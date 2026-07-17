@@ -1,0 +1,71 @@
+# Protocol Config — Project-specific configuration for ECHO Protocol
+#
+# QUICK START: Change these 3 lines for your project:
+#   1. language:       "rust" | "typescript" | "python" | "go" | "java" | "csharp"
+#   2. commands.build: your compile/build command
+#   3. commands.test:  your test runner command
+
+project:
+  name: "savant-code"
+  description: "Multi-Agent AI Coding Assistant with ECHO Protocol governance. TypeScript monorepo, Bun runtime."
+  version: "0.0.1"
+
+protocol:
+  version: "0.2.0"
+  strict_mode: true  # true = all 15 laws active (default), false = core 4 laws only
+
+language: "typescript"  # rust | typescript | python | go | java | csharp
+
+commands:
+  build: "bun run ci"
+  test: "bun test"
+  type_check: "bun run --cwd=common typecheck && bun run --cwd=agents typecheck && bun run --cwd=sdk typecheck && bun run --cwd=cli typecheck && bun run --cwd=evals typecheck && bun run --cwd=packages/agent-runtime typecheck && bun run --cwd=packages/code-map typecheck && bun run --cwd=packages/llm-providers typecheck"
+  lint: "bunx eslint ."
+  format: "bunx prettier --check ."
+  clean: "bun run --cwd=sdk clean"
+
+paths:
+  src: "src/"
+  tests: "tests/"
+  docs: "docs/"
+  dev: "dev/"
+  fids: "dev/fids/"
+  fids_archive: "dev/fids/archive/"
+  session_summaries: "dev/session-summaries/"
+  learnings: "dev/LEARNINGS.md"
+
+quality:
+  max_file_lines: 300
+  max_function_lines: 50
+  max_line_length: 100
+  max_complexity: 10
+  max_params: 4
+  max_comment_density: 0.33
+  max_nesting_depth: 3
+
+# Naming rules: see coding-standards/{language}.md
+
+testing:
+  fuzz_enabled: false
+  mutation_enabled: false
+  coverage_threshold: 80
+  test_timeout: 30
+  parallel_tests: true
+
+fid:
+  auto_create: true
+  severity_levels: ["critical", "high", "medium", "low"]
+  max_open_fids: 20
+
+perfection_loop:
+  max_iterations: 10
+  change_threshold: 0.10
+  convergence_threshold: 0.02
+  convergence_passes: 2
+  oscillation_limit: 3
+
+session:
+  auto_summary: true
+  summary_interval: 30
+  max_session_hours: 4
+  autonomy_level: 3  # 1=Guided, 2=Supervised, 3=Autonomous (default)

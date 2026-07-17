@@ -1,0 +1,102 @@
+import { GEMINI_3_1_FLASH_LITE_MODEL_ID } from '@codebuff/common/constants/gemini'
+
+import { publisher } from './constants'
+
+import type {
+  AgentDefinition,
+  AgentStepContext,
+} from './types/agent-definition'
+
+const basher: AgentDefinition = {
+  id: 'basher',
+  publisher,
+  model: GEMINI_3_1_FLASH_LITE_MODEL_ID,
+  displayName: 'Basher',
+  spawnerPrompt:
+    'Runs a single terminal command and (recommended) describes its output using an LLM using the what_to_summarize field. A lightweight shell command executor. Every basher spawn MUST include params: { command: "<shell>" }.',
+
+  inputSchema: {
+    params: {
+      type: 'object',
+      properties: {
+        command: {
+          type: 'string',
+          description: 'The terminal command to run in bash shell. Don\'t forget this field!',
+        },
+        what_to_summarize: {
+          type: 'string',
+          description:
+            'What information from the command output is desired. Be specific about what to look for or extract. This is optional, and if not provided, the basher will return the full command output without summarization.',
+        },
+        timeout_seconds: {
+          type: 'number',
+          description: 'Set to -1 for no timeout. Default 30',
+        },
+      },
+      required: ['command'],
+    },
+  },
+  outputMode: 'last_message',
+  includeMessageHistory: false,
+  toolNames: ['run_terminal_command'],
+  systemPrompt: `You are part of the Savant ECHO Protocol system. You are an expert at analyzing the output of a terminal command.
+
+Your job is to:
+1. Review the terminal command and its output
+2. Analyze the output based on what the user requested
+3. Provide a clear, concise description of the relevant information
+
+When describing command output:
+- Use excerpts from the actual output when possible (especially for errors, key values, or specific data)
+- Focus on the information the user requested
+- Be concise but thorough
+- If the output is very long, summarize the key points rather than reproducing everything
+- Don't include any follow up recommendations, suggestions, or offers to help`,
+  instructionsPrompt: `The user has provided a command to run and specified what information they want from the output.
+
+Run the command and then describe the relevant information from the output, following the user's instructions about what to focus on.
+
+Do not use any tools! Only analyze the output of the command.`,
+  handleSteps: function* ({ params }: AgentStepContext) {
+    const command = params?.command as string | undefined
+    if (!command) {
+      // Using console.error because agents run in a sandboxed environment without access to structured logger
+      console.error('Basher agent: missing required "command" parameter')
+      yield {
+        toolName: 'set_output',
+        input: { output: 'Error: Missing required "command" parameter' },
+      }
+      return
+    }
+
+    const timeout_seconds = params?.timeout_seconds as number | undefined
+    const what_to_summarize = params?.what_to_summarize as string | undefined
+
+    // Run the command
+    const { toolResult } = yield {
+      toolName: 'run_terminal_command',
+      input: {
+        command,
+        ...(timeout_seconds !== undefined && { timeout_seconds }),
+      },
+    }
+
+    if (!what_to_summarize) {
+      // Return the raw command output without summarization
+      const result = toolResult?.[0]
+      // Only return object values (command output objects), not plain strings
+      const output = result?.type === 'json' && typeof result.value === 'object' ? result.value : ''
+      yield {
+        toolName: 'set_output',
+        input: { output },
+        includeToolCall: false,
+      }
+      return
+    }
+
+    // Let the model analyze and describe the output
+    yield 'STEP'
+  },
+}
+
+export default basher

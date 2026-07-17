@@ -1,0 +1,43 @@
+{
+  "name": "savant-code",
+  "version": "0.0.1",
+  "description": "Multi-Agent AI Coding Assistant with ECHO Protocol",
+  "license": "Apache-2.0",
+  "bin": {
+    "savant-code": "index.js",
+    "sc": "index.js"
+  },
+  "scripts": {
+    "prepack": "node ../release-core/prepare-package.js",
+    "postpack": "node ../release-core/prepare-package.js --clean"
+  },
+  "files": [
+    "index.js",
+    "launcher.js",
+    "http.js",
+    "README.md"
+  ],
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "cpu": [
+    "x64",
+    "arm64"
+  ],
+  "engines": {
+    "node": ">=16"
+  },
+  "dependencies": {
+    "tar": "^7.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/CodebuffAI/codebuff.git"
+  },
+  "homepage": "https://codebuff.com",
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -1,0 +1,257 @@
+import { closeSync, openSync, writeSync } from 'fs'
+import { createRequire } from 'module'
+
+import { getCliEnv } from './env'
+import { logger } from './logger'
+
+// Global renderer reference for clipboard operations.
+// Registered once by the useClipboard hook so all callers of
+// copyTextToClipboard automatically benefit from renderer-based
+// OSC 52 without threading the renderer through every call site.
+let registeredRenderer: Record<string, unknown> | null = null
+
+export function registerClipboardRenderer(renderer: Record<string, unknown>): void {
+  registeredRenderer = renderer
+}
+
+export function unregisterClipboardRenderer(): void {
+  registeredRenderer = null
+}
+
+const require = createRequire(import.meta.url)
+
+type ClipboardListener = (message: string | null) => void
+
+let currentMessage: string | null = null
+const listeners = new Set<ClipboardListener>()
+let clearTimer: ReturnType<typeof setTimeout> | null = null
+
+interface ShowMessageOptions {
+  durationMs?: number
+}
+
+export function subscribeClipboardMessages(
+  listener: ClipboardListener,
+): () => void {
+  listeners.add(listener)
+  listener(currentMessage)
+  return () => {
+    listeners.delete(listener)
+  }
+}
+
+function emitClipboardMessage(message: string | null) {
+  currentMessage = message
+  for (const listener of listeners) {
+    listener(message)
+  }
+}
+
+export function showClipboardMessage(
+  message: string | null,
+  options: ShowMessageOptions = {},
+) {
+  if (clearTimer) {
+    clearTimeout(clearTimer)
+    clearTimer = null
+  }
+
+  emitClipboardMessage(message)
+
+  const duration = options.durationMs ?? 3000
+  if (message && duration > 0) {
+    clearTimer = setTimeout(() => {
+      emitClipboardMessage(null)
+      clearTimer = null
+    }, duration)
+  }
+}
+
+function getDefaultSuccessMessage(text: string): string | null {
+  const preview = text.replace(/\s+/g, ' ').trim()
+  if (!preview) {
+    return null
+  }
+  const truncated = preview.length > 40 ? `${preview.slice(0, 37)}…` : preview
+  return `Copied: "${truncated}"`
+}
+
+export interface CopyToClipboardOptions {
+  successMessage?: string | null
+  errorMessage?: string | null
+  durationMs?: number
+  suppressGlobalMessage?: boolean
+}
+
+export async function copyTextToClipboard(
+  text: string,
+  {
+    successMessage,
+    errorMessage,
+    durationMs,
+    suppressGlobalMessage = false,
+  }: CopyToClipboardOptions = {},
+) {
+  if (!text || text.trim().length === 0) {
+    return
+  }
+
+  const osc52Blocked = isOsc52Blocked()
+  try {
+    const tryCopyViaAnyOsc52 = () =>
+      !osc52Blocked && (tryCopyViaRenderer(text) || tryCopyViaOsc52(text))
+
+    let copied: boolean
+    if (isRemoteSession()) {
+      // Remote/SSH: prefer renderer OSC 52 (through render pipeline),
+      // then our manual OSC 52, then platform tools
+      copied = tryCopyViaAnyOsc52() || tryCopyViaPlatformTool(text)
+    } else {
+      // Local: prefer platform tools (reliable with tmux),
+      // then renderer OSC 52, then our manual OSC 52 as fallback
+      copied = tryCopyViaPlatformTool(text) || tryCopyViaAnyOsc52()
+    }
+
+    if (!copied) {
+      throw new Error('No clipboard method available')
+    }
+
+    if (!suppressGlobalMessage) {
+      const message =
+        successMessage !== undefined
+          ? successMessage
+          : getDefaultSuccessMessage(text)
+      if (message) {
+        showClipboardMessage(message, { durationMs })
+      }
+    }
+  } catch (error) {
+    logger.error(error, 'Failed to copy to clipboard')
+    // When the terminal drops OSC 52 and no platform tool exists (e.g.
+    // Codespaces), the Shift+drag guidance is the only way the user can copy,
+    // so show it even for callers that suppress routine messages.
+    if (!suppressGlobalMessage || osc52Blocked) {
+      showClipboardMessage(
+        osc52Blocked
+          ? OSC52_BLOCKED_MESSAGE
+          : (errorMessage ?? 'Failed to copy to clipboard'),
+        // Give the longer guidance message extra time to be read
+        { durationMs: durationMs ?? (osc52Blocked ? 6000 : undefined) },
+      )
+    }
+    throw error
+  }
+}
+
+export function clearClipboardMessage() {
+  if (clearTimer) {
+    clearTimeout(clearTimer)
+    clearTimer = null
+  }
+  emitClipboardMessage(null)
+}
+
+
+// =============================================================================
+// OSC52 Clipboard Support
+// =============================================================================
+// OSC52 writes to clipboard via terminal escape sequences - works over SSH
+// because the client terminal handles clipboard. Format: ESC ] 52 ; c ; <base64> BEL
+// tmux/screen require passthrough wrapping to forward the sequence.
+
+export function isRemoteSession(): boolean {
+  const env = getCliEnv()
+  return !!(env.SSH_CLIENT || env.SSH_TTY || env.SSH_CONNECTION)
+}
+
+export const OSC52_BLOCKED_MESSAGE =
+  'Copy is blocked by this terminal — hold Shift and drag to select, then copy normally'
+
+// GitHub Codespaces and VS Code remote (SSH/tunnel) terminals silently drop
+// OSC 52 sequences, so a "successful" write never reaches the user's
+// clipboard. Local VS Code terminals (including devcontainers) honor OSC 52.
+// https://github.com/microsoft/vscode-remote-release/issues/11475
+export function isOsc52Blocked(): boolean {
+  const env = getCliEnv()
+  return (
+    env.TERM_PROGRAM === 'vscode' &&
+    (env.CODESPACES === 'true' || isRemoteSession())
+  )
+}
+
+function tryCopyViaPlatformTool(text: string): boolean {
+  const { execSync } = require('child_process') as typeof import('child_process')
+  const opts = { input: text, stdio: ['pipe', 'ignore', 'ignore'] as ('pipe' | 'ignore')[] }
+
+  try {
+    if (process.platform === 'darwin') {
+      execSync('pbcopy', opts)
+    } else if (process.platform === 'linux') {
+      try {
+        execSync('xclip -selection clipboard', opts)
+      } catch {
+        execSync('xsel --clipboard --input', opts)
+      }
+    } else if (process.platform === 'win32') {
+      execSync('clip', opts)
+    } else {
+      return false
+    }
+    return true
+  } catch {
+    return false
+  }
+}
+
+function tryCopyViaRenderer(text: string): boolean {
+  if (!registeredRenderer) return false
+  const copyFn = registeredRenderer.copyToClipboardOSC52
+  if (typeof copyFn !== 'function') return false
+  try {
+    return Boolean(copyFn.call(registeredRenderer, text))
+  } catch {
+    return false
+  }
+}
+
+// 32KB is safe for all environments (tmux is the strictest)
+const OSC52_MAX_PAYLOAD = 32_000
+
+function buildOsc52Sequence(text: string): string | null {
+  const env = getCliEnv()
+  if (env.TERM === 'dumb') return null
+
+  const base64 = Buffer.from(text, 'utf8').toString('base64')
+  if (base64.length > OSC52_MAX_PAYLOAD) return null
+
+  const osc = `\x1b]52;c;${base64}\x07`
+
+  // tmux: wrap in DCS passthrough with doubled ESC
+  if (env.TMUX) {
+    return `\x1bPtmux;${osc.replace(/\x1b/g, '\x1b\x1b')}\x1b\\`
+  }
+
+  // GNU screen: wrap in DCS passthrough
+  if (env.STY) {
+    return `\x1bP${osc}\x1b\\`
+  }
+
+  return osc
+}
+
+function tryCopyViaOsc52(text: string): boolean {
+  const sequence = buildOsc52Sequence(text)
+  if (!sequence) return false
+
+  const ttyPath = process.platform === 'win32' ? 'CON' : '/dev/tty'
+  let fd: number | null = null
+  try {
+    fd = openSync(ttyPath, 'w')
+    writeSync(fd, sequence)
+    return true
+  } catch {
+    return false
+  } finally {
+    if (fd !== null) closeSync(fd)
+  }
+}

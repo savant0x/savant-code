@@ -1,0 +1,28 @@
+{
+  "name": "@savant-code/database",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "bun": "./src/index.ts",
+      "import": "./src/index.ts",
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./service": {
+      "bun": "./src/service.ts",
+      "import": "./src/service.ts",
+      "types": "./src/service.ts",
+      "default": "./src/service.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p .",
+    "test": "bun test"
+  },
+  "sideEffects": false,
+  "engines": {
+    "bun": "1.3.11"
+  }
+}

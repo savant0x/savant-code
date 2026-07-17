@@ -1,0 +1,53 @@
+.DS_Store
+.idea/
+.vercel
+
+# Environment files (secrets) - Bun loads .env.* files natively
+.env
+.env.*
+!.env.example
+
+# ctags
+tags
+
+node_modules
+dev/debug/
+dev/context/
+dev/.context/
+dist
+dist-env
+tsconfig.tsbuildinfo
+.manicode
+__mock-projects__
+npm-app/src/__tests__/data/
+.aider*
+.codebuff*
+**.log
+
+debug/
+.context/
+docs/bot-detection.md
+.codex
+
+# Nx cache directories
+.nx/cache
+.nx/workspace-data
+
+# Infisical config (user-specific)
+.infisical.json
+.gstack/
+
+# Buffbench DEBUG_ERROR dumps
+evals/buffbench/*-error-*.json
+
+# Freebuff Desktop local runtime state in an opened project (SQLite DB, git
+# worktrees, materialized built-in skills) — never source, always regenerated.
+.freebuff/
+
+# Materialized by release package prepack scripts and removed by postpack.
+cli/release/launcher.js
+cli/release/http.js
+cli/release-staging/launcher.js
+cli/release-staging/http.js
+freebuff/cli/release/launcher.js
+freebuff/cli/release/http.js
