@@ -157,3 +157,22 @@ export const AGENT_MODE_TO_COST_MODE = {
   AgentMode,
   'free' | 'lite' | 'normal' | 'max' | 'experimental' | 'ask'
 >
+
+/**
+ * Derives the context window size from a model identifier.
+ * Used to dynamically set the sidebar's max context display.
+ * Falls back to 200k for unknown models (matches Claude default).
+ */
+export function getContextWindowForModel(model: string): number {
+  const m = model.toLowerCase()
+  // Gemini models: 1M+ token context
+  if (m.includes('gemini')) return 1_048_576
+  // DeepSeek models: 128k context
+  if (m.includes('deepseek')) return 131_072
+  // Claude models (Sonnet, Opus, Haiku): 200k context
+  if (m.includes('claude')) return 200_000
+  // GPT-4 / o-series: 128k context
+  if (m.includes('gpt-4') || m.includes('o1') || m.includes('o3') || m.includes('o4')) return 128_000
+  // Default fallback
+  return 200_000
+}

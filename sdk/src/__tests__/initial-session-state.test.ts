@@ -42,35 +42,30 @@ describe('Initial Session State', () => {
         throw new Error(`File not found: ${path}`)
       },
       readdir: async (path: string) => {
+        // Top-level mock kept for tests that use projectFiles (these tests don't
+        // exercise getProjectFileTree, so the shape of readdir's return doesn't
+        // matter for them). Use plain strings + inclusive matches so this mock
+        // is portable to Windows where path.join may produce backslashes.
         if (path.includes('test-project')) {
-          return [
-            { name: 'src', isDirectory: () => true, isFile: () => false },
-            { name: '.git', isDirectory: () => true, isFile: () => false },
-            {
-              name: 'knowledge.md',
-              isDirectory: () => false,
-              isFile: () => true,
-            },
-            { name: 'README.md', isDirectory: () => false, isFile: () => true },
-            {
-              name: '.gitignore',
-              isDirectory: () => false,
-              isFile: () => true,
-            },
-          ]
+          return ['src', '.git', 'knowledge.md', 'README.md', '.gitignore']
         }
         if (path.includes('src')) {
-          return [
-            { name: 'index.ts', isDirectory: () => false, isFile: () => true },
-            { name: 'utils.ts', isDirectory: () => false, isFile: () => true },
-          ]
+          return ['index.ts', 'utils.ts']
         }
         return []
       },
-      stat: async (path: string): Promise<MockStatResult> => ({
-        isDirectory: () => path.includes('src') || path.includes('.git'),
-        isFile: () => !path.includes('src') && !path.includes('.git'),
-      }),
+      // FID-016 Fix D: parameter named `filePath` (not `path`) so it doesn't
+      // shadow the imported node:path module. path.basename(filePath) gives the
+      // cross-platform final path component so /test-project/src/index.ts is
+      // correctly classified as a file (basename 'index.ts'), not a directory.
+      stat: async (filePath: string): Promise<MockStatResult> => {
+        const basename = path.basename(filePath)
+        const isDirectory = basename === 'src' || basename === '.git'
+        return {
+          isDirectory: () => isDirectory,
+          isFile: () => !isDirectory,
+        }
+      },
       exists: async (path: string) => {
         if (path.includes('.gitignore')) return true
         if (path.includes('.codebuffignore')) return true
@@ -116,23 +111,35 @@ describe('Initial Session State', () => {
   })
 
   test('discovers project files automatically when projectFiles is undefined', async () => {
+    // FID-016 Fix D: readdir returns plain strings (matches Node default behavior
+    // and the CodebuffFileSystem type). getProjectFileTree iterates strings then
+    // calls fs.stat(path.join(fullPath, file)) to decide file vs directory.
+    // Normalize dirPath so comparison works on Windows where path.join uses backslashes.
+    const normDir = (p: string) => p.replace(/\\/g, '/')
     mockFs.readdir = (async (dirPath: string) => {
-      if (dirPath === '/test-project') {
+      const norm = normDir(dirPath)
+      if (norm === '/test-project') {
         return ['src', '.git', 'knowledge.md', 'README.md', '.gitignore']
       }
-      if (dirPath === '/test-project/src') {
+      if (norm === '/test-project/src') {
         return ['index.ts', 'utils.ts', 'generated.ts']
       }
       return []
     }) as CodebuffFileSystem['readdir']
-    mockFs.stat = (async (filePath: string) =>
-      ({
-        isDirectory: () =>
-          filePath === '/test-project/src' || filePath === '/test-project/.git',
-        isFile: () =>
-          filePath !== '/test-project/src' && filePath !== '/test-project/.git',
-        size: filePath.endsWith('generated.ts') ? 1_000_001 : 100,
-      }) as MockStatResult & { size: number }) as CodebuffFileSystem['stat']
+
+    // FID-016 Fix D: stat receives path.join(fullPath, entry). Use path.basename
+    // (cross-platform) so we only match the final path component (avoids false
+    // positives where filePath is e.g. /test-project/src/index.ts but basename
+    // is index.ts, not src).
+    mockFs.stat = (async (filePath: string) => {
+      const basename = path.basename(filePath)
+      const isDirectory = basename === 'src' || basename === '.git'
+      return {
+        isDirectory: () => isDirectory,
+        isFile: () => !isDirectory,
+        size: basename === 'generated.ts' ? 1_000_001 : 100,
+      }
+    }) as CodebuffFileSystem['stat']
 
     const readFilePaths: string[] = []
     const originalReadFile = mockFs.readFile
@@ -151,13 +158,20 @@ describe('Initial Session State', () => {
     expect(sessionState.fileContext.fileTree).toBeDefined()
     expect(sessionState.mainAgentState.agentId).toBe('main-agent')
     expect(sessionState.mainAgentState.messageHistory).toEqual([])
-    expect(readFilePaths.some((p) => p.endsWith('src/index.ts'))).toBe(true)
-    expect(readFilePaths.some((p) => p.endsWith('src/utils.ts'))).toBe(true)
-    expect(readFilePaths.some((p) => p.endsWith('src/generated.ts'))).toBe(
-      false,
-    )
-    expect(readFilePaths.some((p) => p.endsWith('README.md'))).toBe(false)
-    expect(readFilePaths.some((p) => p.endsWith('knowledge.md'))).toBe(true)
+    // Cross-platform path suffix check: endsWith is separator-sensitive, so
+    // 'src/index.ts' won't match 'src\\index.ts' on Windows where path.join
+    // uses backslashes. Accept both forms.
+    const endsWithSegment = (segment: string) => (p: string) =>
+      p.endsWith(`src${path.sep}${segment}`) ||
+      p.endsWith(`src/${segment}`)
+    const endsWithRoot = (name: string) => (p: string) =>
+      p.endsWith(`${path.sep}${name}`) || p.endsWith(`/${name}`)
+
+    expect(readFilePaths.some(endsWithSegment('index.ts'))).toBe(true)
+    expect(readFilePaths.some(endsWithSegment('utils.ts'))).toBe(true)
+    expect(readFilePaths.some(endsWithSegment('generated.ts'))).toBe(false)
+    expect(readFilePaths.some(endsWithRoot('README.md'))).toBe(false)
+    expect(readFilePaths.some(endsWithRoot('knowledge.md'))).toBe(true)
   })
 
   test('derives knowledgeFiles from projectFiles when not provided', async () => {

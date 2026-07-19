@@ -45,6 +45,27 @@ export function createMockStreamWithToolCalls(
   return generator()
 }
 
+/**
+ * Mock researcher agent template for tests that exercise read_docs / web_search.
+ * Replaces the old import from agents-graveyard/researcher/researcher.
+ */
+export const mockResearcherAgent = {
+  id: 'researcher',
+  model: 'anthropic/claude-opus-4.8',
+  displayName: 'Test Researcher',
+  toolNames: ['read_docs', 'web_search', 'read_url', 'end_turn'],
+  spawnableAgents: [],
+  includeMessageHistory: false,
+  inheritParentSystemPrompt: false,
+  outputMode: 'last_message' as const,
+  systemPrompt: 'You are a test researcher agent.',
+  instructionsPrompt: 'Provide research on the user prompt.',
+  spawnerPrompt: 'Research agent for testing.',
+  inputSchema: {
+    prompt: { type: 'string', description: 'Research question' },
+  },
+}
+
 export const mockFileContext: ProjectFileContext = {
   projectRoot: '/test',
   cwd: '/test',

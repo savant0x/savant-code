@@ -127,4 +127,30 @@
   Bun package resolution variation). Do not treat "baseline error count" as a stable
   metric across sessions; verify each session re-captures it.
 
+## Session 2026-07-18: Architecture Audit + Tool Gating + FSM Fixes + Nova Channel
+
+**Key Learnings:**
+
+- CHANGELOG ≠ Code — Two features (hasOpenFids gate, iterationCount enforcement) were documented as complete in CHANGELOG but never implemented in `transition-phase.ts`. Always verify code existence, not just documentation.
+- `scanOpenFids` existed in `protocol-config.ts` but was never wired to the FSM handler. Wiring gaps are the hardest to catch — the infrastructure was built but the connection was missing.
+- Commander v14 uses `process.stdout.write()` internally which buffers in piped/non-TTY environments. `process.exit(0)` kills the process before the buffer flushes. Fix: handle `--version` early with `console.log()` (synchronous).
+- `agents-graveyard/` was deleted but two test files still imported from it. Pre-existing errors are not acceptable — fix them when found, don't defer.
+- ECHO does not permit leaving "pre-existing" errors. If typecheck shows errors, fix them in the same session.
+- `run_terminal_command` was gated to AUDIT phase, restoring a FID-2026-0717-004 claim that was never actually committed. Third CHANGELOG-vs-code divergence found in one session.
+- `readProtocolConfig()` re-reads YAML + scans FIDs on every call. For handlers that only need the FID list, import `scanOpenFids` directly to avoid unnecessary YAML parsing.
+
+**Agent Behavior / Process:**
+
+- Nova (external audit) channel established: `dev/nova/inbox/` + `dev/nova/outbox/` with archive folders. Rule: one active file per folder at a time.
+- Nova's grep for tool gating returned 0 matches because she searched `tools/handlers/` instead of `tools/`. When an audit claims "0 matches", verify the search path before accepting the finding.
+- The Cross-Agent Claim Rule works: Nova cited grep output, I cited source paths + line numbers. Where my evidence was stronger, Nova conceded. Where Nova's was stronger, I conceded. The checks-and-balances loop functioned as designed.
+- When creating mock agent definitions for tests, put them in `test-utils.ts` (shared) rather than duplicating across test files.
+
+**Technical Insights:**
+
+- Tool gating in `tool-executor.ts` sits inside `executeToolCall()` AFTER the permission check and BEFORE handler dispatch — the correct enforcement point.
+- `agentTemplate.id.startsWith('thinker')` correctly matches `thinker`, `thinker-gpt`, `thinker-with-files-gemini`, `thinker-best-of-n-opus`. Any user-created agent with id starting with 'thinker' also gets sequentialthinking — acceptable behavior.
+- ARCHITECTURE.md must honestly distinguish active gates from future-phase items. Don't claim "active" for deferred enforcement.
+- `ProjectFileContext` has a `cwd` property — use it instead of inline `{ cwd: string }` types to maintain consistency with what `tool-executor.ts` actually passes.
+
 <!-- Add new entries above this line -->

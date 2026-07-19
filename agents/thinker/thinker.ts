@@ -7,9 +7,6 @@ const definition: SecretAgentDefinition = {
   id: 'thinker',
   publisher,
   model: 'anthropic/claude-opus-4.8',
-  providerOptions: {
-    only: ['amazon-bedrock'],
-  },
   displayName: 'Savant the Thinker',
   spawnerPrompt:
     'Does deep thinking given the current conversation history and a specific prompt to focus on. Use this to help you solve a specific problem. You must gather any relevant context before spawning this agent because the thinker agent has no access to tools. You can keep the prompt very short, because the thinker agent can see the entire conversation history for context.',

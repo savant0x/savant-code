@@ -13,8 +13,7 @@ import {
   test,
 } from 'bun:test'
 
-import { createToolCallChunk, mockFileContext } from './test-utils'
-import researcherAgent from '../../../../agents-graveyard/researcher/researcher'
+import { createToolCallChunk, mockFileContext, mockResearcherAgent } from './test-utils'
 import * as webApi from '../llm-api/codebuff-web-api'
 import { runAgentStep } from '../run-agent-step'
 import { assembleLocalAgentTemplates } from '../templates/agent-registry'
@@ -92,7 +91,7 @@ describe('web_search tool with researcher agent (via web API facade)', () => {
 
   const mockFileContextWithAgents = {
     ...mockFileContext,
-    agentTemplates: { researcher: researcherAgent },
+    agentTemplates: { researcher: mockResearcherAgent },
   }
 
   test('should call web facade when web_search tool is used', async () => {

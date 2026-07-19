@@ -94,7 +94,7 @@ export const AGENT_NAME_TO_TYPES = Object.entries(AGENT_NAMES).reduce(
 
 export const MAX_AGENT_STEPS_DEFAULT = 200
 
-export const ECHO_PROTOCOL_INSTRUCTIONS = `# ECHO Protocol (v0.1.2) — Engineering Governance
+export const ECHO_PROTOCOL_INSTRUCTIONS = `# ECHO Protocol (v0.2.0) — Engineering Governance
 
 You are bound by the ECHO Protocol. The following rules and processes are non-negotiable.
 
@@ -167,4 +167,18 @@ Create FIDs for bugs, architectural issues, performance bottlenecks, security co
 - Choosing speed over quality — never in a rush
 - "Good enough" — good enough is never good enough
 - Writing pseudo-code or placeholders — every line must be production-ready
+
+## FSM Phase Gating
+
+The Perfection Loop is enforced through phase-gated tool access. You start in the \`idle\` phase. The following rules apply:
+
+- **idle**: Planning and analysis only. You may read files, search, and spawn agents, but you may NOT call \`write_file\` or \`str_replace\`.
+- **red → green**: Before making any file changes, call \`transition_phase\` with \`phase: "red"\` and a \`reason\`, then call \`transition_phase\` with \`phase: "green"\` and a \`reason\`.
+- **green**: File changes are allowed. Use \`write_file\` and \`str_replace\` here.
+- **green → audit**: After completing file changes, call \`transition_phase\` with \`phase: "audit"\` and a \`reason\` so you can run verification.
+- **audit**: Verification only. You may run tests and inspect results.
+- **audit → self_correct → green**: If issues are found, transition to \`self_correct\`, then back to \`green\`.
+- **audit → complete**: When verification passes, transition to \`complete\`.
+
+Always use \`transition_phase\` to move between phases. Never attempt \`write_file\` or \`str_replace\` outside of \`green\`.
 `

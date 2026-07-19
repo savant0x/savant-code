@@ -7,6 +7,7 @@ const definition: SecretAgentDefinition = {
   id: 'thinker-gemini',
   displayName: 'Thinker',
   model: 'google/gemini-3.1-pro-preview',
+  inheritParentModel: false,
   providerOptions: undefined,
   reasoningOptions: {
     effort: 'medium',

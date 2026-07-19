@@ -1,5 +1,6 @@
 import { match } from 'ts-pattern'
 
+import { useChatStore } from '../state/chat-store'
 import {
   appendTextToRootStream,
   appendToolToAgentBlock,
@@ -7,6 +8,7 @@ import {
   closeNativeReasoningInAgent,
   markAgentComplete,
 } from './block-operations'
+import { resetUiToIdle } from './finish-logic'
 import { shouldHideAgent } from './constants'
 import {
   createAgentBlock,
@@ -41,6 +43,7 @@ import type {
   PrintModeToolCall,
   PrintModeToolResult,
 } from '@codebuff/common/types/print-mode'
+import type { AgentActivity } from '@codebuff/common/types/session-state'
 import type { ToolName } from '@codebuff/sdk'
 import type { MutableRefObject } from 'react'
 
@@ -103,9 +106,15 @@ export type EventHandlerState = {
 type TextDelta = { type: 'text' | 'reasoning'; text: string }
 
 const hiddenToolNames = new Set<ToolName | 'spawn_agent_inline'>([
+  // spawn_agent_inline nests under the parent agent's branch.
   'spawn_agent_inline',
+  // end_turn is a no-op tool that closes the agent's step; its box is noise.
   'end_turn',
+  // spawn_agents (multi-agent) is collapsed into parent agent branch.
   'spawn_agents',
+  // render_ui widgets render inline as content; the bordered tool-call box
+  // adds nothing the widget itself doesn't already convey.
+  'render_ui',
 ])
 
 const isHiddenToolName = (
@@ -149,20 +158,13 @@ const appendRootChunk = (state: EventHandlerState, delta: TextDelta) => {
   }
 }
 
+// FID-2026-0718-010 (Q13): updateStreamingAgents now respects runCompleted.
+// Same logic as before, but checks the run-end flag first.
 const updateStreamingAgents = (
   state: EventHandlerState,
   op: { add?: string; remove?: string },
 ) => {
-  state.streaming.setStreamingAgents((prev) => {
-    const next = new Set(prev)
-    if (op.remove) {
-      next.delete(op.remove)
-    }
-    if (op.add) {
-      next.add(op.add)
-    }
-    return next
-  })
+  guardedSetStreamingAgents(state, op)
 }
 
 const handleSubagentStart = (
@@ -465,6 +467,33 @@ const handleSpawnAgentsResult = (
     const agentId = `${toolCallId}-${index}`
     updateStreamingAgents(state, { remove: agentId })
   })
+
+  // FID-2026-0718-010 (F1): flush the parent agent's streaming-state too.
+  // The parent's toolCallId/agentId may have been added back into
+  // streamingAgents by text chunks during the spawn window. Without this
+  // explicit remove, isStreaming stays true on the parent branch and the
+  // "working..." shimmer never clears.
+  flushParentStreamingAgents(state, toolCallId)
+}
+
+/**
+ * FID-2026-0718-010 (F1 + Q13): clear the parent toolCallId / agentId and
+ * any late chunks from streamingAgents. Also short-circuits if the run is
+ * already completed (Q13: late-chunk-after-run-end).
+ */
+function flushParentStreamingAgents(
+  state: EventHandlerState,
+  toolCallId: string,
+): void {
+  if (state.streaming.streamRefs.state.runCompleted) {
+    return
+  }
+  // Remove the parent's toolCallId from the streaming set (the loop ID).
+  state.streaming.setStreamingAgents((prev) => {
+    const next = new Set(prev)
+    next.delete(toolCallId)
+    return next
+  })
 }
 
 const handleToolResult = (
@@ -498,6 +527,21 @@ const handleToolResult = (
     }),
   )
 
+  // Reflect ECHO FSM phase transitions into the chat store so the sidebar's
+  // PhaseIndicator updates in real time. The transition_phase tool returns
+  // `{ phase: 'red' | 'green' | 'audit' | ... }`; malformed payloads no-op.
+  if (
+    event.toolName === 'transition_phase' &&
+    firstOutputValue &&
+    typeof firstOutputValue === 'object' &&
+    'phase' in firstOutputValue &&
+    typeof (firstOutputValue as { phase?: unknown }).phase === 'string'
+  ) {
+    useChatStore
+      .getState()
+      .setFsmPhase((firstOutputValue as { phase: string }).phase)
+  }
+
   updateStreamingAgents(state, { remove: event.toolCallId })
 }
 
@@ -505,6 +549,35 @@ const handleFinish = (state: EventHandlerState, event: PrintModeFinish) => {
   if (typeof event.totalCost === 'number' && state.onTotalCost) {
     state.onTotalCost(event.totalCost)
   }
+
+  // FID-2026-0718-010 (F2 backstop, D5): if finish arrives, ensure UI is
+  // reset to idle. Some runs don't fire subagent_finish for the parent
+  // until after onStreamEnded. Treat `finish` as a strong backstop.
+  resetUiToIdle('finish')
+}
+
+/**
+ * FID-2026-0718-010 (Q13): guard all streaming state mutations against the
+ * runCompleted flag. After runCompleted is set, late-arriving chunks
+ * (race condition) short-circuit with a warn-log.
+ */
+function guardedSetStreamingAgents(
+  state: EventHandlerState,
+  op: { add?: string; remove?: string },
+): void {
+  if (state.streaming.streamRefs.state.runCompleted) {
+    // eslint-disable-next-line no-console
+    console.warn(
+      `[sdk-event-handlers] late streaming-agent event after run end: ${JSON.stringify(op)}`,
+    )
+    return
+  }
+  state.streaming.setStreamingAgents((prev) => {
+    const next = new Set(prev)
+    if (op.remove) next.delete(op.remove)
+    if (op.add) next.add(op.add)
+    return next
+  })
 }
 
 export const createStreamChunkHandler =
@@ -544,11 +617,25 @@ export const createStreamChunkHandler =
 
 export const createEventHandler =
   (state: EventHandlerState) => (event: SDKEvent) => {
-    return match(event)
-      .with({ type: 'subagent_start' }, (e) => handleSubagentStart(state, e))
-      .with({ type: 'subagent_finish' }, (e) => handleSubagentFinish(state, e))
-      .with({ type: 'tool_call' }, (e) => handleToolCall(state, e))
-      .with({ type: 'tool_result' }, (e) => handleToolResult(state, e))
-      .with({ type: 'finish' }, (e) => handleFinish(state, e))
-      .otherwise(() => undefined)
+    return (
+      match(event)
+        .with({ type: 'subagent_start' }, (e) => handleSubagentStart(state, e))
+        .with({ type: 'subagent_finish' }, (e) =>
+          handleSubagentFinish(state, e),
+        )
+        .with({ type: 'tool_call' }, (e) => handleToolCall(state, e))
+        .with({ type: 'tool_result' }, (e) => handleToolResult(state, e))
+        .with({ type: 'finish' }, (e) => handleFinish(state, e))
+        // FID-2026-0718-009: route runtime activity indicator to chat store.
+        // The print-mode activity schema is permissive (all fields optional)
+        // for forward-compat, but the runtime guarantees construction via
+        // setActivity(), which produces a strict AgentActivity discriminated
+        // union — so we cast at the boundary.
+        .with({ type: 'activity' }, (e) =>
+          useChatStore
+            .getState()
+            .setActivity(e.activity as AgentActivity),
+        )
+        .otherwise(() => undefined)
+    )
   }

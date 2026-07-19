@@ -1592,7 +1592,7 @@ export const Chat = ({
           flexGrow: 1,
           gap: 0,
           borderStyle: 'single',
-          borderFg: theme.border,
+          borderColor: theme.border,
         }}
       >
         {/* Pinned header — outside scrollbox so it stays at top */}

@@ -3,6 +3,11 @@ import { TextAttributes } from '@opentui/core'
 
 import { useTheme } from '../hooks/use-theme'
 import { getVersion } from '../utils/version'
+import { IS_FREEBUFF } from '../utils/constants'
+import { loadCodebuffModelPreference } from '../utils/settings'
+import { useFreebuffModelStore } from '../state/freebuff-model-store'
+import { useChatStore } from '../state/chat-store'
+import { AgentStack, Timeline } from './savant-ui'
 
 interface ToolCall {
   name: string
@@ -35,25 +40,6 @@ interface RightSidebarProps {
   toolHistory: ToolCall[]
 }
 
-const ContextBar = ({ percent }: { percent: number }) => {
-  const theme = useTheme()
-  const barWidth = 10
-  const filled = Math.round((percent / 100) * barWidth)
-  const empty = barWidth - filled
-
-  // Color based on usage: green (0-40%), yellow (40-70%), red (70-100%)
-  let barColor = theme.success
-  if (percent > 70) barColor = theme.error
-  else if (percent > 40) barColor = theme.warning
-
-  return (
-    <span>
-      <span fg={barColor}>{'█'.repeat(filled)}</span>
-      <span fg={theme.muted}>{'░'.repeat(empty)}</span>
-    </span>
-  )
-}
-
 export const RightSidebar = memo(function RightSidebar({
   tokensUsed,
   tokensMax,
@@ -69,6 +55,8 @@ export const RightSidebar = memo(function RightSidebar({
   toolHistory,
 }: RightSidebarProps) {
   const theme = useTheme()
+  const fsmPhase = useChatStore((s) => s.fsmPhase) ?? 'idle'
+  const devMode = useChatStore((s) => s.devMode)
 
   const formatTokens = (tokens: number): string => {
     if (tokens >= 1000) return `${(tokens / 1000).toFixed(1)}k`
@@ -83,131 +71,181 @@ export const RightSidebar = memo(function RightSidebar({
     return str.length > max ? str.slice(0, max - 1) + '…' : str
   }
 
+  // Fix: use the correct model source based on mode
+  const displayModel = IS_FREEBUFF
+    ? useFreebuffModelStore.getState().selectedModel
+    : loadCodebuffModelPreference() ?? model
+
+  // Dynamic border width
+  const W = 40
+  const inner = W - 4
+  const pad = (s: string, w: number = inner) => s.padEnd(w)
+
+  const topBorder = '┌' + '─'.repeat(W - 2) + '┐'
+  const midBorder = '├' + '─'.repeat(W - 2) + '┤'
+  const botBorder = '└' + '─'.repeat(W - 2) + '┘'
+
+  const LABEL_W = 9
+  const row = (label: string, value: string) => `│ ${pad(label.padEnd(LABEL_W) + value)} │`
+  const line = (content: string) => `│ ${pad(content)} │`
+  const centerLine = (content: string) => {
+    const space = inner - content.length
+    const left = Math.floor(space / 2)
+    const right = space - left
+    return `│ ${' '.repeat(left)}${content}${' '.repeat(right)} │`
+  }
+
+  // ECHO FSM phase display — inlined (not <PhaseIndicator/>) because
+  // OpenTUI forbids nesting <text> inside <text>. Using <span> children is
+  // the idiomatic mixed-color pattern (see RenderUIButton).
+  const PHASE_INFO: Record<string, { fg: string; label: string; icon: string }> = {
+    idle: { fg: '#6b7280', label: 'IDLE', icon: '○' },
+    red: { fg: '#ef4444', label: 'RED', icon: '●' },
+    green: { fg: '#39ff14', label: 'GREEN', icon: '●' },
+    audit: { fg: '#eab308', label: 'AUDIT', icon: '●' },
+    self_correct: { fg: '#f97316', label: 'FIX', icon: '●' },
+    complete: { fg: '#06b6d4', label: 'DONE', icon: '●' },
+  }
+  const pi = PHASE_INFO[fsmPhase] ?? PHASE_INFO.idle
+  const phaseStr = `${pi.icon} ${pi.label}`
+  const phaseContent = `phase  ${phaseStr}`
+  const phasePad = ' '.repeat(Math.max(0, inner - phaseContent.length))
+
+  // FID-2026-0718-009: runtime activity indicator (distinct from fsmPhase).
+  const activity = useChatStore((s) => s.activity)
+  const ACT_INFO: Record<string, { fg: string; label: string; icon: string }> =
+    {
+      idle: { fg: '#6b7280', label: 'idle', icon: '○' },
+      thinking: { fg: '#a78bfa', label: 'thinking', icon: '⚡' },
+      tool: { fg: '#eab308', label: 'tool', icon: '⚙' },
+      subagent: { fg: '#f97316', label: 'subagent', icon: '◆' },
+      researching: { fg: '#3b82f6', label: 'researching', icon: '◇' },
+    }
+  const ai = ACT_INFO[activity.kind] ?? ACT_INFO.idle
+  let activityDetail = ''
+  if (activity.kind === 'tool') {
+    activityDetail = activity.target
+      ? `${activity.toolName}: ${activity.target}`
+      : (activity.toolName ?? '')
+  } else if (activity.kind === 'subagent') {
+    activityDetail = activity.agentType ?? ''
+  } else if (activity.kind === 'researching') {
+    activityDetail = activity.query ?? ''
+  } else if (activity.kind === 'thinking' && activity.model) {
+    activityDetail = activity.model
+  }
+  const activityStr = activityDetail
+    ? `${ai.icon} ${activityDetail}`
+    : ai.icon
+  const actContent = `work  ${activityStr}`
+  const actPad = ' '.repeat(Math.max(0, inner - actContent.length))
+
   return (
-    <box
-      style={{
-        flexDirection: 'column',
-        width: 30,
-        paddingLeft: 1,
-        paddingRight: 1,
-        borderStyle: 'single',
-        borderFg: theme.border,
-      }}
-    >
+    <box flexDirection="column" width={W} flexShrink={0}>
       {/* Header */}
-      <text attributes={TextAttributes.BOLD} fg={theme.accent}>
-        {'┌─ SAVANT ─────────────┐'}
+      <text fg={theme.muted}>{topBorder}</text>
+      <text attributes={TextAttributes.BOLD} fg={theme.primary}>
+        {centerLine('SAVANT')}
       </text>
-      <text fg={theme.muted} marginBottom={1}>
-        {'│ One Mind. A Thousand │'}
+      <text fg={theme.muted}>
+        {centerLine('One Mind. A Thousand Faces.')}
       </text>
-      <text fg={theme.muted} marginBottom={1}>
-        {'│   Faces.             │'}
+      <text fg={theme.muted}>{midBorder}</text>
+
+      {/* ECHO Phase Section — inlined phase indicator as <span> children.
+          (PhaseIndicator returns <text>, which can't nest inside <text> in OpenTUI.) */}
+      {devMode && (
+        <text attributes={TextAttributes.BOLD} fg="#ff4444">
+          {centerLine('[DEV MODE]')}
+        </text>
+      )}
+      <text attributes={TextAttributes.BOLD} fg={theme.primary}>
+        {line('ECHO Protocol')}
       </text>
+      <text>
+        <span fg={theme.muted}>{'│ phase  '}</span>
+        <span fg={pi.fg}>{phaseStr}</span>
+        <span fg={theme.muted}>{`${phasePad} │`}</span>
+      </text>
+      {/* Work row spacing MUST use 2 trailing spaces (matching phase row)
+          — actContent is `work  ${activityStr}` (2 spaces). 3 trailing spaces
+          here makes the line 41 chars wide vs the 40-cell sidebar → wrap
+          artifact appears as a stray blank line below. */}
+      <text>
+        <span fg={theme.muted}>{'│ work  '}</span>
+        <span fg={ai.fg}>{activityStr}</span>
+        <span fg={theme.muted}>{`${actPad} │`}</span>
+      </text>
+      <text fg={theme.muted}>{midBorder}</text>
 
       {/* Session Section */}
-      <box flexDirection="column" marginBottom={1}>
-        <text attributes={TextAttributes.BOLD} fg={theme.primary}>
-          ┌─ Session ────────────┐
-        </text>
-        <text fg={theme.foreground}>
-          {' '}tokens    {formatTokens(tokensUsed)}/{formatTokens(tokensMax)}
-        </text>
-        <text fg={theme.foreground}>
-          {' '}context   {contextPercent.toFixed(1)}% <ContextBar percent={contextPercent} />
-        </text>
-        <text fg={theme.foreground}>
-          {' '}cost      {formatCost(cost)}
-        </text>
-        <text fg={theme.foreground}>
-          {' '}model     {truncate(model, 14)}
-        </text>
-        <text fg={theme.foreground}>
-          {' '}mode      [{mode}]
-        </text>
-        <text fg={theme.foreground}>
-          {' '}agent     {truncate(agent === 'main-agent' ? 'Savant' : agent, 14)}
-        </text>
-        <text fg={theme.muted}>
-          └──────────────────────┘
-        </text>
-      </box>
+      <text attributes={TextAttributes.BOLD} fg={theme.primary}>
+        {line('Session')}
+      </text>
+      <text fg={theme.muted}>{row('tokens', `${formatTokens(tokensUsed)}/${formatTokens(tokensMax)}`)}</text>
+      <text fg={theme.muted}>{row('cost', formatCost(cost))}</text>
+      <text fg={theme.muted}>{row('model', truncate(displayModel, inner - LABEL_W))}</text>
+      <text fg={theme.muted}>{row('mode', `[${mode}]`)}</text>
+      <text fg={theme.muted}>{row('agent', truncate(agent === 'main-agent' ? 'Savant' : agent, inner - LABEL_W))}</text>
+      <text fg={theme.muted}>{midBorder}</text>
 
       {/* Tools Section */}
-      <box flexDirection="column" marginBottom={1}>
-        <text attributes={TextAttributes.BOLD} fg={theme.primary}>
-          ┌─ Tools ──────────────┐
+      <text attributes={TextAttributes.BOLD} fg={theme.primary}>
+        {line('Tools')}
+      </text>
+      {toolsUsed.map((tool, i) => (
+        <text key={`used-${i}`} fg={theme.foreground}>
+          {line(`● ${tool}`)}
         </text>
-        {toolsUsed.map((tool, i) => (
-          <text key={`used-${i}`} fg={theme.foreground}>
-            {' '}<span fg={theme.primary}>●</span> {tool}
+      ))}
+      {toolsAvailable
+        .filter((t) => !toolsUsed.includes(t))
+        .slice(0, 5)
+        .map((tool, i) => (
+          <text key={`avail-${i}`} fg={theme.muted}>
+            {line(`○ ${tool}`)}
           </text>
         ))}
-        {toolsAvailable
-          .filter((t) => !toolsUsed.includes(t))
-          .slice(0, 5)
-          .map((tool, i) => (
-            <text key={`avail-${i}`} fg={theme.muted}>
-              {' '}○ {tool}
-            </text>
-          ))}
-        <text fg={theme.muted}>
-          └──────────────────────┘
-        </text>
-      </box>
+      <text fg={theme.muted}>{midBorder}</text>
 
-      {/* Files Changed Section */}
-      <box flexDirection="column" marginBottom={1}>
-        <text attributes={TextAttributes.BOLD} fg={theme.primary}>
-          ┌─ Files Changed ───┐
-        </text>
-        <text fg={theme.foreground}>
-          {' '} {filesChanged.modified} modified
-        </text>
-        <text fg={theme.foreground}>
-          {' '} {filesChanged.added} added
-        </text>
-        <text fg={theme.foreground}>
-          {' '} {filesChanged.deleted} deleted
-        </text>
-        <text fg={theme.muted}>
-          └──────────────────┘
-        </text>
-      </box>
+      {/* Files Section */}
+      <text attributes={TextAttributes.BOLD} fg={theme.primary}>
+        {line('Files Changed')}
+      </text>
+      <text fg={theme.muted}>{line(`  ${filesChanged.modified} modified`)}</text>
+      <text fg={theme.muted}>{line(`  ${filesChanged.added} added`)}</text>
+      <text fg={theme.muted}>{line(`  ${filesChanged.deleted} deleted`)}</text>
+      <text fg={theme.muted}>{midBorder}</text>
 
       {/* Agent Stack Section */}
-      <box flexDirection="column" marginBottom={1}>
-        <text attributes={TextAttributes.BOLD} fg={theme.primary}>
-          ┌─ Agent Stack ───────┐
-        </text>
-        {agentStack.map((a, i) => (
-          <text key={`agent-${i}`} fg={theme.foreground}>
-            {' '} {a.isActive ? <span fg={theme.primary}>◆</span> : <span fg={theme.muted}>○</span>} {a.id}{a.isActive ? ' (active)' : ''}
-          </text>
-        ))}
-        <text fg={theme.muted}>
-          └──────────────────────┘
-        </text>
-      </box>
+      <text attributes={TextAttributes.BOLD} fg={theme.primary}>
+        {line('Agent Stack')}
+      </text>
+      <AgentStack
+        agents={agentStack.map((a) => ({
+          name: a.id,
+          active: a.isActive,
+        }))}
+      />
+      <text fg={theme.muted}>{midBorder}</text>
 
       {/* History Section */}
-      <box flexDirection="column">
-        <text attributes={TextAttributes.BOLD} fg={theme.primary}>
-          ┌─ History ──────────┐
-        </text>
-        {toolHistory.slice(-5).map((call, i) => {
-          const date = new Date(call.timestamp)
-          const time = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
-          return (
-            <text key={`history-${i}`} fg={theme.muted}>
-              {' '} {time}  {call.name}
-            </text>
-          )
-        })}
-        <text fg={theme.muted}>
-          └──────────────────────┘
-        </text>
-      </box>
+      <text attributes={TextAttributes.BOLD} fg={theme.primary}>
+        {line('History')}
+      </text>
+      {toolHistory.length > 0 ? (
+        <Timeline
+          events={toolHistory.slice(-5).map((call) => {
+            const date = new Date(call.timestamp)
+            const time = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
+            return { time, label: call.name }
+          })}
+          maxItems={5}
+        />
+      ) : (
+        <text fg={theme.muted}>{line('(empty)')}</text>
+      )}
+      <text fg={theme.muted}>{botBorder}</text>
 
       {/* Version */}
       <text
@@ -217,7 +255,7 @@ export const RightSidebar = memo(function RightSidebar({
           marginTop: 'auto',
         }}
       >
-        {'          v' + getVersion()}
+        {' '.repeat(W - 12) + 'v' + getVersion()}
       </text>
     </box>
   )

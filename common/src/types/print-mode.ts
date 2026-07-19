@@ -99,6 +99,42 @@ export type PrintModeReasoningDelta = z.infer<
   typeof printModeReasoningDeltaSchema
 >
 
+// FID-2026-0718-009 — runtime activity indicator (separate from fsmPhase).
+// The activity variant below is exported as a discriminated union so the SDK
+// handler can narrow `kind` at the type level without a runtime cast.
+// Fields marked required match AgentActivity's discriminated union shape;
+// optional fields stay optional. The runtime contract is that all writes go
+// through `setActivity()` which enforces the strict shape.
+const idleShape = { kind: 'idle' as const, since: 0 }
+const thinkingShape = { kind: 'thinking' as const, startedAt: 0 }
+const toolShape = { kind: 'tool' as const, toolName: '', startedAt: 0 }
+const subagentShape = { kind: 'subagent' as const, agentType: '', startedAt: 0 }
+const researchingShape = {
+  kind: 'researching' as const,
+  query: '',
+  startedAt: 0,
+  source: 'web' as const,
+}
+
+export const printModeActivitySchema = z.object({
+  type: z.literal('activity'),
+  activity: z.union([
+    z.object({ ...idleShape, since: z.number() }),
+    z.object({ ...thinkingShape, startedAt: z.number(), model: z.string().optional() }),
+    z.object({ ...toolShape, startedAt: z.number(), target: z.string().optional() }),
+    z.object({ ...subagentShape, startedAt: z.number(), prompt: z.string().optional() }),
+    z.object({
+      ...researchingShape,
+      startedAt: z.number(),
+      query: z.string(),
+      source: z.enum(['web', 'docs']),
+    }),
+  ]),
+  agentId: z.string().optional(),
+  parentAgentId: z.string().optional(),
+})
+export type PrintModeActivity = z.infer<typeof printModeActivitySchema>
+
 export const printModeEventSchema = z.discriminatedUnion('type', [
   printModeDownloadStatusSchema,
   printModeErrorSchema,
@@ -111,6 +147,8 @@ export const printModeEventSchema = z.discriminatedUnion('type', [
   printModeToolResultSchema,
 
   printModeReasoningDeltaSchema,
+
+  printModeActivitySchema,
 ])
 
 export type PrintModeEvent = z.infer<typeof printModeEventSchema>

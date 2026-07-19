@@ -18,15 +18,17 @@ and one set of engineering laws (ECHO).
 
 | # | Agent | Phase | Responsibility | Tools |
 |---|-------|-------|----------------|-------|
-| 1 | **Orchestrator** | ALL | Routes work through Perfection Loop, enforces protocol compliance, spawns all agents | spawn_agents, read_files, read_subtree, write_todos, suggest_followups, str_replace, write_file, ask_user, read_url, skill, set_output, list_directory, glob, render_ui, transition_phase |
+| 1 | **Orchestrator** | ALL | Routes work through Perfection Loop, enforces protocol compliance, spawns all agents | spawn_agents, read_files, read_subtree, write_todos, suggest_followups, ask_user, read_url, skill, set_output, list_directory, glob, render_ui, transition_phase, write_file, str_replace |
 | 2 | **Detective** | RED | Codebase analysis, grep call-graphs, find issues, catalog evidence with file paths | code_search, set_output |
 | 3 | **Forge** | GREEN | Implementation only. Writes code following the converged FID spec. Cannot self-verify. | write_file, str_replace, set_output |
 | 4 | **Verifier** | AUDIT | Double-audit, run tests, check call-graph reachability, reject hallucinated claims | *(no tools — reads only via message history)* |
 | 5 | **Recorder** | FID | Create, track, archive FIDs. Update CHANGELOG. Ensure no FID closes without AUDIT evidence | write_file, read_files, glob, grep, set_output |
 | 6 | **Thinker** | Planning | Deep reasoning via sequential thinking engine. Critiques specs, plans, implementations | sequentialthinking |
-| 7 | **Scout** | Explore | File/code search, glob, read subtrees, context gathering | spawn_agents |
+| 7 | **Scout** | Explore | File/code search, glob, read subtrees, context gathering | glob, list_directory, read_files, read_subtree, set_output |
 | 8 | **Researcher** | Research | Web search, documentation lookup, external API research | web_search, read_url (web); read_docs (docs) |
 | 9 | **Scribe** | Docs | Session summaries, LESSONS.md, knowledge files, end-of-session capture | read_files, write_file, glob, grep, set_output |
+
+> **Note on Orchestrator write tools:** Per FID-2026-0718-008, the Orchestrator has `write_file` + `str_replace` in its toolName list, but they are GATED to exempt paths only (`dev/fids/`, `dev/scratchpad/`, `dev/nova/`) by `tool-executor.ts`. For all non-exempt paths, these tools are blocked unless FSM phase is `green`. This satisfies ECHO separation-of-duties for production code while allowing FIDs/scratchpad without ceremony.
 
 ---
 
@@ -52,7 +54,7 @@ Code implementation begins only after the FID converges to COMPLETE.
 │       │              │                            │      │
 │       └──────────────┘ (new issues → re-enter RED)│      │
 │                                                    │      │
-└────────────────────────────────────────────────────┘      │
+└────────────────────────────────────────────────────────┘      │
                                                            │
                     ┌──────────────────────────────────────┘
                     ▼
@@ -93,8 +95,9 @@ the MCP reference implementation, stripped of MCP transport.
 The Thinker calls `sequentialthinking` iteratively in a loop:
 
 ```
-thought 1:  "Analyze the problem... what are we trying to solve?"
-thought 2:  "Identify constraints... here are the boundaries"
+thought 1:  "Analyze the problem... what exactly needs to be solved?"
+thought 2:  "Identify constraints... boundaries, requirements, non-negotiables
+..." 
 thought 3:  "Wait, that approach has a flaw — revising thought 2"
    (isRevision: true, revisesThought: 2)
 thought 4:  "Alternative approach branching from thought 1"
@@ -168,15 +171,15 @@ Tracked in AgentState:
 
 Tools are gated by FSM phase in `tool-executor.ts`:
 
-| Tool | Allowed Phases |
-|------|---------------|
-| write_file, str_replace, apply_patch | GREEN only |
-| bash (test/typecheck) | AUDIT only |
-| bash (destructive) | Never |
-| grep, read, glob, list_dir | ALL |
-| spawn_agents | ALL (Orchestrator only) |
-| sequentialthinking | Thinker only |
-| create_fid, update_fid, archive_fid | Recorder only |
+| Tool | Allowed Phases | Status |
+|------|---------------|--------|
+| write_file, str_replace, apply_patch | GREEN only (exempt paths: dev/fids/, dev/nova/, dev/scratchpad/) | ✅ Active |
+| run_terminal_command (bash) | AUDIT only | ✅ Active |
+| sequentialthinking | Thinker only (id starts with `thinker`) | ✅ Active |
+| grep, read, glob, list_dir | ALL | ✅ Active (no gating needed) |
+| spawn_agents | ALL | ✅ Active (template-level only) |
+| bash (destructive) | Never | ⏭️ Future phase (command classification not yet implemented) |
+| create_fid, update_fid, archive_fid | Recorder only | ⏭️ Future phase (these are conceptual roles, not registered tools) |
 
 ---
 
@@ -193,3 +196,28 @@ Tools are gated by FSM phase in `tool-executor.ts`:
 ## Open Decisions
 
 1. FSM enforcement (`transition_phase` tool + tool gating): implement now or defer?
+
+---
+
+## Helper Tool Libraries (Filesystem-Only) — Added 2026-07-19
+
+The 9-agent roster above represents **ECHO runtime roles** — the conversational agents that the Orchestrator spawns through the Perfection Loop.
+
+The filesystem under `agents/` may also contain **helper tool libraries** which are consumed by the canonical 9 roles but do NOT constitute independent conversational agents:
+
+| Helper Dir | Consumed By | Notes |
+|------------|-------------|-------|
+| `browser-use/` | `agents/base2/base2.ts:74`, `agents/context-pruner.ts`, `common/src/constants/free-agents.ts`, `common/src/__tests__/free-agents.test.ts` | Browser automation helper used by Orchestrator + context-pruner |
+| `editor/` | `cli/src/commands/init.ts` (scaffolding), `agents/__tests__/context-pruner.test.ts`, `evals/buffbench/eval-codebuff-hard.json` | Editor scaffolding helper used by `init` command |
+| `file-explorer/` | `common/src/constants/agents.ts`, `evals/buffbench/*.json` | File listing helper consumed by agent-registry constants |
+| `librarian/` | `agents/context-pruner.ts` | Knowledge/context helper used by context-pruner |
+| `types/` | `agents/base-chat.ts`, `agents/base2/base2.ts`, `agents/base2/base-deep.ts`, `agents/basher.ts`, `agents/browser-use/browser-use.ts` | Type-only shared imports across all agents + basher |
+
+**Hierarchy:**
+- 9 canonical ECHO runtime roles (Orchestrator + 8 specialists)
+- + 5 helper tool libraries (above)
+- = 14 directories in `agents/` (post-FID-017 prune, where 2 truly-orphaned `e2e/` + `__tests__/` were deleted)
+
+These two counts are NOT in conflict: the 9-agent roster represents runtime conversation entities; the 14-dir count represents filesystem entries. Future checklists/audits should not confuse them.
+
+**Pre-rebrand note (0.0.2 push):** All `@codebuff/*` workspace names + import paths remain intact at this checkpoint. The full rebrand (rename all `codebuff`/`freebuff` instances to `savant-code`/`savant-free`) ships in the NEXT push.

@@ -76,19 +76,34 @@ export const FREEBUFF_ROOT_AGENT_ID_BY_MODEL: Record<string, string> = {
   [FREEBUFF_GLM_V52_MODEL_ID]: 'base2-free-glm',
 }
 
-export const FREEBUFF_REVIEWER_AGENT_ID_BY_MODEL: Record<string, string> = {
-  [FREEBUFF_MIMO_V25_PRO_MODEL_ID]: 'code-reviewer-mimo-pro',
-  [FREEBUFF_MIMO_V25_MODEL_ID]: 'code-reviewer-mimo',
-  [FREEBUFF_MINIMAX_M3_MODEL_ID]: 'code-reviewer-minimax-m3',
-  [FREEBUFF_KIMI_MODEL_ID]: 'code-reviewer-kimi',
-  [FREEBUFF_DEEPSEEK_V4_PRO_MODEL_ID]: 'code-reviewer-deepseek',
-  [FREEBUFF_DEEPSEEK_V4_FLASH_MODEL_ID]: 'code-reviewer-deepseek-flash',
-  [FREEBUFF_GLM_V52_MODEL_ID]: 'code-reviewer-glm',
-}
+/**
+ * After agent roster consolidation (FID-2026-0718-006), all reviewer variants
+ * have been merged into the single canonical Verifier agent. The Verifier
+ * inherits the parent model via withParentModel(), so no model-specific
+ * mapping is needed.
+ */
+export const FREEBUFF_REVIEWER_AGENT_ID_BY_MODEL: Record<string, string> = {}
 
 export function getFreebuffRootAgentIdForModel(model: string): string {
   return FREEBUFF_ROOT_AGENT_ID_BY_MODEL[model] ?? 'base2-free'
 }
+
+/**
+ * Models that generic subagents may run on when inheriting the parent agent's
+ * model. These agents are spawned by free-mode roots, so they must accept any
+ * free model the user selected.
+ */
+const FREEBUFF_SUBAGENT_MODELS = new Set([
+  FREEBUFF_MINIMAX_M3_MODEL_ID,
+  FREEBUFF_DEEPSEEK_V4_PRO_MODEL_ID,
+  FREEBUFF_DEEPSEEK_V4_FLASH_MODEL_ID,
+  FREEBUFF_KIMI_MODEL_ID,
+  FREEBUFF_MIMO_V25_PRO_MODEL_ID,
+  FREEBUFF_MIMO_V25_MODEL_ID,
+  FREEBUFF_GLM_V52_MODEL_ID,
+  FREEBUFF_HY3_MODEL_ID,
+  FREEBUFF_HY3_ATLAS_MODEL_ID,
+])
 
 /**
  * Agents that are allowed to run in FREE mode.
@@ -134,41 +149,29 @@ export const FREE_MODE_AGENT_MODELS: Record<string, Set<string>> = {
     FREEBUFF_GLM_V52_MODEL_ID,
   ]),
 
-  // Scout agents (file exploration)
-  'scout': new Set(['google/gemini-2.5-flash-lite']),
-  'file-picker-max': new Set([GEMINI_3_1_FLASH_LITE_MODEL_ID]),
-  'file-lister': new Set([GEMINI_3_1_FLASH_LITE_MODEL_ID]),
+  // Generic subagents inherit the parent agent's model, so they must accept
+  // every free model a user might select.
+  'scout': FREEBUFF_SUBAGENT_MODELS,
+  'file-picker-max': FREEBUFF_SUBAGENT_MODELS,
+  'file-lister': FREEBUFF_SUBAGENT_MODELS,
 
   // Research agents
-  'researcher-web': new Set([GEMINI_3_1_FLASH_LITE_MODEL_ID]),
-  'researcher-docs': new Set([GEMINI_3_1_FLASH_LITE_MODEL_ID]),
+  'researcher-web': FREEBUFF_SUBAGENT_MODELS,
+  'researcher-docs': FREEBUFF_SUBAGENT_MODELS,
 
   // Browser automation
-  'browser-use': new Set([GEMINI_3_1_FLASH_LITE_MODEL_ID]),
+  'browser-use': FREEBUFF_SUBAGENT_MODELS,
 
   // Command execution
-  basher: new Set([GEMINI_3_1_FLASH_LITE_MODEL_ID]),
-  'tmux-cli': new Set([FREEBUFF_MINIMAX_M3_MODEL_ID]),
+  basher: FREEBUFF_SUBAGENT_MODELS,
+  'tmux-cli': FREEBUFF_SUBAGENT_MODELS,
 
-  // Code reviewer for free mode
-  'code-reviewer-minimax-m3': new Set([FREEBUFF_MINIMAX_M3_MODEL_ID]),
-  'code-reviewer-kimi': new Set([FREEBUFF_KIMI_MODEL_ID]),
-  'code-reviewer-deepseek': new Set([FREEBUFF_DEEPSEEK_V4_PRO_MODEL_ID]),
-  'code-reviewer-deepseek-flash': new Set([
-    FREEBUFF_DEEPSEEK_V4_FLASH_MODEL_ID,
-  ]),
-  'code-reviewer-mimo-pro': new Set([FREEBUFF_MIMO_V25_PRO_MODEL_ID]),
-  'code-reviewer-mimo': new Set([FREEBUFF_MIMO_V25_MODEL_ID]),
-  'code-reviewer-glm': new Set([FREEBUFF_GLM_V52_MODEL_ID]),
-  // Legacy freebuff clients spawned code-reviewer-lite under provider-specific
-  // free roots before those reviewer IDs existed.
-  'code-reviewer-lite': new Set([
-    FREEBUFF_KIMI_MODEL_ID,
-    FREEBUFF_DEEPSEEK_V4_PRO_MODEL_ID,
-    FREEBUFF_DEEPSEEK_V4_FLASH_MODEL_ID,
-    FREEBUFF_MIMO_V25_PRO_MODEL_ID,
-    FREEBUFF_MIMO_V25_MODEL_ID,
-  ]),
+  // Context pruning (spawned inline by the orchestrator)
+  'context-pruner': FREEBUFF_SUBAGENT_MODELS,
+
+  // Consolidated Verifier (replaces all code-reviewer-* variants).
+  // The Verifier inherits the parent model via withParentModel().
+  verifier: FREEBUFF_SUBAGENT_MODELS,
 
   // Legacy: kept for the standalone gemini thinker agent if invoked directly.
   [FREEBUFF_GEMINI_THINKER_AGENT_ID]: new Set([FREEBUFF_GEMINI_PRO_MODEL_ID]),

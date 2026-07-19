@@ -82,6 +82,16 @@ function createQueryClient(): QueryClient {
 }
 
 async function main(): Promise<void> {
+  // Handle --version / -v early — before Commander and before any
+  // initialization. Commander uses process.stdout.write() which buffers
+  // in piped/non-TTY environments; process.exit(0) then kills the process
+  // before the buffer flushes. console.log() is synchronous and safe.
+  // This also skips the prebuild step overhead for a trivial output.
+  if (process.argv.includes('--version') || process.argv.includes('-v')) {
+    console.log(loadPackageVersion())
+    process.exit(0)
+  }
+
   // CI gate: `<binary> --smoke-tree-sitter` proves the embedded wasm boots
   // through Parser.init end-to-end. Has to live BEFORE commander.parse() —
   // an earlier attempt put this in a pre-init module with top-level await,

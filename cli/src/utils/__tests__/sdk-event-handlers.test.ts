@@ -55,14 +55,16 @@ const createStreamRefs = (): {
     spawnAgentsMap: Map<string, SpawnAgentInfo>
   }
 } => {
-  const state = {
-    rootStreamBuffer: '',
-    agentStreamAccumulators: new Map<string, string>(),
-    rootStreamSeen: false,
-    planExtracted: false,
-    wasAbortedByUser: false,
-    spawnAgentsMap: new Map<string, SpawnAgentInfo>(),
-  }
+const state = {
+  rootStreamBuffer: '',
+  agentStreamAccumulators: new Map<string, string>(),
+  rootStreamSeen: false,
+  planExtracted: false,
+  wasAbortedByUser: false,
+  spawnAgentsMap: new Map<string, SpawnAgentInfo>(),
+  // FID-2026-0718-010 (Q13): late-chunk guard flag, matches StreamState
+  runCompleted: false,
+}
 
   const controller = {
     state,
@@ -94,6 +96,10 @@ const createStreamRefs = (): {
       },
       removeSpawnAgentInfo: (agentId: string) => {
         state.spawnAgentsMap.delete(agentId)
+      },
+      // FID-2026-0718-010 (Q13)
+      setRunCompleted: (value: boolean) => {
+        state.runCompleted = value
       },
     },
   }

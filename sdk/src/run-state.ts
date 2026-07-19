@@ -76,6 +76,8 @@ export type InitialSessionStateOptions = {
   agentDefinitions?: AgentDefinition[]
   customToolDefinitions?: CustomToolDefinition[]
   maxAgentSteps?: number
+  /** Dev override flag — bypasses all FSM tool gating and agent tool restrictions. */
+  devMode?: boolean
   fs?: CodebuffFileSystem
   spawn?: CodebuffSpawn
   logger?: Logger
@@ -606,6 +608,7 @@ export async function initialSessionState(
     changesSinceLastChat: {},
     shellConfigFiles: {},
     systemInfo: getSystemInfo(),
+    ...(params.devMode ? { devMode: params.devMode } : {}),
   })
 
   if (maxAgentSteps) {

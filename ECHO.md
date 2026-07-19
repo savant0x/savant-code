@@ -32,6 +32,7 @@ conventions, and file extensions are defined in `protocol.config.yaml` and the
 | **FID**                    | Feature Implementation Document — tracks bugs, architectural issues, and improvements through resolution          |
 | **Perfection Loop**        | The iterative fix/verify cycle that runs on the FID document — not the code                                       |
 | **FID-Bound Execution**    | Code is never written until the FID converges through the Perfection Loop to COMPLETE status                      |
+| **Activity** (FID-2026-0718-009) | Runtime indicator surfaced in the sidebar that shows what the agent is doing *right now* (tool call, model reasoning, sub-agent delegation, research). Distinct from FSM Phase, which tracks Perfection Loop state. |
 | **Levenshtein Metric**     | 10% character-change cap per pass to prevent oscillation                                                          |
 | **Baseline**               | Reference code state showing intended patterns                                                                    |
 | **Honest Assessment**      | Verifiable output-based evaluation vs. self-reporting (see Honest Assessment section below)                       |
@@ -50,25 +51,25 @@ The Savant harness enforces the Perfection Loop through 9 specialized agents.
 Each agent owns a specific phase and has restricted tools. No agent may perform
 another agent's role.
 
-| # | Agent | Phase | Responsibility | Restricted Tools |
-|---|-------|-------|----------------|------------------|
-| 1 | **Orchestrator** | ALL | Routes work through Perfection Loop, enforces protocol compliance, spawns all agents | write_file, str_replace, apply_patch, bash |
-| 2 | **Detective** | RED | Codebase analysis, grep call-graphs, find issues, catalog evidence with file paths | write_file, str_replace, bash |
-| 3 | **Forge** | GREEN | Implementation only. Writes code following converged FID spec. Cannot self-verify. | spawn_agents, bash (destructive), ask_user |
-| 4 | **Verifier** | AUDIT | Double-audit, run tests, check call-graph reachability, reject hallucinated claims | write_file, str_replace |
-| 5 | **Recorder** | FID | Create, track, archive FIDs. Update CHANGELOG. Ensure no FID closes without AUDIT evidence | str_replace, bash (limited) |
-| 6 | **Thinker** | Planning | Deep reasoning via sequential thinking engine. Critiques specs, plans, implementations | write_file, str_replace, bash |
-| 7 | **Scout** | Explore | File/code search, glob, read subtrees, context gathering | write, str_replace, bash, spawn |
-| 8 | **Researcher** | Research | Web search, documentation lookup, external API research | write, str_replace, bash |
-| 9 | **Scribe** | Docs | Session summaries, LESSONS.md, knowledge files, end-of-session capture | str_replace, bash, spawn |
+| # | Agent | Phase | Responsibility | Tools | Restricted Tools |
+|---|-------|-------|----------------|-------|------------------|
+| 1 | **Orchestrator** | ALL | Routes work through Perfection Loop, enforces protocol compliance, spawns all agents | spawn_agents, read_files, read_subtree, write_todos, suggest_followups, ask_user, read_url, skill, set_output, list_directory, glob, render_ui, transition_phase, write_file, str_replace | apply_patch, bash, sequentialthinking |
+| 2 | **Detective** | RED | Codebase analysis, grep call-graphs, find issues, catalog evidence | code_search, set_output, list_directory, glob, read_files, read_subtree | write_file, str_replace, bash |
+| 3 | **Forge** | GREEN | Implementation only. Writes code following converged FID spec. | write_file, str_replace, set_output | spawn_agents, bash (destructive), ask_user |
+| 4 | **Verifier** | AUDIT | Double-audit, run tests, check call-graph reachability | *(no tools — reads only via message history)* | ALL write tools |
+| 5 | **Recorder** | FID | Create, track, archive FIDs. Update CHANGELOG. | write_file, read_files, glob, grep, set_output, transition_phase | str_replace, bash (limited) |
+| 6 | **Thinker** | Planning | Deep reasoning via sequential thinking engine | sequentialthinking | write_file, str_replace, bash |
+| 7 | **Scout** | Explore | File/code search, glob, read subtrees, context gathering | glob, list_directory, read_files, read_subtree, set_output | write_file, str_replace, bash, spawn |
+| 8 | **Researcher** | Research | Web search, documentation lookup, external API research | web_search, read_url | write_file, str_replace, bash |
+| 9 | **Scribe** | Docs | Session summaries, LESSONS.md, knowledge files | read_files, write_file, glob, grep, set_output | str_replace, bash, spawn |
 
 ### Separation of Duties (Non-Negotiable)
 
 | Rule | Enforced By |
 |------|-------------|
-| The Orchestrator cannot write files or run terminal commands | Tool restriction |
+| The Orchestrator cannot write source code files (delegated to Forge). Can write to scratchpad, FIDs, and Nova paths. | FSM gate + path exemptions |
 | Forge (GREEN) cannot verify its own work | No bash (test) access |
-| Verifier (AUDIT) cannot write code | No write_file/str_replace |
+| Verifier (AUDIT) cannot write anything | toolNames: [] (zero tools) |
 | Detective (RED) cannot implement fixes | No write_file/str_replace |
 | Recorder controls FID lifecycle exclusively | Only Recorder can archive FIDs |
 | Thinker must use sequential thinking for all non-trivial reasoning | Tool mandate |

@@ -1,6 +1,7 @@
 import path from 'path'
 
 import { resolveFilePath } from './path-utils'
+import { resolveAndContain } from '@codebuff/common/util/paths'
 
 import type { ApplyPatchOperation } from '@codebuff/common/tools/params/tool/apply-patch'
 import type { CodebuffToolOutput } from '@codebuff/common/tools/list'
@@ -601,8 +602,10 @@ export async function applyPatchTool(params: {
   cwd: string
   fs: CodebuffFileSystem
   onFileWritten?: OnFileWrittenCallback
+  /** FID-2026-0718-014 v2: injectable for testability. Default = node:fs.realpathSync.native. */
+  realpathFn?: (p: string) => string
 }): Promise<ApplyPatchResult> {
-  const { parameters, cwd, fs, onFileWritten } = params
+  const { parameters, cwd, fs, onFileWritten, realpathFn } = params
   const operation = parseOperation(parameters)
 
   if (!operation) {
@@ -611,6 +614,14 @@ export async function applyPatchTool(params: {
 
   try {
     const { fullPath } = resolveFilePath(cwd, operation.path)
+
+    // FID-2026-0718-014 v2: defense-in-depth at SDK boundary. Per v2 corrected
+    // architecture, this is where the actual fs.writeFile / fs.unlink happens.
+    // Closes the TOCTOU window between agent-runtime's gate and the real FS op.
+    const pathCheck = resolveAndContain(fullPath, { projectRoot: cwd, realpathFn })
+    if (pathCheck.kind === 'reject') {
+      return [errorResult(`apply_patch: ${pathCheck.reason}`)]
+    }
 
     if (operation.type === 'create_file') {
       const sanitizedDiff = sanitizeUnifiedDiff(operation.diff)

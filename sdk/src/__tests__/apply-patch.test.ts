@@ -22,6 +22,7 @@ describe('applyPatchTool', () => {
       },
       cwd: '/repo',
       fs,
+      realpathFn: (p) => p,
     })
 
     expect(result[0]?.type).toBe('json')
@@ -58,6 +59,7 @@ describe('applyPatchTool', () => {
       },
       cwd: '/repo',
       fs,
+      realpathFn: (p) => p,
     })
 
     expect(result[0]?.type).toBe('json')
@@ -98,6 +100,7 @@ describe('applyPatchTool', () => {
       },
       cwd: '/repo',
       fs,
+      realpathFn: (p) => p,
     })
 
     expect(result[0]?.type).toBe('json')
@@ -133,6 +136,7 @@ describe('applyPatchTool', () => {
       },
       cwd: '/repo',
       fs,
+      realpathFn: (p) => p,
     })
 
     expect(result[0]?.type).toBe('json')
@@ -171,6 +175,7 @@ describe('applyPatchTool', () => {
       },
       cwd: '/repo',
       fs,
+      realpathFn: (p) => p,
     })
 
     expect(result[0]?.type).toBe('json')
@@ -204,6 +209,7 @@ describe('applyPatchTool', () => {
       },
       cwd: '/repo',
       fs,
+      realpathFn: (p) => p,
     })
 
     expect(result[0]?.type).toBe('json')
@@ -246,6 +252,7 @@ describe('applyPatchTool', () => {
       },
       cwd: '/repo',
       fs,
+      realpathFn: (p) => p,
     })
 
     expect(result[0]?.type).toBe('json')
@@ -281,6 +288,7 @@ describe('applyPatchTool', () => {
       },
       cwd: '/repo',
       fs,
+      realpathFn: (p) => p,
     })
 
     expect(result[0]?.type).toBe('json')
@@ -315,6 +323,7 @@ describe('applyPatchTool', () => {
       },
       cwd: '/repo',
       fs,
+      realpathFn: (p) => p,
     })
 
     expect(result[0]?.type).toBe('json')
@@ -350,6 +359,7 @@ describe('applyPatchTool', () => {
       },
       cwd: '/repo',
       fs,
+      realpathFn: (p) => p,
     })
 
     expect(result[0]?.type).toBe('json')
@@ -388,6 +398,7 @@ describe('applyPatchTool', () => {
       },
       cwd: '/repo',
       fs,
+      realpathFn: (p) => p,
     })
 
     const created = await fs.readFile('/repo/src/new.txt', 'utf-8')
@@ -407,6 +418,7 @@ describe('applyPatchTool', () => {
       },
       cwd: '/repo',
       fs,
+      realpathFn: (p) => p,
     })
 
     expect(result[0]?.type).toBe('json')

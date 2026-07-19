@@ -60,6 +60,7 @@ describe('handleSteps Parsing Tests', () => {
       spawnableAgents: [],
       includeMessageHistory: true,
       inheritParentSystemPrompt: false,
+      inheritParentModel: true,
       systemPrompt: 'Test system prompt',
       instructionsPrompt: 'Test user prompt',
       stepPrompt: 'Test agent step prompt',

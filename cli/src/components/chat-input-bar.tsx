@@ -391,7 +391,7 @@ export const ChatInputBar = ({
         style={{
           width: '100%',
           borderStyle: 'single',
-          borderFg: theme.border,
+          borderColor: theme.border,
           paddingLeft: 1,
           paddingRight: 1,
           paddingTop: 0,

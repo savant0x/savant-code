@@ -3,9 +3,9 @@
 // Why this exists: `bun dev` runs `bun run src/index.tsx --cwd ..`, and Bun's
 // dotenv auto-loader is disabled once `--cwd` is passed. The environment
 // validation gate in `common/src/env.ts` therefore sees no vars and throws.
-// The e2e harness (`agents/e2e/*.e2e.test.ts`) works around the same
-// gap with a hand-rolled loader; we reuse that exact algorithm here so a
-// fresh `bun dev` (no shell exports) picks up `.env.local`.
+// The application's existing env loader (used by tests) works around the
+// same gap with a hand-rolled parser; we reuse that exact algorithm here
+// so a fresh `bun dev` (no shell exports) picks up `.env.local`.
 //
 // This module MUST be imported before any `@codebuff/common` import that would
 // trigger `common/src/env.ts` (which parses the schema at module load).

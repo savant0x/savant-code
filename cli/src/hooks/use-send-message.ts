@@ -10,10 +10,16 @@ import {
   markFreebuffSessionEnded,
 } from './use-freebuff-session'
 import { getCodebuffClient } from '../utils/codebuff-client'
-import { AGENT_MODE_TO_COST_MODE, IS_FREEBUFF } from '../utils/constants'
+import { AGENT_MODE_TO_COST_MODE, IS_FREEBUFF, getContextWindowForModel } from '../utils/constants'
 import { createEventHandlerState } from '../utils/create-event-handler-state'
+import { getSelectedFreebuffModel } from '../state/freebuff-model-store'
 import { createRunConfig } from '../utils/create-run-config'
 import { getAgentIdForMode } from '../utils/freebuff-agent-selection'
+import {
+  createStalledResetWatcher,
+  markChunkSeen as markChunkSeenHelper,
+  resetUiToIdle,
+} from '../utils/finish-logic'
 import { loadAgentDefinitions } from '../utils/local-agent-registry'
 import { logger } from '../utils/logger'
 import { loadCodebuffModelPreference } from '../utils/settings'
@@ -200,6 +206,13 @@ export const useSendMessage = ({
     streamRefsRef.current = createStreamController()
   }
   const streamRefs = streamRefsRef.current
+
+  // FID-2026-0718-010 (F3 + D5): heartbeat timer ref + stalled-state watcher.
+  // Started before client.run, stopped in finally block. Heartbeat polls
+  // the live snapshot every 2s for token counts; watcher polls every 5s
+  // for 30s of chunk-silence + auto-reset.
+  const heartbeatIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const stalledWatcher = createStalledResetWatcher()
 
   useEffect(() => {
     if (continueChat && !previousRunStateRef.current) {
@@ -428,6 +441,9 @@ export const useSendMessage = ({
       setInputFocused(true)
       inputRef.current?.focus()
 
+      // Reset FSM phase to idle on new user message (FID-2026-0718-008 Fix 9b)
+      useChatStore.getState().onNewUserMessage()
+
       // Get SDK client
       const client = await getCodebuffClient()
 
@@ -537,7 +553,7 @@ export const useSendMessage = ({
         latestRunStateSnapshot,
         useChatStore.getState().messages,
         runChatDir,
-        useChatStore.getState().selectedModel,
+        getSelectedFreebuffModel(),
       )
 
       // Execute SDK run with streaming handlers
@@ -621,6 +637,21 @@ export const useSendMessage = ({
               : undefined,
           onStateSnapshot: (snapshot) => {
             latestRunStateSnapshot = snapshot
+
+            // Wire sidebar: update context tokens and cost in real time
+            // from periodic snapshots (~every 5s) so the UI stays current
+            // during long runs, not just at completion.
+            const snapshotTokenCount =
+              snapshot?.sessionState?.mainAgentState?.contextTokenCount
+            if (typeof snapshotTokenCount === 'number') {
+              useChatStore.getState().updateContextTokens(snapshotTokenCount)
+            }
+            const snapshotCost =
+              snapshot?.sessionState?.mainAgentState?.creditsUsed
+            if (typeof snapshotCost === 'number') {
+              useChatStore.getState().updateSessionCost(snapshotCost)
+            }
+
             // Don't persist once the run is aborted or the user has switched
             // chats: the store's messages then belong to a different
             // conversation, and checkpointing them into this run's directory
@@ -652,6 +683,7 @@ export const useSendMessage = ({
                 params.type === 'modified' ? 'modified' : 'created',
               )
           },
+          devMode: useChatStore.getState().devMode,
         })
 
         // Wire sidebar: add main agent to stack at run start
@@ -660,6 +692,17 @@ export const useSendMessage = ({
             ? agentWithModelOverride
             : agentWithModelOverride.id
         useChatStore.getState().updateAgentStack([{ id: mainAgentName, isActive: true }])
+
+        // Wire sidebar: set context window max from model
+        const modelName =
+          typeof agentWithModelOverride === 'string'
+            ? undefined
+            : agentWithModelOverride.model
+        if (modelName) {
+          useChatStore.getState().updateContextTokensMax(
+            getContextWindowForModel(modelName),
+          )
+        }
 
         // Log a summary only: the full run config contains the entire
         // conversation history and attachments, which bloats log.jsonl.
@@ -682,6 +725,28 @@ export const useSendMessage = ({
           },
           '[send-message] Sending message with sdk run config',
         )
+        // FID-2026-0718-010 (F3): start heartbeat BEFORE client.run.
+        // Polls latestRunStateSnapshot ref every 2s to keep the sidebar's
+        // contextTokensUsed fresh during long sub-agent chains. The
+        // snapshot ref is updated by onStateSnapshot above.
+        heartbeatIntervalRef.current = setInterval(() => {
+          const snap = latestRunStateSnapshot
+          if (!snap) return
+          // FID-2026-0718-010 (F3): poll token count every 2s. Cap is set
+          // once at run-start from agentWithModelOverride.model; the
+          // heartbeat intentionally does NOT refresh the cap (avoids the
+          // cost-flicker problem called out in D4 if we extend to cost).
+          const tokenCount =
+            snap?.sessionState?.mainAgentState?.contextTokenCount
+          if (typeof tokenCount === 'number') {
+            useChatStore.getState().updateContextTokens(tokenCount)
+          }
+        }, 2_000)
+        // Bump the chunk-seen watermark (FID-2026-0718-010 D5).
+        markChunkSeenHelper('send-message-start')
+        // Start the stalled-state watcher.
+        stalledWatcher.start()
+
         const runState = await client.run(runConfig)
 
         // Only adopt and persist the result while this run's chat is still
@@ -711,7 +776,7 @@ export const useSendMessage = ({
           // updater: the store uses immer, so the updater sees a draft proxy
           // and JSON.stringify of the (unbounded) transcript through proxy
           // traps is several times slower.
-          saveChatState(runState, useChatStore.getState().messages, runChatDir, useChatStore.getState().selectedModel)
+          saveChatState(runState, useChatStore.getState().messages, runChatDir, getSelectedFreebuffModel())
         }
         handleRunCompletion({
           runState,
@@ -758,13 +823,37 @@ export const useSendMessage = ({
               latestRunStateSnapshot,
               useChatStore.getState().messages,
               runChatDir,
-              useChatStore.getState().selectedModel,
+              getSelectedFreebuffModel(),
             )
           }
         } else {
           logger.debug({ error }, '[send-message] Ignoring error after abort')
         }
       } finally {
+        // FID-2026-0718-010 (F2 + Q14): BEFORE clearing live state provider,
+        // mark the run as completed so late-arriving chunks short-circuit.
+        // Then fire the canonical end-of-stream reset. Order matters — the
+        // snapshot must settle first, then the UI resets to idle.
+        streamRefs.setters.setRunCompleted(true)
+        if (!abortController.signal.aborted) {
+          // Normal completion path: fire the canonical reset.
+          useChatStore.getState().onStreamEnded('finish')
+        } else {
+          // Abort path: skip chain-lock release here (abort handler did it),
+          // still reset FSM phase + activity to idle.
+          resetUiToIdle('abort', { force: true })
+        }
+
+        // Stop the heartbeat + stalled watcher (FID-2026-0718-010 F3/D5).
+        // Belt-and-braces: clear both named timers even if a previous run
+        // didn't clean up. Idempotent — clearInterval/setTimeout nulls are
+        // safe to call repeatedly.
+        if (heartbeatIntervalRef.current) {
+          clearInterval(heartbeatIntervalRef.current)
+          heartbeatIntervalRef.current = null
+        }
+        stalledWatcher.stop()
+
         // Stop exit-flushing this run's checkpoint; the final state (or last
         // checkpoint, on error) has been saved above. Owner-guarded so an
         // aborted run resolving late can't clear a newer run's provider.

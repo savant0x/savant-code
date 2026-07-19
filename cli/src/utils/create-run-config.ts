@@ -32,6 +32,8 @@ export type CreateRunConfigParams = {
   onStateSnapshot?: (runState: RunState) => void
   /** Optional file write hook. Called after a file is successfully written. */
   onFileWritten?: OnFileWrittenCallback
+  /** Dev override flag — bypasses all FSM tool gating and agent tool restrictions. */
+  devMode?: boolean
 }
 
 const SENSITIVE_EXTENSIONS = new Set([
@@ -111,6 +113,7 @@ export const createRunConfig = (params: CreateRunConfigParams) => {
     extraCodebuffMetadata,
     onStateSnapshot,
     onFileWritten,
+    devMode,
   } = params
 
   return {
@@ -128,6 +131,7 @@ export const createRunConfig = (params: CreateRunConfigParams) => {
     extraCodebuffMetadata,
     onStateSnapshot,
     onFileWritten,
+    devMode,
     fileFilter: ((filePath: string) => {
       if (isSensitiveFile(filePath)) return { status: 'blocked' }
       if (isEnvTemplateFile(filePath)) return { status: 'allow-example' }

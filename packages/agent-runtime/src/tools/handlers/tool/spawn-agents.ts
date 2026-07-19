@@ -6,7 +6,9 @@ import {
   createAgentState,
   executeSubagent,
   extractSubagentContextParams,
+  withParentModel,
 } from './spawn-agent-utils'
+import { setActivity } from '../../../util/activity-tracking'
 
 import type { CodebuffToolHandlerFunction } from '../handler-function-type'
 import type {
@@ -83,14 +85,20 @@ export const handleSpawnAgents = (async (
 
   await previousToolCallFinished
 
+  // FID-2026-0718-009 M3: surface sub-agent activity on parent.
+  // Sub-agent work begins; parent UI shows 'subagent' state.
+
   const results = await Promise.allSettled(
     agents.map(
       async ({ agent_type: agentTypeStr, prompt, params: spawnParams }) => {
-        const { agentTemplate, agentType } = await validateAndGetAgentTemplate({
+        const { agentTemplate: childTemplate, agentType } = await validateAndGetAgentTemplate({
           ...params,
           agentTypeStr,
           parentAgentTemplate,
         })
+
+        // Inherit the parent's model so subagents respect the user's selected model.
+        const agentTemplate = withParentModel(childTemplate, parentAgentTemplate)
 
         validateAgentInput(agentTemplate, agentType, prompt, spawnParams)
 
@@ -100,6 +108,22 @@ export const handleSpawnAgents = (async (
           parentAgentState,
           {},
         )
+
+        // FID-2026-0718-009 M3: surface sub-agent activity on parent.
+        setActivity(
+          parentAgentState,
+          {
+            kind: 'subagent',
+            agentType,
+            startedAt: Date.now(),
+            ...(prompt ? { prompt: prompt.slice(0, 30) } : {}),
+          },
+          writeToClient,
+        )
+
+        // Sub-agent work begins alongside parent work. Parent's activity may
+        // still be 'thinking' so we keep it; the M3 line above ensures the
+        // parent UI starts showing 'subagent' once the agent hits tool calls.
 
         // Extract common context params to avoid bugs from spreading all params
         const contextParams = extractSubagentContextParams(params)
@@ -186,6 +210,15 @@ export const handleSpawnAgents = (async (
         return { ...result, agentType, agentName: agentTemplate.displayName }
       },
     ),
+  )
+
+  // FID-2026-0718-009 M8: After sub-agent work resolves, parent resumes
+  // 'thinking' so the sidebar reflects parent awaiting next sub-agent or
+  // the model step. Single setActivity after all sub-agents resolve.
+  setActivity(
+    parentAgentState,
+    { kind: 'thinking', startedAt: Date.now() },
+    writeToClient,
   )
 
   const reports = await Promise.all(

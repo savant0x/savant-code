@@ -9,6 +9,7 @@ import { loadModePreference, saveModePreference } from '../utils/settings'
 import type { ChatMessage, ContentBlock } from '../types/chat'
 import type { AgentMode } from '../utils/constants'
 import type { InputMode } from '../utils/input-modes'
+import type { AgentActivity } from '@codebuff/common/types/session-state'
 import type { RunState } from '@codebuff/sdk'
 
 // Import types from the types/store module to avoid circular dependencies
@@ -57,6 +58,7 @@ export type ToolHistoryEntry = {
 export type FilesChanged = {
   modified: number
   created: number
+  added: number
   deleted: number
 }
 
@@ -104,6 +106,26 @@ export type ChatStoreState = {
   filesChanged: FilesChanged
   agentStack: AgentStackEntry[]
   sessionCost: number
+  fsmPhase: string
+  /** Dev override — bypasses all ECHO tool gating when true. */
+  devMode: boolean
+  /**
+   * Runtime activity indicator (FID-2026-0718-009). Distinct from fsmPhase.
+   * What the agent is doing RIGHT NOW (tool/model/sub-agent/research).
+   */
+  activity: AgentActivity
+  /**
+   * FID-2026-0718-010 (Q17): anti-thrash window stamp. Tracks when
+   * onStreamEnded last fired. Resets within 100ms are no-ops to dedupe
+   * overlapping resets (finish/abort/slash fired in the same tick).
+   */
+  lastResetAt: number
+  /**
+   * FID-2026-0718-010 (D5/Q19): watermark updated by finish-logic.markChunkSeen
+   * on every SDK chunk. StalledResetWatcher reads this to detect 30s+
+   * silence and auto-reset to idle.
+   */
+  _lastChunkAtMs: number
 }
 
 const findLatestFollowupInBlocks = (
@@ -193,12 +215,32 @@ type ChatStoreActions = {
 
   // Sidebar data actions
   updateContextTokens: (used: number) => void
+  updateContextTokensMax: (max: number) => void
   addToolUsed: (toolName: string) => void
   addToolHistory: (toolName: string) => void
-  incrementFilesChanged: (type: 'modified' | 'created' | 'deleted') => void
+  incrementFilesChanged: (type: 'modified' | 'created' | 'added' | 'deleted') => void
   updateAgentStack: (stack: AgentStackEntry[]) => void
   updateSessionCost: (cost: number) => void
   resetSidebarData: () => void
+  /** Set the current ECHO FSM phase (wired from transition_phase tool results). */
+  setFsmPhase: (phase: string) => void
+  /** Set the runtime activity indicator (FID-2026-0718-009). */
+  setActivity: (activity: AgentActivity) => void
+  /** Reset FSM phase to idle when a new user message is sent. */
+  onNewUserMessage: () => void
+  /**
+   * FID-2026-0718-010 (F2): single canonical end-of-stream reset. Clears
+   * fsmPhase, activity, streamingAgents, activeSubagents, isChainInProgress.
+   * Idempotent; guarded by isRetrying + 100ms anti-thrash window (Q17).
+   */
+  onStreamEnded: (reason: string) => void
+  /**
+   * FID-2026-0718-010 (F3/D5): stamp the last chunk timestamp for the
+   * stalled-reset watchdog. Called from finish-logic.markChunkSeen.
+   */
+  markChunkSeen: () => void
+  /** Toggle dev override mode on/off. */
+  setDevMode: (active: boolean) => void
 }
 
 type ChatStore = ChatStoreState & ChatStoreActions
@@ -238,9 +280,19 @@ const initialState: ChatStoreState = {
   contextTokensMax: 200_000,
   toolsUsed: [],
   toolHistory: [],
-  filesChanged: { modified: 0, created: 0, deleted: 0 },
+  filesChanged: { modified: 0, created: 0, added: 0, deleted: 0 },
   agentStack: [],
   sessionCost: 0,
+  fsmPhase: 'idle',
+  devMode: false,
+  activity: { kind: 'idle', since: Date.now() },
+  /** FID-2026-0718-010: anti-thrash window for onStreamEnded (D2/Q17). */
+  lastResetAt: 0,
+  /**
+   * FID-2026-0718-010: watermark updated by markChunkSeen on every chunk
+   * event. StalledResetWatcher reads this to detect 30s of silence (D2/D5).
+   */
+  _lastChunkAtMs: Date.now(),
 }
 
 export const useChatStore = create<ChatStore>()(
@@ -533,6 +585,11 @@ export const useChatStore = create<ChatStore>()(
         state.contextTokensUsed = used
       }),
 
+    updateContextTokensMax: (max) =>
+      set((state) => {
+        state.contextTokensMax = max
+      }),
+
     addToolUsed: (toolName) =>
       set((state) => {
         if (!state.toolsUsed.includes(toolName)) {
@@ -553,6 +610,7 @@ export const useChatStore = create<ChatStore>()(
       set((state) => {
         if (type === 'modified') state.filesChanged.modified++
         else if (type === 'created') state.filesChanged.created++
+        else if (type === 'added') state.filesChanged.added++
         else if (type === 'deleted') state.filesChanged.deleted++
       }),
 
@@ -572,9 +630,74 @@ export const useChatStore = create<ChatStore>()(
         state.contextTokensMax = 200_000
         state.toolsUsed = []
         state.toolHistory = []
-        state.filesChanged = { modified: 0, created: 0, deleted: 0 }
+        state.filesChanged = { modified: 0, created: 0, added: 0, deleted: 0 }
         state.agentStack = []
         state.sessionCost = 0
+        state.fsmPhase = initialState.fsmPhase
+        state.activity = initialState.activity
+      }),
+
+    setFsmPhase: (phase) =>
+      set((state) => {
+        state.fsmPhase = phase
+      }),
+
+    setActivity: (activity) =>
+      set((state) => {
+        state.activity = activity
+      }),
+
+    onNewUserMessage: () =>
+      set((state) => {
+        // Reset FSM phase + activity when the user sends a new message.
+        // Unlike onStreamEnded (which guards against isRetrying / anti-thrash),
+        // this is the canonical pre-run-zeroing path so it's always safe to
+        // fire — even when the run that just ended was mid-retry.
+        state.fsmPhase = 'idle'
+        state.activity = { kind: 'idle', since: Date.now() }
+        state.lastResetAt = Date.now()
+      }),
+
+    /**
+     * FID-2026-0718-010 (F2): single canonical end-of-stream reset. Called from
+     * finally block, abort handler, slash-command bridges, and stalled detector.
+     * Idempotent — multiple gates can fire within the 100ms anti-thrash window.
+     */
+    onStreamEnded: (reason: string) =>
+      set((state) => {
+        // Guard 1: skip reset during retry (Q15) — retry path will signal
+        // its own reset when it terminates.
+        if (state.isRetrying) return
+        // Guard 2: anti-thrash window (Q17) — first caller within 100ms wins.
+        if (Date.now() - state.lastResetAt < 100) return
+
+        state.fsmPhase = 'idle'
+        state.activity = { kind: 'idle', since: Date.now() }
+        state.streamingAgents = new Set<string>()
+        state.activeSubagents = new Set<string>()
+        state.isChainInProgress = false
+        state.lastResetAt = Date.now()
+        // Bump the chunk-seen watermark so the stalled detector sees
+        // "freshly reset" and won't immediately retrigger.
+        state._lastChunkAtMs = Date.now()
+        // The reason parameter is intentionally not stored. Logging handled
+        // by finish-logic.resetUiToIdle. Tracing via dev/LEARNINGS.
+        void reason
+      }),
+
+    /**
+     * FID-2026-0718-010 (F3/D5): stamp the last chunk timestamp. Called via
+     * markChunkSeen() from finish-logic on every SDK chunk handler.
+     * O(1) write.
+     */
+    markChunkSeen: () =>
+      set((state) => {
+        state._lastChunkAtMs = Date.now()
+      }),
+
+    setDevMode: (active) =>
+      set((state) => {
+        state.devMode = active
       }),
 
     reset: () =>
@@ -615,9 +738,12 @@ export const useChatStore = create<ChatStore>()(
         state.contextTokensMax = 200_000
         state.toolsUsed = []
         state.toolHistory = []
-        state.filesChanged = { modified: 0, created: 0, deleted: 0 }
+        state.filesChanged = { modified: 0, created: 0, added: 0, deleted: 0 }
         state.agentStack = []
         state.sessionCost = 0
+        state.fsmPhase = initialState.fsmPhase
+        state.activity = initialState.activity
+        state.devMode = initialState.devMode
       }),
   })),
 )

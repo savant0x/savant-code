@@ -9,6 +9,7 @@ import {
   createRgJsonContext,
 } from '@codebuff/common/testing/mocks'
 import { describe, expect, it, mock, beforeEach, afterEach } from 'bun:test'
+import path from 'path'
 
 import { codeSearch } from '../tools/code-search'
 
@@ -824,6 +825,12 @@ describe('codeSearch', () => {
   })
 
   describe('cwd parameter handling', () => {
+    // FID-016 Fix B: use path.resolve() in test expectations so mocks match
+    // the impl's path.resolve() output on both POSIX and Windows. On POSIX
+    // path.resolve yields the literal '/test/project'; on Windows it yields
+    // 'C:\test\project' depending on the current drive. Using path.resolve in
+    // both sides eliminates the platform mismatch.
+    const normPath = (p: string) => path.resolve(p)
     it('should handle cwd: "." correctly', async () => {
       const searchPromise = codeSearch({
         projectPath: '/test/project',
@@ -848,7 +855,7 @@ describe('codeSearch', () => {
       expect(mockSpawn).toHaveBeenCalled()
       const spawnOptions = mockSpawn.mock.calls[0]![2] as { cwd: string }
       // When cwd is '.', it should resolve to the project root
-      expect(spawnOptions.cwd).toBe('/test/project')
+      expect(spawnOptions.cwd).toBe(normPath('/test/project'))
     })
 
     it('should handle cwd: "subdir" correctly', async () => {
@@ -872,7 +879,7 @@ describe('codeSearch', () => {
       // Verify spawn was called with correct cwd
       expect(mockSpawn).toHaveBeenCalled()
       const spawnOptions = mockSpawn.mock.calls[0]![2] as { cwd: string }
-      expect(spawnOptions.cwd).toBe('/test/project/subdir')
+      expect(spawnOptions.cwd).toBe(path.resolve('/test/project', 'subdir'))
     })
 
     it('should search cwd outside the project directory', async () => {
@@ -896,7 +903,7 @@ describe('codeSearch', () => {
       // Verify spawn was called with the resolved outside cwd
       expect(mockSpawn).toHaveBeenCalled()
       const spawnOptions = mockSpawn.mock.calls[0]![2] as { cwd: string }
-      expect(spawnOptions.cwd).toBe('/test/outside')
+      expect(spawnOptions.cwd).toBe(path.resolve('/test/project', '../outside'))
     })
   })
 })

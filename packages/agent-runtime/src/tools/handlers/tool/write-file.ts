@@ -1,4 +1,5 @@
 import { AbortError } from '@codebuff/common/util/error'
+import { resolveAndContain } from '@codebuff/common/util/paths'
 import { partition } from 'lodash'
 
 import { processFileBlock } from '../../../process-file-block'
@@ -13,6 +14,7 @@ import type { RequestOptionalFileFn } from '@codebuff/common/types/contracts/cli
 import type { Logger } from '@codebuff/common/types/contracts/logger'
 import type { ParamsExcluding } from '@codebuff/common/types/function-params'
 import type { AgentState } from '@codebuff/common/types/session-state'
+import type { ProjectFileContext } from '@codebuff/common/util/file'
 
 type FileProcessingTools = 'write_file' | 'str_replace' | 'create_plan'
 export type FileProcessing<
@@ -68,6 +70,10 @@ export const handleWriteFile = (async (
     clientSessionId: string
     fileProcessingState: FileProcessingState
     fingerprintId: string
+    // Optional to support test fixtures / partial mocks that don't pass fileContext.
+    // The runtime path through executeToolCall always provides this. We null-check
+    // defensively to fail soft (return reject) rather than crash with TypeError.
+    fileContext?: ProjectFileContext
     logger: Logger
     prompt: string | undefined
     userId: string | undefined
@@ -92,6 +98,41 @@ export const handleWriteFile = (async (
     writeToClient,
   } = params
   const { path, content } = toolCall.input
+
+  // FID-2026-0718-013 v3 — defense-in-depth. Tool-executor already routed
+  // through resolveAndContain (F3: outside !isDevOverride), but a hostile or
+  // buggy caller that bypassed the gate (e.g. via direct tool dispatch) would
+  // still be caught here. Also catches paths mutated by intermediate code.
+  // symmetric with the gate at tool-executor.ts (same projectRoot source).
+  const projectRoot = params.fileContext?.projectRoot
+  if (!projectRoot) {
+    return {
+      output: [
+        {
+          type: 'json' as const,
+          value: {
+            file: path,
+            errorMessage:
+              'write_file: fileContext.projectRoot missing — project config invalid',
+          },
+        },
+      ],
+    }
+  }
+  const pathCheck = resolveAndContain(path, { projectRoot })
+  if (pathCheck.kind === 'reject') {
+    return {
+      output: [
+        {
+          type: 'json' as const,
+          value: {
+            file: path,
+            errorMessage: `write_file: ${pathCheck.reason}`,
+          },
+        },
+      ],
+    }
+  }
 
   const fileProcessingPromisesByPath = fileProcessingState.promisesByPath
   const fileProcessingPromises = fileProcessingState.allPromises

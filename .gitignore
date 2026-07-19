@@ -14,7 +14,7 @@ node_modules
 dev/debug/
 dev/context/
 dev/.context/
-dist
+**/dist/
 dist-env
 tsconfig.tsbuildinfo
 .manicode
@@ -43,6 +43,10 @@ evals/buffbench/*-error-*.json
 # Freebuff Desktop local runtime state in an opened project (SQLite DB, git
 # worktrees, materialized built-in skills) — never source, always regenerated.
 .freebuff/
+
+# Scratchpad (ephemeral working area, .gitkeep preserves directory)
+dev/scratchpad/*
+!dev/scratchpad/.gitkeep
 
 # Materialized by release package prepack scripts and removed by postpack.
 cli/release/launcher.js

@@ -11,7 +11,7 @@ const definition: AgentDefinition = {
   spawnerPrompt:
     'FID lifecycle manager. Spawns to create, track, update, and archive Feature Implementation Documents. Ensures no FID closes without AUDIT evidence.',
   outputMode: 'last_message',
-  toolNames: ['write_file', 'read_files', 'glob', 'grep', 'set_output'],
+  toolNames: ['write_file', 'read_files', 'glob', 'code_search', 'set_output'],
 
   includeMessageHistory: true,
   inheritParentSystemPrompt: true,

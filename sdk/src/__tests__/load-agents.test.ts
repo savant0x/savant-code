@@ -13,6 +13,7 @@ import {
 } from 'bun:test'
 
 import { loadLocalAgents } from '../agents/load-agents'
+import { logger } from '../utils/logger'
 
 import type {
   LoadedAgents,
@@ -450,14 +451,14 @@ describe('loadLocalAgents', () => {
         `,
       )
 
-      const consoleErrorSpy = spyOn(console, 'error').mockImplementation(
-        () => {},
-      )
+      // FID-016 Fix E: impl uses logger.error() from '../utils/logger', NOT
+      // console.error(). Spy on the right target.
+      const loggerErrorSpy = spyOn(logger, 'error').mockImplementation(() => {})
 
       await loadLocalAgents({ agentsPath: agentsDir, verbose: true })
 
-      expect(consoleErrorSpy).toHaveBeenCalled()
-      const errorMessage: string = consoleErrorSpy.mock.calls.flat().join(' ')
+      expect(loggerErrorSpy).toHaveBeenCalled()
+      const errorMessage: string = loggerErrorSpy.mock.calls.flat().join(' ')
       expect(errorMessage).toContain('missing required attributes')
     })
   })

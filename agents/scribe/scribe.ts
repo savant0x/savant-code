@@ -11,7 +11,7 @@ const definition: AgentDefinition = {
   spawnerPrompt:
     'Session documentation agent. Spawns at end of session to write session summaries, update LESSONS.md, and capture knowledge files.',
   outputMode: 'last_message',
-  toolNames: ['read_files', 'write_file', 'glob', 'grep', 'set_output'],
+  toolNames: ['read_files', 'write_file', 'glob', 'code_search', 'set_output'],
 
   includeMessageHistory: true,
   inheritParentSystemPrompt: true,

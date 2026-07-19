@@ -8,6 +8,13 @@ type StreamState = {
   planExtracted: boolean
   wasAbortedByUser: boolean
   spawnAgentsMap: Map<string, SpawnAgentInfo>
+  /**
+   * FID-2026-0718-010 (Q13): set true in the finally block of use-send-message
+   * BEFORE onStreamEnded. Subsequent SDK chunks that try to mutate
+   * streamingAgents / activeSubagents short-circuit with a warn-log
+   * (late-chunk-after-run-end race protection).
+   */
+  runCompleted: boolean
 }
 
 export type StreamController = {
@@ -23,6 +30,12 @@ export type StreamController = {
     setWasAbortedByUser: (value: boolean) => void
     setSpawnAgentInfo: (agentId: string, info: SpawnAgentInfo) => void
     removeSpawnAgentInfo: (agentId: string) => void
+    /**
+     * FID-2026-0718-010 (Q13): set true in use-send-message finally block.
+     * Subsequent SDK chunks that try to mutate streamingAgents short-circuit
+     * with a warn-log (race protection for late chunks after run-end).
+     */
+    setRunCompleted: (value: boolean) => void
   }
 }
 
@@ -38,6 +51,7 @@ export const createStreamController = (): StreamController => {
     planExtracted: false,
     wasAbortedByUser: false,
     spawnAgentsMap: new Map(),
+    runCompleted: false,
   }
 
   const reset = () => {
@@ -47,6 +61,7 @@ export const createStreamController = (): StreamController => {
     state.planExtracted = false
     state.wasAbortedByUser = false
     state.spawnAgentsMap = new Map()
+    state.runCompleted = false
   }
 
   const setters = {
@@ -76,6 +91,14 @@ export const createStreamController = (): StreamController => {
     },
     removeSpawnAgentInfo: (agentId: string) => {
       state.spawnAgentsMap.delete(agentId)
+    },
+    /**
+     * FID-2026-0718-010 (Q13): set true in use-send-message finally block.
+     * Subsequent SDK chunks that try to mutate streamingAgents short-circuit
+     * with a warn-log (race protection for late chunks after run-end).
+     */
+    setRunCompleted: (value: boolean) => {
+      state.runCompleted = value
     },
   }
 

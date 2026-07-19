@@ -24,10 +24,19 @@ export function getApiKey(): string {
 }
 
 /**
- * E2E tests should always run; use mock mode when not opted-in.
+ * FID-016 Fix G: The placeholder skipIfNoApiKey() always returns false,
+ * causing E2E tests (apply-patch, database-query, weather, etc.) to run
+ * against the in-memory mock backend. The mock never executes real agent
+ * tools, so file-creation/tool-execution tests fail with ENOENT. The
+ * honest contract is: E2E tests that require actual tool execution should
+ * only run in LIVE mode (RUN_CODEBUFF_E2E=true). Mock mode tests can verify
+ * transport/auth, but not real side-effects.
+ *
+ * This now returns true when not in live mode, skipping E2E tests that
+ * depend on real LLM tool execution.
  */
 export function skipIfNoApiKey(): boolean {
-  return false
+  return !shouldRunLiveE2e
 }
 
 /**

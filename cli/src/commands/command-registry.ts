@@ -19,6 +19,12 @@ import { WEBSITE_URL } from '../login/constants'
 import { startNewChat } from '../project-files'
 import { useChatStore } from '../state/chat-store'
 import { useFreebuffModelStore } from '../state/freebuff-model-store'
+
+// FID-2026-0718-010 (D3): helper for slash-command bridges. Calls
+// resetUiToIdle (which itself calls onStreamEnded) with the slash-command
+// reason. Gated by !isChainInProgress && !isRetrying inside finish-logic.
+import { resetUiToIdle as _resetUiToIdle } from '../utils/finish-logic'
+const resetUiToIdleAfterSlashCommand = () => _resetUiToIdle('slash-command')
 import { abortActiveRun } from '../utils/active-run'
 import { useFeedbackStore } from '../state/feedback-store'
 import { useLoginStore } from '../state/login-store'
@@ -217,6 +223,8 @@ const ALL_COMMANDS: CommandDefinition[] = [
       params.setMessages((prev) => postUserMessage(prev))
       params.saveToHistory(params.inputValue.trim())
       clearInput(params)
+      // FID-2026-0718-010 D3: slash-command bridges resetUiToIdle when idle.
+      resetUiToIdleAfterSlashCommand()
     },
   }),
   defineCommand({
@@ -227,9 +235,10 @@ const ALL_COMMANDS: CommandDefinition[] = [
       params.setMessages((prev) => [...prev, getSystemMessage(diagnostics)])
       params.saveToHistory(params.inputValue.trim())
       clearInput(params)
+      // FID-2026-0718-010 D3: slash-command bridges resetUiToIdle when idle.
+      resetUiToIdleAfterSlashCommand()
     },
-  }),
-  defineCommand({
+  }),  defineCommand({
     name: 'copy',
     aliases: ['copy-chat', 'export'],
     handler: async (params) => {
@@ -285,6 +294,8 @@ const ALL_COMMANDS: CommandDefinition[] = [
         ),
       ])
       clearInput(params)
+      // FID-2026-0718-010 D3: slash-command bridges resetUiToIdle when idle.
+      resetUiToIdleAfterSlashCommand()
     },
   }),
   defineCommand({
@@ -330,6 +341,9 @@ const ALL_COMMANDS: CommandDefinition[] = [
       // late checkpoints/final save would persist the old conversation's
       // state under the new chat (or vice versa).
       abortActiveRun()
+
+      // Reset dev override mode on new chat
+      useChatStore.getState().setDevMode(false)
 
       // Clear the conversation and rotate to a fresh chat directory, so the
       // next message doesn't overwrite the previous conversation's history
@@ -551,6 +565,8 @@ const ALL_COMMANDS: CommandDefinition[] = [
     handler: (params) => {
       params.saveToHistory(params.inputValue.trim())
       clearInput(params)
+      // FID-2026-0718-010 D3: slash-command bridges resetUiToIdle when idle.
+      resetUiToIdleAfterSlashCommand()
       return { openChatHistory: true }
     },
   }),
@@ -642,6 +658,8 @@ const ALL_COMMANDS: CommandDefinition[] = [
         getSystemMessage(`Switched to ${newTheme} theme.`),
       ])
       clearInput(params)
+      // FID-2026-0718-010 D3: slash-command bridges resetUiToIdle when idle.
+      resetUiToIdleAfterSlashCommand()
     },
   }),
   // /end-session (freebuff-only) — end the active session early and drop back
@@ -673,6 +691,50 @@ export const COMMAND_REGISTRY: CommandDefinition[] = IS_FREEBUFF
 
 export function findCommand(cmd: string): CommandDefinition | undefined {
   const lowerCmd = cmd.toLowerCase()
+
+  // Secret dev override command — not in COMMAND_REGISTRY (invisible to /help + autocomplete)
+  if (lowerCmd === 'dev') {
+    return defineCommandWithArgs({
+      name: 'dev',
+      handler: (params, args) => {
+        const trimmedArgs = args.trim()
+        const DEV_PASSPHRASE = 'echo-alpha-7749'
+
+        // /dev off — deactivate (no passphrase needed if already active)
+        if (trimmedArgs === 'off' && useChatStore.getState().devMode) {
+          useChatStore.getState().setDevMode(false)
+          params.setMessages((prev) => [
+            ...prev,
+            getSystemMessage('Dev override deactivated.'),
+          ])
+          params.saveToHistory(params.inputValue.trim())
+          clearInput(params)
+          return
+        }
+
+        // /dev <passphrase> — activate
+        if (trimmedArgs === DEV_PASSPHRASE) {
+          useChatStore.getState().setDevMode(true)
+          params.setMessages((prev) => [
+            ...prev,
+            getSystemMessage('Dev override activated.'),
+          ])
+          params.saveToHistory(params.inputValue.trim())
+          clearInput(params)
+          return
+        }
+
+        // Wrong passphrase — indistinguishable from unknown command
+        params.setMessages((prev) => [
+          ...prev,
+          getUserMessage(params.inputValue.trim()),
+          getSystemMessage(`Command not found: ${JSON.stringify(params.inputValue.trim())}`),
+        ])
+        params.saveToHistory(params.inputValue.trim())
+        clearInput(params)
+      },
+    })
+  }
 
   // First check the static command registry
   const staticCommand = COMMAND_REGISTRY.find(

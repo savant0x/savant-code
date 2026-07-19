@@ -7,6 +7,8 @@ import {
   FREEBUFF_DEEPSEEK_V4_PRO_MODEL_ID,
   FREEBUFF_GEMINI_PRO_MODEL_ID,
   FREEBUFF_GLM_V52_MODEL_ID,
+  FREEBUFF_HY3_ATLAS_MODEL_ID,
+  FREEBUFF_HY3_MODEL_ID,
   FREEBUFF_KIMI_MODEL_ID,
   FREEBUFF_MIMO_V25_MODEL_ID,
   FREEBUFF_MIMO_V25_PRO_MODEL_ID,
@@ -114,88 +116,6 @@ describe('free mode agent model allowlist', () => {
     ).toBe(false)
   })
 
-  test('allows each freebuff reviewer agent only with its configured model', () => {
-    // The M2.7 reviewer was removed along with the model.
-    expect(
-      isFreeModeAllowedAgentModel(
-        'code-reviewer-minimax',
-        LEGACY_MINIMAX_M2_7_MODEL_ID,
-      ),
-    ).toBe(false)
-    expect(
-      isFreeModeAllowedAgentModel(
-        'code-reviewer-minimax-m3',
-        MINIMAX_M3_MODEL_ID,
-      ),
-    ).toBe(true)
-    expect(
-      isFreeModeAllowedAgentModel(
-        'code-reviewer-minimax-m3',
-        LEGACY_MINIMAX_M2_7_MODEL_ID,
-      ),
-    ).toBe(false)
-    expect(
-      isFreeModeAllowedAgentModel('code-reviewer-kimi', FREEBUFF_KIMI_MODEL_ID),
-    ).toBe(true)
-    expect(
-      isFreeModeAllowedAgentModel(
-        'code-reviewer-deepseek',
-        FREEBUFF_DEEPSEEK_V4_PRO_MODEL_ID,
-      ),
-    ).toBe(true)
-    expect(
-      isFreeModeAllowedAgentModel(
-        'code-reviewer-deepseek-flash',
-        FREEBUFF_DEEPSEEK_V4_FLASH_MODEL_ID,
-      ),
-    ).toBe(true)
-    expect(
-      isFreeModeAllowedAgentModel(
-        'code-reviewer-mimo-pro',
-        FREEBUFF_MIMO_V25_PRO_MODEL_ID,
-      ),
-    ).toBe(true)
-    expect(
-      isFreeModeAllowedAgentModel(
-        'code-reviewer-mimo',
-        FREEBUFF_MIMO_V25_MODEL_ID,
-      ),
-    ).toBe(true)
-    expect(
-      isFreeModeAllowedAgentModel(
-        'code-reviewer-glm',
-        FREEBUFF_GLM_V52_MODEL_ID,
-      ),
-    ).toBe(true)
-  })
-
-  test('allows legacy code-reviewer-lite with freebuff reviewer models', () => {
-    expect(
-      isFreeModeAllowedAgentModel(
-        'code-reviewer-lite',
-        LEGACY_MINIMAX_M2_7_MODEL_ID,
-      ),
-    ).toBe(false)
-    expect(
-      isFreeModeAllowedAgentModel('code-reviewer-lite', MINIMAX_M3_MODEL_ID),
-    ).toBe(false)
-    expect(
-      isFreeModeAllowedAgentModel('code-reviewer-lite', FREEBUFF_KIMI_MODEL_ID),
-    ).toBe(true)
-    expect(
-      isFreeModeAllowedAgentModel(
-        'code-reviewer-lite',
-        FREEBUFF_DEEPSEEK_V4_PRO_MODEL_ID,
-      ),
-    ).toBe(true)
-    expect(
-      isFreeModeAllowedAgentModel(
-        'code-reviewer-lite',
-        FREEBUFF_DEEPSEEK_V4_FLASH_MODEL_ID,
-      ),
-    ).toBe(true)
-  })
-
   test('allows the Freebuff Desktop root agent with every desktop model', () => {
     // The desktop runs ONE root id across all its picker models (model chosen
     // per tab), so each desktop-pickable model must be allowed for it.
@@ -231,42 +151,55 @@ describe('free mode agent model allowlist', () => {
     ).toBe(false)
   })
 
-  test('allows Gemini helper agents only with the stable bundled model', () => {
+  test('allows generic subagents with any free model', () => {
+    const freeModels = [
+      MINIMAX_M3_MODEL_ID,
+      FREEBUFF_DEEPSEEK_V4_PRO_MODEL_ID,
+      FREEBUFF_DEEPSEEK_V4_FLASH_MODEL_ID,
+      FREEBUFF_KIMI_MODEL_ID,
+      FREEBUFF_MIMO_V25_PRO_MODEL_ID,
+      FREEBUFF_MIMO_V25_MODEL_ID,
+      FREEBUFF_GLM_V52_MODEL_ID,
+      FREEBUFF_HY3_MODEL_ID,
+      FREEBUFF_HY3_ATLAS_MODEL_ID,
+    ]
+
     for (const agentId of [
+      'scout',
       'file-picker-max',
       'file-lister',
       'researcher-web',
       'researcher-docs',
       'browser-use',
       'basher',
+      'tmux-cli',
+      'context-pruner',
     ]) {
-      expect(
-        isFreeModeAllowedAgentModel(agentId, GEMINI_3_1_FLASH_LITE_MODEL_ID),
-      ).toBe(true)
-      // The chat-completions endpoint canonicalizes this retired client ID to
-      // the stable model before calling the allowlist. Keep the provider model
-      // itself disallowed so no internal path can route to the retired endpoint.
+      for (const model of freeModels) {
+        expect(isFreeModeAllowedAgentModel(agentId, model)).toBe(true)
+      }
+      // Non-free models stay disallowed.
       expect(
         isFreeModeAllowedAgentModel(
           agentId,
-          'google/gemini-3.1-flash-lite-preview',
+          'anthropic/claude-sonnet-4.5',
         ),
       ).toBe(false)
     }
   })
 
-  test('allows the tmux-cli subagent with its bundled model', () => {
-    expect(isFreeModeAllowedAgentModel('tmux-cli', MINIMAX_M3_MODEL_ID)).toBe(
-      true,
-    )
+  test('publisher-spoof safety for generic subagents', () => {
     expect(
       isFreeModeAllowedAgentModel(
-        'codebuff/tmux-cli@0.0.1',
+        'codebuff/basher@0.0.1',
         MINIMAX_M3_MODEL_ID,
       ),
     ).toBe(true)
     expect(
-      isFreeModeAllowedAgentModel('other/tmux-cli@0.0.1', MINIMAX_M3_MODEL_ID),
+      isFreeModeAllowedAgentModel(
+        'other/basher@0.0.1',
+        MINIMAX_M3_MODEL_ID,
+      ),
     ).toBe(false)
   })
 

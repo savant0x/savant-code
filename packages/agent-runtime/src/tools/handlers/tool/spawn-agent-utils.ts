@@ -295,6 +295,32 @@ export function createAgentState(
     systemPrompt: '',
     toolDefinitions: {},
     contextTokenCount: parentAgentState.contextTokenCount,
+    fsmPhase: parentAgentState.fsmPhase,
+    iterationCount: parentAgentState.iterationCount,
+  }
+}
+
+/**
+ * Returns a shallow clone of the child agent template with its model replaced
+ * by the parent agent template's model. This ensures subagents respect the
+ * user's selected model instead of using their own hardcoded defaults.
+ *
+ * Agents that declare `inheritParentModel: false` keep their own model, which
+ * is useful for reasoning helpers that are intentionally tied to a specific
+ * model (e.g. the Gemini thinker).
+ */
+export function withParentModel(
+  agentTemplate: AgentTemplate,
+  parentAgentTemplate: AgentTemplate,
+): AgentTemplate {
+  if (agentTemplate.inheritParentModel === false) {
+    return agentTemplate
+  }
+
+  return {
+    ...agentTemplate,
+    model: parentAgentTemplate.model,
+    providerOptions: parentAgentTemplate.providerOptions,
   }
 }
 

@@ -6,6 +6,7 @@ const definition: SecretAgentDefinition = {
   id: 'thinker-with-files-gemini',
   publisher,
   model: 'google/gemini-3.1-pro-preview',
+  inheritParentModel: false,
   displayName: 'Theo the Theorizer with Files (Gemini)',
   reasoningOptions: {
     effort: 'medium',

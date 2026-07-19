@@ -1,5 +1,5 @@
 {
-  "name": "@savant-code/sdk",
+  "name": "@codebuff/sdk",
   "private": false,
   "version": "0.0.1",
   "description": "Official SDK for Savant-Code — AI coding agent & ECHO Protocol framework",

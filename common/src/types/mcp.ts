@@ -8,6 +8,7 @@ export const mcpConfigStdioSchema = z.strictObject({
     .array()
     .default(() => []),
   env: z.record(z.string(), z.string()).default(() => ({})),
+  timeout: z.number().positive().optional(),
 })
 
 export const mcpConfigRemoteSchema = z.strictObject({
@@ -15,6 +16,7 @@ export const mcpConfigRemoteSchema = z.strictObject({
   url: z.string(),
   params: z.record(z.string(), z.string()).default(() => ({})),
   headers: z.record(z.string(), z.string()).default(() => ({})),
+  timeout: z.number().positive().optional(),
 })
 
 export const mcpConfigSchema = z.union([

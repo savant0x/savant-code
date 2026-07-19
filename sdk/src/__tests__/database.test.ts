@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, mock, test } from 'bun:test'
+import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test'
 
 import { getUserInfoFromApiKey } from '../impl/database'
 
@@ -15,7 +15,22 @@ describe('getUserInfoFromApiKey', () => {
       error: mock(() => {}),
     }) as unknown as Logger
 
+  // FID-016 Fix C: getUserInfoFromApiKey has an env-stub bypass that returns
+  // early when INFERENCE_BASE_URL is set. To exercise the real fetch path in
+  // these tests we clear the env var in beforeEach and restore it in
+  // afterEach. Ensures fetchMock is actually called rather than short-
+  // circuited by the dev-mode stub.
+  let originalInferenceBaseUrl: string | undefined
+  beforeEach(() => {
+    originalInferenceBaseUrl = process.env.INFERENCE_BASE_URL
+    delete process.env.INFERENCE_BASE_URL
+  })
   afterEach(() => {
+    if (originalInferenceBaseUrl !== undefined) {
+      process.env.INFERENCE_BASE_URL = originalInferenceBaseUrl
+    } else {
+      delete process.env.INFERENCE_BASE_URL
+    }
     globalThis.fetch = originalFetch
     mock.restore()
   })

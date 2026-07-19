@@ -2,6 +2,7 @@ import { TextAttributes } from '@opentui/core'
 import React, { memo, type ReactNode } from 'react'
 
 import { Button } from './button'
+import { Panel } from './savant-ui/primitives/panel'
 import { useTerminalDimensions } from '../hooks/use-terminal-dimensions'
 import { useTheme } from '../hooks/use-theme'
 import { getLastNVisualLines } from '../utils/text-layout'
@@ -61,44 +62,51 @@ export const Thinking = memo(
             : '▸ '
 
     return (
-      <Button
-        style={{
-          flexDirection: 'column',
-          gap: 0,
-        }}
-        onClick={onToggle}
+      <Panel
+        border="none"
+        padding={0}
+        flexDirection="column"
+        gap={0}
       >
-        <text style={{ fg: theme.foreground }}>
-          <span>{toggleIndicator}</span>
-          <span attributes={TextAttributes.BOLD}>reasoning</span>
-        </text>
-        {showPreview && (
-          <box style={{ paddingLeft: 2 }}>
-            <text
-              style={{
-                wrapMode: 'none',
-                fg: theme.muted,
-              }}
-              attributes={TextAttributes.ITALIC}
-            >
-              {hasMore ? '...' + lines.join('\n') : lines.join('\n')}
-            </text>
-          </box>
-        )}
-        {showFull && (
-          <box style={{ paddingLeft: 2 }}>
-            <text
-              style={{
-                wrapMode: 'word',
-                fg: theme.muted,
-              }}
-              attributes={TextAttributes.ITALIC}
-            >
-              {expandedContent}
-            </text>
-          </box>
-        )}
-      </Button>
+        <Button
+          style={{
+            flexDirection: 'column',
+            gap: 0,
+          }}
+          onClick={onToggle}
+        >
+          <text style={{ fg: theme.foreground }}>
+            <span>{toggleIndicator}</span>
+            <span attributes={TextAttributes.BOLD}>reasoning</span>
+          </text>
+          {showPreview && (
+            <box style={{ paddingLeft: 2 }}>
+              <text
+                style={{
+                  wrapMode: 'none',
+                  fg: theme.muted,
+                }}
+                attributes={TextAttributes.ITALIC}
+              >
+                {hasMore ? '...' + lines.join('\n') : lines.join('\n')}
+              </text>
+            </box>
+          )}
+          {showFull && (
+            <box style={{ paddingLeft: 2 }}>
+              <text
+                style={{
+                  wrapMode: 'word',
+                  fg: theme.muted,
+                }}
+                attributes={TextAttributes.ITALIC}
+              >
+                {expandedContent}
+              </text>
+            </box>
+          )}
+        </Button>
+      </Panel>
     )
   },
 )

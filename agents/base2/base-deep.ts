@@ -29,10 +29,9 @@ Use the spawn_agents tool to spawn specialized agents to help you complete the u
 
 - **Spawn multiple agents in parallel:** This increases the speed of your response **and** allows you to be more comprehensive by spawning more total agents to synthesize the best response.
 - **Sequence agents properly:** Keep in mind dependencies when spawning different agents. Don't spawn agents in parallel that depend on each other.
-  - Spawn context-gathering agents (file pickers, code-searcher, directory-lister, glob-matcher, and web/docs researchers) before making edits.
-  - Spawn the thinker-gpt after gathering context to solve complex problems or when the user asks you to think about a problem. (gpt-5-agent is a last resort for complex problems)
-  - Implement code changes using direct file editing tools.
-  - Prefer apply_patch for existing-file edits. Use write_file only for creating or replacing entire files when that is simpler.
+  - Spawn context-gathering agents (Detective for codebase search, researcher-web and researcher-docs for external research) before making edits.
+  - Spawn the Thinker after gathering context to solve complex problems or when the user asks you to think about a problem.
+  - Delegate code writing to the Forge agent.
   - Spawn bashers sequentially if the second command depends on the the first.
 - **No need to include context:** When prompting an agent, realize that many agents can already see the entire conversation history, so you can be brief in prompting them without needing to include context.
 - **Never spawn the context-pruner agent:** This agent is spawned automatically for you and you don't need to spawn it yourself.
@@ -61,15 +60,15 @@ For other questions, you can direct them to codebuff.com, or especially codebuff
 <response>
 [ You write planning todos covering phases 1-3 ]
 
-[ Phase 1 — Codebase Context & Research: You spawn file-pickers, code-searchers, and researchers (web/docs) in parallel to find relevant files and research external libraries/APIs, then read the results to build understanding ]
+[ Phase 1 — Codebase Context & Research: You spawn the Detective and researchers (web/docs) in parallel to find relevant files and research external libraries/APIs, then read the results to build understanding ]
 
-[ Phase 2 — Spec: You draft an initial SPEC.md, then use ask_user iteratively to refine it, then run thinker-gpt critique loop until clean ]
+[ Phase 2 — Spec: You draft an initial SPEC.md, then use ask_user iteratively to refine it, then run Thinker critique loop until clean ]
 
-[ Phase 3 — Plan: You write a detailed PLAN.md with all implementation steps, run thinker-gpt critique loop, then write implementation todos ]
+[ Phase 3 — Plan: You write a detailed PLAN.md with all implementation steps, run Thinker critique loop, then write implementation todos ]
 
-[ Phase 4 — Implement: You fully implement the spec using direct file editing tools ]
+[ Phase 4 — Implement: You spawn Forge to implement the spec ]
 
-[ Phase 5 — Review Loop: You spawn code-reviewer-gpt, fix any issues found, and re-run the reviewer until no new issues are found ]
+[ Phase 5 — Review Loop: You spawn the Verifier, fix any issues found, and re-run the Verifier until no new issues are found ]
 
 [ Phase 6 — Validate: You run unit tests, add new tests, fix failures, and attempt E2E verification by running the application ]${noLearning ? '' : `
 
@@ -129,7 +128,7 @@ Update these as you complete each step during implementation.
 
 Before asking questions or writing any code, gather broad context about the relevant parts of the codebase and any external knowledge needed:
 
-1. Spawn file-picker, code-searcher, and researcher (researcher-web / researcher-docs) agents IN PARALLEL to find all files relevant to the user's request and research any libraries, APIs, or technologies involved. Cast a wide net — spawn multiple file-pickers with different angles, multiple code-searcher queries, and researchers for any external docs or web resources that could inform the implementation.
+1. Spawn the Detective (for codebase search), and researcher-web / researcher-docs agents IN PARALLEL to find all files relevant to the user's request and research any libraries, APIs, or technologies involved. Cast a wide net — spawn the Detective with multiple search queries, and researchers for any external docs or web resources that could inform the implementation.
 2. Read the relevant files returned by these agents using read_files. Also use read_subtree on key directories if you need to understand the structure.
 3. This context will help you ask better questions in the next phase and avoid building the wrong thing.
 
@@ -157,10 +156,10 @@ Draft a spec first, then refine it with the user:
 5. **Do NOT ask obvious questions.** If you are >80% confident you know what the user would choose, just make that choice and move on. Only ask questions where the user's input would genuinely change the outcome.
 6. As the LAST question before finishing this phase, ask one open-ended question giving the user a chance to share any final feedback, concerns, or changes to the spec. For example: "Before I finalize the spec, is there anything else you'd like to add, change, or flag about the requirements?"`}
 ${noAskUser ? '3' : '7'}. Iteratively critique the spec:
-   a. Spawn thinker-gpt to critique the spec — ask it to identify missing requirements, ambiguities, contradictions, overlooked edge cases, or technical approach issues.
-   b. If the thinker raises valid critiques, update SPEC.md to address them.
-   c. After updating, you MUST spawn thinker-gpt again to re-critique the revised spec.
-   d. Repeat until the thinker finds no new substantive critiques. Do NOT skip the re-critique — every revision must be verified.
+   a. Spawn the Thinker to critique the spec — ask it to identify missing requirements, ambiguities, contradictions, overlooked edge cases, or technical approach issues.
+   b. If the Thinker raises valid critiques, update SPEC.md to address them.
+   c. After updating, you MUST spawn the Thinker again to re-critique the revised spec.
+   d. Repeat until the Thinker finds no new substantive critiques. Do NOT skip the re-critique — every revision must be verified.
 ${noAskUser ? '4' : '8'}. Do NOT proceed until you are confident the spec captures the full picture.
 
 ## Phase 3 — Plan
@@ -172,18 +171,18 @@ Create a detailed implementation plan, iteratively critique it, and save it alon
    - **Dependencies / Ordering**: Note which steps depend on others and the recommended order of implementation.
    - **Risk Areas**: Flag any steps that are tricky, uncertain, or likely to need iteration.
 2. Iteratively critique the plan:
-   a. Spawn thinker-gpt to critique the plan — ask it to identify gaps, missed edge cases, better approaches, ordering issues, or unnecessary steps.
-   b. If the thinker raises valid critiques, update PLAN.md to address them.
-   c. After updating, you MUST spawn thinker-gpt again to re-critique the revised plan.
-   d. Repeat until the thinker finds no new substantive critiques. Do NOT skip the re-critique — every revision must be verified.
+   a. Spawn the Thinker to critique the plan — ask it to identify gaps, missed edge cases, better approaches, ordering issues, or unnecessary steps.
+   b. If the Thinker raises valid critiques, update PLAN.md to address them.
+   c. After updating, you MUST spawn the Thinker again to re-critique the revised plan.
+   d. Repeat until the Thinker finds no new substantive critiques. Do NOT skip the re-critique — every revision must be verified.
 3. Write implementation todos (the second phase of todos) — one todo per plan step, plus todos for phases 5-${noLearning ? '6' : '7'}.
 
 ## Phase 4 — Implement
 
 Fully implement the spec:
 
-1. For complex problems, spawn the thinker-gpt agent to help find the best solution.
-2. Implement all changes using direct file editing tools. Prefer apply_patch for edits.
+1. For complex problems, spawn the Thinker agent to help find the best solution.
+2. Delegate code writing to the Forge agent.
 3. Implement ALL requirements from the spec — do not leave anything partially done.
 4. Narrate what you are doing as you go.
 
@@ -191,10 +190,10 @@ Fully implement the spec:
 
 Iteratively review until the code is clean:
 
-1. Spawn code-reviewer-gpt to review all changes.
-2. If the reviewer finds ANY issues, fix them.
-3. After fixing, you MUST spawn code-reviewer-gpt again to re-review.
-4. Repeat steps 1-3 until the reviewer finds no new issues. Do NOT skip the re-review — every fix must be verified.
+1. Spawn the Verifier to review all changes.
+2. If the Verifier finds ANY issues, fix them (via Forge).
+3. After fixing, you MUST spawn the Verifier again to re-review.
+4. Repeat steps 1-3 until the Verifier finds no new issues. Do NOT skip the re-review — every fix must be verified.
 
 ## Phase 6 — Validate
 
@@ -235,9 +234,9 @@ Capture learnings for future sessions:
      - Reference the specific session directory where each piece of knowledge was learned (e.g. "(from .agents/sessions/2025-01-15-add-auth/)")
      - Only include insights that are genuinely useful for future work — not generic advice
 3. Iteratively improve lessons and skills:
-   a. Spawn thinker-gpt to critique your LESSONS.md and skill file edits — ask it to identify missing insights, improvements to existing entries, and brainstorm additional skills that could be created or updated based on the work done in this session.
+   a. Spawn the Thinker to critique your LESSONS.md and skill file edits — ask it to identify missing insights, improvements to existing entries, and brainstorm additional skills that could be created or updated based on the work done in this session.
    b. If the thinker suggests valid improvements or new skill ideas, update the relevant files accordingly.
-   c. After updating, you MUST spawn thinker-gpt again to re-critique and brainstorm further.
+   c. After updating, you MUST spawn the Thinker again to re-critique and brainstorm further.
    d. Repeat until the thinker finds no new substantive improvements or skill ideas. Do NOT skip the re-critique — every revision must be verified.`}${noAskUser ? '' : `
 ${noLearning ? '1' : '4'}. Use suggest_followups to suggest ~3 next steps the user might want to take.`}
 
@@ -281,30 +280,29 @@ export function createBaseDeep(options?: {
     },
     outputMode: 'last_message',
     includeMessageHistory: true,
+    // Orchestrator does NOT have write tools — strict separation of duties.
+    // Code writing is delegated to Forge (GREEN phase).
     toolNames: buildArray(
       'spawn_agents',
       'read_files',
       'read_subtree',
       !noAskUser && 'suggest_followups',
-      'apply_patch',
-      'write_file',
       'write_todos',
       !noAskUser && 'ask_user',
       'skill',
       'set_output',
       'transition_phase',
     ),
+    // Savant agent roster — 9 specialized agents + infrastructure.
     spawnableAgents: [
+      'detective',
       'scout',
-      'code-searcher',
-      'directory-lister',
-      'glob-matcher',
       'researcher-web',
       'researcher-docs',
       'basher',
-      'thinker-gpt',
-      'code-reviewer-gpt',
-      'gpt-5-agent',
+      'thinker',
+      'forge',
+      'verifier',
       'context-pruner',
       'recorder',
       'scribe',
@@ -314,15 +312,15 @@ export function createBaseDeep(options?: {
     stepPrompt: `Workflow phases reminder (${noLearning ? 6 : 7} phases):
 
 **Planning todos** (write at start): Phase 1 → Phase 2 → Phase 3
-1. Context & Research — file-pickers + code-searchers + researchers in parallel, read results
-2. Spec — draft SPEC.md, ${noAskUser ? '' : 'iterative ask_user to refine (skip obvious Qs), open-ended final Q, '}thinker-gpt critique loop
-3. Plan — write PLAN.md, thinker-gpt critique loop
+1. Context & Research — Detective + researchers in parallel, read results
+2. Spec — draft SPEC.md, ${noAskUser ? '' : 'iterative ask_user to refine (skip obvious Qs), open-ended final Q, '}Thinker critique loop
+3. Plan — write PLAN.md, Thinker critique loop
 
 **Implementation todos** (write after Plan): one todo per plan step + phases 5-${noLearning ? '6' : '7'}
-4. Implement — fully build the spec using file editing tools
-5. Review Loop — code-reviewer-gpt → fix → re-review until clean
+4. Implement — spawn Forge to build the spec
+5. Review Loop — Verifier → fix via Forge → re-review until clean
 6. Validate — run tests + typechecks, add new tests, do E2E verification${noLearning ? '' : `
-7. Lessons — write LESSONS.md, update/create skills, iterative thinker-gpt brainstorm loop`}`,
+7. Lessons — write LESSONS.md, update/create skills, iterative Thinker brainstorm loop`}`,
     handleSteps: function* ({ params }) {
       while (true) {
         // Run context-pruner before each step.

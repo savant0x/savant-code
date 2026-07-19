@@ -6,6 +6,7 @@ import {
   executeSubagent,
   createAgentState,
   extractSubagentContextParams,
+  withParentModel,
 } from './spawn-agent-utils'
 
 import type { CodebuffToolHandlerFunction } from '../handler-function-type'
@@ -75,7 +76,7 @@ export const handleSpawnAgentInline = (async (
 
   await previousToolCallFinished
 
-  const { agentTemplate, agentType } = await validateAndGetAgentTemplate({
+  const { agentTemplate: childTemplate, agentType } = await validateAndGetAgentTemplate({
     agentTypeStr,
     parentAgentTemplate,
     localAgentTemplates: params.localAgentTemplates,
@@ -84,6 +85,9 @@ export const handleSpawnAgentInline = (async (
     databaseAgentCache: params.databaseAgentCache,
     apiKey: params.apiKey,
   })
+
+  // Inherit the parent's model so inline subagents respect the user's selected model.
+  const agentTemplate = withParentModel(childTemplate, parentAgentTemplate)
 
   validateAgentInput(agentTemplate, agentType, prompt, spawnParams)
 

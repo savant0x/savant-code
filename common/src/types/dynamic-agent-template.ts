@@ -186,6 +186,7 @@ export const DynamicAgentDefinitionSchema = z.object({
   inputSchema: InputSchemaObjectSchema,
   includeMessageHistory: z.boolean().default(false),
   inheritParentSystemPrompt: z.boolean().default(false),
+  inheritParentModel: z.boolean().default(true),
   outputMode: z
     .enum(['last_message', 'all_messages', 'structured_output'])
     .default('last_message'),

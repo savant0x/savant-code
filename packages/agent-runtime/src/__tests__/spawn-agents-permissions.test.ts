@@ -479,6 +479,28 @@ describe('Spawn Agents Permissions', () => {
       )
       expect(mockLoopAgentSteps).toHaveBeenCalledTimes(1) // Only thinker was spawned
     })
+
+    it('should inherit the parent model for spawned subagents', async () => {
+      const parentAgent = createMockAgent('parent', ['thinker'])
+      parentAgent.model = 'parent/model'
+      const childAgent = createMockAgent('thinker')
+      childAgent.model = 'child/model'
+      const sessionState = getInitialSessionState(mockFileContext)
+      const toolCall = createSpawnToolCall('thinker')
+
+      await handleSpawnAgents({
+        ...handleSpawnAgentsBaseParams,
+        agentState: sessionState.mainAgentState,
+        agentTemplate: parentAgent,
+        localAgentTemplates: { thinker: childAgent },
+        toolCall,
+      })
+
+      expect(mockLoopAgentSteps).toHaveBeenCalledTimes(1)
+      expect(mockLoopAgentSteps.mock.calls[0][0].agentTemplate.model).toBe(
+        'parent/model',
+      )
+    })
   })
 
   describe('handleSpawnAgentInline permission validation', () => {
@@ -604,6 +626,28 @@ describe('Spawn Agents Permissions', () => {
 
       expect(result).rejects.toThrow('is not allowed to spawn child agent type')
       expect(mockLoopAgentSteps).not.toHaveBeenCalled()
+    })
+
+    it('should inherit the parent model for inline spawned subagents', async () => {
+      const parentAgent = createMockAgent('parent', ['thinker'])
+      parentAgent.model = 'parent/model'
+      const childAgent = createMockAgent('thinker')
+      childAgent.model = 'child/model'
+      const sessionState = getInitialSessionState(mockFileContext)
+      const toolCall = createInlineSpawnToolCall('thinker')
+
+      await handleSpawnAgentInline({
+        ...handleSpawnAgentInlineBaseParams,
+        agentState: sessionState.mainAgentState,
+        agentTemplate: parentAgent,
+        localAgentTemplates: { thinker: childAgent },
+        toolCall,
+      })
+
+      expect(mockLoopAgentSteps).toHaveBeenCalledTimes(1)
+      expect(mockLoopAgentSteps.mock.calls[0][0].agentTemplate.model).toBe(
+        'parent/model',
+      )
     })
   })
 })

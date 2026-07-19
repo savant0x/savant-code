@@ -1,3 +1,6 @@
+import { normalize as normalizePosix } from 'path/posix'
+
+import { resolveAndContain } from '@codebuff/common/util/paths'
 import { endsAgentStepParam, toolNames } from '@codebuff/common/tools/constants'
 import { toolParams } from '@codebuff/common/tools/list'
 import { generateCompactId } from '@codebuff/common/util/string'
@@ -11,6 +14,7 @@ import { codebuffToolHandlers } from './handlers/list'
 import { getMatchingSpawn } from './handlers/tool/spawn-agent-utils'
 import { getAgentTemplate } from '../templates/agent-registry'
 import { ensureZodSchema } from './prompts'
+import { toolActivity, setActivity } from '../util/activity-tracking'
 
 import type { AgentTemplate } from '../templates/types'
 import type { CodebuffToolHandlerFunction } from './handlers/handler-function-type'
@@ -319,9 +323,13 @@ export async function executeToolCall<T extends ToolName>(
     },
   })
 
+  // Dev override: bypass ALL tool gating and agent restrictions when devMode is active
+  const isDevOverride = params.fileContext.devMode === true
+
   // Filter out restricted tools - emit error instead of tool call/result
   // This prevents the CLI from showing tool calls that the agent doesn't have permission to use
   if (
+    !isDevOverride &&
     toolCall.toolName &&
     !agentTemplate.toolNames.includes(toolCall.toolName) &&
     !fromHandleSteps
@@ -335,15 +343,81 @@ export async function executeToolCall<T extends ToolName>(
     return previousToolCallFinished
   }
 
-  // ECHO FSM tool gating: block write_file/str_replace unless phase is 'green'
+  // FID-2026-0718-013 v3 F3: containment check runs for every write, regardless
+  // of dev mode. The FSM phase check below remains gated by `!isDevOverride` for
+  // dev flexibility (dev users can write to any exempt-prefix path during any phase).
+  // ECHO FSM tool gating: block write tools unless phase is 'green' or path is exempt.
+  // FID-2026-0718-013 v3 adds: projectRoot propagation (F1) and symlink defense (F2).
   if (
     toolCall.toolName &&
-    (toolCall.toolName === 'write_file' || toolCall.toolName === 'str_replace') &&
-    (agentState.fsmPhase ?? 'idle') !== 'green'
+    (toolCall.toolName === 'write_file' ||
+      toolCall.toolName === 'str_replace' ||
+      toolCall.toolName === 'apply_patch')
+  ) {
+    const rawPath = (toolCall.input as any)?.path ?? ''
+    // FID-2026-0718-013 v3 — defensive null check (symmetric with write-file.ts,
+    // str-replace.ts, apply-patch.ts handlers). Runtime always provides fileContext,
+    // but tests/mocks may omit it. Fail soft with a clear error rather than crash
+    // with TypeError reading `undefined.projectRoot`.
+    const projectRoot = params.fileContext?.projectRoot
+    if (!projectRoot) {
+      onResponseChunk({
+        type: 'error',
+        message: `Tool \`${toolName}\`: fileContext.projectRoot missing — project config invalid (system-level).`,
+      })
+      return previousToolCallFinished
+    }
+    const pathResult = resolveAndContain(rawPath, { projectRoot })
+
+    if (pathResult.kind === 'reject') {
+      onResponseChunk({
+        type: 'error',
+        message: `Tool \`${toolName}\`: invalid path — ${pathResult.reason}. Use a path within the project root, or one of the exempt prefixes: dev/fids/, dev/nova/, dev/scratchpad/.`,
+      })
+      return previousToolCallFinished
+    }
+
+    // FSM phase check (gated by !isDevOverride for dev flexibility).
+    if (
+      !isDevOverride &&
+      pathResult.kind !== 'exempt' &&
+      (agentState.fsmPhase ?? 'idle') !== 'green'
+    ) {
+      onResponseChunk({
+        type: 'error',
+        message: `Tool \`${toolName}\` is only available during the GREEN phase. Current phase: ${agentState.fsmPhase}. Call transition_phase to enter GREEN first.`,
+      })
+      return previousToolCallFinished
+    }
+
+    // FID-2026-0718-013 v3 F2: rewrite the symlink-resolved realpath into the tool
+    // call input so the downstream handler receives a canonical form. Same Q8
+    // hardening, plus the resolved path now reflects any symlink chain.
+    ;(toolCall.input as { path?: string }).path = pathResult.resolved
+  }
+
+  // ECHO FSM tool gating: block bash/terminal commands unless phase is 'audit'
+  if (
+    !isDevOverride &&
+    toolCall.toolName === 'run_terminal_command' &&
+    (agentState.fsmPhase ?? 'idle') !== 'audit'
   ) {
     onResponseChunk({
       type: 'error',
-      message: `Tool \`${toolName}\` is only available during the GREEN phase. Current phase: ${agentState.fsmPhase}. Call transition_phase to enter GREEN first.`,
+      message: `Tool \`${toolName}\` is only available during the AUDIT phase. Current phase: ${agentState.fsmPhase}. Call transition_phase to enter AUDIT first.`,
+    })
+    return previousToolCallFinished
+  }
+
+  // ECHO FSM tool gating: block sequentialthinking unless agent is a Thinker variant
+  if (
+    !isDevOverride &&
+    toolCall.toolName === 'sequentialthinking' &&
+    !agentTemplate.id.startsWith('thinker')
+  ) {
+    onResponseChunk({
+      type: 'error',
+      message: `Tool \`${toolName}\` is only available to Thinker agents. Current agent: ${agentTemplate.id}.`,
     })
     return previousToolCallFinished
   }
@@ -467,6 +541,10 @@ export async function executeToolCall<T extends ToolName>(
   }
 
   // Only emit tool_call event after permission check passes
+  // FID-2026-0718-009: emit activity indicator (M1 tool_call, M6 research tools).
+  // toolActivity mutates agentState.activity + emits a chunk via onResponseChunk.
+  toolActivity(agentState, toolName, effectiveInput, onResponseChunk)
+
   onResponseChunk({
     type: 'tool_call',
     toolCallId,
@@ -521,6 +599,13 @@ export async function executeToolCall<T extends ToolName>(
       toolCallId: toolCall.toolCallId,
       content: output,
     }
+
+    // FID-2026-0718-009: M2 — on tool completion, model reasoning resumes.
+    setActivity(
+      agentState,
+      { kind: 'thinking', startedAt: Date.now() },
+      onResponseChunk,
+    )
 
     onResponseChunk({
       type: 'tool_result',
@@ -660,9 +745,13 @@ export async function executeCustomToolCall(
     autoInsertEndStepParam,
   })
 
+  // Dev override: bypass agent tool restrictions for custom tools when devMode is active
+  const isDevOverride = fileContext.devMode === true
+
   // Filter out restricted tools - emit error instead of tool call/result
   // This prevents the CLI from showing tool calls that the agent doesn't have permission to use
   if (
+    !isDevOverride &&
     toolCall.toolName &&
     !(agentTemplate.toolNames as string[]).includes(toolCall.toolName) &&
     !fromHandleSteps &&

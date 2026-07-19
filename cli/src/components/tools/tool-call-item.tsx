@@ -4,6 +4,10 @@ import stringWidth from 'string-width'
 
 import { useTheme } from '../../hooks/use-theme'
 import { Button } from '../button'
+import {
+  isTextRenderable,
+  renderExpandedContent,
+} from '../blocks/block-helpers'
 
 import type { ChatTheme } from '../../types/theme-system'
 
@@ -17,109 +21,6 @@ interface ToolCallItemProps {
   onToggle?: () => void
   titleSuffix?: string
   dense?: boolean
-}
-
-const isTextRenderable = (value: ReactNode): boolean => {
-  if (value === null || value === undefined || typeof value === 'boolean') {
-    return false
-  }
-
-  if (typeof value === 'string' || typeof value === 'number') {
-    return true
-  }
-
-  if (Array.isArray(value)) {
-    return value.every((child) => isTextRenderable(child))
-  }
-
-  if (React.isValidElement(value)) {
-    const elProps = value.props as Record<string, unknown>
-    if (value.type === React.Fragment) {
-      return isTextRenderable(elProps.children as ReactNode)
-    }
-
-    if (typeof value.type === 'string') {
-      if (
-        value.type === 'span' ||
-        value.type === 'strong' ||
-        value.type === 'em'
-      ) {
-        return isTextRenderable(elProps.children as ReactNode)
-      }
-
-      return false
-    }
-  }
-
-  return false
-}
-
-const renderExpandedContent = (
-  value: ReactNode,
-  theme: ChatTheme,
-  getAttributes: (extra?: number) => number | undefined,
-): ReactNode => {
-  if (
-    value === null ||
-    value === undefined ||
-    value === false ||
-    value === true
-  ) {
-    return null
-  }
-
-  if (isTextRenderable(value)) {
-    return (
-      <text
-        fg={theme.foreground}
-        key="tool-expanded-text"
-        attributes={getAttributes()}
-      >
-        {value}
-      </text>
-    )
-  }
-
-  if (React.isValidElement(value)) {
-    if (value.key === null || value.key === undefined) {
-      return (
-        <box
-          key="tool-expanded-node"
-          style={{ flexDirection: 'column', gap: 0 }}
-        >
-          {value}
-        </box>
-      )
-    }
-    return value
-  }
-
-  if (Array.isArray(value)) {
-    return (
-      <box
-        key="tool-expanded-array"
-        style={{ flexDirection: 'column', gap: 0 }}
-      >
-        {value.map((child, idx) => (
-          <box
-            key={`tool-expanded-array-${idx}`}
-            style={{ flexDirection: 'column', gap: 0 }}
-          >
-            {child}
-          </box>
-        ))}
-      </box>
-    )
-  }
-
-  return (
-    <box
-      key="tool-expanded-unknown"
-      style={{ flexDirection: 'column', gap: 0 }}
-    >
-      {value}
-    </box>
-  )
 }
 
 interface SimpleToolCallItemProps {

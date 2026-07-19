@@ -1,5 +1,5 @@
 {
-  "name": "@savant-code/agent-runtime",
+  "name": "@codebuff/agent-runtime",
   "version": "0.0.1",
   "private": true,
   "type": "module",

@@ -190,6 +190,8 @@ export type RunOptions = {
    *  (created or modified). Useful for tracking file changes, syncing to
    *  databases, or triggering side effects. */
   onFileWritten?: OnFileWrittenCallback
+  /** Dev override flag — bypasses all FSM tool gating and agent tool restrictions. */
+  devMode?: boolean
 }
 
 /** How often onStateSnapshot fires while a run is in flight. */
@@ -313,6 +315,7 @@ async function runOnce({
   extraCodebuffMetadata,
   onStateSnapshot,
   onFileWritten,
+  devMode,
 }: RunExecutionOptions): Promise<RunState> {
   const fsSourceValue = typeof fsSource === 'function' ? fsSource() : fsSource
   const fs = await fsSourceValue
@@ -359,12 +362,18 @@ async function runOnce({
       customToolDefinitions,
       projectFiles,
       maxAgentSteps,
+      devMode,
       fs,
       spawn,
       logger,
     })
   }
   const traceSessionId = previousRun?.traceSessionId ?? crypto.randomUUID()
+
+  // Ensure devMode reflects the current CLI state (may have changed since last run)
+  if (devMode !== undefined) {
+    sessionState.fileContext.devMode = devMode
+  }
 
   for (const toolName of COMPOSIO_META_TOOL_NAMES) {
     delete sessionState.fileContext.customToolDefinitions[toolName]
@@ -519,6 +528,7 @@ async function runOnce({
         env,
         apiKey,
         signal,
+        onFileWritten,
       })
     },
     requestMcpToolData: async ({ mcpConfig, toolNames }) => {
@@ -777,6 +787,7 @@ async function handleToolCall({
   env,
   apiKey,
   signal,
+  onFileWritten,
 }: {
   action: ServerAction<'tool-call-request'>
   overrides: NonNullable<CodebuffClientOptions['overrideTools']>
@@ -786,6 +797,7 @@ async function handleToolCall({
   env?: Record<string, string>
   apiKey: string
   signal?: AbortSignal
+  onFileWritten?: OnFileWrittenCallback
 }): Promise<{ output: ToolResultOutput[] }> {
   const toolName = action.toolName
   const input = action.input

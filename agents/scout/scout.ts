@@ -7,7 +7,7 @@ import {
   type SecretAgentDefinition,
 } from '../types/secret-agent-definition'
 
-import type { StepText, ToolCall } from '../types/agent-definition'
+import type { ToolCall } from '../types/agent-definition'
 
 type FilePickerMode = 'default' | 'max'
 
@@ -50,10 +50,11 @@ export const createFilePicker = (
     },
     outputMode: 'last_message',
     includeMessageHistory: false,
-    toolNames: ['spawn_agents'],
-    spawnableAgents: isMax
-      ? ['file-lister-max']
-      : ['file-lister'],
+    // After FID-2026-0718-007: Scout uses glob + list_directory directly
+    // instead of delegating to Detective (code_search agent).
+    toolNames: ['glob', 'list_directory', 'read_files', 'read_subtree', 'set_output'],
+    // Scout no longer delegates file-finding to any subagent.
+    spawnableAgents: [],
 
     systemPrompt: `You are an expert at finding relevant files in a codebase. ${PLACEHOLDER.FILE_TREE_PROMPT}`,
     instructionsPrompt: `Instructions:
@@ -69,196 +70,103 @@ ${ECHO_PROTOCOL_INSTRUCTIONS}
   }
 }
 
-// handleSteps for default mode - spawns 1 file-lister
-const handleStepsDefault: SecretAgentDefinition['handleSteps'] = function* ({
-  prompt,
-  params,
-}) {
-  const { toolResult: fileListerResults } = yield {
-    toolName: 'spawn_agents',
-    input: {
-      agents: [
-        {
-          agent_type: 'file-lister',
-          prompt: prompt ?? '',
-          params: params ?? {},
-        },
-      ],
-    },
-  } satisfies ToolCall
+/**
+ * handleSteps for default mode — programmatic glob by keyword + STEP yield.
+ * 1. Extract keywords from prompt, glob for each keyword
+ * 2. Yield STEP so the LLM can interpret results, explore deeper, filter/rank
+ * 3. LLM calls set_output with final results
+ */
+const handleStepsDefault: SecretAgentDefinition['handleSteps'] =
+  function* ({ prompt, params }) {
+    const cwd = params?.directories?.length ? params.directories[0] : undefined
 
-  const spawnResults = extractSpawnResults(fileListerResults)
+    // Inlined extractKeywords (must be self-contained for .toString() serialization)
+    function _extractKeywords(p: string): string[] {
+      const STOP_WORDS = new Set(['find','search','look','for','files','file','related','to','the','a','an','in','on','of','and','or','that','which','about','with','show','me','list','get','all','any','where','what','how','please','can','you','i','we','need','want'])
+      const raw = p.toLowerCase().replace(/[^a-z0-9\s\-_.\/]/g, ' ').split(/\s+/).map(t => t.trim()).filter(t => t.length > 1 && !STOP_WORDS.has(t))
+      const seen = new Set<string>()
+      const unique = raw.filter(t => seen.has(t) ? false : (seen.add(t), true))
+      if (unique.length === 0) {
+        const fallback = p.replace(/[^a-z0-9\s\-_.\/]/gi, ' ').trim().split(/\s+/)[0]
+        return fallback ? [fallback.toLowerCase()] : ['*']
+      }
+      return unique
+    }
 
-  const allPaths = new Set<string>()
-  let hasAnyResults = false
-
-  for (const result of spawnResults) {
-    const fileListText = extractLastMessageText(result)
-    if (fileListText) {
-      hasAnyResults = true
-      const paths = fileListText.split('\n').filter(Boolean)
-      for (const path of paths) {
-        allPaths.add(path)
+    // 1. Programmatic glob: extract keywords, search file NAMES (not contents)
+    if (prompt) {
+      const keywords = _extractKeywords(prompt)
+      for (const keyword of keywords) {
+        yield {
+          toolName: 'glob',
+          input: {
+            pattern: `**/*${keyword}*`,
+            ...(cwd ? { cwd } : {}),
+          },
+        } satisfies ToolCall
       }
     }
-  }
 
-  if (!hasAnyResults) {
-    const errorMessages = spawnResults
-      .map(extractErrorMessage)
-      .filter(Boolean)
-      .join('; ')
+    // 2. Yield STEP — let the LLM interpret results, drive deeper exploration
+    //    (LLM can call list_directory, read_files, read_subtree, glob, set_output)
+    yield 'STEP'
+
+    // 3. LLM calls set_output with final results
     yield {
-      type: 'STEP_TEXT',
-      text: errorMessages
-        ? `Error from file-lister(s): ${errorMessages}`
-        : 'Error: Could not extract file list from spawned agent(s)',
-    } satisfies StepText
-    return
+      toolName: 'set_output',
+      input: {
+        message: `Scout found these files for: ${prompt}`,
+      },
+    } satisfies ToolCall
   }
 
-  const paths = Array.from(allPaths)
+/**
+ * handleSteps for max mode — same programmatic glob + deeper LLM exploration.
+ * Max mode encourages the LLM to explore directories more deeply during STEP.
+ */
+const handleStepsMax: SecretAgentDefinition['handleSteps'] =
+  function* ({ prompt, params }) {
+    const cwd = params?.directories?.length ? params.directories[0] : undefined
 
-  yield {
-    toolName: 'read_files',
-    input: { paths },
-  }
+    // Inlined extractKeywords (must be self-contained for .toString() serialization)
+    function _extractKeywords(p: string): string[] {
+      const STOP_WORDS = new Set(['find','search','look','for','files','file','related','to','the','a','an','in','on','of','and','or','that','which','about','with','show','me','list','get','all','any','where','what','how','please','can','you','i','we','need','want'])
+      const raw = p.toLowerCase().replace(/[^a-z0-9\s\-_.\/]/g, ' ').split(/\s+/).map(t => t.trim()).filter(t => t.length > 1 && !STOP_WORDS.has(t))
+      const seen = new Set<string>()
+      const unique = raw.filter(t => seen.has(t) ? false : (seen.add(t), true))
+      if (unique.length === 0) {
+        const fallback = p.replace(/[^a-z0-9\s\-_.\/]/gi, ' ').trim().split(/\s+/)[0]
+        return fallback ? [fallback.toLowerCase()] : ['*']
+      }
+      return unique
+    }
 
-  yield 'STEP'
-
-  function extractSpawnResults(results: any[] | undefined): any[] {
-    if (!results || results.length === 0) return []
-    const jsonResult = results.find((r) => r.type === 'json')
-    if (!jsonResult?.value) return []
-    const spawnedResults = Array.isArray(jsonResult.value)
-      ? jsonResult.value
-      : [jsonResult.value]
-    return spawnedResults.map((result: any) => result?.value).filter(Boolean)
-  }
-
-  function extractLastMessageText(agentOutput: any): string | null {
-    if (!agentOutput) return null
-    if (
-      agentOutput.type === 'lastMessage' &&
-      Array.isArray(agentOutput.value)
-    ) {
-      for (let i = agentOutput.value.length - 1; i >= 0; i--) {
-        const message = agentOutput.value[i]
-        if (message.role === 'assistant' && Array.isArray(message.content)) {
-          for (const part of message.content) {
-            if (part.type === 'text' && typeof part.text === 'string') {
-              return part.text
-            }
-          }
-        }
+    // 1. Programmatic glob: extract keywords, search file NAMES
+    if (prompt) {
+      const keywords = _extractKeywords(prompt)
+      for (const keyword of keywords) {
+        yield {
+          toolName: 'glob',
+          input: {
+            pattern: `**/*${keyword}*`,
+            ...(cwd ? { cwd } : {}),
+          },
+        } satisfies ToolCall
       }
     }
-    return null
-  }
 
-  function extractErrorMessage(agentOutput: any): string | null {
-    if (!agentOutput) return null
-    if (agentOutput.type === 'error') {
-      return agentOutput.message ?? agentOutput.value ?? null
-    }
-    return null
-  }
-}
+    // 2. Yield STEP — in max mode, the LLM should explore more deeply:
+    //    read key files, explore directory structures, find related modules
+    yield 'STEP'
 
-const handleStepsMax: SecretAgentDefinition['handleSteps'] = function* ({
-  prompt,
-  params,
-}) {
-  const { toolResult: fileListerResults } = yield {
-    toolName: 'spawn_agents',
-    input: {
-      agents: [
-        {
-          agent_type: 'file-lister-max',
-          prompt: prompt ?? '',
-          params: params ?? {},
-        },
-      ],
-    },
-  } satisfies ToolCall
-
-  const spawnResults = extractSpawnResults(fileListerResults)
-
-  const allPaths = new Set<string>()
-  let hasAnyResults = false
-
-  for (const result of spawnResults) {
-    const fileListText = extractLastMessageText(result)
-    if (fileListText) {
-      hasAnyResults = true
-      const paths = fileListText.split('\n').filter(Boolean)
-      for (const path of paths) {
-        allPaths.add(path)
-      }
-    }
-  }
-
-  if (!hasAnyResults) {
-    const errorMessages = spawnResults
-      .map(extractErrorMessage)
-      .filter(Boolean)
-      .join('; ')
+    // 3. LLM calls set_output with final results
     yield {
-      type: 'STEP_TEXT',
-      text: errorMessages
-        ? `Error from file-lister(s): ${errorMessages}`
-        : 'Error: Could not extract file list from spawned agent(s)',
-    } satisfies StepText
-    return
+      toolName: 'set_output',
+      input: {
+        message: `Scout found these files for: ${prompt}`,
+      },
+    } satisfies ToolCall
   }
-
-  const paths = Array.from(allPaths)
-
-  yield {
-    toolName: 'read_files',
-    input: { paths },
-  }
-
-  yield 'STEP'
-
-  function extractSpawnResults(results: any[] | undefined): any[] {
-    if (!results || results.length === 0) return []
-    const jsonResult = results.find((r) => r.type === 'json')
-    if (!jsonResult?.value) return []
-    const spawnedResults = Array.isArray(jsonResult.value)
-      ? jsonResult.value
-      : [jsonResult.value]
-    return spawnedResults.map((result: any) => result?.value).filter(Boolean)
-  }
-
-  function extractLastMessageText(agentOutput: any): string | null {
-    if (!agentOutput) return null
-    if (
-      agentOutput.type === 'lastMessage' &&
-      Array.isArray(agentOutput.value)
-    ) {
-      for (let i = agentOutput.value.length - 1; i >= 0; i--) {
-        const message = agentOutput.value[i]
-        if (message.role === 'assistant' && Array.isArray(message.content)) {
-          for (const part of message.content) {
-            if (part.type === 'text' && typeof part.text === 'string') {
-              return part.text
-            }
-          }
-        }
-      }
-    }
-    return null
-  }
-
-  function extractErrorMessage(agentOutput: any): string | null {
-    if (!agentOutput) return null
-    if (agentOutput.type === 'error') {
-      return agentOutput.message ?? agentOutput.value ?? null
-    }
-    return null
-  }
-}
 
 const definition: SecretAgentDefinition = {
   id: 'scout',

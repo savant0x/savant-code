@@ -1,6 +1,8 @@
 import { postStreamProcessing } from './write-file'
 import { processStrReplace } from '../../../process-str-replace'
 
+import { resolveAndContain } from '@codebuff/common/util/paths'
+
 import type { CodebuffToolHandlerFunction } from '../handler-function-type'
 import type { FileProcessingState } from './write-file'
 import type {
@@ -11,6 +13,7 @@ import type {
 import type { RequestOptionalFileFn } from '@codebuff/common/types/contracts/client'
 import type { Logger } from '@codebuff/common/types/contracts/logger'
 import type { ParamsExcluding } from '@codebuff/common/types/function-params'
+import type { ProjectFileContext } from '@codebuff/common/util/file'
 
 export const handleStrReplace = (async (
   params: {
@@ -18,6 +21,9 @@ export const handleStrReplace = (async (
     toolCall: CodebuffToolCall<'str_replace'>
 
     fileProcessingState: FileProcessingState
+    // Optional to support test fixtures / partial mocks. Runtime always provides
+    // this via executeToolCall. Null-check defensively to fail soft.
+    fileContext?: ProjectFileContext
     logger: Logger
 
     requestClientToolCall: (
@@ -40,6 +46,37 @@ export const handleStrReplace = (async (
     writeToClient,
   } = params
   const { path, replacements } = toolCall.input
+
+  // FID-2026-0718-013 v3 — defense-in-depth (mirror write-file.ts).
+  const projectRoot = params.fileContext?.projectRoot
+  if (!projectRoot) {
+    return {
+      output: [
+        {
+          type: 'json' as const,
+          value: {
+            file: path,
+            errorMessage:
+              'str_replace: fileContext.projectRoot missing — project config invalid',
+          },
+        },
+      ],
+    }
+  }
+  const pathCheck = resolveAndContain(path, { projectRoot })
+  if (pathCheck.kind === 'reject') {
+    return {
+      output: [
+        {
+          type: 'json' as const,
+          value: {
+            file: path,
+            errorMessage: `str_replace: ${pathCheck.reason}`,
+          },
+        },
+      ],
+    }
+  }
 
   if (!fileProcessingState.promisesByPath[path]) {
     fileProcessingState.promisesByPath[path] = []

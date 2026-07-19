@@ -86,6 +86,8 @@ export const ProjectFileContextSchema = z.object({
     cpus: z.number(),
     chromeAvailable: z.boolean(),
   }),
+  /** Dev override flag — bypasses all FSM tool gating and agent tool restrictions when true. */
+  devMode: z.boolean().optional(),
 })
 
 export type ProjectFileContext = {
@@ -116,6 +118,8 @@ export type ProjectFileContext = {
     cpus: number
     chromeAvailable: boolean
   }
+  /** Dev override flag — bypasses all FSM tool gating and agent tool restrictions when true. */
+  devMode?: boolean
 }
 
 export const fileRegex =
@@ -135,7 +139,11 @@ export const parseFileBlocks = (fileBlocks: string) => {
 }
 
 export const getStubProjectFileContext = (): ProjectFileContext => ({
-  projectRoot: '',
+  // FID-2026-0718-013 v3 Q13: must be a non-empty absolute path so that
+  // resolveAndContain's F1 invariants (reject missing/non-absolute) don't
+  // cascade into test failures for any test fixture that exercises the
+  // write-tool gate. Production populates this from CLI boot.
+  projectRoot: '/mock/project/root',
   cwd: '',
   fileTree: [],
   fileTokenScores: {},
@@ -161,6 +169,7 @@ export const getStubProjectFileContext = (): ProjectFileContext => ({
     cpus: 0,
     chromeAvailable: false,
   },
+  devMode: undefined,
 })
 
 export const createMarkdownFileBlock = (filePath: string, content: string) => {

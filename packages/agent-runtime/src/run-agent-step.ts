@@ -1,4 +1,5 @@
-import { AnalyticsEvent } from '@codebuff/common/constants/analytics-events'
+import { setActivity } from './util/activity-tracking'
+import { AnalyticsEvent} from '@codebuff/common/constants/analytics-events'
 import {
   isFreeMode,
   shouldUseLocalTokenCountForFreebuffDeepseekFlash,
@@ -503,6 +504,13 @@ export const runAgentStep = async (
   let fullResponse = ''
   const toolResults: ToolMessage[] = []
 
+  // FID-2026-0718-009 M4: model stream starting — set activity to thinking.
+  setActivity(
+    agentState,
+    { kind: 'thinking', startedAt: Date.now() },
+    onResponseChunk,
+  )
+
   // Raw stream from AI SDK
   const stream = getAgentStreamFromTemplate({
     ...params,
@@ -541,6 +549,13 @@ export const runAgentStep = async (
   toolResults.push(...newToolResults)
 
   fullResponse = fullResponseAfterStream
+
+  // FID-2026-0718-009 M5: model stream complete — idle until next event.
+  setActivity(
+    agentState,
+    { kind: 'idle', since: Date.now() },
+    onResponseChunk,
+  )
 
   agentState.messageHistory = expireMessages(
     agentState.messageHistory,

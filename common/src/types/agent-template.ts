@@ -113,6 +113,11 @@ export type AgentTemplate<
   id: AgentTemplateType
   displayName: string
   model: Model
+  /**
+   * When false, the agent keeps its own model even when spawned as a subagent.
+   * Defaults to true (inherit the parent agent's model).
+   */
+  inheritParentModel?: boolean
   reasoningOptions?: OpenRouterReasoningOptions
   providerOptions?: OpenRouterProviderRoutingOptions
 

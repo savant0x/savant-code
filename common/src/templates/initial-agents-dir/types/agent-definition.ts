@@ -181,6 +181,13 @@ export interface AgentDefinition {
    */
   includeMessageHistory?: boolean
 
+  /** Whether to inherit the parent agent's model instead of using this agent's own model.
+   *
+   * Defaults to true.
+   * Set to false when this agent must always run on a specific model.
+   */
+  inheritParentModel?: boolean
+
   /** Whether to inherit the parent agent's system prompt instead of using this agent's own systemPrompt.
    *
    * Defaults to false.

@@ -396,8 +396,14 @@ const definition: AgentDefinition = {
           break
         }
       }
-      if (userPromptMsg.sentAt && lastAssistantMsg?.sentAt) {
-        const gap = userPromptMsg.sentAt - lastAssistantMsg.sentAt
+      if (
+        'sentAt' in userPromptMsg &&
+        lastAssistantMsg !== undefined &&
+        'sentAt' in lastAssistantMsg
+      ) {
+        const gap =
+          (userPromptMsg as { sentAt: number }).sentAt -
+          (lastAssistantMsg as { sentAt: number }).sentAt
         cacheGapMs = gap
         cacheWillMiss = gap > CACHE_EXPIRY_MS
       }

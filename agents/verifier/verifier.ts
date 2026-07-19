@@ -68,9 +68,6 @@ const definition: SecretAgentDefinition = {
   id: 'verifier',
   publisher,
   ...createReviewer('anthropic/claude-opus-4.8'),
-  providerOptions: {
-    only: ['amazon-bedrock'],
-  },
 }
 
 export default definition

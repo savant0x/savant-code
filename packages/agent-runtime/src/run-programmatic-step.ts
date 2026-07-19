@@ -1,5 +1,6 @@
 import { HandleStepsYieldValueSchema } from '@codebuff/common/types/agent-template'
 import { getErrorObject } from '@codebuff/common/util/error'
+import { setActivity } from './util/activity-tracking'
 import { assistantMessage } from '@codebuff/common/util/messages'
 import { cloneDeep } from 'lodash'
 

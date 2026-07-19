@@ -10,6 +10,27 @@ export type ResolvedFilePath = ResolvedProjectPath & {
   isWithinProject: boolean
 }
 
+/**
+ * FID-2026-0718-015: Normalize a path to POSIX-style for cross-platform
+ * consistency. Strips Windows drive-letter prefix (`C:`) and converts
+ * backslashes to forward slashes. On POSIX systems this is effectively a
+ * no-op for paths that don't contain backslashes.
+ *
+ * Rationale: SDK tool tests use POSIX-style keys (e.g., `/repo/src/file.ts`)
+ * for the mock fs. The mock fs is keyed by literal strings. Without
+ * normalization, `path.resolve('/repo', 'src/file.ts')` on Windows returns
+ * `C:\repo\src\file.ts` (backslash + drive), which doesn't match the test
+ * keys. Normalizing to POSIX here makes the SDK's output match the test
+ * fixture format on both platforms.
+ *
+ * Production impact: Node.js `fs.writeFile` accepts POSIX paths on Windows
+ * (interprets them as root-relative to current drive). Production Linux
+ * behavior unchanged (POSIX paths are already the native format).
+ */
+function toPosix(p: string): string {
+  return p.replace(/^[A-Z]:/i, '').replace(/\\/g, '/')
+}
+
 function escapesProject(relativePath: string): boolean {
   return (
     relativePath === '..' ||
@@ -32,7 +53,10 @@ export function resolveFilePathWithinProject(
     return null
   }
 
-  return { fullPath, relativePath }
+  return {
+    fullPath: toPosix(fullPath),
+    relativePath: toPosix(relativePath),
+  }
 }
 
 /**
@@ -43,6 +67,9 @@ export function resolveFilePathWithinProject(
  * when the target is inside the project, otherwise the absolute path.
  * `isWithinProject` lets callers skip project-scoped logic (e.g. gitignore) for
  * files that live outside the project.
+ *
+ * FID-2026-0718-015: Return values are POSIX-normalized (no drive letter,
+ * forward-slash). See `toPosix` for rationale.
  */
 export function resolveFilePath(
   projectRoot: string,
@@ -56,7 +83,11 @@ export function resolveFilePath(
   const isWithinProject = relativePath !== '' && !escapesProject(relativePath)
   const displayPath = isWithinProject ? relativePath : fullPath
 
-  return { fullPath, relativePath: displayPath, isWithinProject }
+  return {
+    fullPath: toPosix(fullPath),
+    relativePath: toPosix(displayPath),
+    isWithinProject,
+  }
 }
 
 export function getProjectPathLookupKeys(

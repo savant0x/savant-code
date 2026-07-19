@@ -1,3 +1,5 @@
+import { scanOpenFids } from '@codebuff/common/util/protocol-config'
+
 import type { CodebuffToolHandlerFunction } from '../handler-function-type'
 import type {
   CodebuffToolCall,
@@ -5,50 +7,129 @@ import type {
 } from '@codebuff/common/tools/list'
 import type { Logger } from '@codebuff/common/types/contracts/logger'
 import type { FsmPhase } from '@codebuff/common/types/session-state'
+import type { ProjectFileContext } from '@codebuff/common/util/file'
+
+const MAX_ITERATIONS = 10
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
   idle: ['red'],
-  red: ['green'],
-  green: ['audit'],
-  audit: ['self_correct', 'complete'],
-  self_correct: ['green'],
+  red: ['green', 'idle'],       // abort from red
+  green: ['audit', 'idle'],      // abort from green
+  audit: ['self_correct', 'complete', 'idle'],  // abort from audit
+  self_correct: ['green', 'idle'],  // abort from self_correct
   complete: ['idle'],
 }
 
+// NOTE: FSM phase and iterationCount are session-scoped (in-memory only).
+// On restart/resume, phase resets to 'idle' and iterationCount resets to 0.
+// This is by design — the Perfection Loop is a session-level workflow.
 export const handleTransitionPhase = (async (params: {
-  previousToolCallFinished: Promise<any>
+  previousToolCallFinished: Promise<void>
   toolCall: CodebuffToolCall<'transition_phase'>
   logger: Logger
-  agentState: { fsmPhase?: FsmPhase }
+  agentState: { fsmPhase?: FsmPhase; iterationCount?: number }
+  fileContext: ProjectFileContext
 }): Promise<{ output: CodebuffToolOutput<'transition_phase'> }> => {
-  const { toolCall, logger, agentState } = params
+  const { toolCall, logger, agentState, fileContext } = params
   const { phase, reason } = toolCall.input
 
   const currentPhase = agentState.fsmPhase ?? 'idle'
   const allowed = VALID_TRANSITIONS[currentPhase] ?? []
   const isValid = allowed.includes(phase)
 
-  logger.debug({ phase, reason, currentPhase, isValid }, 'FSM transition')
-
   if (!isValid) {
+    logger.warn(
+      { phase, reason, currentPhase, allowed },
+      'FSM transition REJECTED',
+    )
     return {
-      output: [{
-        type: 'json',
-        value: {
-          message: `INVALID FSM transition: ${currentPhase} → ${phase}. Allowed: ${allowed.join(', ')}. Reason: ${reason}`,
+      output: [
+        {
+          type: 'json',
+          value: {
+            message: `INVALID FSM transition: ${currentPhase} → ${phase}. Allowed: ${allowed.join(', ')}. Reason: ${reason}`,
+          },
         },
-      }],
+      ],
     }
   }
 
+  // FID-Bound Enforcement: block any entry to 'green' when no open FIDs exist
+  if (phase === 'green') {
+    const openFids = scanOpenFids(fileContext.cwd)
+    if (openFids.length === 0) {
+      logger.warn(
+        { phase, currentPhase, openFids: 0 },
+        'FSM transition REJECTED — no open FIDs',
+      )
+      return {
+        output: [
+          {
+            type: 'json',
+            value: {
+              message: `Cannot transition to GREEN: no open FID files found in dev/fids/. Create a FID before writing code (ECHO Law 2: FID-Bound Execution).`,
+            },
+          },
+        ],
+      }
+    }
+  }
+
+  // Circuit Breaker: hard stop at MAX_ITERATIONS
+  const iterationCount = agentState.iterationCount ?? 0
+  if (phase === 'green' && iterationCount >= MAX_ITERATIONS) {
+    logger.warn(
+      { iterationCount, maxIterations: MAX_ITERATIONS, currentPhase },
+      'FSM transition REJECTED — iteration limit reached',
+    )
+    return {
+      output: [
+        {
+          type: 'json',
+          value: {
+            message: `Hard stop: maximum ${MAX_ITERATIONS} iterations reached (current: ${iterationCount}). Transition to COMPLETE to wrap up this FID, or escalate for review. Do not attempt further self-correction.`,
+          },
+        },
+      ],
+    }
+  }
+
+  // Valid transition — apply state changes
   agentState.fsmPhase = phase as FsmPhase
 
+  // Increment iteration count on self_correct→green
+  if (currentPhase === 'self_correct' && phase === 'green') {
+    agentState.iterationCount = iterationCount + 1
+  }
+
+  // Reset iteration count on audit→complete
+  if (currentPhase === 'audit' && phase === 'complete') {
+    agentState.iterationCount = 0
+  }
+
+  // Reset iteration count on any →idle (abort)
+  if (phase === 'idle') {
+    agentState.iterationCount = 0
+  }
+
+  logger.debug(
+    {
+      transition: `${currentPhase} → ${phase}`,
+      reason,
+      iterationCount: agentState.iterationCount,
+    },
+    'FSM transition OK',
+  )
+
   return {
-    output: [{
-      type: 'json',
-      value: {
-        message: `FSM transition: ${currentPhase} → ${phase}. ${reason}`,
+    output: [
+      {
+        type: 'json',
+        value: {
+          message: `FSM transition: ${currentPhase} → ${phase}. ${reason}`,
+          phase,
+        },
       },
-    }],
+    ],
   }
 }) satisfies CodebuffToolHandlerFunction<'transition_phase'>

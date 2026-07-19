@@ -1,5 +1,5 @@
 {
-  "name": "@savant-code/evals",
+  "name": "@codebuff/evals",
   "version": "0.0.1",
   "description": "Evaluation scripts for Savant-Code (public buffbench subset)",
   "private": true,

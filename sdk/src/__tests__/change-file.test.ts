@@ -20,6 +20,7 @@ describe('changeFile', () => {
       },
       cwd: '/repo',
       fs,
+      realpathFn: (p) => p,
     })
 
     expect(result).toEqual([
@@ -51,6 +52,7 @@ describe('changeFile', () => {
       },
       cwd: '/repo',
       fs,
+      realpathFn: (p) => p,
     })
 
     expect(result).toEqual([
@@ -78,6 +80,7 @@ describe('changeFile', () => {
       },
       cwd: '/repo',
       fs,
+      realpathFn: (p) => p,
     })
 
     expect(result).toEqual([
@@ -105,6 +108,7 @@ describe('changeFile', () => {
       },
       cwd: '/repo',
       fs,
+      realpathFn: (p) => p,
     })
 
     expect(result).toEqual([
@@ -132,6 +136,7 @@ describe('changeFile', () => {
       },
       cwd: '/repo',
       fs,
+      realpathFn: (p) => p,
     })
 
     expect(result).toEqual([
@@ -161,6 +166,7 @@ describe('changeFile', () => {
       },
       cwd: '/repo',
       fs,
+      realpathFn: (p) => p,
     })
 
     expect(result).toEqual([
@@ -177,7 +183,7 @@ describe('changeFile', () => {
     )
   })
 
-  test('writes absolute paths outside the project', async () => {
+  test('rejects absolute paths outside the project (FID-014 v2 security fix)', async () => {
     const fs = createMockFs()
 
     const result = await changeFile({
@@ -188,19 +194,20 @@ describe('changeFile', () => {
       },
       cwd: '/repo',
       fs,
+      realpathFn: (p) => p,
     })
 
-    expect(result).toEqual([
-      {
-        type: 'json',
-        value: {
-          file: '/outside/file.ts',
-          message: 'Created file successfully.',
-        },
-      },
-    ])
-    expect(await fs.readFile('/outside/file.ts', 'utf-8')).toBe(
-      'const value = 1\n',
-    )
+    // FID-014 v2: writes outside the project are now blocked. Prior
+    // behavior allowed /outside/file.ts to succeed (vulnerability fixed).
+    expect(result[0]?.type).toBe('json')
+    if (result[0]?.type !== 'json') {
+      throw new Error('Expected JSON tool result')
+    }
+    expect('errorMessage' in result[0].value).toBe(true)
+    if (!('errorMessage' in result[0].value)) {
+      throw new Error('Expected errorMessage in tool result')
+    }
+    expect(result[0].value.errorMessage).toMatch(/escapes|outside|containment/)
+    expect(result[0].value.file).toBe('/outside/file.ts')
   })
 })

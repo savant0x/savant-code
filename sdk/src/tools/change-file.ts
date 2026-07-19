@@ -1,6 +1,7 @@
 import path from 'path'
 
 import { fileExists } from '@codebuff/common/util/file'
+import { resolveAndContain } from '@codebuff/common/util/paths'
 import { applyPatch } from 'diff'
 import z from 'zod/v4'
 
@@ -35,11 +36,33 @@ export async function changeFile(params: {
   cwd: string
   fs: CodebuffFileSystem
   onFileWritten?: OnFileWrittenCallback
+  /** FID-2026-0718-014 v2: injectable for testability. Default = node:fs.realpathSync.native. */
+  realpathFn?: (p: string) => string
 }): Promise<CodebuffToolOutput<'str_replace'>> {
-  const { parameters, cwd, fs, onFileWritten } = params
+  const { parameters, cwd, fs, onFileWritten, realpathFn } = params
 
   const fileChange = FileChangeSchema.parse(parameters)
   const resolvedPath = resolveFilePath(cwd, fileChange.path)
+
+  // FID-2026-0718-014 v2: defense-in-depth at SDK boundary. Per v2 corrected
+  // architecture, this is where the actual fs.writeFile happens (the CLI is
+  // a frontend; the SDK does the FS ops). Closes the TOCTOU window between
+  // agent-runtime's gate check and the real fs op here.
+  const pathCheck = resolveAndContain(resolvedPath.fullPath, {
+    projectRoot: cwd,
+    realpathFn,
+  })
+  if (pathCheck.kind === 'reject') {
+    return [
+      {
+        type: 'json' as const,
+        value: {
+          file: fileChange.path,
+          errorMessage: `change-file: ${pathCheck.reason}`,
+        },
+      },
+    ]
+  }
 
   const result = await applyChange({ change: fileChange, resolvedPath, fs })
 

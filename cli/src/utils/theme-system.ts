@@ -878,9 +878,9 @@ const DEFAULT_CHAT_THEMES: Record<ThemeName, ChatTheme> = {
     // Core semantic colors — Neon Slate palette
     primary: '#18faf9',      // Cyan — max contrast on near-black
     secondary: '#a78bfa',    // Neon violet — complementary to cyan
-    success: '#22c55e',      // Keep existing green
+    success: '#39ff14',      // Neon green — high-energy completion
     error: '#ff2d55',        // Neon red — Apple system red
-    warning: '#ffd60a',      // Neon yellow — Apple system yellow
+    warning: '#ff9500',      // Neon orange — warm alert, distinct from yellow
     info: '#18faf9',         // Same as primary for consistency
     link: '#3B82F6',
     directory: '#9CA3AF',
