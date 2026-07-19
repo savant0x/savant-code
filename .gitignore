@@ -55,3 +55,9 @@ cli/release-staging/launcher.js
 cli/release-staging/http.js
 freebuff/cli/release/launcher.js
 freebuff/cli/release/http.js
+
+# dev/releases/ -- ephemeral staging area for release notes drafts.
+# Canonical in-repo history: CHANGELOG.md. Canonical external source: GitHub Releases.
+# README.md is the permanent index. All *.md drafts are gitignored.
+dev/releases/*.md
+!dev/releases/README.md
