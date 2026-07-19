@@ -30,7 +30,7 @@
  *   // Module mocking
  *   mockModule,
  *   clearMockedModules,
- * } from '@codebuff/common/testing'
+ * } from '@savantcode.common/testing'
  * ```
  *
  * @module testing
@@ -80,5 +80,5 @@ export type { CreateTestSetupOptions, TestSetupResult } from './setup'
 // Note: These are in separate files for historical reasons but are commonly
 // used together with other testing utilities.
 // Import directly from their modules if you need only env helpers:
-//   - '@codebuff/common/testing-env-process' for process env
-//   - '@codebuff/common/testing-env-ci' for CI env
+//   - '@savantcode.common/testing-env-process' for process env
+//   - '@savantcode.common/testing-env-ci' for CI env

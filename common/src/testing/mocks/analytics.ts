@@ -6,7 +6,7 @@
  *
  * @example
  * ```typescript
- * import { createMockAnalytics, setupAnalyticsMocks } from '@codebuff/common/testing/mocks/analytics'
+ * import { createMockAnalytics, setupAnalyticsMocks } from '@savantcode.common/testing/mocks/analytics'
  *
  * // Option 1: Create mock object
  * const analytics = createMockAnalytics()
@@ -203,7 +203,7 @@ export interface AnalyticsSpies {
  *
  * @example
  * ```typescript
- * import * as analytics from '@codebuff/common/analytics'
+ * import * as analytics from '@savantcode.common/analytics'
  *
  * describe('my test', () => {
  *   let analyticsSpy: AnalyticsSpies

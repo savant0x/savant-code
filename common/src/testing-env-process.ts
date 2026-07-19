@@ -2,7 +2,7 @@ import type { BaseEnv, ProcessEnv } from './types/contracts/env'
 
 /**
  * Test-only helpers for process env snapshots.
- * Keep production code using `@codebuff/common/env-process`.
+ * Keep production code using `@savantcode.common/env-process`.
  */
 export const createTestBaseEnv = (
   overrides: Partial<BaseEnv> = {},

@@ -1,6 +1,6 @@
-import { AnalyticsEvent } from '@codebuff/common/constants/analytics-events'
+import { AnalyticsEvent } from '@savantcode.common/constants/analytics-events'
 
-import type { FreebuffRedditRetentionMilestoneDays } from '@codebuff/common/util/reddit-freebuff-retention'
+import type { FreebuffRedditRetentionMilestoneDays } from '@savantcode.common/util/reddit-freebuff-retention'
 
 export type RedditFirstPromptSurface = 'cli' | 'web' | 'chat'
 

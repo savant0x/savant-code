@@ -6,7 +6,7 @@
  *
  * @example
  * ```typescript
- * import { createTestSetup, TestSetupResult } from '@codebuff/common/testing/setup'
+ * import { createTestSetup, TestSetupResult } from '@savantcode.common/testing/setup'
  *
  * describe('my test', () => {
  *   const setup = createTestSetup()
@@ -113,7 +113,7 @@ export interface TestSetupResult {
  *
  * @example
  * ```typescript
- * import * as analytics from '@codebuff/common/analytics'
+ * import * as analytics from '@savantcode.common/analytics'
  * const db = createMockDbOperations()
  *
  * describe('my test', () => {

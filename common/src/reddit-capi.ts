@@ -1,12 +1,12 @@
 import { createHash } from 'node:crypto'
 
-import { IS_PROD } from '@codebuff/common/env'
-import { extractClientIp } from '@codebuff/common/util/rate-limit'
-import type { Logger } from '@codebuff/common/types/contracts/logger'
+import { IS_PROD } from '@savantcode.common/env'
+import { extractClientIp } from '@savantcode.common/util/rate-limit'
+import type { Logger } from '@savantcode.common/types/contracts/logger'
 import type {
   RedditFirstPromptCapiEventName,
   RedditRetentionCapiEventName,
-} from '@codebuff/common/util/reddit-capi-events'
+} from '@savantcode.common/util/reddit-capi-events'
 
 export type { RedditFirstPromptCapiEventName, RedditRetentionCapiEventName }
 

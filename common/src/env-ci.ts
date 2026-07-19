@@ -3,7 +3,7 @@
  *
  * This module provides a typed interface to CI-specific environment variables.
  * These are used in CI/CD pipelines and eval contexts.
- * In tests, use `@codebuff/common/testing-env-ci`.
+ * In tests, use `@savantcode.common/testing-env-ci`.
  */
 
 import type { CiEnv } from './types/contracts/env'

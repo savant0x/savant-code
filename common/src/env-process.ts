@@ -8,7 +8,7 @@
  * Usage:
  * - Import `getBaseEnv` for base OS-level vars only
  * - Import `getProcessEnv` for the full ProcessEnv (base + extensions)
- * - In tests, use `@codebuff/common/testing-env-process`
+ * - In tests, use `@savantcode.common/testing-env-process`
  */
 
 import type { BaseEnv, ProcessEnv } from './types/contracts/env'

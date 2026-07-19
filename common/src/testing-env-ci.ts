@@ -2,7 +2,7 @@ import type { CiEnv } from './types/contracts/env'
 
 /**
  * Test-only helpers for CI env snapshots.
- * Keep production code using `@codebuff/common/env-ci`.
+ * Keep production code using `@savantcode.common/env-ci`.
  */
 export const createTestCiEnv = (overrides: Partial<CiEnv> = {}): CiEnv => ({
   CI: undefined,
