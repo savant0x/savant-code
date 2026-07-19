@@ -3,6 +3,13 @@
 > Reverse chronological. All notable changes to this project documented here, as
 > required by ECHO's FID Auto-Archive rule (dev/fids/archive/ ⇒ CHANGELOG.md entry).
 
+## FID-2026-0718-025 — small — dev/releases/ Ephemeralization (.gitignore + README Index)
+
+**Closed:** 2026-07-19
+**Resolution:** 3 changes: (1) `.gitignore` — appended 5 lines: rule `dev/releases/*.md` + exception `!dev/releases/README.md` + 3 comment lines (mirrors existing `dev/scratchpad/*` + `!.gitkeep` ephemeral pattern). (2) `dev/releases/README.md` — NEW permanent 44-line index documenting EPHEMERAL convention, workflow steps, and pointing to CHANGELOG.md (canonical in-repo) + GitHub Releases (canonical external). (3) `dev/fids/FID-2026-0718-025-dev-releases-ephemeral-staging.md` — THIS FID doc. Pre-existing v0.0.2.md at commit 72d0a19 NOT modified per ECHO L5 (no destructive rewinds).
+**Verified by:** AUDIT 5-item gate: (1) `grep '^dev/releases/\*\.md$' .gitignore` = 1 PASS; (2) `grep '^!dev/releases/README\.md$' .gitignore` = 1 PASS; (3) `head -10 dev/releases/README.md | grep -i ephemeral` >= 1 PASS; (4) negative-ignore test: `touch dev/releases/_test_ignored.md && git status --ignored` shows `!!` (ignored) NOT `??` (untracked) PASS; (5) post-push: `git log origin/main..HEAD` = 1 commit PASS. Cross-FID invariants preserved: 12 READMEs Apache-2.0, 0 stale substituted strings, Markdownlint clean.
+**Archived:** 2026-07-19
+
 ## FID-2026-0718-024 — medium — Pre-Push Follow-up Batch (DECISION-FID)
 
 **Closed:** 2026-07-19
