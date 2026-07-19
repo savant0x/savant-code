@@ -65,7 +65,7 @@ dev/releases/*.md
 1. `grep -cE '^dev/releases/\*\.md$' .gitignore` ≥ 1 (the rule)
 2. `grep -cE '^!dev/releases/README\.md$' .gitignore` ≥ 1 (the exception)
 3. `head -5 dev/releases/README.md | grep -ci 'ephemeral'` ≥ 1
-4. **Negative test:** create `dev/releases/_test_ignored.md` → `git status --ignored` shows it is `!!`-prefixed (ignored), NOT `??`-prefixed (untracked) → delete
+4. **Negative test:** create `dev/releases/_test_ignored.md` → `git check-ignore -v dev/releases/v0.0.3-draft.md` returns exit 0 with the matching pattern on stdout (`dev/releases/*.md:1:dev/releases/v0.0.3-draft.md`) if the rule fires; exit 1 if not. Cleaner than the deprecated `git status --ignored`. Optional sanity check: `touch dev/releases/_tmp_ignored.md; git status` (semicolon keeps sed-safe from ``git status --ignored` shows it is `!!`-prefixed (ignored), NOT `??`-prefixed (untracked) → delete`) — no untracked entry. Clean up _tmp_ignored.md after.
 5. `git log --oneline origin/main..HEAD` post-push = 1 new commit FORGE + 1 close-out commit
 
 ## COMPLETE — Close-out Steps

@@ -37,7 +37,7 @@ Three reasons (per FID-2026-0718-025 + Thinker-with-files-gemini review):
 
 - `../../CHANGELOG.md` -- canonical in-repo history
 - GitHub Releases -- canonical external source
-- `../fids/FID-2026-0718-025-dev-releases-ephemeral-staging.md` -- the FID that established this convention
+- `../fids/archive/FID-2026-0718-025-dev-releases-ephemeral-staging.md` -- the FID that established this convention
 
 ---
 
