@@ -1,6 +1,11 @@
+<!-- markdownlint-disable MD041 -->
+<img src="../assets/banner.png" alt="@codebuff/sdk — Official TypeScript SDK for the Savant-Code multi-agent runtime" width="650" />
+
 # @codebuff/sdk
 
-Official SDK for Codebuff - AI coding agent and framework
+Official TypeScript SDK for the Savant-Code multi-agent runtime.
+
+[![npm](https://img.shields.io/badge/npm-@codebuff/sdk-%23cb3837?style=flat-square&logo=npm)](https://www.npmjs.com/package/@codebuff/sdk)[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-tested-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](../ECHO.md)
 
 ## Installation
 
@@ -264,4 +269,13 @@ The `RunState` object contains:
 
 ## License
 
-MIT
+Apache-2.0 — see [LICENSE](../LICENSE) for full text.
+
+---
+
+<div align="center">
+
+_This SDK ships from the [codebuff/savant-code monorepo](https://github.com/savant0x/savant-code). It runs on the [ECHO Protocol v0.2.0](ECHO.md) engineering governance system — 15 laws, Perfection Loop FSM, separation of duties._
+
+**Savant** • 2026
+</div>

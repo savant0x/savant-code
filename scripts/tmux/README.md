@@ -1,6 +1,11 @@
+<!-- markdownlint-disable MD041 -->
+<img src="../assets/banner.png" alt="tmux Test Scripts — Interact with TUIs reliably via bracketed paste" width="650" />
+
 # tmux TUI Testing Scripts
 
 Helper scripts for testing TUI applications (Terminal User Interface apps) using tmux. These scripts abstract away the complexity of tmux communication, particularly the **bracketed paste mode** requirement.
+
+For the CLI / SDK / repo Quick Start, see the [root README](../../README.md).
 
 ## Features
 
@@ -338,3 +343,11 @@ These scripts are used by TUI testing agents:
 - `@codex-tester` - Tests OpenAI Codex CLI
 - `@gemini-tester` - Tests Google Gemini CLI
 - Custom agents for other TUI apps can easily be created following the same pattern
+
+---
+
+## License
+
+[Apache-2.0](../../LICENSE) — see [LICENSE](../../LICENSE) for full text.
+
+<sub>Part of [codebuff/savant-code monorepo](https://github.com/savant0x/savant-code) — **Savant** • 2026</sub>

@@ -13,7 +13,7 @@
     "outDir": "./dist",
     "allowImportingTsExtensions": false,
     "types": ["node", "bun-types"],
-    "baseUrl": ".",
+    "rootDir": "..",
     "paths": {
       "@codebuff/common/*": ["../common/src/*"],
       "@codebuff/agent-runtime/*": ["../packages/agent-runtime/src/*"],

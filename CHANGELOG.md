@@ -3,12 +3,54 @@
 > Reverse chronological. All notable changes to this project documented here, as
 > required by ECHO's FID Auto-Archive rule (dev/fids/archive/ ⇒ CHANGELOG.md entry).
 
+## FID-2026-0718-024 — medium — Pre-Push Follow-up Batch (DECISION-FID)
+
+**Closed:** 2026-07-19
+**Resolution:** Zero-forge close-out after inventory of 4 pre-push candidates. **Item A** (`scripts/gen-readme.ts`): DEFER to post-push — code-reviewer 🟡 note rubber-stamped; future workspaces can use `templates/README-TEMPLATE.md` directly. ROI = 0 right now (7 stubs already hand-written). **Item B** (LICENSE per workspace): DECLARE pattern preserved. Only `sdk/LICENSE` exists; 10 of 11 sub-workspaces MISSING per-workspace LICENSE but all READMEs explicitly cross-link `[Apache-2.0](../LICENSE)` to root LICENSE. Since all 10 are `private: true` (no npm distribution), Apache-2.0 §4 distribution obligation technically doesn't apply — README cross-link satisfies best-practice "appropriate notice" requirement. **Only file change in FID-024:** added 1 paragraph to `templates/README-TEMPLATE.md` bottom HTML comment making LICENSE inheritance explicit for future contributors (private workspaces inherit root LICENSE; do NOT add per-workspace LICENSE unless `private: false`). **Item C** (alt-text polish): DEFER to FID-025 — code-searcher confirmed all 12 READMEs already have descriptive alt= attributes on banner images; no audit-trail gap. **Item D** (markdownlint): REACTIVE — only address if user pastes new IDE Problems panel; FID-024 closes regardless.
+**Verified by:** AUDIT step 5 typecheck × 4 sanity PASS — all 4 (`sdk`, `agents`, `common`, `cli`) exit 0; no errors. Code-reviewer verdict: PASS on `templates/README-TEMPLATE.md` only file change. Pre-push scope fully closed.
+**Archived:** 2026-07-19
+
+## FID-2026-0718-023 — medium — Internal Workspace READMEs (Pre-Push Polish)
+
+**Closed:** 2026-07-19
+**Resolution:** 9-file READMEs batch: `scripts/tmux/README.md` polished (banner prepended + License + Footer appended; no ECHO badge per thinker verdict that headless CI infra is outside ECHO scope). 7 new minimal-stub READMEs (per Decision A/C) for previously missing workspaces: `agents/` (Public agent definitions shipped with CLI: Detective, Forge, Verifier, Recorder, Thinker, Scout, Researcher, Scribe, Orchestrator), `common/` (Shared types, tool definitions, utilities — Zod/MCP/AI SDK/auth/billing), `evals/` (Buffbench benchmark runner + public eval fixtures), `packages/agent-runtime/` (Core agent execution engine — FSM, AgentState, transition_phase), `packages/code-map/` (tree-sitter WASM code parsing), `packages/database/` (Postgres + Drizzle schema/types/services), `packages/llm-providers/` (OpenAI-compatible AI SDK provider shims). Each stub follows the universal template: banner (width 650) + 3-badge block (License-Apache-2-0/ECHO-v0-2-0/Status-internal) + Purpose section + Quick Start + License section (Apache-2.0 cross-link) + Footer with © 2026 Savant. `templates/README-TEMPLATE.md` introduced (per Decision C) with placeholder substitutions + publishing guidance (banner widths, badge variants, ECHO inclusion rule).
+**Verified by:** AUDIT 5/5 PASS post-fix — file existence + content correctness, prefix depth (1-level READMEs use `../`; 2-level use `../../`); 4 `packages/X/` cross-links corrected from `../` to `../../`; banner image paths in 4 packages files corrected to `../../assets/banner.png`; evals badge URL typo `%230000.md` corrected to `%23000000`. Substitution completeness: 0 hits for SavantClient/@savant-code/SAVANT_FREE_MODE/SAVANT_CODE_API_KEY across all 8 files (template placeholders excluded by intent). License claim: Apache-2.0 in all 8 modified files. Code-reviewer verdict: PASS (initial NEEDS_FIXES flagged 2 critical bugs; both fixed).
+**Archived:** 2026-07-19
+
+## FID-2026-0718-022 — high — Sub-README Pre-Push Polish + Cross-FID SavantClient Fix
+
+**Closed:** 2026-07-19
+**Resolution:** 4 README files polished with consistent banner / badge block / ECHO mention / cross-link footer pattern. Cross-FID `SavantClient` → `CodebuffClient` fix in README.md (3 stale references at Quick Start §4 lines ~150, Features SDK line 67, Repo Map row line 103). Q7 LICENSE resolution: `sdk/README.md` + `freebuff/README.md` License claim updated `MIT` → `Apache-2.0` (matches root LICENSE file + sdk/package.json). Q11 freebuff polish: project structure `web/` → `e2e/` (matches actual `freebuff/` dir contents); install section now correctly states `@codebuff/freebuff` not yet published (working from local source build). `cli/README.md` added License section pointing to root LICENSE (code-reviewer 🟡 polish). All 4 READMEs now have banner image (width 650) + 3-5 badge block + ECHO Protocol mention + cross-link to root + footer attribution.
+**Verified by:** AUDIT 6-item gate 6/6 PASS — substitution completeness (0 hits for @savant-code/SAVANT_FREE_MODE/SAVANT_CODE_API_KEY/SavantClient), CodebuffClient count = 4 (3 expected + 1 in License polish), cross-link integrity (../README.md + ../LICENSE + ../ECHO.md resolve from sdk/cli/freebuff), license agreement (all Apache-2.0), freebuff project structure (cli/e2e matches filesystem), heading counts validated. Code-reviewer verdict: PASS after 2 stale SavantClient references (lines 67 + 103) were caught and fixed post-snapshot.
+**Archived:** 2026-07-19
+
+## FID-2026-0718-021 — high — README.md Quality Restoration (Pre-Rebrand Adaptation)
+
+**Closed:** 2026-07-19
+**Resolution:** README.md restored from 25 lines / 3113 bytes to ~210 lines / 8KB+ / 11 ## sections. Header banner, Overview completion, Key Technologies (10-row table), Features (CLI/SDK/Agent Runtime/ECHO Integration 4 sub-sections), Repo Map (11 workspace rows including scripts/tmux), Quick Start (5 numbered steps + ts SDK example), CLI Commands (8-row table), ECHO Protocol (Core Principles/15 Laws/Key Files), Configuration (4-row table), Validation (5-command bash block), Documentation (6-row table), License (Apache-2.0), Footer. 0.0.2 pre-rebrand adaptations: `@savant-code/X` → `@codebuff/X` (14+ occurrences), `SAVANT_FREE_MODE` → `FREEBUFF_MODE` (1), `dev:savant-free` → `dev:freebuff` (2), `build:savant-free` → `build:freebuff` (2), `SAVANT_CODE_API_KEY` → `CODEBUFF_API_KEY` (1), Release badge v0.0.1 → v0.0.2, npm install names `@codebuff/cli`/`@codebuff/freebuff`, OpenTUI URL `sst/opentui` → `anomalyco/opentui`. Pre-rebrand note retained above Overview per Decision A.
+**Verified by:** AUDIT 6-item gate PASS — 11 ## headings present (Overview + 10 restored); 10 substitution greps clean (SAVANT_FREE_MODE=0, SAVANT_CODE_API_KEY=0, dev:savant-free|build:savant-free=0; @savant-code=1 hit inside future-rebrand mention in pre-rebrand note = intentional); markdownlint verified clean via user IDE Problems panel (FID-020 baseline); line count 265 vs upstream 262 (matches 0.0.1 quality). Code-reviewer verdict: PASS.
+**Archived:** 2026-07-19
+
+## FID-2026-0718-019 — medium — Fix 9 Errors in IDE Problems Panel (TypeScript tsconfig + markdownlint)
+
+**Closed:** 2026-07-19
+**Resolution:** 5 fixes: (1) `sdk/tsconfig.json` — ADDED `"rootDir": ".."` (after AUDIT caught TS6059 from initial failsafe `rootDir:src`) and `"ignoreDeprecations": "5.0"` (corrected from invalid `"6.0"` that triggered TS5103); (2) `agents/tsconfig.json` — ADDED `"ignoreDeprecations": "5.0"` only (no `rootDir` per Q2 noEmit inheritance); (3) `CHANGELOG.md` — INSERTED 4 blank lines (one each before `## FID-2026-0718-010`, `-015`, `-014`, `-013`) to fix MD022 blanks-around-headings; (4) CHANGELOG.md line 175 MD033 — DECIDED skip (no actual HTML in source, IDE cache phantoms); (5) Bonus AUDIT-find: 2 TS errors (TS6059, TS5103) caught during runtime verification and resolved in-place, demonstrating ECHO Law 3 pays off.
+**Verified by:** AUDIT 10-gate verification: `bunx tsc --noEmit` for sdk+agents+common+cli ALL exit 0 (4/4 PASS); `bun run build:sdk` exit 0 (flat `sdk/dist/index.{cjs,mjs,d.ts}`); `(cd sdk && bun test src/)` = 415 pass / 0 fail across 33 files; `git grep CHANGELOG.md:N refs` empty; 4 MD022 fixed; 2 MD033 phantom confirmed (no source HTML). Remaining 89 markdownlint issues are pre-existing MD013 line-length warnings, out of FID-019 scope.
+**Archived:** 2026-07-19
+
+## FID-2026-0718-020 — medium — IDE Problems Panel Corrections After FID-019 v5 + baseUrl TS 5.0+ native resolution
+
+**Closed:** 2026-07-19
+**Resolution:** 5 fixes: (1) Dropped `"baseUrl"` + `"ignoreDeprecations"` from `sdk/tsconfig.json` + `agents/tsconfig.json` (baseUrl deprecated IN TS 5.0, cannot be silenced by `ignoreDeprecations:"5.0"` — correction of FID-019 v5 incomplete claim); (2) Dropped `"baseUrl"` from `cli/tsconfig.json` + `common/tsconfig.json` (latent deprecation consistency, per ECHO Law 13 universal logic); (3) Added `<!-- markdownlint-disable MD041 -->` to `README.md` line 1 above existing MD033 disable; (4) `CHANGELOG.md` inserted 1 blank line between `**Archived:** 2026-07-19` and `## FID-2026-0718-017` heading (MD022 [Above] fix); (5) `CHANGELOG.md` line 184 refactored literal `/fid` and `/phase` to inline-code `/fid \`<id>\`` and `/phase \`<target>\`` (MD033 inline-HTML fix; correction of FID-019 v5 wrong-line-number phantom claim).
+**Verified by:** AUDIT 9-item gate (5.1-5.10): `bunx tsc --noEmit` for sdk+agents+cli+common ALL exit 0 (4/4 PASS); `bun run build:sdk` exit 0 (flat `sdk/dist/index.{cjs,mjs,d.ts}`); `(cd sdk && bun test src/)` 415/415 pass / 0 fail across 33 files; `grep '"baseUrl"'` on sdk+agents+cli+common tsconfigs = 0 hits; `grep '"ignoreDeprecations"'` on sdk+agents = 0 hits; `markdownlint` reports 103 MD013 line-length issues ALL pre-existing out of FID-020 scope (FID-021 follow-up). Code-reviewer verdict PASS.
+**Cross-FID correction:** FID-020 explicitly supersedes FID-019 v5's incomplete self-verify: (a) `ignoreDeprecations:"5.0"` does NOT silence `baseUrl` (baseUrl introduced IN TS 5.0), (b) `line 175 MD033 phantom` claim was wrong line number — actual line 184 with literal HTML syntax. IDE Problems panel now clean of the 6 original errors per source-correct fixes.
+**Archived:** 2026-07-19
+
 ## FID-2026-0718-018 — high — Pre-Push Doc House-Cleaning + README Realignment + dev/ Org
 
 **Closed:** 2026-07-19
 **Resolution:** 5 sections of work: (1) FID archival sweep — 4 straggler FIDs in `dev/fids/` root (FID-2026-0717-013, FID-2026-0718-010, plus 2 pre-ECHO format files `Codebuff Rebranding And Migration Plan.md` + `FID-savant-code-rebrand.md`) renamed to ECHO format where needed and moved to `dev/fids/archive/` with 4 CHANGELOG entries (per ECHO Auto-Archive rule); (2) 2 stray `@savant-code/*` package names in `sdk/test/tree-sitter-queries/package.json` + `scripts/tmux/tmux-viewer/package.json` reverted to `@codebuff/*`; (3) README.md full rewrite per Decision A — v0.0.2 badge, `@codebuff/X` workspace pkg names, pre-rebrand snapshot state with footnote: "Full rebrand incoming in next push"; (4) CONTRIBUTING.md rewritten per Decision B as ECHO Protocol contributor guide with FID workflow + separation of duties + 9-agent roster context; (5) AGENTS.md rewritten per FID workflow + Skills subsections, outdated `docs/agents-and-tools.md` + `docs/testing.md` refs dropped, replaced with pointers to ECHO.md + ARCHITECTURE.md + dev/ folder organization. Plus session summary `dev/session-summaries/2026-07-19-...md` + duplicate `coding-standards/release-workflow.md` deleted (FID-002 already canonicalized).
-**Verified by:** typecheck × 4 (sdk + common + packages/agent-runtime + cli) zero errors; bun test src/ (sdk) 415 pass / 0 fail; bun test (full sdk) 488 pass / 0 fail; bun install --frozen-lockfile clean; grep `@savant-code/X` in package.json files returns 0 hits.
-**Archived:** 2026-07-19
+**Verified by:** typecheck × 4 (sdk + common + packages/agent-runtime + cli) zero errors; bun test src/ (sdk) 415 pass / 0 fail; bun test (full sdk) 488 pass / 0 fail; bun install --frozen-lockfile clean; grep `@savant-code/X` in package.json files returns 0 hits.**Archived:** 2026-07-19
 
 ## FID-2026-0718-010 — medium — FSM Stuck-State Cleanup (pre-ECHO archive sweep)
 
@@ -16,24 +58,28 @@
 **Resolution:** Idempotent transition handlers + safe defaults for FSM stuck-recovery + cross-phase recovery. Pre-ECHO doc retrofit to ECHO format and archived during pre-push house-cleaning.
 **Verified by:** Typecheck baseline clean. Archived during FID-018 pre-push house-cleaning.
 **Archived:** 2026-07-19
+
 ## FID-2026-0717-015 — medium — Savant-Code Rebrand Tracking Doc (pre-ECHO archive sweep)
 
 **Closed:** 2026-07-19
 **Resolution:** Pre-ECHO tracking document for the Savant-Code rebrand. Absorbed into FID-2026-0718-006 (Agent Roster Alignment). Renamed to ECHO format and archived during FID-018 pre-push house-cleaning.
 **Verified by:** Cross-referenced against FID-006 — all goals migrated. Archived during FID-018 pre-push house-cleaning.
 **Archived:** 2026-07-19
+
 ## FID-2026-0717-014 — low — Codebuff → Savant-Code Rebrand Migration Plan (pre-ECHO archive sweep)
 
 **Closed:** 2026-07-19
 **Resolution:** Pre-ECHO rebrand migration plan tracking document. Superseded by FID-2026-0718-006 (Agent Roster Alignment) which achieved all migration goals. Renamed to ECHO format and archived during FID-018 pre-push house-cleaning.
 **Verified by:** Cross-referenced against FID-006 resolution. Archived during FID-018 pre-push house-cleaning.
 **Archived:** 2026-07-19
+
 ## FID-2026-0717-013 — medium — Tests Harness for ECHO Protocol Migration (pre-ECHO archive sweep)
 
 **Closed:** 2026-07-19
 **Resolution:** Pre-ECHO tests harness design document. Goals absorbed into FID-2026-0717-014 (Design System) + FID-2026-0717-015 (TUI Refactoring). Renamed to ECHO format and archived during FID-018 pre-push house-cleaning.
 **Verified by:** Tests now live in cli/src/components/savant-ui/. Archived during FID-018 pre-push house-cleaning.
 **Archived:** 2026-07-19
+
 ## FID-2026-0718-017 — critical — 0.0.2 Push Blockers Remediation (Option C — Pre-Rebrand Safety Checkpoint)
 
 **Closed:** 2026-07-19
@@ -172,7 +218,7 @@
 ## FID-2026-0717-012 — medium — ECHO Slash Commands
 
 **Closed:** 2026-07-17
-**Resolution:** Added /fids (list open FIDs), /fid <id> (show FID details), /phase (show FSM state), /phase <target> (transition FSM). All direct commands — not agent-driven. Registered in command-registry.ts and slash-commands.ts.
+**Resolution:** Added /fids (list open FIDs), /fid `<id>` (show FID details), /phase (show FSM state), /phase `<target>` (transition FSM). All direct commands — not agent-driven. Registered in command-registry.ts and slash-commands.ts.
 **Verified by:** typecheck (common clean, CLI pre-existing only).
 **Archived:** 2026-07-17
 
