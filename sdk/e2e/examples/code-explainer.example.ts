@@ -5,7 +5,7 @@
  * Run with: bun run sdk/e2e/examples/code-explainer.example.ts
  */
 
-import { CodebuffClient } from '../../src/client'
+import { SavantCodeClient } from '../../src/client'
 
 const SAMPLE_CODE = `
 async function fetchUserData(userId: string): Promise<User | null> {
@@ -29,7 +29,7 @@ async function main() {
     process.exit(1)
   }
 
-  const client = new CodebuffClient({ apiKey })
+  const client = new SavantCodeClient({ apiKey })
 
   console.log('📖 Explaining code...\n')
   console.log('Code to explain:')
@@ -39,7 +39,7 @@ async function main() {
   console.log('Explanation:\n')
 
   const result = await client.run({
-    agent: 'codebuff/base2@latest',
+    agent: 'savant-code/base2@latest',
     prompt: `Explain what this code does in simple terms:\n\n${SAMPLE_CODE}`,
     handleStreamChunk: (chunk) => {
       if (typeof chunk === 'string') {

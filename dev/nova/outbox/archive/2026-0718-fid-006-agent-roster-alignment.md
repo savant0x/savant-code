@@ -7,7 +7,7 @@
 
 ## Summary
 
-Aligned the 69-agent Codebuff codebase to the 9-agent Savant architecture per ARCHITECTURE.md spec. 13 fixes across 24 files through the full Perfection Loop (RED → GREEN → AUDIT → SELF-CORRECT → RE-AUDIT → COMPLETE).
+Aligned the 69-agent SavantCode codebase to the 9-agent Savant architecture per ARCHITECTURE.md spec. 13 fixes across 24 files through the full Perfection Loop (RED → GREEN → AUDIT → SELF-CORRECT → RE-AUDIT → COMPLETE).
 
 ## Key Changes
 
@@ -24,7 +24,7 @@ Aligned the 69-agent Codebuff codebase to the 9-agent Savant architecture per AR
 | 10 | withParentModel() inherits providerOptions | spawn-agent-utils.ts |
 | 11 | Fix Scout to delegate to Detective | scout.ts |
 | 12 | Fix context-pruner sentAt type error | context-pruner.ts |
-| 13 | Delete 20+ absorbed Codebuff agent files | general-agent/, reviewer/*, etc. |
+| 13 | Delete 20+ absorbed SavantCode agent files | general-agent/, reviewer/*, etc. |
 
 ## Verification
 
@@ -37,7 +37,7 @@ Aligned the 69-agent Codebuff codebase to the 9-agent Savant architecture per AR
 1. **Strict separation** — Orchestrator loses all write tools
 2. **Single Thinker** — inherits parent model, no model variants
 3. **Verifier has NO tools** — reads only via message history
-4. **Pure merge** — all Codebuff capabilities absorbed into Savant agents
+4. **Pure merge** — all SavantCode capabilities absorbed into Savant agents
 5. **Free-mode infrastructure preserved** — for future free version buildout
 
 ## Files Deleted

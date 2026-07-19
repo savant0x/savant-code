@@ -1,19 +1,19 @@
 import React from 'react'
 
-import { useFreebuffSessionProgress } from '../hooks/use-freebuff-session-progress'
+import { useFreebuffSessionProgress } from '../hooks/use-savant-free-session-progress'
 import { useNow } from '../hooks/use-now'
 import { useTheme } from '../hooks/use-theme'
-import { formatFreebuffPremiumResetCountdown } from '../utils/freebuff-premium-reset'
+import { formatFreebuffPremiumResetCountdown } from '../utils/savant-free-premium-reset'
 import { formatSessionUnits } from '../utils/format-session-units'
 
-import type { FreebuffSessionResponse } from '../types/freebuff-session'
+import type { SavantFree$1 } from '../types/savant-free-session'
 
-interface FreebuffActiveSessionSummaryProps {
-  session: FreebuffSessionResponse | null
+interface SavantFree$1 {
+  session: SavantFree$1 | null
 }
 
-export const FreebuffActiveSessionSummary: React.FC<
-  FreebuffActiveSessionSummaryProps
+export const SavantFree$1: React.FC<
+  SavantFree$1
 > = ({ session }) => {
   const theme = useTheme()
   const now = useNow(60_000, session?.status === 'active')

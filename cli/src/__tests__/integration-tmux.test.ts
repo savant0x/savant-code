@@ -69,10 +69,10 @@ describe.skipIf(!tmuxAvailable || !sdkBuilt)(
             }),
           ),
         )
-        // Clear FREEBUFF_MODE from the tmux global env. A previous freebuff
-        // build or `bun run dev:freebuff` invocation in the same tmux server
+        // Clear FREEBUFF_MODE from the tmux global env. A previous savant-free
+        // build or `bun run dev:savant-free` invocation in the same tmux server
         // can leave it set globally, which would make this test see the
-        // freebuff CLI variant (which has no `--agent` flag).
+        // savant-free CLI variant (which has no `--agent` flag).
         await tmux(['set-environment', '-gu', 'FREEBUFF_MODE']).catch(() => {})
       }
     })
@@ -80,7 +80,7 @@ describe.skipIf(!tmuxAvailable || !sdkBuilt)(
     test(
       'CLI starts and displays help output',
       async () => {
-        const sessionName = 'codebuff-test-' + Date.now()
+        const sessionName = 'savant-code-test-' + Date.now()
 
         try {
           // Create session with --help flag and keep it alive with '; sleep 2'
@@ -126,7 +126,7 @@ describe.skipIf(!tmuxAvailable || !sdkBuilt)(
     test(
       'CLI accepts --agent flag',
       async () => {
-        const sessionName = 'codebuff-test-' + Date.now()
+        const sessionName = 'savant-code-test-' + Date.now()
 
         try {
           // Start CLI with --agent flag (it will wait for input, so we can capture)

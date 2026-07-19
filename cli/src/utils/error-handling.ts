@@ -1,16 +1,16 @@
-import { env } from '@codebuff/common/env'
-import { extractApiErrorDetails } from '@codebuff/common/util/error'
-import { formatFreebuffHardBlockedPrivacySignals } from '@codebuff/common/util/freebuff-privacy'
+import { env } from '@savant-code/common/env'
+import { extractApiErrorDetails } from '@savant-code/common/util/error'
+import { formatFreebuffHardBlockedPrivacySignals } from '@savant-code/common/util/savant-free-privacy'
 
 import type { ChatMessage } from '../types/chat'
 import type {
-  FreebuffCountryBlockReason,
-  FreebuffIpPrivacySignal,
-} from '@codebuff/common/types/freebuff-session'
+  SavantFree$1,
+  SavantFree$1,
+} from '@savant-code/common/types/savant-free-session'
 
 import { IS_FREEBUFF } from './constants'
 
-const defaultAppUrl = env.NEXT_PUBLIC_CODEBUFF_APP_URL || 'https://codebuff.com'
+const defaultAppUrl = env.NEXT_PUBLIC_CODEBUFF_APP_URL || 'https://savant-code.com'
 
 // Normalize unknown errors to a user-facing string.
 const extractErrorMessage = (error: unknown, fallback: string): string => {
@@ -147,8 +147,8 @@ export const getCountryBlockFromFreeModeError = (
   error: unknown,
 ): {
   countryCode: string
-  countryBlockReason?: FreebuffCountryBlockReason
-  ipPrivacySignals?: FreebuffIpPrivacySignal[]
+  countryBlockReason?: SavantFree$1
+  ipPrivacySignals?: SavantFree$1[]
 } | null => {
   if (!isFreeModeUnavailableError(error)) return null
   const errorDetails = getCliApiErrorDetails(error)
@@ -162,10 +162,10 @@ export const getCountryBlockFromFreeModeError = (
     countryCode,
     countryBlockReason:
       typeof errorDetails.countryBlockReason === 'string'
-        ? (errorDetails.countryBlockReason as FreebuffCountryBlockReason)
+        ? (errorDetails.countryBlockReason as SavantFree$1)
         : undefined,
     ipPrivacySignals: errorDetails.ipPrivacySignals as
-      | FreebuffIpPrivacySignal[]
+      | SavantFree$1[]
       | undefined,
   }
 }
@@ -176,7 +176,7 @@ export const getFreeModeUnavailableErrorMessage = (
   const details = getCliApiErrorDetails(error)
   const block = getCountryBlockFromFreeModeError(error)
   if (block?.countryBlockReason === 'anonymous_network') {
-    return `${IS_FREEBUFF ? 'Freebuff' : 'Free mode'} cannot be used from ${formatFreebuffHardBlockedPrivacySignals(
+    return `${IS_FREEBUFF ? 'SavantFree' : 'Free mode'} cannot be used from ${formatFreebuffHardBlockedPrivacySignals(
       block.ipPrivacySignals,
     )} traffic. Please disable it and try again.`
   }
@@ -184,10 +184,10 @@ export const getFreeModeUnavailableErrorMessage = (
 }
 
 /**
- * Freebuff session gate errors returned by /api/v1/chat/completions. The
+ * SavantFree session gate errors returned by /api/v1/chat/completions. The
  * error codes keep their legacy waiting-room names for wire compatibility.
  *
- * Contract (see docs/freebuff-session-admission.md):
+ * Contract (see docs/savant-free-session-admission.md):
  *   - 428 `waiting_room_required`   — no session row exists, or the request
  *                                     carried no instance id (client isn't
  *                                     holding a session); POST /session to
@@ -198,14 +198,14 @@ export const getFreeModeUnavailableErrorMessage = (
  *   - 409 `session_model_mismatch`  — session tier/model no longer matches.
  *   - 410 `session_expired`         — active session's expires_at has passed.
  */
-export type FreebuffGateErrorKind =
+export type SavantFree$1 =
   | 'waiting_room_required'
   | 'waiting_room_queued'
   | 'session_superseded'
   | 'session_model_mismatch'
   | 'session_expired'
 
-const FREEBUFF_GATE_STATUS: Record<FreebuffGateErrorKind, number> = {
+const FREEBUFF_GATE_STATUS: Record<SavantFree$1, number> = {
   waiting_room_required: 428,
   waiting_room_queued: 429,
   session_superseded: 409,
@@ -215,23 +215,23 @@ const FREEBUFF_GATE_STATUS: Record<FreebuffGateErrorKind, number> = {
 
 export const getFreebuffGateErrorKind = (
   error: unknown,
-): FreebuffGateErrorKind | null => {
+): SavantFree$1 | null => {
   if (!error || typeof error !== 'object') return null
   const errorCode = (error as { error?: unknown }).error
   const statusCode = (error as { statusCode?: unknown }).statusCode
   if (typeof errorCode !== 'string') return null
-  const expected = FREEBUFF_GATE_STATUS[errorCode as FreebuffGateErrorKind]
+  const expected = FREEBUFF_GATE_STATUS[errorCode as SavantFree$1]
   if (expected === undefined || statusCode !== expected) return null
-  return errorCode as FreebuffGateErrorKind
+  return errorCode as SavantFree$1
 }
 
 export const OUT_OF_CREDITS_MESSAGE = `Out of credits. Please add credits at ${defaultAppUrl}/usage`
 
 export const FREEBUFF_RATE_LIMIT_MESSAGE =
-  'Freebuff is temporarily busy. Please try again in a moment.'
+  'SavantFree is temporarily busy. Please try again in a moment.'
 
 export const FREE_MODE_UNAVAILABLE_MESSAGE = IS_FREEBUFF
-  ? 'Freebuff is not available in your country.'
+  ? 'SavantFree is not available in your country.'
   : 'Free mode is not available in your country. You can use another mode to continue.'
 
 export const createErrorMessage = (

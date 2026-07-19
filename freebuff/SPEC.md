@@ -1,6 +1,6 @@
-# Freebuff Spec
+# SavantFree Spec
 
-Freebuff is a free-only variant of the Codebuff CLI, distributed as a separate npm package (`freebuff`). It reuses the entire `cli/` package but builds with a compile-time flag that strips out paid features, subscription logic, credits display, and mode switching — leaving only the FREE mode experience.
+SavantFree is a free-only variant of the SavantCode CLI, distributed as a separate npm package (`savant-free`). It reuses the entire `cli/` package but builds with a compile-time flag that strips out paid features, subscription logic, credits display, and mode switching — leaving only the FREE mode experience.
 
 ---
 
@@ -8,7 +8,7 @@ Freebuff is a free-only variant of the Codebuff CLI, distributed as a separate n
 
 ### Environment Variable
 
-- **`FREEBUFF_MODE=true`** — set during the build to produce a Freebuff binary.
+- **`FREEBUFF_MODE=true`** — set during the build to produce a SavantFree binary.
 - Injected via `--define process.env.FREEBUFF_MODE="true"` in `bun build`, following the same pattern as `CODEBUFF_IS_BINARY` and `CODEBUFF_CLI_VERSION`.
 
 ### Runtime Constant
@@ -25,35 +25,35 @@ This enables dead-code elimination in production builds — all `if (!IS_FREEBUF
 
 ## 2. Branding Changes
 
-| Area                  | Codebuff                                                       | Freebuff                                                       |
+| Area                  | SavantCode                                                       | SavantFree                                                       |
 | --------------------- | -------------------------------------------------------------- | -------------------------------------------------------------- |
-| Terminal title prefix | `Codebuff: `                                                   | `Freebuff: `                                                   |
-| CLI commander name    | `codebuff`                                                     | `freebuff`                                                     |
-| npm package name      | `codebuff`                                                     | `freebuff`                                                     |
-| Binary name           | `codebuff`                                                     | `freebuff`                                                     |
-| App header text       | "Codebuff will run commands on your behalf to help you build." | "Freebuff will run commands on your behalf to help you build." |
-| ASCII logo            | `CODEBUFF` block letters                                       | `FREEBUFF` block letters (new logo)                            |
+| Terminal title prefix | `SavantCode: `                                                   | `SavantFree: `                                                   |
+| CLI commander name    | `savant-code`                                                     | `savant-free`                                                     |
+| npm package name      | `savant-code`                                                     | `savant-free`                                                     |
+| Binary name           | `savant-code`                                                     | `savant-free`                                                     |
+| App header text       | "SavantCode will run commands on your behalf to help you build." | "SavantFree will run commands on your behalf to help you build." |
+| ASCII logo            | `SAVANT_CODE` block letters                                       | `FREEBUFF` block letters (new logo)                            |
 | Description           | "AI coding agent"                                              | "Free AI coding assistant"                                     |
-| Homepage              | codebuff.com                                                   | codebuff.com/free (or same)                                    |
-| `WEBSITE_URL` usage   | Points to codebuff.com                                         | Same (login, feedback, etc. stay on codebuff.com)              |
+| Homepage              | savant-code.com                                                   | savant-code.com/free (or same)                                    |
+| `WEBSITE_URL` usage   | Points to savant-code.com                                         | Same (login, feedback, etc. stay on savant-code.com)              |
 
 ### Files to modify (conditional on `IS_FREEBUFF`)
 
-- **`cli/src/utils/terminal-title.ts`** — Change `TITLE_PREFIX` from `'Codebuff: '` to `'Freebuff: '` when `IS_FREEBUFF`.
+- **`cli/src/utils/terminal-title.ts`** — Change `TITLE_PREFIX` from `'SavantCode: '` to `'SavantFree: '` when `IS_FREEBUFF`.
 - **`cli/src/login/constants.ts`** — Add a `LOGO_FREEBUFF` ASCII art variant, select based on `IS_FREEBUFF`.
-- **`cli/src/app.tsx`** — Conditional header text ("Freebuff will run commands...").
-- **`cli/src/index.tsx`** — Change commander `.name('freebuff')` and `.description(...)` when `IS_FREEBUFF`.
+- **`cli/src/app.tsx`** — Conditional header text ("SavantFree will run commands...").
+- **`cli/src/index.tsx`** — Change commander `.name('savant-free')` and `.description(...)` when `IS_FREEBUFF`.
 
 ---
 
 ## 3. Mode Restrictions
 
-Freebuff only supports **FREE mode**. All mode-related features are stripped.
+SavantFree only supports **FREE mode**. All mode-related features are stripped.
 
 ### Behavior
 
 - `agentMode` is always `'FREE'` and never changes.
-- The initial mode flag (`--free`, `--max`, `--plan`) CLI options are removed in Freebuff; mode is hardcoded.
+- The initial mode flag (`--free`, `--max`, `--plan`) CLI options are removed in SavantFree; mode is hardcoded.
 - No mode divider messages are ever inserted into chat history.
 
 ### Files to modify
@@ -70,7 +70,7 @@ Freebuff only supports **FREE mode**. All mode-related features are stripped.
 
 ## 4. Slash Commands
 
-### Commands to REMOVE in Freebuff
+### Commands to REMOVE in SavantFree
 
 | Command                                            | Reason                                                                                         |
 | -------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
@@ -110,7 +110,7 @@ Freebuff only supports **FREE mode**. All mode-related features are stripped.
 
 ## 5. Credits & Subscription UI
 
-Freebuff never displays credits, usage, subscription info, or out-of-credits states.
+SavantFree never displays credits, usage, subscription info, or out-of-credits states.
 
 ### Components to suppress (render `null` when `IS_FREEBUFF`)
 
@@ -149,9 +149,9 @@ When `IS_FREEBUFF`, these input modes should be unreachable:
 
 ## 6. Help Menu
 
-The `/help` banner in Freebuff should be simplified. Remove the **Credits** section entirely.
+The `/help` banner in SavantFree should be simplified. Remove the **Credits** section entirely.
 
-### Freebuff Help Content
+### SavantFree Help Content
 
 ```
 Shortcuts
@@ -177,7 +177,7 @@ No "Credits" section. No `/subscribe`, `/usage`, or `/ads:enable` references.
 
 ## 7. Ads Behavior
 
-In Freebuff, ads are **always enabled** and **cannot be disabled**.
+In SavantFree, ads are **always enabled** and **cannot be disabled**.
 
 - The ad banner always renders (when an ad is available).
 - The "Hide ads" link in the info panel is replaced with "Ads are required in Free mode." (this already exists in `ad-banner.tsx` when `isFreeMode` is true).
@@ -195,57 +195,57 @@ In Freebuff, ads are **always enabled** and **cannot be disabled**.
 
 ### Directory Structure
 
-The `freebuff/` directory is organized as a product-level directory with subdirectories for each surface (CLI, web, etc.):
+The `savant-free/` directory is organized as a product-level directory with subdirectories for each surface (CLI, web, etc.):
 
 ```
-freebuff/
+savant-free/
 ├── SPEC.md           # This file (product-level spec)
 ├── README.md         # Product-level documentation
 ├── cli/              # CLI build & release infrastructure
 │   ├── build.ts      # Build script that sets FREEBUFF_MODE=true
 │   └── release/
-│       ├── package.json  # npm package metadata (name: "freebuff")
+│       ├── package.json  # npm package metadata (name: "savant-free")
 │       ├── index.js      # Thin product configuration entry point
 │       └── README.md     # npm package README
-└── web/              # (Future) Freebuff website code
+└── web/              # (Future) SavantFree website code
 ```
 
-This structure allows `freebuff/web/` (or other surfaces) to be added alongside the CLI without restructuring.
+This structure allows `savant-free/web/` (or other surfaces) to be added alongside the CLI without restructuring.
 
-### Build Script (`freebuff/cli/build.ts`)
+### Build Script (`savant-free/cli/build.ts`)
 
 Wraps `cli/scripts/build-binary.ts` with:
 
 ```bash
-FREEBUFF_MODE=true bun cli/scripts/build-binary.ts freebuff <version>
+FREEBUFF_MODE=true bun cli/scripts/build-binary.ts savant-free <version>
 ```
 
 The existing `build-binary.ts` already supports a custom binary name argument and passes `NEXT_PUBLIC_*` env vars. We add `FREEBUFF_MODE` to the `defineFlags` array in `build-binary.ts`.
 
-### Release Package (`freebuff/cli/release/package.json`)
+### Release Package (`savant-free/cli/release/package.json`)
 
 Mirrors `cli/release/package.json` but with:
 
-- `"name": "freebuff"`
+- `"name": "savant-free"`
 - `"description": "Free AI coding assistant"`
-- `"bin": { "freebuff": "index.js" }`
+- `"bin": { "savant-free": "index.js" }`
 - Shared launcher implementation from `cli/release-core/`, materialized during `npm pack`
 - Downloads the platform-specific binary on first launch
-- Binary stored at `~/.config/manicode/freebuff` (or `freebuff.exe` on Windows)
+- Binary stored at `~/.config/manicode/savant-free` (or `savant-free.exe` on Windows)
 
 ### GitHub Workflow
 
-New file: `.github/workflows/freebuff-release.yml`
+New file: `.github/workflows/savant-free-release.yml`
 
 Mirrors `cli-release-prod.yml` with these changes:
 
 - **Trigger**: `workflow_dispatch` (manual) or scheduled
-- **Binary name**: `freebuff`
-- **Version source**: `freebuff/cli/release/package.json`
-- **Git tags**: `freebuff-v<version>`
-- **npm publish**: `freebuff` package
+- **Binary name**: `savant-free`
+- **Version source**: `savant-free/cli/release/package.json`
+- **Git tags**: `savant-free-v<version>`
+- **npm publish**: `savant-free` package
 - **Environment overrides**: `{"FREEBUFF_MODE": "true", "NEXT_PUBLIC_CB_ENVIRONMENT": "prod"}`
-- **GitHub Release**: Creates releases in `CodebuffAI/codebuff-community` (or a separate repo)
+- **GitHub Release**: Creates releases in `savant0x/savant-code-community` (or a separate repo)
 
 ---
 
@@ -262,7 +262,7 @@ const defineFlags = [
     'process.env.CODEBUFF_CLI_TARGET',
     `"${targetInfo.platform}-${targetInfo.arch}"`,
   ],
-  // Freebuff mode flag
+  // SavantFree mode flag
   ['process.env.FREEBUFF_MODE', `"${process.env.FREEBUFF_MODE ?? 'false'}"`],
   ...nextPublicEnvVars,
 ]
@@ -272,7 +272,7 @@ const defineFlags = [
 
 ## 10. Features That Stay Unchanged
 
-These features work identically in Freebuff:
+These features work identically in SavantFree:
 
 - **Authentication** — Login/logout flow, API key storage
 - **Chat** — Message history, streaming, agent spawning
@@ -308,7 +308,7 @@ The server already handles FREE mode correctly:
 - Free-mode-allowed agent+model combos cost 0 credits
 - Ad impressions in FREE mode already don't grant credits
 
-No server-side changes are needed for Freebuff, **except** the release download API (`/api/releases/download/`) must be configured to serve `freebuff-*` binary tarballs. This may require updating the download route to recognize Freebuff release tags (`freebuff-v*`).
+No server-side changes are needed for SavantFree, **except** the release download API (`/api/releases/download/`) must be configured to serve `savant-free-*` binary tarballs. This may require updating the download route to recognize SavantFree release tags (`savant-free-v*`).
 
 ---
 
@@ -323,8 +323,8 @@ No server-side changes are needed for Freebuff, **except** the release download 
 
 ### Integration Tests
 
-- Build a Freebuff binary and verify:
-  - Title says "Freebuff"
+- Build a SavantFree binary and verify:
+  - Title says "SavantFree"
   - No mode toggle visible
   - `/subscribe`, `/usage` commands not found
   - Help menu has no Credits section
@@ -332,7 +332,7 @@ No server-side changes are needed for Freebuff, **except** the release download 
 
 ### E2E (tmux)
 
-- Use `codebuff-local-cli` agent with `FREEBUFF_MODE=true` to verify visual output
+- Use `savant-code-local-cli` agent with `FREEBUFF_MODE=true` to verify visual output
 
 ---
 
@@ -360,9 +360,9 @@ No server-side changes are needed for Freebuff, **except** the release download 
 
 ### Phase 4: Build & Release Infrastructure
 
-11. Create `freebuff/cli/release/` package files
-12. Create `freebuff/cli/build.ts` script
-13. Create `.github/workflows/freebuff-release.yml`
+11. Create `savant-free/cli/release/` package files
+12. Create `savant-free/cli/build.ts` script
+13. Create `.github/workflows/savant-free-release.yml`
 
 ### Phase 5: Testing
 

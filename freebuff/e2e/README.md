@@ -1,6 +1,6 @@
-# Freebuff E2E Tests
+# SavantFree E2E Tests
 
-End-to-end tests for the Freebuff CLI binary. Tests verify that the compiled binary works correctly by interacting with it via tmux.
+End-to-end tests for the SavantFree CLI binary. Tests verify that the compiled binary works correctly by interacting with it via tmux.
 
 ## Architecture
 
@@ -8,14 +8,14 @@ Two testing approaches are supported:
 
 ### 1. Direct tmux tests (fast, deterministic)
 
-Use the `FreebuffSession` class to start the binary in tmux, send commands, capture output, and assert directly.
+Use the `SavantFree$1` class to start the binary in tmux, send commands, capture output, and assert directly.
 
 ```typescript
 import { describe, test, expect, afterEach } from 'bun:test'
-import { FreebuffSession, requireFreebuffBinary } from '../utils'
+import { SavantFree$1, requireFreebuffBinary } from '../utils'
 
 describe('My Feature', () => {
-  let session: FreebuffSession | null = null
+  let session: SavantFree$1 | null = null
 
   afterEach(async () => {
     if (session) await session.stop()
@@ -24,7 +24,7 @@ describe('My Feature', () => {
 
   test('works correctly', async () => {
     const binary = requireFreebuffBinary()
-    session = await FreebuffSession.start(binary)
+    session = await SavantFree$1.start(binary)
 
     await session.send('/help')
     const output = await session.capture(2)
@@ -36,12 +36,12 @@ describe('My Feature', () => {
 
 ### 2. SDK agent-driven tests (AI-powered verification)
 
-Use the Codebuff SDK to run a testing agent that interacts with Freebuff via custom tmux tools. The agent reasons about the CLI output and verifies complex behaviors.
+Use the SavantCode SDK to run a testing agent that interacts with SavantFree via custom tmux tools. The agent reasons about the CLI output and verifies complex behaviors.
 
 ```typescript
 import { describe, test, expect, afterEach } from 'bun:test'
-import { CodebuffClient } from '@codebuff/sdk'
-import { freebuffTesterAgent } from '../agent/freebuff-tester'
+import { SavantCodeClient } from '@savant-code/sdk'
+import { savant-free$1 } from '../agent/savant-free-tester'
 import { createFreebuffTmuxTools, requireFreebuffBinary } from '../utils'
 
 describe('Agent Test', () => {
@@ -60,11 +60,11 @@ describe('Agent Test', () => {
     const tmuxTools = createFreebuffTmuxTools(binary)
     cleanup = tmuxTools.cleanup
 
-    const client = new CodebuffClient({ apiKey })
+    const client = new SavantCodeClient({ apiKey })
     const result = await client.run({
-      agent: freebuffTesterAgent.id,
-      prompt: 'Start Freebuff and verify the branding is correct.',
-      agentDefinitions: [freebuffTesterAgent],
+      agent: savant-free$1.id,
+      prompt: 'Start SavantFree and verify the branding is correct.',
+      agentDefinitions: [savant-free$1],
       customToolDefinitions: tmuxTools.tools,
       handleEvent: () => {},
     })
@@ -77,7 +77,7 @@ describe('Agent Test', () => {
 ## Prerequisites
 
 - **tmux** must be installed: `brew install tmux` (macOS) or `sudo apt-get install tmux` (Ubuntu)
-- **Freebuff binary** must be built: `bun freebuff/cli/build.ts 0.0.0-dev`
+- **SavantFree binary** must be built: `bun savant-free/cli/build.ts 0.0.0-dev`
 - **SDK built** (for agent tests): `cd sdk && bun run build`
 - **CODEBUFF_API_KEY** (for agent tests only): Set this environment variable
 
@@ -86,34 +86,34 @@ describe('Agent Test', () => {
 ### Build the binary first
 
 ```bash
-bun freebuff/cli/build.ts 0.0.0-dev
+bun savant-free/cli/build.ts 0.0.0-dev
 ```
 
 ### Run all tests
 
 ```bash
-bun test freebuff/e2e/tests/
+bun test savant-free/e2e/tests/
 ```
 
 ### Run a specific test
 
 ```bash
-bun test freebuff/e2e/tests/version.e2e.test.ts
-bun test freebuff/e2e/tests/startup.e2e.test.ts
-bun test freebuff/e2e/tests/help-command.e2e.test.ts
-bun test freebuff/e2e/tests/agent-startup.e2e.test.ts
+bun test savant-free/e2e/tests/version.e2e.test.ts
+bun test savant-free/e2e/tests/startup.e2e.test.ts
+bun test savant-free/e2e/tests/help-command.e2e.test.ts
+bun test savant-free/e2e/tests/agent-startup.e2e.test.ts
 ```
 
 ### Use a custom binary path
 
 ```bash
-FREEBUFF_BINARY=/path/to/freebuff bun test freebuff/e2e/tests/
+FREEBUFF_BINARY=/path/to/savant-free bun test savant-free/e2e/tests/
 ```
 
 ## Adding New Tests
 
-1. Create a new file in `freebuff/e2e/tests/` with the naming convention `<feature>.e2e.test.ts`
-2. Add the test name to `.github/workflows/freebuff-e2e.yml` matrix:
+1. Create a new file in `savant-free/e2e/tests/` with the naming convention `<feature>.e2e.test.ts`
+2. Add the test name to `.github/workflows/savant-free-e2e.yml` matrix:
 
 ```yaml
 matrix:
@@ -129,9 +129,9 @@ matrix:
 
 ## CI Workflow
 
-The `.github/workflows/freebuff-e2e.yml` workflow:
+The `.github/workflows/savant-free-e2e.yml` workflow:
 
-1. **Builds** the Freebuff binary once (linux-x64)
+1. **Builds** the SavantFree binary once (linux-x64)
 2. **Runs each test file in parallel** via GitHub Actions matrix strategy
 3. **Uploads tmux session logs** on failure for debugging
 
@@ -141,11 +141,11 @@ Triggers:
 
 ## Utilities Reference
 
-### `FreebuffSession`
+### `SavantFree$1`
 
 | Method | Description |
 |--------|-------------|
-| `FreebuffSession.start(binaryPath)` | Start binary in tmux, returns session |
+| `SavantFree$1.start(binaryPath)` | Start binary in tmux, returns session |
 | `session.send(text)` | Send text input (presses Enter) |
 | `session.sendKey(key)` | Send special key (e.g. `'C-c'`, `'Escape'`) |
 | `session.capture(waitSec?)` | Capture terminal output |

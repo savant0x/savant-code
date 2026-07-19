@@ -1,15 +1,15 @@
 import { setActivity } from './util/activity-tracking'
-import { AnalyticsEvent} from '@codebuff/common/constants/analytics-events'
+import { AnalyticsEvent} from '@savant-code/common/constants/analytics-events'
 import {
   isFreeMode,
   shouldUseLocalTokenCountForFreebuffDeepseekFlash,
-} from '@codebuff/common/constants/free-agents'
+} from '@savant-code/common/constants/free-agents'
 import {
   supportsAssistantPrefill,
   supportsCacheControl,
-} from '@codebuff/common/old-constants'
-import { TOOLS_WHICH_WONT_FORCE_NEXT_STEP } from '@codebuff/common/tools/constants'
-import { buildArray } from '@codebuff/common/util/array'
+} from '@savant-code/common/old-constants'
+import { TOOLS_WHICH_WONT_FORCE_NEXT_STEP } from '@savant-code/common/tools/constants'
+import { buildArray } from '@savant-code/common/util/array'
 import {
   AbortError,
   FETCH_IDLE_TIMEOUT_USER_MESSAGE,
@@ -19,15 +19,15 @@ import {
   isAbortError,
   isFetchIdleTimeoutError,
   isTransientNetworkError,
-} from '@codebuff/common/util/error'
-import { serializeCacheDebugCorrelation } from '@codebuff/common/util/cache-debug'
-import { systemMessage, userMessage } from '@codebuff/common/util/messages'
+} from '@savant-code/common/util/error'
+import { serializeCacheDebugCorrelation } from '@savant-code/common/util/cache-debug'
+import { systemMessage, userMessage } from '@savant-code/common/util/messages'
 import { type ToolSet } from 'ai'
 import { cloneDeep, mapValues } from 'lodash'
 import z from 'zod/v4'
 
 import { CACHE_DEBUG_FULL_LOGGING } from './constants'
-import { callTokenCountAPI } from './llm-api/codebuff-web-api'
+import { callTokenCountAPI } from './llm-api/savant-code-web-api'
 import { getMCPToolData } from './mcp'
 import { getAgentStreamFromTemplate } from './prompt-agent-stream'
 import { isThinkOnlyResponse } from './util/think-tags'
@@ -59,38 +59,38 @@ import {
   countTokensMessages,
 } from './util/token-counter'
 
-import type { AgentTemplate } from '@codebuff/common/types/agent-template'
-import type { TrackEventFn } from '@codebuff/common/types/contracts/analytics'
+import type { AgentTemplate } from '@savant-code/common/types/agent-template'
+import type { TrackEventFn } from '@savant-code/common/types/contracts/analytics'
 import type {
   AddAgentStepFn,
   FinishAgentRunFn,
   StartAgentRunFn,
-} from '@codebuff/common/types/contracts/database'
+} from '@savant-code/common/types/contracts/database'
 import type {
   CacheDebugUsageData,
   PromptAiSdkFn,
-} from '@codebuff/common/types/contracts/llm'
-import type { Logger } from '@codebuff/common/types/contracts/logger'
-import type { TraceWriter } from '@codebuff/common/types/contracts/trace'
-import type { ParamsExcluding } from '@codebuff/common/types/function-params'
+} from '@savant-code/common/types/contracts/llm'
+import type { Logger } from '@savant-code/common/types/contracts/logger'
+import type { TraceWriter } from '@savant-code/common/types/contracts/trace'
+import type { ParamsExcluding } from '@savant-code/common/types/function-params'
 import type {
   Message,
   ToolMessage,
-} from '@codebuff/common/types/messages/codebuff-message'
+} from '@savant-code/common/types/messages/savant-code-message'
 import type {
   TextPart,
   ImagePart,
-} from '@codebuff/common/types/messages/content-part'
-import type { PrintModeEvent } from '@codebuff/common/types/print-mode'
+} from '@savant-code/common/types/messages/content-part'
+import type { PrintModeEvent } from '@savant-code/common/types/print-mode'
 import type {
   AgentTemplateType,
   AgentState,
   AgentOutput,
-} from '@codebuff/common/types/session-state'
+} from '@savant-code/common/types/session-state'
 import type {
   CustomToolDefinitions,
   ProjectFileContext,
-} from '@codebuff/common/util/file'
+} from '@savant-code/common/util/file'
 
 // Convert a tool's stored inputSchema into JSON Schema suitable for Anthropic's
 // count_tokens API. Built-in and MCP tools store a Zod schema here; serializing
@@ -1003,11 +1003,11 @@ export async function loopAgentSteps(
         countTokens(system) +
         countTokensJson(toolsForTokenCount)
 
-      // Free (freebuff) runs never call the token-count web API: the awaited
+      // Free (savant-free) runs never call the token-count web API: the awaited
       // per-step round-trip (full history + tools shipped to the server, which
       // relays to Anthropic) adds seconds of serial overhead to every step and
       // ~1M+ requests/day of web-service load, and free-mode context limits
-      // don't need Anthropic-exact counts. Paid Codebuff runs keep the
+      // don't need Anthropic-exact counts. Paid SavantCode runs keep the
       // accurate API count.
       if (
         isFreeMode(params.costMode) ||
@@ -1021,7 +1021,7 @@ export async function loopAgentSteps(
         // Check context token count via the web API. Pass the run's apiKey
         // explicitly: interactive CLI users don't have CODEBUFF_API_KEY set in
         // their environment, so relying on the ciEnv fallback made this call
-        // fail every step ('Missing Codebuff base URL or API key') and forced
+        // fail every step ('Missing SavantCode base URL or API key') and forced
         // the less accurate local estimate.
         const tokenCountResult = await callTokenCountAPI({
           messages: messagesWithStepPrompt,

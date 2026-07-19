@@ -1,18 +1,18 @@
 import {
   flattenTree,
   getProjectFileTree,
-} from '@codebuff/common/project-file-tree'
+} from '@savant-code/common/project-file-tree'
 import micromatch from 'micromatch'
 
-import type { CodebuffToolOutput } from '@codebuff/common/tools/list'
-import type { CodebuffFileSystem } from '@codebuff/common/types/filesystem'
+import type { SavantCodeToolOutput } from '@savant-code/common/tools/list'
+import type { SavantCodeFileSystem } from '@savant-code/common/types/filesystem'
 
 export async function glob(params: {
   pattern: string
   projectPath: string
   cwd?: string
-  fs: CodebuffFileSystem
-}): Promise<CodebuffToolOutput<'glob'>> {
+  fs: SavantCodeFileSystem
+}): Promise<SavantCodeToolOutput<'glob'>> {
   const { pattern, projectPath, cwd, fs } = params
 
   try {

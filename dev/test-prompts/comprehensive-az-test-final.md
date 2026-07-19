@@ -263,8 +263,8 @@ bun test common/src/util/__tests__/paths.test.ts  # 18 pass / 4 skip / 0 fail
 ```bash
 # Verify "Savant" branding throughout
 /code_search "Savant" cli/src/ --type tsx | wc -l
-/code_search "freebuff" cli/src/ --type tsx | wc -l
-# Savant count should be >> freebuff count (rebrand complete)
+/code_search "savant-free" cli/src/ --type tsx | wc -l
+# Savant count should be >> savant-free count (rebrand complete)
 
 # Verify ECHO Protocol references
 /code_search "ECHO" ECHO.md | head -5

@@ -1,16 +1,16 @@
 
-import * as mainPromptModule from '@codebuff/agent-runtime/main-prompt'
-import { getInitialSessionState } from '@codebuff/common/types/session-state'
-import { getStubProjectFileContext } from '@codebuff/common/util/file'
+import * as mainPromptModule from '@savant-code/agent-runtime/main-prompt'
+import { getInitialSessionState } from '@savant-code/common/types/session-state'
+import { getStubProjectFileContext } from '@savant-code/common/util/file'
 import { afterEach, describe, expect, it, mock, spyOn } from 'bun:test'
 
-import { CodebuffClient } from '../client'
+import { SavantCodeClient } from '../client'
 import * as databaseModule from '../impl/database'
 
-import type { CodebuffClientOptions } from '../run'
-import type { PrintModeEvent } from '@codebuff/common/types/print-mode'
+import type { SavantCodeClientOptions } from '../run'
+import type { PrintModeEvent } from '@savant-code/common/types/print-mode'
 
-describe('CodebuffClient handleEvent / handleStreamChunk', () => {
+describe('SavantCodeClient handleEvent / handleStreamChunk', () => {
   afterEach(() => {
     mock.restore()
   })
@@ -105,13 +105,13 @@ describe('CodebuffClient handleEvent / handleStreamChunk', () => {
     )
 
     type StreamChunk = Parameters<
-      NonNullable<CodebuffClientOptions['handleStreamChunk']>
+      NonNullable<SavantCodeClientOptions['handleStreamChunk']>
     >[0]
 
     const events: PrintModeEvent[] = []
     const streamChunks: StreamChunk[] = []
 
-    const client = new CodebuffClient({
+    const client = new SavantCodeClient({
       apiKey: 'test-key',
     })
 

@@ -1,5 +1,5 @@
 {
-  "name": "@codebuff/llm-providers",
+  "name": "@savant-code/llm-providers",
   "version": "0.0.1",
   "private": true,
   "type": "module",

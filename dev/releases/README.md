@@ -41,4 +41,4 @@ Three reasons (per FID-2026-0718-025 + Thinker-with-files-gemini review):
 
 ---
 
-<sub>Part of the [codebuff/savant-code monorepo](https://github.com/savant0x/savant-code), governed by the [ECHO Protocol v0.2.0](../../ECHO.md).</sub>
+<sub>Part of the [savant-code/savant-code monorepo](https://github.com/savant0x/savant-code), governed by the [ECHO Protocol v0.2.0](../../ECHO.md).</sub>

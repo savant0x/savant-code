@@ -1,11 +1,11 @@
-import { toolNames } from '@codebuff/common/tools/constants'
-import { buildArray } from '@codebuff/common/util/array'
-import { AbortError } from '@codebuff/common/util/error'
+import { toolNames } from '@savant-code/common/tools/constants'
+import { buildArray } from '@savant-code/common/util/array'
+import { AbortError } from '@savant-code/common/util/error'
 import {
   assistantMessage,
   userMessage,
-} from '@codebuff/common/util/messages'
-import { generateCompactId } from '@codebuff/common/util/string'
+} from '@savant-code/common/util/messages'
+import { generateCompactId } from '@savant-code/common/util/string'
 
 import { processStreamWithTools } from '../tool-stream-parser'
 import { INCLUDE_REASONING_IN_MESSAGE_HISTORY } from '../constants'
@@ -19,17 +19,17 @@ import { withSystemTags } from '../util/messages'
 import type { CustomToolCall, ExecuteToolCallParams } from './tool-executor'
 import type { AgentTemplate } from '../templates/types'
 import type { FileProcessingState } from './handlers/tool/write-file'
-import type { ToolName } from '@codebuff/common/tools/constants'
-import type { CodebuffToolCall } from '@codebuff/common/tools/list'
-import type { Logger } from '@codebuff/common/types/contracts/logger'
-import type { ParamsExcluding } from '@codebuff/common/types/function-params'
+import type { ToolName } from '@savant-code/common/tools/constants'
+import type { SavantCodeToolCall } from '@savant-code/common/tools/list'
+import type { Logger } from '@savant-code/common/types/contracts/logger'
+import type { ParamsExcluding } from '@savant-code/common/types/function-params'
 import type {
   Message,
   ToolMessage,
-} from '@codebuff/common/types/messages/codebuff-message'
-import type { PrintModeEvent } from '@codebuff/common/types/print-mode'
-import type { Subgoal } from '@codebuff/common/types/session-state'
-import type { ProjectFileContext } from '@codebuff/common/util/file'
+} from '@savant-code/common/types/messages/savant-code-message'
+import type { PrintModeEvent } from '@savant-code/common/types/print-mode'
+import type { Subgoal } from '@savant-code/common/types/session-state'
+import type { ProjectFileContext } from '@savant-code/common/util/file'
 
 export async function processStream(
   params: {
@@ -88,8 +88,8 @@ export async function processStream(
   // === MUTABLE STATE ===
   const toolResults: ToolMessage[] = []
   const toolResultsToAddToMessageHistory: ToolMessage[] = []
-  const toolCalls: (CodebuffToolCall | CustomToolCall)[] = []
-  const toolCallsToAddToMessageHistory: (CodebuffToolCall | CustomToolCall)[] = []
+  const toolCalls: (SavantCodeToolCall | CustomToolCall)[] = []
+  const toolCallsToAddToMessageHistory: (SavantCodeToolCall | CustomToolCall)[] = []
   const assistantMessages: Message[] = []
   let hadToolCallError = false
   const errorMessages: Message[] = []

@@ -1,4 +1,4 @@
-import { GEMINI_3_1_FLASH_LITE_MODEL_ID } from '@codebuff/common/constants/gemini'
+import { GEMINI_3_1_FLASH_LITE_MODEL_ID } from '@savant-code/common/constants/gemini'
 
 import { publisher } from './constants'
 

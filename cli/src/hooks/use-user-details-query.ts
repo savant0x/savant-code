@@ -1,15 +1,15 @@
 import { useQuery } from '@tanstack/react-query'
 
 import { getAuthToken } from '../utils/auth'
-import { getApiClient, setApiClientAuthToken } from '../utils/codebuff-api'
+import { getApiClient, setApiClientAuthToken } from '../utils/savant-code-api'
 import { logger as defaultLogger } from '../utils/logger'
 
 import type {
-  CodebuffApiClient,
+  SavantCodeApiClient,
   UserField,
   UserDetails,
-} from '../utils/codebuff-api'
-import type { Logger } from '@codebuff/common/types/contracts/logger'
+} from '../utils/savant-code-api'
+import type { Logger } from '@savant-code/common/types/contracts/logger'
 
 // Re-export types for backwards compatibility
 export type { UserField, UserDetails }
@@ -25,7 +25,7 @@ interface FetchUserDetailsParams<T extends UserField> {
   authToken: string
   fields: readonly T[]
   logger?: Logger
-  apiClient?: CodebuffApiClient
+  apiClient?: SavantCodeApiClient
 }
 
 /**
@@ -37,7 +37,7 @@ export async function fetchUserDetails<T extends UserField>({
   logger = defaultLogger,
   apiClient: providedApiClient,
 }: FetchUserDetailsParams<T>): Promise<UserDetails<T> | null> {
-  let apiClient: CodebuffApiClient
+  let apiClient: SavantCodeApiClient
   if (providedApiClient) {
     apiClient = providedApiClient
   } else {

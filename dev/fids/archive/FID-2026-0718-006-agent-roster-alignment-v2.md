@@ -1,4 +1,4 @@
-# FID-2026-0718-006 — high — Agent Roster Alignment (Savant Spec ↔ Codebuff Codebase)
+# FID-2026-0718-006 — high — Agent Roster Alignment (Savant Spec ↔ SavantCode Codebase)
 
 **Created:** 2026-07-18
 **Status:** Open
@@ -11,8 +11,8 @@
 ## Summary
 
 The ARCHITECTURE.md spec defines 9 specialized agents with strict separation of duties.
-The codebase has 69 bundled agents inherited from Codebuff. The orchestrator (`base2`)
-spawns a mix of Savant agents and Codebuff agents with overlapping responsibilities.
+The codebase has 69 bundled agents inherited from SavantCode. The orchestrator (`base2`)
+spawns a mix of Savant agents and SavantCode agents with overlapping responsibilities.
 This FID tracks the alignment to the 9-agent Savant architecture without losing capabilities.
 
 ---
@@ -109,9 +109,9 @@ This FID tracks the alignment to the 9-agent Savant architecture without losing 
 1. **Orchestrator:** Remove write tools — strict separation of duties
 2. **Thinker:** Consolidate to 1 agent — inherits parent model, no model variants
 3. **Verifier:** NO tools — reads only via message history
-4. **Merge Strategy:** Pure merge — all capabilities absorbed into Savant agents directly. No internal delegation to Codebuff-named agents. The codebase is becoming its own source (Savant-Code) and will not retain Codebuff naming.
+4. **Merge Strategy:** Pure merge — all capabilities absorbed into Savant agents directly. No internal delegation to SavantCode-named agents. The codebase is becoming its own source (Savant-Code) and will not retain SavantCode naming.
 5. **Best-of-n:** Preserve best-of-n quality by merging handleSteps logic into Forge and Verifier respectively.
-6. **Agent files:** Codebuff agent files that are fully absorbed can be deleted after merge. Agent files that provide infrastructure (basher, context-pruner, tmux-cli, browser-use, librarian) stay.
+6. **Agent files:** SavantCode agent files that are fully absorbed can be deleted after merge. Agent files that provide infrastructure (basher, context-pruner, tmux-cli, browser-use, librarian) stay.
 
 ### Fix 1: Strip Write Tools from Orchestrator
 
@@ -133,7 +133,7 @@ This FID tracks the alignment to the 9-agent Savant architecture without losing 
 
 **File:** `agents/base2/base2.ts` — `createBase2()` function
 
-**Change:** Replace Codebuff agents with Savant equivalents:
+**Change:** Replace SavantCode agents with Savant equivalents:
 
 **Remove:**
 - `code-searcher` → Detective absorbs
@@ -239,9 +239,9 @@ toolNames: ['code_search', 'set_output', 'list_directory', 'glob', 'read_files',
 
 **Question:** `createReviewer()` creates 10+ variants with different models. Consolidating loses model diversity.
 
-**Answer:** The Verifier's job is to read code and give feedback — model quality matters but any capable model works. `withParentModel()` will override the Verifier's model to match the parent. The 10+ reviewer variants exist for Codebuff's multi-model strategy, not for Savant's single-model design. Consolidating to 1 Verifier is correct.
+**Answer:** The Verifier's job is to read code and give feedback — model quality matters but any capable model works. `withParentModel()` will override the Verifier's model to match the parent. The 10+ reviewer variants exist for SavantCode's multi-model strategy, not for Savant's single-model design. Consolidating to 1 Verifier is correct.
 
-**Robustness:** The `createReviewer()` factory stays available for Codebuff-specific variants. We just don't reference them from the Savant orchestrator's spawnableAgents.
+**Robustness:** The `createReviewer()` factory stays available for SavantCode-specific variants. We just don't reference them from the Savant orchestrator's spawnableAgents.
 
 ### Q5: Detective scope expansion
 
@@ -541,7 +541,7 @@ export function withParentModel(
 - `withParentModel()` after SELF-CORRECT fix: `{ ...agentTemplate, model: parentAgentTemplate.model, providerOptions: parentAgentTemplate.providerOptions }`
 - The factory's providerOptions get overridden by withParentModel() at spawn time
 
-**Answer:** After the withParentModel() fix, the factory's hardcoded providerOptions are overridden. This is acceptable for now. The factory pattern is Codebuff heritage — it creates model-specific variants. After consolidation to 1 Forge, the factory's model parameter becomes just a fallback default.
+**Answer:** After the withParentModel() fix, the factory's hardcoded providerOptions are overridden. This is acceptable for now. The factory pattern is SavantCode heritage — it creates model-specific variants. After consolidation to 1 Forge, the factory's model parameter becomes just a fallback default.
 
 **Recommendation:** Leave the factory as-is for now. The withParentModel() fix handles the override. If the factory becomes orphaned after deleting editor-gpt-5.ts, consider simplifying it to remove the model parameter.
 
@@ -565,14 +565,14 @@ export function withParentModel(
 - Its own `toolNames`: `apply_patch`, `write_file`, `spawn_agents`, `read_files`, `read_subtree`, `suggest_followups`, `write_todos`, `ask_user`, `skill`, `set_output`, `transition_phase`
 - Its own `spawnableAgents`: `scout`, `code-searcher`, `directory-lister`, `glob-matcher`, `researcher-web`, `researcher-docs`, `basher`, `thinker-gpt`, `code-reviewer-gpt`, `gpt-5-agent`, `context-pruner`, `recorder`, `scribe`
 - Its own system prompt referencing `file-pickers`, `code-searcher`, `thinker-gpt`, `gpt-5-agent`, `code-reviewer-gpt`
-- Its own stepPrompt and instructionsPrompt with the same Codebuff agent references
+- Its own stepPrompt and instructionsPrompt with the same SavantCode agent references
 - `base-deep-evals.ts` inherits from `createBaseDeep()` — same issue
 
 **Answer:** base-deep does NOT inherit from createBase2(). It is a completely independent orchestrator. Fixing createBase2() does NOT fix base-deep. This is a CRITICAL gap in the original FID.
 
 **Fix:** Apply the same Fixes 1-2 to `createBaseDeep()`: remove write tools (apply_patch, write_file), update spawnableAgents to Savant agents, update system prompt/instructionsPrompt/stepPrompt. This is Fix 12.
 
-**Impact:** base-deep and base-deep-evals both get aligned to the Savant spec. Without this fix, they remain Codebuff-style orchestrators with write tools and Codebuff agent references.
+**Impact:** base-deep and base-deep-evals both get aligned to the Savant spec. Without this fix, they remain SavantCode-style orchestrators with write tools and SavantCode agent references.
 
 **Files affected:** `agents/base2/base-deep.ts`, `agents/base2/base-deep-evals.ts`
 
@@ -609,7 +609,7 @@ export function withParentModel(
 - `agents/file-explorer/file-lister.ts` — utility used by file-picker, absorbed by Detective
 - `agents/file-explorer/file-lister-max.ts` — max variant of file-lister
 
-**Answer:** Yes, all of these should be deleted. They are Codebuff agents being absorbed by Savant agents.
+**Answer:** Yes, all of these should be deleted. They are SavantCode agents being absorbed by Savant agents.
 
 **Fix:** Add to the deletion list. This is Fix 13.
 
@@ -635,7 +635,7 @@ export function withParentModel(
 
 **Files affected:** `agents/e2e/file-explorer.e2e.test.ts`, `agents/e2e/base2-free-summary-format.e2e.test.ts`
 
-### Q29: EXPLORE_PROMPT constant in base2.ts references Codebuff agents
+### Q29: EXPLORE_PROMPT constant in base2.ts references SavantCode agents
 
 **Question:** Line 443 of base2.ts defines `EXPLORE_PROMPT` which says: *"The file-picker and code-searcher agents are very useful to find relevant files -- try spawning multiple in parallel (say, 2-5 file-pickers + 1 code-searcher)"*. This is embedded in the system prompt.
 
@@ -696,14 +696,14 @@ No remaining missed questions. All import chains verified. All free-mode constan
 6. Fix 3: Verify Detective toolNames includes all search tools
 7. Fix 10: Update FREE_MODE_AGENT_MODELS and FREEBUFF_REVIEWER_AGENT_ID_BY_MODEL in free-agents.ts — replace all reviewer variants with 'verifier'
 8. Fix 1: Strip write tools from createBase2()
-9. Fix 2: Update spawnableAgents in createBase2() — remove Codebuff agents, add detective
+9. Fix 2: Update spawnableAgents in createBase2() — remove SavantCode agents, add detective
 10. Q26: Remove all FREEBUFF_GEMINI_THINKER imports, variables, and conditionals from base2.ts
 11. Fix 10 (cont): Update freeCodeReviewerAgentId in base2.ts to always be 'verifier'
 12. Q14/Q29: Update Orchestrator system prompt, instructionsPrompt, stepPrompt, EXPLORE_PROMPT
 13. Fix 12: Apply same Fixes 1-2 to base-deep.ts — strip write tools, update spawnableAgents, update system prompt/instructionsPrompt/stepPrompt
 14. Fix 12 (cont): Update base-deep-evals.ts if it overrides anything
 15. withParentModel() fix: Add providerOptions inheritance in spawn-agent-utils.ts
-16. Fix 13: Delete absorbed Codebuff agent files:
+16. Fix 13: Delete absorbed SavantCode agent files:
     - agents/general-agent/*.ts (gpt-5-agent, opus-agent)
     - agents/editor/editor-gpt-5.ts
     - agents/reviewer/*.ts (10 variants)

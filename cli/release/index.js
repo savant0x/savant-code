@@ -19,8 +19,8 @@ const { createLauncher } = require(
 )
 
 const launcher = createLauncher({
-  packageName: 'codebuff',
-  displayName: 'Codebuff',
+  packageName: 'savant-code',
+  displayName: 'SavantCode',
   tempDownloadDirName: '.download-temp',
 })
 

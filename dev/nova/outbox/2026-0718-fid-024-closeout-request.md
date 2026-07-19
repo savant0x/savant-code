@@ -15,7 +15,7 @@ FID-024 was scoped as a DECISION-FID for the 4 pre-push follow-up candidates rai
 
 ## 1 Claim to verify (source-true via direct file read)
 
-1. **`templates/README-TEMPLATE.md` bottom comment has the new LICENSE inheritance paragraph** — verify by reading the last 15 lines of the file. The insertion should appear immediately before the final closing `-->` and read: *"LICENSE: Private workspaces (`private: true` in package.json) DO NOT need a per-workspace LICENSE file — they inherit from the root `LICENSE` via the explicit `Apache-2.0` cross-link in your README's License section. Only publishable workspaces (`private: false` — currently only `@codebuff/sdk`) need their own LICENSE file. (Per FID-2026-0718-024 Decision B: DECLARE pattern over COPY or SYMLINK.)"*
+1. **`templates/README-TEMPLATE.md` bottom comment has the new LICENSE inheritance paragraph** — verify by reading the last 15 lines of the file. The insertion should appear immediately before the final closing `-->` and read: *"LICENSE: Private workspaces (`private: true` in package.json) DO NOT need a per-workspace LICENSE file — they inherit from the root `LICENSE` via the explicit `Apache-2.0` cross-link in your README's License section. Only publishable workspaces (`private: false` — currently only `@savant-code/sdk`) need their own LICENSE file. (Per FID-2026-0718-024 Decision B: DECLARE pattern over COPY or SYMLINK.)"*
 
 ---
 

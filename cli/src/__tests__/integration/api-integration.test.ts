@@ -1,10 +1,10 @@
-import { getUserInfoFromApiKey } from '@codebuff/sdk'
+import { getUserInfoFromApiKey } from '@savant-code/sdk'
 import { describe, test, expect, beforeEach, afterEach, mock } from 'bun:test'
 
-import type { Logger } from '@codebuff/common/types/contracts/logger'
+import type { Logger } from '@savant-code/common/types/contracts/logger'
 
 /**
- * Integration tests for API communication with Codebuff backend
+ * Integration tests for API communication with SavantCode backend
  *
  * These tests verify that the CLI correctly communicates with backend endpoints:
  * - /api/v1/me - User info retrieval with Bearer token auth
@@ -48,7 +48,7 @@ describe('API Integration', () => {
   const originalSetTimeout = globalThis.setTimeout
 
   beforeEach(() => {
-    process.env.NEXT_PUBLIC_CODEBUFF_APP_URL = 'https://example.codebuff.test'
+    process.env.NEXT_PUBLIC_CODEBUFF_APP_URL = 'https://example.savant-code.test'
     // Mock setTimeout to execute immediately for faster tests
     // This makes the retry backoff delays instant
     globalThis.setTimeout = ((
@@ -262,7 +262,7 @@ describe('API Integration', () => {
 
     test('should handle DNS resolution failures gracefully', async () => {
       const fetchMock = setFetchMock(async () => {
-        const error = new Error('getaddrinfo ENOTFOUND api.codebuff.local')
+        const error = new Error('getaddrinfo ENOTFOUND api.savant-code.local')
         error.name = 'ENOTFOUND'
         throw error
       })

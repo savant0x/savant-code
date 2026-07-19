@@ -5,7 +5,7 @@ import { useTheme } from '../hooks/use-theme'
 import { getVersion } from '../utils/version'
 import { IS_FREEBUFF } from '../utils/constants'
 import { loadCodebuffModelPreference } from '../utils/settings'
-import { useFreebuffModelStore } from '../state/freebuff-model-store'
+import { useFreebuffModelStore } from '../state/savant-free-model-store'
 import { useChatStore } from '../state/chat-store'
 import { AgentStack, Timeline } from './savant-ui'
 

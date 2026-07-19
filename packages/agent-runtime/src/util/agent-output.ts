@@ -1,9 +1,9 @@
-import type { AgentTemplate } from '@codebuff/common/types/agent-template'
-import type { Message } from '@codebuff/common/types/messages/codebuff-message'
+import type { AgentTemplate } from '@savant-code/common/types/agent-template'
+import type { Message } from '@savant-code/common/types/messages/savant-code-message'
 import type {
   AgentState,
   AgentOutput,
-} from '@codebuff/common/types/session-state'
+} from '@savant-code/common/types/session-state'
 
 /** Messages tagged with these tags are stripped from agent output. */
 const EXCLUDED_OUTPUT_TAGS = ['TOOL_CALL_ERROR'] as const

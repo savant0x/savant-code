@@ -10,7 +10,7 @@ import React, {
 } from 'react'
 
 import { Button } from './button'
-import { FreebuffReferralBanner } from './freebuff-referral-banner'
+import { SavantFree$1 } from './savant-free-referral-banner'
 import {
   FALLBACK_FREEBUFF_MODEL_ID,
   FREEBUFF_PREMIUM_SESSION_LIMIT,
@@ -20,31 +20,31 @@ import {
   isFreebuffGlmV52ModelId,
   isFreebuffModelAvailable,
   isFreebuffPremiumModelId,
-} from '@codebuff/common/constants/freebuff-models'
+} from '@savant-code/common/constants/savant-free-models'
 import {
   getRateLimitsByModel,
   getReferralInfo,
-} from '@codebuff/common/types/freebuff-session'
+} from '@savant-code/common/types/savant-free-session'
 
-import { startFreebuffSession } from '../hooks/use-freebuff-session'
+import { startFreebuffSession } from '../hooks/use-savant-free-session'
 import { useNow } from '../hooks/use-now'
-import { useFreebuffModelStore } from '../state/freebuff-model-store'
-import { useFreebuffSessionStore } from '../state/freebuff-session-store'
+import { useFreebuffModelStore } from '../state/savant-free-model-store'
+import { useFreebuffSessionStore } from '../state/savant-free-session-store'
 import { useTerminalDimensions } from '../hooks/use-terminal-dimensions'
 import { useTheme } from '../hooks/use-theme'
 import {
-  freebuffModelNavigationDirectionForKey,
+  savant-free$1,
   nextFreebuffModelId,
-} from '../utils/freebuff-model-navigation'
+} from '../utils/savant-free-model-navigation'
 import { formatSessionUnits } from '../utils/format-session-units'
 import {
   formatFreebuffPremiumResetCountdown,
   getFreebuffPremiumResetAt,
-} from '../utils/freebuff-premium-reset'
+} from '../utils/savant-free-premium-reset'
 import { isPlainEnterKey } from '../utils/terminal-enter-detection'
 
-import type { FreebuffModelOption } from '@codebuff/common/constants/freebuff-models'
-import type { FreebuffReferralFocusTarget } from './freebuff-referral-banner'
+import type { SavantFree$1 } from '@savant-code/common/constants/savant-free-models'
+import type { SavantFree$1 } from './savant-free-referral-banner'
 import type {
   BoxRenderable,
   KeyEvent,
@@ -73,7 +73,7 @@ import type {
 type Section = {
   key: 'premium' | 'unlimited' | 'limited'
   label: string
-  models: readonly FreebuffModelOption[]
+  models: readonly SavantFree$1[]
 }
 
 // Sentinel id for the expand/collapse toggle so it can ride the same
@@ -109,7 +109,7 @@ const CUE_GAP = 2 // min gap between a row's details and the focused-row cue
  * scrollbar appears when the whole menu doesn't fit, and Tab/arrow navigation
  * keeps the focused control scrolled into view.
  */
-interface FreebuffModelSelectorProps {
+interface SavantFree$1 {
   /** Max vertical rows the picker may occupy. When the rendered rows exceed
    *  this, the list scrolls (scrollbar shown, focused row kept in view);
    *  otherwise the scrollbox shrinks to fit and no scrollbar appears. */
@@ -120,7 +120,7 @@ interface FreebuffModelSelectorProps {
   onExpandedChange?: (expanded: boolean) => void
 }
 
-export const FreebuffModelSelector: React.FC<FreebuffModelSelectorProps> = ({
+export const SavantFree$1: React.FC<SavantFree$1> = ({
   maxHeight,
   onExpandedChange,
 }) => {
@@ -146,7 +146,7 @@ export const FreebuffModelSelector: React.FC<FreebuffModelSelectorProps> = ({
 
   const availableModels = useMemo(
     // GLM 5.2 is a referral reward, not a freely-pickable model, so it's
-    // surfaced by the separate FreebuffReferralBanner rather than this grid.
+    // surfaced by the separate SavantFree$1 rather than this grid.
     () =>
       getFreebuffModelsForAccessTier(accessTier).filter(
         (m) => !isFreebuffGlmV52ModelId(m.id),
@@ -190,7 +190,7 @@ export const FreebuffModelSelector: React.FC<FreebuffModelSelectorProps> = ({
   // navigation order. Keeping them local avoids a global focus bridge now that
   // the banner renders inside this selector.
   const [extraTargets, setExtraTargets] = useState<
-    FreebuffReferralFocusTarget[]
+    SavantFree$1[]
   >([])
   const extraTargetIds = useMemo(
     () => extraTargets.map((t) => t.id),
@@ -321,10 +321,10 @@ export const FreebuffModelSelector: React.FC<FreebuffModelSelectorProps> = ({
     nameColumnWidth,
     recommendedOneLineLen,
   } = useMemo(() => {
-    const nameLen = (m: FreebuffModelOption) => m.displayName.length
+    const nameLen = (m: SavantFree$1) => m.displayName.length
     const maxNameLen = Math.max(...availableModels.map(nameLen))
 
-    const detailsParts = (model: FreebuffModelOption): number[] => {
+    const detailsParts = (model: SavantFree$1): number[] => {
       const parts: number[] = []
       parts.push(model.tagline.length)
       if (model.warning) parts.push(model.warning.length)
@@ -337,7 +337,7 @@ export const FreebuffModelSelector: React.FC<FreebuffModelSelectorProps> = ({
     const joinedLen = (parts: number[]): number =>
       parts.reduce((a, b) => a + b, 0) + Math.max(0, parts.length - 1) * 3 // " · "
 
-    const oneLineLen = (model: FreebuffModelOption): number =>
+    const oneLineLen = (model: SavantFree$1): number =>
       2 /* indicator + space */ +
       maxNameLen +
       NAME_GAP +
@@ -367,9 +367,9 @@ export const FreebuffModelSelector: React.FC<FreebuffModelSelectorProps> = ({
     // Narrow: line 1 = "indicator name · tagline", line 2 (if any) =
     // "  warning · hours". Compute the max of both so all buttons stay the
     // same width.
-    const labelLineLen = (m: FreebuffModelOption) =>
+    const labelLineLen = (m: SavantFree$1) =>
       2 + m.displayName.length + 3 + m.tagline.length
-    const detailsLineLen = (m: FreebuffModelOption) => {
+    const detailsLineLen = (m: SavantFree$1) => {
       const parts: number[] = []
       if (m.warning) parts.push(m.warning.length)
       if (m.availability === 'deployment_hours') {
@@ -399,7 +399,7 @@ export const FreebuffModelSelector: React.FC<FreebuffModelSelectorProps> = ({
   ])
 
   const rowWraps = useCallback(
-    (m: FreebuffModelOption) =>
+    (m: SavantFree$1) =>
       wrapDetails && (!!m.warning || m.availability === 'deployment_hours'),
     [wrapDetails],
   )
@@ -502,7 +502,7 @@ export const FreebuffModelSelector: React.FC<FreebuffModelSelectorProps> = ({
       (key: KeyEvent) => {
         if (pending) return
         const name = key.name ?? ''
-        const direction = freebuffModelNavigationDirectionForKey(key)
+        const direction = savant-free$1(key)
         // Use the shared Enter detector so the keypad Enter and the niche
         // Linux terminals that send \n (linefeed) for Enter also commit; a
         // raw name === 'return' check silently ignores those, which looks
@@ -557,7 +557,7 @@ export const FreebuffModelSelector: React.FC<FreebuffModelSelectorProps> = ({
   )
 
   const renderModelButton = (
-    model: FreebuffModelOption,
+    model: SavantFree$1,
     options: { recommended?: boolean } = {},
   ) => {
     // Single visual state: the focused row IS the highlight. The user's
@@ -803,7 +803,7 @@ export const FreebuffModelSelector: React.FC<FreebuffModelSelectorProps> = ({
         {sectionsContent}
         {toggleContent}
         {referral && (
-          <FreebuffReferralBanner
+          <SavantFree$1
             width={buttonOuterWidth}
             referral={referral}
             accessTier={accessTier}

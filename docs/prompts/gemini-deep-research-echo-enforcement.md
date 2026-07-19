@@ -1,14 +1,14 @@
-# Gemini Deep Research: ECHO Protocol Runtime Enforcement in Codebuff
+# Gemini Deep Research: ECHO Protocol Runtime Enforcement in SavantCode
 
 ## Objective
 
-Design a runtime enforcement harness that embeds the ECHO Protocol (v0.1.2) as the default agent instructions in the Codebuff AI coding agent framework, replacing the current "Buffy" persona with "Savant." The harness must enforce the 15 Laws, Perfection Loop FSM, circuit breaker rules, FID lifecycle, and boot sequence—not merely include them as prompt text.
+Design a runtime enforcement harness that embeds the ECHO Protocol (v0.1.2) as the default agent instructions in the SavantCode AI coding agent framework, replacing the current "Buffy" persona with "Savant." The harness must enforce the 15 Laws, Perfection Loop FSM, circuit breaker rules, FID lifecycle, and boot sequence—not merely include them as prompt text.
 
 ---
 
 ## Project Context
 
-We forked [Codebuff](https://github.com/CodebuffAI/codebuff) — an open-source TypeScript monorepo that runs AI coding agents via a TUI (terminal UI). The architecture:
+We forked [SavantCode](https://github.com/savant0x/savant-code) — an open-source TypeScript monorepo that runs AI coding agents via a TUI (terminal UI). The architecture:
 
 - **TypeScript monorepo** with Bun runtime
 - **`cli/`** — TUI client built on OpenTUI + React
@@ -61,11 +61,11 @@ The loop calls `runAgentStep()` repeatedly. Each step can produce tool calls, te
 - **Fix:** Stripped leading `/` from the endpoint so it resolves relative to the base URL's path.
 
 ### 4. Settings Validation Fix
-- **Problem:** `validateSettings()` silently dropped the `codebuffModel` field — saved to disk but never read back.
-- **Fix:** Added `codebuffModel` to the validated fields.
+- **Problem:** `validateSettings()` silently dropped the `savantCode$1` field — saved to disk but never read back.
+- **Fix:** Added `savantCode$1` to the validated fields.
 
 ### 5. Logo Rebrand — Savant ASCII Art
-- **Problem:** The ASCII banner showed the old Codebuff/Freebuff design.
+- **Problem:** The ASCII banner showed the old SavantCode/SavantFree design.
 - **Fix:** Replaced all 4 logo constants with the "Savant" text graphic. Added block characters to sheen animation set. Updated line height from 6 to 3.
 
 ---
@@ -342,7 +342,7 @@ Law 3 + AUDIT require build/test after each change. Should verification be:
 
 ## References
 
-- Codebuff GitHub repo: https://github.com/CodebuffAI/codebuff
+- SavantCode GitHub repo: https://github.com/savant0x/savant-code
 - ECHO Protocol: Full text provided above (v0.1.2, embedded in this document)
 
 ---

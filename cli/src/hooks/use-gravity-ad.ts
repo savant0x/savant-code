@@ -1,5 +1,5 @@
-import { WEBSITE_URL } from '@codebuff/sdk'
-import { AnalyticsEvent } from '@codebuff/common/constants/analytics-events'
+import { WEBSITE_URL } from '@savant-code/sdk'
+import { AnalyticsEvent } from '@savant-code/common/constants/analytics-events'
 import { useEffect, useRef, useState } from 'react'
 
 import { useTerminalLayout } from './use-terminal-layout'
@@ -18,7 +18,7 @@ import {
   requestLazyResponseAds,
 } from '../utils/lazy-response-ads'
 
-import type { Message } from '@codebuff/sdk'
+import type { Message } from '@savant-code/sdk'
 import type { ChatMessage } from '../types/chat'
 
 const AD_ROTATION_INTERVAL_MS = 60 * 1000 // 60 seconds per ad
@@ -47,7 +47,7 @@ export type AdResponse = {
  */
 export type AdProvider = 'gravity' | 'carbon' | 'zeroclick'
 // Product surfaces the ads API maps to Gravity placements. 'waiting_room' is the
-// legacy wire name for the freebuff landing screen; 'cli_chat' is the inline
+// legacy wire name for the savant-free landing screen; 'cli_chat' is the inline
 // transcript ad in the coding-agent chat. Values must match the server's
 // AD_SURFACES enum, so don't rename them.
 export type AdSurface = 'waiting_room' | 'cli_chat'
@@ -136,7 +136,7 @@ function trackInlineAdEvent(
 
 type GravityAdOptionsBase = {
   enabled?: boolean
-  /** Skip the "wait for first user message" gate. Used by the freebuff
+  /** Skip the "wait for first user message" gate. Used by the savant-free
    *  landing screen, which has no conversation but still needs ads. */
   forceStart?: boolean
   /** Ad network to request first. The server owns fallback ordering. */
@@ -184,10 +184,10 @@ export const useGravityAd = (options?: GravityAdOptions): GravityAdState => {
   const { terminalHeight } = useTerminalLayout()
   const isVeryCompactHeight = terminalHeight <= 17
 
-  // Freebuff always shows ads even on compact screens (ads are mandatory there).
+  // SavantFree always shows ads even on compact screens (ads are mandatory there).
   const isFreeMode = IS_FREEBUFF
 
-  // Skip ads on very compact screens unless we're in Freebuff (where ads are mandatory)
+  // Skip ads on very compact screens unless we're in SavantFree (where ads are mandatory)
   // Also skip if explicitly disabled (e.g. user has a subscription)
   const shouldHideAds = !enabled || (isVeryCompactHeight && !isFreeMode)
 
@@ -233,7 +233,7 @@ export const useGravityAd = (options?: GravityAdOptions): GravityAdState => {
         return
       }
 
-      // Include mode in request - Freebuff should not grant credits (no balance concept).
+      // Include mode in request - SavantFree should not grant credits (no balance concept).
       const agentMode = useChatStore.getState().agentMode
 
       const res = await fetch(`${WEBSITE_URL}/api/v1/ads/impression`, {
@@ -669,7 +669,7 @@ function getAdUserAgent(): string {
 }
 
 function getCliAdRequestUserAgent(): string {
-  const product = IS_FREEBUFF ? 'Freebuff-CLI' : 'Codebuff-CLI'
+  const product = IS_FREEBUFF ? 'SavantFree-CLI' : 'SavantCode-CLI'
   const version = getCliEnv().CODEBUFF_CLI_VERSION ?? 'dev'
   return `${product}/${version}`
 }

@@ -1,21 +1,21 @@
-import { jsonToolResult } from '@codebuff/common/util/messages'
+import { jsonToolResult } from '@savant-code/common/util/messages'
 
-import { callDocsSearchAPI } from '../../../llm-api/codebuff-web-api'
+import { callDocsSearchAPI } from '../../../llm-api/savant-code-web-api'
 
 import type { fetchContext7LibraryDocumentation } from '../../../llm-api/context7-api'
-import type { CodebuffToolHandlerFunction } from '../handler-function-type'
+import type { SavantCodeToolHandlerFunction } from '../handler-function-type'
 import type {
-  CodebuffToolCall,
-  CodebuffToolOutput,
-} from '@codebuff/common/tools/list'
-import type { ClientEnv, CiEnv } from '@codebuff/common/types/contracts/env'
-import type { Logger } from '@codebuff/common/types/contracts/logger'
-import type { ParamsExcluding } from '@codebuff/common/types/function-params'
+  SavantCodeToolCall,
+  SavantCodeToolOutput,
+} from '@savant-code/common/tools/list'
+import type { ClientEnv, CiEnv } from '@savant-code/common/types/contracts/env'
+import type { Logger } from '@savant-code/common/types/contracts/logger'
+import type { ParamsExcluding } from '@savant-code/common/types/function-params'
 
 export const handleReadDocs = (async (
   params: {
     previousToolCallFinished: Promise<void>
-    toolCall: CodebuffToolCall<'read_docs'>
+    toolCall: SavantCodeToolCall<'read_docs'>
 
     agentStepId: string
     clientSessionId: string
@@ -31,7 +31,7 @@ export const handleReadDocs = (async (
     'query' | 'topic' | 'tokens'
   >,
 ): Promise<{
-  output: CodebuffToolOutput<'read_docs'>
+  output: SavantCodeToolOutput<'read_docs'>
   creditsUsed: number
 }> => {
   const {
@@ -157,4 +157,4 @@ export const handleReadDocs = (async (
       creditsUsed,
     }
   }
-}) satisfies CodebuffToolHandlerFunction<'read_docs'>
+}) satisfies SavantCodeToolHandlerFunction<'read_docs'>

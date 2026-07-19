@@ -1,6 +1,6 @@
 import path from 'path'
 
-import { MAX_AGENT_STEPS_DEFAULT } from '@codebuff/common/constants/agents'
+import { MAX_AGENT_STEPS_DEFAULT } from '@savant-code/common/constants/agents'
 
 import {
   createEventHandler,
@@ -8,14 +8,14 @@ import {
 } from './sdk-event-handlers'
 
 import type { EventHandlerState } from './sdk-event-handlers'
-import type { Logger } from '@codebuff/common/types/contracts/logger'
+import type { Logger } from '@savant-code/common/types/contracts/logger'
 import type {
   AgentDefinition,
   FileFilter,
   MessageContent,
   OnFileWrittenCallback,
   RunState,
-} from '@codebuff/sdk'
+} from '@savant-code/sdk'
 
 export type CreateRunConfigParams = {
   logger: Logger

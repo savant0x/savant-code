@@ -1,6 +1,6 @@
 # SDK Tests & Examples
 
-This folder contains end-to-end tests, integration tests, unit tests, and runnable examples for the Codebuff SDK.
+This folder contains end-to-end tests, integration tests, unit tests, and runnable examples for the SavantCode SDK.
 
 ## Directory Structure
 
@@ -104,15 +104,15 @@ bun run test:e2e && bun run test:integration && bun run test:unit:e2e
 ### E2E Test Pattern
 ```typescript
 import { describe, test, expect, beforeAll } from 'bun:test'
-import { CodebuffClient } from '../../src/client'
+import { SavantCodeClient } from '../../src/client'
 import { EventCollector, getApiKey, skipIfNoApiKey, isAuthError, DEFAULT_AGENT, DEFAULT_TIMEOUT } from '../utils'
 
 describe('E2E: My Test', () => {
-  let client: CodebuffClient
+  let client: SavantCodeClient
 
   beforeAll(() => {
     if (skipIfNoApiKey()) return
-    client = new CodebuffClient({ apiKey: getApiKey() })
+    client = new SavantCodeClient({ apiKey: getApiKey() })
   })
 
   test('does something', async () => {

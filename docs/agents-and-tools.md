@@ -7,11 +7,11 @@
 
 ### Shell Shims
 
-Direct commands without `codebuff` prefix:
+Direct commands without `savant-code` prefix:
 
 ```bash
-codebuff shims install codebuff/base-lite@1.0.0
-eval "$(codebuff shims env)"
+savant-code shims install savant-code/base-lite@1.0.0
+eval "$(savant-code shims env)"
 base-lite "fix this bug"
 ```
 

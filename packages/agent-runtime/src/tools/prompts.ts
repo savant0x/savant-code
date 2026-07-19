@@ -1,20 +1,20 @@
-import { endsAgentStepParam } from '@codebuff/common/tools/constants'
-import { toolParams } from '@codebuff/common/tools/list'
-import { AVAILABLE_SKILLS_PLACEHOLDER } from '@codebuff/common/tools/params/tool/skill'
-import { getToolCallString } from '@codebuff/common/tools/utils'
-import { buildArray } from '@codebuff/common/util/array'
-import { formatAvailableSkillsXml } from '@codebuff/common/util/skills'
-import { pluralize } from '@codebuff/common/util/string'
+import { endsAgentStepParam } from '@savant-code/common/tools/constants'
+import { toolParams } from '@savant-code/common/tools/list'
+import { AVAILABLE_SKILLS_PLACEHOLDER } from '@savant-code/common/tools/params/tool/skill'
+import { getToolCallString } from '@savant-code/common/tools/utils'
+import { buildArray } from '@savant-code/common/util/array'
+import { formatAvailableSkillsXml } from '@savant-code/common/util/skills'
+import { pluralize } from '@savant-code/common/util/string'
 import { cloneDeep } from 'lodash'
 import z from 'zod/v4'
 import { convertJsonSchemaToZod } from 'zod-from-json-schema'
 
-import type { ToolName } from '@codebuff/common/tools/constants'
-import type { SkillsMap } from '@codebuff/common/types/skill'
+import type { ToolName } from '@savant-code/common/tools/constants'
+import type { SkillsMap } from '@savant-code/common/types/skill'
 import type {
   CustomToolDefinitions,
   customToolDefinitionsSchema,
-} from '@codebuff/common/util/file'
+} from '@savant-code/common/util/file'
 import type { ToolSet } from 'ai'
 
 /**

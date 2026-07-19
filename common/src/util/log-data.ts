@@ -5,7 +5,7 @@ import type { LogLevel } from '../types/contracts/logs'
 /**
  * Shared pieces of the Axiom log-row pipeline used by every producer that
  * ingests rows — the long-lived sink (packages/logging/src/sink.ts) and the
- * Convex direct-ingest helper (freebuff/web/convex/lib/axiom_log.ts). Living
+ * Convex direct-ingest helper (savant-free/web/convex/lib/axiom_log.ts). Living
  * here keeps the serialized `data` contract and level ordering identical
  * across producers, so APL queries behave the same regardless of which
  * service emitted a row. Deliberately light on imports (the schemas module

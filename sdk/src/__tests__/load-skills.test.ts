@@ -6,7 +6,7 @@ import path from 'path'
 import {
   SKILL_FILE_NAME,
   SKILL_NAME_MAX_LENGTH,
-} from '@codebuff/common/constants/skills'
+} from '@savant-code/common/constants/skills'
 
 import { loadSkills, parseSkillFileContent } from '../skills/load-skills'
 import { logger } from '../utils/logger'
@@ -50,7 +50,7 @@ describe('loadSkills', () => {
   let projectDir: string
 
   beforeEach(() => {
-    tempRoot = mkdtempSync(path.join(os.tmpdir(), 'codebuff-sdk-load-skills-'))
+    tempRoot = mkdtempSync(path.join(os.tmpdir(), 'savant-code-sdk-load-skills-'))
     homeDir = path.join(tempRoot, 'home')
     projectDir = path.join(tempRoot, 'project')
 

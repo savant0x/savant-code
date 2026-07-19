@@ -1,6 +1,6 @@
 import { uniq } from 'lodash'
 
-import type { RequestFilesFn } from '@codebuff/common/types/contracts/client'
+import type { RequestFilesFn } from '@savant-code/common/types/contracts/client'
 
 export async function getFileReadingUpdates(params: {
   requestFiles: RequestFilesFn

@@ -3,7 +3,7 @@ import { E2E_MOCK_API_KEY, setupE2eMocks } from './e2e-mocks'
 const shouldRunLiveE2e = process.env.RUN_CODEBUFF_E2E === 'true'
 
 /**
- * Utility to load Codebuff API key from environment or user credentials.
+ * Utility to load SavantCode API key from environment or user credentials.
  * Defaults to a mock key for deterministic local runs.
  */
 export function getApiKey(): string {
@@ -12,7 +12,7 @@ export function getApiKey(): string {
     if (!apiKey) {
       throw new Error(
         'CODEBUFF_API_KEY environment variable is required for live e2e tests. ' +
-          'Get your API key at https://www.codebuff.com/api-keys',
+          'Get your API key at https://www.savant-code.com/api-keys',
       )
     }
     return apiKey

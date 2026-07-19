@@ -56,7 +56,7 @@ Per ECHO Perfection Loop: "What questions should I have asked when this FID was 
 **A:** **SEARCH REQUIRED — likely NO.** `package.json:60-71` (root devDependencies) does not list `markdownlint-cli2`. Searched root dir for `.markdownlint.json` / `.markdownlint-cli2.jsonc` config files. **Action in AUDIT:** `ls -la .markdown* *.markdown* 2>/dev/null` to confirm. If absent, `bunx markdownlint-cli2` uses default rules (MD022 + MD033 enabled by default).
 
 ### Q6. Are there other `tsconfig.json` files with the same warnings outside sdk + agents?
-**A:** **NOT FULLY SWEPT — deferred to AUDIT phase.** Tsconfig targets confirmed: `tsconfig.base.json` (root, no baseUrl — clean), `sdk/tsconfig.json` (warns), `agents/tsconfig.json` (warns). Other packages: `cli/`, `common/`, `packages/agent-runtime/`, `packages/code-map/`, `packages/llm-providers/`, `packages/database/`, `evals/`, `freebuff/` may or may not have tsconfig.json. **Action in AUDIT:** `find . -name tsconfig.json -not -path '*/node_modules/*' -not -path '*/dist/*'` and run `bunx tsc --noEmit` on each to find any others with the same warnings.
+**A:** **NOT FULLY SWEPT — deferred to AUDIT phase.** Tsconfig targets confirmed: `tsconfig.base.json` (root, no baseUrl — clean), `sdk/tsconfig.json` (warns), `agents/tsconfig.json` (warns). Other packages: `cli/`, `common/`, `packages/agent-runtime/`, `packages/code-map/`, `packages/llm-providers/`, `packages/database/`, `evals/`, `savant-free/` may or may not have tsconfig.json. **Action in AUDIT:** `find . -name tsconfig.json -not -path '*/node_modules/*' -not -path '*/dist/*'` and run `bunx tsc --noEmit` on each to find any others with the same warnings.
 
 ### Q7. What is the actual content of `CHANGELOG.md` line 175 that triggers MD033 (cols 52, 109)?
 **A:** **NOT PRECISELY RESOLVED.** My source-read shows the area around line 175 is in the FID-2026-0716-007 "Full ECHO Foundation" entry's "Verified by" tail. The exact HTML element with `id=` and `target=` attributes is NOT in my visible read window. **Action in AUDIT:** `grep -n ' id=\| target=' CHANGELOG.md` to locate the exact line + content, then apply Step 4 fix (Option A refactor to `[text](url)` or Option B disable comment).
@@ -73,7 +73,7 @@ Per ECHO Perfection Loop: "What questions should I have asked when this FID was 
 ### Q11. Does refactoring `paths` in agents/tsconfig break if we drop `baseUrl` entirely?
 **A:** **NOT APPLICABLE — FID-019 keeps `baseUrl` via `ignoreDeprecations`.** Drop-baseUrl path refactor is explicitly OUT OF SCOPE per Decision 1 (Option A). The Option B alternative is documented for future-FID scope, not now.
 
-### Q12. Does the `paths` mapping in agents/tsconfig (`@codebuff/sdk → ../sdk/src/index.ts`) require rootDir to work?
+### Q12. Does the `paths` mapping in agents/tsconfig (`@savant-code/sdk → ../sdk/src/index.ts`) require rootDir to work?
 **A:** **NO.** typescript-resolution: `paths` mapping always resolves relative to the tsconfig.json directory, regardless of rootDir. The `noEmit: true` from base means rootDir is moot. **Source:** `agents/tsconfig.json:9` — `paths` resolves to relative `../sdk/src/index.ts`.
 
 ### Q13. Will the `agents/tsconfig.json` `paths` mapping still resolve correctly after we add `ignoreDeprecations`?

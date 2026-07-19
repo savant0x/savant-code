@@ -1,9 +1,9 @@
-import * as analytics from '@codebuff/common/analytics'
-import { TEST_USER_ID } from '@codebuff/common/old-constants'
-import { createTestAgentRuntimeParams } from '@codebuff/common/testing/fixtures/agent-runtime'
-import { getInitialSessionState } from '@codebuff/common/types/session-state'
-import { promptAborted, promptSuccess } from '@codebuff/common/util/error'
-import { assistantMessage, userMessage } from '@codebuff/common/util/messages'
+import * as analytics from '@savant-code/common/analytics'
+import { TEST_USER_ID } from '@savant-code/common/old-constants'
+import { createTestAgentRuntimeParams } from '@savant-code/common/testing/fixtures/agent-runtime'
+import { getInitialSessionState } from '@savant-code/common/types/session-state'
+import { promptAborted, promptSuccess } from '@savant-code/common/util/error'
+import { assistantMessage, userMessage } from '@savant-code/common/util/messages'
 import {
   afterEach,
   beforeEach,
@@ -23,10 +23,10 @@ import { mockFileContext } from './test-utils'
 import * as toolExecutor from '../tools/tool-executor'
 
 import type { AgentTemplate, StepGenerator } from '../templates/types'
-import type { PromptAiSdkFn } from '@codebuff/common/types/contracts/llm'
-import type { Logger } from '@codebuff/common/types/contracts/logger'
-import type { ParamsOf } from '@codebuff/common/types/function-params'
-import type { AgentState } from '@codebuff/common/types/session-state'
+import type { PromptAiSdkFn } from '@savant-code/common/types/contracts/llm'
+import type { Logger } from '@savant-code/common/types/contracts/logger'
+import type { ParamsOf } from '@savant-code/common/types/function-params'
+import type { AgentState } from '@savant-code/common/types/session-state'
 
 const logger: Logger = {
   debug: () => {},

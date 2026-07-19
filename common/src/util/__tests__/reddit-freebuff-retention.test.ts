@@ -4,7 +4,7 @@ import {
   getFreebuffRetentionMilestonesToFire,
   isFirstFreebuffPrompt,
   planFreebuffRedditConversionEvents,
-} from '@savantcode.common/util/reddit-freebuff-retention'
+} from '@savantcode.common/util/reddit-savant-free-retention'
 
 describe('isFirstFreebuffPrompt', () => {
   test('returns true on first-ever usage day', () => {

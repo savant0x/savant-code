@@ -1,10 +1,10 @@
-import type { ComposioMetaToolName } from '@codebuff/common/constants/composio'
-import type { CodebuffToolOutput } from '@codebuff/common/tools/list'
-import type { CodebuffToolHandlerFunction } from '../handler-function-type'
+import type { ComposioMetaToolName } from '@savant-code/common/constants/composio'
+import type { SavantCodeToolOutput } from '@savant-code/common/tools/list'
+import type { SavantCodeToolHandlerFunction } from '../handler-function-type'
 
 function makeComposioHandler<
   T extends ComposioMetaToolName,
->(): CodebuffToolHandlerFunction<T> {
+>(): SavantCodeToolHandlerFunction<T> {
   return async ({ toolCall, requestClientToolCall }) => {
     if (!requestClientToolCall) {
       return {
@@ -22,16 +22,16 @@ function makeComposioHandler<
     return {
       output: (await (requestClientToolCall as any)(
         toolCall,
-      )) as CodebuffToolOutput<T>,
+      )) as SavantCodeToolOutput<T>,
     }
   }
 }
 
-export const handleComposioManageConnections: CodebuffToolHandlerFunction<'composio_manage_connections'> =
+export const handleComposioManageConnections: SavantCodeToolHandlerFunction<'composio_manage_connections'> =
   makeComposioHandler<'composio_manage_connections'>()
-export const handleComposioMultiExecute: CodebuffToolHandlerFunction<'composio_multi_execute_tool'> =
+export const handleComposioMultiExecute: SavantCodeToolHandlerFunction<'composio_multi_execute_tool'> =
   makeComposioHandler<'composio_multi_execute_tool'>()
-export const handleComposioSearchTools: CodebuffToolHandlerFunction<'composio_search_tools'> =
+export const handleComposioSearchTools: SavantCodeToolHandlerFunction<'composio_search_tools'> =
   makeComposioHandler<'composio_search_tools'>()
-export const handleComposioGetToolSchemas: CodebuffToolHandlerFunction<'composio_get_tool_schemas'> =
+export const handleComposioGetToolSchemas: SavantCodeToolHandlerFunction<'composio_get_tool_schemas'> =
   makeComposioHandler<'composio_get_tool_schemas'>()

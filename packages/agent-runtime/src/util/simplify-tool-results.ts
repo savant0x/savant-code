@@ -1,12 +1,12 @@
-import { getErrorObject } from '@codebuff/common/util/error'
+import { getErrorObject } from '@savant-code/common/util/error'
 import { cloneDeep } from 'lodash'
 
-import type { CodebuffToolOutput } from '@codebuff/common/tools/list'
-import type { Logger } from '@codebuff/common/types/contracts/logger'
+import type { SavantCodeToolOutput } from '@savant-code/common/tools/list'
+import type { Logger } from '@savant-code/common/types/contracts/logger'
 
 export function simplifyReadFileResults(
-  messageContent: CodebuffToolOutput<'read_files'>,
-): CodebuffToolOutput<'read_files'> {
+  messageContent: SavantCodeToolOutput<'read_files'>,
+): SavantCodeToolOutput<'read_files'> {
   return [
     {
       type: 'json',
@@ -21,9 +21,9 @@ export function simplifyReadFileResults(
 }
 
 export function simplifyTerminalCommandResults(params: {
-  messageContent: CodebuffToolOutput<'run_terminal_command'>
+  messageContent: SavantCodeToolOutput<'run_terminal_command'>
   logger: Logger
-}): CodebuffToolOutput<'run_terminal_command'> {
+}): SavantCodeToolOutput<'run_terminal_command'> {
   const { messageContent, logger } = params
   try {
     const clone = cloneDeep(messageContent)

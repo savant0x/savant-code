@@ -6,10 +6,10 @@ import {
   getFreebuffUsageDateKey,
   isFreebuffStreakMilestone,
   streakRewardPools,
-} from '../freebuff-streak'
+} from '../savant-free-streak'
 
-describe('freebuff streak helpers', () => {
-  test('formats usage dates in the Freebuff reset timezone', () => {
+describe('savant-free streak helpers', () => {
+  test('formats usage dates in the SavantFree reset timezone', () => {
     expect(getFreebuffUsageDateKey(new Date('2026-05-27T06:30:00.000Z'))).toBe(
       '2026-05-26',
     )
@@ -64,7 +64,7 @@ describe('freebuff streak helpers', () => {
   })
 })
 
-describe('freebuff streak rewards', () => {
+describe('savant-free streak rewards', () => {
   test('recognizes 7-day multiples as milestones', () => {
     expect(isFreebuffStreakMilestone(7)).toBe(true)
     expect(isFreebuffStreakMilestone(14)).toBe(true)
@@ -130,7 +130,7 @@ describe('freebuff streak rewards', () => {
       }),
     ).toEqual([])
     // Streak is at 7 only because yesterday anchored it; the user hasn't used
-    // Freebuff today, so no bonus is earned yet.
+    // SavantFree today, so no bonus is earned yet.
     expect(
       streakRewardPools({
         streak: 7,

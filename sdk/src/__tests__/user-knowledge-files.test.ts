@@ -1,7 +1,7 @@
 import path from 'path'
 
-import { createMockFs } from '@codebuff/common/testing/mocks/filesystem'
-import { createMockLogger } from '@codebuff/common/testing/mocks/logger'
+import { createMockFs } from '@savant-code/common/testing/mocks/filesystem'
+import { createMockLogger } from '@savant-code/common/testing/mocks/logger'
 import { describe, it, expect } from 'bun:test'
 
 import { loadUserKnowledgeFiles } from '../run-state'

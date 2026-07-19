@@ -1,7 +1,7 @@
-import { CHATGPT_OAUTH_ENABLED } from '@codebuff/common/constants/chatgpt-oauth'
+import { CHATGPT_OAUTH_ENABLED } from '@savant-code/common/constants/chatgpt-oauth'
 import { AGENT_MODES, IS_FREEBUFF } from '../utils/constants'
 
-import type { SkillsMap } from '@codebuff/common/types/skill'
+import type { SkillsMap } from '@savant-code/common/types/skill'
 
 
 export interface SlashCommand {
@@ -21,7 +21,7 @@ export interface SlashCommand {
   insertText?: string
 }
 
-// Generate mode commands from the AGENT_MODES constant (excluded in Freebuff)
+// Generate mode commands from the AGENT_MODES constant (excluded in SavantFree)
 const MODE_COMMANDS: SlashCommand[] = IS_FREEBUFF
   ? []
   : AGENT_MODES.map((mode) => ({
@@ -160,7 +160,7 @@ const ALL_SLASH_COMMANDS: SlashCommand[] = [
   {
     id: 'feedback',
     label: 'feedback',
-    description: IS_FREEBUFF ? 'Share general feedback about Freebuff' : 'Share general feedback about Codebuff',
+    description: IS_FREEBUFF ? 'Share general feedback about SavantFree' : 'Share general feedback about SavantCode',
   },
   {
     id: 'bash',

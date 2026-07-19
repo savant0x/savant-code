@@ -1,4 +1,4 @@
-import { getFreebuffModel } from '@codebuff/common/constants/freebuff-models'
+import { getFreebuffModel } from '@savant-code/common/constants/savant-free-models'
 import { TextAttributes } from '@opentui/core'
 import React, { useEffect, useState } from 'react'
 
@@ -6,16 +6,16 @@ import { Button } from './button'
 import { ScrollToBottomButton } from './scroll-to-bottom-button'
 import { ShimmerText } from './shimmer-text'
 
-import { useFreebuffSessionProgress } from '../hooks/use-freebuff-session-progress'
+import { useFreebuffSessionProgress } from '../hooks/use-savant-free-session-progress'
 import { useTheme } from '../hooks/use-theme'
 import { formatElapsedTime } from '../utils/format-elapsed-time'
 import {
   FREEBUFF_COUNTDOWN_VISIBLE_MS,
   formatFreebuffSessionCountdown,
   formatFreebuffSessionRemaining,
-} from '../utils/freebuff-session-display'
+} from '../utils/savant-free-session-display'
 
-import type { FreebuffSessionResponse } from '../types/freebuff-session'
+import type { SavantFree$1 } from '../types/savant-free-session'
 import type { StatusIndicatorState } from '../utils/status-indicator-state'
 
 /** A small status-bar action button with hover-bold styling. */
@@ -57,7 +57,7 @@ interface StatusBarProps {
   statusIndicatorState: StatusIndicatorState
   onStop?: () => void
   onEndSession?: () => void
-  freebuffSession: FreebuffSessionResponse | null
+  savant-free$1: SavantFree$1 | null
 }
 
 export const StatusBar = ({
@@ -67,7 +67,7 @@ export const StatusBar = ({
   statusIndicatorState,
   onStop,
   onEndSession,
-  freebuffSession,
+  savant-free$1,
 }: StatusBarProps) => {
   const theme = useTheme()
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
@@ -106,9 +106,9 @@ export const StatusBar = ({
     return () => clearInterval(interval)
   }, [timerStartTime, shouldShowTimer, statusIndicatorState?.kind])
 
-  const sessionProgress = useFreebuffSessionProgress(freebuffSession)
+  const sessionProgress = useFreebuffSessionProgress(savant-free$1)
   const isUnlimited =
-    freebuffSession?.status === 'active' && !freebuffSession.rateLimit
+    savant-free$1?.status === 'active' && !savant-free$1.rateLimit
 
   const renderStatusIndicator = () => {
     switch (statusIndicatorState.kind) {
@@ -156,8 +156,8 @@ export const StatusBar = ({
           const isUrgent =
             sessionProgress.remainingMs < FREEBUFF_COUNTDOWN_VISIBLE_MS
           const modelName =
-            freebuffSession?.status === 'active'
-              ? getFreebuffModel(freebuffSession.model).displayName
+            savant-free$1?.status === 'active'
+              ? getFreebuffModel(savant-free$1.model).displayName
               : null
           return (
             <span
@@ -192,7 +192,7 @@ export const StatusBar = ({
   const elapsedTimeContent = renderElapsedTime()
 
   // Show gray background when there's status indicator, timer, or when the
-  // freebuff session fill is visible (otherwise the fill would float over
+  // savant-free session fill is visible (otherwise the fill would float over
   // transparent space).
   const hasContent =
     statusIndicatorContent || elapsedTimeContent || sessionProgress !== null
@@ -256,7 +256,7 @@ export const StatusBar = ({
           )}
         {onEndSession &&
           statusIndicatorState.kind === 'idle' &&
-          freebuffSession?.status === 'active' && (
+          savant-free$1?.status === 'active' && (
             <StatusActionButton onClick={onEndSession}>
               ✕ End session
             </StatusActionButton>

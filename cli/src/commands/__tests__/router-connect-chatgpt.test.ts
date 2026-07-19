@@ -19,7 +19,7 @@ const handleChatGptAuthCode = mock(async () => ({
 
 // CHATGPT_OAUTH_ENABLED is a constant, not a function, so mocking it is
 // within the project's documented convention (docs/testing.md).
-mock.module('@codebuff/common/constants/chatgpt-oauth', () => ({
+mock.module('@savant-code/common/constants/chatgpt-oauth', () => ({
   CHATGPT_OAUTH_ENABLED: true,
 }))
 

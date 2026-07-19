@@ -7,16 +7,16 @@ import {
   SKILLS_DIR_NAME,
   SKILL_FILE_NAME,
   isValidSkillName,
-} from '@codebuff/common/constants/skills'
+} from '@savant-code/common/constants/skills'
 import {
   SkillFrontmatterSchema,
   type SkillDefinition,
   type SkillsMap,
-} from '@codebuff/common/types/skill'
+} from '@savant-code/common/types/skill'
 import matter from 'gray-matter'
 
 // Re-export from common for backward compatibility
-export { formatAvailableSkillsXml } from '@codebuff/common/util/skills'
+export { formatAvailableSkillsXml } from '@savant-code/common/util/skills'
 
 /**
  * Parses YAML frontmatter from a SKILL.md file using gray-matter.
@@ -170,17 +170,17 @@ function discoverSkillsFromDirectory(
  * 
  * Order (later overrides earlier):
  * - ~/.claude/skills/ (global Claude-compatible)
- * - ~/.agents/skills/ (global Codebuff)
+ * - ~/.agents/skills/ (global SavantCode)
  * - {cwd}/.claude/skills/ (project Claude-compatible)
- * - {cwd}/.agents/skills/ (project Codebuff)
+ * - {cwd}/.agents/skills/ (project SavantCode)
  */
 function getDefaultSkillsDirs(cwd: string): string[] {
   const home = os.homedir()
   return [
-    // Global directories (Claude-compatible first, then Codebuff)
+    // Global directories (Claude-compatible first, then SavantCode)
     path.join(home, '.claude', SKILLS_DIR_NAME),
     path.join(home, '.agents', SKILLS_DIR_NAME),
-    // Project directories (Claude-compatible first, then Codebuff)
+    // Project directories (Claude-compatible first, then SavantCode)
     path.join(cwd, '.claude', SKILLS_DIR_NAME),
     path.join(cwd, '.agents', SKILLS_DIR_NAME),
   ]

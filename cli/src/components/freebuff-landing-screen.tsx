@@ -4,30 +4,30 @@ import React, { useCallback, useEffect, useState } from 'react'
 
 import { Button } from './button'
 import { ChoiceAdBanner, AD_CARD_HEIGHT } from './ad-banner'
-import { FreebuffModelSelector } from './freebuff-model-selector'
+import { SavantFree$1 } from './savant-free-model-selector'
 import { ShimmerText } from './shimmer-text'
 import {
   refreshFreebuffLandingMetadata,
   takeOverFreebuffSession,
-} from '../hooks/use-freebuff-session'
-import { useFreebuffCtrlCExit } from '../hooks/use-freebuff-ctrl-c-exit'
-import { useFreebuffStreakQuery } from '../hooks/use-freebuff-streak-query'
+} from '../hooks/use-savant-free-session'
+import { useFreebuffCtrlCExit } from '../hooks/use-savant-free-ctrl-c-exit'
+import { useFreebuffStreakQuery } from '../hooks/use-savant-free-streak-query'
 import { useGravityAd } from '../hooks/use-gravity-ad'
 import { useLogo } from '../hooks/use-logo'
 import { useNow } from '../hooks/use-now'
 import { useSheenAnimation } from '../hooks/use-sheen-animation'
 import { useTerminalDimensions } from '../hooks/use-terminal-dimensions'
 import { useTheme } from '../hooks/use-theme'
-import { exitFreebuffCleanly } from '../utils/freebuff-exit'
+import { exitFreebuffCleanly } from '../utils/savant-free-exit'
 import {
   formatFreebuffPremiumResetCountdown,
   getFreebuffPremiumResetAt,
-} from '../utils/freebuff-premium-reset'
+} from '../utils/savant-free-premium-reset'
 import {
   FREEBUFF_STREAK_WEEK,
   getFreebuffStreakBonusNote,
   getFreebuffStreakLine,
-} from '../utils/freebuff-streak-line'
+} from '../utils/savant-free-streak-line'
 import { formatSessionUnits } from '../utils/format-session-units'
 import { isPlainEnterKey } from '../utils/terminal-enter-detection'
 import { getLogoAccentColor, getLogoBlockColor } from '../utils/theme-system'
@@ -36,19 +36,19 @@ import {
   FREEBUFF_ENABLE_STREAK_IN_UI,
   FREEBUFF_LIMITED_SESSION_LIMIT,
   FREEBUFF_PREMIUM_SESSION_LIMIT,
-} from '@codebuff/common/constants/freebuff-models'
+} from '@savant-code/common/constants/savant-free-models'
 import {
   getRateLimitsByModel,
   getReferralInfo,
-} from '@codebuff/common/types/freebuff-session'
-import { formatFreebuffHardBlockedPrivacySignals } from '@codebuff/common/util/freebuff-privacy'
+} from '@savant-code/common/types/savant-free-session'
+import { formatFreebuffHardBlockedPrivacySignals } from '@savant-code/common/util/savant-free-privacy'
 
-import type { FreebuffSessionResponse } from '../types/freebuff-session'
-import type { FreebuffIpPrivacySignal } from '@codebuff/common/types/freebuff-session'
+import type { SavantFree$1 } from '../types/savant-free-session'
+import type { SavantFree$1 } from '@savant-code/common/types/savant-free-session'
 import type { KeyEvent } from '@opentui/core'
 
-interface FreebuffLandingScreenProps {
-  session: FreebuffSessionResponse | null
+interface SavantFree$1 {
+  session: SavantFree$1 | null
   error: string | null
 }
 
@@ -69,7 +69,7 @@ const formatRetryAfter = (ms: number): string => {
   return rem === 0 ? `${hours}h` : `${hours}h ${rem}m`
 }
 
-const PRIVACY_SIGNAL_LABELS: Partial<Record<FreebuffIpPrivacySignal, string>> =
+const PRIVACY_SIGNAL_LABELS: Partial<Record<SavantFree$1, string>> =
 {
   anonymous: 'anonymized network',
   proxy: 'proxy',
@@ -82,7 +82,7 @@ const PRIVACY_SIGNAL_LABELS: Partial<Record<FreebuffIpPrivacySignal, string>> =
 }
 
 const formatPrivacySignalList = (
-  signals: FreebuffIpPrivacySignal[] | undefined,
+  signals: SavantFree$1[] | undefined,
 ): string => {
   const labels = Array.from(
     new Set(
@@ -121,7 +121,7 @@ const formatCountryName = (countryCode: string): string => {
 // is the one the user can act on, so it leads with the action. Rendered
 // directly under the model list — that's where "why these models?" gets asked.
 const getLimitedModeNotice = (
-  session: FreebuffSessionResponse | null,
+  session: SavantFree$1 | null,
 ): string | null => {
   if (!session || !('countryBlockReason' in session)) {
     return "Some models aren't available on this connection"
@@ -221,11 +221,11 @@ const TakeoverPrompt: React.FC = () => {
       }}
     >
       <text style={{ fg: theme.foreground }} attributes={TextAttributes.BOLD}>
-        Freebuff is already running
+        SavantFree is already running
       </text>
 
       <text style={{ fg: theme.muted }}>
-        Only one freebuff instance is allowed at a time.
+        Only one savant-free instance is allowed at a time.
       </text>
 
       <box style={{ flexDirection: 'row', gap: 2, marginTop: 1 }}>
@@ -301,7 +301,7 @@ const StreakInlineLine: React.FC<{
   )
 }
 
-export const FreebuffLandingScreen: React.FC<FreebuffLandingScreenProps> = ({
+export const SavantFree$1: React.FC<SavantFree$1> = ({
   session,
   error,
 }) => {
@@ -647,7 +647,7 @@ export const FreebuffLandingScreen: React.FC<FreebuffLandingScreenProps> = ({
               {reserveStreakSlot && !streakOnHeadingRow && (
                 <StreakInlineLine streak={streak} marginTop={0} />
               )}
-              <FreebuffModelSelector
+              <SavantFree$1
                 maxHeight={selectorMaxHeight}
                 onExpandedChange={setSelectorExpanded}
               />
@@ -713,20 +713,20 @@ export const FreebuffLandingScreen: React.FC<FreebuffLandingScreenProps> = ({
                         <span fg={theme.foreground}>{session.countryCode}</span>
                       </>
                     )}
-                    . Freebuff can't be used from VPN, proxy, or Tor traffic.
-                    Disable it and restart Freebuff to try again.
+                    . SavantFree can't be used from VPN, proxy, or Tor traffic.
+                    Disable it and restart SavantFree to try again.
                   </>
                 ) : session.countryCode === 'UNKNOWN' ? (
                   <>
                     We couldn't verify an eligible location for this request.
                     VPN, Tor, proxy, or unknown-location traffic can't use
-                    freebuff. Press Ctrl+C to exit.
+                    savant-free. Press Ctrl+C to exit.
                   </>
                 ) : (
                   <>
                     We detected your location as{' '}
                     <span fg={theme.foreground}>{session.countryCode}</span>,
-                    which is outside the countries where freebuff is currently
+                    which is outside the countries where savant-free is currently
                     offered. Press Ctrl+C to exit.
                   </>
                 )}
@@ -742,8 +742,8 @@ export const FreebuffLandingScreen: React.FC<FreebuffLandingScreenProps> = ({
                 ⚠ Account unavailable
               </text>
               <text style={{ fg: theme.muted, wrapMode: 'word' }}>
-                This account has been suspended and can't use freebuff. If you
-                think this is a mistake, contact support@codebuff.com. Press
+                This account has been suspended and can't use savant-free. If you
+                think this is a mistake, contact support@savant-code.com. Press
                 Ctrl+C to exit.
               </text>
             </>

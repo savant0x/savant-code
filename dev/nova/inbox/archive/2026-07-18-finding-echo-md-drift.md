@@ -24,13 +24,13 @@
 - Orchestrator: write tools **stripped** (Fix 1: "Strip write tools from Orchestrator")
 - Verifier: `toolNames: []` — **zero tools** (Fix 5-6: "Verifier has NO tools")
 - Scout: "Fix Scout to delegate to Detective" — should be read-only
-- 20+ Codebuff agent files **deleted** (general-agent, reviewer/*, editor-gpt-5, file-explorer/*)
+- 20+ SavantCode agent files **deleted** (general-agent, reviewer/*, editor-gpt-5, file-explorer/*)
 
 ### Contradiction
 **ECHO.md line 55 says Orchestrator HAS write tools. ECHO.md line 71 says Verifier CANNOT write code — but line 58 lists Verifier WITH write_file/str_replace. Self-contradictory within the same file.** The roster table was NOT updated when FID-006 changed the agents.
 
 ### Verified from source:
-- `ECHO.md` lines 55-63: roster table still shows old Codebuff tool assignments ✅ (read directly)
+- `ECHO.md` lines 55-63: roster table still shows old SavantCode tool assignments ✅ (read directly)
 - `verifier.ts` lines 67-71: `createReviewer('anthropic/claude-opus-4.8')`, no toolNames override → inherits reviewer defaults, NOT the `toolNames: []` the report claims. **Need to confirm `createReviewer` actually strips tools** — the report's claim ("Verifier has NO tools") may rely on `createReviewer` doing it, but ECHO.md line 58 still falsely lists write tools regardless.
 
 ---

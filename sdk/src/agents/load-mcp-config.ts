@@ -4,10 +4,10 @@ import os from 'os'
 import path from 'path'
 
 import { logger } from '../utils/logger'
-import { mcpConfigSchema } from '@codebuff/common/types/mcp'
+import { mcpConfigSchema } from '@savant-code/common/types/mcp'
 import { z } from 'zod/v4'
 
-import type { MCPConfig } from '@codebuff/common/types/mcp'
+import type { MCPConfig } from '@savant-code/common/types/mcp'
 
 /**
  * Schema for the mcp.json file format.

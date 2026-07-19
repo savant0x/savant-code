@@ -82,10 +82,10 @@ The A-Z system test v2 (246 items) revealed 7 actionable findings and 4 agent wo
 
 **Evidence:**
 - `/plan` is listed in `FREEBUFF_ONLY_COMMANDS` in `cli/src/commands/command-registry.ts`
-- Only available in Freebuff mode, not in Codebuff (Savant) mode
+- Only available in SavantFree mode, not in SavantCode (Savant) mode
 - Test expects `/plan` to be available universally
 
-**Impact:** Mode-dependent behavior. The test prompt should note this is Freebuff-only, or the command should be made available in both modes.
+**Impact:** Mode-dependent behavior. The test prompt should note this is SavantFree-only, or the command should be made available in both modes.
 
 ### F7: `set_output` contradiction in Orchestrator (LOW)
 
@@ -242,7 +242,7 @@ Add a note to the test prompt that 4 skills are preloaded (not in `.agents/skill
 
 Either:
 - **A:** Remove `/plan` from `FREEBUFF_ONLY_COMMANDS` (make it universal)
-- **B:** Update test prompt to note it's Freebuff-only
+- **B:** Update test prompt to note it's SavantFree-only
 
 ### Fix 7: Reconcile `set_output` in Orchestrator (F7)
 
@@ -388,9 +388,9 @@ The Orchestrator, Detective, Verifier, Thinker, Scout, and Researcher do NOT hav
 - W4 (large string ceiling): Infrastructure issue — separate FID
 - **Decision: Move W1-W4 to "Future Improvements" section, not implemented here.**
 
-### Q5: For F6, should `/plan` be made universal or kept Freebuff-only?
+### Q5: For F6, should `/plan` be made universal or kept SavantFree-only?
 
-**Answer:** Keep it Freebuff-only (Option B). The `/plan` command is part of the Freebuff product design. Making it universal in Savant mode would require understanding how it interacts with the ECHO Perfection Loop. Update the test prompt to note this is mode-dependent.
+**Answer:** Keep it SavantFree-only (Option B). The `/plan` command is part of the SavantFree product design. Making it universal in Savant mode would require understanding how it interacts with the ECHO Perfection Loop. Update the test prompt to note this is mode-dependent.
 
 ### Q6: For F7, should `set_output` be removed from Orchestrator or ECHO.md updated?
 

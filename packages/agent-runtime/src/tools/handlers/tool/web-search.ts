@@ -1,18 +1,18 @@
-import { jsonToolResult } from '@codebuff/common/util/messages'
+import { jsonToolResult } from '@savant-code/common/util/messages'
 
-import { callWebSearchAPI } from '../../../llm-api/codebuff-web-api'
+import { callWebSearchAPI } from '../../../llm-api/savant-code-web-api'
 
-import type { CodebuffToolHandlerFunction } from '../handler-function-type'
+import type { SavantCodeToolHandlerFunction } from '../handler-function-type'
 import type {
-  CodebuffToolCall,
-  CodebuffToolOutput,
-} from '@codebuff/common/tools/list'
-import type { ClientEnv, CiEnv } from '@codebuff/common/types/contracts/env'
-import type { Logger } from '@codebuff/common/types/contracts/logger'
+  SavantCodeToolCall,
+  SavantCodeToolOutput,
+} from '@savant-code/common/tools/list'
+import type { ClientEnv, CiEnv } from '@savant-code/common/types/contracts/env'
+import type { Logger } from '@savant-code/common/types/contracts/logger'
 
 export const handleWebSearch = (async (params: {
   previousToolCallFinished: Promise<void>
-  toolCall: CodebuffToolCall<'web_search'>
+  toolCall: SavantCodeToolCall<'web_search'>
   logger: Logger
   apiKey: string
 
@@ -28,7 +28,7 @@ export const handleWebSearch = (async (params: {
   clientEnv: ClientEnv
   ciEnv: CiEnv
 }): Promise<{
-  output: CodebuffToolOutput<'web_search'>
+  output: SavantCodeToolOutput<'web_search'>
   creditsUsed: number
 }> => {
   const {
@@ -148,4 +148,4 @@ export const handleWebSearch = (async (params: {
     )
     return { output: jsonToolResult({ errorMessage }), creditsUsed }
   }
-}) satisfies CodebuffToolHandlerFunction<'web_search'>
+}) satisfies SavantCodeToolHandlerFunction<'web_search'>

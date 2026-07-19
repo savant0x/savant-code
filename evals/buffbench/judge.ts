@@ -1,11 +1,11 @@
 import fs from 'fs'
 import path from 'path'
 
-import { withTimeout } from '@codebuff/common/util/promise'
+import { withTimeout } from '@savant-code/common/util/promise'
 import { z } from 'zod/v4'
 
 import type { EvalCommitV2 } from './types'
-import type { AgentDefinition, CodebuffClient } from '@codebuff/sdk'
+import type { AgentDefinition, SavantCodeClient } from '@savant-code/sdk'
 
 const DEBUG_ERROR = true
 
@@ -139,7 +139,7 @@ const judgeAgents: Record<string, AgentDefinition> = {
 }
 
 interface JudgeCommitResultInput {
-  client: CodebuffClient
+  client: SavantCodeClient
   commit: EvalCommitV2
   contextFiles: Record<string, string>
   agentDiff: string

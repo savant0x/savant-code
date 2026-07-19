@@ -1,33 +1,33 @@
 import type { FileProcessingState } from './tool/write-file'
-import type { ToolName } from '@codebuff/common/tools/constants'
+import type { ToolName } from '@savant-code/common/tools/constants'
 import type {
   ClientToolCall,
   ClientToolName,
-  CodebuffToolCall,
-  CodebuffToolMessage,
-  CodebuffToolOutput,
-} from '@codebuff/common/tools/list'
-import type { AgentTemplate } from '@codebuff/common/types/agent-template'
+  SavantCodeToolCall,
+  SavantCodeToolMessage,
+  SavantCodeToolOutput,
+} from '@savant-code/common/tools/list'
+import type { AgentTemplate } from '@savant-code/common/types/agent-template'
 import type {
   AgentRuntimeDeps,
   AgentRuntimeScopedDeps,
-} from '@codebuff/common/types/contracts/agent-runtime'
-import type { TrackEventFn } from '@codebuff/common/types/contracts/analytics'
-import type { SendSubagentChunkFn } from '@codebuff/common/types/contracts/client'
-import type { Logger } from '@codebuff/common/types/contracts/logger'
-import type { PrintModeEvent } from '@codebuff/common/types/print-mode'
-import type { AgentState, Subgoal } from '@codebuff/common/types/session-state'
-import type { ProjectFileContext } from '@codebuff/common/util/file'
+} from '@savant-code/common/types/contracts/agent-runtime'
+import type { TrackEventFn } from '@savant-code/common/types/contracts/analytics'
+import type { SendSubagentChunkFn } from '@savant-code/common/types/contracts/client'
+import type { Logger } from '@savant-code/common/types/contracts/logger'
+import type { PrintModeEvent } from '@savant-code/common/types/print-mode'
+import type { AgentState, Subgoal } from '@savant-code/common/types/session-state'
+import type { ProjectFileContext } from '@savant-code/common/util/file'
 import type { ToolSet } from 'ai'
 
 type PresentOrAbsent<K extends PropertyKey, V> =
   | { [P in K]: V }
   | { [P in K]: never }
 
-export type CodebuffToolHandlerFunction<T extends ToolName = ToolName> = (
+export type SavantCodeToolHandlerFunction<T extends ToolName = ToolName> = (
   params: {
     previousToolCallFinished: Promise<void>
-    toolCall: CodebuffToolCall<T>
+    toolCall: SavantCodeToolCall<T>
 
     agentContext: Record<string, Subgoal>
     agentState: AgentState
@@ -59,11 +59,11 @@ export type CodebuffToolHandlerFunction<T extends ToolName = ToolName> = (
     'requestClientToolCall',
     (
       toolCall: ClientToolCall<T extends ClientToolName ? T : never>,
-    ) => Promise<CodebuffToolOutput<T extends ClientToolName ? T : never>>
+    ) => Promise<SavantCodeToolOutput<T extends ClientToolName ? T : never>>
   > &
     AgentRuntimeDeps &
     AgentRuntimeScopedDeps,
 ) => Promise<{
-  output: CodebuffToolMessage<T>['content']
+  output: SavantCodeToolMessage<T>['content']
   creditsUsed?: number
 }>

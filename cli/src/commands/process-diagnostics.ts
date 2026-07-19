@@ -1,4 +1,4 @@
-import { getActiveTerminalCommandProcesses } from '@codebuff/sdk'
+import { getActiveTerminalCommandProcesses } from '@savant-code/sdk'
 
 import { getTerminalWatchdogDiagnostics } from '../utils/terminal-watchdog'
 import { getCliEnv } from '../utils/env'
@@ -100,7 +100,7 @@ export function formatProcessDiagnostics(
 export function collectProcessDiagnostics(): ProcessDiagnosticsSnapshot {
   const cpuUsage = process.cpuUsage()
   return {
-    product: IS_FREEBUFF ? 'Freebuff' : 'Codebuff',
+    product: IS_FREEBUFF ? 'SavantFree' : 'SavantCode',
     version: getCliEnv().CODEBUFF_CLI_VERSION ?? 'dev',
     runtime:
       typeof Bun !== 'undefined'

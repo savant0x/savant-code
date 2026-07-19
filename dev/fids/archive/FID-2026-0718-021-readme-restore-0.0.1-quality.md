@@ -8,7 +8,7 @@
 
 ## Honest Correction (Cross-FID)
 
-FID-2026-0718-018 ("Pre-Push Doc House-Cleaning + README Realignment + dev/ Org") rewrote README per Decision A — v0.0.2 badge, `@codebuff/X` workspace pkg names, pre-rebrand snapshot state with footnote. **But the rewrite dropped 11 of 0.0.1's substantive sections entirely**, replacing a rich 220-line polished README with a stripped 25-line README.
+FID-2026-0718-018 ("Pre-Push Doc House-Cleaning + README Realignment + dev/ Org") rewrote README per Decision A — v0.0.2 badge, `@savant-code/X` workspace pkg names, pre-rebrand snapshot state with footnote. **But the rewrite dropped 11 of 0.0.1's substantive sections entirely**, replacing a rich 220-line polished README with a stripped 25-line README.
 
 FID-021 CORRECTS this regression. Restores the 11 missing sections from 0.0.1, keeping 0.0.2 pre-rebrand naming. Quality restoration without rebrand discrepancy.
 
@@ -49,13 +49,13 @@ Verified via:
 
 | Section | Verdict | Adaptation Required |
 |---------|---------|---------------------|
-| 1: Header banner | **ADAPT_0_0_2** | `@savant-code/sdk` → `@codebuff/sdk`; `SAVANT_FREE_MODE` → `FREEBUFF_MODE`; Release badge `v0.0.1` → `v0.0.2` |
+| 1: Header banner | **ADAPT_0_0_2** | `@savant-code/sdk` → `@savant-code/sdk`; `SAVANT_FREE_MODE` → `FREEBUFF_MODE`; Release badge `v0.0.1` → `v0.0.2` |
 | 2: Overview | **DIRECT_COPY** | No name/command changes |
 | 3: Key Technologies | **DIRECT_COPY** | Versions match (Bun 1.3.14, TS 5.5.4, OpenTUI 0.2.2, Zod 4.2.1, AI 5.0.52) |
-| 4: Features | **ADAPT_0_0_2** | Sub-headers reflect `@codebuff/cli`, `@codebuff/freebuff`, `@codebuff/sdk`, `@codebuff/agent-runtime` |
-| 5: Repo Map | **ADAPT_0_0_2** | Update all workspace names to `@codebuff/X` |
-| 6: Quick Start | **ADAPT_0_0_2** | Update `dev:savant-free` → `dev:freebuff`, `build:savant-free` → `build:freebuff`; SDK import `@codebuff/sdk`; npm names `@codebuff/cli`/`@codebuff/freebuff` |
-| 7: CLI Commands | **ADAPT_0_0_2** | Update `dev:savant-free` → `dev:freebuff`, `build:savant-free` → `build:freebuff` |
+| 4: Features | **ADAPT_0_0_2** | Sub-headers reflect `@savant-code/cli`, `@savant-code/savant-free`, `@savant-code/sdk`, `@savant-code/agent-runtime` |
+| 5: Repo Map | **ADAPT_0_0_2** | Update all workspace names to `@savant-code/X` |
+| 6: Quick Start | **ADAPT_0_0_2** | Update `dev:savant-free` → `dev:savant-free`, `build:savant-free` → `build:savant-free`; SDK import `@savant-code/sdk`; npm names `@savant-code/cli`/`@savant-code/savant-free` |
+| 7: CLI Commands | **ADAPT_0_0_2** | Update `dev:savant-free` → `dev:savant-free`, `build:savant-free` → `build:savant-free` |
 | 8: ECHO Protocol | **DIRECT_COPY** | Verified against ECHO.md actual content (v0.2.0, 4 process laws + 11 extended) |
 | 9: Configuration | **DIRECT_COPY** | Standard paths |
 | 10: Validation | **DIRECT_COPY** | Standard commands |
@@ -67,16 +67,16 @@ Verified via:
 
 ## Missed Questions (Q1-Q14, all source-cited)
 
-### Q1. Will the restored 0.0.1 README maintain FID-017 Option C constraint (workspace pkg names `«@codebuff/*`») throughout?
-**A:** ✅ YES. All `@savant-code/X` references in 0.0.1 will be replaced with `@codebuff/X` during FORGE. Source: basher verified all 11 workspace packages have `@codebuff/` scope; zero `@savant-code` references in code. Plan: pure-string substitution pass on all 10 package name occurrences + 1 env var change.
+### Q1. Will the restored 0.0.1 README maintain FID-017 Option C constraint (workspace pkg names `«@savant-code/*`») throughout?
+**A:** ✅ YES. All `@savant-code/X` references in 0.0.1 will be replaced with `@savant-code/X` during FORGE. Source: basher verified all 11 workspace packages have `@savant-code/` scope; zero `@savant-code` references in code. Plan: pure-string substitution pass on all 10 package name occurrences + 1 env var change.
 
 ### Q2. Will Quick Start commands match 0.0.2 reality?
-**A:** ✅ YES. Root package.json (basher ground-truth): `name: "savant-code", version: "0.0.2"` + scripts: `dev`, `dev:freebuff`, `build:sdk`, `build:freebuff`, `ci`. Adaptations: `dev:savant-free` → `dev:freebuff`, `build:savant-free` → `build:freebuff` (NOT just alias — different script names).
+**A:** ✅ YES. Root package.json (basher ground-truth): `name: "savant-code", version: "0.0.2"` + scripts: `dev`, `dev:savant-free`, `build:sdk`, `build:savant-free`, `ci`. Adaptations: `dev:savant-free` → `dev:savant-free`, `build:savant-free` → `build:savant-free` (NOT just alias — different script names).
 
-### Q3. Are binaries `savant-code` + `freebuff` per FID-017?
-**A:** ✅ YES. Per FID-017 decision (workspace pkg names `«@codebuff/*` except binaries, CLI binaries pre-renamed). End-user binaries: `savant-code` (paid CLI) + `freebuff` (free variant).
+### Q3. Are binaries `savant-code` + `savant-free` per FID-017?
+**A:** ✅ YES. Per FID-017 decision (workspace pkg names `«@savant-code/*` except binaries, CLI binaries pre-renamed). End-user binaries: `savant-code` (paid CLI) + `savant-free` (free variant).
 
-### Q4. Will `import { SavantClient } from '@codebuff/sdk'` work?
+### Q4. Will `import { SavantClient } from '@savant-code/sdk'` work?
 **A:** ✅ YES. `sdk/package.json` exports map confirms: `./dist/index.mjs` (import), `./dist/index.cjs` (require), `./dist/index.d.ts` (types). All three resolve with current `rootDir: ".."` + bun build output structure (verified in FID-020 AUDIT).
 
 ### Q5. Will Validation block commands work in 0.0.2?
@@ -94,7 +94,7 @@ Verified via:
 - ws ^8.18.0 (verify in GREEN)
 
 ### Q7. Does Repo Map table list all 11 workspace packages in 0.0.2?
-**A:** ✅ YES with adaptation: 0.0.1 lists 10 packages (no `scripts/tmux`). Local root `workspaces` field has 11 entries: agents, cli, common, evals, freebuff, packages/agent-runtime, packages/code-map, packages/database, packages/llm-providers, scripts/tmux, sdk. Decision: include `scripts/tmux` for accuracy.
+**A:** ✅ YES with adaptation: 0.0.1 lists 10 packages (no `scripts/tmux`). Local root `workspaces` field has 11 entries: agents, cli, common, evals, savant-free, packages/agent-runtime, packages/code-map, packages/database, packages/llm-providers, scripts/tmux, sdk. Decision: include `scripts/tmux` for accuracy.
 
 ### Q8. Does Features list accurately describe 0.0.2 implementation?
 **A:** PARTIAL — most features listed in 0.0.1 are accurate. Some features from 0.0.1 may not be fully implemented yet in 0.0.2 (`/init`, etc.). VERIFY each feature claim against actual CLI implementation in GREEN phase (cross-reference against `cli/src/commands/`).
@@ -106,7 +106,7 @@ Verified via:
 **A:** ✅ YES — image exists at `assets/banner.png` (723,847 bytes). Same reference URL path in restored content. GitHub renders banner centered with 850px width.
 
 ### Q11. Should pre-rebrand note from current local README be retained?
-**A:** RECOMMENDATION: YES — keep adapted note near top. The current note explains "0.0.2 is the **pre-rebrand safety checkpoint** — workspace package names retain `@codebuff/*`". This disclaimer helps readers understand the version state.
+**A:** RECOMMENDATION: YES — keep adapted note near top. The current note explains "0.0.2 is the **pre-rebrand safety checkpoint** — workspace package names retain `@savant-code/*`". This disclaimer helps readers understand the version state.
 
 ### Q12. Will workflow commands (`bun run dev`, `bun test`) match?
 **A:** ✅ YES — standard Bun scripts.
@@ -122,7 +122,7 @@ Verified via:
 ## GREEN Plan — 5 Steps (~45 min total)
 
 ### Step 1 (~5 min) — Header Banner Adaptation
-Update `<!-- markdownlint-disable MD033 -->` directive placement, banner image reference, tagline. Replace `@savant-code/sdk` → `@codebuff/sdk` in tagline. Update `SAVANT_FREE_MODE=true` → `FREEBUFF_MODE=true`. Update Release badge `v0.0.1` → `v0.0.2`.
+Update `<!-- markdownlint-disable MD033 -->` directive placement, banner image reference, tagline. Replace `@savant-code/sdk` → `@savant-code/sdk` in tagline. Update `SAVANT_FREE_MODE=true` → `FREEBUFF_MODE=true`. Update Release badge `v0.0.1` → `v0.0.2`.
 
 ### Step 2 (~15 min) — Restore 11 Missing Sections
 Insert in order after Overview paragraph:
@@ -141,15 +141,15 @@ Insert in order after Overview paragraph:
 Apply ADAPT_0_0_2 changes inline per Section Adaptation Matrix.
 
 ### Step 3 (~5 min) — Quick Start Package Install Updates
-Replace SDK import `@savant-code/sdk` → `@codebuff/sdk`. Update End-User Install: `savant-code`/`savant-free` → `@codebuff/cli`/`@codebuff/freebuff`.
+Replace SDK import `@savant-code/sdk` → `@savant-code/sdk`. Update End-User Install: `savant-code`/`savant-free` → `@savant-code/cli`/`@savant-code/savant-free`.
 
 ### Step 4 (~5 min) — CLI Commands/Quick Start Command Updates
-Replace `dev:savant-free` → `dev:freebuff`, `build:savant-free` → `build:freebuff` (4 occurrences in Quick Start + 2 in CLI Commands table).
+Replace `dev:savant-free` → `dev:savant-free`, `build:savant-free` → `build:savant-free` (4 occurrences in Quick Start + 2 in CLI Commands table).
 
 ### Step 5 (~15 min) — AUDIT Verification
 - 5.1: `markdownlint README.md` clean (only out-of-scope MD013 line-length warnings acceptable)
 - 5.2: Manual line-count comparison vs 0.0.1 (~220 lines)
-- 5.3: `grep '@savant-code' README.md` returns 0 (`@codebuff/X` substitution complete)
+- 5.3: `grep '@savant-code' README.md` returns 0 (`@savant-code/X` substitution complete)
 - 5.4: `grep 'SAVANT_FREE_MODE' README.md` returns 0 (`FREEBUFF_MODE` substitution complete)
 - 5.5: `grep 'dev:savant-free\|build:savant-free' README.md` returns 0 (command substitution complete)
 - 5.6: Render check — local README content matches 0.0.1 quality (sections present + accurate content)
@@ -168,7 +168,7 @@ Replace `dev:savant-free` → `dev:freebuff`, `build:savant-free` → `build:fre
 
 ### Decision 3 — Pre-rebrand note retention
 - **✅ Option A (Recommended):** RETAIN adapted pre-rebrand note ABOVE Overview (`> **Note:** 0.0.2 is the **pre-rebrand safety checkpoint**...`) — preserves 0.0.2 context for readers
-- Option B: REMOVE note entirely (let the @codebuff/X namespace speak for itself)
+- Option B: REMOVE note entirely (let the @savant-code/X namespace speak for itself)
 
 ### Decision 4 — scripts/tmux in Repo Map
 - **✅ Option A (Recommended):** INCLUDE `scripts/tmux` row in Repo Map table — it's a real workspace package per root package.json, used in CLI dev workflow
@@ -213,9 +213,9 @@ Replace `dev:savant-free` → `dev:freebuff`, `build:savant-free` → `build:fre
 
 | IN scope (FID-021) | OUT of scope (separate FIDs) |
 |---------------------|------------------------------|
-| Root README.md restoration to 0.0.1 quality | `sdk/README.md`, `cli/README.md`, `freebuff/README.md` — may need same restoration (FID-022 follow-up) |
+| Root README.md restoration to 0.0.1 quality | `sdk/README.md`, `cli/README.md`, `savant-free/README.md` — may need same restoration (FID-022 follow-up) |
 | All 11 missing sections restored with 0.0.2 namespacing | CONTRIBUTING.md, AGENTS.md — already handled by FID-018 |
-| Adapt `«@savant-code/X` → `«@codebuff/X` (10 occurrences) | Image alt-text improvements (separate FID for accessibility) |
+| Adapt `«@savant-code/X` → `«@savant-code/X` (10 occurrences) | Image alt-text improvements (separate FID for accessibility) |
 | Adapt `SAVANT_FREE_MODE` → `FREEBUFF_MODE` (1 occurrence) | License file LICENSE rewording (separate FID) |
 | Update Release badge `v0.0.1` → `v0.0.2` | ECHO.md / ARCHITECTURE.md re-verification (handled by FID-015 framing) |
 | Update build/quick-start commands | Banner image regeneration (separate FID, low ROI) |

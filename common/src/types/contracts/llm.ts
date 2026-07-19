@@ -4,7 +4,7 @@ import type { OpenRouterProviderRoutingOptions , AgentTemplate } from '../agent-
 import type { ParamsExcluding } from '../function-params'
 import type { Logger } from './logger'
 import type { Model } from '../../old-constants'
-import type { Message } from '../messages/codebuff-message'
+import type { Message } from '../messages/savant-code-message'
 import type { PromptResult } from '../../util/error'
 import type { generateText, streamText, ToolCallPart } from 'ai'
 import type z from 'zod/v4'

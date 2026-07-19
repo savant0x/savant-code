@@ -1,3 +1,5 @@
+> **Historical document**: this file describes the pre-rebrand-to-savant-code migration plan in past tense. For current project state, see FID-2026-0719-026.
+
 # **Codebase Migration and Architectural Blueprint: Savant & Savant-Free**
 
 The following research report and execution blueprint provides an exhaustive architectural analysis for decoupling, rebranding, and migrating the open-source CodebuffAI/codebuff monorepo1. The overarching objective of this analysis is to transform the existing TypeScript-based client applications—specifically the premium, subscription-based codebuff client and the ad-supported, zero-configuration freebuff client1—into the distinct entities savant and savant-free, respectively. Furthermore, this document details the meticulous API surface extraction required to sever ties with the original proprietary backend infrastructure. This extraction informs a comprehensive specification for rebuilding the server layer using a high-performance Rust web framework.  

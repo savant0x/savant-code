@@ -9,24 +9,24 @@ import {
   withParentModel,
 } from './spawn-agent-utils'
 
-import type { CodebuffToolHandlerFunction } from '../handler-function-type'
+import type { SavantCodeToolHandlerFunction } from '../handler-function-type'
 import type {
-  CodebuffToolCall,
-  CodebuffToolOutput,
-} from '@codebuff/common/tools/list'
-import type { AgentTemplate } from '@codebuff/common/types/agent-template'
-import type { Logger } from '@codebuff/common/types/contracts/logger'
-import type { ParamsExcluding } from '@codebuff/common/types/function-params'
-import type { PrintModeEvent } from '@codebuff/common/types/print-mode'
-import type { AgentState } from '@codebuff/common/types/session-state'
-import type { ProjectFileContext } from '@codebuff/common/util/file'
+  SavantCodeToolCall,
+  SavantCodeToolOutput,
+} from '@savant-code/common/tools/list'
+import type { AgentTemplate } from '@savant-code/common/types/agent-template'
+import type { Logger } from '@savant-code/common/types/contracts/logger'
+import type { ParamsExcluding } from '@savant-code/common/types/function-params'
+import type { PrintModeEvent } from '@savant-code/common/types/print-mode'
+import type { AgentState } from '@savant-code/common/types/session-state'
+import type { ProjectFileContext } from '@savant-code/common/util/file'
 import type { ToolSet } from 'ai'
 
 type ToolName = 'spawn_agent_inline'
 export const handleSpawnAgentInline = (async (
   params: {
     previousToolCallFinished: Promise<void>
-    toolCall: CodebuffToolCall<ToolName>
+    toolCall: SavantCodeToolCall<ToolName>
 
     agentState: AgentState
     agentTemplate: AgentTemplate
@@ -54,7 +54,7 @@ export const handleSpawnAgentInline = (async (
     | 'clearUserPromptMessagesAfterResponse'
     | 'fingerprintId'
   >,
-): Promise<{ output: CodebuffToolOutput<ToolName> }> => {
+): Promise<{ output: SavantCodeToolOutput<ToolName> }> => {
   const {
     previousToolCallFinished,
     toolCall,
@@ -143,4 +143,4 @@ export const handleSpawnAgentInline = (async (
   parentAgentState.messageHistory = result.agentState.messageHistory
 
   return { output: [{ type: 'json', value: { message: 'Agent spawned.' } }] }
-}) satisfies CodebuffToolHandlerFunction<ToolName>
+}) satisfies SavantCodeToolHandlerFunction<ToolName>

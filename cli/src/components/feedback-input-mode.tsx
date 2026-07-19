@@ -11,7 +11,7 @@ import { createTextPasteHandler } from '../utils/strings'
 import { isPlainEnterKey } from '../utils/terminal-enter-detection'
 import { BORDER_CHARS } from '../utils/ui-constants'
 
-import type { FeedbackCategory } from '@codebuff/common/constants/feedback'
+import type { FeedbackCategory } from '@savant-code/common/constants/feedback'
 
 type CategoryHighlightKey = 'success' | 'error' | 'warning' | 'info'
 
@@ -46,8 +46,8 @@ const CATEGORY_OPTIONS = [
     shortLabel: 'Bug',
     highlightKey: 'warning',
     placeholder: IS_FREEBUFF
-      ? 'Report a problem with Freebuff (crashes, errors, UI issues, etc.)'
-      : 'Report a problem with Codebuff (crashes, errors, UI issues, etc.)',
+      ? 'Report a problem with SavantFree (crashes, errors, UI issues, etc.)'
+      : 'Report a problem with SavantCode (crashes, errors, UI issues, etc.)',
   },
   {
     id: 'other',

@@ -13,9 +13,9 @@
 import * as fs from 'fs'
 import * as path from 'path'
 
-import { CodebuffClient, loadLocalAgents } from '@codebuff/sdk'
+import { SavantCodeClient, loadLocalAgents } from '@savant-code/sdk'
 
-import type { AgentDefinition } from '@codebuff/sdk'
+import type { AgentDefinition } from '@savant-code/sdk'
 
 const TRACE_DIR = path.join(process.cwd(), 'debug', 'librarian-traces')
 
@@ -53,7 +53,7 @@ interface LibrarianOutput {
 }
 
 async function runTask(
-  client: CodebuffClient,
+  client: SavantCodeClient,
   task: TaskDefinition,
   agentDefinitions: AgentDefinition[],
   taskIndex: number,
@@ -245,7 +245,7 @@ async function main() {
   }
   console.log(`Loaded librarian agent (model: ${librarianAgent.model})`)
 
-  const client = new CodebuffClient({
+  const client = new SavantCodeClient({
     apiKey: process.env.CODEBUFF_API_KEY,
     cwd: process.cwd(),
   })

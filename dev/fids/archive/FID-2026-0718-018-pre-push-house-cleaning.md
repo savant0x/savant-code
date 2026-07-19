@@ -12,7 +12,7 @@
 Pre-push house-cleaning per user request. User tightened scope on 2026-07-19: "no files can be out of place, all completed FIDs must be updated and moved to archive." Discovery found:
 
 - 17 README drifts, 5 CONTRIBUTING drifts, 3 AGENTS drifts, 2 stray `@savant-code/*` pkg names
-- 4 straggler ECHO-format FIDs in `dev/fids/` root (FID-2026-0717-013-tests, FID-2026-0718-010-stuck-state-cleanup, plus 2 pre-ECHO format files: `Codebuff Rebranding And Migration Plan.md`, `FID-savant-code-rebrand.md`)
+- 4 straggler ECHO-format FIDs in `dev/fids/` root (FID-2026-0717-013-tests, FID-2026-0718-010-stuck-state-cleanup, plus 2 pre-ECHO format files: `SavantCode Rebranding And Migration Plan.md`, `FID-savant-code-rebrand.md`)
 - Stale `dev/session-summaries/` (latest 2026-07-17, no entry for 2026-07-18 → 19)
 - Duplicate `coding-standards/release-workflow.md` vs `.agents/skills/release-workflow/SKILL.md`
 
@@ -28,7 +28,7 @@ Pre-push house-cleaning per user request. User tightened scope on 2026-07-19: "n
 |------------------------|---------------------------------------|------------------------|
 | `FID-2026-0717-013-tests.md` | `FID-2026-0717-013-tests.md` | already ECHO |
 | `FID-2026-0718-010-stuck-state-cleanup.md` | `FID-2026-0718-010-stuck-state-cleanup.md` | already ECHO |
-| `Codebuff Rebranding And Migration Plan.md` | `FID-2026-0717-014-codebuff-rebrand-migration-plan.md` | ✅ renamed |
+| `SavantCode Rebranding And Migration Plan.md` | `FID-2026-0717-014-savant-code-rebrand-migration-plan.md` | ✅ renamed |
 | `FID-savant-code-rebrand.md` | `FID-2026-0717-015-savant-code-rebrand.md` | ✅ renamed |
 
 **CHANGELOG.md updated** — 4 new FID entries prepended at top (above FID-2026-0718-017):
@@ -84,7 +84,7 @@ Pre-push house-cleaning per user request. User tightened scope on 2026-07-19: "n
 ## 4 Inline Decisions for User Approval
 
 ### Decision 1: README positioning
-- **A ✅ (Recommended):** Pre-rebrand snapshot. README uses `@codebuff/X` + `codebuff`/`freebuff` npm names. `savant-code` retained as CLI binary NAME per `cli/package.json` `bin` field with footnote.
+- **A ✅ (Recommended):** Pre-rebrand snapshot. README uses `@savant-code/X` + `savant-code`/`savant-free` npm names. `savant-code` retained as CLI binary NAME per `cli/package.json` `bin` field with footnote.
 - B: Aspirational Savant across the board (false claims).
 - C: Badge-only update.
 

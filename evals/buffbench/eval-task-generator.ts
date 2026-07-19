@@ -1,5 +1,5 @@
-import type { CodebuffClient} from '@codebuff/sdk';
-import { type AgentDefinition } from '@codebuff/sdk'
+import type { SavantCodeClient} from '@savant-code/sdk';
+import { type AgentDefinition } from '@savant-code/sdk'
 
 import { PLACEHOLDER } from '../../agents/types/secret-agent-definition'
 import filePickerDef from '../../agents/file-explorer/file-picker'
@@ -98,7 +98,7 @@ export async function generateEvalTask({
   input,
   agentDefinitions,
 }: {
-  client: CodebuffClient
+  client: SavantCodeClient
   input: {
     commitSha: string
     parentSha: string

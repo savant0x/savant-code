@@ -18,11 +18,11 @@ FID-021 corrected FID-018's README quality regression. Local README.md grew from
 1. **README.md = 11 ## headings** (Overview + 10 restored): Overview / Key Technologies / Features / Repo Map / Quick Start / CLI Commands / ECHO Protocol / Configuration / Validation / Documentation / License — verify by `grep -cE '^## ' README.md` = 11
 2. **No `SAVANT_FREE_MODE` strings** — verify `grep -c 'SAVANT_FREE_MODE' README.md` = 0 (all substituted to `FREEBUFF_MODE`)
 3. **No `SAVANT_CODE_API_KEY`** — verify `grep -c 'SAVANT_CODE_API_KEY' README.md` = 0 (adapted to `CODEBUFF_API_KEY` matching sdk/src/ env var)
-4. **No `dev:savant-free`/`build:savant-free`** — verify `grep -cE 'dev:savant-free|build:savant-free' README.md` = 0 (adapted to `dev:freebuff`/`build:freebuff`)
+4. **No `dev:savant-free`/`build:savant-free`** — verify `grep -cE 'dev:savant-free|build:savant-free' README.md` = 0 (adapted to `dev:savant-free`/`build:savant-free`)
 5. **Only intentional `@savant-code/*` mention** (one hit in pre-rebrand note explaining the future rebrand) — verify by reading line 15 and confirming it's in the explanatory note, not a leftover substitution
-6. **All `@codebuff/X` references present** — verify by `grep -c '@codebuff' README.md` >= 14 occurrences (Header @codebuff/sdk + Features 4 sub-sections + Repo Map 11 rows + Quick Start + SDK import + CLI Commands + Validation comment + npm install + Footer attribution = ~14 references)
+6. **All `@savant-code/X` references present** — verify by `grep -c '@savant-code' README.md` >= 14 occurrences (Header @savant-code/sdk + Features 4 sub-sections + Repo Map 11 rows + Quick Start + SDK import + CLI Commands + Validation comment + npm install + Footer attribution = ~14 references)
 7. **Header banner + tagline + 7 badges preserved** — verify by reading top 11 lines (banner, tagline, FREEBUFF_MODE description, 7 badges TypeScript/Bun/React/OpenTUI/ECHO/License/Release)
-8. **Pre-rebrand note retained** — verify by reading line 15 matches `> **Note:** 0.0.2 is the **pre-rebrand safety checkpoint** — workspace package names retain \`@codebuff/*\`...`
+8. **Pre-rebrand note retained** — verify by reading line 15 matches `> **Note:** 0.0.2 is the **pre-rebrand safety checkpoint** — workspace package names retain \`@savant-code/*\`...`
 9. **Footer preserves attribution** — verify by reading tail of file (`_Savant-Code is the public TypeScript monorepo...` + `**Savant** • 2026`)
 10. **OpenTUI github URL is `anomalyco/opentui`** (not the old `sst/opentui`) — verify by reading badge line
 11. **Repo Map includes `scripts/tmux/` row** (per Decision A) — verify 11 rows total in the Repo Map table
@@ -58,7 +58,7 @@ FID-021 corrected FID-018's README quality regression. Local README.md grew from
 Please verify:
 
 1. The 11-section structure is correct and complete (no missing section between Overview and License, in correct order)
-- 2. The 0.0.2 namespace adaptations are correct (`@codebuff/X` / `FREEBUFF_MODE` / `dev:freebuff` / `CODEBUFF_API_KEY` / v0.0.2 release badge)
+- 2. The 0.0.2 namespace adaptations are correct (`@savant-code/X` / `FREEBUFF_MODE` / `dev:savant-free` / `CODEBUFF_API_KEY` / v0.0.2 release badge)
 - 3. The pre-rebrand note accurately reflects the FID-017 Option C decision (1,131 consumer imports claim)
 - 4. The header banner / tagline / 7-badge layout matches 0.0.1 design intent
 - 5. Feature claims accurately describe the 0.0.2 implementation (especially: `/init`, MCP tools, skills system, knowledge files, mode switching)

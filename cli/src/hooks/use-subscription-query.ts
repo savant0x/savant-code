@@ -1,11 +1,11 @@
 import { useActivityQuery } from './use-activity-query'
 import { getAuthToken } from '../utils/auth'
 import { IS_FREEBUFF } from '../utils/constants'
-import { getApiClient } from '../utils/codebuff-api'
+import { getApiClient } from '../utils/savant-code-api'
 import { logger as defaultLogger } from '../utils/logger'
 
-import type { Logger } from '@codebuff/common/types/contracts/logger'
-import type { SubscriptionResponse } from '@codebuff/common/types/subscription'
+import type { Logger } from '@savant-code/common/types/contracts/logger'
+import type { SubscriptionResponse } from '@savant-code/common/types/subscription'
 
 export type { SubscriptionResponse }
 

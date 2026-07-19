@@ -38,7 +38,7 @@ export const handleAdsDisable = (): {
 export const getAdsEnabled = (): boolean => {
   if (IS_FREEBUFF) return true
 
-  // Codebuff LITE is a paid mode now, so use the normal saved setting.
+  // SavantCode LITE is a paid mode now, so use the normal saved setting.
   const settings = loadSettings()
   return settings.adsEnabled ?? false
 }

@@ -1,6 +1,6 @@
 import { isEqual } from 'lodash'
 
-import { formatToolOutput } from './codebuff-client'
+import { formatToolOutput } from './savant-code-client'
 import { shouldCollapseByDefault, shouldCollapseForParent } from './constants'
 
 import type {
@@ -13,7 +13,7 @@ import type {
  * Extracts the base agent name from a potentially scoped/versioned agent type string.
  *
  * @example
- * getAgentBaseName('codebuff/scout@0.0.2') // 'scout'
+ * getAgentBaseName('savant-code/scout@0.0.2') // 'scout'
  * getAgentBaseName('scout@1.0.0') // 'scout'
  * getAgentBaseName('scout') // 'scout'
  * getAgentBaseName('scout') // 'scout'

@@ -1,6 +1,6 @@
 import { mock } from 'bun:test'
 
-import type { CodebuffApiClient } from '../../utils/codebuff-api'
+import type { SavantCodeApiClient } from '../../utils/savant-code-api'
 
 export interface MockApiClientOverrides {
   get?: ReturnType<typeof mock>
@@ -29,36 +29,36 @@ const defaultOkResponse = () =>
   Promise.resolve({ ok: true as const, status: 200 })
 
 /**
- * Creates a mock CodebuffApiClient with sensible defaults.
+ * Creates a mock SavantCodeApiClient with sensible defaults.
  * All methods return { ok: true, status: 200 } by default.
  * Pass overrides to customize specific methods.
  */
 export const createMockApiClient = (
   overrides: MockApiClientOverrides = {},
-): CodebuffApiClient => ({
-  get: (overrides.get ?? mock(defaultOkResponse)) as CodebuffApiClient['get'],
+): SavantCodeApiClient => ({
+  get: (overrides.get ?? mock(defaultOkResponse)) as SavantCodeApiClient['get'],
   post: (overrides.post ??
-    mock(defaultOkResponse)) as CodebuffApiClient['post'],
-  put: (overrides.put ?? mock(defaultOkResponse)) as CodebuffApiClient['put'],
+    mock(defaultOkResponse)) as SavantCodeApiClient['post'],
+  put: (overrides.put ?? mock(defaultOkResponse)) as SavantCodeApiClient['put'],
   patch: (overrides.patch ??
-    mock(defaultOkResponse)) as CodebuffApiClient['patch'],
+    mock(defaultOkResponse)) as SavantCodeApiClient['patch'],
   delete: (overrides.delete ??
-    mock(defaultOkResponse)) as CodebuffApiClient['delete'],
+    mock(defaultOkResponse)) as SavantCodeApiClient['delete'],
   request: (overrides.request ??
-    mock(defaultOkResponse)) as CodebuffApiClient['request'],
-  me: (overrides.me ?? mock(defaultOkResponse)) as CodebuffApiClient['me'],
+    mock(defaultOkResponse)) as SavantCodeApiClient['request'],
+  me: (overrides.me ?? mock(defaultOkResponse)) as SavantCodeApiClient['me'],
   usage: (overrides.usage ??
-    mock(defaultOkResponse)) as CodebuffApiClient['usage'],
+    mock(defaultOkResponse)) as SavantCodeApiClient['usage'],
   loginCode: (overrides.loginCode ??
-    mock(defaultOkResponse)) as CodebuffApiClient['loginCode'],
+    mock(defaultOkResponse)) as SavantCodeApiClient['loginCode'],
   loginStatus: (overrides.loginStatus ??
-    mock(defaultOkResponse)) as CodebuffApiClient['loginStatus'],
+    mock(defaultOkResponse)) as SavantCodeApiClient['loginStatus'],
   publish: (overrides.publish ??
-    mock(defaultOkResponse)) as CodebuffApiClient['publish'],
+    mock(defaultOkResponse)) as SavantCodeApiClient['publish'],
   logout: (overrides.logout ??
-    mock(defaultOkResponse)) as CodebuffApiClient['logout'],
+    mock(defaultOkResponse)) as SavantCodeApiClient['logout'],
   feedback: (overrides.feedback ??
-    mock(defaultOkResponse)) as CodebuffApiClient['feedback'],
-  baseUrl: overrides.baseUrl ?? 'https://test.codebuff.com',
+    mock(defaultOkResponse)) as SavantCodeApiClient['feedback'],
+  baseUrl: overrides.baseUrl ?? 'https://test.savant-code.com',
   authToken: overrides.authToken,
 })

@@ -1,8 +1,8 @@
-import { WEBSITE_URL } from '@codebuff/sdk'
+import { WEBSITE_URL } from '@savant-code/sdk'
 import type {
   PublishAgentsResponse,
-} from '@codebuff/common/types/api/agents/publish'
-import type { FeedbackRequest } from '@codebuff/common/schemas/feedback'
+} from '@savant-code/common/types/api/agents/publish'
+import type { FeedbackRequest } from '@savant-code/common/schemas/feedback'
 
 /**
  * API response types for consistent error handling.
@@ -89,9 +89,9 @@ const DEFAULT_RETRY_CONFIG: Required<RetryConfig> = {
 }
 
 /**
- * Configuration for creating a Codebuff API client
+ * Configuration for creating a SavantCode API client
  */
-export interface CodebuffApiClientConfig {
+export interface SavantCodeApiClientConfig {
   /** Base URL for API requests (defaults to WEBSITE_URL from SDK) */
   baseUrl?: string
   /** Auth token for Bearer authentication */
@@ -122,7 +122,7 @@ export interface RequestOptions {
   headers?: Record<string, string>
 }
 
-export interface CodebuffApiClient {
+export interface SavantCodeApiClient {
   readonly baseUrl: string
   readonly authToken?: string
 
@@ -293,11 +293,11 @@ const isRetryableError = (error: unknown): boolean => {
 }
 
 /**
- * Create a Codebuff API client for making authenticated requests to the Codebuff API
+ * Create a SavantCode API client for making authenticated requests to the SavantCode API
  */
 export function createCodebuffApiClient(
-  config: CodebuffApiClientConfig = {},
-): CodebuffApiClient {
+  config: SavantCodeApiClientConfig = {},
+): SavantCodeApiClient {
   const {
     baseUrl = WEBSITE_URL,
     authToken,
@@ -568,7 +568,7 @@ export function createCodebuffApiClient(
 // Shared singleton client
 // ============================================================================
 
-let sharedClient: CodebuffApiClient | null = null
+let sharedClient: SavantCodeApiClient | null = null
 let sharedAuthToken: string | undefined
 // Track the token that was used to create the current client instance
 let clientCreatedWithToken: string | undefined
@@ -581,7 +581,7 @@ let clientCreatedWithToken: string | undefined
  * to ensure a specific auth token is used. The client is recreated whenever
  * the auth token changes.
  */
-export function getApiClient(): CodebuffApiClient {
+export function getApiClient(): SavantCodeApiClient {
   // Recreate client if it doesn't exist or if the token has changed since creation
   if (!sharedClient || clientCreatedWithToken !== sharedAuthToken) {
     sharedClient = createCodebuffApiClient({ authToken: sharedAuthToken })

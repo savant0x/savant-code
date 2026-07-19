@@ -24,7 +24,7 @@
 | # | Test | Expected |
 |---|------|----------|
 | 5 | Run `bun run --version` to confirm CLI version | Returns version string |
-| 6 | Confirm which model is active | Check if IS_FREEBUFF or Codebuff mode |
+| 6 | Confirm which model is active | Check if IS_FREEBUFF or SavantCode mode |
 | 7 | Confirm which shell is detected | bash/powershell |
 
 ---
@@ -214,7 +214,7 @@
 | 102 | `/theme:toggle` | Toggles light/dark |
 | 103 | `/review` | Code review mode |
 | 104 | `/interview` | AI flesh-out questions |
-| 105 | `/plan` | Implementation plan (Freebuff-only) |
+| 105 | `/plan` | Implementation plan (SavantFree-only) |
 | 106 | `/feedback` | Feedback prompt |
 | 107 | `/bash` | Bash mode |
 | 108 | `/logout` | Signs out |
@@ -227,8 +227,8 @@
 | 115 | `/skill:coding-csharp` | Loads C# skill |
 | 116 | `/skill:sequential-thinking` | Loads thinking skill |
 | 117 | `/skill:release-workflow` | Loads release skill |
-| 118 | `/connect` (Freebuff) | Connects OR "not available" |
-| 119 | `/end-session` (Freebuff) | Ends free session |
+| 118 | `/connect` (SavantFree) | Connects OR "not available" |
+| 119 | `/end-session` (SavantFree) | Ends free session |
 | 120 | `help` (no slash) | Same as `/help` |
 | 121 | `new` (no slash) | Same as `/new` |
 | 122 | `exit` (no slash) | Same as `/exit` |

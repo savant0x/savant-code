@@ -271,7 +271,7 @@ export const SingleAdBanner: React.FC<{
 }
 
 /**
- * Up to four ads shown in a row. Still used by the freebuff landing screen,
+ * Up to four ads shown in a row. Still used by the savant-free landing screen,
  * which intentionally fills the space with multiple ads.
  */
 export const ChoiceAdBanner: React.FC<ChoiceAdBannerProps> = ({

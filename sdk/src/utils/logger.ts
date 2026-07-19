@@ -9,7 +9,7 @@ import { pino } from 'pino'
 
 export const logger = pino({
   level: process.env.SDK_LOG_LEVEL ?? 'warn',
-  name: 'codebuff-sdk',
+  name: 'savant-code-sdk',
 })
 
 export default logger

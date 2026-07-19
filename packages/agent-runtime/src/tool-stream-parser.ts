@@ -1,4 +1,4 @@
-import { AnalyticsEvent } from '@codebuff/common/constants/analytics-events'
+import { AnalyticsEvent } from '@savant-code/common/constants/analytics-events'
 
 import {
   createStreamParserState,
@@ -6,15 +6,15 @@ import {
 } from './util/stream-xml-parser'
 
 import type { StreamParserState } from './util/stream-xml-parser'
-import type { Model } from '@codebuff/common/old-constants'
-import type { TrackEventFn } from '@codebuff/common/types/contracts/analytics'
-import type { StreamChunk } from '@codebuff/common/types/contracts/llm'
-import type { Logger } from '@codebuff/common/types/contracts/logger'
+import type { Model } from '@savant-code/common/old-constants'
+import type { TrackEventFn } from '@savant-code/common/types/contracts/analytics'
+import type { StreamChunk } from '@savant-code/common/types/contracts/llm'
+import type { Logger } from '@savant-code/common/types/contracts/logger'
 import type {
   PrintModeError,
   PrintModeText,
-} from '@codebuff/common/types/print-mode'
-import type { PromptResult } from '@codebuff/common/util/error'
+} from '@savant-code/common/types/print-mode'
+import type { PromptResult } from '@savant-code/common/util/error'
 
 function summarizeToolInput(input: unknown): Record<string, unknown> {
   if (typeof input === 'string') {

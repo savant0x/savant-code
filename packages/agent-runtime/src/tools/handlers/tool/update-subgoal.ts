@@ -1,18 +1,18 @@
-import { jsonToolResult } from '@codebuff/common/util/messages'
+import { jsonToolResult } from '@savant-code/common/util/messages'
 
-import type { CodebuffToolHandlerFunction } from '../handler-function-type'
+import type { SavantCodeToolHandlerFunction } from '../handler-function-type'
 import type {
-  CodebuffToolCall,
-  CodebuffToolOutput,
-} from '@codebuff/common/tools/list'
-import type { Subgoal } from '@codebuff/common/types/session-state'
+  SavantCodeToolCall,
+  SavantCodeToolOutput,
+} from '@savant-code/common/tools/list'
+import type { Subgoal } from '@savant-code/common/types/session-state'
 
 type ToolName = 'update_subgoal'
 export const handleUpdateSubgoal = (async (params: {
   previousToolCallFinished: Promise<void>
-  toolCall: CodebuffToolCall<ToolName>
+  toolCall: SavantCodeToolCall<ToolName>
   agentContext: Record<string, Subgoal>
-}): Promise<{ output: CodebuffToolOutput<ToolName> }> => {
+}): Promise<{ output: SavantCodeToolOutput<ToolName> }> => {
   const { previousToolCallFinished, toolCall, agentContext } = params
 
   let messages: string[] = []
@@ -45,4 +45,4 @@ export const handleUpdateSubgoal = (async (params: {
       message: messages.join('\n\n'),
     }),
   }
-}) satisfies CodebuffToolHandlerFunction<ToolName>
+}) satisfies SavantCodeToolHandlerFunction<ToolName>

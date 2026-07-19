@@ -1,16 +1,16 @@
-import { isRetryableStatusCode, getErrorStatusCode } from '@codebuff/sdk'
+import { isRetryableStatusCode, getErrorStatusCode } from '@savant-code/sdk'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 
 import { Chat } from './chat'
 import { ChatHistoryScreen } from './components/chat-history-screen'
-import { FreebuffSupersededScreen } from './components/freebuff-superseded-screen'
+import { SavantFree$1 } from './components/savant-free-superseded-screen'
 import { LoginModal } from './components/login-modal'
 import { ProjectPickerScreen } from './components/project-picker-screen'
-import { FreebuffLandingScreen } from './components/freebuff-landing-screen'
+import { SavantFree$1 } from './components/savant-free-landing-screen'
 import { useAuthQuery } from './hooks/use-auth-query'
 import { useAuthState } from './hooks/use-auth-state'
-import { useFreebuffSession } from './hooks/use-freebuff-session'
+import { useFreebuffSession } from './hooks/use-savant-free-session'
 import { useTerminalFocus } from './hooks/use-terminal-focus'
 import { getProjectRoot, startNewChat } from './project-files'
 import { useChatHistoryStore } from './state/chat-history-store'
@@ -23,7 +23,7 @@ import { findGitRoot } from './utils/git'
 import type { MultilineInputHandle } from './components/multiline-input'
 import type { AgentMode } from './utils/constants'
 import type { AuthStatus } from './utils/status-indicator-state'
-import type { FileTreeNode } from '@codebuff/common/util/file'
+import type { FileTreeNode } from '@savant-code/common/util/file'
 
 interface AppProps {
   initialPrompt: string | null
@@ -199,7 +199,7 @@ export const App = ({
   // Render project picker FIRST when at home directory or outside a project.
   // This deliberately precedes the login/auth and free-session gates so the
   // user always gets to pick a working directory before anything else — auth
-  // failures or a banned freebuff session would otherwise replace the
+  // failures or a banned savant-free session would otherwise replace the
   // picker mid-flash and look like being kicked out of the app.
   if (showProjectPicker) {
     return (
@@ -274,7 +274,7 @@ interface AuthedSurfaceProps {
 }
 
 /**
- * Rendered only after auth is confirmed. Owns the freebuff session gate
+ * Rendered only after auth is confirmed. Owns the savant-free session gate
  * so `useFreebuffSession` runs exactly once per authed session (not before
  * we have a token).
  */
@@ -304,7 +304,7 @@ const AuthedSurface = ({
   // instance id. Show a dedicated screen and stop polling — don't fall back
   // into the pre-chat screen, which would look like normal startup progress.
   if (IS_FREEBUFF && session?.status === 'superseded') {
-    return <FreebuffSupersededScreen />
+    return <SavantFree$1 />
   }
 
   // Route every non-admitted state through the pre-chat screen:
@@ -327,10 +327,10 @@ const AuthedSurface = ({
       session.status === 'rate_limited' ||
       session.status === 'takeover_prompt')
   ) {
-    return <FreebuffLandingScreen session={session} error={sessionError} />
+    return <SavantFree$1 session={session} error={sessionError} />
   }
 
-  // Chat history renders inside AuthedSurface so the freebuff session stays
+  // Chat history renders inside AuthedSurface so the savant-free session stays
   // mounted while the user browses history. Unmounting this surface would
   // DELETE the session row and drop the user back onto the landing screen on
   // return.
@@ -360,7 +360,7 @@ const AuthedSurface = ({
       initialMode={initialMode}
       gitRoot={gitRoot}
       onSwitchToGitRoot={onSwitchToGitRoot}
-      freebuffSession={session}
+      savant-free$1={session}
     />
   )
 }

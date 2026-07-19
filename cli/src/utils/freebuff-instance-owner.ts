@@ -4,19 +4,19 @@ import path from 'path'
 import { getConfigDir } from './auth'
 import { logger } from './logger'
 
-interface FreebuffInstanceOwner {
+interface SavantFree$1 {
   instanceId: string
   pid: number
 }
 
-const OWNER_FILE = 'freebuff-instance-owner.json'
+const OWNER_FILE = 'savant-free-instance-owner.json'
 
 const getOwnerPath = (): string => path.join(getConfigDir(), OWNER_FILE)
 
-function readOwner(): FreebuffInstanceOwner | null {
+function readOwner(): SavantFree$1 | null {
   try {
     const raw = fs.readFileSync(getOwnerPath(), 'utf8')
-    const parsed = JSON.parse(raw) as Partial<FreebuffInstanceOwner>
+    const parsed = JSON.parse(raw) as Partial<SavantFree$1>
     if (
       typeof parsed.instanceId !== 'string' ||
       typeof parsed.pid !== 'number'
@@ -52,7 +52,7 @@ export function recordFreebuffInstanceOwner(instanceId: string): void {
   } catch (error) {
     logger.debug(
       { error: error instanceof Error ? error.message : String(error) },
-      '[freebuff-session] Failed to record local owner',
+      '[savant-free-session] Failed to record local owner',
     )
   }
 }

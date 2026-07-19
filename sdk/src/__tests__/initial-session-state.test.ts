@@ -7,12 +7,12 @@ import { z } from 'zod/v4'
 
 import { initialSessionState } from '../run-state'
 
-import type { MockStatResult } from '@codebuff/common/testing/mock-types'
-import type { Logger } from '@codebuff/common/types/contracts/logger'
-import type { CodebuffFileSystem } from '@codebuff/common/types/filesystem'
+import type { MockStatResult } from '@savant-code/common/testing/mock-types'
+import type { Logger } from '@savant-code/common/types/contracts/logger'
+import type { SavantCodeFileSystem } from '@savant-code/common/types/filesystem'
 
 describe('Initial Session State', () => {
-  let mockFs: CodebuffFileSystem
+  let mockFs: SavantCodeFileSystem
   let mockLogger: Logger
 
   beforeEach(() => {
@@ -33,7 +33,7 @@ describe('Initial Session State', () => {
         if (path.includes('.gitignore')) {
           return 'node_modules/\n.git/'
         }
-        if (path.includes('.codebuffignore')) {
+        if (path.includes('.savantignore')) {
           return ''
         }
         if (path.includes('.manicodeignore')) {
@@ -68,7 +68,7 @@ describe('Initial Session State', () => {
       },
       exists: async (path: string) => {
         if (path.includes('.gitignore')) return true
-        if (path.includes('.codebuffignore')) return true
+        if (path.includes('.savantignore')) return true
         if (path.includes('.manicodeignore')) return true
         if (path.includes('src')) return true
         if (path.includes('.git')) return true
@@ -78,7 +78,7 @@ describe('Initial Session State', () => {
       },
       mkdir: async () => {},
       writeFile: async () => {},
-    } as unknown as CodebuffFileSystem
+    } as unknown as SavantCodeFileSystem
 
     mockLogger = {
       debug: () => {},
@@ -112,7 +112,7 @@ describe('Initial Session State', () => {
 
   test('discovers project files automatically when projectFiles is undefined', async () => {
     // FID-016 Fix D: readdir returns plain strings (matches Node default behavior
-    // and the CodebuffFileSystem type). getProjectFileTree iterates strings then
+    // and the SavantCodeFileSystem type). getProjectFileTree iterates strings then
     // calls fs.stat(path.join(fullPath, file)) to decide file vs directory.
     // Normalize dirPath so comparison works on Windows where path.join uses backslashes.
     const normDir = (p: string) => p.replace(/\\/g, '/')
@@ -125,7 +125,7 @@ describe('Initial Session State', () => {
         return ['index.ts', 'utils.ts', 'generated.ts']
       }
       return []
-    }) as CodebuffFileSystem['readdir']
+    }) as SavantCodeFileSystem['readdir']
 
     // FID-016 Fix D: stat receives path.join(fullPath, entry). Use path.basename
     // (cross-platform) so we only match the final path component (avoids false
@@ -139,14 +139,14 @@ describe('Initial Session State', () => {
         isFile: () => !isDirectory,
         size: basename === 'generated.ts' ? 1_000_001 : 100,
       }
-    }) as CodebuffFileSystem['stat']
+    }) as SavantCodeFileSystem['stat']
 
     const readFilePaths: string[] = []
     const originalReadFile = mockFs.readFile
     mockFs.readFile = (async (filePath: string, encoding?: BufferEncoding) => {
       readFilePaths.push(filePath)
       return originalReadFile(filePath, encoding)
-    }) as CodebuffFileSystem['readFile']
+    }) as SavantCodeFileSystem['readFile']
 
     const sessionState = await initialSessionState({
       cwd: '/test-project',

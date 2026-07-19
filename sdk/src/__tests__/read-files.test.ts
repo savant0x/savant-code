@@ -1,6 +1,6 @@
-import { FILE_READ_STATUS } from '@codebuff/common/old-constants'
-import * as projectFileTree from '@codebuff/common/project-file-tree'
-import { createNodeError } from '@codebuff/common/testing/errors'
+import { FILE_READ_STATUS } from '@savant-code/common/old-constants'
+import * as projectFileTree from '@savant-code/common/project-file-tree'
+import { createNodeError } from '@savant-code/common/testing/errors'
 import {
   describe,
   test,
@@ -13,14 +13,14 @@ import {
 
 import { getFiles } from '../tools/read-files'
 
-import type { CodebuffFileSystem } from '@codebuff/common/types/filesystem'
+import type { SavantCodeFileSystem } from '@savant-code/common/types/filesystem'
 import type { PathLike } from 'node:fs'
 
 // Helper to create a mock filesystem
 function createMockFs(config: {
   files?: Record<string, { content: string; size?: number }>
   errors?: Record<string, { code?: string; message?: string }>
-}): CodebuffFileSystem {
+}): SavantCodeFileSystem {
   const { files = {}, errors = {} } = config
 
   return {
@@ -65,7 +65,7 @@ function createMockFs(config: {
     readdir: async () => [],
     mkdir: async () => undefined,
     writeFile: async () => undefined,
-  } as unknown as CodebuffFileSystem
+  } as unknown as SavantCodeFileSystem
 }
 
 describe('getFiles', () => {

@@ -63,7 +63,7 @@ After text`
       const state = createStreamParserState()
 
       // First chunk ends with partial start tag
-      const result1 = parseStreamChunk('Some text<codebuff', state)
+      const result1 = parseStreamChunk('Some text<savant-code', state)
       expect(result1.filteredText).toBe('Some text')
       expect(result1.toolCalls).toEqual([])
 

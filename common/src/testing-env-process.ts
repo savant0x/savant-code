@@ -62,7 +62,7 @@ export const createTestProcessEnv = (
   OPEN_TUI_THEME: undefined,
   OPENTUI_THEME: undefined,
 
-  // Codebuff CLI-specific
+  // SavantCode CLI-specific
   CODEBUFF_IS_BINARY: undefined,
   CODEBUFF_CLI_VERSION: undefined,
   CODEBUFF_CLI_TARGET: undefined,

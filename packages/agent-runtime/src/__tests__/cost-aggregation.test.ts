@@ -1,12 +1,12 @@
 import {
   createTestAgentRuntimeParams,
   testFileContext,
-} from '@codebuff/common/testing/fixtures/agent-runtime'
+} from '@savant-code/common/testing/fixtures/agent-runtime'
 import {
   getInitialAgentState,
   getInitialSessionState,
-} from '@codebuff/common/types/session-state'
-import { assistantMessage } from '@codebuff/common/util/messages'
+} from '@savant-code/common/types/session-state'
+import { assistantMessage } from '@savant-code/common/util/messages'
 import {
   spyOn,
   beforeEach,
@@ -21,7 +21,7 @@ import * as agentRegistry from '../templates/agent-registry'
 import * as spawnAgentUtils from '../tools/handlers/tool/spawn-agent-utils'
 import { handleSpawnAgents } from '../tools/handlers/tool/spawn-agents'
 
-import type { AgentState } from '@codebuff/common/types/session-state'
+import type { AgentState } from '@savant-code/common/types/session-state'
 
 const mockFileContext = testFileContext
 

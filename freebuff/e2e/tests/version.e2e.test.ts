@@ -7,7 +7,7 @@ import { describe, expect, test } from 'bun:test'
 
 import { requireFreebuffBinary } from '../utils'
 
-describe('Freebuff: --version', () => {
+describe('SavantFree: --version', () => {
   test('outputs a version string', () => {
     const binary = requireFreebuffBinary()
     const output = execFileSync(binary, ['--version'], {
@@ -27,7 +27,7 @@ describe('Freebuff: --version', () => {
 
   test('ignores project bunfig.toml preloads', () => {
     const binary = requireFreebuffBinary()
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'freebuff-bunfig-'))
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'savant-free-bunfig-'))
 
     try {
       fs.writeFileSync(

@@ -1,16 +1,16 @@
 #!/usr/bin/env bun
 
 /**
- * Freebuff CLI build script.
+ * SavantFree CLI build script.
  *
  * Wraps the existing CLI build-binary.ts with FREEBUFF_MODE=true
- * to produce a free-only variant of the Codebuff CLI.
+ * to produce a free-only variant of the SavantCode CLI.
  *
  * Usage:
- *   bun freebuff/cli/build.ts <version>
+ *   bun savant-free/cli/build.ts <version>
  *
  * Example:
- *   bun freebuff/cli/build.ts 1.0.0
+ *   bun savant-free/cli/build.ts 1.0.0
  */
 
 import { spawnSync } from 'child_process'
@@ -22,15 +22,15 @@ const repoRoot = join(__dirname, '..', '..')
 
 const version = process.argv[2]
 if (!version) {
-  console.error('Usage: bun freebuff/cli/build.ts <version>')
+  console.error('Usage: bun savant-free/cli/build.ts <version>')
   process.exit(1)
 }
 
-console.log(`Building Freebuff v${version}...`)
+console.log(`Building SavantFree v${version}...`)
 
 const result = spawnSync(
   'bun',
-  ['cli/scripts/build-binary.ts', 'freebuff', version],
+  ['cli/scripts/build-binary.ts', 'savant-free', version],
   {
     cwd: repoRoot,
     stdio: 'inherit',
@@ -42,8 +42,8 @@ const result = spawnSync(
 )
 
 if (result.status !== 0) {
-  console.error('Freebuff build failed')
+  console.error('SavantFree build failed')
   process.exit(result.status ?? 1)
 }
 
-console.log(`✅ Freebuff v${version} built successfully`)
+console.log(`✅ SavantFree v${version} built successfully`)

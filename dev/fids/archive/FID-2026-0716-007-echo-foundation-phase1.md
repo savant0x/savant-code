@@ -12,13 +12,13 @@
 
 ## Summary
 
-Transform the Codebuff/Freebuff agent framework into the ECHO Protocol-powered Savant engineering system. This FID covers the COMPLETE transformation: defining the 9-agent ECHO roster with separation of duties, injecting the ECHO Protocol into every agent identity, building the Perfection Loop FSM + circuit breaker runtime enforcement, integrating the Sequential Thinking engine for the Thinker agent, creating the Recorder and Scribe agents, and performing the repo-wide rebrand from Codebuff to Savant.
+Transform the SavantCode/SavantFree agent framework into the ECHO Protocol-powered Savant engineering system. This FID covers the COMPLETE transformation: defining the 9-agent ECHO roster with separation of duties, injecting the ECHO Protocol into every agent identity, building the Perfection Loop FSM + circuit breaker runtime enforcement, integrating the Sequential Thinking engine for the Thinker agent, creating the Recorder and Scribe agents, and performing the repo-wide rebrand from SavantCode to Savant.
 
 ## Environment
 
 - **OS:** Windows
 - **Language/Runtime:** TypeScript, Bun
-- **Source Repo:** https://github.com/CodebuffAI/codebuff (file restoration)
+- **Source Repo:** https://github.com/savant0x/savant-code (file restoration)
 - **Target Repo:** https://github.com/savant0x/savant-cli
 
 ---
@@ -91,7 +91,7 @@ The Thinker agent uses a `sequentialthinking` tool (wrapping `SequentialThinking
 - **Typecheck**: agents ✅, common ✅, agent-runtime ✅ (pre-existing test errors only), llm-providers ✅, code-map ✅
 
 ### NOT YET DONE (Scope Items)
-- **Repo-wide rebrand**: Package names and product references still say "Codebuff/Freebuff" in many places. Deferred by user request.
+- **Repo-wide rebrand**: Package names and product references still say "SavantCode/SavantFree" in many places. Deferred by user request.
 
 ---
 
@@ -99,7 +99,7 @@ The Thinker agent uses a `sequentialthinking` tool (wrapping `SequentialThinking
 
 ### DEFERRED (User-requested)
 
-1. **Repo-wide rebrand** — package names, product references (Codebuff→Savant). Deferred by user request — can be done in a future session.
+1. **Repo-wide rebrand** — package names, product references (SavantCode→Savant). Deferred by user request — can be done in a future session.
 
 ---
 
@@ -158,7 +158,7 @@ The Thinker agent uses a `sequentialthinking` tool (wrapping `SequentialThinking
 
 2. **Are the agent tool restrictions actually enforceable with the current architecture?** Answer: Partially. The `toolNames` array in each agent definition restricts what tools the agent can call. But the Orchestrator currently has no tool gating — it can call any tool regardless of FSM phase. The `transition_phase` tool exists but doesn't gate other tools.
 
-3. **What happens to the existing Codebuff product identity during rebrand?** Answer: The rebrand changes display names and agent identities but the underlying Codebuff infrastructure (API endpoints, model routing, package names) remains. This is a partial rebrand that creates a visual identity layer on top of the existing system.
+3. **What happens to the existing SavantCode product identity during rebrand?** Answer: The rebrand changes display names and agent identities but the underlying SavantCode infrastructure (API endpoints, model routing, package names) remains. This is a partial rebrand that creates a visual identity layer on top of the existing system.
 
 4. **Does the SequentialThinkingServer actually persist state across steps?** Answer: The server is a module-level singleton (`const server = new SequentialThinkingServer()` at handler file scope). Within a single Thinker session, the LLM calls `sequentialthinking` N times within one LLM step — those calls DO share the singleton, which is correct. The real problem is concurrent isolation: if two Thinker agents run simultaneously, they share the same `thoughtHistory[]` and `branches{}`, causing thoughts to intermingle. Fix: replace the singleton with a `Map<string, SequentialThinkingServer>` keyed by runId, creating a new instance per agent run.
 
@@ -191,7 +191,7 @@ The Thinker agent uses a `sequentialthinking` tool (wrapping `SequentialThinking
 | 4 | Old agent ID 'editor' in agents/ | ✅ 0 references | `grep -r '"editor"' agents/` — no output |
 | 5 | Old agent ID 'code-reviewer' in agents/ | ✅ 0 references | `grep -r '"code-reviewer"' agents/` — no output |
 | 6 | Old agent ID 'file-picker' in agents/ | ✅ 0 references | `grep -r '"file-picker"' agents/` — no output |
-| 7 | ECHO_PROTOCOL_INSTRUCTIONS callers | ✅ 10 files | 9 agent files import from `@codebuff/common/constants/agents` + 1 definition in constants.ts |
+| 7 | ECHO_PROTOCOL_INSTRUCTIONS callers | ✅ 10 files | 9 agent files import from `@savant-code/common/constants/agents` + 1 definition in constants.ts |
 | 8 | Utility agents one-liner ECHO | ✅ 5 agents | basher.ts, browser-use.ts, tmux-cli.ts, librarian.ts, general-agent.ts — all have "You are part of the Savant ECHO Protocol system." context-pruner inherits from parent |
 | 9 | transition_phase wiring | ✅ WIRED | Definition → params → constants → list → handler → handler registration. All 9 refs found. BUT behind `ENABLE_FSM_ENFORCEMENT` flag (base2.ts:119, base-deep.ts:297) |
 | 10 | transition_phase call-graph | ⚠️ NOT REACHABLE | No production caller invokes `transition_phase` — tool is wired but gated behind disabled flag |
@@ -233,7 +233,7 @@ The Thinker agent uses a `sequentialthinking` tool (wrapping `SequentialThinking
 - **Verified By:** `bun x tsc --noEmit` across all packages + fresh grep evidence in AUDIT section
 - **Commit/PR:** N/A (not a git repo)
 - **Archived:** 2026-07-16
-- **Deferred:** Repo-wide rebrand (Codebuff→Savant) — user-requested deferral, can be done in future session
+- **Deferred:** Repo-wide rebrand (SavantCode→Savant) — user-requested deferral, can be done in future session
 
 ---
 

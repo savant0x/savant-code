@@ -12,7 +12,7 @@
 
 ## Summary
 
-Complete visual overhaul of the Freebuff/Savant CLI from acid-green (#9EFC62) to "Neon Slate" aesthetic with a three-panel layout. Near-black bg (#020617), cyan primary (#18faf9), neon secondaries, split-panel layout with right sidebar for session info/tools/history, bottom status bar with context window tracking, and removal of sheen/shimmer animations.
+Complete visual overhaul of the SavantFree/Savant CLI from acid-green (#9EFC62) to "Neon Slate" aesthetic with a three-panel layout. Near-black bg (#020617), cyan primary (#18faf9), neon secondaries, split-panel layout with right sidebar for session info/tools/history, bottom status bar with context window tracking, and removal of sheen/shimmer animations.
 
 ## Environment
 
@@ -44,7 +44,7 @@ A dark, neon-accented UI with:
 
 ### Root Cause
 
-The current theme was inherited from the Codebuff upstream project with minimal customization. No design system was established — colors are scattered across components with inconsistent usage. The layout is single-column with no dedicated space for session context.
+The current theme was inherited from the SavantCode upstream project with minimal customization. No design system was established — colors are scattered across components with inconsistent usage. The layout is single-column with no dedicated space for session context.
 
 ## Impact Assessment
 
@@ -72,7 +72,7 @@ The current theme was inherited from the Codebuff upstream project with minimal 
 - `cli/src/components/user-error-banner.tsx` — minimal error display
 
 **Other:**
-- `cli/src/components/freebuff-landing-screen.tsx` — compact landing
+- `cli/src/components/savant-free-landing-screen.tsx` — compact landing
 - `cli/src/components/suggested-prompts.tsx` — simpler prompts
 - `cli/src/components/shimmer-text.tsx` — remove or repurpose
 - `cli/src/components/session-ended-banner.tsx` — restyle
@@ -152,10 +152,10 @@ Theme-first redesign with layout expansion: swap the palette first, then add the
 | `cli/src/components/chat-history-screen.tsx` | 387, 391 | New Chat button border + label |
 | `cli/src/components/chat-input-bar.tsx` | 291, 365 | Input border + `❯` prompt |
 | `cli/src/components/feedback-input-mode.tsx` | 196 | Border |
-| `cli/src/components/freebuff-landing-screen.tsx` | 238, 245, 299, 690 | Takeover focus, dots, footer |
-| `cli/src/components/freebuff-model-selector.tsx` | 589, 667, 726 | Model selection highlight |
-| `cli/src/components/freebuff-referral-banner.tsx` | 88, 90, 95, 381 | Referral progress |
-| `cli/src/components/freebuff-superseded-screen.tsx` | 57 | Ctrl+C highlight |
+| `cli/src/components/savant-free-landing-screen.tsx` | 238, 245, 299, 690 | Takeover focus, dots, footer |
+| `cli/src/components/savant-free-model-selector.tsx` | 589, 667, 726 | Model selection highlight |
+| `cli/src/components/savant-free-referral-banner.tsx` | 88, 90, 95, 381 | Referral progress |
+| `cli/src/components/savant-free-superseded-screen.tsx` | 57 | Ctrl+C highlight |
 | `cli/src/components/login-modal.tsx` | 400, 436, 463 | Login states + label |
 | `cli/src/components/model-picker.tsx` | 201 | Selected indicator `› ` |
 | `cli/src/components/project-picker-screen.tsx` | 473, 474 | Selection border + bg |
@@ -176,7 +176,7 @@ Theme-first redesign with layout expansion: swap the palette first, then add the
 | `cli/src/hooks/use-sheen-animation.tsx` | 59, 86 | Definition + export |
 | `cli/src/hooks/use-logo.tsx` | 16, 66, 145-146, 153 | Prop + application in render loop |
 | `cli/src/components/chat-header.tsx` | 25, 38 | `useSheenAnimation()` + pass to logo |
-| `cli/src/components/freebuff-landing-screen.tsx` | 357, 369 | `useSheenAnimation()` + pass to logo |
+| `cli/src/components/savant-free-landing-screen.tsx` | 357, 369 | `useSheenAnimation()` + pass to logo |
 | `cli/src/components/login-modal.tsx` | 229, 241 | `useSheenAnimation()` + pass to logo |
 | `cli/src/components/project-picker-screen.tsx` | 188, 199 | `useSheenAnimation()` + pass to logo |
 
@@ -186,7 +186,7 @@ Theme-first redesign with layout expansion: swap the palette first, then add the
 |------|---------|-------|
 | `cli/src/components/shimmer-text.tsx` | 131 | Component definition |
 | `cli/src/components/status-bar.tsx` | 7, 132, 135, 139, 148 | "retrying...", "connecting...", feedback states |
-| `cli/src/components/freebuff-landing-screen.tsx` | 8, 626 | "Connecting..." |
+| `cli/src/components/savant-free-landing-screen.tsx` | 8, 626 | "Connecting..." |
 | `cli/src/components/blocks/agent-branch-item.tsx` | 11, 298 | Branch loading state |
 | `cli/src/components/out-of-credits-banner.tsx` | 4, 102 | Credits warning |
 
@@ -212,8 +212,8 @@ Theme-first redesign with layout expansion: swap the palette first, then add the
 |------|---------|-------|
 | `cli/src/utils/theme-system.ts` | 83, 98 | Function definitions |
 | `cli/src/components/chat-header.tsx` | 10, 23, 24 | Logo colors |
-| `cli/src/components/freebuff-landing-screen.tsx` | 33, 355, 356 | Logo colors |
-| `cli/src/components/freebuff-superseded-screen.tsx` | 8, 18, 19 | Logo colors |
+| `cli/src/components/savant-free-landing-screen.tsx` | 33, 355, 356 | Logo colors |
+| `cli/src/components/savant-free-superseded-screen.tsx` | 8, 18, 19 | Logo colors |
 | `cli/src/components/login-modal.tsx` | 25, 227, 228 | Logo colors |
 | `cli/src/components/project-picker-screen.tsx` | 19, 186, 187 | Logo colors |
 
@@ -233,7 +233,7 @@ Theme-first redesign with layout expansion: swap the palette first, then add the
 
 **R8 — `theme.secondary` consumers (57 occurrences across 28 files):**
 
-Key files: `status-bar.tsx` (10×), `freebuff-landing-screen.tsx` (6×), `login-modal.tsx` (5×), `publish-container.tsx` (6×), `feedback-input-mode.tsx` (3×), `build-mode-buttons.tsx` (4×), `freebuff-model-selector.tsx` (2×), `message-footer.tsx` (2×), `elapsed-timer.tsx` (1×), `collapse-button.tsx` (1×), `theme-system.ts` (4× markdown palette defaults).
+Key files: `status-bar.tsx` (10×), `savant-free-landing-screen.tsx` (6×), `login-modal.tsx` (5×), `publish-container.tsx` (6×), `feedback-input-mode.tsx` (3×), `build-mode-buttons.tsx` (4×), `savant-free-model-selector.tsx` (2×), `message-footer.tsx` (2×), `elapsed-timer.tsx` (1×), `collapse-button.tsx` (1×), `theme-system.ts` (4× markdown palette defaults).
 
 **R9 — `theme.error` consumers (21 occurrences across 13 files):**
 
@@ -270,15 +270,15 @@ Primary user-facing strings requiring update:
 - `cli/src/login/constants.ts:48` — `LOGO_SMALL = IS_FREEBUFF ? LOGO_SMALL_FREEBUFF : LOGO_SMALL_CODEBUFF`
 - `cli/src/login/constants.ts:31` — `LOGO_FREEBUFF` ASCII art
 - `cli/src/login/constants.ts:39` — `LOGO_SMALL_FREEBUFF` ASCII art
-- `cli/src/components/chat-header.tsx:60` — tagline "Freebuff will run commands..."
-- `cli/src/commands/copy-conversation.ts:276` — `'Freebuff'`
-- `cli/src/commands/init.ts:20` — `'Freebuff'`
-- `cli/src/commands/process-diagnostics.ts:103` — `'Freebuff'`
-- `cli/src/cli-args.ts:54` — description `'Freebuff - Free AI coding assistant'`
-- `cli/src/login/plain-login.ts:30` — `'Freebuff Login'`
-- `cli/src/components/feedback-input-mode.tsx:49` — `'Report a problem with Freebuff'`
-- `cli/src/components/freebuff-landing-screen.tsx:224,725,726` — "Freebuff is already running", "Disable it and restart Freebuff"
-- `agents/base-chat.ts:18,30` — `'Freebuff Chat'`, system prompt
+- `cli/src/components/chat-header.tsx:60` — tagline "SavantFree will run commands..."
+- `cli/src/commands/copy-conversation.ts:276` — `'SavantFree'`
+- `cli/src/commands/init.ts:20` — `'SavantFree'`
+- `cli/src/commands/process-diagnostics.ts:103` — `'SavantFree'`
+- `cli/src/cli-args.ts:54` — description `'SavantFree - Free AI coding assistant'`
+- `cli/src/login/plain-login.ts:30` — `'SavantFree Login'`
+- `cli/src/components/feedback-input-mode.tsx:49` — `'Report a problem with SavantFree'`
+- `cli/src/components/savant-free-landing-screen.tsx:224,725,726` — "SavantFree is already running", "Disable it and restart SavantFree"
+- `agents/base-chat.ts:18,30` — `'SavantFree Chat'`, system prompt
 
 **R14 — Additional hardcoded color values in theme-system.ts:**
 
@@ -474,7 +474,7 @@ Decision chain:
 2. Fix: Replace with `✕ error` in neon red (`theme.error`), no box.
 3. Risk: LOW — simpler rendering.
 
-**G15 — Landing screen (freebuff-landing-screen.tsx):**
+**G15 — Landing screen (savant-free-landing-screen.tsx):**
 
 Decision chain:
 1. Current: Full ASCII logo + ad banner + session info — too much vertical space.
@@ -505,7 +505,7 @@ Decision chain:
 
 **Typecheck — CLI package:**
 ```
-C:\Users\spenc\dev\codebuff\cli>npx tsc --noEmit
+C:\Users\spenc\dev\savant-code\cli>npx tsc --noEmit
 tsconfig.json(15,5): error TS5101: Option 'baseUrl' is deprecated and will stop functioning in TypeScript 7.0. Specify compilerOption '"ignoreDeprecations": "6.0"' to silence this error.
   Visit https://aka.ms/ts6 for migration information.
 ```
@@ -513,7 +513,7 @@ Result: ONLY deprecation warning (TS5101). No type errors. ✓
 
 **Typecheck — SDK package:**
 ```
-C:\Users\spenc\dev\codebuff\sdk>npx tsc --noEmit
+C:\Users\spenc\dev\savant-code\sdk>npx tsc --noEmit
 tsconfig.json(16,5): error TS5101: Option 'baseUrl' is deprecated and will stop functioning in TypeScript 7.0. Specify compilerOption '"ignoreDeprecations": "6.0"' to silence this error.
   Visit https://aka.ms/ts6 for migration information.
 ```
@@ -521,7 +521,7 @@ Result: ONLY deprecation warning (TS5101). No type errors. ✓
 
 **Typecheck — Database package:**
 ```
-C:\Users\spenc\dev\codebuff\packages\database>npx tsc --noEmit
+C:\Users\spenc\dev\savant-code\packages\database>npx tsc --noEmit
 (no output)
 ```
 Result: Clean. No errors. ✓
@@ -597,7 +597,7 @@ No self-corrections needed. Loop 1 RED phase expanded the evidence catalog from 
 
 1. **Theme-first approach works** — Swapping the palette first (G1) delivers 80% of visual impact with 20% of the risk. All 280+ components read from the theme object, so a single file change propagates everywhere.
 2. **Grep call-graph evidence is essential** — The initial RED phase had 20 issues. The comprehensive grep search found 3 additional issues (layout, context tracking, ASCII art) and 280+ consumer occurrences. Without full evidence, fixes would be incomplete.
-3. **Branding drift is real** — The codebase references "FREEBUFF" and "Codebuff" in 100+ locations. User-facing strings need update; internal variable names (IS_FREEBUFF feature flag) should be left as-is for now.
+3. **Branding drift is real** — The codebase references "FREEBUFF" and "SavantCode" in 100+ locations. User-facing strings need update; internal variable names (IS_FREEBUFF feature flag) should be left as-is for now.
 4. **Animations are opt-in, not opt-out** — The sheen animation was wired as a default. Making animations explicitly opt-in (default `undefined`) prevents visual noise.
 5. **Box-drawing characters need testing** — The `┌─ tool_name` header looks good in theory but needs terminal rendering verification. Some terminals render box-drawing chars with different widths.
 6. **Near-black is darker than you think** — `#020617` (Slate-950) is almost indistinguishable from pure black on some monitors. Consider `#0f172a` (Slate-900) as a fallback if contrast issues arise.

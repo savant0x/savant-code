@@ -1,6 +1,6 @@
-import { CHATGPT_OAUTH_ENABLED } from '@codebuff/common/constants/chatgpt-oauth'
+import { CHATGPT_OAUTH_ENABLED } from '@savant-code/common/constants/chatgpt-oauth'
 import { IS_FREEBUFF } from '../utils/constants'
-import { isChatGptOAuthValid } from '@codebuff/sdk'
+import { isChatGptOAuthValid } from '@savant-code/sdk'
 import { TextAttributes } from '@opentui/core'
 import { safeOpen } from '../utils/open-url'
 import React, { useEffect, useMemo } from 'react'
@@ -122,7 +122,7 @@ export const UsageBanner = ({ showTime }: { showTime: number }) => {
           />
         )}
 
-        {/* Codebuff credits section - structured layout */}
+        {/* SavantCode credits section - structured layout */}
         <Button
           onClick={() => {
             safeOpen(WEBSITE_URL + '/usage')

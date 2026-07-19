@@ -1,4 +1,4 @@
-import { buildArray } from '@codebuff/common/util/array'
+import { buildArray } from '@savant-code/common/util/array'
 
 import {
   getGitChangesPrompt,
@@ -7,8 +7,8 @@ import {
 } from './prompts'
 import { countTokens, countTokensJson } from '../util/token-counter'
 
-import type { Logger } from '@codebuff/common/types/contracts/logger'
-import type { ProjectFileContext } from '@codebuff/common/util/file'
+import type { Logger } from '@savant-code/common/types/contracts/logger'
+import type { ProjectFileContext } from '@savant-code/common/util/file'
 
 export function getSearchSystemPrompt(params: {
   fileContext: ProjectFileContext

@@ -32,7 +32,7 @@ Currently, 4 stores hold the model with no guaranteed sync:
 - `useFreebuffModelStore.selectedModel` — in-memory + settings file
 - `useChatStore.selectedModel` — in-memory only
 - DB `sessions.selected_model` — SQLite, only if session exists
-- Settings file `freebuffModel` — JSON file on disk
+- Settings file `savant-free$1` — JSON file on disk
 
 ### Root Cause
 
@@ -46,13 +46,13 @@ The sidebar was added after the model persistence was designed. The sidebar read
 
 | Component | File | Role |
 |-----------|------|------|
-| `useFreebuffModelStore` | `cli/src/state/freebuff-model-store.ts` | Authoritative in-memory store, persisted to settings file |
+| `useFreebuffModelStore` | `cli/src/state/savant-free-model-store.ts` | Authoritative in-memory store, persisted to settings file |
 | `useChatStore.selectedModel` | `cli/src/state/chat-store.ts` | Sidebar display store |
-| `startFreebuffSession` | `cli/src/hooks/use-freebuff-session.ts:355` | User model pick entry point |
+| `startFreebuffSession` | `cli/src/hooks/use-savant-free-session.ts:355` | User model pick entry point |
 | `saveModel` / `getLatestModel` | `packages/database/src/service.ts` | DB persistence |
 | `loadModelFromDb` | `cli/src/utils/db-storage.ts:194` | DB load with settings fallback |
 | `RightSidebar` | `cli/src/components/right-sidebar.tsx` | Display component |
-| `getSelectedFreebuffModel` | `cli/src/state/freebuff-model-store.ts:40` | Imperative read for API/billing |
+| `getSelectedFreebuffModel` | `cli/src/state/savant-free-model-store.ts:40` | Imperative read for API/billing |
 
 ## Perfection Loop
 
@@ -65,7 +65,7 @@ The sidebar was added after the model persistence was designed. The sidebar read
 - `useChatStore.selectedModel` is the source for sidebar display
 - DB is a third source that may not have the model
 - Settings file is a fourth source
-- Evidence: `freebuff-model-store.ts:40` — `getSelectedFreebuffModel` reads from freebuff store only. `chat.tsx:201` — sidebar reads from chat-store only. No code bridges them reliably.
+- Evidence: `savant-free-model-store.ts:40` — `getSelectedFreebuffModel` reads from savant-free store only. `chat.tsx:201` — sidebar reads from chat-store only. No code bridges them reliably.
 
 **R2 — `saveModel()` silently fails on first launch**
 - `saveModel` does `UPDATE sessions WHERE id = (SELECT id FROM sessions ORDER BY created_at DESC LIMIT 1)`
@@ -76,7 +76,7 @@ The sidebar was added after the model persistence was designed. The sidebar read
 - `startFreebuffSession` uses `import(...)` for chat-store and DB service
 - These are fire-and-forget — no await, no error handling
 - Model may not be saved before UI renders
-- Evidence: `use-freebuff-session.ts:368-373` — two dynamic imports with `.then()` but no `await`
+- Evidence: `use-savant-free-session.ts:368-373` — two dynamic imports with `.then()` but no `await`
 
 **R4 — Sidebar mount effect has timing issues**
 - `useEffect(() => { if (!selectedModel) { loadModelFromDb('') } }, [])` runs async
@@ -115,7 +115,7 @@ This eliminates:
 - Risk: LOW — removes race condition
 
 **G3 — Simplify `loadModelFromDb`**
-- Remove the `require()` fallback — not needed if sidebar reads from freebuff store
+- Remove the `require()` fallback — not needed if sidebar reads from savant-free store
 - Keep DB write for audit trail only
 - Risk: LOW — simplifies code
 
@@ -126,7 +126,7 @@ This eliminates:
 - Add synchronous DB save after session creation (not fire-and-forget)
 - Risk: LOW — removes race conditions
 
-**G5 — RightSidebar reads from freebuff store**
+**G5 — RightSidebar reads from savant-free store**
 - Change `chat.tsx` to pass `useFreebuffModelStore.selectedModel` to sidebar
 - This is the same store used by `getSelectedFreebuffModel` for API calls
 - Guarantee: display matches billing
@@ -146,7 +146,7 @@ This eliminates:
 - Existing type contracts maintained
 
 **Call-graph reachability:**
-- `getSelectedFreebuffModel` — 12 callers, all read from freebuff store ✓
+- `getSelectedFreebuffModel` — 12 callers, all read from savant-free store ✓
 - `useChatStore.selectedModel` — only read by sidebar (will be removed) ✓
 - `loadModelFromDb` — only called by mount effect (will be removed) ✓
 

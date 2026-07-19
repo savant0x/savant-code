@@ -1,7 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 
-import { isSupportedFreebuffModelId } from '@codebuff/common/constants/freebuff-models'
+import { isSupportedFreebuffModelId } from '@savant-code/common/constants/savant-free-models'
 
 import { getConfigDir } from './auth'
 import { AGENT_MODES } from './constants'
@@ -22,13 +22,13 @@ const DEFAULT_SETTINGS: Settings = {
 export interface Settings {
   mode?: AgentMode
   adsEnabled?: boolean
-  /** Last model the user picked in the freebuff model selector. Restored on
-   *  next freebuff launch so users land in the queue for their preferred
+  /** Last model the user picked in the savant-free model selector. Restored on
+   *  next savant-free launch so users land in the queue for their preferred
    *  model without re-picking. Persisted as the canonical model id. */
-  freebuffModel?: string
-  /** Last model the user picked in the codebuff model selector. Restored on
+  savant-free$1?: string
+  /** Last model the user picked in the savant-code model selector. Restored on
    *  next launch so users default to their preferred model. */
-  codebuffModel?: string
+  savantCode$1?: string
   /** @deprecated Use server-side fallbackToALaCarte setting instead */
   alwaysUseALaCarte?: boolean
   /** @deprecated Use server-side fallbackToALaCarte setting instead */
@@ -109,14 +109,14 @@ const validateSettings = (parsed: unknown): Settings => {
     settings.adsEnabled = obj.adsEnabled
   }
 
-  // Validate freebuffModel — drop unknown ids so a removed model doesn't
+  // Validate savant-free$1 — drop unknown ids so a removed model doesn't
   // strand the user on a non-existent queue. Hidden-but-supported models are
   // kept; access-tier resolution decides whether they are selectable.
   if (
-    typeof obj.freebuffModel === 'string' &&
-    isSupportedFreebuffModelId(obj.freebuffModel)
+    typeof obj.savant-free$1 === 'string' &&
+    isSupportedFreebuffModelId(obj.savant-free$1)
   ) {
-    settings.freebuffModel = obj.freebuffModel
+    settings.savant-free$1 = obj.savant-free$1
   }
 
   // Validate alwaysUseALaCarte (legacy)
@@ -134,10 +134,10 @@ const validateSettings = (parsed: unknown): Settings => {
     settings.hasSubmittedFirstPrompt = obj.hasSubmittedFirstPrompt
   }
 
-  // Validate codebuffModel — pass through any string; the /model picker
+  // Validate savantCode$1 — pass through any string; the /model picker
   // fetches live OpenRouter models so all returned ids are valid.
-  if (typeof obj.codebuffModel === 'string') {
-    settings.codebuffModel = obj.codebuffModel
+  if (typeof obj.savantCode$1 === 'string') {
+    settings.savantCode$1 = obj.savantCode$1
   }
 
   return settings
@@ -184,35 +184,35 @@ export const saveModePreference = (mode: AgentMode): void => {
 }
 
 /**
- * Load the saved freebuff model preference. Returns undefined if none is
+ * Load the saved savant-free model preference. Returns undefined if none is
  * saved yet — callers should fall back to DEFAULT_FREEBUFF_MODEL_ID.
  */
 export const loadFreebuffModelPreference = (): string | undefined => {
-  return loadSettings().freebuffModel
+  return loadSettings().savant-free$1
 }
 
 /**
- * Save the freebuff model preference. Called whenever the user picks a model
+ * Save the savant-free model preference. Called whenever the user picks a model
  * on the landing screen so the next launch defaults to it.
  */
 export const saveFreebuffModelPreference = (model: string): void => {
-  saveSettings({ freebuffModel: model })
+  saveSettings({ savant-free$1: model })
 }
 
 /**
- * Load the saved codebuff model preference. Returns undefined if none is
+ * Load the saved savant-code model preference. Returns undefined if none is
  * saved yet — callers should fall back to the agent definition's model.
  */
 export const loadCodebuffModelPreference = (): string | undefined => {
-  return loadSettings().codebuffModel
+  return loadSettings().savantCode$1
 }
 
 /**
- * Save the codebuff model preference. Called whenever the user picks a model
+ * Save the savant-code model preference. Called whenever the user picks a model
  * in the CLI so the next launch defaults to it.
  */
 export const saveCodebuffModelPreference = (model: string): void => {
-  saveSettings({ codebuffModel: model })
+  saveSettings({ savantCode$1: model })
 }
 
 /**

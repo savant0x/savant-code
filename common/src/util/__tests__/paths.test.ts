@@ -11,7 +11,7 @@ import * as path from 'node:path'
 import { EXEMPT_PATHS, resolveAndContain } from '../paths'
 
 // Fixed project root for deterministic test results across CI environments.
-const PROJECT_ROOT = path.resolve('/tmp/codebuff-test-project')
+const PROJECT_ROOT = path.resolve('/tmp/savant-code-test-project')
 
 describe('paths.resolveAndContain — legitimate paths', () => {
   test('plain in-project path → ok', () => {

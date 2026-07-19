@@ -20,7 +20,7 @@ requests background execution crashes at runtime.
 
 - **OS:** Windows 11 (win32), Bun 1.3.11 (engines require 1.3.14)
 - **Language/Runtime:** TypeScript 5.5.4, Bun monorepo
-- **Commit/State:** working tree at `C:\Users\spenc\dev\codebuff`, no git commit context
+- **Commit/State:** working tree at `C:\Users\spenc\dev\savant-code`, no git commit context
 
 ## Detailed Description
 

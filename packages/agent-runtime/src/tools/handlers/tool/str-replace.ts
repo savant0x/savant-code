@@ -1,24 +1,24 @@
 import { postStreamProcessing } from './write-file'
 import { processStrReplace } from '../../../process-str-replace'
 
-import { resolveAndContain } from '@codebuff/common/util/paths'
+import { resolveAndContain } from '@savant-code/common/util/paths'
 
-import type { CodebuffToolHandlerFunction } from '../handler-function-type'
+import type { SavantCodeToolHandlerFunction } from '../handler-function-type'
 import type { FileProcessingState } from './write-file'
 import type {
   ClientToolCall,
-  CodebuffToolCall,
-  CodebuffToolOutput,
-} from '@codebuff/common/tools/list'
-import type { RequestOptionalFileFn } from '@codebuff/common/types/contracts/client'
-import type { Logger } from '@codebuff/common/types/contracts/logger'
-import type { ParamsExcluding } from '@codebuff/common/types/function-params'
-import type { ProjectFileContext } from '@codebuff/common/util/file'
+  SavantCodeToolCall,
+  SavantCodeToolOutput,
+} from '@savant-code/common/tools/list'
+import type { RequestOptionalFileFn } from '@savant-code/common/types/contracts/client'
+import type { Logger } from '@savant-code/common/types/contracts/logger'
+import type { ParamsExcluding } from '@savant-code/common/types/function-params'
+import type { ProjectFileContext } from '@savant-code/common/util/file'
 
 export const handleStrReplace = (async (
   params: {
     previousToolCallFinished: Promise<void>
-    toolCall: CodebuffToolCall<'str_replace'>
+    toolCall: SavantCodeToolCall<'str_replace'>
 
     fileProcessingState: FileProcessingState
     // Optional to support test fixtures / partial mocks. Runtime always provides
@@ -28,12 +28,12 @@ export const handleStrReplace = (async (
 
     requestClientToolCall: (
       toolCall: ClientToolCall<'str_replace'>,
-    ) => Promise<CodebuffToolOutput<'str_replace'>>
+    ) => Promise<SavantCodeToolOutput<'str_replace'>>
     writeToClient: (chunk: string) => void
 
     requestOptionalFile: RequestOptionalFileFn
   } & ParamsExcluding<RequestOptionalFileFn, 'filePath'>,
-): Promise<{ output: CodebuffToolOutput<'str_replace'> }> => {
+): Promise<{ output: SavantCodeToolOutput<'str_replace'> }> => {
   const {
     previousToolCallFinished,
     toolCall,
@@ -131,4 +131,4 @@ export const handleStrReplace = (async (
   }
 
   return { output: clientToolResult }
-}) satisfies CodebuffToolHandlerFunction<'str_replace'>
+}) satisfies SavantCodeToolHandlerFunction<'str_replace'>

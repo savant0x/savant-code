@@ -3,7 +3,7 @@ import { describe, test, expect } from 'bun:test'
 import {
   getFreebuffStreakBonusNote,
   getFreebuffStreakLine,
-} from '../freebuff-streak-line'
+} from '../savant-free-streak-line'
 
 describe('getFreebuffStreakLine', () => {
   test('hides the row for new / lapsed users (streak <= 0)', () => {

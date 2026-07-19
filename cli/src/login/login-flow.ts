@@ -1,12 +1,12 @@
-import { AnalyticsEvent } from '@codebuff/common/constants/analytics-events'
+import { AnalyticsEvent } from '@savant-code/common/constants/analytics-events'
 
-import { createCodebuffApiClient } from '../utils/codebuff-api'
+import { createCodebuffApiClient } from '../utils/savant-code-api'
 
 import type {
-  CodebuffApiClient,
+  SavantCodeApiClient,
   LoginCodeResponse,
-} from '../utils/codebuff-api'
-import type { Logger } from '@codebuff/common/types/contracts/logger'
+} from '../utils/savant-code-api'
+import type { Logger } from '@savant-code/common/types/contracts/logger'
 
 // Re-export for backwards compatibility
 export type LoginUrlResponse = LoginCodeResponse
@@ -19,7 +19,7 @@ export type LoginVia = 'modal' | 'plain_command'
 
 export interface GenerateLoginUrlDeps {
   logger: Logger
-  apiClient?: CodebuffApiClient
+  apiClient?: SavantCodeApiClient
   /**
    * Emit a login-funnel analytics event. Injected so login-flow stays a pure,
    * test-friendly module; callers wire in the real `trackEvent`. Omitted in
@@ -89,7 +89,7 @@ interface PollLoginStatusDeps {
   sleep: (ms: number) => Promise<void>
   logger: Logger
   now?: () => number
-  apiClient?: CodebuffApiClient
+  apiClient?: SavantCodeApiClient
   trackEvent?: (event: AnalyticsEvent, properties?: Record<string, any>) => void
 }
 

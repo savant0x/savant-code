@@ -20,7 +20,7 @@ bypasses log levels, redaction, and the structured pipeline.
 
 - **OS:** Windows 11, Bun 1.3.11
 - **Language/Runtime:** TypeScript 5.5.4, Bun monorepo
-- **Commit/State:** working tree at `C:\Users\spenc\dev\codebuff`
+- **Commit/State:** working tree at `C:\Users\spenc\dev\savant-code`
 
 ## Detailed Description
 

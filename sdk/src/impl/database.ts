@@ -1,7 +1,7 @@
-import { validateSingleAgent } from '@codebuff/common/templates/agent-validation'
-import { DynamicAgentTemplateSchema } from '@codebuff/common/types/dynamic-agent-template'
-import { getErrorObject } from '@codebuff/common/util/error'
-import { truncateString } from '@codebuff/common/util/string'
+import { validateSingleAgent } from '@savant-code/common/templates/agent-validation'
+import { DynamicAgentTemplateSchema } from '@savant-code/common/types/dynamic-agent-template'
+import { getErrorObject } from '@savant-code/common/util/error'
+import { truncateString } from '@savant-code/common/util/string'
 import z from 'zod/v4'
 
 import { getWebsiteUrl } from '../constants'
@@ -27,9 +27,9 @@ import type {
   GetUserInfoFromApiKeyOutput,
   StartAgentRunFn,
   UserColumn,
-} from '@codebuff/common/types/contracts/database'
-import type { DynamicAgentTemplate } from '@codebuff/common/types/dynamic-agent-template'
-import type { ParamsOf } from '@codebuff/common/types/function-params'
+} from '@savant-code/common/types/contracts/database'
+import type { DynamicAgentTemplate } from '@savant-code/common/types/dynamic-agent-template'
+import type { ParamsOf } from '@savant-code/common/types/function-params'
 
 type CachedUserInfo = Partial<
   NonNullable<Awaited<GetUserInfoFromApiKeyOutput<UserColumn>>>
@@ -102,7 +102,7 @@ export async function getUserInfoFromApiKey<T extends UserColumn>(
 ): GetUserInfoFromApiKeyOutput<T> {
   const { apiKey, fields, logger } = params
 
-  // Dev-mode bypass: when INFERENCE_BASE_URL is set (no Codebuff backend),
+  // Dev-mode bypass: when INFERENCE_BASE_URL is set (no SavantCode backend),
   // return stub user info instead of making a network request.
   const inferenceBaseUrl = getInferenceBaseUrlFromEnv()
   if (inferenceBaseUrl) {
@@ -321,7 +321,7 @@ export async function startAgentRun(
 ): ReturnType<StartAgentRunFn> {
   const { apiKey, agentId, ancestorRunIds, logger } = params
 
-  // Dev-mode bypass: when INFERENCE_BASE_URL is set (no Codebuff backend),
+  // Dev-mode bypass: when INFERENCE_BASE_URL is set (no SavantCode backend),
   // return a generated runId instead of making a network request.
   const inferenceBaseUrl = getInferenceBaseUrlFromEnv()
   if (inferenceBaseUrl) {

@@ -1,55 +1,55 @@
 <!-- markdownlint-disable MD041 -->
-<img src="../assets/banner.png" alt="@codebuff/sdk — Official TypeScript SDK for the Savant-Code multi-agent runtime" width="650" />
+<img src="../assets/banner.png" alt="@savant-code/sdk — Official TypeScript SDK for the Savant-Code multi-agent runtime" width="650" />
 
-# @codebuff/sdk
+# @savant-code/sdk
 
 Official TypeScript SDK for the Savant-Code multi-agent runtime.
 
-[![npm](https://img.shields.io/badge/npm-@codebuff/sdk-%23cb3837?style=flat-square&logo=npm)](https://www.npmjs.com/package/@codebuff/sdk)[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-tested-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](../ECHO.md)
+[![npm](https://img.shields.io/badge/npm-@savant-code/sdk-%23cb3837?style=flat-square&logo=npm)](https://www.npmjs.com/package/@savant-code/sdk)[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-tested-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](../ECHO.md)
 
 ## Installation
 
 ```bash
-npm install @codebuff/sdk
+npm install @savant-code/sdk
 ```
 
 ## Prerequisites
 
-- Create a Codebuff account and get your [Codebuff API key here](https://www.codebuff.com/api-keys).
+- Create a SavantCode account and get your [SavantCode API key here](https://www.savant-code.com/api-keys).
 
 ## Usage
 
 ### Basic Example
 
 ```typescript
-import { CodebuffClient } from '@codebuff/sdk'
+import { SavantCodeClient } from '@savant-code/sdk'
 
 async function main() {
-  const client = new CodebuffClient({
+  const client = new SavantCodeClient({
     // You need to pass in your own API key here.
-    // Get one here: https://www.codebuff.com/api-keys
+    // Get one here: https://www.savant-code.com/api-keys
     apiKey: process.env.CODEBUFF_API_KEY,
     cwd: process.cwd(),
   })
 
   // First run
   const runState1 = await client.run({
-    // The agent id. Any agent on the store (https://codebuff.com/store)
-    agent: 'codebuff/base@0.0.16',
+    // The agent id. Any agent on the store (https://savant-code.com/store)
+    agent: 'savant-code/base@0.0.16',
     prompt: 'Create a simple calculator class',
     handleEvent: (event) => {
       // All events that happen during the run: agent start/finish, tool calls/results, text responses, errors.
-      console.log('Codebuff Event', JSON.stringify(event))
+      console.log('SavantCode Event', JSON.stringify(event))
     },
   })
 
   // Continue the same session with a follow-up
   const runOrError2 = await client.run({
-    agent: 'codebuff/base@0.0.16',
+    agent: 'savant-code/base@0.0.16',
     prompt: 'Add unit tests for the calculator',
     previousRun: runState1, // <-- this is where your next run differs from the previous run
     handleEvent: (event) => {
-      console.log('Codebuff Event', JSON.stringify(event))
+      console.log('SavantCode Event', JSON.stringify(event))
     },
   })
 }
@@ -64,14 +64,14 @@ Here, we create a full agent and custom tools that can be reused between runs.
 ```typescript
 import { z } from 'zod/v4'
 
-import { CodebuffClient, getCustomToolDefinition } from '@codebuff/sdk'
+import { SavantCodeClient, getCustomToolDefinition } from '@savant-code/sdk'
 
-import type { AgentDefinition } from '@codebuff/sdk'
+import type { AgentDefinition } from '@savant-code/sdk'
 
 async function main() {
-  const client = new CodebuffClient({
+  const client = new SavantCodeClient({
     // Note: You need to pass in your own API key.
-    // Get it here: https://www.codebuff.com/profile?tab=api-keys
+    // Get it here: https://www.savant-code.com/profile?tab=api-keys
     apiKey: process.env.CODEBUFF_API_KEY,
     // Optional directory agent runs from (if applicable).
     cwd: process.cwd(),
@@ -125,7 +125,7 @@ async function main() {
 
     handleEvent: (event) => {
       // All events that happen during the run: agent start/finish, tool calls/results, text responses, errors.
-      console.log('Codebuff Event', JSON.stringify(event))
+      console.log('SavantCode Event', JSON.stringify(event))
     },
   })
 
@@ -152,7 +152,7 @@ Override with `knowledgeFiles` (replaces project files) or `userKnowledgeFiles` 
 
 ```typescript
 await client.run({
-  agent: 'codebuff/base@0.0.16',
+  agent: 'savant-code/base@0.0.16',
   prompt: 'Help me refactor',
   knowledgeFiles: { 'knowledge.md': '# Guidelines\n- Use TypeScript' },
   userKnowledgeFiles: { '~/.knowledge.md': '# Preferences\n- Be concise' },
@@ -164,7 +164,7 @@ await client.run({
 The `fileFilter` option controls which files the agent can read:
 
 ```typescript
-const client = new CodebuffClient({
+const client = new SavantCodeClient({
   apiKey: process.env.CODEBUFF_API_KEY,
   fileFilter: (filePath) => {
     if (filePath === '.env') return { status: 'blocked' }
@@ -183,7 +183,7 @@ const client = new CodebuffClient({
 Loads agent definitions from `.agents` directories on disk.
 
 ```typescript
-import { loadLocalAgents, CodebuffClient } from '@codebuff/sdk'
+import { loadLocalAgents, SavantCodeClient } from '@savant-code/sdk'
 
 // Load from default locations (.agents in cwd, parent, or home)
 const agents = await loadLocalAgents({ verbose: true })
@@ -200,7 +200,7 @@ for (const agent of Object.values(agents)) {
 }
 
 // Use the loaded agents with client.run()
-const client = new CodebuffClient({ apiKey: process.env.CODEBUFF_API_KEY })
+const client = new SavantCodeClient({ apiKey: process.env.CODEBUFF_API_KEY })
 const result = await client.run({
   agent: 'my-custom-agent',
   agentDefinitions: Object.values(agents),
@@ -231,7 +231,7 @@ Files ending in `.d.ts` or `.test.ts` are excluded.
 
 ### `client.run(options)`
 
-Runs a Codebuff agent with the specified options.
+Runs a SavantCode agent with the specified options.
 
 #### Parameters
 
@@ -245,7 +245,7 @@ Runs a Codebuff agent with the specified options.
 
 - **`previousRun`** (object, optional): JSON state returned from a previous `run()` call. Use this to continue a conversation or session with the agent, maintaining context from previous interactions.
 
-- **`projectFiles`** (object, optional): All the files in your project as a plain JavaScript object. Keys should be the full path from your current directory to each file, and values should be the string contents of the file. Example: `{ "src/index.ts": "console.log('hi')" }`. This helps Codebuff pick good source files for context. Note: This parameter was previously named `allFiles` but has been renamed for clarity.
+- **`projectFiles`** (object, optional): All the files in your project as a plain JavaScript object. Keys should be the full path from your current directory to each file, and values should be the string contents of the file. Example: `{ "src/index.ts": "console.log('hi')" }`. This helps SavantCode pick good source files for context. Note: This parameter was previously named `allFiles` but has been renamed for clarity.
 
 - **`knowledgeFiles`** (object, optional): Knowledge files to inject into every `run()` call. Uses the same schema as `projectFiles` - keys are file paths and values are file contents. These files are added directly to the agent's context.
 
@@ -275,7 +275,7 @@ Apache-2.0 — see [LICENSE](../LICENSE) for full text.
 
 <div align="center">
 
-_This SDK ships from the [codebuff/savant-code monorepo](https://github.com/savant0x/savant-code). It runs on the [ECHO Protocol v0.2.0](ECHO.md) engineering governance system — 15 laws, Perfection Loop FSM, separation of duties._
+_This SDK ships from the [savant-code/savant-code monorepo](https://github.com/savant0x/savant-code). It runs on the [ECHO Protocol v0.2.0](ECHO.md) engineering governance system — 15 laws, Perfection Loop FSM, separation of duties._
 
 **Savant** • 2026
 </div>

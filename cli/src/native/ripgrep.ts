@@ -1,6 +1,6 @@
 import path from 'path'
 
-import { getBundledRgPath } from '@codebuff/sdk'
+import { getBundledRgPath } from '@savant-code/sdk'
 import { spawnSync } from 'bun'
 
 import { getCliEnv } from '../utils/env'

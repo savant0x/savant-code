@@ -1,12 +1,12 @@
-import { env } from '@codebuff/common/env'
+import { env } from '@savant-code/common/env'
 import { useCallback } from 'react'
 
 import { invalidateActivityQuery, useActivityQuery } from './use-activity-query'
 import { getAuthToken } from '../utils/auth'
 import { logger as defaultLogger } from '../utils/logger'
 
-import type { ClientEnv } from '@codebuff/common/types/contracts/env'
-import type { Logger } from '@codebuff/common/types/contracts/logger'
+import type { ClientEnv } from '@savant-code/common/types/contracts/env'
+import type { Logger } from '@savant-code/common/types/contracts/logger'
 
 // Query keys for type-safe cache management
 export const usageQueryKeys = {

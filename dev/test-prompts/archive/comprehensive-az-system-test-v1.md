@@ -18,7 +18,7 @@
 
 ### 1.2 Version & Environment
 - [ ] Run `bun run --version` to confirm CLI version
-- [ ] Confirm which model is active (check if IS_FREEBUFF or Codebuff mode)
+- [ ] Confirm which model is active (check if IS_FREEBUFF or SavantCode mode)
 - [ ] Confirm which shell is detected (bash/powershell)
 
 ---
@@ -243,8 +243,8 @@ Test every slash command. For each, type the command and verify the response.
 | 120 | `/skill:coding-csharp` | Loads C# coding skill |
 | 121 | `/skill:sequential-thinking` | Loads sequential thinking skill |
 | 122 | `/skill:release-workflow` | Loads release workflow skill |
-| 123 | `/connect` (Freebuff only) | Connects ChatGPT account OR shows "not available" |
-| 124 | `/end-session` (Freebuff only) | Ends free session |
+| 123 | `/connect` (SavantFree only) | Connects ChatGPT account OR shows "not available" |
+| 124 | `/end-session` (SavantFree only) | Ends free session |
 | 125 | `help` (no slash, implicit) | Same as `/help` |
 | 126 | `new` (no slash, implicit) | Same as `/new` |
 | 127 | `exit` (no slash, implicit) | Same as `/exit` |

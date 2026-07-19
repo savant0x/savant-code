@@ -26,7 +26,7 @@
 **Key Learnings:**
 
 - OpenTUI `<text>` elements inside `<box flexDirection="column">` require a numeric `width` property to render as separate lines - `width: '100%'` collapses them. The right-sidebar works because it has `width: 30`.
-- Model persistence must have a single source of truth - having 4 stores (freebuff store, chat-store, DB, settings file) with no sync guarantee causes model drift which is payment-critical.
+- Model persistence must have a single source of truth - having 4 stores (savant-free store, chat-store, DB, settings file) with no sync guarantee causes model drift which is payment-critical.
 - The `resolveSupportedFreebuffModel` function falls back to FALLBACK_FREEBUFF_MODEL_ID (deepseek) for any model not in the supported list - this silently overrides user selection.
 - `useLogo` hook falls back to text-only "SAVANT" when `contentMaxWidth` is NaN (which happens on first render before terminal dimensions are available).
 - `readFileSync` with `import.meta.dir` resolves to the CLI source directory, not the project root - need correct relative path depth.
@@ -114,7 +114,7 @@
 **Technical Insights:**
 
 - FID-006 designers: the clean "dev-mode bypass" pattern is gate on `INFERENCE_BASE_URL`
-  set (env presence as the universal "no-Codebuff-backend" signal) and return a stub
+  set (env presence as the universal "no-SavantCode-backend" signal) and return a stub
   user/token. This decouples dev auth from `CODEBUFF_API_KEY` entirely.
 - The e2e harness's `loadEnvFile` parser at
   `agents/e2e/base2-free-summary-format.e2e.test.ts:83-108` is the **canonical** env

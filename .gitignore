@@ -21,7 +21,7 @@ tsconfig.tsbuildinfo
 __mock-projects__
 npm-app/src/__tests__/data/
 .aider*
-.codebuff*
+.savant-code*
 **.log
 
 debug/
@@ -40,9 +40,9 @@ docs/bot-detection.md
 # Buffbench DEBUG_ERROR dumps
 evals/buffbench/*-error-*.json
 
-# Freebuff Desktop local runtime state in an opened project (SQLite DB, git
+# SavantFree Desktop local runtime state in an opened project (SQLite DB, git
 # worktrees, materialized built-in skills) — never source, always regenerated.
-.freebuff/
+.savant-free/
 
 # Scratchpad (ephemeral working area, .gitkeep preserves directory)
 dev/scratchpad/*
@@ -53,8 +53,8 @@ cli/release/launcher.js
 cli/release/http.js
 cli/release-staging/launcher.js
 cli/release-staging/http.js
-freebuff/cli/release/launcher.js
-freebuff/cli/release/http.js
+savant-free/cli/release/launcher.js
+savant-free/cli/release/http.js
 
 # dev/releases/ -- ephemeral staging area for release notes drafts.
 # Canonical in-repo history: CHANGELOG.md. Canonical external source: GitHub Releases.

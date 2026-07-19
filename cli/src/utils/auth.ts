@@ -1,15 +1,15 @@
 import fs from 'fs'
 import path from 'path'
 
-import { getCiEnv } from '@codebuff/common/env-ci'
+import { getCiEnv } from '@savant-code/common/env-ci'
 import { z } from 'zod'
 
 
-import { getApiClient, setApiClientAuthToken } from './codebuff-api'
+import { getApiClient, setApiClientAuthToken } from './savant-code-api'
 import { getConfigDir as getConfigDirBase } from './config-dir'
 import { logger } from './logger'
 
-import type { CiEnv } from '@codebuff/common/types/contracts/env'
+import type { CiEnv } from '@savant-code/common/types/contracts/env'
 
 // User schema
 const userSchema = z.object({
@@ -116,7 +116,7 @@ export const getAuthTokenDetails = (
     return { token: envToken, source: 'environment' }
   }
 
-  // Dev-mode bypass: when INFERENCE_BASE_URL is set (no Codebuff backend),
+  // Dev-mode bypass: when INFERENCE_BASE_URL is set (no SavantCode backend),
   // and no credentials are present, return a stub token so the CLI can boot.
   const inferenceBaseUrl = process.env['INFERENCE_BASE_URL']
   if (inferenceBaseUrl) {

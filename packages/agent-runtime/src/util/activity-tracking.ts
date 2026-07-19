@@ -11,8 +11,8 @@
  * Hard truncation at 30 chars + '…' suffix.
  */
 
-import type { AgentActivity, AgentState } from '@codebuff/common/types/session-state'
-import type { PrintModeEvent } from '@codebuff/common/types/print-mode'
+import type { AgentActivity, AgentState } from '@savant-code/common/types/session-state'
+import type { PrintModeEvent } from '@savant-code/common/types/print-mode'
 
 const DEFAULT_IDLE_TIMEOUT_MS = 5000
 const TARGET_DISPLAY_MAX = 30

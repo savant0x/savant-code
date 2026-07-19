@@ -3,15 +3,15 @@ import fs from 'fs'
 import path from 'path'
 
 import type { Runner, RunnerResult, AgentStep } from './runner'
-import type { CodebuffClient } from '@codebuff/sdk'
+import type { SavantCodeClient } from '@savant-code/sdk'
 
 
 const DEBUG_ERROR = true
 
-export class CodebuffRunner implements Runner {
+export class SavantCodeRunner implements Runner {
   private cwd: string
   private env?: Record<string, string>
-  private client: CodebuffClient
+  private client: SavantCodeClient
   private agentId: string
   private localAgentDefinitions: any[]
   private printEvents: boolean
@@ -21,7 +21,7 @@ export class CodebuffRunner implements Runner {
   constructor(options: {
     cwd: string
     env?: Record<string, string>
-    client: CodebuffClient
+    client: SavantCodeClient
     agentId: string
     localAgentDefinitions: any[]
     printEvents: boolean
@@ -117,7 +117,7 @@ export class CodebuffRunner implements Runner {
 
     totalCostUsd = (result.sessionState?.mainAgentState.creditsUsed ?? 0) / 100
 
-    // Get git diff after Codebuff has made changes
+    // Get git diff after SavantCode has made changes
     let diff = ''
     try {
       execSync('git add .', { cwd: this.cwd, stdio: 'ignore' })

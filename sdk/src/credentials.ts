@@ -6,15 +6,15 @@ import { logger } from './utils/logger'
 import {
   CHATGPT_OAUTH_CLIENT_ID,
   CHATGPT_OAUTH_TOKEN_URL,
-} from '@codebuff/common/constants/chatgpt-oauth'
-import { env } from '@codebuff/common/env'
-import { userSchema } from '@codebuff/common/util/credentials'
+} from '@savant-code/common/constants/chatgpt-oauth'
+import { env } from '@savant-code/common/env'
+import { userSchema } from '@savant-code/common/util/credentials'
 import { z } from 'zod/v4'
 
 import { getChatGptOAuthTokenFromEnv } from './env'
 
-import type { ClientEnv } from '@codebuff/common/types/contracts/env'
-import type { User } from '@codebuff/common/util/credentials'
+import type { ClientEnv } from '@savant-code/common/types/contracts/env'
+import type { User } from '@savant-code/common/util/credentials'
 
 const chatGptOAuthSchema = z.object({
   accessToken: z.string(),
@@ -25,7 +25,7 @@ const chatGptOAuthSchema = z.object({
 
 /**
  * Unified schema for the credentials file.
- * Contains both Codebuff user credentials and ChatGPT OAuth credentials.
+ * Contains both SavantCode user credentials and ChatGPT OAuth credentials.
  */
 const credentialsFileSchema = z.object({
   default: userSchema.optional(),
@@ -111,7 +111,7 @@ export const getChatGptOAuthCredentials = (
     }
   }
 
-  // 2. Codebuff's own stored credentials
+  // 2. SavantCode's own stored credentials
   const credentialsPath = getCredentialsPath(clientEnv)
   if (fs.existsSync(credentialsPath)) {
     try {

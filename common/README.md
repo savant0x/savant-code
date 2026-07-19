@@ -1,7 +1,7 @@
 <!-- markdownlint-disable MD041 -->
-<img src="../assets/banner.png" alt="@codebuff/common — Shared types, tool definitions, utilities" width="650" />
+<img src="../assets/banner.png" alt="@savant-code/common — Shared types, tool definitions, utilities" width="650" />
 
-# @codebuff/common
+# @savant-code/common
 
 Shared types, tool definitions, and utilities used across the Savant runtime (Zod schemas, MCP client, AI SDK helpers, auth, billing/Postgres).
 
@@ -9,7 +9,7 @@ Shared types, tool definitions, and utilities used across the Savant runtime (Zo
 
 ## Purpose
 
-`@codebuff/common` is the **cross-workspace source of truth** for shared types and tool wiring (per ECHO Law 13). Contains tool schemas for `read_files`, `write_file`, `str_replace`, `run_terminal_command`, `web_search`, `code_search`, MCP client, AI SDK integrations, and the analytics/billing/Postgres adapters. No agent imports anything from another workspace without going through `@codebuff/common`.
+`@savant-code/common` is the **cross-workspace source of truth** for shared types and tool wiring (per ECHO Law 13). Contains tool schemas for `read_files`, `write_file`, `str_replace`, `run_terminal_command`, `web_search`, `code_search`, MCP client, AI SDK integrations, and the analytics/billing/Postgres adapters. No agent imports anything from another workspace without going through `@savant-code/common`.
 
 ## Quick Start
 
@@ -31,7 +31,7 @@ For full Quick Start including how the CLI runtime consumes `common/`, see the [
 
 <div align="center">
 
-_Part of the [codebuff/savant-code monorepo](https://github.com/savant0x/savant-code), governed by the [ECHO Protocol v0.2.0](../ECHO.md)._
+_Part of the [savant-code/savant-code monorepo](https://github.com/savant0x/savant-code), governed by the [ECHO Protocol v0.2.0](../ECHO.md)._
 
 **Savant** • 2026
 </div>

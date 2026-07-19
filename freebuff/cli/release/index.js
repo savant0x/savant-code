@@ -22,8 +22,8 @@ const { createLauncher } = require(
 )
 
 const launcher = createLauncher({
-  packageName: 'freebuff',
-  displayName: 'Freebuff',
+  packageName: 'savant-free',
+  displayName: 'SavantFree',
   telemetryEvent: 'cli.update_freebuff_failed',
 })
 

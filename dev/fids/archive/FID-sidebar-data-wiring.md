@@ -46,7 +46,7 @@ The UI redesign FID created the sidebar structure with placeholder data. This FI
 
 **Data Stores (Zustand):**
 - `cli/src/state/chat-store.ts` — `sessionCreditsUsed`, `activeSubagents`, `agentMode`
-- `cli/src/state/freebuff-model-store.ts` — `selectedModel`
+- `cli/src/state/savant-free-model-store.ts` — `selectedModel`
 
 **Event Handlers:**
 - `cli/src/utils/sdk-event-handlers.ts` — `handleToolCall()`, `handleSubagentStart()`, `handleSubagentFinish()`
@@ -124,7 +124,7 @@ Add a Zustand store slice for sidebar data, populate it from existing event hand
 - Impact: Cost shows "$0.00"
 
 **R7 — Model/mode info not wired**
-- Evidence: `cli/src/state/freebuff-model-store.ts:25-36` — `selectedModel` available
+- Evidence: `cli/src/state/savant-free-model-store.ts:25-36` — `selectedModel` available
 - Evidence: `cli/src/state/chat-store.ts:67` — `agentMode` available
 - Impact: Model/mode show placeholder text
 
@@ -213,7 +213,7 @@ Decision chain:
 
 **Typecheck — CLI package:**
 ```
-C:\Users\spenc\dev\codebuff\cli>npx tsc --noEmit
+C:\Users\spenc\dev\savant-code\cli>npx tsc --noEmit
 tsconfig.json(15,5): error TS5101: Option 'baseUrl' is deprecated and will stop functioning in TypeScript 7.0. Specify compilerOption '"ignoreDeprecations": "6.0"' to silence this error.
   Visit https://aka.ms/ts6 for migration information.
 ```
@@ -221,7 +221,7 @@ Result: ONLY deprecation warning (TS5101). No type errors. ✓
 
 **Typecheck — SDK package:**
 ```
-C:\Users\spenc\dev\codebuff\sdk>npx tsc --noEmit
+C:\Users\spenc\dev\savant-code\sdk>npx tsc --noEmit
 tsconfig.json(16,5): error TS5101: Option 'baseUrl' is deprecated and will stop functioning in TypeScript 7.0. Specify compilerOption '"ignoreDeprecations": "6.0"' to silence this error.
   Visit https://aka.ms/ts6 for migration information.
 ```
@@ -229,7 +229,7 @@ Result: ONLY deprecation warning (TS5101). No type errors. ✓
 
 **Typecheck — Database package:**
 ```
-C:\Users\spenc\dev\codebuff\packages\database>npx tsc --noEmit
+C:\Users\spenc\dev\savant-code\packages\database>npx tsc --noEmit
 (no output)
 ```
 Result: Clean. No errors. ✓

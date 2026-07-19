@@ -5,7 +5,7 @@
  * Run with: bun run sdk/e2e/examples/code-reviewer.example.ts
  */
 
-import { CodebuffClient } from '../../src/client'
+import { SavantCodeClient } from '../../src/client'
 
 const SAMPLE_CODE = `
 function divide(a, b) {
@@ -20,7 +20,7 @@ async function main() {
     process.exit(1)
   }
 
-  const client = new CodebuffClient({ apiKey })
+  const client = new SavantCodeClient({ apiKey })
 
   console.log('🔍 Reviewing code...\n')
   console.log('Code to review:')
@@ -29,7 +29,7 @@ async function main() {
   console.log('```\n')
 
   const result = await client.run({
-    agent: 'codebuff/base2@latest',
+    agent: 'savant-code/base2@latest',
     prompt: `Review this code and identify any bugs or issues:\n\n${SAMPLE_CODE}`,
     handleStreamChunk: (chunk) => {
       if (typeof chunk === 'string') {

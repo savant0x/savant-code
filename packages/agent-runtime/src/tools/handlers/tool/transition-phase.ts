@@ -1,13 +1,13 @@
-import { scanOpenFids } from '@codebuff/common/util/protocol-config'
+import { scanOpenFids } from '@savant-code/common/util/protocol-config'
 
-import type { CodebuffToolHandlerFunction } from '../handler-function-type'
+import type { SavantCodeToolHandlerFunction } from '../handler-function-type'
 import type {
-  CodebuffToolCall,
-  CodebuffToolOutput,
-} from '@codebuff/common/tools/list'
-import type { Logger } from '@codebuff/common/types/contracts/logger'
-import type { FsmPhase } from '@codebuff/common/types/session-state'
-import type { ProjectFileContext } from '@codebuff/common/util/file'
+  SavantCodeToolCall,
+  SavantCodeToolOutput,
+} from '@savant-code/common/tools/list'
+import type { Logger } from '@savant-code/common/types/contracts/logger'
+import type { FsmPhase } from '@savant-code/common/types/session-state'
+import type { ProjectFileContext } from '@savant-code/common/util/file'
 
 const MAX_ITERATIONS = 10
 
@@ -25,11 +25,11 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
 // This is by design — the Perfection Loop is a session-level workflow.
 export const handleTransitionPhase = (async (params: {
   previousToolCallFinished: Promise<void>
-  toolCall: CodebuffToolCall<'transition_phase'>
+  toolCall: SavantCodeToolCall<'transition_phase'>
   logger: Logger
   agentState: { fsmPhase?: FsmPhase; iterationCount?: number }
   fileContext: ProjectFileContext
-}): Promise<{ output: CodebuffToolOutput<'transition_phase'> }> => {
+}): Promise<{ output: SavantCodeToolOutput<'transition_phase'> }> => {
   const { toolCall, logger, agentState, fileContext } = params
   const { phase, reason } = toolCall.input
 
@@ -132,4 +132,4 @@ export const handleTransitionPhase = (async (params: {
       },
     ],
   }
-}) satisfies CodebuffToolHandlerFunction<'transition_phase'>
+}) satisfies SavantCodeToolHandlerFunction<'transition_phase'>

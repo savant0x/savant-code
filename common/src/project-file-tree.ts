@@ -6,7 +6,7 @@ import { sortBy } from 'lodash'
 import { DEFAULT_IGNORED_PATHS } from './constants/paths'
 import { fileExists, isValidProjectRoot } from './util/file'
 
-import type { CodebuffFileSystem } from './types/filesystem'
+import type { SavantCodeFileSystem } from './types/filesystem'
 import type { DirectoryNode, FileTreeNode } from './util/file'
 
 /**
@@ -58,7 +58,7 @@ export function isShallowScanRoot(
 export async function getProjectFileTree(params: {
   projectRoot: string
   maxFiles?: number
-  fs: CodebuffFileSystem
+  fs: SavantCodeFileSystem
 }): Promise<FileTreeNode[]> {
   const withDefaults = { maxFiles: DEFAULT_MAX_FILES, ...params }
   const { projectRoot, fs } = withDefaults
@@ -220,7 +220,7 @@ function rebaseGitignorePattern(
 export async function parseGitignore(params: {
   fullDirPath: string
   projectRoot: string
-  fs: CodebuffFileSystem
+  fs: SavantCodeFileSystem
 }): Promise<ignore.Ignore> {
   const { fullDirPath, projectRoot, fs } = params
 
@@ -228,7 +228,7 @@ export async function parseGitignore(params: {
   const relativeDirPath = path.relative(projectRoot, fullDirPath)
   const ignoreFiles = [
     path.join(fullDirPath, '.gitignore'),
-    path.join(fullDirPath, '.codebuffignore'),
+    path.join(fullDirPath, '.savantignore'),
     path.join(fullDirPath, '.manicodeignore'), // Legacy support
   ]
 
@@ -317,7 +317,7 @@ export function getLastReadFilePaths(
 export async function isFileIgnored(params: {
   filePath: string
   projectRoot: string
-  fs: CodebuffFileSystem
+  fs: SavantCodeFileSystem
 }): Promise<boolean> {
   const { filePath, projectRoot, fs } = params
 

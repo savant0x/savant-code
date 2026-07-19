@@ -208,7 +208,7 @@ The filesystem under `agents/` may also contain **helper tool libraries** which 
 | Helper Dir | Consumed By | Notes |
 |------------|-------------|-------|
 | `browser-use/` | `agents/base2/base2.ts:74`, `agents/context-pruner.ts`, `common/src/constants/free-agents.ts`, `common/src/__tests__/free-agents.test.ts` | Browser automation helper used by Orchestrator + context-pruner |
-| `editor/` | `cli/src/commands/init.ts` (scaffolding), `agents/__tests__/context-pruner.test.ts`, `evals/buffbench/eval-codebuff-hard.json` | Editor scaffolding helper used by `init` command |
+| `editor/` | `cli/src/commands/init.ts` (scaffolding), `agents/__tests__/context-pruner.test.ts`, `evals/buffbench/eval-savant-code-hard.json` | Editor scaffolding helper used by `init` command |
 | `file-explorer/` | `common/src/constants/agents.ts`, `evals/buffbench/*.json` | File listing helper consumed by agent-registry constants |
 | `librarian/` | `agents/context-pruner.ts` | Knowledge/context helper used by context-pruner |
 | `types/` | `agents/base-chat.ts`, `agents/base2/base2.ts`, `agents/base2/base-deep.ts`, `agents/basher.ts`, `agents/browser-use/browser-use.ts` | Type-only shared imports across all agents + basher |
@@ -220,4 +220,4 @@ The filesystem under `agents/` may also contain **helper tool libraries** which 
 
 These two counts are NOT in conflict: the 9-agent roster represents runtime conversation entities; the 14-dir count represents filesystem entries. Future checklists/audits should not confuse them.
 
-**Pre-rebrand note (0.0.2 push):** All `@codebuff/*` workspace names + import paths remain intact at this checkpoint. The full rebrand (rename all `codebuff`/`freebuff` instances to `savant-code`/`savant-free`) ships in the NEXT push.
+**Pre-rebrand note (0.0.2 push):** All `@savant-code/*` workspace names + import paths remain intact at this checkpoint. The full rebrand (rename all `savant-code`/`savant-free` instances to `savant-code`/`savant-free`) ships in the NEXT push.

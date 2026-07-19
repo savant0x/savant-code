@@ -21,7 +21,7 @@ installed Bun (1.3.11) is below the engines requirement (1.3.14).
 
 - **OS:** Windows 11, Bun 1.3.11 (engines: 1.3.14)
 - **Language/Runtime:** TypeScript 5.5.4, Bun monorepo
-- **Commit/State:** working tree at `C:\Users\spenc\dev\codebuff`
+- **Commit/State:** working tree at `C:\Users\spenc\dev\savant-code`
 
 ## Detailed Description
 
@@ -47,7 +47,7 @@ Template scaffolding (`tests/`) never updated to the repo's actual layout; fresh
 
 ```text
 protocol.config.yaml:30   tests: "tests/"
-(bunfig.toml)             exclude = ["**/*.integration.test.*", "freebuff/e2e/**"]
+(bunfig.toml)             exclude = ["**/*.integration.test.*", "savant-free/e2e/**"]
 node_modules present?     False
 bun --version             1.3.11   (engines: 1.3.14)
 ```
@@ -83,7 +83,7 @@ Fix the config path and document the install/version prerequisite; update CHANGE
 ### Loop 1
 
 - **RED:** `paths.tests: "tests/"` wrong vs actual `__tests__/` + `*.test.ts` layout; `node_modules` absent blocking all validation; Bun 1.3.11 vs engines 1.3.14 skew; `.env.local` not auto-loaded due to `--cwd ..` in dev script disabling Bun dotenv.
-- **GREEN:** `bun install` completed (753 packages). Created `.env.local` at repo root with 8 placeholder vars (gitignored). Created `cli/src/pre-init/load-dev-env.ts` with upward-walk `.env.local` resolver + e2e-harness parser. Wired it as first import in `cli/src/index.tsx` before any `@codebuff/common` import triggers `env.ts`. Verified: `bun dev` prints `Using environment: dev` and proceeds to TUI. `paths.tests` field: inspected `protocol.config.yaml` usage — no tooling reads this field; it is documentation-only dead config. Marked for removal in a follow-up cleanup. Bun version: cli `engines.bun` is `1.3.11` (matches installed); root `packageManager` pin `1.3.14` is a soft warning, not a hard block. Decision: leave as-is until a Bun upgrade is explicitly needed.
+- **GREEN:** `bun install` completed (753 packages). Created `.env.local` at repo root with 8 placeholder vars (gitignored). Created `cli/src/pre-init/load-dev-env.ts` with upward-walk `.env.local` resolver + e2e-harness parser. Wired it as first import in `cli/src/index.tsx` before any `@savant-code/common` import triggers `env.ts`. Verified: `bun dev` prints `Using environment: dev` and proceeds to TUI. `paths.tests` field: inspected `protocol.config.yaml` usage — no tooling reads this field; it is documentation-only dead config. Marked for removal in a follow-up cleanup. Bun version: cli `engines.bun` is `1.3.11` (matches installed); root `packageManager` pin `1.3.14` is a soft warning, not a hard block. Decision: leave as-is until a Bun upgrade is explicitly needed.
 - **AUDIT:** Verified: `bun dev` output shows `Using environment: dev` (env validation passes). TUI renders successfully (confirmed via background process logs showing OpenTUI escape sequences + "Press ENTER to login..." prompt). Typecheck: `bunx tsc --noEmit -p cli/tsconfig.json` shows 8 pre-existing `react-dom/server` declaration errors (not introduced by this FID's changes; they exist in the baseline).
 - **CHANGE DELTA:** 2 new files (`cli/src/pre-init/load-dev-env.ts`, `.env.local`), 1 file modified (`cli/src/index.tsx`). Estimated delta: ~120 lines added, ~6 lines modified.
 

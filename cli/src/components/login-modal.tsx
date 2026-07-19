@@ -282,7 +282,7 @@ export const LoginModal = ({
       >
         {/* Header - Logo rendered by useLogo hook */}
         <box
-          key="codebuff-logo"
+          key="savant-code-logo"
           style={{
             flexDirection: 'column',
             alignItems: contentMaxWidth < 40 ? 'center' : 'flex-start',
@@ -452,7 +452,7 @@ export const LoginModal = ({
                   <span fg={theme.secondary}>
                     Tip: Can't copy? Exit and run{' '}
                   </span>
-                  <span fg={theme.primary}>{IS_FREEBUFF ? 'freebuff' : 'codebuff'} login</span>
+                  <span fg={theme.primary}>{IS_FREEBUFF ? 'savant-free' : 'savant-code'} login</span>
                   <span fg={theme.secondary}>
                     {' '}instead.
                   </span>

@@ -23,8 +23,8 @@
 - `file-lister`
 
 Live `bun test`: 2 of 10 tests FAIL:
-- `allows each freebuff reviewer agent only with its configured model`
-- `allows legacy code-reviewer-lite with freebuff reviewer models`
+- `allows each savant-free reviewer agent only with its configured model`
+- `allows legacy code-reviewer-lite with savant-free reviewer models`
 
 These test cases test behavior of agents that don't exist. Two clean options:
 1. **Delete the failing tests** (recommended — tests target deleted agents, no value)
@@ -51,8 +51,8 @@ bun test src/__tests__/free-agents.test.ts
 ```
 
 **Result:** 10 tests, 8 pass, **2 FAIL**:
-- `allows each freebuff reviewer agent only with its configured model` — `Expected: true, Received: false` for `code-reviewer-lite`
-- `allows legacy code-reviewer-lite with freebuff reviewer models` — same `code-reviewer-lite` failure
+- `allows each savant-free reviewer agent only with its configured model` — `Expected: true, Received: false` for `code-reviewer-lite`
+- `allows legacy code-reviewer-lite with savant-free reviewer models` — same `code-reviewer-lite` failure
 
 **Root cause:** Tests reference `code-reviewer-mimo-pro`, `code-reviewer-kimi`, `code-reviewer-glm`, `code-reviewer-lite` — all of which were DELETED from the agent roster (likely in FID-006 when reviewers were consolidated into `verifier`).
 

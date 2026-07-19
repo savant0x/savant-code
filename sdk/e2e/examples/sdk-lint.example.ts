@@ -5,7 +5,7 @@
  * Run with: bun run sdk/e2e/examples/sdk-lint.example.ts
  */
 
-import { CodebuffClient } from '../../src/client'
+import { SavantCodeClient } from '../../src/client'
 
 const CODE_TO_LINT = `
 class Calculator {
@@ -32,7 +32,7 @@ async function main() {
     process.exit(1)
   }
 
-  const client = new CodebuffClient({ apiKey })
+  const client = new SavantCodeClient({ apiKey })
 
   console.log('🔎 Linting code...\n')
   console.log('Code:')
@@ -42,7 +42,7 @@ async function main() {
   console.log('Lint results:\n')
 
   const result = await client.run({
-    agent: 'codebuff/base2@latest',
+    agent: 'savant-code/base2@latest',
     prompt: `Act as a linter. Find issues in this code and provide specific feedback:\n\n${CODE_TO_LINT}`,
     handleStreamChunk: (chunk) => {
       if (typeof chunk === 'string') {

@@ -1,7 +1,7 @@
 import {
   DEFAULT_FREEBUFF_MODEL_ID,
   resolveAvailableFreebuffModel,
-} from '@codebuff/common/constants/freebuff-models'
+} from '@savant-code/common/constants/savant-free-models'
 import { create } from 'zustand'
 
 import {
@@ -24,7 +24,7 @@ import {
  * The sidebar, API calls, and billing all read from this store via
  * `getSelectedFreebuffModel()`. No other store holds the model.
  */
-interface FreebuffModelStore {
+interface SavantFree$1 {
   selectedModel: string
   /** In-memory only — used by server-driven auto-flips that should NOT persist. */
   setSelectedModel: (model: string) => void
@@ -32,7 +32,7 @@ interface FreebuffModelStore {
   switchModel: (model: string) => void
 }
 
-export const useFreebuffModelStore = create<FreebuffModelStore>((set) => ({
+export const useFreebuffModelStore = create<SavantFree$1>((set) => ({
   selectedModel: resolveAvailableFreebuffModel(
     loadFreebuffModelPreference() ?? DEFAULT_FREEBUFF_MODEL_ID,
   ),

@@ -1,15 +1,15 @@
-import type { CodebuffToolHandlerFunction } from '../handler-function-type'
+import type { SavantCodeToolHandlerFunction } from '../handler-function-type'
 import type {
-  CodebuffToolCall,
-  CodebuffToolOutput,
-} from '@codebuff/common/tools/list'
+  SavantCodeToolCall,
+  SavantCodeToolOutput,
+} from '@savant-code/common/tools/list'
 
 export const handleTaskCompleted = (async ({
   previousToolCallFinished,
 }: {
   previousToolCallFinished: Promise<any>
-  toolCall: CodebuffToolCall<'task_completed'>
-}): Promise<{ output: CodebuffToolOutput<'task_completed'> }> => {
+  toolCall: SavantCodeToolCall<'task_completed'>
+}): Promise<{ output: SavantCodeToolOutput<'task_completed'> }> => {
   await previousToolCallFinished
   return { output: [{ type: 'json', value: { message: 'Task completed.' } }] }
-}) satisfies CodebuffToolHandlerFunction<'task_completed'>
+}) satisfies SavantCodeToolHandlerFunction<'task_completed'>

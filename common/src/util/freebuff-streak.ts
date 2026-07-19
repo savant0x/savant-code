@@ -4,12 +4,12 @@ import {
   FREEBUFF_STREAK_GLM_BONUS_ENABLED,
   FREEBUFF_STREAK_REWARD_INTERVAL_DAYS,
   FREEBUFF_STREAK_REWARDS_ENABLED,
-} from '../constants/freebuff-models'
+} from '../constants/savant-free-models'
 
 import type {
-  FreebuffAccessTier,
-  FreebuffStreakRewardPool,
-} from '../constants/freebuff-models'
+  SavantFree$1,
+  SavantFree$1,
+} from '../constants/savant-free-models'
 
 export const FREEBUFF_STREAK_TIME_ZONE = FREEBUFF_PREMIUM_SESSION_RESET_TIMEZONE
 
@@ -24,7 +24,7 @@ function dateKeyFromParts(parts: Intl.DateTimeFormatPart[]): string {
   const day = get('day')
 
   if (!year || !month || !day) {
-    throw new Error('Failed to format Freebuff usage date')
+    throw new Error('Failed to format SavantFree usage date')
   }
 
   return `${year}-${month}-${day}`
@@ -133,14 +133,14 @@ export function isFreebuffStreakGlmBonusActive(): boolean {
 export function streakRewardPools(params: {
   streak: number
   todayUsed: boolean
-  accessTier: FreebuffAccessTier
-}): FreebuffStreakRewardPool[] {
+  accessTier: SavantFree$1
+}): SavantFree$1[] {
   if (!FREEBUFF_STREAK_REWARDS_ENABLED) return []
   if (!params.todayUsed) return []
   if (params.streak < FREEBUFF_STREAK_REWARD_INTERVAL_DAYS) return []
   // Daily pool bonus: every day at streak >= 7.
   if (params.accessTier === 'limited') return ['limited']
-  const pools: FreebuffStreakRewardPool[] = ['premium']
+  const pools: SavantFree$1[] = ['premium']
   // GLM stays weekly: only on the exact milestone day (once per Pacific week).
   if (isFreebuffStreakMilestone(params.streak) && isFreebuffStreakGlmBonusActive()) {
     pools.push('glm')

@@ -1,15 +1,15 @@
-import type { CodebuffToolHandlerFunction } from '../handler-function-type'
+import type { SavantCodeToolHandlerFunction } from '../handler-function-type'
 import type {
-  CodebuffToolCall,
-  CodebuffToolOutput,
-} from '@codebuff/common/tools/list'
-import type { Logger } from '@codebuff/common/types/contracts/logger'
+  SavantCodeToolCall,
+  SavantCodeToolOutput,
+} from '@savant-code/common/tools/list'
+import type { Logger } from '@savant-code/common/types/contracts/logger'
 
 export const handleThinkDeeply = (async (params: {
   previousToolCallFinished: Promise<any>
-  toolCall: CodebuffToolCall<'think_deeply'>
+  toolCall: SavantCodeToolCall<'think_deeply'>
   logger: Logger
-}): Promise<{ output: CodebuffToolOutput<'think_deeply'> }> => {
+}): Promise<{ output: SavantCodeToolOutput<'think_deeply'> }> => {
   const { previousToolCallFinished, toolCall, logger } = params
   const { thought } = toolCall.input
 
@@ -22,4 +22,4 @@ export const handleThinkDeeply = (async (params: {
 
   await previousToolCallFinished
   return { output: [{ type: 'json', value: { message: 'Thought logged.' } }] }
-}) satisfies CodebuffToolHandlerFunction<'think_deeply'>
+}) satisfies SavantCodeToolHandlerFunction<'think_deeply'>

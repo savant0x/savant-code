@@ -2,11 +2,11 @@ import { execFileSync } from 'node:child_process'
 
 import { afterEach, describe, expect, test } from 'bun:test'
 
-import { FreebuffSession, requireFreebuffBinary } from '../utils'
+import { SavantFree$1, requireFreebuffBinary } from '../utils'
 
 const TEST_TIMEOUT = 60_000
 
-describe('Freebuff: --help flag', () => {
+describe('SavantFree: --help flag', () => {
   test('shows CLI usage information', () => {
     const binary = requireFreebuffBinary()
     const output = execFileSync(binary, ['--help'], {
@@ -15,32 +15,32 @@ describe('Freebuff: --help flag', () => {
     })
 
     // Should show the binary name
-    expect(output.toLowerCase()).toContain('freebuff')
+    expect(output.toLowerCase()).toContain('savant-free')
 
     // Should show usage info
     expect(output).toMatch(/usage|options|commands/i)
   })
 
-  test('does not reference Codebuff', () => {
+  test('does not reference SavantCode', () => {
     const binary = requireFreebuffBinary()
     const output = execFileSync(binary, ['--help'], {
       encoding: 'utf-8',
       timeout: 10_000,
     })
 
-    // The --help output should say Freebuff, not Codebuff
+    // The --help output should say SavantFree, not SavantCode
     expect(output).not.toMatch(/\bcodebuff\b/i)
   })
 })
 
-describe('Freebuff: /help slash command', () => {
-  let session: FreebuffSession | null = null
+describe('SavantFree: /help slash command', () => {
+  let session: SavantFree$1 | null = null
 
-  const openHelp = async (session: FreebuffSession): Promise<string | null> => {
+  const openHelp = async (session: SavantFree$1): Promise<string | null> => {
     const initialOutput = await session.capture()
     if (!initialOutput.includes('Enter a coding task')) {
       console.log(
-        'Skipping /help slash command assertion: Freebuff is not on the chat input screen.',
+        'Skipping /help slash command assertion: SavantFree is not on the chat input screen.',
       )
       return null
     }
@@ -65,7 +65,7 @@ describe('Freebuff: /help slash command', () => {
     'shows help content when /help is entered',
     async () => {
       const binary = requireFreebuffBinary()
-      session = await FreebuffSession.start(binary)
+      session = await SavantFree$1.start(binary)
       await session.waitForReady()
 
       const output = await openHelp(session)
@@ -81,13 +81,13 @@ describe('Freebuff: /help slash command', () => {
     'does not show subscription commands in help',
     async () => {
       const binary = requireFreebuffBinary()
-      session = await FreebuffSession.start(binary)
+      session = await SavantFree$1.start(binary)
       await session.waitForReady()
 
       const output = await openHelp(session)
       if (!output) return
 
-      // Freebuff should NOT show these paid/subscription commands
+      // SavantFree should NOT show these paid/subscription commands
       expect(output).not.toContain('/subscribe')
       expect(output).not.toContain('/usage')
       expect(output).not.toContain('/credits')

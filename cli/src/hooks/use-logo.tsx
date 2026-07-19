@@ -53,7 +53,7 @@ interface LogoResult {
  * Returns:
  * - Full ASCII logo for width >= 70
  * - Small ASCII logo for width >= 40
- * - Text variant "CODEBUFF" or "Codebuff CLI" for narrow widths
+ * - Text variant "SAVANT_CODE" or "SavantCode CLI" for narrow widths
  *
  * The hook handles ALL formatting internally including:
  * - Line parsing and width limiting
@@ -72,16 +72,16 @@ export const useLogo = ({
   const ASCII_LOGO_LINES = 3
   const rawLogoString = useMemo(() => {
     if (maxHeight != null && maxHeight < ASCII_LOGO_LINES) {
-      return IS_FREEBUFF ? 'SAVANT' : 'CODEBUFF'
+      return IS_FREEBUFF ? 'SAVANT' : 'SAVANT_CODE'
     }
     if (availableWidth >= 70) return LOGO
     if (availableWidth >= 20) return LOGO_SMALL
-    return IS_FREEBUFF ? 'SAVANT' : 'CODEBUFF'
+    return IS_FREEBUFF ? 'SAVANT' : 'SAVANT_CODE'
   }, [availableWidth, maxHeight])
 
   // Format text block for plain text contexts (chat messages, etc.)
   const textBlock = useMemo(() => {
-    if (rawLogoString === 'CODEBUFF' || rawLogoString === 'SAVANT') {
+    if (rawLogoString === 'SAVANT_CODE' || rawLogoString === 'SAVANT') {
       return '' // Don't show ASCII art for text-only variant in plain text contexts
     }
     // Parse and format for plain text display
@@ -93,8 +93,8 @@ export const useLogo = ({
   // Format component for React contexts (login modal, etc.)
   const component = useMemo(() => {
     // Text-only variant for very narrow widths
-    if (rawLogoString === 'CODEBUFF' || rawLogoString === 'SAVANT') {
-      const brandName = IS_FREEBUFF ? 'Savant' : 'Codebuff'
+    if (rawLogoString === 'SAVANT_CODE' || rawLogoString === 'SAVANT') {
+      const brandName = IS_FREEBUFF ? 'Savant' : 'SavantCode'
       const forcedByHeight = maxHeight != null && maxHeight < ASCII_LOGO_LINES
       const displayText =
         availableWidth < 30 || forcedByHeight

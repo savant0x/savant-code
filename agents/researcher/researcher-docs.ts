@@ -1,5 +1,5 @@
-import { ECHO_PROTOCOL_INSTRUCTIONS } from '@codebuff/common/constants/agents'
-import { GEMINI_3_1_FLASH_LITE_MODEL_ID } from '@codebuff/common/constants/gemini'
+import { ECHO_PROTOCOL_INSTRUCTIONS } from '@savant-code/common/constants/agents'
+import { GEMINI_3_1_FLASH_LITE_MODEL_ID } from '@savant-code/common/constants/gemini'
 
 import { publisher } from '../constants'
 

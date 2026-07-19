@@ -11,11 +11,11 @@
 
 ## Summary
 
-This FID is **SUPERSEDED**. The original claim that agents/, evals/, freebuff/, and scripts/tmux/ were "empty shells" was incorrect — all have substantial TypeScript source code. The FID was based on a wrong assumption about fork completeness.
+This FID is **SUPERSEDED**. The original claim that agents/, evals/, savant-free/, and scripts/tmux/ were "empty shells" was incorrect — all have substantial TypeScript source code. The FID was based on a wrong assumption about fork completeness.
 
 - `agents/` — 80+ `.ts` files (agent definitions, tests, e2e tests)
 - `evals/` — 25+ `.ts` files (buffbench runner, eval fixtures)
-- `freebuff/` — 18 `.ts` files (CLI release, e2e tests)
+- `savant-free/` — 18 `.ts` files (CLI release, e2e tests)
 - `scripts/tmux/` — shell scripts + tmux-viewer TUI with `.ts`/`.tsx` source
 
 ## Environment
@@ -33,7 +33,7 @@ This FID is **SUPERSEDED**. The original claim that agents/, evals/, freebuff/, 
 | `scripts/tmux/` | Shell scripts (`.sh`) + package.json — functional |
 | `scripts/tmux/tmux-viewer/` | TUI viewer with `.ts`/`.tsx` source — functional |
 | `evals/` | Full buffbench runner with 25+ `.ts` files — functional |
-| `freebuff/` | CLI release + e2e tests with 18 `.ts` files — functional |
+| `savant-free/` | CLI release + e2e tests with 18 `.ts` files — functional |
 
 ### Risk Level
 
@@ -48,7 +48,7 @@ Risk is medium. These are developer-facing utility packages, not production code
 
 ### Problem
 
-The old savant-code repo (fame0528/savant-code) had these packages with full implementations. When forking to create this codebuff repo, only the package.json files were copied — the source code was not. Now that we're rebranding back to savant-code, these packages need to be rebuilt.
+The old savant-code repo (fame0528/savant-code) had these packages with full implementations. When forking to create this savant-code repo, only the package.json files were copied — the source code was not. Now that we're rebranding back to savant-code, these packages need to be rebuilt.
 
 ### What Each Package Does
 
@@ -60,7 +60,7 @@ The old savant-code repo (fame0528/savant-code) had these packages with full imp
 
 ### Root Cause
 
-**Wrong assumption.** This FID claimed these packages were empty shells from an incomplete fork. In reality, agents/, evals/, freebuff/, and scripts/tmux/ all have substantial source code. The FID should be closed — no work is needed.
+**Wrong assumption.** This FID claimed these packages were empty shells from an incomplete fork. In reality, agents/, evals/, savant-free/, and scripts/tmux/ all have substantial source code. The FID should be closed — no work is needed.
 
 ## Proposed Solution
 

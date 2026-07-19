@@ -5,7 +5,7 @@ import { defineToolComponent } from './types'
 import { useTerminalDimensions } from '../../hooks/use-terminal-dimensions'
 import { useTheme } from '../../hooks/use-theme'
 import { getLatestFollowupToolCallId, useChatStore } from '../../state/chat-store'
-import { useFreebuffSessionStore } from '../../state/freebuff-session-store'
+import { useFreebuffSessionStore } from '../../state/savant-free-session-store'
 import { IS_FREEBUFF } from '../../utils/constants'
 import { Button } from '../button'
 
@@ -350,7 +350,7 @@ export const SuggestFollowupsComponent = defineToolComponent({
     const handleSendFollowup = (prompt: string, index: number) => {
       // This gets called from the FollowupCard component
       // The actual logic is handled via the global followup handler
-      const event = new CustomEvent('codebuff:send-followup', {
+      const event = new CustomEvent('savant-code:send-followup', {
         detail: { prompt, index, toolCallId },
       })
       globalThis.dispatchEvent(event)

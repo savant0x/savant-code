@@ -1,7 +1,7 @@
 <!-- markdownlint-disable MD041 -->
-<img src="../assets/banner.png" alt="@codebuff/cli — TUI source for Savant-Code and Savant-Free" width="650" />
+<img src="../assets/banner.png" alt="@savant-code/cli — TUI source for Savant-Code and Savant-Free" width="650" />
 
-# @codebuff/cli
+# @savant-code/cli
 
 The TUI source for both **Savant-Code** and **Savant-Free** — built with OpenTUI and React.
 
@@ -81,7 +81,7 @@ bun run start
 Or use the binary directly:
 
 ```bash
-codebuff-tui
+savant-code-tui
 ```
 
 ## Features
@@ -97,7 +97,7 @@ codebuff-tui
 
 <div align="center">
 
-_This CLI source is part of the [codebuff/savant-code monorepo](https://github.com/savant0x/savant-code), governed by the [ECHO Protocol](../ECHO.md)._
+_This CLI source is part of the [savant-code/savant-code monorepo](https://github.com/savant0x/savant-code), governed by the [ECHO Protocol](../ECHO.md)._
 
 **Savant** • 2026
 </div>

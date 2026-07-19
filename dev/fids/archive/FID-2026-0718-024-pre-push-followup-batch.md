@@ -9,7 +9,7 @@
 ## Honest Correction (Cross-FID audit-trail)
 
 Three months of FID work (001–023) have produced:
-- A clean 12-README hierarchy (root + sdk/cli/freebuff + scripts/tmux + 7 stubs + template)
+- A clean 12-README hierarchy (root + sdk/cli/savant-free + scripts/tmux + 7 stubs + template)
 - All 11 newly-created/edited READMEs cross-link to root LICENSE with explicit `Apache-2.0` claim
 - All 11 have `alt=` attributes on banner images (accessibility-conscious)
 - FID-021 restored root; FID-022 + FID-023 polished the rest
@@ -34,7 +34,7 @@ The remaining pre-push loose ends are inventoried below. **Most of them are by-d
 | Workspace | LICENSE file? | README claims |
 |-----------|---------------|---------------|
 | `sdk/` | **EXISTS** (verified earlier basher + the LICENSE file would be from upstream @savant-code/sdk) | `Apache-2.0` line 272 from code-searcher |
-| `cli/`, `common/`, `freebuff/` | **MISSING** | All claim `Apache-2.0` (cross-link to root LICENSE) |
+| `cli/`, `common/`, `savant-free/` | **MISSING** | All claim `Apache-2.0` (cross-link to root LICENSE) |
 | `packages/agent-runtime/`, `code-map/`, `database/`, `llm-providers/` | **MISSING** | All claim `Apache-2.0` (cross-link to root LICENSE) |
 | `scripts/tmux/`, `agents/`, `evals/` | **MISSING** | All claim `Apache-2.0` (cross-link to root LICENSE) |
 | Root `LICENSE` | **EXISTS** — Apache License, Version 2.0 (~200 lines) | n/a |
@@ -45,9 +45,9 @@ The remaining pre-push loose ends are inventoried below. **Most of them are by-d
 | File | alt= present? | Quality |
 |------|---------------|---------|
 | `README.md` (root) | YES (line 5) | Descriptive: "Savant-Code — Multi-Agent AI Coding Assistant" |
-| `sdk/README.md` (PUBLIC, npm-rendered) | YES (line 2) | Descriptive: "@codebuff/sdk — Official TypeScript SDK..." |
+| `sdk/README.md` (PUBLIC, npm-rendered) | YES (line 2) | Descriptive: "@savant-code/sdk — Official TypeScript SDK..." |
 | `cli/README.md` | YES (line 2) | Descriptive |
-| `freebuff/README.md` | YES (line 2) | Descriptive |
+| `savant-free/README.md` | YES (line 2) | Descriptive |
 | `scripts/tmux/README.md` (deepest depth) | YES (line 2) | Descriptive |
 | 7 new stub READMEs | YES (each line 2) | Descriptive |
 | `templates/README-TEMPLATE.md` | YES (line 2 with placeholder) | Descriptive |
@@ -117,7 +117,7 @@ The remaining pre-push loose ends are inventoried below. **Most of them are by-d
 Just write a FID-024 CHANGELOG entry that records the 4 DECISIONs and explicitly closes-out. Run typecheck sanity. NO file changes. Push proceeds.
 
 ### Path B: Item B SYMLINK — ~15 min
-1. `for ws in cli common freebuff packages/agent-runtime packages/code-map packages/database packages/llm-providers scripts/tmux agents evals; do ln -s ../../LICENSE $ws/LICENSE 2>/dev/null || cp ../../LICENSE $ws/LICENSE; done`
+1. `for ws in cli common savant-free packages/agent-runtime packages/code-map packages/database packages/llm-providers scripts/tmux agents evals; do ln -s ../../LICENSE $ws/LICENSE 2>/dev/null || cp ../../LICENSE $ws/LICENSE; done`
 1. Verify each ws README cross-link still works
 1. CHANGELOG entry
 1. Typecheck sanity

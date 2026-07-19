@@ -34,7 +34,7 @@ Add a SQLite database using `better-sqlite3` to provide durable, queryable stora
 │                 better-sqlite3                          │
 ├─────────────────────────────────────────────────────────┤
 │                  SQLite File                            │
-│              (~/.freebuff/echo.db)                      │
+│              (~/.savant-free/echo.db)                      │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -149,7 +149,7 @@ CREATE TABLE cost_tracking (
 
 ### Decision 2: Global Storage Location
 
-**Choice**: Store database at `~/.freebuff/echo.db`  
+**Choice**: Store database at `~/.savant-free/echo.db`  
 **Rationale**:
 - Persists across projects
 - Follows XDG conventions
@@ -316,7 +316,7 @@ CREATE TABLE schema_version (
 
 **Issue**: No backup strategy for database  
 **Solution**: Implement automatic backups:
-- Daily backups to `~/.freebuff/backups/`
+- Daily backups to `~/.savant-free/backups/`
 - Keep last 7 days
 - Manual backup command
 
@@ -345,7 +345,7 @@ All improvements applied to the design. Ready for final review.
 ### Design Summary
 
 **Database**: SQLite with better-sqlite3  
-**Location**: `~/.freebuff/echo.db`  
+**Location**: `~/.savant-free/echo.db`  
 **Schema**: 6 tables (sessions, agent_templates, agent_configs, fid_documents, message_history, cost_tracking)  
 **Storage**: JSON blobs for complex data (session state, agent configs)  
 **Migration**: Fresh start (no migration of existing data)
@@ -410,7 +410,7 @@ All improvements applied to the design. Ready for final review.
 **Before implementation begins, please review and approve:**
 
 1. **Schema Design** — 6 tables with JSON blobs for complex data
-2. **Storage Location** — Global at `~/.freebuff/echo.db`
+2. **Storage Location** — Global at `~/.savant-free/echo.db`
 3. **Migration Strategy** — Fresh start (no migration)
 4. **Implementation Plan** — 5 phases, ~3 hours total
 

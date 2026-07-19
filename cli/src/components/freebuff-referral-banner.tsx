@@ -6,27 +6,27 @@ import { useCopyToClipboard } from './copy-button'
 import {
   FREEBUFF_GLM_V52_MODEL_ID,
   FREEBUFF_GLM_V52_REFERRAL_CAP,
-} from '@codebuff/common/constants/freebuff-models'
-import { REFERRAL_CLI_DAILY_SESSION_BONUS_CAP } from '@codebuff/common/constants/freebuff-referral-tiers'
-import { pluralize } from '@codebuff/common/util/string'
+} from '@savant-code/common/constants/savant-free-models'
+import { REFERRAL_CLI_DAILY_SESSION_BONUS_CAP } from '@savant-code/common/constants/savant-free-referral-tiers'
+import { pluralize } from '@savant-code/common/util/string'
 
-import { startFreebuffSession } from '../hooks/use-freebuff-session'
+import { startFreebuffSession } from '../hooks/use-savant-free-session'
 import { useNow } from '../hooks/use-now'
 import { useTheme } from '../hooks/use-theme'
 import { LOGIN_WEBSITE_URL } from '../login/constants'
-import { formatFreebuffPremiumResetCountdown } from '../utils/freebuff-premium-reset'
+import { formatFreebuffPremiumResetCountdown } from '../utils/savant-free-premium-reset'
 import { safeOpen } from '../utils/open-url'
 import { BORDER_CHARS } from '../utils/ui-constants'
 
-import type { FreebuffAccessTier } from '@codebuff/common/constants/freebuff-models'
-import type { FreebuffReferralInfo } from '@codebuff/common/types/freebuff-session'
+import type { SavantFree$1 } from '@savant-code/common/constants/savant-free-models'
+import type { SavantFree$1 } from '@savant-code/common/types/savant-free-session'
 
 /** Build a friend's share link from the referral code. Points at the
  *  /get-started page (CLI install walkthrough + hero + FAQs) rather than the
  *  bare landing page; the `?ref=` code is still captured into the attribution
  *  cookie there via the root layout's ReferralCodeCapture. When we know the
  *  inviter's name we pass `?referrer=` too so the page greets the friend with
- *  "X invited you to try Freebuff!". */
+ *  "X invited you to try SavantFree!". */
 function referralLink(code: string, referrerName: string | null): string {
   const params = new URLSearchParams({ ref: code })
   if (referrerName) params.set('referrer', referrerName)
@@ -39,7 +39,7 @@ const COPY_FOCUS_ID = '__freebuff_referral_copy__'
 const GLM_FOCUS_ID = '__freebuff_referral_glm__'
 const BUTTON_HORIZONTAL_CHROME = 6 // two border + four padding columns
 
-export interface FreebuffReferralFocusTarget {
+export interface SavantFree$1 {
   id: string
   activate: () => void
 }
@@ -139,15 +139,15 @@ const CopyInviteLinkButton: React.FC<{
  * Renders nothing unless the server attached a `referral` block, so
  * pre-referral-code users never see it.
  */
-interface FreebuffReferralBannerProps {
+interface SavantFree$1 {
   width: number
-  referral: FreebuffReferralInfo
-  accessTier: FreebuffAccessTier
+  referral: SavantFree$1
+  accessTier: SavantFree$1
   focusedId: string
-  onFocusTargetsChange: (targets: FreebuffReferralFocusTarget[]) => void
+  onFocusTargetsChange: (targets: SavantFree$1[]) => void
 }
 
-export const FreebuffReferralBanner: React.FC<FreebuffReferralBannerProps> = ({
+export const SavantFree$1: React.FC<SavantFree$1> = ({
   width,
   referral,
   accessTier,

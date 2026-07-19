@@ -1,19 +1,19 @@
 #!/usr/bin/env bun
 /**
- * Freebuff Binary Smoke Test
+ * SavantFree Binary Smoke Test
  *
- * Verifies the compiled Freebuff binary:
+ * Verifies the compiled SavantFree binary:
  * 1. Reports a valid version number
- * 2. Shows Freebuff branding (not Codebuff) in --help output
+ * 2. Shows SavantFree branding (not SavantCode) in --help output
  * 3. Excludes mode flags (--free, --max, --plan) from --help
- * 4. Renders the Freebuff title screen (ASCII logo) in tmux
+ * 4. Renders the SavantFree title screen (ASCII logo) in tmux
  *
  * Prerequisites:
- *   bun freebuff/cli/build.ts <version>   # build the binary
+ *   bun savant-free/cli/build.ts <version>   # build the binary
  *   brew install tmux                     # for title-screen test
  *
  * Run:
- *   bun test freebuff/cli/smoke-test.test.ts
+ *   bun test savant-free/cli/smoke-test.test.ts
  */
 
 import { execFileSync, execSync, spawn, spawnSync } from 'child_process'
@@ -23,7 +23,7 @@ import path from 'path'
 import { describe, test, expect, afterEach } from 'bun:test'
 
 const REPO_ROOT = path.join(__dirname, '..', '..')
-const BINARY_PATH = path.join(REPO_ROOT, 'cli', 'bin', 'freebuff')
+const BINARY_PATH = path.join(REPO_ROOT, 'cli', 'bin', 'savant-free')
 const TIMEOUT_MS = 20_000
 
 // ---------------------------------------------------------------------------
@@ -104,7 +104,7 @@ const tmuxAvailable = isTmuxAvailable()
 // Tests
 // ---------------------------------------------------------------------------
 
-describe.skipIf(!binaryExists)('Freebuff Binary Smoke Tests', () => {
+describe.skipIf(!binaryExists)('SavantFree Binary Smoke Tests', () => {
   test(
     '--version outputs a valid semver version',
     () => {
@@ -121,26 +121,26 @@ describe.skipIf(!binaryExists)('Freebuff Binary Smoke Tests', () => {
   )
 
   test(
-    '--help shows Freebuff branding',
+    '--help shows SavantFree branding',
     () => {
       const output = stripAnsiCodes(runBinary(['--help']))
 
-      // CLI name is "freebuff"
-      expect(output).toContain('Usage: freebuff')
-      // Description is Freebuff-specific
+      // CLI name is "savant-free"
+      expect(output).toContain('Usage: savant-free')
+      // Description is SavantFree-specific
       expect(output).toContain('Free AI coding assistant')
-      // Must NOT contain the Codebuff CLI name in the usage line
-      expect(output).not.toContain('Usage: codebuff')
+      // Must NOT contain the SavantCode CLI name in the usage line
+      expect(output).not.toContain('Usage: savant-code')
     },
     TIMEOUT_MS,
   )
 
   test(
-    '--help excludes mode flags (Freebuff is free-only)',
+    '--help excludes mode flags (SavantFree is free-only)',
     () => {
       const output = stripAnsiCodes(runBinary(['--help']))
 
-      // Mode flags should not be present in Freebuff
+      // Mode flags should not be present in SavantFree
       expect(output).not.toMatch(/--free\b/)
       expect(output).not.toMatch(/--max\b/)
       expect(output).not.toMatch(/--plan\b/)
@@ -160,7 +160,7 @@ describe.skipIf(!binaryExists)('Freebuff Binary Smoke Tests', () => {
       // The local URL is intentionally unreachable; the smoke signal is that
       // Commander accepted `login` and the CLI entered the login flow.
       expect(result.status).not.toBe(0)
-      expect(output).toContain('Freebuff Login')
+      expect(output).toContain('SavantFree Login')
       expect(output).toContain('Generating login URL')
       expect(output).not.toContain('too many arguments')
       expect(output).not.toContain('unknown command')
@@ -187,9 +187,9 @@ describe.skipIf(!binaryExists)('Freebuff Binary Smoke Tests', () => {
     })
 
     test(
-      'displays Freebuff ASCII logo on startup',
+      'displays SavantFree ASCII logo on startup',
       async () => {
-        sessionName = `freebuff-smoke-${Date.now()}`
+        sessionName = `savant-free-smoke-${Date.now()}`
 
         // Start the binary in a detached tmux session
         await tmux([
@@ -218,19 +218,19 @@ describe.skipIf(!binaryExists)('Freebuff Binary Smoke Tests', () => {
         // Bail with a descriptive error if the title screen never appeared
         if (!cleanOutput.includes('██')) {
           throw new Error(
-            `Freebuff title screen did not render within 10s. Captured output:\n${cleanOutput}`,
+            `SavantFree title screen did not render within 10s. Captured output:\n${cleanOutput}`,
           )
         }
 
-        // Verify it's the FREEBUFF logo, not CODEBUFF.
-        // The Freebuff 'F' character's third line starts with the crossbar:
+        // Verify it's the FREEBUFF logo, not SAVANT_CODE.
+        // The SavantFree 'F' character's third line starts with the crossbar:
         //   █████╗  ██████╔╝
-        // whereas Codebuff 'C' has:
+        // whereas SavantCode 'C' has:
         //   ██║     ██║   ██║
         // We check for the F + R pattern on line 3 of the logo.
         expect(cleanOutput).toContain('█████╗  ██████╔╝')
 
-        // The Codebuff logo's distinctive C+O opening should NOT appear
+        // The SavantCode logo's distinctive C+O opening should NOT appear
         expect(cleanOutput).not.toContain('██╔════╝██╔═══██╗')
       },
       TIMEOUT_MS,
@@ -240,9 +240,9 @@ describe.skipIf(!binaryExists)('Freebuff Binary Smoke Tests', () => {
 
 // Show skip messages so test output is informative
 if (!binaryExists) {
-  describe('Freebuff Binary Required', () => {
+  describe('SavantFree Binary Required', () => {
     test.skip(
-      'Build the binary first: bun freebuff/cli/build.ts <version>',
+      'Build the binary first: bun savant-free/cli/build.ts <version>',
       () => {},
     )
   })

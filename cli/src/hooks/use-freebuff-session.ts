@@ -1,38 +1,38 @@
-import { env } from '@codebuff/common/env'
+import { env } from '@savant-code/common/env'
 import {
   FALLBACK_FREEBUFF_MODEL_ID,
   LIMITED_FREEBUFF_MODEL_ID,
   resolveFreebuffModelForAccessTier,
-} from '@codebuff/common/constants/freebuff-models'
+} from '@savant-code/common/constants/savant-free-models'
 import {
   getRateLimitsByModel,
   getReferralInfo,
-} from '@codebuff/common/types/freebuff-session'
+} from '@savant-code/common/types/savant-free-session'
 import { useEffect } from 'react'
 
 import {
   getSelectedFreebuffModel,
   useFreebuffModelStore,
-} from '../state/freebuff-model-store'
-import { useFreebuffSessionStore } from '../state/freebuff-session-store'
+} from '../state/savant-free-model-store'
+import { useFreebuffSessionStore } from '../state/savant-free-session-store'
 import { getAuthTokenDetails } from '../utils/auth'
 import { IS_FREEBUFF } from '../utils/constants'
 import {
   isFreebuffInstanceOwnedByDeadLocalProcess,
   recordFreebuffInstanceOwner,
-} from '../utils/freebuff-instance-owner'
+} from '../utils/savant-free-instance-owner'
 import { logger } from '../utils/logger'
 import {
   getCachedReferral,
   rememberReferral,
-} from '../utils/freebuff-referral-cache'
+} from '../utils/savant-free-referral-cache'
 
-import type { FreebuffSessionResponse } from '../types/freebuff-session'
+import type { SavantFree$1 } from '../types/savant-free-session'
 import type {
-  FreebuffCountryBlockReason,
-  FreebuffIpPrivacySignal,
-  FreebuffSessionServerResponse,
-} from '@codebuff/common/types/freebuff-session'
+  SavantFree$1,
+  SavantFree$1,
+  SavantFree$1,
+} from '@savant-code/common/types/savant-free-session'
 
 const POLL_INTERVAL_ACTIVE_MS = 30_000
 const POLL_INTERVAL_ERROR_MS = 10_000
@@ -56,10 +56,10 @@ export function sessionFetchSignal(
 
 /** Header sent on GET so the server can detect when another CLI on the same
  *  account has rotated the id and respond with `{ status: 'superseded' }`. */
-const FREEBUFF_INSTANCE_HEADER = 'x-freebuff-instance-id'
+const FREEBUFF_INSTANCE_HEADER = 'x-savant-free-instance-id'
 
 /** Header sent on POST telling the server which model to use. */
-const FREEBUFF_MODEL_HEADER = 'x-freebuff-model'
+const FREEBUFF_MODEL_HEADER = 'x-savant-free-model'
 
 /** Play the terminal bell so users get an audible notification on admission. */
 const playAdmissionSound = () => {
@@ -72,16 +72,16 @@ const playAdmissionSound = () => {
 
 const sessionEndpoint = (): string => {
   const base = (
-    env.NEXT_PUBLIC_CODEBUFF_APP_URL || 'https://codebuff.com'
+    env.NEXT_PUBLIC_CODEBUFF_APP_URL || 'https://savant-code.com'
   ).replace(/\/$/, '')
-  return `${base}/api/v1/freebuff/session`
+  return `${base}/api/v1/savant-free/session`
 }
 
 async function callSession(
   method: 'POST' | 'GET' | 'DELETE',
   token: string,
   opts: { instanceId?: string; model?: string; signal?: AbortSignal } = {},
-): Promise<FreebuffSessionServerResponse> {
+): Promise<SavantFree$1> {
   const headers: Record<string, string> = { Authorization: `Bearer ${token}` }
   if (method === 'GET' && opts.instanceId) {
     headers[FREEBUFF_INSTANCE_HEADER] = opts.instanceId
@@ -110,7 +110,7 @@ async function callSession(
   if (resp.status === 403) {
     const body = (await resp
       .json()
-      .catch(() => null)) as FreebuffSessionServerResponse | null
+      .catch(() => null)) as SavantFree$1 | null
     if (
       body &&
       (body.status === 'country_blocked' || body.status === 'banned')
@@ -125,7 +125,7 @@ async function callSession(
   if (resp.status === 409 && method === 'POST') {
     const body = (await resp
       .json()
-      .catch(() => null)) as FreebuffSessionServerResponse | null
+      .catch(() => null)) as SavantFree$1 | null
     if (
       body &&
       (body.status === 'model_locked' || body.status === 'model_unavailable')
@@ -133,7 +133,7 @@ async function callSession(
       return body
     }
   }
-  // 429 from POST is the shared session-quota reject (too many Freebuff
+  // 429 from POST is the shared session-quota reject (too many SavantFree
   // sessions today). Terminal for the current poll — the CLI shows a screen
   // explaining the limit and when the user can try again. The 429 status
   // (rather than 200) keeps older CLIs in their error path so they back off
@@ -141,7 +141,7 @@ async function callSession(
   if (resp.status === 429 && method === 'POST') {
     const body = (await resp
       .json()
-      .catch(() => null)) as FreebuffSessionServerResponse | null
+      .catch(() => null)) as SavantFree$1 | null
     if (body && body.status === 'rate_limited') {
       return body
     }
@@ -149,15 +149,15 @@ async function callSession(
   if (!resp.ok) {
     const text = await resp.text().catch(() => '')
     throw new Error(
-      `freebuff session ${method} failed: ${resp.status} ${text.slice(0, 200)}`,
+      `savant-free session ${method} failed: ${resp.status} ${text.slice(0, 200)}`,
     )
   }
-  return (await resp.json()) as FreebuffSessionServerResponse
+  return (await resp.json()) as SavantFree$1
 }
 
 /** Picks the poll delay after a successful tick. Returns null when the state
  *  is terminal (no further polling). */
-function nextDelayMs(next: FreebuffSessionResponse): number | null {
+function nextDelayMs(next: SavantFree$1): number | null {
   switch (next.status) {
     case 'active':
       // Poll at the normal cadence, but ensure we land just after
@@ -201,7 +201,7 @@ type RestartMode = 'rejoin' | 'landing'
 interface PollController {
   /** Cancel the in-flight tick + timer and start a fresh one in `mode`. */
   restart: (mode: RestartMode) => Promise<void>
-  apply: (next: FreebuffSessionResponse) => void
+  apply: (next: SavantFree$1) => void
   abort: () => void
 }
 
@@ -225,7 +225,7 @@ export function getFreebuffInstanceId(): string | undefined {
  *  firing queued work. Same predicate gates DELETE on exit: outside these
  *  states there is no server row to release. */
 export function holdsLiveFreebuffSlot(
-  current: FreebuffSessionResponse | null,
+  current: SavantFree$1 | null,
 ): boolean {
   if (!current) return false
   return (
@@ -235,8 +235,8 @@ export function holdsLiveFreebuffSlot(
 }
 
 function toLandingSession(
-  current: FreebuffSessionResponse | null,
-): Extract<FreebuffSessionResponse, { status: 'none' }> {
+  current: SavantFree$1 | null,
+): Extract<SavantFree$1, { status: 'none' }> {
   const accessTier =
     current && 'accessTier' in current ? current.accessTier : undefined
   const rateLimitsByModel = getRateLimitsByModel(current)
@@ -396,8 +396,8 @@ export function markFreebuffSessionSuperseded(): void {
  *  and sending doomed requests. */
 export function markFreebuffSessionCountryBlocked(params: {
   countryCode: string
-  countryBlockReason?: FreebuffCountryBlockReason
-  ipPrivacySignals?: FreebuffIpPrivacySignal[]
+  countryBlockReason?: SavantFree$1
+  ipPrivacySignals?: SavantFree$1[]
 }): void {
   if (!IS_FREEBUFF) return
   controller?.abort()
@@ -425,12 +425,12 @@ export function markFreebuffSessionEnded(): void {
 }
 
 interface UseFreebuffSessionResult {
-  session: FreebuffSessionResponse | null
+  session: SavantFree$1 | null
   error: string | null
 }
 
 /**
- * Manages the freebuff session lifecycle:
+ * Manages the savant-free session lifecycle:
  *   - GET on mount to probe state (no auto-join; the user picks a model in
  *     the landing screen, which calls startFreebuffSession)
  *   - if the probe sees an existing seat, auto-takes-over when the prior
@@ -450,7 +450,7 @@ export function useFreebuffSession(): UseFreebuffSessionResult {
     const { setSession, setError } = useFreebuffSessionStore.getState()
 
     if (!IS_FREEBUFF) {
-      // Non-freebuff (Codebuff) builds never gate on a free session; leave the
+      // Non-savant-free (SavantCode) builds never gate on a free session; leave the
       // store empty (app.tsx's session routing is all behind IS_FREEBUFF).
       setSession(null)
       return
@@ -460,7 +460,7 @@ export function useFreebuffSession(): UseFreebuffSessionResult {
     if (!token) {
       logger.warn(
         {},
-        '[freebuff-session] No auth token; skipping free-session admission',
+        '[savant-free-session] No auth token; skipping free-session admission',
       )
       setError('Not authenticated')
       return
@@ -469,7 +469,7 @@ export function useFreebuffSession(): UseFreebuffSessionResult {
     let cancelled = false
     let abortController = new AbortController()
     let timer: ReturnType<typeof setTimeout> | null = null
-    let previousStatus: FreebuffSessionResponse['status'] | null = null
+    let previousStatus: SavantFree$1['status'] | null = null
     let restartGeneration = 0
     // Method for the NEXT tick. GET is read-only; POST claims/rotates a seat.
     // Startup is GET (probe before committing). After any POST completes we
@@ -477,7 +477,7 @@ export function useFreebuffSession(): UseFreebuffSessionResult {
     // the startup takeover branch does the same when the probe finds a seat.
     let nextMethod: 'GET' | 'POST' = 'GET'
 
-    const apply = (next: FreebuffSessionResponse) => {
+    const apply = (next: SavantFree$1) => {
       rememberReferral(next)
       if (next.status === 'active') {
         useFreebuffModelStore.getState().setSelectedModel(next.model)
@@ -550,7 +550,7 @@ export function useFreebuffSession(): UseFreebuffSessionResult {
 
         // Startup takeover: the initial probe GET saw we already hold a seat
         // (from a prior CLI instance). Stop here and ask before POSTing to
-        // rotate our instance id; otherwise opening a second freebuff would
+        // rotate our instance id; otherwise opening a second savant-free would
         // immediately supersede the first one.
         // `previousStatus === null` fences this to the very first tick only.
         // Pin the selected model to whatever the server thinks we're on so
@@ -613,7 +613,7 @@ export function useFreebuffSession(): UseFreebuffSessionResult {
       } catch (err) {
         if (cancelled || abortController.signal.aborted) return
         const msg = err instanceof Error ? err.message : String(err)
-        logger.warn({ error: msg }, '[freebuff-session] fetch failed')
+        logger.warn({ error: msg }, '[savant-free-session] fetch failed')
         setError(msg)
         schedule(POLL_INTERVAL_ERROR_MS)
       }

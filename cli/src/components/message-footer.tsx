@@ -1,6 +1,6 @@
-import { SUBSCRIPTION_DISPLAY_NAME } from '@codebuff/common/constants/subscription-plans'
+import { SUBSCRIPTION_DISPLAY_NAME } from '@savant-code/common/constants/subscription-plans'
 import { IS_FREEBUFF } from '../utils/constants'
-import { pluralize } from '@codebuff/common/util/string'
+import { pluralize } from '@savant-code/common/util/string'
 import { TextAttributes } from '@opentui/core'
 import React, { useCallback, useMemo } from 'react'
 

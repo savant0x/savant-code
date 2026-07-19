@@ -1,10 +1,10 @@
-import { MAX_AGENT_STEPS_DEFAULT } from '@codebuff/common/constants/agents'
-import { toolNames } from '@codebuff/common/tools/constants'
+import { MAX_AGENT_STEPS_DEFAULT } from '@savant-code/common/constants/agents'
+import { toolNames } from '@savant-code/common/tools/constants'
 import {
   normalizeAgentIdForLookup,
   parseAgentId,
-} from '@codebuff/common/util/agent-id-parsing'
-import { generateCompactId } from '@codebuff/common/util/string'
+} from '@savant-code/common/util/agent-id-parsing'
+import { generateCompactId } from '@savant-code/common/util/string'
 
 import { loopAgentSteps } from '../../../run-agent-step'
 import { getAgentTemplate } from '../../../templates/agent-registry'
@@ -14,24 +14,24 @@ import {
   withSystemTags,
 } from '../../../util/messages'
 
-import type { AgentTemplate } from '@codebuff/common/types/agent-template'
+import type { AgentTemplate } from '@savant-code/common/types/agent-template'
 import type {
   AgentRuntimeDeps,
   AgentRuntimeScopedDeps,
-} from '@codebuff/common/types/contracts/agent-runtime'
-import type { Logger } from '@codebuff/common/types/contracts/logger'
+} from '@savant-code/common/types/contracts/agent-runtime'
+import type { Logger } from '@savant-code/common/types/contracts/logger'
 import type {
   ParamsExcluding,
   OptionalFields,
-} from '@codebuff/common/types/function-params'
-import type { Message } from '@codebuff/common/types/messages/codebuff-message'
-import type { PrintModeEvent } from '@codebuff/common/types/print-mode'
+} from '@savant-code/common/types/function-params'
+import type { Message } from '@savant-code/common/types/messages/savant-code-message'
+import type { PrintModeEvent } from '@savant-code/common/types/print-mode'
 import type {
   AgentState,
   AgentTemplateType,
   Subgoal,
-} from '@codebuff/common/types/session-state'
-import type { ProjectFileContext } from '@codebuff/common/util/file'
+} from '@savant-code/common/types/session-state'
+import type { ProjectFileContext } from '@savant-code/common/util/file'
 import type { ToolSet } from 'ai'
 
 /**

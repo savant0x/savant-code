@@ -1,6 +1,6 @@
-import { API_KEY_ENV_VAR } from '@codebuff/common/old-constants'
-import { AskUserBridge } from '@codebuff/common/utils/ask-user-bridge'
-import { CodebuffClient } from '@codebuff/sdk'
+import { API_KEY_ENV_VAR } from '@savant-code/common/old-constants'
+import { AskUserBridge } from '@savant-code/common/utils/ask-user-bridge'
+import { SavantCodeClient } from '@savant-code/sdk'
 
 import { getAuthTokenDetails } from './auth'
 import { getCliEnv, getSystemProcessEnv } from './env'
@@ -10,9 +10,9 @@ import { createTraceWriter } from './trace-writer'
 import { getRgPath } from '../native/ripgrep'
 import { getProjectRoot } from '../project-files'
 
-import type { ClientToolCall } from '@codebuff/common/tools/list'
+import type { ClientToolCall } from '@savant-code/common/tools/list'
 
-let clientInstance: CodebuffClient | null = null
+let clientInstance: SavantCodeClient | null = null
 
 /**
  * Recursively removes undefined values from an object to ensure clean JSON serialization.
@@ -38,14 +38,14 @@ function removeUndefinedValues<T>(obj: T): T {
 }
 
 /**
- * Reset the cached CodebuffClient instance.
+ * Reset the cached SavantCodeClient instance.
  * This should be called after login to ensure the client is re-initialized with new credentials.
  */
 export function resetCodebuffClient(): void {
   clientInstance = null
 }
 
-export async function getCodebuffClient(): Promise<CodebuffClient | null> {
+export async function getCodebuffClient(): Promise<SavantCodeClient | null> {
   if (!clientInstance) {
     const { token: apiKey } = getAuthTokenDetails()
 
@@ -73,7 +73,7 @@ export async function getCodebuffClient(): Promise<CodebuffClient | null> {
 
     try {
       const agentDefinitions = loadAgentDefinitions()
-      clientInstance = new CodebuffClient({
+      clientInstance = new SavantCodeClient({
         apiKey,
         cwd: projectRoot,
         agentDefinitions,
@@ -99,7 +99,7 @@ export async function getCodebuffClient(): Promise<CodebuffClient | null> {
         },
       })
     } catch (error) {
-      logger.error(error, 'Failed to initialize CodebuffClient')
+      logger.error(error, 'Failed to initialize SavantCodeClient')
       return null
     }
   }

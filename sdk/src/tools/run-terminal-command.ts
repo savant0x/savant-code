@@ -8,7 +8,7 @@ import type { ChildProcess } from 'child_process'
 import { stripColors } from '../../../common/src/util/string'
 import { getSystemProcessEnv } from '../env'
 
-import type { CodebuffToolOutput } from '../../../common/src/tools/list'
+import type { SavantCodeToolOutput } from '../../../common/src/tools/list'
 
 const COMMAND_OUTPUT_LIMIT = 50_000
 const TRUNCATION_MARKER = '\n[...TRUNCATED DUE TO LENGTH...]\n'
@@ -267,7 +267,7 @@ To fix this, you have several options:
 
 2. Use WSL (Windows Subsystem for Linux):
    Run in PowerShell (Admin): wsl --install
-   Then run Codebuff inside WSL.
+   Then run SavantCode inside WSL.
 
 3. Set a custom bash path:
    Set the CODEBUFF_GIT_BASH_PATH environment variable to your bash.exe location.
@@ -289,7 +289,7 @@ export function runTerminalCommand({
   timeout_seconds: number
   env?: NodeJS.ProcessEnv
   signal?: AbortSignal
-}): Promise<CodebuffToolOutput<'run_terminal_command'>> {
+}): Promise<SavantCodeToolOutput<'run_terminal_command'>> {
   return new Promise((resolve, reject) => {
     const isWindows = os.platform() === 'win32'
     const processEnv = {

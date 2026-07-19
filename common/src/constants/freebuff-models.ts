@@ -13,13 +13,13 @@ import {
 } from './model-config'
 
 /**
- * Models a freebuff user can pick between in the waiting-room model selector.
+ * Models a savant-free user can pick between in the waiting-room model selector.
  *
  * Each model has its own queue (server keys queue position by `model`), so the
  * list here is effectively the set of separate waiting lines. Order is the
  * order shown in the UI.
  */
-export interface FreebuffModelOption {
+export interface SavantFree$1 {
   /** Stable ID used in the wire protocol and DB. Matches the model id passed
    *  to the chat-completions endpoint. */
   id: string
@@ -55,7 +55,7 @@ export const FREEBUFF_GEMINI_PRO_MODEL_ID = 'google/gemini-3.1-pro-preview'
 export const FREEBUFF_DEEPSEEK_V4_PRO_MODEL_ID = 'deepseek/deepseek-v4-pro'
 export const FREEBUFF_DEEPSEEK_V4_FLASH_MODEL_ID = 'deepseek/deepseek-v4-flash'
 /** DeepSeek V4 Flash served by Fireworks instead of DeepSeek's direct API.
- *  Used only by freebuff.com/chat, where Fireworks' faster inference is worth
+ *  Used only by savant-free.com/chat, where Fireworks' faster inference is worth
  *  a slightly less capable serving stack. Not in SUPPORTED_FREEBUFF_MODELS or
  *  the free-mode allowlists — the CLI and web builder keep DeepSeek direct. */
 export const FREEBUFF_DEEPSEEK_V4_FLASH_FIREWORKS_MODEL_ID =
@@ -77,12 +77,12 @@ export const FREEBUFF_MIMO_V25_PRO_MODEL_ID = mimoModels.mimoV25Pro
  *  limit equals the caller's GLM referral score (see the free-session quota). */
 export const FREEBUFF_GLM_V52_MODEL_ID = 'z-ai/glm-5.2'
 /** UI-only rollout switch. Backend support and free-mode allowlists remain
- *  wired even when these models are hidden from the Freebuff picker. */
+ *  wired even when these models are hidden from the SavantFree picker. */
 export const FREEBUFF_ENABLE_MIMO_MODELS_IN_UI = true
 /** UI-only rollout switch for the streak indicator in the waiting room. */
 export const FREEBUFF_ENABLE_STREAK_IN_UI = true
 /** Local/debug switch: force the localhost free-mode country bypass into
- *  limited access so the limited Freebuff UX can be exercised without an env
+ *  limited access so the limited SavantFree UX can be exercised without an env
  *  var. */
 export const FREEBUFF_FORCE_LIMITED_MODE = false
 export const FREEBUFF_PREMIUM_SESSION_LIMIT = 5
@@ -142,7 +142,7 @@ export const FREEBUFF_STREAK_BONUS_SESSION_UNITS = 1
 /** Which session pool a streak bonus credit applies to. `premium` and `limited`
  *  are the daily pools (full vs limited access); `glm` is the weekly GLM 5.2
  *  pool (full access only). */
-export type FreebuffStreakRewardPool = 'premium' | 'limited' | 'glm'
+export type SavantFree$1 = 'premium' | 'limited' | 'glm'
 /** Deprecated wire compatibility field. Session usage now resets at midnight
  *  Pacific time rather than using a rolling hourly window. */
 export const FREEBUFF_PREMIUM_SESSION_WINDOW_HOURS = 24
@@ -156,7 +156,7 @@ interface LocalTimeFormatOptions {
   timeZone?: string
 }
 
-/** Full-access freebuff models that benefit from spawning the gemini-thinker
+/** Full-access savant-free models that benefit from spawning the gemini-thinker
  *  subagent for deeper reasoning. Covers every full-access picker model except
  *  the two limited-tier ones (DeepSeek V4 Flash, MiMo 2.5). Used by the CLI to
  *  toggle the gemini-thinker spawnable + prompts based on the user's pick, and
@@ -187,7 +187,7 @@ const DEEPSEEK_V4_PRO_MODEL = {
   warning: FREEBUFF_DATA_COLLECTION_WARNING,
   premium: true,
   multimodal: false,
-} as const satisfies FreebuffModelOption
+} as const satisfies SavantFree$1
 
 const MIMO_V25_PRO_MODEL = {
   id: FREEBUFF_MIMO_V25_PRO_MODEL_ID,
@@ -196,7 +196,7 @@ const MIMO_V25_PRO_MODEL = {
   availability: 'always',
   premium: true,
   multimodal: true,
-} as const satisfies FreebuffModelOption
+} as const satisfies SavantFree$1
 
 const KIMI_MODEL = {
   id: FREEBUFF_KIMI_MODEL_ID,
@@ -205,7 +205,7 @@ const KIMI_MODEL = {
   availability: 'always',
   premium: true,
   multimodal: true,
-} as const satisfies FreebuffModelOption
+} as const satisfies SavantFree$1
 
 const HY3_MODEL = {
   id: FREEBUFF_HY3_MODEL_ID,
@@ -215,7 +215,7 @@ const HY3_MODEL = {
   premium: true,
   multimodal: false,
   experimental: true,
-} as const satisfies FreebuffModelOption
+} as const satisfies SavantFree$1
 
 const HY3_ATLAS_MODEL = {
   id: FREEBUFF_HY3_ATLAS_MODEL_ID,
@@ -225,7 +225,7 @@ const HY3_ATLAS_MODEL = {
   premium: true,
   multimodal: false,
   experimental: true,
-} as const satisfies FreebuffModelOption
+} as const satisfies SavantFree$1
 
 const MIMO_V25_MODEL = {
   id: FREEBUFF_MIMO_V25_MODEL_ID,
@@ -234,7 +234,7 @@ const MIMO_V25_MODEL = {
   availability: 'always',
   premium: false,
   multimodal: true,
-} as const satisfies FreebuffModelOption
+} as const satisfies SavantFree$1
 
 const DEEPSEEK_V4_FLASH_MODEL = {
   id: FREEBUFF_DEEPSEEK_V4_FLASH_MODEL_ID,
@@ -244,7 +244,7 @@ const DEEPSEEK_V4_FLASH_MODEL = {
   warning: FREEBUFF_DATA_COLLECTION_WARNING,
   premium: false,
   multimodal: false,
-} as const satisfies FreebuffModelOption
+} as const satisfies SavantFree$1
 
 const MINIMAX_M3_MODEL = {
   id: FREEBUFF_MINIMAX_M3_MODEL_ID,
@@ -256,7 +256,7 @@ const MINIMAX_M3_MODEL = {
   // so we don't store its traces either.
   premium: false,
   multimodal: true,
-} as const satisfies FreebuffModelOption
+} as const satisfies SavantFree$1
 
 const GLM_V52_MODEL = {
   id: FREEBUFF_GLM_V52_MODEL_ID,
@@ -269,7 +269,7 @@ const GLM_V52_MODEL = {
   // gate is its weekly referral-session pool, not the daily premium pool.
   premium: true,
   multimodal: false,
-} as const satisfies FreebuffModelOption
+} as const satisfies SavantFree$1
 
 export const SUPPORTED_FREEBUFF_MODELS = [
   DEEPSEEK_V4_PRO_MODEL,
@@ -279,7 +279,7 @@ export const SUPPORTED_FREEBUFF_MODELS = [
   GLM_V52_MODEL,
   DEEPSEEK_V4_FLASH_MODEL,
   MIMO_V25_MODEL,
-] as const satisfies readonly FreebuffModelOption[]
+] as const satisfies readonly SavantFree$1[]
 
 // GLM 5.2 is intentionally NOT in FREEBUFF_MODELS: it isn't a freely-pickable
 // grid model, it's a referral reward surfaced by the separate referral banner.
@@ -295,7 +295,7 @@ export const FREEBUFF_MODELS = [
   ...(FREEBUFF_ENABLE_MIMO_MODELS_IN_UI ? [MIMO_V25_PRO_MODEL] : []),
   DEEPSEEK_V4_FLASH_MODEL,
   ...(FREEBUFF_ENABLE_MIMO_MODELS_IN_UI ? [MIMO_V25_MODEL] : []),
-] as const satisfies readonly FreebuffModelOption[]
+] as const satisfies readonly SavantFree$1[]
 
 export const FREEBUFF_PREMIUM_MODEL_IDS = [
   FREEBUFF_DEEPSEEK_V4_PRO_MODEL_ID,
@@ -303,23 +303,23 @@ export const FREEBUFF_PREMIUM_MODEL_IDS = [
   FREEBUFF_KIMI_MODEL_ID,
 ] as const
 
-/** Freebuff Web-only picker/support set. HY3 is intentionally excluded from
- *  FREEBUFF_MODELS and SUPPORTED_FREEBUFF_MODELS so CLI/Desktop freebuff
+/** SavantFree Web-only picker/support set. HY3 is intentionally excluded from
+ *  FREEBUFF_MODELS and SUPPORTED_FREEBUFF_MODELS so CLI/Desktop savant-free
  *  surfaces do not pick it up during the initial web rollout. */
 export const FREEBUFF_WEB_MODELS = [
   HY3_MODEL,
   GLM_V52_MODEL,
   ...FREEBUFF_MODELS,
-] as const satisfies readonly FreebuffModelOption[]
+] as const satisfies readonly SavantFree$1[]
 
 export const FREEBUFF_WEB_GOD_ONLY_MODELS = [
   HY3_ATLAS_MODEL,
-] as const satisfies readonly FreebuffModelOption[]
+] as const satisfies readonly SavantFree$1[]
 
 export const FREEBUFF_WEB_ALL_MODELS = [
   ...FREEBUFF_WEB_GOD_ONLY_MODELS,
   ...FREEBUFF_WEB_MODELS,
-] as const satisfies readonly FreebuffModelOption[]
+] as const satisfies readonly SavantFree$1[]
 
 export const FREEBUFF_WEB_GOD_ONLY_MODEL_IDS = [
   FREEBUFF_HY3_ATLAS_MODEL_ID,
@@ -337,11 +337,11 @@ export const FREEBUFF_WEB_PREMIUM_MODEL_IDS = [
 export const FREEBUFF_GLM_V52_MODEL_IDS = [FREEBUFF_GLM_V52_MODEL_ID] as const
 
 /** Models that occupy the single per-user "premium-bucket" CONCURRENCY slot in
- *  Freebuff Desktop's multi-session mode: at most one of these may have an
+ *  SavantFree Desktop's multi-session mode: at most one of these may have an
  *  active session per user at a time, while unlimited-bucket models (DeepSeek V4
  *  Flash, MiMo 2.5) may run in any number of concurrent tabs. (On the LIMITED
  *  access tier the admission path puts EVERY model in the slot regardless of
- *  this list — limited users get one freebuff tab at a time; see
+ *  this list — limited users get one savant-free tab at a time; see
  *  `requestDesktopSession`.)
  *
  *  This is strictly a CONCURRENCY bucket, NOT a quota bucket. It is intentionally
@@ -359,12 +359,12 @@ export const FREEBUFF_DESKTOP_PREMIUM_BUCKET_MODEL_IDS = [
 /** True when a desktop tab running `model` under `accessTier` occupies the
  *  single per-user concurrency slot. On the full tier that's the premium
  *  bucket; on the LIMITED tier EVERY model occupies it — limited users get one
- *  freebuff tab at a time. THE shared definition of the one-tab rule: the
+ *  savant-free tab at a time. THE shared definition of the one-tab rule: the
  *  server's admission path and the desktop's picker/soft-gate must both call
  *  this so the client can't drift from what the server enforces. */
 export function occupiesFreebuffDesktopSlot(
   model: string,
-  accessTier: FreebuffAccessTier | null | undefined,
+  accessTier: SavantFree$1 | null | undefined,
 ): boolean {
   return (
     accessTier === 'limited' || isFreebuffDesktopPremiumBucketModelId(model)
@@ -372,22 +372,22 @@ export function occupiesFreebuffDesktopSlot(
 }
 
 /** Wire headers for the free-mode session endpoints
- *  (/api/v1/freebuff/session). Shared so the server handlers and every client
+ *  (/api/v1/savant-free/session). Shared so the server handlers and every client
  *  (CLI, desktop) agree on the exact strings instead of redefining literals. */
-export const FREEBUFF_INSTANCE_HEADER = 'x-freebuff-instance-id'
-export const FREEBUFF_MODEL_HEADER = 'x-freebuff-model'
-/** Trusted server-to-server header. Only the Codebuff API may honor this when
- *  the request authenticates as the Freebuff Web service account; browser and
+export const FREEBUFF_INSTANCE_HEADER = 'x-savant-free-instance-id'
+export const FREEBUFF_MODEL_HEADER = 'x-savant-free-model'
+/** Trusted server-to-server header. Only the SavantCode API may honor this when
+ *  the request authenticates as the SavantFree Web service account; browser and
  *  normal API callers must not be able to select another user's session row. */
-export const FREEBUFF_ACTING_USER_HEADER = 'x-freebuff-acting-user-id'
-/** Trusted Freebuff Web/Cloud session-proxy hint. Keeps the normal CLI GET
+export const FREEBUFF_ACTING_USER_HEADER = 'x-savant-free-acting-user-id'
+/** Trusted SavantFree Web/Cloud session-proxy hint. Keeps the normal CLI GET
  * response compact while letting the browser model picker request zero-usage
  * quota snapshots so it can render accurate "N of M sessions" labels. */
 export const FREEBUFF_INCLUDE_UNUSED_RATE_LIMITS_HEADER =
-  'x-freebuff-include-unused-rate-limits'
-/** Set to '1' by Freebuff Desktop to opt into multi-session mode (concurrent
+  'x-savant-free-include-unused-rate-limits'
+/** Set to '1' by SavantFree Desktop to opt into multi-session mode (concurrent
  *  per-tab sessions); absent for CLI/web, which keep one session per user. */
-export const FREEBUFF_MULTI_SESSION_HEADER = 'x-freebuff-multi-session'
+export const FREEBUFF_MULTI_SESSION_HEADER = 'x-savant-free-multi-session'
 
 /** Models that accept image input. Used to decide whether uploaded images are
  *  forwarded to the model as real multimodal content. */
@@ -409,34 +409,34 @@ export const FREEBUFF_WEB_MULTIMODAL_MODEL_IDS = [
  *  model (incl. MiniMax M3 on Fireworks) is NOT stored; paid, non-free-mode
  *  requests are unaffected and traced as usual. */
 export const FREEBUFF_TRACED_MODEL_IDS = SUPPORTED_FREEBUFF_MODELS.filter(
-  (model: FreebuffModelOption) =>
+  (model: SavantFree$1) =>
     model.warning === FREEBUFF_DATA_COLLECTION_WARNING,
 ).map((model) => model.id)
 
-export type FreebuffModelId = (typeof FREEBUFF_MODELS)[number]['id']
+export type SavantFree$1 = (typeof FREEBUFF_MODELS)[number]['id']
 export type SupportedFreebuffModelId =
   (typeof SUPPORTED_FREEBUFF_MODELS)[number]['id']
-export type FreebuffPremiumModelId = (typeof FREEBUFF_PREMIUM_MODEL_IDS)[number]
-export type FreebuffWebModelId = (typeof FREEBUFF_WEB_ALL_MODELS)[number]['id']
-export type FreebuffWebPremiumModelId =
+export type SavantFree$1 = (typeof FREEBUFF_PREMIUM_MODEL_IDS)[number]
+export type SavantFree$1 = (typeof FREEBUFF_WEB_ALL_MODELS)[number]['id']
+export type SavantFree$1 =
   (typeof FREEBUFF_WEB_PREMIUM_MODEL_IDS)[number]
 
-/** What new freebuff users see selected in the picker. MiniMax M3 is the
+/** What new savant-free users see selected in the picker. MiniMax M3 is the
  *  strongest unlimited model (smartest & multimodal), so new users get good
  *  quality without burning the 5/day premium quota on routine messages.
  *  Callers that need a guaranteed-available id for resolution /
  *  auto-fallbacks should use FALLBACK_FREEBUFF_MODEL_ID instead. */
-export const DEFAULT_FREEBUFF_MODEL_ID: FreebuffModelId =
+export const DEFAULT_FREEBUFF_MODEL_ID: SavantFree$1 =
   FREEBUFF_MINIMAX_M3_MODEL_ID
 
 /** Always-available fallback used when the requested model can't be served
  *  right now (unknown id, deployment hours closed, etc.). Kept distinct from
  *  DEFAULT_FREEBUFF_MODEL_ID so a new user's "preferred default" can be the
  *  smartest model without auto-flipping anyone to a closed serverless model. */
-export const FALLBACK_FREEBUFF_MODEL_ID: FreebuffModelId =
+export const FALLBACK_FREEBUFF_MODEL_ID: SavantFree$1 =
   FREEBUFF_DEEPSEEK_V4_FLASH_MODEL_ID
 
-export const LIMITED_FREEBUFF_MODEL_ID: FreebuffModelId =
+export const LIMITED_FREEBUFF_MODEL_ID: SavantFree$1 =
   FREEBUFF_DEEPSEEK_V4_FLASH_MODEL_ID
 export const LIMITED_FREEBUFF_MODEL_IDS = [
   FREEBUFF_DEEPSEEK_V4_FLASH_MODEL_ID,
@@ -446,19 +446,19 @@ export const LIMITED_FREEBUFF_MODELS = LIMITED_FREEBUFF_MODEL_IDS.map(
   (modelId) => SUPPORTED_FREEBUFF_MODELS.find((model) => model.id === modelId)!,
 )
 
-export type FreebuffAccessTier = 'full' | 'limited'
+export type SavantFree$1 = 'full' | 'limited'
 
-/** Access tier carried in the Freebuff Web Convex JWT. Extends the CLI tier
+/** Access tier carried in the SavantFree Web Convex JWT. Extends the CLI tier
  *  with 'blocked' (Tor / corroborated anonymous network): the app still
  *  loads, but every agent send is rejected server-side. */
-export type FreebuffWebAccessTier = FreebuffAccessTier | 'blocked'
+export type SavantFree$1 = SavantFree$1 | 'blocked'
 
-/** Temporary project-creation cap for outer-region (limited-tier) Freebuff Web
+/** Temporary project-creation cap for outer-region (limited-tier) SavantFree Web
  *  users. A new project consumes one slot; the quota resets at midnight
  *  Pacific time. */
 export const FREEBUFF_WEB_LIMITED_PROJECT_DAILY_LIMIT = 3
 
-/** Models available to limited-region Freebuff Web users. They share the
+/** Models available to limited-region SavantFree Web users. They share the
  * limited-region session pool; every other model remains geo-gated. */
 export const FREEBUFF_WEB_GEO_EXEMPT_MODEL_IDS = [
   FREEBUFF_DEEPSEEK_V4_FLASH_MODEL_ID,
@@ -472,7 +472,7 @@ export function isFreebuffWebGeoExemptModelId(
   return FREEBUFF_WEB_GEO_EXEMPT_MODEL_IDS.some((modelId) => modelId === id)
 }
 
-/** Models a limited-tier Freebuff Web user may select. */
+/** Models a limited-tier SavantFree Web user may select. */
 export const FREEBUFF_WEB_LIMITED_MODEL_IDS = [
   ...new Set<string>([
     ...FREEBUFF_WEB_GEO_EXEMPT_MODEL_IDS,
@@ -487,7 +487,7 @@ export function isFreebuffWebModelAllowedForLimitedTier(
   return FREEBUFF_WEB_LIMITED_MODEL_IDS.some((modelId) => modelId === id)
 }
 
-/** Coerce a limited-tier Freebuff Web selection (premium ids, stale
+/** Coerce a limited-tier SavantFree Web selection (premium ids, stale
  * localStorage values) to the allowed default (DeepSeek V4 Flash). */
 export function resolveFreebuffWebModelForLimitedTier(
   id: string | null | undefined,
@@ -498,8 +498,8 @@ export function resolveFreebuffWebModelForLimitedTier(
 }
 
 export function getFreebuffModelsForAccessTier(
-  accessTier: FreebuffAccessTier | null | undefined,
-): readonly FreebuffModelOption[] {
+  accessTier: SavantFree$1 | null | undefined,
+): readonly SavantFree$1[] {
   if (accessTier === 'limited') return LIMITED_FREEBUFF_MODELS
   return FREEBUFF_MODELS
 }
@@ -510,7 +510,7 @@ export function getFreebuffModelsForAccessTier(
  *  always-available flash model. Both are unlimited, so the recommended pick
  *  never burns the daily premium quota. */
 export function getRecommendedFreebuffModelId(
-  accessTier: FreebuffAccessTier | null | undefined,
+  accessTier: SavantFree$1 | null | undefined,
 ): SupportedFreebuffModelId {
   return accessTier === 'limited'
     ? LIMITED_FREEBUFF_MODEL_ID
@@ -519,7 +519,7 @@ export function getRecommendedFreebuffModelId(
 
 export function isFreebuffModelAllowedForAccessTier(
   model: string | null | undefined,
-  accessTier: FreebuffAccessTier | null | undefined,
+  accessTier: SavantFree$1 | null | undefined,
 ): boolean {
   if (!model) return false
   if (accessTier !== 'limited') return isSupportedFreebuffModelId(model)
@@ -533,7 +533,7 @@ export function isFreebuffModelAllowedForAccessTier(
  *  changing the CLI picker. */
 export function isFreebuffSessionModelId(
   id: string | null | undefined,
-): id is SupportedFreebuffModelId | FreebuffWebModelId {
+): id is SupportedFreebuffModelId | SavantFree$1 {
   return (
     isSupportedFreebuffModelId(id) ||
     isFreebuffWebModelId(id, {
@@ -544,7 +544,7 @@ export function isFreebuffSessionModelId(
 
 export function isFreebuffSessionModelAllowedForAccessTier(
   model: string | null | undefined,
-  accessTier: FreebuffAccessTier | null | undefined,
+  accessTier: SavantFree$1 | null | undefined,
 ): boolean {
   if (!model) return false
   if (accessTier !== 'limited') return isFreebuffSessionModelId(model)
@@ -553,7 +553,7 @@ export function isFreebuffSessionModelAllowedForAccessTier(
 
 export function isFreebuffModelId(
   id: string | null | undefined,
-): id is FreebuffModelId {
+): id is SavantFree$1 {
   if (!id) return false
   return FREEBUFF_MODELS.some((m) => m.id === id)
 }
@@ -561,7 +561,7 @@ export function isFreebuffModelId(
 export function isFreebuffWebModelId(
   id: string | null | undefined,
   options: { includeGodOnly?: boolean } = {},
-): id is FreebuffWebModelId {
+): id is SavantFree$1 {
   if (!id) return false
   const models = options.includeGodOnly
     ? FREEBUFF_WEB_ALL_MODELS
@@ -578,22 +578,22 @@ export function isFreebuffWebGodOnlyModelId(
 
 export function resolveFreebuffModel(
   id: string | null | undefined,
-): FreebuffModelId {
+): SavantFree$1 {
   return isFreebuffModelId(id) ? id : FALLBACK_FREEBUFF_MODEL_ID
 }
 
 export function resolveFreebuffWebModel(
   id: string | null | undefined,
   options: { includeGodOnly?: boolean } = {},
-): FreebuffWebModelId {
+): SavantFree$1 {
   return isFreebuffWebModelId(id, options)
     ? id
-    : (FALLBACK_FREEBUFF_MODEL_ID as FreebuffWebModelId)
+    : (FALLBACK_FREEBUFF_MODEL_ID as SavantFree$1)
 }
 
 export function resolveFreebuffModelForAccessTier(
   id: string | null | undefined,
-  accessTier: FreebuffAccessTier | null | undefined,
+  accessTier: SavantFree$1 | null | undefined,
 ): SupportedFreebuffModelId {
   if (accessTier === 'limited') {
     return isFreebuffModelAllowedForAccessTier(id, accessTier)
@@ -608,8 +608,8 @@ export function resolveFreebuffModelForAccessTier(
 
 export function resolveFreebuffSessionModelForAccessTier(
   id: string | null | undefined,
-  accessTier: FreebuffAccessTier | null | undefined,
-): SupportedFreebuffModelId | FreebuffWebModelId {
+  accessTier: SavantFree$1 | null | undefined,
+): SupportedFreebuffModelId | SavantFree$1 {
   if (accessTier === 'limited') {
     return isFreebuffSessionModelAllowedForAccessTier(id, accessTier)
       ? (id as SupportedFreebuffModelId)
@@ -635,7 +635,7 @@ export function isSupportedFreebuffModelId(
  * the two MUST stay in sync. Only a `-YYYYMMDD`-style suffix matches, so e.g.
  * `mimo-v2.5-pro` never matches the base `mimo-v2.5`.
  */
-export function freebuffModelIdMatches(
+export function savant-free$1(
   candidate: string | null | undefined,
   baseId: string,
 ): boolean {
@@ -652,26 +652,26 @@ export function freebuffModelIdMatches(
 export function isFreebuffGeminiProModelId(
   id: string | null | undefined,
 ): boolean {
-  return freebuffModelIdMatches(id, FREEBUFF_GEMINI_PRO_MODEL_ID)
+  return savant-free$1(id, FREEBUFF_GEMINI_PRO_MODEL_ID)
 }
 
 export function isFreebuffPremiumModelId(
   id: string | null | undefined,
-): id is FreebuffPremiumModelId {
+): id is SavantFree$1 {
   if (!id) return false
   // Suffix-tolerant: a dated variant of a premium id (e.g. a dated Kimi) must
   // still count as premium so it can't dodge the premium daily rate cap.
   return FREEBUFF_PREMIUM_MODEL_IDS.some((modelId) =>
-    freebuffModelIdMatches(id, modelId),
+    savant-free$1(id, modelId),
   )
 }
 
 export function isFreebuffWebPremiumModelId(
   id: string | null | undefined,
-): id is FreebuffWebPremiumModelId {
+): id is SavantFree$1 {
   if (!id) return false
   return FREEBUFF_WEB_PREMIUM_MODEL_IDS.some((modelId) =>
-    freebuffModelIdMatches(id, modelId),
+    savant-free$1(id, modelId),
   )
 }
 
@@ -681,7 +681,7 @@ export function isFreebuffSessionPremiumModelId(
   return isFreebuffWebPremiumModelId(id)
 }
 
-/** Whether `model` occupies the one-per-user Freebuff Desktop premium
+/** Whether `model` occupies the one-per-user SavantFree Desktop premium
  *  CONCURRENCY slot (premium models + MiniMax M3 + GLM 5.2). Suffix-tolerant
  *  (dated snapshots) like the other model predicates so a dated variant can't
  *  dodge the cap. Distinct from isFreebuffPremiumModelId, which gates the daily
@@ -691,7 +691,7 @@ export function isFreebuffDesktopPremiumBucketModelId(
 ): boolean {
   if (!id) return false
   return FREEBUFF_DESKTOP_PREMIUM_BUCKET_MODEL_IDS.some((modelId) =>
-    freebuffModelIdMatches(id, modelId),
+    savant-free$1(id, modelId),
   )
 }
 
@@ -703,7 +703,7 @@ export function isFreebuffGlmV52ModelId(
   id: string | null | undefined,
 ): boolean {
   return FREEBUFF_GLM_V52_MODEL_IDS.some((modelId) =>
-    freebuffModelIdMatches(id, modelId),
+    savant-free$1(id, modelId),
   )
 }
 
@@ -736,14 +736,14 @@ export function resolveSupportedFreebuffModel(
   return isSupportedFreebuffModelId(id) ? id : FALLBACK_FREEBUFF_MODEL_ID
 }
 
-export function getFreebuffModel(id: string): FreebuffModelOption {
+export function getFreebuffModel(id: string): SavantFree$1 {
   return (
     SUPPORTED_FREEBUFF_MODELS.find((m) => m.id === id) ??
     FREEBUFF_MODELS.find((m) => m.id === FALLBACK_FREEBUFF_MODEL_ID)!
   )
 }
 
-export function getFreebuffWebModel(id: string): FreebuffModelOption {
+export function getFreebuffWebModel(id: string): SavantFree$1 {
   return (
     FREEBUFF_WEB_ALL_MODELS.find((m) => m.id === id) ??
     FREEBUFF_WEB_ALL_MODELS.find((m) => m.id === FALLBACK_FREEBUFF_MODEL_ID)!
@@ -839,7 +839,7 @@ export function isFreebuffSessionModelAvailable(
 export function resolveAvailableFreebuffModel(
   id: string | null | undefined,
   now: Date = new Date(),
-): FreebuffModelId {
+): SavantFree$1 {
   const resolved = resolveFreebuffModel(id)
   return isFreebuffModelAvailable(resolved, now)
     ? resolved

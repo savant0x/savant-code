@@ -9,10 +9,10 @@ import {
 } from 'bun:test'
 
 import { createMockApiClient } from '../../__tests__/helpers/mock-api-client'
-import * as CodebuffApiModule from '../../utils/codebuff-api'
+import * as SavantCodeApiModule from '../../utils/savant-code-api'
 import { fetchUserDetails } from '../use-user-details-query'
 
-import type { Logger } from '@codebuff/common/types/contracts/logger'
+import type { Logger } from '@savant-code/common/types/contracts/logger'
 
 describe('fetchUserDetails', () => {
   const mockLogger: Logger = {
@@ -25,7 +25,7 @@ describe('fetchUserDetails', () => {
   const originalEnv = process.env.NEXT_PUBLIC_CODEBUFF_APP_URL
 
   beforeEach(() => {
-    process.env.NEXT_PUBLIC_CODEBUFF_APP_URL = 'https://test.codebuff.com'
+    process.env.NEXT_PUBLIC_CODEBUFF_APP_URL = 'https://test.savant-code.com'
   })
 
   afterEach(() => {
@@ -176,10 +176,10 @@ describe('fetchUserDetails', () => {
       const apiClient = createMockApiClient({ me: meMock })
 
       const setTokenSpy = spyOn(
-        CodebuffApiModule,
+        SavantCodeApiModule,
         'setApiClientAuthToken',
       )
-      spyOn(CodebuffApiModule, 'getApiClient').mockReturnValue(apiClient as ReturnType<typeof CodebuffApiModule.getApiClient>)
+      spyOn(SavantCodeApiModule, 'getApiClient').mockReturnValue(apiClient as ReturnType<typeof SavantCodeApiModule.getApiClient>)
 
       await expect(
         fetchUserDetails({

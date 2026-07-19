@@ -58,7 +58,7 @@ The Detective agent (RED phase) is defined in ARCHITECTURE.md and ECHO.md but do
 | # | Check | Method |
 |---|-------|--------|
 | 1 | code-searcher already has correct tools | `agents/file-explorer/code-searcher.ts:50` — `['code_search', 'set_output']` ✓ |
-| 2 | ECHO identity pattern exists | All roster agents import `ECHO_PROTOCOL_INSTRUCTIONS` from `@codebuff/common/constants/agents` |
+| 2 | ECHO identity pattern exists | All roster agents import `ECHO_PROTOCOL_INSTRUCTIONS` from `@savant-code/common/constants/agents` |
 | 3 | Orchestrator spawnableAgents in base2.ts | Line 120-140 — needs `detective` added |
 | 4 | Sonnet model available | `anthropic/claude-sonnet-4.6` used by Recorder, Scribe — confirmed available |
 | 5 | No circular spawn risk | Detective has no `spawnableAgents` — can't spawn children |

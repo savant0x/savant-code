@@ -7,10 +7,10 @@ import {
 } from './use-activity-query'
 import { subscriptionQueryKeys } from './use-subscription-query'
 import { showClipboardMessage } from '../utils/clipboard'
-import { getApiClient } from '../utils/codebuff-api'
+import { getApiClient } from '../utils/savant-code-api'
 import { logger } from '../utils/logger'
 
-import type { SubscriptionResponse } from '@codebuff/common/types/subscription'
+import type { SubscriptionResponse } from '@savant-code/common/types/subscription'
 
 interface UpdatePreferenceParams {
   fallbackToALaCarte?: boolean

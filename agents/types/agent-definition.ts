@@ -1,1 +1,1 @@
-export * from '@codebuff/common/templates/initial-agents-dir/types/agent-definition'
+export * from '@savant-code/common/templates/initial-agents-dir/types/agent-definition'

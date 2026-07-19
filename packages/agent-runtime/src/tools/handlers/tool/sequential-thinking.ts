@@ -1,11 +1,11 @@
-import { SequentialThinkingServer } from '@codebuff/common/tools/sequential-thinking'
+import { SequentialThinkingServer } from '@savant-code/common/tools/sequential-thinking'
 
-import type { CodebuffToolHandlerFunction } from '../handler-function-type'
+import type { SavantCodeToolHandlerFunction } from '../handler-function-type'
 import type {
-  CodebuffToolCall,
-  CodebuffToolOutput,
-} from '@codebuff/common/tools/list'
-import type { Logger } from '@codebuff/common/types/contracts/logger'
+  SavantCodeToolCall,
+  SavantCodeToolOutput,
+} from '@savant-code/common/tools/list'
+import type { Logger } from '@savant-code/common/types/contracts/logger'
 
 const servers = new Map<string, SequentialThinkingServer>()
 
@@ -20,10 +20,10 @@ function getServerForRun(runId: string): SequentialThinkingServer {
 
 export const handleSequentialThinking = (async (params: {
   previousToolCallFinished: Promise<any>
-  toolCall: CodebuffToolCall<'sequentialthinking'>
+  toolCall: SavantCodeToolCall<'sequentialthinking'>
   logger: Logger
   runId: string
-}): Promise<{ output: CodebuffToolOutput<'sequentialthinking'> }> => {
+}): Promise<{ output: SavantCodeToolOutput<'sequentialthinking'> }> => {
   const { toolCall, logger, runId } = params
   const { thought, thoughtNumber, totalThoughts, nextThoughtNeeded, isRevision, revisesThought, branchFromThought, branchId, needsMoreThoughts } = toolCall.input
 
@@ -45,4 +45,4 @@ export const handleSequentialThinking = (async (params: {
   return {
     output: [{ type: 'json', value: { message: JSON.stringify(result) } }],
   }
-}) satisfies CodebuffToolHandlerFunction<'sequentialthinking'>
+}) satisfies SavantCodeToolHandlerFunction<'sequentialthinking'>

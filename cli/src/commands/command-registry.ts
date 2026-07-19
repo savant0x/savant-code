@@ -1,4 +1,4 @@
-import { CHATGPT_OAUTH_ENABLED } from '@codebuff/common/constants/chatgpt-oauth'
+import { CHATGPT_OAUTH_ENABLED } from '@savant-code/common/constants/chatgpt-oauth'
 import { safeOpen } from '../utils/open-url'
 
 import { handleAdsEnable, handleAdsDisable } from './ads'
@@ -13,12 +13,12 @@ import {
 import { buildInterviewPrompt, buildPlanPrompt, buildReviewPromptFromArgs } from './prompt-builders'
 import { runBashCommand } from './router'
 import { handleUsageCommand } from './usage'
-import { returnToFreebuffLanding } from '../hooks/use-freebuff-session'
+import { returnToFreebuffLanding } from '../hooks/use-savant-free-session'
 import { useThemeStore } from '../hooks/use-theme'
 import { WEBSITE_URL } from '../login/constants'
 import { startNewChat } from '../project-files'
 import { useChatStore } from '../state/chat-store'
-import { useFreebuffModelStore } from '../state/freebuff-model-store'
+import { useFreebuffModelStore } from '../state/savant-free-model-store'
 
 // FID-2026-0718-010 (D3): helper for slash-command bridges. Calls
 // resetUiToIdle (which itself calls onStreamEnded) with the slash-command
@@ -441,7 +441,7 @@ const ALL_COMMANDS: CommandDefinition[] = [
       clearInput(params)
     },
   }),
-  // Mode commands generated from AGENT_MODES (excluded in Freebuff)
+  // Mode commands generated from AGENT_MODES (excluded in SavantFree)
   ...(IS_FREEBUFF ? [] : AGENT_MODES).map((mode) =>
     defineCommandWithArgs({
       name: `mode:${mode.toLowerCase()}`,
@@ -662,9 +662,9 @@ const ALL_COMMANDS: CommandDefinition[] = [
       resetUiToIdleAfterSlashCommand()
     },
   }),
-  // /end-session (freebuff-only) — end the active session early and drop back
+  // /end-session (savant-free-only) — end the active session early and drop back
   // to the model picker. The hook flips status to 'none', which unmounts
-  // <Chat> and mounts <FreebuffLandingScreen>, where the user picks a model
+  // <Chat> and mounts <SavantFree$1>, where the user picks a model
   // and hits Enter to start a new session.
   defineCommand({
     name: 'end-session',

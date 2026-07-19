@@ -7,7 +7,7 @@ const packageDir = process.cwd()
 const packageJson = JSON.parse(
   fs.readFileSync(path.join(packageDir, 'package.json'), 'utf8'),
 )
-const supportedPackages = new Set(['codebuff', 'codecane', 'freebuff'])
+const supportedPackages = new Set(['savant-code', 'codecane', 'savant-free'])
 
 if (!supportedPackages.has(packageJson.name)) {
   throw new Error(

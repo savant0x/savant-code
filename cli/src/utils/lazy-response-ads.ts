@@ -1,1 +1,1 @@
-export * from '@codebuff/common/util/lazy-response-ads'
+export * from '@savant-code/common/util/lazy-response-ads'

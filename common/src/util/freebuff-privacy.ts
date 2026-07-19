@@ -1,20 +1,20 @@
-import type { FreebuffIpPrivacySignal } from '../types/freebuff-session'
+import type { SavantFree$1 } from '../types/savant-free-session'
 
 export const FREEBUFF_HARD_BLOCKED_PRIVACY_SIGNALS = [
   'vpn',
   'proxy',
   'tor',
   'res_proxy',
-] as const satisfies readonly FreebuffIpPrivacySignal[]
+] as const satisfies readonly SavantFree$1[]
 
-type FreebuffHardBlockedPrivacySignal =
+type SavantFree$1 =
   (typeof FREEBUFF_HARD_BLOCKED_PRIVACY_SIGNALS)[number]
 
 const FREEBUFF_HARD_BLOCKED_PRIVACY_SIGNAL_SET =
-  new Set<FreebuffIpPrivacySignal>(FREEBUFF_HARD_BLOCKED_PRIVACY_SIGNALS)
+  new Set<SavantFree$1>(FREEBUFF_HARD_BLOCKED_PRIVACY_SIGNALS)
 
 const FREEBUFF_HARD_BLOCKED_PRIVACY_SIGNAL_LABELS: Record<
-  FreebuffHardBlockedPrivacySignal,
+  SavantFree$1,
   string
 > = {
   vpn: 'VPN',
@@ -24,8 +24,8 @@ const FREEBUFF_HARD_BLOCKED_PRIVACY_SIGNAL_LABELS: Record<
 }
 
 export function isFreebuffHardBlockedPrivacySignal(
-  signal: FreebuffIpPrivacySignal,
-): signal is FreebuffHardBlockedPrivacySignal {
+  signal: SavantFree$1,
+): signal is SavantFree$1 {
   return FREEBUFF_HARD_BLOCKED_PRIVACY_SIGNAL_SET.has(signal)
 }
 
@@ -57,7 +57,7 @@ export function isFreebuffHostingAsType(
 }
 
 export function formatFreebuffHardBlockedPrivacySignals(
-  signals: readonly FreebuffIpPrivacySignal[] | null | undefined,
+  signals: readonly SavantFree$1[] | null | undefined,
 ): string {
   const labels = Array.from(
     new Set(
@@ -74,9 +74,9 @@ export function formatFreebuffHardBlockedPrivacySignals(
 }
 
 export function formatFreebuffHardBlockedMessage(
-  signals: readonly FreebuffIpPrivacySignal[] | null | undefined,
+  signals: readonly SavantFree$1[] | null | undefined,
 ): string {
-  return `Freebuff cannot be used from ${formatFreebuffHardBlockedPrivacySignals(
+  return `SavantFree cannot be used from ${formatFreebuffHardBlockedPrivacySignals(
     signals,
   )} traffic. Please disable it and try again.`
 }

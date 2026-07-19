@@ -8,13 +8,13 @@ import { useChatStore } from '../state/chat-store'
 import {
   getFreebuffInstanceId,
   markFreebuffSessionEnded,
-} from './use-freebuff-session'
-import { getCodebuffClient } from '../utils/codebuff-client'
+} from './use-savant-free-session'
+import { getCodebuffClient } from '../utils/savant-code-client'
 import { AGENT_MODE_TO_COST_MODE, IS_FREEBUFF, getContextWindowForModel } from '../utils/constants'
 import { createEventHandlerState } from '../utils/create-event-handler-state'
-import { getSelectedFreebuffModel } from '../state/freebuff-model-store'
+import { getSelectedFreebuffModel } from '../state/savant-free-model-store'
 import { createRunConfig } from '../utils/create-run-config'
-import { getAgentIdForMode } from '../utils/freebuff-agent-selection'
+import { getAgentIdForMode } from '../utils/savant-free-agent-selection'
 import {
   createStalledResetWatcher,
   markChunkSeen as markChunkSeenHelper,
@@ -62,9 +62,9 @@ import type { ChatMessage } from '../types/chat'
 import type { SendMessageFn } from '../types/contracts/send-message'
 import type { AgentMode } from '../utils/constants'
 import type { SendMessageTimerEvent } from '../utils/send-message-timer'
-import { STATE_SNAPSHOT_INTERRUPTION_MESSAGE } from '@codebuff/sdk'
+import { STATE_SNAPSHOT_INTERRUPTION_MESSAGE } from '@savant-code/sdk'
 
-import type { AgentDefinition, MessageContent, RunState } from '@codebuff/sdk'
+import type { AgentDefinition, MessageContent, RunState } from '@savant-code/sdk'
 import { isCoveredBySubscription } from '../utils/subscription'
 
 import type { SubscriptionResponse } from './use-subscription-query'
@@ -87,7 +87,7 @@ interface UseSendMessageOptions {
   isQueuePausedRef?: React.MutableRefObject<boolean>
   isProcessingQueueRef?: React.MutableRefObject<boolean>
   resumeQueue?: () => void
-  /** Put a message back at the head of the queue. Used by the freebuff
+  /** Put a message back at the head of the queue. Used by the savant-free
    *  run-start guard so a message that can't be sent (session fully over)
    *  is held for the next session instead of consumed. */
   requeueMessageAtFront?: (message: {
@@ -113,7 +113,7 @@ const resolveAgent = (
   return selectedAgentDefinition ?? agentId ?? getAgentIdForMode(agentMode)
 }
 
-// Apply the user's codebuff model override if one is set.
+// Apply the user's savant-code model override if one is set.
 const applyCodebuffModelOverride = (
   agent: AgentDefinition | string,
   agentDefinitions: AgentDefinition[],
@@ -305,7 +305,7 @@ export const useSendMessage = ({
       updateChainInProgress(true)
       setCanProcessQueue(false)
 
-      // Freebuff run-start guard: without a live session slot the server
+      // SavantFree run-start guard: without a live session slot the server
       // rejects the request outright, consuming the message. Hold it at the
       // head of the queue instead; it resumes when the user rejoins from the
       // session-ended banner. Catches sends that bypass the queue's
@@ -450,10 +450,10 @@ export const useSendMessage = ({
       if (!client) {
         logger.error(
           {},
-          '[send-message] No Codebuff client available. Please ensure you are authenticated.',
+          '[send-message] No SavantCode client available. Please ensure you are authenticated.',
         )
         // Show error to user instead of silently failing
-        const brandName = IS_FREEBUFF ? 'Freebuff' : 'Codebuff'
+        const brandName = IS_FREEBUFF ? 'SavantFree' : 'SavantCode'
         setMessages((prev) => [
           ...prev,
           createErrorChatMessage(
@@ -620,7 +620,7 @@ export const useSendMessage = ({
           },
         })
 
-        const freebuffInstanceId = getFreebuffInstanceId()
+        const savant-free$1 = getFreebuffInstanceId()
         const runConfig = createRunConfig({
           logger,
           agent: agentWithModelOverride,
@@ -632,8 +632,8 @@ export const useSendMessage = ({
           signal: abortController.signal,
           costMode: AGENT_MODE_TO_COST_MODE[agentMode],
           extraCodebuffMetadata:
-            IS_FREEBUFF && freebuffInstanceId
-              ? { freebuff_instance_id: freebuffInstanceId }
+            IS_FREEBUFF && savant-free$1
+              ? { freebuff_instance_id: savant-free$1 }
               : undefined,
           onStateSnapshot: (snapshot) => {
             latestRunStateSnapshot = snapshot

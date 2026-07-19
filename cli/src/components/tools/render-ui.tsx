@@ -12,7 +12,7 @@ import type {
   ToolRenderOptions,
 } from './types'
 import type { ChatTheme } from '../../types/theme-system'
-import type { RenderUIButtonWidget } from '@codebuff/common/tools/params/tool/render-ui'
+import type { RenderUIButtonWidget } from '@savant-code/common/tools/params/tool/render-ui'
 
 type RenderUIButtonVariant = NonNullable<RenderUIButtonWidget['variant']>
 

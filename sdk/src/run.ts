@@ -1,31 +1,31 @@
 import path from 'path'
 
-import { callMainPrompt } from '@codebuff/agent-runtime/main-prompt'
+import { callMainPrompt } from '@savant-code/agent-runtime/main-prompt'
 import {
   buildUserMessageContent,
   withSystemTags,
-} from '@codebuff/agent-runtime/util/messages'
-import { MAX_AGENT_STEPS_DEFAULT } from '@codebuff/common/constants/agents'
-import { toOptionalFile } from '@codebuff/common/constants/paths'
+} from '@savant-code/agent-runtime/util/messages'
+import { MAX_AGENT_STEPS_DEFAULT } from '@savant-code/common/constants/agents'
+import { toOptionalFile } from '@savant-code/common/constants/paths'
 import {
   getMCPClient,
   listMCPTools,
   callMCPTool,
-} from '@codebuff/common/mcp/client'
+} from '@savant-code/common/mcp/client'
 import {
   COMPOSIO_META_TOOL_NAMES,
   isComposioMetaToolName,
-} from '@codebuff/common/constants/composio'
-import { toolNames } from '@codebuff/common/tools/constants'
-import { clientToolCallSchema } from '@codebuff/common/tools/list'
-import { AgentOutputSchema } from '@codebuff/common/types/session-state'
+} from '@savant-code/common/constants/composio'
+import { toolNames } from '@savant-code/common/tools/constants'
+import { clientToolCallSchema } from '@savant-code/common/tools/list'
+import { AgentOutputSchema } from '@savant-code/common/types/session-state'
 import {
   FETCH_IDLE_TIMEOUT_USER_MESSAGE,
   TRANSIENT_NETWORK_ERROR_USER_MESSAGE,
   extractApiErrorDetails,
   isFetchIdleTimeoutError,
   isTransientNetworkError,
-} from '@codebuff/common/util/error'
+} from '@savant-code/common/util/error'
 import { cloneDeep } from 'lodash'
 
 import { executeComposioToolViaServer } from './composio'
@@ -46,23 +46,23 @@ import { runTerminalCommand } from './tools/run-terminal-command'
 import type { CustomToolDefinition } from './custom-tool'
 import type { RunState } from './run-state'
 import type { FileFilter } from './tools/read-files'
-import type { ServerAction } from '@codebuff/common/actions'
-import type { AgentDefinition } from '@codebuff/common/templates/initial-agents-dir/types/agent-definition'
-import type { ToolName } from '@codebuff/common/tools/constants'
-import type { PublishedClientToolName } from '@codebuff/common/tools/list'
-import type { Logger } from '@codebuff/common/types/contracts/logger'
-import type { TraceWriter } from '@codebuff/common/types/contracts/trace'
-import type { CodebuffFileSystem } from '@codebuff/common/types/filesystem'
-import type { ToolMessage } from '@codebuff/common/types/messages/codebuff-message'
+import type { ServerAction } from '@savant-code/common/actions'
+import type { AgentDefinition } from '@savant-code/common/templates/initial-agents-dir/types/agent-definition'
+import type { ToolName } from '@savant-code/common/tools/constants'
+import type { PublishedClientToolName } from '@savant-code/common/tools/list'
+import type { Logger } from '@savant-code/common/types/contracts/logger'
+import type { TraceWriter } from '@savant-code/common/types/contracts/trace'
+import type { SavantCodeFileSystem } from '@savant-code/common/types/filesystem'
+import type { ToolMessage } from '@savant-code/common/types/messages/savant-code-message'
 import type {
   ImagePart,
   TextPart,
   ToolResultOutput,
-} from '@codebuff/common/types/messages/content-part'
-import type { PrintModeEvent } from '@codebuff/common/types/print-mode'
-import type { SessionState } from '@codebuff/common/types/session-state'
-import type { Source } from '@codebuff/common/types/source'
-import type { CodebuffSpawn } from '@codebuff/common/types/spawn'
+} from '@savant-code/common/types/messages/content-part'
+import type { PrintModeEvent } from '@savant-code/common/types/print-mode'
+import type { SessionState } from '@savant-code/common/types/session-state'
+import type { Source } from '@savant-code/common/types/source'
+import type { SavantCodeSpawn } from '@savant-code/common/types/spawn'
 
 /**
  * Wraps content for user messages, ensuring text is wrapped in <user_message> tags.
@@ -93,14 +93,14 @@ function isRunPauseError(error: unknown) {
   return (
     !!error &&
     typeof error === 'object' &&
-    (('codebuffRunPaused' in error &&
-      (error as { codebuffRunPaused?: unknown }).codebuffRunPaused === true) ||
+    (('savantCode$1' in error &&
+      (error as { savantCode$1?: unknown }).savantCode$1 === true) ||
       ('name' in error &&
-        (error as { name?: unknown }).name === 'CodebuffRunPausedError'))
+        (error as { name?: unknown }).name === 'SavantCodeRunPausedError'))
   )
 }
 
-export type CodebuffClientOptions = {
+export type SavantCodeClientOptions = {
   apiKey?: string
 
   cwd?: string
@@ -136,8 +136,8 @@ export type CodebuffClientOptions = {
   overrideTools?: OverrideToolHandlers
   customToolDefinitions?: CustomToolDefinition[]
 
-  fsSource?: Source<CodebuffFileSystem>
-  spawnSource?: Source<CodebuffSpawn>
+  fsSource?: Source<SavantCodeFileSystem>
+  spawnSource?: Source<SavantCodeSpawn>
   logger?: Logger
   /** Optional debug trace of agent message histories. Called with the full
    *  history at each agent step boundary; implementations should append each
@@ -254,7 +254,7 @@ const createAbortError = (signal?: AbortSignal) => {
 }
 
 type RunExecutionOptions = RunOptions &
-  CodebuffClientOptions & {
+  SavantCodeClientOptions & {
     apiKey: string
     fingerprintId: string
   }
@@ -319,12 +319,12 @@ async function runOnce({
 }: RunExecutionOptions): Promise<RunState> {
   const fsSourceValue = typeof fsSource === 'function' ? fsSource() : fsSource
   const fs = await fsSourceValue
-  let spawn: CodebuffSpawn
+  let spawn: SavantCodeSpawn
   if (spawnSource) {
     const spawnSourceValue = await spawnSource
-    spawn = spawnSourceValue as CodebuffSpawn
+    spawn = spawnSourceValue as SavantCodeSpawn
   } else {
-    spawn = require('child_process').spawn as CodebuffSpawn
+    spawn = require('child_process').spawn as SavantCodeSpawn
   }
   const preparedContent = wrapContentForUserMessage(content)
   let activeCustomToolDefinitions = customToolDefinitions ?? []
@@ -746,7 +746,7 @@ async function runOnce({
 function requireCwd(cwd: string | undefined, toolName: string): string {
   if (!cwd) {
     throw new Error(
-      `cwd is required for the ${toolName} tool. Please provide cwd in CodebuffClientOptions or override the ${toolName} tool.`,
+      `cwd is required for the ${toolName} tool. Please provide cwd in SavantCodeClientOptions or override the ${toolName} tool.`,
     )
   }
   return cwd
@@ -761,11 +761,11 @@ async function readFiles({
 }: {
   filePaths: string[]
   override?: NonNullable<
-    Required<CodebuffClientOptions>['overrideTools']['read_files']
+    Required<SavantCodeClientOptions>['overrideTools']['read_files']
   >
   fileFilter?: FileFilter
   cwd?: string
-  fs: CodebuffFileSystem
+  fs: SavantCodeFileSystem
 }) {
   if (override) {
     return await override({ filePaths })
@@ -790,10 +790,10 @@ async function handleToolCall({
   onFileWritten,
 }: {
   action: ServerAction<'tool-call-request'>
-  overrides: NonNullable<CodebuffClientOptions['overrideTools']>
+  overrides: NonNullable<SavantCodeClientOptions['overrideTools']>
   customToolDefinitions: Record<string, CustomToolDefinition>
   cwd?: string
-  fs: CodebuffFileSystem
+  fs: SavantCodeFileSystem
   env?: Record<string, string>
   apiKey: string
   signal?: AbortSignal
@@ -1075,7 +1075,7 @@ async function handlePromptResponse({
       const message = [
         'Received invalid prompt response from server:',
         JSON.stringify(parsedOutput.error.issues),
-        'If this issues persists, please contact support@codebuff.com',
+        'If this issues persists, please contact support@savant-code.com',
       ].join('\n')
       onError({ message })
       resolve({

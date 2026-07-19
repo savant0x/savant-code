@@ -1,13 +1,13 @@
 #!/usr/bin/env bun
 
 /**
- * Freebuff CLI release script.
+ * SavantFree CLI release script.
  *
- * Triggers the freebuff-release.yml GitHub Actions workflow
- * to build, publish, and release the Freebuff CLI to npm.
+ * Triggers the savant-free-release.yml GitHub Actions workflow
+ * to build, publish, and release the SavantFree CLI to npm.
  *
  * Usage:
- *   bun freebuff/cli/release.ts [patch|minor|major] [--ref <commit-sha>]
+ *   bun savant-free/cli/release.ts [patch|minor|major] [--ref <commit-sha>]
  *
  * Requires:
  *   CODEBUFF_GITHUB_TOKEN environment variable
@@ -80,7 +80,7 @@ async function triggerWorkflow(versionType: string, checkoutRef: string) {
       -H "Accept: application/vnd.github.v3+json" \
       -H "Authorization: token ${process.env.GITHUB_TOKEN}" \
       -H "Content-Type: application/json" \
-      https://api.github.com/repos/CodebuffAI/freebuff-private/actions/workflows/freebuff-release.yml/dispatches \
+      https://api.github.com/repos/SavantCode/savant-free-private/actions/workflows/savant-free-release.yml/dispatches \
       -d '${payload}'`
 
     const response = execSync(triggerCmd, { encoding: 'utf8' })
@@ -88,22 +88,22 @@ async function triggerWorkflow(versionType: string, checkoutRef: string) {
     if (response.includes('workflow_dispatch')) {
       log(`⚠️  Workflow dispatch failed: ${response}`)
       log(
-        'Please manually trigger the workflow at: https://github.com/CodebuffAI/freebuff-private/actions/workflows/freebuff-release.yml',
+        'Please manually trigger the workflow at: https://github.com/SavantCode/savant-free-private/actions/workflows/savant-free-release.yml',
       )
     } else {
-      log('🎉 Freebuff release workflow triggered!')
+      log('🎉 SavantFree release workflow triggered!')
     }
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err)
     log(`⚠️  Failed to trigger workflow automatically: ${message}`)
     log(
-      'You may need to trigger it manually at: https://github.com/CodebuffAI/freebuff-private/actions/workflows/freebuff-release.yml',
+      'You may need to trigger it manually at: https://github.com/SavantCode/savant-free-private/actions/workflows/savant-free-release.yml',
     )
   }
 }
 
 async function main() {
-  log('🚀 Initiating Freebuff release...')
+  log('🚀 Initiating SavantFree release...')
   log(`Date: ${formatTimestamp()}`)
 
   checkGitHubToken()
@@ -118,7 +118,7 @@ async function main() {
 
   log('')
   log(
-    'Monitor progress at: https://github.com/CodebuffAI/freebuff-private/actions/workflows/freebuff-release.yml',
+    'Monitor progress at: https://github.com/SavantCode/savant-free-private/actions/workflows/savant-free-release.yml',
   )
 }
 

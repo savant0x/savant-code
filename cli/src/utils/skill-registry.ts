@@ -1,9 +1,9 @@
-import { loadSkills as sdkLoadSkills } from '@codebuff/sdk'
+import { loadSkills as sdkLoadSkills } from '@savant-code/sdk'
 
 import { getProjectRoot } from '../project-files'
 import { logger } from './logger'
 
-import type { SkillDefinition, SkillsMap } from '@codebuff/common/types/skill'
+import type { SkillDefinition, SkillsMap } from '@savant-code/common/types/skill'
 
 // ============================================================================
 // Skills cache (loaded via SDK at startup)

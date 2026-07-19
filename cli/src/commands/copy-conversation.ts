@@ -273,7 +273,7 @@ export function serializeConversation(
     renderMessage(message, segments)
   }
 
-  const product = IS_FREEBUFF ? 'Freebuff' : 'Codebuff'
+  const product = IS_FREEBUFF ? 'SavantFree' : 'SavantCode'
   const header = `# ${product} conversation\n_${messages.length} message${messages.length === 1 ? '' : 's'}_`
   const prefix = `${header}\n\n---\n\n`
 

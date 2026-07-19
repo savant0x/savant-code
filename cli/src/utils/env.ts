@@ -5,7 +5,7 @@
  * process env with CLI-specific vars for terminal/IDE detection.
  */
 
-import { getBaseEnv } from '@codebuff/common/env-process'
+import { getBaseEnv } from '@savant-code/common/env-process'
 
 import type { CliEnv } from '../types/env'
 
@@ -84,7 +84,7 @@ export const getCliEnv = (): CliEnv => ({
 })
 
 /**
- * Whether the CLI is running in direct-provider mode (no Codebuff backend).
+ * Whether the CLI is running in direct-provider mode (no SavantCode backend).
  * Set DIRECT_PROVIDER=<provider> (e.g. "openrouter") to launch against a
  * provider directly. When enabled, the CLI skips backend connection pings
  * and agent/validate calls; agents are bundled locally and inference routes

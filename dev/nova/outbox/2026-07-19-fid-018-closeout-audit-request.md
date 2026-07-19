@@ -18,7 +18,7 @@ Pre-push doc house-cleaning + README realignment + dev/ folder organization for 
 
 ### Claim 1 — README.md fully rewritten per Decision A
 - **Verify:** Badge says `v0.0.2` (NOT `v0.0.1`)
-- **Verify:** All `@savant-code/X` workspace pkg refs in README → `@codebuff/X` (Decision A snapshot state)
+- **Verify:** All `@savant-code/X` workspace pkg refs in README → `@savant-code/X` (Decision A snapshot state)
 - **Verify:** Footnote says "Full rebrand incoming in next push"
 - **Verify:** Has ECHO Perfection Loop section
 
@@ -26,7 +26,7 @@ Pre-push doc house-cleaning + README realignment + dev/ folder organization for 
 - **Verify:** REPLACED "public mirror" + "private source repo" framing
 - **Verify:** Has ECHO Protocol + FID workflow section with Perfection Loop visual
 - **Verify:** References `dev/fids/` + FID template + ARCHITECTURE.md
-- **Verify:** Build commands use current actual names (`bun run dev:savant-free`, NOT `build:freebuff`)
+- **Verify:** Build commands use current actual names (`bun run dev:savant-free`, NOT `build:savant-free`)
 
 ### Claim 3 — AGENTS.md fully rewritten
 - **Verify:** DROPPED outdated `docs/agents-and-tools.md` + `docs/testing.md` refs
@@ -39,7 +39,7 @@ Pre-push doc house-cleaning + README realignment + dev/ folder organization for 
 - **Verify:** `dev/fids/archive/` now contains ALL 4 archived files:
   - `FID-2026-0717-013-tests.md`
   - `FID-2026-0718-010-stuck-state-cleanup.md`
-  - `FID-2026-0717-014-codebuff-rebrand-migration-plan.md` (renamed from `Codebuff Rebranding And Migration Plan.md`)
+  - `FID-2026-0717-014-savant-code-rebrand-migration-plan.md` (renamed from `SavantCode Rebranding And Migration Plan.md`)
   - `FID-2026-0717-015-savant-code-rebrand.md` (renamed from `FID-savant-code-rebrand.md`)
 
 ### Claim 5 — 4 CHANGELOG entries prepended in reverse-chronological order
@@ -48,8 +48,8 @@ Pre-push doc house-cleaning + README realignment + dev/ folder organization for 
 - **Verify:** Em-dashes are U+2014 (NOT broken `?` chars from UTF-8 issues)
 
 ### Claim 6 — 2 stray `@savant-code/*` pkg names reverted
-- **Verify:** `sdk/test/tree-sitter-queries/package.json` name is `@codebuff/sdk-tree-sitter-queries-test`
-- **Verify:** `scripts/tmux/tmux-viewer/package.json` name is `@codebuff/tmux-viewer`
+- **Verify:** `sdk/test/tree-sitter-queries/package.json` name is `@savant-code/sdk-tree-sitter-queries-test`
+- **Verify:** `scripts/tmux/tmux-viewer/package.json` name is `@savant-code/tmux-viewer`
 - **Verify:** `grep -rn '@savant-code' sdk/test/ scripts/` returns 0 hits in package.json names
 
 ### Claim 7 — Duplicate coding-standards/release-workflow.md DELETED
@@ -78,7 +78,7 @@ Pre-push doc house-cleaning + README realignment + dev/ folder organization for 
 4. `CHANGELOG.md`
 5. `dev/fids/archive/FID-2026-0717-013-tests.md`
 6. `dev/fids/archive/FID-2026-0718-010-stuck-state-cleanup.md`
-7. `dev/fids/archive/FID-2026-0717-014-codebuff-rebrand-migration-plan.md`
+7. `dev/fids/archive/FID-2026-0717-014-savant-code-rebrand-migration-plan.md`
 8. `dev/fids/archive/FID-2026-0717-015-savant-code-rebrand.md`
 9. `dev/session-summaries/2026-07-19-pre-push-house-cleaning.md`
 10. `sdk/test/tree-sitter-queries/package.json`
@@ -86,11 +86,11 @@ Pre-push doc house-cleaning + README realignment + dev/ folder organization for 
 12. `.agents/skills/release-workflow/SKILL.md`
 
 **Commands:**
-- `cd "C:/Users/spenc/dev/codebuff" && git log --oneline -5`
-- `cd "C:/Users/spenc/dev/codebuff" && git status`
-- `cd "C:/Users/spenc/dev/codebuff" && ls dev/fids/`
-- `cd "C:/Users/spenc/dev/codebuff" && grep -rn '@savant-code' sdk/test/ scripts/`
-- `cd "C:/Users/spenc/dev/codebuff" && ls coding-standards/release-workflow.md 2>&1`
+- `cd "C:/Users/spenc/dev/savant-code" && git log --oneline -5`
+- `cd "C:/Users/spenc/dev/savant-code" && git status`
+- `cd "C:/Users/spenc/dev/savant-code" && ls dev/fids/`
+- `cd "C:/Users/spenc/dev/savant-code" && grep -rn '@savant-code' sdk/test/ scripts/`
+- `cd "C:/Users/spenc/dev/savant-code" && ls coding-standards/release-workflow.md 2>&1`
 
 ---
 

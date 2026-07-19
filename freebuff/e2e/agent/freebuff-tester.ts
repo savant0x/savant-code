@@ -1,28 +1,28 @@
-import type { AgentDefinition } from '@codebuff/sdk'
+import type { AgentDefinition } from '@savant-code/sdk'
 
 /**
- * Agent definition for testing the Freebuff CLI via tmux.
+ * Agent definition for testing the SavantFree CLI via tmux.
  *
  * This agent is designed to be used with the custom tmux tools from
  * `createFreebuffTmuxTools()`. It receives a testing task in its prompt
- * and uses tmux tools to start Freebuff, interact with it, and verify behavior.
+ * and uses tmux tools to start SavantFree, interact with it, and verify behavior.
  *
  * Example usage:
  * ```ts
  * const { tools, cleanup } = createFreebuffTmuxTools(binaryPath)
  * const result = await client.run({
- *   agent: freebuffTesterAgent.id,
- *   prompt: 'Start freebuff and verify the welcome screen shows Freebuff branding',
- *   agentDefinitions: [freebuffTesterAgent],
+ *   agent: savant-free$1.id,
+ *   prompt: 'Start savant-free and verify the welcome screen shows SavantFree branding',
+ *   agentDefinitions: [savant-free$1],
  *   customToolDefinitions: tools,
  *   handleEvent: collector.handleEvent,
  * })
  * await cleanup()
  * ```
  */
-export const freebuffTesterAgent: AgentDefinition = {
-  id: 'freebuff-tester',
-  displayName: 'Freebuff E2E Tester',
+export const savant-free$1: AgentDefinition = {
+  id: 'savant-free-tester',
+  displayName: 'SavantFree E2E Tester',
   model: 'anthropic/claude-sonnet-4.5',
   toolNames: [
     'start_freebuff',
@@ -30,9 +30,9 @@ export const freebuffTesterAgent: AgentDefinition = {
     'capture_freebuff_output',
     'stop_freebuff',
   ],
-  instructionsPrompt: `You are a QA tester for the Freebuff CLI application.
+  instructionsPrompt: `You are a QA tester for the SavantFree CLI application.
 
-Your job is to verify that Freebuff behaves correctly by interacting with it
+Your job is to verify that SavantFree behaves correctly by interacting with it
 through tmux tools. Follow these steps:
 
 1. Call start_freebuff to launch the CLI

@@ -2,7 +2,7 @@
  * Chat streaming hook - connection status, timer, queue management, and exit handling.
  */
 
-import { RECONNECTION_MESSAGE_DURATION_MS } from '@codebuff/sdk'
+import { RECONNECTION_MESSAGE_DURATION_MS } from '@savant-code/sdk'
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useState, useTransition } from 'react'
 
@@ -11,13 +11,13 @@ import { authQueryKeys } from './use-auth-query'
 import { useConnectionStatus } from './use-connection-status'
 import { useElapsedTime } from './use-elapsed-time'
 import { useExitHandler } from './use-exit-handler'
-import { holdsLiveFreebuffSlot } from './use-freebuff-session'
+import { holdsLiveFreebuffSlot } from './use-savant-free-session'
 import { useMessageQueue, type QueuedMessage, type StreamStatus } from './use-message-queue'
 import { useQueueControls } from './use-queue-controls'
 import { useQueueUi } from './use-queue-ui'
 import { useTimeout } from './use-timeout'
 import { useChatStore } from '../state/chat-store'
-import { useFreebuffSessionStore } from '../state/freebuff-session-store'
+import { useFreebuffSessionStore } from '../state/savant-free-session-store'
 import { IS_FREEBUFF } from '../utils/constants'
 import { logger } from '../utils/logger'
 
@@ -137,21 +137,21 @@ export function useChatStreaming({
     }
   }, [askUserState, mainAgentTimer])
 
-  // Freebuff: once the free session is fully over (no live slot — not even
+  // SavantFree: once the free session is fully over (no live slot — not even
   // the post-expiry grace window), hold queued messages instead of firing
   // them. Without this, pending tasks queued before the session ended keep
   // dispatching after the hard cutoff and get rejected by the server's
   // session gate one by one. The hold lifts automatically when the user
   // rejoins (SessionEndedBanner → refreshFreebuffSession → status 'active'),
   // so queued work resumes in the new session.
-  const freebuffSession = useFreebuffSessionStore((s) => s.session)
-  const sendBlocked = IS_FREEBUFF && !holdsLiveFreebuffSlot(freebuffSession)
+  const savant-free$1 = useFreebuffSessionStore((s) => s.session)
+  const sendBlocked = IS_FREEBUFF && !holdsLiveFreebuffSlot(savant-free$1)
   // Log the transition once, not per render — the hold can last indefinitely.
   useEffect(() => {
     if (sendBlocked) {
       logger.info(
         {},
-        '[chat-streaming] Freebuff session over; holding queued messages until rejoin',
+        '[chat-streaming] SavantFree session over; holding queued messages until rejoin',
       )
     }
   }, [sendBlocked])

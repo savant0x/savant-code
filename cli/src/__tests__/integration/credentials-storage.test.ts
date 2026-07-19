@@ -5,7 +5,7 @@ import path from 'path'
 import {
   clearMockedModules,
   mockModule,
-} from '@codebuff/common/testing/mock-modules'
+} from '@savant-code/common/testing/mock-modules'
 import {
   describe,
   test,
@@ -162,7 +162,7 @@ describe('Credentials Storage Integration', () => {
       // Restore getConfigDir to use real implementation for this test
       mock.restore()
 
-      await mockModule('@codebuff/common/env', () => ({
+      await mockModule('@savant-code/common/env', () => ({
         env: { NEXT_PUBLIC_CB_ENVIRONMENT: 'test' },
       }))
 
@@ -177,7 +177,7 @@ describe('Credentials Storage Integration', () => {
       // Restore getConfigDir to use real implementation for this test
       mock.restore()
 
-      await mockModule('@codebuff/common/env', () => ({
+      await mockModule('@savant-code/common/env', () => ({
         env: { NEXT_PUBLIC_CB_ENVIRONMENT: 'dev' },
       }))
 
@@ -193,7 +193,7 @@ describe('Credentials Storage Integration', () => {
       mock.restore()
 
       // Set environment to prod (or unset it)
-      await mockModule('@codebuff/common/env', () => ({
+      await mockModule('@savant-code/common/env', () => ({
         env: { NEXT_PUBLIC_CB_ENVIRONMENT: 'prod' },
       }))
 

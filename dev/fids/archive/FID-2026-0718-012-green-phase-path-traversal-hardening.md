@@ -192,7 +192,7 @@ Same addition in `str-replace.ts:handleStrReplace`.
 
 **Answer:** `path.resolve` on Windows needs `C:` normalization. The project may run on Windows. For cross-platform safety, normalize via `path.normalize(path.win32.normalize(...))` on Windows. Since most users/devs run on Unix, default behavior is Unix `path.resolve`. Detection: `process.platform`.
 
-Note: For server-side Codebuff (Linux), this doesn't matter. For CLI (multi-platform), consider `path.win32.normalize` for Windows targets. **Decision: detect at runtime, use `path.win32` on Windows.**
+Note: For server-side SavantCode (Linux), this doesn't matter. For CLI (multi-platform), consider `path.win32.normalize` for Windows targets. **Decision: detect at runtime, use `path.win32` on Windows.**
 
 (Five Q: ✅ all / ✅ perf / ✅ hostile / ✅ maint / ✅ industry)
 

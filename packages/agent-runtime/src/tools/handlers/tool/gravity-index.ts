@@ -1,16 +1,16 @@
-import { jsonToolResult } from '@codebuff/common/util/messages'
+import { jsonToolResult } from '@savant-code/common/util/messages'
 
-import { callGravityIndexAPI } from '../../../llm-api/codebuff-web-api'
+import { callGravityIndexAPI } from '../../../llm-api/savant-code-web-api'
 
-import type { CodebuffToolHandlerFunction } from '../handler-function-type'
+import type { SavantCodeToolHandlerFunction } from '../handler-function-type'
 import type {
-  CodebuffToolCall,
-  CodebuffToolOutput,
-} from '@codebuff/common/tools/list'
-import type { AgentTemplate } from '@codebuff/common/types/agent-template'
-import type { ClientEnv, CiEnv } from '@codebuff/common/types/contracts/env'
-import type { JSONObject, JSONValue } from '@codebuff/common/types/json'
-import type { Logger } from '@codebuff/common/types/contracts/logger'
+  SavantCodeToolCall,
+  SavantCodeToolOutput,
+} from '@savant-code/common/tools/list'
+import type { AgentTemplate } from '@savant-code/common/types/agent-template'
+import type { ClientEnv, CiEnv } from '@savant-code/common/types/contracts/env'
+import type { JSONObject, JSONValue } from '@savant-code/common/types/json'
+import type { Logger } from '@savant-code/common/types/contracts/logger'
 
 const omitUndefined = (value: Record<string, JSONValue | undefined>) => {
   const result: JSONObject = {}
@@ -29,7 +29,7 @@ const isJSONObject = (value: JSONValue | undefined): value is JSONObject =>
  *  product the request came from rather than all reading as CLI traffic. */
 const gravitySurface = (agentTemplate: { id: string }): string => {
   if (agentTemplate.id === 'base-chat') return 'freebuff_chat'
-  // Freebuff Web project agents are the `base2-free*` family.
+  // SavantFree Web project agents are the `base2-free*` family.
   if (agentTemplate.id.startsWith('base2-free')) return 'freebuff_web'
   return 'codebuff_cli'
 }
@@ -42,7 +42,7 @@ const isServiceAccountSurface = (surface: string): boolean =>
 
 export const handleGravityIndex = (async (params: {
   previousToolCallFinished: Promise<void>
-  toolCall: CodebuffToolCall<'gravity_index'>
+  toolCall: SavantCodeToolCall<'gravity_index'>
   agentTemplate: AgentTemplate
   logger: Logger
   apiKey: string
@@ -58,7 +58,7 @@ export const handleGravityIndex = (async (params: {
   clientEnv: ClientEnv
   ciEnv: CiEnv
 }): Promise<{
-  output: CodebuffToolOutput<'gravity_index'>
+  output: SavantCodeToolOutput<'gravity_index'>
   creditsUsed: number
 }> => {
   const {
@@ -114,10 +114,10 @@ export const handleGravityIndex = (async (params: {
     const input = {
       ...existingInput,
       external_session_id: clientSessionId,
-      // Shared service-account surfaces (Freebuff Web) authenticate the web API
+      // Shared service-account surfaces (SavantFree Web) authenticate the web API
       // with one account key, so the API-key owner can't identify the end user.
       // `fingerprintId` is the stable per-end-user/per-project signal there
-      // (e.g. `freebuff-chat-<userId>` or the project id), so forward it as the
+      // (e.g. `savant-free-chat-<userId>` or the project id), so forward it as the
       // external user id; the web API hashes it before sending to Gravity. CLI
       // traffic omits it and falls back to the real API-key owner server-side.
       ...(isServiceAccountSurface(surface)
@@ -196,4 +196,4 @@ export const handleGravityIndex = (async (params: {
     )
     return { output: jsonToolResult({ errorMessage }), creditsUsed }
   }
-}) satisfies CodebuffToolHandlerFunction<'gravity_index'>
+}) satisfies SavantCodeToolHandlerFunction<'gravity_index'>

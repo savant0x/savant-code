@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 
-// Load repo-root .env.local into process.env BEFORE any @codebuff/common import
+// Load repo-root .env.local into process.env BEFORE any @savant-code/common import
 // triggers environment validation. Required because `bun dev` runs with `--cwd ..`,
 // which disables Bun's dotenv auto-loader. See cli/src/pre-init/load-dev-env.ts.
 import './pre-init/load-dev-env'
@@ -16,8 +16,8 @@ import fs from 'fs'
 import os from 'os'
 import path from 'path'
 
-import { AnalyticsEvent } from '@codebuff/common/constants/analytics-events'
-import { getProjectFileTree } from '@codebuff/common/project-file-tree'
+import { AnalyticsEvent } from '@savant-code/common/constants/analytics-events'
+import { getProjectFileTree } from '@savant-code/common/project-file-tree'
 import { createCliRenderer } from '@opentui/core'
 import { createRoot } from '@opentui/react'
 import {
@@ -36,8 +36,8 @@ import { initializeApp } from './init/init-app'
 import { getProjectRoot, setProjectRoot } from './project-files'
 import { trackEvent } from './utils/analytics'
 import { getAuthToken, getAuthTokenDetails } from './utils/auth'
-import { resetCodebuffClient } from './utils/codebuff-client'
-import { setApiClientAuthToken } from './utils/codebuff-api'
+import { resetCodebuffClient } from './utils/savant-code-client'
+import { setApiClientAuthToken } from './utils/savant-code-api'
 import { IS_FREEBUFF } from './utils/constants'
 import { initializeAgentRegistry } from './utils/local-agent-registry'
 import { trimOversizedChatLogs } from './utils/chat-history'
@@ -52,7 +52,7 @@ import { initializeSkillRegistry } from './utils/skill-registry'
 import { detectTerminalTheme } from './utils/terminal-color-detection'
 import { setOscDetectedTheme } from './utils/theme-system'
 
-import type { FileTreeNode } from '@codebuff/common/util/file'
+import type { FileTreeNode } from '@savant-code/common/util/file'
 
 // Configure TanStack Query's focusManager for terminal environments
 // This is required because there's no browser visibility API in terminal apps
@@ -407,7 +407,7 @@ async function main(): Promise<void> {
 
   // Start the engaged-time heartbeat only once the interactive TUI is actually
   // live — reaching renderer creation means this is a real session (the
-  // login/publish/smoke-test commands all exit earlier). Freebuff-only, matching
+  // login/publish/smoke-test commands all exit earlier). SavantFree-only, matching
   // the MESSAGE_SENT DAU signal. Stopped in exitFreebuffCleanly().
   if (IS_FREEBUFF) {
     startEngagementTracking()

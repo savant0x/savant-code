@@ -1,11 +1,11 @@
 import {
   validateAgents as validateAgentsCommon,
   type DynamicAgentValidationError,
-} from '@codebuff/common/templates/agent-validation'
+} from '@savant-code/common/templates/agent-validation'
 
 import { getWebsiteUrl } from './constants'
 
-import type { AgentDefinition } from '@codebuff/common/templates/initial-agents-dir/types/agent-definition'
+import type { AgentDefinition } from '@savant-code/common/templates/initial-agents-dir/types/agent-definition'
 
 export interface ValidationResult {
   success: boolean
@@ -24,9 +24,9 @@ export interface ValidateAgentsOptions {
   remote?: boolean
 
   /**
-   * The base URL of the Codebuff website API.
+   * The base URL of the SavantCode website API.
    * Optional - defaults to NEXT_PUBLIC_CODEBUFF_APP_URL or environment-based URL.
-   * Example: 'https://codebuff.com'
+   * Example: 'https://savant-code.com'
    */
   websiteUrl?: string
 }
@@ -49,7 +49,7 @@ export interface ValidateAgentsOptions {
  * // Remote validation
  * const result = await validateAgents(definitions, {
  *   remote: true,
- *   websiteUrl: 'https://codebuff.com'
+ *   websiteUrl: 'https://savant-code.com'
  * })
  * ```
  */

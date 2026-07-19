@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { immer } from 'zustand/middleware/immer'
 
-import type { FeedbackCategory } from '@codebuff/common/constants/feedback'
+import type { FeedbackCategory } from '@savant-code/common/constants/feedback'
 
 import type { AdResponse } from '../hooks/use-gravity-ad'
 import type { ChatMessage } from '../types/chat'

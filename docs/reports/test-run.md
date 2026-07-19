@@ -1,4 +1,4 @@
-# Codebuff conversation
+# SavantCode conversation
 _6 messages_
 
 ---
@@ -928,7 +928,7 @@ Now let me gather evidence in parallel — reading key source files, listing dir
           "cli",
           "common",
           "evals",
-          "freebuff",
+          "savant-free",
           "packages/agent-runtime",
           "packages/code-map",
           "packages/database",
@@ -939,14 +939,14 @@ Now let me gather evidence in parallel — reading key source files, listing dir
         "scripts": {
           "start-cli": "bun --cwd cli dev",
           "dev": "bun start-cli",
-          "dev:freebuff": "FREEBUFF_MODE=true bun --cwd cli dev",
+          "dev:savant-free": "FREEBUFF_MODE=true bun --cwd cli dev",
           "release:cli": "bun run --cwd=cli release",
           "release:sdk": "bun run --cwd=sdk release",
-          "release:freebuff": "bun run --cwd=freebuff release",
+          "release:savant-free": "bun run --cwd=savant-free release",
           "build:sdk": "cd sdk && bun run build",
-          "build:freebuff": "bun freebuff/cli/build.ts 0.0.0-dev",
+          "build:savant-free": "bun savant-free/cli/build.ts 0.0.0-dev",
           "buffbench": "bun --cwd evals run-buffbench",
-          "ci": "bun run build:sdk && bun run build:freebuff"
+          "ci": "bun run build:sdk && bun run build:savant-free"
         },
         "dependencies": {
           "better-sqlite3": "^12.11.1",
@@ -1377,7 +1377,7 @@ Now let me gather evidence in parallel — reading key source files, listing dir
         }
       
         const client = new Client({
-          name: 'codebuff',
+          name: 'savant-code',
           version: '1.0.0',
         })
       
@@ -1518,14 +1518,14 @@ Now let me gather evidence in parallel — reading key source files, listing dir
       - cli\src\hooks\use-exit-handler.ts
       - cli\src\utils\__tests__\osc-timeout-scenarios.test.ts
       - cli\src\utils\__tests__\terminal-color-detection.test.ts
-      - cli\src\utils\freebuff-exit.ts
+      - cli\src\utils\savant-free-exit.ts
       - cli\src\utils\terminal-color-detection.ts
       - evals\buffbench\agent-runner.ts
       - evals\buffbench\judge.ts
       - evals\buffbench\lessons-extractor.ts
       - evals\buffbench\meta-analyzer.ts
       - evals\buffbench\trace-analyzer.ts
-      - packages\agent-runtime\src\llm-api\codebuff-web-api.ts
+      - packages\agent-runtime\src\llm-api\savant-code-web-api.ts
       - packages\agent-runtime\src\llm-api\context7-api.ts
       - packages\agent-runtime\src\llm-api\serper-api.ts
     getMCPClient: 
@@ -1577,7 +1577,7 @@ Now let me gather evidence in parallel — reading key source files, listing dir
 ```
 files: 
   - .gitkeep
-  - Codebuff Rebranding And Migration Plan.md
+  - SavantCode Rebranding And Migration Plan.md
   - FID-2026-0717-013-tests.md
   - FID-2026-0717-017-visual-enhancement.md
   - FID-savant-code-rebrand.md
@@ -2174,13 +2174,13 @@ Now let me look at the specific files in detail to gather precise evidence. I'll
 
 - path: packages\agent-runtime\src\tools\handlers\tool\spawn-agent-utils.ts
   content: |
-      import { MAX_AGENT_STEPS_DEFAULT } from '@codebuff/common/constants/agents'
-      import { toolNames } from '@codebuff/common/tools/constants'
+      import { MAX_AGENT_STEPS_DEFAULT } from '@savant-code/common/constants/agents'
+      import { toolNames } from '@savant-code/common/tools/constants'
       import {
         normalizeAgentIdForLookup,
         parseAgentId,
-      } from '@codebuff/common/util/agent-id-parsing'
-      import { generateCompactId } from '@codebuff/common/util/string'
+      } from '@savant-code/common/util/agent-id-parsing'
+      import { generateCompactId } from '@savant-code/common/util/string'
       
       import { loopAgentSteps } from '../../../run-agent-step'
       import { getAgentTemplate } from '../../../templates/agent-registry'
@@ -2190,24 +2190,24 @@ Now let me look at the specific files in detail to gather precise evidence. I'll
         withSystemTags,
       } from '../../../util/messages'
       
-      import type { AgentTemplate } from '@codebuff/common/types/agent-template'
+      import type { AgentTemplate } from '@savant-code/common/types/agent-template'
       import type {
         AgentRuntimeDeps,
         AgentRuntimeScopedDeps,
-      } from '@codebuff/common/types/contracts/agent-runtime'
-      import type { Logger } from '@codebuff/common/types/contracts/logger'
+      } from '@savant-code/common/types/contracts/agent-runtime'
+      import type { Logger } from '@savant-code/common/types/contracts/logger'
       import type {
         ParamsExcluding,
         OptionalFields,
-      } from '@codebuff/common/types/function-params'
-      import type { Message } from '@codebuff/common/types/messages/codebuff-message'
-      import type { PrintModeEvent } from '@codebuff/common/types/print-mode'
+      } from '@savant-code/common/types/function-params'
+      import type { Message } from '@savant-code/common/types/messages/savant-code-message'
+      import type { PrintModeEvent } from '@savant-code/common/types/print-mode'
       import type {
         AgentState,
         AgentTemplateType,
         Subgoal,
-      } from '@codebuff/common/types/session-state'
-      import type { ProjectFileContext } from '@codebuff/common/util/file'
+      } from '@savant-code/common/types/session-state'
+      import type { ProjectFileContext } from '@savant-code/common/util/file'
       import type { ToolSet } from 'ai'
       
       /**
@@ -2630,16 +2630,16 @@ Now let me look at the specific files in detail to gather precise evidence. I'll
       - packages\agent-runtime\src\tools\handlers\tool\spawn-agents.ts
 - path: packages\agent-runtime\src\tools\handlers\tool\transition-phase.ts
   content: |
-      import { scanOpenFids } from '@codebuff/common/util/protocol-config'
+      import { scanOpenFids } from '@savant-code/common/util/protocol-config'
       
-      import type { CodebuffToolHandlerFunction } from '../handler-function-type'
+      import type { SavantCodeToolHandlerFunction } from '../handler-function-type'
       import type {
-        CodebuffToolCall,
-        CodebuffToolOutput,
-      } from '@codebuff/common/tools/list'
-      import type { Logger } from '@codebuff/common/types/contracts/logger'
-      import type { FsmPhase } from '@codebuff/common/types/session-state'
-      import type { ProjectFileContext } from '@codebuff/common/util/file'
+        SavantCodeToolCall,
+        SavantCodeToolOutput,
+      } from '@savant-code/common/tools/list'
+      import type { Logger } from '@savant-code/common/types/contracts/logger'
+      import type { FsmPhase } from '@savant-code/common/types/session-state'
+      import type { ProjectFileContext } from '@savant-code/common/util/file'
       
       const MAX_ITERATIONS = 10
       
@@ -2657,11 +2657,11 @@ Now let me look at the specific files in detail to gather precise evidence. I'll
       // This is by design — the Perfection Loop is a session-level workflow.
       export const handleTransitionPhase = (async (params: {
         previousToolCallFinished: Promise<void>
-        toolCall: CodebuffToolCall<'transition_phase'>
+        toolCall: SavantCodeToolCall<'transition_phase'>
         logger: Logger
         agentState: { fsmPhase?: FsmPhase; iterationCount?: number }
         fileContext: ProjectFileContext
-      }): Promise<{ output: CodebuffToolOutput<'transition_phase'> }> => {
+      }): Promise<{ output: SavantCodeToolOutput<'transition_phase'> }> => {
         const { toolCall, logger, agentState, fileContext } = params
         const { phase, reason } = toolCall.input
       
@@ -2759,7 +2759,7 @@ Now let me look at the specific files in detail to gather precise evidence. I'll
             },
           ],
         }
-      }) satisfies CodebuffToolHandlerFunction<'transition_phase'>
+      }) satisfies SavantCodeToolHandlerFunction<'transition_phase'>
       
   referencedBy: {}
 ```
@@ -2845,7 +2845,7 @@ _Prompt:_ Run these verification commands and report outputs: (1) `bun --version
 > 
 > But the test is a sequence. Let me think about the most efficient path to execute maximum coverage while keeping my FSM state coherent.
 > 
-> Important: FID-Bound Enforcement. The transition `red → green` is blocked if no FID files exist in dev/fids/. But dev/fids/ HAS files (Codebuff Rebranding..., FID-2026-0717-013-tests.md, FID-2026-0717-017-visual-enhancement.md, FID-savant-code-rebrand.md, visual-mockup-neon-slate.txt, plus archive/). Wait, the hasOpenFids check — does it count any .md or specifically FID-*.md? Let me check. The detective found `readProtocolConfig(fileContext.cwd).openFids`. I need to verify the exact logic. But there ARE files matching FID-*.md in dev/fids/, so red→green should pass. Good. Actually wait, the CHANGELOG line 100 says "blocks red→green transition if no FID-*.md files exist". And dev/fids/ has FID-2026-0717-013-tests.md and FID-2026-0717-017-visual-enhancement.md. So we have open FIDs. Good.
+> Important: FID-Bound Enforcement. The transition `red → green` is blocked if no FID files exist in dev/fids/. But dev/fids/ HAS files (SavantCode Rebranding..., FID-2026-0717-013-tests.md, FID-2026-0717-017-visual-enhancement.md, FID-savant-code-rebrand.md, visual-mockup-neon-slate.txt, plus archive/). Wait, the hasOpenFids check — does it count any .md or specifically FID-*.md? Let me check. The detective found `readProtocolConfig(fileContext.cwd).openFids`. I need to verify the exact logic. But there ARE files matching FID-*.md in dev/fids/, so red→green should pass. Good. Actually wait, the CHANGELOG line 100 says "blocks red→green transition if no FID-*.md files exist". And dev/fids/ has FID-2026-0717-013-tests.md and FID-2026-0717-017-visual-enhancement.md. So we have open FIDs. Good.
 > 
 > Now let me also note: the test plan references the Scout agent. The Scout errored: "extractKeywords is not defined (handleSteps was deserialized from a string...)". This is a REAL BUG finding! The Scout's handleSteps references extractKeywords which isn't defined in scope — likely the bundled agent was serialized with a function reference that's lost. This is test 148-165 (Scout file-finding) and is a FAIL. This is exactly the kind of finding the test is meant to surface. Good catch — I should report this as a real failure. Actually wait, this might be because the agent was loaded from a minified/generated bundle. Let me verify by reading scout.ts directly. This is important evidence.
 > 
@@ -2966,8 +2966,8 @@ message: Found 1 file(s) matching pattern "**/spawn-agent-utils.ts"
 
 - path: agents\scout\scout.ts
   content: |
-      import { ECHO_PROTOCOL_INSTRUCTIONS } from '@codebuff/common/constants/agents'
-      import { GEMINI_3_1_FLASH_LITE_MODEL_ID } from '@codebuff/common/constants/gemini'
+      import { ECHO_PROTOCOL_INSTRUCTIONS } from '@savant-code/common/constants/agents'
+      import { GEMINI_3_1_FLASH_LITE_MODEL_ID } from '@savant-code/common/constants/gemini'
       
       import { publisher } from '../constants'
       import {
@@ -3188,14 +3188,14 @@ message: Found 1 file(s) matching pattern "**/spawn-agent-utils.ts"
   referencedBy: {}
 - path: agents\verifier\verifier.ts
   content: |
-      import { ECHO_PROTOCOL_INSTRUCTIONS } from '@codebuff/common/constants/agents'
+      import { ECHO_PROTOCOL_INSTRUCTIONS } from '@savant-code/common/constants/agents'
       import { publisher } from '../constants'
       import {
         PLACEHOLDER,
         type SecretAgentDefinition,
       } from '../types/secret-agent-definition'
       
-      import type { Model } from '@codebuff/common/old-constants'
+      import type { Model } from '@savant-code/common/old-constants'
       
       export const createReviewer = (
         model: Model,
@@ -3265,7 +3265,7 @@ message: Found 1 file(s) matching pattern "**/spawn-agent-utils.ts"
   referencedBy: {}
 - path: agents\detective\detective.ts
   content: |
-      import { ECHO_PROTOCOL_INSTRUCTIONS } from '@codebuff/common/constants/agents'
+      import { ECHO_PROTOCOL_INSTRUCTIONS } from '@savant-code/common/constants/agents'
       import { publisher } from '../constants'
       
       import type { SecretAgentDefinition } from '../types/secret-agent-definition'
@@ -3398,7 +3398,7 @@ message: Found 1 file(s) matching pattern "**/spawn-agent-utils.ts"
   referencedBy: {}
 - path: agents\forge\forge.ts
   content: |
-      import { ECHO_PROTOCOL_INSTRUCTIONS } from '@codebuff/common/constants/agents'
+      import { ECHO_PROTOCOL_INSTRUCTIONS } from '@savant-code/common/constants/agents'
       import { publisher } from '../constants'
       
       import type { AgentDefinition } from '../types/agent-definition'
@@ -3562,7 +3562,7 @@ message: Found 1 file(s) matching pattern "**/spawn-agent-utils.ts"
       - agents\__tests__\editor.test.ts
 - path: agents\recorder\recorder.ts
   content: |
-      import { ECHO_PROTOCOL_INSTRUCTIONS } from '@codebuff/common/constants/agents'
+      import { ECHO_PROTOCOL_INSTRUCTIONS } from '@savant-code/common/constants/agents'
       import { publisher } from '../constants'
       
       import type { AgentDefinition } from '../types/agent-definition'
@@ -3618,7 +3618,7 @@ message: Found 1 file(s) matching pattern "**/spawn-agent-utils.ts"
   referencedBy: {}
 - path: agents\scribe\scribe.ts
   content: |
-      import { ECHO_PROTOCOL_INSTRUCTIONS } from '@codebuff/common/constants/agents'
+      import { ECHO_PROTOCOL_INSTRUCTIONS } from '@savant-code/common/constants/agents'
       import { publisher } from '../constants'
       
       import type { AgentDefinition } from '../types/agent-definition'
@@ -3679,7 +3679,7 @@ message: Found 1 file(s) matching pattern "**/spawn-agent-utils.ts"
   referencedBy: {}
 - path: agents\thinker\thinker.ts
   content: |
-      import { ECHO_PROTOCOL_INSTRUCTIONS } from '@codebuff/common/constants/agents'
+      import { ECHO_PROTOCOL_INSTRUCTIONS } from '@savant-code/common/constants/agents'
       import { publisher } from '../constants'
       
       import type { SecretAgentDefinition } from '../types/secret-agent-definition'
@@ -3776,8 +3776,8 @@ message: Found 1 file(s) matching pattern "**/spawn-agent-utils.ts"
   referencedBy: {}
 - path: agents\researcher\researcher-web.ts
   content: |
-      import { ECHO_PROTOCOL_INSTRUCTIONS } from '@codebuff/common/constants/agents'
-      import { GEMINI_3_1_FLASH_LITE_MODEL_ID } from '@codebuff/common/constants/gemini'
+      import { ECHO_PROTOCOL_INSTRUCTIONS } from '@savant-code/common/constants/agents'
+      import { GEMINI_3_1_FLASH_LITE_MODEL_ID } from '@savant-code/common/constants/gemini'
       
       import { publisher } from '../constants'
       
@@ -3823,8 +3823,8 @@ message: Found 1 file(s) matching pattern "**/spawn-agent-utils.ts"
   referencedBy: {}
 - path: agents\researcher\researcher-docs.ts
   content: |
-      import { ECHO_PROTOCOL_INSTRUCTIONS } from '@codebuff/common/constants/agents'
-      import { GEMINI_3_1_FLASH_LITE_MODEL_ID } from '@codebuff/common/constants/gemini'
+      import { ECHO_PROTOCOL_INSTRUCTIONS } from '@savant-code/common/constants/agents'
+      import { GEMINI_3_1_FLASH_LITE_MODEL_ID } from '@savant-code/common/constants/gemini'
       
       import { publisher } from '../constants'
       
@@ -3911,47 +3911,47 @@ Let me read the FSM gate, Orchestrator tool set, and transition-phase to verify 
 
 - path: packages\agent-runtime\src\tools\tool-executor.ts
   content: |
-      import { endsAgentStepParam, toolNames } from '@codebuff/common/tools/constants'
-      import { toolParams } from '@codebuff/common/tools/list'
-      import { generateCompactId } from '@codebuff/common/util/string'
+      import { endsAgentStepParam, toolNames } from '@savant-code/common/tools/constants'
+      import { toolParams } from '@savant-code/common/tools/list'
+      import { generateCompactId } from '@savant-code/common/util/string'
       import { cloneDeep } from 'lodash'
       
       import { getMCPToolData } from '../mcp'
       import { MCP_TOOL_SEPARATOR } from '../mcp-constants'
       import { getAgentShortName, getAgentToolName } from '../templates/prompts'
       import { formatValueForError } from '../util/format-value'
-      import { codebuffToolHandlers } from './handlers/list'
+      import { savantCode$1 } from './handlers/list'
       import { getMatchingSpawn } from './handlers/tool/spawn-agent-utils'
       import { getAgentTemplate } from '../templates/agent-registry'
       import { ensureZodSchema } from './prompts'
       
       import type { AgentTemplate } from '../templates/types'
-      import type { CodebuffToolHandlerFunction } from './handlers/handler-function-type'
+      import type { SavantCodeToolHandlerFunction } from './handlers/handler-function-type'
       import type { FileProcessingState } from './handlers/tool/write-file'
-      import type { ToolName } from '@codebuff/common/tools/constants'
+      import type { ToolName } from '@savant-code/common/tools/constants'
       import type {
         ClientToolCall,
         ClientToolName,
-        CodebuffToolCall,
-        CodebuffToolOutput,
-      } from '@codebuff/common/tools/list'
+        SavantCodeToolCall,
+        SavantCodeToolOutput,
+      } from '@savant-code/common/tools/list'
       import type {
         AgentRuntimeDeps,
         AgentRuntimeScopedDeps,
-      } from '@codebuff/common/types/contracts/agent-runtime'
-      import type { Logger } from '@codebuff/common/types/contracts/logger'
-      import type { ToolMessage } from '@codebuff/common/types/messages/codebuff-message'
-      import type { ToolResultOutput } from '@codebuff/common/types/messages/content-part'
-      import type { PrintModeEvent } from '@codebuff/common/types/print-mode'
+      } from '@savant-code/common/types/contracts/agent-runtime'
+      import type { Logger } from '@savant-code/common/types/contracts/logger'
+      import type { ToolMessage } from '@savant-code/common/types/messages/savant-code-message'
+      import type { ToolResultOutput } from '@savant-code/common/types/messages/content-part'
+      import type { PrintModeEvent } from '@savant-code/common/types/print-mode'
       import type {
         AgentTemplateType,
         AgentState,
         Subgoal,
-      } from '@codebuff/common/types/session-state'
+      } from '@savant-code/common/types/session-state'
       import type {
         CustomToolDefinitions,
         ProjectFileContext,
-      } from '@codebuff/common/util/file'
+      } from '@savant-code/common/util/file'
       import type { ToolCallPart, ToolSet } from 'ai'
       
       export type CustomToolCall = {
@@ -3963,7 +3963,7 @@ Let me read the FSM gate, Orchestrator tool set, and transition-phase to verify 
         toolName?: string
         input: unknown
         error: string
-      } & Pick<CodebuffToolCall, 'toolCallId'>
+      } & Pick<SavantCodeToolCall, 'toolCallId'>
       
       const bareStringFieldRepairAllowlist: Partial<
         Record<string, readonly string[]>
@@ -4108,7 +4108,7 @@ Let me read the FSM gate, Orchestrator tool set, and transition-phase to verify 
           toolCallId: string
           input: unknown
         }
-      }): CodebuffToolCall<T> | ToolCallError {
+      }): SavantCodeToolCall<T> | ToolCallError {
         const { rawToolCall } = params
         const toolName = rawToolCall.toolName
       
@@ -4155,7 +4155,7 @@ Let me read the FSM gate, Orchestrator tool set, and transition-phase to verify 
           toolName,
           input: result.data,
           toolCallId: rawToolCall.toolCallId,
-        } as CodebuffToolCall<T>
+        } as SavantCodeToolCall<T>
       }
       
       export type ExecuteToolCallParams<T extends string = ToolName> = {
@@ -4186,8 +4186,8 @@ Let me read the FSM gate, Orchestrator tool set, and transition-phase to verify 
         system: string
         tools: ToolSet
         toolCallId: string | undefined
-        toolCalls: (CodebuffToolCall | CustomToolCall)[]
-        toolCallsToAddToMessageHistory: (CodebuffToolCall | CustomToolCall)[]
+        toolCalls: (SavantCodeToolCall | CustomToolCall)[]
+        toolCallsToAddToMessageHistory: (SavantCodeToolCall | CustomToolCall)[]
         toolResults: ToolMessage[]
         toolResultsToAddToMessageHistory: ToolMessage[]
         userId: string | undefined
@@ -4224,7 +4224,7 @@ Let me read the FSM gate, Orchestrator tool set, and transition-phase to verify 
         } = params
         const toolCallId = params.toolCallId ?? generateCompactId()
       
-        const toolCall: CodebuffToolCall<T> | ToolCallError = parseRawToolCall<T>({
+        const toolCall: SavantCodeToolCall<T> | ToolCallError = parseRawToolCall<T>({
           rawToolCall: {
             toolName,
             toolCallId,
@@ -4424,9 +4424,9 @@ Let me read the FSM gate, Orchestrator tool set, and transition-phase to verify 
         })
       
         // Cast to any to avoid type errors
-        const handler = codebuffToolHandlers[
+        const handler = savantCode$1[
           toolName
-        ] as unknown as CodebuffToolHandlerFunction<T>
+        ] as unknown as SavantCodeToolHandlerFunction<T>
       
         // Use effective input for spawn_agents so the handler receives the correct agent types
         const finalToolCall =
@@ -4456,7 +4456,7 @@ Let me read the FSM gate, Orchestrator tool set, and transition-phase to verify 
               toolName: clientToolCall.toolName,
               input: clientToolCall.input,
             })
-            return clientToolResult.output as CodebuffToolOutput<T>
+            return clientToolResult.output as SavantCodeToolOutput<T>
           }) as any,
         })
       
@@ -4767,10 +4767,10 @@ Let me read the FSM gate, Orchestrator tool set, and transition-phase to verify 
       - packages\agent-runtime\src\tools\stream-parser.ts
 - path: agents\base2\base2.ts
   content: |
-      import { ECHO_PROTOCOL_INSTRUCTIONS } from '@codebuff/common/constants/agents'
-      import { buildArray } from '@codebuff/common/util/array'
-      import { COMPOSIO_META_TOOL_NAMES } from '@codebuff/common/constants/composio'
-      import { FREEBUFF_KIMI_MODEL_ID, FREEBUFF_MINIMAX_M3_MODEL_ID } from '@codebuff/common/constants/freebuff-models'
+      import { ECHO_PROTOCOL_INSTRUCTIONS } from '@savant-code/common/constants/agents'
+      import { buildArray } from '@savant-code/common/util/array'
+      import { COMPOSIO_META_TOOL_NAMES } from '@savant-code/common/constants/composio'
+      import { FREEBUFF_KIMI_MODEL_ID, FREEBUFF_MINIMAX_M3_MODEL_ID } from '@savant-code/common/constants/savant-free-models'
       
       import { publisher } from '../constants'
       import {
@@ -4807,7 +4807,7 @@ Let me read the FSM gate, Orchestrator tool set, and transition-phase to verify 
         const isFree = mode === 'free' || mode === 'lite'
       
         // Lite and free modes run MiniMax M3 (routed through the Fireworks AI API).
-        // New Freebuff clients select explicit free variants from the model picker;
+        // New SavantFree clients select explicit free variants from the model picker;
         // the unqualified base2-free agent covers legacy callers.
         const model =
           modelOverride ??
@@ -4871,7 +4871,7 @@ Let me read the FSM gate, Orchestrator tool set, and transition-phase to verify 
             'transition_phase',
           ),
           // Savant agent roster — 9 specialized agents + infrastructure.
-          // Codebuff agent variants removed in FID-2026-0718-006.
+          // SavantCode agent variants removed in FID-2026-0718-006.
           spawnableAgents: buildArray(
             'detective',
             'scout',
@@ -4888,7 +4888,7 @@ Let me read the FSM gate, Orchestrator tool set, and transition-phase to verify 
             'scribe',
           ),
       
-          systemPrompt: `You are Savant, an engineering agent bound by the ECHO Protocol. You are the AI agent behind the product, ${isFree ? 'Freebuff' : 'Codebuff'}, a tool where users can chat with you to code with AI${isFree ? ' for free' : ''}.
+          systemPrompt: `You are Savant, an engineering agent bound by the ECHO Protocol. You are the AI agent behind the product, ${isFree ? 'SavantFree' : 'SavantCode'}, a tool where users can chat with you to code with AI${isFree ? ' for free' : ''}.
       
       Current date: ${PLACEHOLDER.CURRENT_DATE}.
       
@@ -4949,15 +4949,15 @@ Let me read the FSM gate, Orchestrator tool set, and transition-phase to verify 
       - **No need to include context:** When prompting an agent, realize that many agents can already see the entire conversation history, so you can be brief in prompting them without needing to include context.
       - **Never spawn the context-pruner agent:** This agent is spawned automatically for you and you don't need to spawn it yourself.
       
-      # ${isFree ? 'Freebuff' : 'Codebuff'} Meta-information
+      # ${isFree ? 'SavantFree' : 'SavantCode'} Meta-information
       
       You are running on the ${model} model.
       
-      ${isFree ? 'See freebuff.com for more information about the product.' : [
+      ${isFree ? 'See savant-free.com for more information about the product.' : [
         'Users send prompts to you in one of a few user-selected modes, like DEFAULT, MAX, or PLAN.',
         'Every prompt sent consumes the user\'s credits, which is calculated based on the API cost of the models used.',
         'The user can use the "/usage" command to see how many credits they have used and have left, so you can tell them to check their usage this way.',
-        'For other questions, you can direct them to codebuff.com, or especially codebuff.com/docs for detailed information about the product.',
+        'For other questions, you can direct them to savant-code.com, or especially savant-code.com/docs for detailed information about the product.',
       ].join('\n')}
       
       # Response examples
@@ -5394,7 +5394,7 @@ message: Found 1 file(s) matching pattern "**/bundled-agents*.ts"
 > 
 > First, let me verify the FID path exemption and the tool list (to know which tools exist: find_files, lookup_agent_info, code_search, tracking tools). Let me read write-file.ts handler and check common/tools/list or a tool names enum.
 > 
-> Actually, tool-executor imports `toolNames` from '@codebuff/common/tools/constants' — that's the list of valid tool names (used in spawn_agents validation to detect "is a tool, not an agent"). Let me read that to know the canonical tool set. And read write-file handler for the FID exemption.
+> Actually, tool-executor imports `toolNames` from '@savant-code/common/tools/constants' — that's the list of valid tool names (used in spawn_agents validation to detect "is a tool, not an agent"). Let me read that to know the canonical tool set. And read write-file handler for the FID exemption.
 > 
 > Let me do these reads, plus I'll also peek at the slash command registry for Phase 4 (cli/src/commands/command-registry.ts) and dev override code (cli/src/utils — search for devMode).
 > 
@@ -5434,21 +5434,21 @@ Let me verify the FID-exemption location, the canonical tool list, and the slash
 
 - path: packages\agent-runtime\src\tools\handlers\tool\write-file.ts
   content: |
-      import { AbortError } from '@codebuff/common/util/error'
+      import { AbortError } from '@savant-code/common/util/error'
       import { partition } from 'lodash'
       
       import { processFileBlock } from '../../../process-file-block'
       
-      import type { CodebuffToolHandlerFunction } from '../handler-function-type'
+      import type { SavantCodeToolHandlerFunction } from '../handler-function-type'
       import type {
         ClientToolCall,
-        CodebuffToolCall,
-        CodebuffToolOutput,
-      } from '@codebuff/common/tools/list'
-      import type { RequestOptionalFileFn } from '@codebuff/common/types/contracts/client'
-      import type { Logger } from '@codebuff/common/types/contracts/logger'
-      import type { ParamsExcluding } from '@codebuff/common/types/function-params'
-      import type { AgentState } from '@codebuff/common/types/session-state'
+        SavantCodeToolCall,
+        SavantCodeToolOutput,
+      } from '@savant-code/common/tools/list'
+      import type { RequestOptionalFileFn } from '@savant-code/common/types/contracts/client'
+      import type { Logger } from '@savant-code/common/types/contracts/logger'
+      import type { ParamsExcluding } from '@savant-code/common/types/function-params'
+      import type { AgentState } from '@savant-code/common/types/session-state'
       
       type FileProcessingTools = 'write_file' | 'str_replace' | 'create_plan'
       export type FileProcessing<
@@ -5498,7 +5498,7 @@ Let me verify the FID-exemption location, the canonical tool list, and the slash
       export const handleWriteFile = (async (
         params: {
           previousToolCallFinished: Promise<void>
-          toolCall: CodebuffToolCall<'write_file'>
+          toolCall: SavantCodeToolCall<'write_file'>
       
           agentState: AgentState
           clientSessionId: string
@@ -5511,11 +5511,11 @@ Let me verify the FID-exemption location, the canonical tool list, and the slash
       
           requestClientToolCall: (
             toolCall: ClientToolCall<'write_file'>,
-          ) => Promise<CodebuffToolOutput<'write_file'>>
+          ) => Promise<SavantCodeToolOutput<'write_file'>>
           requestOptionalFile: RequestOptionalFileFn
           writeToClient: (chunk: string) => void
         } & ParamsExcluding<RequestOptionalFileFn, 'filePath'>,
-      ): Promise<{ output: CodebuffToolOutput<'write_file'> }> => {
+      ): Promise<{ output: SavantCodeToolOutput<'write_file'> }> => {
         const {
           previousToolCallFinished,
           toolCall,
@@ -5595,7 +5595,7 @@ Let me verify the FID-exemption location, the canonical tool list, and the slash
             requestClientToolCall,
           ),
         }
-      }) satisfies CodebuffToolHandlerFunction<'write_file'>
+      }) satisfies SavantCodeToolHandlerFunction<'write_file'>
       
       export async function postStreamProcessing<T extends FileProcessingTools>(
         toolCall: FileProcessing<T>,
@@ -5603,8 +5603,8 @@ Let me verify the FID-exemption location, the canonical tool list, and the slash
         writeToClient: (chunk: string) => void,
         requestClientToolCall: (
           toolCall: ClientToolCall<T>,
-        ) => Promise<CodebuffToolOutput<T>>,
-      ): Promise<CodebuffToolOutput<T>> {
+        ) => Promise<SavantCodeToolOutput<T>>,
+      ): Promise<SavantCodeToolOutput<T>> {
         const allFileProcessingResults = await Promise.all(
           fileProcessingState.allPromises,
         )
@@ -6005,7 +6005,7 @@ message: "INVALID FSM transition: idle → green. Allowed: red. Reason: TEST 25:
           "cli",
           "common",
           "evals",
-          "freebuff",
+          "savant-free",
           "packages/agent-runtime",
           "packages/code-map",
           "packages/database",
@@ -6016,14 +6016,14 @@ message: "INVALID FSM transition: idle → green. Allowed: red. Reason: TEST 25:
         "scripts": {
           "start-cli": "bun --cwd cli dev",
           "dev": "bun start-cli",
-          "dev:freebuff": "FREEBUFF_MODE=true bun --cwd cli dev",
+          "dev:savant-free": "FREEBUFF_MODE=true bun --cwd cli dev",
           "release:cli": "bun run --cwd=cli release",
           "release:sdk": "bun run --cwd=sdk release",
-          "release:freebuff": "bun run --cwd=freebuff release",
+          "release:savant-free": "bun run --cwd=savant-free release",
           "build:sdk": "cd sdk && bun run build",
-          "build:freebuff": "bun freebuff/cli/build.ts 0.0.0-dev",
+          "build:savant-free": "bun savant-free/cli/build.ts 0.0.0-dev",
           "buffbench": "bun --cwd evals run-buffbench",
-          "ci": "bun run build:sdk && bun run build:freebuff"
+          "ci": "bun run build:sdk && bun run build:savant-free"
         },
         "dependencies": {
           "better-sqlite3": "^12.11.1",
@@ -7449,7 +7449,7 @@ message: "Exit code: 0"
 stdout: |
     Found 3 matches
     .\src\tools\handlers\tool\transition-phase.ts:
-      Line 9: import type { FsmPhase } from '@codebuff/common/types/session-state'
+      Line 9: import type { FsmPhase } from '@savant-code/common/types/session-state'
       Line 30:   agentState: { fsmPhase?: FsmPhase; iterationCount?: number }
       Line 98:   agentState.fsmPhase = phase as FsmPhase
 message: "Exit code: 0"
@@ -7870,7 +7870,7 @@ The documentation fetch failed (missing API key/configuration), so the rules bel
 ```
 
 ```
-Missing Codebuff base URL or API key
+Missing SavantCode base URL or API key
 ```
 
 **Report: React `useEffect` — 2 Main Rules**
@@ -8303,7 +8303,7 @@ phase: audit
 ```
 files: 
   - .gitkeep
-  - Codebuff Rebranding And Migration Plan.md
+  - SavantCode Rebranding And Migration Plan.md
   - FID-2026-0717-013-tests.md
   - FID-2026-0717-017-visual-enhancement.md
   - FID-savant-code-rebrand.md
@@ -8764,7 +8764,7 @@ Now let me source-verify the remaining phases that don't require live CLI intera
 
 - path: cli\src\commands\command-registry.ts
   content: |
-      import { CHATGPT_OAUTH_ENABLED } from '@codebuff/common/constants/chatgpt-oauth'
+      import { CHATGPT_OAUTH_ENABLED } from '@savant-code/common/constants/chatgpt-oauth'
       import { safeOpen } from '../utils/open-url'
       
       import { handleAdsEnable, handleAdsDisable } from './ads'
@@ -8779,12 +8779,12 @@ Now let me source-verify the remaining phases that don't require live CLI intera
       import { buildInterviewPrompt, buildPlanPrompt, buildReviewPromptFromArgs } from './prompt-builders'
       import { runBashCommand } from './router'
       import { handleUsageCommand } from './usage'
-      import { returnToFreebuffLanding } from '../hooks/use-freebuff-session'
+      import { returnToFreebuffLanding } from '../hooks/use-savant-free-session'
       import { useThemeStore } from '../hooks/use-theme'
       import { WEBSITE_URL } from '../login/constants'
       import { startNewChat } from '../project-files'
       import { useChatStore } from '../state/chat-store'
-      import { useFreebuffModelStore } from '../state/freebuff-model-store'
+      import { useFreebuffModelStore } from '../state/savant-free-model-store'
       import { abortActiveRun } from '../utils/active-run'
       import { useFeedbackStore } from '../state/feedback-store'
       import { useLoginStore } from '../state/login-store'
@@ -9196,7 +9196,7 @@ Now let me source-verify the remaining phases that don't require live CLI intera
             clearInput(params)
           },
         }),
-        // Mode commands generated from AGENT_MODES (excluded in Freebuff)
+        // Mode commands generated from AGENT_MODES (excluded in SavantFree)
         ...(IS_FREEBUFF ? [] : AGENT_MODES).map((mode) =>
           defineCommandWithArgs({
             name: `mode:${mode.toLowerCase()}`,
@@ -9413,9 +9413,9 @@ Now let me source-verify the remaining phases that don't require live CLI intera
             clearInput(params)
           },
         }),
-        // /end-session (freebuff-only) — end the active session early and drop back
+        // /end-session (savant-free-only) — end the active session early and drop back
         // to the model picker. The hook flips status to 'none', which unmounts
-        // <Chat> and mounts <FreebuffLandingScreen>, where the user picks a model
+        // <Chat> and mounts <SavantFree$1>, where the user picks a model
         // and hits Enter to start a new session.
         defineCommand({
           name: 'end-session',
@@ -9674,35 +9674,35 @@ message: Found 17 file(s) matching pattern "**/nova/**"
 > - logout (signout) ✅ (108)
 > - exit (quit, q) ✅ (109)
 > - skill:* — dynamic via getSkillByName ✅ (110-117: coding-typescript, coding-python, coding-rust, coding-go, coding-java, coding-csharp, sequential-thinking, release-workflow)
-> - connect (freebuff-only) — in THIS (Codebuff/non-freebuff) build, connect is CHATGPT_OAUTH_ENABLED gated; FREEBUFF_ONLY_COMMANDS includes 'connect', 'plan', 'end-session'. Wait — plan is in FREEBUFF_ONLY_COMMANDS but also defined as a command. Let me re-read.
+> - connect (savant-free-only) — in THIS (SavantCode/non-savant-free) build, connect is CHATGPT_OAUTH_ENABLED gated; FREEBUFF_ONLY_COMMANDS includes 'connect', 'plan', 'end-session'. Wait — plan is in FREEBUFF_ONLY_COMMANDS but also defined as a command. Let me re-read.
 > 
 > Actually: `FREEBUFF_ONLY_COMMANDS = new Set(['connect', 'plan', 'end-session'])`. And `COMMAND_REGISTRY = IS_FREEBUFF ? ALL_COMMANDS.filter(!FREEBUFF_REMOVED_COMMANDS) : ALL_COMMANDS.filter(!FREEBUFF_ONLY_COMMANDS)`.
 > 
-> So in NON-FREEBUFF (Codebuff) mode: COMMAND_REGISTRY excludes 'connect', 'plan', 'end-session'. But 'plan' is ALSO defined in ALL_COMMANDS (defineCommandWithArgs name 'plan'). So in Codebuff mode, 'plan' is filtered OUT of COMMAND_REGISTRY. Hmm. But 'plan' is needed for test 105. 
+> So in NON-FREEBUFF (SavantCode) mode: COMMAND_REGISTRY excludes 'connect', 'plan', 'end-session'. But 'plan' is ALSO defined in ALL_COMMANDS (defineCommandWithArgs name 'plan'). So in SavantCode mode, 'plan' is filtered OUT of COMMAND_REGISTRY. Hmm. But 'plan' is needed for test 105. 
 > 
-> Wait, but `findCommand` checks COMMAND_REGISTRY first, then skill commands, then returns undefined. For 'plan' in Codebuff mode: it's filtered out of COMMAND_REGISTRY, and it's not a skill, so findCommand returns undefined → "Command not found". So in Codebuff mode, /plan does NOT exist?! 
+> Wait, but `findCommand` checks COMMAND_REGISTRY first, then skill commands, then returns undefined. For 'plan' in SavantCode mode: it's filtered out of COMMAND_REGISTRY, and it's not a skill, so findCommand returns undefined → "Command not found". So in SavantCode mode, /plan does NOT exist?! 
 > 
-> Hold on. Let me reconsider. In the test environment, IS_FREEBUFF could be true or false. The git diff showed FREEBUFF references. The README mentions Savant-Code (paid) and Savant-Free. The test plan Phase 4 lists /plan (105) and /connect, /end-session (Freebuff). 
+> Hold on. Let me reconsider. In the test environment, IS_FREEBUFF could be true or false. The git diff showed FREEBUFF references. The README mentions Savant-Code (paid) and Savant-Free. The test plan Phase 4 lists /plan (105) and /connect, /end-session (SavantFree). 
 > 
-> Actually wait — FREEBUFF_ONLY_COMMANDS contains 'plan'. That means 'plan' is freebuff-only. In Codebuff (non-freebuff), 'plan' is removed. But the test plan test 105 expects /plan to work. So either:
-> (a) The test runs in Freebuff mode (IS_FREEBUFF=true), where 'plan' is included. 
+> Actually wait — FREEBUFF_ONLY_COMMANDS contains 'plan'. That means 'plan' is savant-free-only. In SavantCode (non-savant-free), 'plan' is removed. But the test plan test 105 expects /plan to work. So either:
+> (a) The test runs in SavantFree mode (IS_FREEBUFF=true), where 'plan' is included. 
 > (b) There's a discrepancy.
 > 
-> Also 'connect' is in FREEBUFF_ONLY_COMMANDS AND also has a CHATGPT_OAUTH conditional. In Codebuff mode, 'connect' is removed (FREEBUFF_ONLY). In Freebuff mode, 'connect' is in ALL_COMMANDS (since the filter removes FREEBUFF_REMOVED_COMMANDS, not FREEBUFF_ONLY). But 'connect' is also gated by CHATGPT_OAUTH_ENABLED — and the CHATGPT_OAUTH block only adds connect if CHATGPT_OAUTH_ENABLED. Hmm, this is getting complex.
+> Also 'connect' is in FREEBUFF_ONLY_COMMANDS AND also has a CHATGPT_OAUTH conditional. In SavantCode mode, 'connect' is removed (FREEBUFF_ONLY). In SavantFree mode, 'connect' is in ALL_COMMANDS (since the filter removes FREEBUFF_REMOVED_COMMANDS, not FREEBUFF_ONLY). But 'connect' is also gated by CHATGPT_OAUTH_ENABLED — and the CHATGPT_OAUTH block only adds connect if CHATGPT_OAUTH_ENABLED. Hmm, this is getting complex.
 > 
-> Let me reconsider: The test plan test 118 "/connect (Freebuff) — Connects OR 'not available'" and test 119 "/end-session (Freebuff)". So those are explicitly Freebuff-only. Test 105 "/plan" — listed as a general command. But code says 'plan' is FREEBUFF_ONLY. 
+> Let me reconsider: The test plan test 118 "/connect (SavantFree) — Connects OR 'not available'" and test 119 "/end-session (SavantFree)". So those are explicitly SavantFree-only. Test 105 "/plan" — listed as a general command. But code says 'plan' is FREEBUFF_ONLY. 
 > 
-> This is a potential finding: in Codebuff (non-Freebuff) mode, /plan is filtered out (FREEBUFF_ONLY_COMMANDS), contradicting the test expecting /plan to work. But if the test runs in Freebuff mode, /plan works. Given the git diff mentioned FREEBUFF_GEMINI_THINKER being removed and the README mentions both products, the actual runtime mode determines this.
+> This is a potential finding: in SavantCode (non-SavantFree) mode, /plan is filtered out (FREEBUFF_ONLY_COMMANDS), contradicting the test expecting /plan to work. But if the test runs in SavantFree mode, /plan works. Given the git diff mentioned FREEBUFF_GEMINI_THINKER being removed and the README mentions both products, the actual runtime mode determines this.
 > 
 > I don't know IS_FREEBUFF at runtime here. The agents (base2) reference 'FREEBUFF_MODE' env. In the CLI, IS_FREEBUFF is imported from utils/constants. I can't easily determine the runtime value without running the CLI.
 > 
-> For the report, I'll note: command-registry.ts defines help, diagnostics, new, history, copy, theme:toggle, review, interview, plan, feedback, bash, logout, exit, skill:* (dynamic), connect (freebuff/oauth-gated), end-session (freebuff). In Codebuff mode, connect/plan/end-session are excluded via FREEBUFF_ONLY_COMMANDS filter. So /plan availability depends on mode — potential discrepancy with test 105 if running Codebuff mode. I'll flag as CAVEAT.
+> For the report, I'll note: command-registry.ts defines help, diagnostics, new, history, copy, theme:toggle, review, interview, plan, feedback, bash, logout, exit, skill:* (dynamic), connect (savant-free/oauth-gated), end-session (savant-free). In SavantCode mode, connect/plan/end-session are excluded via FREEBUFF_ONLY_COMMANDS filter. So /plan availability depends on mode — potential discrepancy with test 105 if running SavantCode mode. I'll flag as CAVEAT.
 > 
-> Actually, let me reconsider whether 'plan' is really freebuff-only. That seems odd for a coding agent (plan mode is core). Possibly a misconfiguration: plan should be available in both. This is worth flagging as a finding (test 105 might fail in Codebuff mode). But I'm not 100% sure of runtime mode. I'll flag as a CAVEAT/ potential finding.
+> Actually, let me reconsider whether 'plan' is really savant-free-only. That seems odd for a coding agent (plan mode is core). Possibly a misconfiguration: plan should be available in both. This is worth flagging as a finding (test 105 might fail in SavantCode mode). But I'm not 100% sure of runtime mode. I'll flag as a CAVEAT/ potential finding.
 > 
 > Also note: the test lists /fids, /fid, /phase (from FID-006 ECHO slash commands) — but those aren't in command-registry.ts! The ARCHITECTURE/CHANGELOG mentioned /fids, /fid, /phase commands (FID-2026-0717-012). But they're NOT in command-registry.ts. So those ECHO commands may not be registered. That's a finding — the test plan doesn't explicitly list /fids (it's in the FID-006 description, not in Phase 4 table). Phase 4 table starts at /help. So /fids isn't tested in Phase 4. But it's a known feature that may be missing. I'll note it.
 > 
-> Also 'mode:*' commands generated from AGENT_MODES (excluded in Freebuff). And 'model' command (excluded in Freebuff). 
+> Also 'mode:*' commands generated from AGENT_MODES (excluded in SavantFree). And 'model' command (excluded in SavantFree). 
 > 
 > **Phase 11 Nova Protocol:**
 > - dev/nova/inbox/ exists with files ✅ (215)
@@ -9712,7 +9712,7 @@ message: Found 17 file(s) matching pattern "**/nova/**"
 > 
 > Now, I'm essentially done with source verification. Let me also verify the `[DEV MODE]` badge rendering and the `setDevMode`/`devMode` in chat-store (quick grep), and confirm the dev override bypass paths in tool-executor (already seen). Actually I've seen enough.
 > 
-> One more: Phase 15 typechecks — I've verified common + agents (zero errors). Let me verify the remaining packages (cli, sdk, packages/agent-runtime, packages/code-map, packages/llm-providers, evals) to fully satisfy 242-246. To run bash I need AUDIT. Let me do a final AUDIT pass: idle→red→green→audit, then basher typechecks for the remaining 4 packages. Actually that's churn. Alternatively, I could note that common+agents passed and the build pipeline (bun run ci → build:sdk && build:freebuff) is the authority. But for a thorough test, let me run the remaining typechecks.
+> One more: Phase 15 typechecks — I've verified common + agents (zero errors). Let me verify the remaining packages (cli, sdk, packages/agent-runtime, packages/code-map, packages/llm-providers, evals) to fully satisfy 242-246. To run bash I need AUDIT. Let me do a final AUDIT pass: idle→red→green→audit, then basher typechecks for the remaining 4 packages. Actually that's churn. Alternatively, I could note that common+agents passed and the build pipeline (bun run ci → build:sdk && build:savant-free) is the authority. But for a thorough test, let me run the remaining typechecks.
 > 
 > Hmm, but re-entering AUDIT requires 3 transitions. Given I've already demonstrated the cycle works and common+agents typecheck clean, and the remaining packages use the same tsc, I think it's reasonable to run them to be thorough. But it adds a lot of turns. 
 > 
@@ -9758,7 +9758,7 @@ message: Found 17 file(s) matching pattern "**/nova/**"
 - `setDevMode(true/false)` in chat-store; `tool-executor.ts` bypasses ALL 4 gates when `fileContext.devMode === true` ✅ (tests 83–89)
 - `/new` resets dev mode (`setDevMode(false)`) ✅ (tests 90–91)
 
-**Phase 4 (Slash Commands)** — registry defines: help, diagnostics, new, history, copy, theme:toggle, review, interview, plan, feedback, bash, logout, exit, plus dynamic `skill:*` (tests 97–117). **Finding:** `plan`, `connect`, `end-session` are in `FREEBUFF_ONLY_COMMANDS` — excluded from the registry in Codebuff (non-Freebuff) mode, so `/plan` availability depends on runtime mode (potential discrepancy with test 105).
+**Phase 4 (Slash Commands)** — registry defines: help, diagnostics, new, history, copy, theme:toggle, review, interview, plan, feedback, bash, logout, exit, plus dynamic `skill:*` (tests 97–117). **Finding:** `plan`, `connect`, `end-session` are in `FREEBUFF_ONLY_COMMANDS` — excluded from the registry in SavantCode (non-SavantFree) mode, so `/plan` availability depends on runtime mode (potential discrepancy with test 105).
 
 **Phase 11 (Nova)** — `dev/nova/inbox/`, `outbox/`, and both `archive/` dirs exist ✅ (tests 215–219).
 
@@ -9871,7 +9871,7 @@ phase: idle
 > - 3: dev/fids/ scanned — FID-2026-0717-013-tests.md, FID-2026-0717-017-visual-enhancement.md, FID-savant-code-rebrand.md, etc. ✅ PASS
 > - 4: IDLE phase after boot ✅ PASS
 > - 5: bun --version — 1.3.14 (from package.json engines) — I didn't run it live (bash gated). Source-confirmed. PASS-WITH-CAVEAT (didn't run live). Actually I could note version from package.json: bun 1.3.14.
-> - 6: model active — Anthropic claude-opus-4.8 (Codebuff mode, not IS_FREEBUFF) — PASS (source)
+> - 6: model active — Anthropic claude-opus-4.8 (SavantCode mode, not IS_FREEBUFF) — PASS (source)
 > - 7: shell detected — bash (System Info) — PASS
 > 
 > **PHASE 2: Direct Tools**
@@ -9925,7 +9925,7 @@ phase: idle
 > **PHASE 3: Dev Override** — source-verified above. PASS (source). Live toggle needs CLI.
 > 
 > **PHASE 4: Slash Commands** — registry verified. 
-> - 97 help ✅, 98 diagnostics ✅, 99 new ✅, 100 history ✅, 101 copy ✅, 102 theme:toggle ✅, 103 review ✅, 104 interview ✅, 105 plan — CAVEAT (freebuff-only in Codebuff mode), 106 feedback ✅, 107 bash ✅, 108 logout ✅, 109 exit ✅, 110-117 skill:* ✅ (dynamic), 118 connect (freebuff/oauth) ✅-in-freebuff, 119 end-session (freebuff) ✅-in-freebuff, 120-122 help/new/exit no-slash aliases ✅.
+> - 97 help ✅, 98 diagnostics ✅, 99 new ✅, 100 history ✅, 101 copy ✅, 102 theme:toggle ✅, 103 review ✅, 104 interview ✅, 105 plan — CAVEAT (savant-free-only in SavantCode mode), 106 feedback ✅, 107 bash ✅, 108 logout ✅, 109 exit ✅, 110-117 skill:* ✅ (dynamic), 118 connect (savant-free/oauth) ✅-in-savant-free, 119 end-session (savant-free) ✅-in-savant-free, 120-122 help/new/exit no-slash aliases ✅.
 > 
 > **PHASE 5: Agent Roster & Separation (FID-006)**
 > - 123-131: all 9 agents spawnable — detective✅ verifier✅ scout(spawns but crashes)⚠️ thinker✅ recorder✅ scribe✅ forge✅(spawn blocked correctly) researcher-web✅ researcher-docs✅. Note: scout broken, code-reviewer-mimo-pro (test 46) deleted.
@@ -10006,7 +10006,7 @@ phase: idle
 > 3. **Test 37 (code-searcher)** — agent renamed to detective; "code-searcher" not spawnable. Doc/test drift. FAIL (as written).
 > 4. **Test 46 (code-reviewer-mimo-pro)** — deleted in FID-006. Not spawnable. FAIL (as written).
 > 5. **ARCHITECTURE.md doc drift (test 147)** — Scout/Detective tool lists stale vs actual. CAVEAT/FINDING.
-> 6. **Test 105 (/plan)** — plan is FREEBUFF_ONLY; excluded in Codebuff mode. CAVEAT (mode-dependent).
+> 6. **Test 105 (/plan)** — plan is FREEBUFF_ONLY; excluded in SavantCode mode. CAVEAT (mode-dependent).
 > 7. **Test 231 (.agents/skills 11)** — only 7 dirs present; 4 are preloaded. CAVEAT.
 > 8. **Orchestrator set_output (test 69/138)** — present in toolNames but system-prompt says not to use. CAVEAT (doc inconsistency).
 > 9. **tests 13, 70, 74-77 (find_files, lookup_agent_info, add_subgoal, etc.)** — valid tool names but NOT in Orchestrator toolNames → blocked if called directly. CAVEAT (these are subagent tools).
@@ -10155,7 +10155,7 @@ Doc lists Scout tools as `spawn_agents` only and Detective as `code_search, set_
 11 skills are *available* total, but 4 (`find-skills`, `gepeto`, `pinokio`, `sequential-thinking`) are **preloaded**, not in `.agents/skills/`. The claim "11 SKILL.md in `.agents/skills/`" is false.
 
 **F6 — `/plan` availability is mode-dependent (test 105).**
-`plan`, `connect`, `end-session` are in `FREEBUFF_ONLY_COMMANDS`; the `COMMAND_REGISTRY` filter **excludes** them in Codebuff (non-Freebuff) mode. So `/plan` works only in Freebuff mode.
+`plan`, `connect`, `end-session` are in `FREEBUFF_ONLY_COMMANDS`; the `COMMAND_REGISTRY` filter **excludes** them in SavantCode (non-SavantFree) mode. So `/plan` works only in SavantFree mode.
 
 **F7 — Orchestrator `set_output` inconsistency (tests 69, 138).**
 `base2.ts` includes `set_output` in `toolNames` (so test 138 "passes"), but the system prompt simultaneously says *"Don't use set_output."* Minor doc inconsistency.
@@ -10208,9 +10208,9 @@ write the COMPLETE report here. Include all details, big and small. Any issues y
 ## Assistant
 
 > _Reasoning_
-> The user wants me to write the COMPLETE report into a file: `C:\Users\spenc\dev\codebuff\docs\reports` (which is an empty directory). They want all details, including the boilerplate/system-reminder issue I kept noticing, and a final "agent thoughts" section with complaints, requests, and anything that makes my work easier.
+> The user wants me to write the COMPLETE report into a file: `C:\Users\spenc\dev\savant-code\docs\reports` (which is an empty directory). They want all details, including the boilerplate/system-reminder issue I kept noticing, and a final "agent thoughts" section with complaints, requests, and anything that makes my work easier.
 > 
-> This is now an explicit request to WRITE A FILE. The user said "write the COMPLETE report here" and gave a directory `C:\Users\spenc\dev\codebuff\docs\reports`. So writing a report file is now explicitly requested. This means I can use Forge (or write via the report mechanism). 
+> This is now an explicit request to WRITE A FILE. The user said "write the COMPLETE report here" and gave a directory `C:\Users\spenc\dev\savant-code\docs\reports`. So writing a report file is now explicitly requested. This means I can use Forge (or write via the report mechanism). 
 > 
 > Wait — I'm the Orchestrator. I don't have write_file directly (separation of duties). But the user explicitly asked me to "write the COMPLETE report here" into docs/reports/. The earlier instruction "don't modify files unless asked" is now overridden — the user explicitly asked to write the report file.
 > 
@@ -10369,7 +10369,7 @@ write the COMPLETE report here. Include all details, big and small. Any issues y
 > 
 > Let me write this. It'll be long but that's what's requested.
 > 
-> Now, about the directory: `C:\Users\spenc\dev\codebuff\docs\reports` — but the project paths use forward slashes and are relative to project root `C:\Users\spenc\dev\codebuff`. So the file is `docs/reports/az-system-test-v2-report.md`. The directory is empty (confirmed). I'll write there. Relative path: `docs/reports/az-system-test-v2-report.md`.
+> Now, about the directory: `C:\Users\spenc\dev\savant-code\docs\reports` — but the project paths use forward slashes and are relative to project root `C:\Users\spenc\dev\savant-code`. So the file is `docs/reports/az-system-test-v2-report.md`. The directory is empty (confirmed). I'll write there. Relative path: `docs/reports/az-system-test-v2-report.md`.
 > 
 > Let me make sure I'm allowed to write there — it's a normal docs file, not dev/fids/. The GREEN gate allows write_file for any path (the missing dev/fids exemption is irrelevant; green allows all writes). Good.
 > 
@@ -10467,7 +10467,7 @@ phase: green
 > Key evidence collected:
 > - ECHO.md v0.2.0, strict_mode true, language typescript
 > - protocol.config.yaml: strict_mode: true, language: typescript, version 0.0.1
-> - dev/fids/ open: FID-2026-0717-013-tests.md, FID-2026-0717-017-visual-enhancement.md, FID-savant-code-rebrand.md, Codebuff Rebranding And Migration Plan.md, visual-mockup-neon-slate.txt
+> - dev/fids/ open: FID-2026-0717-013-tests.md, FID-2026-0717-017-visual-enhancement.md, FID-savant-code-rebrand.md, SavantCode Rebranding And Migration Plan.md, visual-mockup-neon-slate.txt
 > - package.json: bun 1.3.14, version 0.0.1
 > - ARCHITECTURE.md roster + tool gating table (stale for Scout/Detective)
 > - common/src/mcp/client.ts: withTimeout, DEFAULT_CONNECT_TIMEOUT_MS=30000, DEFAULT_TOOL_TIMEOUT_MS=60000, MAX_TIMEOUT_MS=300000, clientTimeouts, clampTimeout, transport.close() in catch, listToolsCache .catch delete
@@ -10598,10 +10598,10 @@ In GREEN. Now I'll have **Forge** write the complete report verbatim to `docs/re
 > For Phase 1 (Boot & Identity), items 1-7:
 > 1. ECHO.md loaded — PASS. Read ECHO.md (v0.2.0, ACTIVE). Evidence: "ECHO PROTOCOL v0.2.0 — Savant Agent Bootstrap".
 > 2. protocol.config.yaml read — PASS. strict_mode: true, language: typescript, version 0.0.1. Evidence lines.
-> 3. dev/fids/ scanned — PASS. Open FIDs: FID-2026-0717-013-tests.md, FID-2026-0717-017-visual-enhancement.md, FID-savant-code-rebrand.md (plus Codebuff Rebranding..., visual-mockup-neon-slate.txt, archive/).
+> 3. dev/fids/ scanned — PASS. Open FIDs: FID-2026-0717-013-tests.md, FID-2026-0717-017-visual-enhancement.md, FID-savant-code-rebrand.md (plus SavantCode Rebranding..., visual-mockup-neon-slate.txt, archive/).
 > 4. IDLE phase after boot — PASS. Orchestrator enters idle; confirmed by transition tests starting from idle.
 > 5. bun --version — PASS (source: package.json engines.bun = 1.3.14). Not run live (bash gated in idle); version confirmed from manifest. Note: could run in AUDIT.
-> 6. model active — PASS. Codebuff mode (not IS_FREEBUFF); Orchestrator model anthropic/claude-opus-4.8 (from base2.ts default). 
+> 6. model active — PASS. SavantCode mode (not IS_FREEBUFF); Orchestrator model anthropic/claude-opus-4.8 (from base2.ts default). 
 > 7. shell detected — PASS. bash (System Info: Shell: bash).
 > 
 > Phase 2 (Direct Tools) items 8-78:
@@ -10712,14 +10712,14 @@ In GREEN. Now I'll have **Forge** write the complete report verbatim to `docs/re
 > 102. /theme:toggle — PASS.
 > 103. /review — PASS.
 > 104. /interview — PASS.
-> 105. /plan — CAVEAT (F6: FREEBUFF_ONLY; excluded in Codebuff mode).
+> 105. /plan — CAVEAT (F6: FREEBUFF_ONLY; excluded in SavantCode mode).
 > 106. /feedback — PASS.
 > 107. /bash — PASS.
 > 108. /logout — PASS.
 > 109. /exit — PASS.
 > 110-117. /skill:* (coding-typescript/python/rust/go/java/csharp/sequential-thinking/release-workflow) — PASS (dynamic skill commands via getSkillByName).
-> 118. /connect (Freebuff) — PASS (freebuff/oauth-gated).
-> 119. /end-session (Freebuff) — PASS (freebuff-only).
+> 118. /connect (SavantFree) — PASS (savant-free/oauth-gated).
+> 119. /end-session (SavantFree) — PASS (savant-free-only).
 > 120. help (no slash) — PASS (alias).
 > 121. new (no slash) — PASS (alias).
 > 122. exit (no slash) — PASS (alias).
@@ -10902,7 +10902,7 @@ Here is the complete report:
 
 **Date:** 2026-07-18
 **Harness:** Savant-Code (ECHO Protocol v0.2.0), TypeScript monorepo, Bun 1.3.14
-**Executor:** Savant Orchestrator (anthropic/claude-opus-4.8, Codebuff mode — `IS_FREEBUFF` false)
+**Executor:** Savant Orchestrator (anthropic/claude-opus-4.8, SavantCode mode — `IS_FREEBUFF` false)
 **Mode:** Interactive live execution against the running agent + source verification
 **Scope:** 246 test items across 15 phases
 **Caveat:** This was a **read-only verification run — no source code was modified.** Test artifacts (temp FID) were never successfully written, so no cleanup was required.
@@ -10961,10 +10961,10 @@ This is included at the user's explicit request (they noticed I kept referencing
 |---|------|--------|------------------|
 | 1 | ECHO.md loaded | PASS | Read `ECHO.md` — header "ECHO PROTOCOL v0.2.0 — Savant Agent Bootstrap", Status: ACTIVE. |
 | 2 | protocol.config.yaml read | PASS | `strict_mode: true`, `language: "typescript"`, `version: "0.0.1"`. Open FIDs present. |
-| 3 | dev/fids/ scanned | PASS | Open: `FID-2026-0717-013-tests.md`, `FID-2026-0717-017-visual-enhancement.md`, `FID-savant-code-rebrand.md` (+ `Codebuff Rebranding And Migration Plan.md`, `visual-mockup-neon-slate.txt`, `archive/`). |
+| 3 | dev/fids/ scanned | PASS | Open: `FID-2026-0717-013-tests.md`, `FID-2026-0717-017-visual-enhancement.md`, `FID-savant-code-rebrand.md` (+ `SavantCode Rebranding And Migration Plan.md`, `visual-mockup-neon-slate.txt`, `archive/`). |
 | 4 | IDLE phase after boot | PASS | Orchestrator entered `idle`; all FSM cycles below started/resumed from idle. |
 | 5 | bun --version | PASS (src) | `package.json` → `engines.bun = "1.3.14"`. Not run live (bash gated in idle); version confirmed from manifest. |
-| 6 | model active | PASS | Codebuff mode (not `IS_FREEBUFF`); Orchestrator default model `anthropic/claude-opus-4.8` (`base2.ts`). |
+| 6 | model active | PASS | SavantCode mode (not `IS_FREEBUFF`); Orchestrator default model `anthropic/claude-opus-4.8` (`base2.ts`). |
 | 7 | shell detected | PASS | System Info: `Shell: bash`. |
 
 ### PHASE 2 — Direct Tools (8–78)
@@ -11119,14 +11119,14 @@ This is included at the user's explicit request (they noticed I kept referencing
 | 102 | /theme:toggle | PASS | Registry. |
 | 103 | /review | PASS | Registry. |
 | 104 | /interview | PASS | Registry. |
-| 105 | /plan | CAVEAT | See **F6** — `plan` is in `FREEBUFF_ONLY_COMMANDS`; excluded from registry in Codebuff mode. |
+| 105 | /plan | CAVEAT | See **F6** — `plan` is in `FREEBUFF_ONLY_COMMANDS`; excluded from registry in SavantCode mode. |
 | 106 | /feedback | PASS | Registry. |
 | 107 | /bash | PASS | Registry. |
 | 108 | /logout | PASS | Registry. |
 | 109 | /exit | PASS | Registry. |
 | 110–117 | /skill:* (typescript/python/rust/go/java/csharp/sequential-thinking/release-workflow) | PASS | Dynamic via `getSkillByName`. |
-| 118 | /connect (Freebuff) | PASS | Freebuff/OAuth-gated. |
-| 119 | /end-session (Freebuff) | PASS | Freebuff-only. |
+| 118 | /connect (SavantFree) | PASS | SavantFree/OAuth-gated. |
+| 119 | /end-session (SavantFree) | PASS | SavantFree-only. |
 | 120 | help (no slash) | PASS | Alias. |
 | 121 | new (no slash) | PASS | Alias. |
 | 122 | exit (no slash) | PASS | Alias. |
@@ -11336,7 +11336,7 @@ Doc lists Scout tools as `spawn_agents` only and Detective as `code_search, set_
 11 skills are *available* total, but 4 (`find-skills`, `gepeto`, `pinokio`, `sequential-thinking`) are **preloaded**, not present as dirs in `.agents/skills/`. The claim "11 SKILL.md in `.agents/skills/`" is false. **Fix:** reword the test/expectation, or move preloaded skills into `.agents/skills/`.
 
 ### F6 — `/plan` availability is mode-dependent (test 105)
-`plan`, `connect`, `end-session` are in `FREEBUFF_ONLY_COMMANDS`; `COMMAND_REGISTRY` excludes them in Codebuff (non-Freebuff) mode. So `/plan` works only in Freebuff mode. **Fix:** either make `/plan` available in both modes, or document the mode dependency.
+`plan`, `connect`, `end-session` are in `FREEBUFF_ONLY_COMMANDS`; `COMMAND_REGISTRY` excludes them in SavantCode (non-SavantFree) mode. So `/plan` works only in SavantFree mode. **Fix:** either make `/plan` available in both modes, or document the mode dependency.
 
 ### F7 — Orchestrator `set_output` inconsistency (tests 69, 138)
 `base2.ts` includes `set_output` in `toolNames` (so test 138 "passes"), but the system prompt simultaneously says *"Don't use set_output: The set_output tool is for spawned subagents."* **Fix:** remove `set_output` from Orchestrator `toolNames`, or remove the contradictory instruction.

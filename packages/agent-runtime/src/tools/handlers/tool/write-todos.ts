@@ -1,19 +1,19 @@
-import { jsonToolResult } from '@codebuff/common/util/messages'
+import { jsonToolResult } from '@savant-code/common/util/messages'
 
-import type { CodebuffToolHandlerFunction } from '../handler-function-type'
+import type { SavantCodeToolHandlerFunction } from '../handler-function-type'
 import type {
-  CodebuffToolCall,
-  CodebuffToolOutput,
-} from '@codebuff/common/tools/list'
+  SavantCodeToolCall,
+  SavantCodeToolOutput,
+} from '@savant-code/common/tools/list'
 
 type ToolName = 'write_todos'
 export const handleWriteTodos = (async (params: {
   previousToolCallFinished: Promise<void>
-  toolCall: CodebuffToolCall<ToolName>
-}): Promise<{ output: CodebuffToolOutput<ToolName> }> => {
+  toolCall: SavantCodeToolCall<ToolName>
+}): Promise<{ output: SavantCodeToolOutput<ToolName> }> => {
   const { previousToolCallFinished } = params
 
   await previousToolCallFinished
 
   return { output: jsonToolResult({ message: 'Todos written' }) }
-}) satisfies CodebuffToolHandlerFunction<ToolName>
+}) satisfies SavantCodeToolHandlerFunction<ToolName>

@@ -85,7 +85,7 @@ The Savant-Code harness is verified ECHO v0.2.0-compliant:
 - FSM transitions + FID-Bound gate + circuit breaker
 - Tool gating (3 gates) + dev override (test-only)
 - FSM inheritance for subagents
-- 9-agent roster (Codebuff agents deleted)
+- 9-agent roster (SavantCode agents deleted)
 - MCP timeout hardening (30s/60s/300s + transport cleanup + cache retry)
 - Scout glob rewrite
 

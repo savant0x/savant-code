@@ -1,7 +1,7 @@
-import { ECHO_PROTOCOL_INSTRUCTIONS } from '@codebuff/common/constants/agents'
-import { buildArray } from '@codebuff/common/util/array'
-import { COMPOSIO_META_TOOL_NAMES } from '@codebuff/common/constants/composio'
-import { FREEBUFF_KIMI_MODEL_ID, FREEBUFF_MINIMAX_M3_MODEL_ID } from '@codebuff/common/constants/freebuff-models'
+import { ECHO_PROTOCOL_INSTRUCTIONS } from '@savant-code/common/constants/agents'
+import { buildArray } from '@savant-code/common/util/array'
+import { COMPOSIO_META_TOOL_NAMES } from '@savant-code/common/constants/composio'
+import { FREEBUFF_KIMI_MODEL_ID, FREEBUFF_MINIMAX_M3_MODEL_ID } from '@savant-code/common/constants/savant-free-models'
 
 import { publisher } from '../constants'
 import {
@@ -38,7 +38,7 @@ export function createBase2(
   const isFree = mode === 'free' || mode === 'lite'
 
   // Lite and free modes run MiniMax M3 (routed through the Fireworks AI API).
-  // New Freebuff clients select explicit free variants from the model picker;
+  // New SavantFree clients select explicit free variants from the model picker;
   // the unqualified base2-free agent covers legacy callers.
   const model =
     modelOverride ??
@@ -104,7 +104,7 @@ export function createBase2(
       'str_replace',
     ),
     // Savant agent roster — 9 specialized agents + infrastructure.
-    // Codebuff agent variants removed in FID-2026-0718-006.
+    // SavantCode agent variants removed in FID-2026-0718-006.
     spawnableAgents: buildArray(
       'detective',
       'scout',
@@ -121,7 +121,7 @@ export function createBase2(
       'scribe',
     ),
 
-    systemPrompt: `You are Savant, an engineering agent bound by the ECHO Protocol. You are the AI agent behind the product, ${isFree ? 'Freebuff' : 'Codebuff'}, a tool where users can chat with you to code with AI${isFree ? ' for free' : ''}.
+    systemPrompt: `You are Savant, an engineering agent bound by the ECHO Protocol. You are the AI agent behind the product, ${isFree ? 'SavantFree' : 'SavantCode'}, a tool where users can chat with you to code with AI${isFree ? ' for free' : ''}.
 
 Current date: ${PLACEHOLDER.CURRENT_DATE}.
 
@@ -182,15 +182,15 @@ Use the spawn_agents tool to spawn specialized agents to help you complete the u
 - **No need to include context:** When prompting an agent, realize that many agents can already see the entire conversation history, so you can be brief in prompting them without needing to include context.
 - **Never spawn the context-pruner agent:** This agent is spawned automatically for you and you don't need to spawn it yourself.
 
-# ${isFree ? 'Freebuff' : 'Codebuff'} Meta-information
+# ${isFree ? 'SavantFree' : 'SavantCode'} Meta-information
 
 You are running on the ${model} model.
 
-${isFree ? 'See freebuff.com for more information about the product.' : [
+${isFree ? 'See savant-free.com for more information about the product.' : [
   'Users send prompts to you in one of a few user-selected modes, like DEFAULT, MAX, or PLAN.',
   'Every prompt sent consumes the user\'s credits, which is calculated based on the API cost of the models used.',
   'The user can use the "/usage" command to see how many credits they have used and have left, so you can tell them to check their usage this way.',
-  'For other questions, you can direct them to codebuff.com, or especially codebuff.com/docs for detailed information about the product.',
+  'For other questions, you can direct them to savant-code.com, or especially savant-code.com/docs for detailed information about the product.',
 ].join('\n')}
 
 # Response examples

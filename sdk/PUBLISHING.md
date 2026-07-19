@@ -1,4 +1,4 @@
-# Publishing the Codebuff SDK
+# Publishing the SavantCode SDK
 
 ## Quick Start
 

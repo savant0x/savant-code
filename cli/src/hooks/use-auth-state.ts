@@ -1,11 +1,11 @@
-import { AnalyticsEvent } from '@codebuff/common/constants/analytics-events'
+import { AnalyticsEvent } from '@savant-code/common/constants/analytics-events'
 import { useCallback, useEffect, useState } from 'react'
 
 import { useAuthQuery, useLogoutMutation } from './use-auth-query'
 import { useLoginStore } from '../state/login-store'
 import { identifyUser, trackEvent } from '../utils/analytics'
 import { getUserCredentials } from '../utils/auth'
-import { resetCodebuffClient } from '../utils/codebuff-client'
+import { resetCodebuffClient } from '../utils/savant-code-client'
 import { IS_FREEBUFF } from '../utils/constants'
 import { loggerContext } from '../utils/logger'
 
@@ -15,7 +15,7 @@ import type { User } from '../utils/auth'
 const setAuthLoggerContext = (params: { userId: string; email: string }) => {
   loggerContext.userId = params.userId
   loggerContext.userEmail = params.email
-  identifyUser(params.userId, { email: params.email, freebuff: IS_FREEBUFF })
+  identifyUser(params.userId, { email: params.email, savant-free: IS_FREEBUFF })
 }
 
 const clearAuthLoggerContext = () => {

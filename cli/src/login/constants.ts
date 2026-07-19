@@ -1,14 +1,14 @@
 import { readFileSync } from 'fs'
 import { join } from 'path'
-import { FREEBUFF_WEB_URL_PROD } from '@codebuff/common/constants/hosts'
-import { env, IS_DEV } from '@codebuff/common/env'
+import { FREEBUFF_WEB_URL_PROD } from '@savant-code/common/constants/hosts'
+import { env, IS_DEV } from '@savant-code/common/env'
 
 import { IS_FREEBUFF } from '../utils/constants'
 
 // Get the website URL from environment or use default
 export const WEBSITE_URL = env.NEXT_PUBLIC_CODEBUFF_APP_URL
 
-// Freebuff login flow uses the freebuff web app instead of codebuff.com
+// SavantFree login flow uses the savant-free web app instead of savant-code.com
 const FREEBUFF_WEB_URL = IS_DEV
   ? 'http://localhost:3002'
   : (env.NEXT_PUBLIC_FREEBUFF_APP_URL ?? FREEBUFF_WEB_URL_PROD)

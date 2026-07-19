@@ -1,32 +1,32 @@
-export type * from '@codebuff/common/types/json'
-export type * from '@codebuff/common/types/messages/codebuff-message'
-export type * from '@codebuff/common/types/messages/data-content'
-export type * from '@codebuff/common/types/print-mode'
+export type * from '@savant-code/common/types/json'
+export type * from '@savant-code/common/types/messages/savant-code-message'
+export type * from '@savant-code/common/types/messages/data-content'
+export type * from '@savant-code/common/types/print-mode'
 export type {
   TextPart,
   ImagePart,
-} from '@codebuff/common/types/messages/content-part'
+} from '@savant-code/common/types/messages/content-part'
 export { run, STATE_SNAPSHOT_INTERRUPTION_MESSAGE } from './run'
 export { getFiles } from './tools/read-files'
 export type { FileFilter, FileFilterResult } from './tools/read-files'
 export type {
-  CodebuffClientOptions,
+  SavantCodeClientOptions,
   RunOptions,
   MessageContent,
   TextContent,
   ImageContent,
 } from './run'
-export type { TraceWriter } from '@codebuff/common/types/contracts/trace'
-export { buildUserMessageContent } from '@codebuff/agent-runtime/util/messages'
+export type { TraceWriter } from '@savant-code/common/types/contracts/trace'
+export { buildUserMessageContent } from '@savant-code/agent-runtime/util/messages'
 // Agent type exports
-export type { AgentDefinition } from '@codebuff/common/templates/initial-agents-dir/types/agent-definition'
-export type { ToolName } from '@codebuff/common/tools/constants'
+export type { AgentDefinition } from '@savant-code/common/templates/initial-agents-dir/types/agent-definition'
+export type { ToolName } from '@savant-code/common/tools/constants'
 
 export type {
   ClientToolCall,
   ClientToolName,
-  CodebuffToolOutput,
-} from '@codebuff/common/tools/list'
+  SavantCodeToolOutput,
+} from '@savant-code/common/tools/list'
 export * from './client'
 export * from './custom-tool'
 export * from './native/ripgrep'
@@ -40,9 +40,9 @@ export * from './credentials'
 export { loadLocalAgents } from './agents/load-agents'
 export { loadMCPConfig, loadMCPConfigSync } from './agents/load-mcp-config'
 export { loadSkills, loadSkillsSync, parseSkillFileContent } from './skills/load-skills'
-export { formatAvailableSkillsXml } from '@codebuff/common/util/skills'
+export { formatAvailableSkillsXml } from '@savant-code/common/util/skills'
 export type { LoadSkillsOptions } from './skills/load-skills'
-export type { SkillDefinition, SkillsMap } from '@codebuff/common/types/skill'
+export type { SkillDefinition, SkillsMap } from '@savant-code/common/types/skill'
 export type {
   LoadedAgents,
   LoadedAgentDefinition,
@@ -81,15 +81,15 @@ export {
   RECONNECTION_RETRY_DELAY_MS,
 } from './retry-config'
 
-export type { CodebuffFileSystem } from '@codebuff/common/types/filesystem'
+export type { SavantCodeFileSystem } from '@savant-code/common/types/filesystem'
 
 // Tree-sitter / code-map exports
 export {
   getFileTokenScores,
   setWasmDir,
   setTreeSitterWasmPath,
-} from '@codebuff/code-map'
-export type { FileTokenData, TokenCallerMap } from '@codebuff/code-map'
+} from '@savant-code/code-map'
+export type { FileTokenData, TokenCallerMap } from '@savant-code/code-map'
 
 export {
   getActiveTerminalCommandProcesses,

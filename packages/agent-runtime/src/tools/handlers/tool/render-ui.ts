@@ -1,15 +1,15 @@
-import type { CodebuffToolHandlerFunction } from '../handler-function-type'
+import type { SavantCodeToolHandlerFunction } from '../handler-function-type'
 import type {
-  CodebuffToolCall,
-  CodebuffToolOutput,
-} from '@codebuff/common/tools/list'
+  SavantCodeToolCall,
+  SavantCodeToolOutput,
+} from '@savant-code/common/tools/list'
 
 export const handleRenderUI = (async ({
   previousToolCallFinished,
 }: {
   previousToolCallFinished: Promise<unknown>
-  toolCall: CodebuffToolCall<'render_ui'>
-}): Promise<{ output: CodebuffToolOutput<'render_ui'> }> => {
+  toolCall: SavantCodeToolCall<'render_ui'>
+}): Promise<{ output: SavantCodeToolOutput<'render_ui'> }> => {
   await previousToolCallFinished
   return { output: [{ type: 'json', value: { message: 'UI rendered.' } }] }
-}) satisfies CodebuffToolHandlerFunction<'render_ui'>
+}) satisfies SavantCodeToolHandlerFunction<'render_ui'>

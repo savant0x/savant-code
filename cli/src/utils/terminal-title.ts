@@ -15,7 +15,7 @@ import { IS_FREEBUFF } from './constants'
 import { getCliEnv } from './env'
 
 const MAX_TITLE_LENGTH = 60
-const TITLE_PREFIX = IS_FREEBUFF ? 'Freebuff: ' : 'Codebuff: '
+const TITLE_PREFIX = IS_FREEBUFF ? 'SavantFree: ' : 'SavantCode: '
 const OSC_TERMINATOR = '\x07' // BEL
 
 function isInTmux(env: ReturnType<typeof getCliEnv>): boolean {

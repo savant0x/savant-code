@@ -3,9 +3,9 @@ import { describe, expect, test } from 'bun:test'
 import {
   formatFreebuffPremiumResetCountdown,
   getFreebuffPremiumResetAt,
-} from '../freebuff-premium-reset'
+} from '../savant-free-premium-reset'
 
-describe('freebuff premium reset helpers', () => {
+describe('savant-free premium reset helpers', () => {
   test('uses server resetAt when it is in the future', () => {
     const nowMs = Date.parse('2026-05-11T20:00:00.000Z')
     const resetAt = getFreebuffPremiumResetAt({

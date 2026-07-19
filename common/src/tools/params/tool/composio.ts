@@ -70,7 +70,7 @@ const composioMetaToolInputSchemas = {
       sync_response_to_workbench: z
         .boolean()
         .default(false)
-        .describe('Always use false. Codebuff disables Composio workbench.'),
+        .describe('Always use false. SavantCode disables Composio workbench.'),
       session_id: sessionIdParam,
     })
     .catchall(z.unknown()),

@@ -5,10 +5,10 @@
  * process env with SDK-specific vars for binary paths and WASM.
  */
 
-import { BYOK_OPENROUTER_ENV_VAR } from '@codebuff/common/constants/byok'
-import { CHATGPT_OAUTH_TOKEN_ENV_VAR } from '@codebuff/common/constants/chatgpt-oauth'
-import { API_KEY_ENV_VAR } from '@codebuff/common/constants/paths'
-import { getBaseEnv } from '@codebuff/common/env-process'
+import { BYOK_OPENROUTER_ENV_VAR } from '@savant-code/common/constants/byok'
+import { CHATGPT_OAUTH_TOKEN_ENV_VAR } from '@savant-code/common/constants/chatgpt-oauth'
+import { API_KEY_ENV_VAR } from '@savant-code/common/constants/paths'
+import { getBaseEnv } from '@savant-code/common/env-process'
 
 import type { SdkEnv } from './types/env'
 
@@ -35,7 +35,7 @@ export const getCodebuffApiKeyFromEnv = (): string | undefined => {
 }
 
 /**
- * Runtime override for the Codebuff backend base URL. Remote hosts that bundle
+ * Runtime override for the SavantCode backend base URL. Remote hosts that bundle
  * the SDK (Convex Node actions, Next server routes) set this at deploy time;
  * the bundle-time value can inline a dev-machine localhost URL the remote
  * runtime cannot reach.
@@ -57,7 +57,7 @@ export const getByokOpenrouterApiKeyFromEnv = (): string | undefined => {
 
 /**
  * Get the inference base URL from environment.
- * Returns undefined when not set, falling back to Codebuff backend.
+ * Returns undefined when not set, falling back to SavantCode backend.
  */
 export const getInferenceBaseUrlFromEnv = (): string | undefined => {
   return process.env['INFERENCE_BASE_URL']

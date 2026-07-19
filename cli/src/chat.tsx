@@ -1,5 +1,5 @@
-import { AnalyticsEvent } from '@codebuff/common/constants/analytics-events'
-import type { FeedbackCategory } from '@codebuff/common/constants/feedback'
+import { AnalyticsEvent } from '@savant-code/common/constants/analytics-events'
+import type { FeedbackCategory } from '@savant-code/common/constants/feedback'
 import { safeOpen } from './utils/open-url'
 import {
   useCallback,
@@ -16,11 +16,11 @@ import { routeUserPrompt, addBashMessageToHistory } from './commands/router'
 import { SingleAdBanner } from './components/ad-banner'
 import { ChatInputBar } from './components/chat-input-bar'
 import { ChatHeader } from './components/chat-header'
-import { FreebuffActiveSessionSummary } from './components/freebuff-active-session-summary'
+import { SavantFree$1 } from './components/savant-free-active-session-summary'
 import { LoadPreviousButton } from './components/load-previous-button'
 import { ModelPicker } from './components/model-picker'
 import { useModelPickerStore } from './state/model-picker-store'
-import { useFreebuffModelStore } from './state/freebuff-model-store'
+import { useFreebuffModelStore } from './state/savant-free-model-store'
 import type { OpenRouterModel } from './utils/openrouter-models'
 import { ReviewScreen } from './components/review-screen'
 import { MessageWithAgents } from './components/message-with-agents'
@@ -68,7 +68,7 @@ import { reportActivity } from './utils/activity-tracker'
 import { trackEvent } from './utils/analytics'
 import { showClipboardMessage } from './utils/clipboard'
 import { readClipboardImage } from './utils/clipboard-image'
-import { returnToFreebuffLanding } from './hooks/use-freebuff-session'
+import { returnToFreebuffLanding } from './hooks/use-savant-free-session'
 import { END_SESSION_MESSAGE, IS_FREEBUFF } from './utils/constants'
 import { getSystemMessage } from './utils/message-history'
 import { getInputModeConfig } from './utils/input-modes'
@@ -106,10 +106,10 @@ import { computeInputLayoutMetrics } from './utils/text-layout'
 import type { CommandResult } from './commands/command-registry'
 import type { MultilineInputHandle } from './components/multiline-input'
 import type { MatchedSlashCommand } from './hooks/use-suggestion-engine'
-import type { FreebuffSessionResponse } from './types/freebuff-session'
+import type { SavantFree$1 } from './types/savant-free-session'
 import type { User } from './utils/auth'
 import type { AgentMode } from './utils/constants'
-import type { FileTreeNode } from '@codebuff/common/util/file'
+import type { FileTreeNode } from '@savant-code/common/util/file'
 import type { BoxRenderable, ScrollBoxRenderable } from '@opentui/core'
 import type { UseMutationResult } from '@tanstack/react-query'
 import type { Dispatch, SetStateAction } from 'react'
@@ -128,7 +128,7 @@ export const Chat = ({
   initialMode,
   gitRoot,
   onSwitchToGitRoot,
-  freebuffSession,
+  savant-free$1,
 }: {
   initialPrompt: string | null
   agentId?: string
@@ -143,14 +143,14 @@ export const Chat = ({
   initialMode?: AgentMode
   gitRoot?: string | null
   onSwitchToGitRoot?: () => void
-  freebuffSession: FreebuffSessionResponse | null
+  savant-free$1: SavantFree$1 | null
 }) => {
   const [forceFileOnlyMentions, setForceFileOnlyMentions] = useState(false)
   const headerRef = useRef<BoxRenderable | null>(null)
   const [isHeaderVisible, setIsHeaderVisible] = useState(true)
 
   // First-time onboarding: show clickable starter prompts until the user
-  // submits their first prompt ever (persisted in settings). Freebuff only.
+  // submits their first prompt ever (persisted in settings). SavantFree only.
   const [showSuggestedPrompts, setShowSuggestedPrompts] = useState(
     () => IS_FREEBUFF && !hasSubmittedFirstPrompt(),
   )
@@ -732,10 +732,10 @@ export const Chat = ({
         })
     }
 
-    globalThis.addEventListener('codebuff:send-followup', handleFollowupClick)
+    globalThis.addEventListener('savant-code:send-followup', handleFollowupClick)
     return () => {
       globalThis.removeEventListener(
-        'codebuff:send-followup',
+        'savant-code:send-followup',
         handleFollowupClick,
       )
     }
@@ -1555,9 +1555,9 @@ export const Chat = ({
   }, [queuePreviewTitle, pausedQueueText])
 
   const hasActiveFreebuffSession =
-    IS_FREEBUFF && freebuffSession?.status === 'active'
+    IS_FREEBUFF && savant-free$1?.status === 'active'
   const isFreebuffSessionOver =
-    IS_FREEBUFF && freebuffSession?.status === 'ended'
+    IS_FREEBUFF && savant-free$1?.status === 'ended'
   const shouldShowStatusLine =
     !feedbackMode &&
     (hasStatusIndicatorContent ||
@@ -1648,7 +1648,7 @@ export const Chat = ({
         <TopBanner gitRoot={gitRoot} onSwitchToGitRoot={onSwitchToGitRoot} />
 
         {IS_FREEBUFF && (
-          <FreebuffActiveSessionSummary session={freebuffSession} />
+          <SavantFree$1 session={savant-free$1} />
         )}
         {hiddenMessageCount > 0 && (
           <LoadPreviousButton
@@ -1700,7 +1700,7 @@ export const Chat = ({
               ])
               returnToFreebuffLanding({ resetChat: true }).catch(() => {})
             }}
-            freebuffSession={freebuffSession}
+            savant-free$1={savant-free$1}
           />
         )}
 

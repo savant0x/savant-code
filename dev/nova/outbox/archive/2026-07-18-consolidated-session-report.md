@@ -59,7 +59,7 @@ This session implemented the ECHO Protocol across the Savant-Code agent framewor
 
 ## FID-2026-0718-006 — Agent Roster Alignment
 
-**Problem:** 69-agent Codebuff codebase not aligned to 9-agent Savant architecture specified in ARCHITECTURE.md.
+**Problem:** 69-agent SavantCode codebase not aligned to 9-agent Savant architecture specified in ARCHITECTURE.md.
 
 **Solution:** 13 fixes across 24 files through full Perfection Loop (RED → GREEN → AUDIT → SELF-CORRECT → RE-AUDIT → COMPLETE).
 
@@ -76,9 +76,9 @@ This session implemented the ECHO Protocol across the Savant-Code agent framewor
 | 10 | withParentModel() inherits providerOptions | spawn-agent-utils.ts |
 | 11 | Fix Scout to delegate to Detective | scout.ts |
 | 12 | Fix context-pruner sentAt type error | context-pruner.ts |
-| 13 | Delete 20+ absorbed Codebuff agent files | general-agent/, reviewer/*, etc. |
+| 13 | Delete 20+ absorbed SavantCode agent files | general-agent/, reviewer/*, etc. |
 
-**Operator decisions:** Strict separation (Orchestrator has no write tools), single Thinker (inherits parent model), Verifier has NO tools (reads only), pure merge (all Codebuff capabilities absorbed into Savant agents), free-mode infrastructure preserved.
+**Operator decisions:** Strict separation (Orchestrator has no write tools), single Thinker (inherits parent model), Verifier has NO tools (reads only), pure merge (all SavantCode capabilities absorbed into Savant agents), free-mode infrastructure preserved.
 
 **Files deleted (20+):** `agents/general-agent/`, `agents/reviewer/` (10 variants), `agents/editor/editor-gpt-5.ts`, `agents/thinker/best-of-n/` (4 files), `agents/file-explorer/` (4 files), 2 test files.
 

@@ -1,15 +1,15 @@
-import { withTimeout } from '@codebuff/common/util/promise'
+import { withTimeout } from '@savant-code/common/util/promise'
 
-import type { ClientEnv, CiEnv } from '@codebuff/common/types/contracts/env'
-import type { JSONObject } from '@codebuff/common/types/json'
-import type { Logger } from '@codebuff/common/types/contracts/logger'
+import type { ClientEnv, CiEnv } from '@savant-code/common/types/contracts/env'
+import type { JSONObject } from '@savant-code/common/types/json'
+import type { Logger } from '@savant-code/common/types/contracts/logger'
 
 const FETCH_TIMEOUT_MS = 30_000
 const MAX_RETRIES = 3
 const RETRY_BASE_DELAY_MS = 1000
 const RETRYABLE_STATUS_CODES = new Set([408, 429, 500, 502, 503, 504])
 
-interface CodebuffWebApiEnv {
+interface SavantCodeWebApiEnv {
   clientEnv: ClientEnv
   ciEnv: CiEnv
 }
@@ -44,7 +44,7 @@ const callCodebuffV1 = async (params: {
   payload: unknown
   fetch: typeof globalThis.fetch
   logger: Logger
-  env: CodebuffWebApiEnv
+  env: SavantCodeWebApiEnv
   baseUrl?: string
   apiKey?: string
   requestName: 'web-search' | 'docs-search' | 'gravity-index'
@@ -54,7 +54,7 @@ const callCodebuffV1 = async (params: {
   const apiKey = params.apiKey ?? env.ciEnv.CODEBUFF_API_KEY
 
   if (!baseUrl || !apiKey) {
-    return { error: 'Missing Codebuff base URL or API key' }
+    return { error: 'Missing SavantCode base URL or API key' }
   }
 
   const url = `${baseUrl}${endpoint}`
@@ -68,7 +68,7 @@ const callCodebuffV1 = async (params: {
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${apiKey}`,
-            'x-codebuff-api-key': apiKey,
+            'x-savant-code-api-key': apiKey,
           },
           body: JSON.stringify(payload),
         }),
@@ -164,7 +164,7 @@ export async function callWebSearchAPI(params: {
   repoUrl?: string | null
   fetch: typeof globalThis.fetch
   logger: Logger
-  env: CodebuffWebApiEnv
+  env: SavantCodeWebApiEnv
   baseUrl?: string
   apiKey?: string
 }): Promise<{ result?: string; error?: string; creditsUsed?: number }> {
@@ -199,7 +199,7 @@ export async function callDocsSearchAPI(params: {
   repoUrl?: string | null
   fetch: typeof globalThis.fetch
   logger: Logger
-  env: CodebuffWebApiEnv
+  env: SavantCodeWebApiEnv
   baseUrl?: string
   apiKey?: string
 }): Promise<{ documentation?: string; error?: string; creditsUsed?: number }> {
@@ -234,7 +234,7 @@ export async function callGravityIndexAPI(params: {
   input: JSONObject
   fetch: typeof globalThis.fetch
   logger: Logger
-  env: CodebuffWebApiEnv
+  env: SavantCodeWebApiEnv
   baseUrl?: string
   apiKey?: string
 }): Promise<{
@@ -274,7 +274,7 @@ export async function callTokenCountAPI(params: {
   tools?: Array<{ name: string; description?: string; input_schema?: unknown }>
   fetch: typeof globalThis.fetch
   logger: Logger
-  env: CodebuffWebApiEnv
+  env: SavantCodeWebApiEnv
   baseUrl?: string
   apiKey?: string
 }): Promise<{ inputTokens?: number; error?: string }> {
@@ -283,7 +283,7 @@ export async function callTokenCountAPI(params: {
   const apiKey = params.apiKey ?? env.ciEnv.CODEBUFF_API_KEY
 
   if (!baseUrl || !apiKey) {
-    return { error: 'Missing Codebuff base URL or API key' }
+    return { error: 'Missing SavantCode base URL or API key' }
   }
 
   const url = `${baseUrl}/api/v1/token-count`
@@ -299,7 +299,7 @@ export async function callTokenCountAPI(params: {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${apiKey}`,
-          'x-codebuff-api-key': apiKey,
+          'x-savant-code-api-key': apiKey,
         },
         body: JSON.stringify(payload),
       }),

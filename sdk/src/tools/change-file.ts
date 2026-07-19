@@ -1,15 +1,15 @@
 import path from 'path'
 
-import { fileExists } from '@codebuff/common/util/file'
-import { resolveAndContain } from '@codebuff/common/util/paths'
+import { fileExists } from '@savant-code/common/util/file'
+import { resolveAndContain } from '@savant-code/common/util/paths'
 import { applyPatch } from 'diff'
 import z from 'zod/v4'
 
 import { logger } from '../utils/logger'
 import { resolveFilePath } from './path-utils'
 
-import type { CodebuffToolOutput } from '@codebuff/common/tools/list'
-import type { CodebuffFileSystem } from '@codebuff/common/types/filesystem'
+import type { SavantCodeToolOutput } from '@savant-code/common/tools/list'
+import type { SavantCodeFileSystem } from '@savant-code/common/types/filesystem'
 import type { ResolvedProjectPath } from './path-utils'
 
 const FileChangeSchema = z.object({
@@ -34,11 +34,11 @@ export type OnFileWrittenCallback = (params: {
 export async function changeFile(params: {
   parameters: unknown
   cwd: string
-  fs: CodebuffFileSystem
+  fs: SavantCodeFileSystem
   onFileWritten?: OnFileWrittenCallback
   /** FID-2026-0718-014 v2: injectable for testability. Default = node:fs.realpathSync.native. */
   realpathFn?: (p: string) => string
-}): Promise<CodebuffToolOutput<'str_replace'>> {
+}): Promise<SavantCodeToolOutput<'str_replace'>> {
   const { parameters, cwd, fs, onFileWritten, realpathFn } = params
 
   const fileChange = FileChangeSchema.parse(parameters)
@@ -85,7 +85,7 @@ export async function changeFile(params: {
 function formatApplyChangeResult(
   result: ApplyChangeResult,
   fileChange: FileChange,
-): CodebuffToolOutput<'str_replace'>[0]['value'] {
+): SavantCodeToolOutput<'str_replace'>[0]['value'] {
   if (result.status === 'created' || result.status === 'modified') {
     return {
       file: result.file,
@@ -116,7 +116,7 @@ function formatApplyChangeResult(
 async function applyChange(params: {
   change: FileChange
   resolvedPath: ResolvedProjectPath
-  fs: CodebuffFileSystem
+  fs: SavantCodeFileSystem
 }): Promise<ApplyChangeResult> {
   const { change, resolvedPath, fs } = params
   const { content, type } = change

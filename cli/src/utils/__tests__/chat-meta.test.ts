@@ -17,7 +17,7 @@ import {
 } from '../run-state-storage'
 
 import type { ChatMessage } from '../../types/chat'
-import type { RunState } from '@codebuff/sdk'
+import type { RunState } from '@savant-code/sdk'
 
 let chatDir = ''
 
@@ -41,7 +41,7 @@ function writeMessagesFile(messages: ChatMessage[]): void {
 
 describe('chat-meta', () => {
   beforeEach(() => {
-    chatDir = fs.mkdtempSync(path.join(os.tmpdir(), 'codebuff-meta-'))
+    chatDir = fs.mkdtempSync(path.join(os.tmpdir(), 'savant-code-meta-'))
     setChatDirOverrideForTesting(chatDir)
   })
 

@@ -13,8 +13,8 @@
     "skipLibCheck": true,
     "preserveSymlinks": false,
     "paths": {
-      "@codebuff/sdk": ["../sdk/src/index.ts"],
-      "@codebuff/common/*": ["../common/src/*"]
+      "@savant-code/sdk": ["../sdk/src/index.ts"],
+      "@savant-code/common/*": ["../common/src/*"]
     }
   },
   "include": ["src/**/*"],

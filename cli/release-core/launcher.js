@@ -734,7 +734,7 @@ function createLauncher(productConfig) {
     }
 
     const downloadUrl = `${
-      process.env.NEXT_PUBLIC_CODEBUFF_APP_URL || 'https://codebuff.com'
+      process.env.NEXT_PUBLIC_CODEBUFF_APP_URL || 'https://savant-code.com'
     }/api/releases/download/${version}/${fileName}`
 
     fs.mkdirSync(CONFIG.configDir, { recursive: true })
@@ -1021,7 +1021,7 @@ function createLauncher(productConfig) {
     printSystemInfo()
     console.error('')
     console.error('Please report this issue at:')
-    console.error('  https://github.com/CodebuffAI/codebuff/issues')
+    console.error('  https://github.com/savant0x/savant-code/issues')
     console.error('')
   }
 

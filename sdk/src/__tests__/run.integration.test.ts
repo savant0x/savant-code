@@ -3,10 +3,10 @@ import path from 'path'
 
 import { describe, expect, it } from 'bun:test'
 
-import { CodebuffClient } from '../client'
+import { SavantCodeClient } from '../client'
 import { EventCollector, DEFAULT_TIMEOUT } from '../../e2e/utils'
 
-import type { AgentOutput } from '@codebuff/common/types/session-state'
+import type { AgentOutput } from '@savant-code/common/types/session-state'
 
 const apiKey = process.env.CODEBUFF_API_KEY
 const RUN_LIVE_INTEGRATION = process.env.RUN_CODEBUFF_E2E === 'true'
@@ -55,7 +55,7 @@ describe('Prompt Caching', () => {
         return
       }
 
-      const client = new CodebuffClient({ apiKey: liveApiKey })
+      const client = new SavantCodeClient({ apiKey: liveApiKey })
 
       const filler =
         `Run UUID: ${crypto.randomUUID()} ` +
@@ -117,7 +117,7 @@ describe('Prompt Caching', () => {
       try {
         fs.writeFileSync(tempFile1, `MAGIC_NUMBER=${magic1}`)
 
-        const client = new CodebuffClient({
+        const client = new SavantCodeClient({
           apiKey: liveApiKey,
           cwd: process.cwd(),
         })

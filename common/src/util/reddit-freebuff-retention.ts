@@ -3,12 +3,12 @@ const DAY_MS = 24 * 60 * 60 * 1000
 /** PostHog-style retention windows to mirror in Reddit CAPI custom events. */
 export const FREEBUFF_REDDIT_RETENTION_MILESTONE_DAYS = [1, 7, 24] as const
 
-export type FreebuffRedditRetentionMilestoneDays =
+export type SavantFree$1 =
   (typeof FREEBUFF_REDDIT_RETENTION_MILESTONE_DAYS)[number]
 
-export type FreebuffRedditConversionPlan = {
+export type SavantFree$1 = {
   fireFirstPrompt: boolean
-  retentionMilestones: FreebuffRedditRetentionMilestoneDays[]
+  retentionMilestones: SavantFree$1[]
 }
 
 function daysBetween(fromDateKey: string, toDateKey: string): number {
@@ -20,7 +20,7 @@ function daysBetween(fromDateKey: string, toDateKey: string): number {
   return Math.round((to - from) / DAY_MS)
 }
 
-/** First successful freebuff prompt = first-ever usage day recorded. */
+/** First successful savant-free prompt = first-ever usage day recorded. */
 export function isFirstFreebuffPrompt(params: {
   previousUsageDays: readonly string[]
   newUsageDayRecorded: boolean
@@ -33,7 +33,7 @@ export function getFreebuffRetentionMilestonesToFire(params: {
   previousUsageDays: readonly string[]
   todayDateKey: string
   newUsageDayRecorded: boolean
-}): FreebuffRedditRetentionMilestoneDays[] {
+}): SavantFree$1[] {
   if (!params.newUsageDayRecorded) {
     return []
   }
@@ -62,7 +62,7 @@ export function planFreebuffRedditConversionEvents(params: {
   previousUsageDays: readonly string[]
   todayDateKey: string
   newUsageDayRecorded: boolean
-}): FreebuffRedditConversionPlan {
+}): SavantFree$1 {
   return {
     fireFirstPrompt: isFirstFreebuffPrompt(params),
     retentionMilestones: getFreebuffRetentionMilestonesToFire(params),

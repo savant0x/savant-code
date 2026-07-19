@@ -18,11 +18,11 @@ const require = createRequire(import.meta.url)
 
 const wrappers = [
   {
-    name: 'codebuff',
+    name: 'savant-code',
     directory: 'cli/release',
     expectedConfig: {
-      packageName: 'codebuff',
-      displayName: 'Codebuff',
+      packageName: 'savant-code',
+      displayName: 'SavantCode',
       tempDownloadDirName: '.download-temp',
     },
   },
@@ -38,11 +38,11 @@ const wrappers = [
     },
   },
   {
-    name: 'freebuff',
-    directory: 'freebuff/cli/release',
+    name: 'savant-free',
+    directory: 'savant-free/cli/release',
     expectedConfig: {
-      packageName: 'freebuff',
-      displayName: 'Freebuff',
+      packageName: 'savant-free',
+      displayName: 'SavantFree',
       telemetryEvent: 'cli.update_freebuff_failed',
     },
   },

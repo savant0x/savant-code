@@ -1,10 +1,10 @@
-import { FREEBUFF_PREMIUM_SESSION_RESET_TIMEZONE } from '@codebuff/common/constants/freebuff-models'
-import { getZonedDayBounds } from '@codebuff/common/util/zoned-time'
+import { FREEBUFF_PREMIUM_SESSION_RESET_TIMEZONE } from '@savant-code/common/constants/savant-free-models'
+import { getZonedDayBounds } from '@savant-code/common/util/zoned-time'
 
-import type { FreebuffSessionRateLimitByModel } from '@codebuff/common/types/freebuff-session'
+import type { SavantFree$1 } from '@savant-code/common/types/savant-free-session'
 
 export function getFreebuffPremiumResetAt(params: {
-  rateLimitsByModel?: FreebuffSessionRateLimitByModel
+  rateLimitsByModel?: SavantFree$1
   nowMs: number
 }): Date {
   const { rateLimitsByModel, nowMs } = params

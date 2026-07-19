@@ -48,10 +48,10 @@ export function parseArgs({
   const program = new Command()
 
   if (isFreebuff) {
-    // Freebuff: simplified CLI - no prompt args, no agent override, no clear-logs
+    // SavantFree: simplified CLI - no prompt args, no agent override, no clear-logs
     program
-      .name('freebuff')
-      .description('Freebuff - Free AI coding assistant')
+      .name('savant-free')
+      .description('SavantFree - Free AI coding assistant')
       .version(version, '-v, --version', 'Print the CLI version')
       .option(
         '--continue [conversation-id]',
@@ -66,10 +66,10 @@ export function parseArgs({
       )
       .helpOption('-h, --help', 'Show this help message')
   } else {
-    // Codebuff: full CLI with all options
+    // SavantCode: full CLI with all options
     program
-      .name('codebuff')
-      .description('Codebuff CLI - AI-powered coding assistant')
+      .name('savant-code')
+      .description('SavantCode CLI - AI-powered coding assistant')
       .version(version, '-v, --version', 'Print the CLI version')
       .option(
         '--agent <agent-id>',
@@ -108,7 +108,7 @@ export function parseArgs({
   const continueFlag = options.continue
 
   // Determine initial mode from flags (last flag wins if multiple specified)
-  // Freebuff always uses LITE mode
+  // SavantFree always uses LITE mode
   let initialMode: AgentMode | undefined
   if (isFreebuff) {
     initialMode = 'LITE'

@@ -1,13 +1,13 @@
 import * as path from 'path'
 
-import type { CodebuffToolOutput } from '@codebuff/common/tools/list'
-import type { CodebuffFileSystem } from '@codebuff/common/types/filesystem'
+import type { SavantCodeToolOutput } from '@savant-code/common/tools/list'
+import type { SavantCodeFileSystem } from '@savant-code/common/types/filesystem'
 
 export async function listDirectory(params: {
   directoryPath: string
   projectPath: string
-  fs: CodebuffFileSystem
-}): Promise<CodebuffToolOutput<'list_directory'>> {
+  fs: SavantCodeFileSystem
+}): Promise<SavantCodeToolOutput<'list_directory'>> {
   const { directoryPath, projectPath, fs } = params
 
   try {

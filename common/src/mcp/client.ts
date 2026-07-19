@@ -174,7 +174,7 @@ export async function getMCPClient(config: MCPConfig): Promise<string> {
   }
 
   const client = new Client({
-    name: 'codebuff',
+    name: 'savant-code',
     version: '1.0.0',
   })
 

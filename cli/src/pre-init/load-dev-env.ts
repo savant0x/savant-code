@@ -7,7 +7,7 @@
 // same gap with a hand-rolled parser; we reuse that exact algorithm here
 // so a fresh `bun dev` (no shell exports) picks up `.env.local`.
 //
-// This module MUST be imported before any `@codebuff/common` import that would
+// This module MUST be imported before any `@savant-code/common` import that would
 // trigger `common/src/env.ts` (which parses the schema at module load).
 //
 // Path resolution: under `--cwd ..` Bun can report a distorted `import.meta.dir`,

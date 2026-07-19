@@ -1,17 +1,17 @@
-import { jsonToolResult } from '@codebuff/common/util/messages'
-import { SKILLS_DIR_NAME, SKILL_FILE_NAME } from '@codebuff/common/constants/skills'
-import { SkillFrontmatterSchema, type SkillDefinition } from '@codebuff/common/types/skill'
+import { jsonToolResult } from '@savant-code/common/util/messages'
+import { SKILLS_DIR_NAME, SKILL_FILE_NAME } from '@savant-code/common/constants/skills'
+import { SkillFrontmatterSchema, type SkillDefinition } from '@savant-code/common/types/skill'
 import fs from 'fs'
 import path from 'path'
 import os from 'os'
 import matter from 'gray-matter'
 
-import type { CodebuffToolHandlerFunction } from '../handler-function-type'
+import type { SavantCodeToolHandlerFunction } from '../handler-function-type'
 import type {
-  CodebuffToolCall,
-  CodebuffToolOutput,
-} from '@codebuff/common/tools/list'
-import type { ProjectFileContext } from '@codebuff/common/util/file'
+  SavantCodeToolCall,
+  SavantCodeToolOutput,
+} from '@savant-code/common/tools/list'
+import type { ProjectFileContext } from '@savant-code/common/util/file'
 
 /**
  * Dynamically load a single skill from disk.
@@ -84,9 +84,9 @@ type ToolName = 'skill'
 
 export const handleSkill = (async (params: {
   previousToolCallFinished: Promise<void>
-  toolCall: CodebuffToolCall<ToolName>
+  toolCall: SavantCodeToolCall<ToolName>
   fileContext: ProjectFileContext
-}): Promise<{ output: CodebuffToolOutput<ToolName> }> => {
+}): Promise<{ output: SavantCodeToolOutput<ToolName> }> => {
   const { previousToolCallFinished, toolCall, fileContext } = params
   const { name } = toolCall.input
 
@@ -131,4 +131,4 @@ export const handleSkill = (async (params: {
   return {
     output: jsonToolResult(result),
   }
-}) satisfies CodebuffToolHandlerFunction<ToolName>
+}) satisfies SavantCodeToolHandlerFunction<ToolName>

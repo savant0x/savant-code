@@ -15,7 +15,7 @@
 4. **Cross-link depth correctness** — 1-level READMEs (agents, common, evals, scripts/tmux at depth 2) use `../` for plain files but `../../` for scripts/tmux (depth 2); 2-level READMEs (packages/X) use `../../` for root assets + LICENSE + ECHO
 5. **License consistency Apache-2.0** — verify all 8 modified + 1 template files reference Apache-2.0 (template has placeholders; actuals all claim it)
 6. **Banner image references** — verify `assets/banner.png` is present in all 8 modified, with correct depth prefix (`../` for 1-level, `../../` for 2-level packages); all width=650 (sub-page compactness vs root 850)
-7. **Substitution completeness** — verify 0 hits for `SavantClient`/`SAVANT_FREE_MODE`/`SAVANT_CODE_API_KEY`/`dev:savant-free` in the 8 modified files. (Templates may legitimately contain reference patterns; the unmodified SDK + CLI + freebuff + root README are unchanged from FID-022 state.)
+7. **Substitution completeness** — verify 0 hits for `SavantClient`/`SAVANT_FREE_MODE`/`SAVANT_CODE_API_KEY`/`dev:savant-free` in the 8 modified files. (Templates may legitimately contain reference patterns; the unmodified SDK + CLI + savant-free + root README are unchanged from FID-022 state.)
 8. **ECHO Protocol mention** — verify all 7 new stubs include ECHO badge + footer attribution; scripts/tmux deliberately excluded per thinker-with-files-gemini verdict (headless CI infra is outside ECHO scope)
 
 ---
@@ -39,7 +39,7 @@ Initial FORGE wrote `%230000.md` (missing trailing "00") in ECHO badge URL. Code
 - **scripts/tmux**: Has banner prepend + License + Footer append (Option A per thinker verdict), no ECHO badge
 - **agents/README.md** has 9-agent enumeration matching ECHO.md actual content
 - **common/README.md** references ECHO Law 13 (Utility-First, Universal Logic) — verified correct
-- **evals/README.md** references 4 benchmark profiles (codebuff-hard / manifold / plane / saleor) verified against `evals/*.json` filenames
+- **evals/README.md** references 4 benchmark profiles (savant-code-hard / manifold / plane / saleor) verified against `evals/*.json` filenames
 - **packages/agent-runtime/README.md** documents FSM, AgentState, transition_phase — verified against `packages/agent-runtime/src/` source
 - **packages/code-map/README.md** documents tree-sitter WASM + AST structural queries — verified against package.json deps
 - **packages/database/README.md** documents Postgres + Drizzle + 2 export surfaces (root + `./service`) — verified against package.json

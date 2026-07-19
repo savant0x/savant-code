@@ -1,7 +1,7 @@
-import { resolveAndContain } from '@codebuff/common/util/paths'
+import { resolveAndContain } from '@savant-code/common/util/paths'
 
-import type { CodebuffToolHandlerFunction } from '../handler-function-type'
-import type { ProjectFileContext } from '@codebuff/common/util/file'
+import type { SavantCodeToolHandlerFunction } from '../handler-function-type'
+import type { ProjectFileContext } from '@savant-code/common/util/file'
 
 export const handleApplyPatch = (async ({
   previousToolCallFinished,
@@ -42,4 +42,4 @@ export const handleApplyPatch = (async ({
   return {
     output: await requestClientToolCall(clientToolCall),
   }
-}) satisfies CodebuffToolHandlerFunction<'apply_patch'>
+}) satisfies SavantCodeToolHandlerFunction<'apply_patch'>

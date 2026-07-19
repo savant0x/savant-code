@@ -9,8 +9,8 @@ import { loadModePreference, saveModePreference } from '../utils/settings'
 import type { ChatMessage, ContentBlock } from '../types/chat'
 import type { AgentMode } from '../utils/constants'
 import type { InputMode } from '../utils/input-modes'
-import type { AgentActivity } from '@codebuff/common/types/session-state'
-import type { RunState } from '@codebuff/sdk'
+import type { AgentActivity } from '@savant-code/common/types/session-state'
+import type { RunState } from '@savant-code/sdk'
 
 // Import types from the types/store module to avoid circular dependencies
 import type {

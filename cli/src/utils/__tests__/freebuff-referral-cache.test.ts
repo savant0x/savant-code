@@ -4,12 +4,12 @@ import {
   __resetReferralCacheForTest,
   getCachedReferral,
   rememberReferral,
-} from '../freebuff-referral-cache'
+} from '../savant-free-referral-cache'
 
-import type { FreebuffReferralInfo } from '@codebuff/common/types/freebuff-session'
-import type { FreebuffSessionResponse } from '../../types/freebuff-session'
+import type { SavantFree$1 } from '@savant-code/common/types/savant-free-session'
+import type { SavantFree$1 } from '../../types/savant-free-session'
 
-const referral: FreebuffReferralInfo = {
+const referral: SavantFree$1 = {
   code: 'ABC123',
   referrerName: null,
   qualifiedCount: 2,
@@ -22,16 +22,16 @@ const landingWithReferral = {
   status: 'none',
   accessTier: 'full',
   referral,
-} as unknown as FreebuffSessionResponse
+} as unknown as SavantFree$1
 
 const activeWithoutReferral = {
   status: 'active',
   accessTier: 'full',
   model: 'minimax/minimax-m3',
   instanceId: 'i-1',
-} as unknown as FreebuffSessionResponse
+} as unknown as SavantFree$1
 
-describe('freebuff referral cache', () => {
+describe('savant-free referral cache', () => {
   beforeEach(() => {
     __resetReferralCacheForTest()
   })

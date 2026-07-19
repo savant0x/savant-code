@@ -80,7 +80,7 @@ export type BaseEnv = {
 // =============================================================================
 
 /**
- * Extended CI env with Codebuff-specific CI vars.
+ * Extended CI env with SavantCode-specific CI vars.
  * Used by agent-runtime and server code.
  */
 export type CiEnv = BaseCiEnv & {
@@ -128,7 +128,7 @@ export type ProcessEnv = BaseEnv & {
   OPEN_TUI_THEME?: string
   OPENTUI_THEME?: string
 
-  // Codebuff CLI-specific (set during binary build)
+  // SavantCode CLI-specific (set during binary build)
   CODEBUFF_IS_BINARY?: string
   CODEBUFF_CLI_VERSION?: string
   CODEBUFF_CLI_TARGET?: string

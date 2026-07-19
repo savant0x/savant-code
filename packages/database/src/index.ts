@@ -7,7 +7,7 @@ import os from 'os'
 const SCHEMA_VERSION = 1
 
 // Database path
-const DB_DIR = path.join(os.homedir(), '.freebuff')
+const DB_DIR = path.join(os.homedir(), '.savant-free')
 const DB_PATH = path.join(DB_DIR, 'echo.db')
 
 // Ensure directory exists

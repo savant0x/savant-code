@@ -1,11 +1,11 @@
-import { getErrorObject } from '@codebuff/common/util/error'
+import { getErrorObject } from '@savant-code/common/util/error'
 
 import {
   markFreebuffSessionCountryBlocked,
   markFreebuffSessionEnded,
   markFreebuffSessionSuperseded,
   refreshFreebuffSession,
-} from '../use-freebuff-session'
+} from '../use-savant-free-session'
 import { getProjectRoot } from '../../project-files'
 import { useChatStore } from '../../state/chat-store'
 import { IS_FREEBUFF } from '../../utils/constants'
@@ -45,7 +45,7 @@ import type { AgentMode } from '../../utils/constants'
 import type { SendMessageTimerController } from '../../utils/send-message-timer'
 import type { StreamController } from '../stream-state'
 import type { StreamStatus } from '../use-message-queue'
-import type { MessageContent, RunState } from '@codebuff/sdk'
+import type { MessageContent, RunState } from '@savant-code/sdk'
 import type { MutableRefObject, SetStateAction } from 'react'
 
 /** Resets queue state on early return (before streaming starts). */
@@ -337,7 +337,7 @@ export const handleRunCompletion = (params: {
   updater: BatchedMessageUpdater
   aiMessageId: string
   wasAbortedByUser: boolean
-  /** Whether the run streamed any content before finishing. A freebuff gate
+  /** Whether the run streamed any content before finishing. A savant-free gate
    *  rejection with no content means the prompt was consumed unprocessed —
    *  surfaced as an inline error instead of silently looking sent. */
   hasReceivedContent?: boolean
@@ -424,11 +424,11 @@ export const handleRunCompletion = (params: {
       return
     }
 
-    const freebuffRateLimitMessage = IS_FREEBUFF
+    const savant-free$1 = IS_FREEBUFF
       ? getFreebuffRateLimitErrorMessage(output)
       : null
-    if (freebuffRateLimitMessage) {
-      updater.setError(freebuffRateLimitMessage)
+    if (savant-free$1) {
+      updater.setError(savant-free$1)
       finalizeAfterError()
       return
     }
@@ -538,11 +538,11 @@ export const handleRunError = (params: {
     return
   }
 
-  const freebuffRateLimitMessage = IS_FREEBUFF
+  const savant-free$1 = IS_FREEBUFF
     ? getFreebuffRateLimitErrorMessage(error)
     : null
-  if (freebuffRateLimitMessage) {
-    updater.setError(freebuffRateLimitMessage)
+  if (savant-free$1) {
+    updater.setError(savant-free$1)
     return
   }
 
@@ -598,7 +598,7 @@ function handleFreebuffGateError(
       return
     case 'session_superseded':
       updater.setError(
-        'Another freebuff CLI took over this account. Close the other instance, then restart.',
+        'Another savant-free CLI took over this account. Close the other instance, then restart.',
       )
       // Terminal state: stop polling and flip UI to a "please restart" screen
       // so we don't silently fight the other instance for the seat.

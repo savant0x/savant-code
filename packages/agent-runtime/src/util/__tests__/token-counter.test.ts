@@ -6,7 +6,7 @@ import {
   countTokensMessages,
 } from '../token-counter'
 
-import type { Message } from '@codebuff/common/types/messages/codebuff-message'
+import type { Message } from '@savant-code/common/types/messages/savant-code-message'
 
 describe('countTokensMessages', () => {
   test('counts text content plus per-message overhead', () => {

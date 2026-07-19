@@ -4,14 +4,14 @@ import * as os from 'os'
 import * as path from 'path'
 
 // Force tracing on so the test is deterministic
-mock.module('@codebuff/common/env', () => ({
+mock.module('@savant-code/common/env', () => ({
   IS_DEV: true,
 }))
 
 import { createTraceWriter } from '../trace-writer'
 import { setProjectRoot, tryGetProjectRoot } from '../../project-files'
 
-import type { Message } from '@codebuff/common/types/messages/codebuff-message'
+import type { Message } from '@savant-code/common/types/messages/savant-code-message'
 
 let tempDir = ''
 
@@ -50,7 +50,7 @@ describe('createTraceWriter', () => {
   let originalProjectRoot: string | undefined
 
   beforeEach(() => {
-    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'codebuff-trace-'))
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'savant-code-trace-'))
     originalProjectRoot = tryGetProjectRoot()
   })
 

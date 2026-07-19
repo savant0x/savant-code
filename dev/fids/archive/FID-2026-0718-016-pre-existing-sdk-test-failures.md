@@ -30,7 +30,7 @@ This is **same pattern** FID-015 fixed for the SDK write-tool side. Now we fix i
 | **B** | `codeSearch cwd` (3) | `sdk/src/tools/code-search.ts:50` | `sdk/src/__tests__/code-search.test.ts:285-340` | Test asserts `expect(spawnOptions.cwd).toBe('/test/project')` — Windows `path.resolve` produces `C:\test\project` → assertion fails |
 | **C** | `getUserInfoFromApiKey` (2) | `sdk/src/impl/database.ts:91` | `sdk/src/__tests__/database.test.ts:31,62` | Test sets `globalThis.fetch = fetchMock` BUT impl has env-stub bypass `if (inferenceBaseUrl) return stub` that fires before fetch is ever called |
 | **D** | Initial Session State (1) | `sdk/src/run-state.ts:627` (calls `getProjectFileTree`) | `sdk/src/__tests__/initial-session-state.test.ts:132` | Test overrides `mockFs.readdir` to return string array `['src', '.git', ...]` — real `getProjectFileTree` impl expects Dirent-like objects with `.name`, `.isDirectory()` |
-| **E** | `loadLocalAgents verbose` (1) | `sdk/src/agents/load-agents.ts:300` | `sdk/src/__tests__/load-agents.test.ts:766` | Test spies on `console.error` but impl calls `logger.error(...)` (from `@codebuff/common/util/logger`). The spy target is wrong. |
+| **E** | `loadLocalAgents verbose` (1) | `sdk/src/agents/load-agents.ts:300` | `sdk/src/__tests__/load-agents.test.ts:766` | Test spies on `console.error` but impl calls `logger.error(...)` (from `@savant-code/common/util/logger`). The spy target is wrong. |
 | **F** | `loadSkills malformed` (1) | `sdk/src/skills/load-skills.ts:114-127` | `sdk/src/__tests__/load-skills.test.ts:~600` | Test expects `expect.stringContaining('Invalid frontmatter')` but impl checks name-match FIRST → emits `'Skill name X does not match directory name Y'` → fires before frontmatter check |
 | **G** | Custom Agents apply_patch (1) | TBD | `sdk/e2e/custom-agents/apply-patch-tool.e2e.test.ts` | Located. Requires more detailed read in for loop before fix design. |
 
@@ -128,7 +128,7 @@ mockFs.readdir = (async (dirPath: string) => {
     ]
   }
   return []
-}) as CodebuffFileSystem['readdir']
+}) as SavantCodeFileSystem['readdir']
 ```
 
 ### Fix E — Assert on `logger.error` not `console.error` (1 test)

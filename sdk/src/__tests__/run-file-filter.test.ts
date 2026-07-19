@@ -1,15 +1,15 @@
-import * as mainPromptModule from '@codebuff/agent-runtime/main-prompt'
-import { FILE_READ_STATUS } from '@codebuff/common/old-constants'
-import * as projectFileTree from '@codebuff/common/project-file-tree'
-import { getInitialSessionState } from '@codebuff/common/types/session-state'
-import { getStubProjectFileContext } from '@codebuff/common/util/file'
+import * as mainPromptModule from '@savant-code/agent-runtime/main-prompt'
+import { FILE_READ_STATUS } from '@savant-code/common/old-constants'
+import * as projectFileTree from '@savant-code/common/project-file-tree'
+import { getInitialSessionState } from '@savant-code/common/types/session-state'
+import { getStubProjectFileContext } from '@savant-code/common/util/file'
 import { afterEach, describe, expect, it, mock, spyOn } from 'bun:test'
 
-import { CodebuffClient } from '../client'
+import { SavantCodeClient } from '../client'
 import * as databaseModule from '../impl/database'
 
 import type { FileFilter } from '../tools/read-files'
-import type { CodebuffFileSystem } from '@codebuff/common/types/filesystem'
+import type { SavantCodeFileSystem } from '@savant-code/common/types/filesystem'
 import type { PathLike } from 'node:fs'
 
 interface NodeError extends Error {
@@ -24,7 +24,7 @@ const createNodeError = (message: string, code: string): NodeError => {
 
 function createMockFs(config: {
   files?: Record<string, { content: string; size?: number }>
-}): CodebuffFileSystem {
+}): SavantCodeFileSystem {
   const { files = {} } = config
 
   return {
@@ -57,10 +57,10 @@ function createMockFs(config: {
     readdir: async () => [],
     mkdir: async () => undefined,
     writeFile: async () => undefined,
-  } as unknown as CodebuffFileSystem
+  } as unknown as SavantCodeFileSystem
 }
 
-describe('CodebuffClientOptions fileFilter', () => {
+describe('SavantCodeClientOptions fileFilter', () => {
   afterEach(() => {
     mock.restore()
   })
@@ -130,7 +130,7 @@ describe('CodebuffClientOptions fileFilter', () => {
       return { status: 'allow' }
     }
 
-    const client = new CodebuffClient({
+    const client = new SavantCodeClient({
       apiKey: 'test-key',
       cwd: '/project',
       fsSource: mockFs,
@@ -211,7 +211,7 @@ describe('CodebuffClientOptions fileFilter', () => {
       return { status: 'allow' }
     }
 
-    const client = new CodebuffClient({
+    const client = new SavantCodeClient({
       apiKey: 'test-key',
       cwd: '/project',
       fsSource: mockFs,
@@ -294,7 +294,7 @@ describe('CodebuffClientOptions fileFilter', () => {
       return { status: 'allow' }
     }
 
-    const client = new CodebuffClient({
+    const client = new SavantCodeClient({
       apiKey: 'test-key',
       cwd: '/project',
       fsSource: mockFs,
@@ -366,7 +366,7 @@ describe('CodebuffClientOptions fileFilter', () => {
       },
     )
 
-    const client = new CodebuffClient({
+    const client = new SavantCodeClient({
       apiKey: 'test-key',
       cwd: '/project',
       fsSource: mockFs,
@@ -436,7 +436,7 @@ describe('CodebuffClientOptions fileFilter', () => {
     )
 
     // No fileFilter provided
-    const client = new CodebuffClient({
+    const client = new SavantCodeClient({
       apiKey: 'test-key',
       cwd: '/project',
       fsSource: mockFs,
@@ -512,7 +512,7 @@ describe('CodebuffClientOptions fileFilter', () => {
       return { status: 'blocked' }
     }
 
-    const client = new CodebuffClient({
+    const client = new SavantCodeClient({
       apiKey: 'test-key',
       cwd: '/project',
       fsSource: mockFs,

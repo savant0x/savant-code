@@ -1,14 +1,14 @@
 import type { AgentTemplate } from './templates/types'
-import type { TrackEventFn } from '@codebuff/common/types/contracts/analytics'
-import type { SendActionFn } from '@codebuff/common/types/contracts/client'
+import type { TrackEventFn } from '@savant-code/common/types/contracts/analytics'
+import type { SendActionFn } from '@savant-code/common/types/contracts/client'
 import type {
   CacheDebugUsageData,
   PromptAiSdkStreamFn,
-} from '@codebuff/common/types/contracts/llm'
-import type { Logger } from '@codebuff/common/types/contracts/logger'
-import type { ParamsOf } from '@codebuff/common/types/function-params'
-import type { Message } from '@codebuff/common/types/messages/codebuff-message'
-import type { OpenRouterProviderOptions } from '@codebuff/common/types/agent-template'
+} from '@savant-code/common/types/contracts/llm'
+import type { Logger } from '@savant-code/common/types/contracts/logger'
+import type { ParamsOf } from '@savant-code/common/types/function-params'
+import type { Message } from '@savant-code/common/types/messages/savant-code-message'
+import type { OpenRouterProviderOptions } from '@savant-code/common/types/agent-template'
 import type { ToolSet } from 'ai'
 
 export const getAgentStreamFromTemplate = (params: {
@@ -105,7 +105,7 @@ export const getAgentStreamFromTemplate = (params: {
   if (!aiSdkStreamParams.providerOptions) {
     aiSdkStreamParams.providerOptions = {}
   }
-  for (const provider of ['openrouter', 'codebuff'] as const) {
+  for (const provider of ['openrouter', 'savant-code'] as const) {
     if (!aiSdkStreamParams.providerOptions[provider]) {
       aiSdkStreamParams.providerOptions[provider] = {}
     }

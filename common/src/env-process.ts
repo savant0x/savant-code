@@ -74,7 +74,7 @@ export const getProcessEnv = (): ProcessEnv => ({
   OPEN_TUI_THEME: process.env.OPEN_TUI_THEME,
   OPENTUI_THEME: process.env.OPENTUI_THEME,
 
-  // Codebuff CLI-specific
+  // SavantCode CLI-specific
   CODEBUFF_IS_BINARY: process.env.CODEBUFF_IS_BINARY,
   CODEBUFF_CLI_VERSION: process.env.CODEBUFF_CLI_VERSION,
   CODEBUFF_CLI_TARGET: process.env.CODEBUFF_CLI_TARGET,

@@ -1,24 +1,24 @@
-import { jsonToolResult } from '@codebuff/common/util/messages'
+import { jsonToolResult } from '@savant-code/common/util/messages'
 
 import { getAgentTemplate } from '../../../templates/agent-registry'
 import { formatValueForError } from '../../../util/format-value'
 
-import type { CodebuffToolHandlerFunction } from '../handler-function-type'
+import type { SavantCodeToolHandlerFunction } from '../handler-function-type'
 import type {
-  CodebuffToolCall,
-  CodebuffToolOutput,
-} from '@codebuff/common/tools/list'
+  SavantCodeToolCall,
+  SavantCodeToolOutput,
+} from '@savant-code/common/tools/list'
 import type {
   AgentTemplate,
   Logger,
-} from '@codebuff/common/types/agent-template'
-import type { FetchAgentFromDatabaseFn } from '@codebuff/common/types/contracts/database'
-import type { AgentState } from '@codebuff/common/types/session-state'
+} from '@savant-code/common/types/agent-template'
+import type { FetchAgentFromDatabaseFn } from '@savant-code/common/types/contracts/database'
+import type { AgentState } from '@savant-code/common/types/session-state'
 
 type ToolName = 'set_output'
 export const handleSetOutput = (async (params: {
   previousToolCallFinished: Promise<void>
-  toolCall: CodebuffToolCall<ToolName>
+  toolCall: SavantCodeToolCall<ToolName>
 
   agentState: AgentState
   apiKey: string
@@ -26,7 +26,7 @@ export const handleSetOutput = (async (params: {
   localAgentTemplates: Record<string, AgentTemplate>
   logger: Logger
   fetchAgentFromDatabase: FetchAgentFromDatabaseFn
-}): Promise<{ output: CodebuffToolOutput<ToolName> }> => {
+}): Promise<{ output: SavantCodeToolOutput<ToolName> }> => {
   const { previousToolCallFinished, toolCall, agentState, logger } = params
   const output = toolCall.input
   const { data } = output ?? {}
@@ -89,7 +89,7 @@ export const handleSetOutput = (async (params: {
   agentState.output = finalOutput as Record<string, unknown>
 
   return { output: jsonToolResult({ message: 'Output set' }) }
-}) satisfies CodebuffToolHandlerFunction<ToolName>
+}) satisfies SavantCodeToolHandlerFunction<ToolName>
 
 function getZodIssueCount(error: unknown): number {
   if (

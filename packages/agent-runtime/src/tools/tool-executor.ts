@@ -1,48 +1,48 @@
 import { normalize as normalizePosix } from 'path/posix'
 
-import { resolveAndContain } from '@codebuff/common/util/paths'
-import { endsAgentStepParam, toolNames } from '@codebuff/common/tools/constants'
-import { toolParams } from '@codebuff/common/tools/list'
-import { generateCompactId } from '@codebuff/common/util/string'
+import { resolveAndContain } from '@savant-code/common/util/paths'
+import { endsAgentStepParam, toolNames } from '@savant-code/common/tools/constants'
+import { toolParams } from '@savant-code/common/tools/list'
+import { generateCompactId } from '@savant-code/common/util/string'
 import { cloneDeep } from 'lodash'
 
 import { getMCPToolData } from '../mcp'
 import { MCP_TOOL_SEPARATOR } from '../mcp-constants'
 import { getAgentShortName, getAgentToolName } from '../templates/prompts'
 import { formatValueForError } from '../util/format-value'
-import { codebuffToolHandlers } from './handlers/list'
+import { savantCode$1 } from './handlers/list'
 import { getMatchingSpawn } from './handlers/tool/spawn-agent-utils'
 import { getAgentTemplate } from '../templates/agent-registry'
 import { ensureZodSchema } from './prompts'
 import { toolActivity, setActivity } from '../util/activity-tracking'
 
 import type { AgentTemplate } from '../templates/types'
-import type { CodebuffToolHandlerFunction } from './handlers/handler-function-type'
+import type { SavantCodeToolHandlerFunction } from './handlers/handler-function-type'
 import type { FileProcessingState } from './handlers/tool/write-file'
-import type { ToolName } from '@codebuff/common/tools/constants'
+import type { ToolName } from '@savant-code/common/tools/constants'
 import type {
   ClientToolCall,
   ClientToolName,
-  CodebuffToolCall,
-  CodebuffToolOutput,
-} from '@codebuff/common/tools/list'
+  SavantCodeToolCall,
+  SavantCodeToolOutput,
+} from '@savant-code/common/tools/list'
 import type {
   AgentRuntimeDeps,
   AgentRuntimeScopedDeps,
-} from '@codebuff/common/types/contracts/agent-runtime'
-import type { Logger } from '@codebuff/common/types/contracts/logger'
-import type { ToolMessage } from '@codebuff/common/types/messages/codebuff-message'
-import type { ToolResultOutput } from '@codebuff/common/types/messages/content-part'
-import type { PrintModeEvent } from '@codebuff/common/types/print-mode'
+} from '@savant-code/common/types/contracts/agent-runtime'
+import type { Logger } from '@savant-code/common/types/contracts/logger'
+import type { ToolMessage } from '@savant-code/common/types/messages/savant-code-message'
+import type { ToolResultOutput } from '@savant-code/common/types/messages/content-part'
+import type { PrintModeEvent } from '@savant-code/common/types/print-mode'
 import type {
   AgentTemplateType,
   AgentState,
   Subgoal,
-} from '@codebuff/common/types/session-state'
+} from '@savant-code/common/types/session-state'
 import type {
   CustomToolDefinitions,
   ProjectFileContext,
-} from '@codebuff/common/util/file'
+} from '@savant-code/common/util/file'
 import type { ToolCallPart, ToolSet } from 'ai'
 
 export type CustomToolCall = {
@@ -54,7 +54,7 @@ export type ToolCallError = {
   toolName?: string
   input: unknown
   error: string
-} & Pick<CodebuffToolCall, 'toolCallId'>
+} & Pick<SavantCodeToolCall, 'toolCallId'>
 
 const bareStringFieldRepairAllowlist: Partial<
   Record<string, readonly string[]>
@@ -199,7 +199,7 @@ export function parseRawToolCall<T extends ToolName = ToolName>(params: {
     toolCallId: string
     input: unknown
   }
-}): CodebuffToolCall<T> | ToolCallError {
+}): SavantCodeToolCall<T> | ToolCallError {
   const { rawToolCall } = params
   const toolName = rawToolCall.toolName
 
@@ -246,7 +246,7 @@ export function parseRawToolCall<T extends ToolName = ToolName>(params: {
     toolName,
     input: result.data,
     toolCallId: rawToolCall.toolCallId,
-  } as CodebuffToolCall<T>
+  } as SavantCodeToolCall<T>
 }
 
 export type ExecuteToolCallParams<T extends string = ToolName> = {
@@ -277,8 +277,8 @@ export type ExecuteToolCallParams<T extends string = ToolName> = {
   system: string
   tools: ToolSet
   toolCallId: string | undefined
-  toolCalls: (CodebuffToolCall | CustomToolCall)[]
-  toolCallsToAddToMessageHistory: (CodebuffToolCall | CustomToolCall)[]
+  toolCalls: (SavantCodeToolCall | CustomToolCall)[]
+  toolCallsToAddToMessageHistory: (SavantCodeToolCall | CustomToolCall)[]
   toolResults: ToolMessage[]
   toolResultsToAddToMessageHistory: ToolMessage[]
   userId: string | undefined
@@ -315,7 +315,7 @@ export async function executeToolCall<T extends ToolName>(
   } = params
   const toolCallId = params.toolCallId ?? generateCompactId()
 
-  const toolCall: CodebuffToolCall<T> | ToolCallError = parseRawToolCall<T>({
+  const toolCall: SavantCodeToolCall<T> | ToolCallError = parseRawToolCall<T>({
     rawToolCall: {
       toolName,
       toolCallId,
@@ -556,9 +556,9 @@ export async function executeToolCall<T extends ToolName>(
   })
 
   // Cast to any to avoid type errors
-  const handler = codebuffToolHandlers[
+  const handler = savantCode$1[
     toolName
-  ] as unknown as CodebuffToolHandlerFunction<T>
+  ] as unknown as SavantCodeToolHandlerFunction<T>
 
   // Use effective input for spawn_agents so the handler receives the correct agent types
   const finalToolCall =
@@ -588,7 +588,7 @@ export async function executeToolCall<T extends ToolName>(
         toolName: clientToolCall.toolName,
         input: clientToolCall.input,
       })
-      return clientToolResult.output as CodebuffToolOutput<T>
+      return clientToolResult.output as SavantCodeToolOutput<T>
     }) as any,
   })
 

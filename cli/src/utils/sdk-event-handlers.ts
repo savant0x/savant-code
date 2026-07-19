@@ -34,7 +34,7 @@ import type { MessageUpdater } from './message-updater'
 import type { StreamController } from '../hooks/stream-state'
 import type { StreamStatus } from '../hooks/use-message-queue'
 import type { ContentBlock, ToolContentBlock } from '../types/chat'
-import type { Logger } from '@codebuff/common/types/contracts/logger'
+import type { Logger } from '@savant-code/common/types/contracts/logger'
 import type {
   PrintModeEvent as SDKEvent,
   PrintModeFinish,
@@ -42,9 +42,9 @@ import type {
   PrintModeSubagentStart,
   PrintModeToolCall,
   PrintModeToolResult,
-} from '@codebuff/common/types/print-mode'
-import type { AgentActivity } from '@codebuff/common/types/session-state'
-import type { ToolName } from '@codebuff/sdk'
+} from '@savant-code/common/types/print-mode'
+import type { AgentActivity } from '@savant-code/common/types/session-state'
+import type { ToolName } from '@savant-code/sdk'
 import type { MutableRefObject } from 'react'
 
 export type SetStreamingAgentsFn = (

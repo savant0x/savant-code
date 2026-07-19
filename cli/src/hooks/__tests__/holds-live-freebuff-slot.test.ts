@@ -1,8 +1,8 @@
 import { describe, test, expect } from 'bun:test'
 
-import { holdsLiveFreebuffSlot } from '../use-freebuff-session'
+import { holdsLiveFreebuffSlot } from '../use-savant-free-session'
 
-import type { FreebuffSessionResponse } from '../../types/freebuff-session'
+import type { SavantFree$1 } from '../../types/savant-free-session'
 
 // Gate predicate for both the message queue (may queued work still be sent?)
 // and slot release (is there a server row to DELETE?). The load-bearing cases
@@ -10,7 +10,7 @@ import type { FreebuffSessionResponse } from '../../types/freebuff-session'
 // grace window and requests are still admissible; WITHOUT one the session is
 // fully over and any request would be rejected by the chat-completions gate.
 
-const activeSession: FreebuffSessionResponse = {
+const activeSession: SavantFree$1 = {
   status: 'active',
   accessTier: 'full',
   instanceId: 'inst-1',

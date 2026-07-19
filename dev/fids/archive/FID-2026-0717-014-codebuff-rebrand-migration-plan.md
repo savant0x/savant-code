@@ -1,11 +1,11 @@
 # **Codebase Migration and Architectural Blueprint: Savant & Savant-Free**
 
-The following research report and execution blueprint provides an exhaustive architectural analysis for decoupling, rebranding, and migrating the open-source CodebuffAI/codebuff monorepo1. The overarching objective of this analysis is to transform the existing TypeScript-based client applications—specifically the premium, subscription-based codebuff client and the ad-supported, zero-configuration freebuff client1—into the distinct entities savant and savant-free, respectively. Furthermore, this document details the meticulous API surface extraction required to sever ties with the original proprietary backend infrastructure. This extraction informs a comprehensive specification for rebuilding the server layer using a high-performance Rust web framework.  
+The following research report and execution blueprint provides an exhaustive architectural analysis for decoupling, rebranding, and migrating the open-source savant0x/savant-code monorepo1. The overarching objective of this analysis is to transform the existing TypeScript-based client applications—specifically the premium, subscription-based savant-code client and the ad-supported, zero-configuration savant-free client1—into the distinct entities savant and savant-free, respectively. Furthermore, this document details the meticulous API surface extraction required to sever ties with the original proprietary backend infrastructure. This extraction informs a comprehensive specification for rebuilding the server layer using a high-performance Rust web framework.  
 The original application operates as a terminal-native, multi-agent artificial intelligence coding assistant built heavily on TypeScript, the Bun runtime, and a React-based web component architecture1. Because the target backend infrastructure is inaccessible, the frontend architecture must be systematically reverse-engineered at the network boundary to deduce the expected HTTP and WebSocket data contracts. This analysis is structurally divided into six critical execution phases, designed to serve as a direct operational manual for an autonomous coding agent executing the frontend migration while the Rust backend is synthesized in parallel.
 
 ## **Phase 1: Dual-Client Global Rebranding Strategy**
 
-The monorepo structure contains over 7,500 commits and is heavily skewed toward TypeScript (98.1%)1. The rebranding process must account for strict casing preservation across standard variables, classes, environment variables, localized string literals, and deeply nested configuration files. The executing agent must distinctly differentiate between the premium tier (codebuff transitioning to savant) and the free tier (freebuff transitioning to savant-free)1. A naive global substitution will immediately corrupt the Abstract Syntax Tree (AST) of the TypeScript application, breaking module imports, React component hierarchies, and interface bindings.
+The monorepo structure contains over 7,500 commits and is heavily skewed toward TypeScript (98.1%)1. The rebranding process must account for strict casing preservation across standard variables, classes, environment variables, localized string literals, and deeply nested configuration files. The executing agent must distinctly differentiate between the premium tier (savant-code transitioning to savant) and the free tier (savant-free transitioning to savant-free)1. A naive global substitution will immediately corrupt the Abstract Syntax Tree (AST) of the TypeScript application, breaking module imports, React component hierarchies, and interface bindings.
 
 ### **Lexical Search-and-Replace Mappings**
 
@@ -14,7 +14,7 @@ To prevent AST compilation errors, the autonomous agent must execute context-awa
 | Original String (Regex Target) | Target Replacement | Structural Context and Target File Types |
 | :---- | :---- | :---- |
 | \\bcodebuff\\b | savant | Package names (package.json), CLI execution commands, lowercase variables, directory paths, and logging literals1. |
-| \\bCodebuff\\b | Savant | Class names (e.g., CodebuffClient), React functional components, TypeScript interface definitions, and exported module names3. |
+| \\bCodebuff\\b | Savant | Class names (e.g., SavantCodeClient), React functional components, TypeScript interface definitions, and exported module names3. |
 | \\bCODEBUFF\\b | SAVANT | Environment variables, macro definitions, and static configuration constants (e.g., NEXT\_PUBLIC\_CODEBUFF\_APP\_URL)4. |
 | \\bfreebuff\\b | savant-free | CLI install commands, secondary directory names, configuration overrides, and binary targets1. |
 | \\bFreebuff\\b | SavantFree | Class names, UI rendering headers inside the terminal TUI, and namespace declarations specific to the free tier1. |
@@ -25,8 +25,8 @@ To prevent AST compilation errors, the autonomous agent must execute context-awa
 ### **Targeted Sub-System Rebranding Operations**
 
 The string replacement methodology must encompass the CLI entry points, the local environment variable injection system, and the filesystem initialization logic. The application is distributed globally via Node Package Manager (NPM), requiring precise modifications to the package manifests across the workspace.  
-The agent must traverse the root package.json, cli/package.json, and freebuff/cli/package.json1. The standard "name": "codebuff" must be translated to "name": "savant". Furthermore, the binary execution directives within the package manifests dictate how the global commands map to the compiled JavaScript artifacts. The "bin": { "codebuff": "./build/index.js" } directive must transition to "bin": { "savant": "./build/index.js" }, while the equivalent freebuff directive must transition to "savant-free". Concurrently, all markdown documentation, usage instructions, and terminal onboarding scripts must reflect the new installation pathway: npm install \-g savant1.  
-The application utilizes a Next.js-style public environment variable architecture injected during the build process4. The .env.example, build shell scripts, and specifically the common/src/env.ts configuration file must be updated to reflect the new API endpoints. The legacy NEXT\_PUBLIC\_CODEBUFF\_APP\_URL variable, which historically hardcoded redirects to www.codebuff.com to manage OAuth headers, must be rebranded to NEXT\_PUBLIC\_SAVANT\_APP\_URL4.  
+The agent must traverse the root package.json, cli/package.json, and savant-free/cli/package.json1. The standard "name": "savant-code" must be translated to "name": "savant". Furthermore, the binary execution directives within the package manifests dictate how the global commands map to the compiled JavaScript artifacts. The "bin": { "savant-code": "./build/index.js" } directive must transition to "bin": { "savant": "./build/index.js" }, while the equivalent savant-free directive must transition to "savant-free". Concurrently, all markdown documentation, usage instructions, and terminal onboarding scripts must reflect the new installation pathway: npm install \-g savant1.  
+The application utilizes a Next.js-style public environment variable architecture injected during the build process4. The .env.example, build shell scripts, and specifically the common/src/env.ts configuration file must be updated to reflect the new API endpoints. The legacy NEXT\_PUBLIC\_CODEBUFF\_APP\_URL variable, which historically hardcoded redirects to www.savant-code.com to manage OAuth headers, must be rebranded to NEXT\_PUBLIC\_SAVANT\_APP\_URL4.  
 Finally, the original application persists user state, authorization tokens, and detailed chat history within the \~/.config/manicode/ filesystem namespace6. The agent must search for path constructions resolving to .config/manicode/projects/... and structurally rewrite these literals to .config/savant/projects/...6. The analysis reveals a critical bug in the original initialization sequence where getCurrentChatDir() failed to properly catch ENOENT directory creation exceptions, causing fatal crashes upon launch6. The migration process must ensure that the new savant directory initialization sequence implements correct try/catch fallbacks and executes recursive directory creation (mkdir { recursive: true }) to ensure seamless user onboarding.
 
 ## **Phase 2: Client/Server API Surface Extraction**
@@ -35,7 +35,7 @@ The original architecture functions largely as a sophisticated "thin router." It
 
 ### **Core REST Endpoints and JSON Contracts**
 
-Based on the forensic analysis of cli/src/hooks/use-auth-query.ts, freebuff/web/src/app/api/..., and common/src/env.ts, the client fundamentally expects a series of highly specific endpoints to facilitate its application lifecycle4.
+Based on the forensic analysis of cli/src/hooks/use-auth-query.ts, savant-free/web/src/app/api/..., and common/src/env.ts, the client fundamentally expects a series of highly specific endpoints to facilitate its application lifecycle4.
 
 | Endpoint Path | HTTP Method | Expected Request Payload (JSON Schema) | Expected Response Payload (JSON Schema) | Architectural Purpose |
 | :---- | :---- | :---- | :---- | :---- |
@@ -48,7 +48,7 @@ Based on the forensic analysis of cli/src/hooks/use-auth-query.ts, freebuff/web/
 ### **Real-Time Events and Multi-Agent Orchestration**
 
 The application utilizes an advanced, event-driven architecture to coordinate its specialized agents: the File Picker Agent, the Planner Agent, the Editor Agent, and the Reviewer Agent1. Instead of executing a single, monolithic completion, the system operates in a continuous feedback loop. The client expects to stream responses and specific agent state transitions in real-time. Consequently, the new Rust backend must fully support high-bandwidth Server-Sent Events (SSE) or full-duplex WebSockets.  
-The client architecture expects the backend event emitters to broadcast payloads matching strictly defined CodebuffToolOutput schemas9. For instance, when the Planner Agent determines that the project directory must be indexed, the server pushes a tool\_call\_request (specifically an invocation for ripgrep or a file read) through the stream. The client immediately intercepts this event, executes the local filesystem read, and posts the tool\_call\_result back to the server, allowing the backend LLM to continue its generation context2. The core expected event types include agent\_spawned, tool\_call\_request, tool\_call\_result, chunk (for standard token generation), and turn\_complete3.
+The client architecture expects the backend event emitters to broadcast payloads matching strictly defined SavantCodeToolOutput schemas9. For instance, when the Planner Agent determines that the project directory must be indexed, the server pushes a tool\_call\_request (specifically an invocation for ripgrep or a file read) through the stream. The client immediately intercepts this event, executes the local filesystem read, and posts the tool\_call\_result back to the server, allowing the backend LLM to continue its generation context2. The core expected event types include agent\_spawned, tool\_call\_request, tool\_call\_result, chunk (for standard token generation), and turn\_complete3.
 
 ### **Licensing, Rate Limiting, and Telemetry Delineation**
 
@@ -74,7 +74,7 @@ The original authentication architecture implements an asynchronous Device Autho
 ### **Local State Storage Mechanics**
 
 Session states, active models, and authorization caches are persisted natively to the user's local disk inside the \~/.config/savant/ directory. The primary artifact, credentials.json, stores the active JWTs, refresh tokens, and basic user metadata4.  
-A critical vulnerability—or intentional bypass—exists within the freebuff application path. The client deliberately circumvents continuous network validation for API keys to reduce latency. As noted in the analysis of cli/src/hooks/use-auth-query.ts and sdk/src/impl/database.ts, the seedUserInfoCache() method pre-populates the SDK's internal caching layer using historical data read directly from credentials.json4. This prevents fatal application crashes if the backend /api/v1/me endpoint experiences downtime. To fully decouple the state, the executing agent must modify use-auth-query.ts to query the new NEXT\_PUBLIC\_SAVANT\_APP\_URL. The fallback caching mechanism (seedUserInfoCache()) should be maintained to ensure offline resilience and instantaneous terminal startup, but the validation interval logic must be strictly synchronized with the Rust backend's token expiry schedule to prevent unauthorized access.
+A critical vulnerability—or intentional bypass—exists within the savant-free application path. The client deliberately circumvents continuous network validation for API keys to reduce latency. As noted in the analysis of cli/src/hooks/use-auth-query.ts and sdk/src/impl/database.ts, the seedUserInfoCache() method pre-populates the SDK's internal caching layer using historical data read directly from credentials.json4. This prevents fatal application crashes if the backend /api/v1/me endpoint experiences downtime. To fully decouple the state, the executing agent must modify use-auth-query.ts to query the new NEXT\_PUBLIC\_SAVANT\_APP\_URL. The fallback caching mechanism (seedUserInfoCache()) should be maintained to ensure offline resilience and instantaneous terminal startup, but the validation interval logic must be strictly synchronized with the Rust backend's token expiry schedule to prevent unauthorized access.
 
 ### **Defined User Object Shape**
 
@@ -93,7 +93,7 @@ JSON
 
 ### **Decoupling the Authentication Flow**
 
-The legacy application possesses hardcoded redirects targeting www.codebuff.com. These absolute URLs were implemented to prevent intermediate HTTP 301 redirects from actively stripping the sensitive Authorization headers during routing4. The migration agent must actively strip all absolute URIs from the codebase, replacing them entirely with dynamic environmental variables derived from the local configuration.  
+The legacy application possesses hardcoded redirects targeting www.savant-code.com. These absolute URLs were implemented to prevent intermediate HTTP 301 redirects from actively stripping the sensitive Authorization headers during routing4. The migration agent must actively strip all absolute URIs from the codebase, replacing them entirely with dynamic environmental variables derived from the local configuration.  
 During the login process, the findWindowsBash() utility or the generic terminal launcher triggers a browser window launch, directing the user to the backend's OAuth URL11. The callback URI must be fundamentally updated in the backend provider (e.g., GitHub OAuth application settings) to point to the new Rust server's designated callback endpoint. The CLI will continuously hit the /api/auth/cli/poll endpoint using its generated device\_code until the Rust server registers the OAuth success and returns the final access\_token4.
 
 ## **Phase 4: Structural Renaming and the "Do Not Touch" List**
@@ -106,19 +106,19 @@ The autonomous agent must execute the following structural renames using strictl
 
 | Source Filesystem Path | Target Filesystem Path | Explicit Terminal Execution Command |
 | :---- | :---- | :---- |
-| freebuff/ | savant-free/ | git mv freebuff savant-free |
-| freebuff/cli/ | savant-free/cli/ | *(Implicit execution via parent directory move)* |
-| freebuff/web/ | savant-free/web/ | *(Implicit execution via parent directory move)* |
-| cli/src/tests/codebuff.test.ts | cli/src/tests/savant.test.ts | git mv cli/src/tests/codebuff.test.ts cli/src/tests/savant.test.ts |
-| .codebuffignore | .savantignore | git mv .codebuffignore .savantignore \[cite: 1\] |
+| savant-free/ | savant-free/ | git mv savant-free savant-free |
+| savant-free/cli/ | savant-free/cli/ | *(Implicit execution via parent directory move)* |
+| savant-free/web/ | savant-free/web/ | *(Implicit execution via parent directory move)* |
+| cli/src/tests/savant-code.test.ts | cli/src/tests/savant.test.ts | git mv cli/src/tests/savant-code.test.ts cli/src/tests/savant.test.ts |
+| .savantignore | .savantignore | git mv .savantignore .savantignore \[cite: 1\] |
 
-Following the execution of these directory moves, the agent must recursively update workspace array references in the root package.json, bunfig.toml, and tsconfig.base.json to reflect the new paths (utilizing savant-free instead of freebuff) to ensure the Bun runtime correctly maps the dependencies1.
+Following the execution of these directory moves, the agent must recursively update workspace array references in the root package.json, bunfig.toml, and tsconfig.base.json to reflect the new paths (utilizing savant-free instead of savant-free) to ensure the Bun runtime correctly maps the dependencies1.
 
 ### **The Architectural "Do Not Touch" List**
 
 Certain files, dependencies, and external configurations within this ecosystem are highly fragile. Modifying them naively will immediately compromise the build pipeline or core logic. The agent must bypass the following components during the search-and-replace phase:
 
-1. **Hardware Compilation Targets (Bun Baselines)**: The internal build system (located in cli/scripts/build-binary.ts and freebuff/cli/build.ts) contains highly specific logic designed to compile standalone binaries for older central processing units lacking Advanced Vector Extensions 2 (AVX2) instructions4. The string literals bun-windows-x64-baseline and bun-linux-x64-baseline must **not** be modified, as they dictate literal upstream Bun compilation targets4. Modifying these names will force the compiler to default to modern instruction sets, causing immediate SIGILL (illegal instruction) or error code 3221225501 crashes on legacy hardware7.  
+1. **Hardware Compilation Targets (Bun Baselines)**: The internal build system (located in cli/scripts/build-binary.ts and savant-free/cli/build.ts) contains highly specific logic designed to compile standalone binaries for older central processing units lacking Advanced Vector Extensions 2 (AVX2) instructions4. The string literals bun-windows-x64-baseline and bun-linux-x64-baseline must **not** be modified, as they dictate literal upstream Bun compilation targets4. Modifying these names will force the compiler to default to modern instruction sets, causing immediate SIGILL (illegal instruction) or error code 3221225501 crashes on legacy hardware7.  
 2. **Third-Party TUI Libraries**: The terminal user interface relies entirely on the @opentui/core framework7. Namespace references, import statements, and interface extensions mapping to opentui must be preserved in their exact original casing.  
 3. **Local Agent Definitions (.agents/)**: The multi-agent workflow allows developers to define custom routines in .agents/types/agent-definition.ts1. The hidden directory name .agents must remain unchanged. Modifying this string would instantly break backward compatibility for existing users who possess this directory structure populated in their local project roots.  
 4. **Tree-Sitter Namespaces**: The parsing engine utilized for Abstract Syntax Tree code analysis relies on highly specific language grammars (e.g., tree-sitter-typescript, tree-sitter-python)1. The agent must not alter any tree-sitter queries or configuration files mapping to these native node modules.  
@@ -229,7 +229,7 @@ To execute this frontend migration autonomously while ensuring continuous integr
 
 1. **Execute Directory Reorganization**: Programmatically execute the git mv commands specified in Phase 4\. Commit immediately to lock the filesystem changes into the tree: git commit \-m "chore: structural directory renames for savant".  
 2. **Execute AST-Aware Lexical Replacements**: Utilize programmatic AST manipulation tools like ts-morph, or fallback to ripgrep (rg) piped to sed to enact the lexical replacements from Phase 1\.  
-   * *Execution Context*: rg "codebuff" \-l | xargs sed \-i '' 's/codebuff/savant/g'. (The agent must utilize case-preserving regex libraries to prevent breaking camelCase module imports).  
+   * *Execution Context*: rg "savant-code" \-l | xargs sed \-i '' 's/savant-code/savant/g'. (The agent must utilize case-preserving regex libraries to prevent breaking camelCase module imports).  
 3. **Sanitize Storage Paths and Error Handlers**: Traverse the deeply nested utilities associated with logging and disk storage, specifically src/utils/logger.ts and src/project-files.ts6. Explicitly wrap the getCurrentChatDir() initialization in a robust try/catch block. Ensure the new .config/savant directory path is created recursively prior to any device fingerprinting or login logic firing to mitigate known launch crashes.
 
 ### **Step 2: Configuration and Build Script Updates**

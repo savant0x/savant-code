@@ -9,7 +9,7 @@
  *
  * POSIX:
  * - We spawn a detached `/bin/sh` whose stdin is a pipe from this process.
- *   `sh` isn't named node/bun/codebuff/freebuff, so process-name kill sweeps
+ *   `sh` isn't named node/bun/savant-code/savant-free, so process-name kill sweeps
  *   miss it, and `detached` puts it in its own session so process-group kills
  *   miss it too.
  * - The watchdog blocks on `cat` until the pipe hits EOF — which only happens
@@ -22,7 +22,7 @@
  *   synchronous), so it never fires and the normal cleanup path owns the
  *   terminal writes.
  *
- * Windows (closes the codebuff#843 after-exit gap, where the hosting
+ * Windows (closes the savant-code#843 after-exit gap, where the hosting
  * terminal keeps sending mouse/focus VT input that the shell echoes as
  * `^[[<35;12;7M` gibberish):
  * - Bun/libuv put direct children in a kill-on-job-close job object, so a
@@ -181,7 +181,7 @@ export function startTerminalWatchdog(options?: { ttyPath?: string }): void {
     if (process.platform === 'win32') {
       const disarmPath = path.join(
         os.tmpdir(),
-        `codebuff-watchdog-disarm-${process.pid}-${Math.random().toString(36).slice(2)}`,
+        `savant-code-watchdog-disarm-${process.pid}-${Math.random().toString(36).slice(2)}`,
       )
       child = spawnWindowsWatchdog({ ttyPath: options?.ttyPath, disarmPath })
       disarmFilePath = disarmPath

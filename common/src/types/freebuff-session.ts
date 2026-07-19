@@ -1,7 +1,7 @@
-import type { FreebuffAccessTier } from '../constants/freebuff-models'
+import type { SavantFree$1 } from '../constants/savant-free-models'
 
 /**
- * Wire-level shapes returned by `/api/v1/freebuff/session`. Source of truth
+ * Wire-level shapes returned by `/api/v1/savant-free/session`. Source of truth
  * for the CLI (which deserializes these) and the server (which serializes
  * them) — keep both in sync by importing this module from either side.
  *
@@ -11,12 +11,12 @@ import type { FreebuffAccessTier } from '../constants/freebuff-models'
 /**
  * Usage counter surfaced to the CLI so the UI can render
  * "N of M sessions used" alongside active state. Present when the
- * joined model consumes Freebuff sessions. `recentCount` is the
+ * joined model consumes SavantFree sessions. `recentCount` is the
  * rounded session units since the last midnight Pacific reset at the time
  * the response was produced — see also the standalone `rate_limited` status
  * for the reject path.
  */
-export interface FreebuffSessionRateLimit {
+export interface SavantFree$1 {
   model: string
   limit: number
   /** 'pacific_day' for the daily premium/limited pools; 'pacific_week' for the
@@ -30,9 +30,9 @@ export interface FreebuffSessionRateLimit {
   recentCount: number
 }
 
-export type FreebuffSessionRateLimitByModel = Record<
+export type SavantFree$1 = Record<
   string,
-  FreebuffSessionRateLimit
+  SavantFree$1
 >
 
 /**
@@ -49,12 +49,12 @@ export type FreebuffSessionRateLimitByModel = Record<
  * `accessTier` to pick the right copy; both variants share the share code,
  * inviter name, and GitHub-linked flag.
  */
-export interface FreebuffReferralInfo {
+export interface SavantFree$1 {
   /** The user's referral code (`user.referral_code`), used to build the share
    *  link. */
   code: string
   /** The inviter's display name (`user.name`), used to personalize the invite
-   *  landing page ("X invited you to try Freebuff!"). Null when the user has no
+   *  landing page ("X invited you to try SavantFree!"). Null when the user has no
    *  name set. */
   referrerName: string | null
   /** Capped qualified-referral count for the tier's reward: full tier = weekly
@@ -77,26 +77,26 @@ export interface FreebuffReferralInfo {
  *  parameter type for the same reason as `getRateLimitsByModel`. */
 export const getReferralInfo = (
   session: { status: string } | null | undefined,
-): FreebuffReferralInfo | undefined =>
+): SavantFree$1 | undefined =>
   session && 'referral' in session
-    ? (session as { referral?: FreebuffReferralInfo }).referral
+    ? (session as { referral?: SavantFree$1 }).referral
     : undefined
 
 /** Pull the per-model shared session-quota snapshot off whichever statuses
  *  carry it (active, ended, none). Returns undefined for terminal /
  *  pre-join states that have no quota field. The parameter is intentionally
- *  loose so the CLI can pass its `FreebuffSessionResponse` (which adds the
+ *  loose so the CLI can pass its `SavantFree$1` (which adds the
  *  client-only `takeover_prompt` variant) without a discriminated-union
  *  ceremony at every call site. */
 export const getRateLimitsByModel = (
   session: { status: string } | null | undefined,
-): FreebuffSessionRateLimitByModel | undefined =>
+): SavantFree$1 | undefined =>
   session && 'rateLimitsByModel' in session
-    ? (session as { rateLimitsByModel?: FreebuffSessionRateLimitByModel })
+    ? (session as { rateLimitsByModel?: SavantFree$1 })
         .rateLimitsByModel
     : undefined
 
-export type FreebuffCountryBlockReason =
+export type SavantFree$1 =
   | 'country_not_allowed'
   | 'anonymized_or_unknown_country'
   | 'anonymous_network'
@@ -104,7 +104,7 @@ export type FreebuffCountryBlockReason =
   | 'unresolved_client_ip'
   | 'ip_privacy_lookup_failed'
 
-export type FreebuffIpPrivacySignal =
+export type SavantFree$1 =
   | 'anonymous'
   | 'vpn'
   | 'proxy'
@@ -114,19 +114,19 @@ export type FreebuffIpPrivacySignal =
   | 'hosting'
   | 'service'
 
-export type FreebuffSpurStatus =
+export type SavantFree$1 =
   | 'not_checked'
   | 'clean'
   | 'suspicious'
   | 'failed'
 
-export type FreebuffScamalyticsStatus =
+export type SavantFree$1 =
   | 'not_checked'
   | 'clean'
   | 'suspicious'
   | 'failed'
 
-export type FreebuffPrivacyDecision =
+export type SavantFree$1 =
   | 'allowed_clean'
   | 'ipinfo_suspicious_spur_clean'
   | 'corroborated_block'
@@ -137,7 +137,7 @@ export type FreebuffPrivacyDecision =
   | 'ipinfo_failed_limited'
   | 'limited_other'
 
-export type FreebuffPrivacyProviderDecision =
+export type SavantFree$1 =
   | 'not_checked'
   | 'cloudflare_tor'
   | 'ipinfo_clean'
@@ -149,33 +149,33 @@ export type FreebuffPrivacyProviderDecision =
   | 'corroborated_soft'
   | 'corroborated_hard'
 
-export interface FreebuffLimitedModeReason {
+export interface SavantFree$1 {
   /** Present for limited access so the model picker can explain why the
    *  reduced model set is shown without re-running geo/IP logic locally. */
   countryCode?: string | null
-  countryBlockReason?: FreebuffCountryBlockReason | null
-  ipPrivacySignals?: FreebuffIpPrivacySignal[] | null
+  countryBlockReason?: SavantFree$1 | null
+  ipPrivacySignals?: SavantFree$1[] | null
 }
 
-export type FreebuffSessionServerResponse =
+export type SavantFree$1 =
   | ({
       /** User has no session row. CLI must POST to start a session. Also
        *  returned when `getSessionState` notices the user has been swept past
        *  the grace window. */
       status: 'none'
-      accessTier?: FreebuffAccessTier
+      accessTier?: SavantFree$1
       message?: string
       /** Current quota snapshots for free models, keyed by model id. Lets
        *  the picker show today's session usage before the user commits
        *  to a model. */
-      rateLimitsByModel?: FreebuffSessionRateLimitByModel
+      rateLimitsByModel?: SavantFree$1
       /** Referral status for the "invite friends" banner. Full tier advertises
        *  GLM 5.2; limited tier advertises a daily free-session bonus. */
-      referral?: FreebuffReferralInfo
-    } & FreebuffLimitedModeReason)
+      referral?: SavantFree$1
+    } & SavantFree$1)
   | ({
       status: 'active'
-      accessTier: FreebuffAccessTier
+      accessTier: SavantFree$1
       instanceId: string
       /** Model the active session is bound to — cannot change mid-session. */
       model: string
@@ -183,11 +183,11 @@ export type FreebuffSessionServerResponse =
       expiresAt: string
       remainingMs: number
       /** Shared free-session quota for this model. */
-      rateLimit?: FreebuffSessionRateLimit
-      rateLimitsByModel?: FreebuffSessionRateLimitByModel
+      rateLimit?: SavantFree$1
+      rateLimitsByModel?: SavantFree$1
       /** Included for Web/Cloud picker reads that request full quota details. */
-      referral?: FreebuffReferralInfo
-    } & FreebuffLimitedModeReason)
+      referral?: SavantFree$1
+    } & SavantFree$1)
   | ({
       /** Session is over. While `instanceId` is present we're inside the
        *  server-side grace window — chat requests still go through so the
@@ -199,7 +199,7 @@ export type FreebuffSessionServerResponse =
        *  client may also synthesize a no-grace `{ status: 'ended' }` when a
        *  poll reveals the row was swept. Both render the same UI. */
       status: 'ended'
-      accessTier?: FreebuffAccessTier
+      accessTier?: SavantFree$1
       instanceId?: string
       admittedAt?: string
       expiresAt?: string
@@ -208,10 +208,10 @@ export type FreebuffSessionServerResponse =
       /** Snapshot of the user's free-session quota at the moment the
        *  session ended. Lets the post-session banner show "N of M sessions
        *  used today" without an extra round-trip. */
-      rateLimitsByModel?: FreebuffSessionRateLimitByModel
+      rateLimitsByModel?: SavantFree$1
       /** Included for Web/Cloud picker reads that request full quota details. */
-      referral?: FreebuffReferralInfo
-    } & FreebuffLimitedModeReason)
+      referral?: SavantFree$1
+    } & SavantFree$1)
   | {
       /** Another CLI on the same account rotated our instance id. Polling
        *  stops and the UI shows a "close the other CLI" screen. The server
@@ -230,8 +230,8 @@ export type FreebuffSessionServerResponse =
       status: 'country_blocked'
       message?: string
       countryCode: string
-      countryBlockReason?: FreebuffCountryBlockReason
-      ipPrivacySignals?: FreebuffIpPrivacySignal[]
+      countryBlockReason?: SavantFree$1
+      ipPrivacySignals?: SavantFree$1[]
     }
   | {
       /** User has an active session bound to a different model. Returned
@@ -240,14 +240,14 @@ export type FreebuffSessionServerResponse =
        *  your active DeepSeek session to switch?" → on confirm, DELETE then
        *  re-POST with the new model. */
       status: 'model_locked'
-      accessTier?: FreebuffAccessTier
+      accessTier?: SavantFree$1
       currentModel: string
       requestedModel: string
     }
   | {
       /** Requested model is valid but not selectable right now. */
       status: 'model_unavailable'
-      accessTier?: FreebuffAccessTier
+      accessTier?: SavantFree$1
       requestedModel: string
       availableHours: string
     }
@@ -269,8 +269,8 @@ export type FreebuffSessionServerResponse =
        *  daily/weekly session pool — clients should say "close a tab", not
        *  "daily limit". Absent on quota rejects. */
       reason?: 'concurrent_sessions'
-      accessTier?: FreebuffAccessTier
-      /** The freebuff model the user tried to join. */
+      accessTier?: SavantFree$1
+      /** The savant-free model the user tried to join. */
       model: string
       /** Max session units permitted per period (e.g. 5/day premium, or the
        *  user's weekly GLM referral entitlement). */
@@ -286,17 +286,17 @@ export type FreebuffSessionServerResponse =
       retryAfterMs: number
     }
   | {
-      /** Freebuff Desktop multi-session only: the user already holds an active
+      /** SavantFree Desktop multi-session only: the user already holds an active
        *  premium-bucket session and tried to admit a second one. Only one
        *  premium-bucket model (DeepSeek V4 Pro / MiMo 2.5 Pro / Kimi / MiniMax
        *  M3 / GLM 5.2) may run at a time per user; on the full tier unlimited
        *  models (DeepSeek V4 Flash, MiMo 2.5) have no such cap. On the LIMITED
-       *  tier every model occupies the slot — one freebuff tab at a time. The
+       *  tier every model occupies the slot — one savant-free tab at a time. The
        *  desktop client surfaces this and steers the tab to an unlimited model
        *  (or closes the holding tab). Never returned to CLI/web, which run one
        *  session per user. */
       status: 'premium_slot_taken'
-      accessTier?: FreebuffAccessTier
+      accessTier?: SavantFree$1
       /** Model this tab tried to start. */
       requestedModel: string
       /** Model of the premium-bucket session already running. */

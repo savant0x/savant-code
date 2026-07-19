@@ -1,7 +1,7 @@
-import { LRUCache } from '@codebuff/common/util/lru-cache'
+import { LRUCache } from '@savant-code/common/util/lru-cache'
 import { encode } from 'gpt-tokenizer/esm/model/gpt-4o'
 
-import type { Message } from '@codebuff/common/types/messages/codebuff-message'
+import type { Message } from '@savant-code/common/types/messages/savant-code-message'
 
 const ANTHROPIC_TOKEN_FUDGE_FACTOR = 1.35
 

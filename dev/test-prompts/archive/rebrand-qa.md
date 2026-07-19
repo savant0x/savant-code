@@ -1,6 +1,6 @@
 # Savant-Code Rebrand QA — Comprehensive A-Z Live Test
 
-**Purpose:** Final verification pass before public rebrand of Codebuff → Savant-Code. Covers every change from FID-001 through FID-016 plus end-to-end CLI/SDK/agent-runtime integration.
+**Purpose:** Final verification pass before public rebrand of SavantCode → Savant-Code. Covers every change from FID-001 through FID-016 plus end-to-end CLI/SDK/agent-runtime integration.
 
 **Mode:** Interactive live execution inside the Savant CLI. Drive the actual chat session, run real commands, exercise real tools. Report PASS/FAIL/SKIP with evidence for each item.
 
@@ -180,7 +180,7 @@
 ## Section 16: ECHO Roster Fidelity (ECHO.md ↔ agent runtime)
 
 90. `[SOURCE]` Confirm ECHO.md agent table matches all 9 directories in `agents/`.
-91. `[SOURCE]` Confirm freebuff-legacy agents removed (any in `agents/` not listed in ECHO.md is a violation).
+91. `[SOURCE]` Confirm savant-free-legacy agents removed (any in `agents/` not listed in ECHO.md is a violation).
 92. `[SOURCE]` Confirm 4 FREEBUFF_GEMINI_THINKER_* variants consolidated into Verifier (FID-006).
 
 ---
@@ -197,7 +197,7 @@
 
 ## Section 18: Database & Persistence (FID-005)
 
-98. `[SOURCE]` Read `packages/database/` → confirm `~/.savant/data.db` path (not freebuff).
+98. `[SOURCE]` Read `packages/database/` → confirm `~/.savant/data.db` path (not savant-free).
 99. `[LIVE]` Confirm session state persists across restarts.
 100. `[LIVE]` Confirm cost/tokens tracked across sessions in DB.
 
@@ -224,7 +224,7 @@
 ## Section 21: Free-Buff Mode Considerations (future)
 
 109. `[SOURCE]` Confirm IS_FREEBUFF constant exists.
-110. `[SOURCE]` Confirm freebuff-model-store.ts present (uses model selection).
+110. `[SOURCE]` Confirm savant-free-model-store.ts present (uses model selection).
 111. `[SOURCE]` Confirm ad-supported flow paths marked but not blocking paid free flow.
 
 ---

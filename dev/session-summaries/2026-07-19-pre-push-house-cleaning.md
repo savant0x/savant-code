@@ -2,11 +2,11 @@
 
 ## Summary
 
-Closed all FID-2026-0718-* work (FID-001 through FID-018) and prepared the repo for the 0.0.2 pre-rebrand safety checkpoint push. Centerpiece decisions: Option C (preserve `@codebuff/*` workspace pkg names as the snapshot state for 0.0.2; full rebrand lands in next push); Options A/B/B/A for FID-018 doc realignment (pre-rebrand README, full ECHO CONTRIBUTING rewrite, standard dev/ cleanup, delete duplicate skill).
+Closed all FID-2026-0718-* work (FID-001 through FID-018) and prepared the repo for the 0.0.2 pre-rebrand safety checkpoint push. Centerpiece decisions: Option C (preserve `@savant-code/*` workspace pkg names as the snapshot state for 0.0.2; full rebrand lands in next push); Options A/B/B/A for FID-018 doc realignment (pre-rebrand README, full ECHO CONTRIBUTING rewrite, standard dev/ cleanup, delete duplicate skill).
 
 ## Key Learnings
 
-- **Workspace pkg names + 1,131 consumer imports must align.** Nova's prior audits verified compile-time but never ran cold `bun install`. The `@savant-code/sdk` workspace rename left `bun install` failing with `Workspace dependency "@codebuff/sdk" not found` because consumers still said `@codebuff/*`. Option C (snapshot revert) was the right call for 0.0.2; full rebrand (renaming 1,131 imports to `@savant-code/*`) was correctly deferred to the next push.
+- **Workspace pkg names + 1,131 consumer imports must align.** Nova's prior audits verified compile-time but never ran cold `bun install`. The `@savant-code/sdk` workspace rename left `bun install` failing with `Workspace dependency "@savant-code/sdk" not found` because consumers still said `@savant-code/*`. Option C (snapshot revert) was the right call for 0.0.2; full rebrand (renaming 1,131 imports to `@savant-code/*`) was correctly deferred to the next push.
 - **Pre-rebrand checkpoint semantics.** A "checkpoint" push preserves the pre-rebrand state without lying about it. README's "Full rebrand incoming in next push" footnote + decision-record in FID-018 prevents the next push from breaking user trust about workspace pkg state at the 0.0.2 tag.
 - **FID Auto-Archive rule is a discipline.** 4 straggler ECHO-format FIDs and 2 pre-ECHO format tracking docs were sitting in `dev/fids/` root, breaking the "no file out of place" rule the user enforces. Renaming pre-ECHO docs to ECHO format + archiving + adding CHANGELOG entries brought `dev/fids/` to: archive/ + .gitkeep + FID-018 (only). Archived count grew from 45 → 49.
 - **Cross-Agent Claim Rule caught real issues.** Nova's FID-015 verdict flagged 20 SDK test failures I'd missed; FID-016 fixed them. Fid-016's verdict verified 488/0. Nova signed off on FID-013 v3, FID-014, FID-015, FID-016, FID-017 before push. Three-layer audit (Savant → orchestrator → Nova) prevents single-agent hallucination drifts.
@@ -42,7 +42,7 @@ Closed all FID-2026-0718-* work (FID-001 through FID-018) and prepared the repo 
 - **FID-2026-0718-002** — Feature Test Report Findings (FSM Gate + Circuit Breaker + Hygiene)
 - **FID-2026-0718-003** — Dev Override System
 - **FID-2026-0718-004** — A-Z Test Report Findings
-- **FID-2026-0718-006** — Agent Roster Alignment (Savant Spec ↔ Codebuff Codebase)
+- **FID-2026-0718-006** — Agent Roster Alignment (Savant Spec ↔ SavantCode Codebase)
 - **FID-2026-0718-007** — Scout Delegation Quality + MCP Proxy Timeout
 - **FID-2026-0718-008** — A-Z System Test v2 Findings (10 Fixes)
 - **FID-2026-0718-009** — FSM Activity Indicator
@@ -57,7 +57,7 @@ Closed all FID-2026-0718-* work (FID-001 through FID-018) and prepared the repo 
 
 ## Pre-ECHO Docs Archived (renamed to ECHO format)
 
-- `Codebuff Rebranding And Migration Plan.md` → `FID-2026-0717-014-codebuff-rebrand-migration-plan.md` (superseded by FID-006)
+- `SavantCode Rebranding And Migration Plan.md` → `FID-2026-0717-014-savant-code-rebrand-migration-plan.md` (superseded by FID-006)
 - `FID-savant-code-rebrand.md` → `FID-2026-0717-015-savant-code-rebrand.md` (absorbed by FID-006)
 
 ## Test Coverage at Session End

@@ -3,9 +3,9 @@ import { describe, expect, test } from 'bun:test'
 import {
   formatFreebuffSessionCountdown,
   formatFreebuffSessionRemaining,
-} from '../freebuff-session-display'
+} from '../savant-free-session-display'
 
-describe('freebuff session display formatting', () => {
+describe('savant-free session display formatting', () => {
   test('formats urgent countdowns', () => {
     expect(formatFreebuffSessionCountdown(61_000)).toBe('1:01')
     expect(formatFreebuffSessionRemaining(61_000)).toBe('1:01 left')

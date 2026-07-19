@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to the @codebuff/sdk package will be documented in this file.
+All notable changes to the @savant-code/sdk package will be documented in this file.
 
 ## [0.10.7]
 
@@ -46,11 +46,11 @@ Lots of changes in the implementation, including native tool calls under the hoo
 
 ## [0.3.1]
 
-- `CodebuffClient.run` now does not return `null`. Instead, the `CodebuffClient.run(...).output.type` will be `'error'`.
+- `SavantCodeClient.run` now does not return `null`. Instead, the `SavantCodeClient.run(...).output.type` will be `'error'`.
 
 ## [0.3.0]
 
-- New more intuitive interface for `CodebuffClient` and `CodebuffClient.run`.
+- New more intuitive interface for `SavantCodeClient` and `SavantCodeClient.run`.
 
 ## [0.1.30]
 
@@ -59,14 +59,14 @@ Types updates.
 ## [0.1.20]
 
 - You can now retrieve the output of an agent in `result.output` if result is the output of an awaited `client.run(...)` call.
-- cwd is optional in the CodebuffClient constructor.
+- cwd is optional in the SavantCodeClient constructor.
 - You can pass in `extraToolResults` into a run() call to include more info to the agent.
 
 ## [0.1.17]
 
 ### Added
 
-- You can now get an API key from the [Codebuff website](https://www.codebuff.com/profile?tab=api-keys)!
+- You can now get an API key from the [SavantCode website](https://www.savant-code.com/profile?tab=api-keys)!
 - You can provide your own custom tools!
 
 ### Updated
@@ -77,7 +77,7 @@ Types updates.
 
 ### Added
 
-- `closeConnection` method in `CodebuffClient`
+- `closeConnection` method in `SavantCodeClient`
 
 ### Changed
 
@@ -86,7 +86,7 @@ Types updates.
 ### Fixed
 
 - `maxAgentSteps` resets every run
-- `CodebuffClient` no longer requires binary to be installed
+- `SavantCodeClient` no longer requires binary to be installed
 
 ## [0.1.8] - 2025-08-13
 
@@ -110,7 +110,7 @@ Types updates.
 
 ### Added
 
-- Complete `CodebuffClient`
+- Complete `SavantCodeClient`
 - Better docs
 - New `run()` api
 
@@ -118,9 +118,9 @@ Types updates.
 
 ### Added
 
-- Initial release of the Codebuff SDK
-- `CodebuffClient` class for interacting with Codebuff agents
+- Initial release of the SavantCode SDK
+- `SavantCodeClient` class for interacting with SavantCode agents
 - `runNewChat` method for starting new chat sessions
 - TypeScript support with full type definitions
-- Support for all Codebuff agent types
+- Support for all SavantCode agent types
 - Event streaming for real-time responses

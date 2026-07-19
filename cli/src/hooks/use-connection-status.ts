@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 
-import { getCodebuffClient } from '../utils/codebuff-client'
+import { getCodebuffClient } from '../utils/savant-code-client'
 import { isDirectProviderMode } from '../utils/env'
 import { logger } from '../utils/logger'
 
@@ -35,7 +35,7 @@ export function getNextInterval(consecutiveSuccesses: number): number {
 }
 
 /**
- * Hook to monitor connection status to the Codebuff backend.
+ * Hook to monitor connection status to the SavantCode backend.
  * Uses adaptive exponential backoff to reduce polling frequency when connection is stable.
  *
  * When the connection transitions from disconnected to connected, the optional
@@ -50,7 +50,7 @@ export const useConnectionStatus = (
   const previousConnectedRef = useRef<boolean | null>(null)
 
   useEffect(() => {
-    // Direct-provider mode: there is no Codebuff backend to ping. Report
+    // Direct-provider mode: there is no SavantCode backend to ping. Report
     // connected immediately so the status bar shows a steady "Ready" instead
     // of a perpetual "connecting" spinner, and skip the health-check loop.
     if (isDirectProviderMode()) {

@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 
-describe('freebuff command aliases', () => {
-  test('/model aliases /end-session in freebuff', () => {
+describe('savant-free command aliases', () => {
+  test('/model aliases /end-session in savant-free', () => {
     const slashCommandsUrl = new URL(
       '../../data/slash-commands.ts',
       import.meta.url,
@@ -38,12 +38,12 @@ describe('freebuff command aliases', () => {
         FREEBUFF_MODE: 'true',
         NODE_ENV: 'test',
         NEXT_PUBLIC_CB_ENVIRONMENT: 'test',
-        NEXT_PUBLIC_CODEBUFF_APP_URL: 'https://app.codebuff.test',
-        NEXT_PUBLIC_SUPPORT_EMAIL: 'support@codebuff.test',
+        NEXT_PUBLIC_CODEBUFF_APP_URL: 'https://app.savant-code.test',
+        NEXT_PUBLIC_SUPPORT_EMAIL: 'support@savant-code.test',
         NEXT_PUBLIC_POSTHOG_API_KEY: 'phc_test_key',
-        NEXT_PUBLIC_POSTHOG_HOST_URL: 'https://posthog.codebuff.test',
+        NEXT_PUBLIC_POSTHOG_HOST_URL: 'https://posthog.savant-code.test',
         NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: 'pk_test_123',
-        NEXT_PUBLIC_STRIPE_CUSTOMER_PORTAL: 'https://stripe.codebuff.test',
+        NEXT_PUBLIC_STRIPE_CUSTOMER_PORTAL: 'https://stripe.savant-code.test',
         NEXT_PUBLIC_WEB_PORT: '3000',
       },
       stderr: 'pipe',

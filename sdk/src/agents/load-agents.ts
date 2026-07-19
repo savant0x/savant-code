@@ -6,7 +6,7 @@ import { pathToFileURL } from 'url'
 import { logger } from '../utils/logger'
 import { validateAgents } from '../validate-agents'
 
-import type { AgentDefinition } from '@codebuff/common/templates/initial-agents-dir/types/agent-definition'
+import type { AgentDefinition } from '@savant-code/common/templates/initial-agents-dir/types/agent-definition'
 
 /**
  * Agent definition with source file path metadata.

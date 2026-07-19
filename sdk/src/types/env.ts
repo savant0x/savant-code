@@ -9,7 +9,7 @@
 import type {
   BaseEnv,
   ClientEnv,
-} from '@codebuff/common/types/contracts/env'
+} from '@savant-code/common/types/contracts/env'
 
 /**
  * SDK-specific env vars for binary paths and WASM.

@@ -10,7 +10,7 @@
 import type {
   BaseEnv,
   ClientEnv,
-} from '@codebuff/common/types/contracts/env'
+} from '@savant-code/common/types/contracts/env'
 
 /**
  * CLI-specific env vars for terminal/IDE detection and editor preferences.
@@ -70,7 +70,7 @@ export type CliEnv = BaseEnv & {
   OPEN_TUI_THEME?: string
   OPENTUI_THEME?: string
 
-  // Codebuff CLI-specific (set during binary build)
+  // SavantCode CLI-specific (set during binary build)
   CODEBUFF_IS_BINARY?: string
   CODEBUFF_CLI_VERSION?: string
   CODEBUFF_CLI_TARGET?: string
@@ -81,7 +81,7 @@ export type CliEnv = BaseEnv & {
   // Toggle for mirroring CLI logs to the server's /api/logs sink (Axiom).
   CODEBUFF_SHIP_LOGS?: string
   FREEBUFF_MODE?: string
-  // Direct-provider mode: launch without the Codebuff backend, routing
+  // Direct-provider mode: launch without the SavantCode backend, routing
   // inference straight to the provider named here (e.g. "openrouter").
   // When set, the CLI skips backend connection pings and agent/validate
   // calls — agents are bundled locally and inference goes via

@@ -1,7 +1,7 @@
-import { HandleStepsYieldValueSchema } from '@codebuff/common/types/agent-template'
-import { getErrorObject } from '@codebuff/common/util/error'
+import { HandleStepsYieldValueSchema } from '@savant-code/common/types/agent-template'
+import { getErrorObject } from '@savant-code/common/util/error'
 import { setActivity } from './util/activity-tracking'
-import { assistantMessage } from '@codebuff/common/util/messages'
+import { assistantMessage } from '@savant-code/common/util/messages'
 import { cloneDeep } from 'lodash'
 
 import { clearProposedContentForRun } from './tools/handlers/tool/proposed-content-store'
@@ -11,26 +11,26 @@ import { parseTextWithToolCalls } from './util/parse-tool-calls-from-text'
 import type { FileProcessingState } from './tools/handlers/tool/write-file'
 import type { ExecuteToolCallParams } from './tools/tool-executor'
 import type { ParsedSegment } from './util/parse-tool-calls-from-text'
-import type { CodebuffToolCall } from '@codebuff/common/tools/list'
+import type { SavantCodeToolCall } from '@savant-code/common/tools/list'
 import type {
   AgentTemplate,
   StepGenerator,
   PublicAgentState,
-} from '@codebuff/common/types/agent-template'
+} from '@savant-code/common/types/agent-template'
 import type {
   HandleStepsLogChunkFn,
   SendActionFn,
-} from '@codebuff/common/types/contracts/client'
-import type { AddAgentStepFn } from '@codebuff/common/types/contracts/database'
-import type { Logger } from '@codebuff/common/types/contracts/logger'
-import type { ParamsExcluding } from '@codebuff/common/types/function-params'
-import type { ToolMessage } from '@codebuff/common/types/messages/codebuff-message'
+} from '@savant-code/common/types/contracts/client'
+import type { AddAgentStepFn } from '@savant-code/common/types/contracts/database'
+import type { Logger } from '@savant-code/common/types/contracts/logger'
+import type { ParamsExcluding } from '@savant-code/common/types/function-params'
+import type { ToolMessage } from '@savant-code/common/types/messages/savant-code-message'
 import type {
   ToolCallPart,
   ToolResultOutput,
-} from '@codebuff/common/types/messages/content-part'
-import type { PrintModeEvent } from '@codebuff/common/types/print-mode'
-import type { AgentState } from '@codebuff/common/types/session-state'
+} from '@savant-code/common/types/messages/content-part'
+import type { PrintModeEvent } from '@savant-code/common/types/print-mode'
+import type { AgentState } from '@savant-code/common/types/session-state'
 // Maintains generator state for all agents. Generator state can't be serialized, so we store it in memory.
 const runIdToGenerator: Record<string, StepGenerator | undefined> = {}
 export const runIdToStepAll: Set<string> = new Set()
@@ -209,7 +209,7 @@ export async function runProgrammaticStep(
   const agentStepId = crypto.randomUUID()
 
   // Initialize state for tool execution
-  const toolCalls: CodebuffToolCall[] = []
+  const toolCalls: SavantCodeToolCall[] = []
   const toolResults: ToolMessage[] = []
   const fileProcessingState: FileProcessingState = {
     promisesByPath: {},

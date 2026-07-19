@@ -1,9 +1,9 @@
-import type { CodebuffToolHandlerFunction } from '../handler-function-type'
+import type { SavantCodeToolHandlerFunction } from '../handler-function-type'
 import type {
   ClientToolCall,
-  CodebuffToolCall,
-  CodebuffToolOutput,
-} from '@codebuff/common/tools/list'
+  SavantCodeToolCall,
+  SavantCodeToolOutput,
+} from '@savant-code/common/tools/list'
 
 type ToolName = 'run_terminal_command'
 export const handleRunTerminalCommand = (async ({
@@ -12,11 +12,11 @@ export const handleRunTerminalCommand = (async ({
   requestClientToolCall,
 }: {
   previousToolCallFinished: Promise<void>
-  toolCall: CodebuffToolCall<ToolName>
+  toolCall: SavantCodeToolCall<ToolName>
   requestClientToolCall: (
     toolCall: ClientToolCall<ToolName>,
-  ) => Promise<CodebuffToolOutput<ToolName>>
-}): Promise<{ output: CodebuffToolOutput<ToolName> }> => {
+  ) => Promise<SavantCodeToolOutput<ToolName>>
+}): Promise<{ output: SavantCodeToolOutput<ToolName> }> => {
   const clientToolCall: ClientToolCall<ToolName> = {
     toolName: 'run_terminal_command',
     toolCallId: toolCall.toolCallId,
@@ -30,4 +30,4 @@ export const handleRunTerminalCommand = (async ({
   }
   await previousToolCallFinished
   return { output: await requestClientToolCall(clientToolCall) }
-}) satisfies CodebuffToolHandlerFunction<ToolName>
+}) satisfies SavantCodeToolHandlerFunction<ToolName>

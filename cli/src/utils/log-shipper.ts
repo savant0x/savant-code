@@ -1,9 +1,9 @@
-import { IS_DEV, IS_TEST, IS_CI } from '@codebuff/common/env'
+import { IS_DEV, IS_TEST, IS_CI } from '@savant-code/common/env'
 
-import { getApiClient } from './codebuff-api'
+import { getApiClient } from './savant-code-api'
 import { getCliEnv } from './env'
 
-import type { LogRecordInput } from '@codebuff/common/schemas/logs'
+import type { LogRecordInput } from '@savant-code/common/schemas/logs'
 
 /**
  * Client-side shipper that mirrors CLI logs/events into the server's Axiom

@@ -1,13 +1,13 @@
 import { appendFileSync, mkdirSync } from 'fs'
 import path, { dirname } from 'path'
 
-import { IS_DEV } from '@codebuff/common/env'
+import { IS_DEV } from '@savant-code/common/env'
 
 import { getCliEnv } from './env'
 import { getCurrentChatDir, getProjectRoot } from '../project-files'
 
-import type { TraceWriter } from '@codebuff/common/types/contracts/trace'
-import type { Message } from '@codebuff/common/types/messages/codebuff-message'
+import type { TraceWriter } from '@savant-code/common/types/contracts/trace'
+import type { Message } from '@savant-code/common/types/messages/savant-code-message'
 
 const TRACE_FILENAME = 'trace.jsonl'
 

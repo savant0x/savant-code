@@ -2,17 +2,17 @@ import * as os from 'os'
 import path from 'path'
 
 import { logger } from './utils/logger'
-import { getSystemInfo } from '@codebuff/common/util/system-info'
+import { getSystemInfo } from '@savant-code/common/util/system-info'
 import {
   KNOWLEDGE_FILE_NAMES_LOWERCASE,
   isKnowledgeFile,
-} from '@codebuff/common/constants/knowledge'
+} from '@savant-code/common/constants/knowledge'
 import {
   getProjectFileTree,
   getAllFilePaths,
-} from '@codebuff/common/project-file-tree'
-import { getInitialSessionState } from '@codebuff/common/types/session-state'
-import { getErrorObject } from '@codebuff/common/util/error'
+} from '@savant-code/common/project-file-tree'
+import { getInitialSessionState } from '@savant-code/common/types/session-state'
+import { getErrorObject } from '@savant-code/common/util/error'
 import { cloneDeep } from 'lodash'
 import z from 'zod/v4'
 
@@ -24,22 +24,22 @@ export {
   KNOWLEDGE_FILE_NAMES,
   PRIMARY_KNOWLEDGE_FILE_NAME,
   isKnowledgeFile,
-} from '@codebuff/common/constants/knowledge'
+} from '@savant-code/common/constants/knowledge'
 
 import type { CustomToolDefinition } from './custom-tool'
-import type { AgentDefinition } from '@codebuff/common/templates/initial-agents-dir/types/agent-definition'
-import type { Logger } from '@codebuff/common/types/contracts/logger'
-import type { CodebuffFileSystem } from '@codebuff/common/types/filesystem'
-import type { Message } from '@codebuff/common/types/messages/codebuff-message'
+import type { AgentDefinition } from '@savant-code/common/templates/initial-agents-dir/types/agent-definition'
+import type { Logger } from '@savant-code/common/types/contracts/logger'
+import type { SavantCodeFileSystem } from '@savant-code/common/types/filesystem'
+import type { Message } from '@savant-code/common/types/messages/savant-code-message'
 import type {
   AgentOutput,
   SessionState,
-} from '@codebuff/common/types/session-state'
-import type { CodebuffSpawn } from '@codebuff/common/types/spawn'
+} from '@savant-code/common/types/session-state'
+import type { SavantCodeSpawn } from '@savant-code/common/types/spawn'
 import type {
   CustomToolDefinitions,
   FileTreeNode,
-} from '@codebuff/common/util/file'
+} from '@savant-code/common/util/file'
 import type * as fsType from 'fs'
 
 /**
@@ -78,8 +78,8 @@ export type InitialSessionStateOptions = {
   maxAgentSteps?: number
   /** Dev override flag — bypasses all FSM tool gating and agent tool restrictions. */
   devMode?: boolean
-  fs?: CodebuffFileSystem
-  spawn?: CodebuffSpawn
+  fs?: SavantCodeFileSystem
+  spawn?: SavantCodeSpawn
   logger?: Logger
 }
 
@@ -162,7 +162,7 @@ async function computeProjectIndex(params: ProjectIndexInput): Promise<{
 
   if (filePaths.length > 0) {
     try {
-      const { getFileTokenScores } = await import('@codebuff/code-map/parse')
+      const { getFileTokenScores } = await import('@savant-code/code-map/parse')
       const tokenData = await getFileTokenScores(cwd, filePaths, readFile)
       fileTokenScores = tokenData.tokenScores
       tokenCallers = tokenData.tokenCallers
@@ -177,7 +177,7 @@ async function computeProjectIndex(params: ProjectIndexInput): Promise<{
 
 function getProjectIndexInput(params: {
   cwd: string
-  fs?: CodebuffFileSystem
+  fs?: SavantCodeFileSystem
   logger?: Logger
   projectFiles?: Record<string, string>
   discoveredProject?: { fileTree: FileTreeNode[]; filePaths: string[] }
@@ -210,7 +210,7 @@ function getProjectIndexInput(params: {
 
 function createDiscoveredProjectReader(params: {
   cwd: string
-  fs: CodebuffFileSystem
+  fs: SavantCodeFileSystem
   logger: Logger
 }): (filePath: string) => Promise<string | null> {
   const { cwd, fs, logger } = params
@@ -233,7 +233,7 @@ function createDiscoveredProjectReader(params: {
   }
 }
 
-function getFileSize(stats: Awaited<ReturnType<CodebuffFileSystem['stat']>>) {
+function getFileSize(stats: Awaited<ReturnType<SavantCodeFileSystem['stat']>>) {
   return typeof stats.size === 'number' ? stats.size : 0
 }
 
@@ -241,7 +241,7 @@ function getFileSize(stats: Awaited<ReturnType<CodebuffFileSystem['stat']>>) {
  * Helper to convert ChildProcess to Promise with stdout/stderr
  */
 function childProcessToPromise(
-  proc: ReturnType<CodebuffSpawn>,
+  proc: ReturnType<SavantCodeSpawn>,
 ): Promise<{ stdout: string; stderr: string }> {
   return new Promise((resolve, reject) => {
     let stdout = ''
@@ -272,7 +272,7 @@ function childProcessToPromise(
  */
 async function getGitChanges(params: {
   cwd: string
-  spawn: CodebuffSpawn
+  spawn: SavantCodeSpawn
   logger: Logger
 }): Promise<{
   status: string
@@ -337,7 +337,7 @@ async function getGitChanges(params: {
  */
 async function discoverProjectPaths(params: {
   cwd: string
-  fs: CodebuffFileSystem
+  fs: SavantCodeFileSystem
 }): Promise<{ fileTree: FileTreeNode[]; filePaths: string[] }> {
   const { cwd, fs } = params
 
@@ -355,7 +355,7 @@ async function discoverProjectPaths(params: {
  * @internal Exported for testing
  */
 export async function loadUserKnowledgeFiles(params: {
-  fs: CodebuffFileSystem
+  fs: SavantCodeFileSystem
   logger: Logger
   /** Optional home directory override for testing */
   homeDir?: string
@@ -463,7 +463,7 @@ function deriveKnowledgeFiles(
 async function loadKnowledgeFilesFromPaths(params: {
   cwd: string
   filePaths: string[]
-  fs: CodebuffFileSystem
+  fs: SavantCodeFileSystem
   logger: Logger
 }): Promise<Record<string, string>> {
   const { cwd, filePaths, fs, logger } = params
@@ -511,7 +511,7 @@ export async function initialSessionState(
   }
   if (!spawn) {
     const { spawn: nodeSpawn } = require('child_process')
-    spawn = nodeSpawn as CodebuffSpawn
+    spawn = nodeSpawn as SavantCodeSpawn
   }
   if (!logger) {
     logger = {
@@ -637,7 +637,7 @@ export async function generateInitialRunState({
   agentDefinitions?: AgentDefinition[]
   customToolDefinitions?: CustomToolDefinition[]
   maxAgentSteps?: number
-  fs: CodebuffFileSystem
+  fs: SavantCodeFileSystem
 }): Promise<RunState> {
   return {
     traceSessionId: crypto.randomUUID(),

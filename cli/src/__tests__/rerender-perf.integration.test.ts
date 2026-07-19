@@ -124,7 +124,7 @@ describe.skipIf(!tmuxAvailable || !sdkBuilt)(
     test(
       'MessageBlock re-renders stay within acceptable limits',
       async () => {
-        const sessionName = 'codebuff-perf-test-' + Date.now()
+        const sessionName = 'savant-code-perf-test-' + Date.now()
 
         // Clear the debug log before test
         clearCliDebugLog(DEBUG_LOG_PATH)
@@ -215,7 +215,7 @@ describe.skipIf(!tmuxAvailable || !sdkBuilt)(
     test(
       'Forbidden callback props are properly memoized',
       async () => {
-        const sessionName = 'codebuff-memo-test-' + Date.now()
+        const sessionName = 'savant-code-memo-test-' + Date.now()
 
         clearCliDebugLog(DEBUG_LOG_PATH)
 

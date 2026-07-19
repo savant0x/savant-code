@@ -1,4 +1,4 @@
-import { ECHO_PROTOCOL_INSTRUCTIONS } from '@codebuff/common/constants/agents'
+import { ECHO_PROTOCOL_INSTRUCTIONS } from '@savant-code/common/constants/agents'
 import { publisher } from '../constants'
 
 import type { AgentDefinition } from '../types/agent-definition'

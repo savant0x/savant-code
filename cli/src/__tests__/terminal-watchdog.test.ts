@@ -53,11 +53,11 @@ function readTty(ttyPath: string): string {
 
 /**
  * Disarm files the fixture left in the temp dir (Windows watchdog only;
- * POSIX never creates one). Named codebuff-watchdog-disarm-<pid>-<random>.
+ * POSIX never creates one). Named savant-code-watchdog-disarm-<pid>-<random>.
  */
 function findDisarmFiles(pid: number | undefined): string[] {
   return readdirSync(tmpdir()).filter((name) =>
-    name.startsWith(`codebuff-watchdog-disarm-${pid}-`),
+    name.startsWith(`savant-code-watchdog-disarm-${pid}-`),
   )
 }
 

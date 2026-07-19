@@ -3,25 +3,25 @@
  *
  * This module handles:
  * - ChatGPT OAuth: Direct requests to OpenAI API using user's OAuth token
- * - Default: Requests through Codebuff backend (which routes to OpenRouter)
+ * - Default: Requests through SavantCode backend (which routes to OpenRouter)
  */
 
 import path from 'path'
 
-import { BYOK_OPENROUTER_HEADER } from '@codebuff/common/constants/byok'
-import { isFreeMode } from '@codebuff/common/constants/free-agents'
+import { BYOK_OPENROUTER_HEADER } from '@savant-code/common/constants/byok'
+import { isFreeMode } from '@savant-code/common/constants/free-agents'
 import {
   CHATGPT_BACKEND_BASE_URL,
   CHATGPT_OAUTH_ENABLED,
   isChatGptOAuthModelAllowed,
   isOpenAIProviderModel,
   toOpenAIModelId,
-} from '@codebuff/common/constants/chatgpt-oauth'
-import { isTransientNetworkError } from '@codebuff/common/util/error'
+} from '@savant-code/common/constants/chatgpt-oauth'
+import { isTransientNetworkError } from '@savant-code/common/util/error'
 import {
   OpenAICompatibleChatLanguageModel,
   VERSION,
-} from '@codebuff/llm-providers/openai-compatible'
+} from '@savant-code/llm-providers/openai-compatible'
 import { APICallError } from 'ai'
 
 import { getWebsiteUrl } from '../constants'
@@ -48,7 +48,7 @@ let chatGptOAuthRateLimitedUntil: number | null = null
 
 /**
  * Mark ChatGPT OAuth as rate-limited. Subsequent requests will skip direct ChatGPT OAuth
- * and use Codebuff backend until the reset time.
+ * and use SavantCode backend until the reset time.
  */
 export function markChatGptOAuthRateLimited(resetAt?: Date): void {
   const fiveMinutesFromNow = Date.now() + 5 * 60 * 1000
@@ -83,11 +83,11 @@ export function resetChatGptOAuthRateLimit(): void {
  * Parameters for requesting a model.
  */
 export interface ModelRequestParams {
-  /** Codebuff API key for backend authentication */
+  /** SavantCode API key for backend authentication */
   apiKey: string
   /** Model ID (OpenRouter format, e.g., "anthropic/claude-sonnet-4") */
   model: string
-  /** If true, skip ChatGPT OAuth and use Codebuff backend (for fallback after rate limit) */
+  /** If true, skip ChatGPT OAuth and use SavantCode backend (for fallback after rate limit) */
   skipChatGptOAuth?: boolean
   /** Cost mode (e.g. 'free') — affects fallback behavior for OAuth routes */
   costMode?: string
@@ -103,7 +103,7 @@ export interface ModelResult {
   isChatGptOAuth: boolean
 }
 
-// Usage accounting type for OpenRouter/Codebuff backend responses
+// Usage accounting type for OpenRouter/SavantCode backend responses
 type OpenRouterUsageAccounting = {
   cost: number | null
   costDetails: {
@@ -115,7 +115,7 @@ type OpenRouterUsageAccounting = {
  * Get the appropriate model for a request.
  *
  * If ChatGPT OAuth credentials are available and the model is an OpenAI model,
- * returns an OpenAI direct model. Otherwise, returns the Codebuff backend model.
+ * returns an OpenAI direct model. Otherwise, returns the SavantCode backend model.
  *
  * This function is async because it may need to refresh the OAuth token.
  */
@@ -133,7 +133,7 @@ export async function getModelForRequest(
     isChatGptOAuthModelAllowed(model)
   ) {
     // In free mode, rate-limited ChatGPT OAuth must not silently fall through to
-    // the Codebuff backend — freebuff should only use the direct OpenAI route or fail.
+    // the SavantCode backend — savant-free should only use the direct OpenAI route or fail.
     if (isChatGptOAuthRateLimited()) {
       if (isFreeMode(costMode)) {
         throw new Error(
@@ -162,7 +162,7 @@ export async function getModelForRequest(
     }
   }
 
-  // Default: use Codebuff backend
+  // Default: use SavantCode backend
   return {
     model: await createCodebuffBackendModel(apiKey, model),
     isChatGptOAuth: false,
@@ -189,7 +189,7 @@ function createOpenAIOAuthModel(
       'OpenAI-Beta': 'responses=experimental',
       originator: 'codex_cli_rs',
       accept: 'text/event-stream',
-      'user-agent': `ai-sdk/openai-compatible/${VERSION}/codebuff-chatgpt-oauth`,
+      'user-agent': `ai-sdk/openai-compatible/${VERSION}/savant-code-chatgpt-oauth`,
       ...(accountId ? { 'chatgpt-account-id': accountId } : {}),
     }),
     fetch: createChatGptBackendFetch(),
@@ -234,11 +234,11 @@ function fetchWithRetryableNetworkErrors(
 }
 
 /**
- * Create a model that routes through the Codebuff backend.
- * This is the existing behavior - requests go to Codebuff backend which forwards to OpenRouter.
+ * Create a model that routes through the SavantCode backend.
+ * This is the existing behavior - requests go to SavantCode backend which forwards to OpenRouter.
  *
  * When `INFERENCE_BASE_URL` is set, routes directly to that base URL instead of
- * the Codebuff backend. When `INFERENCE_API_KEY` or `OR_MASTER_KEY` is set, uses
+ * the SavantCode backend. When `INFERENCE_API_KEY` or `OR_MASTER_KEY` is set, uses
  * the resolved OpenRouter key for authorization.
  */
 async function createCodebuffBackendModel(
@@ -259,7 +259,7 @@ async function createCodebuffBackendModel(
     resolvedOpenRouterKey ?? getInferenceApiKeyFromEnv() ?? apiKey
 
   return new OpenAICompatibleChatLanguageModel(model, {
-    provider: 'codebuff',
+    provider: 'savant-code',
     url: ({ path: endpoint }) => {
       const baseUrl =
         inferenceBaseUrl ?? getWebsiteUrl()
@@ -271,7 +271,7 @@ async function createCodebuffBackendModel(
     },
     headers: () => ({
       Authorization: `Bearer ${authorizationKey}`,
-      'user-agent': `ai-sdk/openai-compatible/${VERSION}/codebuff`,
+      'user-agent': `ai-sdk/openai-compatible/${VERSION}/savant-code`,
       ...(openrouterApiKey && { [BYOK_OPENROUTER_HEADER]: openrouterApiKey }),
     }),
     metadataExtractor: {
@@ -281,7 +281,7 @@ async function createCodebuffBackendModel(
         parsedBody: any // eslint-disable-line @typescript-eslint/no-explicit-any -- dynamic API response shape from provider
       }) => {
         if (openrouterApiKey !== undefined) {
-          return { codebuff: { usage: openrouterUsage } }
+          return { savant-code: { usage: openrouterUsage } }
         }
 
         if (typeof parsedBody?.usage?.cost === 'number') {
@@ -294,7 +294,7 @@ async function createCodebuffBackendModel(
           openrouterUsage.costDetails.upstreamInferenceCost =
             parsedBody.usage.cost_details.upstream_inference_cost
         }
-        return { codebuff: { usage: openrouterUsage } }
+        return { savant-code: { usage: openrouterUsage } }
       },
       createStreamExtractor: () => ({
         processChunk: (parsedChunk: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any -- dynamic SSE chunk shape from provider
@@ -314,7 +314,7 @@ async function createCodebuffBackendModel(
           }
         },
         buildMetadata: () => {
-          return { codebuff: { usage: openrouterUsage } }
+          return { savant-code: { usage: openrouterUsage } }
         },
       }),
     },

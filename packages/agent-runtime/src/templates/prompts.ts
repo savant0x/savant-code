@@ -1,13 +1,13 @@
-import { buildArray } from '@codebuff/common/util/array'
-import { schemaToJsonStr } from '@codebuff/common/util/zod-schema'
+import { buildArray } from '@savant-code/common/util/array'
+import { schemaToJsonStr } from '@savant-code/common/util/zod-schema'
 import { z } from 'zod/v4'
 
 import { getAgentTemplate } from './agent-registry'
 
-import type { AgentTemplate } from '@codebuff/common/types/agent-template'
-import type { Logger } from '@codebuff/common/types/contracts/logger'
-import type { ParamsExcluding } from '@codebuff/common/types/function-params'
-import type { AgentTemplateType } from '@codebuff/common/types/session-state'
+import type { AgentTemplate } from '@savant-code/common/types/agent-template'
+import type { Logger } from '@savant-code/common/types/contracts/logger'
+import type { ParamsExcluding } from '@savant-code/common/types/function-params'
+import type { AgentTemplateType } from '@savant-code/common/types/session-state'
 import type { ToolSet } from 'ai'
 
 function ensureJsonSchemaCompatible(schema: z.ZodType): z.ZodType {
@@ -22,7 +22,7 @@ function ensureJsonSchemaCompatible(schema: z.ZodType): z.ZodType {
 
 /**
  * Gets the short agent name from a fully qualified agent ID.
- * E.g., 'codebuff/file-picker@1.0.0' -> 'file-picker'
+ * E.g., 'savant-code/file-picker@1.0.0' -> 'file-picker'
  */
 export function getAgentShortName(agentType: AgentTemplateType): string {
   const withoutVersion = agentType.split('@')[0]

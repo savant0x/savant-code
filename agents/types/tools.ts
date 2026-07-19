@@ -277,7 +277,7 @@ export interface ReadUrlParams {
 }
 
 /**
- * Render a small interactive UI widget in the Codebuff CLI. Currently supports a button that opens a link.
+ * Render a small interactive UI widget in the SavantCode CLI. Currently supports a button that opens a link.
  */
 export interface RenderUiParams {
   /** The UI widget to render. */

@@ -25,10 +25,10 @@ import {
   settleCheckpointSave,
 } from '../run-state-storage'
 import type { ChatMessage, ContentBlock } from '../../types/chat'
-import type { RunState } from '@codebuff/sdk'
+import type { RunState } from '@savant-code/sdk'
 
 // Mock the project-files module
-const mockProjectDataDir = path.join(os.tmpdir(), 'codebuff-test-project')
+const mockProjectDataDir = path.join(os.tmpdir(), 'savant-code-test-project')
 const mockCurrentChatDir = path.join(mockProjectDataDir, 'chats', 'test-chat-123')
 
 // Mock the module before importing
@@ -382,7 +382,7 @@ describe('live chat state provider', () => {
   // Point persistence at a temp dir via the explicit test override — module
   // seams (mock.module, HOME, spyOn on auth) are unreliable across bun test
   // files and platforms.
-  const chatDir = path.join(os.tmpdir(), 'codebuff-test-live-chatdir')
+  const chatDir = path.join(os.tmpdir(), 'savant-code-test-live-chatdir')
 
   const testRunState = (marker: string): RunState =>
     ({
@@ -471,7 +471,7 @@ describe('live chat state provider', () => {
 })
 
 describe('atomic save and resilient load', () => {
-  const chatDir = path.join(os.tmpdir(), 'codebuff-test-resilient-chatdir')
+  const chatDir = path.join(os.tmpdir(), 'savant-code-test-resilient-chatdir')
 
   const runState = { output: { type: 'error', message: 'x' } } as RunState
   const messages: ChatMessage[] = [
@@ -542,7 +542,7 @@ describe('atomic save and resilient load', () => {
 })
 
 describe('scheduleCheckpointSave (async, coalescing)', () => {
-  const chatDir = path.join(os.tmpdir(), 'codebuff-test-checkpoint-chatdir')
+  const chatDir = path.join(os.tmpdir(), 'savant-code-test-checkpoint-chatdir')
 
   const runState = (marker: string) =>
     ({ output: { type: 'error', message: marker } }) as unknown as RunState
@@ -622,8 +622,8 @@ describe('chat switches while saves are pending', () => {
   // be resolved at write time from the mutable current chat id, so a pending
   // write from chat A could land in chat B's directory after a /new or
   // /history resume rotated the id in between.
-  const chatDirA = path.join(os.tmpdir(), 'codebuff-test-switch-chat-a')
-  const chatDirB = path.join(os.tmpdir(), 'codebuff-test-switch-chat-b')
+  const chatDirA = path.join(os.tmpdir(), 'savant-code-test-switch-chat-a')
+  const chatDirB = path.join(os.tmpdir(), 'savant-code-test-switch-chat-b')
 
   const runState = (marker: string) =>
     ({ output: { type: 'error', message: marker } }) as unknown as RunState

@@ -9,15 +9,15 @@ export function getFreebuffBinaryPath(): string {
   if (process.env.FREEBUFF_BINARY) {
     return resolve(process.env.FREEBUFF_BINARY)
   }
-  return resolve(REPO_ROOT, 'cli/bin/freebuff')
+  return resolve(REPO_ROOT, 'cli/bin/savant-free')
 }
 
 export function requireFreebuffBinary(): string {
   const binaryPath = getFreebuffBinaryPath()
   if (!existsSync(binaryPath)) {
     throw new Error(
-      `Freebuff binary not found at ${binaryPath}. ` +
-        'Build with: bun freebuff/cli/build.ts <version>',
+      `SavantFree binary not found at ${binaryPath}. ` +
+        'Build with: bun savant-free/cli/build.ts <version>',
     )
   }
   return binaryPath

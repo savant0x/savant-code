@@ -37,13 +37,13 @@ import {
   isSupportedFreebuffModelId,
   resolveFreebuffWebModel,
   resolveFreebuffModelForAccessTier,
-} from '../constants/freebuff-models'
-import type { FreebuffModelOption } from '../constants/freebuff-models'
+} from '../constants/savant-free-models'
+import type { SavantFree$1 } from '../constants/savant-free-models'
 import { minimaxModels } from '../constants/model-config'
 
 const MINIMAX_M3_MODEL_ID = minimaxModels.minimaxM3
 
-describe('freebuff model availability', () => {
+describe('savant-free model availability', () => {
   test('defaults to MiniMax M3, falls back to DeepSeek V4 Flash for new clients', () => {
     expect(DEFAULT_FREEBUFF_MODEL_ID).toBe(MINIMAX_M3_MODEL_ID)
     expect(FALLBACK_FREEBUFF_MODEL_ID).toBe(FREEBUFF_DEEPSEEK_V4_FLASH_MODEL_ID)
@@ -86,7 +86,7 @@ describe('freebuff model availability', () => {
 
   test('trace storage is one source of truth with the data-collection warning', () => {
     // A model is traced in free mode iff it shows the data-collection caveat.
-    const models: readonly FreebuffModelOption[] = SUPPORTED_FREEBUFF_MODELS
+    const models: readonly SavantFree$1[] = SUPPORTED_FREEBUFF_MODELS
     for (const model of models) {
       expect(isFreebuffTracedModelId(model.id)).toBe(
         model.warning === FREEBUFF_DATA_COLLECTION_WARNING,
@@ -152,7 +152,7 @@ describe('freebuff model availability', () => {
     expect(
       resolveFreebuffModelForAccessTier(FREEBUFF_KIMI_MODEL_ID, 'full'),
     ).toBe(FREEBUFF_KIMI_MODEL_ID)
-    // Retired K2.6 is no longer a freebuff model; stale saved selections must
+    // Retired K2.6 is no longer a savant-free model; stale saved selections must
     // fall back rather than be admitted.
     expect(isSupportedFreebuffModelId('moonshotai/kimi-k2.6')).toBe(false)
     expect(
@@ -163,7 +163,7 @@ describe('freebuff model availability', () => {
     ).not.toBe('moonshotai/kimi-k2.6')
   })
 
-  test('HY3 OpenRouter trial is available only as a Freebuff Web premium model for now', () => {
+  test('HY3 OpenRouter trial is available only as a SavantFree Web premium model for now', () => {
     expect(FREEBUFF_HY3_MODEL_ID).toBe(FREEBUFF_HY3_OPENROUTER_FREE_MODEL_ID)
     expect(FREEBUFF_HY3_OPENROUTER_PAID_MODEL_ID).toBe(
       FREEBUFF_HY3_ATLAS_MODEL_ID,
@@ -192,7 +192,7 @@ describe('freebuff model availability', () => {
     )
   })
 
-  test('HY3 Atlas is a god-only Freebuff Web premium model', () => {
+  test('HY3 Atlas is a god-only SavantFree Web premium model', () => {
     expect(FREEBUFF_WEB_GOD_ONLY_MODELS.map((model) => model.id)).toContain(
       FREEBUFF_HY3_ATLAS_MODEL_ID,
     )
@@ -220,7 +220,7 @@ describe('freebuff model availability', () => {
     )
   })
 
-  test('KAT Coder Pro V2 is fully retired from Freebuff Web and Cloud', () => {
+  test('KAT Coder Pro V2 is fully retired from SavantFree Web and Cloud', () => {
     const retiredKatModelId = 'kwaipilot/kat-coder-pro-v2'
     expect(FREEBUFF_WEB_MODELS.map((model) => model.id)).not.toContain(
       retiredKatModelId,
@@ -329,7 +329,7 @@ describe('freebuff model availability', () => {
     ).toBe(true)
   })
 
-  test('full-access freebuff models can spawn the gemini-thinker subagent', () => {
+  test('full-access savant-free models can spawn the gemini-thinker subagent', () => {
     // Full-access models (non-limited, non-fastest) get the thinker.
     expect(canFreebuffModelSpawnGeminiThinker(FREEBUFF_KIMI_MODEL_ID)).toBe(
       true,
@@ -351,7 +351,7 @@ describe('freebuff model availability', () => {
     )
   })
 
-  test('does not support GLM 5.1 for freebuff sessions', () => {
+  test('does not support GLM 5.1 for savant-free sessions', () => {
     const glm = 'z-ai/glm-5.1'
     expect(FREEBUFF_MODELS.map((model) => model.id)).not.toContain(glm)
     expect(SUPPORTED_FREEBUFF_MODELS.map((model) => model.id)).not.toContain(

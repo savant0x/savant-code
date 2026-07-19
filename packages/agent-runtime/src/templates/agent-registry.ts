@@ -1,16 +1,16 @@
-import { validateAgents } from '@codebuff/common/templates/agent-validation'
+import { validateAgents } from '@savant-code/common/templates/agent-validation'
 import {
   normalizeAgentIdForLookup,
   parsePublishedAgentId,
-} from '@codebuff/common/util/agent-id-parsing'
-import { DEFAULT_ORG_PREFIX } from '@codebuff/common/util/agent-name-normalization'
+} from '@savant-code/common/util/agent-id-parsing'
+import { DEFAULT_ORG_PREFIX } from '@savant-code/common/util/agent-name-normalization'
 
-import type { DynamicAgentValidationError } from '@codebuff/common/templates/agent-validation'
-import type { AgentTemplate } from '@codebuff/common/types/agent-template'
-import type { FetchAgentFromDatabaseFn } from '@codebuff/common/types/contracts/database'
-import type { Logger } from '@codebuff/common/types/contracts/logger'
-import type { ParamsExcluding } from '@codebuff/common/types/function-params'
-import type { ProjectFileContext } from '@codebuff/common/util/file'
+import type { DynamicAgentValidationError } from '@savant-code/common/templates/agent-validation'
+import type { AgentTemplate } from '@savant-code/common/types/agent-template'
+import type { FetchAgentFromDatabaseFn } from '@savant-code/common/types/contracts/database'
+import type { Logger } from '@savant-code/common/types/contracts/logger'
+import type { ParamsExcluding } from '@savant-code/common/types/function-params'
+import type { ProjectFileContext } from '@savant-code/common/util/file'
 
 /**
  * Single function to look up an agent template with clear priority order:
@@ -57,14 +57,14 @@ export async function getAgentTemplate(
 
   const parsed = parsePublishedAgentId(normalizedAgentId)
   if (!parsed) {
-    // If agentId doesn't parse as publisher/agent format, try as codebuff/agentId
-    const codebuffParsed = parsePublishedAgentId(
+    // If agentId doesn't parse as publisher/agent format, try as savant-code/agentId
+    const savantCode$1 = parsePublishedAgentId(
       `${DEFAULT_ORG_PREFIX}${normalizedAgentId}`,
     )
-    if (codebuffParsed) {
+    if (savantCode$1) {
       const dbAgent = await fetchAgentFromDatabase({
         ...params,
-        parsedAgentId: codebuffParsed,
+        parsedAgentId: savantCode$1,
       })
       if (dbAgent) {
         databaseAgentCache.set(dbAgent.id, dbAgent)

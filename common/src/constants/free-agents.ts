@@ -3,7 +3,7 @@ import { parseAgentId } from '../util/agent-id-parsing'
 import {
   FREEBUFF_GEMINI_PRO_AGENT_IDS,
   FREEBUFF_GEMINI_THINKER_AGENT_ID,
-} from './freebuff-gemini-thinker'
+} from './savant-free-gemini-thinker'
 import {
   FREEBUFF_DEEPSEEK_V4_FLASH_MODEL_ID,
   FREEBUFF_DEEPSEEK_V4_PRO_MODEL_ID,
@@ -15,7 +15,7 @@ import {
   FREEBUFF_MINIMAX_M3_MODEL_ID,
   FREEBUFF_MIMO_V25_MODEL_ID,
   FREEBUFF_MIMO_V25_PRO_MODEL_ID,
-} from './freebuff-models'
+} from './savant-free-models'
 import { GEMINI_3_1_FLASH_LITE_MODEL_ID } from './gemini'
 
 import type { CostMode } from './model-config'
@@ -27,8 +27,8 @@ import type { CostMode } from './model-config'
 export const FREE_COST_MODE = 'free' as const
 
 /**
- * The single root agent Freebuff Desktop's hosted (codebuff) harness runs every
- * thread turn under (see freebuff-desktop thread-agent.ts). Unlike the CLI — which
+ * The single root agent SavantFree Desktop's hosted (savant-code) harness runs every
+ * thread turn under (see savant-free-desktop thread-agent.ts). Unlike the CLI — which
  * has one root id per model (`base2-free-<model>`) — the desktop uses ONE root id
  * for ALL its models, picking the model per tab. It's a first-party free-mode root
  * just like `base2-free*`, so it's listed in FREEBUFF_ROOT_AGENT_IDS below; its
@@ -36,10 +36,10 @@ export const FREE_COST_MODE = 'free' as const
  * carries the "You are Savant" CLI marker in its system prompt so it passes
  * requestHasFreebuffSystemMarker.
  */
-export const FREEBUFF_DESKTOP_THREAD_AGENT_ID = 'freebuff-desktop-thread'
+export const FREEBUFF_DESKTOP_THREAD_AGENT_ID = 'savant-free-desktop-thread'
 
 /**
- * Root-orchestrator agent IDs counted as "a freebuff session" for abuse
+ * Root-orchestrator agent IDs counted as "a savant-free session" for abuse
  * detection and usage auditing. Subagents (file-picker, basher, etc.) are
  * excluded — they're spawned by the root, so counting them would inflate
  * every user's apparent activity.
@@ -53,10 +53,10 @@ export const FREEBUFF_ROOT_AGENT_IDS = [
   'base2-free-mimo',
   'base2-free-minimax-m3',
   'base2-free-glm',
-  // Freebuff Web trial orchestrators (freebuff_bundled_agents.ts). Every root
+  // SavantFree Web trial orchestrators (freebuff_bundled_agents.ts). Every root
   // id in FREE_MODE_AGENT_MODELS that can spawn subagents MUST also be listed
   // here, or the chat-completions hierarchy gate 403s the subagents with
-  // "Free mode subagents must run under an active freebuff session root"
+  // "Free mode subagents must run under an active savant-free session root"
   // (2026-07-09 incident: trial runs failed at spawn_agent_inline).
   'base2-free-hy3',
   'base2-free-hy3-atlas',
@@ -133,7 +133,7 @@ export const FREE_MODE_AGENT_MODELS: Record<string, Set<string>> = {
   'base2-free-hy3': new Set([FREEBUFF_HY3_MODEL_ID]),
   'base2-free-hy3-atlas': new Set([FREEBUFF_HY3_ATLAS_MODEL_ID]),
 
-  // Freebuff Desktop's single hosted root agent — one root id across all its
+  // SavantFree Desktop's single hosted root agent — one root id across all its
   // models (the user picks the model per tab), so it allows the full desktop
   // picker set. Concurrency is still bounded elsewhere: the free-session
   // admission gate caps premium-bucket models (incl. MiniMax M3) to one active
@@ -211,14 +211,14 @@ export function isFreeMode(costMode: CostMode | string | undefined): boolean {
 export function isFreebuffRootAgent(fullAgentId: string): boolean {
   const { publisherId, agentId } = parseAgentId(fullAgentId)
   if (!agentId) return false
-  if (publisherId && publisherId !== 'codebuff') return false
+  if (publisherId && publisherId !== 'savant-code') return false
   return FREEBUFF_ROOT_AGENT_ID_SET.has(agentId)
 }
 
 export function isFreebuffGeminiThinkerAgent(fullAgentId: string): boolean {
   const { publisherId, agentId } = parseAgentId(fullAgentId)
   if (!agentId) return false
-  if (publisherId && publisherId !== 'codebuff') return false
+  if (publisherId && publisherId !== 'savant-code') return false
   return agentId === FREEBUFF_GEMINI_THINKER_AGENT_ID
 }
 
@@ -226,12 +226,12 @@ export function isFreebuffGeminiThinkerAgent(fullAgentId: string): boolean {
  * True if this agent is permitted to call the premium Gemini Pro model — i.e.
  * one of the two gemini-thinker subagents (CLI `thinker-with-files-gemini` or
  * chat `thinker-gemini`). Publisher-spoof-safe like the other gates: a
- * non-codebuff publisher never matches.
+ * non-savant-code publisher never matches.
  */
 export function isFreebuffGeminiProAgent(fullAgentId: string): boolean {
   const { publisherId, agentId } = parseAgentId(fullAgentId)
   if (!agentId) return false
-  if (publisherId && publisherId !== 'codebuff') return false
+  if (publisherId && publisherId !== 'savant-code') return false
   return FREEBUFF_GEMINI_PRO_AGENT_IDS.has(agentId)
 }
 
@@ -245,7 +245,7 @@ export function shouldUseLocalTokenCountForFreebuffDeepseekFlash(params: {
   }
 
   const { publisherId, agentId } = parseAgentId(fullAgentId)
-  if (publisherId && publisherId !== 'codebuff') return false
+  if (publisherId && publisherId !== 'savant-code') return false
   return agentId === 'base2-free-deepseek-flash'
 }
 
@@ -256,7 +256,7 @@ export function shouldUseLocalTokenCountForFreebuffDeepseekFlash(params: {
  * Returns true only if:
  * 1. The agent has a valid agent ID
  * 2. The agent is in the allowed free-mode agents list
- * 3. The agent is either internal or published by 'codebuff' (prevents spoofing)
+ * 3. The agent is either internal or published by 'savant-code' (prevents spoofing)
  * 4. The model is in that agent's allowed model set
  */
 export function isFreeModeAllowedAgentModel(
@@ -268,8 +268,8 @@ export function isFreeModeAllowedAgentModel(
   // Must have a valid agent ID
   if (!agentId) return false
 
-  // Must be either internal (no publisher) or from codebuff
-  if (publisherId && publisherId !== 'codebuff') return false
+  // Must be either internal (no publisher) or from savant-code
+  if (publisherId && publisherId !== 'savant-code') return false
 
   // Get the allowed models for this agent
   const allowedModels = FREE_MODE_AGENT_MODELS[agentId]
@@ -304,7 +304,7 @@ export function isFreeModeAllowedAgentModel(
  * Handles all agent ID formats:
  * - 'scout'
  * - 'scout@1.0.0'
- * - 'codebuff/scout@0.0.2'
+ * - 'savant-code/scout@0.0.2'
  */
 export function isFreeAgent(fullAgentId: string): boolean {
   const { publisherId, agentId } = parseAgentId(fullAgentId)
@@ -315,9 +315,9 @@ export function isFreeAgent(fullAgentId: string): boolean {
   // Must be in the free tier agents list
   if (!FREE_TIER_AGENTS.has(agentId)) return false
 
-  // Must be either internal (no publisher) or from codebuff
+  // Must be either internal (no publisher) or from savant-code
   // This prevents publisher spoofing attacks
-  if (publisherId && publisherId !== 'codebuff') return false
+  if (publisherId && publisherId !== 'savant-code') return false
 
   return true
 }

@@ -1,20 +1,20 @@
-import { AbortError } from '@codebuff/common/util/error'
-import { resolveAndContain } from '@codebuff/common/util/paths'
+import { AbortError } from '@savant-code/common/util/error'
+import { resolveAndContain } from '@savant-code/common/util/paths'
 import { partition } from 'lodash'
 
 import { processFileBlock } from '../../../process-file-block'
 
-import type { CodebuffToolHandlerFunction } from '../handler-function-type'
+import type { SavantCodeToolHandlerFunction } from '../handler-function-type'
 import type {
   ClientToolCall,
-  CodebuffToolCall,
-  CodebuffToolOutput,
-} from '@codebuff/common/tools/list'
-import type { RequestOptionalFileFn } from '@codebuff/common/types/contracts/client'
-import type { Logger } from '@codebuff/common/types/contracts/logger'
-import type { ParamsExcluding } from '@codebuff/common/types/function-params'
-import type { AgentState } from '@codebuff/common/types/session-state'
-import type { ProjectFileContext } from '@codebuff/common/util/file'
+  SavantCodeToolCall,
+  SavantCodeToolOutput,
+} from '@savant-code/common/tools/list'
+import type { RequestOptionalFileFn } from '@savant-code/common/types/contracts/client'
+import type { Logger } from '@savant-code/common/types/contracts/logger'
+import type { ParamsExcluding } from '@savant-code/common/types/function-params'
+import type { AgentState } from '@savant-code/common/types/session-state'
+import type { ProjectFileContext } from '@savant-code/common/util/file'
 
 type FileProcessingTools = 'write_file' | 'str_replace' | 'create_plan'
 export type FileProcessing<
@@ -64,7 +64,7 @@ export function getFileProcessingValues(
 export const handleWriteFile = (async (
   params: {
     previousToolCallFinished: Promise<void>
-    toolCall: CodebuffToolCall<'write_file'>
+    toolCall: SavantCodeToolCall<'write_file'>
 
     agentState: AgentState
     clientSessionId: string
@@ -81,11 +81,11 @@ export const handleWriteFile = (async (
 
     requestClientToolCall: (
       toolCall: ClientToolCall<'write_file'>,
-    ) => Promise<CodebuffToolOutput<'write_file'>>
+    ) => Promise<SavantCodeToolOutput<'write_file'>>
     requestOptionalFile: RequestOptionalFileFn
     writeToClient: (chunk: string) => void
   } & ParamsExcluding<RequestOptionalFileFn, 'filePath'>,
-): Promise<{ output: CodebuffToolOutput<'write_file'> }> => {
+): Promise<{ output: SavantCodeToolOutput<'write_file'> }> => {
   const {
     previousToolCallFinished,
     toolCall,
@@ -200,7 +200,7 @@ export const handleWriteFile = (async (
       requestClientToolCall,
     ),
   }
-}) satisfies CodebuffToolHandlerFunction<'write_file'>
+}) satisfies SavantCodeToolHandlerFunction<'write_file'>
 
 export async function postStreamProcessing<T extends FileProcessingTools>(
   toolCall: FileProcessing<T>,
@@ -208,8 +208,8 @@ export async function postStreamProcessing<T extends FileProcessingTools>(
   writeToClient: (chunk: string) => void,
   requestClientToolCall: (
     toolCall: ClientToolCall<T>,
-  ) => Promise<CodebuffToolOutput<T>>,
-): Promise<CodebuffToolOutput<T>> {
+  ) => Promise<SavantCodeToolOutput<T>>,
+): Promise<SavantCodeToolOutput<T>> {
   const allFileProcessingResults = await Promise.all(
     fileProcessingState.allPromises,
   )

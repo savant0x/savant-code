@@ -22,7 +22,7 @@ describe('persistent anonymous id', () => {
 
   beforeEach(() => {
     originalHome = process.env.HOME
-    tempHome = fs.mkdtempSync(path.join(os.tmpdir(), 'freebuff-anon-'))
+    tempHome = fs.mkdtempSync(path.join(os.tmpdir(), 'savant-free-anon-'))
     process.env.HOME = tempHome
     resetAnonymousIdCache()
   })

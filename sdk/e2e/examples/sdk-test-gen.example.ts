@@ -5,7 +5,7 @@
  * Run with: bun run sdk/e2e/examples/sdk-test-gen.example.ts
  */
 
-import { CodebuffClient } from '../../src/client'
+import { SavantCodeClient } from '../../src/client'
 
 const CODE_TO_TEST = `
 function add(a: number, b: number): number {
@@ -29,7 +29,7 @@ async function main() {
     process.exit(1)
   }
 
-  const client = new CodebuffClient({ apiKey })
+  const client = new SavantCodeClient({ apiKey })
 
   console.log('🧪 Generating tests...\n')
   console.log('Code to test:')
@@ -39,7 +39,7 @@ async function main() {
   console.log('Generated tests:\n')
 
   const result = await client.run({
-    agent: 'codebuff/base2@latest',
+    agent: 'savant-code/base2@latest',
     prompt: `Generate unit tests for these functions using Jest:\n\n${CODE_TO_TEST}`,
     handleStreamChunk: (chunk) => {
       if (typeof chunk === 'string') {

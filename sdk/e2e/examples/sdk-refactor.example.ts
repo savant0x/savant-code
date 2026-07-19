@@ -5,7 +5,7 @@
  * Run with: bun run sdk/e2e/examples/sdk-refactor.example.ts
  */
 
-import { CodebuffClient } from '../../src/client'
+import { SavantCodeClient } from '../../src/client'
 
 const CODE_TO_REFACTOR = `
 function processData(data) {
@@ -30,7 +30,7 @@ async function main() {
     process.exit(1)
   }
 
-  const client = new CodebuffClient({ apiKey })
+  const client = new SavantCodeClient({ apiKey })
 
   console.log('🔧 Refactoring code...\n')
   console.log('Original code:')
@@ -40,7 +40,7 @@ async function main() {
   console.log('Refactored version:\n')
 
   const result = await client.run({
-    agent: 'codebuff/base2@latest',
+    agent: 'savant-code/base2@latest',
     prompt: `Refactor this code to be more readable and use modern JavaScript features:\n\n${CODE_TO_REFACTOR}`,
     handleStreamChunk: (chunk) => {
       if (typeof chunk === 'string') {

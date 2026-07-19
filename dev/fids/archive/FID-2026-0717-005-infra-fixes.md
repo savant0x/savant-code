@@ -11,7 +11,7 @@
 
 ## Summary
 
-Four infrastructure fixes: (1) DB path uses old brand name `~/.freebuff/echo.db` — rename to `~/.savant/data.db`, (2) `dev/LEARNINGS.md` is write-only — wire into knowledge pipeline so agents read prior session learnings, (3) No subagent depth limit — add `MAX_AGENT_DEPTH` enforcement, (4) No file rollback — add pre-execution snapshots for Perfection Loop reversibility.
+Four infrastructure fixes: (1) DB path uses old brand name `~/.savant-free/echo.db` — rename to `~/.savant/data.db`, (2) `dev/LEARNINGS.md` is write-only — wire into knowledge pipeline so agents read prior session learnings, (3) No subagent depth limit — add `MAX_AGENT_DEPTH` enforcement, (4) No file rollback — add pre-execution snapshots for Perfection Loop reversibility.
 
 ## Environment
 
@@ -25,12 +25,12 @@ Four infrastructure fixes: (1) DB path uses old brand name `~/.freebuff/echo.db`
 
 `packages/database/src/index.ts:10-11`:
 ```typescript
-const DB_DIR = path.join(os.homedir(), '.freebuff')
+const DB_DIR = path.join(os.homedir(), '.savant-free')
 const DB_PATH = path.join(DB_DIR, 'echo.db')
 ```
 
 Two issues:
-- `freebuff` — old brand name, should be `savant` or `savant-code`
+- `savant-free` — old brand name, should be `savant` or `savant-code`
 - `echo` — conflicts with ECHO Protocol naming (the protocol is governance, not the database)
 
 ### Problem 2: LEARNINGS.md Is Write-Only
@@ -76,9 +76,9 @@ The Scribe agent writes to `dev/LEARNINGS.md` at end of session. But:
 ### Steps
 
 **Phase 1: DB Path Rebrand**
-1. Change `DB_DIR` from `.freebuff` to `.savant` in `packages/database/src/index.ts:10`
+1. Change `DB_DIR` from `.savant-free` to `.savant` in `packages/database/src/index.ts:10`
 2. Change `DB_PATH` from `echo.db` to `data.db` in `packages/database/src/index.ts:11`
-3. Add migration logic: if `~/.savant/data.db` doesn't exist but `~/.freebuff/echo.db` does, copy it
+3. Add migration logic: if `~/.savant/data.db` doesn't exist but `~/.savant-free/echo.db` does, copy it
 
 **Phase 2: Wire LEARNINGS.md**
 4. Add `'LEARNINGS.md'` to `KNOWLEDGE_FILE_NAMES` in `common/src/constants/knowledge.ts:13`
@@ -99,7 +99,7 @@ The Scribe agent writes to `dev/LEARNINGS.md` at end of session. But:
 ### Verification
 
 1. Typecheck: `bun run --cwd=common typecheck`
-2. Grep `freebuff` in database module — should not appear
+2. Grep `savant-free` in database module — should not appear
 3. Grep `LEARNINGS` in knowledge.ts — should appear
 4. Verify `MAX_AGENT_DEPTH` check in spawn-agent-utils.ts
 5. Verify snapshot store created and hooked into tool gating
@@ -110,7 +110,7 @@ The Scribe agent writes to `dev/LEARNINGS.md` at end of session. But:
 
 | # | Issue | File:Line | Evidence |
 |---|-------|-----------|----------|
-| 1 | DB path uses `~/.freebuff/echo.db` | `database/src/index.ts:10-11` | `const DB_DIR = path.join(os.homedir(), '.freebuff')` |
+| 1 | DB path uses `~/.savant-free/echo.db` | `database/src/index.ts:10-11` | `const DB_DIR = path.join(os.homedir(), '.savant-free')` |
 | 2 | `echo.db` name conflicts with ECHO Protocol | `database/src/index.ts:11` | `const DB_PATH = path.join(DB_DIR, 'echo.db')` |
 | 3 | LEARNINGS.md not in knowledge file names | `knowledge.ts:13-17` | `KNOWLEDGE_FILE_NAMES` array doesn't include it |
 | 4 | Prompt injection filter blocks subdirectory files | `strings.ts:133` | `KNOWLEDGE_FILE_NAMES_LOWECASE.includes(lowerPath)` — `dev/learnings.md` won't match `learnings.md` |
@@ -124,7 +124,7 @@ The Scribe agent writes to `dev/LEARNINGS.md` at end of session. But:
 **Fix 1: DB Path** (`database/src/index.ts:10-11`)
 - `DB_DIR = '.savant'`
 - `DB_PATH = 'data.db'`
-- Migration: copy `~/.freebuff/echo.db` → `~/.savant/data.db` if source exists and target doesn't
+- Migration: copy `~/.savant-free/echo.db` → `~/.savant/data.db` if source exists and target doesn't
 
 **Fix 2: LEARNINGS.md Wiring** (`knowledge.ts:13`, `strings.ts:133`)
 - Add `'LEARNINGS.md'` to `KNOWLEDGE_FILE_NAMES`
@@ -145,7 +145,7 @@ The Scribe agent writes to `dev/LEARNINGS.md` at end of session. But:
 
 | # | Check | Method |
 |---|-------|--------|
-| 1 | No `freebuff` in database module | Grep `packages/database/src/` for `freebuff` |
+| 1 | No `savant-free` in database module | Grep `packages/database/src/` for `savant-free` |
 | 2 | `LEARNINGS.md` in knowledge names | Grep `knowledge.ts` for `LEARNINGS` |
 | 3 | `LEARNINGS.md` injectable from subdirectory | Grep `strings.ts` for `LEARNINGS` or modified filter |
 | 4 | Depth check exists | Grep `spawn-agent-utils.ts` for `MAX_AGENT_DEPTH` or `depth` |
@@ -154,9 +154,9 @@ The Scribe agent writes to `dev/LEARNINGS.md` at end of session. But:
 
 ### SELF-CORRECT Phase
 
-**Finding S1**: The DB migration needs to handle the case where the user has data in both `~/.freebuff/echo.db` and `~/.savant/data.db`. Which takes precedence?
+**Finding S1**: The DB migration needs to handle the case where the user has data in both `~/.savant-free/echo.db` and `~/.savant/data.db`. Which takes precedence?
 
-**Correction**: If `~/.savant/data.db` exists, use it (it's the current data). If only `~/.freebuff/echo.db` exists, copy it to `~/.savant/data.db`. If both exist, use `~/.savant/data.db` and log a warning.
+**Correction**: If `~/.savant/data.db` exists, use it (it's the current data). If only `~/.savant-free/echo.db` exists, copy it to `~/.savant/data.db`. If both exist, use `~/.savant/data.db` and log a warning.
 
 **Finding S2**: The `MAX_AGENT_DEPTH = 5` might be too restrictive for complex multi-persona workflows. The Orchestrator → Thinker → sequential thinking is 2 levels. Orchestrator → Forge → verifier is 3 levels.
 
@@ -184,7 +184,7 @@ FID converged. 8 issues identified, 6 fixes specified, 6 self-corrections applie
 
 ## Blind Spots (Questions I Should Have Asked)
 
-1. **What about the DB path in test files?** — Tests mock the database. The path change shouldn't affect mocks, but verify no test hardcodes `~/.freebuff/echo.db`.
+1. **What about the DB path in test files?** — Tests mock the database. The path change shouldn't affect mocks, but verify no test hardcodes `~/.savant-free/echo.db`.
 
 2. **Should the migration be async or sync?** — The DB is opened at module load time (synchronous). The migration should happen before the DB connection is established. Use a lazy initialization pattern.
 
@@ -204,7 +204,7 @@ FID converged. 8 issues identified, 6 fixes specified, 6 self-corrections applie
 
 - **Fixed By:** Spencer Howell
 - **Fixed Date:** 2026-07-17 17:30
-- **Fix Description:** 4 fixes: (1) DB path renamed from ~/.freebuff/echo.db to ~/.savant/data.db with legacy migration; (2) LEARNINGS.md wired into knowledge pipeline — added to KNOWLEDGE_FILE_NAMES and fixed subdirectory injection filter; (3) MAX_AGENT_DEPTH = 5 enforced in createAgentState() with ancestorRunIds.length check; (4) Pre-execution snapshots via file-snapshot-store.ts — captures original content on write in GREEN, restores on self_correct→green, clears on audit→complete.
+- **Fix Description:** 4 fixes: (1) DB path renamed from ~/.savant-free/echo.db to ~/.savant/data.db with legacy migration; (2) LEARNINGS.md wired into knowledge pipeline — added to KNOWLEDGE_FILE_NAMES and fixed subdirectory injection filter; (3) MAX_AGENT_DEPTH = 5 enforced in createAgentState() with ancestorRunIds.length check; (4) Pre-execution snapshots via file-snapshot-store.ts — captures original content on write in GREEN, restores on self_correct→green, clears on audit→complete.
 - **Tests Added:** No (typecheck verification only)
 - **Verified By:** typecheck (common clean), grep verification (7 checks all pass)
 - **Commit/PR:** Pending

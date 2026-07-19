@@ -8,7 +8,7 @@
 
 ## Honest Correction (Cross-FID)
 
-FID-2026-0718-022 explicitly deferred internal workspace README work to FID-023 per Decision E ("DEFER to FID-023 (focused audit first to see what exists)"). FID-023 picks up that hand-off. FID-022 POLISHED the 3 public-facing READMEs (sdk, cli, freebuff); FID-023 applies the same pattern at scale to internal workspaces.
+FID-2026-0718-022 explicitly deferred internal workspace README work to FID-023 per Decision E ("DEFER to FID-023 (focused audit first to see what exists)"). FID-023 picks up that hand-off. FID-022 POLISHED the 3 public-facing READMEs (sdk, cli, savant-free); FID-023 applies the same pattern at scale to internal workspaces.
 
 ---
 
@@ -17,8 +17,8 @@ FID-2026-0718-022 explicitly deferred internal workspace README work to FID-023 
 User feedback (2026-07-19): *"Open FID-023 for packages/agent-runtime + packages/code-map + packages/database + packages/llm-providers (and any other internal workspace) README.md audit + polish — batch follow-up after FID-022 closes."*
 
 Verified via:
-- 11 workspace dirs exist (agents, cli, common, evals, freebuff, packages/agent-runtime + code-map + database + llm-providers, scripts/tmux, sdk)
-- 4 README.md files exist (cli=84L, freebuff=41L, scripts/tmux=340L, sdk=267L)
+- 11 workspace dirs exist (agents, cli, common, evals, savant-free, packages/agent-runtime + code-map + database + llm-providers, scripts/tmux, sdk)
+- 4 README.md files exist (cli=84L, savant-free=41L, scripts/tmux=340L, sdk=267L)
 - 7 README.md files MISSING entirely (agents, common, evals, packages/agent-runtime, packages/code-map, packages/database, packages/llm-providers)
 - Substitution audit on existing 4: all CLEAN (0 hits for SavantClient/@savant-code/SAVANT_FREE_MODE/SAVANT_CODE_API_KEY)
 - Only `sdk/` is PUBLIC (`private: false`); all others are PRIVATE — meaning only `sdk/README.md` ships to npm registry. Other READMEs are contributor-facing only.
@@ -33,7 +33,7 @@ Verified via:
 |-----------|-------|----------------|---------|-----|
 | `sdk/README.md` | 267 | **PUBLIC** | CLEAN substance (Installation / Prerequisites / Usage / API Reference / License) + 0.0.2-clean | NONE (FID-022 already handles; defer from FID-023) |
 | `cli/README.md` | 84 | PRIVATE | Internal dev README (Installation / Development / Testing / Build / Run / Features) | Banner image + Quick Start cross-link to root + ECHO mention |
-| `freebuff/README.md` | 41 | PRIVATE | Already polished + cross-link + tagline | Features matrix + ECHO mention + project structure fix |
+| `savant-free/README.md` | 41 | PRIVATE | Already polished + cross-link + tagline | Features matrix + ECHO mention + project structure fix |
 | `scripts/tmux/README.md` | 340 | PRIVATE | Substantial — tmux test scripts documentation | Banner image + ECHO mention + cross-link parity |
 
 ### Missing READMEs (7 — CREATE or SKIP scope)
@@ -55,8 +55,8 @@ Verified via:
 | Dependency | Direction | Status |
 |------------|-----------|--------|
 | FID-021 archived (root README) | FID-023 cross-links to root via `../README.md` | ✅ AVAILABLE |
-| FID-022 RED opened (sdk/cli/freebuff) | FID-023 lifts FID-022's cli + freebuff polish scope | ⚠️ FID-022 not yet FORGED |
-| FID-017 workspace pkg namespace (`@codebuff/*`) | FID-023 must use `@codebuff/*` not `@savant-code/*` | ✅ ASSUMED |
+| FID-022 RED opened (sdk/cli/savant-free) | FID-023 lifts FID-022's cli + savant-free polish scope | ⚠️ FID-022 not yet FORGED |
+| FID-017 workspace pkg namespace (`@savant-code/*`) | FID-023 must use `@savant-code/*` not `@savant-code/*` | ✅ ASSUMED |
 | FID-015 cross-FID correction on `symmetric` | N/A (different domain) | ✅ N/A |
 
 ---
@@ -70,7 +70,7 @@ Verified via:
   - Option C (CREATE_MINIMAL_STUBS): Create the 7 missing with 5-7 line stub (Purpose + Quick Start + cross-link to root). Pros: consistency baseline with public READMEs (which all have cross-link to root); minimum viable orthogonality.
 
 ### Q2. Should the existing 4 READMEs get the FID-022 treatment (banner + badges + ECHO mention + cross-link)?
-**A:** ✅ YES for `cli/README.md`, `freebuff/README.md`, `scripts/tmux/README.md`. NO for `sdk/README.md` (FID-022 has scope). The FID-022 pattern (banner width=650, 5 badges, ECHO 1-paragraph mention, cross-link footer) extends easily to internal READMEs.
+**A:** ✅ YES for `cli/README.md`, `savant-free/README.md`, `scripts/tmux/README.md`. NO for `sdk/README.md` (FID-022 has scope). The FID-022 pattern (banner width=650, 5 badges, ECHO 1-paragraph mention, cross-link footer) extends easily to internal READMEs.
 
 ### Q3. Should missing READMEs include description, key features, and usage examples?
 **A:** ⚠️ DECISION A — depends on scope chosen. RECOMMENDATION: for `agents/`, `common/`, `evals/`, `packages/agent-runtime/` (used by CLI runtime), include short Purpose + Quick Start. For database/code-map/llm-providers (more specialized), include purpose + cross-link to ECHO.md / root.
@@ -100,7 +100,7 @@ Verified via:
 **A:** ⚠️ TARGETED — if `evals/` README exists, it should reference the Buffbench benchmark suite (the workspace IS the benchmark runner per root README Repo Map table). Decision A scope determines if this is auto-included.
 
 ### Q12. Are any `@savant-code/*` references still hidden in workspace README drafts?
-**A:** ✅ NO — greenfield drafts can use `@codebuff/*` exclusively per FID-017 Option C.
+**A:** ✅ NO — greenfield drafts can use `@savant-code/*` exclusively per FID-017 Option C.
 
 ### Q13. Will FID-023 FORGE overlap with FID-022's later FORGE phase?
 **A:** ⚠️ **BLOCKER CONSIDERATION** — FID-022 hasn't FORGED yet (awaiting user approval). If user approves FID-023 first and FORGEs it, FID-022 will need to coordinate cross-FID. **RECOMMENDATION: FID-022 FORGEs first, then FID-023 (sequential dependency to avoid index-shifted line number conflicts in root README cross-FID SavantClient fix).** This is a sequencing constraint surfaced honestly.
@@ -112,7 +112,7 @@ Verified via:
 
 ## GREEN Plan — 5 Steps (~35 min if Option C; ~75 min if Option A)
 
-### Step 1 (~10 min) — Polish existing 3 internal READMEs (cli, freebuff, scripts/tmux)
+### Step 1 (~10 min) — Polish existing 3 internal READMEs (cli, savant-free, scripts/tmux)
 Apply FID-022 pattern. Reuse `assets/banner.png` (reduced width 650px). Add badge block (5 badges: workspace-type / Bun-ts-tested / License / ECHO v0.2.0 / Status). Add ECHO Protocol 1-paragraph mention (cross-link to root + ECHO.md). Footer cross-link to `../README.md`. **EXCLUDE sdk/README.md** (FID-022 scope).
 
 ### Step 2 (~10-30 min depending on Decision A) — Create missing READMEs (7)
@@ -204,7 +204,7 @@ Run 6-item check (defined below).
 
 | IN scope (FID-023) | OUT of scope (separate FIDs) |
 |---------------------|------------------------------|
-| Polish existing 3 internal READMEs (cli/freebuff/scripts/tmux) | sdk/README.md (FID-022 already handles) |
+| Polish existing 3 internal READMEs (cli/savant-free/scripts/tmux) | sdk/README.md (FID-022 already handles) |
 | Create 7 missing READMEs (agents/common/evals/packages/agent-runtime/code-map/database/llm-providers) | LICENSE file audit per workspace (FID-024) |
 | README template at templates/README-TEMPLATE.md (Decision C) | Image alt-text improvements (FID-025) |
 | Substitution grep across all 11 workspaces | ECHO.md / ARCHITECTURE.md updates (already handled in FID-015) |
@@ -216,7 +216,7 @@ Run 6-item check (defined below).
 
 **RECOMMENDED:** Approve FID-022 first → FID-022 FORGE first → FID-023 FORGE second.
 
-Reason: FID-022's Decision D (root README `SavantClient`→`CodebuffClient` fix) shifts root README line numbers; if FID-023 cross-links reference BEFORE that fix happens, the cross-link anchor positions get re-indexed. Sequential execution avoids cross-FID timing issues.
+Reason: FID-022's Decision D (root README `SavantClient`→`SavantCodeClient` fix) shifts root README line numbers; if FID-023 cross-links reference BEFORE that fix happens, the cross-link anchor positions get re-indexed. Sequential execution avoids cross-FID timing issues.
 
 ---
 

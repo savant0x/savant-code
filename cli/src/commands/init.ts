@@ -1,8 +1,8 @@
 import { existsSync, mkdirSync, writeFileSync } from 'fs'
 import path from 'path'
 
-import { AnalyticsEvent } from '@codebuff/common/constants/analytics-events'
-import { PRIMARY_KNOWLEDGE_FILE_NAME } from '@codebuff/common/constants/knowledge'
+import { AnalyticsEvent } from '@savant-code/common/constants/analytics-events'
+import { PRIMARY_KNOWLEDGE_FILE_NAME } from '@savant-code/common/constants/knowledge'
 
 // @ts-expect-error - Bun text import attribute not supported by TypeScript
 import agentDefinitionSource from '../../../common/src/templates/initial-agents-dir/types/agent-definition' with { type: 'text' }
@@ -17,7 +17,7 @@ import { getSystemMessage } from '../utils/message-history'
 
 import type { PostUserMessageFn } from '../types/contracts/send-message'
 
-const brandName = IS_FREEBUFF ? 'Freebuff' : 'Codebuff'
+const brandName = IS_FREEBUFF ? 'SavantFree' : 'SavantCode'
 
 const INITIAL_KNOWLEDGE_FILE = `# Project knowledge
 

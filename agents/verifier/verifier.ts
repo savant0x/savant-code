@@ -1,11 +1,11 @@
-import { ECHO_PROTOCOL_INSTRUCTIONS } from '@codebuff/common/constants/agents'
+import { ECHO_PROTOCOL_INSTRUCTIONS } from '@savant-code/common/constants/agents'
 import { publisher } from '../constants'
 import {
   PLACEHOLDER,
   type SecretAgentDefinition,
 } from '../types/secret-agent-definition'
 
-import type { Model } from '@codebuff/common/old-constants'
+import type { Model } from '@savant-code/common/old-constants'
 
 export const createReviewer = (
   model: Model,

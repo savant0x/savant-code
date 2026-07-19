@@ -1,10 +1,10 @@
-import { FREEBUFF_STREAK_REWARDS_ENABLED } from '@codebuff/common/constants/freebuff-models'
-import { isFreebuffStreakGlmBonusActive } from '@codebuff/common/util/freebuff-streak'
+import { FREEBUFF_STREAK_REWARDS_ENABLED } from '@savant-code/common/constants/savant-free-models'
+import { isFreebuffStreakGlmBonusActive } from '@savant-code/common/util/savant-free-streak'
 
 /** Days in a streak "week" — the milestone the progress dots fill toward. */
 export const FREEBUFF_STREAK_WEEK = 7
 
-export interface FreebuffStreakLine {
+export interface SavantFree$1 {
   /** Count label, e.g. "2 day streak". */
   label: string
   /** A week's worth of progress dots toward the 7-day milestone, e.g.
@@ -20,7 +20,7 @@ export interface FreebuffStreakLine {
  * the caller hides the row entirely — new / lapsed users should be nudged to
  * start using the product, not shown an empty streak.
  */
-export function getFreebuffStreakLine(streak: number): FreebuffStreakLine | null {
+export function getFreebuffStreakLine(streak: number): SavantFree$1 | null {
   if (streak <= 0) return null
 
   // Fill toward the 7-day milestone, then stay full — a 19-day streak should

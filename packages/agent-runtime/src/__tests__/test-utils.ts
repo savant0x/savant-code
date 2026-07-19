@@ -1,9 +1,9 @@
-import { promptSuccess } from '@codebuff/common/util/error'
-import { generateCompactId } from '@codebuff/common/util/string'
+import { promptSuccess } from '@savant-code/common/util/error'
+import { generateCompactId } from '@savant-code/common/util/string'
 
-import type { StreamChunk } from '@codebuff/common/types/contracts/llm'
-import type { PromptResult } from '@codebuff/common/util/error'
-import type { ProjectFileContext } from '@codebuff/common/util/file'
+import type { StreamChunk } from '@savant-code/common/types/contracts/llm'
+import type { PromptResult } from '@savant-code/common/util/error'
+import type { ProjectFileContext } from '@savant-code/common/util/file'
 
 /**
  * Creates a native tool call stream chunk for testing.

@@ -8,7 +8,7 @@
 import {
   toolNameParam,
   toolXmlName,
-} from '@codebuff/common/tools/constants'
+} from '@savant-code/common/tools/constants'
 
 // Use flexible tag matching without requiring specific newlines
 const startToolTag = `<${toolXmlName}>`

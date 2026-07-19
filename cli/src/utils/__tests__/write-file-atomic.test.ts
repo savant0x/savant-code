@@ -9,7 +9,7 @@ let tempDir = ''
 
 describe('writeFileAtomic', () => {
   beforeEach(() => {
-    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'codebuff-atomic-'))
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'savant-code-atomic-'))
   })
 
   afterEach(() => {
@@ -67,7 +67,7 @@ describe('writeFileAtomic', () => {
 
 describe('writeFileAtomicAsync', () => {
   beforeEach(() => {
-    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'codebuff-atomic-async-'))
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'savant-code-atomic-async-'))
   })
 
   afterEach(() => {

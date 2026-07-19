@@ -142,11 +142,11 @@ Add doc comment explaining session-scoped design.
 
 **Finding 1:** Duplicated `scanOpenFids` function in handler.
 
-**Correction:** Removed local copy, imported `readProtocolConfig` from `@codebuff/common/util/protocol-config` instead.
+**Correction:** Removed local copy, imported `readProtocolConfig` from `@savant-code/common/util/protocol-config` instead.
 
 **Finding 2:** Inline `fileContext: { cwd: string }` type.
 
-**Correction:** Changed to `ProjectFileContext` import from `@codebuff/common/util/file`.
+**Correction:** Changed to `ProjectFileContext` import from `@savant-code/common/util/file`.
 
 **Finding 3:** `reason` not in structured log data on success path.
 

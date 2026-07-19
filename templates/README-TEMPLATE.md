@@ -48,7 +48,7 @@ Add as many `## ` and `### ` sections as needed beyond the canonical Purpose + Q
 
 <div align="center">
 
-_Part of the [codebuff/savant-code monorepo](https://github.com/savant0x/savant-code), governed by the [ECHO Protocol v0.2.0](../ECHO.md)._
+_Part of the [savant-code/savant-code monorepo](https://github.com/savant0x/savant-code), governed by the [ECHO Protocol v0.2.0](../ECHO.md)._
 
 **Savant** • 2026
 </div>
@@ -59,7 +59,7 @@ _Part of the [codebuff/savant-code monorepo](https://github.com/savant0x/savant-
 Replace this comment with your workspace-specific notes.
 
 Substitutions needed before publishing:
-- <WORKSPACE_NAME>     → e.g. "@codebuff/agent-runtime"
+- <WORKSPACE_NAME>     → e.g. "@savant-code/agent-runtime"
 - <WORKSPACE_TAGLINE>  → e.g. "Core agent execution engine"
 - <WORKSPACE_DIR>      → e.g. "packages/agent-runtime"
 
@@ -75,5 +75,5 @@ Banner image width:
 
 For dev-tooling READMEs (scripts/tmux, scripts/release), drop the ECHO badge block entirely — the worktop tooling is intentionally outside ECHO protocol scope.
 
-LICENSE: Private workspaces (`private: true` in package.json) DO NOT need a per-workspace LICENSE file — they inherit from the root `LICENSE` via the explicit `Apache-2.0` cross-link in your README's License section. Only publishable workspaces (`private: false` — currently only `@codebuff/sdk`) need their own LICENSE file. (Per FID-2026-0718-024 Decision B: DECLARE pattern over COPY or SYMLINK.)
+LICENSE: Private workspaces (`private: true` in package.json) DO NOT need a per-workspace LICENSE file — they inherit from the root `LICENSE` via the explicit `Apache-2.0` cross-link in your README's License section. Only publishable workspaces (`private: false` — currently only `@savant-code/sdk`) need their own LICENSE file. (Per FID-2026-0718-024 Decision B: DECLARE pattern over COPY or SYMLINK.)
 -->

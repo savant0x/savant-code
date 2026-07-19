@@ -1,25 +1,25 @@
-import { jsonToolResult } from '@codebuff/common/util/messages'
+import { jsonToolResult } from '@savant-code/common/util/messages'
 
 import { getFileReadingUpdates } from '../../../get-file-reading-updates'
 import { renderReadFilesResult } from '../../../util/render-read-files-result'
 
-import type { CodebuffToolHandlerFunction } from '../handler-function-type'
+import type { SavantCodeToolHandlerFunction } from '../handler-function-type'
 import type {
-  CodebuffToolCall,
-  CodebuffToolOutput,
-} from '@codebuff/common/tools/list'
-import type { ParamsExcluding } from '@codebuff/common/types/function-params'
-import type { ProjectFileContext } from '@codebuff/common/util/file'
+  SavantCodeToolCall,
+  SavantCodeToolOutput,
+} from '@savant-code/common/tools/list'
+import type { ParamsExcluding } from '@savant-code/common/types/function-params'
+import type { ProjectFileContext } from '@savant-code/common/util/file'
 
 type ToolName = 'read_files'
 export const handleReadFiles = (async (
   params: {
     previousToolCallFinished: Promise<void>
-    toolCall: CodebuffToolCall<ToolName>
+    toolCall: SavantCodeToolCall<ToolName>
 
     fileContext: ProjectFileContext
   } & ParamsExcluding<typeof getFileReadingUpdates, 'requestedFiles'>,
-): Promise<{ output: CodebuffToolOutput<ToolName> }> => {
+): Promise<{ output: SavantCodeToolOutput<ToolName> }> => {
   const {
     previousToolCallFinished,
     toolCall,
@@ -40,4 +40,4 @@ export const handleReadFiles = (async (
       renderReadFilesResult(addedFiles, fileContext.tokenCallers ?? {}),
     ),
   }
-}) satisfies CodebuffToolHandlerFunction<ToolName>
+}) satisfies SavantCodeToolHandlerFunction<ToolName>

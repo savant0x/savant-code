@@ -11,7 +11,7 @@
 
 ## Summary
 
-Rebrand the CodebuffAI/codebuff CLI monorepo to Savant-Code. The source code was forked from `CodebuffAI/codebuff`. Branding/design reference comes from the earlier `fame0528/savant-code` repo. All infrastructure (npm packages, CLI binary, agent names, branding) must be updated to use "Savant-Code" naming. The "freebuff" name cannot be used — the free/paid split is a business decision deferred to a later date.
+Rebrand the savant0x/savant-code CLI monorepo to Savant-Code. The source code was forked from `savant0x/savant-code`. Branding/design reference comes from the earlier `fame0528/savant-code` repo. All infrastructure (npm packages, CLI binary, agent names, branding) must be updated to use "Savant-Code" naming. The "savant-free" name cannot be used — the free/paid split is a business decision deferred to a later date.
 
 ## Environment
 
@@ -24,13 +24,13 @@ Rebrand the CodebuffAI/codebuff CLI monorepo to Savant-Code. The source code was
 ### Scope
 
 **In-scope (this FID):**
-- All `@codebuff/*` → `@savant-code/*` package renames (DONE)
-- CLI binary name: `codebuff` → `savant-code`
-- All "freebuff" references → deferred (not renaming to "savant-free" yet)
+- All `@savant-code/*` → `@savant-code/*` package renames (DONE)
+- CLI binary name: `savant-code` → `savant-code`
+- All "savant-free" references → deferred (not renaming to "savant-free" yet)
 - README, ARCHITECTURE.md, CHANGELOG.md branding
 - VERSION file: 0.0.1
 - Banner/assets from old savant-code repo (DONE)
-- All "Codebuff" user-facing strings → "Savant-Code"
+- All "SavantCode" user-facing strings → "Savant-Code"
 
 **Out-of-scope (deferred):**
 - Free/paid product split decision
@@ -48,7 +48,7 @@ Rebrand the CodebuffAI/codebuff CLI monorepo to Savant-Code. The source code was
 
 ### Current State
 
-The repo was forked from `CodebuffAI/codebuff` (the original Codebuff open-source repo) and is being rebranded to Savant-Code. Branding/design assets reference the earlier `fame0528/savant-code` repo. The user is mid-rebrand. Some renames are done (package.json names), but thousands of references to "codebuff", "freebuff", "Codebuff", "Freebuff" remain in:
+The repo was forked from `savant0x/savant-code` (the original SavantCode open-source repo) and is being rebranded to Savant-Code. Branding/design assets reference the earlier `fame0528/savant-code` repo. The user is mid-rebrand. Some renames are done (package.json names), but thousands of references to "savant-code", "savant-free", "SavantCode", "SavantFree" remain in:
 - Source code (imports, strings, comments)
 - Agent definitions
 - CLI commands and output
@@ -67,9 +67,9 @@ The repo was forked from `CodebuffAI/codebuff` (the original Codebuff open-sourc
 
 ### What's Not Done
 
-- Source code still has `IS_FREEBUFF` checks, `freebuff` references
-- Agent definitions still reference "codebuff" patterns
-- CLI output strings still say "Codebuff"/"Freebuff"
+- Source code still has `IS_FREEBUFF` checks, `savant-free` references
+- Agent definitions still reference "savant-code" patterns
+- CLI output strings still say "SavantCode"/"SavantFree"
 - Comments throughout codebase reference old names
 - No decision on free/paid split (deferred)
 
@@ -81,8 +81,8 @@ Systematic find-and-replace of user-facing strings only. Internal variable names
 
 ### Steps
 
-1. **Grep for user-facing "Codebuff"/"Freebuff" strings** — identify all occurrences
-2. **Replace user-facing strings** — "Codebuff" → "Savant-Code", "Freebuff" → deferred
+1. **Grep for user-facing "SavantCode"/"SavantFree" strings** — identify all occurrences
+2. **Replace user-facing strings** — "SavantCode" → "Savant-Code", "SavantFree" → deferred
 3. **Update CLI output** — banner, messages, error text
 4. **Update agent definitions** — display names, instructions
 5. **Verify** — typecheck, grep for remaining references
@@ -93,17 +93,17 @@ Systematic find-and-replace of user-facing strings only. Internal variable names
 
 #### RED — Issue Identification
 
-**R1 — User-facing "Codebuff" strings remain**
-- Evidence: grep for `"Codebuff"` in source — multiple hits in CLI output, messages, comments
-- Impact: Users see "Codebuff" branding in a "Savant-Code" product
+**R1 — User-facing "SavantCode" strings remain**
+- Evidence: grep for `"SavantCode"` in source — multiple hits in CLI output, messages, comments
+- Impact: Users see "SavantCode" branding in a "Savant-Code" product
 
-**R2 — "Freebuff" references remain**
-- Evidence: grep for `"freebuff"` in source — multiple hits in feature flags, settings, session handling
-- Impact: "Freebuff" name cannot be used per user directive
+**R2 — "SavantFree" references remain**
+- Evidence: grep for `"savant-free"` in source — multiple hits in feature flags, settings, session handling
+- Impact: "SavantFree" name cannot be used per user directive
 
 **R3 — Agent definitions reference old names**
-- Evidence: `agents/` directory contains "codebuff" in agent IDs and display names
-- Impact: Agent names appear as "codebuff" in CLI
+- Evidence: `agents/` directory contains "savant-code" in agent IDs and display names
+- Impact: Agent names appear as "savant-code" in CLI
 
 **R4 — No free/paid split decision**
 - Evidence: `IS_FREEBUFF` feature flag exists but product split is undecided
@@ -117,16 +117,16 @@ Systematic find-and-replace of user-facing strings only. Internal variable names
 - Keep it as-is until the free/paid decision is made
 - Risk: LOW — no user-facing impact
 
-**G2 — Replace user-facing "Codebuff" with "Savant-Code"**
-- Grep for `"Codebuff"` in CLI output strings, messages, error text
+**G2 — Replace user-facing "SavantCode" with "Savant-Code"**
+- Grep for `"SavantCode"` in CLI output strings, messages, error text
 - Replace with `"Savant-Code"` in all user-facing contexts
 - Keep internal variable names as-is
 - Risk: LOW — string replacement only
 
-**G3 — Defer "Freebuff" references**
+**G3 — Defer "SavantFree" references**
 - `IS_FREEBUFF` stays as feature flag (internal)
-- `freebuff` in settings keys, DB queries stays as-is (internal)
-- No user-facing "Freebuff" strings exist (already cleaned up)
+- `savant-free` in settings keys, DB queries stays as-is (internal)
+- No user-facing "SavantFree" strings exist (already cleaned up)
 - Risk: LOW — no changes needed
 
 **G4 — Agent definitions — keep current names**
@@ -162,7 +162,7 @@ No corrections needed. The scope is clear: rebrand user-facing strings, keep int
 ## Resolution
 
 - **Fixed By:** Forge (pending)
-- **Fix Description:** Replace user-facing "Codebuff" strings with "Savant-Code", defer "Freebuff" references
+- **Fix Description:** Replace user-facing "SavantCode" strings with "Savant-Code", defer "SavantFree" references
 - **Tests Added:** No — string replacements only
 - **Verified By:** Verifier (pending)
 
@@ -170,5 +170,5 @@ No corrections needed. The scope is clear: rebrand user-facing strings, keep int
 
 1. **Branding ≠ internals** — Feature flags like `IS_FREEBUFF` are implementation details. Renaming them creates churn with no user value. Defer until the business decision is made.
 2. **"Free" is a business decision** — Whether to ship one product or two (paid + free) affects naming, packaging, and feature gating. Don't decide in code — defer to partnerships.
-3. **Fork source vs branding reference** — The source code came from `CodebuffAI/codebuff`. The branding/design reference is `fame0528/savant-code`. These are different repos with different purposes.
-4. **Infrastructure can't be copied** — Assets like banners, logos, and branding from the old repo need to be rebuilt with Savant branding, not copied from Codebuff.
+3. **Fork source vs branding reference** — The source code came from `savant0x/savant-code`. The branding/design reference is `fame0528/savant-code`. These are different repos with different purposes.
+4. **Infrastructure can't be copied** — Assets like banners, logos, and branding from the old repo need to be rebuilt with Savant branding, not copied from SavantCode.

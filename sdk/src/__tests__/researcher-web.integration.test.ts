@@ -4,11 +4,11 @@ import path from 'path'
 
 import { describe, expect, it } from 'bun:test'
 
-import { CodebuffClient } from '../client'
+import { SavantCodeClient } from '../client'
 import { loadLocalAgents } from '../agents/load-agents'
 
-import type { AgentOutput } from '@codebuff/common/types/session-state'
-import type { PrintModeEvent } from '@codebuff/common/types/print-mode'
+import type { AgentOutput } from '@savant-code/common/types/session-state'
+import type { PrintModeEvent } from '@savant-code/common/types/print-mode'
 
 const DEFAULT_TIMEOUT_MS = 120_000
 const EXPECTED_KEYWORD = 'useActionState'
@@ -21,7 +21,7 @@ function loadEnvValue(name: string): string | undefined {
   }
 
   for (const envPath of [
-    path.join(homedir(), 'codebuff', '.env.local'),
+    path.join(homedir(), 'savant-code', '.env.local'),
     path.join(process.cwd(), '.env.local'),
   ]) {
     if (!existsSync(envPath)) continue
@@ -159,7 +159,7 @@ describe('researcher-web SDK integration', () => {
       expect(researcherWeb).toBeDefined()
 
       const events: PrintModeEvent[] = []
-      const client = new CodebuffClient({
+      const client = new SavantCodeClient({
         apiKey,
         cwd: process.cwd(),
       })

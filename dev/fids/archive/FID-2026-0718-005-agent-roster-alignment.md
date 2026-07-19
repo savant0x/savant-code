@@ -1,4 +1,4 @@
-# FID-2026-0718-005 — high — Agent Roster Alignment (Savant Spec ↔ Codebuff Codebase)
+# FID-2026-0718-005 — high — Agent Roster Alignment (Savant Spec ↔ SavantCode Codebase)
 
 **Created:** 2026-07-18
 **Status:** Open
@@ -11,8 +11,8 @@
 ## Summary
 
 The ARCHITECTURE.md spec defines 9 specialized agents with strict separation of duties.
-The codebase has 69 bundled agents inherited from Codebuff. The orchestrator (`base2`)
-spawns a mix of Savant agents and Codebuff agents with overlapping responsibilities.
+The codebase has 69 bundled agents inherited from SavantCode. The orchestrator (`base2`)
+spawns a mix of Savant agents and SavantCode agents with overlapping responsibilities.
 This FID tracks the alignment to the 9-agent Savant architecture without losing capabilities.
 
 **Decisions made (operator-approved):**
@@ -110,7 +110,7 @@ This FID tracks the alignment to the 9-agent Savant architecture without losing 
 
 ### Fix 3: Update Orchestrator's spawnableAgents
 
-**Change:** Replace Codebuff agents with Savant equivalents:
+**Change:** Replace SavantCode agents with Savant equivalents:
 
 **Before (current):**
 ```
@@ -163,7 +163,7 @@ basher, context-pruner, tmux-cli, browser-use
 **Answer:** `agents/detective/detective.ts` exists. Need to verify its toolNames match the spec (code_search, set_output) and add list_directory, glob, read_files, read_subtree for full search capability.
 
 ### Q4: What happens to `gpt-5-agent` and `opus-agent`?
-**Answer:** These are generic model-proxy agents from Codebuff. They're not in the Savant spec. They should be removed from the orchestrator's spawnableAgents. If specific model routing is needed, it should be handled by the Thinker's model inheritance or explicit model params on the parent.
+**Answer:** These are generic model-proxy agents from SavantCode. They're not in the Savant spec. They should be removed from the orchestrator's spawnableAgents. If specific model routing is needed, it should be handled by the Thinker's model inheritance or explicit model params on the parent.
 
 ### Q5: Does the context-pruner need to be in spawnableAgents?
 **Answer:** Yes. The context-pruner is auto-spawned by the runtime via `handleSteps`. Keeping it in spawnableAgents ensures the orchestrator can also explicitly trigger pruning if needed.

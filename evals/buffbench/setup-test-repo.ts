@@ -4,7 +4,7 @@ import { execFileSync } from 'child_process'
 import fs from 'fs'
 import path from 'path'
 
-import { generateCompactId } from '@codebuff/common/util/string'
+import { generateCompactId } from '@savant-code/common/util/string'
 
 export const TEST_REPOS_DIR = path.join(__dirname, '..', 'test-repos')
 

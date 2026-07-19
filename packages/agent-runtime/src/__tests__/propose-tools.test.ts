@@ -1,7 +1,7 @@
-import { TEST_USER_ID } from '@codebuff/common/old-constants'
-import { TEST_AGENT_RUNTIME_IMPL } from '@codebuff/common/testing/impl/agent-runtime'
-import { getInitialSessionState } from '@codebuff/common/types/session-state'
-import { assistantMessage, userMessage } from '@codebuff/common/util/messages'
+import { TEST_USER_ID } from '@savant-code/common/old-constants'
+import { TEST_AGENT_RUNTIME_IMPL } from '@savant-code/common/testing/impl/agent-runtime'
+import { getInitialSessionState } from '@savant-code/common/types/session-state'
+import { assistantMessage, userMessage } from '@savant-code/common/util/messages'
 import {
   afterEach,
   beforeEach,
@@ -25,11 +25,11 @@ import type { executeToolCall } from '../tools/tool-executor'
 import type {
   AgentRuntimeDeps,
   AgentRuntimeScopedDeps,
-} from '@codebuff/common/types/contracts/agent-runtime'
-import type { Logger } from '@codebuff/common/types/contracts/logger'
-import type { ParamsOf } from '@codebuff/common/types/function-params'
-import type { ToolMessage } from '@codebuff/common/types/messages/codebuff-message'
-import type { AgentState } from '@codebuff/common/types/session-state'
+} from '@savant-code/common/types/contracts/agent-runtime'
+import type { Logger } from '@savant-code/common/types/contracts/logger'
+import type { ParamsOf } from '@savant-code/common/types/function-params'
+import type { ToolMessage } from '@savant-code/common/types/messages/savant-code-message'
+import type { AgentState } from '@savant-code/common/types/session-state'
 
 const logger: Logger = {
   debug: () => {},

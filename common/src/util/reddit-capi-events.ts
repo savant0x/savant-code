@@ -1,6 +1,6 @@
 import { AnalyticsEvent } from '@savantcode.common/constants/analytics-events'
 
-import type { FreebuffRedditRetentionMilestoneDays } from '@savantcode.common/util/reddit-freebuff-retention'
+import type { SavantFree$1 } from '@savantcode.common/util/reddit-savant-free-retention'
 
 export type RedditFirstPromptSurface = 'cli' | 'web' | 'chat'
 
@@ -38,7 +38,7 @@ export function redditFirstPromptCapiEventName(
 }
 
 export function redditRetentionCapiEventName(
-  milestone: FreebuffRedditRetentionMilestoneDays,
+  milestone: SavantFree$1,
 ): RedditRetentionCapiEventName {
   return `Retention${milestone}dCli`
 }

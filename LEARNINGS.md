@@ -14,7 +14,7 @@
 ### Monorepo Layout (Bun workspaces)
 
 - `cli/` — TUI client (OpenTUI + React). Entry: `bun --cwd cli dev`.
-- `sdk/` — JS/TS SDK (`CodebuffClient` class). Entry: `bun --cwd sdk build`.
+- `sdk/` — JS/TS SDK (`SavantCodeClient` class). Entry: `bun --cwd sdk build`.
 - `common/` — shared types, tools, schemas, utilities. Pure layer; no deps on `cli`/`sdk`.
 - `agents/` — public agent definitions + tool-library helpers (`base2`, `detective`,
   `forge`, `verifier`, `recorder`, `thinker`, `scout`, `researcher`, `scribe`,
@@ -28,7 +28,7 @@
 ### Workstation Boot
 
 - `bun dev` (= `bun --cwd cli dev`) — runs `prebuild:agents && bun run src/index.tsx --cwd ..`
-- `bun dev:freebuff` sets `FREEBUFF_MODE=true`.
+- `bun dev:savant-free` sets `FREEBUFF_MODE=true`.
 - `bun install --frozen-lockfile` MUST succeed; workspace pkg names + consumer import
   names must match verbatim (see *Future-Avoidance* #2 below).
 - Bun 1.3.11 satisfies `cli` engines; root pins 1.3.14 (warning only).
@@ -310,9 +310,9 @@ BEFORE drafting the audit request. Nova will verify — claim once, verify twice
 
 ### 7. 0.0.1 was prerelease package state (recall)
 
-`@codebuff/*` workspace pkg names and 1,131 consumer imports aligning was the v0.0.1 baseline.
+`@savant-code/*` workspace pkg names and 1,131 consumer imports aligning was the v0.0.1 baseline.
 Full rebrand to `@savant-code/*` deferred to next push (post-v0.0.2). Use `Option C` decision
-recording per FID-2026-0718-017: *"preserve @codebuff/* pkg names as the 0.0.2 snapshot state;
+recording per FID-2026-0718-017: *"preserve @savant-code/* pkg names as the 0.0.2 snapshot state;
 full rebrand lands in next push."*
 
 ---
@@ -323,7 +323,7 @@ full rebrand lands in next push."*
 - **Node:** v22+ (v25 in some shells).
 - **TypeScript:** 5.5.4, `strict: true`.
 - **ECHO Protocol:** v0.2.0 (ACTIVE).
-- **Agent-runtime:** `identifier: 'codebuff'`, `version: '0.0.2'` (pre-rebrand).
+- **Agent-runtime:** `identifier: 'savant-code'`, `version: '0.0.2'` (pre-rebrand).
 - **GitHub repo:** `savant0x/savant-code` (post-rebrand target).
 
 ---

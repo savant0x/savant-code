@@ -4,12 +4,12 @@ import { dirname, join } from 'path'
 
 import {
   type CacheDebugCorrelation,
-} from '@codebuff/common/util/cache-debug'
-import type { CacheDebugUsageData } from '@codebuff/common/types/contracts/llm'
-import type { Logger } from '@codebuff/common/types/contracts/logger'
-import type { Message } from '@codebuff/common/types/messages/codebuff-message'
-import type { ProviderMetadata } from '@codebuff/common/types/messages/provider-metadata'
-import type { JSONValue } from '@codebuff/common/types/json'
+} from '@savant-code/common/util/cache-debug'
+import type { CacheDebugUsageData } from '@savant-code/common/types/contracts/llm'
+import type { Logger } from '@savant-code/common/types/contracts/logger'
+import type { Message } from '@savant-code/common/types/messages/savant-code-message'
+import type { ProviderMetadata } from '@savant-code/common/types/messages/provider-metadata'
+import type { JSONValue } from '@savant-code/common/types/json'
 
 type SerializableValue = JSONValue
 

@@ -1,6 +1,6 @@
 export const FREEBUFF_GEMINI_THINKER_AGENT_ID = 'thinker-with-files-gemini'
 
-/** Agent id the freebuff WEB CHAT uses for its gemini-thinker child (see
+/** Agent id the savant-free WEB CHAT uses for its gemini-thinker child (see
  *  agents/thinker/thinker-gemini.ts, spawned from agents/base-chat.ts). Distinct
  *  from the CLI's FREEBUFF_GEMINI_THINKER_AGENT_ID. */
 export const FREEBUFF_CHAT_GEMINI_THINKER_AGENT_ID = 'thinker-gemini'

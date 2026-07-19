@@ -36,7 +36,7 @@ function writeLog(
 
 describe('trimOversizedChatLogs', () => {
   beforeEach(() => {
-    tempDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'codebuff-logs-'))
+    tempDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'savant-code-logs-'))
   })
 
   afterEach(() => {

@@ -1,10 +1,10 @@
 {
-  "name": "freebuff",
+  "name": "savant-free",
   "version": "0.0.123",
   "description": "The world's strongest free coding agent",
   "license": "MIT",
   "bin": {
-    "freebuff": "index.js"
+    "savant-free": "index.js"
   },
   "scripts": {
     "prepack": "node ../../../cli/release-core/prepare-package.js",
@@ -33,9 +33,9 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/CodebuffAI/freebuff-private.git"
+    "url": "git+https://github.com/SavantCode/savant-free-private.git"
   },
-  "homepage": "https://freebuff.com",
+  "homepage": "https://savant-free.com",
   "publishConfig": {
     "access": "public",
     "provenance": false

@@ -1,13 +1,13 @@
 import { z } from 'zod/v4'
 
-import { CodebuffClient, getCustomToolDefinition } from '@codebuff/sdk'
+import { SavantCodeClient, getCustomToolDefinition } from '@savant-code/sdk'
 
-import type { AgentDefinition } from '@codebuff/sdk'
+import type { AgentDefinition } from '@savant-code/sdk'
 
 async function main() {
-  const client = new CodebuffClient({
+  const client = new SavantCodeClient({
     // Note: You need to pass in your own API key.
-    // Get it here: https://www.codebuff.com/profile?tab=api-keys
+    // Get it here: https://www.savant-code.com/profile?tab=api-keys
     apiKey: process.env.CODEBUFF_API_KEY,
     // Optional directory agent runs from (if applicable).
     cwd: process.cwd(),
@@ -61,7 +61,7 @@ async function main() {
 
     handleEvent: (event) => {
       // All events that happen during the run: agent start/finish, tool calls/results, text responses, errors.
-      console.log('Codebuff Event', JSON.stringify(event))
+      console.log('SavantCode Event', JSON.stringify(event))
     },
   })
 

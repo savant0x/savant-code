@@ -1,27 +1,27 @@
 import { postStreamProcessing } from './write-file'
 
-import type { CodebuffToolHandlerFunction } from '../handler-function-type'
+import type { SavantCodeToolHandlerFunction } from '../handler-function-type'
 import type { FileProcessingState } from './write-file'
 import type {
   ClientToolCall,
-  CodebuffToolCall,
-  CodebuffToolOutput,
-} from '@codebuff/common/tools/list'
-import type { Logger } from '@codebuff/common/types/contracts/logger'
+  SavantCodeToolCall,
+  SavantCodeToolOutput,
+} from '@savant-code/common/tools/list'
+import type { Logger } from '@savant-code/common/types/contracts/logger'
 
 export const handleCreatePlan = (async (params: {
   previousToolCallFinished: Promise<void>
-  toolCall: CodebuffToolCall<'create_plan'>
+  toolCall: SavantCodeToolCall<'create_plan'>
 
   fileProcessingState: FileProcessingState
   logger: Logger
 
   requestClientToolCall: (
     toolCall: ClientToolCall<'create_plan'>,
-  ) => Promise<CodebuffToolOutput<'create_plan'>>
+  ) => Promise<SavantCodeToolOutput<'create_plan'>>
   writeToClient: (chunk: string) => void
 }): Promise<{
-  output: CodebuffToolOutput<'create_plan'>
+  output: SavantCodeToolOutput<'create_plan'>
 }> => {
   const {
     fileProcessingState,
@@ -60,4 +60,4 @@ export const handleCreatePlan = (async (params: {
       requestClientToolCall,
     ),
   }
-}) satisfies CodebuffToolHandlerFunction<'create_plan'>
+}) satisfies SavantCodeToolHandlerFunction<'create_plan'>

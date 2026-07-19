@@ -4,18 +4,18 @@ console.log('🧪 Testing CommonJS imports in CommonJS-only project...')
 try {
   // Test 1: Named destructuring import
   console.log('\n1. Testing named destructuring import...')
-  const { CodebuffClient } = require('@codebuff/sdk')
-  console.log('✅ Named destructuring successful:', typeof CodebuffClient)
+  const { SavantCodeClient } = require('@savant-code/sdk')
+  console.log('✅ Named destructuring successful:', typeof SavantCodeClient)
 
-  if (typeof CodebuffClient !== 'function') {
+  if (typeof SavantCodeClient !== 'function') {
     throw new Error(
-      `Expected CodebuffClient to be a function, got ${typeof CodebuffClient}`,
+      `Expected SavantCodeClient to be a function, got ${typeof SavantCodeClient}`,
     )
   }
 
   // Test 2: Default require
   console.log('\n2. Testing default require...')
-  const SDK = require('@codebuff/sdk')
+  const SDK = require('@savant-code/sdk')
   console.log('✅ Default require successful:', typeof SDK)
 
   if (typeof SDK !== 'object' || SDK === null) {
@@ -27,7 +27,7 @@ try {
   const exports = Object.keys(SDK)
   console.log('✅ Found', exports.length, 'exports')
 
-  const expectedExports = ['CodebuffClient', 'getCustomToolDefinition']
+  const expectedExports = ['SavantCodeClient', 'getCustomToolDefinition']
   const foundExports = expectedExports.filter((exp) => exp in SDK)
   console.log('✅ Found expected exports:', foundExports.join(', '))
 
@@ -37,8 +37,8 @@ try {
 
   // Test 4: Test that both access patterns work identically
   console.log('\n4. Testing access pattern consistency...')
-  const ClientFromDestructure = require('@codebuff/sdk').CodebuffClient
-  const ClientFromDefault = require('@codebuff/sdk').CodebuffClient
+  const ClientFromDestructure = require('@savant-code/sdk').SavantCodeClient
+  const ClientFromDefault = require('@savant-code/sdk').SavantCodeClient
 
   if (ClientFromDestructure !== ClientFromDefault) {
     throw new Error('Inconsistent access patterns')
@@ -56,7 +56,7 @@ try {
   // Test no direct import/export statements work (they shouldn't in CJS)
   try {
     // This should fail in CommonJS environment
-    eval('import { CodebuffClient } from "@codebuff/sdk"')
+    eval('import { SavantCodeClient } from "@savant-code/sdk"')
     throw new Error('ESM imports should not work in CommonJS environment')
   } catch (syntaxError) {
     if (

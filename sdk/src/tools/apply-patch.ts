@@ -1,14 +1,14 @@
 import path from 'path'
 
 import { resolveFilePath } from './path-utils'
-import { resolveAndContain } from '@codebuff/common/util/paths'
+import { resolveAndContain } from '@savant-code/common/util/paths'
 
-import type { ApplyPatchOperation } from '@codebuff/common/tools/params/tool/apply-patch'
-import type { CodebuffToolOutput } from '@codebuff/common/tools/list'
-import type { CodebuffFileSystem } from '@codebuff/common/types/filesystem'
+import type { ApplyPatchOperation } from '@savant-code/common/tools/params/tool/apply-patch'
+import type { SavantCodeToolOutput } from '@savant-code/common/tools/list'
+import type { SavantCodeFileSystem } from '@savant-code/common/types/filesystem'
 import type { OnFileWrittenCallback } from './change-file'
 
-type ApplyPatchResult = CodebuffToolOutput<'apply_patch'>
+type ApplyPatchResult = SavantCodeToolOutput<'apply_patch'>
 type ApplyPatchJson = ApplyPatchResult[number] & { type: 'json' }
 type PatchAction = 'add' | 'delete' | 'update'
 type DiffMode = 'default' | 'create'
@@ -600,7 +600,7 @@ function parseOperation(parameters: unknown): ApplyPatchOperation | null {
 export async function applyPatchTool(params: {
   parameters: unknown
   cwd: string
-  fs: CodebuffFileSystem
+  fs: SavantCodeFileSystem
   onFileWritten?: OnFileWrittenCallback
   /** FID-2026-0718-014 v2: injectable for testability. Default = node:fs.realpathSync.native. */
   realpathFn?: (p: string) => string

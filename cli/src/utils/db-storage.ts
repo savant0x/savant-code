@@ -14,8 +14,8 @@ import {
   createFidDocument,
   getFidDocument,
   updateFidDocument,
-} from '@codebuff/database/service'
-import type { RunState } from '@codebuff/sdk'
+} from '@savant-code/database/service'
+import type { RunState } from '@savant-code/sdk'
 import type { ChatMessage } from '../types/chat'
 
 // Storage interface for database-backed state

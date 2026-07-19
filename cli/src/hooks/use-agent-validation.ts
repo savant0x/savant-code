@@ -1,4 +1,4 @@
-import { validateAgents } from '@codebuff/sdk'
+import { validateAgents } from '@savant-code/sdk'
 import { useCallback, useState } from 'react'
 
 import { isDirectProviderMode } from '../utils/env'
@@ -40,7 +40,7 @@ export const useAgentValidation = (): UseAgentValidationResult => {
     try {
       const agentDefinitions = loadAgentDefinitions()
 
-      // Direct-provider mode: no Codebuff backend to validate against. Agents
+      // Direct-provider mode: no SavantCode backend to validate against. Agents
       // are bundled locally, so skip the remote validate call and pass through.
       // The backend integration path is preserved for when this flag is off.
       if (isDirectProviderMode()) {

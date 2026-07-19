@@ -1,5 +1,5 @@
 {
-  "name": "@codebuff/evals",
+  "name": "@savant-code/evals",
   "version": "0.0.1",
   "description": "Evaluation scripts for Savant-Code (public buffbench subset)",
   "private": true,
@@ -13,9 +13,9 @@
     "bun": "1.3.11"
   },
   "dependencies": {
-    "@codebuff/code-map": "workspace:*",
-    "@codebuff/common": "workspace:*",
-    "@codebuff/sdk": "workspace:*",
+    "@savant-code/code-map": "workspace:*",
+    "@savant-code/common": "workspace:*",
+    "@savant-code/sdk": "workspace:*",
     "async": "^3.2.6",
     "diff": "^8.0.2",
     "p-limit": "^6.2.0",

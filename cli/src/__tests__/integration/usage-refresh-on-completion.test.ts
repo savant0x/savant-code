@@ -26,7 +26,7 @@ describe('Usage Refresh on SDK Completion', () => {
   let getAuthTokenSpy: ReturnType<typeof spyOn>
 
   beforeEach(() => {
-    process.env.NEXT_PUBLIC_CODEBUFF_APP_URL = 'https://test.codebuff.local'
+    process.env.NEXT_PUBLIC_CODEBUFF_APP_URL = 'https://test.savant-code.local'
 
     // Reset chat store to initial state
     useChatStore.getState().reset()

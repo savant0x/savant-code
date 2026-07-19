@@ -1,19 +1,19 @@
-import { assistantMessage, userMessage } from '@codebuff/common/util/messages'
+import { assistantMessage, userMessage } from '@savant-code/common/util/messages'
 
-import type { CodebuffToolHandlerFunction } from '../handler-function-type'
+import type { SavantCodeToolHandlerFunction } from '../handler-function-type'
 import type {
-  CodebuffToolCall,
-  CodebuffToolOutput,
-} from '@codebuff/common/tools/list'
-import type { AgentState } from '@codebuff/common/types/session-state'
+  SavantCodeToolCall,
+  SavantCodeToolOutput,
+} from '@savant-code/common/tools/list'
+import type { AgentState } from '@savant-code/common/types/session-state'
 
 export const handleAddMessage = (async (params: {
   previousToolCallFinished: Promise<void>
-  toolCall: CodebuffToolCall<'add_message'>
+  toolCall: SavantCodeToolCall<'add_message'>
 
   agentState: AgentState
 }): Promise<{
-  output: CodebuffToolOutput<'add_message'>
+  output: SavantCodeToolOutput<'add_message'>
 }> => {
   const {
     previousToolCallFinished,
@@ -31,4 +31,4 @@ export const handleAddMessage = (async (params: {
   )
 
   return { output: [{ type: 'json', value: { message: 'Message added.' } }] }
-}) satisfies CodebuffToolHandlerFunction<'add_message'>
+}) satisfies SavantCodeToolHandlerFunction<'add_message'>

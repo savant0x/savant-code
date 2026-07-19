@@ -248,10 +248,10 @@
 ### 7.3 Mode-Specific
 | # | Command | Mode | Expected |
 |---|---------|------|----------|
-| 118 | `/plan` | Codebuff | "Command not found" or "Freebuff-only note" |
-| 119 | `/plan` | Freebuff | Plans mode activated |
-| 120 | `/connect` | Freebuff | Connects OR "not available" |
-| 121 | `/end-session` | Freebuff | Ends free session |
+| 118 | `/plan` | SavantCode | "Command not found" or "SavantFree-only note" |
+| 119 | `/plan` | SavantFree | Plans mode activated |
+| 120 | `/connect` | SavantFree | Connects OR "not available" |
+| 121 | `/end-session` | SavantFree | Ends free session |
 
 ---
 

@@ -11,7 +11,7 @@
 
 ## Summary
 
-Replace the "Buffy" agent persona with "Savant" across the entire Codebuff/Freebuff codebase and inject the ECHO Protocol v0.1.2 as the default agent instructions in the `instructionsPrompt` of `createBase2()`. Two files (`base2.ts`, `base-deep.ts`) are currently in a corrupted/minified state from an earlier PowerShell mishap and need restoration from the upstream repo before the planned edits can be cleanly applied.
+Replace the "Buffy" agent persona with "Savant" across the entire SavantCode/SavantFree codebase and inject the ECHO Protocol v0.1.2 as the default agent instructions in the `instructionsPrompt` of `createBase2()`. Two files (`base2.ts`, `base-deep.ts`) are currently in a corrupted/minified state from an earlier PowerShell mishap and need restoration from the upstream repo before the planned edits can be cleanly applied.
 
 ## Environment
 
@@ -66,7 +66,7 @@ agents/base2/base-deep.ts: 1 lines (expected ~343)
 
 ### Approach
 
-1. Fetch pristine copies of `base2.ts` and `base-deep.ts` from upstream GitHub repo (`https://github.com/CodebuffAI/codebuff`).
+1. Fetch pristine copies of `base2.ts` and `base-deep.ts` from upstream GitHub repo (`https://github.com/savant0x/savant-code`).
 2. Apply the 3 planned edits to `base2.ts`:
    - `displayName: 'Savant the Orchestrator'`
    - `systemPrompt: \`You are Savant, an engineering agent bound by the ECHO Protocol...`
@@ -79,7 +79,7 @@ agents/base2/base-deep.ts: 1 lines (expected ~343)
 
 ### Steps
 
-1. Fetch raw `base2.ts` and `base-deep.ts` from `https://raw.githubusercontent.com/CodebuffAI/codebuff/main/agents/base2/`
+1. Fetch raw `base2.ts` and `base-deep.ts` from `https://raw.githubusercontent.com/savant0x/savant-code/main/agents/base2/`
 2. Write each file to disk (preserving proper line endings)
 3. Apply edits using the `edit` tool (which reads first, then does precision string replacement)
 4. Run `bun run typecheck` — fix any issues

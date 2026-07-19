@@ -1,21 +1,21 @@
-# Codebuff & Freebuff
+# SavantCode & SavantFree
 
 [English](./README.md) | 简体中文
 
-**[Codebuff](https://codebuff.com)** 是一款开源的 AI 编程助手，能根据自然语言指令直接修改你的代码库。**[Freebuff](https://www.npmjs.com/package/freebuff)** 是它的免费、广告支持版本——无需订阅、无需积分、零配置。
+**[SavantCode](https://savant-code.com)** 是一款开源的 AI 编程助手，能根据自然语言指令直接修改你的代码库。**[SavantFree](https://www.npmjs.com/package/savant-free)** 是它的免费、广告支持版本——无需订阅、无需积分、零配置。
 
-与那种"一个模型干所有事"的工具不同，Codebuff 会协调多个专业化的智能体（agent）协同工作，理解你的项目并做出精准的改动。
+与那种"一个模型干所有事"的工具不同，SavantCode 会协调多个专业化的智能体（agent）协同工作，理解你的项目并做出精准的改动。
 
 <div align="center">
-  <img src="./assets/codebuff-vs-claude-code.png" alt="Codebuff vs Claude Code" width="400">
+  <img src="./assets/savant-code-vs-claude-code.png" alt="SavantCode vs Claude Code" width="400">
 </div>
 
-在我们的[评测](evals/README.md)中，Codebuff 在 175+ 个真实开源仓库的编码任务上以 61% 对 53% 的成绩领先 Claude Code。
+在我们的[评测](evals/README.md)中，SavantCode 在 175+ 个真实开源仓库的编码任务上以 61% 对 53% 的成绩领先 Claude Code。
 
 
 ## 工作原理
 
-当你让 Codebuff "给我的 API 加上身份验证"时，它可能会调用：
+当你让 SavantCode "给我的 API 加上身份验证"时，它可能会调用：
 
 1. **File Picker Agent** —— 扫描代码库、理解架构、找出相关文件
 2. **Planner Agent** —— 规划哪些文件需要改、按什么顺序改
@@ -23,7 +23,7 @@
 4. **Reviewer Agent** —— 校验改动是否正确
 
 <div align="center">
-  <img src="./assets/multi-agents.png" alt="Codebuff Multi-Agents" width="250">
+  <img src="./assets/multi-agents.png" alt="SavantCode Multi-Agents" width="250">
 </div>
 
 相比单模型工具，这种多智能体方案能带来更准的上下文理解、更精确的修改，以及更少的错误。
@@ -33,30 +33,30 @@
 安装：
 
 ```bash
-npm install -g codebuff
+npm install -g savant-code
 ```
 
 运行：
 
 ```bash
 cd your-project
-codebuff
+savant-code
 ```
 
-然后直接告诉 Codebuff 你想做什么，剩下的它自己搞定：
+然后直接告诉 SavantCode 你想做什么，剩下的它自己搞定：
 
 - "修掉用户注册里的 SQL 注入漏洞"
 - "给所有 API 端点加上限流"
 - "重构数据库连接代码，提升性能"
 
-Codebuff 会找到对应的文件，跨多个文件做改动，并跑测试确认没有破坏现有功能。
+SavantCode 会找到对应的文件，跨多个文件做改动，并跑测试确认没有破坏现有功能。
 
 ## 创建自定义智能体
 
-要开始构建自己的智能体，先启动 Codebuff 然后执行 `/init`：
+要开始构建自己的智能体，先启动 SavantCode 然后执行 `/init`：
 
 ```bash
-codebuff
+savant-code
 ```
 
 进入 CLI 后：
@@ -67,7 +67,7 @@ codebuff
 
 这会生成：
 ```
-knowledge.md               # Codebuff 用的项目上下文
+knowledge.md               # SavantCode 用的项目上下文
 .agents/
 └── types/                 # TypeScript 类型定义
     ├── agent-definition.ts
@@ -104,27 +104,27 @@ export default {
 
 ## SDK：在生产环境里跑智能体
 
-安装 [SDK 包](https://www.npmjs.com/package/@codebuff/sdk)——注意这跟 CLI 用的 codebuff 包是两个不同的包。
+安装 [SDK 包](https://www.npmjs.com/package/@savant-code/sdk)——注意这跟 CLI 用的 savant-code 包是两个不同的包。
 
 ```bash
-npm install @codebuff/sdk
+npm install @savant-code/sdk
 ```
 
 引入 client，开始跑智能体：
 
 ```typescript
-import { CodebuffClient } from '@codebuff/sdk'
+import { SavantCodeClient } from '@savant-code/sdk'
 
 // 1. 初始化 client
-const client = new CodebuffClient({
+const client = new SavantCodeClient({
   apiKey: 'your-api-key',
   cwd: '/path/to/your/project',
-  onError: (error) => console.error('Codebuff error:', error.message),
+  onError: (error) => console.error('SavantCode error:', error.message),
 })
 
 // 2. 跑一个编码任务……
 const result = await client.run({
-  agent: 'base', // Codebuff 默认的基础编码智能体
+  agent: 'base', // SavantCode 默认的基础编码智能体
   prompt: 'Add error handling to all API endpoints',
   handleEvent: (event) => {
     console.log('Progress', event)
@@ -149,29 +149,29 @@ await client.run({
 })
 ```
 
-更多 SDK 用法请看[这里](https://www.npmjs.com/package/@codebuff/sdk)。
+更多 SDK 用法请看[这里](https://www.npmjs.com/package/@savant-code/sdk)。
 
-## Freebuff：免费的编程智能体
+## SavantFree：免费的编程智能体
 
-不想订阅？**[Freebuff](https://www.npmjs.com/package/freebuff)** 是 Codebuff 的免费版本——无需订阅、无需积分、零配置，装上就能用。
+不想订阅？**[SavantFree](https://www.npmjs.com/package/savant-free)** 是 SavantCode 的免费版本——无需订阅、无需积分、零配置，装上就能用。
 
 ```bash
-npm install -g freebuff
+npm install -g savant-free
 cd your-project
-freebuff
+savant-free
 ```
 
-Freebuff 由广告支持，使用经过优化、兼顾速度与质量的模型。内置网页检索、浏览器使用等能力。详情见 [Freebuff README](./freebuff/README.md)。
+SavantFree 由广告支持，使用经过优化、兼顾速度与质量的模型。内置网页检索、浏览器使用等能力。详情见 [SavantFree README](./savant-free/README.md)。
 
-## 为什么选 Codebuff
+## 为什么选 SavantCode
 
 **自定义工作流**：用 TypeScript 生成器把 AI 生成和程序化控制混着用。智能体可以派生子智能体、按条件分支、跑多步流程。
 
-**OpenRouter 上的任何模型**：Claude Code 把你锁死在 Anthropic 的模型上，Codebuff 不一样——它支持 [OpenRouter](https://openrouter.ai/models) 上的所有模型，从 Claude、GPT 到 Qwen、DeepSeek 这类专用模型都行。可以按任务切换模型，也能随时用上最新发布的模型，不必等平台跟进。
+**OpenRouter 上的任何模型**：Claude Code 把你锁死在 Anthropic 的模型上，SavantCode 不一样——它支持 [OpenRouter](https://openrouter.ai/models) 上的所有模型，从 Claude、GPT 到 Qwen、DeepSeek 这类专用模型都行。可以按任务切换模型，也能随时用上最新发布的模型，不必等平台跟进。
 
-**复用已发布的智能体**：把社区[已发布的智能体](https://www.codebuff.com/store)拼起来用，少走弯路。Codebuff 智能体就是新一代的 MCP！
+**复用已发布的智能体**：把社区[已发布的智能体](https://www.savant-code.com/store)拼起来用，少走弯路。SavantCode 智能体就是新一代的 MCP！
 
-**SDK**：把 Codebuff 嵌进你自己的应用里。可以创建自定义工具、对接 CI/CD，或把编码能力内嵌进你的产品。
+**SDK**：把 SavantCode 嵌进你自己的应用里。可以创建自定义工具、对接 CI/CD，或把编码能力内嵌进你的产品。
 
 ## 进阶用法
 
@@ -180,7 +180,7 @@ Freebuff 由广告支持，使用经过优化、兼顾速度与质量的模型�
 用 `/init` 命令创建带专门工作流的智能体：
 
 ```bash
-codebuff
+savant-code
 /init
 ```
 
@@ -222,30 +222,30 @@ sudo apt-get install tmux
 - 🐛 **修 bug** 或新增功能
 - 🤖 **打造专用智能体**并发布到 Agent Store
 - 📚 **完善文档**或撰写教程
-- 💡 **分享想法**：在 [GitHub Issues](https://github.com/CodebuffAI/codebuff/issues) 留言
+- 💡 **分享想法**：在 [GitHub Issues](https://github.com/savant0x/savant-code/issues) 留言
 
 ## 开始使用
 
 ### 安装
 
-**CLI**：`npm install -g codebuff`
+**CLI**：`npm install -g savant-code`
 
-**SDK**：`npm install @codebuff/sdk`
+**SDK**：`npm install @savant-code/sdk`
 
-**Freebuff（免费版）**：`npm install -g freebuff`
+**SavantFree（免费版）**：`npm install -g savant-free`
 
 ### 资源
 
-**文档**：[codebuff.com/docs](https://codebuff.com/docs)
+**文档**：[savant-code.com/docs](https://savant-code.com/docs)
 
-**社区**：[Discord](https://codebuff.com/discord)
+**社区**：[Discord](https://savant-code.com/discord)
 
-**Issue 与想法**：[GitHub Issues](https://github.com/CodebuffAI/codebuff/issues)
+**Issue 与想法**：[GitHub Issues](https://github.com/savant0x/savant-code/issues)
 
 **贡献指南**：[CONTRIBUTING.md](./CONTRIBUTING.md) ——想贡献从这里开始！
 
-**支持**：[support@codebuff.com](mailto:support@codebuff.com)
+**支持**：[support@savant-code.com](mailto:support@savant-code.com)
 
 ## Star 历史
 
-[![Star History Chart](https://api.star-history.com/svg?repos=CodebuffAI/codebuff&type=Date)](https://www.star-history.com/#CodebuffAI/codebuff&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=savant0x/savant-code&type=Date)](https://www.star-history.com/#savant0x/savant-code&Date)

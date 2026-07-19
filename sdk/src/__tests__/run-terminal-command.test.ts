@@ -147,7 +147,7 @@ describe('terminal command process diagnostics', () => {
   test('cancels a detached Windows grandchild with its terminal-tool tree', async () => {
     if (process.platform !== 'win32') return
 
-    const tempDir = mkdtempSync(join(tmpdir(), 'codebuff-process-tree-'))
+    const tempDir = mkdtempSync(join(tmpdir(), 'savant-code-process-tree-'))
     const pidFile = join(tempDir, 'grandchild.pid')
     const fixture = join(
       import.meta.dir,

@@ -1,7 +1,7 @@
 # Release launcher core
 
 This directory is the canonical implementation of the npm launchers used by
-Codebuff, Codecane, and Freebuff. Each product keeps a small `index.js` in its
+SavantCode, Codecane, and SavantFree. Each product keeps a small `index.js` in its
 release package that supplies product-specific configuration to
 `createLauncher()`.
 
@@ -16,5 +16,5 @@ assemblies with:
 ```bash
 npm pack ./cli/release --dry-run
 npm pack ./cli/release-staging --dry-run
-npm pack ./freebuff/cli/release --dry-run
+npm pack ./savant-free/cli/release --dry-run
 ```

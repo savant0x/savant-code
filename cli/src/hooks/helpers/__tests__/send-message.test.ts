@@ -9,18 +9,18 @@ const ensureEnv = () => {
   process.env.NEXT_PUBLIC_CB_ENVIRONMENT =
     process.env.NEXT_PUBLIC_CB_ENVIRONMENT || 'test'
   process.env.NEXT_PUBLIC_CODEBUFF_APP_URL =
-    process.env.NEXT_PUBLIC_CODEBUFF_APP_URL || 'https://app.codebuff.test'
+    process.env.NEXT_PUBLIC_CODEBUFF_APP_URL || 'https://app.savant-code.test'
   process.env.NEXT_PUBLIC_SUPPORT_EMAIL =
-    process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'support@codebuff.test'
+    process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'support@savant-code.test'
   process.env.NEXT_PUBLIC_POSTHOG_API_KEY =
     process.env.NEXT_PUBLIC_POSTHOG_API_KEY || 'phc_test_key'
   process.env.NEXT_PUBLIC_POSTHOG_HOST_URL =
-    process.env.NEXT_PUBLIC_POSTHOG_HOST_URL || 'https://posthog.codebuff.test'
+    process.env.NEXT_PUBLIC_POSTHOG_HOST_URL || 'https://posthog.savant-code.test'
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY =
     process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || 'pk_test_123'
   process.env.NEXT_PUBLIC_STRIPE_CUSTOMER_PORTAL =
     process.env.NEXT_PUBLIC_STRIPE_CUSTOMER_PORTAL ||
-    'https://stripe.codebuff.test'
+    'https://stripe.savant-code.test'
   process.env.NEXT_PUBLIC_WEB_PORT = process.env.NEXT_PUBLIC_WEB_PORT || '3000'
 }
 
@@ -37,8 +37,8 @@ const {
 } = await import('../send-message')
 const { createBatchedMessageUpdater } =
   await import('../../../utils/message-updater')
-import { createPaymentRequiredError } from '@codebuff/sdk'
-import type { RunState } from '@codebuff/sdk'
+import { createPaymentRequiredError } from '@savant-code/sdk'
+import type { RunState } from '@savant-code/sdk'
 
 const createMockTimerController = (): SendMessageTimerController & {
   startCalls: string[]
@@ -1686,7 +1686,7 @@ describe('resetEarlyReturnState', () => {
   })
 })
 
-describe('freebuff gate errors', () => {
+describe('savant-free gate errors', () => {
   const makeUpdater = (messages: ChatMessage[]) => {
     const updater = createBatchedMessageUpdater('ai-1', (fn: any) => {
       const next = fn(messages)
@@ -1725,7 +1725,7 @@ describe('freebuff gate errors', () => {
       updateChainInProgress: () => {},
     })
     updater.flush()
-    expect(messages[0].userError).toContain('Another freebuff CLI took over')
+    expect(messages[0].userError).toContain('Another savant-free CLI took over')
   })
 
   test('handleRunError suppresses the inline error for 410 session_expired (ended banner takes over)', () => {

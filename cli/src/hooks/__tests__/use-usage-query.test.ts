@@ -1,4 +1,4 @@
-import { createMockLogger } from '@codebuff/common/testing/mocks/logger'
+import { createMockLogger } from '@savant-code/common/testing/mocks/logger'
 import { describe, test, expect, beforeEach, afterEach, mock } from 'bun:test'
 
 import {
@@ -13,7 +13,7 @@ import {
   usageQueryKeys,
 } from '../use-usage-query'
 
-import type { ClientEnv } from '@codebuff/common/types/contracts/env'
+import type { ClientEnv } from '@savant-code/common/types/contracts/env'
 
 
 beforeEach(() => {
@@ -25,7 +25,7 @@ describe('fetchUsageData', () => {
   const originalEnv = process.env.NEXT_PUBLIC_CODEBUFF_APP_URL
 
   beforeEach(() => {
-    process.env.NEXT_PUBLIC_CODEBUFF_APP_URL = 'https://test.codebuff.local'
+    process.env.NEXT_PUBLIC_CODEBUFF_APP_URL = 'https://test.savant-code.local'
   })
 
   afterEach(() => {
@@ -222,11 +222,11 @@ describe('fetchUsageData', () => {
     await fetchUsageData({
       authToken: 'test-token',
       clientEnv: {
-        NEXT_PUBLIC_CODEBUFF_APP_URL: 'https://test.codebuff.local',
+        NEXT_PUBLIC_CODEBUFF_APP_URL: 'https://test.savant-code.local',
       } as ClientEnv,
     })
 
-    expect(capturedUrl).toBe('https://test.codebuff.local/api/v1/usage')
+    expect(capturedUrl).toBe('https://test.savant-code.local/api/v1/usage')
   })
 
   test('should log error on failed request', async () => {

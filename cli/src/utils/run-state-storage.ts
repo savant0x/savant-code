@@ -17,7 +17,7 @@ import { writeFileAtomic, writeFileAtomicAsync } from './write-file-atomic'
 import { saveChatStateToDb, loadChatStateFromDb } from './db-storage'
 
 import type { ChatMessage, ContentBlock } from '../types/chat'
-import type { RunState } from '@codebuff/sdk'
+import type { RunState } from '@savant-code/sdk'
 
 const RUN_STATE_FILENAME = 'run-state.json'
 

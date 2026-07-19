@@ -12,9 +12,9 @@ import {
   FREEBUFF_KIMI_MODEL_ID,
   FREEBUFF_MIMO_V25_MODEL_ID,
   FREEBUFF_MIMO_V25_PRO_MODEL_ID,
-} from '../constants/freebuff-models'
+} from '../constants/savant-free-models'
 import { minimaxModels } from '../constants/model-config'
-import { FREEBUFF_GEMINI_THINKER_AGENT_ID } from '../constants/freebuff-gemini-thinker'
+import { FREEBUFF_GEMINI_THINKER_AGENT_ID } from '../constants/savant-free-gemini-thinker'
 import {
   FREEBUFF_DESKTOP_THREAD_AGENT_ID,
   getFreebuffRootAgentIdForModel,
@@ -29,7 +29,7 @@ const MINIMAX_M3_MODEL_ID = minimaxModels.minimaxM3
 const LEGACY_MINIMAX_M2_7_MODEL_ID = 'minimax/minimax-m2.7'
 
 describe('free mode agent model allowlist', () => {
-  test('maps supported freebuff models to concrete root agents', () => {
+  test('maps supported savant-free models to concrete root agents', () => {
     expect(getFreebuffRootAgentIdForModel(FREEBUFF_KIMI_MODEL_ID)).toBe(
       'base2-free-kimi',
     )
@@ -50,7 +50,7 @@ describe('free mode agent model allowlist', () => {
     )
   })
 
-  test('allows each freebuff root agent only with its configured model', () => {
+  test('allows each savant-free root agent only with its configured model', () => {
     expect(isFreeModeAllowedAgentModel('base2-free', MINIMAX_M3_MODEL_ID)).toBe(
       true,
     )
@@ -116,7 +116,7 @@ describe('free mode agent model allowlist', () => {
     ).toBe(false)
   })
 
-  test('allows the Freebuff Desktop root agent with every desktop model', () => {
+  test('allows the SavantFree Desktop root agent with every desktop model', () => {
     // The desktop runs ONE root id across all its picker models (model chosen
     // per tab), so each desktop-pickable model must be allowed for it.
     for (const model of [
@@ -191,7 +191,7 @@ describe('free mode agent model allowlist', () => {
   test('publisher-spoof safety for generic subagents', () => {
     expect(
       isFreeModeAllowedAgentModel(
-        'codebuff/basher@0.0.1',
+        'savant-code/basher@0.0.1',
         MINIMAX_M3_MODEL_ID,
       ),
     ).toBe(true)
@@ -203,7 +203,7 @@ describe('free mode agent model allowlist', () => {
     ).toBe(false)
   })
 
-  test('allows Gemini Pro for the thinker subagent but not the freebuff root', () => {
+  test('allows Gemini Pro for the thinker subagent but not the savant-free root', () => {
     expect(
       isFreeModeAllowedAgentModel('base2-free', FREEBUFF_GEMINI_PRO_MODEL_ID),
     ).toBe(false)
@@ -221,7 +221,7 @@ describe('free mode agent model allowlist', () => {
     )
     expect(
       isFreebuffGeminiThinkerAgent(
-        `codebuff/${FREEBUFF_GEMINI_THINKER_AGENT_ID}@0.0.1`,
+        `savant-code/${FREEBUFF_GEMINI_THINKER_AGENT_ID}@0.0.1`,
       ),
     ).toBe(true)
     expect(
@@ -231,7 +231,7 @@ describe('free mode agent model allowlist', () => {
     ).toBe(false)
   })
 
-  test('uses local token count only for the DeepSeek Flash freebuff root', () => {
+  test('uses local token count only for the DeepSeek Flash savant-free root', () => {
     expect(
       shouldUseLocalTokenCountForFreebuffDeepseekFlash({
         agentId: 'base2-free-deepseek-flash',
@@ -240,7 +240,7 @@ describe('free mode agent model allowlist', () => {
     ).toBe(true)
     expect(
       shouldUseLocalTokenCountForFreebuffDeepseekFlash({
-        agentId: 'codebuff/base2-free-deepseek-flash@0.0.1',
+        agentId: 'savant-code/base2-free-deepseek-flash@0.0.1',
         model: FREEBUFF_DEEPSEEK_V4_FLASH_MODEL_ID,
       }),
     ).toBe(true)

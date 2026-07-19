@@ -28,7 +28,7 @@ though the auth bypass logic itself is correct (verified in isolation).
 
 - **OS:** Windows 11, Bun 1.3.11
 - **Language/Runtime:** TypeScript 5.5.4 / Bun monorepo / React 19 (OpenTUI)
-- **Commit/State:** working tree at `C:\Users\spenc\dev\codebuff` (NOT a git repo)
+- **Commit/State:** working tree at `C:\Users\spenc\dev\savant-code` (NOT a git repo)
 - **Hot path:** `bun dev` → `bun --cwd cli dev` → `bun run src/index.tsx --cwd ..`
 
 ## Detailed Description
@@ -42,7 +42,7 @@ then crashes:
 
 ```text
 ReferenceError: saveCodebuffModelPreference is not defined
-    at Chat (C:\Users\spenc\dev\codebuff\cli\src\chat.tsx:255:7)
+    at Chat (C:\Users\spenc\dev\savant-code\cli\src\chat.tsx:255:7)
     at react-stack-bottom-frame (...react-reconciler.development.js:15859:20)
     at renderWithHooks (...react-reconciler.development.js:3221:22)
     ...
@@ -91,7 +91,7 @@ ambient/global lookup (or via a different transpiled shape) and does not fail co
 
 ```text
 ReferenceError: saveCodebuffModelPreference is not defined
-    at Chat (C:\Users\spenc\dev\codebuff\cli\src\chat.tsx:255:7)
+    at Chat (C:\Users\spenc\dev\savant-code\cli\src\chat.tsx:255:7)
 ```
 
 **Definition sites (`grep` against `cli/src`):**
@@ -168,7 +168,7 @@ imported 12 lines earlier.
 ### Verification
 
 - `bun dev` does NOT print "ReferenceError: saveCodebuffModelPreference is not defined".
-- TUI renders the Freebuff landing / project picker / login flow.
+- TUI renders the SavantFree landing / project picker / login flow.
 - `bunx tsc --noEmit -p cli/tsconfig.json` exit code identical to baseline (no regressions).
 
 ## Perfection Loop
@@ -225,10 +225,10 @@ imported 12 lines earlier.
   the import block). All 5 production call sites of these symbols (chat.tsx:242-243,
   chat.tsx:257-258 deps, command-registry.ts:473, command-registry.ts:481,
   use-send-message.ts:114) resolve through the import. Definitions still produced by
-  settings.ts:200,208. Visible TUI content includes: "Codebuff will run commands on your
-  behalf to help you build.", directory `~/dev/codebuff`, prompt placeholder
+  settings.ts:200,208. Visible TUI content includes: "SavantCode will run commands on your
+  behalf to help you build.", directory `~/dev/savant-code`, prompt placeholder
   "Enter a coding task or / for commands", and mode banner `< DEFAULT` — i.e. the
-  intended default Freebuff landing. Audit satisfied: error gone, call-graph wired,
+  intended default SavantFree landing. Audit satisfied: error gone, call-graph wired,
   no regressions, TUI renders.
 - **CHANGE DELTA:** 1 file modified (`cli/src/chat.tsx`), 2 lines added, 0 removed,
   ~110 characters. ≈ 0.0006% of repo's 1,101 .ts/.tsx files / ~186k LOC baseline
@@ -250,7 +250,7 @@ imported 12 lines earlier.
   pre-existing model-picker.tsx errors (unrelated to this fix). (2) `bun dev` — TUI
   rendered to log (8899 bytes), zero matches for
   /ReferenceError|undefined|SyntaxError|^Error|cannot|is not defined|throw new/. Visible
-  TUI content shows the Freebuff landing text, project directory, input placeholder, and
+  TUI content shows the SavantFree landing text, project directory, input placeholder, and
   DEFAULT mode banner — confirming the React render completed normally.
   (3) `grep -rn "loadCodebuffModelPreference\|saveCodebuffModelPreference" cli/src/` —
   chat.tsx now imports both (lines 74, 76); all 5 production call sites resolve through

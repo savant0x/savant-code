@@ -1,4 +1,4 @@
-import { getRateLimitsByModel } from '@codebuff/common/types/freebuff-session'
+import { getRateLimitsByModel } from '@savant-code/common/types/savant-free-session'
 import { TextAttributes } from '@opentui/core'
 import { useKeyboard } from '@opentui/react'
 import React, { useCallback, useState } from 'react'
@@ -7,9 +7,9 @@ import { Button } from './button'
 import {
   refreshFreebuffSession,
   returnToFreebuffLanding,
-} from '../hooks/use-freebuff-session'
+} from '../hooks/use-savant-free-session'
 import { useTheme } from '../hooks/use-theme'
-import { useFreebuffSessionStore } from '../state/freebuff-session-store'
+import { useFreebuffSessionStore } from '../state/savant-free-session-store'
 import { formatSessionUnits } from '../utils/format-session-units'
 import { isPlainEnterKey } from '../utils/terminal-enter-detection'
 import { BORDER_CHARS } from '../utils/ui-constants'
@@ -24,7 +24,7 @@ interface SessionEndedBannerProps {
 }
 
 /**
- * Replaces the chat input when the freebuff session has ended. Captures
+ * Replaces the chat input when the savant-free session has ended. Captures
  * Enter to start a new same-chat session. Esc returns to model selection
  * once no in-flight work needs the global stream-interrupt handler.
  */
@@ -65,7 +65,7 @@ export const SessionEndedBanner: React.FC<SessionEndedBannerProps> = ({
     setPendingAction('landing')
     // Drop back to the landing picker (status: 'none') so the user picks a
     // model and hits Enter again to commit, instead of silently starting a
-    // new session. app.tsx swaps us into <FreebuffLandingScreen> on the
+    // new session. app.tsx swaps us into <SavantFree$1> on the
     // transition, unmounting this banner — no need to clear the pending state on
     // success.
     returnToFreebuffLanding({ resetChat: true }).catch(() =>

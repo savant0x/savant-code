@@ -1,20 +1,20 @@
-import type { CodebuffToolHandlerFunction } from '../handler-function-type'
+import type { SavantCodeToolHandlerFunction } from '../handler-function-type'
 import type {
   ClientToolCall,
-  CodebuffToolCall,
-  CodebuffToolOutput,
-} from '@codebuff/common/tools/list'
+  SavantCodeToolCall,
+  SavantCodeToolOutput,
+} from '@savant-code/common/tools/list'
 
 type ToolName = 'run_file_change_hooks'
 export const handleRunFileChangeHooks = (async (params: {
   previousToolCallFinished: Promise<void>
-  toolCall: CodebuffToolCall<ToolName>
+  toolCall: SavantCodeToolCall<ToolName>
   requestClientToolCall: (
     toolCall: ClientToolCall<ToolName>,
-  ) => Promise<CodebuffToolOutput<ToolName>>
-}): Promise<{ output: CodebuffToolOutput<ToolName> }> => {
+  ) => Promise<SavantCodeToolOutput<ToolName>>
+}): Promise<{ output: SavantCodeToolOutput<ToolName> }> => {
   const { previousToolCallFinished, toolCall, requestClientToolCall } = params
 
   await previousToolCallFinished
   return { output: await requestClientToolCall(toolCall) }
-}) satisfies CodebuffToolHandlerFunction<'run_file_change_hooks'>
+}) satisfies SavantCodeToolHandlerFunction<'run_file_change_hooks'>

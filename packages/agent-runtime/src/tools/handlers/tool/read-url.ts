@@ -1,21 +1,21 @@
-import type { CodebuffToolHandlerFunction } from '../handler-function-type'
+import type { SavantCodeToolHandlerFunction } from '../handler-function-type'
 import type {
   ClientToolCall,
-  CodebuffToolCall,
-  CodebuffToolOutput,
-} from '@codebuff/common/tools/list'
+  SavantCodeToolCall,
+  SavantCodeToolOutput,
+} from '@savant-code/common/tools/list'
 
 export const handleReadUrl = (async (params: {
   previousToolCallFinished: Promise<void>
-  toolCall: CodebuffToolCall<'read_url'>
+  toolCall: SavantCodeToolCall<'read_url'>
   requestClientToolCall: (
     toolCall: ClientToolCall<'read_url'>,
-  ) => Promise<CodebuffToolOutput<'read_url'>>
+  ) => Promise<SavantCodeToolOutput<'read_url'>>
 }): Promise<{
-  output: CodebuffToolOutput<'read_url'>
+  output: SavantCodeToolOutput<'read_url'>
 }> => {
   const { previousToolCallFinished, toolCall, requestClientToolCall } = params
 
   await previousToolCallFinished
   return { output: await requestClientToolCall(toolCall) }
-}) satisfies CodebuffToolHandlerFunction<'read_url'>
+}) satisfies SavantCodeToolHandlerFunction<'read_url'>

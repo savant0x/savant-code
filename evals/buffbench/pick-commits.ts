@@ -4,9 +4,9 @@ import { execFileSync } from 'child_process'
 import fs from 'fs'
 import path from 'path'
 
-import { models } from '@codebuff/common/old-constants'
-import { userMessage } from '@codebuff/common/util/messages'
-import { promptAiSdkStructured } from '@codebuff/sdk'
+import { models } from '@savant-code/common/old-constants'
+import { userMessage } from '@savant-code/common/util/messages'
+import { promptAiSdkStructured } from '@savant-code/sdk'
 import { mapLimit } from 'async'
 import { z } from 'zod/v4'
 

@@ -1,7 +1,7 @@
 <!-- markdownlint-disable MD041 -->
-<img src="../assets/banner.png" alt="@codebuff/agents — Public agent definitions for the Savant CLI" width="650" />
+<img src="../assets/banner.png" alt="@savant-code/agents — Public agent definitions for the Savant CLI" width="650" />
 
-# @codebuff/agents
+# @savant-code/agents
 
 Public agent definitions shipped with the Savant CLI (Detective, Forge, Verifier, Recorder, Thinker, Scout, Researcher, Scribe, Orchestrator).
 
@@ -31,7 +31,7 @@ For full Quick Start including how agents are wired into the CLI runtime, see th
 
 <div align="center">
 
-_Part of the [codebuff/savant-code monorepo](https://github.com/savant0x/savant-code), governed by the [ECHO Protocol v0.2.0](../ECHO.md)._
+_Part of the [savant-code/savant-code monorepo](https://github.com/savant0x/savant-code), governed by the [ECHO Protocol v0.2.0](../ECHO.md)._
 
 **Savant** • 2026
 </div>
