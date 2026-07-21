@@ -20,8 +20,8 @@ export const getSdkEnv = (): SdkEnv => ({
   ...getBaseEnv(),
 
   // SDK-specific paths
-  CODEBUFF_RG_PATH: process.env.CODEBUFF_RG_PATH,
-  CODEBUFF_WASM_DIR: process.env.CODEBUFF_WASM_DIR,
+  SAVANT_CODE_RG_PATH: process.env.SAVANT_CODE_RG_PATH,
+  SAVANT_CODE_WASM_DIR: process.env.SAVANT_CODE_WASM_DIR,
 
   // Build flags
   VERBOSE: process.env.VERBOSE,
@@ -30,7 +30,7 @@ export const getSdkEnv = (): SdkEnv => ({
   OVERRIDE_ARCH: process.env.OVERRIDE_ARCH,
 })
 
-export const getCodebuffApiKeyFromEnv = (): string | undefined => {
+export const getSavantCodeApiKeyFromEnv = (): string | undefined => {
   return process.env[API_KEY_ENV_VAR]
 }
 
@@ -42,8 +42,8 @@ export const getCodebuffApiKeyFromEnv = (): string | undefined => {
  */
 export const getRuntimeAppUrlFromEnv = (): string | undefined => {
   return (
-    process.env['NEXT_PUBLIC_CODEBUFF_APP_URL'] ??
-    process.env['CODEBUFF_APP_URL']
+    process.env['NEXT_PUBLIC_SAVANT_CODE_APP_URL'] ??
+    process.env['SAVANT_CODE_APP_URL']
   )
 }
 
@@ -71,4 +71,18 @@ export const getInferenceApiKeyFromEnv = (): string | undefined => {
 }
 export const getChatGptOAuthTokenFromEnv = (): string | undefined => {
   return process.env[CHATGPT_OAUTH_TOKEN_ENV_VAR]
+}
+
+/**
+ * Get the TokenRouter API key from environment.
+ */
+export const getTokenRouterApiKeyFromEnv = (): string | undefined => {
+  return process.env['TOKENROUTER_API_KEY']
+}
+
+/**
+ * Get the NVIDIA NIM API key from environment.
+ */
+export const getNvidiaApiKeyFromEnv = (): string | undefined => {
+  return process.env['NVIDIA_API_KEY']
 }

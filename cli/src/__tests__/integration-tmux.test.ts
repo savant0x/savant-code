@@ -1,3 +1,4 @@
+/* eslint-disable no-console -- integration test: intentional diagnostic output for tmux tests */
 import { spawn } from 'child_process'
 import path from 'path'
 
@@ -69,11 +70,11 @@ describe.skipIf(!tmuxAvailable || !sdkBuilt)(
             }),
           ),
         )
-        // Clear FREEBUFF_MODE from the tmux global env. A previous savant-free
+        // Clear SAVANT_FREE_MODE from the tmux global env. A previous savant-free
         // build or `bun run dev:savant-free` invocation in the same tmux server
         // can leave it set globally, which would make this test see the
         // savant-free CLI variant (which has no `--agent` flag).
-        await tmux(['set-environment', '-gu', 'FREEBUFF_MODE']).catch(() => {})
+        await tmux(['set-environment', '-gu', 'SAVANT_FREE_MODE']).catch(() => {})
       }
     })
 

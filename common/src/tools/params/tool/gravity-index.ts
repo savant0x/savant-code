@@ -1,8 +1,8 @@
 import z from 'zod/v4'
 
 import { gravityIndexInputSchema } from '../../../types/gravity-index'
-import { $getNativeToolCallExampleString, jsonToolResultSchema } from '../utils'
 import { jsonObjectSchema } from '../../../types/json'
+import { $getNativeToolCallExampleString, jsonToolResultSchema } from '../utils'
 
 import type { $ToolParams } from '../../constants'
 

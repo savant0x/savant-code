@@ -8,6 +8,15 @@ import { BORDER_CHARS } from '../utils/ui-constants'
 import type { ChatTheme } from '../types/theme-system'
 
 /**
+ * Safely read a color string from the theme by key.
+ * Non-string values (e.g. markdown overrides object) fall back to an empty string.
+ */
+function getThemeColor(theme: ChatTheme, key: keyof ChatTheme): string {
+  const value = theme[key]
+  return typeof value === 'string' ? value : ''
+}
+
+/**
  * Theme color keys that can be used for banner colors.
  * Add new color keys here as needed.
  */
@@ -75,11 +84,10 @@ export const BottomBanner: React.FC<BottomBannerProps> = ({
   const [isCloseHovered, setIsCloseHovered] = useState(false)
 
   // Resolve colors from theme or use overrides
-  const themeRecord = theme as unknown as Record<string, string>
-  const borderColor = borderColorOverride ?? themeRecord[borderColorKey]
+  const borderColor = borderColorOverride ?? getThemeColor(theme, borderColorKey)
   const textColor =
     textColorOverride ??
-    (textColorKey ? themeRecord[textColorKey] : borderColor)
+    (textColorKey ? getThemeColor(theme, textColorKey) : borderColor)
 
   const hasCloseButton = onClose !== undefined
   const hasTextContent = text !== undefined && children === undefined

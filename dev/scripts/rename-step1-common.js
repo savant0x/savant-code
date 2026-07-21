@@ -11,14 +11,14 @@
  *   4. Generic lowercase \bcodebuff\b → savant
  *
  * Each compound pass must precede the generic \bCodebuff\b pass, otherwise
- * word-boundary semantics leave "Codebuff" embedded in compound identifiers
- * (e.g., CodebuffClient → SavantClient requires explicit pass).
+ * word-boundary semantics leave "SavantCode" embedded in compound identifiers
+ * (e.g., SavantCodeClient → SavantClient requires explicit pass).
  */
 const fs = require('fs');
 const path = require('path');
 
 const COMPOUND_RULES = [
-  // Order: longest compound first (multi-pass safe — done before generic Codebuff/codebuff)
+  // Order: longest compound first (multi-pass safe — done before generic SavantCode/codebuff)
   [/CodebuffAI\/codebuff/g, 'savant0x/savant-code'],
 
   // PascalCase compound identifiers
@@ -26,7 +26,7 @@ const COMPOUND_RULES = [
   [/\bCodebuffApiClientConfig\b/g, 'SavantApiClientConfig'],
   [/\bCodebuffApiClient\b/g,     'SavantApiClient'],
   [/\bCodebuffApiModule\b/g,     'SavantApiModule'],
-  [/\bCodebuffClientOptions\b/g, 'SavantClientOptions'],
+  [/\bSavantCodeClientOptions\b/g, 'SavantClientOptions'],
   [/\bCodebuffConfigSchema\b/g,  'SavantConfigSchema'],
   [/\bCodebuffFileSystem\b/g,    'SavantFileSystem'],
   [/\bCodebuffResearchBot\b/g,   'SavantResearchBot'],
@@ -35,7 +35,7 @@ const COMPOUND_RULES = [
   [/\bCodebuffToolMessage\b/g,   'SavantToolMessage'],
   [/\bCodebuffToolOutput\b/g,    'SavantToolOutput'],
   [/\bCodebuffWebApiEnv\b/g,     'SavantWebApiEnv'],
-  [/\bCodebuffClient\b/g,        'SavantClient'],
+  [/\bSavantCodeClient\b/g,        'SavantClient'],
   [/\bCodebuffConfig\b/g,        'SavantConfig'],
   [/\bCodebuffRunner\b/g,        'SavantRunner'],
   [/\bCodebuffSpawn\b/g,         'SavantSpawn'],

@@ -1,8 +1,8 @@
 import { withTimeout } from '@savant-code/common/util/promise'
 
 import type { ClientEnv, CiEnv } from '@savant-code/common/types/contracts/env'
-import type { JSONObject } from '@savant-code/common/types/json'
 import type { Logger } from '@savant-code/common/types/contracts/logger'
+import type { JSONValue, JSONObject } from '@savant-code/common/types/json'
 
 const FETCH_TIMEOUT_MS = 30_000
 const MAX_RETRIES = 3
@@ -14,7 +14,7 @@ interface SavantCodeWebApiEnv {
   ciEnv: CiEnv
 }
 
-const tryParseJson = (text: string): unknown => {
+const tryParseJson = (text: string): JSONValue | null => {
   try {
     return JSON.parse(text)
   } catch {
@@ -22,36 +22,36 @@ const tryParseJson = (text: string): unknown => {
   }
 }
 
-const getStringField = (value: unknown, key: string): string | undefined => {
+const getStringField = (value: JSONValue, key: string): string | undefined => {
   if (!value || typeof value !== 'object') return undefined
-  const record = value as Record<string, unknown>
+  const record = value as Record<string, JSONValue>
   const field = record[key]
   return typeof field === 'string' ? field : undefined
 }
 
-const getNumberField = (value: unknown, key: string): number | undefined => {
+const getNumberField = (value: JSONValue, key: string): number | undefined => {
   if (!value || typeof value !== 'object') return undefined
-  const record = value as Record<string, unknown>
+  const record = value as Record<string, JSONValue>
   const field = record[key]
   return typeof field === 'number' ? field : undefined
 }
 
-const callCodebuffV1 = async (params: {
+const callSavantCodeV1 = async (params: {
   endpoint:
     | '/api/v1/web-search'
     | '/api/v1/docs-search'
     | '/api/v1/gravity-index'
-  payload: unknown
+  payload: JSONValue
   fetch: typeof globalThis.fetch
   logger: Logger
   env: SavantCodeWebApiEnv
   baseUrl?: string
   apiKey?: string
   requestName: 'web-search' | 'docs-search' | 'gravity-index'
-}): Promise<{ json?: unknown; error?: string; creditsUsed?: number }> => {
+}): Promise<{ json?: JSONValue; error?: string; creditsUsed?: number }> => {
   const { endpoint, payload, fetch, logger, env, requestName } = params
-  const baseUrl = params.baseUrl ?? env.clientEnv.NEXT_PUBLIC_CODEBUFF_APP_URL
-  const apiKey = params.apiKey ?? env.ciEnv.CODEBUFF_API_KEY
+  const baseUrl = params.baseUrl ?? env.clientEnv.NEXT_PUBLIC_SAVANT_CODE_APP_URL
+  const apiKey = params.apiKey ?? env.ciEnv.SAVANT_CODE_API_KEY
 
   if (!baseUrl || !apiKey) {
     return { error: 'Missing SavantCode base URL or API key' }
@@ -171,7 +171,7 @@ export async function callWebSearchAPI(params: {
   const { query, depth = 'standard', repoUrl, fetch, logger, env } = params
   const payload = { query, depth, ...(repoUrl ? { repoUrl } : {}) }
 
-  const res = await callCodebuffV1({
+  const res = await callSavantCodeV1({
     endpoint: '/api/v1/web-search',
     payload,
     fetch,
@@ -183,12 +183,12 @@ export async function callWebSearchAPI(params: {
   })
   if (res.error) return { error: res.error }
 
-  const result = getStringField(res.json, 'result')
+  const result = getStringField(res.json ?? null, 'result')
   if (result) {
     return { result, creditsUsed: res.creditsUsed }
   }
 
-  const error = getStringField(res.json, 'error')
+  const error = getStringField(res.json ?? null, 'error')
   return { error: error ?? 'Invalid response format' }
 }
 
@@ -204,12 +204,12 @@ export async function callDocsSearchAPI(params: {
   apiKey?: string
 }): Promise<{ documentation?: string; error?: string; creditsUsed?: number }> {
   const { libraryTitle, topic, maxTokens, repoUrl, fetch, logger, env } = params
-  const payload: Record<string, unknown> = { libraryTitle }
+  const payload: Record<string, JSONValue> = { libraryTitle }
   if (topic) payload.topic = topic
   if (typeof maxTokens === 'number') payload.maxTokens = maxTokens
   if (repoUrl) payload.repoUrl = repoUrl
 
-  const res = await callCodebuffV1({
+  const res = await callSavantCodeV1({
     endpoint: '/api/v1/docs-search',
     payload,
     fetch,
@@ -221,12 +221,12 @@ export async function callDocsSearchAPI(params: {
   })
   if (res.error) return { error: res.error }
 
-  const documentation = getStringField(res.json, 'documentation')
+  const documentation = getStringField(res.json ?? null, 'documentation')
   if (documentation) {
     return { documentation, creditsUsed: res.creditsUsed }
   }
 
-  const error = getStringField(res.json, 'error')
+  const error = getStringField(res.json ?? null, 'error')
   return { error: error ?? 'Invalid response format' }
 }
 
@@ -244,7 +244,7 @@ export async function callGravityIndexAPI(params: {
 }> {
   const { input, fetch, logger, env } = params
 
-  const res = await callCodebuffV1({
+  const res = await callSavantCodeV1({
     endpoint: '/api/v1/gravity-index',
     payload: input,
     fetch,
@@ -263,15 +263,15 @@ export async function callGravityIndexAPI(params: {
     }
   }
 
-  const error = getStringField(res.json, 'error')
+  const error = getStringField(res.json ?? null, 'error')
   return { error: error ?? 'Invalid response format' }
 }
 
 export async function callTokenCountAPI(params: {
-  messages: unknown[]
+  messages: JSONValue[]
   system?: string
   model?: string
-  tools?: Array<{ name: string; description?: string; input_schema?: unknown }>
+  tools?: Array<{ name: string; description?: string; input_schema?: JSONValue }>
   fetch: typeof globalThis.fetch
   logger: Logger
   env: SavantCodeWebApiEnv
@@ -279,18 +279,18 @@ export async function callTokenCountAPI(params: {
   apiKey?: string
 }): Promise<{ inputTokens?: number; error?: string }> {
   const { messages, system, model, tools, fetch, logger, env } = params
-  const baseUrl = params.baseUrl ?? env.clientEnv.NEXT_PUBLIC_CODEBUFF_APP_URL
-  const apiKey = params.apiKey ?? env.ciEnv.CODEBUFF_API_KEY
+  const baseUrl = params.baseUrl ?? env.clientEnv.NEXT_PUBLIC_SAVANT_CODE_APP_URL
+  const apiKey = params.apiKey ?? env.ciEnv.SAVANT_CODE_API_KEY
 
   if (!baseUrl || !apiKey) {
     return { error: 'Missing SavantCode base URL or API key' }
   }
 
   const url = `${baseUrl}/api/v1/token-count`
-  const payload: Record<string, unknown> = { messages }
-  if (system) payload.system = system
-  if (model) payload.model = model
-  if (tools) payload.tools = tools
+  const payload: Record<string, JSONValue> = { messages: messages as JSONValue }
+  if (system) payload.system = system as JSONValue
+  if (model) payload.model = model as JSONValue
+  if (tools) payload.tools = tools as JSONValue
 
   try {
     const res = await withTimeout(
@@ -328,7 +328,7 @@ export async function callTokenCountAPI(params: {
       return { error: err }
     }
 
-    const inputTokens = getNumberField(json, 'inputTokens')
+    const inputTokens = getNumberField(json ?? null, 'inputTokens')
     if (typeof inputTokens === 'number') {
       return { inputTokens }
     }

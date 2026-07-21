@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- analytics core: dynamic event properties */
 import { PostHog } from 'posthog-node'
 
 /**

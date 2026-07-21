@@ -19,7 +19,7 @@ import { defaultOpenAICompatibleErrorStructure } from '../openai-compatible-erro
 import { prepareTools } from './openai-compatible-prepare-tools'
 
 import type { OpenAICompatibleChatModelId } from './openai-compatible-chat-options'
-import type { ProviderErrorStructure } from '../openai-compatible-error'
+import type { OpenAICompatibleErrorData, ProviderErrorStructure } from '../openai-compatible-error'
 import type { MetadataExtractor } from './openai-compatible-metadata-extractor'
 import type {
   APICallError,
@@ -35,6 +35,7 @@ import type {
   ParseResult,
   ResponseHandler,
 } from '@ai-sdk/provider-utils'
+import type { JSONValue } from '@savant-code/common/types/json'
 
 export type OpenAICompatibleChatConfig = {
   provider: string
@@ -42,7 +43,7 @@ export type OpenAICompatibleChatConfig = {
   url: (options: { modelId: string; path: string }) => string
   fetch?: FetchFunction
   includeUsage?: boolean
-  errorStructure?: ProviderErrorStructure<any>
+  errorStructure?: ProviderErrorStructure<OpenAICompatibleErrorData>
   metadataExtractor?: MetadataExtractor
 
   /**
@@ -269,7 +270,7 @@ export class OpenAICompatibleChatLanguageModel implements LanguageModelV2 {
     // provider metadata:
     const extractedMetadata =
       await this.config.metadataExtractor?.extractMetadata?.({
-        parsedBody: rawResponse,
+        parsedBody: rawResponse as Record<string, JSONValue>,
       })
     const providerMetadata: SharedV2ProviderMetadata = {
       [this.providerOptionsName]: {},
@@ -407,7 +408,7 @@ export class OpenAICompatibleChatLanguageModel implements LanguageModelV2 {
               controller.enqueue({ type: 'raw', rawValue: chunk.rawValue })
             }
 
-            metadataExtractor?.processChunk(chunk.rawValue)
+            metadataExtractor?.processChunk(chunk.rawValue as Record<string, JSONValue>)
 
             // handle error chunks:
             if ('error' in value) {

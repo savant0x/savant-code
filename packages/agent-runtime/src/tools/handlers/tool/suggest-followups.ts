@@ -6,7 +6,7 @@ import type {
 import type { Logger } from '@savant-code/common/types/contracts/logger'
 
 export const handleSuggestFollowups = (async (params: {
-  previousToolCallFinished: Promise<unknown>
+  previousToolCallFinished: Promise<void>
   toolCall: SavantCodeToolCall<'suggest_followups'>
   logger: Logger
 }): Promise<{ output: SavantCodeToolOutput<'suggest_followups'> }> => {

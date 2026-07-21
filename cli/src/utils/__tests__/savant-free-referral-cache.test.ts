@@ -6,10 +6,10 @@ import {
   rememberReferral,
 } from '../savant-free-referral-cache'
 
-import type { SavantFree$1 } from '@savant-code/common/types/savant-free-session'
-import type { SavantFree$1 } from '../../types/savant-free-session'
+import type { SavantFreeSession } from '../../types/savant-free-session'
+import type { SavantFreeReferralInfo } from '@savant-code/common/types/savant-free-session'
 
-const referral: SavantFree$1 = {
+const referral: SavantFreeReferralInfo = {
   code: 'ABC123',
   referrerName: null,
   qualifiedCount: 2,
@@ -22,14 +22,14 @@ const landingWithReferral = {
   status: 'none',
   accessTier: 'full',
   referral,
-} as unknown as SavantFree$1
+} as unknown as SavantFreeSession
 
 const activeWithoutReferral = {
   status: 'active',
   accessTier: 'full',
   model: 'minimax/minimax-m3',
   instanceId: 'i-1',
-} as unknown as SavantFree$1
+} as unknown as SavantFreeSession
 
 describe('savant-free referral cache', () => {
   beforeEach(() => {

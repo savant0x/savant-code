@@ -5,9 +5,9 @@ import { useAuthQuery, useLogoutMutation } from './use-auth-query'
 import { useLoginStore } from '../state/login-store'
 import { identifyUser, trackEvent } from '../utils/analytics'
 import { getUserCredentials } from '../utils/auth'
-import { resetCodebuffClient } from '../utils/savant-code-client'
-import { IS_FREEBUFF } from '../utils/constants'
+import { IS_SAVANT_FREE } from '../utils/constants'
 import { loggerContext } from '../utils/logger'
+import { resetSavantCodeClient } from '../utils/savant-code-client'
 
 import type { MultilineInputHandle } from '../components/multiline-input'
 import type { User } from '../utils/auth'
@@ -15,7 +15,7 @@ import type { User } from '../utils/auth'
 const setAuthLoggerContext = (params: { userId: string; email: string }) => {
   loggerContext.userId = params.userId
   loggerContext.userEmail = params.email
-  identifyUser(params.userId, { email: params.email, savant-free: IS_FREEBUFF })
+  identifyUser(params.userId, { email: params.email, 'savant-free': IS_SAVANT_FREE })
 }
 
 const clearAuthLoggerContext = () => {
@@ -112,7 +112,7 @@ export const useAuthState = ({
       })
 
       // Reset the SDK client to pick up new credentials
-      resetCodebuffClient()
+      resetSavantCodeClient()
       resetChatStore()
       resetLoginState()
       setInputFocused(true)

@@ -4,21 +4,21 @@
  * Starts SavantFree in tmux, sends a prompt asking it to add a console.log
  * to a file, and verifies the file was modified correctly.
  *
- * Requires CODEBUFF_API_KEY — skipped if not set.
+ * Requires SAVANT_CODE_API_KEY — skipped if not set.
  */
 
 import { afterEach, describe, expect, test } from 'bun:test'
 
-import { SavantFree$1, requireFreebuffBinary } from '../utils'
+import { SavantFreeModel, requireSavantFreeBinary } from '../utils'
 
 const TEST_TIMEOUT = 1_000_000
 
 function getApiKey(): string | null {
-  return process.env.CODEBUFF_API_KEY ?? null
+  return process.env.SAVANT_CODE_API_KEY ?? null
 }
 
 describe.skip('SavantFree: Code Edit', () => {
-  let session: SavantFree$1 | null = null
+  let session: SavantFreeModel | null = null
 
   afterEach(async () => {
     if (session) {
@@ -32,13 +32,13 @@ describe.skip('SavantFree: Code Edit', () => {
     async () => {
       if (!getApiKey()) {
         console.log(
-          'Skipping code-edit test: CODEBUFF_API_KEY not set. ' +
+          'Skipping code-edit test: SAVANT_CODE_API_KEY not set. ' +
             'Set it to run code-edit e2e tests.',
         )
         return
       }
 
-      const binary = requireFreebuffBinary()
+      const binary = requireSavantFreeBinary()
       const initialContent = [
         'function greet(name) {',
         "  return 'Hello, ' + name",
@@ -47,7 +47,7 @@ describe.skip('SavantFree: Code Edit', () => {
       ].join('\n')
 
       // Create the file before starting savant-free so it's in the initial context
-      session = await SavantFree$1.start(binary, {
+      session = await SavantFreeModel.start(binary, {
         waitSeconds: 5,
         initialFiles: { 'index.js': initialContent },
       })

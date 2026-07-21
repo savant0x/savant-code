@@ -2,16 +2,18 @@ import { memo, useRef } from 'react'
 
 import { makeTextUnselectable } from './clickable'
 
+import type { OpenTuiHostPropValue } from './clickable'
+import type { MouseEvent } from '@opentui/core'
 import type { ReactNode } from 'react'
 
 interface ButtonProps {
-  onClick?: (e?: unknown) => void | Promise<unknown>
+  onClick?: (event: MouseEvent) => void
   onMouseOver?: () => void
   onMouseOut?: () => void
-  style?: Record<string, unknown>
+  style?: Record<string, string | number | undefined>
   children?: ReactNode
   // pass-through for box host props
-  [key: string]: unknown
+  [key: string]: OpenTuiHostPropValue
 }
 
 /**
@@ -37,10 +39,10 @@ export const Button = memo(function Button({ onClick, onMouseOver, onMouseOut, s
     mouseDownRef.current = true
   }
 
-  const handleMouseUp = (e?: unknown) => {
+  const handleMouseUp = (event: MouseEvent) => {
     // Only trigger click if mouse down happened on this element
     if (mouseDownRef.current && onClick) {
-      onClick(e)
+      onClick(event)
     }
     mouseDownRef.current = false
   }

@@ -1,4 +1,5 @@
 import type { AgentTemplate } from './templates/types'
+import type { OpenRouterProviderOptions } from '@savant-code/common/types/agent-template'
 import type { TrackEventFn } from '@savant-code/common/types/contracts/analytics'
 import type { SendActionFn } from '@savant-code/common/types/contracts/client'
 import type {
@@ -7,16 +8,15 @@ import type {
 } from '@savant-code/common/types/contracts/llm'
 import type { Logger } from '@savant-code/common/types/contracts/logger'
 import type { ParamsOf } from '@savant-code/common/types/function-params'
+import type { JSONValue } from '@savant-code/common/types/json'
 import type { Message } from '@savant-code/common/types/messages/savant-code-message'
-import type { OpenRouterProviderOptions } from '@savant-code/common/types/agent-template'
 import type { ToolSet } from 'ai'
 
 export const getAgentStreamFromTemplate = (params: {
   agentId?: string
   apiKey: string
   clientSessionId: string
-  costMode?: string
-  extraCodebuffMetadata?: Record<string, string>
+  extraSavantCodeMetadata?: Record<string, string>
   fingerprintId: string
   includeCacheControl?: boolean
   localAgentTemplates: Record<string, AgentTemplate>
@@ -31,8 +31,8 @@ export const getAgentStreamFromTemplate = (params: {
   cacheDebugCorrelation?: string
   onCacheDebugProviderRequestBuilt?: (params: {
     provider: string
-    rawBody: unknown
-    normalizedBody?: unknown
+    rawBody: JSONValue
+    normalizedBody?: JSONValue
   }) => void
   onCacheDebugUsageReceived?: (usage: CacheDebugUsageData) => void
 
@@ -45,8 +45,7 @@ export const getAgentStreamFromTemplate = (params: {
     agentId,
     apiKey,
     clientSessionId,
-    costMode,
-    extraCodebuffMetadata,
+    extraSavantCodeMetadata,
     fingerprintId,
     includeCacheControl,
     localAgentTemplates,
@@ -77,8 +76,7 @@ export const getAgentStreamFromTemplate = (params: {
     agentId,
     apiKey,
     clientSessionId,
-    costMode,
-    extraCodebuffMetadata,
+    extraSavantCodeMetadata,
     fingerprintId,
     includeCacheControl,
     logger,

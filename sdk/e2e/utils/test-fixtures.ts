@@ -192,5 +192,5 @@ export const TEST_PROMPTS = {
   commitMessage: 'Generate a commit message for these changes',
 }
 
-export const DEFAULT_AGENT = 'base2'
+export const DEFAULT_AGENT = 'savant'
 export const DEFAULT_TIMEOUT = 120_000 // 2 minutes

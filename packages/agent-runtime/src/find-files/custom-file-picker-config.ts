@@ -1,17 +1,27 @@
-import {
-  finetunedVertexModelNames, // Restore usage
-  costModes,
-  type CostMode,
-} from '@savant-code/common/old-constants'
+import { finetunedVertexModelNames } from '@savant-code/common/old-constants'
 import { z } from 'zod/v4'
 
-// Create the customFileCounts shape using the centralized costModes ('free', 'normal', 'max', etc.)
-const customFileCountsShape = costModes.reduce(
+// Legacy cost-mode labels; kept local now that the centralized costModes
+// constant has been removed (FID-031).
+const costModeLabels = [
+  'free',
+  'lite',
+  'normal',
+  'max',
+  'experimental',
+  'ask',
+] as const
+
+// Create the customFileCounts shape using the local cost-mode labels.
+const customFileCountsShape = costModeLabels.reduce(
   (acc, mode) => {
     acc[mode] = z.number().int().positive().optional()
     return acc
   },
-  {} as Record<CostMode, z.ZodOptional<z.ZodNumber>>,
+  {} as Record<
+    (typeof costModeLabels)[number],
+    z.ZodOptional<z.ZodNumber>
+  >,
 )
 
 // Prepare enum values for modelName.

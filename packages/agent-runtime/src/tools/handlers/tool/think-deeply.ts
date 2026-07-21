@@ -6,7 +6,7 @@ import type {
 import type { Logger } from '@savant-code/common/types/contracts/logger'
 
 export const handleThinkDeeply = (async (params: {
-  previousToolCallFinished: Promise<any>
+  previousToolCallFinished: Promise<void>
   toolCall: SavantCodeToolCall<'think_deeply'>
   logger: Logger
 }): Promise<{ output: SavantCodeToolOutput<'think_deeply'> }> => {

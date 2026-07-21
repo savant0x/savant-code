@@ -1,8 +1,9 @@
-import { describe, expect, test } from 'bun:test'
 import { spawnSync } from 'child_process'
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
+
+import { describe, expect, test } from 'bun:test'
 
 import {
   BoundedOutputBuffer,

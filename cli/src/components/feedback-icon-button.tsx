@@ -1,5 +1,5 @@
-import { AnalyticsEvent } from '@savant-code/common/constants/analytics-events'
 import { TextAttributes } from '@opentui/core'
+import { AnalyticsEvent } from '@savant-code/common/constants/analytics-events'
 import React, { useRef } from 'react'
 
 import { useHoverToggle } from './agent-mode-toggle'

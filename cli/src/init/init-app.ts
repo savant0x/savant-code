@@ -7,12 +7,12 @@ import { enableMapSet } from 'immer'
 
 import { initializeThemeStore } from '../hooks/use-theme'
 import { setProjectRoot } from '../project-files'
-import { initTimestampFormatter } from '../utils/helpers'
-import { enableManualThemeRefresh } from '../utils/theme-system'
-import { initAnalytics } from '../utils/analytics'
-import { logger } from '../utils/logger'
-import { getFingerprintId } from '../utils/fingerprint'
 import { initializeDirenv } from './init-direnv'
+import { initAnalytics } from '../utils/analytics'
+import { getFingerprintId } from '../utils/fingerprint'
+import { initTimestampFormatter } from '../utils/helpers'
+import { logger } from '../utils/logger'
+import { enableManualThemeRefresh } from '../utils/theme-system'
 
 export async function initializeApp(params: { cwd?: string }): Promise<void> {
   if (params.cwd) {

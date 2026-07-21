@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- partial JSON parsing utilities */
 export function parsePartialJsonObjectSingle(content: string): {
   lastParamComplete: boolean
   params: any

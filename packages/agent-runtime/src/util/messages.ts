@@ -15,11 +15,12 @@ import type {
   SavantCodeToolOutput,
 } from '@savant-code/common/tools/list'
 import type { Logger } from '@savant-code/common/types/contracts/logger'
-import type { Message } from '@savant-code/common/types/messages/savant-code-message'
+import type { JSONValue } from '@savant-code/common/types/json'
 import type {
   TextPart,
   ImagePart,
 } from '@savant-code/common/types/messages/content-part'
+import type { Message } from '@savant-code/common/types/messages/savant-code-message'
 
 export function messagesWithSystem(params: {
   messages: Message[]
@@ -40,7 +41,7 @@ export function asUserMessage(str: string): string {
  */
 export function buildUserMessageContent(
   prompt: string | undefined,
-  params: Record<string, any> | undefined,
+  params: Record<string, JSONValue> | undefined,
   content?: Array<TextPart | ImagePart>,
 ): Array<TextPart | ImagePart> {
   const promptHasNonWhitespaceText = (prompt ?? '').trim().length > 0

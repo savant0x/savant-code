@@ -36,7 +36,7 @@ describe('Initial Session State', () => {
         if (path.includes('.savantignore')) {
           return ''
         }
-        if (path.includes('.manicodeignore')) {
+        if (path.includes('.savantignore')) {
           return ''
         }
         throw new Error(`File not found: ${path}`)
@@ -69,7 +69,7 @@ describe('Initial Session State', () => {
       exists: async (path: string) => {
         if (path.includes('.gitignore')) return true
         if (path.includes('.savantignore')) return true
-        if (path.includes('.manicodeignore')) return true
+        if (path.includes('.savantignore')) return true
         if (path.includes('src')) return true
         if (path.includes('.git')) return true
         if (path.includes('knowledge.md')) return true
@@ -317,7 +317,7 @@ describe('Initial Session State', () => {
         description: 'A custom tool',
         endsAgentStep: false,
         exampleInputs: [],
-        execute: async (input: any) => [],
+        execute: async (_input: Record<string, string>) => [],
       },
     ]
 

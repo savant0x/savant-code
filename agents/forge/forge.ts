@@ -1,4 +1,5 @@
 import { ECHO_PROTOCOL_INSTRUCTIONS } from '@savant-code/common/constants/agents'
+
 import { publisher } from '../constants'
 
 import type { AgentDefinition } from '../types/agent-definition'
@@ -31,11 +32,7 @@ export const createCodeEditor = (options: {
   return {
     publisher,
     model: EDITOR_MODEL_BY_VARIANT[options.model],
-    ...(options.model === 'opus' && {
-      providerOptions: {
-        only: ['amazon-bedrock'],
-      },
-    }),
+
     displayName: 'Savant the Forge',
     spawnerPrompt:
       "Expert code editor that implements code changes based on the user's request. Do not specify an input prompt for this agent; it inherits the context of the entire conversation with the user. Make sure to read any files intended to be edited before spawning this agent as it cannot read files on its own.",
@@ -53,7 +50,7 @@ Important: You can not make any other tool calls besides editing files. You cann
 
 Write out what changes you would make using the tool call format below. Use this exact format for each file change:
 
-<codebuff_tool_call>
+<savant_code_tool_call>
 {
   "cb_tool_name": "str_replace",
   "path": "path/to/file",
@@ -68,18 +65,18 @@ Write out what changes you would make using the tool call format below. Use this
     },
   ]
 }
-</codebuff_tool_call>
+</savant_code_tool_call>
 
 OR for new files or major rewrites:
 
-<codebuff_tool_call>
+<savant_code_tool_call>
 {
   "cb_tool_name": "write_file",
   "path": "path/to/file",
   "instructions": "What the change does",
   "content": "Complete file content"
 }
-</codebuff_tool_call>
+</savant_code_tool_call>
 
 ${
   EDITOR_VARIANTS_WITH_THINK_TAGS.has(model)
@@ -93,21 +90,21 @@ You can also use <think> tags interspersed between tool calls to think about the
 [ Long think about the best way to implement the changes ]
 </think>
 
-<codebuff_tool_call>
+<savant_code_tool_call>
 [ First tool call to implement the feature ]
-</codebuff_tool_call>
+</savant_code_tool_call>
 
-<codebuff_tool_call>
+<savant_code_tool_call>
 [ Second tool call to implement the feature ]
-</codebuff_tool_call>
+</savant_code_tool_call>
 
 <think>
 [ Thoughts about a tricky part of the implementation ]
 </think>
 
-<codebuff_tool_call>
+<savant_code_tool_call>
 [ Third tool call to implement the feature ]
-</codebuff_tool_call>
+</savant_code_tool_call>
 
 </example>`
     : ''

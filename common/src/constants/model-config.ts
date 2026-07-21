@@ -10,17 +10,9 @@ export const ALLOWED_MODEL_PREFIXES = [
   'minimax',
   'mimo',
   'tencent',
+  'tokenrouter',
+  'nvidia',
 ] as const
-
-export const costModes = [
-  'free',
-  'lite',
-  'normal',
-  'max',
-  'experimental',
-  'ask',
-] as const
-export type CostMode = (typeof costModes)[number]
 
 export const openaiModels = {
   gpt4_1: 'gpt-4.1-2025-04-14',
@@ -63,6 +55,34 @@ export const openCodeZenModels = {
 } as const
 export type OpenCodeZenModel =
   (typeof openCodeZenModels)[keyof typeof openCodeZenModels]
+
+export const tokenrouterModels = {
+  tokenrouter_kimi_k2p7_code: 'tokenrouter/kimi-k2p7-code',
+  tokenrouter_kimi_k2p7_code_fast: 'tokenrouter/kimi-k2p7-code-fast',
+  tokenrouter_kimi_k2p6: 'tokenrouter/kimi-k2p6',
+  tokenrouter_kimi_k2p5: 'tokenrouter/kimi-k2p5',
+  tokenrouter_deepseek_v4_pro: 'tokenrouter/deepseek-v4-pro',
+  tokenrouter_deepseek_v4_flash: 'tokenrouter/deepseek-v4-flash',
+  tokenrouter_qwen3p7_plus: 'tokenrouter/qwen3p7-plus',
+  tokenrouter_qwen3p6_plus: 'tokenrouter/qwen3p6-plus',
+  tokenrouter_glm5p1: 'tokenrouter/glm-5p1',
+  tokenrouter_glm5p1_fast: 'tokenrouter/glm-5p1-fast',
+  tokenrouter_gpt_oss_120b: 'tokenrouter/gpt-oss-120b',
+  tokenrouter_minimax_m3: 'tokenrouter/minimax-m3',
+  tokenrouter_minimax_m2p7: 'tokenrouter/minimax-m2p7',
+} as const
+export type TokenrouterModel =
+  (typeof tokenrouterModels)[keyof typeof tokenrouterModels]
+
+export const nvidiaModels = {
+  nvidia_glm5_2: 'nvidia/zai-org/glm-5.2',
+  nvidia_llama33_70b: 'nvidia/meta/llama-3.3-70b-instruct',
+  nvidia_nemotron_4_340b: 'nvidia/nvidia/nemotron-4-340b-instruct',
+  nvidia_deepseek_v3: 'nvidia/deepseek-ai/deepseek-v3',
+  nvidia_qwen25_72b: 'nvidia/qwen/qwen2.5-72b-instruct',
+  nvidia_minimax_m27: 'nvidia/minimaxai/minimax-m2.7',
+} as const
+export type NvidiaModel = (typeof nvidiaModels)[keyof typeof nvidiaModels]
 
 export const deepseekModels = {
   deepseekChat: 'deepseek-chat',
@@ -134,6 +154,8 @@ export const models = {
   ...atlasCloudModels,
   ...openrouterModels,
   ...finetunedVertexModels,
+  ...tokenrouterModels,
+  ...nvidiaModels,
 } as const
 
 export const shortModelNames = {
@@ -234,6 +256,8 @@ export const providerDomains = {
   atlascloud: 'atlascloud.ai',
   tencent: 'tencent.com',
   xai: 'x.ai',
+  tokenrouter: 'tokenrouter.com',
+  nvidia: 'nvidia.com',
 } as const
 
 export function getLogoForModel(modelName: string): string | undefined {
@@ -252,6 +276,9 @@ export function getLogoForModel(modelName: string): string | undefined {
   )
     domain = providerDomains.atlascloud
   else if (modelName.startsWith('tencent/')) domain = providerDomains.tencent
+  else if (modelName.startsWith('tokenrouter/'))
+    domain = providerDomains.tokenrouter
+  else if (modelName.startsWith('nvidia/')) domain = providerDomains.nvidia
   else if (modelName.includes('claude')) domain = providerDomains.anthropic
   else if (modelName.includes('grok')) domain = providerDomains.xai
 

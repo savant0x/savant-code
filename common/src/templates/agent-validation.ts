@@ -7,18 +7,35 @@ import {
 
 import type { AgentTemplate } from '../types/agent-template'
 import type { DynamicAgentTemplate } from '../types/dynamic-agent-template'
-import type { Logger } from '@savantcode.common/types/contracts/logger'
+import type { Logger } from '@savant-code/common/types/contracts/logger'
+import type { z } from 'zod/v4'
+import type { JSONSchema } from 'zod/v4/core'
+
+
+
+
 
 export interface DynamicAgentValidationError {
   filePath: string
   message: string
 }
 
+function isObject<T>(
+  value: T | null | undefined,
+): value is T & object {
+  return (
+    value !== null &&
+    value !== undefined &&
+    typeof value === 'object' &&
+    !Array.isArray(value)
+  )
+}
+
 /**
  * Collect all agent IDs from template files without full validation
  */
 export function collectAgentIds(params: {
-  agentTemplates?: Record<string, DynamicAgentTemplate>
+  agentTemplates?: Record<string, object>
   logger: Logger
 }): { agentIds: string[]; spawnableAgentIds: string[] } {
   const { agentTemplates = {}, logger } = params
@@ -30,16 +47,21 @@ export function collectAgentIds(params: {
   for (const filePath of jsonFiles) {
     try {
       const content = agentTemplates[filePath]
-      if (!content) {
+      if (!isObject(content)) {
         continue
       }
+      const record = content as Record<string, unknown>
 
       // Extract the agent ID if it exists
-      if (content.id && typeof content.id === 'string') {
-        agentIds.push(content.id)
+      if (typeof record.id === 'string' && record.id) {
+        agentIds.push(record.id)
       }
-      if (Array.isArray(content.spawnableAgents)) {
-        spawnableAgentIds.push(...content.spawnableAgents)
+      if (Array.isArray(record.spawnableAgents)) {
+        for (const agentId of record.spawnableAgents) {
+          if (typeof agentId === 'string') {
+            spawnableAgentIds.push(agentId)
+          }
+        }
       }
     } catch (error) {
       // Log but don't fail the collection process for other errors
@@ -57,7 +79,7 @@ export function collectAgentIds(params: {
  * Validate and load dynamic agent templates from user-provided agentTemplates
  */
 export function validateAgents(params: {
-  agentTemplates?: Record<string, any>
+  agentTemplates?: Record<string, object>
   logger: Logger
 }): {
   templates: Record<string, AgentTemplate>
@@ -120,12 +142,17 @@ export function validateAgents(params: {
         validationResult.dynamicAgentTemplate!
     } catch (error) {
       const errorMessage =
-        error instanceof Error ? error.message : 'Unknown error'
+        error instanceof Error ? error.message : String(error)
 
-      // Try to extract agent context for better error messages
-      const agentContext = content?.id
-        ? `Agent "${content.id}"${content.displayName ? ` (${content.displayName})` : ''}`
-        : `Agent in ${agentKey}`
+      const context = isObject(content)
+        ? (content as Record<string, unknown>)
+        : null
+      const displayName =
+        typeof context?.displayName === 'string' ? context.displayName : null
+      const agentContext =
+        typeof context?.id === 'string'
+          ? `Agent "${context.id}"${displayName ? ` (${displayName})` : ''}`
+          : `Agent in ${agentKey}`
 
       validationErrors.push({
         filePath: agentKey,
@@ -158,7 +185,7 @@ export function validateAgents(params: {
  * @returns Validation result with either the converted AgentTemplate or an error
  */
 export function validateSingleAgent(params: {
-  template: any
+  template: object
   filePath?: string
 }): {
   success: boolean
@@ -167,6 +194,9 @@ export function validateSingleAgent(params: {
   error?: string
 } {
   const { template, filePath = 'unknown' } = params
+  const raw = isObject(template)
+    ? (template as Record<string, unknown>)
+    : {}
 
   try {
     // First validate against the Zod schema
@@ -178,13 +208,14 @@ export function validateSingleAgent(params: {
       // function too: the stringified form of a bundled function can reference
       // out-of-scope bundler helpers and fail the runtime's eval round-trip.
       let handleStepsString: string | undefined
-      if (template.handleSteps) {
-        handleStepsString = template.handleSteps.toString()
+      const rawHandleSteps = raw.handleSteps
+      if (typeof rawHandleSteps === 'function') {
+        handleStepsString = rawHandleSteps.toString()
+      } else if (typeof rawHandleSteps === 'string') {
+        handleStepsString = rawHandleSteps
       }
-      const handleStepsFn =
-        typeof template.handleSteps === 'function'
-          ? template.handleSteps
-          : template.handleStepsFn
+
+      const handleStepsFn = raw.handleStepsFn
 
       validatedConfig = DynamicAgentTemplateSchema.parse({
         ...typedAgentDefinition,
@@ -194,17 +225,26 @@ export function validateSingleAgent(params: {
         handleSteps: handleStepsString,
         handleStepsFn,
       })
-    } catch (error: any) {
+    } catch (error) {
       // Try to extract agent context for better error messages
-      const agentContext = template.id
-        ? `Agent "${template.id}"${template.displayName ? ` (${template.displayName})` : ''}`
-        : filePath
-          ? `Agent in ${filePath}`
-          : 'Agent'
+      const context = isObject(template)
+        ? (template as Record<string, unknown>)
+        : null
+      const displayName =
+        typeof context?.displayName === 'string' ? context.displayName : null
+      const agentContext =
+        typeof context?.id === 'string'
+          ? `Agent "${context.id}"${displayName ? ` (${displayName})` : ''}`
+          : filePath
+            ? `Agent in ${filePath}`
+            : 'Agent'
+
+      const errorMessage =
+        error instanceof Error ? error.message : String(error)
 
       return {
         success: false,
-        error: `${agentContext}: Schema validation failed: ${error.message}`,
+        error: `${agentContext}: Schema validation failed: ${errorMessage}`,
       }
     }
 
@@ -285,14 +325,20 @@ export function validateSingleAgent(params: {
     }
   } catch (error) {
     const errorMessage =
-      error instanceof Error ? error.message : 'Unknown error'
+      error instanceof Error ? error.message : String(error)
 
     // Try to extract agent context for better error messages
-    const agentContext = template?.id
-      ? `Agent "${template.id}"${template.displayName ? ` (${template.displayName})` : ''}`
-      : filePath
-        ? `Agent in ${filePath}`
-        : 'Agent'
+    const context = isObject(template)
+      ? (template as Record<string, unknown>)
+      : null
+    const displayName =
+      typeof context?.displayName === 'string' ? context.displayName : null
+    const agentContext =
+      typeof context?.id === 'string'
+        ? `Agent "${context.id}"${displayName ? ` (${displayName})` : ''}`
+        : filePath
+          ? `Agent in ${filePath}`
+          : 'Agent'
 
     return {
       success: false,
@@ -315,12 +361,12 @@ function isValidGeneratorFunction(code: string): boolean {
  * This is done once during loading to avoid repeated conversions.
  * Throws descriptive errors for validation failures.
  */
-function convertInputSchema(
-  inputPromptSchema?: Record<string, any>,
-  paramsSchema?: Record<string, any>,
+function convertInputSchema<TPrompt, TParams>(
+  inputPromptSchema?: Record<string, TPrompt>,
+  paramsSchema?: Record<string, TParams>,
   filePath?: string,
 ): AgentTemplate['inputSchema'] {
-  const result: any = {}
+  const result: { prompt?: z.ZodTypeAny; params?: z.ZodTypeAny } = {}
   const fileContext = filePath ? ` in ${filePath}` : ''
 
   // Handle prompt schema
@@ -334,7 +380,9 @@ function convertInputSchema(
           `Invalid inputSchema.prompt${fileContext}: Schema must be a valid non-empty JSON schema object. Found: ${typeof inputPromptSchema}`,
         )
       }
-      const promptZodSchema = convertJsonSchemaToZod(inputPromptSchema)
+      const promptZodSchema = convertJsonSchemaToZod(
+        inputPromptSchema as JSONSchema.BaseSchema,
+      )
       // Validate that the schema results in string or undefined
       const testResult = promptZodSchema.safeParse('test')
       const testUndefined = promptZodSchema.safeParse(undefined)
@@ -377,7 +425,9 @@ function convertInputSchema(
           `Invalid inputSchema.params${fileContext}: Schema must be a valid non-empty JSON schema object. Found: ${typeof paramsSchema}`,
         )
       }
-      const paramsZodSchema = convertJsonSchemaToZod(paramsSchema)
+      const paramsZodSchema = convertJsonSchemaToZod(
+        paramsSchema as JSONSchema.BaseSchema,
+      )
       result.params = paramsZodSchema
     } catch (error) {
       const errorMessage =
@@ -388,5 +438,5 @@ function convertInputSchema(
       )
     }
   }
-  return result
+  return result as AgentTemplate['inputSchema']
 }

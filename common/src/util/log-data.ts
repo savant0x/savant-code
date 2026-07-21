@@ -1,3 +1,4 @@
+/* eslint-disable savant/no-unknown-in-signatures -- log serialization trust boundary: `data: unknown` is the only honest shape for arbitrary logger payloads before JSON.stringify. 3-condition AND-gate: (i.1) caller type cannot be discovered because the utility serializes any application-level value; (i.2) narrowing to `JsonValue`/concrete breaks callers that pass Error instances, Dates, RegExps, or circular structures; (i.3) the function only reads via JSON.stringify + WeakSet circular-ref redaction, preserving existing Axiom ingest behavior. */
 import { MAX_LOG_DATA_BYTES } from '../schemas/logs'
 
 import type { LogLevel } from '../types/contracts/logs'

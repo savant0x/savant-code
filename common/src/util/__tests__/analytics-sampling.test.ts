@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'bun:test'
 
-import { AnalyticsEvent } from '@savantcode.common/constants/analytics-events'
+import { AnalyticsEvent } from '@savant-code/common/constants/analytics-events'
 
 import {
   isFullTelemetryEnabled,
@@ -9,10 +9,10 @@ import {
 } from '../analytics-sampling'
 
 const ORIGINAL_ENV = {
-  CODEBUFF_FULL_TELEMETRY: process.env.CODEBUFF_FULL_TELEMETRY,
-  CODEBUFF_FULL_TELEMETRY_IDS: process.env.CODEBUFF_FULL_TELEMETRY_IDS,
-  CODEBUFF_FULL_TELEMETRY_USER_IDS:
-    process.env.CODEBUFF_FULL_TELEMETRY_USER_IDS,
+  SAVANT_CODE_FULL_TELEMETRY: process.env.SAVANT_CODE_FULL_TELEMETRY,
+  SAVANT_CODE_FULL_TELEMETRY_IDS: process.env.SAVANT_CODE_FULL_TELEMETRY_IDS,
+  SAVANT_CODE_FULL_TELEMETRY_USER_IDS:
+    process.env.SAVANT_CODE_FULL_TELEMETRY_USER_IDS,
 }
 
 function restoreEnv() {
@@ -86,15 +86,15 @@ describe('analytics sampling', () => {
   })
 
   it('honors full telemetry env flags and allowlists', () => {
-    process.env.CODEBUFF_FULL_TELEMETRY = 'true'
+    process.env.SAVANT_CODE_FULL_TELEMETRY = 'true'
     expect(
       isFullTelemetryEnabled({
         distinctId: 'anyone',
       }),
     ).toBe(true)
 
-    delete process.env.CODEBUFF_FULL_TELEMETRY
-    process.env.CODEBUFF_FULL_TELEMETRY_IDS = 'user-2,person@example.com'
+    delete process.env.SAVANT_CODE_FULL_TELEMETRY
+    process.env.SAVANT_CODE_FULL_TELEMETRY_IDS = 'user-2,person@example.com'
 
     expect(
       isFullTelemetryEnabled({

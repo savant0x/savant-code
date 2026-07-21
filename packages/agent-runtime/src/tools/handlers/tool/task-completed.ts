@@ -7,7 +7,7 @@ import type {
 export const handleTaskCompleted = (async ({
   previousToolCallFinished,
 }: {
-  previousToolCallFinished: Promise<any>
+  previousToolCallFinished: Promise<void>
   toolCall: SavantCodeToolCall<'task_completed'>
 }): Promise<{ output: SavantCodeToolOutput<'task_completed'> }> => {
   await previousToolCallFinished

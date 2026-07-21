@@ -9,7 +9,7 @@ import { logger } from '../utils/logger'
 const getRipgrepPath = async (): Promise<string> => {
   const env = getCliEnv()
   // In dev mode, use the SDK's bundled ripgrep binary
-  if (!env.CODEBUFF_IS_BINARY) {
+  if (!env.SAVANT_CODE_IS_BINARY) {
     return getBundledRgPath()
   }
 

@@ -1,3 +1,4 @@
+/* eslint-disable no-console -- example script: intentional console output */
 /**
  * Example: SDK Test Generator
  *
@@ -23,9 +24,9 @@ function divide(a: number, b: number): number {
 `.trim()
 
 async function main() {
-  const apiKey = process.env.CODEBUFF_API_KEY
+  const apiKey = process.env.SAVANT_CODE_API_KEY
   if (!apiKey) {
-    console.error('CODEBUFF_API_KEY environment variable is required')
+    console.error('SAVANT_CODE_API_KEY environment variable is required')
     process.exit(1)
   }
 
@@ -39,7 +40,7 @@ async function main() {
   console.log('Generated tests:\n')
 
   const result = await client.run({
-    agent: 'savant-code/base2@latest',
+    agent: 'savant-code/savant@latest',
     prompt: `Generate unit tests for these functions using Jest:\n\n${CODE_TO_TEST}`,
     handleStreamChunk: (chunk) => {
       if (typeof chunk === 'string') {

@@ -447,7 +447,7 @@ If a FID's proposed solution is architecturally wrong given current project dire
 | Language | Forbidden Pattern | Use Instead |
 |----------|------------------|-------------|
 | Rust | `unwrap()`, `expect()` in non-test code | `?` operator, `match`, explicit error types |
-| TypeScript | `any` type, `@ts-ignore` | `unknown` + type guards, proper typing |
+| TypeScript | `any`, `@ts-ignore`, or `unknown` as param/return/var type (outside a `v is T` type guard) | The actual domain type; at trust boundaries use a user-defined type guard `v is T` with runtime validation — never a cast |
 | Python | Bare `except:`, no type hints | Specific exceptions, type hints on public functions |
 | Go | Ignoring errors with `_` | Check all returned errors |
 | Java | Bare `catch (Exception e)`, null returns | Specific exceptions, `Optional<T>` |

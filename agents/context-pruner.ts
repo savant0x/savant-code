@@ -4,6 +4,7 @@ import type { AgentDefinition, ToolCall } from './types/agent-definition'
 import type {
   FilePart,
   ImagePart,
+  JSONValue,
   Message,
   TextPart,
   ToolMessage,
@@ -121,13 +122,168 @@ const definition: AgentDefinition = {
       if (Array.isArray(message.content)) {
         return message.content
           .filter(
-            (part: Record<string, unknown>) =>
+            (part): part is TextPart =>
               part.type === 'text' && typeof part.text === 'string',
           )
-          .map((part: Record<string, unknown>) => part.text as string)
+          .map((part) => part.text)
           .join('\n')
       }
       return ''
+    }
+
+    function asString(value: JSONValue): string | undefined {
+      return typeof value === 'string' ? value : undefined
+    }
+
+    function asNumber(value: JSONValue): number | undefined {
+      return typeof value === 'number' ? value : undefined
+    }
+
+    function asStringArray(value: JSONValue): string[] | undefined {
+      if (!Array.isArray(value)) return undefined
+      const result: string[] = []
+      for (const item of value) {
+        if (typeof item === 'string') result.push(item)
+      }
+      return result.length > 0 ? result : undefined
+    }
+
+    function asObject(value: JSONValue): Record<string, JSONValue> | undefined {
+      return value !== null && typeof value === 'object' && !Array.isArray(value)
+        ? value
+        : undefined
+    }
+
+    function asAgentSpawnArray(
+      value: JSONValue,
+    ):
+      | Array<{
+          agent_type: string
+          prompt?: string
+          params?: Record<string, JSONValue>
+        }>
+      | undefined {
+      if (!Array.isArray(value)) return undefined
+      const result: Array<{
+        agent_type: string
+        prompt?: string
+        params?: Record<string, JSONValue>
+      }> = []
+      for (const item of value) {
+        const obj = asObject(item)
+        if (!obj) continue
+        const agent_type = asString(obj.agent_type)
+        if (!agent_type) continue
+        const prompt = asString(obj.prompt)
+        const params = asObject(obj.params)
+        result.push({
+          agent_type,
+          ...(prompt && { prompt }),
+          ...(params && { params }),
+        })
+      }
+      return result.length > 0 ? result : undefined
+    }
+
+    function asTodoList(
+      value: JSONValue,
+    ): Array<{ task: string; completed: boolean }> | undefined {
+      if (!Array.isArray(value)) return undefined
+      const result: Array<{ task: string; completed: boolean }> = []
+      for (const item of value) {
+        const obj = asObject(item)
+        if (!obj) continue
+        const task = asString(obj.task)
+        if (task === undefined) continue
+        result.push({ task, completed: obj.completed === true })
+      }
+      return result.length > 0 ? result : undefined
+    }
+
+    function asQuestionList(
+      value: JSONValue,
+    ): Array<{ question: string }> | undefined {
+      if (!Array.isArray(value)) return undefined
+      const result: Array<{ question: string }> = []
+      for (const item of value) {
+        const obj = asObject(item)
+        if (!obj) continue
+        const question = asString(obj.question)
+        if (question === undefined) continue
+        result.push({ question })
+      }
+      return result.length > 0 ? result : undefined
+    }
+
+    function asAnswerList(
+      value: JSONValue,
+    ):
+      | Array<{
+          selectedOption?: string
+          selectedOptions?: string[]
+          otherText?: string
+        }>
+      | undefined {
+      if (!Array.isArray(value)) return undefined
+      const result: Array<{
+        selectedOption?: string
+        selectedOptions?: string[]
+        otherText?: string
+      }> = []
+      for (const item of value) {
+        const obj = asObject(item)
+        if (!obj) continue
+        const selectedOption = asString(obj.selectedOption)
+        const selectedOptions = asStringArray(obj.selectedOptions)
+        const otherText = asString(obj.otherText)
+        result.push({
+          ...(selectedOption && { selectedOption }),
+          ...(selectedOptions && { selectedOptions }),
+          ...(otherText && { otherText }),
+        })
+      }
+      return result.length > 0 ? result : undefined
+    }
+
+    function asAgentResultList(
+      value: JSONValue,
+    ): Array<{
+      agentName?: string
+      agentType?: string
+      value?: { type?: string; value?: JSONValue }
+    }> | undefined {
+      if (!Array.isArray(value)) return undefined
+      const result: Array<{
+        agentName?: string
+        agentType?: string
+        value?: { type?: string; value?: JSONValue }
+      }> = []
+      for (const item of value) {
+        const obj = asObject(item)
+        if (!obj) continue
+        const agentName = asString(obj.agentName)
+        const agentType = asString(obj.agentType)
+        const valueObj = asObject(obj.value)
+        let inner: { type?: string; value?: JSONValue } | undefined
+        if (valueObj) {
+          const type = asString(valueObj.type)
+          const v = valueObj.value
+          inner = {
+            ...(type && { type }),
+            ...(v !== undefined && { value: v }),
+          }
+        }
+        const entry: {
+          agentName?: string
+          agentType?: string
+          value?: { type?: string; value?: JSONValue }
+        } = {}
+        if (agentName) entry.agentName = agentName
+        if (agentType) entry.agentType = agentType
+        if (inner) entry.value = inner
+        result.push(entry)
+      }
+      return result
     }
 
     /**
@@ -135,46 +291,46 @@ const definition: AgentDefinition = {
      */
     function summarizeToolCall(
       toolName: string,
-      input: Record<string, unknown>,
+      input: Record<string, JSONValue>,
     ): string {
       switch (toolName) {
         case 'read_files': {
-          const paths = input.paths as string[] | undefined
+          const paths = asStringArray(input.paths)
           if (paths && paths.length > 0) {
             return `inspected files: ${paths.join(', ')}`
           }
           return 'inspected files'
         }
         case 'write_file': {
-          const path = input.path as string | undefined
+          const path = asString(input.path)
           return path ? `wrote file: ${path}` : 'wrote a file'
         }
         case 'str_replace': {
-          const path = input.path as string | undefined
+          const path = asString(input.path)
           return path ? `edited file: ${path}` : 'edited a file'
         }
         case 'propose_write_file': {
-          const path = input.path as string | undefined
+          const path = asString(input.path)
           return path
             ? `proposed writing: ${path}`
             : 'proposed a file write'
         }
         case 'propose_str_replace': {
-          const path = input.path as string | undefined
+          const path = asString(input.path)
           return path
             ? `proposed editing: ${path}`
             : 'proposed a file edit'
         }
         case 'read_subtree': {
-          const paths = input.paths as string[] | undefined
+          const paths = asStringArray(input.paths)
           if (paths && paths.length > 0) {
             return `inspected subtrees: ${paths.join(', ')}`
           }
           return 'inspected a subtree'
         }
         case 'code_search': {
-          const pattern = input.pattern as string | undefined
-          const flags = input.flags as string | undefined
+          const pattern = asString(input.pattern)
+          const flags = asString(input.flags)
           if (pattern && flags) {
             return `code search for "${pattern}" (${flags})`
           }
@@ -183,25 +339,25 @@ const definition: AgentDefinition = {
             : 'code search'
         }
         case 'glob': {
-          const pattern = input.pattern as string | undefined
+          const pattern = asString(input.pattern)
           return pattern
             ? `glob search for ${pattern}`
             : 'glob search'
         }
         case 'list_directory': {
-          const path = input.path as string | undefined
+          const path = asString(input.path)
           return path
             ? `listed directory: ${path}`
             : 'listed a directory'
         }
         case 'find_files': {
-          const prompt = input.prompt as string | undefined
+          const prompt = asString(input.prompt)
           return prompt
             ? `file-finding request: "${prompt}"`
             : 'file-finding request'
         }
         case 'run_terminal_command': {
-          const command = input.command as string | undefined
+          const command = asString(input.command)
           if (command) {
             const shortCmd =
               command.length > 50 ? command.slice(0, 50) + '...' : command
@@ -211,18 +367,10 @@ const definition: AgentDefinition = {
         }
         case 'spawn_agents':
         case 'spawn_agent_inline': {
-          const agents = input.agents as
-            | Array<{
-                agent_type: string
-                prompt?: string
-                params?: Record<string, unknown>
-              }>
-            | undefined
-          const agentType = input.agent_type as string | undefined
-          const prompt = input.prompt as string | undefined
-          const agentParams = input.params as
-            | Record<string, unknown>
-            | undefined
+          const agents = asAgentSpawnArray(input.agents)
+          const agentType = asString(input.agent_type)
+          const prompt = asString(input.prompt)
+          const agentParams = asObject(input.params)
 
           if (agents && agents.length > 0) {
             const agentDetails = agents.map((a) => {
@@ -273,9 +421,7 @@ const definition: AgentDefinition = {
           return 'delegated agent work'
         }
         case 'write_todos': {
-          const todos = input.todos as
-            | Array<{ task: string; completed: boolean }>
-            | undefined
+          const todos = asTodoList(input.todos)
           if (todos) {
             const completed = todos.filter((t) => t.completed).length
             const incomplete = todos.filter((t) => !t.completed)
@@ -290,9 +436,7 @@ const definition: AgentDefinition = {
           return 'Updated todos'
         }
         case 'ask_user': {
-          const questions = input.questions as
-            | Array<{ question: string }>
-            | undefined
+          const questions = asQuestionList(input.questions)
           if (questions && questions.length > 0) {
             const questionTexts = questions.map((q) => q.question).join('; ')
             const truncated =
@@ -306,18 +450,18 @@ const definition: AgentDefinition = {
         case 'suggest_followups':
           return 'Suggested followups'
         case 'web_search': {
-          const query = input.query as string | undefined
+          const query = asString(input.query)
           return query
             ? `web search for "${query}"`
             : 'web search'
         }
         case 'read_url': {
-          const url = input.url as string | undefined
+          const url = asString(input.url)
           return url ? `read URL: ${url}` : 'read a URL'
         }
         case 'gravity_index': {
-          const query = input.query as string | undefined
-          const action = input.action as string | undefined
+          const query = asString(input.query)
+          const action = asString(input.action)
           if (query) {
             return `Gravity Index ${action ?? 'search'} for "${query}"`
           }
@@ -326,8 +470,8 @@ const definition: AgentDefinition = {
             : 'Gravity Index use'
         }
         case 'read_docs': {
-          const libraryTitle = input.libraryTitle as string | undefined
-          const topic = input.topic as string | undefined
+          const libraryTitle = asString(input.libraryTitle)
+          const topic = asString(input.topic)
           if (libraryTitle && topic) {
             return `consulted docs: ${libraryTitle} - ${topic}`
           }
@@ -397,13 +541,12 @@ const definition: AgentDefinition = {
         }
       }
       if (
-        'sentAt' in userPromptMsg &&
+        userPromptMsg !== undefined &&
+        typeof userPromptMsg.sentAt === 'number' &&
         lastAssistantMsg !== undefined &&
-        'sentAt' in lastAssistantMsg
+        typeof lastAssistantMsg.sentAt === 'number'
       ) {
-        const gap =
-          (userPromptMsg as { sentAt: number }).sentAt -
-          (lastAssistantMsg as { sentAt: number }).sentAt
+        const gap = userPromptMsg.sentAt - lastAssistantMsg.sentAt
         cacheGapMs = gap
         cacheWillMiss = gap > CACHE_EXPIRY_MS
       }
@@ -546,13 +689,13 @@ const definition: AgentDefinition = {
       )
 
     // Find the last user message with images to preserve in the final output
-    let lastUserImageParts: Array<Record<string, unknown>> = []
+    let lastUserImageParts: Array<ImagePart | FilePart> = []
     for (let i = messagesToSummarize.length - 1; i >= 0; i--) {
       const msg = messagesToSummarize[i]
       if (msg.role === 'user' && Array.isArray(msg.content)) {
         const imageParts = msg.content.filter(
-          (part: Record<string, unknown>) =>
-            part.type === 'image' || part.type === 'media',
+          (part): part is ImagePart | FilePart =>
+            part.type === 'image' || part.type === 'media' || part.type === 'file',
         )
         if (imageParts.length > 0) {
           lastUserImageParts = imageParts
@@ -577,8 +720,8 @@ const definition: AgentDefinition = {
           let hasImages = false
           if (Array.isArray(message.content)) {
             hasImages = message.content.some(
-              (part: Record<string, unknown>) =>
-                part.type === 'image' || part.type === 'media',
+              (part): part is ImagePart | FilePart =>
+                part.type === 'image' || part.type === 'media' || part.type === 'file',
             )
           }
           const imageNote = hasImages ? ' [image(s) were attached]' : ''
@@ -606,7 +749,7 @@ const definition: AgentDefinition = {
               }
             } else if (part.type === 'tool-call') {
               const toolName = part.toolName as string
-              const input = (part.input as Record<string, unknown>) || {}
+              const input = asObject(part.input) ?? {}
               toolSummaries.push(summarizeToolCall(toolName, input))
             }
           }
@@ -632,13 +775,13 @@ const definition: AgentDefinition = {
           })
         }
       } else if (message.role === 'tool') {
-        const toolMessage = message as ToolMessage
+        const toolMessage: ToolMessage = message
         const entryParts: string[] = []
 
         if (Array.isArray(toolMessage.content)) {
           for (const part of toolMessage.content) {
             if (part.type === 'json' && part.value) {
-              const value = part.value as Record<string, unknown>
+              const value = asObject(part.value)
 
               if (value.errorMessage || value.error) {
                 let errorText = String(value.errorMessage || value.error)
@@ -654,7 +797,7 @@ const definition: AgentDefinition = {
                 toolMessage.toolName === 'run_terminal_command' &&
                 'exitCode' in value
               ) {
-                const exitCode = value.exitCode as number
+                const exitCode = asNumber(value.exitCode)
                 if (exitCode !== 0) {
                   entryParts.push(`Command failed with exit code: ${exitCode}`)
                 }
@@ -664,13 +807,7 @@ const definition: AgentDefinition = {
                 if (value.skipped) {
                   entryParts.push('User skipped question')
                 } else if ('answers' in value) {
-                  const answers = value.answers as
-                    | Array<{
-                        selectedOption?: string
-                        selectedOptions?: string[]
-                        otherText?: string
-                      }>
-                    | undefined
+                  const answers = asAnswerList(value.answers)
                   if (answers && answers.length > 0) {
                     const answerTexts = answers
                       .map((a) => {
@@ -715,14 +852,7 @@ const definition: AgentDefinition = {
         ) {
           for (const part of toolMessage.content) {
             if (part.type === 'json' && Array.isArray(part.value)) {
-              const agentResults = part.value as Array<{
-                agentName?: string
-                agentType?: string
-                value?: {
-                  type?: string
-                  value?: unknown
-                }
-              }>
+              const agentResults = asAgentResultList(part.value)
               const includedResults = agentResults.filter(
                 (r) =>
                   r.agentType &&
@@ -855,7 +985,7 @@ ${SUMMARY_DISCLAIMER}`,
     const summaryContentParts: (TextPart | ImagePart | FilePart)[] = [textPart]
     // Append image parts (they're already typed correctly from the original message)
     for (const part of lastUserImageParts) {
-      summaryContentParts.push(part as ImagePart | FilePart)
+      summaryContentParts.push(part)
     }
     const summarizedMessage: UserMessage = {
       role: 'user',

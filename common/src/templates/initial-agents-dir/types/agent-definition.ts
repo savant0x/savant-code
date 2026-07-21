@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- user-facing agent types: dynamic constraints */
 /**
  * SavantCode Agent Type Definitions
  *

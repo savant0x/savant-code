@@ -1,6 +1,6 @@
 import * as analytics from '@savant-code/common/analytics'
 import { TEST_USER_ID } from '@savant-code/common/old-constants'
-import { createTestAgentRuntimeParams } from '@savant-code/common/testing/fixtures/agent-runtime'
+import { createTestAgentRuntimeParams, emptyMcpServers } from '@savant-code/common/testing/fixtures/agent-runtime'
 import { clearMockedModules } from '@savant-code/common/testing/mock-modules'
 import {
   createMockDbOperations,
@@ -9,6 +9,7 @@ import {
 import { getInitialSessionState } from '@savant-code/common/types/session-state'
 import { AbortError, promptSuccess } from '@savant-code/common/util/error'
 import { assistantMessage, userMessage } from '@savant-code/common/util/messages'
+import { APICallError, RetryError } from 'ai'
 import {
   afterAll,
   afterEach,
@@ -20,7 +21,6 @@ import {
   mock,
   spyOn,
 } from 'bun:test'
-import { APICallError, RetryError } from 'ai'
 import { z } from 'zod/v4'
 
 import { loopAgentSteps } from '../run-agent-step'
@@ -90,7 +90,7 @@ describe('loopAgentSteps - runAgentStep vs runProgrammaticStep behavior', () => 
       outputMode: 'structured_output',
       includeMessageHistory: true,
       inheritParentSystemPrompt: false,
-      mcpServers: {},
+      mcpServers: emptyMcpServers,
       toolNames: ['read_files', 'write_file', 'end_turn'],
       spawnableAgents: [],
       systemPrompt: 'Test system prompt',

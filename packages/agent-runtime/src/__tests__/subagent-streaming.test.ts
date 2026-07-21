@@ -1,4 +1,5 @@
 import { TEST_USER_ID } from '@savant-code/common/old-constants'
+import { emptyMcpServers } from '@savant-code/common/testing/fixtures/agent-runtime'
 import { TEST_AGENT_RUNTIME_IMPL } from '@savant-code/common/testing/impl/agent-runtime'
 import { getInitialSessionState } from '@savant-code/common/types/session-state'
 import { assistantMessage } from '@savant-code/common/util/messages'
@@ -56,7 +57,7 @@ describe('Subagent Streaming', () => {
       systemPrompt: '',
       instructionsPrompt: '',
       stepPrompt: '',
-      mcpServers: {},
+      mcpServers: emptyMcpServers,
     }
 
     handleSpawnAgentsBaseParams = {

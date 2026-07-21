@@ -17,7 +17,7 @@ function harness(opts?: { idleThresholdMs?: number }) {
   const scheduler: EngagementScheduler = {
     setInterval: (fn) => {
       registered = fn
-      return 'handle'
+      return 42
     },
     clearInterval: () => {
       cleared = true

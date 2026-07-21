@@ -1,4 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- contract type: dynamic tool input/output shapes */
 import type { ServerAction } from '../../actions'
+import type { JSONValue } from '../json'
 import type { MCPConfig } from '../mcp'
 import type { ToolResultOutput } from '../messages/content-part'
 
@@ -18,7 +20,7 @@ export type RequestMcpToolDataFn = (params: {
   {
     name: string
     description?: string
-    inputSchema: unknown
+    inputSchema: JSONValue
   }[]
 >
 
@@ -43,7 +45,7 @@ export type HandleStepsLogChunkFn = (params: {
   userInputId: string
   runId: string
   level: 'debug' | 'info' | 'warn' | 'error'
-  data: unknown
+  data: JSONValue
   message?: string
 }) => void
 

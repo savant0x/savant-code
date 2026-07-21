@@ -1,3 +1,4 @@
+/* eslint-disable no-console -- SDK example: intentional console output */
 /**
  * Example: Code Reviewer
  *
@@ -14,9 +15,9 @@ function divide(a, b) {
 `.trim()
 
 async function main() {
-  const apiKey = process.env.CODEBUFF_API_KEY
+  const apiKey = process.env.SAVANT_CODE_API_KEY
   if (!apiKey) {
-    console.error('CODEBUFF_API_KEY environment variable is required')
+    console.error('SAVANT_CODE_API_KEY environment variable is required')
     process.exit(1)
   }
 
@@ -29,7 +30,7 @@ async function main() {
   console.log('```\n')
 
   const result = await client.run({
-    agent: 'savant-code/base2@latest',
+    agent: 'savant-code/savant@latest',
     prompt: `Review this code and identify any bugs or issues:\n\n${SAMPLE_CODE}`,
     handleStreamChunk: (chunk) => {
       if (typeof chunk === 'string') {

@@ -3,8 +3,8 @@ import { withSystemTags } from '@savant-code/agent-runtime/util/messages'
 import { getInitialSessionState } from '@savant-code/common/types/session-state'
 import { getStubProjectFileContext } from '@savant-code/common/util/file'
 import { assistantMessage, userMessage } from '@savant-code/common/util/messages'
-import { afterEach, describe, expect, it, mock, spyOn } from 'bun:test'
 import { RetryError } from 'ai'
+import { afterEach, describe, expect, it, mock, spyOn } from 'bun:test'
 
 // Type for tool call content blocks in message history
 interface ToolCallContentBlock {
@@ -14,8 +14,15 @@ interface ToolCallContentBlock {
   input: Record<string, unknown>
 }
 
+// Type for text content blocks in message history
+interface TextContentBlock {
+  type: 'text'
+  text: string
+}
+
 import { SavantCodeClient } from '../client'
 import * as databaseModule from '../impl/database'
+
 
 describe('Run Cancellation Handling', () => {
   afterEach(() => {
@@ -76,7 +83,7 @@ describe('Run Cancellation Handling', () => {
     })
 
     const result = await client.run({
-      agent: 'base2',
+      agent: 'savant',
       prompt: 'Please fix the bug',
     })
 
@@ -170,7 +177,7 @@ describe('Run Cancellation Handling', () => {
     })
 
     const result = await client.run({
-      agent: 'base2',
+      agent: 'savant',
       prompt: 'Please fix the bug',
       signal: abortController.signal,
     })
@@ -183,7 +190,7 @@ describe('Run Cancellation Handling', () => {
       (m) =>
         m.role === 'user' &&
         m.content.some(
-          (c: any) => c.type === 'text' && c.text.includes('fix the bug'),
+          (c): c is TextContentBlock => c.type === 'text' && c.text.includes('fix the bug'),
         ),
     )
 
@@ -230,7 +237,7 @@ describe('Run Cancellation Handling', () => {
     })
 
     const result = await client.run({
-      agent: 'base2',
+      agent: 'savant',
       prompt: 'hello',
     })
 
@@ -292,7 +299,7 @@ describe('Run Cancellation Handling', () => {
     })
 
     const result = await client.run({
-      agent: 'base2',
+      agent: 'savant',
       prompt: 'hello',
     })
 
@@ -340,7 +347,7 @@ describe('Run Cancellation Handling', () => {
     })
 
     const result = await client.run({
-      agent: 'base2',
+      agent: 'savant',
       prompt: 'hello',
     })
 
@@ -385,7 +392,7 @@ describe('Run Cancellation Handling', () => {
     })
 
     const result = await client.run({
-      agent: 'base2',
+      agent: 'savant',
       prompt: 'hello',
     })
 
@@ -424,7 +431,7 @@ describe('Run Cancellation Handling', () => {
     })
 
     const result = await client.run({
-      agent: 'base2',
+      agent: 'savant',
       prompt: 'Please fix the bug in my code',
     })
 
@@ -449,8 +456,8 @@ describe('Run Cancellation Handling', () => {
 
     // Verify the message content contains the original prompt
     const textContent = userPromptMessage!.content.find(
-      (c: any) => c.type === 'text',
-    ) as { type: 'text'; text: string } | undefined
+      (c): c is TextContentBlock => c.type === 'text',
+    )
     expect(textContent).toBeDefined()
     expect(textContent!.text).toContain('Please fix the bug in my code')
   })
@@ -522,7 +529,7 @@ describe('Run Cancellation Handling', () => {
     })
 
     const result = await client.run({
-      agent: 'base2',
+      agent: 'savant',
       prompt: 'test prompt',
       signal: abortController.signal,
     })
@@ -536,7 +543,7 @@ describe('Run Cancellation Handling', () => {
     const lastMessage = messageHistory[messageHistory.length - 1]
     expect(lastMessage.role).toBe('user')
     expect(
-      (lastMessage.content[0] as { type: 'text'; text: string }).text,
+      (lastMessage.content[0] as TextContentBlock).text,
     ).toContain('User interrupted')
 
     // Verify there's no empty assistant message before the interruption
@@ -583,7 +590,7 @@ describe('Run Cancellation Handling', () => {
     })
 
     const result = await client.run({
-      agent: 'base2',
+      agent: 'savant',
       prompt: 'Implement the feature',
       handleStreamChunk: (chunk) => {
         if (typeof chunk === 'string') {
@@ -644,7 +651,7 @@ describe('Run Cancellation Handling', () => {
     serverSessionState.mainAgentState.messageHistory.push({
       role: 'assistant',
       content: [
-        { type: 'text', text: 'Let me read that file...' },
+        { type: 'text', text: 'Let me read that file...' } as TextContentBlock,
         {
           type: 'tool-call',
           toolCallId: 'tool-1',
@@ -718,7 +725,7 @@ describe('Run Cancellation Handling', () => {
     })
 
     const result = await client.run({
-      agent: 'base2',
+      agent: 'savant',
       prompt: 'test prompt',
       signal: abortController.signal,
     })
@@ -739,7 +746,7 @@ describe('Run Cancellation Handling', () => {
       (m) =>
         m.role === 'assistant' &&
         m.content.some(
-          (c: any) => c.type === 'tool-call' && c.toolCallId === 'tool-1',
+          (c): c is ToolCallContentBlock => c.type === 'tool-call' && c.toolCallId === 'tool-1',
         ),
     )
     expect(toolCallMessage).toBeDefined()
@@ -816,7 +823,7 @@ describe('Run Cancellation Handling', () => {
     })
 
     const result = await client.run({
-      agent: 'base2',
+      agent: 'savant',
       prompt: 'test prompt',
       signal: abortController.signal,
     })
@@ -829,8 +836,8 @@ describe('Run Cancellation Handling', () => {
     expect(Array.isArray(lastMessage.content)).toBe(true)
 
     const textContent = lastMessage.content.find(
-      (c: any) => c.type === 'text',
-    ) as { type: 'text'; text: string } | undefined
+      (c): c is TextContentBlock => c.type === 'text',
+    )
     expect(textContent).toBeDefined()
 
     // The text should be wrapped in <system> tags
@@ -864,7 +871,7 @@ describe('Run Cancellation Handling', () => {
     })
 
     const result = await client.run({
-      agent: 'base2',
+      agent: 'savant',
       prompt: 'test prompt',
       signal: abortController.signal,
     })
@@ -929,7 +936,7 @@ describe('Run Cancellation Handling', () => {
 
     // Run without aborting
     const result = await client.run({
-      agent: 'base2',
+      agent: 'savant',
       prompt: 'test prompt',
     })
 
@@ -1021,7 +1028,7 @@ describe('Run Cancellation Handling', () => {
 
     // Run 1: cancelled mid-stream
     const firstRunResult = await client.run({
-      agent: 'base2',
+      agent: 'savant',
       prompt: 'Fix the bug in auth.ts',
       signal: abortController.signal,
     })
@@ -1036,7 +1043,7 @@ describe('Run Cancellation Handling', () => {
       (m) =>
         m.role === 'user' &&
         m.content.some(
-          (c: any) => c.type === 'text' && c.text.includes('Fix the bug'),
+          (c): c is TextContentBlock => c.type === 'text' && c.text.includes('Fix the bug'),
         ),
     )
     expect(firstUserMsg).toBeDefined()
@@ -1093,7 +1100,7 @@ describe('Run Cancellation Handling', () => {
 
     // Run 2: uses previousRun from the cancelled first run
     const secondRunResult = await client.run({
-      agent: 'base2',
+      agent: 'savant',
       prompt: 'Now also fix the login page',
       previousRun: firstRunResult,
     })
@@ -1111,7 +1118,7 @@ describe('Run Cancellation Handling', () => {
       (m) =>
         m.role === 'user' &&
         m.content.some(
-          (c: any) => c.type === 'text' && c.text.includes('Fix the bug'),
+          (c): c is TextContentBlock => c.type === 'text' && c.text.includes('Fix the bug'),
         ),
     )
     expect(firstUserMsgInSecond).toBeDefined()
@@ -1121,7 +1128,7 @@ describe('Run Cancellation Handling', () => {
       (m) =>
         m.role === 'user' &&
         m.content.some(
-          (c: any) =>
+          (c): c is TextContentBlock =>
             c.type === 'text' && c.text.includes('fix the login page'),
         ),
     )
@@ -1132,7 +1139,7 @@ describe('Run Cancellation Handling', () => {
       (m) =>
         m.role === 'assistant' &&
         m.content.some(
-          (c: any) =>
+          (c): c is TextContentBlock =>
             c.type === 'text' && c.text.includes('authentication module'),
         ),
     )
@@ -1164,7 +1171,7 @@ describe('Run Cancellation Handling', () => {
       {
         role: 'assistant',
         content: [
-          { type: 'text', text: 'I will analyze the issue.' },
+          { type: 'text', text: 'I will analyze the issue.' } as TextContentBlock,
           {
             type: 'tool-call',
             toolCallId: 'read-1',
@@ -1187,7 +1194,7 @@ describe('Run Cancellation Handling', () => {
       {
         role: 'assistant',
         content: [
-          { type: 'text', text: 'Found the bug, fixing now.' },
+          { type: 'text', text: 'Found the bug, fixing now.' } as TextContentBlock,
           {
             type: 'tool-call',
             toolCallId: 'write-1',
@@ -1266,7 +1273,7 @@ describe('Run Cancellation Handling', () => {
     })
 
     const result = await client.run({
-      agent: 'base2',
+      agent: 'savant',
       prompt: 'test prompt',
       signal: abortController.signal,
       handleStreamChunk: (chunk) => {
@@ -1294,7 +1301,7 @@ describe('Run Cancellation Handling', () => {
     const lastMessage = messageHistory[messageHistory.length - 1]
     expect(lastMessage.role).toBe('user')
     expect(
-      (lastMessage.content[0] as { type: 'text'; text: string }).text,
+      (lastMessage.content[0] as TextContentBlock).text,
     ).toContain('User interrupted the response')
   })
 })

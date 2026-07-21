@@ -1,6 +1,7 @@
 import { getWebsiteUrl } from './constants'
 
 import type { ComposioMetaToolName } from '@savant-code/common/constants/composio'
+import type { JSONValue } from '@savant-code/common/types/json'
 import type { ToolResultOutput } from '@savant-code/common/types/messages/content-part'
 
 type ComposioExecuteResponse = {
@@ -22,7 +23,7 @@ async function readErrorMessage(response: Response): Promise<string> {
 export async function executeComposioToolViaServer(params: {
   apiKey: string
   toolName: ComposioMetaToolName
-  input: Record<string, unknown>
+  input: Record<string, JSONValue>
 }): Promise<ToolResultOutput[]> {
   try {
     const response = await fetch(

@@ -4,7 +4,7 @@
 
 Codecane is a CLI tool that writes code for you.
 
-1. Run `codecane` from your project directory
+1. Run `savant-code` from your project directory
 2. Tell it what to do
 3. It will read and write to files and run commands to produce the code you want
 
@@ -15,7 +15,7 @@ Note: Codecane will run commands in your terminal as it deems necessary to fulfi
 To install Codecane (staging), run:
 
 ```bash
-npm install -g codecane@beta
+npm install -g savant-code@beta
 ```
 
 (Use `sudo` if you get a permission error.)
@@ -25,7 +25,7 @@ npm install -g codecane@beta
 After installation, you can start Codecane by running:
 
 ```bash
-codecane [project-directory]
+savant-code [project-directory]
 ```
 
 If no project directory is specified, Codecane will use the current directory.
@@ -61,7 +61,7 @@ Some have said every change should be paired with a unit test. In 2024, every ch
 If you are getting permission errors during installation, try using sudo:
 
 ```
-sudo npm install -g codecane@beta
+sudo npm install -g savant-code@beta
 ```
 
 If you still have errors, it's a good idea to [reinstall Node](https://nodejs.org/en/download).

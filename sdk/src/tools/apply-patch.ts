@@ -1,12 +1,14 @@
 import path from 'path'
 
-import { resolveFilePath } from './path-utils'
 import { resolveAndContain } from '@savant-code/common/util/paths'
 
-import type { ApplyPatchOperation } from '@savant-code/common/tools/params/tool/apply-patch'
-import type { SavantCodeToolOutput } from '@savant-code/common/tools/list'
-import type { SavantCodeFileSystem } from '@savant-code/common/types/filesystem'
+import { resolveFilePath } from './path-utils'
+
 import type { OnFileWrittenCallback } from './change-file'
+import type { SavantCodeToolOutput } from '@savant-code/common/tools/list'
+import type { ApplyPatchOperation } from '@savant-code/common/tools/params/tool/apply-patch'
+import type { SavantCodeFileSystem } from '@savant-code/common/types/filesystem'
+import type { JSONValue } from '@savant-code/common/types/json'
 
 type ApplyPatchResult = SavantCodeToolOutput<'apply_patch'>
 type ApplyPatchJson = ApplyPatchResult[number] & { type: 'json' }
@@ -584,12 +586,14 @@ function errorResult(errorMessage: string): ApplyPatchJson {
   }
 }
 
-function parseOperation(parameters: unknown): ApplyPatchOperation | null {
+function parseOperation(
+  parameters: Record<string, JSONValue>,
+): ApplyPatchOperation | null {
   if (
     typeof parameters !== 'object' ||
     parameters === null ||
     !('operation' in parameters) ||
-    typeof (parameters as { operation: unknown }).operation !== 'object'
+    typeof parameters.operation !== 'object'
   ) {
     return null
   }
@@ -598,7 +602,7 @@ function parseOperation(parameters: unknown): ApplyPatchOperation | null {
 }
 
 export async function applyPatchTool(params: {
-  parameters: unknown
+  parameters: Record<string, JSONValue>
   cwd: string
   fs: SavantCodeFileSystem
   onFileWritten?: OnFileWrittenCallback

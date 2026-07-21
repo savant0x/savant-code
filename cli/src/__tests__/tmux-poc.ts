@@ -1,5 +1,6 @@
 #!/usr/bin/env bun
 
+/* eslint-disable no-console -- CLI test POC: intentional diagnostic output */
 /**
  * Proof of Concept: tmux-based CLI testing
  *

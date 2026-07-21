@@ -16,8 +16,8 @@ import type {
  */
 export type SdkEnv = BaseEnv & {
   // SDK-specific paths
-  CODEBUFF_RG_PATH?: string
-  CODEBUFF_WASM_DIR?: string
+  SAVANT_CODE_RG_PATH?: string
+  SAVANT_CODE_WASM_DIR?: string
 
   // Build flags
   VERBOSE?: string

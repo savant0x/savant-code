@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- activity query: dynamic activity shapes */
 import { useCallback, useEffect, useRef, useSyncExternalStore } from 'react'
 
 import { isUserActive, subscribeToActivity } from '../utils/activity-tracker'

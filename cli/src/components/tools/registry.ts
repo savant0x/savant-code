@@ -13,17 +13,16 @@ import { ReadDocsComponent } from './read-docs'
 import { ReadFilesComponent } from './read-files'
 import { ReadSubtreeComponent } from './read-subtree'
 import { ReadURLComponent } from './read-url'
-
-import { logger } from '../../utils/logger'
 import { RenderUIComponent } from './render-ui'
-import { WebSearchComponent } from './web-search'
 import { RunTerminalCommandComponent } from './run-terminal-command'
 import { SkillComponent } from './skill'
 import { StrReplaceComponent } from './str-replace'
 import { SuggestFollowupsComponent } from './suggest-followups'
 import { TaskCompleteComponent } from './task-completed'
+import { WebSearchComponent } from './web-search'
 import { WriteFileComponent } from './write-file'
 import { WriteTodosComponent } from './write-todos'
+import { logger } from '../../utils/logger'
 
 import type {
   ToolComponent,

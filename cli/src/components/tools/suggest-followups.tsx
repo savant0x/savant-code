@@ -5,8 +5,8 @@ import { defineToolComponent } from './types'
 import { useTerminalDimensions } from '../../hooks/use-terminal-dimensions'
 import { useTheme } from '../../hooks/use-theme'
 import { getLatestFollowupToolCallId, useChatStore } from '../../state/chat-store'
-import { useFreebuffSessionStore } from '../../state/savant-free-session-store'
-import { IS_FREEBUFF } from '../../utils/constants'
+import { useSavantFreeSessionStore } from '../../state/savant-free-session-store'
+import { IS_SAVANT_FREE } from '../../utils/constants'
 import { Button } from '../button'
 
 import type { ToolRenderConfig } from './types'
@@ -225,8 +225,8 @@ const SuggestFollowupsItem = ({
 }: SuggestFollowupsItemProps) => {
   const theme = useTheme()
   const inputFocused = useChatStore((state) => state.inputFocused)
-  const isFreebuffSessionOver = useFreebuffSessionStore(
-    (state) => IS_FREEBUFF && state.session?.status === 'ended',
+  const isSavantFreeSessionOver = useSavantFreeSessionStore(
+    (state) => IS_SAVANT_FREE && state.session?.status === 'ended',
   )
   const setSuggestedFollowups = useChatStore(
     (state) => state.setSuggestedFollowups,
@@ -310,7 +310,7 @@ const SuggestFollowupsItem = ({
             isHovered={hoveredIndex === index}
             onSendFollowup={onSendFollowup}
             onHover={setHoveredIndex}
-            disabled={!inputFocused || isFreebuffSessionOver}
+            disabled={!inputFocused || isSavantFreeSessionOver}
             labelColumnWidth={labelColumnWidth}
           />
         ))}

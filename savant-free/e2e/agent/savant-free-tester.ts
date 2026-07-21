@@ -4,42 +4,42 @@ import type { AgentDefinition } from '@savant-code/sdk'
  * Agent definition for testing the SavantFree CLI via tmux.
  *
  * This agent is designed to be used with the custom tmux tools from
- * `createFreebuffTmuxTools()`. It receives a testing task in its prompt
+ * `createSavantFreeTmuxTools()`. It receives a testing task in its prompt
  * and uses tmux tools to start SavantFree, interact with it, and verify behavior.
  *
  * Example usage:
  * ```ts
- * const { tools, cleanup } = createFreebuffTmuxTools(binaryPath)
+ * const { tools, cleanup } = createSavantFreeTmuxTools(binaryPath)
  * const result = await client.run({
- *   agent: savant-free$1.id,
+ *   agent: savantFreeTester.id,
  *   prompt: 'Start savant-free and verify the welcome screen shows SavantFree branding',
- *   agentDefinitions: [savant-free$1],
+ *   agentDefinitions: [savantFreeTester],
  *   customToolDefinitions: tools,
  *   handleEvent: collector.handleEvent,
  * })
  * await cleanup()
  * ```
  */
-export const savant-free$1: AgentDefinition = {
+export const savantFreeTester: AgentDefinition = {
   id: 'savant-free-tester',
   displayName: 'SavantFree E2E Tester',
   model: 'anthropic/claude-sonnet-4.5',
   toolNames: [
-    'start_freebuff',
-    'send_to_freebuff',
-    'capture_freebuff_output',
-    'stop_freebuff',
+    'start_savantFree',
+    'send_to_savantFree',
+    'capture_savantFree_output',
+    'stop_savantFree',
   ],
   instructionsPrompt: `You are a QA tester for the SavantFree CLI application.
 
 Your job is to verify that SavantFree behaves correctly by interacting with it
 through tmux tools. Follow these steps:
 
-1. Call start_freebuff to launch the CLI
-2. Use capture_freebuff_output (with waitSeconds) to see the terminal output
-3. Use send_to_freebuff to type commands or text
+1. Call start_savantFree to launch the CLI
+2. Use capture_savantFree_output (with waitSeconds) to see the terminal output
+3. Use send_to_savantFree to type commands or text
 4. Capture output again to verify behavior
-5. ALWAYS call stop_freebuff when done
+5. ALWAYS call stop_savantFree when done
 
 Key things to verify:
 - The CLI starts without errors or crashes

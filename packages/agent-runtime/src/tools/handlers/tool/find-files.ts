@@ -20,6 +20,7 @@ import type {
   ParamsExcluding,
   ParamsOf,
 } from '@savant-code/common/types/function-params'
+import type { JSONValue } from '@savant-code/common/types/json'
 import type { AgentState } from '@savant-code/common/types/session-state'
 import type { ProjectFileContext } from '@savant-code/common/util/file'
 
@@ -29,7 +30,7 @@ const COLLECT_FULL_FILE_CONTEXT = false
 
 export const handleFindFiles = (async (
   params: {
-    previousToolCallFinished: Promise<any>
+    previousToolCallFinished: Promise<void>
     toolCall: SavantCodeToolCall<'find_files'>
     logger: Logger
 
@@ -66,7 +67,7 @@ export const handleFindFiles = (async (
   } = params
   const { prompt } = toolCall.input
 
-  const fileRequestMessagesTokens = countTokensJson(agentState.messageHistory)
+  const fileRequestMessagesTokens = countTokensJson(agentState.messageHistory as JSONValue)
   const system = getSearchSystemPrompt({
     fileContext,
     messagesTokens: fileRequestMessagesTokens,

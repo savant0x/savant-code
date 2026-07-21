@@ -19,7 +19,7 @@ function getServerForRun(runId: string): SequentialThinkingServer {
 }
 
 export const handleSequentialThinking = (async (params: {
-  previousToolCallFinished: Promise<any>
+  previousToolCallFinished: Promise<void>
   toolCall: SavantCodeToolCall<'sequentialthinking'>
   logger: Logger
   runId: string

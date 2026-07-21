@@ -1,10 +1,10 @@
-import { FREEBUFF_PREMIUM_SESSION_RESET_TIMEZONE } from '@savant-code/common/constants/savant-free-models'
+import { SAVANT_FREE_PREMIUM_SESSION_RESET_TIMEZONE } from '@savant-code/common/constants/savant-free-models'
 import { getZonedDayBounds } from '@savant-code/common/util/zoned-time'
 
-import type { SavantFree$1 } from '@savant-code/common/types/savant-free-session'
+import type { SavantFreeRateLimitsByModel } from '@savant-code/common/types/savant-free-session'
 
-export function getFreebuffPremiumResetAt(params: {
-  rateLimitsByModel?: SavantFree$1
+export function getSavantFreePremiumResetAt(params: {
+  rateLimitsByModel?: SavantFreeRateLimitsByModel
   nowMs: number
 }): Date {
   const { rateLimitsByModel, nowMs } = params
@@ -22,7 +22,7 @@ export function getFreebuffPremiumResetAt(params: {
 
   return getZonedDayBounds(
     new Date(nowMs),
-    FREEBUFF_PREMIUM_SESSION_RESET_TIMEZONE,
+    SAVANT_FREE_PREMIUM_SESSION_RESET_TIMEZONE,
   ).resetsAt
 }
 
@@ -31,7 +31,7 @@ export function getFreebuffPremiumResetAt(params: {
  * the weekly GLM pool sets `withDays` so a multi-day window reads as "2d 5h"
  * instead of a 100-hour figure.
  */
-export function formatFreebuffPremiumResetCountdown(
+export function formatSavantFreePremiumResetCountdown(
   resetAt: Date,
   nowMs: number,
   { withDays = false }: { withDays?: boolean } = {},

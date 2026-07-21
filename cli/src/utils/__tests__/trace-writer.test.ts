@@ -1,15 +1,17 @@
-import { describe, test, expect, beforeEach, afterEach, mock } from 'bun:test'
+/* eslint-disable @typescript-eslint/no-explicit-any -- test file: intentional any casts for trace data */
 import * as fs from 'fs'
 import * as os from 'os'
 import * as path from 'path'
+
+import { describe, test, expect, beforeEach, afterEach, mock } from 'bun:test'
 
 // Force tracing on so the test is deterministic
 mock.module('@savant-code/common/env', () => ({
   IS_DEV: true,
 }))
 
-import { createTraceWriter } from '../trace-writer'
 import { setProjectRoot, tryGetProjectRoot } from '../../project-files'
+import { createTraceWriter } from '../trace-writer'
 
 import type { Message } from '@savant-code/common/types/messages/savant-code-message'
 

@@ -28,11 +28,11 @@ const placeholderNames = [
 ] as const
 
 type PlaceholderType<T extends typeof placeholderNames> = {
-  [K in T[number]]: `{CODEBUFF_${K}}`
+  [K in T[number]]: `{SAVANT_CODE_${K}}`
 }
 
 export const PLACEHOLDER = Object.fromEntries(
-  placeholderNames.map((name) => [name, `{CODEBUFF_${name}}` as const]),
+  placeholderNames.map((name) => [name, `{SAVANT_CODE_${name}}` as const]),
 ) as PlaceholderType<typeof placeholderNames>
 export type PlaceholderValue = (typeof PLACEHOLDER)[keyof typeof PLACEHOLDER]
 

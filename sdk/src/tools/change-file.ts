@@ -5,12 +5,13 @@ import { resolveAndContain } from '@savant-code/common/util/paths'
 import { applyPatch } from 'diff'
 import z from 'zod/v4'
 
-import { logger } from '../utils/logger'
 import { resolveFilePath } from './path-utils'
+import { logger } from '../utils/logger'
 
+import type { ResolvedProjectPath } from './path-utils'
 import type { SavantCodeToolOutput } from '@savant-code/common/tools/list'
 import type { SavantCodeFileSystem } from '@savant-code/common/types/filesystem'
-import type { ResolvedProjectPath } from './path-utils'
+import type { JSONValue } from '@savant-code/common/types/json'
 
 const FileChangeSchema = z.object({
   type: z.enum(['patch', 'file']),
@@ -32,7 +33,7 @@ export type OnFileWrittenCallback = (params: {
 }) => void | Promise<void>
 
 export async function changeFile(params: {
-  parameters: unknown
+  parameters: Record<string, JSONValue>
   cwd: string
   fs: SavantCodeFileSystem
   onFileWritten?: OnFileWrittenCallback

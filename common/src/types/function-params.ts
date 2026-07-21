@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- generic utility types: intentional any in type-level programming */
 import type { UnionToIntersection } from 'bun-types/vendor/expect-type'
 
 type Prettify<T> = {

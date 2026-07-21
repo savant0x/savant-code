@@ -183,7 +183,8 @@ export const handleSpawnAgents = (async (
                 )
               }
               if (chunk.type === 'tool_call' || chunk.type === 'tool_result') {
-                return (chunk as any).parentAgentId ?? subAgentState.agentId
+                const printableEvent = chunk as unknown as { parentAgentId?: string }
+                return printableEvent.parentAgentId ?? subAgentState.agentId
               }
               return undefined
             }

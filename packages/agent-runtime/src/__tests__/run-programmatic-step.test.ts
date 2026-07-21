@@ -1,5 +1,6 @@
 import * as analytics from '@savant-code/common/analytics'
 import { TEST_USER_ID } from '@savant-code/common/old-constants'
+import { emptyMcpServers } from '@savant-code/common/testing/fixtures/agent-runtime'
 import { TEST_AGENT_RUNTIME_IMPL } from '@savant-code/common/testing/impl/agent-runtime'
 import { getInitialSessionState } from '@savant-code/common/types/session-state'
 import {
@@ -35,8 +36,8 @@ import type {
 import type { SendActionFn } from '@savant-code/common/types/contracts/client'
 import type { Logger } from '@savant-code/common/types/contracts/logger'
 import type { ParamsOf } from '@savant-code/common/types/function-params'
-import type { ToolMessage } from '@savant-code/common/types/messages/savant-code-message'
 import type { ToolResultOutput } from '@savant-code/common/types/messages/content-part'
+import type { ToolMessage } from '@savant-code/common/types/messages/savant-code-message'
 import type { AgentState } from '@savant-code/common/types/session-state'
 
 const logger: Logger = {
@@ -86,7 +87,7 @@ describe('runProgrammaticStep', () => {
       outputMode: 'structured_output',
       includeMessageHistory: true,
       inheritParentSystemPrompt: false,
-      mcpServers: {},
+      mcpServers: emptyMcpServers,
       toolNames: ['read_files', 'write_file', 'end_turn'],
       spawnableAgents: [],
       systemPrompt: 'Test system prompt',

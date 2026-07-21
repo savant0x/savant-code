@@ -15,7 +15,7 @@ import { mapOpenAICompatibleFinishReason } from './map-openai-compatible-finish-
 import { openaiCompatibleCompletionProviderOptions } from './openai-compatible-completion-options'
 
 import type { OpenAICompatibleCompletionModelId } from './openai-compatible-completion-options'
-import type { ProviderErrorStructure } from '../openai-compatible-error'
+import type { OpenAICompatibleErrorData, ProviderErrorStructure } from '../openai-compatible-error'
 import type {
   APICallError,
   LanguageModelV2,
@@ -37,7 +37,7 @@ type OpenAICompatibleCompletionConfig = {
   headers: () => Record<string, string | undefined>
   url: (options: { modelId: string; path: string }) => string
   fetch?: FetchFunction
-  errorStructure?: ProviderErrorStructure<any>
+  errorStructure?: ProviderErrorStructure<OpenAICompatibleErrorData>
 
   /**
    * The supported URLs for the model.

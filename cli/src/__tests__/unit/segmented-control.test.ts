@@ -74,27 +74,27 @@ const theme: ChatTheme = {
 describe('SegmentedControl - processSegments', () => {
   test('computes width from label using string-width', () => {
     const segments: Segment[] = [
-      { id: 'DEFAULT', label: 'DEFAULT' },
-      { id: 'MAX', label: 'MAX' },
-      { id: 'PLAN', label: 'PLAN' },
+      { id: 'EDIT', label: 'EDIT' },
+      { id: 'SCAFFOLD', label: 'SCAFFOLD' },
+      { id: 'ANALYZE', label: 'ANALYZE' },
     ]
 
     const processed = processSegments(segments, null, false, theme)
     const widths = processed.map((s) => s.width)
     expect(widths).toEqual([
-      stringWidth(' DEFAULT '),
-      stringWidth(' MAX '),
-      stringWidth(' PLAN '),
+      stringWidth(' EDIT '),
+      stringWidth(' SCAFFOLD '),
+      stringWidth(' ANALYZE '),
     ])
   })
 
   test('applies defaultHighlighted when nothing hovered', () => {
     const segments: Segment[] = [
-      { id: 'DEFAULT', label: 'DEFAULT' },
-      { id: 'MAX', label: 'MAX' },
+      { id: 'EDIT', label: 'EDIT' },
+      { id: 'SCAFFOLD', label: 'SCAFFOLD' },
       {
-        id: 'active-DEFAULT',
-        label: '> DEFAULT',
+        id: 'active-EDIT',
+        label: '> EDIT',
         isSelected: true,
         defaultHighlighted: true,
       },
@@ -105,35 +105,35 @@ describe('SegmentedControl - processSegments', () => {
       processed.map((p) => [p.id, p]),
     )
 
-    expect(map['active-DEFAULT'].leftBorderColor).toBe(theme.foreground)
-    expect(map['DEFAULT'].leftBorderColor).toBe(theme.border)
+    expect(map['active-EDIT'].leftBorderColor).toBe(theme.foreground)
+    expect(map['EDIT'].leftBorderColor).toBe(theme.border)
   })
 
   test('hovering a segment highlights it', () => {
     const segments: Segment[] = [
-      { id: 'DEFAULT', label: 'DEFAULT' },
-      { id: 'MAX', label: 'MAX' },
-      { id: 'PLAN', label: 'PLAN' },
+      { id: 'EDIT', label: 'EDIT' },
+      { id: 'SCAFFOLD', label: 'SCAFFOLD' },
+      { id: 'ANALYZE', label: 'ANALYZE' },
     ]
-    const processed = processSegments(segments, 'MAX', true, theme)
+    const processed = processSegments(segments, 'SCAFFOLD', true, theme)
     const map: Record<string, ProcessedSegment> = Object.fromEntries(
       processed.map((p) => [p.id, p]),
     )
 
-    expect(map.MAX.isHovered).toBe(true)
-    expect(map.MAX.leftBorderColor).toBe(theme.foreground)
-    expect(map.DEFAULT.leftBorderColor).toBe(theme.border)
+    expect(map.SCAFFOLD.isHovered).toBe(true)
+    expect(map.SCAFFOLD.leftBorderColor).toBe(theme.foreground)
+    expect(map.EDIT.leftBorderColor).toBe(theme.border)
   })
 
   test('disabled segments use muted text and border colors', () => {
     const segments: Segment[] = [
-      { id: 'DEFAULT', label: 'DEFAULT', disabled: true },
-      { id: 'MAX', label: 'MAX' },
+      { id: 'EDIT', label: 'EDIT', disabled: true },
+      { id: 'SCAFFOLD', label: 'SCAFFOLD' },
     ]
-    const [fast, max] = processSegments(segments, null, false, theme)
-    expect(fast.textColor).toBe(theme.muted)
-    expect(fast.leftBorderColor).toBe(theme.border)
-    expect(max.textColor).toBe(theme.foreground)
+    const [edit, scaffold] = processSegments(segments, null, false, theme)
+    expect(edit.textColor).toBe(theme.muted)
+    expect(edit.leftBorderColor).toBe(theme.border)
+    expect(scaffold.textColor).toBe(theme.foreground)
   })
 })
 

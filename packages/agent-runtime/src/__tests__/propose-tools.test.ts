@@ -1,4 +1,5 @@
 import { TEST_USER_ID } from '@savant-code/common/old-constants'
+import { emptyMcpServers } from '@savant-code/common/testing/fixtures/agent-runtime'
 import { TEST_AGENT_RUNTIME_IMPL } from '@savant-code/common/testing/impl/agent-runtime'
 import { getInitialSessionState } from '@savant-code/common/types/session-state'
 import { assistantMessage, userMessage } from '@savant-code/common/util/messages'
@@ -243,7 +244,7 @@ console.log(add(1, 2));
       outputMode: 'structured_output',
       includeMessageHistory: true,
       inheritParentSystemPrompt: false,
-      mcpServers: {},
+      mcpServers: emptyMcpServers,
       toolNames: [
         'propose_str_replace',
         'propose_write_file',

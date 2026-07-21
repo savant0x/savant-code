@@ -68,7 +68,7 @@ async function extractTaskScores(
     // Find where the agent name starts (common patterns)
     for (let i = parts.length - 2; i > 0; i--) {
       if (
-        parts[i].startsWith('base2') ||
+        parts[i].startsWith('savant') ||
         parts[i].startsWith('external') ||
         parts[i] === 'claude' ||
         parts[i] === 'codex'
@@ -429,8 +429,8 @@ Options:
 Examples:
   bun run analyze-task-scores.ts
   bun run analyze-task-scores.ts --runs 5
-  bun run analyze-task-scores.ts --dir 2025-12-07T21-57_base2
-  bun run analyze-task-scores.ts --dir 2025-12-07T21-57_base2 --threshold 7.5 --json
+  bun run analyze-task-scores.ts --dir 2025-12-07T21-57_savant
+  bun run analyze-task-scores.ts --dir 2025-12-07T21-57_savant --threshold 7.5 --json
   bun run analyze-task-scores.ts --runs 10 --output task-scores.md
 `)
       process.exit(0)

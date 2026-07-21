@@ -1,9 +1,9 @@
 import React from 'react'
 
-import { useTheme } from '../../../hooks/use-theme'
 import { PhaseIndicator } from './phase-indicator'
-import { ProgressBar } from '../feedback/progress-bar'
+import { useTheme } from '../../../hooks/use-theme'
 import { Badge } from '../data-display/badge'
+import { ProgressBar } from '../feedback/progress-bar'
 
 export interface PerfectionLoopProps {
   phase: string

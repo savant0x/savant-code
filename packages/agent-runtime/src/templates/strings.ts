@@ -15,11 +15,11 @@ import { parseUserMessage } from '../util/messages'
 import type { AgentTemplate, PlaceholderValue } from './types'
 import type { Logger } from '@savant-code/common/types/contracts/logger'
 import type { ParamsExcluding } from '@savant-code/common/types/function-params'
+import type { TextPart, ImagePart } from '@savant-code/common/types/messages/content-part'
 import type {
   Message,
   UserMessage,
 } from '@savant-code/common/types/messages/savant-code-message'
-import type { TextPart } from '@savant-code/common/types/messages/content-part'
 import type {
   AgentState,
   AgentTemplateType,
@@ -69,7 +69,7 @@ export async function formatPrompt(
 
   const { messageHistory } = agentState
   function isUserInputMessage(message: Message): message is UserMessage & {
-    content: [TextPart, ...any[]]
+    content: [TextPart, ...Array<TextPart | ImagePart>]
   } {
     return (
       message.role === 'user' &&

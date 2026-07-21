@@ -1,4 +1,5 @@
 import type { SharedV2ProviderMetadata } from '@ai-sdk/provider'
+import type { JSONValue } from '@savant-code/common/types/json'
 
 /**
 Extracts provider-specific metadata from API responses.
@@ -17,7 +18,7 @@ export type MetadataExtractor = {
   extractMetadata: ({
     parsedBody,
   }: {
-    parsedBody: unknown
+    parsedBody: Record<string, JSONValue>
   }) => Promise<SharedV2ProviderMetadata | undefined>
 
   /**
@@ -34,7 +35,7 @@ export type MetadataExtractor = {
      *
      * @param parsedChunk - The parsed JSON response chunk from the provider's API
      */
-    processChunk(parsedChunk: unknown): void
+    processChunk(parsedChunk: Record<string, JSONValue>): void
 
     /**
      * Builds the metadata object after all chunks have been processed.

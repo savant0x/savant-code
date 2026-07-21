@@ -1,5 +1,5 @@
 /**
- * @deprecated Use `@savantcode.common/testing/fixtures/agent-runtime` instead.
+ * @deprecated Use `@savant-code/common/testing/fixtures/agent-runtime` instead.
  */
 
 export * from '../fixtures/agent-runtime'

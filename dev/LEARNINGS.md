@@ -21,6 +21,33 @@
 - [Performance insights]
 ---
 
+## Session 2026-07-21: TUI Rebuild Planning + OpenTUI Integration
+
+**Key Learnings:**
+
+- OpenTUI v0.2.2 provides comprehensive native renderables: DiffRenderable, MarkdownRenderable, CodeRenderable, ScrollBoxRenderable, SelectRenderable, TabSelectRenderable, InputRenderable, TextareaRenderable, TextTableRenderable, ASCIIFontRenderable. Custom implementations should only be used when no native component exists.
+- OpenTUI React integration is seamless via JSX elements (<box>, <text>, <code>, <diff>, <markdown>, <input>, <select>, <textarea>, <scrollbox>, <ascii-font>, <tab-select>) and hooks (useKeyboard, useRenderer, useTimeline, useResize, useSelection, useTerminalDimensions, useFocus, useBlur, usePaste, useEvent).
+- Timeline animations are production-ready with tween, spring, easing, keyframes, and sub-timeline synchronization. The useTimeline hook integrates directly with React.
+- Post-processing effects (scanlines, vignette, brightness, gain, saturation, gamma, chromatic aberration, noise, colorblind simulation) can be applied to the entire render buffer for visual effects without modifying individual components.
+- SyntaxStyle from @opentui/core provides syntax highlighting themes that can be used directly by CodeRenderable, DiffRenderable, and MarkdownRenderable.
+- FID decomposition works well for large projects - splitting FID-033 into 5 phase FIDs (033a-033e) with a Master FID for orchestration maintains ECHO Protocol compliance while making the work manageable.
+- The Perfection Loop converges faster when FIDs are focused on a single problem. Phase FIDs converged in 2 iterations each, while the Master FID needed 4 iterations.
+
+**Agent Behavior / Process:**
+
+- Read all OpenTUI example files before planning to understand full capability set
+- Native OpenTUI components should be preferred over custom implementations
+- Phase FIDs should specify exactly which OpenTUI components to use
+- Verification steps should include grep checks for native component usage
+
+**Technical Insights:**
+
+- OpenTUI box layout with flexDirection: 'column' and width: '100%' causes text elements to collapse; numeric width is required for proper vertical stacking
+- OpenTUI SelectRenderable provides filterable list with keyboard navigation - perfect for command palette
+- OpenTUI TabSelectRenderable provides tab bars with underline, scroll arrows - perfect for navigation
+- OpenTUI ScrollBoxRenderable provides scrollable containers with custom scrollbars - essential for tool output overflow
+- OpenTUI TextTableRenderable provides tables with borders, wrapping, selection - replaces custom table renderers
+
 ## Session 2026-07-17: OpenTUI Text Rendering & Model Persistence
 
 **Key Learnings:**
@@ -152,5 +179,28 @@
 - `agentTemplate.id.startsWith('thinker')` correctly matches `thinker`, `thinker-gpt`, `thinker-with-files-gemini`, `thinker-best-of-n-opus`. Any user-created agent with id starting with 'thinker' also gets sequentialthinking — acceptable behavior.
 - ARCHITECTURE.md must honestly distinguish active gates from future-phase items. Don't claim "active" for deferred enforcement.
 - `ProjectFileContext` has a `cwd` property — use it instead of inline `{ cwd: string }` types to maintain consistency with what `tool-executor.ts` actually passes.
+
+## Session 2026-07-19: ESLint Zero-Tolerance Cleanup (packages/ + sdk/ + agents/)
+
+**Key Learnings:**
+
+- `Partial<Parameters<typeof fn>[0]>` is a clean replacement for `: any` in test helper variables when the exact type is complex and dynamically extended in `beforeEach` — avoids both `any` and overly restrictive `Record<string, ...>` types
+- `Record<string, primitiveUnion>` is too restrictive for test objects containing functions, nested objects, and AbortSignal instances — leads to TypeScript compilation errors when assigned to real function parameters
+- `mock<[], void>` is the correct type for `mock(() => {})` in bun:test — avoids `mock<any, any[]>` without using `any`
+- `import type { ParsedToolCall }` from local module replaces `const allToolCalls: any[] = []` with proper typed arrays
+- For test files that pass intentionally malformed data, use `as StreamChunk` (or similar whole-object cast) instead of `as any` on individual fields — preserves type safety while acknowledging the intentional mismatch
+- CRLF/LF line endings on Windows cause fragile `str_replace` tool behavior; Python scripts with `newline=''` are more reliable for bulk replacements
+
+**Agent Behavior:**
+
+- The `str_replace` tool cannot handle CRLF line endings properly on Windows — always verify with `grep`/`sed` after edit attempts
+- Replacing `any` with types that are too restrictive (like `Record<string, string | number | ...>`) causes cascading TypeScript errors that need separate fixes
+- Batch-fixing 2-3 related test files per turn is more efficient than fixing one at a time
+
+**Technical Insights:**
+
+- `Parameters<typeof fn>[0]` gives the exact input type of a function, which can be used with `Partial<>` for test helper variables that are fully initialized in `beforeEach`
+- `ReturnType<typeof mock<[], void>>` is a valid type annotation for bun:test mock functions — the `Mock` type is inferred correctly
+- When replacing `as any` on a string literal like `'{"paths": ["test.ts"]' as any`, the replacement must handle both the escape sequences and the CRLF/LF line endings of the target file
 
 <!-- Add new entries above this line -->

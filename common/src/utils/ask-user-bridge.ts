@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- ask-user bridge: dynamic response types */
 import type { AskUserQuestion } from '../tools/params/tool/ask-user'
 
 export type AskUserRequest = {

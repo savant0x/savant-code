@@ -20,22 +20,26 @@ import type { DirectoryNode, FileTreeNode } from './util/file'
 function logFileTreeError(
   operation: string,
   filePath: string,
-  error: unknown,
+  error: Error,
 ): void {
   // Only log in debug mode to avoid noisy output
-  if (!process.env.DEBUG && !process.env.CODEBUFF_DEBUG) {
+  if (!process.env.DEBUG && !process.env.SAVANT_CODE_DEBUG) {
     return
   }
 
-  const err = error as { code?: string } | undefined
-  const code = err?.code
-  const errorMessage = error instanceof Error ? error.message : String(error)
+  const code = hasErrnoCode(error) ? error.code : undefined
+  const errorMessage = error.message
 
+  // eslint-disable-next-line no-console -- controlled debug logging for file tree operations
   console.debug(
     `[FileTree] ${operation} failed for "${filePath}"${
       code ? ` (${code})` : ''
     }: ${errorMessage}`,
   )
+}
+
+function hasErrnoCode(error: Error): error is Error & { code?: string } {
+  return 'code' in error
 }
 
 export const DEFAULT_MAX_FILES = 10_000
@@ -154,16 +158,24 @@ export async function getProjectFileTree(params: {
             })
             totalFiles++
           }
-        } catch (error: unknown) {
+        } catch (error) {
           // File may be inaccessible due to permissions or may have been deleted.
           // Log with context for debugging, but continue building the tree.
-          logFileTreeError('fs.stat', filePath, error)
+          logFileTreeError(
+            'fs.stat',
+            filePath,
+            error instanceof Error ? error : new Error(String(error)),
+          )
         }
       }
-    } catch (error: unknown) {
+    } catch (error) {
       // Directory may be inaccessible due to permissions.
       // Log with context for debugging, but continue building the tree.
-      logFileTreeError('fs.readdir', fullPath, error)
+      logFileTreeError(
+        'fs.readdir',
+        fullPath,
+        error instanceof Error ? error : new Error(String(error)),
+      )
     }
   }
   return root.children
@@ -239,10 +251,14 @@ export async function parseGitignore(params: {
     let ignoreContent: string
     try {
       ignoreContent = await fs.readFile(ignoreFilePath, 'utf8')
-    } catch (error: unknown) {
+    } catch (error) {
       // Ignore file may be inaccessible or deleted after existence check.
       // Log with context for debugging, but continue without these ignore rules.
-      logFileTreeError('fs.readFile (ignore file)', ignoreFilePath, error)
+      logFileTreeError(
+        'fs.readFile (ignore file)',
+        ignoreFilePath,
+        error instanceof Error ? error : new Error(String(error)),
+      )
       continue
     }
     const lines = ignoreContent.split('\n')

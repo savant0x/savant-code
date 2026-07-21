@@ -200,13 +200,13 @@ describe('scrubPlanTagsInBlocks', () => {
 
 describe('createModeDividerMessage', () => {
   test('creates a mode divider message', () => {
-    const message = createModeDividerMessage('MAX')
+    const message = createModeDividerMessage('SCAFFOLD')
 
     expect(message.variant).toBe('ai')
     expect(message.content).toBe('')
     expect(message.blocks).toHaveLength(1)
     expect(message.blocks![0].type).toBe('mode-divider')
-    expect((message.blocks![0] as ModeDividerContentBlock).mode).toBe('MAX')
+    expect((message.blocks![0] as ModeDividerContentBlock).mode).toBe('SCAFFOLD')
     expect(message.id).toMatch(/^divider-/)
   })
 })
@@ -1777,7 +1777,7 @@ describe('sanitizeRestoredMessages', () => {
   })
 
   test('leaves mode dividers, system messages, and user messages untouched', () => {
-    const divider = createModeDividerMessage('DEFAULT' as any)
+    const divider = createModeDividerMessage('EDIT')
     const system: ChatMessage = {
       id: 'sys-123',
       variant: 'ai',

@@ -10,6 +10,7 @@ const { pipeline } = require('stream/promises')
 const zlib = require('zlib')
 
 const tar = require('tar')
+
 const { createReleaseHttpClient } = require('./http')
 
 function createLauncher(productConfig) {
@@ -96,7 +97,7 @@ function createLauncher(productConfig) {
 
   function createConfig(packageName) {
     const homeDir = os.homedir()
-    const configDir = path.join(homeDir, '.config', 'manicode')
+    const configDir = path.join(homeDir, '.config', 'savant')
     const binaryName =
       process.platform === 'win32' ? `${packageName}.exe` : packageName
 
@@ -123,10 +124,10 @@ function createLauncher(productConfig) {
 
   function getPostHogConfig() {
     const apiKey =
-      process.env.CODEBUFF_POSTHOG_API_KEY ||
+      process.env.SAVANT_CODE_POSTHOG_API_KEY ||
       process.env.NEXT_PUBLIC_POSTHOG_API_KEY
     const host =
-      process.env.CODEBUFF_POSTHOG_HOST ||
+      process.env.SAVANT_CODE_POSTHOG_HOST ||
       process.env.NEXT_PUBLIC_POSTHOG_HOST_URL
 
     if (!apiKey || !host) {
@@ -223,7 +224,7 @@ function createLauncher(productConfig) {
   function getTargetOverride() {
     const envNames = [
       `${packageName.toUpperCase()}_BINARY_TARGET`,
-      'CODEBUFF_BINARY_TARGET',
+      'SAVANT_CODE_BINARY_TARGET',
       'CLI_BINARY_TARGET',
     ]
 
@@ -734,7 +735,7 @@ function createLauncher(productConfig) {
     }
 
     const downloadUrl = `${
-      process.env.NEXT_PUBLIC_CODEBUFF_APP_URL || 'https://savant-code.com'
+      process.env.NEXT_PUBLIC_SAVANT_CODE_APP_URL || 'https://savant-code.com'
     }/api/releases/download/${version}/${fileName}`
 
     fs.mkdirSync(CONFIG.configDir, { recursive: true })

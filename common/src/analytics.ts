@@ -1,10 +1,10 @@
-import { env, DEBUG_ANALYTICS } from '@savantcode.common/env'
+import { env, DEBUG_ANALYTICS } from '@savant-code/common/env'
 
 import { createPostHogClient, type AnalyticsClient } from './analytics-core'
 import { AnalyticsEvent } from './constants/analytics-events'
 
-import type { TrackEventFn } from '@savantcode.common/types/contracts/analytics'
-import type { Logger } from '@savantcode.common/types/contracts/logger'
+import type { AnalyticsProperties, TrackEventFn } from '@savant-code/common/types/contracts/analytics'
+import type { Logger } from '@savant-code/common/types/contracts/logger'
 
 let client: AnalyticsClient | undefined
 
@@ -35,7 +35,7 @@ export async function flushAnalytics(logger?: Logger) {
 
 export function withDefaultProperties(
   trackEventFn: TrackEventFn,
-  defaultProperties: Record<string, unknown>,
+  defaultProperties: AnalyticsProperties,
 ): TrackEventFn {
   return (params) => {
     trackEventFn({
@@ -53,7 +53,7 @@ export function trackEvent({
 }: {
   event: AnalyticsEvent
   userId: string
-  properties?: Record<string, any>
+  properties?: AnalyticsProperties
   logger: Logger
 }) {
   // Don't track events in non-production environments

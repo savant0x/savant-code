@@ -1,11 +1,11 @@
 import * as analytics from '@savant-code/common/analytics'
 import { TEST_USER_ID } from '@savant-code/common/old-constants'
-import { createTestAgentRuntimeParams } from '@savant-code/common/testing/fixtures/agent-runtime'
-import { promptSuccess } from '@savant-code/common/util/error'
+import { createTestAgentRuntimeParams, emptyMcpServers } from '@savant-code/common/testing/fixtures/agent-runtime'
 import {
   AgentTemplateTypes,
   getInitialSessionState,
 } from '@savant-code/common/types/session-state'
+import { promptSuccess } from '@savant-code/common/util/error'
 import {
   afterEach,
   beforeEach,
@@ -26,25 +26,29 @@ import type {
   RequestOptionalFileFn,
   RequestToolCallFn,
 } from '@savant-code/common/types/contracts/client'
+import type {
+  PromptAiSdkStreamFn,
+  StreamChunk,
+} from '@savant-code/common/types/contracts/llm'
 import type { ParamsOf } from '@savant-code/common/types/function-params'
 import type { ProjectFileContext } from '@savant-code/common/util/file'
 
-let mainPromptBaseParams: any
+let mainPromptBaseParams: Omit<Parameters<typeof mainPrompt>[0], 'action'>
 
 
-import type { StreamChunk } from '@savant-code/common/types/contracts/llm'
 
 const mockAgentStream = (chunks: StreamChunk[]) => {
-  mainPromptBaseParams.promptAiSdkStream = async function* ({}) {
+  const stream: PromptAiSdkStreamFn = async function* () {
     for (const chunk of chunks) {
       yield chunk
     }
-    return 'mock-message-id'
+    return promptSuccess('mock-message-id')
   }
+  mainPromptBaseParams.promptAiSdkStream = stream
 }
 
 describe('mainPrompt', () => {
-  let mockLocalAgentTemplates: Record<string, any>
+  let mockLocalAgentTemplates: Record<string, AgentTemplate>
 
   beforeEach(() => {
     // Setup common mock agent templates
@@ -58,7 +62,7 @@ describe('mainPrompt', () => {
         model: 'gpt-4o-mini',
         includeMessageHistory: true,
         inheritParentSystemPrompt: false,
-        mcpServers: {},
+        mcpServers: emptyMcpServers,
         toolNames: ['write_file', 'run_terminal_command', 'end_turn'],
         spawnableAgents: [],
         systemPrompt: '',
@@ -74,7 +78,7 @@ describe('mainPrompt', () => {
         model: 'gpt-4o',
         includeMessageHistory: true,
         inheritParentSystemPrompt: false,
-        mcpServers: {},
+        mcpServers: emptyMcpServers,
         toolNames: ['write_file', 'run_terminal_command', 'end_turn'],
         spawnableAgents: [],
         systemPrompt: '',
@@ -93,11 +97,14 @@ describe('mainPrompt', () => {
       localAgentTemplates: mockLocalAgentTemplates,
       signal: new AbortController().signal,
       // Mock fetch to return a token count response
-      fetch: async () =>
-        ({
-          ok: true,
-          text: async () => JSON.stringify({ inputTokens: 1000 }),
-        }) as Response,
+      fetch: Object.assign(
+        async () =>
+          ({
+            ok: true,
+            text: async () => JSON.stringify({ inputTokens: 1000 }),
+          }) as Response,
+        { preconnect: async () => {} },
+      ),
     }
 
     // Mock analytics
@@ -164,13 +171,6 @@ describe('mainPrompt', () => {
     mock.restore()
   })
 
-  class _MockWebSocket {
-    send(msg: string) {}
-    close() {}
-    on(event: string, listener: (...args: any[]) => void) {}
-    removeListener(event: string, listener: (...args: any[]) => void) {}
-  }
-
   const mockFileContext: ProjectFileContext = {
     projectRoot: '/test',
     cwd: '/test',
@@ -215,7 +215,7 @@ describe('mainPrompt', () => {
         model: 'gpt-4o-mini',
         includeMessageHistory: true,
         inheritParentSystemPrompt: false,
-        mcpServers: {},
+        mcpServers: emptyMcpServers,
         toolNames: ['write_file', 'run_terminal_command', 'end_turn'],
         spawnableAgents: [],
         systemPrompt: '',
@@ -231,7 +231,7 @@ describe('mainPrompt', () => {
         model: 'gpt-4o-mini',
         includeMessageHistory: false,
         inheritParentSystemPrompt: false,
-        mcpServers: {},
+        mcpServers: emptyMcpServers,
         toolNames: ['write_file', 'run_terminal_command', 'end_turn'],
         spawnableAgents: [],
         systemPrompt: '',
@@ -245,7 +245,6 @@ describe('mainPrompt', () => {
       prompt: 'Hello',
       sessionState,
       fingerprintId: 'test',
-      costMode: 'normal' as const,
       promptId: 'test',
       toolResults: [],
       agentId: mainAgentId,
@@ -285,7 +284,6 @@ describe('mainPrompt', () => {
       prompt: 'Write hello world to new-file.txt',
       sessionState,
       fingerprintId: 'test',
-      costMode: 'max' as const, // This causes streamGemini25Pro to be called
       promptId: 'test',
       toolResults: [],
     }
@@ -303,7 +301,7 @@ describe('mainPrompt', () => {
           model: 'gpt-4o-mini',
           includeMessageHistory: true,
           inheritParentSystemPrompt: false,
-          mcpServers: {},
+          mcpServers: emptyMcpServers,
           toolNames: ['write_file', 'run_terminal_command', 'end_turn'],
           spawnableAgents: [],
           systemPrompt: '',
@@ -319,7 +317,7 @@ describe('mainPrompt', () => {
           model: 'gpt-4o',
           includeMessageHistory: true,
           inheritParentSystemPrompt: false,
-          mcpServers: {},
+          mcpServers: emptyMcpServers,
           toolNames: ['write_file', 'run_terminal_command', 'end_turn'],
           spawnableAgents: [],
           systemPrompt: '',
@@ -359,7 +357,6 @@ describe('mainPrompt', () => {
       prompt: '', // No new prompt
       sessionState,
       fingerprintId: 'test',
-      costMode: 'max' as const,
       promptId: 'test',
       toolResults: [],
     }
@@ -382,7 +379,6 @@ describe('mainPrompt', () => {
       prompt: 'New user prompt',
       sessionState,
       fingerprintId: 'test',
-      costMode: 'max' as const,
       promptId: 'test',
       toolResults: [],
     }
@@ -409,7 +405,6 @@ describe('mainPrompt', () => {
       prompt: '', // No new prompt
       sessionState,
       fingerprintId: 'test',
-      costMode: 'max' as const,
       promptId: 'test',
       toolResults: [],
     }
@@ -434,7 +429,6 @@ describe('mainPrompt', () => {
       prompt: 'Test prompt leading to empty response',
       sessionState,
       fingerprintId: 'test',
-      costMode: 'normal' as const,
       promptId: 'test',
       toolResults: [],
     }

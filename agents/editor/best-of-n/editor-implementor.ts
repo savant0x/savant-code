@@ -1,6 +1,8 @@
+
 import { publisher } from '../../constants'
 
 import type { SecretAgentDefinition } from '../../types/secret-agent-definition'
+import type { JSONValue } from '@savant-code/common/types/json'
 
 export const createBestOfNImplementor = (options: {
   model: 'sonnet' | 'opus' | 'gpt-5' | 'gemini'
@@ -20,11 +22,7 @@ export const createBestOfNImplementor = (options: {
         : isGemini
           ? 'google/gemini-3-pro-preview'
           : 'openai/gpt-5.1',
-    ...(isOpus && {
-      providerOptions: {
-        only: ['amazon-bedrock'],
-      },
-    }),
+
     displayName: 'Implementation Generator',
     spawnerPrompt:
       'Generates a complete implementation using propose_* tools that draft changes without applying them',
@@ -45,7 +43,7 @@ Your task is to write out ALL the code changes needed to complete the user's req
 IMPORTANT: Use propose_str_replace and propose_write_file tools to make your edits. These tools draft changes without actually applying them - they will be reviewed first. DO NOT use any other tools. Do not spawn any agents, read files, or set output.
 
 You can make multiple tool calls across multiple steps to complete the implementation. Only the file changes will be passed on, so you can say whatever you want to help you think. Do not write any final summary as that would be a waste of tokens because no one is reading it.
-<codebuff_tool_call>
+<savant_code_tool_call>
 {
   "cb_tool_name": "propose_str_replace",
   "path": "path/to/file",
@@ -60,18 +58,18 @@ You can make multiple tool calls across multiple steps to complete the implement
     },
   ]
 }
-</codebuff_tool_call>
+</savant_code_tool_call>
 
 OR for new files or major rewrites:
 
-<codebuff_tool_call>
+<savant_code_tool_call>
 {
   "cb_tool_name": "propose_write_file",
   "path": "path/to/file",
   "instructions": "What the change does",
   "content": "Complete file content"
 }
-</codebuff_tool_call>
+</savant_code_tool_call>
 ${
   isGpt5 || isGemini
     ? ``
@@ -86,21 +84,21 @@ You can also use <think> tags interspersed between tool calls to think about the
 [ Long think about the best way to implement the changes ]
 </think>
 
-<codebuff_tool_call>
+<savant_code_tool_call>
 [ First tool call to implement the feature ]
-</codebuff_tool_call>
+</savant_code_tool_call>
 
-<codebuff_tool_call>
+<savant_code_tool_call>
 [ Second tool call to implement the feature ]
-</codebuff_tool_call>
+</savant_code_tool_call>
 
 <think>
 [ Thoughts about a tricky part of the implementation ]
 </think>
 
-<codebuff_tool_call>
+<savant_code_tool_call>
 [ Third tool call to implement the feature ]
-</codebuff_tool_call>
+</savant_code_tool_call>
 
 </example>`
 }
@@ -123,6 +121,8 @@ More style notes:
 Write out your complete implementation now. Do not write any final summary.`,
 
     handleSteps: function* ({ agentState: initialAgentState }) {
+      type DiffResult = { file: string; unifiedDiff: string }
+
       const initialMessageHistoryLength =
         initialAgentState.messageHistory.length
 
@@ -133,7 +133,7 @@ Write out your complete implementation now. Do not write any final summary.`,
       )
 
       // Extract tool calls from assistant messages
-      const toolCalls: { toolName: string; input: any }[] = []
+      const toolCalls: { toolName: string; input: Record<string, JSONValue> }[] = []
       for (const message of postMessages) {
         if (message.role !== 'assistant' || !Array.isArray(message.content))
           continue
@@ -141,14 +141,14 @@ Write out your complete implementation now. Do not write any final summary.`,
           if (part.type === 'tool-call') {
             toolCalls.push({
               toolName: part.toolName,
-              input: part.input ?? (part as any).args ?? {},
+              input: part.input ?? (part as { args?: Record<string, JSONValue> }).args ?? {},
             })
           }
         }
       }
 
       // Extract tool results (unified diffs) from tool messages
-      const toolResults: any[] = []
+      const toolResults: JSONValue[] = []
       for (const message of postMessages) {
         if (message.role !== 'tool' || !Array.isArray(message.content)) continue
         for (const part of message.content) {
@@ -159,9 +159,18 @@ Write out your complete implementation now. Do not write any final summary.`,
       }
 
       // Concatenate all unified diffs for the selector to review
+      function isDiffResult(result: JSONValue): result is DiffResult {
+        if (typeof result !== 'object' || result === null) return false
+        const record = result as Record<string, JSONValue>
+        return (
+          typeof record.file === 'string' &&
+          typeof record.unifiedDiff === 'string'
+        )
+      }
+
       const unifiedDiffs = toolResults
-        .filter((result: any) => result.unifiedDiff)
-        .map((result: any) => `--- ${result.file} ---\n${result.unifiedDiff}`)
+        .filter(isDiffResult)
+        .map((result) => `--- ${result.file} ---\n${result.unifiedDiff}`)
         .join('\n\n')
 
       yield {

@@ -1,4 +1,3 @@
-import { describe, expect, test } from 'bun:test'
 import { EventEmitter } from 'node:events'
 import {
   copyFileSync,
@@ -9,9 +8,11 @@ import {
   writeFileSync,
 } from 'node:fs'
 import { createRequire } from 'node:module'
-import { join } from 'node:path'
 import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+
+import { describe, expect, test } from 'bun:test'
 
 const repoRoot = fileURLToPath(new URL('../../../../', import.meta.url))
 const require = createRequire(import.meta.url)

@@ -5,7 +5,6 @@ import { shouldTrackAnalyticsEvent } from '@savant-code/common/util/analytics-sa
 import { success } from '@savant-code/common/util/error'
 
 import { getWebsiteUrl } from '../constants'
-
 import {
   addAgentStep,
   fetchAgentFromDatabase,
@@ -15,16 +14,16 @@ import {
 } from './database'
 import { promptAiSdk, promptAiSdkStream, promptAiSdkStructured } from './llm'
 
+import type { AgentTemplate } from '@savant-code/common/types/agent-template'
 import type {
   AgentRuntimeDeps,
   AgentRuntimeScopedDeps,
 } from '@savant-code/common/types/contracts/agent-runtime'
-import type { AgentTemplate } from '@savant-code/common/types/agent-template'
+import type { TrackEventFn } from '@savant-code/common/types/contracts/analytics'
 import type { DatabaseAgentCache } from '@savant-code/common/types/contracts/database'
 import type { ClientEnv } from '@savant-code/common/types/contracts/env'
 import type { Logger } from '@savant-code/common/types/contracts/logger'
 import type { TraceWriter } from '@savant-code/common/types/contracts/trace'
-import type { TrackEventFn } from '@savant-code/common/types/contracts/analytics'
 
 const DATABASE_AGENT_CACHE_MAX_ENTRIES = 200
 
@@ -79,7 +78,7 @@ export function getAgentRuntimeImpl(
 
   const clientEnv: ClientEnv = {
     ...(clientEnvInput ?? clientEnvDefault),
-    NEXT_PUBLIC_CODEBUFF_APP_URL: getWebsiteUrl(),
+    NEXT_PUBLIC_SAVANT_CODE_APP_URL: getWebsiteUrl(),
   }
 
   const trackSdkRuntimeEvent: TrackEventFn = (eventParams) => {

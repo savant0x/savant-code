@@ -1,4 +1,5 @@
-import { AnalyticsEvent } from '@savantcode.common/constants/analytics-events'
+/* eslint-disable savant/no-unknown-in-signatures -- analytics logger trust boundary: log payloads arrive schema-less from the CLI/agent runtime; `data: unknown` is the only honest shape. 3-condition AND-gate: (i.1) caller type cannot be discovered without coupling to every logger call site; (i.2) narrowing to `JsonValue`/concrete breaks callers that pass LLM response objects and Error instances; (i.3) runtime narrowing via `isAnalyticsLogData` + `analyticsEvents.has()` preserves existing event filtering behavior. */
+import { AnalyticsEvent } from '@savant-code/common/constants/analytics-events'
 
 // Build PostHog payloads from log data in a single, shared place
 export type AnalyticsLogData = {
@@ -17,6 +18,10 @@ export type TrackableAnalyticsPayload = {
 
 const analyticsEvents = new Set<AnalyticsEvent>(Object.values(AnalyticsEvent))
 
+function isAnalyticsLogData(v: unknown): v is AnalyticsLogData {
+  return typeof v === 'object' && v !== null
+}
+
 const toStringOrNull = (value: unknown): string | null =>
   typeof value === 'string' ? value : null
 
@@ -30,10 +35,10 @@ const getUserId = (
   toStringOrNull(fallbackUserId)
 
 export function getAnalyticsEventId(data: unknown): AnalyticsEvent | null {
-  if (!data || typeof data !== 'object') {
+  if (!isAnalyticsLogData(data)) {
     return null
   }
-  const eventId = (data as AnalyticsLogData).eventId
+  const eventId = data.eventId
   return analyticsEvents.has(eventId as AnalyticsEvent)
     ? (eventId as AnalyticsEvent)
     : null
@@ -50,17 +55,16 @@ export function toTrackableAnalyticsPayload({
   msg: string
   fallbackUserId?: string
 }): TrackableAnalyticsPayload | null {
-  if (!data || typeof data !== 'object') {
+  if (!isAnalyticsLogData(data)) {
     return null
   }
 
-  const record = data as AnalyticsLogData
-  const eventId = getAnalyticsEventId(record)
+  const eventId = getAnalyticsEventId(data)
   if (!eventId) {
     return null
   }
 
-  const userId = getUserId(record, fallbackUserId)
+  const userId = getUserId(data, fallbackUserId)
 
   if (!userId) {
     return null
@@ -70,7 +74,7 @@ export function toTrackableAnalyticsPayload({
     event: eventId,
     userId,
     properties: {
-      ...record,
+      ...data,
       level,
       msg,
     },

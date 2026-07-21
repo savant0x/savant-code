@@ -63,23 +63,23 @@ export const getCliEnv = (): CliEnv => ({
   // Editor preferences
   VISUAL: process.env.VISUAL,
   EDITOR: process.env.EDITOR,
-  CODEBUFF_CLI_EDITOR: process.env.CODEBUFF_CLI_EDITOR,
-  CODEBUFF_EDITOR: process.env.CODEBUFF_EDITOR,
+  SAVANT_CODE_CLI_EDITOR: process.env.SAVANT_CODE_CLI_EDITOR,
+  SAVANT_CODE_EDITOR: process.env.SAVANT_CODE_EDITOR,
 
   // Theme preferences
   OPEN_TUI_THEME: process.env.OPEN_TUI_THEME,
   OPENTUI_THEME: process.env.OPENTUI_THEME,
 
   // Binary build configuration
-  CODEBUFF_IS_BINARY: process.env.CODEBUFF_IS_BINARY,
-  CODEBUFF_CLI_VERSION: process.env.CODEBUFF_CLI_VERSION,
-  CODEBUFF_CLI_TARGET: process.env.CODEBUFF_CLI_TARGET,
-  CODEBUFF_RG_PATH: process.env.CODEBUFF_RG_PATH,
-  CODEBUFF_SCROLL_MULTIPLIER: process.env.CODEBUFF_SCROLL_MULTIPLIER,
-  CODEBUFF_PERF_TEST: process.env.CODEBUFF_PERF_TEST,
-  CODEBUFF_TRACE: process.env.CODEBUFF_TRACE,
-  CODEBUFF_SHIP_LOGS: process.env.CODEBUFF_SHIP_LOGS,
-  FREEBUFF_MODE: process.env.FREEBUFF_MODE,
+  SAVANT_CODE_IS_BINARY: process.env.SAVANT_CODE_IS_BINARY,
+  SAVANT_CODE_CLI_VERSION: process.env.SAVANT_CODE_CLI_VERSION,
+  SAVANT_CODE_CLI_TARGET: process.env.SAVANT_CODE_CLI_TARGET,
+  SAVANT_CODE_RG_PATH: process.env.SAVANT_CODE_RG_PATH,
+  SAVANT_CODE_SCROLL_MULTIPLIER: process.env.SAVANT_CODE_SCROLL_MULTIPLIER,
+  SAVANT_CODE_PERF_TEST: process.env.SAVANT_CODE_PERF_TEST,
+  SAVANT_CODE_TRACE: process.env.SAVANT_CODE_TRACE,
+  SAVANT_CODE_SHIP_LOGS: process.env.SAVANT_CODE_SHIP_LOGS,
+  SAVANT_FREE_MODE: process.env.SAVANT_FREE_MODE,
   DIRECT_PROVIDER: process.env.DIRECT_PROVIDER,
 })
 
@@ -89,7 +89,7 @@ export const getCliEnv = (): CliEnv => ({
  * provider directly. When enabled, the CLI skips backend connection pings
  * and agent/validate calls; agents are bundled locally and inference routes
  * via INFERENCE_BASE_URL. The backend integration path is untouched, so
- * flipping this off (and pointing NEXT_PUBLIC_CODEBUFF_APP_URL at a backend)
+ * flipping this off (and pointing NEXT_PUBLIC_SAVANT_CODE_APP_URL at a backend)
  * restores full backend mode with zero code rework.
  */
 export const isDirectProviderMode = (): boolean =>

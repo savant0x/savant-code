@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- test file: intentional any casts for event handler shapes */
 import { describe, expect, test } from 'bun:test'
 
 import { createAgentBlock } from '../message-block-helpers'
@@ -107,7 +108,7 @@ const state = {
   return { controller, state }
 }
 
-const createTestContext = (agentMode: AgentMode = 'DEFAULT') => {
+const createTestContext = (agentMode: AgentMode = 'EDIT') => {
   let messages: ChatMessage[] = [
     {
       id: 'ai-1',
@@ -175,7 +176,7 @@ const createTestContext = (agentMode: AgentMode = 'DEFAULT') => {
 
 describe('sdk-event-handlers', () => {
   test('extracts plan content from root stream', () => {
-    const { ctx, getMessages, getHasPlanResponse } = createTestContext('PLAN')
+    const { ctx, getMessages, getHasPlanResponse } = createTestContext('SCAFFOLD')
     const handleChunk = createStreamChunkHandler(ctx)
 
     handleChunk('<PLAN>Build plan</PLAN>')

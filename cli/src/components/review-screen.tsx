@@ -83,12 +83,10 @@ export const ReviewScreen: React.FC<ReviewScreenProps> = ({
         width: '100%',
         borderStyle: 'single',
         borderColor: theme.border,
-        customBorderChars: BORDER_CHARS,
         paddingLeft: 1,
         paddingRight: 1,
         flexDirection: 'column',
-      }}
-    >
+      }} customBorderChars={BORDER_CHARS}>
       {REVIEW_OPTIONS.map((option, index) => {
         const isSelected = index === selectedIndex
         return (

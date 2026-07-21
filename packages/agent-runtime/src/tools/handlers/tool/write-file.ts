@@ -45,20 +45,13 @@ export type FileProcessingState = {
 export function getFileProcessingValues(
   state: FileProcessingState,
 ): FileProcessingState {
-  const fileProcessingValues: FileProcessingState = {
-    promisesByPath: {},
-    allPromises: [],
-    fileChangeErrors: [],
-    fileChanges: [],
-    firstFileProcessed: false,
+  return {
+    promisesByPath: { ...state.promisesByPath },
+    allPromises: [...state.allPromises],
+    fileChangeErrors: [...state.fileChangeErrors],
+    fileChanges: [...state.fileChanges],
+    firstFileProcessed: state.firstFileProcessed,
   }
-  for (const [key, value] of Object.entries(state)) {
-    const typedKey = key as keyof typeof fileProcessingValues
-    if (typedKey in fileProcessingValues) {
-      fileProcessingValues[typedKey] = value as any
-    }
-  }
-  return fileProcessingValues
 }
 
 export const handleWriteFile = (async (

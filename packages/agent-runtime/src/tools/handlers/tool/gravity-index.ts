@@ -9,8 +9,8 @@ import type {
 } from '@savant-code/common/tools/list'
 import type { AgentTemplate } from '@savant-code/common/types/agent-template'
 import type { ClientEnv, CiEnv } from '@savant-code/common/types/contracts/env'
-import type { JSONObject, JSONValue } from '@savant-code/common/types/json'
 import type { Logger } from '@savant-code/common/types/contracts/logger'
+import type { JSONObject, JSONValue } from '@savant-code/common/types/json'
 
 const omitUndefined = (value: Record<string, JSONValue | undefined>) => {
   const result: JSONObject = {}
@@ -29,9 +29,9 @@ const isJSONObject = (value: JSONValue | undefined): value is JSONObject =>
  *  product the request came from rather than all reading as CLI traffic. */
 const gravitySurface = (agentTemplate: { id: string }): string => {
   if (agentTemplate.id === 'base-chat') return 'freebuff_chat'
-  // SavantFree Web project agents are the `base2-free*` family.
-  if (agentTemplate.id.startsWith('base2-free')) return 'freebuff_web'
-  return 'codebuff_cli'
+  // SavantFree Web project agents are the `savant-free*` family.
+  if (agentTemplate.id.startsWith('savant-free')) return 'freebuff_web'
+  return 'savant_code_cli'
 }
 
 /** Surfaces that run under a shared service-account API key. For these we must

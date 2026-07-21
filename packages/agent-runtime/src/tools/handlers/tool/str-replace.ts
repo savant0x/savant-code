@@ -1,7 +1,9 @@
+import { resolveAndContain } from '@savant-code/common/util/paths'
+import { toLogValue } from '@savant-code/common/util/type-narrowing'
+
 import { postStreamProcessing } from './write-file'
 import { processStrReplace } from '../../../process-str-replace'
 
-import { resolveAndContain } from '@savant-code/common/util/paths'
 
 import type { SavantCodeToolHandlerFunction } from '../handler-function-type'
 import type { FileProcessingState } from './write-file'
@@ -97,10 +99,8 @@ export const handleStrReplace = (async (
     path,
     replacements,
     initialContentPromise: latestContentPromise,
-    logger,
-  })
-    .catch((error: any) => {
-      logger.error(error, 'Error processing str_replace block')
+    logger,  }).catch((error: unknown) => { // eslint-disable-line savant/no-unknown-in-signatures -- Catch trust boundary: native Promise rejection from str_replace execution
+      logger.error(toLogValue(error), 'Error processing str_replace block')
       return {
         tool: 'str_replace' as const,
         path,

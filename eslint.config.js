@@ -1,8 +1,9 @@
 import eslintConfigPrettier from 'eslint-config-prettier'
 import pluginImport from 'eslint-plugin-import'
-import unusedImports from 'eslint-plugin-unused-imports'
 import globals from 'globals'
 import tseslint from 'typescript-eslint'
+
+import noUnknownInSignatures from './scripts/eslint-rules/no-unknown-in-signatures.js'
 
 export default tseslint.config(
   // Global ignores
@@ -14,6 +15,10 @@ export default tseslint.config(
       '**/node_modules/*',
       'agents-graveyard/**', // Archived/deprecated agents - no need to lint
       'cli/src/agents/bundled-agents.generated.ts', // Auto-generated agent code with embedded console strings
+      'cli/src/agents/bundled-agents.generated.d.ts', // Auto-generated type declarations
+      'packages/code-map/__tests__/test-langs/', // Test fixture files (JS/TS for code-map tests)
+      'packages/llm-providers/src/openai-compatible/chat/stream-transform.test.ts', // Test fixture: console.log in transformation test
+      'scripts/eslint-rules/**', // The rule implementations themselves are not linted by this rule
     ],
   },
 
@@ -88,8 +93,12 @@ export default tseslint.config(
     },
     plugins: {
       import: pluginImport,
-      'unused-imports': unusedImports,
       '@typescript-eslint': tseslint.plugin,
+      savant: {
+        rules: {
+          'no-unknown-in-signatures': noUnknownInSignatures,
+        },
+      },
     },
     settings: {
       'import/resolver': {
@@ -115,7 +124,15 @@ export default tseslint.config(
       ],
       'import/no-unresolved': 'off', // Disabled: TypeScript/Bun handles module resolution; this rule produces false positives with path aliases
       'import/no-duplicates': 'warn',
-      'unused-imports/no-unused-imports': 'warn',
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          args: 'none',
+          ignoreRestSiblings: true,
+        },
+      ],
       '@typescript-eslint/consistent-type-imports': [
         'warn',
         {
@@ -123,21 +140,17 @@ export default tseslint.config(
           fixStyle: 'separate-type-imports',
         },
       ],
-      'no-unused-vars': [
-        'warn',
-        {
-          argsIgnorePattern: '^_', // Allow unused args prefixed with _
-          varsIgnorePattern: '^_', // Allow unused vars prefixed with _
-          args: 'none', // Don't check function arguments (common in callbacks with required signatures)
-        },
-      ],
       '@typescript-eslint/no-explicit-any': [
         'error',
         {
           ignoreRestArgs: true,
-          fixToUnknown: false,
+          fixToUnknown: false, // Do NOT auto-fix any -> unknown; unknown is also forbidden by our rule below
         },
       ],
+      // ECHO Law 6: ban `unknown` as param/return/var type (except inside `v is T` type guards)
+      // Currently 'warn' — flips to 'error' after the cleanup FID (FID-2026-0720-???)
+      // resolves the 367 existing `: unknown` usages in src. See dev/fids/.
+      'savant/no-unknown-in-signatures': 'warn',
       'no-console': [
         'warn',
         {

@@ -1,3 +1,4 @@
+import { emptyMcpServers } from '@savant-code/common/testing/fixtures/agent-runtime'
 import { TEST_AGENT_RUNTIME_IMPL } from '@savant-code/common/testing/impl/agent-runtime'
 import {
   getInitialAgentState,
@@ -55,7 +56,7 @@ describe('QuickJS Sandbox Generator', () => {
       outputMode: 'structured_output',
       includeMessageHistory: false,
       inheritParentSystemPrompt: false,
-      mcpServers: {},
+      mcpServers: emptyMcpServers,
       toolNames: ['set_output'],
       spawnableAgents: [],
       inputSchema: {},

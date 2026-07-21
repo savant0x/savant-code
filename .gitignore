@@ -56,6 +56,10 @@ cli/release-staging/http.js
 savant-free/cli/release/launcher.js
 savant-free/cli/release/http.js
 
+# Local resource/resorucs directories — user-added content, not source controlled
+/resources/
+/resorucs/
+
 # dev/releases/ -- ephemeral staging area for release notes drafts.
 # Canonical in-repo history: CHANGELOG.md. Canonical external source: GitHub Releases.
 # README.md is the permanent index. All *.md drafts are gitignored.

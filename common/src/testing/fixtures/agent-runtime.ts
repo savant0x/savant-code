@@ -11,7 +11,7 @@
  *   createTestAgentRuntimeParams,
  *   createTestAgentRuntimeDeps,
  *   mockFileContext,
- * } from '@savantcode.common/testing/fixtures/agent-runtime'
+ * } from '@savant-code/common/testing/fixtures/agent-runtime'
  *
  * const params = createTestAgentRuntimeParams()
  * const { agentTemplate, localAgentTemplates } = params
@@ -22,7 +22,11 @@ import { mock } from 'bun:test'
 
 import { promptSuccess } from '../../util/error'
 
+import type { AgentTemplate } from '../../types/agent-template'
+import type { MCPConfig } from '../../types/mcp'
 import type { ProjectFileContext } from '../../util/file'
+
+export const emptyMcpServers: Record<string, MCPConfig> = {}
 
 export const mockFileContext: ProjectFileContext = {
   projectRoot: '/test',
@@ -75,7 +79,7 @@ export const testFetch = Object.assign(
 
 export const testClientEnv = {
   NEXT_PUBLIC_CB_ENVIRONMENT: 'test' as const,
-  NEXT_PUBLIC_CODEBUFF_APP_URL: 'https://test.savantcode.com',
+  NEXT_PUBLIC_SAVANT_CODE_APP_URL: 'https://test.savantcode.com',
   NEXT_PUBLIC_SUPPORT_EMAIL: 'support@savant-code.test',
   NEXT_PUBLIC_POSTHOG_API_KEY: 'test-posthog-key',
   NEXT_PUBLIC_POSTHOG_HOST_URL: 'https://test.posthog.com',
@@ -90,8 +94,8 @@ export const testCiEnv = {
   GITHUB_ACTIONS: undefined,
   RENDER: undefined,
   IS_PULL_REQUEST: undefined,
-  CODEBUFF_GITHUB_TOKEN: undefined,
-  CODEBUFF_API_KEY: 'test-api-key',
+  SAVANT_CODE_GITHUB_TOKEN: undefined,
+  SAVANT_CODE_API_KEY: 'test-api-key',
 }
 
 /** @deprecated Use createTestAgentRuntimeParams() */
@@ -165,22 +169,8 @@ export const TEST_AGENT_RUNTIME_IMPL = Object.freeze({
 })
 
 export interface TestAgentRuntimeParams {
-  agentTemplate: {
-    id: string
-    displayName: string
-    model: string
-    inputSchema: Record<string, unknown>
-    outputMode: string
-    includeMessageHistory: boolean
-    inheritParentSystemPrompt: boolean
-    mcpServers: Record<string, unknown>
-    toolNames: string[]
-    spawnableAgents: string[]
-    systemPrompt: string
-    instructionsPrompt: string
-    stepPrompt: string
-  }
-  localAgentTemplates: Record<string, TestAgentRuntimeParams['agentTemplate']>
+  agentTemplate: AgentTemplate
+  localAgentTemplates: Record<string, AgentTemplate>
   sendAction: ReturnType<typeof mock>
   requestFiles: ReturnType<typeof mock>
   requestToolCall: ReturnType<typeof mock>
@@ -219,7 +209,7 @@ export function createTestAgentRuntimeParams(
     outputMode: 'last_message',
     includeMessageHistory: true,
     inheritParentSystemPrompt: false,
-    mcpServers: {},
+    mcpServers: emptyMcpServers,
     toolNames: ['read_files', 'write_file', 'end_turn'],
     spawnableAgents: [],
     systemPrompt: 'You are a test agent.',

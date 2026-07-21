@@ -1,7 +1,7 @@
 import { getReferralInfo } from '@savant-code/common/types/savant-free-session'
 
-import type { SavantFree$1 } from '../types/savant-free-session'
-import type { SavantFree$1 } from '@savant-code/common/types/savant-free-session'
+import type { SavantFreeSession } from '../types/savant-free-session'
+import type { SavantFreeReferralInfo } from '@savant-code/common/types/savant-free-session'
 
 /**
  * Process-wide cache of the most recent referral block the server sent.
@@ -14,18 +14,18 @@ import type { SavantFree$1 } from '@savant-code/common/types/savant-free-session
  * referral banner for the whole visit. Caching the last-known block lets the
  * picker re-render it immediately; a later clean `none` GET refreshes it.
  */
-let lastKnownReferral: SavantFree$1 | undefined
+let lastKnownReferral: SavantFreeReferralInfo | undefined
 
 /** Remember the referral block whenever a response includes one, so it can be
  *  carried across the join → end → return-to-landing round-trip. No-op for
  *  responses without a referral block (it keeps the prior value). */
-export function rememberReferral(session: SavantFree$1 | null): void {
+export function rememberReferral(session: SavantFreeSession | null): void {
   const referral = getReferralInfo(session)
   if (referral) lastKnownReferral = referral
 }
 
 /** The last referral block seen, or undefined if none has been seen yet. */
-export function getCachedReferral(): SavantFree$1 | undefined {
+export function getCachedReferral(): SavantFreeReferralInfo | undefined {
   return lastKnownReferral
 }
 

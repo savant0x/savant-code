@@ -1,7 +1,8 @@
-import { afterEach, beforeEach, describe, expect, it } from 'bun:test'
 import fs from 'fs'
 import os from 'os'
 import path from 'path'
+
+import { afterEach, beforeEach, describe, expect, it } from 'bun:test'
 
 import { handleSkill } from '../skill'
 
@@ -19,7 +20,7 @@ function writeSkill(projectRoot: string, name: string, description: string) {
 function callSkill(name: string, fileContext: Partial<ProjectFileContext>) {
   return handleSkill({
     previousToolCallFinished: Promise.resolve(),
-    toolCall: { toolName: 'skill', input: { name } } as any,
+    toolCall: { toolCallId: 'test-call', toolName: 'skill' as const, input: { name } },
     fileContext: fileContext as ProjectFileContext,
   })
 }
@@ -39,7 +40,7 @@ describe('handleSkill', () => {
     writeSkill(projectRoot, 'demo', 'installed at runtime')
 
     const { output } = await callSkill('demo', { projectRoot, skills: {} })
-    const value = (output as any)[0].value
+    const value = (output as { value: Record<string, string> }[])[0].value
 
     expect(value.name).toBe('demo')
     expect(value.description).toBe('installed at runtime')
@@ -60,7 +61,7 @@ describe('handleSkill', () => {
         },
       },
     })
-    const value = (output as any)[0].value
+    const value = (output as { value: Record<string, string> }[])[0].value
 
     expect(value.description).toBe('fresh on disk')
     expect(value.content).toContain('body for fresh on disk')
@@ -78,7 +79,7 @@ describe('handleSkill', () => {
         },
       },
     })
-    const value = (output as any)[0].value
+    const value = (output as { value: Record<string, string> }[])[0].value
 
     expect(value.description).toBe('cache only')
     expect(value.content).toBe('cached body')
@@ -86,7 +87,7 @@ describe('handleSkill', () => {
 
   it('returns a not-found error when the skill is missing everywhere', async () => {
     const { output } = await callSkill('missing', { projectRoot, skills: {} })
-    const value = (output as any)[0].value
+    const value = (output as { value: Record<string, string> }[])[0].value
 
     expect(value.content).toContain("Skill 'missing' not found")
   })

@@ -1,6 +1,6 @@
-export const FREEBUFF_COUNTDOWN_VISIBLE_MS = 5 * 60_000
+export const SAVANT_FREE_COUNTDOWN_VISIBLE_MS = 5 * 60_000
 
-export const formatFreebuffSessionCountdown = (ms: number): string => {
+export const formatSavantFreeSessionCountdown = (ms: number): string => {
   if (ms <= 0) return 'expiring…'
   const totalSeconds = Math.ceil(ms / 1000)
   const m = Math.floor(totalSeconds / 60)
@@ -8,10 +8,10 @@ export const formatFreebuffSessionCountdown = (ms: number): string => {
   return `${m}:${s.toString().padStart(2, '0')}`
 }
 
-export const formatFreebuffSessionRemaining = (ms: number): string => {
+export const formatSavantFreeSessionRemaining = (ms: number): string => {
   if (ms <= 0) return 'expiring…'
-  if (ms < FREEBUFF_COUNTDOWN_VISIBLE_MS) {
-    return `${formatFreebuffSessionCountdown(ms)} left`
+  if (ms < SAVANT_FREE_COUNTDOWN_VISIBLE_MS) {
+    return `${formatSavantFreeSessionCountdown(ms)} left`
   }
   const totalMinutes = Math.ceil(ms / 60_000)
   if (totalMinutes < 60) return `${totalMinutes}m left`

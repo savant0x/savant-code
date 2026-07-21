@@ -1,5 +1,6 @@
 import { getInputModeConfig, type InputMode } from './input-modes'
 import { isPlainEnterKey } from './terminal-enter-detection'
+
 import type { KeyEvent } from '@opentui/core'
 
 

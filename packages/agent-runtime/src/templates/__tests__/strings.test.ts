@@ -1,8 +1,9 @@
+import { emptyMcpServers } from '@savant-code/common/testing/fixtures/agent-runtime'
 import { TEST_AGENT_RUNTIME_IMPL } from '@savant-code/common/testing/impl/agent-runtime'
 import { describe, test, expect, mock } from 'bun:test'
 
-import { PLACEHOLDER } from '../types'
 import { formatCurrentDate, getAgentPrompt } from '../strings'
+import { PLACEHOLDER } from '../types'
 
 import type { AgentTemplate } from '../types'
 import type { AgentState } from '@savant-code/common/types/session-state'
@@ -72,7 +73,7 @@ const createMockAgentTemplate = (
   outputMode: 'last_message',
   includeMessageHistory: false,
   inheritParentSystemPrompt: false,
-  mcpServers: {},
+  mcpServers: emptyMcpServers,
   toolNames: [],
   spawnableAgents: [],
   systemPrompt: '',

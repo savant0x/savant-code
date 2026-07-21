@@ -26,8 +26,7 @@ export type CreateRunConfigParams = {
   agentDefinitions: AgentDefinition[]
   eventHandlerState: EventHandlerState
   signal: AbortSignal
-  costMode?: 'free' | 'lite' | 'normal' | 'max' | 'experimental' | 'ask'
-  extraCodebuffMetadata?: Record<string, string>
+  extraSavantCodeMetadata?: Record<string, string>
   /** Periodic in-flight RunState checkpoints (see RunOptions.onStateSnapshot). */
   onStateSnapshot?: (runState: RunState) => void
   /** Optional file write hook. Called after a file is successfully written. */
@@ -109,8 +108,7 @@ export const createRunConfig = (params: CreateRunConfigParams) => {
     previousRunState,
     agentDefinitions,
     eventHandlerState,
-    costMode,
-    extraCodebuffMetadata,
+    extraSavantCodeMetadata,
     onStateSnapshot,
     onFileWritten,
     devMode,
@@ -127,8 +125,7 @@ export const createRunConfig = (params: CreateRunConfigParams) => {
     handleStreamChunk: createStreamChunkHandler(eventHandlerState),
     handleEvent: createEventHandler(eventHandlerState),
     signal: params.signal,
-    costMode,
-    extraCodebuffMetadata,
+    extraSavantCodeMetadata,
     onStateSnapshot,
     onFileWritten,
     devMode,

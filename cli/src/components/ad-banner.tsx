@@ -1,10 +1,10 @@
 import { TextAttributes } from '@opentui/core'
-import { safeOpen } from '../utils/open-url'
 import React, { useState, useMemo, useEffect } from 'react'
 
 import { Button } from './button'
 import { useTerminalDimensions } from '../hooks/use-terminal-dimensions'
 import { useTheme } from '../hooks/use-theme'
+import { safeOpen } from '../utils/open-url'
 import { BORDER_CHARS } from '../utils/ui-constants'
 
 import type { AdResponse } from '../hooks/use-gravity-ad'
@@ -138,13 +138,11 @@ export const AdCard: React.FC<{
           height: INLINE_AD_CARD_HEIGHT,
           borderStyle: 'single',
           borderColor: accentColor,
-          customBorderChars: BORDER_CHARS,
           paddingLeft: 1,
           paddingRight: 1,
           flexDirection: 'column',
           overflow: 'hidden',
-        }}
-      >
+        }} customBorderChars={BORDER_CHARS}>
         <box
           style={{
             width: '100%',
@@ -211,12 +209,10 @@ export const AdCard: React.FC<{
         height: AD_CARD_HEIGHT,
         borderStyle: 'single',
         borderColor: isHovered ? theme.primary : theme.muted,
-        customBorderChars: BORDER_CHARS,
         paddingLeft: 1,
         paddingRight: 1,
         flexDirection: 'column',
-      }}
-    >
+      }} customBorderChars={BORDER_CHARS}>
       <box style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', height: MAX_DESC_LINES, overflow: 'hidden' }}>
         <text style={{ fg: theme.muted, flexShrink: 1 }}>
           {truncateToLines(ad.adText, width - 8, MAX_DESC_LINES)}

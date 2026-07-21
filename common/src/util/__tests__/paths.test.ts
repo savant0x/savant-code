@@ -3,10 +3,11 @@
  * FID-2026-0718-013 v3 — adds 7 tests for F1 (projectRoot invariants) + F2 (symlink defense).
  */
 
-import { describe, expect, test } from 'bun:test'
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
+
+import { describe, expect, test } from 'bun:test'
 
 import { EXEMPT_PATHS, resolveAndContain } from '../paths'
 

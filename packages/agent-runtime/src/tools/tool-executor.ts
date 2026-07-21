@@ -1,20 +1,19 @@
-import { normalize as normalizePosix } from 'path/posix'
-
-import { resolveAndContain } from '@savant-code/common/util/paths'
 import { endsAgentStepParam, toolNames } from '@savant-code/common/tools/constants'
 import { toolParams } from '@savant-code/common/tools/list'
+import { resolveAndContain } from '@savant-code/common/util/paths'
 import { generateCompactId } from '@savant-code/common/util/string'
 import { cloneDeep } from 'lodash'
 
 import { getMCPToolData } from '../mcp'
 import { MCP_TOOL_SEPARATOR } from '../mcp-constants'
+import { getAgentTemplate } from '../templates/agent-registry'
 import { getAgentShortName, getAgentToolName } from '../templates/prompts'
 import { formatValueForError } from '../util/format-value'
 import { savantCode$1 } from './handlers/list'
 import { getMatchingSpawn } from './handlers/tool/spawn-agent-utils'
-import { getAgentTemplate } from '../templates/agent-registry'
 import { ensureZodSchema } from './prompts'
 import { toolActivity, setActivity } from '../util/activity-tracking'
+
 
 import type { AgentTemplate } from '../templates/types'
 import type { SavantCodeToolHandlerFunction } from './handlers/handler-function-type'
@@ -31,8 +30,9 @@ import type {
   AgentRuntimeScopedDeps,
 } from '@savant-code/common/types/contracts/agent-runtime'
 import type { Logger } from '@savant-code/common/types/contracts/logger'
-import type { ToolMessage } from '@savant-code/common/types/messages/savant-code-message'
+import type { JSONValue } from '@savant-code/common/types/json'
 import type { ToolResultOutput } from '@savant-code/common/types/messages/content-part'
+import type { ToolMessage } from '@savant-code/common/types/messages/savant-code-message'
 import type { PrintModeEvent } from '@savant-code/common/types/print-mode'
 import type {
   AgentTemplateType,
@@ -47,12 +47,12 @@ import type { ToolCallPart, ToolSet } from 'ai'
 
 export type CustomToolCall = {
   toolName: string
-  input: Record<string, unknown>
+  input: Record<string, JSONValue>
 } & Omit<ToolCallPart, 'type'>
 
 export type ToolCallError = {
   toolName?: string
-  input: unknown
+  input: JSONValue
   error: string
 } & Pick<SavantCodeToolCall, 'toolCallId'>
 
@@ -71,7 +71,7 @@ const bareStringFieldRepairAllowlist: Partial<
   web_search: ['query'],
 }
 
-function repairBareStringFieldObject(input: string, toolName: string): unknown {
+function repairBareStringFieldObject(input: string, toolName: string): Record<string, string> | undefined {
   const allowedFields = bareStringFieldRepairAllowlist[toolName]
   if (!allowedFields) {
     return undefined
@@ -100,9 +100,9 @@ function repairBareStringFieldObject(input: string, toolName: string): unknown {
 }
 
 function parseStringifiedToolInput(
-  input: unknown,
+  input: JSONValue,
   toolName: string,
-): { input: unknown; parseError?: string } {
+): { input: JSONValue; parseError?: string } {
   let parsed = input
   let parseError: string | undefined
 
@@ -148,7 +148,7 @@ function stringInputError(
 function summarizeMissingReplacementFields(
   toolName: string,
   issues: Array<{
-    expected?: unknown
+    expected?: string | string[]
     code?: string
     path?: PropertyKey[]
     message?: string
@@ -197,7 +197,7 @@ export function parseRawToolCall<T extends ToolName = ToolName>(params: {
   rawToolCall: {
     toolName: T
     toolCallId: string
-    input: unknown
+    input: JSONValue
   }
 }): SavantCodeToolCall<T> | ToolCallError {
   const { rawToolCall } = params
@@ -251,7 +251,7 @@ export function parseRawToolCall<T extends ToolName = ToolName>(params: {
 
 export type ExecuteToolCallParams<T extends string = ToolName> = {
   toolName: T
-  input: Record<string, unknown>
+  input: Record<string, JSONValue>
   autoInsertEndStepParam?: boolean
   excludeToolFromMessageHistory?: boolean
 
@@ -354,7 +354,7 @@ export async function executeToolCall<T extends ToolName>(
       toolCall.toolName === 'str_replace' ||
       toolCall.toolName === 'apply_patch')
   ) {
-    const rawPath = (toolCall.input as any)?.path ?? ''
+    const rawPath = (toolCall.input as { path?: string }).path ?? ''
     // FID-2026-0718-013 v3 — defensive null check (symmetric with write-file.ts,
     // str-replace.ts, apply-patch.ts handlers). Runtime always provides fileContext,
     // but tests/mocks may omit it. Fail soft with a clear error rather than crash
@@ -378,10 +378,15 @@ export async function executeToolCall<T extends ToolName>(
     }
 
     // FSM phase check (gated by !isDevOverride for dev flexibility).
+    // SCAFFOLD mode relaxes the per-write GREEN phase requirement so the
+    // orchestrator can write project-root files while a scaffold is in
+    // progress; the AUDIT gate is still enforced at scaffold-complete time
+    // via the set_scaffold_complete tool.
     if (
       !isDevOverride &&
       pathResult.kind !== 'exempt' &&
-      (agentState.fsmPhase ?? 'idle') !== 'green'
+      (agentState.fsmPhase ?? 'idle') !== 'green' &&
+      !agentTemplate.scaffoldMode
     ) {
       onResponseChunk({
         type: 'error',
@@ -510,7 +515,7 @@ export async function executeToolCall<T extends ToolName>(
         }),
       )
 
-      const validAgents: unknown[] = []
+      const validAgents: Array<Record<string, JSONValue>> = []
       const errors: string[] = []
 
       for (const result of validationResults) {
@@ -543,7 +548,7 @@ export async function executeToolCall<T extends ToolName>(
   // Only emit tool_call event after permission check passes
   // FID-2026-0718-009: emit activity indicator (M1 tool_call, M6 research tools).
   // toolActivity mutates agentState.activity + emits a chunk via onResponseChunk.
-  toolActivity(agentState, toolName, effectiveInput, onResponseChunk)
+  toolActivity(agentState, toolName, effectiveInput as Record<string, JSONValue>, onResponseChunk)
 
   onResponseChunk({
     type: 'tool_call',
@@ -576,11 +581,27 @@ export async function executeToolCall<T extends ToolName>(
     toolCall: finalToolCall,
     previousToolCallFinished,
     writeToClient: onResponseChunk,
-    requestClientToolCall: (async (
-      clientToolCall: ClientToolCall<T extends ClientToolName ? T : never>,
+    // FID-029: `as SavantCodeToolOutput<...>` casts are accepted pre-existing
+    // tech debt. See dev/fids/FID-2026-0719-029-as-cast-tech-debt.md.
+    // The runtime SDK returns the raw client-tool result shape; bridging
+    // to SavantCodeToolOutput<...> at the conditional closure slot requires
+    // this cast. On abort, we return a graceful JSON-tool-result matching
+    // composio's missing-runtime fallback pattern (rather than `[]`,
+    // which propagated a wrong-shape never[] downstream). The cast uses
+    // `T extends ClientToolName ? T : never` to align with the slot's
+    // exact conditional type so it satisfies ECHO distribution cleanly.
+    requestClientToolCall: async (
+      clientToolCall: ClientToolCall<
+        T extends ClientToolName ? T : never
+      >,
     ) => {
       if (params.signal.aborted) {
-        return []
+        return [
+          {
+            type: 'json',
+            value: { errorMessage: `Tool call aborted: ${clientToolCall.toolName}` },
+          },
+        ] as SavantCodeToolOutput<T extends ClientToolName ? T : never>
       }
 
       const clientToolResult = await requestToolCall({
@@ -588,8 +609,10 @@ export async function executeToolCall<T extends ToolName>(
         toolName: clientToolCall.toolName,
         input: clientToolCall.input,
       })
-      return clientToolResult.output as SavantCodeToolOutput<T>
-    }) as any,
+      return clientToolResult.output as SavantCodeToolOutput<
+        T extends ClientToolName ? T : never
+      >
+    },
   })
 
   return toolResultPromise.then(async ({ output, creditsUsed }) => {
@@ -636,7 +659,7 @@ export function parseRawCustomToolCall(params: {
   rawToolCall: {
     toolName: string
     toolCallId: string
-    input: unknown
+    input: JSONValue
   }
   autoInsertEndStepParam?: boolean
 }): CustomToolCall | ToolCallError {
@@ -665,20 +688,20 @@ export function parseRawCustomToolCall(params: {
     )
   }
 
-  const processedParameters: Record<string, any> = {}
+  const processedParameters: Record<string, JSONValue> = {}
   for (const [param, val] of Object.entries(parsedInput.input ?? {})) {
     processedParameters[param] = val
   }
 
-  // Add the required codebuff_end_step parameter with the correct value for this tool if requested
-  if (autoInsertEndStepParam) {
+  // Add the required endsAgentStepParam (cb_easp) parameter with the correct value for this tool if requested
+  if (autoInsertEndStepParam && customToolDefs?.[toolName]?.endsAgentStep != null) {
     processedParameters[endsAgentStepParam] =
-      customToolDefs?.[toolName]?.endsAgentStep
+      customToolDefs[toolName].endsAgentStep as JSONValue
   }
 
   const rawSchema = customToolDefs?.[toolName]?.inputSchema
   if (rawSchema) {
-    const paramsSchema = ensureZodSchema(rawSchema)
+    const paramsSchema = ensureZodSchema(rawSchema as Record<string, JSONValue>)
     const result = paramsSchema.safeParse(processedParameters)
 
     if (!result.success) {
@@ -740,7 +763,7 @@ export async function executeCustomToolCall(
     rawToolCall: {
       toolName,
       toolCallId: toolCallId ?? generateCompactId(),
-      input,
+      input: input as JSONValue,
     },
     autoInsertEndStepParam,
   })
@@ -860,9 +883,9 @@ export async function executeCustomToolCall(
  */
 export function tryTransformAgentToolCall(params: {
   toolName: string
-  input: Record<string, unknown>
+  input: Record<string, JSONValue>
   spawnableAgents: AgentTemplateType[]
-}): { toolName: 'spawn_agents'; input: Record<string, unknown> } | null {
+}): { toolName: 'spawn_agents'; input: Record<string, JSONValue> } | null {
   const { toolName, input, spawnableAgents } = params
 
   const matchesAgentToolName = (agentType: AgentTemplateType) =>
@@ -877,7 +900,7 @@ export function tryTransformAgentToolCall(params: {
 
   // Convert to spawn_agents call - input already has prompt and params as top-level fields
   // (consistent with spawn_agents schema)
-  const agentEntry: Record<string, unknown> = {
+  const agentEntry: Record<string, JSONValue> = {
     agent_type: fullAgentType,
   }
   if (typeof input.prompt === 'string') {

@@ -1,9 +1,9 @@
-export { getFreebuffBinaryPath, requireFreebuffBinary, REPO_ROOT } from './binary-helpers'
+export { getSavantFreeBinaryPath, requireSavantFreeBinary, REPO_ROOT } from './binary-helpers'
 export {
-  FREEBUFF_BOOT_SIGNALS,
-  SavantFree$1,
+  SAVANT_FREE_BOOT_SIGNALS,
+  SavantFreeModel,
 } from './savant-free-session'
-export { createFreebuffTmuxTools } from './tmux-custom-tools'
+export { createSavantFreeTmuxTools } from './tmux-custom-tools'
 export {
   tmuxStart,
   tmuxSend,

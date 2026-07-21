@@ -1,8 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- publish command: dynamic error types */
 import { WEBSITE_URL } from '@savant-code/sdk'
 
 import { getUserCredentials } from '../utils/auth'
-import { getApiClient, setApiClientAuthToken } from '../utils/savant-code-api'
 import { loadAgentDefinitions, getLoadedAgentsData } from '../utils/local-agent-registry'
+import { getApiClient, setApiClientAuthToken } from '../utils/savant-code-api'
 
 import type {
   PublishAgentsErrorResponse,

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef } from 'react'
 import stringWidth from 'string-width'
 
 import { useChatStore } from '../state/chat-store'
-import { IS_FREEBUFF } from '../utils/constants'
+import { IS_SAVANT_FREE } from '../utils/constants'
 
 import type { InputValue } from '../types/store'
 import type { AgentMode } from '../utils/constants'
@@ -34,9 +34,9 @@ export const useChatInput = ({
   const inputMode = useChatStore((state) => state.inputMode)
 
   // Estimate the collapsed toggle width as rendered by AgentModeToggle.
-  // In Freebuff, the toggle is always hidden, so never reserve width for it.
-  // In non-Freebuff: hide in bash mode, compact height, or narrow width.
-  const estimatedToggleWidth = IS_FREEBUFF || inputMode !== 'default' || isCompactHeight || isNarrowWidth
+  // In SavantFree, the toggle is always hidden, so never reserve width for it.
+  // In non-SavantFree: hide in bash mode, compact height, or narrow width.
+  const estimatedToggleWidth = IS_SAVANT_FREE || inputMode !== 'default' || isCompactHeight || isNarrowWidth
     ? 0
     : stringWidth(`< ${agentMode}`) + 6 // 2 padding + 2 borders + 2 gap
 
@@ -47,41 +47,15 @@ export const useChatInput = ({
   const availableContentWidth = Math.max(1, separatorWidth - contentPadding)
   const inputWidth = Math.max(1, availableContentWidth - estimatedToggleWidth)
 
-  const handleBuildFast = useCallback(() => {
-    setAgentMode('DEFAULT')
+  const handleBuild = useCallback(() => {
+    setAgentMode('EDIT')
     setInputValue({
       text: BUILD_IT_TEXT,
       cursorPosition: BUILD_IT_TEXT.length,
       lastEditDueToNav: true,
     })
     setTimeout(() => {
-      onSubmitPrompt(BUILD_IT_TEXT, 'DEFAULT')
-      setInputValue({ text: '', cursorPosition: 0, lastEditDueToNav: false })
-    }, 0)
-  }, [setAgentMode, setInputValue, onSubmitPrompt])
-
-  const handleBuildMax = useCallback(() => {
-    setAgentMode('MAX')
-    setInputValue({
-      text: BUILD_IT_TEXT,
-      cursorPosition: BUILD_IT_TEXT.length,
-      lastEditDueToNav: true,
-    })
-    setTimeout(() => {
-      onSubmitPrompt('Build it!', 'MAX')
-      setInputValue({ text: '', cursorPosition: 0, lastEditDueToNav: false })
-    }, 0)
-  }, [setAgentMode, setInputValue, onSubmitPrompt])
-
-  const handleBuildLite = useCallback(() => {
-    setAgentMode('LITE')
-    setInputValue({
-      text: BUILD_IT_TEXT,
-      cursorPosition: BUILD_IT_TEXT.length,
-      lastEditDueToNav: true,
-    })
-    setTimeout(() => {
-      onSubmitPrompt(BUILD_IT_TEXT, 'LITE')
+      onSubmitPrompt(BUILD_IT_TEXT, 'EDIT')
       setInputValue({ text: '', cursorPosition: 0, lastEditDueToNav: false })
     }, 0)
   }, [setAgentMode, setInputValue, onSubmitPrompt])
@@ -99,8 +73,11 @@ export const useChatInput = ({
 
   return {
     inputWidth,
-    handleBuildFast,
-    handleBuildMax,
-    handleBuildLite,
+    handleBuild,
+    // Legacy build-mode button aliases — all map to the single EDIT-mode
+    // build handler now that the old DEFAULT/MAX/LITE axes are collapsed.
+    handleBuildFast: handleBuild,
+    handleBuildMax: handleBuild,
+    handleBuildLite: handleBuild,
   }
 }

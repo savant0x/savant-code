@@ -1,10 +1,10 @@
 import * as mainPromptModule from '@savant-code/agent-runtime/main-prompt'
+import * as mcpClientModule from '@savant-code/common/mcp/client'
 import { getInitialSessionState } from '@savant-code/common/types/session-state'
 import { getStubProjectFileContext } from '@savant-code/common/util/file'
 import { afterEach, describe, expect, it, mock, spyOn } from 'bun:test'
 
 import { SavantCodeClient } from '../client'
-import * as mcpClientModule from '@savant-code/common/mcp/client'
 import * as databaseModule from '../impl/database'
 
 import type { AgentDefinition } from '@savant-code/common/templates/initial-agents-dir/types/agent-definition'

@@ -1,24 +1,37 @@
-type PlainObject = Record<string, any>
+export type SplitDataValue =
+  | string
+  | number
+  | boolean
+  | null
+  | undefined
+  | Date
+  | RegExp
+  | SplitDataValue[]
+  | { [key: string]: SplitDataValue }
+
+type PlainObject = Record<string, SplitDataValue>
 
 interface Chunk<T> {
   data: T
   length: number
 }
 
-function isPlainObject(val: any): val is PlainObject {
+function isPlainObject(val: SplitDataValue): val is PlainObject {
   return (
     typeof val === 'object' &&
     val !== null &&
+    !Array.isArray(val) &&
+    !(val instanceof Date) &&
+    !(val instanceof RegExp) &&
     Object.getPrototypeOf(val) === Object.prototype
   )
 }
 
-function getJsonSize(data: any): number {
+function getJsonSize<T extends SplitDataValue>(data: T): number {
   if (data === undefined) {
     return 'undefined'.length
   }
-  const size = JSON.stringify(data).length
-  return size
+  return JSON.stringify(data).length
 }
 
 function splitString(params: {
@@ -43,9 +56,7 @@ function splitString(params: {
   for (let i = 0; i < data.length; i++) {
     const char = data[i]
     const charSizeContribution = JSON.stringify(char).length - 2
-    let potentialNextSize: number
-
-    potentialNextSize = currentChunk.length + charSizeContribution
+    const potentialNextSize = currentChunk.length + charSizeContribution
 
     if (potentialNextSize <= maxSize) {
       currentChunk.data += char
@@ -78,7 +89,7 @@ function splitObject(params: {
     length: 2,
   }
   for (const [key, value] of Object.entries(obj)) {
-    const entryObject = { [key]: value }
+    const entryObject: PlainObject = { [key]: value }
     const standaloneEntry: Chunk<PlainObject> = {
       data: entryObject,
       length: getJsonSize(entryObject),
@@ -89,26 +100,24 @@ function splitObject(params: {
 
       const items = splitDataWithLengths({
         data: value,
-        maxChunkSize: maxSize - (getJsonSize({ [key]: '' }) - 2),
+        maxChunkSize: maxSize - overhead,
       })
 
       for (const [index, item] of items.entries()) {
-        const itemWithKey: Chunk<any> = {
-          data: { [key]: item.data },
-          length: item.length + overhead,
-        }
-
         if (index < items.length - 1) {
           if (key in currentChunk.data) {
             chunks.push(currentChunk)
-            currentChunk = itemWithKey
+            currentChunk = {
+              data: { [key]: item.data },
+              length: item.length + overhead,
+            }
             continue
           }
 
           const candidateChunkLength =
             currentChunk.length +
-            itemWithKey.length -
-            (currentChunk.length === 2 ? 2 : 3)
+            item.length +
+            (currentChunk.length === 2 ? 0 : -1)
           if (candidateChunkLength <= maxSize) {
             currentChunk.data[key] = item.data
             currentChunk.length = candidateChunkLength
@@ -118,14 +127,20 @@ function splitObject(params: {
           if (currentChunk.length > 2) {
             chunks.push(currentChunk)
           }
-          currentChunk = itemWithKey
+          currentChunk = {
+            data: { [key]: item.data },
+            length: item.length + overhead,
+          }
           continue
         }
 
         if (currentChunk.length > 2) {
           chunks.push(currentChunk)
         }
-        currentChunk = itemWithKey
+        currentChunk = {
+          data: { [key]: item.data },
+          length: item.length + overhead,
+        }
       }
 
       continue
@@ -144,8 +159,8 @@ function splitObject(params: {
 
     if (currentChunk.length > 2) {
       chunks.push(currentChunk)
-      currentChunk = standaloneEntry
     }
+    currentChunk = standaloneEntry
   }
 
   if (currentChunk.length > 2) {
@@ -155,14 +170,17 @@ function splitObject(params: {
   return chunks
 }
 
-function splitArray(params: { arr: any[]; maxSize: number }): Chunk<any[]>[] {
+function splitArray<T extends SplitDataValue>(params: {
+  arr: T[]
+  maxSize: number
+}): Chunk<T[]>[] {
   const { arr, maxSize } = params
-  const chunks: Chunk<any[]>[] = []
-  let currentChunk: Chunk<any[]> = { data: [], length: 2 }
+  const chunks: Chunk<T[]>[] = []
+  let currentChunk: Chunk<T[]> = { data: [], length: 2 }
 
   for (const element of arr) {
     const entryArr = [element]
-    const standaloneEntry: Chunk<any[]> = {
+    const standaloneEntry: Chunk<T[]> = {
       data: entryArr,
       length: getJsonSize(entryArr),
     }
@@ -171,30 +189,28 @@ function splitArray(params: { arr: any[]; maxSize: number }): Chunk<any[]>[] {
       if (currentChunk.length > 2) {
         chunks.push(currentChunk)
       }
+      currentChunk = { data: [], length: 2 }
 
       const items = splitDataWithLengths({
         data: element,
         maxChunkSize: maxSize - 2,
       })
 
-      for (const [index, item] of items.entries()) {
-        if (index < items.length - 1) {
-          // Try to add to current chunk
-          const candidateChunkLength =
-            currentChunk.length +
-            item.length +
-            (currentChunk.length === 2 ? 1 : 0)
-          if (candidateChunkLength <= maxSize) {
-            currentChunk.data.push(item.data)
-            currentChunk.length = candidateChunkLength
-            continue
-          }
-
-          chunks.push({ data: [item.data], length: item.length + 2 })
+      for (const item of items) {
+        const candidateChunkLength =
+          currentChunk.length +
+          item.length +
+          (currentChunk.length === 2 ? 1 : 0)
+        if (candidateChunkLength <= maxSize) {
+          currentChunk.data.push(item.data as T)
+          currentChunk.length = candidateChunkLength
           continue
         }
 
-        currentChunk = { data: [item.data], length: item.length + 2 }
+        if (currentChunk.length > 2) {
+          chunks.push(currentChunk)
+        }
+        currentChunk = { data: [item.data as T], length: item.length + 2 }
       }
       continue
     }
@@ -212,8 +228,8 @@ function splitArray(params: { arr: any[]; maxSize: number }): Chunk<any[]>[] {
 
     if (currentChunk.length > 2) {
       chunks.push(currentChunk)
-      currentChunk = standaloneEntry
     }
+    currentChunk = standaloneEntry
   }
 
   if (currentChunk.length > 2) {
@@ -223,37 +239,45 @@ function splitArray(params: { arr: any[]; maxSize: number }): Chunk<any[]>[] {
   return chunks
 }
 
-function splitDataWithLengths(params: {
-  data: any
+function splitDataWithLengths<T extends SplitDataValue>(params: {
+  data: T
   maxChunkSize: number
-}): Chunk<any>[] {
+}): Chunk<T>[] {
   const { data, maxChunkSize } = params
-  // Handle primitives
   if (typeof data !== 'object' || data === null) {
     if (typeof data === 'string') {
-      const result = splitString({ data, maxSize: maxChunkSize })
-      return result
+      const result = splitString({
+        data,
+        maxSize: maxChunkSize,
+      })
+      return result as Chunk<T>[]
     }
     return [{ data, length: getJsonSize(data) }]
   }
 
-  // Non-plain objects (Date, RegExp, etc.)
   if (!Array.isArray(data) && !isPlainObject(data)) {
     return [{ data, length: getJsonSize(data) }]
   }
 
-  // Arrays
   if (Array.isArray(data)) {
-    const result = splitArray({ arr: data, maxSize: maxChunkSize })
-    return result
+    const result = splitArray({
+      arr: data,
+      maxSize: maxChunkSize,
+    })
+    return result as Chunk<T>[]
   }
 
-  // Plain objects
-  const result = splitObject({ obj: data, maxSize: maxChunkSize })
-  return result
+  const result = splitObject({
+    obj: data,
+    maxSize: maxChunkSize,
+  })
+  return result as Chunk<T>[]
 }
 
-export function splitData(params: { data: any; maxChunkSize?: number }): any[] {
+export function splitData<T extends SplitDataValue>(params: {
+  data: T
+  maxChunkSize?: number
+}): T[] {
   const { data, maxChunkSize = 99_000 } = params
   return splitDataWithLengths({ data, maxChunkSize }).map((cwjl) => cwjl.data)
 }

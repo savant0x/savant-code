@@ -1,6 +1,6 @@
+import { feedbackRequestSchema } from '@savant-code/common/schemas/feedback'
 import { describe, expect, test } from 'bun:test'
 
-import { feedbackRequestSchema } from '@savant-code/common/schemas/feedback'
 
 import { buildFeedbackPayload, buildMessageContext, type RecentMessageSummary } from '../feedback-helpers'
 
@@ -281,7 +281,7 @@ describe('buildFeedbackPayload', () => {
 
     const payload = buildFeedbackPayload({
       ...baseParams,
-      agentMode: 'MAX',
+      agentMode: 'SCAFFOLD',
       sessionCreditsUsed: 3.5,
       recentMessages,
       errors,
@@ -385,7 +385,7 @@ describe('Cross-layer validation', () => {
       feedbackMessageId: 'msg-2',
       target,
       recentMessages,
-      agentMode: 'MAX',
+      agentMode: 'SCAFFOLD',
       sessionCreditsUsed: 3.5,
       errors: [{ id: 'err-1', message: 'Something went wrong' }],
       clientFeedbackId: 'c3d4e5f6-a7b8-4012-8def-123456789012',

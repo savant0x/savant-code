@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- testing utilities: dynamic module mocking */
 import { mock } from 'bun:test'
 
 export type MockResult = {

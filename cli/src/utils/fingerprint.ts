@@ -1,3 +1,4 @@
+ 
 /**
  * Enhanced fingerprinting for CLI authentication.
  *

@@ -1,10 +1,10 @@
-import { FREEBUFF_STREAK_REWARDS_ENABLED } from '@savant-code/common/constants/savant-free-models'
-import { isFreebuffStreakGlmBonusActive } from '@savant-code/common/util/savant-free-streak'
+import { SAVANT_FREE_STREAK_REWARDS_ENABLED } from '@savant-code/common/constants/savant-free-models'
+import { isSavantFreeStreakGlmBonusActive } from '@savant-code/common/util/savant-free-streak'
 
 /** Days in a streak "week" — the milestone the progress dots fill toward. */
-export const FREEBUFF_STREAK_WEEK = 7
+export const SAVANT_FREE_STREAK_WEEK = 7
 
-export interface SavantFree$1 {
+export interface SavantFreeStreakLine {
   /** Count label, e.g. "2 day streak". */
   label: string
   /** A week's worth of progress dots toward the 7-day milestone, e.g.
@@ -20,17 +20,17 @@ export interface SavantFree$1 {
  * the caller hides the row entirely — new / lapsed users should be nudged to
  * start using the product, not shown an empty streak.
  */
-export function getFreebuffStreakLine(streak: number): SavantFree$1 | null {
+export function getSavantFreeStreakLine(streak: number): SavantFreeStreakLine | null {
   if (streak <= 0) return null
 
   // Fill toward the 7-day milestone, then stay full — a 19-day streak should
   // read as fully earned, not roll back over into a partial second week. Past
   // the week, a trailing "+" marks that the streak has run beyond the row.
-  const filled = Math.min(streak, FREEBUFF_STREAK_WEEK)
+  const filled = Math.min(streak, SAVANT_FREE_STREAK_WEEK)
   const dots =
     '●'.repeat(filled) +
-    '○'.repeat(FREEBUFF_STREAK_WEEK - filled) +
-    (streak > FREEBUFF_STREAK_WEEK ? '+' : '')
+    '○'.repeat(SAVANT_FREE_STREAK_WEEK - filled) +
+    (streak > SAVANT_FREE_STREAK_WEEK ? '+' : '')
 
   // "day" stays singular — it's a compound modifier ("7 day streak"), not a
   // count of days on its own.
@@ -48,17 +48,17 @@ export function getFreebuffStreakLine(streak: number): SavantFree$1 | null {
  * banner; this line is the motivational why. GLM is full-access only, so limited
  * users get the daily session bonus alone.
  */
-export function getFreebuffStreakBonusNote(params: {
+export function getSavantFreeStreakBonusNote(params: {
   streak: number
   accessTier: 'full' | 'limited'
 }): string | null {
-  if (!FREEBUFF_STREAK_REWARDS_ENABLED) return null
-  if (params.streak < FREEBUFF_STREAK_WEEK) return null
+  if (!SAVANT_FREE_STREAK_REWARDS_ENABLED) return null
+  if (params.streak < SAVANT_FREE_STREAK_WEEK) return null
   // Only advertise GLM when the full-access GLM bonus is actually active —
   // mirrors what streakRewardPools grants, so the copy never promises a perk the
   // gate won't honor.
   const includesGlm =
-    params.accessTier === 'full' && isFreebuffStreakGlmBonusActive()
+    params.accessTier === 'full' && isSavantFreeStreakGlmBonusActive()
   return includesGlm
     ? '🎁 Streak perk: +1 bonus session every day + 1 GLM 5.2 session each week you keep it up'
     : '🎁 Streak perk: +1 bonus session every day you keep it up'

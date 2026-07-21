@@ -1,3 +1,5 @@
+import { toLogValue } from '@savant-code/common/util/type-narrowing'
+
 import {
   getProposedContent,
   setProposedContent,
@@ -53,8 +55,8 @@ export const handleProposeStrReplace = (async (
     replacements,
     initialContentPromise: latestContentPromise,
     logger,
-  }).catch((error: any) => {
-    logger.error(error, 'Error processing propose_str_replace')
+  }).catch((error: unknown) => { // eslint-disable-line savant/no-unknown-in-signatures -- Catch trust boundary: native Promise rejection from string replacement execution
+    logger.error(toLogValue(error), 'Error processing propose_str_replace')
     return {
       tool: 'str_replace' as const,
       path,

@@ -1,6 +1,6 @@
+import { createMockLogger } from '@savant-code/common/testing/mock-types'
 import { describe, test, expect, mock } from 'bun:test'
 
-import { createMockLogger } from '@savant-code/common/testing/mock-types'
 import { generateLoginUrl, pollLoginStatus } from '../../login/login-flow'
 import { createMockApiClient } from '../helpers/mock-api-client'
 

@@ -1,8 +1,8 @@
 import { describe, test, expect } from 'bun:test'
 
-import { holdsLiveFreebuffSlot } from '../use-savant-free-session'
+import { holdsLiveSavantFreeSlot } from '../use-savant-free-session'
 
-import type { SavantFree$1 } from '../../types/savant-free-session'
+import type { SavantFreeSession } from '../../types/savant-free-session'
 
 // Gate predicate for both the message queue (may queued work still be sent?)
 // and slot release (is there a server row to DELETE?). The load-bearing cases
@@ -10,7 +10,7 @@ import type { SavantFree$1 } from '../../types/savant-free-session'
 // grace window and requests are still admissible; WITHOUT one the session is
 // fully over and any request would be rejected by the chat-completions gate.
 
-const activeSession: SavantFree$1 = {
+const activeSession: SavantFreeSession = {
   status: 'active',
   accessTier: 'full',
   instanceId: 'inst-1',
@@ -20,30 +20,30 @@ const activeSession: SavantFree$1 = {
   remainingMs: 60_000,
 }
 
-describe('holdsLiveFreebuffSlot', () => {
+describe('holdsLiveSavantFreeSlot', () => {
   test('active session holds a slot', () => {
-    expect(holdsLiveFreebuffSlot(activeSession)).toBe(true)
+    expect(holdsLiveSavantFreeSlot(activeSession)).toBe(true)
   })
 
   test('ended WITH instance id (grace window) still holds a slot', () => {
     expect(
-      holdsLiveFreebuffSlot({ status: 'ended', instanceId: 'inst-1' }),
+      holdsLiveSavantFreeSlot({ status: 'ended', instanceId: 'inst-1' }),
     ).toBe(true)
   })
 
   test('ended WITHOUT instance id (post-grace) does not hold a slot', () => {
-    expect(holdsLiveFreebuffSlot({ status: 'ended' })).toBe(false)
+    expect(holdsLiveSavantFreeSlot({ status: 'ended' })).toBe(false)
   })
 
   test('null session does not hold a slot', () => {
-    expect(holdsLiveFreebuffSlot(null)).toBe(false)
+    expect(holdsLiveSavantFreeSlot(null)).toBe(false)
   })
 
   test('pre-join and terminal states do not hold a slot', () => {
-    expect(holdsLiveFreebuffSlot({ status: 'none' })).toBe(false)
-    expect(holdsLiveFreebuffSlot({ status: 'superseded' })).toBe(false)
+    expect(holdsLiveSavantFreeSlot({ status: 'none' })).toBe(false)
+    expect(holdsLiveSavantFreeSlot({ status: 'superseded' })).toBe(false)
     expect(
-      holdsLiveFreebuffSlot({ status: 'takeover_prompt', model: 'm' }),
+      holdsLiveSavantFreeSlot({ status: 'takeover_prompt', model: 'm' }),
     ).toBe(false)
   })
 })

@@ -44,7 +44,7 @@ export const AgentBranchItem = memo((props: AgentBranchItemProps) => {
   } = props
   useWhyDidYouUpdateById('AgentBranchItem', agentId ?? '', props, {
     logLevel: 'debug',
-    enabled: getCliEnv().CODEBUFF_PERF_TEST === 'true',
+    enabled: getCliEnv().SAVANT_CODE_PERF_TEST === 'true',
   })
   const theme = useTheme()
 
@@ -207,9 +207,9 @@ export const AgentBranchItem = memo((props: AgentBranchItemProps) => {
           >
             <text>
               <ShimmerText
-                text="working..."
+                text="thinking..."
                 interval={160}
-                primaryColor={theme.secondary}
+                primaryColor={theme.primary}
               />
             </text>
           </box>

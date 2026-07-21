@@ -1,54 +1,54 @@
 import { TextAttributes } from '@opentui/core'
 import { useKeyboard, useRenderer } from '@opentui/react'
-import React, { useCallback, useEffect, useState } from 'react'
-
-import { Button } from './button'
-import { ChoiceAdBanner, AD_CARD_HEIGHT } from './ad-banner'
-import { SavantFree$1 } from './savant-free-model-selector'
-import { ShimmerText } from './shimmer-text'
 import {
-  refreshFreebuffLandingMetadata,
-  takeOverFreebuffSession,
-} from '../hooks/use-savant-free-session'
-import { useFreebuffCtrlCExit } from '../hooks/use-savant-free-ctrl-c-exit'
-import { useFreebuffStreakQuery } from '../hooks/use-savant-free-streak-query'
-import { useGravityAd } from '../hooks/use-gravity-ad'
-import { useLogo } from '../hooks/use-logo'
-import { useNow } from '../hooks/use-now'
-import { useSheenAnimation } from '../hooks/use-sheen-animation'
-import { useTerminalDimensions } from '../hooks/use-terminal-dimensions'
-import { useTheme } from '../hooks/use-theme'
-import { exitFreebuffCleanly } from '../utils/savant-free-exit'
-import {
-  formatFreebuffPremiumResetCountdown,
-  getFreebuffPremiumResetAt,
-} from '../utils/savant-free-premium-reset'
-import {
-  FREEBUFF_STREAK_WEEK,
-  getFreebuffStreakBonusNote,
-  getFreebuffStreakLine,
-} from '../utils/savant-free-streak-line'
-import { formatSessionUnits } from '../utils/format-session-units'
-import { isPlainEnterKey } from '../utils/terminal-enter-detection'
-import { getLogoAccentColor, getLogoBlockColor } from '../utils/theme-system'
-import { INVERTED_CTA_FG } from '../utils/ui-constants'
-import {
-  FREEBUFF_ENABLE_STREAK_IN_UI,
-  FREEBUFF_LIMITED_SESSION_LIMIT,
-  FREEBUFF_PREMIUM_SESSION_LIMIT,
+  SAVANT_FREE_ENABLE_STREAK_IN_UI,
+  SAVANT_FREE_LIMITED_SESSION_LIMIT,
+  SAVANT_FREE_PREMIUM_SESSION_LIMIT,
 } from '@savant-code/common/constants/savant-free-models'
 import {
   getRateLimitsByModel,
   getReferralInfo,
 } from '@savant-code/common/types/savant-free-session'
-import { formatFreebuffHardBlockedPrivacySignals } from '@savant-code/common/util/savant-free-privacy'
+import { formatSavantFreeHardBlockedPrivacySignals } from '@savant-code/common/util/savant-free-privacy'
+import React, { useCallback, useEffect, useState } from 'react'
 
-import type { SavantFree$1 } from '../types/savant-free-session'
-import type { SavantFree$1 } from '@savant-code/common/types/savant-free-session'
+import { ChoiceAdBanner, AD_CARD_HEIGHT } from './ad-banner'
+import { Button } from './button'
+import { SavantFreeModelSelector } from './savant-free-model-selector'
+import { ShimmerText } from './shimmer-text'
+import { useGravityAd } from '../hooks/use-gravity-ad'
+import { useLogo } from '../hooks/use-logo'
+import { useNow } from '../hooks/use-now'
+import { useSavantFreeCtrlCExit } from '../hooks/use-savant-free-ctrl-c-exit'
+import {
+  refreshSavantFreeLandingMetadata,
+  takeOverSavantFreeSession,
+} from '../hooks/use-savant-free-session'
+import { useSavantFreeStreakQuery } from '../hooks/use-savant-free-streak-query'
+import { useSheenAnimation } from '../hooks/use-sheen-animation'
+import { useTerminalDimensions } from '../hooks/use-terminal-dimensions'
+import { useTheme } from '../hooks/use-theme'
+import { formatSessionUnits } from '../utils/format-session-units'
+import { exitSavantFreeCleanly } from '../utils/savant-free-exit'
+import {
+  formatSavantFreePremiumResetCountdown,
+  getSavantFreePremiumResetAt,
+} from '../utils/savant-free-premium-reset'
+import {
+  SAVANT_FREE_STREAK_WEEK,
+  getSavantFreeStreakBonusNote,
+  getSavantFreeStreakLine,
+} from '../utils/savant-free-streak-line'
+import { isPlainEnterKey } from '../utils/terminal-enter-detection'
+import { getLogoAccentColor, getLogoBlockColor } from '../utils/theme-system'
+import { INVERTED_CTA_FG } from '../utils/ui-constants'
+
+import type { SavantFreeSession } from '../types/savant-free-session'
 import type { KeyEvent } from '@opentui/core'
+import type { SavantFreeIpPrivacySignal } from '@savant-code/common/types/savant-free-session'
 
-interface SavantFree$1 {
-  session: SavantFree$1 | null
+interface SavantFreeLandingScreenProps {
+  session: SavantFreeSession | null
   error: string | null
 }
 
@@ -69,7 +69,7 @@ const formatRetryAfter = (ms: number): string => {
   return rem === 0 ? `${hours}h` : `${hours}h ${rem}m`
 }
 
-const PRIVACY_SIGNAL_LABELS: Partial<Record<SavantFree$1, string>> =
+const PRIVACY_SIGNAL_LABELS: Partial<Record<SavantFreeIpPrivacySignal, string>> =
 {
   anonymous: 'anonymized network',
   proxy: 'proxy',
@@ -82,7 +82,7 @@ const PRIVACY_SIGNAL_LABELS: Partial<Record<SavantFree$1, string>> =
 }
 
 const formatPrivacySignalList = (
-  signals: SavantFree$1[] | undefined,
+  signals: SavantFreeIpPrivacySignal[] | undefined,
 ): string => {
   const labels = Array.from(
     new Set(
@@ -121,7 +121,7 @@ const formatCountryName = (countryCode: string): string => {
 // is the one the user can act on, so it leads with the action. Rendered
 // directly under the model list — that's where "why these models?" gets asked.
 const getLimitedModeNotice = (
-  session: SavantFree$1 | null,
+  session: SavantFreeSession | null,
 ): string | null => {
   if (!session || !('countryBlockReason' in session)) {
     return "Some models aren't available on this connection"
@@ -162,7 +162,7 @@ const TakeoverPrompt: React.FC = () => {
   const handleTakeover = useCallback(() => {
     if (pending) return
     setPending(true)
-    takeOverFreebuffSession().finally(() => setPending(false))
+    takeOverSavantFreeSession().finally(() => setPending(false))
   }, [pending])
 
   useKeyboard(
@@ -178,7 +178,7 @@ const TakeoverPrompt: React.FC = () => {
 
         if (isExit) {
           key.preventDefault?.()
-          exitFreebuffCleanly()
+          exitSavantFreeCleanly()
           return
         }
 
@@ -187,7 +187,7 @@ const TakeoverPrompt: React.FC = () => {
           if (focusedIndex === 0) {
             handleTakeover()
           } else {
-            exitFreebuffCleanly()
+            exitSavantFreeCleanly()
           }
           return
         }
@@ -250,7 +250,7 @@ const TakeoverPrompt: React.FC = () => {
           </text>
         </Button>
         <Button
-          onClick={exitFreebuffCleanly}
+          onClick={exitSavantFreeCleanly}
           onMouseOver={() => setFocusedIndex(1)}
           style={{ paddingLeft: 1, paddingRight: 1 }}
           border={['top', 'bottom', 'left', 'right']}
@@ -281,7 +281,7 @@ const StreakInlineLine: React.FC<{
   marginTop: number
 }> = ({ streak, marginTop }) => {
   const theme = useTheme()
-  const line = getFreebuffStreakLine(streak)
+  const line = getSavantFreeStreakLine(streak)
 
   if (!line) {
     return <text style={{ marginTop, flexShrink: 0 }}> </text>
@@ -301,7 +301,7 @@ const StreakInlineLine: React.FC<{
   )
 }
 
-export const SavantFree$1: React.FC<SavantFree$1> = ({
+export const SavantFreeLandingScreen: React.FC<SavantFreeLandingScreenProps> = ({
   session,
   error,
 }) => {
@@ -375,7 +375,7 @@ export const SavantFree$1: React.FC<SavantFree$1> = ({
     surface: 'waiting_room',
   })
 
-  useFreebuffCtrlCExit()
+  useSavantFreeCtrlCExit()
 
   const [exitHover, setExitHover] = useState(false)
 
@@ -387,22 +387,22 @@ export const SavantFree$1: React.FC<SavantFree$1> = ({
     accessTier === 'limited' && !compact ? getLimitedModeNotice(session) : null
   // 'none' = user hasn't started a session yet. We're in the pre-chat landing
   // state: show the picker with a prompt. Picking a model triggers
-  // startFreebuffSession, which POSTs and transitions straight to 'active' (chat).
+  // startSavantFreeSession, which POSTs and transitions straight to 'active' (chat).
   const isLanding = session?.status === 'none'
-  const streakQuery = useFreebuffStreakQuery({
-    enabled: FREEBUFF_ENABLE_STREAK_IN_UI && isLanding,
+  const streakQuery = useSavantFreeStreakQuery({
+    enabled: SAVANT_FREE_ENABLE_STREAK_IN_UI && isLanding,
   })
   const streak = streakQuery.data?.streak ?? 0
   // Reserve the streak row whenever the feature could appear so the picker
   // doesn't jump when the query resolves or the user crosses from 0 → 1.
   // The component itself renders blank space when streak === 0.
   const reserveStreakSlot =
-    FREEBUFF_ENABLE_STREAK_IN_UI && isLanding && !compact
+    SAVANT_FREE_ENABLE_STREAK_IN_UI && isLanding && !compact
   // Once a full week is earned, explain the recurring perk under the picker so
-  // the streak reads as worth keeping. Accuracy lives in getFreebuffStreakBonusNote
+  // the streak reads as worth keeping. Accuracy lives in getSavantFreeStreakBonusNote
   // (daily session bonus, weekly GLM, GLM only for full access).
   const streakBonusNote = reserveStreakSlot
-    ? getFreebuffStreakBonusNote({
+    ? getSavantFreeStreakBonusNote({
         streak,
         accessTier: accessTier === 'limited' ? 'limited' : 'full',
       })
@@ -440,21 +440,21 @@ export const SavantFree$1: React.FC<SavantFree$1> = ({
   const isSessionExhausted =
     sharedSessionUsed >=
     (accessTier === 'limited'
-      ? FREEBUFF_LIMITED_SESSION_LIMIT
-      : FREEBUFF_PREMIUM_SESSION_LIMIT)
+      ? SAVANT_FREE_LIMITED_SESSION_LIMIT
+      : SAVANT_FREE_PREMIUM_SESSION_LIMIT)
   const sessionUsedColor = isSessionExhausted ? theme.secondary : theme.muted
   const sessionLimit =
     accessTier === 'limited'
-      ? FREEBUFF_LIMITED_SESSION_LIMIT
-      : FREEBUFF_PREMIUM_SESSION_LIMIT
+      ? SAVANT_FREE_LIMITED_SESSION_LIMIT
+      : SAVANT_FREE_PREMIUM_SESSION_LIMIT
   const sessionLabel = accessTier === 'limited' ? 'sessions' : 'premium sessions'
   const formattedSharedSessionUsed = formatSessionUnits(sharedSessionUsed)
-  const sessionResetAt = getFreebuffPremiumResetAt({
+  const sessionResetAt = getSavantFreePremiumResetAt({
     rateLimitsByModel,
     nowMs: now,
   })
   const sessionResetAtMs = sessionResetAt.getTime()
-  const sessionResetCountdown = formatFreebuffPremiumResetCountdown(
+  const sessionResetCountdown = formatSavantFreePremiumResetCountdown(
     sessionResetAt,
     now,
   )
@@ -518,7 +518,7 @@ export const SavantFree$1: React.FC<SavantFree$1> = ({
 
     const delayMs = Math.max(0, sessionResetAtMs - Date.now() + 1_000)
     const timer = setTimeout(() => {
-      refreshFreebuffLandingMetadata().catch(() => { })
+      refreshSavantFreeLandingMetadata().catch(() => { })
     }, delayMs)
 
     return () => clearTimeout(timer)
@@ -551,7 +551,7 @@ export const SavantFree$1: React.FC<SavantFree$1> = ({
             keep the ✕ pushed to the right. */}
         <box />
         <Button
-          onClick={exitFreebuffCleanly}
+          onClick={exitSavantFreeCleanly}
           onMouseOver={() => setExitHover(true)}
           onMouseOut={() => setExitHover(false)}
           style={{ paddingLeft: 1, paddingRight: 1 }}
@@ -647,7 +647,7 @@ export const SavantFree$1: React.FC<SavantFree$1> = ({
               {reserveStreakSlot && !streakOnHeadingRow && (
                 <StreakInlineLine streak={streak} marginTop={0} />
               )}
-              <SavantFree$1
+              <SavantFreeModelSelector
                 maxHeight={selectorMaxHeight}
                 onExpandedChange={setSelectorExpanded}
               />
@@ -700,7 +700,7 @@ export const SavantFree$1: React.FC<SavantFree$1> = ({
                 {session.countryBlockReason === 'anonymous_network' ? (
                   <>
                     We detected{' '}
-                    {formatFreebuffHardBlockedPrivacySignals(
+                    {formatSavantFreeHardBlockedPrivacySignals(
                       session.ipPrivacySignals,
                     )}{' '}
                     traffic

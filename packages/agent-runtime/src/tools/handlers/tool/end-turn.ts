@@ -5,7 +5,7 @@ import type {
 } from '@savant-code/common/tools/list'
 
 export const handleEndTurn = (async (params: {
-  previousToolCallFinished: Promise<any>
+  previousToolCallFinished: Promise<void>
   toolCall: SavantCodeToolCall<'end_turn'>
 }): Promise<{ output: SavantCodeToolOutput<'end_turn'> }> => {
   const { previousToolCallFinished } = params

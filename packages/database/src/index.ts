@@ -1,10 +1,8 @@
-import { Database } from 'bun:sqlite'
-import path from 'path'
 import fs from 'fs'
 import os from 'os'
+import path from 'path'
 
-// Schema version for migrations
-const SCHEMA_VERSION = 1
+import { Database } from 'bun:sqlite'
 
 // Database path
 const DB_DIR = path.join(os.homedir(), '.savant-free')

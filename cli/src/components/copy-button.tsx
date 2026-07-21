@@ -138,7 +138,7 @@ interface CopyButtonProps {
   /** Whether to include a leading space before the icon (default: true) */
   leadingSpace?: boolean
   /** Style props passed to the underlying Clickable */
-  style?: Record<string, unknown>
+  style?: Record<string, string | number | undefined>
 }
 
 /**

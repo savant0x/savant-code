@@ -14,15 +14,15 @@ const DEFAULT_MAX_PARSE_FILE_BYTES = 1_000_000
 const DEFAULT_MAX_TOTAL_PARSE_BYTES = 500_000_000
 
 const MAX_PARSE_FILES = getPositiveIntegerEnv(
-  'CODEBUFF_MAX_PARSE_FILES',
+  'SAVANT_CODE_MAX_PARSE_FILES',
   DEFAULT_MAX_PARSE_FILES,
 )
 const MAX_PARSE_FILE_BYTES = getPositiveIntegerEnv(
-  'CODEBUFF_MAX_PARSE_FILE_BYTES',
+  'SAVANT_CODE_MAX_PARSE_FILE_BYTES',
   DEFAULT_MAX_PARSE_FILE_BYTES,
 )
 const MAX_TOTAL_PARSE_BYTES = getPositiveIntegerEnv(
-  'CODEBUFF_MAX_TOTAL_PARSE_BYTES',
+  'SAVANT_CODE_MAX_TOTAL_PARSE_BYTES',
   DEFAULT_MAX_TOTAL_PARSE_BYTES,
 )
 
@@ -112,7 +112,7 @@ export async function getFileTokenScores(
 
   if (DEBUG_PARSING) {
     const endTime = Date.now()
-    console.log(`Parsed ${filePaths.length} files in ${endTime - startTime}ms`)
+    console.error(`Parsed ${filePaths.length} files in ${endTime - startTime}ms`)
 
     try {
       fs.writeFileSync(
@@ -173,7 +173,7 @@ async function parseTokensForScoring(params: {
   } catch (e) {
     if (DEBUG_PARSING) {
       console.error(`Error reading source: ${e}`)
-      console.log(filePath)
+      console.error(filePath)
     }
     return emptyParsedTokens(false)
   }
@@ -213,9 +213,9 @@ function parseTokensWithLimits(
     const calls = Array.from(new Set(parseResults['call.identifier']))
 
     if (DEBUG_PARSING) {
-      console.log(`\nParsing ${filePath}:`)
-      console.log('Identifiers:', identifiers)
-      console.log('Calls:', calls)
+      console.error(`\nParsing ${filePath}:`)
+      console.error('Identifiers:', identifiers)
+      console.error('Calls:', calls)
     }
 
     return {
@@ -228,7 +228,7 @@ function parseTokensWithLimits(
   } catch (e) {
     if (DEBUG_PARSING) {
       console.error(`Error parsing query: ${e}`)
-      console.log(filePath)
+      console.error(filePath)
     }
     return emptyParsedTokens(false)
   }

@@ -11,19 +11,19 @@ import { authQueryKeys } from './use-auth-query'
 import { useConnectionStatus } from './use-connection-status'
 import { useElapsedTime } from './use-elapsed-time'
 import { useExitHandler } from './use-exit-handler'
-import { holdsLiveFreebuffSlot } from './use-savant-free-session'
 import { useMessageQueue, type QueuedMessage, type StreamStatus } from './use-message-queue'
 import { useQueueControls } from './use-queue-controls'
 import { useQueueUi } from './use-queue-ui'
+import { holdsLiveSavantFreeSlot } from './use-savant-free-session'
 import { useTimeout } from './use-timeout'
 import { useChatStore } from '../state/chat-store'
-import { useFreebuffSessionStore } from '../state/savant-free-session-store'
-import { IS_FREEBUFF } from '../utils/constants'
+import { useSavantFreeSessionStore } from '../state/savant-free-session-store'
+import { IS_SAVANT_FREE } from '../utils/constants'
 import { logger } from '../utils/logger'
 
 import type { ElapsedTimeTracker } from './use-elapsed-time'
-import type { PendingAttachment } from '../types/store'
 import type { SendMessageFn } from '../types/contracts/send-message'
+import type { PendingAttachment } from '../types/store'
 import type { AgentMode } from '../utils/constants'
 import type { MutableRefObject } from 'react'
 
@@ -142,10 +142,10 @@ export function useChatStreaming({
   // them. Without this, pending tasks queued before the session ended keep
   // dispatching after the hard cutoff and get rejected by the server's
   // session gate one by one. The hold lifts automatically when the user
-  // rejoins (SessionEndedBanner → refreshFreebuffSession → status 'active'),
+  // rejoins (SessionEndedBanner → refreshSavantFreeSession → status 'active'),
   // so queued work resumes in the new session.
-  const savant-free$1 = useFreebuffSessionStore((s) => s.session)
-  const sendBlocked = IS_FREEBUFF && !holdsLiveFreebuffSlot(savant-free$1)
+  const savantFreeSession = useSavantFreeSessionStore((s) => s.session)
+  const sendBlocked = IS_SAVANT_FREE && !holdsLiveSavantFreeSlot(savantFreeSession)
   // Log the transition once, not per render — the hold can last indefinitely.
   useEffect(() => {
     if (sendBlocked) {

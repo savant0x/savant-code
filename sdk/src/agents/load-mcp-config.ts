@@ -3,9 +3,10 @@ import fsPromises from 'fs/promises'
 import os from 'os'
 import path from 'path'
 
-import { logger } from '../utils/logger'
 import { mcpConfigSchema } from '@savant-code/common/types/mcp'
 import { z } from 'zod/v4'
+
+import { logger } from '../utils/logger'
 
 import type { MCPConfig } from '@savant-code/common/types/mcp'
 

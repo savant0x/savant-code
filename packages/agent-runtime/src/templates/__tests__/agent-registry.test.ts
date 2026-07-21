@@ -1,4 +1,5 @@
 import * as validationModule from '@savant-code/common/templates/agent-validation'
+import { emptyMcpServers } from '@savant-code/common/testing/fixtures/agent-runtime'
 import { TEST_AGENT_RUNTIME_IMPL } from '@savant-code/common/testing/impl/agent-runtime'
 import { getStubProjectFileContext } from '@savant-code/common/util/file'
 import {
@@ -35,7 +36,7 @@ const mockStaticTemplates: Record<string, AgentTemplate> = {
     systemPrompt: 'Test',
     instructionsPrompt: 'Test',
     stepPrompt: 'Test',
-    mcpServers: {},
+    mcpServers: emptyMcpServers,
     toolNames: ['end_turn'],
     spawnableAgents: [],
     outputMode: 'last_message',
@@ -51,7 +52,7 @@ const mockStaticTemplates: Record<string, AgentTemplate> = {
     systemPrompt: 'Test',
     instructionsPrompt: 'Test',
     stepPrompt: 'Test',
-    mcpServers: {},
+    mcpServers: emptyMcpServers,
     toolNames: ['find_files'],
     spawnableAgents: [],
     outputMode: 'last_message',
@@ -83,7 +84,7 @@ describe('Agent Registry', () => {
         agentTemplates = {},
         logger,
       }: {
-        agentTemplates?: Record<string, DynamicAgentTemplate>
+        agentTemplates?: Record<string, object>
         logger: Logger
       }) => {
         // Start with static templates (simulating the real behavior)
@@ -93,7 +94,7 @@ describe('Agent Registry', () => {
         const validationErrors: any[] = []
 
         for (const key in agentTemplates) {
-          const template = agentTemplates[key]
+          const template = agentTemplates[key] as DynamicAgentTemplate
           if (template.id === 'invalid-agent') {
             validationErrors.push({
               filePath: key,
@@ -105,18 +106,23 @@ describe('Agent Registry', () => {
           }
         }
 
-        return { templates, dynamicTemplates: agentTemplates, validationErrors }
+        return {
+          templates,
+          dynamicTemplates: agentTemplates as Record<string, DynamicAgentTemplate>,
+          validationErrors,
+        }
       },
     )
 
     spyOn(validationModule, 'validateSingleAgent').mockImplementation(
-      ({ template }: { template: DynamicAgentTemplate; filePath?: string }) => {
+      ({ template }: { template: object; filePath?: string }) => {
+        const typedTemplate = template as DynamicAgentTemplate
         // Check for malformed agents (missing required fields)
         if (
-          template.id === 'malformed-agent' ||
-          !template.systemPrompt ||
-          !template.instructionsPrompt ||
-          !template.stepPrompt
+          typedTemplate.id === 'malformed-agent' ||
+          !typedTemplate.systemPrompt ||
+          !typedTemplate.instructionsPrompt ||
+          !typedTemplate.stepPrompt
         ) {
           return {
             success: false,
@@ -125,7 +131,7 @@ describe('Agent Registry', () => {
         }
         return {
           success: true,
-          agentTemplate: template as AgentTemplate,
+          agentTemplate: typedTemplate as AgentTemplate,
         }
       },
     )
@@ -144,7 +150,7 @@ describe('Agent Registry', () => {
           systemPrompt: 'Test',
           instructionsPrompt: 'Test',
           stepPrompt: 'Test',
-          mcpServers: {},
+          mcpServers: emptyMcpServers,
           toolNames: ['end_turn'],
           spawnableAgents: [],
           outputMode: 'last_message',
@@ -211,7 +217,7 @@ describe('Agent Registry', () => {
         instructionsPrompt: 'Test instructions',
         stepPrompt: 'Test step prompt',
         toolNames: ['end_turn'],
-        mcpServers: {},
+        mcpServers: emptyMcpServers,
         inputSchema: {},
         spawnableAgents: [],
         outputMode: 'last_message',
@@ -245,7 +251,7 @@ describe('Agent Registry', () => {
           systemPrompt: 'Local system prompt',
           instructionsPrompt: 'Local instructions',
           stepPrompt: 'Local step prompt',
-          mcpServers: {},
+          mcpServers: emptyMcpServers,
           toolNames: ['end_turn'],
           spawnableAgents: [],
           outputMode: 'last_message',
@@ -274,7 +280,7 @@ describe('Agent Registry', () => {
         instructionsPrompt: 'Cached instructions',
         stepPrompt: 'Cached step prompt',
         inputSchema: {},
-        mcpServers: {},
+        mcpServers: emptyMcpServers,
         toolNames: ['end_turn'],
         spawnableAgents: [],
         outputMode: 'last_message',
@@ -405,7 +411,7 @@ describe('Agent Registry', () => {
         instructionsPrompt: 'Cache test instructions',
         stepPrompt: 'Cache test step prompt',
         inputSchema: {},
-        mcpServers: {},
+        mcpServers: emptyMcpServers,
         toolNames: ['end_turn'],
         spawnableAgents: [],
         outputMode: 'last_message',

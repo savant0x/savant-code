@@ -1,7 +1,7 @@
 import { API_KEY_ENV_VAR } from '@savant-code/common/constants/paths'
 
 import { getWebsiteUrl } from './constants'
-import { getCodebuffApiKeyFromEnv } from './env'
+import { getSavantCodeApiKeyFromEnv } from './env'
 import { run } from './run'
 
 import type { RunOptions, SavantCodeClientOptions } from './run'
@@ -14,7 +14,7 @@ export class SavantCodeClient {
   }
 
   constructor(options: SavantCodeClientOptions) {
-    const foundApiKey = options.apiKey ?? getCodebuffApiKeyFromEnv()
+    const foundApiKey = options.apiKey ?? getSavantCodeApiKeyFromEnv()
     if (!foundApiKey) {
       throw new Error(
         `SavantCode API key not found. Please provide an apiKey in the constructor of SavantCodeClient or set the ${API_KEY_ENV_VAR} environment variable.`,

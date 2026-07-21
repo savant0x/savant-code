@@ -2,18 +2,18 @@ import { describe, expect, test } from 'bun:test'
 
 import {
   addDaysToDateKey,
-  calculateFreebuffStreak,
-  getFreebuffUsageDateKey,
-  isFreebuffStreakMilestone,
+  calculateSavantFreeStreak,
+  getSavantFreeUsageDateKey,
+  isSavantFreeStreakMilestone,
   streakRewardPools,
 } from '../savant-free-streak'
 
 describe('savant-free streak helpers', () => {
   test('formats usage dates in the SavantFree reset timezone', () => {
-    expect(getFreebuffUsageDateKey(new Date('2026-05-27T06:30:00.000Z'))).toBe(
+    expect(getSavantFreeUsageDateKey(new Date('2026-05-27T06:30:00.000Z'))).toBe(
       '2026-05-26',
     )
-    expect(getFreebuffUsageDateKey(new Date('2026-05-27T08:30:00.000Z'))).toBe(
+    expect(getSavantFreeUsageDateKey(new Date('2026-05-27T08:30:00.000Z'))).toBe(
       '2026-05-27',
     )
   })
@@ -26,7 +26,7 @@ describe('savant-free streak helpers', () => {
 
   test('counts a streak that includes today', () => {
     expect(
-      calculateFreebuffStreak({
+      calculateSavantFreeStreak({
         todayDateKey: '2026-05-27',
         usageDates: ['2026-05-25', '2026-05-23', '2026-05-27', '2026-05-26'],
       }),
@@ -39,7 +39,7 @@ describe('savant-free streak helpers', () => {
 
   test('keeps yesterday-anchored streaks alive before today is used', () => {
     expect(
-      calculateFreebuffStreak({
+      calculateSavantFreeStreak({
         todayDateKey: '2026-05-27',
         usageDates: ['2026-05-26', '2026-05-25', '2026-05-24'],
       }),
@@ -52,7 +52,7 @@ describe('savant-free streak helpers', () => {
 
   test('returns zero after a missed full day', () => {
     expect(
-      calculateFreebuffStreak({
+      calculateSavantFreeStreak({
         todayDateKey: '2026-05-27',
         usageDates: ['2026-05-25', '2026-05-24'],
       }),
@@ -66,12 +66,12 @@ describe('savant-free streak helpers', () => {
 
 describe('savant-free streak rewards', () => {
   test('recognizes 7-day multiples as milestones', () => {
-    expect(isFreebuffStreakMilestone(7)).toBe(true)
-    expect(isFreebuffStreakMilestone(14)).toBe(true)
-    expect(isFreebuffStreakMilestone(21)).toBe(true)
-    expect(isFreebuffStreakMilestone(0)).toBe(false)
-    expect(isFreebuffStreakMilestone(6)).toBe(false)
-    expect(isFreebuffStreakMilestone(8)).toBe(false)
+    expect(isSavantFreeStreakMilestone(7)).toBe(true)
+    expect(isSavantFreeStreakMilestone(14)).toBe(true)
+    expect(isSavantFreeStreakMilestone(21)).toBe(true)
+    expect(isSavantFreeStreakMilestone(0)).toBe(false)
+    expect(isSavantFreeStreakMilestone(6)).toBe(false)
+    expect(isSavantFreeStreakMilestone(8)).toBe(false)
   })
 
   test('full access milestone day grants a premium bonus plus a weekly GLM bonus', () => {

@@ -1,3 +1,4 @@
+/* eslint-disable no-console, savant/no-unknown-in-signatures -- test runner: intentional diagnostic output and dynamic trace/output data shapes */
 /**
  * Test script for the browser-use agent.
  *
@@ -169,7 +170,7 @@ async function main() {
   console.log(`Loaded browser-use agent (model: ${browserAgent.model})`)
 
   const client = new SavantCodeClient({
-    apiKey: process.env.CODEBUFF_API_KEY,
+    apiKey: process.env.SAVANT_CODE_API_KEY,
     cwd: process.cwd(),
   })
 

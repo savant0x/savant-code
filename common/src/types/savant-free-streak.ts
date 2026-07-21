@@ -1,4 +1,4 @@
-export interface FreebuffStreakResponse {
+export interface SavantFreeStreakResponse {
   streak: number
   todayUsed: boolean
   lastUsageDate: string | null

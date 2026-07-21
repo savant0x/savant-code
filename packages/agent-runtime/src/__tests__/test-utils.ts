@@ -2,6 +2,7 @@ import { promptSuccess } from '@savant-code/common/util/error'
 import { generateCompactId } from '@savant-code/common/util/string'
 
 import type { StreamChunk } from '@savant-code/common/types/contracts/llm'
+import type { JSONValue } from '@savant-code/common/types/json'
 import type { PromptResult } from '@savant-code/common/util/error'
 import type { ProjectFileContext } from '@savant-code/common/util/file'
 
@@ -11,7 +12,7 @@ import type { ProjectFileContext } from '@savant-code/common/util/file'
  */
 export function createToolCallChunk<T extends string>(
   toolName: T,
-  input: Record<string, unknown>,
+  input: Record<string, JSONValue>,
   toolCallId?: string,
 ): StreamChunk {
   return {
@@ -27,7 +28,7 @@ export function createToolCallChunk<T extends string>(
  * Use this instead of streams that yield text with XML tool calls.
  */
 export function createMockStreamWithToolCalls(
-  chunks: (string | { toolName: string; input: Record<string, unknown> })[],
+  chunks: (string | { toolName: string; input: Record<string, JSONValue> })[],
 ): AsyncGenerator<StreamChunk, PromptResult<string | null>> {
   async function* generator(): AsyncGenerator<
     StreamChunk,

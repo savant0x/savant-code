@@ -73,9 +73,7 @@ export const ChatGptConnectBanner = () => {
   const panelStyle = {
     width: '100%' as const,
     borderStyle: 'single' as const,
-    borderColor: theme.border,
-    customBorderChars: BORDER_CHARS,
-    paddingLeft: 1,
+    borderColor: theme.border,    paddingLeft: 1,
     paddingRight: 1,
   }
 
@@ -85,9 +83,7 @@ export const ChatGptConnectBanner = () => {
     paddingLeft: 1,
     paddingRight: 1,
     borderStyle: 'single' as const,
-    borderColor: hovered ? theme.foreground : theme.border,
-    customBorderChars: BORDER_CHARS,
-  }
+    borderColor: hovered ? theme.foreground : theme.border,  }
 
   const handleClose = () => {
     setInputMode('default')
@@ -107,7 +103,7 @@ export const ChatGptConnectBanner = () => {
 
   if (flowState === 'connected') {
     return (
-      <box style={{ ...panelStyle, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+      <box style={{ ...panelStyle, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }} customBorderChars={BORDER_CHARS}>
         <text style={{ fg: theme.foreground }}>✓ ChatGPT connected</text>
         <box style={{ flexDirection: 'row', gap: 1, alignItems: 'center' }}>
           <Button
@@ -128,7 +124,7 @@ export const ChatGptConnectBanner = () => {
 
   if (flowState === 'error') {
     return (
-      <box style={{ ...panelStyle, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+      <box style={{ ...panelStyle, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }} customBorderChars={BORDER_CHARS}>
         <text style={{ fg: theme.error, flexShrink: 1 }}>
           {error ?? 'Unknown error'}
         </text>
@@ -151,7 +147,7 @@ export const ChatGptConnectBanner = () => {
 
   if (flowState === 'waiting-for-code') {
     return (
-      <box style={{ ...panelStyle, flexDirection: 'column' }}>
+      <box style={{ ...panelStyle, flexDirection: 'column' }} customBorderChars={BORDER_CHARS}>
         <box style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
           <text style={{ fg: theme.foreground }}>Connecting to ChatGPT...</text>
           {closeButton}
@@ -170,7 +166,7 @@ export const ChatGptConnectBanner = () => {
 
   if (flowState === 'not-connected') {
     return (
-      <box style={{ ...panelStyle, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+      <box style={{ ...panelStyle, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }} customBorderChars={BORDER_CHARS}>
         <Button
           style={actionButtonStyle}
           onClick={handleConnect}

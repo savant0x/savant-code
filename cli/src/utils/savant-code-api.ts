@@ -1,8 +1,9 @@
 import { WEBSITE_URL } from '@savant-code/sdk'
+
+import type { FeedbackRequest } from '@savant-code/common/schemas/feedback'
 import type {
   PublishAgentsResponse,
 } from '@savant-code/common/types/api/agents/publish'
-import type { FeedbackRequest } from '@savant-code/common/schemas/feedback'
 
 /**
  * API response types for consistent error handling.
@@ -295,7 +296,7 @@ const isRetryableError = (error: unknown): boolean => {
 /**
  * Create a SavantCode API client for making authenticated requests to the SavantCode API
  */
-export function createCodebuffApiClient(
+export function createSavantCodeApiClient(
   config: SavantCodeApiClientConfig = {},
 ): SavantCodeApiClient {
   const {
@@ -584,7 +585,7 @@ let clientCreatedWithToken: string | undefined
 export function getApiClient(): SavantCodeApiClient {
   // Recreate client if it doesn't exist or if the token has changed since creation
   if (!sharedClient || clientCreatedWithToken !== sharedAuthToken) {
-    sharedClient = createCodebuffApiClient({ authToken: sharedAuthToken })
+    sharedClient = createSavantCodeApiClient({ authToken: sharedAuthToken })
     clientCreatedWithToken = sharedAuthToken
   }
   return sharedClient

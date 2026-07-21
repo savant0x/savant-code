@@ -1,17 +1,12 @@
-import { SUBSCRIPTION_DISPLAY_NAME } from '@savant-code/common/constants/subscription-plans'
-import { IS_FREEBUFF } from '../utils/constants'
-import { pluralize } from '@savant-code/common/util/string'
 import { TextAttributes } from '@opentui/core'
+import { SUBSCRIPTION_DISPLAY_NAME } from '@savant-code/common/constants/subscription-plans'
+import { pluralize } from '@savant-code/common/util/string'
 import React, { useCallback, useMemo } from 'react'
 
 import { CopyButton } from './copy-button'
 import { ElapsedTimer } from './elapsed-timer'
 import { FeedbackIconButton } from './feedback-icon-button'
 import { useSubscriptionQuery } from '../hooks/use-subscription-query'
-import {
-  getBlockPercentRemaining,
-  isCoveredBySubscription,
-} from '../utils/subscription'
 import { useTheme } from '../hooks/use-theme'
 import {
   useFeedbackStore,
@@ -19,6 +14,11 @@ import {
   selectHasSubmittedFeedback,
   selectMessageFeedbackCategory,
 } from '../state/feedback-store'
+import { IS_SAVANT_FREE } from '../utils/constants'
+import {
+  getBlockPercentRemaining,
+  isCoveredBySubscription,
+} from '../utils/subscription'
 
 import type { ContentBlock, TextContentBlock } from '../types/chat'
 
@@ -161,7 +161,7 @@ export const MessageFooter: React.FC<MessageFooterProps> = ({
       ),
     })
   }
-  if (typeof credits === 'number' && credits > 0 && !IS_FREEBUFF) {
+  if (typeof credits === 'number' && credits > 0 && !IS_SAVANT_FREE) {
     footerItems.push({
       key: 'credits',
       node: <CreditsOrSubscriptionIndicator credits={credits} />,

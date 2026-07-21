@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test'
 
-import { AnalyticsEvent } from '@savantcode.common/constants/analytics-events'
+import { AnalyticsEvent } from '@savant-code/common/constants/analytics-events'
 
 import { createAnalyticsDispatcher } from '../analytics-dispatcher'
 

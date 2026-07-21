@@ -1,20 +1,31 @@
 import fs from 'fs'
 import path from 'path'
 
-import { isSupportedFreebuffModelId } from '@savant-code/common/constants/savant-free-models'
+import { isSupportedSavantFreeModelId } from '@savant-code/common/constants/savant-free-models'
+
 
 import { getConfigDir } from './auth'
 import { AGENT_MODES } from './constants'
 import { logger } from './logger'
 
 import type { AgentMode } from './constants'
+import type { ModelProvider } from './openrouter-models'
+import type { JSONValue } from '@savant-code/common/types/json'
 
 const DEFAULT_SETTINGS: Settings = {
-  mode: 'DEFAULT' as const,
+  mode: 'EDIT' as const,
   adsEnabled: true,
 }
 
-// Note: The old FREE mode has been renamed back to LITE; migrate on load.
+// Legacy mode migration map (FID-031). Old DEFAULT/LITE/MAX/PLAN/FREE values
+// all collapse to EDIT now that the toggle drives an execution-scope axis.
+const LEGACY_MODE_MIGRATION: Record<string, AgentMode> = {
+  DEFAULT: 'EDIT',
+  LITE: 'EDIT',
+  MAX: 'EDIT',
+  PLAN: 'EDIT',
+  FREE: 'EDIT',
+}
 
 /**
  * Settings schema - add new settings here as the product evolves
@@ -25,10 +36,14 @@ export interface Settings {
   /** Last model the user picked in the savant-free model selector. Restored on
    *  next savant-free launch so users land in the queue for their preferred
    *  model without re-picking. Persisted as the canonical model id. */
-  savant-free$1?: string
+  savantFreeModelPreference?: string
   /** Last model the user picked in the savant-code model selector. Restored on
    *  next launch so users default to their preferred model. */
-  savantCode$1?: string
+  savantCodeModelPreference?: string
+  /** Last provider the user picked a model from in the savant-code model
+   *  selector. The /model picker defaults to the first model of this provider
+   *  on future opens so users land in the same catalog section. */
+  savantCodeModelProviderPreference?: ModelProvider
   /** @deprecated Use server-side fallbackToALaCarte setting instead */
   alwaysUseALaCarte?: boolean
   /** @deprecated Use server-side fallbackToALaCarte setting instead */
@@ -37,6 +52,9 @@ export interface Settings {
    *  first-time onboarding suggested prompts so they only show to brand-new
    *  users and quietly retire afterwards. */
   hasSubmittedFirstPrompt?: boolean
+  /** Set when the user acknowledges the SCAFFOLD-mode confirmation dialog.
+   *  Persists the first-click warning so it only appears once per user. */
+  scaffoldAcknowledged?: boolean
 }
 
 /**
@@ -72,7 +90,7 @@ export const loadSettings = (): Settings => {
 
   try {
     const settingsFile = fs.readFileSync(settingsPath, 'utf8')
-    const parsed = JSON.parse(settingsFile)
+    const parsed = JSON.parse(settingsFile) as JSONValue
     return validateSettings(parsed)
   } catch (error) {
     logger.debug(
@@ -88,19 +106,19 @@ export const loadSettings = (): Settings => {
 /**
  * Validate and sanitize settings from file
  */
-const validateSettings = (parsed: unknown): Settings => {
+const validateSettings = (parsed: JSONValue): Settings => {
   if (typeof parsed !== 'object' || parsed === null) {
     return {}
   }
 
   const settings: Settings = {}
-  const obj = parsed as Record<string, unknown>
+  const obj = parsed as Record<string, JSONValue>
 
-  // Validate mode; migrate the previously-saved 'FREE' value to 'LITE'.
+  // Validate mode; migrate legacy DEFAULT/LITE/MAX/PLAN/FREE values to EDIT.
   if (typeof obj.mode === 'string') {
-    const normalized = obj.mode === 'FREE' ? 'LITE' : obj.mode
-    if (AGENT_MODES.includes(normalized as AgentMode)) {
-      settings.mode = normalized as AgentMode
+    const migrated = LEGACY_MODE_MIGRATION[obj.mode] ?? obj.mode
+    if (AGENT_MODES.includes(migrated as AgentMode)) {
+      settings.mode = migrated as AgentMode
     }
   }
 
@@ -109,14 +127,17 @@ const validateSettings = (parsed: unknown): Settings => {
     settings.adsEnabled = obj.adsEnabled
   }
 
-  // Validate savant-free$1 — drop unknown ids so a removed model doesn't
-  // strand the user on a non-existent queue. Hidden-but-supported models are
-  // kept; access-tier resolution decides whether they are selectable.
+  // Validate savant-free model preference — drop unknown ids so a removed model
+  // doesn't strand the user on a non-existent queue. Hidden-but-supported models
+  // are kept; access-tier resolution decides whether they are selectable.
+  // Backward-compat: migrate the legacy `freebuffModelPreference` key.
+  const savantFreeModelPreference =
+    obj.savantFreeModelPreference ?? obj.freebuffModelPreference
   if (
-    typeof obj.savant-free$1 === 'string' &&
-    isSupportedFreebuffModelId(obj.savant-free$1)
+    typeof savantFreeModelPreference === 'string' &&
+    isSupportedSavantFreeModelId(savantFreeModelPreference)
   ) {
-    settings.savant-free$1 = obj.savant-free$1
+    settings.savantFreeModelPreference = savantFreeModelPreference
   }
 
   // Validate alwaysUseALaCarte (legacy)
@@ -134,10 +155,34 @@ const validateSettings = (parsed: unknown): Settings => {
     settings.hasSubmittedFirstPrompt = obj.hasSubmittedFirstPrompt
   }
 
-  // Validate savantCode$1 — pass through any string; the /model picker
-  // fetches live OpenRouter models so all returned ids are valid.
-  if (typeof obj.savantCode$1 === 'string') {
-    settings.savantCode$1 = obj.savantCode$1
+  // Validate scaffoldAcknowledged
+  if (typeof obj.scaffoldAcknowledged === 'boolean') {
+    settings.scaffoldAcknowledged = obj.scaffoldAcknowledged
+  }
+
+  // Validate savantCodeModelPreference — pass through any string; the /model
+  // picker fetches live OpenRouter models so all returned ids are valid.
+  // Backward-compat: migrate the legacy `savantCode$1` key.
+  const savantCodeModelPreference =
+    obj.savantCodeModelPreference ?? obj.savantCode$1
+  if (typeof savantCodeModelPreference === 'string') {
+    settings.savantCodeModelPreference = savantCodeModelPreference
+  }
+
+  // Validate savantCodeModelProviderPreference — must be one of the known
+  // gateway providers. Drop unknown/legacy values so a removed provider doesn't
+  // strand the user on an empty section.
+  const validProviders = new Set<ModelProvider>([
+    'openrouter',
+    'tokenrouter',
+    'nvidia',
+  ])
+  if (
+    typeof obj.savantCodeModelProviderPreference === 'string' &&
+    validProviders.has(obj.savantCodeModelProviderPreference as ModelProvider)
+  ) {
+    settings.savantCodeModelProviderPreference =
+      obj.savantCodeModelProviderPreference as ModelProvider
   }
 
   return settings
@@ -169,11 +214,11 @@ export const saveSettings = (newSettings: Partial<Settings>): void => {
 
 /**
  * Load the saved agent mode preference
- * @returns The saved mode, or 'DEFAULT' if not found or invalid
+ * @returns The saved mode, or 'EDIT' if not found or invalid
  */
 export const loadModePreference = (): AgentMode => {
   const settings = loadSettings()
-  return settings.mode ?? 'DEFAULT'
+  return settings.mode ?? 'EDIT'
 }
 
 /**
@@ -185,34 +230,55 @@ export const saveModePreference = (mode: AgentMode): void => {
 
 /**
  * Load the saved savant-free model preference. Returns undefined if none is
- * saved yet — callers should fall back to DEFAULT_FREEBUFF_MODEL_ID.
+ * saved yet — callers should fall back to DEFAULT_SAVANT_FREE_MODEL_ID.
  */
-export const loadFreebuffModelPreference = (): string | undefined => {
-  return loadSettings().savant-free$1
+export const loadSavantFreeModelPreference = (): string | undefined => {
+  return loadSettings().savantFreeModelPreference
 }
 
 /**
  * Save the savant-free model preference. Called whenever the user picks a model
  * on the landing screen so the next launch defaults to it.
  */
-export const saveFreebuffModelPreference = (model: string): void => {
-  saveSettings({ savant-free$1: model })
+export const saveSavantFreeModelPreference = (model: string): void => {
+  saveSettings({ savantFreeModelPreference: model })
 }
 
 /**
  * Load the saved savant-code model preference. Returns undefined if none is
  * saved yet — callers should fall back to the agent definition's model.
  */
-export const loadCodebuffModelPreference = (): string | undefined => {
-  return loadSettings().savantCode$1
+export const loadSavantCodeModelPreference = (): string | undefined => {
+  return loadSettings().savantCodeModelPreference
 }
 
 /**
  * Save the savant-code model preference. Called whenever the user picks a model
  * in the CLI so the next launch defaults to it.
  */
-export const saveCodebuffModelPreference = (model: string): void => {
-  saveSettings({ savantCode$1: model })
+export const saveSavantCodeModelPreference = (model: string): void => {
+  saveSettings({ savantCodeModelPreference: model })
+}
+
+/**
+ * Load the saved savant-code model provider preference. Returns undefined if
+ * none is saved yet — callers should default to the first model in the catalog.
+ */
+export const loadSavantCodeModelProviderPreference = ():
+  | ModelProvider
+  | undefined => {
+  return loadSettings().savantCodeModelProviderPreference
+}
+
+/**
+ * Save the savant-code model provider preference. Called whenever the user picks
+ * a model in the CLI so the next /model open defaults to that provider's
+ * section.
+ */
+export const saveSavantCodeModelProviderPreference = (
+  provider: ModelProvider,
+): void => {
+  saveSettings({ savantCodeModelProviderPreference: provider })
 }
 
 /**

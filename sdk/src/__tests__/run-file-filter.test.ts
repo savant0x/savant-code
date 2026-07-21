@@ -138,7 +138,7 @@ describe('SavantCodeClientOptions fileFilter', () => {
     })
 
     const result = await client.run({
-      agent: 'base2',
+      agent: 'savant',
       prompt: 'read files',
     })
 
@@ -219,7 +219,7 @@ describe('SavantCodeClientOptions fileFilter', () => {
     })
 
     const result = await client.run({
-      agent: 'base2',
+      agent: 'savant',
       prompt: 'read files',
     })
 
@@ -302,7 +302,7 @@ describe('SavantCodeClientOptions fileFilter', () => {
     })
 
     const result = await client.run({
-      agent: 'base2',
+      agent: 'savant',
       prompt: 'read optional file',
     })
 
@@ -373,7 +373,7 @@ describe('SavantCodeClientOptions fileFilter', () => {
     })
 
     const result = await client.run({
-      agent: 'base2',
+      agent: 'savant',
       prompt: 'read optional file',
     })
 
@@ -443,7 +443,7 @@ describe('SavantCodeClientOptions fileFilter', () => {
     })
 
     const result = await client.run({
-      agent: 'base2',
+      agent: 'savant',
       prompt: 'read files',
     })
 
@@ -520,7 +520,7 @@ describe('SavantCodeClientOptions fileFilter', () => {
     })
 
     await client.run({
-      agent: 'base2',
+      agent: 'savant',
       prompt: 'read files',
     })
 

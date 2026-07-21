@@ -1,5 +1,5 @@
 /**
- * Stateful stream XML parser that extracts tool calls from <codebuff_tool_call> XML
+ * Stateful stream XML parser that extracts tool calls from <savant_code_tool_call> XML
  * and filters them out of the text stream.
  *
  * Handles partial tags at chunk boundaries using a stateful approach.
@@ -10,13 +10,15 @@ import {
   toolXmlName,
 } from '@savant-code/common/tools/constants'
 
+import type { JSONValue } from '@savant-code/common/types/json'
+
 // Use flexible tag matching without requiring specific newlines
 const startToolTag = `<${toolXmlName}>`
 const endToolTag = `</${toolXmlName}>`
 
 export type ParsedToolCall = {
   toolName: string
-  input: Record<string, unknown>
+  input: Record<string, JSONValue>
 }
 
 export type StreamParserState = {

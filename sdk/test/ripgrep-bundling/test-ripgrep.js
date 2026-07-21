@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable no-console -- test script: intentional runtime logging */
 // Test ripgrep bundling functionality in runtime environment
 import { writeFileSync, mkdirSync, existsSync } from 'fs'
 import { join, dirname } from 'path'
@@ -226,10 +227,10 @@ try {
 
   // Test 10: Test environment variable override
   console.log('\n10. Testing environment variable override...')
-  const originalPath = process.env.CODEBUFF_RG_PATH
+  const originalPath = process.env.SAVANT_CODE_RG_PATH
 
   // Set environment variable to override
-  process.env.CODEBUFF_RG_PATH = '/usr/bin/rg'
+  process.env.SAVANT_CODE_RG_PATH = '/usr/bin/rg'
 
   try {
     const overridePath = getBundledRgPath(import.meta.url)
@@ -240,9 +241,9 @@ try {
   } finally {
     // Restore original value
     if (originalPath) {
-      process.env.CODEBUFF_RG_PATH = originalPath
+      process.env.SAVANT_CODE_RG_PATH = originalPath
     } else {
-      delete process.env.CODEBUFF_RG_PATH
+      delete process.env.SAVANT_CODE_RG_PATH
     }
   }
 

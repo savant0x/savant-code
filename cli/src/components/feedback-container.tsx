@@ -5,13 +5,15 @@ import { FeedbackInputMode } from './feedback-input-mode'
 import { useChatStore } from '../state/chat-store'
 import { useFeedbackStore } from '../state/feedback-store'
 import { showClipboardMessage } from '../utils/clipboard'
-import { getApiClient } from '../utils/savant-code-api'
 import { buildFeedbackPayload, buildMessageContext } from '../utils/feedback-helpers'
 import { resolveFeedbackSubmission } from '../utils/feedback-submission'
 import { logger } from '../utils/logger'
+import { getApiClient } from '../utils/savant-code-api'
+
+import type { MultilineInputHandle } from './multiline-input'
 
 interface FeedbackContainerProps {
-  inputRef: React.MutableRefObject<any>
+  inputRef: React.MutableRefObject<MultilineInputHandle | null>
   onExitFeedback?: () => void
   width: number
 }
@@ -125,7 +127,10 @@ export const FeedbackContainer: React.FC<FeedbackContainerProps> = ({
           showClipboardMessage('Feedback sent!', { durationMs: 5000 })
         }
       })
-      .catch((error: unknown) => {
+      .catch((
+        // eslint-disable-next-line savant/no-unknown-in-signatures -- catch trust boundary: runtime error shape is not knowable a priori
+        error: unknown,
+      ) => {
         logger.warn({ error }, 'Failed to submit feedback to API')
         const store = useFeedbackStore.getState()
         if (!resolveFeedbackSubmission(store.clientFeedbackId, submittedClientFeedbackId).shouldSettleSubmission) {

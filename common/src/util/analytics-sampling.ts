@@ -1,3 +1,4 @@
+/* eslint-disable savant/no-unknown-in-signatures -- analytics sampling trust boundary: event `properties` arrive schema-less from the CLI/agent runtime; `unknown` is the only honest shape for value-kind discrimination. 3-condition AND-gate: (i.1) caller type cannot be discovered because properties are opaque user/telemetry maps; (i.2) narrowing to `JsonValue`/concrete breaks callers that attach LLM response objects and Error instances to event properties; (i.3) runtime narrowing via `valueKind()`, `getStringProperty()`, and `getPropertyUserId()` preserves existing sampling behavior. */
 import { AnalyticsEvent } from '../constants/analytics-events'
 
 const DEFAULT_SAMPLED_RATE = 0.01
@@ -43,7 +44,7 @@ const ALWAYS_TRACK_EVENTS = new Set<AnalyticsEvent>([
   AnalyticsEvent.DESKTOP_MODEL_CHANGED,
   AnalyticsEvent.DESKTOP_SKILL_RUN,
   AnalyticsEvent.TERMINAL_COMMAND_COMPLETED,
-  AnalyticsEvent.UPDATE_CODEBUFF_FAILED,
+  AnalyticsEvent.UPDATE_SAVANT_CODE_FAILED,
   AnalyticsEvent.USER_INPUT,
   AnalyticsEvent.USER_INPUT_COMPLETE,
 ])
@@ -93,13 +94,13 @@ export function isFullTelemetryEnabled(params: {
   distinctId?: string
   properties?: AnalyticsProperties
 }): boolean {
-  if (isTruthyEnv(process.env.CODEBUFF_FULL_TELEMETRY)) {
+  if (isTruthyEnv(process.env.SAVANT_CODE_FULL_TELEMETRY)) {
     return true
   }
 
   const ids = splitEnvList(
-    process.env.CODEBUFF_FULL_TELEMETRY_IDS ??
-      process.env.CODEBUFF_FULL_TELEMETRY_USER_IDS,
+    process.env.SAVANT_CODE_FULL_TELEMETRY_IDS ??
+      process.env.SAVANT_CODE_FULL_TELEMETRY_USER_IDS,
   )
   if (ids.size === 0) {
     return false

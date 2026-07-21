@@ -22,14 +22,14 @@ describe('fetchUserDetails', () => {
     debug: mock(() => {}),
   }
 
-  const originalEnv = process.env.NEXT_PUBLIC_CODEBUFF_APP_URL
+  const originalEnv = process.env.NEXT_PUBLIC_SAVANT_CODE_APP_URL
 
   beforeEach(() => {
-    process.env.NEXT_PUBLIC_CODEBUFF_APP_URL = 'https://test.savant-code.com'
+    process.env.NEXT_PUBLIC_SAVANT_CODE_APP_URL = 'https://test.savant-code.com'
   })
 
   afterEach(() => {
-    process.env.NEXT_PUBLIC_CODEBUFF_APP_URL = originalEnv
+    process.env.NEXT_PUBLIC_SAVANT_CODE_APP_URL = originalEnv
   })
 
   describe('API failure handling', () => {

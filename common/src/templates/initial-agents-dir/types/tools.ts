@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- generated tool type definitions: dynamic params */
 /**
  * Union type of all available tool names
  */
@@ -26,6 +27,7 @@ export type ToolName =
   | 'skill'
   | 'spawn_agents'
   | 'str_replace'
+  | 'spawn_agent_inline'
   | 'suggest_followups'
   | 'task_completed'
   | 'think_deeply'
@@ -59,6 +61,7 @@ export interface ToolParamsMap {
   set_messages: SetMessagesParams
   set_output: SetOutputParams
   skill: SkillParams
+  spawn_agent_inline: SpawnAgentInlineParams
   spawn_agents: SpawnAgentsParams
   str_replace: StrReplaceParams
   suggest_followups: SuggestFollowupsParams
@@ -331,6 +334,18 @@ export interface SetOutputParams {}
 export interface SkillParams {
   /** The name of the skill to load */
   name: string
+}
+
+/**
+ * Spawn an agent inline within a handleSteps generator.
+ * This is a programmatic-only tool (not user-facing) that spawns
+ * a sub-agent and awaits its completion within the generator.
+ */
+export interface SpawnAgentInlineParams {
+  /** Agent type to spawn */
+  agent_type: string
+  /** Parameters to pass to the spawned agent */
+  params?: Record<string, unknown>
 }
 
 /**

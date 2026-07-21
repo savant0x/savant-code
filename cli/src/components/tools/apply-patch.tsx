@@ -1,3 +1,4 @@
+/* eslint-disable savant/no-unknown-in-signatures -- apply-patch: dynamic patch input handled via `parseOperation(input: unknown)` with runtime typeof/`kind in obj` guards before narrowing to discriminated `PatchOperation` union; LLM-tool input is the trust boundary */
 import { TextAttributes } from '@opentui/core'
 
 import { DiffViewer } from './diff-viewer'

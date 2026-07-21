@@ -1,5 +1,4 @@
 import { AnalyticsEvent } from '@savant-code/common/constants/analytics-events'
-import { isFreeMode } from '@savant-code/common/constants/free-agents'
 import { models, PROFIT_MARGIN } from '@savant-code/common/old-constants'
 import { buildArray } from '@savant-code/common/util/array'
 import { normalizeProviderRequestBodyForCacheDebug } from '@savant-code/common/util/cache-debug'
@@ -11,6 +10,7 @@ import {
 import { convertCbToModelMessages } from '@savant-code/common/util/messages'
 import { isExplicitlyDefinedModel } from '@savant-code/common/util/model-utils'
 import { StopSequenceHandler } from '@savant-code/common/util/stop-sequence'
+import { safeToJSONValue, toJSONValue } from '@savant-code/common/util/type-narrowing'
 import {
   streamText,
   generateText,
@@ -41,7 +41,7 @@ import type {
   PromptAiSdkStructuredOutput,
 } from '@savant-code/common/types/contracts/llm'
 import type { ParamsOf } from '@savant-code/common/types/function-params'
-import type { JSONObject } from '@savant-code/common/types/json'
+import type { JSONValue, JSONObject } from '@savant-code/common/types/json'
 import type { LanguageModel } from 'ai'
 import type z from 'zod/v4'
 
@@ -73,10 +73,9 @@ export function getProviderOptions(params: {
   providerOptions?: Record<string, JSONObject>
   agentProviderOptions?: OpenRouterProviderRoutingOptions
   n?: number
-  costMode?: string
   cacheDebugCorrelation?: string
-  extraCodebuffMetadata?: Record<string, string>
-}): { savant-code: JSONObject } {
+  extraSavantCodeMetadata?: Record<string, string>
+}): { 'savant-code': JSONObject } {
   const {
     model,
     runId,
@@ -84,12 +83,19 @@ export function getProviderOptions(params: {
     providerOptions,
     agentProviderOptions,
     n,
-    costMode,
     cacheDebugCorrelation,
-    extraCodebuffMetadata,
+    extraSavantCodeMetadata,
   } = params
 
-  let providerConfig: Record<string, any>
+  // Both branches produce a provider routing config sent to OpenRouter.
+  // When agentProviderOptions is provided, its full shape is used directly.
+  // Otherwise, a minimal config with order and allow_fallbacks is built.
+  let providerConfig:
+    | OpenRouterProviderRoutingOptions
+    | {
+        order: string[] | undefined
+        allow_fallbacks: boolean
+      }
 
   // Use agent's provider options if provided, otherwise use defaults
   if (agentProviderOptions) {
@@ -107,22 +113,21 @@ export function getProviderOptions(params: {
   return {
     ...providerOptions,
     // Could either be "savant-code" or "openaiCompatible"
-    savant-code: {
-      ...providerOptions?.savant-code,
+    'savant-code': {
+      ...providerOptions?.['savant-code'],
       // All values here get appended to the request body
-      codebuff_metadata: {
+      savant_code_metadata: {
         // Caller-supplied keys go first so they can't override reserved
         // identifiers like run_id/client_id/cost_mode that the server trusts.
-        ...(extraCodebuffMetadata ?? {}),
+        ...(extraSavantCodeMetadata ?? {}),
         run_id: runId,
         client_id: clientSessionId,
         ...(n && { n }),
-        ...(costMode && { cost_mode: costMode }),
         ...(cacheDebugCorrelation && {
           cache_debug_correlation: cacheDebugCorrelation,
         }),
       },
-      provider: providerConfig,
+      provider: providerConfig as JSONObject,
     },
   }
 }
@@ -139,7 +144,7 @@ type OpenRouterUsageAccounting = {
 /**
  * Check if an error is an OAuth rate limit error that should trigger fallback.
  */
-function isOAuthRateLimitError(error: unknown): boolean {
+function isOAuthRateLimitError<T>(error: T): boolean {
   if (!error || typeof error !== 'object') return false
 
   // Check status code (handles both 'status' from AI SDK and 'statusCode' from our errors)
@@ -169,7 +174,7 @@ function isOAuthRateLimitError(error: unknown): boolean {
  * Check if an error is an OAuth authentication error (expired/invalid token).
  * This indicates we should try refreshing the token.
  */
-function isOAuthAuthError(error: unknown): boolean {
+function isOAuthAuthError<T>(error: T): boolean {
   if (!error || typeof error !== 'object') return false
 
   // Check status code (handles both 'status' from AI SDK and 'statusCode' from our errors)
@@ -210,13 +215,13 @@ function getModelProvider(model: LanguageModel): string {
 function emitCacheDebugProviderRequest(params: {
   callback?: (params: {
     provider: string
-    rawBody: unknown
-    normalizedBody?: unknown
+    rawBody: JSONValue
+    normalizedBody?: JSONValue
   }) => void
   provider: string
-  rawBody: unknown
+  rawBody: JSONValue | null
 }) {
-  if (!params.callback) return
+  if (!params.callback || params.rawBody === null) return
 
   const normalized = normalizeProviderRequestBodyForCacheDebug({
     provider: params.provider,
@@ -226,7 +231,8 @@ function emitCacheDebugProviderRequest(params: {
   params.callback({
     provider: params.provider,
     rawBody: params.rawBody,
-    normalizedBody: normalized,
+    normalizedBody:
+      normalized === undefined ? undefined : toJSONValue(normalized),
   })
 }
 
@@ -260,11 +266,11 @@ export type ChatGptOAuthStreamErrorPolicy =
   | 'fail-fast'
   | 'ignore'
 
-export function classifyChatGptOAuthStreamError(params: {
+export function classifyChatGptOAuthStreamError<T>(params: {
   isChatGptOAuth: boolean
   skipChatGptOAuth?: boolean
   hasYieldedContent: boolean
-  error: unknown
+  error: T
 }): ChatGptOAuthStreamErrorPolicy {
   const { isChatGptOAuth, skipChatGptOAuth, hasYieldedContent, error } = params
 
@@ -316,7 +322,6 @@ export async function* promptAiSdkStream(
     apiKey: params.apiKey,
     model: params.model,
     skipChatGptOAuth: params.skipChatGptOAuth,
-    costMode: params.costMode,
   }
   const { model: aiSDKModel, isChatGptOAuth } =
     await getModelForRequest(modelParams)
@@ -379,15 +384,17 @@ export async function* promptAiSdkStream(
 
         if (isSpawnableAgent || isLocalAgent) {
           // Transform agent tool call to spawn_agents
-          const deepParseJson = (value: unknown): unknown => {
+          const deepParseJson = (value: JSONValue): JSONValue => {
             if (typeof value === 'string') {
               try {
-                return deepParseJson(JSON.parse(value))
+                return deepParseJson(toJSONValue(JSON.parse(value)))
               } catch {
                 return value
               }
             }
-            if (Array.isArray(value)) return value.map(deepParseJson)
+            if (Array.isArray(value)) {
+              return value.map((v) => deepParseJson(v))
+            }
             if (value !== null && typeof value === 'object') {
               return Object.fromEntries(
                 Object.entries(value).map(([k, v]) => [k, deepParseJson(v)]),
@@ -395,14 +402,13 @@ export async function* promptAiSdkStream(
             }
             return value
           }
-
-          let input: Record<string, unknown> = {}
+          let input: Record<string, JSONValue> = {}
           try {
             const rawInput =
               typeof toolCall.input === 'string'
-                ? JSON.parse(toolCall.input)
-                : (toolCall.input as Record<string, unknown>)
-            input = deepParseJson(rawInput) as Record<string, unknown>
+                ? (JSON.parse(toolCall.input) as JSONValue)
+                : (toolCall.input as JSONValue)
+            input = deepParseJson(rawInput) as Record<string, JSONValue>
           } catch {
             // If parsing fails, use empty object
           }
@@ -525,10 +531,6 @@ export async function* promptAiSdkStream(
       })
 
       if (chatGptErrorPolicy === 'fallback-rate-limit') {
-        const rateLimitErrorDetails =
-          chunkValue.error instanceof Error
-            ? chunkValue.error.message
-            : String(chunkValue.error)
         logger.warn(
           { error: getErrorObject(chunkValue.error) },
           'ChatGPT OAuth rate limited during stream',
@@ -545,13 +547,6 @@ export async function* promptAiSdkStream(
         })
 
         markChatGptOAuthRateLimited()
-
-        // In free mode, don't fall back to SavantCode backend — fail instead
-        if (isFreeMode(params.costMode)) {
-          throw new Error(
-            `ChatGPT rate limit reached. Please wait a few minutes and try again. (${rateLimitErrorDetails})`,
-          )
-        }
 
         const fallbackResult = yield* promptAiSdkStream({
           ...params,
@@ -593,14 +588,6 @@ export async function* promptAiSdkStream(
           logger.warn(
             { model: requestedModel },
             'ChatGPT OAuth token refresh failed, unable to recover',
-          )
-        }
-
-        // Refresh failed or already retried
-        // In free mode, don't fall back to SavantCode backend — fail instead
-        if (isFreeMode(params.costMode)) {
-          throw new Error(
-            'ChatGPT OAuth authentication failed. Please reconnect with /connect:chatgpt and try again.',
           )
         }
 
@@ -680,7 +667,7 @@ export async function* promptAiSdkStream(
   emitCacheDebugProviderRequest({
     callback: params.onCacheDebugProviderRequestBuilt,
     provider: getModelProvider(aiSDKModel),
-    rawBody: requestMetadata.body,
+    rawBody: safeToJSONValue(requestMetadata.body),
   })
 
   const usageResult = await response.usage
@@ -695,9 +682,9 @@ export async function* promptAiSdkStream(
     const providerMetadata = providerMetadataResult ?? {}
 
     let costOverrideDollars: number | undefined
-    if (providerMetadata.savant-code) {
-      if (providerMetadata.savant-code.usage) {
-        const openrouterUsage = providerMetadata.savant-code
+    if (providerMetadata['savant-code']) {
+      if (providerMetadata['savant-code'].usage) {
+        const openrouterUsage = providerMetadata['savant-code']
           .usage as OpenRouterUsageAccounting
 
         costOverrideDollars =
@@ -754,7 +741,7 @@ export async function promptAiSdk(
   emitCacheDebugProviderRequest({
     callback: params.onCacheDebugProviderRequestBuilt,
     provider: getModelProvider(aiSDKModel),
-    rawBody: response.request?.body,
+    rawBody: safeToJSONValue(response.request?.body),
   })
   emitCacheDebugUsage({
     callback: params.onCacheDebugUsageReceived,
@@ -764,9 +751,9 @@ export async function promptAiSdk(
 
   const providerMetadata = response.providerMetadata ?? {}
   let costOverrideDollars: number | undefined
-  if (providerMetadata.savant-code) {
-    if (providerMetadata.savant-code.usage) {
-      const openrouterUsage = providerMetadata.savant-code
+  if (providerMetadata['savant-code']) {
+    if (providerMetadata['savant-code'].usage) {
+      const openrouterUsage = providerMetadata['savant-code']
         .usage as OpenRouterUsageAccounting
 
       costOverrideDollars =
@@ -823,7 +810,7 @@ export async function promptAiSdkStructured<T>(
   emitCacheDebugProviderRequest({
     callback: params.onCacheDebugProviderRequestBuilt,
     provider: getModelProvider(aiSDKModel),
-    rawBody: response.request?.body,
+    rawBody: safeToJSONValue(response.request?.body),
   })
   emitCacheDebugUsage({
     callback: params.onCacheDebugUsageReceived,
@@ -834,9 +821,9 @@ export async function promptAiSdkStructured<T>(
 
   const providerMetadata = response.providerMetadata ?? {}
   let costOverrideDollars: number | undefined
-  if (providerMetadata.savant-code) {
-    if (providerMetadata.savant-code.usage) {
-      const openrouterUsage = providerMetadata.savant-code
+  if (providerMetadata['savant-code']) {
+    if (providerMetadata['savant-code'].usage) {
+      const openrouterUsage = providerMetadata['savant-code']
         .usage as OpenRouterUsageAccounting
 
       costOverrideDollars =

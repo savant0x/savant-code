@@ -9,6 +9,7 @@ import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test'
 
 import { promptFlashWithFallbacks } from '../gemini-with-fallbacks'
 
+import type { FinetunedVertexModel } from '@savant-code/common/old-constants'
 import type {
   AgentRuntimeDeps,
   AgentRuntimeScopedDeps,
@@ -45,7 +46,7 @@ describe('promptFlashWithFallbacks', () => {
           ...agentRuntimeImpl,
           ...baseParams,
           messages: [],
-          useFinetunedModel: 'gemini-2.0-flash-exp' as any,
+          useFinetunedModel: 'gemini-2.0-flash-exp' as FinetunedVertexModel,
           signal: new AbortController().signal,
         }),
       ).rejects.toThrow(ABORT_ERROR_MESSAGE)
@@ -107,7 +108,7 @@ describe('promptFlashWithFallbacks', () => {
           ...agentRuntimeImpl,
           ...baseParams,
           messages: [],
-          useFinetunedModel: 'gemini-2.0-flash-exp' as any,
+          useFinetunedModel: 'gemini-2.0-flash-exp' as FinetunedVertexModel,
           useGPT4oInsteadOfClaude: true,
           signal: new AbortController().signal,
         }),
@@ -174,7 +175,7 @@ describe('promptFlashWithFallbacks', () => {
         ...agentRuntimeImpl,
         ...baseParams,
         messages: [],
-        useFinetunedModel: 'gemini-2.0-flash-exp' as any,
+        useFinetunedModel: 'gemini-2.0-flash-exp' as FinetunedVertexModel,
         signal: new AbortController().signal,
       })
 
@@ -238,7 +239,7 @@ describe('promptFlashWithFallbacks', () => {
         ...agentRuntimeImpl,
         ...baseParams,
         messages: [],
-        useFinetunedModel: 'gemini-2.0-flash-exp' as any,
+        useFinetunedModel: 'gemini-2.0-flash-exp' as FinetunedVertexModel,
         signal: new AbortController().signal,
       })
 

@@ -9,7 +9,7 @@ import {
   trackEvent,
 } from '../utils/analytics'
 import { saveUserCredentials } from '../utils/auth'
-import { IS_FREEBUFF } from '../utils/constants'
+import { IS_SAVANT_FREE } from '../utils/constants'
 import { getFingerprintId } from '../utils/fingerprint'
 import { logger } from '../utils/logger'
 
@@ -27,7 +27,7 @@ export async function runPlainLogin(): Promise<void> {
   const fingerprintId = await getFingerprintId()
 
   console.log()
-  console.log(bold(IS_FREEBUFF ? 'SavantFree Login' : 'SavantCode Login'))
+  console.log(bold(IS_SAVANT_FREE ? 'SavantFree Login' : 'SavantCode Login'))
   console.log()
   console.log('Generating login URL...')
 
@@ -82,7 +82,7 @@ export async function runPlainLogin(): Promise<void> {
     // logins aren't missing from the funnel, then flush before exiting since
     // process.exit would otherwise drop the buffered PostHog events.
     if (user.id) {
-      identifyUser(user.id, { email: user.email, savant-free: IS_FREEBUFF })
+      identifyUser(user.id, { email: user.email, 'savant-free': IS_SAVANT_FREE })
       trackEvent(AnalyticsEvent.LOGIN, {
         userId: user.id,
         via: 'plain_command',
@@ -95,7 +95,7 @@ export async function runPlainLogin(): Promise<void> {
     console.log()
     console.log(green(`✓ Logged in as ${user.name} (${user.email})`))
     console.log()
-    const cliName = IS_FREEBUFF ? 'savant-free' : 'savant-code'
+    const cliName = IS_SAVANT_FREE ? 'savant-free' : 'savant-code'
     console.log('You can now run ' + cyan(cliName) + ' to start.')
     process.exit(0)
   } else if (result.status === 'timeout') {

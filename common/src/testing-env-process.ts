@@ -2,7 +2,7 @@ import type { BaseEnv, ProcessEnv } from './types/contracts/env'
 
 /**
  * Test-only helpers for process env snapshots.
- * Keep production code using `@savantcode.common/env-process`.
+ * Keep production code using `@savant-code/common/env-process`.
  */
 export const createTestBaseEnv = (
   overrides: Partial<BaseEnv> = {},
@@ -55,19 +55,19 @@ export const createTestProcessEnv = (
   // Editor preferences
   VISUAL: undefined,
   EDITOR: undefined,
-  CODEBUFF_CLI_EDITOR: undefined,
-  CODEBUFF_EDITOR: undefined,
+  SAVANT_CODE_CLI_EDITOR: undefined,
+  SAVANT_CODE_EDITOR: undefined,
 
   // Theme preferences
   OPEN_TUI_THEME: undefined,
   OPENTUI_THEME: undefined,
 
   // SavantCode CLI-specific
-  CODEBUFF_IS_BINARY: undefined,
-  CODEBUFF_CLI_VERSION: undefined,
-  CODEBUFF_CLI_TARGET: undefined,
-  CODEBUFF_RG_PATH: undefined,
-  CODEBUFF_WASM_DIR: undefined,
+  SAVANT_CODE_IS_BINARY: undefined,
+  SAVANT_CODE_CLI_VERSION: undefined,
+  SAVANT_CODE_CLI_TARGET: undefined,
+  SAVANT_CODE_RG_PATH: undefined,
+  SAVANT_CODE_WASM_DIR: undefined,
 
   // Build/CI flags
   VERBOSE: undefined,

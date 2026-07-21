@@ -1,7 +1,7 @@
 import { formatTimestamp } from './helpers'
 
-import type { PendingBashMessage } from '../types/store'
 import type { ChatMessage, ContentBlock } from '../types/chat'
+import type { PendingBashMessage } from '../types/store'
 import type { ToolResultOutput } from '@savant-code/common/types/messages/content-part'
 
 export function createRunTerminalToolResult(params: {

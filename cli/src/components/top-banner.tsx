@@ -4,13 +4,22 @@ import { Button } from './button'
 import { TerminalLink } from './terminal-link'
 import { useTheme } from '../hooks/use-theme'
 import { useChatStore } from '../state/chat-store'
-import { IS_FREEBUFF } from '../utils/constants'
-import type { TopBannerType } from '../types/store'
+import { IS_SAVANT_FREE } from '../utils/constants'
 import { formatCwd } from '../utils/path-helpers'
 import { BORDER_CHARS } from '../utils/ui-constants'
 
+import type { TopBannerType } from '../types/store'
 import type { ChatTheme } from '../types/theme-system'
 import type { ThemeColorKey, InputMode } from '../utils/input-modes'
+
+/**
+ * Safely read a color string from the theme by key.
+ * Non-string values (e.g. markdown overrides object) fall back to an empty string.
+ */
+function getThemeColor(theme: ChatTheme, key: keyof ChatTheme): string {
+  const value = theme[key]
+  return typeof value === 'string' ? value : ''
+}
 
 type BannerContentParams = {
   gitRoot?: string | null
@@ -56,7 +65,7 @@ const TOP_BANNER_REGISTRY: Record<NonNullable<TopBannerType>, BannerConfig> = {
       return (
         <>
           <text style={{ wrapMode: 'word', fg: textColor }}>
-            You started {IS_FREEBUFF ? 'SavantFree' : 'SavantCode'} in a subdirectory of a git repo.
+            You started {IS_SAVANT_FREE ? 'SavantFree' : 'SavantCode'} in a subdirectory of a git repo.
           </text>
           {gitRoot && onSwitchToGitRoot ? (
             <TerminalLink
@@ -107,9 +116,8 @@ export const TopBanner = ({
     }
   }
 
-  const themeRecord = theme as unknown as Record<string, string>
-  const borderColor = themeRecord[config.borderColorKey]
-  const textColor = themeRecord[config.textColorKey]
+  const borderColor = getThemeColor(theme, config.borderColorKey)
+  const textColor = getThemeColor(theme, config.textColorKey)
   const contentParams: BannerContentParams = {
     gitRoot,
     onSwitchToGitRoot,

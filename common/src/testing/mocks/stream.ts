@@ -6,7 +6,7 @@
  *
  * @example
  * ```typescript
- * import { createMockStream, createToolCallChunk } from '@savantcode.common/testing/mocks/stream'
+ * import { createMockStream, createToolCallChunk } from '@savant-code/common/testing/mocks/stream'
  *
  * // Create a mock stream with text and tool calls
  * const stream = createMockStream([
@@ -24,6 +24,7 @@
 
 import { mock } from 'bun:test'
 
+import type { JSONValue } from '../../types/json'
 import type { Mock } from 'bun:test'
 
 /**
@@ -42,7 +43,7 @@ export interface ToolCallChunk {
   type: 'tool-call'
   toolName: string
   toolCallId: string
-  input: Record<string, unknown>
+  input: Record<string, JSONValue>
 }
 
 /**
@@ -86,7 +87,7 @@ let toolCallIdCounter = 0
  */
 export function createToolCallChunk(
   toolName: string,
-  input: Record<string, unknown>,
+  input: Record<string, JSONValue>,
   options: CreateToolCallOptions = {},
 ): ToolCallChunk {
   const { toolCallId = `tool-call-${++toolCallIdCounter}` } = options
@@ -227,7 +228,7 @@ export interface MockPromptOptions {
  */
 export type MockPromptFn = Mock<
   (
-    params: Record<string, unknown>,
+    params: Record<string, JSONValue>,
   ) => AsyncGenerator<StreamChunk, string | null>
 >
 

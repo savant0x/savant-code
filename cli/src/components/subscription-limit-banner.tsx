@@ -1,6 +1,4 @@
 import { SUBSCRIPTION_TIERS } from '@savant-code/common/constants/subscription-plans'
-import { IS_FREEBUFF } from '../utils/constants'
-import { safeOpen } from '../utils/open-url'
 import React from 'react'
 
 import { Button } from './button'
@@ -11,11 +9,15 @@ import { useUpdatePreference } from '../hooks/use-update-preference'
 import { useUsageQuery } from '../hooks/use-usage-query'
 import { WEBSITE_URL } from '../login/constants'
 import { useChatStore } from '../state/chat-store'
+import { IS_SAVANT_FREE } from '../utils/constants'
+import { isDirectProviderMode } from '../utils/env'
+import { safeOpen } from '../utils/open-url'
 import { formatResetTime } from '../utils/time-format'
 import { BORDER_CHARS } from '../utils/ui-constants'
 
 export const SubscriptionLimitBanner = () => {
-  if (IS_FREEBUFF) return null
+  // Skip in free mode and direct-provider mode (no backend to query).
+  if (IS_SAVANT_FREE || isDirectProviderMode()) return null
 
   const setInputMode = useChatStore((state) => state.setInputMode)
   const theme = useTheme()
@@ -76,15 +78,13 @@ export const SubscriptionLimitBanner = () => {
         width: '100%',
         borderStyle: 'single',
         borderColor,
-        customBorderChars: BORDER_CHARS,
         paddingLeft: 1,
         paddingRight: 1,
         paddingTop: 0,
         paddingBottom: 0,
         flexDirection: 'column',
         gap: 0,
-      }}
-    >
+      }} customBorderChars={BORDER_CHARS}>
       <box
         style={{
           flexDirection: 'column',

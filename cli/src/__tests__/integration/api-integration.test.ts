@@ -19,7 +19,7 @@ import type { Logger } from '@savant-code/common/types/contracts/logger'
  */
 describe('API Integration', () => {
   const originalFetch = globalThis.fetch
-  const originalAppUrl = process.env.NEXT_PUBLIC_CODEBUFF_APP_URL
+  const originalAppUrl = process.env.NEXT_PUBLIC_SAVANT_CODE_APP_URL
 
   type LoggerMocks = Logger & {
     info: ReturnType<typeof mock>
@@ -48,7 +48,7 @@ describe('API Integration', () => {
   const originalSetTimeout = globalThis.setTimeout
 
   beforeEach(() => {
-    process.env.NEXT_PUBLIC_CODEBUFF_APP_URL = 'https://example.savant-code.test'
+    process.env.NEXT_PUBLIC_SAVANT_CODE_APP_URL = 'https://example.savant-code.test'
     // Mock setTimeout to execute immediately for faster tests
     // This makes the retry backoff delays instant
     globalThis.setTimeout = ((
@@ -64,7 +64,7 @@ describe('API Integration', () => {
   afterEach(() => {
     globalThis.fetch = originalFetch
     globalThis.setTimeout = originalSetTimeout
-    process.env.NEXT_PUBLIC_CODEBUFF_APP_URL = originalAppUrl
+    process.env.NEXT_PUBLIC_SAVANT_CODE_APP_URL = originalAppUrl
     mock.restore()
   })
 

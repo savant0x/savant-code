@@ -18,8 +18,8 @@ import { useSheenAnimation } from '../hooks/use-sheen-animation'
 import { useTheme } from '../hooks/use-theme'
 import { formatUrl, calculateResponsiveLayout } from '../login/utils'
 import { useLoginStore } from '../state/login-store'
-import { IS_FREEBUFF } from '../utils/constants'
 import { copyTextToClipboard, isRemoteSession } from '../utils/clipboard'
+import { IS_SAVANT_FREE } from '../utils/constants'
 import { getFingerprintId } from '../utils/fingerprint'
 import { logger } from '../utils/logger'
 import { getLogoBlockColor, getLogoAccentColor } from '../utils/theme-system'
@@ -452,7 +452,7 @@ export const LoginModal = ({
                   <span fg={theme.secondary}>
                     Tip: Can't copy? Exit and run{' '}
                   </span>
-                  <span fg={theme.primary}>{IS_FREEBUFF ? 'savant-free' : 'savant-code'} login</span>
+                  <span fg={theme.primary}>{IS_SAVANT_FREE ? 'savant-free' : 'savant-code'} login</span>
                   <span fg={theme.secondary}>
                     {' '}instead.
                   </span>

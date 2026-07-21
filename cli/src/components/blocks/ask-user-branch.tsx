@@ -1,5 +1,5 @@
-import { pluralize } from '@savant-code/common/util/string'
 import { TextAttributes } from '@opentui/core'
+import { pluralize } from '@savant-code/common/util/string'
 import React from 'react'
 
 import { useTheme } from '../../hooks/use-theme'
@@ -23,12 +23,10 @@ export const AskUserBranch = ({ block, availableWidth }: AskUserBranchProps) => 
         width: Math.max(10, availableWidth - 2),
         borderStyle: 'single',
         borderColor: theme.secondary,
-        customBorderChars: BORDER_CHARS,
         padding: 1,
         marginTop: 1,
         marginBottom: 1,
-      }}
-    >
+      }} customBorderChars={BORDER_CHARS}>
       {block.skipped ? (
         <text style={{ fg: theme.muted, attributes: TextAttributes.ITALIC }}>
           You skipped the {pluralize(block.questions.length, 'question', { includeCount: false })}.

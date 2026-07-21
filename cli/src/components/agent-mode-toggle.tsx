@@ -2,9 +2,10 @@ import React, { useEffect, useRef, useState } from 'react'
 
 import { Button } from './button'
 import { SegmentedControl } from './segmented-control'
+import { useScaffoldConfirm } from '../hooks/use-scaffold-confirm'
 import { useTheme } from '../hooks/use-theme'
 import { useChatStore } from '../state/chat-store'
-import { AGENT_MODES, IS_FREEBUFF } from '../utils/constants'
+import { AGENT_MODES, IS_SAVANT_FREE } from '../utils/constants'
 import { BORDER_CHARS } from '../utils/ui-constants'
 
 import type { Segment } from './segmented-control'
@@ -156,12 +157,18 @@ export const AgentModeToggle = ({
   onToggle: () => void
   onSelectMode?: (mode: AgentMode) => void
 }) => {
-  if (IS_FREEBUFF) return null
+  if (IS_SAVANT_FREE) return null
 
   const theme = useTheme()
   const inputFocused = useChatStore((state) => state.inputFocused)
   const [isCollapsedHovered, setIsCollapsedHovered] = useState(false)
   const hoverToggle = useHoverToggle()
+  const {
+    confirmState,
+    requestScaffoldMode,
+    confirm: confirmScaffold,
+    cancel: cancelScaffold,
+  } = useScaffoldConfirm()
 
   const handleMouseOver = () => {
     // Don't open on hover if terminal is not focused
@@ -182,6 +189,13 @@ export const AgentModeToggle = ({
       return
     }
     if (action.type === 'selectMode') {
+      if (action.mode === 'SCAFFOLD') {
+        const canProceed = requestScaffoldMode('SCAFFOLD')
+        if (!canProceed) return
+        onSelectMode?.('SCAFFOLD')
+        hoverToggle.closeNow(true)
+        return
+      }
       onSelectMode?.(action.mode)
       hoverToggle.closeNow(true)
       return
@@ -202,8 +216,8 @@ export const AgentModeToggle = ({
           paddingRight: 1,
           borderStyle: 'single',
           borderColor: isCollapsedHovered ? theme.foreground : theme.border,
-          customBorderChars: BORDER_CHARS,
         }}
+        customBorderChars={BORDER_CHARS}
         onClick={() => {
           if (!inputFocused) return
           hoverToggle.clearAllTimers()
@@ -229,6 +243,38 @@ export const AgentModeToggle = ({
 
   // Expanded state: delegate rendering to SegmentedControl
   const segments: Segment[] = buildExpandedSegments(mode)
+
+  if (confirmState.kind === 'pending') {
+    return (
+      <box style={{ flexDirection: 'column', gap: 1 }}>
+        <text fg={theme.foreground}>
+          <b>SCAFFOLD mode opens project-root writes.</b>
+        </text>
+        <text fg={theme.muted}>
+          Use only for first-time project scaffolding. Confirm?
+        </text>
+        <box style={{ flexDirection: 'row', gap: 2 }}>
+          <Button
+            onClick={() => {
+              confirmScaffold()
+              onSelectMode?.('SCAFFOLD')
+              hoverToggle.closeNow(true)
+            }}
+          >
+            <text fg={theme.foreground}>Confirm</text>
+          </Button>
+          <Button
+            onClick={() => {
+              cancelScaffold()
+              hoverToggle.closeNow(true)
+            }}
+          >
+            <text fg={theme.muted}>Cancel</text>
+          </Button>
+        </box>
+      </box>
+    )
+  }
 
   return (
     <SegmentedControl

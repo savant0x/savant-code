@@ -1,25 +1,24 @@
 import { TextAttributes } from '@opentui/core'
+import {
+  SAVANT_FREE_GLM_V52_MODEL_ID,
+  SAVANT_FREE_GLM_V52_REFERRAL_CAP,
+} from '@savant-code/common/constants/savant-free-models'
+import { REFERRAL_CLI_DAILY_SESSION_BONUS_CAP } from '@savant-code/common/constants/savant-free-referral-tiers'
+import { pluralize } from '@savant-code/common/util/string'
 import React, { useCallback, useEffect, useState } from 'react'
 
 import { Button } from './button'
 import { useCopyToClipboard } from './copy-button'
-import {
-  FREEBUFF_GLM_V52_MODEL_ID,
-  FREEBUFF_GLM_V52_REFERRAL_CAP,
-} from '@savant-code/common/constants/savant-free-models'
-import { REFERRAL_CLI_DAILY_SESSION_BONUS_CAP } from '@savant-code/common/constants/savant-free-referral-tiers'
-import { pluralize } from '@savant-code/common/util/string'
-
-import { startFreebuffSession } from '../hooks/use-savant-free-session'
 import { useNow } from '../hooks/use-now'
+import { startSavantFreeSession } from '../hooks/use-savant-free-session'
 import { useTheme } from '../hooks/use-theme'
 import { LOGIN_WEBSITE_URL } from '../login/constants'
-import { formatFreebuffPremiumResetCountdown } from '../utils/savant-free-premium-reset'
 import { safeOpen } from '../utils/open-url'
+import { formatSavantFreePremiumResetCountdown } from '../utils/savant-free-premium-reset'
 import { BORDER_CHARS } from '../utils/ui-constants'
 
-import type { SavantFree$1 } from '@savant-code/common/constants/savant-free-models'
-import type { SavantFree$1 } from '@savant-code/common/types/savant-free-session'
+import type { SavantFreeAccessTier } from '@savant-code/common/constants/savant-free-models'
+import type { SavantFreeReferralInfo } from '@savant-code/common/types/savant-free-session'
 
 /** Build a friend's share link from the referral code. Points at the
  *  /get-started page (CLI install walkthrough + hero + FAQs) rather than the
@@ -35,18 +34,18 @@ function referralLink(code: string, referrerName: string | null): string {
 
 // Navigation ids for the banner's keyboard-focusable buttons. The model
 // selector owns the landing keyboard handler and appends these after its rows.
-const COPY_FOCUS_ID = '__freebuff_referral_copy__'
-const GLM_FOCUS_ID = '__freebuff_referral_glm__'
+const COPY_FOCUS_ID = '__savant_free_referral_copy__'
+const GLM_FOCUS_ID = '__savant_free_referral_glm__'
 const BUTTON_HORIZONTAL_CHROME = 6 // two border + four padding columns
 
-export interface SavantFree$1 {
+export interface SavantFreeReferralFocusTarget {
   id: string
   activate: () => void
 }
 
 /** Below this menu width, the two unlocked-card actions no longer fit beside
  * each other. */
-const shouldStackFreebuffReferralActions = (width: number): boolean =>
+const shouldStackSavantFreeReferralActions = (width: number): boolean =>
   width < 62
 
 const firstLabelThatFits = (
@@ -139,15 +138,15 @@ const CopyInviteLinkButton: React.FC<{
  * Renders nothing unless the server attached a `referral` block, so
  * pre-referral-code users never see it.
  */
-interface SavantFree$1 {
+interface SavantFreeReferralBannerProps {
   width: number
-  referral: SavantFree$1
-  accessTier: SavantFree$1
+  referral: SavantFreeReferralInfo
+  accessTier: SavantFreeAccessTier
   focusedId: string
-  onFocusTargetsChange: (targets: SavantFree$1[]) => void
+  onFocusTargetsChange: (targets: SavantFreeReferralFocusTarget[]) => void
 }
 
-export const SavantFree$1: React.FC<SavantFree$1> = ({
+export const SavantFreeReferralBanner: React.FC<SavantFreeReferralBannerProps> = ({
   width,
   referral,
   accessTier,
@@ -164,7 +163,7 @@ export const SavantFree$1: React.FC<SavantFree$1> = ({
   const useGlm = useCallback(() => {
     setJoining((wasJoining) => {
       if (wasJoining) return wasJoining
-      startFreebuffSession(FREEBUFF_GLM_V52_MODEL_ID).finally(() =>
+      startSavantFreeSession(SAVANT_FREE_GLM_V52_MODEL_ID).finally(() =>
         setJoining(false),
       )
       return true
@@ -247,7 +246,7 @@ export const SavantFree$1: React.FC<SavantFree$1> = ({
   // FULL tier: GLM 5.2 reward. The GLM-only fields are always present on a
   // full-tier block from the server; default defensively for the wire type.
   const weeklySessionsRemaining = referral.weeklySessionsRemaining ?? 0
-  const resetsIn = formatFreebuffPremiumResetCountdown(
+  const resetsIn = formatSavantFreePremiumResetCountdown(
     referral.resetAt ? new Date(referral.resetAt) : new Date(now),
     now,
     {
@@ -279,7 +278,7 @@ export const SavantFree$1: React.FC<SavantFree$1> = ({
               <span fg={theme.muted}>
                 {' '}
                 — weekly sessions used, resets in {resetsIn}. Refer more (
-                {qualifiedCount}/{FREEBUFF_GLM_V52_REFERRAL_CAP}):
+                {qualifiedCount}/{SAVANT_FREE_GLM_V52_REFERRAL_CAP}):
               </span>
             </>
           ) : (
@@ -306,7 +305,7 @@ export const SavantFree$1: React.FC<SavantFree$1> = ({
   // whole sessions for a clean count — an early-ended session leaves a fraction
   // that the user can still spend, so never show 0 here.
   const sessionsLeft = Math.max(1, Math.ceil(weeklySessionsRemaining))
-  const stackActions = shouldStackFreebuffReferralActions(width)
+  const stackActions = shouldStackSavantFreeReferralActions(width)
   const actionRowWidth = width - 4 // card border + horizontal padding
   const glmLabel = firstLabelThatFits(actionRowWidth, [
     '▶ Use GLM 5.2 ↵',
@@ -314,14 +313,14 @@ export const SavantFree$1: React.FC<SavantFree$1> = ({
     '▶ GLM',
   ])
   const inviteLabels =
-    qualifiedCount >= FREEBUFF_GLM_V52_REFERRAL_CAP
+    qualifiedCount >= SAVANT_FREE_GLM_V52_REFERRAL_CAP
       ? [
-          `✔ Max sessions earned (${qualifiedCount}/${FREEBUFF_GLM_V52_REFERRAL_CAP})`,
+          `✔ Max sessions earned (${qualifiedCount}/${SAVANT_FREE_GLM_V52_REFERRAL_CAP})`,
           '✔ Max earned',
           '✔ Invite',
         ]
       : [
-          `⎘ Invite for +1/wk (${qualifiedCount}/${FREEBUFF_GLM_V52_REFERRAL_CAP})`,
+          `⎘ Invite for +1/wk (${qualifiedCount}/${SAVANT_FREE_GLM_V52_REFERRAL_CAP})`,
           '⎘ Invite +1/wk',
           '⎘ Invite',
         ]

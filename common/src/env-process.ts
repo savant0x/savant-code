@@ -8,7 +8,7 @@
  * Usage:
  * - Import `getBaseEnv` for base OS-level vars only
  * - Import `getProcessEnv` for the full ProcessEnv (base + extensions)
- * - In tests, use `@savantcode.common/testing-env-process`
+ * - In tests, use `@savant-code/common/testing-env-process`
  */
 
 import type { BaseEnv, ProcessEnv } from './types/contracts/env'
@@ -67,19 +67,19 @@ export const getProcessEnv = (): ProcessEnv => ({
   // Editor preferences
   VISUAL: process.env.VISUAL,
   EDITOR: process.env.EDITOR,
-  CODEBUFF_CLI_EDITOR: process.env.CODEBUFF_CLI_EDITOR,
-  CODEBUFF_EDITOR: process.env.CODEBUFF_EDITOR,
+  SAVANT_CODE_CLI_EDITOR: process.env.SAVANT_CODE_CLI_EDITOR,
+  SAVANT_CODE_EDITOR: process.env.SAVANT_CODE_EDITOR,
 
   // Theme preferences
   OPEN_TUI_THEME: process.env.OPEN_TUI_THEME,
   OPENTUI_THEME: process.env.OPENTUI_THEME,
 
   // SavantCode CLI-specific
-  CODEBUFF_IS_BINARY: process.env.CODEBUFF_IS_BINARY,
-  CODEBUFF_CLI_VERSION: process.env.CODEBUFF_CLI_VERSION,
-  CODEBUFF_CLI_TARGET: process.env.CODEBUFF_CLI_TARGET,
-  CODEBUFF_RG_PATH: process.env.CODEBUFF_RG_PATH,
-  CODEBUFF_WASM_DIR: process.env.CODEBUFF_WASM_DIR,
+  SAVANT_CODE_IS_BINARY: process.env.SAVANT_CODE_IS_BINARY,
+  SAVANT_CODE_CLI_VERSION: process.env.SAVANT_CODE_CLI_VERSION,
+  SAVANT_CODE_CLI_TARGET: process.env.SAVANT_CODE_CLI_TARGET,
+  SAVANT_CODE_RG_PATH: process.env.SAVANT_CODE_RG_PATH,
+  SAVANT_CODE_WASM_DIR: process.env.SAVANT_CODE_WASM_DIR,
 
   // Build/CI flags
   VERBOSE: process.env.VERBOSE,

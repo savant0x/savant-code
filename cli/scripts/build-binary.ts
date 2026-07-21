@@ -1,7 +1,6 @@
 #!/usr/bin/env bun
 
 import { spawnSync, type SpawnSyncOptions } from 'child_process'
-import { createRequire } from 'module'
 import {
   chmodSync,
   existsSync,
@@ -12,6 +11,7 @@ import {
   rmSync,
   writeFileSync,
 } from 'fs'
+import { createRequire } from 'module'
 import { tmpdir } from 'os'
 import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
@@ -122,7 +122,7 @@ function getCliTargetLabel(targetInfo: TargetInfo): string {
 
 async function main() {
   const [, , binaryNameArg, version] = process.argv
-  const binaryName = binaryNameArg ?? 'codecane'
+  const binaryName = binaryNameArg ?? 'savant-code'
 
   if (!version) {
     throw new Error('Version argument is required when building a binary')
@@ -165,10 +165,10 @@ async function main() {
 
   const defineFlags = [
     ['process.env.NODE_ENV', '"production"'],
-    ['process.env.CODEBUFF_IS_BINARY', '"true"'],
-    ['process.env.CODEBUFF_CLI_VERSION', `"${version}"`],
+    ['process.env.SAVANT_CODE_IS_BINARY', '"true"'],
+    ['process.env.SAVANT_CODE_CLI_VERSION', `"${version}"`],
     [
-      'process.env.CODEBUFF_CLI_TARGET',
+      'process.env.SAVANT_CODE_CLI_TARGET',
       `"${getCliTargetLabel(targetInfo)}"`,
     ],
     ['process.env.FREEBUFF_MODE', `"${process.env.FREEBUFF_MODE ?? 'false'}"`],
@@ -337,7 +337,7 @@ async function ensureOpenTuiNativeBundle(targetInfo: TargetInfo) {
   }
 
   const registryBase =
-    process.env.CODEBUFF_NPM_REGISTRY ??
+    process.env.SAVANT_CODE_NPM_REGISTRY ??
     process.env.NPM_REGISTRY_URL ??
     'https://registry.npmjs.org'
   const metadataUrl = `${registryBase.replace(/\/$/, '')}/${encodeURIComponent(packageName)}`

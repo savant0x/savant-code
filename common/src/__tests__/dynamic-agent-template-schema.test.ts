@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- test file: intentional any casts for edge cases */
 import { describe, expect, it } from 'bun:test'
 
 import {

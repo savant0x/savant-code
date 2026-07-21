@@ -1,4 +1,5 @@
 import { jsonToolResult } from '@savant-code/common/util/messages'
+import { toLogValue } from '@savant-code/common/util/type-narrowing'
 
 import { getAgentTemplate } from '../../../templates/agent-registry'
 import { formatValueForError } from '../../../util/format-value'
@@ -8,11 +9,10 @@ import type {
   SavantCodeToolCall,
   SavantCodeToolOutput,
 } from '@savant-code/common/tools/list'
-import type {
-  AgentTemplate,
-  Logger,
-} from '@savant-code/common/types/agent-template'
+import type { AgentTemplate } from '@savant-code/common/types/agent-template'
 import type { FetchAgentFromDatabaseFn } from '@savant-code/common/types/contracts/database'
+import type { Logger } from '@savant-code/common/types/contracts/logger'
+import type { JSONValue } from '@savant-code/common/types/json'
 import type { AgentState } from '@savant-code/common/types/session-state'
 
 type ToolName = 'set_output'
@@ -41,7 +41,7 @@ export const handleSetOutput = (async (params: {
     })
   }
 
-  let finalOutput: unknown
+  let finalOutput: unknown // eslint-disable-line savant/no-unknown-in-signatures -- Validation trust boundary: outputSchema narrows this at runtime
   if (agentTemplate?.outputSchema) {
     // When outputSchema is defined, validate against it
     try {
@@ -62,14 +62,14 @@ export const handleSetOutput = (async (params: {
         const prefix = usedData
           ? 'Output validation error: Your output was found inside the `data` field but still failed validation. Please fix the issues and try again without wrapping in `data`. Issues: '
           : 'Output validation error: Output failed to match the output schema and was ignored. You might want to try again! Issues: '
-        const errorMessage = `${prefix}${bestError}\n\nOriginal output value:\n${formatValueForError(output)}`
+        const errorMessage = `${prefix}${bestError}\n\nOriginal output value:\n${formatValueForError(output as JSONValue)}`
         logger.error(
           {
-            output,
+            output: toLogValue(output),
             agentType: agentState.agentType,
             agentId: agentState.agentId,
-            topLevelError: error,
-            dataFieldError: error2,
+            topLevelError: toLogValue(error),
+            dataFieldError: toLogValue(error2),
             usedDataFieldError: usedData,
           },
           'set_output validation error',
@@ -91,6 +91,7 @@ export const handleSetOutput = (async (params: {
   return { output: jsonToolResult({ message: 'Output set' }) }
 }) satisfies SavantCodeToolHandlerFunction<ToolName>
 
+// eslint-disable-next-line savant/no-unknown-in-signatures -- Inspection trust boundary: Zod errors carry runtime-attached fields
 function getZodIssueCount(error: unknown): number {
   if (
     error != null &&

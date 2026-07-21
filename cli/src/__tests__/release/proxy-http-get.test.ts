@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test'
+/* eslint-disable @typescript-eslint/no-explicit-any -- test file: mock server type assertions */
 import { EventEmitter } from 'node:events'
 import {
   mkdtempSync,
@@ -10,9 +10,13 @@ import {
 import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { fileURLToPath } from 'node:url'
-import { Readable, Writable } from 'node:stream'
+import { Readable } from 'node:stream'
 import { pipeline as nodePipeline } from 'node:stream/promises'
+import { fileURLToPath } from 'node:url'
+
+import { describe, expect, test } from 'bun:test'
+
+import type { Writable } from 'node:stream';
 
 const require = createRequire(import.meta.url)
 

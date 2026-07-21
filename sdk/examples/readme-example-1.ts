@@ -1,10 +1,11 @@
+/* eslint-disable no-console -- example script: intentional console output */
 import { SavantCodeClient } from '@savant-code/sdk'
 
 async function main() {
   const client = new SavantCodeClient({
     // You need to pass in your own API key here.
     // Get one here: https://www.savant-code.com/api-keys
-    apiKey: process.env.CODEBUFF_API_KEY,
+    apiKey: process.env.SAVANT_CODE_API_KEY,
     cwd: process.cwd(),
   })
 

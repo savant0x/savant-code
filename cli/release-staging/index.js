@@ -19,7 +19,7 @@ const { createLauncher } = require(
 )
 
 const launcher = createLauncher({
-  packageName: 'codecane',
+  packageName: 'savant-code',
   displayName: 'Codecane',
   includeTreeSitterWasm: false,
   startupBanner: [

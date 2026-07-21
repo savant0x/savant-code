@@ -1,9 +1,9 @@
 import { useNow } from './use-now'
-import { IS_FREEBUFF } from '../utils/constants'
+import { IS_SAVANT_FREE } from '../utils/constants'
 
-import type { SavantFree$1 } from '../types/savant-free-session'
+import type { SavantFreeSession } from '../types/savant-free-session'
 
-export interface SavantFree$1 {
+export interface SavantFreeSessionProgress {
   /** 0..1, fraction of the session remaining. 1 at admission, 0 at expiry. */
   fraction: number
   remainingMs: number
@@ -14,9 +14,9 @@ export interface SavantFree$1 {
  * 1Hz. Returns null outside of active state or in non-savant-free builds, so
  * callers can short-circuit their rendering.
  */
-export function useFreebuffSessionProgress(
-  session: SavantFree$1 | null,
-): SavantFree$1 | null {
+export function useSavantFreeSessionProgress(
+  session: SavantFreeSession | null,
+): SavantFreeSessionProgress | null {
   const expiresAtMs =
     session?.status === 'active' ? Date.parse(session.expiresAt) : null
   const admittedAtMs =
@@ -24,7 +24,7 @@ export function useFreebuffSessionProgress(
 
   const nowMs = useNow(1000, expiresAtMs !== null)
 
-  if (!IS_FREEBUFF || !expiresAtMs || !admittedAtMs) return null
+  if (!IS_SAVANT_FREE || !expiresAtMs || !admittedAtMs) return null
 
   const totalMs = expiresAtMs - admittedAtMs
   if (totalMs <= 0) return null

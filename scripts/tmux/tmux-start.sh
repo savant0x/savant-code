@@ -21,7 +21,7 @@
 #   --wait SECONDS      Seconds to wait for app to initialize (default: 4)
 #   -b, --binary [PATH] Use compiled binary (SavantCode-specific shortcut)
 #                       If PATH omitted, uses ./cli/bin/savant-code
-#                       Can also set CODEBUFF_BINARY env var
+#                       Can also set SAVANT_CODE_BINARY env var
 #   --help              Show this help message
 #
 # SESSION LOGS:
@@ -75,7 +75,7 @@ WIDTH=120
 HEIGHT=30  # Reasonable default that matches typical terminal heights
 WAIT_SECONDS=4
 DEFAULT_BINARY="$PROJECT_ROOT/cli/bin/savant-code"
-BINARY_PATH="${CODEBUFF_BINARY:-}"  # Environment variable takes precedence
+BINARY_PATH="${SAVANT_CODE_BINARY:-}"  # Environment variable takes precedence
 CUSTOM_COMMAND=""  # Custom command to run (takes priority over binary/default)
 OUTPUT_FORMAT="json"  # json (default) or plain
 

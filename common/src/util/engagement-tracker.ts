@@ -30,10 +30,12 @@ export const ENGAGEMENT_INTERVAL_MS = 60_000
  */
 export const ENGAGEMENT_IDLE_THRESHOLD_MS = 5 * 60_000
 
+type IntervalHandle = ReturnType<typeof setInterval> | number
+
 /** Minimal scheduler surface so tests (and the CLI's unref'd timers) can inject. */
 export interface EngagementScheduler {
-  setInterval: (fn: () => void, ms: number) => unknown
-  clearInterval: (handle: unknown) => void
+  setInterval: (fn: () => void, ms: number) => IntervalHandle
+  clearInterval: (handle: IntervalHandle) => void
 }
 
 export interface EngagementTrackerOptions {
@@ -63,7 +65,7 @@ export class EngagementTracker {
 
   private lastActivity: number
   private visible = true
-  private handle: unknown = undefined
+  private handle: IntervalHandle | undefined = undefined
 
   constructor(options: EngagementTrackerOptions) {
     this.emit = options.emit

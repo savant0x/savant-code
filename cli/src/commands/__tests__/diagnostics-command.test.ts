@@ -2,8 +2,8 @@ import { describe, expect, mock, test } from 'bun:test'
 
 import { findCommand } from '../command-registry'
 
-import type { RouterParams } from '../command-registry'
 import type { ChatMessage } from '../../types/chat'
+import type { RouterParams } from '../command-registry'
 
 describe('/diagnostics command', () => {
   test('adds runtime process diagnostics to the chat', () => {

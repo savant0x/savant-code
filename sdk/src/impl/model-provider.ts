@@ -6,10 +6,7 @@
  * - Default: Requests through SavantCode backend (which routes to OpenRouter)
  */
 
-import path from 'path'
-
 import { BYOK_OPENROUTER_HEADER } from '@savant-code/common/constants/byok'
-import { isFreeMode } from '@savant-code/common/constants/free-agents'
 import {
   CHATGPT_BACKEND_BASE_URL,
   CHATGPT_OAUTH_ENABLED,
@@ -30,13 +27,16 @@ import {
   getByokOpenrouterApiKeyFromEnv,
   getInferenceApiKeyFromEnv,
   getInferenceBaseUrlFromEnv,
+  getNvidiaApiKeyFromEnv,
+  getTokenRouterApiKeyFromEnv,
 } from '../env'
-import { resolveOpenRouterApiKey } from './openrouter-key-resolver'
 import {
   createChatGptBackendFetch,
   extractChatGptAccountId,
 } from './chatgpt-backend-fetch'
+import { resolveOpenRouterApiKey } from './openrouter-key-resolver'
 
+import type { JSONValue } from '@savant-code/common/types/json'
 import type { LanguageModel } from 'ai'
 
 // ============================================================================
@@ -89,8 +89,6 @@ export interface ModelRequestParams {
   model: string
   /** If true, skip ChatGPT OAuth and use SavantCode backend (for fallback after rate limit) */
   skipChatGptOAuth?: boolean
-  /** Cost mode (e.g. 'free') — affects fallback behavior for OAuth routes */
-  costMode?: string
 }
 
 /**
@@ -112,6 +110,19 @@ type OpenRouterUsageAccounting = {
 }
 
 /**
+ * Shape of the parsed API response body from the provider for usage extraction.
+ * The provider returns usage data at response.usage.cost and response.usage.cost_details.upstream_inference_cost.
+ */
+interface ProviderParsedResponse {
+  usage?: {
+    cost?: number
+    cost_details?: {
+      upstream_inference_cost?: number
+    }
+  }
+}
+
+/**
  * Get the appropriate model for a request.
  *
  * If ChatGPT OAuth credentials are available and the model is an OpenAI model,
@@ -122,7 +133,7 @@ type OpenRouterUsageAccounting = {
 export async function getModelForRequest(
   params: ModelRequestParams,
 ): Promise<ModelResult> {
-  const { apiKey, model, skipChatGptOAuth, costMode } = params
+  const { apiKey, model, skipChatGptOAuth } = params
 
   // Check if we should use ChatGPT OAuth direct
   // Only attempt for allowlisted models; non-allowlisted models silently fall through to backend.
@@ -132,15 +143,7 @@ export async function getModelForRequest(
     isOpenAIProviderModel(model) &&
     isChatGptOAuthModelAllowed(model)
   ) {
-    // In free mode, rate-limited ChatGPT OAuth must not silently fall through to
-    // the SavantCode backend — savant-free should only use the direct OpenAI route or fail.
-    if (isChatGptOAuthRateLimited()) {
-      if (isFreeMode(costMode)) {
-        throw new Error(
-          'ChatGPT rate limit reached. Please wait a few minutes and try again.',
-        )
-      }
-    } else {
+    if (!isChatGptOAuthRateLimited()) {
       const chatGptOAuthCredentials = await getValidChatGptOAuthCredentials()
 
       if (chatGptOAuthCredentials) {
@@ -152,19 +155,41 @@ export async function getModelForRequest(
           isChatGptOAuth: true,
         }
       }
+    }
+  }
 
-      // In free mode, if credentials are unavailable, don't fall through to backend.
-      if (isFreeMode(costMode)) {
-        throw new Error(
-          'ChatGPT OAuth credentials unavailable. Please reconnect with /connect:chatgpt.',
-        )
-      }
+  // Gateway providers: TokenRouter and NVIDIA NIM each have their own API key
+  // and base URL. Check these before the SavantCode backend path — the
+  // INFERENCE_BASE_URL dev-mode bypass must not affect gateway routing.
+  if (isTokenRouterModel(model)) {
+    const tokenRouterKey = getTokenRouterApiKeyFromEnv()
+    if (!tokenRouterKey) {
+      throw new Error(
+        'TokenRouter API key not set. Set TOKENROUTER_API_KEY environment variable.',
+      )
+    }
+    return {
+      model: createTokenRouterModel(tokenRouterKey, model),
+      isChatGptOAuth: false,
+    }
+  }
+
+  if (isNvidiaModel(model)) {
+    const nvidiaKey = getNvidiaApiKeyFromEnv()
+    if (!nvidiaKey) {
+      throw new Error(
+        'NVIDIA API key not set. Set NVIDIA_API_KEY environment variable.',
+      )
+    }
+    return {
+      model: createNvidiaModel(nvidiaKey, model),
+      isChatGptOAuth: false,
     }
   }
 
   // Default: use SavantCode backend
   return {
-    model: await createCodebuffBackendModel(apiKey, model),
+    model: await createSavantCodeBackendModel(apiKey, model),
     isChatGptOAuth: false,
   }
 }
@@ -212,7 +237,7 @@ function createOpenAIOAuthModel(
 function fetchWithRetryableNetworkErrors(
   ...args: Parameters<typeof globalThis.fetch>
 ): ReturnType<typeof globalThis.fetch> {
-  return globalThis.fetch(...args).catch((error: unknown) => {
+  return globalThis.fetch(...args).catch((error) => {
     if (isTransientNetworkError(error)) {
       const input = args[0]
       const url =
@@ -234,6 +259,78 @@ function fetchWithRetryableNetworkErrors(
 }
 
 /**
+ * Check if a model ID targets TokenRouter (prefix: `tokenrouter/`).
+ * Subagents inherit the parent's model via `withParentModel()` in
+ * spawn-agent-utils.ts — gateway model prefixes propagate correctly.
+ */
+export function isTokenRouterModel(model: string): boolean {
+  return model.startsWith('tokenrouter/')
+}
+
+/**
+ * Check if a model ID targets NVIDIA NIM (prefix: `nvidia/`).
+ * Subagents inherit the parent's model via `withParentModel()` in
+ * spawn-agent-utils.ts — gateway model prefixes propagate correctly.
+ */
+export function isNvidiaModel(model: string): boolean {
+  return model.startsWith('nvidia/')
+}
+
+/**
+ * Create a TokenRouter model.
+ * Strips the `tokenrouter/` prefix — the API expects bare model IDs (e.g.
+ * `kimi-k2p6`, not `tokenrouter/kimi-k2p6`).
+ */
+function createTokenRouterModel(
+  apiKey: string,
+  model: string,
+): LanguageModel {
+  const apiModelId = model.slice('tokenrouter/'.length)
+  return new OpenAICompatibleChatLanguageModel(apiModelId, {
+    provider: 'tokenrouter',
+    url: ({ path: endpoint }) => {
+      const cleanPath = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint
+      return new URL(cleanPath, 'https://tokenrouter.me/v1/').toString()
+    },
+    headers: () => ({
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+      'user-agent': `ai-sdk/openai-compatible/${VERSION}/savant-code-tokenrouter`,
+    }),
+    fetch: fetchWithRetryableNetworkErrors as typeof globalThis.fetch,
+    includeUsage: undefined,
+    supportsStructuredOutputs: false,
+  })
+}
+
+/**
+ * Create an NVIDIA NIM model.
+ * Strips the `nvidia/` prefix — the API expects namespaced IDs (e.g.
+ * `zai-org/glm-5.2`, not `nvidia/zai-org/glm-5.2`).
+ */
+function createNvidiaModel(
+  apiKey: string,
+  model: string,
+): LanguageModel {
+  const apiModelId = model.slice('nvidia/'.length)
+  return new OpenAICompatibleChatLanguageModel(apiModelId, {
+    provider: 'nvidia',
+    url: ({ path: endpoint }) => {
+      const cleanPath = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint
+      return new URL(cleanPath, 'https://integrate.api.nvidia.com/v1/').toString()
+    },
+    headers: () => ({
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+      'user-agent': `ai-sdk/openai-compatible/${VERSION}/savant-code-nvidia`,
+    }),
+    fetch: fetchWithRetryableNetworkErrors as typeof globalThis.fetch,
+    includeUsage: undefined,
+    supportsStructuredOutputs: false,
+  })
+}
+
+/**
  * Create a model that routes through the SavantCode backend.
  * This is the existing behavior - requests go to SavantCode backend which forwards to OpenRouter.
  *
@@ -241,7 +338,7 @@ function fetchWithRetryableNetworkErrors(
  * the SavantCode backend. When `INFERENCE_API_KEY` or `OR_MASTER_KEY` is set, uses
  * the resolved OpenRouter key for authorization.
  */
-async function createCodebuffBackendModel(
+async function createSavantCodeBackendModel(
   apiKey: string,
   model: string,
 ): Promise<LanguageModel> {
@@ -272,16 +369,20 @@ async function createCodebuffBackendModel(
     headers: () => ({
       Authorization: `Bearer ${authorizationKey}`,
       'user-agent': `ai-sdk/openai-compatible/${VERSION}/savant-code`,
+      'HTTP-Referer': getWebsiteUrl(),
+      'X-OpenRouter-Title': 'SavantCode',
+      'X-OpenRouter-Categories': 'cli-agent,cloud-agent,programming-app',
       ...(openrouterApiKey && { [BYOK_OPENROUTER_HEADER]: openrouterApiKey }),
     }),
     metadataExtractor: {
       extractMetadata: async ({
-        parsedBody,
+        parsedBody: rawParsedBody,
       }: {
-        parsedBody: any // eslint-disable-line @typescript-eslint/no-explicit-any -- dynamic API response shape from provider
+        parsedBody: Record<string, JSONValue>
       }) => {
+        const parsedBody = rawParsedBody as ProviderParsedResponse
         if (openrouterApiKey !== undefined) {
-          return { savant-code: { usage: openrouterUsage } }
+          return { 'savant-code': { usage: openrouterUsage } }
         }
 
         if (typeof parsedBody?.usage?.cost === 'number') {
@@ -294,10 +395,11 @@ async function createCodebuffBackendModel(
           openrouterUsage.costDetails.upstreamInferenceCost =
             parsedBody.usage.cost_details.upstream_inference_cost
         }
-        return { savant-code: { usage: openrouterUsage } }
+        return { 'savant-code': { usage: openrouterUsage } }
       },
       createStreamExtractor: () => ({
-        processChunk: (parsedChunk: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any -- dynamic SSE chunk shape from provider
+        processChunk: (rawParsedChunk: Record<string, JSONValue>) => {
+          const parsedChunk = rawParsedChunk as ProviderParsedResponse
           if (openrouterApiKey !== undefined) {
             return
           }
@@ -314,7 +416,7 @@ async function createCodebuffBackendModel(
           }
         },
         buildMetadata: () => {
-          return { savant-code: { usage: openrouterUsage } }
+          return { 'savant-code': { usage: openrouterUsage } }
         },
       }),
     },

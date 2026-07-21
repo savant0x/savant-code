@@ -1,4 +1,4 @@
-import { FREEBUFF_DEEPSEEK_V4_FLASH_FIREWORKS_MODEL_ID } from '@savant-code/common/constants/savant-free-models'
+import { SAVANT_FREE_DEEPSEEK_V4_FLASH_FIREWORKS_MODEL_ID } from '@savant-code/common/constants/savant-free-models'
 
 import { publisher } from './constants'
 
@@ -14,7 +14,7 @@ import type { SecretAgentDefinition } from './types/secret-agent-definition'
 const definition: SecretAgentDefinition = {
   id: 'base-chat',
   publisher,
-  model: FREEBUFF_DEEPSEEK_V4_FLASH_FIREWORKS_MODEL_ID,
+  model: SAVANT_FREE_DEEPSEEK_V4_FLASH_FIREWORKS_MODEL_ID,
   displayName: 'SavantFree Chat',
   spawnerPrompt: 'General-purpose chat assistant for savant-free.com/chat.',
   inputSchema: {

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- debug hook: dynamic comparison values */
 import { useEffect, useRef } from 'react'
 
 import { getCliEnv } from '../utils/env'

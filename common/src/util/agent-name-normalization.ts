@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- dynamic agent registry lookup */
 export const DEFAULT_ORG_PREFIX = 'savant-code/'
 
 /**

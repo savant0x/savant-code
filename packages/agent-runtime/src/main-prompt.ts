@@ -1,6 +1,5 @@
 import { trackEvent } from '@savant-code/common/analytics'
 import { AnalyticsEvent } from '@savant-code/common/constants/analytics-events'
-import { AgentTemplateTypes } from '@savant-code/common/types/session-state'
 
 import { loopAgentSteps } from './run-agent-step'
 import {
@@ -10,7 +9,6 @@ import {
 
 import type { AgentTemplate } from './templates/types'
 import type { ClientAction } from '@savant-code/common/actions'
-import type { CostMode } from '@savant-code/common/old-constants'
 import type {
   RequestToolCallFn,
   SendActionFn,
@@ -57,7 +55,6 @@ export async function mainPrompt(
     content,
     sessionState: sessionState,
     fingerprintId,
-    costMode,
     promptId,
     agentId,
     promptParams,
@@ -72,14 +69,13 @@ export async function mainPrompt(
       event: AnalyticsEvent.USER_INPUT,
       userId,
       properties: {
-        promptId,
-        agentId,
-        costMode,
+        promptId: promptId ?? null,
+        agentId: agentId ?? null,
         hasPrompt: !!prompt,
         hasContent: !!content,
         hasPromptParams: !!promptParams && Object.keys(promptParams).length > 0,
         promptParamsCount: promptParams ? Object.keys(promptParams).length : 0,
-        fingerprintId,
+        fingerprintId: fingerprintId ?? null,
         promptLength: prompt?.length ?? 0,
         contentLength: content?.length ?? 0,
         messageHistoryLength: mainAgentState.messageHistory.length,
@@ -103,16 +99,7 @@ export async function mainPrompt(
 
     agentType = agentId
   } else {
-    agentType = (
-      {
-        ask: AgentTemplateTypes.ask,
-        free: AgentTemplateTypes.base_free,
-        lite: AgentTemplateTypes.base_free,
-        normal: AgentTemplateTypes.base,
-        max: AgentTemplateTypes.base_max,
-        experimental: 'base2',
-      } satisfies Record<CostMode, AgentTemplateType>
-    )[costMode ?? 'normal'] ?? 'base2'
+    agentType = 'savant'
   }
 
   mainAgentState.agentType = agentType
@@ -136,7 +123,6 @@ export async function mainPrompt(
     agentType,
     fingerprintId,
     fileContext,
-    costMode,
   })
 
   // Log a summary only: output can contain the full conversation

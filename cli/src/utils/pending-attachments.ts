@@ -3,6 +3,7 @@ import path from 'node:path'
 
 import { processImageFile, resolveFilePath, isImageFile } from './image-handler'
 import { useChatStore } from '../state/chat-store'
+
 import type { PendingAttachment } from '../types/store'
 
 /**

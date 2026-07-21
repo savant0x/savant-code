@@ -3,6 +3,26 @@ import z from 'zod/v4'
 import { publishedTools } from './constants'
 import { toolParams } from './list'
 
+import type { JSONValue } from '../types/json'
+
+/** Minimal typed subset of JSON Schema used for TypeScript generation. */
+export interface JSONSchema {
+  type?: string
+  properties?: Record<string, JSONSchema>
+  required?: string[]
+  description?: string
+  const?: JSONValue
+  enum?: JSONValue[]
+  items?: JSONSchema
+  additionalProperties?: boolean | JSONSchema
+  anyOf?: JSONSchema[]
+  oneOf?: JSONSchema[]
+}
+
+function isJSONSchema(value: unknown): value is JSONSchema {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
+}
+
 /** A tool name plus the Zod schema describing its parameters. */
 export interface ToolSchemaEntry {
   /** Snake_case tool name, e.g. 'web_search'. */
@@ -33,13 +53,18 @@ export function compileToolDefinitions(
     .map(({ name: toolName, inputSchema: parameterSchema }) => {
       // Convert Zod schema to TypeScript interface using JSON schema
       let typeDefinition: string
-      let jsonSchema: unknown
+      let jsonSchema: JSONSchema | undefined
       try {
-        jsonSchema = z.toJSONSchema(parameterSchema, { io: 'input' })
-        typeDefinition = jsonSchemaToTypeScript(jsonSchema)
+        const rawSchema = z.toJSONSchema(parameterSchema, { io: 'input' })
+        jsonSchema = isJSONSchema(rawSchema) ? rawSchema : undefined
+        typeDefinition = jsonSchemaToTypeScript(
+          jsonSchema ?? { type: 'object', properties: {} },
+        )
       } catch (error) {
-        console.warn(`Failed to convert schema for ${toolName}:`, error)
-        typeDefinition = '{ [key: string]: any }'
+        const message =
+          error instanceof Error ? error.message : String(error)
+        console.warn(`Failed to convert schema for ${toolName}:`, message)
+        typeDefinition = '{ [key: string]: unknown }'
       }
 
       const typeName = `${toPascalCase(toolName)}Params`
@@ -95,22 +120,21 @@ function toPascalCase(str: string): string {
 /**
  * Converts JSON Schema to TypeScript interface definition
  */
-function jsonSchemaToTypeScript(schema: any): string {
+function jsonSchemaToTypeScript(schema: JSONSchema): string {
   if (schema.type === 'object' && schema.properties) {
-    const properties = Object.entries(schema.properties).map(
-      ([key, prop]: [string, any]) => {
-        const isOptional = !schema.required?.includes(key)
-        const propType = getTypeFromJsonSchema(prop)
-        const comment = prop.description ? `  /** ${prop.description} */\n` : ''
-        return `${comment}  "${key}"${isOptional ? '?' : ''}: ${propType}`
-      },
-    )
+    const properties = Object.entries(schema.properties).map(([key, prop]) => {
+      const isOptional = !schema.required?.includes(key)
+      const propType = getTypeFromJsonSchema(prop)
+      const comment = prop.description ? `  /** ${prop.description} */\n` : ''
+      return `${comment}  "${key}"${isOptional ? '?' : ''}: ${propType}`
+    })
     return `{\n${properties.join('\n')}\n}`
   }
   return getTypeFromJsonSchema(schema)
 }
 
-function canEmitInterface(schema: any): boolean {
+function canEmitInterface(schema: JSONSchema | undefined): boolean {
+  if (!schema) return false
   return (
     schema.type === 'object' &&
     !!schema.properties &&
@@ -122,21 +146,21 @@ function canEmitInterface(schema: any): boolean {
 /**
  * Gets TypeScript type from JSON Schema property
  */
-function getTypeFromJsonSchema(prop: any): string {
+function getTypeFromJsonSchema(prop: JSONSchema): string {
   if (prop.const !== undefined) {
     return JSON.stringify(prop.const)
   }
 
   if (prop.type === 'string') {
     if (prop.enum) {
-      return prop.enum.map((v: string) => JSON.stringify(v)).join(' | ')
+      return prop.enum.map((v) => JSON.stringify(v)).join(' | ')
     }
     return 'string'
   }
   if (prop.type === 'number' || prop.type === 'integer') return 'number'
   if (prop.type === 'boolean') return 'boolean'
   if (prop.type === 'array') {
-    const itemType = prop.items ? getTypeFromJsonSchema(prop.items) : 'any'
+    const itemType = prop.items ? getTypeFromJsonSchema(prop.items) : 'unknown'
     return `${itemType}[]`
   }
   if (prop.type === 'object') {
@@ -144,14 +168,20 @@ function getTypeFromJsonSchema(prop: any): string {
       return jsonSchemaToTypeScript(prop)
     }
     if (prop.additionalProperties) {
-      const valueType = getTypeFromJsonSchema(prop.additionalProperties)
+      const valueType = getTypeFromJsonSchema(
+        typeof prop.additionalProperties === 'boolean'
+          ? { type: 'unknown' }
+          : prop.additionalProperties,
+      )
       return `Record<string, ${valueType}>`
     }
-    return 'Record<string, any>'
+    return 'Record<string, unknown>'
   }
   if (prop.anyOf || prop.oneOf) {
-    const schemas = prop.anyOf || prop.oneOf
-    return schemas.map((s: any) => getTypeFromJsonSchema(s)).join(' | ')
+    const schemas = prop.anyOf ?? prop.oneOf
+    if (schemas) {
+      return schemas.map((s) => getTypeFromJsonSchema(s)).join(' | ')
+    }
   }
-  return 'any'
+  return 'unknown'
 }

@@ -1,15 +1,12 @@
-import { setActivity } from './util/activity-tracking'
 import { AnalyticsEvent} from '@savant-code/common/constants/analytics-events'
-import {
-  isFreeMode,
-  shouldUseLocalTokenCountForFreebuffDeepseekFlash,
-} from '@savant-code/common/constants/free-agents'
+import { shouldUseLocalTokenCountForSavantFreeDeepseekFlash } from '@savant-code/common/constants/free-agents'
 import {
   supportsAssistantPrefill,
   supportsCacheControl,
 } from '@savant-code/common/old-constants'
 import { TOOLS_WHICH_WONT_FORCE_NEXT_STEP } from '@savant-code/common/tools/constants'
 import { buildArray } from '@savant-code/common/util/array'
+import { serializeCacheDebugCorrelation } from '@savant-code/common/util/cache-debug'
 import {
   AbortError,
   FETCH_IDLE_TIMEOUT_USER_MESSAGE,
@@ -20,7 +17,6 @@ import {
   isFetchIdleTimeoutError,
   isTransientNetworkError,
 } from '@savant-code/common/util/error'
-import { serializeCacheDebugCorrelation } from '@savant-code/common/util/cache-debug'
 import { systemMessage, userMessage } from '@savant-code/common/util/messages'
 import { type ToolSet } from 'ai'
 import { cloneDeep, mapValues } from 'lodash'
@@ -30,7 +26,6 @@ import { CACHE_DEBUG_FULL_LOGGING } from './constants'
 import { callTokenCountAPI } from './llm-api/savant-code-web-api'
 import { getMCPToolData } from './mcp'
 import { getAgentStreamFromTemplate } from './prompt-agent-stream'
-import { isThinkOnlyResponse } from './util/think-tags'
 import {
   clearProgrammaticRunState,
   runProgrammaticStep,
@@ -41,6 +36,7 @@ import { buildAgentToolSet } from './templates/prompts'
 import { getAgentPrompt } from './templates/strings'
 import { getToolSet } from './tools/prompts'
 import { processStream } from './tools/stream-parser'
+import { setActivity } from './util/activity-tracking'
 import { getAgentOutput } from './util/agent-output'
 import {
   createCacheDebugSnapshot,
@@ -53,6 +49,7 @@ import {
   buildUserMessageContent,
   expireMessages,
 } from './util/messages'
+import { isThinkOnlyResponse } from './util/think-tags'
 import {
   countTokens,
   countTokensJson,
@@ -73,14 +70,15 @@ import type {
 import type { Logger } from '@savant-code/common/types/contracts/logger'
 import type { TraceWriter } from '@savant-code/common/types/contracts/trace'
 import type { ParamsExcluding } from '@savant-code/common/types/function-params'
-import type {
-  Message,
-  ToolMessage,
-} from '@savant-code/common/types/messages/savant-code-message'
+import type { JSONValue } from '@savant-code/common/types/json'
 import type {
   TextPart,
   ImagePart,
 } from '@savant-code/common/types/messages/content-part'
+import type {
+  Message,
+  ToolMessage,
+} from '@savant-code/common/types/messages/savant-code-message'
 import type { PrintModeEvent } from '@savant-code/common/types/print-mode'
 import type {
   AgentTemplateType,
@@ -100,24 +98,24 @@ import type {
 // with `tools.N.custom.input_schema.type: Field required`. We convert to JSON
 // Schema and guarantee a top-level `type: 'object'`.
 export function toTokenCountInputSchema(
-  inputSchema: unknown,
-): Record<string, unknown> | undefined {
+  inputSchema: JSONValue,
+): Record<string, JSONValue> | undefined {
   if (inputSchema == null) return undefined
 
-  let jsonSchema: Record<string, unknown>
+  let jsonSchema: Record<string, JSONValue>
   if (
     typeof (inputSchema as { safeParse?: unknown }).safeParse === 'function'
   ) {
     try {
-      jsonSchema = z.toJSONSchema(inputSchema as z.ZodType, {
+      jsonSchema = z.toJSONSchema(inputSchema as unknown as z.ZodType, {
         io: 'input',
-      }) as Record<string, unknown>
+      }) as Record<string, JSONValue>
     } catch {
       jsonSchema = { type: 'object', properties: {} }
     }
   } else if (typeof inputSchema === 'object' && !Array.isArray(inputSchema)) {
     // Already a plain object (e.g. a pre-serialized JSON Schema) — copy it.
-    jsonSchema = { ...(inputSchema as Record<string, unknown>) }
+    jsonSchema = { ...(inputSchema as Record<string, JSONValue>) }
   } else {
     return undefined
   }
@@ -165,7 +163,6 @@ export const runAgentStep = async (
     userId: string | undefined
     userInputId: string
     clientSessionId: string
-    costMode?: string
     fingerprintId: string
     repoId: string | undefined
     onResponseChunk: (chunk: string | PrintModeEvent) => void
@@ -177,7 +174,7 @@ export const runAgentStep = async (
     localAgentTemplates: Record<string, AgentTemplate>
 
     prompt: string | undefined
-    spawnParams: Record<string, any> | undefined
+    spawnParams: Record<string, JSONValue> | undefined
     system: string
     n?: number
 
@@ -254,14 +251,13 @@ export const runAgentStep = async (
   const agentStepId = crypto.randomUUID()
   trackEvent({
     event: AnalyticsEvent.AGENT_STEP,
-    userId: userId ?? '',
-    properties: {
+    userId: userId ?? '',      properties: {
       agentStepId,
       clientSessionId,
       fingerprintId,
       userInputId,
-      userId,
-      repoName: repoId,
+      userId: userId ?? null,
+      repoName: repoId ?? null,
     },
     logger,
   })
@@ -360,17 +356,17 @@ export const runAgentStep = async (
       cacheDebugCorrelation = createCacheDebugSnapshot({
         agentType: String(agentType),
         system,
-        toolDefinitions: params.tools
+        toolDefinitions: (params.tools
           ? Object.fromEntries(
               Object.entries(params.tools).map(([name, tool]) => [
                 name,
                 {
                   description: tool.description,
-                  inputSchema: tool.inputSchema as {},
+                  inputSchema: tool.inputSchema as unknown as Record<string, JSONValue>,
                 },
               ]),
             )
-          : {},
+          : {}) as Record<string, JSONValue>,
         messages: [systemMessage(system), ...agentState.messageHistory],
         logger,
         projectRoot: fileContext.projectRoot,
@@ -391,8 +387,8 @@ export const runAgentStep = async (
         normalizedBody,
       }: {
         provider: string
-        rawBody: unknown
-        normalizedBody?: unknown
+        rawBody: JSONValue
+        normalizedBody?: JSONValue
       }) => {
         enrichCacheDebugSnapshotWithProviderRequest({
           correlation: cacheDebugCorrelation,
@@ -515,7 +511,6 @@ export const runAgentStep = async (
   const stream = getAgentStreamFromTemplate({
     ...params,
     agentId: agentState.parentId ? agentState.agentId : undefined,
-    costMode: params.costMode,
     cacheDebugCorrelation: cacheDebugCorrelation
       ? serializeCacheDebugCorrelation(cacheDebugCorrelation)
       : undefined,
@@ -676,7 +671,6 @@ export async function loopAgentSteps(
     clearUserPromptMessagesAfterResponse?: boolean
     clientSessionId: string
     content?: Array<TextPart | ImagePart>
-    costMode?: string
     fileContext: ProjectFileContext
     finishAgentRun: FinishAgentRunFn
     localAgentTemplates: Record<string, AgentTemplate>
@@ -690,7 +684,7 @@ export async function loopAgentSteps(
      * to the message history as user prompts and keep the turn going, letting a
      * host "steer" a running agent without aborting or losing the current step. */
     drainSteeringMessages?: () => string[]
-    spawnParams: Record<string, any> | undefined
+    spawnParams: Record<string, JSONValue> | undefined
     startAgentRun: StartAgentRunFn
     userId: string | undefined
     userInputId: string
@@ -756,7 +750,6 @@ export async function loopAgentSteps(
     agentState: initialAgentState,
     agentType,
     clearUserPromptMessagesAfterResponse = true,
-    clientSessionId,
     content,
     fileContext,
     finishAgentRun,
@@ -768,8 +761,6 @@ export async function loopAgentSteps(
     signal,
     spawnParams,
     startAgentRun,
-    userId,
-    userInputId,
     clientEnv,
     ciEnv,
   } = params
@@ -1010,8 +1001,7 @@ export async function loopAgentSteps(
       // don't need Anthropic-exact counts. Paid SavantCode runs keep the
       // accurate API count.
       if (
-        isFreeMode(params.costMode) ||
-        shouldUseLocalTokenCountForFreebuffDeepseekFlash({
+        shouldUseLocalTokenCountForSavantFreeDeepseekFlash({
           agentId: agentTemplate.id,
           model: agentTemplate.model,
         })
@@ -1019,15 +1009,15 @@ export async function loopAgentSteps(
         currentAgentState.contextTokenCount = estimateContextTokensLocally()
       } else {
         // Check context token count via the web API. Pass the run's apiKey
-        // explicitly: interactive CLI users don't have CODEBUFF_API_KEY set in
+        // explicitly: interactive CLI users don't have SAVANT_CODE_API_KEY set in
         // their environment, so relying on the ciEnv fallback made this call
         // fail every step ('Missing SavantCode base URL or API key') and forced
         // the less accurate local estimate.
         const tokenCountResult = await callTokenCountAPI({
-          messages: messagesWithStepPrompt,
+          messages: messagesWithStepPrompt as JSONValue[],
           system,
           model: agentTemplate.model,
-          tools: toolsForTokenCount,
+          tools: toolsForTokenCount as Array<{ name: string; description?: string; input_schema?: JSONValue }>,
           fetch,
           logger,
           env: { clientEnv, ciEnv },
@@ -1065,7 +1055,7 @@ export async function loopAgentSteps(
           system,
           tools,
           template: agentTemplate,
-          toolCallParams: currentParams,
+          toolCallParams: currentParams as Record<string, string | number | boolean | null | undefined> | undefined,
         })
         const {
           agentState: programmaticAgentState,

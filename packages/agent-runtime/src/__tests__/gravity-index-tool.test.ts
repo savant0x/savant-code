@@ -21,8 +21,8 @@ import type {
   AgentRuntimeDeps,
   AgentRuntimeScopedDeps,
 } from '@savant-code/common/types/contracts/agent-runtime'
-import type { ParamsExcluding } from '@savant-code/common/types/function-params'
 import type { StreamChunk } from '@savant-code/common/types/contracts/llm'
+import type { ParamsExcluding } from '@savant-code/common/types/function-params'
 
 let agentRuntimeImpl: AgentRuntimeDeps & AgentRuntimeScopedDeps
 let runAgentStepBaseParams: ParamsExcluding<
@@ -206,7 +206,7 @@ describe('gravity_index tool', () => {
     )
   })
 
-  test('tags base2-free traffic with the freebuff_web surface and forwards external_user_id', async () => {
+  test('tags savant-free traffic with the freebuff_web surface and forwards external_user_id', async () => {
     const spy = spyOn(webApi, 'callGravityIndexAPI').mockResolvedValue({
       result: { search_id: 'search-1' },
     })
@@ -222,9 +222,9 @@ describe('gravity_index tool', () => {
     const fileContext = {
       ...mockFileContext,
       agentTemplates: {
-        'base2-free-deepseek': {
+        'savant-free-deepseek': {
           ...gravityTestAgent,
-          id: 'base2-free-deepseek',
+          id: 'savant-free-deepseek',
           displayName: 'Savant the DeepSeek Free Orchestrator',
         },
       },
@@ -232,7 +232,7 @@ describe('gravity_index tool', () => {
     const sessionState = getInitialSessionState(fileContext)
     const agentState = {
       ...sessionState.mainAgentState,
-      agentType: 'base2-free-deepseek',
+      agentType: 'savant-free-deepseek',
     }
     const { agentTemplates } = assembleLocalAgentTemplates({
       ...agentRuntimeImpl,
@@ -241,10 +241,10 @@ describe('gravity_index tool', () => {
 
     await runAgentStep({
       ...runAgentStepBaseParams,
-      agentType: 'base2-free-deepseek',
+      agentType: 'savant-free-deepseek',
       fileContext,
       localAgentTemplates: agentTemplates,
-      agentTemplate: agentTemplates['base2-free-deepseek'],
+      agentTemplate: agentTemplates['savant-free-deepseek'],
       agentState,
       prompt: 'Find an email provider',
     })

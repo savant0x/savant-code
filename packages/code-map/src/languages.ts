@@ -1,12 +1,10 @@
 import * as fs from 'fs'
 import * as path from 'path'
 
-// Import some types for wasm & .scm files
-import './types'
-
 import { Language, Parser, Query } from 'web-tree-sitter'
 
 import { initTreeSitterForNode } from './init-node'
+// eslint-disable-next-line import/order -- pre-existing edge case: eslint-plugin-import incorrectly flags last sibling import when newlines-between: always
 import { DEBUG_PARSING } from './parse'
 
 /* ------------------------------------------------------------------ */
@@ -146,7 +144,7 @@ function resolveWasmPath(wasmFileName: string): string {
   }
 
   // Try environment variable override
-  const envWasmDir = process.env.CODEBUFF_WASM_DIR
+  const envWasmDir = process.env.SAVANT_CODE_WASM_DIR
   if (envWasmDir) {
     return path.join(envWasmDir, wasmFileName)
   }

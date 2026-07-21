@@ -289,9 +289,7 @@ export const ChatInputBar = ({
           width: '100%',
           borderStyle: 'single',
           borderColor: theme.primary,
-          customBorderChars: BORDER_CHARS,
-        }}
-      >
+          }} customBorderChars={BORDER_CHARS}>
         <MultipleChoiceForm
           questions={askUserState.questions}
           onSubmit={handleFormSubmit}

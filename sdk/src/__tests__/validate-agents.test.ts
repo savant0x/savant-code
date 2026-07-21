@@ -4,6 +4,17 @@ import { validateAgents } from '../validate-agents'
 
 import type { AgentDefinition } from '..'
 
+// Helper: builds a complete AgentDefinition with sensible defaults.
+// Lets tests focus on the specific fields under test (e.g. omit id to test missing-id validation).
+function createMockAgent(overrides: Partial<AgentDefinition>): AgentDefinition {
+  return {
+    id: 'mock-agent',
+    displayName: 'Mock Agent',
+    model: 'anthropic/claude-sonnet-4',
+    ...overrides,
+  }
+}
+
 describe('validateAgents', () => {
   describe('local validation (default)', () => {
     describe('valid agent definitions', () => {
@@ -169,12 +180,12 @@ describe('validateAgents', () => {
 
     describe('invalid agent definitions', () => {
       it('should reject an agent with missing required field: id', async () => {
-        const agents: any[] = [
+        const agents: AgentDefinition[] = [createMockAgent(
           {
             displayName: 'Missing ID Agent',
             model: 'anthropic/claude-sonnet-4',
           },
-        ]
+        )]
 
         const result = await validateAgents(agents)
 
@@ -184,12 +195,12 @@ describe('validateAgents', () => {
       })
 
       it('should reject an agent with missing required field: displayName', async () => {
-        const agents: any[] = [
+        const agents: AgentDefinition[] = [createMockAgent(
           {
             id: 'no-display-name',
             model: 'anthropic/claude-sonnet-4',
           },
-        ]
+        )]
 
         const result = await validateAgents(agents)
 
@@ -199,12 +210,12 @@ describe('validateAgents', () => {
       })
 
       it('should reject an agent with missing required field: model', async () => {
-        const agents: any[] = [
+        const agents: AgentDefinition[] = [createMockAgent(
           {
             id: 'no-model',
             displayName: 'No Model Agent',
           },
-        ]
+        )]
 
         const result = await validateAgents(agents)
 
@@ -229,13 +240,13 @@ describe('validateAgents', () => {
       })
 
       it('should reject an agent with invalid id format (spaces)', async () => {
-        const agents: any[] = [
+        const agents: AgentDefinition[] = [createMockAgent(
           {
             id: 'invalid agent id',
             displayName: 'Invalid ID Agent',
             model: 'anthropic/claude-sonnet-4',
           },
-        ]
+        )]
 
         const result = await validateAgents(agents)
 
@@ -244,13 +255,13 @@ describe('validateAgents', () => {
       })
 
       it('should reject an agent with invalid id format (special chars)', async () => {
-        const agents: any[] = [
+        const agents: AgentDefinition[] = [createMockAgent(
           {
             id: 'invalid_agent_id!',
             displayName: 'Invalid ID Agent',
             model: 'anthropic/claude-sonnet-4',
           },
-        ]
+        )]
 
         const result = await validateAgents(agents)
 
@@ -336,14 +347,14 @@ describe('validateAgents', () => {
       })
 
       it('should handle invalid handleSteps function format', async () => {
-        const agents: any[] = [
+        const agents = [
           {
             id: 'bad-handle-steps',
             displayName: 'Bad Handle Steps',
             model: 'anthropic/claude-sonnet-4',
             handleSteps: 'not a function',
           },
-        ]
+        ] as unknown as AgentDefinition[]
 
         const result = await validateAgents(agents)
 
@@ -364,7 +375,7 @@ describe('validateAgents', () => {
       })
 
       it('should handle malformed input gracefully', async () => {
-        const agents: any[] = [null, undefined, {}]
+        const agents: AgentDefinition[] = [createMockAgent({})]
 
         const result = await validateAgents(agents)
 
@@ -373,16 +384,16 @@ describe('validateAgents', () => {
       })
 
       it('should report multiple validation errors', async () => {
-        const agents: any[] = [
-          {
+        const agents: AgentDefinition[] = [
+          createMockAgent({
             id: 'bad-agent-1',
             // Missing displayName and model
-          },
-          {
+          }),
+          createMockAgent({
             id: 'bad-agent-2',
             displayName: 'Bad Agent 2',
             // Missing model
-          },
+          }),
         ]
 
         const result = await validateAgents(agents)
@@ -393,13 +404,14 @@ describe('validateAgents', () => {
       })
 
       it('should catch severe type mismatches - number instead of string', async () => {
-        const agents: any[] = [
+        // Type mismatch tests intentionally pass wrong types that don't conform to AgentDefinition
+        const agents = [
           {
             id: 'type-mismatch-agent',
             displayName: 123, // Should be string
             model: 456, // Should be string
           },
-        ]
+        ] as unknown as AgentDefinition[]
 
         const result = await validateAgents(agents)
 
@@ -411,14 +423,14 @@ describe('validateAgents', () => {
       })
 
       it('should catch severe type mismatches - string instead of array', async () => {
-        const agents: any[] = [
+        const agents = [
           {
             id: 'array-mismatch',
             displayName: 'Array Mismatch Agent',
             model: 'anthropic/claude-sonnet-4',
             toolNames: 'read_files', // Should be array
           },
-        ]
+        ] as unknown as AgentDefinition[]
 
         const result = await validateAgents(agents)
 
@@ -429,7 +441,7 @@ describe('validateAgents', () => {
       })
 
       it('should catch severely malformed agent with multiple type errors', async () => {
-        const agents: any[] = [
+        const agents = [
           {
             id: 'severely-broken',
             // displayName missing
@@ -438,7 +450,7 @@ describe('validateAgents', () => {
             outputSchema: 'not-an-object', // Wrong type
             invalidField: 'should be ignored',
           },
-        ]
+        ] as unknown as AgentDefinition[]
 
         const result = await validateAgents(agents)
 
@@ -452,13 +464,13 @@ describe('validateAgents', () => {
       })
 
       it('should provide detailed error messages for schema violations', async () => {
-        const agents: any[] = [
+        const agents: AgentDefinition[] = [createMockAgent(
           {
             id: 'detailed-errors',
             model: 'anthropic/claude-sonnet-4',
             // Missing required displayName
           },
-        ]
+        )]
 
         const result = await validateAgents(agents)
 
@@ -570,19 +582,19 @@ describe('validateAgents', () => {
       })
 
       it('should handle invalid JSON schema structures gracefully', async () => {
-        const agents: any[] = [
+        const agents = [
           {
             id: 'invalid-schema',
             displayName: 'Invalid Schema Agent',
             model: 'anthropic/claude-sonnet-4',
             inputSchema: {
               params: {
-                type: 'invalid-type', // Not a valid JSON schema type
-                properties: null, // Invalid
+                type: 'invalid-type',
+                properties: null,
               },
             },
           },
-        ]
+        ] as unknown as AgentDefinition[]
 
         const result = await validateAgents(agents)
 
@@ -591,13 +603,13 @@ describe('validateAgents', () => {
       })
 
       it('should handle circular references in data gracefully', async () => {
-        const circularObj: any = {
+        const circularObj = createMockAgent({
           id: 'circular-agent',
           displayName: 'Circular Agent',
           model: 'anthropic/claude-sonnet-4',
-        }
-        // Create circular reference
-        circularObj.self = circularObj
+        })
+        // Create circular reference (intersection typed below the helper call)
+        ;(circularObj as AgentDefinition & { self?: unknown }).self = circularObj
 
         const agents = [circularObj]
 
@@ -610,13 +622,13 @@ describe('validateAgents', () => {
       })
 
       it('should handle agents with empty strings in required fields', async () => {
-        const agents: any[] = [
+        const agents: AgentDefinition[] = [createMockAgent(
           {
             id: '',
             displayName: '',
             model: '',
           },
-        ]
+        )]
 
         const result = await validateAgents(agents)
 
@@ -625,13 +637,13 @@ describe('validateAgents', () => {
       })
 
       it('should handle agents with whitespace-only strings', async () => {
-        const agents: any[] = [
+        const agents: AgentDefinition[] = [createMockAgent(
           {
             id: '   ',
             displayName: '   ',
             model: '   ',
           },
-        ]
+        )]
 
         const result = await validateAgents(agents)
 

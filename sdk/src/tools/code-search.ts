@@ -2,11 +2,12 @@ import { spawn } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
 
+
 import { formatCodeSearchOutput } from '../../../common/src/util/format-code-search'
 import { getBundledRgPath } from '../native/ripgrep'
 
 import type { SavantCodeToolOutput } from '../../../common/src/tools/list'
-import { Logger } from '@savant-code/common/types/contracts/logger'
+import type { Logger } from '@savant-code/common/types/contracts/logger'
 
 // Hidden directories to include in code search by default.
 // These are searched in addition to '.' to ensure important config/workflow files are discoverable.
@@ -439,7 +440,7 @@ export function codeSearch({
     childProcess.once('error', (error) => {
       if (isResolved) return
       settle({
-        errorMessage: `Failed to execute ripgrep: ${error.message}. Vendored ripgrep not found; ensure @savant-code/sdk is up-to-date or set CODEBUFF_RG_PATH.`,
+        errorMessage: `Failed to execute ripgrep: ${error.message}. Vendored ripgrep not found; ensure @savant-code/sdk is up-to-date or set SAVANT_CODE_RG_PATH.`,
       })
     })
   })

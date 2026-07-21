@@ -1,6 +1,7 @@
 import { LRUCache } from '@savant-code/common/util/lru-cache'
 import { encode } from 'gpt-tokenizer/esm/model/gpt-4o'
 
+import type { JSONValue } from '@savant-code/common/types/json'
 import type { Message } from '@savant-code/common/types/messages/savant-code-message'
 
 const ANTHROPIC_TOKEN_FUDGE_FACTOR = 1.35
@@ -38,7 +39,7 @@ export function countTokens(text: string): number {
   }
 }
 
-export function countTokensJson(value: unknown): number {
+export function countTokensJson(value: JSONValue): number {
   // JSON.stringify(undefined) returns undefined; fall back to '' so countTokens
   // always gets a string.
   return countTokens(JSON.stringify(value) ?? '')
@@ -77,10 +78,10 @@ export function countTokensMessages(messages: Message[]): number {
           break
         case 'tool-call':
           total +=
-            countTokens(part.toolName as string) + countTokensJson(part.input)
+            countTokens(part.toolName as string) + countTokensJson(part.input as JSONValue)
           break
         case 'json': // tool result payload
-          total += countTokensJson(part.value)
+          total += countTokensJson(part.value as JSONValue)
           break
         case 'image':
         case 'file':
@@ -88,7 +89,7 @@ export function countTokensMessages(messages: Message[]): number {
           total += IMAGE_TOKEN_ESTIMATE
           break
         default: // unknown shape: JSON fallback so we never under-count
-          total += countTokensJson(part)
+          total += countTokensJson(part as JSONValue)
       }
     }
   }

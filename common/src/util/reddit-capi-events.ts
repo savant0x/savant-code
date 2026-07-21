@@ -1,6 +1,6 @@
-import { AnalyticsEvent } from '@savantcode.common/constants/analytics-events'
+import { AnalyticsEvent } from '@savant-code/common/constants/analytics-events'
 
-import type { SavantFree$1 } from '@savantcode.common/util/reddit-savant-free-retention'
+import type { RedditRetentionMilestone } from '@savant-code/common/util/reddit-savant-free-retention'
 
 export type RedditFirstPromptSurface = 'cli' | 'web' | 'chat'
 
@@ -9,9 +9,9 @@ export const REDDIT_FIRST_PROMPT_ANALYTICS_EVENTS: Record<
   RedditFirstPromptSurface,
   AnalyticsEvent
 > = {
-  cli: AnalyticsEvent.FREEBUFF_REDDIT_FUNNEL_FIRST_PROMPT_CLI,
-  web: AnalyticsEvent.FREEBUFF_REDDIT_FUNNEL_FIRST_PROMPT_WEB,
-  chat: AnalyticsEvent.FREEBUFF_REDDIT_FUNNEL_FIRST_PROMPT_CHAT,
+  cli: AnalyticsEvent.SAVANT_FREE_REDDIT_FUNNEL_FIRST_PROMPT_CLI,
+  web: AnalyticsEvent.SAVANT_FREE_REDDIT_FUNNEL_FIRST_PROMPT_WEB,
+  chat: AnalyticsEvent.SAVANT_FREE_REDDIT_FUNNEL_FIRST_PROMPT_CHAT,
 }
 
 export type RedditFirstPromptCapiEventName =
@@ -38,7 +38,7 @@ export function redditFirstPromptCapiEventName(
 }
 
 export function redditRetentionCapiEventName(
-  milestone: SavantFree$1,
+  milestone: RedditRetentionMilestone,
 ): RedditRetentionCapiEventName {
   return `Retention${milestone}dCli`
 }

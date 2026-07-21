@@ -5,11 +5,12 @@ import { dirname, join } from 'path'
 import {
   type CacheDebugCorrelation,
 } from '@savant-code/common/util/cache-debug'
+
 import type { CacheDebugUsageData } from '@savant-code/common/types/contracts/llm'
 import type { Logger } from '@savant-code/common/types/contracts/logger'
-import type { Message } from '@savant-code/common/types/messages/savant-code-message'
-import type { ProviderMetadata } from '@savant-code/common/types/messages/provider-metadata'
 import type { JSONValue } from '@savant-code/common/types/json'
+import type { ProviderMetadata } from '@savant-code/common/types/messages/provider-metadata'
+import type { Message } from '@savant-code/common/types/messages/savant-code-message'
 
 type SerializableValue = JSONValue
 
@@ -60,7 +61,7 @@ function getCacheDebugDir(projectRoot: string) {
 
 let cacheDebugCounter = 0
 
-function normalizeForJson(value: unknown): SerializableValue {
+function normalizeForJson(value: JSONValue | undefined): SerializableValue {
   if (
     value === null ||
     typeof value === 'string' ||
@@ -87,7 +88,7 @@ function normalizeForJson(value: unknown): SerializableValue {
 
   if (typeof value === 'object') {
     return Object.fromEntries(
-      Object.entries(value as Record<string, unknown>).map(([key, entryValue]) => [
+      Object.entries(value as Record<string, JSONValue>).map(([key, entryValue]) => [
         key,
         normalizeForJson(entryValue),
       ]),
@@ -141,7 +142,7 @@ function summarizeLargeValue(value: SerializableValue): SerializableValue {
   )
 }
 
-function stableHash(value: unknown): string {
+function stableHash(value: JSONValue): string {
   return createHash('sha256')
     .update(JSON.stringify(normalizeForJson(value)))
     .digest('hex')
@@ -174,8 +175,7 @@ function writeSnapshot(params: {
 
 function serializeMessage(message: Message): CacheDebugMessageSnapshot {
   return {
-    role: message.role,
-    content: normalizeForJson(message.content),
+    role: message.role,        content: normalizeForJson(message.content as JSONValue),
     tags: 'tags' in message ? message.tags : undefined,
     timeToLive: 'timeToLive' in message ? message.timeToLive : undefined,
     sentAt: 'sentAt' in message ? message.sentAt : undefined,
@@ -188,7 +188,7 @@ function serializeMessage(message: Message): CacheDebugMessageSnapshot {
 export function createCacheDebugSnapshot(params: {
   agentType: string
   system: string
-  toolDefinitions: Record<string, unknown>
+  toolDefinitions: Record<string, JSONValue>
   messages: Message[]
   logger: Logger
   projectRoot: string
@@ -233,8 +233,8 @@ export function createCacheDebugSnapshot(params: {
     toolsHash: stableHash(toolDefinitions),
     preConversion: {
       systemPrompt: system,
-      toolDefinitions,
-      messages: messages.map(serializeMessage),
+  toolDefinitions,
+  messages: messages.map(serializeMessage),
     },
   }
 
@@ -282,8 +282,8 @@ export function enrichCacheDebugSnapshotWithUsage(params: {
 export function enrichCacheDebugSnapshotWithProviderRequest(params: {
   correlation: CacheDebugCorrelation
   provider: string
-  rawBody: unknown
-  normalized: unknown
+  rawBody: JSONValue
+  normalized: JSONValue
   logger: Logger
 }) {
   const { correlation, provider, rawBody, normalized, logger } = params

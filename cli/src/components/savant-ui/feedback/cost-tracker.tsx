@@ -1,8 +1,10 @@
 import React from 'react'
 
 import { useTheme } from '../../../hooks/use-theme'
+import { KeyValue } from '../data-display/key-value'
 import { Sparkline } from '../data-display/sparkline'
-import { KeyValue, KeyValueItem } from '../data-display/key-value'
+
+import type { KeyValueItem } from '../data-display/key-value';
 
 export interface CostTrackerProps {
   cost: number

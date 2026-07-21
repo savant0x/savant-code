@@ -4,8 +4,8 @@ import * as path from 'path'
 
 import { Parser } from 'web-tree-sitter'
 
-const TREE_SITTER_WASM_ENV_VAR = 'CODEBUFF_TREE_SITTER_WASM_PATH'
-const WASM_BINARY_GLOBAL_KEY = '__CODEBUFF_TREE_SITTER_WASM_BINARY__'
+const TREE_SITTER_WASM_ENV_VAR = 'SAVANT_CODE_TREE_SITTER_WASM_PATH'
+const WASM_BINARY_GLOBAL_KEY = '__SAVANT_CODE_TREE_SITTER_WASM_BINARY__'
 
 // Pinned to the version in sdk/package.json. If we bump web-tree-sitter,
 // update this too — fetching a wasm built for a different version of the
@@ -28,7 +28,7 @@ const WASM_DOWNLOAD_URLS = [
  *
  * Path-based fallback for environments that can't pre-load the wasm bytes (e.g.
  * external SDK consumers using a custom layout). The CLI binary instead pre-loads
- * bytes onto `globalThis.__CODEBUFF_TREE_SITTER_WASM_BINARY__` because Windows
+ * bytes onto `globalThis.__SAVANT_CODE_TREE_SITTER_WASM_BINARY__` because Windows
  * bunfs paths (`B:\~BUN\root\...`) round-trip inconsistently through
  * `fs.existsSync` even when `fs.readFileSync` succeeds.
  *

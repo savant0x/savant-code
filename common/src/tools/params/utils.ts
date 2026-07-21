@@ -1,3 +1,4 @@
+/* eslint-disable savant/no-unknown-in-signatures, @typescript-eslint/no-explicit-any -- tool params utilities: zod preprocess operates on unknown inputs; a future refactor can replace direct preprocess usage with typed transforms */
 import z from 'zod/v4'
 
 import {

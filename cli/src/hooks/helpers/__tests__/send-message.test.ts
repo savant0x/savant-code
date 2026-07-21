@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- test file: intentional any casts for mock params and session state */
 import { describe, expect, test, mock, beforeEach, afterEach } from 'bun:test'
 
 import type { ChatMessage } from '../../../types/chat'
@@ -8,8 +9,8 @@ import type { StreamStatus } from '../../use-message-queue'
 const ensureEnv = () => {
   process.env.NEXT_PUBLIC_CB_ENVIRONMENT =
     process.env.NEXT_PUBLIC_CB_ENVIRONMENT || 'test'
-  process.env.NEXT_PUBLIC_CODEBUFF_APP_URL =
-    process.env.NEXT_PUBLIC_CODEBUFF_APP_URL || 'https://app.savant-code.test'
+  process.env.NEXT_PUBLIC_SAVANT_CODE_APP_URL =
+    process.env.NEXT_PUBLIC_SAVANT_CODE_APP_URL || 'https://app.savant-code.test'
   process.env.NEXT_PUBLIC_SUPPORT_EMAIL =
     process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'support@savant-code.test'
   process.env.NEXT_PUBLIC_POSTHOG_API_KEY =
@@ -38,6 +39,7 @@ const {
 const { createBatchedMessageUpdater } =
   await import('../../../utils/message-updater')
 import { createPaymentRequiredError } from '@savant-code/sdk'
+
 import type { RunState } from '@savant-code/sdk'
 
 const createMockTimerController = (): SendMessageTimerController & {
@@ -362,7 +364,7 @@ describe('handleRunCompletion', () => {
       handleRunCompletion({
         runState,
         actualCredits: undefined,
-        agentMode: 'DEFAULT' as any,
+        agentMode: 'EDIT',
         timerController,
         updater,
         aiMessageId: 'ai-1',
@@ -419,7 +421,7 @@ describe('handleRunCompletion', () => {
       handleRunCompletion({
         runState,
         actualCredits: 42,
-        agentMode: 'PLAN' as any,
+        agentMode: 'SCAFFOLD',
         timerController,
         updater,
         aiMessageId: 'ai-1',
@@ -459,7 +461,7 @@ describe('handleRunCompletion', () => {
       handleRunCompletion({
         runState,
         actualCredits: undefined,
-        agentMode: 'DEFAULT' as any,
+        agentMode: 'EDIT',
         timerController,
         updater,
         aiMessageId: 'ai-1',
@@ -1028,8 +1030,7 @@ describe('CLI-level race condition: abort run A, attempt run B before A resolves
 
     handleRunCompletion({
       runState,
-      actualCredits: undefined,
-      agentMode: 'DEFAULT' as any,
+      actualCredits: undefined,        agentMode: 'EDIT',
       timerController,
       updater,
       aiMessageId: 'ai-1',
@@ -1335,8 +1336,7 @@ describe('CLI-level race condition: abort run A, attempt run B before A resolves
 
     handleRunCompletion({
       runState: runStateA,
-      actualCredits: undefined,
-      agentMode: 'DEFAULT' as any,
+      actualCredits: undefined,        agentMode: 'EDIT',
       timerController: timerA,
       updater: updaterA,
       aiMessageId: 'ai-run-a',
@@ -1374,8 +1374,7 @@ describe('CLI-level race condition: abort run A, attempt run B before A resolves
 
     handleRunCompletion({
       runState: runStateB,
-      actualCredits: 5,
-      agentMode: 'DEFAULT' as any,
+      actualCredits: 5,        agentMode: 'EDIT',
       timerController: timerB,
       updater: updaterB,
       aiMessageId: 'ai-run-b',
@@ -1819,7 +1818,7 @@ describe('savant-free gate errors', () => {
     handleRunCompletion({
       runState,
       actualCredits: undefined,
-      agentMode: 'LITE',
+      agentMode: 'EDIT',
       timerController: createMockTimerController(),
       updater,
       aiMessageId: 'ai-1',

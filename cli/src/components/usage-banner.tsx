@@ -1,8 +1,6 @@
-import { CHATGPT_OAUTH_ENABLED } from '@savant-code/common/constants/chatgpt-oauth'
-import { IS_FREEBUFF } from '../utils/constants'
-import { isChatGptOAuthValid } from '@savant-code/sdk'
 import { TextAttributes } from '@opentui/core'
-import { safeOpen } from '../utils/open-url'
+import { CHATGPT_OAUTH_ENABLED } from '@savant-code/common/constants/chatgpt-oauth'
+import { isChatGptOAuthValid } from '@savant-code/sdk'
 import React, { useEffect, useMemo } from 'react'
 
 import { BottomBanner } from './bottom-banner'
@@ -15,6 +13,9 @@ import { useUpdatePreference } from '../hooks/use-update-preference'
 import { usageQueryKeys, useUsageQuery } from '../hooks/use-usage-query'
 import { WEBSITE_URL } from '../login/constants'
 import { useChatStore } from '../state/chat-store'
+import { IS_SAVANT_FREE } from '../utils/constants'
+import { isDirectProviderMode } from '../utils/env'
+import { safeOpen } from '../utils/open-url'
 import { formatResetTime, formatResetTimeLong } from '../utils/time-format'
 import {
   getBannerColorLevel,
@@ -45,7 +46,8 @@ const formatRenewalDate = (dateStr: string | null): string => {
 }
 
 export const UsageBanner = ({ showTime }: { showTime: number }) => {
-  if (IS_FREEBUFF) return null
+  // Skip in free mode and direct-provider mode (no backend to query).
+  if (IS_SAVANT_FREE || isDirectProviderMode()) return null
 
   const sessionCreditsUsed = useChatStore((state) => state.sessionCreditsUsed)
   const setInputMode = useChatStore((state) => state.setInputMode)

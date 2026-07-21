@@ -1,9 +1,9 @@
-import { env } from '@savant-code/common/env'
 import {
-  FALLBACK_FREEBUFF_MODEL_ID,
-  LIMITED_FREEBUFF_MODEL_ID,
-  resolveFreebuffModelForAccessTier,
+  FALLBACK_SAVANT_FREE_MODEL_ID,
+  LIMITED_SAVANT_FREE_MODEL_ID,
+  resolveSavantFreeModelForAccessTier,
 } from '@savant-code/common/constants/savant-free-models'
+import { env } from '@savant-code/common/env'
 import {
   getRateLimitsByModel,
   getReferralInfo,
@@ -11,27 +11,27 @@ import {
 import { useEffect } from 'react'
 
 import {
-  getSelectedFreebuffModel,
-  useFreebuffModelStore,
+  getSelectedSavantFreeModel,
+  useSavantFreeModelStore,
 } from '../state/savant-free-model-store'
-import { useFreebuffSessionStore } from '../state/savant-free-session-store'
+import { useSavantFreeSessionStore } from '../state/savant-free-session-store'
 import { getAuthTokenDetails } from '../utils/auth'
-import { IS_FREEBUFF } from '../utils/constants'
-import {
-  isFreebuffInstanceOwnedByDeadLocalProcess,
-  recordFreebuffInstanceOwner,
-} from '../utils/savant-free-instance-owner'
+import { IS_SAVANT_FREE } from '../utils/constants'
 import { logger } from '../utils/logger'
+import {
+  isSavantFreeInstanceOwnedByDeadLocalProcess,
+  recordSavantFreeInstanceOwner,
+} from '../utils/savant-free-instance-owner'
 import {
   getCachedReferral,
   rememberReferral,
 } from '../utils/savant-free-referral-cache'
 
-import type { SavantFree$1 } from '../types/savant-free-session'
+import type { SavantFreeSession } from '../types/savant-free-session'
 import type {
-  SavantFree$1,
-  SavantFree$1,
-  SavantFree$1,
+  SavantFreeSessionState,
+  SavantFreeBlockReason,
+  SavantFreeIpPrivacySignal,
 } from '@savant-code/common/types/savant-free-session'
 
 const POLL_INTERVAL_ACTIVE_MS = 30_000
@@ -56,10 +56,10 @@ export function sessionFetchSignal(
 
 /** Header sent on GET so the server can detect when another CLI on the same
  *  account has rotated the id and respond with `{ status: 'superseded' }`. */
-const FREEBUFF_INSTANCE_HEADER = 'x-savant-free-instance-id'
+const SAVANT_FREE_INSTANCE_HEADER = 'x-savant-free-instance-id'
 
 /** Header sent on POST telling the server which model to use. */
-const FREEBUFF_MODEL_HEADER = 'x-savant-free-model'
+const SAVANT_FREE_MODEL_HEADER = 'x-savant-free-model'
 
 /** Play the terminal bell so users get an audible notification on admission. */
 const playAdmissionSound = () => {
@@ -72,7 +72,7 @@ const playAdmissionSound = () => {
 
 const sessionEndpoint = (): string => {
   const base = (
-    env.NEXT_PUBLIC_CODEBUFF_APP_URL || 'https://savant-code.com'
+    env.NEXT_PUBLIC_SAVANT_FREE_APP_URL || 'https://savant-code.com'
   ).replace(/\/$/, '')
   return `${base}/api/v1/savant-free/session`
 }
@@ -81,13 +81,13 @@ async function callSession(
   method: 'POST' | 'GET' | 'DELETE',
   token: string,
   opts: { instanceId?: string; model?: string; signal?: AbortSignal } = {},
-): Promise<SavantFree$1> {
+): Promise<SavantFreeSession> {
   const headers: Record<string, string> = { Authorization: `Bearer ${token}` }
   if (method === 'GET' && opts.instanceId) {
-    headers[FREEBUFF_INSTANCE_HEADER] = opts.instanceId
+    headers[SAVANT_FREE_INSTANCE_HEADER] = opts.instanceId
   }
   if (method === 'POST' && opts.model) {
-    headers[FREEBUFF_MODEL_HEADER] = opts.model
+    headers[SAVANT_FREE_MODEL_HEADER] = opts.model
   }
   const resp = await fetch(sessionEndpoint(), {
     method,
@@ -110,7 +110,7 @@ async function callSession(
   if (resp.status === 403) {
     const body = (await resp
       .json()
-      .catch(() => null)) as SavantFree$1 | null
+      .catch(() => null)) as SavantFreeSession | null
     if (
       body &&
       (body.status === 'country_blocked' || body.status === 'banned')
@@ -125,7 +125,7 @@ async function callSession(
   if (resp.status === 409 && method === 'POST') {
     const body = (await resp
       .json()
-      .catch(() => null)) as SavantFree$1 | null
+      .catch(() => null)) as SavantFreeSession | null
     if (
       body &&
       (body.status === 'model_locked' || body.status === 'model_unavailable')
@@ -141,7 +141,7 @@ async function callSession(
   if (resp.status === 429 && method === 'POST') {
     const body = (await resp
       .json()
-      .catch(() => null)) as SavantFree$1 | null
+      .catch(() => null)) as SavantFreeSession | null
     if (body && body.status === 'rate_limited') {
       return body
     }
@@ -152,12 +152,12 @@ async function callSession(
       `savant-free session ${method} failed: ${resp.status} ${text.slice(0, 200)}`,
     )
   }
-  return (await resp.json()) as SavantFree$1
+  return (await resp.json()) as SavantFreeSession
 }
 
 /** Picks the poll delay after a successful tick. Returns null when the state
  *  is terminal (no further polling). */
-function nextDelayMs(next: SavantFree$1): number | null {
+function nextDelayMs(next: SavantFreeSession): number | null {
   switch (next.status) {
     case 'active':
       // Poll at the normal cadence, but ensure we land just after
@@ -201,31 +201,31 @@ type RestartMode = 'rejoin' | 'landing'
 interface PollController {
   /** Cancel the in-flight tick + timer and start a fresh one in `mode`. */
   restart: (mode: RestartMode) => Promise<void>
-  apply: (next: SavantFree$1) => void
+  apply: (next: SavantFreeSession) => void
   abort: () => void
 }
 
 let controller: PollController | null = null
 
 /** Read the current instance id for outgoing chat requests. Defined via
- *  `holdsLiveFreebuffSlot` so the two can't drift: an id exists exactly while
+ *  `holdsLiveSavantFreeSlot` so the two can't drift: an id exists exactly while
  *  we hold a live slot (active, or `ended` inside the server-side grace
  *  window where the row stays alive until `expires_at + grace`). */
-export function getFreebuffInstanceId(): string | undefined {
-  const current = useFreebuffSessionStore.getState().session
-  if (!current || !holdsLiveFreebuffSlot(current)) return undefined
+export function getSavantFreeInstanceId(): string | undefined {
+  const current = useSavantFreeSessionStore.getState().session
+  if (!current || !holdsLiveSavantFreeSlot(current)) return undefined
   return 'instanceId' in current ? current.instanceId : undefined
 }
 
 /** True when the session represents a server-side slot the caller is
  *  holding (active, or in the post-expiry grace window with a live
  *  instance id). Chat requests are only admissible in these states — once
- *  the slot is gone, `getFreebuffInstanceId` returns undefined and the
+ *  the slot is gone, `getSavantFreeInstanceId` returns undefined and the
  *  server rejects the request — so the message queue gates on this before
  *  firing queued work. Same predicate gates DELETE on exit: outside these
  *  states there is no server row to release. */
-export function holdsLiveFreebuffSlot(
-  current: SavantFree$1 | null,
+export function holdsLiveSavantFreeSlot(
+  current: SavantFreeSession | null,
 ): boolean {
   if (!current) return false
   return (
@@ -235,8 +235,8 @@ export function holdsLiveFreebuffSlot(
 }
 
 function toLandingSession(
-  current: SavantFree$1 | null,
-): Extract<SavantFree$1, { status: 'none' }> {
+  current: SavantFreeSession | null,
+): Extract<SavantFreeSession, { status: 'none' }> {
   const accessTier =
     current && 'accessTier' in current ? current.accessTier : undefined
   const rateLimitsByModel = getRateLimitsByModel(current)
@@ -267,9 +267,9 @@ function toLandingSession(
  *  one. Used both by exit paths and any flow that wants the next POST to
  *  start clean (rejoin, return-to-landing). Always swallows errors — the
  *  server-side sweep is the backstop. */
-async function releaseFreebuffSlot(): Promise<void> {
-  const current = useFreebuffSessionStore.getState().session
-  if (!holdsLiveFreebuffSlot(current)) return
+async function releaseSavantFreeSlot(): Promise<void> {
+  const current = useSavantFreeSessionStore.getState().session
+  if (!holdsLiveSavantFreeSlot(current)) return
   const { token } = getAuthTokenDetails()
   if (!token) return
   try {
@@ -290,11 +290,11 @@ interface RestartOpts {
   releaseSlot?: boolean
 }
 
-async function restartFreebuffSession(
+async function restartSavantFreeSession(
   mode: RestartMode,
   opts: RestartOpts = {},
 ): Promise<void> {
-  if (!IS_FREEBUFF) return
+  if (!IS_SAVANT_FREE) return
   // Halt the running poll loop before we touch local stores or DELETE the
   // slot. Otherwise an in-flight GET could land mid-reset and overwrite
   // state, or the next scheduled tick could fire between DELETE and
@@ -302,7 +302,7 @@ async function restartFreebuffSession(
   // below; the extra abort here is cheap.
   controller?.abort()
   if (opts.resetChat) await resetChatStore()
-  if (opts.releaseSlot) await releaseFreebuffSlot()
+  if (opts.releaseSlot) await releaseSavantFreeSlot()
   await controller?.restart(mode)
 }
 
@@ -311,10 +311,10 @@ async function restartFreebuffSession(
  * Pass `resetChat: true` to also wipe local chat history — used when
  * rejoining after a session ended so the next admitted session starts fresh.
  */
-export function refreshFreebuffSession(
+export function refreshSavantFreeSession(
   opts: { resetChat?: boolean } = {},
 ): Promise<void> {
-  return restartFreebuffSession('rejoin', { resetChat: opts.resetChat })
+  return restartSavantFreeSession('rejoin', { resetChat: opts.resetChat })
 }
 
 /**
@@ -323,10 +323,10 @@ export function refreshFreebuffSession(
  * they consciously choose a model and hit Enter to join, rather than being
  * silently re-queued for whatever model they last used.
  */
-export function returnToFreebuffLanding(
+export function returnToSavantFreeLanding(
   opts: { resetChat?: boolean } = {},
 ): Promise<void> {
-  return restartFreebuffSession('landing', {
+  return restartSavantFreeSession('landing', {
     resetChat: opts.resetChat,
     releaseSlot: true,
   })
@@ -335,8 +335,8 @@ export function returnToFreebuffLanding(
 /** Refresh picker-only metadata (quota and queue depths) while staying on the
  * model selection screen. Used when a midnight-Pacific session quota reset
  * passes while the landing screen is open. */
-export function refreshFreebuffLandingMetadata(): Promise<void> {
-  return restartFreebuffSession('landing')
+export function refreshSavantFreeLandingMetadata(): Promise<void> {
+  return restartSavantFreeSession('landing')
 }
 
 /**
@@ -351,25 +351,25 @@ export function refreshFreebuffLandingMetadata(): Promise<void> {
  * the locked model so the active session stays intact. Users who really want
  * to switch can /end-session deliberately.
  */
-export function startFreebuffSession(model: string): Promise<void> {
-  if (!IS_FREEBUFF) return Promise.resolve()
+export function startSavantFreeSession(model: string): Promise<void> {
+  if (!IS_SAVANT_FREE) return Promise.resolve()
   // This is the only explicit user-pick path (called from the picker on
   // click / Enter), so persistence belongs here — and ONLY here. Server-
   // driven flips (`model_locked`, `model_unavailable`, takeover) go
   // through `setSelectedModel` directly, which never writes to disk.
-  const current = useFreebuffSessionStore.getState().session
+  const current = useSavantFreeSessionStore.getState().session
   const accessTier =
     current && 'accessTier' in current ? current.accessTier : 'full'
-  useFreebuffModelStore.getState().switchModel(model)
-  return restartFreebuffSession('rejoin')
+  useSavantFreeModelStore.getState().switchModel(model)
+  return restartSavantFreeSession('rejoin')
 }
 
-export function takeOverFreebuffSession(): Promise<void> {
-  if (!IS_FREEBUFF) return Promise.resolve()
-  const current = useFreebuffSessionStore.getState().session
+export function takeOverSavantFreeSession(): Promise<void> {
+  if (!IS_SAVANT_FREE) return Promise.resolve()
+  const current = useSavantFreeSessionStore.getState().session
   if (current?.status !== 'takeover_prompt') return Promise.resolve()
-  useFreebuffModelStore.getState().setSelectedModel(current.model)
-  return restartFreebuffSession('rejoin')
+  useSavantFreeModelStore.getState().setSelectedModel(current.model)
+  return restartSavantFreeSession('rejoin')
 }
 
 /**
@@ -377,13 +377,13 @@ export function takeOverFreebuffSession(): Promise<void> {
  * skip React unmount (process.exit on Ctrl+C) so the seat frees up quickly
  * instead of waiting for the server-side expiry sweep.
  */
-export async function endFreebuffSessionBestEffort(): Promise<void> {
-  if (!IS_FREEBUFF) return
-  await releaseFreebuffSlot()
+export async function endSavantFreeSessionBestEffort(): Promise<void> {
+  if (!IS_SAVANT_FREE) return
+  await releaseSavantFreeSlot()
 }
 
-export function markFreebuffSessionSuperseded(): void {
-  if (!IS_FREEBUFF) return
+export function markSavantFreeSessionSuperseded(): void {
+  if (!IS_SAVANT_FREE) return
   controller?.abort()
   controller?.apply({ status: 'superseded' })
 }
@@ -394,27 +394,27 @@ export function markFreebuffSessionSuperseded(): void {
  *  Transitioning the session state here unmounts the Chat surface in favor of
  *  the landing screen's country_blocked message, so the user can't keep typing
  *  and sending doomed requests. */
-export function markFreebuffSessionCountryBlocked(params: {
+export function markSavantFreeSessionCountryBlocked(params: {
   countryCode: string
-  countryBlockReason?: SavantFree$1
-  ipPrivacySignals?: SavantFree$1[]
+  countryBlockReason?: SavantFreeBlockReason
+  ipPrivacySignals?: SavantFreeIpPrivacySignal[]
 }): void {
-  if (!IS_FREEBUFF) return
+  if (!IS_SAVANT_FREE) return
   controller?.abort()
   controller?.apply({ status: 'country_blocked', ...params })
   // Best-effort DELETE so we don't hold a session row the server is already
   // refusing to serve at chat time.
-  releaseFreebuffSlot().catch(() => {})
+  releaseSavantFreeSlot().catch(() => {})
 }
 
 /** Flip into the local `ended` state without an instanceId (server has lost
  *  our row). The chat surface stays mounted with the rejoin banner.
  *  Preserves any `rateLimitsByModel` snapshot from the prior session so the
  *  banner can show today's session count without an extra fetch. */
-export function markFreebuffSessionEnded(): void {
-  if (!IS_FREEBUFF) return
+export function markSavantFreeSessionEnded(): void {
+  if (!IS_SAVANT_FREE) return
   controller?.abort()
-  const current = useFreebuffSessionStore.getState().session
+  const current = useSavantFreeSessionStore.getState().session
   const rateLimitsByModel = getRateLimitsByModel(current)
   controller?.apply({
     status: 'ended',
@@ -424,15 +424,15 @@ export function markFreebuffSessionEnded(): void {
   })
 }
 
-interface UseFreebuffSessionResult {
-  session: SavantFree$1 | null
+interface UseSavantFreeSessionResult {
+  session: SavantFreeSession | null
   error: string | null
 }
 
 /**
  * Manages the savant-free session lifecycle:
  *   - GET on mount to probe state (no auto-join; the user picks a model in
- *     the landing screen, which calls startFreebuffSession)
+ *     the landing screen, which calls startSavantFreeSession)
  *   - if the probe sees an existing seat, auto-takes-over when the prior
  *     local owner process is gone; otherwise asks before POSTing to rotate
  *     the instance id so any other CLI on the same account is superseded
@@ -442,16 +442,16 @@ interface UseFreebuffSessionResult {
  *   - DELETE on unmount so the slot frees up for the next user
  *   - plays a bell on admission to an active session
  */
-export function useFreebuffSession(): UseFreebuffSessionResult {
-  const session = useFreebuffSessionStore((s) => s.session)
-  const error = useFreebuffSessionStore((s) => s.error)
+export function useSavantFreeSession(): UseSavantFreeSessionResult {
+  const session = useSavantFreeSessionStore((s) => s.session)
+  const error = useSavantFreeSessionStore((s) => s.error)
 
   useEffect(() => {
-    const { setSession, setError } = useFreebuffSessionStore.getState()
+    const { setSession, setError } = useSavantFreeSessionStore.getState()
 
-    if (!IS_FREEBUFF) {
+    if (!IS_SAVANT_FREE) {
       // Non-savant-free (SavantCode) builds never gate on a free session; leave the
-      // store empty (app.tsx's session routing is all behind IS_FREEBUFF).
+      // store empty (app.tsx's session routing is all behind IS_SAVANT_FREE).
       setSession(null)
       return
     }
@@ -469,7 +469,7 @@ export function useFreebuffSession(): UseFreebuffSessionResult {
     let cancelled = false
     let abortController = new AbortController()
     let timer: ReturnType<typeof setTimeout> | null = null
-    let previousStatus: SavantFree$1['status'] | null = null
+    let previousStatus: SavantFreeSession['status'] | null = null
     let restartGeneration = 0
     // Method for the NEXT tick. GET is read-only; POST claims/rotates a seat.
     // Startup is GET (probe before committing). After any POST completes we
@@ -477,15 +477,15 @@ export function useFreebuffSession(): UseFreebuffSessionResult {
     // the startup takeover branch does the same when the probe finds a seat.
     let nextMethod: 'GET' | 'POST' = 'GET'
 
-    const apply = (next: SavantFree$1) => {
+    const apply = (next: SavantFreeSession) => {
       rememberReferral(next)
       if (next.status === 'active') {
-        useFreebuffModelStore.getState().setSelectedModel(next.model)
-        recordFreebuffInstanceOwner(next.instanceId)
+        useSavantFreeModelStore.getState().setSelectedModel(next.model)
+        recordSavantFreeInstanceOwner(next.instanceId)
       } else if (next.status === 'none' && next.accessTier === 'limited') {
-        useFreebuffModelStore
+        useSavantFreeModelStore
           .getState()
-          .setSelectedModel(LIMITED_FREEBUFF_MODEL_ID)
+          .setSelectedModel(LIMITED_SAVANT_FREE_MODEL_ID)
       }
       setSession(next)
       setError(null)
@@ -508,8 +508,8 @@ export function useFreebuffSession(): UseFreebuffSessionResult {
     const tick = async () => {
       if (cancelled) return
       const method = nextMethod
-      const instanceId = getFreebuffInstanceId()
-      const model = getSelectedFreebuffModel()
+      const instanceId = getSavantFreeInstanceId()
+      const model = getSelectedSavantFreeModel()
       try {
         const next = await callSession(method, token, {
           signal: abortController.signal,
@@ -528,7 +528,7 @@ export function useFreebuffSession(): UseFreebuffSessionResult {
         // (a GET) lands the actual active session. Users who really want to
         // switch can /end-session deliberately.
         if (next.status === 'model_locked') {
-          useFreebuffModelStore.getState().setSelectedModel(next.currentModel)
+          useSavantFreeModelStore.getState().setSelectedModel(next.currentModel)
           schedule(0)
           return
         }
@@ -537,9 +537,9 @@ export function useFreebuffSession(): UseFreebuffSessionResult {
           // to the always-available fallback for this run. In-memory only —
           // `setSelectedModel` doesn't persist, so the user's saved preference
           // is preserved for their next launch.
-          useFreebuffModelStore
+          useSavantFreeModelStore
             .getState()
-            .setSelectedModel(FALLBACK_FREEBUFF_MODEL_ID)
+            .setSelectedModel(FALLBACK_SAVANT_FREE_MODEL_ID)
           // The unavailable response came from a POST attempt. Re-POST with
           // the fallback model; a GET would only redisplay the old ended row
           // and leave the restart banner stuck in its pending state.
@@ -561,11 +561,11 @@ export function useFreebuffSession(): UseFreebuffSessionResult {
           previousStatus === null &&
           next.status === 'active'
         ) {
-          useFreebuffModelStore.getState().setSelectedModel(next.model)
+          useSavantFreeModelStore.getState().setSelectedModel(next.model)
           // A fast restart after Ctrl+C can observe the old server row before
           // best-effort DELETE lands. If the row belongs to a dead local
           // process, silently do the same POST as the Take over button.
-          if (isFreebuffInstanceOwnedByDeadLocalProcess(next.instanceId)) {
+          if (isSavantFreeInstanceOwnedByDeadLocalProcess(next.instanceId)) {
             nextMethod = 'POST'
             schedule(0)
             return
@@ -592,7 +592,7 @@ export function useFreebuffSession(): UseFreebuffSessionResult {
           (previousStatus === 'active' || previousStatus === 'ended') &&
           next.status === 'none'
         ) {
-          const current = useFreebuffSessionStore.getState().session
+          const current = useSavantFreeSessionStore.getState().session
           const rateLimitsByModel =
             next.rateLimitsByModel ?? getRateLimitsByModel(current)
           apply({
@@ -639,9 +639,9 @@ export function useFreebuffSession(): UseFreebuffSessionResult {
           // prevent. But the picker still needs live quota snapshots, so kick
           // off a fire-and-forget GET and extract only picker metadata from
           // the response, ignoring whatever status it claims. Polling resumes
-          // when the user commits to a model via startFreebuffSession.
+          // when the user commits to a model via startSavantFreeSession.
           const landingSession = toLandingSession(
-            useFreebuffSessionStore.getState().session,
+            useSavantFreeSessionStore.getState().session,
           )
           apply(landingSession)
           const fetchController = abortController
@@ -696,12 +696,12 @@ export function useFreebuffSession(): UseFreebuffSessionResult {
       cancelled = true
       abortController.abort()
       clearTimer()
-      const current = useFreebuffSessionStore.getState().session
+      const current = useSavantFreeSessionStore.getState().session
       controller = null
 
       // Fire-and-forget DELETE. Only release if we actually held a slot so
       // we don't generate spurious DELETEs (e.g. HMR before POST completes).
-      if (holdsLiveFreebuffSlot(current)) {
+      if (holdsLiveSavantFreeSlot(current)) {
         callSession('DELETE', token).catch(() => {})
       }
       setSession(null)

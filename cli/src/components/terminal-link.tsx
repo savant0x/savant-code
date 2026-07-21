@@ -13,7 +13,7 @@ export interface TerminalLinkProps {
   activeColor?: string
   underlineOnHover?: boolean
   isActive?: boolean
-  onActivate?: () => void | Promise<any>
+  onActivate?: () => void
   containerStyle?: Record<string, unknown>
   lineWrap?: boolean
   inline?: boolean

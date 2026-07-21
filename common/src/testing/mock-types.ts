@@ -11,7 +11,7 @@
  *   createMockLogger,
  *   type MockUserInfo,
  *   type MockCreditResult,
- * } from '@savantcode.common/testing/mock-types'
+ * } from '@savant-code/common/testing/mock-types'
  *
  * const logger = createMockLogger()
  * const userInfo: MockUserInfo = { id: 'user-123' }

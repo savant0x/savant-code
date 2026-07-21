@@ -1,11 +1,13 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- contract type: dynamic stream/error shapes */
 import type { TrackEventFn } from './analytics'
 import type { SendActionFn } from './client'
+import type { PromptResult } from '../../util/error'
 import type { OpenRouterProviderRoutingOptions , AgentTemplate } from '../agent-template'
 import type { ParamsExcluding } from '../function-params'
+import type { JSONValue } from '../json'
 import type { Logger } from './logger'
 import type { Model } from '../../old-constants'
 import type { Message } from '../messages/savant-code-message'
-import type { PromptResult } from '../../util/error'
 import type { generateText, streamText, ToolCallPart } from 'ai'
 import type z from 'zod/v4'
 
@@ -49,8 +51,8 @@ export type PromptAiSdkStreamFn = (
     onCostCalculated?: (credits: number) => Promise<void>
     onCacheDebugProviderRequestBuilt?: (params: {
       provider: string
-      rawBody: unknown
-      normalizedBody?: unknown
+      rawBody: JSONValue
+      normalizedBody?: JSONValue
     }) => void
     onCacheDebugUsageReceived?: (usage: CacheDebugUsageData) => void
     includeCacheControl?: boolean
@@ -60,12 +62,10 @@ export type PromptAiSdkStreamFn = (
     spawnableAgents?: string[]
     /** Map of locally available agent templates - used to transform agent tool calls */
     localAgentTemplates?: Record<string, AgentTemplate>
-    /** Cost mode - 'free' mode means 0 credits charged for all agents */
-    costMode?: string
-    /** Extra key/values merged into the request's `codebuff_metadata` field.
+    /** Extra key/values merged into the request's `savant_code_metadata` field.
      *  Used to forward client-scoped identifiers (e.g. `freebuff_instance_id`)
      *  that server-side gates read from the chat-completions body. */
-    extraCodebuffMetadata?: Record<string, string>
+    extraSavantCodeMetadata?: Record<string, string>
     sendAction: SendActionFn
     logger: Logger
     trackEvent: TrackEventFn
@@ -88,16 +88,14 @@ export type PromptAiSdkFn = (
     onCostCalculated?: (credits: number) => Promise<void>
     onCacheDebugProviderRequestBuilt?: (params: {
       provider: string
-      rawBody: unknown
-      normalizedBody?: unknown
+      rawBody: JSONValue
+      normalizedBody?: JSONValue
     }) => void
     onCacheDebugUsageReceived?: (usage: CacheDebugUsageData) => void
     includeCacheControl?: boolean
     cacheDebugCorrelation?: string
     agentProviderOptions?: OpenRouterProviderRoutingOptions
     maxRetries?: number
-    /** Cost mode - 'free' mode means 0 credits charged for all agents */
-    costMode?: string
     sendAction: SendActionFn
     logger: Logger
     trackEvent: TrackEventFn
@@ -121,12 +119,12 @@ export type PromptAiSdkStructuredInput<T> = {
   timeout?: number
   chargeUser?: boolean
   agentId?: string
-  onCostCalculated?: (credits: number) => Promise<void>
-  onCacheDebugProviderRequestBuilt?: (params: {
-    provider: string
-    rawBody: unknown
-    normalizedBody?: unknown
-  }) => void
+    onCostCalculated?: (credits: number) => Promise<void>
+    onCacheDebugProviderRequestBuilt?: (params: {
+      provider: string
+      rawBody: JSONValue
+      normalizedBody?: JSONValue
+    }) => void
   onCacheDebugUsageReceived?: (usage: CacheDebugUsageData) => void
   includeCacheControl?: boolean
   cacheDebugCorrelation?: string

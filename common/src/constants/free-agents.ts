@@ -1,24 +1,20 @@
-import { parseAgentId } from '../util/agent-id-parsing'
-
 import {
-  FREEBUFF_GEMINI_PRO_AGENT_IDS,
-  FREEBUFF_GEMINI_THINKER_AGENT_ID,
+  SAVANT_FREE_GEMINI_PRO_AGENT_IDS,
+  SAVANT_FREE_GEMINI_THINKER_AGENT_ID,
 } from './savant-free-gemini-thinker'
 import {
-  FREEBUFF_DEEPSEEK_V4_FLASH_MODEL_ID,
-  FREEBUFF_DEEPSEEK_V4_PRO_MODEL_ID,
-  FREEBUFF_GEMINI_PRO_MODEL_ID,
-  FREEBUFF_GLM_V52_MODEL_ID,
-  FREEBUFF_HY3_ATLAS_MODEL_ID,
-  FREEBUFF_HY3_MODEL_ID,
-  FREEBUFF_KIMI_MODEL_ID,
-  FREEBUFF_MINIMAX_M3_MODEL_ID,
-  FREEBUFF_MIMO_V25_MODEL_ID,
-  FREEBUFF_MIMO_V25_PRO_MODEL_ID,
+  SAVANT_FREE_DEEPSEEK_V4_FLASH_MODEL_ID,
+  SAVANT_FREE_DEEPSEEK_V4_PRO_MODEL_ID,
+  SAVANT_FREE_GEMINI_PRO_MODEL_ID,
+  SAVANT_FREE_GLM_V52_MODEL_ID,
+  SAVANT_FREE_HY3_ATLAS_MODEL_ID,
+  SAVANT_FREE_HY3_MODEL_ID,
+  SAVANT_FREE_KIMI_MODEL_ID,
+  SAVANT_FREE_MINIMAX_M3_MODEL_ID,
+  SAVANT_FREE_MIMO_V25_MODEL_ID,
+  SAVANT_FREE_MIMO_V25_PRO_MODEL_ID,
 } from './savant-free-models'
-import { GEMINI_3_1_FLASH_LITE_MODEL_ID } from './gemini'
-
-import type { CostMode } from './model-config'
+import { parseAgentId } from '../util/agent-id-parsing'
 
 /**
  * The cost mode that indicates FREE mode.
@@ -29,14 +25,14 @@ export const FREE_COST_MODE = 'free' as const
 /**
  * The single root agent SavantFree Desktop's hosted (savant-code) harness runs every
  * thread turn under (see savant-free-desktop thread-agent.ts). Unlike the CLI — which
- * has one root id per model (`base2-free-<model>`) — the desktop uses ONE root id
+ * has one root id per model (`savant-free-<model>`) — the desktop uses ONE root id
  * for ALL its models, picking the model per tab. It's a first-party free-mode root
- * just like `base2-free*`, so it's listed in FREEBUFF_ROOT_AGENT_IDS below; its
+ * just like `savant-free*`, so it's listed in SAVANT_FREE_ROOT_AGENT_IDS below; its
  * allowed models are the full desktop picker set (see FREE_MODE_AGENT_MODELS). It
  * carries the "You are Savant" CLI marker in its system prompt so it passes
- * requestHasFreebuffSystemMarker.
+ * requestHasSavantFreeSystemMarker.
  */
-export const FREEBUFF_DESKTOP_THREAD_AGENT_ID = 'savant-free-desktop-thread'
+export const SAVANT_FREE_DESKTOP_THREAD_AGENT_ID = 'savant-free-desktop-thread'
 
 /**
  * Root-orchestrator agent IDs counted as "a savant-free session" for abuse
@@ -44,36 +40,36 @@ export const FREEBUFF_DESKTOP_THREAD_AGENT_ID = 'savant-free-desktop-thread'
  * excluded — they're spawned by the root, so counting them would inflate
  * every user's apparent activity.
  */
-export const FREEBUFF_ROOT_AGENT_IDS = [
-  'base2-free',
-  'base2-free-kimi',
-  'base2-free-deepseek',
-  'base2-free-deepseek-flash',
-  'base2-free-mimo-pro',
-  'base2-free-mimo',
-  'base2-free-minimax-m3',
-  'base2-free-glm',
-  // SavantFree Web trial orchestrators (freebuff_bundled_agents.ts). Every root
+export const SAVANT_FREE_ROOT_AGENT_IDS = [
+  'savant-free',
+  'savant-free-kimi',
+  'savant-free-deepseek',
+  'savant-free-deepseek-flash',
+  'savant-free-mimo-pro',
+  'savant-free-mimo',
+  'savant-free-minimax-m3',
+  'savant-free-glm',
+  // SavantFree Web trial orchestrators (savant_free_bundled_agents.ts). Every root
   // id in FREE_MODE_AGENT_MODELS that can spawn subagents MUST also be listed
   // here, or the chat-completions hierarchy gate 403s the subagents with
   // "Free mode subagents must run under an active savant-free session root"
   // (2026-07-09 incident: trial runs failed at spawn_agent_inline).
-  'base2-free-hy3',
-  'base2-free-hy3-atlas',
-  FREEBUFF_DESKTOP_THREAD_AGENT_ID,
+  'savant-free-hy3',
+  'savant-free-hy3-atlas',
+  SAVANT_FREE_DESKTOP_THREAD_AGENT_ID,
 ] as const
-const FREEBUFF_ROOT_AGENT_ID_SET: ReadonlySet<string> = new Set(
-  FREEBUFF_ROOT_AGENT_IDS,
+const SAVANT_FREE_ROOT_AGENT_ID_SET: ReadonlySet<string> = new Set(
+  SAVANT_FREE_ROOT_AGENT_IDS,
 )
 
-export const FREEBUFF_ROOT_AGENT_ID_BY_MODEL: Record<string, string> = {
-  [FREEBUFF_MIMO_V25_PRO_MODEL_ID]: 'base2-free-mimo-pro',
-  [FREEBUFF_MIMO_V25_MODEL_ID]: 'base2-free-mimo',
-  [FREEBUFF_MINIMAX_M3_MODEL_ID]: 'base2-free-minimax-m3',
-  [FREEBUFF_KIMI_MODEL_ID]: 'base2-free-kimi',
-  [FREEBUFF_DEEPSEEK_V4_PRO_MODEL_ID]: 'base2-free-deepseek',
-  [FREEBUFF_DEEPSEEK_V4_FLASH_MODEL_ID]: 'base2-free-deepseek-flash',
-  [FREEBUFF_GLM_V52_MODEL_ID]: 'base2-free-glm',
+export const SAVANT_FREE_ROOT_AGENT_ID_BY_MODEL: Record<string, string> = {
+  [SAVANT_FREE_MIMO_V25_PRO_MODEL_ID]: 'savant-free-mimo-pro',
+  [SAVANT_FREE_MIMO_V25_MODEL_ID]: 'savant-free-mimo',
+  [SAVANT_FREE_MINIMAX_M3_MODEL_ID]: 'savant-free-minimax-m3',
+  [SAVANT_FREE_KIMI_MODEL_ID]: 'savant-free-kimi',
+  [SAVANT_FREE_DEEPSEEK_V4_PRO_MODEL_ID]: 'savant-free-deepseek',
+  [SAVANT_FREE_DEEPSEEK_V4_FLASH_MODEL_ID]: 'savant-free-deepseek-flash',
+  [SAVANT_FREE_GLM_V52_MODEL_ID]: 'savant-free-glm',
 }
 
 /**
@@ -82,10 +78,10 @@ export const FREEBUFF_ROOT_AGENT_ID_BY_MODEL: Record<string, string> = {
  * inherits the parent model via withParentModel(), so no model-specific
  * mapping is needed.
  */
-export const FREEBUFF_REVIEWER_AGENT_ID_BY_MODEL: Record<string, string> = {}
+export const SAVANT_FREE_REVIEWER_AGENT_ID_BY_MODEL: Record<string, string> = {}
 
-export function getFreebuffRootAgentIdForModel(model: string): string {
-  return FREEBUFF_ROOT_AGENT_ID_BY_MODEL[model] ?? 'base2-free'
+export function getSavantFreeRootAgentIdForModel(model: string): string {
+  return SAVANT_FREE_ROOT_AGENT_ID_BY_MODEL[model] ?? 'savant-free'
 }
 
 /**
@@ -93,16 +89,16 @@ export function getFreebuffRootAgentIdForModel(model: string): string {
  * model. These agents are spawned by free-mode roots, so they must accept any
  * free model the user selected.
  */
-const FREEBUFF_SUBAGENT_MODELS = new Set([
-  FREEBUFF_MINIMAX_M3_MODEL_ID,
-  FREEBUFF_DEEPSEEK_V4_PRO_MODEL_ID,
-  FREEBUFF_DEEPSEEK_V4_FLASH_MODEL_ID,
-  FREEBUFF_KIMI_MODEL_ID,
-  FREEBUFF_MIMO_V25_PRO_MODEL_ID,
-  FREEBUFF_MIMO_V25_MODEL_ID,
-  FREEBUFF_GLM_V52_MODEL_ID,
-  FREEBUFF_HY3_MODEL_ID,
-  FREEBUFF_HY3_ATLAS_MODEL_ID,
+const SAVANT_FREE_SUBAGENT_MODELS = new Set([
+  SAVANT_FREE_MINIMAX_M3_MODEL_ID,
+  SAVANT_FREE_DEEPSEEK_V4_PRO_MODEL_ID,
+  SAVANT_FREE_DEEPSEEK_V4_FLASH_MODEL_ID,
+  SAVANT_FREE_KIMI_MODEL_ID,
+  SAVANT_FREE_MIMO_V25_PRO_MODEL_ID,
+  SAVANT_FREE_MIMO_V25_MODEL_ID,
+  SAVANT_FREE_GLM_V52_MODEL_ID,
+  SAVANT_FREE_HY3_MODEL_ID,
+  SAVANT_FREE_HY3_ATLAS_MODEL_ID,
 ])
 
 /**
@@ -115,23 +111,23 @@ const FREEBUFF_SUBAGENT_MODELS = new Set([
  */
 export const FREE_MODE_AGENT_MODELS: Record<string, Set<string>> = {
   // Root orchestrator
-  'base2-free': new Set([
-    FREEBUFF_MINIMAX_M3_MODEL_ID,
-    FREEBUFF_DEEPSEEK_V4_PRO_MODEL_ID,
-    FREEBUFF_DEEPSEEK_V4_FLASH_MODEL_ID,
-    FREEBUFF_KIMI_MODEL_ID,
-    FREEBUFF_MIMO_V25_PRO_MODEL_ID,
-    FREEBUFF_MIMO_V25_MODEL_ID,
+  'savant-free': new Set([
+    SAVANT_FREE_MINIMAX_M3_MODEL_ID,
+    SAVANT_FREE_DEEPSEEK_V4_PRO_MODEL_ID,
+    SAVANT_FREE_DEEPSEEK_V4_FLASH_MODEL_ID,
+    SAVANT_FREE_KIMI_MODEL_ID,
+    SAVANT_FREE_MIMO_V25_PRO_MODEL_ID,
+    SAVANT_FREE_MIMO_V25_MODEL_ID,
   ]),
-  'base2-free-kimi': new Set([FREEBUFF_KIMI_MODEL_ID]),
-  'base2-free-deepseek': new Set([FREEBUFF_DEEPSEEK_V4_PRO_MODEL_ID]),
-  'base2-free-deepseek-flash': new Set([FREEBUFF_DEEPSEEK_V4_FLASH_MODEL_ID]),
-  'base2-free-mimo-pro': new Set([FREEBUFF_MIMO_V25_PRO_MODEL_ID]),
-  'base2-free-mimo': new Set([FREEBUFF_MIMO_V25_MODEL_ID]),
-  'base2-free-minimax-m3': new Set([FREEBUFF_MINIMAX_M3_MODEL_ID]),
-  'base2-free-glm': new Set([FREEBUFF_GLM_V52_MODEL_ID]),
-  'base2-free-hy3': new Set([FREEBUFF_HY3_MODEL_ID]),
-  'base2-free-hy3-atlas': new Set([FREEBUFF_HY3_ATLAS_MODEL_ID]),
+  'savant-free-kimi': new Set([SAVANT_FREE_KIMI_MODEL_ID]),
+  'savant-free-deepseek': new Set([SAVANT_FREE_DEEPSEEK_V4_PRO_MODEL_ID]),
+  'savant-free-deepseek-flash': new Set([SAVANT_FREE_DEEPSEEK_V4_FLASH_MODEL_ID]),
+  'savant-free-mimo-pro': new Set([SAVANT_FREE_MIMO_V25_PRO_MODEL_ID]),
+  'savant-free-mimo': new Set([SAVANT_FREE_MIMO_V25_MODEL_ID]),
+  'savant-free-minimax-m3': new Set([SAVANT_FREE_MINIMAX_M3_MODEL_ID]),
+  'savant-free-glm': new Set([SAVANT_FREE_GLM_V52_MODEL_ID]),
+  'savant-free-hy3': new Set([SAVANT_FREE_HY3_MODEL_ID]),
+  'savant-free-hy3-atlas': new Set([SAVANT_FREE_HY3_ATLAS_MODEL_ID]),
 
   // SavantFree Desktop's single hosted root agent — one root id across all its
   // models (the user picks the model per tab), so it allows the full desktop
@@ -139,42 +135,42 @@ export const FREE_MODE_AGENT_MODELS: Record<string, Set<string>> = {
   // admission gate caps premium-bucket models (incl. MiniMax M3) to one active
   // session per user (premium_slot_taken), so "one premium model at a time" in
   // full access holds regardless of this allowlist.
-  [FREEBUFF_DESKTOP_THREAD_AGENT_ID]: new Set([
-    FREEBUFF_MINIMAX_M3_MODEL_ID,
-    FREEBUFF_DEEPSEEK_V4_PRO_MODEL_ID,
-    FREEBUFF_DEEPSEEK_V4_FLASH_MODEL_ID,
-    FREEBUFF_KIMI_MODEL_ID,
-    FREEBUFF_MIMO_V25_PRO_MODEL_ID,
-    FREEBUFF_MIMO_V25_MODEL_ID,
-    FREEBUFF_GLM_V52_MODEL_ID,
+  [SAVANT_FREE_DESKTOP_THREAD_AGENT_ID]: new Set([
+    SAVANT_FREE_MINIMAX_M3_MODEL_ID,
+    SAVANT_FREE_DEEPSEEK_V4_PRO_MODEL_ID,
+    SAVANT_FREE_DEEPSEEK_V4_FLASH_MODEL_ID,
+    SAVANT_FREE_KIMI_MODEL_ID,
+    SAVANT_FREE_MIMO_V25_PRO_MODEL_ID,
+    SAVANT_FREE_MIMO_V25_MODEL_ID,
+    SAVANT_FREE_GLM_V52_MODEL_ID,
   ]),
 
   // Generic subagents inherit the parent agent's model, so they must accept
   // every free model a user might select.
-  'scout': FREEBUFF_SUBAGENT_MODELS,
-  'file-picker-max': FREEBUFF_SUBAGENT_MODELS,
-  'file-lister': FREEBUFF_SUBAGENT_MODELS,
+  'scout': SAVANT_FREE_SUBAGENT_MODELS,
+  'file-picker-max': SAVANT_FREE_SUBAGENT_MODELS,
+  'file-lister': SAVANT_FREE_SUBAGENT_MODELS,
 
   // Research agents
-  'researcher-web': FREEBUFF_SUBAGENT_MODELS,
-  'researcher-docs': FREEBUFF_SUBAGENT_MODELS,
+  'researcher-web': SAVANT_FREE_SUBAGENT_MODELS,
+  'researcher-docs': SAVANT_FREE_SUBAGENT_MODELS,
 
   // Browser automation
-  'browser-use': FREEBUFF_SUBAGENT_MODELS,
+  'browser-use': SAVANT_FREE_SUBAGENT_MODELS,
 
   // Command execution
-  basher: FREEBUFF_SUBAGENT_MODELS,
-  'tmux-cli': FREEBUFF_SUBAGENT_MODELS,
+  basher: SAVANT_FREE_SUBAGENT_MODELS,
+  'tmux-cli': SAVANT_FREE_SUBAGENT_MODELS,
 
   // Context pruning (spawned inline by the orchestrator)
-  'context-pruner': FREEBUFF_SUBAGENT_MODELS,
+  'context-pruner': SAVANT_FREE_SUBAGENT_MODELS,
 
   // Consolidated Verifier (replaces all code-reviewer-* variants).
   // The Verifier inherits the parent model via withParentModel().
-  verifier: FREEBUFF_SUBAGENT_MODELS,
+  verifier: SAVANT_FREE_SUBAGENT_MODELS,
 
   // Legacy: kept for the standalone gemini thinker agent if invoked directly.
-  [FREEBUFF_GEMINI_THINKER_AGENT_ID]: new Set([FREEBUFF_GEMINI_PRO_MODEL_ID]),
+  [SAVANT_FREE_GEMINI_THINKER_AGENT_ID]: new Set([SAVANT_FREE_GEMINI_PRO_MODEL_ID]),
 }
 
 /**
@@ -200,26 +196,18 @@ export const FREE_TIER_AGENTS = new Set([
   'researcher-docs',
 ])
 
-/**
- * Check if the current cost mode is FREE mode.
- * In FREE mode, agents using allowed models cost 0 credits.
- */
-export function isFreeMode(costMode: CostMode | string | undefined): boolean {
-  return costMode === FREE_COST_MODE
-}
-
-export function isFreebuffRootAgent(fullAgentId: string): boolean {
+export function isSavantFreeRootAgent(fullAgentId: string): boolean {
   const { publisherId, agentId } = parseAgentId(fullAgentId)
   if (!agentId) return false
   if (publisherId && publisherId !== 'savant-code') return false
-  return FREEBUFF_ROOT_AGENT_ID_SET.has(agentId)
+  return SAVANT_FREE_ROOT_AGENT_ID_SET.has(agentId)
 }
 
-export function isFreebuffGeminiThinkerAgent(fullAgentId: string): boolean {
+export function isSavantFreeGeminiThinkerAgent(fullAgentId: string): boolean {
   const { publisherId, agentId } = parseAgentId(fullAgentId)
   if (!agentId) return false
   if (publisherId && publisherId !== 'savant-code') return false
-  return agentId === FREEBUFF_GEMINI_THINKER_AGENT_ID
+  return agentId === SAVANT_FREE_GEMINI_THINKER_AGENT_ID
 }
 
 /**
@@ -228,25 +216,25 @@ export function isFreebuffGeminiThinkerAgent(fullAgentId: string): boolean {
  * chat `thinker-gemini`). Publisher-spoof-safe like the other gates: a
  * non-savant-code publisher never matches.
  */
-export function isFreebuffGeminiProAgent(fullAgentId: string): boolean {
+export function isSavantFreeGeminiProAgent(fullAgentId: string): boolean {
   const { publisherId, agentId } = parseAgentId(fullAgentId)
   if (!agentId) return false
   if (publisherId && publisherId !== 'savant-code') return false
-  return FREEBUFF_GEMINI_PRO_AGENT_IDS.has(agentId)
+  return SAVANT_FREE_GEMINI_PRO_AGENT_IDS.has(agentId)
 }
 
-export function shouldUseLocalTokenCountForFreebuffDeepseekFlash(params: {
+export function shouldUseLocalTokenCountForSavantFreeDeepseekFlash(params: {
   agentId: string | undefined
   model: string | undefined
 }): boolean {
   const { agentId: fullAgentId, model } = params
-  if (!fullAgentId || model !== FREEBUFF_DEEPSEEK_V4_FLASH_MODEL_ID) {
+  if (!fullAgentId || model !== SAVANT_FREE_DEEPSEEK_V4_FLASH_MODEL_ID) {
     return false
   }
 
   const { publisherId, agentId } = parseAgentId(fullAgentId)
   if (publisherId && publisherId !== 'savant-code') return false
-  return agentId === 'base2-free-deepseek-flash'
+  return agentId === 'savant-free-deepseek-flash'
 }
 
 /**

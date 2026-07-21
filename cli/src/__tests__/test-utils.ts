@@ -21,7 +21,7 @@ export function isTmuxAvailable(): boolean {
     execSync('which tmux', { stdio: 'pipe' })
     // Then verify tmux can actually run by creating and killing a test session
     // This will fail if tmux server can't start (e.g., no socket directory on CI)
-    execSync('tmux new-session -d -s __codebuff_tmux_check__ && tmux kill-session -t __codebuff_tmux_check__', {
+    execSync('tmux new-session -d -s __savant_code_tmux_check__ && tmux kill-session -t __savant_code_tmux_check__', {
       stdio: 'pipe',
       timeout: 5000,
     })
@@ -56,7 +56,7 @@ let cachedEnv: Record<string, string> | null = null
 
 const TEST_CLIENT_ENV_DEFAULTS: Record<string, string> = {
   NEXT_PUBLIC_CB_ENVIRONMENT: 'test',
-  NEXT_PUBLIC_CODEBUFF_APP_URL: 'http://localhost:3000',
+  NEXT_PUBLIC_SAVANT_CODE_APP_URL: 'http://localhost:3000',
   NEXT_PUBLIC_SUPPORT_EMAIL: 'support@savant-code.com',
   NEXT_PUBLIC_POSTHOG_API_KEY: 'test-posthog-key',
   NEXT_PUBLIC_POSTHOG_HOST_URL: 'https://us.i.posthog.com',
@@ -74,8 +74,8 @@ const TEST_SERVER_ENV_DEFAULTS: Record<string, string> = {
   GRAVITY_API_KEY: 'test',
   PORT: '4242',
   DATABASE_URL: 'postgres://user:pass@localhost:5432/db',
-  CODEBUFF_GITHUB_ID: 'test-id',
-  CODEBUFF_GITHUB_SECRET: 'test-secret',
+  SAVANT_CODE_GITHUB_ID: 'test-id',
+  SAVANT_CODE_GITHUB_SECRET: 'test-secret',
   NEXTAUTH_SECRET: 'test-secret',
   STRIPE_SECRET_KEY: 'sk_test_dummy',
   STRIPE_WEBHOOK_SECRET_KEY: 'whsec_dummy',

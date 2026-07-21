@@ -231,7 +231,7 @@ Mirrors `cli/release/package.json` but with:
 - `"bin": { "savant-free": "index.js" }`
 - Shared launcher implementation from `cli/release-core/`, materialized during `npm pack`
 - Downloads the platform-specific binary on first launch
-- Binary stored at `~/.config/manicode/savant-free` (or `savant-free.exe` on Windows)
+- Binary stored at `~/.config/savant/savant-free` (or `savant-free.exe` on Windows)
 
 ### GitHub Workflow
 

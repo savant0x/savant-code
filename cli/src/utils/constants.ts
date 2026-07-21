@@ -1,12 +1,16 @@
+import { getCliEnv } from './env'
+
 import type { ToolName } from '@savant-code/sdk'
 
-import { getCliEnv } from './env'
 
 /**
  * SavantFree build-time flag. When true, the CLI is built as SavantFree (free-only variant).
- * Injected via --define at compile time; enables dead-code elimination by the bundler.
+ *
+ * Drives the SAVANT_FREE_MODE env var at runtime:
+ *   IS_SAVANT_FREE = getCliEnv().SAVANT_FREE_MODE === 'true'
+ * (Currently hardcoded false for local dev — restore the env-var line above to re-enable.)
  */
-export const IS_FREEBUFF = getCliEnv().FREEBUFF_MODE === 'true'
+export const IS_SAVANT_FREE = false // TODO: re-enable free mode later — restore: getCliEnv().SAVANT_FREE_MODE === 'true'
 
 /** Message shown when the user ends a savant-free session early. */
 export const END_SESSION_MESSAGE =
@@ -127,36 +131,18 @@ export const MAIN_AGENT_ID = 'main-agent'
  * Mapping from agent mode to agent ID.
  * Single source of truth for all agent modes (order = cycling order).
  *
- * SavantFree resolves LITE through the selected savant-free model at send time;
- * this fallback stays on base2-free for non-runtime callers. Regular
- * SavantCode maps LITE to base2-lite which charges credits normally.
+ * Three-position execution-scope axis. EDIT is the default strict ECHO loop;
+ * ANALYZE is read-only; SCAFFOLD is an opt-in umbrella-FID mode for first-time
+ * project scaffolding. Object key order drives the UI cycling order.
  */
 export const AGENT_MODE_TO_ID = {
-  DEFAULT: 'base2',
-  LITE: IS_FREEBUFF ? 'base2-free' : 'base2-lite',
-  MAX: 'base2-max',
-  PLAN: 'base2-plan',
+  EDIT: 'savant',
+  SCAFFOLD: 'savant-scaffold',
+  ANALYZE: 'savant-analyze',
 } as const
 
 export type AgentMode = keyof typeof AGENT_MODE_TO_ID
 export const AGENT_MODES = Object.keys(AGENT_MODE_TO_ID) as AgentMode[]
-
-/**
- * Maps CLI agent mode to cost mode for billing.
- *
- * SavantFree's LITE maps to 'free' cost mode (session gate, rate limits, 0 credits
- * for allowlisted agent+model combos). Regular SavantCode's LITE maps to 'lite' —
- * a normal paid mode (charges credits, no session gate, no country restrictions).
- */
-export const AGENT_MODE_TO_COST_MODE = {
-  DEFAULT: 'normal',
-  LITE: IS_FREEBUFF ? 'free' : 'lite',
-  MAX: 'max',
-  PLAN: 'normal',
-} as const satisfies Record<
-  AgentMode,
-  'free' | 'lite' | 'normal' | 'max' | 'experimental' | 'ask'
->
 
 /**
  * Derives the context window size from a model identifier.

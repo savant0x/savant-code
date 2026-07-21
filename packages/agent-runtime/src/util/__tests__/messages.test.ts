@@ -24,11 +24,12 @@ import {
 import * as tokenCounter from '../token-counter'
 
 import type { SavantCodeToolMessage } from '@savant-code/common/tools/list'
-import type { Message } from '@savant-code/common/types/messages/savant-code-message'
+import type { JSONValue } from '@savant-code/common/types/json'
 import type {
   TextPart,
   ToolCallPart,
 } from '@savant-code/common/types/messages/content-part'
+import type { Message } from '@savant-code/common/types/messages/savant-code-message'
 
 /**
  * Type guard to check if a content part is a text part.
@@ -285,7 +286,7 @@ describe('trimMessagesToFitTokenLimit', () => {
     expect(hasReplacementMessage).toBe(true)
 
     // Verify total tokens are under limit
-    const finalTokens = tokenCounter.countTokensJson(result)
+    const finalTokens = tokenCounter.countTokensJson(result as unknown as JSONValue)
     expect(finalTokens).toBeLessThan((maxTotalTokens - systemTokens) * 0.5)
   })
 
@@ -313,7 +314,7 @@ describe('trimMessagesToFitTokenLimit', () => {
     expect(hasReplacementMessage).toBe(true)
 
     // Verify total tokens are under limit
-    const finalTokens = tokenCounter.countTokensJson(result)
+    const finalTokens = tokenCounter.countTokensJson(result as unknown as JSONValue)
     expect(finalTokens).toBeLessThan((maxTotalTokens - systemTokens) * 0.5)
   })
 
@@ -335,7 +336,7 @@ describe('trimMessagesToFitTokenLimit', () => {
     }
 
     // Verify total tokens are under limit
-    const finalTokens = tokenCounter.countTokensJson(result)
+    const finalTokens = tokenCounter.countTokensJson(result as unknown as JSONValue)
     expect(finalTokens).toBeLessThan(maxTotalTokens - systemTokens)
   })
 
@@ -490,7 +491,7 @@ describe('trimMessagesToFitTokenLimit', () => {
       expect(keptMessage).toBeDefined()
 
       // Total tokens should be under limit
-      const finalTokens = tokenCounter.countTokensJson(result)
+      const finalTokens = tokenCounter.countTokensJson(result as unknown as JSONValue)
       expect(finalTokens).toBeLessThan(2000)
     })
 

@@ -11,8 +11,8 @@
  * Hard truncation at 30 chars + '…' suffix.
  */
 
-import type { AgentActivity, AgentState } from '@savant-code/common/types/session-state'
 import type { PrintModeEvent } from '@savant-code/common/types/print-mode'
+import type { AgentActivity, AgentState } from '@savant-code/common/types/session-state'
 
 const DEFAULT_IDLE_TIMEOUT_MS = 5000
 const TARGET_DISPLAY_MAX = 30
@@ -55,7 +55,7 @@ const ALLOWLISTED_TARGET_FIELDS: Partial<Record<string, string>> = {
   spawn_agents: 'agents',
   browser_logs: '',
   compositor: '',
-  codebuff_terminal_command: 'command',
+  savant_code_terminal_command: 'command',
   skill: 'name',
   read_subtree_exa: 'path',
   list_files_in_blob: 'path',
@@ -88,9 +88,11 @@ function truncate(s: string, max: number = TARGET_DISPLAY_MAX): string {
  *   - the input is missing the allowlisted field,
  *   - the input contains a sensitive-style free-form field with no safe field.
  */
+import type { JSONValue } from '@savant-code/common/types/json'
+
 export function extractAllowlistedTarget(
   toolName: string,
-  input: Record<string, unknown> | null | undefined,
+  input: Record<string, JSONValue> | null | undefined,
 ): string | undefined {
   if (!input) return undefined
   const field = ALLOWLISTED_TARGET_FIELDS[toolName] ?? null
@@ -198,7 +200,7 @@ export function bumpActivityIdleTimer(
 export function toolActivity(
   agentState: AgentState,
   toolName: string,
-  input: Record<string, unknown> | null | undefined,
+  input: Record<string, JSONValue> | null | undefined,
   onChunk?: OnChunk,
 ): AgentActivity {
   const target = extractAllowlistedTarget(toolName, input)

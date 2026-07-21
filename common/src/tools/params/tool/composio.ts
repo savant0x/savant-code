@@ -1,8 +1,8 @@
-import { COMPOSIO_META_TOOL_NAMES } from '../../../constants/composio'
 import z from 'zod/v4'
 
 import { jsonToolResultSchema } from '../utils'
 
+import type { COMPOSIO_META_TOOL_NAMES } from '../../../constants/composio'
 import type { $ToolParams } from '../../constants'
 
 const sessionIdParam = z

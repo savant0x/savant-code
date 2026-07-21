@@ -1,3 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- test file: intentional any casts for output access */
+import * as fs from 'fs'
+import * as os from 'os'
+import * as path from 'path'
+
 import {
   describe,
   test,
@@ -6,9 +11,6 @@ import {
   afterEach,
   mock,
 } from 'bun:test'
-import * as fs from 'fs'
-import * as path from 'path'
-import * as os from 'os'
 
 import {
   getAllToggleIdsFromMessages,
@@ -24,6 +26,7 @@ import {
   scheduleCheckpointSave,
   settleCheckpointSave,
 } from '../run-state-storage'
+
 import type { ChatMessage, ContentBlock } from '../../types/chat'
 import type { RunState } from '@savant-code/sdk'
 

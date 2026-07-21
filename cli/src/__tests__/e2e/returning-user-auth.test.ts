@@ -70,7 +70,7 @@ describe('Returning User Authentication helpers', () => {
     expect(details.token).toBe(RETURNING_USER.authToken)
   })
 
-  test('should fall back to CODEBUFF_API_KEY when credentials are missing', () => {
+  test('should fall back to SAVANT_CODE_API_KEY when credentials are missing', () => {
     spyOn(AuthModule, 'getConfigDir').mockReturnValue(tempConfigDir)
     spyOn(AuthModule, 'getCredentialsPath').mockReturnValue(
       path.join(tempConfigDir, 'credentials.json'),

@@ -1,6 +1,18 @@
 import React, { cloneElement, isValidElement, memo } from 'react'
 
+import type { MouseEvent } from '@opentui/core'
 import type { ReactElement, ReactNode } from 'react'
+
+/** Valid values that can be passed through to an OpenTUI host element. */
+export type OpenTuiHostPropValue =
+  | string
+  | number
+  | boolean
+  | null
+  | undefined
+  | ReactNode
+  | ((...args: never[]) => void)
+  | object
 
 /**
  * Makes all text content within a React node tree non-selectable.
@@ -28,7 +40,7 @@ export function makeTextUnselectable(node: ReactNode): ReactNode {
 
   if (!isValidElement(node)) return node
 
-  const el = node as ReactElement<{ children?: ReactNode; [key: string]: unknown }>
+  const el = node as ReactElement<{ children?: ReactNode; [key: string]: OpenTuiHostPropValue }>
   const type = el.type
 
   // Ensure text and span nodes are not selectable
@@ -46,14 +58,14 @@ export function makeTextUnselectable(node: ReactNode): ReactNode {
 interface ClickableProps {
   /** Element type to render: 'box' (default) or 'text' */
   as?: 'box' | 'text'
-  onMouseDown?: (e?: unknown) => void
-  onMouseUp?: (e?: unknown) => void
+  onMouseDown?: (event: MouseEvent) => void
+  onMouseUp?: (event: MouseEvent) => void
   onMouseOver?: () => void
   onMouseOut?: () => void
-  style?: Record<string, unknown>
+  style?: Record<string, string | number | undefined>
   children?: ReactNode
   // pass-through for host element props
-  [key: string]: unknown
+  [key: string]: OpenTuiHostPropValue
 }
 
 /**

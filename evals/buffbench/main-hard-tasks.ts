@@ -32,7 +32,7 @@ async function main() {
   // Run all hard tasks across all 4 eval sets
   await runBuffBench({
     evalDataPaths: evalPaths,
-    agents: ['base2', 'external:claude'],
+    agents: ['savant', 'external:claude'],
     taskIds: allTaskIds,
     taskConcurrency: 4,
     saveTraces,

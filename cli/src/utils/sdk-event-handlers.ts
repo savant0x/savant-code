@@ -1,6 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- sdk event handlers: dynamic agent iteration types */
 import { match } from 'ts-pattern'
 
-import { useChatStore } from '../state/chat-store'
 import {
   appendTextToRootStream,
   appendToolToAgentBlock,
@@ -8,8 +8,8 @@ import {
   closeNativeReasoningInAgent,
   markAgentComplete,
 } from './block-operations'
-import { resetUiToIdle } from './finish-logic'
 import { shouldHideAgent } from './constants'
+import { resetUiToIdle } from './finish-logic'
 import {
   createAgentBlock,
   extractPlanFromBuffer,
@@ -28,6 +28,7 @@ import {
   destinationFromChunkEvent,
   processTextChunk,
 } from './stream-chunk-processor'
+import { useChatStore } from '../state/chat-store'
 
 import type { AgentMode } from './constants'
 import type { MessageUpdater } from './message-updater'
@@ -139,23 +140,6 @@ const appendRootChunk = (state: EventHandlerState, delta: TextDelta) => {
     appendTextToRootStream(blocks, delta),
   )
 
-  if (
-    state.mode.agentMode === 'PLAN' &&
-    delta.type === 'text' &&
-    !state.streaming.streamRefs.state.planExtracted &&
-    state.streaming.streamRefs.state.rootStreamBuffer.includes('</PLAN>')
-  ) {
-    const rawPlan = extractPlanFromBuffer(
-      state.streaming.streamRefs.state.rootStreamBuffer,
-    )
-    if (rawPlan !== null) {
-      state.streaming.streamRefs.setters.setPlanExtracted(true)
-      state.mode.setHasReceivedPlanResponse(true)
-      state.message.updater.updateAiMessageBlocks((blocks) =>
-        insertPlanBlock(blocks, rawPlan),
-      )
-    }
-  }
 }
 
 // FID-2026-0718-010 (Q13): updateStreamingAgents now respects runCompleted.
@@ -566,7 +550,7 @@ function guardedSetStreamingAgents(
   op: { add?: string; remove?: string },
 ): void {
   if (state.streaming.streamRefs.state.runCompleted) {
-    // eslint-disable-next-line no-console
+     
     console.warn(
       `[sdk-event-handlers] late streaming-agent event after run end: ${JSON.stringify(op)}`,
     )

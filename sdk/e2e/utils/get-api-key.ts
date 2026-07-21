@@ -1,6 +1,6 @@
 import { E2E_MOCK_API_KEY, setupE2eMocks } from './e2e-mocks'
 
-const shouldRunLiveE2e = process.env.RUN_CODEBUFF_E2E === 'true'
+const shouldRunLiveE2e = process.env.RUN_SAVANT_CODE_E2E === 'true'
 
 /**
  * Utility to load SavantCode API key from environment or user credentials.
@@ -8,10 +8,10 @@ const shouldRunLiveE2e = process.env.RUN_CODEBUFF_E2E === 'true'
  */
 export function getApiKey(): string {
   if (shouldRunLiveE2e) {
-    const apiKey = process.env.CODEBUFF_API_KEY
+    const apiKey = process.env.SAVANT_CODE_API_KEY
     if (!apiKey) {
       throw new Error(
-        'CODEBUFF_API_KEY environment variable is required for live e2e tests. ' +
+        'SAVANT_CODE_API_KEY environment variable is required for live e2e tests. ' +
           'Get your API key at https://www.savant-code.com/api-keys',
       )
     }
@@ -19,7 +19,7 @@ export function getApiKey(): string {
   }
 
   setupE2eMocks()
-  process.env.CODEBUFF_API_KEY = E2E_MOCK_API_KEY
+  process.env.SAVANT_CODE_API_KEY = E2E_MOCK_API_KEY
   return E2E_MOCK_API_KEY
 }
 
@@ -29,7 +29,7 @@ export function getApiKey(): string {
  * against the in-memory mock backend. The mock never executes real agent
  * tools, so file-creation/tool-execution tests fail with ENOENT. The
  * honest contract is: E2E tests that require actual tool execution should
- * only run in LIVE mode (RUN_CODEBUFF_E2E=true). Mock mode tests can verify
+ * only run in LIVE mode (RUN_SAVANT_CODE_E2E=true). Mock mode tests can verify
  * transport/auth, but not real side-effects.
  *
  * This now returns true when not in live mode, skipping E2E tests that

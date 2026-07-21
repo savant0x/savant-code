@@ -15,8 +15,9 @@ import {
   getFidDocument,
   updateFidDocument,
 } from '@savant-code/database/service'
-import type { RunState } from '@savant-code/sdk'
+
 import type { ChatMessage } from '../types/chat'
+import type { RunState } from '@savant-code/sdk'
 
 // Storage interface for database-backed state
 export interface DbChatState {
@@ -93,14 +94,14 @@ export function loadChatStateFromDb(
     const messages: ChatMessage[] = rawMessages.map((msg) => ({
       id: msg.id,
       variant: msg.role as ChatMessage['variant'],
-      content: msg.content,
+      content: msg.content as string,
       timestamp: msg.created_at,
     }))
 
     return {
       sessionId: session.id,
       runState: {
-        sessionState: session.session_state,
+        sessionState: session.session_state as RunState['sessionState'],
         output: {
           type: 'error',
           message: 'No output yet',

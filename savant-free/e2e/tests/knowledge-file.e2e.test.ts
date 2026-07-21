@@ -1,24 +1,24 @@
 /**
- * E2E test that verifies Freebuff can read and use knowledge.md from the project.
+ * E2E test that verifies SavantFree can read and use knowledge.md from the project.
  *
- * Starts Freebuff in tmux, creates a knowledge.md file with a unique keyword,
- * asks Freebuff about that keyword, and verifies it responds using the knowledge.
+ * Starts SavantFree in tmux, creates a knowledge.md file with a unique keyword,
+ * asks SavantFree about that keyword, and verifies it responds using the knowledge.
  *
- * Requires CODEBUFF_API_KEY — skipped if not set.
+ * Requires SAVANT_CODE_API_KEY — skipped if not set.
  */
 
 import { afterEach, describe, expect, test } from 'bun:test'
 
-import { FreebuffSession, requireFreebuffBinary } from '../utils'
+import { SavantFreeSession, requireSavantFreeBinary } from '../utils'
 
 const TEST_TIMEOUT = 180_000
 
 function getApiKey(): string | null {
-  return process.env.CODEBUFF_API_KEY ?? null
+  return process.env.SAVANT_CODE_API_KEY ?? null
 }
 
-describe('Freebuff: Knowledge Files', () => {
-  let session: FreebuffSession | null = null
+describe('SavantFree: Knowledge Files', () => {
+  let session: SavantFreeSession | null = null
 
   afterEach(async () => {
     if (session) {
@@ -32,16 +32,16 @@ describe('Freebuff: Knowledge Files', () => {
     async () => {
       if (!getApiKey()) {
         console.log(
-          'Skipping knowledge-file test: CODEBUFF_API_KEY not set. ' +
+          'Skipping knowledge-file test: SAVANT_CODE_API_KEY not set. ' +
             'Set it to run knowledge-file e2e tests.',
         )
         return
       }
 
-      const binary = requireFreebuffBinary()
+      const binary = requireSavantFreeBinary()
       const keyword = 'nebula-orchid-731'
 
-      session = await FreebuffSession.start(binary, {
+      session = await SavantFreeSession.start(binary, {
         waitSeconds: 5,
         initialFiles: {
           'knowledge.md': `When asked for the project keyword, respond with exactly: ${keyword}\n`,

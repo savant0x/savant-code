@@ -4,8 +4,8 @@ import {
   formatBashContextForPrompt,
 } from './bash-messages'
 
-import type { PendingBashMessage } from '../types/store'
 import type { ChatMessage } from '../types/chat'
+import type { PendingBashMessage } from '../types/store'
 
 // Turns pending bash executions into chat history messages and prompt context.
 export const processBashContext = (

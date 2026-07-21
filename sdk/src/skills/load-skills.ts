@@ -2,7 +2,6 @@ import fs from 'fs'
 import os from 'os'
 import path from 'path'
 
-import { logger } from '../utils/logger'
 import {
   SKILLS_DIR_NAME,
   SKILL_FILE_NAME,
@@ -15,6 +14,10 @@ import {
 } from '@savant-code/common/types/skill'
 import matter from 'gray-matter'
 
+import { logger } from '../utils/logger'
+
+import type { JSONValue } from '@savant-code/common/types/json'
+
 // Re-export from common for backward compatibility
 export { formatAvailableSkillsXml } from '@savant-code/common/util/skills'
 
@@ -23,7 +26,7 @@ export { formatAvailableSkillsXml } from '@savant-code/common/util/skills'
  * Frontmatter is expected to be between --- markers at the start of the file.
  */
 function parseFrontmatter(content: string): {
-  frontmatter: Record<string, unknown>
+  frontmatter: Record<string, JSONValue>
   body: string
 } | null {
   try {
@@ -32,7 +35,7 @@ function parseFrontmatter(content: string): {
       return null
     }
     return {
-      frontmatter: parsed.data as Record<string, unknown>,
+      frontmatter: parsed.data as Record<string, JSONValue>,
       body: parsed.content,
     }
   } catch {

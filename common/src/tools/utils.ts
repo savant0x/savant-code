@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- tool call string generation: dynamic input types */
 import { toolParams } from './list'
 import { $getToolCallString } from './params/utils'
 

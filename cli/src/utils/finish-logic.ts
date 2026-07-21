@@ -26,8 +26,8 @@
  *      └──────────────────────┘
  */
 
-import { useChatStore } from '../state/chat-store'
 import { logger } from './logger'
+import { useChatStore } from '../state/chat-store'
 
 /** Watermark constants — exposed for tests + audit (D1 = 2s, D2 = 30s). */
 export const STALL_WATERMARK_MS = 30_000

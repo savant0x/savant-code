@@ -7,8 +7,8 @@ import {
 } from './use-activity-query'
 import { subscriptionQueryKeys } from './use-subscription-query'
 import { showClipboardMessage } from '../utils/clipboard'
-import { getApiClient } from '../utils/savant-code-api'
 import { logger } from '../utils/logger'
+import { getApiClient } from '../utils/savant-code-api'
 
 import type { SubscriptionResponse } from '@savant-code/common/types/subscription'
 

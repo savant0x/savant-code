@@ -8,7 +8,6 @@ import { ImplementorGroup } from './implementor-row'
 import { SingleBlock } from './single-block'
 import { ThinkingBlock } from './thinking-block'
 import { ToolBlockGroup } from './tool-block-group'
-import { AdCard } from '../ad-banner'
 import { useMessageBlockStore } from '../../state/message-block-store'
 import { processBlocks, type BlockProcessorHandlers } from '../../utils/block-processor'
 import {
@@ -19,10 +18,11 @@ import {
   responseAdNodePositions,
   responseAdSlotCount,
 } from '../../utils/response-ad-positions'
+import { AdCard } from '../ad-banner'
 
-import type { ReactNode } from 'react'
 import type { ContentBlock } from '../../types/chat'
 import type { MarkdownPalette } from '../../utils/markdown-renderer'
+import type { ReactNode } from 'react'
 
 // `availableWidth` is terminalWidth - 2, but message content is clipped
 // tighter: the transcript scrollbox pads its content (1 left + 2 right) and

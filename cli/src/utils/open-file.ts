@@ -35,8 +35,8 @@ const buildEditorCommands = (
 
   // Check custom editor env vars
   const editorValues = [
-    env.CODEBUFF_CLI_EDITOR,
-    env.CODEBUFF_EDITOR,
+    env.SAVANT_CODE_CLI_EDITOR,
+    env.SAVANT_CODE_EDITOR,
     env.VISUAL,
     env.EDITOR,
   ]
@@ -131,7 +131,7 @@ export const openFileAtPath = async (
   const commands = buildEditorCommands(filePath, env)
 
   for (const command of commands) {
-    // eslint-disable-next-line no-await-in-loop
+     
     const success = await runCommand(command)
     if (success) {
       return true

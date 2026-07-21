@@ -1,28 +1,26 @@
 import { describe, expect, test } from 'bun:test'
 
-import { GEMINI_3_1_FLASH_LITE_MODEL_ID } from '../constants/gemini'
-
 import {
-  FREEBUFF_DEEPSEEK_V4_FLASH_MODEL_ID,
-  FREEBUFF_DEEPSEEK_V4_PRO_MODEL_ID,
-  FREEBUFF_GEMINI_PRO_MODEL_ID,
-  FREEBUFF_GLM_V52_MODEL_ID,
-  FREEBUFF_HY3_ATLAS_MODEL_ID,
-  FREEBUFF_HY3_MODEL_ID,
-  FREEBUFF_KIMI_MODEL_ID,
-  FREEBUFF_MIMO_V25_MODEL_ID,
-  FREEBUFF_MIMO_V25_PRO_MODEL_ID,
-} from '../constants/savant-free-models'
-import { minimaxModels } from '../constants/model-config'
-import { FREEBUFF_GEMINI_THINKER_AGENT_ID } from '../constants/savant-free-gemini-thinker'
-import {
-  FREEBUFF_DESKTOP_THREAD_AGENT_ID,
-  getFreebuffRootAgentIdForModel,
-  isFreebuffGeminiThinkerAgent,
-  isFreebuffRootAgent,
+  SAVANT_FREE_DESKTOP_THREAD_AGENT_ID,
+  getSavantFreeRootAgentIdForModel,
+  isSavantFreeGeminiThinkerAgent,
+  isSavantFreeRootAgent,
   isFreeModeAllowedAgentModel,
-  shouldUseLocalTokenCountForFreebuffDeepseekFlash,
+  shouldUseLocalTokenCountForSavantFreeDeepseekFlash,
 } from '../constants/free-agents'
+import { minimaxModels } from '../constants/model-config'
+import { SAVANT_FREE_GEMINI_THINKER_AGENT_ID } from '../constants/savant-free-gemini-thinker'
+import {
+  SAVANT_FREE_DEEPSEEK_V4_FLASH_MODEL_ID,
+  SAVANT_FREE_DEEPSEEK_V4_PRO_MODEL_ID,
+  SAVANT_FREE_GEMINI_PRO_MODEL_ID,
+  SAVANT_FREE_GLM_V52_MODEL_ID,
+  SAVANT_FREE_HY3_ATLAS_MODEL_ID,
+  SAVANT_FREE_HY3_MODEL_ID,
+  SAVANT_FREE_KIMI_MODEL_ID,
+  SAVANT_FREE_MIMO_V25_MODEL_ID,
+  SAVANT_FREE_MIMO_V25_PRO_MODEL_ID,
+} from '../constants/savant-free-models'
 
 const MINIMAX_M3_MODEL_ID = minimaxModels.minimaxM3
 // Removed model: support was dropped entirely (client + server).
@@ -30,87 +28,87 @@ const LEGACY_MINIMAX_M2_7_MODEL_ID = 'minimax/minimax-m2.7'
 
 describe('free mode agent model allowlist', () => {
   test('maps supported savant-free models to concrete root agents', () => {
-    expect(getFreebuffRootAgentIdForModel(FREEBUFF_KIMI_MODEL_ID)).toBe(
-      'base2-free-kimi',
+    expect(getSavantFreeRootAgentIdForModel(SAVANT_FREE_KIMI_MODEL_ID)).toBe(
+      'savant-free-kimi',
     )
     expect(
-      getFreebuffRootAgentIdForModel(FREEBUFF_DEEPSEEK_V4_PRO_MODEL_ID),
-    ).toBe('base2-free-deepseek')
+      getSavantFreeRootAgentIdForModel(SAVANT_FREE_DEEPSEEK_V4_PRO_MODEL_ID),
+    ).toBe('savant-free-deepseek')
     expect(
-      getFreebuffRootAgentIdForModel(FREEBUFF_DEEPSEEK_V4_FLASH_MODEL_ID),
-    ).toBe('base2-free-deepseek-flash')
-    expect(getFreebuffRootAgentIdForModel(FREEBUFF_MIMO_V25_PRO_MODEL_ID)).toBe(
-      'base2-free-mimo-pro',
+      getSavantFreeRootAgentIdForModel(SAVANT_FREE_DEEPSEEK_V4_FLASH_MODEL_ID),
+    ).toBe('savant-free-deepseek-flash')
+    expect(getSavantFreeRootAgentIdForModel(SAVANT_FREE_MIMO_V25_PRO_MODEL_ID)).toBe(
+      'savant-free-mimo-pro',
     )
-    expect(getFreebuffRootAgentIdForModel(FREEBUFF_MIMO_V25_MODEL_ID)).toBe(
-      'base2-free-mimo',
+    expect(getSavantFreeRootAgentIdForModel(SAVANT_FREE_MIMO_V25_MODEL_ID)).toBe(
+      'savant-free-mimo',
     )
-    expect(getFreebuffRootAgentIdForModel(MINIMAX_M3_MODEL_ID)).toBe(
-      'base2-free-minimax-m3',
+    expect(getSavantFreeRootAgentIdForModel(MINIMAX_M3_MODEL_ID)).toBe(
+      'savant-free-minimax-m3',
     )
   })
 
   test('allows each savant-free root agent only with its configured model', () => {
-    expect(isFreeModeAllowedAgentModel('base2-free', MINIMAX_M3_MODEL_ID)).toBe(
+    expect(isFreeModeAllowedAgentModel('savant-free', MINIMAX_M3_MODEL_ID)).toBe(
       true,
     )
     expect(
-      isFreeModeAllowedAgentModel('base2-free', LEGACY_MINIMAX_M2_7_MODEL_ID),
+      isFreeModeAllowedAgentModel('savant-free', LEGACY_MINIMAX_M2_7_MODEL_ID),
     ).toBe(false)
     expect(
       isFreeModeAllowedAgentModel(
-        'base2-free',
-        FREEBUFF_DEEPSEEK_V4_PRO_MODEL_ID,
+        'savant-free',
+        SAVANT_FREE_DEEPSEEK_V4_PRO_MODEL_ID,
       ),
     ).toBe(true)
     expect(
-      isFreeModeAllowedAgentModel('base2-free', FREEBUFF_KIMI_MODEL_ID),
+      isFreeModeAllowedAgentModel('savant-free', SAVANT_FREE_KIMI_MODEL_ID),
     ).toBe(true)
     expect(
-      isFreeModeAllowedAgentModel('base2-free-kimi', FREEBUFF_KIMI_MODEL_ID),
-    ).toBe(true)
-    expect(
-      isFreeModeAllowedAgentModel(
-        'base2-free-deepseek',
-        FREEBUFF_DEEPSEEK_V4_PRO_MODEL_ID,
-      ),
+      isFreeModeAllowedAgentModel('savant-free-kimi', SAVANT_FREE_KIMI_MODEL_ID),
     ).toBe(true)
     expect(
       isFreeModeAllowedAgentModel(
-        'base2-free-deepseek-flash',
-        FREEBUFF_DEEPSEEK_V4_FLASH_MODEL_ID,
+        'savant-free-deepseek',
+        SAVANT_FREE_DEEPSEEK_V4_PRO_MODEL_ID,
       ),
     ).toBe(true)
     expect(
       isFreeModeAllowedAgentModel(
-        'base2-free-mimo-pro',
-        FREEBUFF_MIMO_V25_PRO_MODEL_ID,
+        'savant-free-deepseek-flash',
+        SAVANT_FREE_DEEPSEEK_V4_FLASH_MODEL_ID,
       ),
     ).toBe(true)
     expect(
       isFreeModeAllowedAgentModel(
-        'base2-free-mimo',
-        FREEBUFF_MIMO_V25_MODEL_ID,
+        'savant-free-mimo-pro',
+        SAVANT_FREE_MIMO_V25_PRO_MODEL_ID,
       ),
     ).toBe(true)
     expect(
       isFreeModeAllowedAgentModel(
-        'base2-free-mimo',
-        FREEBUFF_MIMO_V25_PRO_MODEL_ID,
+        'savant-free-mimo',
+        SAVANT_FREE_MIMO_V25_MODEL_ID,
+      ),
+    ).toBe(true)
+    expect(
+      isFreeModeAllowedAgentModel(
+        'savant-free-mimo',
+        SAVANT_FREE_MIMO_V25_PRO_MODEL_ID,
       ),
     ).toBe(false)
     expect(
       isFreeModeAllowedAgentModel(
-        'base2-free-mimo',
-        `${FREEBUFF_MIMO_V25_MODEL_ID}-20260527`,
+        'savant-free-mimo',
+        `${SAVANT_FREE_MIMO_V25_MODEL_ID}-20260527`,
       ),
     ).toBe(true)
     expect(
-      isFreeModeAllowedAgentModel('base2-free-minimax-m3', MINIMAX_M3_MODEL_ID),
+      isFreeModeAllowedAgentModel('savant-free-minimax-m3', MINIMAX_M3_MODEL_ID),
     ).toBe(true)
     expect(
       isFreeModeAllowedAgentModel(
-        'base2-free-minimax-m3',
+        'savant-free-minimax-m3',
         LEGACY_MINIMAX_M2_7_MODEL_ID,
       ),
     ).toBe(false)
@@ -121,31 +119,31 @@ describe('free mode agent model allowlist', () => {
     // per tab), so each desktop-pickable model must be allowed for it.
     for (const model of [
       MINIMAX_M3_MODEL_ID,
-      FREEBUFF_DEEPSEEK_V4_PRO_MODEL_ID,
-      FREEBUFF_DEEPSEEK_V4_FLASH_MODEL_ID,
-      FREEBUFF_KIMI_MODEL_ID,
-      FREEBUFF_MIMO_V25_PRO_MODEL_ID,
-      FREEBUFF_MIMO_V25_MODEL_ID,
-      FREEBUFF_GLM_V52_MODEL_ID,
+      SAVANT_FREE_DEEPSEEK_V4_PRO_MODEL_ID,
+      SAVANT_FREE_DEEPSEEK_V4_FLASH_MODEL_ID,
+      SAVANT_FREE_KIMI_MODEL_ID,
+      SAVANT_FREE_MIMO_V25_PRO_MODEL_ID,
+      SAVANT_FREE_MIMO_V25_MODEL_ID,
+      SAVANT_FREE_GLM_V52_MODEL_ID,
     ]) {
       expect(
-        isFreeModeAllowedAgentModel(FREEBUFF_DESKTOP_THREAD_AGENT_ID, model),
+        isFreeModeAllowedAgentModel(SAVANT_FREE_DESKTOP_THREAD_AGENT_ID, model),
       ).toBe(true)
     }
     // It's a recognized free-mode root (so its subagents pass the hierarchy gate
     // and the "You are Savant" marker gate applies to it).
-    expect(isFreebuffRootAgent(FREEBUFF_DESKTOP_THREAD_AGENT_ID)).toBe(true)
+    expect(isSavantFreeRootAgent(SAVANT_FREE_DESKTOP_THREAD_AGENT_ID)).toBe(true)
     // A non-free premium model (e.g. raw Claude) stays disallowed even for it.
     expect(
       isFreeModeAllowedAgentModel(
-        FREEBUFF_DESKTOP_THREAD_AGENT_ID,
+        SAVANT_FREE_DESKTOP_THREAD_AGENT_ID,
         'anthropic/claude-sonnet-4.5',
       ),
     ).toBe(false)
     // Publisher-spoof safe.
     expect(
       isFreeModeAllowedAgentModel(
-        `other/${FREEBUFF_DESKTOP_THREAD_AGENT_ID}@0.0.1`,
+        `other/${SAVANT_FREE_DESKTOP_THREAD_AGENT_ID}@0.0.1`,
         MINIMAX_M3_MODEL_ID,
       ),
     ).toBe(false)
@@ -154,14 +152,14 @@ describe('free mode agent model allowlist', () => {
   test('allows generic subagents with any free model', () => {
     const freeModels = [
       MINIMAX_M3_MODEL_ID,
-      FREEBUFF_DEEPSEEK_V4_PRO_MODEL_ID,
-      FREEBUFF_DEEPSEEK_V4_FLASH_MODEL_ID,
-      FREEBUFF_KIMI_MODEL_ID,
-      FREEBUFF_MIMO_V25_PRO_MODEL_ID,
-      FREEBUFF_MIMO_V25_MODEL_ID,
-      FREEBUFF_GLM_V52_MODEL_ID,
-      FREEBUFF_HY3_MODEL_ID,
-      FREEBUFF_HY3_ATLAS_MODEL_ID,
+      SAVANT_FREE_DEEPSEEK_V4_PRO_MODEL_ID,
+      SAVANT_FREE_DEEPSEEK_V4_FLASH_MODEL_ID,
+      SAVANT_FREE_KIMI_MODEL_ID,
+      SAVANT_FREE_MIMO_V25_PRO_MODEL_ID,
+      SAVANT_FREE_MIMO_V25_MODEL_ID,
+      SAVANT_FREE_GLM_V52_MODEL_ID,
+      SAVANT_FREE_HY3_MODEL_ID,
+      SAVANT_FREE_HY3_ATLAS_MODEL_ID,
     ]
 
     for (const agentId of [
@@ -205,61 +203,61 @@ describe('free mode agent model allowlist', () => {
 
   test('allows Gemini Pro for the thinker subagent but not the savant-free root', () => {
     expect(
-      isFreeModeAllowedAgentModel('base2-free', FREEBUFF_GEMINI_PRO_MODEL_ID),
+      isFreeModeAllowedAgentModel('savant-free', SAVANT_FREE_GEMINI_PRO_MODEL_ID),
     ).toBe(false)
     expect(
       isFreeModeAllowedAgentModel(
-        FREEBUFF_GEMINI_THINKER_AGENT_ID,
-        FREEBUFF_GEMINI_PRO_MODEL_ID,
+        SAVANT_FREE_GEMINI_THINKER_AGENT_ID,
+        SAVANT_FREE_GEMINI_PRO_MODEL_ID,
       ),
     ).toBe(true)
   })
 
   test('recognizes the Gemini thinker agent in free mode', () => {
-    expect(isFreebuffGeminiThinkerAgent(FREEBUFF_GEMINI_THINKER_AGENT_ID)).toBe(
+    expect(isSavantFreeGeminiThinkerAgent(SAVANT_FREE_GEMINI_THINKER_AGENT_ID)).toBe(
       true,
     )
     expect(
-      isFreebuffGeminiThinkerAgent(
-        `savant-code/${FREEBUFF_GEMINI_THINKER_AGENT_ID}@0.0.1`,
+      isSavantFreeGeminiThinkerAgent(
+        `savant-code/${SAVANT_FREE_GEMINI_THINKER_AGENT_ID}@0.0.1`,
       ),
     ).toBe(true)
     expect(
-      isFreebuffGeminiThinkerAgent(
-        `other/${FREEBUFF_GEMINI_THINKER_AGENT_ID}@0.0.1`,
+      isSavantFreeGeminiThinkerAgent(
+        `other/${SAVANT_FREE_GEMINI_THINKER_AGENT_ID}@0.0.1`,
       ),
     ).toBe(false)
   })
 
   test('uses local token count only for the DeepSeek Flash savant-free root', () => {
     expect(
-      shouldUseLocalTokenCountForFreebuffDeepseekFlash({
-        agentId: 'base2-free-deepseek-flash',
-        model: FREEBUFF_DEEPSEEK_V4_FLASH_MODEL_ID,
+      shouldUseLocalTokenCountForSavantFreeDeepseekFlash({
+        agentId: 'savant-free-deepseek-flash',
+        model: SAVANT_FREE_DEEPSEEK_V4_FLASH_MODEL_ID,
       }),
     ).toBe(true)
     expect(
-      shouldUseLocalTokenCountForFreebuffDeepseekFlash({
-        agentId: 'savant-code/base2-free-deepseek-flash@0.0.1',
-        model: FREEBUFF_DEEPSEEK_V4_FLASH_MODEL_ID,
+      shouldUseLocalTokenCountForSavantFreeDeepseekFlash({
+        agentId: 'savant-code/savant-free-deepseek-flash@0.0.1',
+        model: SAVANT_FREE_DEEPSEEK_V4_FLASH_MODEL_ID,
       }),
     ).toBe(true)
     expect(
-      shouldUseLocalTokenCountForFreebuffDeepseekFlash({
-        agentId: 'base2-free-deepseek',
-        model: FREEBUFF_DEEPSEEK_V4_FLASH_MODEL_ID,
+      shouldUseLocalTokenCountForSavantFreeDeepseekFlash({
+        agentId: 'savant-free-deepseek',
+        model: SAVANT_FREE_DEEPSEEK_V4_FLASH_MODEL_ID,
       }),
     ).toBe(false)
     expect(
-      shouldUseLocalTokenCountForFreebuffDeepseekFlash({
-        agentId: 'base2-free-deepseek-flash',
-        model: FREEBUFF_DEEPSEEK_V4_PRO_MODEL_ID,
+      shouldUseLocalTokenCountForSavantFreeDeepseekFlash({
+        agentId: 'savant-free-deepseek-flash',
+        model: SAVANT_FREE_DEEPSEEK_V4_PRO_MODEL_ID,
       }),
     ).toBe(false)
     expect(
-      shouldUseLocalTokenCountForFreebuffDeepseekFlash({
-        agentId: 'other/base2-free-deepseek-flash@0.0.1',
-        model: FREEBUFF_DEEPSEEK_V4_FLASH_MODEL_ID,
+      shouldUseLocalTokenCountForSavantFreeDeepseekFlash({
+        agentId: 'other/savant-free-deepseek-flash@0.0.1',
+        model: SAVANT_FREE_DEEPSEEK_V4_FLASH_MODEL_ID,
       }),
     ).toBe(false)
   })

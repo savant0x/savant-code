@@ -108,7 +108,7 @@ export type OpenRouterProviderOptions = {
  */
 export type AgentTemplate<
   P = string | undefined,
-  T = Record<string, any> | undefined,
+  T = Record<string, unknown> | undefined,
 > = {
   id: AgentTemplateType
   displayName: string
@@ -120,6 +120,11 @@ export type AgentTemplate<
   inheritParentModel?: boolean
   reasoningOptions?: OpenRouterReasoningOptions
   providerOptions?: OpenRouterProviderRoutingOptions
+
+  /** FID-031 execution-scope flags */
+  analyzeOnly?: boolean
+  scaffoldMode?: boolean
+  noFIDPerChange?: boolean
 
   mcpServers: Record<string, MCPConfig>
   toolNames: (ToolName | (string & {}))[]
@@ -139,7 +144,7 @@ export type AgentTemplate<
   includeMessageHistory: boolean
   inheritParentSystemPrompt: boolean
   outputMode: 'last_message' | 'all_messages' | 'structured_output'
-  outputSchema?: z.ZodSchema<any>
+  outputSchema?: z.ZodTypeAny
 
   handleSteps?: StepHandler<P, T> | string // Function or string of the generator code for running in a sandbox
   /**
@@ -195,7 +200,7 @@ export type StepGenerator = Generator<
 
 export type StepHandler<
   P = string | undefined,
-  T = Record<string, any> | undefined,
+  T = Record<string, unknown> | undefined,
 > = (context: {
   agentState: AgentState
   prompt: P

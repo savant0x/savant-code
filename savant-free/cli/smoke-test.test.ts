@@ -31,7 +31,7 @@ const TIMEOUT_MS = 20_000
 // ---------------------------------------------------------------------------
 
 function stripAnsiCodes(str: string): string {
-  // eslint-disable-next-line no-control-regex
+   
   return str.replace(/\x1B\[[0-9;]*[a-zA-Z]/g, '')
 }
 
@@ -39,7 +39,7 @@ function isTmuxAvailable(): boolean {
   if (process.env.CI === 'true' || process.env.CI === '1') return false
   try {
     execSync(
-      'which tmux && tmux new-session -d -s __freebuff_tmux_check__ && tmux kill-session -t __freebuff_tmux_check__',
+      'which tmux && tmux new-session -d -s __savantFree_tmux_check__ && tmux kill-session -t __savantFree_tmux_check__',
       { stdio: 'pipe', timeout: 5000 },
     )
     return true
@@ -82,11 +82,11 @@ function runBinaryResult(args: string[]) {
     timeout: 10_000,
     env: {
       ...process.env,
-      FREEBUFF_MODE: 'true',
+      SAVANT_FREE_MODE: 'true',
       NO_COLOR: '1',
       NEXT_PUBLIC_CB_ENVIRONMENT: 'test',
-      NEXT_PUBLIC_CODEBUFF_APP_URL: 'http://127.0.0.1:9',
-      NEXT_PUBLIC_FREEBUFF_APP_URL: 'http://127.0.0.1:9',
+      NEXT_PUBLIC_SAVANT_CODE_APP_URL: 'http://127.0.0.1:9',
+      NEXT_PUBLIC_SAVANT_FREE_APP_URL: 'http://127.0.0.1:9',
       NEXT_PUBLIC_SUPPORT_EMAIL: 'test@example.com',
       NEXT_PUBLIC_POSTHOG_API_KEY: 'test',
       NEXT_PUBLIC_POSTHOG_HOST_URL: 'http://127.0.0.1:9',
@@ -222,7 +222,7 @@ describe.skipIf(!binaryExists)('SavantFree Binary Smoke Tests', () => {
           )
         }
 
-        // Verify it's the FREEBUFF logo, not SAVANT_CODE.
+        // Verify it's the SAVANT_FREE logo, not SAVANT_CODE.
         // The SavantFree 'F' character's third line starts with the crossbar:
         //   █████╗  ██████╔╝
         // whereas SavantCode 'C' has:

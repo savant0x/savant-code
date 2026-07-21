@@ -20,6 +20,12 @@ import type { AgentState, Subgoal } from '@savant-code/common/types/session-stat
 import type { ProjectFileContext } from '@savant-code/common/util/file'
 import type { ToolSet } from 'ai'
 
+// Distributive conditional helper: a key is either present with value `V`
+// (when the tool is a ClientToolName) or absent (otherwise). The inline
+// conditional `T extends ClientToolName ? T : never` inside V keeps the
+// function's parameter types narrow at concrete T sites without collapsing
+// the slot to `never` for generic T (which the outer conditional pattern
+// does — see FID-028 historical notes).
 type PresentOrAbsent<K extends PropertyKey, V> =
   | { [P in K]: V }
   | { [P in K]: never }

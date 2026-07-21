@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- client utilities: dynamic YAML generation and config shapes */
 import { API_KEY_ENV_VAR } from '@savant-code/common/old-constants'
 import { AskUserBridge } from '@savant-code/common/utils/ask-user-bridge'
 import { SavantCodeClient } from '@savant-code/sdk'
@@ -41,11 +42,11 @@ function removeUndefinedValues<T>(obj: T): T {
  * Reset the cached SavantCodeClient instance.
  * This should be called after login to ensure the client is re-initialized with new credentials.
  */
-export function resetCodebuffClient(): void {
+export function resetSavantCodeClient(): void {
   clientInstance = null
 }
 
-export async function getCodebuffClient(): Promise<SavantCodeClient | null> {
+export async function getSavantCodeClient(): Promise<SavantCodeClient | null> {
   if (!clientInstance) {
     const { token: apiKey } = getAuthTokenDetails()
 
@@ -61,11 +62,11 @@ export async function getCodebuffClient(): Promise<SavantCodeClient | null> {
 
     // Set up ripgrep path for SDK to use
     const env = getCliEnv()
-    if (env.CODEBUFF_IS_BINARY) {
+    if (env.SAVANT_CODE_IS_BINARY) {
       try {
         const rgPath = await getRgPath()
         // Note: We still set process.env here because SDK reads from it
-        getSystemProcessEnv().CODEBUFF_RG_PATH = rgPath
+        getSystemProcessEnv().SAVANT_CODE_RG_PATH = rgPath
       } catch (error) {
         logger.error(error, 'Failed to set up ripgrep binary for SDK')
       }

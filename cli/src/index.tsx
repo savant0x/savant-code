@@ -1,4 +1,5 @@
 #!/usr/bin/env bun
+/* eslint-disable savant/no-unknown-in-signatures -- index.tsx: early-fatal catch handler accepts unknown */
 
 // Load repo-root .env.local into process.env BEFORE any @savant-code/common import
 // triggers environment validation. Required because `bun dev` runs with `--cwd ..`,
@@ -16,10 +17,10 @@ import fs from 'fs'
 import os from 'os'
 import path from 'path'
 
-import { AnalyticsEvent } from '@savant-code/common/constants/analytics-events'
-import { getProjectFileTree } from '@savant-code/common/project-file-tree'
 import { createCliRenderer } from '@opentui/core'
 import { createRoot } from '@opentui/react'
+import { AnalyticsEvent } from '@savant-code/common/constants/analytics-events'
+import { getProjectFileTree } from '@savant-code/common/project-file-tree'
 import {
   QueryClient,
   QueryClientProvider,
@@ -31,25 +32,25 @@ import React from 'react'
 import { App } from './app'
 import { loadPackageVersion, parseArgs } from './cli-args'
 import { handlePublish } from './commands/publish'
-import { runPlainLogin } from './login/plain-login'
 import { initializeApp } from './init/init-app'
+import { runPlainLogin } from './login/plain-login'
 import { getProjectRoot, setProjectRoot } from './project-files'
 import { trackEvent } from './utils/analytics'
 import { getAuthToken, getAuthTokenDetails } from './utils/auth'
-import { resetCodebuffClient } from './utils/savant-code-client'
-import { setApiClientAuthToken } from './utils/savant-code-api'
-import { IS_FREEBUFF } from './utils/constants'
-import { initializeAgentRegistry } from './utils/local-agent-registry'
 import { trimOversizedChatLogs } from './utils/chat-history'
+import { IS_SAVANT_FREE } from './utils/constants'
+import { startEngagementTracking } from './utils/engagement'
+import { initializeAgentRegistry } from './utils/local-agent-registry'
 import { clearLogFile, logger } from './utils/logger'
 import { shouldShowProjectPicker } from './utils/project-picker'
 import { saveRecentProject } from './utils/recent-projects'
-import { startEngagementTracking } from './utils/engagement'
 import { installProcessCleanupHandlers } from './utils/renderer-cleanup'
-import { TERMINAL_RESET_SEQUENCES } from './utils/terminal-reset-sequences'
-import { startTerminalWatchdog, stopTerminalWatchdog } from './utils/terminal-watchdog'
+import { setApiClientAuthToken } from './utils/savant-code-api'
+import { resetSavantCodeClient } from './utils/savant-code-client'
 import { initializeSkillRegistry } from './utils/skill-registry'
 import { detectTerminalTheme } from './utils/terminal-color-detection'
+import { TERMINAL_RESET_SEQUENCES } from './utils/terminal-reset-sequences'
+import { startTerminalWatchdog, stopTerminalWatchdog } from './utils/terminal-watchdog'
 import { setOscDetectedTheme } from './utils/theme-system'
 
 import type { FileTreeNode } from '@savant-code/common/util/file'
@@ -99,11 +100,11 @@ async function main(): Promise<void> {
   // still ran first and rejected the unknown flag).
   if (process.argv.includes('--smoke-tree-sitter')) {
     const wasmBinary = (
-      globalThis as { __CODEBUFF_TREE_SITTER_WASM_BINARY__?: Uint8Array }
-    ).__CODEBUFF_TREE_SITTER_WASM_BINARY__
+      globalThis as { __SAVANT_CODE_TREE_SITTER_WASM_BINARY__?: Uint8Array }
+    ).__SAVANT_CODE_TREE_SITTER_WASM_BINARY__
     const wasmPath = (
-      globalThis as { __CODEBUFF_TREE_SITTER_WASM_PATH__?: string }
-    ).__CODEBUFF_TREE_SITTER_WASM_PATH__
+      globalThis as { __SAVANT_CODE_TREE_SITTER_WASM_PATH__?: string }
+    ).__SAVANT_CODE_TREE_SITTER_WASM_PATH__
 
     // Diagnostic dump so CI logs (and bug reports) show exactly what
     // the runtime saw when smoke fails. process.execPath, the
@@ -222,8 +223,8 @@ async function main(): Promise<void> {
     hasInitialPrompt: Boolean(initialPrompt),
     hasAgentOverride: hasAgentOverride,
     continueChat,
-    initialMode: initialMode ?? 'DEFAULT',
-    isFreeBuff: IS_FREEBUFF,
+    initialMode: initialMode ?? 'EDIT',
+    isFreeBuff: IS_SAVANT_FREE,
   })
 
   // Initialize agent registry (loads user agents via SDK).
@@ -329,7 +330,7 @@ async function main(): Promise<void> {
         // Update the project root in the module state
         setProjectRoot(newProjectPath)
         // Reset client to ensure tools use the updated project root
-        resetCodebuffClient()
+        resetSavantCodeClient()
         // Save to recent projects list
         saveRecentProject(newProjectPath)
         // Update local state
@@ -408,8 +409,8 @@ async function main(): Promise<void> {
   // Start the engaged-time heartbeat only once the interactive TUI is actually
   // live — reaching renderer creation means this is a real session (the
   // login/publish/smoke-test commands all exit earlier). SavantFree-only, matching
-  // the MESSAGE_SENT DAU signal. Stopped in exitFreebuffCleanly().
-  if (IS_FREEBUFF) {
+  // the MESSAGE_SENT DAU signal. Stopped in exitSavantFreeCleanly().
+  if (IS_SAVANT_FREE) {
     startEngagementTracking()
   }
 

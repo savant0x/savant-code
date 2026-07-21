@@ -1,13 +1,14 @@
 import React from 'react'
-import { TextAttributes } from '@opentui/core'
+
 import { useTheme } from '../../../hooks/use-theme'
 
-export interface PanelProps {
+import type { BoxProps } from '@opentui/react'
+
+export interface PanelProps extends Omit<BoxProps, 'children' | 'title' | 'border'> {
   title?: string
   border?: 'single' | 'rounded' | 'none'
   padding?: number
   children: React.ReactNode
-  [key: string]: any
 }
 
 export function Panel({

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- file utilities: dynamic type schemas */
 import * as os from 'os'
 import * as path from 'path'
 

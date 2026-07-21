@@ -2,13 +2,13 @@ import { execFileSync } from 'node:child_process'
 
 import { afterEach, describe, expect, test } from 'bun:test'
 
-import { SavantFree$1, requireFreebuffBinary } from '../utils'
+import { SavantFreeModel, requireSavantFreeBinary } from '../utils'
 
 const TEST_TIMEOUT = 60_000
 
 describe('SavantFree: --help flag', () => {
   test('shows CLI usage information', () => {
-    const binary = requireFreebuffBinary()
+    const binary = requireSavantFreeBinary()
     const output = execFileSync(binary, ['--help'], {
       encoding: 'utf-8',
       timeout: 10_000,
@@ -22,7 +22,7 @@ describe('SavantFree: --help flag', () => {
   })
 
   test('does not reference SavantCode', () => {
-    const binary = requireFreebuffBinary()
+    const binary = requireSavantFreeBinary()
     const output = execFileSync(binary, ['--help'], {
       encoding: 'utf-8',
       timeout: 10_000,
@@ -34,9 +34,9 @@ describe('SavantFree: --help flag', () => {
 })
 
 describe('SavantFree: /help slash command', () => {
-  let session: SavantFree$1 | null = null
+  let session: SavantFreeModel | null = null
 
-  const openHelp = async (session: SavantFree$1): Promise<string | null> => {
+  const openHelp = async (session: SavantFreeModel): Promise<string | null> => {
     const initialOutput = await session.capture()
     if (!initialOutput.includes('Enter a coding task')) {
       console.log(
@@ -64,8 +64,8 @@ describe('SavantFree: /help slash command', () => {
   test(
     'shows help content when /help is entered',
     async () => {
-      const binary = requireFreebuffBinary()
-      session = await SavantFree$1.start(binary)
+      const binary = requireSavantFreeBinary()
+      session = await SavantFreeModel.start(binary)
       await session.waitForReady()
 
       const output = await openHelp(session)
@@ -80,8 +80,8 @@ describe('SavantFree: /help slash command', () => {
   test(
     'does not show subscription commands in help',
     async () => {
-      const binary = requireFreebuffBinary()
-      session = await SavantFree$1.start(binary)
+      const binary = requireSavantFreeBinary()
+      session = await SavantFreeModel.start(binary)
       await session.waitForReady()
 
       const output = await openHelp(session)

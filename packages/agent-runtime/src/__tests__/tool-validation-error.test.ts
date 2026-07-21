@@ -1,3 +1,4 @@
+import { emptyMcpServers } from '@savant-code/common/testing/fixtures/agent-runtime'
 import { TEST_AGENT_RUNTIME_IMPL } from '@savant-code/common/testing/impl/agent-runtime'
 import { getInitialSessionState } from '@savant-code/common/types/session-state'
 import { promptSuccess } from '@savant-code/common/util/error'
@@ -36,7 +37,7 @@ describe('tool validation error handling', () => {
     outputMode: 'structured_output',
     includeMessageHistory: true,
     inheritParentSystemPrompt: false,
-    mcpServers: {},
+    mcpServers: emptyMcpServers,
     toolNames: ['spawn_agents', 'end_turn'],
     spawnableAgents: [],
     systemPrompt: 'Test system prompt',

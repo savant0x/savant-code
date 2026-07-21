@@ -1,13 +1,13 @@
-import { memo } from 'react'
 import { TextAttributes } from '@opentui/core'
+import { memo } from 'react'
 
-import { useTheme } from '../hooks/use-theme'
-import { getVersion } from '../utils/version'
-import { IS_FREEBUFF } from '../utils/constants'
-import { loadCodebuffModelPreference } from '../utils/settings'
-import { useFreebuffModelStore } from '../state/savant-free-model-store'
-import { useChatStore } from '../state/chat-store'
 import { AgentStack, Timeline } from './savant-ui'
+import { useTheme } from '../hooks/use-theme'
+import { useChatStore } from '../state/chat-store'
+import { useSavantFreeModelStore } from '../state/savant-free-model-store'
+import { IS_SAVANT_FREE } from '../utils/constants'
+import { loadSavantCodeModelPreference } from '../utils/settings'
+import { getVersion } from '../utils/version'
 
 interface ToolCall {
   name: string
@@ -72,9 +72,9 @@ export const RightSidebar = memo(function RightSidebar({
   }
 
   // Fix: use the correct model source based on mode
-  const displayModel = IS_FREEBUFF
-    ? useFreebuffModelStore.getState().selectedModel
-    : loadCodebuffModelPreference() ?? model
+  const displayModel = IS_SAVANT_FREE
+    ? useSavantFreeModelStore.getState().selectedModel
+    : loadSavantCodeModelPreference() ?? model
 
   // Dynamic border width
   const W = 40

@@ -2,10 +2,10 @@ import { TextAttributes } from '@opentui/core'
 import React, { memo, type ReactNode } from 'react'
 
 import { Button } from './button'
-import { Panel } from './savant-ui/primitives/panel'
 import { useTerminalDimensions } from '../hooks/use-terminal-dimensions'
 import { useTheme } from '../hooks/use-theme'
 import { getLastNVisualLines } from '../utils/text-layout'
+import { Panel } from './savant-ui/primitives/panel'
 
 import type { ThinkingCollapseState } from '../types/chat'
 

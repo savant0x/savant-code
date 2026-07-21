@@ -1,3 +1,4 @@
+/* eslint-disable savant/no-unknown-in-signatures -- axiom-only logger trust boundary: log payloads arrive schema-less from the CLI/agent runtime; `data: unknown` is the only honest shape. 3-condition AND-gate: (i.1) caller type cannot be discovered without coupling to every logger call site; (i.2) narrowing to `JsonValue`/concrete breaks callers that pass Error instances and complex structured metadata; (i.3) runtime narrowing via `isRecord()` + `CONTEXT_PRUNING_FIELDS` value-type checks preserves existing allowlist filtering behavior. */
 /**
  * Operational events that belong in Axiom but not in product analytics.
  *
@@ -34,6 +35,10 @@ const CONTEXT_PRUNING_FIELDS = {
   newest_entry_forced: 'boolean',
 } as const satisfies Record<string, 'string' | 'number' | 'boolean'>
 
+function isRecord(v: unknown): v is Record<string, unknown> {
+  return v != null && typeof v === 'object' && !Array.isArray(v)
+}
+
 export type AxiomOnlyLogEvent = {
   event: typeof CONTEXT_PRUNING_COMPLETED_EVENT
   data: Record<string, string | number | boolean>
@@ -47,10 +52,7 @@ export function getAxiomOnlyLogEvent(
   data: unknown,
   event?: string | null,
 ): AxiomOnlyLogEvent | null {
-  const record =
-    data != null && typeof data === 'object' && !Array.isArray(data)
-      ? (data as Record<string, unknown>)
-      : {}
+  const record = isRecord(data) ? data : {}
   if (
     record.axiomEvent !== CONTEXT_PRUNING_COMPLETED_EVENT &&
     event !== CONTEXT_PRUNING_COMPLETED_EVENT

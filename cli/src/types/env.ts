@@ -63,24 +63,24 @@ export type CliEnv = BaseEnv & {
   // Editor preferences
   VISUAL?: string
   EDITOR?: string
-  CODEBUFF_CLI_EDITOR?: string
-  CODEBUFF_EDITOR?: string
+  SAVANT_CODE_CLI_EDITOR?: string
+  SAVANT_CODE_EDITOR?: string
 
   // Theme preferences
   OPEN_TUI_THEME?: string
   OPENTUI_THEME?: string
 
   // SavantCode CLI-specific (set during binary build)
-  CODEBUFF_IS_BINARY?: string
-  CODEBUFF_CLI_VERSION?: string
-  CODEBUFF_CLI_TARGET?: string
-  CODEBUFF_RG_PATH?: string
-  CODEBUFF_SCROLL_MULTIPLIER?: string
-  CODEBUFF_PERF_TEST?: string
-  CODEBUFF_TRACE?: string
+  SAVANT_CODE_IS_BINARY?: string
+  SAVANT_CODE_CLI_VERSION?: string
+  SAVANT_CODE_CLI_TARGET?: string
+  SAVANT_CODE_RG_PATH?: string
+  SAVANT_CODE_SCROLL_MULTIPLIER?: string
+  SAVANT_CODE_PERF_TEST?: string
+  SAVANT_CODE_TRACE?: string
   // Toggle for mirroring CLI logs to the server's /api/logs sink (Axiom).
-  CODEBUFF_SHIP_LOGS?: string
-  FREEBUFF_MODE?: string
+  SAVANT_CODE_SHIP_LOGS?: string
+  SAVANT_FREE_MODE?: string
   // Direct-provider mode: launch without the SavantCode backend, routing
   // inference straight to the provider named here (e.g. "openrouter").
   // When set, the CLI skips backend connection pings and agent/validate

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- browser action types: dynamic attribute parsing */
 import { z } from 'zod/v4'
 
 // Default values for browser actions

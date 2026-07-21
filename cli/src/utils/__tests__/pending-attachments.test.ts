@@ -1,13 +1,14 @@
 import { describe, test, expect, beforeEach, afterEach } from 'bun:test'
 
 import { useChatStore } from '../../state/chat-store'
-import type { PendingImageAttachment } from '../../types/store'
 import {
   addClipboardPlaceholder,
   addPendingImageFromBase64,
   addPendingImageWithError,
   capturePendingAttachments,
 } from '../pending-attachments'
+
+import type { PendingImageAttachment } from '../../types/store'
 
 /** Helper to get only image attachments from the unified pendingAttachments array */
 function getPendingImages(): PendingImageAttachment[] {

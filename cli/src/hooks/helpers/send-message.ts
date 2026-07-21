@@ -1,21 +1,15 @@
 import { getErrorObject } from '@savant-code/common/util/error'
 
-import {
-  markFreebuffSessionCountryBlocked,
-  markFreebuffSessionEnded,
-  markFreebuffSessionSuperseded,
-  refreshFreebuffSession,
-} from '../use-savant-free-session'
 import { getProjectRoot } from '../../project-files'
 import { useChatStore } from '../../state/chat-store'
-import { IS_FREEBUFF } from '../../utils/constants'
 import { processBashContext } from '../../utils/bash-context-processor'
 import { markRunningAgentsAsCancelled } from '../../utils/block-operations'
+import { IS_SAVANT_FREE } from '../../utils/constants'
 import {
   getCountryBlockFromFreeModeError,
   getFreeModeUnavailableErrorMessage,
-  getFreebuffGateErrorKind,
-  getFreebuffRateLimitErrorMessage,
+  getSavantFreeGateErrorKind,
+  getSavantFreeRateLimitErrorMessage,
   isOutOfCreditsError,
   isFreeModeUnavailableError,
   OUT_OF_CREDITS_MESSAGE,
@@ -32,15 +26,21 @@ import {
 import { createModeDividerMessage } from '../../utils/send-message-helpers'
 import { yieldToEventLoop } from '../../utils/yield-to-event-loop'
 import { invalidateActivityQuery } from '../use-activity-query'
+import {
+  markSavantFreeSessionCountryBlocked,
+  markSavantFreeSessionEnded,
+  markSavantFreeSessionSuperseded,
+  refreshSavantFreeSession,
+} from '../use-savant-free-session'
 import { usageQueryKeys } from '../use-usage-query'
 
+import type { ChatMessage } from '../../types/chat'
 import type {
   PendingAttachment,
   PendingFileAttachment,
   PendingImageAttachment,
   PendingTextAttachment,
 } from '../../types/store'
-import type { ChatMessage } from '../../types/chat'
 import type { AgentMode } from '../../utils/constants'
 import type { SendMessageTimerController } from '../../utils/send-message-timer'
 import type { StreamController } from '../stream-state'
@@ -404,8 +404,8 @@ export const handleRunCompletion = (params: {
 
     if (isFreeModeUnavailableError(output)) {
       updater.setError(getFreeModeUnavailableErrorMessage(output))
-      if (IS_FREEBUFF) {
-        markFreebuffSessionCountryBlocked(
+      if (IS_SAVANT_FREE) {
+        markSavantFreeSessionCountryBlocked(
           getCountryBlockFromFreeModeError(output) ?? {
             countryCode: 'UNKNOWN',
           },
@@ -415,20 +415,20 @@ export const handleRunCompletion = (params: {
       return
     }
 
-    const gateKind = getFreebuffGateErrorKind(output)
+    const gateKind = getSavantFreeGateErrorKind(output)
     if (gateKind) {
-      handleFreebuffGateError(gateKind, updater, {
+      handleSavantFreeGateError(gateKind, updater, {
         messageWasDropped: params.hasReceivedContent === false,
       })
       finalizeAfterError()
       return
     }
 
-    const savant-free$1 = IS_FREEBUFF
-      ? getFreebuffRateLimitErrorMessage(output)
+    const rateLimitMsg = IS_SAVANT_FREE
+      ? getSavantFreeRateLimitErrorMessage(output)
       : null
-    if (savant-free$1) {
-      updater.setError(savant-free$1)
+    if (rateLimitMsg) {
+      updater.setError(rateLimitMsg)
       finalizeAfterError()
       return
     }
@@ -452,9 +452,6 @@ export const handleRunCompletion = (params: {
   })
   const timerResult = timerController.stop('success')
 
-  if (agentMode === 'PLAN') {
-    setHasReceivedPlanResponse(true)
-  }
 
   const elapsedMs = timerResult?.elapsedMs ?? 0
   const elapsedSeconds = Math.floor(elapsedMs / 1000)
@@ -520,8 +517,8 @@ export const handleRunError = (params: {
 
   if (isFreeModeUnavailableError(error)) {
     updater.setError(getFreeModeUnavailableErrorMessage(error))
-    if (IS_FREEBUFF) {
-      markFreebuffSessionCountryBlocked(
+    if (IS_SAVANT_FREE) {
+      markSavantFreeSessionCountryBlocked(
         getCountryBlockFromFreeModeError(error) ?? {
           countryCode: 'UNKNOWN',
         },
@@ -530,19 +527,19 @@ export const handleRunError = (params: {
     return
   }
 
-  const gateKind = getFreebuffGateErrorKind(error)
+  const gateKind = getSavantFreeGateErrorKind(error)
   if (gateKind) {
-    handleFreebuffGateError(gateKind, updater, {
+    handleSavantFreeGateError(gateKind, updater, {
       messageWasDropped: hasReceivedContent === false,
     })
     return
   }
 
-  const savant-free$1 = IS_FREEBUFF
-    ? getFreebuffRateLimitErrorMessage(error)
+  const rateLimitMsg = IS_SAVANT_FREE
+    ? getSavantFreeRateLimitErrorMessage(error)
     : null
-  if (savant-free$1) {
-    updater.setError(savant-free$1)
+  if (rateLimitMsg) {
+    updater.setError(rateLimitMsg)
     return
   }
 
@@ -556,8 +553,8 @@ export const handleRunError = (params: {
  * the request because our session is no longer valid; update local state so
  * the UI reflects reality and we stop sending requests until we re-admit.
  */
-function handleFreebuffGateError(
-  kind: ReturnType<typeof getFreebuffGateErrorKind>,
+function handleSavantFreeGateError(
+  kind: ReturnType<typeof getSavantFreeGateErrorKind>,
   updater: BatchedMessageUpdater,
   opts: { messageWasDropped?: boolean } = {},
 ) {
@@ -584,7 +581,7 @@ function handleFreebuffGateError(
       // mounted so any in-flight agent work can finish under the server-side
       // grace period, and the session-ended banner prompts the user to press
       // Enter when they're ready to rejoin.
-      markFreebuffSessionEnded()
+      markSavantFreeSessionEnded()
       return
     case 'waiting_room_queued':
       // Legacy error code: sessions are admitted immediately now, so this is
@@ -594,7 +591,7 @@ function handleFreebuffGateError(
       )
       // Re-sync without resetting chat — this is a "we'll wait", not a
       // "let's start fresh".
-      refreshFreebuffSession().catch(() => {})
+      refreshSavantFreeSession().catch(() => {})
       return
     case 'session_superseded':
       updater.setError(
@@ -602,7 +599,7 @@ function handleFreebuffGateError(
       )
       // Terminal state: stop polling and flip UI to a "please restart" screen
       // so we don't silently fight the other instance for the seat.
-      markFreebuffSessionSuperseded()
+      markSavantFreeSessionSuperseded()
       return
     default:
       return

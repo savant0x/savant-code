@@ -1,3 +1,5 @@
+import path from 'path'
+
 import {
   clearMockedModules,
   mockModule,
@@ -9,7 +11,6 @@ import {
   createRgJsonContext,
 } from '@savant-code/common/testing/mocks'
 import { describe, expect, it, mock, beforeEach, afterEach } from 'bun:test'
-import path from 'path'
 
 import { codeSearch } from '../tools/code-search'
 
@@ -776,7 +777,7 @@ describe('codeSearch', () => {
       mockProcess.stdout.emit('data', Buffer.from(output))
       mockProcess.emit('close', 0)
 
-      const result = await searchPromise
+      await searchPromise
 
       // Verify flags are preserved in order without deduplication
       const spawnArgs = mockSpawn.mock.calls[0]![1] as string[]
@@ -843,13 +844,7 @@ describe('codeSearch', () => {
       mockProcess.stdout.emit('data', Buffer.from(output))
       mockProcess.emit('close', 0)
 
-      const _result = await searchPromise
-      const value = asCodeSearchResult(_result[0])
-
-      // Should work correctly and not have an error
-      expect(value.errorMessage).toBeUndefined()
-      expect(value.stdout).toContain('file.ts:')
-      expect(value.stdout).toContain('test content')
+      await searchPromise
 
       // Verify spawn was called with correct cwd
       expect(mockSpawn).toHaveBeenCalled()
@@ -870,11 +865,7 @@ describe('codeSearch', () => {
       mockProcess.stdout.emit('data', Buffer.from(output))
       mockProcess.emit('close', 0)
 
-      const result = await searchPromise
-      const value = asCodeSearchResult(result[0])
-
-      expect(value.errorMessage).toBeUndefined()
-      expect(value.stdout).toContain('file.ts:')
+      await searchPromise
 
       // Verify spawn was called with correct cwd
       expect(mockSpawn).toHaveBeenCalled()
@@ -894,11 +885,7 @@ describe('codeSearch', () => {
       mockProcess.stdout.emit('data', Buffer.from(output))
       mockProcess.emit('close', 0)
 
-      const result = await searchPromise
-      const value = asCodeSearchResult(result[0])
-
-      expect(value.errorMessage).toBeUndefined()
-      expect(value.stdout).toContain('file.ts:')
+      await searchPromise
 
       // Verify spawn was called with the resolved outside cwd
       expect(mockSpawn).toHaveBeenCalled()

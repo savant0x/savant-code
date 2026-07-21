@@ -1,8 +1,8 @@
 import { useActivityQuery } from './use-activity-query'
 import { getAuthToken } from '../utils/auth'
-import { IS_FREEBUFF } from '../utils/constants'
-import { getApiClient } from '../utils/savant-code-api'
+import { IS_SAVANT_FREE } from '../utils/constants'
 import { logger as defaultLogger } from '../utils/logger'
+import { getApiClient } from '../utils/savant-code-api'
 
 import type { Logger } from '@savant-code/common/types/contracts/logger'
 import type { SubscriptionResponse } from '@savant-code/common/types/subscription'
@@ -58,7 +58,7 @@ export function useSubscriptionQuery(deps: UseSubscriptionQueryDeps = {}) {
   return useActivityQuery({
     queryKey: subscriptionQueryKeys.current(),
     queryFn: () => fetchSubscriptionData(logger),
-    enabled: enabled && !!authToken && !IS_FREEBUFF,
+    enabled: enabled && !!authToken && !IS_SAVANT_FREE,
     staleTime: 30 * 1000,
     gcTime: 5 * 60 * 1000,
     retry: 1,

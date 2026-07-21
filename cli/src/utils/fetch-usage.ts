@@ -1,6 +1,6 @@
 import { getAuthToken } from './auth'
-import { getApiClient } from './savant-code-api'
 import { logger } from './logger'
+import { getApiClient } from './savant-code-api'
 import { useChatStore } from '../state/chat-store'
 
 import type { SavantCodeApiClient } from './savant-code-api'

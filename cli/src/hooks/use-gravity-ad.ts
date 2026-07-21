@@ -1,25 +1,25 @@
-import { WEBSITE_URL } from '@savant-code/sdk'
 import { AnalyticsEvent } from '@savant-code/common/constants/analytics-events'
+import { WEBSITE_URL } from '@savant-code/sdk'
 import { useEffect, useRef, useState } from 'react'
 
 import { useTerminalLayout } from './use-terminal-layout'
 import { getAdsEnabled } from '../commands/ads'
 import { useChatStore } from '../state/chat-store'
 import { isUserActive, subscribeToActivity } from '../utils/activity-tracker'
-import { getAuthToken } from '../utils/auth'
-import { IS_FREEBUFF } from '../utils/constants'
-import { getCliEnv } from '../utils/env'
-import { logger } from '../utils/logger'
 import { AI_MESSAGE_ID_PREFIX } from '../utils/ai-message-id'
 import { trackEvent } from '../utils/analytics'
+import { getAuthToken } from '../utils/auth'
+import { IS_SAVANT_FREE } from '../utils/constants'
+import { getCliEnv } from '../utils/env'
 import {
   createLazyResponseAdQueue,
   MAX_RESPONSE_AD_POOL_SIZE,
   requestLazyResponseAds,
 } from '../utils/lazy-response-ads'
+import { logger } from '../utils/logger'
 
-import type { Message } from '@savant-code/sdk'
 import type { ChatMessage } from '../types/chat'
+import type { Message } from '@savant-code/sdk'
 
 const AD_ROTATION_INTERVAL_MS = 60 * 1000 // 60 seconds per ad
 const MAX_ADS_AFTER_ACTIVITY = 3 // Show up to 3 ads after last activity, then pause fetching new ads
@@ -185,7 +185,7 @@ export const useGravityAd = (options?: GravityAdOptions): GravityAdState => {
   const isVeryCompactHeight = terminalHeight <= 17
 
   // SavantFree always shows ads even on compact screens (ads are mandatory there).
-  const isFreeMode = IS_FREEBUFF
+  const isFreeMode = IS_SAVANT_FREE
 
   // Skip ads on very compact screens unless we're in SavantFree (where ads are mandatory)
   // Also skip if explicitly disabled (e.g. user has a subscription)
@@ -547,7 +547,7 @@ export const useGravityAd = (options?: GravityAdOptions): GravityAdState => {
         provider,
         surface,
         placement_id: inlinePlacementId,
-        is_freebuff: IS_FREEBUFF,
+        is_savant_free: IS_SAVANT_FREE,
       }
       trackInlineAdEvent(
         AnalyticsEvent.CLI_INLINE_AD_SLOT_ELIGIBLE,
@@ -669,7 +669,7 @@ function getAdUserAgent(): string {
 }
 
 function getCliAdRequestUserAgent(): string {
-  const product = IS_FREEBUFF ? 'SavantFree-CLI' : 'SavantCode-CLI'
-  const version = getCliEnv().CODEBUFF_CLI_VERSION ?? 'dev'
+  const product = IS_SAVANT_FREE ? 'SavantFree-CLI' : 'SavantCode-CLI'
+  const version = getCliEnv().SAVANT_CODE_CLI_VERSION ?? 'dev'
   return `${product}/${version}`
 }

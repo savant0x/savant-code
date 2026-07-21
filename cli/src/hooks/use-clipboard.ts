@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- clipboard hook: dynamic selection event type */
 import { useRenderer } from '@opentui/react'
 import { useEffect, useRef, useState } from 'react'
 

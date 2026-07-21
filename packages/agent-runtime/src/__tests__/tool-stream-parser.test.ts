@@ -7,6 +7,7 @@ import { createToolCallChunk } from './test-utils'
 
 import type { AgentRuntimeDeps } from '@savant-code/common/types/contracts/agent-runtime'
 import type { StreamChunk } from '@savant-code/common/types/contracts/llm'
+import type { JSONValue } from '@savant-code/common/types/json'
 
 describe('processStreamWithTags', () => {
   async function* createMockStream(chunks: StreamChunk[]) {
@@ -41,7 +42,7 @@ describe('processStreamWithTags', () => {
         onTagStart: (tagName: string, attributes: Record<string, string>) => {
           events.push({ tagName, type: 'start', attributes })
         },
-        onTagEnd: (tagName: string, params: Record<string, string>) => {
+        onTagEnd: (tagName: string, params: Record<string, JSONValue>) => {
           events.push({ tagName, type: 'end', params })
         },
       },
@@ -103,7 +104,7 @@ describe('processStreamWithTags', () => {
         onTagStart: (tagName: string, attributes: Record<string, string>) => {
           events.push({ tagName, type: 'start', attributes })
         },
-        onTagEnd: (tagName: string, params: Record<string, string>) => {
+        onTagEnd: (tagName: string, params: Record<string, JSONValue>) => {
           events.push({ tagName, type: 'end', params })
         },
       },
@@ -166,7 +167,7 @@ describe('processStreamWithTags', () => {
         onTagStart: (tagName: string, attributes: Record<string, string>) => {
           events.push({ tagName, type: 'start', attributes })
         },
-        onTagEnd: (tagName: string, params: Record<string, string>) => {
+        onTagEnd: (tagName: string, params: Record<string, JSONValue>) => {
           events.push({ tagName, type: 'end', params })
         },
       },
@@ -175,7 +176,7 @@ describe('processStreamWithTags', () => {
         onTagStart: (tagName: string, attributes: Record<string, string>) => {
           events.push({ tagName, type: 'start', attributes })
         },
-        onTagEnd: (tagName: string, params: Record<string, string>) => {
+        onTagEnd: (tagName: string, params: Record<string, JSONValue>) => {
           events.push({ tagName, type: 'end', params })
         },
       },
@@ -246,7 +247,7 @@ describe('processStreamWithTags', () => {
         onTagStart: (tagName: string, attributes: Record<string, string>) => {
           events.push({ tagName, type: 'start', attributes })
         },
-        onTagEnd: (tagName: string, params: Record<string, string>) => {
+        onTagEnd: (tagName: string, params: Record<string, JSONValue>) => {
           events.push({ tagName, type: 'end', params })
         },
       },
@@ -315,7 +316,7 @@ describe('processStreamWithTags', () => {
         onTagStart: (tagName: string, attributes: Record<string, string>) => {
           events.push({ tagName, type: 'start', attributes })
         },
-        onTagEnd: (tagName: string, params: Record<string, any>) => {
+        onTagEnd: (tagName: string, params: Record<string, JSONValue>) => {
           events.push({ tagName, type: 'end', params })
         },
       },
@@ -383,7 +384,7 @@ describe('processStreamWithTags', () => {
         onTagStart: (tagName: string, attributes: Record<string, string>) => {
           events.push({ tagName, type: 'start', attributes })
         },
-        onTagEnd: (tagName: string, params: Record<string, string>) => {
+        onTagEnd: (tagName: string, params: Record<string, JSONValue>) => {
           events.push({ tagName, type: 'end', params })
         },
       },

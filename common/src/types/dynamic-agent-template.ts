@@ -1,8 +1,10 @@
 import { z } from 'zod/v4'
 
+
 import { ALLOWED_MODEL_PREFIXES, models } from '../old-constants'
 import { mcpConfigSchema } from './mcp'
 
+import type { StepHandler } from './agent-template'
 import type { JSONSchema } from 'zod/v4/core'
 
 // Filter models to only include those that begin with allowed prefixes
@@ -67,46 +69,12 @@ const PromptFieldSchema = z.union([
 ])
 export type PromptField = z.infer<typeof PromptFieldSchema>
 
-const functionSchema = <T extends z.core.$ZodFunction>(schema: T) =>
-  z.custom<Parameters<T['implement']>[0]>((fn: any) => schema.implement(fn))
-// Schema for the Logger interface
-const LoggerSchema = z.object({
-  debug: z.function({
-    input: [z.any(), z.string().optional()],
-    output: z.void(),
-  }),
-  info: z.function({
-    input: [z.any(), z.string().optional()],
-    output: z.void(),
-  }),
-  warn: z.function({
-    input: [z.any(), z.string().optional()],
-    output: z.void(),
-  }),
-  error: z.function({
-    input: [z.any(), z.string().optional()],
-    output: z.void(),
-  }),
-})
-
-// Schema for validating handleSteps function signature
-const HandleStepsSchema = functionSchema(
-  z.function({
-    input: [
-      z.object({
-        agentState: z.object({
-          agentId: z.string(),
-          parentId: z.string(),
-          messageHistory: z.array(z.any()),
-        }),
-        prompt: z.string().optional(),
-        params: z.any().optional(),
-      }),
-      LoggerSchema.optional(),
-    ],
-    output: z.any(),
-  }),
-).optional()
+// Schema for validating handleSteps function signature. We use a plain
+// `z.custom` with a function check because the exact runtime signature is
+// enforced by the TypeScript `StepHandler` type at compile time.
+const HandleStepsSchema = z
+  .custom<StepHandler>((v) => typeof v === 'function')
+  .optional()
 
 // Validates the Typescript template file.
 export const DynamicAgentDefinitionSchema = z.object({
@@ -215,10 +183,9 @@ export const DynamicAgentTemplateSchema = DynamicAgentDefinitionSchema.extend({
   handleSteps: z.string().optional(), // Converted to string after processing
   // Live copy of handleSteps preserved for in-process execution (the string
   // form of a bundled/minified function may not survive an eval round-trip).
-  // Never serialized: JSON.stringify drops function values. Typed loosely so
-  // the zod-inferred signature doesn't fight the StepHandler type.
+  // Never serialized: JSON.stringify drops function values.
   handleStepsFn: z
-    .custom<(...args: any[]) => any>((v) => typeof v === 'function')
+    .custom<StepHandler>((v) => typeof v === 'function')
     .optional(),
 })
   .refine(

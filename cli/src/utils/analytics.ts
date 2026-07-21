@@ -1,8 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- analytics: dynamic event property shapes */
 import {
   createPostHogClient,
   type AnalyticsClientWithIdentify,
   type PostHogClientOptions,
 } from '@savant-code/common/analytics-core'
+import { AnalyticsEvent } from '@savant-code/common/constants/analytics-events'
 import {
   env as defaultEnv,
   IS_PROD as defaultIsProd,
@@ -14,7 +16,6 @@ import { shouldMirrorAnalyticsEvent } from '@savant-code/common/util/log-mirror'
 import { getOrCreatePersistentAnonymousId } from './anonymous-id'
 import { enqueueClientLog } from './log-shipper'
 
-import { AnalyticsEvent } from '@savant-code/common/constants/analytics-events'
 
 
 // Re-export types from core for backwards compatibility
@@ -78,7 +79,7 @@ function resolveDeps(): ResolvedAnalyticsDeps {
 }
 
 let loggerModulePromise:
-  | Promise<{ logger: { debug: (data: any, msg?: string, ...args: any[]) => void } }> // eslint-disable-line @typescript-eslint/no-explicit-any -- dynamic logger module shape
+  | Promise<{ logger: { debug: (data: any, msg?: string, ...args: any[]) => void } }>  
   | null = null
 
 const loadLogger = () => {
@@ -181,7 +182,7 @@ export async function flushAnalytics() {
 
 export function trackEvent(
   event: AnalyticsEvent,
-  properties?: Record<string, any>, // eslint-disable-line @typescript-eslint/no-explicit-any -- dynamic analytics properties per event
+  properties?: Record<string, any>,  
 ) {
   const { isProd } = resolveDeps()
   const distinctId = getDistinctId()
@@ -254,7 +255,7 @@ export function trackEvent(
   }
 }
 
-export function identifyUser(userId: string, properties?: Record<string, any>) { // eslint-disable-line @typescript-eslint/no-explicit-any -- dynamic analytics properties per event
+export function identifyUser(userId: string, properties?: Record<string, any>) {  
   if (!client) {
     const error = new Error('Analytics client not initialized')
     logAnalyticsError(error, {
@@ -307,9 +308,9 @@ export function identifyUser(userId: string, properties?: Record<string, any>) {
 }
 
 export function logError(
-  error: any, // eslint-disable-line @typescript-eslint/no-explicit-any -- error can be any type from caller
+  error: any,  
   userId?: string,
-  properties?: Record<string, any>, // eslint-disable-line @typescript-eslint/no-explicit-any -- dynamic analytics properties per event
+  properties?: Record<string, any>,  
 ) {
   if (!client) {
     return

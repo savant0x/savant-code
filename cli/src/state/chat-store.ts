@@ -2,17 +2,11 @@ import { castDraft } from 'immer'
 import { create } from 'zustand'
 import { immer } from 'zustand/middleware/immer'
 
-import { AGENT_MODES, IS_FREEBUFF } from '../utils/constants'
+import { AGENT_MODES, IS_SAVANT_FREE } from '../utils/constants'
 import { clamp } from '../utils/math'
 import { loadModePreference, saveModePreference } from '../utils/settings'
 
 import type { ChatMessage, ContentBlock } from '../types/chat'
-import type { AgentMode } from '../utils/constants'
-import type { InputMode } from '../utils/input-modes'
-import type { AgentActivity } from '@savant-code/common/types/session-state'
-import type { RunState } from '@savant-code/sdk'
-
-// Import types from the types/store module to avoid circular dependencies
 import type {
   TopBannerType,
   InputValue,
@@ -30,6 +24,12 @@ import type {
   SuggestedFollowupsState,
   ClickedFollowupsMap,
 } from '../types/store'
+import type { AgentMode } from '../utils/constants'
+import type { InputMode } from '../utils/input-modes'
+import type { AgentActivity } from '@savant-code/common/types/session-state'
+import type { RunState } from '@savant-code/sdk'
+
+// Import types from the types/store module to avoid circular dependencies
 
 // Re-export types from the types/store module to maintain backwards compatibility
 export type {
@@ -261,7 +261,7 @@ const initialState: ChatStoreState = {
   isChainInProgress: false,
   slashSelectedIndex: 0,
   agentSelectedIndex: 0,
-  agentMode: IS_FREEBUFF ? ('LITE' as const) : loadModePreference(),
+  agentMode: loadModePreference(),
   hasReceivedPlanResponse: false,
   lastMessageMode: null,
   sessionCreditsUsed: 0,
@@ -367,14 +367,14 @@ export const useChatStore = create<ChatStore>()(
 
     setAgentMode: (mode) =>
       set((state) => {
-        if (IS_FREEBUFF) return
+        if (IS_SAVANT_FREE) return
         state.agentMode = mode
         saveModePreference(mode)
       }),
 
     toggleAgentMode: () =>
       set((state) => {
-        if (IS_FREEBUFF) return
+        if (IS_SAVANT_FREE) return
         const currentIndex = AGENT_MODES.indexOf(state.agentMode)
         const nextIndex = (currentIndex + 1) % AGENT_MODES.length
         state.agentMode = AGENT_MODES[nextIndex]

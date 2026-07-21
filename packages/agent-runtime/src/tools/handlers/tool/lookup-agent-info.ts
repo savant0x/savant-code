@@ -1,5 +1,6 @@
 import { jsonToolResult } from '@savant-code/common/util/messages'
 import { removeUndefinedProps } from '@savant-code/common/util/object'
+import { toJSONValue } from '@savant-code/common/util/type-narrowing'
 import z from 'zod/v4'
 
 import { getAgentTemplate } from '../../../templates/agent-registry'
@@ -9,11 +10,10 @@ import type {
   SavantCodeToolCall,
   SavantCodeToolOutput,
 } from '@savant-code/common/tools/list'
-import type {
-  AgentTemplate,
-  Logger,
-} from '@savant-code/common/types/agent-template'
+import type { AgentTemplate } from '@savant-code/common/types/agent-template'
 import type { FetchAgentFromDatabaseFn } from '@savant-code/common/types/contracts/database'
+import type { Logger } from '@savant-code/common/types/contracts/logger'
+import type { JSONObject } from '@savant-code/common/types/json'
 
 export const handleLookupAgentInfo = (async (params: {
   toolCall: SavantCodeToolCall<'lookup_agent_info'>
@@ -56,28 +56,28 @@ export const handleLookupAgentInfo = (async (params: {
     spawnableAgents,
   } = agentTemplate
 
+  const agentData = removeUndefinedProps({
+    fullAgentId: agentId,
+    id,
+    displayName,
+    model,
+    toolNames,
+    spawnableAgents,
+    includeMessageHistory,
+    spawnerPrompt,
+    ...(inputSchema && {
+      inputSchema: inputSchemaToJSONSchema(inputSchema),
+    }),
+    outputMode,
+    ...(outputSchema && {
+      outputSchema: toJSONSchema(outputSchema),
+    }),
+  })
+
   return {
     output: jsonToolResult({
       found: true,
-      agent: {
-        ...removeUndefinedProps({
-          fullAgentId: agentId,
-          id,
-          displayName,
-          model,
-          toolNames,
-          spawnableAgents,
-          includeMessageHistory,
-          spawnerPrompt,
-          ...(inputSchema && {
-            inputSchema: inputSchemaToJSONSchema(inputSchema),
-          }),
-          outputMode,
-          ...(outputSchema && {
-            outputSchema: toJSONSchema(outputSchema),
-          }),
-        }),
-      },
+      agent: agentData as JSONObject,
     }),
   }
 }) satisfies SavantCodeToolHandlerFunction<'lookup_agent_info'>
@@ -85,10 +85,10 @@ export const handleLookupAgentInfo = (async (params: {
 const toJSONSchema = (schema: z.ZodSchema) => {
   try {
     const jsonSchema = z.toJSONSchema(schema, { io: 'input' }) as {
-      [key: string]: any
+      [key: string]: unknown
     }
     delete jsonSchema['$schema']
-    return jsonSchema
+    return toJSONValue(jsonSchema)
   } catch {
     return { type: 'object', description: 'Schema unavailable' }
   }

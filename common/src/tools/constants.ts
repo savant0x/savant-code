@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- tool constants: Tool type parameter any constraint */
 import { COMPOSIO_META_TOOL_NAMES } from '../constants/composio'
 
 import type { ToolResultOutput } from '../types/messages/content-part'
@@ -5,7 +6,7 @@ import type { Tool } from 'ai'
 
 export const toolNameParam = 'cb_tool_name'
 export const endsAgentStepParam = 'cb_easp'
-export const toolXmlName = 'codebuff_tool_call'
+export const toolXmlName = 'savant_code_tool_call'
 export const startToolTag = `<${toolXmlName}>\n`
 export const endToolTag = `\n</${toolXmlName}>`
 
@@ -47,6 +48,7 @@ export const toolNames = [
   'run_terminal_command',
   'set_messages',
   'set_output',
+  'set_scaffold_complete',
   'sequentialthinking',
   'skill',
   'spawn_agents',
@@ -85,6 +87,7 @@ export const publishedTools = [
   'run_terminal_command',
   'set_messages',
   'set_output',
+  'set_scaffold_complete',
   'skill',
   'spawn_agents',
   'str_replace',

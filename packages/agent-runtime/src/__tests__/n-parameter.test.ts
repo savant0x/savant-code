@@ -1,6 +1,6 @@
 import * as analytics from '@savant-code/common/analytics'
 import { TEST_USER_ID } from '@savant-code/common/old-constants'
-import { createTestAgentRuntimeParams } from '@savant-code/common/testing/fixtures/agent-runtime'
+import { createTestAgentRuntimeParams, emptyMcpServers } from '@savant-code/common/testing/fixtures/agent-runtime'
 import { getInitialSessionState } from '@savant-code/common/types/session-state'
 import { promptAborted, promptSuccess } from '@savant-code/common/util/error'
 import { assistantMessage, userMessage } from '@savant-code/common/util/messages'
@@ -68,7 +68,7 @@ describe('n parameter and GENERATE_N functionality', () => {
       outputMode: 'structured_output',
       includeMessageHistory: true,
       inheritParentSystemPrompt: false,
-      mcpServers: {},
+      mcpServers: emptyMcpServers,
       toolNames: ['read_files', 'write_file', 'end_turn'],
       spawnableAgents: [],
       systemPrompt: 'Test system prompt',

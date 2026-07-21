@@ -1,6 +1,5 @@
 import fs from 'fs'
 import os from 'os'
-import path from 'path'
 import { platform } from 'process'
 
 import { getProcessEnv } from '../env-process'

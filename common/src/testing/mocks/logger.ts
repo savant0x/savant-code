@@ -1,14 +1,15 @@
 import { mock } from 'bun:test'
 
+import type { LogValue } from '../../types/contracts/logger'
 import type { Mock } from 'bun:test'
 
 export type LogLevel = 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'fatal'
 
 export type LogMethod = (
-  data: unknown,
+  data: LogValue,
   msg?: string,
-  ...args: unknown[]
-) => unknown
+  ...args: LogValue[]
+) => void
 
 export type MockLogMethod = Mock<LogMethod>
 
@@ -19,7 +20,7 @@ export interface MockLogger {
   warn: MockLogMethod
   error: MockLogMethod
   fatal: MockLogMethod
-  child: Mock<(bindings: Record<string, unknown>) => MockLogger>
+  child: Mock<(bindings: Record<string, LogValue>) => MockLogger>
 }
 
 export interface CreateMockLoggerOptions {
@@ -30,7 +31,7 @@ export interface CreateMockLoggerOptions {
 export interface CapturedLogEntry {
   level: LogLevel
   message: string
-  meta?: Record<string, unknown>
+  meta?: Record<string, LogValue>
   timestamp: Date
 }
 
@@ -73,11 +74,11 @@ export function createMockLoggerWithCapture(): MockLoggerWithCapture {
   const captured: CapturedLogEntry[] = []
 
   const createCapturingLogMethod = (level: LogLevel): MockLogMethod => {
-    return mock((data: unknown, msg?: string) => {
+    return mock((data: LogValue, msg?: string) => {
       const message = typeof data === 'string' ? data : (msg ?? String(data))
       const meta =
         typeof data === 'object' && data !== null
-          ? (data as Record<string, unknown>)
+          ? (data as Record<string, LogValue>)
           : undefined
       captured.push({
         level,

@@ -3,22 +3,22 @@ import os from 'os'
 import path from 'path'
 
 import { pluralize } from '@savant-code/common/util/string'
+import { createAgentTemplate, getAgentTemplate, updateAgentTemplate } from '@savant-code/database/service'
 import {
   loadLocalAgents as sdkLoadLocalAgents,
   loadMCPConfigSync,
 } from '@savant-code/sdk'
 
-import type { MCPConfig } from '@savant-code/common/types/mcp'
 
-import { getSelectedFreebuffModel } from '../state/savant-free-model-store'
 import { getProjectRoot } from '../project-files'
-import { IS_FREEBUFF, type AgentMode } from './constants'
-import { getAgentIdForMode } from './savant-free-agent-selection'
+import { IS_SAVANT_FREE, type AgentMode } from './constants'
 import { logger } from './logger'
+import { getAgentIdForMode } from './savant-free-agent-selection'
 import * as bundledAgentsModule from '../agents/bundled-agents.generated'
-import { createAgentTemplate, getAgentTemplate, updateAgentTemplate } from '@savant-code/database/service'
+import { getSelectedSavantFreeModel } from '../state/savant-free-model-store'
 
 import type { AgentDefinition } from '@savant-code/common/templates/initial-agents-dir/types/agent-definition'
+import type { MCPConfig } from '@savant-code/common/types/mcp'
 
 // ============================================================================
 // Constants and types
@@ -239,15 +239,15 @@ const cachedAgentsByMode: Map<string, LocalAgentInfo[]> = new Map()
  * Load local agents for display in the '@' menu.
  *
  * @param currentAgentMode - If provided, filters bundled agents to only include
- *   subagents of the current mode's agent (e.g., base2's spawnableAgents for DEFAULT mode).
+ *   subagents of the current mode's agent (e.g., savant's spawnableAgents for DEFAULT mode).
  *   User's local agents from .agents/ are always included regardless of mode.
  */
 export const loadLocalAgents = (
   currentAgentMode?: AgentMode,
 ): LocalAgentInfo[] => {
-  const selectedFreebuffModel = IS_FREEBUFF ? getSelectedFreebuffModel() : null
-  const cacheKey = selectedFreebuffModel
-    ? `${currentAgentMode ?? 'all'}:${selectedFreebuffModel}`
+  const selectedSavantFreeModel = IS_SAVANT_FREE ? getSelectedSavantFreeModel() : null
+  const cacheKey = selectedSavantFreeModel
+    ? `${currentAgentMode ?? 'all'}:${selectedSavantFreeModel}`
     : (currentAgentMode ?? 'all')
   const cached = cachedAgentsByMode.get(cacheKey)
   if (cached) {
@@ -318,9 +318,9 @@ export const saveAgentDefinitionsToDb = (definitions: AgentDefinition[]): void =
     for (const def of definitions) {
       const existing = getAgentTemplate(def.id)
       if (existing) {
-        updateAgentTemplate(def.id, def)
+        updateAgentTemplate(def.id, def as unknown as Record<string, unknown>)
       } else {
-        createAgentTemplate(def)
+        createAgentTemplate(def as unknown as Record<string, unknown>)
       }
     }
     logger.debug(

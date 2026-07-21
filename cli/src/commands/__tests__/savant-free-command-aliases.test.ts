@@ -35,10 +35,10 @@ describe('savant-free command aliases', () => {
       cwd: process.cwd(),
       env: {
         ...process.env,
-        FREEBUFF_MODE: 'true',
+        SAVANT_FREE_MODE: 'true',
         NODE_ENV: 'test',
         NEXT_PUBLIC_CB_ENVIRONMENT: 'test',
-        NEXT_PUBLIC_CODEBUFF_APP_URL: 'https://app.savant-code.test',
+        NEXT_PUBLIC_SAVANT_CODE_APP_URL: 'https://app.savant-code.test',
         NEXT_PUBLIC_SUPPORT_EMAIL: 'support@savant-code.test',
         NEXT_PUBLIC_POSTHOG_API_KEY: 'phc_test_key',
         NEXT_PUBLIC_POSTHOG_HOST_URL: 'https://posthog.savant-code.test',

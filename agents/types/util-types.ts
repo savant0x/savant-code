@@ -1,3 +1,4 @@
+/* eslint-disable savant/no-unknown-in-signatures -- util types contract: timer/notification interface signatures */
 // ===== JSON Types =====
 export type JSONValue =
   | null
@@ -175,8 +176,8 @@ export type MCPConfig =
 // Logger Interface
 // ============================================================================
 export interface Logger {
-  debug: (data: any, msg?: string) => void
-  info: (data: any, msg?: string) => void
-  warn: (data: any, msg?: string) => void
-  error: (data: any, msg?: string) => void
+  debug: (data: unknown, msg?: string) => void
+  info: (data: unknown, msg?: string) => void
+  warn: (data: unknown, msg?: string) => void
+  error: (data: unknown, msg?: string) => void
 }

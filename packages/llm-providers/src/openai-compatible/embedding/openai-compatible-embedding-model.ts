@@ -12,7 +12,7 @@ import { openaiCompatibleEmbeddingProviderOptions } from './openai-compatible-em
 import { defaultOpenAICompatibleErrorStructure } from '../openai-compatible-error'
 
 import type { OpenAICompatibleEmbeddingModelId } from './openai-compatible-embedding-options'
-import type { ProviderErrorStructure } from '../openai-compatible-error'
+import type { OpenAICompatibleErrorData, ProviderErrorStructure } from '../openai-compatible-error'
 import type { EmbeddingModelV2 } from '@ai-sdk/provider'
 import type { FetchFunction } from '@ai-sdk/provider-utils'
 
@@ -31,7 +31,7 @@ Override the parallelism of embedding calls.
   url: (options: { modelId: string; path: string }) => string
   headers: () => Record<string, string | undefined>
   fetch?: FetchFunction
-  errorStructure?: ProviderErrorStructure<any>
+  errorStructure?: ProviderErrorStructure<OpenAICompatibleErrorData>
 }
 
 export class OpenAICompatibleEmbeddingModel implements EmbeddingModelV2<string> {

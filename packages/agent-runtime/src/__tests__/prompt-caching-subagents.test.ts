@@ -1,4 +1,5 @@
 import { TEST_USER_ID } from '@savant-code/common/old-constants'
+import { emptyMcpServers } from '@savant-code/common/testing/fixtures/agent-runtime'
 import { TEST_AGENT_RUNTIME_IMPL } from '@savant-code/common/testing/impl/agent-runtime'
 import { getInitialSessionState } from '@savant-code/common/types/session-state'
 import { promptSuccess } from '@savant-code/common/util/error'
@@ -9,8 +10,8 @@ import { loopAgentSteps } from '../run-agent-step'
 
 import type { AgentTemplate } from '../templates/types'
 import type { ParamsExcluding } from '@savant-code/common/types/function-params'
-import type { Message } from '@savant-code/common/types/messages/savant-code-message'
 import type { TextPart } from '@savant-code/common/types/messages/content-part'
+import type { Message } from '@savant-code/common/types/messages/savant-code-message'
 import type { ProjectFileContext } from '@savant-code/common/util/file'
 
 const mockFileContext: ProjectFileContext = {
@@ -67,7 +68,7 @@ describe('Prompt Caching for Subagents with inheritParentSystemPrompt', () => {
         model: 'anthropic/claude-sonnet-4',
         includeMessageHistory: false,
         inheritParentSystemPrompt: false,
-        mcpServers: {},
+        mcpServers: emptyMcpServers,
         toolNames: [],
         spawnableAgents: ['child'],
         systemPrompt: 'Parent agent system prompt for testing',
@@ -83,7 +84,7 @@ describe('Prompt Caching for Subagents with inheritParentSystemPrompt', () => {
         model: 'anthropic/claude-sonnet-4', // Same model as parent
         includeMessageHistory: false,
         inheritParentSystemPrompt: true, // Should inherit parent's system prompt
-        mcpServers: {},
+        mcpServers: emptyMcpServers,
         toolNames: [],
         spawnableAgents: [],
         systemPrompt: '', // Must be empty when inheritParentSystemPrompt is true
@@ -203,7 +204,7 @@ describe('Prompt Caching for Subagents with inheritParentSystemPrompt', () => {
       model: 'anthropic/claude-sonnet-4',
       includeMessageHistory: false,
       inheritParentSystemPrompt: false,
-      mcpServers: {},
+      mcpServers: emptyMcpServers,
       toolNames: [],
       spawnableAgents: [],
       systemPrompt: 'Standalone child system prompt',
@@ -265,7 +266,7 @@ describe('Prompt Caching for Subagents with inheritParentSystemPrompt', () => {
       model: 'anthropic/claude-sonnet-4',
       includeMessageHistory: true, // Includes message history
       inheritParentSystemPrompt: false, // But uses own system prompt
-      mcpServers: {},
+      mcpServers: emptyMcpServers,
       toolNames: [],
       spawnableAgents: [],
       systemPrompt: 'Child with message history system prompt',
@@ -422,7 +423,7 @@ describe('Prompt Caching for Subagents with inheritParentSystemPrompt', () => {
       model: 'anthropic/claude-sonnet-4',
       includeMessageHistory: false,
       inheritParentSystemPrompt: true,
-      mcpServers: {},
+      mcpServers: emptyMcpServers,
       toolNames: ['read_files', 'code_search'],
       spawnableAgents: [],
       systemPrompt: '',
@@ -499,7 +500,7 @@ describe('Prompt Caching for Subagents with inheritParentSystemPrompt', () => {
       model: 'anthropic/claude-sonnet-4',
       includeMessageHistory: true, // Includes message history
       inheritParentSystemPrompt: true, // AND inherits system prompt
-      mcpServers: {},
+      mcpServers: emptyMcpServers,
       toolNames: [],
       spawnableAgents: [],
       systemPrompt: '', // Must be empty

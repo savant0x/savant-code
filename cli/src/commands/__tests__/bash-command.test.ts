@@ -25,7 +25,7 @@ describe('bash command', () => {
       overrides: Partial<RouterParams> = {},
     ): RouterParams => ({
       abortControllerRef: { current: null },
-      agentMode: 'DEFAULT',
+      agentMode: 'EDIT',
       inputRef: { current: null },
       inputValue: '/bash',
       isChainInProgressRef: { current: false },
@@ -293,7 +293,7 @@ describe('bash command', () => {
       overrides: Partial<RouterParams> = {},
     ): RouterParams => ({
       abortControllerRef: { current: null },
-      agentMode: 'DEFAULT',
+      agentMode: 'EDIT',
       inputRef: { current: null },
       inputValue: '/bash',
       isChainInProgressRef: { current: false },

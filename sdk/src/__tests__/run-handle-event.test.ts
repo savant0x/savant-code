@@ -116,7 +116,7 @@ describe('SavantCodeClient handleEvent / handleStreamChunk', () => {
     })
 
     const result = await client.run({
-      agent: 'base2',
+      agent: 'savant',
       prompt: 'hello world',
       handleEvent: (event) => {
         events.push(event)

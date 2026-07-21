@@ -1,5 +1,5 @@
 /**
- * Freebuff Web referral tiers.
+ * SavantFree Web referral tiers.
  *
  * Each *qualified* referral (referred user's GitHub account is at least
  * MIN_GITHUB_ACCOUNT_AGE_MONTHS old at signup) raises the referrer's tier.
@@ -28,14 +28,14 @@ export const MIN_GITHUB_ACCOUNT_AGE_MONTHS_GLM = 12
 export const MIN_GITHUB_ACCOUNT_AGE_MONTHS_REFERRAL = 4
 
 /**
- * Freebuff CLI limited-tier perk: each qualified referral whose referred user
+ * SavantFree CLI limited-tier perk: each qualified referral whose referred user
  * activated at the *limited* access tier grants +1 daily free-mode session,
  * capped here (e.g. 5 base + 3 = 8/day). Full-access referrals instead grant
- * GLM sessions (see FREEBUFF_GLM_V52_REFERRAL_CAP).
+ * GLM sessions (see SAVANT_FREE_GLM_V52_REFERRAL_CAP).
  */
 export const REFERRAL_CLI_DAILY_SESSION_BONUS_CAP = 3
 
-export interface FreebuffReferralTier {
+export interface SavantFreeReferralTier {
   /** Tier index (0-based, in ascending order of referralsRequired). */
   tier: number
   /** Qualified referrals needed to reach this tier. */
@@ -44,12 +44,12 @@ export interface FreebuffReferralTier {
   standardModelDailyLimit: number
   /** Daily message cap for premium models. */
   premiumModelDailyLimit: number
-  /** Whether the "Powered by Freebuff" watermark is removed from deploys. */
+  /** Whether the "Powered by SavantFree" watermark is removed from deploys. */
   removesWatermark: boolean
 }
 
 /** Tier ladder: 1 referral, then +2 (3 total), then +4 (7 total). */
-export const FREEBUFF_REFERRAL_TIERS: readonly FreebuffReferralTier[] = [
+export const SAVANT_FREE_REFERRAL_TIERS: readonly SavantFreeReferralTier[] = [
   {
     tier: 0,
     referralsRequired: 0,
@@ -86,7 +86,7 @@ export const FREEBUFF_REFERRAL_TIERS: readonly FreebuffReferralTier[] = [
  * ladder tops out at 7 qualified referrals, so it needs its own headroom —
  * generous enough for unqualified signups, small enough to bound farming.
  */
-export const FREEBUFF_WEB_REFERRAL_LIMIT = 20
+export const SAVANT_FREE_WEB_REFERRAL_LIMIT = 20
 
 /**
  * A referral can only be attributed within this many days of the referred
@@ -100,33 +100,33 @@ export const REFERRAL_SIGNUP_WINDOW_DAYS = 30
 /**
  * Max attributed referrals (referral_v2 rows) a single referrer may accumulate.
  * A generous anti-spam ceiling only — every actual reward is already capped at
- * read time (GLM at FREEBUFF_GLM_V52_REFERRAL_CAP, the web tier ladder, the CLI
+ * read time (GLM at SAVANT_FREE_GLM_V52_REFERRAL_CAP, the web tier ladder, the CLI
  * bonus at REFERRAL_CLI_DAILY_SESSION_BONUS_CAP), so this never throttles a
  * legitimate referrer; it just bounds pathological row creation.
  */
-export const FREEBUFF_REFERRAL_SIGNUP_LIMIT = 100
+export const SAVANT_FREE_REFERRAL_SIGNUP_LIMIT = 100
 
-export const MAX_FREEBUFF_REFERRAL_TIER =
-  FREEBUFF_REFERRAL_TIERS[FREEBUFF_REFERRAL_TIERS.length - 1].tier
+export const MAX_SAVANT_FREE_REFERRAL_TIER =
+  SAVANT_FREE_REFERRAL_TIERS[SAVANT_FREE_REFERRAL_TIERS.length - 1].tier
 
 /** Lowest tier whose perks include watermark removal. */
-export const FREEBUFF_WATERMARK_REMOVAL_TIER = FREEBUFF_REFERRAL_TIERS.find(
+export const SAVANT_FREE_WATERMARK_REMOVAL_TIER = SAVANT_FREE_REFERRAL_TIERS.find(
   (tier) => tier.removesWatermark,
 )!.tier
 
 /** Qualified referrals needed before deploys drop the watermark. */
-export const FREEBUFF_WATERMARK_REMOVAL_REFERRALS =
-  FREEBUFF_REFERRAL_TIERS.find(
+export const SAVANT_FREE_WATERMARK_REMOVAL_REFERRALS =
+  SAVANT_FREE_REFERRAL_TIERS.find(
     (tier) => tier.removesWatermark,
   )!.referralsRequired
 
 /** Highest tier unlocked by the given qualified referral count. */
 export function getReferralTier(
   qualifiedReferralCount: number | null | undefined,
-): FreebuffReferralTier {
+): SavantFreeReferralTier {
   const count = Math.max(0, qualifiedReferralCount ?? 0)
-  let unlocked = FREEBUFF_REFERRAL_TIERS[0]
-  for (const tier of FREEBUFF_REFERRAL_TIERS) {
+  let unlocked = SAVANT_FREE_REFERRAL_TIERS[0]
+  for (const tier of SAVANT_FREE_REFERRAL_TIERS) {
     if (count >= tier.referralsRequired) {
       unlocked = tier
     }
@@ -135,18 +135,18 @@ export function getReferralTier(
 }
 
 /** Tier limits by tier index (clamped into range). */
-export function getTierLimits(tier: number): FreebuffReferralTier {
-  const clamped = Math.min(Math.max(0, tier), MAX_FREEBUFF_REFERRAL_TIER)
-  return FREEBUFF_REFERRAL_TIERS.find((t) => t.tier === clamped)!
+export function getTierLimits(tier: number): SavantFreeReferralTier {
+  const clamped = Math.min(Math.max(0, tier), MAX_SAVANT_FREE_REFERRAL_TIER)
+  return SAVANT_FREE_REFERRAL_TIERS.find((t) => t.tier === clamped)!
 }
 
 /** Next tier above the given qualified referral count, or null if maxed. */
 export function getNextReferralTier(
   qualifiedReferralCount: number | null | undefined,
-): FreebuffReferralTier | null {
+): SavantFreeReferralTier | null {
   const current = getReferralTier(qualifiedReferralCount)
   return (
-    FREEBUFF_REFERRAL_TIERS.find((tier) => tier.tier === current.tier + 1) ??
+    SAVANT_FREE_REFERRAL_TIERS.find((tier) => tier.tier === current.tier + 1) ??
     null
   )
 }

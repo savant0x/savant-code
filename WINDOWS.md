@@ -126,7 +126,7 @@ SavantCode requires bash for command execution. This error appears when:
 3. **Set custom bash path** (advanced):
    - If bash.exe is installed in a non-standard location:
    ```powershell
-   set CODEBUFF_GIT_BASH_PATH=C:\path\to\bash.exe
+   set SAVANT_CODE_GIT_BASH_PATH=C:\path\to\bash.exe
    ```
 
 **Reference**: Issue [#274](https://github.com/savant0x/savant-code/issues/274)

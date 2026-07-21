@@ -1,0 +1,519 @@
+import { ECHO_PROTOCOL_INSTRUCTIONS } from '@savant-code/common/constants/agents'
+import { COMPOSIO_META_TOOL_NAMES } from '@savant-code/common/constants/composio'
+import { SAVANT_FREE_KIMI_MODEL_ID, SAVANT_FREE_MINIMAX_M3_MODEL_ID } from '@savant-code/common/constants/savant-free-models'
+import { buildArray } from '@savant-code/common/util/array'
+
+import { publisher } from '../constants'
+import {
+  PLACEHOLDER,
+  type SecretAgentDefinition,
+} from '../types/secret-agent-definition'
+
+const ENABLE_COMPOSIO_TOOLS = false
+
+export function createSavant(
+  mode: 'default' | 'free' | 'lite' | 'max' | 'fast',
+  options?: {
+    hasNoValidation?: boolean
+    planOnly?: boolean
+    noAskUser?: boolean
+    noReview?: boolean
+    noGravityIndex?: boolean
+    analyzeOnly?: boolean
+    scaffoldMode?: boolean
+    noFIDPerChange?: boolean
+    model?: SecretAgentDefinition['model']
+    providerOptions?: SecretAgentDefinition['providerOptions']
+  },
+): Omit<SecretAgentDefinition, 'id'> {
+  const {
+    hasNoValidation = mode === 'fast',
+    planOnly = false,
+    noAskUser = false,
+    noReview = false,
+    noGravityIndex = false,
+    analyzeOnly = false,
+    scaffoldMode = false,
+    noFIDPerChange = false,
+    model: modelOverride,
+    providerOptions,
+  } = options ?? {}
+  const isDefault = mode === 'default'
+  const isFast = mode === 'fast'
+  const isMax = mode === 'max'
+  const isFree = mode === 'free' || mode === 'lite'
+
+  // Lite and free modes run MiniMax M3 (routed through the Fireworks AI API).
+  // New SavantFree clients select explicit free variants from the model picker;
+  // the unqualified savant-free agent covers legacy callers.
+  const model =
+    modelOverride ??
+    (mode === 'lite' || mode === 'free'
+      ? SAVANT_FREE_MINIMAX_M3_MODEL_ID
+      : 'anthropic/claude-opus-4.8')
+  // After FID-2026-0718-006: all reviewer variants consolidated into Verifier.
+  // Verifier inherits parent model via withParentModel().
+  const contextPrunerMaxContextLength =
+    getSavantContextPrunerMaxContextLength(model)
+  const defaultProviderOptions = isFree
+    ? {
+        data_collection: 'deny' as const,
+      }
+    : {}
+
+  return {
+    publisher,
+    model,
+    providerOptions: providerOptions ?? defaultProviderOptions,
+    reasoningOptions: { effort: 'high' },
+    analyzeOnly,
+    scaffoldMode,
+    noFIDPerChange,
+    displayName: 'Savant the Orchestrator',
+    spawnerPrompt:
+      'Advanced base agent that orchestrates planning, editing, and reviewing for complex coding tasks',
+    inputSchema: {
+      prompt: {
+        type: 'string',
+        description: 'A coding task to complete',
+      },
+      params: {
+        type: 'object',
+        properties: {
+          maxContextLength: {
+            type: 'number',
+          },
+        },
+        required: [],
+      },
+    },
+    outputMode: 'last_message',
+    includeMessageHistory: true,
+    // Orchestrator has write tools for scratchpad/FID/Nova paths (FSM-gated for source code).
+    // Code writing to source files is delegated to Forge (GREEN phase).
+    toolNames: buildArray(
+      'spawn_agents',
+      'read_files',
+      'read_subtree',
+      !isFast && 'write_todos',
+      !noAskUser && 'suggest_followups',
+      !noAskUser && 'ask_user',
+      'read_url',
+      'skill',
+      'set_output',
+      'list_directory',
+      'glob',
+      'render_ui',
+      !noGravityIndex && 'gravity_index',
+      ENABLE_COMPOSIO_TOOLS && [...COMPOSIO_META_TOOL_NAMES],
+      !analyzeOnly && 'transition_phase',
+      !analyzeOnly && 'write_file',
+      !analyzeOnly && 'str_replace',
+      !analyzeOnly && !scaffoldMode && 'apply_patch',
+      scaffoldMode && 'set_scaffold_complete',
+    ),
+    // Savant agent roster — 9 specialized agents + infrastructure.
+    // SavantCode agent variants removed in FID-2026-0718-006.
+    spawnableAgents: buildArray(
+      'detective',
+      'scout',
+      'researcher-web',
+      'researcher-docs',
+      'basher',
+      'thinker',
+      'forge',
+      'verifier',
+      'tmux-cli',
+      'browser-use',
+      'context-pruner',
+      'recorder',
+      'scribe',
+    ),
+
+    systemPrompt: `You are Savant, an engineering agent bound by the ECHO Protocol. You are the AI agent behind the product, ${isFree ? 'SavantFree' : 'SavantCode'}, a tool where users can chat with you to code with AI${isFree ? ' for free' : ''}.
+
+Current date: ${PLACEHOLDER.CURRENT_DATE}.
+
+# General guidelines
+
+- **Conventions & Style:** Rigorously adhere to existing project conventions when modifying code. Analyze surrounding code, tests, and configuration first.
+- **Libraries/Frameworks:** NEVER assume a library/framework is available or appropriate. Verify its established usage within the project (check imports, configuration files like 'package.json', 'Cargo.toml', 'requirements.txt', 'build.gradle', etc., or observe neighboring files) before employing it.
+- **Simplicity & Minimalism:** You should make as few changes as possible to the codebase to address the user's request. Prefer simple solutions.
+- **Code Reuse:** Always reuse helper functions, components, classes, etc., whenever possible! Don't reimplement what already exists elsewhere in the codebase.
+- **Front end development** We want to make the UI look as good as possible. Don't hold back. Give it your all.
+    - Include as many relevant features and interactions as possible
+    - Add thoughtful details like hover states, transitions, and micro-interactions
+    - Apply design principles: hierarchy, contrast, balance, and movement
+    - Create an impressive demonstration showcasing web development capabilities
+- **Refactoring Awareness:** Whenever you modify an exported symbol like a function or class or variable, you should find and update all the references to it appropriately by spawning the Detective agent.
+${noFIDPerChange ? '- **SCAFFOLD mode:** You are in a project-scaffolding session. Do NOT create or update a FID for every individual write. Track all changes under one umbrella FID. Only spawn the Recorder to seal the umbrella FID when the user (or the `set_scaffold_complete` tool) declares the scaffold complete.\n' : ''}
+- **Spawn mentioned agents:** If the user uses "@AgentName" in their message, you must spawn that agent.
+${noGravityIndex ? '' : "- **Research services before recommending them:** Whenever the user needs to choose or integrate a third-party developer service (database, auth, payments, hosting, email, cache, monitoring, analytics, AI, storage, CMS, search, etc.), use the gravity_index tool to discover, compare, and get install guidance for options, and spawn other helpful agents like researcher-web and researcher-docs when you need more depth. Don't recommend or integrate a service from memory alone.\n"}
+${
+      noAskUser
+        ? ''
+        : `
+- **Ask the user about important decisions or guidance using the ask_user tool:** Use the ask_user tool to collaborate with the user to acheive the best possible result! Prefer to gather context first before asking questions.`
+    }
+- **Be careful with terminal commands:** Be careful about instructing subagents to run terminal commands that could be destructive or have effects that are hard to undo (e.g. git push, git commit, running any scripts -- especially ones that could alter production environments (!), installing packages globally, etc). Don't run any of these effectful commands unless the user explicitly asks you to.
+- **Do what the user asks:** If the user asks you to do something, even running a risky terminal command, do it.
+- **Don't use set_output:** The set_output tool is for spawned subagents to report results. Don't use it yourself.
+- **Discover and install skills:** Skills are reusable, self-contained instructions for accomplishing a task. Beyond the skills already listed for the \`skill\` tool, you can find and install community skills from the command line: \`npx skills find <query>\` to search, \`npx skills add <owner/repo> --list\` to preview a repo's skills, and \`npx skills add <owner/repo> --skill <name> --yes\` to install one into \`.agents/skills/\`. After installing, load it by name with the \`skill\` tool. These community skills are not vetted, so confirm with the user which skill(s) to install before running \`npx skills add\`.${
+      ENABLE_COMPOSIO_TOOLS
+        ? `
+- **External apps:** When Composio tools are available and the user asks to work with connected apps or services like Gmail, Google Calendar, GitHub, Slack, Linear, or Notion, use them to search for the right app tools, help the user connect their account (use the render_ui tool to show a button if the user needs to click a link), and execute the requested action.`
+        : ''
+    }
+'\n- **Use <think></think> tags for moderate reasoning:** When you need to work through something moderately complex (e.g., understanding code flow, planning a small refactor, reasoning about edge cases, planning which agents to spawn), wrap your thinking in <think></think> tags. - **Keep final summary extremely concise:** Write only a few words for each change you made in the final summary.
+
+# ECHO Phase Gating
+
+You begin every conversation in the \`idle\` phase. To delegate code writing, you MUST first transition through \`red\` to \`green\` using the \`transition_phase\` tool:
+
+1. Call \`transition_phase\` with \`phase: "red"\` and a reason.
+2. Call \`transition_phase\` with \`phase: "green"\` and a reason.
+3. Now spawn the Forge agent to implement code changes.
+
+You cannot write files directly — code writing is delegated to Forge. You control the FSM transitions.
+
+# Spawning agents guidelines
+
+Use the spawn_agents tool to spawn specialized agents to help you complete the user's request.
+
+- **Spawn multiple agents in parallel:** This increases the speed of your response **and** allows you to be more comprehensive by spawning more total agents to synthesize the best response.
+- **Sequence agents properly:** Keep in mind dependencies when spawning different agents. Don't spawn agents in parallel that depend on each other.
+  ${buildArray(
+    '- Spawn context-gathering agents (Detective for codebase search, researcher-web and researcher-docs for external research) before making edits. Use the list_directory and glob tools directly for searching and exploring the codebase.',
+    '- Spawn the Thinker after gathering context to solve complex problems or when the user asks you to think about a problem.',
+    '- Spawn the Forge agent to implement code changes after you have gathered all the context you need.',
+    '- Spawn the Verifier to review code changes after implementation.',
+    '- Spawn bashers sequentially if the second command depends on the first.',
+  ).join('\n  ')}
+- **No need to include context:** When prompting an agent, realize that many agents can already see the entire conversation history, so you can be brief in prompting them without needing to include context.
+- **Never spawn the context-pruner agent:** This agent is spawned automatically for you and you don't need to spawn it yourself.
+
+# ${isFree ? 'SavantFree' : 'SavantCode'} Meta-information
+
+You are running on the ${model} model.
+
+${isFree ? 'See savant-free.com for more information about the product.' : [
+  'Users send prompts to you in one of a few user-selected modes, like DEFAULT, MAX, or PLAN.',
+  'Every prompt sent consumes the user\'s credits, which is calculated based on the API cost of the models used.',
+  'The user can use the "/usage" command to see how many credits they have used and have left, so you can tell them to check their usage this way.',
+  'For other questions, you can direct them to savant-code.com, or especially savant-code.com/docs for detailed information about the product.',
+].join('\n')}
+
+# Response examples
+
+<example>
+
+<user>please implement [a complex new feature]</user>
+
+<response>
+[ You spawn the Detective to search the codebase and a researcher-web in parallel to find relevant files and do research online. You use the list_directory and glob tools directly to search the codebase. ]
+
+[ You read a few of the relevant files using the read_files tool in two separate tool calls ]
+
+[ You spawn the Detective again to find more relevant files, and use glob tools ]
+
+[ You read a few other relevant files using the read_files tool ]${
+      !noAskUser
+        ? `\n\n[ You ask the user for important clarifications on their request or alternate implementation strategies using the ask_user tool ]`
+        : ''
+    }
+[ You spawn the Forge agent to implement the changes ]
+
+[ You spawn the Verifier, a basher to typecheck the changes, and another basher to run tests, all in parallel ]
+
+[ You fix the issues found by the Verifier and type/test errors ]
+
+[ All tests & typechecks pass -- you write a very short final summary of the changes you made ]
+ </reponse>
+
+</example>
+
+<example>
+
+<user>what's the best way to refactor [x]</user>
+
+<response>
+[ You collect codebase context, and then give a strong answer with key examples, and ask if you should make this change ]
+</response>
+
+</example>
+
+${PLACEHOLDER.FILE_TREE_PROMPT_SMALL}
+${PLACEHOLDER.KNOWLEDGE_FILES_CONTENTS}
+${PLACEHOLDER.SYSTEM_INFO_PROMPT}
+
+# Initial Git Changes
+
+The following is the state of the git repository at the start of the conversation. Note that it is not updated to reflect any subsequent changes made by the user or the agents.
+
+${PLACEHOLDER.GIT_CHANGES_PROMPT}
+`,
+
+    instructionsPrompt: planOnly
+      ? buildPlanOnlyInstructionsPrompt({})
+      :      buildImplementationInstructionsPrompt({
+          isFast,
+          isDefault,
+          isMax,
+          isFree,
+          hasNoValidation,
+          noAskUser,
+          noReview,
+        }),
+    stepPrompt: planOnly
+      ? buildPlanOnlyStepPrompt({})
+      :      buildImplementationStepPrompt({
+          isDefault,
+          isFast,
+          isMax,
+          hasNoValidation,
+          isFree,
+          noAskUser,
+          noReview,
+        }),
+
+    // handleSteps is serialized via .toString() and re-eval'd, so closure
+    // variables like `isFree` are not in scope at runtime. Pick the right
+    // literal-baked function here instead.
+    handleSteps: getSavantHandleSteps({
+      isFree: mode === 'free',
+      maxContextLength: contextPrunerMaxContextLength,
+    }),
+  }
+}
+
+type SavantHandleSteps = NonNullable<SecretAgentDefinition['handleSteps']>
+
+function getSavantContextPrunerMaxContextLength(
+  model: SecretAgentDefinition['model'],
+): 250_000 | 400_000 {
+  if (model === SAVANT_FREE_KIMI_MODEL_ID) return 250_000
+  return 400_000
+}
+
+function getSavantHandleSteps({
+  isFree,
+  maxContextLength,
+}: {
+  isFree: boolean
+  maxContextLength: 250_000 | 400_000
+}): SavantHandleSteps {
+  if (isFree) {
+    if (maxContextLength === 250_000) return handleStepsFree250k
+    return handleStepsFree400k
+  }
+  if (maxContextLength === 250_000) return handleSteps250k
+  return handleSteps400k
+}
+
+const handleStepsFree250k: SavantHandleSteps = function* ({ params }) {
+  while (true) {
+    yield {
+      toolName: 'spawn_agent_inline',
+      input: {
+        agent_type: 'context-pruner' as const,
+        params: {
+          maxContextLength: 250_000,
+          ...(params ?? {}),
+          cacheExpiryMs: 30 * 60 * 1000,
+        },
+      },
+      includeToolCall: false,
+    }
+
+    const { stepsComplete } = yield 'STEP'
+    if (stepsComplete) break
+  }
+}
+
+const handleStepsFree400k: SavantHandleSteps = function* ({ params }) {
+  while (true) {
+    yield {
+      toolName: 'spawn_agent_inline',
+      input: {
+        agent_type: 'context-pruner',
+        params: {
+          maxContextLength: 400_000,
+          ...(params ?? {}),
+          cacheExpiryMs: 30 * 60 * 1000,
+        },
+      },
+      includeToolCall: false,
+    }
+
+    const { stepsComplete } = yield 'STEP'
+    if (stepsComplete) break
+  }
+}
+
+const handleSteps250k: SavantHandleSteps = function* ({ params }) {
+  while (true) {
+    yield {
+      toolName: 'spawn_agent_inline',
+      input: {
+        agent_type: 'context-pruner',
+        params: {
+          maxContextLength: 250_000,
+          ...(params ?? {}),
+        },
+      },
+      includeToolCall: false,
+    }
+
+    const { stepsComplete } = yield 'STEP'
+    if (stepsComplete) break
+  }
+}
+
+const handleSteps400k: SavantHandleSteps = function* ({ params }) {
+  while (true) {
+    yield {
+      toolName: 'spawn_agent_inline',
+      input: {
+        agent_type: 'context-pruner',
+        params: {
+          maxContextLength: 400_000,
+          ...(params ?? {}),
+        },
+      },
+      includeToolCall: false,
+    }
+
+    const { stepsComplete } = yield 'STEP'
+    if (stepsComplete) break
+  }
+}
+
+const EXPLORE_PROMPT = `- Spawn the Detective agent to search the codebase, and researcher-web / researcher-docs for external research. Use the list_directory and glob tools directly for searching and exploring the codebase. The Detective agent is very effective at finding relevant files -- spawn it with multiple search queries to explore different parts of the codebase. Use read_subtree if you need to grok a particular part of the codebase. Read all the relevant files using the read_files tool.`
+
+function buildImplementationInstructionsPrompt({
+  isFast,
+  isDefault,
+  isMax,
+  isFree,
+  hasNoValidation,
+  noAskUser,
+  noReview,
+}: {
+  isFast: boolean
+  isDefault: boolean
+  isMax: boolean
+  isFree: boolean
+  hasNoValidation: boolean
+  noAskUser: boolean
+  noReview: boolean
+}) {
+  return `Act as a helpful assistant and freely respond to the user's request however would be most helpful to the user. Use your judgement to orchestrate the completion of the user's request using your specialized sub-agents and tools as needed. Take your time and be comprehensive. Don't surprise the user. For example, don't modify files if the user has not asked you to do so at least implicitly.
+
+## Example response
+
+The user asks you to implement a new feature. You respond in multiple steps:
+
+${buildArray(
+  EXPLORE_PROMPT,
+  isMax &&
+    `- Important: Read as many files as could possibly be relevant to the task over several steps to improve your understanding of the user's request and produce the best possible code changes. Find more examples within the codebase similar to the user's request, dependencies that help with understanding how things work, tests, etc. This is frequently 12-20 files, depending on the task.`,
+  !noAskUser &&
+    'After getting context on the user request from the codebase or from research, use the ask_user tool to ask the user for important clarifications on their request or alternate implementation strategies. You should skip this step if the choice is obvious -- only ask the user if you need their help making the best choice.',
+  (isDefault || isMax || isFree) &&
+    `- For any task requiring 3+ steps, use the write_todos tool to write out your step-by-step implementation plan. Include ALL of the applicable tasks in the list.${isFast || noReview ? '' : ' You should include a step to review the changes after you have implemented the changes.'}:${hasNoValidation ? '' : ' You should include at least one step to validate/test your changes: be specific about whether to typecheck, run tests, run lints, etc.'} You may be able to do reviewing and validation in parallel in the same step. Skip write_todos for simple tasks like quick edits or answering questions.`,
+  (isDefault || isMax || isFree) &&
+    '- For complex problems, spawn the Thinker agent to help find the best solution.',
+  '- IMPORTANT: You must spawn the Forge agent to implement code changes after you have gathered all the context you need. Do not pass any prompt or params to Forge when spawning it.',
+  isFast &&
+    '- For fast mode, spawn Forge for all code changes — the orchestrator does not have write tools.',
+  isFast &&
+    '- Do a single typecheck targeted for your changes at most (if applicable for the project). Or skip this step if the change was small.',
+  !hasNoValidation &&
+    `- For non-trivial changes, test them by running appropriate validation commands for the project (e.g. typechecks, tests, lints, etc.). Try to run all appropriate commands in parallel. ${isMax ? ' Typecheck and test the specific area of the project that you are editing *AND* then typecheck and test the entire project if necessary.' : ' If you can, only test the area of the project that you are editing, rather than the entire project.'} You may have to explore the project to find the appropriate commands. Don't skip this step, unless the change is very small and targeted (< 10 lines and unlikely to have a type error)!`,
+  '- Spawn the Verifier to review code changes after implementation. (Skip this step only if the change is extremely straightforward and obvious.)',
+  !isFast &&
+    !noAskUser &&
+    `- At the end of your turn, use the suggest_followups tool to suggest ~3 next steps the user might want to take (e.g., "Add unit tests", "Refactor into smaller files", "Continue with the next step").`,
+).join('\n')}
+
+${ECHO_PROTOCOL_INSTRUCTIONS}`
+}
+
+function buildImplementationStepPrompt({
+  isDefault,
+  isFast,
+  isMax,
+  hasNoValidation,
+  isFree,
+  noAskUser,
+  noReview,
+}: {
+  isDefault: boolean
+  isFast: boolean
+  isMax: boolean
+  hasNoValidation: boolean
+  isFree: boolean
+  noAskUser: boolean
+  noReview: boolean
+}) {
+  return buildArray(
+    isMax &&
+      `Keep working until the user's request is completely satisfied${!hasNoValidation ? ' and validated' : ''}, or until you require more information from the user.`,
+    `You must spawn the Forge agent to implement code changes.`,
+    `You must spawn the Verifier to review any code changes after implementation, in parallel with typechecking or testing.`,
+    !noAskUser &&
+      `At the end of your turn, you must use the suggest_followups tool to suggest around 3 next steps the user might want to take even if the user just asks a question.`,
+  ).join('\n')
+}
+
+function buildPlanOnlyInstructionsPrompt({}: {}) {
+  return `Orchestrate the completion of the user's request using your specialized sub-agents.
+
+ You are in plan mode, so you should default to asking the user clarifying questions, potentially in multiple rounds as needed to fully understand the user's request, and then creating a spec/plan based on the user's request. However, asking questions and creating a plan is not required at all and you should otherwise strive to act as a helpful assistant and answer the user's questions or requests freely.
+    
+## Example response
+
+The user asks you to implement a new feature. You respond in multiple steps:
+
+${buildArray(
+  EXPLORE_PROMPT,
+  `- After exploring the codebase, your goal is to translate the user request into a clear and concise spec. If the user is just asking a question, you can answer it instead of writing a spec.
+
+## Asking questions
+
+To clarify the user's intent, or get them to weigh in on key decisions, you should use the ask_user tool.
+
+It's good to use this tool before generating a spec, so you can make the best possible spec for the user's request.
+
+If you don't have any important questions to ask, you can skip this step. Keep asking questions until you have a clear understanding of the user's request and how to solve it. However, be sure that you never ask questions with obvious answers or questions about details that can be changed later. Focus on the most important, non-obvious aspects only.
+
+## Creating a spec
+
+Wrap your spec in <PLAN> and </PLAN> tags. The content inside should be markdown formatted (no code fences around the whole plan/spec). For example: <PLAN>\n# Plan\n- Item 1\n- Item 2\n</PLAN>.
+
+The spec should include:
+- A brief title and overview. For the title is preferred to call it a "Plan" rather than a "Spec".
+- A bullet point list of the requirements.
+- An optional "Notes" section detailing any key considerations or constraints or testing requirements.
+- A section with a list of relevant files.
+
+It should not include:
+- A lot of analysis.
+- Sections of actual code.
+- A list of the benefits, performance benefits, or challenges.
+- A step-by-step plan for the implementation.
+- A summary of the spec.
+
+This is more like an extremely short PRD which describes the end result of what the user wants. Think of it like fleshing out the user's prompt to make it more precise, although it should be as short as possible.
+`,
+).join('\n')}`
+}
+
+function buildPlanOnlyStepPrompt({}: {}) {
+  return buildArray(
+    `You are in plan mode. Do not make any file changes. Do not call write_file or str_replace. Do not use the write_todos tool.`,
+  ).join('\n')
+}
+
+const definition = { ...createSavant('default'), id: 'savant' }
+export default definition

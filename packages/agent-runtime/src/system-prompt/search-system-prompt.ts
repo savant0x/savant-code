@@ -25,7 +25,7 @@ export function getSearchSystemPrompt(params: {
   const { fileContext, messagesTokens, logger, options: _options } = params
   const _startTime = Date.now()
 
-  const maxTokens = 500_000 // costMode === 'lite' ? 64_000 :
+  const maxTokens = 500_000
   const maxFilesTokens = 100_000
   const miscTokens = 10_000
   const systemPromptTokenBudget = maxTokens - messagesTokens - miscTokens

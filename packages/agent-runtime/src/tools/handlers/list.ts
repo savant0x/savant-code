@@ -26,9 +26,10 @@ import { handleReadUrl } from './tool/read-url'
 import { handleRenderUI } from './tool/render-ui'
 import { handleRunFileChangeHooks } from './tool/run-file-change-hooks'
 import { handleRunTerminalCommand } from './tool/run-terminal-command'
-import { handleSetMessages } from './tool/set-messages'
 import { handleSequentialThinking } from './tool/sequential-thinking'
+import { handleSetMessages } from './tool/set-messages'
 import { handleSetOutput } from './tool/set-output'
+import { handleSetScaffoldComplete } from './tool/set-scaffold-complete'
 import { handleSkill } from './tool/skill'
 import { handleSpawnAgentInline } from './tool/spawn-agent-inline'
 import { handleSpawnAgents } from './tool/spawn-agents'
@@ -86,6 +87,7 @@ export const savantCode$1: {
   sequentialthinking: handleSequentialThinking,
   set_messages: handleSetMessages,
   set_output: handleSetOutput,
+  set_scaffold_complete: handleSetScaffoldComplete,
   skill: handleSkill,
   spawn_agents: handleSpawnAgents,
   spawn_agent_inline: handleSpawnAgentInline,

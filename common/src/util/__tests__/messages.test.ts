@@ -12,12 +12,13 @@ import {
   mediaToolResult,
 } from '../messages'
 
+import type { JSONValue } from '../../types/json'
 import type { Message } from '../../types/messages/savant-code-message'
 import type { ToolResultPart } from 'ai'
 
 // Test helper types for provider options with cache control
 type CacheControlValue = { type: string }
-type ProviderWithCacheControl = Record<string, unknown> & {
+type ProviderWithCacheControl = Record<string, JSONValue> & {
   cache_control?: CacheControlValue
 }
 
@@ -200,7 +201,7 @@ describe('convertCbToModelMessages', () => {
     const LONE_HIGH = '\uD83D' // high surrogate of 😀 with the low half dropped
     const REPLACEMENT = '�'
 
-    const assertWellFormed = (value: unknown): void => {
+    const assertWellFormed = <T>(value: T): void => {
       const json = JSON.stringify(value)
       // matchAll over lone surrogates: there should be none left.
       const lone = json.match(

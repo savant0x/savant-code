@@ -33,13 +33,11 @@ export const PlanBox = memo(
           width: '100%',
           borderStyle: 'single',
           borderColor: theme.secondary,
-          customBorderChars: BORDER_CHARS,
           paddingLeft: 1,
           paddingRight: 1,
           paddingTop: 0,
           paddingBottom: 1,
-        }}
-      >
+        }} customBorderChars={BORDER_CHARS}>
         <text style={{ wrapMode: 'word', fg: theme.foreground }}>
           {renderMarkdown(planContent, {
             codeBlockWidth: Math.max(10, availableWidth - 8),

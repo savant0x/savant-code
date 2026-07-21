@@ -1,8 +1,8 @@
 import { SimpleToolCallItem } from './tool-call-item'
 import { defineToolComponent } from './types'
 
-import type { ChatTheme } from '../../types/theme-system'
 import type { ToolRenderConfig } from './types'
+import type { ChatTheme } from '../../types/theme-system'
 
 /**
  * UI component for web_search tool.

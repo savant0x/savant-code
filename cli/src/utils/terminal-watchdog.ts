@@ -53,8 +53,8 @@ import { closeSync, openSync, writeFileSync } from 'fs'
 import os from 'os'
 import path from 'path'
 
-import { TERMINAL_RESET_SEQUENCES } from './terminal-reset-sequences'
 import { getCliEnv } from './env'
+import { TERMINAL_RESET_SEQUENCES } from './terminal-reset-sequences'
 
 import type { ChildProcess } from 'child_process'
 

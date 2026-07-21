@@ -6,16 +6,16 @@ import {
   withSystemTags,
 } from '@savant-code/agent-runtime/util/messages'
 import { MAX_AGENT_STEPS_DEFAULT } from '@savant-code/common/constants/agents'
+import {
+  COMPOSIO_META_TOOL_NAMES,
+  isComposioMetaToolName,
+} from '@savant-code/common/constants/composio'
 import { toOptionalFile } from '@savant-code/common/constants/paths'
 import {
   getMCPClient,
   listMCPTools,
   callMCPTool,
 } from '@savant-code/common/mcp/client'
-import {
-  COMPOSIO_META_TOOL_NAMES,
-  isComposioMetaToolName,
-} from '@savant-code/common/constants/composio'
 import { toolNames } from '@savant-code/common/tools/constants'
 import { clientToolCallSchema } from '@savant-code/common/tools/list'
 import { AgentOutputSchema } from '@savant-code/common/types/session-state'
@@ -26,6 +26,7 @@ import {
   isFetchIdleTimeoutError,
   isTransientNetworkError,
 } from '@savant-code/common/util/error'
+import { toJSONValue } from '@savant-code/common/util/type-narrowing'
 import { cloneDeep } from 'lodash'
 
 import { executeComposioToolViaServer } from './composio'
@@ -33,8 +34,8 @@ import { getErrorStatusCode } from './error-utils'
 import { getAgentRuntimeImpl } from './impl/agent-runtime'
 import { getUserInfoFromApiKey } from './impl/database'
 import { initialSessionState, applyOverridesToSessionState } from './run-state'
-import { changeFile, type OnFileWrittenCallback } from './tools/change-file'
 import { applyPatchTool } from './tools/apply-patch'
+import { changeFile, type OnFileWrittenCallback } from './tools/change-file'
 import { codeSearch } from './tools/code-search'
 import { glob } from './tools/glob'
 import { listDirectory } from './tools/list-directory'
@@ -53,12 +54,12 @@ import type { PublishedClientToolName } from '@savant-code/common/tools/list'
 import type { Logger } from '@savant-code/common/types/contracts/logger'
 import type { TraceWriter } from '@savant-code/common/types/contracts/trace'
 import type { SavantCodeFileSystem } from '@savant-code/common/types/filesystem'
-import type { ToolMessage } from '@savant-code/common/types/messages/savant-code-message'
 import type {
   ImagePart,
   TextPart,
   ToolResultOutput,
 } from '@savant-code/common/types/messages/content-part'
+import type { ToolMessage } from '@savant-code/common/types/messages/savant-code-message'
 import type { PrintModeEvent } from '@savant-code/common/types/print-mode'
 import type { SessionState } from '@savant-code/common/types/session-state'
 import type { Source } from '@savant-code/common/types/source'
@@ -80,7 +81,7 @@ const wrapContentForUserMessage = (
 
 type OverrideToolHandlers = {
   [K in PublishedClientToolName]?: (
-    input: any, // eslint-disable-line @typescript-eslint/no-explicit-any -- dynamic tool input shape per tool name
+    input: any, // eslint-disable-line @typescript-eslint/no-explicit-any -- dynamic tool input shape per tool name, savant/no-unknown-in-signatures -- Tool trust boundary: input shapes vary dynamically by tool name
   ) => Promise<ToolResultOutput[]>
 } & {
   // Include read_files separately, since it has a different signature.
@@ -89,14 +90,14 @@ type OverrideToolHandlers = {
   }) => Promise<Record<string, string | null>>
 }
 
-function isRunPauseError(error: unknown) {
+function isRunPauseError<T>(
+  error: T,
+): error is T & { savantCode$1?: boolean; name?: string } {
+  if (!error || typeof error !== 'object') return false
+  const err = error as { savantCode$1?: unknown; name?: unknown }
   return (
-    !!error &&
-    typeof error === 'object' &&
-    (('savantCode$1' in error &&
-      (error as { savantCode$1?: unknown }).savantCode$1 === true) ||
-      ('name' in error &&
-        (error as { name?: unknown }).name === 'SavantCodeRunPausedError'))
+    err.savantCode$1 === true ||
+    err.name === 'SavantCodeRunPausedError'
   )
 }
 
@@ -173,11 +174,10 @@ export type RunOptions = {
    * running agent without aborting — i.e. "steer" it, as opposed to queuing a new
    * prompt for after the turn finishes. */
   drainSteeringMessages?: () => string[]
-  costMode?: string
-  /** Extra key/values merged into each LLM request's `codebuff_metadata`.
+  /** Extra key/values merged into each LLM request's `savant_code_metadata`.
    *  Used by hosts (e.g. the CLI) to forward client-scoped identifiers like
    *  `freebuff_instance_id` that server-side gates read from the request body. */
-  extraCodebuffMetadata?: Record<string, string>
+  extraSavantCodeMetadata?: Record<string, string>
   /** Optional checkpoint hook. Called once when the run starts and then
    *  periodically while it is in flight, with a RunState snapshot that
    *  preserves all progress so far (the user's prompt plus any completed
@@ -311,8 +311,7 @@ async function runOnce({
   extraToolResults,
   signal,
   drainSteeringMessages,
-  costMode,
-  extraCodebuffMetadata,
+  extraSavantCodeMetadata,
   onStateSnapshot,
   onFileWritten,
   devMode,
@@ -535,19 +534,16 @@ async function runOnce({
       const mcpClientId = await getMCPClient(mcpConfig)
       const listToolsResult = await listMCPTools(mcpClientId)
       const tools = listToolsResult.tools
-      const filteredTools: typeof tools = []
-      for (const tool of tools) {
-        if (!toolNames) {
-          filteredTools.push(tool)
-          continue
-        }
-        if (toolNames.includes(tool.name)) {
-          filteredTools.push(tool)
-          continue
-        }
-      }
+      const filteredTools = !toolNames
+        ? tools
+        : tools.filter((tool) => toolNames.includes(tool.name))
 
-      return filteredTools
+      return filteredTools.map((tool) => ({
+        name: tool.name,
+        description:
+          typeof tool.description === 'string' ? tool.description : undefined,
+        inputSchema: toJSONValue(tool.inputSchema),
+      }))
     },
     requestFiles: ({ filePaths }) =>
       readFiles({
@@ -648,7 +644,7 @@ async function runOnce({
     // durable changed" check. Skipping unchanged ticks avoids deep-cloning a
     // potentially multi-MB sessionState every interval while the run is just
     // waiting on a slow LLM call.
-    let lastSnapshotHistory: unknown = null
+    let lastSnapshotHistory: SessionState['mainAgentState']['messageHistory'] | null = null
     const emitStateSnapshot = () => {
       if (settled || signal?.aborted) {
         return
@@ -674,8 +670,9 @@ async function runOnce({
     emitStateSnapshot()
     snapshotTimer = setInterval(emitStateSnapshot, STATE_SNAPSHOT_INTERVAL_MS)
     // Don't let the checkpoint timer keep the host process alive.
-    if (typeof (snapshotTimer as any).unref === 'function') { // eslint-disable-line @typescript-eslint/no-explicit-any -- NodeJS.Timeout may have unref depending on Bun/Node version
-      ;(snapshotTimer as any).unref() // eslint-disable-line @typescript-eslint/no-explicit-any -- NodeJS.Timeout may have unref depending on Bun/Node version
+    const nodeTimer = snapshotTimer as unknown as { unref?: () => void }
+    if (typeof nodeTimer.unref === 'function') {
+      nodeTimer.unref()
     }
   }
 
@@ -689,7 +686,6 @@ async function runOnce({
       promptParams: params,
       content: preparedContent,
       fingerprintId: fingerprintId,
-      costMode: costMode ?? 'normal',
       sessionState,
       toolResults: extraToolResults ?? [],
       agentId,
@@ -699,8 +695,8 @@ async function runOnce({
     repoId: undefined,
     clientSessionId: promptId,
     userId,
-    extraCodebuffMetadata: {
-      ...(extraCodebuffMetadata ?? {}),
+    extraSavantCodeMetadata: {
+      ...(extraSavantCodeMetadata ?? {}),
       trace_session_id: traceSessionId,
     },
     signal: signal ?? new AbortController().signal,

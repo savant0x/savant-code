@@ -10,13 +10,14 @@ import type { Model } from '@savant-code/common/old-constants'
 import type { TrackEventFn } from '@savant-code/common/types/contracts/analytics'
 import type { StreamChunk } from '@savant-code/common/types/contracts/llm'
 import type { Logger } from '@savant-code/common/types/contracts/logger'
+import type { JSONValue } from '@savant-code/common/types/json'
 import type {
   PrintModeError,
   PrintModeText,
 } from '@savant-code/common/types/print-mode'
 import type { PromptResult } from '@savant-code/common/util/error'
 
-function summarizeToolInput(input: unknown): Record<string, unknown> {
+function summarizeToolInput(input: JSONValue): Record<string, JSONValue> {
   if (typeof input === 'string') {
     return {
       inputType: 'string',
@@ -32,7 +33,7 @@ function summarizeToolInput(input: unknown): Record<string, unknown> {
   }
 
   if (input && typeof input === 'object') {
-    const keys = Object.keys(input as Record<string, unknown>)
+    const keys = Object.keys(input as Record<string, JSONValue>)
     return {
       inputType: 'object',
       inputKeyCount: keys.length,
@@ -56,7 +57,7 @@ export async function* processStreamWithTools(params: {
       ) => void | Promise<void>
       onTagEnd: (
         tagName: string,
-        params: Record<string, any>,
+        params: Record<string, JSONValue>,
       ) => void | Promise<void>
     }
   >
@@ -67,7 +68,7 @@ export async function* processStreamWithTools(params: {
     ) => void | Promise<void>
     onTagEnd: (
       tagName: string,
-      params: Record<string, any>,
+      params: Record<string, JSONValue>,
     ) => void | Promise<void>
   }
   onResponseChunk: (chunk: PrintModeText | PrintModeError) => void
@@ -81,7 +82,7 @@ export async function* processStreamWithTools(params: {
   executeXmlToolCall: (params: {
     toolCallId: string
     toolName: string
-    input: Record<string, unknown>
+    input: Record<string, JSONValue>
   }) => Promise<void>
 }): AsyncGenerator<StreamChunk, PromptResult<string | null>> {
   const {
@@ -103,7 +104,7 @@ export async function* processStreamWithTools(params: {
 
   async function processToolCallObject(params: {
     toolName: string
-    input: any
+    input: JSONValue
     contents?: string
   }): Promise<void> {
     const { toolName, contents } = params
@@ -129,14 +130,14 @@ export async function* processStreamWithTools(params: {
         hasContents: typeof contents === 'string' && contents.length > 0,
         contentsLength: contents?.length ?? 0,
         autocompleted,
-        model: loggerOptions?.model,
-        agent: loggerOptions?.agentName,
+        model: loggerOptions?.model ?? null,
+        agent: loggerOptions?.agentName ?? null,
       },
       logger,
     })
 
     await processor.onTagStart(toolName, {})
-    await processor.onTagEnd(toolName, input)
+    await processor.onTagEnd(toolName, input as Record<string, JSONValue>)
   }
 
   function flush() {
@@ -196,7 +197,10 @@ export async function* processStreamWithTools(params: {
     }
 
     if (chunk.type === 'tool-call') {
-      await processToolCallObject(chunk)
+      await processToolCallObject({
+        toolName: chunk.toolName,
+        input: chunk.input as JSONValue,
+      })
     }
 
     yield chunk

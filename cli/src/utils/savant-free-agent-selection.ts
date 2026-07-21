@@ -1,11 +1,11 @@
-import { getFreebuffRootAgentIdForModel } from '@savant-code/common/constants/free-agents'
+import { getSavantFreeRootAgentIdForModel } from '@savant-code/common/constants/free-agents'
 
-import { getSelectedFreebuffModel } from '../state/savant-free-model-store'
-import { AGENT_MODE_TO_ID, IS_FREEBUFF, type AgentMode } from './constants'
+import { AGENT_MODE_TO_ID, IS_SAVANT_FREE, type AgentMode } from './constants'
+import { getSelectedSavantFreeModel } from '../state/savant-free-model-store'
 
 export function getAgentIdForMode(agentMode: AgentMode): string {
-  if (IS_FREEBUFF && agentMode === 'LITE') {
-    return getFreebuffRootAgentIdForModel(getSelectedFreebuffModel())
+  if (IS_SAVANT_FREE && agentMode === 'EDIT') {
+    return getSavantFreeRootAgentIdForModel(getSelectedSavantFreeModel())
   }
 
   return AGENT_MODE_TO_ID[agentMode]

@@ -1,3 +1,4 @@
+/* eslint-disable savant/no-unknown-in-signatures -- log ingestion trust boundary: `truncateData(data: unknown)` accepts arbitrary client-submitted telemetry payloads. 3-condition AND-gate: (i.1) caller type cannot be discovered because the server ingests schema-less log rows; (i.2) narrowing to `JsonValue`/concrete breaks ingestion of Error instances and non-JSON values that clients may submit; (i.3) the function only measures JSON.stringify byte length and truncates when over MAX_LOG_DATA_BYTES, preserving existing server-side ingest behavior. */
 import { MAX_LOG_DATA_BYTES } from '../schemas/logs'
 
 import type { LogRecordInput } from '../schemas/logs'

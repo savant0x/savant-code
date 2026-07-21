@@ -1,15 +1,15 @@
-import { getRateLimitsByModel } from '@savant-code/common/types/savant-free-session'
 import { TextAttributes } from '@opentui/core'
 import { useKeyboard } from '@opentui/react'
+import { getRateLimitsByModel } from '@savant-code/common/types/savant-free-session'
 import React, { useCallback, useState } from 'react'
 
 import { Button } from './button'
 import {
-  refreshFreebuffSession,
-  returnToFreebuffLanding,
+  refreshSavantFreeSession,
+  returnToSavantFreeLanding,
 } from '../hooks/use-savant-free-session'
 import { useTheme } from '../hooks/use-theme'
-import { useFreebuffSessionStore } from '../state/savant-free-session-store'
+import { useSavantFreeSessionStore } from '../state/savant-free-session-store'
 import { formatSessionUnits } from '../utils/format-session-units'
 import { isPlainEnterKey } from '../utils/terminal-enter-detection'
 import { BORDER_CHARS } from '../utils/ui-constants'
@@ -39,13 +39,13 @@ export const SessionEndedBanner: React.FC<SessionEndedBannerProps> = ({
   // All premium models share one daily pool; the server replicates the same
   // snapshot under each premium model id, so the first entry has the right
   // count.
-  const premiumQuota = useFreebuffSessionStore(
+  const premiumQuota = useSavantFreeSessionStore(
     (s) => Object.values(getRateLimitsByModel(s.session) ?? {})[0] ?? null,
   )
   const isQuotaExhausted = premiumQuota
     ? premiumQuota.recentCount >= premiumQuota.limit
     : false
-  const accessTier = useFreebuffSessionStore((s) =>
+  const accessTier = useSavantFreeSessionStore((s) =>
     s.session && 'accessTier' in s.session ? s.session.accessTier : 'full',
   )
   const quotaLabel = accessTier === 'limited' ? 'sessions' : 'premium sessions'
@@ -65,10 +65,10 @@ export const SessionEndedBanner: React.FC<SessionEndedBannerProps> = ({
     setPendingAction('landing')
     // Drop back to the landing picker (status: 'none') so the user picks a
     // model and hits Enter again to commit, instead of silently starting a
-    // new session. app.tsx swaps us into <SavantFree$1> on the
+    // new session. app.tsx swaps us into <SavantFreeLandingScreen> on the
     // transition, unmounting this banner — no need to clear the pending state on
     // success.
-    returnToFreebuffLanding({ resetChat: true }).catch(() =>
+    returnToSavantFreeLanding({ resetChat: true }).catch(() =>
       setPendingAction(null),
     )
   }, [canRestart])
@@ -78,7 +78,7 @@ export const SessionEndedBanner: React.FC<SessionEndedBannerProps> = ({
     setPendingAction('same-chat')
     // Re-POST with the currently selected model and keep the chat/run state
     // intact so the next prompt continues the same conversation.
-    refreshFreebuffSession().catch(() => setPendingAction(null))
+    refreshSavantFreeSession().catch(() => setPendingAction(null))
   }, [canRestart])
 
   useKeyboard(
@@ -110,15 +110,13 @@ export const SessionEndedBanner: React.FC<SessionEndedBannerProps> = ({
         // the quota count lives in the title (which can't carry per-char
         // color); muted otherwise.
         borderColor: isQuotaExhausted ? theme.secondary : theme.muted,
-        customBorderChars: BORDER_CHARS,
         paddingLeft: 1,
         paddingRight: 1,
         paddingTop: 0,
         paddingBottom: 0,
         flexDirection: 'column',
         gap: 0,
-      }}
-    >
+      }} customBorderChars={BORDER_CHARS}>
       {isStreaming ? (
         <text style={{ fg: theme.muted, wrapMode: 'word' }}>
           Agent is wrapping up. Rejoin the wait room after it's finished.
@@ -154,12 +152,10 @@ export const SessionEndedBanner: React.FC<SessionEndedBannerProps> = ({
               borderStyle: 'single',
               borderColor:
                 pendingAction === 'landing' ? theme.muted : theme.border,
-              customBorderChars: BORDER_CHARS,
               paddingLeft: 1,
               paddingRight: 1,
             }}
-            border={['top', 'bottom', 'left', 'right']}
-          >
+            border={['top', 'bottom', 'left', 'right']} customBorderChars={BORDER_CHARS}>
             <text
               style={{
                 fg:

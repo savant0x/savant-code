@@ -1,3 +1,4 @@
+/* eslint-disable savant/no-unknown-in-signatures -- test mock factory: dynamic SQL/query shapes intentionally typed as unknown */
 /**
  * Typed database mock factory for testing.
  *
@@ -6,7 +7,7 @@
  *
  * @example
  * ```typescript
- * import { createMockDbOperations, setupDbSpies } from '@savantcode.common/testing/mocks/database'
+ * import { createMockDbOperations, setupDbSpies } from '@savant-code/common/testing/mocks/database'
  *
  * // Option 1: Create mock operations object
  * const dbOps = createMockDbOperations()

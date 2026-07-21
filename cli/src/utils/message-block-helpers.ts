@@ -1,7 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- message block helpers: dynamic message part filtering */
 import { isEqual } from 'lodash'
 
-import { formatToolOutput } from './savant-code-client'
 import { shouldCollapseByDefault, shouldCollapseForParent } from './constants'
+import { formatToolOutput } from './savant-code-client'
 
 import type {
   ContentBlock,

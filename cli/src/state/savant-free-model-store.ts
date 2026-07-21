@@ -1,12 +1,12 @@
 import {
-  DEFAULT_FREEBUFF_MODEL_ID,
-  resolveAvailableFreebuffModel,
+  DEFAULT_SAVANT_FREE_MODEL_ID,
+  resolveAvailableSavantFreeModel,
 } from '@savant-code/common/constants/savant-free-models'
 import { create } from 'zustand'
 
 import {
-  loadFreebuffModelPreference,
-  saveFreebuffModelPreference,
+  loadSavantFreeModelPreference,
+  saveSavantFreeModelPreference,
 } from '../utils/settings'
 
 /**
@@ -16,15 +16,15 @@ import {
  * in-memory store AND the persisted settings file atomically.
  *
  * Callers:
- *  - GUI model picker (`startFreebuffSession`)
+ *  - GUI model picker (`startSavantFreeSession`)
  *  - `/model <id>` command
  *  - Server-driven auto-flips (model_locked, takeover) — in-memory only via
  *    `setSelectedModel` to avoid overwriting user preference
  *
  * The sidebar, API calls, and billing all read from this store via
- * `getSelectedFreebuffModel()`. No other store holds the model.
+ * `getSelectedSavantFreeModel()`. No other store holds the model.
  */
-interface SavantFree$1 {
+interface SavantFreeModelStore {
   selectedModel: string
   /** In-memory only — used by server-driven auto-flips that should NOT persist. */
   setSelectedModel: (model: string) => void
@@ -32,20 +32,20 @@ interface SavantFree$1 {
   switchModel: (model: string) => void
 }
 
-export const useFreebuffModelStore = create<SavantFree$1>((set) => ({
-  selectedModel: resolveAvailableFreebuffModel(
-    loadFreebuffModelPreference() ?? DEFAULT_FREEBUFF_MODEL_ID,
+export const useSavantFreeModelStore = create<SavantFreeModelStore>((set) => ({
+  selectedModel: resolveAvailableSavantFreeModel(
+    loadSavantFreeModelPreference() ?? DEFAULT_SAVANT_FREE_MODEL_ID,
   ),
   setSelectedModel: (model) =>
     set({ selectedModel: model }),
   switchModel: (model) => {
     set({ selectedModel: model })
-    saveFreebuffModelPreference(model)
+    saveSavantFreeModelPreference(model)
   },
 }))
 
 /** Imperative read for non-React callers (the session hook's tick loop and
  *  the chat-completions metadata builder). */
-export function getSelectedFreebuffModel(): string {
-  return useFreebuffModelStore.getState().selectedModel
+export function getSelectedSavantFreeModel(): string {
+  return useSavantFreeModelStore.getState().selectedModel
 }

@@ -22,15 +22,15 @@ beforeEach(() => {
 
 describe('fetchUsageData', () => {
   const originalFetch = globalThis.fetch
-  const originalEnv = process.env.NEXT_PUBLIC_CODEBUFF_APP_URL
+  const originalEnv = process.env.NEXT_PUBLIC_SAVANT_FREE_APP_URL
 
   beforeEach(() => {
-    process.env.NEXT_PUBLIC_CODEBUFF_APP_URL = 'https://test.savant-code.local'
+    process.env.NEXT_PUBLIC_SAVANT_FREE_APP_URL = 'https://test.savant-code.local'
   })
 
   afterEach(() => {
     globalThis.fetch = originalFetch
-    process.env.NEXT_PUBLIC_CODEBUFF_APP_URL = originalEnv
+    process.env.NEXT_PUBLIC_SAVANT_FREE_APP_URL = originalEnv
     mock.restore()
   })
 
@@ -173,10 +173,10 @@ describe('fetchUsageData', () => {
       fetchUsageData({
         authToken: 'test-token',
         clientEnv: {
-          NEXT_PUBLIC_CODEBUFF_APP_URL: undefined,
+          NEXT_PUBLIC_SAVANT_FREE_APP_URL: undefined,
         } as unknown as ClientEnv,
       }),
-    ).rejects.toThrow('NEXT_PUBLIC_CODEBUFF_APP_URL is not set')
+    ).rejects.toThrow('NEXT_PUBLIC_SAVANT_FREE_APP_URL is not set')
   })
 
   test('should send correct request body', async () => {
@@ -222,7 +222,7 @@ describe('fetchUsageData', () => {
     await fetchUsageData({
       authToken: 'test-token',
       clientEnv: {
-        NEXT_PUBLIC_CODEBUFF_APP_URL: 'https://test.savant-code.local',
+        NEXT_PUBLIC_SAVANT_FREE_APP_URL: 'https://test.savant-code.local',
       } as ClientEnv,
     })
 

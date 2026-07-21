@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- test file: intentional any casts for edge cases */
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 
 import { validateAgents } from '../templates/agent-validation'
@@ -6,7 +7,7 @@ import { DynamicAgentDefinitionSchema } from '../types/dynamic-agent-template'
 import type { DynamicAgentTemplate } from '../types/dynamic-agent-template'
 import type { AgentState } from '../types/session-state'
 import type { ProjectFileContext } from '../util/file'
-import type { Logger } from '@savantcode.common/types/contracts/logger'
+import type { Logger } from '@savant-code/common/types/contracts/logger'
 
 describe('handleSteps Parsing Tests', () => {
   let mockFileContext: ProjectFileContext

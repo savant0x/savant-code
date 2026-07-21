@@ -84,8 +84,8 @@ export type BaseEnv = {
  * Used by agent-runtime and server code.
  */
 export type CiEnv = BaseCiEnv & {
-  CODEBUFF_GITHUB_TOKEN?: string
-  CODEBUFF_API_KEY?: string
+  SAVANT_CODE_GITHUB_TOKEN?: string
+  SAVANT_CODE_API_KEY?: string
   EVAL_RESULTS_EMAIL?: string
 }
 
@@ -121,19 +121,19 @@ export type ProcessEnv = BaseEnv & {
   // Editor preferences
   VISUAL?: string
   EDITOR?: string
-  CODEBUFF_CLI_EDITOR?: string
-  CODEBUFF_EDITOR?: string
+  SAVANT_CODE_CLI_EDITOR?: string
+  SAVANT_CODE_EDITOR?: string
 
   // Theme preferences
   OPEN_TUI_THEME?: string
   OPENTUI_THEME?: string
 
   // SavantCode CLI-specific (set during binary build)
-  CODEBUFF_IS_BINARY?: string
-  CODEBUFF_CLI_VERSION?: string
-  CODEBUFF_CLI_TARGET?: string
-  CODEBUFF_RG_PATH?: string
-  CODEBUFF_WASM_DIR?: string
+  SAVANT_CODE_IS_BINARY?: string
+  SAVANT_CODE_CLI_VERSION?: string
+  SAVANT_CODE_CLI_TARGET?: string
+  SAVANT_CODE_RG_PATH?: string
+  SAVANT_CODE_WASM_DIR?: string
 
   // Build/CI flags
   VERBOSE?: string

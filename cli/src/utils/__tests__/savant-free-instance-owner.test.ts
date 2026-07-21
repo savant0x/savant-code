@@ -12,8 +12,8 @@ ensureCliTestEnv()
 
 const { getConfigDir } = await import('../auth')
 const {
-  isFreebuffInstanceOwnedByDeadLocalProcess,
-  recordFreebuffInstanceOwner,
+  isSavantFreeInstanceOwnedByDeadLocalProcess,
+  recordSavantFreeInstanceOwner,
 } = await import('../savant-free-instance-owner')
 
 describe('savant-free instance owner', () => {
@@ -38,10 +38,10 @@ describe('savant-free instance owner', () => {
   })
 
   test('does not classify the current process as dead', () => {
-    recordFreebuffInstanceOwner('inst-current')
+    recordSavantFreeInstanceOwner('inst-current')
 
     expect(
-      isFreebuffInstanceOwnedByDeadLocalProcess('inst-current'),
+      isSavantFreeInstanceOwnedByDeadLocalProcess('inst-current'),
     ).toBe(false)
   })
 
@@ -52,7 +52,7 @@ describe('savant-free instance owner', () => {
       JSON.stringify({ instanceId: 'inst-dead', pid: 2_147_483_647 }),
     )
 
-    expect(isFreebuffInstanceOwnedByDeadLocalProcess('inst-dead')).toBe(true)
+    expect(isSavantFreeInstanceOwnedByDeadLocalProcess('inst-dead')).toBe(true)
   })
 
   test('ignores a dead pid for a different instance id', () => {
@@ -63,7 +63,7 @@ describe('savant-free instance owner', () => {
     )
 
     expect(
-      isFreebuffInstanceOwnedByDeadLocalProcess('inst-current'),
+      isSavantFreeInstanceOwnedByDeadLocalProcess('inst-current'),
     ).toBe(false)
   })
 })

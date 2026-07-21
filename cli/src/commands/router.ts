@@ -8,22 +8,22 @@ import {
   type RouterParams,
   type CommandResult,
 } from './command-registry'
+import { buildInterviewPrompt, buildPlanPrompt, buildReviewPrompt } from './prompt-builders'
 import {
   isSlashCommand,
   parseCommandInput,
 } from './router-utils'
 import { handleChatGptAuthCode } from '../components/chatgpt-connect-banner'
-import { buildInterviewPrompt, buildPlanPrompt, buildReviewPrompt } from './prompt-builders'
 import { getProjectRoot } from '../project-files'
 import { useChatStore } from '../state/chat-store'
-import { useFreebuffSessionStore } from '../state/savant-free-session-store'
+import { useSavantFreeSessionStore } from '../state/savant-free-session-store'
 import { trackEvent } from '../utils/analytics'
 import {
   buildBashHistoryMessages,
   createRunTerminalToolResult,
 } from '../utils/bash-messages'
 import { showClipboardMessage } from '../utils/clipboard'
-import { IS_FREEBUFF } from '../utils/constants'
+import { IS_SAVANT_FREE } from '../utils/constants'
 import { getSystemProcessEnv } from '../utils/env'
 import { getSystemMessage, getUserMessage } from '../utils/message-history'
 import {
@@ -302,13 +302,13 @@ export async function routeUserPrompt(
   // aliased to the real user id on login), matching the web and chat surfaces
   // so combined DAU is a single unique-users query. SavantFree-only: savant-code
   // CLI usage is intentionally excluded.
-  if (IS_FREEBUFF) {
-    const savant-free$1 = useFreebuffSessionStore.getState().session
+  if (IS_SAVANT_FREE) {
+    const savantFreeSession = useSavantFreeSessionStore.getState().session
     trackEvent(AnalyticsEvent.MESSAGE_SENT, {
       surface: 'cli',
       accessTier:
-        savant-free$1 && 'accessTier' in savant-free$1
-          ? savant-free$1.accessTier
+        savantFreeSession && 'accessTier' in savantFreeSession
+          ? savantFreeSession.accessTier
           : 'unknown',
       mode: agentMode,
       inputMode,

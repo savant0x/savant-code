@@ -2,8 +2,8 @@ import { describe, test, expect, beforeEach, mock } from 'bun:test'
 
 import { fetchAndUpdateUsage } from '../fetch-usage'
 
-import type { SavantCodeApiClient } from '../savant-code-api'
 import type { FetchAndUpdateUsageParams } from '../fetch-usage'
+import type { SavantCodeApiClient } from '../savant-code-api'
 import type { Logger } from '@savant-code/common/types/contracts/logger'
 
 describe('fetchAndUpdateUsage (deprecated)', () => {

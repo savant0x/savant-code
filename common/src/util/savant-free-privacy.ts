@@ -1,32 +1,29 @@
-import type { SavantFree$1 } from '../types/savant-free-session'
+import type { SavantFreeIpPrivacySignal } from '../types/savant-free-session'
 
-export const FREEBUFF_HARD_BLOCKED_PRIVACY_SIGNALS = [
+export const SAVANT_FREE_HARD_BLOCKED_PRIVACY_SIGNALS = [
   'vpn',
   'proxy',
   'tor',
   'res_proxy',
-] as const satisfies readonly SavantFree$1[]
+] as const satisfies readonly SavantFreeIpPrivacySignal[]
 
-type SavantFree$1 =
-  (typeof FREEBUFF_HARD_BLOCKED_PRIVACY_SIGNALS)[number]
+const SAVANT_FREE_HARD_BLOCKED_PRIVACY_SIGNAL_SET =
+  new Set<SavantFreeIpPrivacySignal>(SAVANT_FREE_HARD_BLOCKED_PRIVACY_SIGNALS)
 
-const FREEBUFF_HARD_BLOCKED_PRIVACY_SIGNAL_SET =
-  new Set<SavantFree$1>(FREEBUFF_HARD_BLOCKED_PRIVACY_SIGNALS)
-
-const FREEBUFF_HARD_BLOCKED_PRIVACY_SIGNAL_LABELS: Record<
-  SavantFree$1,
+const SAVANT_FREE_HARD_BLOCKED_PRIVACY_SIGNAL_LABELS: Partial<Record<
+  SavantFreeIpPrivacySignal,
   string
-> = {
+>> = {
   vpn: 'VPN',
   proxy: 'proxy',
   res_proxy: 'proxy',
   tor: 'Tor',
 }
 
-export function isFreebuffHardBlockedPrivacySignal(
-  signal: SavantFree$1,
-): signal is SavantFree$1 {
-  return FREEBUFF_HARD_BLOCKED_PRIVACY_SIGNAL_SET.has(signal)
+export function isSavantFreeHardBlockedPrivacySignal(
+  signal: SavantFreeIpPrivacySignal,
+): signal is SavantFreeIpPrivacySignal {
+  return SAVANT_FREE_HARD_BLOCKED_PRIVACY_SIGNAL_SET.has(signal)
 }
 
 /**
@@ -37,33 +34,33 @@ export function isFreebuffHardBlockedPrivacySignal(
  * users sit behind, so we treat them as benign even when other heuristics
  * (e.g. ipinfo's `is_hosting` flag) would otherwise fire.
  */
-const FREEBUFF_BENIGN_AS_TYPES = new Set([
+const SAVANT_FREE_BENIGN_AS_TYPES = new Set([
   'isp',
   'business',
   'education',
   'government',
 ])
 
-export function isFreebuffBenignAsType(
+export function isSavantFreeBenignAsType(
   asType: string | null | undefined,
 ): boolean {
-  return asType != null && FREEBUFF_BENIGN_AS_TYPES.has(asType.toLowerCase())
+  return asType != null && SAVANT_FREE_BENIGN_AS_TYPES.has(asType.toLowerCase())
 }
 
-export function isFreebuffHostingAsType(
+export function isSavantFreeHostingAsType(
   asType: string | null | undefined,
 ): boolean {
   return typeof asType === 'string' && asType.toLowerCase() === 'hosting'
 }
 
-export function formatFreebuffHardBlockedPrivacySignals(
-  signals: readonly SavantFree$1[] | null | undefined,
+export function formatSavantFreeHardBlockedPrivacySignals(
+  signals: readonly SavantFreeIpPrivacySignal[] | null | undefined,
 ): string {
   const labels = Array.from(
     new Set(
       (signals ?? []).flatMap((signal): string[] => {
-        if (!isFreebuffHardBlockedPrivacySignal(signal)) return []
-        return [FREEBUFF_HARD_BLOCKED_PRIVACY_SIGNAL_LABELS[signal]]
+        if (!isSavantFreeHardBlockedPrivacySignal(signal)) return []
+        return [SAVANT_FREE_HARD_BLOCKED_PRIVACY_SIGNAL_LABELS[signal]!]
       }),
     ),
   )
@@ -73,10 +70,10 @@ export function formatFreebuffHardBlockedPrivacySignals(
   return `${labels.slice(0, -1).join(', ')} or ${labels[labels.length - 1]}`
 }
 
-export function formatFreebuffHardBlockedMessage(
-  signals: readonly SavantFree$1[] | null | undefined,
+export function formatSavantFreeHardBlockedMessage(
+  signals: readonly SavantFreeIpPrivacySignal[] | null | undefined,
 ): string {
-  return `SavantFree cannot be used from ${formatFreebuffHardBlockedPrivacySignals(
+  return `SavantFree cannot be used from ${formatSavantFreeHardBlockedPrivacySignals(
     signals,
   )} traffic. Please disable it and try again.`
 }

@@ -8,11 +8,11 @@
 
 Two products ship from this monorepo. **Savant-Code** is the full-featured AI coding agent for your terminal — multi-agent orchestration, custom skills, MCP tool discovery, progressive skill loading, custom slash commands, stream-JSON output for CI, and the [`@savant-code/sdk`](https://www.npmjs.com/package/@savant-code/sdk) for embedding agents in your own apps. **Savant-Free** is the free, ad-supported variant — no subscription, no API key, same agent runtime with paid features stripped at compile time via `FREEBUFF_MODE=true`.
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-1.3.14-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![React](https://img.shields.io/badge/React-19-%23000000?style=flat-square&logo=react&logoColor=%2300fbff)](https://react.dev/)[![OpenTUI](https://img.shields.io/badge/OpenTUI-0.2.2-%23000000?style=flat-square&logo=opentui&logoColor=%2300fbff)](https://github.com/anomalyco/opentui)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](ECHO.md)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![Release](https://img.shields.io/badge/Release-v0.0.2-%23000000?style=flat-square&logo=semver&logoColor=%2300fbff)](CHANGELOG.md)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-1.3.14-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![React](https://img.shields.io/badge/React-19-%23000000?style=flat-square&logo=react&logoColor=%2300fbff)](https://react.dev/)[![OpenTUI](https://img.shields.io/badge/OpenTUI-0.2.2-%23000000?style=flat-square&logo=opentui&logoColor=%2300fbff)](https://github.com/anomalyco/opentui)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](ECHO.md)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![Release](https://img.shields.io/badge/Release-v0.0.4-%23000000?style=flat-square&logo=semver&logoColor=%2300fbff)](CHANGELOG.md)
 
 </div>
 
-> **Note:** 0.0.2 is the **pre-rebrand safety checkpoint** — workspace package names retain `@savant-code/*` for compatibility with the 1,131 consumer imports in the repo (per FID-2026-0718-017 Option C). Workspace-level rebrand to `@savant-code/*` arrives in the next push. CLI binary names (`savant-code`, `savant-free`) are pre-renamed.
+> **v0.0.4** — Savant Rename + Modes Repurpose. Renamed `agents/base2/` → `agents/savant/`, repurposed the CLI mode toggle to `EDIT` / `ANALYZE` / `SCAFFOLD`, added TokenRouter and NVIDIA NIM gateway providers, and decomposed FID-033 TUI rebuild into 5 phase FIDs.
 
 ---
 
@@ -20,8 +20,8 @@ Two products ship from this monorepo. **Savant-Code** is the full-featured AI co
 
 Savant-Code is a TypeScript monorepo that builds, ships, and maintains two AI coding-agent products from one workspace:
 
-- **Savant-Code** (npm: `@savant-code/cli` — binary: `savant-code`) — the paid CLI + the public [`@savant-code/sdk`](https://www.npmjs.com/package/@savant-code/sdk). Multi-agent orchestration, custom skills, MCP tool discovery, mode switching (`FREE` / `MAX` / `PLAN`), usage metering.
-- **Savant-Free** (npm: `@savant-code/savant-free` — binary: `savant-free`) — the free, ad-supported CLI. Same agent runtime, same SDK, but built with `FREEBUFF_MODE=true` so the bundler strips paid-only slash commands, credits UI, and mode switching. Result: a single binary that "just works" — no subscription, no API key, no config.
+- **Savant-Code** (npm: `@savant-code/cli` — binary: `savant-code`) — the paid CLI + the public [`@savant-code/sdk`](https://www.npmjs.com/package/@savant-code/sdk). Multi-agent orchestration, custom skills, MCP tool discovery, mode switching (`EDIT` / `ANALYZE` / `SCAFFOLD`), usage metering.
+- **Savant-Free** (npm: `@savant-code/savant-free` — binary: `savant-free`) — the free, ad-supported CLI. Same agent runtime, same SDK, but built with `SAVANT_FREE_MODE=true` so the bundler strips paid-only slash commands, credits UI, and mode switching. Result: a single binary that "just works" — no subscription, no API key, no config.
 
 Both products are built from the same `cli/` source — only the build flag differs. The SDK, the agent runtime, the multi-agent orchestration engine, the tool layer, and the LLM provider shims are shared. That's why two products can ship from one monorepo without duplicating thousands of lines.
 
@@ -55,7 +55,7 @@ The whole project ships under [ECHO Protocol v0.2.0](ECHO.md) — the same 15-la
 - **Slash commands** — `/new`, `/history`, `/bash`, `/feedback`, `/theme:toggle`, `/login`, `/logout`, `/exit`, plus agent-specific commands.
 - **`@filename` and `@AgentName` mentions** — file and agent mentions with inline autocomplete.
 - **Bash mode** — `!command` or `/bash` to run shell commands inline (with confirmation).
-- **Mode switching** — `DEFAULT` / `MAX` / `PLAN` modes, togglable at runtime via UI.
+- **Mode switching** — `EDIT` / `ANALYZE` / `SCAFFOLD` execution-scope modes, togglable at runtime via UI.
 - **Streaming & cancellation** — token-by-token SSE streaming with mid-stream cancellation, retry-with-backoff, and subagent streaming for parallel work.
 - **Knowledge files** — project-level `knowledge.md` plus per-user home-dir knowledge, auto-loaded into agent context.
 - **Skills** — OpenClaw-format `SKILL.md` files discovered at startup, schemas sent to the LLM, available as native tools.
@@ -141,7 +141,7 @@ bun run build:savant-free
 import { SavantCodeClient } from '@savant-code/sdk'
 
 const client = new SavantCodeClient({
-  apiKey: process.env.CODEBUFF_API_KEY,
+  apiKey: process.env.SAVANT_CODE_API_KEY,
   cwd: '/path/to/your/project',
   onError: (err) => console.error('Savant-Code error:', err.message),
 })
@@ -170,7 +170,7 @@ npm install -g @savant-code/cli
 | Command | What it does |
 |---------|--------------|
 | `bun run dev` | Launch CLI in dev mode |
-| `bun run dev:savant-free` | Launch with `FREEBUFF_MODE=true` |
+| `bun run dev:savant-free` | Launch with `SAVANT_FREE_MODE=true` |
 | `bun run build:sdk` | Build the SDK for npm publish |
 | `bun run build:savant-free` | Build the savant-free CLI binary |
 | `bun run ci` | `build:sdk && build:savant-free` — CI gate |

@@ -1,5 +1,19 @@
 import { TextAttributes } from '@opentui/core'
 import { useKeyboard } from '@opentui/react'
+import {
+  FALLBACK_SAVANT_FREE_MODEL_ID,
+  SAVANT_FREE_PREMIUM_SESSION_LIMIT,
+  getSavantFreeDeploymentAvailabilityLabel,
+  getSavantFreeModelsForAccessTier,
+  getRecommendedSavantFreeModelId,
+  isSavantFreeGlmV52ModelId,
+  isSavantFreeModelAvailable,
+  isSavantFreePremiumModelId,
+} from '@savant-code/common/constants/savant-free-models'
+import {
+  getRateLimitsByModel,
+  getReferralInfo,
+} from '@savant-code/common/types/savant-free-session'
 import React, {
   useCallback,
   useEffect,
@@ -10,46 +24,31 @@ import React, {
 } from 'react'
 
 import { Button } from './button'
-import { SavantFree$1 } from './savant-free-referral-banner'
-import {
-  FALLBACK_FREEBUFF_MODEL_ID,
-  FREEBUFF_PREMIUM_SESSION_LIMIT,
-  getFreebuffDeploymentAvailabilityLabel,
-  getFreebuffModelsForAccessTier,
-  getRecommendedFreebuffModelId,
-  isFreebuffGlmV52ModelId,
-  isFreebuffModelAvailable,
-  isFreebuffPremiumModelId,
-} from '@savant-code/common/constants/savant-free-models'
-import {
-  getRateLimitsByModel,
-  getReferralInfo,
-} from '@savant-code/common/types/savant-free-session'
-
-import { startFreebuffSession } from '../hooks/use-savant-free-session'
+import { SavantFreeReferralBanner } from './savant-free-referral-banner'
 import { useNow } from '../hooks/use-now'
-import { useFreebuffModelStore } from '../state/savant-free-model-store'
-import { useFreebuffSessionStore } from '../state/savant-free-session-store'
+import { startSavantFreeSession } from '../hooks/use-savant-free-session'
 import { useTerminalDimensions } from '../hooks/use-terminal-dimensions'
 import { useTheme } from '../hooks/use-theme'
-import {
-  savant-free$1,
-  nextFreebuffModelId,
-} from '../utils/savant-free-model-navigation'
+import { useSavantFreeModelStore } from '../state/savant-free-model-store'
+import { useSavantFreeSessionStore } from '../state/savant-free-session-store'
 import { formatSessionUnits } from '../utils/format-session-units'
 import {
-  formatFreebuffPremiumResetCountdown,
-  getFreebuffPremiumResetAt,
+  savantFreeModelNavigationDirectionForKey,
+  nextSavantFreeModelId,
+} from '../utils/savant-free-model-navigation'
+import {
+  formatSavantFreePremiumResetCountdown,
+  getSavantFreePremiumResetAt,
 } from '../utils/savant-free-premium-reset'
 import { isPlainEnterKey } from '../utils/terminal-enter-detection'
 
-import type { SavantFree$1 } from '@savant-code/common/constants/savant-free-models'
-import type { SavantFree$1 } from './savant-free-referral-banner'
+import type { SavantFreeReferralFocusTarget } from './savant-free-referral-banner'
 import type {
   BoxRenderable,
   KeyEvent,
   ScrollBoxRenderable,
 } from '@opentui/core'
+import type { SavantFreeModel } from '@savant-code/common/constants/savant-free-models'
 
 // The picker opens collapsed to a single recommended hero so a new user can
 // start with one Enter press without reading six boxes. The "see all models"
@@ -73,12 +72,12 @@ import type {
 type Section = {
   key: 'premium' | 'unlimited' | 'limited'
   label: string
-  models: readonly SavantFree$1[]
+  models: readonly SavantFreeModel[]
 }
 
 // Sentinel id for the expand/collapse toggle so it can ride the same
 // keyboard-navigation list as the model rows (Tab/arrow to it, Enter to fire).
-const TOGGLE_ID = '__freebuff_toggle__'
+const TOGGLE_ID = '__savant_free_toggle__'
 
 // Right-aligned CTA shown on the focused, joinable row so the highlighted card
 // reads as a button ("you can press Enter here") instead of just a selection.
@@ -109,7 +108,7 @@ const CUE_GAP = 2 // min gap between a row's details and the focused-row cue
  * scrollbar appears when the whole menu doesn't fit, and Tab/arrow navigation
  * keeps the focused control scrolled into view.
  */
-interface SavantFree$1 {
+interface SavantFreeModelSelectorProps {
   /** Max vertical rows the picker may occupy. When the rendered rows exceed
    *  this, the list scrolls (scrollbar shown, focused row kept in view);
    *  otherwise the scrollbox shrinks to fit and no scrollbar appears. */
@@ -120,7 +119,7 @@ interface SavantFree$1 {
   onExpandedChange?: (expanded: boolean) => void
 }
 
-export const SavantFree$1: React.FC<SavantFree$1> = ({
+export const SavantFreeModelSelector: React.FC<SavantFreeModelSelectorProps> = ({
   maxHeight,
   onExpandedChange,
 }) => {
@@ -130,15 +129,15 @@ export const SavantFree$1: React.FC<SavantFree$1> = ({
   // box (capped at 80 cols), so a wide terminal doesn't actually let us
   // sprawl the buttons across it.
   const { contentMaxWidth } = useTerminalDimensions()
-  const selectedModel = useFreebuffModelStore((s) => s.selectedModel)
-  const setSelectedModel = useFreebuffModelStore((s) => s.setSelectedModel)
-  const session = useFreebuffSessionStore((s) => s.session)
+  const selectedModel = useSavantFreeModelStore((s) => s.selectedModel)
+  const setSelectedModel = useSavantFreeModelStore((s) => s.setSelectedModel)
+  const session = useSavantFreeSessionStore((s) => s.session)
   const accessTier =
     (session && 'accessTier' in session ? session.accessTier : undefined) ??
     'full'
   const now = useNow(60_000)
   const deploymentAvailabilityLabel = useMemo(
-    () => getFreebuffDeploymentAvailabilityLabel(new Date(now)),
+    () => getSavantFreeDeploymentAvailabilityLabel(new Date(now)),
     [now],
   )
   const [pending, setPending] = useState<string | null>(null)
@@ -146,15 +145,15 @@ export const SavantFree$1: React.FC<SavantFree$1> = ({
 
   const availableModels = useMemo(
     // GLM 5.2 is a referral reward, not a freely-pickable model, so it's
-    // surfaced by the separate SavantFree$1 rather than this grid.
+    // surfaced by the separate SavantFreeReferralBanner rather than this grid.
     () =>
-      getFreebuffModelsForAccessTier(accessTier).filter(
-        (m) => !isFreebuffGlmV52ModelId(m.id),
+      getSavantFreeModelsForAccessTier(accessTier).filter(
+        (m) => !isSavantFreeGlmV52ModelId(m.id),
       ),
     [accessTier],
   )
   const recommendedModel = useMemo(() => {
-    const id = getRecommendedFreebuffModelId(accessTier)
+    const id = getRecommendedSavantFreeModelId(accessTier)
     return availableModels.find((m) => m.id === id) ?? availableModels[0]!
   }, [accessTier, availableModels])
   const otherModels = useMemo(
@@ -190,7 +189,7 @@ export const SavantFree$1: React.FC<SavantFree$1> = ({
   // navigation order. Keeping them local avoids a global focus bridge now that
   // the banner renders inside this selector.
   const [extraTargets, setExtraTargets] = useState<
-    SavantFree$1[]
+    SavantFreeReferralFocusTarget[]
   >([])
   const extraTargetIds = useMemo(
     () => extraTargets.map((t) => t.id),
@@ -219,12 +218,12 @@ export const SavantFree$1: React.FC<SavantFree$1> = ({
         {
           key: 'premium',
           label: 'PREMIUM',
-          models: otherModels.filter((m) => isFreebuffPremiumModelId(m.id)),
+          models: otherModels.filter((m) => isSavantFreePremiumModelId(m.id)),
         },
         {
           key: 'unlimited',
           label: 'UNLIMITED',
-          models: otherModels.filter((m) => !isFreebuffPremiumModelId(m.id)),
+          models: otherModels.filter((m) => !isSavantFreePremiumModelId(m.id)),
         },
       ] satisfies readonly Section[]
     ).filter((section) => section.models.length > 0)
@@ -241,7 +240,7 @@ export const SavantFree$1: React.FC<SavantFree$1> = ({
   )
   // Keyboard-navigable ids: the model rows, then the toggle, then any focus
   // targets the referral banner registered (so arrowing down past "see all
-  // models" reaches its buttons; nextFreebuffModelId wraps back to the top).
+  // models" reaches its buttons; nextSavantFreeModelId wraps back to the top).
   const navIds = useMemo(
     () => [
       ...renderedModelIds,
@@ -273,9 +272,9 @@ export const SavantFree$1: React.FC<SavantFree$1> = ({
     if (
       (session?.status === 'none' || !session) &&
       (!renderedModelIds.includes(selectedModel) ||
-        !isFreebuffModelAvailable(selectedModel, new Date(now)))
+        !isSavantFreeModelAvailable(selectedModel, new Date(now)))
     ) {
-      setSelectedModel(renderedModelIds[0] ?? FALLBACK_FREEBUFF_MODEL_ID)
+      setSelectedModel(renderedModelIds[0] ?? FALLBACK_SAVANT_FREE_MODEL_ID)
     }
   }, [renderedModelIds, now, selectedModel, session, setSelectedModel])
 
@@ -297,12 +296,12 @@ export const SavantFree$1: React.FC<SavantFree$1> = ({
     ? Object.values(rateLimitsByModel)[0]
     : undefined
   const premiumUsed = sharedRateLimit?.recentCount ?? 0
-  const premiumExhausted = premiumUsed >= FREEBUFF_PREMIUM_SESSION_LIMIT
+  const premiumExhausted = premiumUsed >= SAVANT_FREE_PREMIUM_SESSION_LIMIT
   // The pool resets daily on a Pacific-day boundary regardless of usage, so the
-  // countdown is meaningful even at zero used — getFreebuffPremiumResetAt falls
+  // countdown is meaningful even at zero used — getSavantFreePremiumResetAt falls
   // back to the next day boundary when the server hasn't sent a resetAt yet.
-  const premiumResetCountdown = formatFreebuffPremiumResetCountdown(
-    getFreebuffPremiumResetAt({ rateLimitsByModel, nowMs: now }),
+  const premiumResetCountdown = formatSavantFreePremiumResetCountdown(
+    getSavantFreePremiumResetAt({ rateLimitsByModel, nowMs: now }),
     now,
   )
 
@@ -321,10 +320,10 @@ export const SavantFree$1: React.FC<SavantFree$1> = ({
     nameColumnWidth,
     recommendedOneLineLen,
   } = useMemo(() => {
-    const nameLen = (m: SavantFree$1) => m.displayName.length
+    const nameLen = (m: SavantFreeModel) => m.displayName.length
     const maxNameLen = Math.max(...availableModels.map(nameLen))
 
-    const detailsParts = (model: SavantFree$1): number[] => {
+    const detailsParts = (model: SavantFreeModel): number[] => {
       const parts: number[] = []
       parts.push(model.tagline.length)
       if (model.warning) parts.push(model.warning.length)
@@ -337,7 +336,7 @@ export const SavantFree$1: React.FC<SavantFree$1> = ({
     const joinedLen = (parts: number[]): number =>
       parts.reduce((a, b) => a + b, 0) + Math.max(0, parts.length - 1) * 3 // " · "
 
-    const oneLineLen = (model: SavantFree$1): number =>
+    const oneLineLen = (model: SavantFreeModel): number =>
       2 /* indicator + space */ +
       maxNameLen +
       NAME_GAP +
@@ -367,9 +366,9 @@ export const SavantFree$1: React.FC<SavantFree$1> = ({
     // Narrow: line 1 = "indicator name · tagline", line 2 (if any) =
     // "  warning · hours". Compute the max of both so all buttons stay the
     // same width.
-    const labelLineLen = (m: SavantFree$1) =>
+    const labelLineLen = (m: SavantFreeModel) =>
       2 + m.displayName.length + 3 + m.tagline.length
-    const detailsLineLen = (m: SavantFree$1) => {
+    const detailsLineLen = (m: SavantFreeModel) => {
       const parts: number[] = []
       if (m.warning) parts.push(m.warning.length)
       if (m.availability === 'deployment_hours') {
@@ -399,7 +398,7 @@ export const SavantFree$1: React.FC<SavantFree$1> = ({
   ])
 
   const rowWraps = useCallback(
-    (m: SavantFree$1) =>
+    (m: SavantFreeModel) =>
       wrapDetails && (!!m.warning || m.availability === 'deployment_hours'),
     [wrapDetails],
   )
@@ -461,7 +460,7 @@ export const SavantFree$1: React.FC<SavantFree$1> = ({
 
   const isJoinable = useCallback(
     (modelId: string) => {
-      if (!isFreebuffModelAvailable(modelId, new Date(now))) return false
+      if (!isSavantFreeModelAvailable(modelId, new Date(now))) return false
       const rateLimit = rateLimitsByModel?.[modelId]
       return !rateLimit || rateLimit.recentCount < rateLimit.limit
     },
@@ -474,7 +473,7 @@ export const SavantFree$1: React.FC<SavantFree$1> = ({
       if (modelId === committedModelId) return
       if (!isJoinable(modelId)) return
       setPending(modelId)
-      startFreebuffSession(modelId).finally(() => setPending(null))
+      startSavantFreeSession(modelId).finally(() => setPending(null))
     },
     [pending, committedModelId, isJoinable],
   )
@@ -502,7 +501,7 @@ export const SavantFree$1: React.FC<SavantFree$1> = ({
       (key: KeyEvent) => {
         if (pending) return
         const name = key.name ?? ''
-        const direction = savant-free$1(key)
+        const direction = savantFreeModelNavigationDirectionForKey(key)
         // Use the shared Enter detector so the keypad Enter and the niche
         // Linux terminals that send \n (linefeed) for Enter also commit; a
         // raw name === 'return' check silently ignores those, which looks
@@ -532,7 +531,7 @@ export const SavantFree$1: React.FC<SavantFree$1> = ({
           return
         }
         if (!direction) return
-        const targetId = nextFreebuffModelId({
+        const targetId = nextSavantFreeModelId({
           modelIds: navIds,
           focusedId,
           direction,
@@ -557,7 +556,7 @@ export const SavantFree$1: React.FC<SavantFree$1> = ({
   )
 
   const renderModelButton = (
-    model: SavantFree$1,
+    model: SavantFreeModel,
     options: { recommended?: boolean } = {},
   ) => {
     // Single visual state: the focused row IS the highlight. The user's
@@ -592,7 +591,7 @@ export const SavantFree$1: React.FC<SavantFree$1> = ({
         : theme.border
 
     // Deployment-hours rows show "until 5pm PT" while open and "opens 9am ET"
-    // while closed (the label flips inside getFreebuffDeploymentAvailabilityLabel),
+    // while closed (the label flips inside getSavantFreeDeploymentAvailabilityLabel),
     // so the same string carries both the in-hours and out-of-hours signals
     // without a separate "Closed" chip. Greyed-out fgColor handles the rest.
     const hasHours = model.availability === 'deployment_hours'
@@ -705,7 +704,7 @@ export const SavantFree$1: React.FC<SavantFree$1> = ({
             <span fg={premiumExhausted ? theme.secondary : theme.muted}>
               {' '}
               · {formatSessionUnits(premiumUsed)} of{' '}
-              {FREEBUFF_PREMIUM_SESSION_LIMIT} used
+              {SAVANT_FREE_PREMIUM_SESSION_LIMIT} used
             </span>
           )}
           {section.key === 'premium' && premiumResetCountdown && (
@@ -803,7 +802,7 @@ export const SavantFree$1: React.FC<SavantFree$1> = ({
         {sectionsContent}
         {toggleContent}
         {referral && (
-          <SavantFree$1
+          <SavantFreeReferralBanner
             width={buttonOuterWidth}
             referral={referral}
             accessTier={accessTier}

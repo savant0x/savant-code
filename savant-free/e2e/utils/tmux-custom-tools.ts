@@ -1,10 +1,10 @@
 import { z } from 'zod/v4'
 
-import { SavantFree$1 } from './savant-free-session'
+import { SavantFreeModel } from './savant-free-session'
 
 import type { ZodType } from 'zod/v4'
 
-interface SavantFree$1 {
+interface SavantFreeModel {
   toolName: string
   description: string
   inputSchema: ZodType
@@ -23,19 +23,19 @@ type ToolOutput = { type: 'json'; value: Record<string, unknown> }[]
  *
  * Usage:
  * ```ts
- * const { tools, cleanup } = createFreebuffTmuxTools(binaryPath)
+ * const { tools, cleanup } = createSavantFreeTmuxTools(binaryPath)
  * // ... pass tools to client.run({ customToolDefinitions: tools })
  * // ... in afterEach: await cleanup()
  * ```
  */
-export function createFreebuffTmuxTools(binaryPath: string): {
-  tools: SavantFree$1[]
+export function createSavantFreeTmuxTools(binaryPath: string): {
+  tools: SavantFreeModel[]
   cleanup: () => Promise<void>
 } {
-  let session: SavantFree$1 | null = null
+  let session: SavantFreeModel | null = null
 
-  const startTool: SavantFree$1 = {
-    toolName: 'start_freebuff',
+  const startTool: SavantFreeModel = {
+    toolName: 'start_savantFree',
     description:
       'Start the SavantFree CLI binary in a tmux terminal session. Call this first before interacting with SavantFree.',
     inputSchema: z.object({}),
@@ -53,7 +53,7 @@ export function createFreebuffTmuxTools(binaryPath: string): {
           },
         ]
       }
-      session = await SavantFree$1.start(binaryPath)
+      session = await SavantFreeModel.start(binaryPath)
       await session.waitForReady()
       const initialOutput = await session.capture()
       return [
@@ -69,8 +69,8 @@ export function createFreebuffTmuxTools(binaryPath: string): {
     },
   }
 
-  const sendInputTool: SavantFree$1 = {
-    toolName: 'send_to_freebuff',
+  const sendInputTool: SavantFreeModel = {
+    toolName: 'send_to_savantFree',
     description:
       'Send text input to the running SavantFree CLI. The text is sent as if typed by the user and Enter is pressed.',
     inputSchema: z.object({
@@ -84,7 +84,7 @@ export function createFreebuffTmuxTools(binaryPath: string): {
         return [
           {
             type: 'json',
-            value: { error: 'No session running. Call start_freebuff first.' },
+            value: { error: 'No session running. Call start_savantFree first.' },
           },
         ]
       }
@@ -93,8 +93,8 @@ export function createFreebuffTmuxTools(binaryPath: string): {
     },
   }
 
-  const captureOutputTool: SavantFree$1 = {
-    toolName: 'capture_freebuff_output',
+  const captureOutputTool: SavantFreeModel = {
+    toolName: 'capture_savantFree_output',
     description:
       'Capture the current terminal output from the running SavantFree CLI session. ' +
       'Use waitSeconds to wait before capturing (useful after sending a command).',
@@ -112,7 +112,7 @@ export function createFreebuffTmuxTools(binaryPath: string): {
         return [
           {
             type: 'json',
-            value: { error: 'No session running. Call start_freebuff first.' },
+            value: { error: 'No session running. Call start_savantFree first.' },
           },
         ]
       }
@@ -121,8 +121,8 @@ export function createFreebuffTmuxTools(binaryPath: string): {
     },
   }
 
-  const stopTool: SavantFree$1 = {
-    toolName: 'stop_freebuff',
+  const stopTool: SavantFreeModel = {
+    toolName: 'stop_savantFree',
     description:
       'Stop the running SavantFree CLI session and clean up resources. Always call this when done testing.',
     inputSchema: z.object({}),

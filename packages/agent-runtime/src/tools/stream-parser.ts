@@ -7,8 +7,8 @@ import {
 } from '@savant-code/common/util/messages'
 import { generateCompactId } from '@savant-code/common/util/string'
 
-import { processStreamWithTools } from '../tool-stream-parser'
 import { INCLUDE_REASONING_IN_MESSAGE_HISTORY } from '../constants'
+import { processStreamWithTools } from '../tool-stream-parser'
 import {
   executeCustomToolCall,
   executeToolCall,
@@ -23,6 +23,7 @@ import type { ToolName } from '@savant-code/common/tools/constants'
 import type { SavantCodeToolCall } from '@savant-code/common/tools/list'
 import type { Logger } from '@savant-code/common/types/contracts/logger'
 import type { ParamsExcluding } from '@savant-code/common/types/function-params'
+import type { JSONValue } from '@savant-code/common/types/json'
 import type {
   Message,
   ToolMessage,
@@ -49,7 +50,7 @@ export async function processStream(
     onCostCalculated: (credits: number) => Promise<void>
     onResponseChunk: (chunk: string | PrintModeEvent) => void
   } & Omit<
-    ExecuteToolCallParams<any>,
+    ExecuteToolCallParams<string>,
     | 'fileProcessingState'
     | 'fromHandleSteps'
     | 'fullResponse'
@@ -133,7 +134,7 @@ export async function processStream(
     const responseHandler = createResponseHandler()
     return {
       onTagStart: () => { },
-      onTagEnd: async (_: string, input: Record<string, string>) => {
+      onTagEnd: async (_: string, input: Record<string, JSONValue>) => {
         if (signal.aborted) {
           return
         }

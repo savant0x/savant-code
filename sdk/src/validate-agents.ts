@@ -25,7 +25,7 @@ export interface ValidateAgentsOptions {
 
   /**
    * The base URL of the SavantCode website API.
-   * Optional - defaults to NEXT_PUBLIC_CODEBUFF_APP_URL or environment-based URL.
+   * Optional - defaults to NEXT_PUBLIC_SAVANT_CODE_APP_URL or environment-based URL.
    * Example: 'https://savant-code.com'
    */
   websiteUrl?: string

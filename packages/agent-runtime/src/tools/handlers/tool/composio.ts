@@ -1,6 +1,9 @@
-import type { ComposioMetaToolName } from '@savant-code/common/constants/composio'
-import type { SavantCodeToolOutput } from '@savant-code/common/tools/list'
 import type { SavantCodeToolHandlerFunction } from '../handler-function-type'
+import type { ComposioMetaToolName } from '@savant-code/common/constants/composio'
+import type {
+  ClientToolCall,
+  ClientToolName,
+} from '@savant-code/common/tools/list'
 
 function makeComposioHandler<
   T extends ComposioMetaToolName,
@@ -19,10 +22,22 @@ function makeComposioHandler<
       }
     }
 
+    // FID-029: `as ClientToolCall<T extends ClientToolName ? T : never>`
+    // is accepted pre-existing tech debt. See
+    // dev/fids/FID-2026-0719-029-as-cast-tech-debt.md. The conditional
+    // form is required to align exactly with the handler-function-type
+    // slot signature `ClientToolCall<T extends ClientToolName ? T : never>`;
+    // TypeScript treats `ClientToolCall<T>` and
+    // `ClientToolCall<T extends ClientToolName ? T : never>` as distinct
+    // nominal identities even when they resolve to the same concrete type.
+    const clientToolCall = {
+      toolCallId: toolCall.toolCallId,
+      toolName: toolCall.toolName,
+      input: toolCall.input,
+      providerOptions: toolCall.providerOptions,
+    } as ClientToolCall<T extends ClientToolName ? T : never>
     return {
-      output: (await (requestClientToolCall as any)(
-        toolCall,
-      )) as SavantCodeToolOutput<T>,
+      output: await requestClientToolCall(clientToolCall),
     }
   }
 }

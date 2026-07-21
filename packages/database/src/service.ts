@@ -1,5 +1,6 @@
-import { db } from './index'
 import crypto from 'crypto'
+
+import { db } from './index'
 
 // Types
 export interface Session {
@@ -7,7 +8,7 @@ export interface Session {
   chat_id: string
   agent_id: string
   selected_model: string
-  session_state: any
+  session_state: Record<string, unknown>
   status: string
   created_at: string
   updated_at: string
@@ -15,7 +16,7 @@ export interface Session {
 
 export interface AgentTemplate {
   id: string
-  template: any
+  template: Record<string, unknown>
   version: number
   created_at: string
   updated_at: string
@@ -25,7 +26,7 @@ export interface AgentConfig {
   id: string
   session_id: string
   template_id: string
-  config: any
+  config: Record<string, unknown>
   created_at: string
 }
 
@@ -43,7 +44,7 @@ export interface MessageHistory {
   id: string
   session_id: string
   role: string
-  content: any
+  content: unknown
   created_at: string
 }
 
@@ -57,7 +58,7 @@ export interface CostTracking {
 }
 
 // Session operations
-export function createSession(chatId: string, agentId: string, sessionState: any, selectedModel: string = ''): Session {
+export function createSession(chatId: string, agentId: string, sessionState: Record<string, unknown>, selectedModel: string = ''): Session {
   const id = crypto.randomUUID()
   const stmt = db.prepare(`
     INSERT INTO sessions (id, chat_id, agent_id, session_state, selected_model)
@@ -69,17 +70,17 @@ export function createSession(chatId: string, agentId: string, sessionState: any
 
 export function getSession(id: string): Session | null {
   const stmt = db.prepare('SELECT * FROM sessions WHERE id = ?')
-  const row = stmt.get(id) as any
+  const row = stmt.get(id) as Record<string, unknown> | null
   if (row) {
     return {
       ...row,
-      session_state: JSON.parse(row.session_state)
-    }
+      session_state: JSON.parse(row.session_state as string)
+    } as Session
   }
   return null
 }
 
-export function updateSession(id: string, sessionState: any): void {
+export function updateSession(id: string, sessionState: Record<string, unknown>): void {
   const stmt = db.prepare(`
     UPDATE sessions 
     SET session_state = ?, updated_at = CURRENT_TIMESTAMP
@@ -90,11 +91,11 @@ export function updateSession(id: string, sessionState: any): void {
 
 export function getSessionsByChatId(chatId: string): Session[] {
   const stmt = db.prepare('SELECT * FROM sessions WHERE chat_id = ? ORDER BY created_at DESC')
-  const rows = stmt.all(chatId) as any[]
+  const rows = stmt.all(chatId) as Record<string, unknown>[]
   return rows.map(row => ({
     ...row,
-    session_state: JSON.parse(row.session_state)
-  }))
+    session_state: JSON.parse(row.session_state as string)
+  })) as Session[]
 }
 
 export function updateSessionModel(sessionId: string, model: string): void {
@@ -108,8 +109,8 @@ export function updateSessionModel(sessionId: string, model: string): void {
 
 export function getLatestModelForChat(chatId: string): string {
   const stmt = db.prepare('SELECT selected_model FROM sessions WHERE chat_id = ? ORDER BY created_at DESC LIMIT 1')
-  const row = stmt.get(chatId) as any
-  return row?.selected_model || ''
+  const row = stmt.get(chatId) as Record<string, unknown> | null
+  return (row?.selected_model as string) || ''
 }
 
 export function saveModel(model: string): void {
@@ -123,19 +124,19 @@ export function saveModel(model: string): void {
 
 export function getLatestModel(): string {
   const stmt = db.prepare('SELECT selected_model FROM sessions ORDER BY created_at DESC LIMIT 1')
-  const row = stmt.get() as any
-  return row?.selected_model || ''
+  const row = stmt.get() as Record<string, unknown> | null
+  return (row?.selected_model as string) || ''
 }
 
 export function hasSessions(): boolean {
   const stmt = db.prepare('SELECT COUNT(*) as count FROM sessions')
-  const row = stmt.get() as any
-  return row?.count > 0
+  const row = stmt.get() as Record<string, unknown> | null
+  return (row?.count as number) > 0
 }
 
 // Agent Template operations
-export function createAgentTemplate(template: any): AgentTemplate {
-  const id = template.id || crypto.randomUUID()
+export function createAgentTemplate(template: Record<string, unknown>): AgentTemplate {
+  const id = (typeof template.id === 'string' ? template.id : undefined) || crypto.randomUUID()
   const stmt = db.prepare(`
     INSERT INTO agent_templates (id, template)
     VALUES (?, ?)
@@ -146,17 +147,17 @@ export function createAgentTemplate(template: any): AgentTemplate {
 
 export function getAgentTemplate(id: string): AgentTemplate | null {
   const stmt = db.prepare('SELECT * FROM agent_templates WHERE id = ?')
-  const row = stmt.get(id) as any
+  const row = stmt.get(id) as Record<string, unknown> | null
   if (row) {
     return {
       ...row,
-      template: JSON.parse(row.template)
-    }
+      template: JSON.parse(row.template as string)
+    } as AgentTemplate
   }
   return null
 }
 
-export function updateAgentTemplate(id: string, template: any): void {
+export function updateAgentTemplate(id: string, template: Record<string, unknown>): void {
   const stmt = db.prepare(`
     UPDATE agent_templates 
     SET template = ?, version = version + 1, updated_at = CURRENT_TIMESTAMP
@@ -166,7 +167,7 @@ export function updateAgentTemplate(id: string, template: any): void {
 }
 
 // Agent Config operations
-export function createAgentConfig(sessionId: string, templateId: string, config: any): AgentConfig {
+export function createAgentConfig(sessionId: string, templateId: string, config: Record<string, unknown>): AgentConfig {
   const id = crypto.randomUUID()
   const stmt = db.prepare(`
     INSERT INTO agent_configs (id, session_id, template_id, config)
@@ -178,12 +179,12 @@ export function createAgentConfig(sessionId: string, templateId: string, config:
 
 export function getAgentConfig(id: string): AgentConfig | null {
   const stmt = db.prepare('SELECT * FROM agent_configs WHERE id = ?')
-  const row = stmt.get(id) as any
+  const row = stmt.get(id) as Record<string, unknown> | null
   if (row) {
     return {
       ...row,
-      config: JSON.parse(row.config)
-    }
+      config: JSON.parse(row.config as string)
+    } as AgentConfig
   }
   return null
 }
@@ -214,7 +215,7 @@ export function updateFidDocument(id: string, content: string, status: string, p
 }
 
 // Message History operations
-export function createMessage(sessionId: string, role: string, content: any): MessageHistory {
+export function createMessage(sessionId: string, role: string, content: unknown): MessageHistory {
   const id = crypto.randomUUID()
   const stmt = db.prepare(`
     INSERT INTO message_history (id, session_id, role, content)
@@ -226,23 +227,23 @@ export function createMessage(sessionId: string, role: string, content: any): Me
 
 export function getMessage(id: string): MessageHistory | null {
   const stmt = db.prepare('SELECT * FROM message_history WHERE id = ?')
-  const row = stmt.get(id) as any
+  const row = stmt.get(id) as Record<string, unknown> | null
   if (row) {
     return {
       ...row,
-      content: JSON.parse(row.content)
-    }
+      content: JSON.parse(row.content as string)
+    } as MessageHistory
   }
   return null
 }
 
 export function getMessagesBySessionId(sessionId: string): MessageHistory[] {
   const stmt = db.prepare('SELECT * FROM message_history WHERE session_id = ? ORDER BY created_at ASC')
-  const rows = stmt.all(sessionId) as any[]
+  const rows = stmt.all(sessionId) as Record<string, unknown>[]
   return rows.map(row => ({
     ...row,
-    content: JSON.parse(row.content)
-  }))
+    content: JSON.parse(row.content as string)
+  })) as MessageHistory[]
 }
 
 // Cost Tracking operations

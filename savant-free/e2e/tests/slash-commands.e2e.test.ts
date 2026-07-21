@@ -1,13 +1,13 @@
 import { afterEach, describe, expect, test } from 'bun:test'
 
-import { FreebuffSession, requireFreebuffBinary } from '../utils'
+import { SavantFreeSession, requireSavantFreeBinary } from '../utils'
 
 const TEST_TIMEOUT = 60_000
 const SESSION_HEIGHT = 40
 
 /**
- * Commands that should be REMOVED in Freebuff.
- * These are stripped at build time via the FREEBUFF_REMOVED_COMMAND_IDS set
+ * Commands that should be REMOVED in SavantFree.
+ * These are stripped at build time via the SAVANT_FREE_REMOVED_COMMAND_IDS set
  * in cli/src/data/slash-commands.ts.
  */
 const REMOVED_COMMANDS = [
@@ -24,7 +24,7 @@ const REMOVED_COMMANDS = [
 ]
 
 /**
- * Commands that should be KEPT in Freebuff.
+ * Commands that should be KEPT in SavantFree.
  * Only includes commands reliably visible in the initial autocomplete viewport.
  * Commands like /logout and /exit exist but may be scrolled off-screen.
  */
@@ -37,8 +37,8 @@ const KEPT_COMMANDS = [
   '/theme:toggle',
 ]
 
-describe.skip('Freebuff: Slash Commands', () => {
-  let session: FreebuffSession | null = null
+describe.skip('SavantFree: Slash Commands', () => {
+  let session: SavantFreeSession | null = null
 
   afterEach(async () => {
     if (session) {
@@ -50,8 +50,8 @@ describe.skip('Freebuff: Slash Commands', () => {
   test(
     'slash command menu does not show removed commands',
     async () => {
-      const binary = requireFreebuffBinary()
-      session = await FreebuffSession.start(binary, { waitSeconds: 5, height: SESSION_HEIGHT })
+      const binary = requireSavantFreeBinary()
+      session = await SavantFreeSession.start(binary, { waitSeconds: 5, height: SESSION_HEIGHT })
 
       // Type "/" to trigger the slash command autocomplete menu
       // Use sendKey instead of send to avoid C-u clearing keystroke that
@@ -72,8 +72,8 @@ describe.skip('Freebuff: Slash Commands', () => {
   test(
     'slash command menu shows kept commands',
     async () => {
-      const binary = requireFreebuffBinary()
-      session = await FreebuffSession.start(binary, { waitSeconds: 5, height: SESSION_HEIGHT })
+      const binary = requireSavantFreeBinary()
+      session = await SavantFreeSession.start(binary, { waitSeconds: 5, height: SESSION_HEIGHT })
 
       // Type "/" to trigger the slash command autocomplete menu
       await session.sendKey('/')
@@ -91,15 +91,15 @@ describe.skip('Freebuff: Slash Commands', () => {
   test(
     'no mode-related slash commands are visible',
     async () => {
-      const binary = requireFreebuffBinary()
-      session = await FreebuffSession.start(binary, { waitSeconds: 5, height: SESSION_HEIGHT })
+      const binary = requireSavantFreeBinary()
+      session = await SavantFreeSession.start(binary, { waitSeconds: 5, height: SESSION_HEIGHT })
 
       // Type "/mode" to check for mode commands
       // Use sendKey for the full string to avoid C-u clearing the input
       await session.sendKey('/mode')
       const output = await session.capture(4)
 
-      // Mode commands should not exist in Freebuff
+      // Mode commands should not exist in SavantFree
       expect(output).not.toContain('mode:max')
       expect(output).not.toContain('mode:default')
       expect(output).not.toContain('mode:lite')

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- session-state types: dynamic agent output schemas */
 import { z } from 'zod/v4'
 
 import { MAX_AGENT_STEPS_DEFAULT } from '../constants/agents'

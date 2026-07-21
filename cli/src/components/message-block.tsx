@@ -16,7 +16,6 @@ import { getCliEnv } from '../utils/env'
 import { type MarkdownPalette } from '../utils/markdown-renderer'
 import { formatCwd } from '../utils/path-helpers'
 
-import type { FeedbackCategory } from '@savant-code/common/constants/feedback'
 
 import type {
   ContentBlock,
@@ -26,6 +25,7 @@ import type {
   ChatMessageMetadata,
 } from '../types/chat'
 import type { ThemeColor } from '../types/theme-system'
+import type { FeedbackCategory } from '@savant-code/common/constants/feedback'
 
 interface MessageBlockProps {
   messageId: string
@@ -180,7 +180,7 @@ export const MessageBlock = memo(({
     },
     {
       logLevel: 'debug',
-      enabled: getCliEnv().CODEBUFF_PERF_TEST === 'true',
+      enabled: getCliEnv().SAVANT_CODE_PERF_TEST === 'true',
     },
   )
 

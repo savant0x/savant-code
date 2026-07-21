@@ -1,5 +1,5 @@
-import { pluralize } from '@savant-code/common/util/string'
 import { TextAttributes } from '@opentui/core'
+import { pluralize } from '@savant-code/common/util/string'
 import React, { useMemo, useRef, useEffect, useState } from 'react'
 
 

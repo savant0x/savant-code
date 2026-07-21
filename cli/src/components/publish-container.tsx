@@ -1,5 +1,5 @@
-import { pluralize } from '@savant-code/common/util/string'
 import { TextAttributes } from '@opentui/core'
+import { pluralize } from '@savant-code/common/util/string'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 
@@ -255,9 +255,7 @@ export const PublishContainer: React.FC<PublishContainerProps> = ({
             paddingRight: 1,
             borderStyle: 'single',
             borderColor: theme.border,
-            customBorderChars: BORDER_CHARS,
-          }}
-        >
+            }} customBorderChars={BORDER_CHARS}>
           <text style={{ fg: theme.foreground }}>CLOSE</text>
         </Button>
       </box>
@@ -298,9 +296,7 @@ export const PublishContainer: React.FC<PublishContainerProps> = ({
             paddingRight: 1,
             borderStyle: 'single',
             borderColor: theme.border,
-            customBorderChars: BORDER_CHARS,
-          }}
-        >
+            }} customBorderChars={BORDER_CHARS}>
           <text style={{ fg: theme.foreground }}>CLOSE</text>
         </Button>
       </box>
@@ -428,10 +424,8 @@ export const PublishContainer: React.FC<PublishContainerProps> = ({
                 paddingBottom: 0,
                 borderStyle: 'single',
                 borderColor: canProceed ? theme.foreground : theme.border,
-                customBorderChars: BORDER_CHARS,
                 backgroundColor: 'transparent',
-              }}
-            >
+              }} customBorderChars={BORDER_CHARS}>
               <text
                 style={{ wrapMode: 'none' }}
                 attributes={
@@ -494,10 +488,8 @@ export const PublishContainer: React.FC<PublishContainerProps> = ({
                 paddingBottom: 0,
                 borderStyle: 'single',
                 borderColor: theme.border,
-                customBorderChars: BORDER_CHARS,
                 backgroundColor: 'transparent',
-              }}
-            >
+              }} customBorderChars={BORDER_CHARS}>
               <text style={{ wrapMode: 'none' }}>
                 <span
                   fg={backButtonHovered ? theme.foreground : theme.secondary}
@@ -517,10 +509,8 @@ export const PublishContainer: React.FC<PublishContainerProps> = ({
                 paddingBottom: 0,
                 borderStyle: 'single',
                 borderColor: isPublishing ? theme.border : theme.success,
-                customBorderChars: BORDER_CHARS,
                 backgroundColor: 'transparent',
-              }}
-            >
+              }} customBorderChars={BORDER_CHARS}>
               <text
                 style={{ wrapMode: 'none' }}
                 attributes={isPublishing ? TextAttributes.DIM : undefined}
@@ -589,10 +579,8 @@ export const PublishContainer: React.FC<PublishContainerProps> = ({
                 paddingBottom: 0,
                 borderStyle: 'single',
                 borderColor: theme.success,
-                customBorderChars: BORDER_CHARS,
                 backgroundColor: 'transparent',
-              }}
-            >
+              }} customBorderChars={BORDER_CHARS}>
               <text style={{ wrapMode: 'none' }}>
                 <span fg={closeButtonHovered ? theme.success : theme.foreground}>
                   DONE
@@ -648,10 +636,8 @@ export const PublishContainer: React.FC<PublishContainerProps> = ({
                 paddingBottom: 0,
                 borderStyle: 'single',
                 borderColor: theme.border,
-                customBorderChars: BORDER_CHARS,
                 backgroundColor: 'transparent',
-              }}
-            >
+              }} customBorderChars={BORDER_CHARS}>
               <text style={{ wrapMode: 'none' }}>
                 <span fg={backButtonHovered ? theme.foreground : theme.secondary}>
                   TRY AGAIN
@@ -669,10 +655,8 @@ export const PublishContainer: React.FC<PublishContainerProps> = ({
                 paddingBottom: 0,
                 borderStyle: 'single',
                 borderColor: theme.border,
-                customBorderChars: BORDER_CHARS,
                 backgroundColor: 'transparent',
-              }}
-            >
+              }} customBorderChars={BORDER_CHARS}>
               <text style={{ wrapMode: 'none' }}>
                 <span fg={closeButtonHovered ? theme.foreground : theme.secondary}>
                   CLOSE

@@ -4,16 +4,16 @@ import path from 'path'
 
 import { describe, expect, it } from 'bun:test'
 
-import { SavantCodeClient } from '../client'
 import { loadLocalAgents } from '../agents/load-agents'
+import { SavantCodeClient } from '../client'
 
-import type { AgentOutput } from '@savant-code/common/types/session-state'
 import type { PrintModeEvent } from '@savant-code/common/types/print-mode'
+import type { AgentOutput } from '@savant-code/common/types/session-state'
 
 const DEFAULT_TIMEOUT_MS = 120_000
 const EXPECTED_KEYWORD = 'useActionState'
 const RESEARCHER_WEB_MAX_AGENT_STEPS = 10
-const RUN_LIVE_INTEGRATION = process.env.RUN_CODEBUFF_E2E === 'true'
+const RUN_LIVE_INTEGRATION = process.env.RUN_SAVANT_CODE_E2E === 'true'
 
 function loadEnvValue(name: string): string | undefined {
   if (process.env[name] && process.env[name] !== 'test') {
@@ -65,88 +65,16 @@ function extractOutputText(output: AgentOutput): string {
   return assistantText.join('\n')
 }
 
-function summarizeToolTrace(events: PrintModeEvent[]): {
-  readUrlCount: number
-  lines: string[]
-} {
-  const lines: string[] = []
-  let readUrlCount = 0
-
-  for (const event of events) {
-    if (event.type === 'tool_call') {
-      if (event.toolName === 'web_search') {
-        lines.push(`tool_call web_search query=${event.input.query}`)
-      } else if (event.toolName === 'read_url') {
-        readUrlCount += 1
-        lines.push(`tool_call read_url url=${event.input.url}`)
-      } else {
-        lines.push(`tool_call ${event.toolName}`)
-      }
-      continue
-    }
-
-    if (event.type !== 'tool_result') continue
-
-    const output = event.output[0]
-    const value = output?.type === 'json' ? output.value : undefined
-    if (!value || typeof value !== 'object') {
-      lines.push(`tool_result ${event.toolName} empty`)
-      continue
-    }
-
-    if (event.toolName === 'read_url') {
-      const result = value as {
-        url?: string
-        finalUrl?: string
-        status?: number
-        title?: string
-        text?: string
-        truncated?: boolean
-        errorMessage?: string
-      }
-      if (result.errorMessage) {
-        lines.push(`tool_result read_url error=${result.errorMessage}`)
-      } else {
-        lines.push(
-          [
-            'tool_result read_url',
-            `status=${result.status}`,
-            `finalUrl=${result.finalUrl}`,
-            `title=${JSON.stringify(result.title ?? '')}`,
-            `textChars=${result.text?.length ?? 0}`,
-            `truncated=${result.truncated ?? false}`,
-          ].join(' '),
-        )
-      }
-    } else if (event.toolName === 'web_search') {
-      const result = value as { result?: string; errorMessage?: string }
-      lines.push(
-        result.errorMessage
-          ? `tool_result web_search error=${result.errorMessage}`
-          : `tool_result web_search chars=${result.result?.length ?? 0}`,
-      )
-    }
-  }
-
-  return { readUrlCount, lines }
-}
-
 describe('researcher-web SDK integration', () => {
   it(
     `runs researcher-web through the SDK and answers with ${EXPECTED_KEYWORD}`,
     async () => {
       if (!RUN_LIVE_INTEGRATION) {
-        console.log(
-          'Skipping researcher-web SDK integration test: set RUN_CODEBUFF_E2E=true and CODEBUFF_API_KEY to run.',
-        )
         return
       }
 
-      const apiKey = loadEnvValue('CODEBUFF_API_KEY')
+      const apiKey = loadEnvValue('SAVANT_CODE_API_KEY')
       if (!apiKey) {
-        console.log(
-          'Skipping researcher-web SDK integration test: set RUN_CODEBUFF_E2E=true and CODEBUFF_API_KEY to run.',
-        )
         return
       }
 
@@ -180,15 +108,6 @@ describe('researcher-web SDK integration', () => {
       })
 
       const outputText = extractOutputText(result.output)
-      const trace = summarizeToolTrace(events)
-      console.log(
-        [
-          'researcher-web SDK trace:',
-          ...trace.lines.map((line) => `  ${line}`),
-          `read_url fetch count: ${trace.readUrlCount}`,
-        ].join('\n'),
-      )
-      console.log('researcher-web SDK output:', outputText)
 
       expect(result.output.type).not.toBe('error')
       expect(outputText).toContain(EXPECTED_KEYWORD)

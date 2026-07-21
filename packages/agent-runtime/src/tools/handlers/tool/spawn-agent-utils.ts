@@ -24,6 +24,7 @@ import type {
   ParamsExcluding,
   OptionalFields,
 } from '@savant-code/common/types/function-params'
+import type { JSONValue } from '@savant-code/common/types/json'
 import type { Message } from '@savant-code/common/types/messages/savant-code-message'
 import type { PrintModeEvent } from '@savant-code/common/types/print-mode'
 import type {
@@ -42,8 +43,7 @@ import type { ToolSet } from 'ai'
 export type SubagentContextParams = AgentRuntimeDeps &
   AgentRuntimeScopedDeps & {
     clientSessionId: string
-    costMode?: string
-    extraCodebuffMetadata?: Record<string, string>
+    extraSavantCodeMetadata?: Record<string, string>
     fileContext: ProjectFileContext
     localAgentTemplates: Record<string, AgentTemplate>
     repoId: string | undefined
@@ -96,8 +96,7 @@ export function extractSubagentContextParams(
 
     // Core context params
     clientSessionId: params.clientSessionId,
-    costMode: params.costMode,
-    extraCodebuffMetadata: params.extraCodebuffMetadata,
+    extraSavantCodeMetadata: params.extraSavantCodeMetadata,
     fileContext: params.fileContext,
     localAgentTemplates: params.localAgentTemplates,
     repoId: params.repoId,
@@ -187,7 +186,7 @@ export async function validateAndGetAgentTemplate(
     : getMatchingSpawn(parentAgentTemplate.spawnableAgents, agentTypeStr)
 
   if (!agentType) {
-    if (toolNames.includes(agentTypeStr as any)) {
+    if ((toolNames as readonly string[]).includes(agentTypeStr)) {
       throw new Error(
         `"${agentTypeStr}" is a tool, not an agent. Call it directly as a tool instead of wrapping it in spawn_agents.`,
       )
@@ -203,7 +202,7 @@ export async function validateAndGetAgentTemplate(
   })
 
   if (!agentTemplate) {
-    if (toolNames.includes(agentTypeStr as any)) {
+    if ((toolNames as readonly string[]).includes(agentTypeStr)) {
       throw new Error(
         `"${agentTypeStr}" is a tool, not an agent. Call it directly as a tool instead of wrapping it in spawn_agents.`,
       )
@@ -221,7 +220,7 @@ export function validateAgentInput(
   agentTemplate: AgentTemplate,
   agentType: string,
   prompt?: string,
-  params?: any,
+  params?: JSONValue,
 ): void {
   const { inputSchema } = agentTemplate
 
@@ -333,7 +332,7 @@ export function logAgentSpawn(params: {
   agentId: string
   parentId: string | undefined
   prompt?: string
-  spawnParams?: any
+  spawnParams?: JSONValue
   inline?: boolean
   logger: Logger
 }): void {

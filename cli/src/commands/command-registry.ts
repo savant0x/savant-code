@@ -13,12 +13,12 @@ import {
 import { buildInterviewPrompt, buildPlanPrompt, buildReviewPromptFromArgs } from './prompt-builders'
 import { runBashCommand } from './router'
 import { handleUsageCommand } from './usage'
-import { returnToFreebuffLanding } from '../hooks/use-savant-free-session'
+import { returnToSavantFreeLanding } from '../hooks/use-savant-free-session'
 import { useThemeStore } from '../hooks/use-theme'
 import { WEBSITE_URL } from '../login/constants'
 import { startNewChat } from '../project-files'
 import { useChatStore } from '../state/chat-store'
-import { useFreebuffModelStore } from '../state/savant-free-model-store'
+import { useSavantFreeModelStore } from '../state/savant-free-model-store'
 
 // FID-2026-0718-010 (D3): helper for slash-command bridges. Calls
 // resetUiToIdle (which itself calls onStreamEnded) with the slash-command
@@ -28,13 +28,13 @@ const resetUiToIdleAfterSlashCommand = () => _resetUiToIdle('slash-command')
 import { abortActiveRun } from '../utils/active-run'
 import { useFeedbackStore } from '../state/feedback-store'
 import { useLoginStore } from '../state/login-store'
-import { AGENT_MODES, END_SESSION_MESSAGE, IS_FREEBUFF } from '../utils/constants'
+import { AGENT_MODES, END_SESSION_MESSAGE, IS_SAVANT_FREE } from '../utils/constants'
 import { getSystemMessage, getUserMessage } from '../utils/message-history'
 import { capturePendingAttachments } from '../utils/pending-attachments'
 import { getSkillByName } from '../utils/skill-registry'
-import { loadCodebuffModelPreference, saveCodebuffModelPreference } from '../utils/settings'
+import { loadSavantCodeModelPreference, saveSavantCodeModelPreference } from '../utils/settings'
 import { useModelPickerStore } from '../state/model-picker-store'
-import { fetchOpenRouterModels } from '../utils/openrouter-models'
+import { fetchGatewayModels } from '../utils/openrouter-models'
 
 import type { MultilineInputHandle } from '../components/multiline-input'
 import type { InputValue, PendingAttachment } from '../types/store'
@@ -180,7 +180,7 @@ const clearInput = (params: RouterParams) => {
   params.setInputValue({ text: '', cursorPosition: 0, lastEditDueToNav: false })
 }
 
-const FREEBUFF_REMOVED_COMMANDS = new Set([
+const SAVANT_FREE_REMOVED_COMMANDS = new Set([
   'ads:enable',
   'ads:disable',
   'usage',
@@ -190,7 +190,7 @@ const FREEBUFF_REMOVED_COMMANDS = new Set([
   'gpt-5-agent',
 ])
 
-const FREEBUFF_ONLY_COMMANDS = new Set([
+const SAVANT_FREE_ONLY_COMMANDS = new Set([
   'connect',
   'plan',
   'end-session',
@@ -442,7 +442,7 @@ const ALL_COMMANDS: CommandDefinition[] = [
     },
   }),
   // Mode commands generated from AGENT_MODES (excluded in SavantFree)
-  ...(IS_FREEBUFF ? [] : AGENT_MODES).map((mode) =>
+  ...(IS_SAVANT_FREE ? [] : AGENT_MODES).map((mode) =>
     defineCommandWithArgs({
       name: `mode:${mode.toLowerCase()}`,
       aliases: [`model:${mode.toLowerCase()}`],
@@ -472,7 +472,7 @@ const ALL_COMMANDS: CommandDefinition[] = [
       },
     }),
   ),
-  ...(IS_FREEBUFF
+  ...(IS_SAVANT_FREE
     ? []
     : [
         defineCommandWithArgs({
@@ -486,8 +486,8 @@ const ALL_COMMANDS: CommandDefinition[] = [
             // Free-text selection always works: /model <exact-id> switches
             // immediately, even if the live catalog is unavailable.
             if (trimmedArgs) {
-              saveCodebuffModelPreference(trimmedArgs)
-              useFreebuffModelStore.getState().switchModel(trimmedArgs)
+              saveSavantCodeModelPreference(trimmedArgs)
+              useSavantFreeModelStore.getState().switchModel(trimmedArgs)
               params.setMessages((prev) => [
                 ...prev,
                 getSystemMessage(`Model switched to: ${trimmedArgs}`),
@@ -495,12 +495,12 @@ const ALL_COMMANDS: CommandDefinition[] = [
               return
             }
 
-            const currentModel = loadCodebuffModelPreference()
+            const currentModel = loadSavantCodeModelPreference()
 
             // Live picker: fetch the real-time OpenRouter catalog and render a
             // filterable list. Typing /model <id> (or re-running with a filter)
             // selects the model. Degrades to free-text if the catalog can't load.
-            const models = await fetchOpenRouterModels()
+            const models = await fetchGatewayModels()
             if (models.length === 0) {
               const message = currentModel
                 ? `Current model: ${currentModel}\n\nCouldn't load the live OpenRouter model list. Type an exact model id to switch, e.g. /model anthropic/claude-sonnet-4`
@@ -664,7 +664,7 @@ const ALL_COMMANDS: CommandDefinition[] = [
   }),
   // /end-session (savant-free-only) — end the active session early and drop back
   // to the model picker. The hook flips status to 'none', which unmounts
-  // <Chat> and mounts <SavantFree$1>, where the user picks a model
+  // <Chat> and mounts <SavantFreeLandingScreen>, where the user picks a model
   // and hits Enter to start a new session.
   defineCommand({
     name: 'end-session',
@@ -677,7 +677,7 @@ const ALL_COMMANDS: CommandDefinition[] = [
       ])
       params.saveToHistory(params.inputValue.trim())
       clearInput(params)
-      returnToFreebuffLanding({ resetChat: true }).catch(() => {
+      returnToSavantFreeLanding({ resetChat: true }).catch(() => {
         // The hook surfaces poll errors via the session store; nothing to do
         // here beyond letting the chat history reflect the attempt.
       })
@@ -685,9 +685,9 @@ const ALL_COMMANDS: CommandDefinition[] = [
   }),
 ]
 
-export const COMMAND_REGISTRY: CommandDefinition[] = IS_FREEBUFF
-  ? ALL_COMMANDS.filter((cmd) => !FREEBUFF_REMOVED_COMMANDS.has(cmd.name))
-  : ALL_COMMANDS.filter((cmd) => !FREEBUFF_ONLY_COMMANDS.has(cmd.name))
+export const COMMAND_REGISTRY: CommandDefinition[] = IS_SAVANT_FREE
+  ? ALL_COMMANDS.filter((cmd) => !SAVANT_FREE_REMOVED_COMMANDS.has(cmd.name))
+  : ALL_COMMANDS.filter((cmd) => !SAVANT_FREE_ONLY_COMMANDS.has(cmd.name))
 
 export function findCommand(cmd: string): CommandDefinition | undefined {
   const lowerCmd = cmd.toLowerCase()

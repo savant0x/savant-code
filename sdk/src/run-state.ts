@@ -1,8 +1,6 @@
 import * as os from 'os'
 import path from 'path'
 
-import { logger } from './utils/logger'
-import { getSystemInfo } from '@savant-code/common/util/system-info'
 import {
   KNOWLEDGE_FILE_NAMES_LOWERCASE,
   isKnowledgeFile,
@@ -13,11 +11,13 @@ import {
 } from '@savant-code/common/project-file-tree'
 import { getInitialSessionState } from '@savant-code/common/types/session-state'
 import { getErrorObject } from '@savant-code/common/util/error'
+import { getSystemInfo } from '@savant-code/common/util/system-info'
 import { cloneDeep } from 'lodash'
 import z from 'zod/v4'
 
 import { loadLocalAgents } from './agents/load-agents'
 import { loadSkills } from './skills/load-skills'
+import { logger } from './utils/logger'
 
 // Re-export for SDK consumers
 export {

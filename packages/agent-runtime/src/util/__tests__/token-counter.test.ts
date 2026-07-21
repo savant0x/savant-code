@@ -6,6 +6,7 @@ import {
   countTokensMessages,
 } from '../token-counter'
 
+import type { JSONValue } from '@savant-code/common/types/json'
 import type { Message } from '@savant-code/common/types/messages/savant-code-message'
 
 describe('countTokensMessages', () => {
@@ -61,7 +62,7 @@ describe('countTokensMessages', () => {
     // Structured counting removes the JSON envelope for text parts, so it must
     // not exceed the whole-array JSON count.
     expect(countTokensMessages(messages)).toBeLessThanOrEqual(
-      countTokensJson(messages),
+      countTokensJson(messages as unknown as JSONValue),
     )
   })
 

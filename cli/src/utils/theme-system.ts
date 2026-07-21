@@ -877,7 +877,7 @@ const DEFAULT_CHAT_THEMES: Record<ThemeName, ChatTheme> = {
     name: 'dark',
     // Core semantic colors — Neon Slate palette
     primary: '#18faf9',      // Cyan — max contrast on near-black
-    secondary: '#a78bfa',    // Neon violet — complementary to cyan
+    secondary: '#18faf9',    // Cyan — unified with primary for Savant branding
     success: '#39ff14',      // Neon green — high-energy completion
     error: '#ff2d55',        // Neon red — Apple system red
     warning: '#ff9500',      // Neon orange — warm alert, distinct from yellow
@@ -941,7 +941,7 @@ const DEFAULT_CHAT_THEMES: Record<ThemeName, ChatTheme> = {
     name: 'light',
     // Core semantic colors — Neon Slate light palette
     primary: '#0891b2',      // Cyan-600 — readable on white
-    secondary: '#7c3aed',    // Violet-600 — readable on white
+    secondary: '#0891b2',    // Cyan-600 — unified with primary for Savant branding
     success: '#059669',      // Keep existing
     error: '#dc2626',        // Red-600 — readable on white
     warning: '#d97706',      // Amber-600 — readable on white

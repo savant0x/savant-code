@@ -28,7 +28,7 @@ async function main() {
   const client = new SavantCodeClient({
     // You need to pass in your own API key here.
     // Get one here: https://www.savant-code.com/api-keys
-    apiKey: process.env.CODEBUFF_API_KEY,
+    apiKey: process.env.SAVANT_CODE_API_KEY,
     cwd: process.cwd(),
   })
 
@@ -72,7 +72,7 @@ async function main() {
   const client = new SavantCodeClient({
     // Note: You need to pass in your own API key.
     // Get it here: https://www.savant-code.com/profile?tab=api-keys
-    apiKey: process.env.CODEBUFF_API_KEY,
+    apiKey: process.env.SAVANT_CODE_API_KEY,
     // Optional directory agent runs from (if applicable).
     cwd: process.cwd(),
   })
@@ -165,7 +165,7 @@ The `fileFilter` option controls which files the agent can read:
 
 ```typescript
 const client = new SavantCodeClient({
-  apiKey: process.env.CODEBUFF_API_KEY,
+  apiKey: process.env.SAVANT_CODE_API_KEY,
   fileFilter: (filePath) => {
     if (filePath === '.env') return { status: 'blocked' }
     if (filePath.endsWith('.env.example')) return { status: 'allow-example' }
@@ -200,7 +200,7 @@ for (const agent of Object.values(agents)) {
 }
 
 // Use the loaded agents with client.run()
-const client = new SavantCodeClient({ apiKey: process.env.CODEBUFF_API_KEY })
+const client = new SavantCodeClient({ apiKey: process.env.SAVANT_CODE_API_KEY })
 const result = await client.run({
   agent: 'my-custom-agent',
   agentDefinitions: Object.values(agents),

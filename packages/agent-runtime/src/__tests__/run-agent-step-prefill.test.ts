@@ -1,5 +1,6 @@
 import * as analytics from '@savant-code/common/analytics'
 import { TEST_USER_ID } from '@savant-code/common/old-constants'
+import { emptyMcpServers } from '@savant-code/common/testing/fixtures/agent-runtime'
 import { TEST_AGENT_RUNTIME_IMPL } from '@savant-code/common/testing/impl/agent-runtime'
 import {
   createMockDbOperations,
@@ -26,8 +27,8 @@ import type {
   AgentRuntimeDeps,
   AgentRuntimeScopedDeps,
 } from '@savant-code/common/types/contracts/agent-runtime'
-import type { Message } from '@savant-code/common/types/messages/savant-code-message'
 import type { ParamsExcluding } from '@savant-code/common/types/function-params'
+import type { Message } from '@savant-code/common/types/messages/savant-code-message'
 import type { ProjectFileContext } from '@savant-code/common/util/file'
 
 const mockFileContext: ProjectFileContext = {
@@ -79,7 +80,7 @@ describe('runAgentStep - assistant prefill', () => {
     outputMode: 'last_message' as const,
     includeMessageHistory: true,
     inheritParentSystemPrompt: false,
-    mcpServers: {},
+    mcpServers: emptyMcpServers,
     toolNames: [],
     spawnableAgents: [],
     systemPrompt: 'Test system prompt',

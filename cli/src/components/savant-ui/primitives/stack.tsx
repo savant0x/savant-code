@@ -1,13 +1,14 @@
 import React from 'react'
 
-export interface StackProps {
+import type { BoxProps } from '@opentui/react'
+
+export interface StackProps extends Omit<BoxProps, 'children'> {
   direction?: 'horizontal' | 'vertical'
   gap?: number
   align?: 'flex-start' | 'flex-end' | 'center' | 'stretch'
   justify?: 'flex-start' | 'flex-end' | 'space-between' | 'center'
   wrap?: boolean
   children: React.ReactNode
-  [key: string]: any
 }
 
 export function Stack({

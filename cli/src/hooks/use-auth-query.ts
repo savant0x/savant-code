@@ -18,8 +18,8 @@ import {
   logoutUser as logoutUserUtil,
   type User,
 } from '../utils/auth'
-import { resetCodebuffClient } from '../utils/savant-code-client'
 import { logger as defaultLogger, loggerContext } from '../utils/logger'
+import { resetSavantCodeClient } from '../utils/savant-code-client'
 
 import type { GetUserInfoFromApiKeyFn } from '@savant-code/common/types/contracts/database'
 import type { Logger } from '@savant-code/common/types/contracts/logger'
@@ -50,7 +50,9 @@ type ValidatedUserInfo = {
 /**
  * Check if an error is an authentication error (401, 403)
  */
-function isAuthenticationError(error: unknown): boolean {
+function isAuthenticationError(
+  error: Error | { statusCode?: number; status?: number } | null | undefined,
+): boolean {
   const statusCode = getErrorStatusCode(error)
   return statusCode === 401 || statusCode === 403
 }
@@ -82,9 +84,10 @@ export async function validateApiKey({
 
     return authResult
   } catch (error) {
-    const statusCode = getErrorStatusCode(error)
+    const narrowed = error instanceof Error ? error : typeof error === 'object' && error !== null ? error as { statusCode?: number; status?: number } : null
+    const statusCode = getErrorStatusCode(narrowed)
 
-    if (isAuthenticationError(error)) {
+    if (isAuthenticationError(narrowed)) {
       logger.error('❌ API key validation failed - authentication error')
       // Rethrow the original error to preserve statusCode for higher layers
       throw error
@@ -133,7 +136,7 @@ export function useAuthQuery(deps: UseAuthQueryDeps = {}) {
   } = deps
 
   const userCredentials = getUserCredentials()
-  const apiKey = userCredentials?.authToken || getCiEnv().CODEBUFF_API_KEY || ''
+  const apiKey = userCredentials?.authToken || getCiEnv().SAVANT_CODE_API_KEY || ''
 
   return useQuery({
     queryKey: authQueryKeys.validation(apiKey),
@@ -144,9 +147,10 @@ export function useAuthQuery(deps: UseAuthQueryDeps = {}) {
     // Retry only for retryable network errors (5xx, timeouts, etc.)
     // Don't retry authentication errors (invalid credentials)
     retry: (failureCount, error) => {
-      const statusCode = getErrorStatusCode(error)
+      const narrowed = error instanceof Error ? error : null
+      const statusCode = getErrorStatusCode(narrowed)
       // Don't retry authentication errors - user needs to update credentials
-      if (isAuthenticationError(error)) {
+      if (isAuthenticationError(narrowed)) {
         return false
       }
       // Retry network errors if they're retryable and we haven't exceeded max retries
@@ -234,7 +238,7 @@ export function useLogoutMutation(deps: UseLogoutMutationDeps = {}) {
     mutationFn: logoutUser,
     onSuccess: () => {
       // Reset the SDK client after logout
-      resetCodebuffClient()
+      resetSavantCodeClient()
       // Clear all auth-related cache
       queryClient.removeQueries({ queryKey: authQueryKeys.all })
       // Clear logger context

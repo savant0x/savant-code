@@ -1,6 +1,6 @@
 import { CHATGPT_OAUTH_ENABLED } from '@savant-code/common/constants/chatgpt-oauth'
 import React from 'react'
-import { IS_FREEBUFF } from '../utils/constants'
+
 
 import { ChatGptConnectBanner } from './chatgpt-connect-banner'
 import { HelpBanner } from './help-banner'
@@ -8,6 +8,7 @@ import { PendingAttachmentsBanner } from './pending-attachments-banner'
 import { SubscriptionLimitBanner } from './subscription-limit-banner'
 import { UsageBanner } from './usage-banner'
 import { useChatStore } from '../state/chat-store'
+import { IS_SAVANT_FREE } from '../utils/constants'
 
 /**
  * Registry mapping input modes to their banner components.
@@ -24,9 +25,9 @@ const BANNER_REGISTRY: Record<
 > = {
   default: () => <PendingAttachmentsBanner />,
   image: () => <PendingAttachmentsBanner />,
-  ...(IS_FREEBUFF ? {} : { usage: ({ showTime }: { showTime: number }) => <UsageBanner showTime={showTime} /> }),
+  ...(IS_SAVANT_FREE ? {} : { usage: ({ showTime }: { showTime: number }) => <UsageBanner showTime={showTime} /> }),
   help: () => <HelpBanner />,
-  ...(IS_FREEBUFF ? {} : { subscriptionLimit: () => <SubscriptionLimitBanner /> }),
+  ...(IS_SAVANT_FREE ? {} : { subscriptionLimit: () => <SubscriptionLimitBanner /> }),
   ...(CHATGPT_OAUTH_ENABLED
     ? { 'connect:chatgpt': () => <ChatGptConnectBanner /> }
     : {}),

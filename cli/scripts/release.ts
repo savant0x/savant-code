@@ -29,10 +29,10 @@ function formatTimestamp() {
 }
 
 function checkGitHubToken() {
-  const token = process.env.CODEBUFF_GITHUB_TOKEN
+  const token = process.env.SAVANT_CODE_GITHUB_TOKEN
   if (!token) {
     error(
-      'CODEBUFF_GITHUB_TOKEN environment variable is required but not set.\n' +
+      'SAVANT_CODE_GITHUB_TOKEN environment variable is required but not set.\n' +
       'Please set it with your GitHub personal access token or use the infisical setup.'
     )
   }
@@ -85,7 +85,7 @@ async function main() {
 
   // Check for local GitHub token
   checkGitHubToken()
-  log('✅ Using local CODEBUFF_GITHUB_TOKEN')
+  log('✅ Using local SAVANT_CODE_GITHUB_TOKEN')
 
   log(`Version bump type: ${versionType}`)
 

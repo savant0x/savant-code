@@ -1,8 +1,8 @@
 import { useState } from 'react'
 
 import { Button } from './button'
-import { IS_FREEBUFF } from '../utils/constants'
 import { useTerminalLayout } from '../hooks/use-terminal-layout'
+import { IS_SAVANT_FREE } from '../utils/constants'
 import { BORDER_CHARS } from '../utils/ui-constants'
 
 import type { ChatTheme } from '../types/theme-system'
@@ -18,7 +18,7 @@ export const BuildModeButtons = ({
   onBuildMax: () => void
   onBuildLite: () => void
 }) => {
-  if (IS_FREEBUFF) return null
+  if (IS_SAVANT_FREE) return null
 
   const [hoveredButton, setHoveredButton] = useState<'fast' | 'max' | 'lite' | null>(
     null,
@@ -56,8 +56,8 @@ export const BuildModeButtons = ({
             borderStyle: 'single',
             borderColor:
               hoveredButton === 'fast' ? theme.foreground : theme.secondary,
-            customBorderChars: BORDER_CHARS,
           }}
+          customBorderChars={BORDER_CHARS}
           onClick={onBuildFast}
           onMouseOver={() => setHoveredButton('fast')}
           onMouseOut={() => setHoveredButton(null)}
@@ -75,8 +75,8 @@ export const BuildModeButtons = ({
             borderStyle: 'single',
             borderColor:
               hoveredButton === 'max' ? theme.foreground : theme.secondary,
-            customBorderChars: BORDER_CHARS,
           }}
+          customBorderChars={BORDER_CHARS}
           onClick={onBuildMax}
           onMouseOver={() => setHoveredButton('max')}
           onMouseOut={() => setHoveredButton(null)}
@@ -94,8 +94,8 @@ export const BuildModeButtons = ({
             borderStyle: 'single',
             borderColor:
               hoveredButton === 'lite' ? theme.foreground : theme.secondary,
-            customBorderChars: BORDER_CHARS,
           }}
+          customBorderChars={BORDER_CHARS}
           onClick={onBuildLite}
           onMouseOver={() => setHoveredButton('lite')}
           onMouseOut={() => setHoveredButton(null)}

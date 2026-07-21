@@ -1,6 +1,4 @@
 import { AnalyticsEvent } from '@savant-code/common/constants/analytics-events'
-import type { FeedbackCategory } from '@savant-code/common/constants/feedback'
-import { safeOpen } from './utils/open-url'
 import {
   useCallback,
   useEffect,
@@ -14,19 +12,16 @@ import { useShallow } from 'zustand/react/shallow'
 import { getAdsEnabled } from './commands/ads'
 import { routeUserPrompt, addBashMessageToHistory } from './commands/router'
 import { SingleAdBanner } from './components/ad-banner'
-import { ChatInputBar } from './components/chat-input-bar'
 import { ChatHeader } from './components/chat-header'
-import { SavantFree$1 } from './components/savant-free-active-session-summary'
+import { ChatInputBar } from './components/chat-input-bar'
 import { LoadPreviousButton } from './components/load-previous-button'
-import { ModelPicker } from './components/model-picker'
-import { useModelPickerStore } from './state/model-picker-store'
-import { useFreebuffModelStore } from './state/savant-free-model-store'
-import type { OpenRouterModel } from './utils/openrouter-models'
-import { ReviewScreen } from './components/review-screen'
 import { MessageWithAgents } from './components/message-with-agents'
+import { ModelPicker } from './components/model-picker'
 import { areCreditsRestored } from './components/out-of-credits-banner'
 import { PendingBashMessage } from './components/pending-bash-message'
+import { ReviewScreen } from './components/review-screen'
 import { RightSidebar } from './components/right-sidebar'
+import { SavantFreeActiveSessionSummary } from './components/savant-free-active-session-summary'
 import { SessionEndedBanner } from './components/session-ended-banner'
 import { StatusBar } from './components/status-bar'
 import {
@@ -34,6 +29,7 @@ import {
   DEFAULT_SUGGESTED_PROMPTS,
   type SuggestedPromptSelection,
 } from './components/suggested-prompts'
+import { TerminalLink } from './components/terminal-link'
 import { TopBanner } from './components/top-banner'
 import { getSlashCommandsWithSkills } from './data/slash-commands'
 import { useAgentValidation } from './hooks/use-agent-validation'
@@ -47,53 +43,56 @@ import { useChatMessages } from './hooks/use-chat-messages'
 import { useChatState } from './hooks/use-chat-state'
 import { useChatStreaming } from './hooks/use-chat-streaming'
 import { useChatUI } from './hooks/use-chat-ui'
-import { useSubscriptionQuery } from './hooks/use-subscription-query'
 import { useClipboard } from './hooks/use-clipboard'
 import { useEvent } from './hooks/use-event'
 import { useGravityAd } from './hooks/use-gravity-ad'
 import { useInputHistory } from './hooks/use-input-history'
 import { usePublishMutation } from './hooks/use-publish-mutation'
+import { returnToSavantFreeLanding } from './hooks/use-savant-free-session'
+import { useScaffoldRevertSubscriber } from './hooks/use-scaffold-revert-subscriber'
 import { useSendMessage } from './hooks/use-send-message'
+import { useSubscriptionQuery } from './hooks/use-subscription-query'
 import { useSuggestionEngine } from './hooks/use-suggestion-engine'
 import { useUsageMonitor } from './hooks/use-usage-monitor'
 import { WEBSITE_URL } from './login/constants'
 import { getProjectRoot } from './project-files'
 import { useChatHistoryStore } from './state/chat-history-store'
 import { useChatStore } from './state/chat-store'
-import { useReviewStore } from './state/review-store'
 import { useFeedbackStore } from './state/feedback-store'
 import { useMessageBlockStore } from './state/message-block-store'
+import { useModelPickerStore } from './state/model-picker-store'
 import { usePublishStore } from './state/publish-store'
+import { useReviewStore } from './state/review-store'
+import { useSavantFreeModelStore } from './state/savant-free-model-store'
 import { reportActivity } from './utils/activity-tracker'
 import { trackEvent } from './utils/analytics'
 import { showClipboardMessage } from './utils/clipboard'
 import { readClipboardImage } from './utils/clipboard-image'
-import { returnToFreebuffLanding } from './hooks/use-savant-free-session'
-import { END_SESSION_MESSAGE, IS_FREEBUFF } from './utils/constants'
-import { getSystemMessage } from './utils/message-history'
+import { END_SESSION_MESSAGE, IS_SAVANT_FREE } from './utils/constants'
 import { getInputModeConfig } from './utils/input-modes'
-import { formatCwd } from './utils/path-helpers'
-import { openFileAtPath } from './utils/open-file'
-import { TerminalLink } from './components/terminal-link'
-import {
-  hasSubmittedFirstPrompt,
-  loadCodebuffModelPreference,
-  markFirstPromptSubmitted,
-  saveCodebuffModelPreference,
-} from './utils/settings'
-
 import {
   type ChatKeyboardState,
   createDefaultChatKeyboardState,
 } from './utils/keyboard-actions'
 import { loadLocalAgents } from './utils/local-agent-registry'
 import { logger } from './utils/logger'
+import { getSystemMessage } from './utils/message-history'
+import { openFileAtPath } from './utils/open-file'
+import { safeOpen } from './utils/open-url'
+import { formatCwd } from './utils/path-helpers'
 import {
   addClipboardPlaceholder,
   addPendingFileFromPath,
   addPendingImageFromFile,
   validateAndAddImage,
 } from './utils/pending-attachments'
+import {
+  hasSubmittedFirstPrompt,
+  loadSavantCodeModelPreference,
+  markFirstPromptSubmitted,
+  saveSavantCodeModelPreference,
+  saveSavantCodeModelProviderPreference,
+} from './utils/settings'
 import { getLoadedSkills } from './utils/skill-registry'
 import {
   getStatusIndicatorState,
@@ -106,11 +105,13 @@ import { computeInputLayoutMetrics } from './utils/text-layout'
 import type { CommandResult } from './commands/command-registry'
 import type { MultilineInputHandle } from './components/multiline-input'
 import type { MatchedSlashCommand } from './hooks/use-suggestion-engine'
-import type { SavantFree$1 } from './types/savant-free-session'
+import type { SavantFreeSession } from './types/savant-free-session'
 import type { User } from './utils/auth'
 import type { AgentMode } from './utils/constants'
-import type { FileTreeNode } from '@savant-code/common/util/file'
+import type { OpenRouterModel } from './utils/openrouter-models'
 import type { BoxRenderable, ScrollBoxRenderable } from '@opentui/core'
+import type { FeedbackCategory } from '@savant-code/common/constants/feedback'
+import type { FileTreeNode } from '@savant-code/common/util/file'
 import type { UseMutationResult } from '@tanstack/react-query'
 import type { Dispatch, SetStateAction } from 'react'
 
@@ -128,7 +129,7 @@ export const Chat = ({
   initialMode,
   gitRoot,
   onSwitchToGitRoot,
-  savant-free$1,
+  savantFreeSession,
 }: {
   initialPrompt: string | null
   agentId?: string
@@ -143,7 +144,7 @@ export const Chat = ({
   initialMode?: AgentMode
   gitRoot?: string | null
   onSwitchToGitRoot?: () => void
-  savant-free$1: SavantFree$1 | null
+  savantFreeSession: SavantFreeSession | null
 }) => {
   const [forceFileOnlyMentions, setForceFileOnlyMentions] = useState(false)
   const headerRef = useRef<BoxRenderable | null>(null)
@@ -152,13 +153,17 @@ export const Chat = ({
   // First-time onboarding: show clickable starter prompts until the user
   // submits their first prompt ever (persisted in settings). SavantFree only.
   const [showSuggestedPrompts, setShowSuggestedPrompts] = useState(
-    () => IS_FREEBUFF && !hasSubmittedFirstPrompt(),
+    () => IS_SAVANT_FREE && !hasSubmittedFirstPrompt(),
   )
 
   const { validate: validateAgents } = useAgentValidation()
 
   // Subscribe to ask_user bridge to trigger form display
   useAskUserBridge()
+
+  // Auto-revert from SCAFFOLD to EDIT when the orchestrator declares the
+  // scaffold complete via the set_scaffold_complete tool.
+  useScaffoldRevertSubscriber()
 
   // Monitor usage data and auto-show banner when thresholds are crossed
   useUsageMonitor()
@@ -201,7 +206,7 @@ export const Chat = ({
   const filesChanged = useChatStore((s) => s.filesChanged)
   const agentStack = useChatStore((s) => s.agentStack)
   const sessionCost = useChatStore((s) => s.sessionCost)
-  const sidebarModel = useFreebuffModelStore((s) => s.selectedModel)
+  const sidebarModel = useSavantFreeModelStore((s) => s.selectedModel)
 
   // Interactive /model picker overlay state.
   const modelPickerOpen = useModelPickerStore((s) => s.isOpen)
@@ -227,7 +232,7 @@ export const Chat = ({
     recordClick,
     recordImpression,
   } = useGravityAd({
-    enabled: IS_FREEBUFF || !hasSubscription,
+    enabled: IS_SAVANT_FREE || !hasSubscription,
     provider: 'gravity',
     inline: true,
     surface: 'cli_chat',
@@ -236,7 +241,7 @@ export const Chat = ({
     // Keep the rotating above-input slot separate for reporting continuity.
     slotPlacementId: 'Single-Ad-Unit-1',
   })
-  const showInlineAds = IS_FREEBUFF || getAdsEnabled()
+  const showInlineAds = IS_SAVANT_FREE || getAdsEnabled()
 
   // Stable identities so the message-block callbacks (set once) always call
   // the latest recorder from the hook.
@@ -255,9 +260,10 @@ export const Chat = ({
   // Commit a model pick: persist the override, confirm in-chat, and close.
   const handleModelPickerSelect = useCallback(
     (model: OpenRouterModel) => {
-      saveCodebuffModelPreference(model.id)
-      useFreebuffModelStore.getState().switchModel(model.id)
-      const current = loadCodebuffModelPreference()
+      saveSavantCodeModelPreference(model.id)
+      saveSavantCodeModelProviderPreference(model.provider ?? 'openrouter')
+      useSavantFreeModelStore.getState().switchModel(model.id)
+      const current = loadSavantCodeModelPreference()
       setMessages((prev) => [
         ...prev,
         getSystemMessage(
@@ -271,8 +277,9 @@ export const Chat = ({
       inputRef.current?.focus()
     },
     [
-      saveCodebuffModelPreference,
-      loadCodebuffModelPreference,
+      saveSavantCodeModelPreference,
+      saveSavantCodeModelProviderPreference,
+      loadSavantCodeModelPreference,
       setMessages,
       closeModelPicker,
       setInputFocused,
@@ -1554,16 +1561,16 @@ export const Chat = ({
     return ` ${segments.join('   ')} `
   }, [queuePreviewTitle, pausedQueueText])
 
-  const hasActiveFreebuffSession =
-    IS_FREEBUFF && savant-free$1?.status === 'active'
-  const isFreebuffSessionOver =
-    IS_FREEBUFF && savant-free$1?.status === 'ended'
+  const hasActiveSavantFreeSession =
+    IS_SAVANT_FREE && savantFreeSession?.status === 'active'
+  const isSavantFreeSessionOver =
+    IS_SAVANT_FREE && savantFreeSession?.status === 'ended'
   const shouldShowStatusLine =
     !feedbackMode &&
     (hasStatusIndicatorContent ||
       shouldShowQueuePreview ||
       !isAtBottom ||
-      hasActiveFreebuffSession)
+      hasActiveSavantFreeSession)
 
   // Track mouse movement for ad activity (throttled)
   const lastMouseActivityRef = useRef<number>(0)
@@ -1647,8 +1654,8 @@ export const Chat = ({
         >
         <TopBanner gitRoot={gitRoot} onSwitchToGitRoot={onSwitchToGitRoot} />
 
-        {IS_FREEBUFF && (
-          <SavantFree$1 session={savant-free$1} />
+        {IS_SAVANT_FREE && (
+          <SavantFreeActiveSessionSummary session={savantFreeSession} />
         )}
         {hiddenMessageCount > 0 && (
           <LoadPreviousButton
@@ -1679,7 +1686,7 @@ export const Chat = ({
           backgroundColor: 'transparent',
         }}
       >
-        {showOnboardingPrompts && !reviewMode && !isFreebuffSessionOver && (
+        {showOnboardingPrompts && !reviewMode && !isSavantFreeSessionOver && (
           <SuggestedPrompts
             onSelect={handleSelectSuggestedPrompt}
             maxItems={isCompactHeight ? 2 : undefined}
@@ -1698,9 +1705,9 @@ export const Chat = ({
                 ...prev,
                 getSystemMessage(END_SESSION_MESSAGE),
               ])
-              returnToFreebuffLanding({ resetChat: true }).catch(() => {})
+              returnToSavantFreeLanding({ resetChat: true }).catch(() => {})
             }}
-            savant-free$1={savant-free$1}
+            savantFreeSession={savantFreeSession}
           />
         )}
 
@@ -1723,7 +1730,7 @@ export const Chat = ({
             onCustom={handleReviewCustom}
             onCancel={handleCloseReviewScreen}
           />
-        ) : isFreebuffSessionOver && !askUserState ? (
+        ) : isSavantFreeSessionOver && !askUserState ? (
           <SessionEndedBanner
             isStreaming={isStreaming || isWaitingForResponse}
           />

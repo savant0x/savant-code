@@ -3,11 +3,11 @@ import React, { type ReactNode } from 'react'
 import stringWidth from 'string-width'
 
 import { useTheme } from '../../hooks/use-theme'
-import { Button } from '../button'
 import {
   isTextRenderable,
   renderExpandedContent,
 } from '../blocks/block-helpers'
+import { Button } from '../button'
 
 import type { ChatTheme } from '../../types/theme-system'
 

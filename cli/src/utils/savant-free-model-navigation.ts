@@ -1,4 +1,4 @@
-export type FreebuffModelNavigationDirection = 'forward' | 'backward'
+export type SavantFreeModelNavigationDirection = 'forward' | 'backward'
 
 const FORWARD_KEY_NAMES = new Set(['right', 'down'])
 const BACKWARD_KEY_NAMES = new Set(['left', 'up'])
@@ -9,10 +9,10 @@ const BACKWARD_TAB_SEQUENCES = new Set([
   '\x1b[27;2;9~',
 ])
 
-export function nextFreebuffModelId(params: {
+export function nextSavantFreeModelId(params: {
   modelIds: readonly string[]
   focusedId: string
-  direction: FreebuffModelNavigationDirection
+  direction: SavantFreeModelNavigationDirection
 }): string | null {
   const { modelIds, focusedId, direction } = params
   if (modelIds.length === 0) return null
@@ -24,12 +24,12 @@ export function nextFreebuffModelId(params: {
   return modelIds[(currentIdx + step + modelIds.length) % modelIds.length]
 }
 
-export function freebuffModelNavigationDirectionForKey(key: {
+export function savantFreeModelNavigationDirectionForKey(key: {
   name?: string
   shift?: boolean
   sequence?: string
   raw?: string
-}): FreebuffModelNavigationDirection | null {
+}): SavantFreeModelNavigationDirection | null {
   const name = (key.name ?? '').toLowerCase()
   const sequence = key.sequence ?? key.raw ?? ''
 

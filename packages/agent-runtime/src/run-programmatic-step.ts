@@ -1,7 +1,7 @@
 import { HandleStepsYieldValueSchema } from '@savant-code/common/types/agent-template'
 import { getErrorObject } from '@savant-code/common/util/error'
-import { setActivity } from './util/activity-tracking'
 import { assistantMessage } from '@savant-code/common/util/messages'
+import { toLogValue, safeToJSONValue } from '@savant-code/common/util/type-narrowing'
 import { cloneDeep } from 'lodash'
 
 import { clearProposedContentForRun } from './tools/handlers/tool/proposed-content-store'
@@ -11,6 +11,7 @@ import { parseTextWithToolCalls } from './util/parse-tool-calls-from-text'
 import type { FileProcessingState } from './tools/handlers/tool/write-file'
 import type { ExecuteToolCallParams } from './tools/tool-executor'
 import type { ParsedSegment } from './util/parse-tool-calls-from-text'
+import type { ToolName } from '@savant-code/common/tools/constants'
 import type { SavantCodeToolCall } from '@savant-code/common/tools/list'
 import type {
   AgentTemplate,
@@ -24,11 +25,12 @@ import type {
 import type { AddAgentStepFn } from '@savant-code/common/types/contracts/database'
 import type { Logger } from '@savant-code/common/types/contracts/logger'
 import type { ParamsExcluding } from '@savant-code/common/types/function-params'
-import type { ToolMessage } from '@savant-code/common/types/messages/savant-code-message'
+import type { JSONValue } from '@savant-code/common/types/json'
 import type {
   ToolCallPart,
   ToolResultOutput,
 } from '@savant-code/common/types/messages/content-part'
+import type { ToolMessage } from '@savant-code/common/types/messages/savant-code-message'
 import type { PrintModeEvent } from '@savant-code/common/types/print-mode'
 import type { AgentState } from '@savant-code/common/types/session-state'
 // Maintains generator state for all agents. Generator state can't be serialized, so we store it in memory.
@@ -82,7 +84,7 @@ export async function runProgrammaticStep(
     stepNumber: number
     stepsComplete: boolean
     template: AgentTemplate
-    toolCallParams: Record<string, any> | undefined
+    toolCallParams: Record<string, string | number | boolean | null | undefined> | undefined
     sendAction: SendActionFn
     system: string | undefined
     userId: string | undefined
@@ -158,13 +160,16 @@ export async function runProgrammaticStep(
   if (!generator) {
     const createLogMethod =
       (level: 'debug' | 'info' | 'warn' | 'error') =>
-      (data: any, msg?: string) => {
-        logger[level](data, msg) // Log to backend
+      // eslint-disable-next-line savant/no-unknown-in-signatures -- Logging trust boundary: agent templates may emit arbitrary data structures
+      (data: unknown, msg?: string) => {
+        const logValue = toLogValue(data)
+        const jsonValue = safeToJSONValue(data)
+        logger[level](logValue, msg) // Log to backend
         handleStepsLogChunk({
           userInputId,
           runId: agentState.runId ?? 'undefined',
           level,
-          data,
+          data: jsonValue,
           message: msg,
         })
       }
@@ -305,7 +310,7 @@ export async function runProgrammaticStep(
       }
 
       if ('type' in result.value && result.value.type === 'GENERATE_N') {
-        logger.info({ resultValue: result.value }, 'GENERATE_N yielded')
+        logger.info({ resultValue: toLogValue(result.value) }, 'GENERATE_N yielded')
         // Handle GENERATE_N: generate n responses using the LLM
         generateN = result.value.n
         endTurn = false
@@ -434,7 +439,7 @@ export const getPublicAgentState = (
     agentId,
     runId,
     parentId,
-    messageHistory: messageHistory as any as PublicAgentState['messageHistory'],
+    messageHistory: messageHistory as unknown as PublicAgentState['messageHistory'],
     output,
     systemPrompt,
     toolDefinitions,
@@ -448,7 +453,7 @@ export const getPublicAgentState = (
  */
 type ToolCallToExecute = {
   toolName: string
-  input: Record<string, unknown>
+  input: Record<string, JSONValue>
   includeToolCall?: boolean
 }
 
@@ -524,7 +529,7 @@ async function executeSingleToolCall(
   // Execute the tool call
   await executeToolCall({
     ...params,
-    toolName: toolCallToExecute.toolName as any,
+    toolName: toolCallToExecute.toolName as ToolName,
     input: toolCallToExecute.input,
     autoInsertEndStepParam: true,
     excludeToolFromMessageHistory,

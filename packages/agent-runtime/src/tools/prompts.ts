@@ -10,6 +10,7 @@ import z from 'zod/v4'
 import { convertJsonSchemaToZod } from 'zod-from-json-schema'
 
 import type { ToolName } from '@savant-code/common/tools/constants'
+import type { JSONValue } from '@savant-code/common/types/json'
 import type { SkillsMap } from '@savant-code/common/types/skill'
 import type {
   CustomToolDefinitions,
@@ -22,7 +23,7 @@ import type { ToolSet } from 'ai'
  * (from SDK custom tools that were serialized), converts it to Zod.
  */
 export function ensureZodSchema(
-  schema: z.ZodType | Record<string, unknown>,
+  schema: z.ZodType | Record<string, JSONValue>,
 ): z.ZodType {
   // Check if it's already a Zod schema by looking for the safeParse method
   if (
@@ -32,7 +33,7 @@ export function ensureZodSchema(
     return schema as z.ZodType
   }
   // JSON Schema object - convert to Zod
-  return convertJsonSchemaToZod(schema as Record<string, unknown>)
+  return convertJsonSchemaToZod(schema as Record<string, JSONValue>)
 }
 
 function ensureJsonSchemaCompatible(schema: z.ZodType): z.ZodType {
@@ -45,15 +46,15 @@ function ensureJsonSchemaCompatible(schema: z.ZodType): z.ZodType {
   }
 }
 
-function toJsonSchemaSafe(schema: z.ZodType): Record<string, unknown> {
+function toJsonSchemaSafe(schema: z.ZodType): Record<string, JSONValue> {
   try {
-    return z.toJSONSchema(schema, { io: 'input' }) as Record<string, unknown>
+    return z.toJSONSchema(schema, { io: 'input' }) as Record<string, JSONValue>
   } catch {
     return { type: 'object', properties: {} }
   }
 }
 
-function hasMeaningfulJsonSchema(jsonSchema: Record<string, unknown>): boolean {
+function hasMeaningfulJsonSchema(jsonSchema: Record<string, JSONValue>): boolean {
   const properties = jsonSchema.properties
   if (properties && typeof properties === 'object' && Object.keys(properties).length > 0) {
     return true
@@ -108,7 +109,7 @@ export function buildToolDescription(params: {
   schema: z.ZodType
   description?: string
   endsAgentStep: boolean
-  exampleInputs?: any[]
+  exampleInputs?: JSONValue[]
 }): string {
   const {
     toolName,
@@ -123,7 +124,7 @@ export function buildToolDescription(params: {
       ? `${pluralize(exampleInputs.length, 'Example')}:`
       : '',
     ...exampleInputs.map((example) =>
-      getToolCallString(toolName, example, endsAgentStep),
+      getToolCallString(toolName, example as Record<string, JSONValue>, endsAgentStep),
     ),
   ).join('\n\n')
   return buildArray([
@@ -278,7 +279,7 @@ export const fullToolList = (
       const toolDef = additionalToolDefinitions[toolName]
       return buildToolDescription({
         toolName,
-        schema: ensureZodSchema(toolDef.inputSchema),
+        schema: ensureZodSchema(toolDef.inputSchema as Record<string, JSONValue>),
         description: toolDef.description,
         endsAgentStep: toolDef.endsAgentStep ?? true,
         exampleInputs: toolDef.exampleInputs,
@@ -320,7 +321,7 @@ export const getShortToolInstructions = (
       const { inputSchema, endsAgentStep } = additionalToolDefinitions[name]
       return buildShortToolDescription({
         toolName: name,
-        schema: ensureZodSchema(inputSchema),
+        schema: ensureZodSchema(inputSchema as Record<string, JSONValue>),
         endsAgentStep: endsAgentStep ?? true,
       })
     }),
@@ -394,7 +395,7 @@ export async function getToolSet(params: {
     const clonedDef = cloneDeep(toolDefinition)
     // Custom tool inputSchema may be JSON Schema (from SDK) or Zod (from MCP)
     // Ensure it's a Zod schema for the AI SDK
-    const zodSchema = ensureZodSchema(clonedDef.inputSchema)
+    const zodSchema = ensureZodSchema(clonedDef.inputSchema as Record<string, JSONValue>)
     const safeSchema = ensureJsonSchemaCompatible(zodSchema)
     toolSet[toolName] = {
       ...clonedDef,

@@ -7,6 +7,7 @@ describe('toTokenCountInputSchema', () => {
   it('converts a Zod object schema to JSON Schema with a top-level type', () => {
     const schema = z.object({ paths: z.array(z.string()) })
 
+    // @ts-expect-error - testing Zod schema conversion path
     const result = toTokenCountInputSchema(schema)
 
     expect(result).toEqual({
@@ -27,6 +28,7 @@ describe('toTokenCountInputSchema', () => {
       z.object({ b: z.number() }),
     ])
 
+    // @ts-expect-error - testing Zod union schema conversion path
     const result = toTokenCountInputSchema(schema)!
 
     // A union serializes to `anyOf` with no top-level type; Anthropic rejects
@@ -73,6 +75,7 @@ describe('toTokenCountInputSchema', () => {
 
   it('returns undefined for null/undefined input', () => {
     expect(toTokenCountInputSchema(null)).toBeUndefined()
+    // @ts-expect-error - testing undefined input handling
     expect(toTokenCountInputSchema(undefined)).toBeUndefined()
   })
 })

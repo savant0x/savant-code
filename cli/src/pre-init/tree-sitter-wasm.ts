@@ -60,14 +60,14 @@ if (siblingPath) {
   // Tell init-node.ts (in code-map / the SDK bundle) where the wasm
   // is. The locateFile callback there will hand this path to
   // emscripten, which fs.readFile's it.
-  process.env.CODEBUFF_TREE_SITTER_WASM_PATH = siblingPath
+  process.env.SAVANT_CODE_TREE_SITTER_WASM_PATH = siblingPath
 
   // Also publish on globalThis so the smoke handler in index.tsx can
   // read it without touching process.env (which is gated by the env
   // architecture check outside the allowlisted pre-init files).
   ;(
-    globalThis as { __CODEBUFF_TREE_SITTER_WASM_PATH__?: string }
-  ).__CODEBUFF_TREE_SITTER_WASM_PATH__ = siblingPath
+    globalThis as { __SAVANT_CODE_TREE_SITTER_WASM_PATH__?: string }
+  ).__SAVANT_CODE_TREE_SITTER_WASM_PATH__ = siblingPath
 
   // Also try the synchronous-bytes path: hand the bytes straight to
   // Parser.init({ wasmBinary }) so the SDK doesn't need to round-trip
@@ -76,8 +76,8 @@ if (siblingPath) {
   try {
     const buf = readFileSync(siblingPath)
     ;(
-      globalThis as { __CODEBUFF_TREE_SITTER_WASM_BINARY__?: Uint8Array }
-    ).__CODEBUFF_TREE_SITTER_WASM_BINARY__ = new Uint8Array(
+      globalThis as { __SAVANT_CODE_TREE_SITTER_WASM_BINARY__?: Uint8Array }
+    ).__SAVANT_CODE_TREE_SITTER_WASM_BINARY__ = new Uint8Array(
       buf.buffer,
       buf.byteOffset,
       buf.byteLength,

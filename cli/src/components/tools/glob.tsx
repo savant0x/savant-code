@@ -3,6 +3,16 @@ import { defineToolComponent } from './types'
 
 import type { ToolRenderConfig } from './types'
 
+interface GlobInput {
+  pattern?: string
+  cwd?: string
+}
+
+interface GlobErrorOutput {
+  type: 'json'
+  value: { errorMessage?: string }
+}
+
 /**
  * UI component for glob tool.
  * Displays a single line showing the glob pattern and number of matching files.
@@ -12,23 +22,22 @@ export const GlobComponent = defineToolComponent({
   toolName: 'glob',
 
   render(toolBlock): ToolRenderConfig {
-    const input = toolBlock.input as any
-    const pattern = input?.pattern ?? ''
-    const cwd = input?.cwd ?? ''
+    const input = (toolBlock.input ?? {}) as GlobInput
+    const pattern = input.pattern ?? ''
+    const cwd = input.cwd ?? ''
 
     // Parse output to check for errors
     let hasError = false
 
     if (toolBlock.output) {
       const outputArray = Array.isArray(toolBlock.output)
-        ? toolBlock.output
-        : [toolBlock.output]
+        ? (toolBlock.output as unknown[])
+        : [toolBlock.output as unknown]
 
       for (const item of outputArray) {
-        const output = item as any
-        if (output?.type === 'json' && output?.value) {
-          const value = output.value as any
-          if (value.errorMessage) {
+        if (item && typeof item === 'object' && 'type' in item) {
+          const output = item as GlobErrorOutput
+          if (output.type === 'json' && output.value?.errorMessage) {
             hasError = true
           }
         }

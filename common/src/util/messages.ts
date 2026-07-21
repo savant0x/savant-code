@@ -3,6 +3,8 @@ import { cloneDeep, has, isEqual } from 'lodash'
 
 import type { Logger } from '../types/contracts/logger'
 import type { JSONValue } from '../types/json'
+import type { ToolResultOutput } from '../types/messages/content-part'
+import type { ProviderMetadata } from '../types/messages/provider-metadata'
 import type {
   AssistantMessage,
   AuxiliaryMessageData,
@@ -11,8 +13,6 @@ import type {
   ToolMessage,
   UserMessage,
 } from '../types/messages/savant-code-message'
-import type { ToolResultOutput } from '../types/messages/content-part'
-import type { ProviderMetadata } from '../types/messages/provider-metadata'
 import type {
   AssistantModelMessage,
   ModelMessage,
@@ -89,7 +89,8 @@ export function withoutCacheControl<
   return wrapper
 }
 
-type NonStringContent<T extends { content: any }> = Omit<T, 'content'> & {
+type NonStringContent<T extends { content: string | readonly object[] }> =
+  Omit<T, 'content'> & {
   content: Exclude<T['content'], string>
 }
 type ModelMessageWithAuxiliaryData = (
@@ -100,7 +101,7 @@ type ModelMessageWithAuxiliaryData = (
 ) &
   AuxiliaryMessageData
 
-function assistantToCodebuffMessage(
+function assistantToSavantCodeMessage(
   message: Omit<AssistantMessage, 'content'> & {
     content: Exclude<AssistantMessage['content'], string>[number]
   },
@@ -185,7 +186,7 @@ function convertToolMessage(message: Message): ModelMessageWithAuxiliaryData[] {
       ]
     }
     return message.content.map((c) => {
-      return assistantToCodebuffMessage({
+      return assistantToSavantCodeMessage({
         ...message,
         content: c,
       })
@@ -240,16 +241,17 @@ function toWellFormedString(str: string): string {
   return str.replace(LONE_SURROGATE_REGEX, '�')
 }
 
-function wellFormStringsInPlace(value: unknown): void {
+function wellFormStringsInPlace(value: object): void {
   // Arrays and plain objects are both handled here: Object.keys enumerates array
   // indices too, and indexing by string key mutates the element in place.
-  if (!value || typeof value !== 'object') return
+  // ECHO Law 6 trust-boundary: validate object shape (already enforced by `: object`
+  // signature) + null check + recursive object-only descent.
   const obj = value as Record<string, unknown>
   for (const key of Object.keys(obj)) {
     const item = obj[key]
     if (typeof item === 'string') {
       obj[key] = toWellFormedString(item)
-    } else {
+    } else if (item && typeof item === 'object') {
       wellFormStringsInPlace(item)
     }
   }
@@ -305,7 +307,7 @@ export function convertCbToModelMessages({
   for (const message of aggregated) {
     if (typeof message.content === 'string') {
       message.content = toWellFormedString(message.content)
-    } else {
+    } else if (message.content && typeof message.content === 'object') {
       wellFormStringsInPlace(message.content)
     }
   }

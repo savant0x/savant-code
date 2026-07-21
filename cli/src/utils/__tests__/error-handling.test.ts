@@ -1,14 +1,15 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- test file: intentional any casts for error code manipulation */
 import { describe, test, expect } from 'bun:test'
 
 import {
-  getFreebuffRateLimitErrorMessage,
+  getSavantFreeRateLimitErrorMessage,
   getFreeModeUnavailableErrorMessage,
   isOutOfCreditsError,
   isFreeModeUnavailableError,
   getCountryBlockFromFreeModeError,
   OUT_OF_CREDITS_MESSAGE,
   FREE_MODE_UNAVAILABLE_MESSAGE,
-  FREEBUFF_RATE_LIMIT_MESSAGE,
+  SAVANT_FREE_RATE_LIMIT_MESSAGE,
   createErrorMessage,
 } from '../error-handling'
 
@@ -88,7 +89,7 @@ describe('error-handling', () => {
           statusCode: 403,
           responseBody: JSON.stringify({
             error: 'free_mode_unavailable',
-            message: 'Freebuff cannot be used from VPN traffic.',
+            message: 'SavantFree cannot be used from VPN traffic.',
           }),
         }),
       ).toBe(true)
@@ -130,44 +131,44 @@ describe('error-handling', () => {
     })
   })
 
-  describe('getFreebuffRateLimitErrorMessage', () => {
+  describe('getSavantFreeRateLimitErrorMessage', () => {
     test('returns the generic message for untyped 429 errors', () => {
       expect(
-        getFreebuffRateLimitErrorMessage({
+        getSavantFreeRateLimitErrorMessage({
           statusCode: 429,
           message: 'Too Many Requests',
         }),
-      ).toBe(FREEBUFF_RATE_LIMIT_MESSAGE)
+      ).toBe(SAVANT_FREE_RATE_LIMIT_MESSAGE)
     })
 
     test('returns the generic message for thrown API errors with status 429', () => {
       expect(
-        getFreebuffRateLimitErrorMessage({
+        getSavantFreeRateLimitErrorMessage({
           status: 429,
           message: 'Too Many Requests',
         }),
-      ).toBe(FREEBUFF_RATE_LIMIT_MESSAGE)
+      ).toBe(SAVANT_FREE_RATE_LIMIT_MESSAGE)
     })
 
     test('returns the generic message for retry-wrapped untyped 429 errors', () => {
       expect(
-        getFreebuffRateLimitErrorMessage({
+        getSavantFreeRateLimitErrorMessage({
           message: 'Failed after 4 attempts. Last error: Too Many Requests',
           lastError: {
             statusCode: 429,
             message: 'Too Many Requests',
           },
         }),
-      ).toBe(FREEBUFF_RATE_LIMIT_MESSAGE)
+      ).toBe(SAVANT_FREE_RATE_LIMIT_MESSAGE)
     })
 
     test('returns null for non-429 status codes', () => {
-      expect(getFreebuffRateLimitErrorMessage({ statusCode: 402 })).toBe(null)
-      expect(getFreebuffRateLimitErrorMessage({ statusCode: 500 })).toBe(null)
+      expect(getSavantFreeRateLimitErrorMessage({ statusCode: 402 })).toBe(null)
+      expect(getSavantFreeRateLimitErrorMessage({ statusCode: 500 })).toBe(null)
     })
 
     test('returns null for string statusCode', () => {
-      expect(getFreebuffRateLimitErrorMessage({ statusCode: '429' })).toBe(
+      expect(getSavantFreeRateLimitErrorMessage({ statusCode: '429' })).toBe(
         null,
       )
     })
@@ -177,7 +178,7 @@ describe('error-handling', () => {
         'Free mode rate limit exceeded (1 minute limit). Try again in 30 seconds.'
 
       expect(
-        getFreebuffRateLimitErrorMessage({
+        getSavantFreeRateLimitErrorMessage({
           statusCode: 429,
           error: 'free_mode_rate_limited',
           message,
@@ -190,7 +191,7 @@ describe('error-handling', () => {
         'Free mode rate limit exceeded (1 minute limit). Try again in 30 seconds.'
 
       expect(
-        getFreebuffRateLimitErrorMessage({
+        getSavantFreeRateLimitErrorMessage({
           statusCode: 429,
           message: 'Too Many Requests',
           responseBody: JSON.stringify({
@@ -206,7 +207,7 @@ describe('error-handling', () => {
         'Free mode rate limit exceeded (1 minute limit). Try again in 30 seconds.'
 
       expect(
-        getFreebuffRateLimitErrorMessage({
+        getSavantFreeRateLimitErrorMessage({
           message: 'Failed after 4 attempts. Last error: Too Many Requests',
           lastError: {
             statusCode: 429,
@@ -222,28 +223,28 @@ describe('error-handling', () => {
 
     test('falls back to the generic message when typed quota errors have no message', () => {
       expect(
-        getFreebuffRateLimitErrorMessage({
+        getSavantFreeRateLimitErrorMessage({
           statusCode: 429,
           error: 'free_mode_rate_limited',
         }),
-      ).toBe(FREEBUFF_RATE_LIMIT_MESSAGE)
+      ).toBe(SAVANT_FREE_RATE_LIMIT_MESSAGE)
     })
 
     test('appends detail from agent-run output objects for untyped 429s', () => {
       expect(
-        getFreebuffRateLimitErrorMessage({
+        getSavantFreeRateLimitErrorMessage({
           type: 'error',
           statusCode: 429,
           message: 'Model is at capacity. Please try again later.',
         }),
       ).toBe(
-        `${FREEBUFF_RATE_LIMIT_MESSAGE} (Model is at capacity. Please try again later.)`,
+        `${SAVANT_FREE_RATE_LIMIT_MESSAGE} (Model is at capacity. Please try again later.)`,
       )
     })
 
     test('appends detail from OpenAI-style nested provider error bodies', () => {
       expect(
-        getFreebuffRateLimitErrorMessage({
+        getSavantFreeRateLimitErrorMessage({
           statusCode: 429,
           message: 'Too Many Requests',
           responseBody: JSON.stringify({
@@ -255,18 +256,18 @@ describe('error-handling', () => {
           }),
         }),
       ).toBe(
-        `${FREEBUFF_RATE_LIMIT_MESSAGE} (Model is at capacity. Please try again later.)`,
+        `${SAVANT_FREE_RATE_LIMIT_MESSAGE} (Model is at capacity. Please try again later.)`,
       )
     })
 
     test('does not echo bare HTTP status text from output objects', () => {
       expect(
-        getFreebuffRateLimitErrorMessage({
+        getSavantFreeRateLimitErrorMessage({
           type: 'error',
           statusCode: 429,
           message: 'Too Many Requests',
         }),
-      ).toBe(FREEBUFF_RATE_LIMIT_MESSAGE)
+      ).toBe(SAVANT_FREE_RATE_LIMIT_MESSAGE)
     })
   })
 
@@ -388,9 +389,9 @@ describe('error-handling', () => {
     })
   })
 
-  describe('FREEBUFF_RATE_LIMIT_MESSAGE', () => {
+  describe('SAVANT_FREE_RATE_LIMIT_MESSAGE', () => {
     test('encourages retry without mentioning credits or payment', () => {
-      const message = FREEBUFF_RATE_LIMIT_MESSAGE.toLowerCase()
+      const message = SAVANT_FREE_RATE_LIMIT_MESSAGE.toLowerCase()
       expect(message).toContain('try again')
       expect(message).not.toContain('credit')
       expect(message).not.toContain('pay')

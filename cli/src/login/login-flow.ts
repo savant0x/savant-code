@@ -1,6 +1,6 @@
 import { AnalyticsEvent } from '@savant-code/common/constants/analytics-events'
 
-import { createCodebuffApiClient } from '../utils/savant-code-api'
+import { createSavantCodeApiClient } from '../utils/savant-code-api'
 
 import type {
   SavantCodeApiClient,
@@ -47,7 +47,7 @@ export async function generateLoginUrl(
 
   const apiClient =
     providedApiClient ??
-    createCodebuffApiClient({
+    createSavantCodeApiClient({
       baseUrl,
     })
 
@@ -131,7 +131,7 @@ export async function pollLoginStatus(
 
   const apiClient =
     providedApiClient ??
-    createCodebuffApiClient({
+    createSavantCodeApiClient({
       baseUrl,
     })
 

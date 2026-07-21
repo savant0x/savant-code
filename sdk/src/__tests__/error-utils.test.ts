@@ -11,7 +11,6 @@ import {
   getErrorStatusCode,
   sanitizeErrorMessage,
   RETRYABLE_STATUS_CODES,
-  type HttpError,
 } from '../error-utils'
 
 describe('error-utils', () => {
@@ -186,7 +185,7 @@ describe('error-utils', () => {
     })
 
     test('returns undefined for string', () => {
-      expect(getErrorStatusCode('error string')).toBeUndefined()
+      expect(getErrorStatusCode('error string' as unknown as Error)).toBeUndefined()
     })
 
     test('returns undefined for null', () => {
@@ -199,7 +198,7 @@ describe('error-utils', () => {
 
     test('returns undefined for non-numeric statusCode', () => {
       const error = { statusCode: '500' }
-      expect(getErrorStatusCode(error)).toBeUndefined()
+      expect(getErrorStatusCode(error as unknown as { statusCode?: number })).toBeUndefined()
     })
 
     test('handles objects with numeric status strings', () => {
@@ -232,14 +231,14 @@ describe('error-utils', () => {
 
     test('handles non-string message property', () => {
       const error = { message: 456 }
-      expect(sanitizeErrorMessage(error)).toBe('[object Object]')
+      expect(sanitizeErrorMessage(error as unknown as { message?: string })).toBe('[object Object]')
     })
 
     test('handles deeply nested error objects', () => {
       const error = {
         message: 'Nested error',
         cause: { message: 'Root cause' },
-      }
+      } as Error
       expect(sanitizeErrorMessage(error)).toBe('Nested error')
     })
   })

@@ -4,8 +4,8 @@ import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { Button } from './button'
 import { useTerminalDimensions } from '../hooks/use-terminal-dimensions'
 import { useTheme } from '../hooks/use-theme'
-import type { OpenRouterModel } from '../utils/openrouter-models'
 
+import type { OpenRouterModel } from '../utils/openrouter-models'
 import type { KeyEvent, ScrollBoxRenderable } from '@opentui/core'
 
 const MAX_VISIBLE = 12
@@ -20,15 +20,78 @@ interface ModelPickerProps {
   onClose: () => void
 }
 
+type ModelProvider = NonNullable<OpenRouterModel['provider']>
+
+interface ModelItem {
+  type: 'model'
+  model: OpenRouterModel
+  provider: ModelProvider
+}
+
+interface HeaderItem {
+  type: 'header'
+  provider: ModelProvider
+}
+
+type ListItem = ModelItem | HeaderItem
+
+function getProvider(model: OpenRouterModel): ModelProvider {
+  return model.provider ?? 'openrouter'
+}
+
+function getProviderOrder(provider: ModelProvider): number {
+  switch (provider) {
+    case 'openrouter':
+      return 0
+    case 'tokenrouter':
+      return 1
+    case 'nvidia':
+      return 2
+    default:
+      return 3
+  }
+}
+
+function buildGroupedItems(models: OpenRouterModel[]): ListItem[] {
+  const byProvider = new Map<ModelProvider, OpenRouterModel[]>()
+  for (const model of models) {
+    const provider = getProvider(model)
+    const group = byProvider.get(provider) ?? []
+    group.push(model)
+    byProvider.set(provider, group)
+  }
+
+  const providers = Array.from(byProvider.keys()).sort((a, b) => {
+    const orderDiff = getProviderOrder(a) - getProviderOrder(b)
+    if (orderDiff !== 0) return orderDiff
+    return a.localeCompare(b)
+  })
+
+  const items: ListItem[] = []
+  for (const provider of providers) {
+    const group = byProvider.get(provider)
+    if (!group || group.length === 0) continue
+    group.sort((a, b) => a.id.localeCompare(b.id))
+    items.push({ type: 'header', provider })
+    for (const model of group) {
+      items.push({ type: 'model', model, provider })
+    }
+  }
+
+  return items
+}
+
 /**
  * Interactive, searchable model picker for the /model command.
  *
  * - Filters the FULL live catalog by substring (id or name) — no truncation.
+ * - Groups models by provider with section headers.
+ * - Shows a provider badge for every model.
  * - Arrow / Tab navigation with a viewport that keeps the focus in view.
  * - Enter (or click) selects; Escape closes.
  *
  * Kept generic and provider-agnostic; the parent wires persistence via
- * onSelect. Mirrors the keyboard/focus pattern of FreebuffModelSelector and
+ * onSelect. Mirrors the keyboard/focus pattern of SavantFreeModelSelector and
  * ask-user so behavior is consistent across overlays.
  */
 export const ModelPicker: React.FC<ModelPickerProps> = ({
@@ -43,31 +106,39 @@ export const ModelPicker: React.FC<ModelPickerProps> = ({
   const theme = useTheme()
   const { terminalWidth } = useTerminalDimensions()
 
-  const filtered = useMemo(() => {
+  const filteredModels = useMemo(() => {
     const q = query.trim().toLowerCase()
     if (!q) return models
     return models.filter(
-      (m) => m.id.toLowerCase().includes(q) || m.name.toLowerCase().includes(q),
+      (m) =>
+        m.id.toLowerCase().includes(q) || m.name.toLowerCase().includes(q),
     )
   }, [models, query])
 
+  const items = useMemo(
+    () => buildGroupedItems(filteredModels),
+    [filteredModels],
+  )
+
   // Keep the selected index valid as the filter narrows the list.
   useEffect(() => {
-    if (selectedIndex > filtered.length - 1) {
-      onSelectIndex(Math.max(0, filtered.length - 1))
+    if (selectedIndex > items.length - 1) {
+      onSelectIndex(Math.max(0, items.length - 1))
     }
-  }, [filtered.length, selectedIndex, onSelectIndex])
+  }, [items.length, selectedIndex, onSelectIndex])
 
   const scrollRef = useRef<ScrollBoxRenderable | null>(null)
-  const needsScroll = filtered.length > MAX_VISIBLE
-  const viewportHeight = needsScroll ? MAX_VISIBLE : Math.max(filtered.length, 1)
+  const needsScroll = items.length > MAX_VISIBLE
+  const viewportHeight = needsScroll
+    ? MAX_VISIBLE
+    : Math.max(items.length, 1)
   const start = needsScroll
     ? Math.min(
         Math.max(selectedIndex - Math.floor((MAX_VISIBLE - 1) / 2), 0),
-        Math.max(filtered.length - MAX_VISIBLE, 0),
+        Math.max(items.length - MAX_VISIBLE, 0),
       )
     : 0
-  const visible = filtered.slice(start, start + viewportHeight)
+  const visible = items.slice(start, start + viewportHeight)
 
   useEffect(() => {
     const sb = scrollRef.current
@@ -75,12 +146,30 @@ export const ModelPicker: React.FC<ModelPickerProps> = ({
     sb.scrollTop = start
   }, [start])
 
+  const findNextModelIndex = useCallback(
+    (from: number, direction: 1 | -1): number => {
+      if (items.length === 0) return 0
+      let index = from
+      for (let i = 0; i < items.length; i++) {
+        index =
+          direction === 1
+            ? (index + 1) % items.length
+            : (index - 1 + items.length) % items.length
+        if (items[index]?.type === 'model') {
+          return index
+        }
+      }
+      return 0
+    },
+    [items],
+  )
+
   const commit = useCallback(
     (index: number) => {
-      const model = filtered[index]
-      if (model) onSelect(model)
+      const item = items[index]
+      if (item?.type === 'model') onSelect(item.model)
     },
-    [filtered, onSelect],
+    [items, onSelect],
   )
 
   useKeyboard(
@@ -98,18 +187,12 @@ export const ModelPicker: React.FC<ModelPickerProps> = ({
         }
         if (name === 'up' || (name === 'tab' && key.shift)) {
           prevent()
-          onSelectIndex(
-            filtered.length === 0
-              ? 0
-              : (selectedIndex - 1 + filtered.length) % filtered.length,
-          )
+          onSelectIndex(findNextModelIndex(selectedIndex, -1))
           return
         }
         if (name === 'down' || (name === 'tab' && !key.shift)) {
           prevent()
-          onSelectIndex(
-            filtered.length === 0 ? 0 : (selectedIndex + 1) % filtered.length,
-          )
+          onSelectIndex(findNextModelIndex(selectedIndex, 1))
           return
         }
         if (name === 'backspace') {
@@ -120,7 +203,7 @@ export const ModelPicker: React.FC<ModelPickerProps> = ({
         if (
           name === 'return' ||
           name === 'enter' ||
-          key.name === 'space'
+          name === 'space'
         ) {
           prevent()
           commit(selectedIndex)
@@ -129,19 +212,36 @@ export const ModelPicker: React.FC<ModelPickerProps> = ({
         // Printable characters build the filter query. OpenTUI routes keys
         // globally; while the picker is open the text input is blurred
         // (chat.tsx sets inputFocused false), so these land here.
-        const ch = key.sequence ?? (key as typeof key & { input?: string }).input ?? ''
-        if (ch && ch.length === 1 && !key.ctrl && !key.meta && !(key as typeof key & { alt?: boolean }).alt) {
+        const ch =
+          key.sequence ??
+          (key as typeof key & { input?: string }).input ??
+          ''
+        if (
+          ch &&
+          ch.length === 1 &&
+          !key.ctrl &&
+          !key.meta &&
+          !(key as typeof key & { alt?: boolean }).alt
+        ) {
           prevent()
           onQueryChange(query + ch)
         }
       },
-      [filtered.length, selectedIndex, commit, onClose, onSelectIndex, query, onQueryChange],
+      [
+        selectedIndex,
+        commit,
+        findNextModelIndex,
+        onClose,
+        onQueryChange,
+        onSelectIndex,
+        query,
+      ],
     ),
   )
 
   const menuWidth = Math.max(20, Math.min(terminalWidth - 4, 120))
-  const maxIdLen = filtered.reduce(
-    (max, m) => Math.max(max, m.id.length),
+  const maxIdLen = filteredModels.reduce(
+    (max, model) => Math.max(max, model.id.length),
     0,
   )
 
@@ -161,18 +261,24 @@ export const ModelPicker: React.FC<ModelPickerProps> = ({
     >
       <text style={{ fg: theme.muted, wrapMode: 'none' }}>
         {query
-          ? `Filter: "${query}"  ·  ${filtered.length} match${filtered.length === 1 ? '' : 'es'}`
-          : `Select a model (↑/↓, Enter, Esc)  ·  ${filtered.length} models`}
+          ? `Filter: "${query}"  ·  ${filteredModels.length} match${filteredModels.length === 1 ? '' : 'es'}`
+          : `Select a model (↑/↓, Enter, Esc)  ·  ${filteredModels.length} models`}
       </text>
       <scrollbox
         ref={scrollRef}
         scrollX={false}
         scrollbarOptions={{ visible: false }}
-        verticalScrollbarOptions={{ visible: needsScroll, trackOptions: { width: 1 } }}
+        verticalScrollbarOptions={{
+          visible: needsScroll,
+          trackOptions: { width: 1 },
+        }}
         style={{
           height: viewportHeight + 1,
           flexShrink: 0,
-          rootOptions: { flexDirection: 'row', backgroundColor: 'transparent' },
+          rootOptions: {
+            flexDirection: 'row',
+            backgroundColor: 'transparent',
+          },
           wrapperOptions: { border: false, backgroundColor: 'transparent' },
           contentOptions: {
             flexDirection: 'column',
@@ -182,9 +288,48 @@ export const ModelPicker: React.FC<ModelPickerProps> = ({
           },
         }}
       >
-        {visible.map((model, idx) => {
+        {filteredModels.length === 0 && (
+        <box
+          style={{
+            paddingLeft: 1,
+            paddingTop: 1,
+            backgroundColor: theme.surface,
+          }}
+        >
+          <text style={{ fg: theme.muted, wrapMode: 'none' }}>
+            {query ? `No models match "${query}"` : 'No models available'}
+          </text>
+        </box>
+      )}
+      {visible.map((item, idx) => {
           const absoluteIndex = start + idx
           const isSelected = absoluteIndex === selectedIndex
+
+          if (item.type === 'header') {
+            return (
+              <box
+                key={`header-${item.provider}`}
+                style={{
+                  width: '100%',
+                  paddingLeft: 1,
+                  paddingTop: 1,
+                  paddingBottom: 0,
+                  backgroundColor: theme.surface,
+                }}
+              >
+                <text
+                  style={{
+                    fg: theme.primary,
+                    wrapMode: 'none',
+                  }}
+                >
+                  {item.provider.toUpperCase()}
+                </text>
+              </box>
+            )
+          }
+
+          const { model, provider } = item
           const pad = ' '.repeat(Math.max(0, maxIdLen - model.id.length))
           return (
             <Button
@@ -194,16 +339,28 @@ export const ModelPicker: React.FC<ModelPickerProps> = ({
                 width: '100%',
                 paddingLeft: 1,
                 paddingRight: 1,
-                backgroundColor: isSelected ? theme.surfaceHover : theme.surface,
+                backgroundColor: isSelected
+                  ? theme.surfaceHover
+                  : theme.surface,
               }}
             >
-              <text style={{ fg: isSelected ? theme.foreground : theme.inputFg }}>
+              <text
+                style={{
+                  fg: isSelected ? theme.foreground : theme.inputFg,
+                }}
+              >
                 <span fg={theme.primary}>{isSelected ? '› ' : '  '}</span>
-                <span fg={theme.foreground} attributes={isSelected ? 1 : 0}>
+                <span
+                  fg={theme.foreground}
+                  attributes={isSelected ? 1 : 0}
+                >
                   {model.id}
                 </span>
                 <span>{pad}  </span>
-                <span fg={theme.muted}>{model.name}</span>
+                <span fg={theme.muted}>
+                  <span fg={theme.primary}>[{provider}] </span>
+                  {model.name}
+                </span>
               </text>
             </Button>
           )

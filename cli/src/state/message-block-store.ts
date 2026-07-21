@@ -1,12 +1,12 @@
 import { create } from 'zustand'
 import { immer } from 'zustand/middleware/immer'
 
-import type { FeedbackCategory } from '@savant-code/common/constants/feedback'
 
 import type { AdResponse } from '../hooks/use-gravity-ad'
 import type { ChatMessage } from '../types/chat'
 import type { ChatTheme } from '../types/theme-system'
 import type { MarkdownPalette } from '../utils/markdown-renderer'
+import type { FeedbackCategory } from '@savant-code/common/constants/feedback'
 
 /**
  * Context values that are updated by the Chat component and consumed by

@@ -8,9 +8,9 @@ import { useShallow } from 'zustand/react/shallow'
 
 import { useChatStore } from '../state/chat-store'
 
-import type { InputValue, PendingBashMessage } from '../types/store'
 import type { ChatMessage } from '../types/chat'
 import type { SendMessageFn } from '../types/contracts/send-message'
+import type { InputValue, PendingBashMessage } from '../types/store'
 import type { AgentMode } from '../utils/constants'
 import type { MutableRefObject } from 'react'
 

@@ -5,9 +5,9 @@ import { getCiEnv } from '@savant-code/common/env-ci'
 import { z } from 'zod'
 
 
-import { getApiClient, setApiClientAuthToken } from './savant-code-api'
 import { getConfigDir as getConfigDirBase } from './config-dir'
 import { logger } from './logger'
+import { getApiClient, setApiClientAuthToken } from './savant-code-api'
 
 import type { CiEnv } from '@savant-code/common/types/contracts/env'
 
@@ -111,7 +111,7 @@ export const getAuthTokenDetails = (
     return { token: userCredentials.authToken, source: 'credentials' }
   }
 
-  const envToken = ciEnv.CODEBUFF_API_KEY
+  const envToken = ciEnv.SAVANT_CODE_API_KEY
   if (envToken) {
     return { token: envToken, source: 'environment' }
   }

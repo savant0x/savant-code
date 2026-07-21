@@ -1,7 +1,7 @@
 import React, { memo, useCallback, useMemo } from 'react'
 
-import { GridLayout } from '../grid-layout'
 import { splitAgentsBySize } from '../../utils/block-processor'
+import { GridLayout } from '../grid-layout'
 
 import type { AgentContentBlock } from '../../types/chat'
 

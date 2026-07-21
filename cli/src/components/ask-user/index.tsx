@@ -584,11 +584,9 @@ export const MultipleChoiceForm: React.FC<MultipleChoiceFormProps> = ({
                 submitFocused || (submitHovered && terminalFocused)
                   ? theme.primary
                   : theme.muted,
-              customBorderChars: BORDER_CHARS,
               paddingLeft: 2,
               paddingRight: 2,
-            }}
-          >
+            }} customBorderChars={BORDER_CHARS}>
             <text
               style={{
                 fg:

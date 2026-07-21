@@ -11,6 +11,7 @@
  */
 
 import type { FetchFunction } from '@ai-sdk/provider-utils'
+import type { JSONValue, JSONObject } from '@savant-code/common/types/json'
 
 type FetchLike = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>
 
@@ -52,7 +53,7 @@ interface ChatCompletionsToolCall {
 
 interface ChatCompletionsMessage {
   role: string
-  content?: unknown
+  content?: JSONValue
   tool_calls?: ChatCompletionsToolCall[]
   tool_call_id?: string
 }
@@ -62,33 +63,87 @@ interface ChatCompletionsTool {
   function?: {
     name: string
     description?: string
-    parameters?: unknown
+    parameters?: JSONValue
     strict?: boolean
   }
 }
 
-function convertUserContentParts(content: unknown): unknown {
-  if (typeof content === 'string') return content
-  if (!Array.isArray(content)) return String(content ?? '')
-  return content.map((part: Record<string, unknown>) => {
-    if (part.type === 'text') {
-      return { type: 'input_text', text: part.text }
-    }
-    if (part.type === 'image_url') {
-      const imageUrl = part.image_url as Record<string, unknown> | undefined
-      return {
-        type: 'input_image',
-        image_url: imageUrl?.url ?? imageUrl,
+interface ChatCompletionsBody {
+  model: JSONValue
+  messages: ChatCompletionsMessage[]
+  tools: ChatCompletionsTool[]
+  tool_choice?: JSONValue
+  reasoning_effort?: string
+}
+
+function parseChatCompletionsBody(raw: string): ChatCompletionsBody {
+  const parsed = JSON.parse(raw)
+
+  const messages: ChatCompletionsMessage[] = []
+  if (Array.isArray(parsed.messages)) {
+    for (const msg of parsed.messages) {
+      if (msg && typeof msg.role === 'string') {
+        messages.push({
+          role: msg.role,
+          content: msg.content,
+          tool_calls: msg.tool_calls,
+          tool_call_id: msg.tool_call_id,
+        })
       }
     }
-    return part
+  }
+
+  const tools: ChatCompletionsTool[] = []
+  if (Array.isArray(parsed.tools)) {
+    for (const tool of parsed.tools) {
+      if (tool && typeof tool.type === 'string') {
+        tools.push({
+          type: tool.type,
+          function: tool.function,
+        })
+      }
+    }
+  }
+
+  return {
+    model: parsed.model,
+    messages,
+    tools,
+    tool_choice: parsed.tool_choice,
+    reasoning_effort:
+      typeof parsed.reasoning_effort === 'string'
+        ? parsed.reasoning_effort
+        : undefined,
+  }
+}
+
+function convertUserContentParts(content: JSONValue | undefined): JSONValue {
+  if (content == null) return null
+  if (typeof content === 'string') return content
+  if (!Array.isArray(content)) return String(content ?? '')
+  return content.map((part: JSONValue) => {
+    const p = part as JSONObject
+    if (p.type === 'text') {
+      return { type: 'input_text', text: p.text }
+    }
+    if (p.type === 'image_url') {
+      const imageUrl = p.image_url as JSONObject | undefined
+      if (imageUrl?.url != null) {
+        return { type: 'input_image', image_url: imageUrl.url }
+      }
+      if (imageUrl != null) {
+        return { type: 'input_image', image_url: imageUrl }
+      }
+      return { type: 'input_image' }
+    }
+    return p
   })
 }
 
 function convertMessages(
   messages: ChatCompletionsMessage[],
-): unknown[] {
-  const input: unknown[] = []
+): JSONValue[] {
+  const input: JSONValue[] = []
 
   for (const msg of messages) {
     switch (msg.role) {
@@ -133,7 +188,7 @@ function convertMessages(
           output:
             typeof msg.content === 'string'
               ? msg.content
-              : JSON.stringify(msg.content),
+              : JSON.stringify(msg.content ?? null),
         })
         break
       }
@@ -143,28 +198,34 @@ function convertMessages(
   return input
 }
 
-function convertTools(tools: ChatCompletionsTool[]): unknown[] {
+function convertTools(tools: ChatCompletionsTool[]): JSONValue[] {
   return tools.map((tool) => {
     if (tool.type === 'function' && tool.function) {
-      return {
+      const result: JSONObject = {
         type: 'function',
         name: tool.function.name,
-        description: tool.function.description,
-        parameters: tool.function.parameters,
-        ...(tool.function.strict !== undefined && {
-          strict: tool.function.strict,
-        }),
       }
+      if (tool.function.description != null) {
+        result.description = tool.function.description
+      }
+      if (tool.function.parameters != null) {
+        result.parameters = tool.function.parameters
+      }
+      if (tool.function.strict != null) {
+        result.strict = tool.function.strict
+      }
+      return result
     }
-    return tool
+    const fallback: JSONObject = { type: tool.type }
+    if (tool.function != null) {
+      fallback.function = tool.function as unknown as JSONValue
+    }
+    return fallback
   })
 }
 
-function transformRequestBody(
-  body: Record<string, unknown>,
-): Record<string, unknown> {
-  const messages = (body.messages ?? []) as ChatCompletionsMessage[]
-  const tools = body.tools as ChatCompletionsTool[] | undefined
+function transformRequestBody(body: ChatCompletionsBody): JSONObject {
+  const { messages, tools } = body
 
   // Extract system messages into the top-level `instructions` field
   // (required by the ChatGPT backend API)
@@ -174,7 +235,7 @@ function transformRequestBody(
     .map((m) => (typeof m.content === 'string' ? m.content : JSON.stringify(m.content)))
     .join('\n\n')
 
-  const transformed: Record<string, unknown> = {
+  const transformed: JSONObject = {
     model: body.model,
     instructions: instructions || 'You are a helpful assistant.',
     input: convertMessages(nonSystemMessages),
@@ -222,21 +283,21 @@ function createSseTransformStream(): TransformStream<Uint8Array, Uint8Array> {
 
   function emit(
     controller: TransformStreamDefaultController<Uint8Array>,
-    chunk: Record<string, unknown>,
+    chunk: JSONObject,
   ) {
     controller.enqueue(encoder.encode(`data: ${JSON.stringify(chunk)}\n\n`))
   }
 
   function processEvent(
     controller: TransformStreamDefaultController<Uint8Array>,
-    data: Record<string, unknown>,
+    data: JSONObject,
   ) {
     const type = data.type as string | undefined
     if (!type) return
 
     switch (type) {
       case 'response.created': {
-        const resp = data.response as Record<string, unknown> | undefined
+        const resp = data.response as JSONObject | undefined
         responseId = (resp?.id as string) ?? null
         responseModel = (resp?.model as string) ?? null
         if (!emittedRole) {
@@ -281,7 +342,7 @@ function createSseTransformStream(): TransformStream<Uint8Array, Uint8Array> {
       }
 
       case 'response.output_item.added': {
-        const item = data.item as Record<string, unknown> | undefined
+        const item = data.item as JSONObject | undefined
         if (item?.type === 'function_call') {
           const tcIndex = nextToolCallIndex++
           const outputIdx = (data.output_index as number) ?? 0
@@ -336,8 +397,8 @@ function createSseTransformStream(): TransformStream<Uint8Array, Uint8Array> {
 
       case 'response.completed':
       case 'response.done': {
-        const resp = data.response as Record<string, unknown> | undefined
-        const usage = resp?.usage as Record<string, unknown> | undefined
+        const resp = data.response as JSONObject | undefined
+        const usage = resp?.usage as JSONObject | undefined
         const status = resp?.status as string | undefined
 
         let finishReason = 'stop'
@@ -347,7 +408,7 @@ function createSseTransformStream(): TransformStream<Uint8Array, Uint8Array> {
           finishReason = 'tool_calls'
         }
 
-        const chunk: Record<string, unknown> = {
+        const chunk: JSONObject = {
           id: responseId,
           choices: [
             { index: 0, delta: {}, finish_reason: finishReason },
@@ -356,7 +417,7 @@ function createSseTransformStream(): TransformStream<Uint8Array, Uint8Array> {
 
         if (usage) {
           const outputDetails = usage.output_tokens_details as
-            | Record<string, unknown>
+            | JSONObject
             | undefined
           chunk.usage = {
             prompt_tokens: usage.input_tokens,
@@ -376,9 +437,9 @@ function createSseTransformStream(): TransformStream<Uint8Array, Uint8Array> {
       }
 
       case 'response.failed': {
-        const resp = data.response as Record<string, unknown> | undefined
+        const resp = data.response as JSONObject | undefined
         const errorObj = (resp?.error ?? data.error) as
-          | Record<string, unknown>
+          | JSONObject
           | undefined
         emit(controller, {
           error: {
@@ -393,7 +454,7 @@ function createSseTransformStream(): TransformStream<Uint8Array, Uint8Array> {
       }
 
       case 'error': {
-        const errorObj = (data.error ?? data) as Record<string, unknown>
+        const errorObj = (data.error ?? data) as JSONObject
         emit(controller, {
           error: {
             message:
@@ -425,7 +486,7 @@ function createSseTransformStream(): TransformStream<Uint8Array, Uint8Array> {
         }
 
         try {
-          const parsed = JSON.parse(jsonStr) as Record<string, unknown>
+          const parsed = JSON.parse(jsonStr) as JSONObject
           processEvent(controller, parsed)
         } catch {
           // Skip unparseable lines
@@ -438,7 +499,7 @@ function createSseTransformStream(): TransformStream<Uint8Array, Uint8Array> {
         const jsonStr = buffer.trim().slice(6).trim()
         if (jsonStr && jsonStr !== '[DONE]') {
           try {
-            const parsed = JSON.parse(jsonStr) as Record<string, unknown>
+            const parsed = JSON.parse(jsonStr) as JSONObject
             processEvent(controller, parsed)
           } catch {
             // skip
@@ -470,7 +531,7 @@ export function createChatGptBackendFetch(): FetchFunction {
 
     if (init?.body && typeof init.body === 'string') {
       try {
-        const body = JSON.parse(init.body) as Record<string, unknown>
+        const body = parseChatCompletionsBody(init.body)
         const transformedBody = transformRequestBody(body)
         transformedInit = { ...init, body: JSON.stringify(transformedBody) }
       } catch {

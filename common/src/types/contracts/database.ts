@@ -1,5 +1,5 @@
-import type { AgentTemplate } from '@savantcode.common/types/agent-template'
-import type { Logger } from '@savantcode.common/types/contracts/logger'
+import type { AgentTemplate } from '@savant-code/common/types/agent-template'
+import type { Logger } from '@savant-code/common/types/contracts/logger'
 
 type User = {
   id: string

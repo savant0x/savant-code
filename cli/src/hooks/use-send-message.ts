@@ -1,20 +1,25 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- send message: dynamic action type shapes */
 import { randomUUID } from 'node:crypto'
 
+import { STATE_SNAPSHOT_INTERRUPTION_MESSAGE } from '@savant-code/sdk'
 import { useCallback, useEffect, useRef } from 'react'
 
 import { setCurrentChatId } from '../project-files'
 import { createStreamController } from './stream-state'
-import { useChatStore } from '../state/chat-store'
 import {
-  getFreebuffInstanceId,
-  markFreebuffSessionEnded,
+  getSavantFreeInstanceId,
+  markSavantFreeSessionEnded,
 } from './use-savant-free-session'
-import { getCodebuffClient } from '../utils/savant-code-client'
-import { AGENT_MODE_TO_COST_MODE, IS_FREEBUFF, getContextWindowForModel } from '../utils/constants'
+import { useChatStore } from '../state/chat-store'
+import { getSelectedSavantFreeModel } from '../state/savant-free-model-store'
+import {
+  clearActiveRunAborter,
+  setActiveRunAborter,
+} from '../utils/active-run'
+import { IS_SAVANT_FREE, getContextWindowForModel } from '../utils/constants'
 import { createEventHandlerState } from '../utils/create-event-handler-state'
-import { getSelectedFreebuffModel } from '../state/savant-free-model-store'
 import { createRunConfig } from '../utils/create-run-config'
-import { getAgentIdForMode } from '../utils/savant-free-agent-selection'
+import { saveFidDocumentToDb, isFidPath } from '../utils/db-storage'
 import {
   createStalledResetWatcher,
   markChunkSeen as markChunkSeenHelper,
@@ -22,11 +27,6 @@ import {
 } from '../utils/finish-logic'
 import { loadAgentDefinitions } from '../utils/local-agent-registry'
 import { logger } from '../utils/logger'
-import { loadCodebuffModelPreference } from '../utils/settings'
-import {
-  clearActiveRunAborter,
-  setActiveRunAborter,
-} from '../utils/active-run'
 import {
   clearLiveChatStateProvider,
   loadMostRecentChatState,
@@ -36,7 +36,8 @@ import {
   setLiveChatStateProvider,
   settleCheckpointSave,
 } from '../utils/run-state-storage'
-import { saveFidDocumentToDb, isFidPath } from '../utils/db-storage'
+import { getSavantCodeClient } from '../utils/savant-code-client'
+import { getAgentIdForMode } from '../utils/savant-free-agent-selection'
 import {
   autoCollapsePreviousMessages,
   createAiMessageShell,
@@ -45,6 +46,7 @@ import {
   sanitizeRestoredMessages,
 } from '../utils/send-message-helpers'
 import { createSendMessageTimerController } from '../utils/send-message-timer'
+import { loadSavantCodeModelPreference } from '../utils/settings'
 import {
   handleRunCompletion,
   handleRunError,
@@ -52,25 +54,21 @@ import {
   resetEarlyReturnState,
   setupStreamingContext,
 } from './helpers/send-message'
-import { NETWORK_ERROR_ID } from '../utils/validation-error-helpers'
+import { isCoveredBySubscription } from '../utils/subscription'
 import { yieldToEventLoop } from '../utils/yield-to-event-loop'
 
 import type { ElapsedTimeTracker } from './use-elapsed-time'
 import type { StreamStatus } from './use-message-queue'
-import type { PendingAttachment } from '../types/store'
+import type { SubscriptionResponse } from './use-subscription-query'
 import type { ChatMessage } from '../types/chat'
 import type { SendMessageFn } from '../types/contracts/send-message'
+import type { PendingAttachment } from '../types/store'
 import type { AgentMode } from '../utils/constants'
 import type { SendMessageTimerEvent } from '../utils/send-message-timer'
-import { STATE_SNAPSHOT_INTERRUPTION_MESSAGE } from '@savant-code/sdk'
-
 import type { AgentDefinition, MessageContent, RunState } from '@savant-code/sdk'
-import { isCoveredBySubscription } from '../utils/subscription'
-
-import type { SubscriptionResponse } from './use-subscription-query'
 
 interface UseSendMessageOptions {
-  inputRef: React.MutableRefObject<any> // eslint-disable-line @typescript-eslint/no-explicit-any -- React ref type
+  inputRef: React.MutableRefObject<any>  
   activeSubagentsRef: React.MutableRefObject<Set<string>>
   isChainInProgressRef: React.MutableRefObject<boolean>
   setStreamStatus: (status: StreamStatus) => void
@@ -114,11 +112,11 @@ const resolveAgent = (
 }
 
 // Apply the user's savant-code model override if one is set.
-const applyCodebuffModelOverride = (
+const applySavantCodeModelOverride = (
   agent: AgentDefinition | string,
   agentDefinitions: AgentDefinition[],
 ): AgentDefinition | string => {
-  const modelOverride = loadCodebuffModelPreference()
+  const modelOverride = loadSavantCodeModelPreference()
   if (!modelOverride) return agent
 
   // If agent is a string (agent ID), look it up
@@ -311,8 +309,8 @@ export const useSendMessage = ({
       // session-ended banner. Catches sends that bypass the queue's
       // sendBlocked hold (direct review-screen answers) and the dequeue race
       // where the slot expires between the queue's check and this call.
-      if (IS_FREEBUFF && !getFreebuffInstanceId()) {
-        markFreebuffSessionEnded()
+      if (IS_SAVANT_FREE && !getSavantFreeInstanceId()) {
+        markSavantFreeSessionEnded()
         requeueMessageAtFront?.({ content, attachments: attachments ?? [] })
         resetEarlyReturnState({
           setCanProcessQueue,
@@ -323,9 +321,7 @@ export const useSendMessage = ({
         return
       }
 
-      if (agentMode !== 'PLAN') {
-        setHasReceivedPlanResponse(false)
-      }
+      setHasReceivedPlanResponse(false)
 
       // Initialize timer for elapsed time tracking
       const timerController = createSendMessageTimerController({
@@ -445,7 +441,7 @@ export const useSendMessage = ({
       useChatStore.getState().onNewUserMessage()
 
       // Get SDK client
-      const client = await getCodebuffClient()
+      const client = await getSavantCodeClient()
 
       if (!client) {
         logger.error(
@@ -453,7 +449,7 @@ export const useSendMessage = ({
           '[send-message] No SavantCode client available. Please ensure you are authenticated.',
         )
         // Show error to user instead of silently failing
-        const brandName = IS_FREEBUFF ? 'SavantFree' : 'SavantCode'
+        const brandName = IS_SAVANT_FREE ? 'SavantFree' : 'SavantCode'
         setMessages((prev) => [
           ...prev,
           createErrorChatMessage(
@@ -553,14 +549,14 @@ export const useSendMessage = ({
         latestRunStateSnapshot,
         useChatStore.getState().messages,
         runChatDir,
-        getSelectedFreebuffModel(),
+        getSelectedSavantFreeModel(),
       )
 
       // Execute SDK run with streaming handlers
       try {
         const agentDefinitions = loadAgentDefinitions()
         const resolvedAgent = resolveAgent(agentMode, agentId, agentDefinitions)
-        const agentWithModelOverride = applyCodebuffModelOverride(
+        const agentWithModelOverride = applySavantCodeModelOverride(
           resolvedAgent,
           agentDefinitions,
         )
@@ -620,7 +616,7 @@ export const useSendMessage = ({
           },
         })
 
-        const savant-free$1 = getFreebuffInstanceId()
+        const instanceId = getSavantFreeInstanceId()
         const runConfig = createRunConfig({
           logger,
           agent: agentWithModelOverride,
@@ -630,10 +626,9 @@ export const useSendMessage = ({
           agentDefinitions,
           eventHandlerState,
           signal: abortController.signal,
-          costMode: AGENT_MODE_TO_COST_MODE[agentMode],
-          extraCodebuffMetadata:
-            IS_FREEBUFF && savant-free$1
-              ? { freebuff_instance_id: savant-free$1 }
+          extraSavantCodeMetadata:
+            IS_SAVANT_FREE && instanceId
+              ? { freebuff_instance_id: instanceId }
               : undefined,
           onStateSnapshot: (snapshot) => {
             latestRunStateSnapshot = snapshot
@@ -719,7 +714,6 @@ export const useSendMessage = ({
                 previousRunStateRef.current?.sessionState?.mainAgentState
                   .messageHistory.length ?? 0,
               agentDefinitionCount: agentDefinitions.length,
-              costMode: runConfig.costMode,
               maxAgentSteps: runConfig.maxAgentSteps,
             },
           },
@@ -776,7 +770,7 @@ export const useSendMessage = ({
           // updater: the store uses immer, so the updater sees a draft proxy
           // and JSON.stringify of the (unbounded) transcript through proxy
           // traps is several times slower.
-          saveChatState(runState, useChatStore.getState().messages, runChatDir, getSelectedFreebuffModel())
+          saveChatState(runState, useChatStore.getState().messages, runChatDir, getSelectedSavantFreeModel())
         }
         handleRunCompletion({
           runState,
@@ -823,7 +817,7 @@ export const useSendMessage = ({
               latestRunStateSnapshot,
               useChatStore.getState().messages,
               runChatDir,
-              getSelectedFreebuffModel(),
+              getSelectedSavantFreeModel(),
             )
           }
         } else {

@@ -1,9 +1,8 @@
-import { resetTerminalTitle } from './terminal-title'
+import { logger } from './logger'
 import { flushLiveChatState } from './run-state-storage'
 import { TERMINAL_RESET_SEQUENCES } from './terminal-reset-sequences'
+import { resetTerminalTitle } from './terminal-title'
 import { stopTerminalWatchdog } from './terminal-watchdog'
-
-import { logger } from './logger'
 
 import type { CliRenderer } from '@opentui/core'
 

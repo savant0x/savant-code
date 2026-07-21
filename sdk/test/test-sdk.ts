@@ -1,3 +1,4 @@
+/* eslint-disable no-console -- test script: intentional runtime logging */
 import { SavantCodeClient } from '../src/client'
 import { getUserCredentials } from '../src/credentials'
 
@@ -12,7 +13,7 @@ export async function testSdk() {
   })
 
   const run = await client.run({
-    agent: 'savant-code/base2@latest',
+    agent: 'savant-code/savant@latest',
     prompt: 'Create a simple calculator class',
     handleEvent: (event) => {
       console.log(event)

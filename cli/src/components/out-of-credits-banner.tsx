@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react'
-import { IS_FREEBUFF } from '../utils/constants'
+
 
 import { ShimmerText } from './shimmer-text'
 import { getActivityQueryData } from '../hooks/use-activity-query'
 import { useTheme } from '../hooks/use-theme'
 import { usageQueryKeys, useUsageQuery } from '../hooks/use-usage-query'
 import { useChatStore } from '../state/chat-store'
+import { IS_SAVANT_FREE } from '../utils/constants'
+import { isDirectProviderMode } from '../utils/env'
 import { BORDER_CHARS } from '../utils/ui-constants'
 
 const CREDIT_POLL_INTERVAL = 5 * 1000 // Poll every 5 seconds
@@ -16,7 +18,8 @@ let creditsRestoredGlobal = false
 export const areCreditsRestored = () => creditsRestoredGlobal
 
 export const OutOfCreditsBanner = () => {
-  if (IS_FREEBUFF) return null
+  // Skip in free mode and direct-provider mode (no backend to query).
+  if (IS_SAVANT_FREE || isDirectProviderMode()) return null
 
   const sessionCreditsUsed = useChatStore((state) => state.sessionCreditsUsed)
   const [creditsRestored, setCreditsRestored] = useState(false)
@@ -81,15 +84,13 @@ export const OutOfCreditsBanner = () => {
           width: '100%',
           borderStyle: 'single',
           borderColor: theme.success,
-          customBorderChars: BORDER_CHARS,
           paddingLeft: 1,
           paddingRight: 1,
           paddingTop: 0,
           paddingBottom: 0,
           flexDirection: 'column',
           gap: 0,
-        }}
-      >
+        }} customBorderChars={BORDER_CHARS}>
         <box
           style={{
             flexDirection: 'column',
@@ -122,15 +123,13 @@ export const OutOfCreditsBanner = () => {
         width: '100%',
         borderStyle: 'single',
         borderColor: theme.warning,
-        customBorderChars: BORDER_CHARS,
         paddingLeft: 1,
         paddingRight: 1,
         paddingTop: 0,
         paddingBottom: 0,
         flexDirection: 'column',
         gap: 0,
-      }}
-    >
+      }} customBorderChars={BORDER_CHARS}>
       <box
         style={{
           flexDirection: 'column',

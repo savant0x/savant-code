@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 
-import { getCodebuffClient } from '../utils/savant-code-client'
 import { isDirectProviderMode } from '../utils/env'
 import { logger } from '../utils/logger'
+import { getSavantCodeClient } from '../utils/savant-code-client'
 
 // Adaptive health check interval configuration
 // Progressively increases polling interval based on consecutive successful checks
@@ -73,7 +73,7 @@ export const useConnectionStatus = (
     }
 
     const checkConnection = async () => {
-      const client = await getCodebuffClient()
+      const client = await getSavantCodeClient()
       if (!client) {
         if (isMounted) {
           setIsConnected(false)

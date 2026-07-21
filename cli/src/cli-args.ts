@@ -2,7 +2,7 @@ import { createRequire } from 'module'
 
 import { Argument, Command } from 'commander'
 
-import { IS_FREEBUFF, type AgentMode } from './utils/constants'
+import { IS_SAVANT_FREE, type AgentMode } from './utils/constants'
 import { getCliEnv } from './utils/env'
 
 const require = createRequire(import.meta.url)
@@ -20,8 +20,8 @@ export type ParsedArgs = {
 
 export function loadPackageVersion(): string {
   const env = getCliEnv()
-  if (env.CODEBUFF_CLI_VERSION) {
-    return env.CODEBUFF_CLI_VERSION
+  if (env.SAVANT_CODE_CLI_VERSION) {
+    return env.SAVANT_CODE_CLI_VERSION
   }
 
   try {
@@ -38,16 +38,16 @@ export function loadPackageVersion(): string {
 
 export function parseArgs({
   argv = process.argv,
-  isFreebuff = IS_FREEBUFF,
+  isSavantFree = IS_SAVANT_FREE,
   version = loadPackageVersion(),
 }: {
   argv?: string[]
-  isFreebuff?: boolean
+  isSavantFree?: boolean
   version?: string
 } = {}): ParsedArgs {
   const program = new Command()
 
-  if (isFreebuff) {
+  if (isSavantFree) {
     // SavantFree: simplified CLI - no prompt args, no agent override, no clear-logs
     program
       .name('savant-free')
@@ -87,10 +87,9 @@ export function parseArgs({
         '--cwd <directory>',
         'Set the working directory (default: current directory)',
       )
-      .option('--lite', 'Start in LITE mode')
-      .option('--free', 'Start in LITE mode (deprecated alias)')
-      .option('--max', 'Start in MAX mode')
-      .option('--plan', 'Start in PLAN mode')
+      .option('--edit', 'Start in EDIT mode (default)')
+      .option('--scaffold', 'Start in SCAFFOLD mode')
+      .option('--analyze', 'Start in ANALYZE mode')
       .addHelpText(
         'after',
         '\nCommands:\n  login                          Log in to your account\n  publish                        Publish agents to the registry',
@@ -108,18 +107,17 @@ export function parseArgs({
   const continueFlag = options.continue
 
   // Determine initial mode from flags (last flag wins if multiple specified)
-  // SavantFree always uses LITE mode
   let initialMode: AgentMode | undefined
-  if (isFreebuff) {
-    initialMode = 'LITE'
+  if (isSavantFree) {
+    initialMode = 'EDIT'
   } else {
-    if (options.free || options.lite) initialMode = 'LITE'
-    if (options.max) initialMode = 'MAX'
-    if (options.plan) initialMode = 'PLAN'
+    if (options.edit) initialMode = 'EDIT'
+    if (options.scaffold) initialMode = 'SCAFFOLD'
+    if (options.analyze) initialMode = 'ANALYZE'
   }
 
   return {
-    initialPrompt: !isFreebuff && args.length > 0 ? args.join(' ') : null,
+    initialPrompt: !isSavantFree && args.length > 0 ? args.join(' ') : null,
     command: args[0],
     agent: options.agent,
     clearLogs: options.clearLogs || false,

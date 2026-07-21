@@ -1,6 +1,6 @@
+import { TextAttributes } from '@opentui/core'
 import React from 'react'
 
-import { TextAttributes } from '@opentui/core'
 
 import { useTheme } from '../../../hooks/use-theme'
 

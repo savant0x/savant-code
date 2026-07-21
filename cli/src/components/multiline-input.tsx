@@ -30,6 +30,7 @@ import { calculateNewCursorPosition } from '../utils/word-wrap-utils'
 
 import type { InputValue } from '../types/store'
 import type {
+  CliRenderer,
   KeyEvent,
   MouseEvent,
   PasteEvent,
@@ -37,6 +38,14 @@ import type {
   TextBufferView,
   TextRenderable,
 } from '@opentui/core'
+
+type TextRenderableWithBuffer = TextRenderable & {
+  textBufferView: TextBufferView
+}
+
+interface CliRendererWithStdinBuffer extends CliRenderer {
+  _stdinBuffer?: { timeoutMs?: number }
+}
 
 function getPasteText(event: PasteEvent): string {
   return stripAnsiSequences(decodePasteBytes(event.bytes))
@@ -270,10 +279,7 @@ export const MultilineInput = forwardRef<
   const textRef = useRef<TextRenderable | null>(null)
 
   const lineInfo = textRef.current
-    ? (
-        (textRef.current satisfies TextRenderable as any)
-          .textBufferView as TextBufferView
-      ).lineInfo
+    ? (textRef.current as TextRenderableWithBuffer).textBufferView.lineInfo
     : null
 
   // Focus/blur scrollbox when focused prop changes
@@ -326,7 +332,9 @@ export const MultilineInput = forwardRef<
 
   // Helper to get current selection in original text coordinates
   const getSelectionRange = useCallback((): { start: number; end: number } | null => {
-    const textBufferView = (textRef.current as any)?.textBufferView
+    const textBufferView = textRef.current
+      ? (textRef.current as TextRenderableWithBuffer).textBufferView
+      : null
     if (!textBufferView?.hasSelection?.() || !textBufferView?.getSelection) {
       return null
     }
@@ -344,7 +352,7 @@ export const MultilineInput = forwardRef<
   // Helper to clear the current selection
   const clearSelection = useCallback(() => {
     // Use renderer's clearSelection for proper visual clearing
-    ;(renderer as any)?.clearSelection?.()
+    renderer?.clearSelection?.()
   }, [renderer])
 
   // Helper to delete selected text and return new value and cursor position
@@ -452,9 +460,8 @@ export const MultilineInput = forwardRef<
 
       const lineStarts = lineInfo?.lineStartCols ?? [0]
 
-      const viewport = (scrollBox as any).viewport
-      const viewportTop = Number(viewport?.y ?? 0)
-      const viewportLeft = Number(viewport?.x ?? 0)
+      const viewportTop = Number(scrollBox.viewport.y ?? 0)
+      const viewportLeft = Number(scrollBox.viewport.x ?? 0)
 
       // Get click position, accounting for scroll
       const scrollPosition = scrollBox.verticalScrollBar?.scrollPosition ?? 0
@@ -837,11 +844,9 @@ export const MultilineInput = forwardRef<
       const logicalLineStart = findLineStart(value, cursorPosition)
       const logicalLineEnd = findLineEnd(value, cursorPosition)
       const wordStart = findPreviousWordBoundary(value, cursorPosition)
-      const wordEnd = findNextWordBoundary(value, cursorPosition)
-
-      // Read lineInfo inside the callback to get current value (not stale from closure)
+      const wordEnd = findNextWordBoundary(value, cursorPosition)      // Read lineInfo inside the callback to get current value (not stale from closure)
       const currentLineInfo = textRef.current
-        ? ((textRef.current as any).textBufferView as TextBufferView)?.lineInfo
+        ? (textRef.current as TextRenderableWithBuffer).textBufferView.lineInfo
         : null
 
       // Calculate visual line boundaries from lineInfo (accounts for word wrap)
@@ -1052,8 +1057,8 @@ export const MultilineInput = forwardRef<
   // corrupting paste detection. 100ms is still fast for keyboard input but
   // gives enough time for split paste sequences to arrive.
   useEffect(() => {
-    const cliRenderer = appContext.renderer as Record<string, unknown> | null
-    const stdinBuffer = cliRenderer?._stdinBuffer as Record<string, unknown> | undefined
+    const cliRenderer = appContext.renderer as CliRendererWithStdinBuffer | null
+    const stdinBuffer = cliRenderer?._stdinBuffer
     if (stdinBuffer && typeof stdinBuffer.timeoutMs === 'number') {
       stdinBuffer.timeoutMs = 100
     }

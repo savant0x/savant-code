@@ -8,7 +8,7 @@ import {
 import type { ProcessDiagnosticsSnapshot } from '../process-diagnostics'
 
 const snapshot: ProcessDiagnosticsSnapshot = {
-  product: 'Freebuff',
+  product: 'SavantFree',
   version: '1.2.3',
   runtime: 'Bun 1.3.14',
   platform: 'darwin',
@@ -33,7 +33,7 @@ describe('process diagnostics', () => {
   test('formats owned process IDs without sensitive command data', () => {
     const output = formatProcessDiagnostics(snapshot)
 
-    expect(output).toContain('### Freebuff process diagnostics')
+    expect(output).toContain('### SavantFree process diagnostics')
     expect(output).toContain('CLI uptime: 01:01:01')
     expect(output).toContain('parent/wrapper: PID 100')
     expect(output).toContain('CLI binary: PID 200')

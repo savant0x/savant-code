@@ -1,7 +1,7 @@
 import React from 'react'
 
-import { useTheme } from '../../../hooks/use-theme'
 import { FidCard } from './fid-card'
+import { useTheme } from '../../../hooks/use-theme'
 
 export interface FidData {
   id: string

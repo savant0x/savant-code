@@ -1,7 +1,7 @@
 import { IS_DEV, IS_TEST, IS_CI } from '@savant-code/common/env'
 
-import { getApiClient } from './savant-code-api'
 import { getCliEnv } from './env'
+import { getApiClient } from './savant-code-api'
 
 import type { LogRecordInput } from '@savant-code/common/schemas/logs'
 
@@ -12,7 +12,7 @@ import type { LogRecordInput } from '@savant-code/common/schemas/logs'
  * through the app logger (which would recurse).
  *
  * Tuning via env:
- *  - CODEBUFF_SHIP_LOGS 'true' | 'false'  (default: on outside dev/test)
+ *  - SAVANT_CODE_SHIP_LOGS 'true' | 'false'  (default: on outside dev/test)
  */
 
 const MAX_BATCH = 50
@@ -25,7 +25,7 @@ let flushing = false
 let shutdownRegistered = false
 
 function enabled(): boolean {
-  const flag = getCliEnv().CODEBUFF_SHIP_LOGS
+  const flag = getCliEnv().SAVANT_CODE_SHIP_LOGS
   if (flag === 'true') return true
   if (flag === 'false') return false
   return !IS_DEV && !IS_TEST && !IS_CI

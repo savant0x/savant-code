@@ -3,7 +3,7 @@
 /**
  * SavantFree CLI build script.
  *
- * Wraps the existing CLI build-binary.ts with FREEBUFF_MODE=true
+ * Wraps the existing CLI build-binary.ts with SAVANT_FREE_MODE=true
  * to produce a free-only variant of the SavantCode CLI.
  *
  * Usage:
@@ -36,7 +36,7 @@ const result = spawnSync(
     stdio: 'inherit',
     env: {
       ...process.env,
-      FREEBUFF_MODE: 'true',
+      SAVANT_FREE_MODE: 'true',
     },
   },
 )

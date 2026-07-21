@@ -26,6 +26,7 @@ export type ToolName =
   | 'skill'
   | 'spawn_agents'
   | 'str_replace'
+  | 'spawn_agent_inline'
   | 'suggest_followups'
   | 'task_completed'
   | 'think_deeply'
@@ -60,6 +61,7 @@ export interface ToolParamsMap {
   set_messages: SetMessagesParams
   set_output: SetOutputParams
   skill: SkillParams
+  spawn_agent_inline: SpawnAgentInlineParams
   spawn_agents: SpawnAgentsParams
   str_replace: StrReplaceParams
   suggest_followups: SuggestFollowupsParams
@@ -180,7 +182,7 @@ export interface GravityIndexParams {
   /** For action "search": continue a previous search. For action "report_integration": the search_id from the earlier search result (required). */
   search_id?: string
   /** For action "search": optional structured JSON context about the project, stack, or constraints. */
-  context?: Record<string, any>
+  context?: Record<string, unknown>
   /** For action "browse": optional category filter, e.g. Database, Auth, Payments, Hosting, Email, AI. */
   category?: string
   /** For action "browse": optional keyword filter, e.g. sendgrid or postgres. */
@@ -318,8 +320,11 @@ export interface RunTerminalCommandParams {
 /**
  * Set the conversation history to the provided messages.
  */
+/**
+ * Set the conversation history to the provided messages.
+ */
 export interface SetMessagesParams {
-  messages: any
+  messages: unknown
 }
 
 /**
@@ -336,6 +341,18 @@ export interface SkillParams {
 }
 
 /**
+ * Spawn an agent inline within a handleSteps generator.
+ * This is a programmatic-only tool (not user-facing) that spawns
+ * a sub-agent and awaits its completion within the generator.
+ */
+export interface SpawnAgentInlineParams {
+  /** Agent type to spawn */
+  agent_type: string
+  /** Parameters to pass to the spawned agent */
+  params?: Record<string, unknown>
+}
+
+/**
  * Spawn multiple agents and send a prompt and/or parameters to each of them. These agents will run in parallel. Note that that means they will run independently. If you need to run agents sequentially, use spawn_agents with one agent at a time instead.
  */
 export interface SpawnAgentsParams {
@@ -345,7 +362,7 @@ export interface SpawnAgentsParams {
     /** Prompt to send to the agent */
     prompt?: string
     /** Parameters object for the agent (if any) */
-    params?: Record<string, any>
+    params?: Record<string, unknown>
   }[]
 }
 

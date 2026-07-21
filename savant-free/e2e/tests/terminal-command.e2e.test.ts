@@ -4,21 +4,21 @@
  * Starts SavantFree in tmux, sends a prompt asking it to run a shell command,
  * and verifies the command was executed by checking its side effects.
  *
- * Requires CODEBUFF_API_KEY — skipped if not set.
+ * Requires SAVANT_CODE_API_KEY — skipped if not set.
  */
 
 import { afterEach, describe, expect, test } from 'bun:test'
 
-import { SavantFree$1, requireFreebuffBinary } from '../utils'
+import { SavantFreeModel, requireSavantFreeBinary } from '../utils'
 
 const TEST_TIMEOUT = 1_000_000
 
 function getApiKey(): string | null {
-  return process.env.CODEBUFF_API_KEY ?? null
+  return process.env.SAVANT_CODE_API_KEY ?? null
 }
 
 describe.skip('SavantFree: Terminal Command', () => {
-  let session: SavantFree$1 | null = null
+  let session: SavantFreeModel | null = null
 
   afterEach(async () => {
     if (session) {
@@ -32,14 +32,14 @@ describe.skip('SavantFree: Terminal Command', () => {
     async () => {
       if (!getApiKey()) {
         console.log(
-          'Skipping terminal-command test: CODEBUFF_API_KEY not set. ' +
+          'Skipping terminal-command test: SAVANT_CODE_API_KEY not set. ' +
             'Set it to run terminal-command e2e tests.',
         )
         return
       }
 
-      const binary = requireFreebuffBinary()
-      session = await SavantFree$1.start(binary, { waitSeconds: 5 })
+      const binary = requireSavantFreeBinary()
+      session = await SavantFreeModel.start(binary, { waitSeconds: 5 })
 
       // Wait for the CLI to be fully ready before sending input
       await session.waitForReady()

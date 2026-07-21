@@ -1,5 +1,4 @@
 import { describe, expect, test } from 'bun:test'
-import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 
 import { initializeThemeStore } from '../../../hooks/use-theme'
@@ -7,6 +6,7 @@ import { chatThemes } from '../../../utils/theme-system'
 import { getToolComponent, renderToolComponent } from '../registry'
 
 import type { ToolBlock } from '../types'
+import type React from 'react'
 
 initializeThemeStore()
 

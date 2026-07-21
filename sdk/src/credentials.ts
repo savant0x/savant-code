@@ -2,7 +2,6 @@ import fs from 'fs'
 import path from 'node:path'
 import os from 'os'
 
-import { logger } from './utils/logger'
 import {
   CHATGPT_OAUTH_CLIENT_ID,
   CHATGPT_OAUTH_TOKEN_URL,
@@ -12,8 +11,10 @@ import { userSchema } from '@savant-code/common/util/credentials'
 import { z } from 'zod/v4'
 
 import { getChatGptOAuthTokenFromEnv } from './env'
+import { logger } from './utils/logger'
 
 import type { ClientEnv } from '@savant-code/common/types/contracts/env'
+import type { JSONValue } from '@savant-code/common/types/json'
 import type { User } from '@savant-code/common/util/credentials'
 
 const chatGptOAuthSchema = z.object({
@@ -57,7 +58,7 @@ export const getConfigDir = (clientEnv: ClientEnv = env): string => {
     clientEnv.NEXT_PUBLIC_CB_ENVIRONMENT !== 'prod'
       ? `-${clientEnv.NEXT_PUBLIC_CB_ENVIRONMENT}`
       : ''
-  return path.join(os.homedir(), '.config', `manicode${envSuffix}`)
+  return path.join(os.homedir(), '.config', `savant${envSuffix}`)
 }
 
 /**
@@ -137,7 +138,7 @@ export const saveChatGptOAuthCredentials = (
 
   ensureDirectoryExistsSync(configDir)
 
-  let existingData: Record<string, unknown> = {}
+  let existingData: Record<string, JSONValue> = {}
   if (fs.existsSync(credentialsPath)) {
     try {
       existingData = JSON.parse(fs.readFileSync(credentialsPath, 'utf8'))

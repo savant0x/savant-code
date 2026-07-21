@@ -1,5 +1,7 @@
-import React from 'react'
 import { TextAttributes } from '@opentui/core'
+import React from 'react'
+
+import type { BoxProps } from '@opentui/react'
 
 export interface Column {
   key: string
@@ -8,12 +10,11 @@ export interface Column {
   width?: number
 }
 
-export interface GridProps {
+export interface GridProps extends Omit<BoxProps, 'children' | 'columns' | 'data'> {
   columns: Column[]
   data: Record<string, React.ReactNode>[]
   striped?: boolean
   bordered?: boolean
-  [key: string]: any
 }
 
 export function Grid({

@@ -20,13 +20,13 @@ type AgentTraceState = {
 
 /**
  * Returns whether trace writing is enabled: always in dev, opt-in via
- * CODEBUFF_TRACE=1 in production builds (so users don't pay disk for a second
+ * SAVANT_CODE_TRACE=1 in production builds (so users don't pay disk for a second
  * copy of their conversation by default).
  */
 export function isTraceEnabled(): boolean {
   if (IS_DEV) return true
-  // Same accepted values as CODEBUFF_FULL_TELEMETRY (see analytics-sampling)
-  const flag = getCliEnv().CODEBUFF_TRACE
+  // Same accepted values as SAVANT_CODE_FULL_TELEMETRY (see analytics-sampling)
+  const flag = getCliEnv().SAVANT_CODE_TRACE
   return flag === '1' || flag === 'true' || flag === 'yes'
 }
 

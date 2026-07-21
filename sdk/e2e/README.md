@@ -95,8 +95,8 @@ bun run test:e2e && bun run test:integration && bun run test:unit:e2e
 
 ## Prerequisites
 
-- **API Key**: Set `CODEBUFF_API_KEY` for E2E and integration tests
-- **Opt-in**: Set `RUN_CODEBUFF_E2E=true` for local live API runs (CI runs automatically)
+- **API Key**: Set `SAVANT_CODE_API_KEY` for E2E and integration tests
+- **Opt-in**: Set `RUN_SAVANT_CODE_E2E=true` for local live API runs (CI runs automatically)
 - Tests skip gracefully if API key is not set
 
 ## Writing Tests

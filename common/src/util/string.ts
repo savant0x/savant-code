@@ -1,5 +1,7 @@
 import { sumBy } from 'lodash'
 
+import type { JSONValue } from '../types/json'
+
 export const truncateString = (str: string, maxLength: number) => {
   if (str.length <= maxLength) {
     return str
@@ -304,10 +306,10 @@ export const safeReplace = (
  * @param fallback String to use if parsing fails
  * @returns The content string with the transformed JSON field
  */
-export function transformJsonInString<T = unknown>(
+export function transformJsonInString<T extends JSONValue = JSONValue>(
   content: string,
   field: string,
-  transform: (json: T) => unknown,
+  transform: (json: T) => JSONValue,
   fallback: string,
 ): string {
   // Use a non-greedy match for objects/arrays to prevent over-matching

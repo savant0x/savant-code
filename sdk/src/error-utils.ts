@@ -76,7 +76,9 @@ export function isRetryableStatusCode(statusCode: number | undefined): boolean {
  * Extracts the statusCode from an error if available.
  * Checks both 'statusCode' (our convention) and 'status' (AI SDK's APICallError convention).
  */
-export function getErrorStatusCode(error: unknown): number | undefined {
+export function getErrorStatusCode(
+  error: Error | { statusCode?: number; status?: number } | null | undefined,
+): number | undefined {
   if (error && typeof error === 'object') {
     // Check 'statusCode' first (our convention)
     if ('statusCode' in error) {
@@ -100,7 +102,9 @@ export function getErrorStatusCode(error: unknown): number | undefined {
  * Sanitizes error messages for display
  * Removes sensitive information and formats for user consumption
  */
-export function sanitizeErrorMessage(error: unknown): string {
+export function sanitizeErrorMessage(
+  error: Error | { message?: string } | string | number | null | undefined,
+): string {
   if (error instanceof Error) {
     return error.message
   }

@@ -146,19 +146,19 @@ describe('SavantFree CLI Argument Parsing', () => {
   test('accepts login as a command, not an unexpected argument', () => {
     const result = parseArgs({
       argv: ['node', 'savant-free', 'login'],
-      isFreebuff: true,
+      isSavantFree: true,
       version: '1.0.0',
     })
 
     expect(result.initialPrompt).toBeNull()
     expect(result.command).toBe('login')
-    expect(result.initialMode).toBe('LITE')
+    expect(result.initialMode).toBe('EDIT')
   })
 
   test('allows cwd before the login command', () => {
     const result = parseArgs({
       argv: ['node', 'savant-free', '--cwd', '/tmp', 'login'],
-      isFreebuff: true,
+      isSavantFree: true,
       version: '1.0.0',
     })
 
@@ -170,7 +170,7 @@ describe('SavantFree CLI Argument Parsing', () => {
   test('allows cwd after the login command', () => {
     const result = parseArgs({
       argv: ['node', 'savant-free', 'login', '--cwd', '/tmp'],
-      isFreebuff: true,
+      isSavantFree: true,
       version: '1.0.0',
     })
 

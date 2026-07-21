@@ -1,4 +1,5 @@
 import { ECHO_PROTOCOL_INSTRUCTIONS } from '@savant-code/common/constants/agents'
+
 import { publisher } from '../constants'
 
 import type { AgentDefinition } from '../types/agent-definition'
@@ -24,7 +25,8 @@ const definition: AgentDefinition = {
 2. **Track FIDs** — Maintain accurate status (in_progress, complete, closed) and phase (RED, GREEN, AUDIT, SELF-CORRECT, COMPLETE) in each FID.
 3. **Update FIDs** — Record Perfection Loop progress: RED findings, GREEN fixes, AUDIT evidence, SELF-CORRECT corrections.
 4. **Archive FIDs** — When a FID reaches COMPLETE, move it from \`dev/fids/\` to \`dev/fids/archive/\` and append to \`CHANGELOG.md\`.
-5. **Enforce AUDIT evidence** — No FID may close without tool output evidence in the AUDIT section. Self-reporting is prohibited.
+5. **Seal umbrella FIDs** — When the orchestrator signals 'Scaffold complete' (set_scaffold_complete), call set_output to seal the umbrella FID.
+6. **Enforce AUDIT evidence** — No FID may close without tool output evidence in the AUDIT section. Self-reporting is prohibited.
 
 # FID Format
 
@@ -44,7 +46,36 @@ FIDs follow the template in \`templates/FID-TEMPLATE.md\`. Key sections:
 
 ${ECHO_PROTOCOL_INSTRUCTIONS}`,
 
-  handleSteps: function* ({ agentState, params }) {
+  handleSteps: function* ({ agentState }) {
+    const scaffoldCompleteSignal = agentState.messageHistory.some(
+      (message) => {
+        if (message.role !== 'assistant') return false
+        return message.content.some((part) => {
+          if (part.type !== 'tool-result') return false
+          return part.output.some((output) => {
+            if (output.type !== 'json') return false
+            return (
+              typeof output.value === 'object' &&
+              output.value !== null &&
+              'scaffoldComplete' in output.value &&
+              output.value.scaffoldComplete === true
+            )
+          })
+        })
+      },
+    )
+
+    if (scaffoldCompleteSignal) {
+      yield {
+        toolName: 'set_output',
+        input: {
+          value:
+            'Umbrella FID sealed. Scaffold session complete; reverting to EDIT mode.',
+        },
+      }
+      return
+    }
+
     yield 'STEP'
   },
 }

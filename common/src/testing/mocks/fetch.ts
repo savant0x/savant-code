@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, savant/no-unknown-in-signatures -- test mock utilities: intentional dynamic types for fetch shapes */
 /** Typed fetch mock utilities for testing. */
 
 import { mock } from 'bun:test'

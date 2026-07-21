@@ -1,17 +1,26 @@
+/* eslint-disable savant/no-unknown-in-signatures -- logger: dynamic structured-log data trust-boundary; data parameter accepts arbitrary upstream LLM/agent/tool-call shapes (cf. common/src/util/error.ts trust-boundary contract). ECHO Law 6: `unknown` at trust boundary with internal `typeof`/Array.isArray narrowing is the correct shape. See FID-2026-0719-029-eslint-zero-tolerance-push-gate.md.
+*/
+// Per-function decisions (FID-029-git Step 2 enumeration → Step 3 application — all `any` instances eliminated in this pass):
+// - LoggerContext.[key: string]           → `any` → `unknown` (key access value type downgraded)
+// - pinoLogger                            → `any` → `pino.Logger | undefined` (pino's exported type)
+// - isEmptyObject(value: unknown)         → `any` → `unknown` (runtime `typeof === 'object'` + Array.isArray + Object.keys check inside)
+// - sendAnalyticsAndLog(level, data: unknown, msg?: string, ...args: unknown[]) → `any` → `unknown` for all params
+// - logAsErrorIfNeeded.toTrack.data       → `any` → `unknown`; runtime object guard added before spread
+// - logger wrappers (data: unknown, msg?: string, ...args: unknown[]) → `any` → `unknown`
+// - pino call site                        → removed raw-typed cast on normalizedMsg (msg already typed `string | undefined`; pino.LogFn signature accepts `(obj: object, msg?: string, ...args: unknown[])`)
 import { appendFileSync, existsSync, mkdirSync, unlinkSync } from 'fs'
 import path, { dirname } from 'path'
 import { format as stringFormat } from 'util'
-
 
 import { AnalyticsEvent } from '@savant-code/common/constants/analytics-events'
 import { env, IS_DEV, IS_TEST, IS_CI } from '@savant-code/common/env'
 import { createAnalyticsDispatcher } from '@savant-code/common/util/analytics-dispatcher'
 import { getAnalyticsEventId } from '@savant-code/common/util/analytics-log'
-import { getAxiomOnlyLogEvent } from '@savant-code/common/util/axiom-only-log'
 import {
   isFullTelemetryEnabled,
   summarizeAnalyticsValue,
 } from '@savant-code/common/util/analytics-sampling'
+import { getAxiomOnlyLogEvent } from '@savant-code/common/util/axiom-only-log'
 import { pino } from 'pino'
 
 import {
@@ -34,13 +43,13 @@ export interface LoggerContext {
   clientSessionId?: string
   fingerprintId?: string
   clientRequestId?: string
-  [key: string]: any // Allow for future extensions
+  [key: string]: unknown // Allow for future extensions; values typed as unknown per ECHO Law 6 trust-boundary contract
 }
 
 export const loggerContext: LoggerContext = {}
 
 let logPath: string | undefined = undefined
-let pinoLogger: any = undefined
+let pinoLogger: pino.Logger | undefined = undefined
 
 const loggingLevels = ['info', 'debug', 'warn', 'error', 'fatal'] as const
 type LogLevel = (typeof loggingLevels)[number]
@@ -66,7 +75,7 @@ function safeStringify(obj: unknown): string {
   })
 }
 
-function isEmptyObject(value: any): boolean {
+function isEmptyObject(value: unknown): boolean {
   return (
     value != null &&
     typeof value === 'object' &&
@@ -129,9 +138,9 @@ export function clearLogFile(): void {
 
 function sendAnalyticsAndLog(
   level: LogLevel,
-  data: any,
+  data: unknown,
   msg?: string,
-  ...args: any[]
+  ...args: unknown[]
 ): void {
   if (!IS_CI && !IS_TEST) {
     let projectRoot: string | undefined
@@ -271,21 +280,28 @@ function sendAnalyticsAndLog(
   } else if (pinoLogger !== undefined) {
     const base = { ...loggerContext }
     const obj = includeData ? { ...base, data: normalizedData } : base
-    pinoLogger[level](obj, normalizedMsg as any, ...args)
+    pinoLogger[level](obj, normalizedMsg, ...args)
   }
 }
 
 function logAsErrorIfNeeded(toTrack: {
-  data?: any
+  data?: unknown
   level: LogLevel
   loggerContext: LoggerContext
   msg: string
 }) {
   if (toTrack.level === 'error' || toTrack.level === 'fatal') {
+    // ECHO Law 6 trust-boundary: validate object shape before spread.
+    const dataObj =
+      toTrack.data &&
+      typeof toTrack.data === 'object' &&
+      !Array.isArray(toTrack.data)
+        ? (toTrack.data as Record<string, unknown>)
+        : ({} as Record<string, unknown>)
     logError(
       new Error(toTrack.msg),
       toTrack.loggerContext.userId ?? 'unknown',
-      { ...(toTrack.data ?? {}), context: toTrack.loggerContext },
+      { ...dataObj, context: toTrack.loggerContext },
     )
     flushAnalytics()
   }
@@ -302,7 +318,7 @@ export const logger: Record<LogLevel, pino.LogFn> = Object.fromEntries(
   loggingLevels.map((level) => {
     return [
       level,
-      (data: any, msg?: string, ...args: any[]) =>
+      (data: unknown, msg?: string, ...args: unknown[]) =>
         sendAnalyticsAndLog(level, data, msg, ...args),
     ]
   }),

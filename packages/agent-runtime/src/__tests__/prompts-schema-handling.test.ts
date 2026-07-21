@@ -1,19 +1,20 @@
+import { emptyMcpServers } from '@savant-code/common/testing/fixtures/agent-runtime'
 import { TEST_AGENT_RUNTIME_IMPL } from '@savant-code/common/testing/impl/agent-runtime'
 import { describe, test, expect, mock } from 'bun:test'
-import { convertJsonSchemaToZod } from 'zod-from-json-schema'
 import { z } from 'zod/v4'
+import { convertJsonSchemaToZod } from 'zod-from-json-schema'
 
 import {
   buildAgentToolInputSchema,
   buildAgentToolSet,
 } from '../templates/prompts'
-import { tryTransformAgentToolCall } from '../tools/tool-executor'
 import { handleLookupAgentInfo } from '../tools/handlers/tool/lookup-agent-info'
 import {
   ensureZodSchema,
   buildToolDescription,
   getToolSet,
 } from '../tools/prompts'
+import { tryTransformAgentToolCall } from '../tools/tool-executor'
 
 import type { AgentTemplate } from '../templates/types'
 
@@ -46,7 +47,7 @@ describe('Schema handling error recovery', () => {
         outputMode: 'last_message',
         includeMessageHistory: false,
         inheritParentSystemPrompt: false,
-        mcpServers: {},
+        mcpServers: emptyMcpServers,
         toolNames: [],
         spawnableAgents: [],
         systemPrompt: '',
@@ -83,7 +84,7 @@ describe('Schema handling error recovery', () => {
         outputMode: 'last_message',
         includeMessageHistory: false,
         inheritParentSystemPrompt: false,
-        mcpServers: {},
+        mcpServers: emptyMcpServers,
         toolNames: [],
         spawnableAgents: [],
         systemPrompt: '',
@@ -107,7 +108,7 @@ describe('Schema handling error recovery', () => {
         outputMode: 'last_message',
         includeMessageHistory: false,
         inheritParentSystemPrompt: false,
-        mcpServers: {},
+        mcpServers: emptyMcpServers,
         toolNames: [],
         spawnableAgents: [],
         systemPrompt: '',
@@ -291,7 +292,7 @@ describe('Schema handling error recovery', () => {
         outputSchema: z.function() as unknown as z.ZodType, // This cannot be converted
         includeMessageHistory: false,
         inheritParentSystemPrompt: false,
-        mcpServers: {},
+        mcpServers: emptyMcpServers,
         toolNames: [],
         spawnableAgents: [],
         systemPrompt: '',
@@ -356,7 +357,7 @@ describe('Schema handling error recovery', () => {
         }),
         includeMessageHistory: false,
         inheritParentSystemPrompt: false,
-        mcpServers: {},
+        mcpServers: emptyMcpServers,
         toolNames: ['read_files'],
         spawnableAgents: [],
         systemPrompt: '',

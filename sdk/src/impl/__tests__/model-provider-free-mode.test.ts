@@ -1,10 +1,10 @@
-import { describe, expect, test, beforeEach, afterEach, mock } from 'bun:test'
 import {
   clearMockedModules,
   mockModule,
 } from '@savant-code/common/testing/mock-modules'
+import { describe, expect, test, beforeEach, afterEach, mock } from 'bun:test'
 
-describe('getModelForRequest free-mode guards', () => {
+describe('getModelForRequest ChatGPT OAuth fallback behavior', () => {
   const mockGetValidChatGptOAuthCredentials = mock(() =>
     Promise.resolve(null),
   )
@@ -38,36 +38,7 @@ describe('getModelForRequest free-mode guards', () => {
     return mod
   }
 
-  test('throws when ChatGPT OAuth is rate-limited in free mode', async () => {
-    const { getModelForRequest, markChatGptOAuthRateLimited } =
-      await importFresh()
-
-    markChatGptOAuthRateLimited()
-
-    await expect(
-      getModelForRequest({
-        apiKey: 'test-key',
-        model: 'openai/gpt-5.3',
-        costMode: 'free',
-      }),
-    ).rejects.toThrow('ChatGPT rate limit reached')
-  })
-
-  test('throws when ChatGPT OAuth credentials are unavailable in free mode', async () => {
-    const { getModelForRequest } = await importFresh()
-
-    mockGetValidChatGptOAuthCredentials.mockResolvedValue(null)
-
-    await expect(
-      getModelForRequest({
-        apiKey: 'test-key',
-        model: 'openai/gpt-5.3',
-        costMode: 'free',
-      }),
-    ).rejects.toThrow('ChatGPT OAuth credentials unavailable')
-  })
-
-  test('falls through to backend when rate-limited in non-free mode', async () => {
+  test('falls through to backend when rate-limited', async () => {
     const { getModelForRequest, markChatGptOAuthRateLimited } =
       await importFresh()
 
@@ -76,13 +47,12 @@ describe('getModelForRequest free-mode guards', () => {
     const result = await getModelForRequest({
       apiKey: 'test-key',
       model: 'openai/gpt-5.3',
-      costMode: 'default',
     })
 
     expect(result.isChatGptOAuth).toBe(false)
   })
 
-  test('falls through to backend when credentials unavailable in non-free mode', async () => {
+  test('falls through to backend when credentials unavailable', async () => {
     const { getModelForRequest } = await importFresh()
 
     mockGetValidChatGptOAuthCredentials.mockResolvedValue(null)
@@ -90,7 +60,6 @@ describe('getModelForRequest free-mode guards', () => {
     const result = await getModelForRequest({
       apiKey: 'test-key',
       model: 'openai/gpt-5.3',
-      costMode: 'default',
     })
 
     expect(result.isChatGptOAuth).toBe(false)

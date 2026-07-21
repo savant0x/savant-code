@@ -2,25 +2,27 @@ import { isRetryableStatusCode, getErrorStatusCode } from '@savant-code/sdk'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 
+
 import { Chat } from './chat'
 import { ChatHistoryScreen } from './components/chat-history-screen'
-import { SavantFree$1 } from './components/savant-free-superseded-screen'
 import { LoginModal } from './components/login-modal'
 import { ProjectPickerScreen } from './components/project-picker-screen'
-import { SavantFree$1 } from './components/savant-free-landing-screen'
+import { SavantFreeLandingScreen } from './components/savant-free-landing-screen'
+import { SavantFreeSupersededScreen } from './components/savant-free-superseded-screen'
 import { useAuthQuery } from './hooks/use-auth-query'
 import { useAuthState } from './hooks/use-auth-state'
-import { useFreebuffSession } from './hooks/use-savant-free-session'
+import { useSavantFreeSession } from './hooks/use-savant-free-session'
 import { useTerminalFocus } from './hooks/use-terminal-focus'
 import { getProjectRoot, startNewChat } from './project-files'
 import { useChatHistoryStore } from './state/chat-history-store'
-import { abortActiveRun } from './utils/active-run'
 import { useChatStore } from './state/chat-store'
-import type { TopBannerType } from './types/store'
-import { IS_FREEBUFF } from './utils/constants'
+import { abortActiveRun } from './utils/active-run'
+import { IS_SAVANT_FREE } from './utils/constants'
 import { findGitRoot } from './utils/git'
 
 import type { MultilineInputHandle } from './components/multiline-input'
+import type { TopBannerType } from './types/store'
+import type { User } from './utils/auth'
 import type { AgentMode } from './utils/constants'
 import type { AuthStatus } from './utils/status-indicator-state'
 import type { FileTreeNode } from '@savant-code/common/util/file'
@@ -259,7 +261,7 @@ interface AuthedSurfaceProps {
   fileTree: FileTreeNode[]
   inputRef: React.MutableRefObject<MultilineInputHandle | null>
   setIsAuthenticated: React.Dispatch<React.SetStateAction<boolean | null>>
-  setUser: React.Dispatch<React.SetStateAction<import('./utils/auth').User | null>>
+  setUser: React.Dispatch<React.SetStateAction<User | null>>
   logoutMutation: ReturnType<typeof useAuthState>['logoutMutation']
   continueChat: boolean
   continueChatId: string | undefined
@@ -275,7 +277,7 @@ interface AuthedSurfaceProps {
 
 /**
  * Rendered only after auth is confirmed. Owns the savant-free session gate
- * so `useFreebuffSession` runs exactly once per authed session (not before
+ * so `useSavantFreeSession` runs exactly once per authed session (not before
  * we have a token).
  */
 const AuthedSurface = ({
@@ -298,13 +300,13 @@ const AuthedSurface = ({
   onCancelChatHistory,
   onNewChat,
 }: AuthedSurfaceProps) => {
-  const { session, error: sessionError } = useFreebuffSession()
+  const { session, error: sessionError } = useSavantFreeSession()
 
   // Terminal state: a 409 from the gate means another CLI rotated our
   // instance id. Show a dedicated screen and stop polling — don't fall back
   // into the pre-chat screen, which would look like normal startup progress.
-  if (IS_FREEBUFF && session?.status === 'superseded') {
-    return <SavantFree$1 />
+  if (IS_SAVANT_FREE && session?.status === 'superseded') {
+    return <SavantFreeSupersededScreen />
   }
 
   // Route every non-admitted state through the pre-chat screen:
@@ -319,7 +321,7 @@ const AuthedSurface = ({
   // finishing work under the server-side grace period, and the chat surface
   // itself swaps the input box for the session-ended banner.
   if (
-    IS_FREEBUFF &&
+    IS_SAVANT_FREE &&
     (session === null ||
       session.status === 'none' ||
       session.status === 'country_blocked' ||
@@ -327,7 +329,7 @@ const AuthedSurface = ({
       session.status === 'rate_limited' ||
       session.status === 'takeover_prompt')
   ) {
-    return <SavantFree$1 session={session} error={sessionError} />
+    return <SavantFreeLandingScreen session={session} error={sessionError} />
   }
 
   // Chat history renders inside AuthedSurface so the savant-free session stays
@@ -360,7 +362,7 @@ const AuthedSurface = ({
       initialMode={initialMode}
       gitRoot={gitRoot}
       onSwitchToGitRoot={onSwitchToGitRoot}
-      savant-free$1={session}
+      savantFreeSession={session}
     />
   )
 }

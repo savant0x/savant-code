@@ -4,14 +4,17 @@ import { getStubProjectFileContext } from '@savant-code/common/util/file'
 import { assistantMessage, userMessage } from '@savant-code/common/util/messages'
 import { afterEach, describe, expect, it, mock, spyOn } from 'bun:test'
 
+
 import { SavantCodeClient } from '../client'
 import * as databaseModule from '../impl/database'
+
+import type { JSONValue } from '@savant-code/common/types/json'
 
 interface ToolCallContentBlock {
   type: 'tool-call'
   toolCallId: string
   toolName: string
-  input: Record<string, unknown>
+  input: Record<string, JSONValue>
 }
 
 const setupDatabaseMocks = () => {
@@ -113,7 +116,7 @@ describe('Error preserves in-progress message history', () => {
 
     const client = new SavantCodeClient({ apiKey: 'test-key' })
     const result = await client.run({
-      agent: 'base2',
+      agent: 'savant',
       prompt: 'Fix the bug in auth.ts',
     })
 
@@ -232,7 +235,7 @@ describe('Error preserves in-progress message history', () => {
 
     const client = new SavantCodeClient({ apiKey: 'test-key' })
     const firstResult = await client.run({
-      agent: 'base2',
+      agent: 'savant',
       prompt: 'Investigate the login bug',
     })
 
@@ -242,7 +245,7 @@ describe('Error preserves in-progress message history', () => {
     mock.restore()
     setupDatabaseMocks()
 
-    let historyReceivedByRuntime: unknown[] | undefined
+    let historyReceivedByRuntime: Array<{ role?: string; content?: Array<{ type?: string; toolCallId?: string }> }> | undefined
     spyOn(mainPromptModule, 'callMainPrompt').mockImplementation(
       async (params: Parameters<typeof mainPromptModule.callMainPrompt>[0]) => {
         const { sendAction, promptId } = params
@@ -276,7 +279,7 @@ describe('Error preserves in-progress message history', () => {
     )
 
     const secondResult = await client.run({
-      agent: 'base2',
+      agent: 'savant',
       prompt: 'Now try again',
       previousRun: firstResult,
     })

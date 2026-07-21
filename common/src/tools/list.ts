@@ -24,15 +24,16 @@ import { readUrlParams } from './params/tool/read-url'
 import { renderUIParams } from './params/tool/render-ui'
 import { runFileChangeHooksParams } from './params/tool/run-file-change-hooks'
 import { runTerminalCommandParams } from './params/tool/run-terminal-command'
+import { sequentialThinkingParams } from './params/tool/sequential-thinking'
 import { setMessagesParams } from './params/tool/set-messages'
 import { setOutputParams } from './params/tool/set-output'
+import { setScaffoldCompleteParams } from './params/tool/set-scaffold-complete'
 import { skillParams } from './params/tool/skill'
 import { spawnAgentInlineParams } from './params/tool/spawn-agent-inline'
 import { spawnAgentsParams } from './params/tool/spawn-agents'
 import { strReplaceParams } from './params/tool/str-replace'
 import { suggestFollowupsParams } from './params/tool/suggest-followups'
 import { taskCompletedParams } from './params/tool/task-completed'
-import { sequentialThinkingParams } from './params/tool/sequential-thinking'
 import { thinkDeeplyParams } from './params/tool/think-deeply'
 import { transitionPhaseParams } from './params/tool/transition-phase'
 import { updateSubgoalParams } from './params/tool/update-subgoal'
@@ -41,8 +42,8 @@ import { writeFileParams } from './params/tool/write-file'
 import { writeTodosParams } from './params/tool/write-todos'
 
 import type { $ToolParams, PublishedToolName, ToolName } from './constants'
-import type { ToolMessage } from '../types/messages/savant-code-message'
 import type { ToolCallPart } from '../types/messages/content-part'
+import type { ToolMessage } from '../types/messages/savant-code-message'
 
 export const toolParams = {
   add_message: addMessageParams,
@@ -70,6 +71,7 @@ export const toolParams = {
   sequentialthinking: sequentialThinkingParams,
   set_messages: setMessagesParams,
   set_output: setOutputParams,
+  set_scaffold_complete: setScaffoldCompleteParams,
   skill: skillParams,
   spawn_agents: spawnAgentsParams,
   spawn_agent_inline: spawnAgentInlineParams,
@@ -179,10 +181,8 @@ export const clientToolNames = clientToolCallSchema.def.options.map(
 ) satisfies ToolName[]
 export type ClientToolName = (typeof clientToolNames)[number]
 
-export type ClientToolCall<T extends ClientToolName = ClientToolName> = Extract<
-  z.infer<typeof clientToolCallSchema>,
-  { toolName: T }
-> &
-  Pick<ToolCallPart, 'toolCallId' | 'toolName' | 'input' | 'providerOptions'>
+export type ClientToolCall<T extends ClientToolName = ClientToolName> =
+  Extract<z.infer<typeof clientToolCallSchema>, { toolName: T }> &
+    Pick<ToolCallPart, 'toolCallId' | 'toolName' | 'input' | 'providerOptions'>
 
 export type PublishedClientToolName = Extract<ClientToolName, PublishedToolName>

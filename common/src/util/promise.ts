@@ -1,34 +1,43 @@
+
 export const INITIAL_RETRY_DELAY = 1000 // 1 second
 
-export async function withRetry<T>(
+type RetryableErrorBase = {
+  type?: string
+  code?: string
+  name?: string
+  message?: string
+}
+
+export async function withRetry<T, E extends RetryableErrorBase = RetryableErrorBase>(
   operation: () => Promise<T>,
   options: {
     maxRetries?: number
-    retryIf?: (error: any) => boolean
-    onRetry?: (error: any, attempt: number) => void
+    retryIf?: (error: E) => boolean
+    onRetry?: (error: E, attempt: number) => void
     retryDelayMs?: number
   } = {},
 ): Promise<T> {
   const {
     maxRetries = 3,
-    retryIf = (error) => error?.type === 'APIConnectionError',
+    retryIf = (error) => error.type === 'APIConnectionError',
     onRetry = () => {},
     retryDelayMs = INITIAL_RETRY_DELAY,
   } = options
 
-  let lastError: any = null
+  let lastError: E | null = null
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
       return await operation()
     } catch (error) {
-      lastError = error
+      const typedError = error as E
+      lastError = typedError
 
-      if (!retryIf(error) || attempt === maxRetries - 1) {
-        throw error
+      if (!retryIf(typedError) || attempt === maxRetries - 1) {
+        throw typedError
       }
 
-      onRetry(error, attempt + 1)
+      onRetry(typedError, attempt + 1)
 
       // Exponential backoff with jitter (±20%) to prevent thundering herd
       const baseDelayMs = retryDelayMs * Math.pow(2, attempt)

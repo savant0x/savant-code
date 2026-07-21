@@ -1,7 +1,8 @@
-import { describe, test, expect, beforeEach, afterEach, mock } from 'bun:test'
 import * as fs from 'fs'
 import * as os from 'os'
 import * as path from 'path'
+
+import { describe, test, expect, beforeEach, afterEach, mock } from 'bun:test'
 
 mock.module('../logger', () => ({
   logger: {

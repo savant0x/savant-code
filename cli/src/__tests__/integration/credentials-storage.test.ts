@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- test file: intentional any casts for mock credentials */
 import fs from 'fs'
 import os from 'os'
 import path from 'path'

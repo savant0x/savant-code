@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- generic constraint used by factory functions that create this queue
 export type LazyResponseAdQueue<T extends { impUrl: string }> = {
   targetCounts: Map<string, number>
   attemptedCounts: Map<string, number>

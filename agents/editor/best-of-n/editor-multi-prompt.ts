@@ -1,7 +1,10 @@
+
 import { publisher } from '../../constants'
 
 import type { AgentStepContext, ToolCall } from '../../types/agent-definition'
 import type { SecretAgentDefinition } from '../../types/secret-agent-definition'
+import type { JSONValue } from '@savant-code/common/types/json'
+import type { ToolResultOutput } from '@savant-code/common/types/messages/content-part'
 
 /**
  * Creates a multi-prompt editor agent that spawns one implementor per prompt.
@@ -12,9 +15,6 @@ export function createMultiPromptEditor(): Omit<SecretAgentDefinition, 'id'> {
   return {
     publisher,
     model: 'anthropic/claude-opus-4.8',
-    providerOptions: {
-      only: ['amazon-bedrock'],
-    },
     displayName: 'Multi-Prompt Editor',
     spawnerPrompt:
       'Edits code by spawning multiple implementor agents with different strategy prompts, selects the best implementation, and applies the changes. It also returns further suggested improvements which you should take seriously and act on. Pass as input an array of short prompts specifying different implementation approaches or strategies. Make sure to read any files intended to be edited before spawning this agent.',
@@ -112,8 +112,8 @@ function* handleStepsMultiPrompt({
 
   // Extract spawn results - each is structured output with { toolCalls, toolResults, unifiedDiffs }
   const spawnedImplementations = extractSpawnResults<{
-    toolCalls: { toolName: string; input: any }[]
-    toolResults: any[]
+    toolCalls: { toolName: string; input: Record<string, JSONValue> }[]
+    toolResults: JSONValue[]
     unifiedDiffs: string
   }>(implementorResults)
 
@@ -124,8 +124,8 @@ function* handleStepsMultiPrompt({
       return {
         id: letters[index],
         strategy: prompts[index] ?? 'unknown',
-        content: `Error: ${(result as any)?.errorMessage ?? 'Unknown error'}`,
-        toolCalls: [] as { toolName: string; input: any }[],
+        content: `Error: ${(result as { errorMessage?: string })?.errorMessage ?? 'Unknown error'}`,
+        toolCalls: [] as { toolName: string; input: Record<string, JSONValue> }[],
       }
     }
 
@@ -187,7 +187,7 @@ function* handleStepsMultiPrompt({
   }
 
   // Apply the chosen implementation's tool calls as real edits
-  const appliedToolResults: any[] = []
+  const appliedToolResults: (ToolResultOutput[] | undefined)[] = []
   for (const toolCall of chosenImplementation.toolCalls) {
     // Convert propose_* tool calls to real edit tool calls
     const realToolName =
@@ -226,10 +226,17 @@ function* handleStepsMultiPrompt({
   /**
    * Extracts the array of subagent results from spawn_agents tool output.
    */
-  function extractSpawnResults<T>(results: any[] | undefined): T[] {
+  function extractSpawnResults<T>(results: ToolResultOutput[] | undefined): T[] {
     if (!results || results.length === 0) return []
 
-    const jsonResult = results.find((r) => r.type === 'json')
+    const jsonResult = results.find(
+      (r): r is { type: 'json'; value: JSONValue } =>
+        typeof r === 'object' &&
+        r !== null &&
+        'type' in r &&
+        (r as { type: JSONValue }).type === 'json' &&
+        'value' in r,
+    )
     if (!jsonResult?.value) return []
 
     const spawnedResults = Array.isArray(jsonResult.value)
@@ -237,11 +244,15 @@ function* handleStepsMultiPrompt({
       : [jsonResult.value]
 
     return spawnedResults
-      .map((result: any) => result?.value)
-      .map((result: any) =>
-        result && 'value' in result ? result.value : result,
+      .map((result) => (result as { value?: JSONValue })?.value ?? result)
+      .map((result) =>
+        result &&
+        typeof result === 'object' &&
+        'value' in result
+          ? (result as { value: JSONValue }).value
+          : result,
       )
-      .filter(Boolean)
+      .filter(Boolean) as T[]
   }
 }
 

@@ -25,7 +25,7 @@ describe('Serper API', () => {
 
   beforeAll(async () => {
     await mockModule('@savant-code/common/util/promise', () => ({
-      withTimeout: async (promise: Promise<any>, timeout: number) => promise,
+      withTimeout: async <T>(promise: Promise<T>, timeout: number) => promise,
     }))
   })
 

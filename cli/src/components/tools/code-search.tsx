@@ -6,6 +6,11 @@ import { countCodeSearchResults } from '../../utils/code-search-summary'
 
 import type { ToolRenderConfig } from './types'
 
+interface CodeSearchInput {
+  pattern?: string
+  cwd?: string
+}
+
 /**
  * UI component for code_search tool.
  * Displays a single line showing the search pattern, flags, and number of results.
@@ -15,9 +20,9 @@ export const CodeSearchComponent = defineToolComponent({
   toolName: 'code_search',
 
   render(toolBlock): ToolRenderConfig {
-    const input = toolBlock.input as any
-    const pattern = input?.pattern ?? ''
-    const cwd = input?.cwd ?? ''
+    const input = (toolBlock.input ?? {}) as CodeSearchInput
+    const pattern = input.pattern ?? ''
+    const cwd = input.cwd ?? ''
 
     const totalResults = countCodeSearchResults(toolBlock.output)
 

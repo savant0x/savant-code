@@ -1,5 +1,6 @@
 import * as analytics from '@savant-code/common/analytics'
 import { TEST_USER_ID } from '@savant-code/common/old-constants'
+import { emptyMcpServers } from '@savant-code/common/testing/fixtures/agent-runtime'
 import { TEST_AGENT_RUNTIME_IMPL } from '@savant-code/common/testing/impl/agent-runtime'
 import {
   createMockDbOperations,
@@ -59,7 +60,7 @@ describe('runAgentStep - set_output tool', () => {
       outputMode: 'structured_output' as const,
       includeMessageHistory: true,
       inheritParentSystemPrompt: false,
-      mcpServers: {},
+      mcpServers: emptyMcpServers,
       toolNames: ['set_output', 'end_turn'],
       spawnableAgents: [],
       systemPrompt: 'Test system prompt',
@@ -297,7 +298,7 @@ describe('runAgentStep - set_output tool', () => {
       outputMode: 'structured_output' as const,
       includeMessageHistory: true,
       inheritParentSystemPrompt: false,
-      mcpServers: {},
+      mcpServers: emptyMcpServers,
       toolNames: ['read_files', 'end_turn'],
       spawnableAgents: [],
       systemPrompt: 'Test system prompt',
@@ -406,7 +407,7 @@ describe('runAgentStep - set_output tool', () => {
       outputMode: 'last_message' as const,
       includeMessageHistory: true,
       inheritParentSystemPrompt: false,
-      mcpServers: {},
+      mcpServers: emptyMcpServers,
       toolNames: ['read_files', 'end_turn'],
       spawnableAgents: [],
       systemPrompt: 'Test system prompt',
@@ -446,7 +447,7 @@ describe('runAgentStep - set_output tool', () => {
       outputMode: 'structured_output' as const,
       includeMessageHistory: true,
       inheritParentSystemPrompt: false,
-      mcpServers: {},
+      mcpServers: emptyMcpServers,
       toolNames: ['set_messages', 'end_turn'],
       spawnableAgents: [],
       systemPrompt: 'Delete messages system prompt',
@@ -498,7 +499,7 @@ describe('runAgentStep - set_output tool', () => {
       outputMode: 'structured_output' as const,
       includeMessageHistory: true,
       inheritParentSystemPrompt: false,
-      mcpServers: {},
+      mcpServers: emptyMcpServers,
       toolNames: ['spawn_agent_inline', 'end_turn'],
       spawnableAgents: ['message-deleter-agent'],
       systemPrompt: 'Parent system prompt',

@@ -3,20 +3,16 @@ import path from 'path'
 
 import { describe, expect, it } from 'bun:test'
 
-import { SavantCodeClient } from '../client'
 import { EventCollector, DEFAULT_TIMEOUT } from '../../e2e/utils'
+import { SavantCodeClient } from '../client'
 
 import type { AgentOutput } from '@savant-code/common/types/session-state'
 
-const apiKey = process.env.CODEBUFF_API_KEY
-const RUN_LIVE_INTEGRATION = process.env.RUN_CODEBUFF_E2E === 'true'
+const apiKey = process.env.SAVANT_CODE_API_KEY
+const RUN_LIVE_INTEGRATION = process.env.RUN_SAVANT_CODE_E2E === 'true'
 
 function getLiveApiKey(): string | null {
   if (!RUN_LIVE_INTEGRATION || !apiKey) {
-    console.log(
-      'Skipping prompt caching integration test: set RUN_CODEBUFF_E2E=true and CODEBUFF_API_KEY to run.\n' +
-        'Example: RUN_CODEBUFF_E2E=true CODEBUFF_API_KEY=your-key bun test src/__tests__/run.integration.test.ts',
-    )
     return null
   }
 
@@ -64,12 +60,12 @@ describe('Prompt Caching', () => {
 
       const collector1 = new EventCollector()
       const run1 = await client.run({
-        agent: 'base2',
+        agent: 'savant',
         prompt: `${filler}\n\n${prompt}`,
         handleEvent: collector1.handleEvent,
       })
 
-      console.dir(run1.output, { depth: null })
+      // Skip: run1.output is non-error (asserted below)
       expect(run1.output.type).not.toBe('error')
 
       const cost1 = collector1.getLastEvent('finish')?.totalCost ?? -1
@@ -77,19 +73,19 @@ describe('Prompt Caching', () => {
 
       const collector2 = new EventCollector()
       const run2 = await client.run({
-        agent: 'base2',
+        agent: 'savant',
         prompt,
         previousRun: run1,
         handleEvent: collector2.handleEvent,
       })
 
-      console.dir(run2.output, { depth: null })
+      // Skip: run2.output is non-error (asserted below)
       expect(run2.output.type).not.toBe('error')
 
       const cost2 = collector2.getLastEvent('finish')?.totalCost ?? -1
       expect(cost2).toBeGreaterThanOrEqual(0)
 
-      console.log(`First request cost: ${cost1}, Second request cost: ${cost2}`)
+      // Skip: costs logged only during debugging
       expect(cost2).toBeLessThanOrEqual(cost1 * 0.5)
     },
     DEFAULT_TIMEOUT * 2,
@@ -130,7 +126,7 @@ describe('Prompt Caching', () => {
 
         const collector1 = new EventCollector()
         const run1 = await client.run({
-          agent: 'base2',
+          agent: 'savant',
           prompt:
             `${filler}\n\n` +
             'Look at the Initial Git Changes section in your system prompt. ' +
@@ -139,13 +135,9 @@ describe('Prompt Caching', () => {
           handleEvent: collector1.handleEvent,
         })
 
-        console.dir(run1.output, { depth: null })
         expect(run1.output.type).not.toBe('error')
 
         const responseText = extractOutputText(run1.output)
-        console.log(
-          `Magic number: ${magic1}, LLM response: "${responseText}"`,
-        )
         expect(responseText).toContain(String(magic1))
 
         const cost1 = collector1.getLastEvent('finish')?.totalCost ?? -1
@@ -156,21 +148,19 @@ describe('Prompt Caching', () => {
 
         const collector2 = new EventCollector()
         const run2 = await client.run({
-          agent: 'base2',
+          agent: 'savant',
           prompt: 'respond with "hi"',
           previousRun: run1,
           handleEvent: collector2.handleEvent,
         })
 
-        console.dir(run2.output, { depth: null })
+        // Skip: run2.output is non-error (asserted below)
         expect(run2.output.type).not.toBe('error')
 
         const cost2 = collector2.getLastEvent('finish')?.totalCost ?? -1
         expect(cost2).toBeGreaterThanOrEqual(0)
 
-        console.log(
-          `Git status change test - Magic: ${magic1}→${magic2}, First: ${cost1}, Second: ${cost2}`,
-        )
+        // Skip: costs logged only during debugging
         expect(cost2).toBeLessThanOrEqual(cost1 * 0.5)
       } finally {
         try { fs.unlinkSync(tempFile1) } catch {}

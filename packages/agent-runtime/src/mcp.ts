@@ -44,7 +44,7 @@ export async function getMCPToolData(
     requestedToolsByMcp[mcpName].push(toolName)
   }
 
-  const promises: Promise<any>[] = []
+  const promises: Promise<void>[] = []
   for (const [mcpName, mcpConfig] of Object.entries(mcpServers)) {
     promises.push(
       (async () => {
@@ -56,7 +56,7 @@ export async function getMCPToolData(
 
           for (const { name, description, inputSchema } of mcpData) {
             writeTo[mcpName + MCP_TOOL_SEPARATOR + name] = {
-              inputSchema: convertJsonSchemaToZod(inputSchema as any) as any,
+              inputSchema: convertJsonSchemaToZod(inputSchema as Record<string, unknown>),
               endsAgentStep: true,
               description,
             }

@@ -1,14 +1,14 @@
 const DAY_MS = 24 * 60 * 60 * 1000
 
 /** PostHog-style retention windows to mirror in Reddit CAPI custom events. */
-export const FREEBUFF_REDDIT_RETENTION_MILESTONE_DAYS = [1, 7, 24] as const
+export const SAVANT_FREE_REDDIT_RETENTION_MILESTONE_DAYS = [1, 7, 24] as const
 
-export type SavantFree$1 =
-  (typeof FREEBUFF_REDDIT_RETENTION_MILESTONE_DAYS)[number]
+export type RedditRetentionMilestone =
+  (typeof SAVANT_FREE_REDDIT_RETENTION_MILESTONE_DAYS)[number]
 
-export type SavantFree$1 = {
+export type RedditRetentionConfig = {
   fireFirstPrompt: boolean
-  retentionMilestones: SavantFree$1[]
+  retentionMilestones: RedditRetentionMilestone[]
 }
 
 function daysBetween(fromDateKey: string, toDateKey: string): number {
@@ -21,7 +21,7 @@ function daysBetween(fromDateKey: string, toDateKey: string): number {
 }
 
 /** First successful savant-free prompt = first-ever usage day recorded. */
-export function isFirstFreebuffPrompt(params: {
+export function isFirstSavantFreePrompt(params: {
   previousUsageDays: readonly string[]
   newUsageDayRecorded: boolean
 }): boolean {
@@ -29,11 +29,11 @@ export function isFirstFreebuffPrompt(params: {
 }
 
 /** Milestones that newly cross on this usage day (each fires at most once). */
-export function getFreebuffRetentionMilestonesToFire(params: {
+export function getSavantFreeRetentionMilestonesToFire(params: {
   previousUsageDays: readonly string[]
   todayDateKey: string
   newUsageDayRecorded: boolean
-}): SavantFree$1[] {
+}): RedditRetentionMilestone[] {
   if (!params.newUsageDayRecorded) {
     return []
   }
@@ -51,20 +51,20 @@ export function getFreebuffRetentionMilestonesToFire(params: {
           ),
         )
 
-  return FREEBUFF_REDDIT_RETENTION_MILESTONE_DAYS.filter(
+  return SAVANT_FREE_REDDIT_RETENTION_MILESTONE_DAYS.filter(
     (milestone) =>
       daysSinceFirstToday >= milestone &&
       maxPreviousDaysSinceFirst < milestone,
   )
 }
 
-export function planFreebuffRedditConversionEvents(params: {
+export function planSavantFreeRedditConversionEvents(params: {
   previousUsageDays: readonly string[]
   todayDateKey: string
   newUsageDayRecorded: boolean
-}): SavantFree$1 {
+}): RedditRetentionConfig {
   return {
-    fireFirstPrompt: isFirstFreebuffPrompt(params),
-    retentionMilestones: getFreebuffRetentionMilestonesToFire(params),
+    fireFirstPrompt: isFirstSavantFreePrompt(params),
+    retentionMilestones: getSavantFreeRetentionMilestonesToFire(params),
   }
 }

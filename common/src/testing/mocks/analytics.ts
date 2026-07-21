@@ -6,7 +6,7 @@
  *
  * @example
  * ```typescript
- * import { createMockAnalytics, setupAnalyticsMocks } from '@savantcode.common/testing/mocks/analytics'
+ * import { createMockAnalytics, setupAnalyticsMocks } from '@savant-code/common/testing/mocks/analytics'
  *
  * // Option 1: Create mock object
  * const analytics = createMockAnalytics()
@@ -22,12 +22,13 @@
 
 import { mock, spyOn } from 'bun:test'
 
+import type { AnalyticsProperties } from '../../types/contracts/analytics'
 import type { Mock } from 'bun:test'
 
 /**
  * Properties that can be tracked with an event.
  */
-export type EventProperties = Record<string, unknown>
+export type EventProperties = AnalyticsProperties
 
 /**
  * Signature for the trackEvent function.
@@ -47,7 +48,7 @@ export type FlushAnalyticsFn = () => Promise<void>
  */
 export type IdentifyUserFn = (
   userId: string,
-  traits?: Record<string, unknown>,
+  traits?: AnalyticsProperties,
 ) => void
 
 /**
@@ -203,7 +204,7 @@ export interface AnalyticsSpies {
  *
  * @example
  * ```typescript
- * import * as analytics from '@savantcode.common/analytics'
+ * import * as analytics from '@savant-code/common/analytics'
  *
  * describe('my test', () => {
  *   let analyticsSpy: AnalyticsSpies

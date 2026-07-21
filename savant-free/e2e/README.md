@@ -8,14 +8,14 @@ Two testing approaches are supported:
 
 ### 1. Direct tmux tests (fast, deterministic)
 
-Use the `SavantFree$1` class to start the binary in tmux, send commands, capture output, and assert directly.
+Use the `FreebuffSession` class to start the binary in tmux, send commands, capture output, and assert directly.
 
 ```typescript
 import { describe, test, expect, afterEach } from 'bun:test'
-import { SavantFree$1, requireFreebuffBinary } from '../utils'
+import { FreebuffSession, requireFreebuffBinary } from '../utils'
 
 describe('My Feature', () => {
-  let session: SavantFree$1 | null = null
+  let session: FreebuffSession | null = null
 
   afterEach(async () => {
     if (session) await session.stop()
@@ -24,7 +24,7 @@ describe('My Feature', () => {
 
   test('works correctly', async () => {
     const binary = requireFreebuffBinary()
-    session = await SavantFree$1.start(binary)
+    session = await FreebuffSession.start(binary)
 
     await session.send('/help')
     const output = await session.capture(2)
@@ -141,11 +141,11 @@ Triggers:
 
 ## Utilities Reference
 
-### `SavantFree$1`
+### `FreebuffSession`
 
 | Method | Description |
 |--------|-------------|
-| `SavantFree$1.start(binaryPath)` | Start binary in tmux, returns session |
+| `FreebuffSession.start(binaryPath)` | Start binary in tmux, returns session |
 | `session.send(text)` | Send text input (presses Enter) |
 | `session.sendKey(key)` | Send special key (e.g. `'C-c'`, `'Escape'`) |
 | `session.capture(waitSec?)` | Capture terminal output |

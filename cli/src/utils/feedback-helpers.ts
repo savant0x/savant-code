@@ -7,7 +7,6 @@ import {
 
 import type { ChatMessage } from '../types/chat'
 import type { FeedbackCategory } from '@savant-code/common/constants/feedback'
-
 import type { FeedbackRequest } from '@savant-code/common/schemas/feedback'
 
 export type RecentMessageSummary = NonNullable<

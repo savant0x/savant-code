@@ -1,16 +1,17 @@
 import { env } from '@savant-code/common/env'
 import { extractApiErrorDetails } from '@savant-code/common/util/error'
-import { formatFreebuffHardBlockedPrivacySignals } from '@savant-code/common/util/savant-free-privacy'
+import { formatSavantFreeHardBlockedPrivacySignals } from '@savant-code/common/util/savant-free-privacy'
+
+import { IS_SAVANT_FREE } from './constants'
 
 import type { ChatMessage } from '../types/chat'
 import type {
-  SavantFree$1,
-  SavantFree$1,
+  SavantFreeBlockReason,
+  SavantFreeIpPrivacySignal,
 } from '@savant-code/common/types/savant-free-session'
 
-import { IS_FREEBUFF } from './constants'
 
-const defaultAppUrl = env.NEXT_PUBLIC_CODEBUFF_APP_URL || 'https://savant-code.com'
+const defaultAppUrl = env.NEXT_PUBLIC_SAVANT_FREE_APP_URL || 'https://savant-code.com'
 
 // Normalize unknown errors to a user-facing string.
 const extractErrorMessage = (error: unknown, fallback: string): string => {
@@ -115,7 +116,7 @@ const getCliApiErrorDetails = (error: unknown) => {
   }
 }
 
-export const getFreebuffRateLimitErrorMessage = (
+export const getSavantFreeRateLimitErrorMessage = (
   error: unknown,
 ): string | null => {
   const details = getCliApiErrorDetails(error)
@@ -123,7 +124,7 @@ export const getFreebuffRateLimitErrorMessage = (
   if (details.errorCode === 'free_mode_rate_limited') {
     // Our own rate limiter's message is already user-facing and includes the
     // retry countdown — show it verbatim.
-    return details.message ?? FREEBUFF_RATE_LIMIT_MESSAGE
+    return details.message ?? SAVANT_FREE_RATE_LIMIT_MESSAGE
   }
   // Other 429s (e.g. relayed upstream capacity errors) keep the branded
   // message but include the server detail so users aren't left guessing.
@@ -138,17 +139,17 @@ export const getFreebuffRateLimitErrorMessage = (
     extractApiErrorDetails(error).message ??
     (isRunOutputObject ? details.message : undefined)
   if (detail && !/^too many requests\.?$/i.test(detail)) {
-    return `${FREEBUFF_RATE_LIMIT_MESSAGE} (${detail})`
+    return `${SAVANT_FREE_RATE_LIMIT_MESSAGE} (${detail})`
   }
-  return FREEBUFF_RATE_LIMIT_MESSAGE
+  return SAVANT_FREE_RATE_LIMIT_MESSAGE
 }
 
 export const getCountryBlockFromFreeModeError = (
   error: unknown,
 ): {
   countryCode: string
-  countryBlockReason?: SavantFree$1
-  ipPrivacySignals?: SavantFree$1[]
+  countryBlockReason?: SavantFreeBlockReason
+  ipPrivacySignals?: SavantFreeIpPrivacySignal[]
 } | null => {
   if (!isFreeModeUnavailableError(error)) return null
   const errorDetails = getCliApiErrorDetails(error)
@@ -162,10 +163,10 @@ export const getCountryBlockFromFreeModeError = (
     countryCode,
     countryBlockReason:
       typeof errorDetails.countryBlockReason === 'string'
-        ? (errorDetails.countryBlockReason as SavantFree$1)
+        ? (errorDetails.countryBlockReason as SavantFreeBlockReason)
         : undefined,
     ipPrivacySignals: errorDetails.ipPrivacySignals as
-      | SavantFree$1[]
+      | SavantFreeIpPrivacySignal[]
       | undefined,
   }
 }
@@ -176,7 +177,7 @@ export const getFreeModeUnavailableErrorMessage = (
   const details = getCliApiErrorDetails(error)
   const block = getCountryBlockFromFreeModeError(error)
   if (block?.countryBlockReason === 'anonymous_network') {
-    return `${IS_FREEBUFF ? 'SavantFree' : 'Free mode'} cannot be used from ${formatFreebuffHardBlockedPrivacySignals(
+    return `${IS_SAVANT_FREE ? 'SavantFree' : 'Free mode'} cannot be used from ${formatSavantFreeHardBlockedPrivacySignals(
       block.ipPrivacySignals,
     )} traffic. Please disable it and try again.`
   }
@@ -198,14 +199,14 @@ export const getFreeModeUnavailableErrorMessage = (
  *   - 409 `session_model_mismatch`  — session tier/model no longer matches.
  *   - 410 `session_expired`         — active session's expires_at has passed.
  */
-export type SavantFree$1 =
+export type SavantFreeGateErrorCode =
   | 'waiting_room_required'
   | 'waiting_room_queued'
   | 'session_superseded'
   | 'session_model_mismatch'
   | 'session_expired'
 
-const FREEBUFF_GATE_STATUS: Record<SavantFree$1, number> = {
+const SAVANT_FREE_GATE_STATUS: Record<SavantFreeGateErrorCode, number> = {
   waiting_room_required: 428,
   waiting_room_queued: 429,
   session_superseded: 409,
@@ -213,24 +214,24 @@ const FREEBUFF_GATE_STATUS: Record<SavantFree$1, number> = {
   session_expired: 410,
 }
 
-export const getFreebuffGateErrorKind = (
+export const getSavantFreeGateErrorKind = (
   error: unknown,
-): SavantFree$1 | null => {
+): SavantFreeGateErrorCode | null => {
   if (!error || typeof error !== 'object') return null
   const errorCode = (error as { error?: unknown }).error
   const statusCode = (error as { statusCode?: unknown }).statusCode
   if (typeof errorCode !== 'string') return null
-  const expected = FREEBUFF_GATE_STATUS[errorCode as SavantFree$1]
+  const expected = SAVANT_FREE_GATE_STATUS[errorCode as SavantFreeGateErrorCode]
   if (expected === undefined || statusCode !== expected) return null
-  return errorCode as SavantFree$1
+  return errorCode as SavantFreeGateErrorCode
 }
 
 export const OUT_OF_CREDITS_MESSAGE = `Out of credits. Please add credits at ${defaultAppUrl}/usage`
 
-export const FREEBUFF_RATE_LIMIT_MESSAGE =
+export const SAVANT_FREE_RATE_LIMIT_MESSAGE =
   'SavantFree is temporarily busy. Please try again in a moment.'
 
-export const FREE_MODE_UNAVAILABLE_MESSAGE = IS_FREEBUFF
+export const FREE_MODE_UNAVAILABLE_MESSAGE = IS_SAVANT_FREE
   ? 'SavantFree is not available in your country.'
   : 'Free mode is not available in your country. You can use another mode to continue.'
 

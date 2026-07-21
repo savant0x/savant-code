@@ -1,5 +1,6 @@
 import { CHATGPT_OAUTH_ENABLED } from '@savant-code/common/constants/chatgpt-oauth'
-import { AGENT_MODES, IS_FREEBUFF } from '../utils/constants'
+
+import { AGENT_MODES, IS_SAVANT_FREE } from '../utils/constants'
 
 import type { SkillsMap } from '@savant-code/common/types/skill'
 
@@ -22,7 +23,7 @@ export interface SlashCommand {
 }
 
 // Generate mode commands from the AGENT_MODES constant (excluded in SavantFree)
-const MODE_COMMANDS: SlashCommand[] = IS_FREEBUFF
+const MODE_COMMANDS: SlashCommand[] = IS_SAVANT_FREE
   ? []
   : AGENT_MODES.map((mode) => ({
       id: `mode:${mode.toLowerCase()}`,
@@ -31,7 +32,7 @@ const MODE_COMMANDS: SlashCommand[] = IS_FREEBUFF
       aliases: [`model:${mode.toLowerCase()}`],
     }))
 
-const FREEBUFF_REMOVED_COMMAND_IDS = new Set([
+const SAVANT_FREE_REMOVED_COMMAND_IDS = new Set([
   'ads:enable',
   'ads:disable',
   'usage',
@@ -42,7 +43,7 @@ const FREEBUFF_REMOVED_COMMAND_IDS = new Set([
   'init',
 ])
 
-const FREEBUFF_ONLY_COMMAND_IDS = new Set([
+const SAVANT_FREE_ONLY_COMMAND_IDS = new Set([
   'connect',
   'plan',
   'end-session',
@@ -160,7 +161,7 @@ const ALL_SLASH_COMMANDS: SlashCommand[] = [
   {
     id: 'feedback',
     label: 'feedback',
-    description: IS_FREEBUFF ? 'Share general feedback about SavantFree' : 'Share general feedback about SavantCode',
+    description: IS_SAVANT_FREE ? 'Share general feedback about SavantFree' : 'Share general feedback about SavantCode',
   },
   {
     id: 'bash',
@@ -191,7 +192,7 @@ const ALL_SLASH_COMMANDS: SlashCommand[] = [
     description: 'End your free session (lets you switch model)',
     aliases: ['model'],
   },
-  ...(IS_FREEBUFF
+  ...(IS_SAVANT_FREE
     ? []
     : [
         {
@@ -217,12 +218,12 @@ const ALL_SLASH_COMMANDS: SlashCommand[] = [
   },
 ]
 
-export const SLASH_COMMANDS = IS_FREEBUFF
+export const SLASH_COMMANDS = IS_SAVANT_FREE
   ? ALL_SLASH_COMMANDS.filter(
-      (cmd) => !FREEBUFF_REMOVED_COMMAND_IDS.has(cmd.id),
+      (cmd) => !SAVANT_FREE_REMOVED_COMMAND_IDS.has(cmd.id),
     )
   : ALL_SLASH_COMMANDS.filter(
-      (cmd) => !FREEBUFF_ONLY_COMMAND_IDS.has(cmd.id),
+      (cmd) => !SAVANT_FREE_ONLY_COMMAND_IDS.has(cmd.id),
     )
 
 export const SLASHLESS_COMMAND_IDS = new Set(

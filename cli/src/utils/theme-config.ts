@@ -4,9 +4,10 @@
  * Provides plugin system and customization support for themes
  */
 
+import { logger } from './logger'
+
 import type { ChatTheme } from '../types/theme-system'
 
-import { logger } from './logger'
 
 /**
  * Plugin interface for extending theme system

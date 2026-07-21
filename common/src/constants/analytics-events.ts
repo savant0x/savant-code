@@ -43,7 +43,7 @@ export enum AnalyticsEvent {
   SLASH_COMMAND_USED = 'cli.slash_command_used',
   TERMINAL_COMMAND_COMPLETED = 'cli.terminal_command_completed',
   USER_INPUT_COMPLETE = 'cli.user_input_complete',
-  UPDATE_CODEBUFF_FAILED = 'cli.update_codebuff_failed',
+  UPDATE_SAVANT_CODE_FAILED = 'cli.update_savant_code_failed',
   FEEDBACK_BUTTON_HOVERED = 'cli.feedback_button_hovered',
   FOLLOWUP_CLICKED = 'cli.followup_clicked',
   SUGGESTED_PROMPT_SHOWN = 'cli.suggested_prompt_shown',
@@ -101,7 +101,7 @@ export enum AnalyticsEvent {
   ONBOARD_PAGE_INSTALL_COMMAND_COPIED = 'onboard_page.install_command_copied',
 
   // Web - Creator Attribution
-  CODEBUFF_REFERRER_ATTRIBUTED = 'savant-code.referrer_attributed',
+  SAVANT_CODE_REFERRER_ATTRIBUTED = 'savant-code.referrer_attributed',
 
   // Web - Install Dialog
   INSTALL_DIALOG_CD_COMMAND_COPIED = 'install_dialog.cd_command_copied',
@@ -194,7 +194,7 @@ export enum AnalyticsEvent {
   CHATGPT_OAUTH_AUTH_ERROR = 'sdk.chatgpt_oauth_auth_error',
 
   // SavantFree - Creator Attribution
-  FREEBUFF_REFERRER_ATTRIBUTED = 'savant-free.referrer_attributed',
+  SAVANT_FREE_REFERRER_ATTRIBUTED = 'savant-free.referrer_attributed',
 
   // SavantFree - Referral program server lifecycle (emitted from packages/billing
   // via the server logger → Axiom `event` column). Funnel: redeemed → completed
@@ -203,7 +203,7 @@ export enum AnalyticsEvent {
   // per-evaluation event — that would fire on every live trigger and dominate
   // ingest; it rides on `sweep`, which aggregates outcomes across the whole
   // pending population once per run (see ReferralSweepResult.outcomes).
-  FREEBUFF_REFERRAL_REDEEMED = 'savant-free.referral.redeemed',
+  SAVANT_FREE_REFERRAL_REDEEMED = 'savant-free.referral.redeemed',
   // A redemption attempt that hit one of the one-shot eligibility guards
   // (signup_too_old, user_banned, referrer_limit_reached, reverse_referral,
   // self_referral). Deliberately EXCLUDES the two repeat-prone errors —
@@ -212,80 +212,80 @@ export enum AnalyticsEvent {
   // — which would otherwise re-fire on every <=10-min token mint; those log
   // at debug only. Without this event, a "my friend's invite didn't count"
   // support case is undiagnosable — the guards otherwise return silently.
-  FREEBUFF_REFERRAL_REDEEM_FAILED = 'savant-free.referral.redeem_failed',
+  SAVANT_FREE_REFERRAL_REDEEM_FAILED = 'savant-free.referral.redeem_failed',
   // Attribution went through and the referred user redeemed from an IP or
   // browser the REFERRER was recently seen on. Evidence, NOT a verdict: this
   // is also exactly what a genuine in-person referral looks like ("try it,
   // here's my laptop" — a sibling on the family computer shares both). Only
   // suspicious when corroborated by real farm signals (dormant GitHub, burst
   // velocity, no product use); the sweep + scripts do that weighing.
-  FREEBUFF_REFERRAL_SOCK_SIGNAL = 'savant-free.referral.sock_signal',
-  FREEBUFF_REFERRAL_COMPLETED = 'savant-free.referral.completed',
-  FREEBUFF_REFERRAL_SWEEP = 'savant-free.referral.sweep',
+  SAVANT_FREE_REFERRAL_SOCK_SIGNAL = 'savant-free.referral.sock_signal',
+  SAVANT_FREE_REFERRAL_COMPLETED = 'savant-free.referral.completed',
+  SAVANT_FREE_REFERRAL_SWEEP = 'savant-free.referral.sweep',
 
   // SavantFree - Get Started Page (referral onboarding funnel, in order:
   //   viewed → sign_in_clicked → signed_in → eligibility_resolved →
   //   [connect_github_clicked] → install_command_copied | web_clicked).
   // Every event carries a `referrer` prop (the inviter's name) for per-referrer
   // funnel breakdowns.
-  FREEBUFF_GET_STARTED_VIEWED = 'savant-free.get_started_viewed',
-  FREEBUFF_GET_STARTED_SIGN_IN_CLICKED = 'savant-free.get_started_sign_in_clicked',
-  FREEBUFF_GET_STARTED_SIGNED_IN = 'savant-free.get_started_signed_in',
-  FREEBUFF_GET_STARTED_ELIGIBILITY_RESOLVED = 'savant-free.get_started_eligibility_resolved',
-  FREEBUFF_GET_STARTED_CONNECT_GITHUB_CLICKED = 'savant-free.get_started_connect_github_clicked',
-  FREEBUFF_GET_STARTED_INSTALL_COMMAND_COPIED = 'savant-free.get_started_install_command_copied',
-  FREEBUFF_GET_STARTED_WEB_CLICKED = 'savant-free.get_started_web_clicked',
+  SAVANT_FREE_GET_STARTED_VIEWED = 'savant-free.get_started_viewed',
+  SAVANT_FREE_GET_STARTED_SIGN_IN_CLICKED = 'savant-free.get_started_sign_in_clicked',
+  SAVANT_FREE_GET_STARTED_SIGNED_IN = 'savant-free.get_started_signed_in',
+  SAVANT_FREE_GET_STARTED_ELIGIBILITY_RESOLVED = 'savant-free.get_started_eligibility_resolved',
+  SAVANT_FREE_GET_STARTED_CONNECT_GITHUB_CLICKED = 'savant-free.get_started_connect_github_clicked',
+  SAVANT_FREE_GET_STARTED_INSTALL_COMMAND_COPIED = 'savant-free.get_started_install_command_copied',
+  SAVANT_FREE_GET_STARTED_WEB_CLICKED = 'savant-free.get_started_web_clicked',
   // Deprecated (previous get-started design — no longer fired):
-  FREEBUFF_GET_STARTED_HELP_EXPANDED = 'savant-free.get_started_help_expanded',
-  FREEBUFF_GET_STARTED_EDITOR_CLICKED = 'savant-free.get_started_editor_clicked',
+  SAVANT_FREE_GET_STARTED_HELP_EXPANDED = 'savant-free.get_started_help_expanded',
+  SAVANT_FREE_GET_STARTED_EDITOR_CLICKED = 'savant-free.get_started_editor_clicked',
 
   // SavantFree - Chat
   // Emitted once per new-thread title generation attempt (server-side). The
   // `outcome` property is one of: generated | empty | unknown_model | error |
   // aborted. Carries `latencyMs`, `model`, and `titleLength` so the failure/
   // fallback rate and added latency are queryable.
-  FREEBUFF_CHAT_TITLE_GENERATED = 'savant-free.chat_title_generated',
+  SAVANT_FREE_CHAT_TITLE_GENERATED = 'savant-free.chat_title_generated',
 
   // SavantFree - CLI landing page (/cli). Fired when the install command is
   // copied; `location` distinguishes hero vs install section. Lets us measure
   // install intent per campaign (utm_* ride along as super-properties) — the
   // best proxy conversion for CLI traffic, since CLI activation happens in a
   // separate identity space with no key back to the web landing.
-  FREEBUFF_CLI_INSTALL_COMMAND_COPIED = 'savant-free.cli_install_command_copied',
+  SAVANT_FREE_CLI_INSTALL_COMMAND_COPIED = 'savant-free.cli_install_command_copied',
 
   // SavantFree - Cloud landing page (/cloud). Fired when a logged-out visitor
   // clicks a "Continue with GitHub" / "Connect your repo" CTA; `location`
   // distinguishes hero vs the migration/lovable section vs the final CTA. Best
   // proxy for cloud sign-up intent (utm_* ride along as super-properties).
-  FREEBUFF_CLOUD_CONNECT_REPO_CLICKED = 'savant-free.cloud_connect_repo_clicked',
+  SAVANT_FREE_CLOUD_CONNECT_REPO_CLICKED = 'savant-free.cloud_connect_repo_clicked',
 
   // SavantFree - Home Page
-  FREEBUFF_HOME_INSTALL_COMMAND_COPIED = 'savant-free.home_install_command_copied',
-  FREEBUFF_HOME_GITHUB_CLICKED = 'savant-free.home_github_clicked',
-  FREEBUFF_HOME_INSTALL_GUIDE_EXPANDED = 'savant-free.home_install_guide_expanded',
-  FREEBUFF_HOME_FAQ_OPENED = 'savant-free.home_faq_opened',
+  SAVANT_FREE_HOME_INSTALL_COMMAND_COPIED = 'savant-free.home_install_command_copied',
+  SAVANT_FREE_HOME_GITHUB_CLICKED = 'savant-free.home_github_clicked',
+  SAVANT_FREE_HOME_INSTALL_GUIDE_EXPANDED = 'savant-free.home_install_guide_expanded',
+  SAVANT_FREE_HOME_FAQ_OPENED = 'savant-free.home_faq_opened',
 
   // SavantFree - acquisition attribution (UTM / ad-click params captured as
   // super-properties; filter by utm_source, reddit_click_id, is_reddit_traffic)
-  FREEBUFF_ATTRIBUTED = 'savant-free.attributed',
+  SAVANT_FREE_ATTRIBUTED = 'savant-free.attributed',
   // SavantFree - Reddit ad funnel (filter in PostHog by reddit_click_id / utm_source)
-  FREEBUFF_REDDIT_FUNNEL_CLI_INSTALLED = 'savant-free.reddit_funnel.cli_installed',
-  FREEBUFF_REDDIT_FUNNEL_LOGIN = 'savant-free.reddit_funnel.login',
-  FREEBUFF_REDDIT_FUNNEL_SIGN_UP = 'savant-free.reddit_funnel.sign_up',
-  FREEBUFF_REDDIT_FUNNEL_FIRST_PROMPT_CLI = 'savant-free.reddit_funnel.first_prompt_cli',
-  FREEBUFF_REDDIT_FUNNEL_FIRST_PROMPT_WEB = 'savant-free.reddit_funnel.first_prompt_web',
-  FREEBUFF_REDDIT_FUNNEL_FIRST_PROMPT_CHAT = 'savant-free.reddit_funnel.first_prompt_chat',
-  FREEBUFF_REDDIT_FUNNEL_RETENTION_1D_CLI = 'savant-free.reddit_funnel.retention_1d_cli',
-  FREEBUFF_REDDIT_FUNNEL_RETENTION_7D_CLI = 'savant-free.reddit_funnel.retention_7d_cli',
-  FREEBUFF_REDDIT_FUNNEL_RETENTION_24D_CLI = 'savant-free.reddit_funnel.retention_24d_cli',
-  FREEBUFF_REDDIT_FUNNEL_GRAVITY_AD_CLICK = 'savant-free.reddit_funnel.gravity_ad_click',
+  SAVANT_FREE_REDDIT_FUNNEL_CLI_INSTALLED = 'savant-free.reddit_funnel.cli_installed',
+  SAVANT_FREE_REDDIT_FUNNEL_LOGIN = 'savant-free.reddit_funnel.login',
+  SAVANT_FREE_REDDIT_FUNNEL_SIGN_UP = 'savant-free.reddit_funnel.sign_up',
+  SAVANT_FREE_REDDIT_FUNNEL_FIRST_PROMPT_CLI = 'savant-free.reddit_funnel.first_prompt_cli',
+  SAVANT_FREE_REDDIT_FUNNEL_FIRST_PROMPT_WEB = 'savant-free.reddit_funnel.first_prompt_web',
+  SAVANT_FREE_REDDIT_FUNNEL_FIRST_PROMPT_CHAT = 'savant-free.reddit_funnel.first_prompt_chat',
+  SAVANT_FREE_REDDIT_FUNNEL_RETENTION_1D_CLI = 'savant-free.reddit_funnel.retention_1d_cli',
+  SAVANT_FREE_REDDIT_FUNNEL_RETENTION_7D_CLI = 'savant-free.reddit_funnel.retention_7d_cli',
+  SAVANT_FREE_REDDIT_FUNNEL_RETENTION_24D_CLI = 'savant-free.reddit_funnel.retention_24d_cli',
+  SAVANT_FREE_REDDIT_FUNNEL_GRAVITY_AD_CLICK = 'savant-free.reddit_funnel.gravity_ad_click',
 
   // SavantFree web /chat ads experiment (server-rendered Gravity ads vs the
   // existing @gravity-ai/react inline slot; bucketed by user id — see
   // savant-free/web/src/app/chat/_components/ad-experiment.ts). Both events carry
   // `experiment` + `variant` so PostHog can break down exposure and CTR by arm.
-  FREEBUFF_CHAT_ADS_EXPERIMENT_EXPOSED = 'savant-free.chat_ads.experiment_exposed',
-  FREEBUFF_CHAT_ADS_AD_SHOWN = 'savant-free.chat_ads.ad_shown',
+  SAVANT_FREE_CHAT_ADS_EXPERIMENT_EXPOSED = 'savant-free.chat_ads.experiment_exposed',
+  SAVANT_FREE_CHAT_ADS_AD_SHOWN = 'savant-free.chat_ads.ad_shown',
 
   // SavantFree Desktop (Electron app)
   // Mirrors the CLI's surface events so the desktop shows up in the same DAU /

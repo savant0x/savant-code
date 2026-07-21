@@ -1,5 +1,6 @@
 import { z } from 'zod/v4'
 
+/* eslint-disable no-console -- example script: intentional console output */
 import { SavantCodeClient, getCustomToolDefinition } from '@savant-code/sdk'
 
 import type { AgentDefinition } from '@savant-code/sdk'
@@ -8,7 +9,7 @@ async function main() {
   const client = new SavantCodeClient({
     // Note: You need to pass in your own API key.
     // Get it here: https://www.savant-code.com/profile?tab=api-keys
-    apiKey: process.env.CODEBUFF_API_KEY,
+    apiKey: process.env.SAVANT_CODE_API_KEY,
     // Optional directory agent runs from (if applicable).
     cwd: process.cwd(),
   })

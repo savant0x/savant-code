@@ -1,24 +1,24 @@
 import { useQuery } from '@tanstack/react-query'
 
 import { getAuthToken } from '../utils/auth'
-import { getApiClient, setApiClientAuthToken } from '../utils/savant-code-api'
 import { logger as defaultLogger } from '../utils/logger'
+import { getApiClient, setApiClientAuthToken } from '../utils/savant-code-api'
 
-import type { SavantFree$1 } from '@savant-code/common/types/savant-free-streak'
 import type { Logger } from '@savant-code/common/types/contracts/logger'
+import type { SavantFreeStreakResponse } from '@savant-code/common/types/savant-free-streak'
 
-export const savant-free$1 = {
-  all: ['savant-free$1'] as const,
-  current: () => [...savant-free$1.all, 'current'] as const,
+export const streakQueryKeys = {
+  all: ['streakQueryKeys'] as const,
+  current: () => [...streakQueryKeys.all, 'current'] as const,
 }
 
-export async function fetchFreebuffStreak(params: {
+export async function fetchSavantFreeStreak(params: {
   authToken: string
   logger?: Logger
-}): Promise<SavantFree$1> {
+}): Promise<SavantFreeStreakResponse> {
   const { authToken, logger = defaultLogger } = params
   setApiClientAuthToken(authToken)
-  const response = await getApiClient().get<SavantFree$1>(
+  const response = await getApiClient().get<SavantFreeStreakResponse>(
     '/api/v1/savant-free/streak',
     { retry: false },
   )
@@ -38,7 +38,7 @@ export async function fetchFreebuffStreak(params: {
   return response.data
 }
 
-export function useFreebuffStreakQuery(
+export function useSavantFreeStreakQuery(
   params: {
     enabled?: boolean
     logger?: Logger
@@ -48,8 +48,8 @@ export function useFreebuffStreakQuery(
   const authToken = getAuthToken()
 
   return useQuery({
-    queryKey: savant-free$1.current(),
-    queryFn: () => fetchFreebuffStreak({ authToken: authToken!, logger }),
+    queryKey: streakQueryKeys.current(),
+    queryFn: () => fetchSavantFreeStreak({ authToken: authToken!, logger }),
     enabled: enabled && !!authToken,
     staleTime: 60_000,
     gcTime: 10 * 60_000,

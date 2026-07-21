@@ -68,12 +68,11 @@ function safeRealpath(
   try {
     const realpath = realpathFn(current)
     return path.join(realpath, ...missingSegments)
-  } catch (err: unknown) {
-    // Translate known FS-resolution errno codes to 'reject'. Re-throw
-    // unexpected errors (TypeError, OOM, etc.) so real bugs aren't masked.
-    // FID-013 v3 D5: ENOENT/ELOOP/EACCES/EINVAL/EPERM. Plus ENOTDIR/EIO for
-    // common realpath edge cases.
-    const code = (err as NodeJS.ErrnoException | undefined)?.code
+  } catch (err) {
+    if (!(err instanceof Error)) {
+      throw new Error(`safeRealpath failed for ${filePath}`, { cause: err })
+    }
+    const code = 'code' in err && typeof err.code === 'string' ? err.code : undefined
     if (
       code === 'ENOENT' ||  // broken symlink (target missing)
       code === 'ELOOP' ||   // symlink loop

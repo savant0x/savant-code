@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- event hook: generic handler types */
 import { useCallback, useRef } from 'react'
 
 /**

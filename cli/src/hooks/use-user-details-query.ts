@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 
 import { getAuthToken } from '../utils/auth'
-import { getApiClient, setApiClientAuthToken } from '../utils/savant-code-api'
 import { logger as defaultLogger } from '../utils/logger'
+import { getApiClient, setApiClientAuthToken } from '../utils/savant-code-api'
 
 import type {
   SavantCodeApiClient,

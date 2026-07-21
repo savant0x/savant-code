@@ -1,8 +1,8 @@
-import { describe, test, expect, beforeEach, afterEach, mock, spyOn } from 'bun:test'
-import type { SpawnSyncReturns } from 'child_process'
 import fs from 'fs'
 import os from 'os'
 import path from 'path'
+
+import { describe, test, expect, beforeEach, afterEach, mock, spyOn } from 'bun:test'
 
 import {
   findEnvrcDirectory,
@@ -10,6 +10,8 @@ import {
   getDirenvExport,
   initializeDirenv,
 } from '../init-direnv'
+
+import type { SpawnSyncReturns } from 'child_process'
 
 mock.module('../utils/logger', () => ({
   logger: {

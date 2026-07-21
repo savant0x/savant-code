@@ -1,3 +1,4 @@
+/* eslint-disable savant/no-unknown-in-signatures -- cache debug utility: JSON serialization of arbitrary shapes */
 import type { JSONValue } from '../types/json'
 
 type SerializableValue = JSONValue

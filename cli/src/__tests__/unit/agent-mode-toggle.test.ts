@@ -12,13 +12,13 @@ import { createHoverToggleControllerForTest } from '../mocks/hover-toggle-contro
 import type { AgentMode } from '../../utils/constants'
 
 describe('AgentModeToggle - buildExpandedSegments', () => {
-  const modes: AgentMode[] = ['DEFAULT', 'MAX', 'PLAN']
+  const modes: AgentMode[] = ['EDIT', 'SCAFFOLD', 'ANALYZE']
 
   for (const mode of modes) {
     test(`returns segments with active indicator for ${mode}`, () => {
       const segs = buildExpandedSegments(mode)
-      // 4 mode options (DEFAULT, LITE, MAX, PLAN) + 1 active indicator
-      expect(segs.length).toBe(5)
+      // 3 mode options (EDIT, SCAFFOLD, ANALYZE) + 1 active indicator
+      expect(segs.length).toBe(4)
 
       // Current mode is disabled among the choices
       const current = segs.find((s) => s.id === mode)
@@ -35,18 +35,18 @@ describe('AgentModeToggle - buildExpandedSegments', () => {
 
 describe('AgentModeToggle - resolveAgentModeClick', () => {
   test('clicking active indicator returns closeActive', () => {
-    const action = resolveAgentModeClick('DEFAULT', 'active-DEFAULT', true)
+    const action = resolveAgentModeClick('EDIT', 'active-EDIT', true)
     expect(action).toEqual({ type: 'closeActive' })
   })
 
   test('with onSelectMode provided, clicking different mode selects it', () => {
-    const action = resolveAgentModeClick('DEFAULT', 'MAX', true)
-    expect(action).toEqual({ type: 'selectMode', mode: 'MAX' })
+    const action = resolveAgentModeClick('EDIT', 'SCAFFOLD', true)
+    expect(action).toEqual({ type: 'selectMode', mode: 'SCAFFOLD' })
   })
 
   test('without onSelectMode, clicking different mode toggles', () => {
-    const action = resolveAgentModeClick('DEFAULT', 'PLAN', false)
-    expect(action).toEqual({ type: 'toggleMode', mode: 'PLAN' })
+    const action = resolveAgentModeClick('EDIT', 'ANALYZE', false)
+    expect(action).toEqual({ type: 'toggleMode', mode: 'ANALYZE' })
   })
 })
 

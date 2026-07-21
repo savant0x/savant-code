@@ -1,8 +1,8 @@
 import { TextAttributes } from '@opentui/core'
 import React from 'react'
 
-import { useFreebuffCtrlCExit } from '../hooks/use-savant-free-ctrl-c-exit'
 import { useLogo } from '../hooks/use-logo'
+import { useSavantFreeCtrlCExit } from '../hooks/use-savant-free-ctrl-c-exit'
 import { useTerminalDimensions } from '../hooks/use-terminal-dimensions'
 import { useTheme } from '../hooks/use-theme'
 import { getLogoAccentColor, getLogoBlockColor } from '../utils/theme-system'
@@ -12,7 +12,7 @@ import { getLogoAccentColor, getLogoBlockColor } from '../utils/theme-system'
  * the same account rotated our instance id and we've stopped polling — the
  * user needs to close the other instance and restart.
  */
-export const SavantFree$1: React.FC = () => {
+export const SavantFreeSupersededScreen: React.FC = () => {
   const theme = useTheme()
   const { contentMaxWidth } = useTerminalDimensions()
   const blockColor = getLogoBlockColor(theme.name)
@@ -23,7 +23,7 @@ export const SavantFree$1: React.FC = () => {
     blockColor,
   })
 
-  useFreebuffCtrlCExit()
+  useSavantFreeCtrlCExit()
 
   return (
     <box

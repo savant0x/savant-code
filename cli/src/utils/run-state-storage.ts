@@ -1,6 +1,6 @@
 import * as fs from 'fs'
-import path from 'path'
 import { randomUUID } from 'node:crypto'
+import path from 'path'
 
 import {
   getCurrentChatDir,
@@ -12,9 +12,9 @@ import {
   CHAT_META_FILENAME,
   writeChatMeta,
 } from './chat-meta'
+import { saveChatStateToDb, loadChatStateFromDb } from './db-storage'
 import { logger } from './logger'
 import { writeFileAtomic, writeFileAtomicAsync } from './write-file-atomic'
-import { saveChatStateToDb, loadChatStateFromDb } from './db-storage'
 
 import type { ChatMessage, ContentBlock } from '../types/chat'
 import type { RunState } from '@savant-code/sdk'

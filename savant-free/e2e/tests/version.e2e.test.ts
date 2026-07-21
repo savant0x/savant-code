@@ -5,11 +5,11 @@ import path from 'node:path'
 
 import { describe, expect, test } from 'bun:test'
 
-import { requireFreebuffBinary } from '../utils'
+import { requireSavantFreeBinary } from '../utils'
 
 describe('SavantFree: --version', () => {
   test('outputs a version string', () => {
-    const binary = requireFreebuffBinary()
+    const binary = requireSavantFreeBinary()
     const output = execFileSync(binary, ['--version'], {
       encoding: 'utf-8',
       timeout: 10_000,
@@ -20,13 +20,13 @@ describe('SavantFree: --version', () => {
   })
 
   test('exits with code 0', () => {
-    const binary = requireFreebuffBinary()
+    const binary = requireSavantFreeBinary()
     // execFileSync throws on non-zero exit codes, so if this doesn't throw, it exited 0
     execFileSync(binary, ['--version'], { encoding: 'utf-8', timeout: 10_000 })
   })
 
   test('ignores project bunfig.toml preloads', () => {
-    const binary = requireFreebuffBinary()
+    const binary = requireSavantFreeBinary()
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'savant-free-bunfig-'))
 
     try {

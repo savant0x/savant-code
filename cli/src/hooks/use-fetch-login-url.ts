@@ -1,10 +1,11 @@
 import { useMutation } from '@tanstack/react-query'
-import { safeOpen } from '../utils/open-url'
+
 
 import { LOGIN_WEBSITE_URL } from '../login/constants'
 import { generateLoginUrl } from '../login/login-flow'
 import { trackEvent } from '../utils/analytics'
 import { logger } from '../utils/logger'
+import { safeOpen } from '../utils/open-url'
 
 interface UseFetchLoginUrlParams {
   setLoginUrl: (url: string | null) => void

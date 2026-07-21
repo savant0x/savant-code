@@ -7,7 +7,7 @@ async function main() {
 
   await runBuffBench({
     evalDataPaths: [path.join(__dirname, 'eval-savant-code.json')],
-    agents: ['base2-kimi-2-7-code'],
+    agents: ['savant-kimi-2-7-code'],
     taskIds: ['server-agent-validation'],
     saveTraces,
   })

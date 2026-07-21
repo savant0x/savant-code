@@ -1,17 +1,17 @@
 import {
-  FREEBUFF_GLM_V52_REFERRAL_ENABLED,
-  FREEBUFF_PREMIUM_SESSION_RESET_TIMEZONE,
-  FREEBUFF_STREAK_GLM_BONUS_ENABLED,
-  FREEBUFF_STREAK_REWARD_INTERVAL_DAYS,
-  FREEBUFF_STREAK_REWARDS_ENABLED,
+  SAVANT_FREE_GLM_V52_REFERRAL_ENABLED,
+  SAVANT_FREE_PREMIUM_SESSION_RESET_TIMEZONE,
+  SAVANT_FREE_STREAK_GLM_BONUS_ENABLED,
+  SAVANT_FREE_STREAK_REWARD_INTERVAL_DAYS,
+  SAVANT_FREE_STREAK_REWARDS_ENABLED,
 } from '../constants/savant-free-models'
 
 import type {
-  SavantFree$1,
-  SavantFree$1,
+  SavantFreeAccessTier,
+  SavantFreeStreakPool,
 } from '../constants/savant-free-models'
 
-export const FREEBUFF_STREAK_TIME_ZONE = FREEBUFF_PREMIUM_SESSION_RESET_TIMEZONE
+export const SAVANT_FREE_STREAK_TIME_ZONE = SAVANT_FREE_PREMIUM_SESSION_RESET_TIMEZONE
 
 const DAY_MS = 24 * 60 * 60 * 1000
 
@@ -30,9 +30,9 @@ function dateKeyFromParts(parts: Intl.DateTimeFormatPart[]): string {
   return `${year}-${month}-${day}`
 }
 
-export function getFreebuffUsageDateKey(
+export function getSavantFreeUsageDateKey(
   now: Date = new Date(),
-  timeZone = FREEBUFF_STREAK_TIME_ZONE,
+  timeZone = SAVANT_FREE_STREAK_TIME_ZONE,
 ): string {
   return dateKeyFromParts(
     new Intl.DateTimeFormat('en-US', {
@@ -53,7 +53,7 @@ export function addDaysToDateKey(dateKey: string, days: number): string {
   return new Date(date.getTime() + days * DAY_MS).toISOString().slice(0, 10)
 }
 
-export function calculateFreebuffStreak(params: {
+export function calculateSavantFreeStreak(params: {
   usageDates: readonly string[]
   todayDateKey: string
 }): {
@@ -94,8 +94,8 @@ export function calculateFreebuffStreak(params: {
 
 /** True when `streak` lands exactly on a streak-reward milestone (a positive
  *  multiple of the 7-day interval). */
-export function isFreebuffStreakMilestone(streak: number): boolean {
-  return streak > 0 && streak % FREEBUFF_STREAK_REWARD_INTERVAL_DAYS === 0
+export function isSavantFreeStreakMilestone(streak: number): boolean {
+  return streak > 0 && streak % SAVANT_FREE_STREAK_REWARD_INTERVAL_DAYS === 0
 }
 
 /**
@@ -106,11 +106,11 @@ export function isFreebuffStreakMilestone(streak: number): boolean {
  * while it's off would be unusable. Keeping the grant and the advertised perk
  * gated on the same predicate avoids that mismatch.
  */
-export function isFreebuffStreakGlmBonusActive(): boolean {
+export function isSavantFreeStreakGlmBonusActive(): boolean {
   return (
-    FREEBUFF_STREAK_REWARDS_ENABLED &&
-    FREEBUFF_STREAK_GLM_BONUS_ENABLED &&
-    FREEBUFF_GLM_V52_REFERRAL_ENABLED
+    SAVANT_FREE_STREAK_REWARDS_ENABLED &&
+    SAVANT_FREE_STREAK_GLM_BONUS_ENABLED &&
+    SAVANT_FREE_GLM_V52_REFERRAL_ENABLED
   )
 }
 
@@ -133,16 +133,16 @@ export function isFreebuffStreakGlmBonusActive(): boolean {
 export function streakRewardPools(params: {
   streak: number
   todayUsed: boolean
-  accessTier: SavantFree$1
-}): SavantFree$1[] {
-  if (!FREEBUFF_STREAK_REWARDS_ENABLED) return []
+  accessTier: SavantFreeAccessTier
+}): SavantFreeStreakPool[] {
+  if (!SAVANT_FREE_STREAK_REWARDS_ENABLED) return []
   if (!params.todayUsed) return []
-  if (params.streak < FREEBUFF_STREAK_REWARD_INTERVAL_DAYS) return []
+  if (params.streak < SAVANT_FREE_STREAK_REWARD_INTERVAL_DAYS) return []
   // Daily pool bonus: every day at streak >= 7.
   if (params.accessTier === 'limited') return ['limited']
-  const pools: SavantFree$1[] = ['premium']
+  const pools: SavantFreeStreakPool[] = ['premium']
   // GLM stays weekly: only on the exact milestone day (once per Pacific week).
-  if (isFreebuffStreakMilestone(params.streak) && isFreebuffStreakGlmBonusActive()) {
+  if (isSavantFreeStreakMilestone(params.streak) && isSavantFreeStreakGlmBonusActive()) {
     pools.push('glm')
   }
   return pools

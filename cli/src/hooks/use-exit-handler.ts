@@ -2,8 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { getCurrentChatId } from '../project-files'
 import { flushAnalytics } from '../utils/analytics'
-import { IS_FREEBUFF } from '../utils/constants'
-import { exitFreebuffCleanly } from '../utils/savant-free-exit'
+import { IS_SAVANT_FREE } from '../utils/constants'
+import { exitSavantFreeCleanly } from '../utils/savant-free-exit'
 import { withTimeout } from '../utils/terminal-color-detection'
 
 import type { InputValue } from '../types/store'
@@ -28,7 +28,7 @@ function setupExitMessageHandler() {
       if (chatId) {
         // This runs synchronously during the exit phase
         // OpenTUI has already cleaned up by this point
-        const cliName = IS_FREEBUFF ? 'savant-free' : 'savant-code'
+        const cliName = IS_SAVANT_FREE ? 'savant-free' : 'savant-code'
         process.stdout.write(
           `\nTo continue this session later, run:\n${cliName} --continue ${chatId}\n`,
         )
@@ -40,8 +40,8 @@ function setupExitMessageHandler() {
 }
 
 function exitCli(): void {
-  if (IS_FREEBUFF) {
-    void exitFreebuffCleanly()
+  if (IS_SAVANT_FREE) {
+    void exitSavantFreeCleanly()
     return
   }
 

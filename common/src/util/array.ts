@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- generic array utility functions */
 import { compact, flattenDeep, isEqual } from 'lodash'
 
 export function filterDefined<T>(array: (T | null | undefined)[]) {

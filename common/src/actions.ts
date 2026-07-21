@@ -1,13 +1,14 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- action types: dynamic client/server payload shapes */
 import { z } from 'zod/v4'
 
 import type { GrantType } from './types/grant'
 import type { MCPConfig } from './types/mcp'
-import type { ToolMessage } from './types/messages/savant-code-message'
 import type {
   TextPart,
   ImagePart,
   ToolResultOutput,
 } from './types/messages/content-part'
+import type { ToolMessage } from './types/messages/savant-code-message'
 import type { PrintModeEvent } from './types/print-mode'
 import type { AgentOutput, SessionState, ToolCall } from './types/session-state'
 import type { ProjectFileContext } from './util/file'
@@ -29,7 +30,6 @@ type ClientActionPrompt = {
   promptParams?: Record<string, any> // Additional json params.
   fingerprintId: string
   authToken?: string
-  costMode?: string
   sessionState: SessionState
   toolResults: ToolMessage[]
   model?: string

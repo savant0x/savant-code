@@ -1,3 +1,4 @@
+
 import { isEqual, mapValues, union } from 'lodash'
 
 type RemoveUndefined<T extends object> = {
@@ -7,7 +8,7 @@ type RemoveUndefined<T extends object> = {
 export const removeUndefinedProps = <T extends object>(
   obj: T,
 ): RemoveUndefined<T> => {
-  const newObj: Record<string, unknown> = {}
+  const newObj: Record<string, T[keyof T]> = {}
 
   for (const key of Object.keys(obj)) {
     const value = obj[key as keyof T]
@@ -23,7 +24,7 @@ export const removeNullOrUndefinedProps = <T extends object>(
   obj: T,
   exceptions?: string[],
 ): T => {
-  const newObj: Record<string, unknown> = {}
+  const newObj: Record<string, T[keyof T]> = {}
 
   for (const key of Object.keys(obj)) {
     const value = obj[key as keyof T]
@@ -75,14 +76,27 @@ export const hasSignificantDeepChanges = <T extends object>(
   partial: Partial<T>,
   epsilonForNumbers: number,
 ): boolean => {
-  const compareValues = (currValue: any, partialValue: any): boolean => {
-    if (typeof currValue === 'number' && typeof partialValue === 'number') {
+  const compareValues = <V1, V2>(
+    currValue: V1,
+    partialValue: V2,
+  ): boolean => {
+    if (
+      typeof currValue === 'number' &&
+      typeof partialValue === 'number'
+    ) {
       return Math.abs(currValue - partialValue) > epsilonForNumbers
     }
-    if (typeof currValue === 'object' && typeof partialValue === 'object') {
+    if (
+      typeof currValue === 'object' &&
+      currValue !== null &&
+      !Array.isArray(currValue) &&
+      typeof partialValue === 'object' &&
+      partialValue !== null &&
+      !Array.isArray(partialValue)
+    ) {
       return hasSignificantDeepChanges(
-        currValue,
-        partialValue,
+        currValue as Record<string, unknown>,
+        partialValue as Record<string, unknown>,
         epsilonForNumbers,
       )
     }
@@ -102,7 +116,7 @@ export const hasSignificantDeepChanges = <T extends object>(
 
 export const filterObject = <T extends object>(
   obj: T,
-  predicate: (value: any, key: keyof T) => boolean,
+  predicate: (value: T[keyof T], key: keyof T) => boolean,
 ): { [P in keyof T]: T[P] } => {
   const result = {} as { [P in keyof T]: T[P] }
   for (const key in obj) {
