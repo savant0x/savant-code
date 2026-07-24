@@ -151,36 +151,25 @@ export const AgentOutputSchema = z.discriminatedUnion('type', [
 export type AgentOutput = z.infer<typeof AgentOutputSchema>
 
 export const AgentTemplateTypeList = [
-  // Base agents
-  'base',
-  'base_free',
-  'base_max',
-  'base_experimental',
-  'claude4_gemini_thinking',
-  'superagent',
-  'base_agent_builder',
-
-  // Ask mode
-  'ask',
-
-  // Planning / Thinking
-  'planner',
-  'dry_run',
+  // ECHO agents
   'thinker',
-
-  // Other agents
-  'file_picker',
   'scout',
-  'file_explorer',
-  'researcher',
-  'reviewer',
   'verifier',
   'forge',
   'recorder',
   'scribe',
+
+  // Personas (used by agent runtime for mode selection)
+  'ask',
+  'planner',
+  'dry_run',
+
+  // Infrastructure agents
+  'file_explorer',
+  'researcher',
   'code_searcher',
-  'agent_builder',
-  'example_programmatic',
+
+
 ] as const
 type UnderscoreToDash<S extends string> = S extends `${infer L}_${infer R}`
   ? `${L}-${UnderscoreToDash<R>}` // recurse on the remainder

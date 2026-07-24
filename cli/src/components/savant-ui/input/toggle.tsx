@@ -1,6 +1,8 @@
 import React from 'react'
 
 import { useTheme } from '../../../hooks/use-theme'
+import { glyph } from '../../../utils/glyphs'
+import { resolveThemeColor } from '../icon-theme-keys'
 
 export interface ToggleProps {
   checked: boolean
@@ -11,8 +13,9 @@ export interface ToggleProps {
 
 export function Toggle({ checked, onChange, label, disabled }: ToggleProps) {
   const theme = useTheme()
-  const color = checked ? theme.primary : theme.muted
-  const icon = checked ? '◉' : '◎'
+  const colorKey = checked ? 'primary' : 'muted'
+  const color = resolveThemeColor(theme, colorKey)
+  const icon = glyph(checked ? 'toggleOn' : 'toggleOff')
 
   return (
     <box flexDirection="row" gap={1}>

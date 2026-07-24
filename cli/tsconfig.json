@@ -7,8 +7,11 @@
     "jsx": "react-jsx",
     "jsxImportSource": "@opentui/react",
     "outDir": "./dist",
-    "declaration": true,
-    "declarationMap": true,
+    // Disabling declaration emit avoids TS6059 rootDir conflicts when
+    // cross-workspace path mappings (e.g. @savant-code/sdk) pull source
+    // files outside the cli/ directory into the compilation unit.
+    "declaration": false,
+    "declarationMap": false,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "preserveSymlinks": false,

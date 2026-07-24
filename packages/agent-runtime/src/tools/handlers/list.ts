@@ -25,6 +25,7 @@ import { handleReadSubtree } from './tool/read-subtree'
 import { handleReadUrl } from './tool/read-url'
 import { handleRenderUI } from './tool/render-ui'
 import { handleRunFileChangeHooks } from './tool/run-file-change-hooks'
+import { handleRunReadonlyCommand } from './tool/run-readonly-command'
 import { handleRunTerminalCommand } from './tool/run-terminal-command'
 import { handleSequentialThinking } from './tool/sequential-thinking'
 import { handleSetMessages } from './tool/set-messages'
@@ -83,6 +84,7 @@ export const savantCode$1: {
   read_url: handleReadUrl,
   render_ui: handleRenderUI,
   run_file_change_hooks: handleRunFileChangeHooks,
+  run_readonly_command: handleRunReadonlyCommand,
   run_terminal_command: handleRunTerminalCommand,
   sequentialthinking: handleSequentialThinking,
   set_messages: handleSetMessages,

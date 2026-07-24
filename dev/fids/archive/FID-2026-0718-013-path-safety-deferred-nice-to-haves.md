@@ -1,4 +1,4 @@
-**Status:** OPEN — Perfection Loop converged to v3 (post-Nova audit amendment), awaiting user approval
+**Status:** closed / archived
 **Opened:** 2026-07-18
 **Severity:** medium (security follow-up; current state is hardened against string-traversal but not symlinks; monorepo paths may diverge from process.cwd())
 **Source:** FID-2026-0718-012 close-out — 2 deferred nice-to-haves flagged by code-reviewer

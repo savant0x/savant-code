@@ -84,7 +84,7 @@ const inputSchema = z
                   directories: z
                     .array(z.string())
                     .optional()
-                    .describe('Directories to search within (file-picker)'),
+                    .describe('Directories to search within (scout)'),
                   url: z
                     .string()
                     .optional()

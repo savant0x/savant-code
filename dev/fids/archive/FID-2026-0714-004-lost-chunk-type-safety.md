@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0714-004-lost-chunk-type-safety.md`
 **ID:** FID-2026-0714-004
 **Severity:** medium
-**Status:** created
+**Status:** closed / archived
 **Created:** 2026-07-14 02:30
 **Author:** ECHO Agent (Kilo)
 

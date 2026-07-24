@@ -129,12 +129,12 @@ export interface AgentDefinition {
    */
   toolNames?: (ToolName | (string & {}))[]
 
-  /** Other agents this agent can spawn, like 'savant-code/file-picker@0.0.1'.
+  /** Other agents this agent can spawn, like 'savant-code/scout@0.0.1'.
    *
-   * Use the fully qualified agent id from the agent store, including publisher and version: 'savant-code/file-picker@0.0.1'
+   * Use the fully qualified agent id from the agent store, including publisher and version: 'savant-code/scout@0.0.1'
    * (publisher and version are required!)
    *
-   * Or, use the agent id from a local agent file in your .agents directory: 'file-picker'.
+   * Or, use the agent id from a local agent file in your .agents directory: 'scout'.
    */
   spawnableAgents?: string[]
 

@@ -7,6 +7,7 @@ import {
 } from './use-activity-query'
 import { subscriptionQueryKeys } from './use-subscription-query'
 import { showClipboardMessage } from '../utils/clipboard'
+import { isDirectProviderMode } from '../utils/env'
 import { logger } from '../utils/logger'
 import { getApiClient } from '../utils/savant-code-api'
 
@@ -20,6 +21,11 @@ export function useUpdatePreference() {
   const [isPending, setIsPending] = useState(false)
 
   const mutate = useCallback(async (params: UpdatePreferenceParams) => {
+    if (isDirectProviderMode()) {
+      // Preferences are stored on the backend; silently ignore in direct-provider mode.
+      return
+    }
+
     const queryKey = subscriptionQueryKeys.current()
 
     // Snapshot the previous value for rollback

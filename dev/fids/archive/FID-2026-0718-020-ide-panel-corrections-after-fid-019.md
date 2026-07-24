@@ -1,6 +1,6 @@
 # FID-2026-0718-020 — medium — IDE Problems Panel Corrections After FID-019 v5
 
-**Status:** RED proposing v1. CORRECTS FID-019 v5 which had incomplete self-verify claims. Forthcoming user approval required before any FORGE.
+**Status:** closed / archived
 **Severity:** medium (IDE-hygiene + future-proofing; no runtime impact)
 **Opened:** 2026-07-19
 **Severity justification:** tsconfig baseUrl may shift IDE warnings into concepts the language service recomputes, but typecheck runtime is unaffected.

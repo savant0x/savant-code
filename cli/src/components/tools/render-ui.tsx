@@ -3,8 +3,11 @@ import { memo, useCallback, useEffect, useRef, useState } from 'react'
 
 import { defineToolComponent } from './types'
 import { useTheme } from '../../hooks/use-theme'
+import { glyph } from '../../utils/glyphs'
 import { safeOpen } from '../../utils/open-url'
 import { Button } from '../button'
+import { phaseMapping, statusMapping } from '../savant-ui/echo/phase-info'
+import { resolveThemeColor, type ThemeColorKey } from '../savant-ui/icon-theme-keys'
 
 import type {
   ToolBlock,
@@ -216,18 +219,23 @@ TableWidget.displayName = 'TableWidget'
 
 // ---- Card widget (for FID summaries) ---------------------------------------
 
-const SEVERITY_COLORS: Record<string, string> = {
-  critical: '#ef4444',
-  high: '#f59e0b',
-  medium: '#3b82f6',
-  low: '#6b7280',
+/**
+ * FID-033c Phase C: severity → ThemeColorKey mapping (no hardcoded hex).
+ * Sourced from the shared ChatTheme token system, not literal colors.
+ */
+const SEVERITY_COLOR_KEY: Record<string, ThemeColorKey> = {
+  critical: 'error',
+  high: 'warning',
+  medium: 'info',
+  low: 'muted',
 }
 
 const CardWidget = memo(({ widget }: { widget: CardWidgetData }) => {
   const theme = useTheme()
-  const severityColor = widget.severity
-    ? SEVERITY_COLORS[widget.severity] ?? theme.muted
-    : theme.muted
+  const severityColor = resolveThemeColor(
+    theme,
+    widget.severity ? (SEVERITY_COLOR_KEY[widget.severity] ?? 'muted') : 'muted',
+  )
 
   return (
     <box
@@ -256,13 +264,11 @@ CardWidget.displayName = 'CardWidget'
 
 // ---- Stepper widget --------------------------------------------------------
 
-const STEP_STATUS_ICONS: Record<string, { icon: string; color: (theme: ReturnType<typeof useTheme>) => string }> = {
-  pending: { icon: '○', color: (t) => t.muted },
-  active: { icon: '●', color: (t) => t.primary },
-  done: { icon: '✓', color: (t) => t.success },
-  error: { icon: '✗', color: (t) => t.error },
-}
-
+/**
+ * FID-033c Phase C: uses shared `statusMapping()` + `glyph()` from Phase B
+ * (Law 13 — eliminates the duplicate STEP_STATUS_ICONS hex table that
+ * previously existed here AND in stepper.tsx).
+ */
 const StepperWidget = memo(({ widget }: { widget: StepperWidgetData }) => {
   const theme = useTheme()
   const resolved = widget.steps.map((s, i) => ({
@@ -273,13 +279,15 @@ const StepperWidget = memo(({ widget }: { widget: StepperWidgetData }) => {
   return (
     <box flexDirection="row" alignItems="center">
       {resolved.map((step, i) => {
-        const info = STEP_STATUS_ICONS[step.status]
+        const statusInfo = statusMapping(step.status)
+        const color = resolveThemeColor(theme, statusInfo.colorKey)
+        const icon = glyph(statusInfo.glyph)
         const isLast = i === resolved.length - 1
         return (
           <box key={i} flexDirection="row">
             {!isLast && <text fg={theme.muted}> ── </text>}
-            <text fg={info.color(theme)}>
-              {info.icon} {step.label}
+            <text fg={color}>
+              {icon} {step.label}
             </text>
           </box>
         )
@@ -291,39 +299,41 @@ StepperWidget.displayName = 'StepperWidget'
 
 // ---- Badge widget ----------------------------------------------------------
 
-const BADGE_VARIANT_COLORS: Record<string, string> = {
-  open: '#18faf9',
-  closed: '#39ff14',
-  critical: '#ef4444',
-  high: '#f59e0b',
-  medium: '#3b82f6',
-  low: '#6b7280',
-  info: '#3b82f6',
-  success: '#39ff14',
-  warning: '#f59e0b',
-  error: '#ef4444',
+/**
+ * FID-033c Phase C: badge variant → ThemeColorKey (no hardcoded hex).
+ */
+const BADGE_COLOR_KEY: Record<string, ThemeColorKey> = {
+  open: 'secondary',
+  closed: 'success',
+  critical: 'error',
+  high: 'warning',
+  medium: 'info',
+  low: 'muted',
+  info: 'info',
+  success: 'success',
+  warning: 'warning',
+  error: 'error',
 }
 
 const BadgeWidget = memo(({ widget }: { widget: BadgeWidgetData }) => {
   const theme = useTheme()
-  const color = BADGE_VARIANT_COLORS[widget.variant ?? 'info'] ?? theme.muted
+  const color = resolveThemeColor(
+    theme,
+    BADGE_COLOR_KEY[widget.variant ?? 'info'] ?? 'muted',
+  )
   return <text fg={color}>[{widget.text}]</text>
 })
 BadgeWidget.displayName = 'BadgeWidget'
 
 // ---- Perfection Loop widget ------------------------------------------------
 
-const PL_PHASE_COLORS: Record<string, string> = {
-  idle: '#6b7280',
-  red: '#ef4444',
-  green: '#39ff14',
-  audit: '#eab308',
-  self_correct: '#f97316',
-  complete: '#06b6d4',
-}
-
 const PL_PHASES = ['idle', 'red', 'green', 'audit', 'self_correct', 'complete'] as const
 
+/**
+ * FID-033c Phase C: uses shared `phaseMapping()` + `glyph()` from Phase B
+ * (Law 13 — eliminates the duplicate PL_PHASE_COLORS hex table that was a
+ * copy of the phaseMapping colorKey values).
+ */
 const PerfectionLoopWidget = memo(({ widget }: { widget: PerfectionLoopWidgetData }) => {
   const theme = useTheme()
   const phaseIndex = PL_PHASES.indexOf(widget.phase as typeof PL_PHASES[number])
@@ -337,12 +347,17 @@ const PerfectionLoopWidget = memo(({ widget }: { widget: PerfectionLoopWidgetDat
         {PL_PHASES.map((p, i) => {
           const isActive = p === widget.phase
           const isPast = i < phaseIndex
+          const phaseInfo = phaseMapping(p)
           const color = isActive
-            ? PL_PHASE_COLORS[p]
+            ? resolveThemeColor(theme, phaseInfo.colorKey)
             : isPast
               ? theme.primary
               : theme.muted
-          const icon = isActive ? '●' : isPast ? '✓' : '○'
+          const icon = isActive
+            ? glyph('phaseActive')
+            : isPast
+              ? glyph('phaseComplete')
+              : glyph('phaseIdle')
           return (
             <box key={p} flexDirection="row">
               {i > 0 && <text fg={theme.muted}> ── </text>}

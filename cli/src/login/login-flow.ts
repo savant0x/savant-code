@@ -1,5 +1,6 @@
 import { AnalyticsEvent } from '@savant-code/common/constants/analytics-events'
 
+import { isDirectProviderMode } from '../utils/env'
 import { createSavantCodeApiClient } from '../utils/savant-code-api'
 
 import type {
@@ -38,6 +39,10 @@ export async function generateLoginUrl(
   deps: GenerateLoginUrlDeps,
   options: GenerateLoginUrlOptions,
 ): Promise<LoginUrlResponse> {
+  if (isDirectProviderMode()) {
+    throw new Error('Login requires the Savant Code backend, which is not available in direct-provider mode.')
+  }
+
   const { logger, apiClient: providedApiClient, trackEvent } = deps
   const { baseUrl, fingerprintId, via } = options
 
@@ -113,6 +118,10 @@ export async function pollLoginStatus(
   deps: PollLoginStatusDeps,
   options: PollLoginStatusOptions,
 ): Promise<PollLoginStatusResult> {
+  if (isDirectProviderMode()) {
+    throw new Error('Login status polling requires the Savant Code backend, which is not available in direct-provider mode.')
+  }
+
   const { sleep, logger, apiClient: providedApiClient, trackEvent } = deps
   const {
     baseUrl,

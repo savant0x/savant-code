@@ -29,6 +29,19 @@ import type {
   ProjectFileContext,
 } from '@savant-code/common/util/file'
 
+export function formatFallbackModelInfo(modelId?: string): string {
+  if (!modelId) {
+    return `# Model Information
+
+You are running on an unknown model.`
+  }
+  return `# Model Information
+
+You are running on **${modelId}**.
+
+Full metadata unavailable; the model was not found in the cached OpenRouter catalog.`
+}
+
 export function formatCurrentDate(date: Date): string {
   return new Intl.DateTimeFormat('en-US', {
     year: 'numeric',
@@ -46,6 +59,7 @@ export async function formatPrompt(
     spawnableAgents: AgentTemplateType[]
     agentTemplates: Record<string, AgentTemplate>
     intitialAgentPrompt?: string
+    modelInfoText?: string
     additionalToolDefinitions: () => Promise<
       ProjectFileContext['customToolDefinitions']
     >
@@ -62,6 +76,7 @@ export async function formatPrompt(
     spawnableAgents: _spawnableAgents,
     agentTemplates,
     intitialAgentPrompt,
+    modelInfoText,
     additionalToolDefinitions: _additionalToolDefinitions,
     logger,
   } = params
@@ -123,6 +138,8 @@ export async function formatPrompt(
     [PLACEHOLDER.USER_INPUT_PROMPT]: () => escapeString(lastUserInput ?? ''),
     [PLACEHOLDER.INITIAL_AGENT_PROMPT]: () =>
       escapeString(intitialAgentPrompt ?? ''),
+    [PLACEHOLDER.MODEL_INFO]: () =>
+      modelInfoText ?? formatFallbackModelInfo(agentTemplate?.model),
     [PLACEHOLDER.KNOWLEDGE_FILES_CONTENTS]: () =>
       Object.entries({
         ...Object.fromEntries(

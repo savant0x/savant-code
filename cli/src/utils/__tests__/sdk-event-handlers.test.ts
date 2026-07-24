@@ -197,14 +197,14 @@ describe('sdk-event-handlers', () => {
     )
     streamRefs.controller.setters.setSpawnAgentInfo('tool-1-0', {
       index: 0,
-      agentType: 'file-picker',
+      agentType: 'scout',
     })
 
     const handleEvent = createEventHandler(ctx)
     const startEvent: SubagentStartEvent = {
       type: 'subagent_start',
       agentId: 'agent-real',
-      agentType: 'savant-code/file-picker@1.0.0',
+      agentType: 'savant-code/scout@1.0.0',
       displayName: 'Agent',
       onlyChild: false,
       parentAgentId: undefined,

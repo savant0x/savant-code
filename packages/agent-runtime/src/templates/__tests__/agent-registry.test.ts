@@ -47,7 +47,7 @@ const mockStaticTemplates: Record<string, AgentTemplate> = {
     inputSchema: {},
   },
   file_picker: {
-    id: 'file_picker',
+    id: 'scout',
     displayName: 'File Picker',
     systemPrompt: 'Test',
     instructionsPrompt: 'Test',

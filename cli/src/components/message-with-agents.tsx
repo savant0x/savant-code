@@ -77,7 +77,7 @@ const AgentChildrenGrid = memo(
 
     return (
       <ErrorBoundary fallback={errorFallback} componentName="AgentChildrenGrid">
-        <box style={{ flexDirection: 'column', gap: 0, width: '100%' }}>
+        <box selectable={false} style={{ flexDirection: 'column', gap: 0, width: '100%' }}>
           {subGroups.map((group) => (
             <GridLayout
               key={getItemKey(group[0])}
@@ -219,6 +219,7 @@ export const MessageWithAgents = memo(
     return (
       <box
         key={message.id}
+        selectable={false}
         style={{
           width: '100%',
           flexDirection: 'column',
@@ -227,6 +228,7 @@ export const MessageWithAgents = memo(
         }}
       >
         <box
+          selectable={false}
           style={{
             width: '100%',
             flexDirection: 'row',
@@ -234,6 +236,7 @@ export const MessageWithAgents = memo(
         >
           {showVerticalLine ? (
             <box
+              selectable={false}
               style={{
                 flexDirection: 'row',
                 gap: 0,
@@ -254,7 +257,7 @@ export const MessageWithAgents = memo(
                   {'◆ '}
                 </text>
               )}
-              <box style={contentBoxStyle}>
+              <box selectable={false} style={contentBoxStyle}>
                 <MessageBlock
                   messageId={message.id}
                   blocks={message.blocks}
@@ -290,7 +293,7 @@ export const MessageWithAgents = memo(
               </box>
             </box>
           ) : (
-            <box style={contentBoxStyle}>
+            <box selectable={false} style={contentBoxStyle}>
               <MessageBlock
                 messageId={message.id}
                 blocks={message.blocks}
@@ -426,6 +429,7 @@ const AgentMessage = memo(
     return (
       <box
         key={message.id}
+        selectable={false}
         style={{
           flexDirection: 'column',
           gap: 0,
@@ -433,6 +437,7 @@ const AgentMessage = memo(
         }}
       >
         <box
+          selectable={false}
           style={{
             flexDirection: 'row',
             flexShrink: 0,
@@ -442,6 +447,7 @@ const AgentMessage = memo(
             <span fg={theme?.success}>{fullPrefix}</span>
           </text>
           <box
+            selectable={false}
             style={{
               flexDirection: 'column',
               gap: 0,

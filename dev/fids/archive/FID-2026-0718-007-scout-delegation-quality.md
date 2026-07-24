@@ -1,7 +1,7 @@
 # FID-2026-0718-007 — high — Scout Delegation Quality + MCP Proxy Timeout
 
 **Created:** 2026-07-18
-**Status:** Open — Ready for approval
+**Status:** closed / archived
 **Severity:** high
 **Creator:** Orchestrator (ECHO v0.2.0)
 **Source:** FID-2026-0718-006 code review finding + user request to fix MCP proxy timeout/disabled-proxy edge case

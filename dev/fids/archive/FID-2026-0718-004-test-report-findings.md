@@ -1,7 +1,7 @@
 # FID-2026-0718-004 — critical — A-Z Test Report Findings
 
 **Created:** 2026-07-18
-**Status:** Open
+**Status:** closed / archived
 **Severity:** critical
 **Creator:** Orchestrator (ECHO v0.2.0)
 **Source:** `dev/test-prompts/comprehensive-az-system-test-report.md`

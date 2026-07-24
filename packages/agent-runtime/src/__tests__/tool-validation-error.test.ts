@@ -440,6 +440,185 @@ describe('tool validation error handling', () => {
     expect(errorUserMessage).toBeDefined()
   })
 
+  it('should parse stringified agents array for spawn_agents at execution time', async () => {
+    // FID-2026-0723-004: Some models stringify the `agents` argument.
+    // The executor should JSON.parse it back into an array and emit a clear
+    // error if parsing fails or the parsed value is not an array.
+    const stringifiedAgentsToolCall: StreamChunk = {
+      type: 'tool-call',
+      toolName: 'spawn_agents',
+      toolCallId: 'spawn-agents-stringified-array',
+      input: {
+        agents:
+          '[{"agent_type":"basher","prompt":"Run tests","params":{"command":"bun test"}}]',
+      },
+    }
+
+    async function* mockStream() {
+      yield stringifiedAgentsToolCall
+      return promptSuccess('mock-message-id')
+    }
+
+    const sessionState = getInitialSessionState(mockFileContext)
+    const agentState = sessionState.mainAgentState
+    const responseChunks: (string | PrintModeEvent)[] = []
+
+    const result = await processStream({
+      ...agentRuntimeImpl,
+      agentContext: {},
+      agentState,
+      agentStepId: 'test-step-id',
+      agentTemplate: testAgentTemplate,
+      ancestorRunIds: [],
+      clientSessionId: 'test-session',
+      fileContext: mockFileContext,
+      fingerprintId: 'test-fingerprint',
+      fullResponse: '',
+      localAgentTemplates: { 'test-agent': testAgentTemplate },
+      messages: [],
+      prompt: 'test prompt',
+      repoId: undefined,
+      repoUrl: undefined,
+      runId: 'test-run-id',
+      signal: new AbortController().signal,
+      stream: mockStream(),
+      system: 'test system',
+      tools: {},
+      userId: 'test-user',
+      userInputId: 'test-input-id',
+      onCostCalculated: async () => {},
+      onResponseChunk: (chunk) => {
+        responseChunks.push(chunk)
+      },
+    })
+
+    // The agent "basher" is not a spawnable agent of testAgentTemplate, so the
+    // pre-validation should fail with a clear error. The important behavior is
+    // that the stringified agents array was parsed first and validation ran.
+    const errorEvents = responseChunks.filter(
+      (chunk): chunk is Extract<PrintModeEvent, { type: 'error' }> =>
+        typeof chunk !== 'string' && chunk.type === 'error',
+    )
+    expect(errorEvents.length).toBe(1)
+    expect(errorEvents[0].message).toContain('Failed to spawn agents')
+    expect(result.hadToolCallError).toBe(true)
+  })
+
+  it('should emit a clear error when spawn_agents agents string parses to a non-array', async () => {
+    const stringInputToolCallChunk = {
+      type: 'tool-call' as const,
+      toolName: 'spawn_agents',
+      toolCallId: 'spawn-agents-string-non-array',
+      input: {
+        agents: '{"agent_type":"basher"}',
+      },
+    }
+
+    async function* mockStream() {
+      yield stringInputToolCallChunk
+      return promptSuccess('mock-message-id')
+    }
+
+    const sessionState = getInitialSessionState(mockFileContext)
+    const agentState = sessionState.mainAgentState
+    const responseChunks: (string | PrintModeEvent)[] = []
+
+    const result = await processStream({
+      ...agentRuntimeImpl,
+      agentContext: {},
+      agentState,
+      agentStepId: 'test-step-id',
+      agentTemplate: testAgentTemplate,
+      ancestorRunIds: [],
+      clientSessionId: 'test-session',
+      fileContext: mockFileContext,
+      fingerprintId: 'test-fingerprint',
+      fullResponse: '',
+      localAgentTemplates: { 'test-agent': testAgentTemplate },
+      messages: [],
+      prompt: 'test prompt',
+      repoId: undefined,
+      repoUrl: undefined,
+      runId: 'test-run-id',
+      signal: new AbortController().signal,
+      stream: mockStream(),
+      system: 'test system',
+      tools: {},
+      userId: 'test-user',
+      userInputId: 'test-input-id',
+      onCostCalculated: async () => {},
+      onResponseChunk: (chunk) => {
+        responseChunks.push(chunk)
+      },
+    })
+
+    const errorEvents = responseChunks.filter(
+      (chunk): chunk is Extract<PrintModeEvent, { type: 'error' }> =>
+        typeof chunk !== 'string' && chunk.type === 'error',
+    )
+    expect(errorEvents.length).toBe(1)
+    expect(errorEvents[0].message).toContain('Invalid parameters for spawn_agents')
+    expect(result.hadToolCallError).toBe(true)
+  })
+
+  it('should emit a clear error when spawn_agents agents string is invalid', async () => {
+    const stringInputToolCallChunk = {
+      type: 'tool-call' as const,
+      toolName: 'spawn_agents',
+      toolCallId: 'spawn-agents-unparseable-string',
+      input: {
+        agents: '{"agent_type": "basher", "params": {',
+      },
+    }
+
+    async function* mockStream() {
+      yield stringInputToolCallChunk
+      return promptSuccess('mock-message-id')
+    }
+
+    const sessionState = getInitialSessionState(mockFileContext)
+    const agentState = sessionState.mainAgentState
+    const responseChunks: (string | PrintModeEvent)[] = []
+
+    const result = await processStream({
+      ...agentRuntimeImpl,
+      agentContext: {},
+      agentState,
+      agentStepId: 'test-step-id',
+      agentTemplate: testAgentTemplate,
+      ancestorRunIds: [],
+      clientSessionId: 'test-session',
+      fileContext: mockFileContext,
+      fingerprintId: 'test-fingerprint',
+      fullResponse: '',
+      localAgentTemplates: { 'test-agent': testAgentTemplate },
+      messages: [],
+      prompt: 'test prompt',
+      repoId: undefined,
+      repoUrl: undefined,
+      runId: 'test-run-id',
+      signal: new AbortController().signal,
+      stream: mockStream(),
+      system: 'test system',
+      tools: {},
+      userId: 'test-user',
+      userInputId: 'test-input-id',
+      onCostCalculated: async () => {},
+      onResponseChunk: (chunk) => {
+        responseChunks.push(chunk)
+      },
+    })
+
+    const errorEvents = responseChunks.filter(
+      (chunk): chunk is Extract<PrintModeEvent, { type: 'error' }> =>
+        typeof chunk !== 'string' && chunk.type === 'error',
+    )
+    expect(errorEvents.length).toBe(1)
+    expect(errorEvents[0].message).toContain('Invalid parameters for spawn_agents')
+    expect(errorEvents[0].message).toContain('Expected shape')
+    expect(result.hadToolCallError).toBe(true)
+  })
+
   it('should still emit tool_call and tool_result for valid tool calls', async () => {
     // Create an agent that has read_files tool
     const agentWithReadFiles: AgentTemplate = {
@@ -668,6 +847,140 @@ describe('tool validation error handling', () => {
         typeof chunk !== 'string' && chunk.type === 'tool_call',
     )
     expect(toolCallEvents.length).toBe(0)
+  })
+
+  it('should allow run_readonly_command in idle phase and block run_terminal_command', async () => {
+    const agentWithTerminalTools: AgentTemplate = {
+      ...testAgentTemplate,
+      toolNames: ['run_readonly_command', 'run_terminal_command', 'end_turn'],
+    }
+
+    agentRuntimeImpl.requestToolCall = async () => ({
+      output: [
+        {
+          type: 'json',
+          value: {
+            command: 'bun run typecheck',
+            stdout: 'ok',
+            stderr: '',
+            exitCode: 0,
+          },
+        },
+      ],
+    })
+
+    const sessionState = getInitialSessionState(mockFileContext)
+    const agentState = sessionState.mainAgentState
+    agentState.fsmPhase = 'idle'
+
+    const responseChunks: (string | PrintModeEvent)[] = []
+
+    async function* mockStream() {
+      yield {
+        type: 'tool-call',
+        toolName: 'run_readonly_command',
+        toolCallId: 'readonly-idle-call',
+        input: { command: 'bun run typecheck' },
+      } as StreamChunk
+      return promptSuccess('mock-message-id')
+    }
+
+    await processStream({
+      ...agentRuntimeImpl,
+      agentContext: {},
+      agentState,
+      agentStepId: 'test-step-id',
+      agentTemplate: agentWithTerminalTools,
+      ancestorRunIds: [],
+      clientSessionId: 'test-session',
+      fileContext: mockFileContext,
+      fingerprintId: 'test-fingerprint',
+      fullResponse: '',
+      localAgentTemplates: { 'test-agent': agentWithTerminalTools },
+      messages: [],
+      prompt: 'test prompt',
+      repoId: undefined,
+      repoUrl: undefined,
+      runId: 'test-run-id',
+      signal: new AbortController().signal,
+      stream: mockStream(),
+      system: 'test system',
+      tools: {},
+      userId: 'test-user',
+      userInputId: 'test-input-id',
+      onCostCalculated: async () => {},
+      onResponseChunk: (chunk) => {
+        responseChunks.push(chunk)
+      },
+    })
+
+    const readonlyToolCallEvents = responseChunks.filter(
+      (chunk): chunk is Extract<PrintModeEvent, { type: 'tool_call' }> =>
+        typeof chunk !== 'string' && chunk.type === 'tool_call' && chunk.toolName === 'run_readonly_command',
+    )
+    expect(readonlyToolCallEvents.length).toBe(1)
+
+    const readonlyErrorEvents = responseChunks.filter(
+      (chunk): chunk is Extract<PrintModeEvent, { type: 'error' }> =>
+        typeof chunk !== 'string' && chunk.type === 'error',
+    )
+    expect(readonlyErrorEvents.length).toBe(0)
+
+    // Reset and try run_terminal_command in idle phase
+    responseChunks.length = 0
+    agentState.activity = { kind: 'thinking', startedAt: Date.now() }
+
+    async function* terminalStream() {
+      yield {
+        type: 'tool-call',
+        toolName: 'run_terminal_command',
+        toolCallId: 'terminal-idle-call',
+        input: { command: 'bun run typecheck' },
+      } as StreamChunk
+      return promptSuccess('mock-message-id')
+    }
+
+    await processStream({
+      ...agentRuntimeImpl,
+      agentContext: {},
+      agentState,
+      agentStepId: 'test-step-id',
+      agentTemplate: agentWithTerminalTools,
+      ancestorRunIds: [],
+      clientSessionId: 'test-session',
+      fileContext: mockFileContext,
+      fingerprintId: 'test-fingerprint',
+      fullResponse: '',
+      localAgentTemplates: { 'test-agent': agentWithTerminalTools },
+      messages: [],
+      prompt: 'test prompt',
+      repoId: undefined,
+      repoUrl: undefined,
+      runId: 'test-run-id',
+      signal: new AbortController().signal,
+      stream: terminalStream(),
+      system: 'test system',
+      tools: {},
+      userId: 'test-user',
+      userInputId: 'test-input-id',
+      onCostCalculated: async () => {},
+      onResponseChunk: (chunk) => {
+        responseChunks.push(chunk)
+      },
+    })
+
+    const terminalToolCallEvents = responseChunks.filter(
+      (chunk): chunk is Extract<PrintModeEvent, { type: 'tool_call' }> =>
+        typeof chunk !== 'string' && chunk.type === 'tool_call' && chunk.toolName === 'run_terminal_command',
+    )
+    expect(terminalToolCallEvents.length).toBe(0)
+
+    const terminalErrorEvents = responseChunks.filter(
+      (chunk): chunk is Extract<PrintModeEvent, { type: 'error' }> =>
+        typeof chunk !== 'string' && chunk.type === 'error',
+    )
+    expect(terminalErrorEvents.length).toBe(1)
+    expect(terminalErrorEvents[0].message).toContain('only available during AUDIT or GREEN phases')
   })
 
   it('should preserve tool_call/tool_result ordering when custom tool setup is async', async () => {

@@ -1,6 +1,6 @@
 # FID-2026-0718-021 — high — README.md Quality Restoration v2 (0.0.1 → 0.0.2 Pre-Rebrand Adaptation)
 
-**Status:** RED proposing v1. Awaiting user approval of 4 inline decisions before FORGE (per ECHO Law 2). NOT modifying README yet.
+**Status:** closed / archived
 **Severity:** high (user-flagged first-impression quality regression; affects public release perception)
 **Opened:** 2026-07-19
 

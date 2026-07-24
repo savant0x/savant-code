@@ -916,6 +916,24 @@ const DEFAULT_CHAT_THEMES: Record<ThemeName, ChatTheme> = {
     // Image card
     imageCardBorder: '#64748b', // Slate-500
 
+    // Diff colors (FID-033a) — preserved from prior diff-viewer DIFF_LINE_COLORS.dark
+    diffAdded: '#7ACC35',      // Soft green — was hardcoded in diff-viewer.tsx
+    diffRemoved: '#BF6C69',    // Muted red — was hardcoded in diff-viewer.tsx
+    diffContext: '#e2e8f0',    // Slate-200 — unchanged lines use foreground
+    diffHunkHeader: '#18faf9', // Cyan — was 'cyan' literal in diff-viewer.tsx
+    diffMeta: '#64748b',       // Slate-500 — was theme.muted in diff-viewer.tsx
+
+    // Syntax highlighting tokens (FID-033a) — fed to OpenTUI SyntaxStyle.
+    // Mapping pattern adapted from opencode-dev generateSyntax (theme/index.ts:556).
+    syntaxComment: '#64748b',   // Slate-500 — muted, matches textMuted convention
+    syntaxKeyword: '#c084fc',   // Violet-400 — ansiColors.magenta equivalent
+    syntaxFunction: '#60a5fa',  // Blue-400 — ansiColors.blue equivalent
+    syntaxVariable: '#e2e8f0',  // Slate-200 — foreground (variable = fg)
+    syntaxString: '#4ade80',    // Green-400 — ansiColors.green equivalent
+    syntaxNumber: '#fbbf24',    // Amber-400 — ansiColors.yellow equivalent
+    syntaxType: '#22d3ee',      // Cyan-400 — ansiColors.cyan equivalent
+    syntaxOperator: '#22d3ee',  // Cyan-400 — ansiColors.cyan equivalent
+
     // Markdown
     markdown: {
       codeBackground: '#1e293b',  // Slate-800
@@ -979,6 +997,24 @@ const DEFAULT_CHAT_THEMES: Record<ThemeName, ChatTheme> = {
 
     // Image card
     imageCardBorder: '#64748b', // Slate-500
+
+    // Diff colors (FID-033a) — preserved from prior diff-viewer DIFF_LINE_COLORS.light
+    diffAdded: '#4A9E1C',      // Readable green on white — was hardcoded in diff-viewer.tsx
+    diffRemoved: '#C53030',    // Readable red on white — was hardcoded in diff-viewer.tsx
+    diffContext: '#0f172a',    // Slate-900 — unchanged lines use foreground
+    diffHunkHeader: '#0891b2', // Cyan-600 — light-mode primary
+    diffMeta: '#64748b',       // Slate-500 — muted
+
+    // Syntax highlighting tokens (FID-033a) — light-mode readable equivalents.
+    // Mapping pattern adapted from opencode-dev generateSyntax (theme/index.ts:556).
+    syntaxComment: '#64748b',   // Slate-500 — muted
+    syntaxKeyword: '#7c3aed',   // Violet-600 — readable magenta on white
+    syntaxFunction: '#2563eb',  // Blue-600 — readable blue on white
+    syntaxVariable: '#0f172a',  // Slate-900 — foreground
+    syntaxString: '#059669',    // Emerald-600 — readable green on white
+    syntaxNumber: '#d97706',    // Amber-600 — readable yellow on white
+    syntaxType: '#0891b2',      // Cyan-600 — readable cyan on white
+    syntaxOperator: '#0891b2',  // Cyan-600 — readable cyan on white
 
     // Markdown
     markdown: {

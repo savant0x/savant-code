@@ -1,4 +1,5 @@
 import { CHATGPT_OAUTH_ENABLED } from '@savant-code/common/constants/chatgpt-oauth'
+import { runTerminalCommand } from '@savant-code/sdk'
 import { safeOpen } from '../utils/open-url'
 
 import { handleAdsEnable, handleAdsDisable } from './ads'
@@ -187,7 +188,6 @@ const SAVANT_FREE_REMOVED_COMMANDS = new Set([
   'subscribe',
   'image',
   'publish',
-  'gpt-5-agent',
 ])
 
 const SAVANT_FREE_ONLY_COMMANDS = new Set([
@@ -284,21 +284,6 @@ const ALL_COMMANDS: CommandDefinition[] = [
     },
   }),
   defineCommand({
-    name: 'login',
-    aliases: ['signin'],
-    handler: (params) => {
-      params.setMessages((prev) => [
-        ...prev,
-        getSystemMessage(
-          "You're already in the app. Use /logout to switch accounts.",
-        ),
-      ])
-      clearInput(params)
-      // FID-2026-0718-010 D3: slash-command bridges resetUiToIdle when idle.
-      resetUiToIdleAfterSlashCommand()
-    },
-  }),
-  defineCommand({
     name: 'logout',
     aliases: ['signout'],
     handler: (params) => {
@@ -328,6 +313,86 @@ const ALL_COMMANDS: CommandDefinition[] = [
     aliases: ['quit', 'q'],
     handler: () => {
       process.kill(process.pid, 'SIGINT')
+    },
+  }),
+  defineCommandWithArgs({
+    name: 'verify',
+    aliases: ['typecheck', 'check'],
+    handler: async (params, args) => {
+      const trimmedArgs = args.trim().toLowerCase()
+
+      const workspaceMap: Record<string, string> = {
+        sdk: 'sdk',
+        common: 'common',
+        'agent-runtime': 'packages/agent-runtime',
+        cli: 'cli',
+      }
+
+      const workspaces =
+        trimmedArgs === ''
+          ? Object.entries(workspaceMap)
+          : [[trimmedArgs, workspaceMap[trimmedArgs]]]
+
+      if (!workspaces.length || workspaces.some(([, dir]) => !dir)) {
+        params.setMessages((prev) => [
+          ...prev,
+          getUserMessage(params.inputValue.trim()),
+          getSystemMessage(
+            'Usage: /verify [sdk|common|agent-runtime|cli]',
+          ),
+        ])
+        params.saveToHistory(params.inputValue.trim())
+        clearInput(params)
+        return
+      }
+
+      params.saveToHistory(params.inputValue.trim())
+      clearInput(params)
+
+      const results = await Promise.all(
+        workspaces.map(async ([name, dir]) => {
+          try {
+            const [{ value }] = await runTerminalCommand({
+              command: 'bun run typecheck',
+              process_type: 'SYNC',
+              cwd: dir,
+              timeout_seconds: 120,
+            })
+            const stdout = 'stdout' in value ? value.stdout || '' : ''
+            const stderr = 'stderr' in value ? value.stderr || '' : ''
+            const exitCode = 'exitCode' in value ? value.exitCode ?? 1 : 1
+            return { name, exitCode, stdout, stderr }
+          } catch (error) {
+            return {
+              name,
+              exitCode: 1,
+              stdout: '',
+              stderr: error instanceof Error ? error.message : String(error),
+            }
+          }
+        }),
+      )
+
+      const allPassed = results.every((r) => r.exitCode === 0)
+      const summary = results
+        .map((r) => {
+          const status = r.exitCode === 0 ? 'PASS' : 'FAIL'
+          const detail =
+            r.exitCode === 0
+              ? 'No TypeScript errors'
+              : `exit ${r.exitCode}\n${(r.stderr || r.stdout).slice(0, 300)}`
+          return `${r.name}: ${status}\n${detail}`
+        })
+        .join('\n\n')
+
+      const overall = allPassed
+        ? '✅ All typechecks passed'
+        : '❌ Some typechecks failed'
+
+      params.setMessages((prev) => [
+        ...prev,
+        getSystemMessage(`${overall}\n\n${summary}`),
+      ])
     },
   }),
   defineCommandWithArgs({
@@ -533,19 +598,6 @@ const ALL_COMMANDS: CommandDefinition[] = [
       return { openPublishMode: true }
     },
   }),
-  defineCommand({
-    name: 'gpt-5-agent',
-    handler: (params) => {
-      // Insert @ GPT-5 Agent into the input field (UI shortcut, not a real command)
-      params.setInputValue({
-        text: '@GPT-5 Agent ',
-        cursorPosition: '@GPT-5 Agent '.length,
-        lastEditDueToNav: false,
-      })
-      params.inputRef.current?.focus()
-      // Don't save to history - this is just a UI shortcut
-    },
-  }),
   ...(CHATGPT_OAUTH_ENABLED
     ? [
         defineCommand({
@@ -697,38 +749,52 @@ export function findCommand(cmd: string): CommandDefinition | undefined {
     return defineCommandWithArgs({
       name: 'dev',
       handler: (params, args) => {
-        const trimmedArgs = args.trim()
-        const DEV_PASSPHRASE = 'echo-alpha-7749'
+        const trimmedArgs = args.trim().toLowerCase()
+        const devModeActive = useChatStore.getState().devMode
 
-        // /dev off — deactivate (no passphrase needed if already active)
-        if (trimmedArgs === 'off' && useChatStore.getState().devMode) {
-          useChatStore.getState().setDevMode(false)
-          params.setMessages((prev) => [
-            ...prev,
-            getSystemMessage('Dev override deactivated.'),
-          ])
+        // /dev off — deactivate
+        if (trimmedArgs === 'off') {
+          if (devModeActive) {
+            useChatStore.getState().setDevMode(false)
+            params.setMessages((prev) => [
+              ...prev,
+              getSystemMessage('Dev override deactivated.'),
+            ])
+          } else {
+            params.setMessages((prev) => [
+              ...prev,
+              getSystemMessage('Dev override is already off.'),
+            ])
+          }
           params.saveToHistory(params.inputValue.trim())
           clearInput(params)
           return
         }
 
-        // /dev <passphrase> — activate
-        if (trimmedArgs === DEV_PASSPHRASE) {
-          useChatStore.getState().setDevMode(true)
-          params.setMessages((prev) => [
-            ...prev,
-            getSystemMessage('Dev override activated.'),
-          ])
+        // /dev on — activate (no passphrase required)
+        if (trimmedArgs === 'on' || trimmedArgs === '') {
+          if (devModeActive) {
+            params.setMessages((prev) => [
+              ...prev,
+              getSystemMessage('Dev override is already active.'),
+            ])
+          } else {
+            useChatStore.getState().setDevMode(true)
+            params.setMessages((prev) => [
+              ...prev,
+              getSystemMessage('Dev override activated.'),
+            ])
+          }
           params.saveToHistory(params.inputValue.trim())
           clearInput(params)
           return
         }
 
-        // Wrong passphrase — indistinguishable from unknown command
+        // Unknown /dev subcommand
         params.setMessages((prev) => [
           ...prev,
           getUserMessage(params.inputValue.trim()),
-          getSystemMessage(`Command not found: ${JSON.stringify(params.inputValue.trim())}`),
+          getSystemMessage(`Unknown /dev subcommand: ${trimmedArgs}. Use "/dev on" or "/dev off".`),
         ])
         params.saveToHistory(params.inputValue.trim())
         clearInput(params)

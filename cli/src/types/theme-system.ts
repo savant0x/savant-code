@@ -133,6 +133,56 @@ export interface ChatTheme {
   imageCardBorder: string
 
   // ============================================================================
+  // DIFF COLORS (FID-033a)
+  // Powers diff-viewer.tsx and DiffRenderable in Phase C.
+  // ============================================================================
+
+  /** Added line color (lines starting with `+`) */
+  diffAdded: string
+
+  /** Removed line color (lines starting with `-`) */
+  diffRemoved: string
+
+  /** Context (unchanged) line color */
+  diffContext: string
+
+  /** Hunk header color (lines starting with `@@`) */
+  diffHunkHeader: string
+
+  /** Meta line color (`diff `, `index `, `---`, `+++` headers) */
+  diffMeta: string
+
+  // ============================================================================
+  // SYNTAX HIGHLIGHTING TOKENS (FID-033a)
+  // Tree-sitter scope -> color mappings fed to OpenTUI SyntaxStyle.
+  // See cli/src/utils/syntax-theme.ts createSyntaxStyle().
+  // ============================================================================
+
+  /** Comment / doc text scope */
+  syntaxComment: string
+
+  /** Keyword scope (if, for, return, const, etc.) */
+  syntaxKeyword: string
+
+  /** Function name scope */
+  syntaxFunction: string
+
+  /** String literal scope */
+  syntaxString: string
+
+  /** Numeric literal scope */
+  syntaxNumber: string
+
+  /** Variable identifier scope */
+  syntaxVariable: string
+
+  /** Type / class / interface scope */
+  syntaxType: string
+
+  /** Operator / punctuation scope */
+  syntaxOperator: string
+
+  // ============================================================================
   // MARKDOWN
   // ============================================================================
 

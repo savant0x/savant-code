@@ -126,9 +126,9 @@ describe('Schema handling error recovery', () => {
   describe('direct subagent tool names', () => {
     test('uses underscored tool aliases while preserving hyphenated agent IDs', () => {
       const transformed = tryTransformAgentToolCall({
-        toolName: 'file_picker',
+        toolName: 'scout',
         input: { prompt: 'Find relevant files' },
-        spawnableAgents: ['savant-code/file-picker@1.0.0'],
+        spawnableAgents: ['savant-code/scout@1.0.0'],
       })
 
       expect(transformed).toEqual({
@@ -136,7 +136,7 @@ describe('Schema handling error recovery', () => {
         input: {
           agents: [
             {
-              agent_type: 'savant-code/file-picker@1.0.0',
+              agent_type: 'savant-code/scout@1.0.0',
               prompt: 'Find relevant files',
             },
           ],

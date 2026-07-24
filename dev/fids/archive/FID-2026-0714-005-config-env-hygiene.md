@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0714-005-config-env-hygiene.md`
 **ID:** FID-2026-0714-005
 **Severity:** low
-**Status:** created
+**Status:** closed / archived
 **Created:** 2026-07-14 02:30
 **Author:** ECHO Agent (Kilo)
 

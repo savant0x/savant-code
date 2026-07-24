@@ -1284,12 +1284,12 @@ describe('createAgentBlock', () => {
   test('creates an agent block with required fields', () => {
     const block = createAgentBlock({
       agentId: 'agent-1',
-      agentType: 'file-picker',
+      agentType: 'scout',
     })
 
     expect(block.type).toBe('agent')
     expect(block.agentId).toBe('agent-1')
-    expect(block.agentType).toBe('file-picker')
+    expect(block.agentType).toBe('scout')
     expect(block.status).toBe('running')
     expect(block.content).toBe('')
   })
@@ -1297,7 +1297,7 @@ describe('createAgentBlock', () => {
   test('includes optional prompt', () => {
     const block = createAgentBlock({
       agentId: 'agent-1',
-      agentType: 'file-picker',
+      agentType: 'scout',
       prompt: 'Find files',
     })
 
@@ -1307,7 +1307,7 @@ describe('createAgentBlock', () => {
   test('includes optional params', () => {
     const block = createAgentBlock({
       agentId: 'agent-1',
-      agentType: 'file-picker',
+      agentType: 'scout',
       params: { path: '/src' },
     })
 
@@ -1317,15 +1317,15 @@ describe('createAgentBlock', () => {
 
 describe('getAgentBaseName', () => {
   test('extracts base name from scoped versioned name', () => {
-    expect(getAgentBaseName('savant-code/file-picker@0.0.2')).toBe('file-picker')
+    expect(getAgentBaseName('savant-code/scout@0.0.2')).toBe('scout')
   })
 
   test('extracts base name from simple versioned name', () => {
-    expect(getAgentBaseName('file-picker@1.0.0')).toBe('file-picker')
+    expect(getAgentBaseName('scout@1.0.0')).toBe('scout')
   })
 
   test('returns simple name unchanged', () => {
-    expect(getAgentBaseName('file-picker')).toBe('file-picker')
+    expect(getAgentBaseName('scout')).toBe('scout')
   })
 
   test('normalizes direct tool aliases to canonical agent names', () => {
@@ -1336,20 +1336,20 @@ describe('getAgentBaseName', () => {
 describe('agentTypesMatch', () => {
   test('matches same base names with different versions', () => {
     expect(
-      getAgentBaseName('savant-code/file-picker@0.0.2') ===
-        getAgentBaseName('file-picker@1.0.0'),
+      getAgentBaseName('savant-code/scout@0.0.2') ===
+        getAgentBaseName('scout@1.0.0'),
     ).toBe(true)
   })
 
   test('matches same simple names', () => {
     expect(
-      getAgentBaseName('file-picker') === getAgentBaseName('file-picker'),
+      getAgentBaseName('scout') === getAgentBaseName('scout'),
     ).toBe(true)
   })
 
   test('does not match different base names', () => {
     expect(
-      getAgentBaseName('file-picker') === getAgentBaseName('code-searcher'),
+      getAgentBaseName('scout') === getAgentBaseName('code-searcher'),
     ).toBe(false)
   })
 })
@@ -1529,7 +1529,7 @@ describe('appendInterruptionNotice', () => {
 describe('createSpawnAgentBlocks', () => {
   test('creates agent blocks from spawn_agents input', () => {
     const agents = [
-      { agent_type: 'file-picker', prompt: 'Find files' },
+      { agent_type: 'scout', prompt: 'Find files' },
       { agent_type: 'code-searcher', prompt: 'Search code' },
     ]
 
@@ -1543,7 +1543,7 @@ describe('createSpawnAgentBlocks', () => {
 
   test('filters out hidden agents', () => {
     const agents = [
-      { agent_type: 'file-picker' },
+      { agent_type: 'scout' },
       { agent_type: 'savant-code/context-pruner' }, // This should be hidden
     ]
 
@@ -1556,7 +1556,7 @@ describe('createSpawnAgentBlocks', () => {
 
 describe('isSpawnAgentsResult', () => {
   test('returns true for spawn_agents result structure', () => {
-    const output = [{ agentName: 'file-picker', value: 'result' }]
+    const output = [{ agentName: 'scout', value: 'result' }]
 
     expect(isSpawnAgentsResult(output)).toBe(true)
   })

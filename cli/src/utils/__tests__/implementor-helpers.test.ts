@@ -610,7 +610,7 @@ describe('isImplementorAgent', () => {
   })
 
   test('rejects non-implementor agents', () => {
-    expect(isImplementorAgent({ agentType: 'file-picker', blocks: [] })).toBe(
+    expect(isImplementorAgent({ agentType: 'scout', blocks: [] })).toBe(
       false,
     )
     expect(isImplementorAgent({ agentType: 'commander', blocks: [] })).toBe(
@@ -681,7 +681,7 @@ describe('getImplementorIndex', () => {
       type: 'agent',
       agentId: 'fp1',
       agentName: 'File Picker',
-      agentType: 'file-picker',
+      agentType: 'scout',
       content: '',
       status: 'complete',
       blocks: [],
@@ -873,7 +873,7 @@ describe('groupConsecutiveImplementors', () => {
       createImplementorAgent('impl-1'),
       createImplementorAgent('impl-2', 'editor-implementor-opus'),
       createImplementorAgent('impl-3', 'editor-implementor-gpt-5'),
-      createNonImplementorAgent('fp-1', 'file-picker'),
+      createNonImplementorAgent('fp-1', 'scout'),
     ]
     const result = groupConsecutiveImplementors(blocks, 0)
 
@@ -910,7 +910,7 @@ describe('groupConsecutiveImplementors', () => {
 
   test('returns empty group when starting at non-implementor', () => {
     const blocks: ContentBlock[] = [
-      createNonImplementorAgent('fp-1', 'file-picker'),
+      createNonImplementorAgent('fp-1', 'scout'),
       createImplementorAgent('impl-1'),
     ]
     const result = groupConsecutiveImplementors(blocks, 0)
@@ -989,7 +989,7 @@ describe('groupConsecutiveNonImplementorAgents', () => {
 
   test('groups consecutive non-implementor agents', () => {
     const blocks: ContentBlock[] = [
-      createNonImplementorAgent('fp-1', 'file-picker'),
+      createNonImplementorAgent('fp-1', 'scout'),
       createNonImplementorAgent('cmd-1', 'commander'),
       createNonImplementorAgent('cs-1', 'code-searcher'),
       createImplementorAgent('impl-1'),
@@ -997,7 +997,7 @@ describe('groupConsecutiveNonImplementorAgents', () => {
     const result = groupConsecutiveNonImplementorAgents(blocks, 0)
 
     expect(result.group).toHaveLength(3)
-    expect(result.group[0].agentType).toBe('file-picker')
+    expect(result.group[0].agentType).toBe('scout')
     expect(result.group[1].agentType).toBe('commander')
     expect(result.group[2].agentType).toBe('code-searcher')
     expect(result.nextIndex).toBe(3)
@@ -1005,7 +1005,7 @@ describe('groupConsecutiveNonImplementorAgents', () => {
 
   test('stops at implementor agent', () => {
     const blocks: ContentBlock[] = [
-      createNonImplementorAgent('fp-1', 'file-picker'),
+      createNonImplementorAgent('fp-1', 'scout'),
       createImplementorAgent('impl-1'),
       createNonImplementorAgent('cmd-1', 'commander'),
     ]
@@ -1017,7 +1017,7 @@ describe('groupConsecutiveNonImplementorAgents', () => {
 
   test('stops at non-agent block', () => {
     const blocks: ContentBlock[] = [
-      createNonImplementorAgent('fp-1', 'file-picker'),
+      createNonImplementorAgent('fp-1', 'scout'),
       createTextBlock('some text'),
       createNonImplementorAgent('cmd-1', 'commander'),
     ]
@@ -1030,7 +1030,7 @@ describe('groupConsecutiveNonImplementorAgents', () => {
   test('returns empty group when starting at implementor', () => {
     const blocks: ContentBlock[] = [
       createImplementorAgent('impl-1'),
-      createNonImplementorAgent('fp-1', 'file-picker'),
+      createNonImplementorAgent('fp-1', 'scout'),
     ]
     const result = groupConsecutiveNonImplementorAgents(blocks, 0)
 
@@ -1041,7 +1041,7 @@ describe('groupConsecutiveNonImplementorAgents', () => {
   test('returns empty group when starting at text block', () => {
     const blocks: ContentBlock[] = [
       createTextBlock('some text'),
-      createNonImplementorAgent('fp-1', 'file-picker'),
+      createNonImplementorAgent('fp-1', 'scout'),
     ]
     const result = groupConsecutiveNonImplementorAgents(blocks, 0)
 
@@ -1052,23 +1052,23 @@ describe('groupConsecutiveNonImplementorAgents', () => {
   test('groups from middle of array', () => {
     const blocks: ContentBlock[] = [
       createImplementorAgent('impl-1'),
-      createNonImplementorAgent('fp-1', 'file-picker'),
+      createNonImplementorAgent('fp-1', 'scout'),
       createNonImplementorAgent('cmd-1', 'commander'),
       createTextBlock('done'),
     ]
     const result = groupConsecutiveNonImplementorAgents(blocks, 1)
 
     expect(result.group).toHaveLength(2)
-    expect(result.group[0].agentType).toBe('file-picker')
+    expect(result.group[0].agentType).toBe('scout')
     expect(result.group[1].agentType).toBe('commander')
     expect(result.nextIndex).toBe(3)
   })
 
   test('handles mixed agent types', () => {
     const blocks: ContentBlock[] = [
-      createNonImplementorAgent('fp-1', 'file-picker'),
+      createNonImplementorAgent('fp-1', 'scout'),
       createNonImplementorAgent('think-1', 'thinker'),
-      createNonImplementorAgent('rev-1', 'reviewer'),
+      createNonImplementorAgent('rev-1', 'verifier'),
     ]
     const result = groupConsecutiveNonImplementorAgents(blocks, 0)
 
@@ -1356,7 +1356,7 @@ describe('groupConsecutiveToolBlocks', () => {
       type: 'agent',
       agentId: id,
       agentName: 'Test Agent',
-      agentType: 'file-picker',
+      agentType: 'scout',
       content: '',
       status: 'complete',
       blocks: [],

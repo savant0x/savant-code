@@ -577,7 +577,7 @@ describe('Local Agent Integration', () => {
           version: '1.2.3',
           publisher: 'test-publisher',
           toolNames: ['read_files', 'write_file', 'run_terminal_command'],
-          spawnableAgents: ['savant-code/file-picker@0.0.1'],
+          spawnableAgents: ['savant-code/scout@0.0.1'],
           systemPrompt: 'You are a helpful assistant.',
           instructionsPrompt: 'Follow these instructions carefully.',
           stepPrompt: 'Think step by step.',
@@ -614,7 +614,7 @@ describe('Local Agent Integration', () => {
     expect(fullAgent!.version).toBe('1.2.3')
     expect(fullAgent!.publisher).toBe('test-publisher')
     expect(fullAgent!.toolNames).toContain('read_files')
-    expect(fullAgent!.spawnableAgents).toContain('savant-code/file-picker@0.0.1')
+    expect(fullAgent!.spawnableAgents).toContain('savant-code/scout@0.0.1')
     expect(fullAgent!.systemPrompt).toBe('You are a helpful assistant.')
     expect(fullAgent!.instructionsPrompt).toBe(
       'Follow these instructions carefully.',

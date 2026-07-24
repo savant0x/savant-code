@@ -144,10 +144,33 @@ export const handleGravityIndex = (async (params: {
         },
         'Gravity Index returned error',
       )
+
+    const rawError = (() => {
+      if (typeof webApi.error === 'string') return webApi.error
+      if (webApi.error == null) return 'Invalid Gravity Index response'
+      try {
+        return JSON.stringify(webApi.error)
+      } catch {
+        return 'Gravity Index returned a non-serializable error'
+      }
+    })()
+    const lower = rawError.toLowerCase()
+
+      let errorMessage: string
+      if (lower.includes('base url') || lower.includes('missing savantcode')) {
+        errorMessage = `[CONFIG_ERROR] Gravity Index failed: ${rawError}. Verify the SavantCode app URL is configured and the SAVANT_CODE_API_KEY is set.`
+      } else if (lower.includes('api key') || lower.includes('authorization') || lower.includes('unauthorized')) {
+        errorMessage = `[CREDENTIALS_ERROR] Gravity Index failed: ${rawError}. Verify the SAVANT_CODE_API_KEY is set and valid.`
+      } else if (lower.includes('network error') || lower.includes('fetch') || lower.includes('enetunreach') || lower.includes('econnrefused')) {
+        errorMessage = `[NETWORK_ERROR] Gravity Index failed: ${rawError}. Check that the SavantCode web API is reachable from this environment.`
+      } else if (lower.includes('timeout')) {
+        errorMessage = `[TIMEOUT_ERROR] Gravity Index timed out. Retry or check the SavantCode web API health.`
+      } else {
+        errorMessage = `[API_ERROR] Gravity Index failed: ${rawError}. If this persists, check the SavantCode web API logs or contact support.`
+      }
+
       return {
-        output: jsonToolResult({
-          errorMessage: webApi.error ?? 'Invalid Gravity Index response',
-        }),
+        output: jsonToolResult({ errorMessage }),
         creditsUsed,
       }
     }
@@ -175,9 +198,8 @@ export const handleGravityIndex = (async (params: {
       creditsUsed,
     }
   } catch (error) {
-    const errorMessage = `Error calling Gravity Index action "${action}": ${
-      error instanceof Error ? error.message : 'Unknown error'
-    }`
+    const rawMessage = error instanceof Error ? error.message : 'Unknown error'
+    const errorMessage = `[RUNTIME_ERROR] Gravity Index action "${action}" threw an exception: ${rawMessage}. This is not a network issue. Check the SavantCode web API configuration and server health.`
     logger.error(
       {
         ...gravityContext,

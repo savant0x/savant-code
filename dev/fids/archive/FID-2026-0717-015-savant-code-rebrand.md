@@ -3,7 +3,7 @@
 **Filename:** `FID-savant-code-rebrand.md`
 **ID:** `FID-savant-code-rebrand`
 **Severity:** high
-**Status:** open
+**Status:** closed / archived
 **Created:** 2026-07-17 13:00
 **Author:** Orchestrator
 

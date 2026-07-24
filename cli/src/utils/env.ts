@@ -81,19 +81,25 @@ export const getCliEnv = (): CliEnv => ({
   SAVANT_CODE_SHIP_LOGS: process.env.SAVANT_CODE_SHIP_LOGS,
   SAVANT_FREE_MODE: process.env.SAVANT_FREE_MODE,
   DIRECT_PROVIDER: process.env.DIRECT_PROVIDER,
+  INFERENCE_BASE_URL: process.env.INFERENCE_BASE_URL,
 })
 
 /**
  * Whether the CLI is running in direct-provider mode (no SavantCode backend).
- * Set DIRECT_PROVIDER=<provider> (e.g. "openrouter") to launch against a
- * provider directly. When enabled, the CLI skips backend connection pings
- * and agent/validate calls; agents are bundled locally and inference routes
- * via INFERENCE_BASE_URL. The backend integration path is untouched, so
- * flipping this off (and pointing NEXT_PUBLIC_SAVANT_CODE_APP_URL at a backend)
- * restores full backend mode with zero code rework.
+ * Set DIRECT_PROVIDER=<provider> (e.g. "openrouter") or INFERENCE_BASE_URL
+ * to launch against a provider directly. When enabled, the CLI skips backend
+ * connection pings and agent/validate calls; agents are bundled locally and
+ * inference routes via INFERENCE_BASE_URL. The backend integration path is
+ * untouched, so flipping this off (and pointing NEXT_PUBLIC_SAVANT_CODE_APP_URL
+ * at a backend) restores full backend mode with zero code rework.
  */
-export const isDirectProviderMode = (): boolean =>
-  (getCliEnv().DIRECT_PROVIDER ?? '').trim().length > 0
+export const isDirectProviderMode = (): boolean => {
+  const env = getCliEnv()
+  return (
+    (env.DIRECT_PROVIDER ?? '').trim().length > 0 ||
+    (env.INFERENCE_BASE_URL ?? '').trim().length > 0
+  )
+}
 
 /**
  * Get the raw system process.env object.

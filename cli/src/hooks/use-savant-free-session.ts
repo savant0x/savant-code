@@ -17,6 +17,7 @@ import {
 import { useSavantFreeSessionStore } from '../state/savant-free-session-store'
 import { getAuthTokenDetails } from '../utils/auth'
 import { IS_SAVANT_FREE } from '../utils/constants'
+import { isDirectProviderMode } from '../utils/env'
 import { logger } from '../utils/logger'
 import {
   isSavantFreeInstanceOwnedByDeadLocalProcess,
@@ -82,6 +83,10 @@ async function callSession(
   token: string,
   opts: { instanceId?: string; model?: string; signal?: AbortSignal } = {},
 ): Promise<SavantFreeSession> {
+  if (isDirectProviderMode()) {
+    return { status: 'none' }
+  }
+
   const headers: Record<string, string> = { Authorization: `Bearer ${token}` }
   if (method === 'GET' && opts.instanceId) {
     headers[SAVANT_FREE_INSTANCE_HEADER] = opts.instanceId
@@ -449,7 +454,8 @@ export function useSavantFreeSession(): UseSavantFreeSessionResult {
   useEffect(() => {
     const { setSession, setError } = useSavantFreeSessionStore.getState()
 
-    if (!IS_SAVANT_FREE) {
+    if (!IS_SAVANT_FREE || isDirectProviderMode()) {
+
       // Non-savant-free (SavantCode) builds never gate on a free session; leave the
       // store empty (app.tsx's session routing is all behind IS_SAVANT_FREE).
       setSession(null)

@@ -6,6 +6,7 @@ import { z } from 'zod'
 
 
 import { getConfigDir as getConfigDirBase } from './config-dir'
+import { isDirectProviderMode } from './env'
 import { logger } from './logger'
 import { getApiClient, setApiClientAuthToken } from './savant-code-api'
 
@@ -93,7 +94,7 @@ export const getUserCredentials = (): User | null => {
   }
 }
 
-export type AuthTokenSource = 'credentials' | 'environment' | null
+export type AuthTokenSource = 'credentials' | 'environment' | 'direct-provider-bypass' | null
 
 export interface AuthTokenDetails {
   token?: string
@@ -116,16 +117,16 @@ export const getAuthTokenDetails = (
     return { token: envToken, source: 'environment' }
   }
 
-  // Dev-mode bypass: when INFERENCE_BASE_URL is set (no SavantCode backend),
-  // and no credentials are present, return a stub token so the CLI can boot.
-  const inferenceBaseUrl = process.env['INFERENCE_BASE_URL']
-  if (inferenceBaseUrl) {
+  // Dev-mode bypass: when running against a direct provider (gateway or
+  // INFERENCE_BASE_URL), no SavantCode backend auth is required. Return a stub
+  // token so the CLI can boot and the SDK client can be initialized.
+  if (isDirectProviderMode()) {
     logger.warn(
-      'No auth credentials found; running in dev-mode bypass with stub token',
+      'No auth credentials found; running in direct-provider mode with stub token',
     )
     return {
-      token: 'dev-local-bypass-token',
-      source: 'environment',
+      token: 'stub_bypass_dev_local',
+      source: 'direct-provider-bypass',
     }
   }
 
@@ -216,6 +217,12 @@ export const clearUserCredentials = (): void => {
 }
 
 export async function logoutUser(): Promise<boolean> {
+  // In direct-provider mode there is no backend session to terminate.
+  if (isDirectProviderMode()) {
+    clearUserCredentials()
+    return true
+  }
+
   try {
     const user = getUserCredentials()
     if (user?.authToken) {

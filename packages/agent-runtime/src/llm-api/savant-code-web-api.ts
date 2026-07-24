@@ -36,6 +36,9 @@ const getNumberField = (value: JSONValue, key: string): number | undefined => {
   return typeof field === 'number' ? field : undefined
 }
 
+const isDirectProviderModeRuntime = (): boolean =>
+  (process.env.DIRECT_PROVIDER ?? '').trim().length > 0
+
 const callSavantCodeV1 = async (params: {
   endpoint:
     | '/api/v1/web-search'
@@ -49,6 +52,10 @@ const callSavantCodeV1 = async (params: {
   apiKey?: string
   requestName: 'web-search' | 'docs-search' | 'gravity-index'
 }): Promise<{ json?: JSONValue; error?: string; creditsUsed?: number }> => {
+  if (isDirectProviderModeRuntime()) {
+    return { error: 'SavantCode backend services are unavailable in direct-provider mode.' }
+  }
+
   const { endpoint, payload, fetch, logger, env, requestName } = params
   const baseUrl = params.baseUrl ?? env.clientEnv.NEXT_PUBLIC_SAVANT_CODE_APP_URL
   const apiKey = params.apiKey ?? env.ciEnv.SAVANT_CODE_API_KEY
@@ -278,6 +285,10 @@ export async function callTokenCountAPI(params: {
   baseUrl?: string
   apiKey?: string
 }): Promise<{ inputTokens?: number; error?: string }> {
+  if (isDirectProviderModeRuntime()) {
+    return { error: 'Token counting via the SavantCode backend is unavailable in direct-provider mode.' }
+  }
+
   const { messages, system, model, tools, fetch, logger, env } = params
   const baseUrl = params.baseUrl ?? env.clientEnv.NEXT_PUBLIC_SAVANT_CODE_APP_URL
   const apiKey = params.apiKey ?? env.ciEnv.SAVANT_CODE_API_KEY

@@ -33,6 +33,9 @@ export type CreateRunConfigParams = {
   onFileWritten?: OnFileWrittenCallback
   /** Dev override flag — bypasses all FSM tool gating and agent tool restrictions. */
   devMode?: boolean
+  /** Optional pre-formatted model metadata block injected into the agent
+   *  system prompt via the {SAVANT_CODE_MODEL_INFO} placeholder. */
+  modelInfoText?: string
 }
 
 const SENSITIVE_EXTENSIONS = new Set([
@@ -112,6 +115,7 @@ export const createRunConfig = (params: CreateRunConfigParams) => {
     onStateSnapshot,
     onFileWritten,
     devMode,
+    modelInfoText,
   } = params
 
   return {
@@ -129,6 +133,7 @@ export const createRunConfig = (params: CreateRunConfigParams) => {
     onStateSnapshot,
     onFileWritten,
     devMode,
+    modelInfoText,
     fileFilter: ((filePath: string) => {
       if (isSensitiveFile(filePath)) return { status: 'blocked' }
       if (isEnvTemplateFile(filePath)) return { status: 'allow-example' }

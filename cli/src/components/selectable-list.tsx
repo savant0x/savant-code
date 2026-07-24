@@ -160,6 +160,7 @@ export const SelectableList = forwardRef<
           return (
             <box
               key={item.id}
+              selectable={false}
               style={{
                 flexDirection: 'row',
                 width: '100%',

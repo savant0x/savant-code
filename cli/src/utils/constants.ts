@@ -145,9 +145,10 @@ export type AgentMode = keyof typeof AGENT_MODE_TO_ID
 export const AGENT_MODES = Object.keys(AGENT_MODE_TO_ID) as AgentMode[]
 
 /**
- * Derives the context window size from a model identifier.
- * Used to dynamically set the sidebar's max context display.
- * Falls back to 200k for unknown models (matches Claude default).
+ * Fallback context-window heuristic used when the live gateway catalog does not
+ * yet contain a model (e.g. on first boot before /model is opened).
+ * These values are intentionally conservative / broad; the source of truth is
+ * {@link resolveContextWindowForModel}, which checks the cached catalog first.
  */
 export function getContextWindowForModel(model: string): number {
   const m = model.toLowerCase()
@@ -157,8 +158,9 @@ export function getContextWindowForModel(model: string): number {
   if (m.includes('deepseek')) return 131_072
   // Claude models (Sonnet, Opus, Haiku): 200k context
   if (m.includes('claude')) return 200_000
-  // GPT-4 / o-series: 128k context
-  if (m.includes('gpt-4') || m.includes('o1') || m.includes('o3') || m.includes('o4')) return 128_000
+  // o-series: 200k context. GPT-4 family (including gpt-4o): 128k fallback.
+  if (m.includes('o1') || m.includes('o3') || m.includes('o4')) return 200_000
+  if (m.includes('gpt-4')) return 128_000
   // Default fallback
   return 200_000
 }

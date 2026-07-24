@@ -3,8 +3,8 @@ import { getSavantFreeModel } from '@savant-code/common/constants/savant-free-mo
 import React, { useEffect, useMemo, useState } from 'react'
 
 import { Button } from './button'
+import { KeyHint } from './savant-ui/primitives/key-hint'
 import { ScrollToBottomButton } from './scroll-to-bottom-button'
-import { ShimmerText } from './shimmer-text'
 import { useSavantFreeSessionProgress } from '../hooks/use-savant-free-session-progress'
 import { useTheme } from '../hooks/use-theme'
 import { formatElapsedTime } from '../utils/format-elapsed-time'
@@ -18,15 +18,18 @@ import {
 import type { SavantFreeSession } from '../types/savant-free-session'
 import type { StatusIndicatorState } from '../utils/status-indicator-state'
 
+interface StatusActionButtonProps {
+  onClick: () => void
+  shortcut?: string
+  label?: string
+}
+
 /** A small status-bar action button with hover-bold styling. */
 const StatusActionButton = ({
-  children,
   onClick,
-}: {
-  children: React.ReactNode
-  onClick: () => void
-}) => {
-  const theme = useTheme()
+  shortcut,
+  label,
+}: StatusActionButtonProps) => {
   const [hovered, setHovered] = useState(false)
 
   return (
@@ -36,19 +39,10 @@ const StatusActionButton = ({
       onMouseOver={() => setHovered(true)}
       onMouseOut={() => setHovered(false)}
     >
-      <text>
-        <span
-          fg={theme.secondary}
-          attributes={hovered ? TextAttributes.BOLD : TextAttributes.NONE}
-        >
-          {children}
-        </span>
-      </text>
+      <KeyHint shortcut={shortcut} label={label} bold={hovered} />
     </Button>
   )
 }
-
-const SHIMMER_INTERVAL_MS = 160
 
 interface StatusBarProps {
   timerStartTime: number | null
@@ -259,14 +253,12 @@ export const StatusBar = ({
         {onStop &&
           (statusIndicatorState.kind === 'waiting' ||
             statusIndicatorState.kind === 'streaming') && (
-            <StatusActionButton onClick={onStop}>■ Esc</StatusActionButton>
+            <StatusActionButton onClick={onStop} shortcut="Esc" />
           )}
         {onEndSession &&
           statusIndicatorState.kind === 'idle' &&
           savantFreeSession?.status === 'active' && (
-            <StatusActionButton onClick={onEndSession}>
-              ✕ End session
-            </StatusActionButton>
+            <StatusActionButton onClick={onEndSession} shortcut="End" label="session" />
           )}
         {sessionProgress !== null &&
           sessionProgress.remainingMs < SAVANT_FREE_COUNTDOWN_VISIBLE_MS &&

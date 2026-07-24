@@ -1,6 +1,6 @@
 # FID-2026-0718-024 — medium — Pre-Push Follow-up Batch (4 candidates)
 
-**Status:** RED proposing v1. Awaiting user approval of 4 inline decisions before FORGE (per ECHO Law 2). NOT modifying any files yet.
+**Status:** closed / archived
 **Severity:** medium (these are pre-push quality-of-life improvements; push not strictly blocked by them)
 **Opened:** 2026-07-19
 

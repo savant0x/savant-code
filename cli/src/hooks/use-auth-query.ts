@@ -18,6 +18,7 @@ import {
   logoutUser as logoutUserUtil,
   type User,
 } from '../utils/auth'
+import { isDirectProviderMode } from '../utils/env'
 import { logger as defaultLogger, loggerContext } from '../utils/logger'
 import { resetSavantCodeClient } from '../utils/savant-code-client'
 
@@ -141,7 +142,9 @@ export function useAuthQuery(deps: UseAuthQueryDeps = {}) {
   return useQuery({
     queryKey: authQueryKeys.validation(apiKey),
     queryFn: () => validateApiKey({ apiKey, getUserInfoFromApiKey, logger }),
-    enabled: !!apiKey,
+    // In direct-provider mode there is no SavantCode backend to validate
+    // against, so skip the auth query entirely.
+    enabled: !!apiKey && !isDirectProviderMode(),
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
     // Retry only for retryable network errors (5xx, timeouts, etc.)

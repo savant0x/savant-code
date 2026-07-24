@@ -1,7 +1,7 @@
 import { describe, test, expect, afterEach } from 'bun:test'
 
 import { createTestCliEnv } from '../../testing/env'
-import { getCliEnv } from '../../utils/env'
+import { getCliEnv, isDirectProviderMode } from '../../utils/env'
 
 describe('cli/utils/env', () => {
   describe('getCliEnv', () => {
@@ -164,6 +164,47 @@ describe('cli/utils/env', () => {
       })
       expect(env.HOME).toBe('/custom/home')
       expect(env.NODE_ENV).toBe('production')
+    })
+  })
+
+  describe('isDirectProviderMode', () => {
+    afterEach(() => {
+      delete process.env.DIRECT_PROVIDER
+      delete process.env.INFERENCE_BASE_URL
+    })
+
+    test('returns false when neither DIRECT_PROVIDER nor INFERENCE_BASE_URL are set', () => {
+      delete process.env.DIRECT_PROVIDER
+      delete process.env.INFERENCE_BASE_URL
+      expect(isDirectProviderMode()).toBe(false)
+    })
+
+    test('returns true when DIRECT_PROVIDER is set', () => {
+      process.env.DIRECT_PROVIDER = 'openrouter'
+      expect(isDirectProviderMode()).toBe(true)
+    })
+
+    test('returns true when INFERENCE_BASE_URL is set', () => {
+      process.env.INFERENCE_BASE_URL = 'https://openrouter.ai/api/v1'
+      expect(isDirectProviderMode()).toBe(true)
+    })
+
+    test('returns true when both DIRECT_PROVIDER and INFERENCE_BASE_URL are set', () => {
+      process.env.DIRECT_PROVIDER = 'openrouter'
+      process.env.INFERENCE_BASE_URL = 'https://openrouter.ai/api/v1'
+      expect(isDirectProviderMode()).toBe(true)
+    })
+
+    test('returns false when DIRECT_PROVIDER and INFERENCE_BASE_URL are empty strings', () => {
+      process.env.DIRECT_PROVIDER = ''
+      process.env.INFERENCE_BASE_URL = ''
+      expect(isDirectProviderMode()).toBe(false)
+    })
+
+    test('returns false for whitespace-only values', () => {
+      process.env.DIRECT_PROVIDER = '   '
+      process.env.INFERENCE_BASE_URL = '  \t\n  '
+      expect(isDirectProviderMode()).toBe(false)
     })
   })
 })

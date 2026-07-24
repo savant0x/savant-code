@@ -1,7 +1,7 @@
 # FID-2026-0718-005 — high — Agent Roster Alignment (Savant Spec ↔ SavantCode Codebase)
 
 **Created:** 2026-07-18
-**Status:** Open
+**Status:** closed / archived
 **Severity:** high
 **Creator:** Orchestrator (ECHO v0.2.0)
 **Source:** ARCHITECTURE.md spec review + A-Z system test Finding 1

@@ -190,6 +190,9 @@ function getToolValidationHint(toolName: string): string | undefined {
   if (toolName === 'write_file' || toolName === 'propose_write_file') {
     return 'Expected shape: { "path": string, "instructions": string, "content": string }. Quote string values and escape newlines/quotes inside content.'
   }
+  if (toolName === 'spawn_agents') {
+    return 'Expected shape: { "agents": [{ "agent_type": string, "prompt"?: string, "params"?: object }] }. The top-level value must be an object; "agents" must be an array of objects (not a string).'
+  }
   return undefined
 }
 
@@ -382,15 +385,19 @@ export async function executeToolCall<T extends ToolName>(
     // orchestrator can write project-root files while a scaffold is in
     // progress; the AUDIT gate is still enforced at scaffold-complete time
     // via the set_scaffold_complete tool.
+    // Optimization: Allow writes during self_correct phase too, eliminating
+    // the self_correct → green round-trip when fixing audit findings.
+    const currentPhase = agentState.fsmPhase ?? 'idle'
+    const writePhases = new Set(['green', 'self_correct'])
     if (
       !isDevOverride &&
       pathResult.kind !== 'exempt' &&
-      (agentState.fsmPhase ?? 'idle') !== 'green' &&
+      !writePhases.has(currentPhase) &&
       !agentTemplate.scaffoldMode
     ) {
       onResponseChunk({
         type: 'error',
-        message: `Tool \`${toolName}\` is only available during the GREEN phase. Current phase: ${agentState.fsmPhase}. Call transition_phase to enter GREEN first.`,
+        message: `Tool \`${toolName}\` is only available during green or self_correct phases. Current phase: ${currentPhase}. Call transition_phase to enter green or self_correct first.`,
       })
       return previousToolCallFinished
     }
@@ -401,15 +408,19 @@ export async function executeToolCall<T extends ToolName>(
     ;(toolCall.input as { path?: string }).path = pathResult.resolved
   }
 
-  // ECHO FSM tool gating: block bash/terminal commands unless phase is 'audit'
+  // ECHO FSM tool gating: block bash/terminal commands unless phase is 'audit' or 'green'.
+  // run_readonly_command is intentionally NOT gated here; it is allowed in
+  // every FSM phase and enforces read-only safety in its own handler.
+  // Optimization: Allow terminal commands during GREEN phase too, so the agent
+  // can verify with typecheck/lint immediately after writing without transitioning.
   if (
     !isDevOverride &&
     toolCall.toolName === 'run_terminal_command' &&
-    (agentState.fsmPhase ?? 'idle') !== 'audit'
+    !['audit', 'green'].includes(agentState.fsmPhase ?? 'idle')
   ) {
     onResponseChunk({
       type: 'error',
-      message: `Tool \`${toolName}\` is only available during the AUDIT phase. Current phase: ${agentState.fsmPhase}. Call transition_phase to enter AUDIT first.`,
+      message: `Tool \`${toolName}\` is only available during AUDIT or GREEN phases. Current phase: ${agentState.fsmPhase}. Call transition_phase to enter AUDIT or GREEN first.`,
     })
     return previousToolCallFinished
   }
@@ -444,6 +455,28 @@ export async function executeToolCall<T extends ToolName>(
   // Pre-validate spawn_agents to filter out non-existent agents before streaming
   let effectiveInput = toolCall.input as Record<string, unknown>
   if (toolName === 'spawn_agents') {
+    // FID-2026-0723-004: Some models stringify the `agents` array. Attempt to
+    // parse it back into an array before validation so the agent gets a clear
+    // error instead of a silent schema failure.
+    if (typeof effectiveInput.agents === 'string') {
+      try {
+        const parsed = JSON.parse(effectiveInput.agents)
+        if (!Array.isArray(parsed)) {
+          onResponseChunk({
+            type: 'error',
+            message: `Invalid parameters for spawn_agents: the "agents" argument must be an array of objects, but received a string that parsed to a non-array. Expected shape: { "agents": [{ "agent_type": string, "prompt"?: string, "params"?: object }] }. Re-issue the tool call with the full arguments object and properly escaped string values.`,
+          })
+          return previousToolCallFinished
+        }
+        effectiveInput = { ...effectiveInput, agents: parsed }
+      } catch (parseError) {
+        onResponseChunk({
+          type: 'error',
+          message: `Invalid parameters for spawn_agents: the "agents" argument must be an array of objects, but received a string. JSON.parse failed: ${parseError instanceof Error ? parseError.message : String(parseError)}. Expected shape: { "agents": [{ "agent_type": string, "prompt"?: string, "params"?: object }] }. Re-issue the tool call with the full arguments object and properly escaped string values.`,
+        })
+        return previousToolCallFinished
+      }
+    }
     const agents = effectiveInput.agents
     if (Array.isArray(agents)) {
       const BASE_AGENTS = ['base', 'base-free', 'base-max', 'base-experimental']

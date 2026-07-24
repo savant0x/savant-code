@@ -6,6 +6,7 @@ export interface BadgeProps {
   variant?: 'open' | 'closed' | 'critical' | 'high' | 'medium' | 'low' | 'info' | 'success' | 'warning' | 'error'
   children: React.ReactNode
   pulse?: boolean
+  brackets?: boolean
 }
 
 const VARIANT_COLORS: Record<string, string> = {
@@ -21,13 +22,15 @@ const VARIANT_COLORS: Record<string, string> = {
   error: '#ef4444',
 }
 
-export function Badge({ variant = 'info', children, pulse }: BadgeProps) {
-  const color = VARIANT_COLORS[variant] ?? '#6b7280'
+export function Badge({ variant = 'info', children, pulse, brackets = true }: BadgeProps) {
+  const theme = useTheme()
+  const color = VARIANT_COLORS[variant] ?? theme.muted
   const prefix = pulse ? '● ' : ''
+  const content = brackets ? `[${String(children)}]` : String(children)
 
   return (
-    <text fg={color}>
-      {prefix}[{String(children)}]
+    <text fg={color} selectable={false}>
+      {prefix}{content}
     </text>
   )
 }

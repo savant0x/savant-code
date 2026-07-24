@@ -1,4 +1,3 @@
-import { ECHO_PROTOCOL_INSTRUCTIONS } from '@savant-code/common/constants/agents'
 import { GEMINI_3_1_FLASH_LITE_MODEL_ID } from '@savant-code/common/constants/gemini'
 
 import { publisher } from '../constants'
@@ -35,8 +34,6 @@ If read_url cannot handle a source, choose a different result or explain the lim
 Then, write up a concise answer that includes key findings for the user's prompt and cites source URLs when useful.
 
 HARD RULE: You may not write your final answer until you have successfully fetched at least 3 pages with read_url — for multi-part or comparative questions, fetch 5 or more. Search results alone are never sufficient, no matter how complete they look. If you are about to answer and have fewer than 3 read_url fetches, call read_url instead.
-
-${ECHO_PROTOCOL_INSTRUCTIONS}
 `.trim(),
 }
 

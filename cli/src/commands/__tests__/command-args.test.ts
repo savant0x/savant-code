@@ -179,9 +179,9 @@ describe('command factory pattern', () => {
         'image',
         'publish',
         'new',
-        'mode:default',
-        'mode:max',
-        'mode:plan',
+        'mode:edit',
+        'mode:scaffold',
+        'mode:analyze',
       ]
       for (const name of expectedWithArgs) {
         const cmd = COMMAND_REGISTRY.find((c) => c.name === name)

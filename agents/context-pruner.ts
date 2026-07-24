@@ -695,7 +695,7 @@ const definition: AgentDefinition = {
       if (msg.role === 'user' && Array.isArray(msg.content)) {
         const imageParts = msg.content.filter(
           (part): part is ImagePart | FilePart =>
-            part.type === 'image' || part.type === 'media' || part.type === 'file',
+            part.type === 'image' || part.type === 'file',
         )
         if (imageParts.length > 0) {
           lastUserImageParts = imageParts
@@ -721,7 +721,7 @@ const definition: AgentDefinition = {
           if (Array.isArray(message.content)) {
             hasImages = message.content.some(
               (part): part is ImagePart | FilePart =>
-                part.type === 'image' || part.type === 'media' || part.type === 'file',
+                part.type === 'image' || part.type === 'file',
             )
           }
           const imageNote = hasImages ? ' [image(s) were attached]' : ''
@@ -749,7 +749,7 @@ const definition: AgentDefinition = {
               }
             } else if (part.type === 'tool-call') {
               const toolName = part.toolName as string
-              const input = asObject(part.input) ?? {}
+              const input = asObject(part.input as Record<string, JSONValue>) ?? {}
               toolSummaries.push(summarizeToolCall(toolName, input))
             }
           }
@@ -782,6 +782,7 @@ const definition: AgentDefinition = {
           for (const part of toolMessage.content) {
             if (part.type === 'json' && part.value) {
               const value = asObject(part.value)
+              if (!value) continue
 
               if (value.errorMessage || value.error) {
                 let errorText = String(value.errorMessage || value.error)
@@ -851,9 +852,9 @@ const definition: AgentDefinition = {
           Array.isArray(toolMessage.content)
         ) {
           for (const part of toolMessage.content) {
-            if (part.type === 'json' && Array.isArray(part.value)) {
-              const agentResults = asAgentResultList(part.value)
-              const includedResults = agentResults.filter(
+            if (part.type === 'json' && Array.isArray(part.value)) {                const agentResults = asAgentResultList(part.value)
+                if (!agentResults) continue
+                const includedResults = agentResults.filter(
                 (r) =>
                   r.agentType &&
                   !SPAWN_AGENTS_OUTPUT_BLACKLIST.includes(r.agentType),

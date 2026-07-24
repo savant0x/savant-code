@@ -41,7 +41,9 @@ import { trimOversizedChatLogs } from './utils/chat-history'
 import { IS_SAVANT_FREE } from './utils/constants'
 import { startEngagementTracking } from './utils/engagement'
 import { initializeAgentRegistry } from './utils/local-agent-registry'
+import { fetchGatewayModels } from './utils/openrouter-models'
 import { clearLogFile, logger } from './utils/logger'
+import { applyPostProcessing } from './utils/post-processing'
 import { shouldShowProjectPicker } from './utils/project-picker'
 import { saveRecentProject } from './utils/recent-projects'
 import { installProcessCleanupHandlers } from './utils/renderer-cleanup'
@@ -89,6 +91,7 @@ async function main(): Promise<void> {
   // before the buffer flushes. console.log() is synchronous and safe.
   // This also skips the prebuild step overhead for a trivial output.
   if (process.argv.includes('--version') || process.argv.includes('-v')) {
+    // eslint-disable-next-line no-console
     console.log(loadPackageVersion())
     process.exit(0)
   }
@@ -145,6 +148,7 @@ async function main(): Promise<void> {
       if (effectiveBinary) {
         await Parser.init({ wasmBinary: effectiveBinary })
         // Marker grepped by cli/scripts/smoke-binary.ts — keep this exact text.
+        // eslint-disable-next-line no-console
         console.log(
           `tree-sitter smoke ok (wasmBinary, ${effectiveBinary.byteLength} bytes)`,
         )
@@ -153,6 +157,7 @@ async function main(): Promise<void> {
           locateFile: (name: string) =>
             name === 'tree-sitter.wasm' ? effectivePath! : name,
         })
+        // eslint-disable-next-line no-console
         console.log(`tree-sitter smoke ok (locateFile, path=${effectivePath})`)
       } else {
         console.error(
@@ -236,6 +241,11 @@ async function main(): Promise<void> {
   // Initialize skill registry (loads skills from .agents/skills)
   await initializeSkillRegistry()
 
+  // Warm the gateway model catalog in the background so the model picker and
+  // agent model-info block have fresh metadata. Non-blocking: if it fails,
+  // the app continues and the placeholder falls back to the model id.
+  fetchGatewayModels().catch(() => {})
+
   // Handle publish command before rendering the app
   if (isPublishCommand) {
     const publishIndex = process.argv.indexOf('publish')
@@ -283,6 +293,17 @@ async function main(): Promise<void> {
       React.useState(showProjectPicker)
 
     React.useEffect(() => {
+      // In direct-provider mode (DIRECT_PROVIDER set + gateway keys), the CLI
+      // does not use the SavantCode backend for inference, so backend auth
+      // validation is unnecessary and would fail with a stub/dev token.
+      // Inline the check to avoid importing the env helper before dotenv is
+      // loaded in this early boot module.
+      if (process.env.DIRECT_PROVIDER?.trim().length) {
+        setRequireAuth(false)
+        setHasInvalidCredentials(false)
+        return
+      }
+
       const apiKey = getAuthTokenDetails().token ?? ''
 
       if (!apiKey) {
@@ -291,6 +312,8 @@ async function main(): Promise<void> {
         return
       }
 
+      // A token is present in backend mode; show the invalid-credentials
+      // banner optimistically. It will be cleared once useAuthQuery succeeds.
       setHasInvalidCredentials(true)
       setRequireAuth(false)
     }, [])
@@ -399,6 +422,7 @@ async function main(): Promise<void> {
     backgroundColor: 'transparent',
     exitOnCtrlC: false,
     screenMode: 'alternate-screen',
+    postProcessFns: [applyPostProcessing],
   })
 
   // Remove early handlers — proper cleanup handlers (with renderer access) take over

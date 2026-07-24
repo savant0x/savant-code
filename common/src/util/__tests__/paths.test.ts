@@ -85,6 +85,21 @@ describe('paths.resolveAndContain — exempt prefixes', () => {
     })
     expect(result.kind).toBe('exempt')
   })
+
+  test('absolute dev/scratchpad path is classified as exempt', () => {
+    const result = resolveAndContain(
+      path.join(PROJECT_ROOT, 'dev/scratchpad/system-audit.md'),
+      {
+        projectRoot: PROJECT_ROOT,
+      },
+    )
+    expect(result.kind).toBe('exempt')
+    if (result.kind === 'exempt') {
+      expect(result.resolved).toBe(
+        path.join(PROJECT_ROOT, 'dev/scratchpad/system-audit.md'),
+      )
+    }
+  })
 })
 
 describe('paths.resolveAndContain — rejection cases', () => {

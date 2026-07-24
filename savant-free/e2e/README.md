@@ -8,14 +8,14 @@ Two testing approaches are supported:
 
 ### 1. Direct tmux tests (fast, deterministic)
 
-Use the `FreebuffSession` class to start the binary in tmux, send commands, capture output, and assert directly.
+Use the `SavantFreeModel` class to start the binary in tmux, send commands, capture output, and assert directly.
 
 ```typescript
 import { describe, test, expect, afterEach } from 'bun:test'
-import { FreebuffSession, requireFreebuffBinary } from '../utils'
+import { SavantFreeModel, requireSavantFreeBinary } from '../utils'
 
 describe('My Feature', () => {
-  let session: FreebuffSession | null = null
+  let session: SavantFreeModel | null = null
 
   afterEach(async () => {
     if (session) await session.stop()
@@ -23,8 +23,8 @@ describe('My Feature', () => {
   })
 
   test('works correctly', async () => {
-    const binary = requireFreebuffBinary()
-    session = await FreebuffSession.start(binary)
+    const binary = requireSavantFreeBinary()
+    session = await SavantFreeModel.start(binary)
 
     await session.send('/help')
     const output = await session.capture(2)
@@ -42,7 +42,7 @@ Use the SavantCode SDK to run a testing agent that interacts with SavantFree via
 import { describe, test, expect, afterEach } from 'bun:test'
 import { SavantCodeClient } from '@savant-code/sdk'
 import { savant-free$1 } from '../agent/savant-free-tester'
-import { createFreebuffTmuxTools, requireFreebuffBinary } from '../utils'
+import { createSavantFreeTmuxTools, requireSavantFreeBinary } from '../utils'
 
 describe('Agent Test', () => {
   let cleanup: (() => Promise<void>) | null = null
@@ -53,11 +53,11 @@ describe('Agent Test', () => {
   })
 
   test('verifies startup', async () => {
-    const apiKey = process.env.CODEBUFF_API_KEY
+    const apiKey = process.env.SAVANT_API_KEY
     if (!apiKey) return // Skip if no API key
 
-    const binary = requireFreebuffBinary()
-    const tmuxTools = createFreebuffTmuxTools(binary)
+    const binary = requireSavantFreeBinary()
+    const tmuxTools = createSavantFreeTmuxTools(binary)
     cleanup = tmuxTools.cleanup
 
     const client = new SavantCodeClient({ apiKey })
@@ -79,7 +79,7 @@ describe('Agent Test', () => {
 - **tmux** must be installed: `brew install tmux` (macOS) or `sudo apt-get install tmux` (Ubuntu)
 - **SavantFree binary** must be built: `bun savant-free/cli/build.ts 0.0.0-dev`
 - **SDK built** (for agent tests): `cd sdk && bun run build`
-- **CODEBUFF_API_KEY** (for agent tests only): Set this environment variable
+- **SAVANT_API_KEY** (for agent tests only): Set this environment variable
 
 ## Running Tests
 
@@ -107,7 +107,7 @@ bun test savant-free/e2e/tests/agent-startup.e2e.test.ts
 ### Use a custom binary path
 
 ```bash
-FREEBUFF_BINARY=/path/to/savant-free bun test savant-free/e2e/tests/
+SAVANT_FREE_BINARY=/path/to/savant-free bun test savant-free/e2e/tests/
 ```
 
 ## Adding New Tests
@@ -141,11 +141,11 @@ Triggers:
 
 ## Utilities Reference
 
-### `FreebuffSession`
+### `SavantFreeModel`
 
 | Method | Description |
 |--------|-------------|
-| `FreebuffSession.start(binaryPath)` | Start binary in tmux, returns session |
+| `SavantFreeModel.start(binaryPath)` | Start binary in tmux, returns session |
 | `session.send(text)` | Send text input (presses Enter) |
 | `session.sendKey(key)` | Send special key (e.g. `'C-c'`, `'Escape'`) |
 | `session.capture(waitSec?)` | Capture terminal output |
@@ -153,17 +153,17 @@ Triggers:
 | `session.waitForText(pattern, timeoutMs?)` | Poll until text appears |
 | `session.stop()` | Stop session and clean up |
 
-### `createFreebuffTmuxTools(binaryPath)`
+### `createSavantFreeTmuxTools(binaryPath)`
 
 Creates SDK custom tools for agent-driven testing:
-- `start_freebuff` - Launch the CLI
-- `send_to_freebuff` - Send text input
-- `capture_freebuff_output` - Capture terminal output
-- `stop_freebuff` - Stop and clean up
+- `start_savant_free` - Launch the CLI
+- `send_to_savant_free` - Send text input
+- `capture_savant_free_output` - Capture terminal output
+- `stop_savant_free` - Stop and clean up
 
 ### Helper functions
 
 | Function | Description |
 |----------|-------------|
-| `requireFreebuffBinary()` | Get binary path, throws if not found |
-| `getFreebuffBinaryPath()` | Get binary path (may not exist) |
+| `requireSavantFreeBinary()` | Get binary path, throws if not found |
+| `getSavantFreeBinaryPath()` | Get binary path (may not exist) |

@@ -33,6 +33,32 @@ const backspaceKey = createKey({ name: 'backspace' })
 const defaultState = createDefaultChatKeyboardState()
 
 describe('resolveChatKeyboardAction', () => {
+  describe('model picker overlay', () => {
+    test('any key returns none when model picker is open', () => {
+      const state: ChatKeyboardState = {
+        ...defaultState,
+        modelPickerOpen: true,
+        slashMenuActive: true,
+        slashMatchesLength: 5,
+      }
+      expect(resolveChatKeyboardAction(upKey, state)).toEqual({
+        type: 'none',
+      })
+      expect(resolveChatKeyboardAction(downKey, state)).toEqual({
+        type: 'none',
+      })
+      expect(resolveChatKeyboardAction(enterKey, state)).toEqual({
+        type: 'none',
+      })
+      expect(resolveChatKeyboardAction(escapeKey, state)).toEqual({
+        type: 'none',
+      })
+      expect(resolveChatKeyboardAction(ctrlC, state)).toEqual({
+        type: 'none',
+      })
+    })
+  })
+
   describe('escape key priority - THE BUG FIX', () => {
     test('escape in bash mode exits mode BEFORE interrupting stream', () => {
       const state: ChatKeyboardState = {

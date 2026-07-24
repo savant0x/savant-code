@@ -23,6 +23,7 @@ import { readSubtreeParams } from './params/tool/read-subtree'
 import { readUrlParams } from './params/tool/read-url'
 import { renderUIParams } from './params/tool/render-ui'
 import { runFileChangeHooksParams } from './params/tool/run-file-change-hooks'
+import { runReadonlyCommandParams } from './params/tool/run-readonly-command'
 import { runTerminalCommandParams } from './params/tool/run-terminal-command'
 import { sequentialThinkingParams } from './params/tool/sequential-thinking'
 import { setMessagesParams } from './params/tool/set-messages'
@@ -67,6 +68,7 @@ export const toolParams = {
   read_url: readUrlParams,
   render_ui: renderUIParams,
   run_file_change_hooks: runFileChangeHooksParams,
+  run_readonly_command: runReadonlyCommandParams,
   run_terminal_command: runTerminalCommandParams,
   sequentialthinking: sequentialThinkingParams,
   set_messages: setMessagesParams,

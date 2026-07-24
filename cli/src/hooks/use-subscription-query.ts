@@ -1,4 +1,5 @@
 import { useActivityQuery } from './use-activity-query'
+import { isDirectProviderMode } from '../utils/env'
 import { getAuthToken } from '../utils/auth'
 import { IS_SAVANT_FREE } from '../utils/constants'
 import { logger as defaultLogger } from '../utils/logger'
@@ -17,6 +18,35 @@ export const subscriptionQueryKeys = {
 export async function fetchSubscriptionData(
   logger: Logger = defaultLogger,
 ): Promise<SubscriptionResponse> {
+  if (isDirectProviderMode()) {
+    return {
+      hasSubscription: true,
+      displayName: 'Direct Provider',
+      subscription: {
+        id: 'direct-provider',
+        status: 'active',
+        billingPeriodEnd: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+        cancelAtPeriodEnd: false,
+        canceledAt: null,
+        tier: 1,
+      },
+      rateLimit: {
+        limited: false,
+        canStartNewBlock: true,
+        weeklyUsed: 0,
+        weeklyLimit: Number.MAX_SAFE_INTEGER,
+        weeklyResetsAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        weeklyPercentUsed: 0,
+      },
+      limits: {
+        creditsPerBlock: Number.MAX_SAFE_INTEGER,
+        blockDurationHours: 24,
+        weeklyCreditsLimit: Number.MAX_SAFE_INTEGER,
+      },
+      fallbackToALaCarte: false,
+    }
+  }
+
   const client = getApiClient()
   const response = await client.get<SubscriptionResponse>(
     '/api/user/subscription',
@@ -58,7 +88,7 @@ export function useSubscriptionQuery(deps: UseSubscriptionQueryDeps = {}) {
   return useActivityQuery({
     queryKey: subscriptionQueryKeys.current(),
     queryFn: () => fetchSubscriptionData(logger),
-    enabled: enabled && !!authToken && !IS_SAVANT_FREE,
+    enabled: enabled && !!authToken && !IS_SAVANT_FREE && !isDirectProviderMode(),
     staleTime: 30 * 1000,
     gcTime: 5 * 60 * 1000,
     retry: 1,

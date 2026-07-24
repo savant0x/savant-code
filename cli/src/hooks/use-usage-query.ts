@@ -2,6 +2,7 @@ import { env } from '@savant-code/common/env'
 import { useCallback } from 'react'
 
 import { invalidateActivityQuery, useActivityQuery } from './use-activity-query'
+import { isDirectProviderMode } from '../utils/env'
 import { getAuthToken } from '../utils/auth'
 import { logger as defaultLogger } from '../utils/logger'
 
@@ -43,7 +44,20 @@ export async function fetchUsageData({
   logger = defaultLogger,
   clientEnv = env,
 }: FetchUsageParams): Promise<UsageResponse> {
-  const appUrl = clientEnv.NEXT_PUBLIC_SAVANT_FREE_APP_URL
+  if (isDirectProviderMode()) {
+    return {
+      type: 'usage-response',
+      usage: 0,
+      // Use a large finite value instead of Infinity to avoid breaking any
+      // downstream formatting/arithmetic that expects a finite number.
+      remainingBalance: Number.MAX_SAFE_INTEGER,
+      next_quota_reset: null,
+    }
+  }
+
+  const appUrl =
+    clientEnv.NEXT_PUBLIC_SAVANT_FREE_APP_URL ??
+    process.env.NEXT_PUBLIC_SAVANT_FREE_APP_URL
   if (!appUrl) {
     throw new Error('NEXT_PUBLIC_SAVANT_FREE_APP_URL is not set')
   }
@@ -102,7 +116,7 @@ export function useUsageQuery(deps: UseUsageQueryDeps = {}) {
   return useActivityQuery({
     queryKey: usageQueryKeys.current(),
     queryFn: () => fetchUsageData({ authToken: authToken!, logger }),
-    enabled: enabled && !!authToken,
+    enabled: enabled && !!authToken && !isDirectProviderMode(),
     staleTime: 0, // Always consider data stale for immediate refetching
     gcTime: 5 * 60 * 1000, // 5 minutes
     retry: false, // Don't retry failed usage queries

@@ -87,6 +87,10 @@ export type CliEnv = BaseEnv & {
   // calls — agents are bundled locally and inference goes via
   // INFERENCE_BASE_URL. Keeps the backend seam intact for later.
   DIRECT_PROVIDER?: string
+  // Optional direct inference endpoint URL (e.g. OpenRouter API).
+  // If set, the CLI also operates in direct-provider mode even when
+  // DIRECT_PROVIDER is not explicitly set.
+  INFERENCE_BASE_URL?: string
 }
 
 /**

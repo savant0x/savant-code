@@ -1,6 +1,6 @@
 # FID-2026-0718-011 — low — Cleanup Stale Agent References in free-agents.test.ts (Finding A)
 
-**Status:** OPEN — Perfection Loop converged to v1, awaiting user approval
+**Status:** closed / archived
 **Opened:** 2026-07-18
 **Severity:** low (test-only; no runtime impact; test suite currently failing → 0 errors expected post-fix)
 **Source:** A-Z System Test v3 — Finding A (`dev/scratchpad/az-system-test-v3-report.md`)

@@ -48,6 +48,21 @@ const theme: ChatTheme = {
   directory: '#9CA3AF',
   // Image card
   imageCardBorder: '#3B82F6',
+  // Diff colors (FID-033a)
+  diffAdded: '#7ACC35',
+  diffRemoved: '#BF6C69',
+  diffContext: '#fff',
+  diffHunkHeader: '#0ff',
+  diffMeta: '#777',
+  // Syntax tokens (FID-033a)
+  syntaxComment: '#777',
+  syntaxKeyword: '#c084fc',
+  syntaxFunction: '#60a5fa',
+  syntaxVariable: '#fff',
+  syntaxString: '#4ade80',
+  syntaxNumber: '#fbbf24',
+  syntaxType: '#22d3ee',
+  syntaxOperator: '#22d3ee',
   // Markdown
   markdown: {
     codeBackground: '#111',

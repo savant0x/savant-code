@@ -507,8 +507,13 @@ export const MultilineInput = forwardRef<
           lastEditDueToNav: false,
         })
       }
+
+      // Suppress OpenTUI's native row selection/focus highlight when clicking
+      // in the input box (FID-2026-0722-044).
+      event.preventDefault?.()
+      clearSelection()
     },
-    [focused, lineInfo, value, cursorPosition, onChange],
+    [focused, lineInfo, value, cursorPosition, onChange, clearSelection],
   )
 
   const isPlaceholder = value.length === 0 && placeholder.length > 0

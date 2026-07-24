@@ -1,4 +1,6 @@
 import { createRequire } from 'module'
+import fs from 'fs'
+import path from 'path'
 
 import { Argument, Command } from 'commander'
 
@@ -87,6 +89,10 @@ export function parseArgs({
         '--cwd <directory>',
         'Set the working directory (default: current directory)',
       )
+      .option(
+        '--prompt-file <path>',
+        'Read the initial prompt from a file instead of argv',
+      )
       .option('--edit', 'Start in EDIT mode (default)')
       .option('--scaffold', 'Start in SCAFFOLD mode')
       .option('--analyze', 'Start in ANALYZE mode')
@@ -106,6 +112,30 @@ export function parseArgs({
 
   const continueFlag = options.continue
 
+  // Resolve the initial prompt from argv or a prompt file. A prompt file is
+  // useful for very large prompts that exceed comfortable argv limits or
+  // contain shell-sensitive characters. Resolve relative paths against the
+  // user's current working directory. If the file is missing and the CLI is
+  // running from a nested workspace directory (e.g. `bun --cwd cli dev`),
+  // fall back to the parent directory so project-root paths still work.
+  let initialPrompt: string | null = null
+  if (!isSavantFree) {
+    if (options.promptFile) {
+      const promptFile = options.promptFile as string
+      const resolvePromptFile = (): string => {
+        if (path.isAbsolute(promptFile)) return promptFile
+        const cwdPath = path.resolve(process.cwd(), promptFile)
+        if (fs.existsSync(cwdPath)) return cwdPath
+        const parentPath = path.resolve(process.cwd(), '..', promptFile)
+        if (fs.existsSync(parentPath)) return parentPath
+        return cwdPath
+      }
+      initialPrompt = fs.readFileSync(resolvePromptFile(), 'utf8')
+    } else if (args.length > 0) {
+      initialPrompt = args.join(' ')
+    }
+  }
+
   // Determine initial mode from flags (last flag wins if multiple specified)
   let initialMode: AgentMode | undefined
   if (isSavantFree) {
@@ -117,7 +147,7 @@ export function parseArgs({
   }
 
   return {
-    initialPrompt: !isSavantFree && args.length > 0 ? args.join(' ') : null,
+    initialPrompt,
     command: args[0],
     agent: options.agent,
     clearLogs: options.clearLogs || false,

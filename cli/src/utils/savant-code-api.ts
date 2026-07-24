@@ -1,5 +1,7 @@
 import { WEBSITE_URL } from '@savant-code/sdk'
 
+import { isDirectProviderMode } from './env'
+
 import type { FeedbackRequest } from '@savant-code/common/schemas/feedback'
 import type {
   PublishAgentsResponse,
@@ -318,6 +320,16 @@ export function createSavantCodeApiClient(
     body?: unknown,
     options: RequestOptions = {},
   ): Promise<ApiResponse<T>> {
+    // Safety guard: in direct-provider mode there is no SavantCode backend,
+    // so refuse to emit any outbound request with the synthetic stub token.
+    if (isDirectProviderMode()) {
+      return {
+        ok: false,
+        status: 503,
+        error: 'Backend unavailable in direct-provider mode',
+      }
+    }
+
     const {
       query,
       includeAuth = true,

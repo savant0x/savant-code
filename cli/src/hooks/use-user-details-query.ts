@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 
+import { isDirectProviderMode } from '../utils/env'
 import { getAuthToken } from '../utils/auth'
 import { logger as defaultLogger } from '../utils/logger'
 import { getApiClient, setApiClientAuthToken } from '../utils/savant-code-api'
@@ -37,6 +38,16 @@ export async function fetchUserDetails<T extends UserField>({
   logger = defaultLogger,
   apiClient: providedApiClient,
 }: FetchUserDetailsParams<T>): Promise<UserDetails<T> | null> {
+  if (isDirectProviderMode()) {
+    const stub: Record<string, string> = {
+      id: 'direct-provider',
+      email: 'direct-provider@savant-code.local',
+    }
+    return Object.fromEntries(
+      fields.map((field) => [field, stub[field] ?? '']),
+    ) as UserDetails<T>
+  }
+
   let apiClient: SavantCodeApiClient
   if (providedApiClient) {
     apiClient = providedApiClient
@@ -82,7 +93,7 @@ export function useUserDetailsQuery<T extends UserField>({
       }
       return fetchUserDetails({ authToken, fields, logger })
     },
-    enabled: enabled && !!authToken,
+    enabled: enabled && !!authToken && !isDirectProviderMode(),
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 30 * 60 * 1000, // 30 minutes
     retry: false,

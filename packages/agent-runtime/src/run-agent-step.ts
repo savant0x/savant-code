@@ -1,5 +1,5 @@
 import { AnalyticsEvent} from '@savant-code/common/constants/analytics-events'
-import { shouldUseLocalTokenCountForSavantFreeDeepseekFlash } from '@savant-code/common/constants/free-agents'
+import { shouldUseLocalTokenCount } from '@savant-code/common/constants/free-agents'
 import {
   supportsAssistantPrefill,
   supportsCacheControl,
@@ -994,25 +994,26 @@ export async function loopAgentSteps(
         countTokens(system) +
         countTokensJson(toolsForTokenCount)
 
-      // Free (savant-free) runs never call the token-count web API: the awaited
-      // per-step round-trip (full history + tools shipped to the server, which
-      // relays to Anthropic) adds seconds of serial overhead to every step and
-      // ~1M+ requests/day of web-service load, and free-mode context limits
-      // don't need Anthropic-exact counts. Paid SavantCode runs keep the
-      // accurate API count.
+      // Use local token estimation for external runs (OpenCode Go, BYOK,
+      // savant-free) where the SavantCode web API is unavailable or unnecessary.
+      // The external API ships the full message history + tools via HTTP on every
+      // step, adding serial network overhead (30s timeout × 3 retries). Local
+      // estimation uses gpt-tokenizer with a 1.35× fudge factor — fast and
+      // accurate enough for context management. Only SavantCode-hosted paid runs
+      // need the accurate API count for credit billing.
+      const hasSavantCodeBackend = Boolean(
+        params.apiKey ?? ciEnv.SAVANT_CODE_API_KEY,
+      )
       if (
-        shouldUseLocalTokenCountForSavantFreeDeepseekFlash({
+        shouldUseLocalTokenCount({
           agentId: agentTemplate.id,
           model: agentTemplate.model,
+          hasSavantCodeBackend,
         })
       ) {
         currentAgentState.contextTokenCount = estimateContextTokensLocally()
       } else {
-        // Check context token count via the web API. Pass the run's apiKey
-        // explicitly: interactive CLI users don't have SAVANT_CODE_API_KEY set in
-        // their environment, so relying on the ciEnv fallback made this call
-        // fail every step ('Missing SavantCode base URL or API key') and forced
-        // the less accurate local estimate.
+        // SavantCode-hosted paid run: use the accurate web API count.
         const tokenCountResult = await callTokenCountAPI({
           messages: messagesWithStepPrompt as JSONValue[],
           system,
@@ -1028,7 +1029,7 @@ export async function loopAgentSteps(
         } else if (tokenCountResult.error) {
           logger.warn(
             { error: tokenCountResult.error },
-            'Failed to get token count from web API',
+            'Failed to get token count from web API — falling back to local estimation',
           )
           currentAgentState.contextTokenCount = estimateContextTokensLocally()
         }

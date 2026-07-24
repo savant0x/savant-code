@@ -16,8 +16,15 @@ import {
 import type { ClientEnv } from '@savant-code/common/types/contracts/env'
 
 
+const originalDirectProvider = process.env.DIRECT_PROVIDER
+
 beforeEach(() => {
   resetActivityQueryCache()
+  process.env.DIRECT_PROVIDER = ''
+})
+
+afterEach(() => {
+  process.env.DIRECT_PROVIDER = originalDirectProvider
 })
 
 describe('fetchUsageData', () => {
@@ -169,12 +176,11 @@ describe('fetchUsageData', () => {
   })
 
   test('should throw error when app URL is not set', async () => {
+    process.env.NEXT_PUBLIC_SAVANT_FREE_APP_URL = ''
+
     await expect(
       fetchUsageData({
         authToken: 'test-token',
-        clientEnv: {
-          NEXT_PUBLIC_SAVANT_FREE_APP_URL: undefined,
-        } as unknown as ClientEnv,
       }),
     ).rejects.toThrow('NEXT_PUBLIC_SAVANT_FREE_APP_URL is not set')
   })
@@ -244,6 +250,27 @@ describe('fetchUsageData', () => {
       { status: 503 },
       'Failed to fetch usage data from API',
     )
+  })
+})
+
+describe('fetchUsageData > direct provider mode', () => {
+  test('returns unlimited usage stub without calling API', async () => {
+    process.env.DIRECT_PROVIDER = 'openrouter'
+    let fetchCalled = false
+    globalThis.fetch = mock(async () => {
+      fetchCalled = true
+      return new Response(JSON.stringify({}), { status: 200 })
+    }) as unknown as typeof fetch
+
+    const result = await fetchUsageData({ authToken: 'test-token' })
+
+    expect(fetchCalled).toBe(false)
+    expect(result).toEqual({
+      type: 'usage-response',
+      usage: 0,
+      remainingBalance: Number.MAX_SAFE_INTEGER,
+      next_quota_reset: null,
+    })
   })
 })
 

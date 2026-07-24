@@ -32,9 +32,9 @@ describe('XML tool result ordering', () => {
     const executionOrder: string[] = []
 
     // Stream with XML tool call embedded in text
-    const xmlToolCall = `<codebuff_tool_call>
+    const xmlToolCall = `<savant_tool_call>
 {"cb_tool_name": "test_tool", "param1": "value1"}
-</codebuff_tool_call>`
+</savant_tool_call>`
 
     const streamChunks: StreamChunk[] = [
       textChunk('Text before tool call\n'),
@@ -106,9 +106,9 @@ describe('XML tool result ordering', () => {
     const events: { type: string; toolName?: string; order: number }[] = []
     let eventCounter = 0
 
-    const xmlToolCall = `<codebuff_tool_call>
+    const xmlToolCall = `<savant_tool_call>
 {"cb_tool_name": "read_files", "paths": ["test.ts"]}
-</codebuff_tool_call>`
+</savant_tool_call>`
 
     const streamChunks: StreamChunk[] = [
       textChunk('Before\n'),
@@ -213,9 +213,9 @@ describe('XML tool result ordering', () => {
     // The fix: pass Promise.resolve() instead of previousToolCallFinished for XML mode,
     // so the tool can execute immediately without waiting for the stream to finish.
     
-    const xmlToolCall = `<codebuff_tool_call>
+    const xmlToolCall = `<savant_tool_call>
 {"cb_tool_name": "test_tool", "param": "value"}
-</codebuff_tool_call>`
+</savant_tool_call>`
 
     const streamChunks: StreamChunk[] = [
       textChunk('Before\n'),

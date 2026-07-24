@@ -1,5 +1,3 @@
-import { ECHO_PROTOCOL_INSTRUCTIONS } from '@savant-code/common/constants/agents'
-
 import { publisher } from '../constants'
 
 import type { AgentDefinition } from '../types/agent-definition'
@@ -42,28 +40,29 @@ FIDs follow the template in \`templates/FID-TEMPLATE.md\`. Key sections:
 - You can ONLY write to FID files (\`dev/fids/*.md\`), \`dev/fids/archive/\`, and \`CHANGELOG.md\`.
 - You cannot use str_replace or bash. Use write_file to create/update FIDs.
 - Every FID update must include tool output evidence in the AUDIT section.
-- Never close a FID that has unresolved items in Remaining Work.
-
-${ECHO_PROTOCOL_INSTRUCTIONS}`,
+- Never close a FID that has unresolved items in Remaining Work.`,
 
   handleSteps: function* ({ agentState }) {
-    const scaffoldCompleteSignal = agentState.messageHistory.some(
-      (message) => {
-        if (message.role !== 'assistant') return false
-        return message.content.some((part) => {
-          if (part.type !== 'tool-result') return false
-          return part.output.some((output) => {
-            if (output.type !== 'json') return false
-            return (
-              typeof output.value === 'object' &&
-              output.value !== null &&
-              'scaffoldComplete' in output.value &&
-              output.value.scaffoldComplete === true
-            )
-          })
+    const scaffoldCompleteSignal = agentState.messageHistory.some((message) => {
+      if (message.role !== 'assistant') return false
+      return message.content.some((part) => {
+        const anyPart = part as {
+          type?: string
+          output?: { type: string; value: unknown }[]
+        }
+        if (anyPart.type !== 'tool-result') return false
+        return (anyPart.output ?? []).some((output) => {
+          if (output.type !== 'json') return false
+          const value = output.value
+          return (
+            typeof value === 'object' &&
+            value !== null &&
+            'scaffoldComplete' in value &&
+            (value as Record<string, unknown>).scaffoldComplete === true
+          )
         })
-      },
-    )
+      })
+    })
 
     if (scaffoldCompleteSignal) {
       yield {

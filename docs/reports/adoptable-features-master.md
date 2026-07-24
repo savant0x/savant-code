@@ -4,6 +4,7 @@
 > **Scope:** 16 open-source coding agents / AI platforms scanned
 > **Purpose:** Cross-cutting synthesis of the most impactful and novel ideas for improving savant-code
 > **Method:** Independent Explore-agent scans of each repo → cross-cutting theme analysis
+> **⚠️ Archival note (2026-07-23):** The `resources/` directory containing the 16 reference repos has been removed from disk. This synthesis and the companion `feature-parity-report.md` are preserved as historical research. The `docs/reports/repos/` subfolder retains the individual per-repo analysis files. Feature parity gaps identified here may have changed — run a fresh baseline pass before acting on any recommendation.
 
 ---
 

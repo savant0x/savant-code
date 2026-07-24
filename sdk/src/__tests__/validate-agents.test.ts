@@ -182,6 +182,7 @@ describe('validateAgents', () => {
       it('should reject an agent with missing required field: id', async () => {
         const agents: AgentDefinition[] = [createMockAgent(
           {
+            id: undefined,
             displayName: 'Missing ID Agent',
             model: 'anthropic/claude-sonnet-4',
           },
@@ -198,6 +199,7 @@ describe('validateAgents', () => {
         const agents: AgentDefinition[] = [createMockAgent(
           {
             id: 'no-display-name',
+            displayName: undefined,
             model: 'anthropic/claude-sonnet-4',
           },
         )]
@@ -214,6 +216,7 @@ describe('validateAgents', () => {
           {
             id: 'no-model',
             displayName: 'No Model Agent',
+            model: undefined,
           },
         )]
 
@@ -375,7 +378,11 @@ describe('validateAgents', () => {
       })
 
       it('should handle malformed input gracefully', async () => {
-        const agents: AgentDefinition[] = [createMockAgent({})]
+        const agents: AgentDefinition[] = [createMockAgent({
+          id: undefined,
+          displayName: undefined,
+          model: undefined,
+        })]
 
         const result = await validateAgents(agents)
 
@@ -387,11 +394,14 @@ describe('validateAgents', () => {
         const agents: AgentDefinition[] = [
           createMockAgent({
             id: 'bad-agent-1',
+            displayName: undefined,
+            model: undefined,
             // Missing displayName and model
           }),
           createMockAgent({
             id: 'bad-agent-2',
             displayName: 'Bad Agent 2',
+            model: undefined,
             // Missing model
           }),
         ]
@@ -467,6 +477,7 @@ describe('validateAgents', () => {
         const agents: AgentDefinition[] = [createMockAgent(
           {
             id: 'detailed-errors',
+            displayName: undefined,
             model: 'anthropic/claude-sonnet-4',
             // Missing required displayName
           },

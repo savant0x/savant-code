@@ -42,7 +42,7 @@ export function FidList({ fids, filter, sortBy = 'severity', onSelect }: FidList
   }
 
   return (
-    <box flexDirection="column" gap={1}>
+    <box flexDirection="column" gap={1} focusable={false} selectable={false}>
       {sorted.map((fid) => (
         <FidCard
           key={fid.id}

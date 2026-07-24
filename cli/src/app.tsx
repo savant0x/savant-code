@@ -9,6 +9,7 @@ import { LoginModal } from './components/login-modal'
 import { ProjectPickerScreen } from './components/project-picker-screen'
 import { SavantFreeLandingScreen } from './components/savant-free-landing-screen'
 import { SavantFreeSupersededScreen } from './components/savant-free-superseded-screen'
+import { ToastContainer } from './components/toast'
 import { useAuthQuery } from './hooks/use-auth-query'
 import { useAuthState } from './hooks/use-auth-state'
 import { useSavantFreeSession } from './hooks/use-savant-free-session'
@@ -231,26 +232,32 @@ export const App = ({
   const chatKey = resumeChatId ?? 'current'
 
   return (
-    <AuthedSurface
-      chatKey={chatKey}
-      initialPrompt={initialPrompt}
-      agentId={agentId}
-      fileTree={fileTree}
-      inputRef={inputRef}
-      setIsAuthenticated={setIsAuthenticated}
-      setUser={setUser}
-      logoutMutation={logoutMutation}
-      continueChat={effectiveContinueChat}
-      continueChatId={effectiveContinueChatId}
-      authStatus={authStatus}
-      initialMode={initialMode}
-      gitRoot={gitRoot}
-      onSwitchToGitRoot={handleSwitchToGitRoot}
-      showChatHistory={showChatHistory}
-      onSelectChat={handleResumeChat}
-      onCancelChatHistory={closeChatHistory}
-      onNewChat={handleNewChat}
-    />
+    <>
+      {/* FID-2026-0720-033d Phase D Step 4: ToastContainer mounted at the app
+          root so toasts are visible across all screens (login, landing, chat).
+          Law 4: ToastContainer is the production consumer of useToastStore. */}
+      <AuthedSurface
+        chatKey={chatKey}
+        initialPrompt={initialPrompt}
+        agentId={agentId}
+        fileTree={fileTree}
+        inputRef={inputRef}
+        setIsAuthenticated={setIsAuthenticated}
+        setUser={setUser}
+        logoutMutation={logoutMutation}
+        continueChat={effectiveContinueChat}
+        continueChatId={effectiveContinueChatId}
+        authStatus={authStatus}
+        initialMode={initialMode}
+        gitRoot={gitRoot}
+        onSwitchToGitRoot={handleSwitchToGitRoot}
+        showChatHistory={showChatHistory}
+        onSelectChat={handleResumeChat}
+        onCancelChatHistory={closeChatHistory}
+        onNewChat={handleNewChat}
+      />
+      <ToastContainer />
+    </>
   )
 }
 

@@ -1,9 +1,14 @@
+
+
+
 import { useKeyboard } from '@opentui/react'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
+
 
 import { Button } from './button'
 import { useTerminalDimensions } from '../hooks/use-terminal-dimensions'
 import { useTheme } from '../hooks/use-theme'
+import { Badge } from './savant-ui/data-display/badge'
 
 import type { OpenRouterModel } from '../utils/openrouter-models'
 import type { KeyEvent, ScrollBoxRenderable } from '@opentui/core'
@@ -47,8 +52,10 @@ function getProviderOrder(provider: ModelProvider): number {
       return 1
     case 'nvidia':
       return 2
-    default:
+    case 'opencode-go':
       return 3
+    default:
+      return 4
   }
 }
 
@@ -240,10 +247,6 @@ export const ModelPicker: React.FC<ModelPickerProps> = ({
   )
 
   const menuWidth = Math.max(20, Math.min(terminalWidth - 4, 120))
-  const maxIdLen = filteredModels.reduce(
-    (max, model) => Math.max(max, model.id.length),
-    0,
-  )
 
   return (
     <box
@@ -289,19 +292,19 @@ export const ModelPicker: React.FC<ModelPickerProps> = ({
         }}
       >
         {filteredModels.length === 0 && (
-        <box
-          style={{
-            paddingLeft: 1,
-            paddingTop: 1,
-            backgroundColor: theme.surface,
-          }}
-        >
-          <text style={{ fg: theme.muted, wrapMode: 'none' }}>
-            {query ? `No models match "${query}"` : 'No models available'}
-          </text>
-        </box>
-      )}
-      {visible.map((item, idx) => {
+          <box
+            style={{
+              paddingLeft: 1,
+              paddingTop: 1,
+              backgroundColor: theme.surface,
+            }}
+          >
+            <text style={{ fg: theme.muted, wrapMode: 'none' }}>
+              {query ? `No models match "${query}"` : 'No models available'}
+            </text>
+          </box>
+        )}
+        {visible.map((item, idx) => {
           const absoluteIndex = start + idx
           const isSelected = absoluteIndex === selectedIndex
 
@@ -330,7 +333,6 @@ export const ModelPicker: React.FC<ModelPickerProps> = ({
           }
 
           const { model, provider } = item
-          const pad = ' '.repeat(Math.max(0, maxIdLen - model.id.length))
           return (
             <Button
               key={model.id}
@@ -342,26 +344,45 @@ export const ModelPicker: React.FC<ModelPickerProps> = ({
                 backgroundColor: isSelected
                   ? theme.surfaceHover
                   : theme.surface,
+                flexDirection: 'row',
+                gap: 1,
+                alignItems: 'center',
               }}
             >
-              <text
-                style={{
-                  fg: isSelected ? theme.foreground : theme.inputFg,
-                }}
-              >
-                <span fg={theme.primary}>{isSelected ? '› ' : '  '}</span>
-                <span
+              {/* Marker + model ID */}
+              <box style={{ flexDirection: 'row', flexShrink: 0, gap: 0 }}>
+                <text
+                  fg={theme.primary}
+                  wrapMode="none"
+                  selectable={false}
+                >
+                  {isSelected ? '› ' : '  '}
+                </text>
+                <text
                   fg={theme.foreground}
                   attributes={isSelected ? 1 : 0}
+                  wrapMode="none"
+                  selectable={false}
                 >
                   {model.id}
-                </span>
-                <span>{pad}  </span>
-                <span fg={theme.muted}>
-                  <span fg={theme.primary}>[{provider}] </span>
+                </text>
+              </box>
+              {/* Provider badge */}
+              <box style={{ flexShrink: 0 }}>
+                <Badge variant="info" brackets={false}>
+                  {provider}
+                </Badge>
+              </box>
+              {/* Model name */}
+              <box style={{ flexGrow: 1, minWidth: 0 }}>
+                <text
+                  fg={theme.muted}
+                  wrapMode="char"
+                  selectable={false}
+                >
                   {model.name}
-                </span>
-              </text>
+                </text>
+              </box>
             </Button>
           )
         })}

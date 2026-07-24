@@ -137,7 +137,7 @@ describe('gravity_index tool', () => {
           query: 'transactional email for Next.js',
           external_session_id: 'test-session',
           metadata: expect.objectContaining({
-            surface: 'codebuff_cli',
+            surface: 'savant_code_cli',
             tool_call_id: expect.any(String),
             agent_step_id: expect.any(String),
             fingerprint_id: 'test-fingerprint',
@@ -358,6 +358,85 @@ describe('gravity_index tool', () => {
     const last = JSON.stringify(toolMsgs[toolMsgs.length - 1].content)
     expect(last).toContain('errorMessage')
     expect(last).toContain('Gravity Index is not configured')
+  })
+
+  test('categorizes missing API key error', async () => {
+    spyOn(webApi, 'callGravityIndexAPI').mockResolvedValue({
+      error: 'Missing SavantCode base URL or API key',
+    })
+
+    mockAgentStream([
+      createToolCallChunk('gravity_index', {
+        action: 'list_categories',
+      }),
+      createToolCallChunk('end_turn', {}),
+    ])
+
+    const sessionState = getInitialSessionState(
+      runAgentStepBaseParams.fileContext,
+    )
+    const agentState = {
+      ...sessionState.mainAgentState,
+      agentType: 'gravity-test-agent',
+    }
+    const { agentTemplates } = assembleLocalAgentTemplates({
+      ...agentRuntimeImpl,
+      fileContext: runAgentStepBaseParams.fileContext,
+    })
+
+    const { agentState: newAgentState } = await runAgentStep({
+      ...runAgentStepBaseParams,
+      localAgentTemplates: agentTemplates,
+      agentTemplate: agentTemplates['gravity-test-agent'],
+      agentState,
+      prompt: 'List service categories',
+    })
+
+    const toolMsgs = newAgentState.messageHistory.filter(
+      (m) => m.role === 'tool' && m.toolName === 'gravity_index',
+    )
+    const last = JSON.stringify(toolMsgs[toolMsgs.length - 1].content)
+    expect(last).toContain('[CONFIG_ERROR]')
+    expect(last).toContain('SAVANT_CODE_API_KEY is set')
+  })
+
+  test('categorizes API backend error', async () => {
+    spyOn(webApi, 'callGravityIndexAPI').mockResolvedValue({
+      error: 'Internal server error',
+    })
+
+    mockAgentStream([
+      createToolCallChunk('gravity_index', {
+        action: 'list_categories',
+      }),
+      createToolCallChunk('end_turn', {}),
+    ])
+
+    const sessionState = getInitialSessionState(
+      runAgentStepBaseParams.fileContext,
+    )
+    const agentState = {
+      ...sessionState.mainAgentState,
+      agentType: 'gravity-test-agent',
+    }
+    const { agentTemplates } = assembleLocalAgentTemplates({
+      ...agentRuntimeImpl,
+      fileContext: runAgentStepBaseParams.fileContext,
+    })
+
+    const { agentState: newAgentState } = await runAgentStep({
+      ...runAgentStepBaseParams,
+      localAgentTemplates: agentTemplates,
+      agentTemplate: agentTemplates['gravity-test-agent'],
+      agentState,
+      prompt: 'List service categories',
+    })
+
+    const toolMsgs = newAgentState.messageHistory.filter(
+      (m) => m.role === 'tool' && m.toolName === 'gravity_index',
+    )
+    const last = JSON.stringify(toolMsgs[toolMsgs.length - 1].content)
+    expect(last).toContain('[API_ERROR]')
   })
 
   test('passes non-search actions through the unified facade', async () => {

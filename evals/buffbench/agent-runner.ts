@@ -7,7 +7,7 @@ import { withTimeout } from '@savant-code/common/util/promise'
 
 import { withTestRepo } from '../subagents/test-repo-utils'
 import { ClaudeRunner } from './runners/claude'
-import { SavantCodeRunner } from './runners/savant-code'
+import { SavantCodeRunner } from './runners/codebuff'
 import { CodexRunner } from './runners/codex'
 import { OpenCodeRunner } from './runners/opencode'
 

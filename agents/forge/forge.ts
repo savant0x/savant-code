@@ -1,5 +1,3 @@
-import { ECHO_PROTOCOL_INSTRUCTIONS } from '@savant-code/common/constants/agents'
-
 import { publisher } from '../constants'
 
 import type { AgentDefinition } from '../types/agent-definition'
@@ -123,9 +121,7 @@ More style notes:
 - Optional arguments are code smell and worse than required arguments.
 - New components often should be added to a new file, not added to an existing file.
 
-Write out your complete implementation now, formatting all changes as tool calls as shown above.
-
-${ECHO_PROTOCOL_INSTRUCTIONS}`,
+Write out your complete implementation now, formatting all changes as tool calls as shown above.`,
 
     handleSteps: function* ({ agentState: initialAgentState, logger }) {
       const initialMessageHistoryLength =

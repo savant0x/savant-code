@@ -28,15 +28,15 @@ import type {
 
 describe('getAgentBaseName', () => {
   test('extracts base name from scoped versioned name', () => {
-    expect(getAgentBaseName('savant-code/file-picker@0.0.2')).toBe('file-picker')
+    expect(getAgentBaseName('savant-code/scout@0.0.2')).toBe('scout')
   })
 
   test('extracts base name from simple versioned name', () => {
-    expect(getAgentBaseName('file-picker@1.0.0')).toBe('file-picker')
+    expect(getAgentBaseName('scout@1.0.0')).toBe('scout')
   })
 
   test('returns simple name unchanged', () => {
-    expect(getAgentBaseName('file-picker')).toBe('file-picker')
+    expect(getAgentBaseName('scout')).toBe('scout')
   })
 
   test('normalizes direct tool aliases to canonical agent names', () => {
@@ -44,7 +44,7 @@ describe('getAgentBaseName', () => {
   })
 
   test('handles scoped name without version', () => {
-    expect(getAgentBaseName('savant-code/file-picker')).toBe('file-picker')
+    expect(getAgentBaseName('savant-code/file-picker')).toBe('scout')
   })
 
   test('handles empty string', () => {
@@ -479,12 +479,12 @@ describe('createAgentBlock', () => {
   test('creates basic agent block with required fields', () => {
     const block = createAgentBlock({
       agentId: 'agent-123',
-      agentType: 'file-picker',
+      agentType: 'scout',
     })
     expect(block.type).toBe('agent')
     expect(block.agentId).toBe('agent-123')
-    expect(block.agentName).toBe('file-picker')
-    expect(block.agentType).toBe('file-picker')
+    expect(block.agentName).toBe('scout')
+    expect(block.agentType).toBe('scout')
     expect(block.content).toBe('')
     expect(block.status).toBe('running')
     expect(block.blocks).toEqual([])
@@ -494,7 +494,7 @@ describe('createAgentBlock', () => {
   test('includes prompt when provided', () => {
     const block = createAgentBlock({
       agentId: 'agent-123',
-      agentType: 'file-picker',
+      agentType: 'scout',
       prompt: 'Find relevant files',
     })
     expect(block.initialPrompt).toBe('Find relevant files')
@@ -503,7 +503,7 @@ describe('createAgentBlock', () => {
   test('includes params when provided', () => {
     const block = createAgentBlock({
       agentId: 'agent-123',
-      agentType: 'file-picker',
+      agentType: 'scout',
       params: { directories: ['src'] },
     })
     expect(block.params).toEqual({ directories: ['src'] })
@@ -801,7 +801,7 @@ describe('moveSpawnAgentBlock', () => {
         type: 'agent',
         agentId: 'toolcall-0',
         agentName: 'Agent A',
-        agentType: 'file-picker',
+        agentType: 'scout',
         content: '',
         status: 'running',
         blocks: [],

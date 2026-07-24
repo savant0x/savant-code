@@ -1,4 +1,3 @@
-import { ECHO_PROTOCOL_INSTRUCTIONS } from '@savant-code/common/constants/agents'
 import { GEMINI_3_1_FLASH_LITE_MODEL_ID } from '@savant-code/common/constants/gemini'
 
 import { publisher } from '../constants'
@@ -52,19 +51,31 @@ export const createFilePicker = (
     includeMessageHistory: false,
     // After FID-2026-0718-007: Scout uses glob + list_directory directly
     // instead of delegating to Detective (code_search agent).
-    toolNames: ['glob', 'list_directory', 'read_files', 'read_subtree', 'set_output'],
+    toolNames: [
+      'glob',
+      'list_directory',
+      'read_files',
+      'read_subtree',
+      'set_output',
+    ],
     // Scout no longer delegates file-finding to any subagent.
     spawnableAgents: [],
 
     systemPrompt: `You are an expert at finding relevant files in a codebase. ${PLACEHOLDER.FILE_TREE_PROMPT}`,
     instructionsPrompt: `Instructions:
-Provide an extremely short report of the locations in the codebase that could be helpful. Focus on the files that are most relevant to the user prompt.
-In your report, please give a very concise analysis that includes the full paths of files that are relevant and (extremely briefly) how they could be useful.
+You are an expert file-finding agent. Your goal is to identify the small set of files most relevant to the user's prompt and return concise evidence for each.
 
-Do not use any further tools or spawn any further agents.
+Workflow:
+1. Use glob and list_directory to find candidate files and directories. Start with keyword globs (e.g. \`**/*auth*\`) and broaden only if needed.
+2. Use read_files or read_subtree to peek at promising files when a short excerpt would help you decide if a file is truly relevant.
+3. Rank results by relevance: prefer files whose names, paths, or content directly match the user's request; deprioritize tangential matches.
+4. Summarize each selected file with: full path, one-sentence reason it matters, and (optionally) the most relevant symbol/section.
 
-${ECHO_PROTOCOL_INSTRUCTIONS}
-  `.trim(),
+Output format:
+- Return at most ${isMax ? 20 : 12} files.
+- Keep the report extremely short; do not reproduce large code excerpts.
+- Do not use any further tools or spawn any further agents.
+`.trim(),
 
     handleSteps: isMax ? handleStepsMax : handleStepsDefault,
   }
@@ -76,97 +87,195 @@ ${ECHO_PROTOCOL_INSTRUCTIONS}
  * 2. Yield STEP so the LLM can interpret results, explore deeper, filter/rank
  * 3. LLM calls set_output with final results
  */
-const handleStepsDefault: SecretAgentDefinition['handleSteps'] =
-  function* ({ prompt, params }) {
-    const cwd = params?.directories?.length ? params.directories[0] : undefined
+const handleStepsDefault: SecretAgentDefinition['handleSteps'] = function* ({
+  prompt,
+  params,
+}) {
+  const cwd = params?.directories?.length ? params.directories[0] : undefined
 
-    // Inlined extractKeywords (must be self-contained for .toString() serialization)
-    function _extractKeywords(p: string): string[] {
-      const STOP_WORDS = new Set(['find','search','look','for','files','file','related','to','the','a','an','in','on','of','and','or','that','which','about','with','show','me','list','get','all','any','where','what','how','please','can','you','i','we','need','want'])
-      const raw = p.toLowerCase().replace(/[^a-z0-9\s\-_.\/]/g, ' ').split(/\s+/).map(t => t.trim()).filter(t => t.length > 1 && !STOP_WORDS.has(t))
-      const seen = new Set<string>()
-      const unique = raw.filter(t => seen.has(t) ? false : (seen.add(t), true))
-      if (unique.length === 0) {
-        const fallback = p.replace(/[^a-z0-9\s\-_.\/]/gi, ' ').trim().split(/\s+/)[0]
-        return fallback ? [fallback.toLowerCase()] : ['*']
-      }
-      return unique
+  // Inlined extractKeywords (must be self-contained for .toString() serialization)
+  function _extractKeywords(p: string): string[] {
+    const STOP_WORDS = new Set([
+      'find',
+      'search',
+      'look',
+      'for',
+      'files',
+      'file',
+      'related',
+      'to',
+      'the',
+      'a',
+      'an',
+      'in',
+      'on',
+      'of',
+      'and',
+      'or',
+      'that',
+      'which',
+      'about',
+      'with',
+      'show',
+      'me',
+      'list',
+      'get',
+      'all',
+      'any',
+      'where',
+      'what',
+      'how',
+      'please',
+      'can',
+      'you',
+      'i',
+      'we',
+      'need',
+      'want',
+    ])
+    const raw = p
+      .toLowerCase()
+      .replace(/[^a-z0-9\s\-_.\/]/g, ' ')
+      .split(/\s+/)
+      .map((t) => t.trim())
+      .filter((t) => t.length > 1 && !STOP_WORDS.has(t))
+    const seen = new Set<string>()
+    const unique = raw.filter((t) =>
+      seen.has(t) ? false : (seen.add(t), true),
+    )
+    if (unique.length === 0) {
+      const fallback = p
+        .replace(/[^a-z0-9\s\-_.\/]/gi, ' ')
+        .trim()
+        .split(/\s+/)[0]
+      return fallback ? [fallback.toLowerCase()] : ['*']
     }
-
-    // 1. Programmatic glob: extract keywords, search file NAMES (not contents)
-    if (prompt) {
-      const keywords = _extractKeywords(prompt)
-      for (const keyword of keywords) {
-        yield {
-          toolName: 'glob',
-          input: {
-            pattern: `**/*${keyword}*`,
-            ...(cwd ? { cwd } : {}),
-          },
-        } satisfies ToolCall
-      }
-    }
-
-    // 2. Yield STEP — let the LLM interpret results, drive deeper exploration
-    //    (LLM can call list_directory, read_files, read_subtree, glob, set_output)
-    yield 'STEP'
-
-    // 3. LLM calls set_output with final results
-    yield {
-      toolName: 'set_output',
-      input: {
-        message: `Scout found these files for: ${prompt}`,
-      },
-    } satisfies ToolCall
+    return unique
   }
+
+  // 1. Programmatic glob: extract keywords, search file NAMES (not contents)
+  if (prompt) {
+    const keywords = _extractKeywords(prompt)
+    for (const keyword of keywords) {
+      yield {
+        toolName: 'glob',
+        input: {
+          pattern: `**/*${keyword}*`,
+          ...(cwd ? { cwd } : {}),
+        },
+      } satisfies ToolCall
+    }
+  }
+
+  // 2. Yield STEP — let the LLM interpret results, drive deeper exploration
+  //    (LLM can call list_directory, read_files, read_subtree, glob, set_output)
+  yield 'STEP'
+
+  // 3. LLM calls set_output with final results
+  yield {
+    toolName: 'set_output',
+    input: {
+      message: `Scout found these files for: ${prompt}`,
+    },
+  } satisfies ToolCall
+}
 
 /**
  * handleSteps for max mode — same programmatic glob + deeper LLM exploration.
  * Max mode encourages the LLM to explore directories more deeply during STEP.
  */
-const handleStepsMax: SecretAgentDefinition['handleSteps'] =
-  function* ({ prompt, params }) {
-    const cwd = params?.directories?.length ? params.directories[0] : undefined
+const handleStepsMax: SecretAgentDefinition['handleSteps'] = function* ({
+  prompt,
+  params,
+}) {
+  const cwd = params?.directories?.length ? params.directories[0] : undefined
 
-    // Inlined extractKeywords (must be self-contained for .toString() serialization)
-    function _extractKeywords(p: string): string[] {
-      const STOP_WORDS = new Set(['find','search','look','for','files','file','related','to','the','a','an','in','on','of','and','or','that','which','about','with','show','me','list','get','all','any','where','what','how','please','can','you','i','we','need','want'])
-      const raw = p.toLowerCase().replace(/[^a-z0-9\s\-_.\/]/g, ' ').split(/\s+/).map(t => t.trim()).filter(t => t.length > 1 && !STOP_WORDS.has(t))
-      const seen = new Set<string>()
-      const unique = raw.filter(t => seen.has(t) ? false : (seen.add(t), true))
-      if (unique.length === 0) {
-        const fallback = p.replace(/[^a-z0-9\s\-_.\/]/gi, ' ').trim().split(/\s+/)[0]
-        return fallback ? [fallback.toLowerCase()] : ['*']
-      }
-      return unique
+  // Inlined extractKeywords (must be self-contained for .toString() serialization)
+  function _extractKeywords(p: string): string[] {
+    const STOP_WORDS = new Set([
+      'find',
+      'search',
+      'look',
+      'for',
+      'files',
+      'file',
+      'related',
+      'to',
+      'the',
+      'a',
+      'an',
+      'in',
+      'on',
+      'of',
+      'and',
+      'or',
+      'that',
+      'which',
+      'about',
+      'with',
+      'show',
+      'me',
+      'list',
+      'get',
+      'all',
+      'any',
+      'where',
+      'what',
+      'how',
+      'please',
+      'can',
+      'you',
+      'i',
+      'we',
+      'need',
+      'want',
+    ])
+    const raw = p
+      .toLowerCase()
+      .replace(/[^a-z0-9\s\-_.\/]/g, ' ')
+      .split(/\s+/)
+      .map((t) => t.trim())
+      .filter((t) => t.length > 1 && !STOP_WORDS.has(t))
+    const seen = new Set<string>()
+    const unique = raw.filter((t) =>
+      seen.has(t) ? false : (seen.add(t), true),
+    )
+    if (unique.length === 0) {
+      const fallback = p
+        .replace(/[^a-z0-9\s\-_.\/]/gi, ' ')
+        .trim()
+        .split(/\s+/)[0]
+      return fallback ? [fallback.toLowerCase()] : ['*']
     }
-
-    // 1. Programmatic glob: extract keywords, search file NAMES
-    if (prompt) {
-      const keywords = _extractKeywords(prompt)
-      for (const keyword of keywords) {
-        yield {
-          toolName: 'glob',
-          input: {
-            pattern: `**/*${keyword}*`,
-            ...(cwd ? { cwd } : {}),
-          },
-        } satisfies ToolCall
-      }
-    }
-
-    // 2. Yield STEP — in max mode, the LLM should explore more deeply:
-    //    read key files, explore directory structures, find related modules
-    yield 'STEP'
-
-    // 3. LLM calls set_output with final results
-    yield {
-      toolName: 'set_output',
-      input: {
-        message: `Scout found these files for: ${prompt}`,
-      },
-    } satisfies ToolCall
+    return unique
   }
+
+  // 1. Programmatic glob: extract keywords, search file NAMES
+  if (prompt) {
+    const keywords = _extractKeywords(prompt)
+    for (const keyword of keywords) {
+      yield {
+        toolName: 'glob',
+        input: {
+          pattern: `**/*${keyword}*`,
+          ...(cwd ? { cwd } : {}),
+        },
+      } satisfies ToolCall
+    }
+  }
+
+  // 2. Yield STEP — in max mode, the LLM should explore more deeply:
+  //    read key files, explore directory structures, find related modules
+  yield 'STEP'
+
+  // 3. LLM calls set_output with final results
+  yield {
+    toolName: 'set_output',
+    input: {
+      message: `Scout found these files for: ${prompt}`,
+    },
+  } satisfies ToolCall
+}
 
 const definition: SecretAgentDefinition = {
   id: 'scout',

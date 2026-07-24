@@ -14,6 +14,8 @@ import {
   isOpenAIProviderModel,
   toOpenAIModelId,
 } from '@savant-code/common/constants/chatgpt-oauth'
+import { createAnthropic } from '@ai-sdk/anthropic'
+import { OPENCODE_GO_PROTOCOLS } from '@savant-code/common/constants/model-config'
 import { isTransientNetworkError } from '@savant-code/common/util/error'
 import {
   OpenAICompatibleChatLanguageModel,
@@ -28,6 +30,7 @@ import {
   getInferenceApiKeyFromEnv,
   getInferenceBaseUrlFromEnv,
   getNvidiaApiKeyFromEnv,
+  getOpenCodeGoApiKeyFromEnv,
   getTokenRouterApiKeyFromEnv,
 } from '../env'
 import {
@@ -187,6 +190,19 @@ export async function getModelForRequest(
     }
   }
 
+  if (isOpenCodeGoModel(model)) {
+    const openCodeGoKey = getOpenCodeGoApiKeyFromEnv()
+    if (!openCodeGoKey) {
+      throw new Error(
+        'OpenCode Go API key not set. Set OPENCODE_GO_API_KEY environment variable.',
+      )
+    }
+    return {
+      model: createOpenCodeGoModel(openCodeGoKey, model),
+      isChatGptOAuth: false,
+    }
+  }
+
   // Default: use SavantCode backend
   return {
     model: await createSavantCodeBackendModel(apiKey, model),
@@ -259,6 +275,15 @@ function fetchWithRetryableNetworkErrors(
 }
 
 /**
+ * Check if a model ID targets OpenCode Go (prefix: `opencode-go/`).
+ * Subagents inherit the parent's model via `withParentModel()` in
+ * spawn-agent-utils.ts — gateway model prefixes propagate correctly.
+ */
+export function isOpenCodeGoModel(model: string): boolean {
+  return model.startsWith('opencode-go/')
+}
+
+/**
  * Check if a model ID targets TokenRouter (prefix: `tokenrouter/`).
  * Subagents inherit the parent's model via `withParentModel()` in
  * spawn-agent-utils.ts — gateway model prefixes propagate correctly.
@@ -290,7 +315,7 @@ function createTokenRouterModel(
     provider: 'tokenrouter',
     url: ({ path: endpoint }) => {
       const cleanPath = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint
-      return new URL(cleanPath, 'https://tokenrouter.me/v1/').toString()
+      return new URL(cleanPath, 'https://api.tokenrouter.com/v1/').toString()
     },
     headers: () => ({
       Authorization: `Bearer ${apiKey}`,
@@ -323,6 +348,65 @@ function createNvidiaModel(
       Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
       'user-agent': `ai-sdk/openai-compatible/${VERSION}/savant-code-nvidia`,
+    }),
+    fetch: fetchWithRetryableNetworkErrors as typeof globalThis.fetch,
+    includeUsage: undefined,
+    supportsStructuredOutputs: false,
+  })
+}
+
+/**
+ * Create an OpenCode Go model.
+ *
+ * OpenCode Go exposes dual-protocol endpoints:
+ * - OpenAI-compatible (`/v1/chat/completions`): 10 models
+ * - Anthropic-compatible (`/v1/messages`): 5 models
+ *
+ * The protocol is determined by the model catalog lookup in OPENCODE_GO_PROTOCOLS.
+ * For OpenAI-compatible models, we reuse the existing OpenAICompatibleChatLanguageModel.
+ * For Anthropic-compatible models, we use @ai-sdk/anthropic with a custom base URL.
+ */
+function createOpenCodeGoModel(
+  apiKey: string,
+  model: string,
+): LanguageModel {
+  const protocol = OPENCODE_GO_PROTOCOLS[model]
+  if (!protocol) {
+    throw new Error(
+      `Unknown protocol for OpenCode Go model: ${model}. ` +
+      `Model not found in OPENCODE_GO_PROTOCOLS catalog.`,
+    )
+  }
+
+  const baseUrl = 'https://opencode.ai/zen/go/v1/'
+
+  if (protocol === 'anthropic') {
+    // Anthropic-compatible: use @ai-sdk/anthropic with custom base URL.
+    // This avoids building a 700+ line custom adapter; @ai-sdk/anthropic is
+    // already a workspace dependency and handles the /v1/messages protocol.
+    // DEVIATION from FID-034 scope constraint: reference implementations
+    // (opencode-dev, kilocode) were not available in the repo, so we use
+    // the official SDK adapter instead of a custom Effect/Schema adapter.
+    const anthropic = createAnthropic({
+      baseURL: baseUrl,
+      apiKey,
+    })
+    const apiModelId = model.slice('opencode-go/'.length)
+    return anthropic(apiModelId)
+  }
+
+  // OpenAI-compatible: reuse existing adapter
+  const apiModelId = model.slice('opencode-go/'.length)
+  return new OpenAICompatibleChatLanguageModel(apiModelId, {
+    provider: 'opencode-go',
+    url: ({ path: endpoint }) => {
+      const cleanPath = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint
+      return new URL(cleanPath, baseUrl).toString()
+    },
+    headers: () => ({
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+      'user-agent': `ai-sdk/openai-compatible/${VERSION}/savant-code-opencode-go`,
     }),
     fetch: fetchWithRetryableNetworkErrors as typeof globalThis.fetch,
     includeUsage: undefined,

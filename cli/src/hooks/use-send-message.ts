@@ -16,7 +16,7 @@ import {
   clearActiveRunAborter,
   setActiveRunAborter,
 } from '../utils/active-run'
-import { IS_SAVANT_FREE, getContextWindowForModel } from '../utils/constants'
+import { IS_SAVANT_FREE } from '../utils/constants'
 import { createEventHandlerState } from '../utils/create-event-handler-state'
 import { createRunConfig } from '../utils/create-run-config'
 import { saveFidDocumentToDb, isFidPath } from '../utils/db-storage'
@@ -47,6 +47,11 @@ import {
 } from '../utils/send-message-helpers'
 import { createSendMessageTimerController } from '../utils/send-message-timer'
 import { loadSavantCodeModelPreference } from '../utils/settings'
+import {
+  findGatewayModel,
+  formatModelInfo,
+  resolveContextWindowForModel,
+} from '../utils/openrouter-models'
 import {
   handleRunCompletion,
   handleRunError,
@@ -598,11 +603,13 @@ export const useSendMessage = ({
             useChatStore.getState().addToolHistory(toolName)
           },
           onSubagentStart: (agentId: string, displayName: string) => {
-            // Wire sidebar: add agent to stack
+            // Wire sidebar: add agent to stack. Store both the stable agentId
+            // (used by onSubagentFinish) and the readable displayName (rendered
+            // in the sidebar) so generated compact IDs don't pollute the UI.
             const current = useChatStore.getState().agentStack
             useChatStore.getState().updateAgentStack([
               ...current,
-              { id: displayName, isActive: true },
+              { id: agentId, displayName, isActive: true },
             ])
           },
           onSubagentFinish: (agentId: string) => {
@@ -617,6 +624,17 @@ export const useSendMessage = ({
         })
 
         const instanceId = getSavantFreeInstanceId()
+        const effectiveModelId =
+          typeof agentWithModelOverride === 'string'
+            ? undefined
+            : agentWithModelOverride.model
+        const cachedModel = effectiveModelId
+          ? findGatewayModel(effectiveModelId)
+          : undefined
+        const modelInfoText = effectiveModelId
+          ? formatModelInfo(effectiveModelId, cachedModel)
+          : undefined
+
         const runConfig = createRunConfig({
           logger,
           agent: agentWithModelOverride,
@@ -630,6 +648,7 @@ export const useSendMessage = ({
             IS_SAVANT_FREE && instanceId
               ? { freebuff_instance_id: instanceId }
               : undefined,
+          modelInfoText,
           onStateSnapshot: (snapshot) => {
             latestRunStateSnapshot = snapshot
 
@@ -688,14 +707,15 @@ export const useSendMessage = ({
             : agentWithModelOverride.id
         useChatStore.getState().updateAgentStack([{ id: mainAgentName, isActive: true }])
 
-        // Wire sidebar: set context window max from model
+        // Wire sidebar: set context window max from model. Prefer the live
+        // gateway catalog, fall back to name-based heuristic (FID-2026-0723-062).
         const modelName =
           typeof agentWithModelOverride === 'string'
             ? undefined
             : agentWithModelOverride.model
         if (modelName) {
           useChatStore.getState().updateContextTokensMax(
-            getContextWindowForModel(modelName),
+            resolveContextWindowForModel(modelName),
           )
         }
 

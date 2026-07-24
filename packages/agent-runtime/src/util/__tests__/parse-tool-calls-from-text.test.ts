@@ -150,7 +150,7 @@ Some commentary after`
   "cb_tool_name": "spawn_agents",
   "agents": [
     {
-      "agent_type": "file-picker",
+      "agent_type": "scout",
       "prompt": "Find relevant files"
     },
     {

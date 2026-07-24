@@ -1,0 +1,458 @@
+Total archived FIDs: 76
+
+ID: FID-2026-0714-001-background-terminal-unimplemented
+STATUS: created
+LOOP2: False CONVERGED: False
+REMAINING: 
+RESOLUTION: - **Fixed By:** ECHO Agent (Kilo) - **Fixed Date:** 2026-07-16 - **Fix Description:** Removed `BACKGROUND` from `process_type` union in all 4 files: `sdk/src/tools/run-terminal-command.ts` (type + throw removal), `common/src/tools/params/tool/run-terminal-command.ts` (enum + descriptions), `common/src/templates/initial-agents-dir/types/tools.ts` (type + JSDoc), `agents/types/tools.ts` (type + JSDoc). Breaking change — removed a published tool schema value. - **Tests Added:** None required — no c
+================================================================================
+ID: FID-2026-0714-002-any-type-usage
+STATUS: created
+LOOP2: False CONVERGED: False
+REMAINING: 
+RESOLUTION: - **Fixed By:** ECHO Agent (Kilo) - **Fixed Date:** 2026-07-16 - **Fix Description:** Added `@typescript-eslint/no-explicit-any: ['error', { ignoreRestArgs: true, fixToUnknown: false }]` to the base config in `eslint.config.js`. Added targeted eslint-disable comments with justifications to all 12 production `any` sites: 3 in `sdk/src/impl/model-provider.ts`, 6 in `sdk/src/run.ts`, 2 in `sdk/src/tools/code-search.ts`, 1 in `sdk/src/validate-agents.ts`. - **Tests Added:** None required (lint rule 
+================================================================================
+ID: FID-2026-0714-003-console-in-production
+STATUS: created
+LOOP2: False CONVERGED: False
+REMAINING: 
+RESOLUTION: - **Fixed By:** ECHO Agent (Kilo) - **Fixed Date:** 2026-07-16 - **Fix Description:** Added `@typescript-eslint/no-console: ['warn', { allow: ['warn', 'error'] }]` to base eslint config with override disabling it for TUI user-facing files (`cli/src/login/**`, `cli/src/components/tui/**`). Added `cli/src/agents/bundled-agents.generated.ts` to eslint ignores. Created `sdk/src/utils/logger.ts` with lightweight pino instance. Migrated ~45 diagnostic `console.*` calls across 12 production files to st
+================================================================================
+ID: FID-2026-0714-004-lost-chunk-type-safety
+STATUS: created
+LOOP2: False CONVERGED: False
+REMAINING: 
+RESOLUTION: - **Fixed By:** ECHO Agent (Kilo) - **Fixed Date:** 2026-07-16 - **Fix Description:** Reordered `transform` body in `openai-compatible-chat-language-model.ts`: `chunk.success` check now comes before `options.includeRawChunks` block, ensuring `chunk.rawValue` is only accessed when `chunk.success === true`. Removed the `// TODO we lost type safety on Chunk... MUST FIX` comment. Added `stream-transform.test.ts` with 2 tests verifying failed parse results never trigger rawValue access. - **Tests Add
+================================================================================
+ID: FID-2026-0714-005-config-env-hygiene
+STATUS: created
+LOOP2: False CONVERGED: False
+REMAINING: 
+RESOLUTION: - **Fixed By:** ECHO Agent (Kilo) - **Fixed Date:** 2026-07-16 - **Fix Description:** Created `.env.local` (repo root, gitignored) with 8 placeholder `NEXT_PUBLIC_*` vars satisfying `clientEnvSchema`. Created `cli/src/pre-init/load-dev-env.ts` — upward-walking `.env.local` resolver using the e2e harness's exact parser algorithm. Wired as first import in `cli/src/index.tsx` to bypass `--cwd ..` dotenv auto-loader disablement. `paths.tests` field is dead config (no tooling reads it); deferred remo
+================================================================================
+ID: FID-2026-0714-006-inference-backend-openrouter-swap
+STATUS: created
+LOOP2: False CONVERGED: False
+REMAINING: 
+RESOLUTION: - **Fixed By:** ECHO Agent (Kilo) - **Fixed Date:** 2026-07-16 - **Fix Description:** Modified `createCodebuffBackendModel` in `sdk/src/impl/model-provider.ts` to use `INFERENCE_BASE_URL` env var (when set, routes directly to that URL; otherwise falls back to `getWebsiteUrl()`). Added `OR_MASTER_KEY` master key exchange in new `sdk/src/impl/openrouter-key-resolver.ts` — POST `https://openrouter.ai/api/v1/keys` with `{ name, description, limit: null }`, caches resolved key in process-lifetime var
+================================================================================
+ID: FID-2026-0716-001-chat-tsx-missing-model-pref-import
+STATUS: closed
+LOOP2: False CONVERGED: False
+REMAINING: 
+RESOLUTION: - **Fixed By:** ECHO Agent (Hy3, free) - **Fixed Date:** 2026-07-16 12:55 - **Fix Description:** Added `loadCodebuffModelPreference` and `saveCodebuffModelPreference`   to the existing `./utils/settings` `import {…}` block in `cli/src/chat.tsx` (was at lines   72-75, now at 72-77). Alphabetical ordering preserved. No other file touched. Resolves   `ReferenceError: saveCodebuffModelPreference is not defined` at chat.tsx:255 (was dep   array of `useCallback` in the model-pick handler). - **Tests A
+================================================================================
+ID: FID-2026-0716-002-model-picker-keyevent-type-mismatch
+STATUS: closed
+LOOP2: False CONVERGED: False
+REMAINING: 
+RESOLUTION: - **Fixed By:** recursive (human + AI pair) - **Fixed Date:** 2026-07-16 - **Fix Description:** Added typed intersection casts at lines 132-133 of model-picker.tsx to widen `key` with the runtime-present `input` and `alt` fields. No upstream change needed. - **Tests Added:** None required (type-only fix). - **Verified By:** `bun x tsc --noEmit -p cli/tsconfig.json` — zero model-picker errors. - **Commit/PR:** N/A (not a git repo) - **Archived:** 2026-07-16
+================================================================================
+ID: FID-2026-0716-007-echo-foundation-phase1
+STATUS: closed
+LOOP2: False CONVERGED: False
+REMAINING: ### DEFERRED (User-requested)  1. **Repo-wide rebrand** — package names, product references (SavantCode→Savant). Deferred by user request — can be done in a future session.  ---
+RESOLUTION: - **Fixed By:** recursive (human + AI pair) - **Fixed Date:** 2026-07-16 - **Fix Description:** Complete ECHO Foundation implementation: ECHO identity injected into 7 standalone agents + 5 utility agents. Shared constant in common/constants/agents.ts. 3 file renames (editor→forge, code-reviewer→verifier, file-picker→scout). Spawn references updated across codebase. SequentialThinkingServer per-run isolation (Map per runId). FSM enforcement active (fsmPhase in AgentState, transition_phase handler
+================================================================================
+ID: FID-2026-0716-007-savant-rebrand-phase1
+STATUS: closed
+LOOP2: False CONVERGED: False
+REMAINING: 
+RESOLUTION: - **Fixed By:** FID-2026-0716-007 (echo-foundation-phase1) — all work absorbed into the larger ECHO foundation FID - **Fixed Date:** 2026-07-16 - **Fix Description:** Corrupted base2.ts and base-deep.ts restored from upstream GitHub. ECHO identity injected into all agents. Display names updated to Savant. File renames completed (editor→forge, code-reviewer→verifier, file-picker→scout). Spawn references updated. bundled-agents.generated.ts regenerated. - **Tests Added:** Typecheck passes. No new 
+================================================================================
+ID: FID-2026-0717-001-fsm-enforcement-blocks-fid-creation
+STATUS: closed
+LOOP2: False CONVERGED: True
+REMAINING: 
+RESOLUTION: - **Fixed By:** Spencer Howell - **Fixed Date:** 2026-07-17 14:30 - **Fix Description:** 5 changes across 4 files: FID path exemption in tool gate, subagent FSM inheritance, apply_patch gating, Orchestrator/deep-agent Separation of Duties enforcement, Recorder transition_phase tool - **Tests Added:** No (typecheck verification only — pre-existing baseline unchanged) - **Verified By:** typecheck (common + agents), grep verification (6 checks all pass) - **Commit/PR:** Pending - **Archived:** 2026
+================================================================================
+ID: FID-2026-0717-002-coding-standards-skill-system
+STATUS: closed
+LOOP2: False CONVERGED: True
+REMAINING: 
+RESOLUTION: - **Fixed By:** Spencer Howell - **Fixed Date:** 2026-07-17 16:00 - **Fix Description:** Converted 7 coding standards to skills in .agents/skills/. Each file got YAML frontmatter (name, description). Standards moved from coding-standards/ to .agents/skills/coding-{language}/SKILL.md. ECHO.md updated to reference new paths. No code changes needed — existing loadSkillsSync() discovers .agents/skills/ automatically. - **Tests Added:** No (typecheck verification only) - **Verified By:** typecheck (c
+================================================================================
+ID: FID-2026-0717-003-remove-non-coding-standards
+STATUS: closed
+LOOP2: False CONVERGED: True
+REMAINING: 
+RESOLUTION: - **Fixed By:** Spencer Howell - **Fixed Date:** 2026-07-17 16:00 - **Fix Description:** Deleted coding-standards/x402.md (Savant core, not coding harness). Kept release-workflow.md as a skill. All 7 standards moved to .agents/skills/ with frontmatter. - **Tests Added:** No (typecheck verification only) - **Verified By:** typecheck (common clean), directory structure verified - **Commit/PR:** Pending - **Archived:** 2026-07-17 (set when moved to `dev/fids/archive/`)
+================================================================================
+ID: FID-2026-0717-004-bash-gating-strict-mode
+STATUS: closed
+LOOP2: False CONVERGED: True
+REMAINING: 
+RESOLUTION: - **Fixed By:** Spencer Howell - **Fixed Date:** 2026-07-17 16:45 - **Fix Description:** 5 changes: (1) run_terminal_command gated to AUDIT phase in tool-executor.ts; (2) strictMode field added to AgentState with default true; (3) strictMode inherited by subagents via createAgentState(); (4) readStrictMode() utility reads protocol.config.yaml at boot in run-state.ts; (5) system prompt injection when strictMode is false in run-agent-step.ts. - **Tests Added:** No (typecheck verification only) - *
+================================================================================
+ID: FID-2026-0717-005-infra-fixes
+STATUS: closed
+LOOP2: False CONVERGED: True
+REMAINING: 
+RESOLUTION: - **Fixed By:** Spencer Howell - **Fixed Date:** 2026-07-17 17:30 - **Fix Description:** 4 fixes: (1) DB path renamed from ~/.savant-free/echo.db to ~/.savant/data.db with legacy migration; (2) LEARNINGS.md wired into knowledge pipeline — added to KNOWLEDGE_FILE_NAMES and fixed subdirectory injection filter; (3) MAX_AGENT_DEPTH = 5 enforced in createAgentState() with ancestorRunIds.length check; (4) Pre-execution snapshots via file-snapshot-store.ts — captures original content on write in GREEN,
+================================================================================
+ID: FID-2026-0717-006-detective-agent
+STATUS: closed
+LOOP2: False CONVERGED: True
+REMAINING: 
+RESOLUTION: - **Fixed By:** Pending - **Archived:** Pending
+================================================================================
+ID: FID-2026-0717-007-circuit-breakers
+STATUS: closed
+LOOP2: False CONVERGED: True
+REMAINING: 
+RESOLUTION: - **Fixed By:** Pending - **Archived:** Pending
+================================================================================
+ID: FID-2026-0717-008-boot-sequence
+STATUS: closed
+LOOP2: False CONVERGED: True
+REMAINING: 
+RESOLUTION: - **Fixed By:** Pending - **Archived:** Pending
+================================================================================
+ID: FID-2026-0717-009-fid-bound-enforcement
+STATUS: closed
+LOOP2: False CONVERGED: True
+REMAINING: 
+RESOLUTION: - **Fixed By:** Pending - **Archived:** Pending
+================================================================================
+ID: FID-2026-0717-011-fsm-phase-ui
+STATUS: closed
+LOOP2: False CONVERGED: True
+REMAINING: 
+RESOLUTION: - **Fixed By:** Pending - **Archived:** Pending
+================================================================================
+ID: FID-2026-0717-012-echo-commands
+STATUS: closed
+LOOP2: False CONVERGED: True
+REMAINING: 
+RESOLUTION: - **Fixed By:** Pending - **Archived:** Pending
+================================================================================
+ID: FID-2026-0717-013-tests
+STATUS: created
+LOOP2: False CONVERGED: True
+REMAINING: 
+RESOLUTION: - **Fixed By:** Pending - **Archived:** Pending
+================================================================================
+ID: FID-2026-0717-014-codebuff-rebrand-migration-plan
+STATUS: unknown
+LOOP2: False CONVERGED: False
+REMAINING: 
+RESOLUTION: 
+================================================================================
+ID: FID-2026-0717-014-design-system
+STATUS: closed
+LOOP2: False CONVERGED: True
+REMAINING: 
+RESOLUTION: - **Fixed By:** Pending - **Fixed Date:** Pending - **Fix Description:** Pending - **Tests Added:** Pending - **Verified By:** Pending - **Commit/PR:** Pending - **Archived:** Pending
+================================================================================
+ID: FID-2026-0717-015-savant-code-rebrand
+STATUS: open
+LOOP2: False CONVERGED: False
+REMAINING: 
+RESOLUTION: - **Fixed By:** Forge (pending) - **Fix Description:** Replace user-facing "SavantCode" strings with "Savant-Code", defer "SavantFree" references - **Tests Added:** No — string replacements only - **Verified By:** Verifier (pending)
+================================================================================
+ID: FID-2026-0717-015-tui-refactor-neon-colors
+STATUS: closed
+LOOP2: False CONVERGED: True
+REMAINING: 
+RESOLUTION: - **Fixed By:** Spencer Howell - **Fixed Date:** 2026-07-17 21:30 - **Fix Description:** 12 fixes: 10 pre-existing type errors fixed (borderFg→borderColor x3, animationEnabled prop, FilesChanged.added, accent→primary, selectedModel→getSelectedFreebuffModel x3). Neon colors updated (success→#39ff14, warning→#ff9500). Right-sidebar refactored with Savant-UI. Shared helpers extracted to block-helpers.tsx (~190 lines deduped). thinking.tsx refactored with Panel. - **Tests Added:** No (typecheck veri
+================================================================================
+ID: FID-2026-0717-016-right-sidebar-visual
+STATUS: closed
+LOOP2: False CONVERGED: True
+REMAINING: 
+RESOLUTION: - **Fixed By:** Spencer Howell - **Fixed Date:** 2026-07-17 22:15 - **Fix Description:** 4 visual fixes: (1) Tagline merged to single line "One Mind. A Thousand Faces." (28 chars, fits 30-char sidebar); (2) TokenMeter changed from 2-line column layout to single-line row layout (ProgressBar width 20→12, token count inline); (3) Model truncation increased from 14 to 20 chars; (4) Context section extracted into own bordered section with ┌─ Context ────┐ wrapper matching other sections. - **Tests Ad
+================================================================================
+ID: FID-2026-0717-017-visual-enhancement
+STATUS: closed
+LOOP2: False CONVERGED: True
+REMAINING: 
+RESOLUTION: - **Fixed By:** Savant Visual Enhancement commit - **Verified:** typecheck (zero errors), render-ui tests (2/2 pass) - **Archived:** 2026-07-17
+================================================================================
+ID: FID-2026-0718-001-subagent-model-propagation
+STATUS: created
+LOOP2: False CONVERGED: False
+REMAINING: 
+RESOLUTION: - **Fixed By:** Savant Orchestrator - **Fixed Date:** 2026-07-18 - **Fix Description:** Added `withParentModel` helper in `spawn-agent-utils.ts` and applied it in `spawn-agents.ts` and `spawn-agent-inline.ts` so every spawned subagent inherits the parent agent's model. Added unit tests verifying model inheritance for both `spawn_agents` and `spawn_agent_inline`. - **Tests Added:** Yes — model inheritance tests for `spawn_agents` and `spawn_agent_inline`. - **Verified By:** Typecheck + unit tests
+================================================================================
+ID: FID-2026-0718-002-feature-test-report
+STATUS: closed
+LOOP2: False CONVERGED: True
+REMAINING: 
+RESOLUTION: - **Fixed By:** Orchestrator (GREEN) + Forge (implementation) - **Verified By:** typecheck (common ✅, agent-runtime ✅), code-reviewer-mimo-pro (approved) - **Archived:** 2026-07-18
+================================================================================
+ID: FID-2026-0718-003-dev-override
+STATUS: closed
+LOOP2: False CONVERGED: False
+REMAINING: 
+RESOLUTION: - **Fixed By:** Orchestrator - **Fixed Date:** 2026-07-18 - **Fix Description:** Dev override system: secret `/dev` command with passphrase, `devMode` in ProjectFileContext, bypass in tool-executor.ts, sidebar badge - **Tests Added:** No (manual testing via dev override itself) - **Verified By:** Thinker AUDIT phase (6/6 PASS) - **Commit/PR:** (pending — implementation in progress) - **Archived:** 2026-07-18  ---
+================================================================================
+ID: FID-2026-0718-004-test-report-findings
+STATUS: Open
+LOOP2: False CONVERGED: False
+REMAINING: 
+RESOLUTION: 
+================================================================================
+ID: FID-2026-0718-005-agent-roster-alignment
+STATUS: Open
+LOOP2: False CONVERGED: False
+REMAINING: 
+RESOLUTION: 
+================================================================================
+ID: FID-2026-0718-006-agent-roster-alignment-v2
+STATUS: Open
+LOOP2: False CONVERGED: False
+REMAINING: 
+RESOLUTION: 
+================================================================================
+ID: FID-2026-0718-007-scout-delegation-quality
+STATUS: Open — Ready for approval
+LOOP2: False CONVERGED: True
+REMAINING: 
+RESOLUTION: 
+================================================================================
+ID: FID-2026-0718-008-az-test-findings
+STATUS: Open — Perfection Loop in progress
+LOOP2: False CONVERGED: True
+REMAINING: 
+RESOLUTION: *(Populated after AUDIT passes)*
+================================================================================
+ID: FID-2026-0718-009-fsm-activity-indicator
+STATUS: open — Perfection Loop converged in 2 Thinker rounds, awaiting user approval
+LOOP2: False CONVERGED: True
+REMAINING: 
+RESOLUTION: *(populated after AUDIT passes and user approves implementation)*  - **Fixed By:** Orchestrator + Forge (implementation) - **Verified By:** Verifier (post-implementation audit) + Recorder (CHANGELOG entry) - **Commit/PR:** TBD on merge  ---
+================================================================================
+ID: FID-2026-0718-010-stuck-state-cleanup
+STATUS: v2 — Perfection Loop re-run; 19 missed questions all answered; converged 2026-07-18
+LOOP2: False CONVERGED: True
+REMAINING: 
+RESOLUTION: 
+================================================================================
+ID: FID-2026-0718-011-free-agents-test-cleanup
+STATUS: OPEN — Perfection Loop converged to v1, awaiting user approval
+LOOP2: False CONVERGED: True
+REMAINING: 
+RESOLUTION: 
+================================================================================
+ID: FID-2026-0718-012-green-phase-path-traversal-hardening
+STATUS: OPEN — Perfection Loop converged to v1, Nova AUDIT passed, awaiting user approval
+LOOP2: False CONVERGED: True
+REMAINING: 
+RESOLUTION: 
+================================================================================
+ID: FID-2026-0718-013-path-safety-deferred-nice-to-haves
+STATUS: OPEN — Perfection Loop converged to v3 (post-Nova audit amendment), awaiting user approval
+LOOP2: False CONVERGED: True
+REMAINING: 
+RESOLUTION: 
+================================================================================
+ID: FID-2026-0718-014-path-safety-perimeter-completion
+STATUS: CLOSED + ARCHIVED (v3 close-out — implementation complete, Windows platform test caveat documented)
+LOOP2: False CONVERGED: False
+REMAINING: 
+RESOLUTION: 
+================================================================================
+ID: FID-2026-0718-015-windows-platform-test-fixes
+STATUS: OPEN — Perfection Loop at RED (5 source-verified failures)
+LOOP2: False CONVERGED: False
+REMAINING: 
+RESOLUTION: 
+================================================================================
+ID: FID-2026-0718-016-pre-existing-sdk-test-failures
+STATUS: RED + GREEN + AUDIT phases complete. Ready for FORGE approval.
+LOOP2: False CONVERGED: False
+REMAINING: 
+RESOLUTION: 
+================================================================================
+ID: FID-2026-0718-017-0.0.2-push-blockers
+STATUS: COMPLETE
+LOOP2: False CONVERGED: False
+REMAINING: 
+RESOLUTION: 5 fixes for the pre-rebrand 0.0.2 push blockers:  1. **Workspace pkg name revert (Option C)** — 11 workspace `package.json` `name` fields reverted `@savant-code/X` → `@savant-code/X` to match the 1,131 existing consumer imports. Pre-rebrand snapshot = original names. 2. **Orphan prune** — 2 truly-orphaned agent dirs deleted (`agents/e2e/`, `agents/__tests__/`); 5 actively-referenced helper tool-library dirs kept per call-graph verification. 3. **Lockfile + dist cleanup** — `bun install --frozen-
+================================================================================
+ID: FID-2026-0718-018-pre-push-house-cleaning
+STATUS: Step 5 ✅ DONE (FID archival sweep complete per user tightening). AUDIT pending user approval of 4 inline decisions for remaining Steps 1-4, 6-8.
+LOOP2: False CONVERGED: False
+REMAINING: GREEN Plan Steps  ### Step 1 (15 min) — README rewrite: fix 17 drifts + add ECHO Perfection Loop section ### Step 2 (2 min) — Stray pkg names: sed-revert 2 package.json files (`sdk/test/tree-sitter-queries`, `scripts/tmux/tmux-viewer`) ### Step 3 (10 min) — CONTRIBUTING.md rewrite: "open source monorepo governed by ECHO v0.2.0" + FID workflow subsection ### Step 4 (5 min) — AGENTS.md rewrite: drop outdated `docs/*` refs + add ECHO/FID/skill subsections ### Step 6 (3 min) — Write `dev/session-sum
+RESOLUTION: 
+================================================================================
+ID: FID-2026-0718-019-fix-9-eslint-no-explicit-any
+STATUS: RED proposing v1. AUDIT pending user approval of 1 inline decision.
+LOOP2: False CONVERGED: False
+REMAINING: 
+RESOLUTION: 
+================================================================================
+ID: FID-2026-0718-019-fix-9-problems-panel-errors
+STATUS: v5 CONVERGED (AUDIT verified 2026-07-19). v1 hypothesis wrong (ESLint as-any); v2 corrected to user-pasted IDE errors (3 tsconfig + 6 markdownlint); v3 added Q1-Q14 + Perfection Loop; v4 added Q15-Q19 + 9-item AUDIT gate; **v5 = AUDIT 5.1 caught TS6059 regression with `rootDir:src`, pivot to `rootDir:..` won, all in-scope gates pass**.
+LOOP2: False CONVERGED: False
+REMAINING: 
+RESOLUTION: 
+================================================================================
+ID: FID-2026-0718-020-ide-panel-corrections-after-fid-019
+STATUS: RED proposing v1. CORRECTS FID-019 v5 which had incomplete self-verify claims. Forthcoming user approval required before any FORGE.
+LOOP2: False CONVERGED: False
+REMAINING: 
+RESOLUTION: 
+================================================================================
+ID: FID-2026-0718-021-readme-restore-0.0.1-quality
+STATUS: RED proposing v1. Awaiting user approval of 4 inline decisions before FORGE (per ECHO Law 2). NOT modifying README yet.
+LOOP2: False CONVERGED: False
+REMAINING: 
+RESOLUTION: 
+================================================================================
+ID: FID-2026-0718-022-sub-readmes-pre-push-polish
+STATUS: RED proposing v1. Awaiting user approval of 4 inline decisions before FORGE (per ECHO Law 2). NOT modifying any sub-README files yet.
+LOOP2: False CONVERGED: False
+REMAINING: 
+RESOLUTION: 
+================================================================================
+ID: FID-2026-0718-023-packages-readmes-pre-push-polish
+STATUS: RED proposing v1. Awaiting user approval of 4 inline decisions before FORGE (per ECHO Law 2). NOT modifying any internal workspace READMEs yet.
+LOOP2: False CONVERGED: False
+REMAINING: 
+RESOLUTION: 
+================================================================================
+ID: FID-2026-0718-024-pre-push-followup-batch
+STATUS: RED proposing v1. Awaiting user approval of 4 inline decisions before FORGE (per ECHO Law 2). NOT modifying any files yet.
+LOOP2: False CONVERGED: False
+REMAINING: 
+RESOLUTION: 
+================================================================================
+ID: FID-2026-0718-025-dev-releases-ephemeral-staging
+STATUS: proposed (RED) → closed after FORGE+AUDIT+COMPLETE
+LOOP2: False CONVERGED: False
+REMAINING: 
+RESOLUTION: 
+================================================================================
+ID: FID-2026-0719-026-ts-rebrand-savant-code
+STATUS: complete
+LOOP2: True CONVERGED: False
+REMAINING: 
+RESOLUTION: (target post-Perfection-Loop)  - **Fixed By:** Savant Orchestrator → Forge agent (per workspace) → Verifier (per workspace) - **Fixed Date:** TBD (after FID convergence + Perfection Loop + Nova pre-merge audit) - **Tests Added:** grep-zero assertions in CI; markdownlint clean on README/CHANGELOG updates - **Verified By:** Phase D verification gates (typecheck × 4 + SDK 488+ + lockfile + grep zero + Nova pre-FORGE PASS) - **Predecessor (convergence design, must close first per Convergence Plan v3
+================================================================================
+ID: FID-2026-0719-027-clean-break-codebuff-legacy
+STATUS: closed
+LOOP2: False CONVERGED: False
+REMAINING: 
+RESOLUTION: - **Fixed By:** Savant Orchestrator - **Fixed Date:** 2026-07-19 - **Fix Description:** Renamed remaining `codebuff`-branded identifiers to `savant_code`/`SAVANT_CODE` across source files, tests, and build scripts. - **Tests Added:** No new tests; existing tests updated - **Verified By:** x4 typecheck gate + code-reviewer-kimi - **Commit/PR:** TBD - **Archived:** 2026-07-19
+================================================================================
+ID: FID-2026-0719-028-rename-freebuff-legacy
+STATUS: complete
+LOOP2: False CONVERGED: False
+REMAINING: 
+RESOLUTION: - **Fixed By:** Savant Orchestrator - **Fixed Date:** 2026-07-19 - **Fix Description:** Renamed remaining `freebuff`-branded identifiers to `savant_free`/`SavantFree` across source files and tests; added migration logic for persisted settings key. - **Tests Added:** No new tests; existing tests updated - **Verified By:** x4 typecheck gate + code-reviewer-kimi - **Commit/PR:** TBD - **Archived:** 2026-07-19
+================================================================================
+ID: FID-2026-0719-029-as-cast-tech-debt
+STATUS: open
+LOOP2: False CONVERGED: False
+REMAINING: 
+RESOLUTION: 
+================================================================================
+ID: FID-2026-0719-029-eslint-zero-tolerance-push-gate
+STATUS: closed / archived (Perfection Loop iteration 2026-07-20 converged; spec locked; code implementation downstream per ECHO FID-Bound Execution)
+LOOP2: False CONVERGED: True
+REMAINING: : cli/src (136 issues)  - 44 `no-explicit-any` errors - 92 warnings (mix of `import/order`, `no-console`, `no-unused-vars`) - 11 warnings auto-fixable with `--fix`
+RESOLUTION: - **Fixed By:** Perfection Loop iteration 2026-07-20 (Orchestrator + Thinker + Verifier) - **Spec-locked Date:** 2026-07-20 - **GREEN spec:** PROPER NARROW strategy — per-case decision matrix with (a) concrete type / (b) `<T>` generic / (c) `v is T` trust-boundary guard / (d) `JsonValue` recursive union / (e) cast-pattern replace / (f) `_`-prefix or removal / (g) `eslint --fix` import-order / (h) `logger.warn` no-console. Disable is LAST RESORT only via 3-condition AND-gate with audit-evidence. 
+================================================================================
+ID: FID-2026-0719-030-agent-runtime-tests-excluded-for-push
+STATUS: open
+LOOP2: False CONVERGED: False
+REMAINING: 
+RESOLUTION: 
+================================================================================
+ID: FID-2026-0720-030.1-agent-runtime-tests-remediation
+STATUS: closed / archived
+LOOP2: False CONVERGED: False
+REMAINING: 
+RESOLUTION: - Re-included `packages/agent-runtime/src/__tests__/**/*` in the agent-runtime `tsconfig.json` build (removed from `exclude` array) - Fixed type errors across 25+ test files, reducing errors from 67 → 2 (97% reduction) - x4 typecheck gate: ALL GREEN (sdk, common, agent-runtime, cli all pass) - 2 remaining errors in `agent-registry.test.ts` lines 82, 113: generic type mismatch in mock implementations of `validateAgents<TTemplate>` and `validateSingleAgent<T>` — test-only boundary issues that don'
+================================================================================
+ID: FID-2026-0720-031-savant-rename-and-modes-repurpose
+STATUS: closed / archived
+LOOP2: True CONVERGED: False
+REMAINING: 
+RESOLUTION: - **Fixed By:** Forge (Buffy session, FID-031 code-touch) - **Fixed Date:** 2026-07-21 - **Fix Description:** Renamed `agents/base2/` → `agents/savant/` (22 files), factory `createBase2` → `createSavant`, and all `base2*` agent IDs → `savant*`. Repurposed the input-box modes toggle to the ANALYZE/EDIT/SCAFFOLD execution-scope axis. Added `savant-analyze.ts` (read-only) and `savant-scaffold.ts` (umbrella-FID mode) with internal-only `analyzeOnly`, `scaffoldMode`, and `noFIDPerChange` flags on `Se
+================================================================================
+ID: FID-2026-0720-032-eslint-unknown-sig-stage-2-remediation
+STATUS: closed (Perfection Loop 2026-07-20; SUPERSEDED-state auto-archive alongside FID-2026-0719-029)
+LOOP2: False CONVERGED: False
+REMAINING: 
+RESOLUTION: **Status:** OPEN — awaiting Stage-2 implementation post-push (after v0.0.3 ships 2026-07-19).  **Estimated scope:** - ~24 file edits (split disable + targeted replace + inject type guards) - 1-line `eslint.config.js` rule-flip - x4 typecheck pass - Runtime test pass (`bun test`) to verify no regressions - Test fixtures in `__tests__/` may need companion disable-with-justification (each is a separate audit)  **Acceptance criteria:** - All 24 file-level disables EITHER removed (with proper type re
+================================================================================
+ID: FID-2026-0720-032-gateway-providers
+STATUS: fixed
+LOOP2: False CONVERGED: False
+REMAINING: 
+RESOLUTION: - **Fixed By:** Orchestrator - **Fixed Date:** 2026-07-20 17:30 - **Fix Description:** Added TokenRouter and NVIDIA NIM as gateway LLM providers. 6 files modified: model catalogs + prefixes in model-config.ts, API key helpers in env.ts, factory functions + routing in model-provider.ts, multi-provider fetch in openrouter-models.ts, command-registry.ts swap to fetchGatewayModels(), provider labels in model-picker.tsx. - **Tests Added:** None new — existing tests pass (pre-existing env validation i
+================================================================================
+ID: FID-2026-0720-033-master-tui-rebuild
+STATUS: closed
+LOOP2: True CONVERGED: True
+REMAINING: 
+RESOLUTION: - **Fixed By:** ECHO Agent (Perfection Loop) - **Fixed Date:** 2026-07-21 (decomposed 2026-07-21 00:15; all phases closed 2026-07-21) - **Fix Description:** Decomposed FID-033 into 5 phase FIDs (033a–033e) with Master orchestration FID; all 5 phases implemented, verified, and archived. - **Tests Added:** N/A (documentation only); per-phase test evidence recorded in each archived phase FID. - **Verified By:** Master closure audit (2026-07-21) — final verification block (re-audited after independe
+================================================================================
+ID: FID-2026-0720-033-tui-rebuild-comprehensive
+STATUS: created
+LOOP2: True CONVERGED: True
+REMAINING: 
+RESOLUTION: - **Fixed By:** [Pending — glm-5.2 agent] - **Fixed Date:** [Pending] - **Fix Description:** [Pending] - **Tests Added:** [Pending] - **Verified By:** [Pending] - **Commit/PR:** [Pending] - **Archived:** [Pending]  ---
+================================================================================
+ID: FID-2026-0720-033a-theme-system-port
+STATUS: closed
+LOOP2: True CONVERGED: False
+REMAINING: 
+RESOLUTION: - **Fixed By:** Forge (GLM 5.2 session, 2026-07-21) - **Fixed Date:** 2026-07-21 17:30 - **Fix Description:** Added OpenTUI SyntaxStyle integration (`cli/src/utils/syntax-theme.ts` NEW, exports `createSyntaxStyle(theme: ChatTheme): SyntaxStyle` mapping 8 syntax tokens to `ThemeTokenStyle[]` via `SyntaxStyle.fromTheme`, with module-level cached empty-style fallback for Law 14). Extended `ChatTheme` with 5 diff tokens (`diffAdded`/`diffRemoved`/`diffContext`/`diffHunkHeader`/`diffMeta`) + 8 syntax
+================================================================================
+ID: FID-2026-0720-033b-glyph-icon-system
+STATUS: closed
+LOOP2: True CONVERGED: False
+REMAINING: 
+RESOLUTION: - **Fixed By:** Forge (GLM 5.2 session, 2026-07-21) - **Fixed Date:** 2026-07-21 18:30 - **Fix Description:** Created centralized glyph system — `cli/src/utils/glyphs.ts` (30-icon 3-tier table: Nerd Font → Unicode → ASCII, `hasNerdFont()` with session cache + `SAVANT_GLYPH_TIER` env override + TERM_PROGRAM allowlist, `glyph()` with `?` placeholder fallback). Created `cli/src/components/savant-ui/icon.tsx` (`<span>`-based `Icon` composable inside `<text>`) + `icon-theme-keys.ts` (`ThemeColorKey` 
+================================================================================
+ID: FID-2026-0720-033c-tool-message-rendering
+STATUS: closed / archived
+LOOP2: True CONVERGED: False
+REMAINING: 
+RESOLUTION: - **Fixed By:** Forge (ECHO Protocol, GLM 5.2 session) - **Fixed Date:** 2026-07-21 17:05 - **Fix Description:** Focused on the three highest-value, lowest-risk Phase C changes (per "no deferrals, full steam ahead" directive):    1. **render-ui.tsx** — replaced 4 hardcoded hex tables (SEVERITY_COLORS, BADGE_VARIANT_COLORS, PL_PHASE_COLORS, STEP_STATUS_ICONS) with theme tokens via `resolveThemeColor()` + `ThemeColorKey` maps. PL_PHASE_COLORS and STEP_STATUS_ICONS now use shared `phaseMapping()`/`
+================================================================================
+ID: FID-2026-0720-033d-layout-navigation
+STATUS: closed / archived
+LOOP2: True CONVERGED: True
+REMAINING: 
+RESOLUTION: - **Fixed By:** Forge (ECHO Protocol, GLM 5.2 session) - **Fixed Date:** 2026-07-21 17:20 - **Fix Description:** Built 4 new Phase D components + wired 2 integration points:    1. **CommandPalette** (`cli/src/components/command-palette.tsx`) — overlay using native OpenTUI `<select>` JSX (SelectRenderable wrapper); reuses `SuggestionItem` type from `suggestion-menu.tsx` (Law 7); `useKeyboard` with `{ release: false }` for Escape-to-close; `onSelect(index, option)` callback fires on Enter (select-
+================================================================================
+ID: FID-2026-0720-033e-polish
+STATUS: closed / archived
+LOOP2: True CONVERGED: False
+REMAINING: 
+RESOLUTION: - **Fixed By:** Forge (Phase E implementation) - **Fixed Date:** 2026-07-21 - **Fix Description:** Added Timeline-driven animations to the progress bar and phase indicator; wired OpenTUI `SyntaxStyle` into the diff viewer and markdown code blocks; upgraded markdown rendering to use theme tokens and native `<code>` elements; added an opt-in post-processing layer with scanlines, vignette, and colorblind-simulation matrices. - **Tests Added:** N/A (cosmetic polish; existing typecheck + ESLint gates
+================================================================================
+ID: FID-2026-0721-034-opencode-go-provider
+STATUS: closed
+LOOP2: True CONVERGED: True
+REMAINING: 
+RESOLUTION: - **Fixed By:** Forge (Buffy orchestration) - **Fixed Date:** 2026-07-21 - **Fix Description:** Added OpenCode Go as a new LLM provider with dual-protocol support (OpenAI-compatible + Anthropic-compatible). 15 models across 6 files. - **Tests Added:** x4 typecheck gate passes; grep verification confirms all integration points - **Verified By:** x4 typecheck gate (common, sdk, agent-runtime, cli — all 0 errors) + code-reviewer-mimo approved - **Commit/PR:** Pending (user to commit) - **Archived:*
+================================================================================
+ID: FID-model-persistence
+STATUS: closed
+LOOP2: False CONVERGED: True
+REMAINING: 
+RESOLUTION: - **Fixed By:** Forge - **Fix Description:** Removed chat-store selectedModel; sidebar reads directly from useFreebuffModelStore; unified model pipeline via switchModel() - **Tests Added:** None — removing dead code - **Verified By:** Verifier
+================================================================================
+ID: FID-sidebar-data-wiring
+STATUS: converged
+LOOP2: True CONVERGED: True
+REMAINING: 
+RESOLUTION: - **Fixed By:** Forge (pending implementation) - **Fixed Date:** [pending — FID converged, awaiting Forge execution] - **Fix Description:** Add sidebar data slice to chat-store, wire 7 data sources from existing event handlers, pass live data to RightSidebar component - **Tests Added:** No — data wiring only, no new logic - **Verified By:** Verifier (pending — after Forge implementation) - **Commit/PR:** [pending] - **Archived:** [pending]
+================================================================================
+ID: FID-sub-packages
+STATUS: SUPERSEDED
+LOOP2: False CONVERGED: False
+REMAINING: 
+RESOLUTION: - **Fixed By:** N/A — FID superseded (claims were incorrect) - **Fix Description:** All packages already have source code. No implementation needed. - **Tests Added:** N/A - **Verified By:** Filesystem audit — `.ts` files exist in all listed packages
+================================================================================
+ID: FID-ui-redesign-neon-slate
+STATUS: converged
+LOOP2: True CONVERGED: True
+REMAINING: 
+RESOLUTION: - **Fixed By:** Forge (pending implementation) - **Fixed Date:** [pending — FID converged, awaiting Forge execution] - **Fix Description:** Theme-first redesign (G1-G4) + three-panel layout (G5-G7) + component refactoring (G8-G16) - **Tests Added:** No — visual changes only, no new logic - **Verified By:** Verifier (pending — after Forge implementation) - **Commit/PR:** [pending] - **Archived:** [pending]
+================================================================================

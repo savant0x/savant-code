@@ -1,3 +1,7 @@
+import fs from 'fs'
+import path from 'path'
+import os from 'os'
+
 import { describe, test, expect, beforeEach, afterEach } from 'bun:test'
 import { Command } from 'commander'
 
@@ -56,10 +60,10 @@ describe('CLI Argument Parsing', () => {
   test('parses --agent flag correctly', () => {
     const result = parseTestArgs([
       '--agent',
-      'file-picker',
+      'scout',
       'find all TypeScript files',
     ])
-    expect(result.agent).toBe('file-picker')
+    expect(result.agent).toBe('scout')
     expect(result.initialPrompt).toBe('find all TypeScript files')
   })
 
@@ -88,11 +92,11 @@ describe('CLI Argument Parsing', () => {
   test('handles multiple flags together', () => {
     const result = parseTestArgs([
       '--agent',
-      'reviewer',
+      'verifier',
       '--clear-logs',
       'review my code',
     ])
-    expect(result.agent).toBe('reviewer')
+    expect(result.agent).toBe('verifier')
     expect(result.clearLogs).toBe(true)
     expect(result.initialPrompt).toBe('review my code')
   })
@@ -139,6 +143,48 @@ describe('CLI Argument Parsing', () => {
   test('handles -v flag', () => {
     const result = parseTestArgs(['-v'])
     expect(result.version).toBe(true)
+  })
+
+  test('parses --prompt-file flag correctly', () => {
+    const tmpFile = path.join(os.tmpdir(), 'cli-args-prompt-test.txt')
+    fs.writeFileSync(tmpFile, 'hello from file')
+    try {
+      const result = parseArgs({
+        argv: ['node', 'savant-code', '--prompt-file', tmpFile],
+      })
+      expect(result.initialPrompt).toBe('hello from file')
+    } finally {
+      fs.unlinkSync(tmpFile)
+    }
+  })
+
+  test('resolves --prompt-file relative to cwd with parent fallback', () => {
+    const tmpFile = path.join(os.tmpdir(), 'cli-args-prompt-relative.txt')
+    fs.writeFileSync(tmpFile, 'relative prompt')
+    try {
+      // Simulate the common `bun --cwd cli dev --prompt-file <file>` case:
+      // process.cwd() is the cli workspace, and the file lives in the parent.
+      const originalCwd = process.cwd()
+      const simulatedCliDir = path.join(
+        originalCwd,
+        'cli-args-prompt-simulated-cli',
+      )
+      fs.mkdirSync(simulatedCliDir, { recursive: true })
+      try {
+        process.chdir(simulatedCliDir)
+        const relativePath = path.relative(originalCwd, tmpFile)
+        process.chdir(simulatedCliDir)
+        const result = parseArgs({
+          argv: ['node', 'savant-code', '--prompt-file', relativePath],
+        })
+        expect(result.initialPrompt).toBe('relative prompt')
+      } finally {
+        process.chdir(originalCwd)
+        fs.rmSync(simulatedCliDir, { recursive: true, force: true })
+      }
+    } finally {
+      fs.unlinkSync(tmpFile)
+    }
   })
 })
 

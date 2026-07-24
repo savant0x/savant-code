@@ -9,7 +9,7 @@ Public agent definitions shipped with the Savant CLI (Detective, Forge, Verifier
 
 ## Purpose
 
-The agents in this workspace are the **separation-of-duties specialists** that execute the Perfection Loop FSM (RED → GREEN → AUDIT → SELF-CORRECT → COMPLETE). Each agent is restricted to a small tool set per ECHO Law 13 — Detective reads + searches only, Forge writes only, Verifier reads only, Recorder archives FIDs, Thinker reasons sequentially, etc. The Orchestrator in `agents/base2/` routes work across agents and is the only one allowed to spawn child agents.
+The agents in this workspace are the **separation-of-duties specialists** that execute the Perfection Loop FSM (RED → GREEN → AUDIT → SELF-CORRECT → COMPLETE). Each agent is restricted to a small tool set per ECHO Law 13 — Detective reads + searches only, Forge writes only, Verifier reads only, Recorder archives FIDs, Thinker reasons sequentially, etc. The Orchestrator in `agents/savant/` routes work across agents and is the only one allowed to spawn child agents.
 
 ## Quick Start
 

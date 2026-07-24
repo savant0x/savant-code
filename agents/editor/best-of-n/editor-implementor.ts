@@ -1,4 +1,3 @@
-
 import { publisher } from '../../constants'
 
 import type { SecretAgentDefinition } from '../../types/secret-agent-definition'
@@ -133,7 +132,10 @@ Write out your complete implementation now. Do not write any final summary.`,
       )
 
       // Extract tool calls from assistant messages
-      const toolCalls: { toolName: string; input: Record<string, JSONValue> }[] = []
+      const toolCalls: {
+        toolName: string
+        input: Record<string, JSONValue>
+      }[] = []
       for (const message of postMessages) {
         if (message.role !== 'assistant' || !Array.isArray(message.content))
           continue
@@ -141,7 +143,9 @@ Write out your complete implementation now. Do not write any final summary.`,
           if (part.type === 'tool-call') {
             toolCalls.push({
               toolName: part.toolName,
-              input: part.input ?? (part as { args?: Record<string, JSONValue> }).args ?? {},
+              input: (part.input ??
+                (part as { args?: Record<string, JSONValue> }).args ??
+                {}) as Record<string, JSONValue>,
             })
           }
         }

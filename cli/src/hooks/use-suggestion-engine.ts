@@ -5,7 +5,7 @@ import {
   getProjectFileTree,
   type PathInfo,
 } from '@savant-code/common/project-file-tree'
-import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 
 import { getProjectRoot } from '../project-files'
@@ -591,9 +591,7 @@ export const useSuggestionEngine = ({
   fileTree,
   disableAgentSuggestions = false,
   currentAgentMode,
-}: SuggestionEngineOptions): SuggestionEngineResult => {
-  const deferredInput = useDeferredValue(inputValue)
-  const slashCacheRef = useRef<Map<string, MatchedSlashCommand[]>>(
+}: SuggestionEngineOptions): SuggestionEngineResult => {  const slashCacheRef = useRef<Map<string, MatchedSlashCommand[]>>(
     new Map<string, SlashCommand[]>(),
   )
   const agentCacheRef = useRef<Map<string, MatchedAgentInfo[]>>(
@@ -623,13 +621,17 @@ export const useSuggestionEngine = ({
     setFilePaths(flattenFileTree(fileTree))
   }, [fileTree])
 
+  // Use the current inputValue (not a deferred value) so the slash menu
+  // activates the same frame the user types '/'. Using a deferred value for
+  // slash context caused the menu to miss the keystroke and let Up/Down leak
+  // into the input as raw escape sequences.
   const slashContext = useMemo(
-    () => parseSlashContext(deferredInput),
-    [deferredInput],
+    () => parseSlashContext(inputValue),
+    [inputValue],
   )
 
-  // Note: mentionContext uses inputValue directly (not deferredInput) because
-  // the cursor position must match the text being parsed. Using deferredInput
+  // Note: mentionContext uses inputValue directly (not a deferred value) because
+  // the cursor position must match the text being parsed. Using a deferred value
   // with current cursorPosition causes desync during heavy renders, making the
   // @ menu fail to appear intermittently (especially after long conversations).
   const mentionContext = useMemo(

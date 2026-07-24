@@ -40,6 +40,7 @@ const placeholderNames = [
   'GIT_CHANGES_PROMPT',
   'INITIAL_AGENT_PROMPT',
   'KNOWLEDGE_FILES_CONTENTS',
+  'MODEL_INFO',
   'PROJECT_ROOT',
   'REMAINING_STEPS',
   'SYSTEM_INFO_PROMPT',
@@ -47,6 +48,8 @@ const placeholderNames = [
   'USER_CWD',
   'USER_INPUT_PROMPT',
 ] as const
+
+// NOTE: This list must stay in sync with common/src/types/session-state.ts AgentTemplateTypeList
 
 type PlaceholderType<T extends readonly string[]> = {
   [K in T[number]]: `{SAVANT_CODE_${K}}`
@@ -63,31 +66,25 @@ export const placeholderValues = Object.values(PLACEHOLDER)
 // ============================================================================
 
 export const AgentTemplateTypeList = [
-  // Base agents
-  'base',
-  'base_lite',
-  'base_max',
-  'base_experimental',
-  'claude4_gemini_thinking',
-  'superagent',
-  'base_agent_builder',
-
-  // Ask mode
-  'ask',
-
-  // Planning / Thinking
-  'dry_run',
+  // ECHO agents
   'thinker',
-
-  // Other agents
-  'file_picker',
-  'file_explorer',
-  'researcher',
-  'reviewer',
+  'scout',
+  'verifier',
+  'forge',
   'recorder',
   'scribe',
-  'agent_builder',
-  'example_programmatic',
+
+  // Personas (used by agent runtime for mode selection)
+  'ask',
+  'planner',
+  'dry_run',
+
+  // Infrastructure agents
+  'file_explorer',
+  'researcher',
+  'code_searcher',
+
+
 ] as const
 
 type UnderscoreToDash<S extends string> = S extends `${infer L}_${infer R}`

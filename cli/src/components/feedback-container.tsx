@@ -7,6 +7,7 @@ import { useFeedbackStore } from '../state/feedback-store'
 import { showClipboardMessage } from '../utils/clipboard'
 import { buildFeedbackPayload, buildMessageContext } from '../utils/feedback-helpers'
 import { resolveFeedbackSubmission } from '../utils/feedback-submission'
+import { isDirectProviderMode } from '../utils/env'
 import { logger } from '../utils/logger'
 import { getApiClient } from '../utils/savant-code-api'
 
@@ -62,6 +63,11 @@ export const FeedbackContainer: React.FC<FeedbackContainerProps> = ({
   const handleFeedbackSubmit = useCallback(() => {
     const store = useFeedbackStore.getState()
     if (store.isSubmitting) return
+
+    if (isDirectProviderMode()) {
+      showClipboardMessage('Feedback unavailable in direct-provider mode', { durationMs: 5000 })
+      return
+    }
 
     const { clientFeedbackId } = store
     if (!clientFeedbackId) return

@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0720-033-tui-rebuild-comprehensive.md`
 **ID:** FID-2026-0720-033
 **Severity:** critical
-**Status:** created
+**Status:** closed / archived (superseded by 033a-033e phases)
 **Created:** 2026-07-20 23:45
 **Author:** ECHO Agent (plan), Spencer Howell (execution via glm-5.2 agent)
 

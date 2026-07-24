@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0719-026-ts-rebrand-savant-code.md`
 **ID:** FID-2026-0719-026
 **Severity:** high
-**Status:** complete
+**Status:** closed / archived
 **Closed:** 2026-07-19
 **Created:** 2026-07-19
 **Author:** Savant Orchestrator (with Nova source-verified input from `dev/nova/inbox/2026-07-19-verdict-convergence-plan-v2.md`)

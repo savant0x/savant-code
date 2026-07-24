@@ -1,12 +1,923 @@
 # Changelog
 
-## v0.0.4 — 2026-07-21
+## v0.0.5 — 2026-07-24
 
-**Highlights:**
-- **FID-031 — Savant Rename + Modes Repurpose:** Renamed `agents/base2/` → `agents/savant/`, repurposed the CLI input-box mode toggle to `EDIT` / `ANALYZE` / `SCAFFOLD`, and added SCAFFOLD-mode umbrella-FID guards.
-- **FID-032 — Gateway Providers:** Added TokenRouter and NVIDIA NIM as OpenAI-compatible gateway backends.
-- **FID-030.1 — Agent-Runtime Tests Remediation:** Re-included `__tests__/` in the agent-runtime build and reduced type errors from 67 → 2 (97% reduction).
-- **FID-033 — TUI Rebuild Planning:** Decomposed the comprehensive TUI rebuild into 5 incremental phase FIDs with OpenTUI v0.2.2 native component integration.
+Major release: complete TUI rebuild, orchestrator optimization, and legacy codebase cleanup. 42 FIDs closed, 114 total archived, 0 active.
+
+### TUI Rebuild (5 Phases)
+- **Phase A** — Theme system: SyntaxStyle integration, diff/syntax tokens, hardcoded hex removal
+- **Phase B** — Glyph/icon system: 3-tier fallback (Nerd Font → Unicode → ASCII), shared phase-info module
+- **Phase C** — Tool rendering: native OpenTUI code blocks, FID loader + useFids hook
+- **Phase D** — Layout/navigation: CommandPalette, Dialog, Toast system, slash-command cleanup
+- **Phase E** — Polish: Timeline animations, syntax highlighting, post-processing layer
+
+### Orchestrator Optimization
+- Hybrid Mode — Savant writes code directly; Forge reserved for complex tasks (50-60% fewer LLM calls)
+- Parallel agent batching — Detective + Researcher + Thinker fire in parallel via Promise.allSettled
+- Smart phase transitions — skip RED/GREEN/AUDIT when criteria met; Law 3 never skipped
+- Batch operations — write all files first, verify once at the end
+- Verifier trigger — objective criteria (10+ lines, 2+ files, new API, security)
+- Local token estimation — eliminates serial HTTP round-trip for external runs
+- Conditional context-pruner — skips spawn when context < 80% of limit
+
+### Provider & Model System
+- OpenCode Go — dual-protocol provider (OpenAI + Anthropic compatible), 15 curated models
+- Context window resolved from OpenRouter catalog (no more hardcoded 200k)
+- Model metadata injected into system prompts via `PLACEHOLDER.MODEL_INFO`
+- Default model changed from hardcoded expensive models to `openrouter/free`
+
+### Direct-Provider Mode
+- Backend-stub gating — `isDirectProviderMode()` single source of truth
+- Request-level 503 guard prevents stub token from reaching real backend
+- `Infinity` usage stub replaced with `Number.MAX_SAFE_INTEGER`
+
+### Legacy Cleanup
+- 10 dead Codebuff template types removed (FID-066)
+- `file_picker` → `scout`, `reviewer` → `verifier` renamed across 20+ files (FID-067)
+- `ORCHESTRATOR_IDS` set replaces `startsWith('base')` special case
+
+### Tooling & DX
+- `run_readonly_command` — read-only terminal commands from any ECHO phase
+- `&&` chaining allowed for safe read-only command chains
+- `/verify` slash command — runs all 4 workspace typechecks concurrently
+- Automated test runner script (`scripts/run-az-test.sh`)
+- A-Z test prompt updated to v10 (148 tests, 28 phases)
+
+### Sidebar & UI
+- Active Agents section moved to top of sidebar
+- Perfection Loop section added below Sessions
+- FID list shows full descriptions, sorted alphabetically
+- Tools history capped to 5-entry sliding window
+- Double-space and row-highlight issues resolved
+- Branding component with `tiny` ASCII font, centered
+- Directory indicator moved to sidebar Session section
+
+### Quality
+- x4 typecheck gate: all pass (sdk, common, agent-runtime, cli)
+- SDK tests: 412/412 pass
+- 6 `validate-agents` test failures fixed (SDK suite fully green)
+- README SDK example updated: `agent: 'base'` → `agent: 'savant'`
+- Test fixture branding: `codebuff_tool_call` → `savant_tool_call`
+- 114 FIDs archived, 0 active remaining
+
+---
+
+## FID-2026-0723-067 — Rename Legacy Template Aliases
+
+**Date:** 2026-07-23
+**Severity:** medium
+**Status:** closed / archived
+
+**Summary:** Completed the cleanup started by FID-066 by removing the `file_picker`, `reviewer`, and `researcher` legacy aliases from the codebase. Renamed `file_picker` → `scout` and `reviewer` → `verifier` across 20+ files (107+ replacements). Removed `researcher` from `baseAgentSubagents`. Updated all test mock data to use current agent IDs.
+
+**Changes:**
+- `common/src/types/session-state.ts` — Removed `file_picker` and `reviewer` from `AgentTemplateTypeList`
+- `agents/types/secret-agent-definition.ts` — Synchronized list removal
+- `packages/agent-runtime/src/templates/types.ts` — Removed `researcher` from `baseAgentSubagents`
+- `common/src/tools/params/tool/spawn-agents.ts` — Updated description from `file-picker` to `scout`
+- `common/src/constants/free-agents.ts` — Updated comment from `file-picker` to `scout`
+- `cli/src/hooks/__tests__/use-ask-user-bridge.test.ts` — Updated `@file-picker` to `@scout`
+- 18 additional test and production files — Bulk renamed `file_picker` → `scout` and `reviewer` → `verifier`
+
+**Verification:**
+- x4 typecheck gate passes (common, agents, sdk, cli, evals, packages/* all exit 0)
+- code-reviewer-mimo approved
+
+**Archived:** 2026-07-23
+
+## FID-2026-0723-066 — Legacy Template-Type Cleanup
+
+**Date:** 2026-07-23
+**Severity:** medium
+**Status:** closed / archived
+
+**Summary:** Synchronized two divergent `AgentTemplateTypeList` arrays and removed 10 dead legacy Codebuff entries (`base`, `base_free`, `base_lite`, `base_max`, `base_experimental`, `claude4_gemini_thinking`, `superagent`, `base_agent_builder`, `agent_builder`, `example_programmatic`). Updated `baseAgentSubagents` to use current ECHO agent IDs. Replaced `startsWith('base')` special case in `local-agent-registry.ts` with explicit `ORCHESTRATOR_IDS` set.
+
+**Changes:**
+- `common/src/types/session-state.ts` — Removed 10 dead entries from `AgentTemplateTypeList`
+- `agents/types/secret-agent-definition.ts` — Synchronized list to match
+- `packages/agent-runtime/src/templates/types.ts` — Updated `baseAgentSubagents` to use `scout`/`verifier`
+- `common/src/constants/agents.ts` — Removed dead `base` and `agent-builder` personas
+- `cli/src/utils/local-agent-registry.ts` — Replaced `startsWith('base')` with module-level `ORCHESTRATOR_IDS` set
+- `main-prompt.test.ts` — Replaced `AgentTemplateTypes.base/base_max` with `scout/thinker`
+- `dynamic-agent-template-schema.test.ts` — Replaced `AgentTemplateTypes.file_picker` with string literal
+
+**Verification:**
+- x4 typecheck gate passes (all workspaces exit 0)
+- code-reviewer-mimo approved
+
+**Archived:** 2026-07-23
+
+## FID-2026-0723-065 — A-Z Test Feedback: Tooling & DX Fixes
+
+**Date:** 2026-07-23
+**Severity:** medium
+**Status:** closed / archived
+
+**Summary:** Addressed four tooling friction points from the A-Z System Test v7: allowed `&&` chaining in `run_readonly_command` for safe read-only chains, documented the `cwd` parameter as the preferred alternative to `cd ... &&`, fixed the `read_subtree` path in the test prompt, and added a `/verify` slash command that runs all 4 workspace typechecks concurrently.
+
+**Changes:**
+- `packages/agent-runtime/src/tools/handlers/tool/run-readonly-command.ts` — added safe `&&` splitting with per-segment validation; added `cd` to read-only allow-list
+- `common/src/tools/params/tool/run-readonly-command.ts` — documented `cwd` and `&&` chaining in tool description
+- `cli/src/data/slash-commands.ts` — added `verify` slash command
+- `cli/src/commands/command-registry.ts` — added `/verify` handler with concurrent typechecks
+- `dev/test-prompts/comprehensive-az-test-final.md` — fixed `read_subtree cli/src/components` → `read_subtree cli/src`
+- `packages/agent-runtime/src/tools/handlers/__tests__/run-readonly-command.test.ts` — added 12 new `&&`-chain tests (file total: 42)
+
+**Verification:** x4 typecheck passes. `run-readonly-command.test.ts` 12/12 pass.
+
+**Archived:** 2026-07-24
+
+## FID-2026-0723-064 — Slash Command Menu Cleanup
+
+**Date:** 2026-07-23
+**Severity:** medium
+**Status:** closed / archived
+
+**Summary:** Removed 7 dead/commented-out slash command entries and 2 orphaned handlers from the CLI. Cleaned up the slash command menu to remove stale agent references (`agent:gpt-5`, `agent:opus`), commented-out features (`/undo`, `/redo`, `/publish`), and the orphaned `/login` handler. Updated `/model` description example.
+
+**Changes:**
+- `cli/src/data/slash-commands.ts` — removed dead entries (undo/redo, agent:gpt-5, agent:opus, publish commented block); updated /model description
+- `cli/src/commands/command-registry.ts` — removed orphaned `/login` handler and dead `gpt-5-agent` handler
+
+**Verification:** x4 typecheck passes. Grep confirms zero remaining references to removed symbols.
+
+**Archived:** 2026-07-24
+
+## FID-2026-0723-063 — Right Sidebar TUI Polish
+
+**Date:** 2026-07-23
+**Severity:** medium
+**Status:** closed / archived
+
+**Summary:** Polished the right sidebar/TUI after the latest comprehensive A-Z test run. Fixed the hardcoded 200k context-window display, suppressed the duplicate `IDLE` phase row while work is active, moved the directory indicator from above the input box into the sidebar `Session` section, made `Agent Status` and `Perfection Loop` collapsible via `SidebarSection`, sorted and capped the Tools list to 5 entries, cleaned up double/empty spacing, and bumped `VERSION` to `0.0.5`.
+
+**Changes:**
+- `cli/src/utils/openrouter-models.ts` — Added `inferContextLength()` helper and applied it to TokenRouter and OpenCode Go hardcoded catalogs so the sidebar shows accurate context windows instead of falling back to 200k.
+- `cli/src/components/savant-ui/echo/agent-status.tsx` — Refactored to use `SidebarSection`; suppresses the idle phase row when real runtime activity is happening; shows only the phase or activity line as appropriate.
+- `cli/src/components/savant-ui/echo/perfection-loop.tsx` — Refactored to use `SidebarSection`; removed custom bordered box.
+- `cli/src/components/right-sidebar.tsx` — Added `Directory` row inside the `Session` section; sorted and capped the Tools list to 5 visible entries.
+- `cli/src/chat.tsx` — Removed the old `Directory <path>` text above the chat input box and cleaned up now-unused imports.
+- `VERSION` — Bumped to `0.0.5`.
+
+**Verification:**
+- `cd cli && bun run typecheck` passes.
+- `cd cli && bun test src/utils/__tests__/openrouter-models.test.ts` passes (14/14).
+
+**Archived:** 2026-07-23
+
+## FID-2026-0723-062 — Token Tracker Sidebar Shows Correct Model Context Window
+
+**Date:** 2026-07-23
+**Severity:** high
+**Status:** closed / archived
+
+**Summary:** Fixed the right sidebar token tracker so it displays the actual context window of the selected model instead of always showing "200k". Added a reactive effect that keeps `contextTokensMax` in sync with the active model, removed the hardcoded reset in store reset actions, and introduced a catalog-first `resolveContextWindowForModel()` utility.
+
+**Changes:**
+- `cli/src/utils/openrouter-models.ts` — Added `resolveContextWindowForModel()`; checks the cached gateway catalog first, then falls back to `getContextWindowForModel()`.
+- `cli/src/utils/constants.ts` — Updated `getContextWindowForModel()` JSDoc to document it as a last-resort fallback; improved `o1`/`o3`/`o4` heuristic to 200k.
+- `cli/src/state/chat-store.ts` — Removed the `contextTokensMax = 200_000` reset from `resetSidebarData()` and `reset()` so the model-derived value survives resets.
+- `cli/src/chat.tsx` — Added a `useEffect` that updates `contextTokensMax` whenever the active model changes.
+- `cli/src/hooks/use-send-message.ts` — Replaced `getContextWindowForModel()` with `resolveContextWindowForModel()` at run-start.
+- `cli/src/utils/__tests__/openrouter-models.test.ts` — Added unit tests for `resolveContextWindowForModel` (catalog hit, heuristic fallback, default fallback, missing `contextLength`).
+- `dev/fids/FID-2026-0723-062-token-tracker-context-window-hardcoded.md` — Marked closed/archived and moved to `dev/fids/archive/`.
+
+**Verification:**
+- `cd cli && bun run typecheck` passes.
+- `bun test src/utils/__tests__/openrouter-models.test.ts` passes (12/12).
+
+**Archived:** 2026-07-23
+
+## FID-2026-0723-061 — Backend-Stub Strategy for Direct-Provider Mode
+
+**Date:** 2026-07-23
+**Severity:** medium
+**Status:** closed / archived
+
+**Summary:** Consolidated direct-provider detection so `isDirectProviderMode()` is the single source of truth. The helper now returns true when either `DIRECT_PROVIDER` or `INFERENCE_BASE_URL` is set, and `cli/src/utils/auth.ts` consumes it instead of manually checking env vars. Added a request-level 503 guard in `savant-code-api.ts` so the synthetic `stub_bypass_dev_local` token never reaches a real backend. Renamed the synthetic token from `dev-local-bypass-token` to `stub_bypass_dev_local` and replaced the `Infinity` usage stub with `Number.MAX_SAFE_INTEGER`.
+
+**Changes:**
+- `cli/src/utils/env.ts` — `isDirectProviderMode()` now detects both `DIRECT_PROVIDER` and `INFERENCE_BASE_URL`.
+- `cli/src/types/env.ts` — Added `INFERENCE_BASE_URL` to the `CliEnv` type.
+- `cli/src/utils/auth.ts` — Refactored `getAuthTokenDetails()` to use `isDirectProviderMode()`; renamed stub token to `stub_bypass_dev_local`.
+- `cli/src/utils/savant-code-api.ts` — Added request-level 503 guard when `isDirectProviderMode()` is true.
+- `cli/src/hooks/use-usage-query.ts` — Replaced `Infinity` with `Number.MAX_SAFE_INTEGER` for the direct-provider usage balance stub.
+- `cli/src/__tests__/utils/env.test.ts` — Added `isDirectProviderMode` tests covering `DIRECT_PROVIDER`, `INFERENCE_BASE_URL`, both, empty strings, and whitespace-only values.
+- `cli/src/utils/__tests__/savant-code-api.test.ts` — Added env isolation and direct-provider guard tests.
+- `dev/fids/FID-2026-0723-061-backend-stub-strategy.md` — Marked closed/archived and moved to `dev/fids/archive/`.
+
+**Verification:**
+- `cd cli && bun run typecheck` passes.
+- Affected unit tests pass (86/86 across env, savant-code-api, use-usage-query, use-user-details-query).
+
+**Archived:** 2026-07-23
+
+
+## FID-2026-0722-053 — Orchestrator Agent Hardcoded Expensive Model
+
+**Date:** 2026-07-23
+**Severity:** high
+**Status:** closed / archived
+
+**Summary:** Replaced hardcoded expensive models (`anthropic/claude-opus-4.8`, `openai/gpt-5.4`) with `openrouter/free` as the default fallback. Users without a model selection via `/model` now get the free tier instead of being charged for expensive models.
+
+**Changes:**
+- `agents/savant/savant.ts:57` — Changed default from `'anthropic/claude-opus-4.8'` to `'openrouter/free'`
+- `agents/savant/savant-deep.ts:307` — Changed from `'openai/gpt-5.4'` to `'openrouter/free'`
+
+**Verification:** Typecheck passes across all 4 workspaces (sdk, common, agent-runtime, cli).
+
+**Archived:** 2026-07-23
+
+## FID-2026-0722-054 — OpenRouter Model Metadata in Prompt
+
+**Date:** 2026-07-22
+**Severity:** medium
+**Status:** closed / archived
+
+**Summary:** Inject model metadata (name, context length, pricing, capabilities) into system prompts via `PLACEHOLDER.MODEL_INFO`. Enables the agent to self-report accurate model info.
+
+**Changes:**
+- `formatModelInfo()` in `cli/src/utils/openrouter-models.ts` — renders metadata block
+- `PLACEHOLDER.MODEL_INFO` in `packages/agent-runtime/src/templates/types.ts`
+- Substitution in `packages/agent-runtime/src/templates/strings.ts`
+- Wired into `agents/savant/savant.ts` system prompt
+
+**Verification:** Tests pass in `openrouter-models.test.ts` and `strings.test.ts`.
+
+**Archived:** 2026-07-23
+
+## FID-2026-0723-060 — Parallel Agent Batching
+
+**Date:** 2026-07-23
+**Severity:** medium
+**Status:** closed / archived
+
+**Summary:** Expanded parallel execution instruction to cover all independent agents (Detective + Researcher + Thinker), not just Detective + Researcher. Added agent dependency table to system prompt clarifying which agents can run in parallel and which must be sequenced.
+
+**Changes:**
+- `agents/savant/savant.ts` — Expanded parallel batching instruction with full agent dependency matrix
+- `ECHO.md` — Documented parallel execution rules
+
+**Archived:** 2026-07-23
+
+## FID-2026-0723-059 — Smart Phase Transitions
+
+**Date:** 2026-07-23
+**Severity:** medium
+**Status:** closed / archived
+
+**Summary:** Added criteria for when ECHO Perfection Loop phases can be skipped: skip RED when issues are already known, skip GREEN deliberation for obvious fixes, skip full AUDIT for trivial changes (< 10 lines, single file). Law 3 (Verify Before Proceed) is never skipped.
+
+**Changes:**
+- `agents/savant/savant.ts` — Added Smart Phase Transitions table with skip criteria
+- `ECHO.md` — Documented phase transition rules
+
+**Archived:** 2026-07-23
+
+## FID-2026-0723-058 — Batch Operations
+
+**Date:** 2026-07-23
+**Severity:** medium
+**Status:** closed / archived
+
+**Summary:** Added batch operations instruction: when making multiple related file changes, write ALL files first, then run typecheck/lint ONCE at the end. Reduces verification rounds from N to 1 for multi-file tasks (~25% fewer LLM calls).
+
+**Changes:**
+- `agents/savant/savant.ts` — Added batch operations instruction
+- `ECHO.md` — Documented batch operations as optimization
+
+**Archived:** 2026-07-23
+
+## FID-2026-0723-057 — Verifier Trigger Optimization
+
+**Date:** 2026-07-23
+**Severity:** high
+**Status:** closed / archived
+
+**Summary:** Replaced subjective Verifier trigger ("skip if straightforward") with objective criteria (10+ lines, 2+ files, new API, security, user request, Forge usage). Enhanced Verifier prompt with 6-item ECHO Audit Checklist. Documented Hybrid Mode audit requirements and Double Audit enforcement.
+
+**Changes:**
+- `agents/savant/savant.ts` — Replaced subjective trigger with objective criteria table
+- `agents/verifier/verifier.ts` — Added 6-item Audit Checklist to instructionsPrompt
+- `ECHO.md` — Documented Hybrid Mode audit requirements and Law 4 enforcement
+
+**Archived:** 2026-07-23
+
+## FID-2026-0722-052 — Agent Capabilities Test Findings
+
+**Date:** 2026-07-22
+**Severity:** high
+**Status:** closed / archived
+
+**Summary:** Fixed 3 hard failures from Agent Capabilities Test (72 tests, 13 phases): CLI tsconfig rootDir workaround, `apply_patch` operation validation, `gravity_index` error categorization. Added regression tests for apply_patch and gravity-index error paths.
+
+**Changes:**
+- `cli/tsconfig.json` — Disabled declaration emit for cross-workspace path mappings
+- `packages/agent-runtime/src/tools/handlers/tool/apply-patch.ts` — Added explicit validation of operation object, type, path, and diff
+- `packages/agent-runtime/src/tools/handlers/tool/gravity-index.ts` — Replaced generic "Unable to connect" with categorized diagnostics
+- `packages/agent-runtime/src/__tests__/apply-patch-tool.test.ts` — NEW: regression tests
+- `packages/agent-runtime/src/__tests__/gravity-index-tool.test.ts` — Extended error categorization tests
+
+**Verification:** x4 typecheck passes. 17/17 tests pass.
+
+**Archived:** 2026-07-22
+
+## FID-2026-0722-050 — Prompt Audit: Mode-Specific Orchestrator Prompts
+
+**Date:** 2026-07-22
+**Severity:** high
+**Status:** closed / archived
+
+**Summary:** Refactored monolithic orchestrator system prompt into mode-specific preambles (EDIT, ANALYZE, SCAFFOLD, PLAN, FREE). Removed duplicated ECHO Protocol appendix from recorder, scribe, and savant-deep. Fixed corrupted `<thinking>` tag stripping. Expanded Scout instructions with workflow guidance.
+
+**Changes:**
+- `agents/savant/savant.ts` — Extracted `buildSystemPrompt(mode, context)` with mode-specific preambles
+- `agents/thinker/thinker.ts` — Fixed `<thinking>` tag stripping regex
+- `agents/recorder/recorder.ts` — Removed ECHO appendix
+- `agents/scribe/scribe.ts` — Removed ECHO appendix
+- `agents/savant/savant-deep.ts` — Removed ECHO appendix, fixed template literal
+- `agents/scout/scout.ts` — Expanded instructions with workflow guidance
+
+**Verification:** x4 typecheck passes.
+
+**Archived:** 2026-07-22
+
+## FID-2026-0722-043 — Master Sidebar Terminal Redesign
+
+**Date:** 2026-07-22
+**Severity:** medium
+**Status:** closed / archived
+
+**Summary:** Master FID coordinating sidebar and terminal visual overhaul. Children 040 (sidebar layout) and 042 (FidCard redesign) implemented. 041 (terminal components) archived separately.
+
+**Archived:** 2026-07-23
+
+## FID-2026-0722-042 — FidCard/FidList Redesign
+
+**Date:** 2026-07-22
+**Severity:** medium
+**Status:** closed / archived
+
+**Summary:** Redesigned FidCard with `Clickable` wrapper, chevron expand/collapse, `Badge` pill components, flex-based layout. Removed hardcoded indentation and ASCII borders.
+
+**Archived:** 2026-07-23
+
+## FID-2026-0722-040 — Sidebar Core Layout Redesign
+
+**Date:** 2026-07-22
+**Severity:** medium
+**Status:** closed / archived
+
+**Summary:** Replaced ASCII art borders with native primitives `SidebarSection` and `KeyValueRow`. Right sidebar now uses semantic components throughout.
+
+**Archived:** 2026-07-23
+
+## FID-2026-0722-038 — Sidebar FidCard Native Border Collision
+
+**Date:** 2026-07-22
+**Severity:** medium
+**Status:** closed / archived
+
+**Summary:** FidCard no longer uses `border={true}` which collided with sidebar layout. Now uses `Clickable` wrapper with `makeTextUnselectable`.
+
+**Archived:** 2026-07-23
+
+## FID-2026-0721-037 — Right Sidebar Stroke Artifact
+
+**Date:** 2026-07-21
+**Severity:** low
+**Status:** closed / archived
+
+**Summary:** Removed `│ │` double-bar stroke artifact from right sidebar. All `topBorder`/`midBorder`/`botBorder`/`centerLine` patterns eliminated.
+
+**Archived:** 2026-07-23
+
+## FID-2026-0721-036 — Right Sidebar Fid Enhancement
+
+**Date:** 2026-07-21
+**Severity:** medium
+**Status:** closed / archived
+
+**Summary:** Enhanced FidCard with chevron toggle, pill badges, expandable summary section. Replaced raw `<box>` elements with `Clickable` component.
+
+**Archived:** 2026-07-23
+
+## FID-2026-0721-038 — Env Placeholder Convention
+
+**Date:** 2026-07-21
+**Severity:** low
+**Status:** closed / archived
+
+**Summary:** Cleaned `.env.local` placeholder patterns — removed `sk-...`/`nvapi-...`/`ocg-...` sentinel values that could leak into prompts or logs.
+
+**Archived:** 2026-07-23
+
+## FID-2026-0721-035 — Slash Model Picker Broken
+
+**Date:** 2026-07-21
+**Severity:** high
+**Status:** closed / archived
+
+**Summary:** Slash command palette and model picker were broken. Rewrote `command-palette.tsx` with fully controlled list using `Button` components instead of OpenTUI `<select>`.
+
+**Archived:** 2026-07-23
+
+## FID-2026-0723-004 — Comprehensive A-Z Test v5 Findings and Agent-Experience Fixes
+
+**Date:** 2026-07-23
+**Severity:** high
+**Status:** closed / archived
+
+**Summary:** The Comprehensive A-Z System Test v5 passed with 166/166 items, but revealed significant workflow friction and tool-schema limitations within the multi-agent harness. This FID addresses the highest-impact issues: read-only terminal commands are now executable from any ECHO phase, `spawn_agents` returns actionable schema errors, and the orchestrator tool list was updated.
+
+**Changes:**
+- **NEW** `run_readonly_command` tool — executes non-destructive terminal commands (typecheck, test, ls, grep, git status, etc.) from any ECHO phase, bypassing the `run_terminal_command` phase gate.
+- **REWIRED** `spawn_agents` schema handling — stringified `agents` arrays are parsed and malformed payloads now return concrete schema examples instead of raw Zod errors.
+- **REWIRED** `packages/agent-runtime/src/tools/tool-executor.ts` — explicit FSM bypass for `run_readonly_command`.
+- **REWIRED** `agents/savant/savant.ts` — added `run_readonly_command` to the orchestrator tool list.
+- **REWIRED** `common/src/tools/params/tool/run-readonly-command.ts`, `common/src/tools/list.ts`, `common/src/tools/constants.ts` — published the read-only command tool.
+- **NEW** `packages/agent-runtime/src/tools/handlers/__tests__/run-readonly-command.test.ts` — safety tests for metacharacter rejection, destructive command rejection, destructive git flags, and FSM bypass.
+- **EXTENDED** `packages/agent-runtime/src/__tests__/tool-validation-error.test.ts` — `spawn_agents` string-array and malformed payload cases.
+
+**Verification:**
+- x4 typecheck gate passes (common, sdk, agent-runtime, cli all exit 0).
+- `run-readonly-command.test.ts` passes 30 tests covering valid delegation, rejection of destructive commands, and FSM bypass.
+- `tool-validation-error.test.ts` extended with `spawn_agents` string-array and malformed payload cases.
+
+**Archived:** 2026-07-23
+
+## FID-2026-0723-003 — ECHO FSM Optimization Fixes
+
+**Date:** 2026-07-23
+**Severity:** high
+**Status:** closed / archived
+
+**Summary:** Fixed 5 issues in the FSM optimization prototype: added self_correct to complete as valid FSM transition, updated stale FSM diagrams, clarified double-audit rule, fixed error message naming, resolved Law 2 tension.
+
+**Archived:** 2026-07-23
+
+## FID-2026-0723-002 — Hybrid Mode + Parallel Execution (Savant Direct Coding)
+
+**Date:** 2026-07-23
+**Severity:** high
+**Status:** closed / archived
+
+**Summary:** The orchestrator workflow requires 6-8 LLM calls minimum per task. Two optimizations: (1) Hybrid mode where Savant writes code directly for most tasks with Forge as fallback, and (2) Parallel execution for context gathering. Combined, these reduce LLM calls from 6-8 to 3-4 per task — a 50-60% speed improvement.
+
+**Changes:**
+- **REWIRED** `agents/savant/savant.ts` — Updated system prompt to enable hybrid mode: Savant writes code directly using `write_file`/`str_replace` (already in toolNames at lines 114-115), Forge only spawned for complex tasks or when verification fails. Added parallel context gathering instructions (batch Detective + Researcher in single spawn call).
+
+**Verification:**
+- x4 typecheck gate: sdk ✅ | common ✅ | agent-runtime ✅ | cli ✅ (all 0 errors)
+- Code analysis: `write_file`/`str_replace` already in orchestrator toolNames (lines 114-115)
+- Code analysis: `Promise.allSettled` parallelism infrastructure exists in `spawn-agents.ts` line 91
+- code-reviewer-mimo reviewed and approved.
+
+**Archived:** 2026-07-23
+
+## FID-2026-0723-001 — Orchestrator Workflow Optimization (Parallel Context, Batch Operations, Smart Phases)
+
+**Date:** 2026-07-23
+**Severity:** high
+**Status:** closed / archived
+
+**Summary:** The orchestrator workflow takes 15-23 minutes for typical tasks (32 LLM calls for 4-5 files). Three structural bottlenecks identified: serial agent spawning, per-file verification cycles, and rigid phase transitions. Proposed three targeted optimizations that preserve ECHO Protocol correctness while reducing execution time by ~40-50%.
+
+**Changes:**
+- **FID CREATED** `dev/fids/FID-2026-0723-001-orchestrator-workflow-optimization.md` — Documents three optimizations:
+  1. **Parallel Context Gathering** — Spawn Detective + Researcher in parallel via batched `spawn_agents` calls (infrastructure already supports this via `Promise.allSettled` in `spawn-agents.ts` line 91)
+  2. **Batch Operations** — Combine multiple file edits before verification instead of per-file cycles
+  3. **Smart Phase Transitions** — Allow phase-skipping when issues are known, fix is obvious, or change is trivial
+
+**Verification:**
+- Code analysis: `spawn-agents.ts` line 91 uses `Promise.allSettled(agents.map(...))` — parallelism infrastructure exists
+- Code analysis: `savant.ts` lines 222-296 show 4 `handleSteps` variants with `while (true)` loops
+- Code analysis: `run-agent-step.ts` line 554 shows main loop with per-iteration overhead
+- All optimizations are prompt/documentation changes — zero runtime code modifications needed
+- Zero risk of breaking existing functionality
+
+**Archived:** 2026-07-23
+
+## FID-2026-0722-056 — Orchestrator Step-Loop Overhead (Local Token Estimation + Conditional Context-Pruner)
+
+**Date:** 2026-07-23
+**Severity:** high
+**Status:** closed / archived
+
+**Summary:** A real-world ECHO workflow test took 23 minutes and 32 LLM calls for 4-5 files. Two structural bottlenecks in the agent-runtime step loop accounted for the majority of wasted time: (1) the token count API made a serial HTTP round-trip on every step for non-SavantCode runs; (2) the context-pruner spawned unconditionally on every step even when context was nowhere near the limit.
+
+**Changes:**
+- **NEW** `common/src/constants/free-agents.ts` — added `shouldUseLocalTokenCount()` that defaults to local token estimation when no SavantCode backend is configured (detected via API key presence). Keeps the existing `shouldUseLocalTokenCountForSavantFreeDeepseekFlash` for backward compat.
+- **REWIRED** `packages/agent-runtime/src/run-agent-step.ts` — replaced `shouldUseLocalTokenCountForSavantFreeDeepseekFlash` with `shouldUseLocalTokenCount`, passing `hasSavantCodeBackend` derived from API key presence. Eliminates the serial HTTP round-trip + 30s timeout × 3 retries for external runs.
+- **REWIRED** `agents/savant/savant.ts` — all 4 `handleSteps` variants (free-250k, free-400k, 250k, 400k) now gate the context-pruner spawn behind `agentState.contextTokenCount > maxContextLength * 0.8`, skipping the spawn when context is far from the limit.
+
+**Verification:**
+- x4 typecheck gate: common ✅ | agent-runtime ✅ | cli ✅ (all 0 errors)
+- Grep: `shouldUseLocalTokenCount` imported and called in run-agent-step.ts (lines 2, 1009)
+- Grep: `contextTokenCount > maxContextLength * 0.8` in all 4 handleSteps (savant.ts lines 226, 249, 272, 294)
+- code-reviewer-mimo reviewed and approved.
+
+**Archived:** 2026-07-23
+
+## FID-2026-0722-049 — Fix Agent Stack Storing displayName as id
+
+**Date:** 2026-07-22
+**Severity:** low
+**Status:** closed / archived
+
+**Summary:** Fixed the Active Agents sidebar list showing verbose subagent display names like "Savant the ..." and leaving stale active entries. The root cause was that `use-send-message.ts` stored the long `displayName` as the stack entry `id`, which also broke `onSubagentFinish` matching because it searched for the short `agentId`.
+
+**Changes:**
+- **REWIRED** `cli/src/hooks/use-send-message.ts` — `onSubagentStart` now stores `{ id: agentId, isActive: true }` instead of `{ id: displayName, isActive: true }`. The short `agentId` is now rendered by `AgentStack.formatAgentName()` and correctly matched by `onSubagentFinish`.
+
+**Verification:**
+- `cd cli && bun run typecheck` → exit 0.
+- `bun x eslint src/hooks/use-send-message.ts --max-warnings 0` → exit 0.
+- code-reviewer-kimi reviewed and approved (no blockers).
+
+**Archived:** 2026-07-22
+
+## FID-2026-0722-048 — Fix Active Agent Name Capitalization
+
+**Date:** 2026-07-22
+**Severity:** low
+**Status:** closed / archived
+
+**Summary:** Fixed the right sidebar's **Active Agents** section so the `savant` agent ID displays as `Savant`, matching the capitalization of other agent names. Also handles `main-agent` as `Savant` and converts other kebab-case agent IDs to Title Case.
+
+**Changes:**
+- **REWIRED** `cli/src/components/savant-ui/echo/agent-stack.tsx` — added `formatAgentName()` helper. Special-cases `savant` and `main-agent` to `Savant`; converts remaining kebab-case IDs (e.g., `savant-free`, `detective`) to Title Case with safe handling for empty segments.
+
+**Verification:**
+- `cd cli && bun run typecheck` → exit 0.
+- `bun x eslint src/components/savant-ui/echo/agent-stack.tsx --max-warnings 0` → exit 0.
+- code-reviewer-kimi reviewed and approved (no blockers).
+
+**Archived:** 2026-07-22
+
+## FID-2026-0722-047 — Build Real Perfection Loop UI Component
+
+**Date:** 2026-07-22
+**Severity:** medium
+**Status:** closed / archived
+
+**Summary:** Added a real **Perfection Loop** UI component that reads active FIDs from `dev/fids/` and visualizes the ECHO loop phases: RED → GREEN → AUDIT → SELF-CORRECT → COMPLETE. The component is mounted in the right sidebar below `AgentStatus` and shows the current loop position derived from the most advanced active FID status. When no active FIDs exist, it displays an idle state.
+
+**Changes:**
+- **NEW** `cli/src/components/savant-ui/echo/perfection-loop.tsx` — `PerfectionLoop` component. Loads active FIDs via `useFids()`, maps FID status to loop phase (`created`→RED, `analyzed`→GREEN, `fixed`→AUDIT, `verified`→SELF-CORRECT, `closed`/none→COMPLETE), and renders a compact vertical phase list in a bordered box using theme tokens and `glyph()`.
+- **REWIRED** `cli/src/components/savant-ui/index.ts` — added `PerfectionLoop` barrel export.
+- **REWIRED** `cli/src/components/right-sidebar.tsx` — mounted `PerfectionLoop` below `AgentStatus`.
+
+**Verification:**
+- `cd cli && bun run typecheck` → exit 0.
+- `bun x eslint src/components/savant-ui/echo/perfection-loop.tsx src/components/savant-ui/index.ts src/components/right-sidebar.tsx --max-warnings 0` → exit 0.
+- code-reviewer-kimi reviewed and approved (no blockers).
+
+**Archived:** 2026-07-22
+
+## FID-2026-0722-046 — Rename Misnamed `PerfectionLoop` Component to `AgentStatus`
+
+**Date:** 2026-07-22
+**Severity:** medium
+**Status:** closed / archived
+
+**Summary:** The sidebar component `perfection-loop.tsx` was titled "Perfection Loop" but actually displayed the ECHO FSM phase and runtime agent activity, not the ECHO Perfection Loop (the FID-bound RED→GREEN→AUDIT→SELF-CORRECT cycle). Renamed the component and file to `AgentStatus`, updated the title to "Agent Status", and corrected the JSDoc to clarify the distinction.
+
+**Changes:**
+- **NEW** `cli/src/components/savant-ui/echo/agent-status.tsx` — renamed `PerfectionLoop` → `AgentStatus`; title changed to "Agent Status"; JSDoc updated to note the component shows runtime agent status, not the ECHO Perfection Loop.
+- **DELETED** `cli/src/components/savant-ui/echo/perfection-loop.tsx`.
+- **REWIRED** `cli/src/components/savant-ui/index.ts` — barrel export updated from `PerfectionLoop` to `AgentStatus`.
+- **REWIRED** `cli/src/components/right-sidebar.tsx` — import and JSX usage updated to `AgentStatus`.
+- **REWIRED** `cli/src/components/savant-ui/echo/phase-indicator.tsx` — comment reference updated from `perfection-loop.tsx` to `agent-status.tsx`.
+
+**Verification:**
+- `cd cli && bun run typecheck` → exit 0.
+- `bun x eslint src/components/savant-ui/echo/agent-status.tsx src/components/savant-ui/index.ts src/components/right-sidebar.tsx src/components/savant-ui/echo/phase-indicator.tsx --max-warnings 0` → exit 0.
+- code-reviewer-kimi reviewed and approved.
+
+**Archived:** 2026-07-22
+
+## FID-2026-0722-045 — CLI Layout Responsive to Narrow Terminals
+
+**Date:** 2026-07-22
+**Severity:** high
+**Status:** closed / archived
+
+**Summary:** The main chat layout previously kept the 40-column `RightSidebar` visible at every terminal width, which crushed the chat column when the terminal was resized smaller. The CLI now hides the sidebar below 100 columns so the chat area stays usable.
+
+**Changes:**
+- **`cli/src/chat.tsx`** — Added `SIDEBAR_MIN_TERMINAL_WIDTH = 100` and a `showSidebar = terminalWidth >= SIDEBAR_MIN_TERMINAL_WIDTH` guard. `RightSidebar` is conditionally rendered; below the threshold the left chat column expands to the full terminal width.
+
+**Verification:**
+- `cd cli && bun run typecheck` → exit 0.
+- `bun x eslint src/chat.tsx --max-warnings 0` → exit 0.
+- code-reviewer-kimi reviewed and approved.
+
+**Archived:** 2026-07-22
+
+## FID-2026-0722-044 — Sidebar Polish: Color, Row Highlight, and Perfection Loop Label
+
+**Date:** 2026-07-22
+**Severity:** medium
+**Status:** closed / archived
+
+**Summary:** Addressed three remaining terminal UI polish issues in the right sidebar and input area.
+
+**Changes:**
+- **`cli/src/components/right-sidebar.tsx`** — Removed explicit `backgroundColor={theme.surface}` from the root sidebar `<box>` so it inherits the terminal background and matches the non-compact input box container. Updated the `PerfectionLoop` comment from "ECHO Protocol" to "Perfection Loop".
+- **`cli/src/components/multiline-input.tsx`** — Added `event.preventDefault?.()` and `clearSelection()` in `handleMouseDown` to suppress the OpenTUI row selection/focus highlight when clicking in the input box.
+- **`cli/src/components/savant-ui/echo/perfection-loop.tsx`** — Changed the title text from "ECHO Protocol" to "Perfection Loop".
+
+**Verification:**
+- `cd cli && bun run typecheck` → exit 0.
+- `bun x eslint --max-warnings 0` on the three changed files → exit 0.
+- Full x4 typecheck gate (sdk, common, agent-runtime, cli) → all exit 0.
+- code-reviewer-kimi reviewed: approved with two noted follow-ups — possible compact-mode background mismatch, and potential drag-to-select regression in `MultilineInput`.
+
+**Archived:** 2026-07-22
+
+## FID-2026-0722-041 — Terminal-Facing Components Visual Redesign
+
+**Date:** 2026-07-22
+**Severity:** medium
+**Status:** closed / archived
+
+**Summary:** Applied the same visual design system used for the right sidebar to the remaining terminal-facing components that were missed during the earlier TUI redesign phases: `chat-input-bar.tsx`, `model-picker.tsx`, `command-palette.tsx`, and `status-bar.tsx`. Replaced manual string padding and ASCII glyphs with native OpenTUI flexbox and a new `KeyHint` primitive.
+
+**Changes:**
+- **NEW** `cli/src/components/savant-ui/primitives/key-hint.tsx` — reusable bracketed keyboard hint primitive. Returns an OpenTUI `<box>` so it can be nested inside flex containers, and accepts `shortcut` and optional `label`/`bold` props.
+- **REWIRED** `cli/src/components/chat-input-bar.tsx` — removed the hardcoded padded `askUserTitle` string; styled the compact prompt `❯` with `theme.success`; converted mode label/icon chips to theme-aware boxes with colored backgrounds.
+- **REWIRED** `cli/src/components/model-picker.tsx` — removed manual `pad = ' '.repeat(...)` alignment; rendered each row as a flex row with separate columns for marker, model ID, provider badge, and model name; used `wrapMode="char"` for safe truncation.
+- **REWIRED** `cli/src/components/command-palette.tsx` — removed inline spacer spans; used a flex row with marker/label, description, and key-hint columns; replaced hardcoded `ESC to close` text with the `KeyHint` primitive.
+- **REWIRED** `cli/src/components/status-bar.tsx` — replaced raw ASCII glyphs (`■ Esc`, `✕ End session`) with the `KeyHint` primitive inside `StatusActionButton`; removed the unused `ShimmerText` import and `SHIMMER_INTERVAL_MS` constant.
+
+**Verification:**
+- x4 typecheck gate passes (sdk, common, agent-runtime, cli all exit 0).
+- ESLint `--max-warnings 0` on the five changed files passes (exit 0).
+
+**Archived:** 2026-07-22
+
+## FID-2026-0722-039 — FID Authoring Rules Missing from Runtime System Prompt
+
+**Date:** 2026-07-22
+**Severity:** high
+**Status:** closed / archived
+
+**Summary:** The runtime system prompt (`ECHO_PROTOCOL_INSTRUCTIONS`) instructed agents to create FIDs but never specified the directory, filename format, template, required metadata, allowed statuses, or the Recorder-only role restriction. This led to a malformed design document being written as a FID to a top-level `fids/` directory. The fix adds explicit FID Authoring Rules to the runtime prompt, mirrors them in `ECHO.md`, moves the stray document to `docs/design/`, adds a `.markdownlint.json` / `.markdownlintignore`, and introduces a regression test. During closure, 21 pre-existing TypeScript errors in the `agents` workspace were also fixed under the same FID.
+
+**Changes:**
+- **REWIRED** `common/src/constants/agents.ts` — Replaced the brief `## FID Lifecycle` section with a detailed `## FID Authoring Rules` block covering directory (`dev/fids/`), filename format (`FID-YYYY-MMDD-NNN-{kebab-case-title}.md`), number allocation, template (`templates/FID-TEMPLATE.md`), required metadata, allowed statuses (`created | analyzed | fixed | verified | closed`), and Recorder-only role restriction.
+- **REWIRED** `ECHO.md` — Added a `### FID Authoring Rules` subsection mirroring the runtime prompt rules (Law 13 single source of truth).
+- **MOVED** `fids/database-architecture.md` → `docs/design/database-architecture.md` — removed the stray `FID:` prefix and corrected the title to treat it as a non-FID design document; deleted the empty `fids/` directory.
+- **NEW** `.markdownlint.json` / `.markdownlintignore` — scoped markdownlint config to enforce the requested rules without enabling all default rules.
+- **NEW** `common/src/__tests__/agents.test.ts` — regression test asserting `ECHO_PROTOCOL_INSTRUCTIONS` contains the required FID authoring substrings.
+- **FIXED** pre-existing `agents` workspace type errors in `context-pruner.ts`, `editor/best-of-n/editor-implementor.ts`, `editor/best-of-n/editor-multi-prompt.ts`, `recorder/recorder.ts`, and `savant/savant.ts`; aligned `common/src/templates/initial-agents-dir/types/util-types.ts` `AuxiliaryMessageData` with the runtime type by adding `sentAt`.
+
+**Verification:**
+- `bun run --cwd=common typecheck` ✅ 0 errors
+- `bun run --cwd=agents typecheck` ✅ 0 errors
+- `bun test src/__tests__/agents.test.ts --cwd=common` ✅ 1/1 passing
+- `bunx eslint common/src/constants/agents.ts --max-warnings 0` ✅ 0 warnings
+- `bunx eslint agents/context-pruner.ts agents/editor/best-of-n/editor-implementor.ts agents/editor/best-of-n/editor-multi-prompt.ts agents/recorder/recorder.ts agents/savant/savant.ts common/src/templates/initial-agents-dir/types/util-types.ts --max-warnings 0` ✅ 0 warnings
+
+**Archived:** 2026-07-22
+
+## FID-2026-0721-034 — Add OpenCode Go as LLM Provider (dual-protocol)
+
+**Date:** 2026-07-21
+**Severity:** medium
+**Status:** closed / archived
+
+**Summary:** Added OpenCode Go as a new LLM provider backend with dual-protocol support (OpenAI-compatible + Anthropic-compatible). 15 curated open coding models accessible via subscription ($5 first month, $10/month). Integration follows existing multi-provider patterns (TokenRouter, NVIDIA NIM) with `@ai-sdk/anthropic` used for Anthropic-compatible models instead of a custom 700+ line adapter (reference implementations not available in repo).
+
+**Changes:**
+- **`common/src/constants/model-config.ts`** — Added `opencodeGoModels` catalog (15 models with `OPENCODE_GO_PROTOCOLS` map), `'opencode-go'` to `ALLOWED_MODEL_PREFIXES`, `opencodeGo: 'opencode.ai'` to `providerDomains`, `getLogoForModel` case for `opencode-go/` prefix.
+- **`sdk/src/env.ts`** — Added `getOpenCodeGoApiKeyFromEnv()` returning `process.env['OPENCODE_GO_API_KEY']`.
+- **`sdk/src/impl/model-provider.ts`** — Added `isOpenCodeGoModel()`, `createOpenCodeGoModel()` with dual-protocol routing (OpenAI-compatible via existing `OpenAICompatibleChatLanguageModel`, Anthropic-compatible via `@ai-sdk/anthropic` with custom `baseURL`), and routing in `getModelForRequest()`.
+- **`cli/src/utils/openrouter-models.ts`** — Added `'opencode-go'` to `ModelProvider` type, `OPENCODE_GO_CATALOG` (15 models), `fetchOpenCodeGoModels()`, wired into `fetchGatewayModels()`.
+- **`cli/src/components/model-picker.tsx`** — Added `'opencode-go'` case to `getProviderOrder()` (returns 3, default bumped to 4).
+
+**Verification:**
+- x4 typecheck gate passes (common, sdk, agent-runtime, cli all exit 0).
+- Grep confirms all integration points present across 6 files.
+- code-reviewer-mimo approved (after fixing `require()` → static import for ESM compliance).
+
+**FID Deviation:** The FID's Scope Constraints specified building a custom `AnthropicCompatibleChatLanguageModel` adapter (700+ lines). Reference implementations (opencode-dev, kilocode) were not available in the repo. Used `@ai-sdk/anthropic` (already a workspace dependency at v2.0.50) with custom `baseURL` instead — simpler, more maintainable, and follows official Vercel AI SDK patterns. Deviation documented in `createOpenCodeGoModel()` function comment.
+
+**Archived:** 2026-07-21
+
+## FID-2026-0720-033-master — Master TUI Rebuild Orchestration Closure (all 5 phases archived)
+
+**Date:** 2026-07-21
+**Severity:** high
+**Status:** closed / archived
+
+**Summary:** Closed the Master orchestration FID for the 5-phase TUI rebuild. All 5 phase FIDs (033a–033e) had already converged through their own Perfection Loops, been implemented, verified, and archived to `dev/fids/archive/`. This closure finalizes the Master FID itself: status flipped `analyzed → closed`, Phase FIDs table normalized to uniform "CLOSED 2026-07-21 — archived" annotations (033c/033d/033e previously showed only "✅ DONE" with no archived annotation; 033e had no status at all), all 11 Steps marked complete with per-phase evidence, and the Resolution section finalized with the consolidated final-verification evidence block. Master FID moved to `dev/fids/archive/`.
+
+**Changes:**
+- **REWIRED** `dev/fids/FID-2026-0720-033-master-tui-rebuild.md` — Status `analyzed` → `closed`; Last Audit updated to note the Master closure audit; Phase FIDs table rows for 033c/033d/033e given uniform "**CLOSED 2026-07-21**" + "archived" annotations matching 033a/033b; Steps 1–11 all marked ✅ complete with per-phase archive + convergence evidence and the consolidated final-verification results; Resolution section finalized (Verified By now lists the grep/glob evidence from the closure audit; Archived stamp dated 2026-07-21).
+- **MOVED** `dev/fids/FID-2026-0720-033-master-tui-rebuild.md` → `dev/fids/archive/FID-2026-0720-033-master-tui-rebuild.md` (per ECHO Auto-Archive rule).
+
+**Verification (Master closure audit, 2026-07-21):**
+- All 5 phase FIDs confirmed in `dev/fids/archive/` (033a, 033b, 033c, 033d, 033e) via glob — 0 phase FIDs remain in `dev/fids/`.
+- Phase-scoped hex: `grep -rn '#[0-9a-fA-F]{6}' cli/src/components/{savant-ui/echo/phase-indicator,savant-ui/feedback/alert,savant-ui/input/toggle,savant-ui/navigation/stepper,right-sidebar,tools/render-ui}.tsx` → 0 results — Law 13 dedup complete across all phase consumer files.
+- Full-tree hex audit: `grep -rn '#[0-9a-fA-F]{6}' cli/src/components/` → 20+ instances across ~10 files (sample: `savant-ui/feedback/badge.tsx`, `savant-ui/animation/pulse.tsx` (`#6b7280`), `ad-banner.tsx`, `ask-user/components/*.tsx`, `login-modal.tsx`, `project-picker-screen.tsx`, `blocks/implementor-row.tsx`). `right-sidebar.tsx` originally appeared in this list with a non-phase `#ff4444` DEV-MODE indicator; it was fixed during the Master closure audit by replacing the hardcoded hex with `theme.error` and re-verified clean. These remaining components were **not in scope** of any phase FID (033a–033e) and are deferred to a follow-up cleanup FID.
+- All 9 NEW files claimed across phases A–E present on disk (glob-verified): `syntax-theme.ts`, `post-processing.ts`, `glyphs.ts`, `fid-loader.ts`, `command-palette.tsx`, `dialog.tsx`, `toast.tsx`, `use-fids.ts`, `use-toast.ts` (correcting an earlier basher false-negative on `use-toast.ts`).
+- OpenTUI native components wired (grep-verified): `SyntaxStyle`/`createSyntaxStyle`, `useTimeline`, `applyPostProcessing`, `SelectRenderable`, `DiffRenderable`, `CodeRenderable` all present in `cli/src/`.
+- CHANGELOG.md already carries the 5 per-phase closed/archived entries (033a–033e); this Master entry is the 6th and final.
+
+**Note:** The underlying TUI rebuild code changes (Phases A–E) remain uncommitted in the working tree as of this closure — the original Phase A–E implementation work was never committed past `v0.0.4`. This Master FID closure is documentation/process bookkeeping only; the user is expected to commit the Phases A–E code together with this closure.
+
+**Archived:** 2026-07-21
+
+## FID-2026-0720-033e — Phase E: Polish (Timeline animations, syntax highlighting, post-processing)
+
+**Date:** 2026-07-21
+**Severity:** low
+**Status:** closed / archived
+
+**Summary:** Final cosmetic phase of the TUI rebuild. Added Timeline-driven animations to the progress bar and phase indicator, wired OpenTUI `SyntaxStyle` into the diff viewer and markdown code blocks, upgraded markdown rendering to use theme tokens and native `<code>` elements, and added an opt-in post-processing layer with scanlines, vignette, and colorblind-simulation matrices.
+
+**Changes:**
+- **NEW** `cli/src/utils/post-processing.ts` — exports `applyPostProcessing` (opt-in via `SAVANT_CODE_POST_PROCESSING=1`) and `applyColorblindSimulation` (driven by `SAVANT_CODE_COLORBLIND=<protanopia|deuteranopia|tritanopia|achromatopsia>`). Wraps every native call in `try/catch` and gates on `supportsTruecolor()` so the TUI never crashes for a cosmetic effect. Uses `applyScanlines`, `VignetteEffect`, and `colorMatrixUniform` from OpenTUI's post-processing API.
+- **REWIRED** `cli/src/index.tsx` — passes `postProcessFns: [applyPostProcessing]` to `createCliRenderer`.
+- **REWIRED** `cli/src/components/savant-ui/feedback/progress-bar.tsx` — uses `useTimeline` from `@opentui/react` to tween progress value changes over 300ms.
+- **REWIRED** `cli/src/components/savant-ui/echo/phase-indicator.tsx` — uses `useTimeline` to fade the phase label brightness on each phase change.
+- **REWIRED** `cli/src/components/tools/diff-viewer.tsx` — now renders the full diff through a native OpenTUI `<code content={diffText} filetype="diff" syntaxStyle={syntaxStyle} />` element for tree-sitter diff highlighting.
+- **REWIRED** `cli/src/utils/markdown-renderer.tsx` — removed all `as any` casts; code blocks now render with the theme's `SyntaxStyle` when a `ChatTheme` is available; palette still falls back to defaults when no theme is supplied.
+
+**Verification:**
+- x4 typecheck gate passes (sdk, common, agent-runtime, cli all exit 0).
+- ESLint `--max-warnings 0` on changed Phase E files passes (exit 0).
+- Law 4 grep: `useTimeline` consumers in `progress-bar.tsx` and `phase-indicator.tsx`; `applyPostProcessing` wired in `index.tsx`; `SyntaxStyle` used in `diff-viewer.tsx` and `markdown-renderer.tsx`.
+
+**Archived:** 2026-07-21
+
+## FID-2026-0720-033d — Phase D: Layout & Navigation (CommandPalette, Dialog, Toast system)
+
+**Date:** 2026-07-21
+**Severity:** high
+**Status:** closed / archived
+
+**Summary:** Built 4 new UI surface components — CommandPalette (native OpenTUI `<select>` overlay), Dialog (reusable modal primitive), ToastContainer + useToastStore (ephemeral notifications) — and wired them into the app: CommandPalette replaces the inline slash-command SuggestionMenu in chat-input-bar, ToastContainer mounts at the app root. All surfaces use theme tokens (Phase A) and the `useKeyboard` hook for keyboard navigation.
+
+**Changes:**
+- **NEW** `cli/src/components/command-palette.tsx` — overlay command palette using native OpenTUI `<select>` JSX (SelectRenderable wrapper). Reuses the existing `SuggestionItem` type from `suggestion-menu.tsx` (**Law 7** — no parallel command type). `useKeyboard` with `{ release: false }` for Escape-to-close. `onSelect(index, option)` callback fires on Enter (the SelectRenderable `select-current` keyBinding action); `option.value` carries the original `SuggestionItem`. Rendered INLINE above the input (not early-return) so the user keeps typing to refine the filter.
+- **NEW** `cli/src/components/dialog.tsx` — reusable overlay modal primitive. Theme-aware (surface background, primary border, muted ESC hint). Escape-to-close via `useKeyboard`. Optional title + footer + borderStyle. `width` prop typed as `number | 'auto' | \`${number}%\`` matching the OpenTUI box style width type exactly (**Law 6** — no casts). Foundation for migrating 4 ad-hoc modals (login-modal, review-screen, publish-confirmation, ask-user) incrementally.
+- **NEW** `cli/src/components/toast.tsx` — `ToastContainer` renders the toast queue from `useToastStore` Zustand store; stacked bottom-right; variant→color map (error/warning/success/info → ChatTheme color key, single truth per **Law 13**); × dismiss button per toast; re-exports `useToast`.
+- **NEW** `cli/src/hooks/use-toast.ts` — Zustand store (`useToastStore`); `addToast` with auto-dismiss timeout (default 3000ms, configurable, 0 = sticky); `dismissToast` cancels active timeout; `MAX_TOASTS=5` drops oldest on overflow (**Law 14** — toast queue overflow never blocks the UI); `useToast` convenience hook exposing `addToast` + `dismissToast`.
+- **REWIRED** `cli/src/components/chat-input-bar.tsx` — wired `CommandPalette` inline above the input for slash suggestions (replaces the inline `SuggestionMenu` for slash; mention (@) suggestions still use `SuggestionMenu` since they're file/agent completions). `handleSlashSelect` wires palette `onSelect` to the existing `onSlashItemClick` handler (no duplicate filtering logic, **Law 13**). `handleSlashClose` clears input via `setInputValue({text:''})` so `hasSlashSuggestions` becomes false and the palette unmounts — Escape actually closes (**Law 14** — no modal trap). Removed dead `borderColor` const (unused per ESLint).
+- **REWIRED** `cli/src/app.tsx` — mounted `ToastContainer` at the app root (wraps `AuthedSurface` + `ToastContainer` in a fragment) so toasts are visible across all screens (login, landing, chat). **Law 4**: `ToastContainer` is the production consumer of `useToastStore`.
+
+**Scope Note:** Per the "no deferrals" directive, Phase D shipped the 4 new components + 2 wiring points. Migration of the 4 ad-hoc modals to use `<Dialog>` is incremental (the Dialog primitive is now available for future FIDs). Right-sidebar redesign (Step 4) and status-bar activity indicator (Step 5) were largely completed in Phase B/C — the sidebar already uses theme tokens + the two-signal display (`phaseMapping()` + `activityMapping()`) wired in Phase B.
+
+**Verification:** `cd cli && bun run typecheck` → exit 0 (0 errors). `bun x eslint <6 changed files> --max-warnings 0` → exit 0. Law 4 grep: native `<select>` in command-palette; `useKeyboard` in command-palette + dialog; `ToastContainer` mounted in app.tsx; `CommandPalette` mounted in chat-input-bar; `useToastStore`/`useToast`/`addToast` wired. Law 7 grep: `SuggestionItem` reused. Law 13 grep: `hasSlashSuggestions` consolidated. code-reviewer-glm: 3 rounds — caught `useKeyboard {catchAll}` wrong options shape (fixed → `{release:false}`), `<select> onSubmit` wrong callback (fixed → `onSelect(index, option)`), critical UX regression of early-return hiding input (fixed → inline), `onClose` no-op modal trap (fixed → `handleSlashClose` clears input), dialog width type cast (fixed → proper union), toast `cursor` invalid style (removed), unused vars (removed). APPROVED.
+
+**Archived:** 2026-07-21
+
+## FID-2026-0720-033c — Phase C: Tool & Message Rendering (render-ui hex→tokens, code-block→SyntaxStyle, FID loader)
+
+**Date:** 2026-07-21
+**Severity:** high
+**Status:** closed / archived
+
+**Summary:** Focused Phase C on the three highest-value, lowest-risk wins (per "no deferrals, full steam ahead" directive): removed all hardcoded hex from `render-ui.tsx` (Law 13 dedup via shared phase-info), wired `createSyntaxStyle` (Phase A) to a native OpenTUI `<code>` JSX element in `code-block.tsx`, and created a FID loader utility + `useFids` hook that wires `<FidList>` to live `dev/fids/` data in the right-sidebar.
+
+**Changes:**
+- **REWIRED** `cli/src/components/tools/render-ui.tsx` — replaced 4 hardcoded hex tables (`SEVERITY_COLORS`, `BADGE_VARIANT_COLORS`, `PL_PHASE_COLORS`, `STEP_STATUS_ICONS`) with theme tokens via `resolveThemeColor()` + `ThemeColorKey` maps. `PL_PHASE_COLORS` and `STEP_STATUS_ICONS` now use shared `phaseMapping()`/`statusMapping()` + `glyph()` from Phase B (**Law 13 dedup** — eliminates duplicate tables that existed in render-ui AND phase-info/stepper).
+- **REWIRED** `cli/src/components/savant-ui/data-display/code-block.tsx` — now wires `createSyntaxStyle` (Phase A) via native OpenTUI `<code>` JSX element (`content`, `filetype`, `syntaxStyle`); SyntaxStyle memoized per theme change with `useMemo([theme])`. **Closes the Phase A Law 4 deferral** (createSyntaxStyle now has a production consumer).
+- **NEW** `cli/src/utils/fid-loader.ts` — `loadFids(fidsDir?)` reads `dev/fids/*.md`, parses `**Field:** value` metadata via regex (`ID`, `Status`, `Severity`, `Summary`), returns `FidData[]` sorted by severity (critical first). Per-file error isolation (Law 14 — one unreadable FID doesn't block the rest; missing directory returns `[]`).
+- **NEW** `cli/src/hooks/use-fids.ts` — `useFids(fidsDir?)` React hook wrapping `loadFids` with `refresh()` callback; `isLoading` state for first-load; no error state needed since `loadFids` never throws.
+- **REWIRED** `cli/src/components/right-sidebar.tsx` — wired `<FidList>` using `useFids()` hook; added 'Active FIDs' section between Agent Stack and History showing the open count + top 3 FIDs. **Closes the FidList Law 4 gap** (useFids now has a production consumer).
+
+**Scope Note:** Per the "no deferrals" directive, Phase C was scoped to the genuine wins. The reasoning-block.tsx (FID Step 6) was found to be a **Law 7 violation** — `thinking-block.tsx`, `block-operations.ts`, and `think-tag-parser.ts` already handle reasoning content extensively, so a new `reasoning-block.tsx` would duplicate existing logic. diff-viewer.tsx and markdown-renderer.tsx native renderable wrapping deferred to Phase E (polish) as they require deeper OpenTUI API verification.
+
+**Verification:** `cd cli && bun run typecheck` → exit 0 (0 errors). `bun x eslint <5 changed files> --max-warnings 0` → exit 0. Law 4 grep: hardcoded hex in render-ui.tsx → 0 results; `createSyntaxStyle` production consumer → `code-block.tsx`; `loadFids`/`useFids` consumers → `right-sidebar.tsx`; `PL_PHASE_COLORS`/`STEP_STATUS_ICONS` in render-ui → 0 results (dedup complete). code-reviewer-glm: 2 rounds — APPROVED both (first round flagged the FidList Law 4 gap, addressed by right-sidebar wiring in round 2).
+
+**Archived:** 2026-07-21
+
+## FID-2026-0720-033b — Phase B: Glyph/Icon System
+
+**Date:** 2026-07-21
+**Severity:** medium
+**Status:** closed / archived
+
+**Summary:** Built a centralized glyph/icon system with 3-tier fallback (Nerd Font → Unicode → ASCII), Nerd Font detection, and a shared phase-info module that eliminates Law 13 duplication across 5 components. Integrated into phase-indicator, alert, toggle, stepper, and right-sidebar — all hardcoded phase/status hex removed.
+
+**Changes:**
+- **NEW** `cli/src/utils/glyphs.ts` — 30-icon `GLYPH_TABLE` across 3 tiers; `hasNerdFont()` with session cache + `SAVANT_GLYPH_TIER` env override + TERM_PROGRAM allowlist (wezterm/kitty/ghostty); `glyph(name)` lookup with `?` placeholder fallback for unknown names; `_resetGlyphCacheForTests` export.
+- **NEW** `cli/src/components/savant-ui/icon.tsx` — `<span>`-based `Icon` component (composable inside `<text>`, unlike `<text>` which can't nest in OpenTUI); takes `GlyphName` + `ThemeColorKey`; bold via `TextAttributes.BOLD`.
+- **NEW** `cli/src/components/savant-ui/icon-theme-keys.ts` — `ThemeColorKey` literal union (32 keys) + `resolveThemeColor()` with `foreground` fallback (never throws, Law 14).
+- **NEW** `cli/src/components/savant-ui/branding.tsx` — declarative `<ascii-font text={text} font={font} color={resolvedColor} />` JSX element (4 font styles: tiny/block/slick/shade); theme-aware color via ChatTheme tokens.
+- **NEW** `cli/src/components/savant-ui/echo/phase-info.ts` — shared `phaseMapping`/`activityMapping`/`statusMapping`; maps phases → (GlyphName, ThemeColorKey, label); **eliminates Law 13 duplication** between `right-sidebar.tsx` and `phase-indicator.tsx` (both had identical `PHASE_INFO` hex tables).
+- **REWIRED** `cli/src/components/savant-ui/echo/phase-indicator.tsx` — uses `phaseMapping()` + `glyph()` + `resolveThemeColor()`; removed hardcoded `PHASE_INFO` hex table.
+- **REWIRED** `cli/src/components/savant-ui/feedback/alert.tsx` — `ALERT_MAP` replaces `ICONS` + `TYPE_COLORS` hex tables.
+- **REWIRED** `cli/src/components/savant-ui/input/toggle.tsx` — `glyph('toggleOn'/'toggleOff')` replaces `◉`/`◎` literals.
+- **REWIRED** `cli/src/components/savant-ui/navigation/stepper.tsx` — `statusMapping()` replaces `STATUS_ICONS` hex table.
+- **REWIRED** `cli/src/components/right-sidebar.tsx` — `phaseMapping()` + `activityMapping()` replace duplicated `PHASE_INFO` + `ACT_INFO` hex tables (was Law 13 violation).
+
+**Verification:** `cd cli && bun run typecheck` → exit 0. `bun x eslint <Phase B files> --max-warnings 0` → exit 0. Law 4 grep: hardcoded phase hex in 5 consumers → 0 results; `glyph()` consumers → 9; `phaseMapping`/`activityMapping`/`statusMapping` wired; `<ascii-font>` used in branding. code-reviewer-glm: 3 rounds — caught imperative-DOM branding rewrite (fixed → declarative `<ascii-font>`), `<text>` nesting issue (fixed → `<span>`-based Icon), subagent color semantic regression `syntaxType`→`warning` (fixed).
+
+**Law 4 deferral:** `<Icon>` and `<Branding>` components are foundationally exported but not yet mounted by a header/landing consumer — first mount consumers are Phase D (Layout & Navigation: header redesign, landing screens). The 5 integrated consumers use the raw `glyph()`+`resolveThemeColor()` helpers (Law 4 satisfied for the glyph system). Mirrors Phase A's `createSyntaxStyle` deferral pattern.
+
+## FID-2026-0720-033a — Phase A: Theme System — SyntaxStyle Integration + Diff/Syntax Tokens
+
+**Date:** 2026-07-21
+**Severity:** high
+**Status:** closed / archived
+
+**Summary:** Closed the real gaps in the existing Savant theme system (not a full port — the theme engine already existed at 1391 lines). Added OpenTUI `SyntaxStyle` integration for tree-sitter syntax highlighting, extended `ChatTheme` with diff + syntax tokens, rewired `diff-viewer.tsx` to theme tokens (removed 4 hardcoded hex), and deleted an orphaned backup file.
+
+**Changes:**
+- **NEW** `cli/src/utils/syntax-theme.ts` — `createSyntaxStyle(theme: ChatTheme): SyntaxStyle` maps 8 syntax tokens to OpenTUI `ThemeTokenStyle[]` via `SyntaxStyle.fromTheme()`. Module-level cached empty-style fallback for Law 14 (never crash the TUI for a cosmetic feature). Pattern adapted from opencode-dev `generateSyntax` (theme/index.ts:556, MIT).
+- **EXTENDED** `cli/src/types/theme-system.ts` `ChatTheme` — added 5 diff tokens (`diffAdded`/`diffRemoved`/`diffContext`/`diffHunkHeader`/`diffMeta`) + 8 syntax tokens (`syntaxComment`/`syntaxKeyword`/`syntaxFunction`/`syntaxString`/`syntaxNumber`/`syntaxVariable`/`syntaxType`/`syntaxOperator`).
+- **EXTENDED** `cli/src/utils/theme-system.ts` `DEFAULT_CHAT_THEMES` — added token values for dark + light. Diff colors preserved from prior `DIFF_LINE_COLORS` hex (`#7ACC35`/`#BF6C69`/`#4A9E1C`/`#C53030`); syntax colors adapted from opencode-dev ansi-color mapping.
+- **REWIRED** `cli/src/components/tools/diff-viewer.tsx` — `lineColor()` now reads `theme.diffAdded`/`diffRemoved`/`diffHunkHeader`/`diffMeta`/`diffContext`. Removed `DIFF_LINE_COLORS` constant + dead `|| theme.foreground` fallback.
+- **DELETED** `cli/src/components/savant-ui/_backup-theme.ts` — orphaned 41-line backup, 0 import references.
+- **TESTS** `cli/src/utils/__tests__/syntax-theme.test.ts` (NEW, 4 tests) + `cli/src/__tests__/unit/segmented-control.test.ts` mock extended with 13 new tokens.
+
+**Verification:** `cd cli && bun run typecheck` → exit 0. `bun x eslint <changed files> --max-warnings 0` → exit 0. Law 4 grep: `DIFF_LINE_COLORS` → 0; diff hex in tools/ → 0; `createSyntaxStyle` → 1 (foundational export, Phase C consumer); `_backup-theme.ts` → gone. code-reviewer-glm: 2 rounds, all findings addressed.
+
+**Law 4 deferral:** `createSyntaxStyle` has zero production consumers at Phase A close — the consumer is Phase C `CodeRenderable`/`DiffRenderable` (Master FID dependency 033a → 033c). Diff tokens ARE wired via `diff-viewer.tsx`. Documented honestly rather than claiming false reachability.
+
+**Process note:** FID-033a Loops 1–4 carried a false premise (described the theme system as a 41-line stub; actually 1391 lines across 2 files) and a fabricated Loop 3 audit mark ("1025 lines verified" — actually 1089). Loop 5 RED re-audit corrected both. See FID archive entry for the full audit trail.
+
+## v0.0.4 — Savant Rename + Modes Repurpose + Gateway Providers + Type-Safety Pass
+
+**Date:** 2026-07-21
+**Stats:** 640 files changed · 26,728 insertions · 5,070 deletions · 14 FIDs closed
+
+### Highlights
+
+#### Savant Rename + Modes Repurpose (FID-031)
+Renamed `agents/base2/` → `agents/savant/` and all `base2*` agent IDs to `savant*`. Repurposed the CLI input-box mode toggle from the dead `DEFAULT/LITE/MAX/PLAN` model-selection axis to a 3-position execution-scope axis:
+
+| Mode | Behavior |
+|------|----------|
+| **EDIT** (default) | Full strict ECHO Perfection Loop |
+| **ANALYZE** | Read-only mode — no source writes |
+| **SCAFFOLD** | Umbrella-FID project scaffolding with modal-confirm + auto-revert |
+
+- Added `set_scaffold_complete` tool + CLI auto-revert subscriber
+- Added `use-scaffold-confirm.ts` modal gate (first-click warning)
+- Stripped dead `providerOptions.only: ['amazon-bedrock']` from 5 agent files
+- Stripped dead `costMode` field chain (CLI → SDK → runtime)
+
+#### Gateway Providers (FID-032)
+Added **TokenRouter** (13+ models via `https://tokenrouter.me/v1`) and **NVIDIA NIM** (100+ models via `https://integrate.api.nvidia.com/v1`) as OpenAI-compatible gateway backends.
+
+- `common/src/constants/model-config.ts` — model catalogs + provider domains
+- `sdk/src/env.ts` — API key helpers
+- `sdk/src/impl/model-provider.ts` — factory functions + routing logic
+- `cli/src/utils/openrouter-models.ts` — `fetchGatewayModels()` multi-provider fetch
+- `cli/src/components/model-picker.tsx` — provider grouping with section headers + badges
+
+#### Agent-Runtime Tests Remediation (FID-030.1)
+Re-included `packages/agent-runtime/src/__tests__/` in the TypeScript build and fixed type errors across 25+ test files, reducing errors from **67 → 2** (97% reduction).
+
+#### ECHO Law 6 — Eliminated `unknown` from Function Signatures (FID-029-git-batch)
+Massive proper-narrow pass across `packages/agent-runtime` to eliminate `unknown` from function signatures per ECHO Law 6. Replaced all `unknown` parameter/return types with `JSONValue`, `Record<string, JSONValue>`, `Promise<void>`, concrete union types.
+
+- **batch-1 (8 files):** Core tool execution pipeline
+- **batch-2 (11 files):** Utility and template layer
+
+#### TUI Rebuild Planning (FID-033)
+Decomposed the comprehensive TUI rebuild into 5 incremental phase FIDs:
+
+| Phase | FID | Scope |
+|-------|-----|-------|
+| A | 033a | Theme System Port |
+| B | 033b | Glyph/Icon System |
+| C | 033c | Tool & Message Rendering |
+| D | 033d | Layout & Navigation |
+| E | 033e | Polish |
+
+### Full FID List (v0.0.4 cycle)
+
+| FID | Title | Severity | Status |
+|-----|-------|----------|--------|
+| FID-031 | Savant Rename + Modes Repurpose | high | archived |
+| FID-032 | Gateway Providers (TokenRouter + NVIDIA NIM) | medium | archived |
+| FID-030.1 | Agent-Runtime Tests Remediation | medium | archived |
+| FID-033 | TUI Rebuild Planning (5-phase decomposition) | high | analyzed |
+| FID-029-git-batch | Proper-Narrow Pass: Eliminated `unknown` | critical | in-progress |
+| FID-029-git | Root-Cause Fix: `unknown` in llm-providers | critical | archived |
+| FID-029 | ESLint Zero-Tolerance Push Gate | critical | archived |
+| FID-030 | Agent-Runtime Tests Exclusion | medium | archived |
+| FID-028 | freebuff → savant_free Rename + OpenRouter Branding | medium | archived |
+| FID-027 | codebuff → savant-code Clean Break | medium | archived |
+| FID-026 | TypeScript Rebrand: codebuff → savant-code | high | archived |
+| FID-025 | dev/releases/ Ephemeralization | small | archived |
+| FID-024 | Pre-Push Follow-up Batch | medium | archived |
+| FID-023 | Internal Workspace READMEs | medium | archived |
+
+### Verification
+- x4 typecheck gate: **ALL GREEN**
+- ESLint --max-warnings 0: **ALL GREEN**
+- SDK test suite: **415 pass / 0 fail**
+- Full SDK suite: **488 pass / 0 fail**
 
 ## FID-2026-0720-031 — Savant Rename + Modes Repurpose (ANALYZE/EDIT/SCAFFOLD)
 

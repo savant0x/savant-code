@@ -1,6 +1,6 @@
 # FID-2026-0718-016 — critical — Pre-existing SDK Test Failures (22 fixes)
 
-**Status:** RED + GREEN + AUDIT phases complete. Ready for FORGE approval.
+**Status:** closed / archived
 **Scope:** Option A approved by Spencer 2026-07-18.
 **Triggered by:** Nova FID-015 close-out verdict (CONDITIONAL — Claim 10 REFUTED).
 **Estimated LoC:** ~40 lines test-side changes (mostly Windows path normalization).

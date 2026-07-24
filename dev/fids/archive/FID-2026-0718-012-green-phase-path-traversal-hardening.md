@@ -1,6 +1,6 @@
 # FID-2026-0718-012 — medium — GREEN-Phase Path-Traversal Containment (Finding D)
 
-**Status:** OPEN — Perfection Loop converged to v1, Nova AUDIT passed, awaiting user approval
+**Status:** closed / archived
 **Opened:** 2026-07-18
 **Severity:** medium (current deployment context — GREEN is gated by FID auth + manually driven)
 **Severity Escalation:** HIGH for autonomous-deployment context (per Nova verdict 2026-07-18) — when Savant-Core spawns Savant-Code autonomously, GREEN-phase escalation becomes unmediated — a green-phase agent with full filesystem write scope is a real attack surface

@@ -1,4 +1,4 @@
-import { describe, test, expect, mock, beforeEach } from 'bun:test'
+import { describe, test, expect, mock, beforeEach, afterEach } from 'bun:test'
 
 import { createSavantCodeApiClient } from '../savant-code-api'
 
@@ -10,8 +10,13 @@ type MockFetch = (url: string, options?: RequestInit) => Promise<Response>
 
 describe('createSavantCodeApiClient', () => {
   let mockFetch: ReturnType<typeof mock<MockFetch>>
+  const originalDirectProvider = process.env.DIRECT_PROVIDER
 
   beforeEach(() => {
+    // Existing tests assume a real backend is reachable, so clear any
+    // direct-provider env that would trigger the request guard.
+    process.env.DIRECT_PROVIDER = ''
+
     mockFetch = mock<MockFetch>(() =>
       Promise.resolve({
         ok: true,
@@ -19,6 +24,14 @@ describe('createSavantCodeApiClient', () => {
         json: () => Promise.resolve({ id: 'test-id' }),
       } as Response),
     )
+  })
+
+  afterEach(() => {
+    if (originalDirectProvider === undefined) {
+      delete process.env.DIRECT_PROVIDER
+    } else {
+      process.env.DIRECT_PROVIDER = originalDirectProvider
+    }
   })
 
   describe('client creation', () => {
@@ -516,6 +529,47 @@ describe('createSavantCodeApiClient', () => {
         'TLS certificate verification failed for https://savant-free.com.',
       )
       expect(mockTlsFetch).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  describe('direct provider mode', () => {
+    const originalDirectProvider = process.env.DIRECT_PROVIDER
+
+    beforeEach(() => {
+      process.env.DIRECT_PROVIDER = 'openrouter'
+    })
+
+    test('request returns 503 error without calling fetch', async () => {
+      const client = createSavantCodeApiClient({
+        baseUrl: 'https://test.api',
+        fetch: mockFetch as unknown as typeof fetch,
+      })
+
+      const result = await client.get('/api/v1/test', { retry: false })
+
+      expect(mockFetch).not.toHaveBeenCalled()
+      expect(result).toEqual({
+        ok: false,
+        status: 503,
+        error: 'Backend unavailable in direct-provider mode',
+      })
+    })
+
+    test('endpoint methods return 503 error without calling fetch', async () => {
+      const client = createSavantCodeApiClient({
+        baseUrl: 'https://test.api',
+        authToken: 'stub_bypass_dev_local',
+        fetch: mockFetch as unknown as typeof fetch,
+      })
+
+      const result = await client.usage()
+
+      expect(mockFetch).not.toHaveBeenCalled()
+      expect(result).toEqual({
+        ok: false,
+        status: 503,
+        error: 'Backend unavailable in direct-provider mode',
+      })
     })
   })
 

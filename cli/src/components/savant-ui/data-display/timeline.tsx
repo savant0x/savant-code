@@ -18,11 +18,19 @@ export function Timeline({ events, maxItems }: TimelineProps) {
   const display = maxItems ? events.slice(-maxItems) : events
 
   return (
-    <box flexDirection="column" gap={0}>
+    <box flexDirection="column" gap={1} focusable={false} selectable={false}>
       {display.map((event, i) => (
-        <box key={i} flexDirection="row" gap={1}>
-          <text fg={theme.muted}>{event.time}</text>
-          <text fg={event.color ?? theme.foreground}>{event.label}</text>
+        <box key={i} flexDirection="row" gap={1} focusable={false} selectable={false}>
+          <text fg={theme.muted} wrapMode="none" selectable={false}>
+            {event.time}
+          </text>
+          <text
+            fg={event.color ?? theme.foreground}
+            wrapMode="word"
+            selectable={false}
+          >
+            {event.label}
+          </text>
         </box>
       ))}
     </box>

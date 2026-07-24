@@ -1,6 +1,6 @@
 # FID-2026-0718-018 — high — Pre-Push Doc House-Cleaning + README Realignment + dev/ Org
 
-**Status:** Step 5 ✅ DONE (FID archival sweep complete per user tightening). AUDIT pending user approval of 4 inline decisions for remaining Steps 1-4, 6-8.
+**Status:** closed / archived
 **Severity:** high (pre-push; docs must align with 0.0.2 pre-rebrand snapshot per FID-017 Option C)
 **Opened:** 2026-07-19
 **Updated:** 2026-07-19 (Step 5 sweep complete per user "no files out of place" directive)

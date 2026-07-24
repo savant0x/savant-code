@@ -2,7 +2,7 @@
 
 **Date:** 2026-07-19
 **Severity:** low
-**Status:** open
+**Status:** closed / archived
 **Context:** v0.0.3 rebrand push â€” ECHO Protocol compliance audit
 
 ## Summary
@@ -80,7 +80,7 @@ The following tests use `as unknown as AgentDefinition[]` to simulate runtime ty
 
 ## Test-Only `as` Casts (additional, V0.0.3 push gate)
 
-- `sdk/src/__tests__/credentials.test.ts` — 5 `as unknown as ClientEnv` boundary casts at lines ~101, ~114, ~199, ~222, ~283. These construct non-canonical env values (env strings like `'nonexistent'`, `'chatgpt-no-creds'`) to test the function reading an arbitrary string at runtime. The runtime path doesn't validate against the zod enum, so the test must bypass.
-- `sdk/src/__tests__/validate-agents.test.ts` — 2 `as unknown as AgentDefinition[]` casts at the 'bad-handle-steps' (handleSteps: 'not a function') and 'invalid-json-schema' (type: 'invalid-type', properties: null) tests. Simulate runtime type mismatches so the validator exercises the rejection path.
+- `sdk/src/__tests__/credentials.test.ts` ï¿½ 5 `as unknown as ClientEnv` boundary casts at lines ~101, ~114, ~199, ~222, ~283. These construct non-canonical env values (env strings like `'nonexistent'`, `'chatgpt-no-creds'`) to test the function reading an arbitrary string at runtime. The runtime path doesn't validate against the zod enum, so the test must bypass.
+- `sdk/src/__tests__/validate-agents.test.ts` ï¿½ 2 `as unknown as AgentDefinition[]` casts at the 'bad-handle-steps' (handleSteps: 'not a function') and 'invalid-json-schema' (type: 'invalid-type', properties: null) tests. Simulate runtime type mismatches so the validator exercises the rejection path.
 
 All test-only casts are documented here per ECHO Law 6 trust-boundary principle; production source code should continue to avoid `as` casts except for the 3 FID-029 production-line cases (composio 1x, tool-executor 2x).

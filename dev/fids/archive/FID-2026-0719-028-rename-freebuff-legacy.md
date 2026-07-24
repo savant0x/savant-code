@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0719-028-rename-freebuff-legacy.md`
 **ID:** FID-2026-0719-028
 **Severity:** medium
-**Status:** complete
+**Status:** closed / archived
 **Closed:** 2026-07-19
 **Created:** 2026-07-19
 **Author:** Savant Orchestrator

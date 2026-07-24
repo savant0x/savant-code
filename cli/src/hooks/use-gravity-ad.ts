@@ -10,7 +10,7 @@ import { AI_MESSAGE_ID_PREFIX } from '../utils/ai-message-id'
 import { trackEvent } from '../utils/analytics'
 import { getAuthToken } from '../utils/auth'
 import { IS_SAVANT_FREE } from '../utils/constants'
-import { getCliEnv } from '../utils/env'
+import { getCliEnv, isDirectProviderMode } from '../utils/env'
 import {
   createLazyResponseAdQueue,
   MAX_RESPONSE_AD_POOL_SIZE,
@@ -167,6 +167,18 @@ type GravityAdOptions = GravityAdOptionsBase &
  * no unnecessary inline requests; long answers repeat a pool of four ads.
  */
 export const useGravityAd = (options?: GravityAdOptions): GravityAdState => {
+  // Ads are a backend monetization feature; direct-provider mode has no backend.
+  if (isDirectProviderMode()) {
+    return {
+      ads: null,
+      responseAds: {},
+      requestResponseAds: () => {},
+      isLoading: false,
+      recordClick: () => {},
+      recordImpression: () => {},
+    }
+  }
+
   const enabled = options?.enabled ?? true
   const forceStart = options?.forceStart ?? false
   const provider: AdProvider = options?.provider ?? 'gravity'

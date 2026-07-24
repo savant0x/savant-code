@@ -1,4 +1,5 @@
-import React from 'react'
+import { useTimeline } from '@opentui/react'
+import React, { useEffect, useRef, useState } from 'react'
 
 import { useTheme } from '../../../hooks/use-theme'
 
@@ -20,7 +21,33 @@ export function ProgressBar({
   color,
 }: ProgressBarProps) {
   const theme = useTheme()
-  const percent = Math.min(Math.max((value / max) * 100, 0), 100)
+  const [displayValue, setDisplayValue] = useState(value)
+  const startRef = useRef(value)
+
+  const timeline = useTimeline({ autoplay: false })
+
+  useEffect(() => {
+    const start = startRef.current
+    const end = value
+    if (start === end) return
+
+    timeline.once(
+      { value: start },
+      {
+        value: end,
+        duration: 300,
+        ease: 'outQuad',
+        onUpdate: (anim) => {
+          setDisplayValue(anim.targets[0]?.value ?? end)
+        },
+      },
+    )
+    timeline.play()
+    startRef.current = end
+  }, [value, timeline])
+
+  const clampedValue = Math.min(Math.max(displayValue, 0), max)
+  const percent = max === 0 ? 0 : Math.min(Math.max((clampedValue / max) * 100, 0), 100)
   const filled = Math.round((percent / 100) * width)
   const empty = width - filled
 

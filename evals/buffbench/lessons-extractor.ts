@@ -33,7 +33,7 @@ const lessonsExtractorAgent: AgentDefinition = {
   displayName: 'Buffbench Lessons Extractor',
   model: 'openai/gpt-5',
   toolNames: ['spawn_agents', 'read_files', 'set_output'],
-  spawnableAgents: ['file-picker', 'find-all-referencer'],
+  spawnableAgents: ['scout', 'find-all-referencer'],
   inputSchema: {
     prompt: { type: 'string', description: 'Lessons extraction prompt' },
   },

@@ -210,9 +210,9 @@ describe('command-registry', () => {
       expect(credits).toBeDefined()
       expect(credits?.name).toBe('usage')
 
-      const modelDefault = findCommand('model:default')
-      expect(modelDefault).toBeDefined()
-      expect(modelDefault?.name).toBe('mode:default')
+      const modelEdit = findCommand('model:edit')
+      expect(modelEdit).toBeDefined()
+      expect(modelEdit?.name).toBe('mode:edit')
 
       const quit = findCommand('quit')
       expect(quit).toBeDefined()

@@ -1,6 +1,6 @@
 # Savant-Code Modes — Feature Writeup (post-rebrand, OpenRouter-only)
 
-> Status: **diagnostic audit completed**. Pending action: redesign of the input-box AgentMode toggle after `agents/base2/base2*.ts` is renamed. Filed under FID-2026-0720-031 (to be opened when work begins).
+> **⚠️ OUTDATED — Historical document, do not use for current reference.** This file was a diagnostic audit of the pre-rebrand mode system. It references `agents/base2/` paths, `anthropic/claude-opus-4.8` as the DEFAULT model, and `providerOptions` patterns that no longer exist. For current agent definitions, see `agents/savant/savant.ts` and `agents/savant/savant-deep.ts`. Filed under FID-2026-0720-031 (never opened).
 
 ## TL;DR — answer to "do modes do anything?"
 

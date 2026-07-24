@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0718-009-fsm-activity-indicator.md`
 **ID:** FID-2026-0718-009
 **Severity:** medium (UX clarity — no functional break)
-**Status:** open — Perfection Loop converged in 2 Thinker rounds, awaiting user approval
+**Status:** closed / archived
 **Created:** 2026-07-18
 **Author:** Orchestrator (ECHO v0.2.0)
 **Source:** User observation — "phase stays idle while Savant is actively doing something"

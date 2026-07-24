@@ -1,6 +1,6 @@
 # FID-2026-0718-023 — medium — Internal Workspace README Audit + Polish (packages/* + others)
 
-**Status:** RED proposing v1. Awaiting user approval of 4 inline decisions before FORGE (per ECHO Law 2). NOT modifying any internal workspace READMEs yet.
+**Status:** closed / archived
 **Severity:** medium (internal workspaces ship in monorepo only — not directly npm-published except sdk; quality is contributor-experience not consumer-facing)
 **Opened:** 2026-07-19
 

@@ -1,4 +1,3 @@
-import { ECHO_PROTOCOL_INSTRUCTIONS } from '@savant-code/common/constants/agents'
 import { GEMINI_3_1_FLASH_LITE_MODEL_ID } from '@savant-code/common/constants/gemini'
 
 import { publisher } from '../constants'
@@ -27,9 +26,7 @@ const definition: SecretAgentDefinition = {
   instructionsPrompt: `Instructions:
 1. Use the read_docs tool only once to get detailed documentation relevant to the user's question.
 2. Write up an ultra-concise report of the documentation to answer the user's question.
-
-${ECHO_PROTOCOL_INSTRUCTIONS}
-  `.trim(),
+`.trim(),
 }
 
 export default definition

@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 
+import { isDirectProviderMode } from '../utils/env'
 import { getAuthToken } from '../utils/auth'
 import { logger as defaultLogger } from '../utils/logger'
 import { getApiClient, setApiClientAuthToken } from '../utils/savant-code-api'
@@ -17,6 +18,14 @@ export async function fetchSavantFreeStreak(params: {
   logger?: Logger
 }): Promise<SavantFreeStreakResponse> {
   const { authToken, logger = defaultLogger } = params
+  if (isDirectProviderMode()) {
+    return {
+      streak: 0,
+      todayUsed: false,
+      lastUsageDate: null,
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    }
+  }
   setApiClientAuthToken(authToken)
   const response = await getApiClient().get<SavantFreeStreakResponse>(
     '/api/v1/savant-free/streak',
@@ -50,7 +59,7 @@ export function useSavantFreeStreakQuery(
   return useQuery({
     queryKey: streakQueryKeys.current(),
     queryFn: () => fetchSavantFreeStreak({ authToken: authToken!, logger }),
-    enabled: enabled && !!authToken,
+    enabled: enabled && !!authToken && !isDirectProviderMode(),
     staleTime: 60_000,
     gcTime: 10 * 60_000,
     retry: false,

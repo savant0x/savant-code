@@ -1,4 +1,4 @@
-**Status:** OPEN — Perfection Loop at RED (5 source-verified failures)
+**Status:** closed / archived
 **Opened:** 2026-07-18
 **Severity:** medium (blocks clean Windows CI; production Linux unaffected)
 **Source:** FID-2026-0718-014 v3 close-out Section 12.4

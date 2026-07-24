@@ -20,6 +20,7 @@ const placeholderNames = [
   'GIT_CHANGES_PROMPT',
   'INITIAL_AGENT_PROMPT',
   'KNOWLEDGE_FILES_CONTENTS',
+  'MODEL_INFO',
   'PROJECT_ROOT',
   'REMAINING_STEPS',
   'SYSTEM_INFO_PROMPT',
@@ -54,8 +55,7 @@ export const baseAgentToolNames: ToolName[] = [
 ] as const
 
 export const baseAgentSubagents: AgentTemplateType[] = [
-  AgentTemplateTypes.file_picker,
-  AgentTemplateTypes.researcher,
+  AgentTemplateTypes.scout,
   AgentTemplateTypes.thinker,
-  AgentTemplateTypes.reviewer,
+  AgentTemplateTypes.verifier,
 ] as const

@@ -37,7 +37,7 @@
 
 - `ECHO.md` — **single** bootstrap file; any agent reads it on session start.
 - `protocol.config.yaml` — language/commands/strict_mode config per project.
-- `agents/base2/base2.ts` — the Orchestrator; toolNames changes here alter all sub-spawns.
+- `agents/savant/savant.ts` — the Orchestrator; toolNames changes here alter all sub-spawns.
 - `packages/agent-runtime/src/tools/tool-executor.ts` — FSM gate; tool gating by phase.
 - `packages/agent-runtime/src/tools/handlers/tool/transition-phase.ts` — Perfection Loop FSM.
 - `cli/src/state/chat-store.ts` — Zustand store; `fsmPhase` + UI state.
@@ -291,7 +291,7 @@ to confirm children see the parent's current phase.
 
 ### 5. Stale agent references survive registry rebuilds (found 2026-0718)
 
-Adding an agent to `agents/base2/base2.ts` `spawnableAgents` doesn't auto-remove
+Adding an agent to `agents/savant/savant.ts` `spawnableAgents` doesn't auto-remove
 references to deleted agents elsewhere (e.g., `FREEBUFF_REVIEWER_AGENT_ID_BY_MODEL` still
 mapping deleted reviewer variants). After agent-merge refactors, **grep ALL
 references** before claiming clean state: `grep -rn 'old-agent-id' common/ agents/ cli/`.

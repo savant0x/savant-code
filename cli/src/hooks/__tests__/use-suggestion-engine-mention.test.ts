@@ -346,7 +346,7 @@ describe('single quote handling - apostrophes should NOT suppress @ menu', () =>
   // Real-world usage examples
   const realWorldExamples = [
     ["Why doesn't this work? @agent", 'agent'],
-    ["That's what @file-picker", 'file-picker'],
+    ["That's what @file-picker", 'scout'],
     ["What's @commander", 'commander'],
   ] as const
 

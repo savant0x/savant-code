@@ -3,13 +3,13 @@
 
 # @savant-code/database
 
-Database abstraction layer: Postgres + Drizzle schema, connection types, and service objects for analytics, billing, and auth.
+Database abstraction layer: SQLite via `bun:sqlite`, schema, connection, and service objects for sessions, agent configs, FID documents, message history, and cost tracking.
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](../../LICENSE)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](../../ECHO.md)[![Status](https://img.shields.io/badge/Status-internal-%23ff9500?style=flat-square&logo=github&logoColor=%2300fbff)](../../README.md)
 
 ## Purpose
 
-`@savant-code/database` owns the **persistence boundary** between the Savant runtime and Postgres. Exports two surfaces: the root (`.` → `src/index.ts`) for connected clients and migrations, and `./service` for the higher-level service objects the CLI uses to record runs, agent state, billing events, and analytics. Consumed by `@savant-code/common` (for billing/analytics adapters) and indirectly by the CLI run state.
+`@savant-code/database` owns the **persistence boundary** for the Savant runtime. Uses `bun:sqlite` (Bun's built-in SQLite driver) with WAL mode for crash recovery. Exports a database connection, schema creation, and typed service objects for CRUD operations on sessions, agent templates, agent configs, FID documents, message history, and cost tracking. Consumed by the CLI run state and agent runtime.
 
 ## Quick Start
 

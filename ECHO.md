@@ -21,7 +21,7 @@ FID lifecycle — code is never written until the FID has converged.
 conventions, and file extensions are defined in `protocol.config.yaml` and the
 `coding-standards/` directory.
 
-**We do not optimize for speed. We optimize for mathematical correctness, extreme robustness, and multi-year maintainability.**
+**We optimize for mathematical correctness, extreme robustness, and multi-year maintainability — while using adaptive complexity routing to avoid unnecessary overhead on simple tasks.**
 
 ---
 
@@ -31,7 +31,7 @@ conventions, and file extensions are defined in `protocol.config.yaml` and the
 | -------------------------- | ----------------------------------------------------------------------------------------------------------------- |
 | **FID**                    | Feature Implementation Document — tracks bugs, architectural issues, and improvements through resolution          |
 | **Perfection Loop**        | The iterative fix/verify cycle that runs on the FID document — not the code                                       |
-| **FID-Bound Execution**    | Code is never written until the FID converges through the Perfection Loop to COMPLETE status                      |
+| **FID-Bound Execution**    | For complex tasks, code is written only after the FID converges. For simple tasks, the Orchestrator writes directly (Hybrid Mode) and verifies immediately. |
 | **Activity** (FID-2026-0718-009) | Runtime indicator surfaced in the sidebar that shows what the agent is doing *right now* (tool call, model reasoning, sub-agent delegation, research). Distinct from FSM Phase, which tracks Perfection Loop state. |
 | **Levenshtein Metric**     | 10% character-change cap per pass to prevent oscillation                                                          |
 | **Baseline**               | Reference code state showing intended patterns                                                                    |
@@ -39,7 +39,7 @@ conventions, and file extensions are defined in `protocol.config.yaml` and the
 | **Five Questions**         | Evaluation framework for any approach                                                                             |
 | **Anti-Pattern**           | Forbidden behavior that violates the protocol                                                                     |
 | **Double Audit**           | Every change verified by two independent methods (static analysis + runtime tests). Self-reporting is prohibited. |
-| **Separation of Duties**   | The agent that writes code cannot verify it. The agent that discovers issues cannot close them.                    |
+| **Separation of Duties**   | The agent that writes code cannot verify it. In Hybrid Mode, the Orchestrator writes code but verification is done by bashers (typecheck/lint) or Verifier, never self-verified. |
 | **`protocol.config.yaml`** | Project-specific configuration (language, commands, paths)                                                        |
 | **`coding-standards/`**    | Language-specific naming and style conventions                                                                    |
 
@@ -53,7 +53,7 @@ another agent's role.
 
 | # | Agent | Phase | Responsibility | Tools | Restricted Tools |
 |---|-------|-------|----------------|-------|------------------|
-| 1 | **Orchestrator** | ALL | Routes work through Perfection Loop, enforces protocol compliance, spawns all agents | spawn_agents, read_files, read_subtree, write_todos, suggest_followups, ask_user, read_url, skill, set_output, list_directory, glob, render_ui, transition_phase, write_file, str_replace | apply_patch, bash, sequentialthinking |
+| 1 | **Orchestrator** | ALL | Primary coder (Hybrid Mode) + routes complex work through Perfection Loop. Writes code directly for most tasks, spawns Forge for complex changes. | spawn_agents, read_files, read_subtree, write_todos, suggest_followups, ask_user, read_url, skill, set_output, list_directory, glob, render_ui, transition_phase, write_file, str_replace | apply_patch, bash, sequentialthinking |
 | 2 | **Detective** | RED | Codebase analysis, grep call-graphs, find issues, catalog evidence | code_search, set_output, list_directory, glob, read_files, read_subtree | write_file, str_replace, bash |
 | 3 | **Forge** | GREEN | Implementation only. Writes code following converged FID spec. | write_file, str_replace, set_output | spawn_agents, bash (destructive), ask_user |
 | 4 | **Verifier** | AUDIT | Double-audit, run tests, check call-graph reachability | *(no tools — reads only via message history)* | ALL write tools |
@@ -67,7 +67,7 @@ another agent's role.
 
 | Rule | Enforced By |
 |------|-------------|
-| The Orchestrator cannot write source code files (delegated to Forge). Can write to scratchpad, FIDs, and Nova paths. | FSM gate + path exemptions |
+| The Orchestrator writes code directly in Hybrid Mode (most tasks). For complex tasks (> 3 files + new APIs, novel architecture, verification fails twice), delegate to Forge via FID-Bound Execution. | Hybrid Mode + FID criteria |
 | Forge (GREEN) cannot verify its own work | No bash (test) access |
 | Verifier (AUDIT) cannot write anything | toolNames: [] (zero tools) |
 | Detective (RED) cannot implement fixes | No write_file/str_replace |
@@ -287,10 +287,15 @@ This rule is the inter-agent version of the AUDIT phase's call-graph reachabilit
 
 ---
 
-## FID-Bound Execution
+## FID-Bound Execution (Complex Tasks Only)
 
-Code implementation follows FID convergence — never precedes it.
+The full FID-Bound Execution flow is reserved for genuinely complex tasks:
+- Touches > 3 files AND requires new imports/APIs, OR
+- Novel architecture or patterns not in the codebase, OR
+- Verification fails twice with direct fixes, OR
+- User explicitly requests Forge
 
+For the full flow:
 ```text
 Step 1:  Detect issue → Detective creates FID (RED)
 Step 2:  Propose fix → Thinker + Recorder document solution (GREEN)
@@ -306,14 +311,43 @@ Step 7:  If implementation audit fails → Forge revises, Verifier re-audits
 Step 8:  Implementation passes → done
 ```
 
+## Hybrid Mode (Most Tasks — Default)
+
+For tasks that don't meet the complex criteria above, the Orchestrator writes code directly:
+```text
+Step 1:  Read relevant files to understand codebase
+Step 2:  Write ALL code changes using write_file and str_replace
+Step 3:  Run verification (typecheck, lint) in parallel using bashers
+Step 4:  Spawn Verifier for code review (see criteria below)
+Step 5:  If verification passes → done
+Step 6:  If verification fails → spawn Forge to fix, then re-verify
+```
+
+### Verifier Trigger Criteria (Objective)
+
+The Verifier MUST be spawned when ANY of these apply:
+- Change is 10+ lines
+- Change touches 2+ files
+- New function or API added
+- Security-sensitive code touched
+- User explicitly requests review
+- FID-Bound Execution (Forge)
+
+The Verifier MAY be skipped ONLY when: change is < 10 lines AND single file AND no new imports.
+
+### Double Audit (Hybrid Mode)
+
+Hybrid Mode satisfies the Double Audit requirement via:
+- **Method 1:** bashers (typecheck/lint) — static analysis
+- **Method 2:** Verifier — independent code review (when triggered by criteria above)
+
+Self-reporting is prohibited. The Orchestrator that writes code must not be the one to verify it.
+
 ### Enforcement
 
-- The Orchestrator cannot skip steps 1-4. An open FID must reach COMPLETE
-  before any write_file or str_replace tool call is made.
-- The Verifier's implementation audit (step 6) is a separate pass from the
-  FID audit (step 3). Both require tool output evidence.
-- If the implementation diverges from the converged FID, a new FID must be
-  created documenting the divergence.
+- For Hybrid Mode: The Orchestrator writes code directly. Verification is done by bashers (typecheck/lint) or Verifier — never self-verified.
+- For FID-Bound Execution: The Orchestrator cannot skip steps 1-4. An open FID must reach COMPLETE before Forge implements.
+- The Verifier's implementation audit (step 6) is a separate pass from the FID audit (step 3). Both require tool output evidence.
 
 ---
 
@@ -324,8 +358,7 @@ Step 8:  Implementation passes → done
 - **Document as you go.** Don't leave documentation for later.
 - **Commit atomic changes.** Each commit should be independently revertible.
 - **Track progress visually.** Update TODO lists after each completed task.
-- **Use the right agent.** The Orchestrator delegates to the appropriate agent
-  for each phase. Do not perform another agent's role.
+- **Use the right path.** For most tasks, write code directly (Hybrid Mode). For complex tasks, delegate to Forge via FID-Bound Execution. The Orchestrator is the primary coder; Forge is the specialist for complex work.
 
 ---
 
@@ -351,12 +384,11 @@ Whenever the operator issues the trigger phrase **"run the perfection loop"**, t
 
 ### During Session
 
-1. The Orchestrator receives user input and determines the appropriate phase
-2. For each phase, the Orchestrator spawns the corresponding agent
-3. Work progresses through the Perfection Loop one FID at a time
-4. After FID convergence, Forge implements, Verifier audits the code
-5. All issues are documented as FIDs in `dev/fids/`
-6. Session summary is updated with progress
+1. The Orchestrator receives user input and determines the task complexity
+2. For most tasks: Orchestrator writes code directly (Hybrid Mode), verifies with bashers
+3. For complex tasks: Orchestrator delegates to Forge via FID-Bound Execution
+4. All issues are documented as FIDs in `dev/fids/`
+5. Session summary is updated with progress
 
 ### End of Session
 
@@ -386,6 +418,20 @@ Created → Analyzed → Fixed → Verified → Closed → Archived
 - When you find a performance bottleneck
 - When you notice a security concern
 - When you see an opportunity for improvement
+
+### FID Authoring Rules
+
+Only the Recorder agent may create, update, or archive FID files. Agents without write tools (Thinker, Scout, Researcher) must route FID content through the Recorder. Parent agents with write tools must not write FID files directly from a sub-agent's output.
+
+FIDs are Markdown files that live ONLY in `dev/fids/`. NEVER create top-level directories such as `fids/`, `archive/`, or any path that shadows canonical ECHO paths.
+
+Filename format: `FID-YYYY-MMDD-NNN-{kebab-case-title}.md`. Scan the existing FIDs in `dev/fids/` and `dev/fids/archive/` first to allocate the next available number on the date, and never reuse a number on the same date.
+
+Use `templates/FID-TEMPLATE.md` as the exact template. Required metadata fields: **Filename**, **ID**, **Severity**, **Status**, **Created**, **Author**.
+
+Allowed status values: `created | analyzed | fixed | verified | closed`.
+
+Non-FID design documents go to `docs/design/`, never at the repo root, and never with a `FID-` prefix.
 
 ### FID Format
 
@@ -438,7 +484,7 @@ If a FID's proposed solution is architecturally wrong given current project dire
 | Deferring approved work without presenting | Scope reduction is a silent decision | 2 |
 | Writing pseudo-code or placeholders | Every line must be production-ready | 5 |
 | Performing another agent's role | Separation of duties is non-negotiable | — |
-| Writing code before FID converges | FID-Bound Execution is absolute | — |
+| Writing code before FID converges (for complex tasks) | FID-Bound Execution is absolute for complex tasks; Hybrid Mode allows direct writing for simple tasks | — |
 | The agent who writes the code verifying it | Separation of duties | — |
 | Swallowed errors | Silently discarding errors where failure is not acceptable (see language-specific error handling patterns in coding-standards) | 14 |
 

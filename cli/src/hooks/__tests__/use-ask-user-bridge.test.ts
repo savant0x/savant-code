@@ -125,7 +125,7 @@ describe('useAskUserBridge', () => {
 
     test('input with special characters is preserved after skip', () => {
       useChatStore.setState({
-        inputValue: "Don't lose this apostrophe or @file-picker mention",
+        inputValue: "Don't lose this apostrophe or @scout mention",
         cursorPosition: 51,
       })
 

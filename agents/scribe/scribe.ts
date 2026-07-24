@@ -1,5 +1,3 @@
-import { ECHO_PROTOCOL_INSTRUCTIONS } from '@savant-code/common/constants/agents'
-
 import { publisher } from '../constants'
 
 import type { AgentDefinition } from '../types/agent-definition'
@@ -46,9 +44,7 @@ const definition: AgentDefinition = {
 - You cannot use str_replace, bash, or spawn. Use write_file for all writes.
 - Be concise. Session summaries should be actionable, not verbose.
 - Every lesson learned must include a concrete example or evidence.
-- Never fabricate information. Only document what actually happened.
-
-${ECHO_PROTOCOL_INSTRUCTIONS}`,
+- Never fabricate information. Only document what actually happened.`,
 
   handleSteps: function* ({ agentState, params }) {
     yield 'STEP'

@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0720-032-gateway-providers.md`
 **ID:** FID-2026-0720-032
 **Severity:** medium
-**Status:** fixed
+**Status:** closed / archived
 **Created:** 2026-07-20 17:00
 **Author:** Orchestrator (self-authored)
 

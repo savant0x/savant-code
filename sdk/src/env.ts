@@ -86,3 +86,10 @@ export const getTokenRouterApiKeyFromEnv = (): string | undefined => {
 export const getNvidiaApiKeyFromEnv = (): string | undefined => {
   return process.env['NVIDIA_API_KEY']
 }
+
+/**
+ * Get the OpenCode Go API key from environment.
+ */
+export const getOpenCodeGoApiKeyFromEnv = (): string | undefined => {
+  return process.env['OPENCODE_GO_API_KEY']
+}

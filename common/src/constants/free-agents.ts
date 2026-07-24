@@ -36,7 +36,7 @@ export const SAVANT_FREE_DESKTOP_THREAD_AGENT_ID = 'savant-free-desktop-thread'
 
 /**
  * Root-orchestrator agent IDs counted as "a savant-free session" for abuse
- * detection and usage auditing. Subagents (file-picker, basher, etc.) are
+ * detection and usage auditing. Subagents (scout, basher, etc.) are
  * excluded — they're spawned by the root, so counting them would inflate
  * every user's apparent activity.
  */
@@ -235,6 +235,38 @@ export function shouldUseLocalTokenCountForSavantFreeDeepseekFlash(params: {
   const { publisherId, agentId } = parseAgentId(fullAgentId)
   if (publisherId && publisherId !== 'savant-code') return false
   return agentId === 'savant-free-deepseek-flash'
+}
+
+/**
+ * Determines whether token counting should use the fast local estimation
+ * path instead of the external SavantCode web API. The external API ships
+ * the full message history + tools via HTTP on every step, adding serial
+ * network overhead (30s timeout × 3 retries) that is unnecessary when:
+ * - No SavantCode backend is configured (external/BYOK/OpenCode Go runs)
+ * - The model is savant-free-deepseek-flash (existing exception)
+ *
+ * Local estimation uses gpt-tokenizer with a 1.35× fudge factor — fast
+ * and accurate enough for context management. The external API is only
+ * needed for SavantCode-hosted paid runs where credit billing requires
+ * Anthropic-exact counts.
+ */
+export function shouldUseLocalTokenCount(params: {
+  agentId: string | undefined
+  model: string | undefined
+  hasSavantCodeBackend?: boolean
+}): boolean {
+  // Existing narrow exception: savant-free-deepseek-flash always uses local
+  if (shouldUseLocalTokenCountForSavantFreeDeepseekFlash(params)) {
+    return true
+  }
+
+  // If no SavantCode backend is configured, skip the external API entirely
+  // (it would fail with 'Missing SavantCode base URL or API key' anyway)
+  if (params.hasSavantCodeBackend === false) {
+    return true
+  }
+
+  return false
 }
 
 /**

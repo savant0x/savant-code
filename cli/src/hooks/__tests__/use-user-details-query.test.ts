@@ -24,12 +24,16 @@ describe('fetchUserDetails', () => {
 
   const originalEnv = process.env.NEXT_PUBLIC_SAVANT_CODE_APP_URL
 
+  const originalDirectProvider = process.env.DIRECT_PROVIDER
+
   beforeEach(() => {
     process.env.NEXT_PUBLIC_SAVANT_CODE_APP_URL = 'https://test.savant-code.com'
+    process.env.DIRECT_PROVIDER = ''
   })
 
   afterEach(() => {
     process.env.NEXT_PUBLIC_SAVANT_CODE_APP_URL = originalEnv
+    process.env.DIRECT_PROVIDER = originalDirectProvider
   })
 
   describe('API failure handling', () => {
@@ -190,6 +194,34 @@ describe('fetchUserDetails', () => {
       ).resolves.toEqual({ email: 'test@example.com' })
 
       expect(setTokenSpy).toHaveBeenCalledWith('valid-token')
+    })
+  })
+
+  describe('direct provider mode', () => {
+    test('returns stub user details without calling API', async () => {
+      process.env.DIRECT_PROVIDER = 'openrouter'
+
+      const meMock = mock(() =>
+        Promise.resolve({
+          ok: true,
+          status: 200,
+          data: {},
+        }),
+      )
+      const apiClient = createMockApiClient({ me: meMock })
+
+      const result = await fetchUserDetails({
+        authToken: 'valid-token',
+        fields: ['id', 'email'] as const,
+        logger: mockLogger,
+        apiClient,
+      })
+
+      expect(meMock).not.toHaveBeenCalled()
+      expect(result).toEqual({
+        id: 'direct-provider',
+        email: 'direct-provider@savant-code.local',
+      })
     })
   })
 })

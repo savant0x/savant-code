@@ -1,6 +1,6 @@
 # FID-2026-0718-022 — high — Sub-README Pre-Push Polish (sdk/cli/savant-free)
 
-**Status:** RED proposing v1. Awaiting user approval of 4 inline decisions before FORGE (per ECHO Law 2). NOT modifying any sub-README files yet.
+**Status:** closed / archived
 **Severity:** high (sub-readmes ship to npm on publish; root README errors propagate to sub-package landings)
 **Opened:** 2026-07-19
 

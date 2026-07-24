@@ -33,6 +33,9 @@ export type ChatKeyboardState = {
   totalMentionMatches: number
   disableSlashSuggestions: boolean
 
+  // Overlay state
+  modelPickerOpen: boolean
+
   // Queue state
   queuePaused: boolean
   queuedCount: number
@@ -134,7 +137,12 @@ export function resolveChatKeyboardAction(
   const isPageUp = key.name === 'pageup' && !hasModifier(key)
   const isPageDown = key.name === 'pagedown' && !hasModifier(key)
 
-  // Priority 0: Out of credits mode - Enter opens buy credits page
+  // Priority 0: Model picker overlay open - let it handle its own keyboard
+  if (state.modelPickerOpen) {
+    return { type: 'none' }
+  }
+
+  // Priority 0.5: Out of credits mode - Enter opens buy credits page
   if (state.inputMode === 'outOfCredits') {
     if (isEnter) {
       return { type: 'open-buy-credits' }
@@ -373,6 +381,7 @@ export function createDefaultChatKeyboardState(): ChatKeyboardState {
     slashMatchesLength: 0,
     totalMentionMatches: 0,
     disableSlashSuggestions: false,
+    modelPickerOpen: false,
     queuePaused: false,
     queuedCount: 0,
     historyNavUpEnabled: false,

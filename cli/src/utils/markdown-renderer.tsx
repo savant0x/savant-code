@@ -7,7 +7,11 @@ import stringWidth from 'string-width'
 import { unified } from 'unified'
 
 import { logger } from './logger'
+import { createSyntaxStyle } from './syntax-theme'
+import { createMarkdownPalette } from './theme-system'
 
+import type { ChatTheme } from '../types/theme-system'
+import type { SyntaxStyle } from '@opentui/core'
 import type {
   Blockquote,
   Code,
@@ -58,14 +62,15 @@ export interface MarkdownPalette {
 export interface MarkdownRenderOptions {
   palette?: Partial<MarkdownPalette>
   codeBlockWidth?: number
+  theme?: ChatTheme
 }
 
 const defaultPalette: MarkdownPalette = {
-  inlineCodeFg: '#86efac',
-  codeBackground: '#0d1117',
-  codeHeaderFg: '#666',
+  inlineCodeFg: 'green',
+  codeBackground: 'black',
+  codeHeaderFg: 'gray',
   headingFg: {
-    1: 'magenta',
+    1: 'green',
     2: 'green',
     3: 'green',
     4: 'green',
@@ -75,18 +80,19 @@ const defaultPalette: MarkdownPalette = {
   listBulletFg: 'white',
   blockquoteBorderFg: 'gray',
   blockquoteTextFg: 'gray',
-  dividerFg: '#666',
-  codeTextFg: 'brightWhite',
+  dividerFg: 'gray',
+  codeTextFg: 'white',
   codeMonochrome: false,
-  linkFg: '#3B82F6',
+  linkFg: 'blue',
 }
 
 const resolvePalette = (
+  base: MarkdownPalette = defaultPalette,
   overrides?: Partial<MarkdownPalette>,
 ): MarkdownPalette => {
   const palette: MarkdownPalette = {
-    ...defaultPalette,
-    headingFg: { ...defaultPalette.headingFg },
+    ...base,
+    headingFg: { ...base.headingFg },
   }
 
   if (!overrides) {
@@ -119,16 +125,19 @@ interface RenderState {
   palette: MarkdownPalette
   codeBlockWidth: number
   nextKey: () => string
+  syntaxStyle?: SyntaxStyle
 }
 
 const createRenderState = (
   palette: MarkdownPalette,
   codeBlockWidth: number,
+  syntaxStyle?: SyntaxStyle,
 ): RenderState => {
   let counter = 0
   return {
     palette,
     codeBlockWidth,
+    syntaxStyle,
     nextKey: () => {
       counter += 1
       return `markdown-${counter}`
@@ -444,17 +453,17 @@ const nodeToPlainText = (node: MarkdownNode): string => {
 
     case 'delete': {
       // Strikethrough - just return the text content
-      const deleteNode = node as any
+      const deleteNode = node as { children?: MarkdownNode[] }
       if (Array.isArray(deleteNode.children)) {
-        return getChildrenText(deleteNode.children as MarkdownNode[])
+        return getChildrenText(deleteNode.children)
       }
       return ''
     }
 
     default: {
-      const anyNode = node as any
-      if (Array.isArray(anyNode.children)) {
-        return getChildrenText(anyNode.children as MarkdownNode[])
+      const nodeWithChildren = node as { children?: MarkdownNode[] }
+      if (Array.isArray(nodeWithChildren.children)) {
+        return getChildrenText(nodeWithChildren.children)
       }
       return ''
     }
@@ -476,8 +485,7 @@ const renderNodes = (
 }
 
 const renderCodeBlock = (code: Code, state: RenderState): ReactNode[] => {
-  const { palette, nextKey } = state
-  const lines = code.value.split('\n')
+  const { palette, nextKey, syntaxStyle } = state
   const nodes: ReactNode[] = []
 
   if (code.lang) {
@@ -489,21 +497,35 @@ const renderCodeBlock = (code: Code, state: RenderState): ReactNode[] => {
     )
   }
 
-  lines.forEach((line, index) => {
-    const displayLine = line === '' ? ' ' : line
+  // FID-033e: render code blocks with OpenTUI SyntaxStyle when a theme is
+  // available; fall back to the previous plain-text span rendering otherwise.
+  if (syntaxStyle) {
     nodes.push(
-      <span
+      <code
         key={nextKey()}
-        fg={palette.codeTextFg}
-        bg={palette.codeMonochrome ? undefined : palette.codeBackground}
-      >
-        {displayLine}
-      </span>,
+        content={code.value}
+        filetype={code.lang ?? 'text'}
+        syntaxStyle={syntaxStyle}
+      />,
     )
-    if (index < lines.length - 1) {
-      nodes.push('\n')
-    }
-  })
+  } else {
+    const lines = code.value.split('\n')
+    lines.forEach((line, index) => {
+      const displayLine = line === '' ? ' ' : line
+      nodes.push(
+        <span
+          key={nextKey()}
+          fg={palette.codeTextFg}
+          bg={palette.codeMonochrome ? undefined : palette.codeBackground}
+        >
+          {displayLine}
+        </span>,
+      )
+      if (index < lines.length - 1) {
+        nodes.push('\n')
+      }
+    })
+  }
 
   nodes.push('\n\n')
   return nodes
@@ -960,9 +982,9 @@ const renderNode = (
 
     case 'delete': {
       // Strikethrough from GFM
-      const anyNode = node as any
+      const deleteNode = node as { children?: MarkdownNode[] }
       const children = renderNodes(
-        anyNode.children as MarkdownNode[],
+        (deleteNode.children ?? []) as MarkdownNode[],
         state,
         node.type,
       )
@@ -979,9 +1001,9 @@ const renderNode = (
         return [fallbackText]
       }
 
-      const anyNode = node as any
-      if (Array.isArray(anyNode.children)) {
-        return renderNodes(anyNode.children as MarkdownNode[], state, node.type)
+      const nodeWithChildren = node as { children?: MarkdownNode[] }
+      if (Array.isArray(nodeWithChildren.children)) {
+        return renderNodes(nodeWithChildren.children, state, node.type)
       }
 
       return []
@@ -1011,9 +1033,13 @@ export function renderMarkdown(
   options: MarkdownRenderOptions = {},
 ): ReactNode {
   try {
-    const palette = resolvePalette(options.palette)
+    const basePalette = options.theme
+      ? createMarkdownPalette(options.theme)
+      : defaultPalette
+    const palette = resolvePalette(basePalette, options.palette)
     const codeBlockWidth = options.codeBlockWidth ?? 80
-    const state = createRenderState(palette, codeBlockWidth)
+    const syntaxStyle = options.theme ? createSyntaxStyle(options.theme) : undefined
+    const state = createRenderState(palette, codeBlockWidth, syntaxStyle)
     const ast = processor.parse(markdown) as Root
     applyInlineFallbackFormatting(ast)
     const nodes = renderNode(ast, state, ast.type, undefined)

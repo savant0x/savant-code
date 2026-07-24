@@ -1,5 +1,3 @@
-import { ECHO_PROTOCOL_INSTRUCTIONS } from '@savant-code/common/constants/agents'
-
 import { publisher } from '../constants'
 
 import type { SecretAgentDefinition } from '../types/secret-agent-definition'
@@ -123,7 +121,6 @@ Return a structured list of issues, each with:
 - Evidence (grep output, code snippet)
 - Severity (critical/high/medium/low)
 
-${ECHO_PROTOCOL_INSTRUCTIONS}
 `,
 }
 

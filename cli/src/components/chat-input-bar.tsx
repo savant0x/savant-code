@@ -6,6 +6,7 @@ import React from 'react'
 
 import { AgentModeToggle } from './agent-mode-toggle'
 import { MultipleChoiceForm } from './ask-user'
+import { CommandPalette } from './command-palette'
 import { FeedbackContainer } from './feedback-container'
 import { InputModeBanner } from './input-mode-banner'
 import { MultilineInput, type MultilineInputHandle } from './multiline-input'
@@ -132,7 +133,7 @@ export const ChatInputBar = ({
   // Increase menu size on larger screen heights
   const normalModeMaxVisible = terminalHeight > 35 ? 15 : 10
   const { submitAnswers, skip } = useAskUserBridge()
-  const [askUserTitle] = React.useState(' Some questions for you ')
+  const [askUserTitle] = React.useState('Some questions for you')
 
   // Shared key intercept handler for suggestion menu navigation and history navigation
   const handleKeyIntercept = useEvent(
@@ -173,6 +174,35 @@ export const ChatInputBar = ({
         width={separatorWidth}
       />
     )
+  }
+
+  // FID-2026-0720-033d Phase D Step 5: the CommandPalette is rendered INLINE
+  // above the input box (in both compact and normal paths below) when slash
+  // suggestions are active — NOT as an early-return that hides the input.
+  // This preserves the UX where the user keeps typing to refine the filter.
+  // The palette consumes the same SuggestionItem[] from use-suggestion-engine
+  // (Law 13 — no duplicate filtering logic). Law 4: CommandPalette is mounted
+  // via this consumer.
+  //
+  // `handleSlashSelect` wires the palette's onSelect to the existing
+  // onSlashItemClick handler (which executes the command). `handleSlashClose`
+  // clears the input so the suggestion engine deactivates — Escape actually
+  // closes the palette (Law 14 — no modal trap).
+  const handleSlashSelect = (item: SuggestionItem) => {
+    const index = slashSuggestionItems.findIndex((s) => s.id === item.id)
+    if (index >= 0 && onSlashItemClick) {
+      onSlashItemClick(index)
+    }
+  }
+  const handleSlashClose = () => {
+    // Clear the slash query so `hasSlashSuggestions` becomes false and the
+    // palette unmounts. The suggestion engine deactivates when input no
+    // longer starts with '/'.
+    setInputValue({
+      text: '',
+      cursorPosition: 0,
+      lastEditDueToNav: false,
+    })
   }
 
   // Out of credits mode: replace entire input with out-of-credits banner
@@ -278,7 +308,6 @@ export const ChatInputBar = ({
 
   const effectivePlaceholder =
     inputMode === 'default' ? inputPlaceholder : modeConfig.placeholder
-  const borderColor = theme[modeConfig.color]
 
   if (askUserState) {
     return (
@@ -289,7 +318,9 @@ export const ChatInputBar = ({
           width: '100%',
           borderStyle: 'single',
           borderColor: theme.primary,
-          }} customBorderChars={BORDER_CHARS}>
+        }}
+        customBorderChars={BORDER_CHARS}
+      >
         <MultipleChoiceForm
           questions={askUserState.questions}
           onSubmit={handleFormSubmit}
@@ -304,13 +335,17 @@ export const ChatInputBar = ({
     const compactMaxHeight = Math.floor(terminalHeight / 2)
     return (
       <>
+        {/* FID-033d Phase D: slash commands now render as the CommandPalette
+            overlay (native <select>) inline above the input. Mention (@)
+            suggestions still use the inline SuggestionMenu. */}
         {hasSlashSuggestions ? (
-          <SuggestionMenu
+          <CommandPalette
             items={slashSuggestionItems}
-            selectedIndex={slashSelectedIndex}
-            maxVisible={5}
             prefix="/"
-            onItemClick={onSlashItemClick}
+            selectedIndex={slashSelectedIndex}
+            title="Slash Commands"
+            onSelect={handleSlashSelect}
+            onClose={handleSlashClose}
           />
         ) : null}
         {hasMentionSuggestions ? (
@@ -330,27 +365,27 @@ export const ChatInputBar = ({
             width: '100%',
             paddingLeft: 1,
             paddingRight: 1,
+            gap: 1,
             backgroundColor: theme.surface,
           }}
         >
           {modeConfig.label && (
-            <box style={{ flexShrink: 0, paddingRight: 1 }}>
-              <text>
-                <span
-                  bg={theme.info}
-                  fg={theme.background}
-                >{` ${modeConfig.label} `}</span>
+            <box
+              style={{
+                flexShrink: 0,
+                paddingLeft: 1,
+                paddingRight: 1,
+                backgroundColor: theme.info,
+              }}
+            >
+              <text fg={theme.background} selectable={false}>
+                {modeConfig.label}
               </text>
             </box>
           )}
           {modeConfig.icon && (
-            <box
-              style={{
-                flexShrink: 0,
-                paddingRight: 1,
-              }}
-            >
-              <text style={{ fg: theme[modeConfig.color] }}>
+            <box style={{ flexShrink: 0 }}>
+              <text fg={theme[modeConfig.color]} selectable={false}>
                 {modeConfig.icon}
               </text>
             </box>
@@ -360,7 +395,7 @@ export const ChatInputBar = ({
               that it's a focusable input — costs no extra height. */}
           {!modeConfig.label && !modeConfig.icon && (
             <box style={{ flexShrink: 0 }}>
-              <text style={{ fg: theme.primary }}>❯</text>
+              <text fg={theme.success} selectable={false}>❯</text>
             </box>
           )}
           <MultilineInput
@@ -398,13 +433,17 @@ export const ChatInputBar = ({
           gap: hasAnyPreview ? 1 : 0,
         }}
       >
+        {/* FID-033d Phase D: slash commands now render as the CommandPalette
+            overlay (native <select>) inline above the input. Mention (@)
+            suggestions still use the inline SuggestionMenu. */}
         {hasSlashSuggestions ? (
-          <SuggestionMenu
+          <CommandPalette
             items={slashSuggestionItems}
-            selectedIndex={slashSelectedIndex}
-            maxVisible={normalModeMaxVisible}
             prefix="/"
-            onItemClick={onSlashItemClick}
+            selectedIndex={slashSelectedIndex}
+            title="Slash Commands"
+            onSelect={handleSlashSelect}
+            onClose={handleSlashClose}
           />
         ) : null}
         {hasMentionSuggestions ? (
@@ -431,27 +470,27 @@ export const ChatInputBar = ({
             style={{
               flexDirection: 'row',
               alignItems: shouldCenterInputVertically ? 'center' : 'flex-start',
+              gap: 1,
               width: '100%',
             }}
           >
             {modeConfig.label && (
-              <box style={{ flexShrink: 0, paddingRight: 1 }}>
-                <text>
-                  <span
-                    bg={theme.info}
-                    fg={theme.background}
-                  >{` ${modeConfig.label} `}</span>
+              <box
+                style={{
+                  flexShrink: 0,
+                  paddingLeft: 1,
+                  paddingRight: 1,
+                  backgroundColor: theme.info,
+                }}
+              >
+                <text fg={theme.background} selectable={false}>
+                  {modeConfig.label}
                 </text>
               </box>
             )}
             {modeConfig.icon && (
-              <box
-                style={{
-                  flexShrink: 0,
-                  paddingRight: 1,
-                }}
-              >
-                <text style={{ fg: theme[modeConfig.color] }}>
+              <box style={{ flexShrink: 0 }}>
+                <text fg={theme[modeConfig.color]} selectable={false}>
                   {modeConfig.icon}
                 </text>
               </box>

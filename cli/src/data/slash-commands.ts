@@ -37,7 +37,6 @@ const SAVANT_FREE_REMOVED_COMMAND_IDS = new Set([
   'ads:disable',
   'usage',
   'subscribe',
-  'agent:gpt-5',
   'image',
   'publish',
   'init',
@@ -90,16 +89,7 @@ const ALL_SLASH_COMMANDS: SlashCommand[] = [
     description: 'Create a starter knowledge.md file',
     implicitCommand: true,
   },
-  // {
-  //   id: 'undo',
-  //   label: 'undo',
-  //   description: 'Undo the last change made by the assistant',
-  // },
-  // {
-  //   id: 'redo',
-  //   label: 'redo',
-  //   description: 'Redo the most recent undone change',
-  // },
+
   {
     id: 'usage',
     label: 'usage',
@@ -146,18 +136,8 @@ const ALL_SLASH_COMMANDS: SlashCommand[] = [
     description: 'Copy the full conversation (messages + tool results) to the clipboard',
     aliases: ['copy-chat', 'export'],
   },
-  {
-    id: 'agent:gpt-5',
-    label: 'agent:gpt-5',
-    description: 'Spawn the GPT-5 agent to help solve complex problems',
-    insertText: '@GPT-5 Agent ',
-  },
-  // {
-  //   id: 'agent:opus',
-  //   label: 'agent:opus',
-  //   description: 'Spawn the Opus agent to help solve any problem',
-  //   insertText: '@Opus Agent ',
-  // },
+
+
   {
     id: 'feedback',
     label: 'feedback',
@@ -176,11 +156,7 @@ const ALL_SLASH_COMMANDS: SlashCommand[] = [
     aliases: ['img', 'attach'],
   },
   ...MODE_COMMANDS,
-  // {
-  //   id: 'publish',
-  //   label: 'publish',
-  //   description: 'Publish agents to the agent store',
-  // },
+
   {
     id: 'theme:toggle',
     label: 'theme:toggle',
@@ -198,7 +174,7 @@ const ALL_SLASH_COMMANDS: SlashCommand[] = [
         {
           id: 'model',
           label: 'model',
-          description: 'Switch the active model (e.g. /model openai/gpt-4o)',
+          description: 'Switch the active model (e.g. /model anthropic/claude-opus-4.6)',
           aliases: ['switch-model'],
         },
       ]),
@@ -215,6 +191,12 @@ const ALL_SLASH_COMMANDS: SlashCommand[] = [
     description: 'Quit the CLI',
     aliases: ['quit', 'q'],
     implicitCommand: true,
+  },
+  {
+    id: 'verify',
+    label: 'verify',
+    description: 'Run typechecks across all workspaces (or one: sdk, common, agent-runtime, cli)',
+    aliases: ['typecheck', 'check'],
   },
 ]
 

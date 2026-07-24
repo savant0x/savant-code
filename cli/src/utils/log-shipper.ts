@@ -1,6 +1,6 @@
 import { IS_DEV, IS_TEST, IS_CI } from '@savant-code/common/env'
 
-import { getCliEnv } from './env'
+import { getCliEnv, isDirectProviderMode } from './env'
 import { getApiClient } from './savant-code-api'
 
 import type { LogRecordInput } from '@savant-code/common/schemas/logs'
@@ -25,6 +25,7 @@ let flushing = false
 let shutdownRegistered = false
 
 function enabled(): boolean {
+  if (isDirectProviderMode()) return false
   const flag = getCliEnv().SAVANT_CODE_SHIP_LOGS
   if (flag === 'true') return true
   if (flag === 'false') return false

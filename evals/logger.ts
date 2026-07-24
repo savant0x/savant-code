@@ -10,19 +10,20 @@ let pinoLogger: any = undefined
 const loggingLevels = ['info', 'debug', 'warn', 'error', 'fatal'] as const
 type LogLevel = (typeof loggingLevels)[number]
 
+// pino v9 removed the static destination/transport methods from the type
+// definitions but they still exist at runtime. Cast to access them.
+const pinoAny = pino as any
+
 function initPinoLoggerWithPath(path: string): void {
   if (path === logPath) return // nothing to do
 
   logPath = path
   mkdirSync(dirname(path), { recursive: true })
 
-  // ──────────────────────────────────────────────────────────────
-  //  pino.destination(..) → SonicBoom stream, no worker thread
-  // ──────────────────────────────────────────────────────────────
-  const fileStream = pino.destination({
-    dest: path, // absolute or relative file path
-    mkdir: true, // create parent dirs if they don’t exist
-    sync: false, // set true if you *must* block on every write
+  const fileStream = pinoAny.destination({
+    dest: path,
+    mkdir: true,
+    sync: false,
   })
 
   pinoLogger = pino(
@@ -33,7 +34,7 @@ function initPinoLoggerWithPath(path: string): void {
       },
       timestamp: () => `,"timestamp":"${new Date().toISOString()}"`,
     },
-    fileStream, // <-- no worker thread involved
+    fileStream,
   )
 }
 
@@ -57,7 +58,7 @@ function log(level: LogLevel, data: any, msg?: string, ...args: any[]): void {
  *
  * e.g. logger.info({eventId: AnalyticsEvent.SOME_EVENT, field: value}, 'some message')
  */
-export const logger: Record<LogLevel, pino.LogFn> = Object.fromEntries(
+export const logger: Record<LogLevel, (data: any, msg?: string, ...args: any[]) => void> = Object.fromEntries(
   loggingLevels.map((level) => {
     return [
       level,
@@ -65,4 +66,4 @@ export const logger: Record<LogLevel, pino.LogFn> = Object.fromEntries(
         log(level, data, msg, ...args),
     ]
   }),
-) as Record<LogLevel, pino.LogFn>
+) as Record<LogLevel, (data: any, msg?: string, ...args: any[]) => void>

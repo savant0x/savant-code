@@ -1,8 +1,9 @@
 import { TextAttributes } from '@opentui/core'
 import React from 'react'
 
-
 import { useTheme } from '../../../hooks/use-theme'
+import { glyph, type GlyphName } from '../../../utils/glyphs'
+import { resolveThemeColor, type ThemeColorKey } from '../icon-theme-keys'
 
 export interface AlertProps {
   type?: 'info' | 'success' | 'warning' | 'error'
@@ -10,23 +11,20 @@ export interface AlertProps {
   message: string
 }
 
-const ICONS: Record<string, string> = {
-  info: 'ℹ',
-  success: '✓',
-  warning: '⚠',
-  error: '✗',
-}
-
-const TYPE_COLORS: Record<string, string> = {
-  info: '#3b82f6',
-  success: '#22c55e',
-  warning: '#f59e0b',
-  error: '#ef4444',
+// FID-033b Phase B: alert icons + colors sourced from the centralized glyph
+// map + ChatTheme tokens (no hardcoded hex, Law 13).
+const ALERT_MAP: Record<NonNullable<AlertProps['type']>, { glyph: GlyphName; colorKey: ThemeColorKey }> = {
+  info: { glyph: 'alertInfo', colorKey: 'info' },
+  success: { glyph: 'alertSuccess', colorKey: 'success' },
+  warning: { glyph: 'alertWarning', colorKey: 'warning' },
+  error: { glyph: 'alertError', colorKey: 'error' },
 }
 
 export function Alert({ type = 'info', title, message }: AlertProps) {
-  const color = TYPE_COLORS[type]
-  const icon = ICONS[type]
+  const theme = useTheme()
+  const mapping = ALERT_MAP[type]
+  const color = resolveThemeColor(theme, mapping.colorKey)
+  const icon = glyph(mapping.glyph)
 
   return (
     <box flexDirection="row" gap={1}>

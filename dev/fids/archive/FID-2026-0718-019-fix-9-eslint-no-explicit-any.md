@@ -1,6 +1,6 @@
 # FID-2026-0718-019 — medium — Fix 9 ESLint `@typescript-eslint/no-explicit-any` Errors (Problems Panel)
 
-**Status:** RED proposing v1. AUDIT pending user approval of 1 inline decision.
+**Status:** closed / archived
 **Severity:** medium (code-quality cleanup; runtime unaffected; IDE-hygiene only)
 **Opened:** 2026-07-19
 

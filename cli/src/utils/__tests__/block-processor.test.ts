@@ -75,7 +75,7 @@ function createImplementorAgent(
 
 function createNonImplementorAgent(
   agentId: string,
-  agentType: string = 'file-picker',
+  agentType: string = 'scout',
 ): AgentContentBlock {
   return {
     type: 'agent',
@@ -416,7 +416,7 @@ describe('processBlocks', () => {
       const { handlers, calls } = createMockHandlers()
       const blocks: ContentBlock[] = [
         createImplementorAgent('impl-1'),
-        createNonImplementorAgent('fp-1', 'file-picker'),
+        createNonImplementorAgent('fp-1', 'scout'),
         createImplementorAgent('impl-2'),
       ]
 
@@ -439,7 +439,7 @@ describe('processBlocks', () => {
     test('groups single non-implementor agent', () => {
       const { handlers, calls } = createMockHandlers()
       const blocks: ContentBlock[] = [
-        createNonImplementorAgent('fp-1', 'file-picker'),
+        createNonImplementorAgent('fp-1', 'scout'),
       ]
 
       const result = processBlocks(blocks, handlers)
@@ -452,7 +452,7 @@ describe('processBlocks', () => {
     test('groups consecutive small (collapsed-by-default) agents together', () => {
       const { handlers, calls } = createMockHandlers()
       const blocks: ContentBlock[] = [
-        createNonImplementorAgent('fp-1', 'file-picker'),
+        createNonImplementorAgent('fp-1', 'scout'),
         createNonImplementorAgent('b-1', 'basher'),
         createNonImplementorAgent('cs-1', 'code-searcher'),
       ]
@@ -464,7 +464,7 @@ describe('processBlocks', () => {
       expect(calls[0].handler).toBe('onAgentGroup')
       const agentBlocks = calls[0].args[0] as AgentContentBlock[]
       expect(agentBlocks).toHaveLength(3)
-      expect(agentBlocks[0].agentType).toBe('file-picker')
+      expect(agentBlocks[0].agentType).toBe('scout')
       expect(agentBlocks[1].agentType).toBe('basher')
       expect(agentBlocks[2].agentType).toBe('code-searcher')
     })
@@ -472,7 +472,7 @@ describe('processBlocks', () => {
     test('groups consecutive non-implementor agents including mixed sizes', () => {
       const { handlers, calls } = createMockHandlers()
       const blocks: ContentBlock[] = [
-        createNonImplementorAgent('fp-1', 'file-picker'),
+        createNonImplementorAgent('fp-1', 'scout'),
         createNonImplementorAgent('cr-1', 'code-reviewer'),
         createNonImplementorAgent('cs-1', 'code-searcher'),
       ]
@@ -485,7 +485,7 @@ describe('processBlocks', () => {
       expect(calls[0].handler).toBe('onAgentGroup')
       const agentBlocks = calls[0].args[0] as AgentContentBlock[]
       expect(agentBlocks).toHaveLength(3)
-      expect(agentBlocks[0].agentType).toBe('file-picker')
+      expect(agentBlocks[0].agentType).toBe('scout')
       expect(agentBlocks[1].agentType).toBe('code-reviewer')
       expect(agentBlocks[2].agentType).toBe('code-searcher')
     })
@@ -493,7 +493,7 @@ describe('processBlocks', () => {
     test('separates non-implementor groups from other block types', () => {
       const { handlers, calls } = createMockHandlers()
       const blocks: ContentBlock[] = [
-        createNonImplementorAgent('fp-1', 'file-picker'),
+        createNonImplementorAgent('fp-1', 'scout'),
         createTextBlock('commentary'),
         createNonImplementorAgent('cmd-1', 'commander'),
       ]
@@ -624,7 +624,7 @@ describe('processBlocks', () => {
         createReasoningBlock('thinking about the problem'),
         createReasoningBlock('considering options'),
         createTextBlock('I will search for files first'),
-        createNonImplementorAgent('fp-1', 'file-picker'),
+        createNonImplementorAgent('fp-1', 'scout'),
         createNonImplementorAgent('cs-1', 'code-searcher'),
         createTextBlock('Now I will make changes'),
         createImplementorAgent('impl-1', 'editor-implementor'),
@@ -650,7 +650,7 @@ describe('processBlocks', () => {
       const blocks: ContentBlock[] = [
         createToolBlock('read_files', 'tool-1'),
         createToolBlock('code_search', 'tool-2'),
-        createNonImplementorAgent('fp-1', 'file-picker'),
+        createNonImplementorAgent('fp-1', 'scout'),
         createToolBlock('str_replace', 'tool-3'),
         createImplementorAgent('impl-1'),
       ]
@@ -731,7 +731,7 @@ describe('processBlocks', () => {
       const { handlers, calls } = createMockHandlers()
       const blocks: ContentBlock[] = [
         createTextBlock('text at 0'),
-        createNonImplementorAgent('fp-1', 'file-picker'),   // index 1
+        createNonImplementorAgent('fp-1', 'scout'),   // index 1
         createNonImplementorAgent('b-1', 'basher'),          // index 2
         createNonImplementorAgent('cr-1', 'code-reviewer'),  // index 3
         createNonImplementorAgent('cs-1', 'code-searcher'),  // index 4
@@ -773,7 +773,7 @@ describe('splitAgentsBySize', () => {
 
   test('groups all small agents together', () => {
     const agents = [
-      createNonImplementorAgent('fp-1', 'file-picker'),
+      createNonImplementorAgent('fp-1', 'scout'),
       createNonImplementorAgent('b-1', 'basher'),
       createNonImplementorAgent('cs-1', 'code-searcher'),
     ]
@@ -792,7 +792,7 @@ describe('splitAgentsBySize', () => {
 
   test('splits small and large agents correctly', () => {
     const agents = [
-      createNonImplementorAgent('fp-1', 'file-picker'),
+      createNonImplementorAgent('fp-1', 'scout'),
       createNonImplementorAgent('cr-1', 'code-reviewer'),
       createNonImplementorAgent('b-1', 'basher'),
       createNonImplementorAgent('b-2', 'basher'),

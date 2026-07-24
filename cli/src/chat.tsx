@@ -29,7 +29,7 @@ import {
   DEFAULT_SUGGESTED_PROMPTS,
   type SuggestedPromptSelection,
 } from './components/suggested-prompts'
-import { TerminalLink } from './components/terminal-link'
+
 import { TopBanner } from './components/top-banner'
 import { getSlashCommandsWithSkills } from './data/slash-commands'
 import { useAgentValidation } from './hooks/use-agent-validation'
@@ -60,6 +60,7 @@ import { useChatHistoryStore } from './state/chat-history-store'
 import { useChatStore } from './state/chat-store'
 import { useFeedbackStore } from './state/feedback-store'
 import { useMessageBlockStore } from './state/message-block-store'
+import { useGatewayCatalogStore } from './state/gateway-catalog-store'
 import { useModelPickerStore } from './state/model-picker-store'
 import { usePublishStore } from './state/publish-store'
 import { useReviewStore } from './state/review-store'
@@ -77,9 +78,7 @@ import {
 import { loadLocalAgents } from './utils/local-agent-registry'
 import { logger } from './utils/logger'
 import { getSystemMessage } from './utils/message-history'
-import { openFileAtPath } from './utils/open-file'
 import { safeOpen } from './utils/open-url'
-import { formatCwd } from './utils/path-helpers'
 import {
   addClipboardPlaceholder,
   addPendingFileFromPath,
@@ -93,6 +92,7 @@ import {
   saveSavantCodeModelPreference,
   saveSavantCodeModelProviderPreference,
 } from './utils/settings'
+import { resolveContextWindowForModel } from './utils/openrouter-models'
 import { getLoadedSkills } from './utils/skill-registry'
 import {
   getStatusIndicatorState,
@@ -101,6 +101,7 @@ import {
 import { createPasteHandler } from './utils/strings'
 import { setTerminalTitle } from './utils/terminal-title'
 import { computeInputLayoutMetrics } from './utils/text-layout'
+import { formatCwd } from './utils/path-helpers'
 
 import type { CommandResult } from './commands/command-registry'
 import type { MultilineInputHandle } from './components/multiline-input'
@@ -206,6 +207,7 @@ export const Chat = ({
   const filesChanged = useChatStore((s) => s.filesChanged)
   const agentStack = useChatStore((s) => s.agentStack)
   const sessionCost = useChatStore((s) => s.sessionCost)
+  const updateContextTokensMax = useChatStore((s) => s.updateContextTokensMax)
   const sidebarModel = useSavantFreeModelStore((s) => s.selectedModel)
 
   // Interactive /model picker overlay state.
@@ -256,6 +258,17 @@ export const Chat = ({
       setInputFocused(false)
     }
   }, [modelPickerOpen, setInputFocused])
+
+  // FID-2026-0723-062: keep the sidebar context-token cap in sync with the
+  // active model. This fires on initial render (restored preference), when the
+  // model changes, and when the gateway catalog finishes loading asynchronously.
+  const gatewayCatalogLoadedAt = useGatewayCatalogStore((s) => s.lastLoadedAt)
+  useEffect(() => {
+    if (sidebarModel) {
+      const maxTokens = resolveContextWindowForModel(sidebarModel)
+      updateContextTokensMax(maxTokens)
+    }
+  }, [sidebarModel, updateContextTokensMax, gatewayCatalogLoadedAt])
 
   // Commit a model pick: persist the override, confirm in-chat, and close.
   const handleModelPickerSelect = useCallback(
@@ -1099,6 +1112,7 @@ export const Chat = ({
       totalMentionMatches: agentMatches.length + fileMatches.length,
       disableSlashSuggestions:
         getInputModeConfig(inputMode).disableSlashSuggestions,
+      modelPickerOpen,
       historyNavUpEnabled,
       historyNavDownEnabled,
       nextCtrlCWillExit,
@@ -1387,7 +1401,10 @@ export const Chat = ({
   useChatKeyboard({
     state: chatKeyboardState,
     handlers: chatKeyboardHandlers,
-    disabled: askUserState !== null || reviewMode,
+    // Disable the global keyboard dispatcher while the model picker overlay is
+    // open so its own useKeyboard handler has exclusive control of Up/Down,
+    // Enter, Escape, and typing the filter query.
+    disabled: askUserState !== null || reviewMode || modelPickerOpen,
   })
 
   // Sync message block context to zustand store for child components
@@ -1583,9 +1600,23 @@ export const Chat = ({
     }
   }, [])
 
+  // FID-2026-0722-045: Hide the right sidebar on narrow terminals so the
+  // chat area keeps enough width to remain usable. The sidebar is 40 cols
+  // and supplemental; below this threshold the left column needs the space.
+  const SIDEBAR_MIN_TERMINAL_WIDTH = 100
+
+  const projectRootDisplay = formatCwd(getProjectRoot())
+  const showSidebar = terminalWidth >= SIDEBAR_MIN_TERMINAL_WIDTH
+  const directoryMaxWidth = showSidebar ? terminalWidth - 42 : terminalWidth - 2
+  const directoryDisplay =
+    projectRootDisplay.length > directoryMaxWidth && directoryMaxWidth > 10
+      ? `…${projectRootDisplay.slice(-directoryMaxWidth + 1)}`
+      : projectRootDisplay
+
   return (
     <box
       onMouseMove={handleMouseActivity}
+      focusable={false}
       style={{
         flexDirection: 'row',  // Horizontal split: chat + sidebar
         gap: 0,
@@ -1594,6 +1625,7 @@ export const Chat = ({
     >
       {/* Left column: chat content + bottom section */}
       <box
+        focusable={false}
         style={{
           flexDirection: 'column',
           flexGrow: 1,
@@ -1606,6 +1638,7 @@ export const Chat = ({
         <box
           ref={headerRef as React.Ref<BoxRenderable>}
           style={{ flexDirection: 'column' }}
+          focusable={false}
         >
           <ChatHeader
             projectRoot={getProjectRoot()}
@@ -1681,6 +1714,7 @@ export const Chat = ({
       </scrollbox>
 
       <box
+        focusable={false}
         style={{
           flexShrink: 0,
           backgroundColor: 'transparent',
@@ -1747,16 +1781,15 @@ export const Chat = ({
                 onClose={closeModelPicker}
               />
             )}
-            <text style={{ fg: theme.muted, paddingLeft: 1, marginBottom: 0 }}>
-              Directory{' '}
-              <TerminalLink
-                text={formatCwd(getProjectRoot())}
-                color={theme.foreground}
-                inline={true}
-                underlineOnHover={true}
-                onActivate={() => openFileAtPath(getProjectRoot())}
-              />
-            </text>
+            <box
+              flexDirection="row"
+              paddingLeft={1}
+              focusable={false}
+            >
+              <text fg={theme.muted} wrapMode="none" selectable={false}>
+                {`cwd: ${directoryDisplay}`}
+              </text>
+            </box>
             <ChatInputBar
               inputValue={inputValue}
               cursorPosition={cursorPosition}
@@ -1822,21 +1855,23 @@ export const Chat = ({
       </box>
       </box>
 
-      {/* Right sidebar — session info, tools, history */}
-      <RightSidebar
-        tokensUsed={contextTokensUsed}
-        tokensMax={contextTokensMax}
-        contextPercent={contextTokensMax > 0 ? (contextTokensUsed / contextTokensMax) * 100 : 0}
-        cost={sessionCost}
-        model={sidebarModel || 'unknown'}
-        mode={agentMode}
-        agent={agentId ?? 'Savant'}
-        toolsUsed={toolsUsed}
-        toolsAvailable={['read_file', 'search_files', 'apply_patch', 'bash']}
-        filesChanged={filesChanged}
-        agentStack={agentStack.length > 0 ? agentStack : [{ id: agentId ?? 'Savant', isActive: true }]}
-        toolHistory={toolHistory}
-      />
+      {/* Right sidebar — session info, tools, history.
+          Hidden on narrow terminals so the chat column remains usable. */}
+      {showSidebar && (
+        <RightSidebar
+          tokensUsed={contextTokensUsed}
+          tokensMax={contextTokensMax}
+          cost={sessionCost}
+          model={sidebarModel || 'unknown'}
+          mode={agentMode}
+          agent={agentId ?? 'Savant'}
+          toolsUsed={toolsUsed}
+          toolsAvailable={['read_file', 'search_files', 'apply_patch', 'bash']}
+          filesChanged={filesChanged}
+          agentStack={agentStack.length > 0 ? agentStack : [{ id: agentId ?? 'Savant', isActive: true }]}
+          toolHistory={toolHistory}
+        />
+      )}
     </box>
   )
 }

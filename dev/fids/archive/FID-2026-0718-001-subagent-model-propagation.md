@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0718-001-subagent-model-propagation.md`
 **ID:** FID-2026-0718-001
 **Severity:** high
-**Status:** created
+**Status:** closed / archived
 **Created:** 2026-07-18 00:00
 **Author:** Savant Orchestrator
 

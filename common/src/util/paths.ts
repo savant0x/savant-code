@@ -145,7 +145,7 @@ export function resolveAndContain(
 
   // Check exempt prefixes. After an exempt match we STILL run containment
   // (Q8) so `dev/fids/x/../etc/passwd` is rejected.
-  const matchedExempt =
+  let matchedExempt =
     EXEMPT_PATHS.find((prefix) => normalized.startsWith(prefix)) ?? null
 
   // Stage-2: collapse `..` and `.` segments via path.resolve.
@@ -175,6 +175,18 @@ export function resolveAndContain(
   const realpathForCompare = realpath.replace(/\\/g, '/')
   if (!realpathForCompare.startsWith(projectRootForCompare)) {
     return { kind: 'reject', reason: 'symlink escapes project root' }
+  }
+
+  // Exempt prefixes must also be recognized when the caller supplies an
+  // absolute path (e.g. `C:\\...\\dev\\scratchpad\\...`) or a path
+  // containing leading segments. Compute the resolved path relative to the
+  // project root and check it against the same safe prefixes.
+  const resolvedRelative = path
+    .relative(projectRootForCompare, realpathForCompare)
+    .replace(/\\/g, '/')
+  if (!matchedExempt) {
+    matchedExempt =
+      EXEMPT_PATHS.find((prefix) => resolvedRelative.startsWith(prefix)) ?? null
   }
 
   // Return raw realpath (platform-native) for backward compat with

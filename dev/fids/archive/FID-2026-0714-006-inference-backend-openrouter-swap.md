@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0714-006-inference-backend-openrouter-swap.md`
 **ID:** FID-2026-0714-006
 **Severity:** medium
-**Status:** created
+**Status:** closed / archived
 **Created:** 2026-07-14 03:57
 **Author:** ECHO Agent (Kilo)
 

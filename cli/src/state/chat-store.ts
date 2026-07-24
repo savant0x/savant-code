@@ -64,6 +64,7 @@ export type FilesChanged = {
 
 export type AgentStackEntry = {
   id: string
+  displayName?: string
   isActive: boolean
 }
 
@@ -627,7 +628,10 @@ export const useChatStore = create<ChatStore>()(
     resetSidebarData: () =>
       set((state) => {
         state.contextTokensUsed = 0
-        state.contextTokensMax = 200_000
+        // contextTokensMax is intentionally NOT reset here. It is derived
+        // from the currently selected model and updated reactively by the
+        // chat screen (FID-2026-0723-062). Resetting it to 200k would make
+        // the sidebar lie after a sidebar reset mid-session.
         state.toolsUsed = []
         state.toolHistory = []
         state.filesChanged = { modified: 0, created: 0, added: 0, deleted: 0 }
@@ -733,9 +737,9 @@ export const useChatStore = create<ChatStore>()(
         state.suggestedFollowups = null
         state.clickedFollowupsMap = new Map<string, Set<number>>()
 
-        // Reset sidebar data
+        // Reset sidebar data. contextTokensMax is derived from the active
+        // model, so leave it alone — the chat screen effect keeps it correct.
         state.contextTokensUsed = 0
-        state.contextTokensMax = 200_000
         state.toolsUsed = []
         state.toolHistory = []
         state.filesChanged = { modified: 0, created: 0, added: 0, deleted: 0 }

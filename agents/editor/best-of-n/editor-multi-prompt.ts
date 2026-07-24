@@ -199,10 +199,10 @@ function* handleStepsMultiPrompt({
 
     if (realToolName === 'str_replace' || realToolName === 'write_file') {
       const { toolResult } = yield {
-        toolName: realToolName,
-        input: toolCall.input,
+        toolName: realToolName as 'str_replace' | 'write_file',
+        input: toolCall.input as Record<string, JSONValue>,
         includeToolCall: true,
-      } satisfies ToolCall<'str_replace'> | ToolCall<'write_file'>
+      } as unknown as ToolCall<'str_replace'> | ToolCall<'write_file'>
 
       appliedToolResults.push(toolResult)
     }

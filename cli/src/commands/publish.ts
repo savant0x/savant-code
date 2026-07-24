@@ -2,6 +2,7 @@
 import { WEBSITE_URL } from '@savant-code/sdk'
 
 import { getUserCredentials } from '../utils/auth'
+import { isDirectProviderMode } from '../utils/env'
 import { loadAgentDefinitions, getLoadedAgentsData } from '../utils/local-agent-registry'
 import { getApiClient, setApiClientAuthToken } from '../utils/savant-code-api'
 
@@ -94,6 +95,14 @@ async function publishAgentTemplates(
  * @returns PublishResult with success/error information
  */
 export async function handlePublish(agentIds: string[]): Promise<PublishResult> {
+  if (isDirectProviderMode()) {
+    return {
+      success: false,
+      error: 'Publishing requires the Savant Code backend, which is not available in direct-provider mode.',
+      hint: 'Disable DIRECT_PROVIDER to use the backend, or export agents locally.',
+    }
+  }
+
   const user = getUserCredentials()
 
   if (!user) {

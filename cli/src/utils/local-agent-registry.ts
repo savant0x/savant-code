@@ -26,6 +26,12 @@ import type { MCPConfig } from '@savant-code/common/types/mcp'
 
 const AGENTS_DIR_NAME = '.agents'
 
+/** Known orchestrator agent IDs that receive auto-injected user agents and MCP servers. */
+const ORCHESTRATOR_IDS = new Set([
+  'savant', 'savant-free', 'savant-lite', 'savant-max',
+  'savant-plan', 'savant-analyze',
+])
+
 export interface LocalAgentInfo {
   id: string
   displayName: string
@@ -369,13 +375,12 @@ export const loadAgentDefinitions = (): AgentDefinition[] => {
     }
   }
 
-  // Auto-add user agent IDs to spawnableAgents of base agents
+  // Auto-add user agent IDs to spawnableAgents of orchestrator agents
   // This allows users to spawn their custom agents without needing to
-  // explicitly add them to the base agent's spawnableAgents list
+  // explicitly add them to the orchestrator's spawnableAgents list
   if (userAgentIds.length > 0) {
     for (const def of definitions) {
-      // Consider any agent with an ID starting with 'base' as a base agent
-      if (def.id.startsWith('base') && def.spawnableAgents) {
+      if (ORCHESTRATOR_IDS.has(def.id) && def.spawnableAgents) {
         const existingSpawnable = new Set(def.spawnableAgents)
         for (const userAgentId of userAgentIds) {
           if (!existingSpawnable.has(userAgentId)) {
@@ -386,17 +391,14 @@ export const loadAgentDefinitions = (): AgentDefinition[] => {
     }
   }
 
-  // Merge MCP servers from mcp.json into base agents
+  // Merge MCP servers from mcp.json into orchestrator agents
   // This allows users to configure MCP tools that are available to the main agent
   if (Object.keys(mcpServersCache).length > 0) {
     for (const def of definitions) {
-      // Consider any agent with an ID starting with 'base' as a base agent
-      if (def.id.startsWith('base')) {
-        // Initialize mcpServers if not present
+      if (ORCHESTRATOR_IDS.has(def.id)) {
         if (!def.mcpServers) {
           def.mcpServers = {}
         }
-        // Merge MCP servers (user config can override existing servers)
         def.mcpServers = {
           ...def.mcpServers,
           ...mcpServersCache,

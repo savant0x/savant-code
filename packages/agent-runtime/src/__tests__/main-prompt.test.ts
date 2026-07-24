@@ -53,9 +53,9 @@ describe('mainPrompt', () => {
   beforeEach(() => {
     // Setup common mock agent templates
     mockLocalAgentTemplates = {
-      [AgentTemplateTypes.base]: {
-        id: AgentTemplateTypes.base,
-        displayName: 'Base Agent',
+      'scout': {
+        id: 'scout',
+        displayName: 'Savant the Scout',
         outputMode: 'last_message',
         inputSchema: {},
         spawnerPrompt: '',
@@ -63,15 +63,15 @@ describe('mainPrompt', () => {
         includeMessageHistory: true,
         inheritParentSystemPrompt: false,
         mcpServers: emptyMcpServers,
-        toolNames: ['write_file', 'run_terminal_command', 'end_turn'],
+        toolNames: ['glob', 'list_directory', 'read_files', 'read_subtree'],
         spawnableAgents: [],
         systemPrompt: '',
         instructionsPrompt: '',
         stepPrompt: '',
       } satisfies AgentTemplate,
-      [AgentTemplateTypes.base_max]: {
-        id: AgentTemplateTypes.base_max,
-        displayName: 'Base Max Agent',
+      'thinker': {
+        id: 'thinker',
+        displayName: 'Savant the Thinker',
         outputMode: 'last_message',
         inputSchema: {},
         spawnerPrompt: '',
@@ -79,7 +79,7 @@ describe('mainPrompt', () => {
         includeMessageHistory: true,
         inheritParentSystemPrompt: false,
         mcpServers: emptyMcpServers,
-        toolNames: ['write_file', 'run_terminal_command', 'end_turn'],
+        toolNames: ['sequentialthinking'],
         spawnableAgents: [],
         systemPrompt: '',
         instructionsPrompt: '',
@@ -292,9 +292,9 @@ describe('mainPrompt', () => {
       ...mainPromptBaseParams,
       action,
       localAgentTemplates: {
-        [AgentTemplateTypes.base]: {
-          id: 'base',
-          displayName: 'Base Agent',
+        'scout': {
+          id: 'scout',
+          displayName: 'Savant the Scout',
           outputMode: 'last_message',
           inputSchema: {},
           spawnerPrompt: '',
@@ -302,15 +302,15 @@ describe('mainPrompt', () => {
           includeMessageHistory: true,
           inheritParentSystemPrompt: false,
           mcpServers: emptyMcpServers,
-          toolNames: ['write_file', 'run_terminal_command', 'end_turn'],
+          toolNames: ['glob', 'list_directory', 'read_files', 'read_subtree'],
           spawnableAgents: [],
           systemPrompt: '',
           instructionsPrompt: '',
           stepPrompt: '',
         },
-        [AgentTemplateTypes.base_max]: {
-          id: 'base-max',
-          displayName: 'Base Max Agent',
+        'thinker': {
+          id: 'thinker',
+          displayName: 'Savant the Thinker',
           outputMode: 'last_message',
           inputSchema: {},
           spawnerPrompt: '',
@@ -318,7 +318,7 @@ describe('mainPrompt', () => {
           includeMessageHistory: true,
           inheritParentSystemPrompt: false,
           mcpServers: emptyMcpServers,
-          toolNames: ['write_file', 'run_terminal_command', 'end_turn'],
+          toolNames: ['sequentialthinking'],
           spawnableAgents: [],
           systemPrompt: '',
           instructionsPrompt: '',

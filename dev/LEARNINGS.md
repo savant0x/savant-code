@@ -203,4 +203,32 @@
 - `ReturnType<typeof mock<[], void>>` is a valid type annotation for bun:test mock functions — the `Mock` type is inferred correctly
 - When replacing `as any` on a string literal like `'{"paths": ["test.ts"]' as any`, the replacement must handle both the escape sequences and the CRLF/LF line endings of the target file
 
+## Session 2026-07-23: FSM Optimization + Workflow Feedback Loop
+
+**Key Learnings:**
+
+- Prompt changes take effect immediately on next conversation; runtime changes require build + restart. This creates a two-layer optimization surface: prompt = fast iteration, runtime = guaranteed enforcement.
+- `self_correct → complete` shortcut saves 2 transitions per fix cycle (was: self_correct → green → audit → complete). This is the single biggest time savings from the optimization.
+- Tool-mediated verification (running `tsc` via `run_terminal_command`) is NOT self-reporting — the compiler is the auditor, not the agent. This distinction is critical for usability while preserving Law compliance.
+- `basher` is a spawnable agent (via `spawn_agents`), not a phase-gated tool. Listing it in the phase-gated tools table was misleading.
+- RED phase is for finding EXISTING bugs in code you're about to modify. It is NOT required for creating new files or implementing from a clear spec. Skipping RED does not violate Law 2 (Present Before Act) — presenting a plan ≠ running RED.
+- When updating prompts that promise behavior, always verify the runtime supports it. The prompt is a contract. I wrote "self_correct → complete" in the prompt first, but the runtime rejected it — this was the most critical issue found.
+- Triple backticks inside template literals break the string. FSM diagrams cannot use markdown code fences inside backtick-delimited strings. Use plain text descriptions instead.
+- ~40% of agent time in a typical session was phase transitions and recovery from gating errors. The optimization reduced this significantly.
+
+**Agent Behavior:**
+
+- Self-audit caught 5 issues that would have shipped to users. The AUDIT phase doing its job.
+- Verifier caught 3 additional issues (stale diagram, double-audit bypass, basher table). Independent review is essential even after self-audit.
+- The `str_replace` tool cannot handle CRLF line endings properly on Windows — confirmed again in this session.
+- Basher spawn requires `{ command: "..." }` params format — first attempt failed because I passed `{}`.
+
+**Technical Insights:**
+
+- VALID_TRANSITIONS map in `transition-phase.ts` is the single source of truth for allowed FSM transitions. If it's not in the map, the runtime rejects it regardless of what the prompt says.
+- `iterationCount` is incremented on `self_correct → green` (looping back) and reset on any `→ complete` or `→ idle`. This ensures the circuit breaker (max 10 iterations) still works with the new shortcut.
+- The `scanOpenFids` check only runs when entering `green` phase. `self_correct → complete` doesn't need it because you can only reach self_correct if you were already in a valid FSM flow (which required an open FID).
+
+---
+
 <!-- Add new entries above this line -->

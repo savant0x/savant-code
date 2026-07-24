@@ -1,6 +1,6 @@
 # FID-2026-0718-010 — medium — Stuck-State Cleanup (working-banner, sidebar phase, token heartbeat)
 
-**Status:** v2 — Perfection Loop re-run; 19 missed questions all answered; converged 2026-07-18
+**Status:** closed / archived
 **Opened:** 2026-07-18 | **v2 convergence:** 2026-07-18
 **Severity:** medium (UX, no data loss; visible to every user after first long run)
 **Affects:** `cli/src/components/blocks/agent-branch-item.tsx`, `cli/src/utils/sdk-event-handlers.ts`, `cli/src/state/chat-store.ts`, `cli/src/hooks/use-send-message.ts`, `cli/src/components/status-bar.tsx`, `cli/src/commands/*`

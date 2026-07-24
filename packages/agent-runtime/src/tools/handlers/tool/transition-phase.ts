@@ -16,7 +16,7 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
   red: ['green', 'idle'],       // abort from red
   green: ['audit', 'idle'],      // abort from green
   audit: ['self_correct', 'complete', 'idle'],  // abort from audit
-  self_correct: ['green', 'idle'],  // abort from self_correct
+  self_correct: ['green', 'complete', 'idle'],  // fix & verify inline → complete; or loop back to green
   complete: ['idle'],
 }
 
@@ -97,13 +97,13 @@ export const handleTransitionPhase = (async (params: {
   // Valid transition — apply state changes
   agentState.fsmPhase = phase as FsmPhase
 
-  // Increment iteration count on self_correct→green
+  // Increment iteration count on self_correct→green (looping back)
   if (currentPhase === 'self_correct' && phase === 'green') {
     agentState.iterationCount = iterationCount + 1
   }
 
-  // Reset iteration count on audit→complete
-  if (currentPhase === 'audit' && phase === 'complete') {
+  // Reset iteration count on completion (audit→complete or self_correct→complete)
+  if (phase === 'complete') {
     agentState.iterationCount = 0
   }
 

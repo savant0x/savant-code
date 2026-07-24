@@ -1,6 +1,6 @@
 # FID-2026-0718-019 — medium — Fix 9 Errors in IDE Problems Panel (v4: FINAL — Convergence Re-Pass)
 
-**Status:** v5 CONVERGED (AUDIT verified 2026-07-19). v1 hypothesis wrong (ESLint as-any); v2 corrected to user-pasted IDE errors (3 tsconfig + 6 markdownlint); v3 added Q1-Q14 + Perfection Loop; v4 added Q15-Q19 + 9-item AUDIT gate; **v5 = AUDIT 5.1 caught TS6059 regression with `rootDir:src`, pivot to `rootDir:..` won, all in-scope gates pass**.
+**Status:** closed / archived
 **Severity:** medium (IDE-hygiene + future-proofing; no runtime impact)
 **Opened:** 2026-07-19
 **Last iterated:** 2026-07-19 (v4 Convergence Re-Pass)

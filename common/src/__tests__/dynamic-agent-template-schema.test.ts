@@ -129,8 +129,7 @@ describe('DynamicAgentDefinitionSchema', () => {
         ...validBaseTemplate,
         parentInstructions: {
           researcher: 'Spawn when you need research',
-          [AgentTemplateTypes.file_picker]: 'Spawn when you need files',
-          base: 'Spawn for general tasks',
+          'scout': 'Spawn for file exploration',
         },
       }
 
@@ -302,7 +301,7 @@ describe('DynamicAgentDefinitionSchema', () => {
     it('should reject template with non-empty spawnableAgents but missing spawn_agents tool', () => {
       const template = {
         ...validBaseTemplate,
-        spawnableAgents: ['researcher', 'file-picker'], // Non-empty spawnableAgents
+        spawnableAgents: ['researcher', 'scout'], // Non-empty spawnableAgents
         toolNames: ['end_turn', 'read_files'], // Missing spawn_agents
       }
 
@@ -347,7 +346,7 @@ describe('DynamicAgentDefinitionSchema', () => {
     it('should accept template with non-empty spawnableAgents and spawn_agents tool', () => {
       const template = {
         ...validBaseTemplate,
-        spawnableAgents: ['researcher', 'file-picker'],
+        spawnableAgents: ['researcher', 'scout'],
         toolNames: ['end_turn', 'spawn_agents'],
       }
 

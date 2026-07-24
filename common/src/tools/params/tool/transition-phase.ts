@@ -29,7 +29,7 @@ Valid transitions:
 - red → green
 - green → audit
 - audit → self_correct | complete
-- self_correct → green
+- self_correct → green | complete
 - complete → idle
 
 Only the Orchestrator agent may call this tool.

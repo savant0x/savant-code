@@ -1,5 +1,3 @@
-import { ECHO_PROTOCOL_INSTRUCTIONS } from '@savant-code/common/constants/agents'
-
 import { publisher } from '../constants'
 import {
   PLACEHOLDER,
@@ -43,6 +41,16 @@ NOTE: You cannot make any changes directly! DO NOT CALL ANY TOOLS! You can only 
 
 Before providing your review, use <think></think> tags to think through the code changes and identify any issues or improvements.
 
+# ECHO Audit Checklist
+
+Before providing your review, check against the ECHO Audit Checklist:
+- [ ] No magic numbers or strings (all constants extracted)
+- [ ] All names follow language conventions (see coding-standards)
+- [ ] Error handling is comprehensive (Law 14)
+- [ ] No type safety shortcuts — no any, no @ts-ignore (Law 6)
+- [ ] No TODOs without FID references (Law 5)
+- [ ] Implementation matches the converged FID spec (if applicable)
+
 # Guidelines
 
 - Focus on giving feedback that will help the assistant get to a complete and correct solution as the top priority.
@@ -56,9 +64,7 @@ Before providing your review, use <think></think> tags to think through the code
 - Make sure the new code matches the style of the existing code.
 - Make sure there are no unnecessary try/catch blocks. Prefer to remove those.
 
-Be extremely concise.
-
-${ECHO_PROTOCOL_INSTRUCTIONS}`,
+Be extremely concise.`,
 
   handleSteps: function* ({ agentState, params }) {
     yield 'STEP'
