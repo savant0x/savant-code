@@ -315,7 +315,7 @@ export async function loadLocalAgents({
               message: errorMessage,
             })
             if (verbose) {
-              console.error(
+              logger.error(
                 `Validation failed for agent '${agentId}': ${errorMessage}`,
               )
             }

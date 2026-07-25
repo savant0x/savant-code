@@ -46,6 +46,9 @@ interface RightSidebarProps {
   filesChanged: FilesChanged
   agentStack: AgentInfo[]
   toolHistory: ToolCall[]
+  isStreaming: boolean
+  isWaitingForResponse: boolean
+  fsmPhase: string
 }
 
 /**
@@ -82,6 +85,9 @@ export const RightSidebar = React.memo(function RightSidebar({
   filesChanged,
   agentStack,
   toolHistory,
+  isStreaming,
+  isWaitingForResponse,
+  fsmPhase,
 }: RightSidebarProps) {
   const theme = useTheme()
 
@@ -135,20 +141,28 @@ export const RightSidebar = React.memo(function RightSidebar({
         </text>
       )}
 
-      {/* Active Agents — shown at the top so the user sees the running agent
-          roster immediately after the header. */}
-      <SidebarSection title="Active Agents">
-        <AgentStack
-          agents={
-            agentStack.length > 0
-              ? agentStack.map((a) => ({
-                  name: a.displayName ?? a.id,
-                  active: a.isActive,
-                }))
-              : [{ name: agent, active: true }]
-          }
-        />
-      </SidebarSection>
+      {/* Active Agents — only show agents that are currently active. Inactive
+          agents are hidden so the sidebar stays clean during long sessions
+          with many spawned subagents. */}
+      {(() => {
+        const activeAgents = agentStack.filter((a) => a.isActive)
+        const displayAgents = activeAgents.length > 0
+          ? activeAgents
+          : isStreaming || isWaitingForResponse
+            ? [{ id: agent, isActive: true } as AgentInfo]
+            : []
+        if (displayAgents.length === 0) return null
+        return (
+          <SidebarSection title="Active Agents">
+            <AgentStack
+              agents={displayAgents.map((a) => ({
+                name: a.displayName ?? a.id,
+                active: true,
+              }))}
+            />
+          </SidebarSection>
+        )
+      })()}
 
       <AgentStatus />
 
@@ -164,7 +178,10 @@ export const RightSidebar = React.memo(function RightSidebar({
         />
       </SidebarSection>
 
-      <PerfectionLoop />
+      {/* Perfection Loop — only show when the FSM is in an active phase
+          (not idle). When idle, the loop section is hidden to reduce
+          visual clutter. */}
+      {fsmPhase !== 'idle' && <PerfectionLoop />}
 
       {/* Tools */}
       <SidebarSection title="Tools">

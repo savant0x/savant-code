@@ -6,12 +6,13 @@ import { assistantMessage, userMessage } from '@savant-code/common/util/messages
 import { RetryError } from 'ai'
 import { afterEach, describe, expect, it, mock, spyOn } from 'bun:test'
 
+
 // Type for tool call content blocks in message history
 interface ToolCallContentBlock {
   type: 'tool-call'
   toolCallId: string
   toolName: string
-  input: Record<string, unknown>
+  input: Record<string, JSONValue>
 }
 
 // Type for text content blocks in message history
@@ -22,6 +23,8 @@ interface TextContentBlock {
 
 import { SavantCodeClient } from '../client'
 import * as databaseModule from '../impl/database'
+
+import type { JSONValue } from '@savant-code/common/types/json'
 
 
 describe('Run Cancellation Handling', () => {

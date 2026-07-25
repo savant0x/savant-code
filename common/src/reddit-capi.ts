@@ -108,7 +108,7 @@ export async function sendRedditCustomConversion(
           ...(user ? { user } : {}),
         },
       ],
-      partner: 'FREEBUFF',
+      partner: 'SAVANT',
       partner_version: '1.0.0',
     },
   }

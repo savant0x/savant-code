@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any -- test mock: intentional any for timer vars */
+ 
 import {
   OPEN_DELAY_MS,
   CLOSE_DELAY_MS,

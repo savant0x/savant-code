@@ -1,15 +1,15 @@
-/* eslint-disable @typescript-eslint/no-explicit-any -- tool call string generation: dynamic input types */
 import { toolParams } from './list'
 import { $getToolCallString } from './params/utils'
 
 import type { ToolName } from './constants'
+import type { JSONValue } from '../types/json'
 import type z from 'zod/v4'
 
 export function getToolCallString<T extends ToolName | (string & {})>(
   toolName: T,
   input: T extends ToolName
-    ? z.input<(typeof toolParams)[T]['inputSchema']>
-    : Record<string, any>,
+    ? z.infer<(typeof toolParams)[T]['inputSchema']>
+    : Record<string, JSONValue>,
   ...endsAgentStep: T extends ToolName ? [] : [boolean]
 ): string {
   const endsAgentStepValue =

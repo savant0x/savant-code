@@ -1,11 +1,10 @@
-/* eslint-disable @typescript-eslint/no-explicit-any -- test file: intentional any casts for edge cases */
+ 
 import { describe, expect, it } from 'bun:test'
 
 import {
   DynamicAgentDefinitionSchema,
   DynamicAgentTemplateSchema,
 } from '../types/dynamic-agent-template'
-import { AgentTemplateTypes } from '../types/session-state'
 
 describe('DynamicAgentDefinitionSchema', () => {
   const validBaseTemplate = {

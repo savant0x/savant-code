@@ -60,14 +60,14 @@ export const ReadFilesComponent = defineToolComponent({
   toolName: 'read_files',
 
   render(toolBlock): ToolRenderConfig {
-    const input = toolBlock.input as any
+    const rawPaths = toolBlock.input?.paths
 
     // Extract file paths from input
-    const filePaths: string[] = Array.isArray(input?.paths)
-      ? input.paths
-          .filter((path: any) => typeof path === 'string')
-          .map((path: string) => path.trim())
-          .filter((path: string) => path.length > 0)
+    const filePaths: string[] = Array.isArray(rawPaths)
+      ? rawPaths
+          .filter((path): path is string => typeof path === 'string')
+          .map((path) => path.trim())
+          .filter((path) => path.length > 0)
       : []
 
     if (filePaths.length === 0) {

@@ -1,4 +1,3 @@
-import { useChatStore } from '../state/chat-store'
 import { IS_SAVANT_FREE } from '../utils/constants'
 import { logger } from '../utils/logger'
 import { getSystemMessage } from '../utils/message-history'

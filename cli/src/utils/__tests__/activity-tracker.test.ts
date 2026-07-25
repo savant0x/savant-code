@@ -209,7 +209,7 @@ describe('activity-tracker', () => {
 
     test('unsubscribing non-existent listener does nothing', () => {
       const listener1 = mock(() => {})
-      const listener2 = mock(() => {})
+      const _listener2 = mock(() => {})
 
       const unsub1 = subscribeToActivity(listener1)
       unsub1()

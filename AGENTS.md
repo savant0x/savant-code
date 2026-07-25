@@ -36,7 +36,7 @@ The 9-agent roster is enforced in `ARCHITECTURE.md`. Each agent has restricted t
 | `agents/` | `@savant-code/agents` | Public agent definitions shipped with the CLI (9 canonical + 5 helper tool-library dirs) |
 | `cli/` | `@savant-code/cli` | CLI source — UI, commands, state, hooks, OpenTUI/React components |
 | `common/` | `@savant-code/common` | Shared types, tool definitions, utilities |
-| `evals/` | `@savant-code/evals` | Buffbench benchmark runner + public eval fixtures |
+| `evals/` | `@savant-code/evals` | Eval benchmark runner + public eval fixtures |
 | `savant-free/` | `@savant-code/savant-free` | CLI release + e2e tests for the free variant |
 | `packages/database/` | `@savant-code/database` | Database abstraction layer |
 | `packages/agent-runtime/` | `@savant-code/agent-runtime` | Agent loop, tool executor, LLM API integration |

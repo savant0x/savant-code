@@ -1,9 +1,0 @@
-Savant file-creation test
-==========================
-
-This file was created by Savant (the Orchestrator agent) on 2026-07-18
-to verify file-creation capability, following the ECHO Perfection Loop
-FSM (idle -> red -> green -> audit -> complete).
-
-It is a throwaway artifact. Delete it with:
-  del test-creation.txt

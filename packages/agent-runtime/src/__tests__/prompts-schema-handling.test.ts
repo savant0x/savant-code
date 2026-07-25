@@ -4,6 +4,7 @@ import { describe, test, expect, mock } from 'bun:test'
 import { z } from 'zod/v4'
 import { convertJsonSchemaToZod } from 'zod-from-json-schema'
 
+
 import {
   buildAgentToolInputSchema,
   buildAgentToolSet,
@@ -17,6 +18,7 @@ import {
 import { tryTransformAgentToolCall } from '../tools/tool-executor'
 
 import type { AgentTemplate } from '../templates/types'
+import type { JSONValue } from '@savant-code/common/types/json'
 
 /** Create a mock logger using bun:test mock() for better test consistency */
 const createMockLogger = () => ({
@@ -40,8 +42,8 @@ describe('Schema handling error recovery', () => {
         model: 'gpt-4o-mini',
         inputSchema: {
           prompt: z.string().describe('A test prompt'),
-          params: problematicSchema as unknown as z.ZodType<
-            Record<string, unknown> | undefined
+          params: problematicSchema as z.ZodTypeAny as z.ZodSchema<
+            Record<string, JSONValue> | undefined
           >,
         },
         outputMode: 'last_message',
@@ -153,7 +155,7 @@ describe('Schema handling error recovery', () => {
       // Should not throw when building tool description
       const description = buildToolDescription({
         toolName: 'test_tool',
-        schema: problematicSchema as unknown as z.ZodType,
+        schema: problematicSchema as z.ZodTypeAny,
         description: 'A test tool',
         endsAgentStep: false,
       })
@@ -170,7 +172,7 @@ describe('Schema handling error recovery', () => {
 
       const description = buildToolDescription({
         toolName: 'fallback_test',
-        schema: problematicSchema as unknown as z.ZodType,
+        schema: problematicSchema as z.ZodTypeAny,
         description: 'Testing fallback behavior',
         endsAgentStep: false,
       })
@@ -232,7 +234,7 @@ describe('Schema handling error recovery', () => {
       const customToolDefs = {
         problematic_tool: {
           description: 'A problematic tool',
-          inputSchema: z.function() as unknown as z.ZodType,
+          inputSchema: z.function() as z.ZodTypeAny,
           endsAgentStep: true,
         },
       }
@@ -289,7 +291,7 @@ describe('Schema handling error recovery', () => {
           prompt: z.string(),
         },
         outputMode: 'structured_output',
-        outputSchema: z.function() as unknown as z.ZodType, // This cannot be converted
+        outputSchema: z.function() as z.ZodTypeAny, // This cannot be converted
         includeMessageHistory: false,
         inheritParentSystemPrompt: false,
         mcpServers: emptyMcpServers,
@@ -440,7 +442,7 @@ describe('Schema handling error recovery', () => {
 
       const description = buildToolDescription({
         toolName: 'async_tool',
-        schema: problematicSchema as unknown as z.ZodType,
+        schema: problematicSchema as z.ZodTypeAny,
         description: 'An async tool',
         endsAgentStep: true,
       })

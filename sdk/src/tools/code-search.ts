@@ -2,12 +2,45 @@ import { spawn } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
 
+import { z } from 'zod/v4'
 
 import { formatCodeSearchOutput } from '../../../common/src/util/format-code-search'
 import { getBundledRgPath } from '../native/ripgrep'
 
 import type { SavantCodeToolOutput } from '../../../common/src/tools/list'
 import type { Logger } from '@savant-code/common/types/contracts/logger'
+import type { JSONValue } from '@savant-code/common/types/json'
+
+type CodeSearchResult =
+  | { stdout: string; message: string; stderr?: string; exitCode?: number }
+  | { errorMessage: string; stdout?: string; stderr?: string }
+
+const ripgrepEventSchema = z.object({
+  type: z.enum(['match', 'context']),
+  data: z.object({
+    path: z.object({
+      text: z.string().optional(),
+      bytes: z.string().optional(),
+    }).optional(),
+    line_number: z.number().optional(),
+    lines: z.object({
+      text: z.string().optional(),
+    }).optional(),
+  }),
+})
+
+type RipgrepEvent = z.infer<typeof ripgrepEventSchema>
+
+function parseRipgrepEventLine(line: string): RipgrepEvent | null {
+  let parsed: JSONValue
+  try {
+    parsed = JSON.parse(line) as JSONValue
+  } catch {
+    return null
+  }
+  const result = ripgrepEventSchema.safeParse(parsed)
+  return result.success ? result.data : null
+}
 
 // Hidden directories to include in code search by default.
 // These are searched in addition to '.' to ensure important config/workflow files are discoverable.
@@ -57,10 +90,53 @@ export function codeSearch({
     // Deduplicating would break up these pairs and cause errors
     // Strip surrounding quotes from each token since spawn() passes args directly
     // without shell interpretation (e.g. "'foo.md'" → "foo.md")
-    const flagsArray = (flags || '')
+    const rawFlagsArray = (flags || '')
       .split(' ')
       .filter(Boolean)
       .map((token) => token.replace(/^['"]|['"]$/g, ''))
+
+    // FID-076: Validate flagsArray — separate actual flags from positional arguments.
+    // Agents sometimes misuse `flags` for directory filtering (e.g., "cli/src -g '*.ts'").
+    // Non-flag arguments (not starting with '-') break ripgrep's argument structure
+    // on Windows, causing patterns to be treated as filenames.
+    const flagsArray: string[] = []
+    const extraSearchPaths: string[] = []
+    let prevWasFlag = false
+    for (const token of rawFlagsArray) {
+      if (prevWasFlag) {
+        // Previous token was a flag — this token is its value (e.g., -g *.ts, -A 2)
+        // Defensive: treat any non-"-" token after a flag as its value,
+        // regardless of whether the flag is in a known list.
+        flagsArray.push(token)
+        prevWasFlag = false
+        continue
+      }
+      if (token.startsWith('-')) {
+        flagsArray.push(token)
+        // Heuristic: flags that are NOT boolean (i.e., take a value argument)
+        // typically have a longer form or are followed by a non-"-" token.
+        // We conservatively assume the next token is a value if the flag is
+        // single-char with a value or a long flag without '='.
+        const isBooleanFlag = [
+          '--no-config', '-n', '--json', '-i', '-l', '-c', '--count',
+          '--files-with-matches', '--files-without-match', '-h', '--help',
+          '--version', '-v', '--invert-match', '--no-filename',
+          '--no-line-number', '--no-messages', '--no-heading',
+          '--with-filename', '--heading', '--hidden', '--no-ignore',
+          '-u', '--unrestricted', '--binary', '--crlf', '--no-unicode',
+        ].includes(token)
+        prevWasFlag = !isBooleanFlag && !token.includes('=')
+      } else {
+        // Non-flag argument — likely a directory path misuse. Move to search paths.
+        extraSearchPaths.push(token)
+        if (logger) {
+          logger.warn(
+            { token, flags },
+            'code-search: Non-flag argument in flags parameter moved to search paths. Use the cwd parameter instead for directory filtering.',
+          )
+        }
+      }
+    }
 
     // Use JSON output for robust parsing and early stopping
     // --no-config prevents user/system .ripgreprc from interfering
@@ -76,7 +152,8 @@ export function codeSearch({
         return false
       }
     })
-    const searchPaths = ['.', ...existingHiddenDirs]
+    // FID-076: Extra search paths from non-flag arguments in flagsArray
+    const searchPaths = ['.', ...extraSearchPaths, ...existingHiddenDirs]
     const args = [
       '--no-config',
       '-n',
@@ -125,7 +202,7 @@ export function codeSearch({
     // Guard to prevent double-settlement from concurrent timeout and process close events
     let killTimeoutId: ReturnType<typeof setTimeout> | null = null
 
-    const settle = (payload: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any -- dynamic event payload from ripgrep JSON lines
+    const settle = (payload: CodeSearchResult) => {
       if (isResolved) return
       isResolved = true
 
@@ -229,10 +306,8 @@ export function codeSearch({
 
       for (const line of lines) {
         if (!line) continue
-        let evt: any // eslint-disable-line @typescript-eslint/no-explicit-any -- dynamic event shape from ripgrep JSON lines
-        try {
-          evt = JSON.parse(line)
-        } catch {
+        const evt = parseRipgrepEventLine(line)
+        if (!evt) {
           continue
         }
 
@@ -337,8 +412,8 @@ export function codeSearch({
           for (const ln of maybeMany.split('\n')) {
             if (!ln) continue
             try {
-              const evt = JSON.parse(ln)
-              if (evt?.type === 'match' || evt?.type === 'context') {
+              const evt = parseRipgrepEventLine(ln)
+              if (evt) {
                 const filePath =
                   evt.data.path?.text ?? evt.data.path?.bytes ?? ''
                 const lineNumber = evt.data.line_number ?? 0

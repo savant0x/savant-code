@@ -1,4 +1,3 @@
-import { getCliEnv } from './env'
 
 import type { ToolName } from '@savant-code/sdk'
 
@@ -10,7 +9,7 @@ import type { ToolName } from '@savant-code/sdk'
  *   IS_SAVANT_FREE = getCliEnv().SAVANT_FREE_MODE === 'true'
  * (Currently hardcoded false for local dev — restore the env-var line above to re-enable.)
  */
-export const IS_SAVANT_FREE = false // TODO: re-enable free mode later — restore: getCliEnv().SAVANT_FREE_MODE === 'true'
+export const IS_SAVANT_FREE = false // NOTE: re-enable free mode later — restore: getCliEnv().SAVANT_FREE_MODE === 'true'
 
 /** Message shown when the user ends a savant-free session early. */
 export const END_SESSION_MESSAGE =
@@ -42,7 +41,6 @@ export const shouldHideAgent = (agentId: string): boolean => {
 // Agent IDs that should be collapsed by default when they start
 export const COLLAPSED_BY_DEFAULT_AGENT_IDS = [
   'scout',
-  'code-reviewer-selector',
   'thinker-selector',
   'best-of-n-selector',
   'basher',
@@ -66,9 +64,7 @@ export const shouldCollapseByDefault = (agentType: string): boolean => {
  * Rules for collapsing child agents when spawned by specific parent agents.
  * Key: parent agent type pattern, Value: array of child agent type patterns to collapse
  */
-export const PARENT_CHILD_COLLAPSE_RULES: Record<string, string[]> = {
-  'code-reviewer-multi-prompt': ['verifier'],
-}
+export const PARENT_CHILD_COLLAPSE_RULES: Record<string, string[]> = {}
 
 /**
  * Check if a child agent should be collapsed when spawned by a specific parent

@@ -11,6 +11,7 @@ import { logger } from './logger'
 import { getApiClient, setApiClientAuthToken } from './savant-code-api'
 
 import type { CiEnv } from '@savant-code/common/types/contracts/env'
+import type { JSONValue } from '@savant-code/common/types/json'
 
 // User schema
 const userSchema = z.object({
@@ -153,7 +154,7 @@ export interface AuthValidationResult {
 }
 
 /** Read existing credentials file, returns empty object if missing/invalid */
-const readCredentialsFile = (): Record<string, unknown> => {
+const readCredentialsFile = (): Record<string, JSONValue> => {
   const credentialsPath = getCredentialsPath()
   if (!fs.existsSync(credentialsPath)) return {}
   try {

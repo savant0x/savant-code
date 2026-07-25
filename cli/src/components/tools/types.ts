@@ -1,9 +1,14 @@
 import type { ContentBlock } from '../../types/chat'
 import type { ChatTheme } from '../../types/theme-system'
+import type { JSONValue } from '@savant-code/common/types/json'
 import type { ToolName } from '@savant-code/sdk'
 import type { ReactNode } from 'react'
 
 export type ToolBlock = Extract<ContentBlock, { type: 'tool' }>
+
+export type ToolBlockOf<T extends ToolName = ToolName> = ToolBlock & {
+  toolName: T
+}
 
 export type ToolRenderOptions = {
   availableWidth: number
@@ -52,4 +57,44 @@ export function defineToolComponent<T extends ToolName>(
   component: ToolComponent<T>,
 ): ToolComponent<T> {
   return component
+}
+
+/** Safely read a string field from a tool input. */
+export function getString(
+  input: Record<string, JSONValue>,
+  key: string,
+): string | undefined {
+  const value = input[key]
+  return typeof value === 'string' ? value : undefined
+}
+
+/** Safely read an JSONValue field from a tool input. */
+export function getJSONValue(
+  input: Record<string, JSONValue>,
+  key: string,
+): JSONValue | undefined {
+  return input[key]
+}
+
+/** Type guard for JSON objects (plain records, not arrays). */
+export function isJSONObject(
+  value: JSONValue,
+): value is Record<string, JSONValue> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
+}
+
+/** Safely read an array of strings from a tool input. */
+export function getStringArray(
+  input: Record<string, JSONValue>,
+  key: string,
+): string[] | undefined {
+  const value = input[key]
+  if (!Array.isArray(value)) return undefined
+  const result: string[] = []
+  for (const item of value) {
+    if (typeof item === 'string') {
+      result.push(item)
+    }
+  }
+  return result.length > 0 ? result : undefined
 }

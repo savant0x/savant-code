@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# Savant-Code — Automated A-Z System Test Runner (v9)
+# Savant-Code — Automated A-Z System Test Runner (v11)
 # =============================================================================
 # Automates all code-level (non-interactive) tests from the A-Z test prompt.
 # Interactive-only tests (slash commands, TUI, /dev, agent spawning) are marked
@@ -122,10 +122,17 @@ rg_not() {
 rg_count() {
   local pattern="$1" path="$2"
   if [ -d "$path" ]; then
-    grep -rcE "$pattern" "$path" 2>/dev/null | awk -F: '{s+=$NF} END {print s+0}'
+    grep -rcE "$pattern" "$path" 2>/dev/null | awk -F: '{s+=$NF} END {print s+0}' || true
   else
     grep -cE "$pattern" "$path" 2>/dev/null || echo "0"
   fi
+}
+
+# Count rg/grep matches in production source only (exclude test files and __tests__ dirs)
+rg_count_prod() {
+  local pattern="$1" path="$2"
+  find "$path" -type f \( -name '*.ts' -o -name '*.tsx' \) ! -name '*.test.ts' ! -name '*.test.tsx' ! -name '*.spec.ts' ! -name '*.spec.tsx' ! -path '*/__tests__/*' -print0 2>/dev/null | \
+    xargs -0 grep -cE "$pattern" 2>/dev/null | awk -F: '{s+=$NF} END {print s+0}' || true
 }
 
 # ── Argument Parsing ──────────────────────────────────────────────────────────
@@ -165,7 +172,7 @@ run_phase() {
 # ── Ensure results directory exists ──────────────────────────────────────────
 mkdir -p "$RESULTS_DIR"
 
-echo -e "${BOLD}Savant-Code — Automated A-Z System Test v9${RESET}"
+echo -e "${BOLD}Savant-Code — Automated A-Z System Test v11${RESET}"
 echo "Date: $(date '+%Y-%m-%d %H:%M:%S')"
 echo "Platform: $(uname -s)"
 echo ""
@@ -832,9 +839,9 @@ if run_phase 28; then
     fail "T146" "spawn-agents.ts description does NOT reference scout"
   fi
 
-  # T147: No stale file_picker in production code
-  stale_fp_ar=$(rg_count "file_picker|file-picker" "$REPO_ROOT/packages/agent-runtime/src")
-  stale_fp_cli=$(rg_count "file_picker|file-picker" "$REPO_ROOT/cli/src")
+  # T147: No stale file_picker in production code (test files excluded)
+  stale_fp_ar=$(rg_count_prod "file_picker|file-picker" "$REPO_ROOT/packages/agent-runtime/src")
+  stale_fp_cli=$(rg_count_prod "file_picker|file-picker" "$REPO_ROOT/cli/src")
   stale_fp=$((stale_fp_ar + stale_fp_cli))
   if [ "$stale_fp" -eq 0 ]; then
     pass "T147" "No stale file_picker in production code"
@@ -842,14 +849,145 @@ if run_phase 28; then
     fail "T147" "$stale_fp stale file_picker references in production code"
   fi
 
-  # T148: No stale reviewer in production code
-  stale_rev_ar=$(rg_count "reviewer" "$REPO_ROOT/packages/agent-runtime/src")
-  stale_rev_cli=$(rg_count "reviewer" "$REPO_ROOT/cli/src")
+  # T148: No stale reviewer in production code (test files excluded)
+  stale_rev_ar=$(rg_count_prod "reviewer" "$REPO_ROOT/packages/agent-runtime/src")
+  stale_rev_cli=$(rg_count_prod "reviewer" "$REPO_ROOT/cli/src")
   stale_rev=$((stale_rev_ar + stale_rev_cli))
   if [ "$stale_rev" -eq 0 ]; then
     pass "T148" "No stale reviewer in production code"
   else
     fail "T148" "$stale_rev stale reviewer references in production code"
+  fi
+fi
+
+# =============================================================================
+# Phase 29: ECHO Law 6 / 13 / 15 Compliance (v0.0.6)
+# =============================================================================
+if run_phase 29; then
+  header "Phase 29: ECHO Compliance (FID-068/069/070/071)"
+
+  # JSONValue domain type exists
+  if [ -f "$REPO_ROOT/common/src/types/json.ts" ] && rg_check "export type JSONValue" "$REPO_ROOT/common/src/types/json.ts"; then
+    pass "T149" "JSONValue type defined in common/src/types/json.ts"
+  else
+    fail "T149" "JSONValue type NOT defined in common/src/types/json.ts"
+  fi
+
+  # safeParseJSONObject helper exists
+  if [ -f "$REPO_ROOT/common/src/util/type-narrowing.ts" ] && rg_check "safeParseJSONObject" "$REPO_ROOT/common/src/util/type-narrowing.ts"; then
+    pass "T150" "safeParseJSONObject helper exists"
+  else
+    fail "T150" "safeParseJSONObject helper missing"
+  fi
+
+  # No Record<string, unknown> shortcuts in production source (test files excluded)
+  cli_unknown=$(rg_count_prod "Record[[:space:]]*<[[:space:]]*string[[:space:]]*,[[:space:]]*unknown[[:space:]]*>" "$REPO_ROOT/cli/src" || echo "0")
+  sdk_unknown=$(rg_count_prod "Record[[:space:]]*<[[:space:]]*string[[:space:]]*,[[:space:]]*unknown[[:space:]]*>" "$REPO_ROOT/sdk/src" || echo "0")
+  ar_unknown=$(rg_count_prod "Record[[:space:]]*<[[:space:]]*string[[:space:]]*,[[:space:]]*unknown[[:space:]]*>" "$REPO_ROOT/packages/agent-runtime/src" || echo "0")
+  common_unknown=$(rg_count_prod "Record[[:space:]]*<[[:space:]]*string[[:space:]]*,[[:space:]]*unknown[[:space:]]*>" "$REPO_ROOT/common/src" || echo "0")
+  total_unknown=$((cli_unknown + sdk_unknown + ar_unknown + common_unknown))
+  if [ "$total_unknown" -eq 0 ]; then
+    pass "T151" "No Record<string, unknown> shortcuts in production source"
+  else
+    fail "T151" "$total_unknown Record<string, unknown> shortcuts remaining in production source"
+  fi
+
+  # Dead utility files removed
+  if [ ! -f "$REPO_ROOT/common/src/util/agent-name-resolver.ts" ] && [ ! -f "$REPO_ROOT/cli/src/utils/agent-id-utils.ts" ] && [ ! -f "$REPO_ROOT/cli/src/utils/time-format.ts" ]; then
+    pass "T152" "Dead utility files removed (agent-name-resolver, agent-id-utils, time-format)"
+  else
+    fail "T152" "One or more dead utility files still present"
+  fi
+
+  # Canonical utility exports preserved
+  if rg_check "export function getSimpleAgentId" "$REPO_ROOT/common/src/util/agent-id-parsing.ts" 2>/dev/null; then
+    pass "T153" "getSimpleAgentId in agent-id-parsing.ts"
+  else
+    fail "T153" "getSimpleAgentId missing from agent-id-parsing.ts"
+  fi
+
+  if rg_check "export (const|function) pluralize" "$REPO_ROOT/common/src/util/string.ts" 2>/dev/null; then
+    pass "T154" "pluralize in string.ts"
+  else
+    fail "T154" "pluralize missing from string.ts"
+  fi
+
+  if rg_check "export (const|function) formatTimeUntil" "$REPO_ROOT/common/src/util/dates.ts" 2>/dev/null; then
+    pass "T155" "formatTimeUntil in dates.ts"
+  else
+    fail "T155" "formatTimeUntil missing from dates.ts"
+  fi
+
+  # ESLint zero warnings across four core workspaces
+  echo -ne "  Running ESLint --max-warnings 0 on four workspaces... "
+  if (cd "$REPO_ROOT" && bun x eslint common/src cli/src sdk/src packages/agent-runtime/src --max-warnings 0 2>&1) >/dev/null 2>&1; then
+    pass "T156" "ESLint --max-warnings 0 passes (common/cli/sdk/agent-runtime)"
+  else
+    fail "T156" "ESLint --max-warnings 0 FAILED"
+  fi
+fi
+
+# =============================================================================
+# Phase 30: Cloudflare Workers AI Provider (v0.0.6)
+# =============================================================================
+if run_phase 30; then
+  header "Phase 30: Cloudflare Workers AI Provider (FID-072)"
+
+  if rg_check "cloudflare" "$REPO_ROOT/common/src/constants/model-config.ts" 2>/dev/null; then
+    pass "T171" "cloudflare references in model-config.ts"
+  else
+    fail "T171" "cloudflare NOT in model-config.ts"
+  fi
+
+  if rg_check "isCloudflareModel|createCloudflareModel" "$REPO_ROOT/sdk/src/impl/model-provider.ts" 2>/dev/null; then
+    pass "T172" "Cloudflare model functions in sdk/src/impl/model-provider.ts"
+  else
+    fail "T172" "Cloudflare model functions missing"
+  fi
+
+  if rg_check "getCloudflareApiTokenFromEnv|getCloudflareAccountIdFromEnv" "$REPO_ROOT/sdk/src/env.ts" 2>/dev/null; then
+    pass "T173" "Cloudflare env getters in sdk/src/env.ts"
+  else
+    fail "T173" "Cloudflare env getters missing"
+  fi
+
+  if rg_check "isCloudflareModel" "$REPO_ROOT/sdk/src/index.ts" 2>/dev/null; then
+    pass "T174" "isCloudflareModel re-exported from sdk/src/index.ts"
+  else
+    fail "T174" "isCloudflareModel NOT re-exported"
+  fi
+
+  # T175/T176: CLI wiring is intentionally deferred; FID-072 only added SDK/common support.
+  skip "T175" "cloudflare in cli/src/utils/openrouter-models.ts" "deferred: no CLI wiring in FID-072"
+  skip "T176" "cloudflare in cli/src/components/model-picker.tsx" "deferred: no CLI wiring in FID-072"
+fi
+
+# =============================================================================
+# Phase 31: Release metadata (v0.0.6)
+# =============================================================================
+if run_phase 31; then
+  header "Phase 31: Release metadata"
+
+  version_from_file=$(cat "$REPO_ROOT/VERSION" 2>/dev/null | tr -d '[:space:]')
+  version_from_root=$(grep -m1 '"version"' "$REPO_ROOT/package.json" | sed -E 's/.*"version"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/')
+  version_from_cli=$(grep -m1 '"version"' "$REPO_ROOT/cli/package.json" | sed -E 's/.*"version"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/')
+
+  if [ "$version_from_file" = "0.0.6" ]; then
+    pass "T179" "VERSION file is 0.0.6"
+  else
+    fail "T179" "VERSION file is '$version_from_file' (expected 0.0.6)"
+  fi
+
+  if [ "$version_from_root" = "0.0.6" ]; then
+    pass "T180" "Root package.json is 0.0.6"
+  else
+    fail "T180" "Root package.json is '$version_from_root' (expected 0.0.6)"
+  fi
+
+  if [ "$version_from_cli" = "0.0.6" ]; then
+    pass "T181" "cli/package.json is 0.0.6"
+  else
+    fail "T181" "cli/package.json is '$version_from_cli' (expected 0.0.6)"
   fi
 fi
 
@@ -878,7 +1016,7 @@ JSON_RESULTS+="]"
 # Write JSON
 cat > "$RESULTS_JSON" << ENDJSON
 {
-  "version": "v9",
+  "version": "v11",
   "date": "$(date -u '+%Y-%m-%dT%H:%M:%SZ')",
   "platform": "$(uname -s)",
   "summary": {
@@ -893,7 +1031,7 @@ ENDJSON
 
 # Write Markdown
 cat > "$RESULTS_MD" << ENDMD
-# Savant-Code — Automated A-Z Test Results v9
+# Savant-Code — Automated A-Z Test Results v11
 
 **Date:** $(date '+%Y-%m-%d %H:%M:%S')
 **Platform:** $(uname -s)

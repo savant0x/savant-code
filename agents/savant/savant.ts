@@ -385,6 +385,7 @@ function buildImplementationStepPrompt({
     `You may write code directly using write_file and str_replace. Spawn Forge only for complex tasks or when verification fails and needs expert repair.`,
     `Verify with typecheck/lint in parallel using bashers after writing. You may run verification inline during GREEN phase without transitioning to AUDIT.`,
     `If audit finds issues: transition to self_correct (write tools available), fix them, verify inline, then transition directly to complete. No need to re-enter green for simple fixes.`,
+    `- After completing a FID (transitioning to 'complete' phase), immediately transition back to 'idle' using transition_phase. Do not wait for user input in complete phase — it is a momentary state, not a resting state.`,
     `If you spawned Forge to implement changes, also spawn the Verifier to review. For direct writes, verify with typecheck/lint in parallel using bashers.`,
     !noAskUser &&
       `At the end of your turn, you must use the suggest_followups tool to suggest around 3 next steps the user might want to take even if the user just asks a question.`,

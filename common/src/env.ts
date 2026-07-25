@@ -2,6 +2,7 @@ import { clientEnvSchema, clientProcessEnv } from './env-schema'
 
 const parsedEnv = clientEnvSchema.safeParse(clientProcessEnv)
 if (!parsedEnv.success) {
+  // eslint-disable-next-line no-console -- environment validation failed before any logger is available
   console.error('Environment validation failed:', parsedEnv.error.issues)
   throw new Error(`Invalid environment configuration: ${parsedEnv.error.message}`)
 }

@@ -46,6 +46,7 @@ import type {
   ToolContentBlock,
 } from '../../types/chat'
 import type { MarkdownPalette } from '../../utils/markdown-renderer'
+import type { JSONValue } from '@savant-code/common/types/json'
 
 /**
  * Compute preview text for collapsed agent display.
@@ -381,7 +382,7 @@ export const AgentBranchWrapper = memo(
         )
         // set_output wraps data in a 'data' property, so we need to access input.data
         const outputData = (
-          setOutputBlock?.input as { data?: Record<string, unknown> }
+          setOutputBlock?.input as { data?: Record<string, JSONValue> }
         )?.data
         const implementationId = outputData?.implementationId as
           | string

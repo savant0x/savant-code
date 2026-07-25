@@ -133,6 +133,14 @@ export const handleReadSubtree = (async (params: {
       outputs.push(buildFileResult(p))
       continue
     }
+    // Fallback: prefix match for directories (e.g., 'agents/savant' matches
+    // a node with filePath 'agents/savant' or a directory whose children
+    // have filePaths starting with 'agents/savant/').
+    const prefixNode = findDirectoryByPrefix(fileContext.fileTree, p)
+    if (prefixNode) {
+      outputs.push(buildDirectoryResult([prefixNode], p))
+      continue
+    }
     outputs.push({
       path: p,
       errorMessage: `Path not found or ignored: ${p}`,
@@ -155,6 +163,35 @@ function findNodeByFilePath(
     if (node.type === 'directory' && node.children) {
       const found = findNodeByFilePath(node.children, target)
       if (found) return found
+    }
+  }
+  return undefined
+}
+
+/**
+ * Find a directory node whose filePath matches the target as a prefix,
+ * with a strict boundary check to prevent false positives.
+ * E.g., 'agents/savant' matches a directory with filePath 'agents/savant'
+ * or a directory whose children have filePaths like 'agents/savant/foo.ts',
+ * but NOT 'agents/savant-backup/'.
+ */
+function findDirectoryByPrefix(
+  nodes: FileTreeNode[],
+  target: string,
+): FileTreeNode | undefined {
+  const normalized = target.replace(/\\/g, '/')
+  for (const node of nodes) {
+    if (node.type === 'directory') {
+      const nodePath = (node.filePath ?? '').replace(/\\/g, '/')
+      // Exact match
+      if (nodePath === normalized) return node
+      // Prefix match with boundary: nodePath starts with target/ and target is a directory
+      if (nodePath.startsWith(normalized + '/')) return node
+      // Check children for prefix match
+      if (node.children) {
+        const found = findDirectoryByPrefix(node.children, target)
+        if (found) return found
+      }
     }
   }
   return undefined

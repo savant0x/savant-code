@@ -14,6 +14,7 @@ import {
 } from '../clipboard'
 import { logger } from '../logger'
 
+import type { ClipboardRenderer } from '../clipboard'
 import type { MockTimers } from '@savant-code/common/testing/mocks/timers'
 
 /**
@@ -469,7 +470,7 @@ describe('clipboard', () => {
     })
 
     test('renderer without copyToClipboardOSC52 falls through and fails', async () => {
-      registerClipboardRenderer({ someOtherMethod: () => true })
+      registerClipboardRenderer({ someOtherMethod: () => true } as ClipboardRenderer)
 
       await expect(
         copyTextToClipboard('test text', { suppressGlobalMessage: true })

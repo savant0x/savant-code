@@ -19,7 +19,7 @@ function createLauncher(productConfig) {
     displayName,
     includeTreeSitterWasm = true,
     startupBanner = [],
-    telemetryEvent = 'cli.update_codebuff_failed',
+    telemetryEvent = 'cli.update_savant_failed',
     telemetryProperties = {},
     tempDownloadDirName = `.${packageName}-download-temp`,
   } = productConfig

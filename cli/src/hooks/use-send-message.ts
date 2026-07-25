@@ -28,6 +28,11 @@ import {
 import { loadAgentDefinitions } from '../utils/local-agent-registry'
 import { logger } from '../utils/logger'
 import {
+  findGatewayModel,
+  formatModelInfo,
+  resolveContextWindowForModel,
+} from '../utils/openrouter-models'
+import {
   clearLiveChatStateProvider,
   loadMostRecentChatState,
   resolveCurrentChatDir,
@@ -47,11 +52,6 @@ import {
 } from '../utils/send-message-helpers'
 import { createSendMessageTimerController } from '../utils/send-message-timer'
 import { loadSavantCodeModelPreference } from '../utils/settings'
-import {
-  findGatewayModel,
-  formatModelInfo,
-  resolveContextWindowForModel,
-} from '../utils/openrouter-models'
 import {
   handleRunCompletion,
   handleRunError,
@@ -646,7 +646,7 @@ export const useSendMessage = ({
           signal: abortController.signal,
           extraSavantCodeMetadata:
             IS_SAVANT_FREE && instanceId
-              ? { freebuff_instance_id: instanceId }
+              ? { savant_free_instance_id: instanceId }
               : undefined,
           modelInfoText,
           onStateSnapshot: (snapshot) => {

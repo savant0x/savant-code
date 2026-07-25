@@ -1,5 +1,8 @@
-/* eslint-disable savant/no-unknown-in-signatures -- analytics sampling trust boundary: event `properties` arrive schema-less from the CLI/agent runtime; `unknown` is the only honest shape for value-kind discrimination. 3-condition AND-gate: (i.1) caller type cannot be discovered because properties are opaque user/telemetry maps; (i.2) narrowing to `JsonValue`/concrete breaks callers that attach LLM response objects and Error instances to event properties; (i.3) runtime narrowing via `valueKind()`, `getStringProperty()`, and `getPropertyUserId()` preserves existing sampling behavior. */
+ 
 import { AnalyticsEvent } from '../constants/analytics-events'
+
+import type { AnalyticsProperties } from '../types/contracts/analytics'
+import type { JSONValue } from '../types/json'
 
 const DEFAULT_SAMPLED_RATE = 0.01
 
@@ -49,17 +52,20 @@ const ALWAYS_TRACK_EVENTS = new Set<AnalyticsEvent>([
   AnalyticsEvent.USER_INPUT_COMPLETE,
 ])
 
-type AnalyticsProperties = Record<string, unknown> | undefined
+// Re-export the canonical analytics properties type so callers remain compatible.
+export type { AnalyticsProperties }
 
 function getStringProperty(
-  properties: AnalyticsProperties,
+  properties: AnalyticsProperties | undefined,
   key: string,
 ): string | undefined {
   const value = properties?.[key]
   return typeof value === 'string' && value.trim() ? value : undefined
 }
 
-function getPropertyUserId(properties: AnalyticsProperties): string | undefined {
+function getPropertyUserId(
+  properties: AnalyticsProperties | undefined,
+): string | undefined {
   const direct =
     getStringProperty(properties, 'userId') ??
     getStringProperty(properties, 'user_id') ??
@@ -70,7 +76,7 @@ function getPropertyUserId(properties: AnalyticsProperties): string | undefined 
 
   const user = properties?.user
   if (user && typeof user === 'object') {
-    const id = (user as { id?: unknown }).id
+    const id = (user as Record<string, JSONValue>).id
     return typeof id === 'string' && id.trim() ? id : undefined
   }
 
@@ -92,7 +98,7 @@ function isTruthyEnv(value: string | undefined): boolean {
 
 export function isFullTelemetryEnabled(params: {
   distinctId?: string
-  properties?: AnalyticsProperties
+  properties?: AnalyticsProperties | undefined
 }): boolean {
   if (isTruthyEnv(process.env.SAVANT_CODE_FULL_TELEMETRY)) {
     return true
@@ -121,7 +127,7 @@ export function isFullTelemetryEnabled(params: {
 
 function getEventSampleRate(
   event: AnalyticsEvent,
-  properties: AnalyticsProperties,
+  properties: AnalyticsProperties | undefined,
 ): number {
   const level = getStringProperty(properties, 'level')?.toLowerCase()
   if (
@@ -150,7 +156,7 @@ function hashString(input: string): number {
 function getSamplingKey(params: {
   event: AnalyticsEvent
   distinctId?: string
-  properties?: AnalyticsProperties
+  properties?: AnalyticsProperties | undefined
 }): string {
   return (
     params.distinctId ??
@@ -164,7 +170,7 @@ function getSamplingKey(params: {
 export function shouldTrackAnalyticsEvent(params: {
   event: AnalyticsEvent
   distinctId?: string
-  properties?: AnalyticsProperties
+  properties?: AnalyticsProperties | undefined
 }): boolean {
   if (isFullTelemetryEnabled(params)) {
     return true
@@ -194,8 +200,8 @@ function valueKind(value: unknown): string {
 }
 
 export function summarizeAnalyticsValue(
-  value: unknown,
-): Record<string, unknown> {
+  value: JSONValue,
+): Record<string, JSONValue> {
   if (value === null || value === undefined) {
     return { kind: valueKind(value) }
   }
@@ -209,7 +215,7 @@ export function summarizeAnalyticsValue(
   }
 
   if (typeof value === 'object') {
-    const keys = Object.keys(value as Record<string, unknown>)
+    const keys = Object.keys(value as Record<string, JSONValue>)
     return {
       kind: 'object',
       keyCount: keys.length,

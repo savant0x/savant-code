@@ -48,6 +48,7 @@ const siblingPath = candidates.find((p) => existsSync(p))
 // disk paths, but pre-init silently bailed, meaning module-init time
 // gives different values. argv[0] alone wasn't enough to fix it.
 if (process.argv.includes('--smoke-tree-sitter')) {
+  // eslint-disable-next-line no-console -- pre-init diagnostic; logger is not available this early
   console.error(
     `[pre-init diag] argv[0]=${process.argv[0]}\n` +
       `[pre-init diag] execPath=${process.execPath}\n` +
@@ -83,6 +84,7 @@ if (siblingPath) {
       buf.byteLength,
     )
   } catch (err) {
+    // eslint-disable-next-line no-console -- pre-init diagnostic; logger is not available this early
     console.error(
       '[tree-sitter pre-init] readFileSync failed for sibling wasm at',
       siblingPath,

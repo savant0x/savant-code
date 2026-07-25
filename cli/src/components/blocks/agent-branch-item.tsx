@@ -9,7 +9,7 @@ import { BORDER_CHARS } from '../../utils/ui-constants'
 import { Button } from '../button'
 import { CollapseButton } from '../collapse-button'
 import { ShimmerText } from '../shimmer-text'
-import { isTextRenderable, renderExpandedContent } from './block-helpers'
+import {renderExpandedContent} from './block-helpers'
 
 interface AgentBranchItemProps {
   name: string

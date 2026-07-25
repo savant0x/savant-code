@@ -282,7 +282,7 @@ export const fullToolList = (
         schema: ensureZodSchema(toolDef.inputSchema as Record<string, JSONValue>),
         description: toolDef.description,
         endsAgentStep: toolDef.endsAgentStep ?? true,
-        exampleInputs: toolDef.exampleInputs,
+        exampleInputs: toolDef.exampleInputs as JSONValue[] | undefined,
       })
     }),]
 

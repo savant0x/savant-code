@@ -160,7 +160,7 @@ export async function runProgrammaticStep(
   if (!generator) {
     const createLogMethod =
       (level: 'debug' | 'info' | 'warn' | 'error') =>
-      // eslint-disable-next-line savant/no-unknown-in-signatures -- Logging trust boundary: agent templates may emit arbitrary data structures
+       
       (data: unknown, msg?: string) => {
         const logValue = toLogValue(data)
         const jsonValue = safeToJSONValue(data)
@@ -195,7 +195,7 @@ export async function runProgrammaticStep(
     generator = generatorFn({
       agentState,
       prompt,
-      params: toolCallParams,
+      params: toolCallParams as Record<string, JSONValue> | undefined,
       logger: streamingLogger,
     })
     runIdToGenerator[agentState.runId] = generator

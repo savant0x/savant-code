@@ -1,11 +1,20 @@
-/* eslint-disable @typescript-eslint/no-explicit-any -- file utilities: dynamic type schemas */
 import * as os from 'os'
 import * as path from 'path'
 
 import { z } from 'zod/v4'
 
+import { jsonValueSchema } from '../types/json'
+
+import type { AgentDefinition } from '../templates/initial-agents-dir/types/agent-definition'
+import type { StepHandler } from '../types/agent-template'
 import type { SavantCodeFileSystem } from '../types/filesystem'
+import type { JSONValue } from '../types/json'
 import type { SkillsMap } from '../types/skill'
+
+export type ProcessedAgentTemplate = Omit<AgentDefinition, 'handleSteps'> & {
+  handleSteps?: string
+  handleStepsFn?: StepHandler
+}
 
 export const FileTreeNodeSchema: z.ZodType<FileTreeNode> = z.object({
   name: z.string(),
@@ -46,10 +55,10 @@ export const customToolDefinitionsSchema = z
       // inputSchema can be a Zod schema (from MCP tools) or a JSON Schema object
       // (from SDK custom tools that have been serialized). The agent-runtime
       // converts JSON schemas to Zod using ensureZodSchema() before use.
-      inputSchema: z.custom<z.ZodType | Record<string, unknown>>(),
+      inputSchema: z.custom<z.ZodType | Record<string, JSONValue>>(),
       endsAgentStep: z.boolean().optional().default(false),
       description: z.string().optional(),
-      exampleInputs: z.record(z.string(), z.any()).array().optional(),
+      exampleInputs: z.record(z.string(), jsonValueSchema).array().optional(),
     }),
   )
   .default(() => ({}))
@@ -67,9 +76,9 @@ export const ProjectFileContextSchema = z.object({
     .optional(),
   knowledgeFiles: z.record(z.string(), z.string()),
   userKnowledgeFiles: z.record(z.string(), z.string()).optional(),
-  agentTemplates: z.record(z.string(), z.any()).default(() => ({})),
+  agentTemplates: z.record(z.string(), z.custom<object>()).default(() => ({})),
   customToolDefinitions: customToolDefinitionsSchema,
-  skills: z.record(z.string(), z.any()).optional(),
+  skills: z.custom<SkillsMap>().optional(),
   gitChanges: z.object({
     status: z.string(),
     diff: z.string(),
@@ -99,7 +108,7 @@ export type ProjectFileContext = {
   tokenCallers?: Record<string, Record<string, string[]>>
   knowledgeFiles: Record<string, string>
   userKnowledgeFiles?: Record<string, string>
-  agentTemplates: Record<string, any>
+  agentTemplates: Record<string, object>
   customToolDefinitions: CustomToolDefinitions
   skills?: SkillsMap
   gitChanges: {

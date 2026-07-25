@@ -7,6 +7,8 @@
 
 import { z } from 'zod/v4'
 
+import { jsonValueSchema, type JSONValue } from '../types/json'
+
 import type { MCPConfig } from './mcp'
 import type { Model } from '../old-constants'
 import type { ToolResultOutput } from './messages/content-part'
@@ -108,7 +110,7 @@ export type OpenRouterProviderOptions = {
  */
 export type AgentTemplate<
   P = string | undefined,
-  T = Record<string, unknown> | undefined,
+  T = Record<string, JSONValue> | undefined,
 > = {
   id: AgentTemplateType
   displayName: string
@@ -173,7 +175,7 @@ export const GenerateNSchema = z.object({
 
 export const HandleStepsToolCallSchema = z.object({
   toolName: z.string().min(1),
-  input: z.record(z.string(), z.any()),
+  input: z.record(z.string(), jsonValueSchema),
   includeToolCall: z.boolean().optional(),
 })
 
@@ -200,7 +202,7 @@ export type StepGenerator = Generator<
 
 export type StepHandler<
   P = string | undefined,
-  T = Record<string, unknown> | undefined,
+  T = Record<string, JSONValue> | undefined,
 > = (context: {
   agentState: AgentState
   prompt: P

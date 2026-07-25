@@ -1,11 +1,11 @@
 import path from 'path'
 
-import { runBuffBench } from './run-buffbench'
+import { runBenchmark } from './run-benchmark'
 
 async function main() {
   const saveTraces = process.argv.includes('--save-traces')
 
-  await runBuffBench({
+  await runBenchmark({
     evalDataPaths: [path.join(__dirname, 'eval-savant-code.json')],
     agents: ['savant-kimi-2-7-code'],
     taskIds: ['server-agent-validation'],
@@ -17,7 +17,7 @@ async function main() {
 
 if (import.meta.main) {
   main().catch((error) => {
-    console.error('Error running buffbench:', error)
+    console.error('Error running benchmark:', error)
     process.exit(1)
   })
 }

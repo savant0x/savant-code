@@ -1,4 +1,4 @@
-/* eslint-disable savant/no-unknown-in-signatures -- cache debug utility: JSON serialization of arbitrary shapes */
+ 
 import type { JSONValue } from '../types/json'
 
 type SerializableValue = JSONValue
@@ -38,7 +38,7 @@ function normalizeForJson(value: unknown): SerializableValue {
 
   if (typeof value === 'object') {
     return Object.fromEntries(
-      Object.entries(value as Record<string, unknown>).map(([key, entryValue]) => [
+      Object.entries(value as SerializableRecord).map(([key, entryValue]) => [
         key,
         normalizeForJson(entryValue),
       ]),

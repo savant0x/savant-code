@@ -34,6 +34,7 @@ export function countTokens(text: string): number {
     }
     return count
   } catch (e) {
+    // eslint-disable-next-line no-console -- token counter fallback; no logger available in this utility
     console.error('Error counting tokens', e)
     return Math.ceil(text.length / 3)
   }
@@ -70,7 +71,7 @@ export function countTokensMessages(messages: Message[]): number {
       continue
     }
 
-    for (const part of content as Array<Record<string, unknown>>) {
+    for (const part of content as Array<Record<string, JSONValue>>) {
       switch (part.type) {
         case 'text':
         case 'reasoning':

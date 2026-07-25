@@ -11,6 +11,7 @@
  * Hard truncation at 30 chars + '…' suffix.
  */
 
+import type { JSONValue } from '@savant-code/common/types/json'
 import type { PrintModeEvent } from '@savant-code/common/types/print-mode'
 import type { AgentActivity, AgentState } from '@savant-code/common/types/session-state'
 
@@ -88,8 +89,6 @@ function truncate(s: string, max: number = TARGET_DISPLAY_MAX): string {
  *   - the input is missing the allowlisted field,
  *   - the input contains a sensitive-style free-form field with no safe field.
  */
-import type { JSONValue } from '@savant-code/common/types/json'
-
 export function extractAllowlistedTarget(
   toolName: string,
   input: Record<string, JSONValue> | null | undefined,
@@ -105,7 +104,7 @@ export function extractAllowlistedTarget(
     if (Array.isArray(agents) && agents.length > 0) {
       const first = agents[0]
       if (first && typeof first === 'object') {
-        const agentType = (first as Record<string, unknown>).agent_type
+        const agentType = (first as Record<string, JSONValue>).agent_type
         if (typeof agentType === 'string') return truncate(agentType)
       }
     }
@@ -221,7 +220,7 @@ export function toolActivity(
   if (toolName === 'spawn_agents' || toolName === 'spawn_inline_subagent') {
     const firstAgentType =
       Array.isArray(input?.agents) && input.agents.length > 0
-        ? (input.agents[0] as Record<string, unknown>)?.agent_type
+        ? (input.agents[0] as Record<string, JSONValue>)?.agent_type
         : undefined
     const activity: AgentActivity = {
       kind: 'subagent',

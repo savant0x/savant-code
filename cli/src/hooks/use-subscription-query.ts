@@ -1,7 +1,7 @@
 import { useActivityQuery } from './use-activity-query'
-import { isDirectProviderMode } from '../utils/env'
 import { getAuthToken } from '../utils/auth'
 import { IS_SAVANT_FREE } from '../utils/constants'
+import { isDirectProviderMode } from '../utils/env'
 import { logger as defaultLogger } from '../utils/logger'
 import { getApiClient } from '../utils/savant-code-api'
 

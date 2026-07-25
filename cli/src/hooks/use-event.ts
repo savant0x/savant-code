@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any -- event hook: generic handler types */
 import { useCallback, useRef } from 'react'
 
 /**
@@ -20,7 +19,9 @@ import { useCallback, useRef } from 'react'
  * // handleClick has a stable reference, so it won't cause child re-renders
  * <ChildComponent onClick={handleClick} />
  */
-export function useEvent<T extends (...args: any[]) => any>(callback: T): T {
+export function useEvent<T extends (...args: never[]) => unknown>(
+  callback: T,
+): T {
   const callbackRef = useRef<T>(callback)
 
   // Update the ref to the latest callback on every render
@@ -29,7 +30,8 @@ export function useEvent<T extends (...args: any[]) => any>(callback: T): T {
 
   // Return a stable function that calls the latest callback
   return useCallback(
-    ((...args: any[]) => callbackRef.current(...args)) as T,
+    ((...args: Parameters<T>) =>
+      (callbackRef.current as T)(...args)) as T,
     [], // Empty deps array ensures the function identity is stable
   )
 }

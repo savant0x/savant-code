@@ -27,7 +27,7 @@ type CacheDebugMessageSnapshot = {
 
 type CacheDebugPreConversionSnapshot = {
   systemPrompt: string
-  toolDefinitions: Record<string, unknown>
+  toolDefinitions: Record<string, JSONValue>
   messages: CacheDebugMessageSnapshot[]
 }
 

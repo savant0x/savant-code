@@ -316,7 +316,7 @@ interface CommitWithSource {
   evalDataPath: string
 }
 
-export async function runBuffBench(options: {
+export async function runBenchmark(options: {
   evalDataPaths: string[]
   agents: string[]
   taskConcurrency?: number

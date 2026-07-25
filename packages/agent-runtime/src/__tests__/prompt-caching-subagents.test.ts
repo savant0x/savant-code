@@ -146,7 +146,7 @@ describe('Prompt Caching for Subagents with inheritParentSystemPrompt', () => {
     const sessionState = getInitialSessionState(mockFileContext)
 
     // Run parent agent first to establish system prompt
-    const parentResult = await loopAgentSteps({
+    const _parentResult = await loopAgentSteps({
       ...loopAgentStepsBaseParams,
       userInputId: 'test-parent',
       prompt: 'Parent task',
@@ -215,7 +215,7 @@ describe('Prompt Caching for Subagents with inheritParentSystemPrompt', () => {
     mockLocalAgentTemplates['standalone-child'] = standaloneChild
 
     // Run parent agent first
-    const parentResult = await loopAgentSteps({
+    const _parentResult = await loopAgentSteps({
       ...loopAgentStepsBaseParams,
       userInputId: 'test-parent',
       prompt: 'Parent task',
@@ -369,7 +369,7 @@ describe('Prompt Caching for Subagents with inheritParentSystemPrompt', () => {
     const sessionState = getInitialSessionState(mockFileContext)
 
     // Run parent agent
-    const parentResult = await loopAgentSteps({
+    const _parentResult = await loopAgentSteps({
       ...loopAgentStepsBaseParams,
       userInputId: 'test-parent',
       prompt: 'Parent task',
@@ -511,7 +511,7 @@ describe('Prompt Caching for Subagents with inheritParentSystemPrompt', () => {
     mockLocalAgentTemplates['full-inherit-child'] = fullInheritChild
 
     // Run parent agent first with some message history
-    const parentResult = await loopAgentSteps({
+    const _parentResult = await loopAgentSteps({
       ...loopAgentStepsBaseParams,
       userInputId: 'test-parent',
       prompt: 'Parent task',

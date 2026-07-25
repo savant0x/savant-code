@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any -- activity query: dynamic activity shapes */
 import { useCallback, useEffect, useRef, useSyncExternalStore } from 'react'
 
 import { isUserActive, subscribeToActivity } from '../utils/activity-tracker'
@@ -84,15 +83,15 @@ function getKeySnapshot<T>(key: string): KeySnapshot<T> {
   const fetching = cache.fetchingKeys.has(key)
 
   const memo = snapshotMemo.get(key)
-  if (memo && memo.entryRef === (entry as any) && memo.fetching === fetching) {
+  if (memo && memo.entryRef === entry && memo.fetching === fetching) {
     return memo.snap as KeySnapshot<T>
   }
 
   const snap: KeySnapshot<T> = { entry, isFetching: fetching }
   snapshotMemo.set(key, {
-    entryRef: entry as any,
+    entryRef: entry,
     fetching,
-    snap: snap as any,
+    snap: snap as KeySnapshot<unknown>,
   })
   return snap
 }

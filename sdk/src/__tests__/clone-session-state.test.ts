@@ -2,9 +2,12 @@ import { getInitialSessionState } from '@savant-code/common/types/session-state'
 import { getStubProjectFileContext } from '@savant-code/common/util/file'
 import { describe, expect, it } from 'bun:test'
 
+
 import { cloneSessionState } from '../run'
 
+import type { JSONValue } from '@savant-code/common/types/json'
 import type { SessionState } from '@savant-code/common/types/session-state'
+import type z from 'zod/v4'
 
 type TestContentBlock =
   | { type: 'text'; text: string }
@@ -67,10 +70,10 @@ describe('cloneSessionState', () => {
     // MCP tools can place Zod schemas (with methods) in customToolDefinitions.
     // Sharing fileContext means this never affects the clone path.
     type FileContextWithTools = typeof source.fileContext & {
-      customToolDefinitions: Record<string, { inputSchema: { parse: () => Record<string, unknown>; _def: Record<string, unknown> } }>
+      customToolDefinitions: Record<string, { inputSchema: z.ZodType | Record<string, JSONValue> }>
     }
     ;(source.fileContext as unknown as FileContextWithTools).customToolDefinitions = {
-      mcpTool: { inputSchema: { parse: () => ({}), _def: {} } },
+      mcpTool: { inputSchema: { parse: () => ({}), _def: {} } as unknown as z.ZodType },
     }
 
     const clone = cloneSessionState(source)

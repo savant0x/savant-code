@@ -1,5 +1,5 @@
 import { SimpleToolCallItem } from './tool-call-item'
-import { defineToolComponent } from './types'
+import { defineToolComponent, getString } from './types'
 
 import type { ToolRenderConfig } from './types'
 
@@ -11,10 +11,9 @@ export const SkillComponent = defineToolComponent({
   toolName: 'skill',
 
   render(toolBlock): ToolRenderConfig {
-    const input = toolBlock.input as any
+    const input = toolBlock.input
 
-    const skillName =
-      typeof input?.name === 'string' ? input.name.trim() : ''
+    const skillName = getString(input, 'name')?.trim() ?? ''
 
     if (!skillName) {
       return { content: null }

@@ -22,7 +22,7 @@ export const applyPatchResultSchema = z.union([
 const toolName = 'apply_patch'
 const endsAgentStep = false
 
-const operationSchema = z.discriminatedUnion('type', [
+export const applyPatchOperationSchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('create_file'),
     path: z.string().min(1, 'Path cannot be empty'),
@@ -39,11 +39,11 @@ const operationSchema = z.discriminatedUnion('type', [
   }),
 ])
 
-export type ApplyPatchOperation = z.infer<typeof operationSchema>
+export type ApplyPatchOperation = z.infer<typeof applyPatchOperationSchema>
 
 const inputSchema = z
   .object({
-    operation: operationSchema.describe(
+    operation: applyPatchOperationSchema.describe(
       'The file operation to perform. type is one of create_file, update_file, or delete_file.',
     ),
   })

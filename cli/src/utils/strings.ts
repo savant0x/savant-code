@@ -1,4 +1,18 @@
+import { statSync } from 'fs'
 import path from 'path'
+
+
+import {
+  getFileOrFolderPathFromText,
+  getImageFilePathFromText,
+  hasClipboardImage,
+  readClipboardFilePath,
+  readClipboardImageFilePath,
+  readClipboardText,
+} from './clipboard-image'
+import { isImageFile } from './image-handler'
+
+import type { InputValue } from '../types/store'
 
 /** Max number of lines to show in collapsed previews */
 export const MAX_COLLAPSED_LINES = 3
@@ -18,20 +32,6 @@ export function truncateToLines(
   }
   return lines.slice(0, maxLines).join('\n').trimEnd() + '...'
 }
-
-import { statSync } from 'fs'
-
-import {
-  getFileOrFolderPathFromText,
-  getImageFilePathFromText,
-  hasClipboardImage,
-  readClipboardFilePath,
-  readClipboardImageFilePath,
-  readClipboardText,
-} from './clipboard-image'
-import { isImageFile } from './image-handler'
-
-import type { InputValue } from '../types/store'
 
 export function getSubsequenceIndices(
   str: string,

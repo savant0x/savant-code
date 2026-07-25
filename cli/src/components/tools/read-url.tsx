@@ -2,7 +2,6 @@ import { SimpleToolCallItem } from './tool-call-item'
 import { defineToolComponent } from './types'
 
 import type { ToolRenderConfig } from './types'
-import type { ChatTheme } from '../../types/theme-system'
 
 /**
  * UI component for read_url tool.

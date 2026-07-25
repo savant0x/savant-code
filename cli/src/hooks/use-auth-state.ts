@@ -96,7 +96,7 @@ export const useAuthState = ({
     (loggedInUser: User) => {
       // Identify first (aliases the pre-login anonymous history to the real
       // user id) so the login event below is attributed to the user.
-      if (loggedInUser.id && loggedInUser.email) {
+      if (loggedInUser.id && typeof loggedInUser.email === 'string') {
         setAuthLoggerContext({
           userId: loggedInUser.id,
           email: loggedInUser.email,
@@ -105,7 +105,7 @@ export const useAuthState = ({
 
       // Track successful login
       trackEvent(AnalyticsEvent.LOGIN, {
-        userId: loggedInUser.id,
+        userId: loggedInUser.id ?? '',
         via: 'modal',
         hasEmail: Boolean(loggedInUser.email),
         hasName: Boolean(loggedInUser.name),

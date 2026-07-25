@@ -10,6 +10,7 @@ import { initialSessionState } from '../run-state'
 import type { MockStatResult } from '@savant-code/common/testing/mock-types'
 import type { Logger } from '@savant-code/common/types/contracts/logger'
 import type { SavantCodeFileSystem } from '@savant-code/common/types/filesystem'
+import type { ProcessedAgentTemplate } from '@savant-code/common/util/file'
 
 describe('Initial Session State', () => {
   let mockFs: SavantCodeFileSystem
@@ -300,7 +301,7 @@ describe('Initial Session State', () => {
       sessionState.fileContext.agentTemplates['custom-agent'],
     ).toBeDefined()
     expect(
-      sessionState.fileContext.agentTemplates['custom-agent'].displayName,
+      (sessionState.fileContext.agentTemplates['custom-agent'] as ProcessedAgentTemplate).displayName,
     ).toBe('Custom Agent')
   })
 

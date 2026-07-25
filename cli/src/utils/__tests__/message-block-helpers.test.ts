@@ -44,7 +44,7 @@ describe('getAgentBaseName', () => {
   })
 
   test('handles scoped name without version', () => {
-    expect(getAgentBaseName('savant-code/file-picker')).toBe('scout')
+    expect(getAgentBaseName('savant-code/scout')).toBe('scout')
   })
 
   test('handles empty string', () => {
@@ -1046,7 +1046,7 @@ describe('transformAskUserBlocks', () => {
     ]
     const result = transformAskUserBlocks(blocks, {
       toolCallId: 'tool-123',
-      resultValue: { answers: ['Yes'] },
+      resultValue: { answers: [{ questionIndex: 0, selectedOption: 'Yes' }] },
     })
     expect((result[0] as AgentContentBlock).blocks![0].type).toBe('ask-user')
   })

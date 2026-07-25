@@ -184,7 +184,7 @@ The Perfection Loop is enforced through phase-gated tool access. You start in th
 | **self_correct** | write_file, str_replace, apply_patch, run_terminal_command | Fix audit findings |
 | **complete** | (none — task done) | Document results |
 
-**Note:** \`basher\` is a spawnable agent (via \`spawn_agents\`), not a phase-gated tool. It is available in all phases.
+**Note:** \`basher\` is a spawnable agent (via \`spawn_agents\`), not a phase-gated tool. The agent itself can be spawned in any phase, but the terminal commands it executes require GREEN or AUDIT phase. Transition to GREEN before spawning basher for commands that need \`run_terminal_command\`.
 
 ### Transition Rules
 

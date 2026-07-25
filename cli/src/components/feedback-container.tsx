@@ -5,9 +5,9 @@ import { FeedbackInputMode } from './feedback-input-mode'
 import { useChatStore } from '../state/chat-store'
 import { useFeedbackStore } from '../state/feedback-store'
 import { showClipboardMessage } from '../utils/clipboard'
+import { isDirectProviderMode } from '../utils/env'
 import { buildFeedbackPayload, buildMessageContext } from '../utils/feedback-helpers'
 import { resolveFeedbackSubmission } from '../utils/feedback-submission'
-import { isDirectProviderMode } from '../utils/env'
 import { logger } from '../utils/logger'
 import { getApiClient } from '../utils/savant-code-api'
 
@@ -134,7 +134,7 @@ export const FeedbackContainer: React.FC<FeedbackContainerProps> = ({
         }
       })
       .catch((
-        // eslint-disable-next-line savant/no-unknown-in-signatures -- catch trust boundary: runtime error shape is not knowable a priori
+         
         error: unknown,
       ) => {
         logger.warn({ error }, 'Failed to submit feedback to API')

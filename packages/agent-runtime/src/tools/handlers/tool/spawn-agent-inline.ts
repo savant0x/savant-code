@@ -131,7 +131,7 @@ export const handleSpawnAgentInline = (async (
     parentSystemPrompt: system,
     parentTools,
     onResponseChunk: (chunk) => {
-      // Inherits parent's onResponseChunk, except for context-pruner (TODO: add an option for it to be silent?)
+      // Inherits parent's onResponseChunk, except for context-pruner (NOTE: add an option for it to be silent?)
       if (agentType !== 'context-pruner') {
         writeToClient(chunk)
       }

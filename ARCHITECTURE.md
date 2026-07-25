@@ -208,8 +208,8 @@ The filesystem under `agents/` may also contain **helper tool libraries** which 
 | Helper Dir | Consumed By | Notes |
 |------------|-------------|-------|
 | `browser-use/` | `agents/savant/savant.ts:74`, `agents/context-pruner.ts`, `common/src/constants/free-agents.ts`, `common/src/__tests__/free-agents.test.ts` | Browser automation helper used by Orchestrator + context-pruner |
-| `editor/` | `cli/src/commands/init.ts` (scaffolding), `agents/__tests__/context-pruner.test.ts`, `evals/buffbench/eval-savant-code-hard.json` | Editor scaffolding helper used by `init` command |
-| `file-explorer/` | `common/src/constants/agents.ts`, `evals/buffbench/*.json` | File listing helper consumed by agent-registry constants |
+| `editor/` | `cli/src/commands/init.ts` (scaffolding), `agents/__tests__/context-pruner.test.ts`, `evals/benchmark/eval-savant-code-hard.json` | Editor scaffolding helper used by `init` command |
+| `file-explorer/` | `common/src/constants/agents.ts`, `evals/benchmark/*.json` | File listing helper consumed by agent-registry constants |
 | `librarian/` | `agents/context-pruner.ts` | Knowledge/context helper used by context-pruner |
 | `types/` | `agents/base-chat.ts`, `agents/savant/savant.ts`, `agents/savant/savant-deep.ts`, `agents/basher.ts`, `agents/browser-use/browser-use.ts` | Type-only shared imports across all agents + basher |
 

@@ -151,7 +151,7 @@ describe('gravity_index tool', () => {
     expect(spy.mock.calls[0]?.[0]?.input).not.toHaveProperty('external_user_id')
   })
 
-  test('tags base-chat traffic with the freebuff_chat surface', async () => {
+  test('tags base-chat traffic with the savant_free_chat surface', async () => {
     const spy = spyOn(webApi, 'callGravityIndexAPI').mockResolvedValue({
       result: { search_id: 'search-1' },
     })
@@ -199,14 +199,14 @@ describe('gravity_index tool', () => {
         input: expect.objectContaining({
           external_user_id: 'test-fingerprint',
           metadata: expect.objectContaining({
-            surface: 'freebuff_chat',
+            surface: 'savant_free_chat',
           }),
         }),
       }),
     )
   })
 
-  test('tags savant-free traffic with the freebuff_web surface and forwards external_user_id', async () => {
+  test('tags savant-free traffic with the savant_free_web surface and forwards external_user_id', async () => {
     const spy = spyOn(webApi, 'callGravityIndexAPI').mockResolvedValue({
       result: { search_id: 'search-1' },
     })
@@ -257,7 +257,7 @@ describe('gravity_index tool', () => {
           // attribution instead of letting it collapse onto the service account.
           external_user_id: 'test-fingerprint',
           metadata: expect.objectContaining({
-            surface: 'freebuff_web',
+            surface: 'savant_free_web',
           }),
         }),
       }),

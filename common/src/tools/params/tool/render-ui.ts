@@ -1,5 +1,6 @@
 import z from 'zod/v4'
 
+import { jsonValueSchema } from '../../../types/json'
 import { $getNativeToolCallExampleString, jsonToolResultSchema } from '../utils'
 
 import type { $ToolParams } from '../../constants'
@@ -55,7 +56,7 @@ const tableColumnSchema = z.object({
 const tableWidgetSchema = z.object({
   type: z.literal('table'),
   columns: z.array(tableColumnSchema).describe('Column definitions'),
-  rows: z.array(z.record(z.string(), z.unknown())).describe('Row data objects keyed by column key'),
+  rows: z.array(z.record(z.string(), jsonValueSchema)).describe('Row data objects keyed by column key'),
   title: z.string().optional().describe('Optional table title'),
 })
 

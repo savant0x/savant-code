@@ -1,5 +1,5 @@
 import { SimpleToolCallItem } from './tool-call-item'
-import { defineToolComponent } from './types'
+import { defineToolComponent, getString, getStringArray } from './types'
 import { useTheme } from '../../hooks/use-theme'
 
 import type { ToolRenderConfig } from './types'
@@ -13,15 +13,11 @@ export const ReadSubtreeComponent = defineToolComponent({
   toolName: 'read_subtree',
 
   render(toolBlock): ToolRenderConfig {
-    const input = toolBlock.input as any
-    const paths: string[] = Array.isArray(input?.paths)
-      ? input.paths.filter((p: any) => typeof p === 'string' && p.trim().length)
-      : []
+    const input = toolBlock.input
+    const rawPaths = getStringArray(input, 'paths') ?? []
 
     const displayPath: string =
-      typeof input?.path === 'string' && input.path.trim().length > 0
-        ? input.path.trim()
-        : paths[0] || ''
+      getString(input, 'path')?.trim() || rawPaths[0] || ''
 
     const finalPath = displayPath || '.'
 

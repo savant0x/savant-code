@@ -93,7 +93,7 @@ type NonStringContent<T extends { content: string | readonly object[] }> =
   Omit<T, 'content'> & {
   content: Exclude<T['content'], string>
 }
-type ModelMessageWithAuxiliaryData = (
+export type SavantModelMessage = (
   | SystemModelMessage
   | NonStringContent<UserModelMessage>
   | NonStringContent<AssistantModelMessage>
@@ -126,7 +126,7 @@ function assistantToSavantCodeMessage(
 
 function convertToolResultMessage(
   message: ToolMessage,
-): ModelMessageWithAuxiliaryData[] {
+): SavantModelMessage[] {
   if (message.content.length === 0) {
     return [
       cloneDeep<ToolModelMessage>({
@@ -159,12 +159,12 @@ function convertToolResultMessage(
     }
     c satisfies never
     throw new Error(
-      `Invalid tool output type: ${(c as { type: unknown }).type}`,
+      `Invalid tool output type: ${JSON.stringify(c)}`,
     )
   })
 }
 
-function convertToolMessage(message: Message): ModelMessageWithAuxiliaryData[] {
+function convertToolMessage(message: Message): SavantModelMessage[] {
   if (message.role === 'system') {
     return [
       {
@@ -203,8 +203,8 @@ function convertToolMessage(message: Message): ModelMessageWithAuxiliaryData[] {
 
 function convertToolMessages(
   messages: Message[],
-): ModelMessageWithAuxiliaryData[] {
-  const withoutToolMessages: ModelMessageWithAuxiliaryData[] = []
+): SavantModelMessage[] {
+  const withoutToolMessages: SavantModelMessage[] = []
   for (const message of messages) {
     withoutToolMessages.push(...convertToolMessage(message))
   }
@@ -246,7 +246,7 @@ function wellFormStringsInPlace(value: object): void {
   // indices too, and indexing by string key mutates the element in place.
   // ECHO Law 6 trust-boundary: validate object shape (already enforced by `: object`
   // signature) + null check + recursive object-only descent.
-  const obj = value as Record<string, unknown>
+  const obj = value as Record<string, JSONValue>
   for (const key of Object.keys(obj)) {
     const item = obj[key]
     if (typeof item === 'string') {
@@ -265,11 +265,11 @@ export function convertCbToModelMessages({
   messages: Message[]
   includeCacheControl?: boolean
   logger?: Logger
-}): ModelMessage[] {
-  const toolMessagesConverted: ModelMessageWithAuxiliaryData[] =
+}): SavantModelMessage[] {
+  const toolMessagesConverted: SavantModelMessage[] =
     convertToolMessages(messages)
 
-  const aggregated: ModelMessageWithAuxiliaryData[] = []
+  const aggregated: SavantModelMessage[] = []
   for (const message of toolMessagesConverted) {
     if (aggregated.length === 0) {
       aggregated.push(message)

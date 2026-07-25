@@ -14,7 +14,7 @@ export interface TerminalLinkProps {
   underlineOnHover?: boolean
   isActive?: boolean
   onActivate?: () => void
-  containerStyle?: Record<string, unknown>
+  containerStyle?: Record<string, string | number | undefined>
   lineWrap?: boolean
   inline?: boolean
 }

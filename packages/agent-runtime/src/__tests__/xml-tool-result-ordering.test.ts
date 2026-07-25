@@ -1,5 +1,5 @@
-import { TEST_AGENT_RUNTIME_IMPL } from '@savant-code/common/testing/impl/agent-runtime'
 import { AnalyticsEvent } from '@savant-code/common/constants/analytics-events'
+import { TEST_AGENT_RUNTIME_IMPL } from '@savant-code/common/testing/impl/agent-runtime'
 import { promptSuccess } from '@savant-code/common/util/error'
 import { beforeEach, describe, expect, it } from 'bun:test'
 
@@ -132,7 +132,7 @@ describe('XML tool result ordering', () => {
       }
     }
 
-    for await (const chunk of processStreamWithTools({
+    for await (const _chunk of processStreamWithTools({
       ...agentRuntimeImpl,
       stream,
       processors: {},
@@ -239,7 +239,7 @@ describe('XML tool result ordering', () => {
     )
 
     const streamPromise = (async () => {
-      for await (const chunk of processStreamWithTools({
+      for await (const _chunk of processStreamWithTools({
         ...agentRuntimeImpl,
         stream,
         processors: {},

@@ -8,6 +8,7 @@ import type {
   LoginCodeResponse,
 } from '../utils/savant-code-api'
 import type { Logger } from '@savant-code/common/types/contracts/logger'
+import type { JSONValue } from '@savant-code/common/types/json'
 
 // Re-export for backwards compatibility
 export type LoginUrlResponse = LoginCodeResponse
@@ -26,7 +27,7 @@ export interface GenerateLoginUrlDeps {
    * test-friendly module; callers wire in the real `trackEvent`. Omitted in
    * tests, where it no-ops.
    */
-  trackEvent?: (event: AnalyticsEvent, properties?: Record<string, any>) => void
+  trackEvent?: (event: AnalyticsEvent, properties?: Record<string, JSONValue>) => void
 }
 
 export interface GenerateLoginUrlOptions {
@@ -48,7 +49,7 @@ export async function generateLoginUrl(
 
   // A login attempt has begun. This is the top of the login sub-funnel; the
   // gap between this and a successful `cli.login` is where users are lost.
-  trackEvent?.(AnalyticsEvent.LOGIN_STARTED, { via })
+  trackEvent?.(AnalyticsEvent.LOGIN_STARTED, { via: via ?? null })
 
   const apiClient =
     providedApiClient ??
@@ -67,7 +68,7 @@ export async function generateLoginUrl(
       '❌ Failed to request login URL',
     )
     trackEvent?.(AnalyticsEvent.LOGIN_FAILED, {
-      via,
+      via: via ?? null,
       reason: 'url_request',
       status: response.status,
     })
@@ -80,7 +81,7 @@ export async function generateLoginUrl(
       '❌ Empty response from login URL',
     )
     trackEvent?.(AnalyticsEvent.LOGIN_FAILED, {
-      via,
+      via: via ?? null,
       reason: 'url_empty',
       status: response.status,
     })
@@ -95,7 +96,7 @@ interface PollLoginStatusDeps {
   logger: Logger
   now?: () => number
   apiClient?: SavantCodeApiClient
-  trackEvent?: (event: AnalyticsEvent, properties?: Record<string, any>) => void
+  trackEvent?: (event: AnalyticsEvent, properties?: Record<string, JSONValue>) => void
 }
 
 interface PollLoginStatusOptions {
@@ -110,7 +111,7 @@ interface PollLoginStatusOptions {
 }
 
 export type PollLoginStatusResult =
-  | { status: 'success'; user: Record<string, unknown>; attempts: number }
+  | { status: 'success'; user: Record<string, JSONValue>; attempts: number }
   | { status: 'timeout' }
   | { status: 'aborted' }
 
@@ -148,7 +149,7 @@ export async function pollLoginStatus(
     if (shouldContinue && !shouldContinue()) {
       logger.warn('🛑 Polling aborted by caller')
       trackEvent?.(AnalyticsEvent.LOGIN_ABORTED, {
-        via,
+        via: via ?? null,
         attempts,
         durationMs: now() - startTime,
       })
@@ -158,7 +159,7 @@ export async function pollLoginStatus(
     if (now() - startTime >= timeoutMs) {
       logger.warn('⌛️ Login polling timed out')
       trackEvent?.(AnalyticsEvent.LOGIN_TIMEOUT, {
-        via,
+        via: via ?? null,
         attempts,
         durationMs: now() - startTime,
       })
@@ -192,7 +193,7 @@ export async function pollLoginStatus(
       if (response.data?.user && typeof response.data.user === 'object') {
         return {
           status: 'success',
-          user: response.data.user as Record<string, unknown>,
+          user: response.data.user as Record<string, JSONValue>,
           attempts,
         }
       }

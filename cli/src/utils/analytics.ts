@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any -- analytics: dynamic event property shapes */
 import {
   createPostHogClient,
   type AnalyticsClientWithIdentify,
@@ -16,6 +15,9 @@ import { shouldMirrorAnalyticsEvent } from '@savant-code/common/util/log-mirror'
 import { getOrCreatePersistentAnonymousId } from './anonymous-id'
 import { enqueueClientLog } from './log-shipper'
 
+import type { Logger } from '@savant-code/common/types/contracts/logger'
+import type { JSONValue } from '@savant-code/common/types/json'
+
 
 
 // Re-export types from core for backwards compatibility
@@ -31,7 +33,8 @@ export enum AnalyticsErrorStage {
 
 type AnalyticsErrorContext = {
   stage: AnalyticsErrorStage
-} & Record<string, unknown>
+  [key: string]: JSONValue
+}
 
 type AnalyticsErrorLogger = (
   error: unknown,
@@ -78,9 +81,7 @@ function resolveDeps(): ResolvedAnalyticsDeps {
   }
 }
 
-let loggerModulePromise:
-  | Promise<{ logger: { debug: (data: any, msg?: string, ...args: any[]) => void } }>  
-  | null = null
+let loggerModulePromise: Promise<{ logger: Logger }> | null = null
 
 const loadLogger = () => {
   if (!loggerModulePromise) {
@@ -89,7 +90,7 @@ const loadLogger = () => {
   return loggerModulePromise
 }
 
-function logAnalyticsDebug(message: string, data: Record<string, unknown>) {
+function logAnalyticsDebug(message: string, data: Record<string, JSONValue>) {
   if (!DEBUG_ANALYTICS) {
     return
   }
@@ -147,7 +148,7 @@ export function initAnalytics() {
     logAnalyticsError(error, {
       stage: AnalyticsErrorStage.Init,
       missingEnv: true,
-    })
+    } as AnalyticsErrorContext)
     throw error
   }
 
@@ -178,11 +179,9 @@ export async function flushAnalytics() {
     // This prevents PostHog errors from cluttering the user's console
     logAnalyticsError(error, { stage: AnalyticsErrorStage.Flush })
   }
-}
-
-export function trackEvent(
+}export function trackEvent(
   event: AnalyticsEvent,
-  properties?: Record<string, any>,  
+  properties?: Record<string, JSONValue>,
 ) {
   const { isProd } = resolveDeps()
   const distinctId = getDistinctId()
@@ -193,8 +192,8 @@ export function trackEvent(
       logAnalyticsError(error, {
         stage: AnalyticsErrorStage.Track,
         event,
-        properties,
-      })
+        properties: properties ?? null,
+      } as AnalyticsErrorContext)
       throw error
     }
     return
@@ -209,7 +208,7 @@ export function trackEvent(
     if (DEBUG_ANALYTICS) {
       logAnalyticsDebug(`[analytics] ${event}`, {
         event,
-        properties,
+        properties: properties ?? null,
         distinctId,
       })
     }
@@ -230,8 +229,8 @@ export function trackEvent(
     logAnalyticsError(error, {
       stage: AnalyticsErrorStage.Track,
       event,
-      properties,
-    })
+      properties: properties ?? null,
+    } as AnalyticsErrorContext)
   }
 
   // Mirror analytics events into the Axiom logs sink too (PostHog stays the
@@ -255,13 +254,13 @@ export function trackEvent(
   }
 }
 
-export function identifyUser(userId: string, properties?: Record<string, any>) {  
+export function identifyUser(userId: string, properties?: Record<string, JSONValue>) {  
   if (!client) {
     const error = new Error('Analytics client not initialized')
     logAnalyticsError(error, {
       stage: AnalyticsErrorStage.Identify,
-      properties,
-    })
+      properties: properties ?? null,
+    } as AnalyticsErrorContext)
     throw error
   }
 
@@ -276,8 +275,8 @@ export function identifyUser(userId: string, properties?: Record<string, any>) {
     if (DEBUG_ANALYTICS) {
       logAnalyticsDebug('[analytics] user identified', {
         userId,
-        previousAnonymousId,
-        properties,
+        previousAnonymousId: previousAnonymousId ?? null,
+        properties: properties ?? null,
       })
     }
     return
@@ -302,15 +301,13 @@ export function identifyUser(userId: string, properties?: Record<string, any>) {
   } catch (error) {
     logAnalyticsError(error, {
       stage: AnalyticsErrorStage.Identify,
-      properties,
-    })
+      properties: properties ?? null,
+    } as AnalyticsErrorContext)
   }
-}
-
-export function logError(
-  error: any,  
+}export function logError(
+  error: Error,
   userId?: string,
-  properties?: Record<string, any>,  
+  properties?: Record<string, JSONValue>,
 ) {
   if (!client) {
     return
@@ -327,7 +324,7 @@ export function logError(
     // This prevents PostHog connection issues from cluttering the user's console
     logAnalyticsError(postHogError, {
       stage: AnalyticsErrorStage.CaptureException,
-      properties,
-    })
+      properties: properties ?? null,
+    } as AnalyticsErrorContext)
   }
 }

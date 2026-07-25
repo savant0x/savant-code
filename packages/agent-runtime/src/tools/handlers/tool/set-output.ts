@@ -41,7 +41,7 @@ export const handleSetOutput = (async (params: {
     })
   }
 
-  let finalOutput: unknown // eslint-disable-line savant/no-unknown-in-signatures -- Validation trust boundary: outputSchema narrows this at runtime
+  let finalOutput: unknown  
   if (agentTemplate?.outputSchema) {
     // When outputSchema is defined, validate against it
     try {
@@ -86,12 +86,12 @@ export const handleSetOutput = (async (params: {
   }
 
   // Set the output (completely replaces previous output)
-  agentState.output = finalOutput as Record<string, unknown>
+  agentState.output = finalOutput as Record<string, JSONValue>
 
   return { output: jsonToolResult({ message: 'Output set' }) }
 }) satisfies SavantCodeToolHandlerFunction<ToolName>
 
-// eslint-disable-next-line savant/no-unknown-in-signatures -- Inspection trust boundary: Zod errors carry runtime-attached fields
+ 
 function getZodIssueCount(error: unknown): number {
   if (
     error != null &&

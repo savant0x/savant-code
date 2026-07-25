@@ -108,7 +108,11 @@ export function renderToolComponent(
   }
 
   try {
-    return component.render(toolBlock as any, theme, options) // eslint-disable-line @typescript-eslint/no-explicit-any -- dynamic tool block type per component
+    return component.render(
+      toolBlock as Parameters<typeof component.render>[0],
+      theme,
+      options,
+    )
   } catch (error) {
       logger.error(
         `Error rendering tool component for ${toolBlock.toolName}:`,

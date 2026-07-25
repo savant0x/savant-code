@@ -37,7 +37,7 @@ export function AgentStack({ agents }: AgentStackProps) {
   const theme = useTheme()
 
   return (
-    <box flexDirection="column" gap={1} focusable={false} selectable={false}>
+    <box flexDirection="column" focusable={false} selectable={false}>
       {agents.map((agent, i) => {
         const isActive = agent.active ?? false
         return (

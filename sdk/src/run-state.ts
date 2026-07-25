@@ -1,6 +1,7 @@
 import * as os from 'os'
 import path from 'path'
 
+
 import {
   KNOWLEDGE_FILE_NAMES_LOWERCASE,
   isKnowledgeFile,
@@ -19,17 +20,11 @@ import { loadLocalAgents } from './agents/load-agents'
 import { loadSkills } from './skills/load-skills'
 import { logger } from './utils/logger'
 
-// Re-export for SDK consumers
-export {
-  KNOWLEDGE_FILE_NAMES,
-  PRIMARY_KNOWLEDGE_FILE_NAME,
-  isKnowledgeFile,
-} from '@savant-code/common/constants/knowledge'
-
 import type { CustomToolDefinition } from './custom-tool'
 import type { AgentDefinition } from '@savant-code/common/templates/initial-agents-dir/types/agent-definition'
 import type { Logger } from '@savant-code/common/types/contracts/logger'
 import type { SavantCodeFileSystem } from '@savant-code/common/types/filesystem'
+import type { JSONValue } from '@savant-code/common/types/json'
 import type { Message } from '@savant-code/common/types/messages/savant-code-message'
 import type {
   AgentOutput,
@@ -39,8 +34,16 @@ import type { SavantCodeSpawn } from '@savant-code/common/types/spawn'
 import type {
   CustomToolDefinitions,
   FileTreeNode,
+  ProcessedAgentTemplate,
 } from '@savant-code/common/util/file'
 import type * as fsType from 'fs'
+
+// Re-export for SDK consumers
+export {
+  KNOWLEDGE_FILE_NAMES,
+  PRIMARY_KNOWLEDGE_FILE_NAME,
+  isKnowledgeFile,
+} from '@savant-code/common/constants/knowledge'
 
 /**
  * Given a list of candidate file paths, selects the one with highest priority.
@@ -88,20 +91,20 @@ export type InitialSessionStateOptions = {
  */
 function processAgentDefinitions(
   agentDefinitions: AgentDefinition[],
-): Record<string, any> { // eslint-disable-line @typescript-eslint/no-explicit-any -- dynamic agent template shape per definition
-  const processedAgentTemplates: Record<string, any> = {} // eslint-disable-line @typescript-eslint/no-explicit-any -- dynamic agent template shape per definition
+): Record<string, ProcessedAgentTemplate> {
+  const processedAgentTemplates: Record<string, ProcessedAgentTemplate> = {}
   agentDefinitions.forEach((definition) => {
-    const processedConfig = { ...definition } as Record<string, any> // eslint-disable-line @typescript-eslint/no-explicit-any -- dynamic agent config shape
-    if (
-      processedConfig.handleSteps &&
-      typeof processedConfig.handleSteps === 'function'
-    ) {
+    // Omit the original function-valued handleSteps so the object matches the
+    // ProcessedAgentTemplate shape without a cast.
+    const { handleSteps, ...rest } = definition
+    const processedConfig: ProcessedAgentTemplate = rest
+    if (handleSteps && typeof handleSteps === 'function') {
       // Keep the live function for in-process execution: the stringified form
       // of a bundled function can reference out-of-scope bundler helpers
       // (e.g. esbuild keepNames' `__name`) and fail the runtime's eval.
       // JSON serialization of the session state drops it harmlessly.
-      processedConfig.handleStepsFn = processedConfig.handleSteps
-      processedConfig.handleSteps = processedConfig.handleSteps.toString()
+      processedConfig.handleStepsFn = handleSteps
+      processedConfig.handleSteps = handleSteps.toString()
     }
     if (processedConfig.id) {
       processedAgentTemplates[processedConfig.id] = processedConfig
@@ -123,7 +126,7 @@ function processCustomToolDefinitions(
       // The agent-runtime will wrap this with AI SDK's jsonSchema() helper
       const jsonSchema = z.toJSONSchema(toolDefinition.inputSchema, {
         io: 'input',
-      }) as Record<string, unknown>
+      }) as Record<string, JSONValue>
       delete jsonSchema['$schema']
 
       return [
@@ -153,12 +156,12 @@ const MAX_DISCOVERED_PROJECT_READ_BYTES = 1_000_000
 
 async function computeProjectIndex(params: ProjectIndexInput): Promise<{
   fileTree: FileTreeNode[]
-  fileTokenScores: Record<string, any> // eslint-disable-line @typescript-eslint/no-explicit-any -- dynamic token score shape per model
-  tokenCallers: Record<string, any> // eslint-disable-line @typescript-eslint/no-explicit-any -- dynamic caller info shape per token
+  fileTokenScores: Record<string, Record<string, number>>
+  tokenCallers: Record<string, Record<string, string[]>>
 }> {
   const { cwd, fileTree, filePaths, readFile } = params
-  let fileTokenScores = {}
-  let tokenCallers = {}
+  let fileTokenScores: Record<string, Record<string, number>> = {}
+  let tokenCallers: Record<string, Record<string, string[]>> = {}
 
   if (filePaths.length > 0) {
     try {
@@ -545,19 +548,22 @@ export async function initialSessionState(
     }
   }
 
-  let processedAgentTemplates: Record<string, any> = {} // eslint-disable-line @typescript-eslint/no-explicit-any -- dynamic agent template shape per definition
+  let processedAgentTemplates: Record<string, ProcessedAgentTemplate> = {}
   if (agentDefinitions && agentDefinitions.length > 0) {
     processedAgentTemplates = processAgentDefinitions(agentDefinitions)
   } else {
-    processedAgentTemplates = await loadLocalAgents({ verbose: false })
+    const loadedAgents = await loadLocalAgents({ verbose: false })
+    processedAgentTemplates = processAgentDefinitions(
+      Object.values(loadedAgents),
+    )
   }
   const processedCustomToolDefinitions = processCustomToolDefinitions(
     customToolDefinitions,
   )
 
   let fileTree: FileTreeNode[] = []
-  let fileTokenScores: Record<string, any> = {} // eslint-disable-line @typescript-eslint/no-explicit-any -- dynamic token score shape per model
-  let tokenCallers: Record<string, any> = {} // eslint-disable-line @typescript-eslint/no-explicit-any -- dynamic caller info shape per token
+  let fileTokenScores: Record<string, Record<string, number>> = {}
+  let tokenCallers: Record<string, Record<string, string[]>> = {}
 
   const projectIndex = cwd
     ? getProjectIndexInput({ cwd, fs, logger, projectFiles, discoveredProject })

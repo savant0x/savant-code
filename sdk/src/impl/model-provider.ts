@@ -6,6 +6,7 @@
  * - Default: Requests through SavantCode backend (which routes to OpenRouter)
  */
 
+import { createAnthropic } from '@ai-sdk/anthropic'
 import { BYOK_OPENROUTER_HEADER } from '@savant-code/common/constants/byok'
 import {
   CHATGPT_BACKEND_BASE_URL,
@@ -14,7 +15,6 @@ import {
   isOpenAIProviderModel,
   toOpenAIModelId,
 } from '@savant-code/common/constants/chatgpt-oauth'
-import { createAnthropic } from '@ai-sdk/anthropic'
 import { OPENCODE_GO_PROTOCOLS } from '@savant-code/common/constants/model-config'
 import { isTransientNetworkError } from '@savant-code/common/util/error'
 import {
@@ -32,6 +32,8 @@ import {
   getNvidiaApiKeyFromEnv,
   getOpenCodeGoApiKeyFromEnv,
   getTokenRouterApiKeyFromEnv,
+  getCloudflareApiTokenFromEnv,
+  getCloudflareAccountIdFromEnv,
 } from '../env'
 import {
   createChatGptBackendFetch,
@@ -203,6 +205,25 @@ export async function getModelForRequest(
     }
   }
 
+  if (isCloudflareModel(model)) {
+    const cloudflareKey = getCloudflareApiTokenFromEnv()
+    const cloudflareAccountId = getCloudflareAccountIdFromEnv()
+    if (!cloudflareKey) {
+      throw new Error(
+        'Cloudflare API token not set. Set CLOUDFLARE_API_TOKEN environment variable.',
+      )
+    }
+    if (!cloudflareAccountId) {
+      throw new Error(
+        'Cloudflare account ID not set. Set CLOUDFLARE_ACCOUNT_ID environment variable.',
+      )
+    }
+    return {
+      model: createCloudflareModel(cloudflareKey, cloudflareAccountId, model),
+      isChatGptOAuth: false,
+    }
+  }
+
   // Default: use SavantCode backend
   return {
     model: await createSavantCodeBackendModel(apiKey, model),
@@ -302,6 +323,13 @@ export function isNvidiaModel(model: string): boolean {
 }
 
 /**
+ * Check if a model ID targets Cloudflare Workers AI (prefix: `cloudflare/`).
+ */
+export function isCloudflareModel(model: string): boolean {
+  return model.startsWith('cloudflare/')
+}
+
+/**
  * Create a TokenRouter model.
  * Strips the `tokenrouter/` prefix — the API expects bare model IDs (e.g.
  * `kimi-k2p6`, not `tokenrouter/kimi-k2p6`).
@@ -348,6 +376,33 @@ function createNvidiaModel(
       Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
       'user-agent': `ai-sdk/openai-compatible/${VERSION}/savant-code-nvidia`,
+    }),
+    fetch: fetchWithRetryableNetworkErrors as typeof globalThis.fetch,
+    includeUsage: undefined,
+    supportsStructuredOutputs: false,
+  })
+}
+
+/**
+ * Create a Cloudflare Workers AI model.
+ * Strips the `cloudflare/` prefix and prepends `@cf/` to match Cloudflare's API model naming.
+ * Base URL includes account ID in the path: /client/v4/accounts/{ACCOUNT_ID}/ai/v1/
+ */
+function createCloudflareModel(apiKey: string, accountId: string, model: string): LanguageModel {
+  const apiModelId = `@cf/${model.slice('cloudflare/'.length)}`
+  return new OpenAICompatibleChatLanguageModel(apiModelId, {
+    provider: 'cloudflare',
+    url: ({ path: endpoint }) => {
+      const cleanPath = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint
+      return new URL(
+        cleanPath,
+        `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/v1/`,
+      ).toString()
+    },
+    headers: () => ({
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+      'user-agent': `ai-sdk/openai-compatible/${VERSION}/savant-code-cloudflare`,
     }),
     fetch: fetchWithRetryableNetworkErrors as typeof globalThis.fetch,
     includeUsage: undefined,

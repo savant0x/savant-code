@@ -1,5 +1,6 @@
 import z from 'zod/v4'
 
+import { jsonValueSchema } from '../../../types/json'
 import {
   $getNativeToolCallExampleString,
   coerceToObject,
@@ -15,7 +16,7 @@ const inputSchema = z
     agent_type: z.string().describe('Agent to spawn'),
     prompt: z.string().optional().describe('Prompt to send to the agent'),
     params: z
-      .preprocess(coerceToObject, z.record(z.string(), z.any()))
+      .preprocess(coerceToObject, z.record(z.string(), jsonValueSchema))
       .optional()
       .describe('Parameters object for the agent (if any)'),
   })

@@ -107,14 +107,14 @@ export async function getUserInfoFromApiKey<T extends UserColumn>(
   const inferenceBaseUrl = getInferenceBaseUrlFromEnv()
   if (inferenceBaseUrl) {
     logger.warn('getUserInfoFromApiKey: no-backend mode, returning stub user')
-    const stubUser = {
+    const stubUser: Record<string, string> = {
       id: 'dev',
       email: 'dev@localhost',
       name: 'Dev User',
-    } as any // eslint-disable-line @typescript-eslint/no-explicit-any -- dev-mode stub user shape
+    }
     return Object.fromEntries(
-      fields.map((field) => [field, stubUser[field]]),
-    ) as any // eslint-disable-line @typescript-eslint/no-explicit-any -- dev-mode stub return type
+      fields.map((field) => [field, stubUser[field] ?? null]),
+    ) as Awaited<GetUserInfoFromApiKeyOutput<T>>
   }
 
   const cached = userInfoCache[apiKey]

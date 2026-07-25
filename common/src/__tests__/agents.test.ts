@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'bun:test'
+
 import { ECHO_PROTOCOL_INSTRUCTIONS } from '../constants/agents'
 
 describe('ECHO_PROTOCOL_INSTRUCTIONS', () => {

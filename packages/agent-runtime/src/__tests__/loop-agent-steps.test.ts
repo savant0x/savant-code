@@ -174,7 +174,7 @@ describe('loopAgentSteps - runAgentStep vs runProgrammaticStep behavior', () => 
       'test-agent': mockTemplate,
     }
 
-    const result = await loopAgentSteps({
+    const _result = await loopAgentSteps({
       ...loopAgentStepsBaseParams,
       agentType: 'test-agent',
       localAgentTemplates,
@@ -718,7 +718,7 @@ describe('loopAgentSteps - runAgentStep vs runProgrammaticStep behavior', () => 
     const mockGeneratorFunction = function* () {
       const { nResponses } = yield { type: 'GENERATE_N', n: 3 }
       receivedNResponses = nResponses
-      const step = yield {
+      const _step = yield {
         toolName: 'read_files',
         input: { paths: ['test.txt'] },
       }

@@ -11,7 +11,6 @@
  * the `<ttyPath>.armed` marker before printing "ready" — killing earlier
  * would take the bootstrap down before the watchdog exists.
  */
-/* eslint-disable no-console -- fixture process intentionally prints to stdout */
 import { existsSync } from 'fs'
 
 import {

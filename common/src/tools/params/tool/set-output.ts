@@ -1,5 +1,6 @@
 import z from 'zod/v4'
 
+import { jsonValueSchema } from '../../../types/json'
 import { $getNativeToolCallExampleString } from '../utils'
 
 import type { $ToolParams } from '../../constants'
@@ -23,7 +24,7 @@ const endsAgentStep = false
 // This means both `{ results: [...] }` and `{ data: { results: [...] } }` are accepted.
 const inputSchema = z
   .looseObject({
-    data: z.record(z.string(), z.any()).optional(),
+    data: z.record(z.string(), jsonValueSchema).optional(),
   })
   .describe(
     'JSON object to set as the agent output. The shape of the parameters are specified dynamically further down in the conversation. This completely replaces any previous output. If the agent was spawned, this value will be passed back to its parent. If the agent has an outputSchema defined, the output will be validated against it.',

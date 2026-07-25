@@ -1,11 +1,11 @@
 import { TextAttributes } from '@opentui/core'
+import { getSimpleAgentId } from '@savant-code/common/util/agent-id-parsing'
 import { pluralize } from '@savant-code/common/util/string'
 import React, { useMemo, useRef, useEffect, useState } from 'react'
 
 
 import { Button } from './button'
 import { useTheme } from '../hooks/use-theme'
-import { getSimpleAgentId } from '../utils/agent-id-utils'
 
 import type { LocalAgentInfo } from '../utils/local-agent-registry'
 import type { ScrollBoxRenderable } from '@opentui/core'

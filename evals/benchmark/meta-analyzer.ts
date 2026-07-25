@@ -44,8 +44,8 @@ export interface MetaAnalysisResult {
 }
 
 const metaAnalyzerAgent: AgentDefinition = {
-  id: 'buffbench-meta-analyzer',
-  displayName: 'Buffbench Meta Analyzer',
+  id: 'benchmark-meta-analyzer',
+  displayName: 'Benchmark Meta Analyzer',
   model: 'openai/gpt-5',
   toolNames: ['set_output'],
   inputSchema: {
@@ -242,7 +242,7 @@ Focus on patterns across multiple tasks, not individual task details.`
     const agentOutput: string[] = []
     const analyzerResult = await withTimeout(
       client.run({
-        agent: 'buffbench-meta-analyzer',
+        agent: 'benchmark-meta-analyzer',
         prompt,
         agentDefinitions: [metaAnalyzerAgent],
         handleEvent: (event) => {

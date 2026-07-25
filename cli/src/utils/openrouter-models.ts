@@ -1,5 +1,5 @@
-import { logger } from './logger'
 import { getContextWindowForModel } from './constants'
+import { logger } from './logger'
 
 /**
  * Live OpenRouter model catalog.
@@ -294,8 +294,33 @@ Full metadata unavailable; the model was not found in the cached OpenRouter cata
 }
 
 /**
+ * Strip provider prefixes (tokenrouter/, nvidia/, opencode-go/) and variant
+ * suffixes (-free, -fast, :free) from a model ID to get the canonical
+ * OpenRouter model ID for context-window lookup.
+ *
+ * Examples:
+ *   "tokenrouter/z-ai/glm-5.2-free" → "z-ai/glm-5.2"
+ *   "tokenrouter/openai/gpt-5.5-pro" → "openai/gpt-5.5-pro"
+ *   "z-ai/glm-5.2" → "z-ai/glm-5.2"
+ */
+function toCanonicalModelId(modelId: string): string {
+  let id = modelId
+  // Strip gateway provider prefixes: tokenrouter/, nvidia/, opencode-go/
+  id = id.replace(/^(?:tokenrouter|nvidia|opencode-go)\//, '')
+  // Strip variant suffixes: -free, -fast, :free, :beta
+  id = id.replace(/-(?:free|fast|beta)$/, '')
+  id = id.replace(/:(?:free|beta)$/, '')
+  return id
+}
+
+/**
  * Look up a model in the cached gateway catalog by id, falling back to a
  * provider-prefixed match and then a base-family match.
+ *
+ * When the initial match comes from a hardcoded catalog (TokenRouter, OpenCode
+ * Go) that has an *inferred* context length (not from the API), this function
+ * also checks the live OpenRouter catalog for the canonical model ID to find
+ * the real context length.
  */
 export function findGatewayModel(modelId: string): OpenRouterModel | undefined {
   const catalog = getCachedGatewayModels()
@@ -319,13 +344,54 @@ export function findGatewayModel(modelId: string): OpenRouterModel | undefined {
 }
 
 /**
+ * Find the real context length for a model by checking the live OpenRouter
+ * catalog. Strips provider prefixes and variant suffixes to find the base
+ * model (e.g. "tokenrouter/z-ai/glm-5.2-free" → "z-ai/glm-5.2").
+ *
+ * This is called by {@link resolveContextWindowForModel} when the gateway
+ * catalog match has no contextLength or only an inferred one.
+ */
+function findContextLengthFromOpenRouter(modelId: string): number | undefined {
+  const openRouterCatalog = getCachedOpenRouterModels()
+  if (openRouterCatalog.length === 0) return undefined
+
+  const canonical = toCanonicalModelId(modelId)
+
+  // Exact canonical match
+  const exact = openRouterCatalog.find((m) => m.id === canonical)
+  if (typeof exact?.contextLength === 'number') return exact.contextLength
+
+  // Try without any provider prefix at all
+  const withoutProvider = canonical.replace(/^[a-z0-9-]+\//, '')
+  const byBase = openRouterCatalog.find((m) => m.id === withoutProvider)
+  if (typeof byBase?.contextLength === 'number') return byBase.contextLength
+
+  // Family match: strip version suffix and match by prefix
+  const familyId = canonical.replace(/-\d+(\.\d+)?$/, '')
+  if (familyId && familyId !== canonical) {
+    const family = openRouterCatalog.find((m) => m.id.startsWith(familyId))
+    if (typeof family?.contextLength === 'number') return family.contextLength
+  }
+
+  return undefined
+}
+
+/**
  * Resolve the best-known context window for a model id.
  * Priority:
- * 1. Cached gateway catalog (OpenRouter/TokenRouter/NVIDIA/OpenCode Go)
- * 2. Name-based heuristic fallback
- * 3. 200k default
+ * 1. Live OpenRouter catalog (via canonical model ID lookup)
+ * 2. Cached gateway catalog (TokenRouter/NVIDIA/OpenCode Go)
+ * 3. Name-based heuristic fallback
+ * 4. 200k default
  */
 export function resolveContextWindowForModel(modelId: string): number {
+  // Check the live OpenRouter catalog first — it has the real context lengths
+  // from the API, whereas hardcoded catalogs (TokenRouter, OpenCode Go) use
+  // inferred values that may be wrong (e.g. GLM 5.2 has 1M context, not 128k).
+  const fromOpenRouter = findContextLengthFromOpenRouter(modelId)
+  if (typeof fromOpenRouter === 'number') return fromOpenRouter
+
+  // Fall back to the gateway catalog (may have inferred context lengths)
   const fromCatalog = findGatewayModel(modelId)
   if (typeof fromCatalog?.contextLength === 'number') {
     return fromCatalog.contextLength

@@ -1,3 +1,4 @@
+
 import { describe, expect, it } from 'bun:test'
 import z from 'zod/v4'
 
@@ -6,6 +7,10 @@ import {
   coerceToObject,
   normalizeReplacementAliases,
 } from '../utils'
+
+import type { JSONSchema as JSONSchemaNamespace } from 'zod/v4/core'
+
+type JSONSchema = JSONSchemaNamespace.JSONSchema
 
 describe('coerceToArray', () => {
   it('passes through arrays unchanged', () => {
@@ -141,8 +146,8 @@ describe('coerceToArray with Zod schemas', () => {
       paths: z.preprocess(coerceToArray, z.array(z.string())),
     })
 
-    const plainSchema = z.toJSONSchema(plain, { io: 'input' })
-    const coercedSchema = z.toJSONSchema(coerced, { io: 'input' })
+    const plainSchema = z.toJSONSchema(plain, { io: 'input' }) as JSONSchema
+    const coercedSchema = z.toJSONSchema(coerced, { io: 'input' }) as JSONSchema
     expect(coercedSchema).toEqual(plainSchema)
   })
 })
@@ -158,8 +163,8 @@ describe('coerceToObject with Zod schemas', () => {
         .optional(),
     })
 
-    const plainSchema = z.toJSONSchema(plain, { io: 'input' })
-    const coercedSchema = z.toJSONSchema(coerced, { io: 'input' })
+    const plainSchema = z.toJSONSchema(plain, { io: 'input' }) as JSONSchema
+    const coercedSchema = z.toJSONSchema(coerced, { io: 'input' }) as JSONSchema
     expect(coercedSchema).toEqual(plainSchema)
   })
 })

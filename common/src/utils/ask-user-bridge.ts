@@ -1,10 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any -- ask-user bridge: dynamic response types */
-import type { AskUserQuestion } from '../tools/params/tool/ask-user'
+import type { AskUserQuestion, AskUserResponse } from '../tools/params/tool/ask-user'
 
 export type AskUserRequest = {
   toolCallId: string
   questions: AskUserQuestion[]
-  resolve: (response: any) => void
+  resolve: (response: AskUserResponse) => void
 }
 
 type Listener = (request: AskUserRequest | null) => void
@@ -20,7 +19,7 @@ export const AskUserBridge = {
     })
   },
 
-  submit: (response: any) => {
+  submit: (response: AskUserResponse) => {
     if (pendingRequest) {
       pendingRequest.resolve(response)
       pendingRequest = null

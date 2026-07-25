@@ -5,6 +5,8 @@
 > **Purpose:** Cross-cutting synthesis of the most impactful and novel ideas for improving savant-code
 > **Method:** Independent Explore-agent scans of each repo → cross-cutting theme analysis
 > **⚠️ Archival note (2026-07-23):** The `resources/` directory containing the 16 reference repos has been removed from disk. This synthesis and the companion `feature-parity-report.md` are preserved as historical research. The `docs/reports/repos/` subfolder retains the individual per-repo analysis files. Feature parity gaps identified here may have changed — run a fresh baseline pass before acting on any recommendation.
+>
+> **Superseded (2026-07-25):** A fresh scan of 116 repos was performed on 2026-07-25. The new master synthesis lives at [`adoptable-features-2026-07-25.md`](./adoptable-features-2026-07-25.md) and supersedes this document for the 116-repo scan. This 2026-07-19 master remains as historical research covering the original 16 repos; the 2026-07-25 report covers a broader ecosystem and incorporates spot-verification of high-impact claims against actual source.
 
 ---
 

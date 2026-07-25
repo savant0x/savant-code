@@ -1,5 +1,6 @@
 import { models } from '@savant-code/common/old-constants'
 import { promptSuccess } from '@savant-code/common/util/error'
+import { jsonValueSchema } from '@savant-code/common/types/json'
 import { spyOn } from 'bun:test'
 import z from 'zod/v4'
 
@@ -48,7 +49,7 @@ function buildMockAgentTemplate(params: {
     stepPrompt: '',
     inputSchema: {
       prompt: z.string().optional(),
-      params: z.object({}).passthrough().optional(),
+      params: z.record(z.string(), jsonValueSchema).optional(),
     },
     includeMessageHistory: true,
     inheritParentSystemPrompt: false,

@@ -93,3 +93,17 @@ export const getNvidiaApiKeyFromEnv = (): string | undefined => {
 export const getOpenCodeGoApiKeyFromEnv = (): string | undefined => {
   return process.env['OPENCODE_GO_API_KEY']
 }
+
+/**
+ * Get the Cloudflare Workers AI API token from environment.
+ */
+export const getCloudflareApiTokenFromEnv = (): string | undefined => {
+  return process.env['CLOUDFLARE_API_TOKEN']
+}
+
+/**
+ * Get the Cloudflare account ID from environment.
+ */
+export const getCloudflareAccountIdFromEnv = (): string | undefined => {
+  return process.env['CLOUDFLARE_ACCOUNT_ID']
+}

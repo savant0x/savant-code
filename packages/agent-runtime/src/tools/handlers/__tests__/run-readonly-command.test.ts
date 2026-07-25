@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'bun:test'
+import {describe, expect, it} from 'bun:test'
 
 import { handleRunReadonlyCommand } from '../tool/run-readonly-command'
 
@@ -240,5 +240,40 @@ describe('handleRunReadonlyCommand', () => {
     const value = getJsonValue(result.output)
     expect(value.exitCode).toBe(1)
     expect(value.stderr).toContain('run_readonly_command rejected')
+  })
+
+  it('allows version-checking commands (bun --version, tsc --version, etc.)', async () => {
+    const versionCommands = [
+      'bun --version',
+      'bun -v',
+      'tsc --version',
+      'node --version',
+      'node -v',
+      'npm --version',
+      'npm -v',
+      'npx --version',
+      'pnpm --version',
+      'pnpm -v',
+      'yarn --version',
+      'yarn -v',
+      'deno --version',
+      'cargo --version',
+      'go version',
+      'go --version',
+      'rustc --version',
+      'python --version',
+    ]
+
+    for (const command of versionCommands) {
+      const result = await handleRunReadonlyCommand({
+        previousToolCallFinished: Promise.resolve(),
+        toolCall: makeToolCall(command),
+        requestClientToolCall,
+      } as any)
+
+      const value = getJsonValue(result.output)
+      expect(value.exitCode).toBe(0)
+      expect(value.stdout).toBe('mocked stdout')
+    }
   })
 })

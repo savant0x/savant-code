@@ -2,6 +2,7 @@ import { z } from 'zod/v4'
 
 
 import { ALLOWED_MODEL_PREFIXES, models } from '../old-constants'
+import { jsonValueSchema } from './json'
 import { mcpConfigSchema } from './mcp'
 
 import type { StepHandler } from './agent-template'
@@ -53,10 +54,11 @@ const JsonObjectSchemaSchema = z.intersection(
 const InputSchemaObjectSchema = z
   .looseObject({
     prompt: z
-      .looseObject({
+      .object({
         type: z.literal('string'),
         description: z.string().optional(),
       })
+      .catchall(jsonValueSchema)
       .optional(), // Optional JSON schema for prompt validation
     params: JsonObjectSchemaSchema.optional(), // Optional JSON schema for params validation
   })

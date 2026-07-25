@@ -1,4 +1,4 @@
-/* eslint-disable savant/no-unknown-in-signatures -- axiom-only logger trust boundary: log payloads arrive schema-less from the CLI/agent runtime; `data: unknown` is the only honest shape. 3-condition AND-gate: (i.1) caller type cannot be discovered without coupling to every logger call site; (i.2) narrowing to `JsonValue`/concrete breaks callers that pass Error instances and complex structured metadata; (i.3) runtime narrowing via `isRecord()` + `CONTEXT_PRUNING_FIELDS` value-type checks preserves existing allowlist filtering behavior. */
+ 
 /**
  * Operational events that belong in Axiom but not in product analytics.
  *
@@ -35,7 +35,7 @@ const CONTEXT_PRUNING_FIELDS = {
   newest_entry_forced: 'boolean',
 } as const satisfies Record<string, 'string' | 'number' | 'boolean'>
 
-function isRecord(v: unknown): v is Record<string, unknown> {
+function isRecord(v: unknown): v is Record<string, string | number | boolean> {
   return v != null && typeof v === 'object' && !Array.isArray(v)
 }
 

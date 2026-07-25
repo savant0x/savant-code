@@ -1,9 +1,12 @@
+import { safeParseJSONObject } from '@savant-code/common/util/type-narrowing'
+
 import { SimpleToolCallItem } from './tool-call-item'
 import { defineToolComponent } from './types'
 
 import type { ToolRenderConfig } from './types'
+import type { JSONValue } from '@savant-code/common/types/json'
 
-const asTrimmedString = (value: unknown): string =>
+const asTrimmedString = (value: JSONValue): string =>
   typeof value === 'string' ? value.trim() : ''
 
 const DEFAULT_NAME = 'Services'
@@ -20,12 +23,12 @@ export interface GravityIndexParts {
  * "Search services") and the plain target it acts on, so the action reads as
  * a single natural phrase instead of a "Brand · Verb" subcommand.
  */
-export const getGravityIndexParts = (input: unknown): GravityIndexParts => {
-  if (!input || typeof input !== 'object') {
+export const getGravityIndexParts = (input: JSONValue): GravityIndexParts => {
+  const params = safeParseJSONObject(input)
+  if (!params) {
     return { name: DEFAULT_NAME, description: '' }
   }
 
-  const params = input as Record<string, unknown>
   const action = asTrimmedString(params.action)
 
   switch (action) {

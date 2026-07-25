@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any -- publish command: dynamic error types */
 import { WEBSITE_URL } from '@savant-code/sdk'
 
 import { getUserCredentials } from '../utils/auth'
@@ -6,10 +5,12 @@ import { isDirectProviderMode } from '../utils/env'
 import { loadAgentDefinitions, getLoadedAgentsData } from '../utils/local-agent-registry'
 import { getApiClient, setApiClientAuthToken } from '../utils/savant-code-api'
 
+import type { AgentDefinition } from '@savant-code/common/templates/initial-agents-dir/types/agent-definition'
 import type {
   PublishAgentsErrorResponse,
   PublishAgentsResponse,
 } from '@savant-code/common/types/api/agents/publish'
+import type { JSONValue } from '@savant-code/common/types/json'
 
 export interface PublishResult {
   success: boolean
@@ -24,11 +25,15 @@ export interface PublishResult {
   hint?: string
 }
 
+type PublishableTemplate = Omit<AgentDefinition, 'handleSteps'> & {
+  handleSteps?: string
+}
+
 /**
  * Publish agent templates to the backend
  */
 async function publishAgentTemplates(
-  data: Record<string, any>[],
+  data: PublishableTemplate[],
   authToken: string,
   allLocalAgentIds: string[],
 ): Promise<PublishAgentsResponse & { statusCode?: number }> {
@@ -36,7 +41,7 @@ async function publishAgentTemplates(
   const apiClient = getApiClient()
 
   try {
-    const response = await apiClient.publish(data, allLocalAgentIds)
+    const response = await apiClient.publish(data as Record<string, JSONValue>[], allLocalAgentIds)
 
     if (!response.ok) {
       // Try to use the full error data if available (includes details, hint, etc.)
@@ -67,7 +72,7 @@ async function publishAgentTemplates(
       ...response.data,
       statusCode: response.status,
     }
-  } catch (err: any) {
+  } catch (err) {
     if (err instanceof TypeError && err.message.includes('fetch')) {
       return {
         success: false,
@@ -75,16 +80,23 @@ async function publishAgentTemplates(
       }
     }
 
-    const body = err?.responseBody || err?.body || err
-    const error = body?.error || body?.message || 'Failed to publish'
-    const details = body?.details
-    const hint = body?.hint
+    if (err instanceof Error) {
+      const body = (err as { responseBody?: { error?: string; message?: string; details?: string; hint?: string }; body?: { error?: string; message?: string; details?: string; hint?: string } }).responseBody || (err as { body?: { error?: string; message?: string; details?: string; hint?: string } }).body
+      const error = body?.error || body?.message || 'Failed to publish'
+      const details = body?.details
+      const hint = body?.hint
+
+      return {
+        success: false,
+        error,
+        details,
+        hint,
+      }
+    }
 
     return {
       success: false,
-      error,
-      details,
-      hint,
+      error: 'Failed to publish',
     }
   }
 }
@@ -133,7 +145,7 @@ export async function handlePublish(agentIds: string[]): Promise<PublishResult> 
       }
     }
 
-    const matchingTemplates: Record<string, any> = {}
+    const matchingTemplates: Record<string, PublishableTemplate> = {}
 
     for (const agentId of agentIds) {
       // Find the specific agent
@@ -158,14 +170,14 @@ export async function handlePublish(agentIds: string[]): Promise<PublishResult> 
         }
       }
 
-      // Process the template for publishing
-      const processedTemplate = { ...matchingTemplate }
+      // Process the template for publishing. Drop the runtime handleSteps
+      // function; we'll re-attach it as a serialized string below if present.
+      const { handleSteps, ...matchingTemplateRest } = matchingTemplate
+      const processedTemplate: PublishableTemplate = { ...matchingTemplateRest }
 
       // Convert handleSteps function to string if present
-      if (typeof (matchingTemplate as any).handleSteps === 'function') {
-        ;(processedTemplate as any).handleSteps = (
-          matchingTemplate as any
-        ).handleSteps.toString()
+      if (typeof handleSteps === 'function') {
+        processedTemplate.handleSteps = handleSteps.toString()
       }
 
       matchingTemplates[matchingTemplate.id] = processedTemplate

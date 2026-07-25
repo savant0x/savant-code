@@ -12,6 +12,7 @@ import type {
   MarkdownThemeOverrides,
   ThemeName,
 } from '../types/theme-system'
+import type { JSONValue } from '@savant-code/common/types/json'
 
 /**
  * Check if the terminal supports truecolor (24-bit color).
@@ -501,14 +502,14 @@ const detectJetBrainsTheme = (
 const extractZedTheme = (content: string): ThemeName | null => {
   try {
     const sanitized = stripJsonStyleComments(content)
-    const parsed = JSON.parse(sanitized) as Record<string, unknown>
-    const candidates: unknown[] = []
+    const parsed = JSON.parse(sanitized) as Record<string, JSONValue>
+    const candidates: string[] = []
 
     const themeSetting = parsed.theme
     if (typeof themeSetting === 'string') {
       candidates.push(themeSetting)
     } else if (themeSetting && typeof themeSetting === 'object') {
-      const themeConfig = themeSetting as Record<string, unknown>
+      const themeConfig = themeSetting as Record<string, JSONValue>
       const modeRaw = themeConfig.mode
       if (typeof modeRaw === 'string') {
         const mode = modeRaw.toLowerCase()
@@ -538,12 +539,12 @@ const extractZedTheme = (content: string): ThemeName | null => {
 
     const appearance = parsed.appearance
     if (appearance && typeof appearance === 'object') {
-      const appearanceTheme = (appearance as Record<string, unknown>).theme
+      const appearanceTheme = (appearance as Record<string, JSONValue>).theme
       if (typeof appearanceTheme === 'string') {
         candidates.push(appearanceTheme)
       }
 
-      const preference = (appearance as Record<string, unknown>)
+      const preference = (appearance as Record<string, JSONValue>)
         .theme_preference
       if (typeof preference === 'string') {
         candidates.push(preference)
@@ -552,7 +553,7 @@ const extractZedTheme = (content: string): ThemeName | null => {
 
     const ui = parsed.ui
     if (ui && typeof ui === 'object') {
-      const uiTheme = (ui as Record<string, unknown>).theme
+      const uiTheme = (ui as Record<string, JSONValue>).theme
       if (typeof uiTheme === 'string') {
         candidates.push(uiTheme)
       }
@@ -594,10 +595,10 @@ const detectZedTheme = (
     // and fall back to platform detection
     try {
       const sanitized = stripJsonStyleComments(content)
-      const parsed = JSON.parse(sanitized) as Record<string, unknown>
+      const parsed = JSON.parse(sanitized) as Record<string, JSONValue>
       const themeSetting = parsed.theme
       if (themeSetting && typeof themeSetting === 'object') {
-        const themeConfig = themeSetting as Record<string, unknown>
+        const themeConfig = themeSetting as Record<string, JSONValue>
         const modeRaw = themeConfig.mode
         if (typeof modeRaw === 'string' && modeRaw.toLowerCase() === 'system') {
           return detectPlatformTheme()
@@ -745,7 +746,9 @@ export const parseThemeOverrides = (
 
 const textDecoder = new TextDecoder()
 
-const readSpawnOutput = (output: unknown): string => {
+const readSpawnOutput = (
+  output: Uint8Array | string | null | undefined,
+): string => {
   if (!output) return ''
   if (typeof output === 'string') return output.trim()
   if (output instanceof Uint8Array) return textDecoder.decode(output).trim()

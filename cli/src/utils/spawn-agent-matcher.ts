@@ -2,6 +2,7 @@ import { getAgentBaseName, moveSpawnAgentBlock } from './message-block-helpers'
 
 import type { SpawnAgentInfo } from '../hooks/stream-state'
 import type { ContentBlock } from '../types/chat'
+import type { JSONValue } from '@savant-code/common/types/json'
 
 export interface SpawnAgentMatch {
   tempId: string
@@ -30,7 +31,7 @@ export const resolveSpawnAgentToReal = (options: {
   realAgentId: string
   realAgentType?: string
   parentAgentId?: string
-  params?: Record<string, unknown>
+  params?: Record<string, JSONValue>
   prompt?: string
 }): ContentBlock[] => {
   const {

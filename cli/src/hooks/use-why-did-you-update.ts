@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any -- debug hook: dynamic comparison values */
 import { useEffect, useRef } from 'react'
 
 import { getCliEnv } from '../utils/env'
@@ -29,7 +28,7 @@ import { logger } from '../utils/logger'
  *   return <div>...</div>
  * }
  */
-export function useWhyDidYouUpdate<T extends Record<string, any>>(
+export function useWhyDidYouUpdate<T extends object>(
   componentName: string,
   props: T,
   options: {
@@ -60,17 +59,16 @@ export function useWhyDidYouUpdate<T extends Record<string, any>>(
       if (changedProps.length > 0) {
         const logData = {
           renderCount: renderCount.current,
-          changedProps: changedProps.map((key) => String(key)),
-          propChanges: changedProps.reduce(
-            (acc, key) => {
-              acc[String(key)] = {
-                previous: previousProps.current![key],
-                current: props[key],
-              }
-              return acc
-            },
-            {} as Record<string, { previous: any; current: any }>,
-          ),
+          changedProps: changedProps.map((key) => String(key)),                propChanges: changedProps.reduce(
+              (acc, key) => {
+                acc[String(key)] = {
+                  previous: previousProps.current![key],
+                  current: props[key],
+                }
+                return acc
+              },
+              {} as Record<string, { previous: T[keyof T]; current: T[keyof T] }>,
+            ),
         }
 
         logger[logLevel](
@@ -109,7 +107,7 @@ export function useWhyDidYouUpdate<T extends Record<string, any>>(
  *   return <div>...</div>
  * }
  */
-export function useWhyDidYouUpdateById<T extends Record<string, any>>(
+export function useWhyDidYouUpdateById<T extends object>(
   componentName: string,
   id: string,
   props: T,
@@ -155,7 +153,7 @@ export function useWhyDidYouUpdateById<T extends Record<string, any>>(
                 }
                 return acc
               },
-              {} as Record<string, { previous: any; current: any }>,
+              {} as Record<string, { previous: T[keyof T]; current: T[keyof T] }>,
             ),
           },
           `${componentName} render #${renderCount} [${id}]: ${changedProps.length} ${changedProps.length === 1 ? 'prop' : 'props'} changed`,

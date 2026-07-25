@@ -723,9 +723,9 @@ describe('loadLocalAgents', () => {
         `,
       )
 
-      const consoleErrorSpy = spyOn(console, 'error').mockImplementation(
-        () => {},
-      )
+      // FID-016 Fix E: impl uses logger.error() from '../utils/logger', NOT
+      // console.error(). Spy on the right target.
+      const loggerErrorSpy = spyOn(logger, 'error').mockImplementation(() => {})
 
       await loadLocalAgents({
         agentsPath: agentsDir,
@@ -733,8 +733,8 @@ describe('loadLocalAgents', () => {
         verbose: true,
       })
 
-      expect(consoleErrorSpy).toHaveBeenCalled()
-      const errorMessage: string = consoleErrorSpy.mock.calls.flat().join(' ')
+      expect(loggerErrorSpy).toHaveBeenCalled()
+      const errorMessage: string = loggerErrorSpy.mock.calls.flat().join(' ')
       expect(errorMessage).toContain('Validation failed')
       expect(errorMessage).toContain('invalid-agent')
     })
@@ -754,9 +754,9 @@ describe('loadLocalAgents', () => {
         `,
       )
 
-      const consoleErrorSpy = spyOn(console, 'error').mockImplementation(
-        () => {},
-      )
+      // FID-016 Fix E: impl uses logger.error() from '../utils/logger', NOT
+      // console.error(). Spy on the right target.
+      const loggerErrorSpy = spyOn(logger, 'error').mockImplementation(() => {})
 
       await loadLocalAgents({
         agentsPath: agentsDir,
@@ -765,7 +765,7 @@ describe('loadLocalAgents', () => {
       })
 
       // Should not log validation errors when verbose is false
-      const calls: string = consoleErrorSpy.mock.calls.flat().join(' ')
+      const calls: string = loggerErrorSpy.mock.calls.flat().join(' ')
       expect(calls).not.toContain('Validation failed')
     })
 

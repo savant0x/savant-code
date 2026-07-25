@@ -14,11 +14,16 @@ import { createMarkdownPalette } from '../utils/theme-system'
 import type { ChatMessage } from '../types/chat'
 import type { ChatTheme } from '../types/theme-system'
 import type { MarkdownPalette } from '../utils/markdown-renderer'
-import type { ScrollBoxRenderable } from '@opentui/core'
+import type { ScrollBoxRenderable, ScrollAcceleration } from '@opentui/core'
 
 export interface UseChatUIOptions {
   messages: ChatMessage[]
   isUserCollapsing: () => boolean
+}
+
+/** OpenTUI ScrollBox props exposed by the chat UI hook. */
+export interface ChatScrollboxProps {
+  scrollAcceleration?: ScrollAcceleration
 }
 
 export interface UseChatUIReturn {
@@ -27,7 +32,7 @@ export interface UseChatUIReturn {
   scrollToLatest: () => void
   scrollUp: () => void
   scrollDown: () => void
-  appliedScrollboxProps: Record<string, unknown>
+  appliedScrollboxProps: ChatScrollboxProps
   isAtBottom: boolean
   hasOverflow: boolean
 

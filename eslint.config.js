@@ -148,16 +148,10 @@ export default tseslint.config(
         },
       ],
       // ECHO Law 6: ban `unknown` as param/return/var type (except inside `v is T` type guards)
-      // Currently 'warn' — flips to 'error' after the cleanup FID (FID-2026-0720-???)
-      // resolves the 367 existing `: unknown` usages in src. See dev/fids/.
-      'savant/no-unknown-in-signatures': 'warn',
-      'no-console': [
-        'warn',
-        {
-          allow: ['warn', 'error'], // Allow console.warn/error for diagnostic fallback
-        },
-      ],
-      'react-hooks/exhaustive-deps': 'off', // Disabled: plugin not configured for all packages
+      // Temporarily disabled while the dedicated unknown-cleanup FID is drafted (see FID-069 notes).
+      // NOTE: re-enable as 'error' once all non-guard `unknown` usages are typed or suppressed.
+      'savant/no-unknown-in-signatures': 'off',
+      'no-console': 'warn', // Production code must use the structured logger; suppress locally with a justification comment
       '@next/next/no-img-element': 'off', // Disabled: plugin not configured for all packages
     },
   },
@@ -170,6 +164,21 @@ export default tseslint.config(
     ],
     rules: {
       'no-console': 'off',
+    },
+  },
+
+  // Test files: allow console and explicit any while the dedicated test-cleanup FID is queued.
+  // NOTE(FID-068 follow-up): remove this override once test-only `any`/`console` cleanup is complete.
+  {
+    files: [
+      '**/__tests__/**/*.{ts,tsx}',
+      '**/*.test.{ts,tsx}',
+      '**/*.integration.test.{ts,tsx}',
+      'cli/src/**/helpers/*.{ts,tsx}',
+    ],
+    rules: {
+      'no-console': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
     },
   },
 

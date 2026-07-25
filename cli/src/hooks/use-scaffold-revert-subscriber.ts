@@ -1,4 +1,6 @@
+import { safeParseJSONObject } from '@savant-code/common/util/type-narrowing'
 import { useEffect, useRef } from 'react'
+
 
 import { useChatStore } from '../state/chat-store'
 
@@ -21,11 +23,9 @@ function findScaffoldCompletion(messages: ChatMessage[]): boolean {
 
       const text = toolBlock.output
       if (typeof text === 'string') {
-        try {
-          const parsed = JSON.parse(text) as Record<string, unknown>
+        const parsed = safeParseJSONObject(text)
+        if (parsed) {
           return parsed.scaffoldComplete === true
-        } catch {
-          // Not JSON; ignore
         }
       }
     }

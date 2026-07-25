@@ -1,4 +1,3 @@
-/* eslint-disable no-console -- integration test: intentional diagnostic output for perf analysis */
 import { spawn } from 'child_process'
 import path from 'path'
 

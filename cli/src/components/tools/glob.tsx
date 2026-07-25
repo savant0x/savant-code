@@ -58,10 +58,6 @@ export const GlobComponent = defineToolComponent({
     if (hasError) {
       summary += ' (error)'
     }
-    // TODO(James): Reenable when we pass tool results as an object
-    //  else {
-    //   summary += ` (${fileCount} file${fileCount === 1 ? '' : 's'})`
-    // }
 
     return {
       content: <SimpleToolCallItem name="Glob" description={summary} />,

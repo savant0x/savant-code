@@ -29,7 +29,6 @@ import {
   DEFAULT_SUGGESTED_PROMPTS,
   type SuggestedPromptSelection,
 } from './components/suggested-prompts'
-
 import { TopBanner } from './components/top-banner'
 import { getSlashCommandsWithSkills } from './data/slash-commands'
 import { useAgentValidation } from './hooks/use-agent-validation'
@@ -59,8 +58,8 @@ import { getProjectRoot } from './project-files'
 import { useChatHistoryStore } from './state/chat-history-store'
 import { useChatStore } from './state/chat-store'
 import { useFeedbackStore } from './state/feedback-store'
-import { useMessageBlockStore } from './state/message-block-store'
 import { useGatewayCatalogStore } from './state/gateway-catalog-store'
+import { useMessageBlockStore } from './state/message-block-store'
 import { useModelPickerStore } from './state/model-picker-store'
 import { usePublishStore } from './state/publish-store'
 import { useReviewStore } from './state/review-store'
@@ -79,6 +78,8 @@ import { loadLocalAgents } from './utils/local-agent-registry'
 import { logger } from './utils/logger'
 import { getSystemMessage } from './utils/message-history'
 import { safeOpen } from './utils/open-url'
+import { resolveContextWindowForModel } from './utils/openrouter-models'
+import { formatCwd } from './utils/path-helpers'
 import {
   addClipboardPlaceholder,
   addPendingFileFromPath,
@@ -92,7 +93,6 @@ import {
   saveSavantCodeModelPreference,
   saveSavantCodeModelProviderPreference,
 } from './utils/settings'
-import { resolveContextWindowForModel } from './utils/openrouter-models'
 import { getLoadedSkills } from './utils/skill-registry'
 import {
   getStatusIndicatorState,
@@ -101,7 +101,6 @@ import {
 import { createPasteHandler } from './utils/strings'
 import { setTerminalTitle } from './utils/terminal-title'
 import { computeInputLayoutMetrics } from './utils/text-layout'
-import { formatCwd } from './utils/path-helpers'
 
 import type { CommandResult } from './commands/command-registry'
 import type { MultilineInputHandle } from './components/multiline-input'
@@ -1868,8 +1867,11 @@ export const Chat = ({
           toolsUsed={toolsUsed}
           toolsAvailable={['read_file', 'search_files', 'apply_patch', 'bash']}
           filesChanged={filesChanged}
-          agentStack={agentStack.length > 0 ? agentStack : [{ id: agentId ?? 'Savant', isActive: true }]}
+          agentStack={agentStack}
           toolHistory={toolHistory}
+          isStreaming={isStreaming}
+          isWaitingForResponse={isWaitingForResponse}
+          fsmPhase={useChatStore.getState().fsmPhase}
         />
       )}
     </box>

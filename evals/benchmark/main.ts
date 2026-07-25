@@ -1,6 +1,6 @@
 import path from 'path'
 
-import { runBuffBench } from './run-buffbench'
+import { runBenchmark } from './run-benchmark'
 
 async function main() {
   const saveTraces = process.argv.includes('--save-traces')
@@ -9,7 +9,7 @@ async function main() {
   // Use 'external:claude' for Claude Code CLI
   // Use 'external:codex' for OpenAI Codex CLI
   // Use 'external:opencode' for OpenCode CLI
-  await runBuffBench({
+  await runBenchmark({
     evalDataPaths: [path.join(__dirname, 'eval-savant-code.json')],
     agents: ['savant-free-evals'],
     taskConcurrency: 6,

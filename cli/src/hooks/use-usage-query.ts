@@ -2,8 +2,8 @@ import { env } from '@savant-code/common/env'
 import { useCallback } from 'react'
 
 import { invalidateActivityQuery, useActivityQuery } from './use-activity-query'
-import { isDirectProviderMode } from '../utils/env'
 import { getAuthToken } from '../utils/auth'
+import { isDirectProviderMode } from '../utils/env'
 import { logger as defaultLogger } from '../utils/logger'
 
 import type { ClientEnv } from '@savant-code/common/types/contracts/env'

@@ -27,7 +27,7 @@ export const isTextRenderable = (value: React.ReactNode): boolean => {
   }
 
   if (React.isValidElement(value)) {
-    const elProps = value.props as Record<string, unknown>
+    const elProps = value.props as { children?: React.ReactNode }
     if (value.type === React.Fragment) {
       return isTextRenderable(elProps.children as React.ReactNode)
     }

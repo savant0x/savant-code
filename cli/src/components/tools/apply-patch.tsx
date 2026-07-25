@@ -1,5 +1,5 @@
-/* eslint-disable savant/no-unknown-in-signatures -- apply-patch: dynamic patch input handled via `parseOperation(input: unknown)` with runtime typeof/`kind in obj` guards before narrowing to discriminated `PatchOperation` union; LLM-tool input is the trust boundary */
 import { TextAttributes } from '@opentui/core'
+import { safeParseJSONObject } from '@savant-code/common/util/type-narrowing'
 
 import { DiffViewer } from './diff-viewer'
 import { defineToolComponent } from './types'
@@ -12,11 +12,17 @@ type PatchOperation =
   | { type: 'update_file'; path: string; diff: string }
   | { type: 'delete_file'; path: string }
 
+ 
 function parseOperation(input: unknown): PatchOperation | null {
   if (!input || typeof input !== 'object') return null
-  const op = (input as { operation?: unknown }).operation
-  if (!op || typeof op !== 'object') return null
-  const { type, path, diff } = op as Record<string, unknown>
+  const inputObj = safeParseJSONObject(input)
+  if (!inputObj) return null
+  const opValue = inputObj.operation
+  const op = safeParseJSONObject(opValue)
+  if (!op) return null
+  const type = op.type
+  const path = op.path
+  const diff = op.diff
   if (typeof type !== 'string' || typeof path !== 'string') return null
   if (type === 'create_file' && typeof diff === 'string') {
     return { type: 'create_file', path, diff }

@@ -1,4 +1,5 @@
 import { SUBSCRIPTION_TIERS } from '@savant-code/common/constants/subscription-plans'
+import { formatTimeUntil } from '@savant-code/common/util/dates'
 import React from 'react'
 
 import { Button } from './button'
@@ -12,7 +13,6 @@ import { useChatStore } from '../state/chat-store'
 import { IS_SAVANT_FREE } from '../utils/constants'
 import { isDirectProviderMode } from '../utils/env'
 import { safeOpen } from '../utils/open-url'
-import { formatResetTime } from '../utils/time-format'
 import { BORDER_CHARS } from '../utils/ui-constants'
 
 export const SubscriptionLimitBanner = () => {
@@ -103,7 +103,7 @@ export const SubscriptionLimitBanner = () => {
             </text>
             {weeklyResetsAt && (
               <text style={{ fg: theme.muted }}>
-                Weekly usage resets in {formatResetTime(weeklyResetsAt)}
+                Weekly usage resets in {formatTimeUntil(weeklyResetsAt, { fallback: 'now' })}
               </text>
             )}
           </>
@@ -114,7 +114,7 @@ export const SubscriptionLimitBanner = () => {
             </text>
             {blockResetsAt && (
               <text style={{ fg: theme.muted }}>
-                New session starts in {formatResetTime(blockResetsAt)}
+                New session starts in {formatTimeUntil(blockResetsAt, { fallback: 'now' })}
               </text>
             )}
           </>

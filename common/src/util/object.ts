@@ -1,5 +1,7 @@
-
 import { isEqual, mapValues, union } from 'lodash'
+
+import type { JSONValue } from '../types/json'
+
 
 type RemoveUndefined<T extends object> = {
   [K in keyof T as T[K] extends undefined ? never : K]: Exclude<T[K], undefined>
@@ -95,8 +97,8 @@ export const hasSignificantDeepChanges = <T extends object>(
       !Array.isArray(partialValue)
     ) {
       return hasSignificantDeepChanges(
-        currValue as Record<string, unknown>,
-        partialValue as Record<string, unknown>,
+        currValue as Record<string, JSONValue>,
+        partialValue as Record<string, JSONValue>,
         epsilonForNumbers,
       )
     }

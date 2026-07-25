@@ -1,4 +1,4 @@
-/* eslint-disable savant/no-unknown-in-signatures -- test mock factory: dynamic SQL/query shapes intentionally typed as unknown */
+ 
 /**
  * Typed database mock factory for testing.
  *

@@ -7,6 +7,7 @@ import type { AgentTemplate } from './templates/types'
 import type { RequestMcpToolDataFn } from '@savant-code/common/types/contracts/client'
 import type { Logger } from '@savant-code/common/types/contracts/logger'
 import type { OptionalFields } from '@savant-code/common/types/function-params'
+import type { JSONValue } from '@savant-code/common/types/json'
 import type {
   CustomToolDefinitions,
   ProjectFileContext,
@@ -56,7 +57,7 @@ export async function getMCPToolData(
 
           for (const { name, description, inputSchema } of mcpData) {
             writeTo[mcpName + MCP_TOOL_SEPARATOR + name] = {
-              inputSchema: convertJsonSchemaToZod(inputSchema as Record<string, unknown>),
+              inputSchema: convertJsonSchemaToZod(inputSchema as Record<string, JSONValue>),
               endsAgentStep: true,
               description,
             }

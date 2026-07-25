@@ -55,7 +55,7 @@ export const handleProposeStrReplace = (async (
     replacements,
     initialContentPromise: latestContentPromise,
     logger,
-  }).catch((error: unknown) => { // eslint-disable-line savant/no-unknown-in-signatures -- Catch trust boundary: native Promise rejection from string replacement execution
+  }).catch((error: unknown) => {  
     logger.error(toLogValue(error), 'Error processing propose_str_replace')
     return {
       tool: 'str_replace' as const,

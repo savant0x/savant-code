@@ -11,6 +11,7 @@ import { isDirectProviderMode } from '../utils/env'
 import { logger } from '../utils/logger'
 import { getApiClient } from '../utils/savant-code-api'
 
+import type { JSONValue } from '@savant-code/common/types/json'
 import type { SubscriptionResponse } from '@savant-code/common/types/subscription'
 
 interface UpdatePreferenceParams {
@@ -43,9 +44,13 @@ export function useUpdatePreference() {
 
     try {
       const client = getApiClient()
+      const body: Record<string, JSONValue> = {
+        fallbackToALaCarte: params.fallbackToALaCarte ?? null,
+      }
+
       const response = await client.patch<{ success: boolean; error?: string }>(
         '/api/user/preferences',
-        params as Record<string, unknown>,
+        body,
         { includeCookie: true },
       )
 

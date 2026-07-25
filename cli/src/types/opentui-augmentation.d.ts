@@ -1,4 +1,3 @@
-import type { BoxOptions } from '@opentui/core'
 
 declare module '@opentui/core' {
   interface BoxOptions {

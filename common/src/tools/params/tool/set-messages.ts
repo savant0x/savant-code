@@ -5,13 +5,14 @@ import {
   textToolResultSchema,
 } from '../utils'
 
+import type { Message } from '../../../types/messages/savant-code-message'
 import type { $ToolParams } from '../../constants'
 
 const toolName = 'set_messages'
 const endsAgentStep = true
 const inputSchema = z
   .object({
-    messages: z.any(),
+    messages: z.array(z.custom<Message>()),
   })
   .describe(`Set the conversation history to the provided messages.`)
 const description = `

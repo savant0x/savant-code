@@ -2,6 +2,7 @@ import fs from 'fs'
 import os from 'os'
 import path from 'path'
 
+
 import { describe, test, expect, beforeEach, afterEach, mock, spyOn } from 'bun:test'
 
 import {
@@ -11,7 +12,7 @@ import {
   initializeDirenv,
 } from '../init-direnv'
 
-import type { SpawnSyncReturns } from 'child_process'
+import type * as childProcessModule from 'child_process'
 
 mock.module('../utils/logger', () => ({
   logger: {
@@ -197,7 +198,7 @@ describe('init-direnv', () => {
   describe('getDirenvExport', () => {
     let tempDir: string
     let spawnSyncSpy: ReturnType<typeof spyOn>
-    let childProcess: typeof import('child_process')
+    let childProcess: typeof childProcessModule
 
     beforeEach(async () => {
       tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'direnv-export-test-'))
@@ -219,7 +220,7 @@ describe('init-direnv', () => {
         pid: 1234,
         output: [],
         signal: null,
-      } as SpawnSyncReturns<string>)
+      } as childProcessModule.SpawnSyncReturns<string>)
 
       const result = getDirenvExport(tempDir)
 
@@ -237,7 +238,7 @@ describe('init-direnv', () => {
         pid: 1234,
         output: [],
         signal: null,
-      } as SpawnSyncReturns<string>)
+      } as childProcessModule.SpawnSyncReturns<string>)
 
       const result = getDirenvExport(tempDir)
 
@@ -255,7 +256,7 @@ describe('init-direnv', () => {
         pid: 1234,
         output: [],
         signal: null,
-      } as SpawnSyncReturns<string>)
+      } as childProcessModule.SpawnSyncReturns<string>)
 
       const result = getDirenvExport(tempDir)
 
@@ -270,7 +271,7 @@ describe('init-direnv', () => {
         pid: 1234,
         output: [],
         signal: null,
-      } as SpawnSyncReturns<string>)
+      } as childProcessModule.SpawnSyncReturns<string>)
 
       const result = getDirenvExport(tempDir)
 
@@ -285,7 +286,7 @@ describe('init-direnv', () => {
         pid: 1234,
         output: [],
         signal: null,
-      } as SpawnSyncReturns<string>)
+      } as childProcessModule.SpawnSyncReturns<string>)
 
       const result = getDirenvExport(tempDir)
 
@@ -300,7 +301,7 @@ describe('init-direnv', () => {
         pid: 1234,
         output: [],
         signal: null,
-      } as SpawnSyncReturns<string>)
+      } as childProcessModule.SpawnSyncReturns<string>)
 
       const result = getDirenvExport(tempDir)
 
@@ -315,7 +316,7 @@ describe('init-direnv', () => {
         pid: 1234,
         output: [],
         signal: null,
-      } as SpawnSyncReturns<string>)
+      } as childProcessModule.SpawnSyncReturns<string>)
 
       const result = getDirenvExport(tempDir)
 
@@ -340,7 +341,7 @@ describe('init-direnv', () => {
         pid: 1234,
         output: [],
         signal: null,
-      } as SpawnSyncReturns<string>)
+      } as childProcessModule.SpawnSyncReturns<string>)
 
       getDirenvExport(tempDir)
 
@@ -356,7 +357,7 @@ describe('init-direnv', () => {
   describe('initializeDirenv', () => {
     let tempDir: string
     let spawnSyncSpy: ReturnType<typeof spyOn>
-    let childProcess: typeof import('child_process')
+    let childProcess: typeof childProcessModule
     let originalEnv: NodeJS.ProcessEnv
     let originalCwd: string
 
@@ -395,7 +396,7 @@ describe('init-direnv', () => {
             pid: 1234,
             output: [],
             signal: null,
-          } as SpawnSyncReturns<string>
+          } as childProcessModule.SpawnSyncReturns<string>
         }
         if (cmd === 'direnv' && args?.[0] === 'export') {
           return {
@@ -405,9 +406,9 @@ describe('init-direnv', () => {
             pid: 1234,
             output: [],
             signal: null,
-          } as SpawnSyncReturns<string>
+          } as childProcessModule.SpawnSyncReturns<string>
         }
-        return { status: 1, stdout: '', stderr: '', pid: 0, output: [], signal: null } as SpawnSyncReturns<string>
+        return { status: 1, stdout: '', stderr: '', pid: 0, output: [], signal: null } as childProcessModule.SpawnSyncReturns<string>
       })
 
       initializeDirenv()
@@ -429,7 +430,7 @@ describe('init-direnv', () => {
             pid: 1234,
             output: [],
             signal: null,
-          } as SpawnSyncReturns<string>
+          } as childProcessModule.SpawnSyncReturns<string>
         }
         if (cmd === 'direnv' && args?.[0] === 'export') {
           return {
@@ -439,9 +440,9 @@ describe('init-direnv', () => {
             pid: 1234,
             output: [],
             signal: null,
-          } as SpawnSyncReturns<string>
+          } as childProcessModule.SpawnSyncReturns<string>
         }
-        return { status: 1, stdout: '', stderr: '', pid: 0, output: [], signal: null } as SpawnSyncReturns<string>
+        return { status: 1, stdout: '', stderr: '', pid: 0, output: [], signal: null } as childProcessModule.SpawnSyncReturns<string>
       })
 
       initializeDirenv()
@@ -462,7 +463,7 @@ describe('init-direnv', () => {
             pid: 1234,
             output: [],
             signal: null,
-          } as SpawnSyncReturns<string>
+          } as childProcessModule.SpawnSyncReturns<string>
         }
         throw new Error('direnv should not be called when not available')
       })
@@ -484,7 +485,7 @@ describe('init-direnv', () => {
             pid: 1234,
             output: [],
             signal: null,
-          } as SpawnSyncReturns<string>
+          } as childProcessModule.SpawnSyncReturns<string>
         }
         throw new Error('direnv should not be called when no .envrc')
       })
@@ -505,7 +506,7 @@ describe('init-direnv', () => {
             pid: 1234,
             output: [],
             signal: null,
-          } as SpawnSyncReturns<string>
+          } as childProcessModule.SpawnSyncReturns<string>
         }
         if (cmd === 'direnv' && args?.[0] === 'export') {
           return {
@@ -515,9 +516,9 @@ describe('init-direnv', () => {
             pid: 1234,
             output: [],
             signal: null,
-          } as SpawnSyncReturns<string>
+          } as childProcessModule.SpawnSyncReturns<string>
         }
-        return { status: 1, stdout: '', stderr: '', pid: 0, output: [], signal: null } as SpawnSyncReturns<string>
+        return { status: 1, stdout: '', stderr: '', pid: 0, output: [], signal: null } as childProcessModule.SpawnSyncReturns<string>
       })
 
       initializeDirenv()

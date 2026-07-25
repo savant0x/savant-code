@@ -1,3 +1,5 @@
+import { pluralize } from '@savant-code/common/util/string'
+
 import { getAgentBaseName } from './message-block-helpers'
 
 import type {
@@ -29,9 +31,6 @@ export function countCodeSearchResults(output?: string): number {
   }, 0)
 }
 
-const pluralize = (count: number, singular: string, plural = `${singular}s`) =>
-  `${count} ${count === 1 ? singular : plural}`
-
 const isCodeSearchToolBlock = (
   block: ContentBlock,
 ): block is ToolContentBlock =>
@@ -55,7 +54,7 @@ export function getCodeSearcherCollapsedPreview(
   }
 
   const completedToolBlocks = toolBlocks.filter((block) => block.output)
-  const searchLabel = pluralize(searchCount, 'search', 'searches')
+  const searchLabel = pluralize(searchCount, 'search')
 
   if (completedToolBlocks.length === 0) {
     return searchLabel

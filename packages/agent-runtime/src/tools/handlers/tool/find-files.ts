@@ -25,7 +25,7 @@ import type { AgentState } from '@savant-code/common/types/session-state'
 import type { ProjectFileContext } from '@savant-code/common/util/file'
 
 // Turn this on to collect full file context, using Claude-4-Opus to pick which files to send up
-// TODO: We might want to be able to turn this on on a per-repo basis.
+// NOTE: We might want to be able to turn this on on a per-repo basis.
 const COLLECT_FULL_FILE_CONTEXT = false
 
 export const handleFindFiles = (async (

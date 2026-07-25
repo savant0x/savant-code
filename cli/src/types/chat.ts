@@ -1,4 +1,5 @@
 import type { ChatTheme } from './theme-system'
+import type { JSONValue } from '@savant-code/common/types/json'
 import type { ToolName } from '@savant-code/sdk'
 import type { ReactNode } from 'react'
 
@@ -38,7 +39,7 @@ export type ToolContentBlock = {
   type: 'tool'
   toolCallId: string
   toolName: ToolName
-  input: any
+  input: Record<string, JSONValue>
   output?: string
   outputRaw?: unknown
   agentId?: string
@@ -55,7 +56,7 @@ export type AgentContentBlock = {
   status: 'running' | 'complete' | 'failed' | 'cancelled'
   blocks?: ContentBlock[]
   initialPrompt?: string
-  params?: Record<string, any>
+  params?: Record<string, JSONValue>
   isCollapsed?: boolean
   userOpened?: boolean
   /** The spawn_agents tool call ID that created this block, used to match results */

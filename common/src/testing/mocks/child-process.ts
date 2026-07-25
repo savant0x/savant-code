@@ -1,4 +1,4 @@
-/* eslint-disable savant/no-unknown-in-signatures -- test mock: dynamic process event shapes typed as `unknown` (EventEmitter payloads are dynamic); cast pattern uses double-cast `as unknown as T` (NOT the unconstrained type token per ECHO.md Law 6); `options?: object` parameter uses the `object` constraint (per ECHO.md Law 6 — concrete over open-keyword record) */
+ 
 /** Typed child process mock for testing code that spawns processes. */
 
 import { EventEmitter } from 'events'

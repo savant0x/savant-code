@@ -22,6 +22,7 @@ import type {
   AgentRuntimeDeps,
   AgentRuntimeScopedDeps,
 } from '@savant-code/common/types/contracts/agent-runtime'
+import type { StreamChunk } from '@savant-code/common/types/contracts/llm'
 import type { ParamsExcluding } from '@savant-code/common/types/function-params'
 
 let agentRuntimeImpl: AgentRuntimeDeps & AgentRuntimeScopedDeps
@@ -29,8 +30,6 @@ let runAgentStepBaseParams: ParamsExcluding<
   typeof runAgentStep,
   'localAgentTemplates' | 'agentState' | 'prompt' | 'agentTemplate'
 >
-import type { StreamChunk } from '@savant-code/common/types/contracts/llm'
-
 function mockAgentStream(chunks: StreamChunk[]) {
   runAgentStepBaseParams.promptAiSdkStream = async function* ({}) {
     for (const chunk of chunks) {

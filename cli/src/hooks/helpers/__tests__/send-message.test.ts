@@ -1,9 +1,11 @@
-/* eslint-disable @typescript-eslint/no-explicit-any -- test file: intentional any casts for mock params and session state */
+
+import { createPaymentRequiredError } from '@savant-code/sdk'
 import { describe, expect, test, mock, beforeEach, afterEach } from 'bun:test'
 
 import type { ChatMessage } from '../../../types/chat'
 import type { SendMessageTimerController } from '../../../utils/send-message-timer'
 import type { StreamStatus } from '../../use-message-queue'
+import type { RunState } from '@savant-code/sdk'
 
 // Ensure required env vars exist so logger/env parsing succeeds in tests
 const ensureEnv = () => {
@@ -38,9 +40,6 @@ const {
 } = await import('../send-message')
 const { createBatchedMessageUpdater } =
   await import('../../../utils/message-updater')
-import { createPaymentRequiredError } from '@savant-code/sdk'
-
-import type { RunState } from '@savant-code/sdk'
 
 const createMockTimerController = (): SendMessageTimerController & {
   startCalls: string[]
@@ -82,9 +81,9 @@ describe('setupStreamingContext', () => {
       const streamRefs = createStreamController()
       const timerController = createMockTimerController()
       const abortControllerRef = { current: null as AbortController | null }
-      let streamStatus: StreamStatus = 'idle'
-      let canProcessQueue = false
-      let chainInProgress = true
+      let _streamStatus: StreamStatus = 'idle'
+      let _canProcessQueue = false
+      let _chainInProgress = true
       let isRetrying = true
 
       const { updater, abortController } = setupStreamingContext({
@@ -96,13 +95,13 @@ describe('setupStreamingContext', () => {
         streamRefs,
         abortControllerRef,
         setStreamStatus: (status: StreamStatus) => {
-          streamStatus = status
+          _streamStatus = status
         },
         setCanProcessQueue: (can: boolean) => {
-          canProcessQueue = can
+          _canProcessQueue = can
         },
         updateChainInProgress: (value: boolean) => {
-          chainInProgress = value
+          _chainInProgress = value
         },
         setIsRetrying: (value: boolean) => {
           isRetrying = value
@@ -117,11 +116,11 @@ describe('setupStreamingContext', () => {
       expect(streamRefs.state.wasAbortedByUser).toBe(true)
 
       // Verify stream status reset for UI feedback
-      expect(streamStatus).toBe('idle')
+      expect(_streamStatus).toBe('idle')
 
       // Chain lock is released immediately so new messages can be sent directly
-      expect(chainInProgress).toBe(false)
-      expect(canProcessQueue).toBe(true)
+      expect(_chainInProgress).toBe(false)
+      expect(_canProcessQueue).toBe(true)
 
       // Verify retrying reset
       expect(isRetrying).toBe(false)
@@ -146,14 +145,14 @@ describe('setupStreamingContext', () => {
       expect(aiMessage!.isComplete).toBe(true)
     })
 
-    test('abort sets canProcessQueue based on queue pause state', () => {
+    test('abort sets _canProcessQueue based on queue pause state', () => {
       let messages = createBaseMessages()
       const streamRefs = createStreamController()
       const timerController = createMockTimerController()
       const abortControllerRef = { current: null as AbortController | null }
       const isQueuePausedRef = { current: true }
-      let canProcessQueue = false
-      let canProcessQueueCallCount = 0
+      let _canProcessQueue = false
+      let _canProcessQueueCallCount = 0
 
       const { abortController } = setupStreamingContext({
         aiMessageId: 'ai-1',
@@ -165,8 +164,8 @@ describe('setupStreamingContext', () => {
         abortControllerRef,
         setStreamStatus: () => {},
         setCanProcessQueue: (can: boolean) => {
-          canProcessQueue = can
-          canProcessQueueCallCount++
+          _canProcessQueue = can
+          _canProcessQueueCallCount++
         },
         isQueuePausedRef,
         updateChainInProgress: () => {},
@@ -177,10 +176,10 @@ describe('setupStreamingContext', () => {
       // Trigger abort
       abortController.abort()
 
-      // Abort handler sets canProcessQueue respecting queue pause state
-      expect(canProcessQueueCallCount).toBe(1)
-      // Queue was paused, so canProcessQueue stays false
-      expect(canProcessQueue).toBe(false)
+      // Abort handler sets _canProcessQueue respecting queue pause state
+      expect(_canProcessQueueCallCount).toBe(1)
+      // Queue was paused, so _canProcessQueue stays false
+      expect(_canProcessQueue).toBe(false)
     })
 
     test('abort resets isProcessingQueueRef', () => {
@@ -223,9 +222,9 @@ describe('setupStreamingContext', () => {
       const abortControllerRef = { current: null as AbortController | null }
       const isProcessingQueueRef = { current: true }
       const isQueuePausedRef = { current: true }
-      let streamStatus = 'streaming' as StreamStatus
-      let canProcessQueue = true
-      let chainInProgress = true
+      let _streamStatus = 'streaming' as StreamStatus
+      let _canProcessQueue = true
+      let _chainInProgress = true
       let isRetrying = true
 
       const { abortController } = setupStreamingContext({
@@ -237,15 +236,15 @@ describe('setupStreamingContext', () => {
         streamRefs,
         abortControllerRef,
         setStreamStatus: (status) => {
-          streamStatus = status
+          _streamStatus = status
         },
         setCanProcessQueue: (can) => {
-          canProcessQueue = can
+          _canProcessQueue = can
         },
         isQueuePausedRef,
         isProcessingQueueRef,
         updateChainInProgress: (value) => {
-          chainInProgress = value
+          _chainInProgress = value
         },
         setIsRetrying: (value) => {
           isRetrying = value
@@ -256,9 +255,9 @@ describe('setupStreamingContext', () => {
       // Sanity check initial state
       expect(isProcessingQueueRef.current).toBe(true)
       expect(isQueuePausedRef.current).toBe(true)
-      expect(streamStatus).toBe('streaming')
-      expect(canProcessQueue).toBe(true)
-      expect(chainInProgress).toBe(true)
+      expect(_streamStatus).toBe('streaming')
+      expect(_canProcessQueue).toBe(true)
+      expect(_chainInProgress).toBe(true)
       expect(isRetrying).toBe(true)
 
       // Trigger abort
@@ -267,10 +266,10 @@ describe('setupStreamingContext', () => {
       // After abort, chain lock and processing lock are released immediately
       // so new messages can be sent directly instead of being queued.
       expect(isProcessingQueueRef.current).toBe(false)
-      expect(canProcessQueue).toBe(false) // Respects isQueuePausedRef (true)
-      expect(chainInProgress).toBe(false) // Released immediately
+      expect(_canProcessQueue).toBe(false) // Respects isQueuePausedRef (true)
+      expect(_chainInProgress).toBe(false) // Released immediately
       expect(isRetrying).toBe(false)
-      expect(streamStatus).toBe('idle')
+      expect(_streamStatus).toBe('idle')
     })
 
     test('abort handler stores abortController in ref', () => {
@@ -343,12 +342,12 @@ describe('handleRunCompletion', () => {
       })
 
       // These simulate state that was already cleaned up by the abort handler
-      let streamStatus: StreamStatus = 'idle'
-      let canProcessQueue = true
-      let chainInProgress = false
+      let _streamStatus: StreamStatus = 'idle'
+      let _canProcessQueue = true
+      let _chainInProgress = false
       const isProcessingQueueRef = { current: false }
       const isQueuePausedRef = { current: false }
-      let hasReceivedPlanResponse = false
+      let _hasReceivedPlanResponse = false
 
       // Track if setters are called (they shouldn't be)
       let setStreamStatusCalled = false
@@ -371,18 +370,18 @@ describe('handleRunCompletion', () => {
         wasAbortedByUser: true,
         setStreamStatus: (status: StreamStatus) => {
           setStreamStatusCalled = true
-          streamStatus = status
+          _streamStatus = status
         },
         setCanProcessQueue: (can: boolean) => {
           setCanProcessQueueCalled = true
-          canProcessQueue = can
+          _canProcessQueue = can
         },
         updateChainInProgress: (value: boolean) => {
           updateChainInProgressCalled = true
-          chainInProgress = value
+          _chainInProgress = value
         },
         setHasReceivedPlanResponse: (value: boolean) => {
-          hasReceivedPlanResponse = value
+          _hasReceivedPlanResponse = value
         },
         isProcessingQueueRef,
         isQueuePausedRef,
@@ -402,20 +401,24 @@ describe('handleRunCompletion', () => {
         messages = fn(messages)
       })
 
-      let hasReceivedPlanResponse = false
+      let _hasReceivedPlanResponse = false
 
       const runState = {
         traceSessionId: 'trace-test',
-        sessionState: undefined,
-        output: {
-          type: 'lastMessage' as const,
-          value: [
-            {
-              type: 'text' as const,
-              text: 'Server response that should be ignored',
-            },
-          ],
-        },
+        sessionState: undefined,          output: {
+            type: 'lastMessage' as const,
+            value: [
+              {
+                role: 'assistant' as const,
+                content: [
+                  {
+                    type: 'text' as const,
+                    text: 'Server response that should be ignored',
+                  },
+                ],
+              },
+            ],
+          },
       }
 
       handleRunCompletion({
@@ -430,12 +433,12 @@ describe('handleRunCompletion', () => {
         setCanProcessQueue: () => {},
         updateChainInProgress: () => {},
         setHasReceivedPlanResponse: (value: boolean) => {
-          hasReceivedPlanResponse = value
+          _hasReceivedPlanResponse = value
         },
       })
 
       // Should NOT set plan response (abort path returns early before processing output)
-      expect(hasReceivedPlanResponse).toBe(false)
+      expect(_hasReceivedPlanResponse).toBe(false)
 
       // Timer should NOT be stopped by handleRunCompletion (abort handler already stopped it)
       expect(timerController.stopCalls).not.toContain('success')
@@ -450,7 +453,7 @@ describe('handleRunCompletion', () => {
       })
 
       let resumeQueueCalled = false
-      let canProcessQueueCalled = false
+      let _canProcessQueueCalled = false
 
       const runState = {
         traceSessionId: 'trace-test',
@@ -468,7 +471,7 @@ describe('handleRunCompletion', () => {
         wasAbortedByUser: true,
         setStreamStatus: () => {},
         setCanProcessQueue: () => {
-          canProcessQueueCalled = true
+          _canProcessQueueCalled = true
         },
         updateChainInProgress: () => {},
         setHasReceivedPlanResponse: () => {},
@@ -479,79 +482,79 @@ describe('handleRunCompletion', () => {
 
       // Neither should be called - abort handler already handled cleanup
       expect(resumeQueueCalled).toBe(false)
-      expect(canProcessQueueCalled).toBe(false)
+      expect(_canProcessQueueCalled).toBe(false)
     })
   })
 })
 
 describe('finalizeQueueState', () => {
   test('sets stream status to idle and resets queue state', () => {
-    let streamStatus = 'streaming' as StreamStatus
-    let canProcessQueue = false
-    let chainInProgress = true
+    let _streamStatus = 'streaming' as StreamStatus
+    let _canProcessQueue = false
+    let _chainInProgress = true
     const isProcessingQueueRef = { current: true }
 
     finalizeQueueState({
       setStreamStatus: (status) => {
-        streamStatus = status
+        _streamStatus = status
       },
       setCanProcessQueue: (can) => {
-        canProcessQueue = can
+        _canProcessQueue = can
       },
       updateChainInProgress: (value) => {
-        chainInProgress = value
+        _chainInProgress = value
       },
       isProcessingQueueRef,
     })
 
-    expect(streamStatus).toBe('idle')
-    expect(canProcessQueue).toBe(true)
-    expect(chainInProgress).toBe(false)
+    expect(_streamStatus).toBe('idle')
+    expect(_canProcessQueue).toBe(true)
+    expect(_chainInProgress).toBe(false)
     expect(isProcessingQueueRef.current).toBe(false)
   })
 
   test('calls resumeQueue instead of setCanProcessQueue when provided', () => {
-    let streamStatus = 'streaming' as StreamStatus
-    let canProcessQueueCalled = false
+    let _streamStatus = 'streaming' as StreamStatus
+    let _canProcessQueueCalled = false
     let resumeQueueCalled = false
-    let chainInProgress = true
+    let _chainInProgress = true
 
     finalizeQueueState({
       setStreamStatus: (status) => {
-        streamStatus = status
+        _streamStatus = status
       },
       setCanProcessQueue: () => {
-        canProcessQueueCalled = true
+        _canProcessQueueCalled = true
       },
       updateChainInProgress: (value) => {
-        chainInProgress = value
+        _chainInProgress = value
       },
       resumeQueue: () => {
         resumeQueueCalled = true
       },
     })
 
-    expect(streamStatus).toBe('idle')
+    expect(_streamStatus).toBe('idle')
     expect(resumeQueueCalled).toBe(true)
-    expect(canProcessQueueCalled).toBe(false)
-    expect(chainInProgress).toBe(false)
+    expect(_canProcessQueueCalled).toBe(false)
+    expect(_chainInProgress).toBe(false)
   })
 
   test('respects isQueuePausedRef when no resumeQueue provided', () => {
-    let canProcessQueue = true
+    let _canProcessQueue = true
     const isQueuePausedRef = { current: true }
 
     finalizeQueueState({
       setStreamStatus: () => {},
       setCanProcessQueue: (can) => {
-        canProcessQueue = can
+        _canProcessQueue = can
       },
       updateChainInProgress: () => {},
       isQueuePausedRef,
     })
 
-    // When queue was paused before streaming, canProcessQueue should be false
-    expect(canProcessQueue).toBe(false)
+    // When queue was paused before streaming, _canProcessQueue should be false
+    expect(_canProcessQueue).toBe(false)
   })
 })
 
@@ -582,9 +585,9 @@ describe('handleRunError', () => {
       messages = fn(messages)
     })
 
-    let streamStatus: StreamStatus = 'idle'
-    let canProcessQueue = false
-    let chainInProgress = true
+    let _streamStatus: StreamStatus = 'idle'
+    let _canProcessQueue = false
+    let _chainInProgress = true
     let isRetrying = true
 
     handleRunError({
@@ -595,13 +598,13 @@ describe('handleRunError', () => {
         isRetrying = value
       },
       setStreamStatus: (status: StreamStatus) => {
-        streamStatus = status
+        _streamStatus = status
       },
       setCanProcessQueue: (can: boolean) => {
-        canProcessQueue = can
+        _canProcessQueue = can
       },
       updateChainInProgress: (value: boolean) => {
-        chainInProgress = value
+        _chainInProgress = value
       },
     })
 
@@ -613,9 +616,9 @@ describe('handleRunError', () => {
     expect(aiMessage!.userError).toBe('Network timeout')
 
     // Verify state resets
-    expect(streamStatus).toBe('idle')
-    expect(canProcessQueue).toBe(true)
-    expect(chainInProgress).toBe(false)
+    expect(_streamStatus).toBe('idle')
+    expect(_canProcessQueue).toBe(true)
+    expect(_chainInProgress).toBe(false)
     expect(isRetrying).toBe(false)
 
     // Verify timer stopped with error
@@ -728,7 +731,7 @@ describe('handleRunError', () => {
     expect(isProcessingQueueRef.current).toBe(false)
   })
 
-  test('respects isQueuePausedRef when setting canProcessQueue on error', () => {
+  test('respects isQueuePausedRef when setting _canProcessQueue on error', () => {
     let messages: ChatMessage[] = [
       {
         id: 'ai-1',
@@ -744,7 +747,7 @@ describe('handleRunError', () => {
       messages = fn(messages)
     })
     const isQueuePausedRef = { current: true }
-    let canProcessQueue = true
+    let _canProcessQueue = true
 
     handleRunError({
       error: new Error('Some error'),
@@ -753,14 +756,14 @@ describe('handleRunError', () => {
       setIsRetrying: () => {},
       setStreamStatus: () => {},
       setCanProcessQueue: (can: boolean) => {
-        canProcessQueue = can
+        _canProcessQueue = can
       },
       updateChainInProgress: () => {},
       isQueuePausedRef,
     })
 
-    // When queue was paused before streaming, canProcessQueue should be false
-    expect(canProcessQueue).toBe(false)
+    // When queue was paused before streaming, _canProcessQueue should be false
+    expect(_canProcessQueue).toBe(false)
   })
 
   test('context length exceeded error (AI_APICallError) stores error in userError and preserves content', () => {
@@ -790,9 +793,9 @@ describe('handleRunError', () => {
       },
     )
 
-    let streamStatus = 'streaming' as StreamStatus
-    let canProcessQueue = false
-    let chainInProgress = true
+    let _streamStatus = 'streaming' as StreamStatus
+    let _canProcessQueue = false
+    let _chainInProgress = true
     let isRetrying = true
 
     handleRunError({
@@ -803,13 +806,13 @@ describe('handleRunError', () => {
         isRetrying = value
       },
       setStreamStatus: (status: StreamStatus) => {
-        streamStatus = status
+        _streamStatus = status
       },
       setCanProcessQueue: (can: boolean) => {
-        canProcessQueue = can
+        _canProcessQueue = can
       },
       updateChainInProgress: (value: boolean) => {
-        chainInProgress = value
+        _chainInProgress = value
       },
     })
 
@@ -834,9 +837,9 @@ describe('handleRunError', () => {
     expect(aiMessage!.isComplete).toBe(true)
 
     // State should be reset
-    expect(streamStatus).toBe('idle')
-    expect(canProcessQueue).toBe(true)
-    expect(chainInProgress).toBe(false)
+    expect(_streamStatus).toBe('idle')
+    expect(_canProcessQueue).toBe(true)
+    expect(_chainInProgress).toBe(false)
     expect(isRetrying).toBe(false)
 
     // Timer should be stopped with error
@@ -917,14 +920,14 @@ describe('CLI-level race condition: abort run A, attempt run B before A resolves
    */
   const canQueueProcessNextMessage = (opts: {
     isChainInProgress: boolean
-    canProcessQueue: boolean
-    streamStatus: StreamStatus
+    _canProcessQueue: boolean
+    _streamStatus: StreamStatus
     isProcessingQueue: boolean
     isQueuePaused: boolean
   }): boolean => {
     if (opts.isQueuePaused) return false
-    if (!opts.canProcessQueue) return false
-    if (opts.streamStatus !== 'idle') return false
+    if (!opts._canProcessQueue) return false
+    if (opts._streamStatus !== 'idle') return false
     if (opts.isChainInProgress) return false
     if (opts.isProcessingQueue) return false
     return true
@@ -932,20 +935,20 @@ describe('CLI-level race condition: abort run A, attempt run B before A resolves
 
   test('run B can proceed immediately after abort (chain lock released by abort handler)', () => {
     // --- Shared mutable state (simulates React refs and state in the CLI) ---
-    let streamStatus: StreamStatus = 'idle'
-    let canProcessQueue = false
-    let chainInProgress = true // Set true at start of sendMessage
+    let _streamStatus: StreamStatus = 'idle'
+    let _canProcessQueue = false
+    let _chainInProgress = true // Set true at start of sendMessage
     const isProcessingQueueRef = { current: false }
     const isQueuePausedRef = { current: false }
 
     const setStreamStatus = (status: StreamStatus) => {
-      streamStatus = status
+      _streamStatus = status
     }
     const setCanProcessQueue = (can: boolean) => {
-      canProcessQueue = can
+      _canProcessQueue = can
     }
     const updateChainInProgress = (value: boolean) => {
-      chainInProgress = value
+      _chainInProgress = value
     }
 
     // --- PHASE 1: Start run A (setupStreamingContext) ---
@@ -954,7 +957,7 @@ describe('CLI-level race condition: abort run A, attempt run B before A resolves
     const timerControllerA = createMockTimerController()
     const abortControllerRefA = { current: null as AbortController | null }
 
-    const { updater: updaterA, abortController: abortControllerA } =
+    const { updater: _updaterA, abortController: abortControllerA } =
       setupStreamingContext({
         aiMessageId: 'ai-1',
         timerController: timerControllerA,
@@ -973,26 +976,26 @@ describe('CLI-level race condition: abort run A, attempt run B before A resolves
       })
 
     // Simulate streaming has started
-    streamStatus = 'streaming'
+    _streamStatus = 'streaming'
 
     // Verify run A is actively streaming
-    expect(streamStatus).toBe('streaming')
-    expect(chainInProgress).toBe(true)
+    expect(_streamStatus).toBe('streaming')
+    expect(_chainInProgress).toBe(true)
 
     // --- PHASE 2: User aborts run A ---
     abortControllerA.abort()
 
     // Abort handler fires synchronously: UI is updated AND chain lock is released
     expect(streamRefsA.state.wasAbortedByUser).toBe(true)
-    expect(streamStatus as StreamStatus).toBe('idle')
-    expect(chainInProgress).toBe(false) // Chain lock released immediately!
-    expect(canProcessQueue).toBe(true)
+    expect(_streamStatus as StreamStatus).toBe('idle')
+    expect(_chainInProgress).toBe(false) // Chain lock released immediately!
+    expect(_canProcessQueue).toBe(true)
 
     // --- PHASE 3: User types run B — verify it's UNBLOCKED ---
     const canProcessRunB = canQueueProcessNextMessage({
-      isChainInProgress: chainInProgress,
-      canProcessQueue,
-      streamStatus,
+      isChainInProgress: _chainInProgress,
+      _canProcessQueue,
+      _streamStatus,
       isProcessingQueue: isProcessingQueueRef.current,
       isQueuePaused: isQueuePausedRef.current,
     })
@@ -1006,9 +1009,9 @@ describe('CLI-level race condition: abort run A, attempt run B before A resolves
     // After abort releases the chain lock, handleRunCompletion should be a no-op
     // to avoid interfering with any new run that may have started.
 
-    let streamStatus: StreamStatus = 'idle'
-    let canProcessQueue = true
-    let chainInProgress = false // Already released by abort handler
+    let _streamStatus: StreamStatus = 'idle'
+    let _canProcessQueue = true
+    let _chainInProgress = false // Already released by abort handler
     const isProcessingQueueRef = { current: false }
     const isQueuePausedRef = { current: false }
 
@@ -1039,7 +1042,7 @@ describe('CLI-level race condition: abort run A, attempt run B before A resolves
         setStreamStatusCallCount++
       },
       setCanProcessQueue: (can: boolean) => {
-        canProcessQueue = can
+        _canProcessQueue = can
       },
       updateChainInProgress: () => {
         updateChainInProgressCallCount++
@@ -1053,8 +1056,8 @@ describe('CLI-level race condition: abort run A, attempt run B before A resolves
     expect(setStreamStatusCallCount).toBe(0)
     expect(updateChainInProgressCallCount).toBe(0)
     // State should be unchanged (still in the "released" state from abort handler)
-    expect(chainInProgress).toBe(false)
-    expect(canProcessQueue).toBe(true)
+    expect(_chainInProgress).toBe(false)
+    expect(_canProcessQueue).toBe(true)
   })
 
   test('aborted run A finally block must not clear isProcessingQueueRef owned by run B', () => {
@@ -1067,9 +1070,9 @@ describe('CLI-level race condition: abort run A, attempt run B before A resolves
 
     const isProcessingQueueRef = { current: false }
     const isQueuePausedRef = { current: false }
-    let chainInProgress = true
-    let canProcessQueue = false
-    let streamStatus: StreamStatus = 'idle'
+    let _chainInProgress = true
+    let _canProcessQueue = false
+    let _streamStatus: StreamStatus = 'idle'
 
     // --- Run A setup and abort ---
     let messagesA = createBaseMessages()
@@ -1086,15 +1089,15 @@ describe('CLI-level race condition: abort run A, attempt run B before A resolves
       streamRefs: sharedStreamRefs,
       abortControllerRef: abortRefA,
       setStreamStatus: (status: StreamStatus) => {
-        streamStatus = status
+        _streamStatus = status
       },
       setCanProcessQueue: (can: boolean) => {
-        canProcessQueue = can
+        _canProcessQueue = can
       },
       isQueuePausedRef,
       isProcessingQueueRef,
       updateChainInProgress: (value: boolean) => {
-        chainInProgress = value
+        _chainInProgress = value
       },
       setIsRetrying: () => {},
       setStreamingAgents: () => {},
@@ -1102,13 +1105,13 @@ describe('CLI-level race condition: abort run A, attempt run B before A resolves
 
     // Abort run A
     abortA.abort()
-    expect(chainInProgress).toBe(false)
+    expect(_chainInProgress).toBe(false)
     expect(isProcessingQueueRef.current).toBe(false)
 
     // --- Run B starts from queue, takes ownership of isProcessingQueueRef ---
     isProcessingQueueRef.current = true // Queue's processNextMessage sets this
-    chainInProgress = true
-    canProcessQueue = false
+    _chainInProgress = true
+    _canProcessQueue = false
 
     // --- Simulate run A's finally block (late execution) ---
     // In use-send-message.ts, the finally block guards with !abortController.signal.aborted.
@@ -1123,8 +1126,8 @@ describe('CLI-level race condition: abort run A, attempt run B before A resolves
 
     // isProcessingQueueRef must still be true (owned by run B)
     expect(isProcessingQueueRef.current).toBe(true)
-    // chainInProgress must still be true (owned by run B)
-    expect(chainInProgress).toBe(true)
+    // _chainInProgress must still be true (owned by run B)
+    expect(_chainInProgress).toBe(true)
   })
 
   test('reject-after-abort must not run handleRunError cleanup that could clobber run B', () => {
@@ -1135,9 +1138,9 @@ describe('CLI-level race condition: abort run A, attempt run B before A resolves
     // This tests the pattern used in use-send-message.ts where the catch block
     // guards handleRunError with !abortController.signal.aborted.
 
-    let streamStatus: StreamStatus = 'idle'
-    let canProcessQueue = true
-    let chainInProgress = false // Released by abort handler
+    let _streamStatus: StreamStatus = 'idle'
+    let _canProcessQueue = true
+    let _chainInProgress = false // Released by abort handler
     const isProcessingQueueRef = { current: false }
     const isQueuePausedRef = { current: false }
 
@@ -1147,10 +1150,10 @@ describe('CLI-level race condition: abort run A, attempt run B before A resolves
     expect(abortController.signal.aborted).toBe(true)
 
     // --- Run B has started and claimed shared state ---
-    chainInProgress = true
-    canProcessQueue = false
+    _chainInProgress = true
+    _canProcessQueue = false
     isProcessingQueueRef.current = true
-    streamStatus = 'streaming'
+    _streamStatus = 'streaming'
 
     // --- Simulate what happens if client.run() rejects after abort ---
     // The catch block pattern: only handle error if NOT aborted
@@ -1164,13 +1167,13 @@ describe('CLI-level race condition: abort run A, attempt run B before A resolves
         updater: createBatchedMessageUpdater('ai-1', () => {}),
         setIsRetrying: () => {},
         setStreamStatus: (status: StreamStatus) => {
-          streamStatus = status
+          _streamStatus = status
         },
         setCanProcessQueue: (can: boolean) => {
-          canProcessQueue = can
+          _canProcessQueue = can
         },
         updateChainInProgress: (value: boolean) => {
-          chainInProgress = value
+          _chainInProgress = value
         },
         isProcessingQueueRef,
         isQueuePausedRef,
@@ -1178,19 +1181,19 @@ describe('CLI-level race condition: abort run A, attempt run B before A resolves
     }
 
     // Run B's state must be untouched
-    expect(chainInProgress).toBe(true) // Still owned by run B
-    expect(canProcessQueue).toBe(false) // Still owned by run B
+    expect(_chainInProgress).toBe(true) // Still owned by run B
+    expect(_canProcessQueue).toBe(false) // Still owned by run B
     expect(isProcessingQueueRef.current).toBe(true) // Still owned by run B
-    expect(streamStatus).toBe('streaming') // Still owned by run B
+    expect(_streamStatus).toBe('streaming') // Still owned by run B
   })
 
   test('handleRunError WOULD clobber run B state if called without abort guard (documents why guard is needed)', () => {
     // This test proves that handleRunError resets shared state, which is why
     // the catch block in use-send-message.ts MUST guard it with abort check.
 
-    let streamStatus: StreamStatus = 'streaming'
-    let canProcessQueue = false
-    let chainInProgress = true
+    let _streamStatus: StreamStatus = 'streaming'
+    let _canProcessQueue = false
+    let _chainInProgress = true
     const isProcessingQueueRef = { current: true }
     const isQueuePausedRef = { current: false }
 
@@ -1201,23 +1204,23 @@ describe('CLI-level race condition: abort run A, attempt run B before A resolves
       updater: createBatchedMessageUpdater('ai-1', (fn: any) => {}),
       setIsRetrying: () => {},
       setStreamStatus: (status: StreamStatus) => {
-        streamStatus = status
+        _streamStatus = status
       },
       setCanProcessQueue: (can: boolean) => {
-        canProcessQueue = can
+        _canProcessQueue = can
       },
       updateChainInProgress: (value: boolean) => {
-        chainInProgress = value
+        _chainInProgress = value
       },
       isProcessingQueueRef,
       isQueuePausedRef,
     })
 
     // handleRunError resets ALL shared state — this would clobber run B
-    expect(chainInProgress).toBe(false) // Clobbered!
-    expect(canProcessQueue).toBe(true) // Clobbered!
+    expect(_chainInProgress).toBe(false) // Clobbered!
+    expect(_canProcessQueue).toBe(true) // Clobbered!
     expect(isProcessingQueueRef.current).toBe(false) // Clobbered!
-    expect(streamStatus as StreamStatus).toBe('idle') // Clobbered!
+    expect(_streamStatus as StreamStatus).toBe('idle') // Clobbered!
   })
 
   test('full two-run lifecycle with shared streamRefs: run A abort → run B starts immediately', () => {
@@ -1226,21 +1229,21 @@ describe('CLI-level race condition: abort run A, attempt run B before A resolves
     // Verifies that run B can start immediately after abort, and that run A's
     // late-resolving handleRunCompletion does NOT interfere with run B.
 
-    let streamStatus: StreamStatus = 'idle'
-    let canProcessQueue = false
-    let chainInProgress = true
+    let _streamStatus: StreamStatus = 'idle'
+    let _canProcessQueue = false
+    let _chainInProgress = true
     const isProcessingQueueRef = { current: false }
     const isQueuePausedRef = { current: false }
     let previousRunState: RunState | null = null
 
     const setStreamStatus = (status: StreamStatus) => {
-      streamStatus = status
+      _streamStatus = status
     }
     const setCanProcessQueue = (can: boolean) => {
-      canProcessQueue = can
+      _canProcessQueue = can
     }
     const updateChainInProgress = (value: boolean) => {
-      chainInProgress = value
+      _chainInProgress = value
     }
 
     // CRITICAL: Use a single shared streamRefs instance, just like production.
@@ -1270,17 +1273,17 @@ describe('CLI-level race condition: abort run A, attempt run B before A resolves
         setStreamingAgents: () => {},
       })
 
-    streamStatus = 'streaming'
+    _streamStatus = 'streaming'
 
     // Abort run A
     abortA.abort()
-    expect(chainInProgress).toBe(false) // Lock released immediately!
-    expect(canProcessQueue).toBe(true)
+    expect(_chainInProgress).toBe(false) // Lock released immediately!
+    expect(_canProcessQueue).toBe(true)
     expect(sharedStreamRefs.state.wasAbortedByUser).toBe(true)
 
     // === RUN B starts immediately (before A's client.run() resolves) ===
-    chainInProgress = true
-    canProcessQueue = false
+    _chainInProgress = true
+    _canProcessQueue = false
 
     let messagesB: ChatMessage[] = [
       {
@@ -1351,7 +1354,7 @@ describe('CLI-level race condition: abort run A, attempt run B before A resolves
 
     // handleRunCompletion for aborted run A should be a no-op
     // (it should NOT interfere with run B's chain lock)
-    expect(chainInProgress).toBe(true) // Still true from run B!
+    expect(_chainInProgress).toBe(true) // Still true from run B!
 
     // Simulate run B completing normally
     const runStateB: RunState = {
@@ -1367,7 +1370,12 @@ describe('CLI-level race condition: abort run A, attempt run B before A resolves
       } as any,
       output: {
         type: 'lastMessage' as const,
-        value: [{ type: 'text' as const, text: 'full response' }],
+        value: [
+          {
+            role: 'assistant' as const,
+            content: [{ type: 'text' as const, text: 'full response' }],
+          },
+        ],
       },
     }
     previousRunState = runStateB
@@ -1397,8 +1405,8 @@ describe('CLI-level race condition: abort run A, attempt run B before A resolves
         { role: 'assistant', content: 'full response to second message' },
       ],
     })
-    expect(chainInProgress).toBe(false)
-    expect(canProcessQueue).toBe(true)
+    expect(_chainInProgress).toBe(false)
+    expect(_canProcessQueue).toBe(true)
   })
 })
 
@@ -1412,46 +1420,46 @@ describe('CLI-level race condition: abort run A, attempt run B before A resolves
 describe('resetEarlyReturnState', () => {
   describe('prepareUserMessage exception path', () => {
     test('resets chain in progress to false', () => {
-      let chainInProgress = true
+      let _chainInProgress = true
 
       resetEarlyReturnState({
         updateChainInProgress: (value) => {
-          chainInProgress = value
+          _chainInProgress = value
         },
         setCanProcessQueue: () => {},
       })
 
-      expect(chainInProgress).toBe(false)
+      expect(_chainInProgress).toBe(false)
     })
 
-    test('sets canProcessQueue to true when queue is not paused', () => {
-      let canProcessQueue = false
+    test('sets _canProcessQueue to true when queue is not paused', () => {
+      let _canProcessQueue = false
       const isQueuePausedRef = { current: false }
 
       resetEarlyReturnState({
         updateChainInProgress: () => {},
         setCanProcessQueue: (can) => {
-          canProcessQueue = can
+          _canProcessQueue = can
         },
         isQueuePausedRef,
       })
 
-      expect(canProcessQueue).toBe(true)
+      expect(_canProcessQueue).toBe(true)
     })
 
-    test('sets canProcessQueue to false when queue is paused', () => {
-      let canProcessQueue = true
+    test('sets _canProcessQueue to false when queue is paused', () => {
+      let _canProcessQueue = true
       const isQueuePausedRef = { current: true }
 
       resetEarlyReturnState({
         updateChainInProgress: () => {},
         setCanProcessQueue: (can) => {
-          canProcessQueue = can
+          _canProcessQueue = can
         },
         isQueuePausedRef,
       })
 
-      expect(canProcessQueue).toBe(false)
+      expect(_canProcessQueue).toBe(false)
     })
 
     test('resets isProcessingQueueRef to false', () => {
@@ -1476,107 +1484,107 @@ describe('resetEarlyReturnState', () => {
       }).not.toThrow()
     })
 
-    test('handles missing isQueuePausedRef gracefully (defaults to canProcessQueue=true)', () => {
-      let canProcessQueue = false
+    test('handles missing isQueuePausedRef gracefully (defaults to _canProcessQueue=true)', () => {
+      let _canProcessQueue = false
 
       resetEarlyReturnState({
         updateChainInProgress: () => {},
         setCanProcessQueue: (can) => {
-          canProcessQueue = can
+          _canProcessQueue = can
         },
         // No isQueuePausedRef - should default to !undefined = true
       })
 
-      expect(canProcessQueue).toBe(true)
+      expect(_canProcessQueue).toBe(true)
     })
   })
 
   describe('validation failure path (success: false)', () => {
     test('resets all queue state correctly when processing queued message', () => {
-      let chainInProgress = true
-      let canProcessQueue = false
+      let _chainInProgress = true
+      let _canProcessQueue = false
       const isProcessingQueueRef = { current: true }
       const isQueuePausedRef = { current: false }
 
       resetEarlyReturnState({
         updateChainInProgress: (value) => {
-          chainInProgress = value
+          _chainInProgress = value
         },
         setCanProcessQueue: (can) => {
-          canProcessQueue = can
+          _canProcessQueue = can
         },
         isProcessingQueueRef,
         isQueuePausedRef,
       })
 
-      expect(chainInProgress).toBe(false)
-      expect(canProcessQueue).toBe(true)
+      expect(_chainInProgress).toBe(false)
+      expect(_canProcessQueue).toBe(true)
       expect(isProcessingQueueRef.current).toBe(false)
     })
 
     test('respects queue paused state after validation failure', () => {
-      let chainInProgress = true
-      let canProcessQueue = true
+      let _chainInProgress = true
+      let _canProcessQueue = true
       const isProcessingQueueRef = { current: true }
       const isQueuePausedRef = { current: true }
 
       resetEarlyReturnState({
         updateChainInProgress: (value) => {
-          chainInProgress = value
+          _chainInProgress = value
         },
         setCanProcessQueue: (can) => {
-          canProcessQueue = can
+          _canProcessQueue = can
         },
         isProcessingQueueRef,
         isQueuePausedRef,
       })
 
-      expect(chainInProgress).toBe(false)
-      expect(canProcessQueue).toBe(false) // Queue was paused, should stay paused
+      expect(_chainInProgress).toBe(false)
+      expect(_canProcessQueue).toBe(false) // Queue was paused, should stay paused
       expect(isProcessingQueueRef.current).toBe(false)
     })
   })
 
   describe('validation exception path', () => {
     test('resets all queue state correctly when validation throws', () => {
-      let chainInProgress = true
-      let canProcessQueue = false
+      let _chainInProgress = true
+      let _canProcessQueue = false
       const isProcessingQueueRef = { current: true }
       const isQueuePausedRef = { current: false }
 
       // Simulating what happens after catching validation exception
       resetEarlyReturnState({
         updateChainInProgress: (value) => {
-          chainInProgress = value
+          _chainInProgress = value
         },
         setCanProcessQueue: (can) => {
-          canProcessQueue = can
+          _canProcessQueue = can
         },
         isProcessingQueueRef,
         isQueuePausedRef,
       })
 
-      expect(chainInProgress).toBe(false)
-      expect(canProcessQueue).toBe(true)
+      expect(_chainInProgress).toBe(false)
+      expect(_canProcessQueue).toBe(true)
       expect(isProcessingQueueRef.current).toBe(false)
     })
 
     test('preserves queue pause state when validation throws', () => {
-      let canProcessQueue = true
+      let _canProcessQueue = true
       const isQueuePausedRef = { current: true }
       const isProcessingQueueRef = { current: true }
 
       resetEarlyReturnState({
         updateChainInProgress: () => {},
         setCanProcessQueue: (can) => {
-          canProcessQueue = can
+          _canProcessQueue = can
         },
         isProcessingQueueRef,
         isQueuePausedRef,
       })
 
       // Queue was explicitly paused before, should remain paused after error
-      expect(canProcessQueue).toBe(false)
+      expect(_canProcessQueue).toBe(false)
       // But processing lock should be released to allow manual resume
       expect(isProcessingQueueRef.current).toBe(false)
     })
@@ -1585,100 +1593,100 @@ describe('resetEarlyReturnState', () => {
   describe('complete early return scenarios', () => {
     test('queue can process next message after prepareUserMessage exception', () => {
       // Scenario: Message was being processed from queue, prepareUserMessage throws
-      let chainInProgress = true
-      let canProcessQueue = false
+      let _chainInProgress = true
+      let _canProcessQueue = false
       const isProcessingQueueRef = { current: true }
       const isQueuePausedRef = { current: false }
 
       // After exception, reset is called
       resetEarlyReturnState({
         updateChainInProgress: (value) => {
-          chainInProgress = value
+          _chainInProgress = value
         },
         setCanProcessQueue: (can) => {
-          canProcessQueue = can
+          _canProcessQueue = can
         },
         isProcessingQueueRef,
         isQueuePausedRef,
       })
 
       // Queue should be able to process next message
-      expect(chainInProgress).toBe(false)
-      expect(canProcessQueue).toBe(true)
+      expect(_chainInProgress).toBe(false)
+      expect(_canProcessQueue).toBe(true)
       expect(isProcessingQueueRef.current).toBe(false)
     })
 
     test('queue can process next message after validation returns success=false', () => {
       // Scenario: Message was being processed, validation returns failure
-      let chainInProgress = true
-      let canProcessQueue = false
+      let _chainInProgress = true
+      let _canProcessQueue = false
       const isProcessingQueueRef = { current: true }
       const isQueuePausedRef = { current: false }
 
       resetEarlyReturnState({
         updateChainInProgress: (value) => {
-          chainInProgress = value
+          _chainInProgress = value
         },
         setCanProcessQueue: (can) => {
-          canProcessQueue = can
+          _canProcessQueue = can
         },
         isProcessingQueueRef,
         isQueuePausedRef,
       })
 
       // All locks released, queue can continue
-      expect(chainInProgress).toBe(false)
-      expect(canProcessQueue).toBe(true)
+      expect(_chainInProgress).toBe(false)
+      expect(_canProcessQueue).toBe(true)
       expect(isProcessingQueueRef.current).toBe(false)
     })
 
     test('queue can process next message after validation throws exception', () => {
       // Scenario: Message was being processed, validation throws
-      let chainInProgress = true
-      let canProcessQueue = false
+      let _chainInProgress = true
+      let _canProcessQueue = false
       const isProcessingQueueRef = { current: true }
       const isQueuePausedRef = { current: false }
 
       resetEarlyReturnState({
         updateChainInProgress: (value) => {
-          chainInProgress = value
+          _chainInProgress = value
         },
         setCanProcessQueue: (can) => {
-          canProcessQueue = can
+          _canProcessQueue = can
         },
         isProcessingQueueRef,
         isQueuePausedRef,
       })
 
       // All locks released, queue can continue
-      expect(chainInProgress).toBe(false)
-      expect(canProcessQueue).toBe(true)
+      expect(_chainInProgress).toBe(false)
+      expect(_canProcessQueue).toBe(true)
       expect(isProcessingQueueRef.current).toBe(false)
     })
 
     test('queue remains blocked after error if user had paused it', () => {
       // Scenario: User paused queue, then an error occurred
       // Queue should remain paused after error recovery
-      let chainInProgress = true
-      let canProcessQueue = true
+      let _chainInProgress = true
+      let _canProcessQueue = true
       const isProcessingQueueRef = { current: true }
       const isQueuePausedRef = { current: true } // User explicitly paused
 
       resetEarlyReturnState({
         updateChainInProgress: (value) => {
-          chainInProgress = value
+          _chainInProgress = value
         },
         setCanProcessQueue: (can) => {
-          canProcessQueue = can
+          _canProcessQueue = can
         },
         isProcessingQueueRef,
         isQueuePausedRef,
       })
 
       // Chain is no longer in progress
-      expect(chainInProgress).toBe(false)
+      expect(_chainInProgress).toBe(false)
       // But queue should remain blocked because user paused it
-      expect(canProcessQueue).toBe(false)
+      expect(_canProcessQueue).toBe(false)
       // Processing lock is released though
       expect(isProcessingQueueRef.current).toBe(false)
     })

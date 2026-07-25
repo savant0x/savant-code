@@ -1,4 +1,4 @@
-/* eslint-disable savant/no-unknown-in-signatures, @typescript-eslint/no-explicit-any -- tool params utilities: zod preprocess operates on unknown inputs; a future refactor can replace direct preprocess usage with typed transforms */
+ 
 import z from 'zod/v4'
 
 import {
@@ -10,6 +10,8 @@ import {
 
 import type { JSONValue } from '../../types/json'
 import type { ToolResultOutput } from '../../types/messages/content-part'
+
+type ToolInputRecord = Record<string, JSONValue>
 
 /**
  * Coerces a value into an array if it isn't one already.
@@ -67,7 +69,7 @@ export function normalizeReplacementAliases(val: unknown): unknown {
     return val
   }
 
-  const replacement = { ...(val as Record<string, unknown>) }
+  const replacement = { ...(val as ToolInputRecord) }
   for (const [target, aliases] of [
     ['oldString', ['old', 'old_str', 'old_string']],
     ['newString', ['new', 'new_str', 'new_string']],
@@ -90,14 +92,14 @@ export function normalizeReplacementAliases(val: unknown): unknown {
  * @param input - The input to the tool
  * @param endsAgentStep - Whether the agent should end its turn after this tool call
  */
-export function $getToolCallString<Input>(params: {
+export function $getToolCallString(params: {
   toolName: string
-  inputSchema: z.ZodType<any, Input> | null
-  input: Input
+  inputSchema: z.ZodTypeAny | null
+  input: object
   endsAgentStep: boolean
 }): string {
   const { toolName, input, endsAgentStep } = params
-  const obj: Record<string, any> = {
+  const obj: ToolInputRecord = {
     [toolNameParam]: toolName,
     ...input,
   }
@@ -107,10 +109,10 @@ export function $getToolCallString<Input>(params: {
   return [startToolTag, JSON.stringify(obj, null, 2), endToolTag].join('')
 }
 
-export function $getNativeToolCallExampleString<Input>(params: {
+export function $getNativeToolCallExampleString(params: {
   toolName: string
-  inputSchema: z.ZodType<any, Input> | null
-  input: Input
+  inputSchema: z.ZodTypeAny | null
+  input: object
   endsAgentStep?: boolean // unused
 }): string {
   const { toolName, input } = params

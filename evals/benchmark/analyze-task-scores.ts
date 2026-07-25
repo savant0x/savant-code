@@ -1,8 +1,8 @@
 #!/usr/bin/env bun
 /**
- * Analyze task scores from BuffBench evaluation logs
+ * Analyze task scores from benchmark evaluation logs
  *
- * Usage: bun run evals/buffbench/analyze-task-scores.ts [--runs N] [--output FILE] [--dir DIR]
+ * Usage: bun run evals/benchmark/analyze-task-scores.ts [--runs N] [--output FILE] [--dir DIR]
  *
  * Options:
  *   --runs N      Number of recent runs to analyze (default: 10, ignored if --dir is specified)
@@ -196,7 +196,7 @@ function generateMarkdownReport(
   const overallAvg =
     sortedTasks.reduce((sum, t) => sum + t.avg, 0) / sortedTasks.length
 
-  let output = `# BuffBench Task Score Analysis
+  let output = `# Benchmark Task Score Analysis
 
 Generated: ${new Date().toISOString()}
 
@@ -414,7 +414,7 @@ async function main() {
       format = 'json'
     } else if (args[i] === '--help' || args[i] === '-h') {
       console.log(`
-BuffBench Task Score Analyzer
+Benchmark Task Score Analyzer
 
 Usage: bun run analyze-task-scores.ts [OPTIONS]
 

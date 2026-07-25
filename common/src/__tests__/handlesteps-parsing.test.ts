@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any -- test file: intentional any casts for edge cases */
+ 
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 
 import { validateAgents } from '../templates/agent-validation'

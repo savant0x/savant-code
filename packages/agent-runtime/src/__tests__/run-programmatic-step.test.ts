@@ -638,7 +638,7 @@ describe('runProgrammaticStep', () => {
     })
 
     it('should pass tool results back to generator', async () => {
-      const toolResults: ToolMessage[] = []
+      const _toolResults: ToolMessage[] = []
       let receivedToolResult: ToolResultOutput[] | undefined
 
       const mockGenerator = (function* () {

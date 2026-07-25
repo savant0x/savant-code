@@ -11,6 +11,33 @@ export type SplitDataValue =
 
 type PlainObject = Record<string, SplitDataValue>
 
+/**
+ * Recursive partial type used for split chunks.
+ * Each chunk represents a slice of the original data, so object keys and nested
+ * values are optional by definition. Primitive types are widened to their base
+ * types so that literal string/number inputs do not propagate literal types to
+ * the return type.
+ */
+type DeepPartial<T> = T extends string
+  ? string
+  : T extends number
+    ? number
+    : T extends boolean
+      ? boolean
+      : T extends null
+        ? null
+        : T extends undefined
+          ? undefined
+          : T extends Date
+            ? Date
+            : T extends RegExp
+              ? RegExp
+              : T extends readonly unknown[]
+                ? DeepPartial<T[number]>[]
+                : T extends object
+                  ? { [K in keyof T]?: DeepPartial<T[K]> }
+                  : T
+
 interface Chunk<T> {
   data: T
   length: number
@@ -277,7 +304,9 @@ function splitDataWithLengths<T extends SplitDataValue>(params: {
 export function splitData<T extends SplitDataValue>(params: {
   data: T
   maxChunkSize?: number
-}): T[] {
+}): DeepPartial<T>[] {
   const { data, maxChunkSize = 99_000 } = params
-  return splitDataWithLengths({ data, maxChunkSize }).map((cwjl) => cwjl.data)
+  return splitDataWithLengths({ data, maxChunkSize }).map(
+    (cwjl) => cwjl.data,
+  ) as DeepPartial<T>[]
 }

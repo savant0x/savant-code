@@ -185,6 +185,6 @@ export type ClientToolName = (typeof clientToolNames)[number]
 
 export type ClientToolCall<T extends ClientToolName = ClientToolName> =
   Extract<z.infer<typeof clientToolCallSchema>, { toolName: T }> &
-    Pick<ToolCallPart, 'toolCallId' | 'toolName' | 'input' | 'providerOptions'>
+    Pick<ToolCallPart, 'toolCallId' | 'toolName' | 'providerOptions'>
 
 export type PublishedClientToolName = Extract<ClientToolName, PublishedToolName>

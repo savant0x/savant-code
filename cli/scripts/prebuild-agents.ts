@@ -68,7 +68,18 @@ async function loadAgentDefinition(filePath: string): Promise<AgentDefinition | 
     const module = await import(filePath)
     const definition = module.default
 
-    if (!definition || !definition.id || !definition.model) {
+    if (!definition) {
+      console.warn(`⚠️  Skipped ${filePath}: no default export found`)
+      return null
+    }
+
+    if (!definition.id) {
+      console.warn(`⚠️  Skipped ${filePath}: missing required 'id' field`)
+      return null
+    }
+
+    if (!definition.model) {
+      console.warn(`⚠️  Skipped ${filePath} (agent '${definition.id}'): missing required 'model' field`)
       return null
     }
 
@@ -81,7 +92,8 @@ async function loadAgentDefinition(filePath: string): Promise<AgentDefinition | 
 
     return processed
   } catch (error) {
-    console.error(`Error loading agent from ${filePath}:`, error)
+    const errorMsg = error instanceof Error ? error.message : String(error)
+    console.error(`❌ Failed to load agent from ${filePath}: ${errorMsg}`)
     return null
   }
 }

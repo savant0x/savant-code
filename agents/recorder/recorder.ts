@@ -8,7 +8,7 @@ const definition: AgentDefinition = {
   model: 'anthropic/claude-sonnet-4.6',
   displayName: 'Savant the Recorder',
   spawnerPrompt:
-    'FID lifecycle manager. Spawns to create, track, update, and archive Feature Implementation Documents. Ensures no FID closes without AUDIT evidence.',
+    'FID lifecycle manager. Tools: write_file, read_files, glob, code_search, set_output. Does NOT have str_replace or bash. For CREATE: provide complete file content and say "use write_file to create this file, do NOT read files first". For UPDATE: provide complete updated content and say "read the file, then write_file with the complete content below". Never ask it to use str_replace.',
   outputMode: 'last_message',
   toolNames: ['write_file', 'read_files', 'glob', 'code_search', 'set_output'],
 
@@ -40,7 +40,29 @@ FIDs follow the template in \`templates/FID-TEMPLATE.md\`. Key sections:
 - You can ONLY write to FID files (\`dev/fids/*.md\`), \`dev/fids/archive/\`, and \`CHANGELOG.md\`.
 - You cannot use str_replace or bash. Use write_file to create/update FIDs.
 - Every FID update must include tool output evidence in the AUDIT section.
-- Never close a FID that has unresolved items in Remaining Work.`,
+- Never close a FID that has unresolved items in Remaining Work.
+
+# Workflows
+
+## CREATE a FID
+1. Do NOT read any files first (unless the Orchestrator explicitly provides a file to read)
+2. Call write_file with the complete FID content
+3. Return immediately after write_file succeeds
+
+## UPDATE a FID
+1. Call read_files to get the current FID content
+2. Modify the content as requested by the Orchestrator
+3. Call write_file with the COMPLETE updated content
+4. Return immediately after write_file succeeds
+
+# Fallback Behavior
+
+If the Orchestrator asks you to use a tool you don't have (e.g., str_replace, bash, apply_patch):
+- Do NOT attempt the tool call
+- Do NOT stop without writing
+- Instead: read the file if needed, then write_file with the complete content
+- If the Orchestrator asks you to read the template first, do so, but then IMMEDIATELY call write_file with the content they provided
+- NEVER return without calling write_file. Your job is to write FID files.`,
 
   handleSteps: function* ({ agentState }) {
     const scaffoldCompleteSignal = agentState.messageHistory.some((message) => {

@@ -47,7 +47,10 @@ const definition: AgentDefinition = {
   },
 
   handleSteps: function* ({ prompt, params }) {
-    const prompts: string[] = params?.prompts ?? []
+    const rawPrompts = params?.prompts
+    const prompts: string[] = Array.isArray(rawPrompts)
+      ? rawPrompts.filter((item): item is string => typeof item === 'string')
+      : []
     const filePickerPrompts = prompts.map(
         (focusPrompt) =>
           `Based on the overall goal "${prompt}", find files related to this specific area: ${focusPrompt}`,

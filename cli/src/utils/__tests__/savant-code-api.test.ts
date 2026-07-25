@@ -533,7 +533,7 @@ describe('createSavantCodeApiClient', () => {
   })
 
   describe('direct provider mode', () => {
-    const originalDirectProvider = process.env.DIRECT_PROVIDER
+    const _originalDirectProvider = process.env.DIRECT_PROVIDER
 
     beforeEach(() => {
       process.env.DIRECT_PROVIDER = 'openrouter'

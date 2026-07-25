@@ -130,9 +130,9 @@ const validateSettings = (parsed: JSONValue): Settings => {
   // Validate savant-free model preference — drop unknown ids so a removed model
   // doesn't strand the user on a non-existent queue. Hidden-but-supported models
   // are kept; access-tier resolution decides whether they are selectable.
-  // Backward-compat: migrate the legacy `freebuffModelPreference` key.
+  // Backward-compat: migrate the legacy model preference key.
   const savantFreeModelPreference =
-    obj.savantFreeModelPreference ?? obj.freebuffModelPreference
+    obj.savantFreeModelPreference ?? obj.freebuffModelPreference ?? obj.savantFreeModelPreferenceLegacy
   if (
     typeof savantFreeModelPreference === 'string' &&
     isSupportedSavantFreeModelId(savantFreeModelPreference)

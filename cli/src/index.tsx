@@ -1,5 +1,5 @@
 #!/usr/bin/env bun
-/* eslint-disable savant/no-unknown-in-signatures -- index.tsx: early-fatal catch handler accepts unknown */
+ 
 
 // Load repo-root .env.local into process.env BEFORE any @savant-code/common import
 // triggers environment validation. Required because `bun dev` runs with `--cwd ..`,
@@ -41,8 +41,8 @@ import { trimOversizedChatLogs } from './utils/chat-history'
 import { IS_SAVANT_FREE } from './utils/constants'
 import { startEngagementTracking } from './utils/engagement'
 import { initializeAgentRegistry } from './utils/local-agent-registry'
-import { fetchGatewayModels } from './utils/openrouter-models'
 import { clearLogFile, logger } from './utils/logger'
+import { fetchGatewayModels } from './utils/openrouter-models'
 import { applyPostProcessing } from './utils/post-processing'
 import { shouldShowProjectPicker } from './utils/project-picker'
 import { saveRecentProject } from './utils/recent-projects'
@@ -122,6 +122,7 @@ async function main(): Promise<void> {
     } catch (err) {
       dirListing = [`<readdir failed: ${err instanceof Error ? err.message : err}>`]
     }
+    // eslint-disable-next-line no-console -- CLI smoke diagnostic; logger is not yet initialized
     console.error(
       `[smoke diag] execPath=${process.execPath}\n` +
         `[smoke diag] execDir=${execDir}\n` +
@@ -148,7 +149,7 @@ async function main(): Promise<void> {
       if (effectiveBinary) {
         await Parser.init({ wasmBinary: effectiveBinary })
         // Marker grepped by cli/scripts/smoke-binary.ts — keep this exact text.
-        // eslint-disable-next-line no-console
+        // eslint-disable-next-line no-console -- CLI smoke success marker; logger is not yet initialized
         console.log(
           `tree-sitter smoke ok (wasmBinary, ${effectiveBinary.byteLength} bytes)`,
         )
@@ -157,9 +158,10 @@ async function main(): Promise<void> {
           locateFile: (name: string) =>
             name === 'tree-sitter.wasm' ? effectivePath! : name,
         })
-        // eslint-disable-next-line no-console
+        // eslint-disable-next-line no-console -- CLI smoke success marker; logger is not yet initialized
         console.log(`tree-sitter smoke ok (locateFile, path=${effectivePath})`)
       } else {
+        // eslint-disable-next-line no-console -- CLI smoke failure; logger is not yet initialized
         console.error(
           'tree-sitter smoke FAIL: no wasm available — pre-init published ' +
             'nothing and the sibling-of-execPath fallback also missed. See ' +
@@ -169,6 +171,7 @@ async function main(): Promise<void> {
       }
       process.exit(0)
     } catch (err) {
+      // eslint-disable-next-line no-console -- CLI smoke failure; logger is not yet initialized
       console.error('tree-sitter smoke FAIL:', err)
       process.exit(1)
     }
@@ -229,7 +232,7 @@ async function main(): Promise<void> {
     hasAgentOverride: hasAgentOverride,
     continueChat,
     initialMode: initialMode ?? 'EDIT',
-    isFreeBuff: IS_SAVANT_FREE,
+    isSavantFree: IS_SAVANT_FREE,
   })
 
   // Initialize agent registry (loads user agents via SDK).
@@ -402,6 +405,7 @@ async function main(): Promise<void> {
       // stdout may be closed
     }
     try {
+      // eslint-disable-next-line no-console -- Fatal startup error before logger is available
       console.error('Fatal error during startup:', error)
     } catch {
       // stderr may be closed

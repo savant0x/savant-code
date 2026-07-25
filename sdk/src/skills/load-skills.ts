@@ -78,7 +78,7 @@ export function parseSkillFileContent(
   // Verify name matches directory name
   if (frontmatter.name !== directoryName) {
     if (verbose) {
-      console.error(
+      logger.error(
         `Skill name '${frontmatter.name}' does not match directory name '${directoryName}' in ${filePath}`,
       )
     }

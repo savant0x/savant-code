@@ -29,8 +29,8 @@ type ExtractAgentLessonsInput = {
 }
 
 const lessonsExtractorAgent: AgentDefinition = {
-  id: 'buffbench-lessons-extractor',
-  displayName: 'Buffbench Lessons Extractor',
+  id: 'benchmark-lessons-extractor',
+  displayName: 'Benchmark Lessons Extractor',
   model: 'openai/gpt-5',
   toolNames: ['spawn_agents', 'read_files', 'set_output'],
   spawnableAgents: ['scout', 'find-all-referencer'],
@@ -153,7 +153,7 @@ Task: Analyze what went wrong and what should have been done. For each mistake o
     const agentOutput: string[] = []
     const result = await withTimeout(
       client.run({
-        agent: 'buffbench-lessons-extractor',
+        agent: 'benchmark-lessons-extractor',
         prompt: lessonsPrompt,
         agentDefinitions: [lessonsExtractorAgent, ...localAgentDefinitions],
         handleEvent: (event) => {
@@ -206,7 +206,7 @@ export function saveAgentLessons(params: {
     if (!fs.existsSync(lessonsFile)) {
       fs.writeFileSync(
         lessonsFile,
-        `# Agent Lessons: ${agentId}\n\nLessons accumulated across buffbench runs. Each lesson identifies what went wrong and what should have been done instead.\n\n`,
+        `# Agent Lessons: ${agentId}\n\nLessons accumulated across benchmark runs. Each lesson identifies what went wrong and what should have been done instead.\n\n`,
         'utf-8',
       )
     }

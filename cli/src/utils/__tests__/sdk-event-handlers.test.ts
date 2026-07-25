@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any -- test file: intentional any casts for event handler shapes */
+ 
 import { describe, expect, test } from 'bun:test'
 
 import { createAgentBlock } from '../message-block-helpers'
@@ -13,6 +13,7 @@ import type { AgentContentBlock, ChatMessage } from '../../types/chat'
 import type { AgentMode } from '../constants'
 import type { EventHandlerState } from '../sdk-event-handlers'
 import type { Logger } from '@savant-code/common/types/contracts/logger'
+import type { JSONValue } from '@savant-code/common/types/json'
 
 // Type for spawn agent info stored in the map
 interface SpawnAgentInfo {
@@ -28,7 +29,7 @@ interface SubagentStartEvent {
   displayName: string
   onlyChild: boolean
   parentAgentId: string | undefined
-  params: Record<string, unknown> | undefined
+  params: Record<string, JSONValue> | undefined
   prompt: string | undefined
 }
 

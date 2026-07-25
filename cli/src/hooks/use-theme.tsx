@@ -31,7 +31,7 @@ type ThemeStore = {
 
 export let useThemeStore: UseBoundStore<StoreApi<ThemeStore>> = (() => {
   throw new Error('useThemeStore not initialized')
-}) as any
+}) as unknown as UseBoundStore<StoreApi<ThemeStore>>
 let themeStoreInitialized = false
 
 type ThemeDetector = {

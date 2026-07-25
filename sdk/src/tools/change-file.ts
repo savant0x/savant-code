@@ -13,7 +13,7 @@ import type { SavantCodeToolOutput } from '@savant-code/common/tools/list'
 import type { SavantCodeFileSystem } from '@savant-code/common/types/filesystem'
 import type { JSONValue } from '@savant-code/common/types/json'
 
-const FileChangeSchema = z.object({
+export const FileChangeSchema = z.object({
   type: z.enum(['patch', 'file']),
   path: z.string(),
   content: z.string(),

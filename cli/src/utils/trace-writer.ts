@@ -7,6 +7,7 @@ import { getCliEnv } from './env'
 import { getCurrentChatDir, getProjectRoot } from '../project-files'
 
 import type { TraceWriter } from '@savant-code/common/types/contracts/trace'
+import type { JSONValue } from '@savant-code/common/types/json'
 import type { Message } from '@savant-code/common/types/messages/savant-code-message'
 
 const TRACE_FILENAME = 'trace.jsonl'
@@ -78,10 +79,18 @@ export function createTraceWriter(
         writtenRoles: [],
         system: undefined,
       }
-      const base = { agentId, agentType, runId, userInputId, step }
+      const base: Record<string, JSONValue> = {
+        agentId,
+        agentType,
+        userInputId,
+        step,
+      }
+      if (runId !== undefined) {
+        base.runId = runId
+      }
       const timestamp = new Date().toISOString()
       const lines: string[] = []
-      const appendLine = (record: Record<string, unknown>): void => {
+      const appendLine = (record: Record<string, JSONValue>): void => {
         lines.push(JSON.stringify({ timestamp, ...record }))
       }
 
@@ -109,7 +118,9 @@ export function createTraceWriter(
           ...base,
           type: 'message',
           index: i,
-          message,
+          // Trust-boundary cast: Message is a runtime value that must be
+          // JSON-serializable for the trace file, which JSONValue models.
+          message: message as unknown as JSONValue,
         })
       }
 

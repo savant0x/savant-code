@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any -- test file: intentional any casts for edge cases */
+ 
 import { beforeEach, describe, expect, it, test } from 'bun:test'
 
 import { validateAgents } from '../templates/agent-validation'
@@ -169,7 +169,7 @@ describe('Agent Validation', () => {
             instructionsPrompt: 'Test user prompt',
             stepPrompt: 'Test step prompt',
             inputSchema: {
-              prompt: {} as Record<string, never>, // invalid prompt schema
+              prompt: {} as { type: 'string' }, // invalid prompt schema
             },
             outputMode: 'last_message',
             includeMessageHistory: true,
@@ -528,7 +528,7 @@ describe('Agent Validation', () => {
               instructionsPrompt: 'Test user prompt',
               stepPrompt: 'Test step prompt',
               inputSchema: {
-                prompt: 10 as unknown as Record<string, never>, // Invalid - number schema
+                prompt: {} as { type: 'string' }, // Invalid - missing type at runtime
               },
               outputMode: 'last_message',
               includeMessageHistory: true,

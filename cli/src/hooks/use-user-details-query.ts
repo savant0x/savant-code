@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 
-import { isDirectProviderMode } from '../utils/env'
 import { getAuthToken } from '../utils/auth'
+import { isDirectProviderMode } from '../utils/env'
 import { logger as defaultLogger } from '../utils/logger'
 import { getApiClient, setApiClientAuthToken } from '../utils/savant-code-api'
 

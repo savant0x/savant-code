@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any -- test file: mock server type assertions */
+ 
 import { EventEmitter } from 'node:events'
 import {
   mkdtempSync,

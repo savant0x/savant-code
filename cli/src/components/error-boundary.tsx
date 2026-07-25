@@ -1,5 +1,7 @@
 import { memo, type ReactNode } from 'react'
 
+import { logger } from '../utils/logger'
+
 interface ErrorBoundaryPlaceholderProps {
   children: ReactNode
   fallback: ReactNode
@@ -49,7 +51,13 @@ export function withErrorFallback<T>(
   try {
     return renderFn()
   } catch (error) {
-    console.error(`[${componentName ?? 'withErrorFallback'}] Error caught:`, error)
+    logger.error(
+      {
+        componentName: componentName ?? 'withErrorFallback',
+        error: error instanceof Error ? error.message : String(error),
+      },
+      'Error caught in withErrorFallback',
+    )
     return fallback
   }
 }

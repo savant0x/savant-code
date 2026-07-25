@@ -1,7 +1,9 @@
 import { z } from 'zod/v4'
 
+import { jsonObjectSchema } from '../../json'
+
 export const publishAgentsRequestSchema = z.object({
-  data: z.record(z.string(), z.any()).array(),
+  data: jsonObjectSchema.array(),
   // All local agent IDs from the client, used for validation to recognize local agents
   // that aren't being published but are referenced by agents being published
   allLocalAgentIds: z.array(z.string()).optional(),

@@ -1,7 +1,32 @@
-import { jsonValueSchema } from '../types/json'
+import { jsonObjectSchema, jsonValueSchema } from '../types/json'
 
 import type { LogValue } from '../types/contracts/logger'
 import type { JSONValue } from '../types/json'
+
+/**
+ * Runtime parser: validates an arbitrary value as a JSON object and returns the
+ * parsed object so callers can reuse it without re-parsing.
+ *
+ * Use at trust boundaries where the compile-time type is `unknown` or a broad
+ * `JSONValue`. This uses the project's zod schema to validate that the value is a
+ * plain object whose nested values are all valid `JSONValue` shapes.
+ */
+ 
+export function safeParseJSONObject(value: unknown): Record<string, JSONValue> | undefined {
+  const result = jsonObjectSchema.safeParse(value)
+  return result.success ? result.data : undefined
+}
+
+/**
+ * Runtime type guard: narrows an arbitrary value to a JSON object.
+ *
+ * This is a thin wrapper around {@link safeParseJSONObject} for callers that
+ * only need a boolean check. Note: it parses the whole object, so prefer
+ * {@link safeParseJSONObject} when you need the parsed value.
+ */
+export function isJSONObject(value: unknown): value is Record<string, JSONValue> {
+  return safeParseJSONObject(value) !== undefined
+}
 
 /**
  * Runtime type guard: narrows an arbitrary value to `JSONValue`.
@@ -19,7 +44,7 @@ export function isJSONValue(value: unknown): value is JSONValue {
 /**
  * Runtime narrowing: returns the value if it is a `JSONValue`, otherwise throws.
  */
-// eslint-disable-next-line savant/no-unknown-in-signatures -- trust-boundary narrow: external `unknown` validated into `JSONValue`
+ 
 export function toJSONValue(value: unknown): JSONValue {
   return jsonValueSchema.parse(value)
 }
@@ -32,7 +57,7 @@ export function toJSONValue(value: unknown): JSONValue {
  * cyclic objects, etc.) are coerced to a string representation. Use this at
  * boundaries where a runtime crash would be worse than a degraded log payload.
  */
-// eslint-disable-next-line savant/no-unknown-in-signatures -- trust-boundary narrow: external `unknown` safely coerced to `JSONValue`
+ 
 export function safeToJSONValue(value: unknown): JSONValue {
   if (isJSONValue(value)) {
     return value
@@ -64,7 +89,7 @@ export function safeToJSONValue(value: unknown): JSONValue {
  * loggers regularly receive, and falls back to stringification for anything
  * else so that logging never throws.
  */
-// eslint-disable-next-line savant/no-unknown-in-signatures -- trust-boundary narrow: external `unknown` coerced to `LogValue`
+ 
 export function toLogValue(value: unknown): LogValue {
   if (value === null || value === undefined) {
     return value

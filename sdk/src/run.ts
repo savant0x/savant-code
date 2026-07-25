@@ -18,6 +18,8 @@ import {
 } from '@savant-code/common/mcp/client'
 import { toolNames } from '@savant-code/common/tools/constants'
 import { clientToolCallSchema } from '@savant-code/common/tools/list'
+import { applyPatchOperationSchema } from '@savant-code/common/tools/params/tool/apply-patch'
+import { jsonObjectSchema, type JSONValue } from '@savant-code/common/types/json'
 import { AgentOutputSchema } from '@savant-code/common/types/session-state'
 import {
   FETCH_IDLE_TIMEOUT_USER_MESSAGE,
@@ -35,7 +37,7 @@ import { getAgentRuntimeImpl } from './impl/agent-runtime'
 import { getUserInfoFromApiKey } from './impl/database'
 import { initialSessionState, applyOverridesToSessionState } from './run-state'
 import { applyPatchTool } from './tools/apply-patch'
-import { changeFile, type OnFileWrittenCallback } from './tools/change-file'
+import { changeFile, FileChangeSchema, type OnFileWrittenCallback } from './tools/change-file'
 import { codeSearch } from './tools/code-search'
 import { glob } from './tools/glob'
 import { listDirectory } from './tools/list-directory'
@@ -81,7 +83,7 @@ const wrapContentForUserMessage = (
 
 type OverrideToolHandlers = {
   [K in PublishedClientToolName]?: (
-    input: any, // eslint-disable-line @typescript-eslint/no-explicit-any -- dynamic tool input shape per tool name, savant/no-unknown-in-signatures -- Tool trust boundary: input shapes vary dynamically by tool name
+    input: Record<string, JSONValue>,
   ) => Promise<ToolResultOutput[]>
 } & {
   // Include read_files separately, since it has a different signature.
@@ -164,7 +166,7 @@ export type RunOptions = {
   prompt: string
   /** Content array for multimodal messages (text + images) */
   content?: MessageContent[]
-  params?: Record<string, any> // eslint-disable-line @typescript-eslint/no-explicit-any -- dynamic agent params per agent definition
+  params?: Record<string, JSONValue>
   previousRun?: RunState
   extraToolResults?: ToolMessage[]
   signal?: AbortSignal
@@ -176,7 +178,7 @@ export type RunOptions = {
   drainSteeringMessages?: () => string[]
   /** Extra key/values merged into each LLM request's `savant_code_metadata`.
    *  Used by hosts (e.g. the CLI) to forward client-scoped identifiers like
-   *  `freebuff_instance_id` that server-side gates read from the request body. */
+   *  `savant_free_instance_id` that server-side gates read from the request body. */
   extraSavantCodeMetadata?: Record<string, string>
   /** Optional checkpoint hook. Called once when the run starts and then
    *  periodically while it is in flight, with a RunState snapshot that
@@ -382,8 +384,8 @@ async function runOnce({
     delete sessionState.fileContext.customToolDefinitions[toolName]
   }
 
-  let resolvePromise: (value: RunReturnType) => any = () => {} // eslint-disable-line @typescript-eslint/no-explicit-any -- Promise constructor resolver type
-  let _reject: (error: any) => any = () => {} // eslint-disable-line @typescript-eslint/no-explicit-any -- Promise constructor rejecter type
+  let resolvePromise: (value: RunReturnType | PromiseLike<RunReturnType>) => void = () => {}
+  let _reject: (error: Error) => void = () => {}
   const promise = new Promise<RunReturnType>((res, rej) => {
     resolvePromise = res
     _reject = rej
@@ -857,7 +859,7 @@ async function handleToolCall({
       )
     }
     return {
-      output: await customToolHandler.execute(action.input),
+      output: await customToolHandler.execute(input),
     }
   }
 
@@ -871,14 +873,11 @@ async function handleToolCall({
       override = overrides['write_file']
     }
     if (override) {
-      // Note: This type assertion is necessary because TypeScript cannot narrow
-      // the union type of all possible tool inputs based on the dynamic toolName.
-      // The input has been validated by clientToolCallSchema.parse above.
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      result = await override(input as any)
+      result = await override(input)
     } else if (toolName === 'end_turn') {
       result = [{ type: 'json', value: { message: 'Turn ended.' } }]
     } else if (toolName === 'write_file' || toolName === 'str_replace') {
+      FileChangeSchema.parse(input)
       result = await changeFile({
         parameters: input,
         cwd: requireCwd(cwd, toolName),
@@ -886,6 +885,7 @@ async function handleToolCall({
         onFileWritten,
       })
     } else if (toolName === 'apply_patch') {
+      applyPatchOperationSchema.parse(input.operation)
       result = await applyPatchTool({
         parameters: input,
         cwd: requireCwd(cwd, toolName),
@@ -895,33 +895,48 @@ async function handleToolCall({
     } else if (toolName === 'run_terminal_command') {
       const resolvedCwd = requireCwd(cwd, 'run_terminal_command')
       result = await runTerminalCommand({
-        ...input,
-        cwd: path.resolve(resolvedCwd, input.cwd ?? '.'),
+        command: getString(input, 'command'),
+        process_type: 'SYNC',
+        cwd: path.resolve(
+          resolvedCwd,
+          getOptionalString(input, 'cwd') ?? '.',
+        ),
+        timeout_seconds: getOptionalNumber(input, 'timeout_seconds') ?? 30,
         env,
         signal,
-      } as Parameters<typeof runTerminalCommand>[0])
+      })
     } else if (toolName === 'read_url') {
       result = await readUrl({
-        ...(input as Parameters<typeof readUrl>[0]),
+        url: getString(input, 'url'),
+        max_chars: getOptionalNumber(input, 'max_chars'),
         signal,
       })
     } else if (toolName === 'code_search') {
       result = await codeSearch({
         projectPath: requireCwd(cwd, 'code_search'),
-        ...input,
+        pattern: getString(input, 'pattern'),
+        flags: getOptionalString(input, 'flags'),
+        cwd: getOptionalString(input, 'cwd'),
+        maxResults: getOptionalNumber(input, 'maxResults'),
+        globalMaxResults: getOptionalNumber(input, 'globalMaxResults'),
+        maxOutputStringLength: getOptionalNumber(
+          input,
+          'maxOutputStringLength',
+        ),
+        timeoutSeconds: getOptionalNumber(input, 'timeoutSeconds'),
         signal,
-      } as Parameters<typeof codeSearch>[0])
+      })
     } else if (toolName === 'list_directory') {
       result = await listDirectory({
-        directoryPath: (input as { path: string }).path,
+        directoryPath: getString(input, 'path'),
         projectPath: requireCwd(cwd, 'list_directory'),
         fs,
       })
     } else if (toolName === 'glob') {
       result = await glob({
-        pattern: (input as { pattern: string; cwd?: string }).pattern,
+        pattern: getString(input, 'pattern'),
         projectPath: requireCwd(cwd, 'glob'),
-        cwd: (input as { pattern: string; cwd?: string }).cwd,
+        cwd: getOptionalString(input, 'cwd'),
         fs,
       })
     } else if (toolName === 'run_file_change_hooks') {
@@ -935,6 +950,7 @@ async function handleToolCall({
         },
       ]
     } else if (isComposioMetaToolName(toolName)) {
+      jsonObjectSchema.parse(input)
       result = await executeComposioToolViaServer({
         apiKey,
         toolName,
@@ -970,6 +986,38 @@ async function handleToolCall({
   return {
     output: result,
   }
+}
+
+function getString(input: Record<string, JSONValue>, key: string): string {
+  const value = input[key]
+  if (typeof value !== 'string') {
+    throw new Error(`Expected ${key} to be a string`)
+  }
+  return value
+}
+
+function getOptionalString(
+  input: Record<string, JSONValue>,
+  key: string,
+): string | undefined {
+  const value = input[key]
+  if (value === undefined) return undefined
+  if (typeof value !== 'string') {
+    throw new Error(`Expected ${key} to be a string`)
+  }
+  return value
+}
+
+function getOptionalNumber(
+  input: Record<string, JSONValue>,
+  key: string,
+): number | undefined {
+  const value = input[key]
+  if (value === undefined) return undefined
+  if (typeof value !== 'number') {
+    throw new Error(`Expected ${key} to be a number`)
+  }
+  return value
 }
 
 /**
@@ -1050,7 +1098,7 @@ async function handlePromptResponse({
   traceSessionId,
 }: {
   action: ServerAction<'prompt-response'> | ServerAction<'prompt-error'>
-  resolve: (value: RunReturnType) => any // eslint-disable-line @typescript-eslint/no-explicit-any -- ServerAction resolve type is intentionally loose
+  resolve: (value: RunReturnType) => void
   onError: (error: { message: string }) => void
   initialSessionState: SessionState
   traceSessionId: string

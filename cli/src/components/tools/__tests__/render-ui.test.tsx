@@ -7,16 +7,17 @@ import { chatThemes } from '../../../utils/theme-system'
 import { RenderUIComponent } from '../render-ui'
 
 import type { ToolBlock } from '../types'
+import type { JSONValue } from '@savant-code/common/types/json'
 
 initializeThemeStore()
 
 const createToolBlock = (
-  input: unknown,
+  input: Record<string, JSONValue> | undefined,
 ): ToolBlock & { toolName: 'render_ui' } => ({
   type: 'tool',
   toolName: 'render_ui',
   toolCallId: 'test-render-ui-call-id',
-  input,
+  input: input ?? {},
 })
 
 const renderOptions = {

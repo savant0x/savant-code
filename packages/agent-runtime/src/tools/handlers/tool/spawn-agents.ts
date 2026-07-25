@@ -1,4 +1,5 @@
 import { jsonToolResult } from '@savant-code/common/util/messages'
+import { safeToJSONValue } from '@savant-code/common/util/type-narrowing'
 
 import {
   validateAndGetAgentTemplate,
@@ -229,7 +230,7 @@ export const handleSpawnAgents = (async (
         return {
           agentName,
           agentType,
-          value: output,
+          value: safeToJSONValue(output),
         }
       } else {
         const agentTypeStr = agents[index].agent_type

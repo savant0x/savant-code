@@ -16,6 +16,7 @@ import {
   AGENT_CONTENT_HORIZONTAL_PADDING,
   MAX_AGENT_DEPTH,
 } from '../utils/layout-helpers'
+import { logger } from '../utils/logger'
 import {
   renderMarkdown,
   hasMarkdown,
@@ -58,8 +59,9 @@ const AgentChildrenGrid = memo(
 
     if (depth >= MAX_AGENT_DEPTH) {
       if (getCliEnv().NODE_ENV === 'development') {
-        console.warn(
-          `[AgentChildrenGrid] Depth limit (${MAX_AGENT_DEPTH}) reached, truncating agent tree`,
+        logger.warn(
+          { depth, maxAgentDepth: MAX_AGENT_DEPTH },
+          '[AgentChildrenGrid] Depth limit reached, truncating agent tree',
         )
       }
       return (

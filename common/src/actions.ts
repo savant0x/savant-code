@@ -1,7 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any -- action types: dynamic client/server payload shapes */
 import { z } from 'zod/v4'
 
 import type { GrantType } from './types/grant'
+import type { JSONValue } from './types/json'
 import type { MCPConfig } from './types/mcp'
 import type {
   TextPart,
@@ -27,7 +27,7 @@ type ClientActionPrompt = {
   promptId: string
   prompt: string | undefined
   content?: (TextPart | ImagePart)[]
-  promptParams?: Record<string, any> // Additional json params.
+  promptParams?: Record<string, JSONValue> // Additional json params.
   fingerprintId: string
   authToken?: string
   sessionState: SessionState
@@ -69,7 +69,7 @@ type ClientActionMcpToolData = {
   tools: {
     name: string
     description?: string
-    inputSchema: { type: 'object';[k: string]: unknown }
+    inputSchema: { type: 'object';[k: string]: JSONValue }
   }[]
 }
 
@@ -111,7 +111,7 @@ type ServerActionHandleStepsLogChunk = {
   userInputId: string
   agentId: string
   level: 'debug' | 'info' | 'warn' | 'error'
-  data: any
+  data: Record<string, JSONValue>
   message?: string
 }
 
@@ -135,7 +135,7 @@ type ServerActionToolCallRequest = {
   userInputId: string
   requestId: string
   toolName: string
-  input: Record<string, any>
+  input: Record<string, JSONValue>
   timeout?: number
   mcpConfig?: MCPConfig
 }

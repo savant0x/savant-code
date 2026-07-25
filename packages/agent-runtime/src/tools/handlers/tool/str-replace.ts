@@ -99,7 +99,7 @@ export const handleStrReplace = (async (
     path,
     replacements,
     initialContentPromise: latestContentPromise,
-    logger,  }).catch((error: unknown) => { // eslint-disable-line savant/no-unknown-in-signatures -- Catch trust boundary: native Promise rejection from str_replace execution
+    logger,  }).catch((error: unknown) => {  
       logger.error(toLogValue(error), 'Error processing str_replace block')
       return {
         tool: 'str_replace' as const,

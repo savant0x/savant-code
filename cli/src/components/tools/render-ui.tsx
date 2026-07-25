@@ -16,6 +16,7 @@ import type {
 } from './types'
 import type { ChatTheme } from '../../types/theme-system'
 import type { RenderUIButtonWidget } from '@savant-code/common/tools/params/tool/render-ui'
+import type { JSONValue } from '@savant-code/common/types/json'
 
 type RenderUIButtonVariant = NonNullable<RenderUIButtonWidget['variant']>
 
@@ -24,7 +25,7 @@ type RenderUIButtonVariant = NonNullable<RenderUIButtonWidget['variant']>
 interface TableWidgetData {
   type: 'table'
   columns: Array<{ key: string; label: string; align?: 'left' | 'center' | 'right' }>
-  rows: Record<string, unknown>[]
+  rows: Record<string, JSONValue>[]
   title?: string
 }
 

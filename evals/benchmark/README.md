@@ -1,10 +1,10 @@
-# BuffBench
+# Benchmark
 
-BuffBench is SavantCode's evaluation framework for measuring AI coding agent performance through real-world git commit reconstruction tasks.
+Benchmark is SavantCode's evaluation framework for measuring AI coding agent performance through real-world git commit reconstruction tasks.
 
 ## Overview
 
-BuffBench evaluates coding agents by having them reconstruct actual git commits from open source repositories. The system uses AI-powered judging to assess both the quality of implementation and the agent's problem-solving process.
+Benchmark evaluates coding agents by having them reconstruct actual git commits from open source repositories. The system uses AI-powered judging to assess both the quality of implementation and the agent's problem-solving process.
 
 ### Key Features
 
@@ -20,7 +20,7 @@ BuffBench evaluates coding agents by having them reconstruct actual git commits 
 
 ### System Components
 
-1. **Evaluation Orchestration** (`run-buffbench.ts`)
+1. **Evaluation Orchestration** (`run-benchmark.ts`)
    - Manages the complete evaluation pipeline
    - Handles parallel execution of multiple agents on multiple tasks
    - Coordinates between agents, judges, and analyzers
@@ -61,7 +61,7 @@ BuffBench evaluates coding agents by having them reconstruct actual git commits 
 
 ```mermaid
 sequenceDiagram
-    participant Orchestrator as BuffBench Orchestrator
+    participant Orchestrator as Benchmark Orchestrator
     participant AgentRunner as Agent Runner
     participant Agent as Coding Agent
     participant Judge as AI Judge (3x)
@@ -135,7 +135,7 @@ The AI judge evaluates three dimensions:
 
 ### External CLI Agents
 
-BuffBench supports running external CLI coding agents for comparison:
+Benchmark supports running external CLI coding agents for comparison:
 
 - **Claude Code**: Use `external:claude` - requires `claude` CLI installed
 - **Codex**: Use `external:codex` - requires `codex` CLI installed
@@ -144,8 +144,8 @@ BuffBench supports running external CLI coding agents for comparison:
 Example comparing SavantCode vs Claude Code:
 
 ```typescript
-await runBuffBench({
-  evalDataPath: 'evals/buffbench/eval-savant-code.json',
+await runBenchmark({
+  evalDataPath: 'evals/benchmark/eval-savant-code.json',
   agents: ['base2', 'external:claude'],
   taskConcurrency: 3,
 })
@@ -169,14 +169,14 @@ npm install -g @openai/codex
 ```bash
 # Install from https://opencode.ai/docs/install
 # Set OPENCODE_API_KEY environment variable
-# BuffBench uses opencode/kimi-k2.6 by default; override with OPENCODE_MODEL if needed.
+# Benchmark uses opencode/kimi-k2.6 by default; override with OPENCODE_MODEL if needed.
 ```
 
 ## Directory Structure
 
 ```
-evals/buffbench/
-├── run-buffbench.ts          # Main orchestrator
+evals/benchmark/
+├── run-benchmark.ts          # Main orchestrator
 ├── main.ts                   # Example usage
 ├── main-nightly.ts           # Nightly evaluation runner with email reporting
 ├── main-single-eval.ts       # Single evaluation runner
@@ -209,9 +209,9 @@ evals/buffbench/
 #### Basic Example
 
 ```typescript
-import { runBuffBench } from './run-buffbench'
+import { runBenchmark } from './run-benchmark'
 
-await runBuffBench({
+await runBenchmark({
   evalDataPath: 'eval-savant-code.json',
   agents: ['base2', 'base2-fast'],
   taskConcurrency: 3,
@@ -222,13 +222,13 @@ await runBuffBench({
 
 ```bash
 # Run evaluations
-bun run evals/buffbench/main.ts
+bun run evals/benchmark/main.ts
 
 # Run single evaluation
-bun run evals/buffbench/main-single-eval.ts
+bun run evals/benchmark/main-single-eval.ts
 
 # Run nightly evaluation with email reporting
-bun run evals/buffbench/main-nightly.ts
+bun run evals/benchmark/main-nightly.ts
 ```
 
 ### Creating New Evaluations
@@ -236,7 +236,7 @@ bun run evals/buffbench/main-nightly.ts
 #### 1. Generate from Specific Commits
 
 ```bash
-bun run evals/buffbench/gen-evals.ts \
+bun run evals/benchmark/gen-evals.ts \
   https://github.com/user/repo \
   abc123 \
   def456 \
@@ -246,7 +246,7 @@ bun run evals/buffbench/gen-evals.ts \
 #### 2. Generate from Repository (End-to-End)
 
 ```bash
-bun run evals/buffbench/gen-repo-eval.ts \
+bun run evals/benchmark/gen-repo-eval.ts \
   https://github.com/user/repo
 ```
 
@@ -362,12 +362,12 @@ Run automated nightly evaluations with email reporting:
 The nightly evaluation runner automatically sends email reports with results.
 
 ```bash
-bun run evals/buffbench/main-nightly.ts
+bun run evals/benchmark/main-nightly.ts
 ```
 
 ## Output Files
 
-BuffBench creates a timestamped logs directory for each run:
+Benchmark creates a timestamped logs directory for each run:
 
 ```
 logs/YYYY-MM-DDTHH-MM_agent1_vs_agent2/
@@ -413,7 +413,7 @@ logs/YYYY-MM-DDTHH-MM_agent1_vs_agent2/
 
 ```bash
 # Required
-CODEBUFF_API_KEY=your-api-key
+SAVANT_CODE_API_KEY=your-api-key
 
 # Optional
 EVAL_RESULTS_EMAIL=team@savant-code.com  # For nightly email reports
@@ -431,7 +431,7 @@ taskConcurrency: 10  // High parallelism (faster, more resources)
 
 ## Examples
 
-The `evals/buffbench/` directory contains several example evaluation files:
+The `evals/benchmark/` directory contains several example evaluation files:
 
 - **eval-savant-code.json** - SavantCode project evaluations
 - **eval-manifold.json** - Manifold prediction market evaluations

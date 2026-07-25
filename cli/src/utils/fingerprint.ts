@@ -11,15 +11,19 @@
 import { createHash, randomBytes } from 'node:crypto'
 import { cpus, networkInterfaces } from 'node:os'
 
+
 import { AnalyticsEvent } from '@savant-code/common/constants/analytics-events'
 
 import { trackEvent } from './analytics'
 import { detectShell } from './detect-shell'
 import { logger } from './logger'
 
+import type * as NodeMachineId from 'node-machine-id'
+import type * as Systeminformation from 'systeminformation'
+
 // Lazy imports for optional dependencies
-let machineIdModule: typeof import('node-machine-id') | null = null
-let systeminformationModule: typeof import('systeminformation') | null = null
+let machineIdModule: typeof NodeMachineId | null = null
+let systeminformationModule: typeof Systeminformation | null = null
 
 async function getMachineId(): Promise<string> {
   if (!machineIdModule) {

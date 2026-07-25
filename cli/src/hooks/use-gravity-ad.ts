@@ -19,6 +19,7 @@ import {
 import { logger } from '../utils/logger'
 
 import type { ChatMessage } from '../types/chat'
+import type { JSONValue } from '@savant-code/common/types/json'
 import type { Message } from '@savant-code/sdk'
 
 const AD_ROTATION_INTERVAL_MS = 60 * 1000 // 60 seconds per ad
@@ -124,7 +125,7 @@ export function claimAdImpression(
 
 function trackInlineAdEvent(
   event: AnalyticsEvent,
-  properties: Record<string, unknown>,
+  properties: Record<string, JSONValue>,
 ): void {
   try {
     trackEvent(event, properties)
@@ -419,7 +420,7 @@ export const useGravityAd = (options?: GravityAdOptions): GravityAdState => {
       })
 
       if (!response.ok) {
-        let responseBody: unknown
+        let responseBody: JSONValue
         try {
           const contentType = response.headers.get('content-type') ?? ''
           responseBody = contentType.includes('application/json')
@@ -551,15 +552,15 @@ export const useGravityAd = (options?: GravityAdOptions): GravityAdState => {
     const previousEligibleCount = ctrl.eligibleSlotCounts.get(messageId) ?? 0
     if (count > previousEligibleCount) {
       ctrl.eligibleSlotCounts.set(messageId, count)
-      const telemetryProperties = {
+      const telemetryProperties: Record<string, JSONValue> = {
         response_id: messageId,
         chat_session_id: useChatStore.getState().chatSessionId,
         eligible_slot_count: count,
         pool_size: MAX_RESPONSE_AD_POOL_SIZE,
         provider,
-        surface,
         placement_id: inlinePlacementId,
         is_savant_free: IS_SAVANT_FREE,
+        ...(surface ? { surface } : {}),
       }
       trackInlineAdEvent(
         AnalyticsEvent.CLI_INLINE_AD_SLOT_ELIGIBLE,

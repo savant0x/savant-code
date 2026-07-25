@@ -108,4 +108,5 @@ export {
 } from './impl/llm'
 export {
   resetChatGptOAuthRateLimit,
+  isCloudflareModel,
 } from './impl/model-provider'

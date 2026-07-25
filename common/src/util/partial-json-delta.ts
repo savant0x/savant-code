@@ -1,38 +1,39 @@
-/* eslint-disable @typescript-eslint/no-explicit-any -- partial JSON parsing utilities */
+import type { JSONObject, JSONValue } from '../types/json'
+
 export function parsePartialJsonObjectSingle(content: string): {
   lastParamComplete: boolean
-  params: any
+  params: JSONObject
 } {
+  let parsed: JSONValue
   try {
-    return { lastParamComplete: true, params: JSON.parse(content) }
+    parsed = JSON.parse(content)
+    if (isJSONObject(parsed)) return { lastParamComplete: true, params: parsed }
   } catch {}
 
   if (!content.match(/\d$/)) {
     try {
-      return { lastParamComplete: true, params: JSON.parse(content + '}') }
+      parsed = JSON.parse(content + '}')
+      if (isJSONObject(parsed)) return { lastParamComplete: true, params: parsed }
     } catch {}
   }
 
   try {
-    return { lastParamComplete: false, params: JSON.parse(content + '"}') }
+    parsed = JSON.parse(content + '"}')
+    if (isJSONObject(parsed)) return { lastParamComplete: false, params: parsed }
   } catch {}
 
   if (content.endsWith('\\')) {
     try {
-      return {
-        lastParamComplete: false,
-        params: JSON.parse(content.slice(0, -1) + '"}'),
-      }
+      parsed = JSON.parse(content.slice(0, -1) + '"}')
+      if (isJSONObject(parsed)) return { lastParamComplete: false, params: parsed }
     } catch {}
   }
 
   let commaPos = content.length
   while ((commaPos = content.lastIndexOf(',', commaPos - 1)) !== -1) {
     try {
-      return {
-        lastParamComplete: true,
-        params: JSON.parse(content.slice(0, commaPos) + '}'),
-      }
+      parsed = JSON.parse(content.slice(0, commaPos) + '}')
+      if (isJSONObject(parsed)) return { lastParamComplete: true, params: parsed }
     } catch {}
   }
 
@@ -43,8 +44,8 @@ export function getPartialJsonDelta(
   content: string,
   previous: string,
 ): {
-  delta: Record<string, any>
-  result: Record<string, any>
+  delta: JSONObject
+  result: JSONObject
   lastParam: { key: string | undefined; complete: boolean }
 } {
   if (!content.startsWith(previous)) {
@@ -61,7 +62,7 @@ export function getPartialJsonDelta(
 
   const entries = Object.entries(params)
 
-  const delta: Record<string, any> = {}
+  const delta: JSONObject = {}
   for (const [key, value] of entries) {
     if (prevParams[key] === value) {
       if (prevLastParam === key && !prevLastParamComplete) {
@@ -69,8 +70,9 @@ export function getPartialJsonDelta(
       }
       continue
     }
-    if (typeof value === 'string') {
-      delta[key] = value.slice((prevParams[key] ?? '').length)
+    const prevValue = prevParams[key]
+    if (typeof value === 'string' && typeof prevValue === 'string') {
+      delta[key] = value.slice(prevValue.length)
     } else {
       delta[key] = value
     }
@@ -87,4 +89,8 @@ export function getPartialJsonDelta(
           : lastParamComplete,
     },
   }
+}
+
+function isJSONObject(value: JSONValue): value is JSONObject {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
 }

@@ -13,6 +13,7 @@ export const ALLOWED_MODEL_PREFIXES = [
   'tokenrouter',
   'nvidia',
   'opencode-go',
+  'cloudflare',
   'moonshotai',
   'bytedance-seed',
   'xiaomi',
@@ -153,6 +154,24 @@ export const OPENCODE_GO_PROTOCOLS: Record<string, 'openai' | 'anthropic'> = {
   'opencode-go/qwen3.6-plus': 'anthropic',
 } as const
 
+export const cloudflareModels = {
+  cloudflare_gpt_oss_120b: 'cloudflare/openai/gpt-oss-120b',
+  cloudflare_gpt_oss_20b: 'cloudflare/openai/gpt-oss-20b',
+  cloudflare_deepseek_r1_distill: 'cloudflare/deepseek/deepseek-r1-distill-qwen-32b',
+  cloudflare_gemma_4_26b: 'cloudflare/google/gemma-4-26b-a4b-it',
+  cloudflare_llama_3_3_70b: 'cloudflare/meta/llama-3.3-70b-instruct-fp8-fast',
+  cloudflare_llama_4_scout: 'cloudflare/meta/llama-4-scout-17b-16e-instruct',
+  cloudflare_kimi_k2_7_code: 'cloudflare/moonshotai/kimi-k2.7-code',
+  cloudflare_kimi_k2_6: 'cloudflare/moonshotai/kimi-k2.6',
+  cloudflare_glm_5_2: 'cloudflare/zai-org/glm-5.2',
+  cloudflare_glm_4_7_flash: 'cloudflare/zai-org/glm-4.7-flash',
+  cloudflare_qwen3_30b: 'cloudflare/qwen/qwen3-30b-a3b-fp8',
+  cloudflare_qwq_32b: 'cloudflare/qwen/qwq-32b',
+  cloudflare_nemotron_3: 'cloudflare/nvidia/nemotron-3-120b-a12b',
+  cloudflare_mistral_small: 'cloudflare/mistralai/mistral-small-3.1-24b-instruct',
+} as const
+export type CloudflareModel = (typeof cloudflareModels)[keyof typeof cloudflareModels]
+
 export const deepseekModels = {
   deepseekChat: 'deepseek-chat',
   deepseekReasoner: 'deepseek-reasoner',
@@ -225,6 +244,7 @@ export const models = {
   ...finetunedVertexModels,
   ...tokenrouterModels,
   ...nvidiaModels,
+  ...cloudflareModels,
 } as const
 
 export const shortModelNames = {
@@ -328,6 +348,7 @@ export const providerDomains = {
   tokenrouter: 'tokenrouter.com',
   nvidia: 'nvidia.com',
   opencodeGo: 'opencode.ai',
+  cloudflare: 'cloudflare.com',
 } as const
 
 export function getLogoForModel(modelName: string): string | undefined {
@@ -349,8 +370,8 @@ export function getLogoForModel(modelName: string): string | undefined {
   else if (modelName.startsWith('tokenrouter/'))
     domain = providerDomains.tokenrouter
   else if (modelName.startsWith('nvidia/')) domain = providerDomains.nvidia
-  else if (modelName.startsWith('opencode-go/'))
-    domain = providerDomains.opencodeGo
+  else if (modelName.startsWith('cloudflare/')) domain = providerDomains.cloudflare
+  else if (modelName.startsWith('opencode-go/')) domain = providerDomains.opencodeGo
   else if (modelName.includes('claude')) domain = providerDomains.anthropic
   else if (modelName.includes('grok')) domain = providerDomains.xai
 

@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any -- contract type: dynamic stream/error shapes */
+ 
 import type { TrackEventFn } from './analytics'
 import type { SendActionFn } from './client'
 import type { PromptResult } from '../../util/error'
@@ -63,7 +63,7 @@ export type PromptAiSdkStreamFn = (
     /** Map of locally available agent templates - used to transform agent tool calls */
     localAgentTemplates?: Record<string, AgentTemplate>
     /** Extra key/values merged into the request's `savant_code_metadata` field.
-     *  Used to forward client-scoped identifiers (e.g. `freebuff_instance_id`)
+     *  Used to forward client-scoped identifiers (e.g. `savant_free_instance_id`)
      *  that server-side gates read from the chat-completions body. */
     extraSavantCodeMetadata?: Record<string, string>
     sendAction: SendActionFn
@@ -141,7 +141,7 @@ export type PromptAiSdkStructuredFn = <T>(
 ) => PromptAiSdkStructuredOutput<T>
 
 export type HandleOpenRouterStreamFn = (params: {
-  body: any
+  body: ReadableStream<Uint8Array> | null
   userId: string
   agentId: string
-}) => Promise<ReadableStream>
+}) => Promise<ReadableStream<Uint8Array>>

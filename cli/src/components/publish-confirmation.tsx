@@ -1,9 +1,9 @@
 import { TextAttributes } from '@opentui/core'
+import { getSimpleAgentId } from '@savant-code/common/util/agent-id-parsing'
 import React, { useMemo, useState } from 'react'
 
 import { Button } from './button'
 import { useTheme } from '../hooks/use-theme'
-import { getSimpleAgentId } from '../utils/agent-id-utils'
 import { BORDER_CHARS } from '../utils/ui-constants'
 
 import type { LocalAgentInfo } from '../utils/local-agent-registry'

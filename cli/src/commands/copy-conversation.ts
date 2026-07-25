@@ -1,4 +1,4 @@
-/* eslint-disable savant/no-unknown-in-signatures -- copy-conversation: tool inputs are `unknown` (LLM tool-call payloads passed through JSON.stringify before Markdown rendering); trust-boundary validated via typeof + JSON.parse guards in `renderToolInput` / `renderToolOutput` */
+ 
 /**
  * `/copy` command — serialize the entire conversation (user + assistant text,
  * reasoning, tool calls with their inputs and outputs, sub-agents) into clean

@@ -6,12 +6,13 @@ import { chatThemes } from '../../../utils/theme-system'
 import { getToolComponent, renderToolComponent } from '../registry'
 
 import type { ToolBlock } from '../types'
+import type { JSONValue } from '@savant-code/common/types/json'
 import type React from 'react'
 
 initializeThemeStore()
 
 const createToolBlock = (
-  operation: Record<string, unknown>,
+  operation: Record<string, JSONValue>,
 ): ToolBlock & { toolName: 'apply_patch' } => ({
   type: 'tool',
   toolName: 'apply_patch',

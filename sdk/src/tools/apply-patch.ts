@@ -1,12 +1,13 @@
 import path from 'path'
 
+import { applyPatchOperationSchema } from '@savant-code/common/tools/params/tool/apply-patch'
 import { resolveAndContain } from '@savant-code/common/util/paths'
 
 import { resolveFilePath } from './path-utils'
 
+
 import type { OnFileWrittenCallback } from './change-file'
 import type { SavantCodeToolOutput } from '@savant-code/common/tools/list'
-import type { ApplyPatchOperation } from '@savant-code/common/tools/params/tool/apply-patch'
 import type { SavantCodeFileSystem } from '@savant-code/common/types/filesystem'
 import type { JSONValue } from '@savant-code/common/types/json'
 
@@ -586,21 +587,6 @@ function errorResult(errorMessage: string): ApplyPatchJson {
   }
 }
 
-function parseOperation(
-  parameters: Record<string, JSONValue>,
-): ApplyPatchOperation | null {
-  if (
-    typeof parameters !== 'object' ||
-    parameters === null ||
-    !('operation' in parameters) ||
-    typeof parameters.operation !== 'object'
-  ) {
-    return null
-  }
-
-  return (parameters as { operation: ApplyPatchOperation }).operation
-}
-
 export async function applyPatchTool(params: {
   parameters: Record<string, JSONValue>
   cwd: string
@@ -610,11 +596,13 @@ export async function applyPatchTool(params: {
   realpathFn?: (p: string) => string
 }): Promise<ApplyPatchResult> {
   const { parameters, cwd, fs, onFileWritten, realpathFn } = params
-  const operation = parseOperation(parameters)
+  const operationParse = applyPatchOperationSchema.safeParse(parameters.operation)
 
-  if (!operation) {
+  if (!operationParse.success) {
     return [errorResult('Missing or invalid operation object.')]
   }
+
+  const operation = operationParse.data
 
   try {
     const { fullPath } = resolveFilePath(cwd, operation.path)

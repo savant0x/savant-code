@@ -1,9 +1,9 @@
 <!-- markdownlint-disable MD041 -->
-<img src="../assets/banner.png" alt="@savant-code/evals — Buffbench benchmark runner + public eval fixtures" width="650" />
+<img src="../assets/banner.png" alt="@savant-code/evals — Benchmark runner + public eval fixtures" width="650" />
 
 # @savant-code/evals
 
-Eval harness for the Savant agent. Runs the **Buffbench** benchmark suite against public eval fixtures (savant-code-hard / manifold / plane / saleor / additional profiles) and traces per-task performance.
+Eval harness for the Savant agent. Runs the **benchmark** suite against public eval fixtures (savant-code-hard / manifold / plane / saleor / additional profiles) and traces per-task performance.
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](../LICENSE)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](../ECHO.md)[![Status](https://img.shields.io/badge/Status-internal-%23ff9500?style=flat-square&logo=github&logoColor=%2300fbff)](../README.md)
 
@@ -17,14 +17,14 @@ Eval harness for the Savant agent. Runs the **Buffbench** benchmark suite agains
 # From the repo root
 bun install
 
-# Run the public buffbench subset
-bun --cwd evals run-buffbench
+# Run the public benchmark subset
+bun --cwd evals run-benchmark
 
 # Type-check
 bun --cwd evals typecheck
 ```
 
-See `evals/buffbench/README.md` (if present) for per-task scoring rules.
+See `evals/benchmark/README.md` (if present) for per-task scoring rules.
 
 ## License
 

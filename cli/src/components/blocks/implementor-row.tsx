@@ -263,7 +263,7 @@ const CompactFileStats = memo(
     onSelectFile,
     fileDiffs,
   }: CompactFileStatsProps) => {
-    const theme = useTheme()
+    const _theme = useTheme()
 
     // Fixed bar width - keeps layout simple and predictable
     const maxBarWidth = STATS_BAR_WIDTH

@@ -74,13 +74,18 @@ export function runBashCommand(command: string) {
     setMessages((prev) => [...prev, assistantMessage])
   }
 
+  const rawEnv = getSystemProcessEnv()
+  const env = Object.fromEntries(
+    Object.entries(rawEnv).filter(([, v]) => v !== undefined),
+  ) as Record<string, string>
+
   runTerminalCommand({
     command,
     process_type: 'SYNC',
     cwd: commandCwd,
     timeout_seconds: -1,
-    env: getSystemProcessEnv(),
-  })
+    env,
+  } as Parameters<typeof runTerminalCommand>[0])
     .then(([{ value }]) => {
       const stdout = 'stdout' in value ? value.stdout || '' : ''
       const stderr = 'stderr' in value ? value.stderr || '' : ''
@@ -304,12 +309,16 @@ export async function routeUserPrompt(
   // CLI usage is intentionally excluded.
   if (IS_SAVANT_FREE) {
     const savantFreeSession = useSavantFreeSessionStore.getState().session
+    const accessTier: string =
+      savantFreeSession &&
+      typeof (savantFreeSession as { accessTier?: string }).accessTier ===
+        'string'
+        ? (savantFreeSession as { accessTier: string }).accessTier
+        : 'unknown'
+
     trackEvent(AnalyticsEvent.MESSAGE_SENT, {
       surface: 'cli',
-      accessTier:
-        savantFreeSession && 'accessTier' in savantFreeSession
-          ? savantFreeSession.accessTier
-          : 'unknown',
+      accessTier,
       mode: agentMode,
       inputMode,
       inputLength: trimmed.length,

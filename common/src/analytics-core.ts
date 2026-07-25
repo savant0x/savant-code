@@ -1,5 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any -- analytics core: dynamic event properties */
 import { PostHog } from 'posthog-node'
+
+import type { JSONValue } from './types/json'
 
 /**
  * Shared analytics core module.
@@ -12,7 +13,7 @@ export interface AnalyticsClient {
   capture: (params: {
     distinctId: string
     event: string
-    properties?: Record<string, any>
+    properties?: Record<string, JSONValue>
   }) => void
   flush: () => Promise<void>
 }
@@ -21,14 +22,14 @@ export interface AnalyticsClient {
 export interface AnalyticsClientWithIdentify extends AnalyticsClient {
   identify: (params: {
     distinctId: string
-    properties?: Record<string, any>
+    properties?: Record<string, JSONValue>
   }) => void
   /** Links an alias (previous anonymous ID) to a distinctId (real user ID) */
   alias: (data: { distinctId: string; alias: string }) => void
   captureException: (
-    error: any,
+    error: Error,
     distinctId: string,
-    properties?: Record<string, any>,
+    properties?: Record<string, JSONValue>,
   ) => void
 }
 

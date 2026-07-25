@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any -- generic utility types: intentional any in type-level programming */
+/* ECHO Law 6: generic utility types use proper bounded generics. */
 import type { UnionToIntersection } from 'bun-types/vendor/expect-type'
 
 type Prettify<T> = {
@@ -7,11 +7,11 @@ type Prettify<T> = {
 
 type StripExact<T> = T extends infer U & { [x: string]: never } ? U : T
 
-type ParamsOfFunction<T> = T extends (params: infer C) => any
+type ParamsOfFunction<T> = T extends (params: infer C) => unknown
   ? StripExact<C>
   : never
 
-type IsUnion<T, U = T> = T extends any ? ([U] extends [T] ? false : true) : false
+type IsUnion<T, U = T> = T extends T ? ([U] extends [T] ? false : true) : false
 type ParamsOfArray<T> = UnionToIntersection<
   T extends [infer fn, ...infer rest]
     ? ParamsOfFunction<fn> | ParamsOfArray<rest>
@@ -22,7 +22,7 @@ type ParamsOfUnion<T> = IsUnion<T> extends true
   : ParamsOfFunction<T>
 
 export type ParamsOf<T> = Prettify<
-  T extends any[] ? ParamsOfArray<T> : ParamsOfUnion<T>
+  T extends readonly unknown[] ? ParamsOfArray<T> : ParamsOfUnion<T>
 >
 
 export type OptionalFields<T, K extends keyof T> = Prettify<

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any -- clipboard hook: dynamic selection event type */
 import { useRenderer } from '@opentui/react'
 import { useEffect, useRef, useState } from 'react'
 
@@ -9,6 +8,32 @@ import {
   subscribeClipboardMessages,
   unregisterClipboardRenderer,
 } from '../utils/clipboard'
+
+import type {
+  ClipboardRenderer,
+  ClipboardRendererSelection,
+} from '../utils/clipboard'
+
+function isSelectionLike(
+  value: unknown,
+): value is ClipboardRendererSelection {
+  return typeof value === 'object' && value !== null && 'getSelectedText' in value
+}
+
+function extractSelectedText(
+  selectionEvent: ClipboardRendererSelection | string,
+  renderer: ClipboardRenderer | null,
+): string | null {
+  const rendererSelection = renderer?.getSelection?.()
+  const selectionObj = selectionEvent ?? rendererSelection
+  const rawText: string | null =
+    selectionObj && isSelectionLike(selectionObj)
+      ? selectionObj.getSelectedText?.() ?? null
+      : typeof selectionObj === 'string'
+        ? selectionObj
+        : null
+  return rawText
+}
 
 function formatDefaultClipboardMessage(text: string): string | null {
   const preview = text.replace(/\s+/g, ' ').trim()
@@ -37,7 +62,7 @@ export const useClipboard = () => {
   // can use the renderer's OSC 52 method when available.
   useEffect(() => {
     if (renderer) {
-      registerClipboardRenderer(renderer as unknown as Record<string, unknown>)
+      registerClipboardRenderer(renderer as ClipboardRenderer)
       return () => {
         unregisterClipboardRenderer()
       }
@@ -46,13 +71,10 @@ export const useClipboard = () => {
   }, [renderer])
 
   useEffect(() => {
-    const handleSelection = (selectionEvent: any) => {
-      const selectionObj = selectionEvent ?? (renderer as any)?.getSelection?.()
-      const rawText: string | null = selectionObj?.getSelectedText
-        ? selectionObj.getSelectedText()
-        : typeof selectionObj === 'string'
-          ? selectionObj
-          : null
+    const handleSelection = (
+      selectionEvent: ClipboardRendererSelection | string,
+    ) => {
+      const rawText = extractSelectedText(selectionEvent, renderer as ClipboardRenderer | null)
 
       // Filter out cursor character from selected text
       const cleanedText = rawText?.replace(new RegExp(CURSOR_CHAR, 'g'), '') ?? null

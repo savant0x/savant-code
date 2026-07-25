@@ -55,8 +55,6 @@ const definition: AgentDefinition = {
       'researcher-docs',
       'basher',
       'verifier',
-      'code-reviewer-opus',
-      'code-reviewer-multi-prompt',
       'librarian',
       'tmux-cli',
       'browser-use',

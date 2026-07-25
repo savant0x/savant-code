@@ -1,105 +1,68 @@
-import { TextAttributes } from '@opentui/core'
-import React, { type ReactNode } from 'react'
-import stringWidth from 'string-width'
+import { TextAttributes } from '@opentui/core';
+import React, { type ReactNode } from 'react';
+import stringWidth from 'string-width';
 
-import { useTheme } from '../../hooks/use-theme'
-import {
-  isTextRenderable,
-  renderExpandedContent,
-} from '../blocks/block-helpers'
-import { Button } from '../button'
-
-import type { ChatTheme } from '../../types/theme-system'
-
+import { useTheme } from '../../hooks/use-theme';
+import { isTextRenderable as _isTextRenderable, renderExpandedContent, } from '../blocks/block-helpers';
+import { Button } from '../button';
 interface ToolCallItemProps {
-  name: string
-  content: ReactNode
-  isCollapsed: boolean
-  isStreaming: boolean
-  streamingPreview: string
-  finishedPreview: string
-  onToggle?: () => void
-  titleSuffix?: string
-  dense?: boolean
+    name: string;
+    content: ReactNode;
+    isCollapsed: boolean;
+    isStreaming: boolean;
+    streamingPreview: string;
+    finishedPreview: string;
+    onToggle?: () => void;
+    titleSuffix?: string;
+    dense?: boolean;
 }
-
 interface SimpleToolCallItemProps {
-  name: string
-  /** Description - can be a string or ReactNode for rich formatting */
-  description: string | ReactNode
-  descriptionColor?: string
+    name: string;
+    /** Description - can be a string or ReactNode for rich formatting */
+    description: string | ReactNode;
+    descriptionColor?: string;
 }
-
-export const SimpleToolCallItem = ({
-  name,
-  description,
-  descriptionColor,
-}: SimpleToolCallItemProps) => {
-  const theme = useTheme()
-  const bulletChar = '• '
-
-  return (
-    <box style={{ flexDirection: 'row', alignItems: 'center', width: '100%' }}>
+export const SimpleToolCallItem = ({ name, description, descriptionColor, }: SimpleToolCallItemProps) => {
+    const theme = useTheme();
+    const bulletChar = '• ';
+    return (<box style={{ flexDirection: 'row', alignItems: 'center', width: '100%' }}>
       <text style={{ wrapMode: 'word' }}>
         <span fg={theme.foreground}>{bulletChar}</span>
         <span fg={theme.foreground} attributes={TextAttributes.BOLD}>
           {name}
         </span>
         <span fg={theme.foreground}> </span>
-        {typeof description === 'string' ? (
-          <span fg={descriptionColor ?? theme.foreground}>{description}</span>
-        ) : (
-          description
-        )}
+        {typeof description === 'string' ? (<span fg={descriptionColor ?? theme.foreground}>{description}</span>) : (description)}
       </text>
-    </box>
-  )
-}
-
-export const ToolCallItem = ({
-  name,
-  content,
-  isCollapsed,
-  isStreaming,
-  streamingPreview,
-  finishedPreview,
-  onToggle,
-  titleSuffix,
-  dense = false,
-}: ToolCallItemProps) => {
-  const theme = useTheme()
-
-  const baseTextAttributes = theme.messageTextAttributes ?? 0
-  const getAttributes = (extra: number = 0): number | undefined => {
-    const combined = baseTextAttributes | extra
-    return combined === 0 ? undefined : combined
-  }
-
-  const isExpanded = !isCollapsed
-  const bulletChar = '• '
-  const toggleIndicator = onToggle ? (isCollapsed ? '▸ ' : '▾ ') : ''
-  const toggleLabel = onToggle ? toggleIndicator : bulletChar
-  // Width in cells of the toggle label (toggle arrow or bullet). Used to align
-  // expanded content directly under the toggle icon.
-  const toggleIndent = stringWidth(toggleLabel)
-  const collapsedPreviewText = isStreaming ? streamingPreview : finishedPreview
-  const showCollapsedPreview = collapsedPreviewText.length > 0
-
-  return (
-    <box style={{ flexDirection: 'column', gap: 0, width: '100%' }}>
-      <box
-        style={{
-          flexDirection: 'column',
-          gap: 0,
-          paddingLeft: 0,
-          paddingRight: 0,
-          paddingTop: 0,
-          paddingBottom: 0,
-          width: '100%',
-        }}
-      >
-        <Button
-          style={{
+    </box>);
+};
+export const ToolCallItem = ({ name, content, isCollapsed, isStreaming, streamingPreview, finishedPreview, onToggle, titleSuffix, dense = false, }: ToolCallItemProps) => {
+    const theme = useTheme();
+    const baseTextAttributes = theme.messageTextAttributes ?? 0;
+    const getAttributes = (extra: number = 0): number | undefined => {
+        const combined = baseTextAttributes | extra;
+        return combined === 0 ? undefined : combined;
+    };
+    const isExpanded = !isCollapsed;
+    const bulletChar = '• ';
+    const toggleIndicator = onToggle ? (isCollapsed ? '▸ ' : '▾ ') : '';
+    const toggleLabel = onToggle ? toggleIndicator : bulletChar;
+    // Width in cells of the toggle label (toggle arrow or bullet). Used to align
+    // expanded content directly under the toggle icon.
+    const toggleIndent = stringWidth(toggleLabel);
+    const collapsedPreviewText = isStreaming ? streamingPreview : finishedPreview;
+    const showCollapsedPreview = collapsedPreviewText.length > 0;
+    return (<box style={{ flexDirection: 'column', gap: 0, width: '100%' }}>
+      <box style={{
+            flexDirection: 'column',
+            gap: 0,
+            paddingLeft: 0,
+            paddingRight: 0,
+            paddingTop: 0,
+            paddingBottom: 0,
+            width: '100%',
+        }}>
+        <Button style={{
             flexDirection: 'row',
             alignItems: 'center',
             paddingLeft: 0,
@@ -107,72 +70,48 @@ export const ToolCallItem = ({
             paddingTop: 0,
             paddingBottom: 0,
             width: '100%',
-          }}
-          onClick={onToggle}
-        >
+        }} onClick={onToggle}>
           <text style={{ wrapMode: 'none' }}>
             {/* Box-drawing header: ┌─ tool_name ─ path */}
             <span fg={theme.muted}>
               {'┌─ '}
             </span>
-            <span
-              fg={theme.foreground}
-              attributes={isExpanded ? TextAttributes.BOLD : undefined}
-            >
+            <span fg={theme.foreground} attributes={isExpanded ? TextAttributes.BOLD : undefined}>
               {name}
             </span>
-            {titleSuffix ? (
-              <span fg={theme.muted}>
+            {titleSuffix ? (<span fg={theme.muted}>
                 {` ─ ${titleSuffix}`}
-              </span>
-            ) : null}
+              </span>) : null}
             <span fg={theme.muted}>
               {' ─┐'}
             </span>
-            {isStreaming ? (
-              <span fg={theme.primary} attributes={TextAttributes.DIM}>
+            {isStreaming ? (<span fg={theme.primary} attributes={TextAttributes.DIM}>
                 {' running'}
-              </span>
-            ) : null}
+              </span>) : null}
           </text>
         </Button>
 
-        {isCollapsed ? (
-          showCollapsedPreview ? (
-            <box
-              style={{
+        {isCollapsed ? (showCollapsedPreview ? (<box style={{
                 paddingLeft: 0,
                 paddingRight: 0,
                 paddingTop: 0,
                 paddingBottom: 0,
                 width: '100%',
-              }}
-            >
-              <text
-                fg={isStreaming ? theme.foreground : theme.muted}
-                attributes={getAttributes(TextAttributes.ITALIC)}
-                style={{ wrapMode: 'word' }}
-              >
+            }}>
+              <text fg={isStreaming ? theme.foreground : theme.muted} attributes={getAttributes(TextAttributes.ITALIC)} style={{ wrapMode: 'word' }}>
                 {collapsedPreviewText}
               </text>
-            </box>
-          ) : null
-        ) : (
-          <box
-            style={{
-              flexDirection: 'column',
-              gap: 0,
-              // Indent expanded content underneath the toggle icon
-              paddingLeft: toggleIndent,
-              paddingRight: dense ? 0 : toggleIndent,
-              paddingTop: 0,
-              paddingBottom: 0,
-            }}
-          >
+            </box>) : null) : (<box style={{
+                flexDirection: 'column',
+                gap: 0,
+                // Indent expanded content underneath the toggle icon
+                paddingLeft: toggleIndent,
+                paddingRight: dense ? 0 : toggleIndent,
+                paddingTop: 0,
+                paddingBottom: 0,
+            }}>
             {renderExpandedContent(content, theme, getAttributes)}
-          </box>
-        )}
+          </box>)}
       </box>
-    </box>
-  )
-}
+    </box>);
+};

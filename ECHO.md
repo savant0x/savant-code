@@ -433,6 +433,32 @@ Allowed status values: `created | analyzed | fixed | verified | closed`.
 
 Non-FID design documents go to `docs/design/`, never at the repo root, and never with a `FID-` prefix.
 
+### Spawning the Recorder
+
+When the Orchestrator spawns the Recorder to create or update FIDs, it MUST follow these rules. The Recorder has a fixed tool set and specific behavioral patterns — incorrect prompts cause silent failures.
+
+**Recorder tools:** `write_file`, `read_files`, `glob`, `code_search`, `set_output`
+**Recorder does NOT have:** `str_replace`, `bash`, `apply_patch`
+
+#### CREATE workflow
+- Provide the COMPLETE file content in the prompt — do not expect the Recorder to compose it
+- Say: "Use write_file to create this file. Do NOT read any other files first."
+- Do NOT ask the Recorder to read the template first — give it the content directly
+- The Recorder defaults to reading first, then stopping without writing. The explicit "Do NOT read" instruction prevents this.
+
+#### UPDATE workflow
+- Say: "Read [file path], then use write_file with the COMPLETE updated content below."
+- Provide the complete updated content — the Recorder cannot do str_replace
+- Say: "Do NOT read any other files besides this one."
+- After the Recorder reads the file, it will write the full updated content back.
+
+#### Common mistakes to avoid
+- ❌ "Use str_replace to update the FID" — Recorder does not have str_replace
+- ❌ "Read the template and create the FID" — Recorder reads then stops without writing
+- ❌ Providing partial content and expecting the Recorder to fill in gaps
+- ✅ "Use write_file to create this file immediately with the content below"
+- ✅ "Read [file], then write_file with the complete updated content below"
+
 ### FID Format
 
 See `templates/FID-TEMPLATE.md` for the standard format.

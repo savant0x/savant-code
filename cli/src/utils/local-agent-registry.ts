@@ -3,6 +3,7 @@ import os from 'os'
 import path from 'path'
 
 import { pluralize } from '@savant-code/common/util/string'
+import { safeToJSONValue } from '@savant-code/common/util/type-narrowing'
 import { createAgentTemplate, getAgentTemplate, updateAgentTemplate } from '@savant-code/database/service'
 import {
   loadLocalAgents as sdkLoadLocalAgents,
@@ -18,6 +19,7 @@ import * as bundledAgentsModule from '../agents/bundled-agents.generated'
 import { getSelectedSavantFreeModel } from '../state/savant-free-model-store'
 
 import type { AgentDefinition } from '@savant-code/common/templates/initial-agents-dir/types/agent-definition'
+import type { JSONValue } from '@savant-code/common/types/json'
 import type { MCPConfig } from '@savant-code/common/types/mcp'
 
 // ============================================================================
@@ -49,6 +51,12 @@ let userAgentsCache: Record<string, AgentDefinition> = {}
 let userAgentFilePaths: Map<string, string> = new Map()
 // Cache for MCP servers loaded from mcp.json in .agents directories
 let mcpServersCache: Record<string, MCPConfig> = {}
+// Fallback cache for bundled agents loaded directly from agents/ directory
+// at runtime. Populated by initializeAgentRegistry() when the generated
+// bundled-agents.generated.ts file is missing or incomplete (e.g., in dev
+// mode before the prebuild step has run, or when a new agent was added but
+// prebuild hasn't re-run yet).
+let bundledAgentsFallbackCache: Record<string, AgentDefinition> = {}
 
 /**
  * Initialize the agent registry by loading user agents via the SDK.
@@ -93,6 +101,51 @@ export async function initializeAgentRegistry(): Promise<void> {
   } catch (error) {
     logger.warn({ error }, 'Failed to load MCP config from .agents directories')
     mcpServersCache = {}
+  }
+
+  // Fallback: if the generated bundled-agents file is missing OR any known
+  // critical agent is absent from it, load agent definitions directly from
+  // the agents/ directory at runtime. This ensures all built-in agents
+  // (detective, scout, forge, etc.) are always available, even in dev mode
+  // before prebuild:agents has run, or when a specific agent's import failed
+  // during the prebuild step (silently skipping that agent).
+  const REQUIRED_AGENT_IDS = [
+    'detective', 'scout', 'forge', 'thinker', 'verifier',
+    'recorder', 'basher', 'researcher-web', 'researcher-docs',
+    'context-pruner', 'scribe', 'tmux-cli', 'browser-use',
+  ]
+  const currentBundledAgents = getBundledAgents()
+  const currentBundledIds = new Set(Object.keys(currentBundledAgents))
+  const missingRequiredAgents = REQUIRED_AGENT_IDS.some(
+    (id) => !currentBundledIds.has(id),
+  )
+  if (
+    Object.keys(currentBundledAgents).length === 0 ||
+    missingRequiredAgents
+  ) {
+    try {
+      const projectRoot = getProjectRoot() || process.cwd()
+      const agentsDir = path.join(projectRoot, 'agents')
+      if (fs.existsSync(agentsDir) && fs.statSync(agentsDir).isDirectory()) {
+        const fallbackAgents = await sdkLoadLocalAgents({
+          agentsPath: agentsDir,
+          verbose: false,
+        })
+        if (Object.keys(fallbackAgents).length > 0) {
+          bundledAgentsFallbackCache = fallbackAgents
+          logger.debug(
+            { count: Object.keys(bundledAgentsFallbackCache).length },
+            '[agents] Loaded bundled agents from agents/ directory (runtime fallback)',
+          )
+        }
+      }
+    } catch (error) {
+      logger.warn(
+        { error },
+        'Failed to load bundled agents from agents/ directory (runtime fallback)',
+      )
+      bundledAgentsFallbackCache = {}
+    }
   }
 }
 
@@ -178,11 +231,31 @@ const getUserAgentDefinitions = (): AgentDefinition[] => {
 // ============================================================================
 
 const getBundledAgents = (): Record<string, AgentDefinition> => {
-  return bundledAgentsModule.bundledAgents ?? {}
+  // Merge generated bundled agents with runtime fallback cache.
+  // Generated agents take precedence; fallback fills in any gaps
+  // (e.g., when the generated file is missing in dev mode).
+  const generated = bundledAgentsModule.bundledAgents ?? {}
+  if (Object.keys(bundledAgentsFallbackCache).length === 0) {
+    return generated
+  }
+  const merged: Record<string, AgentDefinition> = { ...bundledAgentsFallbackCache }
+  for (const [id, def] of Object.entries(generated)) {
+    merged[id] = def
+  }
+  return merged
 }
 
 const getBundledAgentsAsLocalInfo = (): LocalAgentInfo[] => {
-  return bundledAgentsModule.getBundledAgentsAsLocalInfo?.() ?? []
+  const fromGenerated = bundledAgentsModule.getBundledAgentsAsLocalInfo?.() ?? []
+  const fromFallback = Object.values(bundledAgentsFallbackCache).map((def) => ({
+    id: def.id,
+    displayName: def.displayName || def.id,
+    filePath: '[agents/]',
+    isBundled: true,
+  }))
+  // Merge: generated takes precedence, fallback fills gaps
+  const generatedIds = new Set(fromGenerated.map((a) => a.id))
+  return [...fromGenerated, ...fromFallback.filter((a) => !generatedIds.has(a.id))]
 }
 
 // ============================================================================
@@ -319,14 +392,30 @@ export const loadLocalAgents = (
 /**
  * Save agent definitions to database
  */
+function agentDefinitionToRecord(def: AgentDefinition): Record<string, JSONValue> | undefined {
+  const jsonValue = safeToJSONValue(def)
+  if (typeof jsonValue !== 'object' || jsonValue === null) {
+    logger.warn(
+      { defId: def.id },
+      'Agent definition serialized to a non-object; skipping DB save',
+    )
+    return undefined
+  }
+  return jsonValue as Record<string, JSONValue>
+}
+
 export const saveAgentDefinitionsToDb = (definitions: AgentDefinition[]): void => {
   try {
     for (const def of definitions) {
       const existing = getAgentTemplate(def.id)
+      const record = agentDefinitionToRecord(def)
+      if (!record) {
+        continue
+      }
       if (existing) {
-        updateAgentTemplate(def.id, def as unknown as Record<string, unknown>)
+        updateAgentTemplate(def.id, record)
       } else {
-        createAgentTemplate(def as unknown as Record<string, unknown>)
+        createAgentTemplate(record)
       }
     }
     logger.debug(
@@ -494,6 +583,7 @@ export const __resetLocalAgentRegistryForTests = (): void => {
   userAgentsCache = {}
   userAgentFilePaths = new Map()
   mcpServersCache = {}
+  bundledAgentsFallbackCache = {}
 }
 
 /**

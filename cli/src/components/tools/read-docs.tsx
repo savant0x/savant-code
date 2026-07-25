@@ -1,5 +1,5 @@
 import { SimpleToolCallItem } from './tool-call-item'
-import { defineToolComponent } from './types'
+import { defineToolComponent, getString } from './types'
 
 import type { ToolRenderConfig } from './types'
 
@@ -12,12 +12,11 @@ export const ReadDocsComponent = defineToolComponent({
   toolName: 'read_docs',
 
   render(toolBlock): ToolRenderConfig {
-    const input = toolBlock.input as any
+    const input = toolBlock.input
 
     // Extract library and topic from input
-    const libraryTitle =
-      typeof input?.libraryTitle === 'string' ? input.libraryTitle.trim() : ''
-    const topic = typeof input?.topic === 'string' ? input.topic.trim() : ''
+    const libraryTitle = getString(input, 'libraryTitle')?.trim() ?? ''
+    const topic = getString(input, 'topic')?.trim() ?? ''
 
     if (!libraryTitle && !topic) {
       return { content: null }

@@ -14,7 +14,6 @@ import { useFetchLoginUrl } from '../hooks/use-fetch-login-url'
 import { useLoginKeyboardHandlers } from '../hooks/use-login-keyboard-handlers'
 import { useLoginPolling } from '../hooks/use-login-polling'
 import { useLogo } from '../hooks/use-logo'
-import { useSheenAnimation } from '../hooks/use-sheen-animation'
 import { useTheme } from '../hooks/use-theme'
 import { formatUrl, calculateResponsiveLayout } from '../login/utils'
 import { useLoginStore } from '../state/login-store'
@@ -22,7 +21,6 @@ import { copyTextToClipboard, isRemoteSession } from '../utils/clipboard'
 import { IS_SAVANT_FREE } from '../utils/constants'
 import { getFingerprintId } from '../utils/fingerprint'
 import { logger } from '../utils/logger'
-import { getLogoBlockColor, getLogoAccentColor } from '../utils/theme-system'
 
 import type { User } from '../utils/auth'
 
@@ -48,7 +46,6 @@ export const LoginModal = ({
     expiresAt,
     isWaitingForEnter,
     hasOpenedBrowser,
-    sheenPosition,
     justCopied,
     setLoginUrl,
     setLoading,
@@ -58,7 +55,6 @@ export const LoginModal = ({
     setExpiresAt,
     setIsWaitingForEnter,
     setHasOpenedBrowser,
-    setSheenPosition,
     setCopyMessage,
     setJustCopied,
     setHasClickedLink,
@@ -224,8 +220,6 @@ export const LoginModal = ({
   const loginUrlWrapped = loginUrlLines.length > 1
 
   // Logo colors — no sheen animation
-  const blockColor = getLogoBlockColor(theme.name)
-  const accentColor = getLogoAccentColor(theme.name)
 
   // Get the logo component based on available content width
   const { component: logoComponent } = useLogo({

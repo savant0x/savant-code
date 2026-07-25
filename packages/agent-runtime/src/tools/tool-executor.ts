@@ -2,6 +2,7 @@ import { endsAgentStepParam, toolNames } from '@savant-code/common/tools/constan
 import { toolParams } from '@savant-code/common/tools/list'
 import { resolveAndContain } from '@savant-code/common/util/paths'
 import { generateCompactId } from '@savant-code/common/util/string'
+import { toJSONValue } from '@savant-code/common/util/type-narrowing'
 import { cloneDeep } from 'lodash'
 
 import { getMCPToolData } from '../mcp'
@@ -49,6 +50,10 @@ export type CustomToolCall = {
   toolName: string
   input: Record<string, JSONValue>
 } & Omit<ToolCallPart, 'type'>
+
+function isJSONObject(value: JSONValue): value is Record<string, JSONValue> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
+}
 
 export type ToolCallError = {
   toolName?: string
@@ -357,7 +362,8 @@ export async function executeToolCall<T extends ToolName>(
       toolCall.toolName === 'str_replace' ||
       toolCall.toolName === 'apply_patch')
   ) {
-    const rawPath = (toolCall.input as { path?: string }).path ?? ''
+    const input = toolCall.input as Record<string, JSONValue>
+    const rawPath = typeof input.path === 'string' ? input.path : ''
     // FID-2026-0718-013 v3 — defensive null check (symmetric with write-file.ts,
     // str-replace.ts, apply-patch.ts handlers). Runtime always provides fileContext,
     // but tests/mocks may omit it. Fail soft with a clear error rather than crash
@@ -405,7 +411,7 @@ export async function executeToolCall<T extends ToolName>(
     // FID-2026-0718-013 v3 F2: rewrite the symlink-resolved realpath into the tool
     // call input so the downstream handler receives a canonical form. Same Q8
     // hardening, plus the resolved path now reflects any symlink chain.
-    ;(toolCall.input as { path?: string }).path = pathResult.resolved
+    input.path = pathResult.resolved
   }
 
   // ECHO FSM tool gating: block bash/terminal commands unless phase is 'audit' or 'green'.
@@ -451,16 +457,16 @@ export async function executeToolCall<T extends ToolName>(
     return previousToolCallFinished
   }
 
-  // TODO: Allow tools to provide a validation function, and move this logic into the spawn_agents validation function.
+  // NOTE: Future improvement: allow tools to provide a validation function and move this logic into the spawn_agents validation function.
   // Pre-validate spawn_agents to filter out non-existent agents before streaming
-  let effectiveInput = toolCall.input as Record<string, unknown>
+  let effectiveInput: Record<string, JSONValue> = toolCall.input
   if (toolName === 'spawn_agents') {
     // FID-2026-0723-004: Some models stringify the `agents` array. Attempt to
     // parse it back into an array before validation so the agent gets a clear
     // error instead of a silent schema failure.
     if (typeof effectiveInput.agents === 'string') {
       try {
-        const parsed = JSON.parse(effectiveInput.agents)
+        const parsed = toJSONValue(JSON.parse(effectiveInput.agents))
         if (!Array.isArray(parsed)) {
           onResponseChunk({
             type: 'error',
@@ -468,7 +474,7 @@ export async function executeToolCall<T extends ToolName>(
           })
           return previousToolCallFinished
         }
-        effectiveInput = { ...effectiveInput, agents: parsed }
+        effectiveInput = { ...effectiveInput, agents: parsed as JSONValue }
       } catch (parseError) {
         onResponseChunk({
           type: 'error',
@@ -484,10 +490,10 @@ export async function executeToolCall<T extends ToolName>(
 
       const validationResults = await Promise.allSettled(
         agents.map(async (agent) => {
-          if (!agent || typeof agent !== 'object') {
+          if (!isJSONObject(agent)) {
             return { valid: false as const, error: 'Invalid agent entry' }
           }
-          const agentTypeStr = (agent as Record<string, unknown>).agent_type
+          const agentTypeStr = agent.agent_type
           if (typeof agentTypeStr !== 'string' || !agentTypeStr) {
             return {
               valid: false as const,
@@ -581,7 +587,7 @@ export async function executeToolCall<T extends ToolName>(
   // Only emit tool_call event after permission check passes
   // FID-2026-0718-009: emit activity indicator (M1 tool_call, M6 research tools).
   // toolActivity mutates agentState.activity + emits a chunk via onResponseChunk.
-  toolActivity(agentState, toolName, effectiveInput as Record<string, JSONValue>, onResponseChunk)
+  toolActivity(agentState, toolName, effectiveInput, onResponseChunk)
 
   onResponseChunk({
     type: 'tool_call',

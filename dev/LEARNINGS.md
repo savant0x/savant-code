@@ -229,6 +229,29 @@
 - `iterationCount` is incremented on `self_correct → green` (looping back) and reset on any `→ complete` or `→ idle`. This ensures the circuit breaker (max 10 iterations) still works with the new shortcut.
 - The `scanOpenFids` check only runs when entering `green` phase. `self_correct → complete` doesn't need it because you can only reach self_correct if you were already in a valid FSM flow (which required an open FID).
 
+## Session 2026-07-24: Cloudflare Provider Integration + Process Violations
+
+**Key Learnings:**
+
+- Recorder agent failed 3 times to write/update FID files during FID-072. Each time it read the file but returned without writing. Root cause unknown — needs investigation. Possible: tool availability, prompt engineering, context window, or timeout issues.
+- Orchestrator committed 5 ECHO Protocol violations during FID-072: (1) Recorder failure workaround, (2) Law 2 violation (implementation before approval), (3) Law 1 violation (did not re-read ECHO.md before coding), (4) Law 15 violation (dismissed pre-existing errors), (5) Separation of duties violation (wrote FID files directly).
+- "Pre-existing errors" is a dangerous default. LEARNINGS from Session 2026-07-18 already established: "ECHO does not permit leaving 'pre-existing' errors. If typecheck shows errors, fix them in the same session." The Orchestrator violated this learned behavior.
+- Reading is not understanding. Law 1 requires reading 0-EOF, but the real requirement is understanding and applying the content. Summarize key requirements after reading to create a cognitive checkpoint.
+- Protocol over pragmatism. When the Recorder fails, do not write FID files directly. Document the failure and ask the user how to proceed.
+- Explicit approval is non-negotiable. Law 2 requires user approval before implementation. Implicit approval from engagement is not sufficient.
+
+**Agent Behavior / Process:**
+
+- The Recorder agent is critical infrastructure. When it fails, the entire FID lifecycle breaks down. Investigate root cause before working around.
+- Default behavior should be "investigate and fix" not "dismiss as pre-existing" for typecheck errors.
+- After reading ECHO.md, summarize the key requirements for the current task before proceeding.
+- When the Recorder fails, document the failure in a new FID and ask the user how to proceed.
+
+**Technical Insights:**
+
+- FID-072 (Cloudflare Workers AI) was implemented successfully despite process violations. The code changes follow the established gateway provider pattern exactly.
+- FID-073 documents the process violations for systematic fixing.
+
 ---
 
 <!-- Add new entries above this line -->

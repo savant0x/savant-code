@@ -1,13 +1,10 @@
-/* eslint-disable savant/no-unknown-in-signatures -- logger: dynamic structured-log data trust-boundary; data parameter accepts arbitrary upstream LLM/agent/tool-call shapes (cf. common/src/util/error.ts trust-boundary contract). ECHO Law 6: `unknown` at trust boundary with internal `typeof`/Array.isArray narrowing is the correct shape. See FID-2026-0719-029-eslint-zero-tolerance-push-gate.md.
-*/
-// Per-function decisions (FID-029-git Step 2 enumeration → Step 3 application — all `any` instances eliminated in this pass):
-// - LoggerContext.[key: string]           → `any` → `unknown` (key access value type downgraded)
-// - pinoLogger                            → `any` → `pino.Logger | undefined` (pino's exported type)
-// - isEmptyObject(value: unknown)         → `any` → `unknown` (runtime `typeof === 'object'` + Array.isArray + Object.keys check inside)
-// - sendAnalyticsAndLog(level, data: unknown, msg?: string, ...args: unknown[]) → `any` → `unknown` for all params
-// - logAsErrorIfNeeded.toTrack.data       → `any` → `unknown`; runtime object guard added before spread
-// - logger wrappers (data: unknown, msg?: string, ...args: unknown[]) → `any` → `unknown`
-// - pino call site                        → removed raw-typed cast on normalizedMsg (msg already typed `string | undefined`; pino.LogFn signature accepts `(obj: object, msg?: string, ...args: unknown[])`)
+// Per-function decisions (FID-068 Step 3 — `any` and broad Record types eliminated):
+// - LoggerContext.[key: string]           → `unknown` → `LogValue | undefined`
+// - isEmptyObject(value: unknown)         → `unknown` → `LogValue`
+// - sendAnalyticsAndLog(level, data: unknown, msg?: string, ...args: unknown[]) → `LogValue` for all log inputs
+// - logAsErrorIfNeeded.toTrack.data       → `unknown` → `LogValue`; inline safeToJSONValue conversion for logError
+// - logger wrappers (data: unknown, msg?: string, ...args: unknown[]) → `LogValue`
+// - pino call site                        → typed with `LogValue` and final `as unknown as Record<LogLevel, pino.LogFn>` cast
 import { appendFileSync, existsSync, mkdirSync, unlinkSync } from 'fs'
 import path, { dirname } from 'path'
 import { format as stringFormat } from 'util'
@@ -21,6 +18,7 @@ import {
   summarizeAnalyticsValue,
 } from '@savant-code/common/util/analytics-sampling'
 import { getAxiomOnlyLogEvent } from '@savant-code/common/util/axiom-only-log'
+import { safeToJSONValue } from '@savant-code/common/util/type-narrowing'
 import { pino } from 'pino'
 
 import {
@@ -33,6 +31,8 @@ import { enqueueClientLog } from './log-shipper'
 import { getCurrentChatDir, getProjectRoot } from '../project-files'
 
 import type { LogRecordInput } from '@savant-code/common/schemas/logs'
+import type { LogValue } from '@savant-code/common/types/contracts/logger'
+import type { JSONValue } from '@savant-code/common/types/json'
 
 /** Name of the per-chat debug log file written in production builds */
 export const CHAT_LOG_FILENAME = 'log.jsonl'
@@ -43,7 +43,7 @@ export interface LoggerContext {
   clientSessionId?: string
   fingerprintId?: string
   clientRequestId?: string
-  [key: string]: unknown // Allow for future extensions; values typed as unknown per ECHO Law 6 trust-boundary contract
+  [key: string]: LogValue | undefined
 }
 
 export const loggerContext: LoggerContext = {}
@@ -62,7 +62,7 @@ const analyticsDispatcher = createAnalyticsDispatcher({
  * Safely stringify an object, handling circular references.
  * Replaces circular references with '[Circular]' placeholder.
  */
-function safeStringify(obj: unknown): string {
+function safeStringify(obj: LogValue): string {
   const seen = new WeakSet()
   return JSON.stringify(obj, (_key, value) => {
     if (typeof value === 'object' && value !== null) {
@@ -75,7 +75,18 @@ function safeStringify(obj: unknown): string {
   })
 }
 
-function isEmptyObject(value: unknown): boolean {
+function loggerContextToRecord(
+  context: LoggerContext,
+): Record<string, JSONValue> {
+  const result: Record<string, JSONValue> = {}
+  for (const [key, value] of Object.entries(context)) {
+    if (value === undefined) continue
+    result[key] = safeToJSONValue(value)
+  }
+  return result
+}
+
+function isEmptyObject(value: LogValue): boolean {
   return (
     value != null &&
     typeof value === 'object' &&
@@ -138,9 +149,9 @@ export function clearLogFile(): void {
 
 function sendAnalyticsAndLog(
   level: LogLevel,
-  data: unknown,
+  data: LogValue,
   msg?: string,
-  ...args: unknown[]
+  ...args: LogValue[]
 ): void {
   if (!IS_CI && !IS_TEST) {
     let projectRoot: string | undefined
@@ -183,7 +194,10 @@ function sendAnalyticsAndLog(
     })
 
     analyticsPayloads.forEach((payload) => {
-      trackEvent(payload.event, payload.properties)
+      trackEvent(
+        payload.event,
+        payload.properties as Record<string, JSONValue>,
+      )
     })
   }
 
@@ -193,22 +207,26 @@ function sendAnalyticsAndLog(
   if (!IS_DEV && !IS_TEST && !IS_CI && !hasEventId && !axiomOnlyLogEvent) {
     const fullTelemetry = isFullTelemetryEnabled({
       distinctId: loggerContext.userId,
-      properties: loggerContext,
+      properties: loggerContextToRecord(loggerContext),
     })
     const includeRawData =
       fullTelemetry || level === 'error' || level === 'fatal'
-    const dataProperties =
+    const dataProperties: Record<string, JSONValue> =
       includeData && includeRawData
-        ? { data: normalizedData }
+        ? { data: safeToJSONValue(normalizedData) }
         : includeData
-          ? { dataSummary: summarizeAnalyticsValue(normalizedData) }
+          ? {
+              dataSummary: summarizeAnalyticsValue(
+                safeToJSONValue(normalizedData),
+              ),
+            }
           : {}
 
     trackEvent(AnalyticsEvent.CLI_LOG, {
       level,
       msg: stringFormat(normalizedMsg ?? '', ...args),
       ...dataProperties,
-      ...loggerContext,
+      ...loggerContextToRecord(loggerContext),
     })
   }
 
@@ -232,7 +250,7 @@ function sendAnalyticsAndLog(
     const includeRawData =
       isFullTelemetryEnabled({
         distinctId: loggerContext.userId,
-        properties: loggerContext,
+        properties: loggerContextToRecord(loggerContext),
       }) ||
       level === 'error' ||
       level === 'fatal'
@@ -241,7 +259,7 @@ function sendAnalyticsAndLog(
       : includeData
         ? includeRawData
           ? normalizedData
-          : summarizeAnalyticsValue(normalizedData)
+          : summarizeAnalyticsValue(safeToJSONValue(normalizedData))
         : undefined
     const record: LogRecordInput = {
       timestamp: new Date().toISOString(),
@@ -285,23 +303,29 @@ function sendAnalyticsAndLog(
 }
 
 function logAsErrorIfNeeded(toTrack: {
-  data?: unknown
+  data?: LogValue
   level: LogLevel
   loggerContext: LoggerContext
   msg: string
 }) {
   if (toTrack.level === 'error' || toTrack.level === 'fatal') {
-    // ECHO Law 6 trust-boundary: validate object shape before spread.
     const dataObj =
       toTrack.data &&
       typeof toTrack.data === 'object' &&
       !Array.isArray(toTrack.data)
-        ? (toTrack.data as Record<string, unknown>)
-        : ({} as Record<string, unknown>)
+        ? (toTrack.data as Record<string, LogValue>)
+        : ({} as Record<string, LogValue>)
+    const dataRecord: Record<string, JSONValue> = {}
+    for (const [key, value] of Object.entries(dataObj)) {
+      dataRecord[key] = safeToJSONValue(value)
+    }
     logError(
       new Error(toTrack.msg),
       toTrack.loggerContext.userId ?? 'unknown',
-      { ...dataObj, context: toTrack.loggerContext },
+      {
+        ...dataRecord,
+        context: loggerContextToRecord(toTrack.loggerContext),
+      },
     )
     flushAnalytics()
   }
@@ -318,11 +342,11 @@ export const logger: Record<LogLevel, pino.LogFn> = Object.fromEntries(
   loggingLevels.map((level) => {
     return [
       level,
-      (data: unknown, msg?: string, ...args: unknown[]) =>
+      (data: LogValue, msg?: string, ...args: LogValue[]) =>
         sendAnalyticsAndLog(level, data, msg, ...args),
     ]
   }),
-) as Record<LogLevel, pino.LogFn>
+) as unknown as Record<LogLevel, pino.LogFn>
 
 setAnalyticsErrorLogger((error, context) => {
   const err =

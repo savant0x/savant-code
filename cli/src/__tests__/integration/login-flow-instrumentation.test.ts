@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any -- test file: analytics event type assertions */
+ 
 import { AnalyticsEvent } from '@savant-code/common/constants/analytics-events'
 import { createMockLogger } from '@savant-code/common/testing/mock-types'
 import { describe, test, expect, mock } from 'bun:test'

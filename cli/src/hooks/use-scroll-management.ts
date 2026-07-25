@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
+import type { ChatMessage } from '../types/chat'
 import type { ScrollBoxRenderable } from '@opentui/core'
 
 // Scroll detection threshold - how close to bottom to consider "at bottom"
@@ -30,12 +31,12 @@ const easeOutCubic = (t: number): number => {
  */
 export const useChatScrollbox = (
   scrollRef: React.RefObject<ScrollBoxRenderable | null>,
-  messages: any[],
+  messages: ChatMessage[],
   isUserCollapsing: () => boolean,
 ) => {
   const autoScrollEnabledRef = useRef<boolean>(true)
   const programmaticScrollRef = useRef<boolean>(false)
-  const animationFrameRef = useRef<number | null>(null)
+  const animationFrameRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [isAtBottom, setIsAtBottom] = useState<boolean>(true)
 
   const cancelAnimation = useCallback(() => {
@@ -67,7 +68,7 @@ export const useChatScrollbox = (
         scrollbox.scrollTop = newScroll
 
         if (progress < 1) {
-          animationFrameRef.current = setTimeout(animate, frameInterval) as any
+          animationFrameRef.current = setTimeout(animate, frameInterval)
         } else {
           animationFrameRef.current = null
         }

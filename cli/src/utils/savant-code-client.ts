@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any -- client utilities: dynamic YAML generation and config shapes */
 import { API_KEY_ENV_VAR } from '@savant-code/common/old-constants'
+import { askUserParams } from '@savant-code/common/tools/params/tool/ask-user'
 import { AskUserBridge } from '@savant-code/common/utils/ask-user-bridge'
 import { SavantCodeClient } from '@savant-code/sdk'
 
@@ -11,7 +11,7 @@ import { createTraceWriter } from './trace-writer'
 import { getRgPath } from '../native/ripgrep'
 import { getProjectRoot } from '../project-files'
 
-import type { ClientToolCall } from '@savant-code/common/tools/list'
+import type { JSONValue } from '@savant-code/common/types/json'
 
 let clientInstance: SavantCodeClient | null = null
 
@@ -27,10 +27,10 @@ function removeUndefinedValues<T>(obj: T): T {
     return obj.map(removeUndefinedValues) as T
   }
   if (typeof obj === 'object') {
-    const result: Record<string, unknown> = {}
+    const result: Record<string, JSONValue> = {}
     for (const [key, value] of Object.entries(obj)) {
       if (value !== undefined) {
-        result[key] = removeUndefinedValues(value)
+        result[key] = removeUndefinedValues(value) as JSONValue
       }
     }
     return result as T
@@ -81,10 +81,11 @@ export async function getSavantCodeClient(): Promise<SavantCodeClient | null> {
         logger,
         traceWriter: createTraceWriter(),
         overrideTools: {
-          ask_user: async (input: ClientToolCall<'ask_user'>['input']) => {
+          ask_user: async (input: Record<string, JSONValue>) => {
+            const { questions } = askUserParams.inputSchema.parse(input)
             const askUserResponse = await AskUserBridge.request(
               'cli-override',
-              input.questions,
+              questions,
             )
             const response = askUserResponse as {
               answers?: Array<{ questionIndex: number; selectedOption: string }>
@@ -126,82 +127,80 @@ export function getToolDisplayInfo(toolName: string): {
   }
 }
 
-function toYaml(obj: any, indent = 0): string {
+function toYaml(value: JSONValue, indent = 0): string {
   const spaces = '  '.repeat(indent)
 
-  if (obj === null || obj === undefined) {
+  if (value === null || value === undefined) {
     return 'null'
   }
 
-  if (typeof obj === 'string') {
-    if (obj.includes('\n')) {
-      const lines = obj.split('\n')
+  if (typeof value === 'string') {
+    if (value.includes('\n')) {
+      const lines = value.split('\n')
       return (
         '|\n' + lines.map((line) => '  '.repeat(indent + 1) + line).join('\n')
       )
     }
-    return obj.includes(':') || obj.includes('#') ? `"${obj}"` : obj
+    return value.includes(':') || value.includes('#') ? `"${value}"` : value
   }
 
-  if (typeof obj === 'number' || typeof obj === 'boolean') {
-    return String(obj)
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value)
   }
 
-  if (Array.isArray(obj)) {
-    if (obj.length === 0) return '[]'
+  if (Array.isArray(value)) {
+    if (value.length === 0) return '[]'
     return (
       '\n' +
-      obj
+      value
         .map((item) => spaces + '- ' + toYaml(item, indent + 1).trimStart())
         .join('\n')
     )
   }
 
-  if (typeof obj === 'object') {
-    const entries = Object.entries(obj)
-    if (entries.length === 0) return '{}'
+  const entries = Object.entries(value)
+  if (entries.length === 0) return '{}'
 
-    return entries
-      .map(([key, value]) => {
-        const yamlValue = toYaml(value, indent + 1)
-        if (
-          typeof value === 'object' &&
-          value !== null &&
-          !Array.isArray(value) &&
-          Object.keys(value).length > 0
-        ) {
-          return `${spaces}${key}:\n${yamlValue}`
-        }
-        if (typeof value === 'string' && value.includes('\n')) {
-          return `${spaces}${key}: ${yamlValue}`
-        }
-        return `${spaces}${key}: ${yamlValue}`
-      })
-      .join('\n')
-  }
-
-  return String(obj)
+  return entries
+    .map(([key, entryValue]) => {
+      const yamlValue = toYaml(entryValue, indent + 1)
+      if (
+        typeof entryValue === 'object' &&
+        entryValue !== null &&
+        !Array.isArray(entryValue) &&
+        Object.keys(entryValue).length > 0
+      ) {
+        return `${spaces}${key}:\n${yamlValue}`
+      }
+      return `${spaces}${key}: ${yamlValue}`
+    })
+    .join('\n')
 }
 
-export function formatToolOutput(output: unknown): string {
+export function formatToolOutput(output: JSONValue): string {
   if (!output) return ''
 
   if (Array.isArray(output)) {
     return output
-      .map((item) => {
-        if (item.type === 'json') {
+      .map((item: JSONValue) => {
+        const typedItem = item as {
+          type: 'json' | 'text'
+          value?: JSONValue
+          text?: string
+        }
+        if (typedItem.type === 'json') {
           // Handle errorMessage in the value object
           if (
-            item.value &&
-            typeof item.value === 'object' &&
-            'errorMessage' in item.value
+            typedItem.value &&
+            typeof typedItem.value === 'object' &&
+            'errorMessage' in typedItem.value
           ) {
-            return String(item.value.errorMessage)
+            return String((typedItem.value as Record<string, JSONValue>).errorMessage)
           }
-          return toYaml(item.value)
+          return toYaml(typedItem.value ?? null)
         }
-        if (item.type === 'text') {
-          return item.text || ''
+        if (typedItem.type === 'text') {
+          return typedItem.text || ''
         }
         return String(item)
       })

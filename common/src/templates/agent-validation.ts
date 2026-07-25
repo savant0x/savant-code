@@ -5,8 +5,9 @@ import {
   DynamicAgentTemplateSchema,
 } from '../types/dynamic-agent-template'
 
-import type { AgentTemplate } from '../types/agent-template'
+import type { AgentTemplate , StepHandler } from '../types/agent-template'
 import type { DynamicAgentTemplate } from '../types/dynamic-agent-template'
+import type { JSONValue } from '../types/json'
 import type { Logger } from '@savant-code/common/types/contracts/logger'
 import type { z } from 'zod/v4'
 import type { JSONSchema } from 'zod/v4/core'
@@ -50,7 +51,7 @@ export function collectAgentIds(params: {
       if (!isObject(content)) {
         continue
       }
-      const record = content as Record<string, unknown>
+      const record = content as Record<string, JSONValue>
 
       // Extract the agent ID if it exists
       if (typeof record.id === 'string' && record.id) {
@@ -145,7 +146,7 @@ export function validateAgents(params: {
         error instanceof Error ? error.message : String(error)
 
       const context = isObject(content)
-        ? (content as Record<string, unknown>)
+        ? (content as Record<string, JSONValue>)
         : null
       const displayName =
         typeof context?.displayName === 'string' ? context.displayName : null
@@ -195,7 +196,7 @@ export function validateSingleAgent(params: {
 } {
   const { template, filePath = 'unknown' } = params
   const raw = isObject(template)
-    ? (template as Record<string, unknown>)
+    ? (template as Record<string, JSONValue | StepHandler | undefined>)
     : {}
 
   try {
@@ -228,7 +229,7 @@ export function validateSingleAgent(params: {
     } catch (error) {
       // Try to extract agent context for better error messages
       const context = isObject(template)
-        ? (template as Record<string, unknown>)
+        ? (template as Record<string, JSONValue>)
         : null
       const displayName =
         typeof context?.displayName === 'string' ? context.displayName : null
@@ -329,7 +330,7 @@ export function validateSingleAgent(params: {
 
     // Try to extract agent context for better error messages
     const context = isObject(template)
-      ? (template as Record<string, unknown>)
+      ? (template as Record<string, JSONValue>)
       : null
     const displayName =
       typeof context?.displayName === 'string' ? context.displayName : null

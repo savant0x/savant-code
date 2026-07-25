@@ -1,15 +1,16 @@
-/* eslint-disable @typescript-eslint/no-explicit-any -- session-state types: dynamic agent output schemas */
 import { z } from 'zod/v4'
 
+import { jsonValueSchema } from './json'
 import { MAX_AGENT_STEPS_DEFAULT } from '../constants/agents'
 
+import type { JSONValue } from './json'
 import type { Message } from './messages/savant-code-message'
 import type { ProjectFileContext } from '../util/file'
 
 export const toolCallSchema = z.object({
   toolName: z.string(),
   toolCallId: z.string(),
-  input: z.record(z.string(), z.any()),
+  input: z.record(z.string(), jsonValueSchema),
 })
 export type ToolCall = z.infer<typeof toolCallSchema>
 
@@ -88,7 +89,7 @@ export type AgentState = {
   stepsRemaining: number
   creditsUsed: number
   directCreditsUsed: number
-  output?: Record<string, any>
+  output?: Record<string, JSONValue>
   parentId?: string
   systemPrompt: string
   toolDefinitions: Record<
@@ -128,15 +129,15 @@ export type AgentState = {
 export const AgentOutputSchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('structuredOutput'),
-    value: z.record(z.string(), z.any()).or(z.null()),
+    value: z.record(z.string(), jsonValueSchema).or(z.null()),
   }),
   z.object({
     type: z.literal('lastMessage'),
-    value: z.array(z.any()), // Array of assistant and tool messages from the last turn, including tool results
+    value: z.array(z.custom<Message>()), // Array of assistant and tool messages from the last turn, including tool results
   }),
   z.object({
     type: z.literal('allMessages'),
-    value: z.array(z.any()),
+    value: z.array(z.custom<Message>()),
   }),
   z.object({
     type: z.literal('error'),

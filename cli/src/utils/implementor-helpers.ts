@@ -1,8 +1,11 @@
+import { safeParseJSONObject } from '@savant-code/common/util/type-narrowing'
+
 import type {
   AgentContentBlock,
   ContentBlock,
   ToolContentBlock,
 } from '../types/chat'
+import type { JSONValue } from '@savant-code/common/types/json'
 
 export const IMPLEMENTOR_AGENT_IDS = [
   'editor-implementor',
@@ -218,12 +221,12 @@ export function extractValueForKey(output: string, key: string): string | null {
  */
 export function extractFilePath(toolBlock: ToolContentBlock): string | null {
   const outputStr = typeof toolBlock.output === 'string' ? toolBlock.output : ''
-  const input = toolBlock.input as Record<string, unknown>
-
   return (
     extractValueForKey(outputStr, 'file') ||
-    (typeof input?.path === 'string' ? input.path : null) ||
-    (typeof input?.file_path === 'string' ? input.file_path : null)
+    (typeof toolBlock.input?.path === 'string' ? toolBlock.input.path : null) ||
+    (typeof toolBlock.input?.file_path === 'string'
+      ? toolBlock.input.file_path
+      : null)
   )
 }
 
@@ -237,21 +240,22 @@ export function extractDiff(toolBlock: ToolContentBlock): string | null {
 
   // First try to get from outputRaw (for executed tool results)
   // outputRaw is typically an array like [{type: "json", value: {unifiedDiff: "..."}}]
-  const outputRaw = toolBlock.outputRaw as unknown
-  if (Array.isArray(outputRaw) && outputRaw[0]?.value) {
-    const value = outputRaw[0].value as Record<string, unknown>
-    if (hasErrorMessage(value)) return null
-    if (isSuccessfulEditMessage(value.message)) hasSuccessfulOutput = true
-    if (value.unifiedDiff) return value.unifiedDiff as string
-    if (value.patch) return value.patch as string
+  const outputRaw = toolBlock.outputRaw
+  if (Array.isArray(outputRaw) && outputRaw[0]?.value != null) {
+    const value = safeParseJSONObject(outputRaw[0].value)
+    if (value) {
+      if (hasErrorMessage(value)) return null
+      if (isSuccessfulEditMessage(value.message)) hasSuccessfulOutput = true
+      if (typeof value.unifiedDiff === 'string') return value.unifiedDiff
+      if (typeof value.patch === 'string') return value.patch
+    }
   }
-  // Also check direct properties (in case format differs)
-  if (typeof outputRaw === 'object' && outputRaw !== null) {
-    const rawObj = outputRaw as Record<string, unknown>
-    if (hasErrorMessage(rawObj)) return null
-    if (isSuccessfulEditMessage(rawObj.message)) hasSuccessfulOutput = true
-    if (rawObj.unifiedDiff) return rawObj.unifiedDiff as string
-    if (rawObj.patch) return rawObj.patch as string
+  const outputObj = safeParseJSONObject(outputRaw)
+  if (outputObj) {
+    if (hasErrorMessage(outputObj)) return null
+    if (isSuccessfulEditMessage(outputObj.message)) hasSuccessfulOutput = true
+    if (typeof outputObj.unifiedDiff === 'string') return outputObj.unifiedDiff
+    if (typeof outputObj.patch === 'string') return outputObj.patch
   }
 
   // Try to get from output string (key: value format)
@@ -282,32 +286,43 @@ export function extractDiff(toolBlock: ToolContentBlock): string | null {
     return null
   }
 
-  const input = toolBlock.input as Record<string, unknown>
+  const input = toolBlock.input
   const baseToolName = getBaseToolName(toolBlock.toolName)
 
   // Handle str_replace: construct diff from replacements
-  if (baseToolName === 'str_replace' && Array.isArray(input?.replacements)) {
-    const replacements = input.replacements as ReplacementInput[]
+  if (baseToolName === 'str_replace' && Array.isArray(input.replacements)) {
+    const replacements = input.replacements.filter(isReplacementInput)
     if (replacements.length > 0) {
       return constructDiffFromReplacements(replacements)
     }
   }
 
   // Handle write_file: show content as addition
-  if (baseToolName === 'write_file' && typeof input?.content === 'string') {
+  if (baseToolName === 'write_file' && typeof input.content === 'string') {
     return constructDiffFromWriteFile(input.content)
   }
 
   // Fallback: get from input.content (for other tools)
-  if (input?.content !== undefined && typeof input.content === 'string') {
+  if (input.content !== undefined && typeof input.content === 'string') {
     return input.content
   }
 
   return null
 }
 
-function hasErrorMessage(value: Record<string, unknown>): boolean {
-  return Boolean(value.errorMessage || (value.value as any)?.errorMessage)
+function hasErrorMessage(value: Record<string, JSONValue>): boolean {
+  if (typeof value.errorMessage === 'string' && value.errorMessage !== '') {
+    return true
+  }
+  const nested = safeParseJSONObject(value.value)
+  if (
+    nested &&
+    typeof nested.errorMessage === 'string' &&
+    nested.errorMessage !== ''
+  ) {
+    return true
+  }
+  return false
 }
 
 function hasFailedEditOutput(params: {
@@ -333,15 +348,13 @@ function hasFailedEditOutput(params: {
 }
 
 function isFailedEditToolBlock(toolBlock: ToolContentBlock): boolean {
-  const outputRaw = toolBlock.outputRaw as unknown
-  if (Array.isArray(outputRaw) && outputRaw[0]?.value) {
-    const value = outputRaw[0].value as Record<string, unknown>
-    if (hasErrorMessage(value)) return true
+  const outputRaw = toolBlock.outputRaw
+  if (Array.isArray(outputRaw) && outputRaw[0]?.value != null) {
+    const value = safeParseJSONObject(outputRaw[0].value)
+    if (value && hasErrorMessage(value)) return true
   }
-  if (typeof outputRaw === 'object' && outputRaw !== null) {
-    const rawObj = outputRaw as Record<string, unknown>
-    if (hasErrorMessage(rawObj)) return true
-  }
+  const outputObj = safeParseJSONObject(outputRaw)
+  if (outputObj && hasErrorMessage(outputObj)) return true
 
   const outputStr = typeof toolBlock.output === 'string' ? toolBlock.output : ''
   const message = extractValueForKey(outputStr, 'message')
@@ -351,7 +364,7 @@ function isFailedEditToolBlock(toolBlock: ToolContentBlock): boolean {
   return hasFailedEditOutput({ outputStr, message, diffFromOutput })
 }
 
-function isSuccessfulEditMessage(message: unknown): boolean {
+function isSuccessfulEditMessage(message: JSONValue): boolean {
   if (typeof message !== 'string') {
     return false
   }
@@ -378,6 +391,22 @@ type ReplacementInput = {
   newString?: string
   old?: string
   new?: string
+}
+
+function isReplacementInput(value: JSONValue): value is ReplacementInput {
+  const parsed = safeParseJSONObject(value)
+  if (!parsed) return false
+  let hasString = false
+  for (const key of ['oldString', 'newString', 'old', 'new']) {
+    const field = parsed[key]
+    if (field !== undefined && field !== null && typeof field !== 'string') {
+      return false
+    }
+    if (typeof field === 'string') {
+      hasString = true
+    }
+  }
+  return hasString
 }
 
 function constructDiffFromReplacements(
@@ -685,7 +714,7 @@ interface MultiPromptSetOutputData {
   chosenStrategy?: string
   reason?: string
   suggestedImprovements?: string
-  toolResults?: unknown[]
+  toolResults?: JSONValue[]
   error?: string
 }
 
@@ -695,13 +724,10 @@ interface SetOutputInput {
 }
 
 /** Type guard for set_output input with data property */
-function hasSetOutputData(input: unknown): input is SetOutputInput {
-  return (
-    typeof input === 'object' &&
-    input !== null &&
-    'data' in input &&
-    typeof (input as SetOutputInput).data === 'object'
-  )
+function hasSetOutputData(
+  input: Record<string, JSONValue>,
+): input is SetOutputInput & Record<string, JSONValue> {
+  return safeParseJSONObject(input.data) !== undefined
 }
 
 /**
@@ -713,19 +739,21 @@ function extractSelectionReason(
 ): string | null {
   if (!blocks || blocks.length === 0) return null
 
-  const setOutputBlock = blocks.find(
-    (block): block is ToolContentBlock =>
-      block.type === 'tool' &&
-      block.toolName === 'set_output' &&
-      hasSetOutputData(block.input) &&
-      typeof block.input.data?.reason === 'string',
-  )
-
-  if (!setOutputBlock || !hasSetOutputData(setOutputBlock.input)) {
-    return null
+  for (const block of blocks) {
+    if (
+      block.type !== 'tool' ||
+      block.toolName !== 'set_output' ||
+      !hasSetOutputData(block.input)
+    ) {
+      continue
+    }
+    const reason = block.input.data?.reason
+    if (typeof reason === 'string') {
+      return reason
+    }
   }
 
-  return setOutputBlock.input.data?.reason ?? null
+  return null
 }
 
 /**

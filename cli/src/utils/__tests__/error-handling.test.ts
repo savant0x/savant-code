@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any -- test file: intentional any casts for error code manipulation */
+ 
 import { describe, test, expect } from 'bun:test'
 
 import {

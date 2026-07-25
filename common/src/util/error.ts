@@ -1,28 +1,6 @@
-/* eslint-disable savant/no-unknown-in-signatures -- error.ts trust-boundary helpers.
+import type { JSONValue } from '../types/json'
 
-The PUBLIC exported functions accept `unknown` because they ARE the trust-boundary entry points called from cross-file `catch (e: unknown)` blocks (14+ consumers in cli/ + packages/agent-runtime/ + sdk/ + evals/). Each public function internally uses `instanceof Error`, `typeof x`, `'k' in obj`, or `Array.isArray(...)` runtime validation before narrowing to its real domain type — the ECHO Law 6 trust-boundary contract.
-
-3-condition AND-gate justification per FID-2026-0719-029-eslint-zero-tolerance-push-gate.md (REVISED 2026-07-20):
-  (i.1) Type discovery impossible: catch-block default + AI SDK + Node errors expose runtime-attached fields whose compile-time type is unknowable (ErrorObject's `cause?`, `requestBodyValues?`, `responseBody?`).
-  (i.2) Narrowing public-API signatures breaks compilation: 14+ consumers call `failure(e)`, `isAbortError(e)`, `extractApiErrorDetails(e)` with `e: unknown` from catch handlers.
-  (i.3) Runtime regression: changing public-facing signatures to `Error | string` would break SDK/agent-runtime `catch (e: unknown) → ?` ergonomic idioms across the codebase.
-
-Per-function decisions (FID-029-git Step 2 enumeration → Step 3 application):
-PUBLIC (kept `unknown` — external trust-boundary contract):
-- failure(error: unknown)                     → keep unknown (trust-boundary; validates via getErrorObject internally)
-- isAbortError(error: unknown)                → keep unknown (predicate boolean; runtime `instanceof Error` + name check)
-- parseApiErrorResponseBody(:unknown)         → keep unknown (JSON.parse output IS untyped; runtime `typeof === 'string'` check)
-- extractApiErrorDetails(:unknown)            → keep unknown (delegates; iterates getApiErrorCandidates which is properly narrowed)
-- isFetchIdleTimeoutError(:unknown)           → keep unknown (delegates to getApiErrorCandidates + nested-object field reads)
-- isTransientNetworkError(:unknown)           → keep unknown (delegates + nested-object field reads)
-- getErrorObject(error: unknown, ...)         → keep unknown (THE primary trust-boundary parser; runtime `instanceof Error` guard)
-
-PRIVATE (proper ECHO-narrow — receive `unknown`, narrow via runtime guards, return specific types):
-- getApiErrorCandidates(:unknown): object[]           → runtime `typeof === 'object'` check at every recursion level; returns ONLY validated objects
-- getApiErrorStatusCode(:unknown): number | undefined → runtime `typeof === 'object'` check before `'k' in obj` access
-- getApiErrorResponseBody(:unknown): string | object | undefined → runtime `typeof === 'object'` check before field access
-- safeStringify(value: unknown, ...): string | undefined → JSON.stringify input is inherently `unknown`; not exported
-*/
+ 
 export type ErrorOr<T, E extends ErrorObject = ErrorObject> =
   | Success<T>
   | Failure<E>
@@ -258,7 +236,7 @@ export function parseApiErrorResponseBody(responseBody: unknown): {
       typeof (parsed as { error: unknown }).error === 'object' &&
       (parsed as { error: unknown }).error !== null
     ) {
-      const nested = (parsed as { error: Record<string, unknown> }).error
+      const nested = (parsed as { error: Record<string, JSONValue> }).error
       if (result.errorCode === undefined) {
         if (typeof nested.code === 'string') {
           result.errorCode = nested.code
@@ -521,7 +499,7 @@ interface ExtendedErrorProperties {
   responseBody?: string
   url?: string
   isRetryable?: boolean
-  requestBodyValues?: Record<string, unknown>
+  requestBodyValues?: Record<string, JSONValue>
   cause?: unknown
 }
 

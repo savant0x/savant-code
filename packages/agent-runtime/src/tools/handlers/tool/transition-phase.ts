@@ -54,8 +54,11 @@ export const handleTransitionPhase = (async (params: {
     }
   }
 
-  // FID-Bound Enforcement: block any entry to 'green' when no open FIDs exist
-  if (phase === 'green') {
+  // FID-Bound Enforcement: block any entry to 'green' when no open FIDs exist.
+  // Dev mode bypass: when devMode is active, allow GREEN transitions without
+  // an open FID. This enables Hybrid Mode (direct writes for simple tasks)
+  // and mirrors the isDevOverride pattern in tool-executor.ts for write tools.
+  if (phase === 'green' && fileContext.devMode !== true) {
     const openFids = scanOpenFids(fileContext.cwd)
     if (openFids.length === 0) {
       logger.warn(

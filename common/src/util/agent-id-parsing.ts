@@ -105,6 +105,17 @@ export function parsePublishedAgentId(fullAgentId: string): {
  * hyphens in the agent-name segment. Publisher IDs and version strings are
  * preserved as written.
  */
+/**
+ * Extracts the simple agent ID from a potentially qualified ID.
+ * Handles formats like:
+ * - "my-agent" -> "my-agent"
+ * - "publisher/my-agent" -> "my-agent"
+ * - "publisher/my-agent@1.0.0" -> "my-agent"
+ */
+export function getSimpleAgentId(qualifiedId: string): string {
+  return qualifiedId.split('/').pop()?.split('@')[0] ?? qualifiedId
+}
+
 export function normalizeAgentIdForLookup(fullAgentId: string): string {
   const parts = fullAgentId.split('/')
   if (parts.length > 2) {

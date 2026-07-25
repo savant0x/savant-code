@@ -1,5 +1,6 @@
 import { TextAttributes } from '@opentui/core'
 import { CHATGPT_OAUTH_ENABLED } from '@savant-code/common/constants/chatgpt-oauth'
+import { formatTimeUntil } from '@savant-code/common/util/dates'
 import { isChatGptOAuthValid } from '@savant-code/sdk'
 import React, { useEffect, useMemo } from 'react'
 
@@ -16,7 +17,6 @@ import { useChatStore } from '../state/chat-store'
 import { IS_SAVANT_FREE } from '../utils/constants'
 import { isDirectProviderMode } from '../utils/env'
 import { safeOpen } from '../utils/open-url'
-import { formatResetTime, formatResetTimeLong } from '../utils/time-format'
 import {
   getBannerColorLevel,
   generateLoadingBannerText,
@@ -224,7 +224,7 @@ const SubscriptionUsageSection: React.FC<SubscriptionUsageSectionProps> = ({
             <ProgressBar value={blockPercent} width={12} showPercentage={false} />
             <text style={{ fg: theme.muted }}>
               {rateLimit.blockResetsAt
-                ? ` resets in ${formatResetTime(new Date(rateLimit.blockResetsAt))}`
+                ? ` resets in ${formatTimeUntil(new Date(rateLimit.blockResetsAt), { fallback: 'now' })}`
                 : ''}
             </text>
           </box>
@@ -232,7 +232,7 @@ const SubscriptionUsageSection: React.FC<SubscriptionUsageSectionProps> = ({
             <text style={{ fg: theme.muted }}>{`Weekly limit ${`${weeklyPercent}%`.padStart(4)} `}</text>
             <ProgressBar value={weeklyPercent} width={12} showPercentage={false} />
             <text style={{ fg: theme.muted }}>
-              {` resets in ${formatResetTimeLong(rateLimit.weeklyResetsAt)}`}
+              {` resets in ${formatTimeUntil(rateLimit.weeklyResetsAt, { fallback: 'now' })}`}
             </text>
           </box>
         </box>

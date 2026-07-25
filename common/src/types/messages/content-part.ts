@@ -39,7 +39,7 @@ export const toolCallPartSchema = z.object({
   type: z.literal('tool-call'),
   toolCallId: z.string(),
   toolName: z.string(),
-  input: z.record(z.string(), z.unknown()),
+  input: z.record(z.string(), jsonValueSchema),
   providerOptions: providerMetadataSchema.optional(),
   providerExecuted: z.boolean().optional(),
 })

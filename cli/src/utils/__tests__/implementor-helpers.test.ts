@@ -706,7 +706,7 @@ describe('groupConsecutiveBlocks', () => {
     input: {},
   })
 
-  const createAgentBlock = (
+  const _createAgentBlock = (
     agentType: string,
     agentId: string,
   ): AgentContentBlock =>

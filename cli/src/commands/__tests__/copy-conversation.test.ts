@@ -3,6 +3,8 @@ import { describe, test, expect } from 'bun:test'
 import { serializeConversation } from '../copy-conversation'
 
 import type { ChatMessage, ContentBlock } from '../../types/chat'
+import type { JSONValue } from '@savant-code/common/types/json'
+
 
 const msg = (
   variant: ChatMessage['variant'],
@@ -17,7 +19,7 @@ const msg = (
 
 const toolBlock = (
   toolName: string,
-  input: unknown,
+  input: Record<string, JSONValue>,
   output: string,
 ): ContentBlock => ({
   type: 'tool',
@@ -195,7 +197,7 @@ describe('serializeConversation', () => {
             type: 'tool',
             toolCallId: 'c1',
             toolName: 'end_turn' as never,
-            input: null,
+            input: {},
             output: undefined,
           },
         ],

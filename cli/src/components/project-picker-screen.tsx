@@ -1,6 +1,6 @@
 import os from 'os'
 
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useMemo } from 'react'
 
 import { Button } from './button'
 import { MultilineInput } from './multiline-input'
@@ -10,13 +10,11 @@ import { useDirectoryBrowser } from '../hooks/use-directory-browser'
 import { useLogo } from '../hooks/use-logo'
 import { usePathTabCompletion } from '../hooks/use-path-tab-completion'
 import { useSearchableList } from '../hooks/use-searchable-list'
-import { useSheenAnimation } from '../hooks/use-sheen-animation'
 import { useTerminalLayout } from '../hooks/use-terminal-layout'
 import { useTheme } from '../hooks/use-theme'
 import { formatCwd } from '../utils/path-helpers'
 import { loadRecentProjects } from '../utils/recent-projects'
 import { isPlainEnterKey } from '../utils/terminal-enter-detection'
-import { getLogoBlockColor, getLogoAccentColor } from '../utils/theme-system'
 
 import type { SelectableListItem } from './selectable-list'
 
@@ -61,7 +59,6 @@ export const ProjectPickerScreen: React.FC<ProjectPickerScreenProps> = ({
   initialPath,
 }) => {
   const theme = useTheme()
-  const [sheenPosition, setSheenPosition] = useState(0)
 
   // Directory browsing state and navigation
   const {
@@ -181,10 +178,6 @@ export const ProjectPickerScreen: React.FC<ProjectPickerScreenProps> = ({
 
   // Center content only in non-compact mode when there's extra space
   const shouldCenterContent = !isCompactMode && spaceAfterFilePicker > 10
-
-  // Logo setup — no sheen animation
-  const blockColor = getLogoBlockColor(theme.name)
-  const accentColor = getLogoAccentColor(theme.name)
 
   const { component: logoComponent } = useLogo({
     availableWidth: contentMaxWidth,

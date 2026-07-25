@@ -99,7 +99,11 @@ export async function validateAgents(
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
         const errorMessage =
-          (errorData as any).error || // eslint-disable-line @typescript-eslint/no-explicit-any -- dynamic error shape from validation API
+          (typeof errorData === 'object' &&
+            errorData !== null &&
+            'error' in errorData &&
+            typeof (errorData as { error: unknown }).error === 'string' &&
+            (errorData as { error: string }).error) ||
           `HTTP ${response.status}: ${response.statusText}`
 
         return {

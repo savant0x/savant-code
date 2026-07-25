@@ -1,5 +1,6 @@
 import z from 'zod/v4'
 
+import { jsonValueSchema } from './json'
 import { toolResultOutputSchema } from './messages/content-part'
 
 export const printModeStartSchema = z.object({
@@ -28,7 +29,7 @@ export const printModeToolCallSchema = z.object({
   type: z.literal('tool_call'),
   toolCallId: z.string(),
   toolName: z.string(),
-  input: z.record(z.string(), z.any()),
+  input: z.record(z.string(), jsonValueSchema),
   agentId: z.string().optional(),
   parentAgentId: z.string().optional(),
   includeToolCall: z.boolean().optional(),
@@ -65,7 +66,7 @@ export const printModeSubagentStartSchema = z.object({
   displayName: z.string(),
   onlyChild: z.boolean(),
   parentAgentId: z.string().optional(),
-  params: z.record(z.string(), z.any()).optional(),
+  params: z.record(z.string(), jsonValueSchema).optional(),
   prompt: z.string().optional(),
 })
 export type PrintModeSubagentStart = z.infer<
@@ -79,7 +80,7 @@ export const printModeSubagentFinishSchema = z.object({
   displayName: z.string(),
   onlyChild: z.boolean(),
   parentAgentId: z.string().optional(),
-  params: z.record(z.string(), z.any()).optional(),
+  params: z.record(z.string(), jsonValueSchema).optional(),
   prompt: z.string().optional(),
 })
 export type PrintModeSubagentFinish = z.infer<

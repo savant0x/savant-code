@@ -36,11 +36,11 @@ describe('handleInitializationFlowLocally', () => {
   let existsSyncSpy: ReturnType<typeof spyOn>
   let writeFileSyncSpy: ReturnType<typeof spyOn>
   let mkdirSyncSpy: ReturnType<typeof spyOn>
-  let getProjectRootSpy: ReturnType<typeof spyOn>
+  let _getProjectRootSpy: ReturnType<typeof spyOn>
 
   beforeEach(() => {
     // Mock getProjectRoot
-    getProjectRootSpy = spyOn(projectFiles, 'getProjectRoot').mockReturnValue(
+    _getProjectRootSpy = spyOn(projectFiles, 'getProjectRoot').mockReturnValue(
       TEST_PROJECT_ROOT,
     )
 

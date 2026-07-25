@@ -171,7 +171,7 @@ async function main() {
       'process.env.SAVANT_CODE_CLI_TARGET',
       `"${getCliTargetLabel(targetInfo)}"`,
     ],
-    ['process.env.FREEBUFF_MODE', `"${process.env.FREEBUFF_MODE ?? 'false'}"`],
+    ['process.env.SAVANT_FREE_MODE', `"${process.env.SAVANT_FREE_MODE ?? 'false'}"`],
     ...nextPublicEnvVars,
   ]
 

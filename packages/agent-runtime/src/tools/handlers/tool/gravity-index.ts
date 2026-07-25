@@ -28,9 +28,9 @@ const isJSONObject = (value: JSONValue | undefined): value is JSONObject =>
 /** Gravity attribution surface, so clicks/conversions are attributable to the
  *  product the request came from rather than all reading as CLI traffic. */
 const gravitySurface = (agentTemplate: { id: string }): string => {
-  if (agentTemplate.id === 'base-chat') return 'freebuff_chat'
+  if (agentTemplate.id === 'base-chat') return 'savant_free_chat'
   // SavantFree Web project agents are the `savant-free*` family.
-  if (agentTemplate.id.startsWith('savant-free')) return 'freebuff_web'
+  if (agentTemplate.id.startsWith('savant-free')) return 'savant_free_web'
   return 'savant_code_cli'
 }
 
@@ -38,7 +38,7 @@ const gravitySurface = (agentTemplate: { id: string }): string => {
  *  send a per-end-user identifier so Gravity attributes conversions to the real
  *  user instead of collapsing every request onto the service account. */
 const isServiceAccountSurface = (surface: string): boolean =>
-  surface === 'freebuff_chat' || surface === 'freebuff_web'
+  surface === 'savant_free_chat' || surface === 'savant_free_web'
 
 export const handleGravityIndex = (async (params: {
   previousToolCallFinished: Promise<void>

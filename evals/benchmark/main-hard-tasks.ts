@@ -1,7 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 
-import { runBuffBench } from './run-buffbench'
+import { runBenchmark } from './run-benchmark'
 
 import type { EvalDataV2 } from './types'
 
@@ -30,7 +30,7 @@ async function main() {
   )
 
   // Run all hard tasks across all 4 eval sets
-  await runBuffBench({
+  await runBenchmark({
     evalDataPaths: evalPaths,
     agents: ['savant', 'external:claude'],
     taskIds: allTaskIds,

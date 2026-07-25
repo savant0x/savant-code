@@ -1,7 +1,7 @@
 import React from 'react'
 
 import { SimpleToolCallItem } from './tool-call-item'
-import { defineToolComponent } from './types'
+import { defineToolComponent, getString, isJSONObject } from './types'
 import { useTheme } from '../../hooks/use-theme'
 
 import type { ToolRenderConfig } from './types'
@@ -15,24 +15,26 @@ export const ListDirectoryComponent = defineToolComponent({
   toolName: 'list_directory',
 
   render(toolBlock): ToolRenderConfig {
-    const input = toolBlock.input as any
+    const input = toolBlock.input
 
     // Extract directories from input
     let directories: string[] = []
 
-    if (Array.isArray(input?.directories)) {
-      directories = input.directories
-        .map((dir: any) =>
-          typeof dir === 'object' && dir.path ? dir.path : dir,
-        )
-        .filter(
-          (path: any) => typeof path === 'string' && path.trim().length > 0,
-        )
-    } else if (
-      typeof input?.path === 'string' &&
-      input.path.trim().length > 0
-    ) {
-      directories = [input.path.trim()]
+    const rawDirectories = input?.directories
+    if (Array.isArray(rawDirectories)) {
+      directories = rawDirectories
+        .map((dir) => {
+          if (isJSONObject(dir) && typeof dir.path === 'string') {
+            return dir.path
+          }
+          return dir
+        })
+        .filter((path): path is string => typeof path === 'string' && path.trim().length > 0)
+    } else {
+      const singlePath = getString(input, 'path')
+      if (singlePath && singlePath.trim().length > 0) {
+        directories = [singlePath.trim()]
+      }
     }
 
     if (directories.length === 0) {

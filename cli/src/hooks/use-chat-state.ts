@@ -146,7 +146,6 @@ export function useChatState(): UseChatStateReturn {
   )
   const streamingAgents = useMemo(
     () => rawStreamingAgents,
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [streamingAgentsKey],
   )
 

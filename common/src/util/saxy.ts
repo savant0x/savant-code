@@ -1,4 +1,4 @@
-/* eslint-disable savant/no-unknown-in-signatures -- XML parser trust-boundary. `Saxy` extends Node `Transform`/`EventEmitter`; `_waiting.data` and event-payload shapes are inherently untyped until schema-driven narrowing. */
+ 
 /**
  * This is a modified version of the Saxy library that emits text nodes immediately
  */

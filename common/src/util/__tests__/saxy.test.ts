@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any -- test file: intentional any arrays for event capture */
+ 
 import { describe, expect, it } from 'bun:test'
 
 import { Saxy } from '../saxy'

@@ -16,7 +16,7 @@ interface RaisedPillProps {
   fillColor?: string
   padding?: number
   onPress?: () => void
-  style?: Record<string, unknown>
+  style?: Record<string, string | number | undefined>
 }
 
 const buildHorizontal = (length: number): string => {

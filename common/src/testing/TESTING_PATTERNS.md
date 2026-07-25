@@ -1,6 +1,6 @@
 # Testing Patterns Guide
 
-This guide documents best practices for writing tests in the SavantCode codebase, based on lessons learned from buffbench runs and production issues.
+This guide documents best practices for writing tests in the SavantCode codebase, based on lessons learned from eval benchmark runs and production issues.
 
 ## Table of Contents
 
@@ -287,7 +287,7 @@ describe('data layer', () => {
 
 ---
 
-## Additional Lessons from Buffbench
+## Additional Lessons from Eval Benchmarks
 
 ### Cross-Browser Styles
 

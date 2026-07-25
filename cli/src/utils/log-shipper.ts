@@ -4,6 +4,7 @@ import { getCliEnv, isDirectProviderMode } from './env'
 import { getApiClient } from './savant-code-api'
 
 import type { LogRecordInput } from '@savant-code/common/schemas/logs'
+import type { JSONValue } from '@savant-code/common/types/json'
 
 /**
  * Client-side shipper that mirrors CLI logs/events into the server's Axiom
@@ -79,7 +80,7 @@ export async function flushClientLogs(): Promise<void> {
     // /api/logs and docs/logging.md.
     await client.post(
       '/api/logs',
-      { records: batch },
+      { records: batch } as Record<string, JSONValue>,
       {
         includeAuth: Boolean(client.authToken),
         retry: false,

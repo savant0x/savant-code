@@ -1,14 +1,18 @@
-/* eslint-disable @typescript-eslint/no-explicit-any -- message block helpers: dynamic message part filtering */
+ 
+import {
+  askUserResponseSchema,
+} from '@savant-code/common/tools/params/tool/ask-user'
+import { safeToJSONValue } from '@savant-code/common/util/type-narrowing'
 import { isEqual } from 'lodash'
 
 import { shouldCollapseByDefault, shouldCollapseForParent } from './constants'
 import { formatToolOutput } from './savant-code-client'
 
+import type { ContentBlock, AgentContentBlock } from '../types/chat'
 import type {
-  ContentBlock,
-  AgentContentBlock,
-  AskUserContentBlock,
-} from '../types/chat'
+  AskUserQuestion,
+} from '@savant-code/common/tools/params/tool/ask-user'
+import type { JSONValue } from '@savant-code/common/types/json'
 
 /**
  * Extracts the base agent name from a potentially scoped/versioned agent type string.
@@ -122,6 +126,14 @@ export interface SpawnAgentResultContent {
   hasError: boolean
 }
 
+function isTextPart(value: unknown): value is { type: 'text'; text: string } {
+  if (typeof value !== 'object' || value === null) {
+    return false
+  }
+  const obj = value as Record<string, JSONValue>
+  return obj.type === 'text' && typeof obj.text === 'string'
+}
+
 /**
  * Extracts text content from a Message object's content array.
  * Handles assistant messages with TextPart content.
@@ -131,9 +143,13 @@ const extractTextFromMessageContent = (content: unknown): string => {
     return ''
   }
   return content
-    .filter((part: any) => part?.type === 'text' && typeof part?.text === 'string')
-    .map((part: any) => part.text)
+    .filter((part: unknown) => isTextPart(part))
+    .map((part) => (part as { type: 'text'; text: string }).text)
     .join('')
+}
+
+function isRecord(value: unknown): value is Record<string, JSONValue> {
+  return value !== null && typeof value === 'object'
 }
 
 /**
@@ -157,7 +173,7 @@ export const extractSpawnAgentResultContent = (
     return { content: '', hasError: false }
   }
 
-  const obj = resultValue as Record<string, unknown>
+  const obj = resultValue as Record<string, JSONValue>
 
   // Handle empty object
   if (Object.keys(obj).length === 0) {
@@ -165,20 +181,25 @@ export const extractSpawnAgentResultContent = (
   }
 
   // Handle error messages (check both top-level and nested)
-  if (obj.errorMessage) {
-    return { content: String(obj.errorMessage), hasError: true }
+  if (typeof obj.errorMessage === 'string') {
+    return { content: obj.errorMessage, hasError: true }
   }
-  if ((obj.value as any)?.errorMessage) {
-    return { content: String((obj.value as any).errorMessage), hasError: true }
+
+  const valueObj = isRecord(obj.value) ? obj.value : null
+  if (valueObj && typeof valueObj.errorMessage === 'string') {
+    return { content: valueObj.errorMessage, hasError: true }
   }
 
   // Handle lastMessage and allMessages output modes: { type: "lastMessage"|"allMessages", value: [Message array] }
   // This is common for agents like researcher-web
-  if ((obj.type === 'lastMessage' || obj.type === 'allMessages') && Array.isArray(obj.value)) {
-    const messages = obj.value as Array<{ role?: string; content?: unknown }>
-    const textContent = messages
-      .filter((msg) => msg?.role === 'assistant')
-      .map((msg) => extractTextFromMessageContent(msg?.content))
+  if (
+    (obj.type === 'lastMessage' || obj.type === 'allMessages') &&
+    Array.isArray(obj.value)
+  ) {
+    const textContent = obj.value
+      .filter(isRecord)
+      .filter((msg) => msg.role === 'assistant')
+      .map((msg) => extractTextFromMessageContent(msg.content))
       .filter(Boolean)
       .join('\n')
     return { content: textContent, hasError: false }
@@ -188,22 +209,18 @@ export const extractSpawnAgentResultContent = (
   if (obj.type === 'structuredOutput') {
     const value = obj.value
     // Check for message field in structured output
-    if (value && typeof value === 'object') {
-      const valueObj = value as Record<string, unknown>
-      if (typeof valueObj.message === 'string') {
-        return { content: valueObj.message, hasError: false }
+    if (isRecord(value)) {
+      if (typeof value.message === 'string') {
+        return { content: value.message, hasError: false }
       }
       // Check for data.message pattern
-      if (valueObj.data && typeof valueObj.data === 'object') {
-        const dataObj = valueObj.data as Record<string, unknown>
-        if (typeof dataObj.message === 'string') {
-          return { content: dataObj.message, hasError: false }
-        }
+      if (isRecord(value.data) && typeof value.data.message === 'string') {
+        return { content: value.data.message, hasError: false }
       }
     }
     // Fall through to format as JSON
     return {
-      content: formatToolOutput([{ type: 'json', value: obj.value }]),
+      content: formatToolOutput([{ type: 'json', value: safeToJSONValue(obj.value) }]),
       hasError: false,
     }
   }
@@ -214,16 +231,16 @@ export const extractSpawnAgentResultContent = (
   }
 
   // Handle message field (top-level or nested)
-  if (obj.message) {
-    return { content: String(obj.message), hasError: false }
+  if (typeof obj.message === 'string') {
+    return { content: obj.message, hasError: false }
   }
-  if ((obj.value as any)?.message) {
-    return { content: String((obj.value as any).message), hasError: false }
+  if (valueObj && typeof valueObj.message === 'string') {
+    return { content: valueObj.message, hasError: false }
   }
 
   // Fallback to formatted output
   return {
-    content: formatToolOutput([{ type: 'json', value: resultValue }]),
+    content: formatToolOutput([{ type: 'json', value: safeToJSONValue(resultValue) }]),
     hasError: false,
   }
 }
@@ -283,7 +300,7 @@ export interface CreateAgentBlockOptions {
   agentId: string
   agentType: string
   prompt?: string
-  params?: Record<string, unknown>
+  params?: Record<string, JSONValue>
   /** The spawn_agents tool call ID that created this block */
   spawnToolCallId?: string
   /** The index within the spawn_agents call */
@@ -466,7 +483,7 @@ export const moveSpawnAgentBlock = (
   tempId: string,
   realId: string,
   parentId?: string,
-  params?: Record<string, unknown>,
+  params?: Record<string, JSONValue>,
   prompt?: string,
   realAgentType?: string,
 ): ContentBlock[] => {
@@ -549,9 +566,16 @@ export const transformAskUserBlocks = (
       block.toolCallId === toolCallId &&
       block.toolName === 'ask_user'
     ) {
-      const skipped = (resultValue as any)?.skipped
-      const answers = (resultValue as any)?.answers
-      const questions = block.input.questions
+      const responseParse = askUserResponseSchema.safeParse(resultValue)
+      if (!responseParse.success) {
+        // Trust-boundary guard: if the tool result does not match the expected
+        // schema, keep the original tool block instead of creating malformed UI.
+        return block
+      }
+      // `block.input` was already validated when the ask_user tool was invoked,
+      // so a cast is safe here; `questions` is used for display only.
+      const questions = block.input.questions as AskUserQuestion[]
+      const { skipped, answers } = responseParse.data
 
       if (!answers && !skipped) {
         // If no result data, keep as tool block (fallback)
@@ -564,7 +588,7 @@ export const transformAskUserBlocks = (
         questions,
         answers,
         skipped,
-      } as AskUserContentBlock
+      }
     }
 
     if (block.type === 'agent' && block.blocks) {
@@ -600,14 +624,29 @@ export const updateToolBlockWithOutput = (
     if (block.type === 'tool' && block.toolCallId === toolCallId) {
       let output: string
       if (block.toolName === 'run_terminal_command') {
-        const parsed = (toolOutput?.[0] as any)?.value
+        const first = toolOutput?.[0]
+        let parsed: { stdout?: string; stderr?: string } | undefined
+        if (
+          first &&
+          typeof first === 'object' &&
+          'value' in first
+        ) {
+          const value = (first as { value: unknown }).value
+          if (
+            value &&
+            typeof value === 'object' &&
+            !Array.isArray(value)
+          ) {
+            parsed = value as { stdout?: string; stderr?: string }
+          }
+        }
         if (parsed?.stdout || parsed?.stderr) {
           output = (parsed.stdout || '') + (parsed.stderr || '')
         } else {
-          output = formatToolOutput(toolOutput)
+          output = formatToolOutput(toolOutput.map(safeToJSONValue))
         }
       } else {
-        output = formatToolOutput(toolOutput)
+        output = formatToolOutput(toolOutput.map(safeToJSONValue))
       }
       return { ...block, output }
     } else if (block.type === 'agent' && block.blocks) {

@@ -7,7 +7,7 @@ interface SavantCodeProviderOptions {
     savant_code_metadata: {
       run_id: string
       client_id: string
-      freebuff_instance_id?: string
+      savant_free_instance_id?: string
     }
   }
 }
@@ -31,13 +31,13 @@ describe('getProviderOptions — savant_code_metadata', () => {
   it('merges extraSavantCodeMetadata into savant_code_metadata', () => {
     const opts = getProviderOptions({
       ...baseParams,
-      extraSavantCodeMetadata: { freebuff_instance_id: 'abc-123' },
+      extraSavantCodeMetadata: { savant_free_instance_id: 'abc-123' },
     }) as unknown as SavantCodeProviderOptions
     const meta = opts['savant-code'].savant_code_metadata
     expect(meta).toMatchObject({
       run_id: 'run-1',
       client_id: 'session-1',
-      freebuff_instance_id: 'abc-123',
+      savant_free_instance_id: 'abc-123',
     })
   })
 
@@ -47,7 +47,7 @@ describe('getProviderOptions — savant_code_metadata', () => {
     expect(Object.keys(meta)).toEqual(
       expect.arrayContaining(['run_id', 'client_id']),
     )
-    expect(meta.freebuff_instance_id).toBeUndefined()
+    expect(meta.savant_free_instance_id).toBeUndefined()
   })
 
   it('extraSavantCodeMetadata does not overwrite reserved keys', () => {

@@ -1,3 +1,5 @@
+import { safeParseJSONObject } from '@savant-code/common/util/type-narrowing'
+
 import { SimpleToolCallItem } from './tool-call-item'
 import { defineToolComponent } from './types'
 
@@ -22,11 +24,11 @@ export const ManageConnectionsComponent = defineToolComponent({
   toolName: 'composio_manage_connections',
 
   render(toolBlock: ToolBlock & { toolName: 'composio_manage_connections' }): ToolRenderConfig {
-    const input = toolBlock.input as {
-      toolkits?: string[]
-      reinitiate_all?: boolean
-    } | undefined
-    const toolkits = input?.toolkits ?? []
+    const input = toolBlock.input
+    const toolkitsArray = input.toolkits
+    const toolkits = Array.isArray(toolkitsArray)
+      ? toolkitsArray.filter((item): item is string => typeof item === 'string')
+      : []
     const description = toolkits.length > 0 ? formatList(toolkits) : ''
 
     return {
@@ -46,21 +48,24 @@ export const ExecuteToolComponent = defineToolComponent({
   toolName: 'composio_multi_execute_tool',
 
   render(toolBlock: ToolBlock & { toolName: 'composio_multi_execute_tool' }): ToolRenderConfig {
-    const input = toolBlock.input as {
-      tools?: Array<Record<string, unknown>>
-      thought?: string
-    } | undefined
-    const tools = input?.tools ?? []
-    const thought = input?.thought
+    const input = toolBlock.input
+    const toolsArray = input.tools
+    const tools = Array.isArray(toolsArray) ? toolsArray : []
+    const thought =
+      typeof input.thought === 'string' ? input.thought : undefined
 
     // Prefer the thought as description, otherwise extract tool slugs
     const description =
       thought ??
       (tools.length > 0
         ? formatList(
-            tools.map((t) =>
-              typeof t.slug === 'string' ? t.slug : JSON.stringify(t),
-            ),
+            tools.map((t) => {
+              const obj = safeParseJSONObject(t)
+              if (obj && typeof obj.slug === 'string') {
+                return obj.slug
+              }
+              return JSON.stringify(t)
+            }),
           )
         : '')
 
@@ -81,10 +86,9 @@ export const SearchToolsComponent = defineToolComponent({
   toolName: 'composio_search_tools',
 
   render(toolBlock: ToolBlock & { toolName: 'composio_search_tools' }): ToolRenderConfig {
-    const input = toolBlock.input as {
-      queries?: unknown[]
-    } | undefined
-    const queries = input?.queries ?? []
+    const input = toolBlock.input
+    const queriesArray = input.queries
+    const queries = Array.isArray(queriesArray) ? queriesArray : []
     const description =
       queries.length > 0
         ? formatList(
@@ -109,10 +113,11 @@ export const GetToolSchemasComponent = defineToolComponent({
   toolName: 'composio_get_tool_schemas',
 
   render(toolBlock: ToolBlock & { toolName: 'composio_get_tool_schemas' }): ToolRenderConfig {
-    const input = toolBlock.input as {
-      tool_slugs?: string[]
-    } | undefined
-    const toolSlugs = input?.tool_slugs ?? []
+    const input = toolBlock.input
+    const toolSlugsArray = input.tool_slugs
+    const toolSlugs = Array.isArray(toolSlugsArray)
+      ? toolSlugsArray.filter((item): item is string => typeof item === 'string')
+      : []
     const description = toolSlugs.length > 0 ? formatList(toolSlugs) : ''
 
     return {

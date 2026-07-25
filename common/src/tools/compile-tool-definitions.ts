@@ -63,8 +63,9 @@ export function compileToolDefinitions(
       } catch (error) {
         const message =
           error instanceof Error ? error.message : String(error)
+        // eslint-disable-next-line no-console -- build-time schema conversion fallback; no logger in common
         console.warn(`Failed to convert schema for ${toolName}:`, message)
-        typeDefinition = '{ [key: string]: unknown }'
+        typeDefinition = 'Record<string, JSONValue>'
       }
 
       const typeName = `${toPascalCase(toolName)}Params`
@@ -86,6 +87,11 @@ ${declaration}`
     .join('\n')
 
   return `/**
+ * Any JSON-serializable value
+ */
+export type JSONValue = string | number | boolean | null | { [key: string]: JSONValue } | JSONValue[]
+
+/**
  * Union type of all available tool names
  */
 export type ToolName = ${toolUnion}
@@ -160,7 +166,7 @@ function getTypeFromJsonSchema(prop: JSONSchema): string {
   if (prop.type === 'number' || prop.type === 'integer') return 'number'
   if (prop.type === 'boolean') return 'boolean'
   if (prop.type === 'array') {
-    const itemType = prop.items ? getTypeFromJsonSchema(prop.items) : 'unknown'
+    const itemType = prop.items ? getTypeFromJsonSchema(prop.items) : 'JSONValue'
     return `${itemType}[]`
   }
   if (prop.type === 'object') {
@@ -175,7 +181,7 @@ function getTypeFromJsonSchema(prop: JSONSchema): string {
       )
       return `Record<string, ${valueType}>`
     }
-    return 'Record<string, unknown>'
+    return 'Record<string, JSONValue>'
   }
   if (prop.anyOf || prop.oneOf) {
     const schemas = prop.anyOf ?? prop.oneOf
@@ -183,5 +189,5 @@ function getTypeFromJsonSchema(prop: JSONSchema): string {
       return schemas.map((s) => getTypeFromJsonSchema(s)).join(' | ')
     }
   }
-  return 'unknown'
+  return 'JSONValue'
 }

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any -- user-facing agent types: dynamic constraints */
 /**
  * SavantCode Agent Type Definitions
  *
@@ -149,7 +148,7 @@ export interface AgentDefinition {
    * }
    */
   inputSchema?: {
-    prompt?: { type: 'string'; description?: string }
+    prompt?: JsonStringSchema
     params?: JsonObjectSchema
   }
 
@@ -282,14 +281,14 @@ export interface AgentDefinition {
 
 export interface AgentState {
   agentId: string
-  runId: string
-  parentId: string | undefined
+  runId?: string
+  parentId?: string
 
   /** The agent's conversation history: messages from the user and the assistant. */
   messageHistory: Message[]
 
   /** The last value set by the set_output tool. This is a plain object or undefined if not set. */
-  output: Record<string, any> | undefined
+  output?: Record<string, JSONValue>
 
   /** The system prompt for this agent. */
   systemPrompt: string
@@ -313,7 +312,7 @@ export interface AgentState {
 export interface AgentStepContext {
   agentState: AgentState
   prompt?: string
-  params?: Record<string, any>
+  params?: Record<string, JSONValue>
   logger: Logger
 }
 
@@ -462,8 +461,10 @@ import type {
   Message,
   ToolResultOutput,
   JsonObjectSchema,
+  JsonStringSchema,
   MCPConfig,
   Logger,
+  JSONValue,
 } from './util-types'
 
 export type { ToolName, GetToolParams }

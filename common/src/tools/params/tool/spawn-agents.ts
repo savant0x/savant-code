@@ -1,6 +1,6 @@
 import z from 'zod/v4'
 
-import { jsonObjectSchema } from '../../../types/json'
+import { jsonObjectSchema, jsonValueSchema } from '../../../types/json'
 import {
   $getNativeToolCallExampleString,
   coerceToArray,
@@ -96,7 +96,7 @@ const inputSchema = z
                       'Array of strategy prompts (editor-multi-prompt, code-reviewer-multi-prompt)',
                     ),
                 })
-                .catchall(z.any()),
+                .catchall(jsonValueSchema),
             )
             .optional()
             .describe('Parameters object for the agent'),

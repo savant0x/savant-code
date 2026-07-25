@@ -1,12 +1,26 @@
 import { TextAttributes } from '@opentui/core'
 
-import { defineToolComponent } from './types'
+import { defineToolComponent, isJSONObject } from './types'
 import { useTheme } from '../../hooks/use-theme'
 
 import type { ToolRenderConfig } from './types'
+import type { JSONValue } from '@savant-code/common/types/json'
+
+interface TodoItem extends Record<string, JSONValue> {
+  task: string
+  completed: boolean
+}
 
 interface WriteTodosItemProps {
-  todos: Array<{ task: string; completed: boolean }>
+  todos: TodoItem[]
+}
+
+function isTodoItem(value: JSONValue): value is TodoItem {
+  if (!isJSONObject(value)) return false
+  const record = value
+  return (
+    typeof record.task === 'string' && typeof record.completed === 'boolean'
+  )
 }
 
 const WriteTodosItem = ({ todos }: WriteTodosItemProps) => {
@@ -73,15 +87,11 @@ export const WriteTodosComponent = defineToolComponent({
     const { input } = toolBlock
 
     // Extract todos from input
-    let todos: Array<{ task: string; completed: boolean }> = []
+    let todos: TodoItem[] = []
 
-    if (Array.isArray(input?.todos)) {
-      todos = input.todos.filter(
-        (todo: any) =>
-          typeof todo === 'object' &&
-          typeof todo.task === 'string' &&
-          typeof todo.completed === 'boolean',
-      )
+    const rawTodos = input?.todos
+    if (Array.isArray(rawTodos)) {
+      todos = rawTodos.filter((todo): todo is TodoItem => isTodoItem(todo))
     }
 
     if (todos.length === 0) {

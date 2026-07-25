@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any -- test file: intentional any casts for trace data */
+ 
 import * as fs from 'fs'
 import * as os from 'os'
 import * as path from 'path'

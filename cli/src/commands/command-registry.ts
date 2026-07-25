@@ -1,8 +1,11 @@
 import { CHATGPT_OAUTH_ENABLED } from '@savant-code/common/constants/chatgpt-oauth'
 import { runTerminalCommand } from '@savant-code/sdk'
-import { safeOpen } from '../utils/open-url'
 
 import { handleAdsEnable, handleAdsDisable } from './ads'
+import { returnToSavantFreeLanding } from '../hooks/use-savant-free-session'
+import { useThemeStore } from '../hooks/use-theme'
+import { WEBSITE_URL } from '../login/constants'
+import { startNewChat } from '../project-files'
 import { handleCopyConversationCommand } from './copy-conversation'
 import { handleHelpCommand } from './help'
 import { handleImageCommand } from './image'
@@ -14,36 +17,34 @@ import {
 import { buildInterviewPrompt, buildPlanPrompt, buildReviewPromptFromArgs } from './prompt-builders'
 import { runBashCommand } from './router'
 import { handleUsageCommand } from './usage'
-import { returnToSavantFreeLanding } from '../hooks/use-savant-free-session'
-import { useThemeStore } from '../hooks/use-theme'
-import { WEBSITE_URL } from '../login/constants'
-import { startNewChat } from '../project-files'
 import { useChatStore } from '../state/chat-store'
+import { useFeedbackStore } from '../state/feedback-store'
+import { useLoginStore } from '../state/login-store'
+import { useModelPickerStore } from '../state/model-picker-store'
 import { useSavantFreeModelStore } from '../state/savant-free-model-store'
+import { abortActiveRun } from '../utils/active-run'
+import { AGENT_MODES, END_SESSION_MESSAGE, IS_SAVANT_FREE } from '../utils/constants'
+import { resetUiToIdle as _resetUiToIdle } from '../utils/finish-logic'
+import { getSystemMessage, getUserMessage } from '../utils/message-history'
+import { safeOpen } from '../utils/open-url'
+import { fetchGatewayModels } from '../utils/openrouter-models'
+import { capturePendingAttachments } from '../utils/pending-attachments'
+import { loadSavantCodeModelPreference, saveSavantCodeModelPreference } from '../utils/settings'
+import { getSkillByName } from '../utils/skill-registry'
+
+import type { MultilineInputHandle } from '../components/multiline-input'
+import type { ChatMessage } from '../types/chat'
+import type { SendMessageFn } from '../types/contracts/send-message'
+import type { InputValue, PendingAttachment } from '../types/store'
+import type { User } from '../utils/auth'
+import type { AgentMode } from '../utils/constants'
+import type { UseMutationResult } from '@tanstack/react-query'
+
 
 // FID-2026-0718-010 (D3): helper for slash-command bridges. Calls
 // resetUiToIdle (which itself calls onStreamEnded) with the slash-command
 // reason. Gated by !isChainInProgress && !isRetrying inside finish-logic.
-import { resetUiToIdle as _resetUiToIdle } from '../utils/finish-logic'
 const resetUiToIdleAfterSlashCommand = () => _resetUiToIdle('slash-command')
-import { abortActiveRun } from '../utils/active-run'
-import { useFeedbackStore } from '../state/feedback-store'
-import { useLoginStore } from '../state/login-store'
-import { AGENT_MODES, END_SESSION_MESSAGE, IS_SAVANT_FREE } from '../utils/constants'
-import { getSystemMessage, getUserMessage } from '../utils/message-history'
-import { capturePendingAttachments } from '../utils/pending-attachments'
-import { getSkillByName } from '../utils/skill-registry'
-import { loadSavantCodeModelPreference, saveSavantCodeModelPreference } from '../utils/settings'
-import { useModelPickerStore } from '../state/model-picker-store'
-import { fetchGatewayModels } from '../utils/openrouter-models'
-
-import type { MultilineInputHandle } from '../components/multiline-input'
-import type { InputValue, PendingAttachment } from '../types/store'
-import type { ChatMessage } from '../types/chat'
-import type { SendMessageFn } from '../types/contracts/send-message'
-import type { User } from '../utils/auth'
-import type { AgentMode } from '../utils/constants'
-import type { UseMutationResult } from '@tanstack/react-query'
 
 export type RouterParams = {
   abortControllerRef: React.MutableRefObject<AbortController | null>

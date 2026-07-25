@@ -1,3 +1,4 @@
+import { safeToJSONValue } from '@savant-code/common/util/type-narrowing'
 import { WEBSITE_URL } from '@savant-code/sdk'
 
 import { isDirectProviderMode } from './env'
@@ -6,6 +7,7 @@ import type { FeedbackRequest } from '@savant-code/common/schemas/feedback'
 import type {
   PublishAgentsResponse,
 } from '@savant-code/common/types/api/agents/publish'
+import type { JSONValue } from '@savant-code/common/types/json'
 
 /**
  * API response types for consistent error handling.
@@ -15,7 +17,7 @@ import type {
  */
 export type ApiResponse<T> =
   | { ok: true; status: number; data?: T }
-  | { ok: false; status: number; error?: string; errorData?: Record<string, unknown> }
+  | { ok: false; status: number; error?: string; errorData?: Record<string, JSONValue> }
 
 // ============================================================================
 // Type-safe endpoint request/response types
@@ -57,7 +59,7 @@ export interface LoginStatusRequest {
 }
 
 export interface LoginStatusResponse {
-  user?: Record<string, unknown>
+  user?: Record<string, JSONValue>
 }
 
 export interface LogoutRequest {
@@ -82,6 +84,23 @@ export interface RetryConfig {
   maxDelayMs?: number
   /** HTTP status codes to retry on (default: [408, 429, 500, 502, 503, 504]) */
   retryableStatusCodes?: number[]
+}
+
+/**
+ * Build a JSON request body by dropping keys with `undefined` values.
+ * Values are known to be JSON-serializable because they come from typed
+ * request objects, so the cast to `Record<string, JSONValue>` is safe.
+ */
+function buildRequestBody<T extends Record<string, JSONValue | undefined>>(
+  obj: T,
+): Record<string, JSONValue> {
+  const result: Record<string, JSONValue> = {}
+  for (const [key, value] of Object.entries(obj)) {
+    if (value !== undefined) {
+      result[key] = value
+    }
+  }
+  return result
 }
 
 const DEFAULT_RETRY_CONFIG: Required<RetryConfig> = {
@@ -133,7 +152,7 @@ export interface SavantCodeApiClient {
   request<T>(
     method: string,
     path: string,
-    body?: unknown,
+    body?: JSONValue,
     options?: RequestOptions,
   ): Promise<ApiResponse<T>>
 
@@ -143,21 +162,21 @@ export interface SavantCodeApiClient {
   /** Make a POST request */
   post<T>(
     path: string,
-    body?: Record<string, unknown>,
+    body?: Record<string, JSONValue>,
     options?: RequestOptions,
   ): Promise<ApiResponse<T>>
 
   /** Make a PUT request */
   put<T>(
     path: string,
-    body?: Record<string, unknown>,
+    body?: Record<string, JSONValue>,
     options?: RequestOptions,
   ): Promise<ApiResponse<T>>
 
   /** Make a PATCH request */
   patch<T>(
     path: string,
-    body?: Record<string, unknown>,
+    body?: Record<string, JSONValue>,
     options?: RequestOptions,
   ): Promise<ApiResponse<T>>
 
@@ -186,7 +205,7 @@ export interface SavantCodeApiClient {
 
   /** Publish agents via /api/agents/publish */
   publish(
-    data: Record<string, unknown>[],
+    data: Record<string, JSONValue>[],
     allLocalAgentIds?: string[],
   ): Promise<ApiResponse<PublishAgentsResponse>>
 
@@ -271,6 +290,7 @@ const calculateBackoffDelay = (
  * Note: AbortError is NOT retryable because it indicates intentional cancellation
  * (e.g., user cancelled the request or our timeout was exceeded).
  */
+ 
 const isRetryableError = (error: unknown): boolean => {
   if (error instanceof Error) {
     const name = error.name.toLowerCase()
@@ -317,7 +337,7 @@ export function createSavantCodeApiClient(
   async function request<T>(
     method: string,
     path: string,
-    body?: unknown,
+    body?: JSONValue,
     options: RequestOptions = {},
   ): Promise<ApiResponse<T>> {
     // Safety guard: in direct-provider mode there is no SavantCode backend,
@@ -373,7 +393,7 @@ export function createSavantCodeApiClient(
       ? { ...mergedDefaultRetry, ...retryConfig }
       : null
 
-    let lastError: unknown
+    let lastError: Error | undefined = undefined
     const maxAttempts = shouldRetry ? (retryOpts?.maxRetries ?? 0) + 1 : 1
 
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
@@ -418,12 +438,11 @@ export function createSavantCodeApiClient(
 
         // Parse error response
         let errorMessage: string | undefined
-        let errorData: unknown
+        let errorData: Record<string, JSONValue> | undefined
         try {
-          const errorBody = await response.json()
-          errorData = errorBody
+          errorData = (await response.json()) as Record<string, JSONValue>
           errorMessage =
-            errorBody?.error || errorBody?.message || response.statusText
+            String(errorData.error || errorData.message || response.statusText)
         } catch {
           try {
             errorMessage = await response.text()
@@ -432,10 +451,11 @@ export function createSavantCodeApiClient(
           }
         }
 
-        return { ok: false, status: response.status, error: errorMessage, errorData: errorData as Record<string, unknown> | undefined }
+        return { ok: false, status: response.status, error: errorMessage, errorData }
       } catch (error) {
         clearTimeout(timeoutId)
-        lastError = error
+        lastError =
+          error instanceof Error ? error : new Error(String(error))
 
         // Check if we should retry on this error
         if (
@@ -481,7 +501,7 @@ export function createSavantCodeApiClient(
 
     post<T>(
       path: string,
-      body?: Record<string, unknown>,
+      body?: Record<string, JSONValue>,
       options?: RequestOptions,
     ): Promise<ApiResponse<T>> {
       return request<T>('POST', path, body, options)
@@ -489,7 +509,7 @@ export function createSavantCodeApiClient(
 
     put<T>(
       path: string,
-      body?: Record<string, unknown>,
+      body?: Record<string, JSONValue>,
       options?: RequestOptions,
     ): Promise<ApiResponse<T>> {
       return request<T>('PUT', path, body, options)
@@ -497,7 +517,7 @@ export function createSavantCodeApiClient(
 
     patch<T>(
       path: string,
-      body?: Record<string, unknown>,
+      body?: Record<string, JSONValue>,
       options?: RequestOptions,
     ): Promise<ApiResponse<T>> {
       return request<T>('PATCH', path, body, options)
@@ -549,27 +569,34 @@ export function createSavantCodeApiClient(
     },
 
     publish(
-      data: Record<string, unknown>[],
+      data: Record<string, JSONValue>[],
       allLocalAgentIds?: string[],
     ): Promise<ApiResponse<PublishAgentsResponse>> {
       // Auth is sent via Authorization header (includeAuth defaults to true)
-      return request<PublishAgentsResponse>('POST', '/api/agents/publish', {
-        data,
-        allLocalAgentIds,
-      })
+      return request<PublishAgentsResponse>(
+        'POST',
+        '/api/agents/publish',
+        buildRequestBody({ data, allLocalAgentIds }),
+      )
     },
 
     logout(req: LogoutRequest = {}): Promise<ApiResponse<void>> {
       // Auth is sent via Authorization header (includeAuth defaults to true)
-      return request<void>('POST', '/api/auth/cli/logout', {
-        userId: req.userId,
-        fingerprintId: req.fingerprintId,
-        fingerprintHash: req.fingerprintHash,
-      })
+      return request<void>(
+        'POST',
+        '/api/auth/cli/logout',
+        buildRequestBody({
+          userId: req.userId,
+          fingerprintId: req.fingerprintId,
+          fingerprintHash: req.fingerprintHash,
+        }),
+      )
     },
 
     feedback(req: FeedbackRequest): Promise<ApiResponse<FeedbackResponse>> {
-      return request<FeedbackResponse>('POST', '/api/v1/feedback', req, {
+      // Guard at the trust boundary: ensure only JSON-serializable data is
+      // emitted over the wire, even though the request type is typed.
+      return request<FeedbackResponse>('POST', '/api/v1/feedback', safeToJSONValue(req), {
         // Feedback submissions are not idempotent server-side yet, so avoid automatic retries.
         retry: false,
       })

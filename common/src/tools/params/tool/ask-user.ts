@@ -80,7 +80,7 @@ const inputSchema = z
     'Ask the user a list of multiple choice questions. Each question must have at least 2 options. The agent execution will pause until the user submits their answers.',
   )
 
-const outputSchema = z.object({
+export const askUserResponseSchema = z.object({
   answers: z
     .array(
       z.object({
@@ -108,6 +108,8 @@ const outputSchema = z.object({
     .optional()
     .describe('True if user skipped the questions'),
 })
+
+export type AskUserResponse = z.infer<typeof askUserResponseSchema>
 
 const description = `
 Ask the user multiple choice questions and pause execution until they respond. Supports both single-select (radio) and multi-select (checkbox) modes.
@@ -177,5 +179,5 @@ export const askUserParams = {
   endsAgentStep,
   description,
   inputSchema,
-  outputSchema: jsonToolResultSchema(outputSchema),
+  outputSchema: jsonToolResultSchema(askUserResponseSchema),
 } satisfies $ToolParams
