@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-07-24-074-agent-capabilities-test.md`
 **ID:** FID-2026-07-24-074
 **Severity:** medium
-**Status:** analyzed
+**Status:** closed
 **Created:** 2026-07-24 22:00
 **Author:** Savant (MiMo V2.5) + Creator (collaborative)
 

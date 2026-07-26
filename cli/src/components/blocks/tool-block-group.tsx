@@ -1,5 +1,6 @@
-import React, { memo, type ReactNode } from 'react'
+import React, { memo, useCallback, type ReactNode } from 'react'
 
+import { CopyableBlock } from './copyable-block'
 import { ToolBranch } from './tool-branch'
 
 import type { ContentBlock } from '../../types/chat'
@@ -42,16 +43,30 @@ export const ToolBlockGroup = memo(
 
     if (groupNodes.length === 0) return null
 
+    // Combine all tool texts for copying the group
+    const getCopyText = useCallback(() => {
+      return toolBlocks
+        .filter(toolBlock => toolBlock.toolName !== 'run_readonly_command')
+        .map((toolBlock) => {
+          if (toolBlock.type !== 'tool') return ''
+          return `[Tool: ${toolBlock.toolName}]\nInput:\n${JSON.stringify(toolBlock.input, null, 2)}\n\nOutput:\n${toolBlock.output ?? '(no output)'}`
+        })
+        .filter(Boolean)
+        .join('\n\n---\n\n')
+    }, [toolBlocks])
+
     return (
-      <box
-        key={`${keyPrefix}-tool-group-${startIndex}`}
-        style={{
-          flexDirection: 'column',
-          gap: 0,
-        }}
-      >
-        {groupNodes}
-      </box>
+      <CopyableBlock getCopyText={getCopyText}>
+        <box
+          key={`${keyPrefix}-tool-group-${startIndex}`}
+          style={{
+            flexDirection: 'column',
+            gap: 0,
+          }}
+        >
+          {groupNodes}
+        </box>
+      </CopyableBlock>
     )
   },
 )

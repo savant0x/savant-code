@@ -158,6 +158,111 @@ describe('convertCbToModelMessages', () => {
       ])
     })
 
+    it('should coerce string system message content to text', () => {
+      const messages = [
+        {
+          role: 'system' as const,
+          content: 'You are a helpful assistant',
+        },
+      ] as unknown as Message[]
+
+      const result = convertCbToModelMessages({
+        messages,
+        includeCacheControl: false,
+      })
+
+      expect(result).toEqual([
+        {
+          role: 'system',
+          content: 'You are a helpful assistant',
+        },
+      ])
+    })
+
+    it('should coerce string user message content to text parts', () => {
+      const messages = [
+        {
+          role: 'user' as const,
+          content: 'Hello from the user',
+        },
+      ] as unknown as Message[]
+
+      const result = convertCbToModelMessages({
+        messages,
+        includeCacheControl: false,
+      })
+
+      expect(result).toEqual([
+        {
+          role: 'user',
+          content: [{ type: 'text', text: 'Hello from the user' }],
+        },
+      ])
+    })
+
+    it('should coerce string assistant message content to text parts', () => {
+      const messages = [
+        {
+          role: 'assistant' as const,
+          content: 'Hello from the assistant',
+        },
+      ] as unknown as Message[]
+
+      const result = convertCbToModelMessages({
+        messages,
+        includeCacheControl: false,
+      })
+
+      expect(result).toEqual([
+        {
+          role: 'assistant',
+          content: [{ type: 'text', text: 'Hello from the assistant' }],
+        },
+      ])
+    })
+
+    it('should fall back to empty string for invalid system content', () => {
+      const messages = [
+        {
+          role: 'system' as const,
+          content: null,
+        },
+      ] as unknown as Message[]
+
+      const result = convertCbToModelMessages({
+        messages,
+        includeCacheControl: false,
+      })
+
+      expect(result).toEqual([
+        {
+          role: 'system',
+          content: '',
+        },
+      ])
+    })
+
+    it('should fall back to empty content for invalid user content', () => {
+      const messages = [
+        {
+          role: 'user' as const,
+          content: null,
+        },
+      ] as unknown as Message[]
+
+      const result = convertCbToModelMessages({
+        messages,
+        includeCacheControl: false,
+      })
+
+      expect(result).toEqual([
+        {
+          role: 'user',
+          content: [],
+        },
+      ])
+    })
+
     it('should convert user messages with array content', () => {
       const messages: Message[] = [
         {
@@ -341,6 +446,38 @@ describe('convertCbToModelMessages', () => {
               toolCallId: 'call_empty',
               toolName: 'scraper_page_to_markdown',
               output: { type: 'json', value: '' },
+            } satisfies ToolResultPart),
+          ],
+        }),
+      ])
+    })
+
+    it('should coerce string tool content into a json tool result', () => {
+      const messages: Message[] = [
+        {
+          role: 'tool',
+          toolName: 'read_files',
+          toolCallId: 'call_compact',
+          content: '[compacted]' as unknown as never,
+        },
+      ]
+
+      const result = convertCbToModelMessages({
+        messages,
+        includeCacheControl: false,
+      })
+
+      expect(result).toEqual([
+        expect.objectContaining({
+          role: 'tool',
+          toolCallId: 'call_compact',
+          toolName: 'read_files',
+          content: [
+            expect.objectContaining({
+              type: 'tool-result',
+              toolCallId: 'call_compact',
+              toolName: 'read_files',
+              output: { type: 'json', value: '[compacted]' },
             } satisfies ToolResultPart),
           ],
         }),

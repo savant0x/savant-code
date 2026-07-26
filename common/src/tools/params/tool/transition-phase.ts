@@ -25,7 +25,7 @@ const description = `
 Transition the Perfection Loop Finite State Machine to a new phase.
 
 Valid transitions:
-- idle → red
+- idle → red | green
 - red → green
 - green → audit
 - audit → self_correct | complete

@@ -147,14 +147,15 @@ export class OpenCodeRunner implements Runner {
           const toolCallId = part.callID ?? part.id ?? `opencode-${Date.now()}`
           const input = part.state?.input ?? {}
 
+          const inputObj =
+            input && typeof input === 'object' && !Array.isArray(input)
+              ? (input as Record<string, unknown>)
+              : { input }
           const toolCall: PrintModeToolCall = {
             type: 'tool_call',
             toolName,
             toolCallId,
-            input:
-              input && typeof input === 'object'
-                ? (input as Record<string, unknown>)
-                : { input },
+            input: toJsonValue(inputObj) as Record<string, JSONValue>,
           }
           steps.push(toolCall)
 

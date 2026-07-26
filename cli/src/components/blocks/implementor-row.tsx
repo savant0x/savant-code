@@ -1,21 +1,7 @@
 import { TextAttributes } from '@opentui/core'
 import React, { memo, useCallback, useMemo, useState } from 'react'
 
-/** Horizontal padding inside implementor cards (left + right) */
-const CARD_HORIZONTAL_PADDING = 4
-/** Fixed width for the +/- bar visualization */
-const STATS_BAR_WIDTH = 5
-/** Minimum inner content width */
-const MIN_INNER_WIDTH = 10
-
-/** Labels for proposal cards when no file changes exist */
-const EMPTY_STATE_LABELS = {
-  running: 'generating...',
-  complete: 'no changes',
-  failed: 'failed',
-  cancelled: 'cancelled',
-} as const
-
+import { CopyableBlock } from './copyable-block'
 import { useGridLayout } from '../../hooks/use-grid-layout'
 import { useTheme } from '../../hooks/use-theme'
 import { getAgentStatusInfo } from '../../utils/agent-helpers'
@@ -34,6 +20,21 @@ import { CollapseButton } from '../collapse-button'
 import { DiffViewer } from '../tools/diff-viewer'
 
 import type { AgentContentBlock, ContentBlock } from '../../types/chat'
+
+/** Horizontal padding inside implementor cards (left + right) */
+const CARD_HORIZONTAL_PADDING = 4
+/** Fixed width for the +/- bar visualization */
+const STATS_BAR_WIDTH = 5
+/** Minimum inner content width */
+const MIN_INNER_WIDTH = 10
+
+/** Labels for proposal cards when no file changes exist */
+const EMPTY_STATE_LABELS = {
+  running: 'generating...',
+  complete: 'no changes',
+  failed: 'failed',
+  cancelled: 'cancelled',
+} as const
 
 interface ImplementorGroupProps {
   implementors: AgentContentBlock[]
@@ -69,34 +70,57 @@ export const ImplementorGroup = memo(
           {columnGroups.map((columnItems, colIdx) => {
             // Use first agent's ID as stable column key
             const columnKey = columnItems[0]?.agentId ?? `col-${colIdx}`
-            return (
-              <box
-                key={columnKey}
-                style={{
-                  flexDirection: 'column',
-                  gap: 0,
-                  flexGrow: 1,
-                  flexShrink: 1,
-                  flexBasis: 0,
-                  minWidth: 0,
-                }}
-              >
-                {columnItems.map((agentBlock) => {
-                  const implementorIndex = getImplementorIndex(
-                    agentBlock,
-                    siblingBlocks,
-                  )
+            const columnCopyText = columnItems
+              .map((agentBlock) => {
+                const lines: string[] = [
+                  `[Implementor: ${getImplementorDisplayName(
+                    agentBlock.agentType,
+                    getImplementorIndex(agentBlock, siblingBlocks),
+                  )}]`,
+                ]
+                agentBlock.blocks?.forEach((b) => {
+                  if (b.type === 'text') lines.push(b.content)
+                  if (b.type === 'tool')
+                    lines.push(
+                      `[Tool: ${b.toolName}]\nInput: ${JSON.stringify(
+                        b.input,
+                      )}\nOutput: ${b.output ?? '(no output)'}`,
+                    )
+                })
+                return lines.join('\n\n')
+              })
+              .join('\n\n---\n\n')
 
-                  return (
-                    <ImplementorCard
-                      key={agentBlock.agentId}
-                      agentBlock={agentBlock}
-                      implementorIndex={implementorIndex}
-                      cardWidth={cardWidth}
-                    />
-                  )
-                })}
-              </box>
+            return (
+              <CopyableBlock getCopyText={() => columnCopyText}>
+                <box
+                  key={columnKey}
+                  style={{
+                    flexDirection: 'column',
+                    gap: 0,
+                    flexGrow: 1,
+                    flexShrink: 1,
+                    flexBasis: 0,
+                    minWidth: 0,
+                  }}
+                >
+                  {columnItems.map((agentBlock) => {
+                    const implementorIndex = getImplementorIndex(
+                      agentBlock,
+                      siblingBlocks,
+                    )
+
+                    return (
+                      <ImplementorCard
+                        key={agentBlock.agentId}
+                        agentBlock={agentBlock}
+                        implementorIndex={implementorIndex}
+                        cardWidth={cardWidth}
+                      />
+                    )
+                  })}
+                </box>
+              </CopyableBlock>
             )
           })}
         </box>

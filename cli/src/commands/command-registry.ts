@@ -2,6 +2,8 @@ import { CHATGPT_OAUTH_ENABLED } from '@savant-code/common/constants/chatgpt-oau
 import { runTerminalCommand } from '@savant-code/sdk'
 
 import { handleAdsEnable, handleAdsDisable } from './ads'
+import { handleGoalCommand } from './goal'
+import { handleLoopCommand } from './loop'
 import { returnToSavantFreeLanding } from '../hooks/use-savant-free-session'
 import { useThemeStore } from '../hooks/use-theme'
 import { WEBSITE_URL } from '../login/constants'
@@ -227,6 +229,15 @@ const ALL_COMMANDS: CommandDefinition[] = [
       // FID-2026-0718-010 D3: slash-command bridges resetUiToIdle when idle.
       resetUiToIdleAfterSlashCommand()
     },
+  }),
+  defineCommandWithArgs({
+    name: 'goal',
+    handler: handleGoalCommand,
+  }),
+  defineCommandWithArgs({
+    name: 'loop',
+    aliases: ['repeat'],
+    handler: handleLoopCommand,
   }),
   defineCommand({
     name: 'diagnostics',

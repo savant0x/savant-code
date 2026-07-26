@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0722-038-sidebar-fidcard-native-border-collision.md`
 **ID:** FID-2026-0722-038
 **Severity:** high
-**Status:** analyzed
+**Status:** closed
 **Created:** 2026-07-22 00:00
 **Author:** Forge (via operator-requested deep review)
 

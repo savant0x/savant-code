@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-07-25-076-windows-code-search-shell-escaping.md`
 **ID:** FID-2026-07-25-076
 **Severity:** high
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-07-25 00:30
 **Author:** Savant (MiMo V2.5)
 

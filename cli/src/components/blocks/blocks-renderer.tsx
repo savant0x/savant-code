@@ -67,6 +67,7 @@ interface BlocksRendererPropsRef {
   lastTextBlockIndex: number
 }
 
+
 export const BlocksRenderer = memo(
   ({
     sourceBlocks,
@@ -197,6 +198,7 @@ export const BlocksRenderer = memo(
 
         onSingleBlock: (block, index) => {
           const p = propsRef.current
+          const isCopyTarget = p.contentToCopy && index === p.lastTextBlockIndex
           return (
             <SingleBlock
               key={`${p.messageId}-block-${index}`}
@@ -215,7 +217,7 @@ export const BlocksRenderer = memo(
               onBuildMax={p.onBuildMax}
               onBuildLite={p.onBuildLite}
               isLastMessage={p.isLastMessage}
-              contentToCopy={index === p.lastTextBlockIndex ? p.contentToCopy : undefined}
+              contentToCopy={isCopyTarget ? p.contentToCopy : undefined}
             />
           )
         },

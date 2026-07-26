@@ -14,12 +14,13 @@
     "declarationMap": false,
     "esModuleInterop": true,
     "skipLibCheck": true,
+    "types": ["bun", "node"],
     "preserveSymlinks": false,
     "paths": {
       "@savant-code/sdk": ["../sdk/src/index.ts"],
       "@savant-code/common/*": ["../common/src/*"]
     }
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "scripts/**/*"],
   "exclude": ["node_modules", "dist"]
 }

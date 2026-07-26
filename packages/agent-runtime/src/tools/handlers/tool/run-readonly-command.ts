@@ -1,19 +1,24 @@
 import type { SavantCodeToolHandlerFunction } from '../handler-function-type';
 import type { ClientToolCall, ClientToolName as _ClientToolName, SavantCodeToolCall, SavantCodeToolOutput, } from '@savant-code/common/tools/list';
+// FID-2026-0725-085 BUG-003: Denylist architecture replaces allowlist.
+// A denylist blocks known-dangerous commands while allowing all others.
+// This is more maintainable and doesn't break on new/OS-specific commands.
+//
 // Forbidden shell metacharacters/patterns that could enable command
 // substitution, redirection, pipes, or backgrounding. Chaining with `&&` is
 // permitted only after safe splitting and per-segment validation (see below).
+// NOTE: Windows stderr redirections (2>nul, 2>&1) are explicitly permitted
+// as they are read-only and standard diagnostic patterns.
 const FORBIDDEN_METACHAR_REGEX = /[<>;|`$&]|\|\||\$\(/;
+// Explicitly permitted Windows stderr redirections (read-only, diagnostic).
+const WINDOWS_STDERR_REDIRECT_REGEX = /\b2>nul\b|\b2>&1\b/;
 // Destructive filesystem commands that mutate state. These are rejected even
 // when used without metacharacters (e.g. `rm -rf /`).
 const DESTRUCTIVE_COMMAND_REGEX = /^\s*(rm|mv|cp|chmod|chown|mkdir|mkfs|dd|mount|umount|truncate|mkfifo|mknod|ln\s*-s?|rmdir|touch|tee\s*-?|shred|chattr|setfacl)\b/i;
-// Commands that are clearly read-only and useful for diagnostics.
-// NOTE: This is an allow-list. Tools that can mutate files or execute
-// arbitrary code (e.g. `sed -i`, `awk 'system(...)'`, `code`, editors) are
-// intentionally excluded even though they can be used read-only.
-const READONLY_COMMAND_ALLOW_REGEX = /^\s*(?:bun\s+(?:run\s+typecheck|run\s+test|test|x?eslint|x?prettier\s+--check|--version|-v)|tsc\s+(?:--noEmit|--version)|git\s+(?:status|diff|log|show|branch|tag|remote|config\s+-{0,2}list|rev-parse)|ls|ll|dir|cd|cat|head|tail|less|more|grep|rg|find|fd|pwd|echo|printf|which|where|whoami|uname|node\s+(?:--version|-v)|npm\s+(?:--version|-v)|npx\s+--version|python\s+--version|go\s+(?:version|--version)|rustc\s+--version|cargo\s+--version|pnpm\s+(?:--version|-v)|yarn\s+(?:--version|-v)|deno\s+--version|wc|jq|yq|column|tree|du|df|free|top\s+-|ps\s+|date|env|printenv|test|\[|stat|realpath|basename|dirname|readlink|file)\b/i;
-// git subcommands are allowed, but some flags mutate state. Reject those.
-const GIT_DESTRUCTIVE_FLAG_REGEX = /^\s*git\s+(?:branch\s+-(?:D|d|M|m|--force|--move|--delete)|tag\s+-(?:d|delete|--delete)|remote\s+(?:add|remove|rename|prune|set-url)|(?:checkout|reset|rm|mv|merge|rebase|cherry-pick|revert|apply|am|switch)\b|\S+\s+--output|--force\b)/i;
+// Mutating git operations. Read-only git (status, diff, log, show, branch, tag, remote) is allowed.
+const GIT_MUTATING_REGEX = /^\s*git\s+(?:branch\s+-(?:D|d|M|m|--force|--move|--delete)|tag\s+-(?:d|delete|--delete)|remote\s+(?:add|remove|rename|prune|set-url)|(?:checkout|reset|rm|mv|merge|rebase|cherry-pick|revert|apply|am|switch)\b|\S+\s+--output|--force\b)/i;
+// Dangerous commands that could execute arbitrary code or access the network.
+const DANGEROUS_COMMAND_REGEX = /^\s*(?:curl|wget|ssh|scp|rsync|nc|ncat|socat|telnet|eval|exec|source|\.\s|pip\s+install|npm\s+(?:install|publish|exec)|npx\s+(?!--version)|yarn\s+(?:add|remove|publish)|cargo\s+(?:install|publish)|go\s+run|python\s+-c|node\s+-e|deno\s+run)\b/i;
 /**
  * Split a command on unquoted `&&` separators. Respects single quotes,
  * double quotes, and backslash escapes so that `echo "a && b"` is not split.
@@ -111,30 +116,35 @@ function isReadonlyCommand(command: string): {
             };
         }
         const masked = maskQuoted(segment);
-        if (FORBIDDEN_METACHAR_REGEX.test(masked)) {
+        // Check for forbidden metacharacters, but allow Windows stderr redirections
+        // (2>nul, 2>&1) which are read-only diagnostic patterns.
+        if (FORBIDDEN_METACHAR_REGEX.test(masked) && !WINDOWS_STDERR_REDIRECT_REGEX.test(segment)) {
             return {
                 valid: false,
                 reason: 'Command contains forbidden shell metacharacters (redirection, pipes, command substitution, backgrounding, or `||`). Use run_terminal_command in green/audit phase for complex commands.',
             };
         }
+        // Denylist checks: block known-dangerous commands
         if (DESTRUCTIVE_COMMAND_REGEX.test(segment)) {
             return {
                 valid: false,
                 reason: 'Command is a destructive filesystem operation. Use run_terminal_command in green/audit phase for destructive commands.',
             };
         }
-        if (GIT_DESTRUCTIVE_FLAG_REGEX.test(segment)) {
+        if (GIT_MUTATING_REGEX.test(segment)) {
             return {
                 valid: false,
-                reason: 'Git invocation contains destructive flags (delete/remove/reset/checkout/etc). Use run_terminal_command in green/audit phase for mutating git operations.',
+                reason: 'Git invocation contains mutating flags (delete/remove/reset/checkout/etc). Use run_terminal_command in green/audit phase for mutating git operations.',
             };
         }
-        if (!READONLY_COMMAND_ALLOW_REGEX.test(segment)) {
+        if (DANGEROUS_COMMAND_REGEX.test(segment)) {
             return {
                 valid: false,
-                reason: 'Command is not recognized as a read-only diagnostic command. If you need to run it, use run_terminal_command in green/audit phase.',
+                reason: 'Command could execute arbitrary code or access the network. Use run_terminal_command in green/audit phase for such commands.',
             };
         }
+        // All other commands are allowed (denylist architecture).
+        // This includes: findstr, Windows diagnostic tools, any command not in the denylist.
     }
     return { valid: true };
 }

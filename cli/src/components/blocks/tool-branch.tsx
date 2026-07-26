@@ -1,6 +1,7 @@
 import { memo, useCallback } from 'react'
 
 import { ContentWithMarkdown } from './content-with-markdown'
+import { CopyableBlock } from './copyable-block'
 import { useTheme } from '../../hooks/use-theme'
 import { useChatStore } from '../../state/chat-store'
 import { shouldCollapseToolByDefault } from '../../utils/constants'
@@ -130,19 +131,26 @@ export const ToolBranch = memo(
       displayContent === null ||
       displayContent === undefined ||
       displayContent === false ||
-      displayContent === '' ? null : (
-        <text
-          fg={theme.foreground}
-          style={{ wrapMode: 'word' }}
-          attributes={
-            theme.messageTextAttributes && theme.messageTextAttributes !== 0
-              ? theme.messageTextAttributes
-              : undefined
-          }
-        >
-          {displayContent}
-        </text>
-      )
+      displayContent === ''
+        ? null
+        : (() => {
+            const textNode = displayContent as React.ReactElement<{
+              children?: React.ReactNode
+            }>
+            return (
+              <text
+                fg={theme.foreground}
+                style={{ wrapMode: 'word' }}
+                attributes={
+                  theme.messageTextAttributes && theme.messageTextAttributes !== 0
+                    ? theme.messageTextAttributes
+                    : undefined
+                }
+              >
+                {textNode.props.children}
+              </text>
+            )
+          })()
 
     const headerName = displayInfo.name
 
@@ -150,6 +158,37 @@ export const ToolBranch = memo(
       onToggleCollapsed(toolBlock.toolCallId)
     }, [onToggleCollapsed, toolBlock.toolCallId])
 
+    const getCopyText = useCallback(() => {
+      return `[Tool: ${toolBlock.toolName}]\nInput:\n${JSON.stringify(toolBlock.input, null, 2)}\n\nOutput:\n${toolBlock.output ?? '(no output)'}`
+    }, [toolBlock.toolName, toolBlock.input, toolBlock.output])
+
+    // Skip copy button for run_readonly_command results
+    const shouldShowCopyButton = toolBlock.toolName !== 'run_readonly_command';
+
+    if (shouldShowCopyButton) {
+      return (
+        <CopyableBlock getCopyText={getCopyText} isStreaming={isStreaming}>
+          <box key={keyPrefix}>
+            {toolRenderConfig ? (
+              toolRenderConfig.content
+            ) : (
+              <ToolCallItem
+                name={headerName}
+                content={renderableDisplayContent}
+                isCollapsed={isCollapsed}
+                isStreaming={isStreaming}
+                streamingPreview={streamingPreview}
+                finishedPreview={finishedPreview}
+                onToggle={handleToggle}
+                titleSuffix={undefined}
+              />
+            )}
+          </box>
+        </CopyableBlock>
+      )
+    }
+
+    // Render without copy button for run_readonly_command
     return (
       <box key={keyPrefix}>
         {toolRenderConfig ? (

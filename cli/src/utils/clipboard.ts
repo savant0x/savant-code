@@ -117,9 +117,7 @@ export async function copyTextToClipboard(
 ) {
   if (!text || text.trim().length === 0) {
     return
-  }
-
-  const osc52Blocked = isOsc52Blocked()
+  }    const osc52Blocked = isOsc52Blocked()
   try {
     const tryCopyViaAnyOsc52 = () =>
       !osc52Blocked && (tryCopyViaRenderer(text) || tryCopyViaOsc52(text))
@@ -276,5 +274,31 @@ function tryCopyViaOsc52(text: string): boolean {
     return false
   } finally {
     if (fd !== null) closeSync(fd)
+  }
+}
+
+// =============================================================================
+// FID-2026-0725-087: universal copy button wrapper
+// =============================================================================
+
+/**
+ * Copy text to the OS clipboard.
+ * Returns `true` if the copy succeeded, `false` otherwise. No global
+ * toast/message is shown so the caller can drive its own UI feedback.
+ *
+ * @param text - The text to copy (will be truncated to ~1MB if needed)
+ */
+export async function copyToClipboard(text: string): Promise<boolean> {
+  const MAX_CLIPBOARD_SIZE = 1_000_000
+  const textToCopy =
+    text.length > MAX_CLIPBOARD_SIZE
+      ? `${text.slice(0, MAX_CLIPBOARD_SIZE)}\n\n[truncated, see source]`
+      : text
+
+  try {
+    await copyTextToClipboard(textToCopy, { suppressGlobalMessage: true })
+    return true
+  } catch {
+    return false
   }
 }

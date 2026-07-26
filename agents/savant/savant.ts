@@ -219,7 +219,9 @@ function getSavantHandleSteps({
 }
 
 const handleStepsFree250k: SavantHandleSteps = function* ({ params, agentState }) {
-  const maxContextLength = params?.maxContextLength ?? 250_000
+  // FID-2026-0725-085 Layer 3: Read maxContextLength from agentState first
+  // (set by loopAgentSteps from resolved context window), then params, then default.
+  const maxContextLength = agentState.maxContextLength ?? params?.maxContextLength ?? 250_000
   while (true) {
     // Only spawn context-pruner when context is approaching the limit (>80%).
     // Skipping when context is far from full eliminates a wasted LLM call per
@@ -245,7 +247,8 @@ const handleStepsFree250k: SavantHandleSteps = function* ({ params, agentState }
 }
 
 const handleStepsFree400k: SavantHandleSteps = function* ({ params, agentState }) {
-  const maxContextLength = params?.maxContextLength ?? 400_000
+  // FID-2026-0725-085 Layer 3: Read maxContextLength from agentState first
+  const maxContextLength = agentState.maxContextLength ?? params?.maxContextLength ?? 400_000
   while (true) {
     if (agentState.contextTokenCount > maxContextLength * 0.8) {
       yield {
@@ -268,7 +271,8 @@ const handleStepsFree400k: SavantHandleSteps = function* ({ params, agentState }
 }
 
 const handleSteps250k: SavantHandleSteps = function* ({ params, agentState }) {
-  const maxContextLength = params?.maxContextLength ?? 250_000
+  // FID-2026-0725-085 Layer 3: Read maxContextLength from agentState first
+  const maxContextLength = agentState.maxContextLength ?? params?.maxContextLength ?? 250_000
   while (true) {
     if (agentState.contextTokenCount > maxContextLength * 0.8) {
       yield {
@@ -290,7 +294,8 @@ const handleSteps250k: SavantHandleSteps = function* ({ params, agentState }) {
 }
 
 const handleSteps400k: SavantHandleSteps = function* ({ params, agentState }) {
-  const maxContextLength = params?.maxContextLength ?? 400_000
+  // FID-2026-0725-085 Layer 3: Read maxContextLength from agentState first
+  const maxContextLength = agentState.maxContextLength ?? params?.maxContextLength ?? 400_000
   while (true) {
     if (agentState.contextTokenCount > maxContextLength * 0.8) {
       yield {
@@ -346,7 +351,7 @@ ${buildArray(
     `- For any task requiring 3+ steps, use the write_todos tool to write out your step-by-step implementation plan. Include ALL of the applicable tasks in the list.${isFast || noReview ? '' : ' You should include a step to review the changes after you have implemented the changes.'}:${hasNoValidation ? '' : ' You should include at least one step to validate/test your changes: be specific about whether to typecheck, run tests, run lints, etc.'} You may be able to do reviewing and validation in parallel in the same step. Skip write_todos for simple tasks like quick edits or answering questions.`,
   (isDefault || isMax || isFree) &&
     '- For complex problems, spawn the Thinker agent to help find the best solution.',
-  '- IMPORTANT: You have write_file and str_replace tools — write code directly for most tasks. Use the full ECHO Perfection Loop (spawn Forge) only for genuinely complex changes (touches > 3 files AND requires new imports/APIs, OR novel architecture, OR verification fails twice, OR user explicitly requests Forge). For everything else, write the code yourself, then verify with typecheck/lint in parallel using bashers.',
+  '- IMPORTANT: You have write_file and str_replace tools — write code directly for most tasks. Use the full ECHO Perfection Loop (spawn Forge) only for genuinely complex changes (touches > 75 lines AND requires new imports/APIs, OR novel architecture, OR verification fails twice, OR user explicitly requests Forge). For everything else, write the code yourself, then verify with typecheck/lint in parallel using bashers.',
   '- **Parallel agent batching:** When spawning multiple agents that don\'t depend on each other, fire them ALL in a single spawn_agents call — they run in parallel via Promise.allSettled. Independent agents: Detective + Researcher + Thinker (no data dependency). Dependent agents: Scout waits for Detective; Forge waits for Thinker; Verifier waits for Forge. Batch all independent agents together; only wait for dependencies when required.',
   isFast &&
     '- For fast mode, skip verification if the change is very small (< 10 lines, no new imports). Otherwise, do a single typecheck.',
@@ -592,7 +597,7 @@ You are the primary coder. For most tasks:
 ## Full ECHO Loop (Complex Tasks — only when criteria below are met)
 
 Use the full Perfection Loop ONLY when ALL of these apply:
-- Touches > 3 files AND requires new imports/APIs, OR
+- Touches > 75 lines AND requires new imports/APIs, OR
 - Novel architecture or patterns not in the codebase, OR
 - Verification fails twice with direct fixes, OR
 - User explicitly requests Forge
@@ -607,7 +612,7 @@ Skip phases when appropriate to reduce overhead:
 
 | Phase | Skip When | Still Required |
 |-------|-----------|----------------|
-| RED | Issues already known from prior analysis, creating new files, or < 3 files with no existing code to audit | Law 2 (Present Before Act) — present your plan before writing |
+| RED | Issues already known from prior analysis, creating new files, or < 75 lines with no existing code to audit | Law 2 (Present Before Act) — present your plan before writing |
 | GREEN deliberation | Fix is obvious (typo, missing import, constant change) or user provided exact code | Law 2 |
 | Full AUDIT | Change is < 10 lines AND single file AND typecheck/lint already pass inline | Law 3 (Verify Before Proceed) — verification always happens |
 

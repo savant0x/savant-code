@@ -635,6 +635,13 @@ export const useSendMessage = ({
           ? formatModelInfo(effectiveModelId, cachedModel)
           : undefined
 
+        // FID-2026-0725-085 CTX-007: Resolve context window BEFORE createRunConfig
+        // so it flows through to the agent runtime for accurate compaction thresholds.
+        const resolvedContextWindow =
+          typeof agentWithModelOverride === 'string'
+            ? undefined
+            : resolveContextWindowForModel(agentWithModelOverride.model)
+
         const runConfig = createRunConfig({
           logger,
           agent: agentWithModelOverride,
@@ -649,6 +656,7 @@ export const useSendMessage = ({
               ? { savant_free_instance_id: instanceId }
               : undefined,
           modelInfoText,
+          contextWindow: resolvedContextWindow,
           onStateSnapshot: (snapshot) => {
             latestRunStateSnapshot = snapshot
 
@@ -707,16 +715,10 @@ export const useSendMessage = ({
             : agentWithModelOverride.id
         useChatStore.getState().updateAgentStack([{ id: mainAgentName, isActive: true }])
 
-        // Wire sidebar: set context window max from model. Prefer the live
-        // gateway catalog, fall back to name-based heuristic (FID-2026-0723-062).
-        const modelName =
-          typeof agentWithModelOverride === 'string'
-            ? undefined
-            : agentWithModelOverride.model
-        if (modelName) {
-          useChatStore.getState().updateContextTokensMax(
-            resolveContextWindowForModel(modelName),
-          )
+        // Wire sidebar: set context window max from model. Reuse the resolved
+        // value computed above for createRunConfig (CTX-007 fix).
+        if (resolvedContextWindow) {
+          useChatStore.getState().updateContextTokensMax(resolvedContextWindow)
         }
 
         // Log a summary only: the full run config contains the entire

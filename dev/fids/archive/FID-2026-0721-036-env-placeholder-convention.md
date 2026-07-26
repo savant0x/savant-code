@@ -3,7 +3,7 @@
 **Filename:** `dev/fids/FID-2026-0721-036-env-placeholder-convention.md`
 **ID:** FID-2026-0721-036
 **Severity:** low
-**Status:** analyzed
+**Status:** closed
 **Created:** 2026-07-21
 **Author:** ECHO Agent (Perfection Loop)
 

@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0722-052-agent-capabilities-test-findings.md`
 **ID:** FID-2026-0722-052
 **Severity:** high
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-07-22 18:30
 **Author:** Savant Orchestrator
 

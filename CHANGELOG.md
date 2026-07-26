@@ -1,5 +1,209 @@
 # Changelog
 
+## v0.0.9 — 2026-07-25
+
+### Universal Copy Buttons on Every Response Block (FID-087)
+
+Added a copy affordance to every assistant-facing content block in the CLI transcript. Each text response, reasoning block, tool result, agent branch, and implementor group now renders a small copy button that copies the block's plain text to the clipboard with visual feedback.
+
+**Changes:**
+- `cli/src/components/blocks/copy-button.tsx` — New inline copy button with idle, hover, copied, and failed states, using the existing terminal-safe `clipboard.ts` utility.
+- `cli/src/components/blocks/copyable-block.tsx` — New flex-layout wrapper that places the copy button in a right-aligned footer row and hides it while the content is streaming.
+- `cli/src/components/blocks/single-block.tsx` — Wrapped non-user text blocks in `CopyableBlock`.
+- `cli/src/components/blocks/thinking-block.tsx` — Wrapped reasoning blocks in `CopyableBlock`.
+- `cli/src/components/blocks/tool-branch.tsx` — Wrapped individual tool results in `CopyableBlock`.
+- `cli/src/components/blocks/tool-block-group.tsx` — Wrapped tool result groups in `CopyableBlock`.
+- `cli/src/components/blocks/agent-branch-wrapper.tsx` — Wrapped agent branches content in `CopyableBlock`.
+- `cli/src/components/blocks/implementor-row.tsx` — Wrapped implementor columns in `CopyableBlock`.
+- `cli/src/utils/clipboard.ts` — Restored the original public clipboard API and added a new `copyToClipboard()` wrapper that suppresses global toast messages and returns a boolean.
+- `dev/test-prompts/release-az-test-fid-087.md` — New release A-Z test prompt covering the copy-button feature and core regression checks.
+
+**Verification:**
+- `cd cli && bun run typecheck` passes.
+- ESLint on all changed files passes with zero warnings.
+- `bun test src/__tests__/unit/copy-button.test.ts` passes.
+- `dev/fids/FID-2026-0725-087-universal-copy-buttons.md` updated and verified against actual code.
+
+**FID:** FID-2026-0725-087 (closed / archived 2026-07-25)
+
+## v0.0.8 — 2026-07-25
+
+### Context Compaction System — Four-Layer Progressive Auto-Compaction (FID-085)
+
+Implemented a four-layer progressive context compaction system to fix the critical issue where Savant's context window fills during long sessions with zero automatic intervention. Additionally discovered and fixed 12 bugs across FSM gating, tool permissions, token limits, and context window wiring.
+
+**Architecture:** Runtime service (not spawned agent) with four progressive layers:
+- **Layer 2 (MicroCompact):** Per-turn tool result clearing, zero API cost. Runs before every API call in loopAgentSteps. Clears stale read_files, code_search, glob, etc. results older than the 3 most recent.
+- **Layer 3 (AutoCompact):** Full LLM summarization triggered at token threshold (context - 30k buffer). Circuit breaker: max 3 failures → 5min cooldown. Context window now resolved from OpenRouter catalog and flows through full stack.
+- **Layer 4 (ReactiveCompact):** Emergency truncation on API prompt-too-long error. Preserves first message + last 20% of messages, retries API call once.
+
+**New files:**
+- `packages/agent-runtime/src/context-compactor.ts` — ContextCompactor class (~350 lines)
+
+**Key changes:**
+- `packages/agent-runtime/src/run-agent-step.ts` — MicroCompact + autoCompact + reactiveCompact integration
+- `packages/agent-runtime/src/tools/tool-executor.ts` — BUG-001 (agent ID in errors), BUG-004 (FSM phase ordering), BUG-006 (devMode warning)
+- `packages/agent-runtime/src/tools/handlers/tool/run-readonly-command.ts` — BUG-003: Allowlist → denylist architecture (findstr, 2>nul now work)
+- `common/src/types/session-state.ts` — Added maxContextLength to AgentState for Layer 3
+- `common/src/constants/agents.ts` — BUG-005: Rewrote ECHO_PROTOCOL_INSTRUCTIONS, corrected FSM Phase Gating table
+- `cli/src/utils/openrouter-models.ts` — CTX-010: Fixed inferContextLength (Grok→1M, GPT→256k, GLM→1M, MiniMax→256k)
+- `cli/src/utils/create-run-config.ts` — CTX-007: Added contextWindow parameter
+- `cli/src/hooks/use-send-message.ts` — CTX-007: Wired resolveContextWindowForModel through full stack
+- `agents/savant/savant.ts` — Layer 3: handleSteps reads agentState.maxContextLength
+
+**Bug fixes (12 total):** BUG-001, BUG-003, BUG-004, BUG-005, BUG-006, BUG-009, BUG-010, CTX-003, CTX-007, CTX-008, CTX-010. BUG-002/007/008 (tests) deferred.
+
+**Verification:** Typecheck passes across all 4 workspaces (agent-runtime, common, cli, sdk).
+
+**FID:** FID-2026-0725-085 (closed / archived 2026-07-25)
+
+### Benchmark v2 — Category/Difficulty CLI Filters
+
+Added `--category` and `--difficulty` CLI flags to `evals/v2/src/cli.ts` so harness runs can be scoped to a subset of tasks.
+
+**Usage:**
+```bash
+cd evals
+bun run v2/src/cli.ts --tasks-dir v2/tasks --output-dir v2/reports --mode baseline --category pure_coding
+bun run v2/src/cli.ts --tasks-dir v2/tasks --output-dir v2/reports --mode baseline --difficulty medium
+```
+
+**Implementation:**
+- `evals/v2/src/harness.ts` — `HarnessOptions` now accepts optional `category` and `difficulty`; the harness filters the loaded registry before running tasks.
+- `evals/v2/src/cli.ts` — Added `--category` and `--difficulty` argument parsing; values are validated against the existing Zod schemas and passed through to `BenchmarkHarness`.
+- `evals/v2/README.md` — Added CLI usage examples for the new flags.
+
+**Verification:**
+- Typecheck passes.
+- `--category pure_coding` selects the 2 `pure_coding` tasks.
+- `--difficulty medium` selects the 3 medium tasks.
+- Unfiltered run still executes all 4 tasks.
+
+## v0.0.7 — 2026-07-25
+
+### Benchmark v2 Baseline Run (FID-084)
+
+The evals/v2 baseline harness was run successfully with four sample tasks across three categories.
+
+**Results:**
+- 4 tasks run
+- 4 passed
+- 0 failed, 0 errors, 0 timeouts
+- Duration: 0.55s
+
+**Sample tasks:**
+- `pure_coding/add-fix` — fix an off-by-one bug in `add.js` (easy)
+- `pure_coding/rename-greet` — rename `greet` to `welcome` across `greet.js` and `app.js` (medium)
+- `error_recovery/env-fault` — remove an injected environmental fault and fix `add` in `calculator.js` (medium)
+- `multi_agent_orchestration/options-contract` — refactor `greet.js` to accept an options object and update `app.js` to use it (medium)
+
+**Verification method:**
+- Task environments seeded via `setup_files`
+- Golden patches applied in baseline mode
+- Deterministic checks for functional output and orchestration/contract consistency → exit code 0, stdout `ok`
+
+**Deterministic ordering:**
+- `evals/v2/src/registry.ts` now sorts tasks by `task_id` before returning the registry, so reports list tasks alphabetically instead of filesystem order.
+
+**Generated reports:**
+- `evals/v2/reports/report.json`
+- `evals/v2/reports/report.md`
+
+### Benchmark v2 — ECHO-Native Deterministic Evaluation System (FID-084)
+
+Approved the retrofitted benchmark v2 FID and began Week 1 implementation. The new benchmark replaces the legacy `evals/benchmark/` git-commit-reconstruction harness with a deterministic-first, ECHO-native evaluation system tailored to Savant-Code's actual environment (Windows/Bun monorepo) and value proposition (multi-agent orchestration, FSM phase compliance, custom/MCP tools, skills, programmatic agents).
+
+**Design highlights:**
+- Deterministic-first scoring: tests/builds/typechecks before any LLM judge.
+- ECHO-native metrics: FSM compliance, subagent utilization, tool-permission respect, Detective precision/recall, Forge minimality, Verifier impact.
+- Windows-compatible temp-dir sandbox for local development; Docker sandbox for Linux/CI. Firecracker/CRIU explicitly excluded from MVP.
+- Comparable `AgentRunner` interface for Savant SDK and external CLI agents (Claude Code, Codex, OpenCode).
+- 9-category task taxonomy purpose-built for Savant-Code capabilities.
+- 8-week implementation roadmap.
+
+**Week 5 implementation completed:**
+- `evals/v2/src/harness.ts` — Orchestrates benchmark runs across a task registry, supports `evaluate` and `baseline` modes, and wires together sandbox, agent runner, deterministic verifier, and metric aggregator.
+- `evals/v2/src/reports.ts` — JSON and Markdown report generators for harness results.
+- `evals/v2/src/cli.ts` — CLI entry point for running the harness with `--tasks-dir`, `--output-dir`, `--mode`, `--concurrency`, and other flags.
+- `evals/v2/tests/harness.test.ts` and `evals/v2/tests/reports.test.ts` — Unit tests for harness orchestration and report generation.
+- `evals/v2/tasks/pure_coding/add-fix/` — First real sample task (simple `add` function bug fix) with a golden patch.
+- `evals/package.json` — Added `harness:v2` script for baseline runs.
+- Fixed pre-existing TypeScript errors uncovered during verification in `packages/agent-runtime/src/run-agent-step.ts` by adding `contextWindow` to `AgentTemplate` and making `ContextCompactor.microCompact` generic.
+
+**Verification:** `evals/v2` tests pass (67 tests). x4 typecheck passes (sdk, common, packages/agent-runtime, cli).
+
+**FID:** FID-2026-0725-084 (closed / archived 2026-07-25)
+
+### Prebuild Agent Bundling Fix — Detective/Scout Transpilation Errors (FID-081)
+
+Fixed pre-existing prebuild errors in `agents/detective/detective.ts` and `agents/scout/scout.ts` where unescaped backticks inside template literal `instructionsPrompt` strings caused Bun transpilation failures. The prebuild script (`cli/scripts/prebuild-agents.ts`) dynamically imports agent definition files via Bun's `import()`, which fails when template literals contain unescaped backtick characters that prematurely terminate the string boundary.
+
+**Changes:**
+- `agents/detective/detective.ts` — Replaced template literal `instructionsPrompt` with `Array.join('\n')` pattern to avoid backtick escaping issues in Bun's TypeScript transpiler.
+- `agents/scout/scout.ts` — Same fix applied to `instructionsPrompt` and `systemPrompt` template literals.
+- `cli/src/agents/bundled-agents.generated.ts` — Regenerated by prebuild script: 0 deleted agent IDs remain, 35 agents bundled.
+
+**Verification:** CLI typecheck passes (`tsc --noEmit` exit 0). Prebuild script runs clean — no remaining transpilation errors. 0 of 12 previously-deleted agent IDs present in generated file.
+
+**FID:** FID-2026-0725-081 (archived)
+
+
+
+### Hybrid Mode FSM Deadlock Fix + Complexity Threshold Change (FID-080)
+
+Fixed two issues in the ECHO Protocol FSM that blocked Hybrid Mode for simple tasks.
+
+**Problem 1 — FSM Deadlock:** The runtime FSM only allowed `idle → red` (no `idle → green`), and the FID-Bound Enforcement check blocked ALL `→ green` transitions when no open FIDs existed. This meant every trivial one-line fix required spawning the Recorder to create a throwaway FID just to unlock the GREEN phase — defeating the purpose of Hybrid Mode.
+
+**Problem 2 — File-Count Threshold:** The complexity criteria used "touches > 3 files" / "< 3 files" to decide Hybrid vs Full ECHO Loop. A line count is more meaningful than a file count — a single file can be 500 lines or 5 lines.
+
+**Changes:**
+- `packages/agent-runtime/src/tools/handlers/tool/transition-phase.ts` — Added `green` to `VALID_TRANSITIONS.idle` (now `['red', 'green']`). Added `&& currentPhase !== 'idle'` to the FID-Bound Enforcement check so Hybrid Mode (`idle → green`) bypasses the FID requirement while `red → green` and `self_correct → green` still require it.
+- `common/src/tools/params/tool/transition-phase.ts` — Updated tool description to show `idle → red | green`.
+- `ECHO.md` — Changed `> 3 files` → `> 75 lines` and `< 3 files` → `< 75 lines` (3 locations: FID-Bound Execution, Separation of Duties, Skip RED).
+- `common/src/constants/agents.ts` — Changed `> 3 files` → `> 75 lines` and `< 3 files` → `< 75 lines` in `ECHO_PROTOCOL_INSTRUCTIONS`.
+- `agents/savant/savant.ts` — Changed `> 3 files` → `> 75 lines` (3 locations) and `< 3 files` → `< 75 lines` (1 location) in system prompt + instructions prompt.
+
+**Verification:** x4 typecheck passes (agent-runtime ✅, common ✅, cli ✅, evals ✅). Verifier approved.
+
+### Dead Savant Variant Cleanup (FID-080)
+
+Deleted 12 dead savant variant files from `agents/savant/` — all pre-fork/rebrand legacy code that was bundled into the CLI binary but never selected by any runtime code path.
+
+**Deleted files:** `savant-deep.ts`, `savant-deep-evals.ts`, `savant-evals.ts`, `savant-fast.ts`, `savant-fast-no-validation.ts`, `savant-gemini-evals.ts`, `savant-kimi-2-7-code.ts`, `savant-max-evals.ts`, `savant-max.ts`, `savant-mimo.ts`, `savant-lite.ts`, `savant-plan.ts`
+
+**Kept (12 files):** `savant.ts` (main), `savant-scaffold.ts` (SCAFFOLD mode), `savant-analyze.ts` (ANALYZE mode), and 8 `savant-free-*.ts` files (free-mode infrastructure, referenced by `free-agents.ts`, will be re-enabled when Savant-Free launches).
+
+**Cleanup:**
+- `cli/src/utils/local-agent-registry.ts` — Removed `savant-max`, `savant-lite`, `savant-plan` from `ORCHESTRATOR_IDS` set.
+- `evals/benchmark/main-single-eval.ts` — Updated to use `savant` instead of deleted `savant-kimi-2-7-code`.
+
+### Pre-Existing Typecheck Errors Fixed (FID-080)
+
+Fixed 4 pre-existing TypeScript errors in the `evals` workspace discovered during verification (ECHO Law 1 — never skip past a problem).
+
+**Changes:**
+- `evals/benchmark/eval-task-generator.ts` — Optional `commitMessage` spreading (avoid passing `undefined` to `JSONValue`).
+- `evals/benchmark/lessons-extractor.ts` — Replaced unsafe cast with runtime validation for `lessons` array.
+- `evals/benchmark/meta-analyzer.ts` — Replaced unsafe cast with runtime validation for `MetaAnalysisResult`.
+- `evals/benchmark/runners/opencode.ts` — Proper `JSONValue` conversion for tool call input.
+
+### tsconfig Fixes (FID-080)
+
+- `evals/tsconfig.json` — Removed deprecated `baseUrl` option (TS 7.0 deprecation warning).
+- `cli/tsconfig.json` — Added `"scripts/**/*"` to `include` and `"types": ["bun", "node"]` to `compilerOptions` so `cli/scripts/build-binary.ts` gets proper Node/Bun type definitions.
+
+### Timeline Double-Spacing Fix (FID-079)
+
+Fixed the right sidebar History section showing double-spaced entries.
+
+**Changes:**
+- `cli/src/components/savant-ui/data-display/timeline.tsx` — Changed `gap={1}` to `gap={0}` on the outer container to remove the blank line between each history entry.
+
+**Verification:** CLI typecheck passes.
+
+---
+
 ## v0.0.6 — 2026-07-25
 
 ### Token Display Fix — Context Window Lookup for Gateway Models (FID-079)

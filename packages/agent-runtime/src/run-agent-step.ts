@@ -25,6 +25,7 @@ import z from 'zod/v4'
 import { CACHE_DEBUG_FULL_LOGGING } from './constants'
 import { callTokenCountAPI } from './llm-api/savant-code-web-api'
 import { getMCPToolData } from './mcp'
+import { ContextCompactor } from './context-compactor'
 import { getAgentStreamFromTemplate } from './prompt-agent-stream'
 import {
   clearProgrammaticRunState,
@@ -607,6 +608,30 @@ export const runAgentStep = async (
     shouldEndTurn = hasTaskCompleted || (hasNoToolResults && !isThinkOnly)
   }
 
+  // FID-2026-0725-083: Goal evaluation — if a goal condition is set and the
+  // agent called task_completed, check whether the goal is satisfied.
+  // If satisfied → keep shouldEndTurn = true (end the loop).
+  // If not satisfied → set shouldEndTurn = false (continue iterating).
+  if (shouldEndTurn && agentState.goalCondition) {
+    const goalSatisfied = /\bGOAL_SATISFIED\b/.test(fullResponse)
+    if (goalSatisfied) {
+      logger.info(
+        { goalCondition: agentState.goalCondition },
+        'Goal evaluation: GOAL_SATISFIED — ending loop',
+      )
+    } else {
+      // Goal not satisfied or error — continue iterating
+      shouldEndTurn = false
+      const goalNotSatisfied = /\bGOAL_NOT_SATISFIED\b/.test(fullResponse)
+      const goalError = /\bGOAL_ERROR\b/.test(fullResponse)
+      const reason = goalNotSatisfied ? 'NOT_SATISFIED' : goalError ? 'ERROR' : 'no marker found'
+      logger.debug(
+        { goalCondition: agentState.goalCondition, reason },
+        `Goal evaluation: ${reason} — continuing iteration`,
+      )
+    }
+  }
+
   agentState = {
     ...agentState,
     stepsRemaining: agentState.stepsRemaining - 1,
@@ -689,6 +714,8 @@ export async function loopAgentSteps(
     userId: string | undefined
     userInputId: string
     agentTemplate?: AgentTemplate
+    /** FID-2026-0725-085 CTX-007: Resolved context window from OpenRouter catalog. */
+    contextWindow?: number
   } & ParamsExcluding<typeof additionalToolDefinitions, 'agentTemplate'> &
     ParamsExcluding<
       typeof runProgrammaticStep,
@@ -959,6 +986,33 @@ export async function loopAgentSteps(
   let totalSteps = 0
   let nResponses: string[] | undefined = undefined
 
+  // FID-2026-0725-083: Parse goal condition from the initial message.
+  // The /goal command sends <goal condition="..."> in the message content.
+  // We extract it and store it in agentState.goalCondition for evaluation
+  // after each task_completed call.
+  if (hasUserMessage && prompt) {
+    const goalMatch = prompt.match(/<goal condition="([^"]+)">/)
+    if (goalMatch && !currentAgentState.goalCondition) {
+      currentAgentState.goalCondition = goalMatch[1]
+      logger.info(
+        { goalCondition: goalMatch[1] },
+        'Goal condition detected from message — will evaluate after each task_completed',
+      )
+    }
+  }
+
+  // FID-2026-0725-085: Initialize ContextCompactor for micro-compact before each API call.
+  // This runs at the start of the agent loop so it's available for every iteration.
+  // Use resolved contextWindow from CLI (CTX-007) or infer from model name (CTX-003).
+  const contextCompactor = new ContextCompactor({
+    logger,
+    contextWindow: params.contextWindow,
+    model: agentTemplate.model,
+  })
+  // FID-2026-0725-085 Layer 3: Wire resolved context window into agentState
+  // so handleSteps (savant.ts) can use it for auto-compact threshold.
+  initialAgentState.maxContextLength = contextCompactor.getThresholds().autoCompact + 30_000
+
   try {
     while (true) {
       totalSteps++
@@ -1034,6 +1088,46 @@ export async function loopAgentSteps(
           currentAgentState.contextTokenCount = estimateContextTokensLocally()
         }
       }
+
+      // FID-2026-0725-085: Run micro-compact before each API call to clear stale tool results.
+      // This is zero-cost (no LLM call) and reduces context size incrementally.
+      const thresholds = contextCompactor.getThresholds()
+      const messagesBeforeMicroCompact = currentAgentState.messageHistory.length
+      const microResult = contextCompactor.microCompact(currentAgentState.messageHistory as unknown as import('./context-compactor').CompactionMessage[])
+      if (microResult.tokensSaved > 0) {
+        currentAgentState.messageHistory = microResult.messages as unknown as typeof currentAgentState.messageHistory
+        // FID-2026-0725-085: Log visible compaction summary.
+        // Follows the Kilo Code / OpenClaude pattern: pause, output summary, proceed.
+        const percentUsed = Math.round((currentAgentState.contextTokenCount / thresholds.autoCompact) * 100)
+        logger.info(
+          { messagesCleared: messagesBeforeMicroCompact - microResult.messages.length, tokensSaved: microResult.tokensSaved, percentUsed },
+          `⚙️ Context micro-compacted: cleared stale tool results, ~${microResult.tokensSaved.toLocaleString()} tokens saved. Context at ${percentUsed}% of auto-compact threshold.`,
+        )
+      }
+
+      // FID-2026-0725-085: Check auto-compact threshold.
+      // If context exceeds threshold, emit warning and log for diagnostics.
+      // Full LLM summarization is handled by handleSteps context-pruner spawn.
+      const autoCompactCheck = contextCompactor.shouldAutoCompact(
+        currentAgentState.messageHistory as unknown as import('./context-compactor').CompactionMessage[],
+        currentAgentState.contextTokenCount,
+      )
+      if (autoCompactCheck.shouldCompact) {
+        const degradationWarning = contextCompactor.getDegradationWarning()
+        if (degradationWarning) {
+          logger.warn({ contextTokenCount: currentAgentState.contextTokenCount }, degradationWarning)
+        } else {
+          logger.warn(
+            { contextTokenCount: currentAgentState.contextTokenCount, threshold: thresholds.autoCompact },
+            `⚠️ Context approaching auto-compact threshold (${currentAgentState.contextTokenCount.toLocaleString()} / ${thresholds.autoCompact.toLocaleString()} tokens). Full summarization will trigger via context-pruner.`,
+          )
+        }
+      }
+
+      // FID-2026-0725-085 Layer 3: After step completes, check if context was compacted
+      // and record result in ContextCompactor for circuit breaker tracking.
+      // Detect compaction by checking if contextTokenCount dropped significantly.
+      const preStepTokenCount = currentAgentState.contextTokenCount
 
       // 1. Run programmatic step first if it exists
       let n: number | undefined = undefined
@@ -1241,6 +1335,57 @@ export async function loopAgentSteps(
           type: 'error',
           message: 'Run cancelled by user',
         },
+      }
+    }
+
+    // FID-2026-0725-085 Layer 4: Reactive compact — catch prompt-too-long errors,
+    // aggressively truncate, and retry once before surfacing the error.
+    if (ContextCompactor.isPromptTooLongError(error) && !signal.aborted) {
+      logger.warn({ error: getErrorObject(error) }, 'Layer 4 reactive compact: prompt-too-long detected, attempting emergency truncation')
+      const reactiveResult = contextCompactor.reactiveCompact(
+        currentAgentState.messageHistory as unknown as import('./context-compactor').CompactionMessage[],
+      )
+      if (reactiveResult.truncated) {
+        currentAgentState.messageHistory = reactiveResult.messages as unknown as typeof currentAgentState.messageHistory
+        logger.warn(
+          { messagesRemoved: currentAgentState.messageHistory.length - reactiveResult.messages.length, tokensSaved: reactiveResult.tokensSaved },
+          `Layer 4 reactive compact: truncated ${currentAgentState.messageHistory.length - reactiveResult.messages.length} messages, saved ~${reactiveResult.tokensSaved.toLocaleString()} tokens. Retrying API call once.`,
+        )
+        // Retry the API call once after reactive compaction
+        try {
+          const retryResult = await runAgentStep({
+            ...params,
+            agentState: currentAgentState,
+            agentTemplate,
+            n: undefined,
+            prompt: currentPrompt,
+            runId,
+            spawnParams: currentParams,
+            system,
+            tools,
+            additionalToolDefinitions: additionalToolDefinitionsWithCache,
+          })
+          // Retry succeeded — use the result
+          Object.assign(initialAgentState, retryResult.agentState)
+          currentAgentState = initialAgentState
+          contextCompactor.recordCompactionResult(true, currentAgentState.contextTokenCount)
+          await finishAgentRun({
+            ...params,
+            runId,
+            status: 'completed',
+            totalSteps,
+            directCredits: currentAgentState.directCreditsUsed,
+            totalCredits: currentAgentState.creditsUsed,
+          })
+          return {
+            agentState: currentAgentState,
+            output: getAgentOutput(currentAgentState, agentTemplate),
+          }
+        } catch (retryError) {
+          // Retry also failed — log and fall through to standard error handling
+          contextCompactor.recordCompactionResult(false)
+          logger.error({ retryError: getErrorObject(retryError) }, 'Layer 4 reactive compact: retry also failed')
+        }
       }
     }
 

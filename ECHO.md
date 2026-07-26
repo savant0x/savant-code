@@ -67,7 +67,7 @@ another agent's role.
 
 | Rule | Enforced By |
 |------|-------------|
-| The Orchestrator writes code directly in Hybrid Mode (most tasks). For complex tasks (> 3 files + new APIs, novel architecture, verification fails twice), delegate to Forge via FID-Bound Execution. | Hybrid Mode + FID criteria |
+| The Orchestrator writes code directly in Hybrid Mode (most tasks). For complex tasks (> 75 lines + new APIs, novel architecture, verification fails twice), delegate to Forge via FID-Bound Execution. | Hybrid Mode + FID criteria |
 | Forge (GREEN) cannot verify its own work | No bash (test) access |
 | Verifier (AUDIT) cannot write anything | toolNames: [] (zero tools) |
 | Detective (RED) cannot implement fixes | No write_file/str_replace |
@@ -290,7 +290,7 @@ This rule is the inter-agent version of the AUDIT phase's call-graph reachabilit
 ## FID-Bound Execution (Complex Tasks Only)
 
 The full FID-Bound Execution flow is reserved for genuinely complex tasks:
-- Touches > 3 files AND requires new imports/APIs, OR
+- Touches > 75 lines AND requires new imports/APIs, OR
 - Novel architecture or patterns not in the codebase, OR
 - Verification fails twice with direct fixes, OR
 - User explicitly requests Forge
@@ -462,6 +462,19 @@ When the Orchestrator spawns the Recorder to create or update FIDs, it MUST foll
 ### FID Format
 
 See `templates/FID-TEMPLATE.md` for the standard format.
+
+### FID Ground-Truth Verification
+
+FID status metadata (`created | analyzed | fixed | verified | closed`) is manually maintained and can drift from reality. **When reporting FID status, verify against the codebase.** FID metadata is a claim, not ground truth.
+
+**Operational rules:**
+
+1. Before reporting any FID's status, check that the files referenced in the FID actually exist and contain the described implementation.
+2. If FID metadata claims `analyzed` but code exists → flag the discrepancy and update the FID.
+3. If FID metadata claims `verified` or `fixed` but code is missing → flag the discrepancy and downgrade the status.
+4. Status reports that don't include codebase verification evidence are invalid.
+
+This rule extends Law 1 (Read 0-EOF Before Touch) and Law 4 (Verify Call-Graph Reachability) to status reporting. The code is the source of truth — the FID markdown is a record that can drift. *(Codifies FID-2026-0725-086.)*
 
 ### FID Auto-Archive
 

@@ -124,6 +124,23 @@ export type AgentState = {
    * to the SDK; cleared on cloneSessionState.
    */
   activityIdleTimer?: ReturnType<typeof setTimeout>
+
+  /**
+   * FID-2026-0725-085: Resolved context window for this model.
+   * Set by the CLI via CTX-007 wiring. Used by handleSteps to determine
+   * when to trigger context-pruner spawning (auto-compact Layer 3).
+   * Falls back to hardcoded defaults if not set.
+   */
+  maxContextLength?: number
+
+  /**
+   * FID-2026-0725-083: Goal condition for /goal command.
+   * When set, the agent evaluates whether the codebase state satisfies
+   * this condition after each task_completed call. If satisfied, the
+   * loop ends. If not, the agent continues iterating.
+   * Set by parsing <goal condition="..."> from message history.
+   */
+  goalCondition?: string
 }
 
 export const AgentOutputSchema = z.discriminatedUnion('type', [

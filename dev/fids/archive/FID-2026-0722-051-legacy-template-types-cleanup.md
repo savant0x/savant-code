@@ -1,6 +1,6 @@
 # FID-2026-0722-051 — Legacy Codebuff Template-Type Cleanup
 
-**Status:** deferred  
+**Status:** closed
 **Severity:** low  
 **Date:** 2026-07-22  
 **Author:** Savant  

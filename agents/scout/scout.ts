@@ -62,22 +62,23 @@ export const createFilePicker = (
     spawnableAgents: [],
 
     systemPrompt: `You are an expert at finding relevant files in a codebase. ${PLACEHOLDER.FILE_TREE_PROMPT}`,
-    instructionsPrompt: `Instructions:
-You are an expert file-finding agent. Your goal is to identify the small set of files most relevant to the user's prompt and return concise evidence for each.
-
-Workflow:
-1. Use glob and list_directory to find candidate files and directories. Start with keyword globs (e.g. \`**/*auth*\`) and broaden only if needed.
-2. Use read_files or read_subtree to peek at promising files when a short excerpt would help you decide if a file is truly relevant.
-3. Rank results by relevance: prefer files whose names, paths, or content directly match the user's request; deprioritize tangential matches.
-4. Summarize each selected file with: full path, one-sentence reason it matters, and (optionally) the most relevant symbol/section.
-
-Output format:
-- Return at most ${isMax ? 20 : 12} files.
-- Keep the report extremely short; do not reproduce large code excerpts.
-- Do not use any further tools or spawn any further agents.
-- CRITICAL: Use the `set_output` tool by calling it as a function with a JSON object argument. Do NOT write XML tags like `<set_output>` or `</set_output>`. Call the tool directly.
-- Always check `exitCode` and `stderr` in tool outputs. If a tool fails, report the failure — do NOT assume success from partial results.
-`.trim(),
+    instructionsPrompt: [
+      'Instructions:',
+      'You are an expert file-finding agent. Your goal is to identify the small set of files most relevant to the user\'s prompt and return concise evidence for each.',
+      '',
+      'Workflow:',
+      '1. Use glob and list_directory to find candidate files and directories. Start with keyword globs (e.g. `**/*auth*`) and broaden only if needed.',
+      '2. Use read_files or read_subtree to peek at promising files when a short excerpt would help you decide if a file is truly relevant.',
+      '3. Rank results by relevance: prefer files whose names, paths, or content directly match the user\'s request; deprioritize tangential matches.',
+      '4. Summarize each selected file with: full path, one-sentence reason it matters, and (optionally) the most relevant symbol/section.',
+      '',
+      'Output format:',
+      `- Return at most ${isMax ? 20 : 12} files.`,
+      '- Keep the report extremely short; do not reproduce large code excerpts.',
+      '- Do not use any further tools or spawn any further agents.',
+      '- CRITICAL: Use the set_output tool by calling it as a function with a JSON object argument. Do NOT write XML tags like <set_output> or </set_output>. Call the tool directly.',
+      '- Always check exitCode and stderr in tool outputs. If a tool fails, report the failure — do NOT assume success from partial results.',
+    ].join('\n'),
 
     handleSteps: isMax ? handleStepsMax : handleStepsDefault,
   }
@@ -137,7 +138,7 @@ const handleStepsDefault: SecretAgentDefinition['handleSteps'] = function* ({
     ])
     const raw = p
       .toLowerCase()
-      .replace(/[^a-z0-9\s\-_.\/]/g, ' ')
+      .replace(/[^a-z0-9\s\-_./]/g, ' ')
       .split(/\s+/)
       .map((t) => t.trim())
       .filter((t) => t.length > 1 && !STOP_WORDS.has(t))
@@ -147,7 +148,7 @@ const handleStepsDefault: SecretAgentDefinition['handleSteps'] = function* ({
     )
     if (unique.length === 0) {
       const fallback = p
-        .replace(/[^a-z0-9\s\-_.\/]/gi, ' ')
+        .replace(/[^a-z0-9\s\-_./]/gi, ' ')
         .trim()
         .split(/\s+/)[0]
       return fallback ? [fallback.toLowerCase()] : ['*']
@@ -234,7 +235,7 @@ const handleStepsMax: SecretAgentDefinition['handleSteps'] = function* ({
     ])
     const raw = p
       .toLowerCase()
-      .replace(/[^a-z0-9\s\-_.\/]/g, ' ')
+      .replace(/[^a-z0-9\s\-_./]/g, ' ')
       .split(/\s+/)
       .map((t) => t.trim())
       .filter((t) => t.length > 1 && !STOP_WORDS.has(t))
@@ -244,7 +245,7 @@ const handleStepsMax: SecretAgentDefinition['handleSteps'] = function* ({
     )
     if (unique.length === 0) {
       const fallback = p
-        .replace(/[^a-z0-9\s\-_.\/]/gi, ' ')
+        .replace(/[^a-z0-9\s\-_./]/gi, ' ')
         .trim()
         .split(/\s+/)[0]
       return fallback ? [fallback.toLowerCase()] : ['*']

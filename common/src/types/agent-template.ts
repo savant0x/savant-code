@@ -122,6 +122,8 @@ export type AgentTemplate<
   inheritParentModel?: boolean
   reasoningOptions?: OpenRouterReasoningOptions
   providerOptions?: OpenRouterProviderRoutingOptions
+  /** Maximum context window size in tokens. Defaults to 200,000. */
+  contextWindow?: number
 
   /** FID-031 execution-scope flags */
   analyzeOnly?: boolean

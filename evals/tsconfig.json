@@ -2,7 +2,6 @@
   "extends": "../tsconfig.base.json",
   "compilerOptions": {
     "types": ["bun", "node"],
-    "baseUrl": ".",
     "skipLibCheck": true,
     "paths": {
       "@savant-code/sdk": ["../sdk/src/index.ts"],

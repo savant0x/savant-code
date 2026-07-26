@@ -11,6 +11,7 @@ import { AgentBlockGrid } from './agent-block-grid'
 import { AgentBranchItem } from './agent-branch-item'
 import { trimNewlines, sanitizePreview } from './block-helpers'
 import { ContentWithMarkdown } from './content-with-markdown'
+import { CopyableBlock } from './copyable-block'
 import { ImplementorGroup } from './implementor-row'
 import { ThinkingBlock } from './thinking-block'
 import { ToolBlockGroup } from './tool-block-group'
@@ -461,34 +462,52 @@ export const AgentBranchWrapper = memo(
       onToggleCollapsed(agentBlock.agentId)
     }, [onToggleCollapsed, agentBlock.agentId])
 
+    const getCopyText = useCallback(() => {
+      // Serialize agent blocks with role prefix
+      const lines: string[] = [`[Agent: ${agentBlock.agentName}]`]
+      agentBlock.blocks?.forEach((b) => {
+        if (b.type === 'text') {
+          lines.push(b.content)
+        } else if (b.type === 'tool') {
+          lines.push(`[Tool: ${b.toolName}]\nInput: ${JSON.stringify(b.input)}\nOutput: ${b.output ?? '(no output)'}`)
+        }
+      })
+      return lines.join('\n\n')
+    }, [agentBlock])
+
     return (
-      <box key={keyPrefix} style={{ flexDirection: 'column', gap: 0 }}>
-        <AgentBranchItem
-          name={agentBlock.agentName}
-          prompt={displayPrompt}
-          agentId={agentBlock.agentId}
-          isCollapsed={isCollapsed}
-          isStreaming={isStreaming}
-          preview={preview}
-          statusLabel={statusLabel ?? undefined}
-          statusColor={statusColor}
-          statusIndicator={statusIndicator}
-          onToggle={onToggle}
-        >
-          <AgentBody
-            agentBlock={agentBlock}
-            keyPrefix={keyPrefix}
-            parentIsStreaming={isStreaming}
-            availableWidth={availableWidth}
-            markdownPalette={markdownPalette}
-            onToggleCollapsed={onToggleCollapsed}
-            onBuildFast={onBuildFast}
-            onBuildMax={onBuildMax}
-            onBuildLite={onBuildLite}
-            isLastMessage={isLastMessage}
-          />
-        </AgentBranchItem>
-      </box>
+      <CopyableBlock
+        getCopyText={getCopyText}
+        isStreaming={isStreaming}
+      >
+        <box key={keyPrefix} style={{ flexDirection: 'column', gap: 0 }}>
+          <AgentBranchItem
+            name={agentBlock.agentName}
+            prompt={displayPrompt}
+            agentId={agentBlock.agentId}
+            isCollapsed={isCollapsed}
+            isStreaming={isStreaming}
+            preview={preview}
+            statusLabel={statusLabel ?? undefined}
+            statusColor={statusColor}
+            statusIndicator={statusIndicator}
+            onToggle={onToggle}
+          >
+            <AgentBody
+              agentBlock={agentBlock}
+              keyPrefix={keyPrefix}
+              parentIsStreaming={isStreaming}
+              availableWidth={availableWidth}
+              markdownPalette={markdownPalette}
+              onToggleCollapsed={onToggleCollapsed}
+              onBuildFast={onBuildFast}
+              onBuildMax={onBuildMax}
+              onBuildLite={onBuildLite}
+              isLastMessage={isLastMessage}
+            />
+          </AgentBranchItem>
+        </box>
+      </CopyableBlock>
     )
   },
 )

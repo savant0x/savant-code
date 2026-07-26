@@ -36,6 +36,9 @@ export type CreateRunConfigParams = {
   /** Optional pre-formatted model metadata block injected into the agent
    *  system prompt via the {SAVANT_CODE_MODEL_INFO} placeholder. */
   modelInfoText?: string
+  /** FID-2026-0725-085 CTX-007: Resolved context window from OpenRouter catalog.
+   *  Passed to agent runtime for accurate compaction thresholds. */
+  contextWindow?: number
 }
 
 const SENSITIVE_EXTENSIONS = new Set([
@@ -134,6 +137,7 @@ export const createRunConfig = (params: CreateRunConfigParams) => {
     onFileWritten,
     devMode,
     modelInfoText,
+    contextWindow: params.contextWindow,
     fileFilter: ((filePath: string) => {
       if (isSensitiveFile(filePath)) return { status: 'blocked' }
       if (isEnvTemplateFile(filePath)) return { status: 'allow-example' }

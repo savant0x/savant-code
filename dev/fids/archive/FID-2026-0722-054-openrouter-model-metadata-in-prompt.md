@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0722-054-openrouter-model-metadata-in-prompt.md`
 **ID:** FID-2026-0722-054
 **Severity:** medium
-**Status:** analyzed
+**Status:** closed
 **Created:** 2026-07-22 19:15
 **Author:** Savant Orchestrator
 

@@ -176,9 +176,25 @@ Task: Analyze what went wrong and what should have been done. For each mistake o
 
     console.log('Agent output:', agentOutput.join('\n'))
 
-    const { lessons } = result.output.value as {
-      lessons: Lesson[]
-    }
+    const output = result.output.value as Record<string, unknown>
+    const rawLessons = output.lessons
+    const lessons: Lesson[] = Array.isArray(rawLessons)
+      ? rawLessons
+          .filter(
+            (item): item is Record<string, unknown> =>
+              typeof item === 'object' && item !== null && !Array.isArray(item),
+          )
+          .map((item) => ({
+            whatWentWrong:
+              typeof item.whatWentWrong === 'string'
+                ? item.whatWentWrong
+                : '',
+            whatShouldHaveBeenDone:
+              typeof item.whatShouldHaveBeenDone === 'string'
+                ? item.whatShouldHaveBeenDone
+                : '',
+          }))
+      : []
     return { lessons }
   } catch (error) {
     console.error('Failed to extract agent lessons:', getErrorObject(error))

@@ -3,7 +3,7 @@ import { cloneDeep, has, isEqual } from 'lodash'
 
 import type { Logger } from '../types/contracts/logger'
 import type { JSONValue } from '../types/json'
-import type { ToolResultOutput } from '../types/messages/content-part'
+import type { TextPart, ToolResultOutput } from '../types/messages/content-part'
 import type { ProviderMetadata } from '../types/messages/provider-metadata'
 import type {
   AssistantMessage,
@@ -101,6 +101,10 @@ export type SavantModelMessage = (
 ) &
   AuxiliaryMessageData
 
+function textPartFromString(text: string): TextPart {
+  return { type: 'text', text }
+}
+
 function assistantToSavantCodeMessage(
   message: Omit<AssistantMessage, 'content'> & {
     content: Exclude<AssistantMessage['content'], string>[number]
@@ -127,6 +131,21 @@ function assistantToSavantCodeMessage(
 function convertToolResultMessage(
   message: ToolMessage,
 ): SavantModelMessage[] {
+  // Defensive: some compaction paths historically wrote a bare string here.
+  // Coerce any non-array content into a json tool result so downstream code
+  // can safely call .map() and the AI SDK receives a valid tool-result shape.
+  if (!Array.isArray(message.content)) {
+    message = {
+      ...message,
+      content: [
+        {
+          type: 'json',
+          value: message.content as JSONValue,
+        } as ToolResultOutput,
+      ],
+    }
+  }
+
   if (message.content.length === 0) {
     return [
       cloneDeep<ToolModelMessage>({
@@ -166,26 +185,66 @@ function convertToolResultMessage(
 
 function convertToolMessage(message: Message): SavantModelMessage[] {
   if (message.role === 'system') {
+    // Defensive: older serialized state may store system content as a plain
+    // string instead of TextPart[]. Treat any non-array as the literal text.
+    const content = message.content as unknown as string | TextPart[]
+    let textContent: string
+    if (Array.isArray(content)) {
+      textContent = content
+        .map((c) => (c && 'text' in c ? c.text : ''))
+        .join('\n\n')
+    } else if (typeof content === 'string') {
+      textContent = content
+    } else {
+      textContent = ''
+    }
     return [
       {
         ...message,
-        content: message.content.map(({ text }) => text).join('\n\n'),
+        content: textContent,
       },
     ]
   }
   if (message.role === 'user') {
-    return [cloneDeep(message)]
-  }
-  if (message.role === 'assistant') {
-    if (typeof message.content === 'string') {
+    // Defensive: older serialized state may store user content as a plain
+    // string. Wrap it as a TextPart[] so downstream code always sees an array.
+    const content = message.content as unknown as
+      | string
+      | UserMessage['content']
+    if (typeof content === 'string') {
       return [
         cloneDeep({
           ...message,
-          content: [{ type: 'text' as const, text: message.content }],
+          content: [textPartFromString(content)],
         }),
       ]
     }
-    return message.content.map((c) => {
+    if (!Array.isArray(content)) {
+      return [
+        cloneDeep({
+          ...message,
+          content: [],
+        }),
+      ]
+    }
+    return [cloneDeep(message)]
+  }
+  if (message.role === 'assistant') {
+    // Defensive: older serialized state may store assistant content as a plain
+    // string (or invalid value). Wrap it as a TextPart[] before iterating.
+    const content = message.content as unknown as
+      | string
+      | AssistantMessage['content']
+    if (!Array.isArray(content)) {
+      const text = typeof content === 'string' ? content : ''
+      return [
+        cloneDeep({
+          ...message,
+          content: [textPartFromString(text)],
+        }),
+      ]
+    }
+    return content.map((c) => {
       return assistantToSavantCodeMessage({
         ...message,
         content: c,

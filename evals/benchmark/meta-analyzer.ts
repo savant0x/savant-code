@@ -275,7 +275,48 @@ Focus on patterns across multiple tasks, not individual task details.`
       }
     }
 
-    return output.value as MetaAnalysisResult
+    const value = output.value as unknown as Record<string, unknown>
+    const rawInsights = Array.isArray(value.agentInsights)
+      ? value.agentInsights
+      : []
+    const agentInsights = rawInsights
+      .filter(
+        (item): item is Record<string, unknown> =>
+          typeof item === 'object' && item !== null && !Array.isArray(item),
+      )
+      .map((item) => ({
+        agentId: typeof item.agentId === 'string' ? item.agentId : '',
+        consistentStrengths: Array.isArray(item.consistentStrengths)
+          ? item.consistentStrengths.filter(
+              (s): s is string => typeof s === 'string',
+            )
+          : [],
+        consistentWeaknesses: Array.isArray(item.consistentWeaknesses)
+          ? item.consistentWeaknesses.filter(
+              (s): s is string => typeof s === 'string',
+            )
+          : [],
+        performanceSummary:
+          typeof item.performanceSummary === 'string'
+            ? item.performanceSummary
+            : '',
+        recommendations: Array.isArray(item.recommendations)
+          ? item.recommendations.filter(
+              (s): s is string => typeof s === 'string',
+            )
+          : [],
+      }))
+    const keyFindings = Array.isArray(value.keyFindings)
+      ? value.keyFindings.filter((s): s is string => typeof s === 'string')
+      : []
+    return {
+      overallComparison:
+        typeof value.overallComparison === 'string'
+          ? value.overallComparison
+          : '',
+      agentInsights,
+      keyFindings,
+    }
   } catch (error) {
     console.error(`Failed to analyze all tasks:`, getErrorObject(error))
     return {

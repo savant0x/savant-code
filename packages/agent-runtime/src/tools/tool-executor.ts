@@ -346,7 +346,7 @@ export async function executeToolCall<T extends ToolName>(
     // The stream parser will convert this to a user message for proper API compliance
     onResponseChunk({
       type: 'error',
-      message: `Tool \`${toolName}\` is not currently available. Make sure to only use tools provided at the start of the conversation AND that you most recently have permission to use.`,
+      message: `Tool \`${toolName}\` is not currently available [agent: ${agentTemplate.id}]. Make sure to only use tools provided at the start of the conversation AND that you most recently have permission to use.`,
     })
     return previousToolCallFinished
   }
@@ -386,7 +386,9 @@ export async function executeToolCall<T extends ToolName>(
       return previousToolCallFinished
     }
 
-    // FSM phase check (gated by !isDevOverride for dev flexibility).
+    // FID-2026-0725-085 BUG-004: FSM phase check runs AFTER path resolution
+    // (needs pathResult to check exempt paths) but BEFORE downstream processing.
+    // Phase error is more actionable than toolNames error, so it takes priority.
     // SCAFFOLD mode relaxes the per-write GREEN phase requirement so the
     // orchestrator can write project-root files while a scaffold is in
     // progress; the AUDIT gate is still enforced at scaffold-complete time
@@ -412,16 +414,12 @@ export async function executeToolCall<T extends ToolName>(
     // call input so the downstream handler receives a canonical form. Same Q8
     // hardening, plus the resolved path now reflects any symlink chain.
     input.path = pathResult.resolved
-  }
-
-  // ECHO FSM tool gating: block bash/terminal commands unless phase is 'audit' or 'green'.
+  }  // ECHO FSM tool gating: block bash/terminal commands unless phase is 'audit' or 'green'.
   // run_readonly_command is intentionally NOT gated here; it is allowed in
   // every FSM phase and enforces read-only safety in its own handler.
-  // Optimization: Allow terminal commands during GREEN phase too, so the agent
-  // can verify with typecheck/lint immediately after writing without transitioning.
+  // FID-2026-0725-085 BUG-004: FSM phase check runs FIRST (more actionable error).
   if (
-    !isDevOverride &&
-    toolCall.toolName === 'run_terminal_command' &&
+    !isDevOverride && toolCall.toolName === 'run_terminal_command' &&
     !['audit', 'green'].includes(agentState.fsmPhase ?? 'idle')
   ) {
     onResponseChunk({
@@ -429,6 +427,11 @@ export async function executeToolCall<T extends ToolName>(
       message: `Tool \`${toolName}\` is only available during AUDIT or GREEN phases. Current phase: ${agentState.fsmPhase}. Call transition_phase to enter AUDIT or GREEN first.`,
     })
     return previousToolCallFinished
+  }
+
+  // FID-2026-0725-085 BUG-006: Log warning when devMode bypasses safety restrictions.
+  if (isDevOverride && (toolCall.toolName === 'write_file' || toolCall.toolName === 'str_replace' || toolCall.toolName === 'apply_patch' || toolCall.toolName === 'run_terminal_command')) {
+    logger.debug({ toolName, fsmPhase: agentState.fsmPhase }, `DEV MODE: ${toolName} bypassing FSM phase gating`)
   }
 
   // ECHO FSM tool gating: block sequentialthinking unless agent is a Thinker variant

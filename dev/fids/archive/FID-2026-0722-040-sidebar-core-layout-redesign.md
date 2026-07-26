@@ -3,7 +3,7 @@
 **Filename:** `dev/fids/FID-2026-0722-040-sidebar-core-layout-redesign.md`
 **ID:** FID-2026-0722-040
 **Severity:** high
-**Status:** analyzed
+**Status:** closed
 **Created:** 2026-07-22 18:00
 **Updated:** 2026-07-22 18:45
 **Author:** ECHO Orchestrator

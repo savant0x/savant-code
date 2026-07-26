@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-07-24-075-agent-harness-tooling-reliability.md`
 **ID:** FID-2026-07-24-075
 **Severity:** high
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-07-24 23:00
 **Author:** Savant (MiMo V2.5)
 

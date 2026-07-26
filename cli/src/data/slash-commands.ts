@@ -193,6 +193,18 @@ const ALL_SLASH_COMMANDS: SlashCommand[] = [
     implicitCommand: true,
   },
   {
+    id: 'goal',
+    label: 'goal',
+    description: 'Run agent until a condition is met (e.g. /goal all tests pass)',
+    aliases: ['g'],
+  },
+  {
+    id: 'loop',
+    label: 'loop',
+    description: 'Run a prompt on a cadence (e.g. /loop 1h "check staging")',
+    aliases: ['repeat'],
+  },
+  {
     id: 'verify',
     label: 'verify',
     description: 'Run typechecks across all workspaces (or one: sdk, common, agent-runtime, cli)',

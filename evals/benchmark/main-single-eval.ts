@@ -7,7 +7,7 @@ async function main() {
 
   await runBenchmark({
     evalDataPaths: [path.join(__dirname, 'eval-savant-code.json')],
-    agents: ['savant-kimi-2-7-code'],
+    agents: ['savant'],
     taskIds: ['server-agent-validation'],
     saveTraces,
   })

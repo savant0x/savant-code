@@ -81,6 +81,22 @@ How will we confirm the fix works?
 - **AUDIT:** [Verification results]
 - **CHANGE DELTA:** [Percentage of code changed]
 
+### Missed Questions
+
+> As part of the Perfection Loop, the Thinker must ask: *"What questions should I have asked when this FID was created, but failed to?"* Surface every missed question, answer it with the most robust default derivable from code inspection, and fold those answers directly back into the existing FID sections.
+
+1. [Missed question → answer]
+2. [Missed question → answer]
+
+### Code Verification Evidence
+
+> Before marking status as `fixed` or `verified`, verify that the code referenced in this FID actually exists. FID metadata is a claim — the code is ground truth. (FID-2026-0725-086)
+
+- [ ] Files referenced in "Affected Components" exist in the codebase
+- [ ] Implementation matches the proposed solution
+- [ ] Typecheck passes: [command output]
+- [ ] FID status updated to reflect actual implementation state
+
 ### Loop 2 (if needed)
 
 - **RED:** [Remaining issues]

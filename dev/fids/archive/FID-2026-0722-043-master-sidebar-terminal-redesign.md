@@ -3,7 +3,7 @@
 **Filename:** `dev/fids/FID-2026-0722-043-master-sidebar-terminal-redesign.md`
 **ID:** FID-2026-0722-043
 **Severity:** high
-**Status:** analyzed
+**Status:** closed
 **Created:** 2026-07-22 18:15
 **Updated:** 2026-07-22 18:45
 **Author:** ECHO Orchestrator

@@ -1,5 +1,6 @@
 import { memo, useCallback } from 'react'
 
+import { CopyableBlock } from './copyable-block'
 import { Thinking } from '../thinking'
 
 import type { ContentBlock } from '../../types/chat'
@@ -52,16 +53,25 @@ export const ThinkingBlock = memo(
       return null
     }
 
+    const getCopyText = useCallback(() => {
+      return `[Reasoning]\n${combinedContent}`
+    }, [combinedContent])
+
     return (
-      <box>
-        <Thinking
-          content={combinedContent}
-          thinkingCollapseState={thinkingCollapseState}
-          isThinkingComplete={isThinkingComplete}
-          onToggle={handleToggle}
-          availableWidth={availWidth}
-        />
-      </box>
+      <CopyableBlock
+        getCopyText={getCopyText}
+        isStreaming={!isThinkingComplete}
+      >
+        <box>
+          <Thinking
+            content={combinedContent}
+            thinkingCollapseState={thinkingCollapseState}
+            isThinkingComplete={isThinkingComplete}
+            onToggle={handleToggle}
+            availableWidth={availWidth}
+          />
+        </box>
+      </CopyableBlock>
     )
   },
 )

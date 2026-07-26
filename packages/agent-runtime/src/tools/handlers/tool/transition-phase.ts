@@ -12,7 +12,7 @@ import type { ProjectFileContext } from '@savant-code/common/util/file'
 const MAX_ITERATIONS = 10
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
-  idle: ['red'],
+  idle: ['red', 'green'],
   red: ['green', 'idle'],       // abort from red
   green: ['audit', 'idle'],      // abort from green
   audit: ['self_correct', 'complete', 'idle'],  // abort from audit
@@ -58,7 +58,7 @@ export const handleTransitionPhase = (async (params: {
   // Dev mode bypass: when devMode is active, allow GREEN transitions without
   // an open FID. This enables Hybrid Mode (direct writes for simple tasks)
   // and mirrors the isDevOverride pattern in tool-executor.ts for write tools.
-  if (phase === 'green' && fileContext.devMode !== true) {
+  if (phase === 'green' && currentPhase !== 'idle' && fileContext.devMode !== true) {
     const openFids = scanOpenFids(fileContext.cwd)
     if (openFids.length === 0) {
       logger.warn(

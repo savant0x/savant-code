@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0721-037-right-sidebar-stroke-artifact.md`
 **ID:** FID-2026-0721-037
 **Severity:** medium
-**Status:** implementation-tested
+**Status:** closed
 **Created:** 2026-07-21 18:15
 **Updated:** 2026-07-21 (Loop 2 — implementation attempt revealed false premises)
 **Author:** ECHO Agent (Orchestrator)

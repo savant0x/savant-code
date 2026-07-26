@@ -3,7 +3,7 @@
 **Filename:** `dev/fids/FID-2026-0722-042-fidcard-fidlist-redesign.md`
 **ID:** FID-2026-0722-042
 **Severity:** high
-**Status:** analyzed
+**Status:** closed
 **Created:** 2026-07-22 18:10
 **Updated:** 2026-07-22 18:45
 **Author:** ECHO Orchestrator

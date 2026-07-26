@@ -1,11 +1,12 @@
 import { TextAttributes } from '@opentui/core'
-import React, { memo, type ReactNode } from 'react'
+import React, { memo, useCallback, type ReactNode } from 'react'
 
 import { AgentBranchWrapper } from './agent-branch-wrapper'
 import { AgentListBranch } from './agent-list-branch'
 import { AskUserBranch } from './ask-user-branch'
 import { trimNewlines, isReasoningTextBlock } from './block-helpers'
 import { ContentWithMarkdown } from './content-with-markdown'
+import { CopyableBlock } from './copyable-block'
 import { ImageBlock } from './image-block'
 import { UserBlockTextWithInlineCopy } from './user-content-copy'
 import { useTheme } from '../../hooks/use-theme'
@@ -69,6 +70,10 @@ export const SingleBlock = memo(
         const filteredContent = isStreamingText
           ? trimNewlines(textBlock.content)
           : textBlock.content.trim()
+        const getCopyText = useCallback(
+          () => filteredContent,
+          [filteredContent],
+        )
         if (!filteredContent) {
           return null
         }
@@ -93,21 +98,26 @@ export const SingleBlock = memo(
         }
 
         return (
-          <text
-            key={renderKey}
-            style={{
-              wrapMode: 'word',
-              fg: blockTextColor,
-            }}
-            attributes={isUser ? TextAttributes.ITALIC : undefined}
+          <CopyableBlock
+            getCopyText={getCopyText}
+            isStreaming={isStreamingText}
           >
-            <ContentWithMarkdown
-              content={filteredContent}
-              isStreaming={isStreamingText}
-              codeBlockWidth={codeBlockWidth}
-              palette={markdownPalette}
-            />
-          </text>
+            <text
+              key={renderKey}
+              style={{
+                wrapMode: 'word',
+                fg: blockTextColor,
+              }}
+              attributes={isUser ? TextAttributes.ITALIC : undefined}
+            >
+              <ContentWithMarkdown
+                content={filteredContent}
+                isStreaming={isStreamingText}
+                codeBlockWidth={codeBlockWidth}
+                palette={markdownPalette}
+              />
+            </text>
+          </CopyableBlock>
         )
       }
 

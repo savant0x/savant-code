@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0721-035-slash-model-picker-broken.md`
 **ID:** FID-2026-0721-035
 **Severity:** high
-**Status:** created
+**Status:** closed
 **Created:** 2026-07-21
 **Author:** Spencer + Buff session (ECHO Protocol)
 

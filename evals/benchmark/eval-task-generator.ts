@@ -127,7 +127,7 @@ export async function generateEvalTask({
     params: {
       diff,
       editedFilePaths,
-      commitMessage,
+      ...(commitMessage !== undefined ? { commitMessage } : {}),
     },
     cwd: repoPath,
     agentDefinitions: allAgentDefinitions,

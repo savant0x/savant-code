@@ -30,8 +30,8 @@ const AGENTS_DIR_NAME = '.agents'
 
 /** Known orchestrator agent IDs that receive auto-injected user agents and MCP servers. */
 const ORCHESTRATOR_IDS = new Set([
-  'savant', 'savant-free', 'savant-lite', 'savant-max',
-  'savant-plan', 'savant-analyze',
+  'savant', 'savant-free',
+  'savant-analyze',
 ])
 
 export interface LocalAgentInfo {
