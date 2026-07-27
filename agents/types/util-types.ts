@@ -1,4 +1,5 @@
-/* eslint-disable savant/no-unknown-in-signatures -- util types contract: timer/notification interface signatures */
+import type { JSONSchema as ZodJSONSchemaNamespace } from 'zod/v4/core'
+
 // ===== JSON Types =====
 export type JSONValue =
   | null
@@ -12,28 +13,19 @@ export type JSONObject = { [key: string]: JSONValue }
 
 export type JSONArray = JSONValue[]
 
+type ZodJSONSchema = ZodJSONSchemaNamespace.JSONSchema
+
 /**
- * JSON Schema definition (for prompt schema or output schema)
+ * JSON Schema definition (for prompt schema or output schema).
+ * Reuse Zod's built-in JSON Schema type so generated and hand-written
+ * schemas remain structurally compatible.
  */
-export type JsonSchema = {
-  type?:
-    | 'object'
-    | 'array'
-    | 'string'
-    | 'number'
-    | 'boolean'
-    | 'null'
-    | 'integer'
-  description?: string
-  properties?: Record<string, JsonSchema | boolean>
-  required?: string[]
-  enum?: Array<string | number | boolean | null>
-  [k: string]: unknown
-}
-export type JsonObjectSchema = JsonSchema & { type: 'object' }
+export type JsonSchema = ZodJSONSchema
+export type JsonObjectSchema = ZodJSONSchema & { type: 'object' }
+export type JsonStringSchema = ZodJSONSchema & { type: 'string' }
 
 // ===== Data Content Types =====
-export type DataContent = string | Uint8Array | ArrayBuffer | Buffer
+export type DataContent = string | Uint8Array | ArrayBuffer | Buffer | URL
 
 // ===== Provider Metadata Types =====
 export type ProviderMetadata = Record<string, Record<string, JSONValue>>
@@ -70,7 +62,7 @@ export type ToolCallPart = {
   type: 'tool-call'
   toolCallId: string
   toolName: string
-  input: Record<string, unknown>
+  input: Record<string, JSONValue>
   providerOptions?: ProviderMetadata
   providerExecuted?: boolean
 }
@@ -175,9 +167,9 @@ export type MCPConfig =
 // ============================================================================
 // Logger Interface
 // ============================================================================
-export interface Logger {
-  debug: (data: unknown, msg?: string) => void
-  info: (data: unknown, msg?: string) => void
-  warn: (data: unknown, msg?: string) => void
-  error: (data: unknown, msg?: string) => void
+export interface Logger<TData = JSONValue> {
+  debug: (data: TData, msg?: string) => void
+  info: (data: TData, msg?: string) => void
+  warn: (data: TData, msg?: string) => void
+  error: (data: TData, msg?: string) => void
 }

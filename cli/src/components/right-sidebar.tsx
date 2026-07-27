@@ -13,6 +13,7 @@ import { getVersion } from '../utils/version'
 import { Timeline } from './savant-ui/data-display/timeline'
 import { AgentStatus } from './savant-ui/echo/agent-status'
 import { FidList } from './savant-ui/echo/fid-list'
+import { LoopStatusPanel } from './savant-ui/echo/loop-status-panel'
 import { PerfectionLoop } from './savant-ui/echo/perfection-loop'
 import { KeyValueRow } from './savant-ui/primitives/key-value-row'
 import { SidebarSection } from './savant-ui/primitives/sidebar-section'
@@ -182,6 +183,9 @@ export const RightSidebar = React.memo(function RightSidebar({
           (not idle). When idle, the loop section is hidden to reduce
           visual clutter. */}
       {fsmPhase !== 'idle' && <PerfectionLoop />}
+
+      {/* Loop Status — shows active loop cadence, goal condition, and iteration count */}
+      <LoopStatusPanel />
 
       {/* Tools */}
       <SidebarSection title="Tools">

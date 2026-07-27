@@ -23,9 +23,9 @@ import { cloneDeep, mapValues } from 'lodash'
 import z from 'zod/v4'
 
 import { CACHE_DEBUG_FULL_LOGGING } from './constants'
+import { ContextCompactor, type CompactionMessage } from './context-compactor'
 import { callTokenCountAPI } from './llm-api/savant-code-web-api'
 import { getMCPToolData } from './mcp'
-import { ContextCompactor } from './context-compactor'
 import { getAgentStreamFromTemplate } from './prompt-agent-stream'
 import {
   clearProgrammaticRunState,
@@ -1093,7 +1093,7 @@ export async function loopAgentSteps(
       // This is zero-cost (no LLM call) and reduces context size incrementally.
       const thresholds = contextCompactor.getThresholds()
       const messagesBeforeMicroCompact = currentAgentState.messageHistory.length
-      const microResult = contextCompactor.microCompact(currentAgentState.messageHistory as unknown as import('./context-compactor').CompactionMessage[])
+      const microResult = contextCompactor.microCompact(currentAgentState.messageHistory as unknown as CompactionMessage[])
       if (microResult.tokensSaved > 0) {
         currentAgentState.messageHistory = microResult.messages as unknown as typeof currentAgentState.messageHistory
         // FID-2026-0725-085: Log visible compaction summary.
@@ -1109,7 +1109,7 @@ export async function loopAgentSteps(
       // If context exceeds threshold, emit warning and log for diagnostics.
       // Full LLM summarization is handled by handleSteps context-pruner spawn.
       const autoCompactCheck = contextCompactor.shouldAutoCompact(
-        currentAgentState.messageHistory as unknown as import('./context-compactor').CompactionMessage[],
+        currentAgentState.messageHistory as unknown as CompactionMessage[],
         currentAgentState.contextTokenCount,
       )
       if (autoCompactCheck.shouldCompact) {
@@ -1127,7 +1127,6 @@ export async function loopAgentSteps(
       // FID-2026-0725-085 Layer 3: After step completes, check if context was compacted
       // and record result in ContextCompactor for circuit breaker tracking.
       // Detect compaction by checking if contextTokenCount dropped significantly.
-      const preStepTokenCount = currentAgentState.contextTokenCount
 
       // 1. Run programmatic step first if it exists
       let n: number | undefined = undefined
@@ -1343,7 +1342,7 @@ export async function loopAgentSteps(
     if (ContextCompactor.isPromptTooLongError(error) && !signal.aborted) {
       logger.warn({ error: getErrorObject(error) }, 'Layer 4 reactive compact: prompt-too-long detected, attempting emergency truncation')
       const reactiveResult = contextCompactor.reactiveCompact(
-        currentAgentState.messageHistory as unknown as import('./context-compactor').CompactionMessage[],
+        currentAgentState.messageHistory as unknown as CompactionMessage[],
       )
       if (reactiveResult.truncated) {
         currentAgentState.messageHistory = reactiveResult.messages as unknown as typeof currentAgentState.messageHistory

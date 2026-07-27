@@ -12,7 +12,7 @@ Two products ship from this monorepo. **Savant-Code** is the full-featured AI co
 
 </div>
 
-> **v0.0.7** — Context Compaction System + message.content.map Regression Fix. Four-layer progressive auto-compaction (MicroCompact, AutoCompact, ReactiveCompact), FSM deadlock fix, 12 bug fixes, copy affordance on every response block.
+> **v0.0.7** — Benchmark v2 baseline: first `evals/v2` harness run, deterministic task ordering, and the ECHO-native scoring roadmap.
 
 ---
 

@@ -13,6 +13,8 @@ import {
   type AllToolNames,
 } from '../types/secret-agent-definition'
 
+import type { JSONValue } from '../types/util-types'
+
 const ENABLE_COMPOSIO_TOOLS = false
 
 export function createSavant(
@@ -221,7 +223,11 @@ function getSavantHandleSteps({
 const handleStepsFree250k: SavantHandleSteps = function* ({ params, agentState }) {
   // FID-2026-0725-085 Layer 3: Read maxContextLength from agentState first
   // (set by loopAgentSteps from resolved context window), then params, then default.
-  const maxContextLength = agentState.maxContextLength ?? params?.maxContextLength ?? 250_000
+  function asNumber(value: JSONValue): number | null {
+    return typeof value === 'number' ? value : null
+  }
+  const p = params ?? {}
+  const maxContextLength = agentState.maxContextLength ?? asNumber(p.maxContextLength) ?? 250_000
   while (true) {
     // Only spawn context-pruner when context is approaching the limit (>80%).
     // Skipping when context is far from full eliminates a wasted LLM call per
@@ -248,7 +254,11 @@ const handleStepsFree250k: SavantHandleSteps = function* ({ params, agentState }
 
 const handleStepsFree400k: SavantHandleSteps = function* ({ params, agentState }) {
   // FID-2026-0725-085 Layer 3: Read maxContextLength from agentState first
-  const maxContextLength = agentState.maxContextLength ?? params?.maxContextLength ?? 400_000
+  function asNumber(value: JSONValue): number | null {
+    return typeof value === 'number' ? value : null
+  }
+  const p = params ?? {}
+  const maxContextLength = agentState.maxContextLength ?? asNumber(p.maxContextLength) ?? 400_000
   while (true) {
     if (agentState.contextTokenCount > maxContextLength * 0.8) {
       yield {
@@ -272,7 +282,11 @@ const handleStepsFree400k: SavantHandleSteps = function* ({ params, agentState }
 
 const handleSteps250k: SavantHandleSteps = function* ({ params, agentState }) {
   // FID-2026-0725-085 Layer 3: Read maxContextLength from agentState first
-  const maxContextLength = agentState.maxContextLength ?? params?.maxContextLength ?? 250_000
+  function asNumber(value: JSONValue): number | null {
+    return typeof value === 'number' ? value : null
+  }
+  const p = params ?? {}
+  const maxContextLength = agentState.maxContextLength ?? asNumber(p.maxContextLength) ?? 250_000
   while (true) {
     if (agentState.contextTokenCount > maxContextLength * 0.8) {
       yield {
@@ -295,7 +309,11 @@ const handleSteps250k: SavantHandleSteps = function* ({ params, agentState }) {
 
 const handleSteps400k: SavantHandleSteps = function* ({ params, agentState }) {
   // FID-2026-0725-085 Layer 3: Read maxContextLength from agentState first
-  const maxContextLength = agentState.maxContextLength ?? params?.maxContextLength ?? 400_000
+  function asNumber(value: JSONValue): number | null {
+    return typeof value === 'number' ? value : null
+  }
+  const p = params ?? {}
+  const maxContextLength = agentState.maxContextLength ?? asNumber(p.maxContextLength) ?? 400_000
   while (true) {
     if (agentState.contextTokenCount > maxContextLength * 0.8) {
       yield {
@@ -544,7 +562,7 @@ function buildDefaultSystemPrompt(context: {
   noAskUser: boolean
   noFIDPerChange: boolean
 }) {
-  const { mode, isFree, noGravityIndex, noAskUser, noFIDPerChange } = context
+  const { isFree, noGravityIndex, noAskUser, noFIDPerChange } = context
   return `You are Savant, an engineering agent bound by the ECHO Protocol. You are the AI agent behind the product, ${isFree ? 'SavantFree' : 'SavantCode'}, a tool where users can chat with you to code with AI${isFree ? ' for free' : ''}.
 
 Current date: ${PLACEHOLDER.CURRENT_DATE}.

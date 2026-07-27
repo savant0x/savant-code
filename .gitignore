@@ -65,3 +65,9 @@ savant-free/cli/release/http.js
 # README.md is the permanent index. All *.md drafts are gitignored.
 dev/releases/*.md
 !dev/releases/README.md
+
+# Savant-Code desktop runtime state (SQLite DB, worktrees, session cache)
+.freebuff/
+
+# Evals v2 test-generated artifacts
+**/evals/v2/tests/.test-*/

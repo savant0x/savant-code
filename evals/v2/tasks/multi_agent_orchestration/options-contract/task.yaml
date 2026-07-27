@@ -1,0 +1,29 @@
+schema_version: "2.0"
+task_id: "savant-v2-mao-options-001"
+category: "multi_agent_orchestration"
+difficulty: "medium"
+description: "Coordinate a contract change across a function definition and its caller so the test passes."
+environment:
+  setup_files:
+    - "greet.js"
+    - "app.js"
+    - "app.test.js"
+    - "orchestration.test.js"
+  network_disabled: true
+golden_patch: "golden.patch"
+inputs:
+  prompt: "app.test.js expects an uppercase greeting. Refactor greet in greet.js to accept an options object { name, uppercase } and uppercase the result when requested. Update app.js to use this new signature so the test passes."
+validation:
+  timeout_seconds: 60
+  required_agents:
+    - "detective"
+    - "forge"
+  deterministic_checks:
+    - command: "bun app.test.js"
+      expected_exit_code: 0
+      retry_count: 0
+      retry_condition: "infra"
+    - command: "bun orchestration.test.js"
+      expected_exit_code: 0
+      retry_count: 0
+      retry_condition: "infra"

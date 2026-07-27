@@ -1,0 +1,170 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Savant-Code Benchmark v2 Task Definition",
+  "description": "Schema for a single benchmark task definition.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "task_id",
+    "category",
+    "difficulty",
+    "environment",
+    "inputs",
+    "validation"
+  ],      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+      "type": "string",
+      "const": "2.0"
+    },
+    "task_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9_-]+$",
+      "description": "Lowercase alphanumeric ID with underscores or hyphens."
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "pure_coding",
+        "fsm_compliance",
+        "multi_agent_orchestration",
+        "custom_tool",
+        "mcp_tool",
+        "skill_driven",
+        "programmatic_agent",
+        "slash_cli",
+        "error_recovery"
+      ]
+    },
+    "difficulty": {
+      "type": "string",
+      "enum": ["easy", "medium", "hard"]
+    },        "description": {
+          "type": "string"
+        },
+        "task_dir": {
+          "type": "string",
+          "description": "Absolute path to the task directory. Populated by the registry loader."
+        },
+        "golden_patch": {
+      "type": "string",
+      "description": "Path to a canonical unified-diff golden patch. Relative paths are resolved against the task file's directory."
+    },
+    "environment": {
+      "type": "object",
+      "required": [],
+      "additionalProperties": false,
+      "properties": {
+        "base_image": {
+          "type": "string"
+        },
+        "setup_script": {
+          "type": "string",
+          "description": "Optional shell script to run after copying setup_files."
+        },
+        "setup_files": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "Optional list of files (relative to the task directory) to copy into the sandbox."
+        },
+        "network_disabled": {
+          "type": "boolean",
+          "default": true
+        }
+      }
+    },
+    "inputs": {
+      "type": "object",
+      "required": ["prompt"],
+      "properties": {
+        "prompt": {
+          "type": "string"
+        }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "required": ["deterministic_checks"],
+      "properties": {
+        "timeout_seconds": {
+          "type": "number",
+          "default": 300
+        },
+        "deterministic_checks": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["command"],
+            "properties": {
+              "command": {
+                "type": "string"
+              },
+              "expected_exit_code": {
+                "type": "number",
+                "default": 0
+              },
+              "timeout_seconds": {
+                "type": "number"
+              },
+              "retry_count": {
+                "type": "number",
+                "default": 0
+              },
+              "retry_condition": {
+                "type": "string",
+                "enum": ["infra", "always"],
+                "default": "infra"
+              }
+            }
+          }
+        },
+        "fsm_assertions": {
+          "type": "object",
+          "properties": {
+            "strict_phase_order": {
+              "type": "boolean",
+              "default": true
+            },
+            "allow_write_in_red": {
+              "type": "boolean",
+              "default": false
+            },
+            "expected_phase_sequence": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "required_agents": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Agent types that should be spawned during the run (e.g., [\"detective\", \"forge\"])."
+        },
+        "custom_tool_checks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["tool_name"],
+            "properties": {
+              "tool_name": {
+                "type": "string"
+              },
+              "expected_calls": {
+                "type": "string",
+                "default": ">=1"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

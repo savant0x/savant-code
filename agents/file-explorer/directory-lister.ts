@@ -40,7 +40,24 @@ const directoryLister: SecretAgentDefinition = {
     params: paramsSchema,
   },
   handleSteps: function* ({ params }) {
-    const directories: ListDirectoryQuery[] = params?.directories ?? []
+    function isJSONObject(value: JSONValue): value is JSONObject {
+      return value !== null && typeof value === 'object' && !Array.isArray(value)
+    }
+    function asListDirectoryQueryArray(
+      value: JSONValue,
+    ): ListDirectoryQuery[] {
+      if (!Array.isArray(value)) return []
+      const result: ListDirectoryQuery[] = []
+      for (const item of value) {
+        if (!isJSONObject(item)) continue
+        const path = item.path
+        if (typeof path !== 'string') continue
+        result.push({ path })
+      }
+      return result
+    }
+    const p = params ?? {}
+    const directories = asListDirectoryQueryArray(p.directories)
 
     const toolResults: JSONValue[] = []
     for (const directory of directories) {
@@ -56,7 +73,7 @@ const directoryLister: SecretAgentDefinition = {
             .filter((result) => result.type === 'json')
             .map((result) => ({
               path: directory.path,
-              ...(result.value as JSONObject),
+              ...(isJSONObject(result.value) ? result.value : {}),
             })),
         )
       }

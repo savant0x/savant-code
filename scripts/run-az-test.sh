@@ -972,22 +972,86 @@ if run_phase 31; then
   version_from_root=$(grep -m1 '"version"' "$REPO_ROOT/package.json" | sed -E 's/.*"version"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/')
   version_from_cli=$(grep -m1 '"version"' "$REPO_ROOT/cli/package.json" | sed -E 's/.*"version"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/')
 
-  if [ "$version_from_file" = "0.0.6" ]; then
-    pass "T179" "VERSION file is 0.0.6"
+  if [ "$version_from_file" = "0.0.7" ]; then
+    pass "T179" "VERSION file is 0.0.7"
   else
-    fail "T179" "VERSION file is '$version_from_file' (expected 0.0.6)"
+    fail "T179" "VERSION file is '$version_from_file' (expected 0.0.7)"
   fi
 
-  if [ "$version_from_root" = "0.0.6" ]; then
-    pass "T180" "Root package.json is 0.0.6"
+  if [ "$version_from_root" = "0.0.7" ]; then
+    pass "T180" "Root package.json is 0.0.7"
   else
-    fail "T180" "Root package.json is '$version_from_root' (expected 0.0.6)"
+    fail "T180" "Root package.json is '$version_from_root' (expected 0.0.7)"
   fi
 
-  if [ "$version_from_cli" = "0.0.6" ]; then
-    pass "T181" "cli/package.json is 0.0.6"
+  if [ "$version_from_cli" = "0.0.7" ]; then
+    pass "T181" "cli/package.json is 0.0.7"
   else
-    fail "T181" "cli/package.json is '$version_from_cli' (expected 0.0.6)"
+    fail "T181" "cli/package.json is '$version_from_cli' (expected 0.0.7)"
+  fi
+fi
+
+# =============================================================================
+# Phase 32: Goal/Loop End-to-End Wiring (FID-2026-0726-001)
+# =============================================================================
+if run_phase 32; then
+  header "Phase 32: Goal/Loop End-to-End Wiring (FID-2026-0726-001)"
+
+  # T200: useLoopScheduler mounted in chat.tsx so /loop cadence actually recurs
+  if rg_check "useLoopScheduler" "$REPO_ROOT/cli/src/chat.tsx" 2>/dev/null; then
+    pass "T200" "useLoopScheduler mounted in chat.tsx"
+  else
+    fail "T200" "useLoopScheduler NOT mounted in chat.tsx"
+  fi
+
+  # T201: LoopStatusPanel subscribes to schedule changes for reactive UI
+  if rg_check "useLoopSchedule" "$REPO_ROOT/cli/src/components/savant-ui/echo/loop-status-panel.tsx" 2>/dev/null; then
+    pass "T201" "LoopStatusPanel uses useLoopSchedule"
+  else
+    fail "T201" "LoopStatusPanel does NOT use useLoopSchedule"
+  fi
+
+  # T202: /goal persists the condition for cross-run evaluation
+  if rg_check "setLoopGoal" "$REPO_ROOT/cli/src/commands/goal.ts" 2>/dev/null; then
+    pass "T202" "goal.ts calls setLoopGoal"
+  else
+    fail "T202" "goal.ts does NOT call setLoopGoal"
+  fi
+
+  # T203: /loop no longer redundantly activates state (startLoop handles it)
+  if rg_check "setLoopActiveState\(true\)" "$REPO_ROOT/cli/src/commands/loop.ts" 2>/dev/null; then
+    fail "T203" "loop.ts still calls setLoopActiveState(true)"
+  else
+    pass "T203" "loop.ts no longer redundantly calls setLoopActiveState(true)"
+  fi
+
+  # T204: scheduler exposes a subscription primitive for reactive UI
+  if rg_check "export function subscribeToSchedule" "$REPO_ROOT/cli/src/hooks/use-loop-scheduler.ts" 2>/dev/null; then
+    pass "T204" "subscribeToSchedule exported from use-loop-scheduler.ts"
+  else
+    fail "T204" "subscribeToSchedule NOT exported from use-loop-scheduler.ts"
+  fi
+
+  # T205: scheduler interval invokes the registered onLoopDue callback
+  if rg_check "schedulerState\.onLoopDue" "$REPO_ROOT/cli/src/hooks/use-loop-scheduler.ts" 2>/dev/null; then
+    pass "T205" "scheduler interval invokes onLoopDue callback"
+  else
+    fail "T205" "scheduler interval does NOT invoke onLoopDue callback"
+  fi
+
+  # T206: /loop actually schedules recurring execution via startLoop
+  if rg_check "startLoop[(]" "$REPO_ROOT/cli/src/commands/loop.ts" 2>/dev/null; then
+    pass "T206" "loop.ts calls startLoop"
+  else
+    fail "T206" "loop.ts does NOT call startLoop"
+  fi
+
+  # T207: goal/loop static typecheck already covered in Phase 15; live CLI
+  #       validation prompt is at dev/test-prompts/goal-loop-cli-test.md
+  if [ -f "$REPO_ROOT/dev/test-prompts/goal-loop-cli-test.md" ]; then
+    pass "T207" "goal-loop-cli-test.md live prompt exists"
+  else
+    fail "T207" "goal-loop-cli-test.md live prompt missing"
   fi
 fi
 

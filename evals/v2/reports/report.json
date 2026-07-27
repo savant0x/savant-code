@@ -1,0 +1,205 @@
+{
+  "results": [
+    {
+      "task_id": "savant-v2-error-recovery-001",
+      "task": {
+        "schema_version": "2.0",
+        "task_id": "savant-v2-error-recovery-001",
+        "category": "error_recovery",
+        "difficulty": "medium",
+        "description": "Recover from an injected environmental fault and fix the add function in calculator.js.",
+        "environment": {
+          "setup_files": [
+            "calculator.js",
+            "calculator.test.js"
+          ],
+          "network_disabled": true
+        },
+        "golden_patch": "C:\\Users\\spenc\\dev\\savant-code\\evals\\v2\\tasks\\error_recovery\\env-fault\\golden.patch",
+        "inputs": {
+          "prompt": "calculator.js has an injected environmental fault that throws on load and a bug in the add function. Remove the fault and fix add so the tests pass."
+        },
+        "validation": {
+          "timeout_seconds": 60,
+          "deterministic_checks": [
+            {
+              "command": "bun calculator.test.js",
+              "expected_exit_code": 0,
+              "retry_count": 0,
+              "retry_condition": "infra"
+            }
+          ]
+        },
+        "task_dir": "v2\\tasks\\error_recovery\\env-fault"
+      },
+      "status": "PASS",
+      "verification": {
+        "task_id": "savant-v2-error-recovery-001",
+        "passed": true,
+        "status": "PASS",
+        "checks": [
+          {
+            "command": "bun calculator.test.js",
+            "expected_exit_code": 0,
+            "attempts": 1,
+            "status": "PASS",
+            "result": {
+              "exitCode": 0,
+              "stdout": "ok\n",
+              "stderr": "",
+              "timedOut": false
+            },
+            "retries": 0,
+            "flaky": false
+          }
+        ],
+        "duration_ms": 136
+      }
+    },
+    {
+      "task_id": "savant-v2-mao-options-001",
+      "task": {
+        "schema_version": "2.0",
+        "task_id": "savant-v2-mao-options-001",
+        "category": "multi_agent_orchestration",
+        "difficulty": "medium",
+        "description": "Coordinate a contract change across a function definition and its caller so the test passes.",
+        "environment": {
+          "setup_files": [
+            "greet.js",
+            "app.js",
+            "app.test.js",
+            "orchestration.test.js"
+          ],
+          "network_disabled": true
+        },
+        "golden_patch": "C:\\Users\\spenc\\dev\\savant-code\\evals\\v2\\tasks\\multi_agent_orchestration\\options-contract\\golden.patch",
+        "inputs": {
+          "prompt": "app.test.js expects an uppercase greeting. Refactor greet in greet.js to accept an options object { name, uppercase } and uppercase the result when requested. Update app.js to use this new signature so the test passes."
+        },
+        "validation": {
+          "timeout_seconds": 60,
+          "deterministic_checks": [
+            {
+              "command": "bun app.test.js",
+              "expected_exit_code": 0,
+              "retry_count": 0,
+              "retry_condition": "infra"
+            },
+            {
+              "command": "bun orchestration.test.js",
+              "expected_exit_code": 0,
+              "retry_count": 0,
+              "retry_condition": "infra"
+            }
+          ],
+          "required_agents": [
+            "detective",
+            "forge"
+          ]
+        },
+        "task_dir": "v2\\tasks\\multi_agent_orchestration\\options-contract"
+      },
+      "status": "PASS",
+      "verification": {
+        "task_id": "savant-v2-mao-options-001",
+        "passed": true,
+        "status": "PASS",
+        "checks": [
+          {
+            "command": "bun app.test.js",
+            "expected_exit_code": 0,
+            "attempts": 1,
+            "status": "PASS",
+            "result": {
+              "exitCode": 0,
+              "stdout": "ok\n",
+              "stderr": "",
+              "timedOut": false
+            },
+            "retries": 0,
+            "flaky": false
+          },
+          {
+            "command": "bun orchestration.test.js",
+            "expected_exit_code": 0,
+            "attempts": 1,
+            "status": "PASS",
+            "result": {
+              "exitCode": 0,
+              "stdout": "ok\n",
+              "stderr": "",
+              "timedOut": false
+            },
+            "retries": 0,
+            "flaky": false
+          }
+        ],
+        "duration_ms": 214
+      }
+    },
+    {
+      "task_id": "savant-v2-pure-rename-001",
+      "task": {
+        "schema_version": "2.0",
+        "task_id": "savant-v2-pure-rename-001",
+        "category": "pure_coding",
+        "difficulty": "medium",
+        "description": "Rename the greet function to welcome across multiple files and update all imports and usages.",
+        "environment": {
+          "setup_files": [
+            "greet.js",
+            "app.js",
+            "app.test.js"
+          ],
+          "network_disabled": true
+        },
+        "golden_patch": "C:\\Users\\spenc\\dev\\savant-code\\evals\\v2\\tasks\\pure_coding\\rename-greet\\golden.patch",
+        "inputs": {
+          "prompt": "Rename the greet function to welcome across all files in this project. Update the export in greet.js, the import and call in app.js, and make sure app.test.js passes."
+        },
+        "validation": {
+          "timeout_seconds": 60,
+          "deterministic_checks": [
+            {
+              "command": "bun app.test.js",
+              "expected_exit_code": 0,
+              "retry_count": 0,
+              "retry_condition": "infra"
+            }
+          ]
+        },
+        "task_dir": "v2\\tasks\\pure_coding\\rename-greet"
+      },
+      "status": "PASS",
+      "verification": {
+        "task_id": "savant-v2-pure-rename-001",
+        "passed": true,
+        "status": "PASS",
+        "checks": [
+          {
+            "command": "bun app.test.js",
+            "expected_exit_code": 0,
+            "attempts": 1,
+            "status": "PASS",
+            "result": {
+              "exitCode": 0,
+              "stdout": "ok\n",
+              "stderr": "",
+              "timedOut": false
+            },
+            "retries": 0,
+            "flaky": false
+          }
+        ],
+        "duration_ms": 109
+      }
+    }
+  ],
+  "total": 3,
+  "passed": 3,
+  "failed": 0,
+  "errors": 0,
+  "timeouts": 0,
+  "duration_ms": 472
+}

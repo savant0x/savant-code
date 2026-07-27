@@ -2,7 +2,7 @@
 import { publisher } from '../constants'
 
 import type { SecretAgentDefinition } from '../types/secret-agent-definition'
-import type { JSONValue } from '@savant-code/common/types/json'
+import type { JSONValue, JSONObject } from '@savant-code/common/types/json'
 
 interface GlobQuery {
   pattern: string
@@ -43,7 +43,26 @@ const globMatcher: SecretAgentDefinition = {
     params: paramsSchema,
   },
   handleSteps: function* ({ params }) {
-    const patterns: GlobQuery[] = params?.patterns ?? []
+    function isJSONObject(value: JSONValue): value is JSONObject {
+      return value !== null && typeof value === 'object' && !Array.isArray(value)
+    }
+    function asGlobQueryArray(value: JSONValue): GlobQuery[] {
+      if (!Array.isArray(value)) return []
+      const result: GlobQuery[] = []
+      for (const item of value) {
+        if (!isJSONObject(item)) continue
+        const pattern = item.pattern
+        if (typeof pattern !== 'string') continue
+        const cwd = item.cwd
+        result.push({
+          pattern,
+          ...(typeof cwd === 'string' ? { cwd } : {}),
+        })
+      }
+      return result
+    }
+    const p = params ?? {}
+    const patterns = asGlobQueryArray(p.patterns)
 
     const toolResults: JSONValue[] = []
     for (const query of patterns) {

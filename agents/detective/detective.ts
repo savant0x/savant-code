@@ -1,7 +1,7 @@
 import { publisher } from '../constants'
 
 import type { SecretAgentDefinition } from '../types/secret-agent-definition'
-import type { JSONValue } from '../types/util-types'
+import type { JSONValue, JSONObject } from '../types/util-types'
 
 interface SearchQuery {
   pattern: string
@@ -60,7 +60,30 @@ const detective: SecretAgentDefinition = {
   },
   outputMode: 'structured_output',
   handleSteps: function* ({ params }) {
-    const searchQueries: SearchQuery[] = params?.searchQueries ?? []
+    function isJSONObject(value: JSONValue): value is JSONObject {
+      return value !== null && typeof value === 'object' && !Array.isArray(value)
+    }
+    function asSearchQueryArray(value: JSONValue): SearchQuery[] {
+      if (!Array.isArray(value)) return []
+      const result: SearchQuery[] = []
+      for (const item of value) {
+        if (!isJSONObject(item)) continue
+        const pattern = item.pattern
+        if (typeof pattern !== 'string') continue
+        const flags = item.flags
+        const cwd = item.cwd
+        const maxResults = item.maxResults
+        result.push({
+          pattern,
+          ...(typeof flags === 'string' ? { flags } : {}),
+          ...(typeof cwd === 'string' ? { cwd } : {}),
+          ...(typeof maxResults === 'number' ? { maxResults } : {}),
+        })
+      }
+      return result
+    }
+    const p = params ?? {}
+    const searchQueries = asSearchQueryArray(p.searchQueries)
 
     const toolResults: JSONValue[] = []
     for (const query of searchQueries) {

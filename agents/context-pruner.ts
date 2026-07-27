@@ -80,8 +80,10 @@ const definition: AgentDefinition = {
     /** Axiom-only operational event understood by the logging adapters. */
     const CONTEXT_PRUNING_COMPLETED_EVENT = 'context_pruning.completed'
 
+    const p = params ?? {}
+
     /** Prompt cache expiry time (Anthropic caches for 5 minutes by default) */
-    const CACHE_EXPIRY_MS: number = params?.cacheExpiryMs ?? 5 * 60 * 1000
+    const CACHE_EXPIRY_MS: number = asNumber(p.cacheExpiryMs) ?? 5 * 60 * 1000
 
     /** Header used in conversation summaries */
     const SUMMARY_HEADER =
@@ -133,8 +135,8 @@ const definition: AgentDefinition = {
       return typeof value === 'string' ? value : undefined
     }
 
-    function asNumber(value: JSONValue): number | undefined {
-      return typeof value === 'number' ? value : undefined
+    function asNumber(value: JSONValue): number | null {
+      return typeof value === 'number' ? value : null
     }
 
     function asStringArray(value: JSONValue): string[] | undefined {
@@ -491,7 +493,7 @@ const definition: AgentDefinition = {
     // =============================================================================
 
     const messages = agentState.messageHistory
-    const maxContextLength: number = params?.maxContextLength ?? 200_000
+    const maxContextLength: number = asNumber(p.maxContextLength) ?? 200_000
 
     // STEP 0: Always remove the last INSTRUCTIONS_PROMPT and SUBAGENT_SPAWN
     // (these are inserted for the context-pruner subagent itself)
@@ -585,8 +587,8 @@ const definition: AgentDefinition = {
     // 3. Older summarized parts beyond the budgets are dropped
 
     const assistantToolBudget: number =
-      params?.assistantToolBudget ?? ASSISTANT_TOOL_BUDGET
-    const userBudget: number = params?.userBudget ?? USER_BUDGET
+      asNumber(p.assistantToolBudget) ?? ASSISTANT_TOOL_BUDGET
+    const userBudget: number = asNumber(p.userBudget) ?? USER_BUDGET
 
     function shouldExcludeMessage(message: Message): boolean {
       if (message.tags?.includes('INSTRUCTIONS_PROMPT')) return true
@@ -739,15 +741,15 @@ const definition: AgentDefinition = {
         if (Array.isArray(message.content)) {
           for (const part of message.content) {
             if (part.type === 'text' && typeof part.text === 'string') {
-              const textWithoutThinkTags = (part.text as string)
+              const textWithoutThinkTags = part.text
                 .replace(/<think>[\s\S]*?<\/think>/g, '')
                 .trim()
               if (textWithoutThinkTags) {
                 textParts.push(textWithoutThinkTags)
               }
             } else if (part.type === 'tool-call') {
-              const toolName = part.toolName as string
-              const input = asObject(part.input as Record<string, JSONValue>) ?? {}
+              const toolName = part.toolName
+              const input = asObject(part.input) ?? {}
               toolSummaries.push(summarizeToolCall(toolName, input))
             }
           }
@@ -1047,8 +1049,8 @@ ${SUMMARY_DISCLAIMER}`,
       logger.info(
         {
           axiomEvent: CONTEXT_PRUNING_COMPLETED_EVENT,
-          agent_run_id: agentState.runId,
-          parent_agent_run_id: agentState.parentId,
+          agent_run_id: agentState.runId ?? null,
+          parent_agent_run_id: agentState.parentId ?? null,
           trigger_reason: triggerReason,
           context_token_count: agentState.contextTokenCount,
           max_context_length: maxContextLength,

@@ -46,6 +46,7 @@ import { useClipboard } from './hooks/use-clipboard'
 import { useEvent } from './hooks/use-event'
 import { useGravityAd } from './hooks/use-gravity-ad'
 import { useInputHistory } from './hooks/use-input-history'
+import { useLoopScheduler } from './hooks/use-loop-scheduler'
 import { usePublishMutation } from './hooks/use-publish-mutation'
 import { returnToSavantFreeLanding } from './hooks/use-savant-free-session'
 import { useScaffoldRevertSubscriber } from './hooks/use-scaffold-revert-subscriber'
@@ -602,6 +603,20 @@ export const Chat = ({
   })
 
   sendMessageRef.current = sendMessage
+
+  // FID-2026-0726-001: mount the loop scheduler so /loop cadence actually
+  // recurs. The callback re-submits the loop prompt using the current agentMode.
+  useLoopScheduler(
+    useCallback(
+      (schedule) => {
+        sendMessage({
+          content: schedule.prompt,
+          agentMode,
+        })
+      },
+      [sendMessage, agentMode],
+    ),
+  )
 
   const onSubmitPrompt = useEvent(
     async (

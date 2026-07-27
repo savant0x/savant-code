@@ -190,7 +190,7 @@ async function runTask(
     output?.type === 'structuredOutput' &&
     output.value !== null
   ) {
-    const data = output.value as LibrarianOutput
+    const data = output.value as unknown as LibrarianOutput
     console.log(`Answer length: ${data.answer?.length ?? 0} chars`)
     console.log(`Relevant files: ${data.relevantFiles?.length ?? 0}`)
     console.log(`Clone dir: ${data.cloneDir}`)
@@ -202,7 +202,7 @@ async function runTask(
     output?.type === 'structuredOutput' &&
     output.value !== null
   ) {
-    const data = output.value as LibrarianOutput
+    const data = output.value as unknown as LibrarianOutput
     if (data.cloneDir && fs.existsSync(data.cloneDir)) {
       console.log(`Cleaning up ${data.cloneDir}...`)
       fs.rmSync(data.cloneDir, { recursive: true, force: true })

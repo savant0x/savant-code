@@ -7,6 +7,7 @@ import {
 } from '../types/secret-agent-definition'
 
 import type { ToolCall } from '../types/agent-definition'
+import type { JSONValue } from '../types/util-types'
 
 type FilePickerMode = 'default' | 'max'
 
@@ -94,7 +95,16 @@ const handleStepsDefault: SecretAgentDefinition['handleSteps'] = function* ({
   prompt,
   params,
 }) {
-  const cwd = params?.directories?.length ? params.directories[0] : undefined
+  function isStringArray(value: JSONValue): value is string[] {
+    return (
+      Array.isArray(value) &&
+      value.every((item) => typeof item === 'string')
+    )
+  }
+  const p = params ?? {}
+  const rawDirectories = p.directories
+  const directories = isStringArray(rawDirectories) ? rawDirectories : []
+  const cwd = directories.length > 0 ? directories[0] : undefined
 
   // Inlined extractKeywords (must be self-contained for .toString() serialization)
   function _extractKeywords(p: string): string[] {
@@ -191,7 +201,16 @@ const handleStepsMax: SecretAgentDefinition['handleSteps'] = function* ({
   prompt,
   params,
 }) {
-  const cwd = params?.directories?.length ? params.directories[0] : undefined
+  function isStringArray(value: JSONValue): value is string[] {
+    return (
+      Array.isArray(value) &&
+      value.every((item) => typeof item === 'string')
+    )
+  }
+  const p = params ?? {}
+  const rawDirectories = p.directories
+  const directories = isStringArray(rawDirectories) ? rawDirectories : []
+  const cwd = directories.length > 0 ? directories[0] : undefined
 
   // Inlined extractKeywords (must be self-contained for .toString() serialization)
   function _extractKeywords(p: string): string[] {

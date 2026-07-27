@@ -304,6 +304,14 @@ export interface AgentState {
    * This is updated on every agent step via the /api/v1/token-count endpoint.
    */
   contextTokenCount: number
+
+  /**
+   * FID-2026-0725-085: Resolved context window for this model.
+   * Set by the CLI via CTX-007 wiring. Used by handleSteps to determine
+   * when to trigger context-pruner spawning (auto-compact Layer 3).
+   * Falls back to hardcoded defaults if not set.
+   */
+  maxContextLength?: number
 }
 
 /**
