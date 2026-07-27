@@ -1,3 +1,7 @@
+<!-- markdownlint-disable MD041 -->
+
+> **Historical note:** This document uses the original product name *FreeBuff* in some sections because it references external research and third-party projects from that period. The product is now **Savant-Code / Savant-Free**.
+
 # **Architecting a Sustainable Free-Tier Inference Backend for a CLI Coding Agent**
 
 The evolution of autonomous AI coding agents is currently constrained by a rigid economic dichotomy: developers must either pay substantial monthly subscriptions for proprietary platforms (e.g., Cursor, GitHub Copilot, Claude Code) or rely on open-source frameworks (e.g., Cline, Aider, Continue.dev) that require high-end local GPUs or "Bring Your Own Key" (BYOK) API setups1. The emergence of tools like FreeBuff has proven the viability of a third path: a zero-configuration, free-to-use CLI agent subsidized by a combination of targeted developer advertising and strategic "data-for-compute" partnerships with major AI laboratories4.  

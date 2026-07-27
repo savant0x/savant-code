@@ -67,7 +67,9 @@ dev/releases/*.md
 !dev/releases/README.md
 
 # Savant-Code desktop runtime state (SQLite DB, worktrees, session cache)
+# Keep legacy .freebuff/ ignored while transitioning to .savant-code/
 .freebuff/
+.savant-code/
 
 # Evals v2 test-generated artifacts
 **/evals/v2/tests/.test-*/

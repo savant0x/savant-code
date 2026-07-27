@@ -1,5 +1,12 @@
 # Changelog
 
+## FID-2026-0727-002 — low — Rename Remaining `.freebuff/` References
+
+**Closed:** 2026-07-27
+**Resolution:** Removed the duplicate FID, archived the kept FID, updated `.gitignore` to ignore `.savant-code/` instead of `.freebuff/`, renamed `docs/FreeBuff Business And Backend Research.md` to `docs/Savant-Code Business And Backend Research.md`, and added historical notes to both research docs explaining the legacy brand references.
+**Verified by:** Workspace typechecks and SDK tests pass.
+**Archived:** 2026-07-27
+
 ## v0.0.9 — 2026-07-25
 
 ### Universal Copy Buttons on Every Response Block (FID-087)
