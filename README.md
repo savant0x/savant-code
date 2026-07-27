@@ -12,7 +12,7 @@ Two products ship from this monorepo. **Savant-Code** is the full-featured AI co
 
 </div>
 
-> **v0.0.7** — Benchmark v2 baseline: first `evals/v2` harness run, deterministic task ordering, and the ECHO-native scoring roadmap.
+> **v0.0.7** — Benchmark v2 baseline, goal-loop scheduling, 4-layer context compaction, universal copy buttons, and gateway provider infrastructure.
 
 ---
 
@@ -52,14 +52,18 @@ The whole project ships under [ECHO Protocol v0.2.0](ECHO.md) — the same 15-la
 
 - **Multi-agent orchestration** — 9 specialized agents coordinate via ECHO Protocol: Detective finds issues, Forge implements, Verifier audits, Recorder manages FIDs, Thinker reasons, Scout explores, Researcher investigates, Scribe documents.
 - **`/init` command** — scaffolds `.agents/types/{agent-definition,tools,util-types}.ts` and a starter `knowledge.md`.
-- **Slash commands** — `/new`, `/history`, `/bash`, `/feedback`, `/theme:toggle`, `/login`, `/logout`, `/exit`, plus agent-specific commands.
+- **Slash commands** — `/new`, `/history`, `/bash`, `/goal`, `/loop`, `/feedback`, `/theme:toggle`, `/login`, `/logout`, `/exit`, plus agent-specific commands.
 - **`@filename` and `@AgentName` mentions** — file and agent mentions with inline autocomplete.
 - **Bash mode** — `!command` or `/bash` to run shell commands inline (with confirmation).
+- **Goal loop** — `/goal` sets a goal condition; `/loop <cadence>` schedules recurring prompt execution (e.g., `/loop 5m check build status`). The loop scheduler manages cadence, run counts, and convergence detection.
 - **Mode switching** — `EDIT` / `ANALYZE` / `SCAFFOLD` execution-scope modes, togglable at runtime via UI.
 - **Streaming & cancellation** — token-by-token SSE streaming with mid-stream cancellation, retry-with-backoff, and subagent streaming for parallel work.
 - **Knowledge files** — project-level `knowledge.md` plus per-user home-dir knowledge, auto-loaded into agent context.
 - **Skills** — OpenClaw-format `SKILL.md` files discovered at startup, schemas sent to the LLM, available as native tools.
 - **MCP tools** — Model Context Protocol servers discovered at startup, schemas published to the LLM API.
+- **Context compaction** — 4-layer progressive auto-compaction: L0 (summarize old turns), L1 (compress tool results), L2 (prune stale context), L3 (aggressive reduction). Preserves critical context while reducing token usage.
+- **Universal copy buttons** — hover-to-copy on code blocks, tool outputs, and file diffs throughout the TUI.
+- **Gateway providers** — TokenRouter, NVIDIA NIM, OpenCode Go, and Cloudflare Workers AI via `@savant-code/llm-providers`.
 - **Theming** — light/dark toggle (`/theme:toggle`), Neon Slate aesthetic.
 
 ### SDK (`@savant-code/sdk`)
@@ -94,7 +98,7 @@ The whole project ships under [ECHO Protocol v0.2.0](ECHO.md) — the same 15-la
 | `agents/` | `@savant-code/agents` | Public agent definitions shipped with the CLI |
 | `cli/` | `@savant-code/cli` | CLI source — UI, commands, state, hooks, OpenTUI/React components |
 | `common/` | `@savant-code/common` | Shared types, tool definitions, utilities |
-| `evals/` | `@savant-code/evals` | Buffbench benchmark runner + public eval fixtures |
+| `evals/` | `@savant-code/evals` | ECHO-native benchmark v2 runner + legacy eval fixtures |
 | `savant-free/` | `@savant-code/savant-free` | CLI release + e2e tests for the free variant |
 | `packages/agent-runtime/` | `@savant-code/agent-runtime` | Agent loop, tool executor, LLM API integration |
 | `packages/code-map/` | `@savant-code/code-map` | tree-sitter code indexing, language detection |
