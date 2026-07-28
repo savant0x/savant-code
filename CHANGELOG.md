@@ -1,20 +1,22 @@
 # Changelog
 
-## FID-2026-07-27-001 — high — Tool Safety + Sandbox Engine (Phase 1)
+## v0.0.8 — 2026-07-27
+
+### Tool Safety + Sandbox Engine (Phase 1) (FID-2026-07-27-001)
 
 **Closed:** 2026-07-27
 **Resolution:** Implemented Phase 1 of the Tool Safety + Sandbox Engine. Added declarative safety metadata per tool in `common/src/tools/safety-registry.ts`, a runtime `SandboxEngine` in `packages/agent-runtime/src/tools/sandbox/engine.ts`, a destructive shell command denylist, and network gating. Wired sandbox evaluation into `packages/agent-runtime/src/tools/tool-executor.ts` after FSM/phase gating and before handler invocation. Added user-facing permission controls: `--permission-mode <safe|prompt|unsafe>` CLI flag, persisted setting via `settings.json`, and `/permissions` slash command (aliases `sandbox`, `safety`). Also restored the `/login` slash command (alias `signin`) and added the missing `g` alias for `/goal`.
 **Verified by:** All 4 workspace typechecks pass; lint passes with zero warnings; sandbox tests 30 pass / 0 fail; CLI tests 100 pass / 0 fail; Nova source verification signed off.
 **Archived:** 2026-07-27
 
-## FID-2026-0727-002 — low — Rename Remaining `.freebuff/` References
+### Rename Remaining `.freebuff/` References (FID-2026-0727-002)
 
 **Closed:** 2026-07-27
 **Resolution:** Removed the duplicate FID, archived the kept FID, updated `.gitignore` to ignore `.savant-code/` instead of `.freebuff/`, renamed `docs/FreeBuff Business And Backend Research.md` to `docs/Savant-Code Business And Backend Research.md`, and added historical notes to both research docs explaining the legacy brand references.
 **Verified by:** Workspace typechecks and SDK tests pass.
 **Archived:** 2026-07-27
 
-## v0.0.9 — 2026-07-25
+## v0.0.10 — 2026-07-25
 
 ### Universal Copy Buttons on Every Response Block (FID-087)
 
@@ -40,7 +42,7 @@ Added a copy affordance to every assistant-facing content block in the CLI trans
 
 **FID:** FID-2026-0725-087 (closed / archived 2026-07-25)
 
-## v0.0.8 — 2026-07-25
+## v0.0.9 — 2026-07-25
 
 ### Context Compaction System — Four-Layer Progressive Auto-Compaction (FID-085)
 
