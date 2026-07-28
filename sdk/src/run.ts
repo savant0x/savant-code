@@ -194,6 +194,8 @@ export type RunOptions = {
   onFileWritten?: OnFileWrittenCallback
   /** Dev override flag — bypasses all FSM tool gating and agent tool restrictions. */
   devMode?: boolean
+  /** Optional sandbox permission mode. */
+  permissionMode?: 'safe' | 'prompt' | 'unsafe'
   /** Optional pre-formatted model metadata block injected into the agent
    *  system prompt via the {SAVANT_CODE_MODEL_INFO} placeholder. */
   modelInfoText?: string
@@ -320,6 +322,7 @@ async function runOnce({
   onStateSnapshot,
   onFileWritten,
   devMode,
+  permissionMode,
   modelInfoText,
 }: RunExecutionOptions): Promise<RunState> {
   const fsSourceValue = typeof fsSource === 'function' ? fsSource() : fsSource
@@ -378,6 +381,9 @@ async function runOnce({
   // Ensure devMode reflects the current CLI state (may have changed since last run)
   if (devMode !== undefined) {
     sessionState.fileContext.devMode = devMode
+  }
+  if (permissionMode !== undefined) {
+    sessionState.fileContext.permissionMode = permissionMode
   }
 
   for (const toolName of COMPOSIO_META_TOOL_NAMES) {

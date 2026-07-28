@@ -31,7 +31,11 @@ import { getSystemMessage, getUserMessage } from '../utils/message-history'
 import { safeOpen } from '../utils/open-url'
 import { fetchGatewayModels } from '../utils/openrouter-models'
 import { capturePendingAttachments } from '../utils/pending-attachments'
-import { loadSavantCodeModelPreference, saveSavantCodeModelPreference } from '../utils/settings'
+import {
+  loadSavantCodeModelPreference,
+  saveSavantCodeModelPreference,
+  savePermissionModePreference,
+} from '../utils/settings'
 import { getSkillByName } from '../utils/skill-registry'
 
 import type { MultilineInputHandle } from '../components/multiline-input'
@@ -232,6 +236,7 @@ const ALL_COMMANDS: CommandDefinition[] = [
   }),
   defineCommandWithArgs({
     name: 'goal',
+    aliases: ['g'],
     handler: handleGoalCommand,
   }),
   defineCommandWithArgs({
@@ -296,6 +301,27 @@ const ALL_COMMANDS: CommandDefinition[] = [
     },
   }),
   defineCommand({
+    name: 'login',
+    aliases: ['signin'],
+    handler: (params) => {
+      params.abortControllerRef.current?.abort()
+      params.stopStreaming()
+      params.setCanProcessQueue(false)
+
+      const { resetLoginState } = useLoginStore.getState()
+      resetLoginState()
+      params.setMessages((prev) => [
+        ...prev,
+        getUserMessage(params.inputValue.trim()),
+        getSystemMessage('Opening login screen...'),
+      ])
+      params.saveToHistory(params.inputValue.trim())
+      clearInput(params)
+      params.setUser(null)
+      params.setIsAuthenticated(false)
+    },
+  }),
+  defineCommand({
     name: 'logout',
     aliases: ['signout'],
     handler: (params) => {
@@ -325,6 +351,64 @@ const ALL_COMMANDS: CommandDefinition[] = [
     aliases: ['quit', 'q'],
     handler: () => {
       process.kill(process.pid, 'SIGINT')
+    },
+  }),
+  defineCommandWithArgs({
+    name: 'permissions',
+    aliases: ['sandbox', 'safety'],
+    handler: (params, args) => {
+      const trimmedArgs = args.trim().toLowerCase()
+      const currentMode = useChatStore.getState().permissionMode
+      const validModes = ['safe', 'prompt', 'unsafe'] as const
+      const modeDescriptions: Record<
+        (typeof validModes)[number],
+        string
+      > = {
+        safe: 'Risky tools are denied automatically.',
+        prompt:
+          'Risky tools are blocked; interactive prompts are not yet implemented, so they currently downgrade to deny.',
+        unsafe:
+          'Risky tools are allowed. Use with caution.',
+      }
+
+      if (!trimmedArgs) {
+        params.setMessages((prev) => [
+          ...prev,
+          getUserMessage(params.inputValue.trim()),
+          getSystemMessage(
+            `Current permission mode: **${currentMode}**\n\n${modeDescriptions[currentMode]}`,
+          ),
+        ])
+        params.saveToHistory(params.inputValue.trim())
+        clearInput(params)
+        return
+      }
+
+      if (!validModes.includes(trimmedArgs as (typeof validModes)[number])) {
+        params.setMessages((prev) => [
+          ...prev,
+          getUserMessage(params.inputValue.trim()),
+          getSystemMessage(
+            `Unknown permission mode: "${trimmedArgs}". Use "/permissions safe", "/permissions prompt", or "/permissions unsafe".`,
+          ),
+        ])
+        params.saveToHistory(params.inputValue.trim())
+        clearInput(params)
+        return
+      }
+
+      const newMode = trimmedArgs as (typeof validModes)[number]
+      useChatStore.getState().setPermissionMode(newMode)
+      savePermissionModePreference(newMode)
+      params.setMessages((prev) => [
+        ...prev,
+        getUserMessage(params.inputValue.trim()),
+        getSystemMessage(
+          `Permission mode set to **${newMode}**.\n\n${modeDescriptions[newMode]}`,
+        ),
+      ])
+      params.saveToHistory(params.inputValue.trim())
+      clearInput(params)
     },
   }),
   defineCommandWithArgs({

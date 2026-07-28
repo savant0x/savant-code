@@ -1,5 +1,12 @@
 # Changelog
 
+## FID-2026-07-27-001 — high — Tool Safety + Sandbox Engine (Phase 1)
+
+**Closed:** 2026-07-27
+**Resolution:** Implemented Phase 1 of the Tool Safety + Sandbox Engine. Added declarative safety metadata per tool in `common/src/tools/safety-registry.ts`, a runtime `SandboxEngine` in `packages/agent-runtime/src/tools/sandbox/engine.ts`, a destructive shell command denylist, and network gating. Wired sandbox evaluation into `packages/agent-runtime/src/tools/tool-executor.ts` after FSM/phase gating and before handler invocation. Added user-facing permission controls: `--permission-mode <safe|prompt|unsafe>` CLI flag, persisted setting via `settings.json`, and `/permissions` slash command (aliases `sandbox`, `safety`). Also restored the `/login` slash command (alias `signin`) and added the missing `g` alias for `/goal`.
+**Verified by:** All 4 workspace typechecks pass; lint passes with zero warnings; sandbox tests 30 pass / 0 fail; CLI tests 100 pass / 0 fail; Nova source verification signed off.
+**Archived:** 2026-07-27
+
 ## FID-2026-0727-002 — low — Rename Remaining `.freebuff/` References
 
 **Closed:** 2026-07-27

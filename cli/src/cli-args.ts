@@ -7,6 +7,8 @@ import { Argument, Command } from 'commander'
 import { IS_SAVANT_FREE, type AgentMode } from './utils/constants'
 import { getCliEnv } from './utils/env'
 
+import type { PermissionMode } from './utils/settings'
+
 const require = createRequire(import.meta.url)
 
 export type ParsedArgs = {
@@ -18,6 +20,7 @@ export type ParsedArgs = {
   continueId?: string | null
   cwd?: string
   initialMode?: AgentMode
+  initialPermissionMode?: PermissionMode
 }
 
 export function loadPackageVersion(): string {
@@ -96,6 +99,10 @@ export function parseArgs({
       .option('--edit', 'Start in EDIT mode (default)')
       .option('--scaffold', 'Start in SCAFFOLD mode')
       .option('--analyze', 'Start in ANALYZE mode')
+      .option(
+        '--permission-mode <mode>',
+        'Sandbox permission mode: safe, prompt, or unsafe (default: prompt)',
+      )
       .addHelpText(
         'after',
         '\nCommands:\n  login                          Log in to your account\n  publish                        Publish agents to the registry',
@@ -146,6 +153,15 @@ export function parseArgs({
     if (options.analyze) initialMode = 'ANALYZE'
   }
 
+  // Validate and normalize --permission-mode (last flag wins)
+  let initialPermissionMode: PermissionMode | undefined
+  if (options.permissionMode) {
+    const normalized = String(options.permissionMode).toLowerCase()
+    if (normalized === 'safe' || normalized === 'prompt' || normalized === 'unsafe') {
+      initialPermissionMode = normalized
+    }
+  }
+
   return {
     initialPrompt,
     command: args[0],
@@ -158,5 +174,6 @@ export function parseArgs({
         : null,
     cwd: options.cwd,
     initialMode,
+    initialPermissionMode,
   }
 }

@@ -33,6 +33,8 @@ export type CreateRunConfigParams = {
   onFileWritten?: OnFileWrittenCallback
   /** Dev override flag — bypasses all FSM tool gating and agent tool restrictions. */
   devMode?: boolean
+  /** Optional sandbox permission mode. */
+  permissionMode?: 'safe' | 'prompt' | 'unsafe'
   /** Optional pre-formatted model metadata block injected into the agent
    *  system prompt via the {SAVANT_CODE_MODEL_INFO} placeholder. */
   modelInfoText?: string
@@ -118,6 +120,7 @@ export const createRunConfig = (params: CreateRunConfigParams) => {
     onStateSnapshot,
     onFileWritten,
     devMode,
+    permissionMode,
     modelInfoText,
   } = params
 
@@ -136,6 +139,7 @@ export const createRunConfig = (params: CreateRunConfigParams) => {
     onStateSnapshot,
     onFileWritten,
     devMode,
+    permissionMode,
     modelInfoText,
     contextWindow: params.contextWindow,
     fileFilter: ((filePath: string) => {

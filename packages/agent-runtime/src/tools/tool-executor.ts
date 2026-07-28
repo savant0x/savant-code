@@ -1,5 +1,6 @@
 import { endsAgentStepParam, toolNames } from '@savant-code/common/tools/constants'
 import { toolParams } from '@savant-code/common/tools/list'
+import { type SandboxPermissionMode } from '@savant-code/common/tools/safety'
 import { resolveAndContain } from '@savant-code/common/util/paths'
 import { generateCompactId } from '@savant-code/common/util/string'
 import { toJSONValue } from '@savant-code/common/util/type-narrowing'
@@ -7,6 +8,7 @@ import { cloneDeep } from 'lodash'
 
 import { getMCPToolData } from '../mcp'
 import { MCP_TOOL_SEPARATOR } from '../mcp-constants'
+import { evaluateToolCall, createDefaultSandboxPolicy } from './sandbox'
 import { getAgentTemplate } from '../templates/agent-registry'
 import { getAgentShortName, getAgentToolName } from '../templates/prompts'
 import { formatValueForError } from '../util/format-value'
@@ -14,6 +16,7 @@ import { savantCode$1 } from './handlers/list'
 import { getMatchingSpawn } from './handlers/tool/spawn-agent-utils'
 import { ensureZodSchema } from './prompts'
 import { toolActivity, setActivity } from '../util/activity-tracking'
+
 
 
 import type { AgentTemplate } from '../templates/types'
@@ -458,6 +461,48 @@ export async function executeToolCall<T extends ToolName>(
       `${toolName} error: ${toolCall.error}`,
     )
     return previousToolCallFinished
+  }
+
+  // FID-2026-07-27-001: Evaluate tool call against the sandbox policy after
+  // FSM and agent-restriction gating, but before streaming the tool_call event
+  // or invoking the handler. devMode bypasses the sandbox (logged below).
+  if (!isDevOverride) {
+    if (!params.fileContext?.projectRoot) {
+      logger.warn(
+        { toolName },
+        'Sandbox check skipped: fileContext.projectRoot is missing. This is a configuration error and may allow unsafe tool calls.',
+      )
+    } else {
+      const sandboxPolicy = createDefaultSandboxPolicy(
+        params.fileContext.projectRoot,
+        params.fileContext.permissionMode as SandboxPermissionMode | undefined,
+      )
+      const sandboxDecision = evaluateToolCall({
+        toolName: toolCall.toolName,
+        input: toolCall.input as Record<string, JSONValue>,
+        policy: sandboxPolicy,
+      })
+      if (sandboxDecision.type === 'deny') {
+        onResponseChunk({
+          type: 'error',
+          message: `Tool \`${toolName}\` was blocked by the sandbox: ${sandboxDecision.reason}`,
+        })
+        return previousToolCallFinished
+      }
+      if (sandboxDecision.type === 'prompt') {
+        // Phase 1: no interactive TUI permission modal yet. Downgrade to deny
+        // in headless mode. Future work will surface a permission request event.
+        logger.debug(
+          { toolName, reason: sandboxDecision.reason },
+          'Sandbox prompt decision downgraded to deny in headless mode',
+        )
+        onResponseChunk({
+          type: 'error',
+          message: `Tool \`${toolName}\` requires approval: ${sandboxDecision.reason}. Run with permission mode \`unsafe\` or re-run interactively when supported.`,
+        })
+        return previousToolCallFinished
+      }
+    }
   }
 
   // NOTE: Future improvement: allow tools to provide a validation function and move this logic into the spawn_agents validation function.

@@ -179,6 +179,13 @@ const ALL_SLASH_COMMANDS: SlashCommand[] = [
         },
       ]),
   {
+    id: 'login',
+    label: 'login',
+    description: 'Open the login screen',
+    aliases: ['signin'],
+    implicitCommand: true,
+  },
+  {
     id: 'logout',
     label: 'logout',
     description: 'Sign out of your session',
@@ -209,6 +216,12 @@ const ALL_SLASH_COMMANDS: SlashCommand[] = [
     label: 'verify',
     description: 'Run typechecks across all workspaces (or one: sdk, common, agent-runtime, cli)',
     aliases: ['typecheck', 'check'],
+  },
+  {
+    id: 'permissions',
+    label: 'permissions',
+    description: 'Show or set the sandbox permission mode: /permissions [safe|prompt|unsafe]',
+    aliases: ['sandbox', 'safety'],
   },
 ]
 

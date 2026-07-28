@@ -110,6 +110,7 @@ import type { SavantFreeSession } from './types/savant-free-session'
 import type { User } from './utils/auth'
 import type { AgentMode } from './utils/constants'
 import type { OpenRouterModel } from './utils/openrouter-models'
+import type { PermissionMode } from './utils/settings'
 import type { BoxRenderable, ScrollBoxRenderable } from '@opentui/core'
 import type { FeedbackCategory } from '@savant-code/common/constants/feedback'
 import type { FileTreeNode } from '@savant-code/common/util/file'
@@ -128,6 +129,7 @@ export const Chat = ({
   continueChatId,
   authStatus,
   initialMode,
+  initialPermissionMode,
   gitRoot,
   onSwitchToGitRoot,
   savantFreeSession,
@@ -143,6 +145,7 @@ export const Chat = ({
   continueChatId?: string
   authStatus: AuthStatus
   initialMode?: AgentMode
+  initialPermissionMode?: PermissionMode
   gitRoot?: string | null
   onSwitchToGitRoot?: () => void
   savantFreeSession: SavantFreeSession | null
@@ -306,6 +309,14 @@ export const Chat = ({
       setAgentMode(initialMode)
     }
   }, [initialMode, setAgentMode])
+
+  // Set initial permission mode from CLI flag on mount (CLI takes precedence
+  // over saved setting because it is an explicit per-launch override).
+  useEffect(() => {
+    if (initialPermissionMode) {
+      useChatStore.getState().setPermissionMode(initialPermissionMode)
+    }
+  }, [initialPermissionMode])
 
   // Use extracted chat messages hook for message tree and pagination
   const {

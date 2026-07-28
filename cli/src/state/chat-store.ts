@@ -4,7 +4,11 @@ import { immer } from 'zustand/middleware/immer'
 
 import { AGENT_MODES, IS_SAVANT_FREE } from '../utils/constants'
 import { clamp } from '../utils/math'
-import { loadModePreference, saveModePreference } from '../utils/settings'
+import {
+  loadModePreference,
+  saveModePreference,
+  loadPermissionModePreference,
+} from '../utils/settings'
 
 import type { ChatMessage, ContentBlock } from '../types/chat'
 import type {
@@ -110,6 +114,8 @@ export type ChatStoreState = {
   fsmPhase: string
   /** Dev override — bypasses all ECHO tool gating when true. */
   devMode: boolean
+  /** Sandbox permission mode: safe = deny risky, prompt = ask when possible, unsafe = allow. */
+  permissionMode: 'safe' | 'prompt' | 'unsafe'
   /**
    * Runtime activity indicator (FID-2026-0718-009). Distinct from fsmPhase.
    * What the agent is doing RIGHT NOW (tool/model/sub-agent/research).
@@ -242,6 +248,8 @@ type ChatStoreActions = {
   markChunkSeen: () => void
   /** Toggle dev override mode on/off. */
   setDevMode: (active: boolean) => void
+  /** Set the sandbox permission mode. */
+  setPermissionMode: (mode: 'safe' | 'prompt' | 'unsafe') => void
 }
 
 type ChatStore = ChatStoreState & ChatStoreActions
@@ -263,6 +271,7 @@ const initialState: ChatStoreState = {
   slashSelectedIndex: 0,
   agentSelectedIndex: 0,
   agentMode: loadModePreference(),
+  permissionMode: loadPermissionModePreference(),
   hasReceivedPlanResponse: false,
   lastMessageMode: null,
   sessionCreditsUsed: 0,
@@ -704,6 +713,11 @@ export const useChatStore = create<ChatStore>()(
         state.devMode = active
       }),
 
+    setPermissionMode: (mode) =>
+      set((state) => {
+        state.permissionMode = mode
+      }),
+
     reset: () =>
       set((state) => {
         state.chatSessionId = generateSessionId()
@@ -748,6 +762,7 @@ export const useChatStore = create<ChatStore>()(
         state.fsmPhase = initialState.fsmPhase
         state.activity = initialState.activity
         state.devMode = initialState.devMode
+        state.permissionMode = initialState.permissionMode
       }),
   })),
 )

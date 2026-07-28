@@ -30,8 +30,14 @@ const LEGACY_MODE_MIGRATION: Record<string, AgentMode> = {
 /**
  * Settings schema - add new settings here as the product evolves
  */
+export type PermissionMode = 'safe' | 'prompt' | 'unsafe'
+
 export interface Settings {
   mode?: AgentMode
+  /** Default sandbox permission mode. "safe" denies risky tools, "prompt" asks
+   *  when possible (headless deny fallback), "unsafe" allows the agent to run
+   *  any gated tool. Persisted so it survives across sessions. */
+  permissionMode?: PermissionMode
   adsEnabled?: boolean
   /** Last model the user picked in the savant-free model selector. Restored on
    *  next savant-free launch so users land in the queue for their preferred
@@ -120,6 +126,16 @@ const validateSettings = (parsed: JSONValue): Settings => {
     if (AGENT_MODES.includes(migrated as AgentMode)) {
       settings.mode = migrated as AgentMode
     }
+  }
+
+  // Validate permissionMode; drop unknown values and fall back to prompt.
+  if (
+    typeof obj.permissionMode === 'string' &&
+    (obj.permissionMode === 'safe' ||
+      obj.permissionMode === 'prompt' ||
+      obj.permissionMode === 'unsafe')
+  ) {
+    settings.permissionMode = obj.permissionMode as PermissionMode
   }
 
   // Validate adsEnabled
@@ -226,6 +242,21 @@ export const loadModePreference = (): AgentMode => {
  */
 export const saveModePreference = (mode: AgentMode): void => {
   saveSettings({ mode })
+}
+
+/**
+ * Load the saved sandbox permission mode preference.
+ * @returns The saved permission mode, or 'prompt' if not found or invalid
+ */
+export const loadPermissionModePreference = (): PermissionMode => {
+  return loadSettings().permissionMode ?? 'prompt'
+}
+
+/**
+ * Save the sandbox permission mode preference.
+ */
+export const savePermissionModePreference = (mode: PermissionMode): void => {
+  saveSettings({ permissionMode: mode })
 }
 
 /**

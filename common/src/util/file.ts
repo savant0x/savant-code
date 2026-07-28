@@ -98,6 +98,8 @@ export const ProjectFileContextSchema = z.object({
   }),
   /** Dev override flag — bypasses all FSM tool gating and agent tool restrictions when true. */
   devMode: z.boolean().optional(),
+  /** Sandbox permission mode: safe = deny risky, prompt = ask when possible, unsafe = allow. */
+  permissionMode: z.enum(['safe', 'prompt', 'unsafe']).optional(),
 })
 
 export type ProjectFileContext = {
@@ -130,6 +132,8 @@ export type ProjectFileContext = {
   }
   /** Dev override flag — bypasses all FSM tool gating and agent tool restrictions when true. */
   devMode?: boolean
+  /** Sandbox permission mode: safe = deny risky, prompt = ask when possible, unsafe = allow. */
+  permissionMode?: 'safe' | 'prompt' | 'unsafe'
 }
 
 export const fileRegex =
@@ -180,6 +184,7 @@ export const getStubProjectFileContext = (): ProjectFileContext => ({
     chromeAvailable: false,
   },
   devMode: undefined,
+  permissionMode: undefined,
 })
 
 export const createMarkdownFileBlock = (filePath: string, content: string) => {

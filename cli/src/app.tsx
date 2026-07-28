@@ -25,6 +25,7 @@ import type { MultilineInputHandle } from './components/multiline-input'
 import type { TopBannerType } from './types/store'
 import type { User } from './utils/auth'
 import type { AgentMode } from './utils/constants'
+import type { PermissionMode } from './utils/settings'
 import type { AuthStatus } from './utils/status-indicator-state'
 import type { FileTreeNode } from '@savant-code/common/util/file'
 
@@ -37,6 +38,7 @@ interface AppProps {
   continueChat: boolean
   continueChatId?: string
   initialMode?: AgentMode
+  initialPermissionMode?: PermissionMode
   showProjectPicker: boolean
   onProjectChange: (projectPath: string) => void
 }
@@ -50,6 +52,7 @@ export const App = ({
   continueChat,
   continueChatId,
   initialMode,
+  initialPermissionMode,
   showProjectPicker,
   onProjectChange,
 }: AppProps) => {
@@ -249,6 +252,7 @@ export const App = ({
         continueChatId={effectiveContinueChatId}
         authStatus={authStatus}
         initialMode={initialMode}
+        initialPermissionMode={initialPermissionMode}
         gitRoot={gitRoot}
         onSwitchToGitRoot={handleSwitchToGitRoot}
         showChatHistory={showChatHistory}
@@ -274,6 +278,7 @@ interface AuthedSurfaceProps {
   continueChatId: string | undefined
   authStatus: AuthStatus
   initialMode: AgentMode | undefined
+  initialPermissionMode?: PermissionMode
   gitRoot: string | null | undefined
   onSwitchToGitRoot: () => void
   showChatHistory: boolean
@@ -300,6 +305,7 @@ const AuthedSurface = ({
   continueChatId,
   authStatus,
   initialMode,
+  initialPermissionMode,
   gitRoot,
   onSwitchToGitRoot,
   showChatHistory,
@@ -367,6 +373,7 @@ const AuthedSurface = ({
       continueChatId={continueChatId}
       authStatus={authStatus}
       initialMode={initialMode}
+      initialPermissionMode={initialPermissionMode}
       gitRoot={gitRoot}
       onSwitchToGitRoot={onSwitchToGitRoot}
       savantFreeSession={session}

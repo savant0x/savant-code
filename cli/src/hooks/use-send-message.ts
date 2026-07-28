@@ -706,6 +706,7 @@ export const useSendMessage = ({
               )
           },
           devMode: useChatStore.getState().devMode,
+          permissionMode: useChatStore.getState().permissionMode,
         })
 
         // Wire sidebar: add main agent to stack at run start

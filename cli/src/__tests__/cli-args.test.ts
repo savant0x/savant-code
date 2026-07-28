@@ -145,6 +145,20 @@ describe('CLI Argument Parsing', () => {
     expect(result.version).toBe(true)
   })
 
+  test('parses --permission-mode flag', () => {
+    const result = parseArgs({
+      argv: ['node', 'savant-code', '--permission-mode', 'safe'],
+    })
+    expect(result.initialPermissionMode).toBe('safe')
+  })
+
+  test('ignores invalid --permission-mode values', () => {
+    const result = parseArgs({
+      argv: ['node', 'savant-code', '--permission-mode', 'paranoid'],
+    })
+    expect(result.initialPermissionMode).toBeUndefined()
+  })
+
   test('parses --prompt-file flag correctly', () => {
     const tmpFile = path.join(os.tmpdir(), 'cli-args-prompt-test.txt')
     fs.writeFileSync(tmpFile, 'hello from file')

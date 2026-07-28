@@ -57,6 +57,13 @@ fid:
   severity_levels: ["critical", "high", "medium", "low"]
   max_open_fids: 20
 
+# Sandbox / tool-safety policy. Runtime values live in CLI state and are
+# persisted in the user's settings.json. This key documents the canonical
+# default; actual behavior is controlled by --permission-mode and /permissions.
+savant:
+  sandbox:
+    permissionMode: "prompt"  # safe | prompt | unsafe
+
 perfection_loop:
   max_iterations: 10
   change_threshold: 0.10

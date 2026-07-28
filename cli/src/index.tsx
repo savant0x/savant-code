@@ -200,6 +200,7 @@ async function main(): Promise<void> {
     continueId,
     cwd,
     initialMode,
+    initialPermissionMode,
   } = parseArgs()
 
   const isLoginCommand = command === 'login'
@@ -379,6 +380,7 @@ async function main(): Promise<void> {
         continueChat={continueChat}
         continueChatId={continueId ?? undefined}
         initialMode={initialMode}
+        initialPermissionMode={initialPermissionMode}
         showProjectPicker={showProjectPickerScreen}
         onProjectChange={handleProjectChange}
       />
