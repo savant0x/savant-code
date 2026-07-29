@@ -38,6 +38,9 @@ docs/bot-detection.md
 .gstack/
 
 # Buffbench DEBUG_ERROR dumps
+
+# Compiled CLI binaries and their sibling artifacts
+/cli/bin/
 evals/buffbench/*-error-*.json
 
 # SavantFree Desktop local runtime state in an opened project (SQLite DB, git

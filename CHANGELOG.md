@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.0.11 — 2026-07-28
+
+### Fix Release Binary Environment (FID-2026-0728-011)
+
+**Closed:** 2026-07-28
+**Resolution:** Fixed `savant-code` release binaries reporting `Using environment: dev` and exiting immediately after install. Root cause was Bun's `--define` not reliably replacing `process.env.*` references once workspace packages were pre-built to `dist` and minified. Solution: the build now writes a sibling `env.json` next to the binary containing the canonical runtime env values; `common/src/env.ts` loads this file before parsing the env schema. Also updated the npm wrapper and CI workflow to ship `env.json` alongside the binary and `tree-sitter.wasm`.
+**Verified by:** Local smoke test of the compiled Windows binary shows the TUI starts and no `Using environment:` banner is printed; `common` and `cli` typechecks pass.
+**Archived:** 2026-07-28
+
 ## v0.0.9 — 2026-07-28
 
 ### /history Command Not Capturing Full Sessions (FID-2026-0728-008)

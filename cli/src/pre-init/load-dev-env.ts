@@ -1,18 +1,15 @@
-// Loads the repo-root `.env.local` into process.env at dev boot.
+// Loads environment values before `common/src/env.ts` parses the schema.
 //
-// Why this exists: `bun dev` runs `bun run src/index.tsx --cwd ..`, and Bun's
-// dotenv auto-loader is disabled once `--cwd` is passed. The environment
-// validation gate in `common/src/env.ts` therefore sees no vars and throws.
-// The application's existing env loader (used by tests) works around the
-// same gap with a hand-rolled parser; we reuse that exact algorithm here
-// so a fresh `bun dev` (no shell exports) picks up `.env.local`.
+// Two modes:
+// 1. Release binary: a sibling `env.json` (written next to the compiled
+//    binary at build time) provides the canonical env values. This is
+//    required because Bun's `--define` replacement is unreliable for env
+//    vars once workspace packages are pre-built to dist and minified.
+// 2. Local dev: `bun dev` runs with `--cwd ..`, which disables Bun's
+//    dotenv auto-loader, so we manually load the repo-root `.env.local`.
 //
-// This module MUST be imported before any `@savant-code/common` import that would
-// trigger `common/src/env.ts` (which parses the schema at module load).
-//
-// Path resolution: under `--cwd ..` Bun can report a distorted `import.meta.dir`,
-// so we walk UP from this file's directory until we find `.env.local` rather
-// than assuming a fixed number of `..` segments.
+// This module MUST be imported before any `@savant-code/common` import that
+// would trigger `common/src/env.ts` (which parses the schema at module load).
 import fs from 'fs'
 import path from 'path'
 
@@ -33,7 +30,31 @@ function findUp(startDir: string, relName: string): string | null {
   return null
 }
 
-const ENV_LOCAL_PATH = findUp(import.meta.dir, '.env.local')
+/**
+ * Load a sibling `env.json` from the directory containing the running binary.
+ * Returns true if the file was found and applied.
+ */
+function loadBinaryEnvIfPresent(): boolean {
+  const execPath = process.execPath
+  if (!execPath) return false
+
+  const envJsonPath = path.join(path.dirname(execPath), 'env.json')
+  try {
+    if (!fs.existsSync(envJsonPath)) return false
+    const parsed = JSON.parse(fs.readFileSync(envJsonPath, 'utf-8'))
+    if (!parsed || typeof parsed !== 'object') return false
+
+    for (const [key, value] of Object.entries(parsed as Record<string, unknown>)) {
+      if (typeof value === 'string') {
+        process.env[key] = value
+      }
+    }
+    return true
+  } catch {
+    // A missing or corrupt env.json is fine; fall through to .env.local logic.
+    return false
+  }
+}
 
 /**
  * Parse a dotenv-style file and apply it to process.env.
@@ -41,9 +62,10 @@ const ENV_LOCAL_PATH = findUp(import.meta.dir, '.env.local')
  * Existing process.env values win (don't clobber real shell exports).
  */
 function applyEnvLocal(): void {
-  if (!ENV_LOCAL_PATH) return
+  const envLocalPath = findUp(import.meta.dir, '.env.local')
+  if (!envLocalPath) return
   try {
-    const content = fs.readFileSync(ENV_LOCAL_PATH, 'utf-8')
+    const content = fs.readFileSync(envLocalPath, 'utf-8')
     for (const rawLine of content.split('\n')) {
       const line = rawLine.trim()
       if (!line || line.startsWith('#')) continue
@@ -68,4 +90,7 @@ function applyEnvLocal(): void {
   }
 }
 
-applyEnvLocal()
+// Release binaries ship their own env.json; everything else loads .env.local.
+if (!loadBinaryEnvIfPresent()) {
+  applyEnvLocal()
+}

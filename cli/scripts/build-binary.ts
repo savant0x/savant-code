@@ -165,10 +165,24 @@ async function main() {
     targetInfo.platform === 'win32' ? `${binaryName}.exe` : binaryName
   const outputFile = join(binDir, outputFilename)
 
-  // Collect all NEXT_PUBLIC_* environment variables
-  const nextPublicEnvVars = Object.entries(process.env)
-    .filter(([key]) => key.startsWith('NEXT_PUBLIC_'))
-    .map(([key, value]) => [`process.env.${key}`, `"${value ?? ''}"`])
+  // Build the canonical runtime environment for the release binary. We used
+  // to pass these as `--define` flags, but workspace packages are pre-built
+  // to dist and minified, so `--define` does not reliably replace every
+  // `process.env.*` reference. Instead we ship an `env.json` next to the
+  // binary and load it at startup (see cli/src/pre-init/load-dev-env.ts).
+  const binaryEnv: Record<string, string> = {
+    NODE_ENV: 'production',
+    SAVANT_CODE_IS_BINARY: 'true',
+    SAVANT_CODE_CLI_VERSION: version,
+    SAVANT_CODE_CLI_TARGET: getCliTargetLabel(targetInfo),
+    SAVANT_FREE_MODE: process.env.SAVANT_FREE_MODE ?? 'false',
+  }
+
+  for (const [key, value] of Object.entries(process.env)) {
+    if (key.startsWith('NEXT_PUBLIC_') && value !== undefined) {
+      binaryEnv[key] = value
+    }
+  }
 
   const defineFlags = [
     ['process.env.NODE_ENV', '"production"'],
@@ -179,7 +193,6 @@ async function main() {
       `"${getCliTargetLabel(targetInfo)}"`,
     ],
     ['process.env.SAVANT_FREE_MODE', `"${process.env.SAVANT_FREE_MODE ?? 'false'}"`],
-    ...nextPublicEnvVars,
   ]
 
   const buildArgs = [
@@ -194,8 +207,9 @@ async function main() {
       : []),
     `--outfile=${outputFile}`,
     '--sourcemap=none',
+    // Keep non-env build constants as `--define` fallbacks. Env vars are
+    // injected at runtime via the sibling env.json file.
     ...defineFlags.flatMap(([key, value]) => ['--define', `${key}=${value}`]),
-    '--env "NEXT_PUBLIC_*"', // Copies all current env vars in process.env to the compiled binary that match the pattern.
   ]
 
   log(
@@ -218,6 +232,13 @@ async function main() {
   const siblingWasm = join(binDir, 'tree-sitter.wasm')
   writeFileSync(siblingWasm, readFileSync(sourceWasm))
   logAlways(`Copied tree-sitter.wasm sibling: ${sourceWasm} → ${siblingWasm}`)
+
+  // Ship the runtime environment as a sibling JSON file. This is more
+  // reliable than `--define` because workspace packages are pre-built to
+  // dist and minified, so compile-time replacements can miss references.
+  const envJsonPath = join(binDir, 'env.json')
+  writeFileSync(envJsonPath, JSON.stringify(binaryEnv, null, 2))
+  logAlways(`Wrote env.json sibling: ${envJsonPath}`)
 
   if (targetInfo.platform !== 'win32') {
     chmodSync(outputFile, 0o755)

@@ -103,7 +103,7 @@ jobs:
         shell: bash
         run: |
           cd cli/bin
-          tar -czf "savant-code-${{ matrix.target }}.tar.gz" "${{ matrix.binary }}" tree-sitter.wasm
+          tar -czf "savant-code-${{ matrix.target }}.tar.gz" "${{ matrix.binary }}" tree-sitter.wasm env.json
 
       - name: Upload to GitHub release
         shell: bash
