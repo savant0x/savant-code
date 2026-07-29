@@ -128,7 +128,14 @@ async function main() {
     throw new Error('Version argument is required when building a binary')
   }
 
-  log(`Building ${binaryName} @ ${version}`)
+  // Release binaries must run in production mode. Local dev builds can opt out
+  // by setting SAVANT_CODE_BUILD_ENV before invoking this script.
+  const buildEnv = process.env.SAVANT_CODE_BUILD_ENV
+  process.env.NEXT_PUBLIC_CB_ENVIRONMENT = buildEnv ?? 'prod'
+
+  log(
+    `Building ${binaryName} @ ${version} (env=${process.env.NEXT_PUBLIC_CB_ENVIRONMENT})`,
+  )
 
   const targetInfo = getTargetInfo()
   const binDir = join(cliRoot, 'bin')

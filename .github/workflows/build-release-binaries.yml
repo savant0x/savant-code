@@ -83,6 +83,9 @@ jobs:
       - name: Build binary
         working-directory: cli
         env:
+          # Release binaries must run in production mode. SAVANT_CODE_BUILD_ENV
+          # lets dev builds opt out; in CI we always want prod.
+          NEXT_PUBLIC_CB_ENVIRONMENT: prod
           # Pin the build target so the native runner architecture does not
           # accidentally influence which binary is produced.
           OVERRIDE_TARGET: ${{ matrix.bun-target }}
