@@ -734,9 +734,13 @@ function createLauncher(productConfig) {
       throw error
     }
 
-    const downloadUrl = `${
-      process.env.NEXT_PUBLIC_SAVANT_CODE_APP_URL || 'https://savant-code.com'
-    }/api/releases/download/${version}/${fileName}`
+    // Default to GitHub releases. The `SAVANT_CODE_RELEASES_URL` env var lets
+    // forks or enterprise deployments override the host (useful when a custom
+    // release server replaces the public GitHub assets).
+    const releaseBaseUrl =
+      process.env.SAVANT_CODE_RELEASES_URL ||
+      'https://github.com/savant0x/savant-code/releases/download'
+    const downloadUrl = `${releaseBaseUrl}/v${version}/${fileName}`
 
     fs.mkdirSync(CONFIG.configDir, { recursive: true })
     const tempBinaryPath = await downloadAndExtract(

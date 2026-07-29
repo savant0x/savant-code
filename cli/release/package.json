@@ -1,8 +1,18 @@
 {
   "name": "savant-code",
-  "version": "0.0.1",
+  "version": "0.0.9",
   "description": "Multi-Agent AI Coding Assistant with ECHO Protocol",
   "license": "Apache-2.0",
+  "author": "Savant Code <founders@savant-code.com>",
+  "keywords": [
+    "ai",
+    "cli",
+    "coding-assistant",
+    "agent",
+    "echo-protocol",
+    "multi-agent",
+    "typescript"
+  ],
   "bin": {
     "savant-code": "index.js",
     "sc": "index.js"
@@ -36,7 +46,10 @@
     "type": "git",
     "url": "https://github.com/savant0x/savant-code.git"
   },
-  "homepage": "https://savant-code.com",
+  "bugs": {
+    "url": "https://github.com/savant0x/savant-code/issues"
+  },
+  "homepage": "https://github.com/savant0x/savant-code#readme",
   "publishConfig": {
     "access": "public"
   }
