@@ -972,22 +972,22 @@ if run_phase 31; then
   version_from_root=$(grep -m1 '"version"' "$REPO_ROOT/package.json" | sed -E 's/.*"version"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/')
   version_from_cli=$(grep -m1 '"version"' "$REPO_ROOT/cli/package.json" | sed -E 's/.*"version"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/')
 
-  if [ "$version_from_file" = "0.0.7" ]; then
-    pass "T179" "VERSION file is 0.0.7"
+  if [ "$version_from_file" = "0.0.9" ]; then
+    pass "T179" "VERSION file is 0.0.9"
   else
-    fail "T179" "VERSION file is '$version_from_file' (expected 0.0.7)"
+    fail "T179" "VERSION file is '$version_from_file' (expected 0.0.9)"
   fi
 
-  if [ "$version_from_root" = "0.0.7" ]; then
-    pass "T180" "Root package.json is 0.0.7"
+  if [ "$version_from_root" = "0.0.9" ]; then
+    pass "T180" "Root package.json is 0.0.9"
   else
-    fail "T180" "Root package.json is '$version_from_root' (expected 0.0.7)"
+    fail "T180" "Root package.json is '$version_from_root' (expected 0.0.9)"
   fi
 
-  if [ "$version_from_cli" = "0.0.7" ]; then
-    pass "T181" "cli/package.json is 0.0.7"
+  if [ "$version_from_cli" = "0.0.9" ]; then
+    pass "T181" "cli/package.json is 0.0.9"
   else
-    fail "T181" "cli/package.json is '$version_from_cli' (expected 0.0.7)"
+    fail "T181" "cli/package.json is '$version_from_cli' (expected 0.0.9)"
   fi
 fi
 

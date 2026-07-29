@@ -25,7 +25,7 @@ const LAYOUT = {
   BACKGROUND_CHATS: 475, // Load this many more in the background for search
   MAX_RENDERED_CHATS: 100, // Only render this many in the list
   TIME_COL_WIDTH: 12, // e.g., "2 hours ago"
-  MSGS_COL_WIDTH: 8, // e.g., "99 msgs"
+  MSGS_COL_WIDTH: 9, // e.g., "!999 msgs"
   DELETE_COL_WIDTH: 6, // e.g., "[×]" + marginRight
   GAP_WIDTH: 3, // gap between columns
 } as const
@@ -108,7 +108,11 @@ export const ChatHistoryScreen: React.FC<ChatHistoryScreenProps> = ({
           LAYOUT.TIME_COL_WIDTH,
         )
         const msgs = padRight(
-          chat.unreadable ? '—' : `${chat.messageCount} msgs`,
+          chat.unreadable
+            ? '—'
+            : chat.completed === false
+              ? `!${chat.messageCount} msgs`
+              : `${chat.messageCount} msgs`,
           LAYOUT.MSGS_COL_WIDTH,
         )
         const prompt = padRight(

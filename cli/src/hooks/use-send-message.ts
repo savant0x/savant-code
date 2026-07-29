@@ -555,6 +555,7 @@ export const useSendMessage = ({
         useChatStore.getState().messages,
         runChatDir,
         getSelectedSavantFreeModel(),
+        false,
       )
 
       // Execute SDK run with streaming handlers
@@ -841,6 +842,7 @@ export const useSendMessage = ({
               useChatStore.getState().messages,
               runChatDir,
               getSelectedSavantFreeModel(),
+              false,
             )
           }
         } else {

@@ -1,5 +1,50 @@
 # Changelog
 
+## v0.0.9 — 2026-07-28
+
+### /history Command Not Capturing Full Sessions (FID-2026-0728-008)
+
+**Closed:** 2026-07-28
+**Resolution:** Fixed the `/history` command by making the filesystem the authoritative source of truth for chat state. Async mid-stream checkpoints already wrote only to the filesystem, but `loadMostRecentChatState` previously preferred the SQLite database and returned stale data. The load path now reads the filesystem first and falls back to the DB only when filesystem state is missing or unreadable. Added a `completed` boolean to the `chat-meta.json` sidecar: `saveChatStateAsync` marks `completed: false`, `saveChatState` marks `completed: true`, and `readChatMeta` defaults a missing `completed` to `true` for backward compatibility. `getAllChats` now carries `completed` and `ChatHistoryScreen` renders a warning indicator for incomplete sessions.
+**Verified by:** `cd cli && bun run typecheck` passes; `bun test src/utils/__tests__/chat-meta.test.ts src/utils/__tests__/chat-history.test.ts src/utils/__tests__/run-state-storage.test.ts` — 56 pass / 0 fail; code-reviewer-kimi approved.
+**Archived:** 2026-07-28
+
+
+### Launch Safety Track (FID-2026-0728-004)
+
+**Closed:** 2026-07-28
+**Resolution:** Completed Phase 2 of the Sandbox Engine. Wired network gating to the current permission mode: `safe` blocks all network tools, `prompt` returns a prompt (downgraded to deny in headless mode), and `unsafe` allows them. Verified that the safety registry is consulted before tool execution, the destructive shell-command denylist blocks destructive operations in `safe` mode, `/permissions`/`/sandbox`/`/safety` aliases are wired, `--permission-mode` is parsed at CLI startup, and permission mode persists across sessions via `settings.json`. Updated the A-Z test prompt Tier 7 (T7.2–T7.8) to reflect the new behavior.
+**Verified by:** `packages/agent-runtime` typecheck passes; sandbox engine tests 19 pass / 0 fail; CLI, SDK, and common typechecks pass; code-reviewer-kimi approved.
+**Archived:** 2026-07-28
+
+### Launch Trust & Verification Track (FID-2026-0728-003)
+
+**Closed:** 2026-07-28
+**Resolution:** Hardened Savant Code's privacy-first / BYOK positioning. Telemetry and ads now default to opt-in (`adsEnabled: false`). Added `sanitizeSecrets` to the logger so analytics, Axiom, and disk logs redact values whose keys look like secrets/tokens. Unified the CLI and SDK config directories under `~/.savant-code[-env]/` using a new shared `SAVANT_CODE_CONFIG_DIR_NAME` constant. Authored `docs/privacy.md` documenting data boundaries, credential storage, network calls, retention, and user controls. Added tests for telemetry default and secret redaction, and updated credentials-storage tests for the new path.
+**Verified by:** CLI, SDK, and common typechecks pass; ESLint on changed files passes with zero warnings; 42 affected tests pass (27 CLI + 15 SDK).
+**Archived:** 2026-07-28
+
+### Launch Friction Reduction Track (FID-2026-0728-005)
+
+**Closed:** 2026-07-28
+**Resolution:** Reduced first-run friction by automatically detecting local Ollama instances and defaulting to them, persisting the direct-provider choice across sessions, and adding a post-install `/health` slash command. Added `packages/llm-providers/src/ollama/detect.ts` with `/api/version` and `/api/tags` probing that honors `OLLAMA_HOST`; wired first-run detection in `cli/src/utils/ollama-onboarding.ts` with persisted `directProvider`/`directProviderBaseUrl` settings; registered `/health` (aliases `status`, `check`) in `cli/src/commands/health-command.ts`; updated `README.md` with Ollama quick-start instructions; and added unit tests for Ollama detection and onboarding.
+**Verified by:** Typecheck passes for `cli` and `packages/llm-providers`; lint passes with zero warnings; Ollama detection tests (4) and onboarding tests (4) pass.
+**Archived:** 2026-07-28
+
+### Launch Artifacts Track (FID-2026-0728-006)
+
+**Closed:** 2026-07-28
+**Resolution:** Created public-facing launch artifacts in `docs/launch/`: HN post (`hn-post.md`), first comment (`hn-first-comment.md`), Twitter/X thread (`twitter-thread.md`), Mastodon thread (`mastodon-thread.md`), newsletter pitch (`newsletter-pitch.md`), and incident response/rollback plan (`incident-response.md`). Added a minimal dark-mode landing page at `docs/launch/landing/index.html`. Rewrote the `README.md` hero section with a one-sentence pitch, install command, Ollama setup instructions, and a demo GIF placeholder. Marketing claims were cross-checked against verified capabilities (BYOK/Ollama, permission modes, ECHO Protocol, open-source licensing).
+**Verified by:** Markdown lint passes on new docs; README renders correctly; `docs/launch/` directory contains all planned files; static landing page files are ready for deployment to `savantcode.dev`.
+**Archived:** 2026-07-28
+
+### Master Launch Strategy Execution (FID-2026-0728-007)
+
+**Closed:** 2026-07-28
+**Resolution:** Closed the master launch coordination FID now that all child tracks (Trust & Verification, Safety Track, Friction Reduction, Launch Artifacts) are closed and archived. The master sequence and critical path are documented: Trust & Verification and Safety Track completed first, Friction Reduction ran in parallel, and Launch Artifacts were finalized after the critical path. Launch Captain assigned to Orchestrator. Target public launch date remains uncommitted pending final A-Z release test across Windows/macOS/Linux and a 7-day code freeze.
+**Verified by:** Child FIDs 003–006 are closed/archived; `docs/launch/` and README artifacts are in place.
+**Archived:** 2026-07-28
+
 ## v0.0.8 — 2026-07-27
 
 ### Tool Safety + Sandbox Engine (Phase 1) (FID-2026-07-27-001)

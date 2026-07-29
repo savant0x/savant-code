@@ -71,7 +71,7 @@ export function flushLiveChatState(): void {
     // overwrite one of these with strictly newer state — that order is
     // intentional.
     for (const [chatDir, state] of pendingCheckpoints) {
-      saveChatState(state.runState, state.messages, chatDir)
+      saveChatState(state.runState, state.messages, chatDir, '', false)
     }
     pendingCheckpoints.clear()
 
@@ -89,7 +89,7 @@ export function flushLiveChatState(): void {
     }
     const state = provider.provide()
     if (state) {
-      saveChatState(state.runState, state.messages, provider.chatDir)
+      saveChatState(state.runState, state.messages, provider.chatDir, '', false)
     }
   } catch {
     // Best-effort - never block process exit.
@@ -184,6 +184,7 @@ export function saveChatState(
   messages: ChatMessage[],
   chatDir: string = resolveCurrentChatDir(),
   selectedModel: string = '',
+  completed: boolean = true,
 ): void {
   try {
     // Save to database
@@ -198,7 +199,7 @@ export function saveChatState(
     fs.mkdirSync(chatDir, { recursive: true })
     writeFileAtomic(runStatePath, JSON.stringify(runState))
     writeFileAtomic(messagesPath, JSON.stringify(messages))
-    writeChatMeta(chatDir, messages)
+    writeChatMeta(chatDir, messages, completed)
   } catch (error) {
     logger.error(
       {
@@ -229,7 +230,9 @@ async function saveChatStateAsync(
     // (unbounded) chat-messages.json. Written after the messages file: it
     // records that file's size/mtime to detect staleness. The meta write is
     // tiny, so keeping it synchronous here is fine.
-    writeChatMeta(chatDir, messages)
+    // Mid-stream checkpoints are explicitly marked incomplete; the final
+    // turn-end save overwrites this with completed: true.
+    writeChatMeta(chatDir, messages, false)
   } catch (error) {
     logger.error(
       {
@@ -306,32 +309,88 @@ export async function settleCheckpointSave(): Promise<void> {
 }
 
 /**
+ * Load chat state from a specific chat directory on disk. Returns null when the
+ * directory or its state files are missing/unreadable.
+ */
+function loadChatStateFromDisk(chatDir: string): SavedChatState | null {
+  const runStatePath = path.join(chatDir, RUN_STATE_FILENAME)
+  const messagesPath = path.join(chatDir, CHAT_MESSAGES_FILENAME)
+
+  // Parse the two files independently: a missing or torn run-state.json
+  // must not lose the transcript, and vice versa. Restore whatever is
+  // readable and fall back for the rest.
+  let runState: RunState | null = null
+  try {
+    runState = JSON.parse(fs.readFileSync(runStatePath, 'utf8')) as RunState
+  } catch (error) {
+    logger.warn(
+      {
+        runStatePath,
+        error: error instanceof Error ? error.message : String(error),
+      },
+      'Could not read run state; restoring transcript without agent context',
+    )
+  }
+
+  let messages: ChatMessage[] | null = null
+  try {
+    messages = JSON.parse(fs.readFileSync(messagesPath, 'utf8')) as ChatMessage[]
+  } catch (error) {
+    logger.warn(
+      {
+        messagesPath,
+        error: error instanceof Error ? error.message : String(error),
+      },
+      'Could not read chat messages; restoring agent context without transcript',
+    )
+  }
+
+  if (!runState && !messages) {
+    logger.debug(
+      { runStatePath, messagesPath },
+      'No readable state files in chat directory',
+    )
+    return null
+  }
+
+  runState ??= {
+    output: {
+      type: 'error',
+      message: 'Previous run state could not be restored.',
+    },
+  } as RunState
+  runState.traceSessionId ??= randomUUID()
+  messages ??= []
+
+  const resolvedChatId = path.basename(chatDir)
+
+  logger.info(
+    {
+      runStatePath,
+      messagesPath,
+      messageCount: messages.length,
+      chatId: resolvedChatId,
+    },
+    'Loaded chat state from chat directory',
+  )
+
+  return { runState, messages, chatId: resolvedChatId }
+}
+
+/**
  * Load both RunState and ChatMessage[] from a specific chat directory or the most recent one.
  * When chatId is provided, it is used to locate the chat directory; otherwise the most
  * recently modified chat directory is used.
  * Returns null if no previous chat exists or files can't be parsed.
+ *
+ * The filesystem is treated as the authoritative source because async checkpoints
+ * (mid-stream) are written to disk but not to the database. The database is only
+ * consulted as a fallback when the filesystem state is unavailable.
  */
 export function loadMostRecentChatState(
   chatId?: string,
 ): SavedChatState | null {
   try {
-    // Try loading from database first
-    if (chatId) {
-      const dbState = loadChatStateFromDb(chatId)
-      if (dbState) {
-        logger.info(
-          { chatId, messageCount: dbState.messages.length },
-          'Loaded chat state from database',
-        )
-        return {
-          runState: dbState.runState,
-          messages: dbState.messages,
-          chatId,
-        }
-      }
-    }
-
-    // Fall back to file system
     let chatDir: string | null = chatDirOverride ?? null
 
     if (!chatDir && chatId && chatId.trim().length > 0) {
@@ -354,77 +413,32 @@ export function loadMostRecentChatState(
       chatDir = getMostRecentChatDir()
     }
 
-    if (!chatDir) {
-      logger.debug('No previous chat directory found')
-      return null
+    // Prefer the filesystem: it holds the latest mid-stream checkpoints.
+    if (chatDir) {
+      const diskState = loadChatStateFromDisk(chatDir)
+      if (diskState) {
+        return diskState
+      }
     }
 
-    const runStatePath = path.join(chatDir, RUN_STATE_FILENAME)
-    const messagesPath = path.join(chatDir, CHAT_MESSAGES_FILENAME)
-
-    // Parse the two files independently: a missing or torn run-state.json
-    // must not lose the transcript, and vice versa. Restore whatever is
-    // readable and fall back for the rest.
-    let runState: RunState | null = null
-    try {
-      runState = JSON.parse(
-        fs.readFileSync(runStatePath, 'utf8'),
-      ) as RunState
-    } catch (error) {
-      logger.warn(
-        {
-          runStatePath,
-          error: error instanceof Error ? error.message : String(error),
-        },
-        'Could not read run state; restoring transcript without agent context',
-      )
+    // Fall back to the database only when the filesystem state is missing.
+    if (chatId) {
+      const dbState = loadChatStateFromDb(chatId)
+      if (dbState) {
+        logger.info(
+          { chatId, messageCount: dbState.messages.length },
+          'Loaded chat state from database',
+        )
+        return {
+          runState: dbState.runState,
+          messages: dbState.messages,
+          chatId,
+        }
+      }
     }
 
-    let messages: ChatMessage[] | null = null
-    try {
-      messages = JSON.parse(
-        fs.readFileSync(messagesPath, 'utf8'),
-      ) as ChatMessage[]
-    } catch (error) {
-      logger.warn(
-        {
-          messagesPath,
-          error: error instanceof Error ? error.message : String(error),
-        },
-        'Could not read chat messages; restoring agent context without transcript',
-      )
-    }
-
-    if (!runState && !messages) {
-      logger.debug(
-        { runStatePath, messagesPath },
-        'No readable state files in chat directory',
-      )
-      return null
-    }
-
-    runState ??= {
-      output: {
-        type: 'error',
-        message: 'Previous run state could not be restored.',
-      },
-    } as RunState
-    runState.traceSessionId ??= randomUUID()
-    messages ??= []
-
-    const resolvedChatId = path.basename(chatDir)
-
-    logger.info(
-      {
-        runStatePath,
-        messagesPath,
-        messageCount: messages.length,
-        chatId: resolvedChatId,
-      },
-      'Loaded chat state from chat directory',
-    )
-
-    return { runState, messages, chatId: resolvedChatId }
+    logger.debug('No previous chat directory found')
+    return null
   } catch (error) {
     logger.error(
       {

@@ -201,4 +201,47 @@ describe('chat-history', () => {
 
     expect(getAllChats(500, tempDataDir)).toHaveLength(0)
   })
+
+  test('getAllChats surfaces incomplete sessions', () => {
+    writeChat('chat-incomplete', 'incomplete prompt')
+    const chatDir = path.join(tempDataDir, 'chats', 'chat-incomplete')
+    const stats = fs.statSync(path.join(chatDir, 'chat-messages.json'))
+    fs.writeFileSync(
+      path.join(chatDir, 'chat-meta.json'),
+      JSON.stringify({
+        messageCount: 1,
+        firstPrompt: 'incomplete prompt',
+        messagesSize: stats.size,
+        messagesMtimeMs: stats.mtimeMs,
+        completed: false,
+      }),
+    )
+
+    const chats = getAllChats(500, tempDataDir)
+
+    expect(chats).toHaveLength(1)
+    expect(chats[0].chatId).toBe('chat-incomplete')
+    expect(chats[0].completed).toBe(false)
+  })
+
+  test('getAllChats treats legacy sidecars without completed as complete', () => {
+    writeChat('chat-legacy', 'legacy prompt')
+    const chatDir = path.join(tempDataDir, 'chats', 'chat-legacy')
+    const stats = fs.statSync(path.join(chatDir, 'chat-messages.json'))
+    fs.writeFileSync(
+      path.join(chatDir, 'chat-meta.json'),
+      JSON.stringify({
+        messageCount: 1,
+        firstPrompt: 'legacy prompt',
+        messagesSize: stats.size,
+        messagesMtimeMs: stats.mtimeMs,
+      }),
+    )
+
+    const chats = getAllChats(500, tempDataDir)
+
+    expect(chats).toHaveLength(1)
+    expect(chats[0].chatId).toBe('chat-legacy')
+    expect(chats[0].completed).toBe(true)
+  })
 })

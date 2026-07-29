@@ -4,6 +4,7 @@ import {
 } from '@savant-code/common/constants/savant-free-models'
 import { create } from 'zustand'
 
+import { IS_SAVANT_FREE } from '../utils/constants'
 import {
   loadSavantFreeModelPreference,
   saveSavantFreeModelPreference,
@@ -33,9 +34,19 @@ interface SavantFreeModelStore {
 }
 
 export const useSavantFreeModelStore = create<SavantFreeModelStore>((set) => ({
-  selectedModel: resolveAvailableSavantFreeModel(
-    loadSavantFreeModelPreference() ?? DEFAULT_SAVANT_FREE_MODEL_ID,
-  ),
+  selectedModel: (() => {
+    const saved = loadSavantFreeModelPreference()
+    if (saved) {
+      // In paid mode, trust the user's raw model ID (e.g. "opencode-go/mimo-v2.5")
+      // directly. resolveAvailableSavantFreeModel() only recognizes free-tier
+      // model IDs and would strip paid models to a fallback, silently switching
+      // the user to an unintended (and potentially expensive) model.
+      return IS_SAVANT_FREE
+        ? resolveAvailableSavantFreeModel(saved)
+        : saved
+    }
+    return DEFAULT_SAVANT_FREE_MODEL_ID
+  })(),
   setSelectedModel: (model) =>
     set({ selectedModel: model }),
   switchModel: (model) => {

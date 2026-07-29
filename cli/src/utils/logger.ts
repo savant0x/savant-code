@@ -62,6 +62,49 @@ const analyticsDispatcher = createAnalyticsDispatcher({
  * Safely stringify an object, handling circular references.
  * Replaces circular references with '[Circular]' placeholder.
  */
+const SENSITIVE_KEYS = new Set([
+  'authToken',
+  'apiKey',
+  'api_key',
+  'token',
+  'accessToken',
+  'refreshToken',
+  'secret',
+  'password',
+  'authorization',
+])
+
+function isSensitiveKey(key: string): boolean {
+  const lower = key.toLowerCase()
+  return Array.from(SENSITIVE_KEYS).some((sensitive) => lower.includes(sensitive.toLowerCase()))
+}
+
+/**
+ * Recursively redact string values whose keys look like secrets/tokens.
+ *
+ * Matching is case-insensitive and matches any key that *contains* a sensitive
+ * substring (e.g. `myApiKey`, `auth_token`, `userToken`). This means keys like
+ * `tokenCount` will also be redacted; we accept that over-redaction to avoid
+ * leaking credentials in logs, analytics, or error reports.
+ */
+export function sanitizeSecrets(value: LogValue): LogValue {
+  if (value === null || value === undefined) return value
+  if (typeof value === 'string') return value
+  if (typeof value !== 'object') return value
+  if (Array.isArray(value)) {
+    return value.map((item) => sanitizeSecrets(item as LogValue)) as LogValue
+  }
+  const result: Record<string, LogValue> = {}
+  for (const [key, val] of Object.entries(value)) {
+    if (isSensitiveKey(key) && typeof val === 'string') {
+      result[key] = '[REDACTED]'
+    } else {
+      result[key] = sanitizeSecrets(val as LogValue)
+    }
+  }
+  return result
+}
+
 function safeStringify(obj: LogValue): string {
   const seen = new WeakSet()
   return JSON.stringify(obj, (_key, value) => {
@@ -174,10 +217,12 @@ function sendAnalyticsAndLog(
   const normalizedData = isStringOnly ? undefined : data
   const normalizedMsg = isStringOnly ? (data as string) : msg
   const includeData = normalizedData != null && !isEmptyObject(normalizedData)
-  const axiomOnlyLogEvent = getAxiomOnlyLogEvent(normalizedData)
+  // Sanitize once before any disk, network, or analytics use.
+  const sanitizedData = includeData ? sanitizeSecrets(normalizedData) : normalizedData
+  const axiomOnlyLogEvent = getAxiomOnlyLogEvent(sanitizedData)
 
   const toTrack = {
-    ...(includeData ? { data: normalizedData } : {}),
+    ...(includeData ? { data: sanitizedData } : {}),
     level,
     loggerContext,
     msg: stringFormat(normalizedMsg, ...args),
@@ -185,9 +230,9 @@ function sendAnalyticsAndLog(
 
   logAsErrorIfNeeded(toTrack)
 
-  if (!IS_DEV && includeData && typeof normalizedData === 'object') {
+  if (!IS_DEV && includeData && typeof sanitizedData === 'object') {
     const analyticsPayloads = analyticsDispatcher.process({
-      data: normalizedData,
+      data: sanitizedData,
       level,
       msg: stringFormat(normalizedMsg ?? '', ...args),
       fallbackUserId: loggerContext.userId,
@@ -203,7 +248,7 @@ function sendAnalyticsAndLog(
 
   // Send all log events to PostHog in production for better observability
   // Skip if the log already has an eventId (to avoid duplicate tracking)
-  const hasEventId = includeData && getAnalyticsEventId(normalizedData) !== null
+  const hasEventId = includeData && getAnalyticsEventId(sanitizedData) !== null
   if (!IS_DEV && !IS_TEST && !IS_CI && !hasEventId && !axiomOnlyLogEvent) {
     const fullTelemetry = isFullTelemetryEnabled({
       distinctId: loggerContext.userId,
@@ -213,11 +258,11 @@ function sendAnalyticsAndLog(
       fullTelemetry || level === 'error' || level === 'fatal'
     const dataProperties: Record<string, JSONValue> =
       includeData && includeRawData
-        ? { data: safeToJSONValue(normalizedData) }
+        ? { data: safeToJSONValue(sanitizedData) }
         : includeData
           ? {
               dataSummary: summarizeAnalyticsValue(
-                safeToJSONValue(normalizedData),
+                safeToJSONValue(sanitizedData),
               ),
             }
           : {}
@@ -258,8 +303,8 @@ function sendAnalyticsAndLog(
       ? axiomOnlyLogEvent.data
       : includeData
         ? includeRawData
-          ? normalizedData
-          : summarizeAnalyticsValue(safeToJSONValue(normalizedData))
+          ? sanitizedData
+          : summarizeAnalyticsValue(safeToJSONValue(sanitizedData))
         : undefined
     const record: LogRecordInput = {
       timestamp: new Date().toISOString(),
@@ -287,7 +332,7 @@ function sendAnalyticsAndLog(
       level: level.toUpperCase(),
       timestamp: new Date().toISOString(),
       ...loggerContext,
-      ...(includeData ? { data: normalizedData } : {}),
+      ...(includeData ? { data: sanitizedData } : {}),
       msg: stringFormat(normalizedMsg ?? '', ...args),
     })
     try {
@@ -297,7 +342,7 @@ function sendAnalyticsAndLog(
     }
   } else if (pinoLogger !== undefined) {
     const base = { ...loggerContext }
-    const obj = includeData ? { ...base, data: normalizedData } : base
+    const obj = includeData ? { ...base, data: sanitizedData } : base
     pinoLogger[level](obj, normalizedMsg, ...args)
   }
 }

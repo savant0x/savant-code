@@ -434,6 +434,11 @@ describe('atomic save and resilient load', () => {
         fs.writeFileSync(path.join(chatDir, 'chat-messages.json'), '[');
         expect(loadMostRecentChatState()).toBeNull();
     });
+    test('saveChatState marks the session as complete', () => {
+        saveChatState(runState, messages);
+        const meta = JSON.parse(fs.readFileSync(path.join(chatDir, 'chat-meta.json'), 'utf8'));
+        expect(meta.completed).toBe(true);
+    });
 });
 describe('scheduleCheckpointSave (async, coalescing)', () => {
     const chatDir = path.join(os.tmpdir(), 'savant-code-test-checkpoint-chatdir');
@@ -487,6 +492,12 @@ describe('scheduleCheckpointSave (async, coalescing)', () => {
     });
     test('settleCheckpointSave is safe with nothing scheduled', async () => {
         await expect(settleCheckpointSave()).resolves.toBeUndefined();
+    });
+    test('checkpoint save marks the session as incomplete', async () => {
+        scheduleCheckpointSave(runState('checkpoint'), messages('checkpoint prompt'));
+        await settleCheckpointSave();
+        const meta = JSON.parse(fs.readFileSync(path.join(chatDir, 'chat-meta.json'), 'utf8'));
+        expect(meta.completed).toBe(false);
     });
 });
 describe('chat switches while saves are pending', () => {

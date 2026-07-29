@@ -1,6 +1,6 @@
 # Release A-Z Test — FID-2026-0726-001 Goal/Loop End-to-End Wiring + FID-2026-0726-002 A-Z Regression Cleanup
 
-**Version:** v0.0.7
+**Version:** v0.0.8
 **Purpose:** Regression and feature verification for the goal/loop slash-command system and the A-Z test regression cleanup before release.
 
 **Ground Rules:**
@@ -42,7 +42,7 @@
 ### T1.7 — Version metadata
 - Read `VERSION`
 - Read root `package.json`
-- **Expected:** both report `0.0.7`
+- **Expected:** both report `0.0.8`
 
 ---
 
@@ -129,7 +129,7 @@
 
 ### T4.4 — A-Z script version expectation
 - Read `scripts/run-az-test.sh`
-- Verify T179 and T180 expect `0.0.7`
+- Verify T179 and T180 expect `0.0.8`
 - **Expected:** version checks align with current release
 
 ---
@@ -174,6 +174,75 @@
 
 ---
 
+## Tier 7: Tool Safety & Sandbox Engine (v0.0.8 — FID-2026-07-27-001)
+
+### T7.1 — Safety registry exists
+- Read `common/src/tools/safety.ts` and `common/src/tools/safety-registry.ts`
+- Verify `safety-registry.ts` exports a registry mapping tool names to safety metadata (level: safe | prompt | unsafe)
+- **Expected:** all registered tools have safety metadata
+
+### T7.2 — `/permissions` command registered
+- Read `cli/src/commands/command-registry.ts`
+- Verify the `permissions` command definition is registered with aliases `sandbox` and `safety`
+- **Expected:** command is accessible via `/permissions`, `/sandbox`, and `/safety`
+
+### T7.3 — `/permissions` accepts valid modes
+- Read `cli/src/commands/command-registry.ts`
+- Verify the `permissions` handler accepts `safe`, `prompt`, and `unsafe` as valid mode arguments
+- **Expected:** mode is stored in `useChatStore` state and persisted to settings
+
+### T7.4 — `/permissions` rejects invalid mode
+- Read `cli/src/commands/command-registry.ts`
+- Verify the `permissions` handler returns an error message for modes other than `safe`/`prompt`/`unsafe`
+- **Expected:** clear error message listing valid modes
+
+### T7.5 — Sandbox engine denylist
+- Search `packages/agent-runtime/src` for sandbox or safety enforcement logic
+- Verify destructive shell commands (rm -rf, git push --force, etc.) are denied in safe mode
+- **Expected:** denylist blocks destructive operations when in safe mode
+
+### T7.6 — `g` alias for `/goal`
+- Read `cli/src/commands/command-registry.ts`
+- Verify `g` is registered as an alias for the `/goal` command
+- **Expected:** typing `g` triggers the same handler as `/goal`
+
+### T7.7 — `--permission-mode` CLI flag
+- Search `cli/src` for `permission-mode` or `permissionMode` flag parsing
+- Verify the CLI parses `--permission-mode safe|prompt|unsafe` at startup
+- **Expected:** flag sets initial permission mode before any commands run
+
+### T7.8 — Network gating
+- Read `packages/agent-runtime/src/tools/sandbox/engine.ts`
+- Verify `createDefaultSandboxPolicy` sets `allowNetwork` based on permission mode (`safe` → false, `prompt`/`unsafe` → true)
+- Verify `evaluateToolCall` denies network tools in `safe` mode, returns `prompt` in `prompt` mode, and allows them in `unsafe` mode
+- Run `cd packages/agent-runtime && bun test src/tools/sandbox/__tests__/engine.test.ts`
+- **Expected:** network access respects permission mode settings (blocked in safe, prompted in prompt, allowed in unsafe)
+
+---
+
+## Tier 8: Brand & Login Restorations (v0.0.8)
+
+### T8.1 — `/login` command registered
+- Read `cli/src/commands/command-registry.ts`
+- Verify `handleLoginCommand` (or equivalent) is registered for `/login`
+- **Expected:** `/login` is accessible as a slash command
+
+### T8.2 — `/login` alias `/signin`
+- Read `cli/src/commands/command-registry.ts`
+- Verify `/signin` is registered as an alias for `/login`
+- **Expected:** `/signin` triggers the same handler as `/login`
+
+### T8.3 — `.savant-code/` config directory
+- Search `common/src`, `cli/src`, and `packages/agent-runtime/src` for config directory references
+- Verify `.savant-code` is used as the config directory name (not `.freebuff`)
+- **Expected:** all runtime paths use `.savant-code/`
+
+### T8.4 — No stale `.freebuff` references in production
+- Search `common/src`, `cli/src`, `sdk/src`, and `packages/agent-runtime/src` for `freebuff` (excluding test files)
+- **Expected:** zero matches in production source
+
+---
+
 ## Report Format
 
 After all tiers, write `dev/scratchpad/release-az-test-fid-2026-0726-001-report.md` with:
@@ -196,4 +265,6 @@ After all tiers, write `dev/scratchpad/release-az-test-fid-2026-0726-001-report.
 | 4 | Regression Checks | 4 | Are the recent cleanups applied correctly? |
 | 5 | Documentation | 3 | Is the FID/CHANGELOG/test prompt complete? |
 | 6 | CLI Smoke | 4 | Does the feature hold up in the real CLI? |
-| **Total** | | **24** | |
+| 7 | Tool Safety & Sandbox Engine | 8 | Are v0.0.8 safety features wired correctly? |
+| 8 | Brand & Login Restorations | 4 | Are v0.0.8 brand/login fixes applied? |
+| **Total** | | **36** | |

@@ -2,30 +2,39 @@ import { CHATGPT_OAUTH_ENABLED } from '@savant-code/common/constants/chatgpt-oau
 import { runTerminalCommand } from '@savant-code/sdk'
 
 import { handleAdsEnable, handleAdsDisable } from './ads'
-import { handleGoalCommand } from './goal'
-import { handleLoopCommand } from './loop'
-import { returnToSavantFreeLanding } from '../hooks/use-savant-free-session'
-import { useThemeStore } from '../hooks/use-theme'
-import { WEBSITE_URL } from '../login/constants'
-import { startNewChat } from '../project-files'
 import { handleCopyConversationCommand } from './copy-conversation'
+import { handleGoalCommand } from './goal'
+import { handleHealthCommand } from './health-command'
 import { handleHelpCommand } from './help'
 import { handleImageCommand } from './image'
 import { handleInitializationFlowLocally } from './init'
+import { handleLoopCommand } from './loop'
 import {
   collectProcessDiagnostics,
   formatProcessDiagnostics,
 } from './process-diagnostics'
-import { buildInterviewPrompt, buildPlanPrompt, buildReviewPromptFromArgs } from './prompt-builders'
+import {
+  buildInterviewPrompt,
+  buildPlanPrompt,
+  buildReviewPromptFromArgs,
+} from './prompt-builders'
 import { runBashCommand } from './router'
 import { handleUsageCommand } from './usage'
+import { returnToSavantFreeLanding } from '../hooks/use-savant-free-session'
+import { useThemeStore } from '../hooks/use-theme'
+import { WEBSITE_URL } from '../login/constants'
+import { startNewChat } from '../project-files'
 import { useChatStore } from '../state/chat-store'
 import { useFeedbackStore } from '../state/feedback-store'
 import { useLoginStore } from '../state/login-store'
 import { useModelPickerStore } from '../state/model-picker-store'
 import { useSavantFreeModelStore } from '../state/savant-free-model-store'
 import { abortActiveRun } from '../utils/active-run'
-import { AGENT_MODES, END_SESSION_MESSAGE, IS_SAVANT_FREE } from '../utils/constants'
+import {
+  AGENT_MODES,
+  END_SESSION_MESSAGE,
+  IS_SAVANT_FREE,
+} from '../utils/constants'
 import { resetUiToIdle as _resetUiToIdle } from '../utils/finish-logic'
 import { getSystemMessage, getUserMessage } from '../utils/message-history'
 import { safeOpen } from '../utils/open-url'
@@ -243,6 +252,16 @@ const ALL_COMMANDS: CommandDefinition[] = [
     name: 'loop',
     aliases: ['repeat'],
     handler: handleLoopCommand,
+  }),
+  defineCommand({
+    name: 'health',
+    aliases: ['status', 'check'],
+    handler: async (params) => {
+      await handleHealthCommand(params)
+      params.saveToHistory(params.inputValue.trim())
+      clearInput(params)
+      resetUiToIdleAfterSlashCommand()
+    },
   }),
   defineCommand({
     name: 'diagnostics',

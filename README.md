@@ -4,26 +4,49 @@
 
 <img src="assets/banner.png" alt="Savant-Code — Multi-Agent AI Coding Assistant" width="850" />
 
-**Savant-Code — Multi-Agent AI Coding Assistant. TypeScript Monorepo. ECHO-Protocol Citizen.**
+**A terminal-native AI coding assistant that audits every change before it touches your repo.**
 
-Two products ship from this monorepo. **Savant-Code** is the full-featured AI coding agent for your terminal — multi-agent orchestration, custom skills, MCP tool discovery, progressive skill loading, custom slash commands, stream-JSON output for CI, and the [`@savant-code/sdk`](https://www.npmjs.com/package/@savant-code/sdk) for embedding agents in your own apps. **Savant-Free** is the free, ad-supported variant — no subscription, no API key, same agent runtime with paid features stripped at compile time via `FREEBUFF_MODE=true`.
+Built with TypeScript/Bun, governed by the ECHO Protocol, and designed for local-first use with Ollama.
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-1.3.14-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![React](https://img.shields.io/badge/React-19-%23000000?style=flat-square&logo=react&logoColor=%2300fbff)](https://react.dev/)[![OpenTUI](https://img.shields.io/badge/OpenTUI-0.2.2-%23000000?style=flat-square&logo=opentui&logoColor=%2300fbff)](https://github.com/anomalyco/opentui)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](ECHO.md)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![Release](https://img.shields.io/badge/Release-v0.0.8-%23000000?style=flat-square&logo=semver&logoColor=%2300fbff)](CHANGELOG.md)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-1.3.14-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![React](https://img.shields.io/badge/React-19-%23000000?style=flat-square&logo=react&logoColor=%2300fbff)](https://react.dev/)[![OpenTUI](https://img.shields.io/badge/OpenTUI-0.2.2-%23000000?style=flat-square&logo=opentui&logoColor=%2300fbff)](https://github.com/anomalyco/opentui)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](ECHO.md)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![Release](https://img.shields.io/badge/Release-v0.0.9-%23000000?style=flat-square&logo=semver&logoColor=%2300fbff)](CHANGELOG.md)
 
 </div>
 
-> **v0.0.8** — Tool Safety + Sandbox Engine (Phase 1), user-facing permission controls (`--permission-mode` / `/permissions`), restored `/login` slash command, and the remaining `.freebuff` rebrand cleanup.
+> **v0.0.9** — Local-first Ollama support, privacy-first BYOK defaults, sandbox engine network gating, `/health` command, and full launch-ready artifacts.
+
+---
+
+## Get Started in 30 Seconds
+
+```bash
+# Install the CLI
+npm install -g @savant-code/cli
+
+# Run it. If Ollama is running, it will auto-detect and use it.
+savant-code
+```
+
+<!-- TODO: replace assets/demo.gif with an animated GIF showing the perfection loop -->
+
+![Savant Code terminal demo placeholder](assets/banner.png)
+
+No Ollama yet?
+
+```bash
+# macOS / Linux
+curl -fsSL https://ollama.com/install.sh | sh
+ollama serve
+
+# Windows: https://ollama.com/download/windows
+```
+
+Then run `savant-code` again, or type `/health` inside the chat to verify the connection.
 
 ---
 
 ## Overview
 
-Savant-Code is a TypeScript monorepo that builds, ships, and maintains two AI coding-agent products from one workspace:
-
-- **Savant-Code** (npm: `@savant-code/cli` — binary: `savant-code`) — the paid CLI + the public [`@savant-code/sdk`](https://www.npmjs.com/package/@savant-code/sdk). Multi-agent orchestration, custom skills, MCP tool discovery, mode switching (`EDIT` / `ANALYZE` / `SCAFFOLD`), usage metering.
-- **Savant-Free** (npm: `@savant-code/savant-free` — binary: `savant-free`) — the free, ad-supported CLI. Same agent runtime, same SDK, but built with `SAVANT_FREE_MODE=true` so the bundler strips paid-only slash commands, credits UI, and mode switching. Result: a single binary that "just works" — no subscription, no API key, no config.
-
-Both products are built from the same `cli/` source — only the build flag differs. The SDK, the agent runtime, the multi-agent orchestration engine, the tool layer, and the LLM provider shims are shared. That's why two products can ship from one monorepo without duplicating thousands of lines.
+Savant-Code is a TypeScript monorepo that builds and ships the terminal-native AI coding assistant **Savant Code** and the public [`@savant-code/sdk`](https://www.npmjs.com/package/@savant-code/sdk). The CLI provides multi-agent orchestration, custom skills, MCP tool discovery, mode switching (`EDIT` / `ANALYZE` / `SCAFFOLD`), and local-first Ollama support. The SDK, agent runtime, multi-agent orchestration engine, tool layer, and LLM provider shims are shared so both surfaces ship from one codebase.
 
 The whole project ships under [ECHO Protocol v0.2.0](ECHO.md) — the same 15-law agent discipline that governs the Savant ecosystem. Every change goes through the RED → GREEN → AUDIT → SELF-CORRECT → COMPLETE Perfection Loop FSM, with a hard 10-iteration cap and a 10% Levenshtein change-cap per pass.
 
@@ -31,24 +54,24 @@ The whole project ships under [ECHO Protocol v0.2.0](ECHO.md) — the same 15-la
 
 ## Key Technologies
 
-| Layer | Tech | Version |
-|-------|------|---------|
-| Runtime | Bun | 1.3.14 (engines `>=1.3.11`) |
-| Language | TypeScript | 5.5.4 (`strict: true`, `noImplicitReturns: true`) |
-| TUI | OpenTUI + React 19 | `@opentui/core` 0.2.2, `react` ^19.0.0 |
-| State | Zustand + Immer | zustand ^5.0.8, immer ^10.1.3 |
-| Validation | Zod | ^4.2.1 |
-| LLM SDK | Vercel AI SDK | `ai` ^5.0.52 + `@ai-sdk/anthropic` 2.0.50 |
-| MCP | Model Context Protocol | `@modelcontextprotocol/sdk` ^1.18.2 |
-| Code parsing | tree-sitter (WASM) | `@vscode/tree-sitter-wasm` 0.1.4 |
-| HTTP / WS | ws, node-fetch, custom SDK client | ws ^8.18.0 |
-| Package manager | Bun workspaces (hoisted) | `bunfig.toml` `[install] linker = "hoisted"` |
+| Layer           | Tech                              | Version                                           |
+| --------------- | --------------------------------- | ------------------------------------------------- |
+| Runtime         | Bun                               | 1.3.14 (engines `>=1.3.11`)                       |
+| Language        | TypeScript                        | 5.5.4 (`strict: true`, `noImplicitReturns: true`) |
+| TUI             | OpenTUI + React 19                | `@opentui/core` 0.2.2, `react` ^19.0.0            |
+| State           | Zustand + Immer                   | zustand ^5.0.8, immer ^10.1.3                     |
+| Validation      | Zod                               | ^4.2.1                                            |
+| LLM SDK         | Vercel AI SDK                     | `ai` ^5.0.52 + `@ai-sdk/anthropic` 2.0.50         |
+| MCP             | Model Context Protocol            | `@modelcontextprotocol/sdk` ^1.18.2               |
+| Code parsing    | tree-sitter (WASM)                | `@vscode/tree-sitter-wasm` 0.1.4                  |
+| HTTP / WS       | ws, node-fetch, custom SDK client | ws ^8.18.0                                        |
+| Package manager | Bun workspaces (hoisted)          | `bunfig.toml` `[install] linker = "hoisted"`      |
 
 ---
 
 ## Features
 
-### CLI (`@savant-code/cli` — npm: `@savant-code/cli` and `@savant-code/savant-free`)
+### CLI (`@savant-code/cli`)
 
 - **Multi-agent orchestration** — 9 specialized agents coordinate via ECHO Protocol: Detective finds issues, Forge implements, Verifier audits, Recorder manages FIDs, Thinker reasons, Scout explores, Researcher investigates, Scribe documents.
 - **`/init` command** — scaffolds `.agents/types/{agent-definition,tools,util-types}.ts` and a starter `knowledge.md`.
@@ -93,19 +116,18 @@ The whole project ships under [ECHO Protocol v0.2.0](ECHO.md) — the same 15-la
 
 ## Repo Map
 
-| Workspace | Package | Purpose |
-|-----------|---------|---------|
-| `agents/` | `@savant-code/agents` | Public agent definitions shipped with the CLI |
-| `cli/` | `@savant-code/cli` | CLI source — UI, commands, state, hooks, OpenTUI/React components |
-| `common/` | `@savant-code/common` | Shared types, tool definitions, utilities |
-| `evals/` | `@savant-code/evals` | ECHO-native benchmark v2 runner + legacy eval fixtures |
-| `savant-free/` | `@savant-code/savant-free` | CLI release + e2e tests for the free variant |
-| `packages/agent-runtime/` | `@savant-code/agent-runtime` | Agent loop, tool executor, LLM API integration |
-| `packages/code-map/` | `@savant-code/code-map` | tree-sitter code indexing, language detection |
-| `packages/database/` | `@savant-code/database` | Database abstraction layer |
-| `packages/llm-providers/` | `@savant-code/llm-providers` | Public LLM provider shims |
-| `sdk/` | `@savant-code/sdk` | Public SDK — `SavantCodeClient`, types, build + verify scripts |
-| `scripts/tmux/` | `@savant-code/tmux` | tmux CLI helpers used in interactive test runs |
+| Workspace                 | Package                      | Purpose                                                           |
+| ------------------------- | ---------------------------- | ----------------------------------------------------------------- |
+| `agents/`                 | `@savant-code/agents`        | Public agent definitions shipped with the CLI                     |
+| `cli/`                    | `@savant-code/cli`           | CLI source — UI, commands, state, hooks, OpenTUI/React components |
+| `common/`                 | `@savant-code/common`        | Shared types, tool definitions, utilities                         |
+| `evals/`                  | `@savant-code/evals`         | ECHO-native benchmark v2 runner + legacy eval fixtures            |     | `savant-free/` | `@savant-code/savant-free` | Future free/ad-supported variant workspace (not yet released) |
+| `packages/agent-runtime/` | `@savant-code/agent-runtime` | Agent loop, tool executor, LLM API integration                    |
+| `packages/code-map/`      | `@savant-code/code-map`      | tree-sitter code indexing, language detection                     |
+| `packages/database/`      | `@savant-code/database`      | Database abstraction layer                                        |
+| `packages/llm-providers/` | `@savant-code/llm-providers` | Public LLM provider shims                                         |
+| `sdk/`                    | `@savant-code/sdk`           | Public SDK — `SavantCodeClient`, types, build + verify scripts    |
+| `scripts/tmux/`           | `@savant-code/tmux`          | tmux CLI helpers used in interactive test runs                    |
 
 ---
 
@@ -122,11 +144,11 @@ bun install
 ### 2. Run the CLI (development)
 
 ```bash
-# Run the CLI in dev mode (paid: savant-code)
+# Run the CLI in dev mode
 bun run dev
 
-# Or run the savant-free variant
-bun run dev:savant-free
+# Or run with a specific permission mode
+bun run dev -- --permission-mode safe
 ```
 
 ### 3. Build for Release
@@ -135,8 +157,8 @@ bun run dev:savant-free
 # Build the SDK
 bun run build:sdk
 
-# Build the savant-free CLI binary
-bun run build:savant-free
+# Build the CLI binary
+bun run build:binary
 ```
 
 ### 4. Use the SDK
@@ -160,24 +182,36 @@ const result = await client.run({
 ### 5. End-User Install
 
 ```bash
-# Free (ad-supported, npm)
-npm install -g @savant-code/savant-free
-
-# Paid (npm)
+# npm
 npm install -g @savant-code/cli
 ```
+
+### 6. Use with local Ollama (zero API key)
+
+If you have [Ollama](https://ollama.com/) installed and running, Savant Code
+auto-detects it on first launch and routes inference to your local daemon — no
+API key, no account, no prompts.
+
+```bash
+# Start Ollama in the background, then run the CLI
+ollama serve
+savant-code
+```
+
+Run `/health` inside the chat to verify the Ollama connection, available local
+models, and current permission mode.
 
 ---
 
 ## CLI Commands
 
-| Command | What it does |
-|---------|--------------|
+| Command       | What it does           |
+| ------------- | ---------------------- |
 | `bun run dev` | Launch CLI in dev mode |
-| `bun run dev:savant-free` | Launch with `SAVANT_FREE_MODE=true` |
+
 | `bun run build:sdk` | Build the SDK for npm publish |
-| `bun run build:savant-free` | Build the savant-free CLI binary |
-| `bun run ci` | `build:sdk && build:savant-free` — CI gate |
+| `bun run build:binary` | Build the CLI binary |
+| `bun run ci` | CI gate — build SDK and release artifacts |
 | `bun test` | Run test suite |
 | `bun x tsc --noEmit` | Type check |
 | `bun x eslint . --max-warnings 0` | Lint |
@@ -201,25 +235,25 @@ This project ships with [ECHO Protocol v0.2.0](ECHO.md) — the single bootstrap
 
 ### Key Files
 
-| File | Purpose |
-|------|---------|
-| `ECHO.md` | The 15 Laws + Perfection Loop FSM + FID lifecycle |
-| `ARCHITECTURE.md` | Agent roster and tool restrictions |
-| `protocol.config.yaml` | Build commands, quality bar, paths |
-| `dev/fids/` | Feature Implementation Documents |
-| `dev/session-summaries/` | Session audit trail |
-| `dev/LEARNINGS.md` | Cross-session lessons |
+| File                     | Purpose                                           |
+| ------------------------ | ------------------------------------------------- |
+| `ECHO.md`                | The 15 Laws + Perfection Loop FSM + FID lifecycle |
+| `ARCHITECTURE.md`        | Agent roster and tool restrictions                |
+| `protocol.config.yaml`   | Build commands, quality bar, paths                |
+| `dev/fids/`              | Feature Implementation Documents                  |
+| `dev/session-summaries/` | Session audit trail                               |
+| `dev/LEARNINGS.md`       | Cross-session lessons                             |
 
 ---
 
 ## Configuration
 
-| What | Where | Format |
-|------|-------|--------|
+| What                         | Where                  | Format                                    |
+| ---------------------------- | ---------------------- | ----------------------------------------- |
 | ECHO Protocol runtime config | `protocol.config.yaml` | YAML — language, commands, quality limits |
-| TypeScript base config | `tsconfig.json` | JSON — `strict: true` |
-| ESLint config | `eslint.config.js` | Flat config |
-| Bun config | `bunfig.toml` | TOML — `linker: "hoisted"` |
+| TypeScript base config       | `tsconfig.json`        | JSON — `strict: true`                     |
+| ESLint config                | `eslint.config.js`     | Flat config                               |
+| Bun config                   | `bunfig.toml`          | TOML — `linker: "hoisted"`                |
 
 ---
 
@@ -227,7 +261,7 @@ This project ships with [ECHO Protocol v0.2.0](ECHO.md) — the single bootstrap
 
 ```bash
 # Build
-bun run build:sdk && bun run build:savant-free
+bun run build:sdk && bun run ci
 
 # Test
 bun test
@@ -250,6 +284,7 @@ bun x prettier --write .
 - [`ARCHITECTURE.md`](ARCHITECTURE.md) — Agent roster and tool restrictions
 - [`protocol.config.yaml`](protocol.config.yaml) — Build commands, quality bar
 - [`CHANGELOG.md`](CHANGELOG.md) — Release history
+- [`docs/launch/landing/index.html`](docs/launch/landing/index.html) — Public landing page
 - [`dev/LEARNINGS.md`](dev/LEARNINGS.md) — Cross-session lessons
 - [`dev/session-summaries/`](dev/session-summaries/) — Session audit trail
 
@@ -263,8 +298,7 @@ bun x prettier --write .
 
 <div align="center">
 
-_Savant-Code is the public TypeScript monorepo for the Savant-Code agent framework. Savant-Free is the ad-supported variant._
+_Savant-Code is the public TypeScript monorepo for the Savant-Code agent framework._
 
 **Savant** • 2026
 </div>
-

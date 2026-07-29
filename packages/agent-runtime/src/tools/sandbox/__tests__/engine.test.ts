@@ -73,11 +73,60 @@ describe('sandbox engine', () => {
     expect(decision.type).toBe('deny')
   })
 
-  it('allows network tools when network is enabled', () => {
+  it('denies network tools in safe mode by default', () => {
     const decision = evaluateToolCall({
       toolName: 'web_search',
       input: { query: 'test' },
       policy: policy('safe'),
+    })
+    expect(decision.type).toBe('deny')
+  })
+
+  it('allows network tools when network is explicitly enabled', () => {
+    const p = policy('safe')
+    p.allowNetwork = true
+    const decision = evaluateToolCall({
+      toolName: 'web_search',
+      input: { query: 'test' },
+      policy: p,
+    })
+    expect(decision.type).toBe('allow')
+  })
+
+  it('prompts for network tools in prompt mode', () => {
+    const decision = evaluateToolCall({
+      toolName: 'web_search',
+      input: { query: 'test' },
+      policy: policy('prompt'),
+    })
+    expect(decision.type).toBe('prompt')
+  })
+
+  it('allows network tools in unsafe mode', () => {
+    const decision = evaluateToolCall({
+      toolName: 'web_search',
+      input: { query: 'test' },
+      policy: policy('unsafe'),
+    })
+    expect(decision.type).toBe('allow')
+  })
+
+  it('prompts for network tools with prompt permission in prompt mode', () => {
+    const decision = evaluateToolCall({
+      toolName: 'composio_multi_execute_tool',
+      input: { tool: 'test' },
+      policy: policy('prompt'),
+    })
+    expect(decision.type).toBe('prompt')
+  })
+
+  it('allows network tools in unsafe mode even if allowNetwork is false', () => {
+    const p = policy('unsafe')
+    p.allowNetwork = false
+    const decision = evaluateToolCall({
+      toolName: 'web_search',
+      input: { query: 'test' },
+      policy: p,
     })
     expect(decision.type).toBe('allow')
   })

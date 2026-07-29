@@ -20,6 +20,9 @@ export interface ChatHistoryEntry {
    * by a crash mid-write). Shown in /history so the chat doesn't silently
    * vanish; can be deleted but not resumed. */
   unreadable?: boolean
+  /** False when the session was interrupted before the turn-end save could
+   * mark it complete. True (or missing) for legacy sessions. */
+  completed?: boolean
 }
 
 function getChatsDir(dataDir: string = getProjectDataDir()): string {
@@ -80,6 +83,7 @@ export function getAllChats(
       try {
         let messageCount = 0
         let lastPrompt = '(empty chat)'
+        let completed: boolean | undefined = true
 
         if (fs.existsSync(info.messagesPath)) {
           // Prefer the sidecar summary: transcripts are unbounded, so parsing
@@ -88,6 +92,7 @@ export function getAllChats(
           if (meta) {
             messageCount = meta.messageCount
             lastPrompt = meta.firstPrompt
+            completed = meta.completed
           } else {
             // Pre-sidecar chats, or a sidecar that no longer matches the
             // messages file (rewritten by an older CLI, crash between the
@@ -99,6 +104,10 @@ export function getAllChats(
             }
             messageCount = messages.length
             lastPrompt = getFirstUserPrompt(messages)
+            // Without a sidecar we cannot know whether the session was
+            // gracefully completed; treat it as complete for backward
+            // compatibility.
+            completed = true
           }
         }
 
@@ -109,6 +118,7 @@ export function getAllChats(
             lastPrompt,
             timestamp: info.mtime,
             messageCount,
+            completed,
           })
         }
       } catch (error) {
@@ -120,7 +130,9 @@ export function getAllChats(
           'Failed to read chat messages',
         )
         // Don't silently hide the chat: list it as unreadable so the user
-        // knows it exists (and can delete it) instead of thinking it was lost
+        // knows it exists (and can delete it) instead of thinking it was lost.
+        // Leave the completion status undefined: corruption is not the same
+        // as an interrupted session.
         chats.push({
           chatId: info.chatId,
           lastPrompt: '(unreadable chat)',

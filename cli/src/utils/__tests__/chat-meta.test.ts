@@ -128,4 +128,35 @@ describe('chat-meta', () => {
       false,
     )
   })
+
+  test('writeChatMeta records completed=false for checkpoints', () => {
+    const messages = [userMessage('checkpoint prompt')]
+    writeMessagesFile(messages)
+    writeChatMeta(chatDir, messages, false)
+
+    expect(readChatMeta(chatDir)).toMatchObject({
+      messageCount: 1,
+      completed: false,
+    })
+  })
+
+  test('readChatMeta defaults missing completed to true', () => {
+    const messages = [userMessage('legacy prompt')]
+    writeMessagesFile(messages)
+    const stats = fs.statSync(path.join(chatDir, CHAT_MESSAGES_FILENAME))
+    fs.writeFileSync(
+      path.join(chatDir, CHAT_META_FILENAME),
+      JSON.stringify({
+        messageCount: 1,
+        firstPrompt: 'legacy prompt',
+        messagesSize: stats.size,
+        messagesMtimeMs: stats.mtimeMs,
+      }),
+    )
+
+    expect(readChatMeta(chatDir)).toMatchObject({
+      messageCount: 1,
+      completed: true,
+    })
+  })
 })

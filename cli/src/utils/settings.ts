@@ -14,7 +14,7 @@ import type { JSONValue } from '@savant-code/common/types/json'
 
 const DEFAULT_SETTINGS: Settings = {
   mode: 'EDIT' as const,
-  adsEnabled: true,
+  adsEnabled: false,
 }
 
 // Legacy mode migration map (FID-031). Old DEFAULT/LITE/MAX/PLAN/FREE values
@@ -50,6 +50,13 @@ export interface Settings {
    *  selector. The /model picker defaults to the first model of this provider
    *  on future opens so users land in the same catalog section. */
   savantCodeModelProviderPreference?: ModelProvider
+  /** When set, the CLI routes inference to a direct provider (e.g. local
+   *  Ollama) instead of the SavantCode backend. Persists the user's local-first
+   *  choice across launches. */
+  directProvider?: string
+  /** Base URL for the direct provider. For Ollama this is
+   *  http://localhost:11434/v1. */
+  directProviderBaseUrl?: string
   /** @deprecated Use server-side fallbackToALaCarte setting instead */
   alwaysUseALaCarte?: boolean
   /** @deprecated Use server-side fallbackToALaCarte setting instead */
@@ -89,9 +96,11 @@ export const loadSettings = (): Settings => {
 
   if (!fs.existsSync(settingsPath)) {
     ensureConfigDirExists()
-    // Create default settings file
-    fs.writeFileSync(settingsPath, JSON.stringify(DEFAULT_SETTINGS, null, 2))
-    return DEFAULT_SETTINGS
+    // Create default settings file. Return a shallow copy so callers cannot
+    // mutate the global default object.
+    const defaults = { ...DEFAULT_SETTINGS }
+    fs.writeFileSync(settingsPath, JSON.stringify(defaults, null, 2))
+    return defaults
   }
 
   try {
@@ -148,7 +157,7 @@ const validateSettings = (parsed: JSONValue): Settings => {
   // are kept; access-tier resolution decides whether they are selectable.
   // Backward-compat: migrate the legacy model preference key.
   const savantFreeModelPreference =
-    obj.savantFreeModelPreference ?? obj.freebuffModelPreference ?? obj.savantFreeModelPreferenceLegacy
+    obj.savantFreeModelPreference ?? obj.savantFreeModelPreferenceLegacy
   if (
     typeof savantFreeModelPreference === 'string' &&
     isSupportedSavantFreeModelId(savantFreeModelPreference)
@@ -192,6 +201,7 @@ const validateSettings = (parsed: JSONValue): Settings => {
     'openrouter',
     'tokenrouter',
     'nvidia',
+    'ollama',
   ])
   if (
     typeof obj.savantCodeModelProviderPreference === 'string' &&
@@ -199,6 +209,15 @@ const validateSettings = (parsed: JSONValue): Settings => {
   ) {
     settings.savantCodeModelProviderPreference =
       obj.savantCodeModelProviderPreference as ModelProvider
+  }
+
+  // Validate direct provider persistence fields. These are used to remember
+  // a local-first (e.g. Ollama) setup across launches.
+  if (typeof obj.directProvider === 'string') {
+    settings.directProvider = obj.directProvider
+  }
+  if (typeof obj.directProviderBaseUrl === 'string') {
+    settings.directProviderBaseUrl = obj.directProviderBaseUrl
   }
 
   return settings

@@ -6,6 +6,7 @@ import {
   CHATGPT_OAUTH_CLIENT_ID,
   CHATGPT_OAUTH_TOKEN_URL,
 } from '@savant-code/common/constants/chatgpt-oauth'
+import { SAVANT_CODE_CONFIG_DIR_NAME } from '@savant-code/common/constants/savant-code-config'
 import { env } from '@savant-code/common/env'
 import { userSchema } from '@savant-code/common/util/credentials'
 import { z } from 'zod/v4'
@@ -53,12 +54,23 @@ export const userFromJson = (json: string): User | null => {
  * Uses the clientEnv to determine the environment suffix.
  */
 export const getConfigDir = (clientEnv: ClientEnv = env): string => {
+  // Allow tests and advanced users to override the config directory in
+  // non-production builds.
+  const override = process.env.SAVANT_CODE_CONFIG_DIR
+  if (
+    override &&
+    clientEnv.NEXT_PUBLIC_CB_ENVIRONMENT &&
+    clientEnv.NEXT_PUBLIC_CB_ENVIRONMENT !== 'prod'
+  ) {
+    return override
+  }
+
   const envSuffix =
     clientEnv.NEXT_PUBLIC_CB_ENVIRONMENT &&
     clientEnv.NEXT_PUBLIC_CB_ENVIRONMENT !== 'prod'
       ? `-${clientEnv.NEXT_PUBLIC_CB_ENVIRONMENT}`
       : ''
-  return path.join(os.homedir(), '.config', `savant${envSuffix}`)
+  return path.join(os.homedir(), `${SAVANT_CODE_CONFIG_DIR_NAME}${envSuffix}`)
 }
 
 /**

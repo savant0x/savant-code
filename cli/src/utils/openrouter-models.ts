@@ -16,7 +16,7 @@ const OPENROUTER_MODELS_URL = 'https://openrouter.ai/api/v1/models'
 /** How long a fetched catalog is considered fresh before a refresh. */
 const CATALOG_TTL_MS = 5 * 60 * 1000
 
-export type ModelProvider = 'openrouter' | 'tokenrouter' | 'nvidia' | 'opencode-go'
+export type ModelProvider = 'openrouter' | 'tokenrouter' | 'nvidia' | 'opencode-go' | 'ollama'
 
 export type OpenRouterModel = {
   /** Canonical model id, e.g. "anthropic/claude-sonnet-4". */
@@ -334,7 +334,8 @@ export function findGatewayModel(modelId: string): OpenRouterModel | undefined {
   if (withoutProvider) return withoutProvider
 
   // Base family match (e.g. "anthropic/claude-sonnet-4" vs "anthropic/claude-sonnet-4.8")
-  const familyId = modelId.replace(/-\d+(\.\d+)?$/, '')
+  // Also handles v-prefixed versions: "mimo-v2.5" → "mimo"
+  const familyId = modelId.replace(/-v?\d+(\.\d+)?$/, '')
   if (familyId && familyId !== modelId) {
     const family = catalog.find((m) => m.id.startsWith(familyId))
     if (family) return family
@@ -357,20 +358,67 @@ function findContextLengthFromOpenRouter(modelId: string): number | undefined {
 
   const canonical = toCanonicalModelId(modelId)
 
-  // Exact canonical match
-  const exact = openRouterCatalog.find((m) => m.id === canonical)
-  if (typeof exact?.contextLength === 'number') return exact.contextLength
+  // Helper: extract contextLength preferring topProvider if available.
+  const ctx = (m: OpenRouterModel | undefined): number | undefined => {
+    if (!m) return undefined
+    // Prefer topProvider.contextLength when present — the OpenRouter API
+    // often omits the top-level context_length for resold models.
+    const tp = m.topProvider?.contextLength
+    if (typeof tp === 'number') return tp
+    if (typeof m.contextLength === 'number') return m.contextLength
+    return undefined
+  }
 
-  // Try without any provider prefix at all
+  // 1. Exact canonical match (e.g. "z-ai/glm-5.2" → "z-ai/glm-5.2")
+  const exact = openRouterCatalog.find((m) => m.id === canonical)
+  if (ctx(exact) !== undefined) return ctx(exact)!
+
+  // 2. Try without any provider prefix at all
   const withoutProvider = canonical.replace(/^[a-z0-9-]+\//, '')
   const byBase = openRouterCatalog.find((m) => m.id === withoutProvider)
-  if (typeof byBase?.contextLength === 'number') return byBase.contextLength
+  if (ctx(byBase) !== undefined) return ctx(byBase)!
 
-  // Family match: strip version suffix and match by prefix
-  const familyId = canonical.replace(/-\d+(\.\d+)?$/, '')
+  // 3. Family match: strip version suffix and match by prefix
+  // Handles v-prefixed versions: "mimo-v2.5" → "mimo" → matches "xiaomi/mimo-v2.5"
+  const familyId = canonical.replace(/-v?\d+(\.\d+)?$/, '')
   if (familyId && familyId !== canonical) {
     const family = openRouterCatalog.find((m) => m.id.startsWith(familyId))
-    if (typeof family?.contextLength === 'number') return family.contextLength
+    if (ctx(family) !== undefined) return ctx(family)!
+  }
+
+  // 3b. Name-family match: when the ID-based family match misses (e.g.
+  //     canonical "mimo-v2.5" → family "mimo" but OpenRouter has
+  //     "xiaomi/mimo-v2.5" which doesn't start with "mimo"), fall back
+  //     to matching by normalized model name.
+  const familyName = familyId.split('/').pop() ?? familyId
+  if (familyName && familyName !== canonical) {
+    const byFamilyName = openRouterCatalog.find((m) => {
+      const mFamily = m.id.split('/').pop()?.replace(/-v?\d+(\.\d+)?$/, '') ?? ''
+      return mFamily === familyName
+    })
+    if (ctx(byFamilyName) !== undefined) return ctx(byFamilyName)!
+  }
+
+  // 4. Name-based fallback: when gateway model IDs (e.g.
+  //    "opencode-go/mimo-v2.5") don't map 1:1 to OpenRouter IDs
+  //    (e.g. "xiaomi/mimo-v2.5"), match by the human-readable name
+  //    which both catalogs share.
+  const gatewayModel = findGatewayModel(modelId)
+  if (gatewayModel?.name) {
+    const nameLower = gatewayModel.name.toLowerCase()
+    // First try exact name match.
+    const byName = openRouterCatalog.find(
+      (m) => m.name?.toLowerCase() === nameLower,
+    )
+    if (ctx(byName) !== undefined) return ctx(byName)!
+
+    // Fuzzy: match when one name contains the other (handles suffixes
+    // like "MiMo V2.5" vs "MiMo V2.5 Pro").
+    const byFuzzyName = openRouterCatalog.find((m) => {
+      const mName = m.name?.toLowerCase() ?? ''
+      return mName.includes(nameLower) || nameLower.includes(mName)
+    })
+    if (ctx(byFuzzyName) !== undefined) return ctx(byFuzzyName)!
   }
 
   return undefined

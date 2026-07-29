@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Savant Code — Local-first AI coding assistant</title>
+    <meta
+      name="description"
+      content="A terminal-native AI coding assistant that audits every change before it touches your repo. Local-first with Ollama. BYOK. Open source."
+    />
+    <style>
+      :root {
+        --bg: #0b0d10;
+        --fg: #e8eef4;
+        --muted: #9aa5b1;
+        --accent: #00fbff;
+        --accent-dim: rgba(0, 251, 255, 0.12);
+        --border: #1f2937;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--fg);
+        font-family:
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          Roboto,
+          sans-serif;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+      }
+      .container {
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 4rem 1.5rem 6rem;
+      }
+      .badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        background: var(--accent-dim);
+        color: var(--accent);
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+      h1 {
+        font-size: clamp(2.5rem, 7vw, 4rem);
+        line-height: 1.05;
+        margin: 1.5rem 0 1rem;
+        font-weight: 800;
+      }
+      .lead {
+        font-size: 1.25rem;
+        color: var(--muted);
+        max-width: 600px;
+      }
+      .cta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin: 2rem 0;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.875rem 1.5rem;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition:
+          transform 0.1s ease,
+          opacity 0.15s ease;
+      }
+      .btn:hover {
+        transform: translateY(-2px);
+      }
+      .btn-primary {
+        background: var(--accent);
+        color: var(--bg);
+      }
+      .btn-secondary {
+        border: 1px solid var(--border);
+        color: var(--fg);
+      }
+      .demo {
+        margin: 3rem 0;
+        border: 1px solid var(--border);
+        border-radius: 0.75rem;
+        overflow: hidden;
+        background: #11151c;
+      }
+      .demo img,
+      .demo video {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+      .demo-placeholder {
+        display: grid;
+        place-items: center;
+        aspect-ratio: 16 / 9;
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+      .features {
+        display: grid;
+        gap: 1.5rem;
+        margin: 3rem 0;
+      }
+      .feature {
+        padding: 1.25rem;
+        border: 1px solid var(--border);
+        border-radius: 0.5rem;
+      }
+      .feature h3 {
+        margin: 0 0 0.5rem;
+        color: var(--accent);
+        font-size: 1rem;
+      }
+      .feature p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+      .install {
+        margin: 3rem 0;
+        padding: 1.5rem;
+        border: 1px solid var(--border);
+        border-radius: 0.5rem;
+        background: #11151c;
+      }
+      .install pre {
+        margin: 0.75rem 0 0;
+        padding: 1rem;
+        border-radius: 0.375rem;
+        background: #0b0d10;
+        color: var(--accent);
+        overflow-x: auto;
+        font-size: 0.9rem;
+      }
+      footer {
+        margin-top: 4rem;
+        padding-top: 2rem;
+        border-top: 1px solid var(--border);
+        color: var(--muted);
+        font-size: 0.875rem;
+      }
+      footer a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      footer a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <span class="badge">Open Source · Apache-2.0</span>
+      <span class="badge" style="margin-left: 0.5rem">v0.0.9</span>
+      <h1>Code that actually works.</h1>
+      <p class="lead">
+        Savant Code is a terminal-native AI coding assistant that runs a 9-agent
+        auditing loop before any change touches your repo. Local-first with
+        Ollama. BYOK. Privacy by design.
+      </p>
+
+      <div class="cta">
+        <a
+          class="btn btn-primary"
+          href="https://github.com/savant0x/savant-code"
+          >View on GitHub</a
+        >
+        <a
+          class="btn btn-secondary"
+          href="https://github.com/savant0x/savant-code/blob/main/ECHO.md"
+          >Read ECHO Protocol</a
+        >
+      </div>
+
+      <div class="demo">
+        <div class="demo-placeholder">
+          Animated terminal demo placeholder — replace with GIF/MP4
+        </div>
+      </div>
+
+      <div class="features">
+        <div class="feature">
+          <h3>9-Agent Perfection Loop</h3>
+          <p>
+            Detective, Thinker, Forge, Verifier, and five more agents coordinate
+            under the ECHO Protocol. The writer never audits its own work.
+          </p>
+        </div>
+        <div class="feature">
+          <h3>Local-first with Ollama</h3>
+          <p>
+            Auto-detects a running Ollama daemon and routes inference locally.
+            No API key. No account. Your code stays on your machine.
+          </p>
+        </div>
+        <div class="feature">
+          <h3>Permission Mode Sandbox</h3>
+          <p>
+            Run in <code>safe</code>, <code>prompt</code>, or
+            <code>unsafe</code> mode. Destructive commands and network access
+            are gated by your chosen permission level.
+          </p>
+        </div>
+      </div>
+
+      <div class="install">
+        <strong>Install in one command</strong>
+        <pre>npm install -g @savant-code/cli</pre>
+      </div>
+
+      <footer>
+        <p>
+          Built with TypeScript, Bun, and React for the terminal UI. Join the
+          discussion on <a href="#">Discord</a> or open an issue on
+          <a href="https://github.com/savant0x/savant-code">GitHub</a>.
+        </p>
+        <p>© 2026 Savant Code contributors.</p>
+      </footer>
+    </div>
+  </body>
+</html>

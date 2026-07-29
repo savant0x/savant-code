@@ -10,6 +10,12 @@
       "types": "./src/openai-compatible/index.ts",
       "default": "./src/openai-compatible/index.ts"
     },
+    "./ollama": {
+      "bun": "./src/ollama/index.ts",
+      "import": "./src/ollama/index.ts",
+      "types": "./src/ollama/index.ts",
+      "default": "./src/ollama/index.ts"
+    },
     "./*": {
       "bun": "./src/*.ts",
       "import": "./src/*.ts",

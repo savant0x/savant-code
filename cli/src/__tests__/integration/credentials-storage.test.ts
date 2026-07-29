@@ -28,8 +28,8 @@ import type { User } from '../../utils/auth'
  *
  * These tests verify the complete flow of saving, loading, and managing
  * user credentials on the file system. Credentials are stored in:
- * - Dev: ~/.config/manicode-dev/credentials.json
- * - Prod: ~/.config/manicode/credentials.json
+ * - Dev: ~/.savant-code-dev/credentials.json
+ * - Prod: ~/.savant-code/credentials.json
  *
  * Tests ensure:
  * - Directories are created if missing
@@ -53,7 +53,7 @@ describe('Credentials Storage Integration', () => {
 
   beforeEach(() => {
     // Create temporary config directory for tests
-    tempConfigDir = fs.mkdtempSync(path.join(os.tmpdir(), 'manicode-test-'))
+    tempConfigDir = fs.mkdtempSync(path.join(os.tmpdir(), 'savant-test-'))
 
     // Set project root to avoid "Project root not set" error in logger
     setProjectRoot(tempConfigDir)
@@ -159,7 +159,7 @@ describe('Credentials Storage Integration', () => {
       expect(keys[0]).toBe('default')
     })
 
-    test('should use manicode-test directory in test environment', async () => {
+    test('should use savant-code-test directory in test environment', async () => {
       // Restore getConfigDir to use real implementation for this test
       mock.restore()
 
@@ -170,11 +170,11 @@ describe('Credentials Storage Integration', () => {
       // Call real getConfigDir to verify it includes '-dev'
       const configDir = authModule.getConfigDir()
       expect(configDir).toEqual(
-        path.join(os.homedir(), '.config', 'manicode-test'),
+        path.join(os.homedir(), '.savant-code-test'),
       )
     })
 
-    test('should use manicode-dev directory in development environment', async () => {
+    test('should use savant-code-dev directory in development environment', async () => {
       // Restore getConfigDir to use real implementation for this test
       mock.restore()
 
@@ -185,11 +185,11 @@ describe('Credentials Storage Integration', () => {
       // Call real getConfigDir to verify it includes '-dev'
       const configDir = authModule.getConfigDir()
       expect(configDir).toEqual(
-        path.join(os.homedir(), '.config', 'manicode-dev'),
+        path.join(os.homedir(), '.savant-code-dev'),
       )
     })
 
-    test('should use manicode directory in production environment', async () => {
+    test('should use savant-code directory in production environment', async () => {
       // Restore getConfigDir to use real implementation
       mock.restore()
 
@@ -200,7 +200,7 @@ describe('Credentials Storage Integration', () => {
 
       // Call real getConfigDir to verify it doesn't include '-dev'
       const configDir = authModule.getConfigDir()
-      expect(configDir).toEqual(path.join(os.homedir(), '.config', 'manicode'))
+      expect(configDir).toEqual(path.join(os.homedir(), '.savant-code'))
     })
 
     test('should allow credentials to persist across simulated CLI restarts', () => {

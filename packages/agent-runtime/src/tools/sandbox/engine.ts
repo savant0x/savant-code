@@ -19,7 +19,9 @@ export function createDefaultSandboxPolicy(
 ): SandboxPolicy {
   return {
     workspaceRoot,
-    allowNetwork: true,
+    // Network access is blocked in safe mode and gated by permission in prompt
+    // mode. Only unsafe mode allows network requests without prompting.
+    allowNetwork: mode !== 'safe',
     permissionMode: mode,
   }
 }
@@ -76,10 +78,18 @@ export function evaluateToolCall(params: {
   }
 
   // Network gate.
-  if (safety.effect === 'network' && !policy.allowNetwork) {
-    return {
-      type: 'deny',
-      reason: `Network access is disabled. Tool \`${toolName}\` requires network.`,
+  if (safety.effect === 'network') {
+    if (!policy.allowNetwork) {
+      return {
+        type: 'deny',
+        reason: `Network access is disabled. Tool \`${toolName}\` requires network.`,
+      }
+    }
+    if (policy.permissionMode === 'prompt') {
+      return {
+        type: 'prompt',
+        reason: `Tool \`${toolName}\` requires network access.`,
+      }
     }
   }
 

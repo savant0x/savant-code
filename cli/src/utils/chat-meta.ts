@@ -26,6 +26,7 @@ const chatMetaSchema = z.object({
   firstPrompt: z.string(),
   messagesSize: z.number(),
   messagesMtimeMs: z.number(),
+  completed: z.boolean().optional(),
 })
 
 export type ChatMeta = z.infer<typeof chatMetaSchema>
@@ -52,13 +53,18 @@ export function getFirstUserPrompt(messages: ChatMessage[]): string {
  * that directory must already contain exactly `messages` (its stats are
  * recorded to bind the sidecar to it).
  */
-export function writeChatMeta(chatDir: string, messages: ChatMessage[]): void {
+export function writeChatMeta(
+  chatDir: string,
+  messages: ChatMessage[],
+  completed: boolean = true,
+): void {
   const stats = fs.statSync(path.join(chatDir, CHAT_MESSAGES_FILENAME))
   const meta: ChatMeta = {
     messageCount: messages.length,
     firstPrompt: getFirstUserPrompt(messages),
     messagesSize: stats.size,
     messagesMtimeMs: stats.mtimeMs,
+    completed,
   }
   writeFileAtomic(path.join(chatDir, CHAT_META_FILENAME), JSON.stringify(meta))
 }
@@ -83,7 +89,12 @@ export function readChatMeta(chatDir: string): ChatMeta | null {
     ) {
       return null
     }
-    return meta
+    // Treat legacy sidecars without a completed flag as complete so existing
+    // sessions are not suddenly flagged as interrupted.
+    return {
+      ...meta,
+      completed: meta.completed ?? true,
+    }
   } catch {
     return null
   }

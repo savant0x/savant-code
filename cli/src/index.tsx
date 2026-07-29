@@ -42,6 +42,10 @@ import { IS_SAVANT_FREE } from './utils/constants'
 import { startEngagementTracking } from './utils/engagement'
 import { initializeAgentRegistry } from './utils/local-agent-registry'
 import { clearLogFile, logger } from './utils/logger'
+import {
+  applyPersistedDirectProviderSettings,
+  detectOllamaAndConfigureDirectProvider,
+} from './utils/ollama-onboarding'
 import { fetchGatewayModels } from './utils/openrouter-models'
 import { applyPostProcessing } from './utils/post-processing'
 import { shouldShowProjectPicker } from './utils/project-picker'
@@ -208,6 +212,14 @@ async function main(): Promise<void> {
   const hasAgentOverride = Boolean(agent?.trim())
 
   await initializeApp({ cwd })
+
+  // Restore any persisted direct-provider choice (e.g. local Ollama) before
+  // falling back to detection, so returning users keep their local setup.
+  applyPersistedDirectProviderSettings()
+
+  // Auto-detect Ollama on first run and route inference to the local daemon
+  // when no backend token or explicit direct provider is configured.
+  await detectOllamaAndConfigureDirectProvider()
 
   // Set the auth token for the API client
   setApiClientAuthToken(getAuthToken())

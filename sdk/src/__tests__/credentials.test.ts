@@ -51,22 +51,22 @@ describe('credentials', () => {
   describe('getConfigDir', () => {
     test('returns path with environment suffix for non-prod environments', () => {
       const dir = getConfigDir(testEnv)
-      expect(dir).toContain('savant-test')
-      expect(dir).toContain('.config')
+      expect(dir).toContain('.savant-code-test')
+      expect(dir).not.toContain('.config')
     })
 
     test('returns path without suffix for prod environment', () => {
       const prodEnv = createTestEnv({ NEXT_PUBLIC_CB_ENVIRONMENT: 'prod' })
       const dir = getConfigDir(prodEnv)
-      expect(dir).toContain('savant')
-      expect(dir).not.toContain('savant-prod')
+      expect(dir).toContain('.savant-code')
+      expect(dir).not.toContain('.savant-code-prod')
     })
 
     test('returns path without suffix when environment is undefined', () => {
       const emptyEnv = createTestEnv({})
       const dir = getConfigDir(emptyEnv)
-      expect(dir).toContain('savant')
-      expect(dir).not.toContain('savant-')
+      expect(dir).toContain('.savant-code')
+      expect(dir).not.toContain('.savant-code-')
     })
   })
 
@@ -74,7 +74,7 @@ describe('credentials', () => {
     test('returns path within config directory', () => {
       const credPath = getCredentialsPath(testEnv)
       expect(credPath).toContain('credentials.json')
-      expect(credPath).toContain('savant-test')
+      expect(credPath).toContain('.savant-code-test')
     })
   })
 
