@@ -20,7 +20,7 @@ Built with TypeScript/Bun, governed by the ECHO Protocol, and designed for local
 
 ```bash
 # Install the CLI
-npm install -g @savant-code/cli
+npm install -g savant-code
 
 # Run it. If Ollama is running, it will auto-detect and use it.
 savant-code
@@ -183,7 +183,7 @@ const result = await client.run({
 
 ```bash
 # npm
-npm install -g @savant-code/cli
+npm install -g savant-code
 ```
 
 ### 6. Use with local Ollama (zero API key)

@@ -31,9 +31,9 @@ flood, security issue, or reputational incident.
 
 ```bash
 # Unpublish is only possible within 72 hours of publish
-npm unpublish @savant-code/cli@<bad-version>
+npm unpublish savant-code@<bad-version>
 # Or deprecate if unpublish is not possible
-npm deprecate @savant-code/cli@<bad-version> \
+npm deprecate savant-code@<bad-version> \
   "Critical issue, install <fixed-version> instead"
 ```
 

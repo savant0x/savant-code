@@ -22,7 +22,7 @@ actually works.
 Install the v0.0.9 release:
 
 ```bash
-npm install -g @savant-code/cli
+npm install -g savant-code
 ```
 
 Then just run `savant-code` in any project. If you have Ollama running, it will

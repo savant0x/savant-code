@@ -9,7 +9,7 @@ Most agents ship fast code. Savant Code ships code that actually works.
 
 A 9-agent perfection loop audits every change before it touches your repo.
 
-Install: npm install -g @savant-code/cli
+Install: npm install -g savant-code
 
 #AI #OpenSource #CLI #DevTools
 ```
