@@ -91,6 +91,11 @@ jobs:
         run: |
           bun run scripts/build-binary.ts savant-code "${{ steps.version.outputs.VERSION }}"
 
+      - name: Smoke test binary
+        shell: bash
+        run: |
+          ./cli/bin/${{ matrix.binary }} --version
+
       - name: Package tarball
         shell: bash
         run: |
