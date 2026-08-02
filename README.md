@@ -88,12 +88,29 @@ hard 10-iteration cap and a 10% Levenshtein change-cap per pass.
   Protocol: Detective finds issues, Forge implements, Verifier audits, Recorder
   manages FIDs, Thinker reasons, Scout explores, Researcher investigates, Scribe
   documents.
+- **Thinker with sequential thinking** — the Thinker agent accumulates stacked
+  reasoning steps via `sequentialthinking`, converges to a typed non-null
+  `FinalArtifact` (status/synthesis/payload/metrics/thoughts), and never returns
+  a null or empty result.
+- **Native tool-call hardening** — fail-closed streaming boundary for
+  incomplete/malformed/truncated tool calls; stale-fragment replacement for
+  placeholder arguments; permissive coercion of stringified numbers/booleans
+  before strict Zod validation.
+- **Tool permission boundary** — strict allowlist-based tool provisioning via
+  `filterToolSet`; restricted agents (Thinker, Scout) never receive parent-only
+  tools; executor authorization unchanged.
 - **`/init` command** — scaffolds
   `.agents/types/{agent-definition,tools,util-types}.ts` and a starter
   `knowledge.md`.
 - **Slash commands** — `/new`, `/history`, `/bash`, `/goal`, `/loop`,
   `/feedback`, `/theme:toggle`, `/login`, `/logout`, `/exit`, plus
   agent-specific commands.
+- **Provider setup** — `/provider` opens an interactive dropdown picker showing
+  all providers with ✓/✗ configuration status. Select a provider to enter its
+  API key (masked input). Keys stored in local `credentials.json`.
+- **Telemetry controls** — `/telemetry status|enable|disable` toggles analytics
+  collection. Active by default; user-disableable. Consent gates all PostHog,
+  error reporting, and Axiom shipping.
 - **`@filename` and `@AgentName` mentions** — file and agent mentions with
   inline autocomplete.
 - **Bash mode** — `!command` or `/bash` to run shell commands inline (with
@@ -114,11 +131,16 @@ hard 10-iteration cap and a 10% Levenshtein change-cap per pass.
 - **Context compaction** — 4-layer progressive auto-compaction: L0 (summarize
   old turns), L1 (compress tool results), L2 (prune stale context), L3
   (aggressive reduction). Preserves critical context while reducing token usage.
+- **Context window resolution** — gateway models (e.g. `opencode-go/mimo-v2.5`)
+  resolve their real context length from the OpenRouter catalog at runtime.
 - **Universal copy buttons** — hover-to-copy on code blocks, tool outputs, and
   file diffs throughout the TUI.
 - **Gateway providers** — TokenRouter, NVIDIA NIM, OpenCode Go, and Cloudflare
   Workers AI via `@savant-code/llm-providers`.
+- **Default model** — MiMo 2.5 via OpenCode Go (configurable via `/model`).
 - **Theming** — light/dark toggle (`/theme:toggle`), Neon Slate aesthetic.
+- **Sidebar folding** — right-sidebar sections and FID cards start collapsed
+  for a compact first render; click to expand.
 
 ### SDK (`@savant-code/sdk`)
 
@@ -363,10 +385,7 @@ bun x prettier --write .
 
 ---
 
-<div align="center">
-
 _Savant-Code is the public TypeScript monorepo for the Savant-Code agent
 framework._
 
 **Savant** • 2026
-</div>
