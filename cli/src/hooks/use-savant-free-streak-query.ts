@@ -37,7 +37,9 @@ export async function fetchSavantFreeStreak(params: {
       { status: response.status, error: response.error },
       'Failed to fetch savant-free streak',
     )
-    throw new Error(`Failed to fetch savant-free streak (HTTP ${response.status})`)
+    throw new Error(
+      `Failed to fetch savant-free streak (HTTP ${response.status})`,
+    )
   }
 
   if (!response.data) {

@@ -32,7 +32,11 @@ export default {
       // A type guard is identified by its RETURN TYPE ANNOTATION being a
       // `v is T` predicate — in ESLint's AST this is a TSTypePredicate node.
       const rt = funcNode.returnType
-      if (rt && rt.typeAnnotation && rt.typeAnnotation.type === 'TSTypePredicate') {
+      if (
+        rt &&
+        rt.typeAnnotation &&
+        rt.typeAnnotation.type === 'TSTypePredicate'
+      ) {
         return true
       }
       return false
@@ -62,7 +66,13 @@ export default {
         const val = node[key]
         if (Array.isArray(val)) {
           for (const child of val) {
-            if (typeof child === 'object' && child && child.type && containsUnknown(child)) return true
+            if (
+              typeof child === 'object' &&
+              child &&
+              child.type &&
+              containsUnknown(child)
+            )
+              return true
           }
         } else if (val && typeof val === 'object' && val.type) {
           if (containsUnknown(val)) return true

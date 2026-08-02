@@ -221,6 +221,7 @@ const validateSettings = (parsed: JSONValue): Settings => {
     'nvidia',
     'opencode-go',
     'ollama',
+    'commandcode',
   ])
   if (
     typeof obj.savantCodeModelProviderPreference === 'string' &&

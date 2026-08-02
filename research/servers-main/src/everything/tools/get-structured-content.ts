@@ -1,6 +1,7 @@
 import { z } from "zod";
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import {
+
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type {
   CallToolResult,
   ContentBlock,
 } from "@modelcontextprotocol/sdk/types.js";

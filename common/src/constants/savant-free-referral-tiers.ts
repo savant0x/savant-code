@@ -110,9 +110,8 @@ export const MAX_SAVANT_FREE_REFERRAL_TIER =
   SAVANT_FREE_REFERRAL_TIERS[SAVANT_FREE_REFERRAL_TIERS.length - 1].tier
 
 /** Lowest tier whose perks include watermark removal. */
-export const SAVANT_FREE_WATERMARK_REMOVAL_TIER = SAVANT_FREE_REFERRAL_TIERS.find(
-  (tier) => tier.removesWatermark,
-)!.tier
+export const SAVANT_FREE_WATERMARK_REMOVAL_TIER =
+  SAVANT_FREE_REFERRAL_TIERS.find((tier) => tier.removesWatermark)!.tier
 
 /** Qualified referrals needed before deploys drop the watermark. */
 export const SAVANT_FREE_WATERMARK_REMOVAL_REFERRALS =

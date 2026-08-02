@@ -1,7 +1,6 @@
 import { TextAttributes } from '@opentui/core'
 import React from 'react'
 
-
 import { useTheme } from '../../../hooks/use-theme'
 
 export interface KeyHintProps {

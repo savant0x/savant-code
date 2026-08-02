@@ -1,9 +1,11 @@
 import * as mainPromptModule from '@savant-code/agent-runtime/main-prompt'
 import { getInitialSessionState } from '@savant-code/common/types/session-state'
 import { getStubProjectFileContext } from '@savant-code/common/util/file'
-import { assistantMessage, userMessage } from '@savant-code/common/util/messages'
+import {
+  assistantMessage,
+  userMessage,
+} from '@savant-code/common/util/messages'
 import { afterEach, describe, expect, it, mock, spyOn } from 'bun:test'
-
 
 import { SavantCodeClient } from '../client'
 import * as databaseModule from '../impl/database'
@@ -97,7 +99,12 @@ describe('Error preserves in-progress message history', () => {
             role: 'tool',
             toolCallId: 'write-1',
             toolName: 'write_file',
-            content: [{ type: 'json', value: { file: 'auth.ts', message: 'File written' } }],
+            content: [
+              {
+                type: 'json',
+                value: { file: 'auth.ts', message: 'File written' },
+              },
+            ],
           },
         ]
 
@@ -221,7 +228,12 @@ describe('Error preserves in-progress message history', () => {
             role: 'tool',
             toolCallId: 'read-login',
             toolName: 'read_files',
-            content: [{ type: 'json', value: [{ path: 'login.ts', content: 'login code' }] }],
+            content: [
+              {
+                type: 'json',
+                value: [{ path: 'login.ts', content: 'login code' }],
+              },
+            ],
           },
         ]
 
@@ -245,7 +257,12 @@ describe('Error preserves in-progress message history', () => {
     mock.restore()
     setupDatabaseMocks()
 
-    let historyReceivedByRuntime: Array<{ role?: string; content?: Array<{ type?: string; toolCallId?: string }> }> | undefined
+    let historyReceivedByRuntime:
+      | Array<{
+          role?: string
+          content?: Array<{ type?: string; toolCallId?: string }>
+        }>
+      | undefined
     spyOn(mainPromptModule, 'callMainPrompt').mockImplementation(
       async (params: Parameters<typeof mainPromptModule.callMainPrompt>[0]) => {
         const { sendAction, promptId } = params
@@ -289,10 +306,10 @@ describe('Error preserves in-progress message history', () => {
     const receivedReadCall = historyReceivedByRuntime!.find(
       (m) =>
         (m as { role: string }).role === 'assistant' &&
-        ((m as { content: Array<{ type: string; toolCallId?: string }> })
-          .content ?? []).some(
-          (c) => c.type === 'tool-call' && c.toolCallId === 'read-login',
-        ),
+        (
+          (m as { content: Array<{ type: string; toolCallId?: string }> })
+            .content ?? []
+        ).some((c) => c.type === 'tool-call' && c.toolCallId === 'read-login'),
     )
     expect(receivedReadCall).toBeDefined()
 
@@ -304,7 +321,8 @@ describe('Error preserves in-progress message history', () => {
     expect(receivedToolResult).toBeDefined()
 
     // Final result should preserve history
-    const finalHistory = secondResult.sessionState!.mainAgentState.messageHistory
+    const finalHistory =
+      secondResult.sessionState!.mainAgentState.messageHistory
     const finalReadCall = finalHistory.find(
       (m) =>
         m.role === 'assistant' &&

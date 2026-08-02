@@ -33,9 +33,7 @@ describe('paths.resolveAndContain — legitimate paths', () => {
     })
     expect(result.kind).toBe('ok')
     if (result.kind === 'ok') {
-      expect(result.resolved).toBe(
-        path.join(PROJECT_ROOT, 'foo.ts'),
-      )
+      expect(result.resolved).toBe(path.join(PROJECT_ROOT, 'foo.ts'))
     }
   })
 

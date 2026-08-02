@@ -1,7 +1,6 @@
 import { useKeyboard } from '@opentui/react'
 import React from 'react'
 
-
 import { Button } from './button'
 import { useTheme } from '../hooks/use-theme'
 import { KeyHint } from './savant-ui/primitives/key-hint'
@@ -129,11 +128,7 @@ export const CommandPalette = ({
               >
                 {/* Marker + command */}
                 <box style={{ flexDirection: 'row', flexShrink: 0, gap: 0 }}>
-                  <text
-                    fg={theme.primary}
-                    wrapMode="none"
-                    selectable={false}
-                  >
+                  <text fg={theme.primary} wrapMode="none" selectable={false}>
                     {isSelected ? '› ' : '  '}
                   </text>
                   <text
@@ -147,11 +142,7 @@ export const CommandPalette = ({
                 </box>
                 {/* Description */}
                 <box style={{ flexGrow: 1, minWidth: 0 }}>
-                  <text
-                    fg={theme.muted}
-                    wrapMode="char"
-                    selectable={false}
-                  >
+                  <text fg={theme.muted} wrapMode="char" selectable={false}>
                     {item.description}
                   </text>
                 </box>

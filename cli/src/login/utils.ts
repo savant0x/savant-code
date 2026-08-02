@@ -67,8 +67,8 @@ export function getSheenColor(
   sheenPosition: number,
   logoColor: string,
   shadowChars: Set<string>,
-  accentColor: string = '#18faf9',  // Neon cyan — updated from acid green
-  blockColor: string = '#020617',   // Near-black — updated from white
+  accentColor: string = '#18faf9', // Neon cyan — updated from acid green
+  blockColor: string = '#020617', // Near-black — updated from white
   isReversing: boolean = false,
 ): string {
   // Block characters use the specified block color

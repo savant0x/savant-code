@@ -6,7 +6,10 @@ import { useChatStore } from '../state/chat-store'
 import { useFeedbackStore } from '../state/feedback-store'
 import { showClipboardMessage } from '../utils/clipboard'
 import { isDirectProviderMode } from '../utils/env'
-import { buildFeedbackPayload, buildMessageContext } from '../utils/feedback-helpers'
+import {
+  buildFeedbackPayload,
+  buildMessageContext,
+} from '../utils/feedback-helpers'
 import { resolveFeedbackSubmission } from '../utils/feedback-submission'
 import { logger } from '../utils/logger'
 import { getApiClient } from '../utils/savant-code-api'
@@ -65,7 +68,9 @@ export const FeedbackContainer: React.FC<FeedbackContainerProps> = ({
     if (store.isSubmitting) return
 
     if (isDirectProviderMode()) {
-      showClipboardMessage('Feedback unavailable in direct-provider mode', { durationMs: 5000 })
+      showClipboardMessage('Feedback unavailable in direct-provider mode', {
+        durationMs: 5000,
+      })
       return
     }
 
@@ -79,7 +84,10 @@ export const FeedbackContainer: React.FC<FeedbackContainerProps> = ({
 
     store.setIsSubmitting(true)
 
-    const { target, recentMessages } = buildMessageContext(messages, feedbackMessageId)
+    const { target, recentMessages } = buildMessageContext(
+      messages,
+      feedbackMessageId,
+    )
     const payload = buildFeedbackPayload({
       text,
       feedbackCategory,
@@ -100,10 +108,11 @@ export const FeedbackContainer: React.FC<FeedbackContainerProps> = ({
       .feedback(payload)
       .then((response) => {
         const store = useFeedbackStore.getState()
-        const { isCurrentSubmission, shouldSettleSubmission } = resolveFeedbackSubmission(
-          store.clientFeedbackId,
-          submittedClientFeedbackId,
-        )
+        const { isCurrentSubmission, shouldSettleSubmission } =
+          resolveFeedbackSubmission(
+            store.clientFeedbackId,
+            submittedClientFeedbackId,
+          )
 
         if (!response.ok) {
           logger.warn(
@@ -117,7 +126,10 @@ export const FeedbackContainer: React.FC<FeedbackContainerProps> = ({
         }
 
         if (submittedMessageId) {
-          store.markMessageFeedbackSubmitted(submittedMessageId, submittedCategory)
+          store.markMessageFeedbackSubmitted(
+            submittedMessageId,
+            submittedCategory,
+          )
         }
 
         if (isCurrentSubmission) {
@@ -133,13 +145,15 @@ export const FeedbackContainer: React.FC<FeedbackContainerProps> = ({
           showClipboardMessage('Feedback sent!', { durationMs: 5000 })
         }
       })
-      .catch((
-         
-        error: unknown,
-      ) => {
+      .catch((error: unknown) => {
         logger.warn({ error }, 'Failed to submit feedback to API')
         const store = useFeedbackStore.getState()
-        if (!resolveFeedbackSubmission(store.clientFeedbackId, submittedClientFeedbackId).shouldSettleSubmission) {
+        if (
+          !resolveFeedbackSubmission(
+            store.clientFeedbackId,
+            submittedClientFeedbackId,
+          ).shouldSettleSubmission
+        ) {
           return
         }
         store.setIsSubmitting(false)

@@ -1,6 +1,4 @@
-
 import type { ToolName } from '@savant-code/sdk'
-
 
 /**
  * SavantFree build-time flag. When true, the CLI is built as SavantFree (free-only variant).

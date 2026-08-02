@@ -3,13 +3,17 @@
 
 # @savant-code/agents
 
-Public agent definitions shipped with the Savant CLI (Detective, Forge, Verifier, Recorder, Thinker, Scout, Researcher, Scribe, Orchestrator).
+Public agent definitions shipped with the Savant CLI (Detective, Forge, Verifier, Recorder, Thinker, Scout, Researcher,
+Scribe, Orchestrator).
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](../LICENSE)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](../ECHO.md)[![Status](https://img.shields.io/badge/Status-internal-%23ff9500?style=flat-square&logo=github&logoColor=%2300fbff)](../README.md)
 
 ## Purpose
 
-The agents in this workspace are the **separation-of-duties specialists** that execute the Perfection Loop FSM (RED → GREEN → AUDIT → SELF-CORRECT → COMPLETE). Each agent is restricted to a small tool set per ECHO Law 13 — Detective reads + searches only, Forge writes only, Verifier reads only, Recorder archives FIDs, Thinker reasons sequentially, etc. The Orchestrator in `agents/savant/` routes work across agents and is the only one allowed to spawn child agents.
+The agents in this workspace are the **separation-of-duties specialists** that execute the Perfection Loop FSM (RED →
+GREEN → AUDIT → SELF-CORRECT → COMPLETE). Each agent is restricted to a small tool set per ECHO Law 13 — Detective reads
+and searches only; Forge writes only; Verifier reads only; Recorder archives FIDs; Thinker reasons sequentially, etc. The
+Orchestrator in `agents/savant/` routes work across agents and is the only one allowed to spawn child agents.
 
 ## Quick Start
 

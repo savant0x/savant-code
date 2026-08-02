@@ -10,10 +10,7 @@
  * OpenTUI's `convertThemeToStyles` (resources/opentui-main/packages/core/src/syntax-style.ts).
  */
 
-import {
-  SyntaxStyle,
-  type ThemeTokenStyle,
-} from '@opentui/core'
+import { SyntaxStyle, type ThemeTokenStyle } from '@opentui/core'
 
 import { logger } from './logger'
 
@@ -31,7 +28,12 @@ const buildSyntaxTokenStyles = (theme: ChatTheme): ThemeTokenStyle[] => {
 
   return [
     {
-      scope: ['comment', 'comment.block', 'comment.line', 'comment.documentation'],
+      scope: [
+        'comment',
+        'comment.block',
+        'comment.line',
+        'comment.documentation',
+      ],
       style: { foreground: theme.syntaxComment, dim: true },
     },
     {
@@ -46,11 +48,7 @@ const buildSyntaxTokenStyles = (theme: ChatTheme): ThemeTokenStyle[] => {
       style: { foreground: theme.syntaxKeyword, bold: true },
     },
     {
-      scope: [
-        'entity.name.function',
-        'support.function',
-        'meta.function-call',
-      ],
+      scope: ['entity.name.function', 'support.function', 'meta.function-call'],
       style: { foreground: theme.syntaxFunction },
     },
     {

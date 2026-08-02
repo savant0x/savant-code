@@ -1,4 +1,3 @@
- 
 import {
   OPEN_DELAY_MS,
   CLOSE_DELAY_MS,

@@ -10,9 +10,11 @@
 
 ## Problem Statement
 
-The ECHO/Savant system stores vital state (session state, agent configurations, FID documents, message history, cost tracking) that needs durable, queryable storage. JSON files on disk have critical flaws:
+The ECHO/Savant system stores vital state (session state, agent configurations, FID documents, message history, cost
+tracking) that needs durable, queryable storage. JSON files on disk have critical flaws:
 
-1. **Serialization cycles** — Live function references in session state objects cause `JSON.stringify` to fail when cloning between runs
+1. **Serialization cycles** — Live function references in session state objects cause `JSON.stringify` to fail when
+   cloning between runs
 2. **No durability** — Crashes, restarts, or hot reloads lose all state
 3. **No queryability** — Cannot search session history, track costs, or audit agent actions
 4. **Fragile state management** — Cloning in-memory objects between runs is error-prone
@@ -23,7 +25,7 @@ SQLite database via `bun:sqlite` (Bun's built-in SQLite driver — no external d
 
 ### Core Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────────┐
 │                    ECHO System                          │
 ├─────────────────────────────────────────────────────────┤
@@ -145,6 +147,7 @@ CREATE INDEX IF NOT EXISTS idx_cost_tracking_agent_id ON cost_tracking(agent_id)
 
 **Choice**: Use Bun's built-in `bun:sqlite` driver (zero external dependencies).  
 **Rationale**:
+
 - Ships with Bun — no `npm install` needed
 - Synchronous API (simpler error handling, no async overhead)
 - WAL mode for crash recovery and concurrent reads
@@ -152,6 +155,7 @@ CREATE INDEX IF NOT EXISTS idx_cost_tracking_agent_id ON cost_tracking(agent_id)
 - File-based — single `echo.db` file, easy to backup/restore
 
 **Alternatives Considered**:
+
 - `better-sqlite3`: External dependency, same API shape, but `bun:sqlite` is equivalent and built-in
 - PostgreSQL: Requires server process, overkill for local CLI tool
 - `drizzle-orm`: Schema abstraction layer — adds complexity without benefit for this simple schema
@@ -160,12 +164,14 @@ CREATE INDEX IF NOT EXISTS idx_cost_tracking_agent_id ON cost_tracking(agent_id)
 
 **Choice**: Store complex data as `TEXT` columns with `JSON.stringify()`/`JSON.parse()` in the service layer.  
 **Rationale**:
+
 - Session state is a black box (server protocol, different shapes per agent)
 - Agent configs are dynamic (different tool sets, model options)
 - Simpler schema — fewer tables, no ORM
 - SQLite JSON functions (`json_extract`, etc.) available if needed later
 
 **Alternatives Considered**:
+
 - SQLite native JSON columns: Less portable, `bun:sqlite` treats JSON as TEXT anyway
 - Fully normalized schema: Too rigid, breaks when session state schema changes
 
@@ -173,6 +179,7 @@ CREATE INDEX IF NOT EXISTS idx_cost_tracking_agent_id ON cost_tracking(agent_id)
 
 **Choice**: Store database at `~/.savant-free/echo.db`  
 **Rationale**:
+
 - Persists across projects
 - Follows XDG conventions (`~/.config/` or `~/.local/share/` pattern)
 - Easy to backup/restore (single file)
@@ -182,6 +189,7 @@ CREATE INDEX IF NOT EXISTS idx_cost_tracking_agent_id ON cost_tracking(agent_id)
 
 **Choice**: Enable Write-Ahead Logging (`PRAGMA journal_mode = WAL`)  
 **Rationale**:
+
 - Crash recovery — committed transactions survive process kills
 - Concurrent reads — multiple processes can read while one writes
 - Performance — faster than rollback journal for mixed read/write workloads

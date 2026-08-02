@@ -13,7 +13,10 @@
 import type { FetchFunction } from '@ai-sdk/provider-utils'
 import type { JSONValue, JSONObject } from '@savant-code/common/types/json'
 
-type FetchLike = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>
+type FetchLike = (
+  input: RequestInfo | URL,
+  init?: RequestInit,
+) => Promise<Response>
 
 // ============================================================================
 // JWT / Account ID
@@ -140,9 +143,7 @@ function convertUserContentParts(content: JSONValue | undefined): JSONValue {
   })
 }
 
-function convertMessages(
-  messages: ChatCompletionsMessage[],
-): JSONValue[] {
+function convertMessages(messages: ChatCompletionsMessage[]): JSONValue[] {
   const input: JSONValue[] = []
 
   for (const msg of messages) {
@@ -151,7 +152,11 @@ function convertMessages(
         // System messages are extracted to top-level `instructions` field;
         // if any slip through, convert to developer role
         if (msg.content) {
-          input.push({ type: 'message', role: 'developer', content: msg.content })
+          input.push({
+            type: 'message',
+            role: 'developer',
+            content: msg.content,
+          })
         }
         break
       }
@@ -166,7 +171,11 @@ function convertMessages(
 
       case 'assistant': {
         if (msg.content) {
-          input.push({ type: 'message', role: 'assistant', content: msg.content })
+          input.push({
+            type: 'message',
+            role: 'assistant',
+            content: msg.content,
+          })
         }
         if (msg.tool_calls) {
           for (const tc of msg.tool_calls) {
@@ -232,7 +241,9 @@ function transformRequestBody(body: ChatCompletionsBody): JSONObject {
   const systemMessages = messages.filter((m) => m.role === 'system')
   const nonSystemMessages = messages.filter((m) => m.role !== 'system')
   const instructions = systemMessages
-    .map((m) => (typeof m.content === 'string' ? m.content : JSON.stringify(m.content)))
+    .map((m) =>
+      typeof m.content === 'string' ? m.content : JSON.stringify(m.content),
+    )
     .join('\n\n')
 
   const transformed: JSONObject = {
@@ -410,15 +421,12 @@ function createSseTransformStream(): TransformStream<Uint8Array, Uint8Array> {
 
         const chunk: JSONObject = {
           id: responseId,
-          choices: [
-            { index: 0, delta: {}, finish_reason: finishReason },
-          ],
+          choices: [{ index: 0, delta: {}, finish_reason: finishReason }],
         }
 
         if (usage) {
           const outputDetails = usage.output_tokens_details as
-            | JSONObject
-            | undefined
+            JSONObject | undefined
           chunk.usage = {
             prompt_tokens: usage.input_tokens,
             completion_tokens: usage.output_tokens,
@@ -438,14 +446,11 @@ function createSseTransformStream(): TransformStream<Uint8Array, Uint8Array> {
 
       case 'response.failed': {
         const resp = data.response as JSONObject | undefined
-        const errorObj = (resp?.error ?? data.error) as
-          | JSONObject
-          | undefined
+        const errorObj = (resp?.error ?? data.error) as JSONObject | undefined
         emit(controller, {
           error: {
             message:
-              (errorObj?.message as string) ??
-              'ChatGPT backend request failed',
+              (errorObj?.message as string) ?? 'ChatGPT backend request failed',
             type: (errorObj?.type as string) ?? 'server_error',
           },
         })

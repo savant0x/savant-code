@@ -1,8 +1,28 @@
-# SavantCode & SavantFree
+# Savant-Code
 
 [English](./README.md) | 简体中文
 
-**[SavantCode](https://savant-code.com)** 是一款开源的 AI 编程助手，能根据自然语言指令直接修改你的代码库。**[SavantFree](https://www.npmjs.com/package/savant-free)** 是它的免费、广告支持版本——无需订阅、无需积分、零配置。
+> **当前版本：v0.0.15** — CommandCode.ai 网关、首次运行的提供商密钥引导、以及本地/BYOK 使用体验已更新。
+
+Savant-Code 是一个本地优先的终端 AI 编程助手。它支持 Ollama、本地模型和用户自带 API 密钥（BYOK）；不会要求
+用户创建项目级 `.env` 文件来保存提供商密钥。
+
+## 首次配置提供商
+
+如果没有运行 Ollama，请在 CLI 中执行：
+
+```text
+/provider
+```
+
+选择提供商并在遮罩输入框中粘贴密钥。CLI 会将通过 `/provider` 输入的密钥保存在用户级
+`.savant-code/credentials.json`，不会写入聊天记录；环境变量优先于已保存的密钥。
+
+当前网关提供商包括 OpenCode Go、TokenRouter、NVIDIA NIM、CommandCode 和 Cloudflare Workers AI。
+CommandCode 的环境变量名称是 `COMMAND_CODE_API_KEY`。
+
+**[SavantCode](https://savant-code.com)** 是一款开源的 AI
+编程助手，能根据自然语言指令直接修改你的代码库。**[SavantFree](https://www.npmjs.com/package/savant-free)** 是它的免费、广告支持版本——无需订阅、无需积分、零配置。
 
 与那种"一个模型干所有事"的工具不同，SavantCode 会协调多个专业化的智能体（agent）协同工作，理解你的项目并做出精准的改动。
 
@@ -10,17 +30,16 @@
   <img src="./assets/savant-code-vs-claude-code.png" alt="SavantCode vs Claude Code" width="400">
 </div>
 
-在我们的[评测](evals/README.md)中，SavantCode 在 175+ 个真实开源仓库的编码任务上以 61% 对 53% 的成绩领先 Claude Code。
-
+项目的具体评测结果和历史测试报告请参阅仓库中的 `evals/` 与 `dev/test-prompts/archive/`；本文不把历史基准数字当作当前版本保证。
 
 ## 工作原理
 
 当你让 SavantCode "给我的 API 加上身份验证"时，它可能会调用：
 
-1. **File Picker Agent** —— 扫描代码库、理解架构、找出相关文件
-2. **Planner Agent** —— 规划哪些文件需要改、按什么顺序改
-3. **Editor Agent** —— 执行精确的修改
-4. **Reviewer Agent** —— 校验改动是否正确
+1. **Detective** —— 用证据扫描代码库并找出相关问题
+2. **Thinker / Recorder** —— 规划工作并维护 FID
+3. **Forge** —— 根据已收敛的 FID 执行精确修改
+4. **Verifier** —— 独立审计改动并运行验证
 
 <div align="center">
   <img src="./assets/multi-agents.png" alt="SavantCode Multi-Agents" width="250">
@@ -61,12 +80,12 @@ savant-code
 
 进入 CLI 后：
 
-```
+```text
 /init
 ```
 
 这会生成：
-```
+```text
 knowledge.md               # SavantCode 用的项目上下文
 .agents/
 └── types/                 # TypeScript 类型定义
@@ -79,7 +98,8 @@ knowledge.md               # SavantCode 用的项目上下文
 
 通过指定工具、可派生的子智能体和提示词来实现自己的工作流。我们还提供了 TypeScript 生成器，方便你以更程序化的方式控制流程。
 
-下面是一个 `git-committer` 智能体的例子，它会基于当前的 git 状态生成提交。注意它先跑 `git diff` 和 `git log` 分析改动，然后再把决策权交给 LLM，让它撰写有意义的 commit message 并完成实际提交。
+下面是一个 `git-committer` 智能体的例子，它会基于当前的 git 状态生成提交。注意它先跑 `git diff` 和 `git log` 分析改动，然后再把决策权交给 LLM，让它撰写有意义的 commit
+message 并完成实际提交。
 
 ```typescript
 export default {
@@ -151,23 +171,18 @@ await client.run({
 
 更多 SDK 用法请看[这里](https://www.npmjs.com/package/@savant-code/sdk)。
 
-## SavantFree：免费的编程智能体
+## Savant-Free：未来的免费版本
 
-不想订阅？**[SavantFree](https://www.npmjs.com/package/savant-free)** 是 SavantCode 的免费版本——无需订阅、无需积分、零配置，装上就能用。
-
-```bash
-npm install -g savant-free
-cd your-project
-savant-free
-```
-
-SavantFree 由广告支持，使用经过优化、兼顾速度与质量的模型。内置网页检索、浏览器使用等能力。详情见 [SavantFree README](./savant-free/README.md)。
+仓库中保留 `savant-free/` 工作区用于未来的免费版本开发；它不是当前
+0.0.15 公开发布路径的一部分。当前公开 CLI 是 Savant-Code，采用本地优先和 BYOK 模式。
 
 ## 为什么选 SavantCode
 
 **自定义工作流**：用 TypeScript 生成器把 AI 生成和程序化控制混着用。智能体可以派生子智能体、按条件分支、跑多步流程。
 
-**OpenRouter 上的任何模型**：Claude Code 把你锁死在 Anthropic 的模型上，SavantCode 不一样——它支持 [OpenRouter](https://openrouter.ai/models) 上的所有模型，从 Claude、GPT 到 Qwen、DeepSeek 这类专用模型都行。可以按任务切换模型，也能随时用上最新发布的模型，不必等平台跟进。
+**OpenRouter 上的任何模型**：Claude Code 把你锁死在 Anthropic 的模型上，SavantCode 不一样——它支持
+[OpenRouter](https://openrouter.ai/models) 上的所有模型，从 Claude、GPT 到 Qwen、DeepSeek
+这类专用模型都行。可以按任务切换模型，也能随时用上最新发布的模型，不必等平台跟进。
 
 **复用已发布的智能体**：把社区[已发布的智能体](https://www.savant-code.com/store)拼起来用，少走弯路。SavantCode 智能体就是新一代的 MCP！
 
@@ -248,4 +263,5 @@ sudo apt-get install tmux
 
 ## Star 历史
 
-[![Star History Chart](https://api.star-history.com/svg?repos=savant0x/savant-code&type=Date)](https://www.star-history.com/#savant0x/savant-code&Date)
+[![Star History
+Chart](https://api.star-history.com/svg?repos=savant0x/savant-code&type=Date)](https://www.star-history.com/#savant0x/savant-code&Date)

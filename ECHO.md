@@ -21,7 +21,8 @@ FID lifecycle — code is never written until the FID has converged.
 conventions, and file extensions are defined in `protocol.config.yaml` and the
 `coding-standards/` directory.
 
-**We optimize for mathematical correctness, extreme robustness, and multi-year maintainability — while using adaptive complexity routing to avoid unnecessary overhead on simple tasks.**
+**We optimize for mathematical correctness, extreme robustness, and multi-year maintainability — while using
+adaptive complexity routing to avoid unnecessary overhead on simple tasks.**
 
 ---
 
@@ -89,7 +90,8 @@ Laws 1-4 are the Immutable Process Laws governing workflow. Laws 5-15 are the Ex
 | **Extended** | 5-15 (Code Quality)     | When `strict_mode: true` (default) | `protocol.strict_mode` |
 
 - **Core laws** are non-negotiable and always enforced regardless of config.
-- **Extended laws** are enforced when `strict_mode: true`. Set to `false` for quick exploration or debugging sessions where full rigor is unnecessary.
+- **Extended laws** are enforced when `strict_mode: true`. Set to `false` for quick exploration or debugging
+  sessions where full rigor is unnecessary.
 - The boot sequence always confirms Core laws. Extended laws are confirmed only when `strict_mode` is active.
 
 #### strict_mode: false Behavior
@@ -121,7 +123,8 @@ coding standard's `## Quality Overrides` section:
 | **3** | **Verify Before Proceed**          | Every change verified with build and test commands (from `protocol.config.yaml`) before moving on.                                | No broken builds ever. Zero errors, zero warnings.                                       |
 | **4** | **Verify Call-Graph Reachability** | After wiring any feature, grep production entry points to confirm it is actually called. Compilation is NOT verification.         | Zero grep results = NOT wired. Do not mark complete.                                     |
 
-**Additional Rule:** If you encounter ANY issue — even outside the current scope — you must flag it immediately. Never skip past a problem because "it's not what we're working on."
+**Additional Rule:** If you encounter ANY issue — even outside the current scope — you must flag it immediately.
+Never skip past a problem because "it's not what we're working on."
 
 ### Laws 5-15: The Extended Code Laws
 
@@ -182,7 +185,7 @@ architecture evaluation requires the structured sequential thinking process.
 
 ### Sequential Thinking Lifecycle
 
-```
+```text
 thought 1:  Define the problem — what exactly needs to be solved?
 thought 2:  Identify constraints — boundaries, requirements, non-negotiables
 thought 3:  Explore approach A — strengths, weaknesses, tradeoffs
@@ -274,13 +277,19 @@ not on the code. Code implementation begins only after the FID converges.
 
 ### Cross-Agent Claim Rule *(amended 2026-06-14, FID-151)*
 
-In multi-agent sessions, an agent may receive a claim attributed to another agent (e.g., a forwarded message, a relay of an analysis, a citation in a session summary). **The attribution is not a source.** "Detective said X" is not a source; "Detective's FID entry at path Y contains X" is. The recipient owes the operator the discipline of treating attributed claims as hypotheses, not facts, until the substance is verifiable in the recipient's own records.
+In multi-agent sessions, an agent may receive a claim attributed to another agent (e.g., a forwarded message, a
+relay of an analysis, a citation in a session summary). **The attribution is not a source.** "Detective said X" is
+not a source; "Detective's FID entry at path Y contains X" is. The recipient owes the operator the discipline of
+treating attributed claims as hypotheses, not facts, until the substance is verifiable in the recipient's own
+records.
 
 **Operational rules for FIDs that contain or cite cross-agent claims:**
 
 1. The FID must cite the source path of any external claim, not just the attribution.
-2. Specific numbers or facts sourced from another agent's analysis must be traceable to a record the FID author can grep, read, or query independently.
-3. If the substance of a cross-agent claim is not verifiable in the recipient's records, the FID must flag the gap, not act on the attribution.
+2. Specific numbers or facts sourced from another agent's analysis must be traceable to a record the FID author can
+   grep, read, or query independently.
+3. If the substance of a cross-agent claim is not verifiable in the recipient's records, the FID must flag the gap,
+   not act on the attribution.
 4. Numbers that cannot be verified must be tagged "unverified" in-band, or rejected, never cited as facts.
 
 This rule is the inter-agent version of the AUDIT phase's call-graph reachability requirement. *(Codifies LESSON-008.)*
@@ -290,6 +299,7 @@ This rule is the inter-agent version of the AUDIT phase's call-graph reachabilit
 ## FID-Bound Execution (Complex Tasks Only)
 
 The full FID-Bound Execution flow is reserved for genuinely complex tasks:
+
 - Touches > 75 lines AND requires new imports/APIs, OR
 - Novel architecture or patterns not in the codebase, OR
 - Verification fails twice with direct fixes, OR
@@ -326,6 +336,7 @@ Step 6:  If verification fails → spawn Forge to fix, then re-verify
 ### Verifier Trigger Criteria (Objective)
 
 The Verifier MUST be spawned when ANY of these apply:
+
 - Change is 10+ lines
 - Change touches 2+ files
 - New function or API added
@@ -338,6 +349,7 @@ The Verifier MAY be skipped ONLY when: change is < 10 lines AND single file AND 
 ### Double Audit (Hybrid Mode)
 
 Hybrid Mode satisfies the Double Audit requirement via:
+
 - **Method 1:** bashers (typecheck/lint) — static analysis
 - **Method 2:** Verifier — independent code review (when triggered by criteria above)
 
@@ -345,9 +357,12 @@ Self-reporting is prohibited. The Orchestrator that writes code must not be the 
 
 ### Enforcement
 
-- For Hybrid Mode: The Orchestrator writes code directly. Verification is done by bashers (typecheck/lint) or Verifier — never self-verified.
-- For FID-Bound Execution: The Orchestrator cannot skip steps 1-4. An open FID must reach COMPLETE before Forge implements.
-- The Verifier's implementation audit (step 6) is a separate pass from the FID audit (step 3). Both require tool output evidence.
+- For Hybrid Mode: The Orchestrator writes code directly. Verification is done by bashers (typecheck/lint) or
+  Verifier — never self-verified.
+- For FID-Bound Execution: The Orchestrator cannot skip steps 1-4. An open FID must reach COMPLETE before Forge
+  implements.
+- The Verifier's implementation audit (step 6) is a separate pass from the FID audit (step 3). Both require tool
+  output evidence.
 
 ---
 
@@ -358,7 +373,8 @@ Self-reporting is prohibited. The Orchestrator that writes code must not be the 
 - **Document as you go.** Don't leave documentation for later.
 - **Commit atomic changes.** Each commit should be independently revertible.
 - **Track progress visually.** Update TODO lists after each completed task.
-- **Use the right path.** For most tasks, write code directly (Hybrid Mode). For complex tasks, delegate to Forge via FID-Bound Execution. The Orchestrator is the primary coder; Forge is the specialist for complex work.
+- **Use the right path.** For most tasks, write code directly (Hybrid Mode). For complex tasks, delegate to Forge
+  via FID-Bound Execution. The Orchestrator is the primary coder; Forge is the specialist for complex work.
 
 ---
 
@@ -368,7 +384,8 @@ Self-reporting is prohibited. The Orchestrator that writes code must not be the 
 
 1. Read this ECHO.md first
 2. Load `protocol.config.yaml` to get project-specific commands
-3. **BOOT CHECK:** If `language` is set to `"CHANGE_ME"`, HALT. Do not proceed. Require the user to configure the language before continuing.
+3. **BOOT CHECK:** If `language` is set to `"CHANGE_ME"`, HALT. Do not proceed. Require the user to configure the
+   language before continuing.
 4. Load `coding-standards/{language}.md` for naming conventions and quality overrides
 5. Review `ARCHITECTURE.md` to understand the agent roster and tool restrictions
 6. Review `dev/LEARNINGS.md` for known issues
@@ -380,7 +397,12 @@ Self-reporting is prohibited. The Orchestrator that writes code must not be the 
 
 ### FID Perfection Loop Trigger
 
-Whenever the operator issues the trigger phrase **"run the perfection loop"**, the Orchestrator MUST run the Perfection Loop (RED → GREEN → AUDIT → COMPLETE) on every open FID. As part of each loop, the Thinker must ask: *"What questions should I have asked when this FID was created, but failed to?"* — surface every missed question, answer it with the most robust default derivable from code inspection, and fold those answers directly back into the existing FID sections. Only after the FID document is fully updated does the loop proceed to AUDIT. Do not implement any FID's proposed solution until the loop is fully documented.
+Whenever the operator issues the trigger phrase **"run the perfection loop"**, the Orchestrator MUST run the
+Perfection Loop (RED → GREEN → AUDIT → COMPLETE) on every open FID. As part of each loop, the Thinker must ask:
+*"What questions should I have asked when this FID was created, but failed to?"* — surface every missed question,
+answer it with the most robust default derivable from code inspection, and fold those answers directly back into
+the existing FID sections. Only after the FID document is fully updated does the loop proceed to AUDIT. Do not
+implement any FID's proposed solution until the loop is fully documented.
 
 ### During Session
 
@@ -421,13 +443,19 @@ Created → Analyzed → Fixed → Verified → Closed → Archived
 
 ### FID Authoring Rules
 
-Only the Recorder agent may create, update, or archive FID files. Agents without write tools (Thinker, Scout, Researcher) must route FID content through the Recorder. Parent agents with write tools must not write FID files directly from a sub-agent's output.
+Only the Recorder agent may create, update, or archive FID files. Agents without write tools (Thinker, Scout,
+Researcher) must route FID content through the Recorder. Parent agents with write tools must not write FID files
+directly from a sub-agent's output.
 
-FIDs are Markdown files that live ONLY in `dev/fids/`. NEVER create top-level directories such as `fids/`, `archive/`, or any path that shadows canonical ECHO paths.
+FIDs are Markdown files that live ONLY in `dev/fids/`. NEVER create top-level directories such as `fids/`,
+`archive/`, or any path that shadows canonical ECHO paths.
 
-Filename format: `FID-YYYY-MMDD-NNN-{kebab-case-title}.md`. Scan the existing FIDs in `dev/fids/` and `dev/fids/archive/` first to allocate the next available number on the date, and never reuse a number on the same date.
+Filename format: `FID-YYYY-MMDD-NNN-{kebab-case-title}.md`. Scan the existing FIDs in `dev/fids/` and
+`dev/fids/archive/` first to allocate the next available number on the date, and never reuse a number on the same
+date.
 
-Use `templates/FID-TEMPLATE.md` as the exact template. Required metadata fields: **Filename**, **ID**, **Severity**, **Status**, **Created**, **Author**.
+Use `templates/FID-TEMPLATE.md` as the exact template. Required metadata fields: **Filename**, **ID**,
+**Severity**, **Status**, **Created**, **Author**.
 
 Allowed status values: `created | analyzed | fixed | verified | closed`.
 
@@ -435,24 +463,29 @@ Non-FID design documents go to `docs/design/`, never at the repo root, and never
 
 ### Spawning the Recorder
 
-When the Orchestrator spawns the Recorder to create or update FIDs, it MUST follow these rules. The Recorder has a fixed tool set and specific behavioral patterns — incorrect prompts cause silent failures.
+When the Orchestrator spawns the Recorder to create or update FIDs, it MUST follow these rules. The Recorder has a
+fixed tool set and specific behavioral patterns — incorrect prompts cause silent failures.
 
 **Recorder tools:** `write_file`, `read_files`, `glob`, `code_search`, `set_output`
 **Recorder does NOT have:** `str_replace`, `bash`, `apply_patch`
 
 #### CREATE workflow
+
 - Provide the COMPLETE file content in the prompt — do not expect the Recorder to compose it
 - Say: "Use write_file to create this file. Do NOT read any other files first."
 - Do NOT ask the Recorder to read the template first — give it the content directly
-- The Recorder defaults to reading first, then stopping without writing. The explicit "Do NOT read" instruction prevents this.
+- The Recorder defaults to reading first, then stopping without writing. The explicit "Do NOT read" instruction
+  prevents this.
 
 #### UPDATE workflow
+
 - Say: "Read [file path], then use write_file with the COMPLETE updated content below."
 - Provide the complete updated content — the Recorder cannot do str_replace
 - Say: "Do NOT read any other files besides this one."
 - After the Recorder reads the file, it will write the full updated content back.
 
 #### Common mistakes to avoid
+
 - ❌ "Use str_replace to update the FID" — Recorder does not have str_replace
 - ❌ "Read the template and create the FID" — Recorder reads then stops without writing
 - ❌ Providing partial content and expecting the Recorder to fill in gaps
@@ -465,16 +498,19 @@ See `templates/FID-TEMPLATE.md` for the standard format.
 
 ### FID Ground-Truth Verification
 
-FID status metadata (`created | analyzed | fixed | verified | closed`) is manually maintained and can drift from reality. **When reporting FID status, verify against the codebase.** FID metadata is a claim, not ground truth.
+FID status metadata (`created | analyzed | fixed | verified | closed`) is manually maintained and can drift from
+reality. **When reporting FID status, verify against the codebase.** FID metadata is a claim, not ground truth.
 
 **Operational rules:**
 
-1. Before reporting any FID's status, check that the files referenced in the FID actually exist and contain the described implementation.
+1. Before reporting any FID's status, check that the files referenced in the FID actually exist and contain the
+   described implementation.
 2. If FID metadata claims `analyzed` but code exists → flag the discrepancy and update the FID.
 3. If FID metadata claims `verified` or `fixed` but code is missing → flag the discrepancy and downgrade the status.
 4. Status reports that don't include codebase verification evidence are invalid.
 
-This rule extends Law 1 (Read 0-EOF Before Touch) and Law 4 (Verify Call-Graph Reachability) to status reporting. The code is the source of truth — the FID markdown is a record that can drift. *(Codifies FID-2026-0725-086.)*
+This rule extends Law 1 (Read 0-EOF Before Touch) and Law 4 (Verify Call-Graph Reachability) to status reporting.
+The code is the source of truth — the FID markdown is a record that can drift. *(Codifies FID-2026-0725-086.)*
 
 ### FID Auto-Archive
 
@@ -487,25 +523,31 @@ When a FID status is updated to **Closed**, the Recorder MUST:
 
 ### FID Perfection Loop Completion Requirement
 
-Every open FID must have a complete Perfection Loop section before its proposed solution is implemented. Incomplete FIDs are not eligible for implementation.
+Every open FID must have a complete Perfection Loop section before its proposed solution is implemented. Incomplete
+FIDs are not eligible for implementation.
 
 **RED phase** (Detective) must catalog:
+
 - All failures and issues with evidence (file paths, line numbers, grep output)
 - Call-graph reachability evidence (grep for callers/consumers)
 - Existing tests that cover or miss the affected path
 
 **GREEN phase** (Thinker + Recorder) must specify:
+
 - Exact fix with minimal changes, arrived at through sequential thinking
 - Answers to all unanswered questions in the FID
 - Most robust default for any decision the FID left blank
 - Any new FIDs created as a result of the RED findings
 
 **AUDIT phase** (Verifier) must include:
+
 - Verification command output (build, test, typecheck, lint)
 - For new functions/config fields: grep production callers/readers with output pasted into the FID
 - Self-reporting is prohibited — evidence must come from tool output
 
-If a FID's proposed solution is architecturally wrong given current project direction, the FID must be updated with the correct approach before GREEN proceeds. Do not implement a misaligned FID and create a new one; update the existing FID and note the change in its Resolution section.
+If a FID's proposed solution is architecturally wrong given current project direction, the FID must be updated with
+the correct approach before GREEN proceeds. Do not implement a misaligned FID and create a new one; update the
+existing FID and note the change in its Resolution section.
 
 ---
 
@@ -542,7 +584,8 @@ If a FID's proposed solution is architecturally wrong given current project dire
 
 ## Honest Assessment
 
-The protocol requires verifiable claims, but this does not mean agents cannot reason about design decisions. The distinction:
+The protocol requires verifiable claims, but this does not mean agents cannot reason about design decisions. The
+distinction:
 
 | Claim Type | Requirement | Example |
 |-----------|-------------|---------|
@@ -550,7 +593,8 @@ The protocol requires verifiable claims, but this does not mean agents cannot re
 | **Design decisions** ("I chose X because Y") | MUST include documented reasoning | Explain tradeoffs, alternatives considered, why this approach wins |
 | **Status claims** ("this is complete", "this is fixed") | MUST be verifiable through independent check | Run audit commands, grep for call-graph reachability |
 
-**Never** claim code works without running verification commands. **Always** explain architectural reasoning when presenting design choices.
+**Never** claim code works without running verification commands. **Always** explain architectural reasoning when
+presenting design choices.
 
 ---
 
@@ -662,6 +706,7 @@ Document these in `dev/LEARNINGS.md` to improve future sessions.
 
 ---
 
-> **Final Note:** This document is the single source of truth for the ECHO Protocol. Read it completely before any work session. Perfection is the standard. No exceptions.
+> **Final Note:** This document is the single source of truth for the ECHO Protocol. Read it completely before any
+  work session. Perfection is the standard. No exceptions.
 
 **ECHO Protocol: Every principle, rule, and requirement in one file. Know it. Follow it. Enforce it.**

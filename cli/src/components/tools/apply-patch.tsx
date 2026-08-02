@@ -12,7 +12,6 @@ type PatchOperation =
   | { type: 'update_file'; path: string; diff: string }
   | { type: 'delete_file'; path: string }
 
- 
 function parseOperation(input: unknown): PatchOperation | null {
   if (!input || typeof input !== 'object') return null
   const inputObj = safeParseJSONObject(input)

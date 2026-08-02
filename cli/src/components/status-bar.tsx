@@ -221,10 +221,7 @@ export const StatusBar = ({
         }}
       >
         {statusIndicatorContent !== null && (
-          <text
-            fg={statusIndicatorContent.color}
-            style={{ wrapMode: 'none' }}
-          >
+          <text fg={statusIndicatorContent.color} style={{ wrapMode: 'none' }}>
             {statusIndicatorContent.text}
           </text>
         )}
@@ -258,7 +255,11 @@ export const StatusBar = ({
         {onEndSession &&
           statusIndicatorState.kind === 'idle' &&
           savantFreeSession?.status === 'active' && (
-            <StatusActionButton onClick={onEndSession} shortcut="End" label="session" />
+            <StatusActionButton
+              onClick={onEndSession}
+              shortcut="End"
+              label="session"
+            />
           )}
         {sessionProgress !== null &&
           sessionProgress.remainingMs < SAVANT_FREE_COUNTDOWN_VISIBLE_MS &&

@@ -30,8 +30,7 @@ export function useEvent<T extends (...args: never[]) => unknown>(
 
   // Return a stable function that calls the latest callback
   return useCallback(
-    ((...args: Parameters<T>) =>
-      (callbackRef.current as T)(...args)) as T,
+    ((...args: Parameters<T>) => (callbackRef.current as T)(...args)) as T,
     [], // Empty deps array ensures the function identity is stable
   )
 }

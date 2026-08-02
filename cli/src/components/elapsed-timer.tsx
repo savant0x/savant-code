@@ -49,7 +49,8 @@ export const ElapsedTimer = ({
 
   return (
     <text fg={theme.secondary} attributes={attributes}>
-      {formatElapsedTime(elapsedSeconds)}{suffix}
+      {formatElapsedTime(elapsedSeconds)}
+      {suffix}
     </text>
   )
 }

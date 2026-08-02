@@ -1,8 +1,11 @@
 import { describe, it, expect, beforeEach } from 'bun:test'
+
 import { BenchmarkHarness, type HarnessOptions } from '../src/harness'
+
 import type { AgentRunner, TraceDocument } from '../src/runner'
 import type { Sandbox, CommandResult } from '../src/sandbox'
 import type { TaskDefinition } from '../src/schema'
+import type { RunState } from '@savant-code/sdk'
 
 function makeTask(overrides: Partial<TaskDefinition> = {}): TaskDefinition {
   return {
@@ -69,7 +72,7 @@ class FakeRunner implements AgentRunner {
 
   async initialize(): Promise<void> {}
 
-  async executePrompt(prompt: string): Promise<import('@savant-code/sdk').RunState> {
+  async executePrompt(prompt: string): Promise<RunState> {
     this.executed = true
     return { output: { type: 'text', text: prompt } } as any
   }
@@ -173,10 +176,7 @@ describe('BenchmarkHarness', () => {
 
     const sandboxes = [sandboxA, sandboxB]
     const options: HarnessOptions = {
-      tasks: [
-        makeTask({ task_id: 'task-a' }),
-        makeTask({ task_id: 'task-b' }),
-      ],
+      tasks: [makeTask({ task_id: 'task-a' }), makeTask({ task_id: 'task-b' })],
       mode: 'baseline',
       concurrency: 2,
       sandboxFactory: () => sandboxes.shift()!,
@@ -197,6 +197,8 @@ describe('BenchmarkHarness', () => {
     } as any
 
     const harness = new BenchmarkHarness(options)
-    await expect(harness.run()).rejects.toThrow('Either tasksDir or tasks must be provided')
+    await expect(harness.run()).rejects.toThrow(
+      'Either tasksDir or tasks must be provided',
+    )
   })
 })

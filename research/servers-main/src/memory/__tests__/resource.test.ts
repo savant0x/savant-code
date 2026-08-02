@@ -1,11 +1,14 @@
-import { describe, it, expect, vi } from 'vitest';
-import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { SubscribeRequestSchema, UnsubscribeRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+import { describe, it, expect, vi } from 'vitest';
+
 import {
-  KnowledgeGraphManager,
   registerKnowledgeGraphResource,
   registerKnowledgeGraphSubscriptions,
 } from '../index.js';
+
+import type {
+  KnowledgeGraphManager} from '../index.js';
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
 describe('knowledge-graph resource', () => {
   it('registers with kebab-case name, correct URI, and JSON mime type', () => {

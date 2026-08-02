@@ -186,9 +186,7 @@ Task: Analyze what went wrong and what should have been done. For each mistake o
           )
           .map((item) => ({
             whatWentWrong:
-              typeof item.whatWentWrong === 'string'
-                ? item.whatWentWrong
-                : '',
+              typeof item.whatWentWrong === 'string' ? item.whatWentWrong : '',
             whatShouldHaveBeenDone:
               typeof item.whatShouldHaveBeenDone === 'string'
                 ? item.whatShouldHaveBeenDone

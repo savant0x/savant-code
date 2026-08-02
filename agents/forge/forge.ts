@@ -3,12 +3,7 @@ import { publisher } from '../constants'
 import type { AgentDefinition } from '../types/agent-definition'
 
 type CodeEditorVariant =
-  | 'gpt-5'
-  | 'opus'
-  | 'glm'
-  | 'kimi'
-  | 'deepseek'
-  | 'minimax'
+  'gpt-5' | 'opus' | 'glm' | 'kimi' | 'deepseek' | 'minimax'
 
 const EDITOR_MODEL_BY_VARIANT: Record<CodeEditorVariant, string> = {
   'gpt-5': 'openai/gpt-5.1',

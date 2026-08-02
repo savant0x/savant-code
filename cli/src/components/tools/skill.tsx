@@ -20,9 +20,7 @@ export const SkillComponent = defineToolComponent({
     }
 
     return {
-      content: (
-        <SimpleToolCallItem name="Load Skill" description={skillName} />
-      ),
+      content: <SimpleToolCallItem name="Load Skill" description={skillName} />,
     }
   },
 })

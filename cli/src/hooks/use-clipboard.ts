@@ -14,10 +14,10 @@ import type {
   ClipboardRendererSelection,
 } from '../utils/clipboard'
 
-function isSelectionLike(
-  value: unknown,
-): value is ClipboardRendererSelection {
-  return typeof value === 'object' && value !== null && 'getSelectedText' in value
+function isSelectionLike(value: unknown): value is ClipboardRendererSelection {
+  return (
+    typeof value === 'object' && value !== null && 'getSelectedText' in value
+  )
 }
 
 function extractSelectedText(
@@ -28,7 +28,7 @@ function extractSelectedText(
   const selectionObj = selectionEvent ?? rendererSelection
   const rawText: string | null =
     selectionObj && isSelectionLike(selectionObj)
-      ? selectionObj.getSelectedText?.() ?? null
+      ? (selectionObj.getSelectedText?.() ?? null)
       : typeof selectionObj === 'string'
         ? selectionObj
         : null
@@ -74,10 +74,14 @@ export const useClipboard = () => {
     const handleSelection = (
       selectionEvent: ClipboardRendererSelection | string,
     ) => {
-      const rawText = extractSelectedText(selectionEvent, renderer as ClipboardRenderer | null)
+      const rawText = extractSelectedText(
+        selectionEvent,
+        renderer as ClipboardRenderer | null,
+      )
 
       // Filter out cursor character from selected text
-      const cleanedText = rawText?.replace(new RegExp(CURSOR_CHAR, 'g'), '') ?? null
+      const cleanedText =
+        rawText?.replace(new RegExp(CURSOR_CHAR, 'g'), '') ?? null
 
       if (!cleanedText || cleanedText.trim().length === 0) {
         pendingSelectionRef.current = null

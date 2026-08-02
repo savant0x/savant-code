@@ -11,9 +11,9 @@ import type {
 } from '@savant-code/sdk'
 
 // Test 1: Type imports work correctly
-const testClient: SavantCodeClient = {} as any
-const testTool: CustomToolDefinition = {} as any
-const testState: RunState = {} as any
+const _testClient: SavantCodeClient = {} as any
+const _testTool: CustomToolDefinition = {} as any
+const _testState: RunState = {} as any
 
 console.log('✅ Type imports successful')
 
@@ -35,19 +35,19 @@ const mockOptions: ClientOptions = {
 }
 
 // This should compile without errors
-const mockClient = new ClientClass(mockOptions)
+const _mockClient = new ClientClass(mockOptions)
 
 console.log('✅ Client instantiation types work correctly')
 
 // Test 4: Custom tool definition types (compile-time only)
 type MockTool = ReturnType<typeof getCustomToolDefinition>
-const toolTypeTest: MockTool = {} as any
+const _toolTypeTest: MockTool = {} as any
 
 console.log('✅ Custom tool definition types work correctly')
 
 // Test 5: CommonJS import syntax also works in TypeScript
 const SDKRequire = require('@savant-code/sdk')
-const ClientFromRequire: typeof ClientClass = SDKRequire.SavantCodeClient
+const _ClientFromRequire: typeof ClientClass = SDKRequire.SavantCodeClient
 
 console.log('✅ CommonJS require syntax works in TypeScript')
 

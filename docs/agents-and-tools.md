@@ -4,7 +4,9 @@
 
 ## Agents
 
-The Savant harness ships 9 canonical agents + 5 helper tool-library agents from the `agents/` workspace. Each agent is a `SecretAgentDefinition` with a restricted tool set — no agent may perform another agent's role (ECHO Law: Separation of Duties).
+The Savant harness ships 9 canonical agents + 5 helper tool-library agents from the `agents/` workspace. Each agent is a
+`SecretAgentDefinition` with a restricted tool set — no agent may perform another agent's role (ECHO Law: Separation of
+Duties).
 
 ### Canonical 9-Agent Roster
 
@@ -34,7 +36,7 @@ These are consumed by the canonical 9 roles but do NOT constitute independent co
 
 ### Directory Layout
 
-```
+```text
 agents/
 ├── savant/              # Orchestrator (savant.ts, savant-deep.ts, + variants)
 ├── detective/           # RED phase
@@ -73,7 +75,8 @@ agents/
 
 ## Tools
 
-Tool definitions live in `common/src/tools/` and are executed via the SDK helpers + agent-runtime. Each tool has a Zod input schema, output schema, and an `endsAgentStep` flag.
+Tool definitions live in `common/src/tools/` and are executed via the SDK helpers + agent-runtime. Each tool has a Zod
+input schema, output schema, and an `endsAgentStep` flag.
 
 ### Tool Catalog
 
@@ -173,13 +176,14 @@ Tool definitions live in `common/src/tools/` and are executed via the SDK helper
 
 Tools are gated by FSM phase in `packages/agent-runtime/src/tools/tool-executor.ts`:
 
-```
+```text
 write_file / str_replace / apply_patch  →  GREEN only
 run_terminal_command                    →  AUDIT only
 sequentialthinking                      →  Thinker only (agent ID starts with "thinker")
 ```
 
-Gate logic: `(agentState.fsmPhase ?? 'idle') !== 'green'` — subagents inherit `fsmPhase` from parent via `createAgentState()` in `spawn-agent-utils.ts`.
+Gate logic: `(agentState.fsmPhase ?? 'idle') !== 'green'` — subagents inherit `fsmPhase` from parent via
+`createAgentState()` in `spawn-agent-utils.ts`.
 
 ### Tool Integration Points
 

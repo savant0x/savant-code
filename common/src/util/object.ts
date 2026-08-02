@@ -2,7 +2,6 @@ import { isEqual, mapValues, union } from 'lodash'
 
 import type { JSONValue } from '../types/json'
 
-
 type RemoveUndefined<T extends object> = {
   [K in keyof T as T[K] extends undefined ? never : K]: Exclude<T[K], undefined>
 }
@@ -78,14 +77,8 @@ export const hasSignificantDeepChanges = <T extends object>(
   partial: Partial<T>,
   epsilonForNumbers: number,
 ): boolean => {
-  const compareValues = <V1, V2>(
-    currValue: V1,
-    partialValue: V2,
-  ): boolean => {
-    if (
-      typeof currValue === 'number' &&
-      typeof partialValue === 'number'
-    ) {
+  const compareValues = <V1, V2>(currValue: V1, partialValue: V2): boolean => {
+    if (typeof currValue === 'number' && typeof partialValue === 'number') {
       return Math.abs(currValue - partialValue) > epsilonForNumbers
     }
     if (

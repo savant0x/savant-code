@@ -1,4 +1,3 @@
- 
 import { describe, expect, test } from 'bun:test'
 
 import { createAgentBlock } from '../message-block-helpers'
@@ -57,16 +56,16 @@ const createStreamRefs = (): {
     spawnAgentsMap: Map<string, SpawnAgentInfo>
   }
 } => {
-const state = {
-  rootStreamBuffer: '',
-  agentStreamAccumulators: new Map<string, string>(),
-  rootStreamSeen: false,
-  planExtracted: false,
-  wasAbortedByUser: false,
-  spawnAgentsMap: new Map<string, SpawnAgentInfo>(),
-  // FID-2026-0718-010 (Q13): late-chunk guard flag, matches StreamState
-  runCompleted: false,
-}
+  const state = {
+    rootStreamBuffer: '',
+    agentStreamAccumulators: new Map<string, string>(),
+    rootStreamSeen: false,
+    planExtracted: false,
+    wasAbortedByUser: false,
+    spawnAgentsMap: new Map<string, SpawnAgentInfo>(),
+    // FID-2026-0718-010 (Q13): late-chunk guard flag, matches StreamState
+    runCompleted: false,
+  }
 
   const controller = {
     state,
@@ -177,7 +176,8 @@ const createTestContext = (agentMode: AgentMode = 'EDIT') => {
 
 describe('sdk-event-handlers', () => {
   test('extracts plan content from root stream', () => {
-    const { ctx, getMessages, getHasPlanResponse } = createTestContext('SCAFFOLD')
+    const { ctx, getMessages, getHasPlanResponse } =
+      createTestContext('SCAFFOLD')
     const handleChunk = createStreamChunkHandler(ctx)
 
     handleChunk('<PLAN>Build plan</PLAN>')

@@ -15,14 +15,10 @@ export const REDDIT_FIRST_PROMPT_ANALYTICS_EVENTS: Record<
 }
 
 export type RedditFirstPromptCapiEventName =
-  | 'FirstPromptCli'
-  | 'FirstPromptWeb'
-  | 'FirstPromptChat'
+  'FirstPromptCli' | 'FirstPromptWeb' | 'FirstPromptChat'
 
 export type RedditRetentionCapiEventName =
-  | 'Retention1dCli'
-  | 'Retention7dCli'
-  | 'Retention24dCli'
+  'Retention1dCli' | 'Retention7dCli' | 'Retention24dCli'
 
 export function redditFirstPromptCapiEventName(
   surface: RedditFirstPromptSurface,

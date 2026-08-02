@@ -97,6 +97,8 @@ describe('savantFreeModelNavigationDirectionForKey', () => {
   })
 
   test('ignores non-navigation keys', () => {
-    expect(savantFreeModelNavigationDirectionForKey({ name: 'enter' })).toBeNull()
+    expect(
+      savantFreeModelNavigationDirectionForKey({ name: 'enter' }),
+    ).toBeNull()
   })
 })

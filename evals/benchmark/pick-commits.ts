@@ -119,7 +119,11 @@ Return your response as JSON with the selected commits. If none of the commits a
 const fingerprintId = 'commit-picker'
 const userInputId = 'commit-picker'
 
-function getCommits(repoPath: string, limit: number, afterCommit?: string): CommitInfo[] {
+function getCommits(
+  repoPath: string,
+  limit: number,
+  afterCommit?: string,
+): CommitInfo[] {
   const gitArgs = [
     'log',
     '--pretty=format:%H|%an|%ad|%s',
@@ -133,11 +137,10 @@ function getCommits(repoPath: string, limit: number, afterCommit?: string): Comm
     gitArgs.push(`${afterCommit}^`) // Start from the parent of the specified commit
   }
 
-  const gitLogOutput = execFileSync(
-    'git',
-    gitArgs,
-    { cwd: repoPath, encoding: 'utf-8' },
-  )
+  const gitLogOutput = execFileSync('git', gitArgs, {
+    cwd: repoPath,
+    encoding: 'utf-8',
+  })
 
   const lines = gitLogOutput.split('\n').filter((line) => line.trim() !== '')
 
@@ -571,7 +574,9 @@ if (require.main === module) {
   const args = process.argv.slice(2)
 
   if (args.length === 0) {
-    console.log('Usage: bun run pick-commits <repo-url> [output-path] [limit] [--after <commit-sha>]')
+    console.log(
+      'Usage: bun run pick-commits <repo-url> [output-path] [limit] [--after <commit-sha>]',
+    )
     console.log('')
     console.log('Examples:')
     console.log('  bun run pick-commits https://github.com/user/repo')

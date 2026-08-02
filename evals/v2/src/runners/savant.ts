@@ -1,6 +1,6 @@
 import { SavantCodeClient } from '@savant-code/sdk'
-import type { PrintModeEvent } from '@savant-code/common/types/print-mode'
-import type { RunState } from '@savant-code/sdk'
+
+import { TraceCollector } from '../trace'
 
 import type {
   AgentRunner,
@@ -9,7 +9,8 @@ import type {
   TraceDocument,
 } from '../runner'
 import type { Sandbox } from '../sandbox'
-import { TraceCollector } from '../trace'
+import type { PrintModeEvent } from '@savant-code/common/types/print-mode'
+import type { RunState } from '@savant-code/sdk'
 
 export interface SavantAgentRunnerConfig extends RunnerConfig {
   /**
@@ -52,7 +53,9 @@ export class SavantAgentRunner implements AgentRunner {
 
   async executePrompt(prompt: string): Promise<RunState> {
     if (!this.config || !this.client || !this.sandbox || !this.collector) {
-      throw new Error("Runner has not been initialized. Call initialize() first.")
+      throw new Error(
+        'Runner has not been initialized. Call initialize() first.',
+      )
     }
 
     const runState = await this.client.run({
@@ -78,7 +81,9 @@ export class SavantAgentRunner implements AgentRunner {
 
   collectTrace(): TraceDocument {
     if (!this.config || !this.collector) {
-      throw new Error("Runner has not been initialized. Call initialize() first.")
+      throw new Error(
+        'Runner has not been initialized. Call initialize() first.',
+      )
     }
 
     return this.collector.finalize(this.finalState)
@@ -86,7 +91,9 @@ export class SavantAgentRunner implements AgentRunner {
 
   async handleInteractivePrompt(_request: string): Promise<string> {
     // The Savant SDK does not expose interactive prompts during a run.
-    throw new Error("Interactive prompts are not supported by the Savant SDK runner.")
+    throw new Error(
+      'Interactive prompts are not supported by the Savant SDK runner.',
+    )
   }
 
   async injectFault(fault: RunFault): Promise<void> {

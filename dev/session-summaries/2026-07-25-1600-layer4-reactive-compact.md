@@ -1,11 +1,14 @@
 # Session Summary — 2026-07-25 16:00
 
 ## Session Type
+
 Feature Implementation / FID Closure
 
 ## Summary
 
-Completed the final layer (Layer 4) of the context compaction system: reactive compact for emergency truncation when the API returns a prompt-too-long error. Updated FID-2026-0725-085 with Layer 4 details, archived it to dev/fids/archive/, and appended the v0.0.8 CHANGELOG entry. All four layers of the compaction system are now implemented and verified.
+Completed the final layer (Layer 4) of the context compaction system: reactive compact for emergency truncation when the
+API returns a prompt-too-long error. Updated FID-2026-0725-085 with Layer 4 details, archived it to dev/fids/archive/,
+and appended the v0.0.8 CHANGELOG entry. All four layers of the compaction system are now implemented and verified.
 
 ## Planned Work
 
@@ -29,7 +32,8 @@ Completed the final layer (Layer 4) of the context compaction system: reactive c
 
 2. **`static isPromptTooLongError(error)`** — Error detection:
    - Matches common API error patterns from Anthropic, OpenRouter, and other providers
-   - Checks for: "prompt is too long", "context_length_exceeded", "maximum context length", "token limit", "too many tokens", "input too long", "request too large"
+   - Checks for: "prompt is too long", "context_length_exceeded", "maximum context length", "token limit", "too many
+     tokens", "input too long", "request too large"
 
 ### Integration in loopAgentSteps
 

@@ -45,7 +45,8 @@ Our users regularly use Codecane to implement new features, write unit tests, re
 
 ## Knowledge Files
 
-To unlock the full benefits of modern LLMs, we recommend storing knowledge alongside your code. Add a `knowledge.md` file anywhere in your project to provide helpful context, guidance, and tips for the LLM as it performs tasks for you.
+To unlock the full benefits of modern LLMs, we recommend storing knowledge alongside your code. Add a `knowledge.md`
+file anywhere in your project to provide helpful context, guidance, and tips for the LLM as it performs tasks for you.
 
 Codecane can fluently read and write files, so it will add knowledge as it goes. You don't need to write knowledge manually!
 
@@ -54,13 +55,15 @@ Some have said every change should be paired with a unit test. In 2024, every ch
 ## Tips
 
 1. Type '/help' or just '/' to see available commands.
-2. Create a `knowledge.md` file and collect specific points of advice. The assistant will use this knowledge to improve its responses.
+2. Create a `knowledge.md` file and collect specific points of advice. The assistant will use this knowledge to improve
+   its responses.
 3. Type `undo` or `redo` to revert or reapply file changes from the conversation.
 4. Press `Esc` or `Ctrl+C` while Codecane is generating a response to stop it.
 
 ## Troubleshooting
 
-This package is not intended for installation from npm. If a local validation pack fails, rerun the dry-run command above and report the failure to the release owner.
+This package is not intended for installation from npm. If a local validation pack fails, rerun the dry-run command
+above and report the failure to the release owner.
 
 ## Feedback
 

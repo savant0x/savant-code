@@ -6,7 +6,15 @@ import {
   SKILL_FILE_NAME,
   SKILL_NAME_MAX_LENGTH,
 } from '@savant-code/common/constants/skills'
-import { afterEach, beforeEach, describe, expect, mock, spyOn, test } from 'bun:test'
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  spyOn,
+  test,
+} from 'bun:test'
 
 import { loadSkills, parseSkillFileContent } from '../skills/load-skills'
 import { logger } from '../utils/logger'
@@ -50,7 +58,9 @@ describe('loadSkills', () => {
   let projectDir: string
 
   beforeEach(() => {
-    tempRoot = mkdtempSync(path.join(os.tmpdir(), 'savant-code-sdk-load-skills-'))
+    tempRoot = mkdtempSync(
+      path.join(os.tmpdir(), 'savant-code-sdk-load-skills-'),
+    )
     homeDir = path.join(tempRoot, 'home')
     projectDir = path.join(tempRoot, 'project')
 
@@ -92,7 +102,13 @@ describe('loadSkills', () => {
       'project-claude-skill',
     ])
     expect(skills['global-claude-skill']?.filePath).toBe(
-      path.join(homeDir, '.claude', 'skills', 'global-claude-skill', 'SKILL.md'),
+      path.join(
+        homeDir,
+        '.claude',
+        'skills',
+        'global-claude-skill',
+        'SKILL.md',
+      ),
     )
     expect(skills['project-agents-skill']?.description).toBe(
       'Description for project-agents-skill',
@@ -233,8 +249,8 @@ describe('loadSkills', () => {
       .join('\n')
     expect(
       errorCalls.includes('does not match directory name') ||
-      errorCalls.includes('Invalid frontmatter') ||
-      errorCalls.includes('Failed to read skill file'),
+        errorCalls.includes('Invalid frontmatter') ||
+        errorCalls.includes('Failed to read skill file'),
     ).toBe(true)
 
     expect(loggerWarnSpy).toHaveBeenCalledWith(
@@ -294,7 +310,11 @@ describe('parseSkillFileContent', () => {
         directoryName: 'deploy',
         filePath: '/skills/deploy/SKILL.md',
       }),
-    ).toMatchObject({ name: 'deploy', description: 'Deploy safely', content: valid })
+    ).toMatchObject({
+      name: 'deploy',
+      description: 'Deploy safely',
+      content: valid,
+    })
     expect(
       parseSkillFileContent(valid.replace('name: deploy', 'name: release'), {
         directoryName: 'deploy',

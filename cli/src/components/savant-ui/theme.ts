@@ -3,7 +3,11 @@ import { useTheme } from '../../hooks/use-theme'
 /** Design tokens for the Savant-UI component library. */
 export const tokens = {
   spacing: { xs: 1, sm: 2, md: 3, lg: 4, xl: 6 },
-  borders: { single: 'single' as const, rounded: 'rounded' as const, none: 'none' as const },
+  borders: {
+    single: 'single' as const,
+    rounded: 'rounded' as const,
+    none: 'none' as const,
+  },
   colors: {
     success: '#22c55e',
     error: '#ef4444',

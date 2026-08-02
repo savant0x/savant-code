@@ -12,7 +12,8 @@ export const CHATGPT_OAUTH_ENABLED = true
 export const CHATGPT_OAUTH_CLIENT_ID = 'app_EMoamEEZ73f0CkXaXp7hrann'
 
 /** OAuth endpoints */
-export const CHATGPT_OAUTH_AUTHORIZE_URL = 'https://auth.openai.com/oauth/authorize'
+export const CHATGPT_OAUTH_AUTHORIZE_URL =
+  'https://auth.openai.com/oauth/authorize'
 export const CHATGPT_OAUTH_TOKEN_URL = 'https://auth.openai.com/oauth/token'
 
 /** Pinned redirect URI for paste-based localhost callback flow. */
@@ -78,5 +79,7 @@ export function toOpenAIModelId(model: string): string {
     return mapped
   }
 
-  throw new Error(`Model is not supported for ChatGPT OAuth direct routing: ${model}`)
+  throw new Error(
+    `Model is not supported for ChatGPT OAuth direct routing: ${model}`,
+  )
 }

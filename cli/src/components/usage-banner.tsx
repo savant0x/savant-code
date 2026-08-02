@@ -22,7 +22,6 @@ import {
   generateLoadingBannerText,
 } from '../utils/usage-banner-state'
 
-
 const MANUAL_SHOW_TIMEOUT = 60 * 1000 // 1 minute
 const USAGE_POLL_INTERVAL = 30 * 1000 // 30 seconds
 
@@ -36,13 +35,13 @@ const formatRenewalDate = (dateStr: string | null): string => {
   const isToday = resetDate.toDateString() === today.toDateString()
   return isToday
     ? resetDate.toLocaleString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-    })
+        hour: 'numeric',
+        minute: '2-digit',
+      })
     : resetDate.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-    })
+        month: 'short',
+        day: 'numeric',
+      })
 }
 
 export const UsageBanner = ({ showTime }: { showTime: number }) => {
@@ -56,9 +55,10 @@ export const UsageBanner = ({ showTime }: { showTime: number }) => {
   const isChatGptConnected = CHATGPT_OAUTH_ENABLED && isChatGptOAuthValid()
 
   // Fetch subscription data
-  const { data: subscriptionData, isLoading: isSubscriptionLoading } = useSubscriptionQuery({
-    refetchInterval: 30 * 1000,
-  })
+  const { data: subscriptionData, isLoading: isSubscriptionLoading } =
+    useSubscriptionQuery({
+      refetchInterval: 30 * 1000,
+    })
 
   const {
     data: apiData,
@@ -103,10 +103,18 @@ export const UsageBanner = ({ showTime }: { showTime: number }) => {
   }
 
   const colorLevel = getBannerColorLevel(activeData.remainingBalance)
-  const renewalDate = activeData.next_quota_reset ? formatRenewalDate(activeData.next_quota_reset) : null
+  const renewalDate = activeData.next_quota_reset
+    ? formatRenewalDate(activeData.next_quota_reset)
+    : null
 
-  const activeSubscription = subscriptionData?.hasSubscription ? subscriptionData : null
-  const { rateLimit, subscription: subscriptionInfo, displayName } = activeSubscription ?? {}
+  const activeSubscription = subscriptionData?.hasSubscription
+    ? subscriptionData
+    : null
+  const {
+    rateLimit,
+    subscription: subscriptionInfo,
+    displayName,
+  } = activeSubscription ?? {}
 
   return (
     <BottomBanner
@@ -134,7 +142,9 @@ export const UsageBanner = ({ showTime }: { showTime: number }) => {
             {/* Main stats row */}
             <box style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 1 }}>
               <text style={{ fg: theme.muted }}>Session:</text>
-              <text style={{ fg: theme.foreground }}>{sessionCreditsUsed.toLocaleString()} credits</text>
+              <text style={{ fg: theme.foreground }}>
+                {sessionCreditsUsed.toLocaleString()} credits
+              </text>
               <text style={{ fg: theme.muted }}>·</text>
               <text style={{ fg: theme.muted }}>Remaining:</text>
               {isLoadingData ? (
@@ -200,7 +210,10 @@ const SubscriptionUsageSection: React.FC<SubscriptionUsageSectionProps> = ({
 
   const blockPercent = useMemo(() => {
     if (rateLimit?.blockLimit == null || rateLimit.blockUsed == null) return 100
-    return Math.max(0, 100 - Math.round((rateLimit.blockUsed / rateLimit.blockLimit) * 100))
+    return Math.max(
+      0,
+      100 - Math.round((rateLimit.blockUsed / rateLimit.blockLimit) * 100),
+    )
   }, [rateLimit?.blockLimit, rateLimit?.blockUsed])
 
   const weeklyPercent = rateLimit ? 100 - rateLimit.weeklyPercentUsed : 100
@@ -220,8 +233,14 @@ const SubscriptionUsageSection: React.FC<SubscriptionUsageSectionProps> = ({
       ) : rateLimit ? (
         <box style={{ flexDirection: 'column', gap: 0 }}>
           <box style={{ flexDirection: 'row', alignItems: 'center', gap: 0 }}>
-            <text style={{ fg: theme.muted }}>{`5-hour limit ${`${blockPercent}%`.padStart(4)} `}</text>
-            <ProgressBar value={blockPercent} width={12} showPercentage={false} />
+            <text
+              style={{ fg: theme.muted }}
+            >{`5-hour limit ${`${blockPercent}%`.padStart(4)} `}</text>
+            <ProgressBar
+              value={blockPercent}
+              width={12}
+              showPercentage={false}
+            />
             <text style={{ fg: theme.muted }}>
               {rateLimit.blockResetsAt
                 ? ` resets in ${formatTimeUntil(new Date(rateLimit.blockResetsAt), { fallback: 'now' })}`
@@ -229,8 +248,14 @@ const SubscriptionUsageSection: React.FC<SubscriptionUsageSectionProps> = ({
             </text>
           </box>
           <box style={{ flexDirection: 'row', alignItems: 'center', gap: 0 }}>
-            <text style={{ fg: theme.muted }}>{`Weekly limit ${`${weeklyPercent}%`.padStart(4)} `}</text>
-            <ProgressBar value={weeklyPercent} width={12} showPercentage={false} />
+            <text
+              style={{ fg: theme.muted }}
+            >{`Weekly limit ${`${weeklyPercent}%`.padStart(4)} `}</text>
+            <ProgressBar
+              value={weeklyPercent}
+              width={12}
+              showPercentage={false}
+            />
             <text style={{ fg: theme.muted }}>
               {` resets in ${formatTimeUntil(rateLimit.weeklyResetsAt, { fallback: 'now' })}`}
             </text>
@@ -240,12 +265,23 @@ const SubscriptionUsageSection: React.FC<SubscriptionUsageSectionProps> = ({
       <box style={{ flexDirection: 'column', gap: 0, marginTop: 1 }}>
         <box style={{ flexDirection: 'row', alignItems: 'center', gap: 1 }}>
           <text style={{ fg: theme.muted }}>Credit spending:</text>
-          <text style={{ fg: fallbackToALaCarte ? theme.foreground : theme.warning }}>
+          <text
+            style={{
+              fg: fallbackToALaCarte ? theme.foreground : theme.warning,
+            }}
+          >
             {fallbackToALaCarte ? 'enabled' : 'disabled'}
           </text>
-          <Button onClick={handleToggleFallbackToALaCarte} disabled={updatePreference.isPending}>
-            <text style={{ fg: theme.muted, attributes: TextAttributes.UNDERLINE }}>
-              {updatePreference.isPending ? '[updating...]' : `[${fallbackToALaCarte ? 'disable' : 'enable'}]`}
+          <Button
+            onClick={handleToggleFallbackToALaCarte}
+            disabled={updatePreference.isPending}
+          >
+            <text
+              style={{ fg: theme.muted, attributes: TextAttributes.UNDERLINE }}
+            >
+              {updatePreference.isPending
+                ? '[updating...]'
+                : `[${fallbackToALaCarte ? 'disable' : 'enable'}]`}
             </text>
           </Button>
         </box>

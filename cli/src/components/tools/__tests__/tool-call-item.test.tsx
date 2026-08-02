@@ -3,8 +3,8 @@ import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 
 import { initializeThemeStore } from '../../../hooks/use-theme'
-import { SimpleToolCallItem } from '../tool-call-item'
 import { ReadFilesComponent } from '../read-files'
+import { SimpleToolCallItem } from '../tool-call-item'
 
 import type { ChatTheme } from '../../../types/theme-system'
 

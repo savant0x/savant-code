@@ -4,7 +4,6 @@ import { createSavantCodeApiClient } from '../savant-code-api'
 
 import type { FeedbackRequest } from '@savant-code/common/schemas/feedback'
 
-
 // Type for mocked fetch function
 type MockFetch = (url: string, options?: RequestInit) => Promise<Response>
 
@@ -41,7 +40,9 @@ describe('createSavantCodeApiClient', () => {
     })
 
     test('should create client with custom base URL', () => {
-      const client = createSavantCodeApiClient({ baseUrl: 'https://custom.api' })
+      const client = createSavantCodeApiClient({
+        baseUrl: 'https://custom.api',
+      })
       expect(client.baseUrl).toBe('https://custom.api')
     })
 

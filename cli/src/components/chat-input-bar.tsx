@@ -395,7 +395,9 @@ export const ChatInputBar = ({
               that it's a focusable input — costs no extra height. */}
           {!modeConfig.label && !modeConfig.icon && (
             <box style={{ flexShrink: 0 }}>
-              <text fg={theme.success} selectable={false}>❯</text>
+              <text fg={theme.success} selectable={false}>
+                ❯
+              </text>
             </box>
           )}
           <MultilineInput

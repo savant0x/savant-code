@@ -13,19 +13,22 @@ export function parsePartialJsonObjectSingle(content: string): {
   if (!content.match(/\d$/)) {
     try {
       parsed = JSON.parse(content + '}')
-      if (isJSONObject(parsed)) return { lastParamComplete: true, params: parsed }
+      if (isJSONObject(parsed))
+        return { lastParamComplete: true, params: parsed }
     } catch {}
   }
 
   try {
     parsed = JSON.parse(content + '"}')
-    if (isJSONObject(parsed)) return { lastParamComplete: false, params: parsed }
+    if (isJSONObject(parsed))
+      return { lastParamComplete: false, params: parsed }
   } catch {}
 
   if (content.endsWith('\\')) {
     try {
       parsed = JSON.parse(content.slice(0, -1) + '"}')
-      if (isJSONObject(parsed)) return { lastParamComplete: false, params: parsed }
+      if (isJSONObject(parsed))
+        return { lastParamComplete: false, params: parsed }
     } catch {}
   }
 
@@ -33,7 +36,8 @@ export function parsePartialJsonObjectSingle(content: string): {
   while ((commaPos = content.lastIndexOf(',', commaPos - 1)) !== -1) {
     try {
       parsed = JSON.parse(content.slice(0, commaPos) + '}')
-      if (isJSONObject(parsed)) return { lastParamComplete: true, params: parsed }
+      if (isJSONObject(parsed))
+        return { lastParamComplete: true, params: parsed }
     } catch {}
   }
 

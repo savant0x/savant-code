@@ -6,7 +6,6 @@ import type {
 } from '@ai-sdk/provider'
 import type { JSONValue } from '@savant-code/common/types/json'
 
-
 function isRecord(value: JSONValue): value is Record<string, JSONValue> {
   return value !== null && typeof value === 'object' && !Array.isArray(value)
 }
@@ -15,11 +14,17 @@ function decodeJsonPointerSegment(segment: string) {
   return segment.replace(/~1/g, '/').replace(/~0/g, '~')
 }
 
-function lookupJsonPointer(root: JSONValue, pointer: string): JSONValue | undefined {
+function lookupJsonPointer(
+  root: JSONValue,
+  pointer: string,
+): JSONValue | undefined {
   if (!pointer.startsWith('#/')) return undefined
 
   let current: JSONValue = root
-  for (const segment of pointer.slice(2).split('/').map(decodeJsonPointerSegment)) {
+  for (const segment of pointer
+    .slice(2)
+    .split('/')
+    .map(decodeJsonPointerSegment)) {
     if (!isRecord(current) && !Array.isArray(current)) return undefined
     current = (current as Record<string, JSONValue>)[segment]
   }
@@ -27,7 +32,8 @@ function lookupJsonPointer(root: JSONValue, pointer: string): JSONValue | undefi
 }
 
 function inlineLocalSchemaRefs(schema: JSONValue): JSONValue {
-  const root: JSONValue = isRecord(schema) && 'jsonSchema' in schema ? schema.jsonSchema : schema
+  const root: JSONValue =
+    isRecord(schema) && 'jsonSchema' in schema ? schema.jsonSchema : schema
 
   const visit = (value: JSONValue, refStack: Set<string>): JSONValue => {
     if (Array.isArray(value)) {
@@ -56,7 +62,8 @@ function inlineLocalSchemaRefs(schema: JSONValue): JSONValue {
 
       if (Object.keys(siblings).length === 0) return {}
       return visit(siblings, refStack)
-    }      const result: Record<string, JSONValue> = {}
+    }
+    const result: Record<string, JSONValue> = {}
     for (const [key, child] of Object.entries(value)) {
       if (key === '$defs' || key === 'definitions') continue
       result[key] = visit(child, refStack)
@@ -82,8 +89,8 @@ export function prepareTools({
           name: string
           description: string | undefined
           parameters: JSONValue
-      }
-    }>
+        }
+      }>
   toolChoice:
     | { type: 'function'; function: { name: string } }
     | 'auto'

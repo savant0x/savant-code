@@ -9,17 +9,21 @@ If you are a **FreeBuff agent** working on this repository, do **NOT** use `ECHO
 
 Use instead:
 
-```
+```text
 dev/nova/specs/echo-v0.1.2-freebuff.md
 ```
 
-`ECHO.md` is the ECHO Protocol for the **Savant-Code harness** (multi-agent roster). FreeBuff agents operate under a single-agent adaptation located at `dev/nova/specs/echo-v0.1.2-freebuff.md`. The corresponding machine-readable configuration is `freebuff.protocol` in `protocol.config.yaml`.
+`ECHO.md` is the ECHO Protocol for the **Savant-Code harness** (multi-agent roster). FreeBuff agents operate under
+a single-agent adaptation located at `dev/nova/specs/echo-v0.1.2-freebuff.md`. The corresponding machine-readable
+configuration is `freebuff.protocol` in `protocol.config.yaml`.
 
 ## Why
 
 - Savant-Code `ECHO.md` assumes a 9-agent roster and harness-bound tooling that FreeBuff agents do not have.
-- The FreeBuff ECHO adaptation simplifies the protocol for single-agent operation while keeping the same core laws and perfection loop.
-- This directive exists so future FreeBuff sessions bootstrap with the correct protocol without relying on session-by-session instructions.
+- The FreeBuff ECHO adaptation simplifies the protocol for single-agent operation while keeping the same core laws
+  and perfection loop.
+- This directive exists so future FreeBuff sessions bootstrap with the correct protocol without relying on
+  session-by-session instructions.
 
 ## Quick Reference
 

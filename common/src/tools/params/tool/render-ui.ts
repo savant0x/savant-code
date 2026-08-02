@@ -56,7 +56,9 @@ const tableColumnSchema = z.object({
 const tableWidgetSchema = z.object({
   type: z.literal('table'),
   columns: z.array(tableColumnSchema).describe('Column definitions'),
-  rows: z.array(z.record(z.string(), jsonValueSchema)).describe('Row data objects keyed by column key'),
+  rows: z
+    .array(z.record(z.string(), jsonValueSchema))
+    .describe('Row data objects keyed by column key'),
   title: z.string().optional().describe('Optional table title'),
 })
 
@@ -67,7 +69,10 @@ const cardWidgetSchema = z.object({
   type: z.literal('card'),
   title: z.string().describe('Card title'),
   status: z.string().optional().describe('Status text (e.g. open, closed)'),
-  severity: z.string().optional().describe('Severity (critical, high, medium, low)'),
+  severity: z
+    .string()
+    .optional()
+    .describe('Severity (critical, high, medium, low)'),
   summary: z.string().describe('Short summary text'),
   body: z.string().optional().describe('Optional longer body text'),
 })
@@ -77,7 +82,10 @@ export type RenderUICardWidget = z.infer<typeof cardWidgetSchema>
 // Stepper widget (for Perfection Loop phases)
 const stepperStepSchema = z.object({
   label: z.string().describe('Step label'),
-  status: z.enum(['pending', 'active', 'done', 'error']).optional().default('pending'),
+  status: z
+    .enum(['pending', 'active', 'done', 'error'])
+    .optional()
+    .default('pending'),
 })
 
 const stepperWidgetSchema = z.object({
@@ -91,7 +99,21 @@ export type RenderUIStepperWidget = z.infer<typeof stepperWidgetSchema>
 // Badge widget
 const badgeWidgetSchema = z.object({
   type: z.literal('badge'),
-  variant: z.enum(['open', 'closed', 'critical', 'high', 'medium', 'low', 'info', 'success', 'warning', 'error']).optional().default('info'),
+  variant: z
+    .enum([
+      'open',
+      'closed',
+      'critical',
+      'high',
+      'medium',
+      'low',
+      'info',
+      'success',
+      'warning',
+      'error',
+    ])
+    .optional()
+    .default('info'),
   text: z.string().describe('Badge text'),
 })
 
@@ -100,13 +122,24 @@ export type RenderUIBadgeWidget = z.infer<typeof badgeWidgetSchema>
 // Perfection Loop widget
 const perfectionLoopWidgetSchema = z.object({
   type: z.literal('perfection_loop'),
-  phase: z.string().describe('Current FSM phase (idle, red, green, audit, self_correct, complete)'),
+  phase: z
+    .string()
+    .describe(
+      'Current FSM phase (idle, red, green, audit, self_correct, complete)',
+    ),
   iteration: z.number().int().optional().describe('Current iteration count'),
-  maxIterations: z.number().int().optional().default(10).describe('Max iterations'),
+  maxIterations: z
+    .number()
+    .int()
+    .optional()
+    .default(10)
+    .describe('Max iterations'),
   fidName: z.string().optional().describe('Associated FID name'),
 })
 
-export type RenderUIPerfectionLoopWidget = z.infer<typeof perfectionLoopWidgetSchema>
+export type RenderUIPerfectionLoopWidget = z.infer<
+  typeof perfectionLoopWidgetSchema
+>
 
 const widgetSchema = z.discriminatedUnion('type', [
   buttonWidgetSchema,

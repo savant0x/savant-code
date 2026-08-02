@@ -17,7 +17,8 @@
 
 ### Known Issues
 
-- FreeBuff ECHO v0.1.2 and Savant ECHO v0.2.0 were documented separately but not distinguished in the shared machine-readable configuration.
+- FreeBuff ECHO v0.1.2 and Savant ECHO v0.2.0 were documented separately but not distinguished in the shared
+  machine-readable configuration.
 - Archived FIDs contained legacy status spellings, missing required metadata, and one unresolved `complete` record.
 - Previous audit evidence was not sufficient to certify the configured validation commands in this session.
 
@@ -45,8 +46,10 @@
 
 - **Status:** completed
 - **FIDs Created:** FID-2026-0731-008
-- **Changes Made:** Created the remediation FID and recorded the exact config, lifecycle, preservation, and verification boundaries.
-- **Verification:** Full reads of the canonical FreeBuff protocol, configuration, FID template, active lifecycle records, and affected historical records; independent inventory identified 69 affected archive records.
+- **Changes Made:** Created the remediation FID and recorded the exact config, lifecycle, preservation, and verification
+  boundaries.
+- **Verification:** Full reads of the canonical FreeBuff protocol, configuration, FID template, active lifecycle
+  records, and affected historical records; independent inventory identified 69 affected archive records.
 
 ---
 
@@ -61,8 +64,13 @@
 ### Final validation and closeout
 
 - **Status:** completed
-- **Changes Made:** Repaired the atomic filename migration, removed recreated legacy files, extended the protocol loader with indentation-aware Savant/FreeBuff parsing, added focused tests, closed and archived FID-2026-0731-008, and updated the changelog.
-- **Verification:** Final inventory: 160 records, 4 active, 156 archived, 160 unique canonical IDs, no filename/metadata mismatches, and no legacy migrated basenames after archiving the validated telemetry decision FID. Common and all configured workspace typechecks pass; focused protocol tests pass 2/2; root loader reports `typescript` and FreeBuff `0.1.2-freebuff` strict mode; independent review found no critical findings.
+- **Changes Made:** Repaired the atomic filename migration, removed recreated legacy files, extended the protocol loader
+  with indentation-aware Savant/FreeBuff parsing, added focused tests, closed and archived FID-2026-0731-008, and
+  updated the changelog.
+- **Verification:** Final inventory: 160 records, 4 active, 156 archived, 160 unique canonical IDs, no filename/metadata
+  mismatches, and no legacy migrated basenames after archiving the validated telemetry decision FID. Common and all
+  configured workspace typechecks pass; focused protocol tests pass 2/2; root loader reports `typescript` and FreeBuff
+  `0.1.2-freebuff` strict mode; independent review found no critical findings.
 
 ### Dual-product protocol configuration ambiguity
 
@@ -89,7 +97,8 @@
 - [ ] configured format command: not run in focused governance gate
 - [x] focused protocol-config tests: PASS — 2 passed / 0 failed
 - [x] root protocol loader smoke test: PASS — Savant strict mode, `typescript`, FreeBuff `0.1.2-freebuff` strict mode
-- [x] governance inventory scans: PASS — 160 records, 4 active, 156 archived, canonical filenames, required metadata/status/location/ID invariants, and unique IDs
+- [x] governance inventory scans: PASS — 160 records, 4 active, 156 archived, canonical filenames, required
+  metadata/status/location/ID invariants, and unique IDs
 
 ---
 
@@ -97,7 +106,8 @@
 
 ### Code Changes
 
-- **Files Modified:** Governance/configuration records plus 19 canonical FID filename migrations, protocol loader, focused tests, session summary, and changelog
+- **Files Modified:** Governance/configuration records plus 19 canonical FID filename migrations, protocol loader,
+  focused tests, session summary, and changelog
 - **Lines Added:** pending exact git diff count
 - **Lines Removed:** pending exact git diff count
 - **Net Change:** documentation/configuration only; runtime source unchanged
@@ -112,8 +122,10 @@
 
 ## Open Questions
 
-- Historical body preservation was audited structurally through normalization notes and retained sections; metadata backfill does not fabricate implementation evidence.
-- Full repository build/test/lint/format suites, cross-platform checks, and interactive release checks remain outside this focused governance gate.
+- Historical body preservation was audited structurally through normalization notes and retained sections; metadata
+  backfill does not fabricate implementation evidence.
+- Full repository build/test/lint/format suites, cross-platform checks, and interactive release checks remain outside
+  this focused governance gate.
 
 ---
 

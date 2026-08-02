@@ -7,13 +7,12 @@ import { glyph } from '../../utils/glyphs'
 import { safeOpen } from '../../utils/open-url'
 import { Button } from '../button'
 import { phaseMapping, statusMapping } from '../savant-ui/echo/phase-info'
-import { resolveThemeColor, type ThemeColorKey } from '../savant-ui/icon-theme-keys'
+import {
+  resolveThemeColor,
+  type ThemeColorKey,
+} from '../savant-ui/icon-theme-keys'
 
-import type {
-  ToolBlock,
-  ToolRenderConfig,
-  ToolRenderOptions,
-} from './types'
+import type { ToolBlock, ToolRenderConfig, ToolRenderOptions } from './types'
 import type { ChatTheme } from '../../types/theme-system'
 import type { RenderUIButtonWidget } from '@savant-code/common/tools/params/tool/render-ui'
 import type { JSONValue } from '@savant-code/common/types/json'
@@ -24,7 +23,11 @@ type RenderUIButtonVariant = NonNullable<RenderUIButtonWidget['variant']>
 
 interface TableWidgetData {
   type: 'table'
-  columns: Array<{ key: string; label: string; align?: 'left' | 'center' | 'right' }>
+  columns: Array<{
+    key: string
+    label: string
+    align?: 'left' | 'center' | 'right'
+  }>
   rows: Record<string, JSONValue>[]
   title?: string
 }
@@ -40,7 +43,10 @@ interface CardWidgetData {
 
 interface StepperWidgetData {
   type: 'stepper'
-  steps: Array<{ label: string; status?: 'pending' | 'active' | 'done' | 'error' }>
+  steps: Array<{
+    label: string
+    status?: 'pending' | 'active' | 'done' | 'error'
+  }>
   current?: number
 }
 
@@ -99,7 +105,9 @@ const isStepperWidget = (w: unknown): w is StepperWidgetData =>
 const isBadgeWidget = (w: unknown): w is BadgeWidgetData =>
   !!w && typeof w === 'object' && (w as { type?: string }).type === 'badge'
 const isPerfectionLoopWidget = (w: unknown): w is PerfectionLoopWidgetData =>
-  !!w && typeof w === 'object' && (w as { type?: string }).type === 'perfection_loop'
+  !!w &&
+  typeof w === 'object' &&
+  (w as { type?: string }).type === 'perfection_loop'
 
 // ---- Button widget (unchanged logic) ---------------------------------------
 
@@ -177,7 +185,9 @@ const RenderUIButton = ({ widget }: { widget: RenderUIButtonWidget }) => {
           <span fg={foregroundColor} attributes={textAttributes}>
             {widget.text}
           </span>
-          <span fg={foregroundColor} attributes={textAttributes}>{' ↗'}</span>
+          <span fg={foregroundColor} attributes={textAttributes}>
+            {' ↗'}
+          </span>
         </text>
       </Button>
     </box>
@@ -235,7 +245,9 @@ const CardWidget = memo(({ widget }: { widget: CardWidgetData }) => {
   const theme = useTheme()
   const severityColor = resolveThemeColor(
     theme,
-    widget.severity ? (SEVERITY_COLOR_KEY[widget.severity] ?? 'muted') : 'muted',
+    widget.severity
+      ? (SEVERITY_COLOR_KEY[widget.severity] ?? 'muted')
+      : 'muted',
   )
 
   return (
@@ -251,9 +263,7 @@ const CardWidget = memo(({ widget }: { widget: CardWidgetData }) => {
         <text fg={theme.primary} attributes={TextAttributes.BOLD}>
           {widget.title}
         </text>
-        {widget.severity && (
-          <text fg={severityColor}>[{widget.severity}]</text>
-        )}
+        {widget.severity && <text fg={severityColor}>[{widget.severity}]</text>}
         {widget.status && <text fg={theme.muted}>({widget.status})</text>}
       </box>
       <text fg={theme.foreground}>{widget.summary}</text>
@@ -328,54 +338,67 @@ BadgeWidget.displayName = 'BadgeWidget'
 
 // ---- Perfection Loop widget ------------------------------------------------
 
-const PL_PHASES = ['idle', 'red', 'green', 'audit', 'self_correct', 'complete'] as const
+const PL_PHASES = [
+  'idle',
+  'red',
+  'green',
+  'audit',
+  'self_correct',
+  'complete',
+] as const
 
 /**
  * FID-033c Phase C: uses shared `phaseMapping()` + `glyph()` from Phase B
  * (Law 13 — eliminates the duplicate PL_PHASE_COLORS hex table that was a
  * copy of the phaseMapping colorKey values).
  */
-const PerfectionLoopWidget = memo(({ widget }: { widget: PerfectionLoopWidgetData }) => {
-  const theme = useTheme()
-  const phaseIndex = PL_PHASES.indexOf(widget.phase as typeof PL_PHASES[number])
-  const iter = widget.iteration ?? 0
-  const maxIter = widget.maxIterations ?? 10
-  const filled = Math.round((iter / maxIter) * 15)
+const PerfectionLoopWidget = memo(
+  ({ widget }: { widget: PerfectionLoopWidgetData }) => {
+    const theme = useTheme()
+    const phaseIndex = PL_PHASES.indexOf(
+      widget.phase as (typeof PL_PHASES)[number],
+    )
+    const iter = widget.iteration ?? 0
+    const maxIter = widget.maxIterations ?? 10
+    const filled = Math.round((iter / maxIter) * 15)
 
-  return (
-    <box flexDirection="column">
-      <box flexDirection="row" alignItems="center">
-        {PL_PHASES.map((p, i) => {
-          const isActive = p === widget.phase
-          const isPast = i < phaseIndex
-          const phaseInfo = phaseMapping(p)
-          const color = isActive
-            ? resolveThemeColor(theme, phaseInfo.colorKey)
-            : isPast
-              ? theme.primary
-              : theme.muted
-          const icon = isActive
-            ? glyph('phaseActive')
-            : isPast
-              ? glyph('phaseComplete')
-              : glyph('phaseIdle')
-          return (
-            <box key={p} flexDirection="row">
-              {i > 0 && <text fg={theme.muted}> ── </text>}
-              <text fg={color}>
-                {icon} {p.toUpperCase()}
-              </text>
-            </box>
-          )
-        })}
+    return (
+      <box flexDirection="column">
+        <box flexDirection="row" alignItems="center">
+          {PL_PHASES.map((p, i) => {
+            const isActive = p === widget.phase
+            const isPast = i < phaseIndex
+            const phaseInfo = phaseMapping(p)
+            const color = isActive
+              ? resolveThemeColor(theme, phaseInfo.colorKey)
+              : isPast
+                ? theme.primary
+                : theme.muted
+            const icon = isActive
+              ? glyph('phaseActive')
+              : isPast
+                ? glyph('phaseComplete')
+                : glyph('phaseIdle')
+            return (
+              <box key={p} flexDirection="row">
+                {i > 0 && <text fg={theme.muted}> ── </text>}
+                <text fg={color}>
+                  {icon} {p.toUpperCase()}
+                </text>
+              </box>
+            )
+          })}
+        </box>
+        <text fg={theme.muted}>
+          {`iterations ${'█'.repeat(filled)}${'░'.repeat(15 - filled)} ${iter}/${maxIter}`}
+        </text>
+        {widget.fidName && (
+          <text fg={theme.primary}>FID: {widget.fidName}</text>
+        )}
       </box>
-      <text fg={theme.muted}>
-        {`iterations ${'█'.repeat(filled)}${'░'.repeat(15 - filled)} ${iter}/${maxIter}`}
-      </text>
-      {widget.fidName && <text fg={theme.primary}>FID: {widget.fidName}</text>}
-    </box>
-  )
-})
+    )
+  },
+)
 PerfectionLoopWidget.displayName = 'PerfectionLoopWidget'
 
 // ---- Tool component factory -----------------------------------------------

@@ -61,8 +61,7 @@ export function compileToolDefinitions(
           jsonSchema ?? { type: 'object', properties: {} },
         )
       } catch (error) {
-        const message =
-          error instanceof Error ? error.message : String(error)
+        const message = error instanceof Error ? error.message : String(error)
         // eslint-disable-next-line no-console -- build-time schema conversion fallback; no logger in common
         console.warn(`Failed to convert schema for ${toolName}:`, message)
         typeDefinition = 'Record<string, JSONValue>'
@@ -166,7 +165,9 @@ function getTypeFromJsonSchema(prop: JSONSchema): string {
   if (prop.type === 'number' || prop.type === 'integer') return 'number'
   if (prop.type === 'boolean') return 'boolean'
   if (prop.type === 'array') {
-    const itemType = prop.items ? getTypeFromJsonSchema(prop.items) : 'JSONValue'
+    const itemType = prop.items
+      ? getTypeFromJsonSchema(prop.items)
+      : 'JSONValue'
     return `${itemType}[]`
   }
   if (prop.type === 'object') {

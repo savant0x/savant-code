@@ -14,6 +14,8 @@ export default tseslint.config(
       '**/.contentlayer/*',
       '**/node_modules/*',
       'agents-graveyard/**', // Archived/deprecated agents - no need to lint
+      'resources/**', // Vendored resource files - not linted (see .prettierignore / .markdownlintignore)
+      'research/**', // Vendored research snapshots - not linted (see .prettierignore / .markdownlintignore)
       'cli/src/agents/bundled-agents.generated.ts', // Auto-generated agent code with embedded console strings
       'cli/src/agents/bundled-agents.generated.d.ts', // Auto-generated type declarations
       'packages/code-map/__tests__/test-langs/', // Test fixture files (JS/TS for code-map tests)
@@ -175,6 +177,28 @@ export default tseslint.config(
       '**/*.test.{ts,tsx}',
       '**/*.integration.test.{ts,tsx}',
       'cli/src/**/helpers/*.{ts,tsx}',
+    ],
+    rules: {
+      'no-console': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
+    },
+  },
+
+  // Tooling directories: console IS the output mechanism (benchmark harnesses,
+  // build/release scripts, smoke tests, type-compat fixtures). Per FID-070
+  // (law-5-and-14: remove todos and console in production), console is allowed
+  // in dedicated CLI scripts and tooling; all production source dirs
+  // (cli/src, sdk/src, common/src, packages/*/src, agents) stay governed.
+  {
+    files: [
+      'evals/**',
+      'scripts/**',
+      'sdk/scripts/**',
+      'sdk/test/**',
+      'sdk/smoke-test-dist.ts',
+      'cli/scripts/**',
+      'cli/release*/**',
+      'savant-free/cli/**',
     ],
     rules: {
       'no-console': 'off',

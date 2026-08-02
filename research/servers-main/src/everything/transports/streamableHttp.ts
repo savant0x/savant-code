@@ -1,11 +1,20 @@
-import {
-  StreamableHTTPServerTransport,
-  EventStore,
-} from "@modelcontextprotocol/sdk/server/streamableHttp.js";
-import express, { Request, Response } from "express";
-import { createServer } from "../server/index.js";
 import { randomUUID } from "node:crypto";
+
+import {
+  StreamableHTTPServerTransport
+} from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import cors from "cors";
+import express from "express";
+
+import { createServer } from "../server/index.js";
+
+import type {
+  EventStore} from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+import type { Request, Response } from "express";
+
+
+
+
 
 // Simple in-memory event store for SSE resumability
 class InMemoryEventStore implements EventStore {

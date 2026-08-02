@@ -1,9 +1,15 @@
 import * as analytics from '@savant-code/common/analytics'
 import { TEST_USER_ID } from '@savant-code/common/old-constants'
-import { createTestAgentRuntimeParams, emptyMcpServers } from '@savant-code/common/testing/fixtures/agent-runtime'
+import {
+  createTestAgentRuntimeParams,
+  emptyMcpServers,
+} from '@savant-code/common/testing/fixtures/agent-runtime'
 import { getInitialSessionState } from '@savant-code/common/types/session-state'
 import { promptAborted, promptSuccess } from '@savant-code/common/util/error'
-import { assistantMessage, userMessage } from '@savant-code/common/util/messages'
+import {
+  assistantMessage,
+  userMessage,
+} from '@savant-code/common/util/messages'
 import {
   afterEach,
   beforeEach,
@@ -113,7 +119,7 @@ describe('n parameter and GENERATE_N functionality', () => {
       spawnParams: undefined,
       system: 'Test system',
       signal: new AbortController().signal,
-      tools: {}
+      tools: {},
     }
   })
 
@@ -126,7 +132,9 @@ describe('n parameter and GENERATE_N functionality', () => {
     it('should call promptAiSdk with n parameter when n is provided', async () => {
       runAgentStepBaseParams.promptAiSdk = mock(() =>
         Promise.resolve(
-          promptSuccess(JSON.stringify(['Response 1', 'Response 2', 'Response 3'])),
+          promptSuccess(
+            JSON.stringify(['Response 1', 'Response 2', 'Response 3']),
+          ),
         ),
       )
 
@@ -194,8 +202,8 @@ describe('n parameter and GENERATE_N functionality', () => {
     })
 
     it('should use normal flow when n is undefined', async () => {
-      runAgentStepBaseParams.promptAiSdk = mock(
-        async () => promptSuccess('Should not be called'),
+      runAgentStepBaseParams.promptAiSdk = mock(async () =>
+        promptSuccess('Should not be called'),
       )
 
       runAgentStepBaseParams.promptAiSdkStream = mock(async function* () {

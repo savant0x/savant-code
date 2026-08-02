@@ -40,6 +40,7 @@ Scanned 16 repositories spanning Python, TypeScript, Rust, and Go. The following
 | Zero | Bidirectional (client + server), OAuth |
 
 **Adoptable patterns:**
+
 - **InProcessTransport** (OpenCode) — Run embedded MCP servers without subprocess overhead
 - **Multi-MCP merging** (Agno) — Connect to multiple servers, merge tools into single namespace
 - **MCP proxy** (OpenHands) — Namespace-mount remote servers without exposing API keys
@@ -67,6 +68,7 @@ Scanned 16 repositories spanning Python, TypeScript, Rust, and Go. The following
 | Zero | `plugin.json` manifest (tools, hooks, skills) |
 
 **Adoptable patterns:**
+
 - **Manifest-based plugins** (AionUi, Zero, OpenClaw) — JSON manifests declare capabilities without code
 - **Contribution points** (AionUi) — VS Code-style `contributes` pattern
 - **4-source discovery** (Hermes) — Bundled → user → project → entry points
@@ -100,6 +102,7 @@ Scanned 16 repositories spanning Python, TypeScript, Rust, and Go. The following
 **Recommended adoption: OpenCode's Four-Axis Route Architecture.** DeepSeek, TogetherAI, Cerebras all reuse `OpenAIChat.protocol` — each provider deployment is 5-15 lines. Bug fixes propagate to every consumer. Rationale: orthogonal axes are more maintainable than per-provider adapter classes (Agno, Hermes) or declarative YAML (Goose) for savant-code's TypeScript monorepo.
 
 **Adoptable patterns:**
+
 - **Four-axis decomposition** (OpenCode/Kilo) — Protocol, Endpoint, Auth, Framing as orthogonal axes
 - **Auth profile rotation with cooldown** (OpenClaw) — Mark failures, track cooldown expiry, select soonest-available
 - **Provider-neutral runtime types** (Zero) — `CompletionRequest`/`StreamEvent` decoupled from provider specifics
@@ -132,6 +135,7 @@ Scanned 16 repositories spanning Python, TypeScript, Rust, and Go. The following
 3. **OpenClaw** — Identifier preservation (UUIDs, hashes, URLs not summarized away)
 
 **Adoptable patterns:**
+
 - **Structured summary template** (OpenCode) — Preserve file paths, error strings, commands
 - **Proactive + reactive dual-path** (Zero) — Don't wait for context-limit error
 - **Identifier preservation** (OpenClaw) — Don't lose FIDs, SHAs, paths during summarization
@@ -160,6 +164,7 @@ Scanned 16 repositories spanning Python, TypeScript, Rust, and Go. The following
 **Recommended adoption: Zero's Swarm.** Mailbox-based inter-agent communication (not just parent-child), task handoff between agent types, channel-based `WaitSettled` (not polling), deferred tool loading that adapts to swarm state. Rationale: more mature than parent-child spawning (Cline, Gemini CLI); SQLite-persisted alternatives (OpenClaw) are heavier than savant-code's 9-agent roster needs.
 
 **Adoptable patterns:**
+
 - **Mailbox-based communication** (Zero) — More mature than parent-child spawning
 - **Task handoff between agent types** (Zero) — Agents can transfer work to specialists
 - **Completion guard** (Cline) — Prevents premature exit while tasks are in progress
@@ -256,6 +261,7 @@ Scanned 16 repositories spanning Python, TypeScript, Rust, and Go. The following
 **Recommended adoption: Codex's two-phase pipeline.** Phase 1 extracts structured memories from completed conversations (parallel with concurrency caps). Phase 2 consolidates into workspace artifacts via git-baseline diff. DB-backed job claiming, lease management, watermark tracking. Rationale: two-phase extraction doesn't block the agent loop (unlike Hermes' inline strategy); OpenClaw's dreaming + OpenClaude's auto-dream gating are useful as the consolidation scheduler.
 
 **Adoptable patterns:**
+
 - **Two-phase extraction → consolidation** (Codex) — Don't block the agent loop
 - **Dreaming** (OpenClaw) — Background cron during idle periods
 - **Auto-dream gating** (OpenClaude) — Cheap checks first (time → session count → lock)
@@ -280,6 +286,7 @@ Scanned 16 repositories spanning Python, TypeScript, Rust, and Go. The following
 | Zero | **Process-level assertions** — required trace events, forbidden changed files |
 
 **Recommended adoptions:**
+
 1. **Gemini CLI** — Dynamic baseline verification (fails on main → marked "Pre-existing"), trustworthiness filter (60%+ per-night), automated promotion from USUALLY→ALWAYS
 2. **Zero** — `requiredTraceEvents` tests process, not just output. `forbiddenChangedFiles` prevents overreach.
 
@@ -301,6 +308,7 @@ Scanned 16 repositories spanning Python, TypeScript, Rust, and Go. The following
 | Zero | Built-in recipes (git-recap, ci-watch, todo-pulse) |
 
 **Adoptable patterns:**
+
 - **Markdown-based specs** (Cline) — Developer-friendly, version-controllable
 - **Recipe presets** (Zero) — Pre-configured common tasks
 - **Conversation-bound execution** (AionUi) — Preserves context history
@@ -412,26 +420,31 @@ During parity work, these unique strengths must be preserved:
 ## Prioritized Adoption Roadmap
 
 ### Phase 0 — Extensibility Foundation (unblocks everything)
+
 1. **MCP consolidation** — promote existing `packages/agent-runtime/src/mcp.ts` + `sdk/src/agents/load-mcp-config.ts` + `research/servers-main/` (sequentialthinking, memory, filesystem) into a `packages/mcp/` workspace; add OAuth + InProcessTransport + MCP proxy/namespace-mounting. Not a from-scratch build.
 2. **Plugin loader + manifest schema** (`extensions/` dir) — savant-code has no plugin SDK today (only a skills loader); build manifest-based plugins modeled on AionUi `aion-extension.json` / Zero `plugin.json`.
 3. **Skills marketplace** — savant-code has a runtime skill loader (`packages/agent-runtime/src/tools/handlers/tool/skill.ts`) and 7 bundled skills (`.agents/skills/`); gap is a registry/marketplace (ClawHub-style) + remote skill discovery (OpenCode `skill/discovery.ts`).
 
 ### Phase 1 — Provider & Context
+
 4. **Provider registry** (promote `getModelForRequest()` to 4-axis architecture)
 5. **Context compaction** (structured summary + proactive/reactive dual-path)
 6. **Repo map** (PageRank + tree-sitter)
 
 ### Phase 2 — Safety & Orchestration
+
 7. **Execution policy engine** (wildcard rules + structured block codes)
 8. **Multi-agent orchestration** (mailbox-based with completion guard)
 9. **Tool search / deferred loading**
 
 ### Phase 3 — Intelligence & Memory
+
 10. **Hook system** (7+ events with BeforeModel synthetic responses)
 11. **Memory system** (two-phase extraction → consolidation)
 12. **LSP integration** (background async diagnostics)
 
 ### Phase 4 — Automation & Quality
+
 13. **Cron scheduler** (markdown specs + recipe presets)
 14. **Eval framework** (3-layer pyramid + process-level assertions)
 15. **Session fork/rewind**

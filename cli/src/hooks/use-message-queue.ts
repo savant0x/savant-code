@@ -217,7 +217,13 @@ export const useMessageQueue = (
 
   useEffect(() => {
     processNextMessage()
-  }, [canProcessQueue, streamStatus, queuedMessages.length, processNextMessage, isChainInProgressRef])
+  }, [
+    canProcessQueue,
+    streamStatus,
+    queuedMessages.length,
+    processNextMessage,
+    isChainInProgressRef,
+  ])
 
   const addToQueue = useCallback(
     (message: string, attachments: PendingAttachment[] = []) => {

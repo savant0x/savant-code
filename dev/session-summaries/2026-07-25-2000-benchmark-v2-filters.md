@@ -13,7 +13,8 @@
 - **OS:** Windows (win32)
 - **Language/Runtime:** Bun 1.3.14
 - **Branch:** main
-- **Last Commit:** `efc2ee720fb07269ab0ce243f6d970237bd865d4` v0.0.6 — ECHO compliance, Cloudflare provider, agent capabilities fixes, buff name removal
+- **Last Commit:** `efc2ee720fb07269ab0ce243f6d970237bd865d4` v0.0.6 — ECHO compliance, Cloudflare provider, agent
+  capabilities fixes, buff name removal
 
 ### Known Issues
 
@@ -37,7 +38,8 @@
 - **Status:** completed
 - **FIDs Created:** N/A
 - **Changes Made:**
-  - `evals/v2/src/registry.ts`: After scanning the tasks directory, the registry is sorted by `task_id` using `localeCompare` before returning the `TaskRegistry`.
+  - `evals/v2/src/registry.ts`: After scanning the tasks directory, the registry is sorted by `task_id` using
+    `localeCompare` before returning the `TaskRegistry`.
 - **Verification:**
   - Baseline harness run shows tasks listed alphabetically by `task_id`.
   - Typecheck passes.
@@ -50,7 +52,8 @@
   - `evals/v2/tasks/pure_coding/add-fix/`: simple off-by-one bug fix.
   - `evals/v2/tasks/pure_coding/rename-greet/`: multi-file refactor renaming `greet` to `welcome`.
   - `evals/v2/tasks/error_recovery/env-fault/`: injected environmental fault + `add` bug.
-  - `evals/v2/tasks/multi_agent_orchestration/options-contract/`: options-contract refactor with separate orchestration verification.
+  - `evals/v2/tasks/multi_agent_orchestration/options-contract/`: options-contract refactor with separate orchestration
+    verification.
 - **Verification:**
   - All 4 tasks pass in baseline mode.
   - Golden patches applies cleanly.
@@ -60,8 +63,10 @@
 - **Status:** completed
 - **FIDs Created:** N/A
 - **Changes Made:**
-  - `evals/v2/src/harness.ts`: Added optional `category` and `difficulty` to `HarnessOptions`; filter applied after loading the registry.
-  - `evals/v2/src/cli.ts`: Added `--category` and `--difficulty` flags with Zod schema validation; values passed through to `BenchmarkHarness`.
+  - `evals/v2/src/harness.ts`: Added optional `category` and `difficulty` to `HarnessOptions`; filter applied after
+    loading the registry.
+  - `evals/v2/src/cli.ts`: Added `--category` and `--difficulty` flags with Zod schema validation; values passed through
+    to `BenchmarkHarness`.
   - `evals/v2/README.md`: Added CLI usage examples for the new flags.
   - `CHANGELOG.md`: Added "Benchmark v2 — Category/Difficulty CLI Filters" entry.
 - **Verification:**
@@ -100,7 +105,8 @@ None.
 
 ### Code Changes
 
-- **Files Modified:** `evals/v2/src/registry.ts`, `evals/v2/src/harness.ts`, `evals/v2/src/cli.ts`, `evals/v2/README.md`, `CHANGELOG.md`
+- **Files Modified:** `evals/v2/src/registry.ts`, `evals/v2/src/harness.ts`, `evals/v2/src/cli.ts`,
+  `evals/v2/README.md`, `CHANGELOG.md`
 - **Files Added:** 4 sample task directories, session summary
 
 ### Git Status
@@ -119,7 +125,8 @@ None.
 
 ## Lessons Learned
 
-- Small omission: `--category` and `--difficulty` were parsed and validated but initially not passed to the `BenchmarkHarness` constructor; caught by verifying filtered task counts.
+- Small omission: `--category` and `--difficulty` were parsed and validated but initially not passed to the
+  `BenchmarkHarness` constructor; caught by verifying filtered task counts.
 
 ---
 

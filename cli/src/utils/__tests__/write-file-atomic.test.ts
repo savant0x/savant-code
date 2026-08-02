@@ -68,7 +68,9 @@ describe('writeFileAtomic', () => {
 
 describe('writeFileAtomicAsync', () => {
   beforeEach(() => {
-    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'savant-code-atomic-async-'))
+    tempDir = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'savant-code-atomic-async-'),
+    )
   })
 
   afterEach(() => {

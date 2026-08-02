@@ -1,6 +1,5 @@
 import React from 'react'
 
-
 export interface SpacerProps {
   size?: number
   direction?: 'horizontal' | 'vertical'

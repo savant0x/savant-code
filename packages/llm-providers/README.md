@@ -1,5 +1,6 @@
 <!-- markdownlint-disable MD041 -->
-<img src="../../assets/banner.png" alt="@savant-code/llm-providers — OpenAI-compatible LLM provider shims" width="650" />
+<img src="../../assets/banner.png" alt="@savant-code/llm-providers — OpenAI-compatible LLM provider shims"
+width="650" />
 
 # @savant-code/llm-providers
 
@@ -9,7 +10,10 @@ AI SDK provider abstractions and routing logic for OpenAI-compatible LLMs (`@ai-
 
 ## Purpose
 
-`@savant-code/llm-providers` is the **adapter layer** between `@savant-code/agent-runtime` and any OpenAI-compatible chat API (Anthropic via compatible shim, OpenAI directly, self-hosted inference). Exports the OpenAI-compatible surface as `./openai-compatible` plus per-provider shims. Consumed by `@savant-code/agent-runtime` and the CLI's selection of MAX / DEFAULT / PLAN modes.
+`@savant-code/llm-providers` is the **adapter layer** between `@savant-code/agent-runtime` and any
+OpenAI-compatible chat API (Anthropic via compatible shim, OpenAI directly, self-hosted inference). Exports the
+OpenAI-compatible surface as `./openai-compatible` plus per-provider shims. Consumed by
+`@savant-code/agent-runtime` and the CLI's selection of MAX / DEFAULT / PLAN modes.
 
 ## Quick Start
 
@@ -31,7 +35,8 @@ For full Quick Start see the [root README](../../README.md#key-technologies).
 
 <div align="center">
 
-_Part of the [savant-code/savant-code monorepo](https://github.com/savant0x/savant-code), governed by the [ECHO Protocol v0.2.0](../../ECHO.md)._
+_Part of the [savant-code/savant-code monorepo](https://github.com/savant0x/savant-code), governed by the [ECHO
+Protocol v0.2.0](../../ECHO.md)._
 
 **Savant** • 2026
 </div>

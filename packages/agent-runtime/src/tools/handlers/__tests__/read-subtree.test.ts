@@ -151,7 +151,9 @@ describe('handleReadSubtree', () => {
       (v) => v.path === 'does-not-exist' && v.errorMessage,
     )
     expect(errEntry).toBeTruthy()
-    expect(String(errEntry!.errorMessage)).toContain('Path not found or ignored')
+    expect(String(errEntry!.errorMessage)).toContain(
+      'Path not found or ignored',
+    )
   })
 
   it('includes variables when reading a subdirectory with proper path mapping', async () => {

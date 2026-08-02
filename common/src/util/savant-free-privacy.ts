@@ -10,10 +10,9 @@ export const SAVANT_FREE_HARD_BLOCKED_PRIVACY_SIGNALS = [
 const SAVANT_FREE_HARD_BLOCKED_PRIVACY_SIGNAL_SET =
   new Set<SavantFreeIpPrivacySignal>(SAVANT_FREE_HARD_BLOCKED_PRIVACY_SIGNALS)
 
-const SAVANT_FREE_HARD_BLOCKED_PRIVACY_SIGNAL_LABELS: Partial<Record<
-  SavantFreeIpPrivacySignal,
-  string
->> = {
+const SAVANT_FREE_HARD_BLOCKED_PRIVACY_SIGNAL_LABELS: Partial<
+  Record<SavantFreeIpPrivacySignal, string>
+> = {
   vpn: 'VPN',
   proxy: 'proxy',
   res_proxy: 'proxy',

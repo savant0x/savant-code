@@ -3,13 +3,17 @@
 
 # @savant-code/common
 
-Shared types, tool definitions, and utilities used across the Savant runtime (Zod schemas, MCP client, AI SDK helpers, auth, billing/Postgres).
+Shared types, tool definitions, and utilities used across the Savant runtime (Zod schemas, MCP client, AI SDK helpers,
+auth, billing/Postgres).
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](../LICENSE)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](../ECHO.md)[![Status](https://img.shields.io/badge/Status-internal-%23ff9500?style=flat-square&logo=github&logoColor=%2300fbff)](../README.md)
 
 ## Purpose
 
-`@savant-code/common` is the **cross-workspace source of truth** for shared types and tool wiring (per ECHO Law 13). Contains tool schemas for `read_files`, `write_file`, `str_replace`, `run_terminal_command`, `web_search`, `code_search`, MCP client, AI SDK integrations, and the analytics/billing/Postgres adapters. No agent imports anything from another workspace without going through `@savant-code/common`.
+`@savant-code/common` is the **cross-workspace source of truth** for shared types and tool wiring (per ECHO Law 13).
+Contains tool schemas for `read_files`, `write_file`, `str_replace`, `run_terminal_command`, `web_search`,
+`code_search`, MCP client, AI SDK integrations, and the analytics/billing/Postgres adapters. No agent imports anything
+from another workspace without going through `@savant-code/common`.
 
 ## Quick Start
 

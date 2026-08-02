@@ -14,7 +14,11 @@ export interface TreeViewProps {
   level?: number
 }
 
-export function TreeView({ nodes, defaultExpanded = false, level = 0 }: TreeViewProps) {
+export function TreeView({
+  nodes,
+  defaultExpanded = false,
+  level = 0,
+}: TreeViewProps) {
   const theme = useTheme()
 
   return (
@@ -23,12 +27,18 @@ export function TreeView({ nodes, defaultExpanded = false, level = 0 }: TreeView
         const isLast = i === nodes.length - 1
         const prefix = level === 0 ? '' : isLast ? '└─ ' : '├─ '
         const hasChildren = node.children && node.children.length > 0
-        const icon = hasChildren ? (node.expanded ?? defaultExpanded ? '▼ ' : '▶ ') : '  '
+        const icon = hasChildren
+          ? (node.expanded ?? defaultExpanded)
+            ? '▼ '
+            : '▶ '
+          : '  '
 
         return (
           <box key={i} flexDirection="column">
             <text fg={theme.foreground}>
-              {prefix}{icon}{node.label}
+              {prefix}
+              {icon}
+              {node.label}
             </text>
             {hasChildren && (node.expanded ?? defaultExpanded) && (
               <TreeView

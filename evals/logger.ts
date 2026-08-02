@@ -58,7 +58,10 @@ function log(level: LogLevel, data: any, msg?: string, ...args: any[]): void {
  *
  * e.g. logger.info({eventId: AnalyticsEvent.SOME_EVENT, field: value}, 'some message')
  */
-export const logger: Record<LogLevel, (data: any, msg?: string, ...args: any[]) => void> = Object.fromEntries(
+export const logger: Record<
+  LogLevel,
+  (data: any, msg?: string, ...args: any[]) => void
+> = Object.fromEntries(
   loggingLevels.map((level) => {
     return [
       level,

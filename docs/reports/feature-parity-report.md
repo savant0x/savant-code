@@ -104,6 +104,7 @@ Established from direct source reads. Citations are to the savant-code workspace
 ## 3. Reference Product Snapshots
 
 ### 3.1 hermes-agent (Python)
+
 Nous Research's Hermes Agent. Extremely broad: ~95 self-registering tools (`tools/registry.py`),
 ~30 messaging channels (`gateway/platforms/`, `plugins/platforms/` — Telegram, Discord, Slack,
 WhatsApp, Signal, Matrix, etc.), **35 model-provider plugins** (`plugins/model-providers/`:
@@ -118,6 +119,7 @@ Tirith pre-exec scan, file/secret safety). Evidence: `hermes-agent/README.md`,
 `hermes-agent/AGENTS.md`, `hermes-agent/tools/`, `hermes-agent/plugins/`.
 
 ### 3.2 openclaude (TS/Bun)
+
 Claude-Code-style coding agent. Rich tool set (~120 slash commands; `src/tools/` — Bash,
 PowerShell, FileRead/Write/Edit, Glob, Grep, NotebookEdit, WebSearch/Fetch/Browser, RepoMap,
 LSP, Task/ScheduleCron, Workflow, SendMessage, TeamCreate). **~25 vendors + ~25 gateways**
@@ -128,10 +130,12 @@ context auto/micro/snippet compaction (`src/services/compact/`), repo-map (PageR
 persistent memory (`src/memdir/`, team-memory sync with secret scanning), **OS sandbox**
 (`@anthropic-ai/sandbox-runtime`, `shouldUseSandbox.ts`), **LSP integration**, **voice mode**,
 **VS Code extension**, Android (Termux), goals system, wiki/knowledge base, MCP client+server
+
 + official registry, security-review / bughunter commands, gRPC headless server, background
 daemon. Evidence: `openclaude/README.md`, `openclaude/AGENTS.md`, `openclaude/src/`.
 
 ### 3.3 openclaw (TS) — the broadest platform
+
 Personal-AI-agent **platform**. **150+ provider extensions** (`extensions/` — openai, anthropic,
 google, meta, mistral, deepseek, xai, groq, ollama, bedrock, vertex, openrouter, litellm,
 cloudflare-ai-gateway, tencent, volcengine, alibaba, nvidia…), **model-catalog** subsystem
@@ -146,6 +150,7 @@ Linux, Windows `swabble`), Web Control UI (Lit), TUI, daemon + gateway, ACP bind
 deploy. Evidence: `openclaw/README.md`, `openclaw/VISION.md`, `openclaw/src/`, `openclaw/extensions/`.
 
 ### 3.4 zero (Go)
+
 Terminal coding agent (Claude-Code/Codex-style). Specialists + **swarm** (`internal/swarm/`),
 **25+ providers** (`internal/providercatalog/catalog.go` — OpenAI, Anthropic, Google, Bedrock,
 Vertex, OpenRouter, DeepSeek, Qwen, Kimi, MiniMax, Mistral, xAI, Groq, Ollama, LM Studio…),
@@ -160,6 +165,7 @@ notifiers. **No Web UI, no Mobile, no Docker image.** Evidence: `zero/zero-main/
 `zero/zero-main/docs/`, `zero/zero-main/internal/`.
 
 ### 3.5 agno (Python)
+
 High-performance AI agent framework. **54 LLM providers** (`models/` — OpenAI, Anthropic,
 Google, xAI, DeepSeek, MiniMax, Bedrock, Vertex, Azure, Groq, Together, Fireworks, Ollama,
 LM Studio, Mistral, Cohere, HuggingFace, Novita, SambaNova, Cerebras, Perplexity, watsonx…),
@@ -171,6 +177,7 @@ scheduler, eval suite, guardrails, @approval HITL decorator, session forking. Ev
 `agno/README.md`, `agno/agent/`, `agno/models/`, `agno/tools/mcp/`, `agno/os/`.
 
 ### 3.6 aider (Python)
+
 Mature terminal pair-programming agent (~6.8M installs, ~60k stars). Distinguishing
 innovations: **13+ polymorphic edit formats** (SEARCH/REPLACE, unified diff, whole file,
 patch, fenced/editor variants, architect/editor two-stage, ask, context, help —
@@ -183,6 +190,7 @@ benchmark framework (Polyglot Exercism + SWE-bench with Docker isolation). 100+ 
 configs in declarative YAML. Evidence: `aider/README.md`, `aider/coders/`, `aider/repomap.py`.
 
 ### 3.7 AionUi (Electron + React + Rust + Bun + TS)
+
 Desktop-first AI coworking app. Wraps **20+ CLI-based AI agents** (Claude Code, Codex,
 Goose, OpenClaw, Hermes, Cursor…) behind a unified **ACP protocol** with capability
 negotiation. **Team mode** with leader/teammate hierarchy, mailbox communication, task
@@ -196,6 +204,7 @@ adapters, MCP servers, assistants, agents, skills, themes, settings). Mobile com
 Slack, Discord). Evidence: `AionUi/README.md`, `AionUi/packages/desktop/src/`, `AionUi/examples/`.
 
 ### 3.8 cline (TypeScript/Bun)
+
 Disciplined layered-SDK coding agent (`@cline/shared → llms → agents → core → apps`).
 9 default tool factories with 5 presets (Act/Plan/Search/Minimal/Yolo), model-tool routing
 (OpenAI gets `apply_patch` instead of `editor`), **SubprocessSandbox** for plugins (IPC
@@ -208,6 +217,7 @@ hard at 5), git-based checkpoints, VCR HTTP recording for testing, 3-layer eval 
 (contract → smoke → E2E Harbor/SWE-bench). Evidence: `cline/README.md`, `cline/sdk/packages/`.
 
 ### 3.9 codex (Rust + TS/Python SDKs)
+
 OpenAI's Codex CLI. **OS-level sandboxing** (macOS Seatbelt SBPL, Linux seccomp/Landlock/
 bubblewrap, Windows restricted token — `codex-rs/sandboxing/`), **Starlark execution policy**
 (prefix matching, host executable resolution, self-validating rules — `codex-rs/execpolicy/`),
@@ -222,6 +232,7 @@ Phase 2: git-baseline diff consolidation), bidirectional MCP, Markdown skills wi
 rollout budgets. Evidence: `codex/README.md`, `codex/codex-rs/`.
 
 ### 3.10 gemini-cli (TypeScript/Node)
+
 Google's Gemini CLI. 7-package monorepo (core/cli/sdk/a2a-server/vscode-companion/
 devtools/test-utils). **Graph-based context management** with typed nodes (UserPrompt,
 AgentThought, ToolExecution, MaskedTool, AgentYield, Snapshot, RollingSummary) and a
@@ -236,6 +247,7 @@ night). JIT subdirectory context discovery. Agent acknowledgement system for unt
 definitions. Evidence: `gemini-cli/README.md`, `gemini-cli/packages/core/src/`.
 
 ### 3.11 goose (Rust + Electron/TS UI + Ink/React TUI)
+
 Linux Foundation / AAIF coding agent (v1.43.0). **15+ providers** with declarative YAML
 custom providers and OAuth device flow. **70+ MCP server extensions** via `ExtensionManager`
 (subprocess spawning, OAuth, health monitoring, malware checking via OSV API). 10 built-in
@@ -248,6 +260,7 @@ schemas, retry configs). Plugin dual-format (Gemini + OpenPlugins) with auto-upd
 repetition). Evidence: `goose/README.md`, `goose/crates/goose/`, `goose/crates/goose-mcp/`.
 
 ### 3.12 gpt-pilot (Python)
+
 Structured development workflow agent. **Step-based development** — breaks projects into
 ordered phases (architecture, planning, coding, testing, debugging) with clear entry/exit
 criteria. **TDD integration** — generates tests before code, runs them, iterates until
@@ -258,6 +271,7 @@ than raw shell). Automatic git commits at logical boundaries. Conversation histo
 summarization. Evidence: `gpt-pilot/README.md`, `gpt-pilot/pilot/`.
 
 ### 3.13 kilocode (TypeScript/Bun + Effect-TS)
+
 Fork of OpenCode built on Effect-TS. Every subsystem is an Effect `Service` with `Layer`
 composition; `LayerNode` enforces Location-scoped vs global-scoped services at the type
 level. **4-axis LLM route architecture** (Protocol/Endpoint/Auth/Framing, 5-15 lines per
@@ -268,11 +282,13 @@ matching and composable rulesets (`Permission.merge`). 48 built-in tools includi
 based sandboxing** (filesystem allow/deny, network allow/deny/proxy, environment deny/set —
 Bubblewrap/Seatbelt backends). Memory system with `remember`/`forget`/`correct`/`recall`/
 `catalog` operations, token budgeting, secret filtering. Skills with multi-location discovery
+
 + trust provenance. Git worktree isolation. MCP client with OAuth. Hono HTTP server with
 OpenAPI + mDNS discovery. Tree-sitter indexing. Evidence: `kilocode/README.md`,
 `kilocode/packages/`.
 
 ### 3.14 opencode-dev (TypeScript/Bun + Effect-TS)
+
 Upstream of Kilo Code. **4-axis LLM route architecture** (`packages/llm/src/route/` —
 Protocol, Endpoint, Auth, Framing). **Durable session runner** (loads history, resolves
 model, streams one LLM turn, persists events incrementally, settles tools durably, loops).
@@ -288,6 +304,7 @@ from remote URLs with concurrent fetching. Filesystem watcher (@parcel/watcher, 
 aware). Evidence: `opencode-dev/README.md`, `opencode-dev/packages/`.
 
 ### 3.15 OpenHands (Python + React/FastAPI)
+
 Multi-backend coding agent platform. **Sandbox abstraction layer** — run agent work in
 Docker, local process, remote VM, or cloud; flip between backends mid-session. **Agent-
 Client Protocol (ACP)** — any agent implementing ACP can plug in as sub-agent or standalone
@@ -304,6 +321,7 @@ automation. Workspace archive before sandbox teardown. Rate limiting (in-memory 
 enterprise). Evidence: `OpenHands/README.md`, `OpenHands/openhands/app_server/`.
 
 ### 3.16 SWE-agent (Python)
+
 Princeton research-oriented coding agent. **ACI design philosophy** — curated agent-
 optimized tool surfaces (specialized file viewers, search commands, linting-gated editors)
 rather than raw shell access. **YAML-driven configuration** with composable config merging.
@@ -460,6 +478,7 @@ need. Evidence is grouped by category; not every repo is cited in every category
 where the repo offers a distinct, adoptable pattern.
 
 ### 5.1 Extensibility surface (MCP + Plugins + Skills) — **highest priority**
+
 - **Gap (corrected 2026-07-20):** savant-code has **partial** MCP and skills surfaces,
   but **no plugin SDK and no skills marketplace**:
   - **MCP client (partial):** `packages/agent-runtime/src/mcp.ts` is a per-server
@@ -488,6 +507,7 @@ where the repo offers a distinct, adoptable pattern.
   registry/marketplace modeled on ClawHub, with trigger-based loading modeled on OpenHands.
 
 ### 5.2 Provider breadth & routing
+
 - **Gap:** savant-code supports ~8 model prefixes through a **single OpenAI-compatible
   class** with two hard-coded routes (ChatGPT-OAuth, SavantCode/OpenRouter). No per-provider
   adapter, no smart routing, no model catalog, no fallback/failover, no cost-based routing.
@@ -504,6 +524,7 @@ where the repo offers a distinct, adoptable pattern.
   (This aligns with the multi-provider end-state flagged in archived `FID-2026-0714-006`.)
 
 ### 5.3 Scheduling / cron
+
 - **Gap:** savant-code has **no scheduler**. Agents run only on interactive CLI invocation.
 - **Reference evidence (16-repo coverage):**
   - hermes `cron/scheduler.py` (5-field cron, ISO timestamps, per-job skills/models, multi-platform delivery).
@@ -519,6 +540,7 @@ where the repo offers a distinct, adoptable pattern.
   runs, audit trail).
 
 ### 5.4 OS-level sandbox & permission engine
+
 - **Gap:** savant-code has **no OS sandbox** and only coarse per-agent `providerOptions`
   (model routing), not command/network/filesystem policy.
 - **Reference evidence (16-repo coverage):**
@@ -532,6 +554,7 @@ where the repo offers a distinct, adoptable pattern.
   before shipping autonomous shell execution.
 
 ### 5.5 Messaging channels / integrations
+
 - **Gap:** savant-code is **CLI/TUI/SDK only** — no Slack/Discord/Telegram/WhatsApp/etc.
 - **Reference evidence (16-repo coverage):**
   - openclaw `extensions/` (40+ channels — WhatsApp, Telegram, Slack, Discord, Signal, iMessage, IRC, Teams, Matrix, Feishu, LINE, WeChat, QQ, etc.).
@@ -545,6 +568,7 @@ where the repo offers a distinct, adoptable pattern.
   `channels/` extension category modeled on openclaw's `src/channels/` is the parity target.
 
 ### 5.6 UI surfaces (Web / Desktop / Mobile)
+
 - **Gap:** savant-code has CLI (OpenTUI+React) + embeddable SDK only. No web dashboard, no
   desktop app, no mobile.
 - **Reference evidence (16-repo coverage):**
@@ -563,6 +587,7 @@ where the repo offers a distinct, adoptable pattern.
   gemini-cli) is the highest-leverage minimum.
 
 ### 5.7 Media generation & voice
+
 - **Gap:** savant-code has **no** image/video/music generation, **no** TTS, **no** meeting bots.
 - **Reference evidence (16-repo coverage):**
   - openclaw `src/image-generation/`, `video-generation/`, `music-generation/`, `tts/`, `meeting-bot/`, `talk/` (wake words, realtime sessions via ElevenLabs).
@@ -574,6 +599,7 @@ where the repo offers a distinct, adoptable pattern.
 - **savant impact:** Deliver through plugins/providers (5.1, 5.2). Not core to coding parity.
 
 ### 5.8 Persistent memory & context compaction
+
 - **Gap:** savant-code has DB + cache-debug but **no** cross-session persistent memory and
   **no** autonomous context compaction (only manual prompt-cache awareness).
 - **Reference evidence (16-repo coverage):**
@@ -587,6 +613,7 @@ where the repo offers a distinct, adoptable pattern.
   dual-path. Improves long-task quality.
 
 ### 5.9 Evaluation / benchmark harness
+
 - **Gap:** savant-code has **Buffbench** (`evals/`) but no agentic eval suite (expected/forbidden
   file diffs, verification commands, trace scoring).
 - **Reference evidence (16-repo coverage):**
@@ -604,6 +631,7 @@ where the repo offers a distinct, adoptable pattern.
   AUDIT phase.
 
 ### 5.10 Secrets & policy management
+
 - **Gap:** savant-code holds keys in env/backend; **no** SecretRef abstraction, no policy engine,
   no keyring.
 - **Reference evidence (16-repo coverage):**
@@ -618,6 +646,7 @@ where the repo offers a distinct, adoptable pattern.
   before any autonomous shell execution.
 
 ### 5.11 Hooks, LSP, and code intelligence (added 2026-07-20)
+
 - **Gap:** savant-code has no hook system (no `beforeModel`/`afterTool`/etc.), no LSP
   integration (only tree-sitter `code-map`), and no PageRank repo map.
 - **Reference evidence (16-repo coverage):**
@@ -637,6 +666,7 @@ where the repo offers a distinct, adoptable pattern.
 Phased so each phase unlocks the next (extensibility first — it is the force-multiplier).
 
 ### Phase 0 — Extensibility foundation (unblocks everything else)
+
 1. **MCP consolidation** — promote existing `packages/agent-runtime/src/mcp.ts` +
    `sdk/src/agents/load-mcp-config.ts` + `research/servers-main/` (3 bundled servers)
    into a `packages/mcp/` workspace; add OAuth + InProcessTransport + MCP proxy.
@@ -651,6 +681,7 @@ Phased so each phase unlocks the next (extensibility first — it is the force-m
    discovery (openclaude `src/skills/`, opencode `skill/discovery.ts`).
 
 ### Phase 1 — Provider & routing parity
+
 4. Promote `getModelForRequest()` from a 2-branch switch to a **4-axis route architecture**
    (Protocol/Endpoint/Auth/Framing) modeled on opencode-dev + kilocode
    (`packages/llm/src/route/`). 5-15 lines per new provider.
@@ -662,6 +693,7 @@ Phased so each phase unlocks the next (extensibility first — it is the force-m
 7. Add **declarative YAML providers** (goose pattern) for no-code provider additions.
 
 ### Phase 2 — Safety & autonomy
+
 8. **OS/command sandbox** — adopt zero's dual-layer model (tool metadata + sandbox with
    structured `Block` codes: `symlink_traversal`, `destructive_command`, `outside_workspace`)
    plus codex's cross-platform sandbox (SBPL/seccomp/seatbelt).
@@ -673,6 +705,7 @@ Phased so each phase unlocks the next (extensibility first — it is the force-m
     boundary + keyring (`internal/credstore/`, `internal/keyring/`).
 
 ### Phase 3 — Automation, memory & intelligence
+
 12. **Cron/scheduler + daemon** — cline markdown specs (`.cline/cron/*.md` with YAML
     frontmatter) + zero recipe presets + goose agent-session cron (full provider context).
 13. **Persistent memory** — codex two-phase pipeline (parallel extraction → git-baseline
@@ -692,6 +725,7 @@ Phased so each phase unlocks the next (extensibility first — it is the force-m
     weight, 0.1x private identifier weight, token-budgeted) + openclaude file-stat fingerprinting cache.
 
 ### Phase 4 — Surface expansion (only if personal-agent parity is the goal)
+
 19. **Channels** via plugin category (openclaw `src/channels/` 40+; hermes `gateway/platforms/` ~30).
 20. **Web dashboard + Desktop/Mobile shells** wrapping the SDK (hermes FastAPI+Electron+Tauri;
     openclaw Lit Web UI + multi-OS apps; AionUi Electron+Rust+Expo).
@@ -730,6 +764,7 @@ the governance spine.
 ## 8. Evidence Index
 
 **savant-code (direct reads, 2026-07-20 re-verification):**
+
 - `packages/llm-providers/src/openai-compatible/` — provider abstraction
 - `sdk/src/impl/model-provider.ts` — `getModelForRequest()` 2-branch routing (verified lines 133-181)
 - `sdk/src/impl/openrouter-key-resolver.ts`, `sdk/src/env.ts` — key/env resolution
@@ -746,6 +781,7 @@ the governance spine.
 - `ECHO.md`, `AGENTS.md` — governance
 
 **Reference repos (independent Explore-agent inventories, 2026-07-19; 16-repo full coverage):**
+
 - `resources/agno/` — `README.md`, `agent/`, `models/` (54 providers), `tools/mcp/`, `tools/multi_mcp.py`, `os/app.py` (AgentOS), `workflow/`, `memory/`, `knowledge/`, `eval/`, `scheduler/`
 - `resources/aider/` — `README.md`, `coders/` (13 edit formats), `repomap.py` (PageRank), `history.py`, `linter.py`, `watch.py`, `benchmark/`, `resources/model-settings.yml` (100+ configs)
 - `resources/AionUi/` — `README.md`, `packages/desktop/` (Electron+Rust+React 19), `examples/` (extension SDK), `packages/web-host/`, `mobile/` (Expo), `tests/e2e/cases/teams/`
@@ -764,6 +800,7 @@ the governance spine.
 - `resources/zero/zero-main/` — `README.md`, `docs/`, `internal/agent/loop.go`, `internal/agent/compaction.go` (proactive+reactive), `internal/sandbox/` (landlock/seccomp/seatbelt/Windows), `internal/swarm/` (mailbox), `internal/specialist/`, `internal/mcp/`, `internal/plugins/`, `internal/skills/`, `internal/hooks/`, `internal/sessions/`, `internal/cron/`, `internal/agent/selfcorrect.go`, `internal/agent/profile_controller.go` (adaptive), `internal/agent/completion_policy.go`, `internal/lsp/`, `internal/worktrees/`, `internal/agenteval/`, `internal/perfbench/`, `internal/credstore/`, `internal/keyring/`, `internal/redaction/`
 
 **Companion documents:**
+
 - `docs/reports/adoptable-features-master.md` — 16-repo feature-first synthesis (20 numbered features, per-repo comparison tables, "Recommended adoption" picks with rationale).
 - `docs/reports/repos/*.md` — 16 individual repo inventories (source for this report's Section 3 snapshots and Section 5 evidence).
 - `docs/AI Coding Agents Market Research.md` — Claude Code / Codex / Cursor / OpenCode competitive synthesis.

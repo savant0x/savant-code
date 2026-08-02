@@ -8,8 +8,6 @@ import type { JudgingResult } from './judge'
 import type { FinalCheckOutput } from './types'
 import type { AgentDefinition, SavantCodeClient } from '@savant-code/sdk'
 
-
-
 export interface AgentTraceData {
   agentId: string
   commitSha: string

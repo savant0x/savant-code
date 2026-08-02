@@ -21,11 +21,7 @@ describe('ShimmerText host modes', () => {
 
   test('wraps shimmer spans in text when hosted inside a box', () => {
     const markup = renderToStaticMarkup(
-      <ShimmerText
-        text="thinking"
-        primaryColor="#18faf9"
-        host="box"
-      />,
+      <ShimmerText text="thinking" primaryColor="#18faf9" host="box" />,
     )
 
     expect(markup).toMatch(/^<text><span /)

@@ -1,4 +1,7 @@
-import { endsAgentStepParam, toolNames } from '@savant-code/common/tools/constants'
+import {
+  endsAgentStepParam,
+  toolNames,
+} from '@savant-code/common/tools/constants'
 import { toolParams } from '@savant-code/common/tools/list'
 import { type SandboxPermissionMode } from '@savant-code/common/tools/safety'
 import { resolveAndContain } from '@savant-code/common/util/paths'
@@ -16,8 +19,6 @@ import { savantCode$1 } from './handlers/list'
 import { getMatchingSpawn } from './handlers/tool/spawn-agent-utils'
 import { ensureZodSchema } from './prompts'
 import { toolActivity, setActivity } from '../util/activity-tracking'
-
-
 
 import type { AgentTemplate } from '../templates/types'
 import type { SavantCodeToolHandlerFunction } from './handlers/handler-function-type'
@@ -79,7 +80,10 @@ const bareStringFieldRepairAllowlist: Partial<
   web_search: ['query'],
 }
 
-function repairBareStringFieldObject(input: string, toolName: string): Record<string, string> | undefined {
+function repairBareStringFieldObject(
+  input: string,
+  toolName: string,
+): Record<string, string> | undefined {
   const allowedFields = bareStringFieldRepairAllowlist[toolName]
   if (!allowedFields) {
     return undefined
@@ -417,12 +421,13 @@ export async function executeToolCall<T extends ToolName>(
     // call input so the downstream handler receives a canonical form. Same Q8
     // hardening, plus the resolved path now reflects any symlink chain.
     input.path = pathResult.resolved
-  }  // ECHO FSM tool gating: block bash/terminal commands unless phase is 'audit' or 'green'.
+  } // ECHO FSM tool gating: block bash/terminal commands unless phase is 'audit' or 'green'.
   // run_readonly_command is intentionally NOT gated here; it is allowed in
   // every FSM phase and enforces read-only safety in its own handler.
   // FID-2026-0725-085 BUG-004: FSM phase check runs FIRST (more actionable error).
   if (
-    !isDevOverride && toolCall.toolName === 'run_terminal_command' &&
+    !isDevOverride &&
+    toolCall.toolName === 'run_terminal_command' &&
     !['audit', 'green'].includes(agentState.fsmPhase ?? 'idle')
   ) {
     onResponseChunk({
@@ -433,8 +438,17 @@ export async function executeToolCall<T extends ToolName>(
   }
 
   // FID-2026-0725-085 BUG-006: Log warning when devMode bypasses safety restrictions.
-  if (isDevOverride && (toolCall.toolName === 'write_file' || toolCall.toolName === 'str_replace' || toolCall.toolName === 'apply_patch' || toolCall.toolName === 'run_terminal_command')) {
-    logger.debug({ toolName, fsmPhase: agentState.fsmPhase }, `DEV MODE: ${toolName} bypassing FSM phase gating`)
+  if (
+    isDevOverride &&
+    (toolCall.toolName === 'write_file' ||
+      toolCall.toolName === 'str_replace' ||
+      toolCall.toolName === 'apply_patch' ||
+      toolCall.toolName === 'run_terminal_command')
+  ) {
+    logger.debug(
+      { toolName, fsmPhase: agentState.fsmPhase },
+      `DEV MODE: ${toolName} bypassing FSM phase gating`,
+    )
   }
 
   // ECHO FSM tool gating: block sequentialthinking unless agent is a Thinker variant
@@ -678,15 +692,15 @@ export async function executeToolCall<T extends ToolName>(
     // `T extends ClientToolName ? T : never` to align with the slot's
     // exact conditional type so it satisfies ECHO distribution cleanly.
     requestClientToolCall: async (
-      clientToolCall: ClientToolCall<
-        T extends ClientToolName ? T : never
-      >,
+      clientToolCall: ClientToolCall<T extends ClientToolName ? T : never>,
     ) => {
       if (params.signal.aborted) {
         return [
           {
             type: 'json',
-            value: { errorMessage: `Tool call aborted: ${clientToolCall.toolName}` },
+            value: {
+              errorMessage: `Tool call aborted: ${clientToolCall.toolName}`,
+            },
           },
         ] as SavantCodeToolOutput<T extends ClientToolName ? T : never>
       }
@@ -781,9 +795,12 @@ export function parseRawCustomToolCall(params: {
   }
 
   // Add the required endsAgentStepParam (cb_easp) parameter with the correct value for this tool if requested
-  if (autoInsertEndStepParam && customToolDefs?.[toolName]?.endsAgentStep != null) {
-    processedParameters[endsAgentStepParam] =
-      customToolDefs[toolName].endsAgentStep as JSONValue
+  if (
+    autoInsertEndStepParam &&
+    customToolDefs?.[toolName]?.endsAgentStep != null
+  ) {
+    processedParameters[endsAgentStepParam] = customToolDefs[toolName]
+      .endsAgentStep as JSONValue
   }
 
   const rawSchema = customToolDefs?.[toolName]?.inputSchema

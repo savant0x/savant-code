@@ -133,7 +133,12 @@ function runTreeSitterSmoke(binary: string): Promise<void> {
 
 type AttemptOutcome =
   | { kind: 'boot'; pattern: RegExp; bytes: number; exitCode: number | null }
-  | { kind: 'fatal'; pattern: RegExp; captured: string; exitCode: number | null }
+  | {
+      kind: 'fatal'
+      pattern: RegExp
+      captured: string
+      exitCode: number | null
+    }
   | { kind: 'no-signal'; captured: string; exitCode: number | null }
 
 /**
@@ -187,7 +192,12 @@ function runBootAttempt(
       // Positive gate: the binary must have rendered a known boot screen.
       const matched = BOOT_SIGNAL_PATTERNS.find((p) => p.test(captured))
       if (matched) {
-        resolve({ kind: 'boot', pattern: matched, bytes: captured.length, exitCode })
+        resolve({
+          kind: 'boot',
+          pattern: matched,
+          bytes: captured.length,
+          exitCode,
+        })
         return
       }
 

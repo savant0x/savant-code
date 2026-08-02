@@ -185,7 +185,9 @@ describe('error-utils', () => {
     })
 
     test('returns undefined for string', () => {
-      expect(getErrorStatusCode('error string' as unknown as Error)).toBeUndefined()
+      expect(
+        getErrorStatusCode('error string' as unknown as Error),
+      ).toBeUndefined()
     })
 
     test('returns undefined for null', () => {
@@ -198,7 +200,9 @@ describe('error-utils', () => {
 
     test('returns undefined for non-numeric statusCode', () => {
       const error = { statusCode: '500' }
-      expect(getErrorStatusCode(error as unknown as { statusCode?: number })).toBeUndefined()
+      expect(
+        getErrorStatusCode(error as unknown as { statusCode?: number }),
+      ).toBeUndefined()
     })
 
     test('handles objects with numeric status strings', () => {
@@ -214,7 +218,9 @@ describe('error-utils', () => {
     })
 
     test('returns string directly', () => {
-      expect(sanitizeErrorMessage('Plain string error')).toBe('Plain string error')
+      expect(sanitizeErrorMessage('Plain string error')).toBe(
+        'Plain string error',
+      )
     })
 
     test('extracts message from object with message property', () => {
@@ -231,7 +237,9 @@ describe('error-utils', () => {
 
     test('handles non-string message property', () => {
       const error = { message: 456 }
-      expect(sanitizeErrorMessage(error as unknown as { message?: string })).toBe('[object Object]')
+      expect(
+        sanitizeErrorMessage(error as unknown as { message?: string }),
+      ).toBe('[object Object]')
     })
 
     test('handles deeply nested error objects', () => {

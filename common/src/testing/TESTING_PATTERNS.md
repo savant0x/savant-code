@@ -1,6 +1,7 @@
 # Testing Patterns Guide
 
-This guide documents best practices for writing tests in the SavantCode codebase, based on lessons learned from eval benchmark runs and production issues.
+This guide documents best practices for writing tests in the SavantCode codebase, based on lessons learned from eval
+benchmark runs and production issues.
 
 ## Table of Contents
 
@@ -32,7 +33,8 @@ afterEach(() => {
 })
 ```
 
-**Why**: `afterAll` runs only once after all tests complete. If one test modifies mock behavior, subsequent tests inherit that state, causing flaky tests and hard-to-debug failures.
+**Why**: `afterAll` runs only once after all tests complete. If one test modifies mock behavior, subsequent tests
+inherit that state, causing flaky tests and hard-to-debug failures.
 
 ---
 

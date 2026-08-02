@@ -3,7 +3,6 @@ import { getSimpleAgentId } from '@savant-code/common/util/agent-id-parsing'
 import { pluralize } from '@savant-code/common/util/string'
 import React, { useMemo, useRef, useEffect, useState } from 'react'
 
-
 import { Button } from './button'
 import { useTheme } from '../hooks/use-theme'
 
@@ -32,7 +31,9 @@ function countDependencies(
   for (const spawnableId of spawnableAgents) {
     const simpleId = getSimpleAgentId(spawnableId)
     if (localAgentIds.has(simpleId) && !visited.has(simpleId)) {
-      count += 1 + countDependencies(simpleId, agentDefinitions, localAgentIds, visited)
+      count +=
+        1 +
+        countDependencies(simpleId, agentDefinitions, localAgentIds, visited)
     }
   }
 
@@ -68,7 +69,13 @@ function buildDepTree(
         children.push({
           id: agent.id,
           displayName: agent.displayName,
-          children: buildDepTree(simpleId, agents, agentDefinitions, localAgentIds, newAncestorIds),
+          children: buildDepTree(
+            simpleId,
+            agents,
+            agentDefinitions,
+            localAgentIds,
+            newAncestorIds,
+          ),
         })
       }
     }
@@ -95,7 +102,13 @@ const DepTree: React.FC<{
 
         return (
           <React.Fragment key={node.id}>
-            <box style={{ flexDirection: 'row', gap: 1, paddingLeft: depth * 3 + 3 }}>
+            <box
+              style={{
+                flexDirection: 'row',
+                gap: 1,
+                paddingLeft: depth * 3 + 3,
+              }}
+            >
               <text style={{ fg: theme.muted }}>{prefix}</text>
               <text style={{ fg: theme.muted }}>{displayText}</text>
             </box>
@@ -137,17 +150,29 @@ export const AgentChecklist: React.FC<AgentChecklistProps> = ({
   const theme = useTheme()
   const scrollRef = useRef<ScrollBoxRenderable | null>(null)
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
-  const [expandedAgentIds, setExpandedAgentIds] = useState<Set<string>>(new Set())
-  const [hoveredSubagentLink, setHoveredSubagentLink] = useState<string | null>(null)
+  const [expandedAgentIds, setExpandedAgentIds] = useState<Set<string>>(
+    new Set(),
+  )
+  const [hoveredSubagentLink, setHoveredSubagentLink] = useState<string | null>(
+    null,
+  )
 
   // Precompute local agent IDs for dependency calculations
-  const localAgentIds = useMemo(() => new Set(allAgents.map((a) => a.id)), [allAgents])
+  const localAgentIds = useMemo(
+    () => new Set(allAgents.map((a) => a.id)),
+    [allAgents],
+  )
 
   // Calculate dependency count for each agent
   const dependencyCounts = useMemo(() => {
     const counts = new Map<string, number>()
     for (const agent of allAgents) {
-      const count = countDependencies(agent.id, agentDefinitions, localAgentIds, new Set())
+      const count = countDependencies(
+        agent.id,
+        agentDefinitions,
+        localAgentIds,
+        new Set(),
+      )
       counts.set(agent.id, count)
     }
     return counts
@@ -286,7 +311,9 @@ export const AgentChecklist: React.FC<AgentChecklistProps> = ({
                         : isHighlighted
                           ? theme.foreground
                           : theme.muted,
-                      attributes: isHighlighted ? TextAttributes.BOLD : undefined,
+                      attributes: isHighlighted
+                        ? TextAttributes.BOLD
+                        : undefined,
                     }}
                   >
                     {symbol}
@@ -298,7 +325,9 @@ export const AgentChecklist: React.FC<AgentChecklistProps> = ({
                         : isHighlighted
                           ? theme.foreground
                           : theme.muted,
-                      attributes: isHighlighted ? TextAttributes.BOLD : undefined,
+                      attributes: isHighlighted
+                        ? TextAttributes.BOLD
+                        : undefined,
                     }}
                   >
                     {displayText}
@@ -336,7 +365,13 @@ export const AgentChecklist: React.FC<AgentChecklistProps> = ({
               {/* Expanded dependency tree */}
               {isExpanded && depCount > 0 && (
                 <DepTree
-                  nodes={buildDepTree(agent.id, allAgents, agentDefinitions, localAgentIds, new Set())}
+                  nodes={buildDepTree(
+                    agent.id,
+                    allAgents,
+                    agentDefinitions,
+                    localAgentIds,
+                    new Set(),
+                  )}
                   depth={0}
                   theme={theme}
                 />

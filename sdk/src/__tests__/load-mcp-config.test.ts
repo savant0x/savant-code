@@ -4,12 +4,18 @@ import path from 'path'
 
 import { afterEach, beforeEach, describe, expect, it } from 'bun:test'
 
-import { loadMCPConfig, loadMCPConfigSync, mcpFileSchema } from '../agents/load-mcp-config'
+import {
+  loadMCPConfig,
+  loadMCPConfigSync,
+  mcpFileSchema,
+} from '../agents/load-mcp-config'
 
 import type { MCPConfig } from '@savant-code/common/types/mcp'
 
 // Helper to safely access stdio config properties
-function isStdioConfig(config: MCPConfig): config is MCPConfig & { command: string; env?: Record<string, string> } {
+function isStdioConfig(
+  config: MCPConfig,
+): config is MCPConfig & { command: string; env?: Record<string, string> } {
   return 'command' in config
 }
 
@@ -54,7 +60,9 @@ describe('mcpFileSchema', () => {
     if (result.success) {
       const remoteServer = result.data.mcpServers.remoteServer
       expect(remoteServer).toBeDefined()
-      expect('url' in remoteServer && remoteServer.url).toBe('https://example.com/mcp')
+      expect('url' in remoteServer && remoteServer.url).toBe(
+        'https://example.com/mcp',
+      )
     }
   })
 

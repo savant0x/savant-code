@@ -53,7 +53,8 @@ export interface EngagementTrackerOptions {
 
 const defaultScheduler: EngagementScheduler = {
   setInterval: (fn, ms) => setInterval(fn, ms),
-  clearInterval: (handle) => clearInterval(handle as ReturnType<typeof setInterval>),
+  clearInterval: (handle) =>
+    clearInterval(handle as ReturnType<typeof setInterval>),
 }
 
 export class EngagementTracker {
@@ -70,7 +71,8 @@ export class EngagementTracker {
   constructor(options: EngagementTrackerOptions) {
     this.emit = options.emit
     this.intervalMs = options.intervalMs ?? ENGAGEMENT_INTERVAL_MS
-    this.idleThresholdMs = options.idleThresholdMs ?? ENGAGEMENT_IDLE_THRESHOLD_MS
+    this.idleThresholdMs =
+      options.idleThresholdMs ?? ENGAGEMENT_IDLE_THRESHOLD_MS
     this.now = options.now ?? (() => Date.now())
     this.scheduler = options.scheduler ?? defaultScheduler
     this.lastActivity = this.now()

@@ -480,7 +480,7 @@ handling.
 
 ## Resolution
 
-- **Fixed By:** Buffy / FreeBuff implementation
+- **Fixed By:** Savant implementation
 - **Fixed Date:** 2026-08-01
 - **Fix Description:** Added a strictly typed `native-incomplete` stream error contract; preserved fail-closed provider finalization for incomplete required-key arguments; normalized the provider signal in `promptAiSdkStream`; propagated it through `processStream`; added a bounded two-attempt consecutive recovery state in `loopAgentSteps`; persisted a truthful failed step on exhaustion; and preserved the existing Thinker authorization boundary. Incomplete calls never create executable tool-call/tool-result history pairs.
 - **Tests Added:** Provider SSE typed-error assertions; strictly typed SDK normalization-boundary tests for native-incomplete and fatal generic errors; runtime successful continuation, bounded retry, streak reset, no-orphan-history, and existing parser/validation regression coverage.

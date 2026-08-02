@@ -15,7 +15,10 @@ import type { User } from '../utils/auth'
 const setAuthLoggerContext = (params: { userId: string; email: string }) => {
   loggerContext.userId = params.userId
   loggerContext.userEmail = params.email
-  identifyUser(params.userId, { email: params.email, 'savant-free': IS_SAVANT_FREE })
+  identifyUser(params.userId, {
+    email: params.email,
+    'savant-free': IS_SAVANT_FREE,
+  })
 }
 
 const clearAuthLoggerContext = () => {

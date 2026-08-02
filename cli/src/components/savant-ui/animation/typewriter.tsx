@@ -9,7 +9,12 @@ export interface TypewriterProps {
   cursor?: boolean
 }
 
-export function Typewriter({ text, speed = 30, onComplete, cursor = true }: TypewriterProps) {
+export function Typewriter({
+  text,
+  speed = 30,
+  onComplete,
+  cursor = true,
+}: TypewriterProps) {
   const theme = useTheme()
   const [displayed, setDisplayed] = useState('')
   const [done, setDone] = useState(false)

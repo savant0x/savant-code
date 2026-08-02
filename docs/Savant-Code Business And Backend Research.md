@@ -139,41 +139,84 @@ To counter this, FreeBuff emphasizes the minimal friction of a terminal-native p
 
 The architecture of FreeBuff demonstrates that providing free, autonomous AI coding assistance is economically viable at scale, provided the system rigorously balances ad monetization against heavily subsidized inference costs. For organizations seeking to construct a competing, sustainable inference backend, the following architectural directives are paramount:
 
-> 1. **Cryptographic Impression Tracking**: Traditional API callbacks for ad impressions are insufficient in a developer-centric environment prone to reverse-engineering. The backend must implement a cryptographic handshake wherein the ad payload contains a unique, time-sensitive nonce. The CLI must execute a localized proof-of-work or visual hashing function on the rendered ad text, returning the computed signature to the backend. This strictly couples inference provisioning to verified ad consumption, neutralizing headless API proxies like Freebuff2API.  
-> 2. **Dynamic Data-for-Compute Routing**: Abstract the model provider layer entirely. The sustainability of the free tier relies entirely on open-weight providers prioritizing data acquisition over API revenue. Build a dynamic routing engine that monitors the real-time cost of inference across various providers. If a specific provider withdraws their data-sharing subsidy or alters their terms of service, the router must seamlessly fall back to the next most efficient model without disrupting the user's workflow.  
-> 3. **Aggressive Context Pruning via Local Embeddings**: Transmitting comprehensive abstract syntax trees for every interaction incurs massive token costs. Implement a local semantic indexer within the CLI prior to transmission. The local agent should utilize lightweight, locally hosted embedding models (e.g., all-MiniLM-L6-v2) to prune irrelevant files, sending only the most statistically significant code chunks to the proxy server. This reduces upstream token expenditure and drastically improves response latency.  
-> 4. **Asynchronous Parallel Orchestration**: Adopt the multi-agent DAG model for all complex reasoning tasks. User retention is highly correlated with perceived speed. Utilizing highly efficient models like DeepSeek Flash to run three parallel implementations alongside a dedicated Selector Agent will consistently outperform a single, expensive frontier model in both latency and overall cost-efficiency.
+> 1. **Cryptographic Impression Tracking**: Traditional API callbacks for ad impressions are insufficient in a
+>    developer-centric environment prone to reverse-engineering. The backend must implement a cryptographic handshake
+>    wherein the ad payload contains a unique, time-sensitive nonce. The CLI must execute a localized proof-of-work
+>    or visual hashing function on the rendered ad text, returning the computed signature to the backend. This
+>    strictly couples inference provisioning to verified ad consumption, neutralizing headless API proxies like
+>    Freebuff2API.
+> 2. **Dynamic Data-for-Compute Routing**: Abstract the model provider layer entirely. The sustainability of the
+>    free tier relies entirely on open-weight providers prioritizing data acquisition over API revenue. Build a
+>    dynamic routing engine that monitors the real-time cost of inference across various providers. If a specific
+>    provider withdraws their data-sharing subsidy or alters their terms of service, the router must seamlessly fall
+>    back to the next most efficient model without disrupting the user's workflow.
+> 3. **Aggressive Context Pruning via Local Embeddings**: Transmitting comprehensive abstract syntax trees for
+>    every interaction incurs massive token costs. Implement a local semantic indexer within the CLI prior to
+>    transmission. The local agent should utilize lightweight, locally hosted embedding models (e.g.,
+>    all-MiniLM-L6-v2) to prune irrelevant files, sending only the most statistically significant code chunks to the
+>    proxy server. This reduces upstream token expenditure and drastically improves response latency.
+> 4. **Asynchronous Parallel Orchestration**: Adopt the multi-agent DAG model for all complex reasoning tasks.
+>    User retention is highly correlated with perceived speed. Utilizing highly efficient models like DeepSeek Flash
+>    to run three parallel implementations alongside a dedicated Selector Agent will consistently outperform a
+>    single, expensive frontier model in both latency and overall cost-efficiency.
 
 By synthesizing terminal-native ad integration with aggressive provider subsidies and multi-agent parallelization, the architecture surrounding platforms like FreeBuff establishes a highly defensible, economically scalable blueprint for the future of developer tooling.
 
-#### **Works cited**
+### **Works cited**
 
-> 1. CodebuffAI/codebuff: Generate code from the terminal\! \- GitHub, [https://github.com/CodebuffAI/codebuff](https://github.com/CodebuffAI/codebuff)  
-> 2. The free alternative to Claude Code | Freebuff, [https://freebuff.com/blog/free-claude-code-cli-coding-agent-alternative-freebuff](https://freebuff.com/blog/free-claude-code-cli-coding-agent-alternative-freebuff)  
-> 3. The free alternative to Antigravity CLI | Freebuff, [https://freebuff.com/blog/free-antigravity-cli-coding-agent-alternative-freebuff](https://freebuff.com/blog/free-antigravity-cli-coding-agent-alternative-freebuff)  
-> 4. tips | Codebuff Docs, [https://www.codebuff.com/docs/tips/what-makes-codebuff-unique](https://www.codebuff.com/docs/tips/what-makes-codebuff-unique)  
+> 1. CodebuffAI/codebuff: Generate code from the terminal\! \- GitHub,
+>    [https://github.com/CodebuffAI/codebuff](https://github.com/CodebuffAI/codebuff)
+> 2. The free alternative to Claude Code | Freebuff,
+>    [https://freebuff.com/blog/free-claude-code-cli-coding-agent-alternative-freebuff](https://freebuff.com/blog/free-claude-code-cli-coding-agent-alternative-freebuff)
+> 3. The free alternative to Antigravity CLI | Freebuff,
+>    [https://freebuff.com/blog/free-antigravity-cli-coding-agent-alternative-freebuff](https://freebuff.com/blog/free-antigravity-cli-coding-agent-alternative-freebuff)
+> 4. tips | Codebuff Docs,
+>    [https://www.codebuff.com/docs/tips/what-makes-codebuff-unique](https://www.codebuff.com/docs/tips/what-makes-codebuff-unique)
 > 5. Zeroclick, [https://info.zeroclick.ai/](https://info.zeroclick.ai/)  
 > 6. Gravity | The Ad Network for AI, [https://www.trygravity.ai/](https://www.trygravity.ai/)  
-> 7. Developer Marketing Platforms Compared: Choosing Your Channel Mix for 2026, [https://business.daily.dev/resources/developer-marketing-platforms-comparison-channel-mix/](https://business.daily.dev/resources/developer-marketing-platforms-comparison-channel-mix/)  
-> 8. notBlubbll/free-buff-lol \- GitHub, [https://github.com/notBlubbll/free-buff-lol](https://github.com/notBlubbll/free-buff-lol)  
+> 7. Developer Marketing Platforms Compared: Choosing Your Channel Mix for 2026,
+>    [https://business.daily.dev/resources/developer-marketing-platforms-comparison-channel-mix/](https://business.daily.dev/resources/developer-marketing-platforms-comparison-channel-mix/)
+> 8. notBlubbll/free-buff-lol \- GitHub,
+>    [https://github.com/notBlubbll/free-buff-lol](https://github.com/notBlubbll/free-buff-lol)
 > 9. Frequently Asked Questions | Carbon Ads, [https://www.carbonads.net/faq](https://www.carbonads.net/faq)  
-> 10. Carbon Ads • OSS.Fund | Open Source Sustainability Directory, [https://www.oss.fund/carbon-ads/](https://www.oss.fund/carbon-ads/)  
-> 11. CPM, CPC, CPA: Which Pricing Model for Developer Advertising? | Idlen, [https://www.idlen.io/blog/cpm-cpc-cpa-developer-advertising-pricing-guide/](https://www.idlen.io/blog/cpm-cpc-cpa-developer-advertising-pricing-guide/)  
-> 12. Idlen.io Review (2026): Pricing & Alternatives | Stork.AI, [https://www.stork.ai/en/idlen-io](https://www.stork.ai/en/idlen-io)  
-> 13. Launch HN: Codebuff (YC F24) – CLI tool that writes code for you | Hacker News, [https://news.ycombinator.com/item?id=42078536](https://news.ycombinator.com/item?id=42078536)  
-> 14. Please add support for old cpu's · Issue \#497 · CodebuffAI/codebuff \- GitHub, [https://github.com/CodebuffAI/codebuff/issues/497](https://github.com/CodebuffAI/codebuff/issues/497)  
-> 15. GitHub \- Quorinex/Freebuff2API: OpenAI-compatible Freebuff proxy with dynamic free-agent tracking, token rotation, and ready-to-use Docker deployment., [https://github.com/Quorinex/Freebuff2API](https://github.com/Quorinex/Freebuff2API)  
-> 16. CodeBuff: The Open-Source Multi-Agent AI Coding Revolution | atal upadhyay, [https://atalupadhyay.wordpress.com/2026/03/04/codebuff-the-open-source-multi-agent-ai-coding-revolution/](https://atalupadhyay.wordpress.com/2026/03/04/codebuff-the-open-source-multi-agent-ai-coding-revolution/)  
-> 17. Remove shimmer animation from freebuff waiting room Wait time (\#523) · CodebuffAI/codebuff@9099292 \- GitHub, [https://github.com/CodebuffAI/codebuff/actions/runs/24651667103](https://github.com/CodebuffAI/codebuff/actions/runs/24651667103)  
-> 18. codebuff/sdk/src/client.ts at main \- GitHub, [https://github.com/CodebuffAI/codebuff/blob/main/sdk/src/client.ts](https://github.com/CodebuffAI/codebuff/blob/main/sdk/src/client.ts)  
-> 19. Free CLI agent — unlimited DeepSe… for students | StudentOffers.co, [https://www.studentoffers.co/offer/freebuff](https://www.studentoffers.co/offer/freebuff)  
-> 20. Rate-limit freebuff GLM sessions to 5 per 20 hours · CodebuffAI/codebuff@7dd903b \- GitHub, [https://github.com/CodebuffAI/codebuff/actions/runs/24808282674](https://github.com/CodebuffAI/codebuff/actions/runs/24808282674)  
-> 21. Rate-limit freebuff GLM sessions to 5 per 20 hours (\#537) · CodebuffAI/codebuff@585260b, [https://github.com/CodebuffAI/codebuff/actions/runs/24915163705](https://github.com/CodebuffAI/codebuff/actions/runs/24915163705)  
-> 22. freebuff2api-openai-proxy | Skills M... \- LobeHub, [https://lobehub.com/bg/skills/aradotso-trending-skills-freebuff2api-openai-proxy](https://lobehub.com/bg/skills/aradotso-trending-skills-freebuff2api-openai-proxy)  
-> 23. Freebuff: The 100% free coding agent \- Y Combinator, [https://www.ycombinator.com/companies/freebuff](https://www.ycombinator.com/companies/freebuff)  
-> 24. codebuff/README.md at main \- GitHub, [https://github.com/CodebuffAI/codebuff/blob/main/README.md](https://github.com/CodebuffAI/codebuff/blob/main/README.md)  
-> 25. codebuff/README.zh-CN.md at main \- GitHub, [https://github.com/CodebuffAI/codebuff/blob/main/README.zh-CN.md](https://github.com/CodebuffAI/codebuff/blob/main/README.zh-CN.md)  
-> 26. Codebuff download | SourceForge.net, [https://sourceforge.net/projects/codebuff.mirror/](https://sourceforge.net/projects/codebuff.mirror/)  
+> 10. Carbon Ads • OSS.Fund | Open Source Sustainability Directory,
+>    [https://www.oss.fund/carbon-ads/](https://www.oss.fund/carbon-ads/)
+> 11. CPM, CPC, CPA: Which Pricing Model for Developer Advertising? | Idlen,
+>    [https://www.idlen.io/blog/cpm-cpc-cpa-developer-advertising-pricing-guide/](https://www.idlen.io/blog/cpm-cpc-cpa-developer-advertising-pricing-guide/)
+> 12. Idlen.io Review (2026): Pricing & Alternatives | Stork.AI,
+>    [https://www.stork.ai/en/idlen-io](https://www.stork.ai/en/idlen-io)
+> 13. Launch HN: Codebuff (YC F24) – CLI tool that writes code for you | Hacker News,
+>    [https://news.ycombinator.com/item?id=42078536](https://news.ycombinator.com/item?id=42078536)
+> 14. Please add support for old cpu's · Issue \#497 · CodebuffAI/codebuff \- GitHub,
+>    [https://github.com/CodebuffAI/codebuff/issues/497](https://github.com/CodebuffAI/codebuff/issues/497)
+> 15. GitHub \- Quorinex/Freebuff2API: OpenAI-compatible Freebuff proxy with dynamic free-agent tracking, token
+>    rotation, and ready-to-use Docker deployment.,
+>    [https://github.com/Quorinex/Freebuff2API](https://github.com/Quorinex/Freebuff2API)
+> 16. CodeBuff: The Open-Source Multi-Agent AI Coding Revolution | atal upadhyay,
+>    [https://atalupadhyay.wordpress.com/2026/03/04/codebuff-the-open-source-multi-agent-ai-coding-revolution/](https://atalupadhyay.wordpress.com/2026/03/04/codebuff-the-open-source-multi-agent-ai-coding-revolution/)
+> 17. Remove shimmer animation from freebuff waiting room Wait time (\#523) · CodebuffAI/codebuff@9099292 \-
+>    GitHub,
+>    [https://github.com/CodebuffAI/codebuff/actions/runs/24651667103](https://github.com/CodebuffAI/codebuff/actions/runs/24651667103)
+> 18. codebuff/sdk/src/client.ts at main \- GitHub,
+>    [https://github.com/CodebuffAI/codebuff/blob/main/sdk/src/client.ts](https://github.com/CodebuffAI/codebuff/blob/main/sdk/src/client.ts)
+> 19. Free CLI agent — unlimited DeepSe… for students | StudentOffers.co,
+>    [https://www.studentoffers.co/offer/freebuff](https://www.studentoffers.co/offer/freebuff)
+> 20. Rate-limit freebuff GLM sessions to 5 per 20 hours · CodebuffAI/codebuff@7dd903b \- GitHub,
+>    [https://github.com/CodebuffAI/codebuff/actions/runs/24808282674](https://github.com/CodebuffAI/codebuff/actions/runs/24808282674)
+> 21. Rate-limit freebuff GLM sessions to 5 per 20 hours (\#537) · CodebuffAI/codebuff@585260b,
+>    [https://github.com/CodebuffAI/codebuff/actions/runs/24915163705](https://github.com/CodebuffAI/codebuff/actions/runs/24915163705)
+> 22. freebuff2api-openai-proxy | Skills M... \- LobeHub,
+>    [https://lobehub.com/bg/skills/aradotso-trending-skills-freebuff2api-openai-proxy](https://lobehub.com/bg/skills/aradotso-trending-skills-freebuff2api-openai-proxy)
+> 23. Freebuff: The 100% free coding agent \- Y Combinator,
+>    [https://www.ycombinator.com/companies/freebuff](https://www.ycombinator.com/companies/freebuff)
+> 24. codebuff/README.md at main \- GitHub,
+>    [https://github.com/CodebuffAI/codebuff/blob/main/README.md](https://github.com/CodebuffAI/codebuff/blob/main/README.md)
+> 25. codebuff/README.zh-CN.md at main \- GitHub,
+>    [https://github.com/CodebuffAI/codebuff/blob/main/README.zh-CN.md](https://github.com/CodebuffAI/codebuff/blob/main/README.zh-CN.md)
+> 26. Codebuff download | SourceForge.net,
+>    [https://sourceforge.net/projects/codebuff.mirror/](https://sourceforge.net/projects/codebuff.mirror/)
 > 27. Antigravity IDE, [https://antigravityide.net/](https://antigravityide.net/)  
-> 28. Google Antigravity CLI features, [https://antigravity.google/docs/cli-features](https://antigravity.google/docs/cli-features)  
-> 29. Codebuff \- Copilot Alternatives, [https://copilot-alternatives.com/alternative/codebuff/](https://copilot-alternatives.com/alternative/codebuff/)
+> 28. Google Antigravity CLI features,
+>    [https://antigravity.google/docs/cli-features](https://antigravity.google/docs/cli-features)
+> 29. Codebuff \- Copilot Alternatives,
+>    [https://copilot-alternatives.com/alternative/codebuff/](https://copilot-alternatives.com/alternative/codebuff/)

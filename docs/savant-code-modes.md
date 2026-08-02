@@ -1,6 +1,9 @@
-# Savant-Code Modes — Feature Writeup (post-rebrand, OpenRouter-only)
+# Savant-Code Modes — Historical Feature Writeup (2026-07-20)
 
-> **⚠️ OUTDATED — Historical document, do not use for current reference.** This file was a diagnostic audit of the pre-rebrand mode system. It references `agents/base2/` paths, `anthropic/claude-opus-4.8` as the DEFAULT model, and `providerOptions` patterns that no longer exist. For current agent definitions, see `agents/savant/savant.ts` and `agents/savant/savant-deep.ts`. Filed under FID-2026-0720-031 (never opened).
+> **⚠️ HISTORICAL — Do not use this document as current product or architecture guidance.** This diagnostic audit
+> describes the pre-rebrand mode system and intentionally preserves obsolete paths, model names, and provider options as
+> an audit record. Current agent definitions and provider behavior are documented in `README.md`, `ARCHITECTURE.md`,
+> `agents/savant/savant.ts`, and `sdk/src/impl/model-provider.ts`. No pending implementation plan is tracked by this file.
 
 ## TL;DR — answer to "do modes do anything?"
 
@@ -11,7 +14,8 @@ Yes — but only half of the wire. The input-box **DEFAULT/LITE/MAX/PLaN** toggl
 | **Agent ID load** (`AGENT_MODE_TO_ID[mode]`) | **Live** — each mode loads a distinct `AgentDefinition` with different model default, `providerOptions`, tool list, validation, and system prompt. |
 | **`costMode` value** (`AGENT_MODE_TO_COST_MODE[mode]`) | **Dead** — was meant for the now-defunct SavantCode backend. Flows through `sdk/run.ts` as a string, but no backend consumes it on the OpenRouter-direct path. |
 
-If you only have time to read one paragraph: the toggle changes *which agent runs*; it does **not** change billing, rate limiting, telemetry, or session gating — those were backend responsibilities that no longer exist.
+If you only have time to read one paragraph: the toggle changes *which agent runs*; it does **not** change billing,
+rate limiting, telemetry, or session gating — those were backend responsibilities that no longer exist.
 
 ---
 
@@ -25,13 +29,14 @@ There is a frequent source of confusion because the word "mode" appears in three
 | `InputMode` (`'default' \| 'bash' \| 'homeDir' \| 'plan' \| 'review' \| 'interview' \| 'usage' \| 'image' \| 'help' \| 'connect:chatgpt' \| 'outOfCredits' \| 'subscriptionLimit'`) | `cli/src/utils/input-modes.ts` | Input-box prefix/slash-command context. Determines whether the AgentMode toggle is visible. |
 | `costMode` (`'free' \| 'lite' \| 'normal' \| 'max' \| 'experimental' \| 'ask'`) | `common/src/constants/model-config.ts` | Legacy billing tag, passed to SDK. Same names as AgentMode labels but a separate string union. |
 
-The input-box toggle the user sees in `DEFAULT/LITE/MAX` is the **AgentMode toggle** from the first table. The `costMode` it maps to is from the third table — and is dead on the OpenRouter-direct path.
+The input-box toggle the user sees in `DEFAULT/LITE/MAX` is the **AgentMode toggle** from the first table. The
+`costMode` it maps to is from the third table — and is dead on the OpenRouter-direct path.
 
 ---
 
 ## 2. Full wire path (verbatim)
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────────────┐
 │  cli/src/utils/constants.ts                                             │
 │    AGENT_MODE_TO_ID                                                    │
@@ -98,13 +103,15 @@ The input-box toggle the user sees in `DEFAULT/LITE/MAX` is the **AgentMode togg
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
-The half of the wire that is **dead post-rebrand**: `costMode` and `agentDefinions`. The `costMode` parameter still flows but no backend reads it. The `agentDefinions` (legacy backend-loaded agent registry) is unused.
+The half of the wire that is **dead post-rebrand**: `costMode` and `agentDefinions`. The `costMode` parameter still
+flows but no backend reads it. The `agentDefinions` (legacy backend-loaded agent registry) is unused.
 
 ---
 
 ## 3. What each mode ACTUALLY produces (per working-tree evidence)
 
-Read from `agents/base2/base2.ts` and the wrappers `agents/base2/base2-{lite,max,plan,fast,free}.ts`. Each row is the difference the runtime sees when you click the toggle in the input box.
+Read from `agents/base2/base2.ts` and the wrappers `agents/base2/base2-{lite,max,plan,fast,free}.ts`. Each row is
+the difference the runtime sees when you click the toggle in the input box.
 
 | AgentMode | Loaded agent ID | `model` (default if no override) | `providerOptions` | Validation | Tools (vs base2) |
 |---|---|---|---|---|---|
@@ -116,23 +123,31 @@ Read from `agents/base2/base2.ts` and the wrappers `agents/base2/base2-{lite,max
 | (used inside `noAskUser: true` shell) | `base2-fast-no-validation` | whatever model override is passed | `{ only: ['amazon-bedrock'] }` | `hasNoValidation: true` | drops `write_todos`, `suggest_followups`, `ask_user` |
 
 Notes:
-- The model strings are OpenRouter routing labels, not endpoints. `minimax/minimax-m3` and `anthropic/claude-opus-4.8` both reach OpenRouter's unified `/api/v1/chat/completions` endpoint; OpenRouter handles the underlying provider.
-- `base2-free` and `base2-lite` route to the same `minimax/minimax-m3` model but differ in `providerOptions` — free mode denies data collection, lite mode restricts to bedrock (which is questionable on OpenRouter-direct, see §7).
-- `modelOverride ?? ...` — if you pick a model in the model picker UI, that override wins over the AgentMode default. The picker choice is honoured regardless of mode.
-- `'free'` and `'lite'` AgentMode IDs differ but produce nearly identical AgentDefinitions; the only behavioral delta is the `providerOptions`.
+
+- The model strings are OpenRouter routing labels, not endpoints. `minimax/minimax-m3` and
+  `anthropic/claude-opus-4.8` both reach OpenRouter's unified `/api/v1/chat/completions` endpoint; OpenRouter
+  handles the underlying provider.
+- `base2-free` and `base2-lite` route to the same `minimax/minimax-m3` model but differ in `providerOptions` — free
+  mode denies data collection, lite mode restricts to bedrock (which is questionable on OpenRouter-direct, see §7).
+- `modelOverride ?? ...` — if you pick a model in the model picker UI, that override wins over the AgentMode
+  default. The picker choice is honoured regardless of mode.
+- `'free'` and `'lite'` AgentMode IDs differ but produce nearly identical AgentDefinitions; the only behavioral
+  delta is the `providerOptions`.
 
 ---
 
 ## 4. The agent-mode-toggle UI component (`cli/src/components/agent-mode-toggle.tsx`)
 
 - Compact, hover-expandable segmented control. Returns `null` if `IS_SAVANT_FREE === true`.
-- Internal `useHoverToggle()` hook manages open/close with `OPEN_DELAY_MS=0`, `CLOSE_DELAY_MS=250`, `REOPEN_SUPPRESS_MS=250` to prevent flicker on rapid hover transitions.
+- Internal `useHoverToggle()` hook manages open/close with `OPEN_DELAY_MS=0`, `CLOSE_DELAY_MS=250`,
+  `REOPEN_SUPPRESS_MS=250` to prevent flicker on rapid hover transitions.
 - Builds segments from `AGENT_MODES` (the array derived from `Object.keys(AGENT_MODE_TO_ID)`).
   - Each non-active mode renders as a clickable segment.
   - Active mode renders as a `> MODE` indicator.
 - Click handlers funnel through the exported `resolveAgentModeClick(currentMode, clickedId, hasOnSelectMode)` helper:
   - Clicking an active mode → `{ type: 'closeActive' }`
-  - Clicking a different mode → `{ type: 'selectMode'; mode: target }` if `onSelectMode` is provided, otherwise `{ type: 'toggleMode'; mode: target }`.
+  - Clicking a different mode → `{ type: 'selectMode'; mode: target }` if `onSelectMode` is provided, otherwise `{
+    type: 'toggleMode'; mode: target }`.
 - Disabled when `inputFocused === false` (the toggle won't open if the terminal is not focused — UX rule).
 
 ### Visibility rule (which `InputMode`s expose the toggle)
@@ -146,7 +161,9 @@ From `cli/src/utils/input-modes.ts`, each `InputModeConfig` has `showAgentModeTo
 
 Plus an unconditional override: in SavantFree builds, all toggle visibility is forced off.
 
-Practical consequence: when the user types `/plan`, `/review`, or `/interview`, the agent-mode toggle disappears. When the user is back in the default chat, it reappears. `subscriptionLimit` and `outOfCredits` also hide it because there's no interactive mode toggle to display.
+Practical consequence: when the user types `/plan`, `/review`, or `/interview`, the agent-mode toggle disappears.
+When the user is back in the default chat, it reappears. `subscriptionLimit` and `outOfCredits` also hide it
+because there's no interactive mode toggle to display.
 
 ---
 
@@ -163,15 +180,21 @@ export type CostMode = (typeof costModes)[number]
 
 It flows through the wire as a string label:
 
-1. `AGENT_MODE_TO_COST_MODE[mode]` in `constants.ts` produces one of `'free' | 'lite' | 'normal' | 'max' | 'experimental' | 'ask'`.
+1. `AGENT_MODE_TO_COST_MODE[mode]` in `constants.ts` produces one of `'free' | 'lite' | 'normal' | 'max' |
+   'experimental' | 'ask'`.
 2. `use-send-message.ts` passes it to `createRunConfig({ costMode, ... })`.
 3. `create-run-config.ts` puts it in the returned RunConfig object.
 4. `sdk/src/run.ts` declares it on `RunOptions` and forwards it to `callMainPrompt(...)` in `agent-runtime`.
-5. `agent-runtime` checks `isFreeMode(costMode)` to gate ChatGPT-OAuth-direct flows in `sdk/src/impl/model-provider.ts` and `gemini-with-fallbacks.ts`.
+5. `agent-runtime` checks `isFreeMode(costMode)` to gate ChatGPT-OAuth-direct flows in
+   `sdk/src/impl/model-provider.ts` and `gemini-with-fallbacks.ts`.
 
-**The only runtime effect of `costMode` today** is the `isFreeMode(costMode)` check — which only matters if the user is using a ChatGPT OAuth direct connection (out-of-scope post-rebrand since OpenRouter is the universal backend). On the OpenRouter-direct path, **`costMode` is fully inert** — the value flows through but nothing reads it.
+**The only runtime effect of `costMode` today** is the `isFreeMode(costMode)` check — which only matters if the
+user is using a ChatGPT OAuth direct connection (out-of-scope post-rebrand since OpenRouter is the universal
+backend). On the OpenRouter-direct path, **`costMode` is fully inert** — the value flows through but nothing reads
+it.
 
-If you keep `costMode` in the wire purely as a labeling facility (or for backward compatibility with hypothetical future metering), that's fine. If you want to drop it entirely, the chain is short.
+If you keep `costMode` in the wire purely as a labeling facility (or for backward compatibility with hypothetical
+future metering), that's fine. If you want to drop it entirely, the chain is short.
 
 ---
 
@@ -201,7 +224,9 @@ const defaultProviderOptions = isFree
   : { only: ['amazon-bedrock'] }
 ```
 
-This forces every DEFAULT/MAX/LITE/PLAN run to **only** route through amazon-bedrock. If your OpenRouter-direct setup no longer includes amazon-bedrock as a routing surface (likely, since you replaced the old SavantCode backend with a master-key OpenRouter path), this would silently **fail every paid-mode request** at the AI SDK layer.
+This forces every DEFAULT/MAX/LITE/PLAN run to **only** route through amazon-bedrock. If your OpenRouter-direct
+setup no longer includes amazon-bedrock as a routing surface (likely, since you replaced the old SavantCode backend
+with a master-key OpenRouter path), this would silently **fail every paid-mode request** at the AI SDK layer.
 
 Verify before redesign ships:
 
@@ -211,11 +236,13 @@ grep -rn 'amazon-bedrock' agents/ common/ sdk/ packages/ 2>/dev/null | grep -v _
 ```
 
 If amazon-bedrock appears anywhere outside test mocks and ECHO docs, decide whether to:
+
 - (a) Drop the `only: ['amazon-bedrock']` constraint entirely — neutral request, OpenRouter picks the cheapest route.
 - (b) Repoint to whatever provider you actually use (e.g. `anthropic-direct`, `minimax-direct`).
 - (c) Document Bedrock as still-approved for paid runs and confirm contract.
 
-This is **not** an aesthetic issue — it's a runtime correctness issue. Catching this in the redesign pass is cheaper than discovering it after shipping.
+This is **not** an aesthetic issue — it's a runtime correctness issue. Catching this in the redesign pass is
+cheaper than discovering it after shipping.
 
 ---
 
@@ -223,25 +250,30 @@ This is **not** an aesthetic issue — it's a runtime correctness issue. Catchin
 
 ### Option A — Strip `costMode` only. Keep mode toggle + AgentDefinition IDs.
 
-- Remove `costMode` from `cli/src/utils/create-run-config.ts` (line ~92), `sdk/src/run.ts` (~line 150), `cli/src/hooks/use-send-message.ts` (~line 632).
+- Remove `costMode` from `cli/src/utils/create-run-config.ts` (line ~92), `sdk/src/run.ts` (~line 150),
+  `cli/src/hooks/use-send-message.ts` (~line 632).
 - Keep `AGENT_MODE_TO_ID`, keep `base2-lite/base2-max/etc.` files.
 - ~30 lines removed across 3 files. No UX change.
 - *When to pick this:* if you want the cheapest possible cleanup and the toggle feature is acceptable as-is.
 
 ### Option B — Rename modes to match new product language.
 
-- Replace mode label table in `cli/src/utils/constants.ts` (`DEFAULT → STANDARD`, `LITE → FAST`, `MAX → PRO`, drop or rename `PLAN`).
-- Update strings in `agent-mode-toggle.tsx` (the `buildExpandedSegments` function constructs segments from `AGENT_MODES` automatically — only hardcoded labels are the `> MODE` indicator).
+- Replace mode label table in `cli/src/utils/constants.ts` (`DEFAULT → STANDARD`, `LITE → FAST`, `MAX → PRO`, drop
+  or rename `PLAN`).
+- Update strings in `agent-mode-toggle.tsx` (the `buildExpandedSegments` function constructs segments from
+  `AGENT_MODES` automatically — only hardcoded labels are the `> MODE` indicator).
 - Optionally rename the underlying `AgentDefinition` IDs (`base2-lite → base2-fast`, etc.).
 - ~50 lines changed across 3–5 files. UX-visible change (button labels in input box).
 - *When to pick this:* if the current label names don't reflect the product's new positioning.
 
 ### Option C — Collapse the toggle. Always load one agent.
 
-- Set `AGENT_MODE_TO_ID = { DEFAULT: 'base2', LITE: 'base2', MAX: 'base2', PLAN: 'base2' }` (or just remove the mode toggle entirely).
+- Set `AGENT_MODE_TO_ID = { DEFAULT: 'base2', LITE: 'base2', MAX: 'base2', PLAN: 'base2' }` (or just remove the
+  mode toggle entirely).
 - The picker becomes purely cosmetic; `costMode` is irrelevant.
 - ~10 lines changed plus 1 component deletion.
-- *When to pick this:* if you've decided one prompt pipeline + one model picker is enough and you want maximum simplicity.
+- *When to pick this:* if you've decided one prompt pipeline + one model picker is enough and you want maximum
+  simplicity.
 
 There's no Option D / "do nothing" — the latent `amazon-bedrock` risk in §7 alone warrants touching this code.
 
@@ -252,13 +284,16 @@ There's no Option D / "do nothing" — the latent `amazon-bedrock` risk in §7 a
 Run these to confirm the wire path:
 
 1. Boot the CLI: `cd /c/Users/spenc/dev/savant-code && bun dev`.
-2. Add a one-line debug log at `cli/src/components/agent-mode-toggle.tsx` `handleSegmentClick`, e.g. `console.log('[modes] click', mode, '→', agent)`.
-3. Add a debug log at `cli/src/hooks/use-send-message.ts` near line 632: `console.log('[modes] sending', { agent, costMode, modelOverride })`.
+2. Add a one-line debug log at `cli/src/components/agent-mode-toggle.tsx` `handleSegmentClick`, e.g.
+   `console.log('[modes] click', mode, '→', agent)`.
+3. Add a debug log at `cli/src/hooks/use-send-message.ts` near line 632: `console.log('[modes] sending', { agent,
+   costMode, modelOverride })`.
 4. Click each mode (DEFAULT/LITE/MAX/PLaN), send a one-line prompt, and confirm:
    - Agent ID is what `AGENT_MODE_TO_ID[mode]` says.
    - `costMode` reaches `create-run-config.ts` and is forwarded.
 5. Pick a model from the model picker UI that overrides the AgentMode default; confirm `modelOverride` wins.
-6. Run `grep -rn 'amazon-bedrock' agents/ common/ sdk/ packages/ 2>/dev/null` to confirm any Bedrock leftover is intentional.
+6. Run `grep -rn 'amazon-bedrock' agents/ common/ sdk/ packages/ 2>/dev/null` to confirm any Bedrock leftover is
+   intentional.
 
 ---
 
@@ -273,21 +308,31 @@ Before touching any file, capture decisions on:
 - [ ] Which **`InputMode`** contexts should still expose the toggle
 - [ ] What to do with `base2-free` and `base2-lite` (which produce near-identical AgentDefinitions)
 - [ ] Whether `planOnly` becomes a real `AgentMode` or stays as a `createBase2` flag
-- [ ] FIDs/documentation updates: open FID-2026-0720-031 at the start of work, file CHANGELOG.md entry + migrate FID to `archive/` at close
+- [ ] FIDs/documentation updates: open FID-2026-0720-031 at the start of work, file CHANGELOG.md entry + migrate
+  FID to `archive/` at close
 
 ---
 
 ## 11. Related documents
 
-- [`ARCHITECTURE.md`](../ARCHITECTURE.md) — 9-agent roster (Orchestrator, Detective, Forge, Verifier, Recorder, Thinker, Scout, Researcher, Scribe)
+- [`ARCHITECTURE.md`](../ARCHITECTURE.md) — 9-agent roster (Orchestrator, Detective, Forge, Verifier, Recorder,
+  Thinker, Scout, Researcher, Scribe)
 - [`ECHO.md`](../ECHO.md) — Perfection Loop FSM, FID lifecycle
 - [`docs/agents-and-tools.md`](agents-and-tools.md) — Agent roster breakdown
 - [`docs/SAVANT-VERSIONING.md`](SAVANT-VERSIONING.md) — Versioning convention
-- [`CHANGELOG.md`](../CHANGELOG.md) — FID-2026-0719-030 entry documents the agent-runtime `__tests__/` exclusion decision that touches overlapping infrastructure
+- [`CHANGELOG.md`](../CHANGELOG.md) — FID-2026-0719-030 entry documents the agent-runtime `__tests__/` exclusion
+  decision that touches overlapping infrastructure
 
 Pending FIDs this writeup will fold into:
+
 - FID-2026-0720-031 (to be opened): Modes feature redesign after base2 rename
 
 ---
 
-*Audit performed 2026-07-20. Working-tree evidence: 8 files read directly (`agents/base2/base2.ts`, `agents/base2/base2-lite.ts`, `agents/base2/base2-max.ts`, `agents/base2/base2-free.ts`, `agents/base2/base2-plan.ts`, `agents/base2/base2-fast.ts`, `common/src/constants/model-config.ts`, `sdk/src/impl/model-provider.ts`, `cli/src/components/agent-mode-toggle.tsx`, `cli/src/utils/input-modes.ts`, `cli/src/utils/constants.ts`, `cli/src/utils/create-run-config.ts`). Conclusions: costMode path is dead post-rebrand; AgentMode toggle wire path is real but partially cosmetic; amazon-bedrock constraint is a latent runtime risk.*
+*Audit performed 2026-07-20. Working-tree evidence: 8 files read directly (`agents/base2/base2.ts`,
+`agents/base2/base2-lite.ts`, `agents/base2/base2-max.ts`, `agents/base2/base2-free.ts`,
+`agents/base2/base2-plan.ts`, `agents/base2/base2-fast.ts`, `common/src/constants/model-config.ts`,
+`sdk/src/impl/model-provider.ts`, `cli/src/components/agent-mode-toggle.tsx`, `cli/src/utils/input-modes.ts`,
+`cli/src/utils/constants.ts`, `cli/src/utils/create-run-config.ts`). Conclusions: costMode path is dead
+post-rebrand; AgentMode toggle wire path is real but partially cosmetic; amazon-bedrock constraint is a latent
+runtime risk.*

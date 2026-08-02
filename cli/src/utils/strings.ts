@@ -1,7 +1,6 @@
 import { statSync } from 'fs'
 import path from 'path'
 
-
 import {
   getFileOrFolderPathFromText,
   getImageFilePathFromText,
@@ -231,7 +230,9 @@ export function createPasteHandler(options: {
     }
 
     const rawClipboardText = readClipboardText()
-    const clipboardText = rawClipboardText ? Bun.stripANSI(rawClipboardText) : null
+    const clipboardText = rawClipboardText
+      ? Bun.stripANSI(rawClipboardText)
+      : null
 
     // Check if clipboard text is a path to an image file
     if (clipboardText && onPasteImagePath && cwd) {

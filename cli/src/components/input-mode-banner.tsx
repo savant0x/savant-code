@@ -1,7 +1,6 @@
 import { CHATGPT_OAUTH_ENABLED } from '@savant-code/common/constants/chatgpt-oauth'
 import React from 'react'
 
-
 import { ChatGptConnectBanner } from './chatgpt-connect-banner'
 import { HelpBanner } from './help-banner'
 import { PendingAttachmentsBanner } from './pending-attachments-banner'
@@ -25,9 +24,17 @@ const BANNER_REGISTRY: Record<
 > = {
   default: () => <PendingAttachmentsBanner />,
   image: () => <PendingAttachmentsBanner />,
-  ...(IS_SAVANT_FREE ? {} : { usage: ({ showTime }: { showTime: number }) => <UsageBanner showTime={showTime} /> }),
+  ...(IS_SAVANT_FREE
+    ? {}
+    : {
+        usage: ({ showTime }: { showTime: number }) => (
+          <UsageBanner showTime={showTime} />
+        ),
+      }),
   help: () => <HelpBanner />,
-  ...(IS_SAVANT_FREE ? {} : { subscriptionLimit: () => <SubscriptionLimitBanner /> }),
+  ...(IS_SAVANT_FREE
+    ? {}
+    : { subscriptionLimit: () => <SubscriptionLimitBanner /> }),
   ...(CHATGPT_OAUTH_ENABLED
     ? { 'connect:chatgpt': () => <ChatGptConnectBanner /> }
     : {}),

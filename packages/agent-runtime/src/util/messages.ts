@@ -275,7 +275,11 @@ export function getMessagesSubset(params: {
 
   // Remove cache_control from all messages
   for (const message of messagesSubset) {
-    for (const provider of ['anthropic', 'openrouter', 'savant-code'] as const) {
+    for (const provider of [
+      'anthropic',
+      'openrouter',
+      'savant-code',
+    ] as const) {
       delete message.providerOptions?.[provider]?.cacheControl
     }
   }

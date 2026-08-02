@@ -116,11 +116,7 @@ const CopyIcon: React.FC<CopyIconProps> = ({
 }) => {
   const theme = useTheme()
   const text = getCopyIconText(isCopied, isHovered, leadingSpace)
-  const fg = isCopied
-    ? 'green'
-    : isHovered
-      ? theme.foreground
-      : theme.muted
+  const fg = isCopied ? 'green' : isHovered ? theme.foreground : theme.muted
   const attributes = isCopied || isHovered ? undefined : TextAttributes.DIM
 
   // Keep the icon as a primitive text child. `Clickable as="text"` already

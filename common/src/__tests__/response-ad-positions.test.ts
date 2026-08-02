@@ -20,8 +20,12 @@ describe('responseAdNodePositions', () => {
     expect(responseAdNodePositions({ nodeCount: 2, adCount: 4 })).toEqual([])
     expect(responseAdNodePositions({ nodeCount: 3, adCount: 4 })).toEqual([1])
     expect(responseAdNodePositions({ nodeCount: 4, adCount: 4 })).toEqual([1])
-    expect(responseAdNodePositions({ nodeCount: 6, adCount: 4 })).toEqual([1, 4])
-    expect(responseAdNodePositions({ nodeCount: 9, adCount: 4 })).toEqual([1, 4, 7])
+    expect(responseAdNodePositions({ nodeCount: 6, adCount: 4 })).toEqual([
+      1, 4,
+    ])
+    expect(responseAdNodePositions({ nodeCount: 9, adCount: 4 })).toEqual([
+      1, 4, 7,
+    ])
   })
 
   test('eligible display slots are not capped at eight', () => {
@@ -35,7 +39,9 @@ describe('responseAdNodePositions', () => {
   })
 
   test('never places more ads than provided', () => {
-    expect(responseAdNodePositions({ nodeCount: 20, adCount: 2 })).toEqual([1, 4])
+    expect(responseAdNodePositions({ nodeCount: 20, adCount: 2 })).toEqual([
+      1, 4,
+    ])
     expect(responseAdNodePositions({ nodeCount: 20, adCount: 0 })).toEqual([])
   })
 

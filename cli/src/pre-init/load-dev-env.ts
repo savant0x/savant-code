@@ -44,7 +44,9 @@ function loadBinaryEnvIfPresent(): boolean {
     const parsed = JSON.parse(fs.readFileSync(envJsonPath, 'utf-8'))
     if (!parsed || typeof parsed !== 'object') return false
 
-    for (const [key, value] of Object.entries(parsed as Record<string, unknown>)) {
+    for (const [key, value] of Object.entries(
+      parsed as Record<string, unknown>,
+    )) {
       if (typeof value === 'string') {
         process.env[key] = value
       }

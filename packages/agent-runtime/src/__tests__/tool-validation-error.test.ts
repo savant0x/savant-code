@@ -557,7 +557,9 @@ describe('tool validation error handling', () => {
         typeof chunk !== 'string' && chunk.type === 'error',
     )
     expect(errorEvents.length).toBe(1)
-    expect(errorEvents[0].message).toContain('Invalid parameters for spawn_agents')
+    expect(errorEvents[0].message).toContain(
+      'Invalid parameters for spawn_agents',
+    )
     expect(result.hadToolCallError).toBe(true)
   })
 
@@ -614,7 +616,9 @@ describe('tool validation error handling', () => {
         typeof chunk !== 'string' && chunk.type === 'error',
     )
     expect(errorEvents.length).toBe(1)
-    expect(errorEvents[0].message).toContain('Invalid parameters for spawn_agents')
+    expect(errorEvents[0].message).toContain(
+      'Invalid parameters for spawn_agents',
+    )
     expect(errorEvents[0].message).toContain('Expected shape')
     expect(result.hadToolCallError).toBe(true)
   })
@@ -916,7 +920,9 @@ describe('tool validation error handling', () => {
 
     const readonlyToolCallEvents = responseChunks.filter(
       (chunk): chunk is Extract<PrintModeEvent, { type: 'tool_call' }> =>
-        typeof chunk !== 'string' && chunk.type === 'tool_call' && chunk.toolName === 'run_readonly_command',
+        typeof chunk !== 'string' &&
+        chunk.type === 'tool_call' &&
+        chunk.toolName === 'run_readonly_command',
     )
     expect(readonlyToolCallEvents.length).toBe(1)
 
@@ -971,7 +977,9 @@ describe('tool validation error handling', () => {
 
     const terminalToolCallEvents = responseChunks.filter(
       (chunk): chunk is Extract<PrintModeEvent, { type: 'tool_call' }> =>
-        typeof chunk !== 'string' && chunk.type === 'tool_call' && chunk.toolName === 'run_terminal_command',
+        typeof chunk !== 'string' &&
+        chunk.type === 'tool_call' &&
+        chunk.toolName === 'run_terminal_command',
     )
     expect(terminalToolCallEvents.length).toBe(0)
 
@@ -980,7 +988,9 @@ describe('tool validation error handling', () => {
         typeof chunk !== 'string' && chunk.type === 'error',
     )
     expect(terminalErrorEvents.length).toBe(1)
-    expect(terminalErrorEvents[0].message).toContain('only available during AUDIT or GREEN phases')
+    expect(terminalErrorEvents[0].message).toContain(
+      'only available during AUDIT or GREEN phases',
+    )
   })
 
   it('should preserve tool_call/tool_result ordering when custom tool setup is async', async () => {

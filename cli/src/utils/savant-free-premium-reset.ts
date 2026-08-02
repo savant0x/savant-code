@@ -13,10 +13,7 @@ export function getSavantFreePremiumResetAt(params: {
     : undefined
   const parsedServerResetAt = serverResetAt ? new Date(serverResetAt) : null
 
-  if (
-    parsedServerResetAt &&
-    Number.isFinite(parsedServerResetAt.getTime())
-  ) {
+  if (parsedServerResetAt && Number.isFinite(parsedServerResetAt.getTime())) {
     return parsedServerResetAt
   }
 

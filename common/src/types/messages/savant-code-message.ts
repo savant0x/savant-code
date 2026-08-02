@@ -52,7 +52,4 @@ export type ToolMessage = {
 } & AuxiliaryMessageData
 
 export type Message =
-  | SystemMessage
-  | UserMessage
-  | AssistantMessage
-  | ToolMessage
+  SystemMessage | UserMessage | AssistantMessage | ToolMessage

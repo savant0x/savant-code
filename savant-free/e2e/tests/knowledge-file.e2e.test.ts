@@ -52,7 +52,9 @@ describe('SavantFree: Knowledge Files', () => {
       // Wait for the CLI to be fully ready before sending input
       await session.waitForReady()
 
-      await session.send('What is the project keyword? Reply with only the keyword.')
+      await session.send(
+        'What is the project keyword? Reply with only the keyword.',
+      )
 
       const output = await session.waitForText(keyword, 120_000)
       expect(output).toContain(keyword)

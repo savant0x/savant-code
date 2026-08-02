@@ -7,7 +7,8 @@ The TUI source for both **Savant-Code** and **Savant-Free** — built with OpenT
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-1.3.14-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![OpenTUI](https://img.shields.io/badge/OpenTUI-0.2.2-%23000000?style=flat-square&logo=opentui&logoColor=%2300fbff)](https://github.com/anomalyco/opentui)[![React](https://img.shields.io/badge/React-19-%23000000?style=flat-square&logo=react&logoColor=%2300fbff)](https://react.dev/)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](../ECHO.md)
 
-**For the end-user Quick Start** (how to install/launch Savant-Code or Savant-Free), see the [root README](../README.md#quick-start). This CLI package is the **internal dev source** used to build both CLI binaries.
+**For the end-user Quick Start** (how to install/launch Savant-Code or Savant-Free), see the [root
+README](../README.md#quick-start). This CLI package is the **internal dev source** used to build both CLI binaries.
 
 ## Installation
 
@@ -60,7 +61,8 @@ bun run test:tmux-poc
 # ✅ Works:  tmux send-keys -t session $'\e[200~hello\e[201~'
 ```
 
-See [tmux.knowledge.md](tmux.knowledge.md) for comprehensive tmux documentation and [src/__tests__/README.md](src/__tests__/README.md) for testing documentation.
+See [tmux.knowledge.md](tmux.knowledge.md) for comprehensive tmux documentation and
+[src/__tests__/README.md](src/__tests__/README.md) for testing documentation.
 
 ## Build
 

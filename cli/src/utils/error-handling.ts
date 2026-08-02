@@ -10,8 +10,8 @@ import type {
   SavantFreeIpPrivacySignal,
 } from '@savant-code/common/types/savant-free-session'
 
-
-const defaultAppUrl = env.NEXT_PUBLIC_SAVANT_FREE_APP_URL || 'https://savant-code.com'
+const defaultAppUrl =
+  env.NEXT_PUBLIC_SAVANT_FREE_APP_URL || 'https://savant-code.com'
 
 // Normalize unknown errors to a user-facing string.
 const extractErrorMessage = (error: unknown, fallback: string): string => {
@@ -53,8 +53,7 @@ export const isOutOfCreditsError = (error: unknown): boolean => {
 export const isFreeModeUnavailableError = (error: unknown): boolean => {
   const details = getCliApiErrorDetails(error)
   return (
-    details.statusCode === 403 &&
-    details.errorCode === 'free_mode_unavailable'
+    details.statusCode === 403 && details.errorCode === 'free_mode_unavailable'
   )
 }
 
@@ -166,14 +165,11 @@ export const getCountryBlockFromFreeModeError = (
         ? (errorDetails.countryBlockReason as SavantFreeBlockReason)
         : undefined,
     ipPrivacySignals: errorDetails.ipPrivacySignals as
-      | SavantFreeIpPrivacySignal[]
-      | undefined,
+      SavantFreeIpPrivacySignal[] | undefined,
   }
 }
 
-export const getFreeModeUnavailableErrorMessage = (
-  error: unknown,
-): string => {
+export const getFreeModeUnavailableErrorMessage = (error: unknown): string => {
   const details = getCliApiErrorDetails(error)
   const block = getCountryBlockFromFreeModeError(error)
   if (block?.countryBlockReason === 'anonymous_network') {

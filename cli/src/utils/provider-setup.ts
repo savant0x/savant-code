@@ -1,6 +1,11 @@
 import fs from 'fs'
 
-import { getAuthToken, getConfigDir, getCredentialsPath } from './auth'
+import {
+  getAuthToken,
+  getAuthTokenDetails,
+  getConfigDir,
+  getCredentialsPath,
+} from './auth'
 import {
   DEFAULT_SAVANT_CODE_MODEL_PROVIDER,
   loadSavantCodeModelProviderPreference,
@@ -27,9 +32,18 @@ export const PROVIDER_SETUP_CONFIG = {
     envVar: 'NVIDIA_API_KEY',
     baseUrl: 'https://integrate.api.nvidia.com/v1',
   },
+  commandcode: {
+    label: 'CommandCode',
+    envVar: 'COMMAND_CODE_API_KEY',
+    baseUrl: 'https://api.commandcode.ai/provider/v1',
+  },
 } as const
 
 export type ProviderSetupName = keyof typeof PROVIDER_SETUP_CONFIG
+
+export type MissingProviderSetup = (typeof PROVIDER_SETUP_CONFIG)[ProviderSetupName] & {
+  provider: ProviderSetupName
+}
 
 let activeProvider: ProviderSetupName = PROVIDER_SETUP_DEFAULT
 
@@ -46,11 +60,9 @@ export function getActiveProviderSetup(): ProviderSetupName {
   return activeProvider
 }
 
-export function getProviderSetupInfo(provider: string):
-  | ((typeof PROVIDER_SETUP_CONFIG)[ProviderSetupName] & {
-      provider: ProviderSetupName
-    })
-  | undefined {
+export function getProviderSetupInfo(
+  provider: string,
+): MissingProviderSetup | undefined {
   const normalized = provider.trim().toLowerCase()
   if (!(normalized in PROVIDER_SETUP_CONFIG)) return undefined
 
@@ -59,6 +71,43 @@ export function getProviderSetupInfo(provider: string):
     provider: providerName,
     ...PROVIDER_SETUP_CONFIG[providerName],
   }
+}
+
+/**
+ * Return setup metadata only when the active runtime needs a gateway key.
+ * Backend credentials and local Ollama are intentionally not gateway setup
+ * cases; direct-provider mode uses a stub backend token for bootstrapping.
+ */
+export function getMissingProviderSetup(): MissingProviderSetup | undefined {
+  const authSource = getAuthTokenDetails().source
+  if (authSource === 'credentials' || authSource === 'environment') {
+    return undefined
+  }
+
+  const configuredProvider = process.env.DIRECT_PROVIDER?.trim()
+  if (!configuredProvider && process.env.INFERENCE_BASE_URL?.trim()) {
+    // A custom OpenAI-compatible endpoint has no provider-specific key
+    // metadata; leave its authentication to the endpoint configuration.
+    return undefined
+  }
+
+  const provider = configuredProvider || PROVIDER_SETUP_DEFAULT
+  if (provider.toLowerCase() === 'ollama') return undefined
+
+  const info = getProviderSetupInfo(provider)
+  if (!info || !process.env[info.envVar]?.trim()) return info
+  return undefined
+}
+
+export function getProviderSetupGuidance(
+  info: MissingProviderSetup,
+): string {
+  return [
+    `${info.label} needs an API key before sending a prompt.`,
+    `Run /provider ${info.provider} (or /provider) and paste the key into the masked prompt.`,
+    `The key is stored globally at ${getCredentialsPath()} and is never added to chat history.`,
+    `For automation, set ${info.envVar} in your shell before starting Savant-Code.`,
+  ].join(' ')
 }
 
 function readCredentialsRecord(): Record<string, JSONValue> {
@@ -115,9 +164,11 @@ export function applyPersistedProviderApiKeys(): void {
     !process.env.INFERENCE_BASE_URL?.trim() &&
     !getAuthToken()
   ) {
-    const configured = (Object.entries(PROVIDER_SETUP_CONFIG) as Array<
-      [ProviderSetupName, (typeof PROVIDER_SETUP_CONFIG)[ProviderSetupName]]
-    >).find(([, config]) => Boolean(storedKeys[config.envVar]))
+    const configured = (
+      Object.entries(PROVIDER_SETUP_CONFIG) as Array<
+        [ProviderSetupName, (typeof PROVIDER_SETUP_CONFIG)[ProviderSetupName]]
+      >
+    ).find(([, config]) => Boolean(storedKeys[config.envVar]))
     if (configured) {
       const [provider, config] = configured
       process.env.DIRECT_PROVIDER = provider

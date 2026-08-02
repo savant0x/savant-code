@@ -84,7 +84,8 @@ export const BottomBanner: React.FC<BottomBannerProps> = ({
   const [isCloseHovered, setIsCloseHovered] = useState(false)
 
   // Resolve colors from theme or use overrides
-  const borderColor = borderColorOverride ?? getThemeColor(theme, borderColorKey)
+  const borderColor =
+    borderColorOverride ?? getThemeColor(theme, borderColorKey)
   const textColor =
     textColorOverride ??
     (textColorKey ? getThemeColor(theme, textColorKey) : borderColor)

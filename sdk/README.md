@@ -1,5 +1,6 @@
 <!-- markdownlint-disable MD041 -->
-<img src="../assets/banner.png" alt="@savant-code/sdk — Official TypeScript SDK for the Savant-Code multi-agent runtime" width="650" />
+<img src="../assets/banner.png" alt="@savant-code/sdk — Official TypeScript SDK for the Savant-Code multi-agent
+runtime" width="650" />
 
 # @savant-code/sdk
 
@@ -15,7 +16,13 @@ npm install @savant-code/sdk
 
 ## Prerequisites
 
-- Create a SavantCode account and get your [SavantCode API key here](https://www.savant-code.com/api-keys).
+The SDK client uses the Savant-Code backend contract and requires the API key supplied to `SavantCodeClient`.
+Set `SAVANT_CODE_API_KEY` in the environment or pass the key through your application's secret management.
+The CLI's interactive `/provider` credentials are a separate local CLI onboarding flow and are not implicitly loaded by
+SDK clients.
+
+For direct provider routing, configure the provider-specific environment variables documented by the runtime, including
+`OPENCODE_GO_API_KEY`, `TOKENROUTER_API_KEY`, `NVIDIA_API_KEY`, and `COMMAND_CODE_API_KEY`.
 
 ## Usage
 
@@ -26,8 +33,7 @@ import { SavantCodeClient } from '@savant-code/sdk'
 
 async function main() {
   const client = new SavantCodeClient({
-    // You need to pass in your own API key here.
-    // Get one here: https://www.savant-code.com/api-keys
+    // Supply your backend API key through your application's secret manager.
     apiKey: process.env.SAVANT_CODE_API_KEY,
     cwd: process.cwd(),
   })
@@ -35,7 +41,7 @@ async function main() {
   // First run
   const runState1 = await client.run({
     // The agent id. Any agent on the store (https://savant-code.com/store)
-    agent: 'savant-code/base@0.0.16',
+    agent: 'savant-code/base@latest',
     prompt: 'Create a simple calculator class',
     handleEvent: (event) => {
       // All events that happen during the run: agent start/finish, tool calls/results, text responses, errors.
@@ -45,7 +51,7 @@ async function main() {
 
   // Continue the same session with a follow-up
   const runOrError2 = await client.run({
-    agent: 'savant-code/base@0.0.16',
+    agent: 'savant-code/base@latest',
     prompt: 'Add unit tests for the calculator',
     previousRun: runState1, // <-- this is where your next run differs from the previous run
     handleEvent: (event) => {
@@ -70,8 +76,7 @@ import type { AgentDefinition } from '@savant-code/sdk'
 
 async function main() {
   const client = new SavantCodeClient({
-    // Note: You need to pass in your own API key.
-    // Get it here: https://www.savant-code.com/profile?tab=api-keys
+    // Supply your backend API key through your application's secret manager.
     apiKey: process.env.SAVANT_CODE_API_KEY,
     // Optional directory agent runs from (if applicable).
     cwd: process.cwd(),
@@ -152,7 +157,7 @@ Override with `knowledgeFiles` (replaces project files) or `userKnowledgeFiles` 
 
 ```typescript
 await client.run({
-  agent: 'savant-code/base@0.0.16',
+  agent: 'savant-code/base@latest',
   prompt: 'Help me refactor',
   knowledgeFiles: { 'knowledge.md': '# Guidelines\n- Use TypeScript' },
   userKnowledgeFiles: { '~/.knowledge.md': '# Preferences\n- Be concise' },
@@ -174,9 +179,11 @@ const client = new SavantCodeClient({
 })
 ```
 
-**Statuses:** `'blocked'` (returns `[BLOCKED]`), `'allow-example'` (prefixes content with `[TEMPLATE]`), `'allow'` (normal read).
+**Statuses:** `'blocked'` (returns `[BLOCKED]`), `'allow-example'` (prefixes content with `[TEMPLATE]`), `'allow'`
+(normal read).
 
-**Default behavior:** When no `fileFilter` is provided, gitignore checking is applied automatically. When a `fileFilter` IS provided, the caller owns all filtering.
+**Default behavior:** When no `fileFilter` is provided, gitignore checking is applied automatically. When a
+`fileFilter` IS provided, the caller owns all filtering.
 
 ### `loadLocalAgents(options)`
 
@@ -210,9 +217,11 @@ const result = await client.run({
 
 #### Parameters
 
-- **`agentsPath`** (string, optional): Path to a specific agents directory. If omitted, searches in `{cwd}/.agents`, `{cwd}/../.agents`, and `{homedir}/.agents`.
+- **`agentsPath`** (string, optional): Path to a specific agents directory. If omitted, searches in
+  `{cwd}/.agents`, `{cwd}/../.agents`, and `{homedir}/.agents`.
 - **`verbose`** (boolean, optional): Whether to log errors during loading. Defaults to `false`.
-- **`validate`** (boolean, optional): Whether to validate agents after loading. Invalid agents are filtered out. Defaults to `false`.
+- **`validate`** (boolean, optional): Whether to validate agents after loading. Invalid agents are filtered out.
+  Defaults to `false`.
 
 #### Returns
 
@@ -235,31 +244,46 @@ Runs a SavantCode agent with the specified options.
 
 #### Parameters
 
-- **`agent`** (string, required): The agent to run. Use `'base'` for the default agent, or specify a custom agent ID if you made your own agent definition (passed with the `agentDefinitions` param).
+- **`agent`** (string, required): The agent to run. Use `'base'` for the default agent, or specify a custom agent
+  ID if you made your own agent definition (passed with the `agentDefinitions` param).
 
 - **`prompt`** (string, required): The user prompt describing what you want the agent to do.
 
-- **`params`** (object, optional): Additional parameters for the agent. Most agents don't use this, but some custom agents can take a JSON object as input in addition to the user prompt string.
+- **`params`** (object, optional): Additional parameters for the agent. Most agents don't use this, but some custom
+  agents can take a JSON object as input in addition to the user prompt string.
 
-- **`handleEvent`** (function, optional): Callback function that receives every event during execution (assistant messages, tool calls, etc.). This allows you to stream the agent's progress in real-time. We will likely add a token-by-token streaming callback in the future.
+- **`handleEvent`** (function, optional): Callback function that receives every event during execution (assistant
+  messages, tool calls, etc.). This allows you to stream the agent's progress in real-time. We will likely add a
+  token-by-token streaming callback in the future.
 
-- **`previousRun`** (object, optional): JSON state returned from a previous `run()` call. Use this to continue a conversation or session with the agent, maintaining context from previous interactions.
+- **`previousRun`** (object, optional): JSON state returned from a previous `run()` call. Use this to continue a
+  conversation or session with the agent, maintaining context from previous interactions.
 
-- **`projectFiles`** (object, optional): All the files in your project as a plain JavaScript object. Keys should be the full path from your current directory to each file, and values should be the string contents of the file. Example: `{ "src/index.ts": "console.log('hi')" }`. This helps SavantCode pick good source files for context. Note: This parameter was previously named `allFiles` but has been renamed for clarity.
+- **`projectFiles`** (object, optional): All the files in your project as a plain JavaScript object. Keys should be
+  the full path from your current directory to each file, and values should be the string contents of the file.
+  Example: `{ "src/index.ts": "console.log('hi')" }`. This helps SavantCode pick good source files for context.
+  Note: This parameter was previously named `allFiles` but has been renamed for clarity.
 
-- **`knowledgeFiles`** (object, optional): Knowledge files to inject into every `run()` call. Uses the same schema as `projectFiles` - keys are file paths and values are file contents. These files are added directly to the agent's context.
+- **`knowledgeFiles`** (object, optional): Knowledge files to inject into every `run()` call. Uses the same schema
+  as `projectFiles` - keys are file paths and values are file contents. These files are added directly to the
+  agent's context.
 
-- **`agentDefinitions`** (array, optional): Array of custom agent definitions. Each object should satisfy the AgentDefinition type.
+- **`agentDefinitions`** (array, optional): Array of custom agent definitions. Each object should satisfy the
+  AgentDefinition type.
 
-- **`customToolDefinitions`** (array, optional): Array of custom tool definitions that extend the agent's capabilities. Each tool definition includes a name, Zod schema for input validation, and a handler function. These tools can be called by the agent during execution.
+- **`customToolDefinitions`** (array, optional): Array of custom tool definitions that extend the agent's
+  capabilities. Each tool definition includes a name, Zod schema for input validation, and a handler function.
+  These tools can be called by the agent during execution.
 
-- **`maxAgentSteps`** (number, optional): Maximum number of steps the agent can take before stopping. Use this as a safety measure in case your agent starts going off the rails. A reasonable number is around 20.
+- **`maxAgentSteps`** (number, optional): Maximum number of steps the agent can take before stopping. Use this as a
+  safety measure in case your agent starts going off the rails. A reasonable number is around 20.
 
 #### Returns
 
 Returns a Promise that resolves to either a "success" or a "failure" object.
 
-- The "success" object contains a `RunState` object which can be passed into subsequent runs via the `previousRun` parameter to resume the conversation.
+- The "success" object contains a `RunState` object which can be passed into subsequent runs via the `previousRun`
+  parameter to resume the conversation.
 - The "failure" object contains an `Error` object with a `name`, `message`, and `stack` properties.
 
 The `RunState` object contains:
@@ -275,7 +299,9 @@ Apache-2.0 — see [LICENSE](../LICENSE) for full text.
 
 <div align="center">
 
-_This SDK ships from the [savant-code/savant-code monorepo](https://github.com/savant0x/savant-code). It runs on the [ECHO Protocol v0.2.0](ECHO.md) engineering governance system — 15 laws, Perfection Loop FSM, separation of duties._
+_This SDK ships from the [savant-code/savant-code monorepo](https://github.com/savant0x/savant-code). It runs on
+the [ECHO Protocol v0.2.0](ECHO.md) engineering governance system — 15 laws, Perfection Loop FSM, separation of
+duties._
 
 **Savant** • 2026
 </div>

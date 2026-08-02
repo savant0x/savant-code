@@ -19,7 +19,10 @@ import {
 import { toolNames } from '@savant-code/common/tools/constants'
 import { clientToolCallSchema } from '@savant-code/common/tools/list'
 import { applyPatchOperationSchema } from '@savant-code/common/tools/params/tool/apply-patch'
-import { jsonObjectSchema, type JSONValue } from '@savant-code/common/types/json'
+import {
+  jsonObjectSchema,
+  type JSONValue,
+} from '@savant-code/common/types/json'
 import { AgentOutputSchema } from '@savant-code/common/types/session-state'
 import {
   FETCH_IDLE_TIMEOUT_USER_MESSAGE,
@@ -37,7 +40,11 @@ import { getAgentRuntimeImpl } from './impl/agent-runtime'
 import { getUserInfoFromApiKey } from './impl/database'
 import { initialSessionState, applyOverridesToSessionState } from './run-state'
 import { applyPatchTool } from './tools/apply-patch'
-import { changeFile, FileChangeSchema, type OnFileWrittenCallback } from './tools/change-file'
+import {
+  changeFile,
+  FileChangeSchema,
+  type OnFileWrittenCallback,
+} from './tools/change-file'
 import { codeSearch } from './tools/code-search'
 import { glob } from './tools/glob'
 import { listDirectory } from './tools/list-directory'
@@ -97,10 +104,7 @@ function isRunPauseError<T>(
 ): error is T & { savantCode$1?: boolean; name?: string } {
   if (!error || typeof error !== 'object') return false
   const err = error as { savantCode$1?: unknown; name?: unknown }
-  return (
-    err.savantCode$1 === true ||
-    err.name === 'SavantCodeRunPausedError'
-  )
+  return err.savantCode$1 === true || err.name === 'SavantCodeRunPausedError'
 }
 
 export type SavantCodeClientOptions = {
@@ -390,7 +394,9 @@ async function runOnce({
     delete sessionState.fileContext.customToolDefinitions[toolName]
   }
 
-  let resolvePromise: (value: RunReturnType | PromiseLike<RunReturnType>) => void = () => {}
+  let resolvePromise: (
+    value: RunReturnType | PromiseLike<RunReturnType>,
+  ) => void = () => {}
   let _reject: (error: Error) => void = () => {}
   const promise = new Promise<RunReturnType>((res, rej) => {
     resolvePromise = res
@@ -656,7 +662,8 @@ async function runOnce({
     // durable changed" check. Skipping unchanged ticks avoids deep-cloning a
     // potentially multi-MB sessionState every interval while the run is just
     // waiting on a slow LLM call.
-    let lastSnapshotHistory: SessionState['mainAgentState']['messageHistory'] | null = null
+    let lastSnapshotHistory:
+      SessionState['mainAgentState']['messageHistory'] | null = null
     const emitStateSnapshot = () => {
       if (settled || signal?.aborted) {
         return
@@ -903,10 +910,7 @@ async function handleToolCall({
       result = await runTerminalCommand({
         command: getString(input, 'command'),
         process_type: 'SYNC',
-        cwd: path.resolve(
-          resolvedCwd,
-          getOptionalString(input, 'cwd') ?? '.',
-        ),
+        cwd: path.resolve(resolvedCwd, getOptionalString(input, 'cwd') ?? '.'),
         timeout_seconds: getOptionalNumber(input, 'timeout_seconds') ?? 30,
         env,
         signal,

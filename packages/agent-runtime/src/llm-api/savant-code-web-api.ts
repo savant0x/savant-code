@@ -41,9 +41,7 @@ const isDirectProviderModeRuntime = (): boolean =>
 
 const callSavantCodeV1 = async (params: {
   endpoint:
-    | '/api/v1/web-search'
-    | '/api/v1/docs-search'
-    | '/api/v1/gravity-index'
+    '/api/v1/web-search' | '/api/v1/docs-search' | '/api/v1/gravity-index'
   payload: JSONValue
   fetch: typeof globalThis.fetch
   logger: Logger
@@ -53,11 +51,15 @@ const callSavantCodeV1 = async (params: {
   requestName: 'web-search' | 'docs-search' | 'gravity-index'
 }): Promise<{ json?: JSONValue; error?: string; creditsUsed?: number }> => {
   if (isDirectProviderModeRuntime()) {
-    return { error: 'SavantCode backend services are unavailable in direct-provider mode.' }
+    return {
+      error:
+        'SavantCode backend services are unavailable in direct-provider mode.',
+    }
   }
 
   const { endpoint, payload, fetch, logger, env, requestName } = params
-  const baseUrl = params.baseUrl ?? env.clientEnv.NEXT_PUBLIC_SAVANT_CODE_APP_URL
+  const baseUrl =
+    params.baseUrl ?? env.clientEnv.NEXT_PUBLIC_SAVANT_CODE_APP_URL
   const apiKey = params.apiKey ?? env.ciEnv.SAVANT_CODE_API_KEY
 
   if (!baseUrl || !apiKey) {
@@ -278,7 +280,11 @@ export async function callTokenCountAPI(params: {
   messages: JSONValue[]
   system?: string
   model?: string
-  tools?: Array<{ name: string; description?: string; input_schema?: JSONValue }>
+  tools?: Array<{
+    name: string
+    description?: string
+    input_schema?: JSONValue
+  }>
   fetch: typeof globalThis.fetch
   logger: Logger
   env: SavantCodeWebApiEnv
@@ -286,11 +292,15 @@ export async function callTokenCountAPI(params: {
   apiKey?: string
 }): Promise<{ inputTokens?: number; error?: string }> {
   if (isDirectProviderModeRuntime()) {
-    return { error: 'Token counting via the SavantCode backend is unavailable in direct-provider mode.' }
+    return {
+      error:
+        'Token counting via the SavantCode backend is unavailable in direct-provider mode.',
+    }
   }
 
   const { messages, system, model, tools, fetch, logger, env } = params
-  const baseUrl = params.baseUrl ?? env.clientEnv.NEXT_PUBLIC_SAVANT_CODE_APP_URL
+  const baseUrl =
+    params.baseUrl ?? env.clientEnv.NEXT_PUBLIC_SAVANT_CODE_APP_URL
   const apiKey = params.apiKey ?? env.ciEnv.SAVANT_CODE_API_KEY
 
   if (!baseUrl || !apiKey) {

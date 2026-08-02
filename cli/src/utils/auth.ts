@@ -4,7 +4,6 @@ import path from 'path'
 import { getCiEnv } from '@savant-code/common/env-ci'
 import { z } from 'zod'
 
-
 import { getConfigDir as getConfigDirBase } from './config-dir'
 import { isDirectProviderMode } from './env'
 import { logger } from './logger'
@@ -95,7 +94,8 @@ export const getUserCredentials = (): User | null => {
   }
 }
 
-export type AuthTokenSource = 'credentials' | 'environment' | 'direct-provider-bypass' | null
+export type AuthTokenSource =
+  'credentials' | 'environment' | 'direct-provider-bypass' | null
 
 export interface AuthTokenDetails {
   token?: string

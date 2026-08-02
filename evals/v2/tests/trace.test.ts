@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'bun:test'
+
 import { TraceCollector } from '../src/trace'
+
 import type { PrintModeEvent } from '@savant-code/common/types/print-mode'
 
 describe('TraceCollector', () => {

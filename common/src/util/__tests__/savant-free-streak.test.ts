@@ -10,12 +10,12 @@ import {
 
 describe('savant-free streak helpers', () => {
   test('formats usage dates in the SavantFree reset timezone', () => {
-    expect(getSavantFreeUsageDateKey(new Date('2026-05-27T06:30:00.000Z'))).toBe(
-      '2026-05-26',
-    )
-    expect(getSavantFreeUsageDateKey(new Date('2026-05-27T08:30:00.000Z'))).toBe(
-      '2026-05-27',
-    )
+    expect(
+      getSavantFreeUsageDateKey(new Date('2026-05-27T06:30:00.000Z')),
+    ).toBe('2026-05-26')
+    expect(
+      getSavantFreeUsageDateKey(new Date('2026-05-27T08:30:00.000Z')),
+    ).toBe('2026-05-27')
   })
 
   test('adds days across month boundaries', () => {

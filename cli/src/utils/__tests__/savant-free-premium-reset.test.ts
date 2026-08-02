@@ -67,7 +67,9 @@ describe('savant-free premium reset helpers', () => {
     const nowMs = Date.parse('2026-05-11T20:00:00.000Z')
     const resetAt = new Date('2026-05-12T07:30:00.000Z')
 
-    expect(formatSavantFreePremiumResetCountdown(resetAt, nowMs)).toBe('11h 30m')
+    expect(formatSavantFreePremiumResetCountdown(resetAt, nowMs)).toBe(
+      '11h 30m',
+    )
   })
 
   test('formats sub-hour reset countdowns', () => {

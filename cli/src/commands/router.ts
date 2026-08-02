@@ -2,17 +2,17 @@ import { AnalyticsEvent } from '@savant-code/common/constants/analytics-events'
 import { CHATGPT_OAUTH_ENABLED } from '@savant-code/common/constants/chatgpt-oauth'
 import { runTerminalCommand } from '@savant-code/sdk'
 
-
 import {
   findCommand,
   type RouterParams,
   type CommandResult,
 } from './command-registry'
-import { buildInterviewPrompt, buildPlanPrompt, buildReviewPrompt } from './prompt-builders'
 import {
-  isSlashCommand,
-  parseCommandInput,
-} from './router-utils'
+  buildInterviewPrompt,
+  buildPlanPrompt,
+  buildReviewPrompt,
+} from './prompt-builders'
+import { isSlashCommand, parseCommandInput } from './router-utils'
 import { handleChatGptAuthCode } from '../components/chatgpt-connect-banner'
 import { getProjectRoot } from '../project-files'
 import { useChatStore } from '../state/chat-store'
@@ -25,11 +25,6 @@ import {
 import { showClipboardMessage } from '../utils/clipboard'
 import { IS_SAVANT_FREE } from '../utils/constants'
 import { getSystemProcessEnv } from '../utils/env'
-import {
-  getActiveProviderSetup,
-  getProviderSetupInfo,
-  saveProviderApiKey,
-} from '../utils/provider-setup'
 import { getSystemMessage, getUserMessage } from '../utils/message-history'
 import {
   capturePendingAttachments,
@@ -37,6 +32,13 @@ import {
   hasProcessingImages,
   validateAndAddImage,
 } from '../utils/pending-attachments'
+import {
+  getActiveProviderSetup,
+  getMissingProviderSetup,
+  getProviderSetupGuidance,
+  getProviderSetupInfo,
+  saveProviderApiKey,
+} from '../utils/provider-setup'
 
 /**
  * Run a bash command with automatic ghost/direct mode selection.
@@ -94,7 +96,7 @@ export function runBashCommand(command: string) {
     .then(([{ value }]) => {
       const stdout = 'stdout' in value ? value.stdout || '' : ''
       const stderr = 'stderr' in value ? value.stderr || '' : ''
-      const exitCode = 'exitCode' in value ? value.exitCode ?? 0 : 0
+      const exitCode = 'exitCode' in value ? (value.exitCode ?? 0) : 0
 
       // Track terminal command completion
       const durationMs = Date.now() - startTime
@@ -432,7 +434,9 @@ export async function routeUserPrompt(
     if (!info) {
       setMessages((prev) => [
         ...prev,
-        getSystemMessage('Provider setup is unavailable. Use /provider to try again.'),
+        getSystemMessage(
+          'Provider setup is unavailable. Use /provider to try again.',
+        ),
       ])
     } else if (!trimmed) {
       setMessages((prev) => [
@@ -452,7 +456,9 @@ export async function routeUserPrompt(
         const message = error instanceof Error ? error.message : String(error)
         setMessages((prev) => [
           ...prev,
-          getSystemMessage(`Could not save the ${info.label} API key: ${message}`),
+          getSystemMessage(
+            `Could not save the ${info.label} API key: ${message}`,
+          ),
         ])
       }
     }
@@ -518,6 +524,17 @@ export async function routeUserPrompt(
       durationMs: 2000,
     })
     return
+  }
+
+  if (!isSlashCommand(trimmed)) {
+    const missingProvider = getMissingProviderSetup()
+    if (missingProvider) {
+      setMessages((prev) => [
+        ...prev,
+        getSystemMessage(getProviderSetupGuidance(missingProvider)),
+      ])
+      return
+    }
   }
 
   saveToHistory(trimmed)

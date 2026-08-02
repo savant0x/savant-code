@@ -29,7 +29,7 @@ const getRipgrepPath = async (): Promise<string> => {
     // Use require() with literal paths to ensure the binary gets bundled into the compiled CLI
     // This is necessary for Bun's binary compilation to include the ripgrep binary
     let embeddedRgPath: string
-    
+
     if (process.platform === 'darwin' && process.arch === 'arm64') {
       embeddedRgPath = require('../../../sdk/dist/vendor/ripgrep/arm64-darwin/rg')
     } else if (process.platform === 'darwin' && process.arch === 'x64') {
@@ -41,7 +41,9 @@ const getRipgrepPath = async (): Promise<string> => {
     } else if (process.platform === 'win32' && process.arch === 'x64') {
       embeddedRgPath = require('../../../sdk/dist/vendor/ripgrep/x64-win32/rg.exe')
     } else {
-      throw new Error(`Unsupported platform: ${process.platform}-${process.arch}`)
+      throw new Error(
+        `Unsupported platform: ${process.platform}-${process.arch}`,
+      )
     }
 
     // Copy SDK's bundled binary to binary directory for portability

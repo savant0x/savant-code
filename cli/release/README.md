@@ -2,7 +2,8 @@
 
 **A terminal-native multi-agent AI coding assistant that audits every change before it touches your repo.**
 
-Built with TypeScript/Bun, governed by the [ECHO Protocol](https://github.com/savant0x/savant-code/blob/main/ECHO.md), and designed for local-first use with Ollama or any OpenAI-compatible provider.
+Built with TypeScript/Bun, governed by the [ECHO Protocol](https://github.com/savant0x/savant-code/blob/main/ECHO.md),
+and designed for local-first use with Ollama or any OpenAI-compatible provider.
 
 [![GitHub Stars](https://img.shields.io/github/stars/savant0x/savant-code?style=social)](https://github.com/savant0x/savant-code)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/savant0x/savant-code/blob/main/LICENSE)
@@ -20,11 +21,53 @@ cd your-project
 savant-code
 ```
 
-Then just start chatting — describe what you want and Savant-Code will read your codebase, plan changes, implement them, and verify the result.
+Then just start chatting — describe what you want and Savant-Code will read your codebase, plan changes, implement them,
+and verify the result.
+
+### Configure your provider
+
+If Ollama is not running, configure a hosted provider before sending your first prompt:
+
+```text
+/provider opencode-go
+```
+
+You can also enter `/provider` to choose from the interactive provider picker. Paste the key into the masked prompt;
+Savant-Code stores it globally and never adds it to chat history.
+
+The default OpenCode Go key is read from `OPENCODE_GO_API_KEY`. CommandCode uses
+`COMMAND_CODE_API_KEY`. The persisted credential file is:
+
+- **Windows:** `C:\\Users\\<username>\\.savant-code\\credentials.json`
+- **macOS/Linux:** `~/.savant-code/credentials.json`
+
+For automation, set the environment variable before launching Savant-Code:
+
+```powershell
+# PowerShell
+$env:OPENCODE_GO_API_KEY = "your-key"
+savant-code
+```
+
+```cmd
+:: Command Prompt
+set OPENCODE_GO_API_KEY=your-key
+savant-code
+```
+
+```bash
+# macOS/Linux
+export OPENCODE_GO_API_KEY=your-key
+savant-code
+```
+
+Environment variables take precedence over the saved credential. Do not create a project-local `.env` file or edit
+`credentials.json` manually.
 
 ## What Makes Savant-Code Different
 
-Savant-Code isn't a single AI model guessing at your code. It's a **multi-agent system** where 9 specialized agents coordinate through a strict protocol to audit every change before it touches your files.
+Savant-Code isn't a single AI model guessing at your code. It's a **multi-agent system** where 9 specialized agents
+coordinate through a strict protocol to audit every change before it touches your files.
 
 ### The Agent Roster
 
@@ -54,30 +97,43 @@ No code is written without a plan. No plan is accepted without audit. No audit p
 ## Features
 
 ### Multi-Agent Orchestration
-9 specialized agents coordinate via the ECHO Protocol. Detective finds issues, Forge implements, Verifier audits, Thinker reasons through complex problems, and Recorder tracks everything.
+
+9 specialized agents coordinate via the ECHO Protocol. Detective finds issues, Forge implements, Verifier audits,
+Thinker reasons through complex problems, and Recorder tracks everything.
 
 ### Thinker with Sequential Thinking
-The Thinker agent accumulates stacked reasoning steps, converges to a typed non-null result, and never returns an empty or null output. Each thought builds on the previous one.
+
+The Thinker agent accumulates stacked reasoning steps, converges to a typed non-null result, and never returns an empty
+or null output. Each thought builds on the previous one.
 
 ### Native Tool-Call Hardening
-Fail-closed streaming boundary for incomplete or malformed tool calls. Stale-fragment replacement for placeholder arguments. Permissive coercion of stringified values before strict validation.
+
+Fail-closed streaming boundary for incomplete or malformed tool calls. Stale-fragment replacement for placeholder
+arguments. Permissive coercion of stringified values before strict validation.
 
 ### Tool Permission Boundary
-Strict allowlist-based tool provisioning. Restricted agents never receive parent-only tools. Each agent has exactly the tools it needs — no more.
+
+Strict allowlist-based tool provisioning. Restricted agents never receive parent-only tools. Each agent has exactly the
+tools it needs — no more.
 
 ### Gateway Providers
+
 Works with Ollama (local-first) and any OpenAI-compatible API:
+
 - **OpenCode Go** (default) — MiMo 2.5
 - **OpenRouter** — access to hundreds of models
 - **NVIDIA NIM** — enterprise inference
 - **Cloudflare Workers AI** — edge inference
 - **TokenRouter** — multi-provider routing
+- **CommandCode** — OpenAI-compatible hosted inference
 - **Any OpenAI-compatible endpoint** — custom providers via `/provider`
 
 ### Context Compaction
+
 4-layer progressive auto-compaction keeps your session running through large codebases without hitting context limits.
 
 ### Rich Terminal UI
+
 - Streaming token-by-token output
 - Copy buttons on code blocks, tool outputs, and diffs
 - Mode switching (EDIT / ANALYZE / SCAFFOLD)
@@ -86,6 +142,7 @@ Works with Ollama (local-first) and any OpenAI-compatible API:
 - Collapsible sidebar sections
 
 ### Goal Loop
+
 Set a goal and a cadence — Savant-Code will check and work toward it on a schedule.
 
 ```bash
@@ -109,7 +166,9 @@ Set a goal and a cadence — Savant-Code will check and work toward it on a sche
 | `/init` | Scaffold agent config files |
 
 ### Knowledge Files
-Add a `knowledge.md` anywhere in your project to give Savant-Code persistent context about your codebase, conventions, and preferences.
+
+Add a `knowledge.md` anywhere in your project to give Savant-Code persistent context about your codebase, conventions,
+and preferences.
 
 ## Usage Examples
 
@@ -131,19 +190,23 @@ Add a `knowledge.md` anywhere in your project to give Savant-Code persistent con
 ## Troubleshooting
 
 ### Permission Errors
+
 ```bash
 sudo npm install -g savant-code
 ```
 Or [reinstall Node](https://nodejs.org/en/download) to fix global permissions.
 
 ### Corporate Proxy / Firewall
+
 ```bash
 export HTTPS_PROXY=http://your-proxy-server:port
 savant-code
 ```
 
 ### No Model Available
-Savant-Code requires at least one LLM provider. Run `/provider` to configure one, or install [Ollama](https://ollama.com) for local inference.
+
+Savant-Code requires at least one LLM provider. Run `/provider` to configure one, or install
+[Ollama](https://ollama.com) for local inference.
 
 ## Links
 

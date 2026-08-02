@@ -1,17 +1,17 @@
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import {
   resourceTypeCompleter,
   resourceIdForPromptCompleter,
-} from "../resources/templates.js";
-import {
+
   textResource,
   textResourceUri,
   blobResourceUri,
   blobResource,
   RESOURCE_TYPE_BLOB,
   RESOURCE_TYPE_TEXT,
-  RESOURCE_TYPES,
-} from "../resources/templates.js";
+  RESOURCE_TYPES} from "../resources/templates.js";
+
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+
 
 /**
  * Register a prompt with an embedded resource reference

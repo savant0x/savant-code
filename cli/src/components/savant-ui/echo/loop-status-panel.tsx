@@ -44,11 +44,7 @@ export function LoopStatusPanel() {
       {schedule.goalCondition && (
         <KeyValueRow
           label="Goal"
-          value={
-            <text fg={theme.foreground}>
-              {schedule.goalCondition}
-            </text>
-          }
+          value={<text fg={theme.foreground}>{schedule.goalCondition}</text>}
         />
       )}
       {schedule.lastRunAt && (

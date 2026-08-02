@@ -20,7 +20,13 @@ export function Timeline({ events, maxItems }: TimelineProps) {
   return (
     <box flexDirection="column" gap={0} focusable={false} selectable={false}>
       {display.map((event, i) => (
-        <box key={i} flexDirection="row" gap={1} focusable={false} selectable={false}>
+        <box
+          key={i}
+          flexDirection="row"
+          gap={1}
+          focusable={false}
+          selectable={false}
+        >
           <text fg={theme.muted} wrapMode="none" selectable={false}>
             {event.time}
           </text>

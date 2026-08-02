@@ -1,4 +1,3 @@
-
 import { flushAnalytics } from './analytics'
 import { stopEngagementTracking } from './engagement'
 import { withTimeout } from './terminal-color-detection'

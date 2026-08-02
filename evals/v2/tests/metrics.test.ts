@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'bun:test'
+
 import { MetricAggregator, evaluateExpectedCalls } from '../src/metrics'
+
 import type { EchoPhase, TraceDocument } from '../src/runner'
 import type { TaskDefinition } from '../src/schema'
 
@@ -22,7 +24,10 @@ function makeTask(overrides: Partial<TaskDefinition> = {}): TaskDefinition {
   }
 }
 
-function makeTrace(events: TraceDocument['events'], currentPhase: EchoPhase = 'idle'): TraceDocument {
+function makeTrace(
+  events: TraceDocument['events'],
+  currentPhase: EchoPhase = 'idle',
+): TraceDocument {
   return {
     task_id: 'metrics-test-001',
     run_id: 'run-001',
@@ -268,7 +273,9 @@ describe('MetricAggregator', () => {
       validation: {
         timeout_seconds: 60,
         deterministic_checks: [],
-        custom_tool_checks: [{ tool_name: 'code_search', expected_calls: '==1' }],
+        custom_tool_checks: [
+          { tool_name: 'code_search', expected_calls: '==1' },
+        ],
       },
     })
 
@@ -317,7 +324,9 @@ describe('MetricAggregator', () => {
       validation: {
         timeout_seconds: 60,
         deterministic_checks: [],
-        custom_tool_checks: [{ tool_name: 'code_search', expected_calls: '>=2' }],
+        custom_tool_checks: [
+          { tool_name: 'code_search', expected_calls: '>=2' },
+        ],
       },
     })
 

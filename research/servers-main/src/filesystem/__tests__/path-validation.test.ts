@@ -1,7 +1,9 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import * as path from 'path';
 import * as fs from 'fs/promises';
 import * as os from 'os';
+import * as path from 'path';
+
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+
 import { isPathWithinAllowedDirectories } from '../path-validation.js';
 
 /**

@@ -1,4 +1,3 @@
- 
 /** Typed child process mock for testing code that spawns processes. */
 
 import { EventEmitter } from 'events'

@@ -1,20 +1,20 @@
-schema_version: "2.0"
-task_id: "savant-v2-pure-add-001"
-category: "pure_coding"
-difficulty: "easy"
-description: "Fix the add function so it returns the sum of two numbers."
+schema_version: '2.0'
+task_id: 'savant-v2-pure-add-001'
+category: 'pure_coding'
+difficulty: 'easy'
+description: 'Fix the add function so it returns the sum of two numbers.'
 environment:
   setup_files:
-    - "add.js"
-    - "add.test.js"
+    - 'add.js'
+    - 'add.test.js'
   network_disabled: true
-golden_patch: "golden.patch"
+golden_patch: 'golden.patch'
 inputs:
-  prompt: "Fix the add function in add.js so it returns the sum of two numbers."
+  prompt: 'Fix the add function in add.js so it returns the sum of two numbers.'
 validation:
   timeout_seconds: 60
   deterministic_checks:
-    - command: "bun add.test.js"
+    - command: 'bun add.test.js'
       expected_exit_code: 0
       retry_count: 0
-      retry_condition: "infra"
+      retry_condition: 'infra'

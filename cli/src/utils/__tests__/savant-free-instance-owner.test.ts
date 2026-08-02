@@ -40,9 +40,9 @@ describe('savant-free instance owner', () => {
   test('does not classify the current process as dead', () => {
     recordSavantFreeInstanceOwner('inst-current')
 
-    expect(
-      isSavantFreeInstanceOwnedByDeadLocalProcess('inst-current'),
-    ).toBe(false)
+    expect(isSavantFreeInstanceOwnedByDeadLocalProcess('inst-current')).toBe(
+      false,
+    )
   })
 
   test('classifies a matching owner with a dead pid as dead', () => {
@@ -62,8 +62,8 @@ describe('savant-free instance owner', () => {
       JSON.stringify({ instanceId: 'inst-other', pid: 2_147_483_647 }),
     )
 
-    expect(
-      isSavantFreeInstanceOwnedByDeadLocalProcess('inst-current'),
-    ).toBe(false)
+    expect(isSavantFreeInstanceOwnedByDeadLocalProcess('inst-current')).toBe(
+      false,
+    )
   })
 })

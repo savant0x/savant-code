@@ -12,8 +12,7 @@ export class StopSequenceHandler {
   public process(
     text: string,
   ):
-    | { text: string; endOfStream: boolean }
-    | { text: null; endOfStream: true } {
+    { text: string; endOfStream: boolean } | { text: null; endOfStream: true } {
     if (this.finished) {
       return {
         text: null,

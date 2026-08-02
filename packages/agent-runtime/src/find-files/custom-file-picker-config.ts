@@ -18,10 +18,7 @@ const customFileCountsShape = costModeLabels.reduce(
     acc[mode] = z.number().int().positive().optional()
     return acc
   },
-  {} as Record<
-    (typeof costModeLabels)[number],
-    z.ZodOptional<z.ZodNumber>
-  >,
+  {} as Record<(typeof costModeLabels)[number], z.ZodOptional<z.ZodNumber>>,
 )
 
 // Prepare enum values for modelName.

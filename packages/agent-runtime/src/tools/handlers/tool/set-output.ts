@@ -41,7 +41,7 @@ export const handleSetOutput = (async (params: {
     })
   }
 
-  let finalOutput: unknown  
+  let finalOutput: unknown
   if (agentTemplate?.outputSchema) {
     // When outputSchema is defined, validate against it
     try {
@@ -91,7 +91,6 @@ export const handleSetOutput = (async (params: {
   return { output: jsonToolResult({ message: 'Output set' }) }
 }) satisfies SavantCodeToolHandlerFunction<ToolName>
 
- 
 function getZodIssueCount(error: unknown): number {
   if (
     error != null &&

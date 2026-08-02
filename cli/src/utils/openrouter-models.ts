@@ -1,3 +1,5 @@
+import { commandcodeModels } from '@savant-code/common/constants/model-config'
+
 import { getContextWindowForModel } from './constants'
 import { logger } from './logger'
 
@@ -16,7 +18,13 @@ const OPENROUTER_MODELS_URL = 'https://openrouter.ai/api/v1/models'
 /** How long a fetched catalog is considered fresh before a refresh. */
 const CATALOG_TTL_MS = 5 * 60 * 1000
 
-export type ModelProvider = 'openrouter' | 'tokenrouter' | 'nvidia' | 'opencode-go' | 'ollama'
+export type ModelProvider =
+  | 'openrouter'
+  | 'tokenrouter'
+  | 'nvidia'
+  | 'opencode-go'
+  | 'ollama'
+  | 'commandcode'
 
 export type OpenRouterModel = {
   /** Canonical model id, e.g. "anthropic/claude-sonnet-4". */
@@ -122,8 +130,7 @@ function parseCatalog(json: OpenRouterModelsResponse): OpenRouterModel[] {
       description: m.description,
       contextLength: m.context_length,
       maxCompletionTokens: m.max_completion_tokens,
-      promptPricePerToken:
-        prompt !== undefined ? Number(prompt) : undefined,
+      promptPricePerToken: prompt !== undefined ? Number(prompt) : undefined,
       completionPricePerToken:
         completion !== undefined ? Number(completion) : undefined,
       inputCacheReadPricePerToken:
@@ -165,7 +172,8 @@ export async function fetchOpenRouterModels(
   forceRefresh = false,
 ): Promise<OpenRouterModel[]> {
   const now = Date.now()
-  const fresh = cachedCatalog !== null && !forceRefresh && now - cachedAt < CATALOG_TTL_MS
+  const fresh =
+    cachedCatalog !== null && !forceRefresh && now - cachedAt < CATALOG_TTL_MS
 
   if (fresh && cachedCatalog) {
     return cachedCatalog
@@ -263,16 +271,24 @@ Full metadata unavailable; the model was not found in the cached OpenRouter cata
     lines.push(`- **Description:** ${model.description}`)
   }
   if (typeof model.contextLength === 'number') {
-    lines.push(`- **Context window:** ${model.contextLength.toLocaleString()} tokens`)
+    lines.push(
+      `- **Context window:** ${model.contextLength.toLocaleString()} tokens`,
+    )
   }
   if (typeof model.maxCompletionTokens === 'number') {
-    lines.push(`- **Max completion tokens:** ${model.maxCompletionTokens.toLocaleString()}`)
+    lines.push(
+      `- **Max completion tokens:** ${model.maxCompletionTokens.toLocaleString()}`,
+    )
   }
   if (typeof model.promptPricePerToken === 'number') {
-    lines.push(`- **Input price:** $${(model.promptPricePerToken * 1_000_000).toFixed(2)} per 1M tokens`)
+    lines.push(
+      `- **Input price:** $${(model.promptPricePerToken * 1_000_000).toFixed(2)} per 1M tokens`,
+    )
   }
   if (typeof model.completionPricePerToken === 'number') {
-    lines.push(`- **Output price:** $${(model.completionPricePerToken * 1_000_000).toFixed(2)} per 1M tokens`)
+    lines.push(
+      `- **Output price:** $${(model.completionPricePerToken * 1_000_000).toFixed(2)} per 1M tokens`,
+    )
   }
   if (model.modality) {
     lines.push(`- **Modalities:** ${model.modality}`)
@@ -330,7 +346,9 @@ export function findGatewayModel(modelId: string): OpenRouterModel | undefined {
   if (exact) return exact
 
   // Provider prefix variants (e.g. "openai/gpt-5" vs "gpt-5")
-  const withoutProvider = catalog.find((m) => m.id === modelId.replace(/^[a-z0-9-]+\//, ''))
+  const withoutProvider = catalog.find(
+    (m) => m.id === modelId.replace(/^[a-z0-9-]+\//, ''),
+  )
   if (withoutProvider) return withoutProvider
 
   // Base family match (e.g. "anthropic/claude-sonnet-4" vs "anthropic/claude-sonnet-4.8")
@@ -393,7 +411,11 @@ function findContextLengthFromOpenRouter(modelId: string): number | undefined {
   const familyName = familyId.split('/').pop() ?? familyId
   if (familyName && familyName !== canonical) {
     const byFamilyName = openRouterCatalog.find((m) => {
-      const mFamily = m.id.split('/').pop()?.replace(/-v?\d+(\.\d+)?$/, '') ?? ''
+      const mFamily =
+        m.id
+          .split('/')
+          .pop()
+          ?.replace(/-v?\d+(\.\d+)?$/, '') ?? ''
       return mFamily === familyName
     })
     if (ctx(byFamilyName) !== undefined) return ctx(byFamilyName)!
@@ -489,7 +511,10 @@ export async function fetchNvidiaModels(
   forceRefresh = false,
 ): Promise<OpenRouterModel[]> {
   const now = Date.now()
-  const fresh = nvidiaCache !== null && !forceRefresh && now - nvidiaCacheAt < CATALOG_TTL_MS
+  const fresh =
+    nvidiaCache !== null &&
+    !forceRefresh &&
+    now - nvidiaCacheAt < CATALOG_TTL_MS
   if (fresh && nvidiaCache) return nvidiaCache
   if (nvidiaInflight) return nvidiaInflight
 
@@ -532,41 +557,165 @@ export async function fetchNvidiaModels(
 
 const TOKENROUTER_CATALOG: OpenRouterModel[] = [
   // Tier 1 — Elite Flagships
-  { id: 'tokenrouter/anthropic/claude-fable-5', name: 'Claude Fable 5', provider: 'tokenrouter' },
-  { id: 'tokenrouter/openai/gpt-5.6-sol', name: 'GPT 5.6 Sol', provider: 'tokenrouter' },
-  { id: 'tokenrouter/deepseek/deepseek-v4-pro', name: 'DeepSeek V4 Pro', provider: 'tokenrouter' },
-  { id: 'tokenrouter/qwen/qwen3.7-max', name: 'Qwen 3.7 Max', provider: 'tokenrouter' },
+  {
+    id: 'tokenrouter/anthropic/claude-fable-5',
+    name: 'Claude Fable 5',
+    provider: 'tokenrouter',
+  },
+  {
+    id: 'tokenrouter/openai/gpt-5.6-sol',
+    name: 'GPT 5.6 Sol',
+    provider: 'tokenrouter',
+  },
+  {
+    id: 'tokenrouter/deepseek/deepseek-v4-pro',
+    name: 'DeepSeek V4 Pro',
+    provider: 'tokenrouter',
+  },
+  {
+    id: 'tokenrouter/qwen/qwen3.7-max',
+    name: 'Qwen 3.7 Max',
+    provider: 'tokenrouter',
+  },
   { id: 'tokenrouter/z-ai/glm-5.2', name: 'GLM 5.2', provider: 'tokenrouter' },
-  { id: 'tokenrouter/openai/gpt-5.5-pro', name: 'GPT 5.5 Pro', provider: 'tokenrouter' },
-  { id: 'tokenrouter/anthropic/claude-opus-4.8', name: 'Claude Opus 4.8', provider: 'tokenrouter' },
-  { id: 'tokenrouter/x-ai/grok-4.5', name: 'Grok 4.5', provider: 'tokenrouter' },
-  { id: 'tokenrouter/moonshotai/kimi-k3', name: 'Kimi K3', provider: 'tokenrouter' },
-  { id: 'tokenrouter/bytedance-seed/seedream-5.0-pro', name: 'Seedream 5.0 Pro', provider: 'tokenrouter' },
+  {
+    id: 'tokenrouter/openai/gpt-5.5-pro',
+    name: 'GPT 5.5 Pro',
+    provider: 'tokenrouter',
+  },
+  {
+    id: 'tokenrouter/anthropic/claude-opus-4.8',
+    name: 'Claude Opus 4.8',
+    provider: 'tokenrouter',
+  },
+  {
+    id: 'tokenrouter/x-ai/grok-4.5',
+    name: 'Grok 4.5',
+    provider: 'tokenrouter',
+  },
+  {
+    id: 'tokenrouter/moonshotai/kimi-k3',
+    name: 'Kimi K3',
+    provider: 'tokenrouter',
+  },
+  {
+    id: 'tokenrouter/bytedance-seed/seedream-5.0-pro',
+    name: 'Seedream 5.0 Pro',
+    provider: 'tokenrouter',
+  },
   { id: 'tokenrouter/MiniMax-M3', name: 'MiniMax M3', provider: 'tokenrouter' },
   // Tier 2 — Frontier Performers
-  { id: 'tokenrouter/anthropic/claude-sonnet-5', name: 'Claude Sonnet 5', provider: 'tokenrouter' },
-  { id: 'tokenrouter/openai/gpt-5.6-terra', name: 'GPT 5.6 Terra', provider: 'tokenrouter' },
-  { id: 'tokenrouter/qwen/qwen3.7-plus', name: 'Qwen 3.7 Plus', provider: 'tokenrouter' },
-  { id: 'tokenrouter/anthropic/claude-opus-4.8-fast', name: 'Claude Opus 4.8 Fast', provider: 'tokenrouter' },
-  { id: 'tokenrouter/google/gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro', provider: 'tokenrouter' },
-  { id: 'tokenrouter/anthropic/claude-opus-4.7', name: 'Claude Opus 4.7', provider: 'tokenrouter' },
-  { id: 'tokenrouter/anthropic/claude-opus-4.7-fast', name: 'Claude Opus 4.7 Fast', provider: 'tokenrouter' },
-  { id: 'tokenrouter/openai/gpt-5.5', name: 'GPT 5.5', provider: 'tokenrouter' },
-  { id: 'tokenrouter/z-ai/glm-5.2-free', name: 'GLM 5.2 Free', provider: 'tokenrouter' },
-  { id: 'tokenrouter/deepseek/deepseek-v3.2', name: 'DeepSeek V3.2', provider: 'tokenrouter' },
-  { id: 'tokenrouter/qwen/qwen3.6-plus', name: 'Qwen 3.6 Plus', provider: 'tokenrouter' },
-  { id: 'tokenrouter/moonshotai/kimi-k2.7-code', name: 'Kimi K2.7 Code', provider: 'tokenrouter' },
-  { id: 'tokenrouter/xiaomi/mimo-v2.5-pro', name: 'MiMo V2.5 Pro', provider: 'tokenrouter' },
+  {
+    id: 'tokenrouter/anthropic/claude-sonnet-5',
+    name: 'Claude Sonnet 5',
+    provider: 'tokenrouter',
+  },
+  {
+    id: 'tokenrouter/openai/gpt-5.6-terra',
+    name: 'GPT 5.6 Terra',
+    provider: 'tokenrouter',
+  },
+  {
+    id: 'tokenrouter/qwen/qwen3.7-plus',
+    name: 'Qwen 3.7 Plus',
+    provider: 'tokenrouter',
+  },
+  {
+    id: 'tokenrouter/anthropic/claude-opus-4.8-fast',
+    name: 'Claude Opus 4.8 Fast',
+    provider: 'tokenrouter',
+  },
+  {
+    id: 'tokenrouter/google/gemini-3.1-pro-preview',
+    name: 'Gemini 3.1 Pro',
+    provider: 'tokenrouter',
+  },
+  {
+    id: 'tokenrouter/anthropic/claude-opus-4.7',
+    name: 'Claude Opus 4.7',
+    provider: 'tokenrouter',
+  },
+  {
+    id: 'tokenrouter/anthropic/claude-opus-4.7-fast',
+    name: 'Claude Opus 4.7 Fast',
+    provider: 'tokenrouter',
+  },
+  {
+    id: 'tokenrouter/openai/gpt-5.5',
+    name: 'GPT 5.5',
+    provider: 'tokenrouter',
+  },
+  {
+    id: 'tokenrouter/z-ai/glm-5.2-free',
+    name: 'GLM 5.2 Free',
+    provider: 'tokenrouter',
+  },
+  {
+    id: 'tokenrouter/deepseek/deepseek-v3.2',
+    name: 'DeepSeek V3.2',
+    provider: 'tokenrouter',
+  },
+  {
+    id: 'tokenrouter/qwen/qwen3.6-plus',
+    name: 'Qwen 3.6 Plus',
+    provider: 'tokenrouter',
+  },
+  {
+    id: 'tokenrouter/moonshotai/kimi-k2.7-code',
+    name: 'Kimi K2.7 Code',
+    provider: 'tokenrouter',
+  },
+  {
+    id: 'tokenrouter/xiaomi/mimo-v2.5-pro',
+    name: 'MiMo V2.5 Pro',
+    provider: 'tokenrouter',
+  },
   { id: 'tokenrouter/z-ai/glm-5.1', name: 'GLM 5.1', provider: 'tokenrouter' },
-  { id: 'tokenrouter/openai/gpt-5.4', name: 'GPT 5.4', provider: 'tokenrouter' },
-  { id: 'tokenrouter/x-ai/grok-4.3', name: 'Grok 4.3', provider: 'tokenrouter' },
-  { id: 'tokenrouter/anthropic/claude-opus-4.6', name: 'Claude Opus 4.6', provider: 'tokenrouter' },
-  { id: 'tokenrouter/openai/gpt-5.3-codex', name: 'GPT 5.3 Codex', provider: 'tokenrouter' },
-  { id: 'tokenrouter/nvidia/nemotron-3-super-120b-a12b', name: 'Nemotron 3 Super 120B', provider: 'tokenrouter' },
-  { id: 'tokenrouter/miromind/mirothinker-1-7-deepresearch', name: 'MiroThinker 1.7 DeepResearch', provider: 'tokenrouter' },
-  { id: 'tokenrouter/qwen/qwen3.5-397b-a17b', name: 'Qwen 3.5 397B', provider: 'tokenrouter' },
-  { id: 'tokenrouter/qwen/qwen3.5-122b-a10b', name: 'Qwen 3.5 122B', provider: 'tokenrouter' },
-  { id: 'tokenrouter/openai/gpt-oss-120b', name: 'GPT-OSS 120B', provider: 'tokenrouter' },
+  {
+    id: 'tokenrouter/openai/gpt-5.4',
+    name: 'GPT 5.4',
+    provider: 'tokenrouter',
+  },
+  {
+    id: 'tokenrouter/x-ai/grok-4.3',
+    name: 'Grok 4.3',
+    provider: 'tokenrouter',
+  },
+  {
+    id: 'tokenrouter/anthropic/claude-opus-4.6',
+    name: 'Claude Opus 4.6',
+    provider: 'tokenrouter',
+  },
+  {
+    id: 'tokenrouter/openai/gpt-5.3-codex',
+    name: 'GPT 5.3 Codex',
+    provider: 'tokenrouter',
+  },
+  {
+    id: 'tokenrouter/nvidia/nemotron-3-super-120b-a12b',
+    name: 'Nemotron 3 Super 120B',
+    provider: 'tokenrouter',
+  },
+  {
+    id: 'tokenrouter/miromind/mirothinker-1-7-deepresearch',
+    name: 'MiroThinker 1.7 DeepResearch',
+    provider: 'tokenrouter',
+  },
+  {
+    id: 'tokenrouter/qwen/qwen3.5-397b-a17b',
+    name: 'Qwen 3.5 397B',
+    provider: 'tokenrouter',
+  },
+  {
+    id: 'tokenrouter/qwen/qwen3.5-122b-a10b',
+    name: 'Qwen 3.5 122B',
+    provider: 'tokenrouter',
+  },
+  {
+    id: 'tokenrouter/openai/gpt-oss-120b',
+    name: 'GPT-OSS 120B',
+    provider: 'tokenrouter',
+  },
 ]
 
 /**
@@ -577,8 +726,7 @@ const TOKENROUTER_CATALOG: OpenRouterModel[] = [
 export function fetchTokenRouterModels(): OpenRouterModel[] {
   return TOKENROUTER_CATALOG.map((m) => ({
     ...m,
-    contextLength:
-      m.contextLength ?? inferContextLength(m.name),
+    contextLength: m.contextLength ?? inferContextLength(m.name),
   }))
 }
 
@@ -592,18 +740,50 @@ const OPENCODE_GO_CATALOG: OpenRouterModel[] = [
   { id: 'opencode-go/glm-5.2', name: 'GLM 5.2', provider: 'opencode-go' },
   { id: 'opencode-go/glm-5.1', name: 'GLM 5.1', provider: 'opencode-go' },
   { id: 'opencode-go/kimi-k3', name: 'Kimi K3', provider: 'opencode-go' },
-  { id: 'opencode-go/kimi-k2.7-code', name: 'Kimi K2.7 Code', provider: 'opencode-go' },
+  {
+    id: 'opencode-go/kimi-k2.7-code',
+    name: 'Kimi K2.7 Code',
+    provider: 'opencode-go',
+  },
   { id: 'opencode-go/kimi-k2.6', name: 'Kimi K2.6', provider: 'opencode-go' },
   { id: 'opencode-go/mimo-v2.5', name: 'MiMo V2.5', provider: 'opencode-go' },
-  { id: 'opencode-go/mimo-v2.5-pro', name: 'MiMo V2.5 Pro', provider: 'opencode-go' },
-  { id: 'opencode-go/deepseek-v4-pro', name: 'DeepSeek V4 Pro', provider: 'opencode-go' },
-  { id: 'opencode-go/deepseek-v4-flash', name: 'DeepSeek V4 Flash', provider: 'opencode-go' },
+  {
+    id: 'opencode-go/mimo-v2.5-pro',
+    name: 'MiMo V2.5 Pro',
+    provider: 'opencode-go',
+  },
+  {
+    id: 'opencode-go/deepseek-v4-pro',
+    name: 'DeepSeek V4 Pro',
+    provider: 'opencode-go',
+  },
+  {
+    id: 'opencode-go/deepseek-v4-flash',
+    name: 'DeepSeek V4 Flash',
+    provider: 'opencode-go',
+  },
   // Anthropic-compatible models
   { id: 'opencode-go/minimax-m3', name: 'MiniMax M3', provider: 'opencode-go' },
-  { id: 'opencode-go/minimax-m2.7', name: 'MiniMax M2.7', provider: 'opencode-go' },
-  { id: 'opencode-go/qwen3.7-max', name: 'Qwen 3.7 Max', provider: 'opencode-go' },
-  { id: 'opencode-go/qwen3.7-plus', name: 'Qwen 3.7 Plus', provider: 'opencode-go' },
-  { id: 'opencode-go/qwen3.6-plus', name: 'Qwen 3.6 Plus', provider: 'opencode-go' },
+  {
+    id: 'opencode-go/minimax-m2.7',
+    name: 'MiniMax M2.7',
+    provider: 'opencode-go',
+  },
+  {
+    id: 'opencode-go/qwen3.7-max',
+    name: 'Qwen 3.7 Max',
+    provider: 'opencode-go',
+  },
+  {
+    id: 'opencode-go/qwen3.7-plus',
+    name: 'Qwen 3.7 Plus',
+    provider: 'opencode-go',
+  },
+  {
+    id: 'opencode-go/qwen3.6-plus',
+    name: 'Qwen 3.6 Plus',
+    provider: 'opencode-go',
+  },
 ]
 
 /**
@@ -614,13 +794,33 @@ const OPENCODE_GO_CATALOG: OpenRouterModel[] = [
 export function fetchOpenCodeGoModels(): OpenRouterModel[] {
   return OPENCODE_GO_CATALOG.map((m) => ({
     ...m,
-    contextLength:
-      m.contextLength ?? inferContextLength(m.name),
+    contextLength: m.contextLength ?? inferContextLength(m.name),
   }))
 }
 
 // ============================================================================
-// Combined gateway fetch — OpenRouter + TokenRouter + NVIDIA NIM + OpenCode Go
+// CommandCode — dual-protocol provider; use the shared model catalog
+// ============================================================================
+
+/**
+ * Return the CommandCode model catalog.
+ * The IDs are maintained in common model configuration so routing and picker
+ * entries cannot silently drift apart. Context lengths are conservative
+ * family estimates until CommandCode exposes authoritative metadata.
+ */
+export function fetchCommandCodeModels(): OpenRouterModel[] {
+  return Object.values(commandcodeModels)
+    .map((id) => ({
+      id,
+      name: id.slice('commandcode/'.length),
+      provider: 'commandcode' as const,
+      contextLength: inferContextLength(id),
+    }))
+    .sort((a, b) => a.id.localeCompare(b.id))
+}
+
+// ============================================================================
+// Combined gateway fetch — OpenRouter + TokenRouter + NVIDIA NIM + OpenCode Go + CommandCode
 // ============================================================================
 
 /**
@@ -693,8 +893,10 @@ function notifyGatewayCatalogListeners(catalog: OpenRouterModel[]): void {
  * - OpenRouter (live API, public)
  * - NVIDIA NIM (live API, public)
  * - TokenRouter (hardcoded, requires auth for API)
+ * - OpenCode Go (hardcoded, subscription-gated)
+ * - CommandCode (hardcoded, provider catalog)
  *
- * Fetches all three in parallel via Promise.allSettled(). If a source fails,
+ * Fetches live sources in parallel via Promise.allSettled(). If a source fails,
  * uses cached/empty list for that provider. Returns a combined, sorted list.
  * Caches per-process with the same TTL as OpenRouter.
  */
@@ -702,7 +904,10 @@ export async function fetchGatewayModels(
   forceRefresh = false,
 ): Promise<OpenRouterModel[]> {
   const now = Date.now()
-  const fresh = gatewayCache !== null && !forceRefresh && now - gatewayCacheAt < CATALOG_TTL_MS
+  const fresh =
+    gatewayCache !== null &&
+    !forceRefresh &&
+    now - gatewayCacheAt < CATALOG_TTL_MS
   if (fresh && gatewayCache) return gatewayCache
   if (gatewayInflight) return gatewayInflight
 
@@ -713,13 +918,22 @@ export async function fetchGatewayModels(
     ])
 
     const orModels =
-      orResult.status === 'fulfilled' ? orResult.value : cachedCatalog ?? []
+      orResult.status === 'fulfilled' ? orResult.value : (cachedCatalog ?? [])
     const nvidiaModels =
-      nvidiaResult.status === 'fulfilled' ? nvidiaResult.value : nvidiaCache ?? []
+      nvidiaResult.status === 'fulfilled'
+        ? nvidiaResult.value
+        : (nvidiaCache ?? [])
     const tokenrouterModels = fetchTokenRouterModels()
     const openCodeGoModels = fetchOpenCodeGoModels()
+    const commandCodeModels = fetchCommandCodeModels()
 
-    const combined = [...orModels, ...tokenrouterModels, ...nvidiaModels, ...openCodeGoModels]
+    const combined = [
+      ...orModels,
+      ...tokenrouterModels,
+      ...nvidiaModels,
+      ...openCodeGoModels,
+      ...commandCodeModels,
+    ]
     combined.sort((a, b) => a.id.localeCompare(b.id))
     gatewayCache = combined
     gatewayCacheAt = Date.now()

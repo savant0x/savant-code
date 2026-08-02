@@ -4,18 +4,17 @@ import {
   getCustomToolDefinition,
 } from '@savant-code/sdk'
 import * as FullSDK from '@savant-code/sdk'
-;
 
 import type {
   SavantCodeClient,
   CustomToolDefinition,
   RunState,
 } from '@savant-code/sdk'
-(async () => {
+;(async () => {
   // Test 1: Type imports work correctly
-  const testClient: SavantCodeClient = {} as any
-  const testTool: CustomToolDefinition = {} as any
-  const testState: RunState = {} as any
+  const _testClient: SavantCodeClient = {} as any
+  const _testTool: CustomToolDefinition = {} as any
+  const _testState: RunState = {} as any
 
   console.log('✅ Type imports successful')
 
@@ -37,23 +36,23 @@ import type {
   }
 
   // This should compile without errors
-  const mockClient = new ClientClass(mockOptions)
+  const _mockClient = new ClientClass(mockOptions)
 
   console.log('✅ Client instantiation types work correctly')
 
   // Test 4: Custom tool definition types (compile-time only)
   type MockTool = ReturnType<typeof getCustomToolDefinition>
-  const toolTypeTest: MockTool = {} as any
+  const _toolTypeTest: MockTool = {} as any
 
   console.log('✅ Custom tool definition types work correctly')
 
   // Test 5: Dynamic imports also work in TypeScript ESM
   const dynamicSDK = await import('@savant-code/sdk')
-  const ClientFromDynamic: typeof ClientClass = dynamicSDK.SavantCodeClient
+  const _ClientFromDynamic: typeof ClientClass = dynamicSDK.SavantCodeClient
   console.log('✅ Dynamic imports work in TypeScript ESM')
 
   // Test 6: Namespace imports work
-  const ClientFromNamespace: typeof ClientClass = FullSDK.SavantCodeClient
+  const _ClientFromNamespace: typeof ClientClass = FullSDK.SavantCodeClient
   console.log('✅ Namespace imports work correctly')
 })()
 

@@ -1,10 +1,13 @@
 # Benchmark
 
-Benchmark is SavantCode's evaluation framework for measuring AI coding agent performance through real-world git commit reconstruction tasks.
+Benchmark is SavantCode's evaluation framework for measuring AI coding agent performance through real-world git
+commit reconstruction tasks.
 
 ## Overview
 
-Benchmark evaluates coding agents by having them reconstruct actual git commits from open source repositories. The system uses AI-powered judging to assess both the quality of implementation and the agent's problem-solving process.
+Benchmark evaluates coding agents by having them reconstruct actual git commits from open source repositories. The
+system uses AI-powered judging to assess both the quality of implementation and the agent's problem-solving
+process.
 
 ### Key Features
 
@@ -104,7 +107,9 @@ sequenceDiagram
 ### Advanced Analysis
 
 #### Trace Analysis (Per-Task)
+
 After each task, the trace analyzer examines:
+
 - How agents approached the problem
 - Tool usage patterns and sequences
 - Context gathering strategies
@@ -112,7 +117,9 @@ After each task, the trace analyzer examines:
 - Relative performance comparison
 
 #### Meta-Analysis (Across All Tasks)
+
 After all tasks complete, the meta analyzer identifies:
+
 - Consistent strengths and weaknesses per agent
 - Performance trends and patterns
 - Cost vs quality trade-offs
@@ -174,7 +181,7 @@ npm install -g @openai/codex
 
 ## Directory Structure
 
-```
+```text
 evals/benchmark/
 ├── run-benchmark.ts          # Main orchestrator
 ├── main.ts                   # Example usage
@@ -251,6 +258,7 @@ bun run evals/benchmark/gen-repo-eval.ts \
 ```
 
 This will:
+
 1. Clone the repository
 2. Select high-quality commits using AI
 3. Generate evaluation tasks for each commit
@@ -369,7 +377,7 @@ bun run evals/benchmark/main-nightly.ts
 
 Benchmark creates a timestamped logs directory for each run:
 
-```
+```text
 logs/YYYY-MM-DDTHH-MM_agent1_vs_agent2/
 ├── 1-task-id-agent1-abc123.json      # Agent 1 trace for task 1
 ├── 1-task-id-agent2-abc123.json      # Agent 2 trace for task 1

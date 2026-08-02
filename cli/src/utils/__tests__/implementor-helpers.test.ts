@@ -1,4 +1,3 @@
- 
 import { describe, expect, test } from 'bun:test'
 
 import {
@@ -392,7 +391,8 @@ describe('shouldShowEditDiff', () => {
       input: {
         replacements: [{ oldString: 'const x = 1', newString: 'const x = 2' }],
       },
-      output: 'file: src/existing.ts\nmessage: String replace applied successfully.',
+      output:
+        'file: src/existing.ts\nmessage: String replace applied successfully.',
     }
 
     expect(shouldShowEditDiff(block)).toBe(true)
@@ -610,9 +610,7 @@ describe('isImplementorAgent', () => {
   })
 
   test('rejects non-implementor agents', () => {
-    expect(isImplementorAgent({ agentType: 'scout', blocks: [] })).toBe(
-      false,
-    )
+    expect(isImplementorAgent({ agentType: 'scout', blocks: [] })).toBe(false)
     expect(isImplementorAgent({ agentType: 'commander', blocks: [] })).toBe(
       false,
     )

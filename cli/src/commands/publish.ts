@@ -2,7 +2,10 @@ import { WEBSITE_URL } from '@savant-code/sdk'
 
 import { getUserCredentials } from '../utils/auth'
 import { isDirectProviderMode } from '../utils/env'
-import { loadAgentDefinitions, getLoadedAgentsData } from '../utils/local-agent-registry'
+import {
+  loadAgentDefinitions,
+  getLoadedAgentsData,
+} from '../utils/local-agent-registry'
 import { getApiClient, setApiClientAuthToken } from '../utils/savant-code-api'
 
 import type { AgentDefinition } from '@savant-code/common/templates/initial-agents-dir/types/agent-definition'
@@ -41,13 +44,15 @@ async function publishAgentTemplates(
   const apiClient = getApiClient()
 
   try {
-    const response = await apiClient.publish(data as Record<string, JSONValue>[], allLocalAgentIds)
+    const response = await apiClient.publish(
+      data as Record<string, JSONValue>[],
+      allLocalAgentIds,
+    )
 
     if (!response.ok) {
       // Try to use the full error data if available (includes details, hint, etc.)
       const errorData = response.errorData as
-        | Partial<PublishAgentsErrorResponse>
-        | undefined
+        Partial<PublishAgentsErrorResponse> | undefined
       return {
         success: false,
         error: errorData?.error ?? response.error ?? 'Unknown error',
@@ -81,7 +86,33 @@ async function publishAgentTemplates(
     }
 
     if (err instanceof Error) {
-      const body = (err as { responseBody?: { error?: string; message?: string; details?: string; hint?: string }; body?: { error?: string; message?: string; details?: string; hint?: string } }).responseBody || (err as { body?: { error?: string; message?: string; details?: string; hint?: string } }).body
+      const body =
+        (
+          err as {
+            responseBody?: {
+              error?: string
+              message?: string
+              details?: string
+              hint?: string
+            }
+            body?: {
+              error?: string
+              message?: string
+              details?: string
+              hint?: string
+            }
+          }
+        ).responseBody ||
+        (
+          err as {
+            body?: {
+              error?: string
+              message?: string
+              details?: string
+              hint?: string
+            }
+          }
+        ).body
       const error = body?.error || body?.message || 'Failed to publish'
       const details = body?.details
       const hint = body?.hint
@@ -106,11 +137,14 @@ async function publishAgentTemplates(
  * @param agentIds The ids or display names of the agents to publish
  * @returns PublishResult with success/error information
  */
-export async function handlePublish(agentIds: string[]): Promise<PublishResult> {
+export async function handlePublish(
+  agentIds: string[],
+): Promise<PublishResult> {
   if (isDirectProviderMode()) {
     return {
       success: false,
-      error: 'Publishing requires the Savant Code backend, which is not available in direct-provider mode.',
+      error:
+        'Publishing requires the Savant Code backend, which is not available in direct-provider mode.',
       hint: 'Disable DIRECT_PROVIDER to use the backend, or export agents locally.',
     }
   }
@@ -205,7 +239,9 @@ export async function handlePublish(agentIds: string[]): Promise<PublishResult> 
     let hint = result.hint
     if (result.error?.includes('Publisher field required')) {
       hint = 'Add a "publisher" field to your agent templates.'
-    } else if (result.error?.includes('Publisher not found or not accessible')) {
+    } else if (
+      result.error?.includes('Publisher not found or not accessible')
+    ) {
       hint = `Check that the publisher ID is correct and you have access to it. Visit ${WEBSITE_URL}/publishers to manage publishers.`
     }
 

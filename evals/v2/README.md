@@ -11,7 +11,7 @@ Deterministic-first, ECHO-native evaluation system for Savant-Code.
 
 ## Directory Layout
 
-```
+```text
 evals/v2/
 ├── src/
 │   ├── schema.ts      # Zod schemas for task definitions

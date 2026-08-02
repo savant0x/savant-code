@@ -2,9 +2,11 @@
 
 ## Overview
 
-Add autonomous loop capabilities to savant-code that let users set a goal and walk away. The agent iterates through the ECHO Perfection Loop until a verifiable condition is met, with circuit breakers to prevent runaway token consumption.
+Add autonomous loop capabilities to savant-code that let users set a goal and walk away. The agent iterates through the
+ECHO Perfection Loop until a verifiable condition is met, with circuit breakers to prevent runaway token consumption.
 
 Two primitives:
+
 - **`/goal`** — "keep going until this condition is true"
 - **`/loop`** — "re-run this every N minutes"
 
@@ -12,7 +14,7 @@ Two primitives:
 
 ### Interface
 
-```
+```text
 /goal "all tests pass and lint is clean"
 /goal status          # check progress
 /goal pause           # pause the loop
@@ -22,7 +24,7 @@ Two primitives:
 
 ### State Machine
 
-```
+```text
 ┌─────────┐    condition met     ┌──────────┐
 │  ACTIVE │──────────────────────>│ ACHIEVED │
 └────┬────┘                      └──────────┘
@@ -57,17 +59,20 @@ interface GoalState {
 
 ### Evaluator
 
-After each agent turn, a **separate evaluator** checks if the goal condition is met. The evaluator is a lightweight LLM call (not a full agent run) that receives:
+After each agent turn, a **separate evaluator** checks if the goal condition is met. The evaluator is a lightweight LLM
+call (not a full agent run) that receives:
 
 1. The goal condition
 2. The agent's last output (tool calls, test results, file changes)
 3. The current state of the codebase (git diff, test results)
 
 The evaluator returns:
+
 - `achieved: boolean` — is the condition met?
 - `reason: string` — why or why not
 
-**Critical**: The evaluator is a DIFFERENT model than the one doing the work. This prevents the agent from "grading its own homework."
+**Critical**: The evaluator is a DIFFERENT model than the one doing the work. This prevents the agent from "grading its
+own homework."
 
 ### Circuit Breakers
 
@@ -93,7 +98,7 @@ The /goal command wraps the existing ECHO Perfection Loop:
 
 ### Interface
 
-```
+```text
 /loop 30m               # re-run every 30 minutes
 /loop 1h "check for failing tests"
 /loop status
@@ -124,7 +129,8 @@ interface LoopState {
 
 ### Token Budget
 
-Track cumulative token usage across all turns in a goal. When the budget is hit, the goal fails gracefully with a summary of what was accomplished.
+Track cumulative token usage across all turns in a goal. When the budget is hit, the goal fails gracefully with a
+summary of what was accomplished.
 
 ```typescript
 interface TokenBudget {
@@ -153,7 +159,7 @@ If the agent's output shows no meaningful file changes for 5 consecutive turns, 
 
 ### Active Goal Display
 
-```
+```text
 ┌─ Goal: all tests pass and lint is clean ─────────────┐
 │ Turn 3/20 · 142K tokens · 2m 30s elapsed            │
 │                                                     │
@@ -167,7 +173,7 @@ If the agent's output shows no meaningful file changes for 5 consecutive turns, 
 
 ### Goal Achieved
 
-```
+```text
 ┌─ Goal Achieved ─────────────────────────────────────┐
 │ "all tests pass and lint is clean"                  │
 │ 5 turns · 89K tokens · 4m 12s                       │
@@ -180,7 +186,7 @@ If the agent's output shows no meaningful file changes for 5 consecutive turns, 
 
 ### Goal Failed (Circuit Breaker)
 
-```
+```text
 ┌─ Goal Failed: Circuit Breaker ──────────────────────┐
 │ Reason: Max turns reached (20)                       │
 │ 20 turns · 487K tokens · 18m 30s                    │
@@ -217,6 +223,7 @@ If the agent's output shows no meaningful file changes for 5 consecutive turns, 
 ### Token Economics
 
 The /goal command must be profitable on the free tier:
+
 - Circuit breaker caps total tokens at 500K per goal
 - At $0.14/M input tokens, 500K tokens = $0.07 cost
 - At $25 CPM with 12 impressions per goal, revenue = $0.30

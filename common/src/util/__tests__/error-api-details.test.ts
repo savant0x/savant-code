@@ -114,9 +114,9 @@ describe('isFetchIdleTimeoutError', () => {
   it('detects a timeout nested inside an AI SDK RetryError wrapper', () => {
     const timeoutError = new Error('The operation timed out.')
     timeoutError.name = 'TimeoutError'
-    const retryError = new Error(
-      'Failed after 3 attempts.',
-    ) as Error & { errors: unknown[] }
+    const retryError = new Error('Failed after 3 attempts.') as Error & {
+      errors: unknown[]
+    }
     retryError.errors = [timeoutError]
     expect(isFetchIdleTimeoutError(retryError)).toBe(true)
   })

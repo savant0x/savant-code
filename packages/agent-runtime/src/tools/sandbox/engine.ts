@@ -66,7 +66,10 @@ export function evaluateToolCall(params: {
   }
 
   // Shell command denylist.
-  if (toolName === 'run_terminal_command' || toolName === 'run_readonly_command') {
+  if (
+    toolName === 'run_terminal_command' ||
+    toolName === 'run_readonly_command'
+  ) {
     const command = typeof input.command === 'string' ? input.command : ''
     const pattern = findDestructivePattern(command)
     if (pattern) {
@@ -104,4 +107,3 @@ export function evaluateToolCall(params: {
 
   return { type: 'allow' }
 }
-

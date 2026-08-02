@@ -15,7 +15,9 @@ export const handleAdsEnable = (): {
   return {
     postUserMessage: (messages) => [
       ...messages,
-      getSystemMessage('Ads enabled. You will see contextual ads above the input and in the chat.'),
+      getSystemMessage(
+        'Ads enabled. You will see contextual ads above the input and in the chat.',
+      ),
     ],
   }
 }

@@ -17,7 +17,10 @@ export function buildArray<T>(...params: FalseyValueArray<T>[]): T[] {
   return collected.filter(isNotFalsey)
 }
 
-function collectValues<T>(values: FalseyValueArray<T>[], result: (T | Falsey)[]): void {
+function collectValues<T>(
+  values: FalseyValueArray<T>[],
+  result: (T | Falsey)[],
+): void {
   for (const value of values) {
     if (Array.isArray(value)) {
       collectValues(value, result)
@@ -28,10 +31,19 @@ function collectValues<T>(values: FalseyValueArray<T>[], result: (T | Falsey)[])
 }
 
 function isNotFalsey<T>(value: T | Falsey): value is T {
-  return value !== false && value !== undefined && value !== null && value !== 0 && value !== ''
+  return (
+    value !== false &&
+    value !== undefined &&
+    value !== null &&
+    value !== 0 &&
+    value !== ''
+  )
 }
 
-export function groupConsecutive<T, U>(xs: T[], key: (x: T) => U): Array<{ key: U; items: T[] }> {
+export function groupConsecutive<T, U>(
+  xs: T[],
+  key: (x: T) => U,
+): Array<{ key: U; items: T[] }> {
   if (!xs.length) {
     return []
   }

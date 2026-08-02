@@ -1,6 +1,6 @@
 {
   "name": "savant-code",
-  "version": "0.0.13",
+  "version": "0.0.15",
   "license": "Apache-2.0",
   "type": "module",
   "workspaces": [
@@ -27,6 +27,8 @@
     "build:savant-free": "bun savant-free/cli/build.ts 0.0.0-dev",
     "buffbench": "bun --cwd evals run-buffbench",
     "ci": "bun run build:sdk && bun run build:savant-free",
+    "lint:md": "markdownlint .",
+    "prepare": "git config core.hooksPath .githooks",
     "typecheck": "bun run --cwd=common typecheck && bun run --cwd=agents typecheck && bun run --cwd=sdk typecheck && bun run --cwd=cli typecheck && bun run --cwd=evals typecheck && bun run --cwd=packages/agent-runtime typecheck && bun run --cwd=packages/code-map typecheck && bun run --cwd=packages/database typecheck && bun run --cwd=packages/llm-providers typecheck"
   },
   "dependencies": {
@@ -65,6 +67,7 @@
     "eslint-plugin-import": "^2.29.1",
     "ignore": "^6.0.2",
     "lodash": "4.17.23",
+    "markdownlint-cli": "^0.49.1",
     "prettier": "^3.7.4",
     "ts-node": "^10.9.2",
     "ts-pattern": "^5.9.0",

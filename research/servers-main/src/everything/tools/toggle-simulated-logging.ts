@@ -1,9 +1,11 @@
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import {
   beginSimulatedLogging,
   stopSimulatedLogging,
 } from "../server/logging.js";
+
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+
 
 // Tool configuration
 const name = "toggle-simulated-logging";

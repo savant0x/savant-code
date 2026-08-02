@@ -101,7 +101,7 @@ export const RightSidebar = React.memo(function RightSidebar({
   // Resolve the model label based on mode.
   const displayModel = IS_SAVANT_FREE
     ? useSavantFreeModelStore.getState().selectedModel
-    : loadSavantCodeModelPreference() ?? model
+    : (loadSavantCodeModelPreference() ?? model)
 
   // Pass full FID summaries so the card can display the complete description.
   const fids = activeFids
@@ -128,16 +128,34 @@ export const RightSidebar = React.memo(function RightSidebar({
         focusable={false}
         selectable={false}
       >
-        <box flexDirection="column" alignItems="center" flexShrink={1} width="100%" selectable={false}>
+        <box
+          flexDirection="column"
+          alignItems="center"
+          flexShrink={1}
+          width="100%"
+          selectable={false}
+        >
           <Branding font="tiny" text="Savant" color="primary" />
         </box>
-        <box flexDirection="column" alignItems="center" flexShrink={1} width="100%" selectable={false}>
-          <text fg={theme.muted} selectable={false}>One Mind. A Thousand Faces.</text>
+        <box
+          flexDirection="column"
+          alignItems="center"
+          flexShrink={1}
+          width="100%"
+          selectable={false}
+        >
+          <text fg={theme.muted} selectable={false}>
+            One Mind. A Thousand Faces.
+          </text>
         </box>
       </box>
 
       {devMode && (
-        <text attributes={TextAttributes.BOLD} fg={theme.error} selectable={false}>
+        <text
+          attributes={TextAttributes.BOLD}
+          fg={theme.error}
+          selectable={false}
+        >
           [DEV MODE]
         </text>
       )}
@@ -147,11 +165,12 @@ export const RightSidebar = React.memo(function RightSidebar({
           with many spawned subagents. */}
       {(() => {
         const activeAgents = agentStack.filter((a) => a.isActive)
-        const displayAgents = activeAgents.length > 0
-          ? activeAgents
-          : isStreaming || isWaitingForResponse
-            ? [{ id: agent, isActive: true } as AgentInfo]
-            : []
+        const displayAgents =
+          activeAgents.length > 0
+            ? activeAgents
+            : isStreaming || isWaitingForResponse
+              ? [{ id: agent, isActive: true } as AgentInfo]
+              : []
         if (displayAgents.length === 0) return null
         return (
           <SidebarSection title="Active Agents" defaultExpanded>
@@ -169,7 +188,10 @@ export const RightSidebar = React.memo(function RightSidebar({
 
       {/* Session */}
       <SidebarSection title="Session" defaultExpanded>
-        <KeyValueRow label="Agent" value={agent === 'main-agent' ? 'Savant' : agent} />
+        <KeyValueRow
+          label="Agent"
+          value={agent === 'main-agent' ? 'Savant' : agent}
+        />
         <KeyValueRow label="Cost" value={formatCost(cost)} />
         <KeyValueRow label="Mode" value={mode} />
         <KeyValueRow label="Model" value={displayModel} />
@@ -192,7 +214,12 @@ export const RightSidebar = React.memo(function RightSidebar({
         {[...toolsUsed]
           .sort((a, b) => a.localeCompare(b))
           .map((tool, i) => (
-            <text key={`used-${i}`} fg={theme.foreground} wrapMode="none" selectable={false}>
+            <text
+              key={`used-${i}`}
+              fg={theme.foreground}
+              wrapMode="none"
+              selectable={false}
+            >
               {`● ${tool}`}
             </text>
           ))}
@@ -201,7 +228,12 @@ export const RightSidebar = React.memo(function RightSidebar({
           .sort((a, b) => a.localeCompare(b))
           .slice(0, Math.max(0, 5 - toolsUsed.length))
           .map((tool, i) => (
-            <text key={`avail-${i}`} fg={theme.muted} wrapMode="none" selectable={false}>
+            <text
+              key={`avail-${i}`}
+              fg={theme.muted}
+              wrapMode="none"
+              selectable={false}
+            >
               {`○ ${tool}`}
             </text>
           ))}

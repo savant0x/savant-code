@@ -5,25 +5,19 @@ import {
   DynamicAgentTemplateSchema,
 } from '../types/dynamic-agent-template'
 
-import type { AgentTemplate , StepHandler } from '../types/agent-template'
+import type { AgentTemplate, StepHandler } from '../types/agent-template'
 import type { DynamicAgentTemplate } from '../types/dynamic-agent-template'
 import type { JSONValue } from '../types/json'
 import type { Logger } from '@savant-code/common/types/contracts/logger'
 import type { z } from 'zod/v4'
 import type { JSONSchema } from 'zod/v4/core'
 
-
-
-
-
 export interface DynamicAgentValidationError {
   filePath: string
   message: string
 }
 
-function isObject<T>(
-  value: T | null | undefined,
-): value is T & object {
+function isObject<T>(value: T | null | undefined): value is T & object {
   return (
     value !== null &&
     value !== undefined &&
@@ -325,8 +319,7 @@ export function validateSingleAgent(params: {
       dynamicAgentTemplate: validatedConfig,
     }
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : String(error)
+    const errorMessage = error instanceof Error ? error.message : String(error)
 
     // Try to extract agent context for better error messages
     const context = isObject(template)

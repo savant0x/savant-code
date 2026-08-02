@@ -1,5 +1,32 @@
 # Changelog
 
+## v0.0.15 — 2026-08-02
+
+### Added
+
+- **CommandCode.ai LLM provider (FID-2026-0802-002):** Added CommandCode.ai as a first-class gateway provider alongside TokenRouter, NVIDIA NIM, OpenCode Go, and Cloudflare Workers AI. Most models use the OpenAI-compatible `/v1/chat/completions` protocol; Claude models use the Anthropic-compatible `/v1/messages` protocol.
+- Added CommandCode model-prefix, catalog, provider-domain, logo, and protocol-mapping support in `common/src/constants/model-config.ts` and `cli/src/utils/openrouter-models.ts`.
+- Added `COMMAND_CODE_API_KEY` environment loading in `sdk/src/env.ts`, CommandCode model detection and factory routing in `sdk/src/impl/model-provider.ts`, and CLI setup metadata in `cli/src/utils/provider-setup.ts`.
+- Added CommandCode catalog fetching and gateway-model integration, removed the duplicate `commandcodeGatewayModels` catalog, and added regression coverage proving every active CommandCode model has exactly one protocol mapping.
+- **First-run provider-key onboarding (FID-2026-0802-003):** Added fresh-install guidance in `cli/src/chat.tsx` and `cli/src/index.tsx`, including how to run `/provider` or `/provider opencode-go`, enter a masked key, use an environment variable, and find the persisted user-level `.savant-code/credentials.json` file.
+
+### Changed
+
+- Added provider metadata and persisted-key loading in `cli/src/utils/provider-setup.ts`; explicit environment variables retain precedence over stored credentials, and provider keys are never printed or written to chat history.
+- Added the pre-request guard in `cli/src/commands/router.ts`: ordinary prompts no longer call the SDK when the selected provider is missing its key, while slash commands, configured backend requests, and local/Ollama paths remain available. Added no-send, precedence, slash-command, backend, Ollama, and empty-prompt bypass coverage.
+- Updated the shipped npm documentation in `cli/release/README.md` and the root `README.md` with provider setup and credential-location instructions.
+- **Lint, format, and pre-push recovery (FID-2026-0802-001):** Completed the approved local recovery across the configured ESLint, Prettier, and Markdownlint policy. Repaired the live Markdownlint corpus (including MD013 line lengths and MD032 blank-line boundaries), retained the explicit Markdown policy, and documented the safe `.githooks/pre-push` boundary.
+- Added/retained `.markdownlint.json`, `.markdownlintignore`, `.prettierignore`, ESLint/protocol configuration, package lint scripts, and hook wiring; full-repository Prettier remains explicitly excluded where Markdown and Prettier policies conflict.
+- Safely classified and removed only the user-authorized empty `.commandcode/taste/taste.md` and root `nul` artifacts after byte/metadata checks; unrelated recovery files and pre-existing formatting scope were not silently deleted.
+- Synchronized the current Savant-Code release boundary to `0.0.15` across package manifests, `VERSION`, lockfile workspace records, protocol project metadata, and current release-facing documentation.
+
+### Verification
+
+- `bun run lint:md` and zero-warning ESLint pass; the pre-push gate is documented and configured without creating or rewriting commits.
+- Common model-config tests/typecheck, focused CLI provider/catalog/onboarding tests/typecheck, SDK typecheck, 415 SDK tests, and declared-file diff checks pass. Full-repository Prettier remains a documented pre-existing/deferred boundary rather than an unsupported green claim.
+- FIDs 001, 002, and 003 each completed the FreeBuff Perfection Loop with implementation, independent audit, and verification evidence. They were closed only after this changelog entry was added and are archived under `dev/fids/archive/`.
+- **Documentation and repository hygiene (FID-2026-0802-004):** Refreshed current architecture, English/Chinese README, SDK, Windows, privacy, and versioning guidance for the 0.0.15 local/BYOK release; corrected provider credential terminology; and organized 19 approved untracked recovery, scratchpad, release-draft, Nova, and research artifacts under `dev/archive/2026-08-02-repository-hygiene/` with reversible SHA-256 manifests. No files were deleted, and tracked historical records were preserved.
+
 ## v0.0.12 — 2026-08-01
 
 ### Thinker State Accumulation & Non-Null Output Rebuild (FID-2026-0801-012)

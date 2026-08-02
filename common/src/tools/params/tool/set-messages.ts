@@ -1,9 +1,6 @@
 import z from 'zod/v4'
 
-import {
-  $getNativeToolCallExampleString,
-  textToolResultSchema,
-} from '../utils'
+import { $getNativeToolCallExampleString, textToolResultSchema } from '../utils'
 
 import type { Message } from '../../../types/messages/savant-code-message'
 import type { $ToolParams } from '../../constants'

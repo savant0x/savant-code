@@ -1,4 +1,3 @@
- 
 import fs from 'fs'
 import os from 'os'
 import path from 'path'
@@ -169,9 +168,7 @@ describe('Credentials Storage Integration', () => {
 
       // Call real getConfigDir to verify it includes '-dev'
       const configDir = authModule.getConfigDir()
-      expect(configDir).toEqual(
-        path.join(os.homedir(), '.savant-code-test'),
-      )
+      expect(configDir).toEqual(path.join(os.homedir(), '.savant-code-test'))
     })
 
     test('should use savant-code-dev directory in development environment', async () => {
@@ -184,9 +181,7 @@ describe('Credentials Storage Integration', () => {
 
       // Call real getConfigDir to verify it includes '-dev'
       const configDir = authModule.getConfigDir()
-      expect(configDir).toEqual(
-        path.join(os.homedir(), '.savant-code-dev'),
-      )
+      expect(configDir).toEqual(path.join(os.homedir(), '.savant-code-dev'))
     })
 
     test('should use savant-code directory in production environment', async () => {

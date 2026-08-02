@@ -69,7 +69,8 @@ describe('inline ad layout', () => {
   test('uses the full detail row when no destination domain is available', () => {
     const layout = getInlineAdLayout(
       {
-        adText: 'A Carbon ad whose tracked destination is intentionally hidden.',
+        adText:
+          'A Carbon ad whose tracked destination is intentionally hidden.',
         title: 'Example Sponsor',
         url: '',
       },

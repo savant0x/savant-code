@@ -1,9 +1,5 @@
-
-
-
 import { useKeyboard } from '@opentui/react'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
-
 
 import { Button } from './button'
 import { useTerminalDimensions } from '../hooks/use-terminal-dimensions'
@@ -117,8 +113,7 @@ export const ModelPicker: React.FC<ModelPickerProps> = ({
     const q = query.trim().toLowerCase()
     if (!q) return models
     return models.filter(
-      (m) =>
-        m.id.toLowerCase().includes(q) || m.name.toLowerCase().includes(q),
+      (m) => m.id.toLowerCase().includes(q) || m.name.toLowerCase().includes(q),
     )
   }, [models, query])
 
@@ -136,9 +131,7 @@ export const ModelPicker: React.FC<ModelPickerProps> = ({
 
   const scrollRef = useRef<ScrollBoxRenderable | null>(null)
   const needsScroll = items.length > MAX_VISIBLE
-  const viewportHeight = needsScroll
-    ? MAX_VISIBLE
-    : Math.max(items.length, 1)
+  const viewportHeight = needsScroll ? MAX_VISIBLE : Math.max(items.length, 1)
   const start = needsScroll
     ? Math.min(
         Math.max(selectedIndex - Math.floor((MAX_VISIBLE - 1) / 2), 0),
@@ -207,11 +200,7 @@ export const ModelPicker: React.FC<ModelPickerProps> = ({
           onQueryChange(query.slice(0, -1))
           return
         }
-        if (
-          name === 'return' ||
-          name === 'enter' ||
-          name === 'space'
-        ) {
+        if (name === 'return' || name === 'enter' || name === 'space') {
           prevent()
           commit(selectedIndex)
           return
@@ -220,9 +209,7 @@ export const ModelPicker: React.FC<ModelPickerProps> = ({
         // globally; while the picker is open the text input is blurred
         // (chat.tsx sets inputFocused false), so these land here.
         const ch =
-          key.sequence ??
-          (key as typeof key & { input?: string }).input ??
-          ''
+          key.sequence ?? (key as typeof key & { input?: string }).input ?? ''
         if (
           ch &&
           ch.length === 1 &&
@@ -351,11 +338,7 @@ export const ModelPicker: React.FC<ModelPickerProps> = ({
             >
               {/* Marker + model ID */}
               <box style={{ flexDirection: 'row', flexShrink: 0, gap: 0 }}>
-                <text
-                  fg={theme.primary}
-                  wrapMode="none"
-                  selectable={false}
-                >
+                <text fg={theme.primary} wrapMode="none" selectable={false}>
                   {isSelected ? '› ' : '  '}
                 </text>
                 <text
@@ -375,11 +358,7 @@ export const ModelPicker: React.FC<ModelPickerProps> = ({
               </box>
               {/* Model name */}
               <box style={{ flexGrow: 1, minWidth: 0 }}>
-                <text
-                  fg={theme.muted}
-                  wrapMode="char"
-                  selectable={false}
-                >
+                <text fg={theme.muted} wrapMode="char" selectable={false}>
                   {model.name}
                 </text>
               </box>

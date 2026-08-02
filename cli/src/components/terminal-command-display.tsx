@@ -61,7 +61,8 @@ export const TerminalCommandDisplay = ({
       </span>
       {timeoutLabel && (
         <span fg={theme.muted} attributes={TextAttributes.DIM}>
-          {' '}({timeoutLabel})
+          {' '}
+          ({timeoutLabel})
         </span>
       )}
     </text>

@@ -20,7 +20,11 @@ function writeSkill(projectRoot: string, name: string, description: string) {
 function callSkill(name: string, fileContext: Partial<ProjectFileContext>) {
   return handleSkill({
     previousToolCallFinished: Promise.resolve(),
-    toolCall: { toolCallId: 'test-call', toolName: 'skill' as const, input: { name } },
+    toolCall: {
+      toolCallId: 'test-call',
+      toolName: 'skill' as const,
+      input: { name },
+    },
     fileContext: fileContext as ProjectFileContext,
   })
 }

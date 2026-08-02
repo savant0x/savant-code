@@ -65,7 +65,9 @@ export function isDirenvAvailable(): boolean {
 }
 
 /** @internal */
-export function getDirenvExport(envrcDir: string): Record<string, string | null> | null {
+export function getDirenvExport(
+  envrcDir: string,
+): Record<string, string | null> | null {
   try {
     const result = spawnSync('direnv', ['export', 'json'], {
       cwd: envrcDir,
@@ -76,9 +78,7 @@ export function getDirenvExport(envrcDir: string): Record<string, string | null>
 
     if (result.status !== 0) {
       if (result.stderr?.includes('is blocked')) {
-        logger.warn(
-          'direnv: .envrc is blocked. Run `direnv allow` to enable.',
-        )
+        logger.warn('direnv: .envrc is blocked. Run `direnv allow` to enable.')
       }
       return null
     }

@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-/* eslint-disable no-console -- release script: intentional console output */
 
 const { execSync } = require('child_process')
 
@@ -34,10 +33,10 @@ function checkGitHubToken() {
   if (!token) {
     error(
       'SAVANT_CODE_GITHUB_TOKEN environment variable is required but not set.\n' +
-      'Please set it with your GitHub personal access token or use the infisical setup.'
+        'Please set it with your GitHub personal access token or use the infisical setup.',
     )
   }
-  
+
   // Set GITHUB_TOKEN for compatibility with existing curl commands
   process.env.GITHUB_TOKEN = token
   return token
@@ -91,7 +90,9 @@ async function main() {
   await triggerWorkflow(versionType)
 
   log('')
-  log('Monitor progress at: https://github.com/SavantCode/savant-free-private/actions')
+  log(
+    'Monitor progress at: https://github.com/SavantCode/savant-free-private/actions',
+  )
 }
 
 main().catch((err) => {

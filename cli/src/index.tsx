@@ -1,5 +1,4 @@
 #!/usr/bin/env bun
- 
 
 // Load repo-root .env.local into process.env BEFORE any @savant-code/common import
 // triggers environment validation. Required because `bun dev` runs with `--cwd ..`,
@@ -35,10 +34,6 @@ import { handlePublish } from './commands/publish'
 import { initializeApp } from './init/init-app'
 import { runPlainLogin } from './login/plain-login'
 import { getProjectRoot, setProjectRoot } from './project-files'
-import {
-  applyPersistedProviderApiKeys,
-  configureDefaultDirectProvider,
-} from './utils/provider-setup'
 import { trackEvent } from './utils/analytics'
 import { getAuthToken, getAuthTokenDetails } from './utils/auth'
 import { trimOversizedChatLogs } from './utils/chat-history'
@@ -53,6 +48,10 @@ import {
 import { fetchGatewayModels } from './utils/openrouter-models'
 import { applyPostProcessing } from './utils/post-processing'
 import { shouldShowProjectPicker } from './utils/project-picker'
+import {
+  applyPersistedProviderApiKeys,
+  configureDefaultDirectProvider,
+} from './utils/provider-setup'
 import { saveRecentProject } from './utils/recent-projects'
 import { installProcessCleanupHandlers } from './utils/renderer-cleanup'
 import { setApiClientAuthToken } from './utils/savant-code-api'
@@ -60,7 +59,10 @@ import { resetSavantCodeClient } from './utils/savant-code-client'
 import { initializeSkillRegistry } from './utils/skill-registry'
 import { detectTerminalTheme } from './utils/terminal-color-detection'
 import { TERMINAL_RESET_SEQUENCES } from './utils/terminal-reset-sequences'
-import { startTerminalWatchdog, stopTerminalWatchdog } from './utils/terminal-watchdog'
+import {
+  startTerminalWatchdog,
+  stopTerminalWatchdog,
+} from './utils/terminal-watchdog'
 import { setOscDetectedTheme } from './utils/theme-system'
 
 import type { FileTreeNode } from '@savant-code/common/util/file'
@@ -70,7 +72,7 @@ import type { FileTreeNode } from '@savant-code/common/util/file'
 // Without this, refetchInterval won't work because TanStack Query thinks the app is "unfocused"
 focusManager.setEventListener(() => {
   // No-op: no event listeners in CLI environment (no window focus/visibility events)
-  return () => { }
+  return () => {}
 })
 focusManager.setFocused(true)
 
@@ -128,7 +130,9 @@ async function main(): Promise<void> {
     try {
       dirListing = fs.readdirSync(execDir)
     } catch (err) {
-      dirListing = [`<readdir failed: ${err instanceof Error ? err.message : err}>`]
+      dirListing = [
+        `<readdir failed: ${err instanceof Error ? err.message : err}>`,
+      ]
     }
     // eslint-disable-next-line no-console -- CLI smoke diagnostic; logger is not yet initialized
     console.error(

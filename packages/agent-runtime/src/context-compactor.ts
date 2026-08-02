@@ -19,7 +19,8 @@ import type { Logger } from '@savant-code/common/types/contracts/logger'
  */
 export interface CompactionMessage {
   role: string
-  content: string | Array<{ type: string; text?: string; [key: string]: unknown }>
+  content:
+    string | Array<{ type: string; text?: string; [key: string]: unknown }>
   tags?: string[]
   toolName?: string
   toolCallId?: string
@@ -169,7 +170,9 @@ export class ContextCompactor {
     }
 
     // Keep all non-tool messages and the N most recent tool results
-    const keepRecent = toolResultIndices.slice(-this.thresholds.microCompactMaxKeepRecent)
+    const keepRecent = toolResultIndices.slice(
+      -this.thresholds.microCompactMaxKeepRecent,
+    )
     const clearSet = new Set(
       toolResultIndices.filter((idx) => !keepRecent.includes(idx)),
     )
@@ -269,8 +272,11 @@ export class ContextCompactor {
     // Preserve messages with images (multimodal)
     const imageMessages = messages.filter((msg) => {
       if (typeof msg.content === 'string') return false
-      return Array.isArray(msg.content) && msg.content.some(
-        (part) => part.type === 'image' || part.type === 'image_url',
+      return (
+        Array.isArray(msg.content) &&
+        msg.content.some(
+          (part) => part.type === 'image' || part.type === 'image_url',
+        )
       )
     })
 

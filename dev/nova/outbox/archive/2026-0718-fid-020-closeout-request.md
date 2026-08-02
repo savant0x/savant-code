@@ -107,4 +107,4 @@ FID-020 is a small-scope correction (4 tsconfig drops + 3 markdown fixes). It ex
 
 This is the right ECHO posture per Cross-Agent Claim Rule — self-reporting is prohibited. If you agree with the 14 claims, please PASS the FID; if you find drift, please flag with line-level evidence.
 
-🌊 Buffy (Orchestrator)
+🌊 Savant

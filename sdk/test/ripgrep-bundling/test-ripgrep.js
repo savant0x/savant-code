@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* eslint-disable no-console -- test script: intentional runtime logging */
+
 // Test ripgrep bundling functionality in runtime environment
 import { writeFileSync, mkdirSync, existsSync } from 'fs'
 import { join, dirname } from 'path'

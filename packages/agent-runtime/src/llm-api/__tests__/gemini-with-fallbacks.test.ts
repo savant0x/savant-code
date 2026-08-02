@@ -120,7 +120,10 @@ describe('promptFlashWithFallbacks', () => {
 
     it('should not fall back when native AbortError is thrown', async () => {
       // Simulate native AbortError thrown by fetch/AI SDK when AbortSignal is triggered
-      const nativeAbortError = new DOMException('signal is aborted without reason', 'AbortError')
+      const nativeAbortError = new DOMException(
+        'signal is aborted without reason',
+        'AbortError',
+      )
       agentRuntimeImpl.promptAiSdk = mock(() =>
         Promise.reject(nativeAbortError),
       )
@@ -142,9 +145,7 @@ describe('promptFlashWithFallbacks', () => {
       // Some libraries throw Error with name set to AbortError
       const abortError = new Error('The operation was aborted')
       abortError.name = 'AbortError'
-      agentRuntimeImpl.promptAiSdk = mock(() =>
-        Promise.reject(abortError),
-      )
+      agentRuntimeImpl.promptAiSdk = mock(() => Promise.reject(abortError))
 
       await expect(
         promptFlashWithFallbacks({

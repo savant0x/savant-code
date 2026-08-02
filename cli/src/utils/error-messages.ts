@@ -5,8 +5,16 @@ import { sanitizeErrorMessage, getErrorStatusCode } from '@savant-code/sdk'
  *
  * The goal is to provide clear, consistent messaging across the CLI.
  */
-export function formatErrorForDisplay(error: unknown, fallbackTitle: string): string {
-  const narrowed = error instanceof Error ? error : typeof error === 'object' && error !== null ? error as { statusCode?: number; status?: number; message?: string } : null
+export function formatErrorForDisplay(
+  error: unknown,
+  fallbackTitle: string,
+): string {
+  const narrowed =
+    error instanceof Error
+      ? error
+      : typeof error === 'object' && error !== null
+        ? (error as { statusCode?: number; status?: number; message?: string })
+        : null
   const statusCode = getErrorStatusCode(narrowed)
 
   // Authentication-specific messaging based on statusCode
@@ -41,7 +49,15 @@ export function formatErrorForDisplay(error: unknown, fallbackTitle: string): st
 
   // Try sanitizeErrorMessage for other cases
   const safeMessage = sanitizeErrorMessage(
-    error instanceof Error ? error : typeof error === 'string' ? error : typeof error === 'number' ? error : typeof error === 'object' && error !== null ? error as { message?: string } : null,
+    error instanceof Error
+      ? error
+      : typeof error === 'string'
+        ? error
+        : typeof error === 'number'
+          ? error
+          : typeof error === 'object' && error !== null
+            ? (error as { message?: string })
+            : null,
   )
   return `${fallbackTitle}: ${safeMessage}`
 }
@@ -52,7 +68,10 @@ export function formatErrorForDisplay(error: unknown, fallbackTitle: string): st
  * Example output:
  *   "⚠️ Network error: Server error. Please try again later. • 3 messages will retry when connection is restored"
  */
-export function formatRetryBannerMessage(error: unknown, pendingCount: number): string {
+export function formatRetryBannerMessage(
+  error: unknown,
+  pendingCount: number,
+): string {
   const baseTitle = 'Network error'
   const formatted = formatErrorForDisplay(error, baseTitle)
 

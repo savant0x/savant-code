@@ -1,4 +1,3 @@
- 
 /**
  * Operational events that belong in Axiom but not in product analytics.
  *

@@ -65,9 +65,7 @@ let disarmFilePath: string | null = null
 export function getTerminalWatchdogDiagnostics() {
   const external = disarmFilePath !== null
   const childIsRunning = Boolean(
-    watchdog?.pid &&
-      watchdog.exitCode === null &&
-      watchdog.signalCode === null,
+    watchdog?.pid && watchdog.exitCode === null && watchdog.signalCode === null,
   )
   return {
     armed: childIsRunning || external,

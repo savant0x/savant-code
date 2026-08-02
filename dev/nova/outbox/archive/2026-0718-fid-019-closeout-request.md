@@ -85,4 +85,4 @@ FAIL = any fabricated claim or any cannot-verify result. List the discrepancy ex
 FID-019 was a small-scope fix (3 JSON fields + 4 markdown blank lines). But the FORGE caught a TS6059 regression mid-execution — AUDIT was the only reason we noticed. This FID is a real-world demonstration of ECHO Law 3 (Verify Before Proceed) paying off. If you agree with the 12 claims, please PASS the FID; if you find any drift, please flag with line-level evidence.
 
 Thank you,
-🦞 Buffy (Orchestrator)
+🦞 Savant

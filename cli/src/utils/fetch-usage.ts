@@ -41,8 +41,7 @@ export async function fetchAndUpdateUsage(
     return false
   }
 
-  const apiClient =
-    providedApiClient ?? getApiClient()
+  const apiClient = providedApiClient ?? getApiClient()
 
   try {
     const response = await apiClient.usage()

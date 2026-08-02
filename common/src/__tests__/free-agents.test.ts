@@ -37,21 +37,21 @@ describe('free mode agent model allowlist', () => {
     expect(
       getSavantFreeRootAgentIdForModel(SAVANT_FREE_DEEPSEEK_V4_FLASH_MODEL_ID),
     ).toBe('savant-free-deepseek-flash')
-    expect(getSavantFreeRootAgentIdForModel(SAVANT_FREE_MIMO_V25_PRO_MODEL_ID)).toBe(
-      'savant-free-mimo-pro',
-    )
-    expect(getSavantFreeRootAgentIdForModel(SAVANT_FREE_MIMO_V25_MODEL_ID)).toBe(
-      'savant-free-mimo',
-    )
+    expect(
+      getSavantFreeRootAgentIdForModel(SAVANT_FREE_MIMO_V25_PRO_MODEL_ID),
+    ).toBe('savant-free-mimo-pro')
+    expect(
+      getSavantFreeRootAgentIdForModel(SAVANT_FREE_MIMO_V25_MODEL_ID),
+    ).toBe('savant-free-mimo')
     expect(getSavantFreeRootAgentIdForModel(MINIMAX_M3_MODEL_ID)).toBe(
       'savant-free-minimax-m3',
     )
   })
 
   test('allows each savant-free root agent only with its configured model', () => {
-    expect(isFreeModeAllowedAgentModel('savant-free', MINIMAX_M3_MODEL_ID)).toBe(
-      true,
-    )
+    expect(
+      isFreeModeAllowedAgentModel('savant-free', MINIMAX_M3_MODEL_ID),
+    ).toBe(true)
     expect(
       isFreeModeAllowedAgentModel('savant-free', LEGACY_MINIMAX_M2_7_MODEL_ID),
     ).toBe(false)
@@ -65,7 +65,10 @@ describe('free mode agent model allowlist', () => {
       isFreeModeAllowedAgentModel('savant-free', SAVANT_FREE_KIMI_MODEL_ID),
     ).toBe(true)
     expect(
-      isFreeModeAllowedAgentModel('savant-free-kimi', SAVANT_FREE_KIMI_MODEL_ID),
+      isFreeModeAllowedAgentModel(
+        'savant-free-kimi',
+        SAVANT_FREE_KIMI_MODEL_ID,
+      ),
     ).toBe(true)
     expect(
       isFreeModeAllowedAgentModel(
@@ -104,7 +107,10 @@ describe('free mode agent model allowlist', () => {
       ),
     ).toBe(true)
     expect(
-      isFreeModeAllowedAgentModel('savant-free-minimax-m3', MINIMAX_M3_MODEL_ID),
+      isFreeModeAllowedAgentModel(
+        'savant-free-minimax-m3',
+        MINIMAX_M3_MODEL_ID,
+      ),
     ).toBe(true)
     expect(
       isFreeModeAllowedAgentModel(
@@ -132,7 +138,9 @@ describe('free mode agent model allowlist', () => {
     }
     // It's a recognized free-mode root (so its subagents pass the hierarchy gate
     // and the "You are Savant" marker gate applies to it).
-    expect(isSavantFreeRootAgent(SAVANT_FREE_DESKTOP_THREAD_AGENT_ID)).toBe(true)
+    expect(isSavantFreeRootAgent(SAVANT_FREE_DESKTOP_THREAD_AGENT_ID)).toBe(
+      true,
+    )
     // A non-free premium model (e.g. raw Claude) stays disallowed even for it.
     expect(
       isFreeModeAllowedAgentModel(
@@ -178,10 +186,7 @@ describe('free mode agent model allowlist', () => {
       }
       // Non-free models stay disallowed.
       expect(
-        isFreeModeAllowedAgentModel(
-          agentId,
-          'anthropic/claude-sonnet-4.5',
-        ),
+        isFreeModeAllowedAgentModel(agentId, 'anthropic/claude-sonnet-4.5'),
       ).toBe(false)
     }
   })
@@ -194,16 +199,16 @@ describe('free mode agent model allowlist', () => {
       ),
     ).toBe(true)
     expect(
-      isFreeModeAllowedAgentModel(
-        'other/basher@0.0.1',
-        MINIMAX_M3_MODEL_ID,
-      ),
+      isFreeModeAllowedAgentModel('other/basher@0.0.1', MINIMAX_M3_MODEL_ID),
     ).toBe(false)
   })
 
   test('allows Gemini Pro for the thinker subagent but not the savant-free root', () => {
     expect(
-      isFreeModeAllowedAgentModel('savant-free', SAVANT_FREE_GEMINI_PRO_MODEL_ID),
+      isFreeModeAllowedAgentModel(
+        'savant-free',
+        SAVANT_FREE_GEMINI_PRO_MODEL_ID,
+      ),
     ).toBe(false)
     expect(
       isFreeModeAllowedAgentModel(
@@ -214,9 +219,9 @@ describe('free mode agent model allowlist', () => {
   })
 
   test('recognizes the Gemini thinker agent in free mode', () => {
-    expect(isSavantFreeGeminiThinkerAgent(SAVANT_FREE_GEMINI_THINKER_AGENT_ID)).toBe(
-      true,
-    )
+    expect(
+      isSavantFreeGeminiThinkerAgent(SAVANT_FREE_GEMINI_THINKER_AGENT_ID),
+    ).toBe(true)
     expect(
       isSavantFreeGeminiThinkerAgent(
         `savant-code/${SAVANT_FREE_GEMINI_THINKER_AGENT_ID}@0.0.1`,

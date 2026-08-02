@@ -303,7 +303,9 @@ export async function setupTestRepo(
           `Token format: ${token.substring(0, 10)}... (length: ${token.length})`,
         )
       } else {
-        console.error('SAVANT_CODE_GITHUB_TOKEN environment variable is not set')
+        console.error(
+          'SAVANT_CODE_GITHUB_TOKEN environment variable is not set',
+        )
       }
     }
 

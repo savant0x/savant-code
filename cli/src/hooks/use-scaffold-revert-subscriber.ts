@@ -1,7 +1,6 @@
 import { safeParseJSONObject } from '@savant-code/common/util/type-narrowing'
 import { useEffect, useRef } from 'react'
 
-
 import { useChatStore } from '../state/chat-store'
 
 import type { ChatMessage, ToolContentBlock } from '../types/chat'

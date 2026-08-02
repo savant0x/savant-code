@@ -9,10 +9,7 @@
         "difficulty": "medium",
         "description": "Recover from an injected environmental fault and fix the add function in calculator.js.",
         "environment": {
-          "setup_files": [
-            "calculator.js",
-            "calculator.test.js"
-          ],
+          "setup_files": ["calculator.js", "calculator.test.js"],
           "network_disabled": true
         },
         "golden_patch": "C:\\Users\\spenc\\dev\\savant-code\\evals\\v2\\tasks\\error_recovery\\env-fault\\golden.patch",
@@ -93,10 +90,7 @@
               "retry_condition": "infra"
             }
           ],
-          "required_agents": [
-            "detective",
-            "forge"
-          ]
+          "required_agents": ["detective", "forge"]
         },
         "task_dir": "v2\\tasks\\multi_agent_orchestration\\options-contract"
       },
@@ -147,11 +141,7 @@
         "difficulty": "medium",
         "description": "Rename the greet function to welcome across multiple files and update all imports and usages.",
         "environment": {
-          "setup_files": [
-            "greet.js",
-            "app.js",
-            "app.test.js"
-          ],
+          "setup_files": ["greet.js", "app.js", "app.test.js"],
           "network_disabled": true
         },
         "golden_patch": "C:\\Users\\spenc\\dev\\savant-code\\evals\\v2\\tasks\\pure_coding\\rename-greet\\golden.patch",

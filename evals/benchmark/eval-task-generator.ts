@@ -1,7 +1,6 @@
-import type { SavantCodeClient} from '@savant-code/sdk';
-import { type AgentDefinition } from '@savant-code/sdk'
-
 import { PLACEHOLDER } from '../../agents/types/secret-agent-definition'
+
+import type { AgentDefinition, SavantCodeClient } from '@savant-code/sdk'
 
 const evalTaskGeneratorAgentDef: AgentDefinition = {
   id: 'eval-task-generator',

@@ -1,4 +1,3 @@
-
 import { publisher } from '../../constants'
 
 import type { AgentStepContext, ToolCall } from '../../types/agent-definition'
@@ -125,7 +124,10 @@ function* handleStepsMultiPrompt({
         id: letters[index],
         strategy: prompts[index] ?? 'unknown',
         content: `Error: ${(result as { errorMessage?: string })?.errorMessage ?? 'Unknown error'}`,
-        toolCalls: [] as { toolName: string; input: Record<string, JSONValue> }[],
+        toolCalls: [] as {
+          toolName: string
+          input: Record<string, JSONValue>
+        }[],
       }
     }
 
@@ -226,7 +228,9 @@ function* handleStepsMultiPrompt({
   /**
    * Extracts the array of subagent results from spawn_agents tool output.
    */
-  function extractSpawnResults<T>(results: ToolResultOutput[] | undefined): T[] {
+  function extractSpawnResults<T>(
+    results: ToolResultOutput[] | undefined,
+  ): T[] {
     if (!results || results.length === 0) return []
 
     const jsonResult = results.find(
@@ -246,9 +250,7 @@ function* handleStepsMultiPrompt({
     return spawnedResults
       .map((result) => (result as { value?: JSONValue })?.value ?? result)
       .map((result) =>
-        result &&
-        typeof result === 'object' &&
-        'value' in result
+        result && typeof result === 'object' && 'value' in result
           ? (result as { value: JSONValue }).value
           : result,
       )

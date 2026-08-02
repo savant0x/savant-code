@@ -25,7 +25,9 @@ export async function fetchSubscriptionData(
       subscription: {
         id: 'direct-provider',
         status: 'active',
-        billingPeriodEnd: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+        billingPeriodEnd: new Date(
+          Date.now() + 365 * 24 * 60 * 60 * 1000,
+        ).toISOString(),
         cancelAtPeriodEnd: false,
         canceledAt: null,
         tier: 1,
@@ -35,7 +37,9 @@ export async function fetchSubscriptionData(
         canStartNewBlock: true,
         weeklyUsed: 0,
         weeklyLimit: Number.MAX_SAFE_INTEGER,
-        weeklyResetsAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        weeklyResetsAt: new Date(
+          Date.now() + 7 * 24 * 60 * 60 * 1000,
+        ).toISOString(),
         weeklyPercentUsed: 0,
       },
       limits: {
@@ -88,7 +92,8 @@ export function useSubscriptionQuery(deps: UseSubscriptionQueryDeps = {}) {
   return useActivityQuery({
     queryKey: subscriptionQueryKeys.current(),
     queryFn: () => fetchSubscriptionData(logger),
-    enabled: enabled && !!authToken && !IS_SAVANT_FREE && !isDirectProviderMode(),
+    enabled:
+      enabled && !!authToken && !IS_SAVANT_FREE && !isDirectProviderMode(),
     staleTime: 30 * 1000,
     gcTime: 5 * 60 * 1000,
     retry: 1,

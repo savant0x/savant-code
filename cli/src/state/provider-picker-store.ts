@@ -38,7 +38,10 @@ export const useProviderPickerStore = create<ProviderPickerStore>((set) => ({
       providers,
       // Start selection on the first unconfigured provider (most likely intent),
       // or the first provider if all are configured.
-      selectedIndex: Math.max(0, providers.findIndex((p) => !p.configured)),
+      selectedIndex: Math.max(
+        0,
+        providers.findIndex((p) => !p.configured),
+      ),
     }),
   close: () => set({ isOpen: false, providers: [], selectedIndex: 0 }),
   setSelectedIndex: (index) => set({ selectedIndex: index }),

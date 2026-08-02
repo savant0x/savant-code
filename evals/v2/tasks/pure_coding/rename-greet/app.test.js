@@ -1,6 +1,7 @@
 const fs = require('fs')
-const { welcome } = require('./greet')
+
 const app = require('./app')
+const { welcome } = require('./greet')
 
 if (typeof welcome !== 'function') {
   throw new Error('greet.js should export a function named welcome')

@@ -195,7 +195,9 @@ export function formatToolOutput(output: JSONValue): string {
             typeof typedItem.value === 'object' &&
             'errorMessage' in typedItem.value
           ) {
-            return String((typedItem.value as Record<string, JSONValue>).errorMessage)
+            return String(
+              (typedItem.value as Record<string, JSONValue>).errorMessage,
+            )
           }
           return toYaml(typedItem.value ?? null)
         }

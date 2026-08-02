@@ -44,11 +44,13 @@ export const defaultDestructivePatterns: DestructivePattern[] = [
   {
     name: 'rm-root',
     pattern: /(?:^|\s|;|&&|\|\|)rm\s+(?:-[a-zA-Z]*\s+)?(?:\/\s*(?:$|\s)|\/\*)/i,
-    reason: 'Deleting the filesystem root or all files under it is destructive.',
+    reason:
+      'Deleting the filesystem root or all files under it is destructive.',
   },
   {
     name: 'rm-home',
-    pattern: /(?:^|\s|;|&&|\|\|)rm\s+(?:-[a-zA-Z]*\s+)?(?:~|\$HOME)\s*(?:$|\s|;|&&|\|\|)/i,
+    pattern:
+      /(?:^|\s|;|&&|\|\|)rm\s+(?:-[a-zA-Z]*\s+)?(?:~|\$HOME)\s*(?:$|\s|;|&&|\|\|)/i,
     reason: 'Deleting the user home directory is destructive.',
   },
   {
@@ -93,12 +95,14 @@ export const defaultDestructivePatterns: DestructivePattern[] = [
   },
   {
     name: 'chmod-system',
-    pattern: /(?:^|\s|;|&&|\|\|)chmod\s+(?:-[a-zA-Z]*\s+)?(?:-R\s+)?(?:777|755)\s*\//i,
+    pattern:
+      /(?:^|\s|;|&&|\|\|)chmod\s+(?:-[a-zA-Z]*\s+)?(?:-R\s+)?(?:777|755)\s*\//i,
     reason: 'Recursively changing permissions on system paths is destructive.',
   },
   {
     name: 'chown-system',
-    pattern: /(?:^|\s|;|&&|\|\|)chown\s+(?:-[a-zA-Z]*\s+)?(?:-R\s+)?[^\s]+\s+\//i,
+    pattern:
+      /(?:^|\s|;|&&|\|\|)chown\s+(?:-[a-zA-Z]*\s+)?(?:-R\s+)?[^\s]+\s+\//i,
     reason: 'Recursively changing ownership of system paths is destructive.',
   },
 ]

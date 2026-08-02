@@ -22,9 +22,9 @@ export const ImageBlock = memo(({ block, availableWidth }: ImageBlockProps) => {
   const { image, mediaType, filename, size, width, height } = block
 
   // Calculate display dimensions based on actual image dimensions
-  const displaySize = useMemo(() => 
-    calculateDisplaySize({ width, height, availableWidth }),
-    [width, height, availableWidth]
+  const displaySize = useMemo(
+    () => calculateDisplaySize({ width, height, availableWidth }),
+    [width, height, availableWidth],
   )
 
   // Try to render inline if supported
@@ -71,7 +71,7 @@ export const ImageBlock = memo(({ block, availableWidth }: ImageBlockProps) => {
             <span attributes={TextAttributes.DIM}> ({formattedSize})</span>
           )}
         </text>
-        
+
         {/* The actual inline image - rendered via escape sequence */}
         <text style={{ wrapMode: 'none' }}>{inlineSequence}</text>
       </box>

@@ -58,10 +58,7 @@ async function withTimeout<T>(
  * Clamps a user-supplied timeout to [1, MAX_TIMEOUT_MS].
  * Returns the default if the input is undefined.
  */
-function clampTimeout(
-  value: number | undefined,
-  defaultValue: number,
-): number {
+function clampTimeout(value: number | undefined, defaultValue: number): number {
   if (value === undefined) return defaultValue
   return Math.min(Math.max(Math.round(value), 1), MAX_TIMEOUT_MS)
 }

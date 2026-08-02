@@ -1,5 +1,5 @@
-import { McpServer, RegisteredResource } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { Resource, ResourceLink } from "@modelcontextprotocol/sdk/types.js";
+import type { McpServer, RegisteredResource } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { Resource, ResourceLink } from "@modelcontextprotocol/sdk/types.js";
 
 /**
  * Tracks registered session resources by URI to allow updating/removing on re-registration.

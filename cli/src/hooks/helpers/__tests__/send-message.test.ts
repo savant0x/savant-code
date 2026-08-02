@@ -1,4 +1,3 @@
-
 import { createPaymentRequiredError } from '@savant-code/sdk'
 import { describe, expect, test, mock, beforeEach, afterEach } from 'bun:test'
 
@@ -12,13 +11,15 @@ const ensureEnv = () => {
   process.env.NEXT_PUBLIC_CB_ENVIRONMENT =
     process.env.NEXT_PUBLIC_CB_ENVIRONMENT || 'test'
   process.env.NEXT_PUBLIC_SAVANT_CODE_APP_URL =
-    process.env.NEXT_PUBLIC_SAVANT_CODE_APP_URL || 'https://app.savant-code.test'
+    process.env.NEXT_PUBLIC_SAVANT_CODE_APP_URL ||
+    'https://app.savant-code.test'
   process.env.NEXT_PUBLIC_SUPPORT_EMAIL =
     process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'support@savant-code.test'
   process.env.NEXT_PUBLIC_POSTHOG_API_KEY =
     process.env.NEXT_PUBLIC_POSTHOG_API_KEY || 'phc_test_key'
   process.env.NEXT_PUBLIC_POSTHOG_HOST_URL =
-    process.env.NEXT_PUBLIC_POSTHOG_HOST_URL || 'https://posthog.savant-code.test'
+    process.env.NEXT_PUBLIC_POSTHOG_HOST_URL ||
+    'https://posthog.savant-code.test'
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY =
     process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || 'pk_test_123'
   process.env.NEXT_PUBLIC_STRIPE_CUSTOMER_PORTAL =
@@ -405,20 +406,21 @@ describe('handleRunCompletion', () => {
 
       const runState = {
         traceSessionId: 'trace-test',
-        sessionState: undefined,          output: {
-            type: 'lastMessage' as const,
-            value: [
-              {
-                role: 'assistant' as const,
-                content: [
-                  {
-                    type: 'text' as const,
-                    text: 'Server response that should be ignored',
-                  },
-                ],
-              },
-            ],
-          },
+        sessionState: undefined,
+        output: {
+          type: 'lastMessage' as const,
+          value: [
+            {
+              role: 'assistant' as const,
+              content: [
+                {
+                  type: 'text' as const,
+                  text: 'Server response that should be ignored',
+                },
+              ],
+            },
+          ],
+        },
       }
 
       handleRunCompletion({
@@ -1033,7 +1035,8 @@ describe('CLI-level race condition: abort run A, attempt run B before A resolves
 
     handleRunCompletion({
       runState,
-      actualCredits: undefined,        agentMode: 'EDIT',
+      actualCredits: undefined,
+      agentMode: 'EDIT',
       timerController,
       updater,
       aiMessageId: 'ai-1',
@@ -1339,7 +1342,8 @@ describe('CLI-level race condition: abort run A, attempt run B before A resolves
 
     handleRunCompletion({
       runState: runStateA,
-      actualCredits: undefined,        agentMode: 'EDIT',
+      actualCredits: undefined,
+      agentMode: 'EDIT',
       timerController: timerA,
       updater: updaterA,
       aiMessageId: 'ai-run-a',
@@ -1382,7 +1386,8 @@ describe('CLI-level race condition: abort run A, attempt run B before A resolves
 
     handleRunCompletion({
       runState: runStateB,
-      actualCredits: 5,        agentMode: 'EDIT',
+      actualCredits: 5,
+      agentMode: 'EDIT',
       timerController: timerB,
       updater: updaterB,
       aiMessageId: 'ai-run-b',

@@ -40,7 +40,7 @@ cd scripts/tmux && bun run view-session <session-name>
 
 The TUI uses a vertical layout designed for clarity:
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │ Session: my-session  120x30           5 cmds  10 captures       │  ← Header
 ├─────────────────────────────────────────────────────────────────┤
@@ -69,6 +69,7 @@ The TUI uses a vertical layout designed for clarity:
 ## Features
 
 ### For Humans (Interactive TUI)
+
 - **Capture view**: Terminal output centered with visible boundary
 - **Timeline panel**: Card-style navigation at the bottom with label and triggering command
 - **Auto-centering**: Selected timeline card stays centered in view
@@ -94,6 +95,7 @@ bun scripts/tmux/tmux-viewer/index.tsx my-session --replay
 ```
 
 **Playback controls:**
+
 - `Space` - Toggle play/pause
 - `+` or `=` - Speed up (shorter interval between captures)
 - `-` or `_` - Slow down (longer interval between captures)
@@ -102,9 +104,11 @@ bun scripts/tmux/tmux-viewer/index.tsx my-session --replay
 
 **Available speeds:** 0.5s, 1.0s, 1.5s (default), 2.0s, 3.0s, 5.0s per capture
 
-The timeline panel title shows `▶ Playing` or `⏸ Paused`, and the footer shows current position (e.g., `2/10`), playback speed (e.g., `@1.5s`), and controls.
+The timeline panel title shows `▶ Playing` or `⏸ Paused`, and the footer shows current position (e.g., `2/10`),
+playback speed (e.g., `@1.5s`), and controls.
 
 ### For AIs (JSON Output)
+
 Use the `--json` flag to get structured output:
 
 ```json
@@ -145,6 +149,7 @@ The viewer reads YAML-formatted session data from `debug/tmux-sessions/{session}
 - `capture-*.txt` - Capture files with YAML front-matter
 
 ### Session Info (session-info.yaml)
+
 ```yaml
 session: cli-test-1234567890
 started: 2025-01-01T12:00:00Z
@@ -156,6 +161,7 @@ status: active
 ```
 
 ### Commands (commands.yaml)
+
 ```yaml
 - timestamp: 2025-01-01T12:00:05Z
   type: text
@@ -164,6 +170,7 @@ status: active
 ```
 
 ### Capture Files (capture-001-label.txt)
+
 ```yaml
 ---
 sequence: 1
@@ -196,6 +203,7 @@ The `@cli-tester` agent can use this viewer to inspect session data:
 ## GIF Export
 
 The `--export-gif` flag renders the session replay as an animated GIF, perfect for:
+
 - Sharing CLI demonstrations
 - Embedding in documentation
 - Bug reports and issue tracking
@@ -228,6 +236,7 @@ bun scripts/tmux/tmux-viewer/index.tsx my-session --export-gif large.gif --font-
 ### GIF Output
 
 The exported GIF includes:
+
 - Terminal content rendered as monospace text
 - Frame labels showing capture sequence number and label
 - Timestamps for each frame

@@ -53,8 +53,7 @@ export function getSavantFreeRetentionMilestonesToFire(params: {
 
   return SAVANT_FREE_REDDIT_RETENTION_MILESTONE_DAYS.filter(
     (milestone) =>
-      daysSinceFirstToday >= milestone &&
-      maxPreviousDaysSinceFirst < milestone,
+      daysSinceFirstToday >= milestone && maxPreviousDaysSinceFirst < milestone,
   )
 }
 

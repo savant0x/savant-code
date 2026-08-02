@@ -1,17 +1,18 @@
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import {
   InMemoryTaskStore,
   InMemoryTaskMessageQueue,
 } from "@modelcontextprotocol/sdk/experimental/tasks";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+
+import { stopSimulatedLogging } from "./logging.js";
+import { syncRoots } from "./roots.js";
+import { registerPrompts } from "../prompts/index.js";
+import { registerResources, readInstructions } from "../resources/index.js";
 import {
   setSubscriptionHandlers,
   stopSimulatedResourceUpdates,
 } from "../resources/subscriptions.js";
 import { registerConditionalTools, registerTools } from "../tools/index.js";
-import { registerResources, readInstructions } from "../resources/index.js";
-import { registerPrompts } from "../prompts/index.js";
-import { stopSimulatedLogging } from "./logging.js";
-import { syncRoots } from "./roots.js";
 
 // Server Factory response
 export type ServerFactoryResponse = {

@@ -1,4 +1,3 @@
- 
 import * as fs from 'fs'
 import * as os from 'os'
 import * as path from 'path'
@@ -121,10 +120,7 @@ describe('createTraceWriter', () => {
     })
 
     const systemLines = readTraceLines().filter((l) => l.type === 'system')
-    expect(systemLines.map((l) => l.system)).toEqual([
-      'be helpful',
-      'be terse',
-    ])
+    expect(systemLines.map((l) => l.system)).toEqual(['be helpful', 'be terse'])
   })
 
   test('detects history rewrites and re-dumps the new history', () => {
@@ -133,11 +129,7 @@ describe('createTraceWriter', () => {
     writer.recordStep({
       ...baseParams,
       step: 1,
-      messages: [
-        userMessage('a'),
-        assistantMessage('b'),
-        userMessage('c'),
-      ],
+      messages: [userMessage('a'), assistantMessage('b'), userMessage('c')],
     })
     // Compaction: history replaced with a shorter one
     writer.recordStep({

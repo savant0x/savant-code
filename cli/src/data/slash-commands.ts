@@ -175,18 +175,19 @@ const ALL_SLASH_COMMANDS: SlashCommand[] = [
   ...(IS_SAVANT_FREE
     ? []
     : [
-  {
-    id: 'model',
-    label: 'model',
-    description:
-      'Switch the active model (e.g. /model anthropic/claude-opus-4.6)',
-    aliases: ['switch-model'],
-  },
-  {
-    id: 'provider',
-    label: 'provider',
-    description: 'Configure a provider API key (stored locally and masked)',
-  },
+        {
+          id: 'model',
+          label: 'model',
+          description:
+            'Switch the active model (e.g. /model anthropic/claude-opus-4.6)',
+          aliases: ['switch-model'],
+        },
+        {
+          id: 'provider',
+          label: 'provider',
+          description:
+            'Configure a provider API key (stored locally and masked)',
+        },
       ]),
   {
     id: 'login',

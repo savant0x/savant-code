@@ -30,10 +30,7 @@ export interface SavantFreeRateLimit {
   recentCount: number
 }
 
-export type SavantFreeRateLimitsByModel = Record<
-  string,
-  SavantFreeRateLimit
->
+export type SavantFreeRateLimitsByModel = Record<string, SavantFreeRateLimit>
 
 /**
  * Referral status surfaced to the CLI model-selector so it can render an
@@ -115,10 +112,7 @@ export type SavantFreeIpPrivacySignal =
   | 'service'
 
 export type SavantFreeIpCheckResult =
-  | 'not_checked'
-  | 'clean'
-  | 'suspicious'
-  | 'failed'
+  'not_checked' | 'clean' | 'suspicious' | 'failed'
 
 export type SavantFreeAccessVerdict =
   | 'allowed_clean'

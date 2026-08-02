@@ -55,7 +55,7 @@ export const handleProposeStrReplace = (async (
     replacements,
     initialContentPromise: latestContentPromise,
     logger,
-  }).catch((error: unknown) => {  
+  }).catch((error: unknown) => {
     logger.error(toLogValue(error), 'Error processing propose_str_replace')
     return {
       tool: 'str_replace' as const,
@@ -91,9 +91,10 @@ export const handleProposeStrReplace = (async (
     }
   }
 
-  const message = strReplaceResult.messages.length > 0
-    ? strReplaceResult.messages.join('\n\n')
-    : 'Proposed string replacement'
+  const message =
+    strReplaceResult.messages.length > 0
+      ? strReplaceResult.messages.join('\n\n')
+      : 'Proposed string replacement'
 
   return {
     output: [

@@ -91,7 +91,9 @@ async function build() {
     plugins: [],
   })
 
-  console.log('🩹 Patching broken export aliases (Bun bundler dedup workaround)...')
+  console.log(
+    '🩹 Patching broken export aliases (Bun bundler dedup workaround)...',
+  )
   await fixBrokenExportAliases('dist/index.mjs')
   await fixBrokenExportAliases('dist/index.cjs')
 

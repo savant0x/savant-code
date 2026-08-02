@@ -31,7 +31,11 @@ export async function handleGoalCommand(
       ),
     ])
     params.saveToHistory(params.inputValue.trim())
-    params.setInputValue({ text: '', cursorPosition: 0, lastEditDueToNav: false })
+    params.setInputValue({
+      text: '',
+      cursorPosition: 0,
+      lastEditDueToNav: false,
+    })
     resetUiToIdle('slash-command')
     return
   }
@@ -52,7 +56,9 @@ export async function handleGoalCommand(
   params.setMessages((prev) => [
     ...prev,
     getUserMessage(`/goal ${condition}`),
-    getSystemMessage(`🎯 Goal set: "${condition}"\n\nThe agent will now iterate through RED → GREEN → AUDIT until this condition is satisfied. Same model evaluates the goal. Circuit breakers apply.`),
+    getSystemMessage(
+      `🎯 Goal set: "${condition}"\n\nThe agent will now iterate through RED → GREEN → AUDIT until this condition is satisfied. Same model evaluates the goal. Circuit breakers apply.`,
+    ),
   ])
 
   params.saveToHistory(`/goal ${condition}`)
@@ -65,7 +71,9 @@ export async function handleGoalCommand(
   // The runtime will parse <goal condition="..."> from the message and
   // store it in agentState.goalCondition for evaluation after each task_completed.
   params.sendMessage({
-    content: goalInstruction + '\n\nNow begin working toward this goal. Start by analyzing the current state of the codebase.',
+    content:
+      goalInstruction +
+      '\n\nNow begin working toward this goal. Start by analyzing the current state of the codebase.',
     agentMode: params.agentMode,
   })
 
@@ -77,5 +85,3 @@ export async function handleGoalCommand(
 
   return
 }
-
-

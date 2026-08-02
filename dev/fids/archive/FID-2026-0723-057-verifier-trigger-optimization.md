@@ -5,7 +5,7 @@
 **Severity:** high
 **Status:** closed
 **Created:** 2026-07-23 01:30
-**Author:** Buffy (Orchestrator)
+**Author:** Savant
 
 ---
 
@@ -141,7 +141,7 @@ Replace subjective Verifier trigger with objective criteria. Enhance Verifier pr
 
 ## Resolution
 
-- **Fixed By:** Buffy (Orchestrator)
+- **Fixed By:** Savant
 - **Fixed Date:** 2026-07-23 02:00
 - **Fix Description:** Replaced subjective Verifier trigger with objective criteria (10+ lines, 2+ files, new API, security, user request, Forge usage), enhanced Verifier prompt with 6-item ECHO Audit Checklist, documented Hybrid Mode audit requirements and Double Audit enforcement in ECHO.md
 - **Tests Added:** No (prompt-only changes)

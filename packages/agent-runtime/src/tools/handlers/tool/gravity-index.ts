@@ -145,23 +145,32 @@ export const handleGravityIndex = (async (params: {
         'Gravity Index returned error',
       )
 
-    const rawError = (() => {
-      if (typeof webApi.error === 'string') return webApi.error
-      if (webApi.error == null) return 'Invalid Gravity Index response'
-      try {
-        return JSON.stringify(webApi.error)
-      } catch {
-        return 'Gravity Index returned a non-serializable error'
-      }
-    })()
-    const lower = rawError.toLowerCase()
+      const rawError = (() => {
+        if (typeof webApi.error === 'string') return webApi.error
+        if (webApi.error == null) return 'Invalid Gravity Index response'
+        try {
+          return JSON.stringify(webApi.error)
+        } catch {
+          return 'Gravity Index returned a non-serializable error'
+        }
+      })()
+      const lower = rawError.toLowerCase()
 
       let errorMessage: string
       if (lower.includes('base url') || lower.includes('missing savantcode')) {
         errorMessage = `[CONFIG_ERROR] Gravity Index failed: ${rawError}. Verify the SavantCode app URL is configured and the SAVANT_CODE_API_KEY is set.`
-      } else if (lower.includes('api key') || lower.includes('authorization') || lower.includes('unauthorized')) {
+      } else if (
+        lower.includes('api key') ||
+        lower.includes('authorization') ||
+        lower.includes('unauthorized')
+      ) {
         errorMessage = `[CREDENTIALS_ERROR] Gravity Index failed: ${rawError}. Verify the SAVANT_CODE_API_KEY is set and valid.`
-      } else if (lower.includes('network error') || lower.includes('fetch') || lower.includes('enetunreach') || lower.includes('econnrefused')) {
+      } else if (
+        lower.includes('network error') ||
+        lower.includes('fetch') ||
+        lower.includes('enetunreach') ||
+        lower.includes('econnrefused')
+      ) {
         errorMessage = `[NETWORK_ERROR] Gravity Index failed: ${rawError}. Check that the SavantCode web API is reachable from this environment.`
       } else if (lower.includes('timeout')) {
         errorMessage = `[TIMEOUT_ERROR] Gravity Index timed out. Retry or check the SavantCode web API health.`

@@ -64,7 +64,8 @@ export async function detectOllama(
       signal: AbortSignal.timeout(3000),
     })
     if (versionResponse.ok) {
-      const versionJson = (await versionResponse.json()) as OllamaVersionResponse
+      const versionJson =
+        (await versionResponse.json()) as OllamaVersionResponse
       version = versionJson.version
     }
   } catch {

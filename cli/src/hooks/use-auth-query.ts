@@ -85,7 +85,12 @@ export async function validateApiKey({
 
     return authResult
   } catch (error) {
-    const narrowed = error instanceof Error ? error : typeof error === 'object' && error !== null ? error as { statusCode?: number; status?: number } : null
+    const narrowed =
+      error instanceof Error
+        ? error
+        : typeof error === 'object' && error !== null
+          ? (error as { statusCode?: number; status?: number })
+          : null
     const statusCode = getErrorStatusCode(narrowed)
 
     if (isAuthenticationError(narrowed)) {
@@ -137,7 +142,8 @@ export function useAuthQuery(deps: UseAuthQueryDeps = {}) {
   } = deps
 
   const userCredentials = getUserCredentials()
-  const apiKey = userCredentials?.authToken || getCiEnv().SAVANT_CODE_API_KEY || ''
+  const apiKey =
+    userCredentials?.authToken || getCiEnv().SAVANT_CODE_API_KEY || ''
 
   return useQuery({
     queryKey: authQueryKeys.validation(apiKey),

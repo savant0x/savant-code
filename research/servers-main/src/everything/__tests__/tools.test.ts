@@ -1,25 +1,27 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+
 import { registerEchoTool, EchoSchema } from '../tools/echo.js';
-import { registerGetSumTool } from '../tools/get-sum.js';
-import { registerGetEnvTool } from '../tools/get-env.js';
-import { registerGetTinyImageTool, MCP_TINY_IMAGE } from '../tools/get-tiny-image.js';
-import { registerGetStructuredContentTool } from '../tools/get-structured-content.js';
 import { registerGetAnnotatedMessageTool } from '../tools/get-annotated-message.js';
-import { registerTriggerLongRunningOperationTool } from '../tools/trigger-long-running-operation.js';
+import { registerGetEnvTool } from '../tools/get-env.js';
 import { registerGetResourceLinksTool } from '../tools/get-resource-links.js';
 import { registerGetResourceReferenceTool } from '../tools/get-resource-reference.js';
+import { registerGetRootsListTool } from '../tools/get-roots-list.js';
+import { registerGetStructuredContentTool } from '../tools/get-structured-content.js';
+import { registerGetSumTool } from '../tools/get-sum.js';
+import { registerGetTinyImageTool, MCP_TINY_IMAGE } from '../tools/get-tiny-image.js';
+import { registerGZipFileAsResourceTool } from '../tools/gzip-file-as-resource.js';
+import { registerSimulateResearchQueryTool } from '../tools/simulate-research-query.js';
 import { registerToggleSimulatedLoggingTool } from '../tools/toggle-simulated-logging.js';
 import { registerToggleSubscriberUpdatesTool } from '../tools/toggle-subscriber-updates.js';
-import { registerTriggerSamplingRequestTool } from '../tools/trigger-sampling-request.js';
 import { registerTriggerElicitationRequestTool } from '../tools/trigger-elicitation-request.js';
+import { registerTriggerLongRunningOperationTool } from '../tools/trigger-long-running-operation.js';
+import { registerTriggerSamplingRequestTool } from '../tools/trigger-sampling-request.js';
 import {
   registerTriggerUrlElicitationTool,
   __resetIssuedErrorPathElicitations,
 } from '../tools/trigger-url-elicitation.js';
-import { registerGetRootsListTool } from '../tools/get-roots-list.js';
-import { registerGZipFileAsResourceTool } from '../tools/gzip-file-as-resource.js';
-import { registerSimulateResearchQueryTool } from '../tools/simulate-research-query.js';
+
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
 // Helper to capture registered tool handlers
 function createMockServer() {

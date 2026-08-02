@@ -1,5 +1,7 @@
-import { describe, it, expect, beforeEach, afterEach } from 'bun:test'
 import { existsSync } from 'node:fs'
+
+import { describe, it, expect, beforeEach, afterEach } from 'bun:test'
+
 import { TempDirSandbox } from '../src/sandboxes/tempdir'
 
 describe('TempDirSandbox', () => {
@@ -22,9 +24,12 @@ describe('TempDirSandbox', () => {
 
   it('runs a simple command and captures stdout', async () => {
     const isWindows = process.platform === 'win32'
-    const result = await sandbox.runCommand(isWindows ? 'echo hello' : 'printf hello', {
-      shell: true,
-    })
+    const result = await sandbox.runCommand(
+      isWindows ? 'echo hello' : 'printf hello',
+      {
+        shell: true,
+      },
+    )
     expect(result.exitCode).toBe(0)
     expect(result.stdout).toContain('hello')
   })

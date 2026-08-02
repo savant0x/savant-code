@@ -1,7 +1,8 @@
 import { readdir, readFile } from 'node:fs/promises'
 import path from 'node:path'
-import { z } from 'zod'
+
 import { parse as parseYaml } from 'yaml'
+
 import {
   taskDefinitionSchema,
   taskRegistrySchema,
@@ -51,7 +52,10 @@ function parseTaskFile(content: string, filePath: string): unknown {
   throw new TaskRegistryError(`Unsupported task file extension: ${filePath}`)
 }
 
-function validateTaskDefinition(data: unknown, filePath: string): TaskDefinition {
+function validateTaskDefinition(
+  data: unknown,
+  filePath: string,
+): TaskDefinition {
   const result = taskDefinitionSchema.safeParse(data)
   if (!result.success) {
     const issues = result.error.issues
@@ -65,7 +69,9 @@ function validateTaskDefinition(data: unknown, filePath: string): TaskDefinition
   return result.data
 }
 
-export async function loadTaskFromFile(filePath: string): Promise<TaskDefinition> {
+export async function loadTaskFromFile(
+  filePath: string,
+): Promise<TaskDefinition> {
   const content = await readFile(filePath, 'utf-8')
   const data = parseTaskFile(content, filePath)
   const task = validateTaskDefinition(data, filePath)
@@ -132,7 +138,9 @@ export async function loadTaskRegistry(
   // leaderboard generation) always see tasks in a deterministic order rather
   // than filesystem order.
   const sortedRegistry: TaskRegistry = {}
-  const sortedKeys = Object.keys(registry).sort((a, b) => a.localeCompare(b, 'en'));
+  const sortedKeys = Object.keys(registry).sort((a, b) =>
+    a.localeCompare(b, 'en'),
+  )
   for (const key of sortedKeys) {
     sortedRegistry[key] = registry[key]
   }
@@ -146,7 +154,10 @@ export function loadTaskRegistryFromObject(data: unknown): TaskRegistry {
     const issues = result.error.issues
       .map((issue) => `${issue.path.join('.')}: ${issue.message}`)
       .join('; ')
-    throw new TaskRegistryError(`Task registry validation failed: ${issues}`, result.error)
+    throw new TaskRegistryError(
+      `Task registry validation failed: ${issues}`,
+      result.error,
+    )
   }
   return result.data
 }
@@ -162,5 +173,7 @@ export function filterTasksByDifficulty(
   registry: TaskRegistry,
   difficulty: TaskDefinition['difficulty'],
 ): TaskDefinition[] {
-  return Object.values(registry).filter((task) => task.difficulty === difficulty)
+  return Object.values(registry).filter(
+    (task) => task.difficulty === difficulty,
+  )
 }

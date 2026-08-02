@@ -6,7 +6,9 @@ import { findCommand } from '../command-registry'
 import type { RouterParams } from '../command-registry'
 
 describe('/dev command', () => {
-  const createMockParams = (overrides: Partial<RouterParams> = {}): RouterParams =>
+  const createMockParams = (
+    overrides: Partial<RouterParams> = {},
+  ): RouterParams =>
     ({
       abortControllerRef: { current: null },
       agentMode: 'EDIT',
@@ -80,7 +82,8 @@ describe('/dev command', () => {
     dev!.handler(params, 'on')
 
     expect(useChatStore.getState().devMode).toBe(true)
-    const setMessagesCall = (params.setMessages as ReturnType<typeof mock>).mock.calls[0][0]
+    const setMessagesCall = (params.setMessages as ReturnType<typeof mock>).mock
+      .calls[0][0]
     const newMessages = setMessagesCall([])
     const messageText = JSON.stringify(newMessages)
     expect(messageText).toContain('already active')
@@ -94,7 +97,8 @@ describe('/dev command', () => {
     dev!.handler(params, 'off')
 
     expect(useChatStore.getState().devMode).toBe(false)
-    const setMessagesCall = (params.setMessages as ReturnType<typeof mock>).mock.calls[0][0]
+    const setMessagesCall = (params.setMessages as ReturnType<typeof mock>).mock
+      .calls[0][0]
     const newMessages = setMessagesCall([])
     const messageText = JSON.stringify(newMessages)
     expect(messageText).toContain('already off')
@@ -107,7 +111,8 @@ describe('/dev command', () => {
     dev!.handler(params, 'password')
 
     expect(useChatStore.getState().devMode).toBe(false)
-    const setMessagesCall = (params.setMessages as ReturnType<typeof mock>).mock.calls[0][0]
+    const setMessagesCall = (params.setMessages as ReturnType<typeof mock>).mock
+      .calls[0][0]
     const newMessages = setMessagesCall([])
     const messageText = JSON.stringify(newMessages)
     expect(messageText).toContain('Unknown /dev subcommand')

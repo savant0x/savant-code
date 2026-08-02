@@ -73,7 +73,9 @@ describe.skipIf(!tmuxAvailable || !sdkBuilt)(
         // build or `bun run dev:savant-free` invocation in the same tmux server
         // can leave it set globally, which would make this test see the
         // savant-free CLI variant (which has no `--agent` flag).
-        await tmux(['set-environment', '-gu', 'SAVANT_FREE_MODE']).catch(() => {})
+        await tmux(['set-environment', '-gu', 'SAVANT_FREE_MODE']).catch(
+          () => {},
+        )
       }
     })
 

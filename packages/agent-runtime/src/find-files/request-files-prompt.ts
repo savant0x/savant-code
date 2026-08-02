@@ -6,7 +6,10 @@ import {
   type FinetunedVertexModel,
 } from '@savant-code/common/old-constants'
 import { getAllFilePaths } from '@savant-code/common/project-file-tree'
-import { isAbortError, unwrapPromptResult } from '@savant-code/common/util/error'
+import {
+  isAbortError,
+  unwrapPromptResult,
+} from '@savant-code/common/util/error'
 import { systemMessage, userMessage } from '@savant-code/common/util/messages'
 import { range, shuffle, uniq } from 'lodash'
 

@@ -15,6 +15,7 @@ Scanned 116 repositories spanning TypeScript, Python, Rust, Go, Swift, and Zig. 
 **The single highest-leverage adoption is the Audit + Isolation Triad: tamper-evident ledger + git worktree-per-FID + git-ref checkpoints.** Savant-Code's FID lifecycle is documented in trivially-editable markdown with no integrity guarantee, Forge writes directly to the workspace with no isolation, and the Perfection Loop's SELF-CORRECT has no per-run checkpoint to roll back to. These three capabilities compose: every FID transition gets hash-chained, every Forge run happens in an isolated worktree, and every Perfection Loop iteration gets a git-ref checkpoint the Verifier can roll back to on test failure. Together they transform the FID lifecycle from a document-based gentlemen's agreement into a tamper-evident, crash-safe, rollback-capable system.
 
 **Spot-verification performed by the Orchestrator (not sub-agent-reported):**
+
 - `os-moda/crates/agentd/src/ledger.rs:1-50` — `Event` struct, `GENESIS_PREV_HASH`, WAL pragma confirmed
 - `goose/crates/goose/src/context_mgmt/mod.rs:227-256` — `filter_tool_responses`, middle-out removal confirmed
 - `cline/sdk/packages/core/src/hooks/checkpoint-hooks.ts:1-20` — `CheckpointEntry`/`CheckpointMetadata` confirmed
@@ -515,28 +516,33 @@ During adoption work, these unique strengths must be preserved:
 ## Prioritized Adoption Roadmap
 
 ### Phase 0 — FID Integrity Foundation (unblocks safe autonomous operation)
+
 1. **Tamper-evident audit ledger** (item 1) — hash-chained SQLite ledger for every FID transition + tool call; `savant verify-ledger` CLI
 2. **Git worktree-per-FID with rollback** (item 2) — each FID runs in isolated worktree; kagan's `Bun.hash` stable paths
 3. **Git-ref checkpoints per Perfection Loop iteration** (item 3) — `refs/savant/checkpoints/{fidId}/{iteration}/`; AUDIT can `git reset` on test failure
 4. **SpendMeter per-agent daily kill-switch** (item 4) — `state/spend.json`; refuse to invoke model if over cap; alerts at 80%/100%
 
 ### Phase 1 — Context & Memory
+
 5. **Context compaction pipeline** (item 5) — goose's progressive compaction + SWE-agent's pluggable HistoryProcessor pipeline + entroly's Cache Aligner + hermes-agent's sacred-invariant rule
 6. **Background memory pipeline** (item 6) — codex's 2-phase extraction → consolidation; agno's typed stores; spartan-ai-toolkit's 3-layer structure; os-moda's SKILLGEN loop
 
 ### Phase 2 — Safety & Intelligence
+
 7. **Deterministic tool-call guardrails** (item 7) — zed's hardcoded floor + pi-steering-hooks' regex rules + codex's execpolicy + goose's adversary inspector
 8. **Risk-tiered change classifier** (item 8) — great_cto's T0/T1/T2 auto-routing Hybrid vs FID-Bound; spec-critic; Explore-First; blueprint Q&A
 9. **Code intelligence beyond tree-sitter** (item 9) — aider's PageRank + refact's LMDB back-links + refact's VecDB + reflex's trigram index + codesight's blast-radius + sourcebook's co-change
 10. **Per-FID file scope enforcement** (item 13) — bernstein's owned_files allowlist + spartan-ai-toolkit's freeze mode + kagan's push protection
 
 ### Phase 3 — Orchestration & Autonomy
+
 11. **Parallel execution & best-of-N** (item 10) — kimi-code's tool-call scheduler + bernstein's tournament runs + SWE-agent's AskColleagues + LoopTroop's LLM Council
 12. **Goal/budget-bound Perfection Loop** (item 11) — kimi-code's Goal state machine + openclaude's Goal evaluator + pi-ralph's max_activations
 13. **Hookable lifecycle events** (item 12) — codex's JSON Schema hooks + openase's failure policies + octomind's TOML guardrails
 14. **Autonomous/scheduled execution** (item 17) — cline's cron scheduler + os-moda's autonomous loop engine + golembot's proactive coordinator
 
 ### Phase 4 — Quality & Review
+
 15. **Code review format / PR packing** (item 14) — prpack's diff+full-file+adjacent-tests + four review-angle prompts + sourcebook's two-layer gate
 16. **AGENTS.md linting & auto-generation** (item 15) — cc-audit's 12-rule linter + caliber's scoring + faf-cli's managed-block authoring
 17. **LSP integration** (item 16) — kilocode's LSP client with `lsp.updated` events
@@ -544,6 +550,7 @@ During adoption work, these unique strengths must be preserved:
 19. **Output filtering** (item 19) — forge's per-class Bash output filter + test-output filter + auto-backprop
 
 ### Phase 5 — Provider & UX Polish
+
 20. **Provider status & quota management** (item 21) — models' status registry + onwatch's auto quota-starter + OAuth token rotation
 21. **Portable config & overlay** (item 22) — claude-snapshot + claude-overlay + `env:` prefix
 22. **Session fork/rewind/side-conversation** (item 23) — zero's `/btw` + `/rewind` + pi-ralph's steering queue

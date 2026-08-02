@@ -10,7 +10,10 @@ export interface Column {
   width?: number
 }
 
-export interface GridProps extends Omit<BoxProps, 'children' | 'columns' | 'data'> {
+export interface GridProps extends Omit<
+  BoxProps,
+  'children' | 'columns' | 'data'
+> {
   columns: Column[]
   data: Record<string, React.ReactNode>[]
   striped?: boolean

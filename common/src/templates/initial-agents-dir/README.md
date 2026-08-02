@@ -1,6 +1,7 @@
 # Custom Agents
 
-Create specialized agent workflows that coordinate multiple AI agents to tackle complex engineering tasks. Instead of a single agent trying to handle everything, you can orchestrate teams of focused specialists that work together.
+Create specialized agent workflows that coordinate multiple AI agents to tackle complex engineering tasks. Instead of a
+single agent trying to handle everything, you can orchestrate teams of focused specialists that work together.
 
 ## Getting Started
 
@@ -16,9 +17,12 @@ Create specialized agent workflows that coordinate multiple AI agents to tackle 
 
 # What is SavantCode?
 
-SavantCode is an **open-source AI coding assistant** that edits your codebase through natural language instructions. Instead of using one model for everything, it coordinates specialized agents that work together to understand your project and make precise changes.
+SavantCode is an **open-source AI coding assistant** that edits your codebase through natural language instructions.
+Instead of using one model for everything, it coordinates specialized agents that work together to understand your
+project and make precise changes.
 
-SavantCode beats Claude Code at 61% vs 53% on [our evals](https://github.com/savant0x/savant-code/tree/main/evals) across 175+ coding tasks over multiple open-source repos that simulate real-world tasks.
+SavantCode beats Claude Code at 61% vs 53% on [our evals](https://github.com/savant0x/savant-code/tree/main/evals)
+across 175+ coding tasks over multiple open-source repos that simulate real-world tasks.
 
 ## How SavantCode Works
 
@@ -29,21 +33,29 @@ When you ask SavantCode to "add authentication to my API," it might invoke:
 3. An **Editor Agent** to make precise edits
 4. A **Reviewer Agent** to validate changes
 
-This multi-agent approach gives you better context understanding, more accurate edits, and fewer errors compared to single-model tools.
+This multi-agent approach gives you better context understanding, more accurate edits, and fewer errors compared to
+single-model tools.
 
 ## Context Window Management
 
 ### Why Agent Workflows?
 
-Modern software projects are complex ecosystems with thousands of files, multiple frameworks, intricate dependencies, and domain-specific requirements. A single AI agent trying to understand and modify such systems faces fundamental limitations—not just in knowledge, but in the sheer volume of information it can process at once.
+Modern software projects are complex ecosystems with thousands of files, multiple frameworks, intricate dependencies,
+and domain-specific requirements. A single AI agent trying to understand and modify such systems faces fundamental
+limitations—not just in knowledge, but in the sheer volume of information it can process at once.
 
 ### The Solution: Focused Context Windows
 
-Agent workflows elegantly solve this by breaking large tasks into focused sub-problems. When working with large codebases (100k+ lines), each specialist agent receives only the narrow context it needs—a security agent sees only auth code, not UI components—keeping the context for each agent manageable while ensuring comprehensive coverage.
+Agent workflows elegantly solve this by breaking large tasks into focused sub-problems. When working with large
+codebases (100k+ lines), each specialist agent receives only the narrow context it needs—a security agent sees only auth
+code, not UI components—keeping the context for each agent manageable while ensuring comprehensive coverage.
 
 ### Why Not Just Mimic Human Roles?
 
-This is about efficient AI context management, not recreating a human department. Simply creating a "frontend-developer" agent misses the point. AI agents don't have human constraints like context-switching or meetings. Their power comes from hyper-specialization, allowing them to process a narrow domain more deeply than a human could, then coordinating seamlessly with other specialists.
+This is about efficient AI context management, not recreating a human department. Simply creating a "frontend-developer"
+agent misses the point. AI agents don't have human constraints like context-switching or meetings. Their power comes
+from hyper-specialization, allowing them to process a narrow domain more deeply than a human could, then coordinating
+seamlessly with other specialists.
 
 ## Agent workflows in action
 
@@ -70,7 +82,8 @@ export default {
 }
 ```
 
-This agent systematically analyzes changes, reads relevant files for context, then creates commits with clear, meaningful messages that explain the "why" behind changes.
+This agent systematically analyzes changes, reads relevant files for context, then creates commits with clear,
+meaningful messages that explain the "why" behind changes.
 
 # Agent Development Guide
 
@@ -175,7 +188,9 @@ Choose models based on your agent's needs:
 - **`openai/gpt-5.2`**: Best at complex reasoning and planning
 - **`google/gemini-3.1-flash-lite`**: Fast and cost-effective for simple or medium-complexity tasks
 
-**Any model on OpenRouter**: Unlike Claude Code which locks you into Anthropic's models, SavantCode supports any model available on [OpenRouter](https://openrouter.ai/models) - from Claude and GPT to specialized models like Qwen, DeepSeek, and others. Switch models for different tasks or use the latest releases without waiting for platform updates.
+**Any model on OpenRouter**: Unlike Claude Code which locks you into Anthropic's models, SavantCode supports any model
+available on [OpenRouter](https://openrouter.ai/models) - from Claude and GPT to specialized models like Qwen, DeepSeek,
+and others. Switch models for different tasks or use the latest releases without waiting for platform updates.
 
 See [OpenRouter](https://openrouter.ai/models) for all available models and pricing.
 
@@ -198,7 +213,8 @@ async *handleSteps() {
 }
 ```
 
-**Reuse any published agent**: Compose existing [published agents](https://www.savant-code.com/store) to get a leg up. SavantCode agents are the new MCP!
+**Reuse any published agent**: Compose existing [published agents](https://www.savant-code.com/store) to get a leg up.
+SavantCode agents are the new MCP!
 
 ## Best Practices
 
@@ -277,9 +293,13 @@ async *handleSteps() {
 
 ## Why Choose SavantCode for Custom Agents
 
-**Deep customizability**: Create sophisticated agent workflows with TypeScript generators that mix AI generation with programmatic control. Define custom agents that spawn subagents, implement conditional logic, and orchestrate complex multi-step processes that adapt to your specific use cases.
+**Deep customizability**: Create sophisticated agent workflows with TypeScript generators that mix AI generation with
+programmatic control. Define custom agents that spawn subagents, implement conditional logic, and orchestrate complex
+multi-step processes that adapt to your specific use cases.
 
-**Fully customizable SDK**: Build SavantCode's capabilities directly into your applications with a complete TypeScript SDK. Create custom tools, integrate with your CI/CD pipeline, build AI-powered development environments, or embed intelligent coding assistance into your products.
+**Fully customizable SDK**: Build SavantCode's capabilities directly into your applications with a complete TypeScript
+SDK. Create custom tools, integrate with your CI/CD pipeline, build AI-powered development environments, or embed
+intelligent coding assistance into your products.
 
 Learn more about the SDK [here](https://www.npmjs.com/package/@savant-code/sdk).
 

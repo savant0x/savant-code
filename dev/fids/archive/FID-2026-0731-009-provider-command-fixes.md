@@ -6,7 +6,7 @@
 **Status:** closed
 **Created:** 2026-07-31 14:00
 **Updated:** 2026-07-31 17:00
-**Author:** Buffy (Orchestrator)
+**Author:** Savant
 
 ---
 
@@ -116,7 +116,7 @@ Follow the existing `/model` picker pattern (Zustand store + React overlay compo
 
 ## Resolution
 
-- **Fixed By:** Buffy (Orchestrator)
+- **Fixed By:** Savant
 - **Fixed Date:** 2026-07-31 17:00
 - **Fix Description:** (1) /provider with no args now opens a dropdown picker with arrow key navigation and ✓/✗ status badges. (2) Masked input cursor uses theme.muted instead of theme.info, fixing the unreadable cyan block.
 - **Tests Added:** No — existing tests cover the behavior.

@@ -137,7 +137,10 @@ export async function detectOllamaAndConfigureDirectProvider(
     return
   }
 
-  logger.debug({}, 'Detecting local Ollama instance for frictionless onboarding')
+  logger.debug(
+    {},
+    'Detecting local Ollama instance for frictionless onboarding',
+  )
 
   const ollama = await detect()
 

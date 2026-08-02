@@ -1,5 +1,3 @@
-
-
 import { describe, it, expect, mock } from 'bun:test'
 
 import {
@@ -12,9 +10,6 @@ import {
   type LanguageConfig,
   type RuntimeLanguageLoader,
 } from '../src/languages'
-
-
-
 
 describe('languages module', () => {
   describe('languageTable', () => {

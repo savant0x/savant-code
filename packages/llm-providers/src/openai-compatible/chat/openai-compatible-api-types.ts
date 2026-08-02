@@ -26,8 +26,7 @@ export interface OpenAICompatibleUserMessage extends JsonRecord<OpenAICompatible
 }
 
 export type OpenAICompatibleContentPart =
-  | OpenAICompatibleContentPartText
-  | OpenAICompatibleContentPartImage
+  OpenAICompatibleContentPartText | OpenAICompatibleContentPartImage
 
 export interface OpenAICompatibleContentPartImage extends JsonRecord {
   type: 'image_url'

@@ -28,7 +28,14 @@ interface ButtonProps {
  * - Use {@link Clickable} when you need direct control over mouse events but still want
  *   non-selectable text for an interactive region.
  */
-export const Button = memo(function Button({ onClick, onMouseOver, onMouseOut, style, children, ...rest }: ButtonProps) {
+export const Button = memo(function Button({
+  onClick,
+  onMouseOver,
+  onMouseOut,
+  style,
+  children,
+  ...rest
+}: ButtonProps) {
   const processedChildren = makeTextUnselectable(children)
 
   // Track whether mouse down occurred on this element to implement proper click detection

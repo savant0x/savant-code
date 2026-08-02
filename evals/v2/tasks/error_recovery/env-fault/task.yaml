@@ -1,20 +1,20 @@
-schema_version: "2.0"
-task_id: "savant-v2-error-recovery-001"
-category: "error_recovery"
-difficulty: "medium"
-description: "Recover from an injected environmental fault and fix the add function in calculator.js."
+schema_version: '2.0'
+task_id: 'savant-v2-error-recovery-001'
+category: 'error_recovery'
+difficulty: 'medium'
+description: 'Recover from an injected environmental fault and fix the add function in calculator.js.'
 environment:
   setup_files:
-    - "calculator.js"
-    - "calculator.test.js"
+    - 'calculator.js'
+    - 'calculator.test.js'
   network_disabled: true
-golden_patch: "golden.patch"
+golden_patch: 'golden.patch'
 inputs:
-  prompt: "calculator.js has an injected environmental fault that throws on load and a bug in the add function. Remove the fault and fix add so the tests pass."
+  prompt: 'calculator.js has an injected environmental fault that throws on load and a bug in the add function. Remove the fault and fix add so the tests pass.'
 validation:
   timeout_seconds: 60
   deterministic_checks:
-    - command: "bun calculator.test.js"
+    - command: 'bun calculator.test.js'
       expected_exit_code: 0
       retry_count: 0
-      retry_condition: "infra"
+      retry_condition: 'infra'

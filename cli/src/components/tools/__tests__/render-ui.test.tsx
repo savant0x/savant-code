@@ -335,7 +335,18 @@ describe('RenderUIComponent', () => {
     })
 
     test('renders a badge with all severity variants', () => {
-      const variants = ['open', 'closed', 'critical', 'high', 'medium', 'low', 'info', 'success', 'warning', 'error'] as const
+      const variants = [
+        'open',
+        'closed',
+        'critical',
+        'high',
+        'medium',
+        'low',
+        'info',
+        'success',
+        'warning',
+        'error',
+      ] as const
       for (const variant of variants) {
         const result = RenderUIComponent.render(
           createToolBlock({
@@ -394,7 +405,14 @@ describe('RenderUIComponent', () => {
     })
 
     test('renders all 6 ECHO phases', () => {
-      const phases = ['idle', 'red', 'green', 'audit', 'self_correct', 'complete']
+      const phases = [
+        'idle',
+        'red',
+        'green',
+        'audit',
+        'self_correct',
+        'complete',
+      ]
       for (const phase of phases) {
         const result = RenderUIComponent.render(
           createToolBlock({

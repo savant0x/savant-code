@@ -112,7 +112,10 @@ export async function getFileTokenScores(
 
   if (DEBUG_PARSING) {
     const endTime = Date.now()
-    console.error(`Parsed ${filePaths.length} files in ${endTime - startTime}ms`)
+    // eslint-disable-next-line no-console -- DEBUG_PARSING diagnostic only
+    console.error(
+      `Parsed ${filePaths.length} files in ${endTime - startTime}ms`,
+    )
 
     try {
       fs.writeFileSync(
@@ -172,7 +175,9 @@ async function parseTokensForScoring(params: {
     })
   } catch (e) {
     if (DEBUG_PARSING) {
+      // eslint-disable-next-line no-console -- DEBUG_PARSING diagnostic only
       console.error(`Error reading source: ${e}`)
+      // eslint-disable-next-line no-console -- DEBUG_PARSING diagnostic only
       console.error(filePath)
     }
     return emptyParsedTokens(false)
@@ -213,8 +218,11 @@ function parseTokensWithLimits(
     const calls = Array.from(new Set(parseResults['call.identifier']))
 
     if (DEBUG_PARSING) {
+      // eslint-disable-next-line no-console -- DEBUG_PARSING diagnostic only
       console.error(`\nParsing ${filePath}:`)
+      // eslint-disable-next-line no-console -- DEBUG_PARSING diagnostic only
       console.error('Identifiers:', identifiers)
+      // eslint-disable-next-line no-console -- DEBUG_PARSING diagnostic only
       console.error('Calls:', calls)
     }
 
@@ -227,7 +235,9 @@ function parseTokensWithLimits(
     }
   } catch (e) {
     if (DEBUG_PARSING) {
+      // eslint-disable-next-line no-console -- DEBUG_PARSING diagnostic only
       console.error(`Error parsing query: ${e}`)
+      // eslint-disable-next-line no-console -- DEBUG_PARSING diagnostic only
       console.error(filePath)
     }
     return emptyParsedTokens(false)

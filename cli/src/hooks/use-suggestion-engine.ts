@@ -7,7 +7,6 @@ import {
 } from '@savant-code/common/project-file-tree'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
-
 import { getProjectRoot } from '../project-files'
 import { range } from '../utils/arrays'
 import { logger } from '../utils/logger'
@@ -73,13 +72,16 @@ interface MentionParseResult {
 
 // Helper to check if a position is inside string delimiters (double quotes or backticks only)
 // Single quotes are excluded because they're commonly used as apostrophes (don't, it's, etc.)
-export const isInsideStringDelimiters = (text: string, position: number): boolean => {
+export const isInsideStringDelimiters = (
+  text: string,
+  position: number,
+): boolean => {
   let inDoubleQuote = false
   let inBacktick = false
 
   for (let i = 0; i < position; i++) {
     const char = text[i]
-    
+
     // Check if this character is escaped by counting preceding backslashes
     let numBackslashes = 0
     let j = i - 1
@@ -87,7 +89,7 @@ export const isInsideStringDelimiters = (text: string, position: number): boolea
       numBackslashes++
       j--
     }
-    
+
     // If there's an odd number of backslashes, the character is escaped
     const isEscaped = numBackslashes % 2 === 1
 
@@ -115,7 +117,7 @@ export const parseAtInLine = (line: string): MentionParseResult => {
   }
 
   const beforeChar = atIndex > 0 ? line[atIndex - 1] : ''
-  
+
   // Don't trigger on escaped @: \@
   if (beforeChar === '\\') {
     return { active: false, query: '', atIndex: -1 }
@@ -134,7 +136,8 @@ export const parseAtInLine = (line: string): MentionParseResult => {
 
   const afterAt = line.slice(atIndex + 1)
   const firstSpaceIndex = afterAt.search(/\s/)
-  const query = firstSpaceIndex === -1 ? afterAt : afterAt.slice(0, firstSpaceIndex)
+  const query =
+    firstSpaceIndex === -1 ? afterAt : afterAt.slice(0, firstSpaceIndex)
 
   if (firstSpaceIndex !== -1) {
     return { active: false, query: '', atIndex: -1 }
@@ -287,10 +290,7 @@ const createHighlightIndices = (start: number, end: number): number[] => [
   ...range(start, end),
 ]
 
-const createPushUnique = <T, K>(
-  getKey: (item: T) => K,
-  seen: Set<K>,
-) => {
+const createPushUnique = <T, K>(getKey: (item: T) => K, seen: Set<K>) => {
   return (target: T[], item: T) => {
     const key = getKey(item)
     if (!seen.has(key)) {
@@ -352,14 +352,11 @@ const fuzzyMatch = (
   // - Longer consecutive matches = better
   // - Matches at word boundaries (after /) = better
   const boundaryBonus = indices.filter(
-    (idx) => idx === 0 || text[idx - 1] === '/'
+    (idx) => idx === 0 || text[idx - 1] === '/',
   ).length
 
   const score =
-    gaps * 10 -
-    maxConsecutive * 5 -
-    boundaryBonus * 15 +
-    (indices[0] ?? 0) // Prefer matches that start earlier
+    gaps * 10 - maxConsecutive * 5 - boundaryBonus * 15 + (indices[0] ?? 0) // Prefer matches that start earlier
 
   return { indices, score }
 }
@@ -386,7 +383,9 @@ const filterFileMatches = (
   const hasSlashes = querySegments.length > 1
 
   // Helper to match path segments (for queries with /)
-  const matchPathSegments = (filePath: string): { indices: number[]; score: number } | null => {
+  const matchPathSegments = (
+    filePath: string,
+  ): { indices: number[]; score: number } | null => {
     const pathLower = filePath.toLowerCase()
     const highlightIndices: number[] = []
     let searchStart = 0
@@ -442,7 +441,10 @@ const filterFileMatches = (
       else if (fileNameLower.startsWith(normalized)) {
         const fileNameStart = filePath.lastIndexOf(fileName)
         matchResult = {
-          indices: createHighlightIndices(fileNameStart, fileNameStart + normalized.length),
+          indices: createHighlightIndices(
+            fileNameStart,
+            fileNameStart + normalized.length,
+          ),
           score: -500 + filePath.length, // High priority
         }
       }
@@ -463,19 +465,20 @@ const filterFileMatches = (
     if (matchResult) {
       // Adjust score: prefer shorter paths
       const lengthPenalty = filePath.length * 2
-      
+
       // Give bonus for exact directory matches (query matches the full path)
       // e.g. "cli" should prioritize "cli/" directory over "cli/package.json"
       const isExactMatch = pathLower === normalized
       const isExactDirMatch = isDirectory && isExactMatch
       const exactMatchBonus = isExactDirMatch ? -500 : 0
-      
+
       // Only penalize directories when they're not an exact or prefix match
       // This ensures "cli/" appears before "cli/src/file.ts" when searching "cli"
       const isPrefixMatch = pathLower.startsWith(normalized)
       const dirPenalty = isDirectory && !isPrefixMatch ? 50 : 0
-      
-      const finalScore = matchResult.score + lengthPenalty + dirPenalty + exactMatchBonus
+
+      const finalScore =
+        matchResult.score + lengthPenalty + dirPenalty + exactMatchBonus
 
       pushUnique(matches, {
         filePath,
@@ -591,7 +594,8 @@ export const useSuggestionEngine = ({
   fileTree,
   disableAgentSuggestions = false,
   currentAgentMode,
-}: SuggestionEngineOptions): SuggestionEngineResult => {  const slashCacheRef = useRef<Map<string, MatchedSlashCommand[]>>(
+}: SuggestionEngineOptions): SuggestionEngineResult => {
+  const slashCacheRef = useRef<Map<string, MatchedSlashCommand[]>>(
     new Map<string, SlashCommand[]>(),
   )
   const agentCacheRef = useRef<Map<string, MatchedAgentInfo[]>>(
@@ -756,18 +760,22 @@ export const useSuggestionEngine = ({
       // Show directories with trailing / in the label
       const displayLabel = file.isDirectory ? `${fileName}/` : fileName
       const displayPath = file.isDirectory ? `${file.filePath}/` : file.filePath
-      
+
       return {
         id: file.filePath,
         label: displayLabel,
         labelHighlightIndices: file.pathHighlightIndices
-          ? file.pathHighlightIndices.map((idx) => {
-              const fileNameStart = file.filePath.lastIndexOf(fileName)
-              return idx >= fileNameStart ? idx - fileNameStart : -1
-            }).filter((idx) => idx >= 0)
+          ? file.pathHighlightIndices
+              .map((idx) => {
+                const fileNameStart = file.filePath.lastIndexOf(fileName)
+                return idx >= fileNameStart ? idx - fileNameStart : -1
+              })
+              .filter((idx) => idx >= 0)
           : null,
         description: isRootLevel ? '.' : displayPath,
-        descriptionHighlightIndices: isRootLevel ? null : file.pathHighlightIndices,
+        descriptionHighlightIndices: isRootLevel
+          ? null
+          : file.pathHighlightIndices,
       }
     })
   }, [fileMatches])

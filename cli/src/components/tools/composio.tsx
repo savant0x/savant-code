@@ -23,7 +23,9 @@ function formatList(items: string[], maxItems = 3): string {
 export const ManageConnectionsComponent = defineToolComponent({
   toolName: 'composio_manage_connections',
 
-  render(toolBlock: ToolBlock & { toolName: 'composio_manage_connections' }): ToolRenderConfig {
+  render(
+    toolBlock: ToolBlock & { toolName: 'composio_manage_connections' },
+  ): ToolRenderConfig {
     const input = toolBlock.input
     const toolkitsArray = input.toolkits
     const toolkits = Array.isArray(toolkitsArray)
@@ -47,7 +49,9 @@ export const ManageConnectionsComponent = defineToolComponent({
 export const ExecuteToolComponent = defineToolComponent({
   toolName: 'composio_multi_execute_tool',
 
-  render(toolBlock: ToolBlock & { toolName: 'composio_multi_execute_tool' }): ToolRenderConfig {
+  render(
+    toolBlock: ToolBlock & { toolName: 'composio_multi_execute_tool' },
+  ): ToolRenderConfig {
     const input = toolBlock.input
     const toolsArray = input.tools
     const tools = Array.isArray(toolsArray) ? toolsArray : []
@@ -85,7 +89,9 @@ export const ExecuteToolComponent = defineToolComponent({
 export const SearchToolsComponent = defineToolComponent({
   toolName: 'composio_search_tools',
 
-  render(toolBlock: ToolBlock & { toolName: 'composio_search_tools' }): ToolRenderConfig {
+  render(
+    toolBlock: ToolBlock & { toolName: 'composio_search_tools' },
+  ): ToolRenderConfig {
     const input = toolBlock.input
     const queriesArray = input.queries
     const queries = Array.isArray(queriesArray) ? queriesArray : []
@@ -112,11 +118,15 @@ export const SearchToolsComponent = defineToolComponent({
 export const GetToolSchemasComponent = defineToolComponent({
   toolName: 'composio_get_tool_schemas',
 
-  render(toolBlock: ToolBlock & { toolName: 'composio_get_tool_schemas' }): ToolRenderConfig {
+  render(
+    toolBlock: ToolBlock & { toolName: 'composio_get_tool_schemas' },
+  ): ToolRenderConfig {
     const input = toolBlock.input
     const toolSlugsArray = input.tool_slugs
     const toolSlugs = Array.isArray(toolSlugsArray)
-      ? toolSlugsArray.filter((item): item is string => typeof item === 'string')
+      ? toolSlugsArray.filter(
+          (item): item is string => typeof item === 'string',
+        )
       : []
     const description = toolSlugs.length > 0 ? formatList(toolSlugs) : ''
 

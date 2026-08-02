@@ -14,19 +14,19 @@ export interface KeyValueProps {
   labelWidth?: number
 }
 
-export function KeyValue({ items, separator = '  ', labelWidth = 12 }: KeyValueProps) {
+export function KeyValue({
+  items,
+  separator = '  ',
+  labelWidth = 12,
+}: KeyValueProps) {
   const theme = useTheme()
 
   return (
     <box flexDirection="column">
       {items.map((item, i) => (
         <box key={i} flexDirection="row" gap={1}>
-          <text fg={theme.muted}>
-            {item.label.padEnd(labelWidth)}
-          </text>
-          <text fg={item.color ?? theme.foreground}>
-            {item.value}
-          </text>
+          <text fg={theme.muted}>{item.label.padEnd(labelWidth)}</text>
+          <text fg={item.color ?? theme.foreground}>{item.value}</text>
         </box>
       ))}
     </box>

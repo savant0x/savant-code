@@ -24,7 +24,8 @@ export const subgoalSchema = z.object({
 })
 export type Subgoal = z.infer<typeof subgoalSchema>
 
-export type FsmPhase = 'idle' | 'red' | 'green' | 'audit' | 'self_correct' | 'complete'
+export type FsmPhase =
+  'idle' | 'red' | 'green' | 'audit' | 'self_correct' | 'complete'
 
 const FSM_PHASE_LIST: readonly FsmPhase[] = [
   'idle',
@@ -43,10 +44,11 @@ const FSM_PHASE_LIST: readonly FsmPhase[] = [
  *
  * Source: FID-2026-0718-010 §3.2 Q11.
  */
-export function isValidFsmPhase(
-  value: unknown,
-): value is FsmPhase {
-  return typeof value === 'string' && (FSM_PHASE_LIST as readonly string[]).includes(value)
+export function isValidFsmPhase(value: unknown): value is FsmPhase {
+  return (
+    typeof value === 'string' &&
+    (FSM_PHASE_LIST as readonly string[]).includes(value)
+  )
 }
 
 /**
@@ -186,8 +188,6 @@ export const AgentTemplateTypeList = [
   'file_explorer',
   'researcher',
   'code_searcher',
-
-
 ] as const
 type UnderscoreToDash<S extends string> = S extends `${infer L}_${infer R}`
   ? `${L}-${UnderscoreToDash<R>}` // recurse on the remainder
@@ -198,8 +198,7 @@ export const AgentTemplateTypes = Object.fromEntries(
 const agentTemplateTypeSchema = z.enum(AgentTemplateTypeList)
 // Allow dynamic agent types by extending the base enum with string
 export type AgentTemplateType =
-  | z.infer<typeof agentTemplateTypeSchema>
-  | (string & {})
+  z.infer<typeof agentTemplateTypeSchema> | (string & {})
 
 export type SessionState = {
   fileContext: ProjectFileContext

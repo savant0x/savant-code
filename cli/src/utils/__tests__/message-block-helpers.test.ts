@@ -188,7 +188,10 @@ describe('autoCollapseBlocks', () => {
     ]
     const result = autoCollapseBlocks(blocks)
     expect(result[0]).toHaveProperty('isCollapsed', true)
-    expect((result[0] as AgentContentBlock).blocks![0]).toHaveProperty('isCollapsed', true)
+    expect((result[0] as AgentContentBlock).blocks![0]).toHaveProperty(
+      'isCollapsed',
+      true,
+    )
   })
 
   test('collapses tool blocks', () => {
@@ -568,7 +571,9 @@ describe('updateBlocksRecursively', () => {
       ...block,
       status: 'complete' as const,
     }))
-    expect((result[0] as AgentContentBlock).blocks![0]).toMatchObject({ status: 'complete' })
+    expect((result[0] as AgentContentBlock).blocks![0]).toMatchObject({
+      status: 'complete',
+    })
   })
 
   test('returns original array if target not found', () => {
@@ -947,8 +952,12 @@ describe('extractBlockById', () => {
     )
     const parentBlock = remainingBlocks[0] as AgentContentBlock
     expect(parentBlock.blocks).toHaveLength(2)
-    expect((parentBlock.blocks![0] as TextContentBlock).content).toBe('Keep this')
-    expect((parentBlock.blocks![1] as TextContentBlock).content).toBe('Keep this too')
+    expect((parentBlock.blocks![0] as TextContentBlock).content).toBe(
+      'Keep this',
+    )
+    expect((parentBlock.blocks![1] as TextContentBlock).content).toBe(
+      'Keep this too',
+    )
     expect(extractedBlock).not.toBeNull()
   })
 })
@@ -960,7 +969,11 @@ describe('transformAskUserBlocks', () => {
         type: 'tool',
         toolCallId: 'tool-123',
         toolName: 'ask_user',
-        input: { questions: [{ question: 'Pick one', options: [{ label: 'A' }, { label: 'B' }] }] },
+        input: {
+          questions: [
+            { question: 'Pick one', options: [{ label: 'A' }, { label: 'B' }] },
+          ],
+        },
       },
     ]
     const result = transformAskUserBlocks(blocks, {
@@ -969,7 +982,9 @@ describe('transformAskUserBlocks', () => {
     })
     expect(result[0].type).toBe('ask-user')
     const askUserBlock = result[0] as AskUserContentBlock
-    expect(askUserBlock.answers).toEqual([{ questionIndex: 0, selectedOption: 'A' }])
+    expect(askUserBlock.answers).toEqual([
+      { questionIndex: 0, selectedOption: 'A' },
+    ])
     expect(askUserBlock.questions).toEqual([
       { question: 'Pick one', options: [{ label: 'A' }, { label: 'B' }] },
     ])
@@ -981,7 +996,11 @@ describe('transformAskUserBlocks', () => {
         type: 'tool',
         toolCallId: 'tool-123',
         toolName: 'ask_user',
-        input: { questions: [{ question: 'Pick one', options: [{ label: 'A' }, { label: 'B' }] }] },
+        input: {
+          questions: [
+            { question: 'Pick one', options: [{ label: 'A' }, { label: 'B' }] },
+          ],
+        },
       },
     ]
     const result = transformAskUserBlocks(blocks, {
@@ -1150,7 +1169,9 @@ describe('updateToolBlockWithOutput', () => {
       toolCallId: 'tool-123',
       toolOutput: [{ type: 'text', value: 'contents' }],
     })
-    expect(((result[0] as AgentContentBlock).blocks![0] as ToolContentBlock).output).toBeDefined()
+    expect(
+      ((result[0] as AgentContentBlock).blocks![0] as ToolContentBlock).output,
+    ).toBeDefined()
   })
 
   test('returns same reference for unchanged nested blocks', () => {

@@ -32,11 +32,10 @@ export const Thinking = memo(
     const { contentMaxWidth } = useTerminalDimensions()
 
     // Special case: single **bold** string under 100 chars gets compact rendering
-    const singleBoldMatch = content.length < 100 ? content.trim().match(/^\*\*([^*]+)\*\*$/) : null
+    const singleBoldMatch =
+      content.length < 100 ? content.trim().match(/^\*\*([^*]+)\*\*$/) : null
     if (singleBoldMatch) {
-      return (
-        null
-      )
+      return null
     }
 
     const width = Math.max(10, availableWidth ?? contentMaxWidth)
@@ -55,19 +54,16 @@ export const Thinking = memo(
     const showFull = thinkingCollapseState === 'expanded'
     const showPreview = thinkingCollapseState === 'preview' && lines.length > 0
 
-    const toggleIndicator =
-      !isThinkingComplete ? '• '
-        : showFull ? '▾ '
-          : showPreview ? '• '
-            : '▸ '
+    const toggleIndicator = !isThinkingComplete
+      ? '• '
+      : showFull
+        ? '▾ '
+        : showPreview
+          ? '• '
+          : '▸ '
 
     return (
-      <Panel
-        border="none"
-        padding={0}
-        flexDirection="column"
-        gap={0}
-      >
+      <Panel border="none" padding={0} flexDirection="column" gap={0}>
         <Button
           style={{
             flexDirection: 'column',

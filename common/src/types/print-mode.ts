@@ -121,9 +121,21 @@ export const printModeActivitySchema = z.object({
   type: z.literal('activity'),
   activity: z.union([
     z.object({ ...idleShape, since: z.number() }),
-    z.object({ ...thinkingShape, startedAt: z.number(), model: z.string().optional() }),
-    z.object({ ...toolShape, startedAt: z.number(), target: z.string().optional() }),
-    z.object({ ...subagentShape, startedAt: z.number(), prompt: z.string().optional() }),
+    z.object({
+      ...thinkingShape,
+      startedAt: z.number(),
+      model: z.string().optional(),
+    }),
+    z.object({
+      ...toolShape,
+      startedAt: z.number(),
+      target: z.string().optional(),
+    }),
+    z.object({
+      ...subagentShape,
+      startedAt: z.number(),
+      prompt: z.string().optional(),
+    }),
     z.object({
       ...researchingShape,
       startedAt: z.number(),

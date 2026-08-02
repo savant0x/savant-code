@@ -244,7 +244,7 @@ Furthermore, provider API drift poses an ongoing risk. Changes to how OpenAI, An
 The legacy Thinker's reliance on message history and implicit state finalization is a structural dead end. It cannot be patched to achieve absolute reliability because streaming text and asynchronous tool execution are inherently subject to race conditions and token degradation.  
 The proposed Event-Sourced CQRS State Machine fundamentally eliminates the possibility of a successful output containing a null value by elevating schema validation to a strict, impassable state-transition gate. It provides absolute determinism, protects the orchestrator from private Chain-of-Thought leakage, bypasses the cognitive degradation of the Format Tax, and establishes a robust, extensible foundation for Savant-Code's multi-agent future. Implementation of Phase 1 of the migration strategy should commence immediately.
 
-#### **Works cited**
+### **Works cited**
 
 > 1. Sequential Thinking MCP Server \- Forked to Support SSE · GitHub, [https://github.com/light4/mcp-server-sequentialthinking](https://github.com/light4/mcp-server-sequentialthinking)  
 > 2. servers/src/sequentialthinking/README.md at main · modelcontextprotocol/servers \- GitHub, [https://github.com/modelcontextprotocol/servers/blob/main/src/sequentialthinking/README.md](https://github.com/modelcontextprotocol/servers/blob/main/src/sequentialthinking/README.md)  

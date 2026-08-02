@@ -44,14 +44,20 @@ async function runApplyPatch(input: unknown) {
     },
     fileContext: mockFileContext,
     requestClientToolCall: async () => [
-      { type: 'json' as const, value: { message: 'client called', applied: [] } },
+      {
+        type: 'json' as const,
+        value: { message: 'client called', applied: [] },
+      },
     ],
   })
 }
 
 describe('apply_patch tool validation', () => {
   test('rejects missing operation object', async () => {
-    const result = await runApplyPatch({ path: 'src/index.ts', diff: '@@\n- old\n+ new\n' })
+    const result = await runApplyPatch({
+      path: 'src/index.ts',
+      diff: '@@\n- old\n+ new\n',
+    })
     const output = result.output[0]
     expect(output.type).toBe('json')
     const value = output.value as { errorMessage: string }
@@ -60,7 +66,11 @@ describe('apply_patch tool validation', () => {
 
   test('rejects invalid operation type', async () => {
     const result = await runApplyPatch({
-      operation: { type: 'rename_file', path: 'src/index.ts', diff: '@@\n- old\n+ new\n' },
+      operation: {
+        type: 'rename_file',
+        path: 'src/index.ts',
+        diff: '@@\n- old\n+ new\n',
+      },
     })
     const output = result.output[0]
     expect(output.type).toBe('json')
@@ -75,7 +85,9 @@ describe('apply_patch tool validation', () => {
     const output = result.output[0]
     expect(output.type).toBe('json')
     const value = output.value as { errorMessage: string }
-    expect(value.errorMessage).toContain('operation.path must be a non-empty string')
+    expect(value.errorMessage).toContain(
+      'operation.path must be a non-empty string',
+    )
   })
 
   test('rejects missing diff for update_file', async () => {
@@ -136,7 +148,13 @@ describe('apply_patch tool validation', () => {
       },
       fileContext: mockFileContext,
       requestClientToolCall: async () => [
-        { type: 'json' as const, value: { message: 'created', applied: [{ file: 'src/index.ts', action: 'add' }] } },
+        {
+          type: 'json' as const,
+          value: {
+            message: 'created',
+            applied: [{ file: 'src/index.ts', action: 'add' }],
+          },
+        },
       ],
     })
 
@@ -164,7 +182,13 @@ describe('apply_patch tool validation', () => {
       },
       fileContext: mockFileContext,
       requestClientToolCall: async () => [
-        { type: 'json' as const, value: { message: 'updated', applied: [{ file: 'src/index.ts', action: 'update' }] } },
+        {
+          type: 'json' as const,
+          value: {
+            message: 'updated',
+            applied: [{ file: 'src/index.ts', action: 'update' }],
+          },
+        },
       ],
     })
 

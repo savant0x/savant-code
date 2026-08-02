@@ -105,10 +105,7 @@ export const useChatScrollbox = (
     if (!scrollbox) return
 
     const viewportHeight = scrollbox.viewport.height
-    const maxScroll = Math.max(
-      0,
-      scrollbox.scrollHeight - viewportHeight,
-    )
+    const maxScroll = Math.max(0, scrollbox.scrollHeight - viewportHeight)
     const scrollAmount = Math.floor(viewportHeight * PAGE_SCROLL_FRACTION)
     const targetScroll = Math.min(maxScroll, scrollbox.scrollTop + scrollAmount)
     animateScrollTo(targetScroll)

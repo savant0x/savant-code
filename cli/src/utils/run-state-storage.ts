@@ -334,7 +334,9 @@ function loadChatStateFromDisk(chatDir: string): SavedChatState | null {
 
   let messages: ChatMessage[] | null = null
   try {
-    messages = JSON.parse(fs.readFileSync(messagesPath, 'utf8')) as ChatMessage[]
+    messages = JSON.parse(
+      fs.readFileSync(messagesPath, 'utf8'),
+    ) as ChatMessage[]
   } catch (error) {
     logger.warn(
       {

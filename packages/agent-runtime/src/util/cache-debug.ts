@@ -2,9 +2,7 @@ import { createHash, randomUUID } from 'crypto'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs'
 import { dirname, join } from 'path'
 
-import {
-  type CacheDebugCorrelation,
-} from '@savant-code/common/util/cache-debug'
+import { type CacheDebugCorrelation } from '@savant-code/common/util/cache-debug'
 
 import type { CacheDebugUsageData } from '@savant-code/common/types/contracts/llm'
 import type { Logger } from '@savant-code/common/types/contracts/logger'
@@ -88,10 +86,9 @@ function normalizeForJson(value: JSONValue | undefined): SerializableValue {
 
   if (typeof value === 'object') {
     return Object.fromEntries(
-      Object.entries(value as Record<string, JSONValue>).map(([key, entryValue]) => [
-        key,
-        normalizeForJson(entryValue),
-      ]),
+      Object.entries(value as Record<string, JSONValue>).map(
+        ([key, entryValue]) => [key, normalizeForJson(entryValue)],
+      ),
     )
   }
 
@@ -122,7 +119,11 @@ function summarizeLargeValue(value: SerializableValue): SerializableValue {
     return value
   }
 
-  if ('url' in value && typeof value.url === 'string' && value.url.startsWith('data:')) {
+  if (
+    'url' in value &&
+    typeof value.url === 'string' &&
+    value.url.startsWith('data:')
+  ) {
     return {
       ...value,
       url: summarizeDataUrl(value.url),
@@ -131,7 +132,11 @@ function summarizeLargeValue(value: SerializableValue): SerializableValue {
 
   return Object.fromEntries(
     Object.entries(value).map(([key, entryValue]) => {
-      if (key === 'file_data' && typeof entryValue === 'string' && entryValue.startsWith('data:')) {
+      if (
+        key === 'file_data' &&
+        typeof entryValue === 'string' &&
+        entryValue.startsWith('data:')
+      ) {
         return [key, summarizeDataUrl(entryValue)]
       }
       if (key === 'arguments' && typeof entryValue === 'string') {
@@ -168,18 +173,18 @@ function writeSnapshot(params: {
   const { snapshot, logger } = params
   mkdirSync(dirname(snapshot.filePath), { recursive: true })
   writeFileSync(snapshot.filePath, JSON.stringify(snapshot, null, 2))
-  logger.debug(
-    `[Cache Debug] Wrote enriched snapshot to ${snapshot.filePath}`,
-  )
+  logger.debug(`[Cache Debug] Wrote enriched snapshot to ${snapshot.filePath}`)
 }
 
 function serializeMessage(message: Message): CacheDebugMessageSnapshot {
   return {
-    role: message.role,        content: normalizeForJson(message.content as JSONValue),
+    role: message.role,
+    content: normalizeForJson(message.content as JSONValue),
     tags: 'tags' in message ? message.tags : undefined,
     timeToLive: 'timeToLive' in message ? message.timeToLive : undefined,
     sentAt: 'sentAt' in message ? message.sentAt : undefined,
-    providerOptions: 'providerOptions' in message ? message.providerOptions : undefined,
+    providerOptions:
+      'providerOptions' in message ? message.providerOptions : undefined,
     toolCallId: 'toolCallId' in message ? message.toolCallId : undefined,
     toolName: 'toolName' in message ? message.toolName : undefined,
   }
@@ -233,8 +238,8 @@ export function createCacheDebugSnapshot(params: {
     toolsHash: stableHash(toolDefinitions),
     preConversion: {
       systemPrompt: system,
-  toolDefinitions,
-  messages: messages.map(serializeMessage),
+      toolDefinitions,
+      messages: messages.map(serializeMessage),
     },
   }
 
@@ -275,7 +280,10 @@ export function enrichCacheDebugSnapshotWithUsage(params: {
 
     writeSnapshot({ snapshot: updated, logger })
   } catch (err) {
-    logger.warn({ error: err }, '[Cache Debug] Failed to enrich snapshot with usage')
+    logger.warn(
+      { error: err },
+      '[Cache Debug] Failed to enrich snapshot with usage',
+    )
   }
 }
 
@@ -320,4 +328,3 @@ export function enrichCacheDebugSnapshotWithProviderRequest(params: {
     logger.warn({ error: err }, '[Cache Debug] Failed to enrich snapshot')
   }
 }
-

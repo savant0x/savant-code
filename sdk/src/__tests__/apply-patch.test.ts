@@ -1,7 +1,6 @@
 import { createMockFs } from '@savant-code/common/testing/mocks/filesystem'
 import { describe, expect, test } from 'bun:test'
 
-
 import { applyPatchTool } from '../tools/apply-patch'
 
 describe('applyPatchTool', () => {
@@ -129,9 +128,14 @@ describe('applyPatchTool', () => {
         operation: {
           type: 'update_file',
           path: 'src/file.ts',
-          diff: ['@@ -1 +1 @@', ' line1', '-line2', '+line2 changed', ' line3', ''].join(
-            '\n',
-          ),
+          diff: [
+            '@@ -1 +1 @@',
+            ' line1',
+            '-line2',
+            '+line2 changed',
+            ' line3',
+            '',
+          ].join('\n'),
         },
       },
       cwd: '/repo',
@@ -165,12 +169,7 @@ describe('applyPatchTool', () => {
         operation: {
           type: 'update_file',
           path: 'src/file.ts',
-          diff: [
-            '@@ target',
-            '+inserted',
-            ' after',
-            '',
-          ].join('\n'),
+          diff: ['@@ target', '+inserted', ' after', ''].join('\n'),
         },
       },
       cwd: '/repo',
@@ -189,7 +188,9 @@ describe('applyPatchTool', () => {
     }
 
     const updated = await fs.readFile('/repo/src/file.ts', 'utf-8')
-    expect(updated).toBe(['before', 'target', 'inserted', 'after', ''].join('\n'))
+    expect(updated).toBe(
+      ['before', 'target', 'inserted', 'after', ''].join('\n'),
+    )
   })
 
   test('applies update patch when file has CRLF line endings', async () => {
@@ -282,8 +283,7 @@ describe('applyPatchTool', () => {
         operation: {
           type: 'update_file',
           path: 'src/file.ts',
-          diff:
-            'Patch below:\r\n```diff\r\n@@ -1,1 +1,1 @@\r\n-const a = 1\r\n+const a = 2\r\n```',
+          diff: 'Patch below:\r\n```diff\r\n@@ -1,1 +1,1 @@\r\n-const a = 1\r\n+const a = 2\r\n```',
         },
       },
       cwd: '/repo',
@@ -431,6 +431,8 @@ describe('applyPatchTool', () => {
       throw new Error('Expected errorMessage in tool result')
     }
 
-    expect(result[0].value.errorMessage).toContain('Invalid Add File Line: oops')
+    expect(result[0].value.errorMessage).toContain(
+      'Invalid Add File Line: oops',
+    )
   })
 })

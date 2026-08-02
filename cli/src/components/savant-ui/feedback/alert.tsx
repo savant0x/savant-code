@@ -13,7 +13,10 @@ export interface AlertProps {
 
 // FID-033b Phase B: alert icons + colors sourced from the centralized glyph
 // map + ChatTheme tokens (no hardcoded hex, Law 13).
-const ALERT_MAP: Record<NonNullable<AlertProps['type']>, { glyph: GlyphName; colorKey: ThemeColorKey }> = {
+const ALERT_MAP: Record<
+  NonNullable<AlertProps['type']>,
+  { glyph: GlyphName; colorKey: ThemeColorKey }
+> = {
   info: { glyph: 'alertInfo', colorKey: 'info' },
   success: { glyph: 'alertSuccess', colorKey: 'success' },
   warning: { glyph: 'alertWarning', colorKey: 'warning' },
@@ -30,7 +33,11 @@ export function Alert({ type = 'info', title, message }: AlertProps) {
     <box flexDirection="row" gap={1}>
       <text fg={color}>{icon}</text>
       <box flexDirection="column">
-        {title && <text fg={color} attributes={TextAttributes.BOLD}>{title}</text>}
+        {title && (
+          <text fg={color} attributes={TextAttributes.BOLD}>
+            {title}
+          </text>
+        )}
         <text>{message}</text>
       </box>
     </box>

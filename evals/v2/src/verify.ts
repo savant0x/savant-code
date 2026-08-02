@@ -1,4 +1,5 @@
 import { applyGoldenPatch } from './golden'
+
 import type { Sandbox, CommandResult } from './sandbox'
 import type { DeterministicCheck, TaskDefinition } from './schema'
 
@@ -30,7 +31,11 @@ export interface VerificationResult {
 
 export interface VerifierOptions {
   /** Optional hook called after each attempt for observability. */
-  onAttempt?: (check: DeterministicCheck, attempt: number, result: CommandResult) => void
+  onAttempt?: (
+    check: DeterministicCheck,
+    attempt: number,
+    result: CommandResult,
+  ) => void
   /**
    * When true, the verifier applies the task's `golden_patch` to the sandbox
    * before running deterministic checks. Used for baseline validation, not
@@ -62,7 +67,10 @@ function looksLikeInfraFailure(result: CommandResult): boolean {
   return infraKeywords.some((keyword) => text.includes(keyword))
 }
 
-function shouldRetry(check: DeterministicCheck, result: CommandResult): boolean {
+function shouldRetry(
+  check: DeterministicCheck,
+  result: CommandResult,
+): boolean {
   if (result.exitCode === check.expected_exit_code) return false
   if (check.retry_count <= 0) return false
   if (check.retry_condition === 'always') return true
@@ -124,7 +132,9 @@ export class DeterministicVerifier {
   }
 
   private async runCheck(check: DeterministicCheck): Promise<CheckResult> {
-    const timeout = check.timeout_seconds ? check.timeout_seconds * 1000 : undefined
+    const timeout = check.timeout_seconds
+      ? check.timeout_seconds * 1000
+      : undefined
     let lastResult: CommandResult | undefined
     let attempts = 0
     let lastWasError = false

@@ -5,7 +5,6 @@ import { serializeConversation } from '../copy-conversation'
 import type { ChatMessage, ContentBlock } from '../../types/chat'
 import type { JSONValue } from '@savant-code/common/types/json'
 
-
 const msg = (
   variant: ChatMessage['variant'],
   opts: { content?: string; blocks?: ContentBlock[] } = {},
@@ -36,7 +35,11 @@ describe('serializeConversation', () => {
       msg('ai', {
         blocks: [
           { type: 'text', content: 'Sure, reading it now.' },
-          toolBlock('read_files', { paths: ['config.ts'] }, 'export const x = 1'),
+          toolBlock(
+            'read_files',
+            { paths: ['config.ts'] },
+            'export const x = 1',
+          ),
         ],
       }),
     ]
@@ -55,10 +58,13 @@ describe('serializeConversation', () => {
   })
 
   test('pretty-prints JSON tool output envelopes', () => {
-    const envelope =
-      '[{"type":"json","value":{"stdout":"hi\\n","exitCode":0}}]'
+    const envelope = '[{"type":"json","value":{"stdout":"hi\\n","exitCode":0}}]'
     const messages: ChatMessage[] = [
-      msg('ai', { blocks: [toolBlock('run_terminal_command', { command: 'echo hi' }, envelope)] }),
+      msg('ai', {
+        blocks: [
+          toolBlock('run_terminal_command', { command: 'echo hi' }, envelope),
+        ],
+      }),
     ]
     const { text } = serializeConversation(messages)
     // Pretty-printed across multiple lines, not a single dense JSON string.
@@ -69,7 +75,9 @@ describe('serializeConversation', () => {
 
   test('leaves non-JSON tool output as raw text', () => {
     const messages: ChatMessage[] = [
-      msg('ai', { blocks: [toolBlock('read_files', { p: 'a' }, 'plain text output')] }),
+      msg('ai', {
+        blocks: [toolBlock('read_files', { p: 'a' }, 'plain text output')],
+      }),
     ]
     const { text } = serializeConversation(messages)
     expect(text).toContain('plain text output')
@@ -96,7 +104,9 @@ describe('serializeConversation', () => {
         blocks: [toolBlock('read_files', { p: 'a' }, 'short output')],
       }),
     ]
-    const { omittedCount } = serializeConversation(messages, { maxBytes: 10_000 })
+    const { omittedCount } = serializeConversation(messages, {
+      maxBytes: 10_000,
+    })
     expect(omittedCount).toBe(0)
   })
 
@@ -186,7 +196,9 @@ describe('serializeConversation', () => {
     expect(Buffer.byteLength(text, 'utf8')).toBeLessThanOrEqual(maxBytes)
     expect(text).toContain('truncated to fit clipboard')
     // The most recent tail of the content is what survives.
-    expect(text.endsWith('word \n') || text.trimEnd().endsWith('word')).toBe(true)
+    expect(text.endsWith('word \n') || text.trimEnd().endsWith('word')).toBe(
+      true,
+    )
   })
 
   test('tool call with no input or output renders a compact one-liner', () => {

@@ -21,7 +21,8 @@ const basher: AgentDefinition = {
       properties: {
         command: {
           type: 'string',
-          description: 'The terminal command to run in bash shell. Don\'t forget this field!',
+          description:
+            "The terminal command to run in bash shell. Don't forget this field!",
         },
         what_to_summarize: {
           type: 'string',
@@ -61,6 +62,7 @@ Do not use any tools! Only analyze the output of the command.`,
     const command = params?.command as string | undefined
     if (!command) {
       // Using console.error because agents run in a sandboxed environment without access to structured logger
+      // eslint-disable-next-line no-console -- sandboxed agent env: no structured logger available
       console.error('Basher agent: missing required "command" parameter')
       yield {
         toolName: 'set_output',
@@ -85,7 +87,10 @@ Do not use any tools! Only analyze the output of the command.`,
       // Return the raw command output without summarization
       const result = toolResult?.[0]
       // Only return object values (command output objects), not plain strings
-      const output = result?.type === 'json' && typeof result.value === 'object' ? result.value : ''
+      const output =
+        result?.type === 'json' && typeof result.value === 'object'
+          ? result.value
+          : ''
       yield {
         toolName: 'set_output',
         input: { output },

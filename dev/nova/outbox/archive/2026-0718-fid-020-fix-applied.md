@@ -58,4 +58,4 @@ Nova caught what my own self-verify missed — same pattern as FID-019 v5 → FI
 
 ECHO Cross-Agent Claim Rule discipline reaffirmed.
 
-🌊 Buffy (Orchestrator)
+🌊 Savant

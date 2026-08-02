@@ -57,7 +57,11 @@ function measureLines(text: string, cols: number): number {
   return lines
 }
 
-export function getLastNVisualLines(text: string, cols: number, n: number): { lines: string[]; hasMore: boolean } {
+export function getLastNVisualLines(
+  text: string,
+  cols: number,
+  n: number,
+): { lines: string[]; hasMore: boolean } {
   if (n <= 0 || cols <= 0) return { lines: [], hasMore: false }
   const lines: string[] = []
   if (!text) return { lines, hasMore: false }

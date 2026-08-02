@@ -1,4 +1,3 @@
-/* eslint-disable no-console -- test script: intentional runtime logging */
 import { SavantCodeClient } from '../src/client'
 import { getUserCredentials } from '../src/credentials'
 

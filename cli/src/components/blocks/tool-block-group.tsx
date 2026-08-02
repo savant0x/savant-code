@@ -46,7 +46,7 @@ export const ToolBlockGroup = memo(
     // Combine all tool texts for copying the group
     const getCopyText = useCallback(() => {
       return toolBlocks
-        .filter(toolBlock => toolBlock.toolName !== 'run_readonly_command')
+        .filter((toolBlock) => toolBlock.toolName !== 'run_readonly_command')
         .map((toolBlock) => {
           if (toolBlock.type !== 'tool') return ''
           return `[Tool: ${toolBlock.toolName}]\nInput:\n${JSON.stringify(toolBlock.input, null, 2)}\n\nOutput:\n${toolBlock.output ?? '(no output)'}`

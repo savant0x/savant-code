@@ -9,7 +9,10 @@ import { SingleBlock } from './single-block'
 import { ThinkingBlock } from './thinking-block'
 import { ToolBlockGroup } from './tool-block-group'
 import { useMessageBlockStore } from '../../state/message-block-store'
-import { processBlocks, type BlockProcessorHandlers } from '../../utils/block-processor'
+import {
+  processBlocks,
+  type BlockProcessorHandlers,
+} from '../../utils/block-processor'
 import {
   getResponseAdForSlot,
   responseAdDisplayCount,
@@ -67,7 +70,6 @@ interface BlocksRendererPropsRef {
   lastTextBlockIndex: number
 }
 
-
 export const BlocksRenderer = memo(
   ({
     sourceBlocks,
@@ -120,7 +122,10 @@ export const BlocksRenderer = memo(
           const p = propsRef.current
           return (
             <ThinkingBlock
-              key={reasoningBlocks[0]?.thinkingId ?? `${p.messageId}-thinking-${startIndex}`}
+              key={
+                reasoningBlocks[0]?.thinkingId ??
+                `${p.messageId}-thinking-${startIndex}`
+              }
               blocks={reasoningBlocks}
               onToggleCollapsed={p.onToggleCollapsed}
               availableWidth={p.availableWidth}

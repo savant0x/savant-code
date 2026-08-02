@@ -48,7 +48,8 @@ describe('API Integration', () => {
   const originalSetTimeout = globalThis.setTimeout
 
   beforeEach(() => {
-    process.env.NEXT_PUBLIC_SAVANT_CODE_APP_URL = 'https://example.savant-code.test'
+    process.env.NEXT_PUBLIC_SAVANT_CODE_APP_URL =
+      'https://example.savant-code.test'
     // Mock setTimeout to execute immediately for faster tests
     // This makes the retry backoff delays instant
     globalThis.setTimeout = ((

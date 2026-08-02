@@ -1,6 +1,7 @@
 # SavantFree E2E Tests
 
-End-to-end tests for the SavantFree CLI binary. Tests verify that the compiled binary works correctly by interacting with it via tmux.
+End-to-end tests for the SavantFree CLI binary. Tests verify that the compiled binary works correctly by
+interacting with it via tmux.
 
 ## Architecture
 
@@ -36,7 +37,8 @@ describe('My Feature', () => {
 
 ### 2. SDK agent-driven tests (AI-powered verification)
 
-Use the SavantCode SDK to run a testing agent that interacts with SavantFree via custom tmux tools. The agent reasons about the CLI output and verifies complex behaviors.
+Use the SavantCode SDK to run a testing agent that interacts with SavantFree via custom tmux tools. The agent
+reasons about the CLI output and verifies complex behaviors.
 
 ```typescript
 import { describe, test, expect, afterEach } from 'bun:test'
@@ -136,6 +138,7 @@ The `.github/workflows/savant-free-e2e.yml` workflow:
 3. **Uploads tmux session logs** on failure for debugging
 
 Triggers:
+
 - **Nightly** at 6:00 AM PT
 - **Manual** via workflow_dispatch
 
@@ -156,6 +159,7 @@ Triggers:
 ### `createSavantFreeTmuxTools(binaryPath)`
 
 Creates SDK custom tools for agent-driven testing:
+
 - `start_savant_free` - Launch the CLI
 - `send_to_savant_free` - Send text input
 - `capture_savant_free_output` - Capture terminal output

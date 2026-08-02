@@ -5,7 +5,7 @@
 **Severity:** medium
 **Status:** closed
 **Created:** 2026-07-23 02:15
-**Author:** Buffy (Orchestrator)
+**Author:** Savant
 
 ---
 

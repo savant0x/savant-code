@@ -1,10 +1,12 @@
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import {
-  CallToolResult,
-  CreateMessageRequest,
   CreateMessageResultSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
+
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type {
+  CallToolResult,
+  CreateMessageRequest} from "@modelcontextprotocol/sdk/types.js";
 
 // Tool input schema
 const TriggerSamplingRequestSchema = z.object({

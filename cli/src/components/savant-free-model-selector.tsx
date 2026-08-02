@@ -119,10 +119,9 @@ interface SavantFreeModelSelectorProps {
   onExpandedChange?: (expanded: boolean) => void
 }
 
-export const SavantFreeModelSelector: React.FC<SavantFreeModelSelectorProps> = ({
-  maxHeight,
-  onExpandedChange,
-}) => {
+export const SavantFreeModelSelector: React.FC<
+  SavantFreeModelSelectorProps
+> = ({ maxHeight, onExpandedChange }) => {
   const theme = useTheme()
   // contentMaxWidth (not terminalWidth) is the real budget — the parent
   // landing screen wraps this picker in a `maxWidth: contentMaxWidth`

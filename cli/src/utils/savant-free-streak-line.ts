@@ -20,7 +20,9 @@ export interface SavantFreeStreakLine {
  * the caller hides the row entirely — new / lapsed users should be nudged to
  * start using the product, not shown an empty streak.
  */
-export function getSavantFreeStreakLine(streak: number): SavantFreeStreakLine | null {
+export function getSavantFreeStreakLine(
+  streak: number,
+): SavantFreeStreakLine | null {
   if (streak <= 0) return null
 
   // Fill toward the 7-day milestone, then stay full — a 19-day streak should

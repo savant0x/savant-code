@@ -5,7 +5,6 @@ import { resolveAndContain } from '@savant-code/common/util/paths'
 
 import { resolveFilePath } from './path-utils'
 
-
 import type { OnFileWrittenCallback } from './change-file'
 import type { SavantCodeToolOutput } from '@savant-code/common/tools/list'
 import type { SavantCodeFileSystem } from '@savant-code/common/types/filesystem'
@@ -433,7 +432,9 @@ function applyChunks(input: string, chunks: Chunk[]): string {
       )
     }
 
-    destinationLines.push(...originalLines.slice(originalIndex, chunk.origIndex))
+    destinationLines.push(
+      ...originalLines.slice(originalIndex, chunk.origIndex),
+    )
     originalIndex = chunk.origIndex
 
     if (chunk.insLines.length > 0) {
@@ -528,7 +529,11 @@ function tryApplyPatchWithFallbacks(params: {
     attemptedStrategies.push(attempt.name)
 
     try {
-      const { result: patched } = applyDiff(attempt.source, attempt.diff, 'default')
+      const { result: patched } = applyDiff(
+        attempt.source,
+        attempt.diff,
+        'default',
+      )
 
       if (patchHasIntendedChanges(attempt.diff) && patched === attempt.source) {
         lastError = 'Patch produced no content changes'
@@ -596,7 +601,9 @@ export async function applyPatchTool(params: {
   realpathFn?: (p: string) => string
 }): Promise<ApplyPatchResult> {
   const { parameters, cwd, fs, onFileWritten, realpathFn } = params
-  const operationParse = applyPatchOperationSchema.safeParse(parameters.operation)
+  const operationParse = applyPatchOperationSchema.safeParse(
+    parameters.operation,
+  )
 
   if (!operationParse.success) {
     return [errorResult('Missing or invalid operation object.')]
@@ -610,7 +617,10 @@ export async function applyPatchTool(params: {
     // FID-2026-0718-014 v2: defense-in-depth at SDK boundary. Per v2 corrected
     // architecture, this is where the actual fs.writeFile / fs.unlink happens.
     // Closes the TOCTOU window between agent-runtime's gate and the real FS op.
-    const pathCheck = resolveAndContain(fullPath, { projectRoot: cwd, realpathFn })
+    const pathCheck = resolveAndContain(fullPath, {
+      projectRoot: cwd,
+      realpathFn,
+    })
     if (pathCheck.kind === 'reject') {
       return [errorResult(`apply_patch: ${pathCheck.reason}`)]
     }

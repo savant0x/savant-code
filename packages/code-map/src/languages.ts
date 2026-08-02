@@ -300,6 +300,7 @@ export async function getLanguageConfig(
     return await createLanguageConfig(filePath, unifiedLoader)
   } catch (err) {
     if (DEBUG_PARSING) {
+      // eslint-disable-next-line no-console -- DEBUG_PARSING diagnostic only
       console.error('[tree-sitter] Load error for', filePath, err)
     }
     return undefined

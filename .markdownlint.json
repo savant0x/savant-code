@@ -1,14 +1,42 @@
 {
+  "default": false,
   "MD001": true,
   "MD003": { "style": "atx" },
   "MD012": true,
   "MD013": {
     "line_length": 120,
     "heading_line_length": 120,
-    "code_blocks": false
+    "code_blocks": false,
+    "tables": false
   },
   "MD022": true,
   "MD032": true,
+  "MD033": {
+    "allowed_elements": [
+      "a",
+      "b",
+      "br",
+      "code",
+      "details",
+      "div",
+      "em",
+      "i",
+      "img",
+      "kbd",
+      "p",
+      "span",
+      "strong",
+      "sub",
+      "summary",
+      "sup",
+      "table",
+      "tbody",
+      "td",
+      "th",
+      "thead",
+      "tr"
+    ]
+  },
   "MD040": true,
   "MD041": true
 }

@@ -21,7 +21,6 @@ import type {
   UserModelMessage,
 } from 'ai'
 
-
 export function toContentString(msg: ModelMessage): string {
   const { content } = msg
   if (typeof content === 'string') return content
@@ -89,8 +88,10 @@ export function withoutCacheControl<
   return wrapper
 }
 
-type NonStringContent<T extends { content: string | readonly object[] }> =
-  Omit<T, 'content'> & {
+type NonStringContent<T extends { content: string | readonly object[] }> = Omit<
+  T,
+  'content'
+> & {
   content: Exclude<T['content'], string>
 }
 export type SavantModelMessage = (
@@ -128,9 +129,7 @@ function assistantToSavantCodeMessage(
   return cloneDeep({ ...message, content: [message.content] })
 }
 
-function convertToolResultMessage(
-  message: ToolMessage,
-): SavantModelMessage[] {
+function convertToolResultMessage(message: ToolMessage): SavantModelMessage[] {
   // Defensive: some compaction paths historically wrote a bare string here.
   // Coerce any non-array content into a json tool result so downstream code
   // can safely call .map() and the AI SDK receives a valid tool-result shape.
@@ -177,9 +176,7 @@ function convertToolResultMessage(
       })
     }
     c satisfies never
-    throw new Error(
-      `Invalid tool output type: ${JSON.stringify(c)}`,
-    )
+    throw new Error(`Invalid tool output type: ${JSON.stringify(c)}`)
   })
 }
 
@@ -209,8 +206,7 @@ function convertToolMessage(message: Message): SavantModelMessage[] {
     // Defensive: older serialized state may store user content as a plain
     // string. Wrap it as a TextPart[] so downstream code always sees an array.
     const content = message.content as unknown as
-      | string
-      | UserMessage['content']
+      string | UserMessage['content']
     if (typeof content === 'string') {
       return [
         cloneDeep({
@@ -233,8 +229,7 @@ function convertToolMessage(message: Message): SavantModelMessage[] {
     // Defensive: older serialized state may store assistant content as a plain
     // string (or invalid value). Wrap it as a TextPart[] before iterating.
     const content = message.content as unknown as
-      | string
-      | AssistantMessage['content']
+      string | AssistantMessage['content']
     if (!Array.isArray(content)) {
       const text = typeof content === 'string' ? content : ''
       return [
@@ -260,9 +255,7 @@ function convertToolMessage(message: Message): SavantModelMessage[] {
   )
 }
 
-function convertToolMessages(
-  messages: Message[],
-): SavantModelMessage[] {
+function convertToolMessages(messages: Message[]): SavantModelMessage[] {
   const withoutToolMessages: SavantModelMessage[] = []
   for (const message of messages) {
     withoutToolMessages.push(...convertToolMessage(message))
@@ -458,8 +451,8 @@ export function convertCbToModelMessages({
       }
       throw new Error(
         `convertCbToModelMessages: Message at index ${i} failed schema validation.\n` +
-        `Role: ${message.role}\n` +
-        `Message:\n${result.error.message}`,
+          `Role: ${message.role}\n` +
+          `Message:\n${result.error.message}`,
       )
     }
   }
@@ -469,9 +462,7 @@ export function convertCbToModelMessages({
 
 // type NoContent<T> = T & { content?: never }
 export type SystemContent =
-  | string
-  | SystemMessage['content'][number]
-  | SystemMessage['content']
+  string | SystemMessage['content'][number] | SystemMessage['content']
 export function systemContent(
   content: SystemContent,
 ): SystemMessage['content'] {
@@ -488,8 +479,8 @@ export function systemMessage(
   params:
     | SystemContent
     | ({
-      content: SystemContent
-    } & Omit<SystemMessage, 'role' | 'content'>),
+        content: SystemContent
+      } & Omit<SystemMessage, 'role' | 'content'>),
 ): SystemMessage {
   if (typeof params === 'object' && 'content' in params) {
     return {
@@ -505,9 +496,7 @@ export function systemMessage(
 }
 
 export type UserContent =
-  | string
-  | UserMessage['content'][number]
-  | UserMessage['content']
+  string | UserMessage['content'][number] | UserMessage['content']
 export function userContent(content: UserContent): UserMessage['content'] {
   if (typeof content === 'string') {
     return [{ type: 'text', text: content }]
@@ -522,8 +511,8 @@ export function userMessage(
   params:
     | UserContent
     | ({
-      content: UserContent
-    } & Omit<UserMessage, 'role' | 'content'>),
+        content: UserContent
+      } & Omit<UserMessage, 'role' | 'content'>),
 ): UserMessage {
   if (typeof params === 'object' && 'content' in params) {
     return {
@@ -541,9 +530,7 @@ export function userMessage(
 }
 
 export type AssistantContent =
-  | string
-  | AssistantMessage['content'][number]
-  | AssistantMessage['content']
+  string | AssistantMessage['content'][number] | AssistantMessage['content']
 export function assistantContent(
   content: AssistantContent,
 ): AssistantMessage['content'] {
@@ -560,8 +547,8 @@ export function assistantMessage(
   params:
     | AssistantContent
     | ({
-      content: AssistantContent
-    } & Omit<AssistantMessage, 'role' | 'content'>),
+        content: AssistantContent
+      } & Omit<AssistantMessage, 'role' | 'content'>),
 ): AssistantMessage {
   if (typeof params === 'object' && 'content' in params) {
     return {
@@ -581,10 +568,10 @@ export function assistantMessage(
 export function jsonToolResult<T extends JSONValue>(
   value: T,
 ): [
-    Extract<ToolResultOutput, { type: 'json' }> & {
-      value: T
-    },
-  ] {
+  Extract<ToolResultOutput, { type: 'json' }> & {
+    value: T
+  },
+] {
   return [
     {
       type: 'json',

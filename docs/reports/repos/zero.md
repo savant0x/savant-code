@@ -10,63 +10,83 @@ Zero is a Go-based terminal coding agent with 25+ LLM providers, OS-level sandbo
 ## Feature Inventory
 
 ### Multi-Provider LLM (25+)
+
 - **Provider-Neutral Types** — `CompletionRequest`/`StreamEvent` abstraction with single `Provider.StreamCompletion` interface. OpenAI, Anthropic, Gemini, Groq, OpenRouter, DeepSeek, Mistral, xAI, Qwen, Kimi, Ollama, LM Studio, MiniMax, etc. (`internal/providers/`, `internal/providercatalog/`)
 
 ### Agent Loop
+
 - **Core Run** — 3184 lines. Malformed tool call detection, repeated-failure guards, stall retries, empty-turn nudges, max-turn fallback, proactive/reactive compaction. `RequireCompletionSignal` for headless mode. (`internal/agent/loop.go`)
 
 ### Context Compaction
+
 - **Proactive + Reactive** — Summarizes oldest middle at ~70% context. Per-provider calibration by usage. Turn-boundary preservation (never splits tool_use/tool_result). Plan/structured state preserved. (`internal/agent/compaction.go`)
 
 ### Permission & Sandbox Engine
+
 - **Dual-Layer** — Tool-level permission metadata + sandbox engine evaluating path scope, network, destructive shell, command-prefix grants. Platform backends: macOS seatbelt, Linux landlock/bwrap/seccomp, Windows restricted token + WFP. Risk classification (low/medium/high/critical) with structured `Block` codes. (`internal/sandbox/`)
 
 ### Multi-Agent Swarm
+
 - **Mailbox-Based** — Orchestrator spawns/coordinates/collects from concurrent specialists. Per-agent mailboxes, task handoff, channel-based `WaitSettled` (not polling). Deferred tool loading adapts to swarm state. (`internal/swarm/`)
 
 ### Specialist Sub-Agents
+
 - **Markdown Manifests** — Three scopes (built-in, user, project). `extends` inheritance. `GenerateSpecialist` tool (agent creates its own sub-agents). Background state survives restarts. (`internal/specialist/`)
 
 ### MCP (Client + Server)
+
 - **Bidirectional** — Both client and server. stdio and HTTP transports. OAuth. (`internal/mcp/`)
 
 ### Plugin System
+
 - **Directory-with-Manifest** — `plugin.json` with tools, hooks, skills. Auto-registration of skill roots. (`internal/plugins/`)
 
 ### Skills System
+
 - **On-Demand Loading** — Multi-root discovery with earlier-root-wins. Registered in system prompt. (`internal/skills/`)
 
 ### Hooks System
+
 - **Shell Commands** — stdin-JSON payload (not env vars). `beforeTool` (blocking) / `afterTool` (advisory). Audit trail. (`internal/hooks/`)
 
 ### Session Management
+
 - **Resume/Fork/Rewind** — Append-only event log (`events.jsonl` + `metadata.json`). Parent/root IDs for lineage. (`internal/sessions/`)
 
 ### Cron Scheduler
+
 - **Built-in Recipes** — `git-recap`, `ci-watch`, `todo-pulse`, `daily-summary`. Customizable loop prompt. DST-aware parser. (`internal/cron/`)
 
 ### Self-Correction System
+
 - **Post-Edit Verification** — LSP diagnostics + project verification (tests/lint) fed back to model. Attempt ceiling (default 3). Autonomy-gated (low = report only, high = auto-fix). (`internal/agent/selfcorrect.go`)
 
 ### Execution Profile Controller
+
 - **Adaptive Self-Regulation** — Observes per-turn signals (tool failure streak, risky mutations, self-correct failures, uncertain completion) and one-shot escalates loop parameters. Safety: escalation targets are displaced values (can never introduce unauthorized knobs). (`internal/agent/profile_controller.go`)
 
 ### Parallel Tool Execution
+
 - **Read-Ahead** — Independent read-only tools (read_file + grep + glob) execute concurrently (up to 8). Resource-key conflict detection prevents same-path parallel reads. (`internal/agent/parallel_tools.go`)
 
 ### Deferred Tool Loading
+
 - **State-Dependent** — Many tools withheld, advertised as compact `tool_search` lines. Coordination tools un-defer when swarm exists. (`internal/tools/deferred.go`)
 
 ### Stream-JSON Protocol
+
 - **Headless/Automation** — Schema-versioned (v2), line-delimited JSON. Structured events with permission metadata. (`internal/streamjson/`)
 
 ### Agent Evals
+
 - **Process-Level Assertions** — Fixtures with expected changed files, forbidden files, verification commands, required trace events. (`internal/agenteval/`)
 
 ### Spec Mode
+
 - **Plan-First** — Draft spec, pause for human review, then execute. (`internal/specmode/`)
 
 ### Other
+
 - **LSP Integration** — Background async diagnostics. (`internal/lsp/`)
 - **Worktrees** — Isolated git worktrees. (`internal/worktrees/`)
 - **Completion Policy** — Validates headless work is actually complete. (`internal/agent/completion_policy.go`)

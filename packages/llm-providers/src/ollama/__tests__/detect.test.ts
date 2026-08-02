@@ -39,10 +39,7 @@ describe('detectOllama', () => {
         if (url.pathname === '/api/tags') {
           return new Response(
             JSON.stringify({
-              models: [
-                { name: 'llama3.1:latest' },
-                { name: 'qwen2:0.5b' },
-              ],
+              models: [{ name: 'llama3.1:latest' }, { name: 'qwen2:0.5b' }],
             }),
           )
         }

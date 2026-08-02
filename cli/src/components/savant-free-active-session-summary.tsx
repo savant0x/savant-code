@@ -30,7 +30,7 @@ export const SavantFreeActiveSessionSummary: React.FC<
 
   const resetCountdown = formatSavantFreePremiumResetCountdown(
     new Date(quota.resetAt),
-    now
+    now,
   )
   const label =
     'accessTier' in session && session.accessTier === 'limited'

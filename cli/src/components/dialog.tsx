@@ -23,7 +23,6 @@
 import { useKeyboard } from '@opentui/react'
 import React from 'react'
 
-
 import { useTheme } from '../hooks/use-theme'
 
 interface DialogProps {
@@ -92,9 +91,7 @@ export const Dialog = ({
       )}
 
       {/* Content */}
-      <box style={{ flexDirection: 'column', flexGrow: 1 }}>
-        {children}
-      </box>
+      <box style={{ flexDirection: 'column', flexGrow: 1 }}>{children}</box>
 
       {/* Footer */}
       {footer && (

@@ -1,4 +1,3 @@
- 
 import { AnalyticsEvent } from '../constants/analytics-events'
 
 import type { AnalyticsProperties } from '../types/contracts/analytics'
@@ -118,8 +117,7 @@ export function isFullTelemetryEnabled(params: {
     getStringProperty(params.properties, 'userEmail'),
     getStringProperty(params.properties, 'email'),
   ].filter(
-    (value): value is string =>
-      typeof value === 'string' && value.length > 0,
+    (value): value is string => typeof value === 'string' && value.length > 0,
   )
 
   return candidates.some((candidate) => ids.has(candidate))

@@ -3,11 +3,7 @@ import { cyan, green, red, yellow, bold } from 'picocolors'
 
 import { LOGIN_WEBSITE_URL } from './constants'
 import { generateLoginUrl, pollLoginStatus } from './login-flow'
-import {
-  flushAnalytics,
-  identifyUser,
-  trackEvent,
-} from '../utils/analytics'
+import { flushAnalytics, identifyUser, trackEvent } from '../utils/analytics'
 import { saveUserCredentials } from '../utils/auth'
 import { IS_SAVANT_FREE } from '../utils/constants'
 import { getFingerprintId } from '../utils/fingerprint'
@@ -82,7 +78,10 @@ export async function runPlainLogin(): Promise<void> {
     // logins aren't missing from the funnel, then flush before exiting since
     // process.exit would otherwise drop the buffered PostHog events.
     if (user.id) {
-      identifyUser(user.id, { email: user.email, 'savant-free': IS_SAVANT_FREE })
+      identifyUser(user.id, {
+        email: user.email,
+        'savant-free': IS_SAVANT_FREE,
+      })
       trackEvent(AnalyticsEvent.LOGIN, {
         userId: user.id,
         via: 'plain_command',

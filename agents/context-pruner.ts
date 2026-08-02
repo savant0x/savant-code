@@ -149,14 +149,14 @@ const definition: AgentDefinition = {
     }
 
     function asObject(value: JSONValue): Record<string, JSONValue> | undefined {
-      return value !== null && typeof value === 'object' && !Array.isArray(value)
+      return value !== null &&
+        typeof value === 'object' &&
+        !Array.isArray(value)
         ? value
         : undefined
     }
 
-    function asAgentSpawnArray(
-      value: JSONValue,
-    ):
+    function asAgentSpawnArray(value: JSONValue):
       | Array<{
           agent_type: string
           prompt?: string
@@ -215,9 +215,7 @@ const definition: AgentDefinition = {
       return result.length > 0 ? result : undefined
     }
 
-    function asAnswerList(
-      value: JSONValue,
-    ):
+    function asAnswerList(value: JSONValue):
       | Array<{
           selectedOption?: string
           selectedOptions?: string[]
@@ -245,13 +243,13 @@ const definition: AgentDefinition = {
       return result.length > 0 ? result : undefined
     }
 
-    function asAgentResultList(
-      value: JSONValue,
-    ): Array<{
-      agentName?: string
-      agentType?: string
-      value?: { type?: string; value?: JSONValue }
-    }> | undefined {
+    function asAgentResultList(value: JSONValue):
+      | Array<{
+          agentName?: string
+          agentType?: string
+          value?: { type?: string; value?: JSONValue }
+        }>
+      | undefined {
       if (!Array.isArray(value)) return undefined
       const result: Array<{
         agentName?: string
@@ -311,15 +309,11 @@ const definition: AgentDefinition = {
         }
         case 'propose_write_file': {
           const path = asString(input.path)
-          return path
-            ? `proposed writing: ${path}`
-            : 'proposed a file write'
+          return path ? `proposed writing: ${path}` : 'proposed a file write'
         }
         case 'propose_str_replace': {
           const path = asString(input.path)
-          return path
-            ? `proposed editing: ${path}`
-            : 'proposed a file edit'
+          return path ? `proposed editing: ${path}` : 'proposed a file edit'
         }
         case 'read_subtree': {
           const paths = asStringArray(input.paths)
@@ -334,21 +328,15 @@ const definition: AgentDefinition = {
           if (pattern && flags) {
             return `code search for "${pattern}" (${flags})`
           }
-          return pattern
-            ? `code search for "${pattern}"`
-            : 'code search'
+          return pattern ? `code search for "${pattern}"` : 'code search'
         }
         case 'glob': {
           const pattern = asString(input.pattern)
-          return pattern
-            ? `glob search for ${pattern}`
-            : 'glob search'
+          return pattern ? `glob search for ${pattern}` : 'glob search'
         }
         case 'list_directory': {
           const path = asString(input.path)
-          return path
-            ? `listed directory: ${path}`
-            : 'listed a directory'
+          return path ? `listed directory: ${path}` : 'listed a directory'
         }
         case 'find_files': {
           const prompt = asString(input.prompt)
@@ -451,9 +439,7 @@ const definition: AgentDefinition = {
           return 'Suggested followups'
         case 'web_search': {
           const query = asString(input.query)
-          return query
-            ? `web search for "${query}"`
-            : 'web search'
+          return query ? `web search for "${query}"` : 'web search'
         }
         case 'read_url': {
           const url = asString(input.url)
@@ -465,9 +451,7 @@ const definition: AgentDefinition = {
           if (query) {
             return `Gravity Index ${action ?? 'search'} for "${query}"`
           }
-          return action
-            ? `Gravity Index ${action}`
-            : 'Gravity Index use'
+          return action ? `Gravity Index ${action}` : 'Gravity Index use'
         }
         case 'read_docs': {
           const libraryTitle = asString(input.libraryTitle)
@@ -852,9 +836,10 @@ const definition: AgentDefinition = {
           Array.isArray(toolMessage.content)
         ) {
           for (const part of toolMessage.content) {
-            if (part.type === 'json' && Array.isArray(part.value)) {                const agentResults = asAgentResultList(part.value)
-                if (!agentResults) continue
-                const includedResults = agentResults.filter(
+            if (part.type === 'json' && Array.isArray(part.value)) {
+              const agentResults = asAgentResultList(part.value)
+              if (!agentResults) continue
+              const includedResults = agentResults.filter(
                 (r) =>
                   r.agentType &&
                   !SPAWN_AGENTS_OUTPUT_BLACKLIST.includes(r.agentType),

@@ -16,7 +16,10 @@ import type { TrackEventFn } from '@savant-code/common/types/contracts/analytics
 import type { SendSubagentChunkFn } from '@savant-code/common/types/contracts/client'
 import type { Logger } from '@savant-code/common/types/contracts/logger'
 import type { PrintModeEvent } from '@savant-code/common/types/print-mode'
-import type { AgentState, Subgoal } from '@savant-code/common/types/session-state'
+import type {
+  AgentState,
+  Subgoal,
+} from '@savant-code/common/types/session-state'
 import type { ProjectFileContext } from '@savant-code/common/util/file'
 import type { ToolSet } from 'ai'
 
@@ -27,8 +30,7 @@ import type { ToolSet } from 'ai'
 // the slot to `never` for generic T (which the outer conditional pattern
 // does — see FID-028 historical notes).
 type PresentOrAbsent<K extends PropertyKey, V> =
-  | { [P in K]: V }
-  | { [P in K]: never }
+  { [P in K]: V } | { [P in K]: never }
 
 export type SavantCodeToolHandlerFunction<T extends ToolName = ToolName> = (
   params: {

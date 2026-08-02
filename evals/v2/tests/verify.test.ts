@@ -1,8 +1,11 @@
-import { describe, it, expect, beforeEach } from 'bun:test'
 import { writeFile } from 'node:fs/promises'
 import path from 'node:path'
-import { DeterministicVerifier } from '../src/verify'
+
+import { describe, it, expect, beforeEach } from 'bun:test'
+
 import { TempDirSandbox } from '../src/sandboxes/tempdir'
+import { DeterministicVerifier } from '../src/verify'
+
 import type { Sandbox, CommandResult } from '../src/sandbox'
 import type { TaskDefinition } from '../src/schema'
 
@@ -157,7 +160,8 @@ describe('DeterministicVerifier', () => {
           timeout_seconds: 60,
           deterministic_checks: [
             {
-              command: process.platform === 'win32' ? 'type data.txt' : 'cat data.txt',
+              command:
+                process.platform === 'win32' ? 'type data.txt' : 'cat data.txt',
               expected_exit_code: 0,
               retry_count: 0,
               retry_condition: 'infra',
@@ -166,7 +170,9 @@ describe('DeterministicVerifier', () => {
         },
       })
 
-      const verifier = new DeterministicVerifier(sandbox, { applyGoldenPatch: true })
+      const verifier = new DeterministicVerifier(sandbox, {
+        applyGoldenPatch: true,
+      })
       const result = await verifier.verify(task)
       expect(result.passed).toBe(true)
       expect(result.checks[0].status).toBe('PASS')

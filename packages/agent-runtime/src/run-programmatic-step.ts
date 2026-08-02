@@ -1,7 +1,10 @@
 import { HandleStepsYieldValueSchema } from '@savant-code/common/types/agent-template'
 import { getErrorObject } from '@savant-code/common/util/error'
 import { assistantMessage } from '@savant-code/common/util/messages'
-import { toLogValue, safeToJSONValue } from '@savant-code/common/util/type-narrowing'
+import {
+  toLogValue,
+  safeToJSONValue,
+} from '@savant-code/common/util/type-narrowing'
 import { cloneDeep } from 'lodash'
 
 import { clearProposedContentForRun } from './tools/handlers/tool/proposed-content-store'
@@ -84,7 +87,8 @@ export async function runProgrammaticStep(
     stepNumber: number
     stepsComplete: boolean
     template: AgentTemplate
-    toolCallParams: Record<string, string | number | boolean | null | undefined> | undefined
+    toolCallParams:
+      Record<string, string | number | boolean | null | undefined> | undefined
     sendAction: SendActionFn
     system: string | undefined
     userId: string | undefined
@@ -160,7 +164,6 @@ export async function runProgrammaticStep(
   if (!generator) {
     const createLogMethod =
       (level: 'debug' | 'info' | 'warn' | 'error') =>
-       
       (data: unknown, msg?: string) => {
         const logValue = toLogValue(data)
         const jsonValue = safeToJSONValue(data)
@@ -310,7 +313,10 @@ export async function runProgrammaticStep(
       }
 
       if ('type' in result.value && result.value.type === 'GENERATE_N') {
-        logger.info({ resultValue: toLogValue(result.value) }, 'GENERATE_N yielded')
+        logger.info(
+          { resultValue: toLogValue(result.value) },
+          'GENERATE_N yielded',
+        )
         // Handle GENERATE_N: generate n responses using the LLM
         generateN = result.value.n
         endTurn = false
@@ -439,7 +445,8 @@ export const getPublicAgentState = (
     agentId,
     runId,
     parentId,
-    messageHistory: messageHistory as unknown as PublicAgentState['messageHistory'],
+    messageHistory:
+      messageHistory as unknown as PublicAgentState['messageHistory'],
     output,
     systemPrompt,
     toolDefinitions,

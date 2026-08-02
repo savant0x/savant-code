@@ -1,11 +1,15 @@
 # Session Summary — 2026-07-25 12:00
 
 ## Session Type
+
 Feature Implementation / Bug Fix / ECHO Compliance
 
 ## Summary
 
-Implemented a four-layer progressive context compaction system to fix the critical issue where Savant's context window fills during long sessions with zero automatic intervention. Additionally, discovered and fixed 12 bugs across FSM gating, tool permissions, token limits, and context window wiring. The session expanded from "context fills with no compaction" to a comprehensive audit of the entire tool execution pipeline.
+Implemented a four-layer progressive context compaction system to fix the critical issue where Savant's context window
+fills during long sessions with zero automatic intervention. Additionally, discovered and fixed 12 bugs across FSM
+gating, tool permissions, token limits, and context window wiring. The session expanded from "context fills with no
+compaction" to a comprehensive audit of the entire tool execution pipeline.
 
 ## Planned Work
 
@@ -23,16 +27,19 @@ Implemented a four-layer progressive context compaction system to fix the critic
 ## FIDs Created & Resolved
 
 ### FID-2026-0725-085: Context Compaction System
+
 **Status:** Verified
 **Severity:** Critical
 **12 issues found and fixed across 10 files**
 
 #### New Files Created
+
 | File | Purpose |
 |------|---------|
 | `packages/agent-runtime/src/context-compactor.ts` | ContextCompactor runtime service — microCompact, autoCompact threshold, circuit breaker, degradation warnings |
 
 #### Files Modified
+
 | File | Changes |
 |------|---------|
 | `packages/agent-runtime/src/run-agent-step.ts` | MicroCompact integration, autoCompact threshold check, ContextCompactor initialization with resolved context window |
@@ -48,6 +55,7 @@ Implemented a four-layer progressive context compaction system to fix the critic
 ## Bugs Fixed
 
 ### Critical (4)
+
 | ID | Issue | Fix |
 |----|-------|-----|
 | BUG-001 | spawn_agents error lacks agent ID | Added `[agent: ${agentTemplate.id}]` prefix |
@@ -56,6 +64,7 @@ Implemented a four-layer progressive context compaction system to fix the critic
 | CTX-003 | Hardcoded 200k context window | Resolves from model name via inferContextWindowFromModel() |
 
 ### High (5)
+
 | ID | Issue | Fix |
 |----|-------|-----|
 | BUG-003 | Allowlist rejects valid Windows commands | Denylist architecture |
@@ -65,6 +74,7 @@ Implemented a four-layer progressive context compaction system to fix the critic
 | CTX-007 | UI resolves context window but runtime never reads it | Wired through createRunConfig to loopAgentSteps |
 
 ### Medium (3)
+
 | ID | Issue | Fix |
 |----|-------|-----|
 | BUG-005 | FSM documentation stale vs runtime | Updated FSM Phase Gating table |
@@ -72,6 +82,7 @@ Implemented a four-layer progressive context compaction system to fix the critic
 | CTX-008 | Three different token estimation methods | Documented; consistent chars/3.5 heuristic |
 
 ### Low (1)
+
 | ID | Issue | Status |
 |----|-------|--------|
 | BUG-002 | No FSM phase gating tests | Deferred — new test files needed |
@@ -79,20 +90,26 @@ Implemented a four-layer progressive context compaction system to fix the critic
 ## Architecture Decisions
 
 ### Runtime Service, Not Spawned Agent
-Compaction is a runtime service in `packages/agent-runtime/`, not a spawned agent. This avoids the chicken-and-egg problem where the compaction agent inherits the bloated context it's trying to compress.
+
+Compaction is a runtime service in `packages/agent-runtime/`, not a spawned agent. This avoids the chicken-and-egg
+problem where the compaction agent inherits the bloated context it's trying to compress.
 
 ### Denylist > Allowlist
-The `run_readonly_command` allowlist broke on valid commands (findstr, 2>nul). A denylist blocks known-dangerous commands while allowing all others — more maintainable and doesn't break on new/OS-specific commands.
+
+The `run_readonly_command` allowlist broke on valid commands (findstr, 2>nul). A denylist blocks known-dangerous
+commands while allowing all others — more maintainable and doesn't break on new/OS-specific commands.
 
 ### Context Window Wiring
+
 The resolved context window from OpenRouter now flows through the full stack:
-```
+```text
 CLI → resolveContextWindowForModel → createRunConfig → SDK → loopAgentSteps → ContextCompactor → handleSteps → context-pruner
 ```
 
 ## Verification
 
 ### Typecheck Results (Final)
+
 | Workspace | Status |
 |-----------|--------|
 | `packages/agent-runtime` | ✅ PASS |
@@ -108,16 +125,26 @@ CLI → resolveContextWindowForModel → createRunConfig → SDK → loopAgentSt
 
 ## Lessons Learned
 
-1. **Scope expands when you investigate.** Starting from "context fills with no compaction" led to discovering 12 bugs across 10 files. Never pass over an issue during testing.
-2. **Token limits must be wired through the full stack.** The UI resolved the correct context window but the runtime never received it — 4 disconnected paths all using different hardcoded values.
-3. **Template literals with backticks are dangerous in TypeScript.** Rewrote ECHO_PROTOCOL_INSTRUCTIONS as array-join to avoid template literal escaping issues.
-4. **Runtime services beat spawned agents for compaction.** The context-pruner agent inherits the bloated context it's trying to compress — a runtime service operates on the message array directly.
-5. **Allowlist → denylist is almost always the right architectural choice.** The run_readonly_command allowlist broke on valid commands; a denylist would have been maintainable.
-6. **Error messages must include agent context.** The "not currently available" error was impossible to debug without knowing which agent hit it.
-7. **Fallback UX matters as much as the happy path.** Users need to know what happens during compaction failures, not just that failures are handled.
-8. **Reference repos are invaluable.** hermes-agent (trajectory_compressor.py), openclaw (context-engine), and openclaude (autoCompact/compact/microCompact) provided proven patterns for progressive compaction.
-9. **str_replace with template literals is fragile.** When editing files containing TypeScript template literals, use write_file to rewrite the entire section instead of str_replace.
-10. **FSM phase gating documentation must stay in sync with runtime.** The prompt-level FSM table was stale — only 5 tools are actually phase-gated in the runtime.
+1. **Scope expands when you investigate.** Starting from "context fills with no compaction" led to discovering 12 bugs
+   across 10 files. Never pass over an issue during testing.
+2. **Token limits must be wired through the full stack.** The UI resolved the correct context window but the runtime
+   never received it — 4 disconnected paths all using different hardcoded values.
+3. **Template literals with backticks are dangerous in TypeScript.** Rewrote ECHO_PROTOCOL_INSTRUCTIONS as array-join to
+   avoid template literal escaping issues.
+4. **Runtime services beat spawned agents for compaction.** The context-pruner agent inherits the bloated context it's
+   trying to compress — a runtime service operates on the message array directly.
+5. **Allowlist → denylist is almost always the right architectural choice.** The run_readonly_command allowlist broke on
+   valid commands; a denylist would have been maintainable.
+6. **Error messages must include agent context.** The "not currently available" error was impossible to debug without
+   knowing which agent hit it.
+7. **Fallback UX matters as much as the happy path.** Users need to know what happens during compaction failures, not
+   just that failures are handled.
+8. **Reference repos are invaluable.** hermes-agent (trajectory_compressor.py), openclaw (context-engine), and
+   openclaude (autoCompact/compact/microCompact) provided proven patterns for progressive compaction.
+9. **str_replace with template literals is fragile.** When editing files containing TypeScript template literals, use
+   write_file to rewrite the entire section instead of str_replace.
+10. **FSM phase gating documentation must stay in sync with runtime.** The prompt-level FSM table was stale — only 5
+    tools are actually phase-gated in the runtime.
 
 ## Open Items
 

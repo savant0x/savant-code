@@ -1,9 +1,12 @@
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { registerResourceTemplates } from "./templates.js";
-import { registerFileResources } from "./files.js";
-import { fileURLToPath } from "url";
-import { dirname, join } from "path";
 import { readFileSync } from "fs";
+import { dirname, join } from "path";
+import { fileURLToPath } from "url";
+
+
+import { registerFileResources } from "./files.js";
+import { registerResourceTemplates } from "./templates.js";
+
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
 /**
  * Register the resources with the MCP server.

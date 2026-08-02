@@ -5,8 +5,7 @@ import { loadSettings, saveSettings } from '../utils/settings'
 import type { AgentMode } from '../utils/constants'
 
 export type ScaffoldConfirmState =
-  | { kind: 'idle' }
-  | { kind: 'pending'; targetMode: AgentMode }
+  { kind: 'idle' } | { kind: 'pending'; targetMode: AgentMode }
 
 /**
  * Manages the first-click confirmation for SCAFFOLD mode.

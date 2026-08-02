@@ -67,7 +67,9 @@ export const handleFindFiles = (async (
   } = params
   const { prompt } = toolCall.input
 
-  const fileRequestMessagesTokens = countTokensJson(agentState.messageHistory as JSONValue)
+  const fileRequestMessagesTokens = countTokensJson(
+    agentState.messageHistory as JSONValue,
+  )
   const system = getSearchSystemPrompt({
     fileContext,
     messagesTokens: fileRequestMessagesTokens,

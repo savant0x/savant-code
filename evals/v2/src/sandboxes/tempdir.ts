@@ -1,7 +1,8 @@
+import { spawn } from 'node:child_process'
 import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
-import { spawn } from 'node:child_process'
+
 import type { Sandbox, CommandOptions, CommandResult } from '../sandbox'
 
 export interface TempDirSandboxOptions {
@@ -46,7 +47,6 @@ export class TempDirSandbox implements Sandbox {
     const cwd = this.getWorkingDir()
     const resolvedCwd = options.cwd ? path.join(cwd, options.cwd) : cwd
 
-    const isWindows = process.platform === 'win32'
     const child = spawn(command, [], {
       cwd: resolvedCwd,
       shell: options.shell ?? true,
@@ -69,7 +69,7 @@ export class TempDirSandbox implements Sandbox {
 
       const timeoutId =
         timeout && timeout > 0
-          ?          setTimeout(() => {
+          ? setTimeout(() => {
               killed = true
               // Best-effort termination. On Windows this only kills the shell
               // process; a future Docker/Firecracker sandbox should be used for
@@ -107,7 +107,9 @@ export class TempDirSandbox implements Sandbox {
     this.workingDir = ''
   }
 
-  private buildEnv(overrides: Record<string, string> | undefined): NodeJS.ProcessEnv {
+  private buildEnv(
+    overrides: Record<string, string> | undefined,
+  ): NodeJS.ProcessEnv {
     // MVP: inherit the host environment. This leaks host env variables, but it
     // keeps temp-dir sandbox simple. Use Docker/Firecracker for real isolation.
     return {

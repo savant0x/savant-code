@@ -1,20 +1,14 @@
+import type { Sandbox } from './sandbox'
+import type { TaskDefinition } from './schema'
 import type { PrintModeEvent } from '@savant-code/common/types/print-mode'
 import type { CustomToolDefinition, RunState } from '@savant-code/sdk'
-import type { TaskDefinition } from './schema'
-import type { Sandbox } from './sandbox'
 
 /**
  * ECHO phases that the harness tracks.
  * The unknown value is used when a phase has not been observed yet.
  */
 export type EchoPhase =
-  | 'idle'
-  | 'red'
-  | 'green'
-  | 'audit'
-  | 'self_correct'
-  | 'complete'
-  | 'unknown'
+  'idle' | 'red' | 'green' | 'audit' | 'self_correct' | 'complete' | 'unknown'
 
 /**
  * A fault injected by the harness to test agent resilience.

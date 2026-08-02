@@ -28,9 +28,9 @@ export const CopyButton = memo(function CopyButton({
   label = 'Copy to clipboard',
 }: CopyButtonProps) {
   const theme = useTheme()
-  const [state, setState] = useState<
-    'idle' | 'hovering' | 'copied' | 'failed'
-  >('idle')
+  const [state, setState] = useState<'idle' | 'hovering' | 'copied' | 'failed'>(
+    'idle',
+  )
   const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const handleMouseOver = useCallback(() => {

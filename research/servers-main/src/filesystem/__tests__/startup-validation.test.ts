@@ -1,8 +1,9 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { spawn } from 'child_process';
-import * as path from 'path';
 import * as fs from 'fs/promises';
 import * as os from 'os';
+import * as path from 'path';
+
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 
 const SERVER_PATH = path.join(__dirname, '..', 'dist', 'index.js');
 

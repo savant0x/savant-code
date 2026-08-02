@@ -1,4 +1,3 @@
- 
 /**
  * Typed database mock factory for testing.
  *

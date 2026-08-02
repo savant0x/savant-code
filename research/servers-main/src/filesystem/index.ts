@@ -1,19 +1,19 @@
 #!/usr/bin/env node
 
+import { createReadStream } from "fs";
+import fs from "fs/promises";
+import path from "path";
+import { pathToFileURL } from "url";
+
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
   RootsListChangedNotificationSchema,
   type Root,
 } from "@modelcontextprotocol/sdk/types.js";
-import fs from "fs/promises";
-import { createReadStream } from "fs";
-import path from "path";
-import { pathToFileURL } from "url";
-import { z } from "zod";
 import { minimatch } from "minimatch";
-import { normalizePath, expandHome } from './path-utils.js';
-import { getValidRootDirectories } from './roots-utils.js';
+import { z } from "zod";
+
 import {
   // Function imports
   formatSize,
@@ -27,6 +27,8 @@ import {
   headFile,
   setAllowedDirectories,
 } from './lib.js';
+import { normalizePath, expandHome } from './path-utils.js';
+import { getValidRootDirectories } from './roots-utils.js';
 
 // Command line argument parsing
 const args = process.argv.slice(2);

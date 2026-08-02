@@ -1,13 +1,15 @@
-import { z } from "zod";
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import {
+  ElicitResultSchema,
+} from "@modelcontextprotocol/sdk/types.js";
+import { z } from "zod";
+
+import type { CreateTaskResult } from "@modelcontextprotocol/sdk/experimental/tasks";
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type {
   CallToolResult,
   GetTaskResult,
   Task,
-  ElicitResult,
-  ElicitResultSchema,
-} from "@modelcontextprotocol/sdk/types.js";
-import { CreateTaskResult } from "@modelcontextprotocol/sdk/experimental/tasks";
+  ElicitResult} from "@modelcontextprotocol/sdk/types.js";
 
 // Tool input schema
 const SimulateResearchQuerySchema = z.object({

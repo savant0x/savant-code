@@ -52,7 +52,8 @@ export interface SavantFreeModel {
 export const SAVANT_FREE_DEPLOYMENT_HOURS_LABEL = '9am ET-5pm PT every day'
 export const SAVANT_FREE_GEMINI_PRO_MODEL_ID = 'google/gemini-3.1-pro-preview'
 export const SAVANT_FREE_DEEPSEEK_V4_PRO_MODEL_ID = 'deepseek/deepseek-v4-pro'
-export const SAVANT_FREE_DEEPSEEK_V4_FLASH_MODEL_ID = 'deepseek/deepseek-v4-flash'
+export const SAVANT_FREE_DEEPSEEK_V4_FLASH_MODEL_ID =
+  'deepseek/deepseek-v4-flash'
 /** DeepSeek V4 Flash served by Fireworks instead of DeepSeek's direct API.
  *  Used only by savant-free.com/chat, where Fireworks' faster inference is worth
  *  a slightly less capable serving stack. Not in SUPPORTED_SAVANT_FREE_MODELS or
@@ -110,7 +111,8 @@ export const SAVANT_FREE_GLM_V52_REFERRAL_ENABLED = true
 export const SAVANT_FREE_GLM_V52_SESSION_LENGTH_MS = 60 * 60 * 1000
 export const SAVANT_FREE_LIMITED_SESSION_RESET_TIMEZONE =
   SAVANT_FREE_PREMIUM_SESSION_RESET_TIMEZONE
-export const SAVANT_FREE_LIMITED_SESSION_PERIOD = SAVANT_FREE_PREMIUM_SESSION_PERIOD
+export const SAVANT_FREE_LIMITED_SESSION_PERIOD =
+  SAVANT_FREE_PREMIUM_SESSION_PERIOD
 
 /**
  * Streak rewards. Once a user reaches a `SAVANT_FREE_STREAK_REWARD_INTERVAL_DAYS`
@@ -333,7 +335,9 @@ export const SAVANT_FREE_WEB_PREMIUM_MODEL_IDS = [
 /** Models unlocked by referrals, metered by the weekly GLM session pool rather
  *  than the daily premium pool. Kept separate from SAVANT_FREE_PREMIUM_MODEL_IDS
  *  so GLM never falls into the shared 5/day premium quota. */
-export const SAVANT_FREE_GLM_V52_MODEL_IDS = [SAVANT_FREE_GLM_V52_MODEL_ID] as const
+export const SAVANT_FREE_GLM_V52_MODEL_IDS = [
+  SAVANT_FREE_GLM_V52_MODEL_ID,
+] as const
 
 /** Models that occupy the single per-user "premium-bucket" CONCURRENCY slot in
  *  SavantFree Desktop's multi-session mode: at most one of these may have an
@@ -415,8 +419,10 @@ export const SAVANT_FREE_TRACED_MODEL_IDS = SUPPORTED_SAVANT_FREE_MODELS.filter(
 export type SavantFreeModelId = (typeof SAVANT_FREE_MODELS)[number]['id']
 export type SupportedSavantFreeModelId =
   (typeof SUPPORTED_SAVANT_FREE_MODELS)[number]['id']
-export type SavantFreePremiumModelId = (typeof SAVANT_FREE_PREMIUM_MODEL_IDS)[number]
-export type SavantFreeWebAllModelId = (typeof SAVANT_FREE_WEB_ALL_MODELS)[number]['id']
+export type SavantFreePremiumModelId =
+  (typeof SAVANT_FREE_PREMIUM_MODEL_IDS)[number]
+export type SavantFreeWebAllModelId =
+  (typeof SAVANT_FREE_WEB_ALL_MODELS)[number]['id']
 export type SavantFreeWebPremiumModelId =
   (typeof SAVANT_FREE_WEB_PREMIUM_MODEL_IDS)[number]
 
@@ -442,7 +448,8 @@ export const LIMITED_SAVANT_FREE_MODEL_IDS = [
   SAVANT_FREE_MIMO_V25_MODEL_ID,
 ] as const
 export const LIMITED_SAVANT_FREE_MODELS = LIMITED_SAVANT_FREE_MODEL_IDS.map(
-  (modelId) => SUPPORTED_SAVANT_FREE_MODELS.find((model) => model.id === modelId)!,
+  (modelId) =>
+    SUPPORTED_SAVANT_FREE_MODELS.find((model) => model.id === modelId)!,
 )
 
 export type SavantFreeAccessTier = 'full' | 'limited'
@@ -745,7 +752,9 @@ export function getSavantFreeModel(id: string): SavantFreeModel {
 export function getSavantFreeWebModel(id: string): SavantFreeModel {
   return (
     SAVANT_FREE_WEB_ALL_MODELS.find((m) => m.id === id) ??
-    SAVANT_FREE_WEB_ALL_MODELS.find((m) => m.id === FALLBACK_SAVANT_FREE_MODEL_ID)!
+    SAVANT_FREE_WEB_ALL_MODELS.find(
+      (m) => m.id === FALLBACK_SAVANT_FREE_MODEL_ID,
+    )!
   )
 }
 

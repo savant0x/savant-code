@@ -10,7 +10,7 @@
 
 Paste this into freebuff:
 
-```
+```text
 Pick up FID-2026-0728-008 (dev/fids/FID-2026-0728-008-history-session-capture.md). 
 The root cause analysis is complete. Read the FID, then read the handoff at 
 dev/session-summaries/2026-07-28-history-capture-handoff.md for the exact 
@@ -34,31 +34,38 @@ Two write paths exist:
 | `saveChatState()` (sync) | ✅ | ✅ | Turn start + turn end |
 | `scheduleCheckpointSave()` → `saveChatStateAsync()` (async) | ❌ | ✅ | Every ~5s during streaming |
 
-**The bug:** `loadMostRecentChatState()` (line ~150) tries DB first. If DB returns a result, it returns immediately — never checking the filesystem for a newer checkpoint. Messages saved only via async checkpoints (mid-stream state) are silently discarded on reload.
+**The bug:** `loadMostRecentChatState()` (line ~150) tries DB first. If DB returns a result, it returns immediately —
+never checking the filesystem for a newer checkpoint. Messages saved only via async checkpoints (mid-stream state) are
+silently discarded on reload.
 
-**The fix:** `saveChatStateAsync` must also update the DB (throttled, e.g. every 30s). AND/OR `loadMostRecentChatState` must compare DB timestamp vs filesystem timestamp and prefer the newer one.
+**The fix:** `saveChatStateAsync` must also update the DB (throttled, e.g. every 30s). AND/OR `loadMostRecentChatState`
+must compare DB timestamp vs filesystem timestamp and prefer the newer one.
 
 ### Issue 2: Dual-Source History Listing
 
 **File:** `cli/src/utils/chat-history.ts`
 
 `getAllChats()` merges results from:
+
 - `getAllChatsFromDb()` — reads all chat IDs from SQLite
 - `getAllChatsFromDisk()` — scans `chats/` dir for `chat-meta.json`
 
-These can diverge. A DB entry may exist for a chat whose FS data was lost, or vice versa → ghost sessions (0 messages) or missing sessions.
+These can diverge. A DB entry may exist for a chat whose FS data was lost, or vice versa → ghost sessions (0 messages)
+or missing sessions.
 
 ### Issue 3: No Session-Completeness Marker
 
 **File:** `cli/src/utils/chat-meta.ts`
 
-`ChatMeta` type has `title`, `timestamp`, `messageCount`, `model` — but no `completed: boolean`. Users can't distinguish a graceful session end from a crash.
+`ChatMeta` type has `title`, `timestamp`, `messageCount`, `model` — but no `completed: boolean`. Users can't distinguish
+a graceful session end from a crash.
 
 ### Issue 4: Sidecar Staleness Window
 
 **File:** `cli/src/utils/chat-meta.ts`
 
-`writeChatMeta` records `messagesSize`/`messagesMtimeMs` for staleness detection. But there's a window between `chat-messages.json` write and `chat-meta.json` write where concurrent reads get stale data.
+`writeChatMeta` records `messagesSize`/`messagesMtimeMs` for staleness detection. But there's a window between
+`chat-messages.json` write and `chat-meta.json` write where concurrent reads get stale data.
 
 ---
 
@@ -125,11 +132,13 @@ export interface ChatMeta {
 }
 ```
 
-Set `completed: true` in the final `saveChatState` call at turn end (in `use-send-message.ts`, after the `settleCheckpointSave()` + final `saveChatState()`).
+Set `completed: true` in the final `saveChatState` call at turn end (in `use-send-message.ts`, after the
+`settleCheckpointSave()` + final `saveChatState()`).
 
 ### Step 4: Fix getAllChats reconciliation (chat-history.ts)
 
-When a DB entry has no matching filesystem data, skip it. When a filesystem entry has no DB entry, create one. Filter out sessions with 0 messages.
+When a DB entry has no matching filesystem data, skip it. When a filesystem entry has no DB entry, create one. Filter
+out sessions with 0 messages.
 
 ### Step 5: Close sidecar staleness window (chat-meta.ts)
 
@@ -142,6 +151,7 @@ Before reading from the store, verify the session is fully loaded. If not, load 
 ### Step 7: Tests
 
 Add tests covering:
+
 1. Checkpoint-then-restart preserves all messages
 2. Incomplete sessions show warning in history
 3. DB/filesystem reconciliation produces correct listing
@@ -151,7 +161,7 @@ Add tests covering:
 
 ## Key Files (Read These First)
 
-```
+```text
 cli/src/utils/run-state-storage.ts    — Core persistence (saveChatState, scheduleCheckpointSave, loadMostRecentChatState)
 cli/src/utils/chat-history.ts         — getAllChats() history listing
 cli/src/utils/chat-meta.ts            — Sidecar read/write (readChatMeta, writeChatMeta)
@@ -172,6 +182,7 @@ cd cli && bun test src/utils/__tests__/
 ```
 
 Manual test checklist:
+
 - [ ] Start a long session, kill mid-stream, restart, `/history` shows all messages
 - [ ] `/copy` exports complete transcript
 - [ ] Incomplete sessions show visual indicator in history

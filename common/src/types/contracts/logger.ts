@@ -13,7 +13,11 @@ export type LogValue =
   | Uint8Array
   | object
 
-export type LoggerFn = (data: LogValue, msg?: string, ...args: LogValue[]) => void
+export type LoggerFn = (
+  data: LogValue,
+  msg?: string,
+  ...args: LogValue[]
+) => void
 
 export type Logger = {
   debug: LoggerFn

@@ -1,4 +1,7 @@
-import { assistantMessage, userMessage } from '@savant-code/common/util/messages'
+import {
+  assistantMessage,
+  userMessage,
+} from '@savant-code/common/util/messages'
 
 import type { SavantCodeToolHandlerFunction } from '../handler-function-type'
 import type {

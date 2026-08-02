@@ -44,8 +44,12 @@ describe('getSavantFreeStreakLine', () => {
 
 describe('getSavantFreeStreakBonusNote', () => {
   test('hidden below the 7-day milestone', () => {
-    expect(getSavantFreeStreakBonusNote({ streak: 0, accessTier: 'full' })).toBeNull()
-    expect(getSavantFreeStreakBonusNote({ streak: 6, accessTier: 'full' })).toBeNull()
+    expect(
+      getSavantFreeStreakBonusNote({ streak: 0, accessTier: 'full' }),
+    ).toBeNull()
+    expect(
+      getSavantFreeStreakBonusNote({ streak: 6, accessTier: 'full' }),
+    ).toBeNull()
     expect(
       getSavantFreeStreakBonusNote({ streak: 6, accessTier: 'limited' }),
     ).toBeNull()
@@ -61,7 +65,10 @@ describe('getSavantFreeStreakBonusNote', () => {
   })
 
   test('limited access advertises only the daily session perk', () => {
-    const note = getSavantFreeStreakBonusNote({ streak: 14, accessTier: 'limited' })
+    const note = getSavantFreeStreakBonusNote({
+      streak: 14,
+      accessTier: 'limited',
+    })
     expect(note).toContain('bonus session')
     expect(note).toContain('every day')
     expect(note).not.toContain('GLM')

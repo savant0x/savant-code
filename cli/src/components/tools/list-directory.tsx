@@ -29,7 +29,10 @@ export const ListDirectoryComponent = defineToolComponent({
           }
           return dir
         })
-        .filter((path): path is string => typeof path === 'string' && path.trim().length > 0)
+        .filter(
+          (path): path is string =>
+            typeof path === 'string' && path.trim().length > 0,
+        )
     } else {
       const singlePath = getString(input, 'path')
       if (singlePath && singlePath.trim().length > 0) {

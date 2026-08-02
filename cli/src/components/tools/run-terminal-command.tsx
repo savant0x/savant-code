@@ -12,7 +12,9 @@ export interface ParsedTerminalOutput {
  * Parse terminal command output from JSON or raw string format.
  * Exported for testing.
  */
-export const parseTerminalOutput = (rawOutput: string | undefined): ParsedTerminalOutput => {
+export const parseTerminalOutput = (
+  rawOutput: string | undefined,
+): ParsedTerminalOutput => {
   if (!rawOutput) {
     return { output: null }
   }
@@ -51,9 +53,14 @@ export const RunTerminalCommandComponent = defineToolComponent({
 
   render(toolBlock, _theme, options): ToolRenderConfig {
     // Extract command and timeout from input
-    const input = toolBlock.input as { command?: string; timeout_seconds?: number } | undefined
-    const command = typeof input?.command === 'string' ? input.command.trim() : ''
-    const timeoutSeconds = typeof input?.timeout_seconds === 'number' ? input.timeout_seconds : undefined
+    const input = toolBlock.input as
+      { command?: string; timeout_seconds?: number } | undefined
+    const command =
+      typeof input?.command === 'string' ? input.command.trim() : ''
+    const timeoutSeconds =
+      typeof input?.timeout_seconds === 'number'
+        ? input.timeout_seconds
+        : undefined
 
     // Extract output and startingCwd from tool result
     const { output, startingCwd } = parseTerminalOutput(toolBlock.output)

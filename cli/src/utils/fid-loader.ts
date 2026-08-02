@@ -34,9 +34,7 @@ const DEFAULT_FIDS_DIR = join('dev', 'fids')
  * Returns the trimmed value, or `undefined` if the field is not found.
  */
 function extractField(content: string, field: string): string | undefined {
-  const match = content.match(
-    new RegExp(`\\*\\*${field}:\\*\\*\\s*(.+)`, 'm'),
-  )
+  const match = content.match(new RegExp(`\\*\\*${field}:\\*\\*\\s*(.+)`, 'm'))
   const value = match?.[1]?.trim()
   return value && value.length > 0 ? value : undefined
 }
@@ -101,7 +99,9 @@ function parseFidFile(filePath: string): FidData | undefined {
  *   Returns an empty array if the directory does not exist or contains no
  *   valid FID files (Law 14 — never throws).
  */
-export function loadFids(fidsDir: string = join(process.cwd(), DEFAULT_FIDS_DIR)): FidData[] {
+export function loadFids(
+  fidsDir: string = join(process.cwd(), DEFAULT_FIDS_DIR),
+): FidData[] {
   if (!existsSync(fidsDir)) return []
 
   let entries: string[]

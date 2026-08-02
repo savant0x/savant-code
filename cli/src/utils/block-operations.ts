@@ -19,7 +19,12 @@ const generateThinkingId = (): string => {
 }
 
 type AgentTextUpdate =
-  | { type: 'text'; mode: 'append'; content: string; textType: 'text' | 'reasoning' }
+  | {
+      type: 'text'
+      mode: 'append'
+      content: string
+      textType: 'text' | 'reasoning'
+    }
   | { type: 'text'; mode: 'replace'; content: string }
 
 const updateAgentText = (
@@ -68,7 +73,10 @@ const updateAgentText = (
 
     // Handle native reasoning chunks for agent blocks
     if (update.textType === 'reasoning') {
-      const updatedAgentBlocks = appendNativeReasoningToBlocks(agentBlocks, text)
+      const updatedAgentBlocks = appendNativeReasoningToBlocks(
+        agentBlocks,
+        text,
+      )
       const updatedContent = (block.content ?? '') + text
       return {
         ...block,
@@ -261,7 +269,13 @@ const appendTextWithThinkParsingToBlocks = (
       const thinkingOpen =
         isLastSegment && !textToParse.endsWith(THINK_CLOSE_TAG)
       if (thinkingOpen) {
-        nextBlocks.push(createReasoningBlock(segment.content, thinkingOpen, generateThinkingId()))
+        nextBlocks.push(
+          createReasoningBlock(
+            segment.content,
+            thinkingOpen,
+            generateThinkingId(),
+          ),
+        )
       }
     } else {
       const prevBlock = nextBlocks[nextBlocks.length - 1]
@@ -326,7 +340,9 @@ const appendNativeReasoningToBlocks = (
  * Checks if a block is a native reasoning block (not from <think> tags).
  * Native reasoning blocks have textType === 'reasoning' but thinkingOpen === undefined.
  */
-export const isNativeReasoningBlock = (block: ContentBlock | undefined): boolean => {
+export const isNativeReasoningBlock = (
+  block: ContentBlock | undefined,
+): boolean => {
   if (!block || block.type !== 'text') {
     return false
   }
@@ -345,7 +361,9 @@ export const closeNativeReasoningInAgent = (
     if (block.type !== 'agent') {
       return block
     }
-    const closedBlocks = block.blocks ? closeNativeReasoningBlock(block.blocks) : undefined
+    const closedBlocks = block.blocks
+      ? closeNativeReasoningBlock(block.blocks)
+      : undefined
     if (closedBlocks && closedBlocks !== block.blocks) {
       return { ...block, blocks: closedBlocks }
     }
@@ -356,7 +374,7 @@ export const closeNativeReasoningInAgent = (
 /**
  * Marks the last native reasoning block as complete by setting thinkingOpen: false.
  * This triggers the UI to collapse the thinking block.
- * 
+ *
  * Note: We search backwards through all blocks because agent/tool blocks may have
  * been added after the reasoning block but before text output starts.
  */
@@ -371,16 +389,16 @@ export const closeNativeReasoningBlock = (
       break
     }
   }
-  
+
   if (lastReasoningIndex === -1) {
     return blocks
   }
-  
+
   const reasoningBlock = blocks[lastReasoningIndex]
   if (reasoningBlock.type !== 'text') {
     return blocks
   }
-  
+
   const nextBlocks = [...blocks]
   nextBlocks[lastReasoningIndex] = {
     ...reasoningBlock,
@@ -428,7 +446,10 @@ export const appendTextToRootStream = (
 
   // For text type: first close any open native reasoning block, then parse for <think> tags
   const blocksWithClosedReasoning = closeNativeReasoningBlock(blocks)
-  return appendTextWithThinkParsingToBlocks(blocksWithClosedReasoning, delta.text)
+  return appendTextWithThinkParsingToBlocks(
+    blocksWithClosedReasoning,
+    delta.text,
+  )
 }
 
 export const appendTextToAgentBlock = (
@@ -465,7 +486,9 @@ export const appendToolToAgentBlock = (
       return block
     }
     // Close any open native reasoning blocks before adding the tool
-    const agentBlocks = block.blocks ? closeNativeReasoningBlock([...block.blocks]) : []
+    const agentBlocks = block.blocks
+      ? closeNativeReasoningBlock([...block.blocks])
+      : []
     return { ...block, blocks: [...agentBlocks, toolBlock] }
   })
 
@@ -475,9 +498,11 @@ export const markAgentComplete = (blocks: ContentBlock[], agentId: string) =>
       return block
     }
     // Close any open native reasoning blocks when the agent completes
-    const closedBlocks = block.blocks ? closeNativeReasoningBlock(block.blocks) : undefined
-    return { 
-      ...block, 
+    const closedBlocks = block.blocks
+      ? closeNativeReasoningBlock(block.blocks)
+      : undefined
+    return {
+      ...block,
       status: 'complete' as const,
       ...(closedBlocks && { blocks: closedBlocks }),
     }
@@ -500,7 +525,7 @@ export const markRunningAgentsAsCancelled = (
     let updatedBlocks = block.blocks
       ? markRunningAgentsAsCancelled(block.blocks)
       : undefined
-    
+
     // Close any open native reasoning blocks in this agent
     if (updatedBlocks) {
       updatedBlocks = closeNativeReasoningBlock(updatedBlocks)

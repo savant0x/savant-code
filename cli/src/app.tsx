@@ -2,7 +2,6 @@ import { isRetryableStatusCode, getErrorStatusCode } from '@savant-code/sdk'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 
-
 import { Chat } from './chat'
 import { ChatHistoryScreen } from './components/chat-history-screen'
 import { LoginModal } from './components/login-modal'
@@ -169,7 +168,7 @@ export const App = ({
       resetChatStore()
       setResumeChatId(chatId)
     },
-    [closeChatHistory, resetChatStore]
+    [closeChatHistory, resetChatStore],
   )
 
   const handleNewChat = useCallback(() => {
@@ -188,7 +187,9 @@ export const App = ({
 
   // Derive auth reachability + retrying state from authQuery error
   const authError = authQuery.error
-  const authErrorStatusCode = authError ? getErrorStatusCode(authError) : undefined
+  const authErrorStatusCode = authError
+    ? getErrorStatusCode(authError)
+    : undefined
 
   let authStatus: AuthStatus = 'ok'
   if (authQuery.isError && authErrorStatusCode !== undefined) {

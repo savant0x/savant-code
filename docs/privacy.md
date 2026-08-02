@@ -3,7 +3,7 @@
 > **Scope:** This document describes what data Savant Code collects, where it
 > goes, and how users control it. It covers the CLI, SDK, and agent-runtime.
 >
-> **Version:** v0.0.12
+> **Version:** v0.0.15
 >
 > **Applies to:** `cli`, `sdk`, `packages/agent-runtime`, `common`
 
@@ -14,8 +14,11 @@
 2. **Bring Your Own Key (BYOK).** The user supplies their own API keys. Savant
    Code does not vend, own, or proxy inference credentials.
 3. **Telemetry is user-controlled.** Remote analytics and error reporting
-   default to enabled for new users, can be disabled at any timewith `/telemetry disable`, and are separate from ad consent.
-4. **Controlled credential storage in the BYOK flow.** Provider API keys may be read from environment variables or secure masked user input. Explicit environment variables take precedence; keys entered through `/provider` are stored locally in the user's `credentials.json` with the existing backend credential profile preserved.
+   default to enabled for new users, can be disabled at any time with `/telemetry disable`, and are separate from ad
+   consent.
+4. **Controlled credential storage in the BYOK flow.** Provider API keys may be read from environment variables or
+   secure masked user input. Explicit environment variables take precedence; keys entered through `/provider` are
+   stored locally in the user's `credentials.json` with the existing backend credential profile preserved.
 5. **Transparent network calls.** Every network request the CLI makes is
    documented below.
 
@@ -47,7 +50,9 @@
 ### BYOK API Keys
 
 - Environment-provided BYOK keys are read at runtime and are never copied to
-  disk by Savant Code.
+  disk by Savant Code. Current direct-provider variables include
+  `OPENCODE_GO_API_KEY`, `TOKENROUTER_API_KEY`, `NVIDIA_API_KEY`, and
+  `COMMAND_CODE_API_KEY`.
 - Keys entered through the masked `/provider` flow are stored in the user's
   local `credentials.json` so npm-installed users can configure a provider
   without editing shell profiles.
@@ -65,7 +70,9 @@
 - This file is created with the user's OS permissions and is not shared or
   transmitted.
 - Users can clear this file at any time with the `/logout` command.
-  -Future work (separate FID) will evaluate migrating the backend auth token to the OS keychain or encrypted local storage. For launch, plaintext credential storage is limited to the backend session token and provider keys explicitly entered through `/provider`; environment-provided keys are not copied to disk.
+  - **Future work (separate FID):** Evaluate migrating the backend auth token to the OS keychain or encrypted local
+  storage. For launch, plaintext credential storage is limited to the backend session token and provider keys
+  explicitly entered through `/provider`; environment-provided keys are not copied to disk.
 
 ## 4. Network Calls
 

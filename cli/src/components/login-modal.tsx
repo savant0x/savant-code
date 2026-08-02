@@ -1,11 +1,5 @@
 import { useRenderer } from '@opentui/react'
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { Button } from './button'
 import { useLoginMutation } from '../hooks/use-auth-query'
@@ -194,7 +188,6 @@ export const LoginModal = ({
     onCopyUrl: copyToClipboard,
   })
 
-
   // Calculate terminal width and height for responsive display
   const terminalWidth = renderer?.width || 80
   const terminalHeight = renderer?.height || 24
@@ -341,9 +334,7 @@ export const LoginModal = ({
             }}
           >
             <text style={{ wrapMode: 'word' }}>
-              <span fg={'#00cc00'}>
-                Press ENTER to login...
-              </span>
+              <span fg={'#00cc00'}>Press ENTER to login...</span>
             </text>
           </box>
         )}
@@ -437,19 +428,17 @@ export const LoginModal = ({
               }}
             >
               <text style={{ wrapMode: 'none' }}>
-                <span fg={theme.secondary}>
-                  Waiting for login...
-                </span>
+                <span fg={theme.secondary}>Waiting for login...</span>
               </text>
               {isRemoteSession() && !isVerySmall && (
                 <text style={{ wrapMode: 'word' }}>
                   <span fg={theme.secondary}>
                     Tip: Can't copy? Exit and run{' '}
                   </span>
-                  <span fg={theme.primary}>{IS_SAVANT_FREE ? 'savant-free' : 'savant-code'} login</span>
-                  <span fg={theme.secondary}>
-                    {' '}instead.
+                  <span fg={theme.primary}>
+                    {IS_SAVANT_FREE ? 'savant-free' : 'savant-code'} login
                   </span>
+                  <span fg={theme.secondary}> instead.</span>
                 </text>
               )}
             </box>

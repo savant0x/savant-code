@@ -3,13 +3,18 @@
 
 # @savant-code/code-map
 
-Tree-sitter WASM-powered code parsing and repository mapping utilities. Supplies `@savant-code/agent-runtime` and `@savant-code/evals` with the structural context the agent uses to plan code changes.
+Tree-sitter WASM-powered code parsing and repository mapping utilities. Supplies `@savant-code/agent-runtime` and
+`@savant-code/evals` with the structural context the agent uses to plan code changes.
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](../../LICENSE)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](../../ECHO.md)[![Status](https://img.shields.io/badge/Status-internal-%23ff9500?style=flat-square&logo=github&logoColor=%2300fbff)](../../README.md)
 
 ## Purpose
 
-`@savant-code/code-map` parses repository sources into a per-file AST via tree-sitter WASM (`@vscode/tree-sitter-wasm` + `web-tree-sitter`) and surfaces structural queries (function definitions, class definitions, imports, exports, call sites) to the agent. The agent uses these signals to plan edits intelligently rather than working on raw text. Consumed by `@savant-code/agent-runtime` (for tool-call site discovery) and `@savant-code/evals` (for per-task scoring heuristics).
+`@savant-code/code-map` parses repository sources into a per-file AST via tree-sitter WASM
+(`@vscode/tree-sitter-wasm` + `web-tree-sitter`) and surfaces structural queries (function definitions, class
+definitions, imports, exports, call sites) to the agent. The agent uses these signals to plan edits intelligently
+rather than working on raw text. Consumed by `@savant-code/agent-runtime` (for tool-call site discovery) and
+`@savant-code/evals` (for per-task scoring heuristics).
 
 ## Quick Start
 
@@ -31,7 +36,8 @@ For full Quick Start see the [root README](../../README.md#key-technologies).
 
 <div align="center">
 
-_Part of the [savant-code/savant-code monorepo](https://github.com/savant0x/savant-code), governed by the [ECHO Protocol v0.2.0](../../ECHO.md)._
+_Part of the [savant-code/savant-code monorepo](https://github.com/savant0x/savant-code), governed by the [ECHO
+Protocol v0.2.0](../../ECHO.md)._
 
 **Savant** • 2026
 </div>

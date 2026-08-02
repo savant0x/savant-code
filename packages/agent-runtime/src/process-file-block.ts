@@ -30,20 +30,13 @@ export type WriteFileResult = WriteFileSuccess | WriteFileError
  * Returns a PromptResult wrapping the result:
  * - `{ aborted: false, value: WriteFileResult }` on success or recoverable error
  */
-export async function processFileBlock(
-  params: {
-    path: string
-    initialContentPromise: Promise<string | null>
-    newContent: string
-    logger: Logger
-  },
-): Promise<PromptResult<WriteFileResult>> {
-  const {
-    path,
-    initialContentPromise,
-    newContent,
-    logger,
-  } = params
+export async function processFileBlock(params: {
+  path: string
+  initialContentPromise: Promise<string | null>
+  newContent: string
+  logger: Logger
+}): Promise<PromptResult<WriteFileResult>> {
+  const { path, initialContentPromise, newContent, logger } = params
   const initialContent = await initialContentPromise
 
   if (initialContent === null) {

@@ -47,7 +47,8 @@ export function ProgressBar({
   }, [value, timeline])
 
   const clampedValue = Math.min(Math.max(displayValue, 0), max)
-  const percent = max === 0 ? 0 : Math.min(Math.max((clampedValue / max) * 100, 0), 100)
+  const percent =
+    max === 0 ? 0 : Math.min(Math.max((clampedValue / max) * 100, 0), 100)
   const filled = Math.round((percent / 100) * width)
   const empty = width - filled
 
@@ -60,7 +61,10 @@ export function ProgressBar({
   return (
     <box flexDirection="row" gap={1}>
       {label && <text fg={theme.muted}>{label}</text>}
-      <text fg={barColor}>{'█'.repeat(filled)}{'░'.repeat(empty)}</text>
+      <text fg={barColor}>
+        {'█'.repeat(filled)}
+        {'░'.repeat(empty)}
+      </text>
       {showPercent && <text fg={theme.muted}>{percent.toFixed(0)}%</text>}
     </box>
   )

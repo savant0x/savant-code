@@ -7,13 +7,16 @@ import { env, IS_DEV } from '@savant-code/common/env'
 import { IS_SAVANT_FREE } from '../utils/constants'
 
 // Get the website URL from environment or use default
-export const WEBSITE_URL = env.NEXT_PUBLIC_SAVANT_FREE_APP_URL || 'https://savant-code.com'
+export const WEBSITE_URL =
+  env.NEXT_PUBLIC_SAVANT_FREE_APP_URL || 'https://savant-code.com'
 
 // SavantFree login flow uses the savant-free web app instead of savant-code.com
 const SAVANT_FREE_WEB_URL = IS_DEV
   ? 'http://localhost:3002'
   : (env.NEXT_PUBLIC_SAVANT_FREE_APP_URL ?? SAVANT_FREE_WEB_URL_PROD)
-export const LOGIN_WEBSITE_URL = IS_SAVANT_FREE ? SAVANT_FREE_WEB_URL : WEBSITE_URL
+export const LOGIN_WEBSITE_URL = IS_SAVANT_FREE
+  ? SAVANT_FREE_WEB_URL
+  : WEBSITE_URL
 
 // Read logo from art file — single source of truth
 const ART_PATH = join(import.meta.dir, '..', 'art', 'savant-text-graf.md')
@@ -34,7 +37,9 @@ const LOGO_SAVANT_FREE = getLogoFromArt()
 const LOGO_SMALL_SAVANT_FREE = getLogoFromArt()
 
 export const LOGO = IS_SAVANT_FREE ? LOGO_SAVANT_FREE : LOGO_SAVANT_CODE
-export const LOGO_SMALL = IS_SAVANT_FREE ? LOGO_SMALL_SAVANT_FREE : LOGO_SMALL_SAVANT_CODE
+export const LOGO_SMALL = IS_SAVANT_FREE
+  ? LOGO_SMALL_SAVANT_FREE
+  : LOGO_SMALL_SAVANT_CODE
 
 // Characters that receive the sheen animation effect (block chars + border/shadow)
 export const SHADOW_CHARS = new Set([

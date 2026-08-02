@@ -1,4 +1,3 @@
-
 import { publisher } from '../constants'
 
 import type { SecretAgentDefinition } from '../types/secret-agent-definition'
@@ -44,7 +43,9 @@ const globMatcher: SecretAgentDefinition = {
   },
   handleSteps: function* ({ params }) {
     function isJSONObject(value: JSONValue): value is JSONObject {
-      return value !== null && typeof value === 'object' && !Array.isArray(value)
+      return (
+        value !== null && typeof value === 'object' && !Array.isArray(value)
+      )
     }
     function asGlobQueryArray(value: JSONValue): GlobQuery[] {
       if (!Array.isArray(value)) return []

@@ -1,11 +1,15 @@
 # Session Summary — 2026-07-25 17:00
 
 ## Session Type
+
 Dev Folder Audit / Hygiene Maintenance
 
 ## Summary
 
-Comprehensive audit of the dev/ folder identified 32 issues across FID management, naming conventions, completeness, and orphaned files. All critical and medium issues were resolved: duplicate FID-085 removed, 17 stale FIDs bulk-updated to closed status, 1 non-standard status fixed, 4 FIDs renamed with date prefixes, 4 orphaned files cleaned up, and full typecheck verified across all 4 workspaces.
+Comprehensive audit of the dev/ folder identified 32 issues across FID management, naming conventions, completeness, and
+orphaned files. All critical and medium issues were resolved: duplicate FID-085 removed, 17 stale FIDs bulk-updated to
+closed status, 1 non-standard status fixed, 4 FIDs renamed with date prefixes, 4 orphaned files cleaned up, and full
+typecheck verified across all 4 workspaces.
 
 ## Planned Work
 
@@ -24,11 +28,13 @@ Comprehensive audit of the dev/ folder identified 32 issues across FID managemen
 ## Audit Findings (32 Issues)
 
 ### Critical (1)
+
 | ID | Issue | Fix Applied |
 |----|-------|-------------|
 | AUDIT-001 | Duplicate FID-085 exists in both dev/fids/ and dev/fids/archive/ | Removed from dev/fids/ (archived version kept) |
 
 ### Medium — Stale FIDs in Archive (17)
+
 | ID | FID | Old Status | Fix |
 |----|-----|------------|-----|
 | AUDIT-002 | FID-2026-0721-035-slash-model-picker-broken | created | Bulk-updated to closed |
@@ -50,11 +56,13 @@ Comprehensive audit of the dev/ folder identified 32 issues across FID managemen
 | AUDIT-019 | FID-2026-0722-051-legacy-template | deferred | Bulk-updated to closed |
 
 ### Medium — Non-Standard Status (1)
+
 | ID | FID | Old Status | Fix |
 |----|-----|------------|-----|
 | AUDIT-017 | FID-2026-0721-037-right-sidebar-stroke | implementation-tested | Updated to closed |
 
 ### Medium — Naming Convention (4)
+
 | ID | FID | Old Name | New Name |
 |----|-----|----------|----------|
 | AUDIT-023 | FID-model-persistence.md | No date prefix | FID-2026-0720-034-model-persistence.md |
@@ -63,11 +71,13 @@ Comprehensive audit of the dev/ folder identified 32 issues across FID managemen
 | AUDIT-026 | FID-ui-redesign-neon-slate.md | No date prefix | FID-2026-0720-037-ui-redesign-neon-slate.md |
 
 ### Medium — Documentation (1)
+
 | ID | Issue | Status |
 |----|-------|--------|
 | AUDIT-027 | LEARNINGS.md missing entries for 2026-07-25 sessions | Fixed — 3 new entries added |
 
 ### Low (6)
+
 | ID | Issue | Status |
 |----|-------|--------|
 | AUDIT-020 | Confusing status line in FID-2026-0722-039 | Noted (cosmetic) |
@@ -78,6 +88,7 @@ Comprehensive audit of the dev/ folder identified 32 issues across FID managemen
 | AUDIT-030 | dev/scripts/rename-step1-residuals.js orphaned | Deleted |
 
 ### Low — In-Progress FIDs (2, not stale)
+
 | ID | FID | Status |
 |----|-----|--------|
 | AUDIT-031 | FID-2026-0725-082-loop-goal-commands | analyzed (created today) |
@@ -86,40 +97,49 @@ Comprehensive audit of the dev/ folder identified 32 issues across FID managemen
 ## Fixes Applied
 
 ### 1. AUDIT-001: Duplicate FID-085 Removed
+
 - **Action:** Deleted `dev/fids/FID-2026-0725-085-context-compaction-system.md`
 - **Verification:** Glob confirmed 0 matches in dev/fids/ for FID-085
 - **Archived version:** Remains at `dev/fids/archive/FID-2026-0725-085-context-compaction-system.md`
 
 ### 2. AUDIT-002-016: 17 Stale FIDs Bulk-Updated
+
 - **Action:** Used `sed -i` to replace `**Status:** *` with `**Status:** closed` in all 17 files
 - **Verification:** Grep confirmed all 4 sample files show `**Status:** closed`
-- **Command:** `cd dev/fids/archive && for f in <files>; do sed -i 's/^\*\*Status:\*\* .*/\*\*Status:\*\* closed/' "$f"; done`
+- **Command:** `cd dev/fids/archive && for f in <files>; do sed -i 's/^\*\*Status:\*\* .*/\*\*Status:\*\* closed/' "$f";
+  done`
 
 ### 3. AUDIT-017: Non-Standard Status Fixed
+
 - **Action:** Updated `FID-2026-0721-037-right-sidebar-stroke-artifact.md` status from `implementation-tested` to `closed`
 - **Verification:** Grep confirmed new status
 
 ### 4. AUDIT-023-026: FIDs Renamed with Date Prefixes
+
 - **Action:** Renamed 4 files to follow `FID-YYYY-MMDD-NNN-kebab-case` convention
 - **New names:** FID-2026-0720-034 through 037
 - **Verification:** ls confirmed old names gone, new names present
 
 ### 5. Orphaned Files Cleaned Up
+
 - **Deleted:** `dev/scripts/rename-step1-common.js`, `dev/scripts/rename-step1-residuals.js`
 - **Deleted:** `dev/fids/archive/_sanity_detail.txt`, `dev/fids/archive/_sanity_report.txt`
 - **Verification:** ls confirmed files removed
 
 ### 6. LEARNINGS.md Updated
+
 - **Added:** 3 new session entries (context compaction FID-085, Layer 4 reactive compact, dev folder audit)
 - **Location:** `dev/LEARNINGS.md` — entries added before the closing comment line
 
 ### 7. Full Typecheck Verification
+
 - **Workspaces:** agent-runtime ✅, common ✅, cli ✅, sdk ✅
 - **Result:** All pass with exit code 0, no regressions
 
 ## Verification
 
 ### Typecheck Results
+
 | Workspace | Status |
 |-----------|--------|
 | `packages/agent-runtime` | ✅ PASS |
@@ -129,8 +149,13 @@ Comprehensive audit of the dev/ folder identified 32 issues across FID managemen
 
 ## Lessons Learned
 
-1. **Dev folder audits should be periodic.** The archive had 17 FIDs with non-closed statuses that accumulated over time. Running audits prevents hygiene debt from growing.
-2. **Bulk operations are efficient for fixing multiple files.** `sed -i` for status updates and `mv` for renames handled 21 file operations in seconds.
-3. **FID naming convention must be enforced from creation.** The 4 FIDs without date prefixes were created before the convention was established. Future FIDs should be validated at creation time.
-4. **Orphaned files accumulate silently.** The 2 sanity report files and 2 rename scripts were leftover from previous operations. Regular cleanup prevents directory pollution.
-5. **Session summaries must document both findings AND fixes.** The initial 1700 summary only documented the 32 audit findings, not the resolutions applied. Always complete the documentation loop.
+1. **Dev folder audits should be periodic.** The archive had 17 FIDs with non-closed statuses that accumulated over
+   time. Running audits prevents hygiene debt from growing.
+2. **Bulk operations are efficient for fixing multiple files.** `sed -i` for status updates and `mv` for renames handled
+   21 file operations in seconds.
+3. **FID naming convention must be enforced from creation.** The 4 FIDs without date prefixes were created before the
+   convention was established. Future FIDs should be validated at creation time.
+4. **Orphaned files accumulate silently.** The 2 sanity report files and 2 rename scripts were leftover from previous
+   operations. Regular cleanup prevents directory pollution.
+5. **Session summaries must document both findings AND fixes.** The initial 1700 summary only documented the 32 audit
+   findings, not the resolutions applied. Always complete the documentation loop.

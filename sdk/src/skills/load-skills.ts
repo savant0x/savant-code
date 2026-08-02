@@ -66,9 +66,9 @@ export function parseSkillFileContent(
   const result = SkillFrontmatterSchema.safeParse(parsed.frontmatter)
   if (!result.success) {
     if (verbose) {
-        logger.error(
-          `Invalid skill frontmatter in ${filePath}: ${result.error.message}`,
-        )
+      logger.error(
+        `Invalid skill frontmatter in ${filePath}: ${result.error.message}`,
+      )
     }
     return null
   }
@@ -104,7 +104,7 @@ function loadSkillFromFile(
   try {
     content = fs.readFileSync(skillFilePath, 'utf8')
   } catch {
-    if (verbose)       logger.error(`Failed to read skill file: ${skillFilePath}`)
+    if (verbose) logger.error(`Failed to read skill file: ${skillFilePath}`)
     return null
   }
   return parseSkillFileContent(content, {
@@ -170,7 +170,7 @@ function discoverSkillsFromDirectory(
 /**
  * Gets the default skills directories to search.
  * Searches both .claude/skills and .agents/skills for Claude Code compatibility.
- * 
+ *
  * Order (later overrides earlier):
  * - ~/.claude/skills/ (global Claude-compatible)
  * - ~/.agents/skills/ (global SavantCode)

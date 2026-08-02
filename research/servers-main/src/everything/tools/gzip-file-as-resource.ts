@@ -1,11 +1,16 @@
-import { z } from "zod";
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { CallToolResult, Resource } from "@modelcontextprotocol/sdk/types.js";
 import { gzipSync } from "node:zlib";
+
+import { z } from "zod";
+
 import {
   getSessionResourceURI,
   registerSessionResource,
 } from "../resources/session.js";
+
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { CallToolResult, Resource } from "@modelcontextprotocol/sdk/types.js";
+
+
 
 // Maximum input file size - 10 MB default
 const GZIP_MAX_FETCH_SIZE = Number(

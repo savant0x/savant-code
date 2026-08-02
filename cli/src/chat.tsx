@@ -17,9 +17,9 @@ import { ChatInputBar } from './components/chat-input-bar'
 import { LoadPreviousButton } from './components/load-previous-button'
 import { MessageWithAgents } from './components/message-with-agents'
 import { ModelPicker } from './components/model-picker'
-import { ProviderPicker } from './components/provider-picker'
 import { areCreditsRestored } from './components/out-of-credits-banner'
 import { PendingBashMessage } from './components/pending-bash-message'
+import { ProviderPicker } from './components/provider-picker'
 import { ReviewScreen } from './components/review-screen'
 import { RightSidebar } from './components/right-sidebar'
 import { SavantFreeActiveSessionSummary } from './components/savant-free-active-session-summary'
@@ -65,7 +65,6 @@ import { useGatewayCatalogStore } from './state/gateway-catalog-store'
 import { useMessageBlockStore } from './state/message-block-store'
 import { useModelPickerStore } from './state/model-picker-store'
 import { useProviderPickerStore } from './state/provider-picker-store'
-import { beginProviderSetup, getProviderSetupInfo } from './utils/provider-setup'
 import { usePublishStore } from './state/publish-store'
 import { useReviewStore } from './state/review-store'
 import { useSavantFreeModelStore } from './state/savant-free-model-store'
@@ -92,6 +91,12 @@ import {
   validateAndAddImage,
 } from './utils/pending-attachments'
 import {
+  beginProviderSetup,
+  getMissingProviderSetup,
+  getProviderSetupGuidance,
+  getProviderSetupInfo,
+} from './utils/provider-setup'
+import {
   hasSubmittedFirstPrompt,
   loadSavantCodeModelPreference,
   markFirstPromptSubmitted,
@@ -114,6 +119,7 @@ import type { SavantFreeSession } from './types/savant-free-session'
 import type { User } from './utils/auth'
 import type { AgentMode } from './utils/constants'
 import type { OpenRouterModel } from './utils/openrouter-models'
+import type { ProviderSetupName } from './utils/provider-setup'
 import type { PermissionMode } from './utils/settings'
 import type { BoxRenderable, ScrollBoxRenderable } from '@opentui/core'
 import type { FeedbackCategory } from '@savant-code/common/constants/feedback'
@@ -206,6 +212,20 @@ export const Chat = ({
     },
   } = useChatState()
 
+  const providerGuidanceShownRef = useRef(false)
+  useEffect(() => {
+    if (providerGuidanceShownRef.current || messages.length !== 0) return
+
+    const missingProvider = getMissingProviderSetup()
+    if (!missingProvider) return
+
+    providerGuidanceShownRef.current = true
+    setMessages((prev) => [
+      ...prev,
+      getSystemMessage(getProviderSetupGuidance(missingProvider)),
+    ])
+  }, [messages.length, setMessages])
+
   // Sidebar data from chat-store
   const contextTokensUsed = useChatStore((s) => s.contextTokensUsed)
   const contextTokensMax = useChatStore((s) => s.contextTokensMax)
@@ -231,7 +251,9 @@ export const Chat = ({
   // Interactive /provider picker overlay state.
   const providerPickerOpen = useProviderPickerStore((s) => s.isOpen)
   const providerPickerProviders = useProviderPickerStore((s) => s.providers)
-  const providerPickerSelectedIndex = useProviderPickerStore((s) => s.selectedIndex)
+  const providerPickerSelectedIndex = useProviderPickerStore(
+    (s) => s.selectedIndex,
+  )
   const setProviderPickerSelectedIndex = useProviderPickerStore(
     (s) => s.setSelectedIndex,
   )
@@ -290,7 +312,7 @@ export const Chat = ({
 
   // Commit a provider pick: enter providerSetup mode for the chosen provider.
   const handleProviderPickerSelect = useCallback(
-    (provider: import('./utils/provider-setup').ProviderSetupName) => {
+    (provider: ProviderSetupName) => {
       closeProviderPicker()
       beginProviderSetup(provider)
       const info = getProviderSetupInfo(provider)
@@ -306,12 +328,7 @@ export const Chat = ({
         ])
       }
     },
-    [
-      closeProviderPicker,
-      setInputFocused,
-      inputRef,
-      setMessages,
-    ],
+    [closeProviderPicker, setInputFocused, inputRef, setMessages],
   )
 
   // Commit a model pick: persist the override, confirm in-chat, and close.
@@ -744,14 +761,15 @@ export const Chat = ({
     },
   )
 
-  // Retire onboarding suggested prompts once the user submits anything
-  // (typed or clicked), persisting so they don't return on future launches.
+  // Retire onboarding suggested prompts only after the user submits a prompt.
+  // Provider guidance is a system message and must not count as submission.
+  const hasSubmittedPrompt = messages.some((message) => message.variant === 'user')
   useEffect(() => {
-    if (showSuggestedPrompts && messages.length > 0) {
+    if (showSuggestedPrompts && hasSubmittedPrompt) {
       markFirstPromptSubmitted()
       setShowSuggestedPrompts(false)
     }
-  }, [showSuggestedPrompts, messages.length])
+  }, [showSuggestedPrompts, hasSubmittedPrompt])
 
   // Submit a suggested onboarding prompt as if the user had typed and sent it
   const handleSelectSuggestedPrompt = useEvent(
@@ -1467,7 +1485,11 @@ export const Chat = ({
     handlers: chatKeyboardHandlers,
     // Disable the global keyboard dispatcher while the model or provider picker
     // overlay is open so its own useKeyboard handler has exclusive control.
-    disabled: askUserState !== null || reviewMode || modelPickerOpen || providerPickerOpen,
+    disabled:
+      askUserState !== null ||
+      reviewMode ||
+      modelPickerOpen ||
+      providerPickerOpen,
   })
 
   // Sync message block context to zustand store for child components

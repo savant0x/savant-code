@@ -39,20 +39,24 @@ export { getUserInfoFromApiKey } from './impl/database'
 export * from './credentials'
 export { loadLocalAgents } from './agents/load-agents'
 export { loadMCPConfig, loadMCPConfigSync } from './agents/load-mcp-config'
-export { loadSkills, loadSkillsSync, parseSkillFileContent } from './skills/load-skills'
+export {
+  loadSkills,
+  loadSkillsSync,
+  parseSkillFileContent,
+} from './skills/load-skills'
 export { formatAvailableSkillsXml } from '@savant-code/common/util/skills'
 export type { LoadSkillsOptions } from './skills/load-skills'
-export type { SkillDefinition, SkillsMap } from '@savant-code/common/types/skill'
+export type {
+  SkillDefinition,
+  SkillsMap,
+} from '@savant-code/common/types/skill'
 export type {
   LoadedAgents,
   LoadedAgentDefinition,
   LoadLocalAgentsResult,
   AgentValidationError,
 } from './agents/load-agents'
-export type {
-  MCPFileConfig,
-  LoadedMCPConfig,
-} from './agents/load-mcp-config'
+export type { MCPFileConfig, LoadedMCPConfig } from './agents/load-mcp-config'
 
 export { validateAgents } from './validate-agents'
 export type { ValidationResult, ValidateAgentsOptions } from './validate-agents'
@@ -96,10 +100,7 @@ export {
   runTerminalCommand,
 } from './tools/run-terminal-command'
 export type { ActiveTerminalCommandProcess } from './tools/run-terminal-command'
-export {
-  getInferenceBaseUrlFromEnv,
-  getInferenceApiKeyFromEnv,
-} from './env'
+export { getInferenceBaseUrlFromEnv, getInferenceApiKeyFromEnv } from './env'
 export { resolveOpenRouterApiKey } from './impl/openrouter-key-resolver'
 export {
   promptAiSdk,
@@ -109,4 +110,5 @@ export {
 export {
   resetChatGptOAuthRateLimit,
   isCloudflareModel,
+  isCommandCodeModel,
 } from './impl/model-provider'

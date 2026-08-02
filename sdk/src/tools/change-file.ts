@@ -68,11 +68,17 @@ export async function changeFile(params: {
   const result = await applyChange({ change: fileChange, resolvedPath, fs })
 
   // Call the onFileWritten callback if provided and the file was successfully written
-  if (onFileWritten && (result.status === 'created' || result.status === 'modified')) {
-    const content = fileChange.type === 'file' 
-      ? fileChange.content 
-      : await fs.readFile(resolvedPath.fullPath, 'utf-8').catch(() => fileChange.content)
-    
+  if (
+    onFileWritten &&
+    (result.status === 'created' || result.status === 'modified')
+  ) {
+    const content =
+      fileChange.type === 'file'
+        ? fileChange.content
+        : await fs
+            .readFile(resolvedPath.fullPath, 'utf-8')
+            .catch(() => fileChange.content)
+
     await onFileWritten({
       path: fileChange.path,
       content,

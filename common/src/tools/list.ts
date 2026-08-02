@@ -105,9 +105,10 @@ export type SavantCodeToolOutput<T extends ToolName = ToolName> = {
     : never
 }[T]
 
-export type SavantCodeToolMessage<T extends ToolName = ToolName> = ToolMessage & {
-  content: SavantCodeToolOutput<T>
-}
+export type SavantCodeToolMessage<T extends ToolName = ToolName> =
+  ToolMessage & {
+    content: SavantCodeToolOutput<T>
+  }
 
 // Tool call to send to client
 export const clientToolCallSchema = z.discriminatedUnion('toolName', [
@@ -183,8 +184,10 @@ export const clientToolNames = clientToolCallSchema.def.options.map(
 ) satisfies ToolName[]
 export type ClientToolName = (typeof clientToolNames)[number]
 
-export type ClientToolCall<T extends ClientToolName = ClientToolName> =
-  Extract<z.infer<typeof clientToolCallSchema>, { toolName: T }> &
-    Pick<ToolCallPart, 'toolCallId' | 'toolName' | 'providerOptions'>
+export type ClientToolCall<T extends ClientToolName = ClientToolName> = Extract<
+  z.infer<typeof clientToolCallSchema>,
+  { toolName: T }
+> &
+  Pick<ToolCallPart, 'toolCallId' | 'toolName' | 'providerOptions'>
 
 export type PublishedClientToolName = Extract<ClientToolName, PublishedToolName>

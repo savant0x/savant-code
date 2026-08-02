@@ -11,8 +11,10 @@ import type { JSONValue } from '../types/json'
  * `JSONValue`. This uses the project's zod schema to validate that the value is a
  * plain object whose nested values are all valid `JSONValue` shapes.
  */
- 
-export function safeParseJSONObject(value: unknown): Record<string, JSONValue> | undefined {
+
+export function safeParseJSONObject(
+  value: unknown,
+): Record<string, JSONValue> | undefined {
   const result = jsonObjectSchema.safeParse(value)
   return result.success ? result.data : undefined
 }
@@ -24,7 +26,9 @@ export function safeParseJSONObject(value: unknown): Record<string, JSONValue> |
  * only need a boolean check. Note: it parses the whole object, so prefer
  * {@link safeParseJSONObject} when you need the parsed value.
  */
-export function isJSONObject(value: unknown): value is Record<string, JSONValue> {
+export function isJSONObject(
+  value: unknown,
+): value is Record<string, JSONValue> {
   return safeParseJSONObject(value) !== undefined
 }
 
@@ -36,7 +40,7 @@ export function isJSONObject(value: unknown): value is Record<string, JSONValue>
  * `JSONValue` union. It uses the project's zod schema so invalid shapes
  * fail fast at runtime.
  */
- 
+
 export function isJSONValue(value: unknown): value is JSONValue {
   return jsonValueSchema.safeParse(value).success
 }
@@ -44,7 +48,7 @@ export function isJSONValue(value: unknown): value is JSONValue {
 /**
  * Runtime narrowing: returns the value if it is a `JSONValue`, otherwise throws.
  */
- 
+
 export function toJSONValue(value: unknown): JSONValue {
   return jsonValueSchema.parse(value)
 }
@@ -57,7 +61,7 @@ export function toJSONValue(value: unknown): JSONValue {
  * cyclic objects, etc.) are coerced to a string representation. Use this at
  * boundaries where a runtime crash would be worse than a degraded log payload.
  */
- 
+
 export function safeToJSONValue(value: unknown): JSONValue {
   if (isJSONValue(value)) {
     return value
@@ -89,7 +93,7 @@ export function safeToJSONValue(value: unknown): JSONValue {
  * loggers regularly receive, and falls back to stringification for anything
  * else so that logging never throws.
  */
- 
+
 export function toLogValue(value: unknown): LogValue {
   if (value === null || value === undefined) {
     return value

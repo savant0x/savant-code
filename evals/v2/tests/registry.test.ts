@@ -1,6 +1,8 @@
-import { describe, expect, it } from 'bun:test'
 import { mkdir, rm, writeFile } from 'node:fs/promises'
 import path from 'node:path'
+
+import { describe, expect, it } from 'bun:test'
+
 import {
   loadTaskFromFile,
   loadTaskRegistry,
@@ -8,9 +10,12 @@ import {
   filterTasksByCategory,
   filterTasksByDifficulty,
 } from '../src/registry'
+
 import type { TaskDefinition } from '../src/schema'
 
-function createValidTask(overrides: Partial<TaskDefinition> = {}): TaskDefinition {
+function createValidTask(
+  overrides: Partial<TaskDefinition> = {},
+): TaskDefinition {
   return {
     schema_version: '2.0',
     task_id: 'savant-v2-auth-jwt-001',
@@ -123,11 +128,6 @@ describe('loadTaskRegistry', () => {
       task_id: 'savant-v2-pure-001',
       category: 'pure_coding',
     })
-    const task2 = createValidTask({
-      task_id: 'savant-v2-fsm-001',
-      category: 'fsm_compliance',
-    })
-
     await writeFile(
       path.join(TEST_DIR, 'pure_coding', 'task.json'),
       JSON.stringify(task1),
@@ -167,7 +167,9 @@ validation:
     await writeFile(path.join(TEST_DIR, 'a.json'), JSON.stringify(task))
     await writeFile(path.join(TEST_DIR, 'b.json'), JSON.stringify(task))
 
-    await expect(loadTaskRegistry(TEST_DIR)).rejects.toThrow('Duplicate task_id')
+    await expect(loadTaskRegistry(TEST_DIR)).rejects.toThrow(
+      'Duplicate task_id',
+    )
 
     await rm(TEST_DIR, { recursive: true, force: true })
   })

@@ -10,39 +10,51 @@ SWE-agent is a research-oriented coding agent from Princeton that formalizes the
 ## Feature Inventory
 
 ### ACI Design Philosophy
+
 - **Agent-Computer Interface** — Curated tool surfaces that maximize agent performance. Specialized file viewers, search commands, and editors with built-in linters rather than raw shell. (`docs/background/aci.md`, `tools/windowed_edit_linting/`)
 
 ### YAML-Driven Configuration
+
 - **Composable Configs** — Entire agent behavior governed by YAML files. Multiple configs merged via repeated `--config` flags. (`config/default.yaml`, `sweagent/utils/config.py`)
 
 ### Tool Bundle System
+
 - **Self-Contained Bundles** — Each tool is a directory with `config.yaml`, `bin/` executables, optional `install.sh`, optional `lib/`. `hidden_tools` feature, `state_command` for dynamic state injection. (`tools/`, `sweagent/tools/bundle.py`)
 
 ### 11 Parser Strategies
+
 - **FunctionCallingParser** — LiteLLM tool calls. **ThoughtActionParser** — backtick code blocks. **XMLThoughtActionParser**, **XMLFunctionCallingParser**, **JsonParser**, **ActionParser**, **ActionOnlyParser**, **EditFormat**, **Identity**, **BashCodeBlockParser**, **SingleBashCodeBlockParser**. (`sweagent/tools/parsing.py`)
 
 ### History Processor Pipeline
+
 - **Composable Processors** — `LastNObservations` (polling-aware caching), `CacheControlHistoryProcessor` (Anthropic prompt cache), `ClosedWindowHistoryProcessor` (collapse outdated windows), `TagToolCallObservations`, `RemoveRegex`, `ImageParsingHistoryProcessor`. (`sweagent/agent/history_processors.py`)
 
 ### Container Sandboxing
+
 - **Docker/Modal/AWS** — via SWE-ReX. Agent never runs code on host. Clean separation between agent logic and runtime. (`sweagent/environment/swe_env.py`)
 
 ### Retry Agent with Review Loop
+
 - **Multi-Attempt** — Runs agent multiple times. `Reviewer` (separate LLM) scores solutions. `Chooser` with `Preselector` picks best. `ScoreRetryLoop` (threshold) and `ChooserRetryLoop` (LLM selection). (`sweagent/agent/reviewer.py`, `sweagent/agent/agents.py`)
 
 ### Action Sampling
+
 - **AskColleagues** — Sample N completions, present as "colleague ideas", model synthesizes. **BinaryTrajectoryComparison** — Pairwise tournament selection. (`sweagent/agent/action_sampler.py`)
 
 ### Command Safety
+
 - **Blocklist** — Configurable prefix, exact match, or conditional regex blocking. (`sweagent/tools/tools.py`)
 
 ### Three-Layer Hook System
+
 - **Agent/Env/Run Hooks** — `AgentHook` (per-step), `EnvHook` (environment lifecycle), `RunHook` (instance lifecycle). Combined dispatch. Events: `on_actions_generated`, `on_action_executed`, `on_model_query`, `on_query_message_added`. (`sweagent/agent/hooks/`, `sweagent/environment/hooks/`, `sweagent/run/hooks/`)
 
 ### Batch Execution
+
 - **Parallel Workers** — ThreadPoolExecutor with per-instance cost tracking, thread-safe API key rotation, random startup delays, live progress bars, continuous SWE-bench submission. (`sweagent/run/run_batch.py`)
 
 ### Other
+
 - **Multimodal Support** — Image processing from GitHub issues. Vision model integration. (`sweagent/agent/problem_statement.py`)
 - **Human-in-the-Loop Shell** — `^C` switches to human input, `^D` returns to AI. (`sweagent/agent/extra/shell_agent.py`)
 - **Web-Based Trajectory Inspector** — Built-in HTTP server for viewing agent trajectories. (`sweagent/inspector/`)

@@ -1,9 +1,6 @@
 import z from 'zod/v4'
 
-import {
-  $getNativeToolCallExampleString,
-  jsonToolResultSchema,
-} from '../utils'
+import { $getNativeToolCallExampleString, jsonToolResultSchema } from '../utils'
 
 import type { $ToolParams } from '../../constants'
 
@@ -33,7 +30,8 @@ ${$getNativeToolCallExampleString({
   toolName,
   inputSchema,
   input: {
-    summary: 'Initial project scaffold created (package.json, tsconfig.json, README).',
+    summary:
+      'Initial project scaffold created (package.json, tsconfig.json, README).',
   },
   endsAgentStep,
 })}

@@ -65,7 +65,8 @@ const TOP_BANNER_REGISTRY: Record<NonNullable<TopBannerType>, BannerConfig> = {
       return (
         <>
           <text style={{ wrapMode: 'word', fg: textColor }}>
-            You started {IS_SAVANT_FREE ? 'SavantFree' : 'SavantCode'} in a subdirectory of a git repo.
+            You started {IS_SAVANT_FREE ? 'SavantFree' : 'SavantCode'} in a
+            subdirectory of a git repo.
           </text>
           {gitRoot && onSwitchToGitRoot ? (
             <TerminalLink

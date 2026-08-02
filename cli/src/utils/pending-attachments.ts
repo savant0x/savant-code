@@ -20,7 +20,7 @@ function exitImageModeIfActive(): void {
  * Process an image file and add it to the pending images state.
  * This handles compression/resizing and caches the result so we don't
  * need to reprocess at send time.
- * 
+ *
  * @param replacePlaceholder - If provided, replaces an existing placeholder entry instead of adding new
  */
 export async function addPendingImageFromFile(
@@ -29,14 +29,14 @@ export async function addPendingImageFromFile(
   replacePlaceholder?: string,
 ): Promise<void> {
   const filename = path.basename(imagePath)
-  
+
   if (replacePlaceholder) {
     // Replace existing placeholder with actual image info (still processing)
     useChatStore.setState((state) => ({
       pendingAttachments: state.pendingAttachments.map((att) =>
         att.kind === 'image' && att.path === replacePlaceholder
           ? { ...att, path: imagePath, filename }
-          : att
+          : att,
       ),
     }))
   } else {
@@ -97,7 +97,7 @@ export async function addPendingImageFromBase64(
   // For base64 images (like clipboard), we already have the data
   // Check size and add directly
   const size = Math.round((base64Data.length * 3) / 4) // Approximate decoded size
-  
+
   useChatStore.getState().addPendingImage({
     path: tempPath || `clipboard:${filename}`,
     filename,
@@ -137,7 +137,7 @@ export function addClipboardPlaceholder(): string {
  * Add a pending image with an error note (e.g., unsupported format, not found).
  * Used when we want to show the image in the banner with an error state.
  * Error images are automatically removed after a short delay.
- * 
+ *
  * Error images are automatically removed after AUTO_REMOVE_ERROR_DELAY_MS.
  */
 export function addPendingImageWithError(
@@ -151,19 +151,19 @@ export function addPendingImageWithError(
     status: 'error',
     note,
   })
-  
+
   // Clear any existing timer for this path (shouldn't happen, but be safe)
   const existingTimer = errorImageTimers.get(imagePath)
   if (existingTimer) {
     clearTimeout(existingTimer)
   }
-  
+
   // Auto-remove error images after a delay
   const timer = setTimeout(() => {
     errorImageTimers.delete(imagePath)
     useChatStore.getState().removePendingImage(imagePath)
   }, AUTO_REMOVE_ERROR_DELAY_MS)
-  
+
   errorImageTimers.set(imagePath, timer)
 }
 
@@ -189,14 +189,14 @@ export async function validateAndAddImage(
   cwd: string,
 ): Promise<{ success: true } | { success: false; error: string }> {
   const resolvedPath = resolveFilePath(imagePath, cwd)
-  
+
   // Check if file exists
   if (!existsSync(resolvedPath)) {
     const error = 'file not found'
     addPendingImageWithError(resolvedPath, `❌ ${error}`)
     return { success: false, error }
   }
-  
+
   // Check if it's a supported format
   if (!isImageFile(resolvedPath)) {
     const ext = path.extname(imagePath).toLowerCase()
@@ -204,7 +204,7 @@ export async function validateAndAddImage(
     addPendingImageWithError(resolvedPath, `❌ ${error}`)
     return { success: false, error }
   }
-  
+
   // Process and add the image (addPendingImageFromFile handles exiting image mode on success)
   await addPendingImageFromFile(resolvedPath, cwd)
   return { success: true }
@@ -215,7 +215,7 @@ export async function validateAndAddImage(
 // ---------------------------------------------------------------------------
 
 const MAX_FILE_READ_SIZE = 1024 * 1024 // 1 MB – don't read files larger than this
-const MAX_CONTENT_CHARS = 100 * 1024   // 100 KB of text content
+const MAX_CONTENT_CHARS = 100 * 1024 // 100 KB of text content
 const MAX_DIR_ENTRIES = 100
 
 function formatFileSize(bytes: number): string {
@@ -332,18 +332,22 @@ export function addPendingFileFromPath(
  * Check if any pending images are still processing.
  */
 export function hasProcessingImages(): boolean {
-  return useChatStore.getState().pendingAttachments.some(
-    (att) => att.kind === 'image' && att.status === 'processing',
-  )
+  return useChatStore
+    .getState()
+    .pendingAttachments.some(
+      (att) => att.kind === 'image' && att.status === 'processing',
+    )
 }
 
 /**
  * Check if any pending file attachments are still processing.
  */
 export function hasProcessingFiles(): boolean {
-  return useChatStore.getState().pendingAttachments.some(
-    (att) => att.kind === 'file' && att.status === 'processing',
-  )
+  return useChatStore
+    .getState()
+    .pendingAttachments.some(
+      (att) => att.kind === 'file' && att.status === 'processing',
+    )
 }
 
 /**
@@ -357,5 +361,3 @@ export function capturePendingAttachments(): PendingAttachment[] {
   }
   return pendingAttachments
 }
-
-

@@ -4,7 +4,10 @@ import { useTheme } from '../../../hooks/use-theme'
 
 import type { BoxProps } from '@opentui/react'
 
-export interface PanelProps extends Omit<BoxProps, 'children' | 'title' | 'border'> {
+export interface PanelProps extends Omit<
+  BoxProps,
+  'children' | 'title' | 'border'
+> {
   title?: string
   border?: 'single' | 'rounded' | 'none'
   padding?: number

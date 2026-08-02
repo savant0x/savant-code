@@ -4,7 +4,6 @@ import { toLogValue } from '@savant-code/common/util/type-narrowing'
 import { postStreamProcessing } from './write-file'
 import { processStrReplace } from '../../../process-str-replace'
 
-
 import type { SavantCodeToolHandlerFunction } from '../handler-function-type'
 import type { FileProcessingState } from './write-file'
 import type {
@@ -99,7 +98,9 @@ export const handleStrReplace = (async (
     path,
     replacements,
     initialContentPromise: latestContentPromise,
-    logger,  }).catch((error: unknown) => {  
+    logger,
+  })
+    .catch((error: unknown) => {
       logger.error(toLogValue(error), 'Error processing str_replace block')
       return {
         tool: 'str_replace' as const,

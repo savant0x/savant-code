@@ -3,11 +3,7 @@ export type SavantFreeModelNavigationDirection = 'forward' | 'backward'
 const FORWARD_KEY_NAMES = new Set(['right', 'down'])
 const BACKWARD_KEY_NAMES = new Set(['left', 'up'])
 const FORWARD_TAB_SEQUENCES = new Set(['\t', '\x1b[9u'])
-const BACKWARD_TAB_SEQUENCES = new Set([
-  '\x1b[Z',
-  '\x1b[9;2u',
-  '\x1b[27;2;9~',
-])
+const BACKWARD_TAB_SEQUENCES = new Set(['\x1b[Z', '\x1b[9;2u', '\x1b[27;2;9~'])
 
 export function nextSavantFreeModelId(params: {
   modelIds: readonly string[]

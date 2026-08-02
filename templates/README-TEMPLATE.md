@@ -32,7 +32,8 @@ For end-user Quick Start see the [root README](../README.md).
 
 ## Optional: Features / Architecture / API Reference
 
-Add as many `## ` and `### ` sections as needed beyond the canonical Purpose + Quick Start blocks above. Common additions:
+Add as many `## ` and `### ` sections as needed beyond the canonical Purpose + Quick Start blocks above. Common
+additions:
 
 - `## Features` — bullet list of capabilities
 - `## Architecture` — high-level design (consider a Mermaid diagram for complex flows)
@@ -48,7 +49,8 @@ Add as many `## ` and `### ` sections as needed beyond the canonical Purpose + Q
 
 <div align="center">
 
-_Part of the [savant-code/savant-code monorepo](https://github.com/savant0x/savant-code), governed by the [ECHO Protocol v0.2.0](../ECHO.md)._
+_Part of the [savant-code/savant-code monorepo](https://github.com/savant0x/savant-code), governed by the [ECHO
+Protocol v0.2.0](../ECHO.md)._
 
 **Savant** • 2026
 </div>
@@ -63,9 +65,11 @@ Substitutions needed before publishing:
 - <WORKSPACE_TAGLINE>  → e.g. "Core agent execution engine"
 - <WORKSPACE_DIR>      → e.g. "packages/agent-runtime"
 
-Don't shadow any of the 5 canonical sections above unless you have a strong reason — contributors expect to find Quick Start and License in this position.
+Don't shadow any of the 5 canonical sections above unless you have a strong reason — contributors expect to find
+Quick Start and License in this position.
 
-For README that ships to npm (i.e., workspace has `private: false`), add a 4-5 badge block instead of the 3-badge internal variant:
+For README that ships to npm (i.e., workspace has `private: false`), add a 4-5 badge block instead of the 3-badge
+internal variant:
 - License + ECHO + npm + Bun + TypeScript
 
 Banner image width:
@@ -73,7 +77,11 @@ Banner image width:
 - Publishable sub-READMEs (sdk): 650px
 - Internal READMEs (all others): 650px
 
-For dev-tooling READMEs (scripts/tmux, scripts/release), drop the ECHO badge block entirely — the worktop tooling is intentionally outside ECHO protocol scope.
+For dev-tooling READMEs (scripts/tmux, scripts/release), drop the ECHO badge block entirely — the worktop tooling
+is intentionally outside ECHO protocol scope.
 
-LICENSE: Private workspaces (`private: true` in package.json) DO NOT need a per-workspace LICENSE file — they inherit from the root `LICENSE` via the explicit `Apache-2.0` cross-link in your README's License section. Only publishable workspaces (`private: false` — currently only `@savant-code/sdk`) need their own LICENSE file. (Per FID-2026-0718-024 Decision B: DECLARE pattern over COPY or SYMLINK.)
+LICENSE: Private workspaces (`private: true` in package.json) DO NOT need a per-workspace LICENSE file — they
+inherit from the root `LICENSE` via the explicit `Apache-2.0` cross-link in your README's License section. Only
+publishable workspaces (`private: false` — currently only `@savant-code/sdk`) need their own LICENSE file. (Per
+FID-2026-0718-024 Decision B: DECLARE pattern over COPY or SYMLINK.)
 -->

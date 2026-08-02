@@ -1,11 +1,11 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import * as fs from 'fs/promises';
-import * as path from 'path';
 import * as os from 'os';
+import * as path from 'path';
 
 // We need to test the buildTree function, but it's defined inside the request handler
 // So we'll extract the core logic into a testable function
 import { minimatch } from 'minimatch';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 
 interface TreeEntry {
     name: string;

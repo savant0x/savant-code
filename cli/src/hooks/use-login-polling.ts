@@ -53,7 +53,13 @@ export function useLoginPolling({
     // fingerprintHash only becomes non-null after the login-URL mutation
     // succeeds, and that path always sets fingerprintId first — so gating
     // on fingerprintHash implicitly gates on fingerprintId.
-    if (!loginUrl || !fingerprintId || !fingerprintHash || !expiresAt || !isWaitingForEnter) {
+    if (
+      !loginUrl ||
+      !fingerprintId ||
+      !fingerprintHash ||
+      !expiresAt ||
+      !isWaitingForEnter
+    ) {
       return
     }
 

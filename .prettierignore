@@ -1,0 +1,9 @@
+# Markdown formatting is owned by markdownlint (`bun run lint:md` — see .markdownlint.json).
+# Prettier's markdown defaults (80-char prose wrap, padded tables) conflict with the repo's
+# 120-char-line / compact-table style, so markdown is excluded from the format gate.
+*.md
+
+# Local content dirs (already gitignored; listed here so prettier skips them explicitly)
+resources/
+research/
+.eslint-recovery.json

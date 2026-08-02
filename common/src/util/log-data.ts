@@ -1,4 +1,3 @@
- 
 import { MAX_LOG_DATA_BYTES } from '../schemas/logs'
 
 import type { LogLevel } from '../types/contracts/logs'

@@ -51,7 +51,10 @@ describe.skip('SavantFree: Slash Commands', () => {
     'slash command menu does not show removed commands',
     async () => {
       const binary = requireSavantFreeBinary()
-      session = await SavantFreeSession.start(binary, { waitSeconds: 5, height: SESSION_HEIGHT })
+      session = await SavantFreeSession.start(binary, {
+        waitSeconds: 5,
+        height: SESSION_HEIGHT,
+      })
 
       // Type "/" to trigger the slash command autocomplete menu
       // Use sendKey instead of send to avoid C-u clearing keystroke that
@@ -73,7 +76,10 @@ describe.skip('SavantFree: Slash Commands', () => {
     'slash command menu shows kept commands',
     async () => {
       const binary = requireSavantFreeBinary()
-      session = await SavantFreeSession.start(binary, { waitSeconds: 5, height: SESSION_HEIGHT })
+      session = await SavantFreeSession.start(binary, {
+        waitSeconds: 5,
+        height: SESSION_HEIGHT,
+      })
 
       // Type "/" to trigger the slash command autocomplete menu
       await session.sendKey('/')
@@ -92,7 +98,10 @@ describe.skip('SavantFree: Slash Commands', () => {
     'no mode-related slash commands are visible',
     async () => {
       const binary = requireSavantFreeBinary()
-      session = await SavantFreeSession.start(binary, { waitSeconds: 5, height: SESSION_HEIGHT })
+      session = await SavantFreeSession.start(binary, {
+        waitSeconds: 5,
+        height: SESSION_HEIGHT,
+      })
 
       // Type "/mode" to check for mode commands
       // Use sendKey for the full string to avoid C-u clearing the input

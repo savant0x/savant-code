@@ -108,7 +108,10 @@ describe('Agent Registry', () => {
 
         return {
           templates,
-          dynamicTemplates: agentTemplates as Record<string, DynamicAgentTemplate>,
+          dynamicTemplates: agentTemplates as Record<
+            string,
+            DynamicAgentTemplate
+          >,
           validationErrors,
         }
       },

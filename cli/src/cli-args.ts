@@ -157,7 +157,11 @@ export function parseArgs({
   let initialPermissionMode: PermissionMode | undefined
   if (options.permissionMode) {
     const normalized = String(options.permissionMode).toLowerCase()
-    if (normalized === 'safe' || normalized === 'prompt' || normalized === 'unsafe') {
+    if (
+      normalized === 'safe' ||
+      normalized === 'prompt' ||
+      normalized === 'unsafe'
+    ) {
       initialPermissionMode = normalized
     }
   }

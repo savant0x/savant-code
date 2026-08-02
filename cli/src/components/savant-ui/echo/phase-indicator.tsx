@@ -24,7 +24,10 @@ export interface PhaseIndicatorProps {
  * from dim to full brightness, giving the Perfection Loop indicator a smooth
  * transition without depending on the underlying color format.
  */
-export function PhaseIndicator({ phase, showLabel = true }: PhaseIndicatorProps) {
+export function PhaseIndicator({
+  phase,
+  showLabel = true,
+}: PhaseIndicatorProps) {
   const theme = useTheme()
   const mapping = phaseMapping(phase)
   const color = resolveThemeColor(theme, mapping.colorKey)

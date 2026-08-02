@@ -1,7 +1,9 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import fs from 'fs/promises';
-import path from 'path';
 import os from 'os';
+import path from 'path';
+
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+
 import {
   // Pure utility functions
   formatSize,

@@ -11,10 +11,7 @@ const snapshots = new Map<string, Map<string, string>>()
  * Captures the original content of a file before modification.
  * Only captures if the file exists and hasn't been snapshotted yet for this run.
  */
-export function captureSnapshot(
-  runId: string,
-  filePath: string,
-): void {
+export function captureSnapshot(runId: string, filePath: string): void {
   let runSnapshots = snapshots.get(runId)
   if (!runSnapshots) {
     runSnapshots = new Map()

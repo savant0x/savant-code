@@ -4,20 +4,23 @@ import path from 'path'
 
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 
+import { applyPersistedDirectProviderSettings } from '../ollama-onboarding'
 import {
   applyPersistedProviderApiKeys,
   configureDefaultDirectProvider,
   getConfiguredProviderNames,
+  getMissingProviderSetup,
+  getProviderSetupGuidance,
   getProviderSetupInfo,
   saveProviderApiKey,
 } from '../provider-setup'
-import { applyPersistedDirectProviderSettings } from '../ollama-onboarding'
 import { saveSettings } from '../settings'
 
 const PROVIDER_ENV_VARS = [
   'OPENCODE_GO_API_KEY',
   'TOKENROUTER_API_KEY',
   'NVIDIA_API_KEY',
+  'COMMAND_CODE_API_KEY',
   'CLOUDFLARE_API_TOKEN',
   'DIRECT_PROVIDER',
   'INFERENCE_BASE_URL',
@@ -103,18 +106,14 @@ describe('provider setup', () => {
     applyPersistedProviderApiKeys()
 
     expect(process.env.DIRECT_PROVIDER).toBe('opencode-go')
-    expect(process.env.INFERENCE_BASE_URL).toBe(
-      'https://opencode.ai/zen/go/v1',
-    )
+    expect(process.env.INFERENCE_BASE_URL).toBe('https://opencode.ai/zen/go/v1')
   })
 
   test('configures the default gateway without inventing a provider key', () => {
     configureDefaultDirectProvider()
 
     expect(process.env.DIRECT_PROVIDER).toBe('opencode-go')
-    expect(process.env.INFERENCE_BASE_URL).toBe(
-      'https://opencode.ai/zen/go/v1',
-    )
+    expect(process.env.INFERENCE_BASE_URL).toBe('https://opencode.ai/zen/go/v1')
     expect(process.env.OPENCODE_GO_API_KEY).toBeUndefined()
   })
 
@@ -147,9 +146,31 @@ describe('provider setup', () => {
     applyPersistedDirectProviderSettings()
 
     expect(process.env.DIRECT_PROVIDER).toBe('opencode-go')
-    expect(process.env.INFERENCE_BASE_URL).toBe(
-      'https://opencode.ai/zen/go/v1',
-    )
+    expect(process.env.INFERENCE_BASE_URL).toBe('https://opencode.ai/zen/go/v1')
+  })
+
+  test('identifies missing setup only for the active gateway provider', () => {
+    process.env.DIRECT_PROVIDER = 'opencode-go'
+
+    const missing = getMissingProviderSetup()
+
+    expect(missing?.provider).toBe('opencode-go')
+    if (!missing) throw new Error('Expected missing provider setup')
+    const guidance = getProviderSetupGuidance(missing)
+    expect(guidance).toContain('/provider opencode-go')
+    expect(guidance).toContain('OPENCODE_GO_API_KEY')
+
+    process.env.OPENCODE_GO_API_KEY = 'shell-key'
+    expect(getMissingProviderSetup()).toBeUndefined()
+  })
+
+  test('bypasses gateway guidance for Ollama and backend auth', () => {
+    process.env.DIRECT_PROVIDER = 'ollama'
+    expect(getMissingProviderSetup()).toBeUndefined()
+
+    delete process.env.DIRECT_PROVIDER
+    process.env.SAVANT_CODE_API_KEY = 'backend-key'
+    expect(getMissingProviderSetup()).toBeUndefined()
   })
 
   test('returns setup metadata for supported providers only', () => {

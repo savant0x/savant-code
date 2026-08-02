@@ -1,4 +1,8 @@
-export { getSavantFreeBinaryPath, requireSavantFreeBinary, REPO_ROOT } from './binary-helpers'
+export {
+  getSavantFreeBinaryPath,
+  requireSavantFreeBinary,
+  REPO_ROOT,
+} from './binary-helpers'
 export {
   SAVANT_FREE_BOOT_SIGNALS,
   SavantFreeModel,

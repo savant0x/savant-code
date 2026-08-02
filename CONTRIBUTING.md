@@ -1,8 +1,10 @@
 # Contributing
 
-This is the open-source monorepo for **Savant-Code** — the public TypeScript workspace that ships two products (Savant-Code + Savant-Free) from one source tree. The repository is the source of truth; patches go directly here.
+This is the open-source monorepo for **Savant-Code** — the public TypeScript workspace that ships two products
+(Savant-Code + Savant-Free) from one source tree. The repository is the source of truth; patches go directly here.
 
-All work in this repo is governed by **[ECHO Protocol v0.2.0](ECHO.md)** and the **FID-Bound Perfection Loop**. Please read ECHO.md end-to-end before contributing — it's a strict discipline, not a style preference.
+All work in this repo is governed by **[ECHO Protocol v0.2.0](ECHO.md)** and the **FID-Bound Perfection Loop**. Please
+read ECHO.md end-to-end before contributing — it's a strict discipline, not a style preference.
 
 ---
 
@@ -10,7 +12,7 @@ All work in this repo is governed by **[ECHO Protocol v0.2.0](ECHO.md)** and the
 
 **Every change flows through a FID (Feature Implementation Document):**
 
-```
+```text
 RED (Detective finds issues, catalogs evidence)
   → GREEN (Thinker proposes fix, Recorder writes FID)
   → AUDIT (Verifier double-checks source + runtime + call-graph)
@@ -36,7 +38,8 @@ RED (Detective finds issues, catalogs evidence)
 1. Read [`ECHO.md`](ECHO.md) end-to-end — 15 laws, Perfection Loop FSM, FID lifecycle.
 2. Read [`ARCHITECTURE.md`](ARCHITECTURE.md) — agent roster and tool restrictions.
 3. Check [`dev/fids/`](dev/fids/) for open work — your change may overlap.
-4. File a new FID (`dev/fids/FID-YYYY-MMDD-NNN-{title}.md`) using [`templates/FID-TEMPLATE.md`](templates/FID-TEMPLATE.md) before writing code.
+4. File a new FID (`dev/fids/FID-YYYY-MMDD-NNN-{title}.md`) using
+   [`templates/FID-TEMPLATE.md`](templates/FID-TEMPLATE.md) before writing code.
 5. Run the agent's Perfection Loop on your FID: RED → GREEN → AUDIT → COMPLETE.
 6. Only after AUDIT PASS should Forge implement the code change.
 
@@ -82,4 +85,4 @@ bun x eslint . --max-warnings 0
 - `agents/` — public agent definitions shipped with the CLI
 - `packages/agent-runtime/` — agent loop, tool executor, LLM API integration
 - `packages/code-map/` — source parsing helpers
-- `packages/llm-providers/` — public LLM
+- `packages/llm-providers/` — public LLM

@@ -6,7 +6,8 @@
 
 ## Initial State
 
-Post-FID-026 rebrand. Active source still contained `codebuff`-branded identifiers that were intentionally preserved under the assumption they were external contracts. Operator requested a complete clean break.
+Post-FID-026 rebrand. Active source still contained `codebuff`-branded identifiers that were intentionally preserved
+under the assumption they were external contracts. Operator requested a complete clean break.
 
 ## Work Performed
 

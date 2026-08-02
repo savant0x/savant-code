@@ -5,7 +5,7 @@ Skills are reusable instruction sets that agents can load on-demand via the `ski
 ## Creating a Skill
 
 1. Create a directory with your skill name (lowercase alphanumeric with hyphens):
-   ```
+   ```text
    .agents/skills/my-skill/
    ```
 
@@ -36,6 +36,7 @@ Skills are reusable instruction sets that agents can load on-demand via the `ski
 ## Name Validation
 
 Skill names must:
+
 - Be 1-64 characters long
 - Use only lowercase letters, numbers, and hyphens
 - Not start or end with a hyphen
@@ -48,6 +49,7 @@ Invalid examples: `Git-Release`, `my--skill`, `-skill`, `skill-`
 ## Discovery Locations
 
 Skills are discovered from these locations (in order of precedence):
+
 1. `~/.agents/skills/` (global, lowest priority)
 2. `.agents/skills/` (project, highest priority)
 
@@ -57,7 +59,7 @@ Project skills override global skills with the same name.
 
 Agents see available skills listed in the `skill` tool description. When an agent needs a skill's instructions, it calls:
 
-```
+```typescript
 skill({ name: "my-skill" })
 ```
 

@@ -146,13 +146,9 @@ interface SavantFreeReferralBannerProps {
   onFocusTargetsChange: (targets: SavantFreeReferralFocusTarget[]) => void
 }
 
-export const SavantFreeReferralBanner: React.FC<SavantFreeReferralBannerProps> = ({
-  width,
-  referral,
-  accessTier,
-  focusedId,
-  onFocusTargetsChange,
-}) => {
+export const SavantFreeReferralBanner: React.FC<
+  SavantFreeReferralBannerProps
+> = ({ width, referral, accessTier, focusedId, onFocusTargetsChange }) => {
   const theme = useTheme()
   const now = useNow(60_000)
   const [joining, setJoining] = useState(false)

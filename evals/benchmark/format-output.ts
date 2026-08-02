@@ -85,7 +85,6 @@ export function formatAgentResult(params: {
 }): string {
   const {
     agentId,
-    commit,
     judging,
     cost,
     durationMs,

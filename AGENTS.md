@@ -2,7 +2,8 @@
 
 Savant-Code is the multi-agent AI coding assistant built on the ECHO Protocol v0.2.0.
 
-> **All work is governed by [ECHO Protocol](ECHO.md).** No code is written without a FID that has converged through the Perfection Loop.
+> **All work is governed by [ECHO Protocol](ECHO.md).** No code is written without a FID that has converged through the
+  Perfection Loop.
 
 ## Key Technologies
 
@@ -15,7 +16,9 @@ Savant-Code is the multi-agent AI coding assistant built on the ECHO Protocol v0
 
 ## Agent Roster (9 canonical ECHO roles)
 
-The 9-agent roster is enforced in `ARCHITECTURE.md`. Each agent has restricted tools. See [ARCHITECTURE.md](ARCHITECTURE.md) → "Helper Tool Libraries" for the distinction between the 9 runtime roles and the 14 filesystem entries in `agents/`.
+The 9-agent roster is enforced in `ARCHITECTURE.md`. Each agent has restricted tools. See
+[ARCHITECTURE.md](ARCHITECTURE.md) → "Helper Tool Libraries" for the distinction between the 9 runtime roles and the 14
+filesystem entries in `agents/`.
 
 | Agent | Phase | Role |
 |---|---|---|
@@ -78,9 +81,17 @@ cd sdk && bun run typecheck && cd ../common && bun run typecheck && cd ../packag
 # SDK test suite (HARD GATE)
 cd sdk && bun test src/
 
-# Lint
+# Lint (HARD GATE — enforced pre-push)
 bun x eslint . --max-warnings 0
+
+# Markdown lint (HARD GATE — enforced pre-push)
+bun run lint:md
 
 # Format
 bun x prettier --write .
 ```
+
+> **Pre-push gate:** a native git pre-push hook (`.githooks/pre-push`) runs
+> `bun x eslint . --max-warnings 0` + `bun run lint:md` before every push. It is
+> auto-wired on `bun install` via the root `prepare` script
+> (`git config core.hooksPath .githooks`). Bypass only with `git push --no-verify`.

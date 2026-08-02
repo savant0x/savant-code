@@ -35,11 +35,7 @@ export function tmuxSend(
   text: string,
   options?: { noEnter?: boolean; waitIdle?: number; force?: boolean },
 ): void {
-  const args: string[] = [
-    `${SCRIPTS_DIR}/tmux-send.sh`,
-    sessionName,
-    text,
-  ]
+  const args: string[] = [`${SCRIPTS_DIR}/tmux-send.sh`, sessionName, text]
   if (options?.noEnter) args.push('--no-enter')
   if (options?.waitIdle) args.push('--wait-idle', String(options.waitIdle))
   if (options?.force) args.push('--force')

@@ -1,6 +1,5 @@
 import React from 'react'
 
-
 export interface SparklineProps {
   data: number[]
   width?: number
@@ -10,7 +9,12 @@ export interface SparklineProps {
 
 const BLOCKS = ['▁', '▂', '▃', '▄', '▅', '▆', '▇', '█']
 
-export function Sparkline({ data, width = 10, color = '#18faf9', label }: SparklineProps) {
+export function Sparkline({
+  data,
+  width = 10,
+  color = '#18faf9',
+  label,
+}: SparklineProps) {
   if (data.length === 0) {
     return <text>No data</text>
   }
@@ -22,7 +26,10 @@ export function Sparkline({ data, width = 10, color = '#18faf9', label }: Sparkl
 
   const chars = displayData.map((v) => {
     const normalized = (v - min) / range
-    const index = Math.min(Math.floor(normalized * BLOCKS.length), BLOCKS.length - 1)
+    const index = Math.min(
+      Math.floor(normalized * BLOCKS.length),
+      BLOCKS.length - 1,
+    )
     return BLOCKS[index]
   })
 

@@ -13,6 +13,7 @@ export const ALLOWED_MODEL_PREFIXES = [
   'tokenrouter',
   'nvidia',
   'opencode-go',
+  'commandcode',
   'cloudflare',
   'moonshotai',
   'bytedance-seed',
@@ -70,32 +71,43 @@ export const tokenrouterModels = {
   tokenrouter_qwen_qwen3_7_max: 'tokenrouter/qwen/qwen3.7-max',
   tokenrouter_zai_glm_5_2: 'tokenrouter/z-ai/glm-5.2',
   tokenrouter_openai_gpt_5_5_pro: 'tokenrouter/openai/gpt-5.5-pro',
-  tokenrouter_anthropic_claude_opus_4_8: 'tokenrouter/anthropic/claude-opus-4.8',
+  tokenrouter_anthropic_claude_opus_4_8:
+    'tokenrouter/anthropic/claude-opus-4.8',
   tokenrouter_xai_grok_4_5: 'tokenrouter/x-ai/grok-4.5',
   tokenrouter_moonshotai_kimi_k3: 'tokenrouter/moonshotai/kimi-k3',
-  tokenrouter_bytedance_seed_seedream_5_0_pro: 'tokenrouter/bytedance-seed/seedream-5.0-pro',
+  tokenrouter_bytedance_seed_seedream_5_0_pro:
+    'tokenrouter/bytedance-seed/seedream-5.0-pro',
   tokenrouter_minimax_m3: 'tokenrouter/MiniMax-M3',
   // Tier 2 — Frontier Performers
-  tokenrouter_anthropic_claude_sonnet_5: 'tokenrouter/anthropic/claude-sonnet-5',
+  tokenrouter_anthropic_claude_sonnet_5:
+    'tokenrouter/anthropic/claude-sonnet-5',
   tokenrouter_openai_gpt_5_6_terra: 'tokenrouter/openai/gpt-5.6-terra',
   tokenrouter_qwen_qwen3_7_plus: 'tokenrouter/qwen/qwen3.7-plus',
-  tokenrouter_anthropic_claude_opus_4_8_fast: 'tokenrouter/anthropic/claude-opus-4.8-fast',
-  tokenrouter_google_gemini_3_1_pro_preview: 'tokenrouter/google/gemini-3.1-pro-preview',
-  tokenrouter_anthropic_claude_opus_4_7: 'tokenrouter/anthropic/claude-opus-4.7',
-  tokenrouter_anthropic_claude_opus_4_7_fast: 'tokenrouter/anthropic/claude-opus-4.7-fast',
+  tokenrouter_anthropic_claude_opus_4_8_fast:
+    'tokenrouter/anthropic/claude-opus-4.8-fast',
+  tokenrouter_google_gemini_3_1_pro_preview:
+    'tokenrouter/google/gemini-3.1-pro-preview',
+  tokenrouter_anthropic_claude_opus_4_7:
+    'tokenrouter/anthropic/claude-opus-4.7',
+  tokenrouter_anthropic_claude_opus_4_7_fast:
+    'tokenrouter/anthropic/claude-opus-4.7-fast',
   tokenrouter_openai_gpt_5_5: 'tokenrouter/openai/gpt-5.5',
   tokenrouter_zai_glm_5_2_free: 'tokenrouter/z-ai/glm-5.2-free',
   tokenrouter_deepseek_v3_2: 'tokenrouter/deepseek/deepseek-v3.2',
   tokenrouter_qwen_qwen3_6_plus: 'tokenrouter/qwen/qwen3.6-plus',
-  tokenrouter_moonshotai_kimi_k2_7_code: 'tokenrouter/moonshotai/kimi-k2.7-code',
+  tokenrouter_moonshotai_kimi_k2_7_code:
+    'tokenrouter/moonshotai/kimi-k2.7-code',
   tokenrouter_xiaomi_mimo_v2_5_pro: 'tokenrouter/xiaomi/mimo-v2.5-pro',
   tokenrouter_zai_glm_5_1: 'tokenrouter/z-ai/glm-5.1',
   tokenrouter_openai_gpt_5_4: 'tokenrouter/openai/gpt-5.4',
   tokenrouter_xai_grok_4_3: 'tokenrouter/x-ai/grok-4.3',
-  tokenrouter_anthropic_claude_opus_4_6: 'tokenrouter/anthropic/claude-opus-4.6',
+  tokenrouter_anthropic_claude_opus_4_6:
+    'tokenrouter/anthropic/claude-opus-4.6',
   tokenrouter_openai_gpt_5_3_codex: 'tokenrouter/openai/gpt-5.3-codex',
-  tokenrouter_nvidia_nemotron_3_super_120b: 'tokenrouter/nvidia/nemotron-3-super-120b-a12b',
-  tokenrouter_miromind_mirothinker_1_7: 'tokenrouter/miromind/mirothinker-1-7-deepresearch',
+  tokenrouter_nvidia_nemotron_3_super_120b:
+    'tokenrouter/nvidia/nemotron-3-super-120b-a12b',
+  tokenrouter_miromind_mirothinker_1_7:
+    'tokenrouter/miromind/mirothinker-1-7-deepresearch',
   tokenrouter_qwen_qwen3_5_397b: 'tokenrouter/qwen/qwen3.5-397b-a17b',
   tokenrouter_qwen_qwen3_5_122b: 'tokenrouter/qwen/qwen3.5-122b-a10b',
   tokenrouter_openai_gpt_oss_120b: 'tokenrouter/openai/gpt-oss-120b',
@@ -136,6 +148,74 @@ export type OpencodeGoModel =
   (typeof opencodeGoModels)[keyof typeof opencodeGoModels]
 
 /** Protocol metadata for OpenCode Go models — each model specifies its API protocol. */
+export const commandcodeModels = {
+  // Claude models (require Anthropic endpoint)
+  commandcode_claude_opus_5: 'commandcode/claude-opus-5',
+  commandcode_claude_opus_4_8: 'commandcode/claude-opus-4.8',
+  commandcode_claude_sonnet_5: 'commandcode/claude-sonnet-5',
+  commandcode_claude_sonnet_4_6: 'commandcode/claude-sonnet-4.6',
+  commandcode_claude_haiku_4_5: 'commandcode/claude-haiku-4.5',
+  // OpenAI-compatible models
+  commandcode_grok_4_5: 'commandcode/x-ai/grok-4.5',
+  commandcode_glm_5_2: 'commandcode/z-ai/glm-5.2',
+  commandcode_glm_5_1: 'commandcode/z-ai/glm-5.1',
+  commandcode_kimi_k3: 'commandcode/moonshotai/kimi-k3',
+  commandcode_kimi_k2_7_code: 'commandcode/moonshotai/kimi-k2.7-code',
+  commandcode_kimi_k2_6: 'commandcode/moonshotai/kimi-k2.6',
+  commandcode_mimo_v2_5: 'commandcode/xiaomi/mimo-v2.5',
+  commandcode_mimo_v2_5_pro: 'commandcode/xiaomi/mimo-v2.5-pro',
+  commandcode_deepseek_v4_pro: 'commandcode/deepseek/deepseek-v4-pro',
+  commandcode_deepseek_v4_flash: 'commandcode/deepseek/deepseek-v4-flash',
+  commandcode_deepseek_v3_2: 'commandcode/deepseek/deepseek-v3.2',
+  commandcode_gpt_5_6_sol: 'commandcode/openai/gpt-5.6-sol',
+  commandcode_gpt_5_6_terra: 'commandcode/openai/gpt-5.6-terra',
+  commandcode_gpt_5_6_luna: 'commandcode/openai/gpt-5.6-luna',
+  commandcode_gpt_5_5: 'commandcode/openai/gpt-5.5',
+  commandcode_gpt_5_3_codex: 'commandcode/openai/gpt-5.3-codex',
+  commandcode_qwen3_7_max: 'commandcode/qwen/qwen3.7-max',
+  commandcode_qwen3_7_plus: 'commandcode/qwen/qwen3.7-plus',
+  commandcode_qwen3_6_plus: 'commandcode/qwen/qwen3.6-plus',
+  commandcode_minimax_m3: 'commandcode/minimax-m3',
+  commandcode_minimax_m2_7: 'commandcode/minimaxai/minimax-m2.7',
+  // Free models
+  commandcode_laguna_s_2_1: 'commandcode/lagunaai/laguna-s-2.1',
+  commandcode_ling_3_0_flash: 'commandcode/minimaxai/ling-3.0-flash',
+} as const
+export type CommandcodeModel =
+  (typeof commandcodeModels)[keyof typeof commandcodeModels]
+
+/** Protocol metadata for CommandCode models — Claude models require the Anthropic endpoint. */
+export const COMMANDCODE_PROTOCOLS: Record<string, 'openai' | 'anthropic'> = {
+  'commandcode/claude-opus-5': 'anthropic',
+  'commandcode/claude-opus-4.8': 'anthropic',
+  'commandcode/claude-sonnet-5': 'anthropic',
+  'commandcode/claude-sonnet-4.6': 'anthropic',
+  'commandcode/claude-haiku-4.5': 'anthropic',
+  'commandcode/x-ai/grok-4.5': 'openai',
+  'commandcode/z-ai/glm-5.2': 'openai',
+  'commandcode/z-ai/glm-5.1': 'openai',
+  'commandcode/moonshotai/kimi-k3': 'openai',
+  'commandcode/moonshotai/kimi-k2.7-code': 'openai',
+  'commandcode/moonshotai/kimi-k2.6': 'openai',
+  'commandcode/xiaomi/mimo-v2.5': 'openai',
+  'commandcode/xiaomi/mimo-v2.5-pro': 'openai',
+  'commandcode/deepseek/deepseek-v4-pro': 'openai',
+  'commandcode/deepseek/deepseek-v4-flash': 'openai',
+  'commandcode/deepseek/deepseek-v3.2': 'openai',
+  'commandcode/openai/gpt-5.6-sol': 'openai',
+  'commandcode/openai/gpt-5.6-terra': 'openai',
+  'commandcode/openai/gpt-5.6-luna': 'openai',
+  'commandcode/openai/gpt-5.5': 'openai',
+  'commandcode/openai/gpt-5.3-codex': 'openai',
+  'commandcode/qwen/qwen3.7-max': 'openai',
+  'commandcode/qwen/qwen3.7-plus': 'openai',
+  'commandcode/qwen/qwen3.6-plus': 'openai',
+  'commandcode/minimax-m3': 'openai',
+  'commandcode/minimaxai/minimax-m2.7': 'openai',
+  'commandcode/lagunaai/laguna-s-2.1': 'openai',
+  'commandcode/minimaxai/ling-3.0-flash': 'openai',
+} as const
+
 export const OPENCODE_GO_PROTOCOLS: Record<string, 'openai' | 'anthropic'> = {
   'opencode-go/grok-4.5': 'openai',
   'opencode-go/glm-5.2': 'openai',
@@ -157,7 +237,8 @@ export const OPENCODE_GO_PROTOCOLS: Record<string, 'openai' | 'anthropic'> = {
 export const cloudflareModels = {
   cloudflare_gpt_oss_120b: 'cloudflare/openai/gpt-oss-120b',
   cloudflare_gpt_oss_20b: 'cloudflare/openai/gpt-oss-20b',
-  cloudflare_deepseek_r1_distill: 'cloudflare/deepseek/deepseek-r1-distill-qwen-32b',
+  cloudflare_deepseek_r1_distill:
+    'cloudflare/deepseek/deepseek-r1-distill-qwen-32b',
   cloudflare_gemma_4_26b: 'cloudflare/google/gemma-4-26b-a4b-it',
   cloudflare_llama_3_3_70b: 'cloudflare/meta/llama-3.3-70b-instruct-fp8-fast',
   cloudflare_llama_4_scout: 'cloudflare/meta/llama-4-scout-17b-16e-instruct',
@@ -168,9 +249,11 @@ export const cloudflareModels = {
   cloudflare_qwen3_30b: 'cloudflare/qwen/qwen3-30b-a3b-fp8',
   cloudflare_qwq_32b: 'cloudflare/qwen/qwq-32b',
   cloudflare_nemotron_3: 'cloudflare/nvidia/nemotron-3-120b-a12b',
-  cloudflare_mistral_small: 'cloudflare/mistralai/mistral-small-3.1-24b-instruct',
+  cloudflare_mistral_small:
+    'cloudflare/mistralai/mistral-small-3.1-24b-instruct',
 } as const
-export type CloudflareModel = (typeof cloudflareModels)[keyof typeof cloudflareModels]
+export type CloudflareModel =
+  (typeof cloudflareModels)[keyof typeof cloudflareModels]
 
 export const deepseekModels = {
   deepseekChat: 'deepseek-chat',
@@ -349,6 +432,7 @@ export const providerDomains = {
   nvidia: 'nvidia.com',
   opencodeGo: 'opencode.ai',
   cloudflare: 'cloudflare.com',
+  commandcode: 'commandcode.ai',
 } as const
 
 export function getLogoForModel(modelName: string): string | undefined {
@@ -370,8 +454,12 @@ export function getLogoForModel(modelName: string): string | undefined {
   else if (modelName.startsWith('tokenrouter/'))
     domain = providerDomains.tokenrouter
   else if (modelName.startsWith('nvidia/')) domain = providerDomains.nvidia
-  else if (modelName.startsWith('cloudflare/')) domain = providerDomains.cloudflare
-  else if (modelName.startsWith('opencode-go/')) domain = providerDomains.opencodeGo
+  else if (modelName.startsWith('cloudflare/'))
+    domain = providerDomains.cloudflare
+  else if (modelName.startsWith('opencode-go/'))
+    domain = providerDomains.opencodeGo
+  else if (modelName.startsWith('commandcode/'))
+    domain = providerDomains.commandcode
   else if (modelName.includes('claude')) domain = providerDomains.anthropic
   else if (modelName.includes('grok')) domain = providerDomains.xai
 

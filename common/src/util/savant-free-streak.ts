@@ -11,7 +11,8 @@ import type {
   SavantFreeStreakPool,
 } from '../constants/savant-free-models'
 
-export const SAVANT_FREE_STREAK_TIME_ZONE = SAVANT_FREE_PREMIUM_SESSION_RESET_TIMEZONE
+export const SAVANT_FREE_STREAK_TIME_ZONE =
+  SAVANT_FREE_PREMIUM_SESSION_RESET_TIMEZONE
 
 const DAY_MS = 24 * 60 * 60 * 1000
 
@@ -142,7 +143,10 @@ export function streakRewardPools(params: {
   if (params.accessTier === 'limited') return ['limited']
   const pools: SavantFreeStreakPool[] = ['premium']
   // GLM stays weekly: only on the exact milestone day (once per Pacific week).
-  if (isSavantFreeStreakMilestone(params.streak) && isSavantFreeStreakGlmBonusActive()) {
+  if (
+    isSavantFreeStreakMilestone(params.streak) &&
+    isSavantFreeStreakGlmBonusActive()
+  ) {
     pools.push('glm')
   }
   return pools

@@ -8,7 +8,6 @@ import { logger } from './logger'
 
 import type { ChatTheme } from '../types/theme-system'
 
-
 /**
  * Plugin interface for extending theme system
  * Plugins can modify themes at runtime
@@ -22,10 +21,7 @@ export interface ThemePlugin {
    * @param mode - The detected light/dark mode
    * @returns Partial theme to merge
    */
-  apply: (
-    theme: ChatTheme,
-    mode: 'dark' | 'light',
-  ) => Partial<ChatTheme>
+  apply: (theme: ChatTheme, mode: 'dark' | 'light') => Partial<ChatTheme>
 }
 
 /**
@@ -87,7 +83,10 @@ export const registerThemePlugin = (plugin: ThemePlugin): void => {
 const resolveThemeColors = (theme: ChatTheme, mode: 'dark' | 'light'): void => {
   const defaultFallback = mode === 'dark' ? '#ffffff' : '#000000'
 
-  const resolve = (value: string, fallback: string = defaultFallback): string => {
+  const resolve = (
+    value: string,
+    fallback: string = defaultFallback,
+  ): string => {
     if (typeof value === 'string') {
       const normalized = value.trim().toLowerCase()
       if (normalized === 'default' || normalized.length === 0) {

@@ -27,7 +27,10 @@ export interface GenerateLoginUrlDeps {
    * test-friendly module; callers wire in the real `trackEvent`. Omitted in
    * tests, where it no-ops.
    */
-  trackEvent?: (event: AnalyticsEvent, properties?: Record<string, JSONValue>) => void
+  trackEvent?: (
+    event: AnalyticsEvent,
+    properties?: Record<string, JSONValue>,
+  ) => void
 }
 
 export interface GenerateLoginUrlOptions {
@@ -41,7 +44,9 @@ export async function generateLoginUrl(
   options: GenerateLoginUrlOptions,
 ): Promise<LoginUrlResponse> {
   if (isDirectProviderMode()) {
-    throw new Error('Login requires the Savant Code backend, which is not available in direct-provider mode.')
+    throw new Error(
+      'Login requires the Savant Code backend, which is not available in direct-provider mode.',
+    )
   }
 
   const { logger, apiClient: providedApiClient, trackEvent } = deps
@@ -96,7 +101,10 @@ interface PollLoginStatusDeps {
   logger: Logger
   now?: () => number
   apiClient?: SavantCodeApiClient
-  trackEvent?: (event: AnalyticsEvent, properties?: Record<string, JSONValue>) => void
+  trackEvent?: (
+    event: AnalyticsEvent,
+    properties?: Record<string, JSONValue>,
+  ) => void
 }
 
 interface PollLoginStatusOptions {
@@ -120,7 +128,9 @@ export async function pollLoginStatus(
   options: PollLoginStatusOptions,
 ): Promise<PollLoginStatusResult> {
   if (isDirectProviderMode()) {
-    throw new Error('Login status polling requires the Savant Code backend, which is not available in direct-provider mode.')
+    throw new Error(
+      'Login status polling requires the Savant Code backend, which is not available in direct-provider mode.',
+    )
   }
 
   const { sleep, logger, apiClient: providedApiClient, trackEvent } = deps

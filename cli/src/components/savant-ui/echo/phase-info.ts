@@ -33,10 +33,22 @@ const PHASE_MAP: Record<string, PhaseMapping> = {
 /** Runtime activity → glyph + theme color key + label (FID-009 two-signal). */
 const ACTIVITY_MAP: Record<string, PhaseMapping> = {
   idle: { glyph: 'phaseIdle', colorKey: 'muted', label: 'IDLE' },
-  thinking: { glyph: 'activityThinking', colorKey: 'syntaxKeyword', label: 'thinking' },
+  thinking: {
+    glyph: 'activityThinking',
+    colorKey: 'syntaxKeyword',
+    label: 'thinking',
+  },
   tool: { glyph: 'activityTool', colorKey: 'warning', label: 'tool' },
-  subagent: { glyph: 'activitySubagent', colorKey: 'warning', label: 'subagent' },
-  researching: { glyph: 'activityResearching', colorKey: 'info', label: 'researching' },
+  subagent: {
+    glyph: 'activitySubagent',
+    colorKey: 'warning',
+    label: 'subagent',
+  },
+  researching: {
+    glyph: 'activityResearching',
+    colorKey: 'info',
+    label: 'researching',
+  },
 }
 
 const FALLBACK_PHASE: PhaseMapping = PHASE_MAP.idle

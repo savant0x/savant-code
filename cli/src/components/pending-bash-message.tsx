@@ -10,9 +10,7 @@ interface PendingBashMessageProps {
   message: PendingBashMessageType
 }
 
-export const PendingBashMessage = ({
-  message,
-}: PendingBashMessageProps) => {
+export const PendingBashMessage = ({ message }: PendingBashMessageProps) => {
   const theme = useTheme()
 
   return (

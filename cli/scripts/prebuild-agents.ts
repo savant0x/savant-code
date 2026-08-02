@@ -1,5 +1,5 @@
 #!/usr/bin/env bun
-/* eslint-disable no-console -- CLI diagnostics are the script's output contract. */
+ 
 /**
  * Prebuild script that scans the agents/ directory and generates a TypeScript
  * module with all agent definitions embedded as static data.

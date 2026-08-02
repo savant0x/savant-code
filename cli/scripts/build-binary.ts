@@ -25,11 +25,9 @@ type TargetInfo = {
 const VERBOSE = process.env.VERBOSE === 'true'
 const OVERRIDE_TARGET = process.env.OVERRIDE_TARGET
 const OVERRIDE_PLATFORM = process.env.OVERRIDE_PLATFORM as
-  | NodeJS.Platform
-  | undefined
+  NodeJS.Platform | undefined
 const OVERRIDE_ARCH = process.env.OVERRIDE_ARCH ?? undefined
-const OVERRIDE_COMPILE_EXECUTABLE_PATH =
-  process.env.BUN_COMPILE_EXECUTABLE_PATH
+const OVERRIDE_COMPILE_EXECUTABLE_PATH = process.env.BUN_COMPILE_EXECUTABLE_PATH
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -192,7 +190,10 @@ async function main() {
       'process.env.SAVANT_CODE_CLI_TARGET',
       `"${getCliTargetLabel(targetInfo)}"`,
     ],
-    ['process.env.SAVANT_FREE_MODE', `"${process.env.SAVANT_FREE_MODE ?? 'false'}"`],
+    [
+      'process.env.SAVANT_FREE_MODE',
+      `"${process.env.SAVANT_FREE_MODE ?? 'false'}"`,
+    ],
   ]
 
   const buildArgs = [
@@ -244,9 +245,7 @@ async function main() {
     chmodSync(outputFile, 0o755)
   }
 
-  logAlways(
-    `✅ Built ${outputFilename} (${getCliTargetLabel(targetInfo)})`,
-  )
+  logAlways(`✅ Built ${outputFilename} (${getCliTargetLabel(targetInfo)})`)
 }
 
 main().catch((error: unknown) => {
@@ -268,7 +267,14 @@ function findWebTreeSitterWasm(): string {
   const candidates = [
     join(cliRoot, 'node_modules', 'web-tree-sitter', 'tree-sitter.wasm'),
     join(cliRoot, '..', 'node_modules', 'web-tree-sitter', 'tree-sitter.wasm'),
-    join(cliRoot, '..', 'sdk', 'node_modules', 'web-tree-sitter', 'tree-sitter.wasm'),
+    join(
+      cliRoot,
+      '..',
+      'sdk',
+      'node_modules',
+      'web-tree-sitter',
+      'tree-sitter.wasm',
+    ),
   ]
   const found = candidates.find((p) => existsSync(p))
   if (found) return found

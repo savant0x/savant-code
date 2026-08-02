@@ -1,5 +1,13 @@
 import { QueryClient } from '@tanstack/react-query'
-import { describe, test, expect, beforeEach, afterEach, mock, spyOn } from 'bun:test'
+import {
+  describe,
+  test,
+  expect,
+  beforeEach,
+  afterEach,
+  mock,
+  spyOn,
+} from 'bun:test'
 
 import { usageQueryKeys } from '../../hooks/use-usage-query'
 import { useChatStore } from '../../state/chat-store'
@@ -26,7 +34,8 @@ describe('Usage Refresh on SDK Completion', () => {
   let getAuthTokenSpy: ReturnType<typeof spyOn>
 
   beforeEach(() => {
-    process.env.NEXT_PUBLIC_SAVANT_CODE_APP_URL = 'https://test.savant-code.local'
+    process.env.NEXT_PUBLIC_SAVANT_CODE_APP_URL =
+      'https://test.savant-code.local'
 
     // Reset chat store to initial state
     useChatStore.getState().reset()

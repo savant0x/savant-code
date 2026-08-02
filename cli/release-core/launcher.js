@@ -842,16 +842,17 @@ function createLauncher(productConfig) {
 
       // Move env.json next to the binary. The binary loads this at startup to
       // determine its runtime environment, so it must live beside the exe.
-      const tempEnvJsonPath = path.join(
-        CONFIG.tempDownloadDir,
-        'env.json',
-      )
+      const tempEnvJsonPath = path.join(CONFIG.tempDownloadDir, 'env.json')
       if (fs.existsSync(tempEnvJsonPath)) {
         const targetEnvJsonPath = path.join(
           path.dirname(CONFIG.binaryPath),
           'env.json',
         )
-        replaceFileWithRollback(tempEnvJsonPath, targetEnvJsonPath, replacements)
+        replaceFileWithRollback(
+          tempEnvJsonPath,
+          targetEnvJsonPath,
+          replacements,
+        )
       }
 
       replaceFileWithRollback(

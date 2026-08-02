@@ -1,9 +1,11 @@
 # Savant Community Discord — Server Design
 
 ## Server Name
+
 **Savant** (or "Savant Community")
 
 ## Channel Format
+
 `emoji | name` — e.g., `📢 | announcements`, `🛠️ | general`
 
 ---
@@ -11,6 +13,7 @@
 ## Channel Structure
 
 ### 📢 INFORMATION
+
 | Channel | Purpose |
 |---------|---------|
 | `📢 \| announcements` | Product launches, major updates, milestones |
@@ -19,6 +22,7 @@
 | `❓ \| faq` | Common questions, troubleshooting |
 
 ### 🛠️ SAVANT CODE
+
 | Channel | Purpose |
 |---------|---------|
 | `⌨️ \| general` | General Savant Code discussion |
@@ -29,6 +33,7 @@
 | `⚡ \| tips-tricks` | Power user tips, workflow optimization |
 
 ### 🔬 SAVANT INFERENCE (Phase 2)
+
 | Channel | Purpose |
 |---------|---------|
 | `🧠 \| inference-general` | Provider discussion, model routing |
@@ -36,6 +41,7 @@
 | `📡 \| inference-announcements` | Provider updates, pricing changes |
 
 ### 🦀 SAVANT CORE (Phase 3)
+
 | Channel | Purpose |
 |---------|---------|
 | `⚙️ \| core-general` | Rust framework discussion |
@@ -43,6 +49,7 @@
 | `🚀 \| core-announcements` | Core releases, roadmap updates |
 
 ### 🔨 DEVELOPMENT
+
 | Channel | Purpose |
 |---------|---------|
 | `📊 \| dev-updates` | Internal dev progress (public-facing) |
@@ -51,6 +58,7 @@
 | `🏛️ \| echos` | ECHO Protocol discussion, governance philosophy |
 
 ### 💬 COMMUNITY
+
 | Channel | Purpose |
 |---------|---------|
 | `☕ \| off-topic` | General chat, non-Savant discussion |
@@ -59,6 +67,7 @@
 | `🏆 \| showcase` | Projects built with Savant tools |
 
 ### 🔒 INTERNAL (Staff Only)
+
 | Channel | Purpose |
 |---------|---------|
 | `🔒 \| staff-chat` | Internal team discussion |

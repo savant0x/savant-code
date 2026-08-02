@@ -17,21 +17,31 @@ export interface FidListProps {
   onSelect?: (fid: FidData) => void
 }
 
-const SEVERITY_ORDER: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 }
+const SEVERITY_ORDER: Record<string, number> = {
+  critical: 0,
+  high: 1,
+  medium: 2,
+  low: 3,
+}
 
-export function FidList({ fids, filter, sortBy = 'severity', onSelect }: FidListProps) {
+export function FidList({
+  fids,
+  filter,
+  sortBy = 'severity',
+  onSelect,
+}: FidListProps) {
   const theme = useTheme()
 
   let filtered = fids
   if (filter) {
-    filtered = fids.filter(
-      (f) => f.status === filter || f.severity === filter,
-    )
+    filtered = fids.filter((f) => f.status === filter || f.severity === filter)
   }
 
   const sorted = [...filtered].sort((a, b) => {
     if (sortBy === 'severity') {
-      return (SEVERITY_ORDER[a.severity] ?? 99) - (SEVERITY_ORDER[b.severity] ?? 99)
+      return (
+        (SEVERITY_ORDER[a.severity] ?? 99) - (SEVERITY_ORDER[b.severity] ?? 99)
+      )
     }
     if (sortBy === 'status') return a.status.localeCompare(b.status)
     return a.id.localeCompare(b.id)

@@ -22,9 +22,11 @@ interface SavantFreeSessionStore {
   setError: (error: string | null) => void
 }
 
-export const useSavantFreeSessionStore = create<SavantFreeSessionStore>((set) => ({
-  session: null,
-  error: null,
-  setSession: (session) => set({ session }),
-  setError: (error) => set({ error }),
-}))
+export const useSavantFreeSessionStore = create<SavantFreeSessionStore>(
+  (set) => ({
+    session: null,
+    error: null,
+    setSession: (session) => set({ session }),
+    setError: (error) => set({ error }),
+  }),
+)

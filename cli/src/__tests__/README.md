@@ -208,7 +208,7 @@ When adding new tests:
 
 ### tmux Not Found
 
-```
+```text
 ⚠️  tmux not found but required for integration/E2E tests
 ```
 
@@ -216,7 +216,7 @@ When adding new tests:
 
 ### SDK Not Built
 
-```
+```text
 ✓ Build SDK for E2E tests: cd sdk && bun run build [skip]
 ```
 

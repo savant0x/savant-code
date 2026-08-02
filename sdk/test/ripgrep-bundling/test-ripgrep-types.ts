@@ -8,10 +8,10 @@ import { getBundledRgPath, ToolHelpers } from '@savant-code/sdk'
 
   // Should accept optional import.meta.url parameter
   const rgPath1: string = getBundledRgPath()
-  const rgPath2: string = getBundledRgPath(import.meta.url)
+  const _rgPath2: string = getBundledRgPath(import.meta.url)
 
   // Return type should be string
-  const pathTest: string = rgPath1
+  const _pathTest: string = rgPath1
 
   console.log('✅ getBundledRgPath types work correctly')
 
@@ -84,30 +84,30 @@ import { getBundledRgPath, ToolHelpers } from '@savant-code/sdk'
   console.log('\n4. Testing optional parameters...')
 
   // These should all compile without errors
-  const basicSearch = ToolHelpers.codeSearch({
+  const _basicSearch = ToolHelpers.codeSearch({
     projectPath: '/test',
     pattern: 'test',
   })
 
-  const searchWithFlags = ToolHelpers.codeSearch({
+  const _searchWithFlags = ToolHelpers.codeSearch({
     projectPath: '/test',
     pattern: 'test',
     flags: '-i',
   })
 
-  const searchWithCwd = ToolHelpers.codeSearch({
+  const _searchWithCwd = ToolHelpers.codeSearch({
     projectPath: '/test',
     pattern: 'test',
     cwd: 'src',
   })
 
-  const searchWithMaxResults = ToolHelpers.codeSearch({
+  const _searchWithMaxResults = ToolHelpers.codeSearch({
     projectPath: '/test',
     pattern: 'test',
     maxResults: 5,
   })
 
-  const searchWithAll = ToolHelpers.codeSearch({
+  const _searchWithAll = ToolHelpers.codeSearch({
     projectPath: '/test',
     pattern: 'test',
     flags: '-i',

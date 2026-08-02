@@ -2,7 +2,7 @@ import { mock } from 'bun:test'
 
 import type { SavantCodeFileSystem } from '../../types/filesystem'
 import type { Mock } from 'bun:test'
-import type { PathLike , Stats } from 'node:fs'
+import type { PathLike, Stats } from 'node:fs'
 
 export interface CreateMockFsOptions {
   files?: Record<string, string>

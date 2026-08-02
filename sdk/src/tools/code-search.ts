@@ -18,14 +18,18 @@ type CodeSearchResult =
 const ripgrepEventSchema = z.object({
   type: z.enum(['match', 'context']),
   data: z.object({
-    path: z.object({
-      text: z.string().optional(),
-      bytes: z.string().optional(),
-    }).optional(),
+    path: z
+      .object({
+        text: z.string().optional(),
+        bytes: z.string().optional(),
+      })
+      .optional(),
     line_number: z.number().optional(),
-    lines: z.object({
-      text: z.string().optional(),
-    }).optional(),
+    lines: z
+      .object({
+        text: z.string().optional(),
+      })
+      .optional(),
   }),
 })
 
@@ -118,12 +122,33 @@ export function codeSearch({
         // We conservatively assume the next token is a value if the flag is
         // single-char with a value or a long flag without '='.
         const isBooleanFlag = [
-          '--no-config', '-n', '--json', '-i', '-l', '-c', '--count',
-          '--files-with-matches', '--files-without-match', '-h', '--help',
-          '--version', '-v', '--invert-match', '--no-filename',
-          '--no-line-number', '--no-messages', '--no-heading',
-          '--with-filename', '--heading', '--hidden', '--no-ignore',
-          '-u', '--unrestricted', '--binary', '--crlf', '--no-unicode',
+          '--no-config',
+          '-n',
+          '--json',
+          '-i',
+          '-l',
+          '-c',
+          '--count',
+          '--files-with-matches',
+          '--files-without-match',
+          '-h',
+          '--help',
+          '--version',
+          '-v',
+          '--invert-match',
+          '--no-filename',
+          '--no-line-number',
+          '--no-messages',
+          '--no-heading',
+          '--with-filename',
+          '--heading',
+          '--hidden',
+          '--no-ignore',
+          '-u',
+          '--unrestricted',
+          '--binary',
+          '--crlf',
+          '--no-unicode',
         ].includes(token)
         prevWasFlag = !isBooleanFlag && !token.includes('=')
       } else {

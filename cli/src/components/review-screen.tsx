@@ -56,7 +56,9 @@ export const ReviewScreen: React.FC<ReviewScreenProps> = ({
           return
         }
         if (key.name === 'down') {
-          setSelectedIndex((prev) => Math.min(REVIEW_OPTIONS.length - 1, prev + 1))
+          setSelectedIndex((prev) =>
+            Math.min(REVIEW_OPTIONS.length - 1, prev + 1),
+          )
           return
         }
         if (isPlainEnterKey(key)) {
@@ -86,7 +88,9 @@ export const ReviewScreen: React.FC<ReviewScreenProps> = ({
         paddingLeft: 1,
         paddingRight: 1,
         flexDirection: 'column',
-      }} customBorderChars={BORDER_CHARS}>
+      }}
+      customBorderChars={BORDER_CHARS}
+    >
       {REVIEW_OPTIONS.map((option, index) => {
         const isSelected = index === selectedIndex
         return (

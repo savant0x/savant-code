@@ -22,7 +22,9 @@ function formatAgentName(name: string): string {
   if (name === 'savant' || name === 'main-agent') return 'Savant'
   return name
     .split('-')
-    .map((word) => (word.length === 0 ? word : word[0].toUpperCase() + word.slice(1)))
+    .map((word) =>
+      word.length === 0 ? word : word[0].toUpperCase() + word.slice(1),
+    )
     .join(' ')
 }
 
@@ -41,8 +43,18 @@ export function AgentStack({ agents }: AgentStackProps) {
       {agents.map((agent, i) => {
         const isActive = agent.active ?? false
         return (
-          <box key={i} flexDirection="row" gap={1} alignItems="center" focusable={false} selectable={false}>
-            <text fg={isActive ? theme.primary : theme.muted} selectable={false}>
+          <box
+            key={i}
+            flexDirection="row"
+            gap={1}
+            alignItems="center"
+            focusable={false}
+            selectable={false}
+          >
+            <text
+              fg={isActive ? theme.primary : theme.muted}
+              selectable={false}
+            >
               {isActive ? '●' : '○'}
             </text>
             <text

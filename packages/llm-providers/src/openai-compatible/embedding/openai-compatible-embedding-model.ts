@@ -12,7 +12,10 @@ import { openaiCompatibleEmbeddingProviderOptions } from './openai-compatible-em
 import { defaultOpenAICompatibleErrorStructure } from '../openai-compatible-error'
 
 import type { OpenAICompatibleEmbeddingModelId } from './openai-compatible-embedding-options'
-import type { OpenAICompatibleErrorData, ProviderErrorStructure } from '../openai-compatible-error'
+import type {
+  OpenAICompatibleErrorData,
+  ProviderErrorStructure,
+} from '../openai-compatible-error'
 import type { EmbeddingModelV2 } from '@ai-sdk/provider'
 import type { FetchFunction } from '@ai-sdk/provider-utils'
 

@@ -1,4 +1,3 @@
-
 import { COMPOSIO_META_TOOL_NAMES } from '@savant-code/common/constants/composio'
 import { clientToolNames, toolParams } from '@savant-code/common/tools/list'
 import { afterEach, describe, expect, mock, test } from 'bun:test'

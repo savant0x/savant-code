@@ -4,7 +4,7 @@ import { useTheme } from '../../../hooks/use-theme'
 import { KeyValue } from '../data-display/key-value'
 import { Sparkline } from '../data-display/sparkline'
 
-import type { KeyValueItem } from '../data-display/key-value';
+import type { KeyValueItem } from '../data-display/key-value'
 
 export interface CostTrackerProps {
   cost: number
@@ -17,7 +17,11 @@ export function CostTracker({ cost, trend, model, budget }: CostTrackerProps) {
   const theme = useTheme()
 
   const items: KeyValueItem[] = [
-    { label: 'cost', value: `$${cost.toFixed(2)}`, color: cost > 1 ? theme.error : theme.foreground },
+    {
+      label: 'cost',
+      value: `$${cost.toFixed(2)}`,
+      color: cost > 1 ? theme.error : theme.foreground,
+    },
   ]
   if (model) {
     items.push({ label: 'model', value: model })
@@ -27,7 +31,12 @@ export function CostTracker({ cost, trend, model, budget }: CostTrackerProps) {
     items.push({
       label: 'remaining',
       value: `$${remaining.toFixed(2)}`,
-      color: remaining < 0 ? theme.error : remaining < budget * 0.2 ? theme.warning : theme.foreground,
+      color:
+        remaining < 0
+          ? theme.error
+          : remaining < budget * 0.2
+            ? theme.warning
+            : theme.foreground,
     })
   }
 

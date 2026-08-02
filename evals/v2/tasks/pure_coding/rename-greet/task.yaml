@@ -1,21 +1,21 @@
-schema_version: "2.0"
-task_id: "savant-v2-pure-rename-001"
-category: "pure_coding"
-difficulty: "medium"
-description: "Rename the greet function to welcome across multiple files and update all imports and usages."
+schema_version: '2.0'
+task_id: 'savant-v2-pure-rename-001'
+category: 'pure_coding'
+difficulty: 'medium'
+description: 'Rename the greet function to welcome across multiple files and update all imports and usages.'
 environment:
   setup_files:
-    - "greet.js"
-    - "app.js"
-    - "app.test.js"
+    - 'greet.js'
+    - 'app.js'
+    - 'app.test.js'
   network_disabled: true
-golden_patch: "golden.patch"
+golden_patch: 'golden.patch'
 inputs:
-  prompt: "Rename the greet function to welcome across all files in this project. Update the export in greet.js, the import and call in app.js, and make sure app.test.js passes."
+  prompt: 'Rename the greet function to welcome across all files in this project. Update the export in greet.js, the import and call in app.js, and make sure app.test.js passes.'
 validation:
   timeout_seconds: 60
   deterministic_checks:
-    - command: "bun app.test.js"
+    - command: 'bun app.test.js'
       expected_exit_code: 0
       retry_count: 0
-      retry_condition: "infra"
+      retry_condition: 'infra'

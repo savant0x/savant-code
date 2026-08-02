@@ -79,7 +79,8 @@ export function countTokensMessages(messages: Message[]): number {
           break
         case 'tool-call':
           total +=
-            countTokens(part.toolName as string) + countTokensJson(part.input as JSONValue)
+            countTokens(part.toolName as string) +
+            countTokensJson(part.input as JSONValue)
           break
         case 'json': // tool result payload
           total += countTokensJson(part.value as JSONValue)

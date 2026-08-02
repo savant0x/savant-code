@@ -1,10 +1,10 @@
-## SavantCode for Windows dev setup
+# SavantCode for Windows dev setup
 
 Welcome!
 
 For development, we have a shared windows machine, via shadow.tech.
 
-### Accessing the machine
+## Accessing the machine
 
 You can access the machine either from the browser or with the desktop app:
 
@@ -17,13 +17,16 @@ You can access the machine either from the browser or with the desktop app:
 - They claim its better, idk.
 - https://shadow.tech/download/
 
-Supposedly you can also use Window's Remote Desktop to access the machine instead, but I've not tried it. Shadow.tech claims their protocol is better optimized for lower bandwidth use & hence smoother performance.
+Supposedly you can also use Window's Remote Desktop to access the machine instead, but I've not tried it.
+Shadow.tech claims their protocol is better optimized for lower bandwidth use & hence smoother performance.
 
 ## Set-up guide:
 
-You shouldn't need this - but just in case you stop using Shadow.tech, or make a new account, here's a guide on how to get from a blank Windows install to a SavantCode install.
+You shouldn't need this - but just in case you stop using Shadow.tech, or make a new account, here's a guide on how
+to get from a blank Windows install to a SavantCode install.
 
-Surprisingly: most guides in fact recommend running everything in an Admin PowerShell, contra to advice to not use sudo on eg: Linux/macOS.
+Surprisingly: most guides in fact recommend running everything in an Admin PowerShell, contra to advice to not use
+sudo on eg: Linux/macOS.
 
 - Install Choco: Open PowerShell as Admin, and run the command from https://chocolatey.org/install
 - Install NVM: Restart PowerShell (still as Admin) and run `choco install nvm -y`
@@ -36,7 +39,7 @@ Surprisingly: most guides in fact recommend running everything in an Admin Power
 
 Running into problems? Here are solutions to the most common Windows-specific issues.
 
-### Issue: "Failed to determine latest version" on First Run
+### Issue: "Failed to determine latest version" or release metadata on First Run
 
 **Symptom**:
 ```powershell
@@ -46,7 +49,8 @@ Please check your internet connection and try again
 ```
 
 **Cause**:
-SavantCode checks GitHub for the latest release on first run. This fails when:
+Some release wrappers or older installations may check public release metadata during startup. This can fail when:
+
 - Corporate firewall blocks `github.com`
 - Proxy settings not configured
 - Network connectivity issues
@@ -54,7 +58,7 @@ SavantCode checks GitHub for the latest release on first run. This fails when:
 
 **Solutions**:
 
-1. **Set the `HTTPS_PROXY` environment variable** (if behind corporate proxy):
+1. **Set the `HTTPS_PROXY` environment variable** (if behind corporate proxy or a restricted network):
 
    SavantCode natively supports proxy environment variables. This is the recommended fix:
 
@@ -70,7 +74,8 @@ SavantCode checks GitHub for the latest release on first run. This fails when:
    savant-code
    ```
 
-   To make it permanent, add `HTTPS_PROXY` to your Windows System Environment Variables (Settings → System → Advanced → Environment Variables).
+   To make it permanent, add `HTTPS_PROXY` to your Windows System Environment Variables (Settings → System →
+   Advanced → Environment Variables).
 
 2. **Verify network access**:
    ```powershell
@@ -101,12 +106,13 @@ SavantCode checks GitHub for the latest release on first run. This fails when:
 ### Issue: "Bash is required but was not found" Error
 
 **Symptom**:
-```
+```text
 Bash is required but was not found on this Windows system.
 ```
 
 **Cause**:
 SavantCode requires bash for command execution. This error appears when:
+
 - Git for Windows is not installed
 - You're not running inside WSL
 - bash.exe is not in your PATH
@@ -159,7 +165,7 @@ Complex git commands may have issues with Windows path handling or shell escapin
 ### Issue: Login Browser Window Fails to Open
 
 **Symptom**:
-```
+```text
 Press ENTER to open your browser and finish logging in...
 
 Caught exception: Error: Executable not found in $PATH: "start"
@@ -168,7 +174,8 @@ TLCWeb > Unable to login. Please try again by typing "login" in the terminal.
 ```
 
 **Cause**:
-When running SavantCode in Git Bash (MINGW64), the `start` command is not available in PATH. The browser auto-open feature fails.
+When running SavantCode in Git Bash (MINGW64), the `start` command is not available in PATH. The browser auto-open
+feature fails.
 
 **Solutions**:
 
@@ -199,11 +206,13 @@ When running SavantCode in Git Bash (MINGW64), the `start` command is not availa
 
 **What it means**:
 This is **not an error** - it's an informational message indicating:
+
 - Your local binary needs to be downloaded/updated
 - "error" is a placeholder version (not a real error state)
 - SavantCode will automatically download the correct version
 
 **What to do**:
+
 - Wait for the download to complete: "Download complete! Starting SavantCode..."
 - If download fails, check your internet connection
 - If it persists, try the solutions in "Failed to determine latest version" above
@@ -221,6 +230,7 @@ If these solutions don't resolve your problem:
 3. **Join Discord community**: https://savant-code.com/discord
 
 When reporting issues, please include:
+
 - Windows version: `winver` command
 - PowerShell/Git Bash/CMD
 - Node version: `node --version`

@@ -6,7 +6,6 @@ import { stopTerminalWatchdog } from './terminal-watchdog'
 
 import type { CliRenderer } from '@opentui/core'
 
-
 let renderer: CliRenderer | null = null
 let handlersInstalled = false
 let terminalStateReset = false

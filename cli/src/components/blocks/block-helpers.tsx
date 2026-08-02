@@ -114,9 +114,7 @@ export const isTextRenderable = (value: React.ReactNode): boolean => {
 
   if (Array.isArray(value)) {
     return value.every(
-      (child) =>
-        typeof child === 'string' ||
-        typeof child === 'number',
+      (child) => typeof child === 'string' || typeof child === 'number',
     )
   }
 

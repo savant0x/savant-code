@@ -48,9 +48,7 @@ export function withTimeout<T>(
 /**
  * Check if the current terminal supports OSC color queries
  */
-export function terminalSupportsOSC(
-  env: CliEnv = getCliEnv(),
-): boolean {
+export function terminalSupportsOSC(env: CliEnv = getCliEnv()): boolean {
   const term = env.TERM || ''
   const termProgram = env.TERM_PROGRAM || ''
 
@@ -95,12 +93,12 @@ function buildOscQuery(oscCode: number): string {
 
 /**
  * Query the terminal for OSC color information.
- * 
+ *
  * IMPORTANT: This function reads from stdin because OSC responses come through
  * the PTY which appears on stdin. This means it MUST be run BEFORE any other
  * stdin listeners (like OpenTUI) are attached. OSC detection runs at the very
  * start of main() in index.tsx, before OpenTUI is initialized.
- * 
+ *
  * @param ttyPath - Path to TTY for writing the query
  * @param query - The OSC query string to send
  * @returns The raw response string or null if query failed

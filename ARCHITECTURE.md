@@ -28,7 +28,11 @@ and one set of engineering laws (ECHO).
 | 8 | **Researcher** | Research | Web search, documentation lookup, external API research | web_search, read_url (web); read_docs (docs) |
 | 9 | **Scribe** | Docs | Session summaries, LESSONS.md, knowledge files, end-of-session capture | read_files, write_file, glob, grep, set_output |
 
-> **Note on Orchestrator write tools:** Per FID-2026-0718-008, the Orchestrator has `write_file` + `str_replace` in its toolName list, but they are GATED to exempt paths only (`dev/fids/`, `dev/scratchpad/`, `dev/nova/`) by `tool-executor.ts`. For all non-exempt paths, these tools are blocked unless FSM phase is `green`. This satisfies ECHO separation-of-duties for production code while allowing FIDs/scratchpad without ceremony.
+> **Note on Orchestrator write tools:** Per FID-2026-0718-008, the Orchestrator has `write_file` + `str_replace` in its
+  toolName list, but they are GATED to exempt paths only (`dev/fids/`, `dev/scratchpad/`, `dev/nova/`) by
+  `tool-executor.ts`. For all non-exempt paths, these tools are blocked unless FSM phase is `green` or `self_correct`
+  (see Tool Gating). This satisfies ECHO separation-of-duties for production code while allowing FIDs/scratchpad without
+  ceremony.
 
 ---
 
@@ -37,7 +41,7 @@ and one set of engineering laws (ECHO).
 The Perfection Loop runs on the **FID document**, not on the code.
 Code implementation begins only after the FID converges to COMPLETE.
 
-```
+```text
 ┌──────────────────────────────────────────────────────────┐
 │                 FID PERFECTION LOOP                       │
 │  (iterates on the FID document until convergence)         │
@@ -94,7 +98,7 @@ the MCP reference implementation, stripped of MCP transport.
 
 The Thinker calls `sequentialthinking` iteratively in a loop:
 
-```
+```text
 thought 1:  "Analyze the problem... what exactly needs to be solved?"
 thought 2:  "Identify constraints... boundaries, requirements, non-negotiables
 ..." 
@@ -173,8 +177,8 @@ Tools are gated by FSM phase in `tool-executor.ts`:
 
 | Tool | Allowed Phases | Status |
 |------|---------------|--------|
-| write_file, str_replace, apply_patch | GREEN only (exempt paths: dev/fids/, dev/nova/, dev/scratchpad/) | ✅ Active |
-| run_terminal_command (bash) | AUDIT only | ✅ Active |
+| write_file, str_replace, apply_patch | GREEN + SELF_CORRECT (exempt paths: dev/fids/, dev/nova/, dev/scratchpad/) | ✅ Active |
+| run_terminal_command (bash) | AUDIT + GREEN | ✅ Active |
 | sequentialthinking | Thinker only (id starts with `thinker`) | ✅ Active |
 | grep, read, glob, list_dir | ALL | ✅ Active (no gating needed) |
 | spawn_agents | ALL | ✅ Active (template-level only) |
@@ -193,17 +197,15 @@ Tools are gated by FSM phase in `tool-executor.ts`:
 
 ---
 
-## Open Decisions
-
-1. FSM enforcement (`transition_phase` tool + tool gating): implement now or defer?
-
 ---
 
 ## Helper Tool Libraries (Filesystem-Only) — Added 2026-07-19
 
-The 9-agent roster above represents **ECHO runtime roles** — the conversational agents that the Orchestrator spawns through the Perfection Loop.
+The 9-agent roster above represents **ECHO runtime roles** — the conversational agents that the Orchestrator spawns
+through the Perfection Loop.
 
-The filesystem under `agents/` may also contain **helper tool libraries** which are consumed by the canonical 9 roles but do NOT constitute independent conversational agents:
+The filesystem under `agents/` may also contain **helper tool libraries** which are consumed by the canonical 9 roles
+but do NOT constitute independent conversational agents:
 
 | Helper Dir | Consumed By | Notes |
 |------------|-------------|-------|
@@ -214,10 +216,14 @@ The filesystem under `agents/` may also contain **helper tool libraries** which 
 | `types/` | `agents/base-chat.ts`, `agents/savant/savant.ts`, `agents/savant/savant-deep.ts`, `agents/basher.ts`, `agents/browser-use/browser-use.ts` | Type-only shared imports across all agents + basher |
 
 **Hierarchy:**
+
 - 9 canonical ECHO runtime roles (Orchestrator + 8 specialists)
 - + 5 helper tool libraries (above)
 - = 14 directories in `agents/` (post-FID-017 prune, where 2 truly-orphaned `e2e/` + `__tests__/` were deleted)
 
-These two counts are NOT in conflict: the 9-agent roster represents runtime conversation entities; the 14-dir count represents filesystem entries. Future checklists/audits should not confuse them.
+These two counts are NOT in conflict: the 9-agent roster represents runtime conversation entities; the 14-dir count
+represents filesystem entries. Future checklists/audits should not confuse them.
 
-**Pre-rebrand note (0.0.2 push):** All `@savant-code/*` workspace names + import paths remain intact at this checkpoint. The full rebrand (rename all `savant-code`/`savant-free` instances to `savant-code`/`savant-free`) ships in the NEXT push.
+**Current release note (0.0.15):** The repository uses the `@savant-code/*` workspace names and import paths. Historical
+rebrand and checkpoint decisions remain in the archived session records and release history; this architecture document
+tracks the current repository state.

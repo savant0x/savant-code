@@ -120,9 +120,7 @@ const inputSchema = z
       .number()
       .default(30)
       .optional()
-      .describe(
-        `Set to -1 for no timeout. Default 30`,
-      ),
+      .describe(`Set to -1 for no timeout. Default 30`),
   })
   .describe(
     `Execute a CLI command from the **project root** (different from the user's cwd).`,

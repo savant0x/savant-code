@@ -1,7 +1,9 @@
 import { describe, it, expect, beforeEach } from 'bun:test'
+
 import { SavantAgentRunner } from '../src/runners/savant'
-import type { SavantAgentRunnerConfig } from '../src/runners/savant'
 import { TempDirSandbox } from '../src/sandboxes/tempdir'
+
+import type { SavantAgentRunnerConfig } from '../src/runners/savant'
 import type { TaskDefinition } from '../src/schema'
 import type { RunState, SavantCodeClient } from '@savant-code/sdk'
 
@@ -80,7 +82,9 @@ describe('SavantAgentRunner', () => {
     const fakeClient: Pick<SavantCodeClient, 'run'> = {
       run: async (_options: unknown) => {
         // Simulate the runtime calling handleEvent for a tool_call.
-        const typedOptions = _options as { handleEvent?: (event: unknown) => void }
+        const typedOptions = _options as {
+          handleEvent?: (event: unknown) => void
+        }
         typedOptions.handleEvent?.({
           type: 'tool_call',
           toolCallId: 'tc-1',
@@ -110,7 +114,9 @@ describe('SavantAgentRunner', () => {
     await runner.executePrompt('hello')
     const trace = runner.collectTrace()
 
-    const phaseTransitions = trace.events.filter((e) => e.type === 'phase_transition')
+    const phaseTransitions = trace.events.filter(
+      (e) => e.type === 'phase_transition',
+    )
     expect(phaseTransitions.length).toBe(2)
     expect(phaseTransitions[0]).toEqual({
       type: 'phase_transition',
@@ -134,7 +140,9 @@ describe('SavantAgentRunner', () => {
     const runState = makeRunState()
     const fakeClient: Pick<SavantCodeClient, 'run'> = {
       run: async (_options: unknown) => {
-        const typedOptions = _options as { handleStreamChunk?: (chunk: unknown) => void }
+        const typedOptions = _options as {
+          handleStreamChunk?: (chunk: unknown) => void
+        }
         typedOptions.handleStreamChunk?.({
           type: 'subagent_chunk',
           agentId: 'agent-1',

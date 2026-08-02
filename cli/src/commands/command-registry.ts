@@ -29,6 +29,7 @@ import { useChatStore } from '../state/chat-store'
 import { useFeedbackStore } from '../state/feedback-store'
 import { useLoginStore } from '../state/login-store'
 import { useModelPickerStore } from '../state/model-picker-store'
+import { useProviderPickerStore } from '../state/provider-picker-store'
 import { useSavantFreeModelStore } from '../state/savant-free-model-store'
 import { abortActiveRun } from '../utils/active-run'
 import {
@@ -47,7 +48,6 @@ import {
   getProviderSetupInfo,
   PROVIDER_SETUP_CONFIG,
 } from '../utils/provider-setup'
-import { useProviderPickerStore } from '../state/provider-picker-store'
 import {
   loadSavantCodeModelPreference,
   saveSavantCodeModelPreference,
@@ -710,7 +710,10 @@ const ALL_COMMANDS: CommandDefinition[] = [
               const configured = getConfiguredProviderNames()
               const providers = (
                 Object.entries(PROVIDER_SETUP_CONFIG) as Array<
-                  [string, (typeof PROVIDER_SETUP_CONFIG)[keyof typeof PROVIDER_SETUP_CONFIG]]
+                  [
+                    string,
+                    (typeof PROVIDER_SETUP_CONFIG)[keyof typeof PROVIDER_SETUP_CONFIG],
+                  ]
                 >
               ).map(([name, config]) => ({
                 name: name as (typeof configured)[number],
@@ -734,7 +737,7 @@ const ALL_COMMANDS: CommandDefinition[] = [
                 ...prev,
                 getUserMessage(params.inputValue.trim()),
                 getSystemMessage(
-                  'Unknown provider. Use /provider opencode-go, /provider tokenrouter, or /provider nvidia.',
+                  `Unknown provider. Use /provider followed by one of: ${Object.keys(PROVIDER_SETUP_CONFIG).join(', ')}.`,
                 ),
               ])
               params.saveToHistory(params.inputValue.trim())

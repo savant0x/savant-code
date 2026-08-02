@@ -5,7 +5,6 @@ import path from 'path'
 import type { Runner, RunnerResult, AgentStep } from './runner'
 import type { SavantCodeClient } from '@savant-code/sdk'
 
-
 const DEBUG_ERROR = true
 
 export class SavantCodeRunner implements Runner {

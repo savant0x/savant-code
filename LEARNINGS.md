@@ -51,7 +51,7 @@
 
 ### Perfection Loop Phase FSM (canonical)
 
-```
+```text
 idle → red → green → audit → self_correct → green (re-iterate)
                                 ↓
                               complete (FID closed)
@@ -89,7 +89,7 @@ up to `MAX_ITERATIONS = 10` (circuit breaker; see `transition-phase.ts:12`).
 
 ### Three-Layer Audit Chain
 
-```
+```text
 Savant Orchestrator  →  code-reviewer-minimax-m3  →  Nova (third-party)
      (self-verify)        (independent reviewer)      (external verifier)
 ```
@@ -100,6 +100,7 @@ Nova signing off is required before any of: tag push, release publish, pre-rebra
 ### Cross-Agent Claim Rule
 
 Every claim in a close-out report must be **source-verifiable**. Common failure modes:
+
 - Claim "typecheck passes" → forgot to actually run `bun run --cwd=<pkg> typecheck`.
 - Claim "tests pass" → only ran a subset, not full suite.
 - Claim "feature shipped" → forgot the close-out commit landed.
@@ -140,11 +141,12 @@ If `markdownlint` Problems-panel entries appear, the canonical fix is **document
 suppression: `<!-- markdownlint-disable MDxxx -->` before the offending line, or
 disable-by-name in the first line:
 
-```
+```markdown
 <!-- markdownlint-disable MD041 -->
 ```
 
 Valid document-level suppressions used in this repo:
+
 - `MD041` (first line should be a top-level heading) — suppressed in README (line 1 must
   be the disable directive itself).
 - `MD033` (no inline HTML `<id>`/`<target>`) — keep file because em-dash refs in CHANGELOG
@@ -157,6 +159,7 @@ Valid document-level suppressions used in this repo:
 ### README Structure (per FID-2026-0718-021)
 
 11 sections in this order:
+
 1. Banner header (project name + tag line)
 2. Key Technologies
 3. Features
@@ -171,7 +174,7 @@ Valid document-level suppressions used in this repo:
 
 ### CHANGELOG Entry Format
 
-```
+```markdown
 ## FID-YYYY-MMDD-NNN — severity — short title
 
 **Closed:** YYYY-MM-DD
@@ -185,7 +188,7 @@ Reverse chronological. Every archived FID MUST have a CHANGELOG entry at the top
 
 ### Session Summary Structure
 
-```
+```markdown
 1. Summary
 2. Key Learnings
 3. Agent Behavior / Process
@@ -300,6 +303,7 @@ references** before claiming clean state: `grep -rn 'old-agent-id' common/ agent
 
 Pattern: Orchestrator writes close-out report claiming "all tests pass" but ran a subset.
 Common gaps:
+
 - Ran `bun test src/` but not `bun test` (full SDK).
 - Claimed SDK changes because path-utils.ts changed, but didn't run dependent test files.
 - Forgot to ship writes referenced in the report (CHANGELOG entry, FID archive move).

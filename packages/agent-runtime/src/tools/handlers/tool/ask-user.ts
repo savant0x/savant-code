@@ -10,7 +10,9 @@ type ToolName = 'ask_user'
 export const handleAskUser = (async (params: {
   previousToolCallFinished: Promise<void>
   toolCall: SavantCodeToolCall<ToolName>
-  requestClientToolCall: (toolCall: SavantCodeToolCall<ToolName>) => Promise<SavantCodeToolOutput<ToolName>>
+  requestClientToolCall: (
+    toolCall: SavantCodeToolCall<ToolName>,
+  ) => Promise<SavantCodeToolOutput<ToolName>>
 }): Promise<{ output: SavantCodeToolOutput<ToolName> }> => {
   const { previousToolCallFinished, toolCall, requestClientToolCall } = params
 

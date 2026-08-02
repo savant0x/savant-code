@@ -163,8 +163,7 @@ describe('Initial Session State', () => {
     // 'src/index.ts' won't match 'src\\index.ts' on Windows where path.join
     // uses backslashes. Accept both forms.
     const endsWithSegment = (segment: string) => (p: string) =>
-      p.endsWith(`src${path.sep}${segment}`) ||
-      p.endsWith(`src/${segment}`)
+      p.endsWith(`src${path.sep}${segment}`) || p.endsWith(`src/${segment}`)
     const endsWithRoot = (name: string) => (p: string) =>
       p.endsWith(`${path.sep}${name}`) || p.endsWith(`/${name}`)
 
@@ -301,7 +300,11 @@ describe('Initial Session State', () => {
       sessionState.fileContext.agentTemplates['custom-agent'],
     ).toBeDefined()
     expect(
-      (sessionState.fileContext.agentTemplates['custom-agent'] as ProcessedAgentTemplate).displayName,
+      (
+        sessionState.fileContext.agentTemplates[
+          'custom-agent'
+        ] as ProcessedAgentTemplate
+      ).displayName,
     ).toBe('Custom Agent')
   })
 

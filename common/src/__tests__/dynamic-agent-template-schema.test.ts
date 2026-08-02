@@ -1,4 +1,3 @@
- 
 import { describe, expect, it } from 'bun:test'
 
 import {
@@ -128,7 +127,7 @@ describe('DynamicAgentDefinitionSchema', () => {
         ...validBaseTemplate,
         parentInstructions: {
           researcher: 'Spawn when you need research',
-          'scout': 'Spawn for file exploration',
+          scout: 'Spawn for file exploration',
         },
       }
 

@@ -1,6 +1,5 @@
 import { useMutation } from '@tanstack/react-query'
 
-
 import { LOGIN_WEBSITE_URL } from '../login/constants'
 import { generateLoginUrl } from '../login/login-flow'
 import { trackEvent } from '../utils/analytics'

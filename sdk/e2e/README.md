@@ -4,7 +4,7 @@ This folder contains end-to-end tests, integration tests, unit tests, and runnab
 
 ## Directory Structure
 
-```
+```text
 sdk/e2e/
 ├── streaming/          # E2E tests for streaming behavior
 ├── workflows/          # E2E tests for multi-step workflows  
@@ -22,6 +22,7 @@ sdk/e2e/
 ## Test Categories
 
 ### E2E Tests (`test:e2e`)
+
 Full end-to-end tests that exercise complete user workflows with real API calls.
 
 ```bash
@@ -36,6 +37,7 @@ bun run test:e2e
 | `features/` | projectFiles, knowledgeFiles, maxAgentSteps |
 
 ### Integration Tests (`test:integration`)
+
 Tests that verify SDK + API integration mechanics.
 
 ```bash
@@ -50,6 +52,7 @@ bun run test:integration
 | `connection-check` | Tests checkConnection() method |
 
 ### Unit Tests (`test:unit:e2e`)
+
 Pure unit tests with no external dependencies.
 
 ```bash
@@ -61,6 +64,7 @@ bun run test:unit:e2e
 | `event-collector.test.ts` | Tests EventCollector utility class |
 
 ### Examples
+
 Runnable scripts demonstrating SDK usage patterns. Not tests - just examples!
 
 ```bash
@@ -102,6 +106,7 @@ bun run test:e2e && bun run test:integration && bun run test:unit:e2e
 ## Writing Tests
 
 ### E2E Test Pattern
+
 ```typescript
 import { describe, test, expect, beforeAll } from 'bun:test'
 import { SavantCodeClient } from '../../src/client'
@@ -133,6 +138,7 @@ describe('E2E: My Test', () => {
 ```
 
 ### Unit Test Pattern
+
 ```typescript
 import { describe, test, expect, beforeEach } from 'bun:test'
 import { EventCollector } from '../event-collector'

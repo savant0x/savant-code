@@ -2,10 +2,12 @@ import * as mainPromptModule from '@savant-code/agent-runtime/main-prompt'
 import { withSystemTags } from '@savant-code/agent-runtime/util/messages'
 import { getInitialSessionState } from '@savant-code/common/types/session-state'
 import { getStubProjectFileContext } from '@savant-code/common/util/file'
-import { assistantMessage, userMessage } from '@savant-code/common/util/messages'
+import {
+  assistantMessage,
+  userMessage,
+} from '@savant-code/common/util/messages'
 import { RetryError } from 'ai'
 import { afterEach, describe, expect, it, mock, spyOn } from 'bun:test'
-
 
 // Type for tool call content blocks in message history
 interface ToolCallContentBlock {
@@ -25,7 +27,6 @@ import { SavantCodeClient } from '../client'
 import * as databaseModule from '../impl/database'
 
 import type { JSONValue } from '@savant-code/common/types/json'
-
 
 describe('Run Cancellation Handling', () => {
   afterEach(() => {
@@ -193,7 +194,8 @@ describe('Run Cancellation Handling', () => {
       (m) =>
         m.role === 'user' &&
         m.content.some(
-          (c): c is TextContentBlock => c.type === 'text' && c.text.includes('fix the bug'),
+          (c): c is TextContentBlock =>
+            c.type === 'text' && c.text.includes('fix the bug'),
         ),
     )
 
@@ -545,9 +547,9 @@ describe('Run Cancellation Handling', () => {
     // The last message should be the interruption (user role), not an empty assistant message
     const lastMessage = messageHistory[messageHistory.length - 1]
     expect(lastMessage.role).toBe('user')
-    expect(
-      (lastMessage.content[0] as TextContentBlock).text,
-    ).toContain('User interrupted')
+    expect((lastMessage.content[0] as TextContentBlock).text).toContain(
+      'User interrupted',
+    )
 
     // Verify there's no empty assistant message before the interruption
     const secondToLastMessage = messageHistory[messageHistory.length - 2]
@@ -749,7 +751,8 @@ describe('Run Cancellation Handling', () => {
       (m) =>
         m.role === 'assistant' &&
         m.content.some(
-          (c): c is ToolCallContentBlock => c.type === 'tool-call' && c.toolCallId === 'tool-1',
+          (c): c is ToolCallContentBlock =>
+            c.type === 'tool-call' && c.toolCallId === 'tool-1',
         ),
     )
     expect(toolCallMessage).toBeDefined()
@@ -1046,7 +1049,8 @@ describe('Run Cancellation Handling', () => {
       (m) =>
         m.role === 'user' &&
         m.content.some(
-          (c): c is TextContentBlock => c.type === 'text' && c.text.includes('Fix the bug'),
+          (c): c is TextContentBlock =>
+            c.type === 'text' && c.text.includes('Fix the bug'),
         ),
     )
     expect(firstUserMsg).toBeDefined()
@@ -1121,7 +1125,8 @@ describe('Run Cancellation Handling', () => {
       (m) =>
         m.role === 'user' &&
         m.content.some(
-          (c): c is TextContentBlock => c.type === 'text' && c.text.includes('Fix the bug'),
+          (c): c is TextContentBlock =>
+            c.type === 'text' && c.text.includes('Fix the bug'),
         ),
     )
     expect(firstUserMsgInSecond).toBeDefined()
@@ -1174,7 +1179,10 @@ describe('Run Cancellation Handling', () => {
       {
         role: 'assistant',
         content: [
-          { type: 'text', text: 'I will analyze the issue.' } as TextContentBlock,
+          {
+            type: 'text',
+            text: 'I will analyze the issue.',
+          } as TextContentBlock,
           {
             type: 'tool-call',
             toolCallId: 'read-1',
@@ -1197,7 +1205,10 @@ describe('Run Cancellation Handling', () => {
       {
         role: 'assistant',
         content: [
-          { type: 'text', text: 'Found the bug, fixing now.' } as TextContentBlock,
+          {
+            type: 'text',
+            text: 'Found the bug, fixing now.',
+          } as TextContentBlock,
           {
             type: 'tool-call',
             toolCallId: 'write-1',
@@ -1303,8 +1314,8 @@ describe('Run Cancellation Handling', () => {
     // Verify interruption message was added at the end
     const lastMessage = messageHistory[messageHistory.length - 1]
     expect(lastMessage.role).toBe('user')
-    expect(
-      (lastMessage.content[0] as TextContentBlock).text,
-    ).toContain('User interrupted the response')
+    expect((lastMessage.content[0] as TextContentBlock).text).toContain(
+      'User interrupted the response',
+    )
   })
 })

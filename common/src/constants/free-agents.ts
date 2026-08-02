@@ -121,7 +121,9 @@ export const FREE_MODE_AGENT_MODELS: Record<string, Set<string>> = {
   ]),
   'savant-free-kimi': new Set([SAVANT_FREE_KIMI_MODEL_ID]),
   'savant-free-deepseek': new Set([SAVANT_FREE_DEEPSEEK_V4_PRO_MODEL_ID]),
-  'savant-free-deepseek-flash': new Set([SAVANT_FREE_DEEPSEEK_V4_FLASH_MODEL_ID]),
+  'savant-free-deepseek-flash': new Set([
+    SAVANT_FREE_DEEPSEEK_V4_FLASH_MODEL_ID,
+  ]),
   'savant-free-mimo-pro': new Set([SAVANT_FREE_MIMO_V25_PRO_MODEL_ID]),
   'savant-free-mimo': new Set([SAVANT_FREE_MIMO_V25_MODEL_ID]),
   'savant-free-minimax-m3': new Set([SAVANT_FREE_MINIMAX_M3_MODEL_ID]),
@@ -147,7 +149,7 @@ export const FREE_MODE_AGENT_MODELS: Record<string, Set<string>> = {
 
   // Generic subagents inherit the parent agent's model, so they must accept
   // every free model a user might select.
-  'scout': SAVANT_FREE_SUBAGENT_MODELS,
+  scout: SAVANT_FREE_SUBAGENT_MODELS,
   'file-picker-max': SAVANT_FREE_SUBAGENT_MODELS,
   'file-lister': SAVANT_FREE_SUBAGENT_MODELS,
 
@@ -170,7 +172,9 @@ export const FREE_MODE_AGENT_MODELS: Record<string, Set<string>> = {
   verifier: SAVANT_FREE_SUBAGENT_MODELS,
 
   // Legacy: kept for the standalone gemini thinker agent if invoked directly.
-  [SAVANT_FREE_GEMINI_THINKER_AGENT_ID]: new Set([SAVANT_FREE_GEMINI_PRO_MODEL_ID]),
+  [SAVANT_FREE_GEMINI_THINKER_AGENT_ID]: new Set([
+    SAVANT_FREE_GEMINI_PRO_MODEL_ID,
+  ]),
 }
 
 /**

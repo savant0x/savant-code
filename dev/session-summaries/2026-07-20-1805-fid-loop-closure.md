@@ -16,12 +16,16 @@
 ECHO.md Perfection Loop state machine ran on FID-029-git:
 
 - **RED (already done)**: 449 → 401 ESLint issues cataloged with file/rule breakdown
-- **GREEN strategy flip** (this session): replaced discredited "file-level disable with justification" approach with ECHO Law 6-compliant PROPER NARROW strategy
-  - Per-case decision matrix (a)→(h): concrete type / `<T extends X>` generic / `v is T` guard / `JsonValue` recursive union / cast-pattern replace / `_` prefix / `eslint --fix` import-order / `logger.warn` no-console
+- **GREEN strategy flip** (this session): replaced discredited "file-level disable with justification" approach with
+  ECHO Law 6-compliant PROPER NARROW strategy
+  - Per-case decision matrix (a)→(h): concrete type / `<T extends X>` generic / `v is T` guard / `JsonValue` recursive
+    union / cast-pattern replace / `_` prefix / `eslint --fix` import-order / `logger.warn` no-console
   - Disable is LAST RESORT only via 3-condition AND-gate with audit evidence
-- **AUDIT #1** via code-reviewer-minimax-m3: APPROVE-WITH-CONDITION (Q7 fabricated `SavantError`, Subsequent Batch Queue missing, FID Auto-Archive operational gap)
+- **AUDIT #1** via code-reviewer-minimax-m3: APPROVE-WITH-CONDITION (Q7 fabricated `SavantError`, Subsequent Batch Queue
+  missing, FID Auto-Archive operational gap)
 - **SELF-CORRECT**:
-  - Q7 corrected: replaced fabricated `SavantError` with project-actual subclasses (`AbortError` in `common/src/util/error.ts:139`, `SsrfError` in `sdk/src/tools/ssrf.ts:14`)
+  - Q7 corrected: replaced fabricated `SavantError` with project-actual subclasses (`AbortError` in
+    `common/src/util/error.ts:139`, `SsrfError` in `sdk/src/tools/ssrf.ts:14`)
   - Subsequent Batch Queue added: 20-file priority list with per-batch cycle spec
   - per-batch cycle step 5 (REMOVE existing file-level disables) elevated to top-level bullet
 - **Re-AUDIT #2** via code-reviewer-minimax-m3: APPROVE-WITH-1-CONDITION (session-summary-log missing)
@@ -31,7 +35,8 @@ ECHO.md Perfection Loop state machine ran on FID-029-git:
 
 Per ECHO FID Auto-Archive rule (4 actions):
 
-- `git mv dev/fids/FID-...` FAILED (working tree dirty — files uncommitted, so `git mv` rejected with "not under version control"); retry with plain `mv` to `dev/fids/archive/`
+- `git mv dev/fids/FID-...` FAILED (working tree dirty — files uncommitted, so `git mv` rejected with "not under version
+  control"); retry with plain `mv` to `dev/fids/archive/`
 - `dev/fids/FID-2026-0719-029-*` → `dev/fids/archive/`
 - `dev/fids/FID-2026-0720-032-*` → `dev/fids/archive/`
 - CHANGELOG.md: prepend two new entries (FID-029-git closed; FID-032 SUPERSEDED)
@@ -48,9 +53,12 @@ Per ECHO FID Auto-Archive rule (4 actions):
 
 ### Proper-Narrow Pass (downstream of FID convergence per ECHO FID-Bound Execution)
 
-Per FID-029-git's Subsequent Batch Queue, files 1-20 need per-case narrowing. First 3: `common/src/util/error.ts`, `common/src/util/messages.ts`, `cli/src/utils/logger.ts`. Per-batch cycle: 5 numbered steps; step 5 = REMOVE existing file-level disables.
+Per FID-029-git's Subsequent Batch Queue, files 1-20 need per-case narrowing. First 3: `common/src/util/error.ts`,
+`common/src/util/messages.ts`, `cli/src/utils/logger.ts`. Per-batch cycle: 5 numbered steps; step 5 = REMOVE existing
+file-level disables.
 
-Flip-severity rule: `savant/no-unknown-in-signatures` flips `'warn' → 'error'` only at FID re-CLOSED state with 0 issues + x4 GREEN + 0 unapproved disables (codified in FID-029-git Flip-Severity Rule section).
+Flip-severity rule: `savant/no-unknown-in-signatures` flips `'warn' → 'error'` only at FID re-CLOSED state with 0 issues,
++x4 GREEN, and 0 unapproved disables (codified in FID-029-git Flip-Severity Rule section).
 
 ### Sibling FIDs (untouched this session)
 
@@ -61,7 +69,8 @@ Flip-severity rule: `savant/no-unknown-in-signatures` flips `'warn' → 'error'`
 ### Push-Gate Status
 
 - ✅ x4 typecheck GREEN (sdk + common + agent-runtime + cli, exit 0)
-- ❌ `eslint --max-warnings 0` STILL FAILING (401 issues remain) — fix is downstream of FID convergence per ECHO FID-Bound Execution
+- ❌ `eslint --max-warnings 0` STILL FAILING (401 issues remain) — fix is downstream of FID convergence per ECHO
+  FID-Bound Execution
 - ⚠️ 24 file-level disable comments on disk (suppression backlog) — reverse via proper-narrow pass
 
 ## Verifications Run
@@ -73,7 +82,14 @@ Flip-severity rule: `savant/no-unknown-in-signatures` flips `'warn' → 'error'`
 
 ## Notes / Lessons Learned
 
-- The original FID-029 strategy (file-level disable with justification) was a SUPPRESSION-DRESSED-AS-FIX pattern. User caught this 2026-07-20 with explicit philosophical stance: "we don't silence and hide the errors in order to save time." Corrected strategy exemplifies ECHO Law 6 + Law 11 + Law 14.
-- The `savant/no-unknown-in-signatures` custom rule + eslint.config.js comment ("Currently 'warn' — flips to 'error' after the cleanup FID resolves the 367 existing `: unknown` usages in src") represents the ECHO-correct enforcement path: rules can be implemented in `warn` mode while cleanup FIDs are open, then flip to `error` once the FID closes. This is a template for future ECHO enforcement.
-- Mass disable patterns, even when technically permitted, are a code smell. The FID-029 iteration proves that fixing root causes (proper narrow) is the ECHO-compliant path.
-- The `git mv` failure when working tree is dirty is a known gotcha for ops on local-only files. Fallback to plain `mv` is fine for files not yet committed; the file state moves and the next `git add` will pick it up.
+- The original FID-029 strategy (file-level disable with justification) was a SUPPRESSION-DRESSED-AS-FIX pattern. User
+  caught this 2026-07-20 with explicit philosophical stance: "we don't silence and hide the errors in order to save
+  time." Corrected strategy exemplifies ECHO Law 6 + Law 11 + Law 14.
+- The `savant/no-unknown-in-signatures` custom rule + eslint.config.js comment ("Currently 'warn' — flips to 'error'
+  after the cleanup FID resolves the 367 existing `: unknown` usages in src") represents the ECHO-correct enforcement
+  path: rules can be implemented in `warn` mode while cleanup FIDs are open, then flip to `error` once the FID closes.
+  This is a template for future ECHO enforcement.
+- Mass disable patterns, even when technically permitted, are a code smell. The FID-029 iteration proves that fixing
+  root causes (proper narrow) is the ECHO-compliant path.
+- The `git mv` failure when working tree is dirty is a known gotcha for ops on local-only files. Fallback to plain `mv`
+  is fine for files not yet committed; the file state moves and the next `git add` will pick it up.

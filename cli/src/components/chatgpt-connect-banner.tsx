@@ -13,11 +13,7 @@ import {
 import { BORDER_CHARS } from '../utils/ui-constants'
 
 type FlowState =
-  | 'checking'
-  | 'not-connected'
-  | 'waiting-for-code'
-  | 'connected'
-  | 'error'
+  'checking' | 'not-connected' | 'waiting-for-code' | 'connected' | 'error'
 
 export const ChatGptConnectBanner = () => {
   const theme = useTheme()
@@ -73,7 +69,8 @@ export const ChatGptConnectBanner = () => {
   const panelStyle = {
     width: '100%' as const,
     borderStyle: 'single' as const,
-    borderColor: theme.border,    paddingLeft: 1,
+    borderColor: theme.border,
+    paddingLeft: 1,
     paddingRight: 1,
   }
 
@@ -83,7 +80,8 @@ export const ChatGptConnectBanner = () => {
     paddingLeft: 1,
     paddingRight: 1,
     borderStyle: 'single' as const,
-    borderColor: hovered ? theme.foreground : theme.border,  }
+    borderColor: hovered ? theme.foreground : theme.border,
+  }
 
   const handleClose = () => {
     setInputMode('default')
@@ -95,15 +93,21 @@ export const ChatGptConnectBanner = () => {
       onMouseOver={() => setIsCloseHovered(true)}
       onMouseOut={() => setIsCloseHovered(false)}
     >
-      <text style={{ fg: isCloseHovered ? theme.error : theme.muted }}>
-        x
-      </text>
+      <text style={{ fg: isCloseHovered ? theme.error : theme.muted }}>x</text>
     </Button>
   )
 
   if (flowState === 'connected') {
     return (
-      <box style={{ ...panelStyle, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }} customBorderChars={BORDER_CHARS}>
+      <box
+        style={{
+          ...panelStyle,
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}
+        customBorderChars={BORDER_CHARS}
+      >
         <text style={{ fg: theme.foreground }}>✓ ChatGPT connected</text>
         <box style={{ flexDirection: 'row', gap: 1, alignItems: 'center' }}>
           <Button
@@ -124,7 +128,15 @@ export const ChatGptConnectBanner = () => {
 
   if (flowState === 'error') {
     return (
-      <box style={{ ...panelStyle, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }} customBorderChars={BORDER_CHARS}>
+      <box
+        style={{
+          ...panelStyle,
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}
+        customBorderChars={BORDER_CHARS}
+      >
         <text style={{ fg: theme.error, flexShrink: 1 }}>
           {error ?? 'Unknown error'}
         </text>
@@ -147,26 +159,39 @@ export const ChatGptConnectBanner = () => {
 
   if (flowState === 'waiting-for-code') {
     return (
-      <box style={{ ...panelStyle, flexDirection: 'column' }} customBorderChars={BORDER_CHARS}>
-        <box style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+      <box
+        style={{ ...panelStyle, flexDirection: 'column' }}
+        customBorderChars={BORDER_CHARS}
+      >
+        <box
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
           <text style={{ fg: theme.foreground }}>Connecting to ChatGPT...</text>
           {closeButton}
         </box>
         <text style={{ fg: theme.muted }}>
           Sign in via your browser to connect.
         </text>
-        {authUrl ? (
-          <text style={{ fg: theme.muted }}>
-            {authUrl}
-          </text>
-        ) : null}
+        {authUrl ? <text style={{ fg: theme.muted }}>{authUrl}</text> : null}
       </box>
     )
   }
 
   if (flowState === 'not-connected') {
     return (
-      <box style={{ ...panelStyle, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }} customBorderChars={BORDER_CHARS}>
+      <box
+        style={{
+          ...panelStyle,
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}
+        customBorderChars={BORDER_CHARS}
+      >
         <Button
           style={actionButtonStyle}
           onClick={handleConnect}

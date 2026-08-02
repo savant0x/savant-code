@@ -8,13 +8,9 @@ import {
   invalidateActivityQuery,
   removeActivityQuery,
 } from '../use-activity-query'
-import {
-  fetchUsageData,
-  usageQueryKeys,
-} from '../use-usage-query'
+import { fetchUsageData, usageQueryKeys } from '../use-usage-query'
 
 import type { ClientEnv } from '@savant-code/common/types/contracts/env'
-
 
 const originalDirectProvider = process.env.DIRECT_PROVIDER
 
@@ -32,7 +28,8 @@ describe('fetchUsageData', () => {
   const originalEnv = process.env.NEXT_PUBLIC_SAVANT_FREE_APP_URL
 
   beforeEach(() => {
-    process.env.NEXT_PUBLIC_SAVANT_FREE_APP_URL = 'https://test.savant-code.local'
+    process.env.NEXT_PUBLIC_SAVANT_FREE_APP_URL =
+      'https://test.savant-code.local'
   })
 
   afterEach(() => {

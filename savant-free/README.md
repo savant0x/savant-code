@@ -5,7 +5,9 @@
 
 **The free coding agent** — no subscription, no API key, no configuration. Start in seconds.
 
-An AI coding agent that runs in your terminal. Describe what you want, and SavantFree edits your code. Built from the same `@savant-code/cli` source as Savant-Code, then compiled with `FREEBUFF_MODE=true` so the bundler strips paid-only features (credits UI, mode switching, MAX/PLAN prompts).
+An AI coding agent that runs in your terminal. Describe what you want, and SavantFree edits your code. Built from
+the same `@savant-code/cli` source as Savant-Code, then compiled with `FREEBUFF_MODE=true` so the bundler strips
+paid-only features (credits UI, mode switching, MAX/PLAN prompts).
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](../ECHO.md)[![Release](https://img.shields.io/badge/Release-pre__publishing-%23ff9500?style=flat-square&logo=semver&logoColor=%2300fbff)](../CHANGELOG.md)
 
@@ -21,7 +23,9 @@ An AI coding agent that runs in your terminal. Describe what you want, and Savan
 
 ## Install
 
-> **Status:** `@savant-code/savant-free` is not yet published on the npm registry (private workspace, v0.0.1). For now, **build from source** (see below) to produce a local `savant-free` binary. The npm install command will be `npm install -g @savant-code/savant-free` once the free variant ships.
+> **Status:** `@savant-code/savant-free` is not yet published on the npm registry (private workspace, v0.0.1). For
+  now, **build from source** (see below) to produce a local `savant-free` binary. The npm install command will be
+  `npm install -g @savant-code/savant-free` once the free variant ships.
 
 ## Usage
 
@@ -34,7 +38,7 @@ For end-user Quick Start including how Savant-Code and Savant-Free relate, see t
 
 ## Project Structure
 
-```
+```text
 savant-free/
 ├── cli/       # CLI build & npm release files (binary: savant-free)
 └── e2e/       # E2E tests for the free variant
@@ -51,7 +55,8 @@ Built binary lives at `savant-free/bin/savant-free`.
 
 ---
 
-For everything else — what SavantFree does, how it works, FAQ, and how it relates to SavantCode — see the [repo root README](../README.md). We keep that one up to date as the single source of truth.
+For everything else — what SavantFree does, how it works, FAQ, and how it relates to SavantCode — see the [repo
+root README](../README.md). We keep that one up to date as the single source of truth.
 
 ## License
 
@@ -61,7 +66,8 @@ For everything else — what SavantFree does, how it works, FAQ, and how it rela
 
 <div align="center">
 
-_Freebuff is part of the [savant-code/savant-code monorepo](https://github.com/savant0x/savant-code), governed by the [ECHO Protocol v0.2.0](../ECHO.md). It's the free, ad-supported companion to the full **Savant-Code** CLI._
+_Freebuff is part of the [savant-code/savant-code monorepo](https://github.com/savant0x/savant-code), governed by
+the [ECHO Protocol v0.2.0](../ECHO.md). It's the free, ad-supported companion to the full **Savant-Code** CLI._
 
 **Savant** • 2026
 </div>

@@ -275,10 +275,10 @@ export async function loadLocalAgents({
       agents[processedAgentDefinition.id] = processedAgentDefinition
     } catch (error) {
       if (verbose) {
-          logger.error(
-            `Error loading agent from file ${fullPath}:`,
-            error instanceof Error ? error.message : error,
-          )
+        logger.error(
+          `Error loading agent from file ${fullPath}:`,
+          error instanceof Error ? error.message : error,
+        )
       }
     }
   }
@@ -331,7 +331,8 @@ export async function loadLocalAgents({
   return agents
 }
 
-async function importAgentModule(fullPath: string): Promise<any | null> { // eslint-disable-line @typescript-eslint/no-explicit-any -- dynamic agent module shape from user-provided file
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- dynamic agent module shape from user-provided file
+async function importAgentModule(fullPath: string): Promise<any | null> {
   // Cache-bust to ensure fresh imports when agent files change
   const urlVersion = `?update=${Date.now()}`
   return import(`${pathToFileURL(fullPath).href}${urlVersion}`)

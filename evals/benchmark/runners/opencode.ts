@@ -1,11 +1,11 @@
 import { execSync, spawn } from 'child_process'
 
 import type { AgentStep, Runner, RunnerResult } from './runner'
+import type { JSONValue } from '@savant-code/common/types/json'
 import type {
   PrintModeToolCall,
   PrintModeToolResult,
 } from '@savant-code/common/types/print-mode'
-import type { JSONValue } from '@savant-code/common/types/json'
 
 const OPENCODE_MODEL = 'opencode/kimi-k2.6'
 

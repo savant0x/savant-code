@@ -1,9 +1,11 @@
 import { describe, it, expect, vi } from 'vitest';
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { registerSimplePrompt } from '../prompts/simple.js';
+
 import { registerArgumentsPrompt } from '../prompts/args.js';
 import { registerPromptWithCompletions } from '../prompts/completions.js';
 import { registerEmbeddedResourcePrompt } from '../prompts/resource.js';
+import { registerSimplePrompt } from '../prompts/simple.js';
+
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
 // Helper to capture registered prompt handlers
 function createMockServer() {

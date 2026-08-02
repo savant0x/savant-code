@@ -1,10 +1,16 @@
 import { mkdir } from 'node:fs/promises'
 import path from 'node:path'
+
 import { BenchmarkHarness } from './harness'
+import { writeJsonReport, writeMarkdownReport } from './reports'
 import { SavantAgentRunner } from './runners/savant'
 import { TempDirSandbox } from './sandboxes/tempdir'
-import { writeJsonReport, writeMarkdownReport } from './reports'
-import { taskCategorySchema, taskDifficultySchema, type TaskCategory, type TaskDifficulty } from './schema'
+import {
+  taskCategorySchema,
+  taskDifficultySchema,
+  type TaskCategory,
+  type TaskDifficulty,
+} from './schema'
 
 export interface CliArgs {
   tasksDir: string
@@ -104,7 +110,11 @@ function validateArgs(args: Partial<CliArgs>): CliArgs {
   if (!args.outputDir) {
     throw new Error('--output-dir is required')
   }
-  if (args.mode === 'evaluate' && !args.apiKey && !process.env.SAVANT_CODE_API_KEY) {
+  if (
+    args.mode === 'evaluate' &&
+    !args.apiKey &&
+    !process.env.SAVANT_CODE_API_KEY
+  ) {
     throw new Error('evaluate mode requires --api-key or SAVANT_CODE_API_KEY')
   }
   if (args.category) {
@@ -128,7 +138,9 @@ function validateArgs(args: Partial<CliArgs>): CliArgs {
   }
 }
 
-export async function main(argv: string[] = process.argv.slice(2)): Promise<void> {
+export async function main(
+  argv: string[] = process.argv.slice(2),
+): Promise<void> {
   const raw = parseArgs(argv)
   if (argv.length === 0) {
     printHelp()

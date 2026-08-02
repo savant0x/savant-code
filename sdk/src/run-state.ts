@@ -1,7 +1,6 @@
 import * as os from 'os'
 import path from 'path'
 
-
 import {
   KNOWLEDGE_FILE_NAMES_LOWERCASE,
   isKnowledgeFile,
@@ -526,8 +525,7 @@ export async function initialSessionState(
   }
 
   let discoveredProject:
-    | { fileTree: FileTreeNode[]; filePaths: string[] }
-    | undefined
+    { fileTree: FileTreeNode[]; filePaths: string[] } | undefined
 
   // Auto-discover project files if not provided and cwd is available
   if (projectFiles === undefined && cwd) {
@@ -716,11 +714,11 @@ export async function applyOverridesToSessionState(
   // Deep clone to avoid mutating the original session state
   let sessionState: SessionState
   try {
-    sessionState = JSON.parse(
-      JSON.stringify(baseSessionState),
-    ) as SessionState
+    sessionState = JSON.parse(JSON.stringify(baseSessionState)) as SessionState
   } catch {
-    logger.debug('JSON clone of session state failed (likely cyclic); falling back to cloneDeep')
+    logger.debug(
+      'JSON clone of session state failed (likely cyclic); falling back to cloneDeep',
+    )
     sessionState = cloneDeep(baseSessionState)
   }
 

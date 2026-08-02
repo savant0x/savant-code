@@ -43,9 +43,7 @@ describe('Returning User Authentication helpers', () => {
   let tempConfigDir: string
 
   beforeEach(() => {
-    tempConfigDir = fs.mkdtempSync(
-      path.join(os.tmpdir(), 'savant-returning-'),
-    )
+    tempConfigDir = fs.mkdtempSync(path.join(os.tmpdir(), 'savant-returning-'))
     originalEnv[API_KEY_ENV_VAR] = process.env[API_KEY_ENV_VAR]
   })
 

@@ -1,4 +1,3 @@
- 
 import { AnalyticsEvent } from '@savant-code/common/constants/analytics-events'
 import { createMockLogger } from '@savant-code/common/testing/mock-types'
 import { describe, test, expect, mock } from 'bun:test'
@@ -84,13 +83,20 @@ describe('login-flow analytics instrumentation', () => {
   test('pollLoginStatus emits LOGIN_TIMEOUT with attempts + via', async () => {
     const trackEvent = createTrackEventMock()
     const loginStatus = mock(
-      async () => ({ ok: false, status: 401 }) as ApiResponse<{ user?: unknown }>,
+      async () =>
+        ({ ok: false, status: 401 }) as ApiResponse<{ user?: unknown }>,
     )
     const apiClient = createMockApiClient({ loginStatus })
     const clock = createClock()
 
     const result = await pollLoginStatus(
-      { sleep: clock.sleep, logger: createMockLogger(), now: clock.now, apiClient, trackEvent },
+      {
+        sleep: clock.sleep,
+        logger: createMockLogger(),
+        now: clock.now,
+        apiClient,
+        trackEvent,
+      },
       {
         baseUrl: 'https://cli.test',
         fingerprintId: 'finger-1',
@@ -115,7 +121,13 @@ describe('login-flow analytics instrumentation', () => {
     const clock = createClock()
 
     const result = await pollLoginStatus(
-      { sleep: clock.sleep, logger: createMockLogger(), now: clock.now, apiClient, trackEvent },
+      {
+        sleep: clock.sleep,
+        logger: createMockLogger(),
+        now: clock.now,
+        apiClient,
+        trackEvent,
+      },
       {
         baseUrl: 'https://cli.test',
         fingerprintId: 'finger-1',

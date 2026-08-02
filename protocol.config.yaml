@@ -8,7 +8,7 @@
 project:
   name: 'savant-code'
   description: 'Multi-Agent AI Coding Assistant with ECHO Protocol governance. TypeScript monorepo, Bun runtime.'
-  version: '0.0.12'
+  version: '0.0.15'
 
 protocol:
   version: '0.2.0'
@@ -29,6 +29,7 @@ commands:
   test: 'bun test'
   type_check: 'bun run --cwd=common typecheck && bun run --cwd=agents typecheck && bun run --cwd=sdk typecheck && bun run --cwd=cli typecheck && bun run --cwd=evals typecheck && bun run --cwd=packages/agent-runtime typecheck && bun run --cwd=packages/code-map typecheck && bun run --cwd=packages/llm-providers typecheck'
   lint: 'bunx eslint .'
+  lint_md: 'bun run lint:md'
   format: 'bunx prettier --check .'
   clean: 'bun run --cwd=sdk clean'
 

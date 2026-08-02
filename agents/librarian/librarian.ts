@@ -43,21 +43,20 @@ const librarian: AgentDefinition = {
       relevantFiles: {
         type: 'array',
         items: { type: 'string' },
-        description: 'Absolute file paths in the cloned repo that are relevant to the answer',
+        description:
+          'Absolute file paths in the cloned repo that are relevant to the answer',
       },
       cloneDir: {
         type: 'string',
-        description: 'The clone directory path so the caller can read files or clean up',
+        description:
+          'The clone directory path so the caller can read files or clean up',
       },
     },
     required: ['answer', 'relevantFiles', 'cloneDir'],
   },
   includeMessageHistory: false,
 
-  toolNames: [
-    'run_terminal_command',
-    'set_output',
-  ],
+  toolNames: ['run_terminal_command', 'set_output'],
 
   systemPrompt: `You are part of the Savant ECHO Protocol system. You are the Librarian, an expert at quickly understanding codebases. You have been given access to a freshly cloned repository in a /tmp directory. Your job is to explore its structure, read relevant files, and answer the user's question thoroughly and accurately.
 
@@ -99,7 +98,10 @@ When you are done, call set_output with your answer, all relevant file paths (ab
 
     const timestamp = Date.now()
     const repoName =
-      String(repoUrl).split('/').pop()?.replace(/\.git$/, '') || 'repo'
+      String(repoUrl)
+        .split('/')
+        .pop()
+        ?.replace(/\.git$/, '') || 'repo'
     const cloneDir = '/tmp/librarian-' + repoName + '-' + timestamp
 
     logger.info('Cloning ' + repoUrl + ' into ' + cloneDir)
@@ -107,8 +109,7 @@ When you are done, call set_output with your answer, all relevant file paths (ab
     const { toolResult } = yield {
       toolName: 'run_terminal_command',
       input: {
-        command:
-          "git clone --depth 1 '" + repoUrl + "' '" + cloneDir + "'",
+        command: "git clone --depth 1 '" + repoUrl + "' '" + cloneDir + "'",
         timeout_seconds: 180,
       },
     }
@@ -143,7 +144,9 @@ When you are done, call set_output with your answer, all relevant file paths (ab
           cloneDir +
           '`. Use run_terminal_command with shell commands (ls, cat, find, grep, head, tree) to explore it. Do NOT use read_files, list_directory, glob, or code_search — they cannot access /tmp paths. Do NOT copy files into the project directory.\n\nNow answer this question about the repo:\n\n' +
           (prompt || 'Provide an overview of this repository.') +
-          '\n\nWhen done, call set_output with your answer, relevantFiles (absolute paths), and cloneDir: "' + cloneDir + '".',
+          '\n\nWhen done, call set_output with your answer, relevantFiles (absolute paths), and cloneDir: "' +
+          cloneDir +
+          '".',
       },
       includeToolCall: false,
     }

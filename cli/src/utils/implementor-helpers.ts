@@ -380,7 +380,9 @@ function isSuccessfulEditMessage(message: JSONValue): boolean {
 
 function isErrorOutput(output: string): boolean {
   const trimmedOutput = output.trim()
-  return trimmedOutput.startsWith('Error:') || trimmedOutput.startsWith('Failed ')
+  return (
+    trimmedOutput.startsWith('Error:') || trimmedOutput.startsWith('Failed ')
+  )
 }
 
 /**

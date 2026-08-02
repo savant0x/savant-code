@@ -1,5 +1,6 @@
 import { writeFile } from 'node:fs/promises'
-import type { HarnessResult, TaskResult } from './harness'
+
+import type { HarnessResult } from './harness'
 
 /**
  * Write the raw harness result as JSON.
@@ -56,9 +57,7 @@ export async function writeMarkdownReport(
 
   lines.push('')
 
-  const failures = result.results.filter(
-    (r) => r.status !== 'PASS',
-  )
+  const failures = result.results.filter((r) => r.status !== 'PASS')
   if (failures.length > 0) {
     lines.push('## Failures')
     lines.push('')

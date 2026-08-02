@@ -1,7 +1,6 @@
 import { closeSync, openSync, writeSync } from 'fs'
 import { createRequire } from 'module'
 
-
 import { getCliEnv } from './env'
 import { logger } from './logger'
 
@@ -117,7 +116,8 @@ export async function copyTextToClipboard(
 ) {
   if (!text || text.trim().length === 0) {
     return
-  }    const osc52Blocked = isOsc52Blocked()
+  }
+  const osc52Blocked = isOsc52Blocked()
   try {
     const tryCopyViaAnyOsc52 = () =>
       !osc52Blocked && (tryCopyViaRenderer(text) || tryCopyViaOsc52(text))
@@ -172,7 +172,6 @@ export function clearClipboardMessage() {
   emitClipboardMessage(null)
 }
 
-
 // =============================================================================
 // OSC52 Clipboard Support
 // =============================================================================
@@ -201,8 +200,12 @@ export function isOsc52Blocked(): boolean {
 }
 
 function tryCopyViaPlatformTool(text: string): boolean {
-  const { execSync } = require('child_process') as unknown as typeof ChildProcess
-  const opts = { input: text, stdio: ['pipe', 'ignore', 'ignore'] as ('pipe' | 'ignore')[] }
+  const { execSync } =
+    require('child_process') as unknown as typeof ChildProcess
+  const opts = {
+    input: text,
+    stdio: ['pipe', 'ignore', 'ignore'] as ('pipe' | 'ignore')[],
+  }
 
   try {
     if (process.platform === 'darwin') {

@@ -1,12 +1,15 @@
 import { cp } from 'node:fs/promises'
 import path from 'node:path'
+
 import pLimit from 'p-limit'
+
+import { MetricAggregator, type MetricReport } from './metrics'
+import { loadTaskRegistry } from './registry'
+import { DeterministicVerifier, type VerificationResult } from './verify'
+
 import type { AgentRunner, TraceDocument } from './runner'
 import type { Sandbox } from './sandbox'
-import type { TaskCategory, TaskDefinition, TaskDifficulty, TaskRegistry } from './schema'
-import { MetricAggregator, type MetricReport } from './metrics'
-import { DeterministicVerifier, type VerificationResult } from './verify'
-import { loadTaskRegistry } from './registry'
+import type { TaskCategory, TaskDefinition, TaskDifficulty } from './schema'
 
 export type HarnessMode = 'evaluate' | 'baseline'
 
@@ -30,7 +33,10 @@ export interface HarnessOptions {
    * Factory that creates and fully initializes a runner for a task in
    * evaluate mode. Not used in baseline mode.
    */
-  agentRunnerFactory?: (task: TaskDefinition, sandbox: Sandbox) => Promise<AgentRunner>
+  agentRunnerFactory?: (
+    task: TaskDefinition,
+    sandbox: Sandbox,
+  ) => Promise<AgentRunner>
   /** Run mode. */
   mode?: HarnessMode
   /**
@@ -99,7 +105,9 @@ export class BenchmarkHarness {
         tasks = tasks.filter((task) => task.category === this.options.category)
       }
       if (this.options.difficulty) {
-        tasks = tasks.filter((task) => task.difficulty === this.options.difficulty)
+        tasks = tasks.filter(
+          (task) => task.difficulty === this.options.difficulty,
+        )
       }
     } else {
       throw new Error('Either tasksDir or tasks must be provided')
@@ -162,9 +170,14 @@ export class BenchmarkHarness {
       await sandbox.prepare()
 
       // Copy task files into the sandbox before running the setup script.
-      if (task.environment.setup_files && task.environment.setup_files.length > 0) {
+      if (
+        task.environment.setup_files &&
+        task.environment.setup_files.length > 0
+      ) {
         if (!task.task_dir) {
-          throw new Error(`task ${task.task_id} has setup_files but no task_dir; load the task through the registry so the task directory is known`)
+          throw new Error(
+            `task ${task.task_id} has setup_files but no task_dir; load the task through the registry so the task directory is known`,
+          )
         }
         for (const file of task.environment.setup_files) {
           const taskDir = path.resolve(task.task_dir)
@@ -181,7 +194,10 @@ export class BenchmarkHarness {
 
       // Run the task's environment setup script (install deps, seed files, etc.).
       if (task.environment.setup_script) {
-        const setupResult = await sandbox.runCommand(task.environment.setup_script, { shell: true })
+        const setupResult = await sandbox.runCommand(
+          task.environment.setup_script,
+          { shell: true },
+        )
         if (setupResult.exitCode !== 0) {
           const details = [
             `exitCode=${setupResult.exitCode}`,
@@ -212,9 +228,10 @@ export class BenchmarkHarness {
 
       const verification = await verifier.verify(task)
 
-      const metrics = trace ? MetricAggregator.aggregate(trace, task) : undefined
-      const passed =
-        verification.passed && (metrics ? metrics.passed : true)
+      const metrics = trace
+        ? MetricAggregator.aggregate(trace, task)
+        : undefined
+      const passed = verification.passed && (metrics ? metrics.passed : true)
 
       return {
         task_id: task.task_id,

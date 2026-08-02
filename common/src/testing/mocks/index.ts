@@ -54,7 +54,6 @@ export type { PendingTimer, MockTimers } from './timers'
 export { createMockFs, restoreMockFs, clearMockFs } from './filesystem'
 export type { MockFs, MockFsWithMocks, CreateMockFsOptions } from './filesystem'
 
-
 export {
   createMockCapture,
   createMockTreeSitterCaptures,
@@ -81,7 +80,4 @@ export {
   createRgJsonMatch,
   createRgJsonContext,
 } from './child-process'
-export type {
-  MockChildProcess,
-  CodeSearchResult,
-} from './child-process'
+export type { MockChildProcess, CodeSearchResult } from './child-process'

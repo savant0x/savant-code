@@ -1,7 +1,6 @@
 import { clientToolCallSchema } from '@savant-code/common/tools/list'
 import { describe, expect, it } from 'bun:test'
 
-
 import { readUrl } from '../tools/read-url'
 import { isBlockedAddress } from '../tools/ssrf'
 

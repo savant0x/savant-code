@@ -1,4 +1,3 @@
- 
 import { EventEmitter } from 'node:events'
 import {
   mkdtempSync,
@@ -16,7 +15,7 @@ import { fileURLToPath } from 'node:url'
 
 import { describe, expect, test } from 'bun:test'
 
-import type { Writable } from 'node:stream';
+import type { Writable } from 'node:stream'
 
 const require = createRequire(import.meta.url)
 

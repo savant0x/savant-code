@@ -61,7 +61,7 @@ export const handleProposeWriteFile = (async (
   // Generate unified diff
   const oldContent = initialContent ?? ''
   let patch = createPatch(path, oldContent, newContent)
-  
+
   // Strip the header lines, keep only from @@ onwards
   const lines = patch.split('\n')
   const hunkStartIndex = lines.findIndex((line) => line.startsWith('@@'))
@@ -70,7 +70,9 @@ export const handleProposeWriteFile = (async (
   }
 
   const isNewFile = initialContent === null
-  const message = isNewFile ? `Proposed new file ${path}` : `Proposed changes to ${path}`
+  const message = isNewFile
+    ? `Proposed new file ${path}`
+    : `Proposed changes to ${path}`
 
   return {
     output: [

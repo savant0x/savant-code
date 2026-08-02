@@ -1,13 +1,18 @@
 const fs = require('fs')
+
 const greet = require('./greet')
 
 // Contract check: greet accepts an options object with name and uppercase.
 if (greet({ name: 'Bob', uppercase: true }) !== 'HELLO, BOB') {
-  throw new Error('greet should uppercase the message when options.uppercase is true')
+  throw new Error(
+    'greet should uppercase the message when options.uppercase is true',
+  )
 }
 
 if (greet({ name: 'Bob', uppercase: false }) !== 'Hello, Bob') {
-  throw new Error('greet should return normal case when options.uppercase is false')
+  throw new Error(
+    'greet should return normal case when options.uppercase is false',
+  )
 }
 
 // Orchestration check: both source files must use the options contract, not a plain string.

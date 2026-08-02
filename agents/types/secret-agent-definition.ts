@@ -83,8 +83,6 @@ export const AgentTemplateTypeList = [
   'file_explorer',
   'researcher',
   'code_searcher',
-
-
 ] as const
 
 type UnderscoreToDash<S extends string> = S extends `${infer L}_${infer R}`
@@ -96,5 +94,4 @@ export const AgentTemplateTypes = Object.fromEntries(
 ) as { [K in (typeof AgentTemplateTypeList)[number]]: UnderscoreToDash<K> }
 
 export type AgentTemplateType =
-  | (typeof AgentTemplateTypeList)[number]
-  | (string & {})
+  (typeof AgentTemplateTypeList)[number] | (string & {})

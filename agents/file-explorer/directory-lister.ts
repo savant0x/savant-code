@@ -41,11 +41,11 @@ const directoryLister: SecretAgentDefinition = {
   },
   handleSteps: function* ({ params }) {
     function isJSONObject(value: JSONValue): value is JSONObject {
-      return value !== null && typeof value === 'object' && !Array.isArray(value)
+      return (
+        value !== null && typeof value === 'object' && !Array.isArray(value)
+      )
     }
-    function asListDirectoryQueryArray(
-      value: JSONValue,
-    ): ListDirectoryQuery[] {
+    function asListDirectoryQueryArray(value: JSONValue): ListDirectoryQuery[] {
       if (!Array.isArray(value)) return []
       const result: ListDirectoryQuery[] = []
       for (const item of value) {

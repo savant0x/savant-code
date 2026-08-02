@@ -165,7 +165,6 @@ describe('fetchUserDetails', () => {
 
       expect(result).toEqual(mockUserDetails)
     })
-
   })
 
   describe('environment validation', () => {
@@ -179,11 +178,10 @@ describe('fetchUserDetails', () => {
       )
       const apiClient = createMockApiClient({ me: meMock })
 
-      const setTokenSpy = spyOn(
-        SavantCodeApiModule,
-        'setApiClientAuthToken',
+      const setTokenSpy = spyOn(SavantCodeApiModule, 'setApiClientAuthToken')
+      spyOn(SavantCodeApiModule, 'getApiClient').mockReturnValue(
+        apiClient as ReturnType<typeof SavantCodeApiModule.getApiClient>,
       )
-      spyOn(SavantCodeApiModule, 'getApiClient').mockReturnValue(apiClient as ReturnType<typeof SavantCodeApiModule.getApiClient>)
 
       await expect(
         fetchUserDetails({

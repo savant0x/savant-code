@@ -60,9 +60,7 @@ describe('chat-meta', () => {
     expect(getFirstUserPrompt(messages)).toBe('hello there')
 
     const long = 'x'.repeat(150)
-    expect(getFirstUserPrompt([userMessage(long)])).toBe(
-      'x'.repeat(97) + '...',
-    )
+    expect(getFirstUserPrompt([userMessage(long)])).toBe('x'.repeat(97) + '...')
     expect(getFirstUserPrompt([])).toBe('(empty chat)')
   })
 

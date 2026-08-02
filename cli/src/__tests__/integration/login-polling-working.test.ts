@@ -232,7 +232,9 @@ describe('Login Polling (Working)', () => {
       if (!payload || typeof payload !== 'object') {
         return false
       }
-      return JSON.stringify(payload as Parameters<Logger['error']>[0]).includes('network failed')
+      return JSON.stringify(payload as Parameters<Logger['error']>[0]).includes(
+        'network failed',
+      )
     })
     expect(sawNetworkFailure).toBe(true)
   })

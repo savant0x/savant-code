@@ -1,6 +1,6 @@
+import type { EchoPhase, RunFault, TraceDocument, TraceEvent } from './runner'
 import type { PrintModeEvent } from '@savant-code/common/types/print-mode'
 import type { RunState } from '@savant-code/sdk'
-import type { EchoPhase, RunFault, TraceDocument, TraceEvent } from './runner'
 
 const VALID_PHASES: EchoPhase[] = [
   'idle',
@@ -45,7 +45,10 @@ export class TraceCollector {
     if (event.type === 'tool_call') {
       this.toolCallCount += 1
       if (event.toolName === 'transition_phase') {
-        this.recordPhaseTransition(event.input as Record<string, unknown>, event.toolCallId)
+        this.recordPhaseTransition(
+          event.input as Record<string, unknown>,
+          event.toolCallId,
+        )
       }
     }
 
@@ -131,7 +134,10 @@ export class TraceCollector {
   }
 
   /** Finalize the collected trace into a {@link TraceDocument}. */
-  finalize(finalState?: RunState, endTime: string = new Date().toISOString()): TraceDocument {
+  finalize(
+    finalState?: RunState,
+    endTime: string = new Date().toISOString(),
+  ): TraceDocument {
     this.finalState = finalState
     this.endTime = endTime
 
@@ -177,5 +183,4 @@ export class TraceCollector {
       },
     }
   }
-
 }

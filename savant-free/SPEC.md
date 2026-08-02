@@ -1,6 +1,8 @@
 # SavantFree Spec
 
-SavantFree is a free-only variant of the SavantCode CLI, distributed as a separate npm package (`savant-free`). It reuses the entire `cli/` package but builds with a compile-time flag that strips out paid features, subscription logic, credits display, and mode switching — leaving only the FREE mode experience.
+SavantFree is a free-only variant of the SavantCode CLI, distributed as a separate npm package (`savant-free`). It
+reuses the entire `cli/` package but builds with a compile-time flag that strips out paid features, subscription
+logic, credits display, and mode switching — leaving only the FREE mode experience.
 
 ---
 
@@ -9,7 +11,8 @@ SavantFree is a free-only variant of the SavantCode CLI, distributed as a separa
 ### Environment Variable
 
 - **`FREEBUFF_MODE=true`** — set during the build to produce a SavantFree binary.
-- Injected via `--define process.env.FREEBUFF_MODE="true"` in `bun build`, following the same pattern as `CODEBUFF_IS_BINARY` and `CODEBUFF_CLI_VERSION`.
+- Injected via `--define process.env.FREEBUFF_MODE="true"` in `bun build`, following the same pattern as
+  `CODEBUFF_IS_BINARY` and `CODEBUFF_CLI_VERSION`.
 
 ### Runtime Constant
 
@@ -39,7 +42,8 @@ This enables dead-code elimination in production builds — all `if (!IS_FREEBUF
 
 ### Files to modify (conditional on `IS_FREEBUFF`)
 
-- **`cli/src/utils/terminal-title.ts`** — Change `TITLE_PREFIX` from `'SavantCode: '` to `'SavantFree: '` when `IS_FREEBUFF`.
+- **`cli/src/utils/terminal-title.ts`** — Change `TITLE_PREFIX` from `'SavantCode: '` to `'SavantFree: '` when
+  `IS_FREEBUFF`.
 - **`cli/src/login/constants.ts`** — Add a `LOGO_FREEBUFF` ASCII art variant, select based on `IS_FREEBUFF`.
 - **`cli/src/app.tsx`** — Conditional header text ("SavantFree will run commands...").
 - **`cli/src/index.tsx`** — Change commander `.name('savant-free')` and `.description(...)` when `IS_FREEBUFF`.
@@ -58,12 +62,15 @@ SavantFree only supports **FREE mode**. All mode-related features are stripped.
 
 ### Files to modify
 
-- **`cli/src/utils/constants.ts`** — When `IS_FREEBUFF`, export a single-element `AGENT_MODES = ['FREE']` and `AGENT_MODE_TO_ID` with only the FREE entry. Or: the mode toggle component simply never renders.
+- **`cli/src/utils/constants.ts`** — When `IS_FREEBUFF`, export a single-element `AGENT_MODES = ['FREE']` and
+  `AGENT_MODE_TO_ID` with only the FREE entry. Or: the mode toggle component simply never renders.
 - **`cli/src/components/agent-mode-toggle.tsx`** — Return `null` when `IS_FREEBUFF` (hide entirely).
-- **`cli/src/components/build-mode-buttons.tsx`** — Return `null` when `IS_FREEBUFF` (hides mode-switching buttons in message UI).
+- **`cli/src/components/build-mode-buttons.tsx`** — Return `null` when `IS_FREEBUFF` (hides mode-switching buttons
+  in message UI).
 - **`cli/src/components/mode-divider.tsx`** — Return `null` when `IS_FREEBUFF` (no mode transition markers).
 - **`cli/src/utils/input-modes.ts`** — Set `showAgentModeToggle: false` for all input mode configs when `IS_FREEBUFF`.
-- **`cli/src/index.tsx`** — Remove `--free`, `--max`, `--plan`, `--lite` CLI flags when `IS_FREEBUFF`; hardcode `initialMode = 'FREE'`.
+- **`cli/src/index.tsx`** — Remove `--free`, `--max`, `--plan`, `--lite` CLI flags when `IS_FREEBUFF`; hardcode
+  `initialMode = 'FREE'`.
 - **`cli/src/state/chat-store.ts`** — Default `agentMode` to `'FREE'`; make `setAgentMode` a no-op when `IS_FREEBUFF`.
 
 ---
@@ -103,8 +110,10 @@ SavantFree only supports **FREE mode**. All mode-related features are stripped.
 
 ### Implementation
 
-- **`cli/src/data/slash-commands.ts`** — Filter `SLASH_COMMANDS` based on `IS_FREEBUFF`. Remove mode commands, subscription commands, credits commands, ads commands, referral, review, publish, and gpt-5 agent commands.
-- **`cli/src/commands/command-registry.ts`** — Filter `COMMAND_REGISTRY` similarly. Wrap removed commands in `!IS_FREEBUFF` guards.
+- **`cli/src/data/slash-commands.ts`** — Filter `SLASH_COMMANDS` based on `IS_FREEBUFF`. Remove mode commands,
+  subscription commands, credits commands, ads commands, referral, review, publish, and gpt-5 agent commands.
+- **`cli/src/commands/command-registry.ts`** — Filter `COMMAND_REGISTRY` similarly. Wrap removed commands in
+  `!IS_FREEBUFF` guards.
 
 ---
 
@@ -153,7 +162,7 @@ The `/help` banner in SavantFree should be simplified. Remove the **Credits** se
 
 ### SavantFree Help Content
 
-```
+```text
 Shortcuts
   Ctrl+C / Esc  stop
   Ctrl+J / Opt+Enter  newline
@@ -180,7 +189,8 @@ No "Credits" section. No `/subscribe`, `/usage`, or `/ads:enable` references.
 In SavantFree, ads are **always enabled** and **cannot be disabled**.
 
 - The ad banner always renders (when an ad is available).
-- The "Hide ads" link in the info panel is replaced with "Ads are required in Free mode." (this already exists in `ad-banner.tsx` when `isFreeMode` is true).
+- The "Hide ads" link in the info panel is replaced with "Ads are required in Free mode." (this already exists in
+  `ad-banner.tsx` when `isFreeMode` is true).
 - The `/ads:enable` and `/ads:disable` commands are removed (see §4).
 - `getAdsEnabled()` always returns `true` when `IS_FREEBUFF`.
 
@@ -195,9 +205,10 @@ In SavantFree, ads are **always enabled** and **cannot be disabled**.
 
 ### Directory Structure
 
-The `savant-free/` directory is organized as a product-level directory with subdirectories for each surface (CLI, web, etc.):
+The `savant-free/` directory is organized as a product-level directory with subdirectories for each surface (CLI,
+web, etc.):
 
-```
+```text
 savant-free/
 ├── SPEC.md           # This file (product-level spec)
 ├── README.md         # Product-level documentation
@@ -220,7 +231,8 @@ Wraps `cli/scripts/build-binary.ts` with:
 FREEBUFF_MODE=true bun cli/scripts/build-binary.ts savant-free <version>
 ```
 
-The existing `build-binary.ts` already supports a custom binary name argument and passes `NEXT_PUBLIC_*` env vars. We add `FREEBUFF_MODE` to the `defineFlags` array in `build-binary.ts`.
+The existing `build-binary.ts` already supports a custom binary name argument and passes `NEXT_PUBLIC_*` env vars.
+We add `FREEBUFF_MODE` to the `defineFlags` array in `build-binary.ts`.
 
 ### Release Package (`savant-free/cli/release/package.json`)
 
@@ -308,7 +320,9 @@ The server already handles FREE mode correctly:
 - Free-mode-allowed agent+model combos cost 0 credits
 - Ad impressions in FREE mode already don't grant credits
 
-No server-side changes are needed for SavantFree, **except** the release download API (`/api/releases/download/`) must be configured to serve `savant-free-*` binary tarballs. This may require updating the download route to recognize SavantFree release tags (`savant-free-v*`).
+No server-side changes are needed for SavantFree, **except** the release download API (`/api/releases/download/`)
+must be configured to serve `savant-free-*` binary tarballs. This may require updating the download route to
+recognize SavantFree release tags (`savant-free-v*`).
 
 ---
 

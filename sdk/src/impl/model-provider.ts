@@ -15,7 +15,10 @@ import {
   isOpenAIProviderModel,
   toOpenAIModelId,
 } from '@savant-code/common/constants/chatgpt-oauth'
-import { OPENCODE_GO_PROTOCOLS } from '@savant-code/common/constants/model-config'
+import {
+  COMMANDCODE_PROTOCOLS,
+  OPENCODE_GO_PROTOCOLS,
+} from '@savant-code/common/constants/model-config'
 import { isTransientNetworkError } from '@savant-code/common/util/error'
 import {
   OpenAICompatibleChatLanguageModel,
@@ -34,6 +37,7 @@ import {
   getTokenRouterApiKeyFromEnv,
   getCloudflareApiTokenFromEnv,
   getCloudflareAccountIdFromEnv,
+  getCommandCodeApiKeyFromEnv,
 } from '../env'
 import {
   createChatGptBackendFetch,
@@ -205,6 +209,19 @@ export async function getModelForRequest(
     }
   }
 
+  if (isCommandCodeModel(model)) {
+    const commandCodeKey = getCommandCodeApiKeyFromEnv()
+    if (!commandCodeKey) {
+      throw new Error(
+        'CommandCode API key not set. Set COMMAND_CODE_API_KEY environment variable.',
+      )
+    }
+    return {
+      model: createCommandCodeModel(commandCodeKey, model),
+      isChatGptOAuth: false,
+    }
+  }
+
   if (isCloudflareModel(model)) {
     const cloudflareKey = getCloudflareApiTokenFromEnv()
     const cloudflareAccountId = getCloudflareAccountIdFromEnv()
@@ -330,14 +347,20 @@ export function isCloudflareModel(model: string): boolean {
 }
 
 /**
+ * Check if a model ID targets CommandCode (prefix: `commandcode/`).
+ * Subagents inherit the parent's model via `withParentModel()` in
+ * spawn-agent-utils.ts — gateway model prefixes propagate correctly.
+ */
+export function isCommandCodeModel(model: string): boolean {
+  return model.startsWith('commandcode/')
+}
+
+/**
  * Create a TokenRouter model.
  * Strips the `tokenrouter/` prefix — the API expects bare model IDs (e.g.
  * `kimi-k2p6`, not `tokenrouter/kimi-k2p6`).
  */
-function createTokenRouterModel(
-  apiKey: string,
-  model: string,
-): LanguageModel {
+function createTokenRouterModel(apiKey: string, model: string): LanguageModel {
   const apiModelId = model.slice('tokenrouter/'.length)
   return new OpenAICompatibleChatLanguageModel(apiModelId, {
     provider: 'tokenrouter',
@@ -361,16 +384,16 @@ function createTokenRouterModel(
  * Strips the `nvidia/` prefix — the API expects namespaced IDs (e.g.
  * `zai-org/glm-5.2`, not `nvidia/zai-org/glm-5.2`).
  */
-function createNvidiaModel(
-  apiKey: string,
-  model: string,
-): LanguageModel {
+function createNvidiaModel(apiKey: string, model: string): LanguageModel {
   const apiModelId = model.slice('nvidia/'.length)
   return new OpenAICompatibleChatLanguageModel(apiModelId, {
     provider: 'nvidia',
     url: ({ path: endpoint }) => {
       const cleanPath = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint
-      return new URL(cleanPath, 'https://integrate.api.nvidia.com/v1/').toString()
+      return new URL(
+        cleanPath,
+        'https://integrate.api.nvidia.com/v1/',
+      ).toString()
     },
     headers: () => ({
       Authorization: `Bearer ${apiKey}`,
@@ -388,7 +411,11 @@ function createNvidiaModel(
  * Strips the `cloudflare/` prefix and prepends `@cf/` to match Cloudflare's API model naming.
  * Base URL includes account ID in the path: /client/v4/accounts/{ACCOUNT_ID}/ai/v1/
  */
-function createCloudflareModel(apiKey: string, accountId: string, model: string): LanguageModel {
+function createCloudflareModel(
+  apiKey: string,
+  accountId: string,
+  model: string,
+): LanguageModel {
   const apiModelId = `@cf/${model.slice('cloudflare/'.length)}`
   return new OpenAICompatibleChatLanguageModel(apiModelId, {
     provider: 'cloudflare',
@@ -421,15 +448,12 @@ function createCloudflareModel(apiKey: string, accountId: string, model: string)
  * For OpenAI-compatible models, we reuse the existing OpenAICompatibleChatLanguageModel.
  * For Anthropic-compatible models, we use @ai-sdk/anthropic with a custom base URL.
  */
-function createOpenCodeGoModel(
-  apiKey: string,
-  model: string,
-): LanguageModel {
+function createOpenCodeGoModel(apiKey: string, model: string): LanguageModel {
   const protocol = OPENCODE_GO_PROTOCOLS[model]
   if (!protocol) {
     throw new Error(
       `Unknown protocol for OpenCode Go model: ${model}. ` +
-      `Model not found in OPENCODE_GO_PROTOCOLS catalog.`,
+        `Model not found in OPENCODE_GO_PROTOCOLS catalog.`,
     )
   }
 
@@ -470,6 +494,53 @@ function createOpenCodeGoModel(
 }
 
 /**
+ * Create a CommandCode model.
+ *
+ * CommandCode exposes two strict protocol endpoints:
+ * - OpenAI-compatible models use `/v1/chat/completions`.
+ * - Anthropic-compatible Claude models use `/v1/messages`.
+ *
+ * The protocol is selected from the shared catalog map. Unknown CommandCode
+ * models fail closed instead of silently using the wrong request schema.
+ */
+function createCommandCodeModel(apiKey: string, model: string): LanguageModel {
+  const protocol = COMMANDCODE_PROTOCOLS[model]
+  if (!protocol) {
+    throw new Error(
+      `Unknown protocol for CommandCode model: ${model}. ` +
+        `Model not found in COMMANDCODE_PROTOCOLS catalog.`,
+    )
+  }
+
+  const baseUrl = 'https://api.commandcode.ai/provider/v1/'
+  const apiModelId = model.slice('commandcode/'.length)
+
+  if (protocol === 'anthropic') {
+    const anthropic = createAnthropic({
+      baseURL: baseUrl,
+      apiKey,
+    })
+    return anthropic(apiModelId)
+  }
+
+  return new OpenAICompatibleChatLanguageModel(apiModelId, {
+    provider: 'commandcode',
+    url: ({ path: endpoint }) => {
+      const cleanPath = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint
+      return new URL(cleanPath, baseUrl).toString()
+    },
+    headers: () => ({
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+      'user-agent': `ai-sdk/openai-compatible/${VERSION}/savant-code-commandcode`,
+    }),
+    fetch: fetchWithRetryableNetworkErrors as typeof globalThis.fetch,
+    includeUsage: undefined,
+    supportsStructuredOutputs: false,
+  })
+}
+
+/**
  * Create a model that routes through the SavantCode backend.
  * This is the existing behavior - requests go to SavantCode backend which forwards to OpenRouter.
  *
@@ -497,8 +568,7 @@ async function createSavantCodeBackendModel(
   return new OpenAICompatibleChatLanguageModel(model, {
     provider: 'savant-code',
     url: ({ path: endpoint }) => {
-      const baseUrl =
-        inferenceBaseUrl ?? getWebsiteUrl()
+      const baseUrl = inferenceBaseUrl ?? getWebsiteUrl()
       // Ensure the base URL path is preserved: /api/v1 + /chat/completions
       // becomes /api/v1/chat/completions (not /chat/completions).
       const baseHref = baseUrl.endsWith('/') ? baseUrl : baseUrl + '/'

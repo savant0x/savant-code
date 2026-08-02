@@ -24,9 +24,9 @@ describe('prompt-builders ChatGPT-aware base prompts', () => {
     })
 
     test('/plan delegates to @thinker-gpt', () => {
-      expect(
-        buildPlanPrompt('add OAuth login', isChatGptConnected),
-      ).toContain('@thinker-gpt')
+      expect(buildPlanPrompt('add OAuth login', isChatGptConnected)).toContain(
+        '@thinker-gpt',
+      )
     })
 
     test('/review delegates to @thinker-gpt', () => {

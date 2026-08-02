@@ -1,6 +1,6 @@
 import { models } from '@savant-code/common/old-constants'
-import { promptSuccess } from '@savant-code/common/util/error'
 import { jsonValueSchema } from '@savant-code/common/types/json'
+import { promptSuccess } from '@savant-code/common/util/error'
 import { spyOn } from 'bun:test'
 import z from 'zod/v4'
 

@@ -13,7 +13,10 @@
 
 import type { JSONValue } from '@savant-code/common/types/json'
 import type { PrintModeEvent } from '@savant-code/common/types/print-mode'
-import type { AgentActivity, AgentState } from '@savant-code/common/types/session-state'
+import type {
+  AgentActivity,
+  AgentState,
+} from '@savant-code/common/types/session-state'
 
 const DEFAULT_IDLE_TIMEOUT_MS = 5000
 const TARGET_DISPLAY_MAX = 30
@@ -205,7 +208,13 @@ export function toolActivity(
   const target = extractAllowlistedTarget(toolName, input)
 
   // web_search & read_docs are surfaced as 'researching' (a richer signal)
-  if (toolName === 'web_search' || toolName === 'read_docs' || toolName === 'researcher' || toolName === 'websearch_with_date' || toolName === 'web_search_simple') {
+  if (
+    toolName === 'web_search' ||
+    toolName === 'read_docs' ||
+    toolName === 'researcher' ||
+    toolName === 'websearch_with_date' ||
+    toolName === 'web_search_simple'
+  ) {
     const query = typeof input?.query === 'string' ? input.query : ''
     const activity: AgentActivity = {
       kind: 'researching',
@@ -224,7 +233,8 @@ export function toolActivity(
         : undefined
     const activity: AgentActivity = {
       kind: 'subagent',
-      agentType: typeof firstAgentType === 'string' ? firstAgentType : 'subagent',
+      agentType:
+        typeof firstAgentType === 'string' ? firstAgentType : 'subagent',
       startedAt: Date.now(),
     }
     setActivity(agentState, activity, onChunk)

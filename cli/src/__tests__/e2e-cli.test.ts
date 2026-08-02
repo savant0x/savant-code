@@ -12,9 +12,11 @@ const sdkBuilt = isSDKBuilt()
 
 ensureCliTestEnv()
 
-function runCLI(
-  args: string[],
-): { stdout: string; stderr: string; exitCode: number | null } {
+function runCLI(args: string[]): {
+  stdout: string
+  stderr: string
+  exitCode: number | null
+} {
   const result = spawnSync('bun', ['run', CLI_PATH, ...args], {
     cwd: path.join(__dirname, '../..'),
     timeout: TIMEOUT_MS,

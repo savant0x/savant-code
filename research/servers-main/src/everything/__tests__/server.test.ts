@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
+
 import { createServer } from '../server/index.js';
 
 describe('Server Factory', () => {

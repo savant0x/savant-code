@@ -4,12 +4,15 @@ import path from 'path'
 
 import { pluralize } from '@savant-code/common/util/string'
 import { safeToJSONValue } from '@savant-code/common/util/type-narrowing'
-import { createAgentTemplate, getAgentTemplate, updateAgentTemplate } from '@savant-code/database/service'
+import {
+  createAgentTemplate,
+  getAgentTemplate,
+  updateAgentTemplate,
+} from '@savant-code/database/service'
 import {
   loadLocalAgents as sdkLoadLocalAgents,
   loadMCPConfigSync,
 } from '@savant-code/sdk'
-
 
 import { getProjectRoot } from '../project-files'
 import { IS_SAVANT_FREE, type AgentMode } from './constants'
@@ -29,10 +32,7 @@ import type { MCPConfig } from '@savant-code/common/types/mcp'
 const AGENTS_DIR_NAME = '.agents'
 
 /** Known orchestrator agent IDs that receive auto-injected user agents and MCP servers. */
-const ORCHESTRATOR_IDS = new Set([
-  'savant', 'savant-free',
-  'savant-analyze',
-])
+const ORCHESTRATOR_IDS = new Set(['savant', 'savant-free', 'savant-analyze'])
 
 export interface LocalAgentInfo {
   id: string
@@ -110,19 +110,26 @@ export async function initializeAgentRegistry(): Promise<void> {
   // before prebuild:agents has run, or when a specific agent's import failed
   // during the prebuild step (silently skipping that agent).
   const REQUIRED_AGENT_IDS = [
-    'detective', 'scout', 'forge', 'thinker', 'verifier',
-    'recorder', 'basher', 'researcher-web', 'researcher-docs',
-    'context-pruner', 'scribe', 'tmux-cli', 'browser-use',
+    'detective',
+    'scout',
+    'forge',
+    'thinker',
+    'verifier',
+    'recorder',
+    'basher',
+    'researcher-web',
+    'researcher-docs',
+    'context-pruner',
+    'scribe',
+    'tmux-cli',
+    'browser-use',
   ]
   const currentBundledAgents = getBundledAgents()
   const currentBundledIds = new Set(Object.keys(currentBundledAgents))
   const missingRequiredAgents = REQUIRED_AGENT_IDS.some(
     (id) => !currentBundledIds.has(id),
   )
-  if (
-    Object.keys(currentBundledAgents).length === 0 ||
-    missingRequiredAgents
-  ) {
+  if (Object.keys(currentBundledAgents).length === 0 || missingRequiredAgents) {
     try {
       const projectRoot = getProjectRoot() || process.cwd()
       const agentsDir = path.join(projectRoot, 'agents')
@@ -238,7 +245,9 @@ const getBundledAgents = (): Record<string, AgentDefinition> => {
   if (Object.keys(bundledAgentsFallbackCache).length === 0) {
     return generated
   }
-  const merged: Record<string, AgentDefinition> = { ...bundledAgentsFallbackCache }
+  const merged: Record<string, AgentDefinition> = {
+    ...bundledAgentsFallbackCache,
+  }
   for (const [id, def] of Object.entries(generated)) {
     merged[id] = def
   }
@@ -246,7 +255,8 @@ const getBundledAgents = (): Record<string, AgentDefinition> => {
 }
 
 const getBundledAgentsAsLocalInfo = (): LocalAgentInfo[] => {
-  const fromGenerated = bundledAgentsModule.getBundledAgentsAsLocalInfo?.() ?? []
+  const fromGenerated =
+    bundledAgentsModule.getBundledAgentsAsLocalInfo?.() ?? []
   const fromFallback = Object.values(bundledAgentsFallbackCache).map((def) => ({
     id: def.id,
     displayName: def.displayName || def.id,
@@ -255,7 +265,10 @@ const getBundledAgentsAsLocalInfo = (): LocalAgentInfo[] => {
   }))
   // Merge: generated takes precedence, fallback fills gaps
   const generatedIds = new Set(fromGenerated.map((a) => a.id))
-  return [...fromGenerated, ...fromFallback.filter((a) => !generatedIds.has(a.id))]
+  return [
+    ...fromGenerated,
+    ...fromFallback.filter((a) => !generatedIds.has(a.id)),
+  ]
 }
 
 // ============================================================================
@@ -324,7 +337,9 @@ const cachedAgentsByMode: Map<string, LocalAgentInfo[]> = new Map()
 export const loadLocalAgents = (
   currentAgentMode?: AgentMode,
 ): LocalAgentInfo[] => {
-  const selectedSavantFreeModel = IS_SAVANT_FREE ? getSelectedSavantFreeModel() : null
+  const selectedSavantFreeModel = IS_SAVANT_FREE
+    ? getSelectedSavantFreeModel()
+    : null
   const cacheKey = selectedSavantFreeModel
     ? `${currentAgentMode ?? 'all'}:${selectedSavantFreeModel}`
     : (currentAgentMode ?? 'all')
@@ -392,7 +407,9 @@ export const loadLocalAgents = (
 /**
  * Save agent definitions to database
  */
-function agentDefinitionToRecord(def: AgentDefinition): Record<string, JSONValue> | undefined {
+function agentDefinitionToRecord(
+  def: AgentDefinition,
+): Record<string, JSONValue> | undefined {
   const jsonValue = safeToJSONValue(def)
   if (typeof jsonValue !== 'object' || jsonValue === null) {
     logger.warn(
@@ -404,7 +421,9 @@ function agentDefinitionToRecord(def: AgentDefinition): Record<string, JSONValue
   return jsonValue as Record<string, JSONValue>
 }
 
-export const saveAgentDefinitionsToDb = (definitions: AgentDefinition[]): void => {
+export const saveAgentDefinitionsToDb = (
+  definitions: AgentDefinition[],
+): void => {
   try {
     for (const def of definitions) {
       const existing = getAgentTemplate(def.id)
@@ -423,10 +442,7 @@ export const saveAgentDefinitionsToDb = (definitions: AgentDefinition[]): void =
       'Saved agent definitions to database',
     )
   } catch (error) {
-    logger.warn(
-      { error },
-      'Failed to save agent definitions to database',
-    )
+    logger.warn({ error }, 'Failed to save agent definitions to database')
   }
 }
 

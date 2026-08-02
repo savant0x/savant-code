@@ -31,10 +31,14 @@ export function buildMessageContext(
 } {
   if (!targetMessageId) {
     const startIndex = Math.max(0, messages.length - MAX_RECENT_MESSAGES)
-    return { target: null, recentMessages: messages.slice(startIndex).map(toRecentMessageSummary) }
+    return {
+      target: null,
+      recentMessages: messages.slice(startIndex).map(toRecentMessageSummary),
+    }
   }
 
-  const target = messages.find((m: ChatMessage) => m.id === targetMessageId) ?? null
+  const target =
+    messages.find((m: ChatMessage) => m.id === targetMessageId) ?? null
 
   if (!target) {
     return { target: null, recentMessages: [] }
@@ -42,7 +46,12 @@ export function buildMessageContext(
 
   const targetIndex = messages.indexOf(target)
   const startIndex = Math.max(0, targetIndex - (MAX_RECENT_MESSAGES - 1))
-  return { target, recentMessages: messages.slice(startIndex, targetIndex + 1).map(toRecentMessageSummary) }
+  return {
+    target,
+    recentMessages: messages
+      .slice(startIndex, targetIndex + 1)
+      .map(toRecentMessageSummary),
+  }
 }
 
 export interface BuildFeedbackPayloadParams {
@@ -73,7 +82,9 @@ export function buildFeedbackPayload(
   } = params
 
   const hasMessageId = feedbackMessageId != null && feedbackMessageId !== ''
-  const feedbackType: 'message' | 'general' = hasMessageId ? 'message' : 'general'
+  const feedbackType: 'message' | 'general' = hasMessageId
+    ? 'message'
+    : 'general'
 
   const truncatedErrors = errors
     ? errors.slice(0, MAX_ERRORS).map((e) => ({
@@ -90,13 +101,15 @@ export function buildFeedbackPayload(
     source: 'cli',
     ...(hasMessageId && { messageId: feedbackMessageId }),
     ...(target?.variant != null && { messageVariant: target.variant }),
-    ...(target?.completionTime != null && target.completionTime !== '' && {
-      completionTime: target.completionTime,
-    }),
+    ...(target?.completionTime != null &&
+      target.completionTime !== '' && {
+        completionTime: target.completionTime,
+      }),
     ...(target?.credits != null && { credits: target.credits }),
     ...(agentMode != null && agentMode !== '' && { agentMode }),
     ...(sessionCreditsUsed != null && { sessionCreditsUsed }),
     ...(recentMessages.length > 0 && { recentMessages }),
-    ...(truncatedErrors && truncatedErrors.length > 0 && { errors: truncatedErrors }),
+    ...(truncatedErrors &&
+      truncatedErrors.length > 0 && { errors: truncatedErrors }),
   }
 }

@@ -107,3 +107,10 @@ export const getCloudflareApiTokenFromEnv = (): string | undefined => {
 export const getCloudflareAccountIdFromEnv = (): string | undefined => {
   return process.env['CLOUDFLARE_ACCOUNT_ID']
 }
+
+/**
+ * Get the CommandCode API key from environment.
+ */
+export const getCommandCodeApiKeyFromEnv = (): string | undefined => {
+  return process.env['COMMAND_CODE_API_KEY']
+}

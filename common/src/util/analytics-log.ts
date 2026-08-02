@@ -1,4 +1,3 @@
- 
 import { AnalyticsEvent } from '@savant-code/common/constants/analytics-events'
 
 import type { AnalyticsProperties } from '../types/contracts/analytics'

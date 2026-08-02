@@ -10,11 +10,12 @@ touches your repo.**
 Built with TypeScript/Bun, governed by the ECHO Protocol, and designed for
 local-first use with Ollama.
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-1.3.14-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![React](https://img.shields.io/badge/React-19-%23000000?style=flat-square&logo=react&logoColor=%2300fbff)](https://react.dev/)[![OpenTUI](https://img.shields.io/badge/OpenTUI-0.2.2-%23000000?style=flat-square&logo=opentui&logoColor=%2300fbff)](https://github.com/anomalyco/opentui)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](ECHO.md)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![Release](https://img.shields.io/badge/Release-v0.0.12-%23000000?style=flat-square&logo=semver&logoColor=%2300fbff)](CHANGELOG.md)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-1.3.14-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![React](https://img.shields.io/badge/React-19-%23000000?style=flat-square&logo=react&logoColor=%2300fbff)](https://react.dev/)[![OpenTUI](https://img.shields.io/badge/OpenTUI-0.2.2-%23000000?style=flat-square&logo=opentui&logoColor=%2300fbff)](https://github.com/anomalyco/opentui)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](ECHO.md)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![Release](https://img.shields.io/badge/Release-v0.0.15-%23000000?style=flat-square&logo=semver&logoColor=%2300fbff)](CHANGELOG.md)
 
 </div>
 
-> **v0.0.12** — Thinker rebuild, native tool-call hardening, provider onboarding, telemetry controls, and release packaging.
+> **v0.0.15** — CommandCode provider support, first-run onboarding, lint/recovery completion,
+> and synchronized release metadata.
 
 ---
 
@@ -43,6 +44,37 @@ ollama serve
 
 Then run `savant-code` again, or type `/health` inside the chat to verify the
 connection.
+
+If Ollama is not running, configure a hosted provider before sending a prompt:
+
+```text
+/provider opencode-go
+```
+
+You can also enter `/provider` to choose from the interactive picker. Paste the
+key into the masked prompt; it is stored globally and is never added to chat
+history. The default OpenCode Go key uses `OPENCODE_GO_API_KEY`; CommandCode uses
+`COMMAND_CODE_API_KEY`. The key is persisted
+at `C:\\Users\\<username>\\.savant-code\\credentials.json` on Windows or
+`~/.savant-code/credentials.json` on macOS/Linux. Environment variables take
+precedence over saved credentials.
+
+```powershell
+$env:OPENCODE_GO_API_KEY = "your-key"
+savant-code
+```
+
+```cmd
+set OPENCODE_GO_API_KEY=your-key
+savant-code
+```
+
+```bash
+export OPENCODE_GO_API_KEY=your-key
+savant-code
+```
+
+Do not create a project-local `.env` file or edit `credentials.json` manually.
 
 ---
 
@@ -135,8 +167,8 @@ hard 10-iteration cap and a 10% Levenshtein change-cap per pass.
   resolve their real context length from the OpenRouter catalog at runtime.
 - **Universal copy buttons** — hover-to-copy on code blocks, tool outputs, and
   file diffs throughout the TUI.
-- **Gateway providers** — TokenRouter, NVIDIA NIM, OpenCode Go, and Cloudflare
-  Workers AI via `@savant-code/llm-providers`.
+- **Gateway providers** — TokenRouter, NVIDIA NIM, OpenCode Go, CommandCode, and
+  Cloudflare Workers AI via `@savant-code/llm-providers`.
 - **Default model** — MiMo 2.5 via OpenCode Go (configurable via `/model`).
 - **Theming** — light/dark toggle (`/theme:toggle`), Neon Slate aesthetic.
 - **Sidebar folding** — right-sidebar sections and FID cards start collapsed
@@ -277,12 +309,13 @@ gateway model. On the first run, enter:
 /provider
 ```
 
-The key prompt is masked and stores the key locally in the Savant-Code config
+The key prompt is masked and stores the key globally in the Savant-Code config
 `credentials.json`; it is not added to chat history. The default provider is
-OpenCode Go (`OPENCODE_GO_API_KEY`). You can also choose `/provider tokenrouter`
-or `/provider nvidia`. Shell environment variables take precedence over stored
-keys, so CI and managed environments can continue to configure providers
-without using local persistence.
+OpenCode Go (`OPENCODE_GO_API_KEY`). CommandCode uses `COMMAND_CODE_API_KEY`.
+You can also choose `/provider tokenrouter`, `/provider nvidia`, or
+`/provider commandcode`. Shell environment variables take precedence over stored
+keys, so CI and managed environments can continue to configure providers without
+using local persistence.
 
 ---
 

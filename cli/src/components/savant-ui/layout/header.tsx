@@ -1,7 +1,6 @@
 import { TextAttributes } from '@opentui/core'
 import React from 'react'
 
-
 export interface HeaderProps {
   title: string
   subtitle?: string

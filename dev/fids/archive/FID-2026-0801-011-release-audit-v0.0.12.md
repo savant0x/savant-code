@@ -224,7 +224,7 @@ existing `protocol.config.yaml`, and the current file inventory confirmed:
 
 ## Resolution
 
-- **Fixed By:** Buffy / FreeBuff release-audit pass
+- **Fixed By:** Savant release-audit pass
 - **Fixed Date:** 2026-08-01
 - **Fix Description:** Consolidated the v0.0.12 CHANGELOG; archived six
   completed FIDs; refreshed the landing page and A–Z prompt to v0.0.12; verified
@@ -251,7 +251,7 @@ existing `protocol.config.yaml`, and the current file inventory confirmed:
 ## Execution Evidence (added by Orchestrator)
 
 - **Date:** 2026-08-01
-- **Executed by:** Buffy (Orchestrator) during release-readiness pass
+- **Executed by:** Savant during release-readiness pass
 - **FIDs archived:** 6 moved to `dev/fids/archive/` (FIDs 0726-001, 0731-001,
   0731-003, 0731-005, 0731-010, 0801-010)
 - **CHANGELOG:** 7 duplicate `## v0.0.12` headers consolidated to 1

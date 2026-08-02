@@ -3,7 +3,17 @@ import React from 'react'
 import { useTheme } from '../../../hooks/use-theme'
 
 export interface BadgeProps {
-  variant?: 'open' | 'closed' | 'critical' | 'high' | 'medium' | 'low' | 'info' | 'success' | 'warning' | 'error'
+  variant?:
+    | 'open'
+    | 'closed'
+    | 'critical'
+    | 'high'
+    | 'medium'
+    | 'low'
+    | 'info'
+    | 'success'
+    | 'warning'
+    | 'error'
   children: React.ReactNode
   pulse?: boolean
   brackets?: boolean
@@ -22,7 +32,12 @@ const VARIANT_COLORS: Record<string, string> = {
   error: '#ef4444',
 }
 
-export function Badge({ variant = 'info', children, pulse, brackets = true }: BadgeProps) {
+export function Badge({
+  variant = 'info',
+  children,
+  pulse,
+  brackets = true,
+}: BadgeProps) {
   const theme = useTheme()
   const color = VARIANT_COLORS[variant] ?? theme.muted
   const prefix = pulse ? '● ' : ''
@@ -30,7 +45,8 @@ export function Badge({ variant = 'info', children, pulse, brackets = true }: Ba
 
   return (
     <text fg={color} selectable={false}>
-      {prefix}{content}
+      {prefix}
+      {content}
     </text>
   )
 }

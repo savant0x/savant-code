@@ -2,7 +2,6 @@ import { execSync } from 'child_process'
 import fs from 'fs'
 import path from 'path'
 
-
 import { API_KEY_ENV_VAR } from '@savant-code/common/old-constants'
 import { SavantCodeClient, getUserCredentials } from '@savant-code/sdk'
 import { mapLimit } from 'async'
@@ -193,14 +192,17 @@ export async function generateEvalFileV2({
         })
 
         // Filter out supplementalFiles that don't exist at parentSha
-        const { valid: validSupplementalFiles, removed } = filterSupplementalFiles(
-          repoPath,
-          parentSha,
-          taskResult.supplementalFiles,
-        )
+        const { valid: validSupplementalFiles, removed } =
+          filterSupplementalFiles(
+            repoPath,
+            parentSha,
+            taskResult.supplementalFiles,
+          )
 
         if (removed.length > 0) {
-          console.log(`⚠️  Filtered out ${removed.length} supplementalFiles that don't exist at parentSha:`)
+          console.log(
+            `⚠️  Filtered out ${removed.length} supplementalFiles that don't exist at parentSha:`,
+          )
           for (const file of removed) {
             console.log(`   - ${file}`)
           }

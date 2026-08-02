@@ -57,7 +57,9 @@ export async function getMCPToolData(
 
           for (const { name, description, inputSchema } of mcpData) {
             writeTo[mcpName + MCP_TOOL_SEPARATOR + name] = {
-              inputSchema: convertJsonSchemaToZod(inputSchema as Record<string, JSONValue>),
+              inputSchema: convertJsonSchemaToZod(
+                inputSchema as Record<string, JSONValue>,
+              ),
               endsAgentStep: true,
               description,
             }

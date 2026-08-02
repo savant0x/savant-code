@@ -98,9 +98,7 @@ export const ProviderPicker: React.FC<ProviderPickerProps> = ({
       {providers.map((provider, idx) => {
         const isSelected = idx === selectedIndex
         const status = provider.configured ? '✓' : '✗'
-        const statusColor = provider.configured
-          ? theme.success
-          : theme.muted
+        const statusColor = provider.configured ? theme.success : theme.muted
 
         return (
           <Button
@@ -110,26 +108,16 @@ export const ProviderPicker: React.FC<ProviderPickerProps> = ({
               width: '100%',
               paddingLeft: 1,
               paddingRight: 1,
-              backgroundColor: isSelected
-                ? theme.surfaceHover
-                : theme.surface,
+              backgroundColor: isSelected ? theme.surfaceHover : theme.surface,
               flexDirection: 'row',
               gap: 1,
               alignItems: 'center',
             }}
           >
-            <text
-              fg={theme.primary}
-              wrapMode="none"
-              selectable={false}
-            >
+            <text fg={theme.primary} wrapMode="none" selectable={false}>
               {isSelected ? '› ' : '  '}
             </text>
-            <text
-              fg={statusColor}
-              wrapMode="none"
-              selectable={false}
-            >
+            <text fg={statusColor} wrapMode="none" selectable={false}>
               {status}
             </text>
             <text
@@ -140,11 +128,7 @@ export const ProviderPicker: React.FC<ProviderPickerProps> = ({
             >
               {provider.label}
             </text>
-            <text
-              fg={theme.muted}
-              wrapMode="none"
-              selectable={false}
-            >
+            <text fg={theme.muted} wrapMode="none" selectable={false}>
               ({provider.name})
             </text>
           </Button>

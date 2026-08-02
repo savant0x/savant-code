@@ -52,9 +52,9 @@ describe('chat-history', () => {
 
     expect(fs.existsSync(path.join(tempDataDir, 'chats', 'chat-a'))).toBe(false)
     expect(fs.existsSync(path.join(tempDataDir, 'chats', 'chat-b'))).toBe(true)
-    expect(
-      getAllChats(500, tempDataDir).map((chat) => chat.chatId),
-    ).toEqual(['chat-b'])
+    expect(getAllChats(500, tempDataDir).map((chat) => chat.chatId)).toEqual([
+      'chat-b',
+    ])
   })
 
   test('deleteChatSession rejects invalid chat ids', () => {

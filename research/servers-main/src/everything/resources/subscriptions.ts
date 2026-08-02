@@ -1,8 +1,9 @@
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import {
   SubscribeRequestSchema,
   UnsubscribeRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
+
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
 // Track subscriber session id lists by URI
 const subscriptions: Map<string, Set<string | undefined>> = new Map<

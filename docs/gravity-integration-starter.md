@@ -2,15 +2,20 @@
 
 > **STATUS: PARKED until 0.0.3 rebrand ships green.**
 > Do NOT wire Gravity into the codebase while `codebuff`/`freebuff` strings are still being renamed.
-> The rebrand is the gate. After `grep -rE 'CODEBUFF|FREEBUFF|manicode' .` (excl. node_modules + dev/fids archive + brand history) returns 0, THEN execute this kit.
+> The rebrand is the gate. After `grep -rE 'CODEBUFF|FREEBUFF|manicode' .` (excl. node_modules + dev/fids archive +
+  brand history) returns 0, THEN execute this kit.
 
 ---
 
 ## What Gravity is
 
-Gravity (trygravity.ai) is an **AI-native ad network** — contextual sponsored suggestions inside AI chat/assistant/conversational products. It's the revenue engine that makes `savant-free` free. The ad request fires **in parallel** with your LLM call (zero added latency), the SDK renders the ad + auto-logs impressions/clicks, and you earn **CPM (per impression) or CPC (per click)**.
+Gravity (trygravity.ai) is an **AI-native ad network** — contextual sponsored suggestions inside AI
+chat/assistant/conversational products. It's the revenue engine that makes `savant-free` free. The ad request fires **in
+parallel** with your LLM call (zero added latency), the SDK renders the ad + auto-logs impressions/clicks, and you earn
+**CPM (per impression) or CPC (per click)**.
 
 **Architecture fit:**
+
 - `savant-free` (ad-supported, free tier) → Gravity SDK wired in, `codebuff_cli` surface ID retained for attribution.
 - `savant-code` (paid tier) → **NO Gravity SDK. No ads.** Clean premium path.
 
@@ -18,7 +23,8 @@ Gravity (trygravity.ai) is an **AI-native ad network** — contextual sponsored 
 
 ## DO-NOT-TOUCH (rebrand scope is separate)
 
-These strings are **wire-protocol / legacy-support identifiers**, NOT branding. They must survive the rebrand untouched OR be re-registered with Gravity under a new ID *after* signup:
+These strings are **wire-protocol / legacy-support identifiers**, NOT branding. They must survive the rebrand untouched
+OR be re-registered with Gravity under a new ID *after* signup:
 
 | String | Role | Action |
 |---|---|---|
@@ -27,7 +33,8 @@ These strings are **wire-protocol / legacy-support identifiers**, NOT branding. 
 | `codebuff_terminal_command` | Activity tracking key | KEEP as-is |
 | `manicode` config dir / `.manicodeignore` | Legacy config support | KEEP as-is (rename to `savant` is a separate, non-Gravity decision) |
 
-⚠️ **If you rename `codebuff_cli` before registering with Gravity, ad revenue attribution breaks.** Register first, get your publisher surface ID, then align the string.
+⚠️ **If you rename `codebuff_cli` before registering with Gravity, ad revenue attribution breaks.** Register first, get
+your publisher surface ID, then align the string.
 
 ---
 
@@ -70,7 +77,9 @@ fetch('/api/chat', {
 });
 ```
 
-**CRITICAL:** Forward `gravity_context` all the way to the ad request. The `device.ua` + `device.ip` are **required** — requests missing them are rejected with HTTP 400. If your backend calls Gravity without forwarding `device`, the ad request carries your *server's* UA/IP, not the end user's.
+**CRITICAL:** Forward `gravity_context` all the way to the ad request. The `device.ua` + `device.ip` are **required** —
+requests missing them are rejected with HTTP 400. If your backend calls Gravity without forwarding `device`, the ad
+request carries your *server's* UA/IP, not the end user's.
 
 ---
 
@@ -120,7 +129,8 @@ function ChatResponse({ response, ads }) {
 }
 ```
 
-`GravityAd` auto-fires impression tracking (IntersectionObserver) + click attribution. 20+ variants: `card`, `minimal`, `inline`, `spotlight`, `pill`, `banner`, `hyperlink`, etc.
+`GravityAd` auto-fires impression tracking (IntersectionObserver) + click attribution. 20+ variants: `card`, `minimal`,
+`inline`, `spotlight`, `pill`, `banner`, `hyperlink`, etc.
 
 ---
 
@@ -166,7 +176,7 @@ const gravity = new Gravity({ production: true });
 
 ## Revenue loop (the "agent economy funds itself" model)
 
-```
+```text
 Gravity ads → savant-free inference paid → savant-free is free
                                     ↓
               you register as Gravity publisher → revenue flows

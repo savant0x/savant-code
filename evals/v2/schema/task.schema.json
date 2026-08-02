@@ -11,9 +11,10 @@
     "environment",
     "inputs",
     "validation"
-  ],      "additionalProperties": false,
-      "properties": {
-        "schema_version": {
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
       "type": "string",
       "const": "2.0"
     },
@@ -39,14 +40,15 @@
     "difficulty": {
       "type": "string",
       "enum": ["easy", "medium", "hard"]
-    },        "description": {
-          "type": "string"
-        },
-        "task_dir": {
-          "type": "string",
-          "description": "Absolute path to the task directory. Populated by the registry loader."
-        },
-        "golden_patch": {
+    },
+    "description": {
+      "type": "string"
+    },
+    "task_dir": {
+      "type": "string",
+      "description": "Absolute path to the task directory. Populated by the registry loader."
+    },
+    "golden_patch": {
       "type": "string",
       "description": "Path to a canonical unified-diff golden patch. Relative paths are resolved against the task file's directory."
     },

@@ -286,7 +286,9 @@ describe('trimMessagesToFitTokenLimit', () => {
     expect(hasReplacementMessage).toBe(true)
 
     // Verify total tokens are under limit
-    const finalTokens = tokenCounter.countTokensJson(result as unknown as JSONValue)
+    const finalTokens = tokenCounter.countTokensJson(
+      result as unknown as JSONValue,
+    )
     expect(finalTokens).toBeLessThan((maxTotalTokens - systemTokens) * 0.5)
   })
 
@@ -314,7 +316,9 @@ describe('trimMessagesToFitTokenLimit', () => {
     expect(hasReplacementMessage).toBe(true)
 
     // Verify total tokens are under limit
-    const finalTokens = tokenCounter.countTokensJson(result as unknown as JSONValue)
+    const finalTokens = tokenCounter.countTokensJson(
+      result as unknown as JSONValue,
+    )
     expect(finalTokens).toBeLessThan((maxTotalTokens - systemTokens) * 0.5)
   })
 
@@ -336,7 +340,9 @@ describe('trimMessagesToFitTokenLimit', () => {
     }
 
     // Verify total tokens are under limit
-    const finalTokens = tokenCounter.countTokensJson(result as unknown as JSONValue)
+    const finalTokens = tokenCounter.countTokensJson(
+      result as unknown as JSONValue,
+    )
     expect(finalTokens).toBeLessThan(maxTotalTokens - systemTokens)
   })
 
@@ -491,7 +497,9 @@ describe('trimMessagesToFitTokenLimit', () => {
       expect(keptMessage).toBeDefined()
 
       // Total tokens should be under limit
-      const finalTokens = tokenCounter.countTokensJson(result as unknown as JSONValue)
+      const finalTokens = tokenCounter.countTokensJson(
+        result as unknown as JSONValue,
+      )
       expect(finalTokens).toBeLessThan(2000)
     })
 

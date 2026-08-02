@@ -20,7 +20,9 @@ describe('getProviderOptions — savant_code_metadata', () => {
   }
 
   it('includes run_id and client_id in savant_code_metadata', () => {
-    const opts = getProviderOptions(baseParams) as unknown as SavantCodeProviderOptions
+    const opts = getProviderOptions(
+      baseParams,
+    ) as unknown as SavantCodeProviderOptions
     const meta = opts['savant-code'].savant_code_metadata
     expect(meta).toMatchObject({
       run_id: 'run-1',
@@ -42,7 +44,9 @@ describe('getProviderOptions — savant_code_metadata', () => {
   })
 
   it('omits extra keys when extraSavantCodeMetadata is undefined', () => {
-    const opts = getProviderOptions(baseParams) as unknown as SavantCodeProviderOptions
+    const opts = getProviderOptions(
+      baseParams,
+    ) as unknown as SavantCodeProviderOptions
     const meta = opts['savant-code'].savant_code_metadata
     expect(Object.keys(meta)).toEqual(
       expect.arrayContaining(['run_id', 'client_id']),

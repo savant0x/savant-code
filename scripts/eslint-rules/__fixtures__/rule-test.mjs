@@ -19,11 +19,23 @@ try {
       `const arrow = (v: unknown): v is number => typeof v === 'number'`,
     ],
     invalid: [
-      { code: `function bad(x: unknown): void {}`, errors: [{ messageId: 'noUnknownSig' }] },
-      { code: `function bad(): unknown { return 1 }`, errors: [{ messageId: 'noUnknownSig' }] },
+      {
+        code: `function bad(x: unknown): void {}`,
+        errors: [{ messageId: 'noUnknownSig' }],
+      },
+      {
+        code: `function bad(): unknown { return 1 }`,
+        errors: [{ messageId: 'noUnknownSig' }],
+      },
       { code: `const x: unknown = 1`, errors: [{ messageId: 'noUnknownSig' }] },
-      { code: `const bad = (x: unknown) => x`, errors: [{ messageId: 'noUnknownSig' }] },
-      { code: `function wrap(input: unknown[]): void {}`, errors: [{ messageId: 'noUnknownSig' }] },
+      {
+        code: `const bad = (x: unknown) => x`,
+        errors: [{ messageId: 'noUnknownSig' }],
+      },
+      {
+        code: `function wrap(input: unknown[]): void {}`,
+        errors: [{ messageId: 'noUnknownSig' }],
+      },
     ],
   })
   console.log('RULE TESTS PASSED')

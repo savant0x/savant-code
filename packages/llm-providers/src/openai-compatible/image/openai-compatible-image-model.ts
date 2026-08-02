@@ -8,7 +8,10 @@ import { z } from 'zod/v4'
 
 import { defaultOpenAICompatibleErrorStructure } from '../openai-compatible-error'
 
-import type { OpenAICompatibleErrorData, ProviderErrorStructure } from '../openai-compatible-error'
+import type {
+  OpenAICompatibleErrorData,
+  ProviderErrorStructure,
+} from '../openai-compatible-error'
 import type { OpenAICompatibleImageModelId } from './openai-compatible-image-settings'
 import type { ImageModelV2, ImageModelV2CallWarning } from '@ai-sdk/provider'
 import type { FetchFunction } from '@ai-sdk/provider-utils'

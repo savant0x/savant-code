@@ -1,8 +1,11 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { getValidRootDirectories } from '../roots-utils.js';
 import { mkdtempSync, rmSync, mkdirSync, writeFileSync, realpathSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
+
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+
+import { getValidRootDirectories } from '../roots-utils.js';
+
 import type { Root } from '@modelcontextprotocol/sdk/types.js';
 
 describe('getValidRootDirectories', () => {

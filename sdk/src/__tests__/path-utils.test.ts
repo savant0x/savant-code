@@ -23,10 +23,7 @@ describe('resolveFilePathWithinProject', () => {
   })
 
   test('normalizes absolute paths inside the project', () => {
-    const result = resolveFilePathWithinProject(
-      '/repo',
-      '/repo/src/file.ts',
-    )
+    const result = resolveFilePathWithinProject('/repo', '/repo/src/file.ts')
     expect(result).not.toBeNull()
     expect(result!.fullPath).toBe(expectedFullPath('/repo/src/file.ts'))
     expect(result!.relativePath).toBe('src/file.ts')

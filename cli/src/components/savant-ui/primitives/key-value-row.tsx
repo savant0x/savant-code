@@ -14,11 +14,7 @@ export interface KeyValueRowProps {
  * Uses native OpenTUI flexbox to push the value to the right edge instead of
  * relying on manual space padding.
  */
-export function KeyValueRow({
-  label,
-  value,
-  valueColor,
-}: KeyValueRowProps) {
+export function KeyValueRow({ label, value, valueColor }: KeyValueRowProps) {
   const theme = useTheme()
 
   return (

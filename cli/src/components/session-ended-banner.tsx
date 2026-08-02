@@ -116,7 +116,9 @@ export const SessionEndedBanner: React.FC<SessionEndedBannerProps> = ({
         paddingBottom: 0,
         flexDirection: 'column',
         gap: 0,
-      }} customBorderChars={BORDER_CHARS}>
+      }}
+      customBorderChars={BORDER_CHARS}
+    >
       {isStreaming ? (
         <text style={{ fg: theme.muted, wrapMode: 'word' }}>
           Agent is wrapping up. Rejoin the wait room after it's finished.
@@ -155,13 +157,13 @@ export const SessionEndedBanner: React.FC<SessionEndedBannerProps> = ({
               paddingLeft: 1,
               paddingRight: 1,
             }}
-            border={['top', 'bottom', 'left', 'right']} customBorderChars={BORDER_CHARS}>
+            border={['top', 'bottom', 'left', 'right']}
+            customBorderChars={BORDER_CHARS}
+          >
             <text
               style={{
                 fg:
-                  pendingAction === 'landing'
-                    ? theme.muted
-                    : theme.foreground,
+                  pendingAction === 'landing' ? theme.muted : theme.foreground,
               }}
             >
               {pendingAction === 'landing' ? (

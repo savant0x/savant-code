@@ -1,5 +1,16 @@
+import { ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
+
+import { registerFileResources } from '../resources/files.js';
+import {
+  getSessionResourceURI,
+  registerSessionResource,
+} from '../resources/session.js';
+import {
+  setSubscriptionHandlers,
+  beginSimulatedResourceUpdates,
+  stopSimulatedResourceUpdates,
+} from '../resources/subscriptions.js';
 import {
   textResource,
   blobResource,
@@ -13,16 +24,8 @@ import {
   resourceIdForResourceTemplateCompleter,
   registerResourceTemplates,
 } from '../resources/templates.js';
-import {
-  getSessionResourceURI,
-  registerSessionResource,
-} from '../resources/session.js';
-import { registerFileResources } from '../resources/files.js';
-import {
-  setSubscriptionHandlers,
-  beginSimulatedResourceUpdates,
-  stopSimulatedResourceUpdates,
-} from '../resources/subscriptions.js';
+
+import type { McpServer} from '@modelcontextprotocol/sdk/server/mcp.js';
 
 describe('Resource Templates', () => {
   describe('Constants', () => {

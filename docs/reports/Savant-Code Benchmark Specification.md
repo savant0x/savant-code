@@ -171,7 +171,7 @@ The benchmarking suite will be cleanly structured within the evals/v2/ directory
 evals/v2/ ├── README.md \# Execution instructions and architecture overview ├── schema/ │ └── task\_schema\_v2.json \# JSON schema enforcing task definitions ├── tasks/ │ ├── pure\_coding/ \# SWE-bench style real-world tasks │ ├── mcp\_tooling/ \# Mock server integration synthetic tasks │ └── fsm\_compliance/ \# Synthetic FSM violation testing tasks ├── runner/ │ ├── index.ts \# Core benchmark pipeline execution logic │ ├── SavantRunner.ts \# SDK integration and trace collection │ └── ExternalRunner.ts \# Bun.spawn wrappers for external CLIs ├── sandbox/ │ ├── firecracker\_config.json \# MicroVM provisioning hardware constraints │ └── snapshot\_manager.ts \# CoW memory state restoration logic ├── scoring/ │ ├── metrics.ts \# FSM and orchestration mathematical formulas │ └── llm\_judge.ts \# Structured output evaluation prompts └── reports/ \# Aggregated SQLite traces and MD leaderboards  
 This comprehensive, highly detailed harness transforms the evaluation of Savant-Code from a simple, output-focused diff-comparison tool into a world-class, architectural capability benchmark, providing rigorous, reproducible, and deeply actionable metrics for future development.
 
-#### **Works cited**
+### **Works cited**
 
 > 1. Introducing SWE-bench Verified \- OpenAI, [https://openai.com/index/introducing-swe-bench-verified/](https://openai.com/index/introducing-swe-bench-verified/)  
 > 2. Can Language Models Resolve Real-world Github Issues \- SWE-bench, [https://www.swebench.com/original.html](https://www.swebench.com/original.html)  

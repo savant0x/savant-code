@@ -9,11 +9,9 @@
 import { TextAttributes } from '@opentui/core'
 import React from 'react'
 
-
 import { resolveThemeColor, type ThemeColorKey } from './icon-theme-keys'
 import { useTheme } from '../../hooks/use-theme'
 import { glyph, type GlyphName } from '../../utils/glyphs'
-
 
 export interface IconProps {
   /** Canonical glyph name from the centralized map. */
@@ -42,7 +40,10 @@ export function Icon({ name, color = 'foreground', bold = false }: IconProps) {
   // <span> composes inside <text>/<box> trees. No padding — callers control
   // spacing (e.g. `{icon} {label}`) to avoid double-space artifacts.
   return (
-    <span fg={resolvedColor} attributes={bold ? TextAttributes.BOLD : undefined}>
+    <span
+      fg={resolvedColor}
+      attributes={bold ? TextAttributes.BOLD : undefined}
+    >
       {char}
     </span>
   )

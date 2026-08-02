@@ -120,9 +120,7 @@ export const hasNerdFont = (): boolean => {
   if (nerdFontCache !== null) return nerdFontCache
 
   try {
-    const override = (
-      process.env.SAVANT_GLYPH_TIER ?? ''
-    ).toLowerCase()
+    const override = (process.env.SAVANT_GLYPH_TIER ?? '').toLowerCase()
     if (override === 'nerdfont') {
       nerdFontCache = true
       return true
@@ -164,7 +162,10 @@ export const activeGlyphTier = (): GlyphTier =>
 export const glyph = (name: GlyphName): string => {
   const entry = GLYPH_TABLE[name]
   if (!entry) {
-    logger.warn({ glyphName: name }, 'Unknown glyph name — rendering placeholder')
+    logger.warn(
+      { glyphName: name },
+      'Unknown glyph name — rendering placeholder',
+    )
     return '?'
   }
 

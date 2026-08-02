@@ -1,4 +1,3 @@
-
 export const INITIAL_RETRY_DELAY = 1000 // 1 second
 
 type RetryableErrorBase = {
@@ -8,7 +7,10 @@ type RetryableErrorBase = {
   message?: string
 }
 
-export async function withRetry<T, E extends RetryableErrorBase = RetryableErrorBase>(
+export async function withRetry<
+  T,
+  E extends RetryableErrorBase = RetryableErrorBase,
+>(
   operation: () => Promise<T>,
   options: {
     maxRetries?: number

@@ -24,7 +24,8 @@ const paramsSchema = {
           },
           flags: {
             type: 'string' as const,
-            description: 'Optional ripgrep flags to customize the search (e.g., "-i" for case-insensitive, "-g *.ts -g *.js" for TypeScript and JavaScript files only, "-g !*.test.ts" to exclude Typescript test files, "-A 3" for 3 lines after match, "-B 2" for 2 lines before match).',
+            description:
+              'Optional ripgrep flags to customize the search (e.g., "-i" for case-insensitive, "-g *.ts -g *.js" for TypeScript and JavaScript files only, "-g !*.test.ts" to exclude Typescript test files, "-A 3" for 3 lines after match, "-B 2" for 2 lines before match).',
           },
           cwd: {
             type: 'string' as const,
@@ -49,11 +50,18 @@ const detective: SecretAgentDefinition = {
   id: 'detective',
   displayName: 'Savant the Detective',
   spawnerPrompt:
-    'RED phase agent for the ECHO Perfection Loop. Discovers issues with evidence: file paths, line numbers, grep output, call-graph reachability. Runs code search queries and catalogs all failures. Do not implement fixes — that is Forge\'s role.',
+    "RED phase agent for the ECHO Perfection Loop. Discovers issues with evidence: file paths, line numbers, grep output, call-graph reachability. Runs code search queries and catalogs all failures. Do not implement fixes — that is Forge's role.",
   model: 'anthropic/claude-sonnet-4.6',
   publisher,
   includeMessageHistory: false,
-  toolNames: ['code_search', 'set_output', 'list_directory', 'glob', 'read_files', 'read_subtree'],
+  toolNames: [
+    'code_search',
+    'set_output',
+    'list_directory',
+    'glob',
+    'read_files',
+    'read_subtree',
+  ],
   spawnableAgents: [],
   inputSchema: {
     params: paramsSchema,
@@ -61,7 +69,9 @@ const detective: SecretAgentDefinition = {
   outputMode: 'structured_output',
   handleSteps: function* ({ params }) {
     function isJSONObject(value: JSONValue): value is JSONObject {
-      return value !== null && typeof value === 'object' && !Array.isArray(value)
+      return (
+        value !== null && typeof value === 'object' && !Array.isArray(value)
+      )
     }
     function asSearchQueryArray(value: JSONValue): SearchQuery[] {
       if (!Array.isArray(value)) return []
@@ -122,7 +132,7 @@ const detective: SecretAgentDefinition = {
     'You are the Detective, the RED phase agent in the ECHO Perfection Loop.',
     '',
     '# Your Role',
-    'Discover issues with evidence. You do NOT implement fixes — that is Forge\'s RED phase responsibility.',
+    "Discover issues with evidence. You do NOT implement fixes — that is Forge's RED phase responsibility.",
     '',
     '# What You Do',
     '1. Search the codebase for issues using code_search',
@@ -136,7 +146,7 @@ const detective: SecretAgentDefinition = {
     '- Do NOT put directory paths in the flags parameter — flags is only for ripgrep flags like -g, -A, -B, -i',
     '- Example: { pattern: "myFunction", cwd: "packages/agent-runtime/src", flags: "-g \'*.ts\' -n" }',
     '',
-    '# What You Don\'t Do',
+    "# What You Don't Do",
     '- Do NOT write files (no write_file, no str_replace)',
     '- Do NOT implement fixes',
     '- Do NOT spawn other agents',

@@ -1,6 +1,8 @@
 import { readFile, writeFile, unlink } from 'node:fs/promises'
 import path from 'node:path'
+
 import { parsePatch, applyPatch } from 'diff'
+
 import type { Sandbox } from './sandbox'
 
 export class GoldenPatchError extends Error {

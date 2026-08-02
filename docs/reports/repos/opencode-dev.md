@@ -10,11 +10,13 @@ OpenCode is the upstream project for Kilo Code. It is a TypeScript/Bun coding ag
 ## Feature Inventory
 
 ### LLM Provider System
+
 - **Four-Axis Route Architecture** — Protocol (API contract), Endpoint (URL), Auth (credentials), Framing (stream decoding). DeepSeek, TogetherAI, Cerebras all reuse `OpenAIChat.protocol` — 5-15 lines per new provider. (`packages/llm/src/route/protocol.ts`, `endpoint.ts`, `auth.ts`, `framing.ts`)
 - **Schema-First Data Model** — All LLM types as Effect Schema classes. Compile-time type safety + runtime validation + JSON encoding. (`packages/llm/src/schema/`)
 - **Typed Tool Runtime** — `ToolRuntime.dispatch` decodes input against schema, dispatches, encodes output. Provider-defined tools pass through untouched. (`packages/llm/src/tool-runtime.ts`)
 
 ### Session Management
+
 - **Durable Session Runner** — Runs one session until it settles. Loads history, resolves model, assembles system context, streams exactly one LLM turn, persists events incrementally, settles tools durably, loops. (`packages/core/src/session/runner/llm.ts`)
 - **Session Input Delivery (Steer/Queue)** — `steer`: promoted at next safe boundary, resets step count. `queue`: pending until idle, one promoted per boundary. Prevents race conditions. (`packages/core/src/session/input.ts`)
 - **Session Context Epoch** — Tracks when system context was last reconciled. Changes injected as durable updates at safe boundaries. (`packages/core/src/session/context-epoch.ts`)
@@ -22,28 +24,36 @@ OpenCode is the upstream project for Kilo Code. It is a TypeScript/Bun coding ag
 - **Session Revert** — Captures snapshots, restores filesystem state. Stage preview then execute. (`packages/core/src/session/revert.ts`)
 
 ### System Context
+
 - **System Context Algebra** — `Source<A>` with key, codec, load function, baseline/update/remove renderers. Composed into `SystemContext`, observed once for durable `Snapshot`. Prevents context drift. (`packages/core/src/system-context/`)
 
 ### Tool System
+
 - **Tool.define Pattern** — `Tool.make({ description, input, output, execute, toModelOutput })`. Layered registration: Location > Application. Scoped lifecycle with `Effect.addFinalizer`. (`packages/core/src/tool/tool.ts`, `registry.ts`)
 - **Tool Output Store** — 2000 lines, 50KB limit. Head/tail preview sampling. 7-day retention. (`packages/core/src/tool-output-store.ts`)
 
 ### Permission System
+
 - **Wildcard Pattern Matching** — `allow/deny/ask` with `Wildcard.match`. Saved approvals. Config protection. (`packages/opencode/src/permission/evaluate.ts`)
 
 ### Agent System
+
 - **Dual-Agent** — `build` (full-access) and `plan` (read-only). `general` subagent for complex searches. Tab to switch. Agent step limits with forced summary. (`packages/opencode/src/agent/agent.ts`)
 
 ### Plugin System
+
 - **Comprehensive Hooks** — `event`, `config`, `tool`, `auth`, `provider`, `chat.message`, `chat.params`, `chat.headers`, `permission.ask`, `tool.execute.before`, `tool.execute.after`, `shell.env`, `experimental.chat.system.transform`, `experimental.session.compacting`. (`packages/plugin/src/index.ts`)
 
 ### MCP Integration
+
 - **Full Client** — Stdio, SSE, Streamable HTTP transports. OAuth provider and callback. Browser-based flows. Catalog management. (`packages/opencode/src/mcp/`)
 
 ### Snapshot System
+
 - **Content-Addressed** — Efficient deduplication. Diff between snapshots, preview restore, selective path restoration. 7-day retention. (`packages/core/src/snapshot.ts`)
 
 ### Other
+
 - **Durable Event System (EventV2)** — SQLite-backed, replayable event store with aggregate sequence tracking. (`packages/core/src/event.ts`)
 - **Background Job System** — Status tracking, output streaming, promotion (background → foreground), timeout. (`packages/core/src/background-job.ts`)
 - **PTY Management** — Create, update, attach, detach. Subscriber-based data streaming with cursor tracking. 2MB cap. (`packages/core/src/pty.ts`)

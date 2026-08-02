@@ -51,7 +51,10 @@ export type ResetReason =
  *   - skip if `isChainInProgress === true` (stalled-detector calls only;
  *     run-completion calls may run unconditionally)
  */
-export function resetUiToIdle(reason: ResetReason, opts?: { force?: boolean }): void {
+export function resetUiToIdle(
+  reason: ResetReason,
+  opts?: { force?: boolean },
+): void {
   const store = useChatStore.getState()
 
   // Same set of guards the action implements, but exposed as a util for
@@ -59,7 +62,10 @@ export function resetUiToIdle(reason: ResetReason, opts?: { force?: boolean }): 
   // user-driven" — they need to inspect chat-store pre-action.
   if (!opts?.force) {
     if (store.isRetrying) {
-      logger.debug({ reason }, '[finish-logic] resetUiToIdle skipped (isRetrying)')
+      logger.debug(
+        { reason },
+        '[finish-logic] resetUiToIdle skipped (isRetrying)',
+      )
       return
     }
     if (Date.now() - store.lastResetAt < RESET_ANTI_THRASH_MS) {

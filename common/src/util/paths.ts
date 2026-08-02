@@ -72,17 +72,18 @@ function safeRealpath(
     if (!(err instanceof Error)) {
       throw new Error(`safeRealpath failed for ${filePath}`, { cause: err })
     }
-    const code = 'code' in err && typeof err.code === 'string' ? err.code : undefined
+    const code =
+      'code' in err && typeof err.code === 'string' ? err.code : undefined
     if (
-      code === 'ENOENT' ||  // broken symlink (target missing)
-      code === 'ELOOP' ||   // symlink loop
-      code === 'EACCES' ||  // permission denied on intermediate dir
-      code === 'EINVAL' ||  // cross-platform edge (Windows reserved name)
-      code === 'EPERM' ||   // sandbox blocks traversal
+      code === 'ENOENT' || // broken symlink (target missing)
+      code === 'ELOOP' || // symlink loop
+      code === 'EACCES' || // permission denied on intermediate dir
+      code === 'EINVAL' || // cross-platform edge (Windows reserved name)
+      code === 'EPERM' || // sandbox blocks traversal
       code === 'ENOTDIR' || // not a directory encountered mid-traversal
-      code === 'EIO' ||     // I/O error mid-read
-      code === 'ENOMEM' ||  // out of memory during path traversal (rare)
-      code === 'EFAULT'     // bad address from driver bug (extremely rare)
+      code === 'EIO' || // I/O error mid-read
+      code === 'ENOMEM' || // out of memory during path traversal (rare)
+      code === 'EFAULT' // bad address from driver bug (extremely rare)
     ) {
       return null
     }
@@ -161,11 +162,7 @@ export function resolveAndContain(
   // node:fs.realpathSync.native). Tests pass identity for mock fs.
   // realpath is `string | null`; the null-check below narrows to `string`.
   const realpathFn = opts?.realpathFn ?? fs.realpathSync.native
-  const realpath = safeRealpath(
-    filePath,
-    opts!.projectRoot!,
-    realpathFn,
-  )
+  const realpath = safeRealpath(filePath, opts!.projectRoot!, realpathFn)
   if (realpath === null) {
     return {
       kind: 'reject',

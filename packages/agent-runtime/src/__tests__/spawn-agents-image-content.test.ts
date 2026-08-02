@@ -24,7 +24,10 @@ import { handleSpawnAgents } from '../tools/handlers/tool/spawn-agents'
 import type { SavantCodeToolCall } from '@savant-code/common/tools/list'
 import type { AgentTemplate } from '@savant-code/common/types/agent-template'
 import type { ParamsExcluding } from '@savant-code/common/types/function-params'
-import type { ImagePart, TextPart } from '@savant-code/common/types/messages/content-part'
+import type {
+  ImagePart,
+  TextPart,
+} from '@savant-code/common/types/messages/content-part'
 
 /**
  * Tests to verify that image content is NOT propagated to spawned subagents via the `content` parameter.
@@ -67,7 +70,10 @@ describe('Spawn Agents Image Content Propagation', () => {
             assistantMessage('Mock agent response'),
           ],
         },
-        output: { type: 'lastMessage', value: [assistantMessage('Mock agent response')] },
+        output: {
+          type: 'lastMessage',
+          value: [assistantMessage('Mock agent response')],
+        },
       }
     })
 
@@ -189,9 +195,7 @@ describe('Spawn Agents Image Content Propagation', () => {
 
       const imageContent = createImageContent()
 
-      sessionState.mainAgentState.messageHistory = [
-        userMessage('Hello'),
-      ]
+      sessionState.mainAgentState.messageHistory = [userMessage('Hello')]
 
       await handleSpawnAgents({
         ...handleSpawnAgentsBaseParams,
@@ -246,9 +250,7 @@ describe('Spawn Agents Image Content Propagation', () => {
 
       const imageContent = createImageContent()
 
-      sessionState.mainAgentState.messageHistory = [
-        userMessage('Hello'),
-      ]
+      sessionState.mainAgentState.messageHistory = [userMessage('Hello')]
 
       await handleSpawnAgentInline({
         ...handleSpawnAgentsBaseParams,
@@ -321,7 +323,10 @@ describe('Spawn Agents Image Content Propagation', () => {
             ...options.agentState,
             messageHistory: [assistantMessage('Mock response')],
           },
-          output: { type: 'lastMessage', value: [assistantMessage('Mock response')] },
+          output: {
+            type: 'lastMessage',
+            value: [assistantMessage('Mock response')],
+          },
         }
       })
 

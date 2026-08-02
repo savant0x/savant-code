@@ -114,10 +114,10 @@ export function renderToolComponent(
       options,
     )
   } catch (error) {
-      logger.error(
-        `Error rendering tool component for ${toolBlock.toolName}:`,
-        error,
-      )
+    logger.error(
+      `Error rendering tool component for ${toolBlock.toolName}:`,
+      error,
+    )
     return undefined
   }
 }

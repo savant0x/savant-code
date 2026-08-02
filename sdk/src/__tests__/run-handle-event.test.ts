@@ -1,4 +1,3 @@
-
 import * as mainPromptModule from '@savant-code/agent-runtime/main-prompt'
 import { getInitialSessionState } from '@savant-code/common/types/session-state'
 import { getStubProjectFileContext } from '@savant-code/common/util/file'
@@ -30,13 +29,9 @@ describe('SavantCodeClient handleEvent / handleStreamChunk', () => {
     spyOn(databaseModule, 'addAgentStep').mockResolvedValue('step-1')
 
     spyOn(mainPromptModule, 'callMainPrompt').mockImplementation(
-      async (
-        params: Parameters<typeof mainPromptModule.callMainPrompt>[0],
-      ) => {
+      async (params: Parameters<typeof mainPromptModule.callMainPrompt>[0]) => {
         const { sendAction, action: promptAction, promptId } = params
-        const sessionState = getInitialSessionState(
-          getStubProjectFileContext(),
-        )
+        const sessionState = getInitialSessionState(getStubProjectFileContext())
 
         await sendAction({
           action: {

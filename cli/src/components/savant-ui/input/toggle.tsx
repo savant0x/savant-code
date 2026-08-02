@@ -20,7 +20,9 @@ export function Toggle({ checked, onChange, label, disabled }: ToggleProps) {
   return (
     <box flexDirection="row" gap={1}>
       <text fg={color}>{icon}</text>
-      {label && <text fg={disabled ? theme.muted : theme.foreground}>{label}</text>}
+      {label && (
+        <text fg={disabled ? theme.muted : theme.foreground}>{label}</text>
+      )}
     </box>
   )
 }

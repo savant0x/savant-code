@@ -1,4 +1,3 @@
- 
 /**
  * This is a modified version of the Saxy library that emits text nodes immediately
  */

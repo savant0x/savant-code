@@ -1,4 +1,4 @@
-/* eslint-disable no-console, savant/no-unknown-in-signatures -- test runner: intentional diagnostic output and dynamic trace/output data shapes */
+ 
 /**
  * E2E test script for the librarian agent.
  *
@@ -186,10 +186,7 @@ async function runTask(
     }
   }
 
-  if (
-    output?.type === 'structuredOutput' &&
-    output.value !== null
-  ) {
+  if (output?.type === 'structuredOutput' && output.value !== null) {
     const data = output.value as unknown as LibrarianOutput
     console.log(`Answer length: ${data.answer?.length ?? 0} chars`)
     console.log(`Relevant files: ${data.relevantFiles?.length ?? 0}`)
@@ -198,10 +195,7 @@ async function runTask(
   console.log(`${'─'.repeat(60)}`)
 
   // Clean up the cloned repo after validation
-  if (
-    output?.type === 'structuredOutput' &&
-    output.value !== null
-  ) {
+  if (output?.type === 'structuredOutput' && output.value !== null) {
     const data = output.value as unknown as LibrarianOutput
     if (data.cloneDir && fs.existsSync(data.cloneDir)) {
       console.log(`Cleaning up ${data.cloneDir}...`)

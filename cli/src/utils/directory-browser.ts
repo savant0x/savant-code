@@ -54,7 +54,9 @@ export function getDirectories(dirPath: string): DirectoryEntry[] {
   // Sort non-parent entries alphabetically (case-insensitive)
   const parentEntry = entries.find((e) => e.isParent)
   const childEntries = entries.filter((e) => !e.isParent)
-  childEntries.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()))
+  childEntries.sort((a, b) =>
+    a.name.toLowerCase().localeCompare(b.name.toLowerCase()),
+  )
 
   return parentEntry ? [parentEntry, ...childEntries] : childEntries
 }

@@ -22,7 +22,10 @@ import { useToastStore } from '../hooks/use-toast'
 import type { ToastVariant } from '../hooks/use-toast'
 
 /** Toast variant → ChatTheme color key. Single truth (Law 13). */
-const TOAST_COLOR_KEY: Record<ToastVariant, 'error' | 'warning' | 'success' | 'info'> = {
+const TOAST_COLOR_KEY: Record<
+  ToastVariant,
+  'error' | 'warning' | 'success' | 'info'
+> = {
   error: 'error',
   warning: 'warning',
   success: 'success',
@@ -60,10 +63,7 @@ const ToastItem = ({
     >
       <text fg={fg}>{message}</text>
       <box style={{ flexGrow: 1 }} />
-      <text
-        fg={theme.muted}
-        onMouseDown={() => onDismiss(id)}
-      >
+      <text fg={theme.muted} onMouseDown={() => onDismiss(id)}>
         {'×'}
       </text>
     </box>

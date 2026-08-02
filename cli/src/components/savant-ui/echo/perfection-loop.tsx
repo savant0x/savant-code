@@ -8,11 +8,7 @@ import { resolveThemeColor } from '../icon-theme-keys'
 import { SidebarSection } from '../primitives/sidebar-section'
 
 type PerfectionLoopPhase =
-  | 'red'
-  | 'green'
-  | 'audit'
-  | 'self_correct'
-  | 'complete'
+  'red' | 'green' | 'audit' | 'self_correct' | 'complete'
 
 interface LoopStep {
   phase: PerfectionLoopPhase
@@ -42,7 +38,9 @@ const STATUS_TO_PHASE: Record<string, PerfectionLoopPhase> = {
  * The loop phase is the most advanced phase among all active FIDs. If there
  * are no active FIDs, the loop is complete/idle.
  */
-function deriveLoopPhase(activeFids: { status: string }[]): PerfectionLoopPhase {
+function deriveLoopPhase(
+  activeFids: { status: string }[],
+): PerfectionLoopPhase {
   if (activeFids.length === 0) return 'complete'
 
   const phaseIndex = (phase: PerfectionLoopPhase) =>

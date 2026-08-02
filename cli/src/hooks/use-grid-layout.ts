@@ -15,7 +15,11 @@ export const WIDTH_LG_THRESHOLD = 150
 export const WIDTH_XL_THRESHOLD = 200
 
 /** Ordered thresholds for determining max columns based on terminal width */
-const WIDTH_THRESHOLDS = [WIDTH_MD_THRESHOLD, WIDTH_LG_THRESHOLD, WIDTH_XL_THRESHOLD] as const
+const WIDTH_THRESHOLDS = [
+  WIDTH_MD_THRESHOLD,
+  WIDTH_LG_THRESHOLD,
+  WIDTH_XL_THRESHOLD,
+] as const
 
 export interface GridLayoutResult<T> {
   columns: number
@@ -41,7 +45,8 @@ export function computeGridLayout<T>(
   }
 
   // Determine max columns from width thresholds
-  const maxColumns = WIDTH_THRESHOLDS.filter(t => availableWidth >= t).length + 1
+  const maxColumns =
+    WIDTH_THRESHOLDS.filter((t) => availableWidth >= t).length + 1
 
   const columns = computeSmartColumns(items.length, maxColumns)
 

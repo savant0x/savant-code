@@ -73,7 +73,10 @@ export interface MetricReport {
  *
  * Supported forms: "N", ">N", ">=N", "<N", "<=N", "==N", "!=N".
  */
-export function evaluateExpectedCalls(actual: number, expected: string): boolean {
+export function evaluateExpectedCalls(
+  actual: number,
+  expected: string,
+): boolean {
   const normalized = expected.trim()
   const match = normalized.match(/^(>=|<=|==|!=|>|<)?(\d+)$/)
   if (!match) {
@@ -177,7 +180,9 @@ export class MetricAggregator {
         .filter((p): p is EchoPhase => p !== undefined)
       metrics.expected_sequence_matched =
         normalizedExpected.length === phaseSequence.length &&
-        normalizedExpected.every((phase, index) => phaseSequence[index] === phase)
+        normalizedExpected.every(
+          (phase, index) => phaseSequence[index] === phase,
+        )
     }
 
     return metrics
@@ -209,13 +214,7 @@ export class MetricAggregator {
       const toolName = event.raw.toolName
       const currentPhase = this.derivePhaseAtEvent(phaseSequence)
       const agentType = agentTypeById.get(event.raw.agentId ?? 'main') ?? 'base'
-      this.checkToolPermission(
-        toolName,
-        currentPhase,
-        agentType,
-        metrics,
-        task,
-      )
+      this.checkToolPermission(toolName, currentPhase, agentType, metrics, task)
     }
   }
 
@@ -234,7 +233,8 @@ export class MetricAggregator {
     task: TaskDefinition,
   ): void {
     if (WRITE_TOOLS.has(toolName)) {
-      const allowWriteInRed = task.validation.fsm_assertions?.allow_write_in_red ?? false
+      const allowWriteInRed =
+        task.validation.fsm_assertions?.allow_write_in_red ?? false
       if (!WRITE_PHASES.has(currentPhase)) {
         if (currentPhase === 'red' && allowWriteInRed) {
           // Explicitly allowed by the task.
@@ -279,7 +279,9 @@ export class MetricAggregator {
       }
     }
 
-    const metCount = required.filter((agent) => distinctAgentTypes.has(agent)).length
+    const metCount = required.filter((agent) =>
+      distinctAgentTypes.has(agent),
+    ).length
     return {
       distinct_agent_types_spawned: spawned,
       required_agents: required,

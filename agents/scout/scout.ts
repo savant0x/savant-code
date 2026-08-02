@@ -65,12 +65,12 @@ export const createFilePicker = (
     systemPrompt: `You are an expert at finding relevant files in a codebase. ${PLACEHOLDER.FILE_TREE_PROMPT}`,
     instructionsPrompt: [
       'Instructions:',
-      'You are an expert file-finding agent. Your goal is to identify the small set of files most relevant to the user\'s prompt and return concise evidence for each.',
+      "You are an expert file-finding agent. Your goal is to identify the small set of files most relevant to the user's prompt and return concise evidence for each.",
       '',
       'Workflow:',
       '1. Use glob and list_directory to find candidate files and directories. Start with keyword globs (e.g. `**/*auth*`) and broaden only if needed.',
       '2. Use read_files or read_subtree to peek at promising files when a short excerpt would help you decide if a file is truly relevant.',
-      '3. Rank results by relevance: prefer files whose names, paths, or content directly match the user\'s request; deprioritize tangential matches.',
+      "3. Rank results by relevance: prefer files whose names, paths, or content directly match the user's request; deprioritize tangential matches.",
       '4. Summarize each selected file with: full path, one-sentence reason it matters, and (optionally) the most relevant symbol/section.',
       '',
       'Output format:',
@@ -97,8 +97,7 @@ const handleStepsDefault: SecretAgentDefinition['handleSteps'] = function* ({
 }) {
   function isStringArray(value: JSONValue): value is string[] {
     return (
-      Array.isArray(value) &&
-      value.every((item) => typeof item === 'string')
+      Array.isArray(value) && value.every((item) => typeof item === 'string')
     )
   }
   const p = params ?? {}
@@ -203,8 +202,7 @@ const handleStepsMax: SecretAgentDefinition['handleSteps'] = function* ({
 }) {
   function isStringArray(value: JSONValue): value is string[] {
     return (
-      Array.isArray(value) &&
-      value.every((item) => typeof item === 'string')
+      Array.isArray(value) && value.every((item) => typeof item === 'string')
     )
   }
   const p = params ?? {}

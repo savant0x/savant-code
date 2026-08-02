@@ -1,8 +1,10 @@
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import {
-  Root,
   RootsListChangedNotificationSchema,
 } from "@modelcontextprotocol/sdk/types.js";
+
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type {
+  Root} from "@modelcontextprotocol/sdk/types.js";
 
 // Track roots by session id
 export const roots: Map<string | undefined, Root[]> = new Map<

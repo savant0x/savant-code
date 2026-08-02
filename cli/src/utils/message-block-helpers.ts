@@ -1,7 +1,4 @@
- 
-import {
-  askUserResponseSchema,
-} from '@savant-code/common/tools/params/tool/ask-user'
+import { askUserResponseSchema } from '@savant-code/common/tools/params/tool/ask-user'
 import { safeToJSONValue } from '@savant-code/common/util/type-narrowing'
 import { isEqual } from 'lodash'
 
@@ -9,9 +6,7 @@ import { shouldCollapseByDefault, shouldCollapseForParent } from './constants'
 import { formatToolOutput } from './savant-code-client'
 
 import type { ContentBlock, AgentContentBlock } from '../types/chat'
-import type {
-  AskUserQuestion,
-} from '@savant-code/common/tools/params/tool/ask-user'
+import type { AskUserQuestion } from '@savant-code/common/tools/params/tool/ask-user'
 import type { JSONValue } from '@savant-code/common/types/json'
 
 /**
@@ -85,7 +80,9 @@ export const autoCollapseBlocks = (blocks: ContentBlock[]): ContentBlock[] => {
   return blocks.map((block) => {
     // Handle thinking blocks (grouped text blocks)
     if (block.type === 'text' && block.thinkingId) {
-      return block.userOpened ? block : { ...block, thinkingCollapseState: 'hidden' as const }
+      return block.userOpened
+        ? block
+        : { ...block, thinkingCollapseState: 'hidden' as const }
     }
 
     // Handle agent blocks
@@ -220,7 +217,9 @@ export const extractSpawnAgentResultContent = (
     }
     // Fall through to format as JSON
     return {
-      content: formatToolOutput([{ type: 'json', value: safeToJSONValue(obj.value) }]),
+      content: formatToolOutput([
+        { type: 'json', value: safeToJSONValue(obj.value) },
+      ]),
       hasError: false,
     }
   }
@@ -240,7 +239,9 @@ export const extractSpawnAgentResultContent = (
 
   // Fallback to formatted output
   return {
-    content: formatToolOutput([{ type: 'json', value: safeToJSONValue(resultValue) }]),
+    content: formatToolOutput([
+      { type: 'json', value: safeToJSONValue(resultValue) },
+    ]),
     hasError: false,
   }
 }
@@ -315,7 +316,15 @@ export interface CreateAgentBlockOptions {
 export const createAgentBlock = (
   options: CreateAgentBlockOptions,
 ): AgentContentBlock => {
-  const { agentId, agentType, prompt, params, spawnToolCallId, spawnIndex, parentAgentType } = options
+  const {
+    agentId,
+    agentType,
+    prompt,
+    params,
+    spawnToolCallId,
+    spawnIndex,
+    parentAgentType,
+  } = options
   const shouldCollapse =
     shouldCollapseByDefault(agentType || '') ||
     shouldCollapseForParent(agentType || '', parentAgentType)
@@ -515,7 +524,11 @@ export const moveSpawnAgentBlock = (
   // If there's a parentId, we need to move the block under the parent.
   // First check if the block is already under the correct parent.
   if (parentId) {
-    const isAlreadyUnderParent = checkBlockIsUnderParent(blocks, tempId, parentId)
+    const isAlreadyUnderParent = checkBlockIsUnderParent(
+      blocks,
+      tempId,
+      parentId,
+    )
     if (isAlreadyUnderParent) {
       // Block is already under the correct parent, just update it in place
       return updateBlocksRecursively(blocks, tempId, updateAgentBlock)
@@ -626,17 +639,9 @@ export const updateToolBlockWithOutput = (
       if (block.toolName === 'run_terminal_command') {
         const first = toolOutput?.[0]
         let parsed: { stdout?: string; stderr?: string } | undefined
-        if (
-          first &&
-          typeof first === 'object' &&
-          'value' in first
-        ) {
+        if (first && typeof first === 'object' && 'value' in first) {
           const value = (first as { value: unknown }).value
-          if (
-            value &&
-            typeof value === 'object' &&
-            !Array.isArray(value)
-          ) {
+          if (value && typeof value === 'object' && !Array.isArray(value)) {
             parsed = value as { stdout?: string; stderr?: string }
           }
         }

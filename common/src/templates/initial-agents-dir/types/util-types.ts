@@ -4,12 +4,7 @@ type ZodJSONSchema = ZodJSONSchemaNamespace.JSONSchema
 
 // ===== JSON Types =====
 export type JSONValue =
-  | null
-  | string
-  | number
-  | boolean
-  | JSONObject
-  | JSONArray
+  null | string | number | boolean | JSONObject | JSONArray
 
 export type JSONObject = { [key: string]: JSONValue }
 
@@ -121,10 +116,7 @@ export type ToolMessage = {
 } & AuxiliaryMessageData
 
 export type Message =
-  | SystemMessage
-  | UserMessage
-  | AssistantMessage
-  | ToolMessage
+  SystemMessage | UserMessage | AssistantMessage | ToolMessage
 
 // ===== MCP Server Types =====
 

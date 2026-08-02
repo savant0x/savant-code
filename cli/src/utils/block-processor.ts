@@ -1,4 +1,3 @@
-
 import { shouldCollapseByDefault } from './constants'
 import {
   isImplementorAgent,
@@ -122,7 +121,7 @@ export function processBlocks(
 ): ReactNode[] {
   const nodes: ReactNode[] = []
 
-  for (let i = 0; i < blocks.length; ) {
+  for (let i = 0; i < blocks.length;) {
     const block = blocks[i]
 
     // Handle reasoning text blocks (thinking)

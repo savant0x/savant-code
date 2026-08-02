@@ -11,15 +11,22 @@ export interface SpinnerProps {
 const DOT_FRAMES = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
 const LINE_FRAMES = ['─', '\\', '│', '/']
 
-export function Spinner({ size = 'md', label, variant = 'dots' }: SpinnerProps) {
+export function Spinner({
+  size = 'md',
+  label,
+  variant = 'dots',
+}: SpinnerProps) {
   const theme = useTheme()
   const [frame, setFrame] = useState(0)
 
   useEffect(() => {
     const frames = variant === 'dots' ? DOT_FRAMES : LINE_FRAMES
-    const interval = setInterval(() => {
-      setFrame((f) => (f + 1) % frames.length)
-    }, size === 'sm' ? 60 : size === 'lg' ? 120 : 80)
+    const interval = setInterval(
+      () => {
+        setFrame((f) => (f + 1) % frames.length)
+      },
+      size === 'sm' ? 60 : size === 'lg' ? 120 : 80,
+    )
     return () => clearInterval(interval)
   }, [variant, size])
 

@@ -47,7 +47,9 @@ const MINIMAX_M3_MODEL_ID = minimaxModels.minimaxM3
 describe('savant-free model availability', () => {
   test('defaults to MiniMax M3, falls back to DeepSeek V4 Flash for new clients', () => {
     expect(DEFAULT_SAVANT_FREE_MODEL_ID).toBe(MINIMAX_M3_MODEL_ID)
-    expect(FALLBACK_SAVANT_FREE_MODEL_ID).toBe(SAVANT_FREE_DEEPSEEK_V4_FLASH_MODEL_ID)
+    expect(FALLBACK_SAVANT_FREE_MODEL_ID).toBe(
+      SAVANT_FREE_DEEPSEEK_V4_FLASH_MODEL_ID,
+    )
   })
 
   test('DeepSeek Pro carries the data-collection warning so users see it before picking', () => {
@@ -72,12 +74,12 @@ describe('savant-free model availability', () => {
     const m3 = SAVANT_FREE_MODELS.find((m) => m.id === MINIMAX_M3_MODEL_ID)
     expect((m3 as { warning?: string } | undefined)?.warning).toBeUndefined()
     // The DeepSeek family discloses data collection and IS stored.
-    expect(isSavantFreeTracedModelId(SAVANT_FREE_DEEPSEEK_V4_PRO_MODEL_ID)).toBe(
-      true,
-    )
-    expect(isSavantFreeTracedModelId(SAVANT_FREE_DEEPSEEK_V4_FLASH_MODEL_ID)).toBe(
-      true,
-    )
+    expect(
+      isSavantFreeTracedModelId(SAVANT_FREE_DEEPSEEK_V4_PRO_MODEL_ID),
+    ).toBe(true)
+    expect(
+      isSavantFreeTracedModelId(SAVANT_FREE_DEEPSEEK_V4_FLASH_MODEL_ID),
+    ).toBe(true)
     // Everything else (incl. M3 on Fireworks) is NOT stored.
     expect(isSavantFreeTracedModelId(MINIMAX_M3_MODEL_ID)).toBe(false)
     expect(isSavantFreeTracedModelId(SAVANT_FREE_KIMI_MODEL_ID)).toBe(false)
@@ -99,10 +101,12 @@ describe('savant-free model availability', () => {
     expect(SAVANT_FREE_MODELS.map((model) => model.id)).toContain(
       SAVANT_FREE_DEEPSEEK_V4_FLASH_MODEL_ID,
     )
-    expect(isSavantFreeModelId(SAVANT_FREE_DEEPSEEK_V4_FLASH_MODEL_ID)).toBe(true)
-    expect(isSavantFreePremiumModelId(SAVANT_FREE_DEEPSEEK_V4_FLASH_MODEL_ID)).toBe(
-      false,
+    expect(isSavantFreeModelId(SAVANT_FREE_DEEPSEEK_V4_FLASH_MODEL_ID)).toBe(
+      true,
     )
+    expect(
+      isSavantFreePremiumModelId(SAVANT_FREE_DEEPSEEK_V4_FLASH_MODEL_ID),
+    ).toBe(false)
   })
 
   test('MiMo models remain supported and follow the UI rollout flag', () => {
@@ -129,8 +133,12 @@ describe('savant-free model availability', () => {
       )
     }
 
-    expect(isSavantFreePremiumModelId(SAVANT_FREE_MIMO_V25_PRO_MODEL_ID)).toBe(true)
-    expect(isSavantFreePremiumModelId(SAVANT_FREE_MIMO_V25_MODEL_ID)).toBe(false)
+    expect(isSavantFreePremiumModelId(SAVANT_FREE_MIMO_V25_PRO_MODEL_ID)).toBe(
+      true,
+    )
+    expect(isSavantFreePremiumModelId(SAVANT_FREE_MIMO_V25_MODEL_ID)).toBe(
+      false,
+    )
   })
 
   test('Kimi K2.7 Code is offered in pickers and server-supported for full mode', () => {
@@ -165,7 +173,9 @@ describe('savant-free model availability', () => {
   })
 
   test('HY3 OpenRouter trial is available only as a SavantFree Web premium model for now', () => {
-    expect(SAVANT_FREE_HY3_MODEL_ID).toBe(SAVANT_FREE_HY3_OPENROUTER_FREE_MODEL_ID)
+    expect(SAVANT_FREE_HY3_MODEL_ID).toBe(
+      SAVANT_FREE_HY3_OPENROUTER_FREE_MODEL_ID,
+    )
     expect(SAVANT_FREE_HY3_OPENROUTER_PAID_MODEL_ID).toBe(
       SAVANT_FREE_HY3_ATLAS_MODEL_ID,
     )
@@ -187,7 +197,9 @@ describe('savant-free model availability', () => {
     expect(resolveSavantFreeWebModel(SAVANT_FREE_HY3_MODEL_ID)).toBe(
       SAVANT_FREE_HY3_MODEL_ID,
     )
-    expect(getSavantFreeWebModel(SAVANT_FREE_HY3_MODEL_ID).displayName).toBe('HY3')
+    expect(getSavantFreeWebModel(SAVANT_FREE_HY3_MODEL_ID).displayName).toBe(
+      'HY3',
+    )
     expect(getSavantFreeWebModel(SAVANT_FREE_HY3_MODEL_ID).tagline).toBe(
       'Trialing its performance',
     )
@@ -206,8 +218,12 @@ describe('savant-free model availability', () => {
         includeGodOnly: true,
       }),
     ).toBe(true)
-    expect(isSavantFreeWebGodOnlyModelId(SAVANT_FREE_HY3_ATLAS_MODEL_ID)).toBe(true)
-    expect(isSavantFreeWebPremiumModelId(SAVANT_FREE_HY3_ATLAS_MODEL_ID)).toBe(true)
+    expect(isSavantFreeWebGodOnlyModelId(SAVANT_FREE_HY3_ATLAS_MODEL_ID)).toBe(
+      true,
+    )
+    expect(isSavantFreeWebPremiumModelId(SAVANT_FREE_HY3_ATLAS_MODEL_ID)).toBe(
+      true,
+    )
     expect(resolveSavantFreeWebModel(SAVANT_FREE_HY3_ATLAS_MODEL_ID)).toBe(
       FALLBACK_SAVANT_FREE_MODEL_ID,
     )
@@ -216,9 +232,9 @@ describe('savant-free model availability', () => {
         includeGodOnly: true,
       }),
     ).toBe(SAVANT_FREE_HY3_ATLAS_MODEL_ID)
-    expect(getSavantFreeWebModel(SAVANT_FREE_HY3_ATLAS_MODEL_ID).displayName).toBe(
-      'HY3 Atlas',
-    )
+    expect(
+      getSavantFreeWebModel(SAVANT_FREE_HY3_ATLAS_MODEL_ID).displayName,
+    ).toBe('HY3 Atlas')
   })
 
   test('KAT Coder Pro V2 is fully retired from SavantFree Web and Cloud', () => {
@@ -243,9 +259,9 @@ describe('savant-free model availability', () => {
     )
     expect(isSavantFreeModelId(legacyMinimaxM27)).toBe(false)
     expect(isSupportedSavantFreeModelId(legacyMinimaxM27)).toBe(false)
-    expect(isSavantFreeModelAllowedForAccessTier(legacyMinimaxM27, 'full')).toBe(
-      false,
-    )
+    expect(
+      isSavantFreeModelAllowedForAccessTier(legacyMinimaxM27, 'full'),
+    ).toBe(false)
     // Old clients with a saved M2.7 selection resolve to the fallback model.
     expect(resolveSavantFreeModelForAccessTier(legacyMinimaxM27, 'full')).toBe(
       FALLBACK_SAVANT_FREE_MODEL_ID,
@@ -273,12 +289,16 @@ describe('savant-free model availability', () => {
   })
 
   test('limited access exposes DeepSeek V4 Flash and non-Pro MiMo 2.5', () => {
-    expect(LIMITED_SAVANT_FREE_MODEL_ID).toBe(SAVANT_FREE_DEEPSEEK_V4_FLASH_MODEL_ID)
+    expect(LIMITED_SAVANT_FREE_MODEL_ID).toBe(
+      SAVANT_FREE_DEEPSEEK_V4_FLASH_MODEL_ID,
+    )
     expect(LIMITED_SAVANT_FREE_MODEL_IDS).toEqual([
       SAVANT_FREE_DEEPSEEK_V4_FLASH_MODEL_ID,
       SAVANT_FREE_MIMO_V25_MODEL_ID,
     ])
-    expect(getSavantFreeModelsForAccessTier('limited').map((m) => m.id)).toEqual([
+    expect(
+      getSavantFreeModelsForAccessTier('limited').map((m) => m.id),
+    ).toEqual([
       SAVANT_FREE_DEEPSEEK_V4_FLASH_MODEL_ID,
       SAVANT_FREE_MIMO_V25_MODEL_ID,
     ])
@@ -304,7 +324,10 @@ describe('savant-free model availability', () => {
       ),
     ).toBe(false)
     expect(
-      resolveSavantFreeModelForAccessTier(SAVANT_FREE_MIMO_V25_MODEL_ID, 'limited'),
+      resolveSavantFreeModelForAccessTier(
+        SAVANT_FREE_MIMO_V25_MODEL_ID,
+        'limited',
+      ),
     ).toBe(SAVANT_FREE_MIMO_V25_MODEL_ID)
     expect(
       resolveSavantFreeModelForAccessTier(MINIMAX_M3_MODEL_ID, 'limited'),
@@ -332,11 +355,13 @@ describe('savant-free model availability', () => {
 
   test('full-access savant-free models can spawn the gemini-thinker subagent', () => {
     // Full-access models (non-limited, non-fastest) get the thinker.
-    expect(canSavantFreeModelSpawnGeminiThinker(SAVANT_FREE_KIMI_MODEL_ID)).toBe(
-      true,
-    )
     expect(
-      canSavantFreeModelSpawnGeminiThinker(SAVANT_FREE_DEEPSEEK_V4_PRO_MODEL_ID),
+      canSavantFreeModelSpawnGeminiThinker(SAVANT_FREE_KIMI_MODEL_ID),
+    ).toBe(true)
+    expect(
+      canSavantFreeModelSpawnGeminiThinker(
+        SAVANT_FREE_DEEPSEEK_V4_PRO_MODEL_ID,
+      ),
     ).toBe(true)
     expect(
       canSavantFreeModelSpawnGeminiThinker(SAVANT_FREE_MIMO_V25_PRO_MODEL_ID),
@@ -345,11 +370,13 @@ describe('savant-free model availability', () => {
 
     // Limited-tier models (DeepSeek V4 Flash, MiMo 2.5) skip it.
     expect(
-      canSavantFreeModelSpawnGeminiThinker(SAVANT_FREE_DEEPSEEK_V4_FLASH_MODEL_ID),
+      canSavantFreeModelSpawnGeminiThinker(
+        SAVANT_FREE_DEEPSEEK_V4_FLASH_MODEL_ID,
+      ),
     ).toBe(false)
-    expect(canSavantFreeModelSpawnGeminiThinker(SAVANT_FREE_MIMO_V25_MODEL_ID)).toBe(
-      false,
-    )
+    expect(
+      canSavantFreeModelSpawnGeminiThinker(SAVANT_FREE_MIMO_V25_MODEL_ID),
+    ).toBe(false)
   })
 
   test('does not support GLM 5.1 for savant-free sessions', () => {
@@ -372,33 +399,44 @@ describe('savant-free model availability', () => {
     expect(SAVANT_FREE_MODELS.map((model) => model.id)).not.toContain(
       SAVANT_FREE_GLM_V52_MODEL_ID,
     )
-    expect(isSavantFreeWebPremiumModelId(SAVANT_FREE_GLM_V52_MODEL_ID)).toBe(false)
+    expect(isSavantFreeWebPremiumModelId(SAVANT_FREE_GLM_V52_MODEL_ID)).toBe(
+      false,
+    )
   })
 
   test('formats the close time in the user local timezone while deployment is open', () => {
     expect(
-      getSavantFreeDeploymentAvailabilityLabel(new Date('2026-01-05T18:00:00Z'), {
-        locale: 'en-US',
-        timeZone: 'America/Los_Angeles',
-      }),
+      getSavantFreeDeploymentAvailabilityLabel(
+        new Date('2026-01-05T18:00:00Z'),
+        {
+          locale: 'en-US',
+          timeZone: 'America/Los_Angeles',
+        },
+      ),
     ).toBe('until 5:00 PM')
   })
 
   test('formats the next open time in the user local timezone while deployment is closed', () => {
     expect(
-      getSavantFreeDeploymentAvailabilityLabel(new Date('2026-01-05T12:00:00Z'), {
-        locale: 'en-US',
-        timeZone: 'America/Los_Angeles',
-      }),
+      getSavantFreeDeploymentAvailabilityLabel(
+        new Date('2026-01-05T12:00:00Z'),
+        {
+          locale: 'en-US',
+          timeZone: 'America/Los_Angeles',
+        },
+      ),
     ).toBe('opens 6:00 AM')
   })
 
   test('includes the weekday when the next opening is on a later local day', () => {
     expect(
-      getSavantFreeDeploymentAvailabilityLabel(new Date('2026-01-11T03:00:00Z'), {
-        locale: 'en-US',
-        timeZone: 'America/Los_Angeles',
-      }),
+      getSavantFreeDeploymentAvailabilityLabel(
+        new Date('2026-01-11T03:00:00Z'),
+        {
+          locale: 'en-US',
+          timeZone: 'America/Los_Angeles',
+        },
+      ),
     ).toBe('opens Sun 6:00 AM')
   })
 

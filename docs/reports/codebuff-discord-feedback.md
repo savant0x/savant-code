@@ -1,4 +1,4 @@
-## Freebuff Community Feedback & Action Report
+# Freebuff Community Feedback & Action Report
 
 Based on the recent logs from the `#feedback` channel, I have compiled a comprehensive report categorizing the top user complaints, recurring issues, and feature requests. The data indicates that while users are highly engaged with Freebuff, recent outages and unclear UI wording are the primary sources of friction.
 

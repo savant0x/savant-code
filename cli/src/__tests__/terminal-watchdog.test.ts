@@ -61,7 +61,10 @@ function findDisarmFiles(pid: number | undefined): string[] {
   )
 }
 
-async function pollForContent(ttyPath: string, timeoutMs: number): Promise<string> {
+async function pollForContent(
+  ttyPath: string,
+  timeoutMs: number,
+): Promise<string> {
   const deadline = Date.now() + timeoutMs
   while (Date.now() < deadline) {
     const content = readTty(ttyPath)

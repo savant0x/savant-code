@@ -1,11 +1,14 @@
 # Agent Template Override System
 
-This system allows users to customize agent behavior by placing override configuration files in their project's `.agents/templates/` directory.
+This system allows users to customize agent behavior by placing override configuration files in their project's
+`.agents/templates/` directory.
 
 ## How It Works
 
-1. **File Detection**: The system automatically detects `.agents/templates/*.json` and `.md` files and loads them into a dedicated `agentTemplates` field in the project file context
-2. **Override Processing**: When an agent is spawned, the system checks for matching override files and applies them to the base template
+1. **File Detection**: The system automatically detects `.agents/templates/*.json` and `.md` files and loads them
+   into a dedicated `agentTemplates` field in the project file context
+2. **Override Processing**: When an agent is spawned, the system checks for matching override files and applies
+   them to the base template
 3. **Dynamic Application**: Overrides are applied at runtime, so changes take effect immediately without restarting
 
 ## Override File Format

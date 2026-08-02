@@ -33,7 +33,10 @@ export interface Sandbox {
   /** Absolute path to the sandbox working directory. */
   getWorkingDir(): string
   /** Run a command inside the sandbox and return its result. */
-  runCommand(command: string, options?: Partial<CommandOptions>): Promise<CommandResult>
+  runCommand(
+    command: string,
+    options?: Partial<CommandOptions>,
+  ): Promise<CommandResult>
   /** Destroy the isolated environment. */
   teardown(): Promise<void>
 }

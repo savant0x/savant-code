@@ -309,7 +309,7 @@ describe('Spawn Agents Permissions', () => {
         ...handleSpawnAgentsBaseParams,
         agentState: sessionState.mainAgentState,
         agentTemplate: parentAgent,
-        localAgentTemplates: { 'scout': childAgent },
+        localAgentTemplates: { scout: childAgent },
         toolCall,
       })
 
@@ -321,9 +321,7 @@ describe('Spawn Agents Permissions', () => {
     })
 
     it('should allow underscored published agent_type when hyphenated agent is spawnable', async () => {
-      const parentAgent = createMockAgent('parent', [
-        'savant-code/scout@1.0.0',
-      ])
+      const parentAgent = createMockAgent('parent', ['savant-code/scout@1.0.0'])
       const childAgent = createMockAgent('savant-code/scout@1.0.0')
       const sessionState = getInitialSessionState(mockFileContext)
       const toolCall = createSpawnToolCall('savant-code/scout@1.0.0')
@@ -386,7 +384,9 @@ describe('Spawn Agents Permissions', () => {
     })
 
     it('should handle versioned agent permissions correctly', async () => {
-      const parentAgent = createMockAgent('parent', ['savant-code/thinker@1.0.0'])
+      const parentAgent = createMockAgent('parent', [
+        'savant-code/thinker@1.0.0',
+      ])
       const childAgent = createMockAgent('savant-code/thinker@1.0.0')
       const sessionState = getInitialSessionState(mockFileContext)
       const toolCall = createSpawnToolCall('savant-code/thinker@1.0.0')
@@ -404,7 +404,9 @@ describe('Spawn Agents Permissions', () => {
     })
 
     it('should allow spawning simple agent name when parent allows versioned agent', async () => {
-      const parentAgent = createMockAgent('parent', ['savant-code/thinker@1.0.0'])
+      const parentAgent = createMockAgent('parent', [
+        'savant-code/thinker@1.0.0',
+      ])
       const childAgent = createMockAgent('savant-code/thinker@1.0.0')
       const sessionState = getInitialSessionState(mockFileContext)
       const toolCall = createSpawnToolCall('thinker') // Simple name
@@ -425,7 +427,9 @@ describe('Spawn Agents Permissions', () => {
     })
 
     it('should reject when version mismatch exists', async () => {
-      const parentAgent = createMockAgent('parent', ['savant-code/thinker@1.0.0'])
+      const parentAgent = createMockAgent('parent', [
+        'savant-code/thinker@1.0.0',
+      ])
       const childAgent = createMockAgent('savant-code/thinker@2.0.0')
       const sessionState = getInitialSessionState(mockFileContext)
       const toolCall = createSpawnToolCall('savant-code/thinker@2.0.0')
@@ -573,7 +577,9 @@ describe('Spawn Agents Permissions', () => {
     })
 
     it('should handle versioned inline agent permissions correctly', async () => {
-      const parentAgent = createMockAgent('parent', ['savant-code/thinker@1.0.0'])
+      const parentAgent = createMockAgent('parent', [
+        'savant-code/thinker@1.0.0',
+      ])
       const childAgent = createMockAgent('savant-code/thinker@1.0.0')
       const sessionState = getInitialSessionState(mockFileContext)
       const toolCall = createInlineSpawnToolCall('savant-code/thinker@1.0.0')
@@ -591,7 +597,9 @@ describe('Spawn Agents Permissions', () => {
     })
 
     it('should allow spawning simple agent name inline when parent allows versioned agent', async () => {
-      const parentAgent = createMockAgent('parent', ['savant-code/thinker@1.0.0'])
+      const parentAgent = createMockAgent('parent', [
+        'savant-code/thinker@1.0.0',
+      ])
       const childAgent = createMockAgent('savant-code/thinker@1.0.0')
       const sessionState = getInitialSessionState(mockFileContext)
       const toolCall = createInlineSpawnToolCall('thinker') // Simple name
@@ -612,7 +620,9 @@ describe('Spawn Agents Permissions', () => {
     })
 
     it('should reject inline spawn when version mismatch exists', async () => {
-      const parentAgent = createMockAgent('parent', ['savant-code/thinker@1.0.0'])
+      const parentAgent = createMockAgent('parent', [
+        'savant-code/thinker@1.0.0',
+      ])
       const childAgent = createMockAgent('savant-code/thinker@2.0.0')
       const sessionState = getInitialSessionState(mockFileContext)
       const toolCall = createInlineSpawnToolCall('savant-code/thinker@2.0.0')

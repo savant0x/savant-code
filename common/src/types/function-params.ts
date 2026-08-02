@@ -17,9 +17,10 @@ type ParamsOfArray<T> = UnionToIntersection<
     ? ParamsOfFunction<fn> | ParamsOfArray<rest>
     : {}
 >
-type ParamsOfUnion<T> = IsUnion<T> extends true
-  ? UnionToIntersection<ParamsOfFunction<T>>
-  : ParamsOfFunction<T>
+type ParamsOfUnion<T> =
+  IsUnion<T> extends true
+    ? UnionToIntersection<ParamsOfFunction<T>>
+    : ParamsOfFunction<T>
 
 export type ParamsOf<T> = Prettify<
   T extends readonly unknown[] ? ParamsOfArray<T> : ParamsOfUnion<T>

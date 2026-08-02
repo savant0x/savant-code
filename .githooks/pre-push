@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# Pre-push hook — enforce the hard lint gates before anything reaches the remote.
+#
+# Runs the same gates as `protocol.config.yaml` (lint + lint_md):
+#   - bun x eslint . --max-warnings 0   (zero-tolerance ESLint, FID-069)
+#   - bun run lint:md                   (markdownlint on governed docs)
+#
+# Wired automatically by the root `prepare` script (`git config core.hooksPath
+# .githooks`), which runs on every `bun install`. Skip with `--no-verify`.
+
+set -uo pipefail
+
+if ! command -v bun >/dev/null 2>&1; then
+  echo "⚠️  pre-push: bun not found — skipping lint gates (run: bun install)"
+  exit 0
+fi
+
+echo "🔍 pre-push: running hard lint gates (eslint --max-warnings 0 + markdownlint)..."
+
+bun x eslint . --max-warnings 0
+eslint_status=$?
+if [ "$eslint_status" -ne 0 ]; then
+  echo "❌ pre-push: ESLint reported errors/warnings — fix before pushing (or use --no-verify)" >&2
+  exit "$eslint_status"
+fi
+
+bun run lint:md
+md_status=$?
+if [ "$md_status" -ne 0 ]; then
+  echo "❌ pre-push: markdownlint reported violations — fix before pushing (or use --no-verify)" >&2
+  exit "$md_status"
+fi
+
+echo "✅ pre-push: lint gates passed (ESLint + markdownlint)"
+exit 0

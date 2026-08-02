@@ -3,7 +3,8 @@
 
 # tmux TUI Testing Scripts
 
-Helper scripts for testing TUI applications (Terminal User Interface apps) using tmux. These scripts abstract away the complexity of tmux communication, particularly the **bracketed paste mode** requirement.
+Helper scripts for testing TUI applications (Terminal User Interface apps) using tmux. These scripts abstract away
+the complexity of tmux communication, particularly the **bracketed paste mode** requirement.
 
 For the CLI / SDK / repo Quick Start, see the [root README](../../README.md).
 
@@ -16,7 +17,10 @@ For the CLI / SDK / repo Quick Start, see the [root README](../../README.md).
 
 ## Why These Scripts?
 
-Many TUI apps (using frameworks like OpenTUI, Ink, Textual, etc.) process keyboard input character-by-character. When tmux sends characters rapidly via `send-keys`, they get dropped or garbled. These scripts automatically wrap input in bracketed paste escape sequences (`\e[200~...\e[201~`), which tells the terminal to process the input atomically.
+Many TUI apps (using frameworks like OpenTUI, Ink, Textual, etc.) process keyboard input character-by-character.
+When tmux sends characters rapidly via `send-keys`, they get dropped or garbled. These scripts automatically wrap
+input in bracketed paste escape sequences (`\e[200~...\e[201~`), which tells the terminal to process the input
+atomically.
 
 **Without these scripts:**
 ```bash
@@ -230,7 +234,7 @@ ls -la debug/tmux-sessions/$SESSION/
 
 ## Session Logs Directory Structure
 
-```
+```text
 debug/tmux-sessions/
 └── tui-test-1234567890/
     ├── session-info.yaml             # Session metadata (YAML format)
@@ -297,6 +301,7 @@ dimensions:
 ```
 
 The front-matter provides:
+
 - **sequence**: Order of captures (1, 2, 3, ...)
 - **label**: Descriptive label if provided via `--label`
 - **timestamp**: ISO 8601 timestamp
@@ -338,6 +343,7 @@ tmux has-session -t SESSION_NAME && echo "exists" || echo "not found"
 ## Used By
 
 These scripts are used by TUI testing agents:
+
 - `@savant-code-tester` - Tests the SavantCode CLI
 - `@claude-code-tester` - Tests Claude Code CLI
 - `@codex-tester` - Tests OpenAI Codex CLI

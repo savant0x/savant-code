@@ -37,10 +37,8 @@ export function useWhyDidYouUpdate<T extends object>(
   } = {},
 ): void {
   const env = getCliEnv()
-  const {
-    logLevel = 'info',
-    enabled = env.NODE_ENV === 'development',
-  } = options
+  const { logLevel = 'info', enabled = env.NODE_ENV === 'development' } =
+    options
 
   const previousProps = useRef<T | null>(null)
   const renderCount = useRef(0)
@@ -59,16 +57,17 @@ export function useWhyDidYouUpdate<T extends object>(
       if (changedProps.length > 0) {
         const logData = {
           renderCount: renderCount.current,
-          changedProps: changedProps.map((key) => String(key)),                propChanges: changedProps.reduce(
-              (acc, key) => {
-                acc[String(key)] = {
-                  previous: previousProps.current![key],
-                  current: props[key],
-                }
-                return acc
-              },
-              {} as Record<string, { previous: T[keyof T]; current: T[keyof T] }>,
-            ),
+          changedProps: changedProps.map((key) => String(key)),
+          propChanges: changedProps.reduce(
+            (acc, key) => {
+              acc[String(key)] = {
+                previous: previousProps.current![key],
+                current: props[key],
+              }
+              return acc
+            },
+            {} as Record<string, { previous: T[keyof T]; current: T[keyof T] }>,
+          ),
         }
 
         logger[logLevel](
@@ -153,7 +152,10 @@ export function useWhyDidYouUpdateById<T extends object>(
                 }
                 return acc
               },
-              {} as Record<string, { previous: T[keyof T]; current: T[keyof T] }>,
+              {} as Record<
+                string,
+                { previous: T[keyof T]; current: T[keyof T] }
+              >,
             ),
           },
           `${componentName} render #${renderCount} [${id}]: ${changedProps.length} ${changedProps.length === 1 ? 'prop' : 'props'} changed`,

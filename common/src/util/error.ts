@@ -1,9 +1,7 @@
 import type { JSONValue } from '../types/json'
 
- 
 export type ErrorOr<T, E extends ErrorObject = ErrorObject> =
-  | Success<T>
-  | Failure<E>
+  Success<T> | Failure<E>
 
 export type Success<T> = {
   success: true
@@ -303,9 +301,7 @@ function getApiErrorCandidates(
     typeof errorWithNested.lastError === 'object' &&
     !seen.has(errorWithNested.lastError)
   ) {
-    candidates.push(
-      ...getApiErrorCandidates(errorWithNested.lastError, seen),
-    )
+    candidates.push(...getApiErrorCandidates(errorWithNested.lastError, seen))
   }
 
   if (Array.isArray(errorWithNested.errors)) {
@@ -348,9 +344,7 @@ function getApiErrorStatusCode(error: unknown): number | undefined {
   return undefined
 }
 
-function getApiErrorResponseBody(
-  error: unknown,
-): string | object | undefined {
+function getApiErrorResponseBody(error: unknown): string | object | undefined {
   // ECHO Law 6 trust-boundary: validate object shape before field access.
   if (!error || typeof error !== 'object') return undefined
   if (!('responseBody' in error)) return undefined

@@ -53,7 +53,10 @@ describe('Spawn Agents Message History', () => {
             assistantMessage('Mock agent response'),
           ],
         },
-        output: { type: 'lastMessage', value: [assistantMessage('Mock agent response')] },
+        output: {
+          type: 'lastMessage',
+          value: [assistantMessage('Mock agent response')],
+        },
       }
     })
 
@@ -177,12 +180,14 @@ describe('Spawn Agents Message History', () => {
     ).toBeTruthy()
 
     // Verify the subagent spawn message is included with proper structure
-    const spawnMessage = capturedSubAgentState.messageHistory.find(
-      (msg: any) => msg.tags?.includes('SUBAGENT_SPAWN'),
+    const spawnMessage = capturedSubAgentState.messageHistory.find((msg: any) =>
+      msg.tags?.includes('SUBAGENT_SPAWN'),
     )
     expect(spawnMessage).toBeTruthy()
     expect(spawnMessage.role).toBe('user')
-    expect(spawnMessage.content[0]?.text).toContain('Subagent child-agent has been spawned')
+    expect(spawnMessage.content[0]?.text).toContain(
+      'Subagent child-agent has been spawned',
+    )
   })
 
   it('should not include conversation history when includeMessageHistory is false', async () => {
@@ -233,7 +238,9 @@ describe('Spawn Agents Message History', () => {
     const spawnMessage = capturedSubAgentState.messageHistory[0]
     expect(spawnMessage.role).toBe('user')
     expect(spawnMessage.tags).toContain('SUBAGENT_SPAWN')
-    expect(spawnMessage.content[0]?.text).toContain('Subagent child-agent has been spawned')
+    expect(spawnMessage.content[0]?.text).toContain(
+      'Subagent child-agent has been spawned',
+    )
   })
 
   it('should handle message history with only system messages', async () => {
@@ -265,8 +272,8 @@ describe('Spawn Agents Message History', () => {
     expect(systemMessages).toHaveLength(2)
 
     // Verify spawn message is present
-    const spawnMessage = capturedSubAgentState.messageHistory.find(
-      (msg: any) => msg.tags?.includes('SUBAGENT_SPAWN'),
+    const spawnMessage = capturedSubAgentState.messageHistory.find((msg: any) =>
+      msg.tags?.includes('SUBAGENT_SPAWN'),
     )
     expect(spawnMessage).toBeTruthy()
   })

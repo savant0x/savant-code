@@ -31,7 +31,8 @@ export type OpenTuiHostPropValue =
  * ```
  */
 export function makeTextUnselectable(node: ReactNode): ReactNode {
-  if (node === null || node === undefined || typeof node === 'boolean') return node
+  if (node === null || node === undefined || typeof node === 'boolean')
+    return node
   if (typeof node === 'string' || typeof node === 'number') return node
 
   if (Array.isArray(node)) {
@@ -46,7 +47,10 @@ export function makeTextUnselectable(node: ReactNode): ReactNode {
 
   if (!isValidElement(node)) return node
 
-  const el = node as ReactElement<{ children?: ReactNode; [key: string]: OpenTuiHostPropValue }>
+  const el = node as ReactElement<{
+    children?: ReactNode
+    [key: string]: OpenTuiHostPropValue
+  }>
   const type = el.type
 
   if (type === React.Fragment) {
@@ -56,12 +60,16 @@ export function makeTextUnselectable(node: ReactNode): ReactNode {
   // Ensure text and span nodes are not selectable
   if (typeof type === 'string' && (type === 'text' || type === 'span')) {
     const nextProps = { ...el.props, selectable: false }
-    const nextChildren = el.props.children ? makeTextUnselectable(el.props.children) : el.props.children
+    const nextChildren = el.props.children
+      ? makeTextUnselectable(el.props.children)
+      : el.props.children
     return cloneElement(el, nextProps, nextChildren)
   }
 
   // Recurse into other host elements and components' children
-  const nextChildren = el.props.children ? makeTextUnselectable(el.props.children) : el.props.children
+  const nextChildren = el.props.children
+    ? makeTextUnselectable(el.props.children)
+    : el.props.children
   return cloneElement(el, el.props, nextChildren)
 }
 

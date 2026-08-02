@@ -10,7 +10,7 @@ import { shouldAutoShowBanner } from '../utils/usage-banner-state'
 /**
  * Hook that monitors usage data and auto-shows the usage banner
  * when credit thresholds are crossed.
- * 
+ *
  * This should be placed in a component that's always mounted (like Chat)
  * so monitoring happens continuously, not just when the banner is visible.
  */
@@ -22,7 +22,9 @@ export function useUsageMonitor() {
 
   // Query usage data - this will refetch when invalidated after message completion.
   // Skip in free mode and direct-provider mode (no backend to query).
-  const { data: usageData } = useUsageQuery({ enabled: !IS_SAVANT_FREE && !isDirectProviderMode() })
+  const { data: usageData } = useUsageQuery({
+    enabled: !IS_SAVANT_FREE && !isDirectProviderMode(),
+  })
 
   useEffect(() => {
     if (IS_SAVANT_FREE) return

@@ -31,7 +31,6 @@ const TIMEOUT_MS = 20_000
 // ---------------------------------------------------------------------------
 
 function stripAnsiCodes(str: string): string {
-   
   return str.replace(/\x1B\[[0-9;]*[a-zA-Z]/g, '')
 }
 
@@ -241,18 +240,12 @@ describe.skipIf(!binaryExists)('SavantFree Binary Smoke Tests', () => {
 // Show skip messages so test output is informative
 if (!binaryExists) {
   describe('SavantFree Binary Required', () => {
-    test.skip(
-      'Build the binary first: bun savant-free/cli/build.ts <version>',
-      () => {},
-    )
+    test.skip('Build the binary first: bun savant-free/cli/build.ts <version>', () => {})
   })
 }
 
 if (binaryExists && !tmuxAvailable) {
   describe('tmux Required for Title Screen Test', () => {
-    test.skip(
-      'Install tmux: brew install tmux (macOS) or apt-get install tmux (Linux)',
-      () => {},
-    )
+    test.skip('Install tmux: brew install tmux (macOS) or apt-get install tmux (Linux)', () => {})
   })
 }

@@ -1,7 +1,9 @@
-import { describe, it, expect } from 'bun:test'
 import { existsSync } from 'node:fs'
 import { writeFile, readFile } from 'node:fs/promises'
 import path from 'node:path'
+
+import { describe, it, expect } from 'bun:test'
+
 import { applyGoldenPatchText } from '../src/golden'
 import { TempDirSandbox } from '../src/sandboxes/tempdir'
 
@@ -80,7 +82,11 @@ describe('applyGoldenPatchText', () => {
 
     try {
       const workingDir = sandbox.getWorkingDir()
-      await writeFile(path.join(workingDir, 'hello.txt'), 'Wrong Content\n', 'utf-8')
+      await writeFile(
+        path.join(workingDir, 'hello.txt'),
+        'Wrong Content\n',
+        'utf-8',
+      )
 
       const patch = `--- hello.txt
 +++ hello.txt
@@ -88,7 +94,9 @@ describe('applyGoldenPatchText', () => {
 -Hello World
 +Hello Savant
 `
-      expect(applyGoldenPatchText(sandbox, patch)).rejects.toThrow('golden patch')
+      expect(applyGoldenPatchText(sandbox, patch)).rejects.toThrow(
+        'golden patch',
+      )
     } finally {
       await sandbox.teardown()
     }

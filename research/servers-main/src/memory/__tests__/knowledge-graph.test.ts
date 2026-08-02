@@ -1,8 +1,12 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { KnowledgeGraphManager, Entity, Relation, KnowledgeGraph } from '../index.js';
+
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+
+import { KnowledgeGraphManager, KnowledgeGraph } from '../index.js';
+
+import type { Entity, Relation} from '../index.js';
 
 describe('KnowledgeGraphManager', () => {
   let manager: KnowledgeGraphManager;
