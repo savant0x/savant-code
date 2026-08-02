@@ -1,132 +1,153 @@
-# The most powerful coding agent
+# Savant-Code
 
-SavantCode is a CLI tool that writes code for you.
+**A terminal-native multi-agent AI coding assistant that audits every change before it touches your repo.**
 
-1. Run `savant-code` from your project directory
-2. Tell it what to do
-3. It will read and write to files and run commands to produce the code you want
+Built with TypeScript/Bun, governed by the [ECHO Protocol](https://github.com/savant0x/savant-code/blob/main/ECHO.md), and designed for local-first use with Ollama or any OpenAI-compatible provider.
 
-Note: SavantCode will run commands in your terminal as it deems necessary to
-fulfill your request.
+[![GitHub Stars](https://img.shields.io/github/stars/savant0x/savant-code?style=social)](https://github.com/savant0x/savant-code)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/savant0x/savant-code/blob/main/LICENSE)
 
 ## Installation
-
-To install SavantCode, run:
 
 ```bash
 npm install -g savant-code
 ```
 
-(Use `sudo` if you get a permission error.)
-
-## Usage
-
-After installing the public package, you can start SavantCode by running:
+## Quick Start
 
 ```bash
-savant-code [project-directory]
+cd your-project
+savant-code
 ```
 
-If no project directory is specified, SavantCode will use the current directory.
+Then just start chatting — describe what you want and Savant-Code will read your codebase, plan changes, implement them, and verify the result.
 
-Once running, simply chat with SavantCode to say what coding task you want done.
+## What Makes Savant-Code Different
 
-If Ollama is not running, configure a hosted provider key with `/provider`.
-The default setup is OpenCode Go; the key prompt is masked and stores the key
-locally in the Savant-Code config `credentials.json`, without adding it to chat
-history. Shell environment variables take precedence over stored keys.
+Savant-Code isn't a single AI model guessing at your code. It's a **multi-agent system** where 9 specialized agents coordinate through a strict protocol to audit every change before it touches your files.
+
+### The Agent Roster
+
+| Agent | Role |
+|-------|------|
+| **Savant** | Orchestrator — routes work, enforces protocol, spawns agents |
+| **Detective** | Discovers bugs and issues with evidence before any code is written |
+| **Forge** | Implements code changes from a converged plan |
+| **Verifier** | Independent double-audit after implementation |
+| **Thinker** | Deep sequential reasoning for complex problems |
+| **Scout** | Explores codebases to gather context |
+| **Researcher** | Web search and documentation lookup |
+| **Recorder** | FID lifecycle management and tracking |
+| **Scribe** | Session summaries and knowledge capture |
+
+### ECHO Protocol
+
+Every change follows the **ECHO Perfection Loop**:
+
+1. **RED** — Identify ALL failures and issues with evidence
+2. **GREEN** — Fix with minimal, surgical changes
+3. **AUDIT** — Independent verification by a separate agent
+4. **COMPLETE** — Document results, archive tracking
+
+No code is written without a plan. No plan is accepted without audit. No audit passes without evidence.
 
 ## Features
 
-- Understands your whole codebase
-- Creates and edits multiple files based on your request
-- Can run your tests or type checker or linter; can install packages
-- It's powerful: ask SavantCode to keep working until it reaches a condition and
-  it will.
+### Multi-Agent Orchestration
+9 specialized agents coordinate via the ECHO Protocol. Detective finds issues, Forge implements, Verifier audits, Thinker reasons through complex problems, and Recorder tracks everything.
 
-Our users regularly use SavantCode to implement new features, write unit tests,
-refactor code,write scripts, or give advice.
+### Thinker with Sequential Thinking
+The Thinker agent accumulates stacked reasoning steps, converges to a typed non-null result, and never returns an empty or null output. Each thought builds on the previous one.
 
-## Knowledge Files
+### Native Tool-Call Hardening
+Fail-closed streaming boundary for incomplete or malformed tool calls. Stale-fragment replacement for placeholder arguments. Permissive coercion of stringified values before strict validation.
 
-To unlock the full benefits of modern LLMs, we recommend storing knowledge
-alongside your code. Add a `knowledge.md` file anywhere in your project to
-provide helpful context, guidance, and tips for the LLM as it performs tasks for
-you.
+### Tool Permission Boundary
+Strict allowlist-based tool provisioning. Restricted agents never receive parent-only tools. Each agent has exactly the tools it needs — no more.
 
-SavantCode can fluently read and write files, so it will add knowledge as it
-goes. You don't need to write knowledge manually!
+### Gateway Providers
+Works with Ollama (local-first) and any OpenAI-compatible API:
+- **OpenCode Go** (default) — MiMo 2.5
+- **OpenRouter** — access to hundreds of models
+- **NVIDIA NIM** — enterprise inference
+- **Cloudflare Workers AI** — edge inference
+- **TokenRouter** — multi-provider routing
+- **Any OpenAI-compatible endpoint** — custom providers via `/provider`
 
-Some have said every change should be paired with a unit test. In 2024, every
-change should come with a knowledge update!
+### Context Compaction
+4-layer progressive auto-compaction keeps your session running through large codebases without hitting context limits.
 
-## Tips
+### Rich Terminal UI
+- Streaming token-by-token output
+- Copy buttons on code blocks, tool outputs, and diffs
+- Mode switching (EDIT / ANALYZE / SCAFFOLD)
+- Light/dark theming with Neon Slate aesthetic
+- Provider picker with masked API key input
+- Collapsible sidebar sections
 
-1. Type '/help' or just '/' to see available commands.
-2. Create a `knowledge.md` file and collect specific points of advice. The
-   assistant will use this knowledge to improve its responses.
-3. Type `undo` or `redo` to revert or reapply file changes from the
-   conversation.
-4. Press `Esc` or `Ctrl+C` while SavantCode is generating a response to stop it.
+### Goal Loop
+Set a goal and a cadence — Savant-Code will check and work toward it on a schedule.
+
+```bash
+/goal fix all failing tests
+/loop 5m
+```
+
+### Slash Commands
+
+| Command | Description |
+|---------|-------------|
+| `/model` | Switch LLM provider and model |
+| `/provider` | Configure API keys (interactive picker) |
+| `/help` | Show all commands |
+| `/new` | Start a fresh conversation |
+| `/history` | Browse past sessions |
+| `/goal` | Set a persistent goal |
+| `/loop` | Schedule recurring checks |
+| `/telemetry` | Toggle analytics (on/off/status) |
+| `/theme:toggle` | Switch light/dark mode |
+| `/init` | Scaffold agent config files |
+
+### Knowledge Files
+Add a `knowledge.md` anywhere in your project to give Savant-Code persistent context about your codebase, conventions, and preferences.
+
+## Usage Examples
+
+**Implement a feature:**
+> Add a rate limiter to the API endpoints that allows 100 requests per minute per IP address, with Redis-backed counting.
+
+**Fix a bug:**
+> The login form crashes on submit when the email field is empty. Find the bug and fix it.
+
+**Write tests:**
+> Add unit tests for the UserService class covering all edge cases in the register flow.
+
+**Refactor:**
+> Refactor the database connection layer to use connection pooling instead of creating a new connection per request.
+
+**Code review:**
+> Review my recent changes and flag any security issues, performance problems, or style violations.
 
 ## Troubleshooting
 
 ### Permission Errors
-
-If you are getting permission errors during installation, try using sudo:
-
 ```bash
 sudo npm install -g savant-code
 ```
-
-If you still have errors, it's a good idea to
-[reinstall Node](https://nodejs.org/en/download).
+Or [reinstall Node](https://nodejs.org/en/download) to fix global permissions.
 
 ### Corporate Proxy / Firewall
-
-If you see `Failed to download savant-code: Request timeout` or
-`Failed to determine latest version`, you may be behind a corporate proxy or
-firewall.
-
-SavantCode respects standard proxy environment variables. Set `HTTPS_PROXY` to
-route traffic through your proxy:
-
-**Linux / macOS (bash/zsh):**
-
 ```bash
 export HTTPS_PROXY=http://your-proxy-server:port
 savant-code
 ```
 
-**Windows (PowerShell):**
+### No Model Available
+Savant-Code requires at least one LLM provider. Run `/provider` to configure one, or install [Ollama](https://ollama.com) for local inference.
 
-```powershell
-$env:HTTPS_PROXY = "http://your-proxy-server:port"
-savant-code
-```
+## Links
 
-**Windows (CMD):**
-
-```cmd
-set HTTPS_PROXY=http://your-proxy-server:port
-savant-code
-```
-
-To make it permanent, add the `export` or `set` line to your shell profile (e.g.
-`~/.bashrc`, `~/.zshrc`, or Windows System Environment Variables).
-
-**Supported environment variables:**
-
-| Variable                      | Purpose                                                                           |
-| ----------------------------- | --------------------------------------------------------------------------------- |
-| `HTTPS_PROXY` / `https_proxy` | Proxy for HTTPS requests (recommended)                                            |
-| `HTTP_PROXY` / `http_proxy`   | Fallback proxy for HTTP requests                                                  |
-| `NO_PROXY` / `no_proxy`       | Comma-separated list of hostnames to bypass the proxy (port suffixes are ignored) |
-
-Both `http://` and `https://` proxy URLs are supported. Proxy authentication is
-supported via URL credentials (e.g. `http://user:password@proxy:port`).
-
-## Feedback
-
-We value your input! Please open a GitHub issue for reproducible feedback or
-contact `support@savant-code.com` for support. Thank you for using SavantCode!
+- **GitHub:** [github.com/savant0x/savant-code](https://github.com/savant0x/savant-code)
+- **Docs:** [savant-code.com/docs](https://savant-code.com/docs)
+- **Issues:** [GitHub Issues](https://github.com/savant0x/savant-code/issues)
+- **License:** MIT
