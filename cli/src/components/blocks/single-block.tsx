@@ -5,9 +5,10 @@ import { AgentBranchWrapper } from './agent-branch-wrapper'
 import { AgentListBranch } from './agent-list-branch'
 import { AskUserBranch } from './ask-user-branch'
 import { trimNewlines, isReasoningTextBlock } from './block-helpers'
-import { ContentWithMarkdown } from './content-with-markdown'
+import { renderContentWithMarkdown } from './content-with-markdown'
 import { CopyableBlock } from './copyable-block'
 import { ImageBlock } from './image-block'
+import { renderMarkdownContent } from './markdown-content'
 import { UserBlockTextWithInlineCopy } from './user-content-copy'
 import { useTheme } from '../../hooks/use-theme'
 import { PlanBox } from '../renderers/plan-box'
@@ -58,7 +59,7 @@ export const SingleBlock = memo(
     contentToCopy,
   }: SingleBlockProps): ReactNode => {
     const theme = useTheme()
-    const codeBlockWidth = Math.max(10, availableWidth - 8)
+    const codeBlockWidth = Math.max(1, availableWidth)
 
     switch (block.type) {
       case 'text': {
@@ -102,21 +103,19 @@ export const SingleBlock = memo(
             getCopyText={getCopyText}
             isStreaming={isStreamingText}
           >
-            <text
-              key={renderKey}
-              style={{
-                wrapMode: 'word',
-                fg: blockTextColor,
-              }}
-              attributes={isUser ? TextAttributes.ITALIC : undefined}
-            >
-              <ContentWithMarkdown
-                content={filteredContent}
-                isStreaming={isStreamingText}
-                codeBlockWidth={codeBlockWidth}
-                palette={markdownPalette}
-              />
-            </text>
+            {renderMarkdownContent({
+              value: renderContentWithMarkdown({
+                content: filteredContent,
+                isStreaming: isStreamingText,
+                codeBlockWidth,
+                palette: markdownPalette,
+              }),
+              theme,
+              getAttributes: (extra = 0) =>
+                (isUser ? TextAttributes.ITALIC : 0) | extra,
+              textColor: blockTextColor,
+              keyPrefix: renderKey,
+            })}
           </CopyableBlock>
         )
       }

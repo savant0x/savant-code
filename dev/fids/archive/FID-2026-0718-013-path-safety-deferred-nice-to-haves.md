@@ -1,14 +1,18 @@
-**Status:** closed / archived
-**Opened:** 2026-07-18
-**Severity:** medium (security follow-up; current state is hardened against string-traversal but not symlinks; monorepo paths may diverge from process.cwd())
-**Source:** FID-2026-0718-012 close-out — 2 deferred nice-to-haves flagged by code-reviewer
-**Reactor:** Orchestrator (Buffy, parent agent)
-**Validated by:** Cross-Agent Claim Rule — 3 source-verifications (basher: apply-patch.ts lines, write-file.ts line 101; basher: getStubProjectFileContext empty; thinker pressure-test: 10 gaps)
-**Depends on:** FID-2026-0718-012 ✅ closed
-**Blocks:** none
-**Drop-in scope:** Single FID with 2 batched fixes. ~140 lines across 4-5 files (no NEW files except tests).
+# Expected: 14 v1 + 6 v2 new = 20 tests pass
+
+**Filename:** `FID-2026-0718-013-path-safety-deferred-nice-to-haves.md`
+**ID:** FID-2026-0718-013
+**Severity:** critical
+**Status:** closed
+**Created:** 2026-0718 00:00
+**Author:** Historical record (metadata backfill)
 
 ---
+
+## Metadata Normalization Note
+
+This historical record was normalized on 2026-07-31 for FreeBuff ECHO v0.1.2 compliance. The original body and evidence are preserved. Original status: `closed / archived`; Original ID: `FID-2026-0718-013-path-safety-deferred-nice-to-haves`. Canonical ID: `FID-2026-0718-013`. Backfilled fields: Filename, ID, Created, Author. Canonical status reflects the record's lifecycle location; it does not add implementation evidence.
+
 
 ## 1. Summary
 

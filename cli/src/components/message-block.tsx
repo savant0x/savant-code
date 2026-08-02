@@ -253,12 +253,12 @@ export const MessageBlock = memo(({
           </box>
         )}
 
-      <box style={{ flexDirection: 'column', gap: 1, width: '100%' }}>
+      <box style={{ flexDirection: 'column', gap: 0, width: '100%' }}>
         {blocks ? (
           <box
             style={{
               flexDirection: 'column',
-              gap: 1,
+              gap: 0,
               width: '100%',
             }}
           >

@@ -5,7 +5,6 @@ import { getInitialSessionState } from '@savant-code/common/types/session-state'
 import { promptSuccess } from '@savant-code/common/util/error'
 import {
   afterEach,
-
   beforeEach,
   describe,
   expect,
@@ -14,7 +13,11 @@ import {
   test,
 } from 'bun:test'
 
-import { createToolCallChunk, mockFileContext, mockResearcherAgent } from './test-utils'
+import {
+  createToolCallChunk,
+  mockFileContext,
+  mockResearcherAgent,
+} from './test-utils'
 import * as webApi from '../llm-api/savant-code-web-api'
 import { runAgentStep } from '../run-agent-step'
 import { assembleLocalAgentTemplates } from '../templates/agent-registry'
@@ -29,7 +32,11 @@ import type { ParamsExcluding } from '@savant-code/common/types/function-params'
 let agentRuntimeImpl: AgentRuntimeDeps & AgentRuntimeScopedDeps
 let runAgentStepBaseParams: ParamsExcluding<
   typeof runAgentStep,
-  'fileContext' | 'localAgentTemplates' | 'agentState' | 'prompt' | 'agentTemplate'
+  | 'fileContext'
+  | 'localAgentTemplates'
+  | 'agentState'
+  | 'prompt'
+  | 'agentTemplate'
 >
 
 function mockAgentStream(chunks: StreamChunk[]) {
@@ -84,6 +91,7 @@ describe('read_docs tool with researcher agent (via web API facade)', () => {
 
   const mockFileContextWithAgents = {
     ...mockFileContext,
+    permissionMode: 'unsafe' as const,
     agentTemplates: { researcher: mockResearcherAgent },
   }
 

@@ -12,6 +12,7 @@ import { initAnalytics } from '../utils/analytics'
 import { getFingerprintId } from '../utils/fingerprint'
 import { initTimestampFormatter } from '../utils/helpers'
 import { logger } from '../utils/logger'
+import { loadAnalyticsEnabled } from '../utils/settings'
 import { enableManualThemeRefresh } from '../utils/theme-system'
 
 export async function initializeApp(params: { cwd?: string }): Promise<void> {
@@ -24,9 +25,9 @@ export async function initializeApp(params: { cwd?: string }): Promise<void> {
   // Initialize analytics before direnv, because direnv uses the logger
   // which calls trackEvent — analytics must be ready first.
   try {
-    initAnalytics()
+    initAnalytics(loadAnalyticsEnabled())
   } catch (error) {
-      logger.debug('Failed to initialize analytics:', error)
+    logger.debug('Failed to initialize analytics:', error)
   }
 
   // Initialize direnv environment before anything else

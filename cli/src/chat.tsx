@@ -17,6 +17,7 @@ import { ChatInputBar } from './components/chat-input-bar'
 import { LoadPreviousButton } from './components/load-previous-button'
 import { MessageWithAgents } from './components/message-with-agents'
 import { ModelPicker } from './components/model-picker'
+import { ProviderPicker } from './components/provider-picker'
 import { areCreditsRestored } from './components/out-of-credits-banner'
 import { PendingBashMessage } from './components/pending-bash-message'
 import { ReviewScreen } from './components/review-screen'
@@ -31,6 +32,7 @@ import {
 } from './components/suggested-prompts'
 import { TopBanner } from './components/top-banner'
 import { getSlashCommandsWithSkills } from './data/slash-commands'
+import { createLoopRunHandler } from './hooks/run-outcome'
 import { useAgentValidation } from './hooks/use-agent-validation'
 import { useAskUserBridge } from './hooks/use-ask-user-bridge'
 import { useChatInput } from './hooks/use-chat-input'
@@ -62,6 +64,8 @@ import { useFeedbackStore } from './state/feedback-store'
 import { useGatewayCatalogStore } from './state/gateway-catalog-store'
 import { useMessageBlockStore } from './state/message-block-store'
 import { useModelPickerStore } from './state/model-picker-store'
+import { useProviderPickerStore } from './state/provider-picker-store'
+import { beginProviderSetup, getProviderSetupInfo } from './utils/provider-setup'
 import { usePublishStore } from './state/publish-store'
 import { useReviewStore } from './state/review-store'
 import { useSavantFreeModelStore } from './state/savant-free-model-store'
@@ -219,8 +223,19 @@ export const Chat = ({
   const modelPickerModels = useModelPickerStore((s) => s.models)
   const modelPickerSelectedIndex = useModelPickerStore((s) => s.selectedIndex)
   const setModelPickerQuery = useModelPickerStore((s) => s.setQuery)
-  const setModelPickerSelectedIndex = useModelPickerStore((s) => s.setSelectedIndex)
+  const setModelPickerSelectedIndex = useModelPickerStore(
+    (s) => s.setSelectedIndex,
+  )
   const closeModelPicker = useModelPickerStore((s) => s.close)
+
+  // Interactive /provider picker overlay state.
+  const providerPickerOpen = useProviderPickerStore((s) => s.isOpen)
+  const providerPickerProviders = useProviderPickerStore((s) => s.providers)
+  const providerPickerSelectedIndex = useProviderPickerStore((s) => s.selectedIndex)
+  const setProviderPickerSelectedIndex = useProviderPickerStore(
+    (s) => s.setSelectedIndex,
+  )
+  const closeProviderPicker = useProviderPickerStore((s) => s.close)
 
   const { statusMessage } = useClipboard()
 
@@ -254,13 +269,13 @@ export const Chat = ({
   const handleAdImpression = useEvent(recordImpression)
   const handleResponseAdsNeeded = useEvent(requestResponseAds)
 
-  // While the model picker overlay is open, blur the text input so keystrokes
-  // (navigation + typing the filter query) route to the picker, not the input.
+  // While the model or provider picker overlay is open, blur the text input
+  // so keystrokes route to the picker, not the input.
   useEffect(() => {
-    if (modelPickerOpen) {
+    if (modelPickerOpen || providerPickerOpen) {
       setInputFocused(false)
     }
-  }, [modelPickerOpen, setInputFocused])
+  }, [modelPickerOpen, providerPickerOpen, setInputFocused])
 
   // FID-2026-0723-062: keep the sidebar context-token cap in sync with the
   // active model. This fires on initial render (restored preference), when the
@@ -272,6 +287,32 @@ export const Chat = ({
       updateContextTokensMax(maxTokens)
     }
   }, [sidebarModel, updateContextTokensMax, gatewayCatalogLoadedAt])
+
+  // Commit a provider pick: enter providerSetup mode for the chosen provider.
+  const handleProviderPickerSelect = useCallback(
+    (provider: import('./utils/provider-setup').ProviderSetupName) => {
+      closeProviderPicker()
+      beginProviderSetup(provider)
+      const info = getProviderSetupInfo(provider)
+      if (info) {
+        useChatStore.getState().setInputMode('providerSetup')
+        setInputFocused(true)
+        inputRef.current?.focus()
+        setMessages((prev) => [
+          ...prev,
+          getSystemMessage(
+            `${info.label} selected. Enter your API key below. It will be masked and stored locally in credentials.json. Environment variables take precedence.`,
+          ),
+        ])
+      }
+    },
+    [
+      closeProviderPicker,
+      setInputFocused,
+      inputRef,
+      setMessages,
+    ],
+  )
 
   // Commit a model pick: persist the override, confirm in-chat, and close.
   const handleModelPickerSelect = useCallback(
@@ -618,15 +659,10 @@ export const Chat = ({
   // FID-2026-0726-001: mount the loop scheduler so /loop cadence actually
   // recurs. The callback re-submits the loop prompt using the current agentMode.
   useLoopScheduler(
-    useCallback(
-      (schedule) => {
-        sendMessage({
-          content: schedule.prompt,
-          agentMode,
-        })
-      },
-      [sendMessage, agentMode],
-    ),
+    useCallback(createLoopRunHandler(sendMessage, agentMode), [
+      sendMessage,
+      agentMode,
+    ]),
   )
 
   const onSubmitPrompt = useEvent(
@@ -777,7 +813,10 @@ export const Chat = ({
         })
     }
 
-    globalThis.addEventListener('savant-code:send-followup', handleFollowupClick)
+    globalThis.addEventListener(
+      'savant-code:send-followup',
+      handleFollowupClick,
+    )
     return () => {
       globalThis.removeEventListener(
         'savant-code:send-followup',
@@ -1426,10 +1465,9 @@ export const Chat = ({
   useChatKeyboard({
     state: chatKeyboardState,
     handlers: chatKeyboardHandlers,
-    // Disable the global keyboard dispatcher while the model picker overlay is
-    // open so its own useKeyboard handler has exclusive control of Up/Down,
-    // Enter, Escape, and typing the filter query.
-    disabled: askUserState !== null || reviewMode || modelPickerOpen,
+    // Disable the global keyboard dispatcher while the model or provider picker
+    // overlay is open so its own useKeyboard handler has exclusive control.
+    disabled: askUserState !== null || reviewMode || modelPickerOpen || providerPickerOpen,
   })
 
   // Sync message block context to zustand store for child components
@@ -1643,7 +1681,7 @@ export const Chat = ({
       onMouseMove={handleMouseActivity}
       focusable={false}
       style={{
-        flexDirection: 'row',  // Horizontal split: chat + sidebar
+        flexDirection: 'row', // Horizontal split: chat + sidebar
         gap: 0,
         flexGrow: 1,
       }}
@@ -1710,174 +1748,182 @@ export const Chat = ({
             },
           }}
         >
-        <TopBanner gitRoot={gitRoot} onSwitchToGitRoot={onSwitchToGitRoot} />
+          <TopBanner gitRoot={gitRoot} onSwitchToGitRoot={onSwitchToGitRoot} />
 
-        {IS_SAVANT_FREE && (
-          <SavantFreeActiveSessionSummary session={savantFreeSession} />
-        )}
-        {hiddenMessageCount > 0 && (
-          <LoadPreviousButton
-            hiddenCount={hiddenMessageCount}
-            onLoadMore={handleLoadPreviousMessages}
-          />
-        )}
-        {visibleTopLevelMessages.map((message, idx) => (
-          <MessageWithAgents
-            key={message.id}
-            message={message}
-            depth={0}
-            isLastMessage={idx === visibleTopLevelMessages.length - 1}
-            availableWidth={messageAvailableWidth}
-          />
-        ))}
-        {/* Pending bash messages as ghost messages (only show those not already in history) */}
-        {pendingBashMessages
-          .filter((msg) => !msg.addedToHistory)
-          .map((msg) => (
-            <PendingBashMessage key={`pending-bash-${msg.id}`} message={msg} />
-          ))}
-      </scrollbox>
-
-      <box
-        focusable={false}
-        style={{
-          flexShrink: 0,
-          backgroundColor: 'transparent',
-        }}
-      >
-        {showOnboardingPrompts && !reviewMode && !isSavantFreeSessionOver && (
-          <SuggestedPrompts
-            onSelect={handleSelectSuggestedPrompt}
-            maxItems={isCompactHeight ? 2 : undefined}
-          />
-        )}
-
-        {shouldShowStatusLine && (
-          <StatusBar
-            timerStartTime={timerStartTime}
-            isAtBottom={isAtBottom}
-            scrollToLatest={scrollToLatest}
-            statusIndicatorState={statusIndicatorState}
-            onStop={chatKeyboardHandlers.onInterruptStream}
-            onEndSession={() => {
-              setMessages((prev) => [
-                ...prev,
-                getSystemMessage(END_SESSION_MESSAGE),
-              ])
-              returnToSavantFreeLanding({ resetChat: true }).catch(() => {})
-            }}
-            savantFreeSession={savantFreeSession}
-          />
-        )}
-
-        {ads?.[0] && showInlineAds && (
-          <SingleAdBanner
-            ad={ads[0]}
-            onClick={recordClick}
-            onImpression={recordImpression}
-          />
-        )}
-
-        {reviewMode ? (
-          // Review and ask_user take precedence over the session-ended banner:
-          // during the grace window the agent may still be asking to run tools
-          // or asking the user a question, and those approvals/answers must be
-          // reachable for the run to finish — otherwise the agent hangs
-          // waiting for input that can never be given.
-          <ReviewScreen
-            onSelectOption={handleReviewOptionSelect}
-            onCustom={handleReviewCustom}
-            onCancel={handleCloseReviewScreen}
-          />
-        ) : isSavantFreeSessionOver && !askUserState ? (
-          <SessionEndedBanner
-            isStreaming={isStreaming || isWaitingForResponse}
-          />
-        ) : (
-          <>
-            {modelPickerOpen && (
-              <ModelPicker
-                models={modelPickerModels}
-                query={modelPickerQuery}
-                selectedIndex={modelPickerSelectedIndex}
-                onQueryChange={setModelPickerQuery}
-                onSelectIndex={setModelPickerSelectedIndex}
-                onSelect={handleModelPickerSelect}
-                onClose={closeModelPicker}
-              />
-            )}
-            <box
-              flexDirection="row"
-              paddingLeft={1}
-              focusable={false}
-            >
-              <text fg={theme.muted} wrapMode="none" selectable={false}>
-                {`cwd: ${directoryDisplay}`}
-              </text>
-            </box>
-            <ChatInputBar
-              inputValue={inputValue}
-              cursorPosition={cursorPosition}
-              setInputValue={setInputValue}
-              inputFocused={inputFocused}
-              inputRef={inputRef}
-              inputPlaceholder={inputPlaceholder}
-              lastEditDueToNav={lastEditDueToNav}
-              agentMode={agentMode}
-              toggleAgentMode={toggleAgentMode}
-              setAgentMode={setAgentMode}
-              hasSlashSuggestions={hasSlashSuggestions}
-              hasMentionSuggestions={hasMentionSuggestions}
-              hasSuggestionMenu={hasSuggestionMenu}
-              slashSuggestionItems={slashSuggestionItems}
-              agentSuggestionItems={agentSuggestionItems}
-              fileSuggestionItems={fileSuggestionItems}
-              slashSelectedIndex={slashSelectedIndex}
-              agentSelectedIndex={agentSelectedIndex}
-              onSlashItemClick={handleSlashItemClick}
-              onMentionItemClick={handleMentionItemClick}
-              theme={theme}
-              terminalHeight={terminalHeight}
-              separatorWidth={separatorWidth}
-              shouldCenterInputVertically={shouldCenterInputVertically}
-              inputBoxTitle={inputBoxTitle}
-              isCompactHeight={isCompactHeight}
-              isNarrowWidth={isNarrowWidth}
-              feedbackMode={feedbackMode}
-              handleExitFeedback={handleExitFeedback}
-              publishMode={publishMode}
-              handleExitPublish={handleExitPublish}
-              handlePublish={handlePublish}
-              handleSubmit={handleSubmit}
-              onPaste={createPasteHandler({
-                text: inputValue,
-                cursorPosition,
-                onChange: setInputValue,
-                onPasteImage: chatKeyboardHandlers.onPasteImage,
-                onPasteImagePath: chatKeyboardHandlers.onPasteImagePath,
-                onPasteFilePath: chatKeyboardHandlers.onPasteFilePath,
-                onPasteLongText: (pastedText) => {
-                  const id = crypto.randomUUID()
-                  const preview = pastedText.slice(0, 100).replace(/\n/g, ' ')
-                  useChatStore.getState().addPendingTextAttachment({
-                    id,
-                    content: pastedText,
-                    preview,
-                    charCount: pastedText.length,
-                  })
-                  // Show temporary status message
-                  showClipboardMessage(
-                    `📋 Pasted text (${pastedText.length.toLocaleString()} chars)`,
-                    { durationMs: 5000 },
-                  )
-                },
-                cwd: getProjectRoot() ?? process.cwd(),
-              })}
-              onInterruptStream={chatKeyboardHandlers.onInterruptStream}
+          {IS_SAVANT_FREE && (
+            <SavantFreeActiveSessionSummary session={savantFreeSession} />
+          )}
+          {hiddenMessageCount > 0 && (
+            <LoadPreviousButton
+              hiddenCount={hiddenMessageCount}
+              onLoadMore={handleLoadPreviousMessages}
             />
-          </>
-        )}
-      </box>
+          )}
+          {visibleTopLevelMessages.map((message, idx) => (
+            <MessageWithAgents
+              key={message.id}
+              message={message}
+              depth={0}
+              isLastMessage={idx === visibleTopLevelMessages.length - 1}
+              availableWidth={messageAvailableWidth}
+            />
+          ))}
+          {/* Pending bash messages as ghost messages (only show those not already in history) */}
+          {pendingBashMessages
+            .filter((msg) => !msg.addedToHistory)
+            .map((msg) => (
+              <PendingBashMessage
+                key={`pending-bash-${msg.id}`}
+                message={msg}
+              />
+            ))}
+        </scrollbox>
+
+        <box
+          focusable={false}
+          style={{
+            flexShrink: 0,
+            backgroundColor: 'transparent',
+          }}
+        >
+          {showOnboardingPrompts && !reviewMode && !isSavantFreeSessionOver && (
+            <SuggestedPrompts
+              onSelect={handleSelectSuggestedPrompt}
+              maxItems={isCompactHeight ? 2 : undefined}
+            />
+          )}
+
+          {shouldShowStatusLine && (
+            <StatusBar
+              timerStartTime={timerStartTime}
+              isAtBottom={isAtBottom}
+              scrollToLatest={scrollToLatest}
+              statusIndicatorState={statusIndicatorState}
+              onStop={chatKeyboardHandlers.onInterruptStream}
+              onEndSession={() => {
+                setMessages((prev) => [
+                  ...prev,
+                  getSystemMessage(END_SESSION_MESSAGE),
+                ])
+                returnToSavantFreeLanding({ resetChat: true }).catch(() => {})
+              }}
+              savantFreeSession={savantFreeSession}
+            />
+          )}
+
+          {ads?.[0] && showInlineAds && (
+            <SingleAdBanner
+              ad={ads[0]}
+              onClick={recordClick}
+              onImpression={recordImpression}
+            />
+          )}
+
+          {reviewMode ? (
+            // Review and ask_user take precedence over the session-ended banner:
+            // during the grace window the agent may still be asking to run tools
+            // or asking the user a question, and those approvals/answers must be
+            // reachable for the run to finish — otherwise the agent hangs
+            // waiting for input that can never be given.
+            <ReviewScreen
+              onSelectOption={handleReviewOptionSelect}
+              onCustom={handleReviewCustom}
+              onCancel={handleCloseReviewScreen}
+            />
+          ) : isSavantFreeSessionOver && !askUserState ? (
+            <SessionEndedBanner
+              isStreaming={isStreaming || isWaitingForResponse}
+            />
+          ) : (
+            <>
+              {modelPickerOpen && (
+                <ModelPicker
+                  models={modelPickerModels}
+                  query={modelPickerQuery}
+                  selectedIndex={modelPickerSelectedIndex}
+                  onQueryChange={setModelPickerQuery}
+                  onSelectIndex={setModelPickerSelectedIndex}
+                  onSelect={handleModelPickerSelect}
+                  onClose={closeModelPicker}
+                />
+              )}
+              {providerPickerOpen && (
+                <ProviderPicker
+                  providers={providerPickerProviders}
+                  selectedIndex={providerPickerSelectedIndex}
+                  onSelectIndex={setProviderPickerSelectedIndex}
+                  onSelect={handleProviderPickerSelect}
+                  onClose={closeProviderPicker}
+                />
+              )}
+              <box flexDirection="row" paddingLeft={1} focusable={false}>
+                <text fg={theme.muted} wrapMode="none" selectable={false}>
+                  {`cwd: ${directoryDisplay}`}
+                </text>
+              </box>
+              <ChatInputBar
+                inputValue={inputValue}
+                cursorPosition={cursorPosition}
+                setInputValue={setInputValue}
+                inputFocused={inputFocused}
+                inputRef={inputRef}
+                inputPlaceholder={inputPlaceholder}
+                lastEditDueToNav={lastEditDueToNav}
+                agentMode={agentMode}
+                toggleAgentMode={toggleAgentMode}
+                setAgentMode={setAgentMode}
+                hasSlashSuggestions={hasSlashSuggestions}
+                hasMentionSuggestions={hasMentionSuggestions}
+                hasSuggestionMenu={hasSuggestionMenu}
+                slashSuggestionItems={slashSuggestionItems}
+                agentSuggestionItems={agentSuggestionItems}
+                fileSuggestionItems={fileSuggestionItems}
+                slashSelectedIndex={slashSelectedIndex}
+                agentSelectedIndex={agentSelectedIndex}
+                onSlashItemClick={handleSlashItemClick}
+                onMentionItemClick={handleMentionItemClick}
+                theme={theme}
+                terminalHeight={terminalHeight}
+                separatorWidth={separatorWidth}
+                shouldCenterInputVertically={shouldCenterInputVertically}
+                inputBoxTitle={inputBoxTitle}
+                isCompactHeight={isCompactHeight}
+                isNarrowWidth={isNarrowWidth}
+                feedbackMode={feedbackMode}
+                handleExitFeedback={handleExitFeedback}
+                publishMode={publishMode}
+                handleExitPublish={handleExitPublish}
+                handlePublish={handlePublish}
+                handleSubmit={handleSubmit}
+                onPaste={createPasteHandler({
+                  text: inputValue,
+                  cursorPosition,
+                  onChange: setInputValue,
+                  onPasteImage: chatKeyboardHandlers.onPasteImage,
+                  onPasteImagePath: chatKeyboardHandlers.onPasteImagePath,
+                  onPasteFilePath: chatKeyboardHandlers.onPasteFilePath,
+                  onPasteLongText: (pastedText) => {
+                    const id = crypto.randomUUID()
+                    const preview = pastedText.slice(0, 100).replace(/\n/g, ' ')
+                    useChatStore.getState().addPendingTextAttachment({
+                      id,
+                      content: pastedText,
+                      preview,
+                      charCount: pastedText.length,
+                    })
+                    // Show temporary status message
+                    showClipboardMessage(
+                      `📋 Pasted text (${pastedText.length.toLocaleString()} chars)`,
+                      { durationMs: 5000 },
+                    )
+                  },
+                  cwd: getProjectRoot() ?? process.cwd(),
+                })}
+                onInterruptStream={chatKeyboardHandlers.onInterruptStream}
+              />
+            </>
+          )}
+        </box>
       </box>
 
       {/* Right sidebar — session info, tools, history.

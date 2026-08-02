@@ -1,8 +1,13 @@
 import { memo } from 'react'
 
 import { useTheme } from '../../hooks/use-theme'
-import { renderMarkdown, type MarkdownPalette } from '../../utils/markdown-renderer'
+import { PLAN_BOX_HORIZONTAL_INSET } from '../../utils/chat-layout'
+import {
+  renderMarkdown,
+  type MarkdownPalette,
+} from '../../utils/markdown-renderer'
 import { BORDER_CHARS } from '../../utils/ui-constants'
+import { renderMarkdownContent } from '../blocks/markdown-content'
 import { BuildModeButtons } from '../build-mode-buttons'
 
 interface PlanBoxProps {
@@ -37,13 +42,22 @@ export const PlanBox = memo(
           paddingRight: 1,
           paddingTop: 0,
           paddingBottom: 1,
-        }} customBorderChars={BORDER_CHARS}>
-        <text style={{ wrapMode: 'word', fg: theme.foreground }}>
-          {renderMarkdown(planContent, {
-            codeBlockWidth: Math.max(10, availableWidth - 8),
+        }}
+        customBorderChars={BORDER_CHARS}
+      >
+        {renderMarkdownContent({
+          value: renderMarkdown(planContent, {
+            codeBlockWidth: Math.max(
+              1,
+              availableWidth - PLAN_BOX_HORIZONTAL_INSET,
+            ),
             palette: markdownPalette,
-          })}
-        </text>
+          }),
+          theme,
+          getAttributes: () => undefined,
+          textColor: theme.foreground,
+          keyPrefix: 'plan-content',
+        })}
         <BuildModeButtons
           theme={theme}
           onBuildFast={onBuildFast}
@@ -54,4 +68,3 @@ export const PlanBox = memo(
     )
   },
 )
-

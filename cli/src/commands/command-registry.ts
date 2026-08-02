@@ -19,6 +19,7 @@ import {
   buildReviewPromptFromArgs,
 } from './prompt-builders'
 import { runBashCommand } from './router'
+import { handleTelemetryCommand } from './telemetry'
 import { handleUsageCommand } from './usage'
 import { returnToSavantFreeLanding } from '../hooks/use-savant-free-session'
 import { useThemeStore } from '../hooks/use-theme'
@@ -41,6 +42,13 @@ import { safeOpen } from '../utils/open-url'
 import { fetchGatewayModels } from '../utils/openrouter-models'
 import { capturePendingAttachments } from '../utils/pending-attachments'
 import {
+  beginProviderSetup,
+  getConfiguredProviderNames,
+  getProviderSetupInfo,
+  PROVIDER_SETUP_CONFIG,
+} from '../utils/provider-setup'
+import { useProviderPickerStore } from '../state/provider-picker-store'
+import {
   loadSavantCodeModelPreference,
   saveSavantCodeModelPreference,
   savePermissionModePreference,
@@ -54,7 +62,6 @@ import type { InputValue, PendingAttachment } from '../types/store'
 import type { User } from '../utils/auth'
 import type { AgentMode } from '../utils/constants'
 import type { UseMutationResult } from '@tanstack/react-query'
-
 
 // FID-2026-0718-010 (D3): helper for slash-command bridges. Calls
 // resetUiToIdle (which itself calls onStreamEnded) with the slash-command
@@ -206,11 +213,7 @@ const SAVANT_FREE_REMOVED_COMMANDS = new Set([
   'publish',
 ])
 
-const SAVANT_FREE_ONLY_COMMANDS = new Set([
-  'connect',
-  'plan',
-  'end-session',
-])
+const SAVANT_FREE_ONLY_COMMANDS = new Set(['connect', 'plan', 'end-session'])
 
 const ALL_COMMANDS: CommandDefinition[] = [
   defineCommand({
@@ -226,6 +229,16 @@ const ALL_COMMANDS: CommandDefinition[] = [
     name: 'ads:disable',
     handler: (params) => {
       const { postUserMessage } = handleAdsDisable()
+      params.setMessages((prev) => postUserMessage(prev))
+      params.saveToHistory(params.inputValue.trim())
+      clearInput(params)
+    },
+  }),
+  defineCommandWithArgs({
+    name: 'telemetry',
+    aliases: ['analytics'],
+    handler: (params, args) => {
+      const postUserMessage = handleTelemetryCommand(args)
       params.setMessages((prev) => postUserMessage(prev))
       params.saveToHistory(params.inputValue.trim())
       clearInput(params)
@@ -274,7 +287,8 @@ const ALL_COMMANDS: CommandDefinition[] = [
       // FID-2026-0718-010 D3: slash-command bridges resetUiToIdle when idle.
       resetUiToIdleAfterSlashCommand()
     },
-  }),  defineCommand({
+  }),
+  defineCommand({
     name: 'copy',
     aliases: ['copy-chat', 'export'],
     handler: async (params) => {
@@ -379,15 +393,11 @@ const ALL_COMMANDS: CommandDefinition[] = [
       const trimmedArgs = args.trim().toLowerCase()
       const currentMode = useChatStore.getState().permissionMode
       const validModes = ['safe', 'prompt', 'unsafe'] as const
-      const modeDescriptions: Record<
-        (typeof validModes)[number],
-        string
-      > = {
+      const modeDescriptions: Record<(typeof validModes)[number], string> = {
         safe: 'Risky tools are denied automatically.',
         prompt:
           'Risky tools are blocked; interactive prompts are not yet implemented, so they currently downgrade to deny.',
-        unsafe:
-          'Risky tools are allowed. Use with caution.',
+        unsafe: 'Risky tools are allowed. Use with caution.',
       }
 
       if (!trimmedArgs) {
@@ -432,7 +442,7 @@ const ALL_COMMANDS: CommandDefinition[] = [
   }),
   defineCommandWithArgs({
     name: 'verify',
-    aliases: ['typecheck', 'check'],
+    aliases: ['typecheck'],
     handler: async (params, args) => {
       const trimmedArgs = args.trim().toLowerCase()
 
@@ -452,9 +462,7 @@ const ALL_COMMANDS: CommandDefinition[] = [
         params.setMessages((prev) => [
           ...prev,
           getUserMessage(params.inputValue.trim()),
-          getSystemMessage(
-            'Usage: /verify [sdk|common|agent-runtime|cli]',
-          ),
+          getSystemMessage('Usage: /verify [sdk|common|agent-runtime|cli]'),
         ])
         params.saveToHistory(params.inputValue.trim())
         clearInput(params)
@@ -475,7 +483,7 @@ const ALL_COMMANDS: CommandDefinition[] = [
             })
             const stdout = 'stdout' in value ? value.stdout || '' : ''
             const stderr = 'stderr' in value ? value.stderr || '' : ''
-            const exitCode = 'exitCode' in value ? value.exitCode ?? 1 : 1
+            const exitCode = 'exitCode' in value ? (value.exitCode ?? 1) : 1
             return { name, exitCode, stdout, stderr }
           } catch (error) {
             return {
@@ -684,15 +692,71 @@ const ALL_COMMANDS: CommandDefinition[] = [
             if (models.length === 0) {
               const message = currentModel
                 ? `Current model: ${currentModel}\n\nCouldn't load the live OpenRouter model list. Type an exact model id to switch, e.g. /model anthropic/claude-sonnet-4`
-                : 'No model override set. Couldn\'t load the live OpenRouter model list — type an exact model id to switch, e.g. /model anthropic/claude-sonnet-4'
-              params.setMessages((prev) => [
-                ...prev,
-                getSystemMessage(message),
-              ])
+                : "No model override set. Couldn't load the live OpenRouter model list — type an exact model id to switch, e.g. /model anthropic/claude-sonnet-4"
+              params.setMessages((prev) => [...prev, getSystemMessage(message)])
               return
             }
 
             useModelPickerStore.getState().open(models)
+          },
+        }),
+        defineCommandWithArgs({
+          name: 'provider',
+          handler: (params, args) => {
+            const trimmedArgs = args.trim()
+
+            // No args: open dropdown picker
+            if (!trimmedArgs) {
+              const configured = getConfiguredProviderNames()
+              const providers = (
+                Object.entries(PROVIDER_SETUP_CONFIG) as Array<
+                  [string, (typeof PROVIDER_SETUP_CONFIG)[keyof typeof PROVIDER_SETUP_CONFIG]]
+                >
+              ).map(([name, config]) => ({
+                name: name as (typeof configured)[number],
+                label: config.label,
+                configured: configured.includes(
+                  name as (typeof configured)[number],
+                ),
+              }))
+
+              useProviderPickerStore.getState().open(providers)
+              params.saveToHistory(params.inputValue.trim())
+              clearInput(params)
+              return
+            }
+
+            const provider = beginProviderSetup(trimmedArgs)
+            const info = provider ? getProviderSetupInfo(provider) : undefined
+
+            if (!info) {
+              params.setMessages((prev) => [
+                ...prev,
+                getUserMessage(params.inputValue.trim()),
+                getSystemMessage(
+                  'Unknown provider. Use /provider opencode-go, /provider tokenrouter, or /provider nvidia.',
+                ),
+              ])
+              params.saveToHistory(params.inputValue.trim())
+              clearInput(params)
+              return
+            }
+
+            params.setInputValue({
+              text: '',
+              cursorPosition: 0,
+              lastEditDueToNav: false,
+            })
+            useChatStore.getState().setInputMode('providerSetup')
+            params.setInputFocused(true)
+            params.inputRef.current?.focus()
+            params.setMessages((prev) => [
+              ...prev,
+              getUserMessage(params.inputValue.trim()),
+              getSystemMessage(
+                `${info.label} selected. Enter your API key below. It will be masked and stored locally in credentials.json. Environment variables take precedence.`,
+              ),
+            ])
           },
         }),
       ]),
@@ -909,7 +973,9 @@ export function findCommand(cmd: string): CommandDefinition | undefined {
         params.setMessages((prev) => [
           ...prev,
           getUserMessage(params.inputValue.trim()),
-          getSystemMessage(`Unknown /dev subcommand: ${trimmedArgs}. Use "/dev on" or "/dev off".`),
+          getSystemMessage(
+            `Unknown /dev subcommand: ${trimmedArgs}. Use "/dev on" or "/dev off".`,
+          ),
         ])
         params.saveToHistory(params.inputValue.trim())
         clearInput(params)
@@ -953,23 +1019,30 @@ function createSkillCommand(skillName: string): CommandDefinition {
           getSystemMessage(`Skill not found: ${skillName}`),
         ])
         params.saveToHistory(params.inputValue.trim())
-        params.setInputValue({ text: '', cursorPosition: 0, lastEditDueToNav: false })
+        params.setInputValue({
+          text: '',
+          cursorPosition: 0,
+          lastEditDueToNav: false,
+        })
         return
       }
 
       const trimmed = params.inputValue.trim()
       params.saveToHistory(trimmed)
-      params.setInputValue({ text: '', cursorPosition: 0, lastEditDueToNav: false })
+      params.setInputValue({
+        text: '',
+        cursorPosition: 0,
+        lastEditDueToNav: false,
+      })
 
       // Build the message content with skill context and optional user args
       const skillContext = `<skill name="${skill.name}">
 ${skill.content}
 </skill>`
 
-      const userPrompt = `I invoke the following skill:\n\n${skillContext}\n\n`
-        + (args.trim()
-          ? `User request: ${args.trim()}`
-          : '')
+      const userPrompt =
+        `I invoke the following skill:\n\n${skillContext}\n\n` +
+        (args.trim() ? `User request: ${args.trim()}` : '')
 
       // Check streaming/queue state
       if (

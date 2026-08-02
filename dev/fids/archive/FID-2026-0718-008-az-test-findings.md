@@ -1,13 +1,18 @@
 # FID-2026-0718-008 — critical — A-Z System Test v2 Findings (7 Issues + Agent Wants)
 
+**Filename:** `FID-2026-0718-008-az-test-findings.md`
+**ID:** FID-2026-0718-008
+**Severity:** critical
+**Status:** closed
 **Created:** 2026-07-18
-**Status:** closed / archived
-**Severity:** critical (F1 is a runtime crash)
-**Creator:** Orchestrator (ECHO v0.2.0)
-**Source:** Comprehensive A-Z system test v2 (246 items, 212 PASS / 16 FAIL / 18 CAVEAT)
-**Test report:** `docs/reports/test-run.md`
+**Author:** Historical record (metadata backfill)
 
 ---
+
+## Metadata Normalization Note
+
+This historical record was normalized on 2026-07-31 for FreeBuff ECHO v0.1.2 compliance. The original body and evidence are preserved. Original status: `closed / archived`; Original ID: `FID-2026-0718-008-az-test-findings`. Canonical ID: `FID-2026-0718-008`. Backfilled fields: Filename, ID, Author. Canonical status reflects the record's lifecycle location; it does not add implementation evidence.
+
 
 ## Summary
 

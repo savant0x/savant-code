@@ -1,6 +1,9 @@
 import * as analytics from '@savant-code/common/analytics'
 import { TEST_USER_ID } from '@savant-code/common/old-constants'
-import { createTestAgentRuntimeParams, emptyMcpServers } from '@savant-code/common/testing/fixtures/agent-runtime'
+import {
+  createTestAgentRuntimeParams,
+  emptyMcpServers,
+} from '@savant-code/common/testing/fixtures/agent-runtime'
 import { clearMockedModules } from '@savant-code/common/testing/mock-modules'
 import {
   createMockDbOperations,
@@ -8,7 +11,10 @@ import {
 } from '@savant-code/common/testing/mocks/database'
 import { getInitialSessionState } from '@savant-code/common/types/session-state'
 import { AbortError, promptSuccess } from '@savant-code/common/util/error'
-import { assistantMessage, userMessage } from '@savant-code/common/util/messages'
+import {
+  assistantMessage,
+  userMessage,
+} from '@savant-code/common/util/messages'
 import { APICallError, RetryError } from 'ai'
 import {
   afterAll,
@@ -23,9 +29,11 @@ import {
 } from 'bun:test'
 import { z } from 'zod/v4'
 
+import { createToolCallChunk, mockFileContext } from './test-utils'
 import { loopAgentSteps } from '../run-agent-step'
 import { clearAgentGeneratorCache } from '../run-programmatic-step'
-import { createToolCallChunk, mockFileContext } from './test-utils'
+import { clearThinkerConvergenceStateForTests } from '../tools/thinker-convergence-gate'
+import { clearAllThoughtSessionsForTests } from '../tools/thought-session-store'
 
 import type { AgentTemplate } from '../templates/types'
 import type { DbSpies } from '@savant-code/common/testing/mocks/database'
@@ -1171,6 +1179,291 @@ describe('loopAgentSteps - runAgentStep vs runProgrammaticStep behavior', () => 
           'pass `verbose: true` in the second argument to fetch()',
         )
       }
+    })
+  })
+
+  describe('native tool-call recovery (FID-2026-0801-010)', () => {
+    it('retries once, then fails visibly without a third model call', async () => {
+      const llmOnlyTemplate = {
+        ...mockTemplate,
+        handleSteps: undefined,
+      }
+      let finishStatus: string | undefined
+      let finishError: string | undefined
+
+      loopAgentStepsBaseParams.promptAiSdkStream = async function* () {
+        llmCallCount++
+        yield {
+          type: 'error' as const,
+          message: 'Incomplete arguments for tool sequentialthinking',
+          errorClass: 'native-incomplete' as const,
+          toolName: 'sequentialthinking',
+        }
+        return promptSuccess(`native-incomplete-${llmCallCount}`)
+      }
+
+      const result = await loopAgentSteps({
+        ...loopAgentStepsBaseParams,
+        agentTemplate: llmOnlyTemplate,
+        localAgentTemplates: { 'test-agent': llmOnlyTemplate },
+        finishAgentRun: mock(
+          async (params: { status: string; errorMessage?: string }) => {
+            finishStatus = params.status
+            finishError = params.errorMessage
+          },
+        ),
+      })
+
+      expect(llmCallCount).toBe(2)
+      expect(result.output.type).toBe('error')
+      if (result.output.type === 'error') {
+        expect(result.output.message).toContain(
+          'Native tool-call recovery failed twice consecutively',
+        )
+      }
+      expect(finishStatus).toBe('failed')
+      expect(finishError).toContain(
+        'Native tool-call recovery failed twice consecutively',
+      )
+
+      const history = result.agentState.messageHistory
+      expect(
+        history.some(
+          (message) =>
+            message.role === 'assistant' &&
+            message.content.some((part) => part.type === 'tool-call'),
+        ),
+      ).toBe(false)
+      expect(history.some((message) => message.role === 'tool')).toBe(false)
+      expect(
+        history.some(
+          (message) =>
+            message.role === 'user' &&
+            message.tags?.includes('TOOL_CALL_ERROR'),
+        ),
+      ).toBe(true)
+    })
+
+    it('recovers on the next step with one valid sequentialthinking result', async () => {
+      const llmOnlyTemplate = {
+        ...mockTemplate,
+        id: 'thinker-test-agent',
+        handleSteps: undefined,
+        toolNames: ['sequentialthinking', 'end_turn'],
+      } satisfies AgentTemplate
+
+      loopAgentStepsBaseParams.promptAiSdkStream = async function* () {
+        llmCallCount++
+        if (llmCallCount === 1) {
+          yield {
+            type: 'error' as const,
+            message: 'Incomplete arguments for tool sequentialthinking',
+            errorClass: 'native-incomplete' as const,
+            toolName: 'sequentialthinking',
+          }
+        } else {
+          yield createToolCallChunk('sequentialthinking', {
+            thought: 'The continuation is executing the complete native call.',
+            thoughtNumber: 1,
+            totalThoughts: 1,
+            nextThoughtNeeded: false,
+          })
+          yield createToolCallChunk('end_turn', {})
+        }
+        return promptSuccess(`recovery-${llmCallCount}`)
+      }
+
+      const result = await loopAgentSteps({
+        ...loopAgentStepsBaseParams,
+        agentTemplate: llmOnlyTemplate,
+        localAgentTemplates: { 'test-agent': llmOnlyTemplate },
+      })
+
+      expect(llmCallCount).toBe(2)
+      expect(result.output.type).not.toBe('error')
+
+      const assistantToolCalls = result.agentState.messageHistory.filter(
+        (message) =>
+          message.role === 'assistant' &&
+          message.content.some(
+            (part) =>
+              part.type === 'tool-call' &&
+              part.toolName === 'sequentialthinking',
+          ),
+      )
+      const sequentialThinkingResults = result.agentState.messageHistory.filter(
+        (message) =>
+          message.role === 'tool' && message.toolName === 'sequentialthinking',
+      )
+
+      expect(assistantToolCalls).toHaveLength(1)
+      expect(sequentialThinkingResults).toHaveLength(1)
+      expect(
+        result.agentState.messageHistory.some(
+          (message) =>
+            message.role === 'user' &&
+            message.tags?.includes('TOOL_CALL_ERROR'),
+        ),
+      ).toBe(true)
+    })
+
+    it('resets the native-incomplete streak after an unrelated tool error', async () => {
+      const llmOnlyTemplate = {
+        ...mockTemplate,
+        handleSteps: undefined,
+      }
+      let finishStatus: string | undefined
+
+      loopAgentStepsBaseParams.promptAiSdkStream = async function* () {
+        llmCallCount++
+        if (llmCallCount === 2) {
+          yield {
+            type: 'error' as const,
+            message: 'An unrelated tool validation error',
+          }
+        } else {
+          yield {
+            type: 'error' as const,
+            message: 'Incomplete arguments for tool sequentialthinking',
+            errorClass: 'native-incomplete' as const,
+            toolName: 'sequentialthinking',
+          }
+        }
+        return promptSuccess(`recovery-${llmCallCount}`)
+      }
+
+      const result = await loopAgentSteps({
+        ...loopAgentStepsBaseParams,
+        agentTemplate: llmOnlyTemplate,
+        localAgentTemplates: { 'test-agent': llmOnlyTemplate },
+        finishAgentRun: mock(async (params: { status: string }) => {
+          finishStatus = params.status
+        }),
+      })
+
+      expect(llmCallCount).toBe(4)
+      expect(result.output.type).toBe('error')
+      expect(finishStatus).toBe('failed')
+    })
+  })
+
+  describe('Thinker convergence gate integration (FID-2026-0801-012)', () => {
+    const thinkerTemplate = (): AgentTemplate => ({
+      ...mockTemplate,
+      id: 'thinker-test-agent',
+      outputMode: 'structured_output',
+      outputSchema: z.object({
+        status: z.string(),
+        payload: z.object({ message: z.string() }).nullable(),
+      }),
+      toolNames: ['sequentialthinking', 'end_turn'],
+      handleSteps: undefined,
+    })
+
+    afterEach(() => {
+      clearAllThoughtSessionsForTests()
+      clearThinkerConvergenceStateForTests()
+    })
+
+    it('sets output from the session snapshot and breaks without the set_output restart', async () => {
+      // The Thinker converges with a single nextThoughtNeeded=false thought and
+      // ends its turn. The gate must build the FinalArtifact from the session
+      // snapshot and set agentState.output BEFORE the loop-top
+      // `output === undefined && shouldEndTurn` restart check can inject the
+      // "You must use set_output" message (which would reintroduce the null).
+      const template = thinkerTemplate()
+      let llmCallNumber = 0
+      loopAgentStepsBaseParams.promptAiSdkStream = async function* () {
+        llmCallNumber++
+        yield createToolCallChunk('sequentialthinking', {
+          thought: 'Conclusion: use the hybrid approach.',
+          thoughtNumber: 1,
+          totalThoughts: 1,
+          nextThoughtNeeded: false,
+        })
+        yield { type: 'text' as const, text: '\n\n' }
+        yield createToolCallChunk('end_turn', {})
+        return promptSuccess('mock-message-id')
+      }
+
+      const result = await loopAgentSteps({
+        ...loopAgentStepsBaseParams,
+        agentType: 'thinker-test-agent',
+        localAgentTemplates: { 'thinker-test-agent': template },
+      })
+
+      // Exactly one LLM call: the loop must NOT have restarted.
+      expect(llmCallNumber).toBe(1)
+      expect(result.agentState.output).toBeDefined()
+      expect((result.agentState.output as { status?: string }).status).toBe(
+        'success',
+      )
+      const restartMessages = result.agentState.messageHistory.filter(
+        (m) =>
+          m.role === 'user' &&
+          m.content[0].type === 'text' &&
+          m.content[0].text.includes('set_output'),
+      )
+      expect(restartMessages.length).toBe(0)
+    })
+
+    it('retries on non-convergence instead of restarting, then converges', async () => {
+      // First turn: the model thinks (nextThoughtNeeded=true) and ends the turn
+      // unconverged. The gate appends a typed retry message and keeps the loop
+      // going — it must NOT hit the set_output restart path. Second turn
+      // converges and the gate sets the artifact.
+      const template = thinkerTemplate()
+      let llmCallNumber = 0
+      loopAgentStepsBaseParams.promptAiSdkStream = async function* () {
+        llmCallNumber++
+        if (llmCallNumber === 1) {
+          yield createToolCallChunk('sequentialthinking', {
+            thought: 'Partial analysis, not done yet.',
+            thoughtNumber: 1,
+            totalThoughts: 2,
+            nextThoughtNeeded: true,
+          })
+        } else {
+          yield createToolCallChunk('sequentialthinking', {
+            thought: 'Final conclusion: hybrid wins.',
+            thoughtNumber: 2,
+            totalThoughts: 2,
+            nextThoughtNeeded: false,
+          })
+        }
+        yield { type: 'text' as const, text: '\n\n' }
+        yield createToolCallChunk('end_turn', {})
+        return promptSuccess('mock-message-id')
+      }
+
+      const result = await loopAgentSteps({
+        ...loopAgentStepsBaseParams,
+        agentType: 'thinker-test-agent',
+        localAgentTemplates: { 'thinker-test-agent': template },
+      })
+
+      // Two LLM calls: first unconverged turn + retry, second converged turn.
+      expect(llmCallNumber).toBe(2)
+      expect(result.agentState.output).toBeDefined()
+      expect((result.agentState.output as { status?: string }).status).toBe(
+        'success',
+      )
+      // The typed retry message was appended after the first turn...
+      const retryMessages = result.agentState.messageHistory.filter(
+        (m) =>
+          m.role === 'user' &&
+          m.content[0].type === 'text' &&
+          m.content[0].text.includes('nextThoughtNeeded=false'),
+      )
+      expect(retryMessages.length).toBeGreaterThan(0)
+      // ...and the set_output restart message was never injected.
+      const restartMessages = result.agentState.messageHistory.filter(
+        (m) =>
+          m.role === 'user' &&
+          m.content[0].type === 'text' &&
+          m.content[0].text.includes('set_output'),
+      )
+      expect(restartMessages.length).toBe(0)
     })
   })
 

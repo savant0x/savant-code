@@ -3,11 +3,16 @@
 **Filename:** `FID-2026-0720-033-tui-rebuild-comprehensive.md`
 **ID:** FID-2026-0720-033
 **Severity:** critical
-**Status:** closed / archived (superseded by 033a-033e phases)
+**Status:** closed
 **Created:** 2026-07-20 23:45
 **Author:** ECHO Agent (plan), Spencer Howell (execution via glm-5.2 agent)
 
 ---
+
+## Metadata Normalization Note
+
+This historical record was normalized on 2026-07-31 for FreeBuff ECHO v0.1.2 compliance. The original body and evidence are preserved. Original status: `closed / archived (superseded by 033a-033e phases)`; Original ID: `FID-2026-0720-033`. Canonical status reflects the record's lifecycle location; it does not add implementation evidence.
+
 
 ## Summary
 

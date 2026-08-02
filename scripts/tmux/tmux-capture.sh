@@ -59,6 +59,9 @@
 
 set -e
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/tmux-env.sh"
+
 # Defaults
 COLORS=false
 START_LINE="-"
@@ -130,7 +133,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Verify session exists
-if ! tmux has-session -t "$SESSION_NAME" 2>/dev/null; then
+if ! tmux_exec has-session -t "$SESSION_NAME" 2>/dev/null; then
     echo "❌ Session '$SESSION_NAME' not found" >&2
     echo "   Run: tmux list-sessions" >&2
     exit 1
@@ -141,19 +144,19 @@ if [[ "$WAIT_SECONDS" -gt 0 ]]; then
     sleep "$WAIT_SECONDS"
 fi
 
-# Build capture command
-CAPTURE_CMD="tmux capture-pane -t \"$SESSION_NAME\" -p"
+# Build capture arguments without eval so session names and options remain safely quoted.
+CAPTURE_ARGS=(capture-pane -t "$SESSION_NAME" -p)
 
 if [[ "$COLORS" == true ]]; then
-    CAPTURE_CMD="$CAPTURE_CMD -e"
+    CAPTURE_ARGS+=(-e)
 fi
 
 if [[ "$START_LINE" != "-" ]]; then
-    CAPTURE_CMD="$CAPTURE_CMD -S $START_LINE"
+    CAPTURE_ARGS+=(-S "$START_LINE")
 fi
 
 if [[ "$END_LINE" != "-" ]]; then
-    CAPTURE_CMD="$CAPTURE_CMD -E $END_LINE"
+    CAPTURE_ARGS+=(-E "$END_LINE")
 fi
 
 # Get project root for session logs directory
@@ -162,10 +165,10 @@ SESSION_DIR="$PROJECT_ROOT/debug/tmux-sessions/$SESSION_NAME"
 
 # Execute capture
 if [[ -n "$OUTPUT_FILE" ]]; then
-    eval "$CAPTURE_CMD" > "$OUTPUT_FILE"
+    tmux_exec "${CAPTURE_ARGS[@]}" > "$OUTPUT_FILE"
 else
     # Capture to variable first
-    CAPTURED_OUTPUT=$(eval "$CAPTURE_CMD")
+    CAPTURED_OUTPUT=$(tmux_exec "${CAPTURE_ARGS[@]}")
     
     # Auto-save capture if enabled
     if [[ "$AUTO_SAVE" == true ]]; then
@@ -203,8 +206,8 @@ else
         fi
         
         # Get terminal dimensions
-        TERM_WIDTH=$(tmux display-message -t "$SESSION_NAME" -p '#{window_width}' 2>/dev/null || echo "unknown")
-        TERM_HEIGHT=$(tmux display-message -t "$SESSION_NAME" -p '#{window_height}' 2>/dev/null || echo "unknown")
+        TERM_WIDTH=$(tmux_exec display-message -t "$SESSION_NAME" -p '#{window_width}' 2>/dev/null || echo "unknown")
+        TERM_HEIGHT=$(tmux_exec display-message -t "$SESSION_NAME" -p '#{window_height}' 2>/dev/null || echo "unknown")
         
         # Write capture with YAML front-matter
         cat > "$CAPTURE_FILE" << EOF

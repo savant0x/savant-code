@@ -4,15 +4,17 @@
 
 <img src="assets/banner.png" alt="Savant-Code — Multi-Agent AI Coding Assistant" width="850" />
 
-**A terminal-native AI coding assistant that audits every change before it touches your repo.**
+**A terminal-native AI coding assistant that audits every change before it
+touches your repo.**
 
-Built with TypeScript/Bun, governed by the ECHO Protocol, and designed for local-first use with Ollama.
+Built with TypeScript/Bun, governed by the ECHO Protocol, and designed for
+local-first use with Ollama.
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-1.3.14-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![React](https://img.shields.io/badge/React-19-%23000000?style=flat-square&logo=react&logoColor=%2300fbff)](https://react.dev/)[![OpenTUI](https://img.shields.io/badge/OpenTUI-0.2.2-%23000000?style=flat-square&logo=opentui&logoColor=%2300fbff)](https://github.com/anomalyco/opentui)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](ECHO.md)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![Release](https://img.shields.io/badge/Release-v0.0.11-%23000000?style=flat-square&logo=semver&logoColor=%2300fbff)](CHANGELOG.md)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-1.3.14-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![React](https://img.shields.io/badge/React-19-%23000000?style=flat-square&logo=react&logoColor=%2300fbff)](https://react.dev/)[![OpenTUI](https://img.shields.io/badge/OpenTUI-0.2.2-%23000000?style=flat-square&logo=opentui&logoColor=%2300fbff)](https://github.com/anomalyco/opentui)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](ECHO.md)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![Release](https://img.shields.io/badge/Release-v0.0.12-%23000000?style=flat-square&logo=semver&logoColor=%2300fbff)](CHANGELOG.md)
 
 </div>
 
-> **v0.0.11** — Fixed release binary environment and installation flow.
+> **v0.0.12** — Thinker rebuild, native tool-call hardening, provider onboarding, telemetry controls, and release packaging.
 
 ---
 
@@ -26,9 +28,8 @@ npm install -g savant-code
 savant-code
 ```
 
-<!-- TODO: replace assets/demo.gif with an animated GIF showing the perfection loop -->
-
-![Savant Code terminal demo placeholder](assets/banner.png)
+_A terminal demo video is not yet available; the landing page and CLI source
+links below describe the currently verified workflow._
 
 No Ollama yet?
 
@@ -40,15 +41,25 @@ ollama serve
 # Windows: https://ollama.com/download/windows
 ```
 
-Then run `savant-code` again, or type `/health` inside the chat to verify the connection.
+Then run `savant-code` again, or type `/health` inside the chat to verify the
+connection.
 
 ---
 
 ## Overview
 
-Savant-Code is a TypeScript monorepo that builds and ships the terminal-native AI coding assistant **Savant Code** and the public [`@savant-code/sdk`](https://www.npmjs.com/package/@savant-code/sdk). The CLI provides multi-agent orchestration, custom skills, MCP tool discovery, mode switching (`EDIT` / `ANALYZE` / `SCAFFOLD`), and local-first Ollama support. The SDK, agent runtime, multi-agent orchestration engine, tool layer, and LLM provider shims are shared so both surfaces ship from one codebase.
+Savant-Code is a TypeScript monorepo that builds and ships the terminal-native
+AI coding assistant **Savant Code** and the public
+[`@savant-code/sdk`](https://www.npmjs.com/package/@savant-code/sdk). The CLI
+provides multi-agent orchestration, custom skills, MCP tool discovery, mode
+switching (`EDIT` / `ANALYZE` / `SCAFFOLD`), and local-first Ollama support. The
+SDK, agent runtime, multi-agent orchestration engine, tool layer, and LLM
+provider shims are shared so both surfaces ship from one codebase.
 
-The whole project ships under [ECHO Protocol v0.2.0](ECHO.md) — the same 15-law agent discipline that governs the Savant ecosystem. Every change goes through the RED → GREEN → AUDIT → SELF-CORRECT → COMPLETE Perfection Loop FSM, with a hard 10-iteration cap and a 10% Levenshtein change-cap per pass.
+The whole project ships under [ECHO Protocol v0.2.0](ECHO.md) — the same 15-law
+agent discipline that governs the Savant ecosystem. Every change goes through
+the RED → GREEN → AUDIT → SELF-CORRECT → COMPLETE Perfection Loop FSM, with a
+hard 10-iteration cap and a 10% Levenshtein change-cap per pass.
 
 ---
 
@@ -73,40 +84,69 @@ The whole project ships under [ECHO Protocol v0.2.0](ECHO.md) — the same 15-la
 
 ### CLI (`@savant-code/cli`)
 
-- **Multi-agent orchestration** — 9 specialized agents coordinate via ECHO Protocol: Detective finds issues, Forge implements, Verifier audits, Recorder manages FIDs, Thinker reasons, Scout explores, Researcher investigates, Scribe documents.
-- **`/init` command** — scaffolds `.agents/types/{agent-definition,tools,util-types}.ts` and a starter `knowledge.md`.
-- **Slash commands** — `/new`, `/history`, `/bash`, `/goal`, `/loop`, `/feedback`, `/theme:toggle`, `/login`, `/logout`, `/exit`, plus agent-specific commands.
-- **`@filename` and `@AgentName` mentions** — file and agent mentions with inline autocomplete.
-- **Bash mode** — `!command` or `/bash` to run shell commands inline (with confirmation).
-- **Goal loop** — `/goal` sets a goal condition; `/loop <cadence>` schedules recurring prompt execution (e.g., `/loop 5m check build status`). The loop scheduler manages cadence, run counts, and convergence detection.
-- **Mode switching** — `EDIT` / `ANALYZE` / `SCAFFOLD` execution-scope modes, togglable at runtime via UI.
-- **Streaming & cancellation** — token-by-token SSE streaming with mid-stream cancellation, retry-with-backoff, and subagent streaming for parallel work.
-- **Knowledge files** — project-level `knowledge.md` plus per-user home-dir knowledge, auto-loaded into agent context.
-- **Skills** — OpenClaw-format `SKILL.md` files discovered at startup, schemas sent to the LLM, available as native tools.
-- **MCP tools** — Model Context Protocol servers discovered at startup, schemas published to the LLM API.
-- **Context compaction** — 4-layer progressive auto-compaction: L0 (summarize old turns), L1 (compress tool results), L2 (prune stale context), L3 (aggressive reduction). Preserves critical context while reducing token usage.
-- **Universal copy buttons** — hover-to-copy on code blocks, tool outputs, and file diffs throughout the TUI.
-- **Gateway providers** — TokenRouter, NVIDIA NIM, OpenCode Go, and Cloudflare Workers AI via `@savant-code/llm-providers`.
+- **Multi-agent orchestration** — 9 specialized agents coordinate via ECHO
+  Protocol: Detective finds issues, Forge implements, Verifier audits, Recorder
+  manages FIDs, Thinker reasons, Scout explores, Researcher investigates, Scribe
+  documents.
+- **`/init` command** — scaffolds
+  `.agents/types/{agent-definition,tools,util-types}.ts` and a starter
+  `knowledge.md`.
+- **Slash commands** — `/new`, `/history`, `/bash`, `/goal`, `/loop`,
+  `/feedback`, `/theme:toggle`, `/login`, `/logout`, `/exit`, plus
+  agent-specific commands.
+- **`@filename` and `@AgentName` mentions** — file and agent mentions with
+  inline autocomplete.
+- **Bash mode** — `!command` or `/bash` to run shell commands inline (with
+  confirmation).
+- **Goal loop** — `/goal` sets a goal condition; `/loop <cadence>` schedules
+  recurring prompt execution (e.g., `/loop 5m check build status`). The loop
+  scheduler manages cadence, run counts, and convergence detection.
+- **Mode switching** — `EDIT` / `ANALYZE` / `SCAFFOLD` execution-scope modes,
+  togglable at runtime via UI.
+- **Streaming & cancellation** — token-by-token SSE streaming with mid-stream
+  cancellation, retry-with-backoff, and subagent streaming for parallel work.
+- **Knowledge files** — project-level `knowledge.md` plus per-user home-dir
+  knowledge, auto-loaded into agent context.
+- **Skills** — OpenClaw-format `SKILL.md` files discovered at startup, schemas
+  sent to the LLM, available as native tools.
+- **MCP tools** — Model Context Protocol servers discovered at startup, schemas
+  published to the LLM API.
+- **Context compaction** — 4-layer progressive auto-compaction: L0 (summarize
+  old turns), L1 (compress tool results), L2 (prune stale context), L3
+  (aggressive reduction). Preserves critical context while reducing token usage.
+- **Universal copy buttons** — hover-to-copy on code blocks, tool outputs, and
+  file diffs throughout the TUI.
+- **Gateway providers** — TokenRouter, NVIDIA NIM, OpenCode Go, and Cloudflare
+  Workers AI via `@savant-code/llm-providers`.
 - **Theming** — light/dark toggle (`/theme:toggle`), Neon Slate aesthetic.
 
 ### SDK (`@savant-code/sdk`)
 
-- **`SavantCodeClient` class** — single entry point for running agents from any Node.js / Bun / browser app.
-- **Streaming events** — `handleEvent` callback receives `RunState` updates, tool calls, file diffs, and final output.
-- **Custom agents** — pass `agentDefinitions: AgentDefinition[]` to override defaults.
+- **`SavantCodeClient` class** — single entry point for running agents from any
+  Node.js / Bun / browser app.
+- **Streaming events** — `handleEvent` callback receives `RunState` updates,
+  tool calls, file diffs, and final output.
+- **Custom agents** — pass `agentDefinitions: AgentDefinition[]` to override
+  defaults.
 - **Custom tools** — pass `customToolDefinitions` to extend the tool registry.
 - **Cancellation** — `AbortSignal` propagates through subagent streams.
 
 ### Agent Runtime (`@savant-code/agent-runtime`)
 
-- **LLM-agnostic** — calls any provider registered with `@savant-code/llm-providers` (OpenAI-compatible chat, Anthropic, etc.).
-- **Multi-step loop** — model decides tool → tool executes → result fed back → repeat until `end_turn` or budget exhausted.
-- **Tool registry** — built-in (`read_files`, `write_file`, `run_terminal_command`, `code_search`, `web_search`, `spawn_agents_inline`, …) + custom + MCP.
-- **Cost aggregation** — per-call token counts and USD cost estimates surfaced in `RunState`.
+- **LLM-agnostic** — calls any provider registered with
+  `@savant-code/llm-providers` (OpenAI-compatible chat, Anthropic, etc.).
+- **Multi-step loop** — model decides tool → tool executes → result fed back →
+  repeat until `end_turn` or budget exhausted.
+- **Tool registry** — built-in (`read_files`, `write_file`,
+  `run_terminal_command`, `code_search`, `web_search`, `spawn_agents_inline`,
+  …) + custom + MCP.
+- **Cost aggregation** — per-call token counts and USD cost estimates surfaced
+  in `RunState`.
 
 ### ECHO Protocol Integration
 
-- **9 specialized agents** — Orchestrator, Detective, Forge, Verifier, Recorder, Thinker, Scout, Researcher, Scribe
+- **9 specialized agents** — Orchestrator, Detective, Forge, Verifier, Recorder,
+  Thinker, Scout, Researcher, Scribe
 - **FID-Bound Execution** — Code is never written until the FID converges
 - **Perfection Loop FSM** — RED → GREEN → AUDIT → SELF-CORRECT → COMPLETE
 - **Separation of Duties** — The agent that writes code cannot verify it
@@ -116,18 +156,23 @@ The whole project ships under [ECHO Protocol v0.2.0](ECHO.md) — the same 15-la
 
 ## Repo Map
 
+<!-- markdownlint-disable MD013 MD060 -->
+
 | Workspace                 | Package                      | Purpose                                                           |
 | ------------------------- | ---------------------------- | ----------------------------------------------------------------- |
 | `agents/`                 | `@savant-code/agents`        | Public agent definitions shipped with the CLI                     |
 | `cli/`                    | `@savant-code/cli`           | CLI source — UI, commands, state, hooks, OpenTUI/React components |
 | `common/`                 | `@savant-code/common`        | Shared types, tool definitions, utilities                         |
-| `evals/`                  | `@savant-code/evals`         | ECHO-native benchmark v2 runner + legacy eval fixtures            |     | `savant-free/` | `@savant-code/savant-free` | Future free/ad-supported variant workspace (not yet released) |
+| `evals/`                  | `@savant-code/evals`         | ECHO-native benchmark v2 runner + legacy eval fixtures            |
+| `savant-free/`            | `@savant-code/savant-free`   | Future free/ad-supported variant workspace (not yet released)     |
 | `packages/agent-runtime/` | `@savant-code/agent-runtime` | Agent loop, tool executor, LLM API integration                    |
 | `packages/code-map/`      | `@savant-code/code-map`      | tree-sitter code indexing, language detection                     |
 | `packages/database/`      | `@savant-code/database`      | Database abstraction layer                                        |
 | `packages/llm-providers/` | `@savant-code/llm-providers` | Public LLM provider shims                                         |
 | `sdk/`                    | `@savant-code/sdk`           | Public SDK — `SavantCodeClient`, types, build + verify scripts    |
 | `scripts/tmux/`           | `@savant-code/tmux`          | tmux CLI helpers used in interactive test runs                    |
+
+<!-- markdownlint-enable MD013 MD060 -->
 
 ---
 
@@ -157,8 +202,8 @@ bun run dev -- --permission-mode safe
 # Build the SDK
 bun run build:sdk
 
-# Build the CLI binary
-bun run build:binary
+# Build the CLI binary from the CLI workspace
+bun run --cwd=cli build:binary
 ```
 
 ### 4. Use the SDK
@@ -201,26 +246,46 @@ savant-code
 Run `/health` inside the chat to verify the Ollama connection, available local
 models, and current permission mode.
 
+### Configure a hosted provider key
+
+If Ollama is not running, Savant-Code needs a provider API key for the selected
+gateway model. On the first run, enter:
+
+```text
+/provider
+```
+
+The key prompt is masked and stores the key locally in the Savant-Code config
+`credentials.json`; it is not added to chat history. The default provider is
+OpenCode Go (`OPENCODE_GO_API_KEY`). You can also choose `/provider tokenrouter`
+or `/provider nvidia`. Shell environment variables take precedence over stored
+keys, so CI and managed environments can continue to configure providers
+without using local persistence.
+
 ---
 
 ## CLI Commands
 
-| Command       | What it does           |
-| ------------- | ---------------------- |
-| `bun run dev` | Launch CLI in dev mode |
+<!-- markdownlint-disable MD013 MD060 -->
 
-| `bun run build:sdk` | Build the SDK for npm publish |
-| `bun run build:binary` | Build the CLI binary |
-| `bun run ci` | CI gate — build SDK and release artifacts |
-| `bun test` | Run test suite |
-| `bun x tsc --noEmit` | Type check |
-| `bun x eslint . --max-warnings 0` | Lint |
+| Command                           | What it does                     |
+| --------------------------------- | -------------------------------- |
+| `bun run dev`                     | Launch CLI in dev mode           |
+| `bun run build:sdk`               | Build the SDK for npm publish    |
+| `bun run --cwd=cli build:binary`  | Build the CLI binary from `cli/` |
+| `bun run ci`                      | Build SDK and release artifacts  |
+| `bun test`                        | Run the test suite               |
+| `bun x tsc --noEmit`              | Type check                       |
+| `bun x eslint . --max-warnings 0` | Lint                             |
+
+<!-- markdownlint-enable MD013 MD060 -->
 
 ---
 
 ## ECHO Protocol
 
-This project ships with [ECHO Protocol v0.2.0](ECHO.md) — the single bootstrap file for agent behavior.
+This project ships with [ECHO Protocol v0.2.0](ECHO.md) — the single bootstrap
+file for agent behavior.
 
 ### Core Principles
 
@@ -231,7 +296,8 @@ This project ships with [ECHO Protocol v0.2.0](ECHO.md) — the single bootstrap
 
 ### 15 Laws
 
-4 immutable process laws (Read 0-EOF, Present Before Act, Verify Before Proceed, Call-Graph Reachability) + 11 extended code laws. `strict: true` in TypeScript.
+4 immutable process laws (Read 0-EOF, Present Before Act, Verify Before Proceed,
+Call-Graph Reachability) + 11 extended code laws. `strict: true` in TypeScript.
 
 ### Key Files
 
@@ -284,7 +350,8 @@ bun x prettier --write .
 - [`ARCHITECTURE.md`](ARCHITECTURE.md) — Agent roster and tool restrictions
 - [`protocol.config.yaml`](protocol.config.yaml) — Build commands, quality bar
 - [`CHANGELOG.md`](CHANGELOG.md) — Release history
-- [`docs/launch/landing/index.html`](docs/launch/landing/index.html) — Public landing page
+- [`docs/launch/landing/index.html`](docs/launch/landing/index.html) — Public
+  landing page
 - [`dev/LEARNINGS.md`](dev/LEARNINGS.md) — Cross-session lessons
 - [`dev/session-summaries/`](dev/session-summaries/) — Session audit trail
 
@@ -298,7 +365,8 @@ bun x prettier --write .
 
 <div align="center">
 
-_Savant-Code is the public TypeScript monorepo for the Savant-Code agent framework._
+_Savant-Code is the public TypeScript monorepo for the Savant-Code agent
+framework._
 
 **Savant** • 2026
 </div>

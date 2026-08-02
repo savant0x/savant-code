@@ -25,6 +25,11 @@ import {
 import { showClipboardMessage } from '../utils/clipboard'
 import { IS_SAVANT_FREE } from '../utils/constants'
 import { getSystemProcessEnv } from '../utils/env'
+import {
+  getActiveProviderSetup,
+  getProviderSetupInfo,
+  saveProviderApiKey,
+} from '../utils/provider-setup'
 import { getSystemMessage, getUserMessage } from '../utils/message-history'
 import {
   capturePendingAttachments,
@@ -417,6 +422,46 @@ export async function routeUserPrompt(
     saveToHistory(trimmed)
     setInputValue({ text: '', cursorPosition: 0, lastEditDueToNav: false })
     setInputMode('default')
+    return
+  }
+
+  // Handle provider API-key setup without writing the secret to chat history.
+  if (inputMode === 'providerSetup') {
+    const provider = getActiveProviderSetup()
+    const info = getProviderSetupInfo(provider)
+    if (!info) {
+      setMessages((prev) => [
+        ...prev,
+        getSystemMessage('Provider setup is unavailable. Use /provider to try again.'),
+      ])
+    } else if (!trimmed) {
+      setMessages((prev) => [
+        ...prev,
+        getSystemMessage(`${info.label} API key cannot be empty.`),
+      ])
+    } else {
+      try {
+        saveProviderApiKey(provider, trimmed)
+        setMessages((prev) => [
+          ...prev,
+          getSystemMessage(
+            `${info.label} API key saved locally. You can now use the configured provider model.`,
+          ),
+        ])
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error)
+        setMessages((prev) => [
+          ...prev,
+          getSystemMessage(`Could not save the ${info.label} API key: ${message}`),
+        ])
+      }
+    }
+
+    // Never save or display the secret itself, and always return to normal input.
+    setInputValue({ text: '', cursorPosition: 0, lastEditDueToNav: false })
+    setInputMode('default')
+    setInputFocused(true)
+    inputRef.current?.focus()
     return
   }
 

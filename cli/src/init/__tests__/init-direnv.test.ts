@@ -2,8 +2,15 @@ import fs from 'fs'
 import os from 'os'
 import path from 'path'
 
-
-import { describe, test, expect, beforeEach, afterEach, mock, spyOn } from 'bun:test'
+import {
+  describe,
+  test,
+  expect,
+  beforeEach,
+  afterEach,
+  mock,
+  spyOn,
+} from 'bun:test'
 
 import {
   findEnvrcDirectory,
@@ -158,17 +165,20 @@ describe('init-direnv', () => {
       }
     })
 
-    test('handles symlinked directories', () => {
-      const actualDir = path.join(tempDir, 'actual')
-      fs.mkdirSync(actualDir)
-      fs.writeFileSync(path.join(actualDir, '.envrc'), 'export FOO=bar')
+    test.skipIf(os.platform() === 'win32')(
+      'handles symlinked directories',
+      () => {
+        const actualDir = path.join(tempDir, 'actual')
+        fs.mkdirSync(actualDir)
+        fs.writeFileSync(path.join(actualDir, '.envrc'), 'export FOO=bar')
 
-      const linkDir = path.join(tempDir, 'link')
-      fs.symlinkSync(actualDir, linkDir)
+        const linkDir = path.join(tempDir, 'link')
+        fs.symlinkSync(actualDir, linkDir)
 
-      const result = findEnvrcDirectory(linkDir)
-      expect(result).not.toBeNull()
-    })
+        const result = findEnvrcDirectory(linkDir)
+        expect(result).not.toBeNull()
+      },
+    )
   })
 
   describe('isDirenvAvailable', () => {
@@ -215,7 +225,10 @@ describe('init-direnv', () => {
     test('returns parsed env vars on successful export', () => {
       spawnSyncSpy.mockReturnValue({
         status: 0,
-        stdout: JSON.stringify({ DATABASE_URL: 'postgres://localhost', API_KEY: 'secret' }),
+        stdout: JSON.stringify({
+          DATABASE_URL: 'postgres://localhost',
+          API_KEY: 'secret',
+        }),
         stderr: '',
         pid: 1234,
         output: [],
@@ -267,7 +280,8 @@ describe('init-direnv', () => {
       spawnSyncSpy.mockReturnValue({
         status: 1,
         stdout: '',
-        stderr: 'direnv: error /path/to/.envrc is blocked. Run `direnv allow` to approve its content',
+        stderr:
+          'direnv: error /path/to/.envrc is blocked. Run `direnv allow` to approve its content',
         pid: 1234,
         output: [],
         signal: null,
@@ -383,75 +397,119 @@ describe('init-direnv', () => {
       spawnSyncSpy.mockRestore()
     })
 
-    test('sets environment variables from direnv export', () => {
-      fs.writeFileSync(path.join(tempDir, '.envrc'), 'export TEST_VAR=test_value')
-      process.chdir(tempDir)
+    test.skipIf(os.platform() === 'win32')(
+      'sets environment variables from direnv export',
+      () => {
+        fs.writeFileSync(
+          path.join(tempDir, '.envrc'),
+          'export TEST_VAR=test_value',
+        )
+        process.chdir(tempDir)
 
-      spawnSyncSpy.mockImplementation((cmd: string, args: string[]) => {
-        if (cmd === 'sh' && args?.[1]?.includes('command -v direnv')) {
+        spawnSyncSpy.mockImplementation((cmd: string, args: string[]) => {
+          if (cmd === 'sh' && args?.[1]?.includes('command -v direnv')) {
+            return {
+              status: 0,
+              stdout: '/usr/local/bin/direnv',
+              stderr: '',
+              pid: 1234,
+              output: [],
+              signal: null,
+            } as childProcessModule.SpawnSyncReturns<string>
+          }
+          if (cmd === 'direnv' && args?.[0] === 'export') {
+            return {
+              status: 0,
+              stdout: JSON.stringify({ TEST_VAR: 'test_value' }),
+              stderr: '',
+              pid: 1234,
+              output: [],
+              signal: null,
+            } as childProcessModule.SpawnSyncReturns<string>
+          }
           return {
-            status: 0,
-            stdout: '/usr/local/bin/direnv',
+            status: 1,
+            stdout: '',
             stderr: '',
-            pid: 1234,
+            pid: 0,
             output: [],
             signal: null,
           } as childProcessModule.SpawnSyncReturns<string>
-        }
-        if (cmd === 'direnv' && args?.[0] === 'export') {
+        })
+
+        initializeDirenv()
+
+        expect(process.env.TEST_VAR).toBe('test_value')
+      },
+    )
+
+    test.skipIf(os.platform() === 'win32')(
+      'unsets environment variables when direnv returns null',
+      () => {
+        fs.writeFileSync(path.join(tempDir, '.envrc'), 'unset OLD_VAR')
+        process.chdir(tempDir)
+        process.env.OLD_VAR = 'should_be_removed'
+
+        spawnSyncSpy.mockImplementation((cmd: string, args: string[]) => {
+          if (cmd === 'sh' && args?.[1]?.includes('command -v direnv')) {
+            return {
+              status: 0,
+              stdout: '/usr/local/bin/direnv',
+              stderr: '',
+              pid: 1234,
+              output: [],
+              signal: null,
+            } as childProcessModule.SpawnSyncReturns<string>
+          }
+          if (cmd === 'direnv' && args?.[0] === 'export') {
+            return {
+              status: 0,
+              stdout: JSON.stringify({ OLD_VAR: null }),
+              stderr: '',
+              pid: 1234,
+              output: [],
+              signal: null,
+            } as childProcessModule.SpawnSyncReturns<string>
+          }
           return {
-            status: 0,
-            stdout: JSON.stringify({ TEST_VAR: 'test_value' }),
+            status: 1,
+            stdout: '',
             stderr: '',
-            pid: 1234,
+            pid: 0,
             output: [],
             signal: null,
           } as childProcessModule.SpawnSyncReturns<string>
-        }
-        return { status: 1, stdout: '', stderr: '', pid: 0, output: [], signal: null } as childProcessModule.SpawnSyncReturns<string>
+        })
+
+        initializeDirenv()
+
+        expect(process.env.OLD_VAR).toBeUndefined()
+      },
+    )
+
+    test.skipIf(os.platform() !== 'win32')('is a no-op on Windows', () => {
+      fs.writeFileSync(
+        path.join(tempDir, '.envrc'),
+        'export SHOULD_NOT_SET=value',
+      )
+      process.chdir(tempDir)
+      delete process.env.SHOULD_NOT_SET
+
+      spawnSyncSpy.mockImplementation(() => {
+        throw new Error('direnv should not be invoked on Windows')
       })
 
       initializeDirenv()
 
-      expect(process.env.TEST_VAR).toBe('test_value')
-    })
-
-    test('unsets environment variables when direnv returns null', () => {
-      fs.writeFileSync(path.join(tempDir, '.envrc'), 'unset OLD_VAR')
-      process.chdir(tempDir)
-      process.env.OLD_VAR = 'should_be_removed'
-
-      spawnSyncSpy.mockImplementation((cmd: string, args: string[]) => {
-        if (cmd === 'sh' && args?.[1]?.includes('command -v direnv')) {
-          return {
-            status: 0,
-            stdout: '/usr/local/bin/direnv',
-            stderr: '',
-            pid: 1234,
-            output: [],
-            signal: null,
-          } as childProcessModule.SpawnSyncReturns<string>
-        }
-        if (cmd === 'direnv' && args?.[0] === 'export') {
-          return {
-            status: 0,
-            stdout: JSON.stringify({ OLD_VAR: null }),
-            stderr: '',
-            pid: 1234,
-            output: [],
-            signal: null,
-          } as childProcessModule.SpawnSyncReturns<string>
-        }
-        return { status: 1, stdout: '', stderr: '', pid: 0, output: [], signal: null } as childProcessModule.SpawnSyncReturns<string>
-      })
-
-      initializeDirenv()
-
-      expect(process.env.OLD_VAR).toBeUndefined()
+      expect(process.env.SHOULD_NOT_SET).toBeUndefined()
+      expect(spawnSyncSpy).not.toHaveBeenCalled()
     })
 
     test('does nothing when direnv is not available', () => {
-      fs.writeFileSync(path.join(tempDir, '.envrc'), 'export SHOULD_NOT_SET=value')
+      fs.writeFileSync(
+        path.join(tempDir, '.envrc'),
+        'export SHOULD_NOT_SET=value',
+      )
       process.chdir(tempDir)
 
       spawnSyncSpy.mockImplementation((cmd: string, args: string[]) => {
@@ -494,7 +552,10 @@ describe('init-direnv', () => {
     })
 
     test('does nothing when direnv export fails', () => {
-      fs.writeFileSync(path.join(tempDir, '.envrc'), 'export SHOULD_NOT_SET=value')
+      fs.writeFileSync(
+        path.join(tempDir, '.envrc'),
+        'export SHOULD_NOT_SET=value',
+      )
       process.chdir(tempDir)
 
       spawnSyncSpy.mockImplementation((cmd: string, args: string[]) => {
@@ -518,7 +579,14 @@ describe('init-direnv', () => {
             signal: null,
           } as childProcessModule.SpawnSyncReturns<string>
         }
-        return { status: 1, stdout: '', stderr: '', pid: 0, output: [], signal: null } as childProcessModule.SpawnSyncReturns<string>
+        return {
+          status: 1,
+          stdout: '',
+          stderr: '',
+          pid: 0,
+          output: [],
+          signal: null,
+        } as childProcessModule.SpawnSyncReturns<string>
       })
 
       initializeDirenv()

@@ -1,12 +1,18 @@
 # FID-2026-0718-007 — high — Scout Delegation Quality + MCP Proxy Timeout
 
-**Created:** 2026-07-18
-**Status:** closed / archived
+**Filename:** `FID-2026-0718-007-scout-delegation-quality.md`
+**ID:** FID-2026-0718-007
 **Severity:** high
-**Creator:** Orchestrator (ECHO v0.2.0)
-**Source:** FID-2026-0718-006 code review finding + user request to fix MCP proxy timeout/disabled-proxy edge case
+**Status:** closed
+**Created:** 2026-07-18
+**Author:** Historical record (metadata backfill)
 
 ---
+
+## Metadata Normalization Note
+
+This historical record was normalized on 2026-07-31 for FreeBuff ECHO v0.1.2 compliance. The original body and evidence are preserved. Original status: `closed / archived`; Original ID: `FID-2026-0718-007-scout-delegation-quality`. Canonical ID: `FID-2026-0718-007`. Backfilled fields: Filename, ID, Author. Canonical status reflects the record's lifecycle location; it does not add implementation evidence.
+
 
 ## Summary
 

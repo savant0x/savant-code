@@ -1,4 +1,4 @@
-import { AnalyticsEvent} from '@savant-code/common/constants/analytics-events'
+import { AnalyticsEvent } from '@savant-code/common/constants/analytics-events'
 import { shouldUseLocalTokenCount } from '@savant-code/common/constants/free-agents'
 import {
   supportsAssistantPrefill,
@@ -35,8 +35,14 @@ import { additionalSystemPrompts } from './system-prompt/prompts'
 import { getAgentTemplate } from './templates/agent-registry'
 import { buildAgentToolSet } from './templates/prompts'
 import { getAgentPrompt } from './templates/strings'
+import { filterToolSet } from './tools/filter-tool-set'
 import { getToolSet } from './tools/prompts'
 import { processStream } from './tools/stream-parser'
+import {
+  resetThinkerConvergenceState,
+  runThinkerConvergenceGate,
+} from './tools/thinker-convergence-gate'
+import { cleanupThoughtSession } from './tools/thought-session-store'
 import { setActivity } from './util/activity-tracking'
 import { getAgentOutput } from './util/agent-output'
 import {
@@ -219,6 +225,7 @@ export const runAgentStep = async (
   agentState: AgentState
   fullResponse: string
   shouldEndTurn: boolean
+  hasNativeIncompleteToolCall: boolean
   messageId: string | null
   nResponses?: string[]
 }> => {
@@ -252,7 +259,8 @@ export const runAgentStep = async (
   const agentStepId = crypto.randomUUID()
   trackEvent({
     event: AnalyticsEvent.AGENT_STEP,
-    userId: userId ?? '',      properties: {
+    userId: userId ?? '',
+    properties: {
       agentStepId,
       clientSessionId,
       fingerprintId,
@@ -286,6 +294,7 @@ export const runAgentStep = async (
       agentState,
       fullResponse: STEP_WARNING_MESSAGE,
       shouldEndTurn: true,
+      hasNativeIncompleteToolCall: false,
       messageId: null,
     }
   }
@@ -350,8 +359,7 @@ export const runAgentStep = async (
   const systemTokens = countTokens(system)
 
   let cacheDebugCorrelation:
-    | ReturnType<typeof createCacheDebugSnapshot>
-    | undefined
+    ReturnType<typeof createCacheDebugSnapshot> | undefined
   if (CACHE_DEBUG_FULL_LOGGING) {
     try {
       cacheDebugCorrelation = createCacheDebugSnapshot({
@@ -363,7 +371,10 @@ export const runAgentStep = async (
                 name,
                 {
                   description: tool.description,
-                  inputSchema: tool.inputSchema as unknown as Record<string, JSONValue>,
+                  inputSchema: tool.inputSchema as unknown as Record<
+                    string,
+                    JSONValue
+                  >,
                 },
               ]),
             )
@@ -463,6 +474,7 @@ export const runAgentStep = async (
         agentState,
         fullResponse: '',
         shouldEndTurn: true,
+        hasNativeIncompleteToolCall: false,
         messageId: null,
         nResponses: undefined,
       }
@@ -493,6 +505,7 @@ export const runAgentStep = async (
       agentState,
       fullResponse: responsesString,
       shouldEndTurn: false,
+      hasNativeIncompleteToolCall: false,
       messageId: null,
       nResponses,
     }
@@ -526,6 +539,7 @@ export const runAgentStep = async (
   const {
     fullResponse: fullResponseAfterStream,
     hadToolCallError,
+    hasNativeIncompleteToolCall,
     messageId,
     toolCalls,
     toolResults: newToolResults,
@@ -547,11 +561,7 @@ export const runAgentStep = async (
   fullResponse = fullResponseAfterStream
 
   // FID-2026-0718-009 M5: model stream complete — idle until next event.
-  setActivity(
-    agentState,
-    { kind: 'idle', since: Date.now() },
-    onResponseChunk,
-  )
+  setActivity(agentState, { kind: 'idle', since: Date.now() }, onResponseChunk)
 
   agentState.messageHistory = expireMessages(
     agentState.messageHistory,
@@ -624,7 +634,11 @@ export const runAgentStep = async (
       shouldEndTurn = false
       const goalNotSatisfied = /\bGOAL_NOT_SATISFIED\b/.test(fullResponse)
       const goalError = /\bGOAL_ERROR\b/.test(fullResponse)
-      const reason = goalNotSatisfied ? 'NOT_SATISFIED' : goalError ? 'ERROR' : 'no marker found'
+      const reason = goalNotSatisfied
+        ? 'NOT_SATISFIED'
+        : goalError
+          ? 'ERROR'
+          : 'no marker found'
       logger.debug(
         { goalCondition: agentState.goalCondition, reason },
         `Goal evaluation: ${reason} — continuing iteration`,
@@ -672,6 +686,7 @@ export const runAgentStep = async (
     agentState,
     fullResponse,
     shouldEndTurn,
+    hasNativeIncompleteToolCall,
     messageId,
     nResponses: undefined,
   }
@@ -828,6 +843,7 @@ export async function loopAgentSteps(
   // Use parent's tools for prompt caching when inheritParentSystemPrompt is true
   const useParentTools =
     agentTemplate.inheritParentSystemPrompt && parentTools !== undefined
+  const inheritedParentTools: ToolSet = parentTools ?? {}
 
   // Initialize message history with user prompt and instructions on first iteration
   const instructionsPrompt = await getAgentPrompt({
@@ -871,8 +887,19 @@ export async function loopAgentSteps(
     system = systemPrompt ?? ''
   }
 
-  // Build agent tools (agents as direct tool calls) for non-inherited tools
-  const agentTools = useParentTools
+  // Prompt inheritance and capability inheritance are separate concerns. A
+  // child may reuse the parent's system prompt while still needing its own
+  // tool definitions when the parent does not contain every allowed tool.
+  const parentToolKeys = new Set(Object.keys(inheritedParentTools))
+  const childToolsSubsetOfParent = agentTemplate.toolNames.every((toolName) =>
+    parentToolKeys.has(toolName),
+  )
+  const useInheritedTools = useParentTools && childToolsSubsetOfParent
+
+  // Build agent tools (agents as direct tool calls) whenever the child needs
+  // its own tool construction. This preserves spawnable child-agent tools in
+  // the same fallback path as built-in, custom, MCP, and skill tools.
+  const agentTools = useInheritedTools
     ? {}
     : await buildAgentToolSet({
         ...params,
@@ -880,8 +907,8 @@ export async function loopAgentSteps(
         agentTemplates: localAgentTemplates,
       })
 
-  const tools = useParentTools
-    ? parentTools
+  const tools = useInheritedTools
+    ? filterToolSet(inheritedParentTools, agentTemplate.toolNames)
     : await getToolSet({
         toolNames: agentTemplate.toolNames,
         additionalToolDefinitions: async () => {
@@ -985,6 +1012,7 @@ export async function loopAgentSteps(
   let currentParams = spawnParams
   let totalSteps = 0
   let nResponses: string[] | undefined = undefined
+  let consecutiveNativeIncompleteSteps = 0
 
   // FID-2026-0725-083: Parse goal condition from the initial message.
   // The /goal command sends <goal condition="..."> in the message content.
@@ -1011,7 +1039,8 @@ export async function loopAgentSteps(
   })
   // FID-2026-0725-085 Layer 3: Wire resolved context window into agentState
   // so handleSteps (savant.ts) can use it for auto-compact threshold.
-  initialAgentState.maxContextLength = contextCompactor.getThresholds().autoCompact + 30_000
+  initialAgentState.maxContextLength =
+    contextCompactor.getThresholds().autoCompact + 30_000
 
   try {
     while (true) {
@@ -1072,7 +1101,11 @@ export async function loopAgentSteps(
           messages: messagesWithStepPrompt as JSONValue[],
           system,
           model: agentTemplate.model,
-          tools: toolsForTokenCount as Array<{ name: string; description?: string; input_schema?: JSONValue }>,
+          tools: toolsForTokenCount as Array<{
+            name: string
+            description?: string
+            input_schema?: JSONValue
+          }>,
           fetch,
           logger,
           env: { clientEnv, ciEnv },
@@ -1093,14 +1126,24 @@ export async function loopAgentSteps(
       // This is zero-cost (no LLM call) and reduces context size incrementally.
       const thresholds = contextCompactor.getThresholds()
       const messagesBeforeMicroCompact = currentAgentState.messageHistory.length
-      const microResult = contextCompactor.microCompact(currentAgentState.messageHistory as unknown as CompactionMessage[])
+      const microResult = contextCompactor.microCompact(
+        currentAgentState.messageHistory as unknown as CompactionMessage[],
+      )
       if (microResult.tokensSaved > 0) {
-        currentAgentState.messageHistory = microResult.messages as unknown as typeof currentAgentState.messageHistory
+        currentAgentState.messageHistory =
+          microResult.messages as unknown as typeof currentAgentState.messageHistory
         // FID-2026-0725-085: Log visible compaction summary.
         // Follows the Kilo Code / OpenClaude pattern: pause, output summary, proceed.
-        const percentUsed = Math.round((currentAgentState.contextTokenCount / thresholds.autoCompact) * 100)
+        const percentUsed = Math.round(
+          (currentAgentState.contextTokenCount / thresholds.autoCompact) * 100,
+        )
         logger.info(
-          { messagesCleared: messagesBeforeMicroCompact - microResult.messages.length, tokensSaved: microResult.tokensSaved, percentUsed },
+          {
+            messagesCleared:
+              messagesBeforeMicroCompact - microResult.messages.length,
+            tokensSaved: microResult.tokensSaved,
+            percentUsed,
+          },
           `⚙️ Context micro-compacted: cleared stale tool results, ~${microResult.tokensSaved.toLocaleString()} tokens saved. Context at ${percentUsed}% of auto-compact threshold.`,
         )
       }
@@ -1115,10 +1158,16 @@ export async function loopAgentSteps(
       if (autoCompactCheck.shouldCompact) {
         const degradationWarning = contextCompactor.getDegradationWarning()
         if (degradationWarning) {
-          logger.warn({ contextTokenCount: currentAgentState.contextTokenCount }, degradationWarning)
+          logger.warn(
+            { contextTokenCount: currentAgentState.contextTokenCount },
+            degradationWarning,
+          )
         } else {
           logger.warn(
-            { contextTokenCount: currentAgentState.contextTokenCount, threshold: thresholds.autoCompact },
+            {
+              contextTokenCount: currentAgentState.contextTokenCount,
+              threshold: thresholds.autoCompact,
+            },
             `⚠️ Context approaching auto-compact threshold (${currentAgentState.contextTokenCount.toLocaleString()} / ${thresholds.autoCompact.toLocaleString()} tokens). Full summarization will trigger via context-pruner.`,
           )
         }
@@ -1149,7 +1198,9 @@ export async function loopAgentSteps(
           system,
           tools,
           template: agentTemplate,
-          toolCallParams: currentParams as Record<string, string | number | boolean | null | undefined> | undefined,
+          toolCallParams: currentParams as
+            | Record<string, string | number | boolean | null | undefined>
+            | undefined,
         })
         const {
           agentState: programmaticAgentState,
@@ -1210,6 +1261,7 @@ export async function loopAgentSteps(
       const {
         agentState: newAgentState,
         shouldEndTurn: llmShouldEndTurn,
+        hasNativeIncompleteToolCall,
         messageId,
         nResponses: generatedResponses,
       } = await runAgentStep({
@@ -1226,6 +1278,51 @@ export async function loopAgentSteps(
         additionalToolDefinitions: additionalToolDefinitionsWithCache,
       })
 
+      Object.assign(initialAgentState, newAgentState)
+      currentAgentState = initialAgentState
+      nResponses = generatedResponses
+
+      let stepStatus: 'completed' | 'failed' = 'completed'
+      let stepErrorMessage: string | undefined
+      if (hasNativeIncompleteToolCall) {
+        consecutiveNativeIncompleteSteps += 1
+        if (consecutiveNativeIncompleteSteps >= 2) {
+          stepStatus = 'failed'
+          stepErrorMessage = NATIVE_TOOL_CALL_RECOVERY_EXHAUSTED_MESSAGE
+        }
+        shouldEndTurn = false
+      } else {
+        // “Consecutive” means no intervening normal text, valid tool result, or
+        // unrelated tool error. Any non-native-incomplete step breaks recovery
+        // streaks before the normal turn decision is applied.
+        consecutiveNativeIncompleteSteps = 0
+        shouldEndTurn = llmShouldEndTurn
+      }
+
+      // FID-2026-0801-012: Thinker convergence gate.
+      // Runs at the runtime boundary AFTER the native step's tool results are
+      // committed to history, and BEFORE the loop-top `output === undefined &&
+      // shouldEndTurn` restart check. For the Thinker it builds the
+      // FinalArtifact from the session snapshot and sets `agentState.output`
+      // for every terminal status — otherwise the restart branch would fire
+      // the "You must use set_output" message and reintroduce
+      // `structuredOutput: null` (set_output is not in the Thinker's
+      // toolNames). Retries keep the loop going with a typed message.
+      if (
+        agentTemplate.outputMode === 'structured_output' &&
+        agentTemplate.toolNames.includes('sequentialthinking')
+      ) {
+        const gateResult = runThinkerConvergenceGate({
+          runId,
+          agentState: currentAgentState,
+          shouldEndTurn,
+          logger,
+        })
+        if (gateResult.retryAppended) {
+          shouldEndTurn = false
+        }
+      }
+
       if (newAgentState.runId) {
         await addAgentStep({
           ...params,
@@ -1234,25 +1331,25 @@ export async function loopAgentSteps(
           credits: newAgentState.directCreditsUsed - creditsBefore,
           childRunIds: newAgentState.childRunIds.slice(childrenBefore),
           messageId,
-          status: 'completed',
+          status: stepStatus,
+          errorMessage: stepErrorMessage,
           startTime,
         })
       } else {
         logger.error('No runId found for agent state after finishing agent run')
       }
 
-      Object.assign(initialAgentState, newAgentState)
-      currentAgentState = initialAgentState
-      shouldEndTurn = llmShouldEndTurn
-      nResponses = generatedResponses
+      if (stepErrorMessage !== undefined) {
+        throw new Error(stepErrorMessage)
+      }
 
       currentPrompt = undefined
       currentParams = undefined
 
       // Steering: if the host fed user messages while this step ran, append them
       // now (the step's LLM call + tools have completed, so history is in a clean
-      // state) and keep the turn going so the agent responds to them next step,
-      // rather than waiting for the whole turn to finish.
+      // state) and keep the turn going so the agent runs a second step that can
+      // see (and act on) the new message.
       const steered = params.drainSteeringMessages?.()
       if (steered?.length) {
         currentAgentState.messageHistory = [
@@ -1340,14 +1437,23 @@ export async function loopAgentSteps(
     // FID-2026-0725-085 Layer 4: Reactive compact — catch prompt-too-long errors,
     // aggressively truncate, and retry once before surfacing the error.
     if (ContextCompactor.isPromptTooLongError(error) && !signal.aborted) {
-      logger.warn({ error: getErrorObject(error) }, 'Layer 4 reactive compact: prompt-too-long detected, attempting emergency truncation')
+      logger.warn(
+        { error: getErrorObject(error) },
+        'Layer 4 reactive compact: prompt-too-long detected, attempting emergency truncation',
+      )
       const reactiveResult = contextCompactor.reactiveCompact(
         currentAgentState.messageHistory as unknown as CompactionMessage[],
       )
       if (reactiveResult.truncated) {
-        currentAgentState.messageHistory = reactiveResult.messages as unknown as typeof currentAgentState.messageHistory
+        currentAgentState.messageHistory =
+          reactiveResult.messages as unknown as typeof currentAgentState.messageHistory
         logger.warn(
-          { messagesRemoved: currentAgentState.messageHistory.length - reactiveResult.messages.length, tokensSaved: reactiveResult.tokensSaved },
+          {
+            messagesRemoved:
+              currentAgentState.messageHistory.length -
+              reactiveResult.messages.length,
+            tokensSaved: reactiveResult.tokensSaved,
+          },
           `Layer 4 reactive compact: truncated ${currentAgentState.messageHistory.length - reactiveResult.messages.length} messages, saved ~${reactiveResult.tokensSaved.toLocaleString()} tokens. Retrying API call once.`,
         )
         // Retry the API call once after reactive compaction
@@ -1367,7 +1473,10 @@ export async function loopAgentSteps(
           // Retry succeeded — use the result
           Object.assign(initialAgentState, retryResult.agentState)
           currentAgentState = initialAgentState
-          contextCompactor.recordCompactionResult(true, currentAgentState.contextTokenCount)
+          contextCompactor.recordCompactionResult(
+            true,
+            currentAgentState.contextTokenCount,
+          )
           await finishAgentRun({
             ...params,
             runId,
@@ -1383,7 +1492,10 @@ export async function loopAgentSteps(
         } catch (retryError) {
           // Retry also failed — log and fall through to standard error handling
           contextCompactor.recordCompactionResult(false)
-          logger.error({ retryError: getErrorObject(retryError) }, 'Layer 4 reactive compact: retry also failed')
+          logger.error(
+            { retryError: getErrorObject(retryError) },
+            'Layer 4 reactive compact: retry also failed',
+          )
         }
       }
     }
@@ -1467,8 +1579,16 @@ export async function loopAgentSteps(
     // but abort/error exits (e.g. chat SSE disconnects) would otherwise leak
     // the run's generator, STEP_ALL flag, and proposed file content forever.
     clearProgrammaticRunState(runId)
+    // FID-2026-0801-012: per-run ThoughtSession and retry counters must not
+    // leak across abort/error exits; cleanup is idempotent and marks an
+    // in-flight session cancelled.
+    cleanupThoughtSession(runId)
+    resetThinkerConvergenceState(runId)
   }
 }
+
+const NATIVE_TOOL_CALL_RECOVERY_EXHAUSTED_MESSAGE =
+  'Native tool-call recovery failed twice consecutively; ending the agent run without executing the incomplete tool call.'
 
 const STEP_WARNING_MESSAGE = [
   "I've made quite a few responses in a row.",

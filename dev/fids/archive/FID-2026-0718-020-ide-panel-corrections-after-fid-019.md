@@ -1,11 +1,18 @@
 # FID-2026-0718-020 — medium — IDE Problems Panel Corrections After FID-019 v5
 
-**Status:** closed / archived
-**Severity:** medium (IDE-hygiene + future-proofing; no runtime impact)
-**Opened:** 2026-07-19
-**Severity justification:** tsconfig baseUrl may shift IDE warnings into concepts the language service recomputes, but typecheck runtime is unaffected.
+**Filename:** `FID-2026-0718-020-ide-panel-corrections-after-fid-019.md`
+**ID:** FID-2026-0718-021
+**Severity:** medium
+**Status:** closed
+**Created:** 2026-0718 00:00
+**Author:** Historical record (metadata backfill)
 
 ---
+
+## Metadata Normalization Note
+
+This historical record was normalized on 2026-07-31 for FreeBuff ECHO v0.1.2 compliance. The original body and evidence are preserved. Original status: `closed / archived`; Original ID: `FID-2026-0718-020-ide-panel-corrections-after-fid-019`. Canonical ID: `FID-2026-0718-021`. Backfilled fields: Filename, ID, Created, Author. Canonical status reflects the record's lifecycle location; it does not add implementation evidence.
+
 
 ## Honest Acknowledgment — FID-019 v5 was incomplete
 

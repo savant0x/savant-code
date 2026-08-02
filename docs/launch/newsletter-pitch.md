@@ -23,12 +23,14 @@ Most AI coding tools optimize for speed. Savant Code optimizes for correctness.
 The loop is slower by design, but the output is code that actually works. It is
 built for developers who are tired of debugging hallucinated patches.
 
-## Privacy-first by architecture
+## Local-first and provider choice
 
 - Local-first: auto-detects Ollama and routes inference locally.
-- BYOK: bring your own API keys if you prefer.
-- No mandatory account, no hosted inference tier that sees your code.
-- Telemetry and ads are opt-in and default to off.
+- BYOK: bring your own API keys if you prefer; remote providers receive the
+  prompt and context you choose to send them.
+- No mandatory account is required for a local Ollama workflow.
+- Telemetry/privacy policy remains an explicit pre-launch decision and is not
+  asserted as resolved by this submission.
 
 ## Built with
 

@@ -13,7 +13,11 @@ import {
   test,
 } from 'bun:test'
 
-import { createToolCallChunk, mockFileContext, mockResearcherAgent } from './test-utils'
+import {
+  createToolCallChunk,
+  mockFileContext,
+  mockResearcherAgent,
+} from './test-utils'
 import * as webApi from '../llm-api/savant-code-web-api'
 import { runAgentStep } from '../run-agent-step'
 import { assembleLocalAgentTemplates } from '../templates/agent-registry'
@@ -54,7 +58,10 @@ describe('web_search tool with researcher agent (via web API facade)', () => {
       agentType: 'researcher',
       ancestorRunIds: [],
       clientSessionId: 'test-session',
-      fileContext: mockFileContext,
+      fileContext: {
+        ...mockFileContext,
+        permissionMode: 'unsafe' as const,
+      },
       fingerprintId: 'test-fingerprint',
       onResponseChunk: () => {},
       repoId: undefined,
@@ -90,6 +97,7 @@ describe('web_search tool with researcher agent (via web API facade)', () => {
 
   const mockFileContextWithAgents = {
     ...mockFileContext,
+    permissionMode: 'unsafe' as const,
     agentTemplates: { researcher: mockResearcherAgent },
   }
 

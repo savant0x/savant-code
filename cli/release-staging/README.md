@@ -1,10 +1,12 @@
-# 🚀 Codecane - The most powerful coding agent (STAGING)
+# 🚀 Savant-Code Staging — Internal Test Package
 
-**⚠️ This is a staging/beta release for testing purposes.**
+**⚠️ This package is private and for internal staging validation only. It is not a production release.**
+
+The package name is `savant-code-staging`; its in-app display name remains Codecane for staging identification.
 
 Codecane is a CLI tool that writes code for you.
 
-1. Run `savant-code` from your project directory
+1. Run `savant-code-staging` from your project directory
 2. Tell it what to do
 3. It will read and write to files and run commands to produce the code you want
 
@@ -12,23 +14,23 @@ Note: Codecane will run commands in your terminal as it deems necessary to fulfi
 
 ## Installation
 
-To install Codecane (staging), run:
+This package is not published for public installation. For a local validation pack only:
 
 ```bash
-npm install -g savant-code@beta
+npm pack ./cli/release-staging --dry-run
 ```
 
-(Use `sudo` if you get a permission error.)
+Do not install this package as the production `savant-code` CLI.
 
 ## Usage
 
-After installation, you can start Codecane by running:
+For local validation, start the staging binary with:
 
 ```bash
-savant-code [project-directory]
+savant-code-staging [project-directory]
 ```
 
-If no project directory is specified, Codecane will use the current directory.
+If no project directory is specified, Savant-Code Staging will use the current directory.
 
 Once running, simply chat with Codecane to say what coding task you want done.
 
@@ -58,13 +60,7 @@ Some have said every change should be paired with a unit test. In 2024, every ch
 
 ## Troubleshooting
 
-If you are getting permission errors during installation, try using sudo:
-
-```
-sudo npm install -g savant-code@beta
-```
-
-If you still have errors, it's a good idea to [reinstall Node](https://nodejs.org/en/download).
+This package is not intended for installation from npm. If a local validation pack fails, rerun the dry-run command above and report the failure to the release owner.
 
 ## Feedback
 

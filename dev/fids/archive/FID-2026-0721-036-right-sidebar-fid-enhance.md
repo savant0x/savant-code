@@ -1,13 +1,18 @@
 # FID: Enhance Right Sidebar FID Display
 
 **Filename:** `FID-2026-0721-036-right-sidebar-fid-enhance.md`
-**ID:** FID-2026-0721-036
+**ID:** FID-2026-0721-001
+**Canonical predecessor ID:** FID-2026-0721-036 (duplicate historical ID corrected by FID-2026-0731-004)
 **Severity:** medium
 **Status:** closed
 **Created:** 2026-07-21 18:00
 **Author:** ECHO Agent (Orchestrator)
 
 ---
+
+## Metadata Normalization Note
+
+Canonical ID: `FID-2026-0721-001`; Original ID: `FID-2026-0721-036-right-sidebar`. Historical body preserved.
 
 ## Summary
 

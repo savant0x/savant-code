@@ -1,8 +1,10 @@
- 
 import type { TrackEventFn } from './analytics'
 import type { SendActionFn } from './client'
 import type { PromptResult } from '../../util/error'
-import type { OpenRouterProviderRoutingOptions , AgentTemplate } from '../agent-template'
+import type {
+  OpenRouterProviderRoutingOptions,
+  AgentTemplate,
+} from '../agent-template'
 import type { ParamsExcluding } from '../function-params'
 import type { JSONValue } from '../json'
 import type { Logger } from './logger'
@@ -10,6 +12,40 @@ import type { Model } from '../../old-constants'
 import type { Message } from '../messages/savant-code-message'
 import type { generateText, streamText, ToolCallPart } from 'ai'
 import type z from 'zod/v4'
+
+export type NativeToolCallError = {
+  type: 'native-incomplete'
+  toolName: string
+}
+
+export function isNativeToolCallError(
+  value: object,
+): value is NativeToolCallError {
+  if (!('type' in value) || !('toolName' in value)) {
+    return false
+  }
+
+  const candidate = value as {
+    type: string
+    toolName: string
+  }
+  return (
+    candidate.type === 'native-incomplete' &&
+    typeof candidate.toolName === 'string'
+  )
+}
+
+export type StreamErrorChunk =
+  | {
+      type: 'error'
+      message: string
+    }
+  | {
+      type: 'error'
+      message: string
+      errorClass: 'native-incomplete'
+      toolName: string
+    }
 
 export type StreamChunk =
   | {
@@ -25,7 +61,7 @@ export type StreamChunk =
       ToolCallPart,
       'type' | 'toolCallId' | 'toolName' | 'input' | 'providerOptions'
     >
-  | { type: 'error'; message: string }
+  | StreamErrorChunk
 
 export type CacheDebugUsageData = {
   inputTokens: number
@@ -119,12 +155,12 @@ export type PromptAiSdkStructuredInput<T> = {
   timeout?: number
   chargeUser?: boolean
   agentId?: string
-    onCostCalculated?: (credits: number) => Promise<void>
-    onCacheDebugProviderRequestBuilt?: (params: {
-      provider: string
-      rawBody: JSONValue
-      normalizedBody?: JSONValue
-    }) => void
+  onCostCalculated?: (credits: number) => Promise<void>
+  onCacheDebugProviderRequestBuilt?: (params: {
+    provider: string
+    rawBody: JSONValue
+    normalizedBody?: JSONValue
+  }) => void
   onCacheDebugUsageReceived?: (usage: CacheDebugUsageData) => void
   includeCacheControl?: boolean
   cacheDebugCorrelation?: string

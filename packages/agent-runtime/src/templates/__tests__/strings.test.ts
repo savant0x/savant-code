@@ -110,9 +110,7 @@ describe('getAgentPrompt', () => {
   })
 
   test('formats current date for prompts', () => {
-    expect(formatCurrentDate(new Date(2026, 4, 22, 12))).toBe(
-      'May 22, 2026',
-    )
+    expect(formatCurrentDate(new Date(2026, 4, 22, 12))).toBe('May 22, 2026')
   })
 
   describe('spawnerPrompt inclusion in instructionsPrompt', () => {
@@ -138,7 +136,7 @@ describe('getAgentPrompt', () => {
 
       const agentTemplates: Record<string, AgentTemplate> = {
         'main-agent': mainAgentTemplate,
-        'scout': filePickerTemplate,
+        scout: filePickerTemplate,
         'code-searcher': codeSearcherTemplate,
       }
 
@@ -157,8 +155,12 @@ describe('getAgentPrompt', () => {
 
       expect(result).toBeDefined()
       expect(result).toContain('You can spawn the following agents:')
-      expect(result).toContain('- file-picker: Spawn to find relevant files in a codebase')
-      expect(result).toContain('- code-searcher: Mechanically runs multiple code search queries')
+      expect(result).toContain(
+        '- scout: Spawn to find relevant files in a codebase',
+      )
+      expect(result).toContain(
+        '- code-searcher: Mechanically runs multiple code search queries',
+      )
     })
 
     test('includes only agent name when spawnerPrompt is not defined', async () => {
@@ -275,61 +277,61 @@ describe('getAgentPrompt', () => {
     })
 
     test('replaces MODEL_INFO with provided modelInfoText', async () => {
-    const agentTemplate = createMockAgentTemplate({
-      id: 'model-info-agent',
-      systemPrompt: `Model info: ${PLACEHOLDER.MODEL_INFO}`,
-    })
-    const agentTemplates: Record<string, AgentTemplate> = {
-      'model-info-agent': agentTemplate,
-    }
+      const agentTemplate = createMockAgentTemplate({
+        id: 'model-info-agent',
+        systemPrompt: `Model info: ${PLACEHOLDER.MODEL_INFO}`,
+      })
+      const agentTemplates: Record<string, AgentTemplate> = {
+        'model-info-agent': agentTemplate,
+      }
 
-    const result = await getAgentPrompt({
-      agentTemplate,
-      promptType: { type: 'systemPrompt' },
-      fileContext: createMockFileContext(),
-      agentState: createMockAgentState('model-info-agent'),
-      agentTemplates,
-      modelInfoText: 'You are running on Test Model.',
-      additionalToolDefinitions: async () => ({}),
-      logger: createMockLogger(),
-      apiKey: TEST_AGENT_RUNTIME_IMPL.apiKey,
-      databaseAgentCache: TEST_AGENT_RUNTIME_IMPL.databaseAgentCache,
-      fetchAgentFromDatabase: TEST_AGENT_RUNTIME_IMPL.fetchAgentFromDatabase,
-    })
+      const result = await getAgentPrompt({
+        agentTemplate,
+        promptType: { type: 'systemPrompt' },
+        fileContext: createMockFileContext(),
+        agentState: createMockAgentState('model-info-agent'),
+        agentTemplates,
+        modelInfoText: 'You are running on Test Model.',
+        additionalToolDefinitions: async () => ({}),
+        logger: createMockLogger(),
+        apiKey: TEST_AGENT_RUNTIME_IMPL.apiKey,
+        databaseAgentCache: TEST_AGENT_RUNTIME_IMPL.databaseAgentCache,
+        fetchAgentFromDatabase: TEST_AGENT_RUNTIME_IMPL.fetchAgentFromDatabase,
+      })
 
-    expect(result).toBe('Model info: You are running on Test Model.')
-    expect(result).not.toContain(PLACEHOLDER.MODEL_INFO)
-  })
-
-  test('falls back to model id when MODEL_INFO is omitted', async () => {
-    const agentTemplate = createMockAgentTemplate({
-      id: 'model-info-fallback-agent',
-      model: 'openai/gpt-4o',
-      systemPrompt: `Model info: ${PLACEHOLDER.MODEL_INFO}.`,
-    })
-    const agentTemplates: Record<string, AgentTemplate> = {
-      'model-info-fallback-agent': agentTemplate,
-    }
-
-    const result = await getAgentPrompt({
-      agentTemplate,
-      promptType: { type: 'systemPrompt' },
-      fileContext: createMockFileContext(),
-      agentState: createMockAgentState('model-info-fallback-agent'),
-      agentTemplates,
-      additionalToolDefinitions: async () => ({}),
-      logger: createMockLogger(),
-      apiKey: TEST_AGENT_RUNTIME_IMPL.apiKey,
-      databaseAgentCache: TEST_AGENT_RUNTIME_IMPL.databaseAgentCache,
-      fetchAgentFromDatabase: TEST_AGENT_RUNTIME_IMPL.fetchAgentFromDatabase,
+      expect(result).toBe('Model info: You are running on Test Model.')
+      expect(result).not.toContain(PLACEHOLDER.MODEL_INFO)
     })
 
-    expect(result).toContain('Model info:')
-    expect(result).toContain('openai/gpt-4o')
-    expect(result).not.toContain(PLACEHOLDER.MODEL_INFO)
-  })
+    test('falls back to model id when MODEL_INFO is omitted', async () => {
+      const agentTemplate = createMockAgentTemplate({
+        id: 'model-info-fallback-agent',
+        model: 'openai/gpt-4o',
+        systemPrompt: `Model info: ${PLACEHOLDER.MODEL_INFO}.`,
+      })
+      const agentTemplates: Record<string, AgentTemplate> = {
+        'model-info-fallback-agent': agentTemplate,
+      }
 
-  test('does not include spawnable agents for non-instructionsPrompt types', async () => {
+      const result = await getAgentPrompt({
+        agentTemplate,
+        promptType: { type: 'systemPrompt' },
+        fileContext: createMockFileContext(),
+        agentState: createMockAgentState('model-info-fallback-agent'),
+        agentTemplates,
+        additionalToolDefinitions: async () => ({}),
+        logger: createMockLogger(),
+        apiKey: TEST_AGENT_RUNTIME_IMPL.apiKey,
+        databaseAgentCache: TEST_AGENT_RUNTIME_IMPL.databaseAgentCache,
+        fetchAgentFromDatabase: TEST_AGENT_RUNTIME_IMPL.fetchAgentFromDatabase,
+      })
+
+      expect(result).toContain('Model info:')
+      expect(result).toContain('openai/gpt-4o')
+      expect(result).not.toContain(PLACEHOLDER.MODEL_INFO)
+    })
+
+    test('does not include spawnable agents for non-instructionsPrompt types', async () => {
       const filePickerTemplate = createMockAgentTemplate({
         id: 'scout',
         displayName: 'File Picker',
@@ -346,7 +348,7 @@ describe('getAgentPrompt', () => {
 
       const agentTemplates: Record<string, AgentTemplate> = {
         'main-agent': mainAgentTemplate,
-        'scout': filePickerTemplate,
+        scout: filePickerTemplate,
       }
 
       // Test systemPrompt - should not include spawnable agents

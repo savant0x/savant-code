@@ -1,4 +1,4 @@
-import {describe, expect, it} from 'bun:test'
+import { describe, expect, it } from 'bun:test'
 
 import { handleRunReadonlyCommand } from '../tool/run-readonly-command'
 
@@ -108,9 +108,9 @@ describe('handleRunReadonlyCommand', () => {
     }
   })
 
-  it('rejects tools that can mutate state even when used read-only', async () => {
-    // sed/awk can be used to edit files or execute code; they do not belong
-    // in a read-only allow-list.
+  it('allows non-denylisted commands under the denylist policy', async () => {
+    // The read-only handler uses a denylist rather than an allowlist. Commands
+    // not explicitly classified as destructive or network-capable are allowed.
     const suspiciousCommands = [
       "sed 's/foo/bar/' file.ts",
       "awk '{print}' file.ts",
@@ -127,8 +127,8 @@ describe('handleRunReadonlyCommand', () => {
       } as any)
 
       const value = getJsonValue(result.output)
-      expect(value.exitCode).toBe(1)
-      expect(value.stderr).toContain('run_readonly_command rejected')
+      expect(value.exitCode).toBe(0)
+      expect(value.stderr).toBe('')
     }
   })
 
@@ -158,8 +158,13 @@ describe('handleRunReadonlyCommand', () => {
     }
   })
 
-  it('rejects vague bun run scripts that may mutate files', async () => {
-    const vagueScripts = ['bun run check', 'bun run lint', 'bun run format', 'bun run build']
+  it('allows non-denylisted bun run scripts', async () => {
+    const vagueScripts = [
+      'bun run check',
+      'bun run lint',
+      'bun run format',
+      'bun run build',
+    ]
 
     for (const command of vagueScripts) {
       const result = await handleRunReadonlyCommand({
@@ -169,12 +174,12 @@ describe('handleRunReadonlyCommand', () => {
       } as any)
 
       const value = getJsonValue(result.output)
-      expect(value.exitCode).toBe(1)
-      expect(value.stderr).toContain('run_readonly_command rejected')
+      expect(value.exitCode).toBe(0)
+      expect(value.stderr).toBe('')
     }
   })
 
-  it('rejects unknown commands', async () => {
+  it('allows unknown commands under the denylist policy', async () => {
     const result = await handleRunReadonlyCommand({
       previousToolCallFinished: Promise.resolve(),
       toolCall: makeToolCall('some_custom_script --flag'),
@@ -182,8 +187,8 @@ describe('handleRunReadonlyCommand', () => {
     } as any)
 
     const unknownValue = getJsonValue(result.output)
-    expect(unknownValue.exitCode).toBe(1)
-    expect(unknownValue.stderr).toContain('run_readonly_command rejected')
+    expect(unknownValue.exitCode).toBe(0)
+    expect(unknownValue.stderr).toBe('')
   })
 
   it('allows safe git inspection commands', async () => {

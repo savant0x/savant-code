@@ -1,13 +1,18 @@
 # FID: Savant-Code Rebrand
 
-**Filename:** `FID-savant-code-rebrand.md`
-**ID:** `FID-savant-code-rebrand`
+**Filename:** `FID-2026-0717-015-savant-code-rebrand.md`
+**ID:** FID-2026-0717-018
 **Severity:** high
-**Status:** closed / archived
+**Status:** closed
 **Created:** 2026-07-17 13:00
 **Author:** Orchestrator
 
 ---
+
+## Metadata Normalization Note
+
+This historical record was normalized on 2026-07-31 for FreeBuff ECHO v0.1.2 compliance. The original body and evidence are preserved. Original status: `closed / archived`; Original ID: `FID-savant-code-rebrand`. Canonical ID: `FID-2026-0717-018`. Canonical status reflects the record's lifecycle location; it does not add implementation evidence.
+
 
 ## Summary
 

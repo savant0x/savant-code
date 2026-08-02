@@ -1,4 +1,5 @@
 #!/usr/bin/env bun
+/* eslint-disable no-console -- CLI diagnostics are the script's output contract. */
 /**
  * Prebuild script that scans the agents/ directory and generates a TypeScript
  * module with all agent definitions embedded as static data.
@@ -16,14 +17,24 @@
 import * as fs from 'fs'
 import * as path from 'path'
 
+import { writeFileAtomic } from '../src/utils/write-file-atomic'
+
 const AGENTS_DIR = path.join(import.meta.dir, '../../agents')
-const OUTPUT_FILE = path.join(import.meta.dir, '../src/agents/bundled-agents.generated.ts')
+const OUTPUT_FILE = path.join(
+  import.meta.dir,
+  '../src/agents/bundled-agents.generated.ts',
+)
 
 interface AgentDefinition {
   id: string
   displayName?: string
-  [key: string]: any
+  [key: string]: unknown
 }
+
+type AgentLoadResult =
+  | { definition: AgentDefinition; failed: false }
+  | { definition: null; failed: false }
+  | { definition: null; failed: true }
 
 /**
  * Recursively get all TypeScript files from a directory
@@ -39,7 +50,11 @@ function getAllTsFiles(dir: string): string[] {
 
       if (entry.isDirectory()) {
         // Skip __tests__ and node_modules directories
-        if (entry.name === '__tests__' || entry.name === 'node_modules' || entry.name === 'types') {
+        if (
+          entry.name === '__tests__' ||
+          entry.name === 'node_modules' ||
+          entry.name === 'types'
+        ) {
           continue
         }
         files.push(...getAllTsFiles(fullPath))
@@ -53,7 +68,8 @@ function getAllTsFiles(dir: string): string[] {
       }
     }
   } catch (error) {
-    console.error(`Error reading directory ${dir}:`, error)
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    throw new Error(`Error reading directory ${dir}: ${errorMessage}`)
   }
 
   return files
@@ -62,7 +78,7 @@ function getAllTsFiles(dir: string): string[] {
 /**
  * Load and process an agent definition from a TypeScript file
  */
-async function loadAgentDefinition(filePath: string): Promise<AgentDefinition | null> {
+async function loadAgentDefinition(filePath: string): Promise<AgentLoadResult> {
   try {
     // Use dynamic import to load the module
     const module = await import(filePath)
@@ -70,40 +86,44 @@ async function loadAgentDefinition(filePath: string): Promise<AgentDefinition | 
 
     if (!definition) {
       console.warn(`⚠️  Skipped ${filePath}: no default export found`)
-      return null
+      return { definition: null, failed: false }
     }
 
     if (!definition.id) {
       console.warn(`⚠️  Skipped ${filePath}: missing required 'id' field`)
-      return null
+      return { definition: null, failed: false }
     }
 
     if (!definition.model) {
-      console.warn(`⚠️  Skipped ${filePath} (agent '${definition.id}'): missing required 'model' field`)
-      return null
+      console.warn(
+        `⚠️  Skipped ${filePath} (agent '${definition.id}'): missing required 'model' field`,
+      )
+      return { definition: null, failed: false }
     }
 
     // Process the definition - convert handleSteps function to string
     const processed: AgentDefinition = { ...definition }
-    
+
     if (typeof processed.handleSteps === 'function') {
       processed.handleSteps = processed.handleSteps.toString()
     }
 
-    return processed
+    return { definition: processed, failed: false }
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error)
     console.error(`❌ Failed to load agent from ${filePath}: ${errorMsg}`)
-    return null
+    return { definition: null, failed: true }
   }
 }
 
 /**
  * Generate the bundled agents TypeScript file
  */
-function generateBundledAgentsFile(agents: Record<string, AgentDefinition>): string {
+function generateBundledAgentsFile(
+  agents: Record<string, AgentDefinition>,
+): string {
   const agentCount = Object.keys(agents).length
-  
+
   return `/**
  * AUTO-GENERATED FILE - DO NOT EDIT MANUALLY
  * 
@@ -155,10 +175,10 @@ async function main() {
   if (DEBUG) {
     console.log('🔍 DEBUG: Scanning agents/ directory...')
   }
-  
+
   if (!fs.existsSync(AGENTS_DIR)) {
     console.error(`Error: agents/ directory not found at ${AGENTS_DIR}`)
-    // process.exit(1)
+    process.exitCode = 1
     return
   }
 
@@ -170,39 +190,54 @@ async function main() {
   const agents: Record<string, AgentDefinition> = {}
   let loadedCount = 0
   let skippedCount = 0
+  let failedCount = 0
 
   for (const filePath of tsFiles) {
     const relativePath = path.relative(AGENTS_DIR, filePath)
-    const definition = await loadAgentDefinition(filePath)
-    
-    if (definition) {
-      agents[definition.id] = definition
+    const result = await loadAgentDefinition(filePath)
+
+    if (result.definition) {
+      agents[result.definition.id] = result.definition
       loadedCount++
       if (DEBUG) {
-        console.log(`  ✅ DEBUG: ${definition.id} (${relativePath})`)
+        console.log(`  ✅ DEBUG: ${result.definition.id} (${relativePath})`)
       }
+    } else if (result.failed) {
+      failedCount++
     } else {
       skippedCount++
       if (DEBUG) {
-        console.log(`  ⏭️ DEBUG: Skipped: ${relativePath} (no valid default export)`)
+        console.log(
+          `  ⏭️ DEBUG: Skipped: ${relativePath} (no valid default export)`,
+        )
       }
     }
   }
 
+  if (failedCount > 0) {
+    console.error(
+      `❌ Agent prebuild aborted: ${failedCount} agent definition(s) failed to load; existing bundle was not replaced.`,
+    )
+    process.exitCode = 1
+    return
+  }
+
   if (DEBUG) {
-    console.log(`\n📦 DEBUG: Loaded ${loadedCount} agents, skipped ${skippedCount} files`)
+    console.log(
+      `\n📦 DEBUG: Loaded ${loadedCount} agents, skipped ${skippedCount} files`,
+    )
   }
 
   // Generate the output file
   const output = generateBundledAgentsFile(agents)
-  
+
   // Ensure output directory exists
   const outputDir = path.dirname(OUTPUT_FILE)
   if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true })
   }
 
-  fs.writeFileSync(OUTPUT_FILE, output, 'utf-8')
+  writeFileAtomic(OUTPUT_FILE, output)
   if (DEBUG) {
     console.log(`\n✨ DEBUG: Generated ${OUTPUT_FILE}`)
     console.log(`   DEBUG: ${Object.keys(agents).length} agents bundled`)

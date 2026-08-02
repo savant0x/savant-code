@@ -171,6 +171,12 @@ describe('command factory pattern', () => {
       }
     })
 
+    test('telemetry command accepts consent arguments', () => {
+      const telemetry = COMMAND_REGISTRY.find((c) => c.name === 'telemetry')
+      expect(telemetry).toBeDefined()
+      expect(telemetry?.acceptsArgs).toBe(true)
+    })
+
     test('expected commands accept args', () => {
       // mode:* commands also accept args now
       const expectedWithArgs = [

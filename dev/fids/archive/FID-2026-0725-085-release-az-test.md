@@ -1,7 +1,7 @@
 # FID: Release A-Z Test — FID-085 Context Compaction System + message.content.map Regression Fix
 
 **Filename:** `FID-2026-0725-085-release-az-test.md`
-**ID:** FID-2026-0725-085-AZ
+**ID:** FID-2026-0725-001
 **Severity:** info
 **Status:** closed
 **Created:** 2026-07-25 16:00
@@ -9,6 +9,10 @@
 **Archived:** 2026-07-25 16:00
 
 ---
+
+## Metadata Normalization Note
+
+Canonical ID: `FID-2026-0725-001`; Original ID: `FID-2026-0725-085-AZ`. Historical body preserved.
 
 ## Executive Summary
 

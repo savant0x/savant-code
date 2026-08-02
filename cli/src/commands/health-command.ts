@@ -2,6 +2,7 @@ import { detectOllama } from '@savant-code/llm-providers/ollama'
 
 import { getSystemMessage } from '../utils/message-history'
 import {
+  loadAnalyticsEnabled,
   loadPermissionModePreference,
   loadSavantCodeModelPreference,
   loadSettings,
@@ -18,17 +19,14 @@ import type { RouterParams } from './command-registry'
  * - The current sandbox permission mode
  * - The configured provider mode (backend vs direct / Ollama)
  */
-export async function handleHealthCommand(
-  params: RouterParams,
-): Promise<void> {
+export async function handleHealthCommand(params: RouterParams): Promise<void> {
   const settings = loadSettings()
   const modelPreference = loadSavantCodeModelPreference()
   const permissionMode = loadPermissionModePreference()
 
   // Prefer the active runtime config, but fall back to persisted settings so
   // the report stays useful when the user has not yet sent a message.
-  const directProvider =
-    process.env.DIRECT_PROVIDER ?? settings.directProvider
+  const directProvider = process.env.DIRECT_PROVIDER ?? settings.directProvider
   const inferenceBaseUrl =
     process.env.INFERENCE_BASE_URL ?? settings.directProviderBaseUrl
   const isDirectProvider =
@@ -56,10 +54,8 @@ export async function handleHealthCommand(
     `**Default model:** ${modelPreference ?? 'none (uses agent default)'}`,
     `**Permission mode:** ${permissionMode}`,
     `**Ads enabled:** ${settings.adsEnabled === true ? 'yes' : 'no'}`,
+    `**Remote analytics:** ${loadAnalyticsEnabled() ? 'enabled' : 'disabled'}`,
   ]
 
-  params.setMessages((prev) => [
-    ...prev,
-    getSystemMessage(lines.join('\n')),
-  ])
+  params.setMessages((prev) => [...prev, getSystemMessage(lines.join('\n'))])
 }

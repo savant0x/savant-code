@@ -1,6 +1,8 @@
 <!-- markdownlint-disable MD041 -->
 
 > **Historical note:** This document was originally titled *FreeBuff Business And Backend Research* and uses the original product names (FreeBuff, Codebuff) because it cites external sources and research from that period. The product has since been rebranded to **Savant-Code / Savant-Free**. The file has been renamed to reflect the current branding; the original prose is preserved for historical accuracy.
+>
+> **Current-plan boundary:** The infrastructure, provider relationships, hosting, and partnership descriptions below are historical/external analysis, not commitments or claims about this project. The current strategy is to release Savant-Code first as a local/BYOK product, gain users, and only then evaluate, design, build, and operate our own backend for a future free product. We are not hosted by FreeBuff, are not partnered with FreeBuff, and do not depend on FreeBuff or another external hosting provider for that future backend.
 
 # **Strategic Architectural and Economic Analysis of Free-Tier AI CLI Coding Agents**
 

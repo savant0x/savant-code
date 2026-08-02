@@ -1,4 +1,4 @@
-import { memo } from 'react'
+import { memo, type ReactNode } from 'react'
 
 import {
   renderMarkdown,
@@ -14,20 +14,21 @@ interface ContentWithMarkdownProps {
   palette: MarkdownPalette
 }
 
-export const ContentWithMarkdown = memo(
-  ({
-    content,
-    isStreaming,
-    codeBlockWidth,
-    palette,
-  }: ContentWithMarkdownProps) => {
-    if (!hasMarkdown(content)) {
-      return content
-    }
-    const options = { codeBlockWidth, palette }
-    if (isStreaming) {
-      return renderStreamingMarkdown(content, options)
-    }
-    return renderMarkdown(content, options)
-  },
+export function renderContentWithMarkdown({
+  content,
+  isStreaming,
+  codeBlockWidth,
+  palette,
+}: ContentWithMarkdownProps): ReactNode {
+  if (!hasMarkdown(content)) {
+    return content
+  }
+  const options = { codeBlockWidth, palette }
+  return isStreaming
+    ? renderStreamingMarkdown(content, options)
+    : renderMarkdown(content, options)
+}
+
+export const ContentWithMarkdown = memo((props: ContentWithMarkdownProps) =>
+  renderContentWithMarkdown(props),
 )

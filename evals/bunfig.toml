@@ -1,0 +1,4 @@
+# Only v2/tests/ contains runnable unit tests.
+# v2/tasks/ fixtures are intentionally broken eval scaffolding and excluded.
+[test]
+root = "./v2/tests"

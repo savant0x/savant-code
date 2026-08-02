@@ -80,7 +80,9 @@
 set -e
 
 # Get project root for logging
-PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+source "$SCRIPT_DIR/tmux-env.sh"
 
 # Defaults
 AUTO_ENTER=true
@@ -160,7 +162,7 @@ done
 # Sometimes sessions take a moment to be fully registered
 SESSION_FOUND=false
 for ((i=1; i<=RETRY_COUNT; i++)); do
-    if tmux has-session -t "$SESSION_NAME" 2>/dev/null; then
+    if tmux_exec has-session -t "$SESSION_NAME" 2>/dev/null; then
         SESSION_FOUND=true
         break
     fi
@@ -177,7 +179,7 @@ fi
 
 # Send special key if specified
 if [[ -n "$SPECIAL_KEY" ]]; then
-    tmux send-keys -t "$SESSION_NAME" "$SPECIAL_KEY"
+    tmux_exec send-keys -t "$SESSION_NAME" "$SPECIAL_KEY"
     
     # Log the special key send as YAML
     SESSION_DIR="$PROJECT_ROOT/debug/tmux-sessions/$SESSION_NAME"
@@ -214,11 +216,12 @@ if [[ "$PASTE_CLIPBOARD" == true ]]; then
     fi
     
     # Send clipboard content using bracketed paste mode
-    tmux send-keys -t "$SESSION_NAME" $'\e[200~'"$CLIPBOARD_CONTENT"$'\e[201~'
+    tmux_exec send-keys -t "$SESSION_NAME" $'\e[200~'"$CLIPBOARD_CONTENT"$'\e[201~'
     
-    # Optionally press Enter
+    # Allow OpenTUI to finish processing clipboard paste before Enter.
     if [[ "$AUTO_ENTER" == true ]]; then
-        tmux send-keys -t "$SESSION_NAME" Enter
+        sleep 0.25
+        tmux_exec send-keys -t "$SESSION_NAME" Enter
     fi
     
     # Log the paste as YAML
@@ -256,18 +259,19 @@ fi
 
 # Clear any existing input in the buffer before sending new text
 # This prevents concatenation when commands are sent in rapid succession
-tmux send-keys -t "$SESSION_NAME" C-u
+tmux_exec send-keys -t "$SESSION_NAME" C-u
 sleep 0.05
 
 # Send text using bracketed paste mode
 # \e[200~ = start bracketed paste
 # \e[201~ = end bracketed paste
-tmux send-keys -t "$SESSION_NAME" $'\e[200~'"$TEXT"$'\e[201~'
+tmux_exec send-keys -t "$SESSION_NAME" $'\e[200~'"$TEXT"$'\e[201~'
 
-# Optionally press Enter (with small delay to let TUI apps process the paste first)
+# Optionally press Enter after allowing OpenTUI to finish processing the paste.
+# A short settle period prevents Enter from racing the bracketed-paste handler.
 if [[ "$AUTO_ENTER" == true ]]; then
-    sleep 0.05
-    tmux send-keys -t "$SESSION_NAME" Enter
+    sleep 0.25
+    tmux_exec send-keys -t "$SESSION_NAME" Enter
     # Wait for CLI to process Enter and clear input buffer before returning
     # This prevents the next send from concatenating with the previous input
     # Default 500ms is needed for TUI CLIs to fully process the command and reset input state
@@ -287,7 +291,7 @@ if [[ "$WAIT_IDLE_SECONDS" != "0" && -n "$WAIT_IDLE_SECONDS" ]]; then
     
     while true; do
         # Capture current terminal output
-        CURRENT_OUTPUT=$(tmux capture-pane -t "$SESSION_NAME" -p 2>/dev/null || echo "")
+        CURRENT_OUTPUT=$(tmux_exec capture-pane -t "$SESSION_NAME" -p 2>/dev/null || echo "")
         CURRENT_TIME=$(date +%s)
         
         if [[ "$CURRENT_OUTPUT" == "$LAST_OUTPUT" ]]; then

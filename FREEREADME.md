@@ -13,7 +13,7 @@ Use instead:
 dev/nova/specs/echo-v0.1.2-freebuff.md
 ```
 
-`ECHO.md` is the ECHO Protocol for the **Savant-Code harness** (multi-agent roster). FreeBuff agents operate under a single-agent adaptation located at `dev/nova/specs/echo-v0.1.2-freebuff.md`.
+`ECHO.md` is the ECHO Protocol for the **Savant-Code harness** (multi-agent roster). FreeBuff agents operate under a single-agent adaptation located at `dev/nova/specs/echo-v0.1.2-freebuff.md`. The corresponding machine-readable configuration is `freebuff.protocol` in `protocol.config.yaml`.
 
 ## Why
 
@@ -23,9 +23,9 @@ dev/nova/specs/echo-v0.1.2-freebuff.md
 
 ## Quick Reference
 
-| Context | Governing Protocol |
-|---------|-------------------|
-| Savant-Code harness agents | `ECHO.md` |
-| FreeBuff agent sessions | `dev/nova/specs/echo-v0.1.2-freebuff.md` |
+| Context                    | Governing Protocol                                             |
+| -------------------------- | -------------------------------------------------------------- |
+| Savant-Code harness agents | `ECHO.md`                                                      |
+| FreeBuff agent sessions    | `dev/nova/specs/echo-v0.1.2-freebuff.md` + `freebuff.protocol` |
 
 Read the FreeBuff protocol completely before any work session.

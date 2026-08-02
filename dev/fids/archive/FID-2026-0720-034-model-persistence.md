@@ -1,13 +1,17 @@
 # FID: Model Persistence Architecture
 
-**Filename:** `FID-model-persistence.md`
-**ID:** FID-model-persistence
+**Filename:** `FID-2026-0720-034-model-persistence.md`
+**ID:** FID-2026-0720-034
 **Severity:** critical
 **Status:** closed
 **Created:** 2026-07-17 12:00
 **Author:** Orchestrator
 
 ---
+
+## Metadata Normalization Note
+
+Canonical ID: `FID-2026-0720-034`; Original ID: `FID-model-persistence`. Historical body preserved.
 
 ## Summary
 

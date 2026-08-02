@@ -105,6 +105,29 @@ describe('analytics dispatcher', () => {
     expect(out[1].userId).toBe('fallback-user')
   })
 
+  it('clears buffered events when consent is withdrawn', () => {
+    const dispatcher = createAnalyticsDispatcher({
+      envName: 'prod',
+      bufferWhenNoUser: true,
+    })
+
+    dispatcher.process({
+      data: { eventId: AnalyticsEvent.APP_LAUNCHED },
+      level,
+      msg,
+    })
+    dispatcher.clearBuffer()
+
+    const out = dispatcher.process({
+      data: { eventId: AnalyticsEvent.AGENT_STEP, userId: 'user-1' },
+      level,
+      msg,
+    })
+
+    expect(out).toHaveLength(1)
+    expect(out[0].event).toBe(AnalyticsEvent.AGENT_STEP)
+  })
+
   it('ignores unknown events even when buffering is on', () => {
     const dispatcher = createAnalyticsDispatcher({
       envName: 'prod',

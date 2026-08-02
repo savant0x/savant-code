@@ -107,28 +107,39 @@ export const AgentBranchItem = memo((props: AgentBranchItemProps) => {
           }}
           onClick={onToggle}
         >
-          <text style={{ wrapMode: 'none' }}>
-            <span fg={toggleIconColor}>{toggleLabel}</span>
-            <span
+          <box
+            selectable={false}
+            style={{ flexDirection: 'row', flexShrink: 0 }}
+          >
+            <text fg={toggleIconColor} style={{ wrapMode: 'none' }}>
+              {toggleLabel}
+            </text>
+            <text
               fg={theme.foreground}
+              style={{ wrapMode: 'none' }}
               attributes={isExpanded ? TextAttributes.BOLD : undefined}
             >
               {name}
-            </span>
+            </text>
             {titleSuffix ? (
-              <span fg={theme.foreground} attributes={TextAttributes.BOLD}>
+              <text
+                fg={theme.foreground}
+                style={{ wrapMode: 'none' }}
+                attributes={TextAttributes.BOLD}
+              >
                 {` ${titleSuffix}`}
-              </span>
+              </text>
             ) : null}
             {statusText ? (
-              <span
+              <text
                 fg={statusColor ?? theme.muted}
+                style={{ wrapMode: 'none' }}
                 attributes={TextAttributes.DIM}
               >
                 {` ${statusText}`}
-              </span>
+              </text>
             ) : null}
-          </text>
+          </box>
         </Button>
 
         {isCollapsed ? (
@@ -205,13 +216,12 @@ export const AgentBranchItem = memo((props: AgentBranchItemProps) => {
               paddingBottom: 0,
             }}
           >
-            <text>
-              <ShimmerText
-                text="thinking..."
-                interval={160}
-                primaryColor={theme.primary}
-              />
-            </text>
+            <ShimmerText
+              text="thinking..."
+              interval={160}
+              primaryColor={theme.primary}
+              host="box"
+            />
           </box>
         )}
       </box>

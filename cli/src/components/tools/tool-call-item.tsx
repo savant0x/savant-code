@@ -3,7 +3,7 @@ import React, { type ReactNode } from 'react';
 import stringWidth from 'string-width';
 
 import { useTheme } from '../../hooks/use-theme';
-import { isTextRenderable as _isTextRenderable, renderExpandedContent, } from '../blocks/block-helpers';
+import { renderExpandedContent } from '../blocks/block-helpers';
 import { Button } from '../button';
 interface ToolCallItemProps {
     name: string;
@@ -32,8 +32,18 @@ export const SimpleToolCallItem = ({ name, description, descriptionColor, }: Sim
           {name}
         </span>
         <span fg={theme.foreground}> </span>
-        {typeof description === 'string' ? (<span fg={descriptionColor ?? theme.foreground}>{description}</span>) : (description)}
+        {typeof description === 'string' && (
+          <span fg={descriptionColor ?? theme.foreground}>{description}</span>
+        )}
       </text>
+      {typeof description !== 'string' && (
+        // Rich descriptions may return fragments/spans or their own text
+        // hosts. Keep them in a layout host rather than placing a React
+        // component directly inside OpenTUI's <text> node.
+        <box style={{ flexDirection: 'row', flexShrink: 1 }}>
+          {description}
+        </box>
+      )}
     </box>);
 };
 export const ToolCallItem = ({ name, content, isCollapsed, isStreaming, streamingPreview, finishedPreview, onToggle, titleSuffix, dense = false, }: ToolCallItemProps) => {

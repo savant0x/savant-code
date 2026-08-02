@@ -1,13 +1,18 @@
 # FID-2026-0722-048 — Fix Active Agent Name Capitalization
 
-**Filename:** `dev/fids/FID-2026-0722-048-active-agent-name-capitalization.md`
+**Filename:** `FID-2026-0722-048-active-agent-name-capitalization.md`
 **ID:** FID-2026-0722-048
 **Severity:** low
-**Status:** closed / archived
+**Status:** closed
 **Created:** 2026-07-22
 **Author:** Forge
 
 ---
+
+## Metadata Normalization Note
+
+This historical record was normalized on 2026-07-31 for FreeBuff ECHO v0.1.2 compliance. The original body and evidence are preserved. Original status: `closed / archived`; Original ID: `FID-2026-0722-048`. Canonical status reflects the record's lifecycle location; it does not add implementation evidence.
+
 
 ## Summary
 

@@ -1,15 +1,18 @@
 # FID-2026-0718-010 — medium — Stuck-State Cleanup (working-banner, sidebar phase, token heartbeat)
 
-**Status:** closed / archived
-**Opened:** 2026-07-18 | **v2 convergence:** 2026-07-18
-**Severity:** medium (UX, no data loss; visible to every user after first long run)
-**Affects:** `cli/src/components/blocks/agent-branch-item.tsx`, `cli/src/utils/sdk-event-handlers.ts`, `cli/src/state/chat-store.ts`, `cli/src/hooks/use-send-message.ts`, `cli/src/components/status-bar.tsx`, `cli/src/commands/*`
-**Reactor:** Orchestrator (post FID-008/009 verification reconfirmed by Nova)
-**Depends on:** FID-2026-0718-008 ✅ closed, FID-2026-0718-009 ✅ closed
-**Blocks:** none
-**Drop-in scope:** Single FID. No scope reduction needed.
+**Filename:** `FID-2026-0718-010-stuck-state-cleanup.md`
+**ID:** FID-2026-0718-010
+**Severity:** medium
+**Status:** closed
+**Created:** 2026-0718 00:00
+**Author:** Historical record (metadata backfill)
 
 ---
+
+## Metadata Normalization Note
+
+This historical record was normalized on 2026-07-31 for FreeBuff ECHO v0.1.2 compliance. The original body and evidence are preserved. Original status: `closed / archived`; Original ID: `FID-2026-0718-010-stuck-state-cleanup`. Canonical ID: `FID-2026-0718-010`. Backfilled fields: Filename, ID, Created, Author. Canonical status reflects the record's lifecycle location; it does not add implementation evidence.
+
 
 ## 1. Summary
 

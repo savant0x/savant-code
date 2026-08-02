@@ -58,13 +58,13 @@ export const mockResearcherAgent = {
   spawnableAgents: [],
   includeMessageHistory: false,
   inheritParentSystemPrompt: false,
+  mcpServers: {},
   outputMode: 'last_message' as const,
   systemPrompt: 'You are a test researcher agent.',
   instructionsPrompt: 'Provide research on the user prompt.',
+  stepPrompt: '',
   spawnerPrompt: 'Research agent for testing.',
-  inputSchema: {
-    prompt: { type: 'string', description: 'Research question' },
-  },
+  inputSchema: {},
 }
 
 export const mockFileContext: ProjectFileContext = {

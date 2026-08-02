@@ -48,8 +48,8 @@ export const ElapsedTimer = ({
   }
 
   return (
-    <span fg={theme.secondary} attributes={attributes}>
+    <text fg={theme.secondary} attributes={attributes}>
       {formatElapsedTime(elapsedSeconds)}{suffix}
-    </span>
+    </text>
   )
 }

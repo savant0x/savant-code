@@ -25,7 +25,7 @@ export function FidCard({
   id,
   summary,
   onClick,
-  expanded: initialExpanded = true,
+  expanded: initialExpanded = false,
 }: FidCardProps) {
   const theme = useTheme()
   const [expanded, setExpanded] = useState(initialExpanded)
@@ -66,7 +66,12 @@ export function FidCard({
 
       {/* Full summary (preserve paragraph breaks from the FID) */}
       {expanded && (
-        <box flexDirection="column" paddingLeft={2} focusable={false} selectable={false}>
+        <box
+          flexDirection="column"
+          paddingLeft={2}
+          focusable={false}
+          selectable={false}
+        >
           {summary.split(/\n\s*\n/).map((paragraph, index) => (
             <text
               key={index}

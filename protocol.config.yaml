@@ -6,33 +6,41 @@
 #   3. commands.test:  your test runner command
 
 project:
-  name: "savant-code"
-  description: "Multi-Agent AI Coding Assistant with ECHO Protocol governance. TypeScript monorepo, Bun runtime."
-  version: "0.0.9"
+  name: 'savant-code'
+  description: 'Multi-Agent AI Coding Assistant with ECHO Protocol governance. TypeScript monorepo, Bun runtime.'
+  version: '0.0.12'
 
 protocol:
-  version: "0.2.0"
-  strict_mode: true  # true = all 15 laws active (default), false = core 4 laws only
+  version: '0.2.0'
+  strict_mode: true # true = all 15 laws active (default), false = core 4 laws only
 
-language: "typescript"  # rust | typescript | python | go | java | csharp
+# FreeBuff uses its single-agent ECHO adaptation alongside this Savant harness
+# configuration. Keep both protocol contracts explicit and independently
+# machine-readable.
+freebuff:
+  protocol:
+    version: '0.1.2-freebuff'
+    strict_mode: true
+
+language: 'typescript' # rust | typescript | python | go | java | csharp
 
 commands:
-  build: "bun run ci"
-  test: "bun test"
-  type_check: "bun run --cwd=common typecheck && bun run --cwd=agents typecheck && bun run --cwd=sdk typecheck && bun run --cwd=cli typecheck && bun run --cwd=evals typecheck && bun run --cwd=packages/agent-runtime typecheck && bun run --cwd=packages/code-map typecheck && bun run --cwd=packages/llm-providers typecheck"
-  lint: "bunx eslint ."
-  format: "bunx prettier --check ."
-  clean: "bun run --cwd=sdk clean"
+  build: 'bun run ci'
+  test: 'bun test'
+  type_check: 'bun run --cwd=common typecheck && bun run --cwd=agents typecheck && bun run --cwd=sdk typecheck && bun run --cwd=cli typecheck && bun run --cwd=evals typecheck && bun run --cwd=packages/agent-runtime typecheck && bun run --cwd=packages/code-map typecheck && bun run --cwd=packages/llm-providers typecheck'
+  lint: 'bunx eslint .'
+  format: 'bunx prettier --check .'
+  clean: 'bun run --cwd=sdk clean'
 
 paths:
-  src: "src/"
-  tests: "tests/"
-  docs: "docs/"
-  dev: "dev/"
-  fids: "dev/fids/"
-  fids_archive: "dev/fids/archive/"
-  session_summaries: "dev/session-summaries/"
-  learnings: "dev/LEARNINGS.md"
+  src: 'src/'
+  tests: 'tests/'
+  docs: 'docs/'
+  dev: 'dev/'
+  fids: 'dev/fids/'
+  fids_archive: 'dev/fids/archive/'
+  session_summaries: 'dev/session-summaries/'
+  learnings: 'dev/LEARNINGS.md'
 
 quality:
   max_file_lines: 300
@@ -54,7 +62,7 @@ testing:
 
 fid:
   auto_create: true
-  severity_levels: ["critical", "high", "medium", "low"]
+  severity_levels: ['critical', 'high', 'medium', 'low']
   max_open_fids: 20
 
 # Sandbox / tool-safety policy. Runtime values live in CLI state and are
@@ -62,7 +70,7 @@ fid:
 # default; actual behavior is controlled by --permission-mode and /permissions.
 savant:
   sandbox:
-    permissionMode: "prompt"  # safe | prompt | unsafe
+    permissionMode: 'prompt' # safe | prompt | unsafe
 
 perfection_loop:
   max_iterations: 10
@@ -75,4 +83,4 @@ session:
   auto_summary: true
   summary_interval: 30
   max_session_hours: 4
-  autonomy_level: 3  # 1=Guided, 2=Supervised, 3=Autonomous (default)
+  autonomy_level: 3 # 1=Guided, 2=Supervised, 3=Autonomous (default)

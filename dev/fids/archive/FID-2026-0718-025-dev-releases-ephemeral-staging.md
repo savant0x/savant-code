@@ -1,6 +1,21 @@
 # FID-2026-0718-025 — small — dev/releases/ Ephemeralization (.gitignore + README Index)
 
-**Status:** proposed (RED) → closed after FORGE+AUDIT+COMPLETE
+**Filename:** `FID-2026-0718-025-dev-releases-ephemeral-staging.md`
+**ID:** FID-2026-0718-025
+**Severity:** low
+**Status:** closed
+**Created:** 2026-0718 00:00
+**Author:** Historical record (metadata backfill)
+
+---
+
+## Metadata Normalization Note
+
+This historical record was normalized on 2026-07-31 for FreeBuff ECHO v0.1.2 compliance. The original body and evidence are preserved. Original status: `closed`; Original ID: `FID-2026-0718-025`. Backfilled fields: Filename, Severity, Created, Author. Canonical status reflects the record's lifecycle location; it does not add implementation evidence.
+
+**ID:** FID-2026-0718-025
+**Status:** closed
+**Lifecycle note:** Historical status prose retained below; canonical status is `closed` after the documented FORGE+AUDIT+COMPLETE work.
 
 ## Background
 

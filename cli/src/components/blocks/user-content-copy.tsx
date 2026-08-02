@@ -1,9 +1,11 @@
 import { TextAttributes } from '@opentui/core'
 import React, { memo } from 'react'
 
+import { useTheme } from '../../hooks/use-theme'
 import { CopyButton } from '../copy-button'
 import { trimNewlines } from './block-helpers'
-import { ContentWithMarkdown } from './content-with-markdown'
+import { renderContentWithMarkdown } from './content-with-markdown'
+import { renderMarkdownContent } from './markdown-content'
 
 import type { MarkdownPalette } from '../../utils/markdown-renderer'
 
@@ -31,6 +33,7 @@ export const UserContentWithCopyButton = memo(
     palette,
     showCopyButton,
   }: UserContentWithCopyButtonProps) => {
+    const theme = useTheme()
     const isStreamingMessage = isLoading || !isComplete
     const normalizedContent = isStreamingMessage
       ? trimNewlines(content)
@@ -43,20 +46,19 @@ export const UserContentWithCopyButton = memo(
     }
 
     if (!showCopyButton) {
-      return (
-        <text
-          key={`message-content-${messageId}`}
-          style={{ wrapMode: 'word', fg: textColor }}
-          attributes={isUser ? TextAttributes.ITALIC : undefined}
-        >
-          <ContentWithMarkdown
-            content={normalizedContent}
-            isStreaming={isStreamingMessage}
-            codeBlockWidth={codeBlockWidth}
-            palette={palette}
-          />
-        </text>
-      )
+      return renderMarkdownContent({
+        value: renderContentWithMarkdown({
+          content: normalizedContent,
+          isStreaming: isStreamingMessage,
+          codeBlockWidth,
+          palette,
+        }),
+        theme,
+        getAttributes: (extra = 0) =>
+          (isUser ? TextAttributes.ITALIC : 0) | extra,
+        textColor,
+        keyPrefix: `message-content-${messageId}`,
+      })
     }
 
     return (
@@ -93,19 +95,25 @@ const UserTextWithInlineCopy = memo(
     codeBlockWidth,
     palette,
   }: UserTextWithInlineCopyProps) => {
+    const theme = useTheme()
     return (
       <CopyButton
+        as="box"
         textToCopy={content}
         style={{ wrapMode: 'word', fg: textColor }}
       >
-        <span attributes={TextAttributes.ITALIC}>
-          <ContentWithMarkdown
-            content={normalizedContent}
-            isStreaming={isStreamingMessage}
-            codeBlockWidth={codeBlockWidth}
-            palette={palette}
-          />
-        </span>
+        {renderMarkdownContent({
+          value: renderContentWithMarkdown({
+            content: normalizedContent,
+            isStreaming: isStreamingMessage,
+            codeBlockWidth,
+            palette,
+          }),
+          theme,
+          getAttributes: (extra = 0) => TextAttributes.ITALIC | extra,
+          textColor,
+          keyPrefix: `message-content-${messageId}`,
+        })}
       </CopyButton>
     )
   },
@@ -133,8 +141,10 @@ export const UserBlockTextWithInlineCopy = memo(
     marginTop,
     marginBottom,
   }: UserBlockTextWithInlineCopyProps) => {
+    const theme = useTheme()
     return (
       <CopyButton
+        as="box"
         textToCopy={contentToCopy}
         style={{
           wrapMode: 'word',
@@ -143,14 +153,18 @@ export const UserBlockTextWithInlineCopy = memo(
           marginBottom,
         }}
       >
-        <span attributes={TextAttributes.ITALIC}>
-          <ContentWithMarkdown
-            content={content}
-            isStreaming={isStreaming}
-            codeBlockWidth={codeBlockWidth}
-            palette={palette}
-          />
-        </span>
+        {renderMarkdownContent({
+          value: renderContentWithMarkdown({
+            content,
+            isStreaming,
+            codeBlockWidth,
+            palette,
+          }),
+          theme,
+          getAttributes: (extra = 0) => TextAttributes.ITALIC | extra,
+          textColor,
+          keyPrefix: 'user-block-content',
+        })}
       </CopyButton>
     )
   },

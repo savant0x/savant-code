@@ -23,6 +23,8 @@ import { pino } from 'pino'
 
 import {
   flushAnalytics,
+  isAnalyticsEnabled,
+  registerAnalyticsConsentListener,
   logError,
   setAnalyticsErrorLogger,
   trackEvent,
@@ -58,6 +60,12 @@ const analyticsDispatcher = createAnalyticsDispatcher({
   bufferWhenNoUser: true,
 })
 
+registerAnalyticsConsentListener((enabled) => {
+  if (!enabled) {
+    analyticsDispatcher.clearBuffer()
+  }
+})
+
 /**
  * Safely stringify an object, handling circular references.
  * Replaces circular references with '[Circular]' placeholder.
@@ -76,7 +84,9 @@ const SENSITIVE_KEYS = new Set([
 
 function isSensitiveKey(key: string): boolean {
   const lower = key.toLowerCase()
-  return Array.from(SENSITIVE_KEYS).some((sensitive) => lower.includes(sensitive.toLowerCase()))
+  return Array.from(SENSITIVE_KEYS).some((sensitive) =>
+    lower.includes(sensitive.toLowerCase()),
+  )
 }
 
 /**
@@ -204,10 +214,9 @@ function sendAnalyticsAndLog(
       projectRoot = undefined
     }
     if (projectRoot) {
-      const logTarget =
-        IS_DEV
-          ? path.join(projectRoot, 'debug', 'cli.jsonl')
-          : path.join(getCurrentChatDir(), CHAT_LOG_FILENAME)
+      const logTarget = IS_DEV
+        ? path.join(projectRoot, 'debug', 'cli.jsonl')
+        : path.join(getCurrentChatDir(), CHAT_LOG_FILENAME)
 
       setLogPath(logTarget)
     }
@@ -218,7 +227,9 @@ function sendAnalyticsAndLog(
   const normalizedMsg = isStringOnly ? (data as string) : msg
   const includeData = normalizedData != null && !isEmptyObject(normalizedData)
   // Sanitize once before any disk, network, or analytics use.
-  const sanitizedData = includeData ? sanitizeSecrets(normalizedData) : normalizedData
+  const sanitizedData = includeData
+    ? sanitizeSecrets(normalizedData)
+    : normalizedData
   const axiomOnlyLogEvent = getAxiomOnlyLogEvent(sanitizedData)
 
   const toTrack = {
@@ -230,7 +241,12 @@ function sendAnalyticsAndLog(
 
   logAsErrorIfNeeded(toTrack)
 
-  if (!IS_DEV && includeData && typeof sanitizedData === 'object') {
+  if (
+    isAnalyticsEnabled() &&
+    !IS_DEV &&
+    includeData &&
+    typeof sanitizedData === 'object'
+  ) {
     const analyticsPayloads = analyticsDispatcher.process({
       data: sanitizedData,
       level,
@@ -239,17 +255,21 @@ function sendAnalyticsAndLog(
     })
 
     analyticsPayloads.forEach((payload) => {
-      trackEvent(
-        payload.event,
-        payload.properties as Record<string, JSONValue>,
-      )
+      trackEvent(payload.event, payload.properties as Record<string, JSONValue>)
     })
   }
 
   // Send all log events to PostHog in production for better observability
   // Skip if the log already has an eventId (to avoid duplicate tracking)
   const hasEventId = includeData && getAnalyticsEventId(sanitizedData) !== null
-  if (!IS_DEV && !IS_TEST && !IS_CI && !hasEventId && !axiomOnlyLogEvent) {
+  if (
+    isAnalyticsEnabled() &&
+    !IS_DEV &&
+    !IS_TEST &&
+    !IS_CI &&
+    !hasEventId &&
+    !axiomOnlyLogEvent
+  ) {
     const fullTelemetry = isFullTelemetryEnabled({
       distinctId: loggerContext.userId,
       properties: loggerContextToRecord(loggerContext),
@@ -279,6 +299,7 @@ function sendAnalyticsAndLog(
   // (in addition to PostHog). Best-effort and batched; skip noisy debug logs
   // and anything before we know who the user is.
   if (
+    isAnalyticsEnabled() &&
     !IS_DEV &&
     !IS_TEST &&
     !IS_CI &&
@@ -395,7 +416,9 @@ export const logger: Record<LogLevel, pino.LogFn> = Object.fromEntries(
 
 setAnalyticsErrorLogger((error, context) => {
   const err =
-    error instanceof Error ? error : new Error(typeof error === 'string' ? error : 'Unknown analytics error')
+    error instanceof Error
+      ? error
+      : new Error(typeof error === 'string' ? error : 'Unknown analytics error')
 
   logger.warn(
     {

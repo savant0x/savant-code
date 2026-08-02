@@ -16,6 +16,7 @@ export type InputMode =
   | 'image'
   | 'help'
   | 'connect:chatgpt'
+  | 'providerSetup'
   | 'outOfCredits'
   | 'subscriptionLimit'
 
@@ -147,6 +148,16 @@ export const INPUT_MODE_CONFIGS: Record<InputMode, InputModeConfig> = {
     color: 'info',
     placeholder: 'authorizing in browser... press Escape to cancel',
     widthAdjustment: 3,
+    showAgentModeToggle: false,
+    disableSlashSuggestions: true,
+    blockKeyboardExit: false,
+  },
+  providerSetup: {
+    icon: '🔑',
+    label: 'Provider key',
+    color: 'warning',
+    placeholder: 'paste the provider API key, then press Enter',
+    widthAdjustment: 14,
     showAgentModeToggle: false,
     disableSlashSuggestions: true,
     blockKeyboardExit: false,

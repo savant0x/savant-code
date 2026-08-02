@@ -250,7 +250,7 @@ dimensions:
   width: 120
   height: 30
 cli_mode: custom  # or "binary" or "dynamic"
-cli_command: claude  # or path to binary, or "bun --cwd=cli run dev"
+cli_command: claude  # or path to binary, or "cd cli && bun run dev"
 status: active
 ```
 

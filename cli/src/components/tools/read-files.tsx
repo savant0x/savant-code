@@ -14,7 +14,7 @@ function FilePathsDescription({ filePaths }: { filePaths: string[] }) {
   const theme = useTheme()
 
   return (
-    <>
+    <text style={{ wrapMode: 'word' }}>
       {filePaths.map((fp, idx) => {
         const isLast = idx === filePaths.length - 1
         const separator = isLast ? '' : ', '
@@ -48,7 +48,7 @@ function FilePathsDescription({ filePaths }: { filePaths: string[] }) {
           </span>
         )
       })}
-    </>
+    </text>
   )
 }
 

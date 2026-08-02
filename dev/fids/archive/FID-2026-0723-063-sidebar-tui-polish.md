@@ -1,5 +1,18 @@
 # FID-2026-0723-063 — Right Sidebar TUI Polish
 
+**Filename:** `FID-2026-0723-063-sidebar-tui-polish.md`
+**ID:** FID-2026-0723-063
+**Severity:** medium
+**Status:** closed
+**Created:** 2026-07-23
+**Author:** Savant Orchestrator
+
+---
+
+## Metadata Normalization Note
+
+This historical record was normalized on 2026-07-31 for FreeBuff ECHO v0.1.2 compliance. The original body and evidence are preserved. Original status: `closed / archived`; Original ID: `FID-2026-0723-063`. Canonical status reflects the record's lifecycle location; it does not add implementation evidence.
+
 **Filename:** `FID-2026-0723-063-sidebar-tui-polish.md`  
 **ID:** FID-2026-0723-063  
 **Severity:** medium  

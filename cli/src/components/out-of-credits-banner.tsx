@@ -99,13 +99,14 @@ export const OutOfCreditsBanner = () => {
             gap: 0,
           }}
         >
-          <text style={{ fg: theme.success }}>
-            <ShimmerText 
-              text="✨ Credits acquired! ✨" 
+          <box style={{ flexDirection: 'row', flexShrink: 1 }}>
+            <ShimmerText
+              text="✨ Credits acquired! ✨"
               primaryColor={theme.success}
               interval={120}
+              host="box"
             />
-          </text>
+          </box>
           <text style={{ fg: theme.muted }}>
             Balance: {remainingBalance.toLocaleString()} credits
           </text>

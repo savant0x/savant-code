@@ -1,10 +1,18 @@
 # FID-2026-0718-023 — medium — Internal Workspace README Audit + Polish (packages/* + others)
 
-**Status:** closed / archived
-**Severity:** medium (internal workspaces ship in monorepo only — not directly npm-published except sdk; quality is contributor-experience not consumer-facing)
-**Opened:** 2026-07-19
+**Filename:** `FID-2026-0718-023-packages-readmes-pre-push-polish.md`
+**ID:** FID-2026-0718-024
+**Severity:** medium
+**Status:** closed
+**Created:** 2026-0718 00:00
+**Author:** Historical record (metadata backfill)
 
 ---
+
+## Metadata Normalization Note
+
+This historical record was normalized on 2026-07-31 for FreeBuff ECHO v0.1.2 compliance. The original body and evidence are preserved. Original status: `closed / archived`; Original ID: `FID-2026-0718-023-packages-readmes-pre-push-polish`. Canonical ID: `FID-2026-0718-024`. Backfilled fields: Filename, ID, Created, Author. Canonical status reflects the record's lifecycle location; it does not add implementation evidence.
+
 
 ## Honest Correction (Cross-FID)
 

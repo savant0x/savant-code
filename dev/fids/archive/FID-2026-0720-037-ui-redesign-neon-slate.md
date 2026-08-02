@@ -1,14 +1,19 @@
 # FID: UI Redesign — Neon Slate Theme
 
-**Filename:** `FID-ui-redesign-neon-slate.md`
-**ID:** FID-ui-redesign-neon-slate
+**Filename:** `FID-2026-0720-037-ui-redesign-neon-slate.md`
+**ID:** FID-2026-0720-037
 **Severity:** high
-**Status:** converged
+**Status:** closed
+**Lifecycle note:** Closed from the converged design record after later implementation evidence confirmed the Neon Slate UI, right sidebar, and related refinements in the shipped CLI and changelog.
 **Created:** 2026-07-16 12:00
 **Converged:** 2026-07-16 15:45
 **Author:** Orchestrator
 
 ---
+
+## Metadata Normalization Note
+
+Canonical ID: `FID-2026-0720-037`; Original ID: `FID-ui-redesign-neon-slate`. Historical body preserved.
 
 ## Summary
 
@@ -585,13 +590,13 @@ No self-corrections needed. Loop 1 RED phase expanded the evidence catalog from 
 
 ## Resolution
 
-- **Fixed By:** Forge (pending implementation)
-- **Fixed Date:** [pending — FID converged, awaiting Forge execution]
-- **Fix Description:** Theme-first redesign (G1-G4) + three-panel layout (G5-G7) + component refactoring (G8-G16)
-- **Tests Added:** No — visual changes only, no new logic
-- **Verified By:** Verifier (pending — after Forge implementation)
-- **Commit/PR:** [pending]
-- **Archived:** [pending]
+- **Fixed By:** Forge and subsequent CLI UI implementation work
+- **Fixed Date:** 2026-07-21 (implementation evidence recorded in later UI FIDs/changelog)
+- **Fix Description:** Neon Slate theme, layout, and sidebar work was implemented and subsequently refined in the shipped CLI; this record is closed as the original design/workstream record.
+- **Tests Added:** Covered by subsequent CLI typecheck and UI verification records
+- **Verified By:** Repository evidence in `cli/src/utils/theme-system.ts`, `cli/src/components/right-sidebar.tsx`, and later FID/changelog entries
+- **Commit/PR:** Historical working-tree implementation; no new commit authorized
+- **Archived:** 2026-07-31
 
 ## Lessons Learned
 

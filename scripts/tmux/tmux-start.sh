@@ -68,6 +68,9 @@ set -e
 # Get project root early (needed for defaults)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+# Use native tmux when available; otherwise bridge to the user's WSL tmux.
+source "$SCRIPT_DIR/tmux-env.sh"
+WSL_PROJECT_ROOT="$(tmux_to_wsl_path "$PROJECT_ROOT")"
 
 # Defaults
 SESSION_NAME=""
@@ -185,16 +188,10 @@ output_success() {
     fi
 }
 
-# Check if tmux is available
-if ! command -v tmux &> /dev/null; then
-    output_error "tmux not found. Install with: brew install tmux (macOS) or apt-get install tmux (Ubuntu)"
-    exit 1
-fi
-
 # Determine command to run (priority: custom command > binary > default)
 if [[ -n "$CUSTOM_COMMAND" ]]; then
     # Custom command mode - run exactly what was specified
-    CLI_CMD="cd '$PROJECT_ROOT' && $CUSTOM_COMMAND 2>&1"
+    CLI_CMD="cd '$WSL_PROJECT_ROOT' && $CUSTOM_COMMAND 2>&1"
     CLI_MODE="custom"
     CLI_DISPLAY="$CUSTOM_COMMAND"
 elif [[ -n "$BINARY_PATH" ]]; then
@@ -207,32 +204,36 @@ elif [[ -n "$BINARY_PATH" ]]; then
         output_error "Binary not executable: $BINARY_PATH. Fix with: chmod +x '$BINARY_PATH'"
         exit 1
     fi
-    CLI_CMD="cd '$PROJECT_ROOT' && '$BINARY_PATH' 2>&1"
+    WSL_BINARY_PATH="$(tmux_to_wsl_path "$BINARY_PATH")"
+    CLI_CMD="cd '$WSL_PROJECT_ROOT' && '$WSL_BINARY_PATH' 2>&1"
     CLI_MODE="binary"
     CLI_DISPLAY="$BINARY_PATH"
 else
     # Default mode - SavantCode dev server via bun (for backward compatibility)
-    CLI_CMD="cd '$PROJECT_ROOT' && bun --cwd=cli run dev 2>&1"
+    # Run from the CLI workspace. Bun's `--cwd` form can render the TUI but
+    # exits before accepting input in WSL; the workspace-local script keeps
+    # the interactive process attached to the tmux pane.
+    CLI_CMD="cd '$WSL_PROJECT_ROOT/cli' && bun run dev 2>&1"
     CLI_MODE="dynamic"
-    CLI_DISPLAY="bun --cwd=cli run dev"
+    CLI_DISPLAY="cd cli && bun run dev"
 fi
 
 # Create tmux session running app
 # Note: We suppress stderr and verify session exists afterward to avoid race conditions
 # where tmux returns non-zero but the session is actually created
-tmux new-session -d -s "$SESSION_NAME" \
+tmux_exec new-session -d -s "$SESSION_NAME" \
     -x "$WIDTH" -y "$HEIGHT" \
     "$CLI_CMD" 2>/dev/null || true
 
 # Verify the session was actually created (more reliable than exit code)
-if ! tmux has-session -t "$SESSION_NAME" 2>/dev/null; then
+if ! tmux_exec has-session -t "$SESSION_NAME" 2>/dev/null; then
     output_error "Failed to create tmux session '$SESSION_NAME'"
     exit 1
 fi
 
 # Keep the session alive even if the process exits, so we can still capture
 # the last terminal output for diagnostics.
-tmux set-option -t "$SESSION_NAME" remain-on-exit on 2>/dev/null || true
+tmux_exec set-option -t "$SESSION_NAME" remain-on-exit on 2>/dev/null || true
 
 # Create session logs directory
 SESSION_DIR="$PROJECT_ROOT/debug/tmux-sessions/$SESSION_NAME"

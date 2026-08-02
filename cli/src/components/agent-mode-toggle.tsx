@@ -1,3 +1,4 @@
+import { TextAttributes } from '@opentui/core'
 import React, { useEffect, useRef, useState } from 'react'
 
 import { Button } from './button'
@@ -235,7 +236,11 @@ export const AgentModeToggle = ({
           wrapMode="none"
           fg={isCollapsedHovered ? theme.foreground : theme.muted}
         >
-          {isCollapsedHovered ? <b>{`< ${mode}`}</b> : `< ${mode}`}
+          {isCollapsedHovered ? (
+            <span attributes={TextAttributes.BOLD}>{`< ${mode}`}</span>
+          ) : (
+            `< ${mode}`
+          )}
         </text>
       </Button>
     )
@@ -248,7 +253,9 @@ export const AgentModeToggle = ({
     return (
       <box style={{ flexDirection: 'column', gap: 1 }}>
         <text fg={theme.foreground}>
-          <b>SCAFFOLD mode opens project-root writes.</b>
+          <span attributes={TextAttributes.BOLD}>
+            SCAFFOLD mode opens project-root writes.
+          </span>
         </text>
         <text fg={theme.muted}>
           Use only for first-time project scaffolding. Confirm?

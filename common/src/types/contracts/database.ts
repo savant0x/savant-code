@@ -95,7 +95,7 @@ export type AddAgentStepFn = (params: {
   credits?: number
   childRunIds?: string[]
   messageId: string | null
-  status?: 'running' | 'completed' | 'skipped'
+  status?: 'running' | 'completed' | 'failed' | 'skipped'
   errorMessage?: string
   startTime: Date
   logger: Logger

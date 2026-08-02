@@ -240,6 +240,29 @@ Always include captures so the parent agent can verify results. Always include l
     const helperScript = `#!/usr/bin/env bash
 set -e
 
+TMUX_COMMAND=(tmux)
+if ! command -v tmux >/dev/null 2>&1; then
+  if command -v wsl.exe >/dev/null 2>&1 && wsl.exe -e tmux -V >/dev/null 2>&1; then
+    TMUX_COMMAND=(wsl.exe -e tmux)
+  else
+    echo "tmux not found natively or inside WSL" >&2
+    exit 1
+  fi
+fi
+
+tmux_exec() {
+  "\${TMUX_COMMAND[@]}" "$@"
+}
+
+TMUX_CWD="$PWD"
+if [[ "\${TMUX_COMMAND[0]}" == "wsl.exe" ]]; then
+  HOST_CWD="$PWD"
+  if command -v cygpath >/dev/null 2>&1; then
+    HOST_CWD="$(cygpath -w "$PWD")"
+  fi
+  TMUX_CWD="$(wsl.exe -e wslpath -u "$HOST_CWD" | tr -d '\\r\\n')"
+fi
+
 usage() {
   echo "Usage: $0 <command> [args]"
   echo "Commands: start, send, capture, stop, key, raw, wait-idle, status"
@@ -253,8 +276,8 @@ case "$CMD" in
   start)
     SESSION="$1"
     [[ -z "$SESSION" ]] && { echo "Usage: start <session>" >&2; exit 1; }
-    tmux new-session -d -s "$SESSION" -x 120 -y 30 bash 2>/dev/null || true
-    if ! tmux has-session -t "$SESSION" 2>/dev/null; then
+    tmux_exec new-session -d -s "$SESSION" -c "$TMUX_CWD" -x 120 -y 30 bash 2>/dev/null || true
+    if ! tmux_exec has-session -t "$SESSION" 2>/dev/null; then
       echo "Failed to create session $SESSION" >&2; exit 1
     fi
     mkdir -p "/tmp/tmux-captures-$SESSION"
@@ -274,16 +297,17 @@ case "$CMD" in
       esac
     done
     [[ -z "$SESSION" || -z "$TEXT" ]] && { echo "Usage: send <session> <text> [--no-enter] [--paste] [--wait-idle N]" >&2; exit 1; }
-    tmux send-keys -t "$SESSION" C-u
+    tmux_exec send-keys -t "$SESSION" C-u
     sleep 0.05
     if [[ "$PASTE_MODE" == true ]]; then
-      tmux send-keys -t "$SESSION" $'\\x1b[200~'"$TEXT"$'\\x1b[201~'
+      tmux_exec send-keys -t "$SESSION" $'\\x1b[200~'"$TEXT"$'\\x1b[201~'
     else
-      tmux send-keys -t "$SESSION" -- "$TEXT"
+      tmux_exec send-keys -t "$SESSION" -- "$TEXT"
     fi
     if [[ "$AUTO_ENTER" == true ]]; then
-      sleep 0.05
-      tmux send-keys -t "$SESSION" Enter
+      # Allow OpenTUI to finish processing bracketed paste before Enter.
+      sleep 0.25
+      tmux_exec send-keys -t "$SESSION" Enter
       sleep 0.5
     fi
     if [[ "$WAIT_IDLE" -gt 0 ]]; then
@@ -291,7 +315,7 @@ case "$CMD" in
       STABLE_START=$(date +%s)
       MAX_END=$(( $(date +%s) + 120 ))
       while true; do
-        CURRENT_OUTPUT=$(tmux capture-pane -t "$SESSION" -S - -p 2>/dev/null || echo "")
+        CURRENT_OUTPUT=$(tmux_exec capture-pane -t "$SESSION" -S - -p 2>/dev/null || echo "")
         NOW=$(date +%s)
         if [[ "$CURRENT_OUTPUT" != "$LAST_OUTPUT" ]]; then
           LAST_OUTPUT="$CURRENT_OUTPUT"
@@ -307,13 +331,13 @@ case "$CMD" in
   key)
     SESSION="$1"; KEY="$2"
     [[ -z "$SESSION" || -z "$KEY" ]] && { echo "Usage: key <session> <key>" >&2; exit 1; }
-    tmux send-keys -t "$SESSION" "$KEY"
+    tmux_exec send-keys -t "$SESSION" "$KEY"
     ;;
 
   raw)
     SESSION="$1"; shift
     [[ -z "$SESSION" ]] && { echo "Usage: raw <session> [tmux send-keys args...]" >&2; exit 1; }
-    tmux send-keys -t "$SESSION" "$@"
+    tmux_exec send-keys -t "$SESSION" "$@"
     ;;
 
   capture)
@@ -344,9 +368,9 @@ case "$CMD" in
       CAPTURE_FILE="$CAPTURE_DIR/capture-\${SEQ_PAD}.txt"
     fi
     if [[ "$FULL" == true ]]; then
-      tmux capture-pane -t "$SESSION" -S - -p > "$CAPTURE_FILE"
+      tmux_exec capture-pane -t "$SESSION" -S - -p > "$CAPTURE_FILE"
     else
-      tmux capture-pane -t "$SESSION" -p > "$CAPTURE_FILE"
+      tmux_exec capture-pane -t "$SESSION" -p > "$CAPTURE_FILE"
     fi
     if [[ "$STRIP_ANSI" == true ]]; then
       perl -pe 's/\\e\\[[\\d;]*[a-zA-Z]//g' "$CAPTURE_FILE" > "$CAPTURE_FILE.tmp" && mv "$CAPTURE_FILE.tmp" "$CAPTURE_FILE"
@@ -364,7 +388,7 @@ case "$CMD" in
     STABLE_START=$(date +%s)
     MAX_END=$(( $(date +%s) + 120 ))
     while true; do
-      CURRENT_OUTPUT=$(tmux capture-pane -t "$SESSION" -S - -p 2>/dev/null || echo "")
+      CURRENT_OUTPUT=$(tmux_exec capture-pane -t "$SESSION" -S - -p 2>/dev/null || echo "")
       NOW=$(date +%s)
       if [[ "$CURRENT_OUTPUT" != "$LAST_OUTPUT" ]]; then
         LAST_OUTPUT="$CURRENT_OUTPUT"
@@ -379,7 +403,7 @@ case "$CMD" in
   status)
     SESSION="$1"
     [[ -z "$SESSION" ]] && { echo "Usage: status <session>" >&2; exit 1; }
-    if tmux has-session -t "$SESSION" 2>/dev/null; then
+    if tmux_exec has-session -t "$SESSION" 2>/dev/null; then
       echo "alive"
     else
       echo "dead"
@@ -389,7 +413,7 @@ case "$CMD" in
   stop)
     SESSION="$1"
     [[ -z "$SESSION" ]] && { echo "Usage: stop <session>" >&2; exit 1; }
-    tmux kill-session -t "$SESSION" 2>/dev/null || true
+    tmux_exec kill-session -t "$SESSION" 2>/dev/null || true
     ;;
 
   *) usage ;;
@@ -494,7 +518,16 @@ esac
     const { toolResult: initCapture } = yield {
       toolName: 'run_terminal_command',
       input: {
-        command: 'sleep 0.5 && ' + helperPath + " capture '" + sessionName + "' --wait 0 --label startup-check",
+        command:
+          'sleep 0.5 && ' +
+          helperPath +
+          " capture '" +
+          sessionName +
+          "' --wait 0 --label startup-check || { " +
+          helperPath +
+          " stop '" +
+          sessionName +
+          "' 2>/dev/null; exit 1; }",
         timeout_seconds: 10,
       },
     }

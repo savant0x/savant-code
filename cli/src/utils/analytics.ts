@@ -13,12 +13,10 @@ import { shouldTrackAnalyticsEvent } from '@savant-code/common/util/analytics-sa
 import { shouldMirrorAnalyticsEvent } from '@savant-code/common/util/log-mirror'
 
 import { getOrCreatePersistentAnonymousId } from './anonymous-id'
-import { enqueueClientLog } from './log-shipper'
+import { clearClientLogs, enqueueClientLog } from './log-shipper'
 
 import type { Logger } from '@savant-code/common/types/contracts/logger'
 import type { JSONValue } from '@savant-code/common/types/json'
-
-
 
 // Re-export types from core for backwards compatibility
 export type { AnalyticsClientWithIdentify as AnalyticsClient } from '@savant-code/common/analytics-core'
@@ -67,6 +65,7 @@ let anonymousId: string | undefined
 // Real user ID after identification
 let currentUserId: string | undefined
 let client: AnalyticsClientWithIdentify | undefined
+let analyticsEnabled = true
 
 // Store injected dependencies (for testing)
 let injectedDeps: AnalyticsDeps | undefined
@@ -119,12 +118,56 @@ export function resetAnalyticsState(deps?: AnalyticsDeps) {
   anonymousId = undefined
   currentUserId = undefined
   client = undefined
+  analyticsEnabled = true
+  clearClientLogs()
   injectedDeps = deps
   identified = false
 }
 
+/** Disable remote analytics and clear any buffered remote events. */
+export function disableAnalytics(): void {
+  // Close the synchronous consent boundary before touching the SDK. This
+  // prevents any caller from capturing while asynchronous client teardown is
+  // in progress.
+  analyticsEnabled = false
+  const previousClient = client
+  client = undefined
+  anonymousId = undefined
+  currentUserId = undefined
+  identified = false
+  clearClientLogs()
+  consentChangeListener?.(false)
+
+  // PostHog's disable() does not flush its queue. It is intentionally
+  // best-effort because consent has already been withdrawn locally.
+  if (previousClient?.disable) {
+    void Promise.resolve()
+      .then(() => previousClient.disable?.())
+      .catch(() => {
+        // Never make disabling telemetry fail the CLI.
+      })
+  }
+}
+
+function updateAnalyticsEnabled(enabled: boolean): void {
+  analyticsEnabled = enabled
+  consentChangeListener?.(enabled)
+}
+
+/** Return whether remote analytics and error reporting are enabled. */
+export function isAnalyticsEnabled(): boolean {
+  return analyticsEnabled
+}
+
 export let identified: boolean = false
 let analyticsErrorLogger: AnalyticsErrorLogger | undefined
+let consentChangeListener: ((enabled: boolean) => void) | undefined
+
+export function registerAnalyticsConsentListener(
+  listener: (enabled: boolean) => void,
+): void {
+  consentChangeListener = listener
+}
 
 export function setAnalyticsErrorLogger(loggerFn: AnalyticsErrorLogger) {
   analyticsErrorLogger = loggerFn
@@ -138,13 +181,29 @@ function logAnalyticsError(error: unknown, context: AnalyticsErrorContext) {
   }
 }
 
-export function initAnalytics() {
+export function initAnalytics(enabled = true) {
+  if (!enabled) {
+    disableAnalytics()
+    return
+  }
+
+  // Repeated startup/enable calls must not orphan a live client. A disabled
+  // client is cleared synchronously by disableAnalytics before re-enable.
+  if (analyticsEnabled && client) {
+    return
+  }
+
   const { env, isProd, createClient, generateAnonymousId } = resolveDeps()
 
   if (!env.NEXT_PUBLIC_POSTHOG_API_KEY || !env.NEXT_PUBLIC_POSTHOG_HOST_URL) {
     const error = new Error(
       'NEXT_PUBLIC_POSTHOG_API_KEY or NEXT_PUBLIC_POSTHOG_HOST_URL is not set',
     )
+    anonymousId = undefined
+    currentUserId = undefined
+    client = undefined
+    identified = false
+    disableAnalytics()
     logAnalyticsError(error, {
       stage: AnalyticsErrorStage.Init,
       missingEnv: true,
@@ -152,24 +211,29 @@ export function initAnalytics() {
     throw error
   }
 
-  // Generate anonymous ID for pre-login tracking
-  // PostHog will merge this with the real user ID via alias() when user logs in
-  anonymousId = generateAnonymousId()
-  identified = false
-
   try {
-    client = createClient(env.NEXT_PUBLIC_POSTHOG_API_KEY, {
+    const nextAnonymousId = generateAnonymousId()
+    const nextClient = createClient(env.NEXT_PUBLIC_POSTHOG_API_KEY, {
       host: env.NEXT_PUBLIC_POSTHOG_HOST_URL,
       enableExceptionAutocapture: isProd,
     })
+
+    // Commit the new remote-analytics session only after client construction
+    // succeeds. A failed enable must never leave the global gate half-open.
+    anonymousId = nextAnonymousId
+    currentUserId = undefined
+    client = nextClient
+    identified = false
+    updateAnalyticsEnabled(true)
   } catch (error) {
+    disableAnalytics()
     logAnalyticsError(error, { stage: AnalyticsErrorStage.Init })
     throw error
   }
 }
 
 export async function flushAnalytics() {
-  if (!client) {
+  if (!analyticsEnabled || !client) {
     return
   }
   try {
@@ -179,10 +243,15 @@ export async function flushAnalytics() {
     // This prevents PostHog errors from cluttering the user's console
     logAnalyticsError(error, { stage: AnalyticsErrorStage.Flush })
   }
-}export function trackEvent(
+}
+export function trackEvent(
   event: AnalyticsEvent,
   properties?: Record<string, JSONValue>,
 ) {
+  if (!analyticsEnabled) {
+    return
+  }
+
   const { isProd } = resolveDeps()
   const distinctId = getDistinctId()
 
@@ -254,7 +323,14 @@ export async function flushAnalytics() {
   }
 }
 
-export function identifyUser(userId: string, properties?: Record<string, JSONValue>) {  
+export function identifyUser(
+  userId: string,
+  properties?: Record<string, JSONValue>,
+) {
+  if (!analyticsEnabled) {
+    return
+  }
+
   if (!client) {
     const error = new Error('Analytics client not initialized')
     logAnalyticsError(error, {
@@ -304,12 +380,13 @@ export function identifyUser(userId: string, properties?: Record<string, JSONVal
       properties: properties ?? null,
     } as AnalyticsErrorContext)
   }
-}export function logError(
+}
+export function logError(
   error: Error,
   userId?: string,
   properties?: Record<string, JSONValue>,
 ) {
-  if (!client) {
+  if (!analyticsEnabled || !client) {
     return
   }
 

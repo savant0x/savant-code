@@ -172,7 +172,9 @@ describe('clipboard', () => {
 
     test('returns early for empty string', async () => {
       const messages: (string | null)[] = []
-      const unsubscribe = subscribeClipboardMessages((msg) => messages.push(msg))
+      const unsubscribe = subscribeClipboardMessages((msg) =>
+        messages.push(msg),
+      )
       messages.length = 0 // Clear initial null
 
       await copyTextToClipboard('')
@@ -185,7 +187,9 @@ describe('clipboard', () => {
 
     test('returns early for whitespace-only string', async () => {
       const messages: (string | null)[] = []
-      const unsubscribe = subscribeClipboardMessages((msg) => messages.push(msg))
+      const unsubscribe = subscribeClipboardMessages((msg) =>
+        messages.push(msg),
+      )
       messages.length = 0 // Clear initial null
 
       await copyTextToClipboard('   \n\t  ')
@@ -211,7 +215,9 @@ describe('clipboard', () => {
 
     test.skipIf(!shouldRun)('formats short text with quotes', async () => {
       const messages: (string | null)[] = []
-      const unsubscribe = subscribeClipboardMessages((msg) => messages.push(msg))
+      const unsubscribe = subscribeClipboardMessages((msg) =>
+        messages.push(msg),
+      )
 
       await copyTextToClipboard('Hello')
 
@@ -222,9 +228,12 @@ describe('clipboard', () => {
 
     test.skipIf(!shouldRun)('truncates long text with ellipsis', async () => {
       const messages: (string | null)[] = []
-      const unsubscribe = subscribeClipboardMessages((msg) => messages.push(msg))
+      const unsubscribe = subscribeClipboardMessages((msg) =>
+        messages.push(msg),
+      )
 
-      const longText = 'This is a very long piece of text that should be truncated because it exceeds the maximum display length'
+      const longText =
+        'This is a very long piece of text that should be truncated because it exceeds the maximum display length'
       await copyTextToClipboard(longText)
 
       const lastMessage = messages.find((m) => m?.startsWith('Copied:'))
@@ -237,7 +246,9 @@ describe('clipboard', () => {
 
     test.skipIf(!shouldRun)('collapses whitespace in preview', async () => {
       const messages: (string | null)[] = []
-      const unsubscribe = subscribeClipboardMessages((msg) => messages.push(msg))
+      const unsubscribe = subscribeClipboardMessages((msg) =>
+        messages.push(msg),
+      )
 
       await copyTextToClipboard('Hello\n\n\nWorld\t\tTest')
 
@@ -246,47 +257,67 @@ describe('clipboard', () => {
       unsubscribe()
     })
 
-    test.skipIf(!shouldRun)('uses custom success message when provided', async () => {
-      const messages: (string | null)[] = []
-      const unsubscribe = subscribeClipboardMessages((msg) => messages.push(msg))
+    test.skipIf(!shouldRun)(
+      'uses custom success message when provided',
+      async () => {
+        const messages: (string | null)[] = []
+        const unsubscribe = subscribeClipboardMessages((msg) =>
+          messages.push(msg),
+        )
 
-      await copyTextToClipboard('test', { successMessage: 'Custom success!' })
+        await copyTextToClipboard('test', { successMessage: 'Custom success!' })
 
-      expect(messages).toContain('Custom success!')
+        expect(messages).toContain('Custom success!')
 
-      unsubscribe()
-    })
+        unsubscribe()
+      },
+    )
 
-    test.skipIf(!shouldRun)('shows no message when successMessage is null', async () => {
-      const messages: (string | null)[] = []
-      const unsubscribe = subscribeClipboardMessages((msg) => messages.push(msg))
-      messages.length = 0 // Clear initial null
+    test.skipIf(!shouldRun)(
+      'shows no message when successMessage is null',
+      async () => {
+        const messages: (string | null)[] = []
+        const unsubscribe = subscribeClipboardMessages((msg) =>
+          messages.push(msg),
+        )
+        messages.length = 0 // Clear initial null
 
-      await copyTextToClipboard('test', { successMessage: null })
+        await copyTextToClipboard('test', { successMessage: null })
 
-      expect(messages.filter((m) => m?.startsWith('Copied'))).toHaveLength(0)
+        expect(messages.filter((m) => m?.startsWith('Copied'))).toHaveLength(0)
 
-      unsubscribe()
-    })
+        unsubscribe()
+      },
+    )
 
-    test.skipIf(!shouldRun)('suppresses message when suppressGlobalMessage is true', async () => {
-      const messages: (string | null)[] = []
-      const unsubscribe = subscribeClipboardMessages((msg) => messages.push(msg))
-      messages.length = 0 // Clear initial null
+    test.skipIf(!shouldRun)(
+      'suppresses message when suppressGlobalMessage is true',
+      async () => {
+        const messages: (string | null)[] = []
+        const unsubscribe = subscribeClipboardMessages((msg) =>
+          messages.push(msg),
+        )
+        messages.length = 0 // Clear initial null
 
-      await copyTextToClipboard('test', { suppressGlobalMessage: true })
+        await copyTextToClipboard('test', { suppressGlobalMessage: true })
 
-      expect(messages.filter((m) => m !== null)).toHaveLength(0)
+        expect(messages.filter((m) => m !== null)).toHaveLength(0)
 
-      unsubscribe()
-    })
+        unsubscribe()
+      },
+    )
   })
 
   describe('copyTextToClipboard - error handling when both methods fail', () => {
     let mockTimers: MockTimers
     let loggerErrorSpy: ReturnType<typeof spyOn>
     let originalPlatform: PropertyDescriptor | undefined
-    let originalEnv: { SSH_CLIENT?: string; SSH_TTY?: string; SSH_CONNECTION?: string; TERM?: string }
+    let originalEnv: {
+      SSH_CLIENT?: string
+      SSH_TTY?: string
+      SSH_CONNECTION?: string
+      TERM?: string
+    }
 
     beforeEach(() => {
       mockTimers = createMockTimers()
@@ -294,7 +325,10 @@ describe('clipboard', () => {
 
       originalPlatform = Object.getOwnPropertyDescriptor(process, 'platform')
       // Use a platform that has no clipboard tool (freebsd)
-      Object.defineProperty(process, 'platform', { value: 'freebsd', configurable: true })
+      Object.defineProperty(process, 'platform', {
+        value: 'freebsd',
+        configurable: true,
+      })
 
       // Save env vars
       originalEnv = {
@@ -322,11 +356,14 @@ describe('clipboard', () => {
         Object.defineProperty(process, 'platform', originalPlatform)
       }
       // Restore env vars
-      if (originalEnv.SSH_CLIENT !== undefined) process.env.SSH_CLIENT = originalEnv.SSH_CLIENT
+      if (originalEnv.SSH_CLIENT !== undefined)
+        process.env.SSH_CLIENT = originalEnv.SSH_CLIENT
       else delete process.env.SSH_CLIENT
-      if (originalEnv.SSH_TTY !== undefined) process.env.SSH_TTY = originalEnv.SSH_TTY
+      if (originalEnv.SSH_TTY !== undefined)
+        process.env.SSH_TTY = originalEnv.SSH_TTY
       else delete process.env.SSH_TTY
-      if (originalEnv.SSH_CONNECTION !== undefined) process.env.SSH_CONNECTION = originalEnv.SSH_CONNECTION
+      if (originalEnv.SSH_CONNECTION !== undefined)
+        process.env.SSH_CONNECTION = originalEnv.SSH_CONNECTION
       else delete process.env.SSH_CONNECTION
       if (originalEnv.TERM !== undefined) process.env.TERM = originalEnv.TERM
       else delete process.env.TERM
@@ -335,7 +372,9 @@ describe('clipboard', () => {
 
     test('shows default error message when both methods fail', async () => {
       const messages: (string | null)[] = []
-      const unsubscribe = subscribeClipboardMessages((msg) => messages.push(msg))
+      const unsubscribe = subscribeClipboardMessages((msg) =>
+        messages.push(msg),
+      )
 
       await expect(copyTextToClipboard('test text')).rejects.toThrow()
 
@@ -346,10 +385,12 @@ describe('clipboard', () => {
 
     test('shows custom error message when provided', async () => {
       const messages: (string | null)[] = []
-      const unsubscribe = subscribeClipboardMessages((msg) => messages.push(msg))
+      const unsubscribe = subscribeClipboardMessages((msg) =>
+        messages.push(msg),
+      )
 
       await expect(
-        copyTextToClipboard('test text', { errorMessage: 'Custom error!' })
+        copyTextToClipboard('test text', { errorMessage: 'Custom error!' }),
       ).rejects.toThrow()
 
       expect(messages).toContain('Custom error!')
@@ -359,11 +400,13 @@ describe('clipboard', () => {
 
     test('suppresses error message when suppressGlobalMessage is true', async () => {
       const messages: (string | null)[] = []
-      const unsubscribe = subscribeClipboardMessages((msg) => messages.push(msg))
+      const unsubscribe = subscribeClipboardMessages((msg) =>
+        messages.push(msg),
+      )
       messages.length = 0 // Clear initial
 
       await expect(
-        copyTextToClipboard('test text', { suppressGlobalMessage: true })
+        copyTextToClipboard('test text', { suppressGlobalMessage: true }),
       ).rejects.toThrow()
 
       expect(messages.filter((m) => m !== null)).toHaveLength(0)
@@ -373,7 +416,7 @@ describe('clipboard', () => {
 
     test('logs error when both methods fail', async () => {
       await expect(
-        copyTextToClipboard('test text', { suppressGlobalMessage: true })
+        copyTextToClipboard('test text', { suppressGlobalMessage: true }),
       ).rejects.toThrow()
 
       expect(loggerErrorSpy).toHaveBeenCalled()
@@ -381,7 +424,7 @@ describe('clipboard', () => {
 
     test('throws error when both methods fail', async () => {
       await expect(
-        copyTextToClipboard('test text', { suppressGlobalMessage: true })
+        copyTextToClipboard('test text', { suppressGlobalMessage: true }),
       ).rejects.toThrow('No clipboard method available')
     })
   })
@@ -391,16 +434,19 @@ describe('clipboard', () => {
     // Skip on CI or non-macOS systems
     const shouldRun = process.platform === 'darwin' && !process.env.CI
 
-    test.skipIf(!shouldRun)('actually copies text to system clipboard on macOS', async () => {
-      const testText = `clipboard-test-${Date.now()}`
+    test.skipIf(!shouldRun)(
+      'actually copies text to system clipboard on macOS',
+      async () => {
+        const testText = `clipboard-test-${Date.now()}`
 
-      await copyTextToClipboard(testText, { suppressGlobalMessage: true })
+        await copyTextToClipboard(testText, { suppressGlobalMessage: true })
 
-      // Verify with pbpaste
-      const clipboardContent = execSync('pbpaste', { encoding: 'utf8' })
+        // Verify with pbpaste
+        const clipboardContent = execSync('pbpaste', { encoding: 'utf8' })
 
-      expect(clipboardContent).toBe(testText)
-    })
+        expect(clipboardContent).toBe(testText)
+      },
+    )
   })
 
   describe('registerClipboardRenderer and renderer-based copy', () => {
@@ -417,18 +463,23 @@ describe('clipboard', () => {
         TERM: process.env.TERM,
         TMUX: process.env.TMUX,
         STY: process.env.STY,
+        TERM_PROGRAM: process.env.TERM_PROGRAM,
       }
       loggerErrorSpy = spyOn(logger, 'error').mockImplementation(() => {})
 
       // Use freebsd + dumb terminal to disable platform tools and OSC52,
       // isolating the renderer path.
-      Object.defineProperty(process, 'platform', { value: 'freebsd', configurable: true })
+      Object.defineProperty(process, 'platform', {
+        value: 'freebsd',
+        configurable: true,
+      })
       delete process.env.SSH_CLIENT
       delete process.env.SSH_TTY
       delete process.env.SSH_CONNECTION
       process.env.TERM = 'dumb'
       delete process.env.TMUX
       delete process.env.STY
+      delete process.env.TERM_PROGRAM
 
       clearClipboardMessage()
       unregisterClipboardRenderer()
@@ -465,25 +516,29 @@ describe('clipboard', () => {
       registerClipboardRenderer({ copyToClipboardOSC52: () => false })
 
       await expect(
-        copyTextToClipboard('test text', { suppressGlobalMessage: true })
+        copyTextToClipboard('test text', { suppressGlobalMessage: true }),
       ).rejects.toThrow('No clipboard method available')
     })
 
     test('renderer without copyToClipboardOSC52 falls through and fails', async () => {
-      registerClipboardRenderer({ someOtherMethod: () => true } as ClipboardRenderer)
+      registerClipboardRenderer({
+        someOtherMethod: () => true,
+      } as ClipboardRenderer)
 
       await expect(
-        copyTextToClipboard('test text', { suppressGlobalMessage: true })
+        copyTextToClipboard('test text', { suppressGlobalMessage: true }),
       ).rejects.toThrow('No clipboard method available')
     })
 
     test('renderer whose copyToClipboardOSC52 throws falls through gracefully', async () => {
       registerClipboardRenderer({
-        copyToClipboardOSC52: () => { throw new Error('renderer error') },
+        copyToClipboardOSC52: () => {
+          throw new Error('renderer error')
+        },
       })
 
       await expect(
-        copyTextToClipboard('test text', { suppressGlobalMessage: true })
+        copyTextToClipboard('test text', { suppressGlobalMessage: true }),
       ).rejects.toThrow('No clipboard method available')
     })
 
@@ -498,7 +553,7 @@ describe('clipboard', () => {
       unregisterClipboardRenderer()
 
       await expect(
-        copyTextToClipboard('test text', { suppressGlobalMessage: true })
+        copyTextToClipboard('test text', { suppressGlobalMessage: true }),
       ).rejects.toThrow('No clipboard method available')
 
       expect(calls).toEqual([])
@@ -526,7 +581,9 @@ describe('clipboard', () => {
       registerClipboardRenderer({ copyToClipboardOSC52: () => true })
 
       const messages: (string | null)[] = []
-      const unsubscribe = subscribeClipboardMessages((msg) => messages.push(msg))
+      const unsubscribe = subscribeClipboardMessages((msg) =>
+        messages.push(msg),
+      )
 
       await copyTextToClipboard('Hello world')
 
@@ -554,6 +611,7 @@ describe('clipboard', () => {
         TERM: process.env.TERM,
         TMUX: process.env.TMUX,
         STY: process.env.STY,
+        TERM_PROGRAM: process.env.TERM_PROGRAM,
       }
       originalPlatform = Object.getOwnPropertyDescriptor(process, 'platform')
       loggerErrorSpy = spyOn(logger, 'error').mockImplementation(() => {})
@@ -583,7 +641,10 @@ describe('clipboard', () => {
       delete process.env.STY
 
       // Use freebsd platform so platform tools fail, forcing OSC52 path
-      Object.defineProperty(process, 'platform', { value: 'freebsd', configurable: true })
+      Object.defineProperty(process, 'platform', {
+        value: 'freebsd',
+        configurable: true,
+      })
 
       // In remote session with working /dev/tty, OSC52 should succeed
       // This test verifies that having SSH_CLIENT set changes the behavior
@@ -606,7 +667,10 @@ describe('clipboard', () => {
       delete process.env.SSH_CONNECTION
       process.env.TERM = 'xterm-256color'
 
-      Object.defineProperty(process, 'platform', { value: 'freebsd', configurable: true })
+      Object.defineProperty(process, 'platform', {
+        value: 'freebsd',
+        configurable: true,
+      })
 
       try {
         await copyTextToClipboard('test', { suppressGlobalMessage: true })
@@ -623,7 +687,10 @@ describe('clipboard', () => {
       process.env.SSH_CONNECTION = '192.168.1.100 54321 10.0.0.1 22'
       process.env.TERM = 'xterm-256color'
 
-      Object.defineProperty(process, 'platform', { value: 'freebsd', configurable: true })
+      Object.defineProperty(process, 'platform', {
+        value: 'freebsd',
+        configurable: true,
+      })
 
       try {
         await copyTextToClipboard('test', { suppressGlobalMessage: true })
@@ -685,7 +752,10 @@ describe('clipboard', () => {
       loggerErrorSpy = spyOn(logger, 'error').mockImplementation(() => {})
 
       // No platform clipboard tool available
-      Object.defineProperty(process, 'platform', { value: 'freebsd', configurable: true })
+      Object.defineProperty(process, 'platform', {
+        value: 'freebsd',
+        configurable: true,
+      })
       delete process.env.SSH_CLIENT
       delete process.env.SSH_TTY
       delete process.env.SSH_CONNECTION
@@ -734,7 +804,9 @@ describe('clipboard', () => {
       process.env.CODESPACES = 'true'
 
       const messages: (string | null)[] = []
-      const unsubscribe = subscribeClipboardMessages((msg) => messages.push(msg))
+      const unsubscribe = subscribeClipboardMessages((msg) =>
+        messages.push(msg),
+      )
 
       await expect(
         copyTextToClipboard('test text', { suppressGlobalMessage: true }),
@@ -749,7 +821,9 @@ describe('clipboard', () => {
       process.env.SSH_CONNECTION = '192.168.1.100 54321 10.0.0.1 22'
 
       const messages: (string | null)[] = []
-      const unsubscribe = subscribeClipboardMessages((msg) => messages.push(msg))
+      const unsubscribe = subscribeClipboardMessages((msg) =>
+        messages.push(msg),
+      )
 
       registerClipboardRenderer({ copyToClipboardOSC52: () => true })
 
@@ -811,6 +885,7 @@ describe('clipboard', () => {
         TERM: process.env.TERM,
         TMUX: process.env.TMUX,
         STY: process.env.STY,
+        TERM_PROGRAM: process.env.TERM_PROGRAM,
       }
       originalPlatform = Object.getOwnPropertyDescriptor(process, 'platform')
       loggerErrorSpy = spyOn(logger, 'error').mockImplementation(() => {})
@@ -839,11 +914,14 @@ describe('clipboard', () => {
       delete process.env.STY
 
       // Use freebsd so platform tools also fail
-      Object.defineProperty(process, 'platform', { value: 'freebsd', configurable: true })
+      Object.defineProperty(process, 'platform', {
+        value: 'freebsd',
+        configurable: true,
+      })
 
       // Should fail because both methods are disabled
       await expect(
-        copyTextToClipboard('test', { suppressGlobalMessage: true })
+        copyTextToClipboard('test', { suppressGlobalMessage: true }),
       ).rejects.toThrow('No clipboard method available')
     })
 
@@ -858,7 +936,10 @@ describe('clipboard', () => {
       delete process.env.STY
 
       // Use freebsd so platform tools fail, only OSC52 available
-      Object.defineProperty(process, 'platform', { value: 'freebsd', configurable: true })
+      Object.defineProperty(process, 'platform', {
+        value: 'freebsd',
+        configurable: true,
+      })
 
       // Create text that will exceed 32KB when base64 encoded
       // Base64 expands by ~4/3, so 25KB of text should exceed 32KB encoded
@@ -866,7 +947,7 @@ describe('clipboard', () => {
 
       // Should fail because OSC52 rejects oversized payload and platform tools unavailable
       await expect(
-        copyTextToClipboard(largeText, { suppressGlobalMessage: true })
+        copyTextToClipboard(largeText, { suppressGlobalMessage: true }),
       ).rejects.toThrow('No clipboard method available')
     })
 
@@ -878,7 +959,10 @@ describe('clipboard', () => {
       process.env.TMUX = '/tmp/tmux-1000/default,12345,0'
       delete process.env.STY
 
-      Object.defineProperty(process, 'platform', { value: 'freebsd', configurable: true })
+      Object.defineProperty(process, 'platform', {
+        value: 'freebsd',
+        configurable: true,
+      })
 
       try {
         await copyTextToClipboard('test', { suppressGlobalMessage: true })
@@ -897,7 +981,10 @@ describe('clipboard', () => {
       delete process.env.TMUX
       process.env.STY = '12345.pts-0.hostname'
 
-      Object.defineProperty(process, 'platform', { value: 'freebsd', configurable: true })
+      Object.defineProperty(process, 'platform', {
+        value: 'freebsd',
+        configurable: true,
+      })
 
       try {
         await copyTextToClipboard('test', { suppressGlobalMessage: true })

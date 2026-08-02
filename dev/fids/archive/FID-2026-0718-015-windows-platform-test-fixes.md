@@ -1,11 +1,18 @@
-**Status:** closed / archived
-**Opened:** 2026-07-18
-**Severity:** medium (blocks clean Windows CI; production Linux unaffected)
-**Source:** FID-2026-0718-014 v3 close-out Section 12.4
-**Reactor:** Orchestrator (Buffy)
-**Depends on:** FID-2026-0718-014 v3 ✅ closed + shipped
+# On Windows (or WSL with Windows subsystem):
+
+**Filename:** `FID-2026-0718-015-windows-platform-test-fixes.md`
+**ID:** FID-2026-0718-015
+**Severity:** medium
+**Status:** closed
+**Created:** 2026-0718 00:00
+**Author:** Historical record (metadata backfill)
 
 ---
+
+## Metadata Normalization Note
+
+This historical record was normalized on 2026-07-31 for FreeBuff ECHO v0.1.2 compliance. The original body and evidence are preserved. Original status: `closed / archived`; Original ID: `FID-2026-0718-015-windows-platform-test-fixes`. Canonical ID: `FID-2026-0718-015`. Backfilled fields: Filename, ID, Created, Author. Canonical status reflects the record's lifecycle location; it does not add implementation evidence.
+
 
 ## 1. Summary
 

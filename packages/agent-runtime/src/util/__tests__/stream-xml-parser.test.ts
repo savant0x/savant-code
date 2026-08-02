@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'bun:test'
 
-import {
-  createStreamParserState,
-  parseStreamChunk,
-} from '../stream-xml-parser'
+import { createStreamParserState, parseStreamChunk } from '../stream-xml-parser'
 
 import type { ParsedToolCall } from '../stream-xml-parser'
 
@@ -50,12 +47,18 @@ After text`
       const state = createStreamParserState()
 
       // First chunk: start tag and partial content
-      const result1 = parseStreamChunk('<savant_code_tool_call>\n{"cb_tool', state)
+      const result1 = parseStreamChunk(
+        '<savant_code_tool_call>\n{"cb_tool',
+        state,
+      )
       expect(result1.filteredText).toBe('')
       expect(result1.toolCalls).toEqual([])
 
       // Second chunk: rest of content and end tag
-      const result2 = parseStreamChunk('_name": "test_tool"}\n</savant_code_tool_call>', state)
+      const result2 = parseStreamChunk(
+        '_name": "test_tool"}\n</savant_code_tool_call>',
+        state,
+      )
       expect(result2.filteredText).toBe('')
       expect(result2.toolCalls).toHaveLength(1)
       expect(result2.toolCalls[0].toolName).toBe('test_tool')
@@ -65,12 +68,15 @@ After text`
       const state = createStreamParserState()
 
       // First chunk ends with partial start tag
-      const result1 = parseStreamChunk('Some text<savant-code', state)
+      const result1 = parseStreamChunk('Some text<savant_code', state)
       expect(result1.filteredText).toBe('Some text')
       expect(result1.toolCalls).toEqual([])
 
       // Second chunk completes the start tag
-      const result2 = parseStreamChunk('_tool_call>\n{"cb_tool_name": "test"}\n</savant_code_tool_call>', state)
+      const result2 = parseStreamChunk(
+        '_tool_call>\n{"cb_tool_name": "test"}\n</savant_code_tool_call>',
+        state,
+      )
       expect(result2.filteredText).toBe('')
       expect(result2.toolCalls).toHaveLength(1)
     })
@@ -173,7 +179,9 @@ Thinking about the task...
       }
 
       const combinedText = allChunks.join('')
-      expect(combinedText).toBe('<think>\nThinking about the task...\n</think>\n\n')
+      expect(combinedText).toBe(
+        '<think>\nThinking about the task...\n</think>\n\n',
+      )
       expect(allToolCalls).toHaveLength(1)
       expect(allToolCalls[0].toolName).toBe('propose_str_replace')
       expect(allToolCalls[0].input.path).toBe('test.ts')
@@ -185,7 +193,10 @@ Thinking about the task...
       const allToolCalls: ParsedToolCall[] = []
 
       // Send start tag and content
-      let result = parseStreamChunk('<savant_code_tool_call>\n{"cb_tool_name": "test"}\n</', state)
+      let result = parseStreamChunk(
+        '<savant_code_tool_call>\n{"cb_tool_name": "test"}\n</',
+        state,
+      )
       allChunks.push(result.filteredText)
       allToolCalls.push(...result.toolCalls)
 
@@ -219,6 +230,56 @@ Thinking about the task...
       expect(combinedText).toBe('HiBye')
       expect(allToolCalls).toHaveLength(1)
       expect(allToolCalls[0].toolName).toBe('x')
+    })
+
+    it('should discard unsupported legacy tool-call markup without executing it', () => {
+      const state = createStreamParserState()
+      const result = parseStreamChunk(
+        '<think>Keep this reasoning</think>\n<tool_call>\n<function=sequentialthinking>\n<parameter=thought>Do not show this</parameter>\n</tool_call>\nAfter',
+        state,
+      )
+
+      expect(result.filteredText).toBe(
+        '<think>Keep this reasoning</think>\n\nAfter',
+      )
+      expect(result.toolCalls).toEqual([])
+    })
+
+    it('should discard legacy tool-call markup split across chunks', () => {
+      const state = createStreamParserState()
+      const chunks = [
+        '<tool_',
+        'call>\n<function=sequentialthinking>',
+        '\n<parameter=thought>Do not execute</parameter>',
+        '\n</tool_call>After',
+      ]
+      const filteredText: string[] = []
+      const toolCalls: ParsedToolCall[] = []
+
+      for (const chunk of chunks) {
+        const result = parseStreamChunk(chunk, state)
+        filteredText.push(result.filteredText)
+        toolCalls.push(...result.toolCalls)
+      }
+
+      expect(filteredText.join('')).toBe('After')
+      expect(toolCalls).toEqual([])
+    })
+
+    it('should discard legacy markup while still extracting a canonical call after it', () => {
+      const state = createStreamParserState()
+      const result = parseStreamChunk(
+        '<tool_call><function=sequentialthinking></tool_call>\n<savant_code_tool_call>\n{"cb_tool_name":"read_files","paths":["test.ts"]}\n</savant_code_tool_call>',
+        state,
+      )
+
+      expect(result.filteredText).toBe('\n')
+      expect(result.toolCalls).toEqual([
+        {
+          toolName: 'read_files',
+          input: { paths: ['test.ts'] },
+        },
+      ])
     })
   })
 })

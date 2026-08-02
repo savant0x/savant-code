@@ -24,6 +24,8 @@ let buffer: LogRecordInput[] = []
 let timer: ReturnType<typeof setInterval> | null = null
 let flushing = false
 let shutdownRegistered = false
+let consentGeneration = 0
+let activeFlushController: AbortController | null = null
 
 function enabled(): boolean {
   if (isDirectProviderMode()) return false
@@ -52,6 +54,14 @@ function registerShutdown(): void {
   process.once('SIGINT', onExit)
 }
 
+/** Discard buffered remote records after consent is withdrawn. */
+export function clearClientLogs(): void {
+  buffer = []
+  consentGeneration += 1
+  activeFlushController?.abort()
+  activeFlushController = null
+}
+
 /** Buffer one record for shipping. Cheap, synchronous, never throws. */
 export function enqueueClientLog(record: LogRecordInput): void {
   if (!enabled()) return
@@ -70,8 +80,15 @@ export function enqueueClientLog(record: LogRecordInput): void {
 export async function flushClientLogs(): Promise<void> {
   if (flushing || buffer.length === 0) return
   flushing = true
+  const batchGeneration = consentGeneration
   const batch = buffer.splice(0, MAX_BATCH)
+  const flushController = new AbortController()
+  activeFlushController = flushController
   try {
+    // A consent withdrawal may happen while this async flush is queued. Drop
+    // the batch before opening the network request if the generation changed.
+    if (batchGeneration !== consentGeneration) return
+
     const client = getApiClient()
     // Ship whether or not we're logged in. With a token the server stamps the
     // authenticated user_id; without one it accepts the batch anonymously
@@ -85,11 +102,15 @@ export async function flushClientLogs(): Promise<void> {
         includeAuth: Boolean(client.authToken),
         retry: false,
         timeoutMs: 5_000,
+        signal: flushController.signal,
       },
     )
   } catch {
     // Best-effort: drop on error rather than risk unbounded growth.
   } finally {
+    if (activeFlushController === flushController) {
+      activeFlushController = null
+    }
     flushing = false
   }
 }

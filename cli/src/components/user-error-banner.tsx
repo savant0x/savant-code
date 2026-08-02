@@ -41,11 +41,9 @@ export const UserErrorBanner = React.memo(function UserErrorBanner({
           gap: 1,
         }}
       >
-        <text style={{ fg: theme.error }}>
-          {'✕ '}
-        </text>
+        <text style={{ fg: theme.error }}>{'✕ '}</text>
         <text style={{ fg: theme.error, wrapMode: 'word' }}>
-          {title ?? 'error'}
+          {title ?? 'Error'}
         </text>
       </box>
       <text style={{ fg: theme.foreground, wrapMode: 'word', paddingLeft: 2 }}>

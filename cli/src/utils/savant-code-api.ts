@@ -4,9 +4,7 @@ import { WEBSITE_URL } from '@savant-code/sdk'
 import { isDirectProviderMode } from './env'
 
 import type { FeedbackRequest } from '@savant-code/common/schemas/feedback'
-import type {
-  PublishAgentsResponse,
-} from '@savant-code/common/types/api/agents/publish'
+import type { PublishAgentsResponse } from '@savant-code/common/types/api/agents/publish'
 import type { JSONValue } from '@savant-code/common/types/json'
 
 /**
@@ -17,7 +15,12 @@ import type { JSONValue } from '@savant-code/common/types/json'
  */
 export type ApiResponse<T> =
   | { ok: true; status: number; data?: T }
-  | { ok: false; status: number; error?: string; errorData?: Record<string, JSONValue> }
+  | {
+      ok: false
+      status: number
+      error?: string
+      errorData?: Record<string, JSONValue>
+    }
 
 // ============================================================================
 // Type-safe endpoint request/response types
@@ -142,6 +145,8 @@ export interface RequestOptions {
   retry?: RetryConfig | false
   /** Custom headers */
   headers?: Record<string, string>
+  /** Optional caller-controlled cancellation signal */
+  signal?: AbortSignal
 }
 
 export interface SavantCodeApiClient {
@@ -290,7 +295,7 @@ const calculateBackoffDelay = (
  * Note: AbortError is NOT retryable because it indicates intentional cancellation
  * (e.g., user cancelled the request or our timeout was exceeded).
  */
- 
+
 const isRetryableError = (error: unknown): boolean => {
   if (error instanceof Error) {
     const name = error.name.toLowerCase()
@@ -357,6 +362,7 @@ export function createSavantCodeApiClient(
       timeoutMs = defaultTimeoutMs,
       retry: retryConfig = mergedDefaultRetry,
       headers: customHeaders = {},
+      signal: externalSignal,
     } = options
 
     // Build URL with query parameters
@@ -397,9 +403,20 @@ export function createSavantCodeApiClient(
     const maxAttempts = shouldRetry ? (retryOpts?.maxRetries ?? 0) + 1 : 1
 
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      // Create abort controller for timeout
+      if (externalSignal?.aborted) {
+        const abortError = new Error('Request aborted')
+        abortError.name = 'AbortError'
+        throw abortError
+      }
+
+      // Create an internal timeout controller while also honoring an optional
+      // caller-controlled cancellation signal (used by consent teardown).
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+      const abortFromExternalSignal = () => controller.abort()
+      externalSignal?.addEventListener('abort', abortFromExternalSignal, {
+        once: true,
+      })
 
       try {
         const response = await fetchFn(url, {
@@ -408,6 +425,7 @@ export function createSavantCodeApiClient(
         })
 
         clearTimeout(timeoutId)
+        externalSignal?.removeEventListener('abort', abortFromExternalSignal)
 
         if (response.ok) {
           try {
@@ -441,8 +459,9 @@ export function createSavantCodeApiClient(
         let errorData: Record<string, JSONValue> | undefined
         try {
           errorData = (await response.json()) as Record<string, JSONValue>
-          errorMessage =
-            String(errorData.error || errorData.message || response.statusText)
+          errorMessage = String(
+            errorData.error || errorData.message || response.statusText,
+          )
         } catch {
           try {
             errorMessage = await response.text()
@@ -451,11 +470,16 @@ export function createSavantCodeApiClient(
           }
         }
 
-        return { ok: false, status: response.status, error: errorMessage, errorData }
+        return {
+          ok: false,
+          status: response.status,
+          error: errorMessage,
+          errorData,
+        }
       } catch (error) {
         clearTimeout(timeoutId)
-        lastError =
-          error instanceof Error ? error : new Error(String(error))
+        externalSignal?.removeEventListener('abort', abortFromExternalSignal)
+        lastError = error instanceof Error ? error : new Error(String(error))
 
         // Check if we should retry on this error
         if (
@@ -558,14 +582,19 @@ export function createSavantCodeApiClient(
     loginStatus(
       req: LoginStatusRequest,
     ): Promise<ApiResponse<LoginStatusResponse>> {
-      return request<LoginStatusResponse>('GET', '/api/auth/cli/status', undefined, {
-        query: {
-          fingerprintId: req.fingerprintId,
-          fingerprintHash: req.fingerprintHash,
-          expiresAt: req.expiresAt,
+      return request<LoginStatusResponse>(
+        'GET',
+        '/api/auth/cli/status',
+        undefined,
+        {
+          query: {
+            fingerprintId: req.fingerprintId,
+            fingerprintHash: req.fingerprintHash,
+            expiresAt: req.expiresAt,
+          },
+          includeAuth: false,
         },
-        includeAuth: false,
-      })
+      )
     },
 
     publish(
@@ -596,10 +625,15 @@ export function createSavantCodeApiClient(
     feedback(req: FeedbackRequest): Promise<ApiResponse<FeedbackResponse>> {
       // Guard at the trust boundary: ensure only JSON-serializable data is
       // emitted over the wire, even though the request type is typed.
-      return request<FeedbackResponse>('POST', '/api/v1/feedback', safeToJSONValue(req), {
-        // Feedback submissions are not idempotent server-side yet, so avoid automatic retries.
-        retry: false,
-      })
+      return request<FeedbackResponse>(
+        'POST',
+        '/api/v1/feedback',
+        safeToJSONValue(req),
+        {
+          // Feedback submissions are not idempotent server-side yet, so avoid automatic retries.
+          retry: false,
+        },
+      )
     },
   }
 }

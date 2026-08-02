@@ -48,7 +48,7 @@ export const AgentStatus: React.FC = () => {
   const showActivity = !activityIsIdle
 
   return (
-    <SidebarSection title="Agent Status">
+    <SidebarSection title="Agent Status" defaultExpanded>
       {showPhase && (
         <text fg={theme.muted} wrapMode="none" selectable={false}>
           {phaseStr}

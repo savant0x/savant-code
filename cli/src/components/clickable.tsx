@@ -35,13 +35,23 @@ export function makeTextUnselectable(node: ReactNode): ReactNode {
   if (typeof node === 'string' || typeof node === 'number') return node
 
   if (Array.isArray(node)) {
-    return node.map((child, idx) => <React.Fragment key={idx}>{makeTextUnselectable(child)}</React.Fragment>)
+    // Preserve array children without injecting fragments. Flatten nested
+    // arrays/fragments because neither shape is a valid child for an OpenTUI
+    // <text> host during reconciliation.
+    return node.flatMap((child) => {
+      const normalized = makeTextUnselectable(child)
+      return Array.isArray(normalized) ? normalized : [normalized]
+    })
   }
 
   if (!isValidElement(node)) return node
 
   const el = node as ReactElement<{ children?: ReactNode; [key: string]: OpenTuiHostPropValue }>
   const type = el.type
+
+  if (type === React.Fragment) {
+    return makeTextUnselectable(el.props.children)
+  }
 
   // Ensure text and span nodes are not selectable
   if (typeof type === 'string' && (type === 'text' || type === 'span')) {

@@ -5,7 +5,6 @@ import {
   createJsonErrorResponseHandler,
   createJsonResponseHandler,
   generateId,
-  isParsableJson,
   parseProviderOptions,
   postJsonToApi,
 } from '@ai-sdk/provider-utils'
@@ -19,11 +18,15 @@ import { defaultOpenAICompatibleErrorStructure } from '../openai-compatible-erro
 import { prepareTools } from './openai-compatible-prepare-tools'
 
 import type { OpenAICompatibleChatModelId } from './openai-compatible-chat-options'
-import type { OpenAICompatibleErrorData, ProviderErrorStructure } from '../openai-compatible-error'
+import type {
+  OpenAICompatibleErrorData,
+  ProviderErrorStructure,
+} from '../openai-compatible-error'
 import type { MetadataExtractor } from './openai-compatible-metadata-extractor'
 import type {
   APICallError,
   LanguageModelV2,
+  LanguageModelV2CallOptions,
   LanguageModelV2CallWarning,
   LanguageModelV2Content,
   LanguageModelV2FinishReason,
@@ -343,6 +346,7 @@ export class OpenAICompatibleChatLanguageModel implements LanguageModelV2 {
       fetch: this.config.fetch,
     })
 
+    const requiredToolKeys = getRequiredToolKeys(options.tools)
     const toolCalls: Array<{
       id: string
       type: 'function'
@@ -408,7 +412,9 @@ export class OpenAICompatibleChatLanguageModel implements LanguageModelV2 {
               controller.enqueue({ type: 'raw', rawValue: chunk.rawValue })
             }
 
-            metadataExtractor?.processChunk(chunk.rawValue as Record<string, JSONValue>)
+            metadataExtractor?.processChunk(
+              chunk.rawValue as Record<string, JSONValue>,
+            )
 
             // handle error chunks:
             if ('error' in value) {
@@ -542,8 +548,17 @@ export class OpenAICompatibleChatLanguageModel implements LanguageModelV2 {
                     toolCall.function?.name != null &&
                     toolCall.function?.arguments != null
                   ) {
-                    // send delta if the argument text has already started:
-                    if (toolCall.function.arguments.length > 0) {
+                    // Send a delta only when it contributes to the canonical
+                    // argument stream. Complete stale placeholders are held
+                    // back until a replacement object arrives.
+                    if (
+                      toolCall.function.arguments.length > 0 &&
+                      !isStaleToolArgumentFragment(
+                        toolCall.function.arguments,
+                        toolCall.function.name,
+                        requiredToolKeys,
+                      )
+                    ) {
                       controller.enqueue({
                         type: 'tool-input-delta',
                         id: toolCall.id,
@@ -553,7 +568,13 @@ export class OpenAICompatibleChatLanguageModel implements LanguageModelV2 {
 
                     // check if tool call is complete
                     // (some providers send the full tool call in one chunk):
-                    if (isParsableJson(toolCall.function.arguments)) {
+                    if (
+                      isCompleteKnownToolCallArguments(
+                        toolCall.function.arguments,
+                        toolCall.function.name,
+                        requiredToolKeys,
+                      )
+                    ) {
                       controller.enqueue({
                         type: 'tool-input-end',
                         id: toolCall.id,
@@ -580,8 +601,28 @@ export class OpenAICompatibleChatLanguageModel implements LanguageModelV2 {
                 }
 
                 if (toolCallDelta.function?.arguments != null) {
-                  toolCall.function!.arguments +=
-                    toolCallDelta.function?.arguments ?? ''
+                  const delta = toolCallDelta.function.arguments
+                  const accumulated = toolCall.function!.arguments
+                  // A "stale fragment" is accumulated content that already
+                  // forms a complete JSON value but is not a usable object for
+                  // this tool (placeholder `{}`, an object missing declared
+                  // required keys, `[]`, `null`, a string literal, etc.).
+                  // Truncated JSON has `reason === 'invalid-json'` and is NOT
+                  // stale — it keeps accumulating.
+                  const isStaleFragment = isStaleToolArgumentFragment(
+                    accumulated,
+                    toolCall.function.name,
+                    requiredToolKeys,
+                  )
+
+                  // Replace a stale fragment with a fresh JSON object fragment
+                  // instead of concatenating into invalid JSON
+                  // (`[]{...}`, `{}{"thought":...`, `"{...}"{...}`).
+                  if (isStaleFragment && delta.trimStart().startsWith('{')) {
+                    toolCall.function!.arguments = delta
+                  } else {
+                    toolCall.function!.arguments += delta
+                  }
                 }
 
                 // send delta
@@ -595,7 +636,11 @@ export class OpenAICompatibleChatLanguageModel implements LanguageModelV2 {
                 if (
                   toolCall.function?.name != null &&
                   toolCall.function?.arguments != null &&
-                  isParsableJson(toolCall.function.arguments)
+                  isCompleteKnownToolCallArguments(
+                    toolCall.function.arguments,
+                    toolCall.function.name,
+                    requiredToolKeys,
+                  )
                 ) {
                   controller.enqueue({
                     type: 'tool-input-end',
@@ -623,7 +668,9 @@ export class OpenAICompatibleChatLanguageModel implements LanguageModelV2 {
               controller.enqueue({ type: 'text-end', id: 'txt-0' })
             }
 
-            // go through all tool calls and send the ones that are not finished
+            // Go through all tool calls and close each input lifecycle exactly
+            // once. Never emit a malformed or schema-incomplete candidate as an
+            // executable tool-call.
             for (const toolCall of toolCalls.filter(
               (toolCall) => !toolCall.hasFinished,
             )) {
@@ -632,12 +679,29 @@ export class OpenAICompatibleChatLanguageModel implements LanguageModelV2 {
                 id: toolCall.id,
               })
 
-              controller.enqueue({
-                type: 'tool-call',
-                toolCallId: toolCall.id ?? generateId(),
-                toolName: toolCall.function.name,
-                input: toolCall.function.arguments,
-              })
+              if (
+                isCompleteKnownToolCallArguments(
+                  toolCall.function.arguments,
+                  toolCall.function.name,
+                  requiredToolKeys,
+                )
+              ) {
+                controller.enqueue({
+                  type: 'tool-call',
+                  toolCallId: toolCall.id,
+                  toolName: toolCall.function.name,
+                  input: toolCall.function.arguments,
+                })
+              } else {
+                finishReason = 'error'
+                controller.enqueue({
+                  type: 'error',
+                  error: {
+                    type: 'native-incomplete',
+                    toolName: toolCall.function.name,
+                  },
+                })
+              }
             }
 
             const providerMetadata: SharedV2ProviderMetadata = {
@@ -678,6 +742,112 @@ export class OpenAICompatibleChatLanguageModel implements LanguageModelV2 {
       response: { headers: responseHeaders },
     }
   }
+}
+
+export type ParsedToolArguments =
+  | { ok: true; value: Record<string, JSONValue> }
+  | { ok: false; reason: 'invalid-json' }
+  | { ok: false; reason: 'non-object'; value: JSONValue }
+
+function isJsonObject(value: JSONValue): value is Record<string, JSONValue> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
+}
+
+function parseJsonObjectArguments(args: string): ParsedToolArguments {
+  try {
+    const parsed = JSON.parse(args) as JSONValue
+    return isJsonObject(parsed)
+      ? { ok: true, value: parsed }
+      : { ok: false, reason: 'non-object', value: parsed }
+  } catch {
+    return { ok: false, reason: 'invalid-json' }
+  }
+}
+
+function hasRequiredToolKeys(
+  value: Record<string, JSONValue>,
+  requiredKeys: readonly string[] | undefined,
+): boolean {
+  if (requiredKeys === undefined) {
+    return Object.keys(value).length > 0
+  }
+
+  return requiredKeys.every((key) =>
+    Object.prototype.hasOwnProperty.call(value, key),
+  )
+}
+
+function isCompleteKnownToolCallArguments(
+  args: string,
+  toolName: string,
+  requiredToolKeys: ReadonlyMap<string, readonly string[]>,
+): boolean {
+  if (!requiredToolKeys.has(toolName)) {
+    return false
+  }
+
+  return isCompleteToolCallArguments(args, requiredToolKeys.get(toolName))
+}
+
+function isStaleToolArgumentFragment(
+  args: string,
+  toolName: string,
+  requiredToolKeys: ReadonlyMap<string, readonly string[]>,
+): boolean {
+  const requiredKeys = requiredToolKeys.get(toolName)
+  if (requiredKeys === undefined) {
+    return false
+  }
+
+  const parsed = parseToolCallArguments(args)
+  return (
+    (!parsed.ok && parsed.reason === 'non-object') ||
+    (parsed.ok && !hasRequiredToolKeys(parsed.value, requiredKeys))
+  )
+}
+
+function getRequiredToolKeys(
+  tools: LanguageModelV2CallOptions['tools'],
+): ReadonlyMap<string, readonly string[]> {
+  const requiredKeys = new Map<string, readonly string[]>()
+
+  for (const tool of tools ?? []) {
+    if (tool.type !== 'function') {
+      continue
+    }
+
+    const schema = tool.inputSchema
+    const keys = schema.required ?? []
+    requiredKeys.set(tool.name, keys)
+  }
+
+  return requiredKeys
+}
+
+/**
+ * Parse tool-call arguments and report whether they form a complete JSON object
+ * with the declared top-level required keys present. Value types and semantic
+ * constraints remain the executor's responsibility.
+ */
+export function parseToolCallArguments(args: string): ParsedToolArguments {
+  const parsed = parseJsonObjectArguments(args)
+  if (!parsed.ok || Object.keys(parsed.value).length === 0) {
+    return parsed
+  }
+  return parsed
+}
+
+/**
+ * Returns true only when the accumulated arguments form a non-empty JSON object
+ * with the required keys for the tool. An explicitly empty required-key list
+ * permits `{}` for zero-argument tools, but an unknown schema does not.
+ */
+export function isCompleteToolCallArguments(
+  args: string,
+  requiredKeys?: readonly string[],
+): boolean {
+  const parsed = parseJsonObjectArguments(args)
+  return parsed.ok && hasRequiredToolKeys(parsed.value, requiredKeys)
 }
 
 const openaiCompatibleTokenUsageSchema = z

@@ -2,14 +2,20 @@
 
 **Filename:** `FID-2026-0720-032-eslint-unknown-sig-stage-2-remediation.md`
 **ID:** FID-2026-0720-032
+**Canonical predecessor ID:** FID-2026-0720-032 (duplicate historical ID corrected by FID-2026-0731-004)
 **Severity:** medium
-**Status:** closed (Perfection Loop 2026-07-20; SUPERSEDED-state auto-archive alongside FID-2026-0719-029)
+**Status:** closed
+**Superseded:** By FID-2026-0719-029; the original status prose is retained below for history.
 **Superseded-by:** FID-2026-0719-029-eslint-zero-tolerance-push-gate (proper-narrow GREEN strategy supersedes the disable-cleanup premise this FID was built on)
 **Created:** 2026-07-20
 **Author:** Savant Orchestrator (Buffy)
 **Depends-on:** FID-2026-0719-029-eslint-zero-tolerance-push-gate (Stage-1, ~79%-resolved pre-v0.0.3-push)
 
 ---
+
+## Metadata Normalization Note
+
+Canonical ID: `FID-2026-0720-032`; Original ID: `FID-2026-0720-032-eslint-stage-2`. Historical body preserved.
 
 ## Summary
 

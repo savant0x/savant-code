@@ -1,6 +1,11 @@
+import { enableMapSet } from 'immer'
 import { create } from 'zustand'
 import { immer } from 'zustand/middleware/immer'
 
+// This store persists Map values in its context. Initialize Immer at module
+// load so direct consumers (including tests and isolated renderers) are safe,
+// not only the normal application bootstrap path.
+enableMapSet()
 
 import type { AdResponse } from '../hooks/use-gravity-ad'
 import type { ChatMessage } from '../types/chat'

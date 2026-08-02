@@ -1,4 +1,3 @@
- 
 /**
  * `/copy` command — serialize the entire conversation (user + assistant text,
  * reasoning, tool calls with their inputs and outputs, sub-agents) into clean
@@ -84,6 +83,14 @@ function fence(content: string, lang = ''): string {
 
 function renderToolInput(input: unknown): string {
   if (input == null) return ''
+  if (
+    (Array.isArray(input) && input.length === 0) ||
+    (typeof input === 'object' &&
+      !Array.isArray(input) &&
+      Object.keys(input as Record<string, unknown>).length === 0)
+  ) {
+    return ''
+  }
   try {
     return JSON.stringify(input, null, 2)
   } catch {
@@ -101,7 +108,10 @@ function renderToolOutput(output: string): { body: string; lang: string } {
   const trimmed = output.trim()
   if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
     try {
-      return { body: JSON.stringify(JSON.parse(trimmed), null, 2), lang: 'json' }
+      return {
+        body: JSON.stringify(JSON.parse(trimmed), null, 2),
+        lang: 'json',
+      }
     } catch {
       // Not valid JSON — fall through to raw.
     }
@@ -177,7 +187,9 @@ function renderBlock(block: ContentBlock, out: Segment[]): void {
 
     case 'agent': {
       const label = block.agentName || block.agentType
-      out.push(`### ⤷ Subagent: ${label}${block.agentName ? ` (${block.agentType})` : ''}`)
+      out.push(
+        `### ⤷ Subagent: ${label}${block.agentName ? ` (${block.agentType})` : ''}`,
+      )
       if (block.initialPrompt?.trim()) {
         out.push(`_Prompt:_ ${block.initialPrompt.trim()}`)
       }
@@ -256,7 +268,8 @@ export interface SerializedConversation {
   truncated: boolean
 }
 
-const TRUNCATION_MARKER = '_[…earlier conversation truncated to fit clipboard…]_'
+const TRUNCATION_MARKER =
+  '_[…earlier conversation truncated to fit clipboard…]_'
 
 /**
  * Serialize the conversation to Markdown. When `maxBytes` is provided and the

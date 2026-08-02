@@ -10,7 +10,8 @@ describe('fingerprint utilities', () => {
       })
 
       test('should detect enhanced fingerprint with full hash', () => {
-        const fullHash = 'enhanced-Ks7mN2pQxR3vW5yZ8aB4cD6eF9gH1iJ2kL4mN5oP7qR8sT0uV1wX3yZ'
+        const fullHash =
+          'enhanced-Ks7mN2pQxR3vW5yZ8aB4cD6eF9gH1iJ2kL4mN5oP7qR8sT0uV1wX3yZ'
         expect(getFingerprintType(fullHash)).toBe('enhanced_cli')
       })
 
@@ -30,7 +31,9 @@ describe('fingerprint utilities', () => {
 
       test('should detect savant-code-cli- prefix with any suffix', () => {
         expect(getFingerprintType('savant-code-cli-')).toBe('legacy')
-        expect(getFingerprintType('savant-code-cli-randomsuffix')).toBe('legacy')
+        expect(getFingerprintType('savant-code-cli-randomsuffix')).toBe(
+          'legacy',
+        )
         expect(getFingerprintType('savant-code-cli-12345678')).toBe('legacy')
       })
 
@@ -84,8 +87,8 @@ describe('fingerprint utilities', () => {
 
       test('should return fingerprint of expected length', () => {
         const fingerprint = generateFingerprintIdSync()
-        // Format: savant-code-cli- (13 chars) + 8 random chars = 21 chars
-        expect(fingerprint.length).toBe(21)
+        // Format: savant-code-cli- (16 chars) + 8 random chars = 24 chars
+        expect(fingerprint.length).toBe(24)
       })
 
       test('should contain only valid base64url characters in suffix', () => {

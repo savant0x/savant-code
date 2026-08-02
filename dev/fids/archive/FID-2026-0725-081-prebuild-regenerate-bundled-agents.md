@@ -1,10 +1,18 @@
-filename: dev/fids/FID-2026-0725-081-prebuild-regenerate-bundled-agents.md
-id: FID-2026-0725-081
-severity: low
-status: closed
-created: 2026-07-25
-author: Savant Orchestrator
+# Prebuild Regenerate Bundled Agents
+
+**Filename:** `FID-2026-0725-081-prebuild-regenerate-bundled-agents.md`
+**ID:** FID-2026-0725-081
+**Severity:** low
+**Status:** closed
+**Created:** 2026-07-25
+**Author:** Savant Orchestrator
+
 ---
+
+## Metadata Normalization Note
+
+This historical record was normalized on 2026-07-31 for FreeBuff ECHO v0.1.2 compliance. The original body and evidence are preserved. Original status: `closed`; Original ID: `FID-2026-0725-081`. Backfilled fields: Filename, ID, Severity, Status, Created, Author. Canonical status reflects the record's lifecycle location; it does not add implementation evidence.
+
 
 # Prebuild Regenerate Bundled Agents
 

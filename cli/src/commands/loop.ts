@@ -1,38 +1,12 @@
-import { getCurrentSchedule, setLoopActiveState, startLoop } from '../hooks/use-loop-scheduler'
+import {
+  getCurrentSchedule,
+  parseCadence,
+  setLoopActiveState,
+  startLoop,
+} from '../hooks/use-loop-scheduler'
 import { getSystemMessage, getUserMessage } from '../utils/message-history'
 
 import type { CommandResult, RouterParams } from './command-registry'
-
-/**
- * Cadence specification parsed from user input.
- * Supports: Nd (daily), Nh (hourly), Nm (every N minutes)
- */
-interface Cadence {
-  intervalMs: number
-  label: string
-}
-
-/**
- * Parse a cadence string like "1d", "1h", "5m" into milliseconds.
- */
-function parseCadence(input: string): Cadence | null {
-  const match = input.match(/^(\d+)([dhm])$/)
-  if (!match) return null
-
-  const amount = parseInt(match[1], 10)
-  const unit = match[2]
-
-  switch (unit) {
-    case 'd':
-      return { intervalMs: amount * 24 * 60 * 60 * 1000, label: `${amount}d` }
-    case 'h':
-      return { intervalMs: amount * 60 * 60 * 1000, label: `${amount}h` }
-    case 'm':
-      return { intervalMs: amount * 60 * 1000, label: `${amount}m` }
-    default:
-      return null
-  }
-}
 
 /**
  * /loop — Run a prompt on a cadence schedule.
@@ -42,7 +16,7 @@ function parseCadence(input: string): Cadence | null {
  *   /loop stop                  — Stop the active loop
  *   /loop status                — Show loop status
  *
- * Cadence options: Nd (daily), Nh (hourly), Nm (every N minutes)
+ * Cadence options: Ns (seconds), Nm (minutes), Nh (hourly), Nd (daily)
  *
  * Examples:
  *   /loop 1d "scan for dependency vulnerabilities and create a PR if found"
@@ -75,11 +49,15 @@ export async function handleLoopCommand(
     params.setMessages((prev) => [
       ...prev,
       getSystemMessage(
-        'Usage: /loop <cadence> <prompt>\n\nCadence: 1d (daily), 1h (hourly), 5m (every 5 minutes)\n\nExamples:\n  /loop 1d "scan for dependency vulnerabilities"\n  /loop 1h "check staging for errors"\n  /loop stop\n  /loop status',
+        'Usage: /loop <cadence> <prompt>\n\nCadence: 30s (seconds), 5m (minutes), 1h (hourly), 1d (daily)\n\nExamples:\n  /loop 1d "scan for dependency vulnerabilities"\n  /loop 1h "check staging for errors"\n  /loop stop\n  /loop status',
       ),
     ])
     params.saveToHistory(params.inputValue.trim())
-    params.setInputValue({ text: '', cursorPosition: 0, lastEditDueToNav: false })
+    params.setInputValue({
+      text: '',
+      cursorPosition: 0,
+      lastEditDueToNav: false,
+    })
     return
   }
 
@@ -94,7 +72,11 @@ export async function handleLoopCommand(
       ),
     ])
     params.saveToHistory(params.inputValue.trim())
-    params.setInputValue({ text: '', cursorPosition: 0, lastEditDueToNav: false })
+    params.setInputValue({
+      text: '',
+      cursorPosition: 0,
+      lastEditDueToNav: false,
+    })
     return
   }
 
@@ -103,11 +85,15 @@ export async function handleLoopCommand(
     params.setMessages((prev) => [
       ...prev,
       getSystemMessage(
-        `Invalid cadence: "${cadenceStr}"\n\nValid formats: 1d (daily), 1h (hourly), 5m (every 5 minutes)`,
+        `Invalid cadence: "${cadenceStr}"\n\nValid formats: 30s (seconds), 5m (minutes), 1h (hourly), 1d (daily)`,
       ),
     ])
     params.saveToHistory(params.inputValue.trim())
-    params.setInputValue({ text: '', cursorPosition: 0, lastEditDueToNav: false })
+    params.setInputValue({
+      text: '',
+      cursorPosition: 0,
+      lastEditDueToNav: false,
+    })
     return
   }
 
@@ -126,12 +112,6 @@ export async function handleLoopCommand(
   params.saveToHistory(`/loop ${cadence.label} ${prompt}`)
   params.setInputValue({ text: '', cursorPosition: 0, lastEditDueToNav: false })
 
-  // Send the prompt to kick off the first run
-  params.sendMessage({
-    content: prompt,
-    agentMode: params.agentMode,
-  })
-
   setTimeout(() => {
     params.scrollToLatest()
   }, 0)
@@ -149,7 +129,9 @@ function handleLoopStop(params: RouterParams): CommandResult {
   params.setMessages((prev) => [
     ...prev,
     getUserMessage('/loop stop'),
-    getSystemMessage('⏹️ Loop stopped. Agent will not resume at the next cadence.'),
+    getSystemMessage(
+      '⏹️ Loop stopped. Agent will not resume at the next cadence.',
+    ),
   ])
   params.saveToHistory('/loop stop')
   params.setInputValue({ text: '', cursorPosition: 0, lastEditDueToNav: false })
@@ -174,12 +156,19 @@ function handleLoopStatus(params: RouterParams): CommandResult {
       `  Next run: in ${timeStr}`,
       `  Runs completed: ${schedule.runCount}`,
       `  Last run: ${schedule.lastRunAt ? new Date(schedule.lastRunAt).toLocaleString() : 'never'}`,
-      `  Status: ${schedule.lastRunSuccess ? '✅ success' : schedule.lastRunAt ? '❌ failed' : '⏳ pending'}`,
+      `  Status: ${
+        schedule.lastRunSuccess === undefined
+          ? '⏳ pending'
+          : schedule.lastRunSuccess
+            ? '✅ success'
+            : '❌ failed'
+      }`,
       '',
       'Use /loop stop to cancel.',
     ].join('\n')
   } else {
-    message = '📊 No active loops. Use /loop <cadence> <prompt> to start a loop.\n\nExample: /loop 1d "scan for dependency vulnerabilities"'
+    message =
+      '📊 No active loops. Use /loop <cadence> <prompt> to start a loop.\n\nExample: /loop 1d "scan for dependency vulnerabilities"'
   }
   params.setMessages((prev) => [
     ...prev,

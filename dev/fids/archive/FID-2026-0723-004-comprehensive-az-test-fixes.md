@@ -3,13 +3,16 @@
 **Filename:** `FID-2026-0723-004-comprehensive-az-test-fixes.md`
 **ID:** FID-2026-0723-004
 **Severity:** high
-**Status:** closed / archived
+**Status:** closed
 **Created:** 2026-07-23 23:00
-**Closed:** 2026-07-23
-**Last Audit:** 2026-07-23
 **Author:** Savant Orchestrator
 
 ---
+
+## Metadata Normalization Note
+
+This historical record was normalized on 2026-07-31 for FreeBuff ECHO v0.1.2 compliance. The original body and evidence are preserved. Original status: `closed / archived`; Original ID: `FID-2026-0723-004`. Canonical status reflects the record's lifecycle location; it does not add implementation evidence.
+
 
 ## Summary
 

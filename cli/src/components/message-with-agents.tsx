@@ -3,6 +3,9 @@ import { memo, useCallback, useMemo, type ReactNode } from 'react'
 import React from 'react'
 import { useShallow } from 'zustand/react/shallow'
 
+import { renderExpandedContent } from './blocks/block-helpers'
+import { renderContentWithMarkdown } from './blocks/content-with-markdown'
+import { renderMarkdownContent } from './blocks/markdown-content'
 import { Button } from './button'
 import { ErrorBoundary } from './error-boundary'
 import { GridLayout } from './grid-layout'
@@ -11,17 +14,20 @@ import { ModeDivider } from './mode-divider'
 import { useChatStore } from '../state/chat-store'
 import { useMessageBlockStore } from '../state/message-block-store'
 import { splitByAgentSize } from '../utils/block-processor'
+import {
+  AGENT_MESSAGE_PREFIX_WIDTH,
+  getChildContentWidth,
+  getMessageContentWidth,
+  MESSAGE_SIDE_GUTTER,
+  ROOT_MESSAGE_PREFIX_WIDTH,
+} from '../utils/chat-layout'
 import { getCliEnv } from '../utils/env'
 import {
   AGENT_CONTENT_HORIZONTAL_PADDING,
   MAX_AGENT_DEPTH,
 } from '../utils/layout-helpers'
 import { logger } from '../utils/logger'
-import {
-  renderMarkdown,
-  hasMarkdown,
-  type MarkdownPalette,
-} from '../utils/markdown-renderer'
+import { hasMarkdown, type MarkdownPalette } from '../utils/markdown-renderer'
 
 import type { ChatMessage } from '../types/chat'
 import type { FeedbackCategory } from '@savant-code/common/constants/feedback'
@@ -79,7 +85,10 @@ const AgentChildrenGrid = memo(
 
     return (
       <ErrorBoundary fallback={errorFallback} componentName="AgentChildrenGrid">
-        <box selectable={false} style={{ flexDirection: 'column', gap: 0, width: '100%' }}>
+        <box
+          selectable={false}
+          style={{ flexDirection: 'column', gap: 0, width: '100%' }}
+        >
           {subGroups.map((group) => (
             <GridLayout
               key={getItemKey(group[0])}
@@ -103,33 +112,48 @@ interface MessageWithAgentsProps {
 }
 
 export const MessageWithAgents = memo(
-  ({ message, depth, isLastMessage, availableWidth }: MessageWithAgentsProps): ReactNode => {
-    const SIDE_GUTTER = 1
+  ({
+    message,
+    depth,
+    isLastMessage,
+    availableWidth,
+  }: MessageWithAgentsProps): ReactNode => {
     const isAgent = message.variant === 'agent'
 
     // Use useShallow for grouped selectors to prevent unnecessary re-renders
-    const { theme, markdownPalette, messageTree, isWaitingForResponse, timerStartTime } =
-      useMessageBlockStore(
-        useShallow((state) => ({
-          theme: state.context.theme,
-          markdownPalette: state.context.markdownPalette,
-          messageTree: state.context.messageTree,
-          isWaitingForResponse: state.context.isWaitingForResponse,
-          timerStartTime: state.context.timerStartTime,
-        })),
-      )
+    const {
+      theme,
+      markdownPalette,
+      messageTree,
+      isWaitingForResponse,
+      timerStartTime,
+    } = useMessageBlockStore(
+      useShallow((state) => ({
+        theme: state.context.theme,
+        markdownPalette: state.context.markdownPalette,
+        messageTree: state.context.messageTree,
+        isWaitingForResponse: state.context.isWaitingForResponse,
+        timerStartTime: state.context.timerStartTime,
+      })),
+    )
 
-    const { onToggleCollapsed, onBuildFast, onBuildMax, onBuildLite, onFeedback, onCloseFeedback } =
-      useMessageBlockStore(
-        useShallow((state) => ({
-          onToggleCollapsed: state.callbacks.onToggleCollapsed,
-          onBuildFast: state.callbacks.onBuildFast,
-          onBuildMax: state.callbacks.onBuildMax,
-          onBuildLite: state.callbacks.onBuildLite,
-          onFeedback: state.callbacks.onFeedback,
-          onCloseFeedback: state.callbacks.onCloseFeedback,
-        })),
-      )
+    const {
+      onToggleCollapsed,
+      onBuildFast,
+      onBuildMax,
+      onBuildLite,
+      onFeedback,
+      onCloseFeedback,
+    } = useMessageBlockStore(
+      useShallow((state) => ({
+        onToggleCollapsed: state.callbacks.onToggleCollapsed,
+        onBuildFast: state.callbacks.onBuildFast,
+        onBuildMax: state.callbacks.onBuildMax,
+        onBuildLite: state.callbacks.onBuildLite,
+        onFeedback: state.callbacks.onFeedback,
+        onCloseFeedback: state.callbacks.onCloseFeedback,
+      })),
+    )
 
     // Memoize onOpenFeedback to prevent unnecessary re-renders
     const onOpenFeedback = useCallback(
@@ -147,8 +171,8 @@ export const MessageWithAgents = memo(
       () => ({
         backgroundColor: theme?.background,
         padding: 0,
-        paddingLeft: SIDE_GUTTER,
-        paddingRight: SIDE_GUTTER,
+        paddingLeft: MESSAGE_SIDE_GUTTER,
+        paddingRight: MESSAGE_SIDE_GUTTER,
         paddingTop: 0,
         paddingBottom: 0,
         gap: 0,
@@ -160,7 +184,13 @@ export const MessageWithAgents = memo(
     )
 
     if (isAgent) {
-      return <AgentMessage message={message} depth={depth} availableWidth={availableWidth} />
+      return (
+        <AgentMessage
+          message={message}
+          depth={depth}
+          availableWidth={availableWidth}
+        />
+      )
     }
 
     const isAi = message.variant === 'ai'
@@ -185,23 +215,33 @@ export const MessageWithAgents = memo(
     const lineColor = isError
       ? 'red'
       : isAi
-        ? theme?.aiLine ?? 'white'
-        : theme?.userLine ?? 'white'
+        ? (theme?.aiLine ?? 'white')
+        : (theme?.userLine ?? 'white')
     const textColor = theme?.foreground ?? 'white'
     const timestampColor = isError
       ? 'red'
       : isAi
-        ? theme?.muted ?? 'white'
-        : theme?.muted ?? 'white'
+        ? (theme?.muted ?? 'white')
+        : (theme?.muted ?? 'white')
 
-    const estimatedMessageWidth = availableWidth
-    const codeBlockWidth = Math.max(10, estimatedMessageWidth - 8)
+    const hasRootPrefix = isAi || isUser
+    const messageContentWidth =
+      depth === 0
+        ? getMessageContentWidth({
+            availableWidth,
+            prefixWidth: hasRootPrefix ? ROOT_MESSAGE_PREFIX_WIDTH : 0,
+          })
+        : getChildContentWidth(availableWidth, MESSAGE_SIDE_GUTTER * 2)
+    const codeBlockWidth = messageContentWidth
 
     const paletteForMessage: MarkdownPalette | undefined = useMemo(
-      () => markdownPalette ? {
-        ...markdownPalette,
-        codeTextFg: textColor,
-      } : undefined,
+      () =>
+        markdownPalette
+          ? {
+              ...markdownPalette,
+              codeTextFg: textColor,
+            }
+          : undefined,
       [markdownPalette, textColor],
     )
 
@@ -215,8 +255,9 @@ export const MessageWithAgents = memo(
 
     const agentChildren = messageTree?.get(message.id) ?? []
     const hasAgentChildren = agentChildren.length > 0
-    // Show vertical line for user messages (including bash commands which are now user messages)
-    const showVerticalLine = isUser
+    // Prefix both user and assistant rows so ownership is visible without
+    // changing the content-width contract between message variants.
+    const showRootPrefix = isUser || isAi
 
     return (
       <box
@@ -236,7 +277,7 @@ export const MessageWithAgents = memo(
             flexDirection: 'row',
           }}
         >
-          {showVerticalLine ? (
+          {showRootPrefix ? (
             <box
               selectable={false}
               style={{
@@ -249,13 +290,17 @@ export const MessageWithAgents = memo(
             >
               {/* User message prefix: > in cyan */}
               {isUser && (
-                <text style={{ fg: lineColor, width: 2 }}>
+                <text
+                  style={{ fg: lineColor, width: ROOT_MESSAGE_PREFIX_WIDTH }}
+                >
                   {'> '}
                 </text>
               )}
-              {/* Agent message prefix: ◆ in violet */}
+              {/* Assistant message prefix: ◆ in the assistant line color */}
               {isAi && (
-                <text style={{ fg: lineColor, width: 2 }}>
+                <text
+                  style={{ fg: lineColor, width: ROOT_MESSAGE_PREFIX_WIDTH }}
+                >
                   {'◆ '}
                 </text>
               )}
@@ -275,7 +320,7 @@ export const MessageWithAgents = memo(
                   textColor={textColor}
                   timestampColor={timestampColor}
                   markdownOptions={markdownOptions}
-                  availableWidth={availableWidth}
+                  availableWidth={messageContentWidth}
                   markdownPalette={markdownPalette!}
                   onToggleCollapsed={onToggleCollapsed}
                   onBuildFast={onBuildFast}
@@ -311,7 +356,7 @@ export const MessageWithAgents = memo(
                 textColor={textColor}
                 timestampColor={timestampColor}
                 markdownOptions={markdownOptions}
-                availableWidth={availableWidth}
+                availableWidth={messageContentWidth}
                 markdownPalette={markdownPalette!}
                 onToggleCollapsed={onToggleCollapsed}
                 onBuildFast={onBuildFast}
@@ -336,7 +381,10 @@ export const MessageWithAgents = memo(
           <AgentChildrenGrid
             agentChildren={agentChildren}
             depth={depth}
-            availableWidth={availableWidth}
+            availableWidth={getChildContentWidth(
+              messageContentWidth,
+              AGENT_CONTENT_HORIZONTAL_PADDING,
+            )}
           />
         )}
       </box>
@@ -353,17 +401,20 @@ interface AgentMessageProps {
 const AgentMessage = memo(
   ({ message, depth, availableWidth }: AgentMessageProps): ReactNode => {
     // Use useShallow for grouped selectors to prevent unnecessary re-renders
-    const { theme, markdownPalette, messageTree, onToggleCollapsed } = useMessageBlockStore(
-      useShallow((state) => ({
-        theme: state.context.theme,
-        markdownPalette: state.context.markdownPalette,
-        messageTree: state.context.messageTree,
-        onToggleCollapsed: state.callbacks.onToggleCollapsed,
-      })),
-    )
+    const { theme, markdownPalette, messageTree, onToggleCollapsed } =
+      useMessageBlockStore(
+        useShallow((state) => ({
+          theme: state.context.theme,
+          markdownPalette: state.context.markdownPalette,
+          messageTree: state.context.messageTree,
+          onToggleCollapsed: state.callbacks.onToggleCollapsed,
+        })),
+      )
 
     // Derive streaming boolean for this specific message to avoid re-renders when other agents change
-    const isStreaming = useChatStore((state) => state.streamingAgents.has(message.id))
+    const isStreaming = useChatStore((state) =>
+      state.streamingAgents.has(message.id),
+    )
     const setFocusedAgentId = useChatStore((state) => state.setFocusedAgentId)
 
     // Guard against missing agent info (should not happen for agent variant messages)
@@ -398,20 +449,28 @@ const AgentMessage = memo(
         ? lastLine.replace(/[#*_`~\[\]()]/g, '').trim()
         : ''
 
-    const agentCodeBlockWidth = Math.max(
-      10,
-      availableWidth - AGENT_CONTENT_HORIZONTAL_PADDING,
+    const agentContentWidth = getChildContentWidth(
+      availableWidth,
+      AGENT_MESSAGE_PREFIX_WIDTH + AGENT_CONTENT_HORIZONTAL_PADDING,
     )
-    const agentPalette: MarkdownPalette | undefined = markdownPalette ? {
-      ...markdownPalette,
-      codeTextFg: theme?.foreground ?? markdownPalette.codeTextFg,
-    } : undefined
+    const agentCodeBlockWidth = agentContentWidth
+    const agentPalette: MarkdownPalette | undefined = markdownPalette
+      ? {
+          ...markdownPalette,
+          codeTextFg: theme?.foreground ?? markdownPalette.codeTextFg,
+        }
+      : undefined
     const agentMarkdownOptions = {
       codeBlockWidth: agentCodeBlockWidth,
       palette: agentPalette!,
     }
     const displayContent = hasMarkdown(rawDisplayContent)
-      ? renderMarkdown(rawDisplayContent, agentMarkdownOptions)
+      ? renderContentWithMarkdown({
+          content: rawDisplayContent,
+          isStreaming,
+          codeBlockWidth: agentMarkdownOptions.codeBlockWidth,
+          palette: agentMarkdownOptions.palette,
+        })
       : rawDisplayContent
 
     const handleTitleClick = (): void => {
@@ -445,8 +504,8 @@ const AgentMessage = memo(
             flexShrink: 0,
           }}
         >
-          <text style={{ wrapMode: 'none' }}>
-            <span fg={theme?.success}>{fullPrefix}</span>
+          <text fg={theme?.success} style={{ wrapMode: 'none' }}>
+            {fullPrefix}
           </text>
           <box
             selectable={false}
@@ -467,41 +526,58 @@ const AgentMessage = memo(
               }}
               onClick={handleTitleClick}
             >
-              <text style={{ wrapMode: 'word' }}>
-                <span fg={theme?.foreground}>{isCollapsed ? '▸ ' : '▾ '}</span>
-                <span fg={theme?.foreground} attributes={TextAttributes.BOLD}>
+              <box
+                selectable={false}
+                style={{ flexDirection: 'row', flexShrink: 0 }}
+              >
+                <text fg={theme?.foreground} style={{ wrapMode: 'none' }}>
+                  {isCollapsed ? '▸ ' : '▾ '}
+                </text>
+                <text
+                  fg={theme?.foreground}
+                  style={{ wrapMode: 'none' }}
+                  attributes={TextAttributes.BOLD}
+                >
                   {agentInfo.agentName}
-                </span>
-              </text>
+                </text>
+              </box>
             </Button>
             <Button
               style={{ flexShrink: 1, paddingBottom: isCollapsed ? 1 : 0 }}
               onClick={handleContentClick}
             >
-              {isStreaming && isCollapsed && streamingPreview && (
+              {isStreaming && isCollapsed && streamingPreview.length > 0 ? (
                 <text
                   style={{ wrapMode: 'word', fg: theme?.foreground }}
                   attributes={TextAttributes.ITALIC}
                 >
                   {streamingPreview}
                 </text>
-              )}
-              {!isStreaming && isCollapsed && finishedPreview && (
+              ) : null}
+              {!isStreaming && isCollapsed && finishedPreview.length > 0 ? (
                 <text
                   style={{ wrapMode: 'word', fg: theme?.muted }}
                   attributes={TextAttributes.ITALIC}
                 >
                   {finishedPreview}
                 </text>
-              )}
-              {!isCollapsed && (
-                <text
-                  key={`agent-content-${message.id}`}
-                  style={{ wrapMode: 'word', fg: theme?.foreground }}
-                >
-                  {displayContent}
-                </text>
-              )}
+              ) : null}
+              {!isCollapsed &&
+                (hasMarkdown(rawDisplayContent)
+                  ? renderMarkdownContent({
+                      value: displayContent,
+                      theme: theme ?? { foreground: 'white' },
+                      getAttributes: () => undefined,
+                      textColor: theme?.foreground ?? 'white',
+                      keyPrefix: `agent-content-${message.id}`,
+                    })
+                  : renderExpandedContent(
+                      displayContent,
+                      theme ?? { foreground: 'white' },
+                      () => undefined,
+                      theme?.foreground ?? 'white',
+                      `agent-content-${message.id}`,
+                    ))}
             </Button>
           </box>
         </box>
@@ -509,7 +585,7 @@ const AgentMessage = memo(
           <AgentChildrenGrid
             agentChildren={agentChildren}
             depth={depth}
-            availableWidth={availableWidth}
+            availableWidth={agentContentWidth}
           />
         )}
       </box>

@@ -31,7 +31,7 @@ const wrappers = [
     name: 'codecane',
     directory: 'cli/release-staging',
     expectedConfig: {
-      packageName: 'codecane',
+      packageName: 'savant-code-staging',
       displayName: 'Codecane',
       includeTreeSitterWasm: false,
       telemetryProperties: { isStaging: true },
@@ -44,7 +44,7 @@ const wrappers = [
     expectedConfig: {
       packageName: 'savant-free',
       displayName: 'SavantFree',
-      telemetryEvent: 'cli.update_savant_free_failed',
+      telemetryEvent: 'cli.update_freebuff_failed',
     },
   },
 ]

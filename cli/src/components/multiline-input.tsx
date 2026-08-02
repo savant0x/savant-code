@@ -200,6 +200,8 @@ interface MultilineInputProps {
   minHeight?: number
   cursorPosition: number
   showScrollbar?: boolean
+  /** Render entered text as bullets for secret input modes. */
+  maskInput?: boolean
 }
 
 export type MultilineInputHandle = {
@@ -224,6 +226,7 @@ export const MultilineInput = forwardRef<
     onKeyIntercept,
     cursorPosition,
     showScrollbar = false,
+    maskInput = false,
   }: MultilineInputProps,
   forwardedRef,
 ) {
@@ -518,10 +521,12 @@ export const MultilineInput = forwardRef<
 
   const isPlaceholder = value.length === 0 && placeholder.length > 0
   const displayValue = isPlaceholder ? placeholder : value
+  const renderedValue =
+    maskInput && !isPlaceholder ? '•'.repeat(value.length) : displayValue
   const showCursor = focused
 
   // Replace tabs with spaces for proper rendering
-  const displayValueForRendering = displayValue.replace(
+  const displayValueForRendering = renderedValue.replace(
     /\t/g,
     ' '.repeat(TAB_WIDTH),
   )
@@ -1228,7 +1233,7 @@ export const MultilineInput = forwardRef<
                 visible={true}
                 focused={focused}
                 shouldBlink={effectiveShouldBlinkCursor}
-                color={supportsTruecolor() ? theme.info : 'lime'}
+                color={supportsTruecolor() ? (maskInput ? theme.muted : theme.info) : 'lime'}
                 key={lastActivity}
               />
             )}

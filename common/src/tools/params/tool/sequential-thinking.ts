@@ -1,43 +1,56 @@
 import z from 'zod/v4'
 
-import {
-  $getNativeToolCallExampleString,
-  textToolResultSchema,
-} from '../utils'
+import { $getNativeToolCallExampleString, textToolResultSchema } from '../utils'
 
 import type { $ToolParams } from '../../constants'
 
 const toolName = 'sequentialthinking'
 const endsAgentStep = false
+
+/**
+ * FID-2026-0801-012: permissive boolean coercion before strict validation.
+ * Matches the MCP reference server (`coercedBoolean`): models commonly emit
+ * stringified `"true"`/`"false"`; strict-only schemas reject them and crash
+ * the loop (MCP issues #2473 / #2792). This normalizes serialization quirks
+ * without inventing values — anything else still fails validation.
+ */
+const coercedBoolean = z.preprocess((val) => {
+  if (typeof val === 'boolean') return val
+  if (typeof val === 'string') {
+    if (val.toLowerCase() === 'true') return true
+    if (val.toLowerCase() === 'false') return false
+  }
+  return val
+}, z.boolean())
+
 const inputSchema = z
   .object({
     thought: z
       .string()
       .min(1, 'Thought cannot be empty')
       .describe('Your current thinking step.'),
-    nextThoughtNeeded: z
-      .boolean()
-      .describe('Whether another thought step is needed.'),
-    thoughtNumber: z
+    nextThoughtNeeded: coercedBoolean.describe(
+      'Whether another thought step is needed.',
+    ),
+    thoughtNumber: z.coerce
       .number()
       .int()
       .min(1)
       .describe('Current position in the thought sequence.'),
-    totalThoughts: z
+    totalThoughts: z.coerce
       .number()
       .int()
       .min(1)
       .describe('Current estimate of total thoughts needed.'),
-    isRevision: z
-      .boolean()
+    isRevision: coercedBoolean
       .optional()
       .describe('Whether this revises a previous thought.'),
-    revisesThought: z
+    revisesThought: z.coerce
       .number()
       .int()
       .optional()
       .describe('Which thought is being revised.'),
-    branchFromThought: z
+    branchFromThought: z.coerce
       .number()
       .int()
       .optional()
@@ -46,8 +59,7 @@ const inputSchema = z
       .string()
       .optional()
       .describe('Branch identifier for alternative exploration paths.'),
-    needsMoreThoughts: z
-      .boolean()
+    needsMoreThoughts: coercedBoolean
       .optional()
       .describe('Extend beyond the initial totalThoughts estimate.'),
   })

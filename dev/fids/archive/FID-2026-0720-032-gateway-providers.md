@@ -1,13 +1,18 @@
 # FID: OpenAI-Compatible Gateway Providers (TokenRouter + NVIDIA NIM)
 
 **Filename:** `FID-2026-0720-032-gateway-providers.md`
-**ID:** FID-2026-0720-032
+**ID:** FID-2026-0720-001
+**Canonical predecessor ID:** FID-2026-0720-032 (duplicate historical ID corrected by FID-2026-0731-004)
 **Severity:** medium
-**Status:** closed / archived
+**Status:** closed
 **Created:** 2026-07-20 17:00
 **Author:** Orchestrator (self-authored)
 
 ---
+
+## Metadata Normalization Note
+
+Canonical ID: `FID-2026-0720-001`; Original ID: `FID-2026-0720-032-gateway-providers`. Historical body preserved.
 
 ## Summary
 

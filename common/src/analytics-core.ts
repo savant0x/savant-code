@@ -31,6 +31,8 @@ export interface AnalyticsClientWithIdentify extends AnalyticsClient {
     distinctId: string,
     properties?: Record<string, JSONValue>,
   ) => void
+  /** Disable the client without flushing queued events. */
+  disable?: () => Promise<void>
 }
 
 /** Environment name type */

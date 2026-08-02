@@ -22,6 +22,10 @@ describe('processStreamWithTags', () => {
     return { type: 'text' as const, text }
   }
 
+  function reasoningChunk(text: string): StreamChunk {
+    return { type: 'reasoning' as const, text }
+  }
+
   let agentRuntimeImpl: AgentRuntimeDeps
 
   beforeEach(() => {
@@ -429,6 +433,171 @@ describe('processStreamWithTags', () => {
         params: { param1: 'value1' },
       },
     ])
+  })
+
+  it('should execute canonical text tool calls and hide their envelope', async () => {
+    const executed: Array<{
+      toolName: string
+      input: Record<string, JSONValue>
+    }> = []
+    const stream = createMockStream([
+      textChunk(
+        'Before\n<savant_code_tool_call>\n{"cb_tool_name":"sequentialthinking","thought":"Use the canonical format"}\n</savant_code_tool_call>\nAfter',
+      ),
+    ])
+    const visibleText: string[] = []
+
+    for await (const chunk of processStreamWithTools({
+      ...agentRuntimeImpl,
+      stream,
+      processors: {},
+      defaultProcessor: () => ({
+        onTagStart: () => {},
+        onTagEnd: () => {},
+      }),
+      onResponseChunk: () => {},
+      executeXmlToolCall: async ({ toolName, input }) => {
+        executed.push({ toolName, input })
+      },
+    })) {
+      if (chunk.type === 'text') {
+        visibleText.push(chunk.text)
+      }
+    }
+
+    expect(executed).toEqual([
+      {
+        toolName: 'sequentialthinking',
+        input: { thought: 'Use the canonical format' },
+      },
+    ])
+    expect(visibleText.join('')).toBe('Before\n\nAfter')
+    expect(visibleText.join('')).not.toContain('savant_code_tool_call')
+  })
+
+  it('should suppress unsupported function XML without executing or emitting it', async () => {
+    const executed: string[] = []
+    const emittedText: string[] = []
+    const unsupportedText =
+      '<tool_call>\\n<function=sequentialthinking>\\n<parameter=thought>Do not execute</parameter>\\n</tool_call>'
+    const stream = createMockStream([textChunk(unsupportedText)])
+    const visibleText: string[] = []
+
+    for await (const chunk of processStreamWithTools({
+      ...agentRuntimeImpl,
+      stream,
+      processors: {},
+      defaultProcessor: () => ({
+        onTagStart: () => {},
+        onTagEnd: () => {},
+      }),
+      onResponseChunk: (chunk) => {
+        if (chunk.type === 'text') {
+          emittedText.push(chunk.text)
+        }
+      },
+      executeXmlToolCall: async ({ toolName }) => {
+        executed.push(toolName)
+      },
+    })) {
+      if (chunk.type === 'text') {
+        visibleText.push(chunk.text)
+      }
+    }
+
+    expect(executed).toEqual([])
+    expect(visibleText.join('')).toBe('')
+    expect(emittedText.join('')).toBe('')
+  })
+
+  it('should suppress legacy markup from reasoning without parsing or executing it', async () => {
+    const executed: string[] = []
+    const visibleReasoning: string[] = []
+    const stream = createMockStream([
+      reasoningChunk(
+        '<think>Keep this reasoning</think>\n<tool_call><function=sequentialthinking>\n<parameter=thought>Do not show this</parameter>\n</tool_call>\nContinue reasoning',
+      ),
+    ])
+
+    for await (const chunk of processStreamWithTools({
+      ...agentRuntimeImpl,
+      stream,
+      processors: {},
+      defaultProcessor: () => ({
+        onTagStart: () => {},
+        onTagEnd: () => {},
+      }),
+      onResponseChunk: () => {},
+      executeXmlToolCall: async ({ toolName }) => {
+        executed.push(toolName)
+      },
+    })) {
+      if (chunk.type === 'reasoning') {
+        visibleReasoning.push(chunk.text)
+      }
+    }
+
+    expect(executed).toEqual([])
+    expect(visibleReasoning.join('')).toBe(
+      '<think>Keep this reasoning</think>\n\nContinue reasoning',
+    )
+  })
+
+  it('should suppress a split legacy block from reasoning', async () => {
+    const stream = createMockStream([
+      reasoningChunk('<think>Keep</think>\n<tool_'),
+      reasoningChunk(
+        'call><function=sequentialthinking>payload</tool_call>\nDone',
+      ),
+    ])
+    const visibleReasoning: string[] = []
+
+    for await (const chunk of processStreamWithTools({
+      ...agentRuntimeImpl,
+      stream,
+      processors: {},
+      defaultProcessor: () => ({
+        onTagStart: () => {},
+        onTagEnd: () => {},
+      }),
+      onResponseChunk: () => {},
+      executeXmlToolCall: async () => {},
+    })) {
+      if (chunk.type === 'reasoning') {
+        visibleReasoning.push(chunk.text)
+      }
+    }
+
+    expect(visibleReasoning.join('')).toBe('<think>Keep</think>\n\nDone')
+  })
+
+  it('should fail closed for an unterminated legacy tool-call block', async () => {
+    const executed: string[] = []
+    const stream = createMockStream([
+      textChunk('<tool_call><function=sequentialthinking>unfinished'),
+    ])
+    const visibleText: string[] = []
+
+    for await (const chunk of processStreamWithTools({
+      ...agentRuntimeImpl,
+      stream,
+      processors: {},
+      defaultProcessor: () => ({
+        onTagStart: () => {},
+        onTagEnd: () => {},
+      }),
+      onResponseChunk: () => {},
+      executeXmlToolCall: async ({ toolName }) => {
+        executed.push(toolName)
+      },
+    })) {
+      if (chunk.type === 'text') {
+        visibleText.push(chunk.text)
+      }
+    }
+
+    expect(executed).toEqual([])
+    expect(visibleText.join('')).toBe('')
   })
 
   it('should handle empty stream', async () => {

@@ -1,5 +1,18 @@
 # FID-2026-0722-051 — Legacy Codebuff Template-Type Cleanup
 
+**Filename:** `FID-2026-0722-051-legacy-template-types-cleanup.md`
+**ID:** FID-2026-0722-051
+**Severity:** low
+**Status:** closed
+**Created:** 2026-0722 00:00
+**Author:** Savant
+
+---
+
+## Metadata Normalization Note
+
+This historical record was normalized on 2026-07-31 for FreeBuff ECHO v0.1.2 compliance. The original body and evidence are preserved. Original status: `closed`; Original ID: `FID-2026-0722-051-legacy-template-types-cleanup`. Canonical ID: `FID-2026-0722-051`. Backfilled fields: Filename, ID, Created. Canonical status reflects the record's lifecycle location; it does not add implementation evidence.
+
 **Status:** closed
 **Severity:** low  
 **Date:** 2026-07-22  

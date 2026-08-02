@@ -31,8 +31,8 @@ Tweet 3/5 — demo
 ```text
 Here is what the perfection loop looks like in practice:
 
-[animated GIF placeholder: terminal showing a failed dependency error caught
-by the Verifier agent, then rewritten correctly]
+A terminal demo asset is not yet available; the workflow is documented in the
+repository and ECHO Protocol.
 
 The red phase finds it. The green phase fixes it. The audit phase verifies it.
 ```
@@ -56,7 +56,7 @@ We are stress-testing the local Ollama integration before a wider launch.
 If you have a real codebase and 5 minutes, try it and break it.
 
 GitHub: <https://github.com/savant0x/savant-code>
-Discord: [invite link TBD]
+Discord: not yet available; please use GitHub Issues for feedback.
 
 Issues with repros are love letters.
 ```

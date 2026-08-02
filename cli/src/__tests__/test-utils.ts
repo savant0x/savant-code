@@ -17,14 +17,26 @@ export function isTmuxAvailable(): boolean {
   }
 
   try {
-    // First check if tmux is installed
-    execSync('which tmux', { stdio: 'pipe' })
-    // Then verify tmux can actually run by creating and killing a test session
-    // This will fail if tmux server can't start (e.g., no socket directory on CI)
-    execSync('tmux new-session -d -s __savant_code_tmux_check__ && tmux kill-session -t __savant_code_tmux_check__', {
-      stdio: 'pipe',
-      timeout: 5000,
-    })
+    // Use native tmux when available; Windows Git Bash commonly reaches tmux
+    // through WSL instead.
+    let tmuxCommand: string
+    try {
+      execSync('tmux -V', { stdio: 'pipe', timeout: 5000 })
+      tmuxCommand = 'tmux'
+    } catch {
+      execSync('wsl.exe -e tmux -V', { stdio: 'pipe', timeout: 5000 })
+      tmuxCommand = 'wsl.exe -e tmux'
+    }
+
+    // Then verify tmux can actually run by creating and killing a test session.
+    // The command is selected from fixed literals above, not user input.
+    execSync(
+      `${tmuxCommand} new-session -d -s __savant_code_tmux_check__ && ${tmuxCommand} kill-session -t __savant_code_tmux_check__`,
+      {
+        stdio: 'pipe',
+        timeout: 5000,
+      },
+    )
     return true
   } catch {
     return false
@@ -115,35 +127,22 @@ function loadCliEnv(): Record<string, string> {
     return cachedEnv
   }
 
-  try {
-    ensureCliEnvDefaults()
-    // NOTE: Inline require() is used for lazy loading - the env module depends on
-    // Infisical secrets which may not be available at module load time in test environments
-    const { env } = require('../../../packages/internal/src/env') as {
-      env: Record<string, unknown>
-    }
+  ensureCliEnvDefaults()
+  // The internal hosted-app environment package is not part of this repository.
+  // CLI integration tests only need a deterministic process environment, so use
+  // the explicit test defaults plus caller-provided values instead of importing
+  // a non-existent workspace module.
+  cachedEnv = Object.entries(process.env).reduce<Record<string, string>>(
+    (acc, [key, value]) => {
+      if (value !== undefined && value !== null) {
+        acc[key] = String(value)
+      }
+      return acc
+    },
+    {},
+  )
 
-    cachedEnv = Object.entries(env).reduce<Record<string, string>>(
-      (acc, [key, value]) => {
-        if (value !== undefined && value !== null) {
-          acc[key] = String(value)
-        }
-        return acc
-      },
-      {},
-    )
-
-    return cachedEnv
-  } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : 'unknown error loading environment'
-    throw new Error(
-      `Failed to load CLI environment via packages/internal/src/env: ${message}. ` +
-        'Run commands via "infisical run -- bun …" or export the required variables.',
-    )
-  }
+  return cachedEnv
 }
 
 export function ensureCliTestEnv(): void {
@@ -196,9 +195,7 @@ export function parseRerenderLogs(logPath: string): RerenderLogEntry[] {
           parsed.msg.includes('render #')
         ) {
           // Extract component name from msg like "MessageBlock render #2 [user-123]: 2 props changed"
-          const msgMatch = parsed.msg.match(
-            /^(\w+) render #(\d+) \[([^\]]+)\]/,
-          )
+          const msgMatch = parsed.msg.match(/^(\w+) render #(\d+) \[([^\]]+)\]/)
           if (msgMatch && parsed.data) {
             entries.push({
               timestamp: parsed.timestamp,
@@ -223,7 +220,9 @@ export function parseRerenderLogs(logPath: string): RerenderLogEntry[] {
 /**
  * Analyze re-render logs and return aggregated statistics
  */
-export function analyzeRerenders(entries: RerenderLogEntry[]): RerenderAnalysis {
+export function analyzeRerenders(
+  entries: RerenderLogEntry[],
+): RerenderAnalysis {
   const rerendersByMessage = new Map<string, number>()
   const propChangeFrequency = new Map<string, number>()
 

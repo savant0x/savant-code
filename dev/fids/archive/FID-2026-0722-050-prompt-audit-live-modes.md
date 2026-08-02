@@ -1,13 +1,18 @@
 # FID-2026-0722-050 — Prompt Audit: Mode-Specific Orchestrator Prompts + Subagent ECHO Duplication
 
-**Filename:** `FID-2026-0722-050-prompt-audit-live-modes.md`  
-**ID:** FID-2026-0722-050  
-**Severity:** high  
-**Status:** closed / archived  
-**Created:** 2026-07-22 12:00  
-**Author:** Savant  
+**Filename:** `FID-2026-0722-050-prompt-audit-live-modes.md`
+**ID:** FID-2026-0722-050
+**Severity:** high
+**Status:** closed
+**Created:** 2026-07-22 12:00
+**Author:** Savant
 
 ---
+
+## Metadata Normalization Note
+
+This historical record was normalized on 2026-07-31 for FreeBuff ECHO v0.1.2 compliance. The original body and evidence are preserved. Original status: `closed / archived`; Original ID: `FID-2026-0722-050`. Canonical status reflects the record's lifecycle location; it does not add implementation evidence.
+
 
 ## Summary
 
@@ -235,4 +240,3 @@ The orchestrator grew by appending mode-specific logic into `instructionsPrompt`
 - Code was edited before the FID converged, violating FID-Bound Execution. The correct order is: FID → Perfection Loop → user approval → code changes.
 - The provider/model system (`withParentModel`, `getModelForRequest`) already handles multi-provider routing; prompt changes should not attempt to override model selection.
 - Future prompt work must begin with a complete read of the runtime prompt assembly path, not just the agent definition files.
-

@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0725-086-fid-ground-truth-verification.md`
 **ID:** FID-2026-0725-086
 **Severity:** high
-**Status:** verified
+**Status:** closed
 **Created:** 2026-07-25
 **Author:** Savant Orchestrator
 
@@ -140,7 +140,7 @@ Add a **FID Ground-Truth Verification** rule to ECHO governance. When any agent 
 - **Tests Added:** No (FID only — code changes follow)
 - **Verified By:** File read audit of goal.ts, loop.ts, session-state.ts, run-agent-step.ts + typecheck x4
 - **Commit/PR:** [Pending — process implementation follows]
-- **Archived:** 2026-07-25
+- **Archived:** 2026-07-31
 
 ## Lessons Learned
 

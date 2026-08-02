@@ -144,7 +144,9 @@ case "$COMMAND" in
         ;;
     list)
         echo "Active tmux sessions:"
-        tmux list-sessions 2>/dev/null || echo "  (none)"
+        # Reuse the same native-tmux/WSL bridge as the other subcommands.
+        source "$SCRIPT_DIR/tmux-env.sh"
+        tmux_exec list-sessions 2>/dev/null || echo "  (none)"
         ;;
     help|--help|-h)
         show_help

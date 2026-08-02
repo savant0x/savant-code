@@ -1,11 +1,18 @@
 # FID-2026-0718-018 — high — Pre-Push Doc House-Cleaning + README Realignment + dev/ Org
 
-**Status:** closed / archived
-**Severity:** high (pre-push; docs must align with 0.0.2 pre-rebrand snapshot per FID-017 Option C)
-**Opened:** 2026-07-19
-**Updated:** 2026-07-19 (Step 5 sweep complete per user "no files out of place" directive)
+**Filename:** `FID-2026-0718-018-pre-push-house-cleaning.md`
+**ID:** FID-2026-0718-018
+**Severity:** high
+**Status:** closed
+**Created:** 2026-0718 00:00
+**Author:** Historical record (metadata backfill)
 
 ---
+
+## Metadata Normalization Note
+
+This historical record was normalized on 2026-07-31 for FreeBuff ECHO v0.1.2 compliance. The original body and evidence are preserved. Original status: `closed / archived`; Original ID: `FID-2026-0718-018-pre-push-house-cleaning`. Canonical ID: `FID-2026-0718-018`. Backfilled fields: Filename, ID, Created, Author. Canonical status reflects the record's lifecycle location; it does not add implementation evidence.
+
 
 ## Problem (RED)
 

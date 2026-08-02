@@ -1,8 +1,11 @@
 import { feedbackRequestSchema } from '@savant-code/common/schemas/feedback'
 import { describe, expect, test } from 'bun:test'
 
-
-import { buildFeedbackPayload, buildMessageContext, type RecentMessageSummary } from '../feedback-helpers'
+import {
+  buildFeedbackPayload,
+  buildMessageContext,
+  type RecentMessageSummary,
+} from '../feedback-helpers'
 
 import type { ChatMessage } from '../../types/chat'
 
@@ -99,9 +102,7 @@ describe('buildMessageContext', () => {
   })
 
   test('includes completionTime when present', () => {
-    const messages = [
-      createMessage({ id: 'msg-1', completionTime: '3.2s' }),
-    ]
+    const messages = [createMessage({ id: 'msg-1', completionTime: '3.2s' })]
 
     const result = buildMessageContext(messages, null)
 
@@ -113,9 +114,7 @@ describe('buildMessageContext', () => {
   })
 
   test('includes empty string completionTime (not dropped by != null)', () => {
-    const messages = [
-      createMessage({ id: 'msg-1', completionTime: '' }),
-    ]
+    const messages = [createMessage({ id: 'msg-1', completionTime: '' })]
 
     const result = buildMessageContext(messages, null)
 
@@ -204,7 +203,9 @@ describe('buildFeedbackPayload', () => {
 
   test('passes through the provided clientFeedbackId', () => {
     const payload = buildFeedbackPayload(baseParams)
-    expect(payload.clientFeedbackId).toBe('a1b2c3d4-e5f6-7890-abcd-ef1234567890')
+    expect(payload.clientFeedbackId).toBe(
+      'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+    )
   })
 
   test('uses the exact clientFeedbackId provided', () => {
@@ -276,7 +277,9 @@ describe('buildFeedbackPayload', () => {
   })
 
   test('includes optional fields when present', () => {
-    const recentMessages: RecentMessageSummary[] = [{ type: 'user', id: 'msg-1' }]
+    const recentMessages: RecentMessageSummary[] = [
+      { type: 'user', id: 'msg-1' },
+    ]
     const errors = [{ id: 'err-1', message: 'Something went wrong' }]
 
     const payload = buildFeedbackPayload({
@@ -287,7 +290,7 @@ describe('buildFeedbackPayload', () => {
       errors,
     })
 
-    expect(payload.agentMode).toBe('MAX')
+    expect(payload.agentMode).toBe('SCAFFOLD')
     expect(payload.sessionCreditsUsed).toBe(3.5)
     expect(payload.recentMessages).toEqual(recentMessages)
     expect(payload.errors).toEqual(errors)
@@ -375,7 +378,12 @@ describe('Cross-layer validation', () => {
   test('buildFeedbackPayload output satisfies server-side zod schema', () => {
     const messages = [
       createMessage({ id: 'msg-1', variant: 'user' }),
-      createMessage({ id: 'msg-2', variant: 'ai', completionTime: '2.5s', credits: 1.2 }),
+      createMessage({
+        id: 'msg-2',
+        variant: 'ai',
+        completionTime: '2.5s',
+        credits: 1.2,
+      }),
     ]
 
     const { target, recentMessages } = buildMessageContext(messages, 'msg-2')

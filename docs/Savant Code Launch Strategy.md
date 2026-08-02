@@ -3,6 +3,8 @@
 The following comprehensive analysis details the optimal go-to-market strategy, competitive positioning, and monetization framework for Savant Code. Set against the highly saturated 2025–2026 artificial intelligence coding agent landscape, this report provides empirical evidence and actionable directives for launching an Apache-2.0 licensed, TypeScript-based CLI tool. The developer ecosystem has recently experienced a paradigm shift; the initial enthusiasm for rapid, unverified code generation has given way to widespread "AI fatigue," driven by the high technical debt and debugging costs associated with hallucination-prone tools.  
 Savant Code’s core differentiators—an ECHO Protocol governance system, a 9-agent roster executing a self-auditing perfection loop, and a privacy-first Bring Your Own Key (BYOK) or local Ollama architecture—perfectly position the product to capture this frustrated demographic. The strategic imperatives detailed below synthesize distribution mechanics, competitor trajectories, pricing models, and community growth tactics to maximize market penetration.
 
+> **Product sequencing boundary:** The immediate strategy is to release and grow Savant-Code as a local/BYOK product. After user adoption, our team may design, build, and operate its own backend for a future free product. This strategy does not assume FreeBuff hosting, a FreeBuff partnership, or any external hosted-service dependency.
+
 ## **1\. Launch Channels & Distribution Strategies**
 
 ### **Optimal Launch Channels for Open-Source Developer Tools**
@@ -96,17 +98,17 @@ The actionable recommendation for Savant Code is to integrate the Carbon Ads CLI
 ### **Structuring Free Tier vs. Paid Tier**
 
 Successful developer tools enforce a clear demarcation between individual utility and team-based collaboration. The free tier typically includes the core functional engine, local execution, and community support. The paid tier introduces governance, compliance, and centralized administration25.  
-The actionable recommendation for Savant Code is to ensure the free tier is entirely uncrippled regarding code generation. The full 9-agent roster and the perfection loop must be available to free users utilizing their own compute (Ollama) or API keys. The paid tier should monetize the ECHO Protocol, allowing organizations to inject custom, proprietary compliance checks into the perfection loop and aggregate telemetry on developer productivity across the enterprise.
+The actionable recommendation for the initial Savant-Code release is to keep the local/BYOK product uncrippled regarding code generation. The full 9-agent roster and the perfection loop should be available to users utilizing their own compute (Ollama) or API keys. After Savant-Code gains users, the team can evaluate and build its own independently operated backend/free product; that future service is not part of the initial release or a current hosting commitment. Any paid enterprise tier should be designed later around ECHO Protocol governance, compliance, and administration.
 
 ### **Break-Even Point for Free-Tier Inference**
 
-Providing free hosted inference for a multi-agent system is economically unviable. Modern AI inference, particularly for autonomous loops that rely heavily on maintaining large contexts in memory (KV Cache), requires massive memory bandwidth30. As an agent critiques and rewrites code through 9 distinct personas, the token generation and context window consumption compound exponentially. A single complex refactoring task could consume tens of thousands of tokens.  
-The actionable recommendation for Savant Code is to refuse to subsidize inference costs for the free tier. The break-even point is irrelevant if the user bears the cost of compute. By forcing BYOK or local Ollama usage, the gross margin on the free tier remains theoretically infinite, heavily insulated from API pricing volatility.
+Providing free hosted inference for a multi-agent system is economically unviable as an initial launch assumption. Modern AI inference, particularly for autonomous loops that rely heavily on maintaining large contexts in memory (KV Cache), requires massive memory bandwidth30. As an agent critiques and rewrites code through 9 distinct personas, the token generation and context window consumption compound exponentially. A single complex refactoring task could consume tens of thousands of tokens.
+The actionable recommendation is to launch Savant-Code with local Ollama and BYOK, so users bear their own compute costs. After the product gains users, the team may model the economics and build an independently operated backend for a future free product if the evidence supports it. That future backend is not available at initial launch and does not depend on FreeBuff or any external hosting partner.
 
 ### **The "Data for Compute" Model**
 
 An emerging economic model in the AI sector involves trading compute access for high-quality developer data. High-fidelity data detailing how senior developers resolve complex architectural problems, navigate codebases, and iterate on errors is immensely valuable for training the next generation of reasoning models (e.g., OpenAI's "o" series or Anthropic's advanced iterations). Research firms and frontier model developers actively seek "Workplace Activity Graphs" and operational telemetry to evaluate and train agents32.  
-The actionable recommendation for Savant Code is to introduce an opt-in "Data for Compute" program. Users who cannot afford API keys or lack the hardware for local Ollama can opt into a hosted inference tier. In exchange, Savant Code captures the anonymized, step-by-step resolution paths generated by the perfection loop. This proprietary dataset of automated code critique and correction can subsequently be licensed to foundational model builders, creating a highly lucrative secondary revenue stream.
+A possible later-stage research direction is an opt-in "Data for Compute" program, but it is not part of the Savant-Code launch plan. Only after Savant-Code gains users and the team has designed and built its own backend should this or any future free-inference model be evaluated. Any such service would require separate privacy, security, economics, legal, and governance decisions; no FreeBuff hosting, partnership, or external service dependency is assumed.
 
 ## **4\. Pre-Launch Preparation**
 
@@ -168,9 +170,9 @@ The actionable recommendation for Savant Code is to prepare a detailed, humble, 
 
 Post-launch drop-off is inevitable unless a strict update cadence is maintained. The actionable recommendation for Savant Code is:
 
-* **30 Days:** Focus entirely on stability. Merge community pull requests, resolve compatibility issues, and activate the Carbon Ads CLI infrastructure once the user base is engaged.  
-* **60 Days:** Launch the opt-in "Data for Compute" hosted tier, expanding the Total Addressable Market (TAM) to users without local GPU capabilities.  
-* **90 Days:** Execute a secondary launch ("Show HN: Savant Code v2.0") focused entirely on the ECHO Protocol, introducing the enterprise governance dashboard.
+* **30 Days:** Focus entirely on stability, community feedback, and compatibility after the Savant-Code release. Do not activate hosted inference or advertising infrastructure by default.
+* **60+ Days:** Measure adoption and user needs, then decide whether to begin designing our own backend for a future free product. This is an investigation milestone, not a promised hosted launch.
+* **90+ Days:** If adoption and capacity justify it, prototype the first-party backend under a separate FID with independent privacy, security, economics, and operational gates; otherwise continue improving the local/BYOK Savant-Code product.
 
 ## **6\. Community & Growth Dynamics**
 

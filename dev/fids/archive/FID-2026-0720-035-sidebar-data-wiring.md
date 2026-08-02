@@ -1,14 +1,19 @@
 # FID: Right Sidebar Data Wiring
 
-**Filename:** `FID-sidebar-data-wiring.md`
-**ID:** FID-sidebar-data-wiring
+**Filename:** `FID-2026-0720-035-sidebar-data-wiring.md`
+**ID:** FID-2026-0720-035
 **Severity:** high
-**Status:** converged
+**Status:** closed
+**Lifecycle note:** Closed from the converged design record after later implementation evidence confirmed the right-sidebar wiring in the shipped CLI and subsequent FID-2026-0723-063/changelog records.
 **Created:** 2026-07-17 10:00
 **Converged:** 2026-07-17 10:45
 **Author:** Orchestrator
 
 ---
+
+## Metadata Normalization Note
+
+Canonical ID: `FID-2026-0720-035`; Original ID: `FID-sidebar-data-wiring`. Historical body preserved.
 
 ## Summary
 
@@ -281,13 +286,13 @@ No self-corrections needed. Loop 1 RED phase identified all 7 data sources with 
 
 ## Resolution
 
-- **Fixed By:** Forge (pending implementation)
-- **Fixed Date:** [pending — FID converged, awaiting Forge execution]
-- **Fix Description:** Add sidebar data slice to chat-store, wire 7 data sources from existing event handlers, pass live data to RightSidebar component
-- **Tests Added:** No — data wiring only, no new logic
-- **Verified By:** Verifier (pending — after Forge implementation)
-- **Commit/PR:** [pending]
-- **Archived:** [pending]
+- **Fixed By:** Forge and subsequent CLI UI implementation work
+- **Fixed Date:** 2026-07-21 (implementation evidence recorded in later UI FIDs/changelog)
+- **Fix Description:** Sidebar data wiring was implemented and subsequently refined in the shipped CLI; this record is closed as the original design/workstream record.
+- **Tests Added:** Covered by subsequent CLI typecheck and UI verification records
+- **Verified By:** Repository evidence in `cli/src/components/right-sidebar.tsx`, `cli/src/chat.tsx`, and later FID-2026-0723-063/changelog entries
+- **Commit/PR:** Historical working-tree implementation; no new commit authorized
+- **Archived:** 2026-07-31
 
 ## Lessons Learned
 

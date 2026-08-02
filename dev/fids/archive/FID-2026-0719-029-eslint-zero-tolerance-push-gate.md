@@ -3,11 +3,16 @@
 **Filename:** `FID-2026-0719-029-eslint-zero-tolerance-push-gate.md`
 **ID:** FID-2026-0719-029
 **Severity:** critical
-**Status:** closed / archived (Perfection Loop iteration 2026-07-20 converged; spec locked; code implementation downstream per ECHO FID-Bound Execution)
+**Status:** closed
 **Created:** 2026-07-19
 **Author:** Savant Orchestrator (Buffy)
 
 ---
+
+## Metadata Normalization Note
+
+This historical record was normalized on 2026-07-31 for FreeBuff ECHO v0.1.2 compliance. The original body and evidence are preserved. Original status: `closed / archived (Perfection Loop iteration 2026-07-20 converged; spec locked; code implementation downstream per ECHO FID-Bound Execution)`; Original ID: `FID-2026-0719-029`. Canonical status reflects the record's lifecycle location; it does not add implementation evidence.
+
 
 ## Summary
 

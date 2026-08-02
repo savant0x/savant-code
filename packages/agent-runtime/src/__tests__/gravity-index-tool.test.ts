@@ -44,7 +44,16 @@ const gravityTestAgent = {
   displayName: 'Gravity Test Agent',
   model: 'openai/gpt-4o-mini',
   toolNames: ['gravity_index', 'end_turn'],
+  spawnableAgents: [],
+  includeMessageHistory: false,
+  inheritParentSystemPrompt: false,
+  mcpServers: {},
+  outputMode: 'last_message' as const,
   systemPrompt: 'Use Gravity Index when choosing developer services.',
+  instructionsPrompt: '',
+  stepPrompt: '',
+  spawnerPrompt: '',
+  inputSchema: {},
 }
 
 describe('gravity_index tool', () => {
@@ -60,6 +69,7 @@ describe('gravity_index tool', () => {
       clientSessionId: 'test-session',
       fileContext: {
         ...mockFileContext,
+        permissionMode: 'unsafe' as const,
         agentTemplates: { 'gravity-test-agent': gravityTestAgent },
       },
       fingerprintId: 'test-fingerprint',
@@ -166,6 +176,7 @@ describe('gravity_index tool', () => {
 
     const fileContext = {
       ...mockFileContext,
+      permissionMode: 'unsafe' as const,
       agentTemplates: {
         'base-chat': {
           ...gravityTestAgent,
@@ -221,6 +232,7 @@ describe('gravity_index tool', () => {
 
     const fileContext = {
       ...mockFileContext,
+      permissionMode: 'unsafe' as const,
       agentTemplates: {
         'savant-free-deepseek': {
           ...gravityTestAgent,

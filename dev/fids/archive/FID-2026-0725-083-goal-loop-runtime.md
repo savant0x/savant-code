@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0725-083-goal-loop-runtime.md`
 **ID:** FID-2026-0725-083
 **Severity:** high
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-07-25
 **Author:** Savant Orchestrator
 
@@ -220,7 +220,9 @@ The goal evaluation uses the same model — the agent's response text is checked
 - **Tests Added:** No (end-to-end testing deferred to follow-up)
 - **Verified By:** Typecheck x4 (common, agent-runtime, cli, sdk) — all exit code 0
 - **Commit/PR:** [Pending]
-- **Archived:** 2026-07-25
+- **Archived:** 2026-07-31
+
+> Lifecycle note: Closed as the runtime integration implementation record based on its documented typecheck evidence. End-to-end acceptance gaps are tracked separately by FID-2026-0726-001, which remains active.
 
 ## Lessons Learned
 

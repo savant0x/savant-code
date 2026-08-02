@@ -3,7 +3,6 @@ import path from 'path'
 
 import { isSupportedSavantFreeModelId } from '@savant-code/common/constants/savant-free-models'
 
-
 import { getConfigDir } from './auth'
 import { AGENT_MODES } from './constants'
 import { logger } from './logger'
@@ -12,9 +11,15 @@ import type { AgentMode } from './constants'
 import type { ModelProvider } from './openrouter-models'
 import type { JSONValue } from '@savant-code/common/types/json'
 
+export const DEFAULT_SAVANT_CODE_MODEL_ID = 'opencode-go/mimo-v2.5' as const
+export const DEFAULT_SAVANT_CODE_MODEL_PROVIDER: ModelProvider = 'opencode-go'
+
 const DEFAULT_SETTINGS: Settings = {
   mode: 'EDIT' as const,
   adsEnabled: false,
+  analyticsEnabled: true,
+  savantCodeModelPreference: DEFAULT_SAVANT_CODE_MODEL_ID,
+  savantCodeModelProviderPreference: DEFAULT_SAVANT_CODE_MODEL_PROVIDER,
 }
 
 // Legacy mode migration map (FID-031). Old DEFAULT/LITE/MAX/PLAN/FREE values
@@ -39,17 +44,24 @@ export interface Settings {
    *  any gated tool. Persisted so it survives across sessions. */
   permissionMode?: PermissionMode
   adsEnabled?: boolean
+  /** Product analytics and remote error reporting consent. Defaults to true for
+   * new users; users can change it with /telemetry enable|disable. */
+  analyticsEnabled?: boolean
   /** Last model the user picked in the savant-free model selector. Restored on
    *  next savant-free launch so users land in the queue for their preferred
    *  model without re-picking. Persisted as the canonical model id. */
   savantFreeModelPreference?: string
-  /** Last model the user picked in the savant-code model selector. Restored on
-   *  next launch so users default to their preferred model. */
+  /** Default model for new users and the last model the user picked in the
+   *  savant-code model selector. Restored on next launch so users default to
+   *  their preferred model. */
   savantCodeModelPreference?: string
   /** Last provider the user picked a model from in the savant-code model
    *  selector. The /model picker defaults to the first model of this provider
    *  on future opens so users land in the same catalog section. */
   savantCodeModelProviderPreference?: ModelProvider
+  /** True when the model preference was selected automatically by Ollama
+   *  onboarding rather than explicitly chosen by the user. */
+  savantCodeModelAutoConfigured?: boolean
   /** When set, the CLI routes inference to a direct provider (e.g. local
    *  Ollama) instead of the SavantCode backend. Persists the user's local-first
    *  choice across launches. */
@@ -152,6 +164,12 @@ const validateSettings = (parsed: JSONValue): Settings => {
     settings.adsEnabled = obj.adsEnabled
   }
 
+  // Validate analyticsEnabled. Missing values intentionally inherit the active
+  // default so existing settings files receive the same behavior as new users.
+  if (typeof obj.analyticsEnabled === 'boolean') {
+    settings.analyticsEnabled = obj.analyticsEnabled
+  }
+
   // Validate savant-free model preference — drop unknown ids so a removed model
   // doesn't strand the user on a non-existent queue. Hidden-but-supported models
   // are kept; access-tier resolution decides whether they are selectable.
@@ -201,6 +219,7 @@ const validateSettings = (parsed: JSONValue): Settings => {
     'openrouter',
     'tokenrouter',
     'nvidia',
+    'opencode-go',
     'ollama',
   ])
   if (
@@ -209,6 +228,9 @@ const validateSettings = (parsed: JSONValue): Settings => {
   ) {
     settings.savantCodeModelProviderPreference =
       obj.savantCodeModelProviderPreference as ModelProvider
+  }
+  if (typeof obj.savantCodeModelAutoConfigured === 'boolean') {
+    settings.savantCodeModelAutoConfigured = obj.savantCodeModelAutoConfigured
   }
 
   // Validate direct provider persistence fields. These are used to remember
@@ -279,6 +301,20 @@ export const savePermissionModePreference = (mode: PermissionMode): void => {
 }
 
 /**
+ * Return whether remote analytics and error reporting are enabled. Missing
+ * values preserve the active-by-default policy for settings created by older
+ * releases.
+ */
+export const loadAnalyticsEnabled = (): boolean => {
+  return loadSettings().analyticsEnabled ?? true
+}
+
+/** Persist the user's remote analytics consent preference. */
+export const saveAnalyticsEnabled = (enabled: boolean): void => {
+  saveSettings({ analyticsEnabled: enabled })
+}
+
+/**
  * Load the saved savant-free model preference. Returns undefined if none is
  * saved yet — callers should fall back to DEFAULT_SAVANT_FREE_MODEL_ID.
  */
@@ -307,7 +343,10 @@ export const loadSavantCodeModelPreference = (): string | undefined => {
  * in the CLI so the next launch defaults to it.
  */
 export const saveSavantCodeModelPreference = (model: string): void => {
-  saveSettings({ savantCodeModelPreference: model })
+  saveSettings({
+    savantCodeModelPreference: model,
+    savantCodeModelAutoConfigured: false,
+  })
 }
 
 /**
@@ -315,8 +354,7 @@ export const saveSavantCodeModelPreference = (model: string): void => {
  * none is saved yet — callers should default to the first model in the catalog.
  */
 export const loadSavantCodeModelProviderPreference = ():
-  | ModelProvider
-  | undefined => {
+  ModelProvider | undefined => {
   return loadSettings().savantCodeModelProviderPreference
 }
 

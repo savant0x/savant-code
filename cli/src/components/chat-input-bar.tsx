@@ -409,6 +409,7 @@ export const ChatInputBar = ({
             maxHeight={compactMaxHeight}
             ref={inputRef}
             cursorPosition={cursorPosition}
+            maskInput={inputMode === 'providerSetup'}
           />
         </box>
         <InputModeBanner />

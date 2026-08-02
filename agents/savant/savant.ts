@@ -220,14 +220,18 @@ function getSavantHandleSteps({
   return handleSteps400k
 }
 
-const handleStepsFree250k: SavantHandleSteps = function* ({ params, agentState }) {
+const handleStepsFree250k: SavantHandleSteps = function* ({
+  params,
+  agentState,
+}) {
   // FID-2026-0725-085 Layer 3: Read maxContextLength from agentState first
   // (set by loopAgentSteps from resolved context window), then params, then default.
   function asNumber(value: JSONValue): number | null {
     return typeof value === 'number' ? value : null
   }
   const p = params ?? {}
-  const maxContextLength = agentState.maxContextLength ?? asNumber(p.maxContextLength) ?? 250_000
+  const maxContextLength =
+    agentState.maxContextLength ?? asNumber(p.maxContextLength) ?? 250_000
   while (true) {
     // Only spawn context-pruner when context is approaching the limit (>80%).
     // Skipping when context is far from full eliminates a wasted LLM call per
@@ -252,13 +256,17 @@ const handleStepsFree250k: SavantHandleSteps = function* ({ params, agentState }
   }
 }
 
-const handleStepsFree400k: SavantHandleSteps = function* ({ params, agentState }) {
+const handleStepsFree400k: SavantHandleSteps = function* ({
+  params,
+  agentState,
+}) {
   // FID-2026-0725-085 Layer 3: Read maxContextLength from agentState first
   function asNumber(value: JSONValue): number | null {
     return typeof value === 'number' ? value : null
   }
   const p = params ?? {}
-  const maxContextLength = agentState.maxContextLength ?? asNumber(p.maxContextLength) ?? 400_000
+  const maxContextLength =
+    agentState.maxContextLength ?? asNumber(p.maxContextLength) ?? 400_000
   while (true) {
     if (agentState.contextTokenCount > maxContextLength * 0.8) {
       yield {
@@ -286,7 +294,8 @@ const handleSteps250k: SavantHandleSteps = function* ({ params, agentState }) {
     return typeof value === 'number' ? value : null
   }
   const p = params ?? {}
-  const maxContextLength = agentState.maxContextLength ?? asNumber(p.maxContextLength) ?? 250_000
+  const maxContextLength =
+    agentState.maxContextLength ?? asNumber(p.maxContextLength) ?? 250_000
   while (true) {
     if (agentState.contextTokenCount > maxContextLength * 0.8) {
       yield {
@@ -313,7 +322,8 @@ const handleSteps400k: SavantHandleSteps = function* ({ params, agentState }) {
     return typeof value === 'number' ? value : null
   }
   const p = params ?? {}
-  const maxContextLength = agentState.maxContextLength ?? asNumber(p.maxContextLength) ?? 400_000
+  const maxContextLength =
+    agentState.maxContextLength ?? asNumber(p.maxContextLength) ?? 400_000
   while (true) {
     if (agentState.contextTokenCount > maxContextLength * 0.8) {
       yield {
@@ -368,14 +378,15 @@ ${buildArray(
   (isDefault || isMax || isFree) &&
     `- For any task requiring 3+ steps, use the write_todos tool to write out your step-by-step implementation plan. Include ALL of the applicable tasks in the list.${isFast || noReview ? '' : ' You should include a step to review the changes after you have implemented the changes.'}:${hasNoValidation ? '' : ' You should include at least one step to validate/test your changes: be specific about whether to typecheck, run tests, run lints, etc.'} You may be able to do reviewing and validation in parallel in the same step. Skip write_todos for simple tasks like quick edits or answering questions.`,
   (isDefault || isMax || isFree) &&
-    '- For complex problems, spawn the Thinker agent to help find the best solution.',
+    '- For complex problems, spawn the Thinker agent to help find the best solution. When the Thinker finishes, its report contains a structured result: `synthesis` (concise explanation of how the conclusion was reached), `payload.message` (the final answer), and `thoughts` (the stacked reasoning steps). Use `payload.message` as the answer when `status` is success.',
   '- IMPORTANT: You have write_file and str_replace tools — write code directly for most tasks. Use the full ECHO Perfection Loop (spawn Forge) only for genuinely complex changes (touches > 75 lines AND requires new imports/APIs, OR novel architecture, OR verification fails twice, OR user explicitly requests Forge). For everything else, write the code yourself, then verify with typecheck/lint in parallel using bashers.',
-  '- **Parallel agent batching:** When spawning multiple agents that don\'t depend on each other, fire them ALL in a single spawn_agents call — they run in parallel via Promise.allSettled. Independent agents: Detective + Researcher + Thinker (no data dependency). Dependent agents: Scout waits for Detective; Forge waits for Thinker; Verifier waits for Forge. Batch all independent agents together; only wait for dependencies when required.',
+  "- **Parallel agent batching:** When spawning multiple agents that don't depend on each other, fire them ALL in a single spawn_agents call — they run in parallel via Promise.allSettled. Independent agents: Detective + Researcher + Thinker (no data dependency). Dependent agents: Scout waits for Detective; Forge waits for Thinker; Verifier waits for Forge. Batch all independent agents together; only wait for dependencies when required.",
   isFast &&
     '- For fast mode, skip verification if the change is very small (< 10 lines, no new imports). Otherwise, do a single typecheck.',
   !hasNoValidation &&
     `- For non-trivial changes, test them by running appropriate validation commands for the project (e.g. typechecks, tests, lints, etc.). Try to run all appropriate commands in parallel. ${isMax ? ' Typecheck and test the specific area of the project that you are editing *AND* then typecheck and test the entire project if necessary.' : ' If you can, only test the area of the project that you are editing, rather than the entire project.'} You may have to explore the project to find the appropriate commands. Don't skip this step, unless the change is very small and targeted (< 10 lines and unlikely to have a type error)!`,
-  !noReview &&  '- **Verifier trigger (objective criteria):** Spawn the Verifier to review code changes when ANY of these apply: (1) change is 10+ lines, (2) change touches 2+ files, (3) new function or API added, (4) security-sensitive code touched, (5) user explicitly requests review, (6) when Forge was used to implement changes. Skip Verifier only when change is < 10 lines AND single file AND no new imports.',
+  !noReview &&
+    '- **Verifier trigger (objective criteria):** Spawn the Verifier to review code changes when ANY of these apply: (1) change is 10+ lines, (2) change touches 2+ files, (3) new function or API added, (4) security-sensitive code touched, (5) user explicitly requests review, (6) when Forge was used to implement changes. Skip Verifier only when change is < 10 lines AND single file AND no new imports.',
   '- **Batch operations:** When making multiple related file changes (e.g., updating a component + its tests + its types), write ALL files first, then run typecheck/lint ONCE at the end. Only verify after each individual write if the changes are unrelated or you suspect a type error in a specific file. This reduces verification rounds from N to 1 for multi-file tasks.',
   !isFast &&
     !noAskUser &&
@@ -597,7 +608,21 @@ ${
 - **External apps:** When Composio tools are available and the user asks to work with connected apps or services like Gmail, Google Calendar, GitHub, Slack, Linear, or Notion, use them to search for the right app tools, help the user connect their account (use the render_ui tool to show a button if the user needs to click a link), and execute the requested action.`
       : ''
   }
-'\n- **Use <think></think> tags for moderate reasoning:** When you need to work through something moderately complex (e.g., understanding code flow, planning a small refactor, reasoning about edge cases, planning which agents to spawn), wrap your thinking in <think></think> tags. - **Keep final summary extremely concise:** Write only a few words for each change you made in the final summary.
+- **Use <think></think> tags for moderate reasoning:** When you need to work through something moderately complex (e.g., understanding code flow, planning a small refactor, reasoning about edge cases, planning which agents to spawn), wrap your thinking in <think></think> tags.
+- **Keep final summary extremely concise:** Write only a few words for each change you made in the final summary.
+
+# Response Formatting
+
+Use markdown formatting in your responses to improve readability in the terminal:
+- Bullet points (- ) for lists of items
+- Numbered lists (1. ) for ordered/sequential items
+- **bold** for emphasis and important terms
+- \`code\` for inline code, commands, file paths, and variable names
+- \`\`\`language for code blocks
+- > for blockquotes and notes
+- Tables with | for structured data comparisons
+- --- for section dividers
+- Headings (## Title) for major sections
 
 # ECHO Phase Gating
 

@@ -16,7 +16,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 /**
  * Cadence specification parsed from user input.
- * Supports: Nd (daily), Nh (hourly), Nm (every N minutes)
+ * Supports: Nd (daily), Nh (hourly), Nm (every N minutes), Ns (every N seconds)
  */
 export interface LoopSchedule {
   /** Unique ID for this loop instance */
@@ -70,16 +70,21 @@ export interface LoopStatus {
 }
 
 /**
- * Parse a cadence string like "1d", "1h", "5m" into milliseconds.
+ * Parse a cadence string like "30s", "1d", "1h", or "5m" into milliseconds.
  */
-export function parseCadence(input: string): { intervalMs: number; label: string } | null {
-  const match = input.match(/^(\d+)([dhm])$/)
+export function parseCadence(
+  input: string,
+): { intervalMs: number; label: string } | null {
+  const match = input.trim().match(/^(\d+)([sdhm])$/)
   if (!match) return null
 
   const amount = parseInt(match[1], 10)
   const unit = match[2]
+  if (amount <= 0) return null
 
   switch (unit) {
+    case 's':
+      return { intervalMs: amount * 1000, label: `${amount}s` }
     case 'd':
       return { intervalMs: amount * 24 * 60 * 60 * 1000, label: `${amount}d` }
     case 'h':
@@ -103,7 +108,8 @@ export function formatDuration(ms: number): string {
 
   if (days > 0) return `${days}d ${hours}h`
   if (hours > 0) return `${hours}h ${minutes}m`
-  return `${minutes}m`
+  if (minutes > 0) return `${minutes}m`
+  return `${Math.ceil(ms / 1000)}s`
 }
 
 /**
@@ -128,8 +134,11 @@ interface SchedulerState {
   schedule: LoopSchedule | null
   listeners: Set<(schedule: LoopSchedule | null) => void>
   interval: ReturnType<typeof setInterval> | null
-  onLoopDue: ((schedule: LoopSchedule) => void) | null
+  onLoopDue: ((schedule: LoopSchedule) => void | Promise<void>) | null
   pendingGoalCondition: string | null
+  runInFlight: boolean
+  executionToken: number
+  inFlightToken: number | null
 }
 
 const schedulerState: SchedulerState = {
@@ -138,6 +147,9 @@ const schedulerState: SchedulerState = {
   interval: null,
   onLoopDue: null,
   pendingGoalCondition: null,
+  runInFlight: false,
+  executionToken: 0,
+  inFlightToken: null,
 }
 
 /**
@@ -150,30 +162,109 @@ function notifyListeners(): void {
 }
 
 /**
+ * Run one scheduler tick. The interval and tests share this implementation so
+ * cadence behavior is deterministic and does not require a second scheduler.
+ */
+export function runLoopSchedulerTick(): void {
+  const schedule = schedulerState.schedule
+  if (!schedule || !schedule.isActive || schedulerState.runInFlight) return
+  if (Date.now() < schedule.nextRunAt) return
+
+  const onLoopDue = schedulerState.onLoopDue
+  if (!onLoopDue) return
+
+  // Advance schedule before invoking the callback so the next run time is
+  // always forward-looking.
+  const dueSchedule: LoopSchedule = {
+    ...schedule,
+    nextRunAt: Date.now() + schedule.cadenceMs,
+    runCount: schedule.runCount,
+    lastRunAt: Date.now(),
+    lastRunSuccess: undefined,
+    lastRunFailed: undefined,
+  }
+  schedulerState.schedule = dueSchedule
+  notifyListeners()
+
+  const executionToken = ++schedulerState.executionToken
+  schedulerState.runInFlight = true
+  schedulerState.inFlightToken = executionToken
+  Promise.resolve()
+    .then(() => onLoopDue(dueSchedule))
+    .then(() => {
+      if (
+        schedulerState.inFlightToken !== executionToken ||
+        schedulerState.schedule?.id !== dueSchedule.id
+      ) {
+        return
+      }
+      schedulerState.schedule = {
+        ...schedulerState.schedule,
+        runCount: schedulerState.schedule.runCount + 1,
+        lastRunSuccess: true,
+        lastRunFailed: false,
+      }
+      notifyListeners()
+    })
+    .catch(() => {
+      if (
+        schedulerState.inFlightToken !== executionToken ||
+        schedulerState.schedule?.id !== dueSchedule.id
+      ) {
+        return
+      }
+      schedulerState.schedule = {
+        ...schedulerState.schedule,
+        runCount: schedulerState.schedule.runCount + 1,
+        lastRunSuccess: false,
+        lastRunFailed: true,
+      }
+      notifyListeners()
+    })
+    .finally(() => {
+      if (schedulerState.inFlightToken !== executionToken) return
+
+      schedulerState.runInFlight = false
+      schedulerState.inFlightToken = null
+
+      // A replacement loop may have become due while the previous send was
+      // still in flight. Drain that pending run only after the old send has
+      // settled, so restarting a loop never creates overlapping sends.
+      if (
+        schedulerState.schedule?.id !== dueSchedule.id &&
+        schedulerState.schedule?.isActive
+      ) {
+        runLoopSchedulerTick()
+      }
+    })
+}
+
+/**
+ * Register the process-scoped callback used when a loop becomes due.
+ * Cleanup is owner-guarded so an old React mount cannot clear a newer one.
+ */
+export function registerLoopDueHandler(
+  handler: (schedule: LoopSchedule) => void | Promise<void>,
+): () => void {
+  schedulerState.onLoopDue = handler
+
+  // A loop can be started before the React effect that registers the handler
+  // runs. Keep that first run pending and drain it as soon as a handler exists.
+  runLoopSchedulerTick()
+
+  return () => {
+    if (schedulerState.onLoopDue === handler) {
+      schedulerState.onLoopDue = null
+    }
+  }
+}
+
+/**
  * Start the check interval if not already running.
  */
 function ensureCheckInterval(): void {
   if (schedulerState.interval) return
-
-  schedulerState.interval = setInterval(() => {
-    const schedule = schedulerState.schedule
-    if (!schedule || !schedule.isActive) return
-    if (Date.now() >= schedule.nextRunAt) {
-      // Advance schedule before invoking the callback so the next run time is
-      // always forward-looking.
-      schedulerState.schedule = {
-        ...schedule,
-        nextRunAt: Date.now() + schedule.cadenceMs,
-        runCount: schedule.runCount + 1,
-        lastRunAt: Date.now(),
-      }
-      notifyListeners()
-
-      if (schedulerState.onLoopDue) {
-        schedulerState.onLoopDue(schedulerState.schedule)
-      }
-    }
-  }, 5000) // Check every 5 seconds
+  schedulerState.interval = setInterval(runLoopSchedulerTick, 5000)
 }
 
 /**
@@ -217,19 +308,28 @@ export function startLoop(
   cadenceLabel: string,
   prompt: string,
 ): void {
+  // Invalidate completion updates from any previous loop, but preserve its
+  // in-flight lock. If a previous send is still running, the new loop remains
+  // due until that send settles; this prevents overlapping requests while
+  // allowing the replacement loop to start immediately afterward.
+  schedulerState.executionToken += 1
   schedulerState.schedule = {
     id: generateLoopId(),
     cadenceMs,
     cadenceLabel,
     prompt,
     isActive: true,
-    nextRunAt: Date.now() + cadenceMs,
+    // Run the first iteration through the same scheduler path as recurring
+    // iterations. This keeps run accounting, overlap protection, goal prompt
+    // construction, and outcome handling consistent from the first run.
+    nextRunAt: Date.now(),
     runCount: 0,
     goalCondition: schedulerState.pendingGoalCondition,
   }
   schedulerState.pendingGoalCondition = null
   notifyListeners()
   ensureCheckInterval()
+  runLoopSchedulerTick()
 }
 
 /**
@@ -237,6 +337,9 @@ export function startLoop(
  */
 export function stopLoop(): void {
   stopCheckInterval()
+  schedulerState.executionToken += 1
+  schedulerState.inFlightToken = null
+  schedulerState.runInFlight = false
   schedulerState.schedule = null
   notifyListeners()
 }
@@ -263,11 +366,11 @@ export function setLoopActiveState(isActive: boolean): void {
  * loop that starts.
  */
 export function setLoopGoal(condition: string): void {
-  schedulerState.pendingGoalCondition = condition
-  if (schedulerState.schedule) {
+  schedulerState.pendingGoalCondition = condition.trim() || null
+  if (schedulerState.schedule && schedulerState.pendingGoalCondition) {
     schedulerState.schedule = {
       ...schedulerState.schedule,
-      goalCondition: condition,
+      goalCondition: schedulerState.pendingGoalCondition,
     }
     notifyListeners()
   }
@@ -287,7 +390,7 @@ export function setLoopGoal(condition: string): void {
  * @param onLoopDue - Callback invoked when a loop's cadence has elapsed.
  */
 export function useLoopScheduler(
-  onLoopDue: (schedule: LoopSchedule) => void,
+  onLoopDue: (schedule: LoopSchedule) => void | Promise<void>,
 ): UseLoopSchedulerReturn {
   const onLoopDueRef = useRef(onLoopDue)
   onLoopDueRef.current = onLoopDue
@@ -300,10 +403,8 @@ export function useLoopScheduler(
   // always used via a ref, so the interval does not need to be restarted when
   // the callback changes.
   useEffect(() => {
-    schedulerState.onLoopDue = (schedule) => onLoopDueRef.current(schedule)
-    return () => {
-      schedulerState.onLoopDue = null
-    }
+    const handler = (schedule: LoopSchedule) => onLoopDueRef.current(schedule)
+    return registerLoopDueHandler(handler)
   }, [])
 
   // Subscribe to schedule changes for reactive UI updates.
@@ -357,9 +458,14 @@ export function useLoopScheduler(
 }
 
 /**
- * Read-only reactive hook that returns the current loop schedule. Use this in
- * UI components that need to display loop state without registering a callback.
+ * Build the recurring prompt while preserving the user's original prompt and
+ * carrying the active goal into every scheduled run.
  */
+export function buildLoopPrompt(schedule: LoopSchedule): string {
+  if (!schedule.goalCondition) return schedule.prompt
+  return `${schedule.prompt}\n\nGoal condition to evaluate after this run: ${schedule.goalCondition}`
+}
+
 export function useLoopSchedule(): LoopSchedule | null {
   const [activeLoop, setActiveLoop] = useState<LoopSchedule | null>(() =>
     getCurrentSchedule(),

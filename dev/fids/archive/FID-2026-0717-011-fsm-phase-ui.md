@@ -5,8 +5,14 @@
 **Severity:** medium
 **Status:** closed
 **Created:** 2026-07-17 18:00
+**Author:** Pending
 
 ---
+
+## Metadata Normalization Note
+
+This historical record was normalized on 2026-07-31 for FreeBuff ECHO v0.1.2 compliance. The original body and evidence are preserved. Original status: `closed`; Original ID: `FID-2026-0717-011`. Backfilled fields: Author. Canonical status reflects the record's lifecycle location; it does not add implementation evidence.
+
 
 ## Summary
 

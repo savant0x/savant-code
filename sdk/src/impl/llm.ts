@@ -1,5 +1,14 @@
 import { AnalyticsEvent } from '@savant-code/common/constants/analytics-events'
 import { models, PROFIT_MARGIN } from '@savant-code/common/old-constants'
+import {
+  isNativeToolCallError,
+  type NativeToolCallError,
+  type PromptAiSdkFn,
+  type StreamErrorChunk,
+  type PromptAiSdkStreamFn,
+  type PromptAiSdkStructuredInput,
+  type PromptAiSdkStructuredOutput,
+} from '@savant-code/common/types/contracts/llm'
 import { buildArray } from '@savant-code/common/util/array'
 import { normalizeProviderRequestBodyForCacheDebug } from '@savant-code/common/util/cache-debug'
 import {
@@ -10,7 +19,10 @@ import {
 import { convertCbToModelMessages } from '@savant-code/common/util/messages'
 import { isExplicitlyDefinedModel } from '@savant-code/common/util/model-utils'
 import { StopSequenceHandler } from '@savant-code/common/util/stop-sequence'
-import { safeToJSONValue, toJSONValue } from '@savant-code/common/util/type-narrowing'
+import {
+  safeToJSONValue,
+  toJSONValue,
+} from '@savant-code/common/util/type-narrowing'
 import {
   streamText,
   generateText,
@@ -34,12 +46,6 @@ import type {
   OpenRouterProviderOptions,
   OpenRouterProviderRoutingOptions,
 } from '@savant-code/common/types/agent-template'
-import type {
-  PromptAiSdkFn,
-  PromptAiSdkStreamFn,
-  PromptAiSdkStructuredInput,
-  PromptAiSdkStructuredOutput,
-} from '@savant-code/common/types/contracts/llm'
 import type { ParamsOf } from '@savant-code/common/types/function-params'
 import type { JSONValue, JSONObject } from '@savant-code/common/types/json'
 import type { LanguageModel } from 'ai'
@@ -261,10 +267,7 @@ function emitCacheDebugUsage(params: {
 }
 
 export type ChatGptOAuthStreamErrorPolicy =
-  | 'fallback-rate-limit'
-  | 'fail-auth-reconnect'
-  | 'fail-fast'
-  | 'ignore'
+  'fallback-rate-limit' | 'fail-auth-reconnect' | 'fail-fast' | 'ignore'
 
 export function classifyChatGptOAuthStreamError<T>(params: {
   isChatGptOAuth: boolean
@@ -287,6 +290,22 @@ export function classifyChatGptOAuthStreamError<T>(params: {
   }
 
   return 'fail-fast'
+}
+
+export function normalizeNativeToolCallStreamError(
+  value: object,
+): Extract<StreamErrorChunk, { errorClass: 'native-incomplete' }> | null {
+  if (!isNativeToolCallError(value)) {
+    return null
+  }
+
+  const nativeError: NativeToolCallError = value
+  return {
+    type: 'error',
+    message: `Incomplete arguments for tool ${nativeError.toolName}; retry the tool call with a complete arguments object.`,
+    errorClass: 'native-incomplete',
+    toolName: nativeError.toolName,
+  }
 }
 
 export async function* promptAiSdkStream(
@@ -488,6 +507,15 @@ export async function* promptAiSdkStream(
     if (chunkValue.type === 'error') {
       // Error chunks from fullStream are non-network errors (tool failures, model issues, rate limits, etc.)
       // Network errors which cannot be recovered from are thrown, not yielded as chunks.
+      // The OpenAI-compatible provider uses a typed object for incomplete native
+      // arguments so this path never relies on parsing a user-facing message.
+      if (typeof chunkValue.error === 'object' && chunkValue.error !== null) {
+        const nativeError = normalizeNativeToolCallStreamError(chunkValue.error)
+        if (nativeError !== null) {
+          yield nativeError
+          continue
+        }
+      }
 
       const errorBody = APICallError.isInstance(chunkValue.error)
         ? chunkValue.error.responseBody

@@ -5,16 +5,15 @@
  * Handles partial tags at chunk boundaries using a stateful approach.
  */
 
-import {
-  toolNameParam,
-  toolXmlName,
-} from '@savant-code/common/tools/constants'
+import { toolNameParam, toolXmlName } from '@savant-code/common/tools/constants'
 
 import type { JSONValue } from '@savant-code/common/types/json'
 
 // Use flexible tag matching without requiring specific newlines
 const startToolTag = `<${toolXmlName}>`
 const endToolTag = `</${toolXmlName}>`
+const legacyStartToolTag = '<tool_call>'
+const legacyEndToolTag = '</tool_call>'
 
 export type ParsedToolCall = {
   toolName: string
@@ -24,8 +23,15 @@ export type ParsedToolCall = {
 export type StreamParserState = {
   /** Buffer for holding partial content when inside a tool call tag or at boundaries */
   buffer: string
-  /** Whether we're currently inside a tool call tag */
+  /** Whether we're currently inside a canonical tool call tag */
   insideToolCall: boolean
+  /** Whether we're discarding an unsupported legacy tool-call block */
+  insideLegacyToolCall: boolean
+}
+
+export type LegacyToolCallFilterState = {
+  buffer: string
+  insideLegacyToolCall: boolean
 }
 
 export type ParseResult = {
@@ -42,7 +48,73 @@ export function createStreamParserState(): StreamParserState {
   return {
     buffer: '',
     insideToolCall: false,
+    insideLegacyToolCall: false,
   }
+}
+
+export function createLegacyToolCallFilterState(): LegacyToolCallFilterState {
+  return {
+    buffer: '',
+    insideLegacyToolCall: false,
+  }
+}
+
+/**
+ * Removes unsupported legacy tool-call blocks from a non-executable text
+ * stream, such as model reasoning. This deliberately does not parse or
+ * execute tool calls; canonical tool-call parsing remains in parseStreamChunk.
+ * Any literal legacy block is intentionally suppressed, including one embedded
+ * in prose, because the affected provider emits this unsupported form as
+ * protocol markup rather than user-authored content.
+ *
+ * Unterminated legacy blocks are held in state and therefore fail closed at
+ * stream completion rather than leaking protocol markup to the user.
+ */
+export function filterLegacyToolCallText(
+  chunk: string,
+  state: LegacyToolCallFilterState,
+): string {
+  if (!chunk) {
+    return ''
+  }
+
+  let text = state.buffer + chunk
+  state.buffer = ''
+  let filteredText = ''
+
+  while (text.length > 0) {
+    if (state.insideLegacyToolCall) {
+      const endIndex = text.indexOf(legacyEndToolTag)
+
+      if (endIndex !== -1) {
+        text = text.slice(endIndex + legacyEndToolTag.length)
+        state.insideLegacyToolCall = false
+      } else {
+        state.buffer = text
+        text = ''
+      }
+      continue
+    }
+
+    const startIndex = text.indexOf(legacyStartToolTag)
+    if (startIndex !== -1) {
+      filteredText += text.slice(0, startIndex)
+      text = text.slice(startIndex + legacyStartToolTag.length)
+      state.insideLegacyToolCall = true
+      continue
+    }
+
+    const partialStart = findPartialTagMatch(text, legacyStartToolTag)
+    if (partialStart > 0) {
+      filteredText += text.slice(0, -partialStart)
+      state.buffer = text.slice(-partialStart)
+    } else {
+      filteredText += text
+    }
+    text = ''
+  }
+
+  return filteredText
 }
 
 /**
@@ -68,12 +140,23 @@ export function parseStreamChunk(
   const toolCalls: ParsedToolCall[] = []
 
   while (text.length > 0) {
-    if (state.insideToolCall) {
-      // We're inside a tool call, look for the end tag
+    if (state.insideLegacyToolCall) {
+      // Unsupported legacy calls are discarded and never executed.
+      const endIndex = text.indexOf(legacyEndToolTag)
+
+      if (endIndex !== -1) {
+        text = text.slice(endIndex + legacyEndToolTag.length)
+        state.insideLegacyToolCall = false
+      } else {
+        state.buffer = text
+        text = ''
+      }
+    } else if (state.insideToolCall) {
+      // We're inside a canonical tool call, look for the end tag.
       const endIndex = text.indexOf(endToolTag)
 
       if (endIndex !== -1) {
-        // Found end tag - extract the content and parse it
+        // Found end tag - extract the content and parse it.
         const toolCallContent = text.slice(0, endIndex)
         const parsedToolCall = parseToolCallContent(toolCallContent)
         if (parsedToolCall) {
@@ -83,29 +166,41 @@ export function parseStreamChunk(
         text = text.slice(endIndex + endToolTag.length)
         state.insideToolCall = false
       } else {
-        // No end tag yet - buffer all content until we find the end tag
+        // No end tag yet - buffer all content until we find the end tag.
         state.buffer = text
         text = ''
       }
     } else {
-      // We're outside a tool call, look for start tag
-      const startIndex = text.indexOf(startToolTag)
+      // We're outside a tool call. Select whichever supported/legacy start tag
+      // appears first so an unsupported block cannot leak into visible text.
+      const canonicalStartIndex = text.indexOf(startToolTag)
+      const legacyStartIndex = text.indexOf(legacyStartToolTag)
+      const hasCanonicalStart = canonicalStartIndex !== -1
+      const hasLegacyStart = legacyStartIndex !== -1
 
-      if (startIndex !== -1) {
-        // Found start tag - emit text before it, then enter tool call
-        filteredText += text.slice(0, startIndex)
-        text = text.slice(startIndex + startToolTag.length)
+      if (
+        hasLegacyStart &&
+        (!hasCanonicalStart || legacyStartIndex < canonicalStartIndex)
+      ) {
+        filteredText += text.slice(0, legacyStartIndex)
+        text = text.slice(legacyStartIndex + legacyStartToolTag.length)
+        state.insideLegacyToolCall = true
+      } else if (hasCanonicalStart) {
+        filteredText += text.slice(0, canonicalStartIndex)
+        text = text.slice(canonicalStartIndex + startToolTag.length)
         state.insideToolCall = true
       } else {
-        // No start tag - check if we might have a partial start tag
-        const partialStart = findPartialTagMatch(text, startToolTag)
+        // No complete start tag - check whether either tag is split at the
+        // chunk boundary. Keep the longest suffix so the next chunk can finish it.
+        const partialStart = Math.max(
+          findPartialTagMatch(text, startToolTag),
+          findPartialTagMatch(text, legacyStartToolTag),
+        )
         if (partialStart > 0) {
-          // Emit everything except the partial tag, buffer the partial
           filteredText += text.slice(0, -partialStart)
           state.buffer = text.slice(-partialStart)
           text = ''
         } else {
-          // No partial match, emit all
           filteredText += text
           text = ''
         }

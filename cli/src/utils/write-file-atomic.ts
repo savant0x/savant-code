@@ -35,7 +35,9 @@ export function writeFileAtomic(filePath: string, data: string): void {
  * so serializing + flushing a multi-MB transcript doesn't block the CLI's
  * render/input thread. Same tmp-then-rename atomicity guarantee.
  */
-export async function writeFileAtomicAsync(
+const asyncWriteQueues = new Map<string, Promise<void>>()
+
+async function writeFileAtomicAsyncOnce(
   filePath: string,
   data: string,
 ): Promise<void> {
@@ -51,4 +53,30 @@ export async function writeFileAtomicAsync(
     }
     throw error
   }
+}
+
+export function writeFileAtomicAsync(
+  filePath: string,
+  data: string,
+): Promise<void> {
+  // Windows can briefly hold the destination during rename. Serialize writes
+  // targeting the same file while retaining parallelism across different files.
+  const previous = asyncWriteQueues.get(filePath) ?? Promise.resolve()
+  const next = previous
+    .catch(() => undefined)
+    .then(() => writeFileAtomicAsyncOnce(filePath, data))
+  asyncWriteQueues.set(filePath, next)
+  void next.then(
+    () => {
+      if (asyncWriteQueues.get(filePath) === next) {
+        asyncWriteQueues.delete(filePath)
+      }
+    },
+    () => {
+      if (asyncWriteQueues.get(filePath) === next) {
+        asyncWriteQueues.delete(filePath)
+      }
+    },
+  )
+  return next
 }

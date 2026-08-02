@@ -5,6 +5,7 @@ import { STATE_SNAPSHOT_INTERRUPTION_MESSAGE } from '@savant-code/sdk'
 import { useCallback, useEffect, useRef } from 'react'
 
 import { setCurrentChatId } from '../project-files'
+import { createRunOutcomeReporter } from './run-outcome'
 import { createStreamController } from './stream-state'
 import {
   getSavantFreeInstanceId,
@@ -12,10 +13,7 @@ import {
 } from './use-savant-free-session'
 import { useChatStore } from '../state/chat-store'
 import { getSelectedSavantFreeModel } from '../state/savant-free-model-store'
-import {
-  clearActiveRunAborter,
-  setActiveRunAborter,
-} from '../utils/active-run'
+import { clearActiveRunAborter, setActiveRunAborter } from '../utils/active-run'
 import { IS_SAVANT_FREE } from '../utils/constants'
 import { createEventHandlerState } from '../utils/create-event-handler-state'
 import { createRunConfig } from '../utils/create-run-config'
@@ -70,10 +68,14 @@ import type { SendMessageFn } from '../types/contracts/send-message'
 import type { PendingAttachment } from '../types/store'
 import type { AgentMode } from '../utils/constants'
 import type { SendMessageTimerEvent } from '../utils/send-message-timer'
-import type { AgentDefinition, MessageContent, RunState } from '@savant-code/sdk'
+import type {
+  AgentDefinition,
+  MessageContent,
+  RunState,
+} from '@savant-code/sdk'
 
 interface UseSendMessageOptions {
-  inputRef: React.MutableRefObject<any>  
+  inputRef: React.MutableRefObject<any>
   activeSubagentsRef: React.MutableRefObject<Set<string>>
   isChainInProgressRef: React.MutableRefObject<boolean>
   setStreamStatus: (status: StreamStatus) => void
@@ -214,7 +216,9 @@ export const useSendMessage = ({
   // Started before client.run, stopped in finally block. Heartbeat polls
   // the live snapshot every 2s for token counts; watcher polls every 5s
   // for 30s of chunk-silence + auto-reset.
-  const heartbeatIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const heartbeatIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
+    null,
+  )
   const stalledWatcher = createStalledResetWatcher()
 
   useEffect(() => {
@@ -299,7 +303,19 @@ export const useSendMessage = ({
   )
 
   const sendMessage = useCallback<SendMessageFn>(
-    async ({ content, agentMode, postUserMessage, attachments }) => {
+    async ({
+      content,
+      agentMode,
+      postUserMessage,
+      attachments,
+      onRunOutcome,
+    }) => {
+      const reportRunOutcome = createRunOutcomeReporter(
+        onRunOutcome,
+        (error) => {
+          logger.warn({ error }, '[send-message] Run outcome observer failed')
+        },
+      )
       // CRITICAL: Set chain in progress immediately (synchronously) before any async work.
       // This ensures the router can detect that we're busy and queue subsequent messages.
       // Set the ref directly first to guarantee immediate visibility to other code paths,
@@ -315,6 +331,7 @@ export const useSendMessage = ({
       // sendBlocked hold (direct review-screen answers) and the dequeue race
       // where the slot expires between the queue's check and this call.
       if (IS_SAVANT_FREE && !getSavantFreeInstanceId()) {
+        reportRunOutcome('failure')
         markSavantFreeSessionEnded()
         requeueMessageAtFront?.({ content, attachments: attachments ?? [] })
         resetEarlyReturnState({
@@ -354,6 +371,7 @@ export const useSendMessage = ({
         bashContextForPrompt = prepared.bashContextForPrompt
         finalContent = prepared.finalContent
       } catch (error) {
+        reportRunOutcome('failure')
         logger.error(
           { error },
           '[send-message] prepareUserMessage failed with exception',
@@ -378,6 +396,7 @@ export const useSendMessage = ({
         const validationResult = await onBeforeMessageSend()
 
         if (!validationResult.success) {
+          reportRunOutcome('failure')
           logger.warn(
             { errors: validationResult.errors },
             '[send-message] Validation failed',
@@ -414,6 +433,7 @@ export const useSendMessage = ({
           return
         }
       } catch (error) {
+        reportRunOutcome('failure')
         logger.error(
           { error },
           '[send-message] Validation before message send failed with exception',
@@ -446,9 +466,34 @@ export const useSendMessage = ({
       useChatStore.getState().onNewUserMessage()
 
       // Get SDK client
-      const client = await getSavantCodeClient()
+      let client
+      try {
+        client = await getSavantCodeClient()
+      } catch (error) {
+        reportRunOutcome('failure')
+        logger.error(
+          { error },
+          '[send-message] Failed to initialize SavantCode client',
+        )
+        setMessages((prev) => [
+          ...prev,
+          createErrorChatMessage(
+            `⚠️ Unable to connect to ${IS_SAVANT_FREE ? 'SavantFree' : 'SavantCode'}. Please check your authentication and try again.`,
+          ),
+        ])
+        await yieldToEventLoop()
+        setTimeout(() => scrollToLatest(), 0)
+        resetEarlyReturnState({
+          setCanProcessQueue,
+          updateChainInProgress,
+          isProcessingQueueRef,
+          isQueuePausedRef,
+        })
+        return
+      }
 
       if (!client) {
+        reportRunOutcome('failure')
         logger.error(
           {},
           '[send-message] No SavantCode client available. Please ensure you are authenticated.',
@@ -608,19 +653,23 @@ export const useSendMessage = ({
             // (used by onSubagentFinish) and the readable displayName (rendered
             // in the sidebar) so generated compact IDs don't pollute the UI.
             const current = useChatStore.getState().agentStack
-            useChatStore.getState().updateAgentStack([
-              ...current,
-              { id: agentId, displayName, isActive: true },
-            ])
+            useChatStore
+              .getState()
+              .updateAgentStack([
+                ...current,
+                { id: agentId, displayName, isActive: true },
+              ])
           },
           onSubagentFinish: (agentId: string) => {
             // Wire sidebar: mark agent as inactive
             const current = useChatStore.getState().agentStack
-            useChatStore.getState().updateAgentStack(
-              current.map((a) =>
-                a.id === agentId ? { ...a, isActive: false } : a,
-              ),
-            )
+            useChatStore
+              .getState()
+              .updateAgentStack(
+                current.map((a) =>
+                  a.id === agentId ? { ...a, isActive: false } : a,
+                ),
+              )
           },
         })
 
@@ -715,7 +764,9 @@ export const useSendMessage = ({
           typeof agentWithModelOverride === 'string'
             ? agentWithModelOverride
             : agentWithModelOverride.id
-        useChatStore.getState().updateAgentStack([{ id: mainAgentName, isActive: true }])
+        useChatStore
+          .getState()
+          .updateAgentStack([{ id: mainAgentName, isActive: true }])
 
         // Wire sidebar: set context window max from model. Reuse the resolved
         // value computed above for createRunConfig (CTX-007 fix).
@@ -766,6 +817,11 @@ export const useSendMessage = ({
         stalledWatcher.start()
 
         const runState = await client.run(runConfig)
+        reportRunOutcome(
+          runState.output && runState.output.type !== 'error'
+            ? 'success'
+            : 'failure',
+        )
 
         // Only adopt and persist the result while this run's chat is still
         // the active one. After a mid-run chat switch (/new, resuming from
@@ -794,7 +850,12 @@ export const useSendMessage = ({
           // updater: the store uses immer, so the updater sees a draft proxy
           // and JSON.stringify of the (unbounded) transcript through proxy
           // traps is several times slower.
-          saveChatState(runState, useChatStore.getState().messages, runChatDir, getSelectedSavantFreeModel())
+          saveChatState(
+            runState,
+            useChatStore.getState().messages,
+            runChatDir,
+            getSelectedSavantFreeModel(),
+          )
         }
         handleRunCompletion({
           runState,
@@ -814,6 +875,7 @@ export const useSendMessage = ({
           isQueuePausedRef,
         })
       } catch (error) {
+        reportRunOutcome('failure')
         // If this run was aborted, the abort handler already handled cleanup.
         // Don't run error handling to avoid interfering with any new run that
         // may have started. Uses per-run abortController.signal (not shared

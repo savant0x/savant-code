@@ -10,9 +10,10 @@ import React, {
 import { AgentBlockGrid } from './agent-block-grid'
 import { AgentBranchItem } from './agent-branch-item'
 import { trimNewlines, sanitizePreview } from './block-helpers'
-import { ContentWithMarkdown } from './content-with-markdown'
+import { renderContentWithMarkdown } from './content-with-markdown'
 import { CopyableBlock } from './copyable-block'
 import { ImplementorGroup } from './implementor-row'
+import { renderMarkdownContent } from './markdown-content'
 import { ThinkingBlock } from './thinking-block'
 import { ToolBlockGroup } from './tool-block-group'
 import { useTheme } from '../../hooks/use-theme'
@@ -27,6 +28,10 @@ import {
   processBlocks,
   type BlockProcessorHandlers,
 } from '../../utils/block-processor'
+import {
+  AGENT_BRANCH_HORIZONTAL_INSET,
+  getChildContentWidth,
+} from '../../utils/chat-layout'
 import { getCodeSearcherCollapsedPreview } from '../../utils/code-search-summary'
 import {
   shouldRenderAsSimpleText,
@@ -159,10 +164,13 @@ const AgentBody = memo(
         const indentationOffset = indent * 2
         return {
           codeBlockWidth: Math.max(
-            10,
-            availableWidth -
-              AGENT_CONTENT_HORIZONTAL_PADDING -
-              indentationOffset,
+            1,
+            getChildContentWidth(
+              availableWidth,
+              AGENT_BRANCH_HORIZONTAL_INSET +
+                AGENT_CONTENT_HORIZONTAL_PADDING +
+                indentationOffset,
+            ),
           ),
           palette: {
             ...markdownPalette,
@@ -283,22 +291,18 @@ const AgentBody = memo(
             const explicitColor = textBlock.color
             const nestedTextColor = explicitColor ?? p.theme.foreground
 
-            return (
-              <text
-                key={`${p.keyPrefix}-text-${index}`}
-                style={{
-                  wrapMode: 'word',
-                  fg: nestedTextColor,
-                }}
-              >
-                <ContentWithMarkdown
-                  content={filteredNestedContent}
-                  isStreaming={isNestedStreamingText}
-                  codeBlockWidth={markdownOptionsForLevel.codeBlockWidth}
-                  palette={markdownOptionsForLevel.palette}
-                />
-              </text>
-            )
+            return renderMarkdownContent({
+              value: renderContentWithMarkdown({
+                content: filteredNestedContent,
+                isStreaming: isNestedStreamingText,
+                codeBlockWidth: markdownOptionsForLevel.codeBlockWidth,
+                palette: markdownOptionsForLevel.palette,
+              }),
+              theme: p.theme,
+              getAttributes: () => undefined,
+              textColor: nestedTextColor,
+              keyPrefix: `${p.keyPrefix}-text-${index}`,
+            })
           }
 
           if (block.type === 'html') {
@@ -386,8 +390,7 @@ export const AgentBranchWrapper = memo(
           setOutputBlock?.input as { data?: Record<string, JSONValue> }
         )?.data
         const implementationId = outputData?.implementationId as
-          | string
-          | undefined
+          string | undefined
         if (implementationId) {
           const letterIndex = implementationId.charCodeAt(0) - 65
           const implementors = siblingBlocks.filter(
@@ -417,13 +420,22 @@ export const AgentBranchWrapper = memo(
             width: '100%',
           }}
         >
-          <text style={{ wrapMode: 'word' }}>
-            <span fg={statusColor}>{statusIndicator}</span>
-            <span fg={theme.foreground} attributes={TextAttributes.BOLD}>
+          <box
+            selectable={false}
+            style={{ flexDirection: 'row', flexShrink: 0 }}
+          >
+            <text fg={statusColor} style={{ wrapMode: 'word' }}>
+              {statusIndicator}
+            </text>
+            <text
+              fg={theme.foreground}
+              style={{ wrapMode: 'word' }}
+              attributes={TextAttributes.BOLD}
+            >
               {' '}
               {statusText}
-            </span>
-          </text>
+            </text>
+          </box>
           {reason && (
             <text
               style={{
@@ -469,17 +481,16 @@ export const AgentBranchWrapper = memo(
         if (b.type === 'text') {
           lines.push(b.content)
         } else if (b.type === 'tool') {
-          lines.push(`[Tool: ${b.toolName}]\nInput: ${JSON.stringify(b.input)}\nOutput: ${b.output ?? '(no output)'}`)
+          lines.push(
+            `[Tool: ${b.toolName}]\nInput: ${JSON.stringify(b.input)}\nOutput: ${b.output ?? '(no output)'}`,
+          )
         }
       })
       return lines.join('\n\n')
     }, [agentBlock])
 
     return (
-      <CopyableBlock
-        getCopyText={getCopyText}
-        isStreaming={isStreaming}
-      >
+      <CopyableBlock getCopyText={getCopyText} isStreaming={isStreaming}>
         <box key={keyPrefix} style={{ flexDirection: 'column', gap: 0 }}>
           <AgentBranchItem
             name={agentBlock.agentName}

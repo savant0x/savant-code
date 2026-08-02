@@ -1,5 +1,18 @@
 # FID-2026-0719-029 — `as` Cast Pre-existing Tech Debt (composio + tool-executor)
 
+**Filename:** `FID-2026-0719-029-as-cast-tech-debt.md`
+**ID:** FID-2026-0719-001
+**Severity:** low
+**Status:** closed
+**Created:** 2026-0719 00:00
+**Author:** Historical record (metadata backfill)
+
+---
+
+## Metadata Normalization Note
+
+This historical record was normalized on 2026-07-31 for FreeBuff ECHO v0.1.2 compliance. The original body and evidence are preserved. Original status: `closed / archived`; Original ID: `FID-2026-0719-029-as-cast-tech-debt`. Canonical ID: `FID-2026-0719-001`. Backfilled fields: Filename, ID, Created, Author. Canonical status reflects the record's lifecycle location; it does not add implementation evidence.
+
 **Date:** 2026-07-19
 **Severity:** low
 **Status:** closed / archived

@@ -1,13 +1,18 @@
 # FID-2026-0722-049 — Fix Agent Stack Storing displayName as id
 
-**Filename:** `dev/fids/FID-2026-0722-049-agent-stack-id-vs-displayname.md`
+**Filename:** `FID-2026-0722-049-agent-stack-id-vs-displayname.md`
 **ID:** FID-2026-0722-049
 **Severity:** low
-**Status:** closed / archived
+**Status:** closed
 **Created:** 2026-07-22
 **Author:** Forge
 
 ---
+
+## Metadata Normalization Note
+
+This historical record was normalized on 2026-07-31 for FreeBuff ECHO v0.1.2 compliance. The original body and evidence are preserved. Original status: `closed / archived`; Original ID: `FID-2026-0722-049`. Canonical status reflects the record's lifecycle location; it does not add implementation evidence.
+
 
 ## Summary
 

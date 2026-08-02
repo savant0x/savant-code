@@ -1,13 +1,18 @@
 # FID-2026-0720-031 — Savant Rename + Modes Repurpose (ANALYZE/EDIT/SCAFFOLD)
 
-**Filename:** `dev/fids/FID-2026-0720-031-savant-rename-and-modes-repurpose.md`
+**Filename:** `FID-2026-0720-031-savant-rename-and-modes-repurpose.md`
 **ID:** FID-2026-0720-031
 **Severity:** medium
-**Status:** closed / archived
+**Status:** closed
 **Created:** 2026-07-20
 **Author:** Spencer + Buff session (FID authored via ECHO Protocol)
 
 ---
+
+## Metadata Normalization Note
+
+This historical record was normalized on 2026-07-31 for FreeBuff ECHO v0.1.2 compliance. The original body and evidence are preserved. Original status: `closed / archived`; Original ID: `FID-2026-0720-031`. Canonical status reflects the record's lifecycle location; it does not add implementation evidence.
+
 
 ## Summary
 
@@ -299,7 +304,7 @@ cli/src/agents/bundled-agents.generated.ts  → auto-generated; must be regenera
 - [docs/savant-code-modes.md](../docs/savant-code-modes.md) — comprehensive modes audit driving this direction
 - [FID-029 dev/fids/FID-2026-0719-029-as-cast-tech-debt.md](./FID-2026-0719-029-as-cast-tech-debt.md) — orthogonal (`as` cast tech debt)
 - [FID-030 dev/fids/FID-2026-0719-030-agent-runtime-tests-excluded-for-push.md](./FID-2026-0719-030-agent-runtime-tests-excluded-for-push.md) — orthogonal (`__tests__/` exclusion)
-- [FID-030.1 dev/fids/FID-2026-0720-030.1-agent-runtime-tests-remediation.md](./FID-2026-0720-030.1-agent-runtime-tests-remediation.md) — orthogonal (post-push test fixes)
+- [FID-030.1 dev/fids/FID-2026-0720-030-agent-runtime-tests-remediation.md](./FID-2026-0720-030-agent-runtime-tests-remediation.md) — orthogonal (post-push test fixes)
 - [FID-027 archive](../dev/fids/archive/FID-2026-0719-027-clean-break-codebuff-legacy.md) — prior rebrand pattern reference
 - [templates/FID-TEMPLATE.md](../templates/FID-TEMPLATE.md) — this FID conforms
 - [ECHO.md](../ECHO.md) — read 0-EOF; Laws + Perfection Loop FSM sourced here

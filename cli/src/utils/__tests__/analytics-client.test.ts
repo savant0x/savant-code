@@ -1,17 +1,16 @@
 import { AnalyticsEvent } from '@savant-code/common/constants/analytics-events'
 import { describe, test, expect, beforeEach, mock } from 'bun:test'
 
-
 import {
   initAnalytics,
   trackEvent,
   identifyUser,
+  disableAnalytics,
   resetAnalyticsState,
   type AnalyticsDeps,
 } from '../analytics'
 
 import type { AnalyticsClientWithIdentify } from '@savant-code/common/analytics-core'
-
 
 describe('analytics with PostHog alias', () => {
   // Store references to track calls
@@ -20,6 +19,7 @@ describe('analytics with PostHog alias', () => {
   let aliasMock: ReturnType<typeof mock>
   let flushMock: ReturnType<typeof mock>
   let captureExceptionMock: ReturnType<typeof mock>
+  let disableMock: ReturnType<typeof mock>
 
   // Fixed anonymous ID for predictable testing
   const TEST_ANONYMOUS_ID = 'anon_test-uuid-1234'
@@ -32,6 +32,7 @@ describe('analytics with PostHog alias', () => {
       alias: aliasMock,
       flush: flushMock,
       captureException: captureExceptionMock,
+      disable: disableMock,
     }
   }
 
@@ -55,6 +56,7 @@ describe('analytics with PostHog alias', () => {
     aliasMock = mock(() => {})
     flushMock = mock(() => Promise.resolve())
     captureExceptionMock = mock(() => {})
+    disableMock = mock(() => Promise.resolve())
 
     // Reset analytics state with test dependencies
     resetAnalyticsState(createTestDeps())
@@ -169,6 +171,53 @@ describe('analytics with PostHog alias', () => {
       expect((calls[2][0] as { distinctId: string }).distinctId).toBe(
         'user-direct',
       )
+    })
+  })
+
+  describe('consent gating', () => {
+    test('does not initialize, capture, identify, or report errors when disabled', () => {
+      disableAnalytics()
+
+      initAnalytics(false)
+      trackEvent(AnalyticsEvent.APP_LAUNCHED)
+      identifyUser('disabled-user')
+
+      expect(captureMock).not.toHaveBeenCalled()
+      expect(captureExceptionMock).not.toHaveBeenCalled()
+      expect(identifyMock).not.toHaveBeenCalled()
+      expect(aliasMock).not.toHaveBeenCalled()
+      expect(disableMock).not.toHaveBeenCalled()
+    })
+
+    test('can re-enable remote analytics after disabling', async () => {
+      initAnalytics()
+      disableAnalytics()
+      await Promise.resolve()
+      initAnalytics()
+      trackEvent(AnalyticsEvent.APP_LAUNCHED)
+
+      expect(disableMock).toHaveBeenCalledTimes(1)
+      expect(captureMock).toHaveBeenCalledTimes(1)
+    })
+
+    test('repeated initialization does not create a second client', () => {
+      initAnalytics()
+      initAnalytics()
+
+      expect(captureMock).not.toHaveBeenCalled()
+      trackEvent(AnalyticsEvent.APP_LAUNCHED)
+      expect(captureMock).toHaveBeenCalledTimes(1)
+    })
+
+    test('leaves analytics disabled when initialization fails', () => {
+      resetAnalyticsState({
+        ...createTestDeps(),
+        env: {},
+      })
+
+      expect(() => initAnalytics()).toThrow('NEXT_PUBLIC_POSTHOG_API_KEY')
+      expect(() => trackEvent(AnalyticsEvent.APP_LAUNCHED)).not.toThrow()
+      expect(captureMock).not.toHaveBeenCalled()
     })
   })
 

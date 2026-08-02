@@ -35,6 +35,10 @@ import { handlePublish } from './commands/publish'
 import { initializeApp } from './init/init-app'
 import { runPlainLogin } from './login/plain-login'
 import { getProjectRoot, setProjectRoot } from './project-files'
+import {
+  applyPersistedProviderApiKeys,
+  configureDefaultDirectProvider,
+} from './utils/provider-setup'
 import { trackEvent } from './utils/analytics'
 import { getAuthToken, getAuthTokenDetails } from './utils/auth'
 import { trimOversizedChatLogs } from './utils/chat-history'
@@ -213,13 +217,23 @@ async function main(): Promise<void> {
 
   await initializeApp({ cwd })
 
-  // Restore any persisted direct-provider choice (e.g. local Ollama) before
-  // falling back to detection, so returning users keep their local setup.
+  // Load persisted direct-provider keys first. Explicit environment variables
+  // remain authoritative, and a saved gateway key must win over an older
+  // auto-configured Ollama setting.
+  applyPersistedProviderApiKeys()
+
+  // Restore any persisted direct-provider choice (e.g. local Ollama) only when
+  // no saved provider key or explicit shell provider already selected a mode.
   applyPersistedDirectProviderSettings()
 
   // Auto-detect Ollama on first run and route inference to the local daemon
   // when no backend token or explicit direct provider is configured.
   await detectOllamaAndConfigureDirectProvider()
+
+  // Keep the first-run default model usable without forcing a backend login.
+  // Ollama wins when available; otherwise the selected gateway runs in direct
+  // mode and reports its exact /provider setup instruction if keyless.
+  configureDefaultDirectProvider()
 
   // Set the auth token for the API client
   setApiClientAuthToken(getAuthToken())

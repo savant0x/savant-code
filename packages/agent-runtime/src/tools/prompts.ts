@@ -54,9 +54,15 @@ function toJsonSchemaSafe(schema: z.ZodType): Record<string, JSONValue> {
   }
 }
 
-function hasMeaningfulJsonSchema(jsonSchema: Record<string, JSONValue>): boolean {
+function hasMeaningfulJsonSchema(
+  jsonSchema: Record<string, JSONValue>,
+): boolean {
   const properties = jsonSchema.properties
-  if (properties && typeof properties === 'object' && Object.keys(properties).length > 0) {
+  if (
+    properties &&
+    typeof properties === 'object' &&
+    Object.keys(properties).length > 0
+  ) {
     return true
   }
 
@@ -80,12 +86,12 @@ function paramsSection(params: { schema: z.ZodType; endsAgentStep: boolean }) {
   const safeSchema = ensureJsonSchemaCompatible(schema)
   const schemaWithEndsAgentStepParam = endsAgentStep
     ? safeSchema.and(
-      z.object({
-        [endsAgentStepParam]: z
-          .literal(endsAgentStep)
-          .describe('Easp flag must be set to true'),
-      }),
-    )
+        z.object({
+          [endsAgentStepParam]: z
+            .literal(endsAgentStep)
+            .describe('Easp flag must be set to true'),
+        }),
+      )
     : safeSchema
   const jsonSchema = toJsonSchemaSafe(schemaWithEndsAgentStepParam)
   delete jsonSchema.description
@@ -124,7 +130,11 @@ export function buildToolDescription(params: {
       ? `${pluralize(exampleInputs.length, 'Example')}:`
       : '',
     ...exampleInputs.map((example) =>
-      getToolCallString(toolName, example as Record<string, JSONValue>, endsAgentStep),
+      getToolCallString(
+        toolName,
+        example as Record<string, JSONValue>,
+        endsAgentStep,
+      ),
     ),
   ).join('\n\n')
   return buildArray([
@@ -156,6 +166,20 @@ function buildShortToolDescription(params: {
   return `${toolName}:\n${paramsSection({ schema, endsAgentStep })}`
 }
 
+export const getToolCallFormatInstructions =
+  (): string => `Tool calls use a specific XML and JSON-like format. Adhere precisely to this canonical envelope:
+
+${getToolCallString(
+  'tool_name',
+  {
+    parameter1: 'value1',
+    parameter2: 123,
+  },
+  false,
+)}
+
+Never emit the incompatible <tool_call><function=...> or <parameter=...> format. Never narrate a tool call as XML outside the canonical <savant_code_tool_call>...</savant_code_tool_call> envelope. When using the text tool-call protocol, emit valid JSON containing cb_tool_name inside the canonical envelope; the runtime executes only that format.`
+
 export const getToolsInstructions = (
   tools: readonly string[],
   additionalToolDefinitions: NonNullable<
@@ -177,16 +201,7 @@ You (Savant) have access to the following tools. Call them when needed.
 
 ## [CRITICAL] Formatting Requirements
 
-Tool calls use a specific XML and JSON-like format. Adhere *precisely* to this nested element structure:
-
-${getToolCallString(
-    'tool_name',
-    {
-      parameter1: 'value1',
-      parameter2: 123,
-    },
-    false,
-  )}
+${getToolCallFormatInstructions()}
 
 ### Commentary
 
@@ -200,20 +215,20 @@ User: can you update the console logs in example/file.ts?
 Assistant: Sure thing! Let's update that file!
 
 ${getToolCallString(
-    'example_editing_tool',
-    {
-      example_file_path: 'path/to/example/file.ts',
-      example_array: [
-        {
-          old_content_with_newlines:
-            "// some context\nconsole.log('Hello world!');\n",
-          new_content_with_newlines:
-            "// some context\nconsole.log('Hello from Savant!');\n",
-        },
-      ],
-    },
-    false,
-  )}
+  'example_editing_tool',
+  {
+    example_file_path: 'path/to/example/file.ts',
+    example_array: [
+      {
+        old_content_with_newlines:
+          "// some context\nconsole.log('Hello world!');\n",
+        new_content_with_newlines:
+          "// some context\nconsole.log('Hello from Savant!');\n",
+      },
+    ],
+  },
+  false,
+)}
 
 All done with the update!
 User: thanks it worked! :)
@@ -279,12 +294,15 @@ export const fullToolList = (
       const toolDef = additionalToolDefinitions[toolName]
       return buildToolDescription({
         toolName,
-        schema: ensureZodSchema(toolDef.inputSchema as Record<string, JSONValue>),
+        schema: ensureZodSchema(
+          toolDef.inputSchema as Record<string, JSONValue>,
+        ),
         description: toolDef.description,
         endsAgentStep: toolDef.endsAgentStep ?? true,
         exampleInputs: toolDef.exampleInputs as JSONValue[] | undefined,
       })
-    }),]
+    }),
+  ]
 
   return `## List of Tools
 
@@ -330,16 +348,7 @@ export const getShortToolInstructions = (
   return `## Tools
 Use the tools below to complete the user request, if applicable.
 
-Tool calls use a specific XML and JSON-like format. Adhere *precisely* to this nested element structure:
-
-${getToolCallString(
-    'tool_name',
-    {
-      parameter1: 'value1',
-      parameter2: 123,
-    },
-    false,
-  )}
+${getToolCallFormatInstructions()}
 
 Important: You only have access to the tools below. Do not use any other tools -- they are not available to you, instead they may have been previously used by other agents.
 
@@ -395,7 +404,9 @@ export async function getToolSet(params: {
     const clonedDef = cloneDeep(toolDefinition)
     // Custom tool inputSchema may be JSON Schema (from SDK) or Zod (from MCP)
     // Ensure it's a Zod schema for the AI SDK
-    const zodSchema = ensureZodSchema(clonedDef.inputSchema as Record<string, JSONValue>)
+    const zodSchema = ensureZodSchema(
+      clonedDef.inputSchema as Record<string, JSONValue>,
+    )
     const safeSchema = ensureJsonSchemaCompatible(zodSchema)
     toolSet[toolName] = {
       ...clonedDef,

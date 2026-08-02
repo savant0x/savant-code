@@ -1,7 +1,7 @@
 # FID: Master TUI Rebuild — Orchestration FID for 5-Phase Rebuild
 
 **Filename:** `FID-2026-0720-033-master-tui-rebuild.md`
-**ID:** FID-2026-0720-033-master
+**ID:** FID-2026-0720-002
 **Severity:** high
 **Status:** closed
 **Created:** 2026-07-21 00:15
@@ -10,6 +10,10 @@
 **Last Audit:** 2026-07-21 (Master closure audit — all phases verified closed/archived, final verification greps pass)
 
 ---
+
+## Metadata Normalization Note
+
+Canonical ID: `FID-2026-0720-002`; Original ID: `FID-2026-0720-033-master`. Historical body preserved.
 
 ## Summary
 
@@ -307,8 +311,8 @@ FID-033e (Polish) ────────────────────�
 ## Linked Documents
 
 - [Original FID-033](./FID-2026-0720-033-tui-rebuild-comprehensive.md) — superseded by decomposition
-- [FID-033a](./FID-2026-0720-033a-theme-system-port.md) — Theme System Port
-- [FID-033b](./FID-2026-0720-033b-glyph-icon-system.md) — Glyph/Icon System
-- [FID-033c](./FID-2026-0720-033c-tool-message-rendering.md) — Tool & Message Rendering
-- [FID-033d](./FID-2026-0720-033d-layout-navigation.md) — Layout & Navigation
-- [FID-033e](./FID-2026-0720-033e-polish.md) — Polish
+- [FID-033a](./FID-2026-0720-003-theme-system-port.md) — Theme System Port
+- [FID-033b](./FID-2026-0720-004-glyph-icon-system.md) — Glyph/Icon System
+- [FID-033c](./FID-2026-0720-005-tool-message-rendering.md) — Tool & Message Rendering
+- [FID-033d](./FID-2026-0720-006-layout-navigation.md) — Layout & Navigation
+- [FID-033e](./FID-2026-0720-007-polish.md) — Polish

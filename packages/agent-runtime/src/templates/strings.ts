@@ -10,12 +10,16 @@ import {
   getProjectFileTreePrompt,
   getSystemInfoPrompt,
 } from '../system-prompt/prompts'
+import { getToolCallFormatInstructions } from '../tools/prompts'
 import { parseUserMessage } from '../util/messages'
 
 import type { AgentTemplate, PlaceholderValue } from './types'
 import type { Logger } from '@savant-code/common/types/contracts/logger'
 import type { ParamsExcluding } from '@savant-code/common/types/function-params'
-import type { TextPart, ImagePart } from '@savant-code/common/types/messages/content-part'
+import type {
+  TextPart,
+  ImagePart,
+} from '@savant-code/common/types/messages/content-part'
 import type {
   Message,
   UserMessage,
@@ -218,6 +222,7 @@ export async function getAgentPrompt<T extends StringField>(
     // Add subagent tools message when using parent's tools for prompt caching
     if (useParentTools) {
       addendum += `\n\nYou are a subagent that only has access to the following tools: ${toolNames.length > 0 ? toolNames.join(', ') : 'none'}. Previously referenced tools in the conversation may have only been available to the parent agent. Do not attempt to use any other tools besides these listed here. You will only get tool errors if you do.`
+      addendum += `\n\n## Tool-Call Protocol\n\n${getToolCallFormatInstructions()}`
 
       // For subagents with inheritSystemPrompt, include full spawnable agents spec
       // since the parent's system prompt may not have these agents listed

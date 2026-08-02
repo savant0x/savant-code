@@ -1,7 +1,6 @@
 import { TextAttributes } from '@opentui/core'
 import React, { useState } from 'react'
 
-
 import { useTheme } from '../../../hooks/use-theme'
 
 export interface SidebarSectionProps {
@@ -19,7 +18,7 @@ export interface SidebarSectionProps {
  */
 export function SidebarSection({
   title,
-  defaultExpanded = true,
+  defaultExpanded = false,
   children,
 }: SidebarSectionProps) {
   const theme = useTheme()
@@ -42,12 +41,21 @@ export function SidebarSection({
         <text fg={theme.muted} selectable={false}>
           {expanded ? '▼' : '▶'}
         </text>
-        <text attributes={TextAttributes.BOLD} fg={theme.primary} selectable={false}>
+        <text
+          attributes={TextAttributes.BOLD}
+          fg={theme.primary}
+          selectable={false}
+        >
           {title}
         </text>
       </box>
       {expanded && (
-        <box flexDirection="column" paddingLeft={2} focusable={false} selectable={false}>
+        <box
+          flexDirection="column"
+          paddingLeft={2}
+          focusable={false}
+          selectable={false}
+        >
           {children}
         </box>
       )}

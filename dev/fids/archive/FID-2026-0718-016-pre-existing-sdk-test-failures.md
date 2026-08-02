@@ -1,12 +1,18 @@
 # FID-2026-0718-016 — critical — Pre-existing SDK Test Failures (22 fixes)
 
-**Status:** closed / archived
-**Scope:** Option A approved by Spencer 2026-07-18.
-**Triggered by:** Nova FID-015 close-out verdict (CONDITIONAL — Claim 10 REFUTED).
-**Estimated LoC:** ~40 lines test-side changes (mostly Windows path normalization).
-**Estimated time:** 15-20 minutes for FORGE + parallel AUDIT.
+**Filename:** `FID-2026-0718-016-pre-existing-sdk-test-failures.md`
+**ID:** FID-2026-0718-016
+**Severity:** critical
+**Status:** closed
+**Created:** 2026-0718 00:00
+**Author:** Historical record (metadata backfill)
 
 ---
+
+## Metadata Normalization Note
+
+This historical record was normalized on 2026-07-31 for FreeBuff ECHO v0.1.2 compliance. The original body and evidence are preserved. Original status: `closed / archived`; Original ID: `FID-2026-0718-016-pre-existing-sdk-test-failures`. Canonical ID: `FID-2026-0718-016`. Backfilled fields: Filename, ID, Severity, Created, Author. Canonical status reflects the record's lifecycle location; it does not add implementation evidence.
+
 
 ## RED Phase — Verified Root Causes (final, post-audit)
 

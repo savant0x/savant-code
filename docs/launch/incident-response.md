@@ -15,15 +15,16 @@ flood, security issue, or reputational incident.
 
 - **Launch Captain:** Orchestrator
 - **Engineering:** who cut the release
-- **Community:** Discord moderator on duty
+- **Community:** GitHub Issues triage until a public community channel exists
 - **Comms:** person who drafted launch copy
 
 ## Communication Channels
 
-- Internal triage: Discord `#announcements` + `#ollama-setup` + `#byok-support`
-  (server and moderator schedule must be created before launch)
+- Internal triage: GitHub Issues with `launch-incident` labels until a public
+  community channel and moderator schedule exist.
 - Public status: GitHub issue titled `[Launch Status] YYYY-MM-DD incident summary`
-- Rollback notice: reply to HN post, update Twitter/Mastodon, pin message in Discord
+- Rollback notice: reply to HN post and update Twitter/Mastodon; do not claim a
+  Discord announcement channel exists until it is created.
 
 ## Rollback Procedures
 
@@ -59,10 +60,12 @@ npm deprecate savant-code@<bad-version> \
 ## Triage Workflow
 
 1. Collect reproductions in GitHub issues with a `launch-incident` label.
-2. Route Ollama issues to `#ollama-setup` and auth/BYOK issues to `#byok-support`.
+2. Route Ollama and auth/BYOK issues to labeled GitHub Issues until dedicated
+   community channels exist.
 3. Reproduce locally on the target OS before declaring root cause.
 4. Cut a hotfix release and verify against the reproduction.
-5. Post a public incident summary in the GitHub issue and Discord.
+5. Post a public incident summary in the GitHub issue and update only the
+   launch channels that actually exist.
 
 ## Shadowban / Flagging Response
 

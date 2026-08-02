@@ -2,13 +2,17 @@
 
 **Filename:** `FID-2026-0718-009-fsm-activity-indicator.md`
 **ID:** FID-2026-0718-009
-**Severity:** medium (UX clarity — no functional break)
-**Status:** closed / archived
+**Severity:** medium
+**Status:** closed
 **Created:** 2026-07-18
 **Author:** Orchestrator (ECHO v0.2.0)
-**Source:** User observation — "phase stays idle while Savant is actively doing something"
 
 ---
+
+## Metadata Normalization Note
+
+This historical record was normalized on 2026-07-31 for FreeBuff ECHO v0.1.2 compliance. The original body and evidence are preserved. Original status: `closed / archived`; Original ID: `FID-2026-0718-009`. Canonical status reflects the record's lifecycle location; it does not add implementation evidence.
+
 
 ## Summary
 

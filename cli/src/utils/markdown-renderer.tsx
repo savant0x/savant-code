@@ -9,6 +9,11 @@ import { unified } from 'unified'
 import { logger } from './logger'
 import { createSyntaxStyle } from './syntax-theme'
 import { createMarkdownPalette } from './theme-system'
+import {
+  MarkdownHeading,
+  MarkdownImage,
+  MarkdownLink,
+} from '../components/blocks/markdown-renderables'
 
 import type { ChatTheme } from '../types/theme-system'
 import type { SyntaxStyle } from '@opentui/core'
@@ -20,6 +25,7 @@ import type {
   Heading,
   InlineCode,
   Link,
+  Image,
   List,
   ListItem,
   Paragraph,
@@ -33,7 +39,10 @@ import type {
 import type { ReactNode } from 'react'
 
 // Helper component to work around TypeScript's Fragment key typing issue
-const KeyedFragment = React.Fragment as React.FC<{ key?: string | number; children?: ReactNode }>
+const KeyedFragment = React.Fragment as React.FC<{
+  key?: string | number
+  children?: ReactNode
+}>
 
 // Helper to wrap segments in KeyedFragments
 const wrapSegmentsInFragments = (
@@ -112,10 +121,7 @@ const resolvePalette = (
   return palette
 }
 
-const processor = unified()
-  .use(remarkParse)
-  .use(remarkGfm)
-  .use(remarkBreaks)
+const processor = unified().use(remarkParse).use(remarkGfm).use(remarkBreaks)
 
 type MarkdownNode = Content | Root
 
@@ -200,7 +206,11 @@ const hasUnescapedMarker = (value: string): boolean => {
     let idx = value.indexOf(marker)
     while (idx !== -1) {
       let backslashes = 0
-      for (let offset = idx - 1; offset >= 0 && value[offset] === '\\'; offset -= 1) {
+      for (
+        let offset = idx - 1;
+        offset >= 0 && value[offset] === '\\';
+        offset -= 1
+      ) {
         backslashes += 1
       }
       if (backslashes % 2 === 0) {
@@ -224,7 +234,11 @@ const findClosingDelimiter = (
       return -1
     }
     let backslashes = 0
-    for (let offset = idx - 1; offset >= 0 && value[offset] === '\\'; offset -= 1) {
+    for (
+      let offset = idx - 1;
+      offset >= 0 && value[offset] === '\\';
+      offset -= 1
+    ) {
       backslashes += 1
     }
     if (backslashes % 2 === 0) {
@@ -294,10 +308,9 @@ const parseInlineFallback = (value: string): InlineFallbackNode[] => {
         (node) => !(node.type === 'text' && node.value.length === 0),
       )
 
-      const emphasisNode: InlineFallbackNode =
-        isDouble
-          ? { type: 'strong', children }
-          : { type: 'emphasis', children }
+      const emphasisNode: InlineFallbackNode = isDouble
+        ? { type: 'strong', children }
+        : { type: 'emphasis', children }
 
       nodes.push(emphasisNode)
       index = closing + markerLength
@@ -370,7 +383,9 @@ const nodeToPlainText = (node: MarkdownNode): string => {
       return getChildrenText((node as Root).children as MarkdownNode[])
 
     case 'paragraph':
-      return getChildrenText((node as Paragraph).children as MarkdownNode[]) + '\n\n'
+      return (
+        getChildrenText((node as Paragraph).children as MarkdownNode[]) + '\n\n'
+      )
 
     case 'text':
       return (node as Text).value
@@ -397,7 +412,9 @@ const nodeToPlainText = (node: MarkdownNode): string => {
         list.children
           .map((item, idx) => {
             const marker = list.ordered ? `${(list.start ?? 1) + idx}. ` : '- '
-            const text = getChildrenText((item as ListItem).children as MarkdownNode[]).trimEnd()
+            const text = getChildrenText(
+              (item as ListItem).children as MarkdownNode[],
+            ).trimEnd()
             return marker + text
           })
           .join('\n') + '\n\n'
@@ -429,20 +446,23 @@ const nodeToPlainText = (node: MarkdownNode): string => {
 
     case 'link': {
       const link = node as Link
-      const label = link.children.length > 0
-        ? getChildrenText(link.children as MarkdownNode[])
-        : link.url
+      const label =
+        link.children.length > 0
+          ? getChildrenText(link.children as MarkdownNode[])
+          : link.url
       return label
     }
 
     case 'table': {
       const table = node as Table
-      return table.children
-        .map((row) => {
-          const cells = (row as TableRow).children as TableCell[]
-          return cells.map((cell) => nodeToPlainText(cell)).join(' | ')
-        })
-        .join('\n') + '\n\n'
+      return (
+        table.children
+          .map((row) => {
+            const cells = (row as TableRow).children as TableCell[]
+            return cells.map((cell) => nodeToPlainText(cell)).join(' | ')
+          })
+          .join('\n') + '\n\n'
+      )
     }
 
     case 'tableRow':
@@ -485,7 +505,7 @@ const renderNodes = (
 }
 
 const renderCodeBlock = (code: Code, state: RenderState): ReactNode[] => {
-  const { palette, nextKey, syntaxStyle } = state
+  const { palette, nextKey, syntaxStyle, codeBlockWidth } = state
   const nodes: ReactNode[] = []
 
   if (code.lang) {
@@ -499,35 +519,62 @@ const renderCodeBlock = (code: Code, state: RenderState): ReactNode[] => {
 
   // FID-033e: render code blocks with OpenTUI SyntaxStyle when a theme is
   // available; fall back to the previous plain-text span rendering otherwise.
-  if (syntaxStyle) {
+  if (syntaxStyle && codeBlockWidth >= 5) {
     nodes.push(
-      <code
+      <box
         key={nextKey()}
-        content={code.value}
-        filetype={code.lang ?? 'text'}
-        syntaxStyle={syntaxStyle}
-      />,
+        style={{
+          flexDirection: 'column',
+          width: Math.max(1, codeBlockWidth),
+          border: true,
+          borderStyle: 'rounded',
+          borderColor: palette.dividerFg,
+          backgroundColor: palette.codeBackground,
+          paddingLeft: 1,
+          paddingRight: 1,
+        }}
+      >
+        <box
+          style={{
+            width: Math.max(1, codeBlockWidth - 4),
+            flexShrink: 1,
+          }}
+        >
+          <code
+            content={code.value}
+            filetype={code.lang ?? 'text'}
+            syntaxStyle={syntaxStyle}
+          />
+        </box>
+      </box>,
     )
   } else {
     const lines = code.value.split('\n')
-    lines.forEach((line, index) => {
-      const displayLine = line === '' ? ' ' : line
-      nodes.push(
-        <span
-          key={nextKey()}
-          fg={palette.codeTextFg}
-          bg={palette.codeMonochrome ? undefined : palette.codeBackground}
-        >
-          {displayLine}
-        </span>,
-      )
-      if (index < lines.length - 1) {
-        nodes.push('\n')
-      }
+    const lineWidth = Math.max(1, codeBlockWidth)
+    lines.forEach((line, lineIndex) => {
+      const wrappedLines = wrapText(line, lineWidth)
+      wrappedLines.forEach((wrappedLine, wrappedIndex) => {
+        const displayLine = wrappedLine === '' ? ' ' : wrappedLine
+        nodes.push(
+          <span
+            key={nextKey()}
+            fg={palette.codeTextFg}
+            bg={palette.codeMonochrome ? undefined : palette.codeBackground}
+          >
+            {displayLine}
+          </span>,
+        )
+        if (
+          wrappedIndex < wrappedLines.length - 1 ||
+          lineIndex < lines.length - 1
+        ) {
+          nodes.push('\n')
+        }
+      })
     })
   }
 
-  nodes.push('\n\n')
+  nodes.push('\n')
   return nodes
 }
 
@@ -563,7 +610,7 @@ const renderBlockquote = (
     }
   })
 
-  nodes.push('\n\n')
+  nodes.push('\n')
   return nodes
 }
 
@@ -604,16 +651,13 @@ const renderList = (list: List, state: RenderState): ReactNode[] => {
     }
   })
 
-  if (nodes.length > 0) {
-    nodes.push('\n')
-  }
-
+  nodes.push('\n')
   return nodes
 }
 
 const renderHeading = (heading: Heading, state: RenderState): ReactNode[] => {
   const { palette, nextKey } = state
-  const depth = Math.max(1, Math.min(heading.depth, 6))
+  const depth = Math.max(1, Math.min(6, heading.depth))
   const color = palette.headingFg[depth] ?? palette.headingFg[6]
   const childNodes = renderNodes(
     heading.children as MarkdownNode[],
@@ -622,12 +666,10 @@ const renderHeading = (heading: Heading, state: RenderState): ReactNode[] => {
   )
 
   return [
-    <span key={nextKey()} fg={color} attributes={TextAttributes.BOLD}>
-      {childNodes.map((segment, idx) => (
-        <KeyedFragment key={nextKey() + '-' + idx}>{segment}</KeyedFragment>
-      ))}
-    </span>,
-    '\n\n',
+    <MarkdownHeading key={nextKey()} depth={depth} color={color}>
+      {childNodes.filter((child) => child !== '\n')}
+    </MarkdownHeading>,
+    '\n',
   ]
 }
 
@@ -650,18 +692,14 @@ const renderInlineCode = (
 }
 
 const renderLink = (link: Link, state: RenderState): ReactNode[] => {
-  const { palette, nextKey } = state
-  const labelNodes = renderNodes(
-    link.children as MarkdownNode[],
-    state,
-    link.type,
-  )
-  const label = labelNodes.length > 0 ? labelNodes : [link.url]
+  const { nextKey } = state
+  const label =
+    getChildrenText(link.children as MarkdownNode[]).trim() || link.url
 
   return [
-    <span key={nextKey()} fg={palette.linkFg}>
-      {wrapSegmentsInFragments(label, nextKey())}
-    </span>,
+    <MarkdownLink key={nextKey()} href={link.url}>
+      {label}
+    </MarkdownLink>,
   ]
 }
 
@@ -694,13 +732,18 @@ const wrapText = (text: string, maxWidth: number): string[] => {
       // Break long words character by character
       for (const char of token) {
         const charWidth = stringWidth(char)
-        if (currentWidth + charWidth > maxWidth) {
+        // A wide grapheme cannot be split across terminal cells. Replace it
+        // with a single-cell marker at the narrowest budget so the renderer
+        // never emits a row wider than its owner.
+        const fittedChar = charWidth > maxWidth ? '·' : char
+        const fittedWidth = stringWidth(fittedChar)
+        if (currentWidth + fittedWidth > maxWidth) {
           if (currentLine) lines.push(currentLine)
-          currentLine = char
-          currentWidth = charWidth
+          currentLine = fittedChar
+          currentWidth = fittedWidth
         } else {
-          currentLine += char
-          currentWidth += charWidth
+          currentLine += fittedChar
+          currentWidth += fittedWidth
         }
       }
     } else if (currentWidth + tokenWidth > maxWidth) {
@@ -754,34 +797,33 @@ const renderTable = (table: Table, state: RenderState): ReactNode[] => {
   // Calculate total width needed:
   // Each column has its content width
   // Separators: " │ " between columns (3 chars each), none at edges
-  const separatorWidth = 3 // ' │ '
-  const numSeparators = numCols - 1
   const totalNaturalWidth =
-    naturalWidths.reduce((a, b) => a + b, 0) + numSeparators * separatorWidth
+    1 + naturalWidths.reduce((a, b) => a + b, 0) + numCols * 3
 
-  // Available width for the table (leave some margin)
-  const availableWidth = Math.max(20, codeBlockWidth - 2)
+  // Every rendered table line has one left border, one right border per cell,
+  // and two padding columns per cell. Derive the cell budget from the owning
+  // content width; never use a fixed minimum that can exceed a narrow terminal.
+  const availableWidth = Math.max(1, Math.floor(codeBlockWidth))
+  const minimumStructuredWidth = 1 + numCols * 4
 
-  // Calculate final column widths
+  if (availableWidth < minimumStructuredWidth) {
+    return renderCompactTable(rows, availableWidth, palette, nextKey)
+  }
+
+  // Calculate final column widths. One character per cell is the smallest
+  // structured representation that still preserves aligned borders.
+  const availableForContent = availableWidth - 1 - numCols * 3
   let columnWidths: number[]
   if (totalNaturalWidth <= availableWidth) {
-    // Table fits - use natural widths
     columnWidths = naturalWidths
   } else {
-    // Table too wide - proportionally shrink columns
-    const availableForContent = availableWidth - numSeparators * separatorWidth
     const totalNaturalContent = naturalWidths.reduce((a, b) => a + b, 0)
     const scale = availableForContent / totalNaturalContent
-    
-    columnWidths = naturalWidths.map((w) => {
-      // Minimum 3 chars, scale the rest
-      return Math.max(3, Math.floor(w * scale))
-    })
-    
-    // Distribute any remaining width to columns that were clamped
+    columnWidths = naturalWidths.map((w) => Math.max(1, Math.floor(w * scale)))
+
     let usedWidth = columnWidths.reduce((a, b) => a + b, 0)
     let remaining = availableForContent - usedWidth
-    for (let i = 0; i < columnWidths.length && remaining > 0; i++) {
+    for (let i = 0; i < columnWidths.length && remaining > 0; i += 1) {
       if (columnWidths[i] < naturalWidths[i]) {
         const add = Math.min(remaining, naturalWidths[i] - columnWidths[i])
         columnWidths[i] += add
@@ -791,7 +833,11 @@ const renderTable = (table: Table, state: RenderState): ReactNode[] => {
   }
 
   // Helper to render a horizontal separator line
-  const renderSeparator = (leftChar: string, midChar: string, rightChar: string): void => {
+  const renderSeparator = (
+    leftChar: string,
+    midChar: string,
+    rightChar: string,
+  ): void => {
     let line = leftChar
     columnWidths.forEach((width, idx) => {
       line += '─'.repeat(width + 2) // +2 for padding spaces
@@ -845,8 +891,7 @@ const renderTable = (table: Table, state: RenderState): ReactNode[] => {
             attributes={isHeader ? TextAttributes.BOLD : undefined}
           >
             {' '}
-            {displayText}
-            {' '}
+            {displayText}{' '}
           </span>,
         )
 
@@ -866,11 +911,107 @@ const renderTable = (table: Table, state: RenderState): ReactNode[] => {
     }
   })
 
-  // Render bottom border
+  // Render bottom border. renderSeparator owns the single trailing boundary.
   renderSeparator('└', '┴', '┘')
 
-  nodes.push('\n')
   return nodes
+}
+
+const renderCompactTable = (
+  rows: string[][],
+  availableWidth: number,
+  palette: MarkdownPalette,
+  nextKey: () => string,
+): ReactNode[] => {
+  const nodes: ReactNode[] = []
+  if (availableWidth < 5) {
+    rows.forEach((row) => {
+      const text = row.join(' | ')
+      wrapText(text, Math.max(1, availableWidth)).forEach((line) => {
+        nodes.push(line, '\n')
+      })
+    })
+    return nodes
+  }
+
+  const innerWidth = availableWidth - 4
+  const border = (left: string, right: string): void => {
+    nodes.push(
+      <span key={nextKey()} fg={palette.dividerFg}>
+        {`${left}${'─'.repeat(innerWidth + 2)}${right}`}
+      </span>,
+      '\n',
+    )
+  }
+
+  const renderCell = (
+    label: string,
+    value: string,
+    isHeader: boolean,
+  ): void => {
+    const text = isHeader ? value : `${label}: ${value}`
+    const lines = wrapText(text, innerWidth)
+    lines.forEach((line) => {
+      nodes.push(
+        <span key={nextKey()} fg={palette.dividerFg}>
+          │
+        </span>,
+        <span
+          key={nextKey()}
+          fg={isHeader ? palette.headingFg[3] : undefined}
+          attributes={isHeader ? TextAttributes.BOLD : undefined}
+        >
+          {' '}
+          {padText(line, innerWidth)}{' '}
+        </span>,
+        <span key={nextKey()} fg={palette.dividerFg}>
+          │
+        </span>,
+        '\n',
+      )
+    })
+  }
+
+  border('┌', '┐')
+  const headers = rows[0] ?? []
+  renderCell('', headers.join(' | '), true)
+  if (rows.length > 1) {
+    border('├', '┤')
+  }
+  rows.slice(1).forEach((row) => {
+    row.forEach((value, index) =>
+      renderCell(headers[index] ?? `Column ${index + 1}`, value, false),
+    )
+  })
+  border('└', '┘')
+  return nodes
+}
+
+export interface StreamingMarkdownBlock {
+  key: string
+  kind: string
+}
+
+/**
+ * Returns stable semantic identities for the completed portion of a streaming
+ * Markdown document. The identity is based on document order and block kind,
+ * not the number of tokens received after the block.
+ */
+export function getStreamingMarkdownBlockManifest(
+  content: string,
+): StreamingMarkdownBlock[] {
+  try {
+    const stableContent = hasIncompleteCodeFence(content)
+      ? content.slice(0, content.lastIndexOf('```'))
+      : content
+    const ast = processor.parse(stableContent) as Root
+    return ast.children.map((node, index) => ({
+      key: `markdown-block-${index}-${node.type}`,
+      kind: node.type,
+    }))
+  } catch {
+    return []
+  }
 }
 
 const renderNode = (
@@ -880,12 +1021,22 @@ const renderNode = (
   nextSibling?: MarkdownNode,
 ): ReactNode[] => {
   switch (node.type) {
-    case 'root':
-      return renderNodes(
-        (node as Root).children as MarkdownNode[],
-        state,
-        node.type,
-      )
+    case 'root': {
+      const root = node as Root
+      return root.children.flatMap((child, index) => {
+        const renderedBlock = renderNode(
+          child as MarkdownNode,
+          state,
+          node.type,
+          root.children[index + 1] as MarkdownNode | undefined,
+        )
+        return [
+          <KeyedFragment key={`markdown-block-${index}-${child.type}`}>
+            {renderedBlock}
+          </KeyedFragment>,
+        ]
+      })
+    }
 
     case 'paragraph': {
       const children = renderNodes(
@@ -903,7 +1054,7 @@ const renderNode = (
           parentType === 'root' &&
           nextSibling &&
           (nextSibling.type === 'blockquote' || nextSibling.type === 'list')
-        nodes.push(isTightFollowup ? '\n' : '\n\n')
+        nodes.push(isTightFollowup ? '\n' : '\n')
       }
       return nodes
     }
@@ -964,18 +1115,31 @@ const renderNode = (
       return ['\n']
 
     case 'thematicBreak': {
-      const width = Math.max(10, Math.min(state.codeBlockWidth, 80))
+      const width = Math.max(1, Math.min(state.codeBlockWidth, 80))
       const divider = '─'.repeat(width)
       return [
         <span key={state.nextKey()} fg={state.palette.dividerFg}>
           {divider}
         </span>,
-        '\n\n',
+        '\n',
       ]
     }
 
     case 'link':
       return renderLink(node as Link, state)
+
+    case 'image': {
+      const image = node as Image
+      return [
+        <MarkdownImage
+          key={state.nextKey()}
+          src={image.url}
+          alt={image.alt ?? undefined}
+          availableWidth={state.codeBlockWidth}
+        />,
+        '\n',
+      ]
+    }
 
     case 'table':
       return renderTable(node as Table, state)
@@ -1012,20 +1176,49 @@ const renderNode = (
 }
 
 const normalizeOutput = (nodes: ReactNode[]): ReactNode => {
-  const trimmed = trimTrailingWhitespaceNodes(nodes)
-  if (trimmed.length === 0) {
+  const normalized: ReactNode[] = []
+
+  nodes.forEach((node) => {
+    if (typeof node === 'string' && /^\s+$/.test(node)) {
+      const previous = normalized[normalized.length - 1]
+      if (typeof previous === 'string' && /^\s+$/.test(previous)) {
+        normalized[normalized.length - 1] = `${previous}${node}`
+      } else {
+        normalized.push(node)
+      }
+      return
+    }
+    normalized.push(node)
+  })
+
+  const trimmed = trimTrailingWhitespaceNodes(normalized).filter(
+    (node, index) => {
+      if (index !== 0 || typeof node !== 'string' || !/^\s+$/.test(node)) {
+        return true
+      }
+      return false
+    },
+  )
+
+  const compacted = trimmed.map((node) => {
+    if (typeof node !== 'string' || !/^\s+$/.test(node)) {
+      return node
+    }
+
+    const newlineCount = (node.match(/\n/g) ?? []).length
+    return newlineCount > 1 ? '\n' : node
+  })
+
+  if (compacted.length === 0) {
     return ''
   }
-  if (trimmed.length === 1) {
-    return trimmed[0]
+  if (compacted.length === 1) {
+    return compacted[0]
   }
-  return (
-    <>
-      {trimmed.map((node, idx) => (
-        <KeyedFragment key={`markdown-out-${idx}`}>{node}</KeyedFragment>
-      ))}
-    </>
-  )
+  // Preserve semantic block fragments as the reconciliation boundary. A
+  // positional wrapper here would make streaming updates reconcile against
+  // `markdown-out-*` keys instead of the stable `markdown-block-*` keys.
+  return compacted
 }
 
 export function renderMarkdown(
@@ -1038,14 +1231,23 @@ export function renderMarkdown(
       : defaultPalette
     const palette = resolvePalette(basePalette, options.palette)
     const codeBlockWidth = options.codeBlockWidth ?? 80
-    const syntaxStyle = options.theme ? createSyntaxStyle(options.theme) : undefined
+    const syntaxStyle = options.theme
+      ? createSyntaxStyle(options.theme)
+      : undefined
     const state = createRenderState(palette, codeBlockWidth, syntaxStyle)
     const ast = processor.parse(markdown) as Root
     applyInlineFallbackFormatting(ast)
     const nodes = renderNode(ast, state, ast.type, undefined)
     return normalizeOutput(nodes)
   } catch (error) {
-    logger.error(error, 'Failed to parse markdown')
+    logger.error(
+      {
+        err: error,
+        contentLength: markdown.length,
+        preview: markdown.slice(0, 200),
+      },
+      'Failed to parse markdown — returning raw content',
+    )
     return markdown
   }
 }
@@ -1073,11 +1275,8 @@ const mergeStreamingSegments = (segments: ReactNode[]): ReactNode => {
 
   return (
     <>
-      {segments.map((segment, idx) => (
-        <KeyedFragment key={`stream-segment-${idx}`}>
-          {segment}
-        </KeyedFragment>
-      ))}
+      <KeyedFragment key="stream-stable-prefix">{segments[0]}</KeyedFragment>
+      <KeyedFragment key="stream-pending-region">{segments[1]}</KeyedFragment>
     </>
   )
 }

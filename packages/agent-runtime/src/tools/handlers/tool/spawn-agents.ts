@@ -9,6 +9,7 @@ import {
   extractSubagentContextParams,
   withParentModel,
 } from './spawn-agent-utils'
+import { filterToolSet } from '../../../tools/filter-tool-set'
 import { setActivity } from '../../../util/activity-tracking'
 
 import type { SavantCodeToolHandlerFunction } from '../handler-function-type'
@@ -92,14 +93,22 @@ export const handleSpawnAgents = (async (
   const results = await Promise.allSettled(
     agents.map(
       async ({ agent_type: agentTypeStr, prompt, params: spawnParams }) => {
-        const { agentTemplate: childTemplate, agentType } = await validateAndGetAgentTemplate({
-          ...params,
-          agentTypeStr,
-          parentAgentTemplate,
-        })
+        const { agentTemplate: childTemplate, agentType } =
+          await validateAndGetAgentTemplate({
+            ...params,
+            agentTypeStr,
+            parentAgentTemplate,
+          })
 
         // Inherit the parent's model so subagents respect the user's selected model.
-        const agentTemplate = withParentModel(childTemplate, parentAgentTemplate)
+        const agentTemplate = withParentModel(
+          childTemplate,
+          parentAgentTemplate,
+        )
+        const inheritedTools = filterToolSet(
+          parentTools,
+          agentTemplate.toolNames,
+        )
 
         validateAgentInput(agentTemplate, agentType, prompt, spawnParams)
 
@@ -146,7 +155,7 @@ export const handleSpawnAgents = (async (
           fromHandleSteps: false,
           parentSystemPrompt,
           parentTools: agentTemplate.inheritParentSystemPrompt
-            ? parentTools
+            ? inheritedTools
             : undefined,
           onResponseChunk: (chunk: string | PrintModeEvent) => {
             if (typeof chunk === 'string') {
@@ -184,7 +193,9 @@ export const handleSpawnAgents = (async (
                 )
               }
               if (chunk.type === 'tool_call' || chunk.type === 'tool_result') {
-                const printableEvent = chunk as unknown as { parentAgentId?: string }
+                const printableEvent = chunk as unknown as {
+                  parentAgentId?: string
+                }
                 return printableEvent.parentAgentId ?? subAgentState.agentId
               }
               return undefined

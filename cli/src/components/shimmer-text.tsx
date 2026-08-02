@@ -133,11 +133,14 @@ export const ShimmerText = ({
   interval = 180,
   colors,
   primaryColor,
+  host = 'text',
 }: {
   text: string
   interval?: number
   colors?: string[]
   primaryColor?: string
+  /** Host mode for OpenTUI: inline fragments belong inside <text>; box mode adds a text host. */
+  host?: 'text' | 'box'
 }) => {
   const theme = useTheme()
   const [pulse, setPulse] = useState<number>(0)
@@ -236,13 +239,16 @@ export const ShimmerText = ({
     parts.push({ text: currentText, color: currentColor, attr: currentAttr })
   }
 
-  return (
-    <>
-      {parts.map((part, index) => (
-        <span key={index} fg={part.color} attributes={part.attr}>
-          {part.text}
-        </span>
-      ))}
-    </>
-  )
+  const inlineContent = parts.map((part, index) => (
+    <span key={index} fg={part.color} attributes={part.attr}>
+      {part.text}
+    </span>
+  ))
+
+  // Inline mode preserves the historical API for callers already inside a
+  // <text>. Box mode supplies the required OpenTUI text host for callers that
+  // render the shimmer directly in a layout container. Keep the mapped spans
+  // as direct children; a React Fragment object is not a valid OpenTUI text
+  // child and can trigger TextNodeRenderable reconciliation failures.
+  return host === 'box' ? <text>{inlineContent}</text> : <>{inlineContent}</>
 }

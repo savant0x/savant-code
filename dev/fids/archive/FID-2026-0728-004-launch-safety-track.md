@@ -46,7 +46,7 @@ The safety engine was started as a v0.0.8 feature but not brought to full enforc
 ### Evidence
 
 - Parent FID: `dev/fids/FID-2026-0728-002-launch-strategy-execution.md`
-- Safety FID: `dev/fids/archive/FID-2026-07-27-001-tool-safety-sandbox-engine.md`
+- Safety FID: `dev/fids/archive/FID-2026-0727-003-tool-safety-sandbox-engine.md`
 - Safety registry: `common/src/tools/safety-registry.ts`
 - Safety metadata: `common/src/tools/safety.ts`
 - Command registry: `cli/src/commands/command-registry.ts`

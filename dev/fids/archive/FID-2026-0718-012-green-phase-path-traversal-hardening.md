@@ -1,18 +1,18 @@
 # FID-2026-0718-012 — medium — GREEN-Phase Path-Traversal Containment (Finding D)
 
-**Status:** closed / archived
-**Opened:** 2026-07-18
-**Severity:** medium (current deployment context — GREEN is gated by FID auth + manually driven)
-**Severity Escalation:** HIGH for autonomous-deployment context (per Nova verdict 2026-07-18) — when Savant-Core spawns Savant-Code autonomously, GREEN-phase escalation becomes unmediated — a green-phase agent with full filesystem write scope is a real attack surface
-**Source:** A-Z System Test v3 — Finding D (`dev/scratchpad/az-system-test-v3-report.md`)
-**Reactor:** Orchestrator (Buffy, parent agent)
-**Nova AUDIT:** External audit (`dev/nova/inbox/2026-07-18-verdict-az-v3-fids.md`) — both live tests run + grep confirmed independently. PASSED.
-**Validated by:** Cross-Agent Claim Rule — three layers: Savant report → orchestrator verification → Nova re-verification
-**Depends on:** none
-**Blocks:** none (separate from path-exemption improvement in FID-008)
-**Drop-in scope:** Single FID. Can be split into Phase-2/Phase-3 if needed.
+**Filename:** `FID-2026-0718-012-green-phase-path-traversal-hardening.md`
+**ID:** FID-2026-0718-012
+**Severity:** high
+**Status:** closed
+**Created:** 2026-0718 00:00
+**Author:** Historical record (metadata backfill)
 
 ---
+
+## Metadata Normalization Note
+
+This historical record was normalized on 2026-07-31 for FreeBuff ECHO v0.1.2 compliance. The original body and evidence are preserved. Original status: `closed / archived`; Original ID: `FID-2026-0718-012-green-phase-path-traversal-hardening`. Canonical ID: `FID-2026-0718-012`. Backfilled fields: Filename, ID, Created, Author. Canonical status reflects the record's lifecycle location; it does not add implementation evidence.
+
 
 ## 1. Summary
 

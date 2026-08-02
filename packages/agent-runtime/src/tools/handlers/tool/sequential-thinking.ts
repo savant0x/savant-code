@@ -1,4 +1,4 @@
-import { SequentialThinkingServer } from '@savant-code/common/tools/sequential-thinking'
+import { getThoughtSession } from '../../thought-session-store'
 
 import type { SavantCodeToolHandlerFunction } from '../handler-function-type'
 import type {
@@ -7,17 +7,6 @@ import type {
 } from '@savant-code/common/tools/list'
 import type { Logger } from '@savant-code/common/types/contracts/logger'
 
-const servers = new Map<string, SequentialThinkingServer>()
-
-function getServerForRun(runId: string): SequentialThinkingServer {
-  let server = servers.get(runId)
-  if (!server) {
-    server = new SequentialThinkingServer()
-    servers.set(runId, server)
-  }
-  return server
-}
-
 export const handleSequentialThinking = (async (params: {
   previousToolCallFinished: Promise<void>
   toolCall: SavantCodeToolCall<'sequentialthinking'>
@@ -25,12 +14,28 @@ export const handleSequentialThinking = (async (params: {
   runId: string
 }): Promise<{ output: SavantCodeToolOutput<'sequentialthinking'> }> => {
   const { toolCall, logger, runId } = params
-  const { thought, thoughtNumber, totalThoughts, nextThoughtNeeded, isRevision, revisesThought, branchFromThought, branchId, needsMoreThoughts } = toolCall.input
+  const {
+    thought,
+    thoughtNumber,
+    totalThoughts,
+    nextThoughtNeeded,
+    isRevision,
+    revisesThought,
+    branchFromThought,
+    branchId,
+    needsMoreThoughts,
+  } = toolCall.input
 
-  logger.debug({ thoughtNumber, totalThoughts, nextThoughtNeeded }, 'Sequential thought')
+  logger.debug(
+    { thoughtNumber, totalThoughts, nextThoughtNeeded },
+    'Sequential thought',
+  )
 
-  const server = getServerForRun(runId)
-  const result = server.processThought({
+  // FID-2026-0801-012: route every accepted call through the per-run session.
+  // The runtime convergence gate reads this session's snapshot after the final
+  // tool result to build the non-null FinalArtifact.
+  const session = getThoughtSession(runId)
+  const result = session.processThought({
     thought,
     thoughtNumber,
     totalThoughts,

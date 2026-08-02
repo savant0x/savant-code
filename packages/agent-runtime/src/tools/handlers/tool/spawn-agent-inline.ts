@@ -8,6 +8,7 @@ import {
   extractSubagentContextParams,
   withParentModel,
 } from './spawn-agent-utils'
+import { filterToolSet } from '../../../tools/filter-tool-set'
 
 import type { SavantCodeToolHandlerFunction } from '../handler-function-type'
 import type {
@@ -76,15 +77,16 @@ export const handleSpawnAgentInline = (async (
 
   await previousToolCallFinished
 
-  const { agentTemplate: childTemplate, agentType } = await validateAndGetAgentTemplate({
-    agentTypeStr,
-    parentAgentTemplate,
-    localAgentTemplates: params.localAgentTemplates,
-    logger,
-    fetchAgentFromDatabase: params.fetchAgentFromDatabase,
-    databaseAgentCache: params.databaseAgentCache,
-    apiKey: params.apiKey,
-  })
+  const { agentTemplate: childTemplate, agentType } =
+    await validateAndGetAgentTemplate({
+      agentTypeStr,
+      parentAgentTemplate,
+      localAgentTemplates: params.localAgentTemplates,
+      logger,
+      fetchAgentFromDatabase: params.fetchAgentFromDatabase,
+      databaseAgentCache: params.databaseAgentCache,
+      apiKey: params.apiKey,
+    })
 
   // Inherit the parent's model so inline subagents respect the user's selected model.
   const agentTemplate = withParentModel(childTemplate, parentAgentTemplate)
@@ -97,6 +99,7 @@ export const handleSpawnAgentInline = (async (
     includeMessageHistory: true,
     inheritParentSystemPrompt: true,
   }
+  const inheritedTools = filterToolSet(parentTools, inlineTemplate.toolNames)
 
   // Create child agent state that shares message history with parent
   const childAgentState: AgentState = {
@@ -107,7 +110,7 @@ export const handleSpawnAgentInline = (async (
       parentAgentState.agentContext,
     ),
     systemPrompt: system,
-    toolDefinitions: mapValues(parentTools, (tool) => ({
+    toolDefinitions: mapValues(inheritedTools, (tool) => ({
       description: tool.description,
       inputSchema: tool.inputSchema as {},
     })),
@@ -129,7 +132,7 @@ export const handleSpawnAgentInline = (async (
     agentState: childAgentState,
     fingerprintId,
     parentSystemPrompt: system,
-    parentTools,
+    parentTools: inheritedTools,
     onResponseChunk: (chunk) => {
       // Inherits parent's onResponseChunk, except for context-pruner (NOTE: add an option for it to be silent?)
       if (agentType !== 'context-pruner') {

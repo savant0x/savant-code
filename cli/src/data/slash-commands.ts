@@ -4,7 +4,6 @@ import { AGENT_MODES, IS_SAVANT_FREE } from '../utils/constants'
 
 import type { SkillsMap } from '@savant-code/common/types/skill'
 
-
 export interface SlashCommand {
   id: string
   label: string
@@ -42,11 +41,7 @@ const SAVANT_FREE_REMOVED_COMMAND_IDS = new Set([
   'init',
 ])
 
-const SAVANT_FREE_ONLY_COMMAND_IDS = new Set([
-  'connect',
-  'plan',
-  'end-session',
-])
+const SAVANT_FREE_ONLY_COMMAND_IDS = new Set(['connect', 'plan', 'end-session'])
 
 const ALL_SLASH_COMMANDS: SlashCommand[] = [
   {
@@ -84,6 +79,12 @@ const ALL_SLASH_COMMANDS: SlashCommand[] = [
     description: 'Disable contextual ads',
   },
   {
+    id: 'telemetry',
+    label: 'telemetry',
+    description: 'Show or change remote analytics consent',
+    aliases: ['analytics'],
+  },
+  {
     id: 'init',
     label: 'init',
     description: 'Create a starter knowledge.md file',
@@ -105,7 +106,8 @@ const ALL_SLASH_COMMANDS: SlashCommand[] = [
   {
     id: 'interview',
     label: 'interview',
-    description: 'AI asks a series of questions to flesh out request into a spec',
+    description:
+      'AI asks a series of questions to flesh out request into a spec',
   },
   {
     id: 'plan',
@@ -133,15 +135,17 @@ const ALL_SLASH_COMMANDS: SlashCommand[] = [
   {
     id: 'copy',
     label: 'copy',
-    description: 'Copy the full conversation (messages + tool results) to the clipboard',
+    description:
+      'Copy the full conversation (messages + tool results) to the clipboard',
     aliases: ['copy-chat', 'export'],
   },
-
 
   {
     id: 'feedback',
     label: 'feedback',
-    description: IS_SAVANT_FREE ? 'Share general feedback about SavantFree' : 'Share general feedback about SavantCode',
+    description: IS_SAVANT_FREE
+      ? 'Share general feedback about SavantFree'
+      : 'Share general feedback about SavantCode',
   },
   {
     id: 'bash',
@@ -171,12 +175,18 @@ const ALL_SLASH_COMMANDS: SlashCommand[] = [
   ...(IS_SAVANT_FREE
     ? []
     : [
-        {
-          id: 'model',
-          label: 'model',
-          description: 'Switch the active model (e.g. /model anthropic/claude-opus-4.6)',
-          aliases: ['switch-model'],
-        },
+  {
+    id: 'model',
+    label: 'model',
+    description:
+      'Switch the active model (e.g. /model anthropic/claude-opus-4.6)',
+    aliases: ['switch-model'],
+  },
+  {
+    id: 'provider',
+    label: 'provider',
+    description: 'Configure a provider API key (stored locally and masked)',
+  },
       ]),
   {
     id: 'login',
@@ -202,7 +212,8 @@ const ALL_SLASH_COMMANDS: SlashCommand[] = [
   {
     id: 'goal',
     label: 'goal',
-    description: 'Run agent until a condition is met (e.g. /goal all tests pass)',
+    description:
+      'Run agent until a condition is met (e.g. /goal all tests pass)',
     aliases: ['g'],
   },
   {
@@ -214,13 +225,15 @@ const ALL_SLASH_COMMANDS: SlashCommand[] = [
   {
     id: 'verify',
     label: 'verify',
-    description: 'Run typechecks across all workspaces (or one: sdk, common, agent-runtime, cli)',
+    description:
+      'Run typechecks across all workspaces (or one: sdk, common, agent-runtime, cli)',
     aliases: ['typecheck', 'check'],
   },
   {
     id: 'permissions',
     label: 'permissions',
-    description: 'Show or set the sandbox permission mode: /permissions [safe|prompt|unsafe]',
+    description:
+      'Show or set the sandbox permission mode: /permissions [safe|prompt|unsafe]',
     aliases: ['sandbox', 'safety'],
   },
 ]

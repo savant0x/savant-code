@@ -1,9 +1,12 @@
-import { detectOllama } from '@savant-code/llm-providers/ollama'
+import {
+  detectOllama,
+  type OllamaDetectionResult,
+} from '@savant-code/llm-providers/ollama'
 
-import { getAuthToken } from './auth'
+import { getAuthToken, getAuthTokenDetails } from './auth'
 import { logger } from './logger'
 import {
-  loadSavantCodeModelPreference,
+  DEFAULT_SAVANT_CODE_MODEL_ID,
   loadSettings,
   saveSettings,
 } from './settings'
@@ -13,6 +16,31 @@ import {
  * Exported so callers can avoid prompting the user again.
  */
 let ollamaAutoConfigured = false
+
+/**
+ * Pick a model that Ollama can serve locally. Cloud-backed Ollama entries are
+ * excluded because they still require remote provider authentication.
+ */
+export function selectLocalOllamaModel(models: string[]): string | undefined {
+  // Cloud-backed, embedding, and reranking models cannot serve chat
+  // completions through the OpenAI-compatible endpoint.
+  const usableModels = models.filter((model) => {
+    const normalized = model.toLowerCase()
+    return (
+      !normalized.endsWith(':cloud') &&
+      !normalized.includes('embed') &&
+      !normalized.includes('rerank')
+    )
+  })
+
+  // Prefer coding/chat models when several local models are installed, while
+  // retaining a deterministic fallback for arbitrary Ollama model names.
+  return (
+    usableModels.find((model) =>
+      /code|coder|chat|instruct|llama|qwen|mistral|deepseek|gemma/i.test(model),
+    ) ?? usableModels[0]
+  )
+}
 
 export function isOllamaAutoConfigured(): boolean {
   return ollamaAutoConfigured
@@ -35,6 +63,16 @@ export function applyPersistedDirectProviderSettings(): void {
   // A real backend token means the user wants the SavantCode backend, not a
   // previously persisted local provider.
   if (getAuthToken()) {
+    return
+  }
+
+  // A direct provider already present in the environment was selected by the
+  // shell or restored from a saved provider key; it takes precedence over an
+  // older persisted Ollama choice.
+  if (
+    process.env.DIRECT_PROVIDER?.trim() ||
+    process.env.INFERENCE_BASE_URL?.trim()
+  ) {
     return
   }
 
@@ -65,32 +103,75 @@ export function applyPersistedDirectProviderSettings(): void {
  * `ollama serve` running can start coding immediately without creating an
  * account or entering an API key.
  */
-export async function detectOllamaAndConfigureDirectProvider(): Promise<void> {
-  // Respect explicit user configuration: if a backend token or direct provider
-  // is already set, do not override it.
-  const hasBackendToken = Boolean(getAuthToken())
+export async function detectOllamaAndConfigureDirectProvider(
+  detect: () => Promise<OllamaDetectionResult> = detectOllama,
+): Promise<void> {
+  // Respect explicit user configuration: if a real backend token or direct
+  // provider is already set, do not override it. Direct-provider mode returns
+  // a stub bypass token from auth.ts; that is not backend authentication and
+  // must not prevent stale Ollama re-probing.
+  const authSource = getAuthTokenDetails().source
+  const hasBackendToken =
+    authSource === 'credentials' || authSource === 'environment'
   const hasDirectProviderEnv =
     (process.env.DIRECT_PROVIDER ?? '').trim().length > 0 ||
     (process.env.INFERENCE_BASE_URL ?? '').trim().length > 0
 
-  if (hasBackendToken || hasDirectProviderEnv) {
-    return
-  }
+  // `applyPersistedDirectProviderSettings` marks persisted Ollama state as
+  // auto-configured. Re-probe that state so a stale gateway model preference
+  // is replaced by a real local Ollama model. Explicit shell configuration is
+  // never overridden. A non-default, non-auto-configured model is also an
+  // explicit user choice and must not be silently replaced by local detection.
+  const settings = loadSettings()
+  const hasExplicitNonOllamaModelChoice =
+    settings.savantCodeModelAutoConfigured !== true &&
+    settings.savantCodeModelPreference !== undefined &&
+    settings.savantCodeModelPreference !== DEFAULT_SAVANT_CODE_MODEL_ID &&
+    settings.savantCodeModelProviderPreference !== 'ollama'
 
-  // If the user has already chosen a savant-code model preference, they have
-  // already interacted with the model picker; leave them alone.
-  if (loadSavantCodeModelPreference()) {
+  if (
+    hasBackendToken ||
+    (hasDirectProviderEnv && !ollamaAutoConfigured) ||
+    (!hasDirectProviderEnv && hasExplicitNonOllamaModelChoice)
+  ) {
     return
   }
 
   logger.debug({}, 'Detecting local Ollama instance for frictionless onboarding')
 
-  const ollama = await detectOllama()
+  const ollama = await detect()
 
-  if (!ollama.available) {
+  const localModel = ollama.available
+    ? selectLocalOllamaModel(ollama.models)
+    : undefined
+
+  if (!ollama.available || !localModel) {
+    // A previously auto-configured Ollama session must not leave a stale
+    // direct-provider environment behind when Ollama disappears or has no
+    // usable chat model. Require an exact persisted/current-environment match
+    // so an explicitly configured shell provider is never cleared.
+    const persistedOllamaMatchesCurrentEnvironment =
+      settings.directProvider === 'ollama' &&
+      settings.directProviderBaseUrl === process.env.INFERENCE_BASE_URL &&
+      process.env.DIRECT_PROVIDER === 'ollama'
+
+    if (ollamaAutoConfigured && persistedOllamaMatchesCurrentEnvironment) {
+      delete process.env.DIRECT_PROVIDER
+      delete process.env.INFERENCE_BASE_URL
+      ollamaAutoConfigured = false
+      // Remove the persisted auto-provider fields as well. Otherwise the next
+      // launch reapplies the same stale state before probing Ollama again.
+      saveSettings({
+        directProvider: undefined,
+        directProviderBaseUrl: undefined,
+        savantCodeModelPreference: DEFAULT_SAVANT_CODE_MODEL_ID,
+        savantCodeModelProviderPreference: 'opencode-go',
+        savantCodeModelAutoConfigured: false,
+      })
+    }
     logger.debug(
-      { error: ollama.error },
-      'Ollama not detected; leaving provider mode unset',
+      { error: ollama.error, host: ollama.host },
+      'Ollama unavailable or has no local chat model; direct provider disabled',
     )
     return
   }
@@ -106,10 +187,20 @@ export async function detectOllamaAndConfigureDirectProvider(): Promise<void> {
   process.env.INFERENCE_BASE_URL = baseUrl
   ollamaAutoConfigured = true
 
-  // Persist the choice so future launches reuse it. The actual model id will
-  // be resolved by the SDK from the Ollama /models endpoint at run time.
+  // Persist both the provider and a real local model. Replace the gateway
+  // default, a prior automatic choice, or a model selected for another
+  // provider. Preserve an explicitly selected Ollama model across launches.
+  const shouldSelectLocalModel =
+    settings.savantCodeModelAutoConfigured === true ||
+    settings.savantCodeModelPreference === DEFAULT_SAVANT_CODE_MODEL_ID ||
+    settings.savantCodeModelProviderPreference !== 'ollama'
+
   saveSettings({
+    savantCodeModelPreference: shouldSelectLocalModel
+      ? localModel
+      : settings.savantCodeModelPreference,
     savantCodeModelProviderPreference: 'ollama',
+    savantCodeModelAutoConfigured: shouldSelectLocalModel,
     directProvider: 'ollama',
     directProviderBaseUrl: baseUrl,
   })

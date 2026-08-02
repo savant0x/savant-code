@@ -1,13 +1,18 @@
 # FID: Sub-Package Implementation
 
-**Filename:** `FID-sub-packages.md`
-**ID:** `FID-sub-packages`
+**Filename:** `FID-2026-0720-036-sub-packages.md`
+**ID:** FID-2026-0720-036
 **Severity:** high
-**Status:** SUPERSEDED
+**Status:** closed
+**Superseded:** The original scope is preserved below; filesystem evidence showed the packages were not empty shells, so no implementation was required.
 **Created:** 2026-07-17 12:30
 **Author:** Orchestrator
 
 ---
+
+## Metadata Normalization Note
+
+Canonical ID: `FID-2026-0720-036`; Original ID: `FID-sub-packages`. Historical body preserved.
 
 ## Summary
 

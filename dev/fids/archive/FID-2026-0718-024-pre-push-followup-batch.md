@@ -1,10 +1,18 @@
 # FID-2026-0718-024 — medium — Pre-Push Follow-up Batch (4 candidates)
 
-**Status:** closed / archived
-**Severity:** medium (these are pre-push quality-of-life improvements; push not strictly blocked by them)
-**Opened:** 2026-07-19
+**Filename:** `FID-2026-0718-024-pre-push-followup-batch.md`
+**ID:** FID-2026-0718-026
+**Severity:** medium
+**Status:** closed
+**Created:** 2026-0718 00:00
+**Author:** Historical record (metadata backfill)
 
 ---
+
+## Metadata Normalization Note
+
+This historical record was normalized on 2026-07-31 for FreeBuff ECHO v0.1.2 compliance. The original body and evidence are preserved. Original status: `closed / archived`; Original ID: `FID-2026-0718-024-pre-push-followup-batch`. Canonical ID: `FID-2026-0718-026`. Backfilled fields: Filename, ID, Created, Author. Canonical status reflects the record's lifecycle location; it does not add implementation evidence.
+
 
 ## Honest Correction (Cross-FID audit-trail)
 

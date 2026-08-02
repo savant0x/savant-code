@@ -1,5 +1,18 @@
 # **Codebase Migration and Architectural Blueprint: Savant & Savant-Free**
 
+**Filename:** `FID-2026-0717-014-codebuff-rebrand-migration-plan.md`
+**ID:** FID-2026-0717-010
+**Severity:** critical
+**Status:** closed
+**Created:** 2026-0717 00:00
+**Author:** Historical record (metadata backfill)
+
+---
+
+## Metadata Normalization Note
+
+This historical record was normalized on 2026-07-31 for FreeBuff ECHO v0.1.2 compliance. The original body and evidence are preserved. Original status: `MISSING`; Original ID: `FID-2026-0717-014-codebuff-rebrand-migration-plan`. Canonical ID: `FID-2026-0717-010`. Backfilled fields: Filename, ID, Severity, Status, Created, Author. Canonical status reflects the record's lifecycle location; it does not add implementation evidence.
+
 The following research report and execution blueprint provides an exhaustive architectural analysis for decoupling, rebranding, and migrating the open-source savant0x/savant-code monorepo1. The overarching objective of this analysis is to transform the existing TypeScript-based client applications—specifically the premium, subscription-based savant-code client and the ad-supported, zero-configuration savant-free client1—into the distinct entities savant and savant-free, respectively. Furthermore, this document details the meticulous API surface extraction required to sever ties with the original proprietary backend infrastructure. This extraction informs a comprehensive specification for rebuilding the server layer using a high-performance Rust web framework.  
 The original application operates as a terminal-native, multi-agent artificial intelligence coding assistant built heavily on TypeScript, the Bun runtime, and a React-based web component architecture1. Because the target backend infrastructure is inaccessible, the frontend architecture must be systematically reverse-engineered at the network boundary to deduce the expected HTTP and WebSocket data contracts. This analysis is structurally divided into six critical execution phases, designed to serve as a direct operational manual for an autonomous coding agent executing the frontend migration while the Rust backend is synthesized in parallel.
 

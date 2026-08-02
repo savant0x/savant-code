@@ -154,7 +154,7 @@ export const RightSidebar = React.memo(function RightSidebar({
             : []
         if (displayAgents.length === 0) return null
         return (
-          <SidebarSection title="Active Agents">
+          <SidebarSection title="Active Agents" defaultExpanded>
             <AgentStack
               agents={displayAgents.map((a) => ({
                 name: a.displayName ?? a.id,
@@ -168,7 +168,7 @@ export const RightSidebar = React.memo(function RightSidebar({
       <AgentStatus />
 
       {/* Session */}
-      <SidebarSection title="Session">
+      <SidebarSection title="Session" defaultExpanded>
         <KeyValueRow label="Agent" value={agent === 'main-agent' ? 'Savant' : agent} />
         <KeyValueRow label="Cost" value={formatCost(cost)} />
         <KeyValueRow label="Mode" value={mode} />
@@ -208,7 +208,7 @@ export const RightSidebar = React.memo(function RightSidebar({
       </SidebarSection>
 
       {/* Files Changed */}
-      <SidebarSection title="Files Changed">
+      <SidebarSection title="Files Changed" defaultExpanded>
         <KeyValueRow label="Added" value={filesChanged.added.toString()} />
         <KeyValueRow label="Deleted" value={filesChanged.deleted.toString()} />
         <KeyValueRow

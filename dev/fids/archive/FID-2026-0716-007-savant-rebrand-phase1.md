@@ -1,13 +1,18 @@
 # FID: Phase 1 — Savant Rebrand + ECHO Protocol Injection
 
 **Filename:** `FID-2026-0716-007-savant-rebrand-phase1.md`
-**ID:** FID-2026-0716-007
+**ID:** FID-2026-0716-003
+**Canonical predecessor ID:** FID-2026-0716-007 (duplicate historical ID corrected by FID-2026-0731-004)
 **Severity:** high
 **Status:** closed
 **Created:** 2026-07-16
 **Author:** recursive (human + AI pair)
 
 ---
+
+## Metadata Normalization Note
+
+Canonical ID: `FID-2026-0716-003`; Original ID: `FID-2026-0716-007-rebrand`. Historical body preserved.
 
 ## Summary
 

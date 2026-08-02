@@ -37,6 +37,9 @@
 
 set -e
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/tmux-env.sh"
+
 # Defaults
 STOP_ALL=false
 LIST_FIRST=false
@@ -103,14 +106,14 @@ done
 # List sessions if requested
 if [[ "$LIST_FIRST" == true ]]; then
     echo "Active tmux sessions:"
-    tmux list-sessions 2>/dev/null || echo "  (none)"
+    tmux_exec list-sessions 2>/dev/null || echo "  (none)"
     echo ""
 fi
 
 # Stop all test sessions
 if [[ "$STOP_ALL" == true ]]; then
     # Get all tui-test-* sessions (and legacy cli-test-* for backward compatibility)
-    SESSIONS=$(tmux list-sessions -F '#{session_name}' 2>/dev/null | grep -E '^(tui-test-|cli-test-)' || true)
+    SESSIONS=$(tmux_exec list-sessions -F '#{session_name}' 2>/dev/null | grep -E '^(tui-test-|cli-test-)' || true)
     
     if [[ -z "$SESSIONS" ]]; then
         echo "No tui-test-* or cli-test-* sessions found"
@@ -119,7 +122,7 @@ if [[ "$STOP_ALL" == true ]]; then
     
     COUNT=0
     while IFS= read -r session; do
-        tmux kill-session -t "$session" 2>/dev/null && ((COUNT++)) || true
+        tmux_exec kill-session -t "$session" 2>/dev/null && ((COUNT++)) || true
     done <<< "$SESSIONS"
     
     echo "Stopped $COUNT session(s)"
@@ -151,4 +154,4 @@ if [[ -f "$SESSION_INFO" ]]; then
 fi
 
 # Stop the specific session (silently succeed if not found)
-tmux kill-session -t "$SESSION_NAME" 2>/dev/null || true
+tmux_exec kill-session -t "$SESSION_NAME" 2>/dev/null || true

@@ -18,12 +18,48 @@ const definition: SecretAgentDefinition = {
         'The problem you are trying to solve, very briefly. No need to provide context, as the thinker agent can see the entire conversation history.',
     },
   },
+  // FID-2026-0801-012: the runtime convergence gate builds the FinalArtifact
+  // from the session snapshot. `status: 'success'` structurally requires a
+  // non-null `payload`; `payload` is null with an `error` for exhausted /
+  // failed / cancelled outcomes.
   outputSchema: {
     type: 'object',
     properties: {
-      message: {
+      status: {
         type: 'string',
-        description: "The response to the user's request",
+        description:
+          "Terminal status: 'success' | 'exhausted' | 'cancelled' | 'failed'",
+      },
+      synthesis: {
+        type: 'string',
+        description: 'Concise explanation of how the conclusion was reached.',
+      },
+      payload: {
+        type: 'object',
+        properties: {
+          message: {
+            type: 'string',
+            description: "The final answer (non-null when status is 'success')",
+          },
+        },
+        description: "The final answer; null when status is not 'success'",
+      },
+      metrics: {
+        type: 'object',
+        properties: {
+          totalThoughts: { type: 'number' },
+          durationMs: { type: 'number' },
+          branches: { type: 'array', items: { type: 'string' } },
+        },
+      },
+      thoughts: {
+        type: 'array',
+        description:
+          'The accepted sequential-thinking thought snapshots, in insertion order.',
+      },
+      error: {
+        type: 'string',
+        description: "Present when status is not 'success'",
       },
     },
   },
@@ -31,7 +67,12 @@ const definition: SecretAgentDefinition = {
   inheritParentSystemPrompt: true,
   includeMessageHistory: true,
   spawnableAgents: [],
-  toolNames: ['sequentialthinking'],
+  // `end_turn` lets the model end its turn explicitly after the final
+  // converged thought (FID-2026-0801-012). The runtime convergence gate still
+  // owns output: premature end_turn (before nextThoughtNeeded=false) triggers
+  // a typed retry, and converged sessions produce the FinalArtifact from the
+  // session snapshot.
+  toolNames: ['sequentialthinking', 'end_turn'],
 
   instructionsPrompt: `
 You are a thinker agent bound by the ECHO Protocol. Use the sequentialthinking tool for all non-trivial reasoning — structured step-by-step thinking with support for branching, revision, and convergence detection.
@@ -43,52 +84,16 @@ The sequentialthinking tool supports:
 
 For trivial decisions only, you may use <think> tags instead.
 
-When you have converged on an answer (nextThoughtNeeded: false), write out a brief response. The parent agent will see your response — no need to call any tools. DO NOT call the set_output tool, as that will be done for you.
+## Convergence contract (FID-2026-0801-012)
+
+- Reason step by step with the sequentialthinking tool.
+- When you have reached your final conclusion, make ONE LAST sequentialthinking call with **nextThoughtNeeded: false** and place your **complete conclusion inside the thought text** of that final call.
+- Do NOT write your conclusion as plain text and stop — the runtime builds the final result from the accepted thought session, and it only finalizes when the last thought set nextThoughtNeeded=false.
+- Do NOT call set_output — that tool is handled by the runtime for you.
+- The thought stream is visible to the user; keep it honest and structured.
 
 ${ECHO_PROTOCOL_INSTRUCTIONS}
 `.trim(),
-
-  handleSteps: function* () {
-    const { agentState } = yield 'STEP'
-
-    // Find the last assistant message
-    const lastAssistantMessage = [...agentState.messageHistory]
-      .reverse()
-      .find((m) => m.role === 'assistant')
-
-    if (!lastAssistantMessage) {
-      const errorMsg =
-        'Error: No assistant message found in conversation history'
-      yield {
-        toolName: 'set_output',
-        input: { message: errorMsg },
-      }
-      return
-    }
-
-    // Extract text content from the assistant message
-    const content = lastAssistantMessage.content
-    let textContent = ''
-    if (typeof content === 'string') {
-      textContent = content
-    } else if (Array.isArray(content)) {
-      textContent = content
-        .filter((part) => part.type === 'text')
-        .map((part) => part.text)
-        .join('')
-    }
-
-    // Remove text within <think> tags (including the tags themselves)
-    const cleanedText = textContent
-      .replace(/<think>[\s\S]*?<\/think>/g, '')
-      .trim()
-
-    yield {
-      toolName: 'set_output',
-      input: { message: cleanedText },
-      includeToolCall: false,
-    }
-  },
 }
 
 export default definition

@@ -3,7 +3,7 @@
 **Filename:** FID-2026-0725-082-loop-goal-commands.md
 **ID:** FID-2026-0725-082
 **Severity:** high
-**Status:** verified
+**Status:** closed
 **Created:** 2026-07-25
 **Author:** Savant Orchestrator
 
@@ -145,7 +145,9 @@ Cadence options: `Nd` (daily), `Nh` (hourly), `Nm` (every N minutes)
 - **Tests Added:** No
 - **Verified By:** File read audit of goal.ts, loop.ts, slash-commands.ts, command-registry.ts + typecheck
 - **Commit/PR:** [Pending]
-- **Archived:** 2026-07-25
+- **Archived:** 2026-07-31
+
+> Lifecycle note: Closed as the command-handler scope. The separate end-to-end goal/loop integration record remains active where its acceptance criteria are unresolved.
 
 ## Lessons Learned
 

@@ -23,9 +23,10 @@ Key trade-offs, because I think HN will ask:
 
 - **It is slower than Copilot/Cursor.** The loop takes extra time because it
   audits before outputting. We think that is worth it for multi-file changes.
-- **It is local-first.** If you run Ollama, your code never leaves your machine.
-  BYOK mode is also supported; we do not have a paid "hosted inference" tier
-  that sees your code. Remote providers receive only what you send them.
+- **It is local-first.** If you run Ollama, inference stays on your machine.
+  BYOK mode is also supported; when you choose a remote provider, it receives
+  the prompt and context you send it. The broader telemetry/privacy policy is
+  still an explicit pre-launch decision, not a claim this post resolves.
 - **It is opinionated.** The ECHO Protocol enforces a strict workflow. Some
   developers will hate that. The ones who want correctness over speed will
   probably love it.

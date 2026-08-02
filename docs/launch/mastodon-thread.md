@@ -32,13 +32,11 @@ Separation of duties is enforced: the agent that writes code cannot verify it.
 Post 3/4 — privacy / self-hosting
 
 ```text
-Savant Code is BYOK/local-Ollama by design. We do not have a hosted inference
-tier that sees your code.
-
-If Ollama is running, `savant-code` auto-detects it and routes inference locally.
-No API key, no account, and telemetry defaults to off.
-
-Telemetry and ads are opt-in and default to off.
+Savant Code supports local Ollama and BYOK provider selection. If Ollama is
+running, `savant-code` auto-detects it and routes inference locally; a remote
+provider receives the prompt and context you choose to send it. No API key or
+account is required for a local Ollama daemon. The broader telemetry/privacy
+policy remains an explicit pre-launch decision and is not resolved by this post.
 ```
 
 Post 4/4 — call to action
@@ -50,5 +48,5 @@ a wider HN launch.
 If you care about code correctness and privacy, we would love your feedback.
 
 GitHub: https://github.com/savant0x/savant-code
-Discord: [invite link TBD]
+Discord: not yet available; please use GitHub Issues for feedback.
 ```

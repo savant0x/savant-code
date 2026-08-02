@@ -1,5 +1,18 @@
 # FID-2026-0719-030 � Exclude `__tests__/` from agent-runtime build for v0.0.3 push
 
+**Filename:** `FID-2026-0719-030-agent-runtime-tests-excluded-for-push.md`
+**ID:** FID-2026-0719-030
+**Severity:** medium
+**Status:** closed
+**Created:** 2026-0719 00:00
+**Author:** Historical record (metadata backfill)
+
+---
+
+## Metadata Normalization Note
+
+This historical record was normalized on 2026-07-31 for FreeBuff ECHO v0.1.2 compliance. The original body and evidence are preserved. Original status: `closed / archived`; Original ID: `FID-2026-0719-030-agent-runtime-tests-excluded-for-push`. Canonical ID: `FID-2026-0719-030`. Backfilled fields: Filename, ID, Created, Author. Canonical status reflects the record's lifecycle location; it does not add implementation evidence.
+
 **Date:** 2026-07-19
 **Severity:** medium
 **Status:** closed / archived

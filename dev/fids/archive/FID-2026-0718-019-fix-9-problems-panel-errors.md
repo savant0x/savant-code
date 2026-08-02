@@ -1,15 +1,18 @@
 # FID-2026-0718-019 — medium — Fix 9 Errors in IDE Problems Panel (v4: FINAL — Convergence Re-Pass)
 
-**Status:** closed / archived
-**Severity:** medium (IDE-hygiene + future-proofing; no runtime impact)
-**Opened:** 2026-07-19
-**Last iterated:** 2026-07-19 (v4 Convergence Re-Pass)
-
-### Why v4 exists
-
-Per user directive: "One more Thinker round before approval — re-evaluate FID-019 v3 convergence to catch any remaining missed questions I missed. Re-critique and refine." THINKER did not return a verdict on this round (consistent with prior pattern). Orchestrator applied self-critique against ECHO Perfection Loop criteria, surfacing 5 additional missed questions (Q15-Q19) that strengthen the AUDIT verification framework.
+**Filename:** `FID-2026-0718-019-fix-9-problems-panel-errors.md`
+**ID:** FID-2026-0718-020
+**Severity:** medium
+**Status:** closed
+**Created:** 2026-0718 00:00
+**Author:** Historical record (metadata backfill)
 
 ---
+
+## Metadata Normalization Note
+
+This historical record was normalized on 2026-07-31 for FreeBuff ECHO v0.1.2 compliance. The original body and evidence are preserved. Original status: `closed / archived`; Original ID: `FID-2026-0718-019-fix-9-problems-panel-errors`. Canonical ID: `FID-2026-0718-020`. Backfilled fields: Filename, ID, Created, Author. Canonical status reflects the record's lifecycle location; it does not add implementation evidence.
+
 
 ## FID Iteration History
 

@@ -1,8 +1,14 @@
 import { TextAttributes } from '@opentui/core'
 import { describe, expect, test } from 'bun:test'
 import React from 'react'
+import stringWidth from 'string-width'
 
+import {
+  MarkdownImage,
+  MarkdownLink,
+} from '../../components/blocks/markdown-renderables'
 import { renderMarkdown, renderStreamingMarkdown } from '../markdown-renderer'
+import { chatThemes } from '../theme-system'
 
 type El = React.ReactElement<Record<string, unknown>>
 
@@ -61,21 +67,28 @@ describe('markdown renderer', () => {
     expect(nodes[0]).toBe('Use ')
 
     const inlineCode = nodes[1] as El
-    expect(inlineCode.props.fg).toBe('#86efac')
-    expect(inlineCode.props.bg).toBe('#0d1117')
+    expect(inlineCode.props.fg).toBe('green')
+    expect(inlineCode.props.bg).toBe('black')
     expect(flattenChildren(inlineCode.props.children)).toEqual([' ls '])
 
     expect(nodes[2]).toBe(' to list files.')
   })
 
-  test('renders headings with color and bold attribute', () => {
+  test('renders headings as depth-aware semantic rows', () => {
     const output = renderMarkdown('# Heading One')
     const nodes = flattenNodes(output)
 
     const heading = nodes[0] as El
-    expect(heading.props.attributes).toBe(TextAttributes.BOLD)
-    expect(heading.props.fg).toBe('magenta')
+    expect(heading.type).toBeDefined()
+    expect(String(heading.type)).toContain('MarkdownHeading')
+    expect(heading.props.depth).toBe(1)
+    expect(heading.props.color).toBe('green')
     expect(flattenChildren(heading.props.children)).toEqual(['Heading One'])
+
+    const deepOutput = renderMarkdown('###### Deep heading')
+    const deepHeading = flattenNodes(deepOutput)[0] as El
+    expect(deepHeading.props.depth).toBe(6)
+    expect(deepHeading.props.depth).not.toBe(heading.props.depth)
   })
 
   test('renders inline emphasis inside headings without extra spacing', () => {
@@ -94,6 +107,44 @@ describe('markdown renderer', () => {
     expect(flattenChildren(strong.props.children)).toEqual(['.github/'])
 
     expect(contents[2]).toBe(' - GitHub workflows and config')
+  })
+
+  test('keeps links and images as structural semantic nodes', () => {
+    const output = renderMarkdown(
+      '[OpenTUI](https://opentui.dev) and ![diagram](https://example.com/diagram.png)',
+    )
+    const nodes = flattenNodes(output)
+    const link = nodes.find(
+      (node): node is El =>
+        React.isValidElement(node) &&
+        String(node.type).includes('MarkdownLink'),
+    )
+    const image = nodes.find(
+      (node): node is El =>
+        React.isValidElement(node) &&
+        String(node.type).includes('MarkdownImage'),
+    )
+
+    expect(link?.type).toBe(MarkdownLink)
+    expect(link?.props.href).toBe('https://opentui.dev')
+    expect(image?.type).toBe(MarkdownImage)
+    expect(image?.props.src).toBe('https://example.com/diagram.png')
+  })
+
+  test('renders themed fenced code inside a bounded panel', () => {
+    const output = renderMarkdown('```ts\nconst value = 1\n```', {
+      theme: chatThemes.dark,
+      codeBlockWidth: 20,
+    })
+    const nodes = flattenNodes(output)
+    const panel = nodes.find(
+      (node): node is El => React.isValidElement(node) && node.type === 'box',
+    )
+
+    expect(panel).toBeDefined()
+    const panelStyle = panel?.props.style as { width?: number }
+    expect(panelStyle.width).toBe(20)
+    expect(flattenChildren(panel?.props.children)).toHaveLength(1)
   })
 
   test('renders blockquotes with prefix', () => {
@@ -244,7 +295,7 @@ savant-code "add a new feature to handle user authentication"
     expect(nodes[0]).toBe('Use ')
 
     const inlineCode = nodes[1] as El
-    expect(inlineCode.props.fg).toBe('#86efac')
+    expect(inlineCode.props.fg).toBe('green')
     const inlineContent = flattenChildren(inlineCode.props.children).join('')
     expect(inlineContent).toContain('savant-code "fix bug"')
 
@@ -330,7 +381,7 @@ savant-code "implement feature" --verbose
     const markdown = `| ID | This is a very long column header that should wrap |
 | -- | -------------------------------------------------- |
 | 1  | This cell has extremely long content that definitely exceeds the width |`
-    
+
     // Use a narrow codeBlockWidth to force wrapping
     const output = renderMarkdown(markdown, { codeBlockWidth: 50 })
     const nodes = flattenNodes(output)
@@ -365,7 +416,7 @@ savant-code "implement feature" --verbose
     const markdown = `| Name | Age |
 | ---- | --- |
 | John | 30  |`
-    
+
     // Use a wide codeBlockWidth so no wrapping is needed
     const output = renderMarkdown(markdown, { codeBlockWidth: 80 })
     const nodes = flattenNodes(output)
@@ -387,12 +438,58 @@ savant-code "implement feature" --verbose
     expect(textContent).toContain('30')
   })
 
+  test('keeps compact tables within very narrow width budgets', () => {
+    const markdown = `| Name | Value |
+| ---- | ----- |
+| wide | text |`
+
+    for (const width of [1, 2, 3, 4, 5, 8, 24, 40, 58, 80, 120]) {
+      const output = renderMarkdown(markdown, { codeBlockWidth: width })
+      const textContent = flattenNodes(output)
+        .map((node) => {
+          if (typeof node === 'string') return node
+          if (React.isValidElement(node)) {
+            return flattenChildren((node as El).props.children).join('')
+          }
+          return ''
+        })
+        .join('')
+
+      const rows = textContent.split('\n').filter((row) => row.length > 0)
+      expect(rows.length).toBeGreaterThan(0)
+      rows.forEach((row) => expect(stringWidth(row)).toBeLessThanOrEqual(width))
+    }
+  })
+
+  test('keeps wide Unicode graphemes within a one-column budget', () => {
+    const markdown = `| 名称 | 值 |
+| ---- | --- |
+| 東京 | 好 |`
+
+    const output = renderMarkdown(markdown, { codeBlockWidth: 1 })
+    const textContent = flattenNodes(output)
+      .map((node) => {
+        if (typeof node === 'string') return node
+        if (React.isValidElement(node)) {
+          return flattenChildren((node as El).props.children).join('')
+        }
+        return ''
+      })
+      .join('')
+
+    textContent
+      .split('\n')
+      .filter(Boolean)
+      .forEach((row) => expect(stringWidth(row)).toBeLessThanOrEqual(1))
+    expect(textContent).toContain('·')
+  })
+
   test('wraps and shows full content when table is too wide', () => {
     // Three columns of roughly equal width
     const markdown = `| Column One | Column Two | Column Three |
 | ---------- | ---------- | ------------ |
 | Value1     | Value2     | Value3       |`
-    
+
     // Very narrow width to force significant wrapping
     const output = renderMarkdown(markdown, { codeBlockWidth: 30 })
     const nodes = flattenNodes(output)

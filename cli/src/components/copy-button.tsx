@@ -101,6 +101,7 @@ interface CopyIconProps {
   isCopied: boolean
   isHovered: boolean
   leadingSpace: boolean
+  host: 'box' | 'text'
 }
 
 /**
@@ -111,22 +112,32 @@ const CopyIcon: React.FC<CopyIconProps> = ({
   isCopied,
   isHovered,
   leadingSpace,
+  host,
 }) => {
   const theme = useTheme()
   const text = getCopyIconText(isCopied, isHovered, leadingSpace)
+  const fg = isCopied
+    ? 'green'
+    : isHovered
+      ? theme.foreground
+      : theme.muted
+  const attributes = isCopied || isHovered ? undefined : TextAttributes.DIM
 
-  if (isCopied) {
-    return <span fg="green">{text}</span>
-  }
-
-  if (isHovered) {
-    return <span fg={theme.foreground}>{text}</span>
+  // Keep the icon as a primitive text child. `Clickable as="text"` already
+  // supplies the outer text host, so it must receive a modifier rather than a
+  // nested text host. The box host needs its own text host beside rich content.
+  if (host === 'text') {
+    return (
+      <span fg={fg} attributes={attributes}>
+        {text}
+      </span>
+    )
   }
 
   return (
-    <span fg={theme.muted} attributes={TextAttributes.DIM}>
+    <text fg={fg} attributes={attributes}>
       {text}
-    </span>
+    </text>
   )
 }
 
@@ -137,6 +148,8 @@ interface CopyButtonProps {
   children?: ReactNode
   /** Whether to include a leading space before the icon (default: true) */
   leadingSpace?: boolean
+  /** Host element for the button; use `box` when children include layout nodes. */
+  as?: 'box' | 'text'
   /** Style props passed to the underlying Clickable */
   style?: Record<string, string | number | undefined>
 }
@@ -151,9 +164,14 @@ interface CopyButtonProps {
  * // Standalone copy button
  * <CopyButton textToCopy="some text" leadingSpace={false} />
  *
- * // With content (icon appears after children)
+ * // With inline text content (icon appears after children)
  * <CopyButton textToCopy={content} style={{ wrapMode: 'word' }}>
  *   <span>Content to display</span>
+ * </CopyButton>
+ *
+ * // With rich markdown/layout content
+ * <CopyButton as="box" textToCopy={content}>
+ *   <box>Rich content</box>
  * </CopyButton>
  * ```
  */
@@ -161,6 +179,7 @@ export const CopyButton: React.FC<CopyButtonProps> = ({
   textToCopy,
   children,
   leadingSpace = true,
+  as = 'text',
   style,
 }) => {
   const { isCopied, copy } = useCopyToClipboard(textToCopy)
@@ -186,7 +205,7 @@ export const CopyButton: React.FC<CopyButtonProps> = ({
 
   return (
     <Clickable
-      as="text"
+      as={as}
       style={style}
       onMouseDown={handleCopy}
       onMouseOver={handleMouseOver}
@@ -197,6 +216,7 @@ export const CopyButton: React.FC<CopyButtonProps> = ({
         isCopied={isCopied}
         isHovered={isHovered}
         leadingSpace={leadingSpace}
+        host={as}
       />
     </Clickable>
   )

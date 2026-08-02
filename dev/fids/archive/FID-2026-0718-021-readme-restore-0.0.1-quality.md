@@ -1,10 +1,18 @@
 # FID-2026-0718-021 — high — README.md Quality Restoration v2 (0.0.1 → 0.0.2 Pre-Rebrand Adaptation)
 
-**Status:** closed / archived
-**Severity:** high (user-flagged first-impression quality regression; affects public release perception)
-**Opened:** 2026-07-19
+**Filename:** `FID-2026-0718-021-readme-restore-0.0.1-quality.md`
+**ID:** FID-2026-0718-022
+**Severity:** high
+**Status:** closed
+**Created:** 2026-0718 00:00
+**Author:** Historical record (metadata backfill)
 
 ---
+
+## Metadata Normalization Note
+
+This historical record was normalized on 2026-07-31 for FreeBuff ECHO v0.1.2 compliance. The original body and evidence are preserved. Original status: `closed / archived`; Original ID: `FID-2026-0718-021-readme-restore-0.0.1-quality`. Canonical ID: `FID-2026-0718-022`. Backfilled fields: Filename, ID, Created, Author. Canonical status reflects the record's lifecycle location; it does not add implementation evidence.
+
 
 ## Honest Correction (Cross-FID)
 

@@ -2,7 +2,10 @@ import { TEST_USER_ID } from '@savant-code/common/old-constants'
 import { emptyMcpServers } from '@savant-code/common/testing/fixtures/agent-runtime'
 import { TEST_AGENT_RUNTIME_IMPL } from '@savant-code/common/testing/impl/agent-runtime'
 import { getInitialSessionState } from '@savant-code/common/types/session-state'
-import { assistantMessage, userMessage } from '@savant-code/common/util/messages'
+import {
+  assistantMessage,
+  userMessage,
+} from '@savant-code/common/util/messages'
 import {
   afterEach,
   beforeEach,
@@ -695,31 +698,33 @@ export function multiply(a: number, b: number): number {
 
       const mockGenerator = (function* () {
         // Make a propose_str_replace call
-        const step1 = yield {
-          toolName: 'propose_str_replace',
-          input: {
-            path: 'src/utils.ts',
-            replacements: [
-              {
-                oldString:
-                  'export function subtract(a: number, b: number): number {\n  return a - b;\n}',
-                newString: `export function subtract(a: number, b: number): number {
+        const proposalInput = {
+          path: 'src/utils.ts',
+          replacements: [
+            {
+              oldString:
+                'export function subtract(a: number, b: number): number {\n  return a - b;\n}',
+              newString: `export function subtract(a: number, b: number): number {
   return a - b;
 }
 
 export function multiply(a: number, b: number): number {
   return a * b;
 }`,
-                allowMultiple: false,
-              },
-            ],
-          },
+              allowMultiple: false,
+            },
+          ],
+        }
+        const step1 = yield {
+          toolName: 'propose_str_replace',
+          input: proposalInput,
         }
 
-        // Capture the tool call and result
+        // Capture the original tool input and its result. `step1` is the
+        // generator's public state, not the input sent to the tool.
         capturedToolCalls.push({
           toolName: 'propose_str_replace',
-          input: step1,
+          input: proposalInput,
         })
         const step1First = step1.toolResult?.[0]
         if (step1First?.type === 'json' && step1First.value) {

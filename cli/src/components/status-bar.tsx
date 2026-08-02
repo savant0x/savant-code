@@ -111,82 +111,69 @@ export const StatusBar = ({
     [statusIndicatorState.kind],
   )
 
-  const renderStatusIndicator = () => {
+  const renderStatusIndicator = (): { text: string; color: string } | null => {
     switch (statusIndicatorState.kind) {
       case 'ctrlC':
-        return <span fg={theme.secondary}>Press Ctrl-C again to exit</span>
+        return { text: 'Press Ctrl-C again to exit', color: theme.secondary }
 
       case 'clipboard':
-        // Use green color for feedback success messages
-        const isFeedbackSuccess =
-          statusIndicatorState.message.includes('Feedback sent')
-        return (
-          <span fg={isFeedbackSuccess ? theme.success : theme.primary}>
-            {statusIndicatorState.message}
-          </span>
-        )
+        // Use green color for feedback success messages.
+        return {
+          text: statusIndicatorState.message,
+          color: statusIndicatorState.message.includes('Feedback sent')
+            ? theme.success
+            : theme.primary,
+        }
 
       case 'reconnected':
-        return <span fg={theme.success}>Reconnected</span>
+        return { text: 'Reconnected', color: theme.success }
 
       case 'retrying':
-        return <span fg={theme.warning}>retrying...</span>
+        return { text: 'retrying...', color: theme.warning }
 
       case 'connecting':
-        return <span fg={theme.muted}>connecting...</span>
+        return { text: 'connecting...', color: theme.muted }
 
       case 'waiting':
-        return (
-          <span fg={theme.secondary}>
-            {loadingPhrase}
-          </span>
-        )
+        return { text: loadingPhrase, color: theme.secondary }
 
       case 'streaming':
-        return (
-          <span fg={theme.primary}>
-            {loadingPhrase}
-          </span>
-        )
+        return { text: loadingPhrase, color: theme.primary }
 
       case 'paused':
         return null
 
       case 'idle':
-        if (sessionProgress !== null) {
+        if (sessionProgress === null) return null
+        {
           const isUrgent =
             sessionProgress.remainingMs < SAVANT_FREE_COUNTDOWN_VISIBLE_MS
           const modelName =
             savantFreeSession?.status === 'active'
               ? getSavantFreeModel(savantFreeSession.model).displayName
               : null
-          return (
-            <span
-              fg={
-                isUnlimited
-                  ? theme.secondary
-                  : isUrgent
-                    ? theme.warning
-                    : theme.secondary
-              }
-            >
-              {modelName ? `${modelName} · ` : ''}
-              {isUnlimited
+          return {
+            text: `${modelName ? `${modelName} · ` : ''}${
+              isUnlimited
                 ? 'unlimited'
-                : formatSavantFreeSessionRemaining(sessionProgress.remainingMs)}
-            </span>
-          )
+                : formatSavantFreeSessionRemaining(sessionProgress.remainingMs)
+            }`,
+            color: isUnlimited
+              ? theme.secondary
+              : isUrgent
+                ? theme.warning
+                : theme.secondary,
+          }
         }
-        return null
     }
   }
 
-  const renderElapsedTime = () => {
+  const renderElapsedTime = (): string | null => {
     if (!shouldShowTimer || elapsedSeconds === 0) {
       return null
     }
 
-    return <span fg={theme.secondary}>{formatElapsedTime(elapsedSeconds)}</span>
+    return formatElapsedTime(elapsedSeconds)
   }
 
   const statusIndicatorContent = renderStatusIndicator()
@@ -196,7 +183,9 @@ export const StatusBar = ({
   // savant-free session fill is visible (otherwise the fill would float over
   // transparent space).
   const hasContent =
-    statusIndicatorContent || elapsedTimeContent || sessionProgress !== null
+    statusIndicatorContent !== null ||
+    elapsedTimeContent !== null ||
+    sessionProgress !== null
 
   return (
     <box
@@ -231,7 +220,14 @@ export const StatusBar = ({
           flexBasis: 0,
         }}
       >
-        <text style={{ wrapMode: 'none' }}>{statusIndicatorContent}</text>
+        {statusIndicatorContent !== null && (
+          <text
+            fg={statusIndicatorContent.color}
+            style={{ wrapMode: 'none' }}
+          >
+            {statusIndicatorContent.text}
+          </text>
+        )}
       </box>
 
       <box style={{ flexShrink: 0 }}>
@@ -249,7 +245,11 @@ export const StatusBar = ({
           gap: 1,
         }}
       >
-        <text style={{ wrapMode: 'none' }}>{elapsedTimeContent}</text>
+        {elapsedTimeContent !== null && (
+          <text fg={theme.secondary} style={{ wrapMode: 'none' }}>
+            {elapsedTimeContent}
+          </text>
+        )}
         {onStop &&
           (statusIndicatorState.kind === 'waiting' ||
             statusIndicatorState.kind === 'streaming') && (
@@ -264,10 +264,12 @@ export const StatusBar = ({
           sessionProgress.remainingMs < SAVANT_FREE_COUNTDOWN_VISIBLE_MS &&
           statusIndicatorState.kind !== 'idle' &&
           !isUnlimited && (
-            <text style={{ wrapMode: 'none' }}>
-              <span fg={theme.warning} attributes={TextAttributes.BOLD}>
-                {formatSavantFreeSessionCountdown(sessionProgress.remainingMs)}
-              </span>
+            <text
+              fg={theme.warning}
+              style={{ wrapMode: 'none' }}
+              attributes={TextAttributes.BOLD}
+            >
+              {formatSavantFreeSessionCountdown(sessionProgress.remainingMs)}
             </text>
           )}
       </box>

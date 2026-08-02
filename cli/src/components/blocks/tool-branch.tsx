@@ -1,7 +1,8 @@
 import { memo, useCallback } from 'react'
 
-import { ContentWithMarkdown } from './content-with-markdown'
+import { renderContentWithMarkdown } from './content-with-markdown'
 import { CopyableBlock } from './copyable-block'
+import { renderMarkdownContent } from './markdown-content'
 import { useTheme } from '../../hooks/use-theme'
 import { useChatStore } from '../../state/chat-store'
 import { shouldCollapseToolByDefault } from '../../utils/constants'
@@ -30,7 +31,9 @@ export const ToolBranch = memo(
   }: ToolBranchProps) => {
     const theme = useTheme()
     // Derive streaming boolean for this specific tool to avoid re-renders when other tools/agents change
-    const isStreaming = useChatStore((state) => state.streamingAgents.has(toolBlock.toolCallId))
+    const isStreaming = useChatStore((state) =>
+      state.streamingAgents.has(toolBlock.toolCallId),
+    )
 
     const sanitizePreview = (value: string): string =>
       value.replace(/[#*_`~\[\]()]/g, '').trim()
@@ -46,7 +49,7 @@ export const ToolBranch = memo(
     }
 
     const displayInfo = getToolDisplayInfo(toolBlock.toolName)
-    
+
     // Check if there's a registered custom component for this tool
     const toolRenderConfig = renderToolComponent(toolBlock, theme, {
       availableWidth,
@@ -54,11 +57,14 @@ export const ToolBranch = memo(
       previewPrefix: '',
       labelWidth: 0,
     })
-    
+
     // Tools without a registered component (fallback rendering) should be collapsed by default
     const hasRegisteredComponent = toolRenderConfig !== undefined
-    const isCollapsed = toolBlock.isCollapsed ?? 
-      (hasRegisteredComponent ? shouldCollapseToolByDefault(toolBlock.toolName) : true)
+    const isCollapsed =
+      toolBlock.isCollapsed ??
+      (hasRegisteredComponent
+        ? shouldCollapseToolByDefault(toolBlock.toolName)
+        : true)
 
     const inputContent = `\`\`\`json\n${JSON.stringify(toolBlock.input, null, 2)}\n\`\`\``
     const codeBlockLang =
@@ -81,7 +87,7 @@ export const ToolBranch = memo(
         : null
 
     const streamingPreview = isStreaming
-      ? commandPreview ?? `${sanitizePreview(firstLine)}...`
+      ? (commandPreview ?? `${sanitizePreview(firstLine)}...`)
       : ''
 
     const getToolFinishedPreview = useCallback(
@@ -106,51 +112,30 @@ export const ToolBranch = memo(
     )
 
     const finishedPreview = !isStreaming
-      ? toolRenderConfig?.collapsedPreview ??
-        getToolFinishedPreview(commandPreview, lastLine)
+      ? (toolRenderConfig?.collapsedPreview ??
+        getToolFinishedPreview(commandPreview, lastLine))
       : ''
 
     const agentMarkdownOptions = {
-      codeBlockWidth: Math.max(10, availableWidth - 12),
+      codeBlockWidth: Math.max(1, availableWidth),
       palette: {
         ...markdownPalette,
         codeTextFg: theme.foreground,
       },
     }
 
-    const displayContent = (
-      <ContentWithMarkdown
-        content={fullContent}
-        isStreaming={false}
-        codeBlockWidth={agentMarkdownOptions.codeBlockWidth}
-        palette={agentMarkdownOptions.palette}
-      />
-    )
-
-    const renderableDisplayContent =
-      displayContent === null ||
-      displayContent === undefined ||
-      displayContent === false ||
-      displayContent === ''
-        ? null
-        : (() => {
-            const textNode = displayContent as React.ReactElement<{
-              children?: React.ReactNode
-            }>
-            return (
-              <text
-                fg={theme.foreground}
-                style={{ wrapMode: 'word' }}
-                attributes={
-                  theme.messageTextAttributes && theme.messageTextAttributes !== 0
-                    ? theme.messageTextAttributes
-                    : undefined
-                }
-              >
-                {textNode.props.children}
-              </text>
-            )
-          })()
+    const renderableDisplayContent = renderMarkdownContent({
+      value: renderContentWithMarkdown({
+        content: fullContent,
+        isStreaming: false,
+        codeBlockWidth: agentMarkdownOptions.codeBlockWidth,
+        palette: agentMarkdownOptions.palette,
+      }),
+      theme,
+      getAttributes: (extra = 0) => (theme.messageTextAttributes ?? 0) | extra,
+      textColor: theme.foreground,
+      keyPrefix: `${keyPrefix}-content`,
+    })
 
     const headerName = displayInfo.name
 
@@ -163,7 +148,7 @@ export const ToolBranch = memo(
     }, [toolBlock.toolName, toolBlock.input, toolBlock.output])
 
     // Skip copy button for run_readonly_command results
-    const shouldShowCopyButton = toolBlock.toolName !== 'run_readonly_command';
+    const shouldShowCopyButton = toolBlock.toolName !== 'run_readonly_command'
 
     if (shouldShowCopyButton) {
       return (

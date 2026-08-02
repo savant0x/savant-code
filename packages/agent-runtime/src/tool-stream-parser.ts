@@ -1,7 +1,9 @@
 import { AnalyticsEvent } from '@savant-code/common/constants/analytics-events'
 
 import {
+  createLegacyToolCallFilterState,
   createStreamParserState,
+  filterLegacyToolCallText,
   parseStreamChunk,
 } from './util/stream-xml-parser'
 
@@ -101,6 +103,7 @@ export async function* processStreamWithTools(params: {
 
   // State for parsing XML tool calls from text stream
   const xmlParserState: StreamParserState = createStreamParserState()
+  const reasoningLegacyFilterState = createLegacyToolCallFilterState()
 
   async function processToolCallObject(params: {
     toolName: string
@@ -156,6 +159,16 @@ export async function* processStreamWithTools(params: {
     if (chunk === undefined) {
       flush()
       streamCompleted = true
+      return
+    }
+
+    if (chunk.type === 'reasoning') {
+      flush()
+      const filteredText = filterLegacyToolCallText(
+        chunk.text,
+        reasoningLegacyFilterState,
+      )
+      yield { ...chunk, text: filteredText }
       return
     }
 

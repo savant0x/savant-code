@@ -1,16 +1,18 @@
 # FID-2026-0718-011 — low — Cleanup Stale Agent References in free-agents.test.ts (Finding A)
 
-**Status:** closed / archived
-**Opened:** 2026-07-18
-**Severity:** low (test-only; no runtime impact; test suite currently failing → 0 errors expected post-fix)
-**Source:** A-Z System Test v3 — Finding A (`dev/scratchpad/az-system-test-v3-report.md`)
-**Reactor:** Orchestrator (Buffy, parent agent)
-**Validated by:** Cross-Agent Claim Rule — independent verification ✅ (finding is real, 2/10 tests fail live)
-**Depends on:** none
-**Blocks:** none
-**Drop-in scope:** Single FID. No scope reduction needed.
+**Filename:** `FID-2026-0718-011-free-agents-test-cleanup.md`
+**ID:** FID-2026-0718-011
+**Severity:** low
+**Status:** closed
+**Created:** 2026-0718 00:00
+**Author:** Historical record (metadata backfill)
 
 ---
+
+## Metadata Normalization Note
+
+This historical record was normalized on 2026-07-31 for FreeBuff ECHO v0.1.2 compliance. The original body and evidence are preserved. Original status: `closed / archived`; Original ID: `FID-2026-0718-011-free-agents-test-cleanup`. Canonical ID: `FID-2026-0718-011`. Backfilled fields: Filename, ID, Created, Author. Canonical status reflects the record's lifecycle location; it does not add implementation evidence.
+
 
 ## 1. Summary
 

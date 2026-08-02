@@ -105,20 +105,18 @@ export const MessageFooter: React.FC<MessageFooterProps> = ({
   // Loading timer
   if (shouldShowLoadingTimer) {
     return (
-      <text
-        attributes={TextAttributes.DIM}
+      <box
         style={{
-          wrapMode: 'none',
+          alignSelf: 'flex-end',
           marginTop: 0,
           marginBottom: 0,
-          alignSelf: 'flex-end',
         }}
       >
         <ElapsedTimer
           startTime={timerStartTime}
           attributes={TextAttributes.DIM}
         />
-      </text>
+      </box>
     )
   }
 

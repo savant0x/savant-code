@@ -2,12 +2,17 @@
 
 **Filename:** `dev/fids/FID-2026-0721-036-env-placeholder-convention.md`
 **ID:** FID-2026-0721-036
+**Canonical predecessor ID:** FID-2026-0721-036 (duplicate historical ID corrected by FID-2026-0731-004)
 **Severity:** low
 **Status:** closed
 **Created:** 2026-07-21
 **Author:** ECHO Agent (Perfection Loop)
 
 ---
+
+## Metadata Normalization Note
+
+Canonical ID: `FID-2026-0721-036`; Original ID: `FID-2026-0721-036-env-placeholder`. Historical body preserved.
 
 ## Summary
 

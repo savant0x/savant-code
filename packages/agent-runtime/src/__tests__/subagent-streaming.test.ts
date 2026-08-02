@@ -45,8 +45,8 @@ describe('Subagent Streaming', () => {
       outputMode: 'last_message',
       inputSchema: {
         prompt: {
-        safeParse: () => ({ success: true }),
-      } as unknown as AgentTemplate['inputSchema']['prompt'],
+          safeParse: () => ({ success: true }),
+        } as unknown as AgentTemplate['inputSchema']['prompt'],
       },
       spawnerPrompt: '',
       model: '',
@@ -99,7 +99,10 @@ describe('Subagent Streaming', () => {
           ...options.agentState,
           messageHistory: [assistantMessage('Test response from subagent')],
         },
-        output: { type: 'lastMessage', value: [assistantMessage('Test response from subagent')] },
+        output: {
+          type: 'lastMessage',
+          value: [assistantMessage('Test response from subagent')],
+        },
       }
     })
 
@@ -159,18 +162,12 @@ describe('Subagent Streaming', () => {
       toolCall,
     })
 
-    // Verify that subagent streaming messages were sent
-    expect(mockWriteToClient).toHaveBeenCalledTimes(2)
-
-    // First call is subagent_start
-    expect(mockWriteToClient).toHaveBeenNthCalledWith(
-      1,
+    // Activity events are also emitted while the subagent runs. Verify the
+    // lifecycle events without assuming they are the only client events.
+    expect(mockWriteToClient).toHaveBeenCalledWith(
       expect.objectContaining({ type: 'subagent_start' }),
     )
-
-    // Second call is subagent_finish
-    expect(mockWriteToClient).toHaveBeenNthCalledWith(
-      2,
+    expect(mockWriteToClient).toHaveBeenCalledWith(
       expect.objectContaining({ type: 'subagent_finish' }),
     )
     return

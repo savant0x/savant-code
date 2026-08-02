@@ -1,15 +1,18 @@
-**Status:** CLOSED + ARCHIVED (v3 close-out — implementation complete, Windows platform test caveat documented)
-**Opened:** 2026-07-18
-**Closed:** 2026-07-18
-**Severity:** high (closes FID-013 Q11 async-window caveat; `autonomy_level: 3` elevates further in autonomous context)
-**Source:** FID-2026-0718-013 v3 close-out + Phase 1 architecture investigation (basher + thinker pressure-test)
-**Reactor:** Orchestrator (Buffy) + thinker pressure-test
-**Validated by:** Cross-Agent Claim Rule — basher source-verified FS-write sites; thinker traced IPC flow agent-runtime → SDK → local tools; Nova audit pending
-**Depends on:** FID-2026-0718-013 v3 ✅ closed + shipped
-**Blocks:** none
-**Follows up to:** FID-2026-0718-015 (Windows platform test fixes — deferred, see Section 12)
+# FID: FID-2026-0718-014-path-safety-perimeter-completion
+
+**Filename:** `FID-2026-0718-014-path-safety-perimeter-completion.md`
+**ID:** FID-2026-0718-014
+**Severity:** high
+**Status:** closed
+**Created:** 2026-0718 00:00
+**Author:** Historical record (metadata backfill)
 
 ---
+
+## Metadata Normalization Note
+
+This historical record was normalized on 2026-07-31 for FreeBuff ECHO v0.1.2 compliance. The original body and evidence are preserved. Original status: `CLOSED + ARCHIVED (v3 close-out — implementation complete, Windows platform test caveat documented)`; Original ID: `FID-2026-0718-014-path-safety-perimeter-completion`. Canonical ID: `FID-2026-0718-014`. Backfilled fields: Filename, ID, Created, Author. Canonical status reflects the record's lifecycle location; it does not add implementation evidence.
+
 
 ## 1. Summary (unchanged from v2)
 

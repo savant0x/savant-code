@@ -21,7 +21,7 @@ import type { AgentTemplate } from '../templates/types'
 import type { FileProcessingState } from './handlers/tool/write-file'
 import type { ToolName } from '@savant-code/common/tools/constants'
 import type { SavantCodeToolCall } from '@savant-code/common/tools/list'
-import type { Logger } from '@savant-code/common/types/contracts/logger'
+import type { Logger as RuntimeLogger } from '@savant-code/common/types/contracts/logger'
 import type { ParamsExcluding } from '@savant-code/common/types/function-params'
 import type { JSONValue } from '@savant-code/common/types/json'
 import type {
@@ -40,7 +40,7 @@ export async function processStream(
     fileContext: ProjectFileContext
     fingerprintId: string
     fullResponse: string
-    logger: Logger
+    logger: RuntimeLogger
     messages: Message[]
     repoId: string | undefined
     runId: string
@@ -66,10 +66,7 @@ export async function processStream(
   > &
     ParamsExcluding<
       typeof processStreamWithTools,
-      | 'processors'
-      | 'defaultProcessor'
-      | 'loggerOptions'
-      | 'executeXmlToolCall'
+      'processors' | 'defaultProcessor' | 'loggerOptions' | 'executeXmlToolCall'
     >,
 ) {
   const {
@@ -90,9 +87,12 @@ export async function processStream(
   const toolResults: ToolMessage[] = []
   const toolResultsToAddToMessageHistory: ToolMessage[] = []
   const toolCalls: (SavantCodeToolCall | CustomToolCall)[] = []
-  const toolCallsToAddToMessageHistory: (SavantCodeToolCall | CustomToolCall)[] = []
+  const toolCallsToAddToMessageHistory: (
+    SavantCodeToolCall | CustomToolCall
+  )[] = []
   const assistantMessages: Message[] = []
   let hadToolCallError = false
+  let hasNativeIncompleteToolCall = false
   const errorMessages: Message[] = []
   const { promise: streamDonePromise, resolve: resolveStreamDonePromise } =
     Promise.withResolvers<void>()
@@ -133,7 +133,7 @@ export async function processStream(
   function createToolExecutionCallback(toolName: string, isXmlMode: boolean) {
     const responseHandler = createResponseHandler()
     return {
-      onTagStart: () => { },
+      onTagStart: () => {},
       onTagEnd: async (_: string, input: Record<string, JSONValue>) => {
         if (signal.aborted) {
           return
@@ -144,10 +144,10 @@ export async function processStream(
         // Check if this is an agent tool call that should be transformed to spawn_agents
         const transformed = !isNativeTool
           ? tryTransformAgentToolCall({
-            toolName,
-            input,
-            spawnableAgents: agentTemplate.spawnableAgents,
-          })
+              toolName,
+              input,
+              spawnableAgents: agentTemplate.spawnableAgents,
+            })
           : null
 
         // Read previousToolCallFinished at execution time to ensure proper sequential chaining.
@@ -306,6 +306,9 @@ export async function processStream(
       } else if (chunk.type === 'error') {
         onResponseChunk(chunk)
         hadToolCallError = true
+        if ('errorClass' in chunk && chunk.errorClass === 'native-incomplete') {
+          hasNativeIncompleteToolCall = true
+        }
         errorMessages.push(
           userMessage({
             content: withSystemTags(
@@ -356,15 +359,16 @@ export async function processStream(
     const completedToolCallIds = new Set(
       toolResultsToAddToMessageHistory.map((r) => r.toolCallId),
     )
-    const filteredToolCalls =
-      toolCallsToAddToMessageHistory.filter((tc) =>
-        completedToolCallIds.has(tc.toolCallId),
-      )
+    const filteredToolCalls = toolCallsToAddToMessageHistory.filter((tc) =>
+      completedToolCallIds.has(tc.toolCallId),
+    )
 
     agentState.messageHistory = buildArray<Message>([
       ...agentState.messageHistory,
       ...assistantMessages,
-      ...filteredToolCalls.map((toolCall) => assistantMessage({ ...toolCall, type: 'tool-call' })),
+      ...filteredToolCalls.map((toolCall) =>
+        assistantMessage({ ...toolCall, type: 'tool-call' }),
+      ),
       ...toolResultsToAddToMessageHistory,
       ...errorMessages,
     ])
@@ -378,6 +382,7 @@ export async function processStream(
     fullResponse: fullResponseChunks.join(''),
     fullResponseChunks,
     hadToolCallError,
+    hasNativeIncompleteToolCall,
     messageId,
     toolCalls,
     toolResults,
