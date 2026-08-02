@@ -5,7 +5,7 @@
 Built with TypeScript/Bun, governed by the [ECHO Protocol](https://github.com/savant0x/savant-code/blob/main/ECHO.md), and designed for local-first use with Ollama or any OpenAI-compatible provider.
 
 [![GitHub Stars](https://img.shields.io/github/stars/savant0x/savant-code?style=social)](https://github.com/savant0x/savant-code)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/savant0x/savant-code/blob/main/LICENSE)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/savant0x/savant-code/blob/main/LICENSE)
 
 ## Installation
 
@@ -150,4 +150,4 @@ Savant-Code requires at least one LLM provider. Run `/provider` to configure one
 - **GitHub:** [github.com/savant0x/savant-code](https://github.com/savant0x/savant-code)
 - **Docs:** [savant-code.com/docs](https://savant-code.com/docs)
 - **Issues:** [GitHub Issues](https://github.com/savant0x/savant-code/issues)
-- **License:** MIT
+- **License:** [Apache 2.0](https://github.com/savant0x/savant-code/blob/main/LICENSE)
