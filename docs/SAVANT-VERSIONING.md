@@ -1,6 +1,6 @@
 # Savant Versioning
 
-**Current release:** Savant-Code `0.0.16`.
+**Current release:** Savant-Code `0.0.17`.
 
 Savant-Code does **not** use SemVer. It uses **Savant Versioning** — a base-10 iteration counter with epistemic resets.
 

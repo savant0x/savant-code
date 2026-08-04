@@ -8,7 +8,7 @@
 project:
   name: 'savant-code'
   description: 'Multi-Agent AI Coding Assistant with ECHO Protocol governance. TypeScript monorepo, Bun runtime.'
-  version: '0.0.16'
+  version: '0.0.17'
 
 protocol:
   version: '0.2.0'

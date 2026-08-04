@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       release_tag:
-        description: 'Existing GitHub release tag to build and upload (for example v0.0.16)'
+        description: 'Existing GitHub release tag to build and upload (for example v0.0.17)'
         required: true
         type: string
 

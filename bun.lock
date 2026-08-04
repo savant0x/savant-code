@@ -42,7 +42,7 @@
     },
     "cli": {
       "name": "@savant-code/cli",
-      "version": "0.0.16",
+      "version": "0.0.17",
       "bin": {
         "savant-code-tui": "./bin/codecane",
       },
@@ -167,7 +167,7 @@
     },
     "sdk": {
       "name": "@savant-code/sdk",
-      "version": "0.0.16",
+      "version": "0.0.17",
       "dependencies": {
         "@ai-sdk/anthropic": "2.0.50",
         "@jitl/quickjs-wasmfile-release-sync": "0.31.0",

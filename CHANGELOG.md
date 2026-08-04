@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.0.17 — 2026-08-03
+
+### Changed
+
+- **Release alignment:** Advanced the active Savant-Code release metadata to `0.0.17` across the root, CLI, SDK, `VERSION`, protocol configuration, and current-facing documentation while preserving the historical `v0.0.16` record.
+- **Complete CLI package README:** Expanded the publishable npm README with the full feature surface: nine-agent ECHO orchestration, Thinker reasoning, fail-closed tool execution, Checkpoint & Rewind, permissions, planning/review/goal workflows, context compaction, skills, MCP, telemetry, diagnostics, SDK/runtime capabilities, and the complete provider matrix.
+- **Provider setup documentation:** Added safe dummy-only examples for OpenCode Go, TokenRouter, NVIDIA NIM, CommandCode, OpenRouter direct mode (`OR_MASTER_KEY` → `OPENROUTER_API_KEY` → `INFERENCE_API_KEY`), Ollama, custom endpoints, and `AMAZON_WORKER`. Private GitHub/npm publishing credentials are intentionally excluded.
+- **GitHub release workflow:** Existing release-artifact workflow supports manual dispatch for an explicit release tag and the five native binary targets.
+
+### Verification
+
+- CLI npm staging dry-run includes the expanded `README.md` and targets `savant-code@0.0.17`.
+- SDK remains version-aligned in the monorepo but is not included in the npm publication scope.
+- Historical `v0.0.16` release notes remain preserved below this entry.
+
 ## v0.0.16 — 2026-08-03
 
 ### Added

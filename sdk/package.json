@@ -1,7 +1,7 @@
 {
   "name": "@savant-code/sdk",
   "private": false,
-  "version": "0.0.16",
+  "version": "0.0.17",
   "description": "Official SDK for Savant-Code — AI coding agent & ECHO Protocol framework",
   "license": "Apache-2.0",
   "type": "module",

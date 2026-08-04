@@ -10,18 +10,18 @@ touches your repo.**
 Built with TypeScript/Bun, governed by the ECHO Protocol, and designed for
 local-first use with Ollama.
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-1.3.14-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![React](https://img.shields.io/badge/React-19-%23000000?style=flat-square&logo=react&logoColor=%2300fbff)](https://react.dev/)[![OpenTUI](https://img.shields.io/badge/OpenTUI-0.2.2-%23000000?style=flat-square&logo=opentui&logoColor=%2300fbff)](https://github.com/anomalyco/opentui)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](ECHO.md)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![Release](https://img.shields.io/badge/Release-v0.0.16-%23000000?style=flat-square&logo=semver&logoColor=%2300fbff)](CHANGELOG.md)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-1.3.14-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![React](https://img.shields.io/badge/React-19-%23000000?style=flat-square&logo=react&logoColor=%2300fbff)](https://react.dev/)[![OpenTUI](https://img.shields.io/badge/OpenTUI-0.2.2-%23000000?style=flat-square&logo=opentui&logoColor=%2300fbff)](https://github.com/anomalyco/opentui)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](ECHO.md)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![Release](https://img.shields.io/badge/Release-v0.0.17-%23000000?style=flat-square&logo=semver&logoColor=%2300fbff)](CHANGELOG.md)
 
 </div>
 
-> **v0.0.16** — Checkpoint & Rewind: a persistent per-turn edit safety net with `/rewind`
+> **v0.0.17** — Checkpoint & Rewind: a persistent per-turn edit safety net with `/rewind`
 > (restore code, conversation, both, or fork a session) built on a durable checkpoint store,
 > plus a repo-wide quality sweep that hardened every execution surface — agent runtime
 > (fail-closed tool-call streaming, Thinker cascade fixes), llm-providers + database
 > (crash-proof init, rowid ordering, statement caching), SDK impl + common (OAuth
 > rate-limit double-execution fix, zod `required` re-derivation), code-map, and the evals
 > runner — with ECHO protocol enforcement (programmatic tool primitives, fail-closed step
-> validation) and build hygiene (`bun run clean`, no orphan sourcemaps). v0.0.16's
+> validation) and build hygiene (`bun run clean`, no orphan sourcemaps). v0.0.17's
 > CommandCode provider, first-run onboarding, and synchronized release metadata carry
 > forward.
 

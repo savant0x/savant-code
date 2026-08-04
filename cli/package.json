@@ -1,6 +1,6 @@
 {
   "name": "@savant-code/cli",
-  "version": "0.0.16",
+  "version": "0.0.17",
   "type": "module",
   "bin": {
     "savant-code": "./bin/savant-code"

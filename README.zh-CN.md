@@ -8,16 +8,16 @@
 
 基于 TypeScript/Bun 构建，受 ECHO 协议治理，并针对本地优先的 Ollama 使用场景设计。
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-1.3.14-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![React](https://img.shields.io/badge/React-19-%23000000?style=flat-square&logo=react&logoColor=%2300fbff)](https://react.dev/)[![OpenTUI](https://img.shields.io/badge/OpenTUI-0.2.2-%23000000?style=flat-square&logo=opentui&logoColor=%2300fbff)](https://github.com/anomalyco/opentui)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](ECHO.md)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![Release](https://img.shields.io/badge/Release-v0.0.16-%23000000?style=flat-square&logo=semver&logoColor=%2300fbff)](CHANGELOG.md)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-1.3.14-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![React](https://img.shields.io/badge/React-19-%23000000?style=flat-square&logo=react&logoColor=%2300fbff)](https://react.dev/)[![OpenTUI](https://img.shields.io/badge/OpenTUI-0.2.2-%23000000?style=flat-square&logo=opentui&logoColor=%2300fbff)](https://github.com/anomalyco/opentui)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](ECHO.md)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![Release](https://img.shields.io/badge/Release-v0.0.17-%23000000?style=flat-square&logo=semver&logoColor=%2300fbff)](CHANGELOG.md)
 
 </div>
 
-> **v0.0.16** — 检查点与回退（Checkpoint & Rewind）：基于持久化检查点存储的每轮编辑安全网，通过
+> **v0.0.17** — 检查点与回退（Checkpoint & Rewind）：基于持久化检查点存储的每轮编辑安全网，通过
 > `/rewind`（可只恢复代码、只恢复对话、两者都恢复，或分叉会话），外加一轮覆盖所有执行面的仓库级
 > 质量大扫除——agent 运行时（fail-closed 工具调用流、Thinker 级联修复）、llm-providers + database
 > （防崩溃初始化、rowid 排序、语句缓存）、SDK 实现层 + common（OAuth 限流双重执行修复、zod
 > `required` 重新推导）、code-map 与 evals 运行器——以及 ECHO 协议强制（编程原语工具、fail-closed
-> 步骤校验）和构建卫生（`bun run clean`，不再产生孤儿 sourcemap）。v0.0.16 的 CommandCode 提供商、
+> 步骤校验）和构建卫生（`bun run clean`，不再产生孤儿 sourcemap）。v0.0.17 的 CommandCode 提供商、
 > 首次运行引导与同步的发布元数据一并延续。
 
 ---

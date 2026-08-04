@@ -19,7 +19,7 @@ cap, with explicit permission controls so you know exactly what is about to run.
 It is slower than Copilot. That is the point. We would rather ship code that
 actually works.
 
-Install the v0.0.16 release:
+Install the v0.0.17 release:
 
 ```bash
 npm install -g savant-code
