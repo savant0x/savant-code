@@ -61,28 +61,69 @@ If Ollama is not running, configure a hosted provider before sending a prompt:
 
 You can also enter `/provider` to choose from the interactive picker. Paste the
 key into the masked prompt; it is stored globally and is never added to chat
-history. The default OpenCode Go key uses `OPENCODE_GO_API_KEY`; CommandCode uses
-`COMMAND_CODE_API_KEY`. The key is persisted
-at `C:\\Users\\<username>\\.savant-code\\credentials.json` on Windows or
+history. The supported hosted providers are:
+
+| Provider | Command | Environment variable | Notes |
+| --- | --- | --- | --- |
+| Ollama | automatic detection | — | Local inference; no API key required |
+| OpenRouter direct | `DIRECT_PROVIDER=openrouter` | `OR_MASTER_KEY`, `OPENROUTER_API_KEY`, or `INFERENCE_API_KEY` | Direct mode; master key, regular key, then inference key precedence |
+| OpenCode Go | `/provider opencode-go` | `OPENCODE_GO_API_KEY` | Default hosted provider; MiMo 2.5 default |
+| TokenRouter | `/provider tokenrouter` | `TOKENROUTER_API_KEY` | Multi-provider gateway |
+| NVIDIA NIM | `/provider nvidia` | `NVIDIA_API_KEY` | NVIDIA-hosted inference |
+| CommandCode | `/provider commandcode` | `COMMAND_CODE_API_KEY` | OpenAI-compatible hosted inference |
+
+The key is persisted at
+`C:\\Users\\<username>\\.savant-code\\credentials.json` on Windows or
 `~/.savant-code/credentials.json` on macOS/Linux. Environment variables take
-precedence over saved credentials.
+precedence over saved credentials. For automation, set one provider key before
+launching Savant-Code:
 
 ```powershell
+# PowerShell — choose one provider key
 $env:OPENCODE_GO_API_KEY = "your-key"
+# $env:TOKENROUTER_API_KEY = "your-key"
+# $env:NVIDIA_API_KEY = "your-key"
+# $env:COMMAND_CODE_API_KEY = "your-key"
 savant-code
 ```
 
 ```cmd
+:: Command Prompt — choose one provider key
 set OPENCODE_GO_API_KEY=your-key
+:: set TOKENROUTER_API_KEY=your-key
+:: set NVIDIA_API_KEY=your-key
+:: set COMMAND_CODE_API_KEY=your-key
 savant-code
 ```
 
 ```bash
-export OPENCODE_GO_API_KEY=your-key
+# macOS/Linux — choose one provider key
+export OPENCODE_GO_API_KEY="your-key"
+# export TOKENROUTER_API_KEY="your-key"
+# export NVIDIA_API_KEY="your-key"
+# export COMMAND_CODE_API_KEY="your-key"
 savant-code
 ```
 
-Do not create a project-local `.env` file or edit `credentials.json` manually.
+### OpenRouter direct mode
+
+To bypass the Savant Code backend and route inference directly to OpenRouter, set:
+
+```bash
+export DIRECT_PROVIDER=openrouter
+export INFERENCE_BASE_URL=https://openrouter.ai/api/v1
+```
+
+OpenRouter key resolution is ordered as follows:
+
+1. `OR_MASTER_KEY` — exchanges for a regular key through OpenRouter `/api/v1/keys`.
+2. `OPENROUTER_API_KEY` — uses an existing regular OpenRouter key directly.
+3. `INFERENCE_API_KEY` — uses the SDK-specific inference key.
+
+Advanced Cloudflare Workers AI integrations use `CLOUDFLARE_API_TOKEN` together
+with `CLOUDFLARE_ACCOUNT_ID`. Ordinary CLI users should use `/provider` or one
+of the four provider-specific keys above. Do not create a project-local `.env`
+file or edit `credentials.json` manually.
 
 ---
 
@@ -350,19 +391,23 @@ models, and current permission mode.
 ### Configure a hosted provider key
 
 If Ollama is not running, Savant-Code needs a provider API key for the selected
-gateway model. On the first run, enter:
+gateway model. Use `/provider` for the interactive picker or choose one directly:
 
 ```text
-/provider
+/provider opencode-go
+/provider tokenrouter
+/provider nvidia
+/provider commandcode
 ```
 
-The key prompt is masked and stores the key globally in the Savant-Code config
-`credentials.json`; it is not added to chat history. The default provider is
-OpenCode Go (`OPENCODE_GO_API_KEY`). CommandCode uses `COMMAND_CODE_API_KEY`.
-You can also choose `/provider tokenrouter`, `/provider nvidia`, or
-`/provider commandcode`. Shell environment variables take precedence over stored
-keys, so CI and managed environments can continue to configure providers without
-using local persistence.
+The supported environment variables are `OPENCODE_GO_API_KEY`,
+`TOKENROUTER_API_KEY`, `NVIDIA_API_KEY`, and `COMMAND_CODE_API_KEY`. The key
+prompt is masked and stores the key globally in the Savant-Code config
+`credentials.json`; it is not added to chat history. Shell environment variables
+take precedence over stored keys, so CI and managed environments can configure
+providers without using local persistence. Advanced direct-provider integrations
+may use `INFERENCE_BASE_URL` and `INFERENCE_API_KEY`; OpenRouter can use
+`OPENROUTER_API_KEY` or `SAVANT_CODE_BYOK_OPENROUTER`.
 
 ---
 

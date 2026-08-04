@@ -26,43 +26,79 @@ and verify the result.
 
 ### Configure your provider
 
-If Ollama is not running, configure a hosted provider before sending your first prompt:
+Savant-Code supports local Ollama plus multiple hosted gateway providers. If Ollama is not running, configure a hosted
+provider before sending your first prompt:
 
 ```text
-/provider opencode-go
+/provider
 ```
 
-You can also enter `/provider` to choose from the interactive provider picker. Paste the key into the masked prompt;
-Savant-Code stores it globally and never adds it to chat history.
+This opens the interactive provider picker. You can also select a provider directly with `/provider <name>`:
 
-The default OpenCode Go key is read from `OPENCODE_GO_API_KEY`. CommandCode uses
-`COMMAND_CODE_API_KEY`. The persisted credential file is:
+| Provider | Picker command | Environment variable | Notes |
+| --- | --- | --- | --- |
+| Ollama | automatic local detection | — | Local inference; no API key required |
+| OpenRouter direct | `DIRECT_PROVIDER=openrouter` | `OR_MASTER_KEY`, `OPENROUTER_API_KEY`, or `INFERENCE_API_KEY` | Direct mode; key resolution uses master key, then regular key, then inference key |
+| OpenCode Go | `/provider opencode-go` | `OPENCODE_GO_API_KEY` | Default hosted provider; MiMo 2.5 is the default model |
+| TokenRouter | `/provider tokenrouter` | `TOKENROUTER_API_KEY` | Multi-provider gateway |
+| NVIDIA NIM | `/provider nvidia` | `NVIDIA_API_KEY` | NVIDIA-hosted inference |
+| CommandCode | `/provider commandcode` | `COMMAND_CODE_API_KEY` | OpenAI-compatible hosted inference |
+
+Paste the selected key into the masked prompt; Savant-Code stores it globally and never adds it to chat history. The
+credential file is:
 
 - **Windows:** `C:\\Users\\<username>\\.savant-code\\credentials.json`
 - **macOS/Linux:** `~/.savant-code/credentials.json`
 
-For automation, set the environment variable before launching Savant-Code:
+For automation, set the provider-specific environment variable before launching Savant-Code. Environment variables take
+precedence over saved credentials:
 
 ```powershell
-# PowerShell
+# PowerShell — choose one provider key
 $env:OPENCODE_GO_API_KEY = "your-key"
+# $env:TOKENROUTER_API_KEY = "your-key"
+# $env:NVIDIA_API_KEY = "your-key"
+# $env:COMMAND_CODE_API_KEY = "your-key"
 savant-code
 ```
 
 ```cmd
-:: Command Prompt
+:: Command Prompt — choose one provider key
 set OPENCODE_GO_API_KEY=your-key
+:: set TOKENROUTER_API_KEY=your-key
+:: set NVIDIA_API_KEY=your-key
+:: set COMMAND_CODE_API_KEY=your-key
 savant-code
 ```
 
 ```bash
-# macOS/Linux
-export OPENCODE_GO_API_KEY=your-key
+# macOS/Linux — choose one provider key
+export OPENCODE_GO_API_KEY="your-key"
+# export TOKENROUTER_API_KEY="your-key"
+# export NVIDIA_API_KEY="your-key"
+# export COMMAND_CODE_API_KEY="your-key"
 savant-code
 ```
 
-Environment variables take precedence over the saved credential. Do not create a project-local `.env` file or edit
-`credentials.json` manually.
+#### OpenRouter direct mode
+
+To bypass the Savant Code backend and route inference directly to OpenRouter, set:
+
+```bash
+export DIRECT_PROVIDER=openrouter
+export INFERENCE_BASE_URL=https://openrouter.ai/api/v1
+```
+
+The OpenRouter credential precedence is:
+
+1. `OR_MASTER_KEY` — exchanges for a regular OpenRouter key through `/api/v1/keys`.
+2. `OPENROUTER_API_KEY` — uses an existing regular OpenRouter key directly.
+3. `INFERENCE_API_KEY` — uses the SDK-specific inference key.
+
+For advanced direct-provider or backend integrations, Cloudflare Workers AI uses `CLOUDFLARE_API_TOKEN` together with
+`CLOUDFLARE_ACCOUNT_ID`. These variables are for advanced configurations; ordinary CLI users should use `/provider` or
+one of the four provider-specific keys above. Do not create a project-local `.env` file or edit `credentials.json`
+manually.
 
 ## What Makes Savant-Code Different
 

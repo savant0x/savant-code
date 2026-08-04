@@ -53,26 +53,64 @@ ollama serve
 ```
 
 你也可以输入 `/provider` 从交互式选择器中选择。将密钥粘贴到遮罩提示框中；它会被全局存储，且永远不会写入
-聊天记录。默认的 OpenCode Go 密钥使用 `OPENCODE_GO_API_KEY`；CommandCode 使用
-`COMMAND_CODE_API_KEY`。密钥持久化在 Windows 的 `C:\Users\<username>\.savant-code\credentials.json`
-或 macOS/Linux 的 `~/.savant-code/credentials.json`。环境变量优先于已保存的凭据。
+聊天记录。支持的托管提供商包括：
+
+| 提供商 | 命令 | 环境变量 | 说明 |
+| --- | --- | --- | --- |
+| Ollama | 自动检测 | — | 本地推理；无需 API 密钥 |
+| OpenRouter 直连 | `DIRECT_PROVIDER=openrouter` | `OR_MASTER_KEY`、`OPENROUTER_API_KEY` 或 `INFERENCE_API_KEY` | 直连模式；优先使用主密钥、普通密钥，再使用推理密钥 |
+| OpenCode Go | `/provider opencode-go` | `OPENCODE_GO_API_KEY` | 默认托管提供商；默认模型为 MiMo 2.5 |
+| TokenRouter | `/provider tokenrouter` | `TOKENROUTER_API_KEY` | 多提供商网关 |
+| NVIDIA NIM | `/provider nvidia` | `NVIDIA_API_KEY` | NVIDIA 托管推理 |
+| CommandCode | `/provider commandcode` | `COMMAND_CODE_API_KEY` | OpenAI 兼容的托管推理 |
+
+密钥持久化在 Windows 的 `C:\Users\<username>\.savant-code\credentials.json` 或 macOS/Linux 的
+`~/.savant-code/credentials.json`。环境变量优先于已保存的凭据。自动化时，在启动 Savant-Code 前设置一个提供商密钥：
 
 ```powershell
+# PowerShell —— 选择一个提供商密钥
 $env:OPENCODE_GO_API_KEY = "your-key"
+# $env:TOKENROUTER_API_KEY = "your-key"
+# $env:NVIDIA_API_KEY = "your-key"
+# $env:COMMAND_CODE_API_KEY = "your-key"
 savant-code
 ```
 
 ```cmd
+:: 命令提示符 —— 选择一个提供商密钥
 set OPENCODE_GO_API_KEY=your-key
+:: set TOKENROUTER_API_KEY=your-key
+:: set NVIDIA_API_KEY=your-key
+:: set COMMAND_CODE_API_KEY=your-key
 savant-code
 ```
 
 ```bash
-export OPENCODE_GO_API_KEY=your-key
+# macOS/Linux —— 选择一个提供商密钥
+export OPENCODE_GO_API_KEY="your-key"
+# export TOKENROUTER_API_KEY="your-key"
+# export NVIDIA_API_KEY="your-key"
+# export COMMAND_CODE_API_KEY="your-key"
 savant-code
 ```
 
-请勿创建项目级的 `.env` 文件，也不要手动编辑 `credentials.json`。
+### OpenRouter 直连模式
+
+如需绕过 Savant Code 后端、将推理直接路由到 OpenRouter，请设置：
+
+```bash
+export DIRECT_PROVIDER=openrouter
+export INFERENCE_BASE_URL=https://openrouter.ai/api/v1
+```
+
+OpenRouter 凭据优先级如下：
+
+1. `OR_MASTER_KEY` —— 通过 OpenRouter `/api/v1/keys` 换取普通密钥。
+2. `OPENROUTER_API_KEY` —— 直接使用已有的普通 OpenRouter 密钥。
+3. `INFERENCE_API_KEY` —— 使用 SDK 专用推理密钥。
+
+高级 Cloudflare Workers AI 集成使用 `CLOUDFLARE_API_TOKEN` 与 `CLOUDFLARE_ACCOUNT_ID`。普通 CLI 用户应使用
+`/provider` 或上面的四个提供商专用密钥。请勿创建项目级 `.env` 文件，也不要手动编辑 `credentials.json`。
 
 ---
 
@@ -286,16 +324,20 @@ savant-code
 
 ### 配置托管提供商密钥
 
-如果 Ollama 没有运行，Savant-Code 需要所选网关模型的提供商 API 密钥。首次运行时输入：
+如果 Ollama 没有运行，Savant-Code 需要所选网关模型的提供商 API 密钥。可使用交互式选择器，也可以直接选择：
 
 ```text
-/provider
+/provider opencode-go
+/provider tokenrouter
+/provider nvidia
+/provider commandcode
 ```
 
-密钥提示为遮罩输入，并将密钥全局存储在 Savant-Code 配置的 `credentials.json` 中；不会加入聊天记录。
-默认提供商是 OpenCode Go（`OPENCODE_GO_API_KEY`）。CommandCode 使用 `COMMAND_CODE_API_KEY`。
-你还可以选择 `/provider tokenrouter`、`/provider nvidia` 或 `/provider commandcode`。shell 环境变量
-优先于已存储的密钥，因此 CI 与托管环境可以不使用本地持久化来配置提供商。
+支持的环境变量是 `OPENCODE_GO_API_KEY`、`TOKENROUTER_API_KEY`、`NVIDIA_API_KEY` 与
+`COMMAND_CODE_API_KEY`。密钥提示为遮罩输入，并将密钥全局存储在 Savant-Code 配置的 `credentials.json` 中；不会加入
+聊天记录。shell 环境变量优先于已存储的密钥，因此 CI 与托管环境可以不使用本地持久化来配置提供商。高级直接提供商
+集成可以使用 `INFERENCE_BASE_URL` 与 `INFERENCE_API_KEY`；OpenRouter 可使用 `OPENROUTER_API_KEY` 或
+`SAVANT_CODE_BYOK_OPENROUTER`。
 
 ---
 
