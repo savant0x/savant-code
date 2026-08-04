@@ -1,9 +1,10 @@
+<!-- markdownlint-disable MD013 -->
+
 # Savant-Code
 
 **A terminal-native multi-agent AI coding assistant that audits every change before it touches your repo.**
 
-Built with TypeScript/Bun, governed by the [ECHO Protocol](https://github.com/savant0x/savant-code/blob/main/ECHO.md),
-and designed for local-first use with Ollama or any OpenAI-compatible provider.
+Built with TypeScript/Bun, governed by the [ECHO Protocol](https://github.com/savant0x/savant-code/blob/main/ECHO.md), and designed for local-first use with Ollama or any OpenAI-compatible provider.
 
 [![GitHub Stars](https://img.shields.io/github/stars/savant0x/savant-code?style=social)](https://github.com/savant0x/savant-code)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/savant0x/savant-code/blob/main/LICENSE)
@@ -21,40 +22,46 @@ cd your-project
 savant-code
 ```
 
-Then just start chatting — describe what you want and Savant-Code will read your codebase, plan changes, implement them,
-and verify the result.
+Describe the change you want. Savant-Code explores the repository, plans the work, implements approved changes, and verifies the result.
 
-### Configure your provider
+If Ollama is installed and running, it is detected automatically and requires no API key:
 
-Savant-Code supports local Ollama plus multiple hosted gateway providers. If Ollama is not running, configure a hosted
-provider before sending your first prompt:
+```bash
+ollama serve
+savant-code
+```
+
+Run `/health` inside the chat to inspect Ollama connectivity, available local models, provider mode, and permission mode.
+
+## Provider Setup
+
+Savant-Code supports local Ollama, hosted gateway providers, and direct OpenRouter or OpenAI-compatible endpoints. Use the interactive picker:
 
 ```text
 /provider
 ```
 
-This opens the interactive provider picker. You can also select a provider directly with `/provider <name>`:
+Or select one of the supported gateway providers directly:
 
-| Provider | Picker command | Environment variable | Notes |
+| Provider | Selection | Environment variable | Notes |
 | --- | --- | --- | --- |
-| Ollama | automatic local detection | — | Local inference; no API key required |
-| OpenRouter direct | `DIRECT_PROVIDER=openrouter` | `OR_MASTER_KEY`, `OPENROUTER_API_KEY`, or `INFERENCE_API_KEY` | Direct mode; key resolution uses master key, then regular key, then inference key |
-| OpenCode Go | `/provider opencode-go` | `OPENCODE_GO_API_KEY` | Default hosted provider; MiMo 2.5 is the default model |
+| Ollama | Automatic detection | `OLLAMA_HOST` (optional) | Local inference; no API key required |
+| OpenCode Go | `/provider opencode-go` | `OPENCODE_GO_API_KEY` | Hosted gateway; MiMo 2.5 is the default model |
 | TokenRouter | `/provider tokenrouter` | `TOKENROUTER_API_KEY` | Multi-provider gateway |
 | NVIDIA NIM | `/provider nvidia` | `NVIDIA_API_KEY` | NVIDIA-hosted inference |
 | CommandCode | `/provider commandcode` | `COMMAND_CODE_API_KEY` | OpenAI-compatible hosted inference |
+| OpenRouter direct | `DIRECT_PROVIDER=openrouter` | `OR_MASTER_KEY`, `OPENROUTER_API_KEY`, or `INFERENCE_API_KEY` | Direct mode without the Savant backend |
+| Custom endpoint | Environment configuration | `INFERENCE_BASE_URL`, `INFERENCE_API_KEY` | Advanced OpenAI-compatible endpoint |
 
-Paste the selected key into the masked prompt; Savant-Code stores it globally and never adds it to chat history. The
-credential file is:
+The interactive key prompt is masked. Saved provider credentials are stored in the user configuration directory and are not added to chat history:
 
-- **Windows:** `C:\\Users\\<username>\\.savant-code\\credentials.json`
+- **Windows:** `C:\Users\<username>\.savant-code\credentials.json`
 - **macOS/Linux:** `~/.savant-code/credentials.json`
 
-For automation, set the provider-specific environment variable before launching Savant-Code. Environment variables take
-precedence over saved credentials:
+Shell environment variables take precedence over saved credentials. Configure one provider key before launching:
 
 ```powershell
-# PowerShell — choose one provider key
+# PowerShell — choose one hosted gateway
 $env:OPENCODE_GO_API_KEY = "your-key"
 # $env:TOKENROUTER_API_KEY = "your-key"
 # $env:NVIDIA_API_KEY = "your-key"
@@ -63,7 +70,7 @@ savant-code
 ```
 
 ```cmd
-:: Command Prompt — choose one provider key
+:: Windows Command Prompt — choose one hosted gateway
 set OPENCODE_GO_API_KEY=your-key
 :: set TOKENROUTER_API_KEY=your-key
 :: set NVIDIA_API_KEY=your-key
@@ -72,7 +79,7 @@ savant-code
 ```
 
 ```bash
-# macOS/Linux — choose one provider key
+# macOS/Linux — choose one hosted gateway
 export OPENCODE_GO_API_KEY="your-key"
 # export TOKENROUTER_API_KEY="your-key"
 # export NVIDIA_API_KEY="your-key"
@@ -80,173 +87,262 @@ export OPENCODE_GO_API_KEY="your-key"
 savant-code
 ```
 
-#### OpenRouter direct mode
+### OpenRouter direct mode
 
-To bypass the Savant Code backend and route inference directly to OpenRouter, set:
+To bypass the Savant Code backend for inference and route directly to OpenRouter:
 
 ```bash
 export DIRECT_PROVIDER=openrouter
 export INFERENCE_BASE_URL=https://openrouter.ai/api/v1
 ```
 
-The OpenRouter credential precedence is:
+The credential resolution order is:
 
-1. `OR_MASTER_KEY` — exchanges for a regular OpenRouter key through `/api/v1/keys`.
+1. `OR_MASTER_KEY` — exchanges a master key for a regular key through OpenRouter `/api/v1/keys`.
 2. `OPENROUTER_API_KEY` — uses an existing regular OpenRouter key directly.
 3. `INFERENCE_API_KEY` — uses the SDK-specific inference key.
 
-For advanced direct-provider or backend integrations, Cloudflare Workers AI uses `CLOUDFLARE_API_TOKEN` together with
-`CLOUDFLARE_ACCOUNT_ID`. These variables are for advanced configurations; ordinary CLI users should use `/provider` or
-one of the four provider-specific keys above. Do not create a project-local `.env` file or edit `credentials.json`
-manually.
+### Complete safe local configuration example
+
+The following is a public template containing dummy values only. Copy it to `.env.local` for local development, then replace only the values you actually use. Configure one inference mode or hosted provider at a time; the entries below document the complete variable surface, not a recommendation to enable every provider simultaneously. `.env.local` must remain private and gitignored. Never copy real credentials into documentation.
+
+```dotenv
+# Core and app configuration
+NEXT_PUBLIC_CB_ENVIRONMENT=dev
+NEXT_PUBLIC_WEB_PORT=3000
+NEXT_PUBLIC_SAVANT_CODE_APP_URL=http://localhost:3000
+# NEXT_PUBLIC_FREEBUFF_APP_URL=http://localhost:3001
+
+# Analytics, support, and billing placeholders
+NEXT_PUBLIC_POSTHOG_API_KEY=phc_dummy_replace_me
+NEXT_PUBLIC_POSTHOG_HOST_URL=http://localhost:4000
+NEXT_PUBLIC_GRAVITY_PIXEL_ID=00000000-0000-0000-0000-000000000000
+NEXT_PUBLIC_SUPPORT_EMAIL=replace-me@example.com
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_dummy_replace_me
+NEXT_PUBLIC_STRIPE_CUSTOMER_PORTAL=http://localhost:3000/portal
+NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION_ID=dummy_replace_me
+
+# OpenRouter direct mode
+DIRECT_PROVIDER=openrouter
+INFERENCE_BASE_URL=https://openrouter.ai/api/v1
+OR_MASTER_KEY=dummy-or-master-key-replace-me
+# OPENROUTER_API_KEY=dummy-openrouter-api-key-replace-me
+# INFERENCE_API_KEY=dummy-inference-api-key-replace-me
+
+# Supported hosted gateways
+OPENCODE_GO_API_KEY=dummy-opencode-go-key-replace-me
+TOKENROUTER_API_KEY=dummy-tokenrouter-key-replace-me
+NVIDIA_API_KEY=dummy-nvidia-key-replace-me
+COMMAND_CODE_API_KEY=dummy-commandcode-key-replace-me
+
+# Local Ollama override (optional)
+# OLLAMA_HOST=http://localhost:11434
+
+# Optional backend and advanced integrations
+# SAVANT_CODE_API_KEY=backend-dummy-replace-me
+# CLOUDFLARE_API_TOKEN=cloudflare-dummy-replace-me
+# CLOUDFLARE_ACCOUNT_ID=cloudflare-account-dummy-replace-me
+AMAZON_WORKER=amazon-worker-dummy-replace-me
+```
+
+`AMAZON_WORKER` is retained for local deployment integrations. `GITHUB_TOKEN` and `NPM_PUBLISH` are intentionally not part of the public template because they are private release credentials.
 
 ## What Makes Savant-Code Different
 
-Savant-Code isn't a single AI model guessing at your code. It's a **multi-agent system** where 9 specialized agents
-coordinate through a strict protocol to audit every change before it touches your files.
+Savant-Code is a multi-agent system rather than a single model guessing at your code. Nine canonical ECHO roles coordinate with strict separation of duties:
 
-### The Agent Roster
-
-| Agent | Role |
-|-------|------|
-| **Savant** | Orchestrator — routes work, enforces protocol, spawns agents |
-| **Detective** | Discovers bugs and issues with evidence before any code is written |
+| Agent | Responsibility |
+| --- | --- |
+| **Savant** | Orchestrator — routes work, enforces protocol, and spawns agents |
+| **Detective** | Finds bugs and issues with evidence before code is written |
 | **Forge** | Implements code changes from a converged plan |
-| **Verifier** | Independent double-audit after implementation |
-| **Thinker** | Deep sequential reasoning for complex problems |
-| **Scout** | Explores codebases to gather context |
-| **Researcher** | Web search and documentation lookup |
-| **Recorder** | FID lifecycle management and tracking |
-| **Scribe** | Session summaries and knowledge capture |
+| **Verifier** | Performs the independent double-audit after implementation |
+| **Recorder** | Manages FID lifecycle and release tracking |
+| **Thinker** | Performs deep sequential reasoning for complex problems |
+| **Scout** | Explores files and code to gather context |
+| **Researcher** | Performs web search and documentation lookup |
+| **Scribe** | Captures session summaries and durable knowledge |
+
+Infrastructure helpers such as terminal execution, browser automation, and web/docs tool libraries support these roles; they are not additional roster members.
 
 ### ECHO Protocol
 
-Every change follows the **ECHO Perfection Loop**:
+Every code change follows the ECHO Perfection Loop:
 
-1. **RED** — Identify ALL failures and issues with evidence
-2. **GREEN** — Fix with minimal, surgical changes
-3. **AUDIT** — Independent verification by a separate agent
-4. **COMPLETE** — Document results, archive tracking
+1. **RED** — identify all failures and issues with evidence.
+2. **GREEN** — implement minimal, surgical changes from the converged FID.
+3. **AUDIT** — independently verify the implementation and call-graph reachability.
+4. **SELF-CORRECT** — resolve audit findings and repeat verification when needed.
+5. **COMPLETE** — record evidence, update tracking, and close the work item.
 
-No code is written without a plan. No plan is accepted without audit. No audit passes without evidence.
+No code is written without a converged plan, and the implementing agent cannot serve as the final verifier.
 
 ## Features
 
-### Multi-Agent Orchestration
+### Multi-agent orchestration
 
-9 specialized agents coordinate via the ECHO Protocol. Detective finds issues, Forge implements, Verifier audits,
-Thinker reasons through complex problems, and Recorder tracks everything.
+- Nine canonical agents coordinate through ECHO with explicit separation of duties.
+- Child agents receive only their authorized tool subset through strict allowlist filtering.
+- Parallel agent work supports exploration, research, implementation, and independent review.
+- FID-bound execution keeps implementation tied to an approved specification.
 
-### Thinker with Sequential Thinking
+### Thinker and sequential reasoning
 
-The Thinker agent accumulates stacked reasoning steps, converges to a typed non-null result, and never returns an empty
-or null output. Each thought builds on the previous one.
+The Thinker accumulates typed sequential reasoning steps and converges to a non-null final artifact containing status, synthesis, payload, metrics, and thoughts. Thinker cascades preserve prompt inheritance while keeping child tools restricted.
 
-### Native Tool-Call Hardening
+### Safe execution and tool-call hardening
 
-Fail-closed streaming boundary for incomplete or malformed tool calls. Stale-fragment replacement for placeholder
-arguments. Permissive coercion of stringified values before strict validation.
+- Fail-closed handling for incomplete, malformed, or truncated native tool calls.
+- Strict tool schema validation with safe coercion of stringified numbers and booleans.
+- Programmatic tool primitives with explicit authorization boundaries.
+- Write-gate checkpoints capture files before `write_file`, `str_replace`, or `apply_patch` changes.
+- Tool errors, cancellation, retry, and child-agent failures are surfaced rather than silently treated as success.
 
-### Tool Permission Boundary
+### Checkpoint and Rewind
 
-Strict allowlist-based tool provisioning. Restricted agents never receive parent-only tools. Each agent has exactly the
-tools it needs — no more.
+Each user turn can persist the pre-edit content of every first-touched file, including subagent writes. `/rewind` supports:
 
-### Gateway Providers
+- **Code only** — restore files while keeping the conversation.
+- **Conversation only** — restore the transcript boundary without changing files.
+- **Both** — restore code and conversation together.
+- **Fork** — restore the selected turn into a fresh chat.
 
-Works with Ollama (local-first) and any OpenAI-compatible API:
+Retention is bounded to the most recent 20 turns, restore paths are revalidated, and terminal side effects are intentionally not rewound. No Git repository is required.
 
-- **OpenCode Go** (default) — MiMo 2.5
-- **OpenRouter** — access to hundreds of models
-- **NVIDIA NIM** — enterprise inference
-- **Cloudflare Workers AI** — edge inference
-- **TokenRouter** — multi-provider routing
-- **CommandCode** — OpenAI-compatible hosted inference
-- **Any OpenAI-compatible endpoint** — custom providers via `/provider`
+### Permissions and modes
 
-### Context Compaction
+- `--permission-mode safe|prompt|unsafe` selects the startup policy.
+- `/permissions` (aliases `/sandbox` and `/safety`) views or changes the policy.
+- `safe` denies risky tools; `prompt` currently also denies them because interactive confirmations are not yet implemented; `unsafe` allows them explicitly.
+- `EDIT`, `ANALYZE`, and `SCAFFOLD` modes change the execution scope at runtime.
 
-4-layer progressive auto-compaction keeps your session running through large codebases without hitting context limits.
+### Planning, review, and goals
 
-### Rich Terminal UI
+- `/interview` turns an underspecified idea into a structured specification.
+- `/plan` creates an implementation plan.
+- `/review` opens a focused code-review workflow.
+- `/goal` defines a verifiable goal.
+- `/loop` schedules recurring checks with cadence, run counts, and convergence detection.
 
-- Streaming token-by-token output
-- Copy buttons on code blocks, tool outputs, and diffs
-- Mode switching (EDIT / ANALYZE / SCAFFOLD)
-- Light/dark theming with Neon Slate aesthetic
-- Provider picker with masked API key input
-- Collapsible sidebar sections
+### Context and project knowledge
 
-### Goal Loop
+- Four-layer progressive context compaction keeps large repositories within model limits.
+- `knowledge.md` files provide durable project conventions and preferences.
+- User-level knowledge can be loaded alongside project knowledge.
+- OpenClaw-format `SKILL.md` files are discovered and exposed as native skills.
+- MCP servers are discovered at startup and their tools are published to the model.
+- Gateway model context lengths can be resolved from the live catalog.
 
-Set a goal and a cadence — Savant-Code will check and work toward it on a schedule.
+### Terminal UI
 
-```bash
-/goal fix all failing tests
-/loop 5m
-```
+- Token-by-token streaming with cancellation and retry backoff.
+- Universal copy actions for code blocks, tool output, and diffs.
+- Light/dark themes with the Neon Slate aesthetic.
+- Collapsible sidebar sections and FID cards.
+- `@filename` and `@AgentName` autocomplete.
+- Bash mode via `!command` or `/bash` with permission enforcement.
+- Masked provider setup and health diagnostics.
+- Telemetry consent controls through `/telemetry status|enable|disable`.
+- Optional image attachments for multimodal providers.
 
-### Slash Commands
+### SDK and runtime
 
-| Command | Description |
-|---------|-------------|
-| `/model` | Switch LLM provider and model |
-| `/provider` | Configure API keys (interactive picker) |
-| `/help` | Show all commands |
-| `/new` | Start a fresh conversation |
-| `/history` | Browse past sessions |
-| `/goal` | Set a persistent goal |
-| `/loop` | Schedule recurring checks |
-| `/telemetry` | Toggle analytics (on/off/status) |
-| `/theme:toggle` | Switch light/dark mode |
-| `/init` | Scaffold agent config files |
+The package ships the CLI on top of shared runtime and SDK capabilities:
 
-### Knowledge Files
+- `SavantCodeClient` for running agents from Node.js, Bun, or browser applications.
+- Streaming `RunState` events for progress, tool calls, diffs, and final output.
+- Custom `AgentDefinition[]` agents and custom tool definitions.
+- `AbortSignal` cancellation propagated through subagent streams.
+- Checkpoint APIs (`openTurn`, `captureSnapshot`, `closeTurn`, `listTurns`, `restoreTurn`, and `forkFrom`).
+- LLM-agnostic runtime with OpenAI-compatible, Anthropic, Ollama, and gateway provider shims.
+- Per-call token counts and USD cost estimates surfaced in run state.
 
-Add a `knowledge.md` anywhere in your project to give Savant-Code persistent context about your codebase, conventions,
-and preferences.
+## Slash Command Reference
+
+Commands can be entered with `/`; aliases are shown in parentheses. Some commands are intentionally unavailable in Savant-Free builds.
+
+| Command | Purpose |
+| --- | --- |
+| `/help` (`/h`, `/?`) | Show command help and tips |
+| `/new` (`/clear`, `/reset`) | Start a fresh conversation |
+| `/history` (`/chats`) | Browse and resume previous sessions |
+| `/copy` (`/export`) | Copy the complete conversation |
+| `/interview` | Create a structured specification |
+| `/plan` | Create an implementation plan |
+| `/review` | Review code changes |
+| `/goal` (`/g`) | Iterate toward a verifiable goal |
+| `/loop` (`/repeat`) | Schedule recurring checks; use `status` or `stop` |
+| `/verify` (`/typecheck`) | Run all four core workspace typechecks or one selected workspace |
+| `/permissions` (`/sandbox`, `/safety`) | View or set the tool permission mode |
+| `/rewind` (`/undo`, `/checkpoint`) | Restore code and/or conversation from a prior turn |
+| `/health` (`/status`, `/check`) | Check provider, Ollama, model, and permission status |
+| `/diagnostics` (`/diag`, `/processes`) | Show local process and resource diagnostics |
+| `/provider` | Configure a hosted provider key with masked input |
+| `/model` | Select or switch the active model |
+| `/publish` | Publish agent templates through the Savant backend |
+| `/feedback` (`/bug`, `/report`) | Open the feedback flow |
+| `/telemetry` (`/analytics`) | View or change remote analytics consent |
+| `/theme:toggle` | Switch between light and dark themes |
+| `/bash` (`!`) | Run a shell command or enter Bash mode |
+| `/image` (`/img`, `/attach`) | Attach an image for supported multimodal models |
+| `/init` | Create starter agent types and `knowledge.md` |
+| `/login` / `/logout` | Authenticate or end the current session |
+| `/exit` (`/quit`, `/q`) | Quit the CLI |
 
 ## Usage Examples
 
 **Implement a feature:**
+
 > Add a rate limiter to the API endpoints that allows 100 requests per minute per IP address, with Redis-backed counting.
 
 **Fix a bug:**
+
 > The login form crashes on submit when the email field is empty. Find the bug and fix it.
 
 **Write tests:**
+
 > Add unit tests for the UserService class covering all edge cases in the register flow.
 
 **Refactor:**
+
 > Refactor the database connection layer to use connection pooling instead of creating a new connection per request.
 
 **Code review:**
-> Review my recent changes and flag any security issues, performance problems, or style violations.
+
+> Review my recent changes and flag security issues, performance problems, and style violations.
 
 ## Troubleshooting
 
-### Permission Errors
+### Permission errors
+
+Use a user-writable Node/npm installation or, where appropriate, install globally with elevated permissions:
 
 ```bash
 sudo npm install -g savant-code
 ```
-Or [reinstall Node](https://nodejs.org/en/download) to fix global permissions.
 
-### Corporate Proxy / Firewall
+### Corporate proxy or firewall
 
 ```bash
 export HTTPS_PROXY=http://your-proxy-server:port
 savant-code
 ```
 
-### No Model Available
+### No model available
 
-Savant-Code requires at least one LLM provider. Run `/provider` to configure one, or install
-[Ollama](https://ollama.com) for local inference.
+Run `/provider` to configure one of the hosted gateways, or install and start [Ollama](https://ollama.com) for local inference.
+
+### Direct-provider mode cannot connect
+
+Confirm that `DIRECT_PROVIDER`, `INFERENCE_BASE_URL`, and the selected credential are set in the same shell that launches Savant-Code. For OpenRouter, verify the precedence order above and use `/health` to inspect the active mode.
 
 ## Links
 
 - **GitHub:** [github.com/savant0x/savant-code](https://github.com/savant0x/savant-code)
-- **Docs:** [savant-code.com/docs](https://savant-code.com/docs)
+- **Documentation:** [savant-code.com/docs](https://savant-code.com/docs)
 - **Issues:** [GitHub Issues](https://github.com/savant0x/savant-code/issues)
 - **License:** [Apache 2.0](https://github.com/savant0x/savant-code/blob/main/LICENSE)
+
+---
+
+_Savant-Code is the public TypeScript monorepo for the Savant-Code agent framework._

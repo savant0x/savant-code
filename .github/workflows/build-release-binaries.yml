@@ -5,6 +5,12 @@ on:
   release:
     types:
       - published
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Existing GitHub release tag to build and upload (for example v0.0.16)'
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -52,8 +58,24 @@ jobs:
             binary: savant-code.exe
 
     steps:
-      - name: Checkout
+      - name: Resolve release tag
+        id: release-tag
+        shell: bash
+        env:
+          INPUT_RELEASE_TAG: ${{ inputs.release_tag }}
+          EVENT_RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          TAG="${INPUT_RELEASE_TAG:-$EVENT_RELEASE_TAG}"
+          if [ -z "$TAG" ]; then
+            echo "A release tag is required." >&2
+            exit 1
+          fi
+          echo "TAG=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout release tag
         uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.release-tag.outputs.TAG }}
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v1
@@ -77,8 +99,10 @@ jobs:
       - name: Extract version from tag
         id: version
         shell: bash
+        env:
+          RELEASE_TAG: ${{ steps.release-tag.outputs.TAG }}
         run: |
-          echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+          echo "VERSION=${RELEASE_TAG#v}" >> "$GITHUB_OUTPUT"
 
       - name: Build binary
         working-directory: cli
@@ -110,7 +134,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload "${GITHUB_REF_NAME}" "cli/bin/savant-code-${{ matrix.target }}.tar.gz" --clobber
+          gh release upload "${{ steps.release-tag.outputs.TAG }}" "cli/bin/savant-code-${{ matrix.target }}.tar.gz" --clobber
 
 # Note: baseline AVX2 fallbacks (linux-x64-baseline, win32-x64-baseline) are
 # not yet built because the current build script does not produce them. Add a
