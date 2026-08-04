@@ -23,7 +23,8 @@ import path from 'path'
 import { describe, test, expect, afterEach } from 'bun:test'
 
 const REPO_ROOT = path.join(__dirname, '..', '..')
-const BINARY_PATH = path.join(REPO_ROOT, 'cli', 'bin', 'savant-free')
+const BINARY_NAME = process.platform === 'win32' ? 'savant-free.exe' : 'savant-free'
+const BINARY_PATH = path.join(REPO_ROOT, 'cli', 'bin', BINARY_NAME)
 const TIMEOUT_MS = 20_000
 
 // ---------------------------------------------------------------------------
@@ -237,10 +238,15 @@ describe.skipIf(!binaryExists)('SavantFree Binary Smoke Tests', () => {
   })
 })
 
-// Show skip messages so test output is informative
+// This file is an artifact smoke gate, not a source-only unit suite. A missing
+// binary must fail loudly so a release cannot report success with every test skipped.
 if (!binaryExists) {
   describe('SavantFree Binary Required', () => {
-    test.skip('Build the binary first: bun savant-free/cli/build.ts <version>', () => {})
+    test('built SavantFree binary is required', () => {
+      throw new Error(
+        'SavantFree binary not found. Build it first: bun savant-free/cli/build.ts <version>',
+      )
+    })
   })
 }
 

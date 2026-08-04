@@ -22,9 +22,9 @@ CHANGELOG entry written.
 - CLI types: `SavantFreeSession`, `SavantFreeSessionStatus`, `SavantFreeSessionStore`,
   `SavantFreeModelStore`, `SavantFreeSessionProgress`, `SavantFreeInstanceOwner`,
   `SavantFreeStreakLine`, `SavantFreeGateErrorCode`, `SavantFreeReferralFocusTarget`
-- Common types: `FreebuffSessionState`, `FreebuffModel`, `FreebuffAccessTier`,
-  `FreebuffReferralInfo`, `FreebuffBlockReason`, `FreebuffIpPrivacySignal`,
-  `FreebuffRateLimitsByModel`, `FreebuffStreakResponse`
+- Common types: `SavantSessionState`, `SavantModel`, `SavantAccessTier`,
+  `SavantReferralInfo`, `SavantBlockReason`, `SavantIpPrivacySignal`,
+  `SavantRateLimitsByModel`, `SavantStreakResponse`
 
 ### Env/client renames
 

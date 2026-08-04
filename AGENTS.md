@@ -36,7 +36,7 @@ filesystem entries in `agents/`.
 
 | Workspace | Package | Purpose |
 |---|---|---|
-| `agents/` | `@savant-code/agents` | Public agent definitions shipped with the CLI (9 canonical + 5 helper tool-library dirs) |
+| `agents/` | `@savant-code/agents` | Public agent definitions shipped with the CLI (9 canonical + 6 helper tool-library/trace dirs) |
 | `cli/` | `@savant-code/cli` | CLI source — UI, commands, state, hooks, OpenTUI/React components |
 | `common/` | `@savant-code/common` | Shared types, tool definitions, utilities |
 | `evals/` | `@savant-code/evals` | Eval benchmark runner + public eval fixtures |

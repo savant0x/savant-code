@@ -1,4 +1,7 @@
-import { scanOpenFids } from '@savant-code/common/util/protocol-config'
+import {
+  readProtocolConfig,
+  scanOpenFids,
+} from '@savant-code/common/util/protocol-config'
 
 import type { SavantCodeToolHandlerFunction } from '../handler-function-type'
 import type {
@@ -9,7 +12,19 @@ import type { Logger } from '@savant-code/common/types/contracts/logger'
 import type { FsmPhase } from '@savant-code/common/types/session-state'
 import type { ProjectFileContext } from '@savant-code/common/util/file'
 
-const MAX_ITERATIONS = 10
+// Circuit-breaker limit, driven by `perfection_loop.max_iterations` in
+// protocol.config.yaml (default 10). Cached per cwd so the YAML is not re-read
+// on every transition while test processes that use multiple cwds stay
+// correct (FID-2026-0803-001 ECHO-3).
+const maxIterationsCache = new Map<string, number>()
+function getMaxIterations(cwd: string): number {
+  let cached = maxIterationsCache.get(cwd)
+  if (cached === undefined) {
+    cached = readProtocolConfig(cwd).maxIterations
+    maxIterationsCache.set(cwd, cached)
+  }
+  return cached
+}
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
   idle: ['red', 'green'],
@@ -34,6 +49,7 @@ export const handleTransitionPhase = (async (params: {
   const { phase, reason } = toolCall.input
 
   const currentPhase = agentState.fsmPhase ?? 'idle'
+  const MAX_ITERATIONS = getMaxIterations(fileContext.cwd)
   const allowed = VALID_TRANSITIONS[currentPhase] ?? []
   const isValid = allowed.includes(phase)
 
@@ -54,10 +70,12 @@ export const handleTransitionPhase = (async (params: {
     }
   }
 
-  // FID-Bound Enforcement: block any entry to 'green' when no open FIDs exist.
-  // Dev mode bypass: when devMode is active, allow GREEN transitions without
-  // an open FID. This enables Hybrid Mode (direct writes for simple tasks)
-  // and mirrors the isDevOverride pattern in tool-executor.ts for write tools.
+  // FID-Bound Enforcement: block entry to 'green' from a loop phase (red/green/
+  // audit/self_correct) when no FID files are present in dev/fids/. This is a
+  // PRESENCE check, not a status/convergence check (FID-2026-0803-001 ECHO-7).
+  // `idle → green` intentionally bypasses it — Hybrid Mode allows direct
+  // orchestrator writes for simple tasks without a FID (ECHO-4); devMode also
+  // bypasses for CLI-dev scenarios.
   if (
     phase === 'green' &&
     currentPhase !== 'idle' &&
@@ -67,14 +85,14 @@ export const handleTransitionPhase = (async (params: {
     if (openFids.length === 0) {
       logger.warn(
         { phase, currentPhase, openFids: 0 },
-        'FSM transition REJECTED — no open FIDs',
+        'FSM transition REJECTED — no FID files present',
       )
       return {
         output: [
           {
             type: 'json',
             value: {
-              message: `Cannot transition to GREEN: no open FID files found in dev/fids/. Create a FID before writing code (ECHO Law 2: FID-Bound Execution).`,
+              message: `Cannot transition to GREEN: no FID files present in dev/fids/. FID-bound execution requires an open FID before writing code (Hybrid Mode direct writes use the idle → green path for simple tasks).`,
             },
           },
         ],

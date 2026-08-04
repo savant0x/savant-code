@@ -104,7 +104,7 @@ export async function generateEvalTask({
     commitMessage?: string
     repoPath: string
   }
-  agentDefinitions?: any[]
+  agentDefinitions?: AgentDefinition[]
 }): Promise<{
   id: string
   reasoning: string

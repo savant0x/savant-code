@@ -10,7 +10,6 @@ import {
   getTotalCostBySessionId,
   getSessionsByChatId,
   getLatestModel,
-  hasSessions as _hasSessions,
   createFidDocument,
   getFidDocument,
   updateFidDocument,
@@ -21,6 +20,22 @@ import { logger } from './logger'
 import type { ChatMessage } from '../types/chat'
 import type { CostTracking } from '@savant-code/database/service'
 import type { RunState } from '@savant-code/sdk'
+
+// FID-006 DB1: previous total cost per session, used to persist per-save
+// deltas instead of cumulative snapshots (which inflated getTotalCostBySessionId).
+// Returns null on read failure so the caller skips the cost write entirely —
+// falling back to zeros here would re-insert a cumulative snapshot and
+// reintroduce the compounding DB2 bug on a transient read error.
+function getPreviousCostTotals(sessionId: string): {
+  total_credits: number
+  total_direct_credits: number
+} | null {
+  try {
+    return getTotalCostBySessionId(sessionId)
+  } catch {
+    return null
+  }
+}
 // Storage interface for database-backed state
 export interface DbChatState {
   sessionId: string
@@ -35,8 +50,9 @@ export function saveChatStateToDb(
   messages: ChatMessage[],
   selectedModel: string = '',
 ): DbChatState {
+  // Hoisted so the error path below can reference it (DB5 no-rethrow).
+  let session: { id: string } | null = null
   try {
-    let session = null
     if (runState.sessionState) {
       const existingSessions = getSessionsByChatId(chatId)
       if (existingSessions.length > 0) {
@@ -54,20 +70,40 @@ export function saveChatStateToDb(
         )
       }
     }
+    // FID-006 DB1: pass each message's stable id so createMessage's
+    // INSERT OR IGNORE deduplicates re-persisted messages instead of appending
+    // duplicate rows on every save.
     if (session && messages.length > 0) {
       for (const message of messages) {
-        createMessage(session.id, message.variant, message.content)
+        createMessage(session.id, message.variant, message.content, message.id)
       }
     }
+    // FID-006 DB2: persist only the delta over the session's previous total;
+    // storing cumulative snapshots per save inflated the summed totals.
     if (session && runState.sessionState?.mainAgentState) {
       const agentState = runState.sessionState.mainAgentState
       if (agentState.creditsUsed > 0 || agentState.directCreditsUsed > 0) {
-        createCostRecord(
-          session.id,
-          agentId,
-          agentState.creditsUsed,
-          agentState.directCreditsUsed,
+        const previous = getPreviousCostTotals(session.id)
+        if (!previous) {
+          // Read failed — skip the cost write. Writing a delta computed
+          // against zeros would re-insert a cumulative snapshot.
+          return {
+            sessionId: session.id,
+            runState,
+            messages,
+          }
+        }
+        const deltaCredits = Math.max(
+          0,
+          agentState.creditsUsed - previous.total_credits,
         )
+        const deltaDirect = Math.max(
+          0,
+          agentState.directCreditsUsed - previous.total_direct_credits,
+        )
+        if (deltaCredits > 0 || deltaDirect > 0) {
+          createCostRecord(session.id, agentId, deltaCredits, deltaDirect)
+        }
       }
     }
     return {
@@ -76,11 +112,14 @@ export function saveChatStateToDb(
       messages,
     }
   } catch (error) {
+    // FID-006 DB5: the DB is a fallback/audit store (filesystem is
+    // authoritative). Log and continue — a DB failure must never fail the
+    // turn, matching loadChatStateFromDb's non-throwing semantics.
     logger.error(
       { error: error instanceof Error ? error.message : String(error) },
       'Failed to save chat state to database',
     )
-    throw error
+    return { sessionId: session?.id ?? '', runState, messages }
   }
 }
 // Load chat state from database
@@ -102,6 +141,9 @@ export function loadChatStateFromDb(chatId: string): DbChatState | null {
       sessionId: session.id,
       runState: {
         sessionState: session.session_state as RunState['sessionState'],
+        // FID-2026-0802-006 DB11: intentional sentinel (not a real failure) —
+        // consumers must not treat `output.type === 'error'` as a run failure
+        // before the first step completes.
         output: {
           type: 'error',
           message: 'No output yet',
@@ -146,14 +188,18 @@ export function getCostSummary(chatId: string): {
   }
 }
 // FID Document operations
-// Check if a path is an FID document path
+// Check if a path is an FID document path.
+// FID-006 CLI1: tolerate both '/' and '\\' separators so native Windows paths
+// (dev\fids\...) match instead of silently skipping FID persistence.
 export function isFidPath(filePath: string): boolean {
   // Match paths like: dev/fids/FID-*.md or dev/fids/archive/FID-*.md
-  return /^dev\/fids\/(archive\/)?FID-.*\.md$/.test(filePath)
+  return /^dev[\\/]fids[\\/](archive[\\/])?FID-.*\.md$/.test(filePath)
 }
 // Extract FID name from path (e.g., "dev/fids/FID-123.md" -> "FID-123")
 export function extractFidNameFromPath(filePath: string): string {
-  const match = filePath.match(/dev\/fids\/(?:archive\/)?(FID-[^/]+)\.md$/)
+  const match = filePath.match(
+    /dev[\\/]fids[\\/](?:archive[\\/])?(FID-[^/]+)\.md$/,
+  )
   return match ? match[1] : ''
 }
 // Save FID document to database
@@ -191,10 +237,12 @@ export function saveFidDocumentToDb(
     )
   }
 }
-// Load selected model from database (most recent session) for audit trail
-export function loadModelFromDb(_chatId: string): string | null {
+// Load selected model from database for audit trail.
+// FID-006 DB3: scope to the provided chat id so model attribution stays
+// correct when multiple chats exist.
+export function loadModelFromDb(chatId: string): string | null {
   try {
-    const model = getLatestModel()
+    const model = getLatestModel(chatId || undefined)
     return model || null
   } catch (error) {
     logger.error(

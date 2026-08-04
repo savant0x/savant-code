@@ -293,18 +293,23 @@ function toWellFormedString(str: string): string {
   return str.replace(LONE_SURROGATE_REGEX, '�')
 }
 
-function wellFormStringsInPlace(value: object): void {
+// FID-2026-0803-003 CMN-8: mirror deepParseJson's depth cap so a deeply nested
+// message payload cannot overflow the stack.
+const MAX_WELL_FORM_DEPTH = 100
+
+function wellFormStringsInPlace(value: object, depth = 0): void {
   // Arrays and plain objects are both handled here: Object.keys enumerates array
   // indices too, and indexing by string key mutates the element in place.
   // ECHO Law 6 trust-boundary: validate object shape (already enforced by `: object`
   // signature) + null check + recursive object-only descent.
+  if (depth > MAX_WELL_FORM_DEPTH) return
   const obj = value as Record<string, JSONValue>
   for (const key of Object.keys(obj)) {
     const item = obj[key]
     if (typeof item === 'string') {
       obj[key] = toWellFormedString(item)
     } else if (item && typeof item === 'object') {
-      wellFormStringsInPlace(item)
+      wellFormStringsInPlace(item, depth + 1)
     }
   }
 }

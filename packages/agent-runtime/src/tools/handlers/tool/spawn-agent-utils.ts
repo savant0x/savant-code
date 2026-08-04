@@ -1,4 +1,7 @@
-import { MAX_AGENT_STEPS_DEFAULT } from '@savant-code/common/constants/agents'
+import {
+  BASE_AGENTS,
+  MAX_AGENT_STEPS_DEFAULT,
+} from '@savant-code/common/constants/agents'
 import { toolNames } from '@savant-code/common/tools/constants'
 import {
   normalizeAgentIdForLookup,
@@ -94,6 +97,11 @@ export function extractSubagentContextParams(
     sendSubagentChunk: params.sendSubagentChunk,
     apiKey: params.apiKey,
 
+    // Checkpointing (FID-2026-0803-004) — subagent writes land in the parent
+    // turn's checkpoint so a rewind restores everything the turn touched.
+    checkpointDir: params.checkpointDir,
+    checkpointTurnId: params.checkpointTurnId,
+
     // Core context params
     clientSessionId: params.clientSessionId,
     extraSavantCodeMetadata: params.extraSavantCodeMetadata,
@@ -168,7 +176,49 @@ export function getMatchingSpawn(
 }
 
 /**
- * Validates agent template and permissions
+ * Resolves a child agent for a spawn: applies the spawnableAgents allowlist
+ * (or the base-agent bypass), then loads the template. FID-2026-0802-005 H4:
+ * this is the single implementation shared by the executor's spawn_agents
+ * pre-validation and the spawn handlers — getMatchingSpawn + getAgentTemplate
+ * run in exactly one place instead of twice per agent.
+ */
+export async function resolveSpawnableAgent(
+  params: {
+    agentTypeStr: string
+    parentAgentTemplate: AgentTemplate
+  } & ParamsExcluding<typeof getAgentTemplate, 'agentId'>,
+): Promise<
+  | { ok: true; agentType: string; agentTemplate: AgentTemplate }
+  | { ok: false; code: 'not-spawnable' | 'not-found' | 'load-failed' }
+> {
+  const { agentTypeStr, parentAgentTemplate } = params
+  const isBaseAgent = BASE_AGENTS.includes(parentAgentTemplate.id)
+  const agentType = isBaseAgent
+    ? normalizeAgentIdForLookup(agentTypeStr)
+    : getMatchingSpawn(parentAgentTemplate.spawnableAgents, agentTypeStr)
+
+  if (!agentType) {
+    return { ok: false, code: 'not-spawnable' }
+  }
+
+  try {
+    const agentTemplate = await getAgentTemplate({
+      ...params,
+      agentId: agentType,
+    })
+    if (!agentTemplate) {
+      return { ok: false, code: 'not-found' }
+    }
+    return { ok: true, agentType, agentTemplate }
+  } catch {
+    return { ok: false, code: 'load-failed' }
+  }
+}
+
+/**
+ * Validates agent template and permissions (thin wrapper over
+ * resolveSpawnableAgent that converts the result into the handler-facing
+ * throw contract).
  */
 export async function validateAndGetAgentTemplate(
   params: {
@@ -179,38 +229,29 @@ export async function validateAndGetAgentTemplate(
   } & ParamsExcluding<typeof getAgentTemplate, 'agentId'>,
 ): Promise<{ agentTemplate: AgentTemplate; agentType: string }> {
   const { agentTypeStr, parentAgentTemplate } = params
-  const BASE_AGENTS = ['base', 'base-free', 'base-max', 'base-experimental']
-  const isBaseAgent = BASE_AGENTS.includes(parentAgentTemplate.id)
-  const agentType = isBaseAgent
-    ? normalizeAgentIdForLookup(agentTypeStr)
-    : getMatchingSpawn(parentAgentTemplate.spawnableAgents, agentTypeStr)
+  const resolved = await resolveSpawnableAgent({
+    ...params,
+    parentAgentTemplate,
+  })
 
-  if (!agentType) {
+  if (!resolved.ok) {
     if ((toolNames as readonly string[]).includes(agentTypeStr)) {
       throw new Error(
         `"${agentTypeStr}" is a tool, not an agent. Call it directly as a tool instead of wrapping it in spawn_agents.`,
       )
     }
-    throw new Error(
-      `Agent type ${parentAgentTemplate.id} is not allowed to spawn child agent type ${agentTypeStr}.`,
-    )
-  }
-
-  const agentTemplate = await getAgentTemplate({
-    ...params,
-    agentId: agentType,
-  })
-
-  if (!agentTemplate) {
-    if ((toolNames as readonly string[]).includes(agentTypeStr)) {
+    if (resolved.code === 'not-spawnable') {
       throw new Error(
-        `"${agentTypeStr}" is a tool, not an agent. Call it directly as a tool instead of wrapping it in spawn_agents.`,
+        `Agent type ${parentAgentTemplate.id} is not allowed to spawn child agent type ${agentTypeStr}.`,
       )
     }
     throw new Error(`Agent type ${agentTypeStr} not found.`)
   }
 
-  return { agentTemplate, agentType }
+  return {
+    agentTemplate: resolved.agentTemplate,
+    agentType: resolved.agentType,
+  }
 }
 
 /**
@@ -321,41 +362,6 @@ export function withParentModel(
     model: parentAgentTemplate.model,
     providerOptions: parentAgentTemplate.providerOptions,
   }
-}
-
-/**
- * Logs agent spawn information
- */
-export function logAgentSpawn(params: {
-  agentTemplate: AgentTemplate
-  agentType: string
-  agentId: string
-  parentId: string | undefined
-  prompt?: string
-  spawnParams?: JSONValue
-  inline?: boolean
-  logger: Logger
-}): void {
-  const {
-    agentTemplate,
-    agentType,
-    agentId,
-    parentId,
-    prompt,
-    spawnParams,
-    inline = false,
-    logger,
-  } = params
-  logger.debug(
-    {
-      agentTemplate,
-      prompt,
-      params: spawnParams,
-      agentId,
-      parentId,
-    },
-    `Spawning agent${inline ? ' inline' : ''} — ${agentType} (${agentId})`,
-  )
 }
 
 /**

@@ -24,7 +24,7 @@
 | # | Test | Expected |
 |---|------|----------|
 | 5 | Run `bun run --version` to confirm CLI version | Returns version string |
-| 6 | Confirm which model is active | Check if IS_FREEBUFF or SavantCode mode |
+| 6 | Confirm which model is active | Check if IS_SAVANT_FREE or SavantCode mode |
 | 7 | Confirm which shell is detected | bash/powershell |
 
 ---

@@ -132,6 +132,14 @@ export type AgentTemplate<
 
   mcpServers: Record<string, MCPConfig>
   toolNames: (ToolName | (string & {}))[]
+  /**
+   * Additional tools a handleSteps generator may invoke beyond `toolNames`.
+   * Model-visible tool definitions remain filtered to `toolNames`; this list
+   * declares the trusted programmatic capability surface (e.g. an agent whose
+   * generator reads files while the model sees no tools). FID-2026-0803-001
+   * ECHO-1/ECHO-2.
+   */
+  programmaticToolNames?: (ToolName | (string & {}))[]
   spawnableAgents: AgentTemplateType[]
 
   spawnerPrompt?: string

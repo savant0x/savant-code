@@ -20,6 +20,12 @@ export interface SecretAgentDefinition extends Omit<
   /** Tools this agent can use. */
   toolNames?: AllToolNames[]
 
+  /**
+   * Tools only the handleSteps generator may call — not model-visible. Keeps
+   * programmatic capability declarations honest (FID-2026-0803-001 ECHO-2).
+   */
+  programmaticToolNames?: AllToolNames[]
+
   /** Internal orchestrator execution-scope flags. Not part of the public user-facing AgentDefinition. */
   analyzeOnly?: boolean
   scaffoldMode?: boolean

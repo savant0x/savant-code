@@ -519,7 +519,13 @@ function transformResponseStream(
   inputStream: ReadableStream<Uint8Array>,
 ): ReadableStream<Uint8Array> {
   const transform = createSseTransformStream()
-  inputStream.pipeTo(transform.writable).catch(() => {})
+  // FID-2026-0803-003 SDK-5: don't unconditionally swallow the upstream stream
+  // error. The pipe already rejects (and by spec aborts the transform), but
+  // explicitly cancel the readable with the error so consumers fail loudly
+  // instead of hanging on a half-closed stream.
+  inputStream.pipeTo(transform.writable).catch((error: unknown) => {
+    void transform.readable.cancel(error).catch(() => {})
+  })
   return transform.readable
 }
 

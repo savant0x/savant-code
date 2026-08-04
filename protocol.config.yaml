@@ -8,33 +8,32 @@
 project:
   name: 'savant-code'
   description: 'Multi-Agent AI Coding Assistant with ECHO Protocol governance. TypeScript monorepo, Bun runtime.'
-  version: '0.0.15'
+  version: '0.0.16'
 
 protocol:
   version: '0.2.0'
   strict_mode: true # true = all 15 laws active (default), false = core 4 laws only
 
-# FreeBuff uses its single-agent ECHO adaptation alongside this Savant harness
-# configuration. Keep both protocol contracts explicit and independently
-# machine-readable.
-freebuff:
-  protocol:
-    version: '0.1.2-freebuff'
-    strict_mode: true
 
 language: 'typescript' # rust | typescript | python | go | java | csharp
 
 commands:
-  build: 'bun run ci'
+  build: 'bun run ci' # NOTE: release-artifact build (SDK + Savant-Free binaries only, per package.json `ci`). Full 9-workspace compile verification is the `type_check` gate below.
   test: 'bun test'
-  type_check: 'bun run --cwd=common typecheck && bun run --cwd=agents typecheck && bun run --cwd=sdk typecheck && bun run --cwd=cli typecheck && bun run --cwd=evals typecheck && bun run --cwd=packages/agent-runtime typecheck && bun run --cwd=packages/code-map typecheck && bun run --cwd=packages/llm-providers typecheck'
-  lint: 'bunx eslint .'
+  # Mirrors the root `typecheck` script — all 9 workspaces including packages/database
+  # (FID-2026-0803-001 ECHO-8).
+  type_check: 'bun run --cwd=common typecheck && bun run --cwd=agents typecheck && bun run --cwd=sdk typecheck && bun run --cwd=cli typecheck && bun run --cwd=evals typecheck && bun run --cwd=packages/agent-runtime typecheck && bun run --cwd=packages/code-map typecheck && bun run --cwd=packages/database typecheck && bun run --cwd=packages/llm-providers typecheck'
+  lint: 'bun x eslint . --max-warnings 0' # zero-tolerance gate (matches .githooks/pre-push)
   lint_md: 'bun run lint:md'
+  # Full-repo prettier is a documented deferred boundary (FID-001); the
+  # practical gate is formatting changed files only (FID-2026-0803-001 ECHO-8).
   format: 'bunx prettier --check .'
   clean: 'bun run --cwd=sdk clean'
 
 paths:
   src: 'src/'
+  # NOTE: workspace tests live in per-package `src/__tests__` (Bun convention);
+  # there is no top-level `tests/` dir (FID-2026-0803-001 ECHO-8).
   tests: 'tests/'
   docs: 'docs/'
   dev: 'dev/'
@@ -43,6 +42,9 @@ paths:
   session_summaries: 'dev/session-summaries/'
   learnings: 'dev/LEARNINGS.md'
 
+# ADVISORY — documented quality bar only. Not enforced by any lint/test gate;
+# core files intentionally exceed max_file_lines (e.g. savant.ts, run.ts).
+# FID-2026-0803-001 ECHO-3.
 quality:
   max_file_lines: 300
   max_function_lines: 50
@@ -54,6 +56,8 @@ quality:
 
 # Naming rules: see coding-standards/{language}.md
 
+# ADVISORY — aspirational testing policy; the real gates are per-workspace
+# `bun test` suites and the pre-push hook. FID-2026-0803-001 ECHO-3.
 testing:
   fuzz_enabled: false
   mutation_enabled: false
@@ -61,18 +65,38 @@ testing:
   test_timeout: 30
   parallel_tests: true
 
+# ADVISORY — documentation of the FID policy. The runtime open-FID check is
+# presence-based (scanOpenFids) and `max_open_fids` is not enforced.
+# FID-2026-0803-001 ECHO-3/ECHO-7.
 fid:
   auto_create: true
   severity_levels: ['critical', 'high', 'medium', 'low']
   max_open_fids: 20
 
-# Sandbox / tool-safety policy. Runtime values live in CLI state and are
-# persisted in the user's settings.json. This key documents the canonical
-# default; actual behavior is controlled by --permission-mode and /permissions.
+# Savant protocol contract — single-agent ECHO adaptation (v0.1.2-savant),
+# machine-readable alongside the harness `protocol:` block (v0.2.0).
 savant:
+  protocol:
+    version: '0.1.2-savant'
+    strict_mode: true
+  # ADVISORY — documents the canonical sandbox default. Actual behavior is
+  # controlled by --permission-mode and /permissions in CLI state.
+  # FID-2026-0803-001 ECHO-3.
   sandbox:
     permissionMode: 'prompt' # safe | prompt | unsafe
 
+# Legacy FreeBuff protocol alias. Retained because the FreeBuff ECHO
+# adaptation and FREEREADME.md route those sessions through this namespace.
+# The runtime normalizes it into the `savant` ProtocolConfig property and
+# prefers the `savant` namespace when both are present.
+freebuff:
+  protocol:
+    version: '0.1.2-freebuff'
+    strict_mode: true
+
+# max_iterations is LIVE: parsed by common/src/util/protocol-config.ts and
+# drives the FSM circuit breaker in transition-phase.ts (FID-2026-0803-001
+# ECHO-3). The remaining fields are advisory/convergence documentation.
 perfection_loop:
   max_iterations: 10
   change_threshold: 0.10
@@ -80,6 +104,8 @@ perfection_loop:
   convergence_passes: 2
   oscillation_limit: 3
 
+# ADVISORY — session policy documentation; not consumed by the runtime.
+# FID-2026-0803-001 ECHO-3.
 session:
   auto_summary: true
   summary_interval: 30

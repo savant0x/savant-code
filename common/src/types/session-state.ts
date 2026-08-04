@@ -96,7 +96,7 @@ export type AgentState = {
   systemPrompt: string
   toolDefinitions: Record<
     string,
-    { description: string | undefined; inputSchema: {} }
+    { description: string | undefined; inputSchema: JSONValue }
   >
   /**
    * The accurate token count from the Anthropic API.

@@ -3,6 +3,7 @@ import { afterEach, describe, expect, mock, test } from 'bun:test'
 import {
   exchangeChatGptCodeForTokens,
   startChatGptOAuthFlow,
+  stopChatGptOAuthServer,
 } from '../chatgpt-oauth'
 
 describe('chatgpt-oauth utility', () => {
@@ -33,5 +34,17 @@ describe('chatgpt-oauth utility', () => {
     expect(error.message).not.toContain('secret-token')
     expect(error.message).not.toContain('secret-refresh')
     expect(error.message).not.toContain('invalid_grant')
+  })
+
+  test('OAuth state is independent of the PKCE code verifier (FID-2026-0802-008 OAUTH1)', () => {
+    const { codeVerifier, authUrl } = startChatGptOAuthFlow()
+    const state = new URL(authUrl).searchParams.get('state')
+
+    expect(state).toBeTruthy()
+    expect(state).not.toBe(codeVerifier)
+    expect(state).toMatch(/^[0-9a-f]{32}$/)
+
+    // Clear module-level pending flow state so later tests start fresh.
+    stopChatGptOAuthServer()
   })
 })

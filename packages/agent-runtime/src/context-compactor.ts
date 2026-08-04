@@ -11,23 +11,16 @@
  */
 
 import type { Logger } from '@savant-code/common/types/contracts/logger'
+import type {
+  Message,
+  ToolMessage,
+} from '@savant-code/common/types/messages/savant-code-message'
 
-/**
- * Message type for compaction operations.
- * Compatible with the Message type from session-state but loosely typed
- * to avoid circular imports.
- */
-export interface CompactionMessage {
-  role: string
-  content:
-    string | Array<{ type: string; text?: string; [key: string]: unknown }>
-  tags?: string[]
-  toolName?: string
-  toolCallId?: string
-  keepDuringTruncation?: boolean
-  timeToLive?: string
-  sentAt?: number
-}
+// FID-2026-0802-005 L8: compaction operations now operate on the canonical
+// `Message` type directly — the previous `CompactionMessage` loose twin forced
+// `as unknown as CompactionMessage[]` casts at every call site in
+// run-agent-step.ts. The Message type lives in common, so importing it here
+// introduces no circularity.
 
 interface CompactorOptions {
   logger: Logger
@@ -45,7 +38,7 @@ interface Thresholds {
 }
 
 interface MicroCompactResult {
-  messages: CompactionMessage[]
+  messages: Message[]
   tokensSaved: number
   messagesCleared: number
 }
@@ -58,7 +51,7 @@ interface AutoCompactCheck {
 
 interface ReactiveCompactResult {
   truncated: boolean
-  messages: CompactionMessage[]
+  messages: Message[]
   tokensSaved: number
   messagesRemoved: number
 }
@@ -74,24 +67,27 @@ const AUTO_COMPACT_BUFFER = 30_000 // 30k token buffer before hard limit
 
 export class CompactionMessage_ {
   // Helper to check if a message has a specific tag
-  static hasTag(msg: CompactionMessage, tag: string): boolean {
+  static hasTag(msg: Message, tag: string): boolean {
     return msg.tags?.includes(tag) ?? false
   }
 
   // Helper to check if a message is a tool result
-  static isToolResult(msg: CompactionMessage): boolean {
+  static isToolResult(msg: Message): msg is ToolMessage {
     return msg.role === 'tool'
   }
 
   // Helper to extract text content from a message
-  static getTextContent(msg: CompactionMessage): string {
+  static getTextContent(msg: Message): string {
     if (typeof msg.content === 'string') {
       return msg.content
     }
     if (Array.isArray(msg.content)) {
       return msg.content
-        .filter((part) => part.type === 'text' && part.text)
-        .map((part) => part.text!)
+        .filter(
+          (part): part is Extract<typeof part, { type: 'text' }> =>
+            part.type === 'text',
+        )
+        .map((part) => part.text)
         .join('\n')
     }
     return ''
@@ -152,9 +148,9 @@ export class ContextCompactor {
    * Safety: Only clears tool results where the paired tool_use has been
    * processed (tool_result exists). Prevents orphaned references.
    */
-  microCompact(messages: CompactionMessage[]): MicroCompactResult {
+  microCompact(messages: Message[]): MicroCompactResult {
     const originalCount = messages.length
-    const compacted: CompactionMessage[] = []
+    const compacted: Message[] = []
     const toolResultIndices: number[] = []
 
     // Find all tool result indices
@@ -179,12 +175,18 @@ export class ContextCompactor {
 
     for (let i = 0; i < messages.length; i++) {
       if (clearSet.has(i)) {
-        // Replace with a minimal placeholder that preserves the slot
+        // Replace with a minimal placeholder that preserves the slot.
+        // clearSet is derived from toolResultIndices, so every cleared slot
+        // is a ToolMessage — re-check with the type guard so the narrowed
+        // placeholder is well-typed (toolName/toolCallId are required on
+        // ToolMessage).
+        const source = messages[i]
+        if (!CompactionMessage_.isToolResult(source)) continue
         compacted.push({
           role: 'tool',
           content: [{ type: 'json', value: '[compacted]' }],
-          toolName: messages[i].toolName,
-          toolCallId: messages[i].toolCallId,
+          toolName: source.toolName,
+          toolCallId: source.toolCallId,
         })
       } else {
         compacted.push(messages[i])
@@ -213,7 +215,7 @@ export class ContextCompactor {
    * in handleSteps (savant.ts).
    */
   shouldAutoCompact(
-    messages: CompactionMessage[],
+    messages: Message[],
     contextTokenCount: number,
   ): AutoCompactCheck {
     // Check circuit breaker
@@ -252,7 +254,7 @@ export class ContextCompactor {
    * (minimum 2), any messages with images (multimodal context).
    * Retries API call once after truncation.
    */
-  reactiveCompact(messages: CompactionMessage[]): ReactiveCompactResult {
+  reactiveCompact(messages: Message[]): ReactiveCompactResult {
     if (messages.length <= 2) {
       return {
         truncated: false,
@@ -269,14 +271,14 @@ export class ContextCompactor {
     const keepFromEnd = Math.max(2, Math.floor(messages.length * 0.2))
     const lastMessages = messages.slice(-keepFromEnd)
 
-    // Preserve messages with images (multimodal)
+    // Preserve messages with images (multimodal). Message content parts use
+    // the 'image' type ('image_url' was a loose-shape legacy check from the
+    // pre-Message CompactionMessage type — no such part exists).
     const imageMessages = messages.filter((msg) => {
       if (typeof msg.content === 'string') return false
       return (
         Array.isArray(msg.content) &&
-        msg.content.some(
-          (part) => part.type === 'image' || part.type === 'image_url',
-        )
+        msg.content.some((part) => part.type === 'image')
       )
     })
 

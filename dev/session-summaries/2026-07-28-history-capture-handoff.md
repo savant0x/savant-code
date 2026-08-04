@@ -8,7 +8,7 @@
 
 ## Quick Start
 
-Paste this into freebuff:
+Paste this into savant:
 
 ```text
 Pick up FID-2026-0728-008 (dev/fids/FID-2026-0728-008-history-session-capture.md). 

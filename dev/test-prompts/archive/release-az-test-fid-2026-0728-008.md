@@ -1,10 +1,10 @@
 <!-- markdownlint-disable MD013 MD022 MD032 MD060 -->
-# Historical Release A-Z Test — History Session Capture + FreeBuff Protocol Directive
+# Historical Release A-Z Test — History Session Capture + Savant Protocol Directive
 
 > Historical record from 2026-07-28. This prompt is preserved for audit history and is not current certification for v0.0.11.
 
 **Version:** v0.0.9
-**Purpose:** Regression and feature verification for FID-2026-0728-008 (/history full-session capture), the FreeBuff protocol directive, and core regressions.
+**Purpose:** Regression and feature verification for FID-2026-0728-008 (/history full-session capture), the Savant protocol directive, and core regressions.
 
 **Ground Rules:**
 - Run from agent context (idle phase unless noted)
@@ -99,23 +99,23 @@
 
 ---
 
-## Tier 3: FreeBuff Protocol Directive
+## Tier 3: Savant Protocol Directive
 
 ### T3.1 — `FREEREADME.md` exists and is clear
 - Read `FREEREADME.md`
-- Verify it states FreeBuff agents must NOT use `ECHO.md`
+- Verify it states Savant agents must NOT use `ECHO.md`
 - Verify it points to `dev/nova/specs/echo-v0.1.2-freebuff.md`
 - **Expected:** root-level directive is unambiguous
 
 ### T3.2 — `ECHO-freebuff.md` is a protocol marker
 - Read `ECHO-freebuff.md`
-- Verify it points to the canonical FreeBuff protocol at `dev/nova/specs/echo-v0.1.2-freebuff.md`
+- Verify it points to the canonical Savant protocol at `dev/nova/specs/echo-v0.1.2-freebuff.md`
 - **Expected:** a session bootstrapping with `ECHO-freebuff.md` lands at the right protocol
 
-### T3.3 — FreeBuff protocol is distinct from Savant-Code protocol
+### T3.3 — Savant protocol is distinct from Savant-Code protocol
 - Read `dev/nova/specs/echo-v0.1.2-freebuff.md`
 - Read `ECHO.md`
-- Verify the FreeBuff version is for single-agent operation and does not reference the 9-agent roster
+- Verify the Savant version is for single-agent operation and does not reference the 9-agent roster
 - **Expected:** the two protocols are clearly scoped to their respective contexts
 
 ### T3.4 — FreeBuff ECHO version header is accurate
@@ -146,8 +146,8 @@
 - Verify `/permissions` (aliases `sandbox`, `safety`) is registered
 - **Expected:** permissions command remains accessible
 
-### T4.5 — No stale `.freebuff` references in production
-- Search `common/src`, `cli/src`, `sdk/src`, and `packages/agent-runtime/src` for `freebuff` (excluding test files)
+### T4.5 — No stale `.savant` references in production
+- Search `common/src`, `cli/src`, `sdk/src`, and `packages/agent-runtime/src` for `savant` (excluding test files)
 - **Expected:** zero matches in production source
 
 ---
@@ -206,7 +206,7 @@ After all tiers, write `dev/scratchpad/release-az-test-fid-2026-0728-008-report.
 |------|------|-------|---------|
 | 1 | Build & Type Safety | 7 | Does the code compile and pass lint? |
 | 2 | /history Session Capture | 8 | Is FID-008 fully implemented and tested? |
-| 3 | FreeBuff Protocol Directive | 4 | Is the FreeBuff protocol correctly wired and discoverable? |
+| 3 | Savant Protocol Directive | 4 | Is the Savant protocol correctly wired and discoverable? |
 | 4 | Regression Checks | 5 | Are previous features still intact? |
 | 5 | Documentation & FID Hygiene | 3 | Is the FID archived and CHANGELOG updated? |
 | 6 | CLI Smoke | 2 | Does the feature hold up in the real CLI? |

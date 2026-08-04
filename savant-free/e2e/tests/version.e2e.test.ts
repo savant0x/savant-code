@@ -15,7 +15,7 @@ describe('SavantFree: --version', () => {
       timeout: 10_000,
     }).trim()
 
-    // Should contain a semver-like version (e.g. "0.0.15" or "1.0.0")
+    // Should contain a semver-like version (e.g. "0.0.16" or "1.0.0")
     expect(output).toMatch(/\d+\.\d+\.\d+/)
   })
 

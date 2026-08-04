@@ -27,7 +27,7 @@ export async function generateRepoEvalV2(repoUrl: string): Promise<void> {
   )
   const { repoUrl: gitRepoUrl, selectedCommits, repoName } = selectedCommitsData
 
-  const commitShas = selectedCommits.map((c: any) => c.sha)
+  const commitShas = selectedCommits.map((c: { sha: string }) => c.sha)
 
   console.log(
     `\nSTEP 2: Generating V2 eval file for ${repoUrl} with ${commitShas.length} commits`,

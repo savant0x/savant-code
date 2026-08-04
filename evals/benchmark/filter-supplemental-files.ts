@@ -21,6 +21,9 @@ function fileExistsAtCommit(
     })
     return true
   } catch {
+    // FID-2026-0803-007 EV-10 (recorded nuance): this is an expected-failure
+    // probe — a non-zero exit means the file does not exist at that commit, and
+    // that IS the answer. Logging here would spam one warning per missing file.
     return false
   }
 }
@@ -68,7 +71,9 @@ function setupRepoForValidation(repoUrl: string, parentShas: string[]): string {
         stdio: 'ignore',
       })
     } catch {
-      // Commit might already exist from clone
+      // FID-2026-0803-007 EV-10 (recorded nuance): expected failure — the
+      // commit often already exists from the clone, which is not an error.
+      // Silence is intentional.
     }
   }
 

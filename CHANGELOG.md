@@ -1,5 +1,276 @@
 # Changelog
 
+## v0.0.16 — 2026-08-03
+
+### Added
+
+- **LLM-providers + database package audit (FID-2026-0803-002):** Applied all 16 approved findings (1 critical /
+  4 medium / 11 low) from the llm-providers + database audit across 4 stages. Stage 1 (correctness): chat
+  `doGenerate` empty-`choices` guard — the schema-valid `choices: []` case previously crashed the primary chat hot
+  path; the FID-006 completion guard was extended to the chat model (LLM-1, CRITICAL); completion provider-options
+  spread now filters against the provider-options schema like the chat model, so `logit_bias`/`logitBias` can no
+  longer double-send (LLM-2); completion prompt template-literal interpolation restored (LLM-4); completion raw-chunk
+  emission reordered after parse success to match chat (LLM-5); completion stream error payload unified to a string
+  message, matching the chat model (LLM-6). Stage 2 (type safety): `z.any()` → `z.unknown()` in the OpenAI-compatible
+  error schema (LLM-3); `parseToolCallArguments` dead dual-return branch removed (LLM-7); stream-transform test
+  doubles fully typed (LLM-8); `__PACKAGE_VERSION__` build-time define injected into `cli/scripts/build-binary.ts` so
+  the User-Agent stops advertising `0.0.0-test` (DB-8). Stage 3 (database robustness): guarded `initDatabase` with a
+  fail-open `:memory:` fallback so a corrupt/unwritable DB degrades instead of crashing the CLI at import (DB-1);
+  `rowid` tiebreakers on second-granularity `created_at` ordering for messages/sessions/cost records (DB-2);
+  model-attribution APIs collapsed to `updateSessionModel`/`getLatestModel` with the dead `getLatestModelForChat`
+  duplicate and ambiguous `saveModel` removed (DB-3). Stage 4 (database hygiene): dead exports
+  `getDatabase`/`closeDatabase`/`hasSessions`/`createAgentConfig`/`getAgentConfig` removed and `getCostRecord`
+  narrowed to an internal helper (DB-4); explicit `requireRow` error replaces `!` assertions on all get-after-create
+  round trips (DB-5); affected-rows checks on UPDATEs (DB-6); `maxImagesPerCall` validated  with `InvalidArgumentError` in the image model (DB-7).
+- **SDK impl + common util audit (FID-2026-0803-003):** Applied all 18 approved findings (4 medium / 14 low)
+  across 4 stages. Stage 1 (SDK correctness): `addAgentStep` now checks `response.ok` before parsing the body, so
+  non-JSON error responses are classified as request failures instead of throwing out of `response.json()` (SDK-1);
+  `hasYieldedContent` is now set on tool-call and reasoning yields, so a ChatGPT OAuth rate-limit error arriving
+  after a tool call no longer triggers the re-stream fallback that would deliver the tool call twice (double
+  execution risk) — with a `mock.module('ai')` regression test proving a single `streamText` call (SDK-2). Stage 2
+  (SDK hygiene): cost-override extraction deduplicated into `extractCostOverrideDollars` (SDK-3); the
+  near-duplicate `isOAuthRateLimitError`/`isOAuthAuthError` classifiers unified into one parameterized
+  `isOAuthError` (SDK-4); the swallowed `pipeTo` error in the ChatGPT backend SSE transform now forwards to the
+  readable side (SDK-5); the OpenRouter master-key exchange cadence documented (SDK-6); the `agentTemplate!`
+  non-null assertion narrowed with a guarded return (SDK-7). Stage 3 (common correctness): new
+  `toToolInputJSONSchema` in `common/src/util/zod-schema.ts` re-derives `required` from the zod `shape` — zod v4
+  drops `required` for `z.preprocess`-wrapped properties (pipe input is `unknown`), so `coerceToArray` params were
+  telling the model their fields were optional; wired into `toTokenCountInputSchema` and
+  `compile-tool-definitions`, with the coerce-to-array tests un-failed plus a nested-`required` case (CMN-1); the
+  `project-file-tree.test.ts` Windows hang (dirname loop never reaching the POSIX root) fixed with `path.resolve`
+  normalization + a no-progress guard, and the test root resolved so win32 mock keys agree with the scan (CMN-2).
+  Stage 4 (common hygiene): six dead exports removed (`safeReplace`, `parseToolCallXml`, `MinHeap`, `splitData`,
+  `genAuthCode`, `buildLogRows`) including four now-empty module files and their tests (CMN-3/4/6); saxy
+  `predicate` typed (CMN-5); `queue.shift()!` narrowed (CMN-7); `wellFormStringsInPlace` depth-capped at 100
+  (CMN-8); `withRetry` clamps `maxRetries` to >= 1 so it can never `throw null` (CMN-9); `withTimeout` clears its
+  timer via `.finally` on every settle path (CMN-10); saxy's dead commented error branches removed (CMN-11).
+- **Checkpoint & Rewind (FID-2026-0803-004):** New edit safety net. A persistent per-turn checkpoint
+  store (`checkpoint-store.ts` — promoted from the previously zero-caller `file-snapshot-store.ts`
+  primitive, which was deleted after migration) records the pre-edit content of every file first touched
+  per user turn as one JSON per turn under the chat dir, with first-capture-wins dedup, `content: null`
+  ⇒ delete-on-restore, `resolveAndContain` re-validation at restore so tampered/escaped entries are
+  skipped, retention pruned to the most recent 20 turns, and a `path.basename` guard on the
+  turnId→filename mapping. The capture seam hooks `executeToolCall`'s write-gate immediately before
+  `write_file`/`str_replace`/`apply_patch` dispatch, with `checkpointDir`/`checkpointTurnId` threaded
+  through the runtime contracts, SDK `RunOptions`, and subagent spawn context so subagent writes land in
+  the same turn (terminal side effects stay untracked). New `/rewind` command + OpenTUI `RewindPicker`
+  with four modes — **code only** (restore touched files), **conversation only** (truncate transcript +
+  SDK `messageHistory` to the turn-start boundary), **both**, and **fork** (restore + rotate to a fresh
+  chat seeded from that turn); the turn lifecycle (openTurn/closeTurn) is wired into
+  `use-send-message`'s run-settle path. 25 new tests (15 store + 10 command).
+
+
+- **Quality scan hygiene fixes (FID-2026-0803-005):** Applied all 6 approved findings (1 medium / 4 low /
+  1 info-by-design) from the codebase quality scan across 6 files plus 2 regression tests. Checkpoint safety
+  net (P1a, MEDIUM): `captureSnapshot` in `checkpoint-store.ts` no longer treats every read failure as "file
+  didn't exist" — only `ENOENT` records the delete-on-restore `null` marker; any other failure
+  (EACCES/EISDIR/EMFILE) adds the path to a per-turn `skippedPaths` set (never serialized, never restored) so a
+  rewind can never DELETE an existing file it merely failed to read, with errno narrowing following the
+  `paths.ts` idiom. Config drift (E1): `protocol.config.yaml` project version synced `0.0.15` → `0.0.16`.
+  Type-safety cleanup (C1–C3): three redundant `agentTemplate!` assertions removed in `run-agent-step.ts`; the
+  `as string[]` cast dropped in `executeCustomToolCall` (`tool-executor.ts`); `generator!` in
+  `run-programmatic-step.ts` replaced with an explicit definite-assignment guard that fails diagnosably when an
+  eval'd handleSteps function returns undefined. Observability (C4): `tool-stream-parser.ts` logs the tool-call
+  input JSON.parse failure at debug level via the in-scope Logger (previously an invisible silent catch).
+  Checkpoint sync IO verified as correct by design (P1b — capture-before-write ordering + per-path dedup
+  bounds cost; no change).
+
+- **Code-map package audit (FID-2026-0803-006):** Applied all 9 approved findings (2 medium / 7 low)
+  from the tree-sitter indexing + language-detection audit across 3 source files plus 2 test files.
+  Correctness (CM-1, MEDIUM): the dead `call in {}` prototype-key guard in `buildTokenCallers` became
+  `call in Object.prototype` — a real-world `toString`/`valueOf` collision previously crashed the
+  whole code map (SDK degraded to empty scores); regression test proves a
+  toString-defined/toString-called corpus no longer throws. Resilience (CM-2, MEDIUM):
+  `UnifiedLanguageLoader` no longer caches a `Parser.init` rejection forever — lazy init shares one
+  in-flight promise across concurrent callers and clears on failure so a later call retries, with a
+  one-time `console.warn` surfacing the cause. Hygiene: `resolveWasmPath`'s dead fallback loop
+  collapsed to an explicit first-path return (CM-3); no-op rethrow removed (CM-4); per-config
+  `initPromise` dedupes concurrent `createLanguageConfig` (CM-5); `.mjs`/`.cjs`/`.mts`/`.cts` added
+  to the language table (CM-6); read failures classify as `skipped` (not parsed) with a stat+read
+  single-window try/catch closing the TOCTOU gap (CM-7); the `as { delete?: … }` cast dropped,
+  optional `tree.delete?.()` retained for mock/runtime compat (CM-8);  `getDirnameDynamically`
+  hardened with an outer try/catch (CM-9).
+
+- **Evals benchmark runner audit (FID-2026-0803-007):** Applied all 12 approved findings (2 high /
+  4 medium / 6 low) from the benchmark harness audit across 10 source files. Headline: the evals
+  package **typecheck now exits 0** (was 2 — two botched "fixes" from a prior audit that never
+  compiled, invisible to the CI gate). Type safety: `trace-analyzer.ts` replaces a lying
+  `as unknown as { agentFeedback: unknown[] }` cast with a `TraceAnalyzerResultSchema` zod
+  `safeParse` (EV-1a); `logger.ts`'s `PinoWithStaticDestination` return type corrected to the
+  exported `DestinationStream` (EV-1b); `JudgingResultSchema` — defined but never used — now
+  validates judge output at `runSingleJudge` (EV-2); 9× `any[]` → `AgentDefinition[]` + one-off
+  `options: any`/`(c: any)` (EV-7); `trace-utils.ts` truncation typed with `ToolResultOutput` +
+  JSON-object guard (EV-8); `catch (error: any)` narrowed (EV-6); bare `catch {` in the score
+  analyzer now surface diagnostics (EV-10). Runtime correctness: timeouts now **abort** the
+  underlying LLM run via `AbortSignal.timeout` (SDK already supported abort) instead of only racing
+  it — judges/analyzers no longer burn API dollars after giving up (EV-3, incl. the missed
+  `lessons-extractor.ts` site); dead mislabeled `judge-sonnet` entry deleted (EV-4); median picker
+  corrected to the true lower median (EV-5); `SavantCodeRunner` gains a `traceSink` so partial
+  agent traces survive an abort (EV-11); meta-analyzer's defensive cast confirmed intentional (EV-9).
+- **ECHO enforcement layer doc drift (FID-2026-0803-009):** All 4 LOW findings fixed (docs/config only, zero
+  code). ECHO.md Researcher roster row now documents both variants (`web_search, read_url (web); read_docs
+  (docs)`) instead of the stale `web_search, read_url` (EC-1); the roster intro gained a footnote separating the 9
+  canonical ECHO roles from the 4 infra spawnables `basher`/`tmux-cli`/`browser-use`/`context-pruner` (EC-2); the
+  Forge restricted cell dropped the misleading `bash (destructive)` (forge.ts never has bash) and now reads
+  `spawn_agents, ask_user` (EC-3); `protocol.config.yaml` `commands.build` comment now states it is the
+  release-artifact build (SDK + Savant-Free) with the 9-workspace compile gate being `type_check` (EC-4).
+- **Database + LLM-providers LOW fixes (FID-2026-0803-010):** All 7 findings implemented (DB-A..C, LLM-A..C,
+  LLM-D — 6 LOW + 1 bonus dead-file removal, zero behavioral change). Database: `createMessage` read-back now
+  uses the `requireRow` pattern instead of the file's last `!` assertion (DB-A); the dead pre-rebrand
+  `agent_configs` table was dropped from the schema with its test-teardown consumer (DB-B); a lazy statement
+  cache replaced 20 per-call `db.prepare()` sites with one `prepare()` helper (DB-C). LLM-providers: the
+  streaming chat transform was extracted from the model into a shared `chat/stream-transform.ts` factory and
+  `stream-transform.test.ts` now drives the REAL logic (it previously tested a simulated copy that could not
+  catch regressions) (LLM-A); `getArgs` parses provider options once when the base key and provider name
+  coincide (LLM-B); byte-identical chat/completion helper duplicates consolidated to the chat copies (LLM-C);
+  dead `internal/index.ts` barrel deleted (LLM-D).
+- **Build artifact hygiene (FID-2026-0803-011):** 3 findings (BH-1..BH-3, all LOW). Corrected the FID-0803-010
+  follow-up note — `cli/bin/` artifacts are gitignored (root `.gitignore` + `cli/.gitignore`), not committed;
+  verified `git ls-files cli/bin/` is empty. Purged ~360 MB of stale local build artifacts (Jul 28-31) that
+  consumers (e2e/tmux) existence-check only. Added `cli/scripts/clean.ts` + a `clean` script, and removed the
+  21 MB `index.js.map` that bun 1.3.11 emits on every compile despite `--sourcemap=none` (the release tarball
+  ships only the binary + wasm + env.json; nothing references the map).
+- **Agent roster over-reporting fix (FID-2026-0803-013):** The Savant orchestrator reported 13 spawnable agents
+  when asked about "the roster" because the main-agent instructions prompt auto-appends a functional spawn list
+  (built from the 13-entry `spawnableAgents` allowlist) and the system prompt had no canonical roster definition.
+  Added an explicit `# Agent Roster` section to the Savant default system prompt: the 9 canonical ECHO roles
+  (Savant/Orchestrator, Detective, Forge, Verifier, Thinker, Scout, Researcher, Recorder, Scribe) with
+  responsibilities, a note that `researcher-web`/`researcher-docs` are the single Researcher role's tool libraries
+  and `basher`/`tmux-cli`/`browser-use`/`context-pruner` are infrastructure helpers (not roster members), and an
+  instruction to report only the 9 roles when asked. `spawnableAgents` allowlist  unchanged (13 — functionally correct).
+- **FreeBuff → Savant rebrand and contract sweep (FID-2026-0803-014):** Renamed active
+  runtime/config identifiers to Savant (`SavantProtocolConfig`, `savant.protocol`,
+  `SAVANT_FREE_MODE`, `cli.update_savant_free_failed`) and updated current-facing
+  documentation and strategic prose. Kept the FreeBuff protocol filenames and routing
+  directive intact by retaining a documented `freebuff.protocol` compatibility alias;
+  the parser prefers `savant.protocol` and normalizes both forms into `.savant`.
+  `IS_SAVANT_FREE` now honors `SAVANT_FREE_MODE`. Legal notices, explicit historical
+  records, `.freebuff/` compatibility ignore rules, and `LEARNINGS.md` were preserved.
+
+### Verification
+
+- **Final Savant-Free artifact smoke follow-up:** Corrected `savant-free/cli/smoke-test.test.ts` to resolve the platform-specific `.exe` binary on Windows instead of silently skipping the suite. After the successful `bun run ci` build, the smoke suite executed 4 tests (version, help branding, mode-flag exclusion, and login flow): **4 pass / 0 fail**. The 2 tmux title-screen assertions were skipped because tmux is unavailable in this environment; no skipped test was counted as a pass.
+- FID-2026-0803-002 completed the ECHO Perfection Loop with operator-approved implementation of all 4 stages (16
+  findings, 1 critical / 4 medium / 11 low), an independent implementation audit (clean pass — no CRITICAL/HIGH;
+  4 LOW follow-ups all closed with code evidence), and the full gate suite: 4-way typecheck
+  (sdk/common/agent-runtime/cli), llm-providers 57 pass / 0 fail, database 11 pass / 0 fail, CLI suite 2730 pass /
+  0 fail, zero-warning ESLint, `bun run lint:md` exit 0, and Prettier clean on all changed files. It was closed and
+  archived after this changelog entry was added.
+- FID-2026-0803-003 completed the ECHO Perfection Loop with operator-approved implementation of all 4 stages (18
+  findings, 4 medium / 14 low). The pre-existing common-suite defects are fixed: the full common suite now
+  completes on Windows (previously hung at `project-file-tree.test.ts` and failed at `coerce-to-array.test.ts`) at
+  521 pass / 0 fail; SDK suite 504 pass / 0 fail (+2 regression tests); CLI suite 2748 pass / 0 fail; 4-way
+  typecheck (sdk/common/agent-runtime/cli), zero-warning ESLint, `bun run lint:md` exit 0, and Prettier clean on
+  all changed files. Independent AUDIT via code-reviewer; FID verified and archived after this entry was added.
+- FID-2026-0803-004 completed the ECHO Perfection Loop with operator-approved implementation of all 4 stages
+  (Checkpoint & Rewind — 4 findings: 1 high / 2 medium / 1 low, all resolved). Gate suite: agent-runtime 581 pass /
+  0 fail, CLI 2758 pass / 0 fail, SDK 431 pass / 0 fail (25 new tests: 15 checkpoint-store + 10 rewind-command),
+  4-way typecheck (sdk/common/agent-runtime/cli), zero-warning ESLint, `bun run lint:md` exit 0, and Prettier clean
+  on all changed files. Independent AUDIT via code-reviewer (clean — turnId filename guard and crash-recovery
+  documentation added in response; dedup-before-read ordering confirmed; 2 tests added); FID verified and archived
+  after this entry was added.
+- FID-2026-0803-005 completed the ECHO Perfection Loop with operator-approved implementation of all 6 findings
+  (1 medium / 4 low / 1 info-by-design). Gate suite: agent-runtime 583 pass / 0 fail (incl. 2 new P1a
+  regression tests: a non-ENOENT read failure is never recorded as null and restore leaves the target
+  untouched; skipped paths stay skipped per turn while normal files are still captured), 4-way typecheck
+  (sdk/common/agent-runtime/cli), zero-warning ESLint, `bun run lint:md` exit 0, and Prettier clean on all
+  changed  files. Independent AUDIT via code-reviewer (clean — no CRITICAL/HIGH/MEDIUM; skipped-capture
+  observability accepted as documented debt); FID verified and archived after this entry was added.
+- FID-2026-0803-006 completed the ECHO Perfection Loop with operator-approved implementation of all 9
+  findings (2 medium / 7 low). Gate suite: code-map 51 pass / 0 fail (incl. 1 new CM-1 regression
+  test), code-map typecheck clean, full-repo zero-warning ESLint, `bun run lint:md` exit 0, Prettier
+  clean on all changed files. Independent AUDIT via code-reviewer (clean — no CRITICAL/HIGH/MEDIUM;
+  CM-7 statSync window completed in response, CM-8 `?.` deviation documented). Note: SDK
+  `smoke-test-dist` requires a built dist absent from the tree — its CJS tree-sitter harness failure
+  is pre-existing/environmental; the `getFileTokenScores` export assertion is verified at source level
+  via typecheck. FID verified and archived after this entry was added.
+- FID-2026-0803-007 completed the ECHO Perfection Loop with operator-approved implementation of all 12
+  findings (2 high / 4 medium / 6 low). Gate suite: **evals typecheck exit 0** (was 2 — the headline:
+  the package now compiles again), evals 67 pass / 0 fail, sdk + common typechecks 0 errors, full-repo
+  zero-warning ESLint, `bun run lint:md` exit 0, Prettier clean on all changed files. Independent AUDIT
+  via code-reviewer (clean — no CRITICAL/HIGH/MEDIUM; three notes recorded in the Resolution:
+  EV-10 probe-site deviation, EV-5 lower-median behavior change, EV-3 lessons-extractor extension).
+  FID verified and archived after this entry was added.
+- FID-2026-0803-009 completed the ECHO Perfection Loop with operator-approved implementation of all 4 LOW
+  findings (doc drift EC-1..EC-4 — docs/config only, no code touched). Double audit passed: static grep
+  verification of each edit + `bun run lint:md` exit 0 + `protocol.config.yaml` YAML parse + table pipe-count
+  integrity. Independent AUDIT via code-reviewer (clean — one doc-precision nit on the EC-2 footnote, addressed
+  in response). FID verified and archived after this entry was added.
+- FID-2026-0803-010 completed the ECHO Perfection Loop with operator-approved implementation of all 7 findings
+  (6 LOW + LLM-D bonus; 2 scope corrections documented in the Resolution — DB-B test-teardown line, LLM-A test
+  backpressure drain). Gate suite: database + llm-providers typecheck exit 0, database 11 pass / 0 fail,
+  llm-providers 58 pass / 0 fail (112 expect; baseline 57 — the 2 simulated transform tests became 3
+  real-transform tests), zero-warning ESLint on both packages, full static double-audit (no `!` read-back, no
+  `db.prepare(` in service functions, `agent_configs` + `internal/index` zero hits, completion imports via
+  `../chat/`). Independent AUDIT via code-reviewer (clean — no correctness issues; one nit applied). FID verified
+  and  archived after this entry was added.
+- FID-2026-0803-011 completed the ECHO Perfection Loop with operator-approved direct implementation (3 LOW
+  findings; 2 premise corrections recorded in the Resolution — artifacts gitignored not committed, and the map
+  regenerates every build rather than being an orphan). Gate suite: `git ls-files cli/bin/` = 0 (nothing
+  tracked lost), regeneration proof `bun savant-free/cli/build.ts 0.0.0-dev` exit 0 with `cli/bin/` containing
+  exactly env.json/savant-free.exe/tree-sitter.wasm, cli typecheck exit 0, ESLint `--max-warnings 0` on changed
+  scripts, `bun run lint:md` exit 0. Independent AUDIT via code-reviewer (clean — one non-actionable nit). FID
+  verified and archived after this entry was added.
+- **Release-wide final gate sweep (2026-08-03):** Full-tree validation of v0.0.16 in one pass, matching the
+  protocol gates exactly. Typecheck ×9 per `protocol.config.yaml` `type_check` (common, agents, sdk, cli,
+  evals, packages/agent-runtime, packages/code-map, packages/database, packages/llm-providers) — all exit 0.
+  Test suites ×7: sdk 431 pass / 0 fail (1 skip), common 521 pass / 0 fail (4 skip), agent-runtime 583 pass /
+  0 fail, code-map 51 pass / 0 fail, database 11 pass / 0 fail, llm-providers 58 pass / 0 fail, cli 2740 pass /
+  0 fail (18 skip) — **4,395 tests total, 0 failures**. `bun x eslint . --max-warnings 0` exit 0; `bun run
+  lint:md` exit 0. Build gate `bun run ci` exit 0: SDK dist (index.mjs / index.cjs / index.d.ts + 11
+  tree-sitter WASM + vendored ripgrep) and Savant-Free binary (`cli/bin` = env.json + savant-free.exe 143 MB +
+  tree-sitter.wasm, no orphan `index.js.map` — FID-011 holds). Release-ready at v0.0.16.
+- **FreeBuff → Savant rebrand and contract sweep (FID-2026-0803-014):** Completed the approved full
+  sweep minus `.md` renames. Focused protocol-config tests: 4 pass / 0 fail, including legacy alias
+  normalization and Savant-over-legacy precedence. CLI wrapper-safety tests: 12 pass / 0 fail.
+  Common, agents, SDK, agent-runtime, and CLI typechecks all exit 0; targeted ESLint and markdownlint
+  exit 0. Active-source audit found no deprecated `FREEBUFF_MODE`, `FreeBuffProtocolConfig`,
+  `update_freebuff_failed`, or `.freebuff` runtime consumers. Independent review closed the two follow-ups:
+  legacy protocol compatibility and environment-driven `IS_SAVANT_FREE` behavior. FID verified and archived
+  after this changelog entry was added.
+- **Release-readiness audit (FID-2026-0803-012):** Bloat trim, doc alignment, and the v2 eval run with
+  tracked results. CRITICAL fix: the 12 benchmark eval fixture JSONs (`eval-{codebuff,manifold,plane,saleor}
+  [-hard|-2].json`) were deleted in the working tree but still tracked in git — restored via `git restore`.
+  Entrypoint fix: `main.ts`/`main-single-eval.ts` referenced the never-existing `eval-savant-code.json`;
+  retargeted to the real `eval-codebuff.json`. Eval harness fixes found by actually running it: (1) the v2
+  evaluate runner passed **no `agentDefinitions`**, so every run failed instantly with `Invalid agent ID:
+  "savant". Available agents: ` — wired `loadLocalAgents` through `cli.ts → RunnerConfig →
+  SavantAgentRunner → client.run()` (mirrors the v1 benchmark); (2) `writeJsonReport` crashed on cyclic
+  provider error objects (`TypeError: Converting circular structure to JSON`) — added a circular-safe
+  replacer that flattens `Error` instances; (3) the `add-fix` task's golden patch had a stale single-line
+  pre-image for the multi-line `add.js` — regenerated. Task hygiene: six gitignored `.test-reports-md-*`
+  temp dirs removed. Docs: `README.zh-CN.md` fully regenerated (complete Chinese translation of the current
+  v0.0.16 README, same 12-section structure — the old file was a stale pre-rebrand translation). Eval
+  results tracked in `docs/reports/savant-code-benchmark-v2-2026-08-03.md`: **baseline 4/4 PASS**;
+  evaluate mode proven end-to-end but 0/4 due to environmental credential limits (free-tier provider 429
+  rate-limiting + BYOK key rejection; `injectFault` is a documented MVP no-op). Root `LEARNINGS.md` kept
+  per operator decision (the agent learnings library).
+- FID-2026-0803-012 completed the ECHO Perfection Loop with operator-approved implementation (3 LOW findings
+  + 3 bonus harness defects found by running the eval; operator scope: keep LEARNINGS.md, regenerate zh-CN,
+  baseline + evaluate). Gate suite: evals typecheck exit 0, v2 suite **69 pass / 0 fail** (67 baseline + 2
+  new regression tests — circular-safe report writer, `agentDefinitions` forwarding), benchmark fixtures
+  restored (12, zero `D`), baseline 4/4 PASS, evaluate harness runs end-to-end, ESLint `--max-warnings 0`
+  on changed files, `bun run lint:md` exit 0, zh-CN section parity 12/12, forbidden-name sweep clean.
+  Independent AUDIT via code-reviewer (clean — no CRITICAL/HIGH/MEDIUM; 2 regression tests added in
+  response). FID verified and archived after this entry was added.
+- FID-2026-0803-013 completed the ECHO Perfection Loop with operator-approved implementation (1 LOW finding:
+  agent roster over-reporting — the orchestrator reported all 13 spawnable agents when asked "the roster".
+  Root cause: the main-agent instructions prompt auto-appends a functional spawn list (13 entries incl.
+  infrastructure helpers + researcher-web/researcher-docs as two entries) and the system prompt had no
+  canonical roster definition. Fix: added an explicit `# Agent Roster` section to the Savant default system
+  prompt — the 9 canonical ECHO roles (Savant/Orchestrator, Detective, Forge, Verifier, Thinker, Scout,
+  Researcher, Recorder, Scribe) with #/Agent/Phase/Responsibility columns matching ARCHITECTURE.md, an
+  "Important distinction" subsection naming researcher-web/researcher-docs as the Researcher role's tool
+  libraries and basher/tmux-cli/browser-use/context-pruner as infrastructure helpers (NOT roster members),
+  and an instruction to report only the 9 roles when asked. `spawnableAgents` allowlist intentionally
+  unchanged (13 — functionally correct). Gate suite: agents typecheck exit 0, CLI typecheck exit 0 (bundle
+  regenerated via `prebuild:agents`, embeds the roster), agent-runtime strings template suite 11/11 pass,
+  ESLint `--max-warnings 0` on changed files, `bun run lint:md` exit 0, forbidden-name sweep clean.
+  Sibling-agent audit (thinker/detective/forge/verifier/scout/scribe/recorder/researcher): clean — all 8
+  specialists have `spawnableAgents: []` so no addendum renders (structurally immune); base-chat (2
+  spawnables) and editor-multi-prompt (3 spawnables) are exactly-scoped with Law-4-verified IDs. Independent
+  AUDIT via code-reviewer (clean). FID verified and archived after this entry was added.
+
 ## v0.0.15 — 2026-08-02
 
 ### Added
@@ -19,13 +290,23 @@
 - Added/retained `.markdownlint.json`, `.markdownlintignore`, `.prettierignore`, ESLint/protocol configuration, package lint scripts, and hook wiring; full-repository Prettier remains explicitly excluded where Markdown and Prettier policies conflict.
 - Safely classified and removed only the user-authorized empty `.commandcode/taste/taste.md` and root `nul` artifacts after byte/metadata checks; unrelated recovery files and pre-existing formatting scope were not silently deleted.
 - Synchronized the current Savant-Code release boundary to `0.0.15` across package manifests, `VERSION`, lockfile workspace records, protocol project metadata, and current release-facing documentation.
+- **Agent-runtime audit hardening (FID-2026-0802-005):** Applied all 28 findings from the agent-runtime hot-path audit (2 critical, 8 high, 18 low) across 18 files plus 3 regression suites. Runtime hardening: parse-error gate ordering before any `toolCall.input` dereference (C1); tool-handler trust boundary with try/catch + retryable error chunks on native and custom/MCP paths (C2); quadratic hot-loop elimination (incremental full-response accumulation, per-message token cache, in-place history mutation); concurrent spawnable-agent resolution; single-pass spawn validation; abort-path promise settling; step-built custom-tool data reuse; single step-prompt computation; Thinker `set_output` prompt fix; allowlist-derived `sequentialthinking` authorization; and dead-code/duplication/Law 6 cast/docs remediation (L1–L18).
+- **Quality sweep at scale (FID-2026-0802-006):** Applied the approved 10-track monorepo sweep (1 critical, 10 high, 21 medium, 25 low, 6 verify) across 15 files plus 4 new test files. Crash + data integrity: completion `doGenerate` empty-choices guard (LLM1, CRITICAL); message dedup by stable id (`INSERT OR IGNORE` + UUID fallback); delta cost records with read-failure skip so totals can never compound again (DB2); per-chat model scoping (DB3); `schema_version` migration hook (DB4); guarded JSON parse + no-rethrow DB save semantics (DB5). Security: `model` re-asserted after provider-options spread (LLM2); image provider-options name + `parseProviderOptions` (LLM3); embedding single-parse (LLM4); API keys redacted to prefix+last-4 across all 6 log sites (SEC2, Law 12). Agent drift: Windows `windowsNote` corrected from cmd verbs to bash-on-Windows (AG2); new toolNames-allowlist validation test against the generated bundle (AG3). CLI/SDK: `isFidPath` Windows-tolerant regexes (CLI1); `withMessageHistory` unified to `cloneDeep` so `handleStepsFn` survives resumes (SDK1). Debt/hygiene: typed evals logger + trace-analyzer wrappers (DEBT1), `dev/nova/reports` lint ignore (DEBT6), unwired `eslint-console.json` deleted (DEBT7), benchmark judge location confirmed (BENCH1).
+- **CLI UI layer audit (FID-2026-0802-007):** Applied all 17 approved findings from the chat.tsx render-loop + command-registry audit (1 high re-assessed to latent, 5 medium, 7 low, 4 verify) across 9 files plus 2 new test files. Correctness: missing-provider guidance gated behind `!IS_SAVANT_FREE` so no build tells users to run `/provider` when the registry excludes it (U1, V2 precondition resolved — free sessions require an auth token); guarded submits with logged + surfaced errors on all three slash/submit paths (E1); reactive `fsmPhase` selector (S1); `TOOLS_AVAILABLE` constant with real tool names — the old sidebar list referenced nonexistent tools (S2). Render-loop perf: `filteredSlashCommands` memo no longer rebuilds + clears the suggestion cache on every keystroke, with a reactive `adsEnabled` chat-store slice seeded from settings and synced by the ads commands (P1); identity-preserving collapse toggle so a single toggle no longer re-renders the whole transcript (P2); memoized `hasSubmittedPrompt` (D6); hoisted styles (D7). Hygiene/parity: `init` gating drift closed (D1), `/dev` hoisted for stable identity (D2), 3× mention-select duplication unified (D3), boolean file-menu handler (D4), router message polish (D5). The new gating-matrix test caught two real discoverability gaps — `/health` and `/publish` were registered but missing from the slash menu (now added).
+- **SDK package audit (FID-2026-0802-008):** Applied all 20 approved findings from the SDK audit (client.ts + run.ts + run-state.ts + impl layer; 2 high / 4 medium / 10 low / 4 verify) across 9 SDK source files, 1 new shared util in `common/`, and 1 CLI source file plus 6 new test files. Correctness/security: event-dispatch rejection routing with a settled guard so a throwing user `handleEvent`/`handleStreamChunk` rejects the run instead of crashing the process via unhandled rejection (E1); OAuth credential file + config dir hardened to 0600/0700 (SEC1); resume-path `applyOverridesToSessionState` switched from JSON round-trip to `cloneDeep` so `handleStepsFn` survives resumes (R1); setup-phase errors now reject the run under a single error contract with aligned abort messages (E2); OAuth `state` now independent of the PKCE code verifier (OAUTH1). Robustness: bounded child processes with timeout + buffer cap (T1); file-tree build deduped from O(n²) to O(n) via `children.some` (P1); warn→debug log level (D5); negative user-info cache (D6). Hygiene: shared `param-helpers` util (D7), dead branches removed (D4, D9), typed guards (D8), URL-safe `getWebsiteUrl` (D1), cache-boundary comments (D2/D3), resume-override depth cap (V4), V1–V3 evidence recorded.
+- **ECHO enforcement layer drift (FID-2026-0803-001):** Applied all 9 approved findings (1 high / 6 medium / 2 low) from the protocol-enforcement audit across 3 stages. Stage 1 (ECHO-1/2): new `PROGRAMMATIC_PRIMITIVES` single source in `common/src/tools/constants.ts`; new optional `programmaticToolNames` field on AgentTemplate/DynamicAgentTemplate/AgentDefinition/SecretAgentDefinition; fail-closed `handleSteps` validation in `run-programmatic-step.ts` (yields must be in toolNames ∪ programmaticToolNames ∪ primitives); `thinker-with-files-gemini` declares `read_files` programmatically (ECHO-2 metadata honesty). Stage 2 (ECHO-3/7/8): `readProtocolConfig` parses `perfection_loop.max_iterations`; transition handler uses it via a per-cwd cache; FID gate reworded as presence-based with Hybrid Mode documented; `protocol.config.yaml` type_check now includes packages/database, lint uses `--max-warnings 0`, advisory fields annotated. Stage 3 (ECHO-4/5/6/9): ARCHITECTURE.md/ECHO.md/AGENTS.md roster + helper-dir + archive-ownership + Hybrid Mode corrections; docs/agents-and-tools.md savant-deep references removed; MIGRATION.md quick-reference row replaced.
 
 ### Verification
 
 - `bun run lint:md` and zero-warning ESLint pass; the pre-push gate is documented and configured without creating or rewriting commits.
 - Common model-config tests/typecheck, focused CLI provider/catalog/onboarding tests/typecheck, SDK typecheck, 415 SDK tests, and declared-file diff checks pass. Full-repository Prettier remains a documented pre-existing/deferred boundary rather than an unsupported green claim.
-- FIDs 001, 002, and 003 each completed the FreeBuff Perfection Loop with implementation, independent audit, and verification evidence. They were closed only after this changelog entry was added and are archived under `dev/fids/archive/`.
+- FIDs 001, 002, and 003 each completed the ECHO Perfection Loop with implementation, independent audit, and verification evidence. They were closed only after this changelog entry was added and are archived under `dev/fids/archive/`.
 - **Documentation and repository hygiene (FID-2026-0802-004):** Refreshed current architecture, English/Chinese README, SDK, Windows, privacy, and versioning guidance for the 0.0.15 local/BYOK release; corrected provider credential terminology; and organized 19 approved untracked recovery, scratchpad, release-draft, Nova, and research artifacts under `dev/archive/2026-08-02-repository-hygiene/` with reversible SHA-256 manifests. No files were deleted, and tracked historical records were preserved.
+- FID-2026-0802-005 completed the ECHO Perfection Loop with operator-approved implementation, an independent implementation audit (2 HIGH + 3 LOW findings, all resolved via SELF-CORRECT), and the full gate suite: typecheck ×4 (sdk/common/agent-runtime/cli), 561 agent-runtime + 418 SDK tests, zero-warning ESLint, `bun run prebuild:agents`, and markdownlint on the FID. It was closed and archived after this changelog entry was added.
+- FID-2026-0802-006 completed the ECHO Perfection Loop with operator-approved implementation of all 5 stages, an independent implementation audit (1 HIGH fixed + 1 MED verified + 2 verify items closed), and the full gate suite: typecheck ×4, 55 llm-providers + 8 database (first-ever) + 344 agent-runtime + 418 SDK + 318 CLI tests, zero-warning ESLint, `bun run lint:md`, Prettier on all changed files, and `bun run prebuild:agents`. It was closed and archived after this changelog entry was added.
+- FID-2026-0802-007 completed the ECHO Perfection Loop with operator-approved implementation of all 3 stages (17 items), an independent implementation audit (2 HIGH-verify + 4 MED/LOW — all closed with code evidence, zero follow-up edits), and the full gate suite: cli typecheck, full CLI suite 2727 pass / 0 fail, 73 focused tests (registry gating matrix + collapse identity), zero-warning ESLint, Prettier clean, and markdownlint on the FID. It was closed and archived after this changelog entry was added.
+- FID-2026-0802-008 completed the ECHO Perfection Loop with operator-approved implementation of all 3 stages (20 items), an independent implementation audit (no CRITICAL/HIGH; 1 MED + 4 LOWs — all closed: D4 exhaustiveness guard reinstated, E2/D2 sessionState convention aligned, SEC1 win32 test converted to skipIf, E1 async-handler race + D7 scope documented), and the full gate suite: 4-way typecheck (sdk/common/agent-runtime/cli), SDK suite 429 pass / 1 skip / 0 fail, CLI suite 2728 pass / 0 fail, zero-warning ESLint, and Prettier clean. It was closed and archived after this changelog entry was added.
+- FID-2026-0803-001 completed the ECHO Perfection Loop with operator-approved implementation of all 3 stages (9 findings, 1 high / 6 medium / 2 low), an independent implementation audit (1 MED cwd-keyed config-cache fix + 3 LOWs — all closed via SELF-CORRECT), and the full gate suite: typecheck ×4 (common/agents/agent-runtime/cli), agent-runtime suite 566 pass / 0 fail, CLI suite 2748 pass / 0 fail, focused common 0 fail, zero-warning ESLint, `bun run lint:md` exit 0, and the regenerated agent bundle validated by the toolnames integration test. It was closed and archived after this changelog entry was added.
 
 ## v0.0.12 — 2026-08-01
 
@@ -117,7 +398,7 @@
 ### Savant-Code Launch Scope Reconciliation (FID-2026-0731-001, FID-2026-0731-003, FID-2026-0731-005)
 
 **Updated:** 2026-07-31
-**Resolution:** Re-scoped the immediate launch gate to the Savant-Code local/BYOK release. A future first-party backend, authentication/model-selection, and recurring-goal validation for the later free product are explicitly post-launch work after user adoption and are no longer treated as Savant-Code promotion blockers. No external FreeBuff hosting, partnership, or service dependency is assumed. Current local interactive/cross-platform evidence and the final operator Go/No-Go remain visible as immediate gates; no runtime, package, telemetry, or promotion behavior changed.
+**Resolution:** Re-scoped the immediate launch gate to the Savant-Code local/BYOK release. A future first-party backend, authentication/model-selection, and recurring-goal validation for the later free product are explicitly post-launch work after user adoption and are no longer treated as Savant-Code promotion blockers. No external Savant hosting, partnership, or service dependency is assumed. Current local interactive/cross-platform evidence and the final operator Go/No-Go remain visible as immediate gates; no runtime, package, telemetry, or promotion behavior changed.
 **Verified by:** Cross-read of the master FID, current v0.0.11 A–Z report, public-docs readiness FID, and evidence report; validation follows.
 
 ### Active-FID Evidence Continuation (FID-2026-0726-001, FID-2026-0731-003)
@@ -129,7 +410,7 @@
 ### FID Lifecycle and Red-Team Reviews (FID-2026-0731-004, FID-2026-0731-007)
 
 **Closed:** 2026-07-31
-**Resolution:** Closed and archived the independently verified FID lifecycle/archive-integrity audit and the cross-cutting pre-launch red-team review. The final inventory is 160 records with 160 unique IDs, 4 active records, and 156 closed archived records. The remaining active records retain explicit Savant-Code local/cross-platform and final-promotion gates rather than being falsely closed; future first-party free-product backend/auth/model-selection/recurrence work is explicitly post-launch, with no external FreeBuff hosting or partnership assumed.
+**Resolution:** Closed and archived the independently verified FID lifecycle/archive-integrity audit and the cross-cutting pre-launch red-team review. The final inventory is 160 records with 160 unique IDs, 4 active records, and 156 closed archived records. The remaining active records retain explicit Savant-Code local/cross-platform and final-promotion gates rather than being falsely closed; future first-party free-product backend/auth/model-selection/recurrence work is explicitly post-launch, with no external Savant hosting or partnership assumed.
 **Verified by:** Post-archive lifecycle invariant scan: zero metadata, status, location, or duplicate-ID problems; repository markdownlint; all four required workspace typechecks; 44 focused tests; focused ESLint; and independent code review.
 **Archived:** 2026-07-31
 
@@ -143,7 +424,7 @@
 ### FreeBuff ECHO Compliance Remediation (FID-2026-0731-008)
 
 **Closed:** 2026-07-31
-**Resolution:** Added an explicit `freebuff.protocol` namespace for ECHO `0.1.2-freebuff` while preserving the Savant harness `0.2.0` contract. Extended and tested the existing protocol loader, canonicalized the remaining 19 FID filenames and exact references without retaining duplicate legacy files, preserved historical bodies with normalization notes, and kept the unresolved goal/loop FID active instead of falsely certifying it as closed. No runtime product, telemetry, release, or promotion behavior changed.
+**Resolution:** Added an explicit `savant.protocol` namespace for ECHO `0.1.2-freebuff` while preserving the Savant harness `0.2.0` contract. Extended and tested the existing protocol loader, canonicalized the remaining 19 FID filenames and exact references without retaining duplicate legacy files, preserved historical bodies with normalization notes, and kept the unresolved goal/loop FID active instead of falsely certifying it as closed. No runtime product, telemetry, release, or promotion behavior changed.
 **Verified by:** Governance inventory: 160 records, 4 active, 156 archived, canonical filenames, complete required metadata, allowed statuses, correct locations, and unique IDs. Common typecheck, all configured workspace typechecks, focused protocol-config tests (2 passed), root loader smoke test, and independent code review passed. Full repository build/test/lint/format commands were not part of this focused governance gate.
 **Archived:** 2026-07-31
 
@@ -251,10 +532,10 @@
 **Verified by:** All 4 workspace typechecks pass; lint passes with zero warnings; sandbox tests 30 pass / 0 fail; CLI tests 100 pass / 0 fail; Nova source verification signed off.
 **Archived:** 2026-07-27
 
-### Rename Remaining `.freebuff/` References (FID-2026-0727-002)
+### Rename Remaining `.savant/` References (FID-2026-0727-002)
 
 **Closed:** 2026-07-27
-**Resolution:** Removed the duplicate FID, archived the kept FID, updated `.gitignore` to ignore `.savant-code/` instead of `.freebuff/`, renamed `docs/FreeBuff Business And Backend Research.md` to `docs/Savant-Code Business And Backend Research.md`, and added historical notes to both research docs explaining the legacy brand references.
+**Resolution:** Removed the duplicate FID, archived the kept FID, updated `.gitignore` to ignore `.savant-code/` instead of `.savant/`, renamed `docs/Savant Business And Backend Research.md` to `docs/Savant-Code Business And Backend Research.md`, and added historical notes to both research docs explaining the legacy brand references.
 **Verified by:** Workspace typechecks and SDK tests pass.
 **Archived:** 2026-07-27
 
@@ -1599,7 +1880,7 @@ Decomposed the comprehensive TUI rebuild into 5 incremental phase FIDs:
 | FID-029-git       | Root-Cause Fix: `unknown` in llm-providers          | critical | archived    |
 | FID-029           | ESLint Zero-Tolerance Push Gate                     | critical | archived    |
 | FID-030           | Agent-Runtime Tests Exclusion                       | medium   | archived    |
-| FID-028           | freebuff → savant_free Rename + OpenRouter Branding | medium   | archived    |
+| FID-028           | savant → savant_free Rename + OpenRouter Branding | medium   | archived    |
 | FID-027           | codebuff → savant-code Clean Break                  | medium   | archived    |
 | FID-026           | TypeScript Rebrand: codebuff → savant-code          | high     | archived    |
 | FID-025           | dev/releases/ Ephemeralization                      | small    | archived    |
@@ -1890,24 +2171,24 @@ Decomposed the comprehensive TUI rebuild into 5 incremental phase FIDs:
 
 **Preserved (intentional):** Source-side ECHO compliance (FID-029 documented `as` casts — composio 1× + tool-executor 2×). Bun's `bun test` runtime test execution is unaffected by the typecheck-time exclusion — all test files still execute and pass at runtime. All test mocks retained unchanged in source — only the typecheck-time validation is deferred, not the test logic.
 
-## FID-2026-0719-028 — Rename Remaining `freebuff` Legacy Identifiers + OpenRouter Branding
+## FID-2026-0719-028 — Rename Remaining `savant` Legacy Identifiers + OpenRouter Branding
 
 **Date:** 2026-07-19
 **Severity:** medium
 **Status:** closed / archived
 
-**Summary:** Completed the `freebuff` → `savant_free`/`SavantFree`/`SAVANT_FREE` rename sweep across active source. Added OpenRouter app-attribution branding headers.
+**Summary:** Completed the `savant` → `savant_free`/`SavantFree`/`SAVANT_FREE` rename sweep across active source. Added OpenRouter app-attribution branding headers.
 
 **Changes:**
 
-- Performed targeted direct-edit rename of `freebuff` identifiers across `cli/src`, `common/src`, `packages/agent-runtime/src`, `sdk/src`, `savant-free/cli`, and `savant-free/e2e`.
-- Renamed all `FREEBUFF_*` constants to `SAVANT_FREE_*`, `Freebuff` types to `SavantFree`, `freebuff` functions/variables to `savantFree`.
-- Renamed `NEXT_PUBLIC_FREEBUFF_APP_URL` → `NEXT_PUBLIC_SAVANT_FREE_APP_URL` and `FREEBUFF_MODE` → `SAVANT_FREE_MODE`.
+- Performed targeted direct-edit rename of `savant` identifiers across `cli/src`, `common/src`, `packages/agent-runtime/src`, `sdk/src`, `savant-free/cli`, and `savant-free/e2e`.
+- Renamed all `SAVANT_*` constants to `SAVANT_FREE_*`, `Savant` types to `SavantFree`, `savant` functions/variables to `savantFree`.
+- Renamed `NEXT_PUBLIC_SAVANT_APP_URL` → `NEXT_PUBLIC_SAVANT_FREE_APP_URL` and `SAVANT_FREE_MODE` → `SAVANT_FREE_MODE`.
 - Deleted duplicate `cli/src/utils/codebuff-api.ts` and `cli/src/utils/__tests__/codebuff-api.test.ts`.
 - Renamed `createCodebuffApiClient` → `createSavantCodeApiClient` in `savant-code-api.ts`, test file, and `login-flow.ts`.
 - Renamed `assistantToCodebuffMessage` → `assistantToSavantCodeMessage` in `common/src/util/messages.ts`.
 - Renamed leftover `codebuff` identifiers: `extraCodebuffMetadata` → `extraSavantCodeMetadata`, `loadCodebuffModelPreference` → `loadSavantCodeModelPreference`, `applyCodebuffModelOverride` → `applySavantCodeModelOverride`.
-- Added settings migration: `loadSettings()` now reads both old and new keys (`savantCodeModelPreference` + `savantCode$1`; `savantFreeModelPreference` + `freebuffModelPreference`).
+- Added settings migration: `loadSettings()` now reads both old and new keys (`savantCodeModelPreference` + `savantCode$1`; `savantFreeModelPreference` + `savantModelPreference`).
 - Added OpenRouter branding headers to `sdk/src/impl/model-provider.ts`: `HTTP-Referer`, `X-OpenRouter-Title: SavantCode`, `X-OpenRouter-Categories: cli-agent,cloud-agent,programming-app`.
 - Created outside-services roadmap doc at `dev/nova/outbox/2026-07-19-savant-free-rebrand-outside-services-roadmap.md`.
 
@@ -1918,7 +2199,7 @@ Decomposed the comprehensive TUI rebuild into 5 incremental phase FIDs:
 - `common` messages tests pass (38/38).
 - Code-reviewer-kimi and code-reviewer-deepseek-flash both approved.
 
-**Preserved (intentional):** External-facing strings — `FREEBUFF` Reddit CAPI partner, `freebuff_chat`/`freebuff_web` Gravity surface IDs, `cli.update_freebuff_failed` telemetry event, `freebuff_instance_id` backend field, `freebuffModelPreference` settings migration fallback. All documented in outside-services roadmap.
+**Preserved (intentional):** External-facing strings — `SAVANT` Reddit CAPI partner, `savant_chat`/`savant_web` Gravity surface IDs, `cli.update_savant_failed` telemetry event, `savant_instance_id` backend field, `savantModelPreference` settings migration fallback. All documented in outside-services roadmap.
 
 ## FID-2026-0719-027 — Clean Break: Remove Remaining `codebuff` Legacy Identifiers
 
@@ -1954,18 +2235,18 @@ Decomposed the comprehensive TUI rebuild into 5 incremental phase FIDs:
 > Reverse chronological. All notable changes to this project documented here, as
 > required by ECHO's FID Auto-Archive rule (dev/fids/archive/ ⇒ CHANGELOG.md entry).
 
-## FID-2026-0719-026 — high — TypeScript Rebrand: codebuff → savant-code, freebuff → savant-free
+## FID-2026-0719-026 — high — TypeScript Rebrand: codebuff → savant-code, savant → savant-free
 
 **Closed:** 2026-07-19
 **Resolution:** Phase B executed across all 6 workspaces: common/, packages/*, sdk/, agents/, cli/, and repo-wide cleanup. **Cumulative: 232 files changed, 2,132 insertions, 927 deletions.**
 
-**Phase B (steps 1-6):** All `@codebuff/*` → `@savant-code/*` package references resolved. All `SavantFree$1` mangled identifiers from prior rebrand passes fixed across ~27 files — components renamed to `SavantFreeModelSelector`, `SavantFreeLandingScreen`, `SavantFreeReferralBanner`, `SavantFreeActiveSessionSummary`, `SavantFreeSupersededScreen`; types renamed to `SavantFreeSession`, `FreebuffSessionState`, `FreebuffModel`, `FreebuffAccessTier`, `FreebuffReferralInfo`, et al. Additional codebuff→savant-code fixes: `resetCodebuffClient`→`resetSavantCodeClient`, `getCodebuffClient`→`getSavantCodeClient`, `CODEBUFF_API_KEY`→`SAVANT_CODE_API_KEY`, `NEXT_PUBLIC_CODEBUFF_APP_URL`→`NEXT_PUBLIC_FREEBUFF_APP_URL`, `CODEBUFF_IS_BINARY`→`SAVANT_CODE_IS_BINARY`. Stale `codebuff-client.ts` removed. `LOGO_CODEBUFF`→`LOGO_SAVANT_CODE`. Wire protocol refs (`codebuff_tool_call`, `codebuff_cli`, etc.) intentionally preserved. Legacy config paths (`manicode`, `.manicodeignore`) preserved.
+**Phase B (steps 1-6):** All `@codebuff/*` → `@savant-code/*` package references resolved. All `SavantFree$1` mangled identifiers from prior rebrand passes fixed across ~27 files — components renamed to `SavantFreeModelSelector`, `SavantFreeLandingScreen`, `SavantFreeReferralBanner`, `SavantFreeActiveSessionSummary`, `SavantFreeSupersededScreen`; types renamed to `SavantFreeSession`, `SavantSessionState`, `SavantModel`, `SavantAccessTier`, `SavantReferralInfo`, et al. Additional codebuff→savant-code fixes: `resetCodebuffClient`→`resetSavantCodeClient`, `getCodebuffClient`→`getSavantCodeClient`, `CODEBUFF_API_KEY`→`SAVANT_CODE_API_KEY`, `NEXT_PUBLIC_CODEBUFF_APP_URL` → `NEXT_PUBLIC_FREEBUFF_APP_URL`, `CODEBUFF_IS_BINARY`→`SAVANT_CODE_IS_BINARY`. Stale `codebuff-client.ts` removed. `LOGO_CODEBUFF`→`LOGO_SAVANT_CODE`. Wire protocol refs (`codebuff_tool_call`, `codebuff_cli`, etc.) intentionally preserved. Legacy config paths (`manicode`, `.manicodeignore`) preserved.
 
 **Debugging session (2026-07-19):** Diagnosed and fixed direct-provider mode gap — `useUsageMonitor`, `OutOfCreditsBanner`, `SubscriptionLimitBanner`, and `UsageBanner` were never taught about `isDirectProviderMode()`, causing them to fire backend API calls even with `DIRECT_PROVIDER=openrouter` set. Added bypass checks to all 4 files. Renamed `IS_FREEBUFF` → `IS_SAVANT_FREE` (132 instances across 46 files in `cli/src/`) — the last unbranded constant. Hardcoded `IS_SAVANT_FREE = false` temporarily for local dev; full SavantFree system preserved intact for later re-enablement.
 
-**Verified by:** x4 typecheck gate — sdk + common + agent-runtime + cli all 0 errors. Repo-wide grep: 0 stray `@codebuff/`, `CodebuffClient`, or `IS_FREEBUFF` references. CLI launch test: boots clean with OpenRouter direct routing.
+**Verified by:** x4 typecheck gate — sdk + common + agent-runtime + cli all 0 errors. Repo-wide grep: 0 stray `@codebuff/`, `CodebuffClient`, or `IS_SAVANT_FREE` references. CLI launch test: boots clean with OpenRouter direct routing.
 
-**Preserved (intentional):** `codebuff_tool_call` XML tag (97 repo-wide / 72 active-source refs), `codebuff_cli` surface ID (2 refs), `codebuff_terminal_command` activity key (1 ref), `cli.update_codebuff_failed` analytics value (1 ref), `manicode` config dir (13 refs), `.manicodeignore` (1 ref), `FREEBUFF_MODE` env var (108 repo-wide / 103 active-source refs), `CODEBUFF_CLI_*` env vars (51 repo-wide / 24 active-source refs), freebuff settings/preference keys (23 repo-wide / 25 active-source refs). All preserved for wire-protocol compatibility, legacy config, or user-data migration safety. `codebuff-client.ts` confirmed removed from disk. Repo-wide counts include these audit documents themselves; active-source counts exclude docs/tests/CHANGELOG.
+**Preserved (intentional):** `codebuff_tool_call` XML tag (97 repo-wide / 72 active-source refs), `codebuff_cli` surface ID (2 refs), `codebuff_terminal_command` activity key (1 ref), `cli.update_codebuff_failed` analytics value (1 ref), `manicode` config dir (13 refs), `.manicodeignore` (1 ref), `SAVANT_FREE_MODE` env var (108 repo-wide / 103 active-source refs), `CODEBUFF_CLI_*` env vars (51 repo-wide / 24 active-source refs), savant settings/preference keys (23 repo-wide / 25 active-source refs). All preserved for wire-protocol compatibility, legacy config, or user-data migration safety. `codebuff-client.ts` confirmed removed from disk. Repo-wide counts include these audit documents themselves; active-source counts exclude docs/tests/CHANGELOG.
 **Archived:** 2026-07-19
 **Nova sign-off:** dev/nova/outbox/2026-07-19-fid-026-phase-b-closeout.md
 
@@ -2000,7 +2281,7 @@ Decomposed the comprehensive TUI rebuild into 5 incremental phase FIDs:
 ## FID-2026-0718-021 — high — README.md Quality Restoration (Pre-Rebrand Adaptation)
 
 **Closed:** 2026-07-19
-**Resolution:** README.md restored from 25 lines / 3113 bytes to ~210 lines / 8KB+ / 11 ## sections. Header banner, Overview completion, Key Technologies (10-row table), Features (CLI/SDK/Agent Runtime/ECHO Integration 4 sub-sections), Repo Map (11 workspace rows including scripts/tmux), Quick Start (5 numbered steps + ts SDK example), CLI Commands (8-row table), ECHO Protocol (Core Principles/15 Laws/Key Files), Configuration (4-row table), Validation (5-command bash block), Documentation (6-row table), License (Apache-2.0), Footer. 0.0.2 pre-rebrand adaptations: `@savant-code/X` → `@savant-code/X` (14+ occurrences), `SAVANT_FREE_MODE` → `FREEBUFF_MODE` (1), `dev:savant-free` → `dev:savant-free` (2), `build:savant-free` → `build:savant-free` (2), `SAVANT_CODE_API_KEY` → `CODEBUFF_API_KEY` (1), Release badge v0.0.1 → v0.0.2, npm install names `@savant-code/cli`/`@savant-code/savant-free`, OpenTUI URL `sst/opentui` → `anomalyco/opentui`. Pre-rebrand note retained above Overview per Decision A.
+**Resolution:** README.md restored from 25 lines / 3113 bytes to ~210 lines / 8KB+ / 11 ## sections. Header banner, Overview completion, Key Technologies (10-row table), Features (CLI/SDK/Agent Runtime/ECHO Integration 4 sub-sections), Repo Map (11 workspace rows including scripts/tmux), Quick Start (5 numbered steps + ts SDK example), CLI Commands (8-row table), ECHO Protocol (Core Principles/15 Laws/Key Files), Configuration (4-row table), Validation (5-command bash block), Documentation (6-row table), License (Apache-2.0), Footer. 0.0.2 pre-rebrand adaptations: `@savant-code/X` → `@savant-code/X` (14+ occurrences), `SAVANT_FREE_MODE` → `SAVANT_FREE_MODE` (1), `dev:savant-free` → `dev:savant-free` (2), `build:savant-free` → `build:savant-free` (2), `SAVANT_CODE_API_KEY` → `CODEBUFF_API_KEY` (1), Release badge v0.0.1 → v0.0.2, npm install names `@savant-code/cli`/`@savant-code/savant-free`, OpenTUI URL `sst/opentui` → `anomalyco/opentui`. Pre-rebrand note retained above Overview per Decision A.
 **Verified by:** AUDIT 6-item gate PASS — 11 ## headings present (Overview + 10 restored); 10 substitution greps clean (SAVANT_FREE_MODE=0, SAVANT_CODE_API_KEY=0, dev:savant-free|build:savant-free=0; @savant-code=1 hit inside future-rebrand mention in pre-rebrand note = intentional); markdownlint verified clean via user IDE Problems panel (FID-020 baseline); line count 265 vs upstream 262 (matches 0.0.1 quality). Code-reviewer verdict: PASS.
 **Archived:** 2026-07-19
 
@@ -2128,7 +2409,7 @@ Decomposed the comprehensive TUI rebuild into 5 incremental phase FIDs:
 ## FID-2026-0718-006 — high — Agent Roster Alignment (Savant Spec ↔ SavantCode Codebase)
 
 **Closed:** 2026-07-18
-**Resolution:** Aligned 69-agent SavantCode codebase to 9-agent Savant architecture. 13 fixes across 24 files: (1) Stripped write tools from Orchestrator (`str_replace`, `write_file`, `propose_*`) — strict separation of duties; (2) Updated `spawnableAgents` on all orchestrator variants — removed 10+ SavantCode agents, added `detective`; (3) Added `list_directory`, `glob`, `read_files`, `read_subtree` to Detective + STEP yield in handleSteps; (4) Fixed pre-existing `grep` → `code_search` bug in Recorder/Scribe; (5) Removed hardcoded `providerOptions` from Thinker/Verifier; (6) Removed all `FREEBUFF_GEMINI_THINKER` imports/conditionals from base2.ts; (7) Updated `FREE_MODE_AGENT_MODELS` — replaced 8 reviewer variants with single `verifier`; (8) Updated `freeCodeReviewerAgentId` to always be `'verifier'`; (9) Updated `ECHO_PROTOCOL_INSTRUCTIONS` from v0.1.2 to v0.2.0; (10) Applied same fixes to `base-deep.ts` + `base-deep-evals.ts`; (11) Updated `withParentModel()` to inherit `providerOptions`; (12) Rewrote system prompt, instructionsPrompt, stepPrompt, EXPLORE_PROMPT to reference Savant agents; (13) Fixed Scout to delegate to Detective. Deleted 20+ absorbed SavantCode agent files. Fixed pre-existing `sentAt` type error in context-pruner.ts. Regenerated `bundled-agents.generated.ts`.
+**Resolution:** Aligned 69-agent SavantCode codebase to 9-agent Savant architecture. 13 fixes across 24 files: (1) Stripped write tools from Orchestrator (`str_replace`, `write_file`, `propose_*`) — strict separation of duties; (2) Updated `spawnableAgents` on all orchestrator variants — removed 10+ SavantCode agents, added `detective`; (3) Added `list_directory`, `glob`, `read_files`, `read_subtree` to Detective + STEP yield in handleSteps; (4) Fixed pre-existing `grep` → `code_search` bug in Recorder/Scribe; (5) Removed hardcoded `providerOptions` from Thinker/Verifier; (6) Removed all `SAVANT_GEMINI_THINKER` imports/conditionals from base2.ts; (7) Updated `FREE_MODE_AGENT_MODELS` — replaced 8 reviewer variants with single `verifier`; (8) Updated `freeCodeReviewerAgentId` to always be `'verifier'`; (9) Updated `ECHO_PROTOCOL_INSTRUCTIONS` from v0.1.2 to v0.2.0; (10) Applied same fixes to `base-deep.ts` + `base-deep-evals.ts`; (11) Updated `withParentModel()` to inherit `providerOptions`; (12) Rewrote system prompt, instructionsPrompt, stepPrompt, EXPLORE_PROMPT to reference Savant agents; (13) Fixed Scout to delegate to Detective. Deleted 20+ absorbed SavantCode agent files. Fixed pre-existing `sentAt` type error in context-pruner.ts. Regenerated `bundled-agents.generated.ts`.
 **Verified by:** typecheck (agents ✅ zero errors, common ✅, agent-runtime ✅), code-reviewer approved.
 **Archived:** 2026-07-18
 
@@ -2177,7 +2458,7 @@ Decomposed the comprehensive TUI rebuild into 5 incremental phase FIDs:
 ## FID-2026-0717-015 — high — TUI Refactoring + Neon Color System + Pre-Existing Bug Fixes
 
 **Closed:** 2026-07-17
-**Resolution:** Fixed 10 pre-existing type errors (borderFg→borderColor, accent→primary, selectedModel→useFreebuffModelStore, animationEnabled prop, FilesChanged.added). Updated neon color system: success #22c55e→#39ff14 (neon green), warning #ffd60a→#ff9500 (neon orange). Refactored right-sidebar.tsx with Savant-UI (KeyValue, Panel, AgentStack, Timeline, TokenMeter). Extracted shared helpers (isTextRenderable, renderExpandedContent) to block-helpers.tsx, deduplicating ~190 lines. Refactored thinking.tsx with Panel. Zero typecheck errors.
+**Resolution:** Fixed 10 pre-existing type errors (borderFg→borderColor, accent→primary, selectedModel→useSavantModelStore, animationEnabled prop, FilesChanged.added). Updated neon color system: success #22c55e→#39ff14 (neon green), warning #ffd60a→#ff9500 (neon orange). Refactored right-sidebar.tsx with Savant-UI (KeyValue, Panel, AgentStack, Timeline, TokenMeter). Extracted shared helpers (isTextRenderable, renderExpandedContent) to block-helpers.tsx, deduplicating ~190 lines. Refactored thinking.tsx with Panel. Zero typecheck errors.
 **Verified by:** typecheck (zero errors — first time in codebase history).
 **Archived:** 2026-07-17
 
@@ -2268,7 +2549,7 @@ Decomposed the comprehensive TUI rebuild into 5 incremental phase FIDs:
 ## FID-2026-0716-008 — high — UI Redesign (Neon Slate Theme) + Sidebar Data Wiring + Model Persistence
 
 **Closed:** 2026-07-16
-**Resolution:** Full TUI overhaul: Neon Slate dark theme across all components, right sidebar with live session metrics (tokens, tools, files, cost, model), unified model pipeline via `useFreebuffModelStore.switchModel()` eliminating 4 sources of model drift, ASCII art header, VERSION utility, input bar border, directory line repositioned, status bar separators.
+**Resolution:** Full TUI overhaul: Neon Slate dark theme across all components, right sidebar with live session metrics (tokens, tools, files, cost, model), unified model pipeline via `useSavantModelStore.switchModel()` eliminating 4 sources of model drift, ASCII art header, VERSION utility, input bar border, directory line repositioned, status bar separators.
 **Verified by:** `bun dev` renders full TUI; sidebar updates live; model persists across restarts; `bun x tsc --noEmit` passes.
 
 ## FID-2026-0716-007 — critical — Full ECHO Foundation (Architecture + Protocol Injection)

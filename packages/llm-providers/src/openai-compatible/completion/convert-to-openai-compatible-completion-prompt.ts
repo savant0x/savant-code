@@ -29,8 +29,10 @@ export function convertToOpenAICompatibleCompletionPrompt({
   for (const { role, content } of prompt) {
     switch (role) {
       case 'system': {
+        // FID-2026-0803-002 LLM-4: the message was a single-quoted literal, so
+        // `${content}` was never interpolated. Use a real template literal.
         throw new InvalidPromptError({
-          message: 'Unexpected system message in prompt: ${content}',
+          message: `Unexpected system message in prompt: ${content}`,
           prompt,
         })
       }

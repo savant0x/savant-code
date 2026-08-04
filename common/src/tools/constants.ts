@@ -10,6 +10,21 @@ export const toolXmlName = 'savant_code_tool_call'
 export const startToolTag = `<${toolXmlName}>\n`
 export const endToolTag = `\n</${toolXmlName}>`
 
+/**
+ * Tools that handleSteps generators may call without declaring them in
+ * `toolNames`. These are internal plumbing primitives (agent output, message
+ * history mutation, trusted inline subagent spawn) that are never intended to
+ * be model-callable. FID-2026-0803-001 ECHO-1: this is the auditable single
+ * source for the programmatic bypass in run-programmatic-step.ts — add a tool
+ * here only if every handleSteps caller of it is intentional and reviewed.
+ */
+export const PROGRAMMATIC_PRIMITIVES = [
+  'add_message',
+  'set_messages',
+  'set_output',
+  'spawn_agent_inline',
+] as const
+
 export const TOOLS_WHICH_WONT_FORCE_NEXT_STEP = [
   'think_deeply',
   'set_output',

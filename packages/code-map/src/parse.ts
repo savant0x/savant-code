@@ -180,7 +180,9 @@ async function parseTokensForScoring(params: {
       // eslint-disable-next-line no-console -- DEBUG_PARSING diagnostic only
       console.error(filePath)
     }
-    return emptyParsedTokens(false)
+    // A read failure is a skip, not a parsed file — it must not consume a
+    // MAX_PARSE_FILES slot with zero tokens (CM-7, FID-2026-0803-006).
+    return emptyParsedTokens(true)
   }
 }
 
@@ -253,13 +255,20 @@ function loadSourceWithinLimits(params: {
   const { filePath, readFile, maxBytes, remainingBytes } = params
 
   if (!readFile) {
-    const bytes = fs.statSync(filePath).size
+    let bytes: number
+    let code: string
+    try {
+      // stat + read in one window: a file that vanishes before or between
+      // the two (or is unreadable) is a skip, not a parse error (TOCTOU,
+      // CM-7, FID-2026-0803-006).
+      bytes = fs.statSync(filePath).size
+      code = fs.readFileSync(filePath, 'utf8')
+    } catch {
+      return null
+    }
     if (bytes > maxBytes || bytes > remainingBytes) return null
 
-    return {
-      code: fs.readFileSync(filePath, 'utf8'),
-      bytes,
-    }
+    return { code, bytes }
   }
 
   const code = readFile(filePath)
@@ -308,7 +317,16 @@ function buildTokenCallers(
   for (const [callingFile, calls] of fileCallsMap.entries()) {
     for (const call of calls) {
       const definingFile = tokenDefinitionMap.get(call)
-      if (!definingFile || callingFile === definingFile || call in {}) {
+      // `call in Object.prototype` (not `in {}`, which only caught the
+      // inherited `__proto__`): skip tokens that collide with Object
+      // prototype keys (constructor/toString/valueOf/…) — otherwise a
+      // truthy inherited member is treated as the caller list and crashes
+      // on `.includes` (CM-1, FID-2026-0803-006).
+      if (
+        !definingFile ||
+        callingFile === definingFile ||
+        call in Object.prototype
+      ) {
         continue
       }
 
@@ -384,6 +402,9 @@ function parseFile(
 
     return result
   } finally {
-    ;(tree as { delete?: () => void }).delete?.()
+    // Optional call: web-tree-sitter's Tree declares delete(), but
+    // structurally-compatible mocks omit it — the cast is gone, the guard stays
+    // (CM-8, FID-2026-0803-006).
+    tree.delete?.()
   }
 }

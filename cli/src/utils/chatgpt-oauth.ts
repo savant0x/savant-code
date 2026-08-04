@@ -87,7 +87,10 @@ export function startChatGptOAuthFlow(): {
 } {
   const codeVerifier = generateCodeVerifier()
   const codeChallenge = generateCodeChallenge(codeVerifier)
-  const state = codeVerifier
+  // FID-2026-0802-008 OAUTH1: state must be independent of the PKCE verifier —
+  // reusing the verifier would leak it to anything that observes the auth URL
+  // or redirect query (browser history, referrers).
+  const state = crypto.randomBytes(16).toString('hex')
 
   pendingCodeVerifier = codeVerifier
   pendingState = state

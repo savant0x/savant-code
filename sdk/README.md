@@ -185,6 +185,33 @@ const client = new SavantCodeClient({
 **Default behavior:** When no `fileFilter` is provided, gitignore checking is applied automatically. When a
 `fileFilter` IS provided, the caller owns all filtering.
 
+### Checkpoint & Rewind
+
+The SDK re-exports the persistent checkpoint store used by the CLI's `/rewind` command. One checkpoint per user
+turn records the pre-edit content of every file first written that turn (including subagent writes); a turn is
+bracketed with `openTurn` → `captureSnapshot` (automatic on writes when `checkpointDir`/`checkpointTurnId` are
+passed to `run`) → `closeTurn`.
+
+```typescript
+import { listTurns, restoreTurn, forkFrom } from '@savant-code/sdk'
+
+// Show the most recent checkpoints (newest first)
+const turns = listTurns(checkpointDir)
+
+// Restore every file the turn touched to its pre-edit content
+restoreTurn({ checkpointDir, turnId: turns[0].turnId, projectRoot: process.cwd() })
+
+// Or seed a new session from that turn (files + conversation boundary)
+const checkpoint = forkFrom({ checkpointDir, turnId: turns[0].turnId, projectRoot: process.cwd() })
+```
+
+Notes:
+
+- Retention is bounded to the most recent 20 turns per checkpoint directory.
+- `content: null` entries mean the file was created during the turn — restoring deletes it.
+- Every path is re-validated against `projectRoot` at restore; escaped/tampered entries are skipped.
+- Turn identity is host-provided (the CLI uses its AI-message id); a `path.basename` guard prevents path-like ids.
+
 ### `loadLocalAgents(options)`
 
 Loads agent definitions from `.agents` directories on disk.

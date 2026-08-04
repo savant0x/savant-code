@@ -95,8 +95,10 @@ async function extractTaskScores(
           })
         }
       }
-    } catch {
-      // Skip files that can't be parsed
+    } catch (error) {
+      // FID-2026-0803-007 EV-10: surface the parse failure instead of
+      // swallowing it silently — a corrupt log file is worth knowing about.
+      console.warn(`Skipping unparseable file ${file}:`, error)
     }
   }
 
@@ -162,8 +164,10 @@ async function analyzeScores(numRuns: number): Promise<{
         stats.min = Math.min(stats.min, score)
         stats.max = Math.max(stats.max, score)
       }
-    } catch {
-      // Skip directories that can't be processed
+    } catch (error) {
+      // FID-2026-0803-007 EV-10: surface the processing failure instead of
+      // swallowing it silently.
+      console.warn(`Skipping unprocessable log dir ${logDir}:`, error)
     }
   }
 

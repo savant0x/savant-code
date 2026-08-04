@@ -3,7 +3,7 @@ import fs from 'fs'
 import path from 'path'
 
 import type { Runner, RunnerResult, AgentStep } from './runner'
-import type { SavantCodeClient } from '@savant-code/sdk'
+import type { AgentDefinition, SavantCodeClient } from '@savant-code/sdk'
 
 const DEBUG_ERROR = true
 
@@ -12,20 +12,24 @@ export class SavantCodeRunner implements Runner {
   private env?: Record<string, string>
   private client: SavantCodeClient
   private agentId: string
-  private localAgentDefinitions: any[]
+  private localAgentDefinitions: AgentDefinition[]
   private printEvents: boolean
   private commitId: string
   private parentSha: string
+  private signal?: AbortSignal
+  private traceSink?: AgentStep[]
 
   constructor(options: {
     cwd: string
     env?: Record<string, string>
     client: SavantCodeClient
     agentId: string
-    localAgentDefinitions: any[]
+    localAgentDefinitions: AgentDefinition[]
     printEvents: boolean
     commitId: string
     parentSha: string
+    signal?: AbortSignal
+    traceSink?: AgentStep[]
   }) {
     this.cwd = options.cwd
     this.env = options.env
@@ -35,6 +39,8 @@ export class SavantCodeRunner implements Runner {
     this.printEvents = options.printEvents
     this.commitId = options.commitId
     this.parentSha = options.parentSha
+    this.signal = options.signal
+    this.traceSink = options.traceSink
   }
 
   async run(prompt: string): Promise<RunnerResult> {
@@ -49,6 +55,7 @@ export class SavantCodeRunner implements Runner {
       cwd: this.cwd,
       env: this.env,
       maxAgentSteps,
+      signal: this.signal,
       handleEvent: (event) => {
         if (
           (event.type === 'tool_call' || event.type === 'tool_result') &&
@@ -86,6 +93,9 @@ export class SavantCodeRunner implements Runner {
           )
         }
         steps.push(event)
+        // FID-2026-0803-007 EV-11: stream steps into the shared trace sink so
+        // partial progress survives an abort/timeout.
+        this.traceSink?.push(event)
       },
     })
 

@@ -288,15 +288,6 @@ export const ensureUrlProtocol = (url: string): string => {
   return `https://${url}`
 }
 
-export const safeReplace = (
-  content: string,
-  searchStr: string,
-  replaceStr: string,
-): string => {
-  const escapedReplaceStr = replaceStr.replace(/\$/g, '$$$$')
-  return content.replace(searchStr, escapedReplaceStr)
-}
-
 /**
  * Extracts a JSON field from a string, transforms it, and puts it back.
  * Handles both array and object JSON values.

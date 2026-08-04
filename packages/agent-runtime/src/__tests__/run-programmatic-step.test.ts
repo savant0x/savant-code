@@ -212,6 +212,23 @@ describe('runProgrammaticStep', () => {
         'No step handler found for agent template test-agent',
       )
     })
+
+    it('SEC1: prefers live handleStepsFn over stringified handleSteps (no eval)', async () => {
+      // A string that would throw a ReferenceError if eval'd and stepped
+      // (references an out-of-scope identifier). The live fn must be preferred
+      // so the eval trust boundary is never crossed in-process.
+      mockTemplate.handleSteps =
+        'function* () { yield { toolName: "end_turn", input: {} }; const x = someUndefinedBundlerHelper; }'
+      mockTemplate.handleStepsFn = () =>
+        (function* () {
+          yield { toolName: 'end_turn', input: {} }
+        })() as StepGenerator
+
+      const result = await runProgrammaticStep(mockParams)
+
+      expect(result.endTurn).toBe(true)
+      expect(result.agentState.output?.error).toBeUndefined()
+    })
   })
 
   describe('tool execution', () => {

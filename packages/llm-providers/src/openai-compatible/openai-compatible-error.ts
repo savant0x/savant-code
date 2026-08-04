@@ -10,7 +10,9 @@ export const openaiCompatibleErrorDataSchema = z.object({
     // OpenAI-compatible providers that have slightly different error
     // responses:
     type: z.string().nullish(),
-    param: z.any().nullish(),
+    // FID-2026-0803-002 LLM-3: `z.any()` → `z.unknown()` (Law 6) — the
+    // looseness is intentional, but the type surface does not need `any`.
+    param: z.unknown().nullish(),
     code: z.union([z.string(), z.number()]).nullish(),
   }),
 })

@@ -185,4 +185,34 @@ describe('SavantAgentRunner', () => {
     const trace = runner.collectTrace()
     expect(trace.events.some((e) => e.type === 'fault_injected')).toBe(true)
   })
+
+  it('forwards agentDefinitions to client.run (FID-2026-0803-012 RR-5b)', async () => {
+    // Regression: the v2 runner passed no agentDefinitions, so the SDK
+    // registry was empty and every evaluate run failed instantly with
+    // `Invalid agent ID: "savant". Available agents: `.
+    const runState = makeRunState()
+    let receivedAgentDefinitions: unknown = 'not-called'
+    const fakeClient: Pick<SavantCodeClient, 'run'> = {
+      run: async (options: unknown) => {
+        receivedAgentDefinitions = (options as { agentDefinitions?: unknown })
+          .agentDefinitions
+        return runState
+      },
+    }
+    const agentDefs = [
+      {
+        id: 'savant',
+        displayName: 'Savant',
+        model: { provider: 'test', id: 'test-model' },
+      },
+    ]
+    config.savantClient = fakeClient
+    config.agentDefinitions = agentDefs as never
+
+    const runner = new SavantAgentRunner()
+    await runner.initialize(config)
+    await runner.executePrompt('hello')
+
+    expect(receivedAgentDefinitions).toEqual(agentDefs)
+  })
 })

@@ -44,4 +44,4 @@ None.
 
 - Update developer `.env` files and CI/CD secrets to use new `SAVANT_CODE_*` env var names.
 - Regenerate `sdk/dist/` to purge old env var references from build artifacts.
-- Consider a follow-up FID for the 23 remaining `freebuff` references if a full clean break is desired.
+- Consider a follow-up FID for the 23 remaining `savant` references if a full clean break is desired.

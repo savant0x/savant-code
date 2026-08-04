@@ -1,267 +1,441 @@
-# Savant-Code
+<!-- markdownlint-disable MD041 -->
+<!-- markdownlint-disable MD033 -->
+<div align="center">
 
-[English](./README.md) | 简体中文
+<img src="assets/banner.png" alt="Savant-Code — 多智能体 AI 编程助手" width="850" />
 
-> **当前版本：v0.0.15** — CommandCode.ai 网关、首次运行的提供商密钥引导、以及本地/BYOK 使用体验已更新。
+**一款终端原生的 AI 编程助手，在每一次改动进入你的代码库之前都会先进行审计。**
 
-Savant-Code 是一个本地优先的终端 AI 编程助手。它支持 Ollama、本地模型和用户自带 API 密钥（BYOK）；不会要求
-用户创建项目级 `.env` 文件来保存提供商密钥。
+基于 TypeScript/Bun 构建，受 ECHO 协议治理，并针对本地优先的 Ollama 使用场景设计。
 
-## 首次配置提供商
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-1.3.14-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![React](https://img.shields.io/badge/React-19-%23000000?style=flat-square&logo=react&logoColor=%2300fbff)](https://react.dev/)[![OpenTUI](https://img.shields.io/badge/OpenTUI-0.2.2-%23000000?style=flat-square&logo=opentui&logoColor=%2300fbff)](https://github.com/anomalyco/opentui)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](ECHO.md)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![Release](https://img.shields.io/badge/Release-v0.0.16-%23000000?style=flat-square&logo=semver&logoColor=%2300fbff)](CHANGELOG.md)
 
-如果没有运行 Ollama，请在 CLI 中执行：
+</div>
+
+> **v0.0.16** — 检查点与回退（Checkpoint & Rewind）：基于持久化检查点存储的每轮编辑安全网，通过
+> `/rewind`（可只恢复代码、只恢复对话、两者都恢复，或分叉会话），外加一轮覆盖所有执行面的仓库级
+> 质量大扫除——agent 运行时（fail-closed 工具调用流、Thinker 级联修复）、llm-providers + database
+> （防崩溃初始化、rowid 排序、语句缓存）、SDK 实现层 + common（OAuth 限流双重执行修复、zod
+> `required` 重新推导）、code-map 与 evals 运行器——以及 ECHO 协议强制（编程原语工具、fail-closed
+> 步骤校验）和构建卫生（`bun run clean`，不再产生孤儿 sourcemap）。v0.0.16 的 CommandCode 提供商、
+> 首次运行引导与同步的发布元数据一并延续。
+
+---
+
+## 30 秒快速开始
+
+```bash
+# 安装 CLI
+npm install -g savant-code
+
+# 运行。如果 Ollama 正在运行，它会自动检测并使用。
+savant-code
+```
+
+_终端演示视频暂未提供；下方落地页与 CLI 源码链接描述了当前已验证的工作流。_
+
+还没有 Ollama？
+
+```bash
+# macOS / Linux
+curl -fsSL https://ollama.com/install.sh | sh
+ollama serve
+
+# Windows: https://ollama.com/download/windows
+```
+
+然后再次运行 `savant-code`，或在聊天中输入 `/health` 验证连接。
+
+如果 Ollama 没有运行，请在发送提示词前配置一个托管提供商：
+
+```text
+/provider opencode-go
+```
+
+你也可以输入 `/provider` 从交互式选择器中选择。将密钥粘贴到遮罩提示框中；它会被全局存储，且永远不会写入
+聊天记录。默认的 OpenCode Go 密钥使用 `OPENCODE_GO_API_KEY`；CommandCode 使用
+`COMMAND_CODE_API_KEY`。密钥持久化在 Windows 的 `C:\Users\<username>\.savant-code\credentials.json`
+或 macOS/Linux 的 `~/.savant-code/credentials.json`。环境变量优先于已保存的凭据。
+
+```powershell
+$env:OPENCODE_GO_API_KEY = "your-key"
+savant-code
+```
+
+```cmd
+set OPENCODE_GO_API_KEY=your-key
+savant-code
+```
+
+```bash
+export OPENCODE_GO_API_KEY=your-key
+savant-code
+```
+
+请勿创建项目级的 `.env` 文件，也不要手动编辑 `credentials.json`。
+
+---
+
+## 概述
+
+Savant-Code 是一个 TypeScript monorepo，用于构建并发布终端原生的 AI 编程助手 **Savant Code** 以及公开的
+[`@savant-code/sdk`](https://www.npmjs.com/package/@savant-code/sdk)。CLI 提供多智能体编排、自定义技能、
+MCP 工具发现、模式切换（`EDIT` / `ANALYZE` / `SCAFFOLD`）以及本地优先的 Ollama 支持。SDK、agent
+运行时、多智能体编排引擎、工具层与 LLM 提供商适配层共享，因此两个产品面从同一套代码发布。
+
+整个项目基于 [ECHO 协议 v0.2.0](ECHO.md) 发布——即治理 Savant 生态的同一套 15 条定律 agent 纪律。每项
+改动都要经过 RED → GREEN → AUDIT → SELF-CORRECT → COMPLETE 完美循环状态机，并带有硬性的 10 次迭代
+上限与每次通过 10% 的 Levenshtein 改动上限。
+
+---
+
+## 关键技术
+
+| 层            | 技术                             | 版本                                             |
+| ------------- | -------------------------------- | ------------------------------------------------ |
+| 运行时        | Bun                              | 1.3.14 (engines `>=1.3.11`)                      |
+| 语言          | TypeScript                       | 5.5.4 (`strict: true`, `noImplicitReturns: true`) |
+| TUI           | OpenTUI + React 19               | `@opentui/core` 0.2.2, `react` ^19.0.0           |
+| 状态管理      | Zustand + Immer                  | zustand ^5.0.8, immer ^10.1.3                    |
+| 校验          | Zod                              | ^4.2.1                                           |
+| LLM SDK       | Vercel AI SDK                    | `ai` ^5.0.52 + `@ai-sdk/anthropic` 2.0.50        |
+| MCP           | Model Context Protocol           | `@modelcontextprotocol/sdk` ^1.18.2              |
+| 代码解析      | tree-sitter (WASM)               | `@vscode/tree-sitter-wasm` 0.1.4                 |
+| HTTP / WS     | ws, node-fetch, 自定义 SDK 客户端 | ws ^8.18.0                                       |
+| 包管理器      | Bun workspaces (hoisted)         | `bunfig.toml` `[install] linker = "hoisted"`     |
+
+---
+
+## 功能特性
+
+### CLI（`@savant-code/cli`）
+
+- **多智能体编排** —— 9 个专职智能体通过 ECHO 协议协作：Detective 发现问题，Forge 实现，Verifier
+  审计，Recorder 管理 FID，Thinker 推理，Scout 探索，Researcher 调研，Scribe 记录文档。
+- **带顺序思维的 Thinker** —— Thinker 智能体通过 `sequentialthinking` 累积栈式推理步骤，收敛到类型化
+  非空的 `FinalArtifact`（status/synthesis/payload/metrics/thoughts），绝不返回 null 或空结果。
+- **原生工具调用加固** —— 针对不完整/畸形/截断工具调用的 fail-closed 流式边界；占位参数的老旧片段
+  替换；在严格 Zod 校验之前对字符串化数字/布尔值的宽松强制转换。
+- **工具权限边界** —— 通过 `filterToolSet` 基于严格白名单进行工具供给；受限智能体（Thinker、Scout）
+  永远不会收到仅父级可用的工具；执行器授权保持不变。
+- **`/init` 命令** —— 生成 `.agents/types/{agent-definition,tools,util-types}.ts` 以及一份入门
+  `knowledge.md`。
+- **斜杠命令** —— `/new`、`/history`、`/bash`、`/goal`、`/loop`、`/feedback`、`/rewind`、
+  `/theme:toggle`、`/login`、`/logout`、`/exit`，以及各智能体专属命令。
+- **提供商设置** —— `/provider` 打开交互式下拉选择器，显示所有提供商及其 ✓/✗ 配置状态。选择提供商后可
+  输入其 API 密钥（遮罩输入）。密钥存储在本地 `credentials.json`。
+- **遥测控制** —— `/telemetry status|enable|disable` 切换远程分析与错误上报。主 CLI 默认开启远程分析，但用户可以
+  随时关闭；关闭后本地日志仍然可用。上下文广告是独立设置：主 CLI 默认关闭广告，并可在适用时单独控制。Savant-Free
+  是独立的广告支持产品面。
+- **`@filename` 与 `@AgentName` 提及** —— 文件与智能体提及，支持行内自动补全。
+- **Bash 模式** —— `!command` 或 `/bash` 行内运行 shell 命令（需确认）。
+- **权限与沙箱控制** —— `--permission-mode safe|prompt|unsafe` 设置启动策略；
+  `/permissions`（别名 `/sandbox`、`/safety`）可在会话中查看或修改策略。  `safe` 自动拒绝高风险工具；由于交互式确认尚未实现，`prompt` 目前也会拒绝高风险工具；`unsafe` 则明确允许高风险工具。
+  只有理解命令风险时才使用 `unsafe`。
+- **目标循环** —— `/goal` 设置目标条件；`/loop <cadence>` 调度周期性提示执行（例如
+  `/loop 5m check build status`）。循环调度器管理节奏、运行次数与收敛检测。
+- **结构化规划与审查** —— `/interview` 将不完整的需求整理为结构化规格，`/plan` 创建实现计划，`/review` 打开
+  专注的代码审查流程。
+- **聊天内验证** —— `/verify` 运行四个受支持的核心工作区类型检查，也可以使用 `/verify sdk`、`/verify common`、
+  `/verify agent-runtime` 或 `/verify cli` 指定目标。`/diagnostics` 报告本地进程与资源信息。
+- **会话工具** —— `/copy`（别名 `/copy-chat`、`/export`）复制完整对话；`/image`（别名 `/img`、`/attach`）
+  在所选提供商支持多模态输入时附加图片。
+- **智能体发布** —— `/publish` 为包含必要 publisher 元数据的模板打开智能体发布流程。它需要 Savant Code 后端，
+  不能在直接提供商模式下使用。
+- **模式切换** —— `EDIT` / `ANALYZE` / `SCAFFOLD` 执行范围模式，可在运行时通过 UI 切换。
+- **流式与取消** —— 逐 token 的 SSE 流式输出，支持流中取消、退避重试，以及并行工作的子智能体流式输出。
+- **知识文件** —— 项目级 `knowledge.md` 外加每用户主目录知识，自动载入 agent 上下文。
+- **技能（Skills）** —— 启动时发现 OpenClaw 格式的 `SKILL.md` 文件，schema 发送给 LLM，作为原生工具使用。
+- **MCP 工具** —— 启动时发现 Model Context Protocol 服务器，schema 发布给 LLM API。
+- **上下文压缩** —— 4 层渐进式自动压缩：L0（总结旧轮次）、L1（压缩工具结果）、L2（裁剪过期上下文）、
+  L3（激进缩减）。在保留关键上下文的同时降低 token 用量。
+- **上下文窗口解析** —— 网关模型（例如 `opencode-go/mimo-v2.5`）在运行时从 OpenRouter 目录解析其真实
+  上下文长度。
+- **通用复制按钮** —— 在整个 TUI 中悬停即可复制代码块、工具输出与文件 diff。
+- **网关提供商** —— 通过 `@savant-code/llm-providers` 支持 TokenRouter、NVIDIA NIM、OpenCode Go、
+  CommandCode 与 Cloudflare Workers AI。
+- **默认模型** —— 通过 OpenCode Go 使用 MiMo 2.5（可通过 `/model` 配置）。
+- **主题** —— 亮/暗切换（`/theme:toggle`），Neon Slate 美学。
+- **侧栏折叠** —— 右侧栏区块与 FID 卡片默认折叠，首屏渲染更紧凑；点击展开。
+- **完整命令面** —— 主要斜杠命令已在下方参考表中列出；高级命令仍可通过注册表与自动补全使用。
+- **检查点与回退** —— 每轮一个持久化检查点，记录每个首触文件的编辑前内容（包括子智能体写入）以及对话
+  边界；`/rewind` 打开选择器，可恢复**仅代码**、**仅对话**、**两者**，或从更早的一轮**分叉新会话**——无需
+  git。保留上限为最近 20 轮，且终端副作用永远不会被回退。
+
+### SDK（`@savant-code/sdk`）
+
+- **`SavantCodeClient` 类** —— 从任何 Node.js / Bun / 浏览器应用运行 agent 的单一入口。
+- **流式事件** —— `handleEvent` 回调接收 `RunState` 更新、工具调用、文件 diff 与最终输出。
+- **自定义 agent** —— 传入 `agentDefinitions: AgentDefinition[]` 覆盖默认配置。
+- **自定义工具** —— 传入 `customToolDefinitions` 扩展工具注册表。
+- **取消** —— `AbortSignal` 通过子智能体流传播。
+- **检查点 API** —— 持久化检查点存储（`openTurn`、`captureSnapshot`、`closeTurn`、`listTurns`、
+  `restoreTurn`、`forkFrom`）从 SDK 重新导出，宿主可以对任何运行做检查点与回退；
+  `checkpointDir`/`checkpointTurnId` 运行选项将轮次边界贯穿到子智能体写入。
+
+### Agent 运行时（`@savant-code/agent-runtime`）
+
+- **LLM 无关** —— 调用任何注册到 `@savant-code/llm-providers` 的提供商（OpenAI 兼容聊天、Anthropic 等）。
+- **多步循环** —— 模型决定工具 → 工具执行 → 结果反馈 → 重复，直到 `end_turn` 或预算耗尽。
+- **工具注册表** —— 内置（`read_files`、`write_file`、`run_terminal_command`、`code_search`、
+  `web_search`、`spawn_agents_inline` 等）+ 自定义 + MCP。
+- **成本聚合** —— 每次调用的 token 计数与 USD 成本估算在 `RunState` 中呈现。
+- **轮次检查点** —— `executeToolCall` 中的写闸门在 `write_file`/`str_replace`/`apply_patch` 分发前捕获
+  编辑前内容；子智能体写入通过 spawn 上下文继承父轮次。
+
+### ECHO 协议集成
+
+- **9 个专职智能体** —— Orchestrator、Detective、Forge、Verifier、Recorder、Thinker、Scout、
+  Researcher、Scribe
+- **FID 约束执行** —— FID 收敛之前绝不写代码
+- **完美循环状态机** —— RED → GREEN → AUDIT → SELF-CORRECT → COMPLETE
+- **职责分离** —— 写代码的智能体不能验证它
+- **15 条定律** —— 4 条不可变流程定律 + 11 条扩展代码定律
+
+---
+
+## 仓库地图
+
+<!-- markdownlint-disable MD013 MD060 -->
+
+| 工作区                    | 包                            | 用途                                                            |
+| ------------------------- | ----------------------------- | --------------------------------------------------------------- |
+| `agents/`                 | `@savant-code/agents`         | 随 CLI 发布的公开 agent 定义                                    |
+| `cli/`                    | `@savant-code/cli`            | CLI 源码——UI、命令、状态、hooks、OpenTUI/React 组件             |
+| `common/`                 | `@savant-code/common`         | 共享类型、工具定义、工具函数                                    |
+| `evals/`                  | `@savant-code/evals`          | ECHO 原生 benchmark v2 运行器 + 遗留 eval fixtures              |
+| `savant-free/`            | `@savant-code/savant-free`    | 私有/预发布的免费广告支持变体；支持本地二进制与 E2E 测试          |
+| `packages/agent-runtime/` | `@savant-code/agent-runtime`  | agent 循环、工具执行器、LLM API 集成                            |
+| `packages/code-map/`      | `@savant-code/code-map`       | tree-sitter 代码索引、语言检测                                  |
+| `packages/database/`      | `@savant-code/database`       | 数据库抽象层                                                     |
+| `packages/llm-providers/` | `@savant-code/llm-providers`  | 公开 LLM 提供商适配层                                           |
+| `sdk/`                    | `@savant-code/sdk`            | 公开 SDK——`SavantCodeClient`、类型、构建 + 验证脚本             |
+| `scripts/tmux/`           | `@savant-code/tmux`           | 交互式测试运行中使用的 tmux CLI 辅助工具                         |
+
+<!-- markdownlint-enable MD013 MD060 -->
+
+---
+
+## 快速上手
+
+### 1. 克隆并安装
+
+```bash
+git clone https://github.com/savant0x/savant-code.git
+cd savant-code
+bun install
+```
+
+### 2. 运行 CLI（开发模式）
+
+```bash
+# 以开发模式运行 CLI
+bun run dev
+
+# 或以指定权限模式运行
+bun run dev -- --permission-mode safe
+```
+
+### 3. 构建发布产物
+
+```bash
+# 构建 SDK
+bun run build:sdk
+
+# 从 CLI 工作区构建 CLI 二进制
+bun run --cwd=cli build:binary
+```
+
+### 4. 使用 SDK
+
+```ts
+import { SavantCodeClient } from '@savant-code/sdk'
+
+const client = new SavantCodeClient({
+  apiKey: process.env.SAVANT_CODE_API_KEY,
+  cwd: '/path/to/your/project',
+  onError: (err) => console.error('Savant-Code error:', err.message),
+})
+
+const result = await client.run({
+  agent: 'savant',
+  prompt: 'Add error handling to all API endpoints',
+  handleEvent: (event) => console.log('Progress', event),
+})
+```
+
+### 5. 终端用户安装
+
+```bash
+# npm
+npm install -g savant-code
+```
+
+### 6. 配合本地 Ollama 使用（零 API 密钥）
+
+如果你已安装并运行 [Ollama](https://ollama.com/)，Savant Code 会在首次启动时自动检测，并将推理路由到
+你的本地守护进程——无需 API 密钥、无需账号、无需任何提示。
+
+```bash
+# 后台启动 Ollama，然后运行 CLI
+ollama serve
+savant-code
+```
+
+在聊天中运行 `/health` 验证 Ollama 连接、可用的本地模型以及当前权限模式。
+
+### 配置托管提供商密钥
+
+如果 Ollama 没有运行，Savant-Code 需要所选网关模型的提供商 API 密钥。首次运行时输入：
 
 ```text
 /provider
 ```
 
-选择提供商并在遮罩输入框中粘贴密钥。CLI 会将通过 `/provider` 输入的密钥保存在用户级
-`.savant-code/credentials.json`，不会写入聊天记录；环境变量优先于已保存的密钥。
+密钥提示为遮罩输入，并将密钥全局存储在 Savant-Code 配置的 `credentials.json` 中；不会加入聊天记录。
+默认提供商是 OpenCode Go（`OPENCODE_GO_API_KEY`）。CommandCode 使用 `COMMAND_CODE_API_KEY`。
+你还可以选择 `/provider tokenrouter`、`/provider nvidia` 或 `/provider commandcode`。shell 环境变量
+优先于已存储的密钥，因此 CI 与托管环境可以不使用本地持久化来配置提供商。
 
-当前网关提供商包括 OpenCode Go、TokenRouter、NVIDIA NIM、CommandCode 和 Cloudflare Workers AI。
-CommandCode 的环境变量名称是 `COMMAND_CODE_API_KEY`。
+---
 
-**[SavantCode](https://savant-code.com)** 是一款开源的 AI
-编程助手，能根据自然语言指令直接修改你的代码库。**[SavantFree](https://www.npmjs.com/package/savant-free)** 是它的免费、广告支持版本——无需订阅、无需积分、零配置。
+## CLI 命令
 
-与那种"一个模型干所有事"的工具不同，SavantCode 会协调多个专业化的智能体（agent）协同工作，理解你的项目并做出精准的改动。
+<!-- markdownlint-disable MD013 MD060 -->
 
-<div align="center">
-  <img src="./assets/savant-code-vs-claude-code.png" alt="SavantCode vs Claude Code" width="400">
-</div>
+| 命令                              | 作用                            |
+| --------------------------------- | ------------------------------- |
+| `bun run dev`                     | 以开发模式启动 CLI              |
+| `bun run build:sdk`               | 构建 SDK 用于 npm 发布          |
+| `bun run --cwd=cli build:binary`  | 从 `cli/` 构建 CLI 二进制       |
+| `bun run ci`                      | 构建 SDK 与发布产物             |
+| `bun test`                        | 运行测试套件                    |
+| `bun x tsc --noEmit`              | 类型检查                        |
+| `bun x eslint . --max-warnings 0` | Lint                            |
 
-项目的具体评测结果和历史测试报告请参阅仓库中的 `evals/` 与 `dev/test-prompts/archive/`；本文不把历史基准数字当作当前版本保证。
+<!-- markdownlint-enable MD013 MD060 -->
 
-## 工作原理
+---
 
-当你让 SavantCode "给我的 API 加上身份验证"时，它可能会调用：
+## 斜杠命令参考
 
-1. **Detective** —— 用证据扫描代码库并找出相关问题
-2. **Thinker / Recorder** —— 规划工作并维护 FID
-3. **Forge** —— 根据已收敛的 FID 执行精确修改
-4. **Verifier** —— 独立审计改动并运行验证
+命令可以使用 `/` 输入；别名显示在括号中。Savant-Free 模式会有意移除付费/后端专属命令，因此可用命令可能有所不同。
 
-<div align="center">
-  <img src="./assets/multi-agents.png" alt="SavantCode Multi-Agents" width="250">
-</div>
+| 命令 | 作用 |
+| --- | --- |
+| `/help`（`/h`、`/?`） | 显示命令帮助与提示 |
+| `/new`（`/clear`、`/reset`） | 开始新聊天；可附带文本直接开始第一条提示 |
+| `/history`（`/chats`） | 浏览并恢复历史对话 |
+| `/copy`（`/export`） | 复制完整对话 |
+| `/interview` | 将想法整理为结构化规格 |
+| `/plan` | 创建实现计划 |
+| `/review` | 审查代码改动 |
+| `/goal`（`/g`） | 持续迭代直到可验证目标满足 |
+| `/loop`（`/repeat`） | 按周期运行提示；使用 `stop` 或 `status` |
+| `/verify`（`/typecheck`） | 运行四个受支持的核心工作区类型检查，可全部运行或指定一个 |
+| `/permissions`（`/sandbox`、`/safety`） | 查看或设置 `safe`、`prompt`、`unsafe` 工具策略 |
+| `/rewind`（`/undo`、`/checkpoint`） | 恢复之前轮次的文件和/或对话 |
+| `/health`（`/status`、`/check`） | 检查 Ollama、提供商模式、模型与权限状态 |
+| `/diagnostics`（`/diag`、`/processes`） | 显示本地进程与资源诊断信息 |
+| `/provider` | 使用遮罩输入配置托管提供商密钥 |
+| `/model` | 选择或切换当前托管模型 |
+| `/publish` | 通过 Savant 后端发布智能体模板 |
+| `/feedback`（`/bug`、`/report`） | 打开反馈流程 |
+| `/telemetry`（`/analytics`） | 查看或修改远程分析同意状态 |
+| `/theme:toggle` | 在亮色与暗色主题间切换 |
+| `/bash`（`!`） | 运行 shell 命令或进入 Bash 模式 |
+| `/image`（`/img`、`/attach`） | 为支持多模态的模型附加图片 |
+| `/init` | 创建入门智能体类型与 `knowledge.md` |
+| `/login` / `/logout` | 登录或结束当前会话 |
+| `/exit`（`/quit`、`/q`） | 退出 CLI |
 
-相比单模型工具，这种多智能体方案能带来更准的上下文理解、更精确的修改，以及更少的错误。
+Savant-Free 还提供 `/end-session` 等免费会话控制和模型选择器；付费/后端专属命令会从该构建中筛除。
 
-## CLI：装好就能写代码
+---
 
-安装：
+## ECHO 协议
 
-```bash
-npm install -g savant-code
-```
+本项目随附 [ECHO 协议 v0.2.0](ECHO.md)——面向 agent 行为的单一引导文件。
 
-运行：
+### 核心原则
 
-```bash
-cd your-project
-savant-code
-```
+- **FID 约束执行** —— FID 收敛之前绝不写代码
+- **完美循环** —— RED → GREEN → AUDIT → SELF-CORRECT → COMPLETE
+- **职责分离** —— 写代码的智能体不能验证它
+- **不允许拖延** —— 每个已批准的工作项都必须完成
 
-然后直接告诉 SavantCode 你想做什么，剩下的它自己搞定：
+### 15 条定律
 
-- "修掉用户注册里的 SQL 注入漏洞"
-- "给所有 API 端点加上限流"
-- "重构数据库连接代码，提升性能"
+4 条不可变流程定律（Read 0-EOF、Present Before Act、Verify Before Proceed、Call-Graph Reachability）+
+11 条扩展代码定律。TypeScript 中 `strict: true`。
 
-SavantCode 会找到对应的文件，跨多个文件做改动，并跑测试确认没有破坏现有功能。
+### 关键文件
 
-## 创建自定义智能体
+<!-- markdownlint-disable MD060 -->
 
-要开始构建自己的智能体，先启动 SavantCode 然后执行 `/init`：
+| 文件                       | 用途                                          |
+| -------------------------- | --------------------------------------------- |
+| `ECHO.md`                  | 15 条定律 + 完美循环状态机 + FID 生命周期     |
+| `ARCHITECTURE.md`          | agent 名册与工具限制                          |
+| `protocol.config.yaml`     | 构建命令、质量基准、路径                      |
+| `dev/fids/`                | 功能实现文档（FID）                            |
+| `dev/session-summaries/`   | 会话审计轨迹                                  |
+| `dev/LEARNINGS.md`         | 跨会话经验                                    |
 
-```bash
-savant-code
-```
+<!-- markdownlint-enable MD060 -->
 
-进入 CLI 后：
+---
 
-```text
-/init
-```
+## 配置
 
-这会生成：
-```text
-knowledge.md               # SavantCode 用的项目上下文
-.agents/
-└── types/                 # TypeScript 类型定义
-    ├── agent-definition.ts
-    ├── tools.ts
-    └── util-types.ts
-```
+| 内容                       | 位置                    | 格式                                    |
+| -------------------------- | ----------------------- | --------------------------------------- |
+| ECHO 协议运行时配置        | `protocol.config.yaml`  | YAML——语言、命令、质量限制              |
+| TypeScript 基础配置        | `tsconfig.json`         | JSON——`strict: true`                    |
+| ESLint 配置                | `eslint.config.js`      | Flat config                             |
+| Bun 配置                   | `bunfig.toml`           | TOML——`linker: "hoisted"`               |
 
-通过编写智能体定义文件，你可以最大程度地控制智能体的行为。
+---
 
-通过指定工具、可派生的子智能体和提示词来实现自己的工作流。我们还提供了 TypeScript 生成器，方便你以更程序化的方式控制流程。
-
-下面是一个 `git-committer` 智能体的例子，它会基于当前的 git 状态生成提交。注意它先跑 `git diff` 和 `git log` 分析改动，然后再把决策权交给 LLM，让它撰写有意义的 commit
-message 并完成实际提交。
-
-```typescript
-export default {
-  id: 'git-committer',
-  displayName: 'Git Committer',
-  model: 'openai/gpt-5-nano',
-  toolNames: ['read_files', 'run_terminal_command', 'end_turn'],
-
-  instructionsPrompt:
-    'You create meaningful git commits by analyzing changes, reading relevant files for context, and crafting clear commit messages that explain the "why" behind changes.',
-
-  async *handleSteps() {
-    // 分析改动
-    yield { tool: 'run_terminal_command', command: 'git diff' }
-    yield { tool: 'run_terminal_command', command: 'git log --oneline -5' }
-
-    // 暂存文件，并用合适的 message 生成提交
-    yield 'STEP_ALL'
-  },
-}
-```
-
-## SDK：在生产环境里跑智能体
-
-安装 [SDK 包](https://www.npmjs.com/package/@savant-code/sdk)——注意这跟 CLI 用的 savant-code 包是两个不同的包。
+## 验证
 
 ```bash
-npm install @savant-code/sdk
-```
+# 构建
+bun run build:sdk && bun run ci
 
-引入 client，开始跑智能体：
-
-```typescript
-import { SavantCodeClient } from '@savant-code/sdk'
-
-// 1. 初始化 client
-const client = new SavantCodeClient({
-  apiKey: 'your-api-key',
-  cwd: '/path/to/your/project',
-  onError: (error) => console.error('SavantCode error:', error.message),
-})
-
-// 2. 跑一个编码任务……
-const result = await client.run({
-  agent: 'base', // SavantCode 默认的基础编码智能体
-  prompt: 'Add error handling to all API endpoints',
-  handleEvent: (event) => {
-    console.log('Progress', event)
-  },
-})
-
-// 3. 也可以跑自定义智能体！
-const myCustomAgent: AgentDefinition = {
-  id: 'greeter',
-  displayName: 'Greeter',
-  model: 'openai/gpt-5.1',
-  instructionsPrompt: 'Say hello!',
-}
-await client.run({
-  agent: 'greeter',
-  agentDefinitions: [myCustomAgent],
-  prompt: 'My name is Bob.',
-  customToolDefinitions: [], // 也可以加自定义工具！
-  handleEvent: (event) => {
-    console.log('Progress', event)
-  },
-})
-```
-
-更多 SDK 用法请看[这里](https://www.npmjs.com/package/@savant-code/sdk)。
-
-## Savant-Free：未来的免费版本
-
-仓库中保留 `savant-free/` 工作区用于未来的免费版本开发；它不是当前
-0.0.15 公开发布路径的一部分。当前公开 CLI 是 Savant-Code，采用本地优先和 BYOK 模式。
-
-## 为什么选 SavantCode
-
-**自定义工作流**：用 TypeScript 生成器把 AI 生成和程序化控制混着用。智能体可以派生子智能体、按条件分支、跑多步流程。
-
-**OpenRouter 上的任何模型**：Claude Code 把你锁死在 Anthropic 的模型上，SavantCode 不一样——它支持
-[OpenRouter](https://openrouter.ai/models) 上的所有模型，从 Claude、GPT 到 Qwen、DeepSeek
-这类专用模型都行。可以按任务切换模型，也能随时用上最新发布的模型，不必等平台跟进。
-
-**复用已发布的智能体**：把社区[已发布的智能体](https://www.savant-code.com/store)拼起来用，少走弯路。SavantCode 智能体就是新一代的 MCP！
-
-**SDK**：把 SavantCode 嵌进你自己的应用里。可以创建自定义工具、对接 CI/CD，或把编码能力内嵌进你的产品。
-
-## 进阶用法
-
-### 自定义智能体工作流
-
-用 `/init` 命令创建带专门工作流的智能体：
-
-```bash
-savant-code
-/init
-```
-
-这会在 `.agents/` 下生成一套可自定义的智能体结构。
-
-## 参与贡献
-
-我们 ❤️ 来自社区的贡献——无论是修 bug、调整智能体、还是改进文档。
-
-**想参与？** 看一眼[贡献指南](./CONTRIBUTING.md) 就能上手。
-
-### 运行测试
-
-跑测试套件：
-
-```bash
-cd cli
+# 测试
 bun test
+
+# 类型检查
+bun x tsc --noEmit
+
+# Lint
+bun x eslint . --max-warnings 0
+
+# 格式化
+bun x prettier --write .
 ```
 
-**交互式端到端测试**需要 tmux：
+---
 
-```bash
-# macOS
-brew install tmux
+## 文档
 
-# Ubuntu/Debian
-sudo apt-get install tmux
+- [`ECHO.md`](ECHO.md) — 15 条定律 + 完美循环状态机
+- [`ARCHITECTURE.md`](ARCHITECTURE.md) — agent 名册与工具限制
+- [`protocol.config.yaml`](protocol.config.yaml) — 构建命令、质量基准
+- [`CHANGELOG.md`](CHANGELOG.md) — 发布历史
+- [`docs/launch/landing/index.html`](docs/launch/landing/index.html) — 公开落地页
+- [`dev/LEARNINGS.md`](dev/LEARNINGS.md) — 跨会话经验
+- [`dev/session-summaries/`](dev/session-summaries/) — 会话审计轨迹
 
-# Windows（通过 WSL）
-wsl --install
-sudo apt-get install tmux
-```
+---
 
-更完整的测试文档见 [cli/src/__tests__/README.md](cli/src/__tests__/README.md)。
+## 许可证
 
-可以帮忙的方向：
+[Apache-2.0](LICENSE) — 完整文本见 [LICENSE](LICENSE)。
 
-- 🐛 **修 bug** 或新增功能
-- 🤖 **打造专用智能体**并发布到 Agent Store
-- 📚 **完善文档**或撰写教程
-- 💡 **分享想法**：在 [GitHub Issues](https://github.com/savant0x/savant-code/issues) 留言
+---
 
-## 开始使用
+_Savant-Code 是 Savant-Code agent 框架的公开 TypeScript monorepo。_
 
-### 安装
-
-**CLI**：`npm install -g savant-code`
-
-**SDK**：`npm install @savant-code/sdk`
-
-**SavantFree（免费版）**：`npm install -g savant-free`
-
-### 资源
-
-**文档**：[savant-code.com/docs](https://savant-code.com/docs)
-
-**社区**：[Discord](https://savant-code.com/discord)
-
-**Issue 与想法**：[GitHub Issues](https://github.com/savant0x/savant-code/issues)
-
-**贡献指南**：[CONTRIBUTING.md](./CONTRIBUTING.md) ——想贡献从这里开始！
-
-**支持**：[support@savant-code.com](mailto:support@savant-code.com)
-
-## Star 历史
-
-[![Star History
-Chart](https://api.star-history.com/svg?repos=savant0x/savant-code&type=Date)](https://www.star-history.com/#savant0x/savant-code&Date)
+**Savant** • 2026

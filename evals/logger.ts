@@ -2,17 +2,27 @@ import { mkdirSync } from 'fs'
 import path, { dirname } from 'path'
 
 import { IS_CI, IS_TEST } from '@savant-code/common/env'
-import { pino } from 'pino'
+import { pino, type DestinationStream } from 'pino'
 
 let logPath: string | undefined = undefined
-let pinoLogger: any = undefined
+let pinoLogger: ReturnType<typeof pino> | undefined = undefined
 
 const loggingLevels = ['info', 'debug', 'warn', 'error', 'fatal'] as const
 type LogLevel = (typeof loggingLevels)[number]
 
-// pino v9 removed the static destination/transport methods from the type
-// definitions but they still exist at runtime. Cast to access them.
-const pinoAny = pino as any
+// FID-2026-0803-007 EV-1b: pino v9 removed the static destination/transport
+// methods from the type definitions but they still exist at runtime. Narrow
+// the cast to the one static we use, typed with the exported DestinationStream
+// (the previous `ReturnType<(typeof pino)['destination']>` reference did not
+// exist on `typeof pino` and failed typecheck).
+type PinoWithStaticDestination = typeof pino & {
+  destination: (opts: {
+    dest: string
+    mkdir: boolean
+    sync: boolean
+  }) => DestinationStream
+}
+const pinoTyped = pino as unknown as PinoWithStaticDestination
 
 function initPinoLoggerWithPath(path: string): void {
   if (path === logPath) return // nothing to do
@@ -20,7 +30,7 @@ function initPinoLoggerWithPath(path: string): void {
   logPath = path
   mkdirSync(dirname(path), { recursive: true })
 
-  const fileStream = pinoAny.destination({
+  const fileStream = pinoTyped.destination({
     dest: path,
     mkdir: true,
     sync: false,
@@ -38,7 +48,12 @@ function initPinoLoggerWithPath(path: string): void {
   )
 }
 
-function log(level: LogLevel, data: any, msg?: string, ...args: any[]): void {
+function log(
+  level: LogLevel,
+  data: unknown,
+  msg?: string,
+  ...args: unknown[]
+): void {
   if (!IS_CI && !IS_TEST) {
     const projectRoot = path.join(__dirname, '..')
     const logTarget = path.join(projectRoot, 'debug', 'evals.log')
@@ -60,13 +75,13 @@ function log(level: LogLevel, data: any, msg?: string, ...args: any[]): void {
  */
 export const logger: Record<
   LogLevel,
-  (data: any, msg?: string, ...args: any[]) => void
+  (data: unknown, msg?: string, ...args: unknown[]) => void
 > = Object.fromEntries(
   loggingLevels.map((level) => {
     return [
       level,
-      (data: any, msg?: string, ...args: any[]) =>
+      (data: unknown, msg?: string, ...args: unknown[]) =>
         log(level, data, msg, ...args),
     ]
   }),
-) as Record<LogLevel, (data: any, msg?: string, ...args: any[]) => void>
+) as Record<LogLevel, (data: unknown, msg?: string, ...args: unknown[]) => void>

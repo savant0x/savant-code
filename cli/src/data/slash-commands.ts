@@ -31,17 +31,25 @@ const MODE_COMMANDS: SlashCommand[] = IS_SAVANT_FREE
       aliases: [`model:${mode.toLowerCase()}`],
     }))
 
-const SAVANT_FREE_REMOVED_COMMAND_IDS = new Set([
+// FID-007 D1: `init` was listed here (menu-only removal) while the command
+// registry still registered it in free builds — free users could run an
+// undiscoverable command. Aligned to the registry: `/init` is available in
+// free builds, so it stays in the menu.
+// FID-007 V4: exported for the gating-parity test.
+export const SAVANT_FREE_REMOVED_COMMAND_IDS = new Set([
   'ads:enable',
   'ads:disable',
   'usage',
   'subscribe',
   'image',
   'publish',
-  'init',
 ])
 
-const SAVANT_FREE_ONLY_COMMAND_IDS = new Set(['connect', 'plan', 'end-session'])
+export const SAVANT_FREE_ONLY_COMMAND_IDS = new Set([
+  'connect',
+  'plan',
+  'end-session',
+])
 
 const ALL_SLASH_COMMANDS: SlashCommand[] = [
   {
@@ -56,6 +64,12 @@ const ALL_SLASH_COMMANDS: SlashCommand[] = [
     label: 'diagnostics',
     description: 'Show local CLI resource usage and terminal tool process IDs',
     aliases: ['diag', 'processes'],
+  },
+  {
+    id: 'health',
+    label: 'health',
+    description: 'Show CLI and backend health status',
+    aliases: ['status', 'check'],
   },
   ...(CHATGPT_OAUTH_ENABLED
     ? [
@@ -159,6 +173,11 @@ const ALL_SLASH_COMMANDS: SlashCommand[] = [
     description: 'Attach an image file (or Ctrl+V to paste from clipboard)',
     aliases: ['img', 'attach'],
   },
+  {
+    id: 'publish',
+    label: 'publish',
+    description: 'Publish an agent to the registry',
+  },
   ...MODE_COMMANDS,
 
   {
@@ -236,6 +255,13 @@ const ALL_SLASH_COMMANDS: SlashCommand[] = [
     description:
       'Show or set the sandbox permission mode: /permissions [safe|prompt|unsafe]',
     aliases: ['sandbox', 'safety'],
+  },
+  {
+    id: 'rewind',
+    label: 'rewind',
+    description:
+      'Restore files and/or conversation to before a previous turn (/rewind, /rewind 2, /rewind 2 fork)',
+    aliases: ['undo', 'checkpoint'],
   },
 ]
 

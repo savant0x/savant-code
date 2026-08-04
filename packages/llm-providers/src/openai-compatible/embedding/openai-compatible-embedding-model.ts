@@ -16,7 +16,10 @@ import type {
   OpenAICompatibleErrorData,
   ProviderErrorStructure,
 } from '../openai-compatible-error'
-import type { EmbeddingModelV2 } from '@ai-sdk/provider'
+import type {
+  SharedV2ProviderMetadata,
+  EmbeddingModelV2,
+} from '@ai-sdk/provider'
 import type { FetchFunction } from '@ai-sdk/provider-utils'
 
 type OpenAICompatibleEmbeddingConfig = {
@@ -75,20 +78,14 @@ export class OpenAICompatibleEmbeddingModel implements EmbeddingModelV2<string> 
   }: Parameters<EmbeddingModelV2<string>['doEmbed']>[0]): Promise<
     Awaited<ReturnType<EmbeddingModelV2<string>['doEmbed']>>
   > {
-    const baseOptionsResult = await parseProviderOptions({
-      provider: 'openai-compatible',
-      providerOptions,
-      schema: openaiCompatibleEmbeddingProviderOptions,
-    })
+    // FID-006 LLM4: a single parse under the provider's own options name —
+    // the previous double parse used the same schema twice.
     const providerOptionsResult = await parseProviderOptions({
       provider: this.providerOptionsName,
       providerOptions,
       schema: openaiCompatibleEmbeddingProviderOptions,
     })
-    const compatibleOptions = Object.assign(
-      baseOptionsResult ?? {},
-      providerOptionsResult ?? {},
-    )
+    const compatibleOptions = providerOptionsResult ?? {}
 
     if (values.length > this.maxEmbeddingsPerCall) {
       throw new TooManyEmbeddingValuesForCallError({
@@ -142,7 +139,5 @@ export class OpenAICompatibleEmbeddingModel implements EmbeddingModelV2<string> 
 const openaiTextEmbeddingResponseSchema = z.object({
   data: z.array(z.object({ embedding: z.array(z.number()) })),
   usage: z.object({ prompt_tokens: z.number() }).nullish(),
-  providerMetadata: z
-    .record(z.string(), z.record(z.string(), z.any()))
-    .optional(),
+  providerMetadata: z.custom<SharedV2ProviderMetadata>().optional(),
 })

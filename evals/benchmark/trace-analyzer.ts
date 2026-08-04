@@ -1,5 +1,5 @@
 import { getErrorObject } from '@savant-code/common/util/error'
-import { withTimeout } from '@savant-code/common/util/promise'
+import { z } from 'zod/v4'
 
 import { truncateTrace } from './trace-utils'
 
@@ -100,10 +100,24 @@ Provide:
   - Relative Performance: How this agent's process compared to others
 - Recommendations: Generalizable improvements to agent workflows and decision-making processes
 
-Important: Focus on the agent's process and methodology, not on the object-level content of the code changes. We want to understand how to improve the agent's approach to any problem.
-
-Note: read_files tool results show [TRUNCATED] for file contents to save space.`,
+Important: Focus on the agent's process and methodology, not on the object-level content of the code changes. We want to understand how to improve the agent's approach to any problem.  Note: read_files tool results show [TRUNCATED] for file contents to save space.`,
 }
+
+// FID-2026-0803-007 EV-1a: runtime validation for the analyzer's structured
+// output, mirroring JudgingResultSchema in judge.ts. The previous cast to
+// `unknown[]` failed typecheck (TS2322) and passed unvalidated data downstream
+// to format-output.ts.
+export const TraceAnalyzerResultSchema = z.object({
+  overallAnalysis: z.string(),
+  agentFeedback: z.array(
+    z.object({
+      agentId: z.string(),
+      strengths: z.array(z.string()),
+      weaknesses: z.array(z.string()),
+      recommendations: z.array(z.string()),
+    }),
+  ),
+})
 
 export async function analyzeAgentTraces({
   client,
@@ -115,7 +129,7 @@ export async function analyzeAgentTraces({
   traces: AgentTraceData[]
   codingAgentPrompt: string
   analyzerContext: {
-    agentDefinitions: any[]
+    agentDefinitions: AgentDefinition[]
     agentTypeDefinition: string
     testedAgentIds: string[]
   }
@@ -184,24 +198,24 @@ Analyze how these agents approached the problem, focusing on their processes and
 Focus on the HOW, not the WHAT: We want to understand and improve how agents work, not evaluate their specific code output.`
 
     const agentOutput: string[] = []
-    const analyzerResult = await withTimeout(
-      client.run({
-        agent: 'trace-analyzer',
-        prompt,
-        agentDefinitions: [traceAnalyzerAgent],
-        handleEvent: (event) => {
-          if (event.type === 'text') {
-            agentOutput.push(event.text)
-          } else if (event.type === 'tool_call') {
-            agentOutput.push(JSON.stringify(event, null, 2))
-          } else if (event.type === 'error') {
-            console.warn('[Trace Analyzer] Error event:', event.message)
-          }
-        },
-      }),
-      20 * 60 * 1000,
-      'Trace analyzer agent timed out after 20 minutes',
-    )
+    const analyzerResult = await client.run({
+      agent: 'trace-analyzer',
+      prompt,
+      agentDefinitions: [traceAnalyzerAgent],
+      // FID-2026-0803-007 EV-3: AbortSignal.timeout aborts the underlying LLM
+      // run instead of just racing it (withTimeout left the promise burning
+      // API dollars and keeping the event loop alive).
+      signal: AbortSignal.timeout(20 * 60 * 1000),
+      handleEvent: (event) => {
+        if (event.type === 'text') {
+          agentOutput.push(event.text)
+        } else if (event.type === 'tool_call') {
+          agentOutput.push(JSON.stringify(event, null, 2))
+        } else if (event.type === 'error') {
+          console.warn('[Trace Analyzer] Error event:', event.message)
+        }
+      },
+    })
 
     const { output } = analyzerResult
 
@@ -217,7 +231,22 @@ Focus on the HOW, not the WHAT: We want to understand and improve how agents wor
       }
     }
 
-    return output.value as any
+    // FID-2026-0803-007 EV-1a: validate instead of casting. Malformed output
+    // falls through to the same error branch as non-structured output above.
+    const parsed = TraceAnalyzerResultSchema.safeParse(output.value)
+    if (!parsed.success) {
+      console.error(
+        'Trace analyzer returned malformed structured output:',
+        parsed.error,
+      )
+      console.error('Trace analyzer output trace:', agentOutput.join(''))
+      return {
+        overallAnalysis:
+          'Error running trace analyzer - malformed structured output',
+        agentFeedback: [],
+      }
+    }
+    return parsed.data
   } catch (error) {
     console.error(`Failed to analyze traces:`, getErrorObject(error))
     return {

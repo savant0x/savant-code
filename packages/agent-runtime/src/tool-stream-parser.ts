@@ -1,4 +1,5 @@
 import { AnalyticsEvent } from '@savant-code/common/constants/analytics-events'
+import { getErrorObject } from '@savant-code/common/util/error'
 
 import {
   createLegacyToolCallFilterState,
@@ -117,9 +118,22 @@ export async function* processStreamWithTools(params: {
     // when its repair pass can't produce a parsed object. Try to parse; if it
     // fails, leave as string — the executor surfaces a clear error.
     if (typeof input === 'string') {
+      const rawInput = input
       try {
-        input = JSON.parse(input)
-      } catch {}
+        input = JSON.parse(rawInput)
+      } catch (error) {
+        // FID-2026-0803-005 C4: pass-through is intentional (the executor
+        // surfaces a clear error), but the failure must be observable in
+        // traces — previously an invisible silent catch.
+        logger.debug(
+          {
+            toolName,
+            inputLength: rawInput.length,
+            error: getErrorObject(error),
+          },
+          'Tool-call input was a string that failed JSON.parse; passing through as string — the executor will surface a clear error',
+        )
+      }
     }
 
     const processor = processors[toolName] ?? defaultProcessor(toolName)

@@ -31,6 +31,11 @@ import {
   isFetchIdleTimeoutError,
   isTransientNetworkError,
 } from '@savant-code/common/util/error'
+import {
+  getOptionalNumber,
+  getOptionalString,
+  getString,
+} from '@savant-code/common/util/param-helpers'
 import { toJSONValue } from '@savant-code/common/util/type-narrowing'
 import { cloneDeep } from 'lodash'
 
@@ -199,10 +204,22 @@ export type RunOptions = {
   /** Dev override flag — bypasses all FSM tool gating and agent tool restrictions. */
   devMode?: boolean
   /** Optional sandbox permission mode. */
-  permissionMode?: 'safe' | 'prompt' | 'unsafe'
-  /** Optional pre-formatted model metadata block injected into the agent
-   *  system prompt via the {SAVANT_CODE_MODEL_INFO} placeholder. */
+  permissionMode?:
+    | 'safe'
+    | 'prompt'
+    | 'unsafe' /** Optional pre-formatted model metadata block injected into the agent
+   *   system prompt via the {SAVANT_CODE_MODEL_INFO} placeholder. */
   modelInfoText?: string
+  /** FID-2026-0803-004: directory for persistent per-turn file checkpoints
+   *   (rewind). When set, the runtime captures pre-write snapshots of every
+   *   write_file/str_replace/apply_patch in each turn. Hosts own the turn
+   *   lifecycle via the checkpoint store (openTurn before run, closeTurn
+   *   after) and pass the same directory here. */
+  checkpointDir?: string
+  /** FID-2026-0803-004: turn identity used to group this run's checkpoint
+   *   captures. Defaults to the run's clientSessionId; hosts (e.g. the CLI)
+   *   pass their own id so they can open/close the matching turn. */
+  checkpointTurnId?: string
 }
 
 /** How often onStateSnapshot fires while a run is in flight. */
@@ -277,7 +294,11 @@ export async function run(options: RunExecutionOptions): Promise<RunState> {
   if (signal?.aborted) {
     const abortError = createAbortError(signal)
     return {
-      sessionState: options.previousRun?.sessionState,
+      // FID-2026-0802-008 D2: omit sessionState when there is no previous
+      // run — callers must not assume a session exists on pre-abort.
+      ...(options.previousRun?.sessionState
+        ? { sessionState: options.previousRun.sessionState }
+        : {}),
       traceSessionId:
         options.previousRun?.traceSessionId ?? crypto.randomUUID(),
       output: {
@@ -328,6 +349,8 @@ async function runOnce({
   devMode,
   permissionMode,
   modelInfoText,
+  checkpointDir,
+  checkpointTurnId,
 }: RunExecutionOptions): Promise<RunState> {
   const fsSourceValue = typeof fsSource === 'function' ? fsSource() : fsSource
   const fs = await fsSourceValue
@@ -350,37 +373,60 @@ async function runOnce({
   } else {
     agentId = agent
   }
+  const traceSessionId = previousRun?.traceSessionId ?? crypto.randomUUID()
+
+  // FID-2026-0802-008 E2: setup failures resolve an error RunState instead of
+  // rejecting — the runtime error path already resolves output.error, so run()
+  // has a single error contract.
+  const errorRunStateFrom = (error: unknown) => {
+    const message = error instanceof Error ? error.message : String(error)
+    const statusCode = getErrorStatusCode(error)
+    return {
+      // sessionState deliberately omitted (RunState.sessionState is optional),
+      // matching the D2 pre-abort convention.
+      traceSessionId,
+      output: {
+        type: 'error' as const,
+        message,
+        ...(statusCode !== undefined && { statusCode }),
+      },
+    }
+  }
+
   let sessionState: SessionState
-  if (previousRun?.sessionState) {
-    // applyOverridesToSessionState handles deep cloning and applying any provided overrides
-    sessionState = await applyOverridesToSessionState(
-      cwd,
-      previousRun.sessionState,
-      {
+  try {
+    if (previousRun?.sessionState) {
+      // applyOverridesToSessionState handles deep cloning and applying any provided overrides
+      sessionState = await applyOverridesToSessionState(
+        cwd,
+        previousRun.sessionState,
+        {
+          knowledgeFiles,
+          agentDefinitions,
+          customToolDefinitions,
+          projectFiles,
+          maxAgentSteps,
+        },
+      )
+    } else {
+      // No previous run, so create a fresh session state
+      sessionState = await initialSessionState({
+        cwd,
+        skillsDir,
         knowledgeFiles,
         agentDefinitions,
         customToolDefinitions,
         projectFiles,
         maxAgentSteps,
-      },
-    )
-  } else {
-    // No previous run, so create a fresh session state
-    sessionState = await initialSessionState({
-      cwd,
-      skillsDir,
-      knowledgeFiles,
-      agentDefinitions,
-      customToolDefinitions,
-      projectFiles,
-      maxAgentSteps,
-      devMode,
-      fs,
-      spawn,
-      logger,
-    })
+        devMode,
+        fs,
+        spawn,
+        logger,
+      })
+    }
+  } catch (error) {
+    return errorRunStateFrom(error)
   }
-  const traceSessionId = previousRun?.traceSessionId ?? crypto.randomUUID()
 
   // Ensure devMode reflects the current CLI state (may have changed since last run)
   if (devMode !== undefined) {
@@ -416,9 +462,34 @@ async function runOnce({
     resolvePromise(value)
   }
 
+  // FID-2026-0802-008 E1: event/stream handlers are dispatched fire-and-forget
+  // from sendAction, so a throwing handler (the default client handleEvent
+  // throws to force error visibility) would otherwise become an unhandled
+  // promise rejection — a process-crash risk. Route handler errors into the
+  // run promise instead; once the run has settled, rejections are dropped.
+  const rejectRunWithHandlerError = (error: unknown) => {
+    if (settled) return
+    _reject(error instanceof Error ? error : new Error(String(error)))
+  }
+  const safeDispatch = async (fn: () => void | Promise<void>) => {
+    try {
+      await fn()
+    } catch (error) {
+      logger?.debug?.(
+        {
+          error: error instanceof Error ? error.message : String(error),
+        },
+        'Event/stream handler threw; rejecting run',
+      )
+      rejectRunWithHandlerError(error)
+    }
+  }
+
   async function onError(error: { message: string }) {
     if (handleEvent) {
-      await handleEvent({ type: 'error', message: error.message })
+      await safeDispatch(() =>
+        handleEvent({ type: 'error', message: error.message }),
+      )
     }
   }
 
@@ -479,23 +550,25 @@ async function runOnce({
 
     if (typeof chunk !== 'string') {
       if (chunk.type === 'reasoning_delta') {
-        handleStreamChunk?.({
-          type: 'reasoning_chunk',
-          chunk: chunk.text,
-          // The agent's stable id (matches subagent_start/subagent_chunk), so
-          // subagent reasoning attributes to the right agent. (Previously this
-          // forwarded runId, which no consumer's agent map is keyed by.)
-          agentId: chunk.agentId,
-          ancestorRunIds: chunk.ancestorRunIds,
-        })
+        await safeDispatch(() =>
+          handleStreamChunk?.({
+            type: 'reasoning_chunk',
+            chunk: chunk.text,
+            // The agent's stable id (matches subagent_start/subagent_chunk), so
+            // subagent reasoning attributes to the right agent. (Previously this
+            // forwarded runId, which no consumer's agent map is keyed by.)
+            agentId: chunk.agentId,
+            ancestorRunIds: chunk.ancestorRunIds,
+          }),
+        )
       } else {
-        await handleEvent?.(chunk)
+        await safeDispatch(() => handleEvent?.(chunk))
       }
       return
     }
 
     if (handleStreamChunk) {
-      await handleStreamChunk(chunk)
+      await safeDispatch(() => handleStreamChunk(chunk))
     }
   }
   const onSubagentResponseChunk = async (
@@ -507,12 +580,14 @@ async function runOnce({
     const { agentId, agentType, chunk } = action
 
     if (handleStreamChunk && chunk) {
-      await handleStreamChunk({
-        type: 'subagent_chunk',
-        agentId,
-        agentType,
-        chunk,
-      })
+      await safeDispatch(() =>
+        handleStreamChunk({
+          type: 'subagent_chunk',
+          agentId,
+          agentType,
+          chunk,
+        }),
+      )
     }
   }
 
@@ -548,6 +623,8 @@ async function runOnce({
         onFileWritten,
       })
     },
+    checkpointDir,
+    checkpointTurnId,
     requestMcpToolData: async ({ mcpConfig, toolNames }) => {
       const mcpClientId = await getMCPClient(mcpConfig)
       const listToolsResult = await listMCPTools(mcpClientId)
@@ -639,21 +716,30 @@ async function runOnce({
     },
   })
 
-  const promptId = Math.random().toString(36).substring(2, 15)
+  // FID-2026-0802-008 D3: crypto-grade id (was Math.random()).
+  const promptId = crypto.randomUUID()
 
   // Send input
-  const userInfo = await getUserInfoFromApiKey({
-    ...agentRuntimeImpl,
-    apiKey,
-    fields: ['id'],
-  })
-  if (!userInfo) {
-    return getCancelledRunState('Invalid API key or user not found')
+  // FID-2026-0802-008 E2: auth failures (401/5xx from getUserInfoFromApiKey)
+  // resolve an error RunState rather than rejecting the run() promise.
+  let userId: string
+  try {
+    const userInfo = await getUserInfoFromApiKey({
+      ...agentRuntimeImpl,
+      apiKey,
+      fields: ['id'],
+    })
+    if (!userInfo) {
+      return getCancelledRunState('Invalid API key or user not found')
+    }
+    userId = userInfo.id
+  } catch (error) {
+    return errorRunStateFrom(error)
   }
-  const userId = userInfo.id
 
   if (signal?.aborted) {
-    return getCancelledRunState('Run cancelled by user.')
+    // Align with the pre-abort message in run() (FID-2026-0802-008 E2).
+    return getCancelledRunState(createAbortError(signal).message)
   }
 
   if (onStateSnapshot) {
@@ -998,38 +1084,6 @@ async function handleToolCall({
   }
 }
 
-function getString(input: Record<string, JSONValue>, key: string): string {
-  const value = input[key]
-  if (typeof value !== 'string') {
-    throw new Error(`Expected ${key} to be a string`)
-  }
-  return value
-}
-
-function getOptionalString(
-  input: Record<string, JSONValue>,
-  key: string,
-): string | undefined {
-  const value = input[key]
-  if (value === undefined) return undefined
-  if (typeof value !== 'string') {
-    throw new Error(`Expected ${key} to be a string`)
-  }
-  return value
-}
-
-function getOptionalNumber(
-  input: Record<string, JSONValue>,
-  key: string,
-): number | undefined {
-  const value = input[key]
-  if (value === undefined) return undefined
-  if (typeof value !== 'number') {
-    throw new Error(`Expected ${key} to be a number`)
-  }
-  return value
-}
-
 /**
  * Extracts an HTTP status code from an error message string.
  * Parses common error patterns to identify the underlying status code.
@@ -1159,17 +1213,10 @@ async function handlePromptResponse({
     }
     resolve(state)
   } else {
+    // FID-2026-0802-008 D4: keep the type-level exhaustiveness guard — if the
+    // action union ever grows, this branch fails to compile instead of
+    // silently leaving the run promise unsettled.
     action satisfies never
-    onError({
-      message: 'Internal error: prompt response type not handled',
-    })
-    resolve({
-      sessionState: initialSessionState,
-      traceSessionId,
-      output: {
-        type: 'error',
-        message: 'Internal error: prompt response type not handled',
-      },
-    })
+    throw new Error('Internal error: prompt response type not handled')
   }
 }

@@ -20,6 +20,7 @@ import { logger } from '../logger'
 import { analyzeAllTasks } from './meta-analyzer'
 
 import type { AgentEvalResults, EvalDataV2, EvalCommitV2 } from './types'
+import type { AgentDefinition } from '@savant-code/sdk'
 
 function parseAgentId(agent: string): {
   agentId: string
@@ -52,11 +53,11 @@ async function runTask(options: {
   index: number
   totalTasks: number
   analyzerContext: {
-    agentDefinitions: any[]
+    agentDefinitions: AgentDefinition[]
     agentTypeDefinition: string
     testedAgentIds: string[]
   }
-  localAgentDefinitions: any[]
+  localAgentDefinitions: AgentDefinition[]
   extractLessons: boolean
   printEvents: boolean
   finalCheckCommands?: string[]

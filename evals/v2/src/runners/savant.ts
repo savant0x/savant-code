@@ -62,6 +62,7 @@ export class SavantAgentRunner implements AgentRunner {
       agent: this.config.agentId ?? 'savant',
       prompt,
       cwd: this.sandbox.getWorkingDir(),
+      agentDefinitions: this.config.agentDefinitions,
       maxAgentSteps: this.config.maxAgentSteps,
       env: this.config.env,
       customToolDefinitions: this.config.customToolDefinitions,

@@ -9,13 +9,24 @@ import { logger } from '../utils/logger'
  * 3. `INFERENCE_API_KEY` — SDK-specific inference key
  *
  * The resolved key is cached for the process lifetime.
+ *
+ * Exchange cadence (FID-2026-0803-003 SDK-6): with OR_MASTER_KEY set, every
+ * process exchanges it for a NEW `savant-code-sdk` key (limit: null) and caches
+ * the result. The raw key value is only returned at creation, so listing
+ * /api/v1/keys cannot recover it for reuse — one key per process is the
+ * intended trade-off (a single POST per CLI invocation). Keys therefore
+ * accumulate on the OpenRouter dashboard across invocations; they can be
+ * revoked there, or OPENROUTER_API_KEY can be set instead to skip exchange.
  */
 
-let cachedKey: string | undefined
+// undefined = not yet attempted; null = resolved to no key (negative cache);
+// string = resolved key. Negative caching (FID-2026-0802-008 D6) stops a
+// failed master-key exchange from re-hitting the network on every call.
+let cachedKey: string | undefined | null
 
 export async function resolveOpenRouterApiKey(): Promise<string | undefined> {
   if (cachedKey !== undefined) {
-    return cachedKey
+    return cachedKey ?? undefined
   }
 
   // Path 1: Master key exchange
@@ -62,5 +73,6 @@ export async function resolveOpenRouterApiKey(): Promise<string | undefined> {
     return cachedKey
   }
 
+  cachedKey = null
   return undefined
 }

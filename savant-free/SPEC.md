@@ -10,8 +10,8 @@ logic, credits display, and mode switching — leaving only the FREE mode experi
 
 ### Environment Variable
 
-- **`FREEBUFF_MODE=true`** — set during the build to produce a SavantFree binary.
-- Injected via `--define process.env.FREEBUFF_MODE="true"` in `bun build`, following the same pattern as
+- **`SAVANT_FREE_MODE=true`** — set during the build to produce a SavantFree binary.
+- Injected via `--define process.env.SAVANT_FREE_MODE="true"` in `bun build`, following the same pattern as
   `CODEBUFF_IS_BINARY` and `CODEBUFF_CLI_VERSION`.
 
 ### Runtime Constant
@@ -19,10 +19,10 @@ logic, credits display, and mode switching — leaving only the FREE mode experi
 Create a shared constant in `cli/src/utils/constants.ts`:
 
 ```ts
-export const IS_FREEBUFF = process.env.FREEBUFF_MODE === 'true'
+export const IS_SAVANT_FREE = process.env.SAVANT_FREE_MODE === 'true'
 ```
 
-This enables dead-code elimination in production builds — all `if (!IS_FREEBUFF)` branches are removed by the bundler.
+This enables dead-code elimination in production builds — all `if (!IS_SAVANT_FREE)` branches are removed by the bundler.
 
 ---
 
@@ -35,18 +35,18 @@ This enables dead-code elimination in production builds — all `if (!IS_FREEBUF
 | npm package name      | `savant-code`                                                     | `savant-free`                                                     |
 | Binary name           | `savant-code`                                                     | `savant-free`                                                     |
 | App header text       | "SavantCode will run commands on your behalf to help you build." | "SavantFree will run commands on your behalf to help you build." |
-| ASCII logo            | `SAVANT_CODE` block letters                                       | `FREEBUFF` block letters (new logo)                            |
+| ASCII logo            | `SAVANT_CODE` block letters                                       | `SAVANT` block letters (new logo)                            |
 | Description           | "AI coding agent"                                              | "Free AI coding assistant"                                     |
 | Homepage              | savant-code.com                                                   | savant-code.com/free (or same)                                    |
 | `WEBSITE_URL` usage   | Points to savant-code.com                                         | Same (login, feedback, etc. stay on savant-code.com)              |
 
-### Files to modify (conditional on `IS_FREEBUFF`)
+### Files to modify (conditional on `IS_SAVANT_FREE`)
 
 - **`cli/src/utils/terminal-title.ts`** — Change `TITLE_PREFIX` from `'SavantCode: '` to `'SavantFree: '` when
-  `IS_FREEBUFF`.
-- **`cli/src/login/constants.ts`** — Add a `LOGO_FREEBUFF` ASCII art variant, select based on `IS_FREEBUFF`.
+  `IS_SAVANT_FREE`.
+- **`cli/src/login/constants.ts`** — Add a `LOGO_SAVANT_FREE` ASCII art variant, select based on `IS_SAVANT_FREE`.
 - **`cli/src/app.tsx`** — Conditional header text ("SavantFree will run commands...").
-- **`cli/src/index.tsx`** — Change commander `.name('savant-free')` and `.description(...)` when `IS_FREEBUFF`.
+- **`cli/src/index.tsx`** — Change commander `.name('savant-free')` and `.description(...)` when `IS_SAVANT_FREE`.
 
 ---
 
@@ -62,16 +62,16 @@ SavantFree only supports **FREE mode**. All mode-related features are stripped.
 
 ### Files to modify
 
-- **`cli/src/utils/constants.ts`** — When `IS_FREEBUFF`, export a single-element `AGENT_MODES = ['FREE']` and
+- **`cli/src/utils/constants.ts`** — When `IS_SAVANT_FREE`, export a single-element `AGENT_MODES = ['FREE']` and
   `AGENT_MODE_TO_ID` with only the FREE entry. Or: the mode toggle component simply never renders.
-- **`cli/src/components/agent-mode-toggle.tsx`** — Return `null` when `IS_FREEBUFF` (hide entirely).
-- **`cli/src/components/build-mode-buttons.tsx`** — Return `null` when `IS_FREEBUFF` (hides mode-switching buttons
+- **`cli/src/components/agent-mode-toggle.tsx`** — Return `null` when `IS_SAVANT_FREE` (hide entirely).
+- **`cli/src/components/build-mode-buttons.tsx`** — Return `null` when `IS_SAVANT_FREE` (hides mode-switching buttons
   in message UI).
-- **`cli/src/components/mode-divider.tsx`** — Return `null` when `IS_FREEBUFF` (no mode transition markers).
-- **`cli/src/utils/input-modes.ts`** — Set `showAgentModeToggle: false` for all input mode configs when `IS_FREEBUFF`.
-- **`cli/src/index.tsx`** — Remove `--free`, `--max`, `--plan`, `--lite` CLI flags when `IS_FREEBUFF`; hardcode
+- **`cli/src/components/mode-divider.tsx`** — Return `null` when `IS_SAVANT_FREE` (no mode transition markers).
+- **`cli/src/utils/input-modes.ts`** — Set `showAgentModeToggle: false` for all input mode configs when `IS_SAVANT_FREE`.
+- **`cli/src/index.tsx`** — Remove `--free`, `--max`, `--plan`, `--lite` CLI flags when `IS_SAVANT_FREE`; hardcode
   `initialMode = 'FREE'`.
-- **`cli/src/state/chat-store.ts`** — Default `agentMode` to `'FREE'`; make `setAgentMode` a no-op when `IS_FREEBUFF`.
+- **`cli/src/state/chat-store.ts`** — Default `agentMode` to `'FREE'`; make `setAgentMode` a no-op when `IS_SAVANT_FREE`.
 
 ---
 
@@ -110,10 +110,10 @@ SavantFree only supports **FREE mode**. All mode-related features are stripped.
 
 ### Implementation
 
-- **`cli/src/data/slash-commands.ts`** — Filter `SLASH_COMMANDS` based on `IS_FREEBUFF`. Remove mode commands,
+- **`cli/src/data/slash-commands.ts`** — Filter `SLASH_COMMANDS` based on `IS_SAVANT_FREE`. Remove mode commands,
   subscription commands, credits commands, ads commands, referral, review, publish, and gpt-5 agent commands.
 - **`cli/src/commands/command-registry.ts`** — Filter `COMMAND_REGISTRY` similarly. Wrap removed commands in
-  `!IS_FREEBUFF` guards.
+  `!IS_SAVANT_FREE` guards.
 
 ---
 
@@ -121,7 +121,7 @@ SavantFree only supports **FREE mode**. All mode-related features are stripped.
 
 SavantFree never displays credits, usage, subscription info, or out-of-credits states.
 
-### Components to suppress (render `null` when `IS_FREEBUFF`)
+### Components to suppress (render `null` when `IS_SAVANT_FREE`)
 
 | Component                  | File                                       | Behavior                                                                 |
 | -------------------------- | ------------------------------------------ | ------------------------------------------------------------------------ |
@@ -134,7 +134,7 @@ SavantFree never displays credits, usage, subscription info, or out-of-credits s
 
 ### Input modes to disable
 
-When `IS_FREEBUFF`, these input modes should be unreachable:
+When `IS_SAVANT_FREE`, these input modes should be unreachable:
 
 - `outOfCredits` — never triggered
 - `subscriptionLimit` — never triggered
@@ -144,9 +144,9 @@ When `IS_FREEBUFF`, these input modes should be unreachable:
 
 ### Hooks to disable/skip
 
-- **`use-usage-monitor.ts`** — Return early when `IS_FREEBUFF` (no credits to monitor).
-- **`use-subscription-query.ts`** — Return empty/disabled when `IS_FREEBUFF`.
-- **`use-claude-quota-query.ts`** — Return empty/disabled when `IS_FREEBUFF`.
+- **`use-usage-monitor.ts`** — Return early when `IS_SAVANT_FREE` (no credits to monitor).
+- **`use-subscription-query.ts`** — Return empty/disabled when `IS_SAVANT_FREE`.
+- **`use-claude-quota-query.ts`** — Return empty/disabled when `IS_SAVANT_FREE`.
 - **`use-usage-query.ts`** — Still needed for server-side billing, but UI never shows it.
 
 ### Session credits tracking
@@ -180,7 +180,7 @@ No "Credits" section. No `/subscribe`, `/usage`, or `/ads:enable` references.
 
 ### File to modify
 
-- **`cli/src/components/help-banner.tsx`** — Conditionally hide the Credits section when `IS_FREEBUFF`.
+- **`cli/src/components/help-banner.tsx`** — Conditionally hide the Credits section when `IS_SAVANT_FREE`.
 
 ---
 
@@ -192,12 +192,12 @@ In SavantFree, ads are **always enabled** and **cannot be disabled**.
 - The "Hide ads" link in the info panel is replaced with "Ads are required in Free mode." (this already exists in
   `ad-banner.tsx` when `isFreeMode` is true).
 - The `/ads:enable` and `/ads:disable` commands are removed (see §4).
-- `getAdsEnabled()` always returns `true` when `IS_FREEBUFF`.
+- `getAdsEnabled()` always returns `true` when `IS_SAVANT_FREE`.
 
 ### Files to modify
 
-- **`cli/src/commands/ads.ts`** — `getAdsEnabled()` returns `true` unconditionally when `IS_FREEBUFF`.
-- **`cli/src/chat.tsx`** — Skip the `!hasSubscription` guard for ads when `IS_FREEBUFF`; always show.
+- **`cli/src/commands/ads.ts`** — `getAdsEnabled()` returns `true` unconditionally when `IS_SAVANT_FREE`.
+- **`cli/src/chat.tsx`** — Skip the `!hasSubscription` guard for ads when `IS_SAVANT_FREE`; always show.
 
 ---
 
@@ -213,7 +213,7 @@ savant-free/
 ├── SPEC.md           # This file (product-level spec)
 ├── README.md         # Product-level documentation
 ├── cli/              # CLI build & release infrastructure
-│   ├── build.ts      # Build script that sets FREEBUFF_MODE=true
+│   ├── build.ts      # Build script that sets SAVANT_FREE_MODE=true
 │   └── release/
 │       ├── package.json  # npm package metadata (name: "savant-free")
 │       ├── index.js      # Thin product configuration entry point
@@ -228,11 +228,11 @@ This structure allows `savant-free/web/` (or other surfaces) to be added alongsi
 Wraps `cli/scripts/build-binary.ts` with:
 
 ```bash
-FREEBUFF_MODE=true bun cli/scripts/build-binary.ts savant-free <version>
+SAVANT_FREE_MODE=true bun cli/scripts/build-binary.ts savant-free <version>
 ```
 
 The existing `build-binary.ts` already supports a custom binary name argument and passes `NEXT_PUBLIC_*` env vars.
-We add `FREEBUFF_MODE` to the `defineFlags` array in `build-binary.ts`.
+We add `SAVANT_FREE_MODE` to the `defineFlags` array in `build-binary.ts`.
 
 ### Release Package (`savant-free/cli/release/package.json`)
 
@@ -256,14 +256,14 @@ Mirrors `cli-release-prod.yml` with these changes:
 - **Version source**: `savant-free/cli/release/package.json`
 - **Git tags**: `savant-free-v<version>`
 - **npm publish**: `savant-free` package
-- **Environment overrides**: `{"FREEBUFF_MODE": "true", "NEXT_PUBLIC_CB_ENVIRONMENT": "prod"}`
+- **Environment overrides**: `{"SAVANT_FREE_MODE": "true", "NEXT_PUBLIC_CB_ENVIRONMENT": "prod"}`
 - **GitHub Release**: Creates releases in `savant0x/savant-code-community` (or a separate repo)
 
 ---
 
 ## 9. Changes to `cli/scripts/build-binary.ts`
 
-Add `FREEBUFF_MODE` to the define flags so it's available at compile time:
+Add `SAVANT_FREE_MODE` to the define flags so it's available at compile time:
 
 ```ts
 const defineFlags = [
@@ -275,7 +275,7 @@ const defineFlags = [
     `"${targetInfo.platform}-${targetInfo.arch}"`,
   ],
   // SavantFree mode flag
-  ['process.env.FREEBUFF_MODE', `"${process.env.FREEBUFF_MODE ?? 'false'}"`],
+  ['process.env.SAVANT_FREE_MODE', `"${process.env.SAVANT_FREE_MODE ?? 'false'}"`],
   ...nextPublicEnvVars,
 ]
 ```
@@ -303,9 +303,9 @@ These features work identically in SavantFree:
 
 ## 11. Analytics
 
-When `IS_FREEBUFF`:
+When `IS_SAVANT_FREE`:
 
-- `APP_LAUNCHED` event includes `isFreebuff: true`
+- `APP_LAUNCHED` event includes `isSavant: true`
 - All existing analytics events continue to fire (helps understand free vs paid usage)
 - No new analytics events needed initially
 
@@ -330,7 +330,7 @@ recognize SavantFree release tags (`savant-free-v*`).
 
 ### Unit Tests
 
-- Test that `IS_FREEBUFF` guards correctly hide/show components
+- Test that `IS_SAVANT_FREE` guards correctly hide/show components
 - Test filtered slash commands list
 - Test filtered command registry
 - Test help banner content
@@ -346,7 +346,7 @@ recognize SavantFree release tags (`savant-free-v*`).
 
 ### E2E (tmux)
 
-- Use `savant-code-local-cli` agent with `FREEBUFF_MODE=true` to verify visual output
+- Use `savant-code-local-cli` agent with `SAVANT_FREE_MODE=true` to verify visual output
 
 ---
 
@@ -354,8 +354,8 @@ recognize SavantFree release tags (`savant-free-v*`).
 
 ### Phase 1: Core Flag & Branding
 
-1. Add `IS_FREEBUFF` constant
-2. Update `build-binary.ts` to pass through `FREEBUFF_MODE`
+1. Add `IS_SAVANT_FREE` constant
+2. Update `build-binary.ts` to pass through `SAVANT_FREE_MODE`
 3. Conditional branding (title, logo, app header, CLI name)
 
 ### Phase 2: Feature Stripping
@@ -380,6 +380,6 @@ recognize SavantFree release tags (`savant-free-v*`).
 
 ### Phase 5: Testing
 
-14. Add unit tests for IS_FREEBUFF guards
+14. Add unit tests for IS_SAVANT_FREE guards
 15. Add integration/E2E tests
 16. Manual QA of built binary

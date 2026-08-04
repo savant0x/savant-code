@@ -18,13 +18,19 @@ function createFsWithFiles(root: string, files: string[]) {
   const dirChildren: Record<string, Set<string>> = { [root]: new Set() }
   for (const file of files) {
     fileRecords[path.join(root, file)] = ''
+    // FID-2026-0803-003 CMN-2: normalize both sides with path.resolve and stop
+    // when dirname makes no progress. On win32 the POSIX root '/repo' never
+    // string-matches the drive-rooted dirname walk, which previously spun forever.
+    const resolvedRoot = path.resolve(root)
     let child = path.join(root, file)
     let dir = path.dirname(child)
     while (true) {
       ;(dirChildren[dir] ??= new Set()).add(path.basename(child))
-      if (dir === root) break
+      if (path.resolve(dir) === resolvedRoot) break
+      const parent = path.dirname(dir)
+      if (parent === dir) break // drive root / no-progress guard
       child = dir
-      dir = path.dirname(dir)
+      dir = parent
     }
   }
   return createMockFs({
@@ -63,7 +69,9 @@ describe('getProjectFileTree', () => {
   })
 
   it('scans regular project roots without a depth limit', async () => {
-    const root = '/repo'
+    // FID-2026-0803-003 CMN-2: resolve the root so win32 mock keys (drive-
+    // rooted) agree with the scan's resolved projectRoot.
+    const root = path.resolve('/repo')
     const fs = createFsWithFiles(root, ['a/b/c/d/e.txt'])
 
     const tree = await getProjectFileTree({ projectRoot: root, fs })

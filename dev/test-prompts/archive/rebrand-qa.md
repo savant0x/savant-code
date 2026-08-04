@@ -181,7 +181,7 @@
 
 90. `[SOURCE]` Confirm ECHO.md agent table matches all 9 directories in `agents/`.
 91. `[SOURCE]` Confirm savant-free-legacy agents removed (any in `agents/` not listed in ECHO.md is a violation).
-92. `[SOURCE]` Confirm 4 FREEBUFF_GEMINI_THINKER_* variants consolidated into Verifier (FID-006).
+92. `[SOURCE]` Confirm 4 SAVANT_GEMINI_THINKER_* variants consolidated into Verifier (FID-006).
 
 ---
 
@@ -223,7 +223,7 @@
 
 ## Section 21: Free-Buff Mode Considerations (future)
 
-109. `[SOURCE]` Confirm IS_FREEBUFF constant exists.
+109. `[SOURCE]` Confirm IS_SAVANT_FREE constant exists.
 110. `[SOURCE]` Confirm savant-free-model-store.ts present (uses model selection).
 111. `[SOURCE]` Confirm ad-supported flow paths marked but not blocking paid free flow.
 

@@ -52,17 +52,24 @@ The Savant harness enforces the Perfection Loop through 9 specialized agents.
 Each agent owns a specific phase and has restricted tools. No agent may perform
 another agent's role.
 
+> **Note:** The 9-agent table above covers the canonical ECHO runtime roles. The
+> Orchestrator's `spawnableAgents` also includes 4 infrastructure helpers
+> (`basher`, `tmux-cli`, `browser-use`, `context-pruner`) that are NOT independent
+> ECHO conversation roles. `browser-use` is a helper tool library; `basher`,
+> `tmux-cli`, `context-pruner` are infra agent definitions — see ARCHITECTURE.md
+> → "Agent Roster" / "Helper Tool Libraries" for the full distinction.
+
 | # | Agent | Phase | Responsibility | Tools | Restricted Tools |
 |---|-------|-------|----------------|-------|------------------|
-| 1 | **Orchestrator** | ALL | Primary coder (Hybrid Mode) + routes complex work through Perfection Loop. Writes code directly for most tasks, spawns Forge for complex changes. | spawn_agents, read_files, read_subtree, write_todos, suggest_followups, ask_user, read_url, skill, set_output, list_directory, glob, render_ui, transition_phase, write_file, str_replace | apply_patch, bash, sequentialthinking |
+| 1 | **Orchestrator** | ALL | Primary coder (Hybrid Mode) + routes complex work through Perfection Loop. Writes code directly for most tasks, spawns Forge for complex changes. | spawn_agents, read_files, read_subtree, run_readonly_command, write_todos, suggest_followups, ask_user, read_url, skill, set_output, list_directory, glob, render_ui, gravity_index, transition_phase, write_file, str_replace, apply_patch (phase-gated), set_scaffold_complete (scaffold mode) | bash, sequentialthinking |
 | 2 | **Detective** | RED | Codebase analysis, grep call-graphs, find issues, catalog evidence | code_search, set_output, list_directory, glob, read_files, read_subtree | write_file, str_replace, bash |
-| 3 | **Forge** | GREEN | Implementation only. Writes code following converged FID spec. | write_file, str_replace, set_output | spawn_agents, bash (destructive), ask_user |
+| 3 | **Forge** | GREEN | Implementation only. Writes code following converged FID spec. | write_file, str_replace, set_output | spawn_agents, ask_user |
 | 4 | **Verifier** | AUDIT | Double-audit, run tests, check call-graph reachability | *(no tools — reads only via message history)* | ALL write tools |
-| 5 | **Recorder** | FID | Create, track, archive FIDs. Update CHANGELOG. | write_file, read_files, glob, grep, set_output, transition_phase | str_replace, bash (limited) |
-| 6 | **Thinker** | Planning | Deep reasoning via sequential thinking engine | sequentialthinking | write_file, str_replace, bash |
+| 5 | **Recorder** | FID | Create, track, archive FIDs. Update CHANGELOG. | write_file, read_files, glob, code_search, set_output | str_replace, bash |
+| 6 | **Thinker** | Planning | Deep reasoning via sequential thinking engine | sequentialthinking, end_turn | write_file, str_replace, bash |
 | 7 | **Scout** | Explore | File/code search, glob, read subtrees, context gathering | glob, list_directory, read_files, read_subtree, set_output | write_file, str_replace, bash, spawn |
-| 8 | **Researcher** | Research | Web search, documentation lookup, external API research | web_search, read_url | write_file, str_replace, bash |
-| 9 | **Scribe** | Docs | Session summaries, LESSONS.md, knowledge files | read_files, write_file, glob, grep, set_output | str_replace, bash, spawn |
+| 8 | **Researcher** | Research | Web search, documentation lookup, external API research | web_search, read_url (web); read_docs (docs) | write_file, str_replace, bash |
+| 9 | **Scribe** | Docs | Session summaries, LESSONS.md, knowledge files | read_files, write_file, glob, code_search, set_output | str_replace, bash, spawn |
 
 ### Separation of Duties (Non-Negotiable)
 
@@ -445,7 +452,9 @@ Created → Analyzed → Fixed → Verified → Closed → Archived
 
 Only the Recorder agent may create, update, or archive FID files. Agents without write tools (Thinker, Scout,
 Researcher) must route FID content through the Recorder. Parent agents with write tools must not write FID files
-directly from a sub-agent's output.
+directly from a sub-agent's output. (Archive note, FID-2026-0803-001 ECHO-6: the Recorder has no filesystem
+move tool — the CLI/orchestrator executes the `dev/fids/ → dev/fids/archive/` move while the Recorder authors the
+FID content, CHANGELOG entry, and audit evidence.)
 
 FIDs are Markdown files that live ONLY in `dev/fids/`. NEVER create top-level directories such as `fids/`,
 `archive/`, or any path that shadows canonical ECHO paths.
@@ -516,7 +525,8 @@ The code is the source of truth — the FID markdown is a record that can drift.
 
 When a FID status is updated to **Closed**, the Recorder MUST:
 
-1. Move the FID file from `dev/fids/` to `dev/fids/archive/`
+1. Move the FID file from `dev/fids/` to `dev/fids/archive/` *(the CLI/orchestrator executes the filesystem move —
+   the Recorder has no move tool; it authors the content and evidence — FID-2026-0803-001 ECHO-6)*
 2. Append an entry to `CHANGELOG.md` with the FID ID, severity, description, and resolution summary
 3. Log the archival in the session summary
 4. Closed FIDs must not remain in the active `dev/fids/` directory
@@ -694,7 +704,7 @@ Document these in `dev/LEARNINGS.md` to improve future sessions.
 | Agent roster       | `ARCHITECTURE.md`                |
 | Project config     | `protocol.config.yaml`           |
 | Language standards | `coding-standards/{language}.md` |
-| Migration guide    | `MIGRATION.md`                   |
+| Agent/tool reference | `docs/agents-and-tools.md`      |
 | FID template       | `templates/FID-TEMPLATE.md`      |
 | Session template   | `templates/SESSION-SUMMARY.md`   |
 | FIDs               | `dev/fids/`                      |

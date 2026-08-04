@@ -18,6 +18,25 @@ export type {
 } from './run'
 export type { TraceWriter } from '@savant-code/common/types/contracts/trace'
 export { buildUserMessageContent } from '@savant-code/agent-runtime/util/messages'
+// FID-2026-0803-004: persistent per-turn file checkpoints (rewind). The CLI
+// owns the turn lifecycle (openTurn before run, closeTurn after) and reads
+// checkpoints back for /rewind; the runtime captures pre-write snapshots.
+export {
+  openTurn,
+  captureSnapshot,
+  closeTurn,
+  listTurns,
+  getTurn,
+  restoreTurn,
+  forkFrom,
+  clearOpenTurnsForTesting,
+  CHECKPOINT_RETENTION,
+} from '@savant-code/agent-runtime/tools/handlers/tool/checkpoint-store'
+export type {
+  CheckpointFileEntry,
+  TurnCheckpoint,
+  TurnSummary,
+} from '@savant-code/agent-runtime/tools/handlers/tool/checkpoint-store'
 // Agent type exports
 export type { AgentDefinition } from '@savant-code/common/templates/initial-agents-dir/types/agent-definition'
 export type { ToolName } from '@savant-code/common/tools/constants'

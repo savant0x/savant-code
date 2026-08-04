@@ -11,12 +11,12 @@ import { cloneDeep } from 'lodash'
 
 import { getMCPToolData } from '../mcp'
 import { MCP_TOOL_SEPARATOR } from '../mcp-constants'
+import { captureSnapshot } from './handlers/tool/checkpoint-store'
 import { evaluateToolCall, createDefaultSandboxPolicy } from './sandbox'
-import { getAgentTemplate } from '../templates/agent-registry'
 import { getAgentShortName, getAgentToolName } from '../templates/prompts'
 import { formatValueForError } from '../util/format-value'
 import { savantCode$1 } from './handlers/list'
-import { getMatchingSpawn } from './handlers/tool/spawn-agent-utils'
+import { resolveSpawnableAgent } from './handlers/tool/spawn-agent-utils'
 import { ensureZodSchema } from './prompts'
 import { toolActivity, setActivity } from '../util/activity-tracking'
 
@@ -298,6 +298,9 @@ export type ExecuteToolCallParams<T extends string = ToolName> = {
   toolResultsToAddToMessageHistory: ToolMessage[]
   userId: string | undefined
   userInputId: string
+  /** FID-2026-0802-005 H8: step-built custom tool data (incl. MCP tools). When
+   *  provided, executeCustomToolCall skips the per-call getMCPToolData rebuild. */
+  customToolDefinitions?: CustomToolDefinitions
 
   fetch: typeof globalThis.fetch
   onCostCalculated: (credits: number) => Promise<void>
@@ -341,6 +344,25 @@ export async function executeToolCall<T extends ToolName>(
   // Dev override: bypass ALL tool gating and agent restrictions when devMode is active
   const isDevOverride = params.fileContext.devMode === true
 
+  // FID-2026-0802-005 C1: the parse-error branch MUST run before any
+  // `toolCall.input` dereference. On parse failure `toolCall.input` is the raw
+  // (unvalidated) input — null or a bare string would crash the write gate
+  // below (`TypeError: Cannot read properties of null` / strict-mode
+  // `Cannot create property 'path' on string`). This gate ordering is the
+  // runtime's most important robustness invariant.
+  if ('error' in toolCall) {
+    const formattedInput = formatValueForError(input)
+    onResponseChunk({
+      type: 'error',
+      message: `${toolCall.error}\n\nOriginal tool call input:\n${formattedInput}`,
+    })
+    logger.debug(
+      { toolCall, error: toolCall.error },
+      `${toolName} error: ${toolCall.error}`,
+    )
+    return previousToolCallFinished
+  }
+
   // Filter out restricted tools - emit error instead of tool call/result
   // This prevents the CLI from showing tool calls that the agent doesn't have permission to use
   if (
@@ -369,6 +391,10 @@ export async function executeToolCall<T extends ToolName>(
       toolCall.toolName === 'str_replace' ||
       toolCall.toolName === 'apply_patch')
   ) {
+    // Safe to deref: the C1 parse-error branch above already narrowed
+    // toolCall to a validated call, so input is the parsed object — never
+    // null/string garbage. The cast is only for the zod-inferred input
+    // union → Record conversion.
     const input = toolCall.input as Record<string, JSONValue>
     const rawPath = typeof input.path === 'string' ? input.path : ''
     // FID-2026-0718-013 v3 — defensive null check (symmetric with write-file.ts,
@@ -421,6 +447,23 @@ export async function executeToolCall<T extends ToolName>(
     // call input so the downstream handler receives a canonical form. Same Q8
     // hardening, plus the resolved path now reflects any symlink chain.
     input.path = pathResult.resolved
+
+    // FID-2026-0803-004: pre-write checkpoint capture (CKR-1/CKR-2). Reads the
+    // file's CURRENT content — the pre-edit original — before the handler
+    // dispatches the write, and records it under this run's turn so /rewind can
+    // restore it. Deduped per path in the store; `content: null` for files that
+    // don't exist yet (created this turn ⇒ delete-on-restore). Only fires when
+    // the host enabled checkpointing via RunOptions.checkpointDir. `input.path`
+    // is a validated string here: the C1 parse-error branch above already
+    // narrowed toolCall, and an empty/non-string path was rejected by
+    // resolveAndContain just above.
+    if (params.checkpointDir && typeof input.path === 'string') {
+      captureSnapshot({
+        checkpointDir: params.checkpointDir,
+        turnId: params.checkpointTurnId ?? params.clientSessionId,
+        filePath: input.path,
+      })
+    }
   } // ECHO FSM tool gating: block bash/terminal commands unless phase is 'audit' or 'green'.
   // run_readonly_command is intentionally NOT gated here; it is allowed in
   // every FSM phase and enforces read-only safety in its own handler.
@@ -451,31 +494,10 @@ export async function executeToolCall<T extends ToolName>(
     )
   }
 
-  // ECHO FSM tool gating: block sequentialthinking unless agent is a Thinker variant
-  if (
-    !isDevOverride &&
-    toolCall.toolName === 'sequentialthinking' &&
-    !agentTemplate.id.startsWith('thinker')
-  ) {
-    onResponseChunk({
-      type: 'error',
-      message: `Tool \`${toolName}\` is only available to Thinker agents. Current agent: ${agentTemplate.id}.`,
-    })
-    return previousToolCallFinished
-  }
-
-  if ('error' in toolCall) {
-    const formattedInput = formatValueForError(input)
-    onResponseChunk({
-      type: 'error',
-      message: `${toolCall.error}\n\nOriginal tool call input:\n${formattedInput}`,
-    })
-    logger.debug(
-      { toolCall, error: toolCall.error },
-      `${toolName} error: ${toolCall.error}`,
-    )
-    return previousToolCallFinished
-  }
+  // FID-2026-0802-005 L11: `sequentialthinking` authorization derives from the
+  // toolNames allowlist gate above (only the Thinker declares it) instead of
+  // an `id.startsWith('thinker')` naming-convention check — capability is no
+  // longer coupled to an agent ID string (FID-005 "identical by construction").
 
   // FID-2026-07-27-001: Evaluate tool call against the sandbox policy after
   // FSM and agent-restriction gating, but before streaming the tool_call event
@@ -493,6 +515,7 @@ export async function executeToolCall<T extends ToolName>(
       )
       const sandboxDecision = evaluateToolCall({
         toolName: toolCall.toolName,
+        // C1: same safe narrowing as the write gate — validated input only.
         input: toolCall.input as Record<string, JSONValue>,
         policy: sandboxPolicy,
       })
@@ -547,9 +570,10 @@ export async function executeToolCall<T extends ToolName>(
     }
     const agents = effectiveInput.agents
     if (Array.isArray(agents)) {
-      const BASE_AGENTS = ['base', 'base-free', 'base-max', 'base-experimental']
-      const isBaseAgent = BASE_AGENTS.includes(agentTemplate.id)
-
+      // FID-2026-0802-005 H4: validation delegates to the single shared
+      // resolver (resolveSpawnableAgent) used by the spawn handlers — no more
+      // duplicated getMatchingSpawn + getAgentTemplate per agent. The handler
+      // still re-resolves via validateAndGetAgentTemplate as defense in depth.
       const validationResults = await Promise.allSettled(
         agents.map(async (agent) => {
           if (!isJSONObject(agent)) {
@@ -563,52 +587,37 @@ export async function executeToolCall<T extends ToolName>(
             }
           }
 
-          let agentIdToLoad = agentTypeStr
-          if (!isBaseAgent) {
-            const matchingSpawn = getMatchingSpawn(
-              agentTemplate.spawnableAgents,
-              agentTypeStr,
-            )
-            if (!matchingSpawn) {
-              if (toolNames.includes(agentTypeStr as ToolName)) {
-                return {
-                  valid: false as const,
-                  error: `"${agentTypeStr}" is a tool, not an agent. Call it directly as a tool instead of wrapping it in spawn_agents.`,
-                }
+          const resolved = await resolveSpawnableAgent({
+            agentTypeStr,
+            parentAgentTemplate: agentTemplate,
+            localAgentTemplates: params.localAgentTemplates,
+            fetchAgentFromDatabase: params.fetchAgentFromDatabase,
+            databaseAgentCache: params.databaseAgentCache,
+            logger,
+            apiKey: params.apiKey,
+          })
+          if (!resolved.ok) {
+            if (toolNames.includes(agentTypeStr as ToolName)) {
+              return {
+                valid: false as const,
+                error: `"${agentTypeStr}" is a tool, not an agent. Call it directly as a tool instead of wrapping it in spawn_agents.`,
               }
+            }
+            if (resolved.code === 'not-spawnable') {
               return {
                 valid: false as const,
                 error: `Agent "${agentTypeStr}" is not available to spawn`,
               }
             }
-            agentIdToLoad = matchingSpawn
-          }
-
-          try {
-            const template = await getAgentTemplate({
-              agentId: agentIdToLoad,
-              localAgentTemplates: params.localAgentTemplates,
-              fetchAgentFromDatabase: params.fetchAgentFromDatabase,
-              databaseAgentCache: params.databaseAgentCache,
-              logger,
-              apiKey: params.apiKey,
-            })
-            if (!template) {
-              if (toolNames.includes(agentTypeStr as ToolName)) {
-                return {
-                  valid: false as const,
-                  error: `"${agentTypeStr}" is a tool, not an agent. Call it directly as a tool instead of wrapping it in spawn_agents.`,
-                }
-              }
+            if (resolved.code === 'load-failed') {
               return {
                 valid: false as const,
-                error: `Agent "${agentTypeStr}" does not exist`,
+                error: `Agent "${agentTypeStr}" could not be loaded`,
               }
             }
-          } catch {
             return {
               valid: false as const,
-              error: `Agent "${agentTypeStr}" could not be loaded`,
+              error: `Agent "${agentTypeStr}" does not exist`,
             }
           }
 
@@ -646,6 +655,15 @@ export async function executeToolCall<T extends ToolName>(
     }
   }
 
+  // FID-2026-0802-005 H7: abort gate — never stream/push a tool call or
+  // invoke a handler after the run has been aborted. Prevents orphaned
+  // tool_calls (no matching tool_result) from entering message history,
+  // which providers reject. The spawn_agents pre-validation above awaits, so
+  // an abort can land inside this window.
+  if (params.signal.aborted) {
+    return previousToolCallFinished
+  }
+
   // Only emit tool_call event after permission check passes
   // FID-2026-0718-009: emit activity indicator (M1 tool_call, M6 research tools).
   // toolActivity mutates agentState.activity + emits a chunk via onResponseChunk.
@@ -677,82 +695,116 @@ export async function executeToolCall<T extends ToolName>(
     toolCallsToAddToMessageHistory.push(finalToolCall)
   }
 
-  const toolResultPromise = handler({
-    ...params,
-    toolCall: finalToolCall,
-    previousToolCallFinished,
-    writeToClient: onResponseChunk,
-    // FID-029: `as SavantCodeToolOutput<...>` casts are accepted pre-existing
-    // tech debt. See dev/fids/FID-2026-0719-029-as-cast-tech-debt.md.
-    // The runtime SDK returns the raw client-tool result shape; bridging
-    // to SavantCodeToolOutput<...> at the conditional closure slot requires
-    // this cast. On abort, we return a graceful JSON-tool-result matching
-    // composio's missing-runtime fallback pattern (rather than `[]`,
-    // which propagated a wrong-shape never[] downstream). The cast uses
-    // `T extends ClientToolName ? T : never` to align with the slot's
-    // exact conditional type so it satisfies ECHO distribution cleanly.
-    requestClientToolCall: async (
-      clientToolCall: ClientToolCall<T extends ClientToolName ? T : never>,
-    ) => {
-      if (params.signal.aborted) {
-        return [
-          {
-            type: 'json',
-            value: {
-              errorMessage: `Tool call aborted: ${clientToolCall.toolName}`,
+  // FID-2026-0802-005 C2: the handler is a trust boundary — a thrown or
+  // rejected exception must surface as a tool error (driving the existing
+  // hadToolCallError retry flow via the error chunk below), never propagate
+  // past the executor and fail the entire run (Law 14).
+  let toolResultPromise: ReturnType<SavantCodeToolHandlerFunction<T>>
+  try {
+    toolResultPromise = handler({
+      ...params,
+      toolCall: finalToolCall,
+      previousToolCallFinished,
+      writeToClient: onResponseChunk,
+      // FID-029: `as SavantCodeToolOutput<...>` casts are accepted pre-existing
+      // tech debt. See dev/fids/FID-2026-0719-029-as-cast-tech-debt.md.
+      // The runtime SDK returns the raw client-tool result shape; bridging
+      // to SavantCodeToolOutput<...> at the conditional closure slot requires
+      // this cast. On abort, we return a graceful JSON-tool-result matching
+      // composio's missing-runtime fallback pattern (rather than `[]`,
+      // which propagated a wrong-shape never[] downstream). The cast uses
+      // `T extends ClientToolName ? T : never` to align with the slot's
+      // exact conditional type so it satisfies ECHO distribution cleanly.
+      requestClientToolCall: async (
+        clientToolCall: ClientToolCall<T extends ClientToolName ? T : never>,
+      ) => {
+        if (params.signal.aborted) {
+          return [
+            {
+              type: 'json',
+              value: {
+                errorMessage: `Tool call aborted: ${clientToolCall.toolName}`,
+              },
             },
-          },
-        ] as SavantCodeToolOutput<T extends ClientToolName ? T : never>
+          ] as SavantCodeToolOutput<T extends ClientToolName ? T : never>
+        }
+
+        const clientToolResult = await requestToolCall({
+          userInputId,
+          toolName: clientToolCall.toolName,
+          input: clientToolCall.input,
+        })
+        return clientToolResult.output as SavantCodeToolOutput<
+          T extends ClientToolName ? T : never
+        >
+      },
+    })
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    onResponseChunk({
+      type: 'error',
+      message: `Tool \`${toolName}\` failed: ${errorMessage}`,
+    })
+    logger.error(
+      { toolName, errorMessage },
+      `Tool \`${toolName}\` threw synchronously: ${errorMessage}`,
+    )
+    return previousToolCallFinished
+  }
+
+  return toolResultPromise.then(
+    async ({ output, creditsUsed }) => {
+      const toolResult: ToolMessage = {
+        role: 'tool',
+        toolName,
+        toolCallId: toolCall.toolCallId,
+        content: output,
       }
 
-      const clientToolResult = await requestToolCall({
-        userInputId,
-        toolName: clientToolCall.toolName,
-        input: clientToolCall.input,
-      })
-      return clientToolResult.output as SavantCodeToolOutput<
-        T extends ClientToolName ? T : never
-      >
-    },
-  })
-
-  return toolResultPromise.then(async ({ output, creditsUsed }) => {
-    const toolResult: ToolMessage = {
-      role: 'tool',
-      toolName,
-      toolCallId: toolCall.toolCallId,
-      content: output,
-    }
-
-    // FID-2026-0718-009: M2 — on tool completion, model reasoning resumes.
-    setActivity(
-      agentState,
-      { kind: 'thinking', startedAt: Date.now() },
-      onResponseChunk,
-    )
-
-    onResponseChunk({
-      type: 'tool_result',
-      toolCallId: toolResult.toolCallId,
-      toolName: toolResult.toolName,
-      output: toolResult.content,
-    })
-
-    toolResults.push(toolResult)
-
-    if (!excludeToolFromMessageHistory) {
-      toolResultsToAddToMessageHistory.push(toolResult)
-    }
-
-    // After tool completes, resolve any pending creditsUsed promise
-    if (creditsUsed) {
-      onCostCalculated(creditsUsed)
-      logger.debug(
-        { credits: creditsUsed, totalCredits: agentState.creditsUsed },
-        `Added ${creditsUsed} credits from ${toolName} to agent state`,
+      // FID-2026-0718-009: M2 — on tool completion, model reasoning resumes.
+      setActivity(
+        agentState,
+        { kind: 'thinking', startedAt: Date.now() },
+        onResponseChunk,
       )
-    }
-  })
+
+      onResponseChunk({
+        type: 'tool_result',
+        toolCallId: toolResult.toolCallId,
+        toolName: toolResult.toolName,
+        output: toolResult.content,
+      })
+
+      toolResults.push(toolResult)
+
+      if (!excludeToolFromMessageHistory) {
+        toolResultsToAddToMessageHistory.push(toolResult)
+      }
+
+      // After tool completes, resolve any pending creditsUsed promise
+      if (creditsUsed) {
+        onCostCalculated(creditsUsed)
+        logger.debug(
+          { credits: creditsUsed, totalCredits: agentState.creditsUsed },
+          `Added ${creditsUsed} credits from ${toolName} to agent state`,
+        )
+      }
+    },
+    async (error) => {
+      // FID-2026-0802-005 C2: rejections are caught here and converted into
+      // the same retryable tool-error flow instead of failing the run.
+      const errorMessage =
+        error instanceof Error ? error.message : String(error)
+      onResponseChunk({
+        type: 'error',
+        message: `Tool \`${toolName}\` failed: ${errorMessage}`,
+      })
+      logger.error(
+        { toolName, errorMessage },
+        `Tool \`${toolName}\` failed: ${errorMessage}`,
+      )
+    },
+  )
 }
 
 export function parseRawCustomToolCall(params: {
@@ -858,12 +910,18 @@ export async function executeCustomToolCall(
     userInputId,
   } = params
   const toolCall: CustomToolCall | ToolCallError = parseRawCustomToolCall({
-    customToolDefs: await getMCPToolData({
-      ...params,
-      toolNames: agentTemplate.toolNames,
-      mcpServers: agentTemplate.mcpServers,
-      writeTo: cloneDeep(fileContext.customToolDefinitions),
-    }),
+    // FID-2026-0802-005 H8: prefer the step-built custom tool data passed down
+    // from loopAgentSteps (built once per step); fall back to the previous
+    // per-call getMCPToolData rebuild (cloneDeep + potential MCP listTools)
+    // only when the caller did not provide it.
+    customToolDefs:
+      params.customToolDefinitions ??
+      (await getMCPToolData({
+        ...params,
+        toolNames: agentTemplate.toolNames,
+        mcpServers: agentTemplate.mcpServers,
+        writeTo: cloneDeep(fileContext.customToolDefinitions),
+      })),
     rawToolCall: {
       toolName,
       toolCallId: toolCallId ?? generateCompactId(),
@@ -880,7 +938,7 @@ export async function executeCustomToolCall(
   if (
     !isDevOverride &&
     toolCall.toolName &&
-    !(agentTemplate.toolNames as string[]).includes(toolCall.toolName) &&
+    !agentTemplate.toolNames.includes(toolCall.toolName) &&
     !fromHandleSteps &&
     !(
       toolCall.toolName.includes(MCP_TOOL_SEPARATOR) &&
@@ -950,35 +1008,54 @@ export async function executeCustomToolCall(
       })
       return clientToolResult.output satisfies ToolResultOutput[]
     })
-    .then((result) => {
-      if (!result) {
+    .then(
+      (result) => {
+        if (!result) {
+          return
+        }
+        const toolResult = {
+          role: 'tool',
+          toolName,
+          toolCallId: toolCall.toolCallId,
+          content: result,
+        } satisfies ToolMessage
+        logger.debug(
+          { input, toolResult },
+          `${toolName} custom tool call & result (${toolResult.toolCallId})`,
+        )
+        onResponseChunk({
+          type: 'tool_result',
+          toolName: toolResult.toolName,
+          toolCallId: toolResult.toolCallId,
+          output: toolResult.content,
+        })
+
+        toolResults.push(toolResult)
+
+        if (!excludeToolFromMessageHistory) {
+          toolResultsToAddToMessageHistory.push(toolResult)
+        }
+
         return
-      }
-      const toolResult = {
-        role: 'tool',
-        toolName,
-        toolCallId: toolCall.toolCallId,
-        content: result,
-      } satisfies ToolMessage
-      logger.debug(
-        { input, toolResult },
-        `${toolName} custom tool call & result (${toolResult.toolCallId})`,
-      )
-      onResponseChunk({
-        type: 'tool_result',
-        toolName: toolResult.toolName,
-        toolCallId: toolResult.toolCallId,
-        output: toolResult.content,
-      })
-
-      toolResults.push(toolResult)
-
-      if (!excludeToolFromMessageHistory) {
-        toolResultsToAddToMessageHistory.push(toolResult)
-      }
-
-      return
-    })
+      },
+      async (error) => {
+        // FID-2026-0802-005 C2 (custom-tool parity): a rejected custom/MCP
+        // tool request must surface as a tool error (driving the
+        // hadToolCallError retry flow) instead of rejecting
+        // previousToolCallFinished and failing the whole run — the same
+        // failure mode C2 fixed for native handlers.
+        const errorMessage =
+          error instanceof Error ? error.message : String(error)
+        onResponseChunk({
+          type: 'error',
+          message: `Tool \`${toolName}\` failed: ${errorMessage}`,
+        })
+        logger.error(
+          { toolName, errorMessage },
+          `Tool \`${toolName}\` failed: ${errorMessage}`,
+        )
+      },
+    )
 }
 
 /**

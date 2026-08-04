@@ -63,7 +63,7 @@
 
 ### T2.3 — Config directory uses `.savant-code`
 - Search `common/src`, `cli/src`, `sdk/src`, and `packages/agent-runtime/src` for config directory name references
-- Verify `.savant-code` is used (not `.freebuff`)
+- Verify `.savant-code` is used (not `.savant`)
 - **Expected:** all runtime paths use `.savant-code[-env]/`
 
 ### T2.4 — Privacy documentation
@@ -199,8 +199,8 @@
 - Verify `/login` and `/signin` aliases are registered
 - **Expected:** login command remains accessible
 
-### T7.3 — No stale `.freebuff` references in production
-- Search `common/src`, `cli/src`, `sdk/src`, and `packages/agent-runtime/src` for `freebuff` (excluding test files)
+### T7.3 — No stale `.savant` references in production
+- Search `common/src`, `cli/src`, `sdk/src`, and `packages/agent-runtime/src` for `savant` (excluding test files)
 - **Expected:** zero matches in production source
 
 ---

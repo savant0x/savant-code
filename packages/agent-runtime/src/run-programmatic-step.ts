@@ -1,3 +1,4 @@
+import { PROGRAMMATIC_PRIMITIVES } from '@savant-code/common/tools/constants'
 import { HandleStepsYieldValueSchema } from '@savant-code/common/types/agent-template'
 import { getErrorObject } from '@savant-code/common/util/error'
 import { assistantMessage } from '@savant-code/common/util/messages'
@@ -41,6 +42,14 @@ const runIdToGenerator: Record<string, StepGenerator | undefined> = {}
 export const runIdToStepAll: Set<string> = new Set()
 type HandleStepsFn = Exclude<AgentTemplate['handleSteps'], string | undefined>
 
+/**
+ * Deserializes a stringified handleSteps generator for sandboxed/resumed
+ * templates. Trust boundary (FID-2026-0802-005 L16): agent definitions are
+ * code, so a malicious template could already act arbitrarily; this eval only
+ * widens the surface if templates come from untrusted sources. Prefer
+ * `template.handleStepsFn` (the live function) whenever the runtime is
+ * in-process — see the call site below.
+ */
 function deserializeHandleSteps(source: string): HandleStepsFn {
   const globalEval = eval as unknown as (code: string) => unknown
   return globalEval(`(${source})`) as HandleStepsFn
@@ -143,7 +152,6 @@ export async function runProgrammaticStep(
     localAgentTemplates: _localAgentTemplates,
     stepsComplete,
     handleStepsLogChunk,
-    sendAction,
     addAgentStep,
     logger,
   } = params
@@ -204,6 +212,16 @@ export async function runProgrammaticStep(
     runIdToGenerator[agentState.runId] = generator
   }
 
+  // Definite-assignment guard (FID-2026-0803-005 C3): generatorFn may be an
+  // eval'd/deserialized function that returns undefined at runtime. Fail with
+  // a diagnosable error instead of dereferencing undefined in the loop below,
+  // which would surface as a misleading generic handleSteps error.
+  if (!generator) {
+    throw new Error(
+      `handleSteps for agent ${template.id} did not return a generator`,
+    )
+  }
+
   // Check if we're in STEP_ALL mode
   if (runIdToStepAll.has(agentState.runId)) {
     if (stepsComplete) {
@@ -227,21 +245,8 @@ export async function runProgrammaticStep(
     firstFileProcessed: false,
   }
   const agentContext = cloneDeep(agentState.agentContext)
-  const _sendSubagentChunk = (data: {
-    userInputId: string
-    agentId: string
-    agentType: string
-    chunk: string
-    prompt?: string
-    forwardToPrompt?: boolean
-  }) => {
-    sendAction({
-      action: {
-        type: 'subagent-response-chunk',
-        ...data,
-      },
-    })
-  }
+  // FID-2026-0802-005 L7: `_sendSubagentChunk` (and its sendAction wiring)
+  // were removed — defined but never called (Law 4 dead code).
 
   let toolResult: ToolResultOutput[] | undefined = undefined
   let endTurn = false
@@ -258,7 +263,7 @@ export async function runProgrammaticStep(
       creditsBefore = agentState.directCreditsUsed
       childrenBefore = agentState.childRunIds.length
 
-      const result = generator!.next({
+      const result = generator.next({
         agentState: getPublicAgentState(
           agentState as AgentState & Required<Pick<AgentState, 'runId'>>,
         ),
@@ -445,8 +450,10 @@ export const getPublicAgentState = (
     agentId,
     runId,
     parentId,
-    messageHistory:
-      messageHistory as unknown as PublicAgentState['messageHistory'],
+    // FID-2026-0802-005 L17: session-state AgentState and the PublicAgentState
+    // projection (agent-definition) are structurally identical for these
+    // fields — the previous `as unknown as` cast was unnecessary.
+    messageHistory,
     output,
     systemPrompt,
     toolDefinitions,
@@ -493,13 +500,20 @@ async function executeSingleToolCall(
 ): Promise<ToolResultOutput[] | undefined> {
   const { agentState, onResponseChunk, toolResults } = params
 
-  // Note: We don't check if the tool is available for the agent template anymore.
-  // You can run any tool from handleSteps now!
-  // if (!template.toolNames.includes(toolCall.toolName)) {
-  //   throw new Error(
-  //     `Tool ${toolCall.toolName} is not available for agent ${template.id}. Available tools: ${template.toolNames.join(', ')}`,
-  //   )
-  // }
+  // FID-2026-0803-001 ECHO-1: bound the programmatic bypass. handleSteps may
+  // call tools declared in `toolNames`, tools declared in
+  // `programmaticToolNames`, or the central PROGRAMMATIC_PRIMITIVES plumbing
+  // set — anything else fails closed with a diagnosable declaration error.
+  const allowedProgrammaticTools = new Set<string>([
+    ...(params.agentTemplate.toolNames ?? []),
+    ...(params.agentTemplate.programmaticToolNames ?? []),
+    ...PROGRAMMATIC_PRIMITIVES,
+  ])
+  if (!allowedProgrammaticTools.has(toolCallToExecute.toolName)) {
+    throw new Error(
+      `handleSteps for agent ${params.agentTemplate.id} yielded tool "${toolCallToExecute.toolName}" which is not declared in toolNames/programmaticToolNames and is not a programmatic primitive. Declare it in the agent's programmaticToolNames (or toolNames) or add it to PROGRAMMATIC_PRIMITIVES in common/src/tools/constants.ts.`,
+    )
+  }
 
   const toolCallId = crypto.randomUUID()
   const excludeToolFromMessageHistory =
@@ -513,23 +527,12 @@ async function executeSingleToolCall(
       toolName: toolCallToExecute.toolName,
       input: toolCallToExecute.input,
     }
-    // onResponseChunk({
-    //   ...toolCallPart,
-    //   type: 'tool_call',
-    //   agentId: agentState.agentId,
-    //   parentAgentId: agentState.parentId,
-    // })
-    // NOTE(James): agentState.messageHistory is readonly for some reason (?!). Recreating the array is a workaround.
-    agentState.messageHistory = [...agentState.messageHistory]
+    // FID-2026-0802-005 H5: messageHistory is a mutable Message[] — the
+    // previous per-call array copy was O(n) per tool call (O(n²) per step for
+    // tool-dense generators). The generator holds the same agentState object,
+    // so in-place push is visible to handleSteps (already the pattern in the
+    // catch path below).
     agentState.messageHistory.push(assistantMessage(toolCallPart))
-    // Optional call handles both top-level and nested agents
-    // sendSubagentChunk({
-    //   userInputId,
-    //   agentId: agentState.agentId,
-    //   agentType: agentState.agentType!,
-    //   chunk: toolCallString,
-    //   forwardToPrompt: !agentState.parentId,
-    // })
   }
 
   const toolResultsToAddToMessageHistory: ToolMessage[] = []
@@ -589,7 +592,6 @@ async function executeSingleToolCall(
     },
   })
 
-  agentState.messageHistory = [...agentState.messageHistory]
   agentState.messageHistory.push(...toolResultsToAddToMessageHistory)
 
   // Get the latest tool result
@@ -614,7 +616,6 @@ async function executeSegmentsArray(
   for (const segment of segments) {
     if (segment.type === 'text') {
       // Add text as an assistant message
-      agentState.messageHistory = [...agentState.messageHistory]
       agentState.messageHistory.push(assistantMessage(segment.text))
 
       // Stream assistant text

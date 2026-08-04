@@ -194,6 +194,12 @@ async function main() {
       'process.env.SAVANT_FREE_MODE',
       `"${process.env.SAVANT_FREE_MODE ?? 'false'}"`,
     ],
+    // FID-2026-0803-002 DB-8: llm-providers' `openai-compatible/version.ts`
+    // reads `__PACKAGE_VERSION__` (bare identifier, source-consumed) with a
+    // `0.0.0-test` fallback. Without this define every request advertises the
+    // test suffix in the User-Agent. `--define` is reliable here because the
+    // reference lives in source (not a pre-built dist bundle).
+    ['__PACKAGE_VERSION__', `"${version}"`],
   ]
 
   const buildArgs = [
@@ -240,6 +246,12 @@ async function main() {
   const envJsonPath = join(binDir, 'env.json')
   writeFileSync(envJsonPath, JSON.stringify(binaryEnv, null, 2))
   logAlways(`Wrote env.json sibling: ${envJsonPath}`)
+
+  // FID-2026-0803-011 BH-3: bun --compile emits an `index.js.map` sibling
+  // even with `--sourcemap=none` (verified on bun 1.3.11). It is not shipped
+  // by the release tarball (binary + tree-sitter.wasm + env.json only) and
+  // nothing references it — remove it so local builds stay lean.
+  rmSync(join(binDir, 'index.js.map'), { force: true })
 
   if (targetInfo.platform !== 'win32') {
     chmodSync(outputFile, 0o755)

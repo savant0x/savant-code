@@ -6,6 +6,7 @@ resources/
 dev/test-prompts/archive/**
 dev/nova/inbox/archive/**
 dev/nova/outbox/archive/**
+dev/nova/reports/**
 docs/cloudflare-llms-full.md
 docs/Savant-Code Business And Backend Research.md
 docs/Savant Code Launch Strategy.md

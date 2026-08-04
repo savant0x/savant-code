@@ -1,3 +1,4 @@
+import { InvalidArgumentError } from '@ai-sdk/provider'
 import {
   combineHeaders,
   createJsonErrorResponseHandler,
@@ -40,6 +41,10 @@ export class OpenAICompatibleImageModel implements ImageModelV2 {
     private readonly config: OpenAICompatibleImageModelConfig,
   ) {}
 
+  get providerOptionsName(): string {
+    return this.config.provider.split('.')[0].trim()
+  }
+
   async doGenerate({
     prompt,
     n,
@@ -53,6 +58,17 @@ export class OpenAICompatibleImageModel implements ImageModelV2 {
     Awaited<ReturnType<ImageModelV2['doGenerate']>>
   > {
     const warnings: Array<ImageModelV2CallWarning> = []
+
+    // FID-2026-0803-002 DB-7: enforce the per-call image limit like the
+    // embedding model enforces maxEmbeddingsPerCall (TooManyEmbeddingValues-
+    // ForCallError); there is no image-specific error class in @ai-sdk/provider,
+    // so InvalidArgumentError carries the same contract-violation meaning.
+    if (n != null && n > this.maxImagesPerCall) {
+      throw new InvalidArgumentError({
+        argument: 'n',
+        message: `n (${n}) exceeds maxImagesPerCall (${this.maxImagesPerCall}).`,
+      })
+    }
 
     if (aspectRatio != null) {
       warnings.push({
@@ -79,7 +95,9 @@ export class OpenAICompatibleImageModel implements ImageModelV2 {
         prompt,
         n,
         size,
-        ...(providerOptions.openai ?? {}),
+        // FID-006 LLM3: key by the provider's own options name (not the
+        // hard-coded `openai` key) so non-OpenAI providers' options apply.
+        ...(providerOptions?.[this.providerOptionsName] ?? {}),
         response_format: 'b64_json',
       },
       failedResponseHandler: createJsonErrorResponseHandler(

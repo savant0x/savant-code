@@ -85,6 +85,73 @@ describe('writeJsonReport', () => {
     const parsed = JSON.parse(content)
     expect(parsed).toEqual(result)
   })
+
+  it('survives cyclic provider error objects (FID-2026-0803-012 RR-5c)', async () => {
+    // Regression: SDK provider errors (AI_APICallError) carry cyclic
+    // requestBodyValues/responseBody fields; a plain JSON.stringify(result)
+    // throws "Converting circular structure to JSON" and kills report writing.
+    const cyclicError = new Error('Provider returned error') as Error & {
+      statusCode: number
+      requestBodyValues: unknown
+      responseBody: unknown
+    }
+    cyclicError.name = 'AI_APICallError'
+    cyclicError.statusCode = 400
+    const requestBody: Record<string, unknown> = { model: 'openrouter/free' }
+    requestBody.self = requestBody // cycle
+    cyclicError.requestBodyValues = requestBody
+    cyclicError.responseBody = requestBody
+
+    const result = makeResult({
+      results: [
+        {
+          task_id: 'report-test-001',
+          task: makeTask(),
+          status: 'FAIL',
+          trace: {
+            task_id: 'report-test-001',
+            run_id: 'run-1',
+            started_at: new Date().toISOString(),
+            events: [],
+            current_phase: 'idle',
+            metadata: {
+              duration_ms: 1,
+              total_steps: 0,
+              subagent_count: 0,
+              tool_call_count: 0,
+              phase_transition_count: 0,
+              final_phase: 'idle',
+            },
+            final_state: {
+              traceSessionId: 'trace-1',
+              output: cyclicError,
+            },
+          },
+          verification: {
+            task_id: 'report-test-001',
+            passed: false,
+            status: 'FAIL',
+            checks: [],
+          },
+        },
+      ],
+      total: 1,
+      passed: 0,
+      failed: 1,
+    } as any)
+
+    const filePath = path.join(testDir, 'report.json')
+    await writeJsonReport(result, filePath)
+
+    const content = await readFile(filePath, 'utf-8')
+    const parsed = JSON.parse(content)
+    // Error flattened to { name, message, statusCode } — no throw, no cycles.
+    expect(parsed.results[0].trace.final_state.output).toEqual({
+      name: 'AI_APICallError',
+      message: 'Provider returned error',
+      statusCode: 400,
+    })
+  })
 })
 
 describe('writeMarkdownReport', () => {

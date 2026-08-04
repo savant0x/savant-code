@@ -280,7 +280,7 @@ export const parseAttrs = (
  */
 const findIndexOutside = (
   haystack: string,
-  predicate: Function,
+  predicate: (char: string) => boolean,
   delim = '',
   fromIndex = 0,
 ) => {
@@ -416,9 +416,8 @@ export class Saxy extends Transform {
             return
           case Node.tagOpen:
           case Node.tagClose:
-            // We do not distinguish between unclosed opening
-            // or unclosed closing tags
-            // callback(new Error('Unclosed tag'))
+            // We do not distinguish between unclosed opening or unclosed
+            // closing tags — accepted silently (lenient tool-call parsing).
             return
           default:
           // Pass
@@ -426,7 +425,7 @@ export class Saxy extends Transform {
       }
 
       if (this._tagStack.length !== 0) {
-        // callback(new Error(`Unclosed tags: ${this._tagStack.join(',')}`))
+        // Unclosed tags are accepted silently (lenient tool-call parsing).
         return
       }
 

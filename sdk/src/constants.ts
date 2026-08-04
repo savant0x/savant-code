@@ -16,7 +16,13 @@ const bundledWebsiteUrl = env.NEXT_PUBLIC_SAVANT_CODE_APP_URL
  * remote runtime cannot reach. Deployment env wins when present.
  */
 export function getWebsiteUrl(): string {
-  return (getRuntimeAppUrlFromEnv() ?? bundledWebsiteUrl).replace(/\/$/, '')
+  // FID-2026-0802-008 D1: defensive fallback — env-schema already requires the
+  // URL at module load (common/env), so this guard only protects remote
+  // bundlers that bypass that validation.
+  return (getRuntimeAppUrlFromEnv() ?? bundledWebsiteUrl ?? '').replace(
+    /\/$/,
+    '',
+  )
 }
 
 /** @deprecated Prefer {@link getWebsiteUrl} for runtime resolution. */

@@ -2,7 +2,6 @@ import fs from 'fs'
 import path from 'path'
 
 import { getErrorObject } from '@savant-code/common/util/error'
-import { withTimeout } from '@savant-code/common/util/promise'
 
 import { truncateTrace } from './trace-utils'
 
@@ -18,7 +17,7 @@ export interface Lesson {
 
 type ExtractAgentLessonsInput = {
   client: SavantCodeClient
-  localAgentDefinitions: any[]
+  localAgentDefinitions: AgentDefinition[]
   prompt: string
   groundTruthFileDiffs: FileDiff[]
   contextFiles: Record<string, string>
@@ -151,20 +150,19 @@ ${error ? `\n## Agent Error\n${error}\n` : ''}
 Task: Analyze what went wrong and what should have been done. For each mistake or gap, provide a lesson with both parts: whatWentWrong and whatShouldHaveBeenDone. Output the lessons array as specified.`
 
     const agentOutput: string[] = []
-    const result = await withTimeout(
-      client.run({
-        agent: 'benchmark-lessons-extractor',
-        prompt: lessonsPrompt,
-        agentDefinitions: [lessonsExtractorAgent, ...localAgentDefinitions],
-        handleEvent: (event) => {
-          if (event.type === 'text') agentOutput.push(event.text)
-          else if (event.type === 'tool_call')
-            agentOutput.push(JSON.stringify(event))
-        },
-      }),
-      20 * 60 * 1000,
-      'Lessons extractor timed out after 20 minutes',
-    )
+    const result = await client.run({
+      agent: 'benchmark-lessons-extractor',
+      prompt: lessonsPrompt,
+      agentDefinitions: [lessonsExtractorAgent, ...localAgentDefinitions],
+      // FID-2026-0803-007 EV-3 (implementation note): same withTimeout pattern
+      // found at this site during implementation — abort instead of racing.
+      signal: AbortSignal.timeout(20 * 60 * 1000),
+      handleEvent: (event) => {
+        if (event.type === 'text') agentOutput.push(event.text)
+        else if (event.type === 'tool_call')
+          agentOutput.push(JSON.stringify(event))
+      },
+    })
 
     if (result.output.type !== 'structuredOutput' || !result.output.value) {
       console.warn(

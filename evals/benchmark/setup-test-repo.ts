@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 
-import { execFileSync } from 'child_process'
+import { execFileSync, type ExecFileSyncOptions } from 'child_process'
 import fs from 'fs'
 import path from 'path'
 
@@ -41,7 +41,7 @@ export function extractRepoNameFromUrl(repoUrl: string): string {
 async function executeGitCommandWithRetry(
   command: string,
   args: string[],
-  options: any,
+  options: ExecFileSyncOptions,
   maxRetries: number = 3,
   baseDelay: number = 1000,
 ): Promise<void> {

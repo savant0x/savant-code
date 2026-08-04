@@ -3,11 +3,10 @@ import type { ToolName } from '@savant-code/sdk'
 /**
  * SavantFree build-time flag. When true, the CLI is built as SavantFree (free-only variant).
  *
- * Drives the SAVANT_FREE_MODE env var at runtime:
- *   IS_SAVANT_FREE = getCliEnv().SAVANT_FREE_MODE === 'true'
- * (Currently hardcoded false for local dev — restore the env-var line above to re-enable.)
+ * The build pipeline injects SAVANT_FREE_MODE into the process environment for
+ * both local development and compiled SavantFree binaries.
  */
-export const IS_SAVANT_FREE = false // NOTE: re-enable free mode later — restore: getCliEnv().SAVANT_FREE_MODE === 'true'
+export const IS_SAVANT_FREE = process.env.SAVANT_FREE_MODE === 'true'
 
 /** Message shown when the user ends a savant-free session early. */
 export const END_SESSION_MESSAGE =

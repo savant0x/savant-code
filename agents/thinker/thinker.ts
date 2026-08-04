@@ -10,7 +10,7 @@ const definition: SecretAgentDefinition = {
   model: 'anthropic/claude-opus-4.8',
   displayName: 'Savant the Thinker',
   spawnerPrompt:
-    'Does deep thinking given the current conversation history and a specific prompt to focus on. Use this to help you solve a specific problem. You must gather any relevant context before spawning this agent because the thinker agent has no access to tools. You can keep the prompt very short, because the thinker agent can see the entire conversation history for context.',
+    'Does deep thinking given the current conversation history and a specific prompt to focus on. Use this to help you solve a specific problem. You must gather any relevant context before spawning this agent because the thinker agent only has the sequentialthinking and end_turn tools — no codebase, web, or write access. You can keep the prompt very short, because the thinker agent can see the entire conversation history for context.',
   inputSchema: {
     prompt: {
       type: 'string',

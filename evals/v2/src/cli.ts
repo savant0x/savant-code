@@ -1,6 +1,8 @@
 import { mkdir } from 'node:fs/promises'
 import path from 'node:path'
 
+import { loadLocalAgents } from '@savant-code/sdk'
+
 import { BenchmarkHarness } from './harness'
 import { writeJsonReport, writeMarkdownReport } from './reports'
 import { SavantAgentRunner } from './runners/savant'
@@ -149,6 +151,18 @@ export async function main(
 
   const args = validateArgs(raw)
 
+  // Load the repo's agent definitions so the SDK client has a non-empty
+  // registry (the CLI prebuilds these into a bundle; the eval runner loads
+  // them explicitly, mirroring evals/benchmark/run-benchmark.ts).
+  const agentDefinitions =
+    args.mode === 'evaluate'
+      ? Object.values(
+          await loadLocalAgents({
+            agentsPath: path.resolve(__dirname, '..', '..', '..', 'agents'),
+          }),
+        )
+      : undefined
+
   const harness = new BenchmarkHarness({
     tasksDir: args.tasksDir,
     sandboxFactory: () => new TempDirSandbox({ prefix: 'savant-bench-' }),
@@ -161,6 +175,7 @@ export async function main(
               sandbox,
               apiKey: args.apiKey,
               agentId: args.agentId,
+              agentDefinitions,
               maxAgentSteps: args.maxAgentSteps,
             })
             return runner

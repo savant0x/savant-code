@@ -98,6 +98,33 @@ export function countTokensMessages(messages: Message[]): number {
   return total
 }
 
+/**
+ * FID-2026-0802-005 H2: per-message token-count cache. Messages are mostly
+ * append-only, so keying by object identity lets repeated calls skip
+ * re-encoding every message on every agent step (O(n) per step → O(n) total
+ * instead of O(n²)). Entries are garbage-collected with the messages
+ * themselves (truncation/compaction drops references), so no explicit
+ * eviction is needed. Counts are estimates by design (same fudge factor as
+ * countTokensMessages), so rare in-place mutations may drift the total
+ * slightly — acceptable per the H2 design decision.
+ */
+const MESSAGE_TOKEN_COUNT_CACHE = new WeakMap<object, number>()
+
+export function countTokensMessagesCached(messages: Message[]): number {
+  let total = 0
+  for (const message of messages) {
+    const cached = MESSAGE_TOKEN_COUNT_CACHE.get(message)
+    if (cached !== undefined) {
+      total += cached
+      continue
+    }
+    const count = countTokensMessages([message])
+    MESSAGE_TOKEN_COUNT_CACHE.set(message, count)
+    total += count
+  }
+  return total
+}
+
 export function countTokensForFiles(
   files: Record<string, string | null>,
 ): Record<string, number> {

@@ -1,5 +1,4 @@
 import { ECHO_PROTOCOL_INSTRUCTIONS } from '@savant-code/common/constants/agents'
-import { COMPOSIO_META_TOOL_NAMES } from '@savant-code/common/constants/composio'
 import {
   SAVANT_FREE_KIMI_MODEL_ID,
   SAVANT_FREE_MINIMAX_M3_MODEL_ID,
@@ -13,9 +12,9 @@ import {
   type AllToolNames,
 } from '../types/secret-agent-definition'
 
-import type { JSONValue } from '../types/util-types'
-
-const ENABLE_COMPOSIO_TOOLS = false
+// FID-2026-0802-005 L18: `ENABLE_COMPOSIO_TOOLS = false` made the Composio
+// toolNames branch and the system-prompt addendum dead code (Law 4) — the
+// constant, its import chain, and both usages were removed.
 
 export function createSavant(
   mode: 'default' | 'free' | 'lite' | 'max' | 'fast',
@@ -112,7 +111,6 @@ export function createSavant(
       'glob',
       'render_ui',
       !noGravityIndex && 'gravity_index',
-      ENABLE_COMPOSIO_TOOLS && [...COMPOSIO_META_TOOL_NAMES],
       !analyzeOnly && 'transition_phase',
       !analyzeOnly && 'write_file',
       !analyzeOnly && 'str_replace',
@@ -220,129 +218,66 @@ function getSavantHandleSteps({
   return handleSteps400k
 }
 
-const handleStepsFree250k: SavantHandleSteps = function* ({
-  params,
-  agentState,
-}) {
-  // FID-2026-0725-085 Layer 3: Read maxContextLength from agentState first
-  // (set by loopAgentSteps from resolved context window), then params, then default.
-  function asNumber(value: JSONValue): number | null {
-    return typeof value === 'number' ? value : null
-  }
-  const p = params ?? {}
-  const maxContextLength =
-    agentState.maxContextLength ?? asNumber(p.maxContextLength) ?? 250_000
-  while (true) {
-    // Only spawn context-pruner when context is approaching the limit (>80%).
-    // Skipping when context is far from full eliminates a wasted LLM call per
-    // step (~16 calls for a typical run) — the pruner would find nothing to do.
-    if (agentState.contextTokenCount > maxContextLength * 0.8) {
-      yield {
-        toolName: 'spawn_agent_inline',
-        input: {
-          agent_type: 'context-pruner' as const,
-          params: {
-            maxContextLength,
-            ...(params ?? {}),
-            cacheExpiryMs: 30 * 60 * 1000,
-          },
-        },
-        includeToolCall: false,
-      }
+// FID-2026-0802-005 L5: the four handleSteps variants differed only in two
+// literals (the fallback maxContextLength and the free-tier cacheExpiryMs) and
+// duplicated `asNumber` four times. They were collapsed into one factory.
+// handleSteps is serialized via .toString() and re-eval'd (prebuild-agents.ts
+// + run-programmatic-step.ts deserializeHandleSteps), so the generated
+// function MUST be fully self-contained: only literals, params, and locals —
+// no closure variables. Baking the two config values as literals into the
+// generated source guarantees that. The eval runs once at module load with
+// numeric literals only — the same trust domain as the runtime's existing
+// deserializeHandleSteps.
+function createSavantHandleSteps(config: {
+  defaultMaxContextLength: 250_000 | 400_000
+  cacheExpiryMs?: number
+}): SavantHandleSteps {
+  const { defaultMaxContextLength, cacheExpiryMs } = config
+  const cacheExpiryParam =
+    cacheExpiryMs === undefined ? '' : `cacheExpiryMs: ${cacheExpiryMs},`
+  const source = `function* ({ params, agentState }) {
+    function asNumber(value) {
+      return typeof value === 'number' ? value : null
     }
-
-    const { stepsComplete } = yield 'STEP'
-    if (stepsComplete) break
-  }
+    const p = params ?? {}
+    const maxContextLength =
+      agentState.maxContextLength ?? asNumber(p.maxContextLength) ?? ${defaultMaxContextLength}
+    while (true) {
+      if (agentState.contextTokenCount > maxContextLength * 0.8) {
+        yield {
+          toolName: 'spawn_agent_inline',
+          input: {
+            agent_type: 'context-pruner',
+            params: {
+              maxContextLength,
+              ...(params ?? {}),
+              ${cacheExpiryParam}
+            },
+          },
+          includeToolCall: false,
+        }
+      }
+      const { stepsComplete } = yield 'STEP'
+      if (stepsComplete) break
+    }
+  }`
+  return eval(`(${source})`) as SavantHandleSteps
 }
 
-const handleStepsFree400k: SavantHandleSteps = function* ({
-  params,
-  agentState,
-}) {
-  // FID-2026-0725-085 Layer 3: Read maxContextLength from agentState first
-  function asNumber(value: JSONValue): number | null {
-    return typeof value === 'number' ? value : null
-  }
-  const p = params ?? {}
-  const maxContextLength =
-    agentState.maxContextLength ?? asNumber(p.maxContextLength) ?? 400_000
-  while (true) {
-    if (agentState.contextTokenCount > maxContextLength * 0.8) {
-      yield {
-        toolName: 'spawn_agent_inline',
-        input: {
-          agent_type: 'context-pruner',
-          params: {
-            maxContextLength,
-            ...(params ?? {}),
-            cacheExpiryMs: 30 * 60 * 1000,
-          },
-        },
-        includeToolCall: false,
-      }
-    }
-
-    const { stepsComplete } = yield 'STEP'
-    if (stepsComplete) break
-  }
-}
-
-const handleSteps250k: SavantHandleSteps = function* ({ params, agentState }) {
-  // FID-2026-0725-085 Layer 3: Read maxContextLength from agentState first
-  function asNumber(value: JSONValue): number | null {
-    return typeof value === 'number' ? value : null
-  }
-  const p = params ?? {}
-  const maxContextLength =
-    agentState.maxContextLength ?? asNumber(p.maxContextLength) ?? 250_000
-  while (true) {
-    if (agentState.contextTokenCount > maxContextLength * 0.8) {
-      yield {
-        toolName: 'spawn_agent_inline',
-        input: {
-          agent_type: 'context-pruner',
-          params: {
-            maxContextLength,
-            ...(params ?? {}),
-          },
-        },
-        includeToolCall: false,
-      }
-    }
-
-    const { stepsComplete } = yield 'STEP'
-    if (stepsComplete) break
-  }
-}
-
-const handleSteps400k: SavantHandleSteps = function* ({ params, agentState }) {
-  // FID-2026-0725-085 Layer 3: Read maxContextLength from agentState first
-  function asNumber(value: JSONValue): number | null {
-    return typeof value === 'number' ? value : null
-  }
-  const p = params ?? {}
-  const maxContextLength =
-    agentState.maxContextLength ?? asNumber(p.maxContextLength) ?? 400_000
-  while (true) {
-    if (agentState.contextTokenCount > maxContextLength * 0.8) {
-      yield {
-        toolName: 'spawn_agent_inline',
-        input: {
-          agent_type: 'context-pruner',
-          params: {
-            maxContextLength,
-            ...(params ?? {}),
-          },
-        },
-        includeToolCall: false,
-      }
-    }
-
-    const { stepsComplete } = yield 'STEP'
-    if (stepsComplete) break
-  }
-}
+const handleStepsFree250k = createSavantHandleSteps({
+  defaultMaxContextLength: 250_000,
+  cacheExpiryMs: 30 * 60 * 1000,
+})
+const handleStepsFree400k = createSavantHandleSteps({
+  defaultMaxContextLength: 400_000,
+  cacheExpiryMs: 30 * 60 * 1000,
+})
+const handleSteps250k = createSavantHandleSteps({
+  defaultMaxContextLength: 250_000,
+})
+const handleSteps400k = createSavantHandleSteps({
+  defaultMaxContextLength: 400_000,
+})
 
 const EXPLORE_PROMPT = `- Spawn the Detective agent to search the codebase, and researcher-web / researcher-docs for external research. Use the list_directory and glob tools directly for searching and exploring the codebase. The Detective agent is very effective at finding relevant files -- spawn it with multiple search queries to explore different parts of the codebase. Use read_subtree if you need to grok a particular part of the codebase. Read all the relevant files using the read_files tool.`
 
@@ -578,6 +513,36 @@ function buildDefaultSystemPrompt(context: {
 
 Current date: ${PLACEHOLDER.CURRENT_DATE}.
 
+# Agent Roster
+
+The Savant agent roster consists of exactly **9 canonical ECHO roles**:
+
+| # | Agent | Phase | Responsibility |
+|---|-------|-------|----------------|
+| 1 | **Savant (Orchestrator)** | ALL | Routes work through Perfection Loop, enforces protocol compliance, spawns all agents |
+| 2 | **Detective** | RED | Codebase analysis, grep call-graphs, find issues, catalog evidence with file paths |
+| 3 | **Forge** | GREEN | Implementation only. Writes code following the converged FID spec. Cannot self-verify. |
+| 4 | **Verifier** | AUDIT | Double-audit, run tests, check call-graph reachability, reject hallucinated claims |
+| 5 | **Recorder** | FID | Create, track, archive FIDs. Update CHANGELOG. Ensure no FID closes without AUDIT evidence |
+| 6 | **Thinker** | Planning | Deep reasoning via sequential thinking engine. Critiques specs, plans, implementations |
+| 7 | **Scout** | Explore | File/code search, glob, read subtrees, context gathering |
+| 8 | **Researcher** | Research | Web search, documentation lookup, external API research |
+| 9 | **Scribe** | Docs | Session summaries, LESSONS.md, knowledge files, end-of-session capture |
+
+---
+
+**Important distinction:** The 9 roles above are the canonical ECHO runtime roster. Additionally, there are **infrastructure helpers** that are NOT roster members:
+
+- \`researcher-web\` / \`researcher-docs\` — tool libraries for the single Researcher role
+- \`basher\` — terminal command executor
+- \`tmux-cli\` — CLI testing via tmux
+- \`browser-use\` — browser automation
+- \`context-pruner\` — context summarization between steps
+
+These helpers are spawnable but do not represent independent conversational agents in the ECHO roster.
+
+When asked about the agent roster, report only the 9 roles listed above.
+
 # General guidelines
 
 - **Conventions & Style:** Rigorously adhere to existing project conventions when modifying code. Analyze surrounding code, tests, and configuration first.
@@ -602,12 +567,7 @@ ${
 - **Be careful with terminal commands:** Be careful about instructing subagents to run terminal commands that could be destructive or have effects that are hard to undo (e.g. git push, git commit, running any scripts -- especially ones that could alter production environments (!), installing packages globally, etc). Don't run any of these effectful commands unless the user explicitly asks you to.
 - **Do what the user asks:** If the user asks you to do something, even running a risky terminal command, do it.
 - **Don't use set_output:** The set_output tool is for spawned subagents to report results. Don't use it yourself.
-- **Discover and install skills:** Skills are reusable, self-contained instructions for accomplishing a task. Beyond the skills already listed for the \`skill\` tool, you can find and install community skills from the command line: \`npx skills find <query>\` to search, \`npx skills add <owner/repo> --list\` to preview a repo's skills, and \`npx skills add <owner/repo> --skill <name> --yes\` to install one into \`.agents/skills/\`. After installing, load it by name with the \`skill\` tool. These community skills are not vetted, so confirm with the user which skill(s) to install before running \`npx skills add\`.${
-    ENABLE_COMPOSIO_TOOLS
-      ? `
-- **External apps:** When Composio tools are available and the user asks to work with connected apps or services like Gmail, Google Calendar, GitHub, Slack, Linear, or Notion, use them to search for the right app tools, help the user connect their account (use the render_ui tool to show a button if the user needs to click a link), and execute the requested action.`
-      : ''
-  }
+- **Discover and install skills:** Skills are reusable, self-contained instructions for accomplishing a task. Beyond the skills already listed for the \`skill\` tool, you can find and install community skills from the command line: \`npx skills find <query>\` to search, \`npx skills add <owner/repo> --list\` to preview a repo's skills, and \`npx skills add <owner/repo> --skill <name> --yes\` to install one into \`.agents/skills/\`. After installing, load it by name with the \`skill\` tool. These community skills are not vetted, so confirm with the user which skill(s) to install before running \`npx skills add\`.
 - **Use <think></think> tags for moderate reasoning:** When you need to work through something moderately complex (e.g., understanding code flow, planning a small refactor, reasoning about edge cases, planning which agents to spawn), wrap your thinking in <think></think> tags.
 - **Keep final summary extremely concise:** Write only a few words for each change you made in the final summary.
 

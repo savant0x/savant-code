@@ -26,16 +26,20 @@ export async function withRetry<
     retryDelayMs = INITIAL_RETRY_DELAY,
   } = options
 
+  // FID-2026-0803-003 CMN-9: maxRetries=0 previously skipped the loop entirely
+  // and the trailing `throw lastError` threw `null`. Always attempt at least once.
+  const effectiveMaxRetries = Math.max(1, maxRetries)
+
   let lastError: E | null = null
 
-  for (let attempt = 0; attempt < maxRetries; attempt++) {
+  for (let attempt = 0; attempt < effectiveMaxRetries; attempt++) {
     try {
       return await operation()
     } catch (error) {
       const typedError = error as E
       lastError = typedError
 
-      if (!retryIf(typedError) || attempt === maxRetries - 1) {
+      if (!retryIf(typedError) || attempt === effectiveMaxRetries - 1) {
         throw typedError
       }
 
@@ -74,11 +78,10 @@ export async function withTimeout<T>(
     }, timeoutMs)
   })
 
+  // FID-2026-0803-003 CMN-10: clear the timer on every settle path (success or
+  // rejection), not just success — a pending timer otherwise leaks the event loop.
   return Promise.race([
-    promise.then((result) => {
-      clearTimeout(timeoutId)
-      return result
-    }),
+    promise.finally(() => clearTimeout(timeoutId)),
     timeoutPromise,
   ])
 }

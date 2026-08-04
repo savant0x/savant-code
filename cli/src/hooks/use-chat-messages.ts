@@ -92,102 +92,7 @@ export function useChatMessages({
       // Set flag to prevent auto-scroll during user-initiated collapse
       isUserCollapsingRef.current = true
 
-      // Find and toggle the block's isCollapsed property
-      setMessages((prevMessages) => {
-        return prevMessages.map((message) => {
-          // Handle agent variant messages
-          if (message.variant === 'agent' && message.id === id) {
-            const wasCollapsed = message.metadata?.isCollapsed ?? false
-            return {
-              ...message,
-              metadata: {
-                ...message.metadata,
-                isCollapsed: !wasCollapsed,
-                userOpened: wasCollapsed, // Mark as user-opened if expanding
-              },
-            }
-          }
-
-          // Handle blocks within messages
-          if (!message.blocks) return message
-
-          const updateBlocksRecursively = (
-            blocks: ContentBlock[],
-          ): ContentBlock[] => {
-            let foundTarget = false
-            const result = blocks.map((block) => {
-              // Handle thinking blocks - just match by thinkingId
-              if (block.type === 'text' && block.thinkingId === id) {
-                foundTarget = true
-                const isExpanded = block.thinkingCollapseState === 'expanded'
-                return {
-                  ...block,
-                  thinkingCollapseState: isExpanded
-                    ? ('preview' as const)
-                    : ('expanded' as const),
-                  userOpened: !isExpanded, // Mark as user-opened if expanding
-                }
-              }
-
-              // Handle agent blocks
-              if (block.type === 'agent' && block.agentId === id) {
-                foundTarget = true
-                const wasCollapsed = block.isCollapsed ?? false
-                return {
-                  ...block,
-                  isCollapsed: !wasCollapsed,
-                  userOpened: wasCollapsed, // Mark as user-opened if expanding
-                }
-              }
-
-              // Handle tool blocks
-              if (block.type === 'tool' && block.toolCallId === id) {
-                foundTarget = true
-                const wasCollapsed = block.isCollapsed ?? false
-                return {
-                  ...block,
-                  isCollapsed: !wasCollapsed,
-                  userOpened: wasCollapsed, // Mark as user-opened if expanding
-                }
-              }
-
-              // Handle agent-list blocks
-              if (block.type === 'agent-list' && block.id === id) {
-                foundTarget = true
-                const wasCollapsed = block.isCollapsed ?? false
-                return {
-                  ...block,
-                  isCollapsed: !wasCollapsed,
-                  userOpened: wasCollapsed, // Mark as user-opened if expanding
-                }
-              }
-
-              // Recursively update nested blocks inside agent blocks
-              if (block.type === 'agent' && block.blocks) {
-                const updatedBlocks = updateBlocksRecursively(block.blocks)
-                // Only create new block if nested blocks actually changed
-                if (updatedBlocks !== block.blocks) {
-                  foundTarget = true
-                  return {
-                    ...block,
-                    blocks: updatedBlocks,
-                  }
-                }
-              }
-
-              return block
-            })
-
-            // Return original array reference if nothing changed
-            return foundTarget ? result : blocks
-          }
-
-          return {
-            ...message,
-            blocks: updateBlocksRecursively(message.blocks),
-          }
-        })
-      })
+      setMessages((prevMessages) => updateMessageCollapse(prevMessages, id))
 
       // Reset flag after state update completes.
       // Uses setTimeout(0) to defer until after React's batched state updates
@@ -256,4 +161,113 @@ export function useChatMessages({
     handleLoadPreviousMessages,
     handleToggleAll,
   }
+}
+
+/**
+ * Pure updater for collapse toggling (FID-007 P2). Extracted from
+ * `handleCollapseToggle` so the identity-preservation contract is unit-
+ * testable: messages/blocks that are NOT the toggle target keep their exact
+ * object identity, so memoized MessageWithAgents components skip re-render.
+ */
+export function updateMessageCollapse(
+  prevMessages: ChatMessage[],
+  id: string,
+): ChatMessage[] {
+  return prevMessages.map((message) => {
+    // Handle agent variant messages
+    if (message.variant === 'agent' && message.id === id) {
+      const wasCollapsed = message.metadata?.isCollapsed ?? false
+      return {
+        ...message,
+        metadata: {
+          ...message.metadata,
+          isCollapsed: !wasCollapsed,
+          userOpened: wasCollapsed, // Mark as user-opened if expanding
+        },
+      }
+    }
+
+    // Handle blocks within messages
+    if (!message.blocks) return message
+
+    const newBlocks = updateBlocksCollapseRecursively(message.blocks, id)
+    // FID-007 P2: return the ORIGINAL message object when nothing changed.
+    // The previous implementation always spread a new object, giving every
+    // block-bearing message a fresh identity on every toggle.
+    return newBlocks === message.blocks
+      ? message
+      : { ...message, blocks: newBlocks }
+  })
+}
+
+function updateBlocksCollapseRecursively(
+  blocks: ContentBlock[],
+  id: string,
+): ContentBlock[] {
+  let foundTarget = false
+  const result = blocks.map((block) => {
+    // Handle thinking blocks - just match by thinkingId
+    if (block.type === 'text' && block.thinkingId === id) {
+      foundTarget = true
+      const isExpanded = block.thinkingCollapseState === 'expanded'
+      return {
+        ...block,
+        thinkingCollapseState: isExpanded
+          ? ('preview' as const)
+          : ('expanded' as const),
+        userOpened: !isExpanded, // Mark as user-opened if expanding
+      }
+    }
+
+    // Handle agent blocks
+    if (block.type === 'agent' && block.agentId === id) {
+      foundTarget = true
+      const wasCollapsed = block.isCollapsed ?? false
+      return {
+        ...block,
+        isCollapsed: !wasCollapsed,
+        userOpened: wasCollapsed, // Mark as user-opened if expanding
+      }
+    }
+
+    // Handle tool blocks
+    if (block.type === 'tool' && block.toolCallId === id) {
+      foundTarget = true
+      const wasCollapsed = block.isCollapsed ?? false
+      return {
+        ...block,
+        isCollapsed: !wasCollapsed,
+        userOpened: wasCollapsed, // Mark as user-opened if expanding
+      }
+    }
+
+    // Handle agent-list blocks
+    if (block.type === 'agent-list' && block.id === id) {
+      foundTarget = true
+      const wasCollapsed = block.isCollapsed ?? false
+      return {
+        ...block,
+        isCollapsed: !wasCollapsed,
+        userOpened: wasCollapsed, // Mark as user-opened if expanding
+      }
+    }
+
+    // Recursively update nested blocks inside agent blocks
+    if (block.type === 'agent' && block.blocks) {
+      const updatedBlocks = updateBlocksCollapseRecursively(block.blocks, id)
+      // Only create new block if nested blocks actually changed
+      if (updatedBlocks !== block.blocks) {
+        foundTarget = true
+        return {
+          ...block,
+          blocks: updatedBlocks,
+        }
+      }
+    }
+
+    return block
+  })
+
+  // Return original array reference if nothing changed
+  return foundTarget ? result : blocks
 }

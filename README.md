@@ -10,12 +10,20 @@ touches your repo.**
 Built with TypeScript/Bun, governed by the ECHO Protocol, and designed for
 local-first use with Ollama.
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-1.3.14-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![React](https://img.shields.io/badge/React-19-%23000000?style=flat-square&logo=react&logoColor=%2300fbff)](https://react.dev/)[![OpenTUI](https://img.shields.io/badge/OpenTUI-0.2.2-%23000000?style=flat-square&logo=opentui&logoColor=%2300fbff)](https://github.com/anomalyco/opentui)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](ECHO.md)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![Release](https://img.shields.io/badge/Release-v0.0.15-%23000000?style=flat-square&logo=semver&logoColor=%2300fbff)](CHANGELOG.md)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-1.3.14-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![React](https://img.shields.io/badge/React-19-%23000000?style=flat-square&logo=react&logoColor=%2300fbff)](https://react.dev/)[![OpenTUI](https://img.shields.io/badge/OpenTUI-0.2.2-%23000000?style=flat-square&logo=opentui&logoColor=%2300fbff)](https://github.com/anomalyco/opentui)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](ECHO.md)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![Release](https://img.shields.io/badge/Release-v0.0.16-%23000000?style=flat-square&logo=semver&logoColor=%2300fbff)](CHANGELOG.md)
 
 </div>
 
-> **v0.0.15** — CommandCode provider support, first-run onboarding, lint/recovery completion,
-> and synchronized release metadata.
+> **v0.0.16** — Checkpoint & Rewind: a persistent per-turn edit safety net with `/rewind`
+> (restore code, conversation, both, or fork a session) built on a durable checkpoint store,
+> plus a repo-wide quality sweep that hardened every execution surface — agent runtime
+> (fail-closed tool-call streaming, Thinker cascade fixes), llm-providers + database
+> (crash-proof init, rowid ordering, statement caching), SDK impl + common (OAuth
+> rate-limit double-execution fix, zod `required` re-derivation), code-map, and the evals
+> runner — with ECHO protocol enforcement (programmatic tool primitives, fail-closed step
+> validation) and build hygiene (`bun run clean`, no orphan sourcemaps). v0.0.16's
+> CommandCode provider, first-run onboarding, and synchronized release metadata carry
+> forward.
 
 ---
 
@@ -135,21 +143,43 @@ hard 10-iteration cap and a 10% Levenshtein change-cap per pass.
   `.agents/types/{agent-definition,tools,util-types}.ts` and a starter
   `knowledge.md`.
 - **Slash commands** — `/new`, `/history`, `/bash`, `/goal`, `/loop`,
-  `/feedback`, `/theme:toggle`, `/login`, `/logout`, `/exit`, plus
+  `/feedback`, `/rewind`, `/theme:toggle`, `/login`, `/logout`, `/exit`, plus
   agent-specific commands.
 - **Provider setup** — `/provider` opens an interactive dropdown picker showing
   all providers with ✓/✗ configuration status. Select a provider to enter its
   API key (masked input). Keys stored in local `credentials.json`.
-- **Telemetry controls** — `/telemetry status|enable|disable` toggles analytics
-  collection. Active by default; user-disableable. Consent gates all PostHog,
-  error reporting, and Axiom shipping.
+- **Telemetry controls** — `/telemetry status|enable|disable` toggles remote
+  analytics and error reporting. Remote analytics is enabled by default in the
+  main CLI but remains user-disableable; local logs remain available when it is
+  disabled. Contextual ads are separate: ads are disabled by default in the
+  main CLI and can be controlled independently where available. Savant-Free is
+  the separate ad-supported product surface.
 - **`@filename` and `@AgentName` mentions** — file and agent mentions with
   inline autocomplete.
 - **Bash mode** — `!command` or `/bash` to run shell commands inline (with
   confirmation).
+- **Permission and sandbox controls** — `--permission-mode safe|prompt|unsafe`
+  sets the startup policy, while `/permissions` (aliases `/sandbox` and
+  `/safety`) shows or changes it during a session. `safe` denies risky tools;
+  `prompt` currently also denies risky tools because interactive confirmations
+  are not yet implemented, and `unsafe` allows them
+  explicitly. Use `unsafe` only when you understand the command risk.
 - **Goal loop** — `/goal` sets a goal condition; `/loop <cadence>` schedules
   recurring prompt execution (e.g., `/loop 5m check build status`). The loop
   scheduler manages cadence, run counts, and convergence detection.
+- **Structured planning and review** — `/interview` turns an underspecified
+  request into a structured specification, `/plan` creates an implementation
+  plan, and `/review` opens a focused code-review workflow.
+- **In-chat verification** — `/verify` runs the four supported core workspace
+  typechecks, or target one with `/verify sdk`, `/verify common`,
+  `/verify agent-runtime`, or `/verify cli`. `/diagnostics` reports local
+  process/resource information.
+- **Conversation utilities** — `/copy` (aliases `/copy-chat` and `/export`) copies
+  the full conversation, while `/image` (aliases `/img` and `/attach`) attaches
+  an image when the selected provider supports multimodal input.
+- **Agent publishing** — `/publish` opens the agent publishing flow for
+  templates with the required publisher metadata. It requires the Savant Code
+  backend rather than direct-provider mode.
 - **Mode switching** — `EDIT` / `ANALYZE` / `SCAFFOLD` execution-scope modes,
   togglable at runtime via UI.
 - **Streaming & cancellation** — token-by-token SSE streaming with mid-stream
@@ -173,6 +203,15 @@ hard 10-iteration cap and a 10% Levenshtein change-cap per pass.
 - **Theming** — light/dark toggle (`/theme:toggle`), Neon Slate aesthetic.
 - **Sidebar folding** — right-sidebar sections and FID cards start collapsed
   for a compact first render; click to expand.
+- **Full command surface** — the primary slash-command families are documented
+  in the reference below; advanced commands remain available through the
+  registry and autocomplete.
+- **Checkpoint & Rewind** — one persistent checkpoint per user turn records the
+  pre-edit content of every file first touched (including subagent writes) plus
+  the conversation boundary; `/rewind` opens a picker to restore **code only**,
+  **conversation only**, **both**, or **fork a new session** from an earlier
+  turn — no git required. Retention is bounded to the most recent 20 turns,
+  and terminal side effects are never rewound.
 
 ### SDK (`@savant-code/sdk`)
 
@@ -184,6 +223,11 @@ hard 10-iteration cap and a 10% Levenshtein change-cap per pass.
   defaults.
 - **Custom tools** — pass `customToolDefinitions` to extend the tool registry.
 - **Cancellation** — `AbortSignal` propagates through subagent streams.
+- **Checkpoint API** — the persistent checkpoint store (`openTurn`,
+  `captureSnapshot`, `closeTurn`, `listTurns`, `restoreTurn`, `forkFrom`) is
+  re-exported from the SDK, so hosts can checkpoint and rewind any run;
+  `checkpointDir`/`checkpointTurnId` run options thread the turn boundary into
+  subagent writes.
 
 ### Agent Runtime (`@savant-code/agent-runtime`)
 
@@ -196,6 +240,9 @@ hard 10-iteration cap and a 10% Levenshtein change-cap per pass.
   …) + custom + MCP.
 - **Cost aggregation** — per-call token counts and USD cost estimates surfaced
   in `RunState`.
+- **Turn checkpoints** — the write-gate in `executeToolCall` captures
+  pre-edit content before `write_file`/`str_replace`/`apply_patch` dispatch;
+  subagent writes inherit the parent turn via spawn context.
 
 ### ECHO Protocol Integration
 
@@ -218,7 +265,7 @@ hard 10-iteration cap and a 10% Levenshtein change-cap per pass.
 | `cli/`                    | `@savant-code/cli`           | CLI source — UI, commands, state, hooks, OpenTUI/React components |
 | `common/`                 | `@savant-code/common`        | Shared types, tool definitions, utilities                         |
 | `evals/`                  | `@savant-code/evals`         | ECHO-native benchmark v2 runner + legacy eval fixtures            |
-| `savant-free/`            | `@savant-code/savant-free`   | Future free/ad-supported variant workspace (not yet released)     |
+| `savant-free/`            | `@savant-code/savant-free`   | Private/pre-release free/ad-supported variant; local binary + E2E support |
 | `packages/agent-runtime/` | `@savant-code/agent-runtime` | Agent loop, tool executor, LLM API integration                    |
 | `packages/code-map/`      | `@savant-code/code-map`      | tree-sitter code indexing, language detection                     |
 | `packages/database/`      | `@savant-code/database`      | Database abstraction layer                                        |
@@ -334,6 +381,45 @@ using local persistence.
 | `bun x eslint . --max-warnings 0` | Lint                             |
 
 <!-- markdownlint-enable MD013 MD060 -->
+
+---
+
+## Slash Command Reference
+
+Commands can be entered with `/`; aliases are shown in parentheses. Availability
+can differ in Savant-Free mode, which intentionally removes paid/backend-only
+commands.
+
+| Command | Purpose |
+| --- | --- |
+| `/help` (`/h`, `/?`) | Show command help and tips |
+| `/new` (`/clear`, `/reset`) | Start a fresh chat; optional text starts the first prompt |
+| `/history` (`/chats`) | Browse and resume previous conversations |
+| `/copy` (`/export`) | Copy the complete conversation |
+| `/interview` | Turn an idea into a structured specification |
+| `/plan` | Create an implementation plan |
+| `/review` | Review code changes |
+| `/goal` (`/g`) | Iterate until a verifiable goal is satisfied |
+| `/loop` (`/repeat`) | Run a prompt on a recurring cadence; use `stop` or `status` |
+| `/verify` (`/typecheck`) | Run the four supported core workspace typechecks, all or one selected |
+| `/permissions` (`/sandbox`, `/safety`) | View or set `safe`, `prompt`, or `unsafe` tool policy |
+| `/rewind` (`/undo`, `/checkpoint`) | Restore a previous turn’s files and/or conversation |
+| `/health` (`/status`, `/check`) | Check Ollama, provider mode, model, and permission status |
+| `/diagnostics` (`/diag`, `/processes`) | Show local process and resource diagnostics |
+| `/provider` | Configure a hosted provider key with masked input |
+| `/model` | Select or switch the active hosted model |
+| `/publish` | Publish agent templates through the Savant backend |
+| `/feedback` (`/bug`, `/report`) | Open the feedback flow |
+| `/telemetry` (`/analytics`) | View or change remote analytics consent |
+| `/theme:toggle` | Switch between light and dark themes |
+| `/bash` (`!`) | Run a shell command or enter Bash mode |
+| `/image` (`/img`, `/attach`) | Attach an image for supported multimodal models |
+| `/init` | Create starter agent types and `knowledge.md` |
+| `/login` / `/logout` | Authenticate or end the current session |
+| `/exit` (`/quit`, `/q`) | Quit the CLI |
+
+Savant-Free additionally exposes free-session controls such as `/end-session`
+and its model picker; paid/backend-only commands are filtered from that build.
 
 ---
 

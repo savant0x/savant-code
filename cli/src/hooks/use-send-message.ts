@@ -1,7 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- send message: dynamic action type shapes */
 import { randomUUID } from 'node:crypto'
+import path from 'node:path'
 
-import { STATE_SNAPSHOT_INTERRUPTION_MESSAGE } from '@savant-code/sdk'
+import {
+  STATE_SNAPSHOT_INTERRUPTION_MESSAGE,
+  closeTurn,
+  openTurn,
+} from '@savant-code/sdk'
 import { useCallback, useEffect, useRef } from 'react'
 
 import { setCurrentChatId } from '../project-files'
@@ -557,6 +562,25 @@ export const useSendMessage = ({
       const runChatDir = resolveCurrentChatDir()
       const runChatIsCurrent = () => resolveCurrentChatDir() === runChatDir
 
+      // FID-2026-0803-004: open this turn's persistent file checkpoint. The
+      // runtime captures pre-write snapshots into checkpointDir keyed by
+      // checkpointTurnId (the AI message id, shared by subagents), so /rewind
+      // can restore every file this turn touched. Capture the conversation
+      // boundary (CLI message count + SDK history length) BEFORE the run so
+      // /rewind can also truncate the conversation back to turn start.
+      const checkpointDir = path.join(runChatDir, 'checkpoints')
+      const turnStartMessageCount = useChatStore.getState().messages.length
+      const turnStartHistoryLength =
+        previousRunStateRef.current?.sessionState?.mainAgentState
+          ?.messageHistory?.length ?? 0
+      openTurn({
+        checkpointDir,
+        turnId: aiMessageId,
+        prompt: finalContent,
+        messageCount: turnStartMessageCount,
+        historyLength: turnStartHistoryLength,
+      })
+
       // Checkpoint the turn to disk immediately so that killing the process
       // (closed terminal, crash) can't lose the user's prompt, then keep the
       // checkpoint fresh from SDK run-state snapshots while the run streams.
@@ -707,6 +731,8 @@ export const useSendMessage = ({
               : undefined,
           modelInfoText,
           contextWindow: resolvedContextWindow,
+          checkpointDir,
+          checkpointTurnId: aiMessageId,
           onStateSnapshot: (snapshot) => {
             latestRunStateSnapshot = snapshot
 
@@ -934,6 +960,17 @@ export const useSendMessage = ({
           heartbeatIntervalRef.current = null
         }
         stalledWatcher.stop()
+
+        // FID-2026-0803-004: close this turn's checkpoint so its JSON is
+        // persisted (and retention pruned) even on abort/error. Safe to call
+        // unconditionally — closeTurn no-ops when the turn wasn't opened.
+        closeTurn({
+          checkpointDir,
+          turnId: aiMessageId,
+          prompt: finalContent,
+          messageCount: turnStartMessageCount,
+          historyLength: turnStartHistoryLength,
+        })
 
         // Stop exit-flushing this run's checkpoint; the final state (or last
         // checkpoint, on error) has been saved above. Owner-guarded so an

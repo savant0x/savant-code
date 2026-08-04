@@ -72,4 +72,13 @@ export type AgentRuntimeScopedDeps = {
   sendSubagentChunk: SendSubagentChunkFn
 
   apiKey: string
+
+  /** FID-2026-0803-004: directory for persistent per-turn file checkpoints
+   *  (rewind). When unset, checkpoint capture is disabled. Hosts that enable
+   *  it also call openTurn/closeTurn on the checkpoint store around the run. */
+  checkpointDir?: string
+  /** FID-2026-0803-004: turn identity for checkpoint grouping. Defaults to
+   *  clientSessionId; hosts may pass their own id (e.g. the CLI's aiMessageId)
+   *  so subagent writes land in the same turn's checkpoint. */
+  checkpointTurnId?: string
 }

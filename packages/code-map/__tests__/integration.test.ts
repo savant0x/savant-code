@@ -230,6 +230,47 @@ console.log('Multiply:', multiply(x, y));
     }
   })
 
+  it(
+    'should not crash when a call identifier collides with Object.prototype (CM-1)',
+    async () => {
+      // Regression (FID-2026-0803-006 CM-1): a token named `toString` defined
+      // in one file and called in another used to crash buildTokenCallers —
+      // `callersByToken['toString']` resolved to the inherited
+      // Object.prototype.toString function, which has no `.includes`.
+      const testFiles = {
+        'src/stringify.js': `
+export function toString(value) {
+  return String(value);
+}
+      `.trim(),
+        'src/app.js': `
+import { toString } from './stringify.js';
+console.log(toString(42));
+      `.trim(),
+      }
+
+      const projectRoot = '/tmp/toString-project'
+      const filePaths = Object.keys(testFiles)
+      const fileProvider = (filePath: string) => {
+        const relativePath = filePath.replace(projectRoot + '/', '')
+        return testFiles[relativePath as keyof typeof testFiles] || null
+      }
+
+      // Must resolve — not throw a TypeError from buildTokenCallers.
+      const result = await getFileTokenScores(
+        projectRoot,
+        filePaths,
+        fileProvider,
+      )
+      expect(result).toHaveProperty('tokenScores')
+      expect(result).toHaveProperty('tokenCallers')
+      // The prototype-colliding token is guarded: no `toString` caller entry.
+      const definingFile = 'src/stringify.js'
+      expect(result.tokenCallers[definingFile]?.['toString']).toBeUndefined()
+    },
+    TEST_TIMEOUT,
+  )
+
   it('should return undefined for unsupported file types', async () => {
     const config = await getLanguageConfig('test.unknown')
     expect(config).toBeUndefined()

@@ -1,6 +1,6 @@
 {
   "name": "@savant-code/cli",
-  "version": "0.0.15",
+  "version": "0.0.16",
   "type": "module",
   "bin": {
     "savant-code": "./bin/savant-code"
@@ -17,6 +17,7 @@
     "dev": "bun run prebuild:agents && bun run src/index.tsx --cwd ..",
     "prebuild:agents": "bun run scripts/prebuild-agents.ts",
     "build:binary": "bun ./scripts/build-binary.ts savant-code $npm_package_version",
+    "clean": "bun run scripts/clean.ts",
     "release": "bun run scripts/release.ts",
     "test": "NODE_ENV=production bun test",
     "test:tmux-poc": "bun run src/__tests__/tmux-poc.ts",

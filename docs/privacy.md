@@ -3,7 +3,7 @@
 > **Scope:** This document describes what data Savant Code collects, where it
 > goes, and how users control it. It covers the CLI, SDK, and agent-runtime.
 >
-> **Version:** v0.0.15
+> **Version:** v0.0.16
 >
 > **Applies to:** `cli`, `sdk`, `packages/agent-runtime`, `common`
 

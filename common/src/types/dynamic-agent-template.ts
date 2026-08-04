@@ -148,6 +148,11 @@ export const DynamicAgentDefinitionSchema = z.object({
     .array()
     .optional()
     .default(() => []),
+  // Tools only the handleSteps generator may call (not model-visible).
+  // FID-2026-0803-001 ECHO-1/ECHO-2. Optional (no default) so existing
+  // templates without the field stay valid and the AgentTemplate field stays
+  // undefined rather than an empty array.
+  programmaticToolNames: z.string().array().optional(),
   spawnableAgents: z
     .array(z.string())
     .optional()

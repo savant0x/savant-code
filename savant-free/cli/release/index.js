@@ -24,7 +24,7 @@ const { createLauncher } = require(
 const launcher = createLauncher({
   packageName: 'savant-free',
   displayName: 'SavantFree',
-  telemetryEvent: 'cli.update_freebuff_failed',
+  telemetryEvent: 'cli.update_savant_free_failed',
 })
 
 module.exports = launcher

@@ -1,7 +1,6 @@
 import fs from 'fs'
 import path from 'path'
 
-import { withTimeout } from '@savant-code/common/util/promise'
 import { z } from 'zod/v4'
 
 import type { EvalCommitV2 } from './types'
@@ -131,11 +130,6 @@ const judgeAgents: Record<string, AgentDefinition> = {
     model: 'google/gemini-3.1-pro-preview',
     ...judgeAgentBase,
   },
-  'judge-sonnet': {
-    id: 'judge-claude',
-    model: 'anthropic/claude-sonnet-4.6',
-    ...judgeAgentBase,
-  },
 }
 
 interface JudgeCommitResultInput {
@@ -157,24 +151,23 @@ async function runSingleJudge(
   const judgeAgent = judgeAgents[judgeAgentId]
   const agentOutput: string[] = []
   try {
-    const judgeResult = await withTimeout(
-      client.run({
-        agent: judgeAgent.id,
-        prompt: judgePrompt,
-        agentDefinitions: Object.values(judgeAgents),
-        handleEvent: (event) => {
-          if (event.type === 'text') {
-            agentOutput.push(event.text)
-          } else if (event.type === 'tool_call') {
-            agentOutput.push(JSON.stringify(event, null, 2))
-          } else if (event.type === 'error') {
-            console.warn(`[Judge ${judgeAgentId}] Error event:`, event.message)
-          }
-        },
-      }),
-      20 * 60 * 1000,
-      'Judge agent timed out after 20 minutes',
-    )
+    const judgeResult = await client.run({
+      agent: judgeAgent.id,
+      prompt: judgePrompt,
+      agentDefinitions: Object.values(judgeAgents),
+      // FID-2026-0803-007 EV-3: abort the underlying LLM run on timeout
+      // instead of racing it (withTimeout left it burning API dollars).
+      signal: AbortSignal.timeout(20 * 60 * 1000),
+      handleEvent: (event) => {
+        if (event.type === 'text') {
+          agentOutput.push(event.text)
+        } else if (event.type === 'tool_call') {
+          agentOutput.push(JSON.stringify(event, null, 2))
+        } else if (event.type === 'error') {
+          console.warn(`[Judge ${judgeAgentId}] Error event:`, event.message)
+        }
+      },
+    })
 
     if (judgeResult.output.type !== 'structuredOutput') {
       console.error(
@@ -204,7 +197,17 @@ async function runSingleJudge(
       return null
     }
 
-    return judgeResult.output.value as JudgingResult
+    // FID-2026-0803-007 EV-2: the schema was defined but never used — validate
+    // instead of casting, so malformed output cannot poison score averaging.
+    const parsed = JudgingResultSchema.safeParse(judgeResult.output.value)
+    if (!parsed.success) {
+      console.error(
+        `Judge ${judgeAgentId} - malformed structured output:`,
+        parsed.error,
+      )
+      return null
+    }
+    return parsed.data
   } catch (error) {
     console.warn(`Judge ${judgeAgentId} failed:`, error)
     return null
@@ -269,11 +272,13 @@ ${finalCheckOutputs ? `\n## Final Check Command Outputs\n${finalCheckOutputs}` :
     }
   }
 
-  // Sort judges by overall score and select the median for analysis
+  // Sort judges by overall score and select the lower median for analysis
   const sortedResults = validResults.sort(
     (a, b) => a.overallScore - b.overallScore,
   )
-  const medianIndex = Math.floor(sortedResults.length / 2)
+  // FID-2026-0803-007 EV-5: floor(n/2) with 2 judges always picked the higher
+  // scorer. floor((n-1)/2) is the true lower median (identical for odd n).
+  const medianIndex = Math.floor((sortedResults.length - 1) / 2)
   const medianResult = sortedResults[medianIndex]
 
   // Calculate average scores across all valid judges

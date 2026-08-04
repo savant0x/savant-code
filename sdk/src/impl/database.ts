@@ -7,7 +7,6 @@ import z from 'zod/v4'
 import { getWebsiteUrl } from '../constants'
 import { getInferenceBaseUrlFromEnv } from '../env'
 import {
-  createAuthError,
   createNetworkError,
   createServerError,
   createHttpError,
@@ -35,7 +34,18 @@ type CachedUserInfo = Partial<
   NonNullable<Awaited<GetUserInfoFromApiKeyOutput<UserColumn>>>
 >
 
-const userInfoCache: Record<string, CachedUserInfo | null> = {}
+// Never stores null: auth failures delete the key, successes store an object.
+// (FID-2026-0802-008 D9 removed the dead null branches that assumed otherwise.)
+const userInfoCache: Record<string, CachedUserInfo> = {}
+
+/**
+ * Redacts an API key for logs (Law 12: never expose sensitive data).
+ * Keeps a short prefix + last-4 for debuggability; never the full key.
+ */
+export function redactApiKey(apiKey: string): string {
+  if (apiKey.length <= 8) return '***'
+  return `${apiKey.slice(0, 4)}...${apiKey.slice(-4)}`
+}
 
 const agentsResponseSchema = z.object({
   version: z.string(),
@@ -107,7 +117,8 @@ export async function getUserInfoFromApiKey<T extends UserColumn>(
   // return stub user info instead of making a network request.
   const inferenceBaseUrl = getInferenceBaseUrlFromEnv()
   if (inferenceBaseUrl) {
-    logger.warn('getUserInfoFromApiKey: no-backend mode, returning stub user')
+    // FID-2026-0802-008 D5: expected in BYOK mode, not a warning.
+    logger.debug('getUserInfoFromApiKey: no-backend mode, returning stub user')
     const stubUser: Record<string, string> = {
       id: 'dev',
       email: 'dev@localhost',
@@ -119,9 +130,6 @@ export async function getUserInfoFromApiKey<T extends UserColumn>(
   }
 
   const cached = userInfoCache[apiKey]
-  if (cached === null) {
-    throw createAuthError()
-  }
   if (
     cached &&
     fields.every((field) => Object.prototype.hasOwnProperty.call(cached, field))
@@ -158,7 +166,7 @@ export async function getUserInfoFromApiKey<T extends UserColumn>(
     )
   } catch (error) {
     logger.error(
-      { error: getErrorObject(error), apiKey, fields },
+      { error: getErrorObject(error), apiKey: redactApiKey(apiKey), fields },
       'getUserInfoFromApiKey network error',
     )
     // Network-level failure: DNS, connection refused, timeout, etc.
@@ -171,7 +179,7 @@ export async function getUserInfoFromApiKey<T extends UserColumn>(
     response.status === 404
   ) {
     logger.error(
-      { apiKey, fields, status: response.status },
+      { apiKey: redactApiKey(apiKey), fields, status: response.status },
       'getUserInfoFromApiKey authentication failed',
     )
     // Don't cache auth failures - allow retry with potentially updated credentials
@@ -183,7 +191,7 @@ export async function getUserInfoFromApiKey<T extends UserColumn>(
 
   if (response.status >= 500 && response.status <= 599) {
     logger.error(
-      { apiKey, fields, status: response.status },
+      { apiKey: redactApiKey(apiKey), fields, status: response.status },
       'getUserInfoFromApiKey server error',
     )
     throw createServerError('Server error', response.status)
@@ -191,7 +199,7 @@ export async function getUserInfoFromApiKey<T extends UserColumn>(
 
   if (!response.ok) {
     logger.error(
-      { apiKey, fields, status: response.status },
+      { apiKey: redactApiKey(apiKey), fields, status: response.status },
       'getUserInfoFromApiKey request failed',
     )
     throw createHttpError('Request failed', response.status)
@@ -207,16 +215,13 @@ export async function getUserInfoFromApiKey<T extends UserColumn>(
     }
   } catch (error) {
     logger.error(
-      { error: getErrorObject(error), apiKey, fields },
+      { error: getErrorObject(error), apiKey: redactApiKey(apiKey), fields },
       'getUserInfoFromApiKey JSON parse error',
     )
     throw createHttpError('Failed to parse response', response.status)
   }
 
   const userInfo = userInfoCache[apiKey]
-  if (userInfo === null) {
-    throw createAuthError()
-  }
   if (
     !userInfo ||
     !fields.every((field) =>
@@ -224,7 +229,7 @@ export async function getUserInfoFromApiKey<T extends UserColumn>(
     )
   ) {
     logger.error(
-      { apiKey, fields },
+      { apiKey: redactApiKey(apiKey), fields },
       'getUserInfoFromApiKey: response missing required fields',
     )
     throw createHttpError('Request failed', response.status)
@@ -294,9 +299,19 @@ export async function fetchAgentFromDatabase(
       return null
     }
 
-    // Set the correct full agent ID for the final template
+    // Set the correct full agent ID for the final template. `agentTemplate` is
+    // optional in the validation result type even on success — narrow instead
+    // of asserting (FID-2026-0803-003 SDK-7, ECHO Law 6).
+    const { agentTemplate: validatedTemplate } = validationResult
+    if (!validatedTemplate) {
+      logger.error(
+        { publisherId, agentId, version: agentConfig.version },
+        'fetchAgentFromDatabase: validation succeeded without agentTemplate',
+      )
+      return null
+    }
     const agentTemplate = {
-      ...validationResult.agentTemplate!,
+      ...validatedTemplate,
       id: `${publisherId}/${agentId}@${agentConfig.version}`,
     }
 
@@ -467,11 +482,12 @@ export async function addAgentStep(
       logger,
     )
 
-    const responseBody = await response.json()
     if (!response.ok) {
-      logger.error({ responseBody }, 'addAgentStep request failed')
+      logger.error({ response }, 'addAgentStep request failed')
       return null
     }
+
+    const responseBody = await response.json()
 
     if (!responseBody?.stepId) {
       logger.error(

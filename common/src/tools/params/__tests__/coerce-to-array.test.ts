@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'bun:test'
 import z from 'zod/v4'
 
+import { toToolInputJSONSchema } from '../../../util/zod-schema'
 import {
   coerceToArray,
   coerceToObject,
@@ -146,8 +147,27 @@ describe('coerceToArray with Zod schemas', () => {
     })
 
     const plainSchema = z.toJSONSchema(plain, { io: 'input' }) as JSONSchema
-    const coercedSchema = z.toJSONSchema(coerced, { io: 'input' }) as JSONSchema
+    // FID-2026-0803-003 CMN-1: zod v4 drops `required` for z.preprocess-wrapped
+    // properties (pipe input is `unknown`); emit through toToolInputJSONSchema
+    // so model-facing tool schemas keep requiredness.
+    const coercedSchema = toToolInputJSONSchema(coerced) as JSONSchema
     expect(coercedSchema).toEqual(plainSchema)
+    expect((coercedSchema as { required?: string[] }).required).toContain(
+      'paths',
+    )
+  })
+
+  it('restores required for nested preprocess-wrapped properties', () => {
+    const schema = z.object({
+      nested: z.object({
+        paths: z.preprocess(coerceToArray, z.array(z.string())),
+      }),
+    })
+
+    const jsonSchema = toToolInputJSONSchema(schema) as {
+      properties: Record<string, { required?: string[] }>
+    }
+    expect(jsonSchema.properties.nested.required).toContain('paths')
   })
 })
 

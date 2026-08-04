@@ -22,14 +22,6 @@ export interface AgentTemplate {
   updated_at: string
 }
 
-export interface AgentConfig {
-  id: string
-  session_id: string
-  template_id: string
-  config: Record<string, unknown>
-  created_at: string
-}
-
 export interface FidDocument {
   id: string
   session_id: string
@@ -48,6 +40,19 @@ export interface MessageHistory {
   created_at: string
 }
 
+/**
+ * Parses a stored JSON string, returning `fallback` for corrupt/missing data
+ * instead of throwing (FID-006 DB5).
+ */
+function parseStoredJson<T>(raw: unknown, fallback: T): T {
+  if (typeof raw !== 'string') return fallback
+  try {
+    return JSON.parse(raw) as T
+  } catch {
+    return fallback
+  }
+}
+
 export interface CostTracking {
   id: string
   session_id: string
@@ -55,6 +60,30 @@ export interface CostTracking {
   credits_used: number
   direct_credits_used: number
   created_at: string
+}
+
+// FID-2026-0803-002 DB-5: get-after-create round trips must surface an
+// explicit error instead of a confusing TypeError from a `!` assertion.
+function requireRow<T>(row: T | null, label: string): T {
+  if (row == null) {
+    throw new Error(`Failed to ${label}`)
+  }
+  return row
+}
+
+// FID-2026-0803-010 DB-C: bun:sqlite statements are reusable — prepare once
+// per SQL string and memoize instead of re-preparing on every call. Lazy (not
+// import-time) so the fail-open initDatabase and the ':memory:' test escape
+// hatch are unaffected.
+const statementCache = new Map<string, ReturnType<typeof db.prepare>>()
+
+function prepare(sql: string): ReturnType<typeof db.prepare> {
+  let stmt = statementCache.get(sql)
+  if (!stmt) {
+    stmt = db.prepare(sql)
+    statementCache.set(sql, stmt)
+  }
+  return stmt
 }
 
 // Session operations
@@ -65,21 +94,21 @@ export function createSession(
   selectedModel: string = '',
 ): Session {
   const id = crypto.randomUUID()
-  const stmt = db.prepare(`
+  const stmt = prepare(`
     INSERT INTO sessions (id, chat_id, agent_id, session_state, selected_model)
     VALUES (?, ?, ?, ?, ?)
   `)
   stmt.run(id, chatId, agentId, JSON.stringify(sessionState), selectedModel)
-  return getSession(id)!
+  return requireRow(getSession(id), `read back session ${id} after insert`)
 }
 
 export function getSession(id: string): Session | null {
-  const stmt = db.prepare('SELECT * FROM sessions WHERE id = ?')
+  const stmt = prepare('SELECT * FROM sessions WHERE id = ?')
   const row = stmt.get(id) as Record<string, unknown> | null
   if (row) {
     return {
       ...row,
-      session_state: JSON.parse(row.session_state as string),
+      session_state: parseStoredJson(row.session_state, {}),
     } as Session
   }
   return null
@@ -88,64 +117,56 @@ export function getSession(id: string): Session | null {
 export function updateSession(
   id: string,
   sessionState: Record<string, unknown>,
-): void {
-  const stmt = db.prepare(`
+): boolean {
+  const stmt = prepare(`
     UPDATE sessions 
     SET session_state = ?, updated_at = CURRENT_TIMESTAMP
     WHERE id = ?
   `)
-  stmt.run(JSON.stringify(sessionState), id)
+  return stmt.run(JSON.stringify(sessionState), id).changes > 0
 }
 
+// FID-2026-0803-002 DB-2: `created_at` is second-granularity, so every
+// ordering query gets a deterministic `rowid` tiebreaker — same-second rows
+// now return in insertion order instead of an unspecified order.
 export function getSessionsByChatId(chatId: string): Session[] {
-  const stmt = db.prepare(
-    'SELECT * FROM sessions WHERE chat_id = ? ORDER BY created_at DESC',
+  const stmt = prepare(
+    'SELECT * FROM sessions WHERE chat_id = ? ORDER BY created_at DESC, rowid DESC',
   )
   const rows = stmt.all(chatId) as Record<string, unknown>[]
   return rows.map((row) => ({
     ...row,
-    session_state: JSON.parse(row.session_state as string),
+    session_state: parseStoredJson(row.session_state, {}),
   })) as Session[]
 }
 
-export function updateSessionModel(sessionId: string, model: string): void {
-  const stmt = db.prepare(`
+// FID-2026-0803-002 DB-6: UPDATEs report whether a row was actually changed
+// so callers can detect silent no-ops on a missing id.
+export function updateSessionModel(sessionId: string, model: string): boolean {
+  const stmt = prepare(`
     UPDATE sessions 
     SET selected_model = ?, updated_at = CURRENT_TIMESTAMP
     WHERE id = ?
   `)
-  stmt.run(model, sessionId)
+  return stmt.run(model, sessionId).changes > 0
 }
 
-export function getLatestModelForChat(chatId: string): string {
-  const stmt = db.prepare(
-    'SELECT selected_model FROM sessions WHERE chat_id = ? ORDER BY created_at DESC LIMIT 1',
-  )
-  const row = stmt.get(chatId) as Record<string, unknown> | null
+// FID-2026-0803-002 DB-3: single read path — `getLatestModel(chatId?)` replaces
+// the previous `getLatestModelForChat` duplicate and the ambiguous
+// `saveModel(model, chatId?)` dual-write (both removed; the CLI uses
+// `updateSessionModel` + `getLatestModel`).
+export function getLatestModel(chatId?: string): string {
+  const stmt = chatId
+    ? prepare(
+        'SELECT selected_model FROM sessions WHERE chat_id = ? ORDER BY created_at DESC, rowid DESC LIMIT 1',
+      )
+    : prepare(
+        'SELECT selected_model FROM sessions ORDER BY created_at DESC, rowid DESC LIMIT 1',
+      )
+  const row = chatId
+    ? (stmt.get(chatId) as Record<string, unknown> | null)
+    : (stmt.get() as Record<string, unknown> | null)
   return (row?.selected_model as string) || ''
-}
-
-export function saveModel(model: string): void {
-  const stmt = db.prepare(`
-    UPDATE sessions 
-    SET selected_model = ?, updated_at = CURRENT_TIMESTAMP
-    WHERE id = (SELECT id FROM sessions ORDER BY created_at DESC LIMIT 1)
-  `)
-  stmt.run(model)
-}
-
-export function getLatestModel(): string {
-  const stmt = db.prepare(
-    'SELECT selected_model FROM sessions ORDER BY created_at DESC LIMIT 1',
-  )
-  const row = stmt.get() as Record<string, unknown> | null
-  return (row?.selected_model as string) || ''
-}
-
-export function hasSessions(): boolean {
-  const stmt = db.prepare('SELECT COUNT(*) as count FROM sessions')
-  const row = stmt.get() as Record<string, unknown> | null
-  return (row?.count as number) > 0
 }
 
 // Agent Template operations
@@ -155,21 +176,24 @@ export function createAgentTemplate(
   const id =
     (typeof template.id === 'string' ? template.id : undefined) ||
     crypto.randomUUID()
-  const stmt = db.prepare(`
+  const stmt = prepare(`
     INSERT INTO agent_templates (id, template)
     VALUES (?, ?)
   `)
   stmt.run(id, JSON.stringify(template))
-  return getAgentTemplate(id)!
+  return requireRow(
+    getAgentTemplate(id),
+    `read back agent template ${id} after insert`,
+  )
 }
 
 export function getAgentTemplate(id: string): AgentTemplate | null {
-  const stmt = db.prepare('SELECT * FROM agent_templates WHERE id = ?')
+  const stmt = prepare('SELECT * FROM agent_templates WHERE id = ?')
   const row = stmt.get(id) as Record<string, unknown> | null
   if (row) {
     return {
       ...row,
-      template: JSON.parse(row.template as string),
+      template: parseStoredJson(row.template, {}),
     } as AgentTemplate
   }
   return null
@@ -178,40 +202,13 @@ export function getAgentTemplate(id: string): AgentTemplate | null {
 export function updateAgentTemplate(
   id: string,
   template: Record<string, unknown>,
-): void {
-  const stmt = db.prepare(`
+): boolean {
+  const stmt = prepare(`
     UPDATE agent_templates 
     SET template = ?, version = version + 1, updated_at = CURRENT_TIMESTAMP
     WHERE id = ?
   `)
-  stmt.run(JSON.stringify(template), id)
-}
-
-// Agent Config operations
-export function createAgentConfig(
-  sessionId: string,
-  templateId: string,
-  config: Record<string, unknown>,
-): AgentConfig {
-  const id = crypto.randomUUID()
-  const stmt = db.prepare(`
-    INSERT INTO agent_configs (id, session_id, template_id, config)
-    VALUES (?, ?, ?, ?)
-  `)
-  stmt.run(id, sessionId, templateId, JSON.stringify(config))
-  return getAgentConfig(id)!
-}
-
-export function getAgentConfig(id: string): AgentConfig | null {
-  const stmt = db.prepare('SELECT * FROM agent_configs WHERE id = ?')
-  const row = stmt.get(id) as Record<string, unknown> | null
-  if (row) {
-    return {
-      ...row,
-      config: JSON.parse(row.config as string),
-    } as AgentConfig
-  }
-  return null
+  return stmt.run(JSON.stringify(template), id).changes > 0
 }
 
 // FID Document operations
@@ -221,16 +218,19 @@ export function createFidDocument(
   id?: string,
 ): FidDocument {
   const fidId = id || crypto.randomUUID()
-  const stmt = db.prepare(`
+  const stmt = prepare(`
     INSERT INTO fid_documents (id, session_id, content)
     VALUES (?, ?, ?)
   `)
   stmt.run(fidId, sessionId, content)
-  return getFidDocument(fidId)!
+  return requireRow(
+    getFidDocument(fidId),
+    `read back FID document ${fidId} after insert`,
+  )
 }
 
 export function getFidDocument(id: string): FidDocument | null {
-  const stmt = db.prepare('SELECT * FROM fid_documents WHERE id = ?')
+  const stmt = prepare('SELECT * FROM fid_documents WHERE id = ?')
   return stmt.get(id) as FidDocument | null
 }
 
@@ -239,50 +239,57 @@ export function updateFidDocument(
   content: string,
   status: string,
   perfectionLoopPhase: string,
-): void {
-  const stmt = db.prepare(`
+): boolean {
+  const stmt = prepare(`
     UPDATE fid_documents 
     SET content = ?, status = ?, perfection_loop_phase = ?, updated_at = CURRENT_TIMESTAMP
     WHERE id = ?
   `)
-  stmt.run(content, status, perfectionLoopPhase, id)
+  return stmt.run(content, status, perfectionLoopPhase, id).changes > 0
 }
 
 // Message History operations
+// FID-006 DB1: `id` is optional and defaults to a fresh UUID; callers that
+// persist the same message repeatedly pass the message's stable id so the
+// INSERT OR IGNORE deduplicates instead of growing the table unboundedly.
 export function createMessage(
   sessionId: string,
   role: string,
   content: unknown,
+  id?: string,
 ): MessageHistory {
-  const id = crypto.randomUUID()
-  const stmt = db.prepare(`
-    INSERT INTO message_history (id, session_id, role, content)
+  const messageId = id || crypto.randomUUID()
+  const stmt = prepare(`
+    INSERT OR IGNORE INTO message_history (id, session_id, role, content)
     VALUES (?, ?, ?, ?)
   `)
-  stmt.run(id, sessionId, role, JSON.stringify(content))
-  return getMessage(id)!
+  stmt.run(messageId, sessionId, role, JSON.stringify(content))
+  return requireRow(
+    getMessage(messageId),
+    `read back message ${messageId} after insert`,
+  )
 }
 
 export function getMessage(id: string): MessageHistory | null {
-  const stmt = db.prepare('SELECT * FROM message_history WHERE id = ?')
+  const stmt = prepare('SELECT * FROM message_history WHERE id = ?')
   const row = stmt.get(id) as Record<string, unknown> | null
   if (row) {
     return {
       ...row,
-      content: JSON.parse(row.content as string),
+      content: parseStoredJson(row.content, null),
     } as MessageHistory
   }
   return null
 }
 
 export function getMessagesBySessionId(sessionId: string): MessageHistory[] {
-  const stmt = db.prepare(
-    'SELECT * FROM message_history WHERE session_id = ? ORDER BY created_at ASC',
+  const stmt = prepare(
+    'SELECT * FROM message_history WHERE session_id = ? ORDER BY created_at ASC, rowid ASC',
   )
   const rows = stmt.all(sessionId) as Record<string, unknown>[]
   return rows.map((row) => ({
     ...row,
-    content: JSON.parse(row.content as string),
+    content: parseStoredJson(row.content, null),
   })) as MessageHistory[]
 }
 
@@ -294,22 +301,25 @@ export function createCostRecord(
   directCreditsUsed: number,
 ): CostTracking {
   const id = crypto.randomUUID()
-  const stmt = db.prepare(`
+  const stmt = prepare(`
     INSERT INTO cost_tracking (id, session_id, agent_id, credits_used, direct_credits_used)
     VALUES (?, ?, ?, ?, ?)
   `)
   stmt.run(id, sessionId, agentId, creditsUsed, directCreditsUsed)
-  return getCostRecord(id)!
+  return requireRow(
+    getCostRecord(id),
+    `read back cost record ${id} after insert`,
+  )
 }
 
-export function getCostRecord(id: string): CostTracking | null {
-  const stmt = db.prepare('SELECT * FROM cost_tracking WHERE id = ?')
+function getCostRecord(id: string): CostTracking | null {
+  const stmt = prepare('SELECT * FROM cost_tracking WHERE id = ?')
   return stmt.get(id) as CostTracking | null
 }
 
 export function getCostsBySessionId(sessionId: string): CostTracking[] {
-  const stmt = db.prepare(
-    'SELECT * FROM cost_tracking WHERE session_id = ? ORDER BY created_at ASC',
+  const stmt = prepare(
+    'SELECT * FROM cost_tracking WHERE session_id = ? ORDER BY created_at ASC, rowid ASC',
   )
   return stmt.all(sessionId) as CostTracking[]
 }
@@ -318,7 +328,7 @@ export function getTotalCostBySessionId(sessionId: string): {
   total_credits: number
   total_direct_credits: number
 } {
-  const stmt = db.prepare(`
+  const stmt = prepare(`
     SELECT 
       COALESCE(SUM(credits_used), 0) as total_credits,
       COALESCE(SUM(direct_credits_used), 0) as total_direct_credits

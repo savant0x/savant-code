@@ -2,7 +2,6 @@ import fs from 'fs'
 import path from 'path'
 
 import { getErrorObject } from '@savant-code/common/util/error'
-import { withTimeout } from '@savant-code/common/util/promise'
 
 import type { SavantCodeClient, AgentDefinition } from '@savant-code/sdk'
 
@@ -148,7 +147,7 @@ export async function analyzeAllTasks(params: {
   logsDir: string
   agents: string[]
   analyzerContext: {
-    agentDefinitions: any[]
+    agentDefinitions: AgentDefinition[]
     agentTypeDefinition: string
     testedAgentIds: string[]
   }
@@ -240,24 +239,22 @@ Analyze these results to identify:
 Focus on patterns across multiple tasks, not individual task details.`
 
     const agentOutput: string[] = []
-    const analyzerResult = await withTimeout(
-      client.run({
-        agent: 'benchmark-meta-analyzer',
-        prompt,
-        agentDefinitions: [metaAnalyzerAgent],
-        handleEvent: (event) => {
-          if (event.type === 'text') {
-            agentOutput.push(event.text)
-          } else if (event.type === 'tool_call') {
-            agentOutput.push(JSON.stringify(event, null, 2))
-          } else if (event.type === 'error') {
-            console.warn('[Meta Analyzer] Error event:', event.message)
-          }
-        },
-      }),
-      30 * 60 * 1000,
-      'Meta analyzer agent timed out after 30 minutes',
-    )
+    const analyzerResult = await client.run({
+      agent: 'benchmark-meta-analyzer',
+      prompt,
+      agentDefinitions: [metaAnalyzerAgent],
+      // FID-2026-0803-007 EV-3: abort the underlying LLM run on timeout.
+      signal: AbortSignal.timeout(30 * 60 * 1000),
+      handleEvent: (event) => {
+        if (event.type === 'text') {
+          agentOutput.push(event.text)
+        } else if (event.type === 'tool_call') {
+          agentOutput.push(JSON.stringify(event, null, 2))
+        } else if (event.type === 'error') {
+          console.warn('[Meta Analyzer] Error event:', event.message)
+        }
+      },
+    })
 
     const { output } = analyzerResult
 
@@ -275,6 +272,10 @@ Focus on patterns across multiple tasks, not individual task details.`
       }
     }
 
+    // FID-2026-0803-007 EV-9: the downstream code defensively validates every
+    // field (typeof/Array.isArray guards + string filters below), so this cast
+    // feeds a manual validation path rather than trusting the value — kept as
+    // the documented intentional pattern rather than adding a zod schema.
     const value = output.value as unknown as Record<string, unknown>
     const rawInsights = Array.isArray(value.agentInsights)
       ? value.agentInsights

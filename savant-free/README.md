@@ -6,7 +6,7 @@
 **The free coding agent** — no subscription, no API key, no configuration. Start in seconds.
 
 An AI coding agent that runs in your terminal. Describe what you want, and SavantFree edits your code. Built from
-the same `@savant-code/cli` source as Savant-Code, then compiled with `FREEBUFF_MODE=true` so the bundler strips
+the same `@savant-code/cli` source as Savant-Code, then compiled with `SAVANT_FREE_MODE=true` so the bundler strips
 paid-only features (credits UI, mode switching, MAX/PLAN prompts).
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](../ECHO.md)[![Release](https://img.shields.io/badge/Release-pre__publishing-%23ff9500?style=flat-square&logo=semver&logoColor=%2300fbff)](../CHANGELOG.md)
@@ -66,7 +66,7 @@ root README](../README.md). We keep that one up to date as the single source of 
 
 <div align="center">
 
-_Freebuff is part of the [savant-code/savant-code monorepo](https://github.com/savant0x/savant-code), governed by
+_Savant is part of the [savant-code/savant-code monorepo](https://github.com/savant0x/savant-code), governed by
 the [ECHO Protocol v0.2.0](../ECHO.md). It's the free, ad-supported companion to the full **Savant-Code** CLI._
 
 **Savant** • 2026

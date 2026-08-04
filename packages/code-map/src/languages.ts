@@ -33,6 +33,9 @@ export interface LanguageConfig {
   parser?: Parser
   query?: Query
   language?: Language
+  /** In-flight lazy-init promise — dedupes concurrent createLanguageConfig
+   *  calls so the wasm/parser/query are built once (CM-5, FID-2026-0803-006). */
+  initPromise?: Promise<void>
 }
 
 export interface RuntimeLanguageLoader {
@@ -110,6 +113,20 @@ export const languageTable: LanguageConfig[] = [
     wasmFile: WASM_FILES['tree-sitter-go.wasm'],
     queryPathOrContent: goQuery,
   },
+  // ESM/CJS + TS module variants (CM-6, FID-2026-0803-006) — same grammars,
+  // previously silently unindexed. Out of scope: C-family (.c/.cc/.cxx/.h),
+  // Kotlin, Swift, PHP, CSS — no matching wasm in @vscode/tree-sitter-wasm
+  // and no in-repo queries (feature track, not hygiene).
+  {
+    extensions: ['.mjs', '.cjs'],
+    wasmFile: WASM_FILES['tree-sitter-javascript.wasm'],
+    queryPathOrContent: javascriptQuery,
+  },
+  {
+    extensions: ['.mts', '.cts'],
+    wasmFile: WASM_FILES['tree-sitter-typescript.wasm'],
+    queryPathOrContent: typescriptQuery,
+  },
 ]
 
 /* ------------------------------------------------------------------ */
@@ -170,18 +187,10 @@ function resolveWasmPath(wasmFileName: string): string {
     path.join(process.cwd(), 'dist', 'wasm', wasmFileName),
   ]
 
-  // Try each path and return the first one that exists (we'll fallback to package resolution if none work)
-  for (const wasmPath of possiblePaths) {
-    try {
-      // Don't actually check file existence here, let the Language.load() call handle it
-      // and fall back to package resolution if it fails
-      return wasmPath
-    } catch {
-      continue
-    }
-  }
-
-  // Default fallback
+  // Only the first candidate is returned: Language.load() failure falls back
+  // to tryResolveFromPackage. The previous loop claimed to "try each path"
+  // but always returned possiblePaths[0] (its try/catch could never throw) —
+  // collapsed to be explicit (CM-3, FID-2026-0803-006).
   return possiblePaths[0]
 }
 
@@ -206,13 +215,21 @@ function tryResolveFromPackage(wasmFileName: string): string | null {
 /* 8. Unified runtime loader                                         */
 /* ------------------------------------------------------------------ */
 class UnifiedLanguageLoader implements RuntimeLanguageLoader {
-  private parserReady: Promise<void>
-
-  constructor() {
-    this.parserReady = initTreeSitterForNode()
-  }
+  private parserReady: Promise<void> | undefined
 
   async initParser(): Promise<void> {
+    if (!this.parserReady) {
+      const p = initTreeSitterForNode()
+      this.parserReady = p
+      // Never cache a rejection (CM-2, FID-2026-0803-006): a later call must
+      // be able to retry — the self-heal download may fix the wasm between
+      // calls. Concurrent callers still share the same in-flight promise.
+      p.catch(() => {
+        if (this.parserReady === p) {
+          this.parserReady = undefined
+        }
+      })
+    }
     await this.parserReady
   }
 
@@ -261,7 +278,9 @@ export async function createLanguageConfig(
   }
 
   if (!cfg.parser) {
-    try {
+    // Dedupe concurrent inits (CM-5, FID-2026-0803-006): the first caller
+    // builds the parser/query once; the rest await the same promise.
+    cfg.initPromise ??= (async () => {
       await runtimeLoader.initParser()
 
       // Load the language using the runtime-specific loader
@@ -279,8 +298,13 @@ export async function createLanguageConfig(
       cfg.language = lang
       cfg.parser = parser
       cfg.query = new Query(lang, queryContent)
+    })()
+    try {
+      await cfg.initPromise
     } catch (err) {
-      // Let the runtime-specific implementation handle error logging
+      // Let a later call retry (the self-heal download may have succeeded
+      // since), and let the runtime-specific implementation surface the error.
+      cfg.initPromise = undefined
       throw err
     }
   }
@@ -293,6 +317,10 @@ export async function createLanguageConfig(
 /* ------------------------------------------------------------------ */
 const unifiedLoader = new UnifiedLanguageLoader()
 
+// One-time diagnostic so a silently-degrading subsystem surfaces its cause
+// (CM-2, FID-2026-0803-006) without spamming per-file errors.
+let warnedInitFailure = false
+
 export async function getLanguageConfig(
   filePath: string,
 ): Promise<LanguageConfig | undefined> {
@@ -302,6 +330,14 @@ export async function getLanguageConfig(
     if (DEBUG_PARSING) {
       // eslint-disable-next-line no-console -- DEBUG_PARSING diagnostic only
       console.error('[tree-sitter] Load error for', filePath, err)
+    }
+    if (!warnedInitFailure) {
+      warnedInitFailure = true
+      // eslint-disable-next-line no-console -- one-time diagnostic
+      console.warn(
+        '[tree-sitter] code-map language init failed; symbol scoring disabled for this process (set SAVANT_CODE_TREE_SITTER_WASM_PATH or check the wasm bundle)',
+        err,
+      )
     }
     return undefined
   }

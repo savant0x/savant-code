@@ -22,9 +22,12 @@ Duties).
 | 8 | **Researcher** | `researcher-web` / `researcher-docs` | Research | Web search, documentation lookup | `web_search`, `read_url` (web) · `read_docs` (docs) |
 | 9 | **Scribe** | `scribe` | Docs | Session summaries, LESSONS.md, knowledge files | `read_files`, `write_file`, `glob`, `code_search`, `set_output` |
 
-### Helper Tool-Library Agents
+### Helper Tool-Library Agents & Specialist Variants
 
-These are consumed by the canonical 9 roles but do NOT constitute independent conversational agents:
+These are consumed by the canonical 9 roles but do NOT constitute independent
+conversational agents. (The final row is a canonical thinker variant listed
+here because it is not spawnable by the Orchestrator's `spawnableAgents`; it is
+spawned by Free/SavantFree prompts.)
 
 | Agent | ID | Tools | Consumed By |
 |-------|----|-------|-------------|
@@ -32,13 +35,13 @@ These are consumed by the canonical 9 roles but do NOT constitute independent co
 | **tmux-cli** | `tmux-cli` | `run_terminal_command`, `read_files`, `set_output`, `add_message` | Orchestrator (interactive CLI testing) |
 | **browser-use** | `browser-use` | `set_output`, `run_terminal_command`, `add_message` | Orchestrator (browser automation) |
 | **Context Pruner** | `context-pruner` | *(no explicit toolNames — uses `set_messages` via runtime)* | Orchestrator (auto-spawned for long sessions) |
-| **Deep Agent** | `savant-deep` | `spawn_agents`, `read_files`, `read_subtree`, `suggest_followups`, `write_todos`, `ask_user`, `skill`, `set_output`, `transition_phase` | Orchestrator (complex task delegation) |
+| **Thinker (Gemini w/ files)** | `thinker-with-files-gemini` | *(no model-visible tools; `read_files` via `programmaticToolNames`)* | Free/SavantFree (reasoning with file context, FID-2026-0803-001 ECHO-2) |
 
 ### Directory Layout
 
 ```text
 agents/
-├── savant/              # Orchestrator (savant.ts, savant-deep.ts, + variants)
+├── savant/              # Orchestrator (savant.ts + mode variants)
 ├── detective/           # RED phase
 ├── forge/               # GREEN phase
 ├── verifier/            # AUDIT phase
@@ -89,6 +92,11 @@ input schema, output schema, and an `endsAgentStep` flag.
 | `apply_patch` | Apply a unified diff patch | GREEN only |
 | `read_files` | Read one or more files | None |
 | `read_subtree` | Read a directory tree recursively | None |
+
+> **Checkpointing:** the write-gate in `executeToolCall` (agent-runtime) captures the pre-edit content of every
+> file before `write_file`/`str_replace`/`apply_patch` dispatch, per user turn (FID-2026-0803-004). Subagent
+> writes inherit the parent turn via spawn context; terminal side effects are never captured. The CLI surfaces
+> this as `/rewind` (code / conversation / both / fork).
 
 #### Search & Navigation
 

@@ -3,13 +3,47 @@ import { writeFile } from 'node:fs/promises'
 import type { HarnessResult } from './harness'
 
 /**
+ * JSON replacer that survives provider error objects.
+ *
+ * SDK provider errors (e.g. `AI_APICallError` from a failed model call) carry
+ * cyclic `requestBodyValues`/`responseBody` fields, so a plain
+ * `JSON.stringify(result)` throws `TypeError: Converting circular structure
+ * to JSON`. This replacer:
+ *  - dedupes repeated objects (breaks cycles), and
+ *  - flattens `Error` instances to `{ name, message, statusCode? }` so the
+ *    stack/heap noise never reaches the report.
+ */
+function createJsonSafeReplacer() {
+  const seen = new WeakSet<object>()
+  return (_key: string, value: unknown): unknown => {
+    if (value instanceof Error) {
+      return {
+        name: value.name,
+        message: value.message,
+        ...('statusCode' in value &&
+        typeof (value as { statusCode?: unknown }).statusCode === 'number'
+          ? { statusCode: (value as { statusCode: number }).statusCode }
+          : {}),
+      }
+    }
+    if (value !== null && typeof value === 'object') {
+      if (seen.has(value)) {
+        return '[Circular]'
+      }
+      seen.add(value)
+    }
+    return value
+  }
+}
+
+/**
  * Write the raw harness result as JSON.
  */
 export async function writeJsonReport(
   result: HarnessResult,
   filePath: string,
 ): Promise<void> {
-  const json = JSON.stringify(result, null, 2)
+  const json = JSON.stringify(result, createJsonSafeReplacer(), 2)
   await writeFile(filePath, json, 'utf-8')
 }
 

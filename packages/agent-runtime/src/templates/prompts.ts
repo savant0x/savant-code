@@ -3,22 +3,13 @@ import { schemaToJsonStr } from '@savant-code/common/util/zod-schema'
 import { z } from 'zod/v4'
 
 import { getAgentTemplate } from './agent-registry'
+import { ensureJsonSchemaCompatible } from '../tools/prompts'
 
 import type { AgentTemplate } from '@savant-code/common/types/agent-template'
 import type { Logger } from '@savant-code/common/types/contracts/logger'
 import type { ParamsExcluding } from '@savant-code/common/types/function-params'
 import type { AgentTemplateType } from '@savant-code/common/types/session-state'
 import type { ToolSet } from 'ai'
-
-function ensureJsonSchemaCompatible(schema: z.ZodType): z.ZodType {
-  try {
-    z.toJSONSchema(schema, { io: 'input' })
-    return schema
-  } catch {
-    const fallback = z.object({}).passthrough()
-    return schema.description ? fallback.describe(schema.description) : fallback
-  }
-}
 
 /**
  * Gets the short agent name from a fully qualified agent ID.
@@ -85,25 +76,35 @@ export async function buildAgentToolSet(
 
   const toolSet: ToolSet = {}
 
-  for (const agentType of spawnableAgents) {
-    const agentTemplate = await getAgentTemplate({
-      ...params,
-      agentId: agentType,
-      localAgentTemplates: agentTemplates,
-    })
+  // FID-2026-0802-005 H3: resolve all spawnable templates concurrently — the
+  // previous serial `await` loop made this O(n) registry lookups (each may hit
+  // the DB). Mirrors buildFullSpawnableAgentsSpec's Promise.all pattern.
+  const resolved = await Promise.all(
+    spawnableAgents.map(async (agentType) => {
+      const agentTemplate = await getAgentTemplate({
+        ...params,
+        agentId: agentType,
+        localAgentTemplates: agentTemplates,
+      })
+      if (!agentTemplate) return null
+      return { agentType, agentTemplate }
+    }),
+  )
 
-    if (!agentTemplate) continue
-
+  for (const result of resolved) {
+    if (!result) continue
+    const { agentType, agentTemplate } = result
     const toolName = getAgentToolName(agentType)
+    const description =
+      agentTemplate.spawnerPrompt ||
+      `Spawn the ${agentTemplate.displayName} agent`
     const inputSchema = ensureJsonSchemaCompatible(
       buildAgentToolInputSchema(agentTemplate),
     )
 
     // Use the same structure as other tools in toolParams
     toolSet[toolName] = {
-      description:
-        agentTemplate.spawnerPrompt ||
-        `Spawn the ${agentTemplate.displayName} agent`,
+      description,
       inputSchema,
     }
   }

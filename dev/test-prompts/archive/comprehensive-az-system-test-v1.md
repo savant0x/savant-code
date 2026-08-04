@@ -18,7 +18,7 @@
 
 ### 1.2 Version & Environment
 - [ ] Run `bun run --version` to confirm CLI version
-- [ ] Confirm which model is active (check if IS_FREEBUFF or SavantCode mode)
+- [ ] Confirm which model is active (check if IS_SAVANT_FREE or SavantCode mode)
 - [ ] Confirm which shell is detected (bash/powershell)
 
 ---

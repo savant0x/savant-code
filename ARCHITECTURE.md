@@ -12,27 +12,37 @@ Two products ship from this monorepo: **Savant-Code** (paid CLI + SDK) and
 **Savant-Free** (ad-supported variant). Both share one runtime, one SDK,
 and one set of engineering laws (ECHO).
 
+**Hybrid Mode exception:** the overview rule below applies to complex tasks.
+For simple tasks the Orchestrator writes code directly without a FID (ECHO.md
+Hybrid Mode; runtime path `idle → green`), then verifies immediately.
+FID-2026-0803-001 ECHO-4.
+
 ---
 
 ## Agent Roster
 
 | # | Agent | Phase | Responsibility | Tools |
 |---|-------|-------|----------------|-------|
-| 1 | **Orchestrator** | ALL | Routes work through Perfection Loop, enforces protocol compliance, spawns all agents | spawn_agents, read_files, read_subtree, write_todos, suggest_followups, ask_user, read_url, skill, set_output, list_directory, glob, render_ui, transition_phase, write_file, str_replace |
-| 2 | **Detective** | RED | Codebase analysis, grep call-graphs, find issues, catalog evidence with file paths | code_search, set_output |
+| 1 | **Orchestrator** | ALL | Routes work through Perfection Loop, enforces protocol compliance, spawns all agents | spawn_agents, read_files, read_subtree, run_readonly_command, write_todos, suggest_followups, ask_user, read_url, skill, set_output, list_directory, glob, render_ui, gravity_index, transition_phase, write_file, str_replace, apply_patch (phase-gated), set_scaffold_complete (scaffold mode) |
+| 2 | **Detective** | RED | Codebase analysis, grep call-graphs, find issues, catalog evidence with file paths | code_search, set_output, list_directory, glob, read_files, read_subtree |
 | 3 | **Forge** | GREEN | Implementation only. Writes code following the converged FID spec. Cannot self-verify. | write_file, str_replace, set_output |
 | 4 | **Verifier** | AUDIT | Double-audit, run tests, check call-graph reachability, reject hallucinated claims | *(no tools — reads only via message history)* |
-| 5 | **Recorder** | FID | Create, track, archive FIDs. Update CHANGELOG. Ensure no FID closes without AUDIT evidence | write_file, read_files, glob, grep, set_output |
-| 6 | **Thinker** | Planning | Deep reasoning via sequential thinking engine. Critiques specs, plans, implementations | sequentialthinking |
+| 5 | **Recorder** | FID | Create, track, archive FIDs. Update CHANGELOG. Ensure no FID closes without AUDIT evidence | write_file, read_files, glob, code_search, set_output |
+| 6 | **Thinker** | Planning | Deep reasoning via sequential thinking engine. Critiques specs, plans, implementations | sequentialthinking, end_turn |
 | 7 | **Scout** | Explore | File/code search, glob, read subtrees, context gathering | glob, list_directory, read_files, read_subtree, set_output |
 | 8 | **Researcher** | Research | Web search, documentation lookup, external API research | web_search, read_url (web); read_docs (docs) |
-| 9 | **Scribe** | Docs | Session summaries, LESSONS.md, knowledge files, end-of-session capture | read_files, write_file, glob, grep, set_output |
+| 9 | **Scribe** | Docs | Session summaries, LESSONS.md, knowledge files, end-of-session capture | read_files, write_file, glob, code_search, set_output |
 
 > **Note on Orchestrator write tools:** Per FID-2026-0718-008, the Orchestrator has `write_file` + `str_replace` in its
   toolName list, but they are GATED to exempt paths only (`dev/fids/`, `dev/scratchpad/`, `dev/nova/`) by
   `tool-executor.ts`. For all non-exempt paths, these tools are blocked unless FSM phase is `green` or `self_correct`
   (see Tool Gating). This satisfies ECHO separation-of-duties for production code while allowing FIDs/scratchpad without
-  ceremony.
+  ceremony. FID-2026-0803-001 ECHO-5 reconciled this table with `agents/savant/savant.ts` (`run_readonly_command`,
+  `gravity_index`, `apply_patch`, `set_scaffold_complete` are model-visible for the Orchestrator).
+
+> **Note on Recorder archive ownership:** the Recorder has no filesystem move/archive tool; the CLI/orchestrator
+  executes the `dev/fids/ → dev/fids/archive/` move while the Recorder authors the FID + CHANGELOG content and evidence.
+  FID-2026-0803-001 ECHO-6.
 
 ---
 
@@ -180,7 +190,7 @@ Tools are gated by FSM phase in `tool-executor.ts`:
 | write_file, str_replace, apply_patch | GREEN + SELF_CORRECT (exempt paths: dev/fids/, dev/nova/, dev/scratchpad/) | ✅ Active |
 | run_terminal_command (bash) | AUDIT + GREEN | ✅ Active |
 | sequentialthinking | Thinker only (id starts with `thinker`) | ✅ Active |
-| grep, read, glob, list_dir | ALL | ✅ Active (no gating needed) |
+| code_search, read_files, glob, list_directory | ALL | ✅ Active (no gating needed) |
 | spawn_agents | ALL | ✅ Active (template-level only) |
 | bash (destructive) | Never | ⏭️ Future phase (command classification not yet implemented) |
 | create_fid, update_fid, archive_fid | Recorder only | ⏭️ Future phase (these are conceptual roles, not registered tools) |
@@ -209,17 +219,19 @@ but do NOT constitute independent conversational agents:
 
 | Helper Dir | Consumed By | Notes |
 |------------|-------------|-------|
-| `browser-use/` | `agents/savant/savant.ts:74`, `agents/context-pruner.ts`, `common/src/constants/free-agents.ts`, `common/src/__tests__/free-agents.test.ts` | Browser automation helper used by Orchestrator + context-pruner |
-| `editor/` | `cli/src/commands/init.ts` (scaffolding), `agents/__tests__/context-pruner.test.ts`, `evals/benchmark/eval-savant-code-hard.json` | Editor scaffolding helper used by `init` command |
-| `file-explorer/` | `common/src/constants/agents.ts`, `evals/benchmark/*.json` | File listing helper consumed by agent-registry constants |
+| `browser-use/` | `agents/savant/savant.ts:132`, `agents/context-pruner.ts`, `common/src/constants/free-agents.ts`, `common/src/__tests__/free-agents.test.ts` | Browser automation helper used by Orchestrator + context-pruner |
+| `editor/` | `cli/src/utils/implementor-helpers.ts`, `agents/editor/best-of-n/*` | Editor scaffolding/best-of-N helper agents used by the CLI implementor flow |
+| `file-explorer/` | `common/src/constants/agents.ts`, `agents/file-explorer/*` | File listing helpers (`directory-lister`, `glob-matcher`) |
 | `librarian/` | `agents/context-pruner.ts` | Knowledge/context helper used by context-pruner |
-| `types/` | `agents/base-chat.ts`, `agents/savant/savant.ts`, `agents/savant/savant-deep.ts`, `agents/basher.ts`, `agents/browser-use/browser-use.ts` | Type-only shared imports across all agents + basher |
+| `types/` | `agents/base-chat.ts`, `agents/savant/savant.ts`, `agents/basher.ts`, `agents/browser-use/browser-use.ts` | Type-only shared imports across all agents + basher |
+| `debug/` | *(none — transient output)* | Browser-agent trace output dir (`agents/debug/browser-agent-traces/`); not a helper library |
 
 **Hierarchy:**
 
 - 9 canonical ECHO runtime roles (Orchestrator + 8 specialists)
-- + 5 helper tool libraries (above)
-- = 14 directories in `agents/` (post-FID-017 prune, where 2 truly-orphaned `e2e/` + `__tests__/` were deleted)
+- + 6 helper tool libraries (above; `debug/` is a transient trace-output dir)
+- = 15 directories in `agents/` (FID-2026-0803-001 ECHO-9 reconciled the count
+  after the `savant-deep`/`e2e`/`__tests__` removals)
 
 These two counts are NOT in conflict: the 9-agent roster represents runtime conversation entities; the 14-dir count
 represents filesystem entries. Future checklists/audits should not confuse them.

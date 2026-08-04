@@ -6,9 +6,9 @@ async function main() {
   const saveTraces = process.argv.includes('--save-traces')
 
   await runBenchmark({
-    evalDataPaths: [path.join(__dirname, 'eval-savant-code.json')],
+    evalDataPaths: [path.join(__dirname, 'eval-codebuff.json')],
     agents: ['savant'],
-    taskIds: ['server-agent-validation'],
+    taskIds: ['filter-system-history'],
     saveTraces,
   })
 

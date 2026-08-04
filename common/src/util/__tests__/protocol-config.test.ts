@@ -15,7 +15,7 @@ afterEach(() => {
 })
 
 describe('readProtocolConfig', () => {
-  test('reads independent Savant and FreeBuff protocol contracts', () => {
+  test('reads the Savant protocol contract alongside the harness protocol', () => {
     const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'protocol-config-'))
     temporaryDirectories.push(cwd)
     fs.mkdirSync(path.join(cwd, 'dev', 'fids'), { recursive: true })
@@ -25,10 +25,12 @@ describe('readProtocolConfig', () => {
         'protocol:',
         "  version: '0.2.0'",
         '  strict_mode: false',
-        'freebuff:',
+        'savant:',
         '  protocol:',
-        "    version: '0.1.2-freebuff'",
+        "    version: '0.1.2-savant'",
         '    strict_mode: true',
+        'perfection_loop:',
+        '  max_iterations: 5',
         "language: 'typescript'",
         '',
       ].join('\n'),
@@ -42,10 +44,63 @@ describe('readProtocolConfig', () => {
       strictMode: false,
       language: 'typescript',
       openFids: ['FID-2026-0731-001-example.md'],
-      freebuff: {
-        version: '0.1.2-freebuff',
+      maxIterations: 5,
+      savant: {
+        version: '0.1.2-savant',
         strictMode: true,
       },
+    })
+  })
+
+  test('normalizes the legacy FreeBuff protocol namespace', () => {
+    const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'protocol-config-'))
+    temporaryDirectories.push(cwd)
+    fs.mkdirSync(path.join(cwd, 'dev', 'fids'), { recursive: true })
+    fs.writeFileSync(
+      path.join(cwd, 'protocol.config.yaml'),
+      [
+        'protocol:',
+        "  version: '0.2.0'",
+        '  strict_mode: true',
+        'freebuff:',
+        '  protocol:',
+        "    version: '0.1.2-freebuff'",
+        '    strict_mode: true',
+        '',
+      ].join('\n'),
+    )
+
+    expect(readProtocolConfig(cwd).savant).toEqual({
+      version: '0.1.2-freebuff',
+      strictMode: true,
+    })
+  })
+
+  test('prefers the Savant namespace when both contracts are present', () => {
+    const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'protocol-config-'))
+    temporaryDirectories.push(cwd)
+    fs.mkdirSync(path.join(cwd, 'dev', 'fids'), { recursive: true })
+    fs.writeFileSync(
+      path.join(cwd, 'protocol.config.yaml'),
+      [
+        'protocol:',
+        "  version: '0.2.0'",
+        '  strict_mode: true',
+        'savant:',
+        '  protocol:',
+        "    version: '0.1.2-savant'",
+        '    strict_mode: false',
+        'freebuff:',
+        '  protocol:',
+        "    version: '0.1.2-freebuff'",
+        '    strict_mode: true',
+        '',
+      ].join('\n'),
+    )
+
+    expect(readProtocolConfig(cwd).savant).toEqual({
+      version: '0.1.2-savant',
+      strictMode: false,
     })
   })
 
@@ -57,7 +112,8 @@ describe('readProtocolConfig', () => {
       strictMode: true,
       language: null,
       openFids: [],
-      freebuff: null,
+      maxIterations: 10,
+      savant: null,
     })
   })
 })

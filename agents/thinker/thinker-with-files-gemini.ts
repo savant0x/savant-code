@@ -40,6 +40,10 @@ const definition: SecretAgentDefinition = {
   inheritParentSystemPrompt: false,
   spawnableAgents: [],
   toolNames: [],
+  // The generator reads the passed filePaths before the model thinks. Kept out
+  // of toolNames so the model sees no tools; declared here so the programmatic
+  // capability is auditable (FID-2026-0803-001 ECHO-2).
+  programmaticToolNames: ['read_files'],
 
   instructionsPrompt: `You are the thinker-with-files-gemini agent. Think about the user request and when satisfied, write out a very concise response that captures the most important points. DO NOT be verbose -- say the absolute minimum needed to answer the user's question correctly.
 

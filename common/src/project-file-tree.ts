@@ -106,7 +106,9 @@ export async function getProjectFileTree(params: {
   let dirsScanned = 0
 
   while (queue.length > 0 && totalFiles < maxFiles && dirsScanned < maxDirs) {
-    const { node, fullPath, ignore: currentIgnore, depth } = queue.shift()!
+    const head = queue.shift()
+    if (!head) break
+    const { node, fullPath, ignore: currentIgnore, depth } = head
     dirsScanned++
     const parsedIgnore = await parseGitignore({
       fullDirPath: fullPath,

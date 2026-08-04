@@ -1,80 +1,106 @@
 import { describe, it, expect } from 'bun:test'
 
-describe('streaming transform type safety', () => {
-  it('does not access rawValue on failed parse result', () => {
-    let rawValueAccessed = false
+import type { LanguageModelV2StreamPart } from '@ai-sdk/provider'
+import type { ParseResult } from '@ai-sdk/provider-utils'
 
-    // Simulate the transform logic from openai-compatible-chat-language-model.ts
-    function transform(chunk: any, controller: any) {
-      // handle failed chunk parsing / validation:
-      if (!chunk.success) {
-        controller.enqueue({ type: 'error', error: chunk.error })
-        return
-      }
+import {
+  createChatStreamTransformer,
+  type OpenAICompatibleChatChunkValue,
+} from './stream-transform'
 
-      // Emit raw chunk if requested (after success check so rawValue is guaranteed)
-      const options = { includeRawChunks: true }
-      if (options.includeRawChunks) {
-        // This line should never be reached for failed chunks
-        rawValueAccessed = true
-        controller.enqueue({ type: 'raw', rawValue: chunk.rawValue })
-      }
-    }
-
-    const controller = {
-      enqueue: (chunk: any) => {},
-    }
-
-    // Write a failed parse result with a sentinel rawValue
-    transform(
-      {
-        success: false,
-        rawValue: 'SENTINEL_RAW_VALUE_SHOULD_NOT_BE_ACCESSED',
-        error: new Error('parse failed'),
-        value: undefined,
-      },
-      controller,
-    )
-
-    expect(rawValueAccessed).toBe(false)
+/**
+ * FID-2026-0803-010 LLM-A: previously these tests re-implemented a simulated
+ * copy of the inline transform, so they could not catch regressions in the
+ * real logic. They now run chunks through the ACTUAL TransformStream produced
+ * by `createChatStreamTransformer` and assert on the emitted parts.
+ */
+async function runThroughStream(
+  chunks: ParseResult<OpenAICompatibleChatChunkValue>[],
+  options: { includeRawChunks?: boolean } = {},
+): Promise<LanguageModelV2StreamPart[]> {
+  const stream = createChatStreamTransformer({
+    warnings: [],
+    includeRawChunks: options.includeRawChunks,
+    metadataExtractor: undefined,
+    requiredToolKeys: new Map(),
+    providerOptionsName: 'openai-compatible',
   })
 
-  it('emits raw chunk on successful parse when includeRawChunks is true', () => {
-    const emitted: any[] = []
+  const writer = stream.writable.getWriter()
+  const reader = stream.readable.getReader()
 
-    function transform(chunk: any, controller: any) {
-      // handle failed chunk parsing / validation:
-      if (!chunk.success) {
-        controller.enqueue({ type: 'error', error: chunk.error })
-        return
-      }
-
-      // Emit raw chunk if requested (after success check so rawValue is guaranteed)
-      const options = { includeRawChunks: true }
-      if (options.includeRawChunks) {
-        controller.enqueue({ type: 'raw', rawValue: chunk.rawValue })
-      }
+  // Drain concurrently: the readable side's high-water mark is 1, so writing
+  // before reading stalls on backpressure. The real consumer (the model's
+  // pipeThrough) pulls continuously; this mirrors that.
+  const parts: LanguageModelV2StreamPart[] = []
+  const drain = (async () => {
+    for (;;) {
+      const { value, done } = await reader.read()
+      if (done) break
+      parts.push(value)
     }
+  })()
 
-    const controller = {
-      enqueue: (chunk: any) => emitted.push(chunk),
-    }
+  for (const chunk of chunks) {
+    await writer.write(chunk)
+  }
+  await writer.close()
+  await drain
+  return parts
+}
 
-    transform(
-      {
-        success: true,
-        rawValue: '{"choices":[{"delta":{"content":"hello"}}]}',
-        value: { content: 'hello' },
-        error: undefined,
-      },
-      controller,
+describe('createChatStreamTransformer', () => {
+  it('does not access rawValue on failed parse result', async () => {
+    const parts = await runThroughStream(
+      [
+        {
+          success: false,
+          rawValue: 'SENTINEL_RAW_VALUE_SHOULD_NOT_BE_ACCESSED',
+          error: new Error('parse failed'),
+        } as ParseResult<OpenAICompatibleChatChunkValue>,
+      ],
+      { includeRawChunks: true },
     )
 
-    // Should emit raw chunk
-    expect(emitted).toHaveLength(1)
-    expect(emitted[0]).toEqual({
+    // The raw-chunk emit happens only after the success check, so a failed
+    // parse must never surface its rawValue.
+    expect(parts.some((part) => part.type === 'raw')).toBe(false)
+    expect(parts.some((part) => part.type === 'error')).toBe(true)
+  })
+
+  it('emits raw chunk on successful parse when includeRawChunks is true', async () => {
+    const rawValue = '{"choices":[{"delta":{"content":"hello"}}]}'
+    const parts = await runThroughStream(
+      [
+        {
+          success: true,
+          rawValue,
+          value: {
+            id: '1',
+            created: 1,
+            model: 'test',
+            choices: [{ delta: { content: 'hello' } }],
+          },
+        },
+      ],
+      { includeRawChunks: true },
+    )
+
+    expect(parts.find((part) => part.type === 'raw')).toEqual({
       type: 'raw',
-      rawValue: '{"choices":[{"delta":{"content":"hello"}}]}',
+      rawValue,
     })
+  })
+
+  it('emits an error part for provider error chunks', async () => {
+    const parts = await runThroughStream([
+      {
+        success: true,
+        rawValue: '{"error":{"message":"boom"}}',
+        value: { error: { message: 'boom' } },
+      },
+    ])
+
+    expect(parts.some((part) => part.type === 'error')).toBe(true)
   })
 })

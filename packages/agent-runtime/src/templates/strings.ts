@@ -253,8 +253,13 @@ export async function getAgentPrompt<T extends StringField>(
       addendum += `\n\nYou can spawn the following agents:\n\n${agentDescriptions.join('\n')}`
     }
 
-    // Add output schema information if defined
-    if (outputSchema) {
+    // Add output schema information if defined. FID-2026-0802-005 H6: the
+    // set_output directive is only valid when the agent actually has the
+    // set_output tool. Structured-output agents like the Thinker (no
+    // set_output in toolNames; runtime convergence gate builds the result)
+    // must NOT be told to call set_output — their own instructions already
+    // forbid it, and the contradictory addendum caused model confusion.
+    if (outputSchema && toolNames.includes('set_output')) {
       addendum += '\n\n## Output Schema\n\n'
       addendum +=
         'When using the set_output tool, your output must conform to this schema. You may pass the fields either directly as top-level parameters or inside a `data` field — both are accepted.\n\n'

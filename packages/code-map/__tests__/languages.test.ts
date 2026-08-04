@@ -16,7 +16,7 @@ describe('languages module', () => {
     it('should contain all expected language configurations', () => {
       expect(languageTable).toBeDefined()
       expect(Array.isArray(languageTable)).toBe(true)
-      expect(languageTable.length).toBe(10) // Current number of supported languages
+      expect(languageTable.length).toBe(12) // Current number of supported languages
     })
 
     it('should have proper structure for each language config', () => {
@@ -71,6 +71,10 @@ describe('languages module', () => {
         { ext: '.rs', wasm: 'tree-sitter-rust.wasm' },
         { ext: '.rb', wasm: 'tree-sitter-ruby.wasm' },
         { ext: '.go', wasm: 'tree-sitter-go.wasm' },
+        { ext: '.mjs', wasm: 'tree-sitter-javascript.wasm' },
+        { ext: '.cjs', wasm: 'tree-sitter-javascript.wasm' },
+        { ext: '.mts', wasm: 'tree-sitter-typescript.wasm' },
+        { ext: '.cts', wasm: 'tree-sitter-typescript.wasm' },
       ]
 
       expectedLanguages.forEach(({ ext, wasm }) => {

@@ -2,6 +2,7 @@ import { castDraft } from 'immer'
 import { create } from 'zustand'
 import { immer } from 'zustand/middleware/immer'
 
+import { getAdsEnabled } from '../commands/ads'
 import { AGENT_MODES, IS_SAVANT_FREE } from '../utils/constants'
 import { clamp } from '../utils/math'
 import {
@@ -95,6 +96,10 @@ export type ChatStoreState = {
   /** The currently active top banner, or null if none */
   activeTopBanner: TopBannerType
   inputMode: InputMode
+  /** Reactive ads state (FID-007 P1): seeded from settings, updated by the
+   *  ads commands so slash-command filtering can depend on it reactively
+   *  instead of polling a non-reactive module read per keystroke. */
+  adsEnabled: boolean
   isRetrying: boolean
   askUserState: AskUserState
   pendingAttachments: PendingAttachment[]
@@ -194,6 +199,7 @@ type ChatStoreActions = {
   setActiveTopBanner: (banner: TopBannerType) => void
   closeTopBanner: () => void
   setInputMode: (mode: InputMode) => void
+  setAdsEnabled: (enabled: boolean) => void
   setIsRetrying: (retrying: boolean) => void
   setAskUserState: (state: AskUserState) => void
   updateAskUserAnswer: (questionIndex: number, optionIndex: number) => void
@@ -284,6 +290,7 @@ const initialState: ChatStoreState = {
   runState: null,
   activeTopBanner: null,
   inputMode: 'default' as InputMode,
+  adsEnabled: getAdsEnabled(),
   isRetrying: false,
   askUserState: null,
   pendingAttachments: [],
@@ -430,6 +437,11 @@ export const useChatStore = create<ChatStore>()(
     setInputMode: (mode) =>
       set((state) => {
         state.inputMode = mode
+      }),
+
+    setAdsEnabled: (enabled) =>
+      set((state) => {
+        state.adsEnabled = enabled
       }),
 
     setIsRetrying: (retrying) =>
@@ -754,6 +766,7 @@ export const useChatStore = create<ChatStore>()(
           : null
         state.activeTopBanner = initialState.activeTopBanner
         state.inputMode = initialState.inputMode
+        state.adsEnabled = initialState.adsEnabled
         state.isRetrying = initialState.isRetrying
         state.askUserState = initialState.askUserState
         state.pendingAttachments = []

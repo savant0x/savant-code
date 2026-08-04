@@ -1,9 +1,9 @@
-import z from 'zod/v4'
-
 import { publishedTools } from './constants'
 import { toolParams } from './list'
+import { toToolInputJSONSchema } from '../util/zod-schema'
 
 import type { JSONValue } from '../types/json'
+import type z from 'zod/v4'
 
 /** Minimal typed subset of JSON Schema used for TypeScript generation. */
 export interface JSONSchema {
@@ -55,7 +55,7 @@ export function compileToolDefinitions(
       let typeDefinition: string
       let jsonSchema: JSONSchema | undefined
       try {
-        const rawSchema = z.toJSONSchema(parameterSchema, { io: 'input' })
+        const rawSchema = toToolInputJSONSchema(parameterSchema)
         jsonSchema = isJSONSchema(rawSchema) ? rawSchema : undefined
         typeDefinition = jsonSchemaToTypeScript(
           jsonSchema ?? { type: 'object', properties: {} },

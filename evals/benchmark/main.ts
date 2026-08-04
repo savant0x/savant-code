@@ -9,8 +9,10 @@ async function main() {
   // Use 'external:claude' for Claude Code CLI
   // Use 'external:codex' for OpenAI Codex CLI
   // Use 'external:opencode' for OpenCode CLI
+  // NOTE: the default profile is the codebuff fixture (see main-hard-tasks.ts
+  // for the hard profile: eval-{codebuff,manifold,plane,saleor}2.json).
   await runBenchmark({
-    evalDataPaths: [path.join(__dirname, 'eval-savant-code.json')],
+    evalDataPaths: [path.join(__dirname, 'eval-codebuff.json')],
     agents: ['savant-free-evals'],
     taskConcurrency: 6,
     saveTraces,

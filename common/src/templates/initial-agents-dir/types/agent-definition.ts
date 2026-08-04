@@ -128,6 +128,12 @@ export interface AgentDefinition {
    */
   toolNames?: (ToolName | (string & {}))[]
 
+  /**
+   * Tools only the handleSteps generator may call — not model-visible. Keeps
+   * programmatic capability declarations honest (FID-2026-0803-001 ECHO-2).
+   */
+  programmaticToolNames?: (ToolName | (string & {}))[]
+
   /** Other agents this agent can spawn, like 'savant-code/scout@0.0.1'.
    *
    * Use the fully qualified agent id from the agent store, including publisher and version: 'savant-code/scout@0.0.1'
@@ -296,7 +302,7 @@ export interface AgentState {
   /** The tool definitions for this agent. */
   toolDefinitions: Record<
     string,
-    { description: string | undefined; inputSchema: {} }
+    { description: string | undefined; inputSchema: JSONValue }
   >
 
   /**

@@ -10,6 +10,7 @@ import {
 import { useShallow } from 'zustand/react/shallow'
 
 import { getAdsEnabled } from './commands/ads'
+import { getCheckpointDir } from './commands/rewind'
 import { routeUserPrompt, addBashMessageToHistory } from './commands/router'
 import { SingleAdBanner } from './components/ad-banner'
 import { ChatHeader } from './components/chat-header'
@@ -21,6 +22,7 @@ import { areCreditsRestored } from './components/out-of-credits-banner'
 import { PendingBashMessage } from './components/pending-bash-message'
 import { ProviderPicker } from './components/provider-picker'
 import { ReviewScreen } from './components/review-screen'
+import { RewindPicker } from './components/rewind-picker'
 import { RightSidebar } from './components/right-sidebar'
 import { SavantFreeActiveSessionSummary } from './components/savant-free-active-session-summary'
 import { SessionEndedBanner } from './components/session-ended-banner'
@@ -57,7 +59,7 @@ import { useSubscriptionQuery } from './hooks/use-subscription-query'
 import { useSuggestionEngine } from './hooks/use-suggestion-engine'
 import { useUsageMonitor } from './hooks/use-usage-monitor'
 import { WEBSITE_URL } from './login/constants'
-import { getProjectRoot } from './project-files'
+import { getProjectRoot, tryGetProjectRoot } from './project-files'
 import { useChatHistoryStore } from './state/chat-history-store'
 import { useChatStore } from './state/chat-store'
 import { useFeedbackStore } from './state/feedback-store'
@@ -67,6 +69,7 @@ import { useModelPickerStore } from './state/model-picker-store'
 import { useProviderPickerStore } from './state/provider-picker-store'
 import { usePublishStore } from './state/publish-store'
 import { useReviewStore } from './state/review-store'
+import { useRewindPickerStore } from './state/rewind-picker-store'
 import { useSavantFreeModelStore } from './state/savant-free-model-store'
 import { reportActivity } from './utils/activity-tracker'
 import { trackEvent } from './utils/analytics'
@@ -96,6 +99,7 @@ import {
   getProviderSetupGuidance,
   getProviderSetupInfo,
 } from './utils/provider-setup'
+import { executeRewind } from './utils/rewind'
 import {
   hasSubmittedFirstPrompt,
   loadSavantCodeModelPreference,
@@ -115,6 +119,7 @@ import { computeInputLayoutMetrics } from './utils/text-layout'
 import type { CommandResult } from './commands/command-registry'
 import type { MultilineInputHandle } from './components/multiline-input'
 import type { MatchedSlashCommand } from './hooks/use-suggestion-engine'
+import type { RewindMode } from './state/rewind-picker-store'
 import type { SavantFreeSession } from './types/savant-free-session'
 import type { User } from './utils/auth'
 import type { AgentMode } from './utils/constants'
@@ -124,8 +129,63 @@ import type { PermissionMode } from './utils/settings'
 import type { BoxRenderable, ScrollBoxRenderable } from '@opentui/core'
 import type { FeedbackCategory } from '@savant-code/common/constants/feedback'
 import type { FileTreeNode } from '@savant-code/common/util/file'
+import type { TurnSummary } from '@savant-code/sdk'
 import type { UseMutationResult } from '@tanstack/react-query'
 import type { Dispatch, SetStateAction } from 'react'
+
+// FID-007 S2: sidebar tool list — hoisted (stable identity so RightSidebar's
+// React.memo can skip) and cross-checked against
+// common/src/tools/constants.ts. The previous inline list named tools that do
+// NOT exist in the executor allowlist (read_file, search_files, bash).
+const SIDEBAR_TOOLS_AVAILABLE = [
+  'read_files',
+  'code_search',
+  'apply_patch',
+  'run_terminal_command',
+]
+
+// FID-007 D7: hoisted static style objects so the render loop stops
+// allocating fresh style identities every render/tick.
+const CHAT_ROOT_STYLE = {
+  flexDirection: 'row', // Horizontal split: chat + sidebar
+  gap: 0,
+  flexGrow: 1,
+} as const
+
+const HEADER_BOX_STYLE = { flexDirection: 'column' } as const
+
+const SCROLLBOX_STYLE = {
+  flexGrow: 1,
+  rootOptions: {
+    flexGrow: 1,
+    padding: 0,
+    gap: 0,
+    flexDirection: 'row',
+    shouldFill: true,
+    backgroundColor: 'transparent',
+  },
+  wrapperOptions: {
+    flexGrow: 1,
+    border: false,
+    shouldFill: true,
+    backgroundColor: 'transparent',
+    flexDirection: 'column',
+  },
+  contentOptions: {
+    flexDirection: 'column',
+    gap: 0,
+    shouldFill: true,
+    justifyContent: 'flex-end',
+    backgroundColor: 'transparent',
+    paddingLeft: 1,
+    paddingRight: 2,
+  },
+} as const
+
+const BOTTOM_BOX_STYLE = {
+  flexShrink: 0,
+  backgroundColor: 'transparent',
+} as const
 
 export const Chat = ({
   initialPrompt,
@@ -214,6 +274,11 @@ export const Chat = ({
 
   const providerGuidanceShownRef = useRef(false)
   useEffect(() => {
+    // FID-007 U1: provider guidance is non-free builds only — SavantFree
+    // reaches inference via its own gateway, `/provider` is not registered
+    // there, and instructing free users to run it would produce
+    // "Command not found".
+    if (IS_SAVANT_FREE) return
     if (providerGuidanceShownRef.current || messages.length !== 0) return
 
     const missingProvider = getMissingProviderSetup()
@@ -229,6 +294,10 @@ export const Chat = ({
   // Sidebar data from chat-store
   const contextTokensUsed = useChatStore((s) => s.contextTokensUsed)
   const contextTokensMax = useChatStore((s) => s.contextTokensMax)
+  // FID-007 S1: reactive selector — the previous getState() read during
+  // render was non-reactive (stale until some unrelated state forced a
+  // re-render).
+  const fsmPhase = useChatStore((s) => s.fsmPhase)
   const toolsUsed = useChatStore((s) => s.toolsUsed)
   const toolHistory = useChatStore((s) => s.toolHistory)
   const filesChanged = useChatStore((s) => s.filesChanged)
@@ -258,6 +327,19 @@ export const Chat = ({
     (s) => s.setSelectedIndex,
   )
   const closeProviderPicker = useProviderPickerStore((s) => s.close)
+
+  // Interactive /rewind picker overlay state (FID-2026-0803-004).
+  const rewindPickerOpen = useRewindPickerStore((s) => s.isOpen)
+  const rewindPickerTurns = useRewindPickerStore((s) => s.turns)
+  const rewindPickerSelectedIndex = useRewindPickerStore((s) => s.selectedIndex)
+  const rewindPickerStage = useRewindPickerStore((s) => s.stage)
+  const rewindPickerMode = useRewindPickerStore((s) => s.mode)
+  const setRewindPickerSelectedIndex = useRewindPickerStore(
+    (s) => s.setSelectedIndex,
+  )
+  const setRewindPickerStage = useRewindPickerStore((s) => s.setStage)
+  const setRewindPickerMode = useRewindPickerStore((s) => s.setMode)
+  const closeRewindPicker = useRewindPickerStore((s) => s.close)
 
   const { statusMessage } = useClipboard()
 
@@ -309,6 +391,27 @@ export const Chat = ({
       updateContextTokensMax(maxTokens)
     }
   }, [sidebarModel, updateContextTokensMax, gatewayCatalogLoadedAt])
+
+  // Commit a /rewind picker selection (FID-2026-0803-004): execute the chosen
+  // restore mode against the selected turn's checkpoint and report in-chat.
+  const handleRewindPickerConfirm = useCallback(
+    (turn: TurnSummary, mode: RewindMode) => {
+      closeRewindPicker()
+      const projectRoot = tryGetProjectRoot() ?? getProjectRoot()
+      const checkpointDir = getCheckpointDir()
+      const message = executeRewind({
+        checkpointDir,
+        projectRoot,
+        turnId: turn.turnId,
+        mode,
+        setMessages,
+      })
+      setMessages((prev) => [...prev, getSystemMessage(message)])
+      setInputFocused(true)
+      inputRef.current?.focus()
+    },
+    [closeRewindPicker, setMessages, setInputFocused, inputRef],
+  )
 
   // Commit a provider pick: enter providerSetup mode for the chosen provider.
   const handleProviderPickerSelect = useCallback(
@@ -440,6 +543,7 @@ export const Chat = ({
   const inputMode = useChatStore((state) => state.inputMode)
   const setInputMode = useChatStore((state) => state.setInputMode)
   const askUserState = useChatStore((state) => state.askUserState)
+  const adsEnabled = useChatStore((state) => state.adsEnabled)
 
   // Get loaded skills for slash commands
   const loadedSkills = useMemo(() => getLoadedSkills(), [])
@@ -448,14 +552,16 @@ export const Chat = ({
   // Hide both ads commands entirely for subscribers
   // Also merge in skill commands
   const filteredSlashCommands = useMemo(() => {
-    const adsEnabled = getAdsEnabled()
     const allCommands = getSlashCommandsWithSkills(loadedSkills)
     return allCommands.filter((cmd) => {
       if (cmd.id === 'ads:enable') return !hasSubscription && !adsEnabled
       if (cmd.id === 'ads:disable') return !hasSubscription && adsEnabled
       return true
     })
-  }, [inputValue, loadedSkills, hasSubscription]) // Re-evaluate when input changes (user may have just toggled)
+    // FID-007 P1: deps are the reactive ads store slice (updated by the ads
+    // commands) — NOT inputValue, whose only effect was to rebuild the command
+    // list and clear the suggestion-engine cache on every keystroke.
+  }, [loadedSkills, hasSubscription, adsEnabled])
 
   const {
     slashContext,
@@ -541,13 +647,17 @@ export const Chat = ({
     setAgentSelectedIndex,
   ])
 
-  const openFileMenuWithTab = useCallback(() => {
+  const openFileMenuWithTab = useCallback((): boolean => {
     const safeCursor = Math.max(0, Math.min(cursorPosition, inputValue.length))
 
     let wordStart = safeCursor
-    while (wordStart > 0 && !/\s/.test(inputValue[wordStart - 1])) {
+    while (wordStart > 0 && !/\s/.test(inputValue[wordStart - 1]!)) {
       wordStart--
     }
+    // FID-007 D4: report whether a word precedes the cursor so the keyboard
+    // handler can fall through when there is nothing to complete (previously
+    // this scan was duplicated inline in onOpenFileMenuWithTab).
+    if (wordStart >= safeCursor) return false
 
     const before = inputValue.slice(0, wordStart)
     const wordAtCursor = inputValue.slice(wordStart, safeCursor)
@@ -565,6 +675,7 @@ export const Chat = ({
       lastEditDueToNav: false,
     })
     setForceFileOnlyMentions(true)
+    return true
   }, [cursorPosition, inputValue, setInputValue])
 
   const { saveToHistory, navigateUp, navigateDown, resetHistoryNavigation } =
@@ -763,7 +874,12 @@ export const Chat = ({
 
   // Retire onboarding suggested prompts only after the user submits a prompt.
   // Provider guidance is a system message and must not count as submission.
-  const hasSubmittedPrompt = messages.some((message) => message.variant === 'user')
+  // FID-007 D6: memoize the O(n) scan — it was re-run over the whole
+  // transcript on every render.
+  const hasSubmittedPrompt = useMemo(
+    () => messages.some((message) => message.variant === 'user'),
+    [messages],
+  )
   useEffect(() => {
     if (showSuggestedPrompts && hasSubmittedPrompt) {
       markFirstPromptSubmitted()
@@ -845,19 +961,21 @@ export const Chat = ({
 
   // handleSlashItemClick is defined later after feedback/publish stores are available
 
-  const handleMentionItemClick = useCallback(
-    (index: number) => {
-      if (mentionContext.startIndex < 0) return
+  // FID-007 D3: single mention select-and-replace helper shared by the click
+  // handler and the two keyboard menu handlers (previously 3 copies).
+  const selectMentionAt = useCallback(
+    (index: number): boolean => {
+      if (mentionContext.startIndex < 0) return false
 
       let replacement: string
       if (index < agentMatches.length) {
         const selected = agentMatches[index]
-        if (!selected) return
+        if (!selected) return false
         replacement = `@${selected.id} `
       } else {
         const fileIndex = index - agentMatches.length
         const selectedFile = fileMatches[fileIndex]
-        if (!selectedFile) return
+        if (!selectedFile) return false
         replacement = `@${selectedFile.filePath} `
       }
       const before = inputValue.slice(0, mentionContext.startIndex)
@@ -870,6 +988,7 @@ export const Chat = ({
         lastEditDueToNav: false,
       })
       setAgentSelectedIndex(0)
+      return true
     },
     [
       mentionContext,
@@ -879,6 +998,13 @@ export const Chat = ({
       setInputValue,
       setAgentSelectedIndex,
     ],
+  )
+
+  const handleMentionItemClick = useCallback(
+    (index: number) => {
+      selectMentionAt(index)
+    },
+    [selectMentionAt],
   )
 
   const { inputWidth, handleBuildFast, handleBuildMax, handleBuildLite } =
@@ -996,29 +1122,38 @@ export const Chat = ({
   )
 
   // Click handler for slash menu items - executes command or inserts text
-  const handleSlashItemClick = useCallback(
-    async (index: number) => {
-      const selected = slashMatches[index]
+  // FID-007 D3/E1: single slash execute helper (insertText handling, selection
+  // reset, and error surfacing) shared by the click handler and keyboard menu.
+  const executeSlashCommand = useCallback(
+    async (selected: MatchedSlashCommand | undefined): Promise<void> => {
       if (!selected) return
 
       // If the command has insertText, insert it instead of executing
       if (applySlashInsertText(selected)) return
 
-      // Execute the selected slash command immediately
-      const commandString = `/${selected.id}`
       setSlashSelectedIndex(0)
-
-      const result = await onSubmitPrompt(commandString, agentMode)
-      handleCommandResult(result)
+      try {
+        const result = await onSubmitPrompt(`/${selected.id}`, agentMode)
+        handleCommandResult(result)
+      } catch (error) {
+        logger.error({ error }, '[slash] Failed to execute command')
+        showClipboardMessage('Failed to execute command', { durationMs: 3000 })
+      }
     },
     [
-      slashMatches,
       applySlashInsertText,
       setSlashSelectedIndex,
       onSubmitPrompt,
       agentMode,
       handleCommandResult,
     ],
+  )
+
+  const handleSlashItemClick = useCallback(
+    async (index: number) => {
+      await executeSlashCommand(slashMatches[index])
+    },
+    [slashMatches, executeSlashCommand],
   )
 
   const inputValueRef = useRef(inputValue)
@@ -1155,8 +1290,14 @@ export const Chat = ({
     if (inputValue.trim()) {
       setTerminalTitle(inputValue)
     }
-    const result = await onSubmitPrompt(inputValue, agentMode)
-    handleCommandResult(result)
+    // FID-007 E1: surface submit failures instead of an unhandled rejection.
+    try {
+      const result = await onSubmitPrompt(inputValue, agentMode)
+      handleCommandResult(result)
+    } catch (error) {
+      logger.error({ error }, '[submit] Failed to submit prompt')
+      showClipboardMessage('Failed to send message', { durationMs: 3000 })
+    }
   }, [onSubmitPrompt, inputValue, agentMode, handleCommandResult])
 
   const totalMentionMatches = agentMatches.length + fileMatches.length
@@ -1246,19 +1387,9 @@ export const Chat = ({
       onSlashMenuDown: () => setSlashSelectedIndex((prev) => prev + 1),
       onSlashMenuUp: () => setSlashSelectedIndex((prev) => prev - 1),
       onSlashMenuSelect: async () => {
-        const selected = slashMatches[slashSelectedIndex] || slashMatches[0]
-        if (!selected) return
-
-        // If the command has insertText, insert it instead of executing
-        if (applySlashInsertText(selected)) return
-
-        // Execute the selected slash command immediately
-        const commandString = `/${selected.id}`
-        setSlashSelectedIndex(0)
-
-        const result = await onSubmitPrompt(commandString, agentMode)
-
-        handleCommandResult(result)
+        await executeSlashCommand(
+          slashMatches[slashSelectedIndex] || slashMatches[0],
+        )
       },
       onSlashMenuComplete: () => {
         // Complete the word without executing - same as clicking on the item
@@ -1293,84 +1424,14 @@ export const Chat = ({
         )
       },
       onMentionMenuSelect: () => {
-        if (mentionContext.startIndex < 0) return
-
-        const trySelectAtIndex = (index: number): boolean => {
-          let replacement: string
-          if (index < agentMatches.length) {
-            const selected = agentMatches[index]
-            if (!selected) return false
-            replacement = `@${selected.id} `
-          } else {
-            const fileIndex = index - agentMatches.length
-            const selectedFile = fileMatches[fileIndex]
-            if (!selectedFile) return false
-            replacement = `@${selectedFile.filePath} `
-          }
-          const before = inputValue.slice(0, mentionContext.startIndex)
-          const after = inputValue.slice(
-            mentionContext.startIndex + 1 + mentionContext.query.length,
-          )
-          setInputValue({
-            text: before + replacement + after,
-            cursorPosition: before.length + replacement.length,
-            lastEditDueToNav: false,
-          })
-          setAgentSelectedIndex(0)
-          return true
-        }
-
         // Try current selection, fall back to first item
-        trySelectAtIndex(agentSelectedIndex) || trySelectAtIndex(0)
+        selectMentionAt(agentSelectedIndex) || selectMentionAt(0)
       },
       onMentionMenuComplete: () => {
         // Complete the word without executing - same as select for mentions
-        if (mentionContext.startIndex < 0) return
-
-        let replacement: string
-        const index = agentSelectedIndex
-        if (index < agentMatches.length) {
-          const selected =
-            agentMatches.length > 0
-              ? agentMatches[index] || agentMatches[0]
-              : undefined
-          if (!selected) return
-          replacement = `@${selected.id} `
-        } else {
-          const fileIndex = index - agentMatches.length
-          const selectedFile =
-            fileMatches.length > 0
-              ? fileMatches[fileIndex] || fileMatches[0]
-              : undefined
-          if (!selectedFile) return
-          replacement = `@${selectedFile.filePath} `
-        }
-        const before = inputValue.slice(0, mentionContext.startIndex)
-        const after = inputValue.slice(
-          mentionContext.startIndex + 1 + mentionContext.query.length,
-        )
-        setInputValue({
-          text: before + replacement + after,
-          cursorPosition: before.length + replacement.length,
-          lastEditDueToNav: false,
-        })
-        setAgentSelectedIndex(0)
+        selectMentionAt(agentSelectedIndex) || selectMentionAt(0)
       },
-      onOpenFileMenuWithTab: () => {
-        const safeCursor = Math.max(
-          0,
-          Math.min(cursorPosition, inputValue.length),
-        )
-        let wordStart = safeCursor
-        while (wordStart > 0 && !/\s/.test(inputValue[wordStart - 1]!)) {
-          wordStart--
-        }
-        if (wordStart < safeCursor) {
-          openFileMenuWithTab()
-          return true
-        }
-        return false
-      },
+      onOpenFileMenuWithTab: () => openFileMenuWithTab(),
       onHistoryUp: navigateUp,
       onHistoryDown: navigateDown,
       onToggleAgentMode: toggleAgentMode,
@@ -1459,11 +1520,8 @@ export const Chat = ({
       agentMode,
       handleCommandResult,
       setAgentSelectedIndex,
-      agentMatches,
-      fileMatches,
       agentSelectedIndex,
-      mentionContext,
-      cursorPosition,
+      selectMentionAt,
       openFileMenuWithTab,
       navigateUp,
       navigateDown,
@@ -1702,11 +1760,7 @@ export const Chat = ({
     <box
       onMouseMove={handleMouseActivity}
       focusable={false}
-      style={{
-        flexDirection: 'row', // Horizontal split: chat + sidebar
-        gap: 0,
-        flexGrow: 1,
-      }}
+      style={CHAT_ROOT_STYLE}
     >
       {/* Left column: chat content + bottom section */}
       <box
@@ -1722,7 +1776,7 @@ export const Chat = ({
         {/* Pinned header — outside scrollbox so it stays at top */}
         <box
           ref={headerRef as React.Ref<BoxRenderable>}
-          style={{ flexDirection: 'column' }}
+          style={HEADER_BOX_STYLE}
           focusable={false}
         >
           <ChatHeader
@@ -1742,33 +1796,7 @@ export const Chat = ({
             trackOptions: { width: 1 },
           }}
           {...appliedScrollboxProps}
-          style={{
-            flexGrow: 1,
-            rootOptions: {
-              flexGrow: 1,
-              padding: 0,
-              gap: 0,
-              flexDirection: 'row',
-              shouldFill: true,
-              backgroundColor: 'transparent',
-            },
-            wrapperOptions: {
-              flexGrow: 1,
-              border: false,
-              shouldFill: true,
-              backgroundColor: 'transparent',
-              flexDirection: 'column',
-            },
-            contentOptions: {
-              flexDirection: 'column',
-              gap: 0,
-              shouldFill: true,
-              justifyContent: 'flex-end',
-              backgroundColor: 'transparent',
-              paddingLeft: 1,
-              paddingRight: 2,
-            },
-          }}
+          style={SCROLLBOX_STYLE}
         >
           <TopBanner gitRoot={gitRoot} onSwitchToGitRoot={onSwitchToGitRoot} />
 
@@ -1801,13 +1829,7 @@ export const Chat = ({
             ))}
         </scrollbox>
 
-        <box
-          focusable={false}
-          style={{
-            flexShrink: 0,
-            backgroundColor: 'transparent',
-          }}
-        >
+        <box focusable={false} style={BOTTOM_BOX_STYLE}>
           {showOnboardingPrompts && !reviewMode && !isSavantFreeSessionOver && (
             <SuggestedPrompts
               onSelect={handleSelectSuggestedPrompt}
@@ -1876,6 +1898,19 @@ export const Chat = ({
                   onSelectIndex={setProviderPickerSelectedIndex}
                   onSelect={handleProviderPickerSelect}
                   onClose={closeProviderPicker}
+                />
+              )}
+              {rewindPickerOpen && (
+                <RewindPicker
+                  turns={rewindPickerTurns}
+                  selectedIndex={rewindPickerSelectedIndex}
+                  stage={rewindPickerStage}
+                  mode={rewindPickerMode}
+                  onSelectIndex={setRewindPickerSelectedIndex}
+                  onSetStage={setRewindPickerStage}
+                  onSetMode={setRewindPickerMode}
+                  onConfirm={handleRewindPickerConfirm}
+                  onClose={closeRewindPicker}
                 />
               )}
               <box flexDirection="row" paddingLeft={1} focusable={false}>
@@ -1959,13 +1994,13 @@ export const Chat = ({
           mode={agentMode}
           agent={agentId ?? 'Savant'}
           toolsUsed={toolsUsed}
-          toolsAvailable={['read_file', 'search_files', 'apply_patch', 'bash']}
+          toolsAvailable={SIDEBAR_TOOLS_AVAILABLE}
           filesChanged={filesChanged}
           agentStack={agentStack}
           toolHistory={toolHistory}
           isStreaming={isStreaming}
           isWaitingForResponse={isWaitingForResponse}
-          fsmPhase={useChatStore.getState().fsmPhase}
+          fsmPhase={fsmPhase}
         />
       )}
     </box>

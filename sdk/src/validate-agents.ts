@@ -62,11 +62,9 @@ export async function validateAgents(
   // Use index as key to preserve all entries (including duplicates)
   const agentTemplates: Record<string, AgentDefinition> = {}
   for (const [index, definition] of definitions.entries()) {
-    // Handle null/undefined gracefully
-    if (!definition) {
-      agentTemplates[`agent_${index}`] = definition
-      continue
-    }
+    // Skip null/undefined entries (FID-2026-0802-008 D8): they were
+    // previously stored as runtime-undefined values into a non-null record.
+    if (!definition) continue
     // Use index to ensure duplicates aren't overwritten
     const key = definition.id ? `${definition.id}_${index}` : `agent_${index}`
     agentTemplates[key] = definition

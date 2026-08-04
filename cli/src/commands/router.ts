@@ -526,7 +526,12 @@ export async function routeUserPrompt(
     return
   }
 
-  if (!isSlashCommand(trimmed)) {
+  // FID-007 U1: the provider-guidance gate is non-free builds only. SavantFree
+  // reaches inference via its own gateway (never provider keys), `/provider` is
+  // not registered there, and free users can be authenticated without a
+  // provider — gating prevents ever instructing a free user to run a command
+  // that resolves to "Command not found".
+  if (!IS_SAVANT_FREE && !isSlashCommand(trimmed)) {
     const missingProvider = getMissingProviderSetup()
     if (missingProvider) {
       setMessages((prev) => [
@@ -564,10 +569,12 @@ export async function routeUserPrompt(
       agentMode,
     })
 
+    // FID-007 D5: echo the user message (consistent with sibling branches)
+    // and drop the redundant JSON.stringify on a plain string.
     setMessages((prev) => [
       ...prev,
       getUserMessage(trimmed),
-      getSystemMessage(`Command not found: ${JSON.stringify(trimmed)}`),
+      getSystemMessage(`Command not found: ${trimmed}`),
     ])
     return
   }

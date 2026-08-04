@@ -36,7 +36,9 @@ const credentialsFileSchema = z.object({
 
 const ensureDirectoryExistsSync = (dir: string) => {
   if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true })
+    // FID-2026-0802-008 SEC1: private config dir (0700) — a world-traversable
+    // directory would defeat the 0600 credentials file below.
+    fs.mkdirSync(dir, { recursive: true, mode: 0o700 })
   }
 }
 
@@ -166,7 +168,16 @@ export const saveChatGptOAuthCredentials = (
     chatgptOAuth: credentials,
   }
 
-  fs.writeFileSync(credentialsPath, JSON.stringify(updatedData, null, 2))
+  // FID-2026-0802-008 SEC1: write OAuth tokens 0600 (mode only applies on
+  // creation) and chmod after write so pre-existing loose perms are tightened.
+  fs.writeFileSync(credentialsPath, JSON.stringify(updatedData, null, 2), {
+    mode: 0o600,
+  })
+  try {
+    fs.chmodSync(credentialsPath, 0o600)
+  } catch {
+    // Windows: chmod is a no-op-ish; ignore.
+  }
 }
 
 export const clearChatGptOAuthCredentials = (

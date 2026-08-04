@@ -41,6 +41,13 @@ export type CreateRunConfigParams = {
   /** FID-2026-0725-085 CTX-007: Resolved context window from OpenRouter catalog.
    *  Passed to agent runtime for accurate compaction thresholds. */
   contextWindow?: number
+  /** FID-2026-0803-004: persistent per-turn file checkpoints (rewind). The
+   *  CLI opens/closes the turn on the checkpoint store; the runtime captures
+   *  pre-write snapshots into this directory. */
+  checkpointDir?: string
+  /** FID-2026-0803-004: turn identity for checkpoint grouping (the CLI's
+   *  aiMessageId), so subagent writes land in the same turn's checkpoint. */
+  checkpointTurnId?: string
 }
 
 const SENSITIVE_EXTENSIONS = new Set([
@@ -142,6 +149,8 @@ export const createRunConfig = (params: CreateRunConfigParams) => {
     permissionMode,
     modelInfoText,
     contextWindow: params.contextWindow,
+    checkpointDir: params.checkpointDir,
+    checkpointTurnId: params.checkpointTurnId,
     fileFilter: ((filePath: string) => {
       if (isSensitiveFile(filePath)) return { status: 'blocked' }
       if (isEnvTemplateFile(filePath)) return { status: 'allow-example' }

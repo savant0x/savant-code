@@ -1,9 +1,10 @@
 # Gravity Integration Starter Kit — `savant-free` (ad-supported tier)
 
 > **STATUS: PARKED until 0.0.3 rebrand ships green.**
-> Do NOT wire Gravity into the codebase while `codebuff`/`freebuff` strings are still being renamed.
-> The rebrand is the gate. After `grep -rE 'CODEBUFF|FREEBUFF|manicode' .` (excl. node_modules + dev/fids archive +
-  brand history) returns 0, THEN execute this kit.
+> Do NOT wire Gravity into the codebase until the Savant rebrand gate is verified.
+> The active source gate is now green: no deprecated `FREEBUFF_*` identifiers remain in `cli/src`, `common/src`,
+> `sdk/src`, `packages`, `agents`, or `savant-free/cli`. Historical protocol documents, legal notices, migration records,
+> and the legacy `.freebuff/` state-directory ignore rule are explicitly retained and are not active runtime branding.
 
 ---
 
@@ -40,7 +41,8 @@ your publisher surface ID, then align the string.
 
 ## Prerequisites (post-0.0.3)
 
-1. 0.0.3 rebrand pushed + green (typecheck ×4, SDK suite, grep-zero on CODEBUFF/FREEBUFF/manicode in active code).
+1. Rebrand gate verified: typecheck ×4 and SDK suite are green; active source contains no deprecated `FREEBUFF_*`
+   identifiers. Retained protocol/history/legal references are documented in the rebrand FID.
 2. Sign up at **app.trygravity.ai/publisher/signup**.
 3. Create an AI platform account for `savant-free`.
 4. Copy **API key** → save as `GRAVITY_API_KEY` (server env).

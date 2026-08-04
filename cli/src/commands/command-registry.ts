@@ -18,6 +18,7 @@ import {
   buildPlanPrompt,
   buildReviewPromptFromArgs,
 } from './prompt-builders'
+import { handleRewindCommand } from './rewind'
 import { runBashCommand } from './router'
 import { handleTelemetryCommand } from './telemetry'
 import { handleUsageCommand } from './usage'
@@ -220,6 +221,9 @@ const ALL_COMMANDS: CommandDefinition[] = [
     name: 'ads:enable',
     handler: (params) => {
       const { postUserMessage } = handleAdsEnable()
+      // FID-007 P1: keep the reactive store slice in sync so slash-command
+      // filtering depends on it without re-reading settings per keystroke.
+      useChatStore.getState().setAdsEnabled(true)
       params.setMessages((prev) => postUserMessage(prev))
       params.saveToHistory(params.inputValue.trim())
       clearInput(params)
@@ -229,6 +233,8 @@ const ALL_COMMANDS: CommandDefinition[] = [
     name: 'ads:disable',
     handler: (params) => {
       const { postUserMessage } = handleAdsDisable()
+      // FID-007 P1: see ads:enable.
+      useChatStore.getState().setAdsEnabled(false)
       params.setMessages((prev) => postUserMessage(prev))
       params.saveToHistory(params.inputValue.trim())
       clearInput(params)
@@ -438,6 +444,15 @@ const ALL_COMMANDS: CommandDefinition[] = [
       ])
       params.saveToHistory(params.inputValue.trim())
       clearInput(params)
+    },
+  }),
+  defineCommandWithArgs({
+    name: 'rewind',
+    aliases: ['undo', 'checkpoint'],
+    handler: async (params, args) => {
+      // FID-2026-0803-004: rewind a previous turn's file state and/or
+      // conversation from the persistent per-turn checkpoints.
+      await handleRewindCommand(params, args)
     },
   }),
   defineCommandWithArgs({
@@ -919,71 +934,96 @@ const ALL_COMMANDS: CommandDefinition[] = [
   }),
 ]
 
-export const COMMAND_REGISTRY: CommandDefinition[] = IS_SAVANT_FREE
-  ? ALL_COMMANDS.filter((cmd) => !SAVANT_FREE_REMOVED_COMMANDS.has(cmd.name))
-  : ALL_COMMANDS.filter((cmd) => !SAVANT_FREE_ONLY_COMMANDS.has(cmd.name))
+// Export the removal sets for the gating-parity test (FID-007 V4).
+export const SAVANT_FREE_REMOVED_COMMAND_NAMES = SAVANT_FREE_REMOVED_COMMANDS
+export const SAVANT_FREE_ONLY_COMMAND_NAMES = SAVANT_FREE_ONLY_COMMANDS
+
+// FID-007 V4: pure gating filter (testable in either build flavor). The
+// free/paid split must stay in lockstep with data/slash-commands.ts — the
+// registry-gating test asserts parity between the two files.
+export function filterCommandsForBuild(
+  commands: CommandDefinition[],
+  isFree: boolean,
+): CommandDefinition[] {
+  return isFree
+    ? commands.filter((cmd) => !SAVANT_FREE_REMOVED_COMMANDS.has(cmd.name))
+    : commands.filter((cmd) => !SAVANT_FREE_ONLY_COMMANDS.has(cmd.name))
+}
+
+export const COMMAND_REGISTRY: CommandDefinition[] = filterCommandsForBuild(
+  ALL_COMMANDS,
+  IS_SAVANT_FREE,
+)
+
+// Exported for the gating-parity test (FID-007 V4).
+export const ALL_COMMAND_DEFINITIONS: CommandDefinition[] = ALL_COMMANDS
+
+// Secret dev override command — hoisted so findCommand returns a stable
+// identity (FID-007 D2). Not in COMMAND_REGISTRY (invisible to /help +
+// autocomplete).
+const DEV_COMMAND_DEFINITION: CommandDefinition = defineCommandWithArgs({
+  name: 'dev',
+  handler: (params, args) => {
+    const trimmedArgs = args.trim().toLowerCase()
+    const devModeActive = useChatStore.getState().devMode
+
+    // /dev off — deactivate
+    if (trimmedArgs === 'off') {
+      if (devModeActive) {
+        useChatStore.getState().setDevMode(false)
+        params.setMessages((prev) => [
+          ...prev,
+          getSystemMessage('Dev override deactivated.'),
+        ])
+      } else {
+        params.setMessages((prev) => [
+          ...prev,
+          getSystemMessage('Dev override is already off.'),
+        ])
+      }
+      params.saveToHistory(params.inputValue.trim())
+      clearInput(params)
+      return
+    }
+
+    // /dev on — activate (no passphrase required)
+    if (trimmedArgs === 'on' || trimmedArgs === '') {
+      if (devModeActive) {
+        params.setMessages((prev) => [
+          ...prev,
+          getSystemMessage('Dev override is already active.'),
+        ])
+      } else {
+        useChatStore.getState().setDevMode(true)
+        params.setMessages((prev) => [
+          ...prev,
+          getSystemMessage('Dev override activated.'),
+        ])
+      }
+      params.saveToHistory(params.inputValue.trim())
+      clearInput(params)
+      return
+    }
+
+    // Unknown /dev subcommand
+    params.setMessages((prev) => [
+      ...prev,
+      getUserMessage(params.inputValue.trim()),
+      getSystemMessage(
+        `Unknown /dev subcommand: ${trimmedArgs}. Use "/dev on" or "/dev off".`,
+      ),
+    ])
+    params.saveToHistory(params.inputValue.trim())
+    clearInput(params)
+  },
+})
 
 export function findCommand(cmd: string): CommandDefinition | undefined {
   const lowerCmd = cmd.toLowerCase()
 
   // Secret dev override command — not in COMMAND_REGISTRY (invisible to /help + autocomplete)
   if (lowerCmd === 'dev') {
-    return defineCommandWithArgs({
-      name: 'dev',
-      handler: (params, args) => {
-        const trimmedArgs = args.trim().toLowerCase()
-        const devModeActive = useChatStore.getState().devMode
-
-        // /dev off — deactivate
-        if (trimmedArgs === 'off') {
-          if (devModeActive) {
-            useChatStore.getState().setDevMode(false)
-            params.setMessages((prev) => [
-              ...prev,
-              getSystemMessage('Dev override deactivated.'),
-            ])
-          } else {
-            params.setMessages((prev) => [
-              ...prev,
-              getSystemMessage('Dev override is already off.'),
-            ])
-          }
-          params.saveToHistory(params.inputValue.trim())
-          clearInput(params)
-          return
-        }
-
-        // /dev on — activate (no passphrase required)
-        if (trimmedArgs === 'on' || trimmedArgs === '') {
-          if (devModeActive) {
-            params.setMessages((prev) => [
-              ...prev,
-              getSystemMessage('Dev override is already active.'),
-            ])
-          } else {
-            useChatStore.getState().setDevMode(true)
-            params.setMessages((prev) => [
-              ...prev,
-              getSystemMessage('Dev override activated.'),
-            ])
-          }
-          params.saveToHistory(params.inputValue.trim())
-          clearInput(params)
-          return
-        }
-
-        // Unknown /dev subcommand
-        params.setMessages((prev) => [
-          ...prev,
-          getUserMessage(params.inputValue.trim()),
-          getSystemMessage(
-            `Unknown /dev subcommand: ${trimmedArgs}. Use "/dev on" or "/dev off".`,
-          ),
-        ])
-        params.saveToHistory(params.inputValue.trim())
-        clearInput(params)
-      },
-    })
+    return DEV_COMMAND_DEFINITION
   }
 
   // First check the static command registry

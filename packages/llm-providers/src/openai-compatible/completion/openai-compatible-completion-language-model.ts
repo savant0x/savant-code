@@ -10,9 +10,11 @@ import { z } from 'zod/v4'
 
 import { defaultOpenAICompatibleErrorStructure } from '../openai-compatible-error'
 import { convertToOpenAICompatibleCompletionPrompt } from './convert-to-openai-compatible-completion-prompt'
-import { getResponseMetadata } from './get-response-metadata'
-import { mapOpenAICompatibleFinishReason } from './map-openai-compatible-finish-reason'
+// FID-2026-0803-010 LLM-C: byte-identical copies of these helpers lived in
+// completion/; the chat/ versions are canonical now.
 import { openaiCompatibleCompletionProviderOptions } from './openai-compatible-completion-options'
+import { getResponseMetadata } from '../chat/get-response-metadata'
+import { mapOpenAICompatibleFinishReason } from '../chat/map-openai-compatible-finish-reason'
 
 import type { OpenAICompatibleCompletionModelId } from './openai-compatible-completion-options'
 import type {
@@ -136,9 +138,6 @@ export class OpenAICompatibleCompletionLanguageModel implements LanguageModelV2 
 
     return {
       args: {
-        // model id:
-        model: this.modelId,
-
         // model specific settings:
         echo: completionOptions.echo,
         logit_bias: completionOptions.logitBias,
@@ -152,7 +151,25 @@ export class OpenAICompatibleCompletionLanguageModel implements LanguageModelV2 
         frequency_penalty: frequencyPenalty,
         presence_penalty: presencePenalty,
         seed,
-        ...providerOptions?.[this.providerOptionsName],
+        // FID-2026-0803-002 LLM-2: filter out the known option keys from the
+        // raw spread (mirroring the chat model) so a caller passing e.g.
+        // `logitBias` does not send BOTH `logit_bias` (mapped) and `logitBias`
+        // (raw camelCase) on the wire.
+        ...Object.fromEntries(
+          Object.entries(
+            providerOptions?.[this.providerOptionsName] ?? {},
+          ).filter(
+            ([key]) =>
+              !Object.keys(
+                openaiCompatibleCompletionProviderOptions.shape,
+              ).includes(key),
+          ),
+        ),
+
+        // model id (FID-006 LLM2): re-asserted AFTER the provider-options
+        // spread so a provider option can never override the requested model
+        // (billing/routing integrity).
+        model: this.modelId,
 
         // prompt:
         prompt: completionPrompt,
@@ -188,11 +205,14 @@ export class OpenAICompatibleCompletionLanguageModel implements LanguageModelV2 
       fetch: this.config.fetch,
     })
 
+    // FID-006 LLM1: guard against providers returning an empty `choices`
+    // array (valid per the response schema). An unguarded `choice.text` deref
+    // would throw a TypeError that crashes the caller.
     const choice = response.choices[0]
     const content: Array<LanguageModelV2Content> = []
 
     // text content:
-    if (choice.text != null && choice.text.length > 0) {
+    if (choice?.text != null && choice.text.length > 0) {
       content.push({ type: 'text', text: choice.text })
     }
 
@@ -203,7 +223,9 @@ export class OpenAICompatibleCompletionLanguageModel implements LanguageModelV2 
         outputTokens: response.usage?.completion_tokens ?? undefined,
         totalTokens: response.usage?.total_tokens ?? undefined,
       },
-      finishReason: mapOpenAICompatibleFinishReason(choice.finish_reason),
+      finishReason: choice
+        ? mapOpenAICompatibleFinishReason(choice.finish_reason)
+        : 'unknown',
       request: { body: args },
       response: {
         ...getResponseMetadata(response),
@@ -263,10 +285,6 @@ export class OpenAICompatibleCompletionLanguageModel implements LanguageModelV2 
           },
 
           transform(chunk, controller) {
-            if (options.includeRawChunks) {
-              controller.enqueue({ type: 'raw', rawValue: chunk.rawValue })
-            }
-
             // handle failed chunk parsing / validation:
             if (!chunk.success) {
               finishReason = 'error'
@@ -276,10 +294,21 @@ export class OpenAICompatibleCompletionLanguageModel implements LanguageModelV2 
 
             const value = chunk.value
 
+            // Emit raw chunk if requested (after success check so rawValue is
+            // guaranteed) — FID-2026-0803-002 LLM-5, mirrors the chat model.
+            if (options.includeRawChunks) {
+              controller.enqueue({ type: 'raw', rawValue: chunk.rawValue })
+            }
+
             // handle error chunks:
             if ('error' in value) {
               finishReason = 'error'
-              controller.enqueue({ type: 'error', error: value.error })
+              // FID-2026-0803-002 LLM-6: unify the payload with the chat model
+              // (string message) instead of the full error object.
+              controller.enqueue({
+                type: 'error',
+                error: value.error.message,
+              })
               return
             }
 

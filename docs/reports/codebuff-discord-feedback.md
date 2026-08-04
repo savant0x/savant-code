@@ -1,6 +1,6 @@
-# Freebuff Community Feedback & Action Report
+# Savant Community Feedback & Action Report
 
-Based on the recent logs from the `#feedback` channel, I have compiled a comprehensive report categorizing the top user complaints, recurring issues, and feature requests. The data indicates that while users are highly engaged with Freebuff, recent outages and unclear UI wording are the primary sources of friction.
+Based on the recent logs from the `#feedback` channel, I have compiled a comprehensive report categorizing the top user complaints, recurring issues, and feature requests. The data indicates that while users are highly engaged with Savant, recent outages and unclear UI wording are the primary sources of friction.
 
 ---
 
@@ -28,7 +28,7 @@ The following table breaks down the highest-priority issues raised by the commun
 Beyond the critical complaints, users discussed several quality-of-life improvements and feature expansions.
 
 * **Regional Expansion:** Users in currently restricted areas (specifically requested: Slovakia) are asking for full access to the platform.
-* **Third-Party Integration Friction:** Developers attempting to use custom instances (like Nodepod) are struggling because Freebuff's custom patches make the codebase proprietary and difficult to troubleshoot.
+* **Third-Party Integration Friction:** Developers attempting to use custom instances (like Nodepod) are struggling because Savant's custom patches make the codebase proprietary and difficult to troubleshoot.
 * **Workspace Management:** Users require clearer pathways for moving or transferring projects into the workspace environment.
 * **UI Customization:** Desktop users expressed appreciation for the "Active colored tabs" feature, indicating that visual organization tools are well-received.
 

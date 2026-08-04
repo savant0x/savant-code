@@ -12,10 +12,7 @@ import { convertJsonSchemaToZod } from 'zod-from-json-schema'
 import type { ToolName } from '@savant-code/common/tools/constants'
 import type { JSONValue } from '@savant-code/common/types/json'
 import type { SkillsMap } from '@savant-code/common/types/skill'
-import type {
-  CustomToolDefinitions,
-  customToolDefinitionsSchema,
-} from '@savant-code/common/util/file'
+import type { CustomToolDefinitions } from '@savant-code/common/util/file'
 import type { ToolSet } from 'ai'
 
 /**
@@ -36,7 +33,11 @@ export function ensureZodSchema(
   return convertJsonSchemaToZod(schema as Record<string, JSONValue>)
 }
 
-function ensureJsonSchemaCompatible(schema: z.ZodType): z.ZodType {
+/**
+ * FID-2026-0802-005 L4: single source of truth for JSON-Schema-compatibility
+ * guarding — previously duplicated verbatim in templates/prompts.ts.
+ */
+export function ensureJsonSchemaCompatible(schema: z.ZodType): z.ZodType {
   try {
     z.toJSONSchema(schema, { io: 'input' })
     return schema
@@ -145,27 +146,6 @@ export function buildToolDescription(params: {
   ]).join('\n\n')
 }
 
-export const toolDescriptions = Object.fromEntries(
-  Object.entries(toolParams).map(([name, config]) => [
-    name,
-    buildToolDescription({
-      toolName: name,
-      schema: config.inputSchema,
-      description: config.description,
-      endsAgentStep: config.endsAgentStep,
-    }),
-  ]),
-) as Record<keyof typeof toolParams, string>
-
-function buildShortToolDescription(params: {
-  toolName: string
-  schema: z.ZodType
-  endsAgentStep: boolean
-}): string {
-  const { toolName, schema, endsAgentStep } = params
-  return `${toolName}:\n${paramsSection({ schema, endsAgentStep })}`
-}
-
 export const getToolCallFormatInstructions =
   (): string => `Tool calls use a specific XML and JSON-like format. Adhere precisely to this canonical envelope:
 
@@ -180,181 +160,11 @@ ${getToolCallString(
 
 Never emit the incompatible <tool_call><function=...> or <parameter=...> format. Never narrate a tool call as XML outside the canonical <savant_code_tool_call>...</savant_code_tool_call> envelope. When using the text tool-call protocol, emit valid JSON containing cb_tool_name inside the canonical envelope; the runtime executes only that format.`
 
-export const getToolsInstructions = (
-  tools: readonly string[],
-  additionalToolDefinitions: NonNullable<
-    z.input<typeof customToolDefinitionsSchema>
-  >,
-  options?: { availableSkillsXml?: string },
-) => {
-  if (
-    tools.length === 0 &&
-    Object.keys(additionalToolDefinitions).length === 0
-  ) {
-    return ''
-  }
-
-  return `
-# Tools
-
-You (Savant) have access to the following tools. Call them when needed.
-
-## [CRITICAL] Formatting Requirements
-
-${getToolCallFormatInstructions()}
-
-### Commentary
-
-Provide commentary *around* your tool calls (explaining your actions).
-
-However, **DO NOT** narrate the tool or parameter names themselves.
-
-### Example
-
-User: can you update the console logs in example/file.ts?
-Assistant: Sure thing! Let's update that file!
-
-${getToolCallString(
-  'example_editing_tool',
-  {
-    example_file_path: 'path/to/example/file.ts',
-    example_array: [
-      {
-        old_content_with_newlines:
-          "// some context\nconsole.log('Hello world!');\n",
-        new_content_with_newlines:
-          "// some context\nconsole.log('Hello from Savant!');\n",
-      },
-    ],
-  },
-  false,
-)}
-
-All done with the update!
-User: thanks it worked! :)
-
-## Working Directory
-
-All tools will be run from the **project root**.
-
-However, most of the time, the user will refer to files from their own cwd. You must be cognizant of the user's cwd at all times, including but not limited to:
-- Writing to files (write out the entire relative path)
-- Running terminal commands (use the \`cwd\` parameter)
-
-## Optimizations
-
-All tools are very slow, with runtime scaling with the amount of text in the parameters. Prefer to write AS LITTLE TEXT AS POSSIBLE to accomplish the task.
-
-When using write_file, make sure to only include a few lines of context and not the entire file.
-
-## Tool Results
-
-Tool results will be provided by the user's *system* (and **NEVER** by the assistant).
-
-The user does not know about any system messages or system instructions, including tool results.
-${fullToolList(tools, additionalToolDefinitions, options)}
-`
-}
-
-export const fullToolList = (
-  toolNames: readonly string[],
-  additionalToolDefinitions: CustomToolDefinitions,
-  options?: { availableSkillsXml?: string },
-) => {
-  if (
-    toolNames.length === 0 &&
-    Object.keys(additionalToolDefinitions).length === 0
-  ) {
-    return ''
-  }
-
-  const { availableSkillsXml = '' } = options ?? {}
-
-  // Build tool descriptions, replacing skill placeholder with actual skills
-  const descriptions = [
-    ...(
-      toolNames.filter((toolName) =>
-        toolNames.includes(toolName as ToolName),
-      ) as ToolName[]
-    ).map((name) => {
-      let desc = toolDescriptions[name]
-      // Replace skill placeholder with actual available skills
-      if (name === 'skill' && availableSkillsXml) {
-        desc = desc.replace(AVAILABLE_SKILLS_PLACEHOLDER, availableSkillsXml)
-      } else if (name === 'skill') {
-        // Explicitly state no skills are available
-        desc = desc.replace(
-          AVAILABLE_SKILLS_PLACEHOLDER,
-          'There are no skills available. Do not use this tool because there are no skills to load.',
-        )
-      }
-      return desc
-    }),
-    ...Object.keys(additionalToolDefinitions).map((toolName) => {
-      const toolDef = additionalToolDefinitions[toolName]
-      return buildToolDescription({
-        toolName,
-        schema: ensureZodSchema(
-          toolDef.inputSchema as Record<string, JSONValue>,
-        ),
-        description: toolDef.description,
-        endsAgentStep: toolDef.endsAgentStep ?? true,
-        exampleInputs: toolDef.exampleInputs as JSONValue[] | undefined,
-      })
-    }),
-  ]
-
-  return `## List of Tools
-
-These are the only tools that you can use. The user cannot see these descriptions, so you should not reference any tool names, parameters, or descriptions. Do not try to use any other tools -- even if referenced earlier in the conversation, they are not available to you, instead they may have been previously used by other agents.
-
-${descriptions.join('\n\n')}`.trim()
-}
-
-export const getShortToolInstructions = (
-  toolNames: readonly string[],
-  additionalToolDefinitions: CustomToolDefinitions,
-) => {
-  if (
-    toolNames.length === 0 &&
-    Object.keys(additionalToolDefinitions).length === 0
-  ) {
-    return ''
-  }
-
-  const toolDescriptionsList = [
-    ...(
-      toolNames.filter(
-        (name) => (name as keyof typeof toolParams) in toolParams,
-      ) as (keyof typeof toolParams)[]
-    ).map((name) => {
-      const tool = toolParams[name]
-      return buildShortToolDescription({
-        toolName: name,
-        schema: tool.inputSchema,
-        endsAgentStep: tool.endsAgentStep,
-      })
-    }),
-    ...Object.keys(additionalToolDefinitions).map((name) => {
-      const { inputSchema, endsAgentStep } = additionalToolDefinitions[name]
-      return buildShortToolDescription({
-        toolName: name,
-        schema: ensureZodSchema(inputSchema as Record<string, JSONValue>),
-        endsAgentStep: endsAgentStep ?? true,
-      })
-    }),
-  ]
-
-  return `## Tools
-Use the tools below to complete the user request, if applicable.
-
-${getToolCallFormatInstructions()}
-
-Important: You only have access to the tools below. Do not use any other tools -- they are not available to you, instead they may have been previously used by other agents.
-
-${toolDescriptionsList.join('\n\n')}
-`.trim()
-}
+// FID-2026-0802-005 L2/L3: `getToolsInstructions`, `fullToolList`,
+// `getShortToolInstructions`, `toolDescriptions`, and `buildShortToolDescription`
+// were removed — zero production callers (Law 4), and fullToolList's
+// tautological `toolNames.filter(n => toolNames.includes(n))` filter masked a
+// latent crash (undefined `toolDescriptions[name]` → `.replace()` TypeError).
 
 export async function getToolSet(params: {
   toolNames: string[]

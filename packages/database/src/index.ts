@@ -4,25 +4,17 @@ import path from 'path'
 
 import { Database } from 'bun:sqlite'
 
-// Database path
-const DB_DIR = path.join(os.homedir(), '.savant-free')
-const DB_PATH = path.join(DB_DIR, 'echo.db')
+// Database path. SAVANT_DB_PATH is an escape hatch for tests (e.g. ':memory:'
+// or a temp file) so the module can be imported against an isolated database
+// (FID-2026-0802-006 DB4/DB-tests).
+const DB_PATH =
+  process.env.SAVANT_DB_PATH ||
+  path.join(os.homedir(), '.savant-free', 'echo.db')
 
-// Ensure directory exists
-if (!fs.existsSync(DB_DIR)) {
-  fs.mkdirSync(DB_DIR, { recursive: true })
-}
-
-// Create database connection
-const db = new Database(DB_PATH)
-
-// Enable WAL mode for better performance
-db.exec('PRAGMA journal_mode = WAL')
-db.exec('PRAGMA foreign_keys = ON')
-
-// Create schema
-function createSchema(): void {
-  db.exec(`
+// Create schema (uses the passed connection so the fail-open fallback can
+// initialize an in-memory database the same way).
+function createSchema(connection: Database): void {
+  connection.exec(`
     -- Schema version tracking
     CREATE TABLE IF NOT EXISTS schema_version (
       version INTEGER PRIMARY KEY,
@@ -48,15 +40,6 @@ function createSchema(): void {
       version INTEGER DEFAULT 1,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-
-    -- Agent Configs: Runtime agent configurations (instance-specific)
-    CREATE TABLE IF NOT EXISTS agent_configs (
-      id TEXT PRIMARY KEY,
-      session_id TEXT REFERENCES sessions(id),
-      template_id TEXT REFERENCES agent_templates(id),
-      config TEXT NOT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
 
     -- FID Documents: Foundation Implementation Documents
@@ -101,18 +84,63 @@ function createSchema(): void {
   `)
 }
 
-// Initialize schema
-createSchema()
+/**
+ * Open a database connection with WAL + foreign keys enabled and the schema
+ * initialized. FID-2026-0803-002 DB-1: the open + DDL are guarded so a corrupt
+ * or unwritable database file (or a missing directory for a custom
+ * SAVANT_DB_PATH) fails open to an in-memory database instead of crashing the
+ * whole CLI at import time.
+ */
+function initDatabase(dbPath: string): Database {
+  const initialize = (pathToOpen: string): Database => {
+    const connection = new Database(pathToOpen)
+    // Enable WAL mode for better performance
+    connection.exec('PRAGMA journal_mode = WAL')
+    connection.exec('PRAGMA foreign_keys = ON')
+    // Initialize schema and record the applied schema version (FID-006 DB4:
+    // the schema_version table was created but never written; it now anchors a
+    // migration path — see getSchemaVersion).
+    createSchema(connection)
+    connection
+      .prepare('INSERT OR IGNORE INTO schema_version (version) VALUES (1)')
+      .run()
+    return connection
+  }
+
+  try {
+    // Ensure directory exists (skipped for :memory: and other non-file targets)
+    if (dbPath !== ':memory:') {
+      fs.mkdirSync(path.dirname(dbPath), { recursive: true })
+    }
+    return initialize(dbPath)
+  } catch (error) {
+    // Fail-open: fall back to an in-memory database so the CLI can still run.
+    // The write path is lost for the session, but startup and existing
+    // sessions degrade gracefully instead of hard-crashing on import.
+    // eslint-disable-next-line no-console -- startup diagnostic; no structured logger in this package
+    console.warn(
+      `[database] Could not open database at ${dbPath} (${error instanceof Error ? error.message : String(error)}); falling back to an in-memory database.`,
+    )
+    return initialize(':memory:')
+  }
+}
+
+// Create database connection (guarded, see initDatabase)
+const db = initDatabase(DB_PATH)
+
+/**
+ * Returns the highest applied schema version. Future schema changes must bump
+ * the version here and guard with `if (getSchemaVersion() < N) { ... }`.
+ */
+export function getSchemaVersion(): number {
+  const row = db
+    .prepare('SELECT MAX(version) as version FROM schema_version')
+    .get() as { version: number | null } | null
+  return row?.version ?? 0
+}
 
 // Export database and types
+// FID-2026-0803-002 DB-4: `getDatabase`/`closeDatabase` had zero callers and
+// duplicated the `db` export; removed.
 export { db }
 export type DatabaseType = typeof db
-
-// Helper functions
-export function getDatabase(): typeof db {
-  return db
-}
-
-export function closeDatabase(): void {
-  db.close()
-}

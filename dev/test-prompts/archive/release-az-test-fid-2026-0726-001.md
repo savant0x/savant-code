@@ -234,11 +234,11 @@
 
 ### T8.3 — `.savant-code/` config directory
 - Search `common/src`, `cli/src`, and `packages/agent-runtime/src` for config directory references
-- Verify `.savant-code` is used as the config directory name (not `.freebuff`)
+- Verify `.savant-code` is used as the config directory name (not `.savant`)
 - **Expected:** all runtime paths use `.savant-code/`
 
-### T8.4 — No stale `.freebuff` references in production
-- Search `common/src`, `cli/src`, `sdk/src`, and `packages/agent-runtime/src` for `freebuff` (excluding test files)
+### T8.4 — No stale `.savant` references in production
+- Search `common/src`, `cli/src`, `sdk/src`, and `packages/agent-runtime/src` for `savant` (excluding test files)
 - **Expected:** zero matches in production source
 
 ---

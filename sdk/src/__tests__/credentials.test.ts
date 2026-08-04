@@ -309,4 +309,36 @@ describe('credentials', () => {
       }
     })
   })
+
+  describe('credentials file permissions (FID-2026-0802-008 SEC1)', () => {
+    test.skipIf(process.platform === 'win32')(
+      'writes credentials file 0600 and config dir 0700 on POSIX',
+      () => {
+        const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'chatgpt-perms-'))
+        const originalHomedir = osWithMutableHomedir.homedir
+        osWithMutableHomedir.homedir = () => tmpDir
+
+        try {
+          const env = createTestEnv({ NEXT_PUBLIC_CB_ENVIRONMENT: 'test' })
+          const configDir = getConfigDir(env)
+          saveChatGptOAuthCredentials(
+            {
+              accessToken: 'access-token',
+              refreshToken: 'refresh-token',
+              expiresAt: Date.now() + 60_000,
+              connectedAt: Date.now(),
+            },
+            env,
+          )
+
+          const credentialsPath = getCredentialsPath(env)
+          expect(fs.statSync(credentialsPath).mode & 0o777).toBe(0o600)
+          expect(fs.statSync(configDir).mode & 0o777).toBe(0o700)
+        } finally {
+          osWithMutableHomedir.homedir = originalHomedir
+          fs.rmSync(tmpDir, { recursive: true, force: true })
+        }
+      },
+    )
+  })
 })

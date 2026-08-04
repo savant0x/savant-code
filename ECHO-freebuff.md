@@ -14,3 +14,9 @@ Read that file completely before any work session. Do not use `ECHO.md` (Savant-
 agent governance.
 
 See `FREEREADME.md` for the full session directive.
+
+## Signing Policy
+
+Agents sign every authored/modified document (FIDs, session summaries, CHANGELOG entries, knowledge files) as
+**`Savant`** only — never as `Buffy`, `FreeBuff`, or any other product/harness name. See "Document Signing &
+Attribution" in `dev/nova/specs/echo-v0.1.2-freebuff.md`.

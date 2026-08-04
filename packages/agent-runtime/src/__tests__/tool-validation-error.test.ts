@@ -1120,4 +1120,261 @@ describe('tool validation error handling', () => {
     )
     expect(orphanToolResults.length).toBe(0)
   })
+
+  it('C1: should not crash on malformed write-tool input (null / bare string)', async () => {
+    // FID-2026-0802-005 C1 regression: the write gate used to dereference
+    // raw (unvalidated) toolCall.input BEFORE the parse-error check — null
+    // threw `TypeError: Cannot read properties of null`, a bare string threw
+    // a strict-mode `Cannot create property 'path' on string`. Both must now
+    // surface as a graceful tool error instead of failing the run.
+    const agentWithWriteTool: AgentTemplate = {
+      ...testAgentTemplate,
+      toolNames: ['write_file', 'end_turn'],
+    }
+
+    const malformedInputs: Array<{ input: unknown; expectInMessage: string }> =
+      [
+        {
+          input: null,
+          expectInMessage: 'Invalid parameters for write_file',
+        },
+        {
+          input: 'just a bare string',
+          expectInMessage:
+            'expected the tool arguments to be an object, but received a string',
+        },
+      ]
+
+    for (const { input, expectInMessage } of malformedInputs) {
+      const toolCallChunk = {
+        type: 'tool-call' as const,
+        toolName: 'write_file',
+        toolCallId: `malformed-write-${Math.random()}`,
+        input: input as any,
+      }
+
+      async function* mockStream() {
+        yield toolCallChunk
+        return promptSuccess('mock-message-id')
+      }
+
+      const sessionState = getInitialSessionState(mockFileContext)
+      const agentState = sessionState.mainAgentState
+      agentState.fsmPhase = 'green'
+      const responseChunks: (string | PrintModeEvent)[] = []
+
+      // Must NOT reject (pre-fix this threw an uncaught TypeError).
+      const result = await processStream({
+        ...agentRuntimeImpl,
+        agentContext: {},
+        agentState,
+        agentStepId: 'test-step-id',
+        agentTemplate: agentWithWriteTool,
+        ancestorRunIds: [],
+        clientSessionId: 'test-session',
+        fileContext: mockFileContext,
+        fingerprintId: 'test-fingerprint',
+        fullResponse: '',
+        localAgentTemplates: { 'test-agent': agentWithWriteTool },
+        messages: [],
+        prompt: 'test prompt',
+        repoId: undefined,
+        repoUrl: undefined,
+        runId: 'test-run-id',
+        signal: new AbortController().signal,
+        stream: mockStream(),
+        system: 'test system',
+        tools: {},
+        userId: 'test-user',
+        userInputId: 'test-input-id',
+        onCostCalculated: async () => {},
+        onResponseChunk: (chunk) => {
+          responseChunks.push(chunk)
+        },
+      })
+
+      const errorEvents = responseChunks.filter(
+        (chunk): chunk is Extract<PrintModeEvent, { type: 'error' }> =>
+          typeof chunk !== 'string' && chunk.type === 'error',
+      )
+      expect(errorEvents.length).toBe(1)
+      expect(errorEvents[0].message).toContain(expectInMessage)
+      // No tool_call was streamed for the malformed call.
+      const toolCallEvents = responseChunks.filter(
+        (chunk): chunk is Extract<PrintModeEvent, { type: 'tool_call' }> =>
+          typeof chunk !== 'string' && chunk.type === 'tool_call',
+      )
+      expect(toolCallEvents.length).toBe(0)
+      expect(result.hadToolCallError).toBe(true)
+    }
+  })
+
+  it('C2: should surface a rejected tool handler as a tool error instead of failing the run', async () => {
+    // FID-2026-0802-005 C2 regression: a handler rejection used to propagate
+    // past the executor → reject previousToolCallFinished → reject the whole
+    // run. It must now be caught, surfaced as an error chunk (driving the
+    // hadToolCallError retry flow), and the run must continue.
+    const agentWithTerminal: AgentTemplate = {
+      ...testAgentTemplate,
+      toolNames: ['run_terminal_command', 'end_turn'],
+    }
+
+    // Make the runtime's terminal execution throw inside the handler.
+    agentRuntimeImpl.requestToolCall = async () => {
+      throw new Error('boom: terminal execution failed')
+    }
+
+    // 'unsafe' permission mode lets run_terminal_command past the sandbox so
+    // the handler actually executes (and rejects) — the point of this test.
+    const unsafeFileContext = {
+      ...mockFileContext,
+      permissionMode: 'unsafe' as const,
+    }
+    const sessionState = getInitialSessionState(unsafeFileContext)
+    const agentState = sessionState.mainAgentState
+    agentState.fsmPhase = 'green'
+    const responseChunks: (string | PrintModeEvent)[] = []
+
+    async function* mockStream() {
+      yield {
+        type: 'tool-call',
+        toolName: 'run_terminal_command',
+        toolCallId: 'throwing-handler-call',
+        input: { command: 'bun run typecheck' },
+      } as StreamChunk
+      return promptSuccess('mock-message-id')
+    }
+
+    // Must NOT reject (pre-fix this propagated and failed the run).
+    const result = await processStream({
+      ...agentRuntimeImpl,
+      agentContext: {},
+      agentState,
+      agentStepId: 'test-step-id',
+      agentTemplate: agentWithTerminal,
+      ancestorRunIds: [],
+      clientSessionId: 'test-session',
+      fileContext: unsafeFileContext,
+      fingerprintId: 'test-fingerprint',
+      fullResponse: '',
+      localAgentTemplates: { 'test-agent': agentWithTerminal },
+      messages: [],
+      prompt: 'test prompt',
+      repoId: undefined,
+      repoUrl: undefined,
+      runId: 'test-run-id',
+      signal: new AbortController().signal,
+      stream: mockStream(),
+      system: 'test system',
+      tools: {},
+      userId: 'test-user',
+      userInputId: 'test-input-id',
+      onCostCalculated: async () => {},
+      onResponseChunk: (chunk) => {
+        responseChunks.push(chunk)
+      },
+    })
+
+    const errorEvents = responseChunks.filter(
+      (chunk): chunk is Extract<PrintModeEvent, { type: 'error' }> =>
+        typeof chunk !== 'string' && chunk.type === 'error',
+    )
+    expect(errorEvents.length).toBe(1)
+    expect(errorEvents[0].message).toContain('boom: terminal execution failed')
+    // The run continues via the hadToolCallError retry flow.
+    expect(result.hadToolCallError).toBe(true)
+    // No orphan tool_result was recorded for the failed handler.
+    const toolMessages = agentState.messageHistory.filter(
+      (m) => m.role === 'tool',
+    )
+    expect(toolMessages.length).toBe(0)
+  })
+
+  it('C2 (custom tools): should surface a rejected custom-tool request as a tool error instead of failing the run', async () => {
+    // FID-2026-0802-005 C2 parity: executeCustomToolCall's requestToolCall
+    // rejection used to reject previousToolCallFinished and fail the whole
+    // run — the same failure mode C2 fixed for native handlers.
+    const toolName = 'flaky_custom_tool'
+    const agentWithCustomTool: AgentTemplate = {
+      ...testAgentTemplate,
+      toolNames: [toolName, 'end_turn'],
+    }
+
+    const fileContextWithCustomTool = {
+      ...mockFileContext,
+      customToolDefinitions: {
+        [toolName]: {
+          inputSchema: {
+            type: 'object',
+            properties: {
+              query: { type: 'string' },
+            },
+            required: ['query'],
+            additionalProperties: false,
+          },
+          endsAgentStep: false,
+          description: 'A flaky custom tool',
+        },
+      },
+    }
+
+    agentRuntimeImpl.requestMcpToolData = async () => []
+    agentRuntimeImpl.requestToolCall = async () => {
+      throw new Error('boom: custom tool execution failed')
+    }
+
+    async function* mockStream() {
+      yield {
+        type: 'tool-call',
+        toolName,
+        toolCallId: 'flaky-custom-call',
+        input: { query: 'test' },
+      } as StreamChunk
+      return promptSuccess('mock-message-id')
+    }
+
+    const sessionState = getInitialSessionState(fileContextWithCustomTool)
+    const agentState = sessionState.mainAgentState
+    const responseChunks: (string | PrintModeEvent)[] = []
+
+    // Must NOT reject (pre-fix this propagated and failed the run).
+    const result = await processStream({
+      ...agentRuntimeImpl,
+      agentContext: {},
+      agentState,
+      agentStepId: 'test-step-id',
+      agentTemplate: agentWithCustomTool,
+      ancestorRunIds: [],
+      clientSessionId: 'test-session',
+      fileContext: fileContextWithCustomTool,
+      fingerprintId: 'test-fingerprint',
+      fullResponse: '',
+      localAgentTemplates: { 'test-agent': agentWithCustomTool },
+      messages: [],
+      prompt: 'test prompt',
+      repoId: undefined,
+      repoUrl: undefined,
+      runId: 'test-run-id',
+      signal: new AbortController().signal,
+      stream: mockStream(),
+      system: 'test system',
+      tools: {},
+      userId: 'test-user',
+      userInputId: 'test-input-id',
+      onCostCalculated: async () => {},
+      onResponseChunk: (chunk) => {
+        responseChunks.push(chunk)
+      },
+    })
+
+    const errorEvents = responseChunks.filter(
+      (chunk): chunk is Extract<PrintModeEvent, { type: 'error' }> =>
+        typeof chunk !== 'string' && chunk.type === 'error',
+    )
+    expect(errorEvents.length).toBe(1)
+    expect(errorEvents[0].message).toContain(
+      'boom: custom tool execution failed',
+    )
+    expect(result.hadToolCallError).toBe(true)
+  })
 })

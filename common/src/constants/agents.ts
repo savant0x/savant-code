@@ -85,6 +85,18 @@ export const AGENT_NAME_TO_TYPES = Object.entries(AGENT_NAMES).reduce(
 
 export const MAX_AGENT_STEPS_DEFAULT = 200
 
+/**
+ * Base agents that may spawn ANY agent by raw ID, bypassing the
+ * spawnableAgents allowlist. Single source of truth (FID-2026-0802-005 L6) —
+ * previously duplicated in tool-executor.ts and spawn-agent-utils.ts.
+ */
+export const BASE_AGENTS: readonly string[] = [
+  'base',
+  'base-free',
+  'base-max',
+  'base-experimental',
+]
+
 export const ECHO_PROTOCOL_INSTRUCTIONS = [
   '# ECHO Protocol (v0.2.0) \u2014 Engineering Governance',
   '',

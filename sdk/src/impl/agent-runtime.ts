@@ -60,6 +60,8 @@ export function getAgentRuntimeImpl(
     | 'requestOptionalFile'
     | 'sendAction'
     | 'sendSubagentChunk'
+    | 'checkpointDir'
+    | 'checkpointTurnId'
   >,
 ): AgentRuntimeDeps & AgentRuntimeScopedDeps {
   const {
@@ -74,6 +76,8 @@ export function getAgentRuntimeImpl(
     requestOptionalFile,
     sendAction,
     sendSubagentChunk,
+    checkpointDir,
+    checkpointTurnId,
   } = params
 
   const clientEnv: ClientEnv = {
@@ -140,6 +144,10 @@ export function getAgentRuntimeImpl(
     sendSubagentChunk,
 
     apiKey,
+
+    // Checkpointing (FID-2026-0803-004)
+    checkpointDir,
+    checkpointTurnId,
   }
 }
 

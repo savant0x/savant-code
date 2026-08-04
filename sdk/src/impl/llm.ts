@@ -72,6 +72,23 @@ function calculateUsedCredits(params: { costDollars: number }): number {
   return Math.round(costDollars * (1 + PROFIT_MARGIN) * 100)
 }
 
+/**
+ * Extract the OpenRouter cost override from provider metadata. Previously
+ * triplicated across the three prompt entry points (FID-2026-0803-003 SDK-3);
+ * returns undefined when no savant-code usage metadata is present.
+ */
+function extractCostOverrideDollars(
+  providerMetadata: unknown,
+): number | undefined {
+  const savantCodeMetadata = (
+    providerMetadata as
+      { 'savant-code'?: { usage?: OpenRouterUsageAccounting } } | undefined
+  )?.['savant-code']
+  const usage = savantCodeMetadata?.usage
+  if (!usage) return undefined
+  return (usage.cost ?? 0) + (usage.costDetails?.upstreamInferenceCost ?? 0)
+}
+
 export function getProviderOptions(params: {
   model: string
   runId: string
@@ -148,32 +165,39 @@ type OpenRouterUsageAccounting = {
 }
 
 /**
- * Check if an error is an OAuth rate limit error that should trigger fallback.
+ * Shared OAuth error classifier (FID-2026-0803-003 SDK-4): matches a status
+ * code OR any keyword in the message/response body.
  */
-function isOAuthRateLimitError<T>(error: T): boolean {
+function isOAuthError<T>(
+  error: T,
+  params: { statuses: number[]; keywords: string[] },
+): boolean {
   if (!error || typeof error !== 'object') return false
 
   // Check status code (handles both 'status' from AI SDK and 'statusCode' from our errors)
   const statusCode = getErrorStatusCode(error)
-  if (statusCode === 429) return true
-
-  // Check error message for rate limit indicators
-  const err = error as {
-    message?: string
-    responseBody?: string
+  if (statusCode !== undefined && params.statuses.includes(statusCode)) {
+    return true
   }
+
+  // Check error message / response body for the keyword set
+  const err = error as { message?: string; responseBody?: string }
   const message = (err.message || '').toLowerCase()
   const responseBody = (err.responseBody || '').toLowerCase()
 
-  if (message.includes('rate_limit') || message.includes('rate limit'))
-    return true
-  if (
-    responseBody.includes('rate_limit') ||
-    responseBody.includes('rate limit')
+  return params.keywords.some(
+    (keyword) => message.includes(keyword) || responseBody.includes(keyword),
   )
-    return true
+}
 
-  return false
+/**
+ * Check if an error is an OAuth rate limit error that should trigger fallback.
+ */
+function isOAuthRateLimitError<T>(error: T): boolean {
+  return isOAuthError(error, {
+    statuses: [429],
+    keywords: ['rate_limit', 'rate limit'],
+  })
 }
 
 /**
@@ -181,36 +205,10 @@ function isOAuthRateLimitError<T>(error: T): boolean {
  * This indicates we should try refreshing the token.
  */
 function isOAuthAuthError<T>(error: T): boolean {
-  if (!error || typeof error !== 'object') return false
-
-  // Check status code (handles both 'status' from AI SDK and 'statusCode' from our errors)
-  const statusCode = getErrorStatusCode(error)
-  if (statusCode === 401 || statusCode === 403) return true
-
-  // Check error message for auth indicators
-  const err = error as {
-    message?: string
-    responseBody?: string
-  }
-  const message = (err.message || '').toLowerCase()
-  const responseBody = (err.responseBody || '').toLowerCase()
-
-  if (message.includes('unauthorized') || message.includes('invalid_token'))
-    return true
-  if (message.includes('authentication') || message.includes('expired'))
-    return true
-  if (
-    responseBody.includes('unauthorized') ||
-    responseBody.includes('invalid_token')
-  )
-    return true
-  if (
-    responseBody.includes('authentication') ||
-    responseBody.includes('expired')
-  )
-    return true
-
-  return false
+  return isOAuthError(error, {
+    statuses: [401, 403],
+    keywords: ['unauthorized', 'invalid_token', 'authentication', 'expired'],
+  })
 }
 
 function getModelProvider(model: LanguageModel): string {
@@ -403,20 +401,27 @@ export async function* promptAiSdkStream(
 
         if (isSpawnableAgent || isLocalAgent) {
           // Transform agent tool call to spawn_agents
-          const deepParseJson = (value: JSONValue): JSONValue => {
+          // FID-2026-0802-008 V4: bounded recursion — tool-call input is
+          // model-generated, but a deeply nested value could otherwise
+          // overflow the stack.
+          const deepParseJson = (value: JSONValue, depth = 0): JSONValue => {
+            if (depth > 100) return value
             if (typeof value === 'string') {
               try {
-                return deepParseJson(toJSONValue(JSON.parse(value)))
+                return deepParseJson(toJSONValue(JSON.parse(value)), depth + 1)
               } catch {
                 return value
               }
             }
             if (Array.isArray(value)) {
-              return value.map((v) => deepParseJson(v))
+              return value.map((v) => deepParseJson(v, depth + 1))
             }
             if (value !== null && typeof value === 'object') {
               return Object.fromEntries(
-                Object.entries(value).map(([k, v]) => [k, deepParseJson(v)]),
+                Object.entries(value).map(([k, v]) => [
+                  k,
+                  deepParseJson(v, depth + 1),
+                ]),
               )
             }
             return value
@@ -646,6 +651,9 @@ export async function* promptAiSdkStream(
             ?.reasoning?.exclude,
       )
       if (!reasoningExcluded) {
+        // FID-2026-0803-003 SDK-2: reasoning is user-visible output — once
+        // streamed, a ChatGPT OAuth fallback would re-emit it.
+        hasYieldedContent = true
         yield {
           type: 'reasoning',
           text: chunkValue.text,
@@ -676,6 +684,9 @@ export async function* promptAiSdkStream(
       }
     }
     if (chunkValue.type === 'tool-call') {
+      // FID-2026-0803-003 SDK-2: tool calls are actionable output — falling
+      // back after one is yielded would deliver it twice (double execution).
+      hasYieldedContent = true
       yield chunkValue
     }
   }
@@ -709,17 +720,7 @@ export async function* promptAiSdkStream(
     const providerMetadataResult = await response.providerMetadata
     const providerMetadata = providerMetadataResult ?? {}
 
-    let costOverrideDollars: number | undefined
-    if (providerMetadata['savant-code']) {
-      if (providerMetadata['savant-code'].usage) {
-        const openrouterUsage = providerMetadata['savant-code']
-          .usage as OpenRouterUsageAccounting
-
-        costOverrideDollars =
-          (openrouterUsage.cost ?? 0) +
-          (openrouterUsage.costDetails?.upstreamInferenceCost ?? 0)
-      }
-    }
+    const costOverrideDollars = extractCostOverrideDollars(providerMetadata)
 
     // Call the cost callback if provided
     if (params.onCostCalculated && costOverrideDollars) {
@@ -778,17 +779,7 @@ export async function promptAiSdk(
   const content = response.text
 
   const providerMetadata = response.providerMetadata ?? {}
-  let costOverrideDollars: number | undefined
-  if (providerMetadata['savant-code']) {
-    if (providerMetadata['savant-code'].usage) {
-      const openrouterUsage = providerMetadata['savant-code']
-        .usage as OpenRouterUsageAccounting
-
-      costOverrideDollars =
-        (openrouterUsage.cost ?? 0) +
-        (openrouterUsage.costDetails?.upstreamInferenceCost ?? 0)
-    }
-  }
+  const costOverrideDollars = extractCostOverrideDollars(providerMetadata)
 
   // Call the cost callback if provided
   if (params.onCostCalculated && costOverrideDollars) {
@@ -848,17 +839,7 @@ export async function promptAiSdkStructured<T>(
   const content = response.object
 
   const providerMetadata = response.providerMetadata ?? {}
-  let costOverrideDollars: number | undefined
-  if (providerMetadata['savant-code']) {
-    if (providerMetadata['savant-code'].usage) {
-      const openrouterUsage = providerMetadata['savant-code']
-        .usage as OpenRouterUsageAccounting
-
-      costOverrideDollars =
-        (openrouterUsage.cost ?? 0) +
-        (openrouterUsage.costDetails?.upstreamInferenceCost ?? 0)
-    }
-  }
+  const costOverrideDollars = extractCostOverrideDollars(providerMetadata)
 
   // Call the cost callback if provided
   if (params.onCostCalculated && costOverrideDollars) {

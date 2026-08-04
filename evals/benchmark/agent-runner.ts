@@ -13,7 +13,7 @@ import { SavantCodeRunner } from './runners/savant'
 
 import type { Runner, AgentStep } from './runners/runner'
 import type { EvalCommitV2, FinalCheckOutput } from './types'
-import type { SavantCodeClient } from '@savant-code/sdk'
+import type { AgentDefinition, SavantCodeClient } from '@savant-code/sdk'
 
 export type { AgentStep }
 
@@ -37,7 +37,7 @@ export async function runAgentOnCommit({
   repoUrl: string
   initCommand?: string
   env?: Record<string, string>
-  localAgentDefinitions: any[]
+  localAgentDefinitions: AgentDefinition[]
   printEvents: boolean
   finalCheckCommands?: string[]
   externalAgentType?: ExternalAgentType
@@ -61,6 +61,11 @@ export async function runAgentOnCommit({
 
   try {
     const timeoutMs = 60 * 60 * 1000 // 60 minutes
+    // FID-2026-0803-007 EV-3/EV-11: an abort signal that fires at the same
+    // deadline as the withTimeout wrapper — SavantCodeRunner threads it into
+    // client.run so the LLM loop actually stops (withTimeout only raced it),
+    // and the traceSink keeps partial steps if the run is aborted.
+    const signal = AbortSignal.timeout(timeoutMs)
     await withTimeout(
       withTestRepo(
         {
@@ -88,6 +93,8 @@ export async function runAgentOnCommit({
               printEvents,
               commitId: commit.id,
               parentSha: commit.parentSha,
+              signal,
+              traceSink: trace,
             })
           }
 
@@ -96,7 +103,12 @@ export async function runAgentOnCommit({
           )
 
           const result = await runner.run(commit.prompt)
-          trace.push(...result.steps)
+          // FID-2026-0803-007 EV-11: SavantCodeRunner already streams events
+          // into the shared `trace` sink in real time, so don't double-push on
+          // success; external runners only surface steps on success.
+          if (externalAgentType !== undefined) {
+            trace.push(...result.steps)
+          }
           cost = result.totalCostUsd
           diff = result.diff
 
@@ -182,15 +194,22 @@ async function runFinalCheckCommands(
         stderr,
       })
       console.log(`  ✓ Command succeeded: ${command}`)
-    } catch (error: any) {
-      // Command failed, but we still capture the output
+    } catch (error) {
+      // Command failed, but we still capture the output.
+      // FID-2026-0803-007 EV-6: narrow the exec error shape instead of `any`.
+      const execError = error as {
+        code?: number
+        stdout?: string
+        stderr?: string
+        message?: string
+      }
       results.push({
         command,
-        exitCode: error.code || 1,
-        stdout: error.stdout || '',
-        stderr: error.stderr || error.message || '',
+        exitCode: execError.code || 1,
+        stdout: execError.stdout || '',
+        stderr: execError.stderr || execError.message || '',
       })
-      console.log(`  ✗ Command failed (exit ${error.code}): ${command}`)
+      console.log(`  ✗ Command failed (exit ${execError.code}): ${command}`)
     }
   }
 

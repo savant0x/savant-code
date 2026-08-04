@@ -1,7 +1,11 @@
 import type { Sandbox } from './sandbox'
 import type { TaskDefinition } from './schema'
 import type { PrintModeEvent } from '@savant-code/common/types/print-mode'
-import type { CustomToolDefinition, RunState } from '@savant-code/sdk'
+import type {
+  AgentDefinition,
+  CustomToolDefinition,
+  RunState,
+} from '@savant-code/sdk'
 
 /**
  * ECHO phases that the harness tracks.
@@ -99,6 +103,14 @@ export interface RunnerConfig {
   apiKey?: string
   /** Agent or agent ID to run. Defaults to 'savant'. */
   agentId?: string
+  /**
+   * Agent definitions to register with the SDK client. Without these the
+   * client's registry is empty and every run fails with
+   * `Invalid agent ID ... Available agents: ` (the CLI prebuilds these into a
+   * bundle; the eval runner must load them explicitly, mirroring
+   * evals/benchmark/run-benchmark.ts).
+   */
+  agentDefinitions?: AgentDefinition[]
   /** Maximum agent steps allowed for a single run. */
   maxAgentSteps?: number
   /** Environment variables merged over the sandbox defaults. */

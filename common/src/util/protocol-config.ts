@@ -1,7 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 
-export interface FreeBuffProtocolConfig {
+export interface SavantProtocolConfig {
   version: string
   strictMode: boolean
 }
@@ -10,7 +10,9 @@ export interface ProtocolConfig {
   strictMode: boolean
   language: string | null
   openFids: string[]
-  freebuff: FreeBuffProtocolConfig | null
+  /** Perfection-loop circuit breaker limit from `perfection_loop.max_iterations`. */
+  maxIterations: number
+  savant: SavantProtocolConfig | null
 }
 
 function extractYamlSection(
@@ -41,12 +43,13 @@ function extractYamlSection(
 
 /**
  * Reads protocol.config.yaml from the project root.
- * Returns parsed config with defaults for both Savant and FreeBuff contracts.
+ * Returns parsed config with defaults for the Savant protocol contract.
  */
 export function readProtocolConfig(cwd: string): ProtocolConfig {
   let strictMode = true
   let language: string | null = null
-  let freebuff: FreeBuffProtocolConfig | null = null
+  let maxIterations = 10
+  let savant: SavantProtocolConfig | null = null
 
   try {
     const configPath = path.join(cwd, 'protocol.config.yaml')
@@ -61,22 +64,44 @@ export function readProtocolConfig(cwd: string): ProtocolConfig {
       strictMode = protocolStrictMatch[1] === 'true'
     }
 
-    const freebuffLines = extractYamlSection(lines, 'freebuff', 0)
-    const freebuffProtocolLines = extractYamlSection(
-      freebuffLines,
+    // perfection_loop.max_iterations drives the FSM circuit breaker
+    // (transition-phase.ts). FID-2026-0803-001 ECHO-3.
+    const perfectionLoopLines = extractYamlSection(lines, 'perfection_loop', 0)
+    const maxIterationsMatch = perfectionLoopLines
+      .join('\n')
+      .match(/^\s+max_iterations:\s*(\d+)/m)
+    if (maxIterationsMatch) {
+      const parsed = Number.parseInt(maxIterationsMatch[1], 10)
+      if (Number.isFinite(parsed) && parsed > 0) {
+        maxIterations = parsed
+      }
+    }
+
+    // FreeBuff protocol documents intentionally use `freebuff.protocol`.
+    // Normalize that legacy contract into the Savant runtime shape while also
+    // accepting the forward-looking `savant.protocol` alias.
+    const freeBuffLines = extractYamlSection(lines, 'freebuff', 0)
+    const savantLines = extractYamlSection(lines, 'savant', 0)
+    const freeBuffProtocolLines = extractYamlSection(
+      freeBuffLines,
       'protocol',
       2,
     )
-    const freebuffVersionMatch = freebuffProtocolLines
+    const savantProtocolLines = extractYamlSection(savantLines, 'protocol', 2)
+    const protocolContractLines =
+      savantProtocolLines.length > 0
+        ? savantProtocolLines
+        : freeBuffProtocolLines
+    const savantVersionMatch = protocolContractLines
       .join('\n')
       .match(/^\s+version:\s*["']([^"']+)["']/m)
-    const freebuffStrictMatch = freebuffProtocolLines
+    const savantStrictMatch = protocolContractLines
       .join('\n')
       .match(/^\s+strict_mode:\s*(true|false)/m)
-    if (freebuffVersionMatch && freebuffStrictMatch) {
-      freebuff = {
-        version: freebuffVersionMatch[1],
-        strictMode: freebuffStrictMatch[1] === 'true',
+    if (savantVersionMatch && savantStrictMatch) {
+      savant = {
+        version: savantVersionMatch[1],
+        strictMode: savantStrictMatch[1] === 'true',
       }
     }
 
@@ -92,7 +117,7 @@ export function readProtocolConfig(cwd: string): ProtocolConfig {
 
   const openFids = scanOpenFids(cwd)
 
-  return { strictMode, language, openFids, freebuff }
+  return { strictMode, language, openFids, maxIterations, savant }
 }
 
 /**

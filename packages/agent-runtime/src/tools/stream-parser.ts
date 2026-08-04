@@ -30,7 +30,10 @@ import type {
 } from '@savant-code/common/types/messages/savant-code-message'
 import type { PrintModeEvent } from '@savant-code/common/types/print-mode'
 import type { Subgoal } from '@savant-code/common/types/session-state'
-import type { ProjectFileContext } from '@savant-code/common/util/file'
+import type {
+  CustomToolDefinitions,
+  ProjectFileContext,
+} from '@savant-code/common/util/file'
 
 export async function processStream(
   params: {
@@ -46,6 +49,8 @@ export async function processStream(
     runId: string
     signal: AbortSignal
     userId: string | undefined
+    /** FID-2026-0802-005 H8: step-built custom tool data (incl. MCP tools). */
+    customToolDefinitions?: CustomToolDefinitions
 
     onCostCalculated: (credits: number) => Promise<void>
     onResponseChunk: (chunk: string | PrintModeEvent) => void
@@ -82,6 +87,10 @@ export async function processStream(
     userId,
   } = params
   const fullResponseChunks: string[] = [fullResponse]
+  // FID-2026-0802-005 H1: incremental accumulator — the previous
+  // `fullResponseChunks.join('')` on every tool call was O(k·L) copying for
+  // tool-dense responses. The chunks array is kept only for the final return.
+  let fullResponseSoFar = fullResponse
 
   // === MUTABLE STATE ===
   const toolResults: ToolMessage[] = []
@@ -171,7 +180,7 @@ export async function processStream(
             fromHandleSteps: false,
 
             fileProcessingState,
-            fullResponse: fullResponseChunks.join(''),
+            fullResponse: fullResponseSoFar,
             previousToolCallFinished: previousPromise,
             toolCallId,
             toolCalls,
@@ -190,7 +199,7 @@ export async function processStream(
             input,
 
             fileProcessingState,
-            fullResponse: fullResponseChunks.join(''),
+            fullResponse: fullResponseSoFar,
             previousToolCallFinished: previousPromise,
             toolCallId,
             toolCalls,
@@ -242,7 +251,7 @@ export async function processStream(
       } else {
         chunk satisfies never
         throw new Error(
-          `Internal error: unhandled chunk type: ${(chunk as { type: unknown }).type}`,
+          `Internal error: unhandled chunk type: ${JSON.stringify(chunk)}`,
         )
       }
       return onResponseChunk(chunk)
@@ -302,6 +311,7 @@ export async function processStream(
         })
       } else if (chunk.type === 'text') {
         onResponseChunk(chunk.text)
+        fullResponseSoFar += chunk.text
         fullResponseChunks.push(chunk.text)
       } else if (chunk.type === 'error') {
         onResponseChunk(chunk)
@@ -320,17 +330,24 @@ export async function processStream(
       } else if (chunk.type === 'tool-call') {
       } else {
         chunk satisfies never
-        throw new Error(
-          `Unhandled chunk type: ${(chunk as { type: unknown }).type}`,
-        )
+        throw new Error(`Unhandled chunk type: ${JSON.stringify(chunk)}`)
       }
     }
 
+    // FID-2026-0802-005 H7: settle the initial tool-call chain before
+    // awaiting it on the normal path (in native mode the first call is
+    // chained on streamDonePromise, so it must be resolved first).
+    resolveStreamDonePromise()
     if (!signal.aborted) {
-      resolveStreamDonePromise()
       await previousToolCallFinished
     }
   } finally {
+    // FID-2026-0802-005 H7: ALWAYS settle streamDonePromise — even on abort
+    // or a mid-stream error — so suspended first-call handlers resume (and
+    // observe signal.aborted) instead of dangling forever with lost credits.
+    // Idempotent: already resolved on the normal path. Trade-off (per FID): a
+    // resumed handler runs to completion bounded by its own signal checks.
+    resolveStreamDonePromise()
     // === FINALIZATION ===
     // Trigger cleanup of the processStreamWithTools generator so it flushes any
     // remaining buffered text to assistantMessages before we build the history.
@@ -379,7 +396,7 @@ export async function processStream(
   }
 
   return {
-    fullResponse: fullResponseChunks.join(''),
+    fullResponse: fullResponseSoFar,
     fullResponseChunks,
     hadToolCallError,
     hasNativeIncompleteToolCall,

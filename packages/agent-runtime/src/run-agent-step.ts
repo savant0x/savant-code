@@ -18,12 +18,12 @@ import {
   isTransientNetworkError,
 } from '@savant-code/common/util/error'
 import { systemMessage, userMessage } from '@savant-code/common/util/messages'
+import { toToolInputJSONSchema } from '@savant-code/common/util/zod-schema'
 import { type ToolSet } from 'ai'
 import { cloneDeep, mapValues } from 'lodash'
-import z from 'zod/v4'
 
 import { CACHE_DEBUG_FULL_LOGGING } from './constants'
-import { ContextCompactor, type CompactionMessage } from './context-compactor'
+import { ContextCompactor } from './context-compactor'
 import { callTokenCountAPI } from './llm-api/savant-code-web-api'
 import { getMCPToolData } from './mcp'
 import { getAgentStreamFromTemplate } from './prompt-agent-stream'
@@ -60,7 +60,7 @@ import { isThinkOnlyResponse } from './util/think-tags'
 import {
   countTokens,
   countTokensJson,
-  countTokensMessages,
+  countTokensMessagesCached,
 } from './util/token-counter'
 
 import type { AgentTemplate } from '@savant-code/common/types/agent-template'
@@ -96,6 +96,7 @@ import type {
   CustomToolDefinitions,
   ProjectFileContext,
 } from '@savant-code/common/util/file'
+import type z from 'zod/v4'
 
 // Convert a tool's stored inputSchema into JSON Schema suitable for Anthropic's
 // count_tokens API. Built-in and MCP tools store a Zod schema here; serializing
@@ -114,9 +115,9 @@ export function toTokenCountInputSchema(
     typeof (inputSchema as { safeParse?: unknown }).safeParse === 'function'
   ) {
     try {
-      jsonSchema = z.toJSONSchema(inputSchema as unknown as z.ZodType, {
-        io: 'input',
-      }) as Record<string, JSONValue>
+      jsonSchema = toToolInputJSONSchema(
+        inputSchema as unknown as z.ZodType,
+      ) as Record<string, JSONValue>
     } catch {
       jsonSchema = { type: 'object', properties: {} }
     }
@@ -153,14 +154,14 @@ async function additionalToolDefinitions(
   const defs = cloneDeep(
     Object.fromEntries(
       Object.entries(fileContext.customToolDefinitions).filter(([toolName]) =>
-        agentTemplate!.toolNames.includes(toolName),
+        agentTemplate.toolNames.includes(toolName),
       ),
     ),
   )
   return getMCPToolData({
     ...params,
-    toolNames: agentTemplate!.toolNames,
-    mcpServers: agentTemplate!.mcpServers,
+    toolNames: agentTemplate.toolNames,
+    mcpServers: agentTemplate.mcpServers,
     writeTo: defs,
   })
 }
@@ -184,6 +185,12 @@ export const runAgentStep = async (
     spawnParams: Record<string, JSONValue> | undefined
     system: string
     n?: number
+    /** FID-2026-0802-005 L15: step prompt computed once per step by
+     *  loopAgentSteps (token counting needs it too) and passed down — avoids
+     *  a second formatPrompt pass (~13 replaceAll incl. file tree). */
+    stepPrompt?: string
+    /** FID-2026-0802-005 H8: step-built custom tool data (incl. MCP tools). */
+    customToolDefinitions?: CustomToolDefinitions
 
     trackEvent: TrackEventFn
     promptAiSdk: PromptAiSdkFn
@@ -299,16 +306,22 @@ export const runAgentStep = async (
     }
   }
 
-  const stepPrompt = await getAgentPrompt({
-    ...params,
-    agentTemplate,
-    promptType: { type: 'stepPrompt' },
-    fileContext,
-    agentState,
-    agentTemplates: localAgentTemplates,
-    logger,
-    additionalToolDefinitions,
-  })
+  // FID-2026-0802-005 L15: the step prompt is computed ONCE per step in
+  // loopAgentSteps (which needs it for token counting) and passed down —
+  // previously runAgentStep recomputed it for identical inputs. Callers that
+  // invoke runAgentStep directly (tests) still get the computed fallback.
+  const stepPrompt =
+    params.stepPrompt ??
+    (await getAgentPrompt({
+      ...params,
+      agentTemplate,
+      promptType: { type: 'stepPrompt' },
+      fileContext,
+      agentState,
+      agentTemplates: localAgentTemplates,
+      logger,
+      additionalToolDefinitions,
+    }))
 
   const agentMessagesUntruncated = buildArray<Message>(
     ...expireMessages(agentState.messageHistory, 'agentStep'),
@@ -953,7 +966,6 @@ export async function loopAgentSteps(
             ],
           ),
         ),
-      ,
     ],
 
     instructionsPrompt &&
@@ -966,10 +978,17 @@ export async function loopAgentSteps(
       }),
   )
 
-  // Convert tools to a serializable format for context-pruner token counting
-  const toolDefinitions = mapValues(tools, (tool) => ({
+  // Convert tools to a serializable format for context-pruner token counting.
+  // FID-2026-0802-005 L9: the inputSchema slot is typed as JSONValue (it feeds
+  // toTokenCountInputSchema, which handles Zod + JSON Schema + garbage); the
+  // AI SDK JSONSchema → JSONValue conversion is an honest trust-boundary
+  // assertion (tracked in the FID-029 ledger), not a cast-to-nothing.
+  const toolDefinitions: Record<
+    string,
+    { description: string | undefined; inputSchema: JSONValue }
+  > = mapValues(tools, (tool) => ({
     description: tool.description,
-    inputSchema: tool.inputSchema as {},
+    inputSchema: tool.inputSchema as unknown as JSONValue,
   }))
 
   const additionalToolDefinitionsWithCache = async () => {
@@ -1051,6 +1070,11 @@ export async function loopAgentSteps(
 
       const startTime = new Date()
 
+      // FID-2026-0802-005 L15: computed once per step and reused by
+      // runAgentStep. Note: this runs before the programmatic step, so a
+      // handleSteps generator that mutates history (e.g. set_messages) could
+      // in theory make the USER_INPUT_PROMPT placeholder stale — no bundled
+      // agent does this; acceptable per the FID.
       const stepPrompt = await getAgentPrompt({
         ...params,
         agentTemplate,
@@ -1072,8 +1096,14 @@ export async function loopAgentSteps(
       // Count structured message content (not JSON.stringify, which inflates the
       // count and counts image base64 as text); system is a plain string; tool
       // schemas stay JSON since that's roughly how the model sees them.
+      // FID-2026-0802-005 H2: countTokensMessagesCached memoizes per-message
+      // counts by object identity, so the history is tokenized once over the
+      // whole run instead of re-encoded every step (O(n²) → O(n)). The step
+      // prompt is counted directly instead of rebuilding the array (saves the
+      // per-step copy too).
       const estimateContextTokensLocally = () =>
-        countTokensMessages(messagesWithStepPrompt) +
+        countTokensMessagesCached(currentAgentState.messageHistory) +
+        countTokens(stepPrompt ?? '') +
         countTokens(system) +
         countTokensJson(toolsForTokenCount)
 
@@ -1127,11 +1157,12 @@ export async function loopAgentSteps(
       const thresholds = contextCompactor.getThresholds()
       const messagesBeforeMicroCompact = currentAgentState.messageHistory.length
       const microResult = contextCompactor.microCompact(
-        currentAgentState.messageHistory as unknown as CompactionMessage[],
+        currentAgentState.messageHistory,
       )
       if (microResult.tokensSaved > 0) {
-        currentAgentState.messageHistory =
-          microResult.messages as unknown as typeof currentAgentState.messageHistory
+        // FID-2026-0802-005 L8: ContextCompactor now operates on Message[]
+        // directly — the `as unknown as CompactionMessage[]` casts are gone.
+        currentAgentState.messageHistory = microResult.messages
         // FID-2026-0725-085: Log visible compaction summary.
         // Follows the Kilo Code / OpenClaude pattern: pause, output summary, proceed.
         const percentUsed = Math.round(
@@ -1152,7 +1183,7 @@ export async function loopAgentSteps(
       // If context exceeds threshold, emit warning and log for diagnostics.
       // Full LLM summarization is handled by handleSteps context-pruner spawn.
       const autoCompactCheck = contextCompactor.shouldAutoCompact(
-        currentAgentState.messageHistory as unknown as CompactionMessage[],
+        currentAgentState.messageHistory,
         currentAgentState.contextTokenCount,
       )
       if (autoCompactCheck.shouldCompact) {
@@ -1276,6 +1307,10 @@ export async function loopAgentSteps(
         system,
         tools,
         additionalToolDefinitions: additionalToolDefinitionsWithCache,
+        // FID-2026-0802-005 L15/H8: reuse the step prompt already computed
+        // above and the step-built custom tool data.
+        stepPrompt,
+        customToolDefinitions: cachedAdditionalToolDefinitions,
       })
 
       Object.assign(initialAgentState, newAgentState)
@@ -1442,11 +1477,10 @@ export async function loopAgentSteps(
         'Layer 4 reactive compact: prompt-too-long detected, attempting emergency truncation',
       )
       const reactiveResult = contextCompactor.reactiveCompact(
-        currentAgentState.messageHistory as unknown as CompactionMessage[],
+        currentAgentState.messageHistory,
       )
       if (reactiveResult.truncated) {
-        currentAgentState.messageHistory =
-          reactiveResult.messages as unknown as typeof currentAgentState.messageHistory
+        currentAgentState.messageHistory = reactiveResult.messages
         logger.warn(
           {
             messagesRemoved:
@@ -1469,6 +1503,7 @@ export async function loopAgentSteps(
             system,
             tools,
             additionalToolDefinitions: additionalToolDefinitionsWithCache,
+            customToolDefinitions: cachedAdditionalToolDefinitions,
           })
           // Retry succeeded — use the result
           Object.assign(initialAgentState, retryResult.agentState)

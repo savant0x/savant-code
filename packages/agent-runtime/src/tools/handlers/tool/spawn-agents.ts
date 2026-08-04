@@ -105,10 +105,6 @@ export const handleSpawnAgents = (async (
           childTemplate,
           parentAgentTemplate,
         )
-        const inheritedTools = filterToolSet(
-          parentTools,
-          agentTemplate.toolNames,
-        )
 
         validateAgentInput(agentTemplate, agentType, prompt, spawnParams)
 
@@ -154,8 +150,13 @@ export const handleSpawnAgents = (async (
           excludeToolFromMessageHistory: false,
           fromHandleSteps: false,
           parentSystemPrompt,
+          // FID-2026-0802-005 L12: filterToolSet only when the child actually
+          // inherits the parent's system prompt (avoid redundant computation
+          // per spawn). The runtime boundary in run-agent-step.ts applies the
+          // same subset filter again for defense in depth — both boundaries
+          // are intentional per FID-005.
           parentTools: agentTemplate.inheritParentSystemPrompt
-            ? inheritedTools
+            ? filterToolSet(parentTools, agentTemplate.toolNames)
             : undefined,
           onResponseChunk: (chunk: string | PrintModeEvent) => {
             if (typeof chunk === 'string') {
@@ -261,15 +262,7 @@ export const handleSpawnAgents = (async (
 
     if (result.status === 'fulfilled') {
       subAgentCredits = result.value.agentState.creditsUsed || 0
-      // Note (James): Try not to include frequent logs with narrow debugging value.
-      // logger.debug(
-      //   {
-      //     parentAgentId: validatedState.agentState.agentId,
-      //     subAgentType: agentInfo.agent_type,
-      //     subAgentCredits,
-      //   },
-      //   'Aggregating successful subagent cost',
-      // )
+      // Note (James): intentionally no per-agent success log — narrow debugging value.
     } else if (result.reason?.agentState?.creditsUsed) {
       // Even failed agents may have incurred partial costs
       subAgentCredits = result.reason.agentState.creditsUsed || 0
@@ -285,15 +278,7 @@ export const handleSpawnAgents = (async (
 
     if (subAgentCredits > 0) {
       parentAgentState.creditsUsed += subAgentCredits
-      // Note (James): Try not to include frequent logs with narrow debugging value.
-      // logger.debug(
-      //   {
-      //     parentAgentId: validatedState.agentState.agentId,
-      //     addedCredits: subAgentCredits,
-      //     totalCredits: validatedState.agentState.creditsUsed,
-      //   },
-      //   'Updated parent agent total cost',
-      // )
+      // Note (James): intentionally no aggregate log — narrow debugging value.
     }
   })
 
