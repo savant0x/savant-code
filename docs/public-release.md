@@ -242,7 +242,7 @@ needs a bump.
 4. Only CI's fresh checkout had nothing up-tree to resolve against, so the compile
    failed — after the release was already live.
 
-### The fix (commits `d10a916`, `db28c50`)
+### The fix (commits `5a55a3b`, `8bfced0`)
 
 - `common/package.json` declares `@noble/hashes ^1.8.0`; `bun.lock` locks it at `1.8.0`.
 - `PUBLIC_PACKAGES` in `scripts/public-release.ts` defaults to `savant-code` only; the
