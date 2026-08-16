@@ -61,6 +61,9 @@ export interface EchoComplianceTrackerLike {
    * Record a write and evaluate Law 1 at write time. Returns a violation when
    * the path was never read this run and carries no content-knowledge signal
    * (new files and content-knowledge writes are exempt). Non-blocking.
+   *
+   * FID-2026-0813-002: the optional identity/phase/FID/law fields make the
+   * write record provenance-ready (the ZTAP receipt carries the same data).
    */
   recordWrite(params: {
     path: string
@@ -75,6 +78,21 @@ export interface EchoComplianceTrackerLike {
     content?: string
     /** True when the path matches security-sensitive keywords. */
     securitySensitive: boolean
+    /** Writer agent id (FID-2026-0813-002). */
+    agentId?: string
+    /** Writer agent type / role label (FID-2026-0813-002). */
+    agentType?: string
+    /** FSM phase at write time (FID-2026-0813-002). */
+    fsmPhase?: string
+    /** Structured active-FID id resolved against the active-FID set (FID-2026-0813-002). */
+    fidId?: string
+    /** Pre-write gate outcomes: law number + outcome (FID-2026-0813-002). */
+    lawChecks?: { law: number; outcome: 'blocked' | 'advisory' | 'passed' }[]
+    /** FID-2026-0814-004 H-03: code vs documentation artifact. When omitted,
+     *  the tracker derives it from the path (`*.md`, `dev/scratchpad/`,
+     *  `docs/`, `dev/session-summaries/`, `dev/test-prompts/` → docs). Doc
+     *  writes gate on markdownlint, not Law 3 / Verifier criteria. */
+    fileKind?: 'code' | 'docs'
   }): ComplianceViolation | null
 
   /** Record a terminal command; the tracker detects verification commands. */
@@ -99,4 +117,15 @@ export interface EchoComplianceTrackerLike {
    * after evaluateAtStepBoundary; returning messages keeps the turn going.
    */
   takeSteeringMessages(): string[]
+
+  /**
+   * Read-only access to recorded writes (FID-2026-0813-002). The ZTAP receipt
+   * builder resolves the structured FID id from the exact-resolution record.
+   */
+  getWriteRecords(): ReadonlyArray<{
+    path: string
+    fidId?: string
+    /** FID-2026-0814-004 H-03: code vs documentation artifact. */
+    fileKind?: 'code' | 'docs'
+  }>
 }

@@ -18,6 +18,7 @@ import { handleListTables } from './tool/database/list-tables'
 import { handleDeepResearch } from './tool/deep-research'
 import { handleEndTurn } from './tool/end-turn'
 import { handleFindFiles } from './tool/find-files'
+import { handleGetGoal } from './tool/get-goal'
 import { handleGlob } from './tool/glob'
 import { handleQueryBlastRadius } from './tool/graph/query-blast-radius'
 import { handleQueryDomainClusters } from './tool/graph/query-domain-clusters'
@@ -48,6 +49,7 @@ import { handleSuggestFollowups } from './tool/suggest-followups'
 import { handleTaskCompleted } from './tool/task-completed'
 import { handleThinkDeeply } from './tool/think-deeply'
 import { handleTransitionPhase } from './tool/transition-phase'
+import { handleUpdateGoal } from './tool/update-goal'
 import { handleUpdateSubgoal } from './tool/update-subgoal'
 import { handleWebSearch } from './tool/web-search'
 import { handleWriteFile } from './tool/write-file'
@@ -65,7 +67,7 @@ import type { ToolName } from '@savant-code/common/tools/constants'
  *   - Any additional arguments for the tool
  * - Returns a promise that will be awaited
  */
-export const savantCode$1: {
+export const savantCodeToolHandlers: {
   [K in ToolName]: SavantCodeToolHandlerFunction<K>
 } = {
   add_message: handleAddMessage,
@@ -85,6 +87,7 @@ export const savantCode$1: {
   end_turn: handleEndTurn,
   execute_query: handleExecuteQuery,
   find_files: handleFindFiles,
+  get_goal: handleGetGoal,
   glob: handleGlob,
   gravity_index: handleGravityIndex,
   list_directory: handleListDirectory,
@@ -116,6 +119,7 @@ export const savantCode$1: {
   task_completed: handleTaskCompleted,
   think_deeply: handleThinkDeeply,
   transition_phase: handleTransitionPhase,
+  update_goal: handleUpdateGoal,
   update_subgoal: handleUpdateSubgoal,
   web_search: handleWebSearch,
   write_file: handleWriteFile,

@@ -10,32 +10,36 @@ touches your repo.**
 Built with TypeScript/Bun, governed by the ECHO Protocol, and designed for
 local-first use with Ollama.
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-1.3.14-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![React](https://img.shields.io/badge/React-19-%23000000?style=flat-square&logo=react&logoColor=%2300fbff)](https://react.dev/)[![OpenTUI](https://img.shields.io/badge/OpenTUI-0.2.2-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](https://github.com/anomalyco/opentui)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](ECHO.md)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![Release](https://img.shields.io/badge/Release-v0.0.23-pending-%23000000?style=flat-square&logo=semver&logoColor=%2300fbff)](CHANGELOG.md)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-1.3.14-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![React](https://img.shields.io/badge/React-19-%23000000?style=flat-square&logo=react&logoColor=%2300fbff)](https://react.dev/)[![OpenTUI](https://img.shields.io/badge/OpenTUI-0.2.2-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](https://github.com/anomalyco/opentui)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](ECHO.md)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![Release](https://img.shields.io/badge/Release-v0.0.24-%2300fbff?style=flat-square&logo=semver&logoColor=%2300fbff)](CHANGELOG.md)
 
 </div>
 
-> **v0.0.23 (pending, unreleased)** — the optimization and automation program's
-> implementation scope is complete and independently signed off across FIDs 003–010.
-> The ECHO remediation package (FID-2026-0811-015 through 021) and the LEARNINGS
-> feedback-system remediation (FID-2026-0811-022 through 029) are implemented,
-> closed, and archived under the granted automation level 3 scope. Nova's
-> independent implementation audits returned **PASS — implementation approved
-> for closure** for both packages. The LEARNINGS work adds a curated privacy-safe
-> embedded source, strict structured lesson validation, chronology and
-> supersession checks, fail-closed stable evidence references, and canonical
-> rule validation. The ECHO work adds production EHEL turn-end reachability,
-> content-complete scanning, trusted custom/MCP tool provenance, explicit
-> execution policy, no-attribution FID governance, provenance-scoped hygiene,
-> and deterministic audit evidence. The earlier untracked 004–014
-> archive-looking artifacts remain explicitly untrusted and untouched pending
-> operator disposition. No tag, push, publication, or deployment has occurred.
+> **v0.0.24** — this release ships the optimization and automation program
+> (FIDs 003–010), the ECHO remediation package (FID-2026-0811-015..021), and
+> the LEARNINGS feedback-system remediation (FID-2026-0811-022..029), plus
+> four newer programs: Zero-Trust Agentic Provenance (FID-2026-0813-001..010),
+> the homegrown Agent-Steering Teacher (FID-2026-0813-011..020 plus the live
+> read-only sidebar surface `FID-2026-0813-022`, with a live `/learn` pipeline,
+> ZTAP-signed attempt receipts, local progression persistence, and a read-only
+> sidebar panel), the canonical version-bump tool (FID-2026-0813-021), and the
+> harness observability & integrity remediation (`FID-2026-0813-023` — the
+> `savantCode$1` rebrand-corruption repair, a live Trust Matrix with an honest
+> empty-state, a reactive context meter with working auto-compact plus a
+> compaction-status row, corrected Files Changed counters, and an operator
+> help overlay).
 >
-> **LEARNINGS audit boundary:** Nova verified 104 tests across 8 suites with
-> zero failures. The global `lint:md` command remains `NEEDS-REVIEW` only for
-> unrelated untracked design-system documents under
-> `packages/design-systems/library/`; the governed learning documents are
-> clean. FID archives and implementation files remain untracked working-tree
-> evidence, not clean-release certification.
+> **Harness-speed remediation + grounding (FID-2026-0815-001..013):** the
+> full harness-speed program — lazy per-step prompt formatting, an async trace
+> writer, history-copy reduction, async checkpoint capture, single-pass
+> compaction, a cached model catalog with async registry I/O, UI no-op guards,
+> and parallel code-map/knowledge-graph indexing (findings F-01…F-12) — plus
+> three follow-on hot-path sweeps (FID-2026-0815-011..013: one system-prompt
+> tokenization per step, deferred trace serialization, a strict-only
+> `existsSync` probe, a bounded read-pattern scan, a trimmed per-step debug
+> payload, and no eager full-history copy). Also closes the agent grounding
+> gap: `formatCurrentDateTime()` now injects the correct **current date and
+> time** (weekday + timezone) and refreshes it every step, so the agent never
+> derives the wrong weekday from a bare date.
 >
 > **Universal session-init grounding (FID-2026-0810-002):** every session boots
 > with a deterministic grounding ritual — the harness protocol and grounding
@@ -47,7 +51,7 @@ local-first use with Ollama.
 > the repo files with a drift check that fails validation if they fall out of
 > sync.
 >
-> The prior unified provider registry remains historical ground truth; this pending
+> The prior unified provider registry remains historical ground truth; this
 > build adds drift detection without changing provider routing. The **unified
 > provider registry** makes `common`'s typed
 > `PROVIDER_REGISTRY` the single source of truth for every provider surface
@@ -68,12 +72,14 @@ local-first use with Ollama.
 ## Get Started in 30 Seconds
 
 ```bash
-# Install the CLI
+# Install the CLI (npm i savant-code -g is the short form)
 npm install -g savant-code
 
 # Run it. If Ollama is running, it will auto-detect and use it.
 savant-code
 ```
+
+Published as [`savant-code` on npm](https://www.npmjs.com/package/savant-code).
 
 _A terminal demo video is not yet available; the landing page and CLI source
 links below describe the currently verified workflow._
@@ -262,9 +268,23 @@ pass.
   `prompt` currently also denies risky tools because interactive confirmations
   are not yet implemented, and `unsafe` allows them
   explicitly. Use `unsafe` only when you understand the command risk.
-- **Goal loop** — `/goal` sets a goal condition; `/loop <cadence>` schedules
-  recurring prompt execution (e.g., `/loop 5m check build status`). The loop
-  scheduler manages cadence, run counts, and convergence detection.
+- **Durable budgeted goal mode** — `/goal <objective> [--budget tokens=N turns=N
+time=MS]` starts a durable, budgeted goal run: an event-sourced goal state
+machine (`active | paused | blocked | complete`) with token/turn/wall-clock
+budgets and a runtime continuation driver that runs goal turns until the model
+verifies completion (`update-goal`), blocks on a genuine impasse, or a budget
+is exhausted. Goal text is injected as `<untrusted_objective>` (data, never
+instructions); `/goal status|pause|resume|cancel` manage the record and the
+sidebar shows live goal + budget consumption.
+- **Goal loop** — `/loop <cadence>` schedules recurring prompt execution (e.g.,
+  `/loop 5m check build status`). The loop scheduler manages cadence, run
+  counts, and convergence detection.
+- **Extensible hook system** — a project-scoped `hooks:` block in
+  `protocol.config.yaml` runs external commands (or internal callbacks) at the
+tool-executor lifecycle (`PreToolUse`/`PostToolUse`/`PostToolUseFailure` plus
+session/subagent events). Hooks compose with the EHEL gate (an additional
+gate, never a bypass) and fail open: only an explicit `deny` decision or exit
+code 2 blocks a tool.
 - **Structured planning and review** — `/interview` turns an underspecified
   request into a structured specification, `/plan` creates an implementation
   plan, and `/review` opens a focused code-review workflow.
@@ -300,11 +320,9 @@ pass.
   for the architecture, authoring lifecycle, security model, persistence contract,
   enforcement behavior, and packaging evidence. For live usability, agent-feedback,
   and latency validation, run the [design-system live test prompt](dev/test-prompts/design-system-live-ux-performance.md).
-  For the complete pending-update regression across the changelog's current feature domains, run the
-  [v0.0.23 comprehensive live-test prompt](dev/test-prompts/v0.0.23-comprehensive-live-test.md), which writes an
-  evidence report to `dev/scratchpad/v0.0.23-comprehensive-live-test-report.md`.
-  The prompts and their eventual live results have separate independent sign-off boundaries.
-  Implementation is closed in the working tree; independent final documentation/implementation review remains pending.
+  For a complete regression across the current feature domains, run the
+  [v0.0.24 harness A–Z live-test prompt](dev/test-prompts/az-v0.0.24-harness-live-test.md), which writes an
+  evidence report to `dev/scratchpad/az-v0.0.24-harness-live-test-report.md`.
 - **MCP tools** — Model Context Protocol servers discovered at startup, schemas
   published to the LLM API.
 - **`deep_research` tool** — the Researcher role's mechanical multi-query web
@@ -352,6 +370,22 @@ pass.
   runtime tracker: non-blocking `compliance_warning` receipts plus corrective
   steering so the running agent self-corrects, escalated to always-on when a
   write touches an active FID (FID-2026-0804-009).
+- **Zero-Trust Agentic Provenance (ZTAP)** — optional, hash-only, per-role
+  Ed25519-signed write receipts at the native write boundary; append-only
+  session ledgers; signed Verifier/Adversary verdict bindings; `/attest` offline
+  JSON and HTML receipts; an independent clean-process validator; and a
+  read-only live Trust Matrix. Configure `provenance.mode` as `off`, `record`
+  (default), or `enforce`. ZTAP proves recorded mechanical process and its
+  integrity, not LLM independence. See the [ZTAP feature guide](docs/design/zero-trust-agentic-provenance.md).
+- **Agent-Steering Teacher (`/learn`)** — a local-first way to practice
+  directing and reviewing an AI coding agent. `/learn start <steering>` drives a
+  live exercise: the steering constraint goes to a read-only teacher-forge
+  agent, the produced solution runs in a capability-sandboxed subprocess, and
+  behavior-first equivalence + deterministic mutation-detection graders review
+  it before you submit a critique of a seeded defect. Versioned local
+  progression is recorded with an honest ZTAP process-evidence receipt and
+  surfaced via `/learn progress` and a live, read-only sidebar panel. See the
+  [teacher guide](docs/design/agent-steering-teacher-guide.md).
 - **Readable edit diffs** — edit blocks tint added lines 50% neon green and
   removed lines 50% neon red (blended against the theme background) and show a
   `[-N/+M]` add/remove counter beside the copy button; the full ECHO Perfection
@@ -359,6 +393,9 @@ pass.
 - **Context compaction** — 4-layer progressive auto-compaction: L0 (summarize
   old turns), L1 (compress tool results), L2 (prune stale context), L3
   (aggressive reduction). Preserves critical context while reducing token usage.
+  A live in-stream signal (`⚙ Compacting context…` → `✓ Compaction complete
+  (−N tokens)`) and a window-consistent sidebar `Compaction` row give real-time
+  visual feedback instead of silent compaction.
 - **Context window resolution** — gateway models (e.g. `opencode-go/mimo-v2.5`)
   resolve their real context length from the OpenRouter catalog at runtime.
 - **Universal copy buttons** — hover-to-copy on code blocks, tool outputs, and
@@ -367,7 +404,10 @@ pass.
   Nous Research, and Cloudflare Workers AI via `@savant-code/llm-providers`. Nous Research
   uses the direct OpenAI-compatible API; Portal OAuth is a separate integration.
 - **Default model** — `openrouter/free` via OpenRouter (configurable via
-  `/model`).
+  `/model`). One model project-wide: the model selected in the UI panel is the
+  only model used — main chat agent, teacher-forge, headless runs, and spawned
+  subagents all resolve the operator's active model (never a hardcoded paid
+  fallback).
 - **Headless / non-interactive mode** — `savant-code --print "<prompt>"` runs a
   single prompt without the TUI and prints the final answer to stdout. Exit
   codes: `0` success, `1` error or timeout, `2` usage error. When stdin is piped
@@ -813,10 +853,12 @@ Commands can be entered with `/`; aliases are shown in parentheses.
 | `/export` (`/save`) | Write a self-contained branded HTML report of the conversation |
 | `/graph refresh` (`/graph`) | Re-index the code knowledge graph and show summary stats (`--full` rebuilds) |
 | `/graph-export` (`/graph:export`) | Write a branded, interactive offline HTML report of the code knowledge graph |
+| `/attest` (`/trust-receipt`) | Export and verify the current project's signed ZTAP trust receipt |
+| `/learn` (`/teacher`) | Practice directing and reviewing an AI coding agent through guided exercises |
 | `/interview` | Turn an idea into a structured specification |
 | `/plan` | Create an implementation plan |
 | `/review` | Review code changes |
-| `/goal` (`/g`) | Iterate until a verifiable goal is satisfied |
+| `/goal` (`/g`) | Start or manage a durable, budgeted goal run (`status`, `pause`, `resume`, `cancel`) |
 | `/loop` (`/repeat`) | Run a prompt on a recurring cadence; use `stop` or `status` |
 | `/verify` (`/typecheck`) | Run the four supported core workspace typechecks, all or one selected |
 | `/permissions` (`/sandbox`, `/safety`) | View or set `safe`, `prompt`, or `unsafe` tool policy |
@@ -927,14 +969,24 @@ events.
 - [`CHANGELOG.md`](CHANGELOG.md) — Release history
 - [`docs/code-universe-export.md`](docs/code-universe-export.md) — `/export` conversation reports and
   `/graph-export` Code Universe guide
+- [`docs/design/zero-trust-agentic-provenance.md`](docs/design/zero-trust-agentic-provenance.md) — ZTAP architecture,
+  trust model, `/attest` workflow, verification, and operational boundaries
+- [`docs/design/agent-steering-teacher-overview.md`](docs/design/agent-steering-teacher-overview.md) — the complete
+  Agent-Steering Teacher overview: product, exercise loop, command reference, module map, trust model, progression + ZTAP
+- [`docs/design/agent-steering-teacher-guide.md`](docs/design/agent-steering-teacher-guide.md) — the Agent-Steering
+  Teacher: exercise loop, modules, trust model, `/learn` usage, and challenge authoring
 - [`docs/design/design-system-library.md`](docs/design/design-system-library.md) —
   loadable design-system architecture, workflows, security, enforcement, and packaging
+- [`docs/design/hook-system.md`](docs/design/hook-system.md) — the extensible
+  lifecycle-hook system: `hooks:` config schema, events, and fail-open protocol
+- [`docs/design/goal-mode.md`](docs/design/goal-mode.md) — the durable budgeted
+  `/goal` workflow: command reference, state machine, and budgets
 - [`dev/test-prompts/design-system-live-ux-performance.md`](dev/test-prompts/design-system-live-ux-performance.md) —
   live CLI usability, agent-feedback, and performance test prompt
 - `dev/nova/outbox/2026-08-11-fid-2026-0811-030-design-system-live-test-signoff-request.md` —
   [independent review request for the live test design and captured result](dev/nova/outbox/2026-08-11-fid-2026-0811-030-design-system-live-test-signoff-request.md)
-- [`docs/launch/landing/index.html`](docs/launch/landing/index.html) — Public
-  landing page
+- [`docs/archive/launch/index.html`](docs/archive/launch/index.html) — Public
+  landing page (archived launch artifact)
 - [`dev/LEARNINGS.md`](dev/LEARNINGS.md) — Cross-session lessons
 - [`dev/session-summaries/`](dev/session-summaries/) — Session audit trail
 

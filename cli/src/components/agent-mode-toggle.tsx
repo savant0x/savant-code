@@ -165,8 +165,6 @@ export const AgentModeToggle = ({
   onToggle: () => void
   onSelectMode?: (mode: AgentMode) => void
 }) => {
-  if (IS_SAVANT_FREE) return null
-
   const theme = useTheme()
   const inputFocused = useChatStore((state) => state.inputFocused)
   const [isCollapsedHovered, setIsCollapsedHovered] = useState(false)
@@ -193,6 +191,8 @@ export const AgentModeToggle = ({
     confirm: confirmScaffold,
     cancel: cancelScaffold,
   } = useScaffoldConfirm()
+
+  if (IS_SAVANT_FREE) return null
 
   const handleMouseOver = () => {
     // Don't open on hover if terminal is not focused

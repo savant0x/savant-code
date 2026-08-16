@@ -23,7 +23,7 @@ FID-2026-0803-001 ECHO-4.
 
 | # | Agent | Phase | Responsibility | Tools |
 |---|-------|-------|----------------|-------|
-| 1 | **Orchestrator** | ALL | Routes work through Perfection Loop, enforces protocol compliance, spawns all agents | spawn_agents, read_files, read_subtree, run_readonly_command, write_todos, suggest_followups, ask_user, read_url, skill, set_output, list_directory, glob, render_ui, gravity_index, transition_phase, write_file, str_replace, apply_patch (phase-gated), set_scaffold_complete (scaffold mode) |
+| 1 | **Orchestrator** | ALL | Routes work through Perfection Loop, enforces protocol compliance, spawns all agents | spawn_agents, read_files, read_subtree, run_readonly_command, write_todos, suggest_followups, ask_user, read_url, skill, set_output, list_directory, glob, render_ui, gravity_index, update_goal, get_goal (durable goal mode, FID-2026-0814-002), transition_phase, write_file, str_replace, apply_patch (phase-gated), set_scaffold_complete (scaffold mode) |
 | 2 | **Detective** | RED | Codebase analysis, grep call-graphs, find issues, catalog evidence with file paths | code_search, set_output, list_directory, glob, read_files, read_subtree, query_blast_radius, query_node_edges, query_domain_clusters |
 | 3 | **Forge** | GREEN | Implementation only. Writes code following the converged FID spec. Cannot self-verify. | write_file, str_replace, set_output |
 | 4 | **Verifier** | AUDIT | Double-audit, run tests, check call-graph reachability, reject hallucinated claims | *(no tools — reads only via message history)* |
@@ -208,6 +208,28 @@ Tools are gated by FSM phase in `tool-executor.ts`:
 | bash (destructive) | Never | ⏭️ Future phase (command classification not yet implemented) |
 | create_fid, update_fid, archive_fid | Recorder only | ⏭️ Future phase (these are conceptual roles, not registered tools) |
 
+### Lifecycle hooks (FID-2026-0814-003)
+
+The tool executor exposes a project-scoped **hook system** declared in
+`protocol.config.yaml` under `hooks:`. Hooks fire at lifecycle points
+(`PreToolUse`/`PostToolUse`/`PostToolUseFailure` + session/subagent events) and
+compose with the EHEL `beforeToolCall` gate — an **additional** gate, never a
+bypass. Hooks are fail-open: only exit code 2 or a JSON
+`"permissionDecision": "deny"` blocks a tool. See
+`docs/design/hook-system.md`.
+
+### Durable goal engine (FID-2026-0814-002)
+
+The Orchestrator owns a durable, budgeted goal record on `agentState`
+(`active | paused | blocked | complete`) driven by a continuation driver and
+the `update_goal`/`get_goal` tools. See `docs/design/goal-mode.md`.
+
+### Zero-Trust provenance (FID-2026-0813-001..010)
+
+Every write records a per-role Ed25519-signed receipt into an append-only
+hash-only session ledger (`provenance.mode`: `off | record | enforce`). See
+`docs/design/zero-trust-agentic-provenance.md`.
+
 ---
 
 ## Boot Sequence
@@ -254,6 +276,6 @@ but do NOT constitute independent conversational agents:
 These two counts are NOT in conflict: the 10-agent roster represents runtime conversation entities; the 19-dir count
 represents filesystem entries. Future checklists/audits should not confuse them.
 
-**Current release note (0.0.23 pending):** The repository uses the `@savant-code/*` workspace names and import paths. Historical
-rebrand and checkpoint decisions remain in the archived session records and release history; this architecture document
-tracks the current repository state.
+**Current state:** The repository uses the `@savant-code/*` workspace names and import paths at version `0.0.24`.
+Historical rebrand and checkpoint decisions remain in the archived session records and release history; this architecture
+document tracks the current repository state.

@@ -136,7 +136,7 @@ export async function runLoopIteration(params: {
 
   // FID-2026-0802-005 L15/H8: compute the step prompt and refresh the context
   // token count / compaction state for this iteration.
-  const { stepPrompt } = await prepareStepContext({
+  const { stepPrompt, systemTokens } = await prepareStepContext({
     loopParams,
     agentTemplate,
     agentState: currentAgentState,
@@ -294,6 +294,8 @@ export async function runLoopIteration(params: {
     // FID-2026-0802-005 L15/H8: reuse the step prompt already computed
     // above and the step-built custom tool data.
     stepPrompt,
+    // FID-2026-0815-011 E-01: reuse the system-prompt token count too.
+    systemTokens,
     customToolDefinitions: getCachedAdditionalToolDefinitions(),
   })
 

@@ -202,6 +202,20 @@ const ALL_SLASH_COMMANDS: SlashCommand[] = [
     description: 'Re-index the code knowledge graph and show summary stats',
     aliases: ['graph:refresh', 'graph'],
   },
+  {
+    id: 'attest',
+    label: 'attest',
+    description:
+      'Export signed ZTAP provenance as authoritative JSON plus an offline trust-receipt HTML view',
+    aliases: ['ztap', 'trust-receipt'],
+  },
+  {
+    id: 'learn',
+    label: 'learn',
+    description:
+      'Open the Agent-Steering Teacher: practice directing and reviewing an AI coding agent',
+    aliases: ['teacher'],
+  },
 
   {
     id: 'feedback',

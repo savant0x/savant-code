@@ -62,7 +62,7 @@ describe('createTraceWriter', () => {
     }
   })
 
-  test('falls back to the real project-root-based path when no resolver is injected', () => {
+  test('falls back to the real project-root-based path when no resolver is injected', async () => {
     setProjectRoot(tempDir)
     const writer = createTraceWriter()!
 
@@ -71,13 +71,14 @@ describe('createTraceWriter', () => {
       step: 1,
       messages: [userMessage('hello')],
     })
+    await writer.flush?.()
 
     const lines = readTraceLines()
     expect(lines).toHaveLength(1)
     expect(lines[0].message.role).toBe('user')
   })
 
-  test('writes each message exactly once across steps', () => {
+  test('writes each message exactly once across steps', async () => {
     const writer = createTraceWriter(() => tracePathFor(tempDir))!
     const history = [userMessage('hello')]
 
@@ -86,6 +87,7 @@ describe('createTraceWriter', () => {
     writer.recordStep({ ...baseParams, step: 1, messages: history })
     // Re-recording the same history adds nothing
     writer.recordStep({ ...baseParams, step: 2, messages: history })
+    await writer.flush?.()
 
     const lines = readTraceLines()
     expect(lines).toHaveLength(2)
@@ -93,7 +95,7 @@ describe('createTraceWriter', () => {
     expect(lines.map((l) => l.index)).toEqual([0, 1])
   })
 
-  test('records system prompt once and again only when it changes', () => {
+  test('records system prompt once and again only when it changes', async () => {
     const writer = createTraceWriter(() => tracePathFor(tempDir))!
 
     writer.recordStep({
@@ -118,12 +120,13 @@ describe('createTraceWriter', () => {
         userMessage('more'),
       ],
     })
+    await writer.flush?.()
 
     const systemLines = readTraceLines().filter((l) => l.type === 'system')
     expect(systemLines.map((l) => l.system)).toEqual(['be helpful', 'be terse'])
   })
 
-  test('detects history rewrites and re-dumps the new history', () => {
+  test('detects history rewrites and re-dumps the new history', async () => {
     const writer = createTraceWriter(() => tracePathFor(tempDir))!
 
     writer.recordStep({
@@ -137,6 +140,7 @@ describe('createTraceWriter', () => {
       step: 2,
       messages: [userMessage('summary of earlier conversation')],
     })
+    await writer.flush?.()
 
     const lines = readTraceLines()
     const marker = lines.find((l) => l.type === 'history_rewritten')
@@ -147,7 +151,7 @@ describe('createTraceWriter', () => {
     expect(lines.filter((l) => l.type === 'message')).toHaveLength(4)
   })
 
-  test('tracks agents independently', () => {
+  test('tracks agents independently', async () => {
     const writer = createTraceWriter(() => tracePathFor(tempDir))!
 
     writer.recordStep({
@@ -162,13 +166,14 @@ describe('createTraceWriter', () => {
       step: 1,
       messages: [userMessage('sub')],
     })
+    await writer.flush?.()
 
     const lines = readTraceLines()
     expect(lines.filter((l) => l.type === 'history_rewritten')).toHaveLength(0)
     expect(lines.map((l) => l.agentId)).toEqual(['agent-1', 'agent-2'])
   })
 
-  test('writes base64 image data in full', () => {
+  test('writes base64 image data in full', async () => {
     const base64 = 'a'.repeat(10_000)
     const writer = createTraceWriter(() => tracePathFor(tempDir))!
 
@@ -185,6 +190,7 @@ describe('createTraceWriter', () => {
         } as Message,
       ],
     })
+    await writer.flush?.()
 
     const lines = readTraceLines()
     expect(lines).toHaveLength(1)

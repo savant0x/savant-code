@@ -47,6 +47,8 @@ export { FidCard } from './echo/fid-card'
 export { FidList } from './echo/fid-list'
 export { AgentStack } from './echo/agent-stack'
 export { TokenMeter } from './echo/token-meter'
+export { TrustMatrix, reduceTrustMatrixEvents } from './echo/trust-matrix'
+export { LearnOverlay, reduceLearnState } from './teacher/learn-overlay'
 
 // Types
 export type { StackProps } from './primitives/stack'
@@ -69,6 +71,17 @@ export type { FidCardProps } from './echo/fid-card'
 export type { FidListProps, FidData } from './echo/fid-list'
 export type { AgentStackProps, AgentStackAgent } from './echo/agent-stack'
 export type { TokenMeterProps } from './echo/token-meter'
+export type {
+  TrustMatrixProps,
+  TrustMatrixRow,
+  TrustMatrixState,
+  TrustMatrixTone,
+} from './echo/trust-matrix'
+export type {
+  LearnOverlayProps,
+  LearnPhase,
+  LearnViewState,
+} from './teacher/learn-overlay'
 export type { GridProps, Column } from './layout/grid'
 export type { HeaderProps } from './layout/header'
 export type { SelectProps, SelectOption } from './input/select'

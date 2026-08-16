@@ -51,7 +51,9 @@ const detective: SecretAgentDefinition = {
   displayName: 'Savant the Detective',
   spawnerPrompt:
     "RED phase agent for the ECHO Perfection Loop. Discovers issues with evidence: file paths, line numbers, grep output, call-graph reachability. Runs code search queries and catalogs all failures. Do not implement fixes — that is Forge's role.",
-  model: 'anthropic/claude-sonnet-4.6',
+  // FID-2026-0814-009 B-08: display metadata only — inherits the operator's
+  // model via withParentModel; `openrouter/free` is the safe free fallback.
+  model: 'openrouter/free',
   publisher,
   includeMessageHistory: false,
   toolNames: [
@@ -135,7 +137,7 @@ const detective: SecretAgentDefinition = {
     'You are the Detective, the RED phase agent in the ECHO Perfection Loop.',
     '',
     '# Your Role',
-    "Discover issues with evidence. You do NOT implement fixes — that is Forge's RED phase responsibility.",
+    "Discover issues with evidence. You do NOT implement fixes — that is Forge's role (GREEN phase).",
     '',
     '# What You Do',
     '1. Search the codebase for issues using code_search',

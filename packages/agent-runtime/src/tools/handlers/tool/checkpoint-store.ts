@@ -86,6 +86,15 @@ type OpenTurnBuffer = {
  */
 const openTurns = new Map<string, OpenTurnBuffer>()
 
+/**
+ * In-flight capture promises keyed by `${checkpointDir}\u0000${turnId}\u0000${filePath}`.
+ * FID-2026-0815-005 (F-04): concurrent captures of the same path coalesce onto
+ * one read so the first-wins dedupe (CKR-1/CKR-2) holds under concurrency — the
+ * single read happens before any of the racing writes dispatch, capturing the
+ * true pre-edit original exactly once.
+ */
+const inFlightCaptures = new Map<string, Promise<void>>()
+
 function bufferKey(checkpointDir: string, turnId: string): string {
   return `${checkpointDir}\u0000${turnId}`
 }
@@ -129,15 +138,17 @@ export function openTurn(params: {
  * Captures the pre-write content of `filePath` for the open turn.
  * Dedupes per path: the first capture wins, so later edits to the same file in
  * the same turn never overwrite the original (restore-to-turn-start stays
- * correct). Reads the file synchronously — capture happens on the write hot
- * path immediately before the handler dispatches, matching the prior store's
- * `fs.readFileSync` behavior.
+ * correct). Async (FID-2026-0815-005 F-04): reads via `fs.promises.readFile` so
+ * the write hot path never blocks the event loop, and an in-flight per-path
+ * promise map coalesces concurrent captures of the same path onto one read.
+ * The caller (runWriteGate) awaits this before dispatch, so the read still
+ * completes before the write.
  */
-export function captureSnapshot(params: {
+export async function captureSnapshot(params: {
   checkpointDir?: string
   turnId: string
   filePath: string
-}): void {
+}): Promise<void> {
   const { checkpointDir, turnId, filePath } = params
   if (!checkpointDir || !filePath) {
     return
@@ -150,26 +161,42 @@ export function captureSnapshot(params: {
   ) {
     return
   }
-  try {
-    buffer.files.set(filePath, fs.readFileSync(filePath, 'utf8'))
-  } catch (error) {
-    // Only ENOENT means "file didn't exist yet" — record null so restore
-    // deletes it (created this turn). ANY other read failure (EACCES,
-    // EISDIR, EMFILE, …) must NOT be recorded as `null`: restore would then
-    // DELETE a file that exists but simply couldn't be read at capture time.
-    // The path is skipped for the rest of the turn instead (FID-2026-0803-005
-    // P1a). Error-code narrowing follows common/src/util/paths.ts.
-    const code =
-      error instanceof Error &&
-      'code' in error &&
-      typeof error.code === 'string'
-        ? error.code
-        : undefined
-    if (code === 'ENOENT') {
-      buffer.files.set(filePath, null)
-    } else {
-      buffer.skippedPaths.add(filePath)
+
+  const captureKey = `${bufferKey(checkpointDir, turnId)}\u0000${filePath}`
+  const inFlight = inFlightCaptures.get(captureKey)
+  if (inFlight) {
+    await inFlight
+    return
+  }
+
+  const read = (async () => {
+    try {
+      buffer.files.set(filePath, await fs.promises.readFile(filePath, 'utf8'))
+    } catch (error) {
+      // Only ENOENT means "file didn't exist yet" — record null so restore
+      // deletes it (created this turn). ANY other read failure (EACCES,
+      // EISDIR, EMFILE, …) must NOT be recorded as `null`: restore would then
+      // DELETE a file that exists but simply couldn't be read at capture time.
+      // The path is skipped for the rest of the turn instead (FID-2026-0803-005
+      // P1a). Error-code narrowing follows common/src/util/paths.ts.
+      const code =
+        error instanceof Error &&
+        'code' in error &&
+        typeof error.code === 'string'
+          ? error.code
+          : undefined
+      if (code === 'ENOENT') {
+        buffer.files.set(filePath, null)
+      } else {
+        buffer.skippedPaths.add(filePath)
+      }
     }
+  })()
+  inFlightCaptures.set(captureKey, read)
+  try {
+    await read
+  } finally {
+    inFlightCaptures.delete(captureKey)
   }
 }
 
@@ -180,13 +207,13 @@ export function captureSnapshot(params: {
  * Best-effort: persistence failures are swallowed so a checkpoint problem can
  * never fail the host's run-settle path.
  */
-export function closeTurn(params: {
+export async function closeTurn(params: {
   checkpointDir?: string
   turnId: string
   prompt?: string
   messageCount?: number
   historyLength?: number
-}): TurnCheckpoint | null {
+}): Promise<TurnCheckpoint | null> {
   const { checkpointDir, turnId } = params
   if (!checkpointDir) {
     return null
@@ -214,13 +241,15 @@ export function closeTurn(params: {
     })),
   }
   try {
-    fs.mkdirSync(checkpointDir, { recursive: true })
-    fs.writeFileSync(
+    // FID-2026-0815-005 (F-04): persist via fs.promises so the turn-settle
+    // path never blocks the event loop.
+    await fs.promises.mkdir(checkpointDir, { recursive: true })
+    await fs.promises.writeFile(
       checkpointFilePath(checkpointDir, turnId),
       JSON.stringify(checkpoint, null, 2),
       'utf8',
     )
-    prune(checkpointDir)
+    await prune(checkpointDir)
   } catch {
     // Best-effort persistence — never fail the run-settle path.
   }
@@ -228,26 +257,34 @@ export function closeTurn(params: {
 }
 
 /** Removes all but the most recent CHECKPOINT_RETENTION checkpoints (by startedAt). */
-function prune(checkpointDir: string): void {
+async function prune(checkpointDir: string): Promise<void> {
   try {
-    const entries = fs
-      .readdirSync(checkpointDir, { withFileTypes: true })
+    const dirents = await fs.promises.readdir(checkpointDir, {
+      withFileTypes: true,
+    })
+    const files = dirents
       .filter((e) => e.isFile() && e.name.endsWith(CHECKPOINT_FILE_SUFFIX))
       .map((e) => path.join(checkpointDir, e.name))
-      .map((file) => {
+    const withStartedAt = await Promise.all(
+      files.map(async (file) => {
         try {
-          const parsed = JSON.parse(fs.readFileSync(file, 'utf8')) as {
+          const parsed = JSON.parse(
+            await fs.promises.readFile(file, 'utf8'),
+          ) as {
             startedAt?: number
           }
           return { file, startedAt: parsed.startedAt ?? 0 }
         } catch {
           return { file, startedAt: 0 }
         }
-      })
-      .sort((a, b) => b.startedAt - a.startedAt)
-    for (const entry of entries.slice(CHECKPOINT_RETENTION)) {
-      fs.rmSync(entry.file, { force: true })
-    }
+      }),
+    )
+    const ordered = withStartedAt.sort((a, b) => b.startedAt - a.startedAt)
+    await Promise.all(
+      ordered
+        .slice(CHECKPOINT_RETENTION)
+        .map((entry) => fs.promises.rm(entry.file, { force: true })),
+    )
   } catch {
     // Best-effort pruning.
   }

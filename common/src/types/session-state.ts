@@ -7,6 +7,7 @@ import type { DesignContract } from './design-system'
 import type { EchoComplianceTrackerLike } from './echo-compliance'
 import type { JSONValue } from './json'
 import type { Message } from './messages/savant-code-message'
+import type { ProvenanceSessionLike } from './provenance'
 import type { ProtocolVariant } from '../util/boot-contract'
 import type { ProjectFileContext } from '../util/file'
 
@@ -123,6 +124,45 @@ export type AgentActivity =
       source: 'web' | 'docs'
     }
 
+/**
+ * FID-2026-0813-023: live compaction status surfaced to the read-only sidebar
+ * row. JSON-safe plain object; set by `prepareStepContext` and read by the CLI
+ * heartbeat.
+ */
+export type CompactionStatus = {
+  phase: 'idle' | 'compacting' | 'compacted' | 'pruned' | 'warning'
+  percentUsed?: number
+  tokensSaved?: number
+}
+
+/**
+ * FID-2026-0814-002: durable budgeted goal record owned by `agentState`.
+ * JSON-safe plain object so it survives the SDK session-snapshot boundary and
+ * session persistence. `complete` is intentionally TRANSIENT — the driver
+ * announces it (tool result in the transcript) and clears the record, so a
+ * completed goal never rests on disk; `cancel` clears it the same way.
+ * `active` demotes to `paused` on run start (never silently resumes work).
+ */
+export type GoalRecord = {
+  goalId: string
+  objective: string
+  completionCriterion?: string
+  status: 'active' | 'paused' | 'blocked'
+  turnsUsed: number
+  tokensUsed: number
+  wallClockMs: number
+  wallClockResumedAt?: number
+  budgetLimits?: {
+    tokenBudget?: number
+    turnBudget?: number
+    wallClockBudgetMs?: number
+  }
+  terminalReason?: string
+  /** Consecutive goal turns the model reported as a genuine impasse. */
+  consecutiveImpasseTurns: number
+  createdAt: number
+}
+
 export type AgentState = {
   /**
    * @deprecated agentId is replaced by runId
@@ -150,6 +190,32 @@ export type AgentState = {
    * This is updated on every agent step via the /api/v1/token-count endpoint.
    */
   contextTokenCount: number
+  /**
+   * FID-2026-0813-023/0814-001: live compaction status for the read-only
+   * sidebar row. Phases: idle (below trigger), compacting (pruner spawned),
+   * compacted (micro-compact cleared tool results), pruned (full
+   * context-pruner summarization), warning (near/over the model window).
+   * `percentUsed` is window-relative (denominator = maxContextLength).
+   */
+  compactionStatus?: CompactionStatus
+  /**
+   * FID-2026-0814-001: wall-clock stamp of the last context-pruner
+   * completion (set at the spawn-agent-inline history-replacement boundary).
+   * Read by the serialized savant handleSteps to back off re-spawning the
+   * pruner during a cooldown after an ineffective run. Not serialized to the
+   * SDK.
+   */
+  lastPrunerCompletionAt?: number
+  /**
+   * FID-2026-0814-011: single trigger authority for auto-compaction. Set
+   * every step by `prepareStepContext` from the proven `shouldAutoCompact`
+   * verdict and consumed by the serialized savant handleSteps so the
+   * context-pruner spawn fires exactly when the warning path fires — the
+   * generator's own ratio arithmetic is only a fallback. Plain boolean so it
+   * survives the SDK JSON snapshot boundary; refreshed each step so it can
+   * never go stale.
+   */
+  autoCompactDue?: boolean
   /**
    * ECHO Perfection Loop FSM phase. Starts at 'idle'. Transitions via transition_phase tool.
    * Tool gating: write_file/str_replace blocked unless phase is 'green'.
@@ -188,8 +254,19 @@ export type AgentState = {
    * this condition after each task_completed call. If satisfied, the
    * loop ends. If not, the agent continues iterating.
    * Set by parsing <goal condition="..."> from message history.
+   * FID-2026-0814-002: kept for backward compatibility — the structured
+   * `goal` record below supersedes it when present.
    */
   goalCondition?: string
+
+  /**
+   * FID-2026-0814-002: durable budgeted goal record. Owned by the runtime;
+   * created from the `<goal-set>` directive (slash surface), controlled by
+   * `update_goal`/`get_goal` model tools and `<goal-control>` directives,
+   * and driven by the goal continuation driver in main-prompt. Complete is
+   * transient (record cleared); `active` demotes to `paused` on run start.
+   */
+  goal?: GoalRecord
 
   /** Explicitly resolved governance contract for this session. */
   protocolVariant?: ProtocolVariant
@@ -222,6 +299,19 @@ export type AgentState = {
    * stale/foreign tracker.
    */
   echoCompliance?: EchoComplianceTrackerLike
+
+  /**
+   * FID-2026-0813-004: ZTAP provenance mode — `off | record | enforce`.
+   * Defaults to `record` when absent. Wired from `protocol.config.yaml`
+   * `provenance.mode` by the CLI run config.
+   */
+  provenanceMode?: 'off' | 'record' | 'enforce'
+  /**
+   * @internal — FID-2026-0813-004: per-session ZTAP provenance engine.
+   * Threaded to subagent states so subagent writes record against the same
+   * session (same pattern as `echoCompliance`). NOT serialized.
+   */
+  provenance?: ProvenanceSessionLike
 }
 
 export const AgentOutputSchema = z.discriminatedUnion('type', [

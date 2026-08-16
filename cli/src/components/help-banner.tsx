@@ -101,6 +101,35 @@ export const HelpBanner = () => {
           </box>
         </box>
 
+        {/* Governance Section — ECHO harness status legends (FID-2026-0813-023) */}
+        <box style={{ flexDirection: 'column', gap: 0 }}>
+          <SectionHeader>Governance</SectionHeader>
+          <box style={{ flexDirection: 'column', paddingLeft: 2 }}>
+            <text style={{ fg: theme.muted }}>
+              Perfection Loop: RED → GREEN → AUDIT → ADVERSARIAL → COMPLETE
+            </text>
+            <text style={{ fg: theme.muted }}>
+              Sidebar "Compaction": idle · ✓ micro · ⚙ compacting… · ✓ pruned ·
+              ⚠ N% of window
+            </text>
+            <text style={{ fg: theme.muted }}>
+              Trust Matrix: signed write/verdict receipts; unsigned hidden
+            </text>
+            <text style={{ fg: theme.muted }}>
+              /attest (trust receipt) · /learn (teacher) · /goal (goal mode) ·
+              /permissions · /model
+            </text>
+            <text style={{ fg: theme.muted }}>
+              {
+                '/goal <objective> [--budget tokens|turns|time] — budgeted goal run'
+              }
+            </text>
+            <text style={{ fg: theme.muted }}>
+              protocol.config.yaml "hooks:" — lifecycle commands, fail-open
+            </text>
+          </box>
+        </box>
+
         {/* Credits Section — hidden in SavantFree */}
         {!IS_SAVANT_FREE && (
           <box style={{ flexDirection: 'column', gap: 0 }}>

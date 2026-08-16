@@ -9,7 +9,9 @@ const librarian: AgentDefinition = {
   id: 'librarian',
   publisher,
   displayName: 'Librarian',
-  model: 'minimax/minimax-m3',
+  // FID-2026-0814-009 B-08: display metadata only — inherits the operator's
+  // model via withParentModel; `openrouter/free` is the safe free fallback.
+  model: 'openrouter/free',
 
   spawnerPrompt:
     'Spawn the librarian agent to shallow-clone a GitHub repository into /tmp and answer questions about its code, structure, or documentation. The agent returns structured output with `answer`, `relevantFiles` (absolute paths in the cloned repo), and `cloneDir`. You can use `run_terminal_command` with `cat` to read the returned `relevantFiles` paths. Clean up `cloneDir` with `rm -rf` when done.',

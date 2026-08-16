@@ -10,6 +10,8 @@ import {
 } from './spawn-agent-utils'
 import { getOrCreateEnforcement } from '../../../echo/enforcement'
 import { appendGroundingRefresh } from '../../../echo/grounding'
+import { getOrCreateProvenance } from '../../../provenance'
+import { extractVerdictText } from '../../../provenance/verdict'
 import { filterToolSet } from '../../../tools/filter-tool-set'
 
 import type { SavantCodeToolHandlerFunction } from '../handler-function-type'
@@ -154,10 +156,54 @@ export const handleSpawnAgentInline = (async (
     clearUserPromptMessagesAfterResponse: false,
   })
 
+  // FID-2026-0813-004: ZTAP verdict binding (inline spawn path). The
+  // Verifier/Adversary verdict is the child's final output; bind it to every
+  // open receipt of the session as a signed verbatim payload (D7).
+  if (agentType === 'verifier' || agentType === 'adversary') {
+    const verdictText = extractVerdictText(result.agentState)
+    if (verdictText) {
+      const provenance = getOrCreateProvenance(parentAgentState, {
+        projectRoot: params.fileContext?.projectRoot ?? '.',
+      })
+      void provenance
+        .bindVerdict({
+          phase: agentType === 'verifier' ? 'audit' : 'adversarial',
+          agentId: childAgentState.agentId,
+          agentType,
+          verdictText,
+        })
+        .then((receipts) => {
+          for (const receipt of receipts) {
+            writeToClient({
+              type: 'provenance_receipt',
+              sessionId: receipt.sessionId,
+              seq: receipt.seq,
+              phase: agentType === 'verifier' ? 'audit' : 'adversarial',
+              status: receipt.status,
+              signed: receipt.signatures.length > 0,
+              receipt,
+              verdictText,
+            })
+          }
+        })
+        .catch(() => {
+          // Best-effort: a failed binding never fails the spawn.
+        })
+    }
+  }
+
   // Update parent agent state to reflect shared message history. The
   // context-pruner replaces history through set_messages in the child; append
   // the freshness refresh at the parent mutation boundary so it cannot be
   // discarded by that replacement.
+  const prunerMessagesRemoved =
+    agentType === 'context-pruner'
+      ? Math.max(
+          0,
+          parentAgentState.messageHistory.length -
+            result.agentState.messageHistory.length,
+        )
+      : 0
   parentAgentState.messageHistory = result.agentState.messageHistory
   if (agentType === 'context-pruner' && !parentAgentState.parentId) {
     appendGroundingRefresh(
@@ -165,6 +211,36 @@ export const handleSpawnAgentInline = (async (
       getOrCreateEnforcement(parentAgentState).recordHistoryReplacement()
         .refreshText,
     )
+    // FID-2026-0814-001: live pruner result feedback + re-spawn cooldown
+    // stamp. The child's history is now the compacted history; estimate tokens
+    // freed with the same convention as micro-compact (~200 tokens per removed
+    // message). The next step boundary recomputes the accurate window-relative
+    // percent, and the anti-thrash score at that boundary is authoritative.
+    parentAgentState.lastPrunerCompletionAt = Date.now()
+    const prunerMaxContextLength = parentAgentState.maxContextLength ?? 200_000
+    const prunerTokensSaved = prunerMessagesRemoved * 200
+    const prunerPercentUsed = Math.round(
+      ((parentAgentState.contextTokenCount ?? 0) / prunerMaxContextLength) *
+        100,
+    )
+    if (prunerTokensSaved > 0) {
+      parentAgentState.compactionStatus = {
+        phase: 'pruned',
+        tokensSaved: prunerTokensSaved,
+        percentUsed: prunerPercentUsed,
+      }
+    } else if (
+      !(spawnParams as { foldOldestExchange?: boolean } | undefined)
+        ?.foldOldestExchange
+    ) {
+      // A real proactive/force compaction that removed nothing is ineffective:
+      // surface the warning instead of leaving a stale status. The amortized
+      // fold no-ops by design (nothing un-absorbed), so it never overwrites.
+      parentAgentState.compactionStatus = {
+        phase: 'warning',
+        percentUsed: prunerPercentUsed,
+      }
+    }
   }
 
   return { output: [{ type: 'json', value: { message: 'Agent spawned.' } }] }

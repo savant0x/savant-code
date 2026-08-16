@@ -1,3 +1,28 @@
+// Constructing an Intl.DateTimeFormat is expensive; cache a single formatter.
+// The value is substituted into the agent system prompt on every build and the
+// formatter is stateless, so a module-level singleton is safe (FID-2026-0815-001).
+const CURRENT_DATE_TIME_FORMATTER = new Intl.DateTimeFormat('en-US', {
+  weekday: 'long',
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+  hour: 'numeric',
+  minute: '2-digit',
+  timeZoneName: 'short',
+})
+
+/**
+ * Formats a Date as a full, human-readable date-and-time string including the
+ * weekday and short timezone name — e.g. "Saturday, August 15, 2026 at 2:34 PM EDT".
+ *
+ * Injected into the agent's system prompt so it always knows the correct current
+ * date and time without having to derive the weekday from a bare date (a known
+ * model failure mode — FID-2026-0815-010).
+ */
+export function formatCurrentDateTime(date: Date = new Date()): string {
+  return CURRENT_DATE_TIME_FORMATTER.format(date)
+}
+
 /**
  * Calculates the next quota reset date.
  * If the current reset date is in the past or null, it calculates the next

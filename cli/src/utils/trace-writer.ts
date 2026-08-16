@@ -1,4 +1,4 @@
-import { appendFileSync, mkdirSync } from 'fs'
+import { appendFile, mkdir } from 'fs/promises'
 import path, { dirname } from 'path'
 
 import { IS_DEV } from '@savant-code/common/env'
@@ -85,30 +85,43 @@ export function createTraceWriter(
   const agentStates = new Map<string, AgentTraceState>()
   let ensuredDir: string | undefined
   let runtimeEventCount = 0
+  let writeChain: Promise<void> = Promise.resolve()
+
+  // Serialize all trace writes through a single promise chain so they are
+  // ordered and non-blocking (the prior appendFileSync blocked the event loop
+  // on every step in dev). The file path is resolved synchronously at enqueue
+  // time because the current chat directory can change between steps.
+  // FID-2026-0815-011 E-02: a lazy producer defers the heavy JSON
+  // serialization into the chain, off the step hot path.
+  const enqueueWrite = (payload: string | (() => string)): void => {
+    const filePath = resolveTraceFilePath()
+    if (!filePath) return
+    const dir = dirname(filePath)
+    writeChain = writeChain
+      .then(async () => {
+        const text = typeof payload === 'function' ? payload() : payload
+        if (ensuredDir !== dir) {
+          await mkdir(dir, { recursive: true })
+          ensuredDir = dir
+        }
+        await appendFile(filePath, text, 'utf8')
+      })
+      .catch(() => {
+        // Tracing must never break the run
+      })
+  }
 
   return {
     recordEvent: (event) => {
       if (runtimeEventCount >= MAX_RUNTIME_EVENTS) return
       runtimeEventCount++
-      const filePath = resolveTraceFilePath()
-      if (!filePath) return
-      try {
-        const dir = dirname(filePath)
-        if (ensuredDir !== dir) {
-          mkdirSync(dir, { recursive: true })
-          ensuredDir = dir
-        }
-        appendFileSync(
-          filePath,
-          JSON.stringify({
-            timestamp: new Date().toISOString(),
-            type: 'runtime_event',
-            ...boundedRuntimeEvent(event),
-          }) + '\n',
-        )
-      } catch {
-        // Tracing must never break the run
-      }
+      enqueueWrite(
+        JSON.stringify({
+          timestamp: new Date().toISOString(),
+          type: 'runtime_event',
+          ...boundedRuntimeEvent(event),
+        }) + '\n',
+      )
     },
     recordStep: ({
       agentId,
@@ -133,14 +146,22 @@ export function createTraceWriter(
         base.runId = runId
       }
       const timestamp = new Date().toISOString()
-      const lines: string[] = []
+      // E-02: collect structured records here and serialize inside the async
+      // chain below, so message serialization never blocks the step hot path.
+      const records: Array<Record<string, JSONValue>> = []
       const appendLine = (record: Record<string, JSONValue>): void => {
-        lines.push(JSON.stringify({ timestamp, ...record }))
+        records.push(record)
       }
 
+      // O(1) rewrite detection on the append path: history is append-only in
+      // the loop, so the prefix never changes when messages.length grows. The
+      // role scan only runs for the (rare) same-length case — a potential
+      // in-place role edit — while truncation (compaction/expiry) is caught by
+      // the length comparison alone.
       const rewritten =
         messages.length < state.writtenRoles.length ||
-        state.writtenRoles.some((role, i) => messages[i]?.role !== role)
+        (messages.length === state.writtenRoles.length &&
+          state.writtenRoles.some((role, i) => messages[i]?.role !== role))
       if (rewritten) {
         appendLine({
           ...base,
@@ -166,26 +187,26 @@ export function createTraceWriter(
           // JSON-serializable for the trace file, which JSONValue models.
           message: message as unknown as JSONValue,
         })
+        // Append the role incrementally instead of a full `messages.map`
+        // rebuild on every call.
+        state.writtenRoles.push(message.role)
       }
 
-      state.writtenRoles = messages.map((m) => m.role)
       agentStates.set(agentId, state)
 
-      if (lines.length === 0) return
-      // Resolve the path per step (not cached for the writer's lifetime: the
-      // current chat directory changes when the user starts a new chat).
-      const filePath = resolveTraceFilePath()
-      if (!filePath) return
-      try {
-        const dir = dirname(filePath)
-        if (ensuredDir !== dir) {
-          mkdirSync(dir, { recursive: true })
-          ensuredDir = dir
-        }
-        appendFileSync(filePath, lines.join('\n') + '\n')
-      } catch {
-        // Tracing must never break the run
-      }
+      if (records.length === 0) return
+      // `timestamp` is captured here so every line keeps the step's time;
+      // `records` holds structured values (message references are never
+      // mutated in place by the loop), so deferring the stringify is safe.
+      enqueueWrite(
+        () =>
+          records
+            .map((record) => JSON.stringify({ timestamp, ...record }))
+            .join('\n') + '\n',
+      )
+    },
+    flush: async () => {
+      await writeChain
     },
   }
 }

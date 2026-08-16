@@ -7,6 +7,8 @@ work separate from historical evidence and generated output.
 |---|---|
 | [`fids/`](fids/) | Active Feature Implementation Documents awaiting resolution |
 | [`fids/archive/`](fids/archive/) | Closed FIDs and immutable historical records |
+| [`build-orders/`](build-orders/) | Planning-only build orders and phase sequencing |
+| [`idea-shelf/`](idea-shelf/) | Shelved ideas, explorations, and design references (not active work) |
 | [`scratchpad/`](scratchpad/) | Short-lived experiments and reusable local validation scripts |
 | [`nova/`](nova/) | Third-party audit inbox/outbox and research channel |
 | [`session-summaries/`](session-summaries/) | Historical session audit trail |
@@ -14,7 +16,7 @@ work separate from historical evidence and generated output.
 | [`exports/`](exports/) | Generated export artifacts; never treat as source documentation |
 | [`releases/`](releases/) | Release-specific development records |
 | [`LEARNINGS.md`](LEARNINGS.md) | Cross-session lessons |
-| [`YAGNI-LEDGER.md`](YAGNI-LEDGER.md) | Intentional-debt and scope ledger |
+| [`LEARNING-RULES.md`](LEARNING-RULES.md) | Canonical learning rules (normative behavior owned by code and protocol) |
 
 ## Hygiene rules
 

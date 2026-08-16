@@ -2,10 +2,7 @@
 
 # Savant-Code v0.0.23 — Release Notes
 
-> **Status: pending release (2026-08-09).** Working tree is aligned to `0.0.23`; this
-> document is the planned GitHub release body. No tag, push, npm publication, GitHub
-> release, or deployment has been performed. Publication is a separate operator action
-> requiring a clean shell (see *Prerequisite* below).
+> **Status: released (2026-08-09).** This document is the v0.0.23 release body.
 
 **v0.0.23 is the optimization, compliance, and quality-hardening release.** It delivers two
 fully signed-off work programs — the optimization & automation batch (FIDs 003–010) and the
@@ -31,7 +28,7 @@ Independently signed off and closed. Adds machine-checkable contracts across the
 Master plan + six children, implemented under the operator's automation level 3 grant,
 closed with an independent Nova implementation audit **PASS**:
 
-- **Gate restoration (Tier 0)** — `lint:md` restored to exit 0 across the untracked design docs.
+- **Gate restoration (Tier 0)** — `lint:md` restored to exit 0 across the design docs.
 - **No-signature compliance scrub (Tier 1)** — `Author: Savant` attribution removed from active documents; dated historical records preserved (immutability).
 - **File-length decomposition (Tier 2, batches A + B)** — 23 production files (up to 756 lines) decomposed to ≤400 lines via pure-move + re-export shims with **byte-identity proof** per file; serialized generator self-containment preserved.
 - **Test-suite decomposition (Tier 2)** — 14 oversized test files split at describe boundaries with counts preserved exactly; all suites green.

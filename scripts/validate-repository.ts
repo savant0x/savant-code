@@ -25,6 +25,11 @@ import {
   validateMetadata,
   VALIDATION_WORKSPACE_POLICY,
 } from './validation-manifest.js'
+import {
+  readConfiguredProjectVersion,
+  readProductVersion,
+  SYNCHRONIZED_PACKAGE_PATHS,
+} from './version.js'
 
 import type {
   CommandParityInput,
@@ -60,6 +65,53 @@ function validateCurrentHygiene(): { code: string; message: string }[] {
     code: `hygiene.${issue.code}`,
     message: `${issue.file}: ${issue.message}`,
   }))
+}
+
+// FID-2026-0813-023: fail-closed, absence-shaped scan for the un-expanded
+// rebrand marker. The rebrand commit (da18963) left the literal identifier
+// `savantCode$1` repo-wide; it compiles silently, so the only durable defense
+// is a validation gate that fails when the marker reappears in source.
+const REBRAND_CORRUPTION_MARKER = 'savantCode$1'
+const REBRAND_SOURCE_DIRS = [
+  'sdk/src',
+  'cli/src',
+  'common/src',
+  'packages',
+  'agents',
+]
+
+function collectRebrandHits(dir: string, hits: string[]): void {
+  let entries: fs.Dirent[]
+  try {
+    entries = fs.readdirSync(dir, { withFileTypes: true })
+  } catch {
+    return
+  }
+  for (const entry of entries) {
+    if (entry.name === 'node_modules' || entry.name === 'dist') continue
+    const full = path.join(dir, entry.name)
+    if (entry.isDirectory()) {
+      collectRebrandHits(full, hits)
+    } else if (/\.(ts|tsx)$/.test(entry.name)) {
+      if (fs.readFileSync(full, 'utf8').includes(REBRAND_CORRUPTION_MARKER)) {
+        hits.push(path.relative(root, full))
+      }
+    }
+  }
+}
+
+function validateRebrandCorruption(): { code: string; message: string }[] {
+  const hits: string[] = []
+  for (const dir of REBRAND_SOURCE_DIRS) {
+    collectRebrandHits(path.join(root, dir), hits)
+  }
+  if (hits.length === 0) return []
+  return [
+    {
+      code: 'rebrand.corruption',
+      message: `Un-expanded rebrand marker \`${REBRAND_CORRUPTION_MARKER}\` found at ${hits.length} source location(s): ${hits.join(', ')}`,
+    },
+  ]
 }
 
 function readJson(relativePath: string): JsonObject {
@@ -111,36 +163,15 @@ function collectMetadata(): MetadataValidationInput {
   const rootEngine = (
     rootPackage.engines as Record<string, unknown> | undefined
   )?.bun
-  const synchronizedPackagePaths = [
-    'package.json',
-    'agents/package.json',
-    'cli/package.json',
-    'common/package.json',
-    'evals/package.json',
-    'savant-free/package.json',
-    'packages/agent-runtime/package.json',
-    'packages/design-systems/package.json',
-    'packages/code-map/package.json',
-    'packages/database/package.json',
-    'packages/knowledge-graph/package.json',
-    'packages/llm-providers/package.json',
-    'scripts/tmux/package.json',
-    'sdk/package.json',
-    'cli/release/package.json',
-    'savant-free/cli/release/package.json',
-  ]
   return {
-    productVersion: fs.readFileSync(path.join(root, 'VERSION'), 'utf8').trim(),
+    productVersion: readProductVersion(root),
     synchronizedPackageVersions: Object.fromEntries(
-      synchronizedPackagePaths.map((filePath) => [
+      SYNCHRONIZED_PACKAGE_PATHS.map((filePath) => [
         filePath,
         readJson(filePath).version as string | undefined,
       ]),
     ),
-    configuredProjectVersion: readYamlScalar(
-      'protocol.config.yaml',
-      /^project:\n(?:.*\n)*?  version:\s*["']?([^"'\s]+)["']?/m,
-    ),
+    configuredProjectVersion: readConfiguredProjectVersion(root),
     harnessProtocolVersion: readYamlScalar(
       'protocol.config.yaml',
       /^protocol:\n\s+version:\s*["']?([^"'\s]+)["']?/m,
@@ -203,6 +234,7 @@ const issues = [
   })),
   ...providerAuditIssues,
   ...validateCurrentHygiene(),
+  ...validateRebrandCorruption(),
 ]
 
 process.stdout.write(`${formatValidationIssues(issues)}\n`)

@@ -53,7 +53,7 @@ function buildDefaultSystemPrompt(context: {
   const { mode, isFree, noGravityIndex, noAskUser, noFIDPerChange } = context
   return `You are Savant, an engineering agent bound by the ECHO Protocol. You are the AI agent behind the product, ${isFree ? 'SavantFree' : 'SavantCode'}, a tool where users can chat with you to code with AI${isFree ? ' for free' : ''}.
 
-Current date: ${PLACEHOLDER.CURRENT_DATE}.
+Current date and time: ${PLACEHOLDER.CURRENT_DATE}.
 
 # Agent Roster
 

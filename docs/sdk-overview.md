@@ -19,7 +19,7 @@ system, skills and MCP loading, and the native-asset plumbing (ripgrep, tree-sit
 | Field | Value | Notes |
 |-------|-------|-------|
 | Name | `@savant-code/sdk` | |
-| Version | `0.0.23` | Pending unreleased working-tree target; mirrors the monorepo version |
+| Version | `0.0.24` | Mirrors the monorepo version |
 | Visibility | `private: false` | Ready for npm publication structurally |
 | **Published to npm** | **Never** | Registry 404 confirmed by third-party audit; intentionally excluded from the published `0.0.22` release (see `dev/session-summaries/2026-08-08-1500-public-release-complete-handoff.md`) |
 | Runtime targets | Node >= 18 (primary), Bun | Dual ESM/CJS output; verified to load in plain Node |
@@ -65,7 +65,7 @@ Source root: `sdk/src/`. Organization by area (all exports listed are public unl
 | `retry-config.ts` | Retry/backoff and reconnection constants for streaming |
 | `agents/load-agents.ts` | `loadLocalAgents` — loads `.agents` dirs (`.ts/.tsx/.js/.mjs/.cjs`), MCP env resolution |
 | `agents/load-mcp-config.ts` | `loadMCPConfig(Sync)` — `.mcp.json` / mcp config parsing |
-| `skills/load-skills.ts` | `loadSkills`, `loadSkillsSync`, `parseSkillFileContent` — `SKILL.md` discovery |
+| `skills/load-skills.ts` | `loadSkills`, `parseSkillFileContent` — `SKILL.md` discovery |
 | `tools/` | Tool handlers: `apply-patch`, `change-file`, `code-search`, `glob`, `list-directory`, `read-files`, `read-url`, `run-terminal-command`, `run-file-change-hooks`, SSRF guard |
 | `impl/model-provider/` | The provider routing + factories (see `docs/design/Adding New Providers.md`) |
 | `impl/openrouter-key-resolver.ts` | OpenRouter credential chain: `OR_MASTER_KEY` exchange → `OPENROUTER_API_KEY` → `INFERENCE_API_KEY`; process-lifetime cache + reset hook |
@@ -141,6 +141,9 @@ Client-level options (`SavantCodeClientOptions`) and per-run options (`RunOption
 | `permissionMode` | run | `safe` / `prompt` / `unsafe` sandbox permission mode |
 | `modelInfoText` | run | Pre-formatted model metadata injected into the system prompt |
 | `echoCompliance` | run | ECHO harness compliance: `{ mode: 'warn' | 'off', fidPaths }` (see below) |
+| `provenanceMode` | run | ZTAP provenance: `'off' \| 'record' \| 'enforce'` (default `record`; `enforce` fail-closes unsigned writes) |
+| `contextWindow` | run | Resolved model context window (tokens). Threaded to the ContextCompactor so thresholds, the display percent, and the pruner trigger share one window (absent → loud fallback, never a silent 200k default) |
+| `compression` | run | Compression config from `protocol.config.yaml` — `microCompact`, `keepRecentTokens`, `autoCompactRatio`, `forceCompactOffset`, `microCompactMaxKeepRecent`, `microCompactFloorTokens` |
 
 ### `RunState` and output
 
@@ -205,8 +208,8 @@ Supported files: `.ts`, `.tsx`, `.js`, `.mjs`, `.cjs` (auto-transpiled). Exclude
 
 ### Skills
 
-Skills are `SKILL.md` files (with optional frontmatter) in a directory. `loadSkills`/`loadSkillsSync`
-discover them from default dirs (`~/.agents/skills`, `.agents/skills`) or a custom `skillsDir`.
+Skills are `SKILL.md` files (with optional frontmatter) in a directory. `loadSkills`
+discovers them from default dirs (`~/.agents/skills`, `.agents/skills`) or a custom `skillsDir`.
 Loaded skills appear in the `skill` tool's description and are loaded on demand by the agent.
 
 ### MCP (Model Context Protocol)

@@ -35,7 +35,32 @@ Each agent gets exactly the tools it needs via strict allowlist filtering. Detec
 
 ## Context Compaction
 
-Four-layer progressive auto-compaction keeps large repositories within model limits. Success is silent, failures are surfaced. Sessions can run through massive codebases without hitting context limits.
+Four-layer progressive auto-compaction keeps large repositories within model limits. A live in-stream signal (`⚙ Compacting context…` → `✓ Compaction complete (−N tokens)`) and a window-consistent sidebar `Compaction` row give real-time feedback. The display denominator, warning threshold, and pruner trigger all resolve from one model context window (no silent fallback), and the pruner spawn is driven by a single authority — the same `shouldAutoCompact` verdict that fires the warning — so auto-compaction can never silently fail to trigger while the context climbs past the window. Sessions can run through massive codebases without hitting context limits.
+
+---
+
+## Durable Budgeted Goal Mode
+
+`/goal <objective> [--budget tokens=N turns=N time=MS]` starts a durable,
+budgeted goal run backed by an event-sourced goal state machine
+(`active | paused | blocked | complete`). A runtime continuation driver runs
+goal turns until the model verifies completion via the `update_goal` tool,
+blocks on a genuine impasse, or a budget is exhausted. Goal text is injected as
+`<untrusted_objective>` so it is treated as data, never instructions.
+`/goal status|pause|resume|cancel` manage the record and the sidebar shows live
+goal + budget consumption.
+
+---
+
+## Extensible Hook System
+
+A project-scoped `hooks:` block in `protocol.config.yaml` registers external
+commands (or internal callbacks) against the tool-executor lifecycle —
+`PreToolUse`/`PostToolUse`/`PostToolUseFailure` plus `SessionStart`/
+`SessionEnd` and `SubagentStart`/`SubagentStop`. Hooks compose with the EHEL
+gate (an additional gate, never a bypass) and fail open: only an explicit
+`deny` decision or exit code 2 blocks a tool; a missing binary, timeout, or
+malformed output allows execution.
 
 ---
 
@@ -55,6 +80,28 @@ Retention is bounded to the most recent 20 turns. No Git repository is required.
 ## Fail-Closed Streaming
 
 Incomplete or malformed tool calls are rejected, not coerced. Stale-fragment replacement for placeholder arguments. Tool errors, cancellation, retry, and child-agent failures are surfaced rather than silently treated as success.
+
+---
+
+## Crash Recovery & Resilience
+
+A single error degrades instead of killing the session (FID-2026-0815-015):
+
+- **Error boundary** — a real class-based React boundary wraps the app root and
+  the agent-message subtree, so a render error falls back to a fallback panel
+  instead of tearing down the terminal.
+- **Guarded idle heartbeat** — the idle-activity timer is `try/catch`-guarded
+  and cleared on run cancel/finalize, so a deferred write to a frozen
+  `agentState` can never throw from a `setTimeout` callback.
+- **Cyclic-safe persistence** — chat-state saves omit ephemeral fields
+  (timer handles, `provenance`) so `JSON.stringify` can't throw on a cycle and
+  drop the save.
+- **Non-fatal background async** — unhandled promise rejections log-and-continue
+  (the engine default) instead of `process.exit(1)`, so a background analytics,
+  ad, or clipboard failure can't take the TUI down.
+- **Visible fatal errors** — a genuine crash is written to stderr after the
+  terminal reset, so it is never a bare `script dev exited 1`;
+  `uncaughtException` remains fatal only as the last resort.
 
 ---
 
@@ -80,6 +127,14 @@ Gateway model context lengths can be resolved from the live catalog. In
 BYOK/direct mode (`DIRECT_PROVIDER` or `INFERENCE_BASE_URL` set) every backend
 call is short-circuited — inference routes straight to the configured endpoint
 (FID-2026-0806-009/010).
+
+One model project-wide: the model selected in the UI panel is the only model
+used — main chat agent, teacher-forge, headless runs, and spawned subagents all
+resolve the operator's active model (never a hardcoded paid fallback). The paid
+build resolves its boot model only from the `/model` selection (`openrouter/free`
+when unset) and never reads the unreleased savant-free catalog or its persisted
+preference, so a stale free-model preference cannot silently switch the operator
+to a paid model (FID-2026-0814-010).
 
 ---
 
@@ -252,10 +307,12 @@ opens a PR via the `gh` CLI (FID-2026-0806-004):
 | `/export` | Write a self-contained branded HTML report |
 | `/graph refresh` | Re-index the code knowledge graph and show summary stats |
 | `/graph-export` | Write a branded, interactive HTML report of the code knowledge graph |
+| `/attest` | Export and verify the current project's signed ZTAP trust receipt |
 | `/interview` | Create a structured specification |
+| `/learn` | Practice directing and reviewing an AI coding agent through guided exercises |
 | `/plan` | Create an implementation plan |
 | `/review` | Review code changes |
-| `/goal` | Iterate toward a verifiable goal |
+| `/goal` | Start or manage a durable, budgeted goal run |
 | `/loop` | Schedule recurring checks |
 | `/verify` | Run typechecks |
 | `/permissions` | View or set the tool permission mode |
@@ -342,12 +399,52 @@ bounded (max 3 retries) and never seed the main agent with a pre-converged proto
 
 ---
 
+## Agent-Steering Teacher
+
+`/learn` is a local-first mode for practicing how to direct and review an AI
+coding agent. It drives a live exercise end to end: your steering constraint
+goes to a read-only, tool-less `teacher-forge` agent, the produced solution runs
+in a capability-sandboxed subprocess, behavior-first equivalence and
+deterministic mutation-detection graders review it, and you submit a critique
+of a seeded defect. Completed attempts are recorded as versioned competency
+records with an honest ZTAP process-evidence receipt.
+
+Commands: `/learn` (overview), `/learn start <steering>`,
+`/learn critique "<statement>" [--location …] [--witness …] [--impact …]`,
+`/learn progress`, `/learn cancel`, `/learn exit`.
+
+See the [Agent-Steering Teacher overview](design/agent-steering-teacher-overview.md)
+and [guide](design/agent-steering-teacher-guide.md).
+
+## Zero-Trust Agentic Provenance
+
+Every write is recorded as a per-role Ed25519-signed receipt at the native
+write boundary, appended to an append-only hash-only session ledger. Configure
+`provenance.mode` as `off`, `record` (default), or `enforce`. Receipts prove
+recorded mechanical process and its integrity — **not** LLM independence.
+
+- **Trust Matrix** — a read-only, event-sourced live panel that renders write
+  and verdict receipts. `pending` reads as `awaiting audit`; at session close
+  `finalize()` auto-resolves any open receipt to an honest `no_verdict`
+  terminal ("no independent verdict — session closed") with a signed
+  system-role annotation, so receipts never linger as a permanent broken
+  `pending`.
+- **`/attest`** (alias `/trust-receipt`) — exports the current project's
+  signed trust receipt as authoritative JSON plus an offline HTML view, and
+  re-verifies the receipt chain in an independent clean-process validator.
+
+See the [Zero-Trust Agentic Provenance guide](design/zero-trust-agentic-provenance.md).
+
 ## Learn More
 
 - [ECHO Protocol](echo-protocol.md) — The governance system
 - [Agent Roster](agents.md) — The 10 agents and their roles
 - [Execution Modes](savant-code-modes.md) — HYBRID / STRICT / ANALYZE / SCAFFOLD / PLAN contracts
 - [Design System Library](design/design-system-library.md) — The full `/design` specification
+- [Agent-Steering Teacher](design/agent-steering-teacher-overview.md) — The complete `/learn` overview
+- [Zero-Trust Agentic Provenance](design/zero-trust-agentic-provenance.md) — The `/attest` trust-receipt system
+- [Hook System](design/hook-system.md) — The extensible lifecycle-hook configuration
+- [Goal Mode](design/goal-mode.md) — The durable budgeted `/goal` workflow
 - [Public Release Workflow](public-release.md) — The governed `/release` pipeline
 - [Installation](installation.md) — Getting started
 - [GitHub](https://github.com/savant0x/savant-code) — Source code

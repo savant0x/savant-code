@@ -154,6 +154,12 @@ coding standard's `## Quality Overrides` section:
 **Additional Rule:** If you encounter ANY issue — even outside the current scope — you must flag it immediately.
 Never skip past a problem because "it's not what we're working on."
 
+**Single-agent scope protection:** When running in single-agent mode (governed by `dev/echo-v0.1.2-single-agent.md`),
+the agent MUST maintain a `SCOPE.md` artifact at the repository root and present any scope-drop for operator approval
+before proceeding — there is no Adversary in single-agent mode to catch a silent decision. See the Scope Boundary
+section of that file. This does not replace the 10-agent roster's Adversary override; it hardens the solo case where
+that override does not exist.
+
 ### Laws 5-15: The Extended Code Laws
 
 | #      | Law                                                                                      | Why                                                                                                            |
@@ -409,7 +415,12 @@ Self-reporting is prohibited. The Orchestrator that writes code must not be the 
 
 ### Start of Session
 
-1. Read this ECHO.md first
+1. Read the correct protocol file for your mode:
+   - **Single-agent session** → read `dev/echo-v0.1.2-single-agent.md` 0-EOF. **Do NOT use this file
+     (`ECHO.md`) for governance** — it describes the 10-agent harness with Hybrid Mode latitude that does
+     not apply to solo operation. Following `ECHO.md`'s "Orchestrator writes code directly" in a single-agent
+     session is a Law 2 violation.
+   - **Harness / multi-agent session** → continue with this `ECHO.md` boot sequence.
 2. Load `protocol.config.yaml` to get project-specific commands
 3. **BOOT CHECK:** If `language` is set to `"CHANGE_ME"`, HALT. Do not proceed. Require the user to configure the
    language before continuing.

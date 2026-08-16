@@ -38,16 +38,35 @@ export function startStateSnapshotting(params: {
   let timer: ReturnType<typeof setInterval> | null = null
   let lastSnapshotHistory:
     SessionState['mainAgentState']['messageHistory'] | null = null
+  // FID-2026-0814-006: the identity check must not be messageHistory-only.
+  // Compaction status and the token count are observable, user-facing fields
+  // written at boundaries that do not always coincide with a history identity
+  // change (e.g. the pruner completion write, or a step-boundary percent
+  // recompute) — so they join the "has anything durable changed" check to
+  // keep the sidebar from showing a stale percent across LLM-call gaps.
+  let lastSnapshotCompactionStatus: unknown = null
+  let lastSnapshotContextTokenCount: number | null = null
 
   const emit = () => {
     if (stopped || signal?.aborted) {
       return
     }
-    const history = sessionState.mainAgentState.messageHistory
-    if (history === lastSnapshotHistory) {
+    const agentState = sessionState.mainAgentState
+    const history = agentState.messageHistory
+    const compactionChanged =
+      agentState.compactionStatus !== lastSnapshotCompactionStatus
+    const tokenCountChanged =
+      agentState.contextTokenCount !== lastSnapshotContextTokenCount
+    if (
+      history === lastSnapshotHistory &&
+      !compactionChanged &&
+      !tokenCountChanged
+    ) {
       return
     }
     lastSnapshotHistory = history
+    lastSnapshotCompactionStatus = agentState.compactionStatus
+    lastSnapshotContextTokenCount = agentState.contextTokenCount
     try {
       onStateSnapshot(getCancelledRunState(STATE_SNAPSHOT_INTERRUPTION_MESSAGE))
     } catch (error) {

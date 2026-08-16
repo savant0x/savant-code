@@ -2,6 +2,15 @@
 
 **For single-agent sessions on this repository, this file is the protocol marker.**
 
+> ## ⛔ BOOT GATE (read before anything else)
+>
+> If you are running in **single-agent mode**, `ECHO.md` (the Savant-Code 10-agent harness protocol) is
+> **NOT your governance**. Reading `ECHO.md` and following its Hybrid Mode latitude (e.g. "Orchestrator writes
+> code directly") in a single-agent session is a **Law 2 violation** — single-agent mode has no Orchestrator,
+> no basher, and no EHEL tool-gating, so the looser Hybrid Mode rules do not apply to you.
+> **You MUST read `dev/echo-v0.1.2-single-agent.md` 0-EOF and follow it exclusively.** If you have already
+> read `ECHO.md` for governance, discard that grounding — it does not govern you.
+
 The full single-agent ECHO protocol is maintained at:
 
 ```text

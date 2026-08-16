@@ -130,4 +130,27 @@ describe('RunState transport serialization', () => {
     expect(agentState.runtimeOnlyHandler).toBeDefined()
     clearTimeout(agentState.activityIdleTimer as ReturnType<typeof setTimeout>)
   })
+
+  it('FID-2026-0815-015: omits the provenance session instance from the transport', () => {
+    const state = makeRunState()
+    ;(
+      state.sessionState!.mainAgentState as Record<string, unknown>
+    ).provenance = {
+      finalize: () => Promise.resolve(),
+      manifest: { internal: true },
+    }
+
+    const encoded = serializeRunState(state)
+    expect(encoded).not.toContain('provenance')
+    // The in-memory instance is untouched on the source object.
+    expect(
+      (state.sessionState!.mainAgentState as Record<string, unknown>)
+        .provenance,
+    ).toBeDefined()
+    clearTimeout(
+      state.sessionState!.mainAgentState.activityIdleTimer as ReturnType<
+        typeof setTimeout
+      >,
+    )
+  })
 })

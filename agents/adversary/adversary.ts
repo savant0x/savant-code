@@ -85,7 +85,9 @@ Then one line: whether the overall Verifier verdict stands, falls, or needs a hu
 const definition: SecretAgentDefinition = {
   id: 'adversary',
   publisher,
-  ...createAdversary('anthropic/claude-opus-4.8'),
+  // FID-2026-0814-009 B-08: display metadata only — inherits the operator's
+  // model via withParentModel; `openrouter/free` is the safe free fallback.
+  ...createAdversary('openrouter/free'),
 }
 
 export default definition

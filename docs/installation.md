@@ -18,6 +18,9 @@
 npm install -g savant-code
 ```
 
+`npm i savant-code -g` is the equivalent short form. Published as
+[`savant-code` on npm](https://www.npmjs.com/package/savant-code).
+
 ---
 
 ## Quick Start

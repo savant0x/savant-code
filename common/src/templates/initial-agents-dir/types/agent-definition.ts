@@ -320,6 +320,35 @@ export interface AgentState {
    * Falls back to hardcoded defaults if not set.
    */
   maxContextLength?: number
+
+  /**
+   * FID-2026-0813-023/0814-001: live compaction status (read by the CLI
+   * heartbeat from the snapshot's mainAgentState). Written by the serialized
+   * savant handleSteps (compacting) and the runtime spawn boundary
+   * (pruned/warning); phases: idle, compacting, compacted (micro), pruned
+   * (full context-pruner summarization), warning.
+   */
+  compactionStatus?: {
+    phase: 'idle' | 'compacting' | 'compacted' | 'pruned' | 'warning'
+    percentUsed?: number
+    tokensSaved?: number
+  }
+
+  /**
+   * FID-2026-0814-001: wall-clock stamp of the last context-pruner
+   * completion. The serialized savant handleSteps reads it to back off the
+   * proactive 0.8 spawn during a cooldown after an ineffective run.
+   */
+  lastPrunerCompletionAt?: number
+
+  /**
+   * FID-2026-0814-011: single trigger authority for auto-compaction. Set
+   * every step by the runtime from the proven `shouldAutoCompact` verdict
+   * and consumed by the serialized savant handleSteps so the context-pruner
+   * spawn fires exactly when the warning path fires — the generator's own
+   * ratio arithmetic is only a fallback.
+   */
+  autoCompactDue?: boolean
 }
 
 /**

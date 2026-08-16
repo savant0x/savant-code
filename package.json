@@ -1,6 +1,6 @@
 {
   "name": "savant-code",
-  "version": "0.0.23",
+  "version": "0.0.24",
   "license": "Apache-2.0",
   "type": "module",
   "workspaces": [
@@ -44,7 +44,9 @@
     "validate:metadata": "bun scripts/validate-repository.ts",
     "prepare": "git config core.hooksPath .githooks",
     "typecheck": "bun run --cwd=common typecheck && bun run --cwd=agents typecheck && bun run --cwd=sdk typecheck && bun run --cwd=cli typecheck && bun run --cwd=evals typecheck && bun run --cwd=packages/agent-runtime typecheck && bun run --cwd=packages/design-systems typecheck && bun run --cwd=packages/code-map typecheck && bun run --cwd=packages/database typecheck && bun run --cwd=packages/knowledge-graph typecheck && bun run --cwd=packages/llm-providers typecheck",
-    "test": "bun run --cwd=sdk test && bun run --cwd=cli test && bun run --cwd=common test && bun run --cwd=agents test && bun run --cwd=evals test:v2 && bun run --cwd=packages/agent-runtime test && bun run --cwd=packages/design-systems test && bun run --cwd=packages/code-map test && bun run --cwd=packages/database test && bun run --cwd=packages/knowledge-graph test && bun run --cwd=packages/llm-providers test"
+    "test": "bun run --cwd=sdk test && bun run --cwd=cli test && bun run --cwd=common test && bun run --cwd=agents test && bun run --cwd=evals test:v2 && bun run --cwd=packages/agent-runtime test && bun run --cwd=packages/design-systems test && bun run --cwd=packages/code-map test && bun run --cwd=packages/database test && bun run --cwd=packages/knowledge-graph test && bun run --cwd=packages/llm-providers test",
+    "version:bump": "bun run scripts/bump-version.ts",
+    "version:check": "bun run scripts/bump-version.ts --check"
   },
   "dependencies": {
     "@savant-code/design-systems": "workspace:*",
@@ -82,6 +84,7 @@
     "eslint-config-prettier": "^9.1.0",
     "eslint-import-resolver-typescript": "^4.4.5",
     "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-react-hooks": "7.1.1",
     "ignore": "^6.0.2",
     "lodash": "4.17.23",
     "markdownlint-cli": "^0.49.1",

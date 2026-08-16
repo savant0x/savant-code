@@ -65,13 +65,14 @@ export function runPreWriteGates(params: {
   // do not re-enable a hybrid block here without also suppressing the
   // tracker's receipt. Strict (all_15) mode keeps hard enforcement: the
   // write is blocked until the file is read.
-  if (
-    targetPath &&
-    !params.state.filesRead.has(targetPath) &&
-    !isNewFile(targetPath)
-  ) {
-    const msg = `Law 1: Read 0-EOF before touch — "${targetPath}" has not been read`
-    if (params.tier === 'all_15') {
+  //
+  // The `isNewFile` probe is a synchronous `existsSync` (FID-2026-0815-011
+  // E-03): it only pays off in strict mode where the block actually fires,
+  // so it is gated behind `tier === 'all_15'`. Hybrid mode skips the disk
+  // probe entirely — the gate is inert there regardless of its result.
+  if (targetPath && !params.state.filesRead.has(targetPath)) {
+    if (params.tier === 'all_15' && !isNewFile(targetPath)) {
+      const msg = `Law 1: Read 0-EOF before touch — "${targetPath}" has not been read`
       return { blocked: true, reason: msg, warnings }
     }
   }

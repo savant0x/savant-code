@@ -17,9 +17,6 @@ let creditsRestoredGlobal = false
 export const areCreditsRestored = () => creditsRestoredGlobal
 
 export const OutOfCreditsBanner = () => {
-  // Skip in free mode and direct-provider mode (no backend to query).
-  if (IS_SAVANT_FREE || isDirectProviderMode()) return null
-
   const sessionCreditsUsed = useChatStore((state) => state.sessionCreditsUsed)
   const [creditsRestored, setCreditsRestored] = useState(false)
 
@@ -69,6 +66,9 @@ export const OutOfCreditsBanner = () => {
     setCreditsRestored(true)
     creditsRestoredGlobal = true
   }, [remainingBalance, creditsRestored, confirmedZeroBalance])
+
+  // Skip in free mode and direct-provider mode (no backend to query).
+  if (IS_SAVANT_FREE || isDirectProviderMode()) return null
 
   // Build stats text
   const statsText = activeData

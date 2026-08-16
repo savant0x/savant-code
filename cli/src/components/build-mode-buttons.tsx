@@ -18,12 +18,13 @@ export const BuildModeButtons = ({
   onBuildMax: () => void
   onBuildLite: () => void
 }) => {
-  if (IS_SAVANT_FREE) return null
-
   const [hoveredButton, setHoveredButton] = useState<
     'fast' | 'max' | 'lite' | null
   >(null)
   const { width } = useTerminalLayout()
+
+  if (IS_SAVANT_FREE) return null
+
   const isNarrow = width.is('xs')
 
   return (

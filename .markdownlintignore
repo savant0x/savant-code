@@ -9,19 +9,18 @@ dev/test-prompts/archive/**
 dev/nova/inbox/archive/**
 dev/nova/outbox/archive/**
 dev/nova/reports/**
-docs/cloudflare-llms-full.md
-docs/Savant-Code Business And Backend Research.md
-docs/Savant Code Launch Strategy.md
-docs/reports/Thinker Agent Architecture Research.md
-docs/reports/Savant-Code Benchmark Specification.md
-docs/reports/repos/**
-docs/reports/feature-parity-report.md
 dev/archive/2026-08-02-repository-hygiene/**
-docs/reports/codebuff-discord-feedback.md
-docs/reports/**
-docs/launch/**
-docs/Launch Plan Review and Optimization.md
 MCP Servers Operational Audit.md
+
+# Archived docs (FID-2026-0815-016) — historical one-off design/research/
+# reports/launch artifacts relocated to docs/archive/ during the v0.0.24
+# release audit. Reference-only records, not live docs; consolidates the
+# former per-file exemptions for the moved paths.
+docs/archive/**
+
+# Shelved ideas and design references — not active work, not governed by
+# strict MD013 (same exemption precedent as the archived docs).
+dev/idea-shelf/**
 
 # Ephemeral working area (FID-2026-0806-008) — scratchpad reports/artifacts
 # are regenerated per audit run; matches the existing eslint ignore.
@@ -33,42 +32,3 @@ dev/scratchpad/**
 dev/nova/inbox/**
 dev/nova/outbox/**
 dev/nova/scratchpad/**
-
-# Untracked dated planning doc (2026-08-12) — long paste-in lines not maintainable
-# under strict MD013; same per-file exemption precedent as the dated design reports.
-dev/Savant-Code Self-Evolution Retrofit Plan.md
-
-# Dated design report (FID-2026-0806-008) — historical record, not live docs;
-# matches the docs/launch/** + per-file exemption precedent.
-docs/design/AI-Playbook-Integration-Plan.md
-docs/design/ECHO-Agent-Skills-Integration-Plan.md
-
-# Third-party deep-research artifact (2026-08-06 Gemini pass) — embedded base64
-# images + 250-char table lines are not maintainable; reference-only record,
-# same per-file exemption precedent as the dated design reports above.
-docs/design/Knowledge-Graph-Export-Optimization.md
-
-# Dated design report (2026-08-07) — ungoverned reference doc with 260-char
-# table lines; not live documentation. Same per-file exemption precedent as
-# the other dated design reports above.
-docs/design/Cyberpunk 3D Canvas Brain Render.md
-
-# Dated agent-skills catalog (reference-only) — long generated table lines and
-# a contributor block are not maintainable under strict MD013/MD022; same
-# per-file exemption precedent as the dated design reports above.
-docs/design/awesome-agent-skills-catalog.md
-
-# External architecture-evaluation reference (2026-08-07) — 250-char table
-# rows and a dense citation block; reference-only record, same per-file
-# exemption precedent.
-docs/Code Universe Architecture Evaluation.md
-
-# Concurrent deep-research artifact (2026-08-08) — 900-char citation lines are
-# not maintainable under strict MD013; reference-only record, same per-file
-# exemption precedent as the dated design reports above.
-docs/design/Savant Ecosystem Project Research.md
-
-# Concurrent deep-research artifact (2026-08-09) — 285-char reference-citation
-# lines are not maintainable under strict MD013; reference-only record, same
-# per-file exemption precedent as the dated design reports above.
-docs/design/Enterprise AI Gateway Research.md

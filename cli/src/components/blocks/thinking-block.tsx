@@ -43,6 +43,14 @@ export const ThinkingBlock = memo(
       }
     }, [onToggleCollapsed, thinkingId])
 
+    // NOTE: this hook must be declared unconditionally, before the early
+    // return below. Calling it only when content exists would change the
+    // hook count between renders (empty → populated during streaming) and
+    // crash React with "Rendered more hooks than during the previous render".
+    const getCopyText = useCallback(() => {
+      return `[Reasoning]\n${combinedContent}`
+    }, [combinedContent])
+
     // thinkingOpen === false means explicitly closed (with </think> tag or message completion)
     // Otherwise (true or undefined), completion is determined by message completion
     const isThinkingComplete =
@@ -52,10 +60,6 @@ export const ThinkingBlock = memo(
     if (!combinedContent || !thinkingId) {
       return null
     }
-
-    const getCopyText = useCallback(() => {
-      return `[Reasoning]\n${combinedContent}`
-    }, [combinedContent])
 
     return (
       <CopyableBlock

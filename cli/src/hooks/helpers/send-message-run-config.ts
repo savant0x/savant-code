@@ -1,8 +1,11 @@
+import { readProtocolConfig } from '@savant-code/common/util/protocol-config'
+
 import {
   applySavantCodeModelOverride,
   buildPromptWithContext,
   resolveAgent,
 } from './send-message-agent'
+import { getProjectRoot } from '../../project-files'
 import { useChatStore } from '../../state/chat-store'
 import { IS_SAVANT_FREE } from '../../utils/constants'
 import { createEventHandlerState } from '../../utils/create-event-handler-state'
@@ -137,12 +140,19 @@ export const buildSendRunConfig = (params: BuildSendRunConfigParams) => {
       ? undefined
       : agentWithModelOverride.model
 
-  // FID-2026-0725-085 CTX-007: Resolve context window BEFORE createRunConfig
-  // so it flows through to the agent runtime for accurate compaction thresholds.
-  const resolvedContextWindow =
-    typeof agentWithModelOverride === 'string'
-      ? undefined
-      : resolveContextWindowForModel(agentWithModelOverride.model)
+  // FID-2026-0725-085 CTX-007 + FID-2026-0813-023: Resolve context window
+  // BEFORE createRunConfig for BOTH agent shapes so it flows through to the
+  // agent runtime for accurate compaction thresholds. A bare string agent
+  // resolves its definition's default model; an object agent resolves its
+  // (possibly overridden) model. Only an unresolvable model yields undefined.
+  const windowModelId =
+    effectiveModelId ??
+    (typeof agentWithModelOverride === 'string'
+      ? agentDefinitions.find((def) => def.id === agentWithModelOverride)?.model
+      : undefined)
+  const resolvedContextWindow = windowModelId
+    ? resolveContextWindowForModel(windowModelId)
+    : undefined
 
   const cachedModel = effectiveModelId
     ? findGatewayModel(effectiveModelId)
@@ -184,6 +194,18 @@ export const buildSendRunConfig = (params: BuildSendRunConfigParams) => {
     devMode,
     permissionMode,
     enforcementMode: agentMode === 'STRICT' ? 'strict' : 'hybrid',
+    // FID-2026-0813-004: ZTAP provenance mode from protocol.config.yaml
+    // `provenance.mode` (defaults to `record`). Read per send — the config is
+    // a small cached fs read and the operator may flip the mode mid-session.
+    provenanceMode: readProtocolConfig(getProjectRoot() ?? process.cwd())
+      .provenance.mode,
+    // FID-2026-0814-004 H-05/H-06/H-07: compression config from
+    // protocol.config.yaml `compression` — the runtime honors `microCompact`
+    // (off-switch), `keepRecentTokens` / `autoCompactRatio` /
+    // `forceCompactOffset` (pruner trigger + fold floor), and
+    // `microCompactMaxKeepRecent` (pressure-gate keep count).
+    compression: readProtocolConfig(getProjectRoot() ?? process.cwd())
+      .compression,
     // The harness product boots under the harness contract (ECHO.md). The
     // single-agent variant is an SDK opt-in for outside agents working on
     // the harness — never the CLI's default (operator directive 2026-08-10).

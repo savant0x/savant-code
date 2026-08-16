@@ -38,16 +38,6 @@ export const ToolBranch = memo(
     const sanitizePreview = (value: string): string =>
       value.replace(/[#*_`~\[\]()]/g, '').trim()
 
-    if (toolBlock.toolName === 'end_turn') {
-      return null
-    }
-    if (toolBlock.toolName === 'ask_user') {
-      return null
-    }
-    if ('includeToolCall' in toolBlock && toolBlock.includeToolCall === false) {
-      return null
-    }
-
     const displayInfo = getToolDisplayInfo(toolBlock.toolName)
 
     // Check if there's a registered custom component for this tool
@@ -146,6 +136,16 @@ export const ToolBranch = memo(
     const getCopyText = useCallback(() => {
       return `[Tool: ${toolBlock.toolName}]\nInput:\n${JSON.stringify(toolBlock.input, null, 2)}\n\nOutput:\n${toolBlock.output ?? '(no output)'}`
     }, [toolBlock.toolName, toolBlock.input, toolBlock.output])
+
+    if (toolBlock.toolName === 'end_turn') {
+      return null
+    }
+    if (toolBlock.toolName === 'ask_user') {
+      return null
+    }
+    if ('includeToolCall' in toolBlock && toolBlock.includeToolCall === false) {
+      return null
+    }
 
     // Skip copy button for run_readonly_command results
     const shouldShowCopyButton = toolBlock.toolName !== 'run_readonly_command'

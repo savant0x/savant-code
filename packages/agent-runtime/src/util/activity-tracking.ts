@@ -192,12 +192,36 @@ export function bumpActivityIdleTimer(
     clearTimeout(agentState.activityIdleTimer)
   }
   agentState.activityIdleTimer = setTimeout(() => {
-    const a = agentState.activity
-    if (!a || a.kind !== 'idle') {
-      agentState.activity = { kind: 'idle', since: Date.now() }
+    try {
+      const a = agentState.activity
+      if (!a || a.kind !== 'idle') {
+        agentState.activity = { kind: 'idle', since: Date.now() }
+      }
+      agentState.activityIdleTimer = undefined
+    } catch {
+      // FID-2026-0815-015: the agentState may be frozen (immer) or finalised
+      // after a cancelled run. This is a best-effort idle heartbeat — never
+      // let it throw and crash the process. Swallow silently: any live timer
+      // is disarmed by clearActivityIdleTimer on the run's exit path, and a
+      // frozen state must not be re-assigned here (that would re-throw).
     }
-    agentState.activityIdleTimer = undefined
   }, timeoutMs)
+}
+
+/**
+ * FID-2026-0815-015: clear the pending idle heartbeat (idempotent, guarded).
+ * Called from the run loop's `finally` so a cancelled/failed/finalised run
+ * never leaves a live timer that later mutates a frozen `agentState`.
+ */
+export function clearActivityIdleTimer(agentState: AgentState): void {
+  try {
+    if (agentState.activityIdleTimer) {
+      clearTimeout(agentState.activityIdleTimer)
+      agentState.activityIdleTimer = undefined
+    }
+  } catch {
+    // Frozen/finalised state — the guarded idle callback won't throw anyway.
+  }
 }
 
 /**

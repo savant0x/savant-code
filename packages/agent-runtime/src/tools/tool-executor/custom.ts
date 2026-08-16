@@ -9,6 +9,7 @@ import {
   buildComplianceWarningChunks,
   formatBlockingError,
 } from '../../echo/violation-handler'
+import { buildHookInput, getHookEngine } from '../../hooks/engine'
 import { getMCPToolData } from '../../mcp'
 import { MCP_TOOL_SEPARATOR } from '../../mcp-constants'
 import { formatValueForError } from '../../util/format-value'
@@ -51,6 +52,7 @@ export async function executeCustomToolCall(
     userInputId,
   } = params
   const toolStartedAt = Date.now()
+  const hookProjectRoot = fileContext?.projectRoot ?? fileContext?.cwd ?? ''
   let toolFinished = false
   const recordToolEvent = (
     event: 'tool_started' | 'tool_finished',
@@ -197,6 +199,31 @@ export async function executeCustomToolCall(
     return previousToolCallFinished
   }
 
+  // FID-2026-0814-003: PreToolUse hooks — the parallel gate for custom/MCP
+  // tools (omitting it would create a bypass for custom tool implementations).
+  // EHEL already blocked above → the hook is skipped (EHEL wins). Fail-open.
+  if (hookProjectRoot) {
+    const hookGate = await getHookEngine(hookProjectRoot).triggerBlock(
+      buildHookInput({
+        event: 'PreToolUse',
+        sessionId: agentState?.runId ?? agentState?.agentId ?? toolName,
+        cwd: hookProjectRoot,
+        toolName,
+        toolInput: toolCall.input as Record<string, JSONValue>,
+      }),
+    )
+    if (hookGate.blocked) {
+      onResponseChunk({
+        type: 'error',
+        message: formatBlockingError(
+          `Hook blocked ${toolName}: ${hookGate.reasons.join('; ') || 'project policy denied this action'}`,
+        ),
+      })
+      finishToolEvent('failed')
+      return previousToolCallFinished
+    }
+  }
+
   // Filter out restricted tools - emit error instead of tool call/result.
   // This prevents the CLI from showing calls that the agent cannot use.
   if (
@@ -294,6 +321,20 @@ export async function executeCustomToolCall(
         })
 
         finishToolEvent('completed')
+
+        // FID-2026-0814-003: PostToolUse — observation only.
+        if (hookProjectRoot) {
+          getHookEngine(hookProjectRoot).fireAndForgetTrigger(
+            buildHookInput({
+              event: 'PostToolUse',
+              sessionId: agentState?.runId ?? agentState?.agentId ?? toolName,
+              cwd: hookProjectRoot,
+              toolName,
+              toolInput: toolCall.input as Record<string, JSONValue>,
+              toolResult: result as unknown as JSONValue,
+            }),
+          )
+        }
         return
       },
       async (error) => {
@@ -313,6 +354,19 @@ export async function executeCustomToolCall(
           `Tool \`${toolName}\` failed: ${errorMessage}`,
         )
         finishToolEvent('failed')
+        // FID-2026-0814-003: PostToolUseFailure from the rejection path.
+        if (hookProjectRoot) {
+          getHookEngine(hookProjectRoot).fireAndForgetTrigger(
+            buildHookInput({
+              event: 'PostToolUseFailure',
+              sessionId: agentState?.runId ?? agentState?.agentId ?? toolName,
+              cwd: hookProjectRoot,
+              toolName,
+              toolInput: toolCall.input as Record<string, JSONValue>,
+              errorMessage,
+            }),
+          )
+        }
       },
     )
     .catch((error) => {

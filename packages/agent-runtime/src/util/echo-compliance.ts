@@ -44,6 +44,15 @@ const USER_REQUESTED_REVIEW_PATTERN =
 
 /** Steering budget — bounded nudges per run so the agent can never loop. */
 const MAX_STEERING_TOTAL = 3
+
+/**
+ * Upper bound on retained glob/search patterns (weak read signals) —
+ * FID-2026-0815-011 E-04. The primary read signal (`readPaths` Set) is
+ * unbounded and authoritative; patterns are only a weak `glob`/`code_search`
+ * hint, so a bounded FIFO window is safe and keeps `hasRead`'s substring scan
+ * O(MAX_READ_PATTERNS).
+ */
+const MAX_READ_PATTERNS = 256
 const MAX_STEERING_PER_LAW: Record<ComplianceViolation['law'], number> = {
   law1: 1,
   law3: 1,
@@ -70,6 +79,29 @@ export function detectsVerificationCommand(command: string): boolean {
 /** Pure evaluator: does a path match security-sensitive keywords? */
 export function isSecuritySensitivePath(path: string): boolean {
   return SECURITY_SENSITIVE_PATH_PATTERN.test(path)
+}
+
+/**
+ * FID-2026-0814-004 H-03: classify a write path as code vs documentation.
+ * Documentation artifacts (`*.md`, `dev/scratchpad/`, `docs/`,
+ * `dev/session-summaries/`, `dev/test-prompts/`) gate on markdownlint, never
+ * on Law 3 / Verifier criteria — a markdown report write is not a code change.
+ */
+export function classifyFileKind(path: string): 'code' | 'docs' {
+  const normalized = normalizePath(path)
+  // Markdown artifacts are always docs regardless of directory.
+  if (/\.(md|markdown|mdx)$/.test(normalized)) return 'docs'
+  // The enumerated harness doc directories are docs — unless the path lives
+  // under a source tree (e.g. `src/docs/helper.ts` is still code).
+  if (
+    /(^|[\/\\])(dev[\/\\](scratchpad|session-summaries|test-prompts)|docs)[\/\\]/i.test(
+      normalized,
+    ) &&
+    !/(^|[\/\\])src[\/\\]/.test(normalized)
+  ) {
+    return 'docs'
+  }
+  return 'code'
 }
 
 /** Pure evaluator: does written content contain a new function/API/type? */
@@ -110,6 +142,15 @@ type WriteRecord = {
   isNewFile: boolean
   content?: string
   securitySensitive: boolean
+  /** FID-2026-0814-004 H-03: code vs documentation artifact. */
+  fileKind: 'code' | 'docs'
+  // FID-2026-0813-002: provenance-ready fields (same data the ZTAP receipt
+  // carries). Optional at the interface; the native executor supplies them.
+  agentId?: string
+  agentType?: string
+  fsmPhase?: string
+  fidId?: string
+  lawChecks?: { law: number; outcome: 'blocked' | 'advisory' | 'passed' }[]
 }
 
 export class EchoComplianceTracker implements EchoComplianceTrackerLike {
@@ -159,7 +200,15 @@ export class EchoComplianceTracker implements EchoComplianceTrackerLike {
   /** Record a search pattern (glob/code_search) — a weak prefix read. */
   recordPatternRead(pattern: string): void {
     if (this.mode === 'off' || !pattern) return
-    this.readPatterns.push(pattern)
+    const normalized = normalizePath(pattern)
+    // Normalize once (lowercase + forward slashes) so `hasRead` never
+    // re-lowercases on the write path; dedupe; and keep the window bounded
+    // (FIFO) so a long session cannot grow the scan unboundedly.
+    if (this.readPatterns.includes(normalized)) return
+    if (this.readPatterns.length >= MAX_READ_PATTERNS) {
+      this.readPatterns.shift()
+    }
+    this.readPatterns.push(normalized)
   }
 
   /** Record a write and evaluate Law 1. Returns a violation (non-blocking). */
@@ -170,6 +219,13 @@ export class EchoComplianceTracker implements EchoComplianceTrackerLike {
     isNewFile: boolean
     content?: string
     securitySensitive: boolean
+    agentId?: string
+    agentType?: string
+    fsmPhase?: string
+    fidId?: string
+    lawChecks?: { law: number; outcome: 'blocked' | 'advisory' | 'passed' }[]
+    /** FID-2026-0814-004 H-03: code vs documentation artifact. */
+    fileKind?: 'code' | 'docs'
   }): ComplianceViolation | null {
     if (this.mode === 'off') return null
 
@@ -181,6 +237,18 @@ export class EchoComplianceTracker implements EchoComplianceTrackerLike {
       isNewFile: params.isNewFile,
       content: params.content,
       securitySensitive: params.securitySensitive,
+      // FID-2026-0814-004 H-03: explicit hint wins; otherwise derive from the
+      // path so doc artifacts are never treated as code changes.
+      fileKind: params.fileKind ?? classifyFileKind(normalized),
+      // FID-2026-0813-002: structured identity + FID resolution. fidId is
+      // supplied by the caller when already resolved; otherwise the tracker
+      // resolves exactly against the active-FID set (never the path-regex
+      // heuristic alone).
+      agentId: params.agentId,
+      agentType: params.agentType,
+      fsmPhase: params.fsmPhase,
+      fidId: params.fidId ?? this.resolveFidId(normalized),
+      lawChecks: params.lawChecks,
     }
     this.writes.push(record)
     // A write invalidates "verified after last write" until a verification
@@ -234,25 +302,33 @@ export class EchoComplianceTracker implements EchoComplianceTrackerLike {
 
     const violations: ComplianceViolation[] = []
     const writes = this.writes
+    // FID-2026-0814-004 H-03: code vs docs split. Doc artifacts (markdown
+    // reports, session summaries, test prompts) gate on markdownlint — never
+    // on Law 3 / Verifier criteria, which are code-change gates. A pure-doc
+    // turn that runs `lint:md` (already recognized by the verification
+    // pattern) is fully verified.
+    const codeWrites = writes.filter((w) => w.fileKind === 'code')
+    const docWrites = writes.filter((w) => w.fileKind === 'docs')
 
-    // Law 3 (verify-before-proceed): writes happened but no verification
-    // command ran after the last write.
-    if (writes.length > 0 && !this.verifiedAfterLastWrite) {
+    // Law 3 (verify-before-proceed): CODE writes happened but no verification
+    // command ran after the last write. Doc-only turns are covered by
+    // markdownlint; a doc turn with no lint:md is not a Law 3 code violation.
+    if (codeWrites.length > 0 && !this.verifiedAfterLastWrite) {
       violations.push({
         law: 'law3',
         severity: 'warning',
-        message: `ECHO Law 3: made ${writes.length} file change(s) without running verification (typecheck/test/lint) after writing. Run the project's verification commands before finishing.`,
+        message: `ECHO Law 3: made ${codeWrites.length} code file change(s) without running verification (typecheck/test/lint) after writing. Run the project's verification commands before finishing.`,
         stepNumber: params.stepNumber,
       })
     }
 
-    // Mechanical Verifier-criteria flag (savant.ts:326).
-    const linesAdded = writes.reduce((sum, w) => sum + w.lineDelta, 0)
-    const filesTouched = new Set(writes.map((w) => w.path)).size
-    const newApiHint = writes.some(
+    // Mechanical Verifier-criteria flag (savant.ts:326) — code writes only.
+    const linesAdded = codeWrites.reduce((sum, w) => sum + w.lineDelta, 0)
+    const filesTouched = new Set(codeWrites.map((w) => w.path)).size
+    const newApiHint = codeWrites.some(
       (w) => w.content !== undefined && hasNewApiDeclaration(w.content),
     )
-    const securitySensitive = writes.some((w) => w.securitySensitive)
+    const securitySensitive = codeWrites.some((w) => w.securitySensitive)
     const forgeUsed = this.spawned.has('forge')
     const verifierSpawned = this.spawned.has('verifier')
     const requestedReview = userRequestedReview(this.userPrompt)
@@ -264,6 +340,21 @@ export class EchoComplianceTracker implements EchoComplianceTrackerLike {
       forgeUsed,
       userRequestedReview: requestedReview,
     })
+
+    // FID-2026-0814-004 H-03: doc-only turns that skipped markdownlint get a
+    // lightweight docs-appropriate reminder (never a Law 3 / Verifier nag).
+    if (
+      docWrites.length > 0 &&
+      codeWrites.length === 0 &&
+      !this.verifiedAfterLastWrite
+    ) {
+      violations.push({
+        law: 'law3',
+        severity: 'info',
+        message: `ECHO: ${docWrites.length} documentation file change(s) made. Run markdownlint (lint:md) before finishing — docs verify with lint:md, not typecheck.`,
+        stepNumber: params.stepNumber,
+      })
+    }
 
     // FID-aware escalation: writes touching active FID paths always flag.
     const fidTouched = writes.some((w) => this.matchesFidPath(w.path))
@@ -308,6 +399,15 @@ export class EchoComplianceTracker implements EchoComplianceTrackerLike {
     return fresh
   }
 
+  /**
+   * Read-only access to the recorded writes (FID-2026-0813-002). Consumed by
+   * the ZTAP receipt builder and future audit/scorecard surfaces; never
+   * mutated after recording.
+   */
+  getWriteRecords(): ReadonlyArray<WriteRecord> {
+    return this.writes
+  }
+
   /** Drain corrective steering notices (budgeted — bounded per law/run). */
   takeSteeringMessages(): string[] {
     if (this.mode === 'off') return []
@@ -333,12 +433,12 @@ export class EchoComplianceTracker implements EchoComplianceTrackerLike {
     for (const dir of this.readDirs) {
       if (path.startsWith(`${dir}/`) || path === dir) return true
     }
-    const pathLower = path.toLowerCase()
+    // `path` arrives normalized (recordWrite passes normalizePath(params.path))
+    // and `readPatterns` are normalized at record time, so no re-lowercasing
+    // is needed here. Exact pattern match, or the searched name appears in the
+    // written path (weak signal).
     for (const pattern of this.readPatterns) {
-      const p = pattern.toLowerCase()
-      // Exact pattern match, or the pattern is a path prefix (dir-ish search),
-      // or the searched name appears in the written path (weak signal).
-      if (pathLower === p || pathLower.includes(p)) return true
+      if (path === pattern || path.includes(pattern)) return true
     }
     return false
   }
@@ -360,6 +460,27 @@ export class EchoComplianceTracker implements EchoComplianceTrackerLike {
     // Also treat any write under the active FID directory (dev/fids/, non-archive)
     // as FID-touching.
     return /(^|\/)dev\/fids\/FID-[^/]+\.md$/i.test(normalized)
+  }
+
+  /**
+   * FID-2026-0813-002: exact structured FID resolution — exact match against
+   * the active-FID path set, falling back to the active FID directory rule.
+   * Never relies on the path-regex heuristic alone for the per-write record.
+   */
+  private resolveFidId(path: string): string | undefined {
+    const normalized = normalizePath(path)
+    for (const fidPath of this.fidPaths) {
+      if (normalizePath(fidPath) === normalized) {
+        const match = fidPath.match(/(FID-\d{4}-\d{4}-\d{3})/i)
+        if (match) return match[1].toUpperCase()
+      }
+    }
+    const dirMatch = normalized.match(/(?:^|\/)dev\/fids\/FID-([^/]+)\.md$/i)
+    if (dirMatch) {
+      const idMatch = dirMatch[1].match(/^\d{4}-\d{4}-\d{3}/)
+      if (idMatch) return `FID-${idMatch[0].toUpperCase()}`
+    }
+    return undefined
   }
 
   private getTouchedFidId(writes: WriteRecord[]): string | undefined {

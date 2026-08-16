@@ -281,4 +281,58 @@ describe('handleRunReadonlyCommand', () => {
       expect(value.stdout).toBe('mocked stdout')
     }
   })
+
+  // FID-2026-0814-004 H-02: quoted metacharacters and character-class `$` are
+  // literal — the shell filter must be quote/class-aware. These are the exact
+  // rejections the A–Z agent hit and had to work around with `&& echo MARKER`
+  // and `-e` gymnastics.
+  it('allows metacharacters inside single quotes', async () => {
+    const quotedCommands = [
+      // `$1` escaped as \$ inside a quote — the old mask+regex rejected the
+      // surviving `$`.
+      "grep -rn 'savantCode\\$1' .",
+      // Quoted pipe — the old mask+regex rejected the surviving `|`.
+      "grep -rn 'a\\|b' .",
+      // `$` inside a character class is literal, never a metachar.
+      "grep -rn 'savantCode[$]1' .",
+      // A whole quoted pipeline fragment is data, not a shell pipe.
+      "echo 'a | b'",
+      "echo 'sleep 1 &'",
+    ]
+
+    for (const command of quotedCommands) {
+      const result = await handleRunReadonlyCommand({
+        previousToolCallFinished: Promise.resolve(),
+        toolCall: makeToolCall(command),
+        requestClientToolCall,
+      } as any)
+
+      const value = getJsonValue(result.output)
+      expect(value.exitCode).toBe(0)
+      expect(value.stderr).toBe('')
+    }
+  })
+
+  it('still rejects unquoted metacharacters (quote-awareness never weakens the denylist)', async () => {
+    const unquotedMetacharCommands = [
+      'echo a | grep b',
+      'echo $(whoami)',
+      'cat file > out.txt',
+      'grep foo; ls',
+      'echo done &',
+      'echo x || echo y',
+    ]
+
+    for (const command of unquotedMetacharCommands) {
+      const result = await handleRunReadonlyCommand({
+        previousToolCallFinished: Promise.resolve(),
+        toolCall: makeToolCall(command),
+        requestClientToolCall,
+      } as any)
+
+      const value = getJsonValue(result.output)
+      expect(value.exitCode).toBe(1)
+      expect(value.stderr).toContain('run_readonly_command rejected')
+    }
+  })
 })

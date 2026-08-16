@@ -115,7 +115,7 @@ flows but no backend reads it. The `agentDefinions` (legacy backend-loaded agent
 
 ---
 
-## 3. What each mode ACTUALLY produces (per working-tree evidence)
+## 3. What each mode ACTUALLY produces (per source audit)
 
 Read from `agents/base2/base2.ts` and the wrappers `agents/base2/base2-{lite,max,plan,fast,free}.ts`. Each row is
 the difference the runtime sees when you click the toggle in the input box.
@@ -338,7 +338,7 @@ Pending FIDs this writeup will fold into:
 
 ---
 
-*Audit performed 2026-07-20. Working-tree evidence: 8 files read directly (`agents/base2/base2.ts`,
+*Audit performed 2026-07-20. Source evidence: 8 files read directly (`agents/base2/base2.ts`,
 `agents/base2/base2-lite.ts`, `agents/base2/base2-max.ts`, `agents/base2/base2-free.ts`,
 `agents/base2/base2-plan.ts`, `agents/base2/base2-fast.ts`, `common/src/constants/model-config.ts`,
 `sdk/src/impl/model-provider.ts`, `cli/src/components/agent-mode-toggle.tsx`, `cli/src/utils/input-modes.ts`,

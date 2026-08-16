@@ -28,6 +28,7 @@ type ResolveSessionStateOptions = Pick<
   | 'permissionMode'
   | 'designContract'
   | 'echoCompliance'
+  | 'provenanceMode'
   | 'prompt'
   | 'logger'
 >
@@ -59,6 +60,7 @@ export async function resolveSessionState(params: {
       permissionMode,
       designContract,
       echoCompliance,
+      provenanceMode,
       prompt,
       logger,
     },
@@ -136,6 +138,13 @@ export async function resolveSessionState(params: {
     })
   } else {
     sessionState.mainAgentState.echoCompliance = undefined
+  }
+
+  // FID-2026-0813-004: ZTAP provenance mode on the main agent state. Absent
+  // values default to `record` at the provenance engine; hosts may override
+  // per run.
+  if (provenanceMode !== undefined) {
+    sessionState.mainAgentState.provenanceMode = provenanceMode
   }
 
   // Ensure devMode reflects the current CLI state (may have changed since last run)

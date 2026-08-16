@@ -1,4 +1,5 @@
 import { KNOWLEDGE_FILE_NAMES_LOWERCASE } from '@savant-code/common/constants/knowledge'
+import { formatCurrentDateTime } from '@savant-code/common/util/dates'
 import { escapeString } from '@savant-code/common/util/string'
 import { z } from 'zod/v4'
 
@@ -47,14 +48,6 @@ You are running on **${modelId}**.
 Full metadata unavailable; the model was not found in the cached OpenRouter catalog.`
 }
 
-export function formatCurrentDate(date: Date): string {
-  return new Intl.DateTimeFormat('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  }).format(date)
-}
-
 export async function formatPrompt(
   params: {
     prompt: string
@@ -97,23 +90,43 @@ export async function formatPrompt(
       parseUserMessage(message.content[0].text) !== undefined
     )
   }
-  const lastUserMessage = messageHistory.findLast(isUserInputMessage)
-  const lastUserInput = lastUserMessage
-    ? parseUserMessage(lastUserMessage.content[0].text)
-    : undefined
+  // The per-step stepPrompt references none of the expensive placeholders
+  // (file tree, git changes, system info, knowledge files, agent name, model
+  // info), yet every step rebuilt them eagerly — three file-tree truncation
+  // passes plus a history scan plus a template lookup — only for replaceAll to
+  // no-op on each. Resolve the last user input and the state's agent template
+  // lazily so a placeholder-free prompt does none of that work.
+  let cachedLastUserInput: string | undefined | null = null
+  const getLastUserInput = (): string | undefined => {
+    if (cachedLastUserInput !== null) return cachedLastUserInput
+    const lastUserMessage = messageHistory.findLast(isUserInputMessage)
+    cachedLastUserInput = lastUserMessage
+      ? parseUserMessage(lastUserMessage.content[0].text)
+      : undefined
+    return cachedLastUserInput
+  }
 
-  const agentTemplate = agentState.agentType
-    ? await getAgentTemplate({
-        ...params,
-        agentId: agentState.agentType,
-        localAgentTemplates: agentTemplates,
-      })
-    : null
+  let cachedStateAgentTemplate: AgentTemplate | null | undefined
+  const getStateAgentTemplate = async (): Promise<AgentTemplate | null> => {
+    if (cachedStateAgentTemplate !== undefined) return cachedStateAgentTemplate
+    cachedStateAgentTemplate = agentState.agentType
+      ? await getAgentTemplate({
+          ...params,
+          agentId: agentState.agentType,
+          localAgentTemplates: agentTemplates,
+        })
+      : null
+    return cachedStateAgentTemplate
+  }
 
   const toInject: Record<PlaceholderValue, () => string | Promise<string>> = {
-    [PLACEHOLDER.AGENT_NAME]: () =>
-      agentTemplate ? agentTemplate.displayName || 'Unknown Agent' : 'Savant',
-    [PLACEHOLDER.CURRENT_DATE]: () => formatCurrentDate(new Date()),
+    [PLACEHOLDER.AGENT_NAME]: async () => {
+      const agentTemplate = await getStateAgentTemplate()
+      return agentTemplate
+        ? agentTemplate.displayName || 'Unknown Agent'
+        : 'Savant'
+    },
+    [PLACEHOLDER.CURRENT_DATE]: () => formatCurrentDateTime(),
     [PLACEHOLDER.FILE_TREE_PROMPT_SMALL]: () =>
       getProjectFileTreePrompt({
         fileContext,
@@ -140,13 +153,16 @@ export async function formatPrompt(
     [PLACEHOLDER.PROJECT_ROOT]: () => fileContext.projectRoot,
     [PLACEHOLDER.SYSTEM_INFO_PROMPT]: () => getSystemInfoPrompt(fileContext),
     [PLACEHOLDER.USER_CWD]: () => fileContext.cwd,
-    [PLACEHOLDER.USER_INPUT_PROMPT]: () => escapeString(lastUserInput ?? ''),
+    [PLACEHOLDER.USER_INPUT_PROMPT]: () =>
+      escapeString(getLastUserInput() ?? ''),
     [PLACEHOLDER.DESIGN_SYSTEM_CONTEXT]: () =>
       fileContext.designSystemContext ?? '',
     [PLACEHOLDER.INITIAL_AGENT_PROMPT]: () =>
       escapeString(intitialAgentPrompt ?? ''),
-    [PLACEHOLDER.MODEL_INFO]: () =>
-      modelInfoText ?? formatFallbackModelInfo(agentTemplate?.model),
+    [PLACEHOLDER.MODEL_INFO]: async () => {
+      const agentTemplate = await getStateAgentTemplate()
+      return modelInfoText ?? formatFallbackModelInfo(agentTemplate?.model)
+    },
     [PLACEHOLDER.PROTOCOL_FILE]: () => {
       if (agentState.protocolVariant && !agentState.protocolFile) {
         throw new Error(
@@ -174,7 +190,12 @@ export async function formatPrompt(
         .join('\n\n'),
   }
 
+  // Only compute a placeholder's value when the prompt actually references it.
+  // replaceAll is a no-op for an absent needle, so skipping the provider is
+  // behavior-preserving while avoiding the expensive file-tree/git/system-info
+  // builds on prompts (notably the per-step stepPrompt) that never use them.
   for (const varName of placeholderValues) {
+    if (!prompt.includes(varName)) continue
     const valueProvider = toInject[varName] ?? (() => '')
     const value = await valueProvider()
     prompt = prompt.replaceAll(varName, value)
@@ -224,8 +245,11 @@ export async function getAgentPrompt<T extends StringField>(
   let addendum = ''
 
   if (promptType.type === 'stepPrompt' && agentState.agentType && prompt) {
-    // Put step prompt within a system_reminder tag so agent doesn't think the user just spoke again.
-    prompt = `<system_reminder>${prompt}</system_reminder>`
+    // Put step prompt within a system_reminder tag so agent doesn't think the
+    // user just spoke again. FID-2026-0815-010: refresh the current date/time
+    // every step so a long session never relies on the stale session-start
+    // system-prompt value — the model always sees a fresh timestamp.
+    prompt = `<system_reminder>Current date and time: ${formatCurrentDateTime()}.\n\n${prompt}</system_reminder>`
   }
 
   // Add tool instructions, spawnable agents, and output schema prompts to instructionsPrompt

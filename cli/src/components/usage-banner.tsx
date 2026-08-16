@@ -45,9 +45,6 @@ const formatRenewalDate = (dateStr: string | null): string => {
 }
 
 export const UsageBanner = ({ showTime }: { showTime: number }) => {
-  // Skip in free mode and direct-provider mode (no backend to query).
-  if (IS_SAVANT_FREE || isDirectProviderMode()) return null
-
   const sessionCreditsUsed = useChatStore((state) => state.sessionCreditsUsed)
   const setInputMode = useChatStore((state) => state.setInputMode)
 
@@ -87,6 +84,9 @@ export const UsageBanner = ({ showTime }: { showTime: number }) => {
   }, [showTime, setInputMode])
 
   const theme = useTheme()
+
+  // Skip in free mode and direct-provider mode (no backend to query).
+  if (IS_SAVANT_FREE || isDirectProviderMode()) return null
 
   const activeData = apiData || cachedUsageData
   const isLoadingData = isLoading || isFetching

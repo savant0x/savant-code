@@ -15,11 +15,13 @@ import {
   buildComplianceWarningChunks,
   formatBlockingError,
 } from '../../echo/violation-handler'
+import { buildHookInput, getHookEngine } from '../../hooks/engine'
+import { getOrCreateProvenance } from '../../provenance'
 import { toolActivity, setActivity } from '../../util/activity-tracking'
 import { isSecuritySensitivePath } from '../../util/echo-compliance'
 import { formatValueForError } from '../../util/format-value'
 import { buildUserMessageContent } from '../../util/messages'
-import { savantCode$1 } from '../handlers/list'
+import { savantCodeToolHandlers } from '../handlers/list'
 import { getSuccessfulFileContent } from '../handlers/tool/write-file'
 import { countWriteLines, parseRawToolCall } from '../tool-call-parse'
 
@@ -36,6 +38,7 @@ import type {
 } from '@savant-code/common/tools/list'
 import type { JSONValue } from '@savant-code/common/types/json'
 import type { ToolMessage } from '@savant-code/common/types/messages/savant-code-message'
+import type { WriteToolName } from '@savant-code/common/types/provenance'
 import type { AgentState } from '@savant-code/common/types/session-state'
 
 /**
@@ -90,6 +93,8 @@ export async function executeToolCall<T extends ToolName>(
   } = params
   const toolCallId = params.toolCallId ?? generateCompactId()
   const toolStartedAt = Date.now()
+  const hookProjectRoot =
+    params.fileContext?.projectRoot ?? params.fileContext?.cwd ?? ''
   let toolFinished = false
   const recordToolEvent = (
     event: 'tool_started' | 'tool_finished',
@@ -279,12 +284,22 @@ export async function executeToolCall<T extends ToolName>(
     // EHEL: Pre-write enforcement gate (after sandbox, before Law 1 tracking)
     // Blocks writes that violate Laws 1, 3, 7, 8, or FID Recorder gate.
     // This call is unconditional: development policy cannot bypass EHEL.
+    // FID-2026-0813-002: the gate outcomes are captured into the write record
+    // (and later the ZTAP receipt's lawChecks field) so law enforcement is
+    // persisted, not just enforced.
+    let writeLawChecks: { law: number; outcome: 'advisory' }[] = []
     {
       const enforceResult = enforcement.beforeToolCall({
         toolName: toolCall.toolName,
         input: toolCall.input as Record<string, unknown>,
         agentId: agentState.agentId,
       })
+      if (!enforceResult.blocked && enforceResult.warnings.length > 0) {
+        writeLawChecks = enforceResult.warnings.map((warning) => ({
+          law: warning.law,
+          outcome: 'advisory' as const,
+        }))
+      }
       if (enforceResult.blocked) {
         // EHEL blocking results carry their advisory warnings (strict-mode
         // Law 7/8 attach the advisory to the blocked result). Surface them as
@@ -322,6 +337,54 @@ export async function executeToolCall<T extends ToolName>(
       }
     }
 
+    // FID-2026-0814-003: PreToolUse hooks — an ADDITIONAL project gate at the
+    // EHEL enforcement point, never a bypass. EHEL already blocked above → the
+    // hook is skipped (EHEL wins). A hook block surfaces through the same
+    // blocking-error path as EHEL advisories; any hook failure fails open.
+    if (hookProjectRoot) {
+      const hookGate = await getHookEngine(hookProjectRoot).triggerBlock(
+        buildHookInput({
+          event: 'PreToolUse',
+          sessionId: agentState.runId ?? agentState.agentId,
+          cwd: hookProjectRoot,
+          toolName: toolCall.toolName,
+          toolInput: toolCall.input as Record<string, JSONValue>,
+        }),
+      )
+      if (hookGate.blocked) {
+        onResponseChunk({
+          type: 'error',
+          message: formatBlockingError(
+            `Hook blocked ${toolCall.toolName}: ${hookGate.reasons.join('; ') || 'project policy denied this action'}`,
+          ),
+        })
+        finishToolEvent('failed')
+        return previousToolCallFinished
+      }
+    }
+
+    // FID-2026-0813-004: ZTAP `enforce` mode fails closed BEFORE dispatch.
+    // If the writer's role key cannot be derived (crypto unavailable), the
+    // write is blocked with a visible reason — no unsigned write is ever
+    // allowed in enforce mode. Record/off modes never block here.
+    if (isWriteToolName(toolCall.toolName)) {
+      const provenance = getOrCreateProvenance(agentState, {
+        projectRoot: params.fileContext.projectRoot,
+      })
+      if (provenance.mode === 'enforce') {
+        try {
+          await provenance.getRoleKey(agentTemplate.id)
+        } catch (error) {
+          onResponseChunk({
+            type: 'error',
+            message: `ZTAP enforce mode: cannot sign this write (${String(error)}). Blocking to fail closed — set provenance.mode to record or off to allow unsigned writes.`,
+          })
+          finishToolEvent('failed')
+          return previousToolCallFinished
+        }
+      }
+    }
+
     // FID-2026-0804-009: Law 1 (read-before-write) — evaluated AFTER the sandbox
     // gate so sandbox-denied writes are never counted toward the change footprint
     // (code-review finding). Only writes that actually dispatch reach this point;
@@ -333,11 +396,21 @@ export async function executeToolCall<T extends ToolName>(
       const echoCompliance = agentState.echoCompliance
       if (echoCompliance && echoCompliance.mode !== 'off') {
         const writeInput = toolCall.input as Record<string, JSONValue>
-        const isNewFile = (() => {
+        // FID-2026-0815-005 (F-05): awaited fs.promises.access replaces the
+        // synchronous existsSync. ENOENT = genuinely absent → new file; any
+        // other failure degrades to "not new" (the existing try/catch contract).
+        const isNewFile = await (async () => {
           try {
-            return !fs.existsSync(resolvedWritePath)
-          } catch {
+            await fs.promises.access(resolvedWritePath)
             return false
+          } catch (error) {
+            const code =
+              error instanceof Error &&
+              'code' in error &&
+              typeof error.code === 'string'
+                ? error.code
+                : undefined
+            return code === 'ENOENT'
           }
         })()
         const contentKnowledge =
@@ -355,6 +428,11 @@ export async function executeToolCall<T extends ToolName>(
           isNewFile,
           content,
           securitySensitive: isSecuritySensitivePath(resolvedWritePath),
+          // FID-2026-0813-002: provenance-ready identity + phase + gate outcomes.
+          agentId: agentState.agentId,
+          agentType: agentTemplate.id,
+          fsmPhase: agentState.fsmPhase ?? 'idle',
+          lawChecks: writeLawChecks,
         })
         if (violation) {
           onResponseChunk({ type: 'compliance_warning', ...violation })
@@ -422,7 +500,7 @@ export async function executeToolCall<T extends ToolName>(
     })
 
     // Cast to any to avoid type errors
-    const handler = savantCode$1[
+    const handler = savantCodeToolHandlers[
       toolName
     ] as unknown as SavantCodeToolHandlerFunction<T>
 
@@ -624,8 +702,77 @@ export async function executeToolCall<T extends ToolName>(
           writeSucceeded,
         })
 
+        // FID-2026-0813-004: ZTAP write-boundary receipt creation. Runs after
+        // the write lifecycle completes; never holds or blocks the write
+        // (append-only chain, D1). Best-effort in record mode; enforce mode
+        // fails closed at the pre-write gate (below) so an exception here is
+        // defense-in-depth only.
+        if (
+          writtenPath !== undefined &&
+          writeSucceeded &&
+          writtenContent !== undefined &&
+          isWriteToolName(toolName)
+        ) {
+          const provenance = getOrCreateProvenance(agentState, {
+            projectRoot: params.fileContext.projectRoot,
+          })
+          void provenance
+            .recordWriteReceipt({
+              path: writtenPath,
+              tool: toolName,
+              content: writtenContent,
+              writerAgentId: agentState.agentId,
+              writerAgentType: agentTemplate.id,
+              fsmPhase: agentState.fsmPhase ?? 'idle',
+              fidId: resolveFidIdForWrite(writtenPath, agentState),
+              lawChecks: writeLawChecks,
+            })
+            .then((receipt) => {
+              if (!receipt) return
+              // FID-2026-0813-009: the CLI matrix consumes only this signed
+              // receipt event. It is observational; it cannot dispatch tools.
+              params.onResponseChunk({
+                type: 'provenance_receipt',
+                sessionId: receipt.sessionId,
+                seq: receipt.seq,
+                phase: 'write',
+                status: receipt.status,
+                signed: receipt.signatures.length > 0,
+                receipt,
+              })
+            })
+            .catch((error) => {
+              // Enforce mode fails closed at the gate; record mode surfaces a
+              // visible notice and continues (the write already succeeded).
+              logger.warn(
+                { toolName, path: writtenPath, error: String(error) },
+                'ZTAP receipt creation failed',
+              )
+            })
+        }
+
         // After tool completes, resolve any pending creditsUsed promise
         finishToolEvent('completed')
+
+        // FID-2026-0814-003: PostToolUse / PostToolUseFailure — observation
+        // only, fire-and-forget. A tool whose result carries an error counts as
+        // a PostToolUseFailure so the event has an honest caller.
+        if (hookProjectRoot) {
+          const failed = hasToolResultError(toolResult.content)
+          getHookEngine(hookProjectRoot).fireAndForgetTrigger(
+            buildHookInput({
+              event: failed ? 'PostToolUseFailure' : 'PostToolUse',
+              sessionId: agentState.runId ?? agentState.agentId,
+              cwd: hookProjectRoot,
+              toolName,
+              toolInput: toolCall.input as Record<string, JSONValue>,
+              toolResult: toolResult.content as unknown as JSONValue,
+              ...(failed
+                ? { errorMessage: 'tool result contains an error' }
+                : {}),
+            }),
+          )
+        }
 
         if (creditsUsed) {
           onCostCalculated(creditsUsed)
@@ -649,10 +796,56 @@ export async function executeToolCall<T extends ToolName>(
           `Tool \`${toolName}\` failed: ${errorMessage}`,
         )
         finishToolEvent('failed')
+        // FID-2026-0814-003: PostToolUseFailure from the rejection path.
+        if (hookProjectRoot) {
+          getHookEngine(hookProjectRoot).fireAndForgetTrigger(
+            buildHookInput({
+              event: 'PostToolUseFailure',
+              sessionId: agentState.runId ?? agentState.agentId,
+              cwd: hookProjectRoot,
+              toolName,
+              toolInput: toolCall.input as Record<string, JSONValue>,
+              errorMessage,
+            }),
+          )
+        }
       },
     )
   } catch (error) {
     finishToolEvent(params.signal.aborted ? 'cancelled' : 'failed')
     throw error
   }
+}
+
+/** Write tools that produce ZTAP receipts (FID-2026-0813-004). Type
+ *  predicate so `toolName` narrows to WriteToolName for receipt typing. */
+function isWriteToolName(toolName: string): toolName is WriteToolName {
+  return (
+    toolName === 'write_file' ||
+    toolName === 'str_replace' ||
+    toolName === 'apply_patch'
+  )
+}
+
+/**
+ * FID-2026-0813-002/004: resolve the structured FID id for a write from the
+ * compliance tracker's exact-resolution write record (active-FID path set).
+ * Falls back to null when the tracker is unavailable — the receipt carries
+ * the resolved id when one exists, never a heuristic.
+ */
+function resolveFidIdForWrite(
+  writtenPath: string,
+  agentState: AgentState,
+): string | null {
+  const tracker = agentState.echoCompliance
+  const records = tracker?.getWriteRecords?.()
+  if (!records || records.length === 0) return null
+  const normalizedTarget = writtenPath.replace(/\\/g, '/').toLowerCase()
+  for (let i = records.length - 1; i >= 0; i--) {
+    const record = records[i]
+    if (record.path.replace(/\\/g, '/').toLowerCase() === normalizedTarget) {
+      return record.fidId ?? null
+    }
+  }
+  return null
 }

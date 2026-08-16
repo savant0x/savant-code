@@ -34,6 +34,7 @@ import { loadPackageVersion, parseArgs } from './cli-args'
 import { handlePublish } from './commands/publish'
 import { runStandaloneRelease } from './commands/release/release-command'
 import { normalizeReleaseCommand } from './commands/release/release-runner'
+import { ErrorBoundary } from './components/error-boundary'
 import { runHeadlessPrint } from './headless-run'
 import { initializeApp } from './init/init-app'
 import { runPlainLogin } from './login/plain-login'
@@ -614,7 +615,20 @@ async function main(): Promise<void> {
 
   createRoot(renderer).render(
     <QueryClientProvider client={queryClient}>
-      <AppWithAsyncAuth />
+      {/* FID-2026-0815-015: a render error anywhere below the root must
+          degrade to a visible fallback, not escape to the process-level
+          uncaughtException handler (which kills the whole terminal). */}
+      <ErrorBoundary
+        fallback={
+          <text fg="red">
+            An unexpected error occurred. The session was stopped safely — run
+            `savant-code --continue` to resume.
+          </text>
+        }
+        componentName="AppRoot"
+      >
+        <AppWithAsyncAuth />
+      </ErrorBoundary>
     </QueryClientProvider>,
   )
 }

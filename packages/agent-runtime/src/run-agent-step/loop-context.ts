@@ -3,6 +3,13 @@ import { userMessage } from '@savant-code/common/util/messages'
 import { mapValues } from 'lodash'
 
 import { ContextCompactor } from '../context-compactor'
+import {
+  createGoalRecord,
+  parseGoalControlDirective,
+  parseGoalSetDirective,
+  pauseGoal,
+  resumeGoal,
+} from './goal-engine'
 import { toTokenCountInputSchema } from './token-count'
 import { additionalToolDefinitions } from './tool-definitions'
 import { additionalSystemPrompts } from '../system-prompt/prompts'
@@ -266,6 +273,57 @@ export async function createLoopContext(params: {
     }
   }
 
+  // FID-2026-0814-002: structured durable-goal directives from the /goal slash
+  // surface. `<goal-set>` creates the durable record (idempotent — never
+  // overwrites an existing record mid-run) and supersedes the legacy
+  // `goalCondition`; `<goal-control>` applies pause/resume/cancel to the
+  // existing record. Directive text is parsed as DATA — the CLI escapes
+  // attribute values, so user text cannot break the parse or leak into
+  // instruction context.
+  if (hasUserMessage && loopParams.prompt) {
+    const goalSet = parseGoalSetDirective(loopParams.prompt)
+    if (goalSet && !initialAgentState.goal) {
+      initialAgentState.goal = createGoalRecord({
+        goalId: goalSet.goalId,
+        objective: goalSet.objective,
+        completionCriterion: goalSet.completionCriterion,
+        budgetTokens: goalSet.budgetTokens,
+        budgetTurns: goalSet.budgetTurns,
+        budgetTimeMs: goalSet.budgetTimeMs,
+      })
+      initialAgentState.goalCondition = undefined
+      loopParams.logger.info(
+        {
+          goalId: initialAgentState.goal.goalId,
+          budgetLimits: initialAgentState.goal.budgetLimits,
+        },
+        'Durable goal created from <goal-set> directive',
+      )
+    }
+    const goalControl = parseGoalControlDirective(loopParams.prompt)
+    if (goalControl && initialAgentState.goal) {
+      if (goalControl.action === 'pause') {
+        pauseGoal(initialAgentState.goal, goalControl.reason)
+        loopParams.logger.info(
+          { goalId: initialAgentState.goal.goalId },
+          'Durable goal paused via <goal-control>',
+        )
+      } else if (goalControl.action === 'resume') {
+        resumeGoal(initialAgentState.goal)
+        loopParams.logger.info(
+          { goalId: initialAgentState.goal.goalId },
+          'Durable goal resumed via <goal-control>',
+        )
+      } else if (goalControl.action === 'cancel') {
+        loopParams.logger.info(
+          { goalId: initialAgentState.goal.goalId },
+          'Durable goal cancelled via <goal-control> — record cleared',
+        )
+        initialAgentState.goal = undefined
+      }
+    }
+  }
+
   // FID-2026-0725-085: Initialize ContextCompactor for micro-compact before each API call.
   // This runs at the start of the agent loop so it's available for every iteration.
   // Use resolved contextWindow from CLI (CTX-007) or infer from model name (CTX-003).
@@ -273,11 +331,22 @@ export async function createLoopContext(params: {
     logger: loopParams.logger,
     contextWindow: loopParams.contextWindow,
     model: agentTemplate.model,
+    // FID-2026-0814-004 H-05/H-06: operator config from `protocol.config.yaml`
+    // `compression` — `microCompact` off honors the off-switch, and
+    // `microCompactMaxKeepRecent` drives the pressure gate.
+    microCompactEnabled: loopParams.compression?.microCompact,
+    microCompactMaxKeepRecent:
+      loopParams.compression?.microCompactMaxKeepRecent,
+    microCompactFloorTokens: loopParams.compression?.microCompactFloorTokens,
   })
   // FID-2026-0725-085 Layer 3: Wire resolved context window into agentState
   // so handleSteps (savant.ts) can use it for auto-compact threshold.
+  // FID-2026-0814-012: read the compactor's reactiveCompact (= contextWindow)
+  // directly — the resolved window, exactly — instead of reconstructing it as
+  // autoCompact + 30_000 (which overshoots when the Math.max(..., 100_000)
+  // clamp kicks in at small windows, and duplicates the buffer magic number).
   initialAgentState.maxContextLength =
-    contextCompactor.getThresholds().autoCompact + 30_000
+    contextCompactor.getThresholds().reactiveCompact
 
   return {
     ok: true,

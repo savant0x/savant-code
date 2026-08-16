@@ -10,6 +10,7 @@ import {
 import { SingleAdBanner } from '../components/ad-banner'
 import { ChatHeader } from '../components/chat-header'
 import { ChatInputBar } from '../components/chat-input-bar'
+import { CompactionSignal } from '../components/compaction-signal'
 import { LoadPreviousButton } from '../components/load-previous-button'
 import { MessageWithAgents } from '../components/message-with-agents'
 import { ModelPicker } from '../components/model-picker'
@@ -203,6 +204,11 @@ export function ChatLayout(props: ChatLayoutProps) {
                 message={msg}
               />
             ))}
+          {/* FID-2026-0814-006: in-stream compaction lifecycle signal (kimi
+              pattern). Render-only — never enters messageHistory, so the ECHO
+              compliance accounting is untouched. Shows ⚙ Compacting… while a
+              pruner runs and the terminal ✓/⚠ outcome once per lifecycle. */}
+          <CompactionSignal />
         </scrollbox>
 
         <box focusable={false} style={BOTTOM_BOX_STYLE}>

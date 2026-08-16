@@ -10,6 +10,7 @@ import {
 } from '@savant-code/common/util/agent-id-parsing'
 import { generateCompactId } from '@savant-code/common/util/string'
 
+import { buildHookInput, getHookEngine } from '../../../hooks/engine'
 import { loopAgentSteps } from '../../../run-agent-step'
 import { getAgentTemplate } from '../../../templates/agent-registry'
 import { formatValueForError } from '../../../util/format-value'
@@ -404,6 +405,10 @@ export function createAgentState(
     // run and the Verifier criteria see the full picture (L-001: Forge wrote
     // without the parent spawning a Verifier).
     echoCompliance: parentAgentState.echoCompliance,
+    // FID-2026-0813-004: thread the parent's ZTAP provenance session so
+    // subagent writes sign into the same session and Verifier/Adversary
+    // verdicts bind to the same receipts.
+    provenance: parentAgentState.provenance,
   }
 }
 
@@ -415,6 +420,14 @@ export function createAgentState(
  * Agents that declare `inheritParentModel: false` keep their own model, which
  * is useful for reasoning helpers that are intentionally tied to a specific
  * model (e.g. the Gemini thinker).
+ *
+ * FID-2026-0814-009 B-06: the child's providerOptions are merged OVER the
+ * parent's rather than replaced wholesale. Infra helpers (tmux-cli,
+ * browser-use, database, github) set `data_collection: 'deny'` to keep
+ * browser/DB/token/CLI content out of provider training data; a naive replace
+ * silently dropped that flag when the default (paid) savant — whose
+ * providerOptions are empty — spawned them. The child's explicit options win
+ * so the privacy flag survives model inheritance.
  */
 export function withParentModel(
   agentTemplate: AgentTemplate,
@@ -427,7 +440,10 @@ export function withParentModel(
   return {
     ...agentTemplate,
     model: parentAgentTemplate.model,
-    providerOptions: parentAgentTemplate.providerOptions,
+    providerOptions: {
+      ...parentAgentTemplate.providerOptions,
+      ...agentTemplate.providerOptions,
+    },
   }
 }
 
@@ -522,15 +538,51 @@ export async function executeSubagent(
   }
   onResponseChunk(startEvent)
 
-  const result = await loopAgentSteps({
-    ...withDefaults,
-    // Don't propagate parent's image content to subagents.
-    // If subagents need to see images, they get them through includeMessageHistory,
-    // not by creating new image-containing messages for their prompts.
-    content: undefined,
-    ancestorRunIds: [...ancestorRunIds, parentAgentState.runId ?? ''],
-    agentType: agentTemplate.id,
-  })
+  // FID-2026-0814-003: SubagentStart/SubagentStop hooks — observation only,
+  // fire-and-forget, fired at the subagent lifecycle boundary (this is the
+  // single funnel shared by spawn_agents and spawn_agent_inline).
+  const hookProjectRoot =
+    withDefaults.fileContext?.projectRoot ?? withDefaults.fileContext?.cwd ?? ''
+  const subagentSessionId =
+    withDefaults.agentState.runId ?? withDefaults.agentState.agentId
+  if (hookProjectRoot) {
+    getHookEngine(hookProjectRoot).fireAndForgetTrigger(
+      buildHookInput({
+        event: 'SubagentStart',
+        sessionId: subagentSessionId,
+        cwd: hookProjectRoot,
+        subagentType: agentTemplate.id,
+        toolInput: {
+          parentAgentId: parentAgentState.agentId,
+          ...(prompt !== undefined ? { prompt } : {}),
+        },
+      }),
+    )
+  }
+
+  let result
+  try {
+    result = await loopAgentSteps({
+      ...withDefaults,
+      // Don't propagate parent's image content to subagents.
+      // If subagents need to see images, they get them through includeMessageHistory,
+      // not by creating new image-containing messages for their prompts.
+      content: undefined,
+      ancestorRunIds: [...ancestorRunIds, parentAgentState.runId ?? ''],
+      agentType: agentTemplate.id,
+    })
+  } finally {
+    if (hookProjectRoot) {
+      getHookEngine(hookProjectRoot).fireAndForgetTrigger(
+        buildHookInput({
+          event: 'SubagentStop',
+          sessionId: subagentSessionId,
+          cwd: hookProjectRoot,
+          subagentType: agentTemplate.id,
+        }),
+      )
+    }
+  }
 
   onResponseChunk({
     type: 'subagent_finish',

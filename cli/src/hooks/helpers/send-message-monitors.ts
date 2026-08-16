@@ -47,7 +47,9 @@ export const startRunMonitors = (params: StartRunMonitorsParams): void => {
 
   // Wire sidebar: set context window max from model. Reuse the resolved
   // value computed for createRunConfig (CTX-007 fix).
-  if (resolvedContextWindow) {
+  // FID-2026-0813-023: use a typeof guard — a truthy guard swallows a
+  // legitimate 0 and leaves the cap stale when resolution returns undefined.
+  if (typeof resolvedContextWindow === 'number') {
     useChatStore.getState().updateContextTokensMax(resolvedContextWindow)
   }
 
@@ -79,6 +81,13 @@ export const startRunMonitors = (params: StartRunMonitorsParams): void => {
     const tokenCount = snap?.sessionState?.mainAgentState?.contextTokenCount
     if (typeof tokenCount === 'number') {
       useChatStore.getState().updateContextTokens(tokenCount)
+    }
+    // FID-2026-0813-023: mirror the runtime's live compaction status into
+    // the read-only sidebar row (idle/compacted/warning).
+    const compactionStatus =
+      snap?.sessionState?.mainAgentState?.compactionStatus
+    if (compactionStatus) {
+      useChatStore.getState().setCompactionStatus(compactionStatus)
     }
   }, 2_000)
   // Bump the chunk-seen watermark (FID-2026-0718-010 D5).

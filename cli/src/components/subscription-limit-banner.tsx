@@ -16,9 +16,6 @@ import { safeOpen } from '../utils/open-url'
 import { BORDER_CHARS } from '../utils/ui-constants'
 
 export const SubscriptionLimitBanner = () => {
-  // Skip in free mode and direct-provider mode (no backend to query).
-  if (IS_SAVANT_FREE || isDirectProviderMode()) return null
-
   const setInputMode = useChatStore((state) => state.setInputMode)
   const theme = useTheme()
 
@@ -46,6 +43,9 @@ export const SubscriptionLimitBanner = () => {
 
   const fallbackToALaCarte = subscriptionData?.fallbackToALaCarte ?? false
   const updatePreference = useUpdatePreference()
+
+  // Skip in free mode and direct-provider mode (no backend to query).
+  if (IS_SAVANT_FREE || isDirectProviderMode()) return null
 
   const handleToggleFallbackToALaCarte = () => {
     updatePreference.mutate({ fallbackToALaCarte: !fallbackToALaCarte })

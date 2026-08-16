@@ -42,4 +42,6 @@ export type TraceWriter = {
     system: string | undefined
     messages: Message[]
   }) => void
+  /** Await pending async writes. Optional — only async implementations expose it. */
+  flush?: () => Promise<void>
 }

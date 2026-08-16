@@ -2,7 +2,7 @@ import { isSupportedSavantFreeModelId } from '@savant-code/common/constants/sava
 import { deriveValidProviderIds } from '@savant-code/common/providers/derive'
 import { PROVIDER_REGISTRY } from '@savant-code/common/providers/registry'
 
-import { AGENT_MODES } from '../constants'
+import { AGENT_MODES, IS_SAVANT_FREE } from '../constants'
 import { LEGACY_MODE_MIGRATION } from './constants'
 
 import type { AgentMode } from '../constants'
@@ -50,17 +50,23 @@ export const validateSettings = (parsed: JSONValue): Settings => {
     settings.analyticsEnabled = obj.analyticsEnabled
   }
 
-  // Validate savant-free model preference — drop unknown ids so a removed model
-  // doesn't strand the user on a non-existent queue. Hidden-but-supported models
-  // are kept; access-tier resolution decides whether they are selectable.
+  // Validate savant-free model preference. In the SavantFree build, drop unknown
+  // ids so a removed model doesn't strand the user on a non-existent queue.
+  // Hidden-but-supported models are kept; access-tier resolution decides whether
+  // they are selectable. In the paid build this key is written by /model and the
+  // picker with arbitrary OpenRouter ids (free or paid) — the strict free-catalog
+  // gate must NOT apply there, or a valid paid-CLI selection is silently dropped
+  // on load and the sidebar falls back to a paid default (FID-2026-0814-002).
   // Backward-compat: migrate the legacy model preference key.
   const savantFreeModelPreference =
     obj.savantFreeModelPreference ?? obj.savantFreeModelPreferenceLegacy
-  if (
-    typeof savantFreeModelPreference === 'string' &&
-    isSupportedSavantFreeModelId(savantFreeModelPreference)
-  ) {
-    settings.savantFreeModelPreference = savantFreeModelPreference
+  if (typeof savantFreeModelPreference === 'string') {
+    if (
+      !IS_SAVANT_FREE ||
+      isSupportedSavantFreeModelId(savantFreeModelPreference)
+    ) {
+      settings.savantFreeModelPreference = savantFreeModelPreference
+    }
   }
 
   // Validate alwaysUseALaCarte (legacy)
@@ -105,9 +111,9 @@ export const validateSettings = (parsed: JSONValue): Settings => {
 
   // Validate savantCodeModelPreference — pass through any string; the /model
   // picker fetches live OpenRouter models so all returned ids are valid.
-  // Backward-compat: migrate the legacy `savantCode$1` key.
+  // Backward-compat: migrate the legacy `savantCodeModelPreferenceLegacy` key.
   const savantCodeModelPreference =
-    obj.savantCodeModelPreference ?? obj.savantCode$1
+    obj.savantCodeModelPreference ?? obj.savantCodeModelPreferenceLegacy
   if (typeof savantCodeModelPreference === 'string') {
     settings.savantCodeModelPreference = savantCodeModelPreference
   }

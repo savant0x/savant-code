@@ -5,15 +5,6 @@ import type { AgentDefinition } from '../types/agent-definition'
 type CodeEditorVariant =
   'gpt-5' | 'opus' | 'glm' | 'kimi' | 'deepseek' | 'minimax'
 
-const EDITOR_MODEL_BY_VARIANT: Record<CodeEditorVariant, string> = {
-  'gpt-5': 'openai/gpt-5.1',
-  opus: 'anthropic/claude-opus-4.8',
-  glm: 'z-ai/glm-5.1',
-  kimi: 'moonshotai/kimi-k2.6',
-  deepseek: 'deepseek/deepseek-v4-pro',
-  minimax: 'minimax/minimax-m3',
-}
-
 const EDITOR_VARIANTS_WITH_THINK_TAGS: ReadonlySet<CodeEditorVariant> = new Set(
   ['opus'],
 )
@@ -24,7 +15,11 @@ export const createCodeEditor = (options: {
   const { model } = options
   return {
     publisher,
-    model: EDITOR_MODEL_BY_VARIANT[options.model],
+    // FID-2026-0814-009 B-08: display metadata only. The paid variant
+    // hardcodes (gpt-5.1 / claude-opus-4.8 / deepseek-v4-pro, etc.) were
+    // removed — Forge inherits the operator's model via withParentModel;
+    // `openrouter/free` is the safe free fallback, never a paid model.
+    model: 'openrouter/free',
 
     displayName: 'Savant the Forge',
     spawnerPrompt:

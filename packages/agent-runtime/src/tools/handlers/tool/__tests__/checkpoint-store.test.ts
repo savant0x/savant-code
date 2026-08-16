@@ -2,7 +2,7 @@ import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 
-import { afterEach, beforeEach, describe, expect, it } from 'bun:test'
+import { afterEach, beforeEach, describe, expect, it, spyOn } from 'bun:test'
 
 import {
   captureSnapshot,
@@ -40,7 +40,7 @@ function read(path_: string): string {
 
 describe('checkpoint-store', () => {
   describe('capture + close round-trip', () => {
-    it('persists a JSON per turn with captured pre-write content', () => {
+    it('persists a JSON per turn with captured pre-write content', async () => {
       const file = path.join(tmpDir, 'a.ts')
       write(file, 'original')
 
@@ -49,14 +49,14 @@ describe('checkpoint-store', () => {
         turnId: 'turn-1',
         prompt: 'fix a',
       })
-      captureSnapshot({
+      await captureSnapshot({
         checkpointDir: checkpointDir(),
         turnId: 'turn-1',
         filePath: file,
       })
       // The write happens after capture — content on disk is still original.
       write(file, 'edited')
-      closeTurn({
+      await closeTurn({
         checkpointDir: checkpointDir(),
         turnId: 'turn-1',
         prompt: 'fix a',
@@ -72,47 +72,47 @@ describe('checkpoint-store', () => {
       expect(checkpoint!.files).toEqual([{ path: file, content: 'original' }])
     })
 
-    it('captures null for files that do not exist yet (created this turn)', () => {
+    it('captures null for files that do not exist yet (created this turn)', async () => {
       const file = path.join(tmpDir, 'new.ts')
       openTurn({ checkpointDir: checkpointDir(), turnId: 't' })
-      captureSnapshot({
+      await captureSnapshot({
         checkpointDir: checkpointDir(),
         turnId: 't',
         filePath: file,
       })
       write(file, 'created')
-      closeTurn({ checkpointDir: checkpointDir(), turnId: 't' })
+      await closeTurn({ checkpointDir: checkpointDir(), turnId: 't' })
 
       const checkpoint = getTurn(checkpointDir(), 't')
       expect(checkpoint!.files).toEqual([{ path: file, content: null }])
     })
 
-    it('dedupes per path — first capture wins across multiple writes', () => {
+    it('dedupes per path — first capture wins across multiple writes', async () => {
       const file = path.join(tmpDir, 'a.ts')
       write(file, 'v0')
       openTurn({ checkpointDir: checkpointDir(), turnId: 't' })
-      captureSnapshot({
+      await captureSnapshot({
         checkpointDir: checkpointDir(),
         turnId: 't',
         filePath: file,
       })
       write(file, 'v1')
-      captureSnapshot({
+      await captureSnapshot({
         checkpointDir: checkpointDir(),
         turnId: 't',
         filePath: file,
       })
-      closeTurn({ checkpointDir: checkpointDir(), turnId: 't' })
+      await closeTurn({ checkpointDir: checkpointDir(), turnId: 't' })
 
       const checkpoint = getTurn(checkpointDir(), 't')
       expect(checkpoint!.files).toEqual([{ path: file, content: 'v0' }])
     })
 
-    it('openTurn resets a stale buffer so a re-run never inherits captures', () => {
+    it('openTurn resets a stale buffer so a re-run never inherits captures', async () => {
       const file = path.join(tmpDir, 'a.ts')
       write(file, 'v0')
       openTurn({ checkpointDir: checkpointDir(), turnId: 't' })
-      captureSnapshot({
+      await captureSnapshot({
         checkpointDir: checkpointDir(),
         turnId: 't',
         filePath: file,
@@ -121,30 +121,61 @@ describe('checkpoint-store', () => {
       // Re-open the same turn (simulating a re-run after a crash) — the stale
       // capture must be discarded, and the fresh open captures current state.
       openTurn({ checkpointDir: checkpointDir(), turnId: 't' })
-      captureSnapshot({
+      await captureSnapshot({
         checkpointDir: checkpointDir(),
         turnId: 't',
         filePath: file,
       })
       write(file, 'v2')
-      closeTurn({ checkpointDir: checkpointDir(), turnId: 't' })
+      await closeTurn({ checkpointDir: checkpointDir(), turnId: 't' })
 
       const checkpoint = getTurn(checkpointDir(), 't')
       expect(checkpoint!.files).toEqual([{ path: file, content: 'v1' }])
     })
 
-    it('is a no-op when checkpointDir is unset (checkpointing disabled)', () => {
+    it('is a no-op when checkpointDir is unset (checkpointing disabled)', async () => {
       const file = path.join(tmpDir, 'a.ts')
       write(file, 'original')
       openTurn({ turnId: 't' })
-      captureSnapshot({ turnId: 't', filePath: file })
-      expect(closeTurn({ turnId: 't' })).toBeNull()
+      await captureSnapshot({ turnId: 't', filePath: file })
+      expect(await closeTurn({ turnId: 't' })).toBeNull()
       expect(listTurns(checkpointDir())).toEqual([])
     })
   })
 
+  describe('capture concurrency (FID-2026-0815-005 F-04)', () => {
+    it('coalesces concurrent captures of the same path onto one read (first-wins)', async () => {
+      const file = path.join(tmpDir, 'a.ts')
+      write(file, 'v0')
+      openTurn({ checkpointDir: checkpointDir(), turnId: 't' })
+
+      const readFileSpy = spyOn(fs.promises, 'readFile')
+      await Promise.all([
+        captureSnapshot({
+          checkpointDir: checkpointDir(),
+          turnId: 't',
+          filePath: file,
+        }),
+        captureSnapshot({
+          checkpointDir: checkpointDir(),
+          turnId: 't',
+          filePath: file,
+        }),
+      ])
+      const readCalls = readFileSpy.mock.calls.length
+      readFileSpy.mockRestore()
+
+      write(file, 'v1')
+      await closeTurn({ checkpointDir: checkpointDir(), turnId: 't' })
+
+      const checkpoint = getTurn(checkpointDir(), 't')
+      expect(checkpoint!.files).toEqual([{ path: file, content: 'v0' }])
+      expect(readCalls).toBe(1)
+    })
+  })
+
   describe('capture skip path (FID-2026-0803-005 P1a)', () => {
-    it('does not record a non-ENOENT read failure as null (would delete on restore)', () => {
+    it('does not record a non-ENOENT read failure as null (would delete on restore)', async () => {
       // A directory path forces a non-ENOENT read error (EISDIR) on every
       // platform — the old catch-all would have recorded it as `null` and a
       // rewind would have DELETED the directory.
@@ -152,12 +183,12 @@ describe('checkpoint-store', () => {
       fs.mkdirSync(dirPath)
 
       openTurn({ checkpointDir: checkpointDir(), turnId: 't' })
-      captureSnapshot({
+      await captureSnapshot({
         checkpointDir: checkpointDir(),
         turnId: 't',
         filePath: dirPath,
       })
-      closeTurn({ checkpointDir: checkpointDir(), turnId: 't' })
+      await closeTurn({ checkpointDir: checkpointDir(), turnId: 't' })
 
       // The path must NOT appear as a `null` (created) entry.
       const checkpoint = getTurn(checkpointDir(), 't')
@@ -173,31 +204,31 @@ describe('checkpoint-store', () => {
       expect(fs.statSync(dirPath).isDirectory()).toBe(true)
     })
 
-    it('keeps a skipped path skipped for the rest of the turn', () => {
+    it('keeps a skipped path skipped for the rest of the turn', async () => {
       const dirPath = path.join(tmpDir, 'some-dir')
       fs.mkdirSync(dirPath)
       const file = path.join(tmpDir, 'a.ts')
       write(file, 'original')
 
       openTurn({ checkpointDir: checkpointDir(), turnId: 't' })
-      captureSnapshot({
+      await captureSnapshot({
         checkpointDir: checkpointDir(),
         turnId: 't',
         filePath: dirPath,
       })
       // A later capture of the same unreadable path must not flip it to null.
-      captureSnapshot({
+      await captureSnapshot({
         checkpointDir: checkpointDir(),
         turnId: 't',
         filePath: dirPath,
       })
       // A normal file is still captured normally in the same turn.
-      captureSnapshot({
+      await captureSnapshot({
         checkpointDir: checkpointDir(),
         turnId: 't',
         filePath: file,
       })
-      closeTurn({ checkpointDir: checkpointDir(), turnId: 't' })
+      await closeTurn({ checkpointDir: checkpointDir(), turnId: 't' })
 
       const checkpoint = getTurn(checkpointDir(), 't')
       expect(checkpoint!.files).toEqual([{ path: file, content: 'original' }])
@@ -205,11 +236,19 @@ describe('checkpoint-store', () => {
   })
 
   describe('listTurns', () => {
-    it('returns newest first with summaries', () => {
+    it('returns newest first with summaries', async () => {
       openTurn({ checkpointDir: checkpointDir(), turnId: 'a', prompt: 'one' })
-      closeTurn({ checkpointDir: checkpointDir(), turnId: 'a', prompt: 'one' })
+      await closeTurn({
+        checkpointDir: checkpointDir(),
+        turnId: 'a',
+        prompt: 'one',
+      })
       openTurn({ checkpointDir: checkpointDir(), turnId: 'b', prompt: 'two' })
-      closeTurn({ checkpointDir: checkpointDir(), turnId: 'b', prompt: 'two' })
+      await closeTurn({
+        checkpointDir: checkpointDir(),
+        turnId: 'b',
+        prompt: 'two',
+      })
 
       const turns = listTurns(checkpointDir())
       expect(turns.map((t) => t.turnId)).toEqual(['b', 'a'])
@@ -218,11 +257,11 @@ describe('checkpoint-store', () => {
   })
 
   describe('retention', () => {
-    it('prunes to the most recent CHECKPOINT_RETENTION turns on close', () => {
+    it('prunes to the most recent CHECKPOINT_RETENTION turns on close', async () => {
       const dir = checkpointDir()
       for (let i = 0; i < 25; i++) {
         openTurn({ checkpointDir: dir, turnId: `t${i}` })
-        closeTurn({ checkpointDir: dir, turnId: `t${i}` })
+        await closeTurn({ checkpointDir: dir, turnId: `t${i}` })
       }
       const turns = listTurns(dir)
       expect(turns.length).toBe(20)
@@ -233,17 +272,17 @@ describe('checkpoint-store', () => {
   })
 
   describe('restoreTurn', () => {
-    it('restores files to their pre-edit content', () => {
+    it('restores files to their pre-edit content', async () => {
       const file = path.join(tmpDir, 'a.ts')
       write(file, 'original')
       openTurn({ checkpointDir: checkpointDir(), turnId: 't' })
-      captureSnapshot({
+      await captureSnapshot({
         checkpointDir: checkpointDir(),
         turnId: 't',
         filePath: file,
       })
       write(file, 'edited')
-      closeTurn({ checkpointDir: checkpointDir(), turnId: 't' })
+      await closeTurn({ checkpointDir: checkpointDir(), turnId: 't' })
 
       const restored = restoreTurn({
         checkpointDir: checkpointDir(),
@@ -254,16 +293,16 @@ describe('checkpoint-store', () => {
       expect(read(file)).toBe('original')
     })
 
-    it('deletes files that were created during the turn (content null)', () => {
+    it('deletes files that were created during the turn (content null)', async () => {
       const file = path.join(tmpDir, 'new.ts')
       openTurn({ checkpointDir: checkpointDir(), turnId: 't' })
-      captureSnapshot({
+      await captureSnapshot({
         checkpointDir: checkpointDir(),
         turnId: 't',
         filePath: file,
       })
       write(file, 'created')
-      closeTurn({ checkpointDir: checkpointDir(), turnId: 't' })
+      await closeTurn({ checkpointDir: checkpointDir(), turnId: 't' })
 
       restoreTurn({
         checkpointDir: checkpointDir(),
@@ -273,16 +312,16 @@ describe('checkpoint-store', () => {
       expect(fs.existsSync(file)).toBe(false)
     })
 
-    it('skips paths that escape the project root (tampered checkpoint)', () => {
+    it('skips paths that escape the project root (tampered checkpoint)', async () => {
       const outside = path.join(path.dirname(tmpDir), 'outside.txt')
       write(outside, 'precious')
       openTurn({ checkpointDir: checkpointDir(), turnId: 't' })
-      captureSnapshot({
+      await captureSnapshot({
         checkpointDir: checkpointDir(),
         turnId: 't',
         filePath: outside,
       })
-      closeTurn({ checkpointDir: checkpointDir(), turnId: 't' })
+      await closeTurn({ checkpointDir: checkpointDir(), turnId: 't' })
 
       const restored = restoreTurn({
         checkpointDir: checkpointDir(),
@@ -305,7 +344,7 @@ describe('checkpoint-store', () => {
   })
 
   describe('forkFrom', () => {
-    it('restores files and returns the checkpoint for seeding a new session', () => {
+    it('restores files and returns the checkpoint for seeding a new session', async () => {
       const file = path.join(tmpDir, 'a.ts')
       write(file, 'original')
       openTurn({
@@ -315,13 +354,13 @@ describe('checkpoint-store', () => {
         messageCount: 4,
         historyLength: 3,
       })
-      captureSnapshot({
+      await captureSnapshot({
         checkpointDir: checkpointDir(),
         turnId: 't',
         filePath: file,
       })
       write(file, 'edited')
-      closeTurn({ checkpointDir: checkpointDir(), turnId: 't' })
+      await closeTurn({ checkpointDir: checkpointDir(), turnId: 't' })
 
       const forked = forkFrom({
         checkpointDir: checkpointDir(),
@@ -344,16 +383,16 @@ describe('checkpoint-store', () => {
       ).toBeNull()
     })
 
-    it('deletes files created during the turn (content null) when forking', () => {
+    it('deletes files created during the turn (content null) when forking', async () => {
       const file = path.join(tmpDir, 'new.ts')
       openTurn({ checkpointDir: checkpointDir(), turnId: 't' })
-      captureSnapshot({
+      await captureSnapshot({
         checkpointDir: checkpointDir(),
         turnId: 't',
         filePath: file,
       })
       write(file, 'created')
-      closeTurn({ checkpointDir: checkpointDir(), turnId: 't' })
+      await closeTurn({ checkpointDir: checkpointDir(), turnId: 't' })
 
       forkFrom({
         checkpointDir: checkpointDir(),
@@ -365,25 +404,25 @@ describe('checkpoint-store', () => {
   })
 
   describe('openTurn isolation', () => {
-    it('separates buffers per (dir, turnId)', () => {
+    it('separates buffers per (dir, turnId)', async () => {
       const fileA = path.join(tmpDir, 'a.ts')
       const fileB = path.join(tmpDir, 'b.ts')
       write(fileA, 'a0')
       write(fileB, 'b0')
       openTurn({ checkpointDir: checkpointDir(), turnId: 't1' })
       openTurn({ checkpointDir: checkpointDir(), turnId: 't2' })
-      captureSnapshot({
+      await captureSnapshot({
         checkpointDir: checkpointDir(),
         turnId: 't1',
         filePath: fileA,
       })
-      captureSnapshot({
+      await captureSnapshot({
         checkpointDir: checkpointDir(),
         turnId: 't2',
         filePath: fileB,
       })
-      closeTurn({ checkpointDir: checkpointDir(), turnId: 't1' })
-      closeTurn({ checkpointDir: checkpointDir(), turnId: 't2' })
+      await closeTurn({ checkpointDir: checkpointDir(), turnId: 't1' })
+      await closeTurn({ checkpointDir: checkpointDir(), turnId: 't2' })
 
       const t1 = getTurn(checkpointDir(), 't1')
       const t2 = getTurn(checkpointDir(), 't2')

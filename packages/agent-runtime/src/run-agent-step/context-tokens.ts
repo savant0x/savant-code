@@ -8,7 +8,7 @@ import { callTokenCountAPI } from '../llm-api/savant-code-web-api'
 import { getAgentPrompt } from '../templates/strings'
 import {
   countTokens,
-  countTokensJson,
+  countTokensJsonCached,
   countTokensMessagesCached,
 } from '../util/token-counter'
 
@@ -39,7 +39,7 @@ export async function prepareStepContext(params: {
   contextCompactor: ContextCompactor
   logger: Logger
   additionalToolDefinitionsWithCache: () => Promise<CustomToolDefinitions>
-}): Promise<{ stepPrompt: string | undefined }> {
+}): Promise<{ stepPrompt: string | undefined; systemTokens: number }> {
   const {
     loopParams,
     agentTemplate,
@@ -66,13 +66,10 @@ export async function prepareStepContext(params: {
     logger,
     additionalToolDefinitions: additionalToolDefinitionsWithCache,
   })
-  const messagesWithStepPrompt = buildArray(
-    ...agentState.messageHistory,
-    stepPrompt &&
-      userMessage({
-        content: stepPrompt,
-      }),
-  )
+  // FID-2026-0815-011 E-01: the system prompt is session-invariant, so its
+  // token count is computed once here and reused by runAgentStep (which
+  // otherwise tokenizes it again every step).
+  const systemTokens = countTokens(system)
 
   // Count structured message content (not JSON.stringify, which inflates the
   // count and counts image base64 as text); system is a plain string; tool
@@ -85,8 +82,8 @@ export async function prepareStepContext(params: {
   const estimateContextTokensLocally = () =>
     countTokensMessagesCached(agentState.messageHistory) +
     countTokens(stepPrompt ?? '') +
-    countTokens(system) +
-    countTokensJson(toolsForTokenCount)
+    systemTokens +
+    countTokensJsonCached(toolsForTokenCount)
 
   // Use local token estimation for external runs (OpenCode Go, BYOK,
   // savant-free) where the SavantCode web API is unavailable or unnecessary.
@@ -108,6 +105,16 @@ export async function prepareStepContext(params: {
     agentState.contextTokenCount = estimateContextTokensLocally()
   } else {
     // SavantCode-hosted paid run: use the accurate web API count.
+    // FID-2026-0815-013 E-01: build the full message+step-prompt array only
+    // here — the local-estimation path above never consumes it, so the eager
+    // O(history) recursive copy used to run (and be discarded) every step.
+    const messagesWithStepPrompt = buildArray(
+      ...agentState.messageHistory,
+      stepPrompt &&
+        userMessage({
+          content: stepPrompt,
+        }),
+    )
     const tokenCountResult = await callTokenCountAPI({
       messages: messagesWithStepPrompt as JSONValue[],
       system,
@@ -145,7 +152,13 @@ export async function prepareStepContext(params: {
   // This is zero-cost (no LLM call) and reduces context size incrementally.
   const thresholds = contextCompactor.getThresholds()
   const messagesBeforeMicroCompact = agentState.messageHistory.length
-  const microResult = contextCompactor.microCompact(agentState.messageHistory)
+  // FID-2026-0814-004 H-05/H-06: the real token count feeds both the
+  // config off-switch (microCompactEnabled inside the compactor) and the
+  // pressure gate (below the floor → no clearing).
+  const microResult = contextCompactor.microCompact(
+    agentState.messageHistory,
+    agentState.contextTokenCount,
+  )
   if (microResult.tokensSaved > 0) {
     // FID-2026-0802-005 L8: ContextCompactor now operates on Message[]
     // directly — the `as unknown as CompactionMessage[]` casts are gone.
@@ -203,5 +216,41 @@ export async function prepareStepContext(params: {
     }
   }
 
-  return { stepPrompt }
+  // FID-2026-0814-001: the sidebar percent is window-relative — the same
+  // denominator the pruner trigger uses (maxContextLength = reactiveCompact =
+  // contextWindow), so "N% of window" lines up with the Context row and the
+  // pruner trigger instead of the hidden internal auto-compact threshold.
+  // FID-2026-0814-012: read reactiveCompact directly (single source of truth).
+  const windowTokens = thresholds.reactiveCompact
+  const percentOfWindow = Math.round(
+    (agentState.contextTokenCount / windowTokens) * 100,
+  )
+  // FID-2026-0814-011: single trigger authority. Record the proven
+  // shouldAutoCompact verdict on agentState so the serialized savant
+  // handleSteps consumes THIS signal (instead of independently re-deriving
+  // from maxContextLength, which can diverge). Set unconditionally each step
+  // so a below-threshold step clears the flag — it can never go stale.
+  agentState.autoCompactDue = autoCompactCheck.shouldCompact
+
+  // FID-2026-0813-023: surface live compaction status to the read-only CLI
+  // sidebar row. The heartbeat reads this off the snapshot's mainAgentState.
+  if (autoCompactCheck.shouldCompact) {
+    agentState.compactionStatus = {
+      phase: 'warning',
+      percentUsed: percentOfWindow,
+    }
+  } else if (microResult.tokensSaved > 0) {
+    agentState.compactionStatus = {
+      phase: 'compacted',
+      tokensSaved: microResult.tokensSaved,
+      percentUsed: percentOfWindow,
+    }
+  } else {
+    agentState.compactionStatus = {
+      phase: 'idle',
+      percentUsed: percentOfWindow,
+    }
+  }
+
+  return { stepPrompt, systemTokens }
 }

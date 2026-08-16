@@ -61,20 +61,23 @@ export const SingleBlock = memo(
     const theme = useTheme()
     const codeBlockWidth = Math.max(1, availableWidth)
 
+    // Hoisted above the switch so `useCallback` runs unconditionally (Rules of
+    // Hooks). For non-text blocks it resolves to '' and is unused.
+    const isStreamingText = isLoading || !isComplete
+    const filteredContent =
+      block.type === 'text'
+        ? isStreamingText
+          ? trimNewlines(block.content)
+          : block.content.trim()
+        : ''
+    const getCopyText = useCallback(() => filteredContent, [filteredContent])
+
     switch (block.type) {
       case 'text': {
         if (isReasoningTextBlock(block)) {
           return null
         }
         const textBlock = block as TextContentBlock
-        const isStreamingText = isLoading || !isComplete
-        const filteredContent = isStreamingText
-          ? trimNewlines(textBlock.content)
-          : textBlock.content.trim()
-        const getCopyText = useCallback(
-          () => filteredContent,
-          [filteredContent],
-        )
         if (!filteredContent) {
           return null
         }

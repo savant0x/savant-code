@@ -4,12 +4,12 @@
  *
  * By default /plan and /review run on the user's currently selected model. If
  * the user has connected a ChatGPT account (via /connect), we delegate the
- * deep-thinking step to the GPT model through the @thinker-gpt agent instead.
+ * deep-thinking step to the standard @thinker agent instead.
  */
 
 import { getChatGptOAuthStatus } from '../utils/chatgpt-oauth'
 
-// Pick the GPT-delegating variant when a ChatGPT account is connected;
+// Pick the thinker-delegating variant when a ChatGPT account is connected;
 // otherwise the user's selected model does the work directly.
 function gptOrSelectedModelPrompt(
   gptVariant: string,
@@ -24,7 +24,7 @@ export function buildPlanBasePrompt(
   isChatGptConnected?: () => boolean,
 ): string {
   return gptOrSelectedModelPrompt(
-    'Gather all the relevant context and then spawn @thinker-gpt Think about how to implement the following:',
+    'Gather all the relevant context and then spawn @thinker Think about how to implement the following:',
     'Gather all the relevant context and then think carefully about how to implement the following:',
     isChatGptConnected,
   )
@@ -35,7 +35,7 @@ export function buildReviewBasePrompt(
   isChatGptConnected?: () => boolean,
 ): string {
   return gptOrSelectedModelPrompt(
-    'Please gather all relevant context and then spawn @thinker-gpt to review:',
+    'Please gather all relevant context and then spawn @thinker to review:',
     'Please gather all relevant context and then carefully review:',
     isChatGptConnected,
   )

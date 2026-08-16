@@ -338,7 +338,9 @@ export const createSendMessageBody = (
         queueReset,
         updater,
       })
-      runLifecycle.finalize()
+      // FID-2026-0815-005 (F-04): closeTurn is now async — await the
+      // checkpoint persistence before the finally block completes.
+      await runLifecycle.finalize()
     }
   }
 }

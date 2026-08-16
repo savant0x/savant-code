@@ -134,6 +134,27 @@ describe('settings telemetry defaults', () => {
     )
   })
 
+  test('paid build preserves a non-free-catalog savantFreeModelPreference (FID-2026-0814-002)', async () => {
+    // The paid CLI's /model + picker write savantFreeModelPreference with
+    // arbitrary OpenRouter ids (free or paid) via switchModel. The strict
+    // free-catalog gate must only apply in the SavantFree build — dropping it
+    // here silently reverts the sidebar to a paid default on the next launch.
+    fs.mkdirSync(getConfigDir(), { recursive: true })
+    fs.writeFileSync(
+      path.join(getConfigDir(), 'settings.json'),
+      JSON.stringify(
+        { savantFreeModelPreference: 'nous/tencent/hy3:free' },
+        null,
+        2,
+      ),
+    )
+
+    const { loadSettings } = await import('../settings')
+    expect(loadSettings().savantFreeModelPreference).toBe(
+      'nous/tencent/hy3:free',
+    )
+  })
+
   test('user savant-code model preference is preserved across loads', async () => {
     fs.mkdirSync(getConfigDir(), { recursive: true })
     fs.writeFileSync(
@@ -243,6 +264,43 @@ describe('settings telemetry defaults', () => {
 
     const { getActiveProvider } = await import('../settings')
     expect(getActiveProvider()).toBe('tokenharbor')
+  })
+
+  test('legacy savantCodeModelPreferenceLegacy migrates to savantCodeModelPreference (FID-2026-0813-023)', async () => {
+    fs.mkdirSync(getConfigDir(), { recursive: true })
+    fs.writeFileSync(
+      path.join(getConfigDir(), 'settings.json'),
+      JSON.stringify(
+        { savantCodeModelPreferenceLegacy: 'openrouter/legacy-model' },
+        null,
+        2,
+      ),
+    )
+
+    const { loadSettings } = await import('../settings')
+    expect(loadSettings().savantCodeModelPreference).toBe(
+      'openrouter/legacy-model',
+    )
+  })
+
+  test('explicit savantCodeModelPreference wins over the legacy key', async () => {
+    fs.mkdirSync(getConfigDir(), { recursive: true })
+    fs.writeFileSync(
+      path.join(getConfigDir(), 'settings.json'),
+      JSON.stringify(
+        {
+          savantCodeModelPreference: 'openrouter/new-model',
+          savantCodeModelPreferenceLegacy: 'openrouter/legacy-model',
+        },
+        null,
+        2,
+      ),
+    )
+
+    const { loadSettings } = await import('../settings')
+    expect(loadSettings().savantCodeModelPreference).toBe(
+      'openrouter/new-model',
+    )
   })
 
   test('opencode-go provider preference round-trips through validation', async () => {

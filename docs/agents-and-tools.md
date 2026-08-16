@@ -142,6 +142,8 @@ input schema, output schema, and an `endsAgentStep` flag.
 | `add_subgoal` | Add a subgoal to the current plan | None |
 | `update_subgoal` | Update an existing subgoal | None |
 | `task_completed` | Mark a task as completed | None |
+| `update_goal` | Report progress or verify completion of a durable budgeted goal (FID-2026-0814-002) | None |
+| `get_goal` | Read the current durable goal record | None |
 
 #### Reasoning & UI
 

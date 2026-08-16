@@ -8,17 +8,26 @@
 
 基于 TypeScript/Bun 构建，受 ECHO 协议治理，并针对本地优先的 Ollama 使用场景设计。
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-1.3.14-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![React](https://img.shields.io/badge/React-19-%23000000?style=flat-square&logo=react&logoColor=%2300fbff)](https://react.dev/)[![OpenTUI](https://img.shields.io/badge/OpenTUI-0.2.2-%23000000?style=flat-square&logo=opentui&logoColor=%2300fbff)](https://github.com/anomalyco/opentui)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](ECHO.md)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![Release](https://img.shields.io/badge/Release-v0.0.23-pending-%23000000?style=flat-square&logo=semver&logoColor=%2300fbff)](CHANGELOG.md)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-1.3.14-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![React](https://img.shields.io/badge/React-19-%23000000?style=flat-square&logo=react&logoColor=%2300fbff)](https://react.dev/)[![OpenTUI](https://img.shields.io/badge/OpenTUI-0.2.2-%23000000?style=flat-square&logo=opentui&logoColor=%2300fbff)](https://github.com/anomalyco/opentui)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](ECHO.md)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![Release](https://img.shields.io/badge/Release-v0.0.24-%23000000?style=flat-square&logo=semver&logoColor=%2300fbff)](CHANGELOG.md)
 
 </div>
 
-> **v0.0.23（待发布，未发布）** —— 优化与自动化计划的实施范围已完成，
+> **v0.0.24（待发布，未发布）** —— 优化与自动化计划的实施范围已完成，
 > 并由独立审计对 FID-2026-0809-003 至 010 全部签署通过。深度审计主计划
 > FID-2026-0811-015 至 021 的 ECHO 合规修复已在自动化级别 3 授权下完成、关闭并归档，
 > Nova 独立实施审计已返回 **PASS — implementation approved for closure**。此前未跟踪的 004–014
 > 归档样式文件仍被明确视为不受信任的工作树工件，保持不变，等待操作员单独处置。
 > 本版本覆盖 fail-closed 凭据/删除扫描、无 shell 发布边界、结构化可复现审计证据、
 > 显式开发环境信任、FID 依赖图校验和可度量质量门禁。尚未创建标签、推送、发布或部署。
+>
+> **性能修复与时间定位（FID-2026-0815-001..013）**：完整的 harness 提速计划 ——
+> 逐步提示格式化懒加载、异步 trace 写入器、历史复制削减、异步检查点捕获、单遍压缩、
+> 带磁盘缓存的模型目录与异步注册表 I/O、UI 无操作守卫，以及并行的 code-map /
+> knowledge-graph 索引（发现项 F-01…F-12）—— 外加三轮后续热路径扫描
+> （FID-2026-0815-011..013：每步一次系统提示分词、延迟 trace 序列化、仅 strict 模式的
+> `existsSync` 探测、有界读取模式扫描、精简的逐步调试负载，以及不再急切复制完整历史）。
+> 同时修复时间定位缺口：`formatCurrentDateTime()` 现在注入正确的当前日期与时间
+> （星期 + 时区）并逐步刷新，代理不再从裸日期推导错误的星期。
 >
 > 此前的统一提供商注册表仍作为历史事实保留；本待发布构建增加漂移检测，但不改变提供商路由。
 > **v0.0.21** —— v0.0.20 之后的首次发布：格式化/测试门禁全面生效、ECHO 强制执行层、
@@ -192,7 +201,7 @@ MCP 工具发现、模式切换（`HYBRID` / `SCAFFOLD` / `STRICT` / `ANALYZE`�
   agent 上下文；自定义系统经过校验、版本化保存，并在 EHEL 写入边界进行检查。详细架构、交互式创建/编辑、
   安全边界、持久化、强制检查与打包证据见
   [设计系统库指南](docs/design/design-system-library.md)。如需实时验证 CLI 可用性、智能体反馈与延迟，请运行
-  [设计系统实时测试提示](dev/test-prompts/design-system-live-ux-performance.md)。对于覆盖当前更新全部变更域的完整回归，请运行[v0.0.23综合实时测试提示](dev/test-prompts/v0.0.23-comprehensive-live-test.md)，结果写入`dev/scratchpad/v0.0.23-comprehensive-live-test-report.md`。这些提示及其实时结果均有独立的签核边界。实现已在工作树中关闭；独立的最终文档/实现审查仍在等待中。
+  [设计系统实时测试提示](dev/test-prompts/design-system-live-ux-performance.md)。对于覆盖当前更新全部变更域的完整回归，请运行[v0.0.24 全自动 A–Z 实时测试提示](dev/test-prompts/az-v0.0.24-harness-live-test.md)，结果写入`dev/scratchpad/az-v0.0.24-harness-live-test-report.md`。这些提示及其实时结果均有独立的签核边界。实现已在工作树中关闭；独立的最终文档/实现审查仍在等待中。
 - **提供商设置** —— `/provider` 打开交互式下拉选择器，显示所有提供商及其 ✓/✗ 配置状态。选择提供商后可
   输入其 API 密钥（遮罩输入）。密钥存储在本地 `credentials.json`。
 - **遥测控制** —— `/telemetry status|enable|disable` 切换远程分析与错误上报。主 CLI 默认开启远程分析，但用户可以

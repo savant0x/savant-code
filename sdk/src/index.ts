@@ -83,11 +83,7 @@ export { getUserInfoFromApiKey } from './impl/database'
 export * from './credentials'
 export { loadLocalAgents } from './agents/load-agents'
 export { loadMCPConfig, loadMCPConfigSync } from './agents/load-mcp-config'
-export {
-  loadSkills,
-  loadSkillsSync,
-  parseSkillFileContent,
-} from './skills/load-skills'
+export { loadSkills, parseSkillFileContent } from './skills/load-skills'
 export { formatAvailableSkillsXml } from '@savant-code/common/util/skills'
 export type { LoadSkillsOptions } from './skills/load-skills'
 export type {

@@ -213,6 +213,19 @@ export const toolSafetyRegistry: Record<ToolName, ToolSafety> = {
     reason: 'Signals task completion.',
   },
 
+  // FID-2026-0814-002: durable goal mode — read-only control over the goal
+  // record (the record lives on agentState, not the filesystem).
+  update_goal: {
+    effect: read,
+    permission: allow,
+    reason: 'Updates the durable goal record (complete/blocked/paused).',
+  },
+  get_goal: {
+    effect: read,
+    permission: allow,
+    reason: 'Reads the durable goal record and budget report.',
+  },
+
   // User interaction
   ask_user: {
     effect: mixed,

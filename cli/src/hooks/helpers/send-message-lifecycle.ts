@@ -48,8 +48,8 @@ export type RunLifecycle = {
   adoptAndPersist: (runState: RunState) => Promise<void>
   /** Persists the last snapshot (plus error banner) after a failed run. */
   persistFailureState: () => Promise<void>
-  /** Closes the turn checkpoint and releases the live-state provider + aborter. */
-  finalize: () => void
+  /** Closes the turn checkpoint (async) and releases the live-state provider + aborter. */
+  finalize: () => Promise<void>
   getLatestRunStateSnapshot: () => RunState
 }
 
@@ -234,11 +234,13 @@ export const createRunLifecycle = (
     )
   }
 
-  const finalize = () => {
+  const finalize = async () => {
     // FID-2026-0803-004: close this turn's checkpoint so its JSON is
     // persisted (and retention pruned) even on abort/error. Safe to call
     // unconditionally — closeTurn no-ops when the turn wasn't opened.
-    closeTurn({
+    // FID-2026-0815-005 (F-04): closeTurn is now async; awaited here so the
+    // persistence settles before the provider/aborter release below.
+    await closeTurn({
       checkpointDir,
       turnId: aiMessageId,
       prompt: finalContent,

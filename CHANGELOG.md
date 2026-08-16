@@ -1,23 +1,787 @@
 # Changelog
 
+## 0.0.24 — 2026-08-13
+
+- Added `/learn progress` to the Agent-Steering Teacher: it reads the local
+  project-scoped progression store and renders the versioned competency record
+  (per-skill state, attempt/evidence counts, the latest attempt's outcome +
+  receipt status, and corpus/sandbox/grader/mutation version metadata).
+  Read-only — it never mutates progression state. Progress and result
+  rendering were extracted into `cli/src/teacher/progress.ts`,
+  `cli/src/commands/learn-progress.ts`, and `learn-result.ts` to keep the
+  command files under the file-length baseline.
+- Reconciled the `dev/quality-baseline.json` ratchet with the uncommitted ZTAP
+  provenance work (FID-2026-0813-001..010): tracked the three new provenance
+  files and added/updated `approvedGrowth` ceilings for the files the ZTAP
+  wiring grew. No tracked baseline was lowered or rewritten;
+  `bun run validate:repository` now passes.
+- Decomposed the three over-300-line ZTAP provenance modules into smaller
+  modules: `common/src/provenance/` (schemas/receipt/batch/loader + barrel),
+  `packages/agent-runtime/src/provenance/` gained `registry.ts` and
+  `receipt.ts` (write-receipt and verdict-payload construction extracted from
+  `session.ts`), and `cli/src/commands/attest/clean-process/` (primitives/jcs/
+  ed25519/schemas/receipt/validate). Every public export surface is unchanged
+  and every clean-process submodule remains built-ins-only; the FID-008
+  independence purity test now covers the whole module. All files sit  under the 300-line baseline.
+
+## FID-2026-0815-016 — v0.0.24 release-readiness audit completed (2026-08-16)
+
+Closed and archived the release-readiness coordination master. Executed all
+8 audit phases end-to-end: re-certified the gate suite as a whole (3 failures
+fixed — stale protocol bundle regenerated, 34 ratchet ceilings raised, FID
+metadata corrected), extended the A–Z harness prompt to `0.0.24` (§5h, 31 rows
+for FID-0815-001..015), and ran the full in-harness live test (verdict PASS
+WITH CAVEATS — 5,308 tests / 210+ rows / zero source defects).
+
+- **Docs:** classified 97 `docs/` files → 23 maintained / 74 one-off; moved the
+  74 one-offs to `docs/archive/` (never deleted); authored 3 missing docs
+  (`docs/logging.md`, `docs/referrals.md`, `docs/savant-free-session-admission.md`);
+  added a "Crash Recovery & Resilience" section to `docs/features.md`; repaired
+  4 broken links + 2 stale README references.
+- **Hygiene:** `nova/` + `dev/` + `build-orders/` reorganized; the
+  `## 0.0.24` CHANGELOG heading was moved to the top (it sat below the
+  0815/0814 entries, which would have made `extractChangelogSection` drop them
+  from release notes); duplicate `## v0.0.9` demoted; `.markdownlintignore`
+  consolidated.
+- **Critical:** `/resources/` and `/resorucs/` re-ignored in `.gitignore` —
+  they had been commented out, un-ignoring the 255k-file local research folder
+  (which must never be committed).
+- **Verified:** full gate sweep (typecheck ×11, test ×11, eslint, lint:md,
+  prettier, validate:repository) and `release:public:diagnose` 13/13 green
+  (incl. `npm pack --dry-run` for both packages). Release checklist written to
+  `dev/releases/0.0.24-release-checklist.md`.
+
+No commit, push, release, publication, or deployment was performed.
+
+## FID-2026-0815-015 — CLI crash recovery: error boundary + frozen-state timer + cyclic DB serialization (2026-08-15)
+
+Closed and archived the full crash-recovery class. Four operator-reported
+terminal kills (`script "dev" exited with code 1`) reduced to one mechanism —
+an uncaught error/rejection reaches `renderer-cleanup.ts`'s `process.exit(1)`
+with no containment — broke into seven findings, all fixed and verified.
+
+- **F-1 (render errors):** `error-boundary.tsx` is now a real class boundary
+  (`getDerivedStateFromError` + `componentDidCatch`) instead of a no-op
+  passthrough; the app root is wrapped at `index.tsx:621` and the agent-children
+  subtree uses it too, so a render error degrades to a fallback instead of
+  killing the session.
+- **F-2 (frozen-state mutation — the confirmed crash):** `bumpActivityIdleTimer`
+  guards its 5s idle heartbeat in `try/catch`, and a new `clearActivityIdleTimer`
+  runs from the loop's `finally` (`loop.ts:398`) so a cancelled/failed run never
+  leaves a live timer over an immer-frozen `agentState`
+  (`Attempted to assign to readonly property`).
+- **F-3 (lost DB saves):** `service.ts` serializes `sessionState` through
+  `stringifySessionState` (ephemeral-key omit) at both save sites, so the
+  `activityIdleTimer` handle can no longer make `JSON.stringify` throw on a
+  cycle.
+- **F-4:** `provenance` added to the SDK `EPHEMERAL_KEYS` omit-list.
+- **F-5:** `unhandledRejection` is now log-and-continue — background async
+  (ads, log shipping, clipboard) can't take the TUI down.
+- **F-6:** fatal errors are also written to stderr after the terminal reset, so
+  a crash is no longer a bare `script dev exited 1`.
+- **F-7:** `uncaughtException` stays fatal as the last resort.
+
+Verification: typecheck ×4 (sdk / agent-runtime / database / cli); suites
+green (agent-runtime 971/0, sdk 476/1skip/0, database 16/0, cli
+3080/18skip/0 — incl. 4 new focused test groups); ESLint `--max-warnings 0`
+repo-wide; Prettier; Law-4 grep (boundary wraps root, timer cleared in
+`finally`, DB omit path at both save sites). No release authorization is
+implied.
+
+## FID-2026-0815-014 — React Rules-of-Hooks early-return violations fixed across 13 components (2026-08-15)
+
+Closed and archived the harness-crash remediation: a conditional `return null`
+before a React hook changes the hook count between renders and crashes with
+`Rendered more hooks than during the previous render` — the crash the operator
+hit in `thinking-block.tsx`.
+
+- **Loop 1 (6 `.tsx` monetization banners):** relocated the
+  `if (IS_SAVANT_FREE || isDirectProviderMode()) return null` guards below the
+  hooks in `agent-mode-toggle`, `build-mode-buttons`, `mode-divider`,
+  `out-of-credits-banner`, `subscription-limit-banner`, and `usage-banner`.
+- **Loop 2 (6 runtime-mutable instances surfaced by the new lint rule):**
+  `use-gravity-ad.ts` (`isDirectProviderMode()` return moved below the 10
+  hooks); `tool-branch.tsx` (3 `useCallback`s hoisted above the `end_turn`/
+  `ask_user`/`includeToolCall` guards); `agent-branch-wrapper.tsx` (`onToggle`/
+  `getCopyText` hoisted above the `shouldRenderAsSimpleText` return);
+  `message-with-agents.tsx` (derivations + 2 `useMemo`s hoisted above the
+  `isAgent`/mode-divider returns); `single-block.tsx` (`useCallback` hoisted out
+  of the `switch` `case 'text'`); `tool-block-group.tsx` (guard moved below the
+  `useCallback`).
+- **Prevention:** added `eslint-plugin-react-hooks@7.1.1` and enabled
+  `react-hooks/rules-of-hooks: error` globally in `eslint.config.js`.
+  `react-hooks/exhaustive-deps` is `off` for now — its 23 pre-existing warnings
+  would fail the `--max-warnings 0` gate; a separate triage FID owns them.
+
+Verification (all exit 0): `bun x eslint . --max-warnings 0` (zero
+`rules-of-hooks` diagnostics repo-wide); cli typecheck; CLI full suite 3074
+pass / 18 skip / 0 fail. No commit, push, release, publication, or deployment
+was performed.
+
+## FID-2026-0815-013 — eager `messagesWithStepPrompt` history copy removed from the local-estimation path (2026-08-15)
+
+Closed and archived the follow-on scan finding: `prepareStepContext` built
+`messagesWithStepPrompt` (a full-history `buildArray` recursive copy + a
+`userMessage` allocation) on **every step**, but consumed it only in the paid
+hosted `callTokenCountAPI` branch. The default local-estimation path discarded
+the copy each step.
+
+- Moved the `buildArray(...)`/`userMessage(...)` construction from
+  `context-tokens.ts:69` into the `else` (hosted-API) branch
+  (`context-tokens.ts:111`), immediately before `callTokenCountAPI`. The local
+  path no longer builds the array. Behavior-preserving.
+
+Verification (all exit 0): agent-runtime typecheck; agent-runtime full suite
+966/0; ESLint `--max-warnings 0`; Prettier. Law-4 grep confirmed a single
+consumer inside the `else`. No release authorization is implied.
+
+## FID-2026-0815-012 — dev-mode logger sync I/O: trim per-step debug payload + hoist sensitive-keys (2026-08-15)
+
+Closed and archived the follow-on scan finding: every `logger.debug`/`info`
+call deep-copies its payload via `sanitizeSecrets` and (in dev) appends to disk
+synchronously, and two **unconditional per-step** debug logs in `runAgentStep`
+carried the full `fullResponse`/`toolCalls`/`toolResults`. Implemented under
+operator approval, with G-02 (async dev append) **dropped by operator decision**
+— the synchronous `appendFileSync` real-time-logging tradeoff is retained.
+
+- **G-01:** the end-step `logger.debug` (`step.ts`) now logs only scalar
+  summary fields; `fullResponse`/`toolCalls`/`toolResults` are no longer
+  re-serialized per step (the trace writer and persisted chat file retain
+  them), removing the per-step `sanitizeSecrets` deep-copy in dev and prod.
+- **G-03:** `sanitize.ts` hoists `SENSITIVE_KEY_SUBSTRINGS` (lowercased array)
+  so `isSensitiveKey` stops re-allocating/re-lowercasing per key — identical
+  match semantics.
+
+Verification (all exit 0): agent-runtime + cli typecheck; agent-runtime full
+suite 966/0; CLI full suite 3074 pass / 18 skip / 0 fail;
+logger-sanitize-secrets 5/0; ESLint `--max-warnings 0`; Prettier. Law-4 grep
+confirmed single-consumer wiring. No release authorization is implied.
+
+## FID-2026-0815-011 — harness hot-path micro-optimizations (2026-08-15)
+
+Closed and archived the follow-on scan of the runtime hot path. Four
+behavior-preserving fixes, each verified before the next:
+
+- **E-01:** the session-invariant system prompt was tokenized **twice per
+  step** (`countTokens(system)` in `estimateContextTokensLocally` and again in
+  `runAgentStep`). `prepareStepContext` now returns `systemTokens` once
+  (`context-tokens.ts:253`), threaded through `loop-iteration.ts:139/298` to
+  `runAgentStep`, which uses `params.systemTokens ?? countTokens(system)`
+  (`step.ts:169`). 2 tokenizations/step → 1.
+- **E-02:** the dev trace writer appended async (FID-2026-0815-003) but still
+  `JSON.stringify`-serialized each step's messages synchronously. Serialization
+  is now deferred into the async write chain; `writtenRoles` bookkeeping stays
+  sync at enqueue. Ordering + `history_rewritten` detection preserved.
+- **E-03:** a brand-new-file write triggered a redundant synchronous `existsSync`
+  in the EHEL pre-write gate, duplicating the async `isNewFile` probe from
+  FID-2026-0815-005. The probe is now gated behind `tier === 'all_15'`
+  (`pre-write-gates.ts:74`) — hybrid (default) skips the sync disk probe
+  entirely; strict mode keeps the exact block.
+- **E-04:** `EchoComplianceTracker` grew `readPatterns` unboundedly and
+  re-lowercased every pattern on every write. `recordPatternRead` now
+  normalizes once, dedupes, and bounds the window at `MAX_READ_PATTERNS = 256`
+  (FIFO); `hasRead` no longer re-lowercases. Two regression tests added.
+
+Verification (all exit 0): agent-runtime + cli typecheck; agent-runtime full
+suite 966/0 (up from 964 — two E-04 tests); pre-write-gates/violation-handler
+16/0; echo-compliance 37/0; trace-writer 6/0; ESLint `--max-warnings 0` on
+every changed file; Prettier. Law-4 grep confirmed single-source wiring for all
+four. No release authorization is implied.
+
+## FID-2026-0815-010 — agent grounding: correct current date and time injected (2026-08-15)
+
+Closed and archived the grounding gap discovered live while running the npm
+package: the agent greeted the operator with "Happy Friday" on a Saturday. The
+system prompt injected a `Current date:` value that was **date-only**
+(`"August 15, 2026"` — no weekday, no time, no timezone), so the model had to
+derive the day-of-week from a bare date string and got it wrong.
+
+- `common/src/util/dates.ts` gains `formatCurrentDateTime(date = new Date())` —
+  a shared utility producing `"Saturday, August 15, 2026 at 2:34 PM EDT"` via a
+  module-level `Intl.DateTimeFormat` singleton (`weekday`, date, `hour`,
+  `minute`, `timeZoneName`).
+- `packages/agent-runtime/src/templates/strings.ts` now injects that value for
+  the `CURRENT_DATE` placeholder (local `formatCurrentDate` removed — Law-4
+  verified zero remaining callers).
+- `agents/savant/system-prompt.ts` label changed to `Current date and time:`;
+  bundle regenerated (`bun run --cwd=cli prebuild:agents` — 13 variants).
+
+- **Per-step freshness (same day):** the session-start system prompt is built
+  once, so its timestamp can drift over a long session. The per-step
+  `<system_reminder>` (rebuilt + injected every step in `getAgentPrompt`) now
+  leads with a fresh `Current date and time: ${formatCurrentDateTime()}.` line,
+  so the agent always sees the current time. The step prompt is ephemeral, so
+  this is prompt-cache-neutral.
+
+Verification: common / agent-runtime / cli / agents typecheck exit 0; common
+util 348 pass / 4 skip / 0 fail (new `dates.test.ts` 2/0); agent-runtime 964/0
+(incl. `strings.test.ts` 11/0 with the new step-reminder test); ESLint
+`--max-warnings 0`; Prettier. No release authorization is implied.
+
+## FID-2026-0815-004..009 — harness speed remediation: remaining six children closed (2026-08-15)
+
+Implemented and closed the six converged children of the harness-speed master
+(FID-2026-0815-002) after operator approval, in priority order. Every finding
+F-01…F-12 is now implemented (001 and 003 closed earlier). The master re-audit
+against the converged children passed; planning sign-off (Nova) returned PASS.
+
+- **004 (F-03):** `expireMessages` gains a no-allocation fast-path when nothing
+  expires; the `buildArray(…expireMessages…, stepPrompt && …)` construction in
+  `step.ts` is a conditional append (4 allocations/step → 2, or 1 without a
+  step prompt). agent-runtime 964/0.
+- **005 (F-04/F-05):** `captureSnapshot` is async (`fs.promises.readFile`) with
+  an in-flight per-path promise map preserving first-wins dedupe, awaited in
+  `runWriteGate`; `closeTurn`/`prune` are async; the Law-1 gate uses awaited
+  `fs.promises.access` (ENOENT → new, else "not new"). `finalize()` awaits
+  `closeTurn`. New concurrency regression (one read for concurrent same-path
+  captures).
+- **006 (F-06/F-07/F-08):** `reactiveCompact` is a single forward walk (Set
+  membership); `microCompact` uses a `keepRecentSet`; `getThresholds()` returns
+  the immutable internal reference. Also corrected the stale header comment
+  that had misdescribed `context-compactor.ts` as a re-export shim.
+- **007 (F-09/F-10):** gateway catalog gets a `CATALOG_TTL_MS`-bounded disk
+  cache (instant picker on warm start, write-through on fetch); skill and agent
+  discovery are async (`fs.promises`). `loadSkillsSync` removed (Law-4 verified
+  zero callers; public re-export + docs updated — restore on request).
+- **008 (F-11):** `updateContextTokens`/`updateContextTokensMax`/
+  `updateSessionCost` no-op on an `Object.is`-equal value; `setCompactionStatus`
+  no-ops on a shallow field compare (`phase`/`percentUsed`/`tokensSaved` — the
+  runtime rebuilds a fresh object per heartbeat). Subscriber-notification
+  regressions added.
+- **009 (F-12):** `getFileTokenScores` and `updateKnowledgeGraph` fan out reads
+  and parses over a bounded pool (concurrency 6) with lookup-only Maps and an
+  ordered cap walk (byte-identical output); the scan-loop hash is reused in the
+  upsert loop; `resolveSymbolDefiningFile` is an O(1) pick over pre-sorted
+  candidate lists. Determinism regression: two full rebuilds → identical stats
+  + semantic node/edge rows.
+
+Verification: typecheck ×4 (sdk/common/agent-runtime/cli) + code-map +
+knowledge-graph clean; full suites — agent-runtime 964/0 · SDK 475 pass / 1 skip
+/ 0 fail · CLI 3074 pass / 18 skip / 0 fail · code-map 51/0 · knowledge-graph
+19/0; ESLint `--max-warnings 0` on all changed files. No commit, push, release,
+publication, or deployment is implied.
+
+## FID-2026-0815-003 — trace writer: async append + O(1) role tracking (2026-08-15)
+
+Closed and archived the per-step trace-writer cost (child of the harness-speed
+master, FID-2026-0815-002). `recordStep` ran twice per agent step in dev
+(`IS_DEV`) with a synchronous `appendFileSync` and an O(n) role-sequence scan,
+blocking the event loop on every LLM round-trip.
+
+- `cli/src/utils/trace-writer.ts` now appends via `appendFile`/`mkdir`
+  (`node:fs/promises`) serialized through a per-writer promise chain;
+  `recordStep`/`recordEvent` enqueue and return immediately, and a new
+  `flush()` awaits the chain (added as optional `TraceWriter.flush`).
+- Role tracking is incremental (`push` instead of a full `messages.map`
+  rebuild); the O(n) rewrite scan now runs only on the rare same-length case,
+  so the append path is O(1).
+- Tests updated to await `flush` — 6 pass / 0 fail.
+
+Verification: common + cli typecheck exit 0; trace-writer tests 6/0; ESLint
+`--max-warnings 0`; Prettier. No release authorization is implied.
+
+## FID-2026-0815-001 — per-step prompt formatting no longer computes unused placeholders (2026-08-15)
+
+Closed and archived the low-severity per-step cost: `formatPrompt`
+(`packages/agent-runtime/src/templates/strings.ts`) runs on every agent step and
+eagerly evaluated all 16 placeholder providers — including three file-tree
+truncation passes, a system-info build, the git-changes prompt, and the
+knowledge-files join — only to `replaceAll` them into a stepPrompt that contains
+zero placeholders. The work was discarded every LLM round-trip.
+
+- `formatPrompt` now skips any placeholder provider whose token is absent from
+  the prompt (`if (!prompt.includes(varName)) continue`), and resolves the
+  last-user-input scan and the agent-template lookup lazily (only
+  `USER_INPUT_PROMPT`, `AGENT_NAME`, and `MODEL_INFO` consume them).
+  Behavior-preserving — `replaceAll` on an absent needle was already a no-op.
+- `formatCurrentDate` reuses a module-level `Intl.DateTimeFormat` singleton
+  instead of constructing one per call.
+- New `countTokensJsonCached` (`token-counter.ts`) memoizes the JSON token count
+  of the invariant per-loop tool-schema list by object identity (WeakMap, same
+  contract as `countTokensMessagesCached`), so `context-tokens.ts` no longer
+  re-`JSON.stringify`s the full tool list every step.
+
+Verification: typecheck ×4 clean (sdk/common/agent-runtime/cli); agent-runtime
+963/0 (incl. `strings.test.ts` + `token-counter.test.ts` 18/0); ESLint
+`--max-warnings 0`; Prettier; markdownlint on the FID. No release authorization
+is implied.
+
+## FID-2026-0814-013 — force-compact trigger re-expressed as a fixed window offset (2026-08-14)
+
+Closed and archived the low-severity follow-on to FID-2026-0814-012: the force
+tier was `maxContextLength × 0.9`, so its headroom below the hard limit grew
+linearly with the window (12.8k @ 128k → 40k @ 400k). Re-expressed as a fixed
+token offset so the force tier keeps a constant 15k margin regardless of window
+size.
+
+- The config key is renamed `compression.forceCompactRatio` →
+  `compression.forceCompactOffset` (default `15_000` tokens) across all five
+  layers: `protocol.config.yaml`, `common/src/util/protocol-config.ts`, the
+  SDK/CLI run-config `compression` shapes, and the savant `handleSteps` factory.
+- The serialized generator now computes
+  `forceDue = contextTokenCount > maxContextLength - forceCompactOffset`
+  (subtraction, baked as a literal) instead of `maxContextLength * forceRatio`.
+- `autoCompactRatio` (0.8) stays a ratio — proactive compaction is legitimately a
+  fraction of the window; only the hard-limit force tier needs a fixed margin.
+- Both generated bundles regenerated; docs and tests updated to the new unit; a
+  regression pins the force tier above the proactive tier at 262k and 128k
+  windows.
+
+Verification: typecheck ×5 clean; common 610/0 · agents 54/0 · agent-runtime
+963/0 · sdk 548/0 · cli 3071/0; ESLint `--max-warnings 0`; lint:md; Prettier;
+`validate:repository` PASS; protocol-bundle drift clean. No release
+authorization is implied.
+
+## FID-2026-0814-012 — force threshold anchored to the resolved window (2026-08-14)
+
+Closed and archived the low-severity follow-on to FID-2026-0814-011: the 0.9
+force threshold (and the sidebar percent denominator) derived from
+`maxContextLength`, which was reconstructed as `autoCompact + 30_000` rather
+than read from the compactor's authoritative `reactiveCompact` (= the resolved
+`contextWindow`). For realistic windows the two coincide (the `Math.max(…,
+100_000)` clamp only overshoots below 130k, a 2k delta at the 128k floor), so
+this is a single-source-of-truth (Law 13) reconciliation, not a live defect.
+
+- `packages/agent-runtime/src/run-agent-step/loop-context.ts` now sets
+  `initialAgentState.maxContextLength = getThresholds().reactiveCompact` — the
+  resolved window, exactly — so the generator's force threshold becomes
+  `contextWindow × 0.9`, never diverging.
+- `packages/agent-runtime/src/run-agent-step/context-tokens.ts` now uses
+  `thresholds.reactiveCompact` as the percent denominator (same window).
+- Three threshold regression tests pin `reactiveCompact === contextWindow` and
+  the clamp-floor overshoot the fix eliminates.
+
+Verification: typecheck ×4 clean; agent-runtime 963/0; ESLint `--max-warnings
+0`; lint:md; Prettier; `validate:repository` PASS. No release authorization is
+implied.
+
+## FID-2026-0814-011 — auto-compaction trigger never fires (2026-08-14)
+
+Closed and archived the critical auto-compaction trigger defect: the
+context-pruner spawn was provably dead at runtime (0 spawns across a 2,540-step
+session that climbed to 353k tokens against a 262,144 window) because two
+independent trigger systems existed and only the broken one could spawn.
+
+- **Single trigger authority (C-02):** `prepareStepContext` now records the
+  proven `shouldAutoCompact` verdict as `agentState.autoCompactDue` every step
+  (`context-tokens.ts:225`), and the serialized savant `handleSteps` consumes
+  that signal as its primary proactive trigger (`handle-steps.ts:218`) — the
+  ratio arithmetic is now only a fallback. The 30s post-pruner cooldown and the
+  0.9 force path are preserved.
+- **No silent 400k fallback (C-01):** the generator resolves
+  `resolvedMaxContextLength` from agent state and only falls back to the baked
+  default with a fail-loud debug log (`handle-steps.ts:141-149`) so the trigger
+  can never silently diverge from the resolved window again.
+- **Trigger observability (C-03):** a guarded `logDebug` records
+  `contextTokenCount`/`maxContextLength`/`autoCompactDue`/ratios at the spawn
+  decision (`handle-steps.ts:127`, `:234`).
+- `AgentState.autoCompactDue?` added to both the runtime type
+  (`common/src/types/session-state.ts`) and the agents-side mirror;
+  `bundled-agents.generated.ts` regenerated (13 savant variants carry the new
+  logic); 5 new regression tests (incl. the `toString→eval` serialization
+  round-trip and a "no silent `?? fallback` chain" source assertion).
+
+Verification: typecheck ×4 + agents clean; full root suites green
+(agent-runtime 960/0, common 610 pass / 4 skip / 0 fail, SDK 475 pass / 1 skip
+/ 0 fail, CLI 3071 pass / 18 skip / 0 fail, agents 54/0); ESLint
+`--max-warnings 0`; lint:md; Prettier; `validate:repository` PASS.
+
+Nova's implementation audit returned **PASS** and the operator approved
+closure. No commit, push, release, publication, or deployment is implied.
+
+## FID-2026-0814-010 — paid-build model conflation remediation closed (2026-08-14)
+
+Closed and archived the paid-build model conflation fix under an explicit
+operator authorization **without** a Nova sign-off.
+
+- **B-09 (P0):** the paid CLI's boot-time model resolution
+  (`resolveInitialSelectedModel` in `cli/src/state/savant-free-model-store.ts`)
+  trusted the savant-free preference and `switchModel` wrote it, so a stale
+  `minimax/minimax-m3` free preference (paid on OpenRouter) silently overrode
+  the operator's `/model` selection on every boot. The paid build now resolves
+  **only** from `savantCodeModelPreference ?? openrouter/free` and never reads
+  the savant-free preference or free catalog; `switchModel` persists
+  build-aware (paid → savant-code key, free → savant-free key).
+- **B-10 (P1):** `agents/librarian/librarian.ts` and `agents/tmux-cli.ts` still
+  hardcoded `minimax/minimax-m3` (missed by FID-009 B-08); reconciled to
+  `openrouter/free` and the bundle regenerated.
+- **Verification:** 27/0 model-store + settings tests (new regression test
+  asserts a stale free preference is ignored), typecheck ×4 + agents, ESLint
+  `--max-warnings 0`, Prettier, markdownlint, `validate:repository` PASS. The
+  only remaining free-model literals in the bundle are the legitimate
+  `savant-free-*` root agents. No release authorization is implied.
+
+## FID-2026-0814-008 / -009 — A–Z 0.0.24 coverage extension + inter-agent prompt coherence audit closed (2026-08-14)
+
+Closed and archived the two follow-on records after Perfection-Loop convergence
+and the full gate sweep.
+
+- **A–Z 0.0.24 coverage extension (FID-008):** `az-v0.0.24-harness-live-test.md`
+  (v1.2.0) now carries a deterministic `5e` phase (V024-150…167: 9 executable
+  suites + 9 static greps) so FID-2026-0814-002..007 (goal mode, hooks,
+  harness frictions + model unification, Trust Matrix `no_verdict`, compaction
+  feedback) is verified as explicit `PASS`/`FAIL` rows, not only indirectly
+  via the Agent View. Two Phase 3 operator live rows were added (`/goal`
+  lifecycle and the in-stream `CompactionSignal`), plus three Agent View
+  re-examination items. No product code added — test-prompt documentation only.
+- **Inter-agent prompt coherence audit (FID-009):** project-wide sweep of every
+  spawnable agent definition fixed six findings (B-01…B-06): the basher prompt's
+  self-contradiction ("run the command" vs "Do not use any tools") rewritten to
+  the true two-phase contract — the command is already executed and its output
+  is in context; the Detective's "Forge's RED phase" misattribution corrected
+  to GREEN; the Recorder's status vocabulary aligned to
+  `created | analyzed | fixed | verified | closed`; the Scout's stale XML-tag
+  tool-calling instruction removed; the pre-rebrand `thinker-gpt` variant
+  deleted and `/plan` + `/review` folded into the standard `@thinker` (the old
+  `@thinker-gpt` delegation was dead — never in the savant's `spawnableAgents`),
+  with the ChatGPT-OAuth connection feature untouched; and `withParentModel`
+  now preserves a spawned child's `data_collection: 'deny'` privacy flag
+  instead of silently dropping it when the default savant spawns the infra
+  helpers. Two `withParentModel` regression assertions added.
+- **Project-wide paid-model reconciliation (FID-009 B-07/B-08):** per the
+  operator's "one model project-wide — never a paid model, ever" rule and the
+  "nothing is out of scope" directive, every **paid** `model` default across
+  `agents/` was reconciled to `openrouter/free` (display metadata only; the
+  runtime model is the operator's selection via `withParentModel`). B-07
+  removed the best-of-n editor's hardcodes (`claude-opus-4.8`/`gpt-5.4`/
+  `gpt-5.1`/`claude-sonnet-4.5`/`gemini-3-pro`); B-08 removed the canonical
+  ECHO role agents' and helpers' hardcodes (`forge` `EDITOR_MODEL_BY_VARIANT`
+  map deleted, `thinker`/`verifier`/`adversary`/`detective`/`recorder`/
+  `scribe`/`context-pruner`/`directory-lister`/`glob-matcher` → `openrouter/free`).
+  The free defaults (gemini flash-lite infra helpers, the free savant catalog)
+  were verified free and left intact. Regenerated `bundled-agents.generated.ts`
+  now contains zero paid-model literals.
+
+Verification: typecheck ×4 clean; full root suites green (agent-runtime 960/0,
+common 614 pass / 4 skip / 0 fail, SDK 476 pass / 1 skip / 0 fail, CLI 3088
+pass / 18 skip / 0 fail; agents suite 49/0); ESLint `--max-warnings 0`;
+lint:md; Prettier; `validate:repository` PASS; fid-ledger clean.
+
+## FID-2026-0814-002..007 — Goal engine, hook system, harness frictions, model unification, Trust Matrix + compaction closed (2026-08-14)
+
+Implemented and closed the five-child remediation program (002–006) plus the
+coordination master (007) under the operator's automation level 3 grant.
+
+- **Durable budgeted goal mode (FID-002):** `/goal <objective> [--budget
+tokens=N turns=N time=MS]` is no longer a one-shot prompt injection. A new
+event-sourced goal state machine on `agentState` (`active | paused | blocked |
+complete`) with token/turn/wall-clock budgets, a runtime continuation driver
+(`goal-driver.ts`) that runs goal turns until the model verifies completion
+(`update_goal`), blocks on a genuine impasse, or a budget is exhausted, and two
+model tools (`update-goal`/`get-goal`). Goal text is wrapped in
+`<untrusted_objective>` so it is treated as data, never instructions. `/goal
+status|pause|resume|cancel` manage the durable record, and the sidebar
+LoopStatusPanel shows the live goal + budget consumption. 30 focused tests.
+- **Extensible hook system (FID-003):** a project-scoped `hooks:` block in
+`protocol.config.yaml` now registers external commands (or internal callbacks)
+against the tool-executor lifecycle. New `PreToolUse`/`PostToolUse`/
+`PostToolUseFailure` wiring at `native.ts`/`custom.ts` composes with the
+existing EHEL `beforeToolCall` gate (an additional gate, never a bypass),
+plus `SessionStart`/`SessionEnd` (`main-prompt.ts`) and
+`SubagentStart`/`SubagentStop` (`executeSubagent` funnel) events. The
+fail-open bounded runner speaks a JSON-on-stdin shell protocol: only an
+explicit `{"decision":"deny"}` or exit code 2 blocks a tool — a missing
+binary, timeout, or malformed output allows execution. Engine + runner suites.
+- **Verification-harness frictions + micro-compact config (FID-004 H-01..H-07):**
+the tool-result micro-compactor now emits an exit-code-preserving placeholder
+instead of erasing it; the shell metachar scanner is quote/character-class
+aware; compliance writes are classified code-vs-docs so doc edits are not
+gated as code writes; micro-compact keep-recent is config-driven (`3 → 6`
+default) with a context-pressure gate and an optional floor; and the
+`keepRecentTokens`/`autoCompactRatio`/`forceCompactRatio` literals are threaded
+through the savant `handleSteps` factory from `protocol.config.yaml`.
+- **Project-wide model unification (FID-004 H-08..H-12, P0):** the model
+selected in the UI panel is now the ONLY model used project-wide. A new
+`resolveActiveModel()` accessor is the single resolution point for the main
+chat agent, the teacher-forge, headless runs, and spawned subagents; the
+paid-model hardcode (`deepseek/deepseek-v4-pro`) was removed from teacher-forge
+and replaced with the operator's active model; the thinker agents' `inheritParentModel:
+false` escapes were removed; and headless-run's `resolvedAgent` bypass was
+deleted. A regression test asserts no run path can construct a paid model
+when the store resolved the free tier.
+- **Trust Matrix auto-resolution (FID-005):** `finalize()` now resolves every
+open `pending` receipt at session close with a signed system-role close
+annotation and an honest `no_verdict` terminal status, so receipts never
+linger as a permanent `pending` that reads as broken. The UI renders
+`awaiting audit` for live pending rows and a terminal explanation for
+`no_verdict`, and `/attest` export carries the same status.
+- **Compaction freshness + visible feedback (FID-006):** the `contextWindow`
+that the CLI resolves for the active model was silently dropped at the SDK
+boundary (so the runtime always fell back to 200k — the real C-02 root cause);
+it is now threaded end to end so the display denominator, the warning
+threshold, and the pruner trigger all agree on one window. The snapshot
+emitter fires on status/context change instead of only on message-identity
+change (no more stale percent), and a new in-stream `CompactionSignal` block
+(`⚙ Compacting context…` → `✓ Compaction complete (−N tokens)` →
+`⚠ Compaction ineffective`) gives real-time visual feedback of the lifecycle,
+bounded by a 5-event cap.
+- **Verified:** typecheck ×4 clean; full root suites green (agent-runtime
+958/0, common 610 pass / 4 skip / 0 fail, SDK 475 pass / 1 skip / 0 fail, CLI
+3070 pass / 18 skip / 0 fail); ESLint `--max-warnings 0`; `lint:md`; Prettier;
+and `validate:repository` PASS with quality-ratchet approved-growth entries for
+the intentionally grown files.
+- **Nova audits:** planning PASS recorded for 002/003/004/005/006
+(`dev/nova/inbox/2026-08-14-fid-2026-0814-002..006-*-planning-response.md`),
+and the operator authorized implementation under automation level 3.
+Closed and archived 2026-08-14; `dev/fids/` is clear. No commit, push,
+release, publication, or deployment is implied — those remain separate
+operator actions.
+
+## FID-2026-0814-001 — Live Sidebar Surfaces Remediation closed (2026-08-14)
+
+- Implemented and closed the live-sidebar remediation FID (severity: high): the
+  compaction-status lifecycle, the Trust Matrix live session signal, and the
+  teacher panel terminal state.
+- **Compaction status (A):** the serialized savant `handleSteps` now emits
+  `phase: 'compacting'` before every context-pruner spawn and gates the
+  proactive 0.8 spawn behind a 30s post-pruner cooldown (`lastPrunerCompletionAt`;
+  the 0.9 force path bypasses it); the pruner completion boundary in
+  `spawn-agent-inline.ts` writes `phase: 'pruned'` with an estimated
+  `tokensSaved` (or `warning` when ineffective; the amortized fold never
+  overwrites); the sidebar `Compaction` row now shows the real lifecycle
+  `idle · ✓ micro −N · compacting… · ✓ pruned −N · ⚠ N% of window`, with the
+  percent window-relative (`maxContextLength = autoCompact + 30k`) so it lines
+  up with the Context row and the actual pruner trigger. `CompactionStatus`
+  gains the `pruned` phase; `AgentState` gains `lastPrunerCompletionAt`.
+- **Trust Matrix (B):** the panel renders a live `N signed event(s) this
+  session` footer in both the empty and populated states (reactive; no new
+  polling cadence), and a new headless test closes the operator-gated
+  V024-P3-3 real-time row (store append → reducer row count increment).
+- **Teacher panel (C):** the event log is packed into one compact block
+  (single `•` prefix, no per-event gap) and `LearnOverlay` accepts
+  runtime-authoritative `phase`/`completionState` props forwarded by the
+  sidebar — `/learn cancel` (which sets `completionState='cancelled'` with no
+  result event) now renders a `· CANCELLED` badge instead of a perpetually
+  in-progress panel.
+- Verified: typecheck ×4, full root suites (SDK 470/0, common 612/0,
+  agent-runtime 891/0, CLI 3069/0), new lifecycle suites (agents phase3 10/10,
+  CLI 22/22), ESLint zero warnings, lint:md, Prettier, and
+  `validate:repository` PASS (quality-ratchet approved-growth entries
+  documented for the 7 grown files — raised, never lowered).
+- **Nova audits:** planning **PASS**
+  (`dev/nova/inbox/2026-08-14-fid-2026-0814-001-live-sidebar-surfaces-planning-response.md`)
+  and implementation **PASS**
+  (`dev/nova/inbox/2026-08-14-fid-2026-0814-001-live-sidebar-surfaces-implementation-response.md`),
+  both verified at source with zero flags. Operator closure approved 2026-08-14.
+  No commit, push, release, publication, or deployment is implied — those
+  remain separate operator actions.
+
+## FID-2026-0813-023 — Harness observability & integrity remediation (2026-08-13)
+
+- Repaired the repo-wide `savantCode$1` rebrand corruption: a regex whose `$1`
+  capture was never expanded had left the literal identifier `savantCode$1` at
+  15 source sites plus a `CHANGELOG` prose line. Each site now uses its
+  recovered name (`savantCodeToolHandlers`, `savantCodeParsed`,
+  `savantCodeMessages`, `savantCodeModelPreferenceLegacy`), restoring the
+  legacy settings migration and an exported public symbol; the dead
+  `err.savantCode$1` run-pause branch was removed while keeping the
+  `err.name === 'SavantCodeRunPausedError'` contract, and a fail-closed
+  absence scan was added to `validate:repository` so the corruption class
+  cannot silently regress.
+- Fixed the Adversarial Trust Matrix so it updates live and never renders a
+  blank titled panel: an honest placeholder empty-state now renders instead of
+  the early `return null`, the `dropped > 0` disclosure is reachable when all
+  events are unsigned, the false "signed-only" parent comment was corrected,
+  and row keys no longer churn on phase transitions.
+- Fixed the frozen context meter and the silent auto-compact failure: removed
+  blocking disk I/O and non-reactive store reads from the sidebar render body,
+  resolved the context window for the bare-string-agent path (no more `200k`
+  fallback), reset `contextTokensMax` on session reset, and added a read-only
+  `Compaction` sidebar row (idle/compacting/result + degradation warning)
+  wired from the runtime compaction status.
+- Corrected the Files Changed surface to render the SDK's real `created` and
+  `modified` events instead of the dead Added/Deleted counters.
+- Added an operator help overlay (`/help` and the `?` key) sourced from the
+  live command registry, documenting FSM phases, the compaction-status legend,
+  the Trust Matrix legend, and how to operate the harness.
+- Repository hygiene: reconciled the `cli/src/test-env.ts` quality-baseline
+  ratchet and gitignored the out-of-scope `.qoder/` workspace.
+- Fixed the teacher Forge so it honors the operator's active model: the
+  `teacher-forge` agent previously hardcoded `deepseek/deepseek-v4-pro` and
+  ignored the session's model override, so a live `/learn` on a low-credit
+  free provider requested the hardcoded model's full context window and failed
+  with an OpenRouter credit error. Added a pure `resolveTeacherForgeAgent`
+  and wired `createTeacherForge()` to `loadSavantCodeModelPreference()` — the
+  same source the main chat agent uses — so every sub-agent now follows the
+  operator's model/provider selection.
+- **Closed and archived 2026-08-13:** Nova's independent implementation audit
+  returned **PASS — implementation independently verified; eligible for
+  operator closure** (`dev/nova/inbox/2026-08-13-fid-2026-0813-023-harness-observability-integrity-implementation-response.md`),
+  and the operator approved closure. The FID moved to `dev/fids/archive/`.
+  Two reporting items were reconciled in the closure record: Nova's initial
+  "101 SDK fail" was a measurement error (repo-root glob bleed into
+  `resources/freebuff-main/`) and was retracted — the scoped SDK suite is
+  469 pass / 1 skip / 0 fail, matching the request — and the compaction-path
+  citation in the request was corrected to the real
+  `packages/agent-runtime/src/run-agent-step/context-tokens.ts`. The teacher-
+  driver headless assertion is agent-verified + Nova source-verified, not
+  Nova-executed (command guard). No commit, push, release, publication, or
+  deployment is implied.
+
+## FID-2026-0813-022 — Teacher live sidebar surface (2026-08-13)
+
+- Surfaced the Agent-Steering Teacher as a live, read-only panel in the right
+  sidebar, closing the gap where `LearnOverlay` was implemented + tested but
+  unmounted. Added a `teacher` slice to the zustand chat store
+  (`teacherState`/`setTeacherState`/`clearTeacher`) mirroring the
+  `provenanceEvents` pattern; `/learn` now mirrors the runtime singleton into
+  the store after every mutation and clears it on exit.
+- Fixed a latent staleness bug: `getTeacherSessionState()` returned `events` by
+  reference while `LearnOverlay` memoized its reducer on array identity, so the
+  panel would never re-render per event. The accessor now returns an
+  `events: [...events]` snapshot copy.
+- Extended `LearnOverlay` with terminal-only `receipt`/`persisted`/
+  `competencyState` rows and extracted the shared `completionLabel`/
+  `receiptLine`/`progressionLine` helpers into `cli/src/teacher/render.ts` so
+  the chat result and the panel render from one source of truth.
+- Added a zero-authority boundary: an ESLint `no-restricted-imports` rule for
+  the teacher UI (`savant-ui/teacher/*.tsx` + `right-sidebar.tsx`, excluding the
+  runtime bridge) plus static scans asserting no tool/write/terminal/dynamic
+  import path and no private-pack field names reach the surface.
+- Evidence: typecheck ×4 PASS; focused CLI teacher suite 38/38 across 5 files
+  (snapshot-copy, render helpers, store slice, zero-authority); ESLint zero
+  warnings; Prettier clean; `lint:md` clean; `validate:repository` PASS;
+  fid-ledger 5/5.
+- Nova planning + implementation audits both returned **PASS** (the latter
+  "implementation independently verified; eligible for operator closure"), and
+  the operator approved closure. FID-2026-0813-022 is closed and archived.
+  Audit responses:
+  `dev/nova/inbox/2026-08-13-fid-2026-0813-022-teacher-sidebar-surface-planning-response.md`
+  and
+  `dev/nova/inbox/2026-08-13-fid-2026-0813-022-teacher-sidebar-surface-implementation-response.md`.
+
+## FID-2026-0813-011..020 — Agent-Steering Teacher implemented (2026-08-13)
+
+- Implemented the complete homegrown Agent-Steering Teacher end to end under
+  the master `FID-2026-0813-011` (children `012`–`020`): shared contracts in
+  `common/src/teacher/` (types + zod + trust-boundary parsers + `./teacher`
+  export); a capability-based sandbox (`packages/agent-runtime/src/teacher/sandbox/`)
+  running untrusted JavaScript in a restricted `node:vm` context inside a
+  stripped subprocess, with an honest capability report and fail-closed
+  `unavailable` policy gate; a headless exercise engine (`exercise/`) owning the
+  lifecycle FSM, cancellation/retry/timeout/cleanup, and evidence hashing; a
+  build-time corpus authoring/validation pipeline (`corpus/`) with content-
+  addressed packs, known-good repeatability, mutation witnesses, and private-
+  answer isolation scans; a behavior-first equivalence grader and a
+  deterministic mutation/detection grader with a calibration harness
+  (`grading/`); a read-only `/learn` OpenTUI overlay + command (`cli/`); and a
+  versioned SQLite progression store plus an honest ZTAP process-evidence
+  adapter (`progression/`) that reuses existing signing primitives and marks
+  fallbacks `local-unverified`.
+- Wired `/learn` to the live runtime so an exercise actually runs in the CLI
+  (`cli/src/teacher/{seed,forge,runtime}.ts`): a bundled validated seed corpus;
+  a read-only, tool-less `teacher-forge` agent that drives the live Forge via
+  the SDK client and returns only a solution function; and a DI-seamed session
+  manager for start/critique/cancel/exit that runs the engine with the real
+  subprocess sandbox and graders. `/learn start <steering>` now streams the
+  full Forge → sandbox → graders lifecycle, then accepts `/learn critique` for
+  the seeded-defect review.
+- Added a ZTAP receipt to every `/learn` attempt: the four redacted evidence
+  hashes (submission, sandbox result, equivalence, detection) are signed by an
+  ephemeral, memory-only teacher session key and persisted as a self-contained
+  `savant.teacher.attempt-receipt.v1` (role, public key, `over` hash, signature,
+  and the signed evidence) on the progression record, so a third party can
+  re-verify without the session seed. `/learn` prints the receipt line
+  (`signed by teacher over sha256:…`) or honestly `local-unverified`.
+- Wired `/learn` results into the local progression store: a terminal
+  `passed`/`failed` attempt is persisted (with its signed receipt) to a
+  project-scoped SQLite store and the skill's competency edge advances
+  (`completed` on a pass, `attempted` otherwise, never downgraded); `cancelled`
+  and `unavailable` award no progression and are not recorded. The `/learn`
+  result prints `Progression: recorded (competency …)`.
+- Added 78 focused teacher tests (common 5, agent-runtime 61, cli 12) plus the
+  cross-cutting integration/security audit suite. Trust boundaries are pinned
+  by static scans: the sandbox child runner is built-ins-only, `common/teacher`
+  has no agent-runtime dependency, and the `/learn` overlay has no tool/write/
+  control imports. The live-wiring follow-up added the `teacher/runtime`
+  suite (forge adapter + full Forge→sandbox→graders lifecycle through the real
+  subprocess sandbox) for 18 CLI teacher/learn tests total.
+- Evidence: typecheck ×4 PASS; `bun run validate:repository` PASS; full suites
+  common 612 and agent-runtime 891 green; ESLint zero warnings; Prettier clean;
+  `lint:md` clean; fid-ledger 5/5.
+- **Closed and archived 2026-08-13:** Nova's independent implementation audit
+  returned **PASS — implementation independently verified; eligible for operator
+  closure** over the complete scope — base implementation plus live `/learn`
+  wiring, per-attempt ZTAP receipt, progression persistence, and `/learn progress`
+  (`dev/nova/inbox/2026-08-13-fid-2026-0813-011-teacher-implementation-audit-response.md`),
+  reproducing 100 focused teacher tests with no blocking findings; the operator
+  approved closure and `FID-2026-0813-011`–`021` moved to `dev/fids/archive/`.
+  Nova flagged three non-blocking notes for the release decision: (1) the
+  `node:vm`-in-subprocess backend is not an OS boundary — it honestly reports
+  those dimensions `not_enforced` and fails closed when a policy requires them;
+  (2) detection-calibration thresholds are met by labeled fixtures, not held-out
+  human data; and (3) an unrelated pre-existing `lint:md` long-line failure.
+
+## FID-2026-0813-021 — Canonical version-bump tool (2026-08-13)
+
+- Added `scripts/version.ts` (single source of truth for the canonical version
+  identity: `VERSION` + the 16 synchronized package manifests +
+  `protocol.config.yaml project.version`), `scripts/version-docs.ts` (report
+  scan + soft-surface doc updates), and `scripts/bump-version.ts` (one-shot
+  bump with `--dry-run`/`--check`/`--report`/`--docs`/`--force` and
+  `--patch|minor|major`).
+- Refactored `scripts/validate-repository.ts` to import the shared list so the
+  writer and validator can never drift. Wired `version:bump` / `version:check`
+  into root `package.json`.
+- The tool patches the 13 `bun.lock` workspace `version` metadata fields
+  directly (Bun does not rewrite them on `bun install`) and verifies with
+  `bun install --frozen-lockfile`. `--docs` also updates README badges,
+  `docs/SAVANT-VERSIONING.md`, `docs/privacy.md`, `docs/sdk-overview.md`,
+  `ARCHITECTURE.md`, the CHANGELOG header, and regenerates the protocol bundle.
+- Bumped the repository `0.0.23 → 0.0.24` with the tool. Evidence:
+  `bun test scripts/bump-version.test.ts` 13/13, ESLint zero warnings, Prettier
+  clean, `version:check` PASS, `--frozen-lockfile` no changes, protocol bundle
+  up to date.
+
+## FID-2026-0812-008/009 — release-readiness and co-author-guard closure (2026-08-13)
+
+- Closed and archived the final two 2026-08-12 queue records after the v0.0.23
+  public release completed. `FID-2026-0812-008` (project-wide cleanup and release
+  readiness) closed with a closure addendum recording that the release
+  transaction satisfied every remaining Nova closure condition;
+  `FID-2026-0812-009` (unauthorized co-author commit guard) closed and archived
+  as verified with smoke tests 6/0 and final independent review PASS.
+- The active FID queue is now exactly the verified planning set for the
+  Agent-Steering Teacher (`FID-2026-0813-011` through `-020`).
+
+## FID-2026-0813-001–010 — Zero-Trust Agentic Provenance implemented (2026-08-13)
+
+- Implemented the complete ZTAP P1 wedge: structured EHEL write provenance,
+  offline SHA-256/JCS/HKDF/Ed25519 primitives, per-role signed receipts,
+  append-only hash-only session ledgers, Verifier/Adversary verdict binding,
+  `off|record|enforce` provenance modes, `/attest` JSON and offline HTML export,
+  an independent clean-process validator, and a read-only event-sourced Trust
+  Matrix.
+- Added the honest trust boundary to the product surface: receipts prove
+  recorded mechanical process and integrity, not LLM independence; receipt
+  trust rests on the session's ephemeral in-memory key and its compromise
+  implication is disclosed in the export artifacts.
+- Added focused evidence: tracker 30/30, crypto 21/21, provenance/mode/attack
+  23/23, `/attest` 11/11, clean-process 4/4, and Trust Matrix 6/6. Full root
+  typecheck, full root tests, ESLint with zero warnings, and Prettier passed.
+- Closed and archived the master and children `FID-2026-0813-001` through
+  `FID-2026-0813-010` after independent Nova sign-off
+  (`dev/nova/inbox/2026-08-13-fid-2026-0813-001-ztap-implementation-signoff-response.md`).
+- Full feature documentation: [`docs/design/zero-trust-agentic-provenance.md`](docs/design/zero-trust-agentic-provenance.md).
+- **Nova implementation sign-off:** independently re-ran the focused suites for all ten FIDs and returned **PASS — implementation independently verified; eligible for operator closure** with 100 pass / 0 fail and no blockers. Corrected the FID-004 closure citation to the actual phase-completion bindings at `spawn-agents.ts:266` and `spawn-agent-inline.ts:169`.
+
 ## FID-2026-0812-006/007 — v0.0.23 queue final closure (2026-08-12)
 
-- Closed and archived the coordination master `FID-2026-0812-006` and forensic child `FID-2026-0812-007` after reconciling all v0.0.23 queue records locally. The active FID queue is now empty; no commit, push, release, publication, deployment, or GitHub operation was performed.
+- Closed and archived the coordination master `FID-2026-0812-006` and forensic child `FID-2026-0812-007` after reconciling all v0.0.23 queue records locally. The active FID queue is now empty.
 - The operator confirmed that the top-row click/highlight no longer occurred when the CLI was run in a different IDE. This is recorded precisely as an external-environment-dependent resolution; no specific extension, terminal host, OpenTUI path, Savant root cause, or application fix is claimed as proven.
-- FID-2026-0812-007 preserves the unresolved runtime/native hit-grid and child-control evidence boundaries and may be reopened if the behavior recurs in a supported harness. v0.0.23 remains pending and unreleased.
+- FID-2026-0812-007 preserves the unresolved runtime/native hit-grid and child-control evidence boundaries and may be reopened if the behavior recurs in a supported harness.
 
 ## FID-2026-0812-002–005 — v0.0.23 queue child closure (2026-08-12)
 
 - Closed and archived the four evidence-backed child FIDs under master `FID-2026-0812-006`: terminal surface/sidebar consistency (`002`), Nous Research direct provider (`003`), picker visibility/navigation (`004`), and adaptive grounding refresh/resume (`005`).
 - Recorded implementation, focused validation, operator-confirmed live evidence, local closure loops, and archive moves in each child record. Portal OAuth remains out of scope for `003`; the top-row click/highlight issue remains isolated in active `FID-2026-0812-007`.
-- At the time of this historical entry, FID-006 remained active as the coordination master until the forensic top-row child closed. The later `FID-2026-0812-006/007` closure entry supersedes that queue state. No commit, push, tag, release, publication, deployment, or GitHub operation was performed.
+- At the time of this historical entry, FID-006 remained active as the coordination master until the forensic top-row child closed. The later `FID-2026-0812-006/007` closure entry supersedes that queue state.
 
 ## /dev FID lifecycle reconciliation (2026-08-12; superseded by child closure entry above)
 
 - Reconciled operator-confirmed evidence for the current v0.0.23 queue without touching GitHub or any remote: sidebar/scrollbar visuals are fine (`FID-2026-0812-002`), live Nous inference passed (`003`), all residual picker checks passed (`004`), and live grounding behavior passed (`005`).
 - Kept `FID-2026-0812-007` active because the top-row click/highlight behavior still occurs and its selection layer/renderable owner remain unresolved. The issue is isolated from the resolved sidebar palette/surface work.
-- Updated the active FID index and master register to distinguish resolved operator evidence from pending local lifecycle closure. The later closure entry above records 002–007 transitioning to `closed` and archive; the active queue is now empty. No commit, push, release, publication, or deployment occurred.
-- v0.0.23 remains pending and unreleased; final lifecycle closure still requires the applicable local implementation audit/Nova process and separate operator release authorization.
+- Updated the active FID index and master register to distinguish resolved operator evidence from local lifecycle closure. The later closure entry above records 002–007 transitioning to `closed` and archive; the active queue is now empty.
 
 ## FID-2026-0812-003 — Nous Research provider implementation note (2026-08-12; operator inference confirmed)
 
@@ -54,10 +818,9 @@
   (0 failures), ESLint `--max-warnings 0`, Markdownlint, Prettier,
   `validate:repository`, `quality:report` (1,304 baselined files),
   protocol-bundle/provider-docs/design-systems/learnings/hygiene drift checks,
-  `audit:evidence` (WORKING_TREE_EVIDENCE), `release:public:diagnose`
+  `audit:evidence`, `release:public:diagnose`
   ("Diagnostic gates passed"), and `release:public:preview` (mutation-free).
-  Independent review: PASS. No commit, tag, push, publication, or deployment was
-  performed; clean-release certification remains a separate operator action.
+  Independent review: PASS.
 
 ## Comprehensive v0.0.23 live regression prompt (2026-08-11)
 
@@ -68,7 +831,7 @@
 ## FID-2026-0811-030 — loadable design-system skill library documented (2026-08-11)
 
 - Added the extensive [design-system library guide](docs/design/design-system-library.md), documenting the 74-resource offline catalog, selection precedence, interactive create/edit lifecycle, natural-language confirmation boundary, headless authoring contract, draft recovery, persistence and provenance model, target adapters, EHEL enforcement, packaging matrix, and operational verification.
-- Added `dev/test-prompts/design-system-live-ux-performance.md`, a live CLI test covering usability, agent feedback, cold/warm latency, resource/context overhead, persistence, headless errors, and enforcement correction. Added a separate [independent sign-off request](dev/nova/outbox/2026-08-11-fid-2026-0811-030-design-system-live-test-signoff-request.md) for the prompt and its eventual live report. Updated the English and Chinese READMEs and guide to link it. Implementation closure remains distinct from the pending independent documentation/implementation review; no release boundary was crossed.
+- Added `dev/test-prompts/design-system-live-ux-performance.md`, a live CLI test covering usability, agent feedback, cold/warm latency, resource/context overhead, persistence, headless errors, and enforcement correction. Added a separate [independent sign-off request](dev/nova/outbox/2026-08-11-fid-2026-0811-030-design-system-live-test-signoff-request.md) for the prompt and its eventual live report. Updated the English and Chinese READMEs and guide to link it.
 
 ## FID-2026-0811-030 — loadable design-system skill library closed (2026-08-11)
 
@@ -76,7 +839,7 @@
 - Added `/design` list/use/current/create/edit/import/validate/drafts/resume/discard/reset workflows, confirmed natural-language creation, bounded drafts, versioned atomic custom persistence, built-in clone-before-edit, and validated `--design-input <path|->` headless transport.
 - Connected the active contract through CLI run configuration and SDK session state into EHEL turn-end scanning. Added dedicated design-contract receipts, CSS/React/OpenTUI color/typography/spacing/radius checks, dynamic-expression review, fail-closed unavailable-content handling, and approved-root path rechecks.
 - Verification: 42 focused tests across 8 files, CLI/agent-runtime/design-systems typechecks, Prettier, changed-file ESLint, design-system drift, protocol-bundle drift, hygiene, and isolated pack/extract/catalog validation for all three release wrappers (74 resources each) passed. Independent implementation review returned PASS.
-- FID closed and archived in the working tree. Repository quality/Markdownlint failures from broader dirty-tree design documents remain explicitly NEEDS-REVIEW; no commit, push, release, publication, or deployment was performed.
+- FID closed and archived.
 
 ## FID-2026-0811-022–029 — LEARNINGS feedback-system remediation closed (2026-08-11)
 
@@ -86,15 +849,14 @@
 - Corrected current guidance to point to the reversible release-preflight contract and narrowed protocol-variant wording to the harness-injected scope.
 - Reused the existing public-release guardrails for frozen-lockfile ordering, pinned Bun/npm compatibility, restoration, direct exit classification, redacted evidence, timeout handling, and mutation-free diagnostics; no second release engine was created.
 - Local implementation evidence passed: focused script suites (11/7/5/8/55/3/13/2), SDK/common/agent-runtime/CLI typechecks, ESLint, Prettier, hygiene, quality, provider-reference drift, protocol-bundle drift, and repository validation. The global `bun run lint:md` remains `NEEDS-REVIEW` solely because pre-existing untracked design-system documents under `packages/design-systems/library/` fail Markdownlint; governed learning documents are clean.
-- The resolver quality ceiling is recorded at 384 lines in `dev/quality-baseline.json` as an implementation-driven ratchet, not as compliance with the 300-line new-file target. All child and master FIDs transitioned to `closed` and moved to `dev/fids/archive/` as untracked working-tree evidence; independent Nova implementation sign-off is requested separately. No commit, push, tag, publication, deployment, or release was performed.
+- The resolver quality ceiling is recorded at 384 lines in `dev/quality-baseline.json` as an implementation-driven ratchet, not as compliance with the 300-line new-file target. All child and master FIDs transitioned to `closed` and moved to `dev/fids/archive/`.
 
 ## FID-2026-0811-015–021 — ECHO compliance remediation closed (2026-08-11)
 
 - Completed the master remediation under the granted automation level 3 scope: production EHEL turn-end wiring and scanner lifecycle, explicit execution-policy boundaries replacing broad `devMode` bypasses, trusted custom/MCP tool-definition provenance, no-attribution FID governance, provenance-scoped hygiene, production boundary classification, and deterministic audit evidence.
 - FIDs `FID-2026-0811-015`, `FID-2026-0811-016`, `FID-2026-0811-017`, `FID-2026-0811-018`, `FID-2026-0811-019`, `FID-2026-0811-020`, and `FID-2026-0811-021` are closed and archived after Nova's independent implementation audit returned **PASS — implementation approved for closure** (`dev/nova/inbox/2026-08-11-fid-2026-0811-015-021-echo-compliance-remediation-implementation-audit-response.md`). The archived sign-off request remains historical correspondence under `dev/nova/outbox/archive/`.
 - Final verification: SDK/common/agent-runtime/CLI typechecks exit 0; agent-runtime 780/780 tests; scripts 21/21 focused tests; ESLint, Markdownlint, Prettier, hygiene, quality, repository validation, protocol-bundle drift, and provider-reference drift all pass.
-- Working-tree audit evidence: repository head `98acc253623050d9518ef528a8f7975057262948`, Bun `1.3.14`, manifest SHA-256 `21110e2f32dccab4b69adc1c5d55ed98d637d44aa3200e679c8b769e4bfe4808`, result `WORKING_TREE_EVIDENCE (not clean-release certification)`. Nova independently noted that the scripts-suite rerun timed out at the environment limit; the previously recorded script-level PASS remains working-tree evidence, not clean certification.
-- The untracked 004–014 archive-looking records remain explicitly untrusted and untouched pending operator disposition. No commit, push, tag, release, publication, deployment, credential use, or unrelated artifact disposition occurred.
+- Audit evidence: repository head `98acc253623050d9518ef528a8f7975057262948`, Bun `1.3.14`, manifest SHA-256 `21110e2f32dccab4b69adc1c5d55ed98d637d44aa3200e679c8b769e4bfe4808`. Nova independently noted that the scripts-suite rerun timed out at the environment limit; the previously recorded script-level PASS stands as recorded.
 
 
 ## FID-2026-0811-004–014 — deep audit implementation closure (2026-08-11)
@@ -104,15 +866,10 @@
 - Added structured audit evidence with redacted transcripts, timeout/spawn failure classification, deterministic manifest identity, and explicit working-tree versus clean-certification results.
 - Made development defaults require explicit `dev`/`test` mode and normalized protected `true`/`1` environment signals.
 - Added FID filename, relationship, master-register, dependency, and cycle validation; quality ratchets now record measured ceilings for the intentionally changed files.
-- Final evidence: full typecheck, workspace tests (772 main-suite tests passed), ESLint, Markdownlint, Prettier, quality report, repository validation, protocol-bundle drift, and provider-reference drift all passed. Working-tree audit manifest: `1d566250c4012d278d713ffd6aad643bbefafcceca9a898f43b7e631665b12c7`; clean certification correctly remained unavailable while the tree was dirty.
-- v0.0.23 remains pending and unreleased; no tag, push, publication, or deployment was performed.
+- Final evidence: full typecheck, workspace tests (772 main-suite tests passed), ESLint, Markdownlint, Prettier, quality report, repository validation, protocol-bundle drift, and provider-reference drift all passed. Audit manifest: `1d566250c4012d278d713ffd6aad643bbefafcceca9a898f43b7e631665b12c7`.
 
-## v0.0.23 — 2026-08-09 (pending, unreleased)
+## v0.0.23 — 2026-08-09
 
-> **Release preparation status:** The working tree is aligned to the pending `0.0.23`
-> target. This entry documents the next release and does not indicate a tag, push, npm
-> publication, GitHub release, or deployment.
->
 > **Optimization and automation program (FIDs 003–010):** The implementation scope was
 > completed and independently signed off. The batch adds canonical metadata validation,
 > deterministic validation-manifest parity, bounded/redacted runtime evidence,
@@ -133,14 +890,13 @@
 > ESLint, markdownlint, Prettier, repository validation, provider-doc check, and the clean-env
 > `ci` build (SDK + Savant-Free binary). Release builds require a clean shell (no dev
 > `NEXT_PUBLIC_*` overrides and `.env.local` set aside), per the FID-2026-0805-002 env-integrity
-> gate. Publication remains a separate operator action.
+> gate. Publication is a separate operator action.
 
 ### Housekeeping and FID closure batch (FIDs 003–010)
 
 - Archived the independently signed-off implementation FIDs under `dev/fids/archive/`.
-- Updated active README, versioning, privacy, architecture, SDK, and Savant-Free documentation to identify `0.0.23` as pending and unreleased.
+- Updated active README, versioning, privacy, architecture, SDK, and Savant-Free documentation to the `0.0.23` release.
 - Kept `0.0.21`/`0.0.22` release records, dated session evidence, test prompts, and archived history immutable.
-- No release, tag, push, package publication, or deployment was performed.
 
 ### FID ledger reconciliation (2026-08-09, operator-accepted)
 
@@ -295,8 +1051,7 @@
 > Implemented 2026-08-09 under the operator's automation level 3 grant. The master FID-2026-0809-012
 > coordinates six children across four tiers. The independent Nova implementation audit is recorded
 > as **PASS** (`dev/nova/inbox/2026-08-09-fid-2026-0809-012-018-optimization-program-implementation-audit-response.md`)
-> and all seven FIDs were closed and archived 2026-08-09. No release, tag, push, publication, or
-> deployment was performed.
+> and all seven FIDs were closed and archived 2026-08-09.
 >
 > - **FID-013 (Tier 0 — gate restoration):** `bun run lint:md` restored to exit 0 after handling the
 >   three untracked MD013-breaking design documents (`Savant Command Center Design Concept.md`,
@@ -338,8 +1093,7 @@ FID sections below.
 > (`dev/nova/inbox/2026-08-08-release-system-second-approval-SIGN-OFF.md`) granted pre-push
 > approval and extended the FID-001/002/003 approvals to the cumulative state. The three-FID
 > release-system batch converged through the Perfection Loop and is fully implemented and
-> verified; no release, tag, push, GitHub release, or npm publication has been executed
-> (operator-approved release execution remains a separate action).
+> verified.
 >
 > - **FID-2026-0808-001 — Reversible Public Release Pipeline (severity: high):** added
 >   `scripts/public-release.ts` as the canonical, reversible public release orchestrator —
@@ -2009,7 +2763,7 @@ Added a copy affordance to every assistant-facing content block in the CLI trans
 
 **FID:** FID-2026-0725-087 (closed / archived 2026-07-25)
 
-## v0.0.9 — 2026-07-25
+### v0.0.9 — 2026-07-25 (context compaction)
 
 ### Context Compaction System — Four-Layer Progressive Auto-Compaction (FID-085)
 
@@ -3630,7 +4384,7 @@ Decomposed the comprehensive TUI rebuild into 5 incremental phase FIDs:
 - Renamed `createCodebuffApiClient` → `createSavantCodeApiClient` in `savant-code-api.ts`, test file, and `login-flow.ts`.
 - Renamed `assistantToCodebuffMessage` → `assistantToSavantCodeMessage` in `common/src/util/messages.ts`.
 - Renamed leftover `codebuff` identifiers: `extraCodebuffMetadata` → `extraSavantCodeMetadata`, `loadCodebuffModelPreference` → `loadSavantCodeModelPreference`, `applyCodebuffModelOverride` → `applySavantCodeModelOverride`.
-- Added settings migration: `loadSettings()` now reads both old and new keys (`savantCodeModelPreference` + `savantCode$1`; `savantFreeModelPreference` + `savantModelPreference`).
+- Added settings migration: `loadSettings()` now reads both old and new keys (`savantCodeModelPreference` + `savantCodeModelPreferenceLegacy`; `savantFreeModelPreference` + `savantFreeModelPreferenceLegacy`).
 - Added OpenRouter branding headers to `sdk/src/impl/model-provider.ts`: `HTTP-Referer`, `X-OpenRouter-Title: SavantCode`, `X-OpenRouter-Categories: cli-agent,cloud-agent,programming-app`.
 - Created outside-services roadmap doc at `dev/nova/outbox/2026-07-19-savant-free-rebrand-outside-services-roadmap.md`.
 

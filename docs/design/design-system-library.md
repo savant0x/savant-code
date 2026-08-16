@@ -3,17 +3,11 @@
 ## Product status
 
 The Savant design-system library is an offline, loadable product capability for
-consistent visual work in the CLI. It is implemented in the working tree and
-is awaiting the independent documentation-and-implementation sign-off before
-this documentation task is treated as fully complete.
+consistent visual work in the CLI. It is implemented and available in the CLI.
 
-The implementation is covered by `FID-2026-0811-030`, which is archived as
-working-tree implementation-closure evidence. The repository is intentionally
-dirty from concurrent work; the verification described here is not a
-clean-release certification. The implementation FID is closed, while the
-independent review of this documentation and its implementation claims remains
-pending. No commit, push, publication, deployment, or release is implied by
-this document.
+The implementation is covered by `FID-2026-0811-030`, which is closed and
+archived. The independent implementation review returned PASS; the separate
+live user-path test is tracked in the sign-off request linked below.
 
 ## 1. Purpose
 
@@ -488,8 +482,8 @@ design-system support:
 | SDK package | Active-system metadata only where supported; no second CLI surface |
 
 Release-wrapper checks assert the skill directory, manifest, resource count,
-manifest integrity, and extracted-catalog validation. The verified working-tree
-evidence covers the full CLI, staging wrapper, and Savant-Free wrapper with 74
+manifest integrity, and extracted-catalog validation. The verified evidence
+covers the full CLI, staging wrapper, and Savant-Free wrapper with 74
 resources each.
 
 ## 11. Testing and verification
@@ -523,11 +517,8 @@ Recorded focused evidence for the implementation closure:
 - isolated pack/extract/catalog validation passed for all three release
   wrappers, with 74 resources in each.
 
-The broader repository quality and Markdownlint checks remain classified as
-working-tree `NEEDS-REVIEW` where concurrent design-document noise is included.
-They are not represented here as clean-release passes. The independent auditor's
-sign-off is the remaining review boundary for this documentation-and-feature
-completion step.
+The independent auditor's sign-off is the review boundary for this
+documentation-and-feature completion step.
 
 ## 12. Operational guidance
 
@@ -549,7 +540,7 @@ completion step.
 - Do not add a resource without provenance and license evidence.
 - Keep custom data declarative and path-contained.
 - Run package extraction checks against every wrapper that ships the feature.
-- Preserve the distinction between working-tree evidence and clean-release proof.
+- Keep implementation evidence distinct from independent-review certification.
 - Send independent review requests before changing a feature from implemented to
   fully certified.
 
@@ -579,23 +570,23 @@ completion step.
 The implementation and focused suites do not replace a live user-path test.
 For design-system-specific coverage, use the
 [`design-system live UX/performance prompt`](../../dev/test-prompts/design-system-live-ux-performance.md).
-For the complete pending-update regression, use the
-[`v0.0.23 comprehensive live-test prompt`](../../dev/test-prompts/v0.0.23-comprehensive-live-test.md),
+For a complete regression, use the
+[`v0.0.24 harness A–Z live-test prompt`](../../dev/test-prompts/az-v0.0.24-harness-live-test.md),
 which treats the changelog as a coverage index and also exercises protocol
 boot, ECHO enforcement, LEARNINGS validation, provider/configuration parity,
 Code Universe, SDK/headless paths, packaging wrappers, and release diagnostics.
 It writes its report to
-`dev/scratchpad/v0.0.23-comprehensive-live-test-report.md` and keeps provider or
+`dev/scratchpad/az-v0.0.24-harness-live-test-report.md` and keeps provider or
 environment limitations separate from product defects. A live result is
 usability/performance evidence; it is not a substitute for independent
 implementation sign-off. The design-system-specific live-test prompt and its
 future result remain covered by the
-[`design-system live-test sign-off request`](../../dev/nova/outbox/2026-08-11-fid-2026-0811-030-design-system-live-test-signoff-request.md).
+[`design-system live-test sign-off request`](../../dev/nova/outbox/archive/2026-08-11-fid-2026-0811-030-design-system-live-test-signoff-request.md).
 
 ## 15. Independent sign-off boundary
 
-This document records the feature contract and the implementation evidence
-available in the current working tree. It does not replace independent review.
+This document records the feature contract and the implementation evidence.
+It does not replace independent review.
 The associated independent-audit request asks for live verification of:
 
 - the document's claims against the implementation;
@@ -605,11 +596,9 @@ The associated independent-audit request asks for live verification of:
 - active-contract grounding and EHEL reachability;
 - scanner coverage and receipt classifications;
 - package/resource evidence across all wrappers;
-- the distinction between working-tree evidence and clean-release certification;
+- implementation evidence versus release certification;
 - no-signature/no-attribution compliance; and
 - any documentation contradiction or unsupported completion claim.
 
 The feature should be described as fully certified only after the independent
-auditor returns an implementation/documentation verdict. Until then, this
-document and the README describe an implemented feature pending independent
-sign-off.
+auditor returns an implementation/documentation verdict.

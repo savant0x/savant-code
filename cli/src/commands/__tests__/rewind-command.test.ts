@@ -43,7 +43,7 @@ function write(p: string, content: string): void {
 }
 
 /** Seeds a checkpoint for turnId with one modified file. */
-function seedTurn(turnId: string, fileName: string): void {
+async function seedTurn(turnId: string, fileName: string): Promise<void> {
   const file = path.join(tmpDir, fileName)
   write(file, 'original')
   openTurn({
@@ -51,9 +51,13 @@ function seedTurn(turnId: string, fileName: string): void {
     turnId,
     prompt: `prompt ${turnId}`,
   })
-  captureSnapshot({ checkpointDir: checkpointDir(), turnId, filePath: file })
+  await captureSnapshot({
+    checkpointDir: checkpointDir(),
+    turnId,
+    filePath: file,
+  })
   write(file, 'edited')
-  closeTurn({
+  await closeTurn({
     checkpointDir: checkpointDir(),
     turnId,
     prompt: `prompt ${turnId}`,
@@ -145,8 +149,8 @@ describe('executeRewind', () => {
     useChatStore.getState().setMessages(value)
   }
 
-  test('code mode restores files to pre-edit content', () => {
-    seedTurn('t1', 'a.ts')
+  test('code mode restores files to pre-edit content', async () => {
+    await seedTurn('t1', 'a.ts')
     const file = path.join(tmpDir, 'a.ts')
     expect(fs.readFileSync(file, 'utf8')).toBe('edited')
 
@@ -161,7 +165,7 @@ describe('executeRewind', () => {
     expect(message).toContain('Rewound 1 file')
   })
 
-  test('conversation mode truncates the transcript to the turn boundary', () => {
+  test('conversation mode truncates the transcript to the turn boundary', async () => {
     // Seed a checkpoint recording a 2-message boundary at turn start.
     const file = path.join(tmpDir, 'a.ts')
     write(file, 'original')
@@ -172,13 +176,13 @@ describe('executeRewind', () => {
       messageCount: 2,
       historyLength: 1,
     })
-    captureSnapshot({
+    await captureSnapshot({
       checkpointDir: checkpointDir(),
       turnId: 't1',
       filePath: file,
     })
     write(file, 'edited')
-    closeTurn({
+    await closeTurn({
       checkpointDir: checkpointDir(),
       turnId: 't1',
       prompt: 'p',
@@ -217,8 +221,8 @@ describe('executeRewind', () => {
     expect(message).toContain('No checkpoint found')
   })
 
-  test('listTurns sees the persisted checkpoint after close', () => {
-    seedTurn('t1', 'a.ts')
+  test('listTurns sees the persisted checkpoint after close', async () => {
+    await seedTurn('t1', 'a.ts')
     const turns = listTurns(checkpointDir())
     expect(turns.length).toBe(1)
     expect(turns[0].prompt).toBe('prompt t1')

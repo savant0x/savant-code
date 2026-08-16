@@ -10,6 +10,7 @@ const EPHEMERAL_KEYS = new Set([
   'activity',
   'activityIdleTimer',
   'echoCompliance',
+  'provenance',
   '_echoEnforcement',
 ])
 

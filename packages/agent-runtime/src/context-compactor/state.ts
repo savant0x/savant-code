@@ -5,6 +5,23 @@ export interface CompactorOptions {
   logger: Logger
   contextWindow?: number
   model?: string
+  /**
+   * FID-2026-0814-004 H-05: micro-compact on/off from `compression.microCompact`
+   * in `protocol.config.yaml`. `false` skips micro-compact entirely (the
+   * operator's evidence-preservation off-switch); absent → enabled (default).
+   */
+  microCompactEnabled?: boolean
+  /**
+   * FID-2026-0814-004 H-06: how many recent tool results micro-compact keeps.
+   * Absent → 6 (FID default 6-8). Configurable so verification-heavy runs
+   * can keep more evidence at low context pressure.
+   */
+  microCompactMaxKeepRecent?: number
+  /**
+   * FID-2026-0814-004 H-06: token floor below which micro-compact never clears
+   * (the pressure gate). Absent → no floor (count-only, historical).
+   */
+  microCompactFloorTokens?: number
 }
 
 export interface Thresholds {
@@ -12,8 +29,11 @@ export interface Thresholds {
   autoCompact: number
   /** Token count at which reactive compact triggers (hard limit) */
   reactiveCompact: number
-  /** Max messages to keep in micro-compact */
+  /** Max messages to keep in micro-compact (FID-2026-0814-004 H-06: 6) */
   microCompactMaxKeepRecent: number
+  /** FID-2026-0814-004 H-06: token floor below which micro-compact never clears
+   *  (context pressure gate). Absent → no floor (count-only, historical). */
+  microCompactFloorTokens?: number
 }
 
 export interface MicroCompactResult {

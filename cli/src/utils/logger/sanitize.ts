@@ -17,11 +17,19 @@ const SENSITIVE_KEYS = new Set([
   'authorization',
 ])
 
+/**
+ * Lowercased sensitive-key substrings, hoisted so the per-key check never
+ * re-lowercases or re-allocates on the log hot path (FID-2026-0815-012 G-03).
+ * `Array.from` preserves the Set's insertion order, so match semantics are
+ * identical to the previous `Array.from(SENSITIVE_KEYS).some(...)` scan.
+ */
+const SENSITIVE_KEY_SUBSTRINGS = Array.from(SENSITIVE_KEYS, (key) =>
+  key.toLowerCase(),
+)
+
 function isSensitiveKey(key: string): boolean {
   const lower = key.toLowerCase()
-  return Array.from(SENSITIVE_KEYS).some((sensitive) =>
-    lower.includes(sensitive.toLowerCase()),
-  )
+  return SENSITIVE_KEY_SUBSTRINGS.some((sensitive) => lower.includes(sensitive))
 }
 
 /**

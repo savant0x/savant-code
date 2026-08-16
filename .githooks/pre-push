@@ -1,12 +1,17 @@
 #!/usr/bin/env bash
-# Pre-push hook — enforce the credential scan + hard lint gates before anything
+# Pre-push hook — enforce the credential scan + hard gates before anything
 # reaches the remote.
 #
-# Runs the same gates as `protocol.config.yaml` (lint + lint_md + format) plus
-# the fail-closed credential scan over the exact pushed commit range:
+# Runs the same gates as `protocol.config.yaml` (type_check + test + lint +
+# lint_md + format) plus the fail-closed credential scan over the exact pushed
+# commit range. ECHO Law 3 (Verify Before Proceed) and Law 15 (build stays
+# clean) require every change to be verified with the build and test commands
+# before delivery, so the typecheck and test gates are enforced here too:
 #   - bun run scripts/pre-push-scan.ts   (pushed-range credential scan, F-A)
 #   - bun x eslint . --max-warnings 0   (zero-tolerance ESLint, FID-069)
 #   - bun run lint:md                   (markdownlint on governed docs)
+#   - bun run typecheck                 (protocol.config.yaml `type_check` gate)
+#   - bun run test                      (protocol.config.yaml `test` gate)
 #   - bunx prettier --check .           (format gate)
 #
 # Wired automatically by the root `prepare` script (`git config core.hooksPath
@@ -65,6 +70,24 @@ if [ "$bundle_status" -ne 0 ]; then
   exit "$bundle_status"
 fi
 
+echo "🔍 pre-push: running typecheck gate (protocol.config.yaml type_check — all workspaces)..."
+
+bun run typecheck
+typecheck_status=$?
+if [ "$typecheck_status" -ne 0 ]; then
+  echo "❌ pre-push: typecheck reported errors — ECHO Law 3 (verify before proceed) refuses the push (or use --no-verify)" >&2
+  exit "$typecheck_status"
+fi
+
+echo "🔍 pre-push: running test gate (protocol.config.yaml test — all workspace suites)..."
+
+bun run test
+test_status=$?
+if [ "$test_status" -ne 0 ]; then
+  echo "❌ pre-push: test suites failed — ECHO Law 3 (verify before proceed) refuses the push (or use --no-verify)" >&2
+  exit "$test_status"
+fi
+
 bunx prettier --check .
 prettier_status=$?
 if [ "$prettier_status" -ne 0 ]; then
@@ -72,5 +95,5 @@ if [ "$prettier_status" -ne 0 ]; then
   exit "$prettier_status"
 fi
 
-echo "✅ pre-push: lint gates passed (ESLint + markdownlint + prettier)"
+echo "✅ pre-push: all gates passed (credential scan + ESLint + markdownlint + typecheck + tests + prettier)"
 exit 0

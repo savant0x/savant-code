@@ -33,6 +33,9 @@ export const MessageWithAgents = memo(
     availableWidth,
   }: MessageWithAgentsProps): ReactNode => {
     const isAgent = message.variant === 'agent'
+    const isAi = message.variant === 'ai'
+    const isUser = message.variant === 'user'
+    const isError = message.variant === 'error'
 
     // Use useShallow for grouped selectors to prevent unnecessary re-renders
     const {
@@ -97,35 +100,8 @@ export const MessageWithAgents = memo(
       [theme?.background],
     )
 
-    if (isAgent) {
-      return (
-        <AgentMessage
-          message={message}
-          depth={depth}
-          availableWidth={availableWidth}
-        />
-      )
-    }
-
-    const isAi = message.variant === 'ai'
-    const isUser = message.variant === 'user'
-    const isError = message.variant === 'error'
-
-    if (
-      message.blocks &&
-      message.blocks.length === 1 &&
-      message.blocks[0].type === 'mode-divider'
-    ) {
-      const dividerBlock = message.blocks[0]
-      return (
-        <ModeDivider
-          key={message.id}
-          mode={dividerBlock.mode}
-          width={availableWidth}
-        />
-      )
-    }
-
+    // Hoisted above the early returns so every hook runs unconditionally
+    // (Rules of Hooks): a conditional `return` before a hook crashes React.
     const lineColor = isError
       ? 'red'
       : isAi
@@ -163,6 +139,31 @@ export const MessageWithAgents = memo(
       () => ({ codeBlockWidth, palette: paletteForMessage! }),
       [codeBlockWidth, paletteForMessage],
     )
+
+    if (isAgent) {
+      return (
+        <AgentMessage
+          message={message}
+          depth={depth}
+          availableWidth={availableWidth}
+        />
+      )
+    }
+
+    if (
+      message.blocks &&
+      message.blocks.length === 1 &&
+      message.blocks[0].type === 'mode-divider'
+    ) {
+      const dividerBlock = message.blocks[0]
+      return (
+        <ModeDivider
+          key={message.id}
+          mode={dividerBlock.mode}
+          width={availableWidth}
+        />
+      )
+    }
 
     const isLoading =
       isAi && message.content === '' && !message.blocks && isWaitingForResponse

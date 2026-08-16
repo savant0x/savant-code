@@ -9,6 +9,7 @@ import { createLoopContext } from './loop-context'
 import { runLoopIteration, type LoopIterationState } from './loop-iteration'
 import { resetThinkerConvergenceState } from '../tools/thinker-convergence-gate'
 import { cleanupThoughtSession } from '../tools/thought-session-store'
+import { clearActivityIdleTimer } from '../util/activity-tracking'
 import { getAgentOutput } from '../util/agent-output'
 import { withSystemTags, expireMessages } from '../util/messages'
 import { retryAfterReactiveCompact } from './loop/reactive-compact'
@@ -391,11 +392,24 @@ export async function loopAgentSteps(
     // but abort/error exits (e.g. chat SSE disconnects) would otherwise leak
     // the run's generator, STEP_ALL flag, and proposed file content forever.
     clearProgrammaticRunState(runId)
+    // FID-2026-0815-015: disarm the idle heartbeat on every exit path so a
+    // cancelled/failed run never leaves a live timer that mutates a frozen
+    // agentState ~5s later (the confirmed "readonly property" crash).
+    clearActivityIdleTimer(initialAgentState)
     // FID-2026-0801-012: per-run ThoughtSession and retry counters must not
     // leak across abort/error exits; cleanup is idempotent and marks an
     // in-flight session cancelled.
     cleanupThoughtSession(runId)
     resetThinkerConvergenceState(runId)
+    // FID-2026-0813-004: finalize the ZTAP provenance session for the main
+    // agent (best-effort, idempotent) so the ledger flushes and the manifest
+    // carries the session-close record. Subagent loops inherit the parent's
+    // session and must not finalize it.
+    if (!initialAgentState.parentId) {
+      void initialAgentState.provenance?.finalize().catch(() => {
+        // Best-effort: finalize must never break the run exit path.
+      })
+    }
     recordRuntimeEvent(
       {
         event: 'cleanup_finished',

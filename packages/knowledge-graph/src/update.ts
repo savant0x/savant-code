@@ -74,6 +74,33 @@ const defaultParseFile: ParseFileFn = async (filePath, fullPath) => {
 /** The node:fs adapter used when no `fs` is injected. */
 const nodeFsAdapter: SavantCodeFileSystem = fs.promises
 
+/** FID-2026-0815-009 (F-12): bounded fan-out for the source reads + parses. */
+const PARSE_CONCURRENCY = 6
+
+/**
+ * Runs `fn` over `items` with bounded concurrency, preserving result order.
+ * The cursor increment is atomic on the single-threaded event loop, so each
+ * item is processed exactly once.
+ */
+async function mapWithConcurrency<T, R>(
+  items: readonly T[],
+  concurrency: number,
+  fn: (item: T, index: number) => Promise<R>,
+): Promise<R[]> {
+  const results = new Array<R>(items.length)
+  let cursor = 0
+  const worker = async (): Promise<void> => {
+    while (cursor < items.length) {
+      const index = cursor
+      cursor += 1
+      results[index] = await fn(items[index], index)
+    }
+  }
+  const workerCount = Math.max(1, Math.min(concurrency, items.length))
+  await Promise.all(Array.from({ length: workerCount }, () => worker()))
+  return results
+}
+
 /**
  * Run an incremental update pass over the project.
  *
@@ -168,13 +195,23 @@ export async function updateKnowledgeGraph(
     }
   }
 
-  for (const filePath of filePaths) {
-    const fullPath = path.join(projectRoot, filePath)
-    const source = await readSource(fullPath)
-    if (source === null) continue
-
+  // FID-2026-0815-009 (F-12): parallelize the source reads (I/O) over a
+  // bounded pool. `sources`/`hashByPath` are lookup-only Maps, so their
+  // insertion order is irrelevant to determinism.
+  const hashByPath = new Map<string, string>()
+  await mapWithConcurrency(filePaths, PARSE_CONCURRENCY, async (filePath) => {
+    const source = await readSource(path.join(projectRoot, filePath))
+    if (source === null) return
     sources.set(filePath, source)
-    const hash = hasher.hash(source)
+    hashByPath.set(filePath, hasher.hash(source))
+  })
+
+  // Ordered walk determines the changed/new set + stats (deterministic).
+  const changedPaths: string[] = []
+  for (const filePath of filePaths) {
+    const source = sources.get(filePath)
+    if (source === undefined) continue
+    const hash = hashByPath.get(filePath) as string
     const existing = existingByPath.get(filePath)
 
     // Unchanged (and not forcing a full rebuild) → skip entirely.
@@ -183,11 +220,7 @@ export async function updateKnowledgeGraph(
       continue
     }
 
-    // Changed/new → parse (best-effort) and stage for upsert.
-    const parsed = await parseFile(filePath, fullPath)
-    if (parsed) {
-      parsedFiles.set(filePath, parsed)
-    }
+    changedPaths.push(filePath)
 
     if (existing && existing.hash === hash) {
       // Only reachable under fullRebuild — count as reindexed.
@@ -198,6 +231,19 @@ export async function updateKnowledgeGraph(
       stats.filesAdded++
     }
   }
+
+  // FID-2026-0815-009 (F-12): parse the changed/new files (best-effort) over
+  // the bounded pool. `parsedFiles` is a lookup-only Map.
+  await mapWithConcurrency(
+    changedPaths,
+    PARSE_CONCURRENCY,
+    async (filePath) => {
+      const parsed = await parseFile(filePath, path.join(projectRoot, filePath))
+      if (parsed) {
+        parsedFiles.set(filePath, parsed)
+      }
+    },
+  )
 
   // 4b. Upsert file rows + nodes + call tokens for every changed/new file.
   // Prune the old subtree first (single DELETE; FK cascade removes stale
@@ -219,12 +265,13 @@ export async function updateKnowledgeGraph(
       const source = sources.get(filePath)
       if (source === undefined) continue
       const existing = existingByPath.get(filePath)
-      if (!fullRebuild && existing && existing.hash === hasher.hash(source)) {
+      // FID-2026-0815-009 (F-12): reuse the scan-loop hash (no re-hash).
+      const hash = hashByPath.get(filePath) as string
+      if (!fullRebuild && existing && existing.hash === hash) {
         continue // unchanged — already counted
       }
 
       pruneStmt.run(filePath)
-      const hash = hasher.hash(source)
       const insertResult = insertFileStmt.run(filePath, hash) as {
         lastInsertRowid: number
       }
@@ -268,6 +315,11 @@ export async function updateKnowledgeGraph(
     const list = dbSymbolIndex.get(row.name) ?? []
     if (!list.includes(filePath)) list.push(filePath)
     dbSymbolIndex.set(row.name, list)
+  }
+  // FID-2026-0815-009 (F-12): pre-sort each symbol's candidate list (shortest
+  // path, then lexicographic) so resolveSymbolDefiningFile is an O(1) pick.
+  for (const list of dbSymbolIndex.values()) {
+    list.sort((a, b) => a.length - b.length || (a < b ? -1 : a > b ? 1 : 0))
   }
 
   // Call tokens from DB — the incremental invariant: the CALLS layer is

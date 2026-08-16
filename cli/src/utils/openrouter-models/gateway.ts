@@ -2,6 +2,10 @@
  * Combined gateway catalog — OpenRouter + TokenRouter + TokenHarbor + NVIDIA NIM
  * + OpenCode Go + CommandCode + Nous Research — plus subscription plumbing.
  */
+import fs from 'node:fs'
+import path from 'node:path'
+
+import { getConfigDir } from '../config-dir'
 import { logger } from '../logger'
 import {
   __resetNousCacheForTest,
@@ -32,6 +36,56 @@ let gatewayCache: OpenRouterModel[] | null = null
 let gatewayCacheAt = 0
 let gatewayInflight: Promise<OpenRouterModel[]> | null = null
 const gatewayCatalogListeners = new Set<(catalog: OpenRouterModel[]) => void>()
+
+/** On-disk warm-start cache filename (FID-2026-0815-007 F-09). */
+const GATEWAY_CATALOG_CACHE_FILE = 'gateway-catalog.json'
+
+type GatewayCatalogDiskCache = {
+  savedAt: number
+  catalog: OpenRouterModel[]
+}
+
+function gatewayCatalogCachePath(): string {
+  return path.join(getConfigDir(), GATEWAY_CATALOG_CACHE_FILE)
+}
+
+/** Loads a fresh gateway catalog from the disk cache, or null when absent/stale/corrupt. */
+function loadGatewayCatalogFromDisk(): {
+  catalog: OpenRouterModel[]
+  savedAt: number
+} | null {
+  try {
+    const raw = fs.readFileSync(gatewayCatalogCachePath(), 'utf8')
+    const parsed = JSON.parse(raw) as GatewayCatalogDiskCache
+    if (
+      !Array.isArray(parsed.catalog) ||
+      typeof parsed.savedAt !== 'number' ||
+      Date.now() - parsed.savedAt >= CATALOG_TTL_MS
+    ) {
+      return null
+    }
+    return { catalog: parsed.catalog, savedAt: parsed.savedAt }
+  } catch {
+    return null
+  }
+}
+
+/** Best-effort write-through of the combined catalog (never throws). */
+async function writeGatewayCatalogToDisk(
+  catalog: OpenRouterModel[],
+): Promise<void> {
+  try {
+    await fs.promises.mkdir(getConfigDir(), { recursive: true })
+    const cache: GatewayCatalogDiskCache = { savedAt: Date.now(), catalog }
+    await fs.promises.writeFile(
+      gatewayCatalogCachePath(),
+      JSON.stringify(cache),
+      'utf8',
+    )
+  } catch {
+    // Best-effort — model metadata is a warm-start convenience only.
+  }
+}
 
 /**
  * Synchronous read of the combined gateway catalog (cached or empty).
@@ -91,6 +145,19 @@ export async function fetchGatewayModels(
   if (fresh && gatewayCache) return gatewayCache
   if (gatewayInflight) return gatewayInflight
 
+  // FID-2026-0815-007 (F-09): warm-start disk cache. When the in-memory cache
+  // is cold, a fresh on-disk catalog is loaded synchronously so the model
+  // picker + model-info block have metadata without paying the network RTT.
+  if (!forceRefresh && gatewayCache === null) {
+    const disk = loadGatewayCatalogFromDisk()
+    if (disk && disk.catalog.length > 0) {
+      gatewayCache = disk.catalog
+      gatewayCacheAt = disk.savedAt
+      notifyGatewayCatalogListeners(disk.catalog)
+      return disk.catalog
+    }
+  }
+
   gatewayInflight = (async () => {
     const [orResult, nvidiaResult, nousResult] = await Promise.allSettled([
       fetchOpenRouterModels(forceRefresh),
@@ -128,6 +195,8 @@ export async function fetchGatewayModels(
     gatewayCache = combined
     gatewayCacheAt = Date.now()
     notifyGatewayCatalogListeners(combined)
+    // FID-2026-0815-007 (F-09): write-through so the next cold boot skips the RTT.
+    await writeGatewayCatalogToDisk(combined)
     return combined
   })()
 
@@ -145,6 +214,13 @@ export function __resetOpenRouterModelsCacheForTest(): void {
   gatewayCache = null
   gatewayCacheAt = 0
   gatewayInflight = null
+  // FID-2026-0815-007: also clear the on-disk warm-start cache so tests start
+  // from a known state.
+  try {
+    fs.rmSync(gatewayCatalogCachePath(), { force: true })
+  } catch {
+    // Best-effort.
+  }
   // Note: intentionally do not clear gatewayCatalogListeners here. This reset
   // is for cache state; listeners (including the gateway-catalog store) should
   // survive test resets so subscriptions remain intact.

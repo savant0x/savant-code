@@ -50,18 +50,6 @@ export {
  * no unnecessary inline requests; long answers repeat a pool of four ads.
  */
 export const useGravityAd = (options?: GravityAdOptions): GravityAdState => {
-  // Ads are a backend monetization feature; direct-provider mode has no backend.
-  if (isDirectProviderMode()) {
-    return {
-      ads: null,
-      responseAds: {},
-      requestResponseAds: () => {},
-      isLoading: false,
-      recordClick: () => {},
-      recordImpression: () => {},
-    }
-  }
-
   const enabled = options?.enabled ?? true
   const forceStart = options?.forceStart ?? false
   const provider: AdProvider = options?.provider ?? 'gravity'
@@ -260,6 +248,18 @@ export const useGravityAd = (options?: GravityAdOptions): GravityAdState => {
         }))
       },
     })
+  }
+
+  // Ads are a backend monetization feature; direct-provider mode has no backend.
+  if (isDirectProviderMode()) {
+    return {
+      ads: null,
+      responseAds: {},
+      requestResponseAds: () => {},
+      isLoading: false,
+      recordClick: () => {},
+      recordImpression: () => {},
+    }
   }
 
   // Don't return ads when ads should be hidden

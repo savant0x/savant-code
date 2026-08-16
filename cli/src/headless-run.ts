@@ -152,12 +152,15 @@ export async function runHeadlessPrint(
   }
 
   const agentDefinitions = params.agentDefinitions ?? loadAgentDefinitions()
-  const agent =
-    params.resolvedAgent ??
-    applySavantCodeModelOverride(
-      resolveAgent('HYBRID', agentId, agentDefinitions),
-      agentDefinitions,
-    )
+  // FID-2026-0814-004 H-12: every headless run resolves the SAME way — the
+  // model always comes from the UI model store (resolveActiveModel via
+  // applySavantCodeModelOverride). The `resolvedAgent` DI escape hatch only
+  // supplies the agent *shape* (definition/id); the model is still overridden
+  // so a headless run can never bill a bundled paid default.
+  const agent = applySavantCodeModelOverride(
+    params.resolvedAgent ?? resolveAgent('HYBRID', agentId, agentDefinitions),
+    agentDefinitions,
+  )
 
   let previousRun: RunState | undefined = params.previousRun
   if (previousRun === undefined && continueChat) {

@@ -11,9 +11,9 @@ interface ModeDividerProps {
 }
 
 export const ModeDivider = ({ mode, width }: ModeDividerProps) => {
-  if (IS_SAVANT_FREE) return null
-
   const theme = useTheme()
+
+  if (IS_SAVANT_FREE) return null
 
   const label = ` ${mode} `
   const labelWidth = stringWidth(label)

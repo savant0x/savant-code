@@ -56,6 +56,10 @@ export type RunAgentStepParams = {
    *  loopAgentSteps (token counting needs it too) and passed down — avoids
    *  a second formatPrompt pass (~13 replaceAll incl. file tree). */
   stepPrompt?: string
+  /** FID-2026-0815-011 E-01: system-prompt token count computed once per step
+   *  in prepareStepContext and passed down so runAgentStep does not re-tokenize
+   *  the invariant system prompt. */
+  systemTokens?: number
   /** FID-2026-0802-005 H8: step-built custom tool data (incl. MCP tools). */
   customToolDefinitions?: CustomToolDefinitions
 
@@ -132,6 +136,16 @@ export type LoopAgentStepsParams = {
   agentTemplate?: AgentTemplate
   /** FID-2026-0725-085 CTX-007: Resolved context window from OpenRouter catalog. */
   contextWindow?: number
+  /** FID-2026-0814-004 H-05/H-06/H-07: compression config threaded from
+   *  `protocol.config.yaml` `compression`. Absent → runtime defaults. */
+  compression?: {
+    microCompact?: boolean
+    keepRecentTokens?: number
+    autoCompactRatio?: number
+    forceCompactOffset?: number
+    microCompactMaxKeepRecent?: number
+    microCompactFloorTokens?: number
+  }
 } & ParamsExcluding<typeof additionalToolDefinitions, 'agentTemplate'> &
   ParamsExcluding<
     typeof runProgrammaticStep,

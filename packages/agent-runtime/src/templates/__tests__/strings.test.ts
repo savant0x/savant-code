@@ -3,7 +3,7 @@ import { TEST_AGENT_RUNTIME_IMPL } from '@savant-code/common/testing/impl/agent-
 import { describe, test, expect, mock } from 'bun:test'
 import { z } from 'zod/v4'
 
-import { formatCurrentDate, getAgentPrompt } from '../strings'
+import { getAgentPrompt } from '../strings'
 import { PLACEHOLDER } from '../types'
 
 import type { AgentTemplate } from '../types'
@@ -84,7 +84,7 @@ const createMockAgentTemplate = (
 })
 
 describe('getAgentPrompt', () => {
-  test('replaces CURRENT_DATE when formatting prompts', async () => {
+  test('replaces CURRENT_DATE with the current date and time when formatting prompts', async () => {
     const agentTemplate = createMockAgentTemplate({
       id: 'date-agent',
       systemPrompt: `Today is ${PLACEHOLDER.CURRENT_DATE}.`,
@@ -106,12 +106,43 @@ describe('getAgentPrompt', () => {
       fetchAgentFromDatabase: TEST_AGENT_RUNTIME_IMPL.fetchAgentFromDatabase,
     })
 
-    expect(result).toBe(`Today is ${formatCurrentDate(new Date())}.`)
+    // Structural, not exact-equality: the injected value includes the current
+    // minute, so an exact match could flake across a minute boundary.
     expect(result).not.toContain(PLACEHOLDER.CURRENT_DATE)
+    expect(result).toMatch(
+      /^Today is (Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday), /,
+    )
+    expect(result).toContain(', 202')
   })
 
-  test('formats current date for prompts', () => {
-    expect(formatCurrentDate(new Date(2026, 4, 22, 12))).toBe('May 22, 2026')
+  test('injects a fresh current date and time into the per-step reminder', async () => {
+    const agentTemplate = createMockAgentTemplate({
+      id: 'step-agent',
+      stepPrompt: 'Work on the task.',
+    })
+    const agentTemplates: Record<string, AgentTemplate> = {
+      'step-agent': agentTemplate,
+    }
+
+    const result = await getAgentPrompt({
+      agentTemplate,
+      promptType: { type: 'stepPrompt' },
+      fileContext: createMockFileContext(),
+      agentState: createMockAgentState('step-agent'),
+      agentTemplates,
+      additionalToolDefinitions: async () => ({}),
+      logger: createMockLogger(),
+      apiKey: TEST_AGENT_RUNTIME_IMPL.apiKey,
+      databaseAgentCache: TEST_AGENT_RUNTIME_IMPL.databaseAgentCache,
+      fetchAgentFromDatabase: TEST_AGENT_RUNTIME_IMPL.fetchAgentFromDatabase,
+    })
+
+    // The step reminder carries a fresh timestamp each step (FID-2026-0815-010).
+    expect(result).toContain('<system_reminder>')
+    expect(result).toMatch(
+      /Current date and time: (Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday), /,
+    )
+    expect(result).toContain('Work on the task.')
   })
 
   describe('spawnerPrompt inclusion in instructionsPrompt', () => {

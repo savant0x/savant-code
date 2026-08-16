@@ -8,7 +8,7 @@
 project:
   name: 'savant-code'
   description: 'Multi-Agent AI Coding Assistant with ECHO Protocol governance. TypeScript monorepo, Bun runtime.'
-  version: '0.0.23'
+  version: '0.0.24'
 
 protocol:
   version: '0.2.0'
@@ -123,7 +123,13 @@ compression:
   microCompact: false # P3a — off by default (cache tradeoff)
   keepRecentTokens: 16384 # P2a — fixed verbatim recent-tail token budget
   autoCompactRatio: 0.8 # P3d — auto-compact trigger ratio
-  forceCompactRatio: 0.9 # P3d — force-compact trigger ratio
+  forceCompactOffset: 15000 # P3d — force-compact trigger offset (tokens below window)
+  # FID-2026-0814-004 H-06: recent tool results micro-compact preserves
+  # (default 6 in the compactor).
+  microCompactMaxKeepRecent: 6
+  # FID-2026-0814-004 H-06: optional token floor for the micro-compact
+  # pressure gate (null = no floor; never micro-compact below it).
+  microCompactFloorTokens: null
   idleCompaction: # P3c — off by default
     enabled: false
     idleAfterSeconds: 1800
@@ -144,3 +150,26 @@ caveman: # P5f — telegraphic output rules (opt-in)
 telemetry: # P4 — token usage + cache-hit monitoring
   enabled: true
   cacheHitAlertDrop: 0.3 # alert when cached-token ratio drops 30+ points
+
+# ZTAP provenance (FID-2026-0813-004): mode is LIVE — parsed by
+# common/src/util/protocol-config.ts and wired into every CLI run by
+# cli/src/hooks/helpers/send-message-run-config.ts.
+#   off     — no ledger, no signing (zero overhead)
+#   record  — receipts signed + appended to .savant/provenance/ (default)
+#   enforce — same as record, plus fail-closed pre-write gates in native.ts
+provenance:
+  mode: 'record' # off | record | enforce
+
+# Extensible lifecycle hooks (FID-2026-0814-003): project-scoped external
+# commands fired at the tool-executor lifecycle. Hooks are fail-open by default
+# — only exit code 2 or a JSON `"permissionDecision": "deny"` blocks a tool.
+# Events: PreToolUse | PostToolUse | PostToolUseFailure | SessionStart |
+# SessionEnd | SubagentStart | SubagentStop | PreCompact | PostCompact | Stop |
+# Interrupt | Notification. `matcher` (optional) is a RegExp on the tool name.
+# Example:
+#   hooks:
+#     - event: PreToolUse
+#       command: node ./hooks/audit-write.js
+#       matcher: write_file|str_replace
+#       timeout: 10
+hooks: []

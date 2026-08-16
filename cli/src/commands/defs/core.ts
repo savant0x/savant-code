@@ -3,6 +3,7 @@ import { useFeedbackStore } from '../../state/feedback-store'
 import { useLoginStore } from '../../state/login-store'
 import { getSystemMessage, getUserMessage } from '../../utils/message-history'
 import { handleAdsEnable, handleAdsDisable } from '../ads'
+import { handleAttestCommand } from '../attest'
 import {
   clearInput,
   defineCommand,
@@ -17,6 +18,7 @@ import { handleGraphExportCommand } from '../graph-export'
 import { handleGraphRefreshCommand } from '../graph-refresh'
 import { handleHealthCommand } from '../health-command'
 import { handleHelpCommand } from '../help'
+import { handleLearnCommand } from '../learn'
 import { handleLoopCommand } from '../loop'
 import {
   collectProcessDiagnostics,
@@ -129,6 +131,16 @@ export const CORE_COMMANDS = [
     name: 'graph-export',
     aliases: ['graph:export', 'gexport'],
     handler: handleGraphExportCommand,
+  }),
+  defineCommandWithArgs({
+    name: 'attest',
+    aliases: ['ztap', 'trust-receipt'],
+    handler: handleAttestCommand,
+  }),
+  defineCommandWithArgs({
+    name: 'learn',
+    aliases: ['teacher'],
+    handler: handleLearnCommand,
   }),
   defineCommandWithArgs({
     name: 'graph-refresh',

@@ -1,3 +1,4 @@
+import type { TeacherSessionState } from '../../teacher/runtime'
 import type { ChatMessage } from '../../types/chat'
 import type {
   TopBannerType,
@@ -18,9 +19,27 @@ import type {
 } from '../../types/store'
 import type { AgentMode } from '../../utils/constants'
 import type { InputMode } from '../../utils/input-modes'
-import type { AgentActivity } from '@savant-code/common/types/session-state'
+import type { PrintModeProvenanceReceipt } from '@savant-code/common/types/print-mode'
+import type {
+  AgentActivity,
+  CompactionStatus,
+} from '@savant-code/common/types/session-state'
 import type { RunState } from '@savant-code/sdk'
 import type { StateCreator } from 'zustand'
+
+/**
+ * FID-2026-0814-006: one terminal compaction lifecycle event for the bounded
+ * in-stream transcript signal (kimi pattern). `pruned` = successful full
+ * pruner run; `ineffective` = a pruner run that removed nothing (the runtime
+ * writes phase `warning` at that boundary). Display-only; never a control
+ * channel.
+ */
+export type CompactionLifecycleEvent = {
+  outcome: 'pruned' | 'ineffective'
+  tokensSaved?: number
+  percentUsed?: number
+  at: number
+}
 
 // Re-export types from the types/store module to maintain backwards compatibility
 export type {
@@ -97,6 +116,16 @@ export type ChatStoreState = {
   // Sidebar data
   contextTokensUsed: number
   contextTokensMax: number
+  /** FID-2026-0813-023: live compaction status for the read-only sidebar row. */
+  compactionStatus: CompactionStatus | null
+  /**
+   * FID-2026-0814-006: session compaction counter + bounded lifecycle events
+   * (OpenClaw "/status 🧹 Compactions: N" + kimi transcript-block patterns).
+   * Incremented on each `pruned` outcome; the bounded event list drives the
+   * in-stream transcript signal. Reset per session like `provenanceEvents`.
+   */
+  compactionCount: number
+  compactionEvents: CompactionLifecycleEvent[]
   toolsUsed: string[]
   toolHistory: ToolHistoryEntry[]
   filesChanged: FilesChanged
@@ -112,6 +141,12 @@ export type ChatStoreState = {
    * What the agent is doing RIGHT NOW (tool/model/sub-agent/research).
    */
   activity: AgentActivity
+  /** FID-2026-0813-009: bounded signed provenance events for the read-only
+   *  trust matrix. Never used as a tool-control channel. */
+  provenanceEvents: PrintModeProvenanceReceipt[]
+  /** FID-2026-0813-022: live teacher exercise state for the read-only sidebar
+   *  surface. Passive mirror of the runtime singleton; never a control path. */
+  teacherState: TeacherSessionState | null
   /**
    * FID-2026-0718-010 (Q17): anti-thrash window stamp. Tracks when
    * onStreamEnded last fired. Resets within 100ms are no-ops to dedupe
@@ -190,6 +225,12 @@ export type ChatStoreActions = {
   // Sidebar data actions
   updateContextTokens: (used: number) => void
   updateContextTokensMax: (max: number) => void
+  /** FID-2026-0813-023: set the live compaction status for the sidebar row. */
+  setCompactionStatus: (status: CompactionStatus | null) => void
+  /** FID-2026-0814-006: bump the session compaction counter (per pruned run). */
+  recordCompactionRun: (event: CompactionLifecycleEvent) => void
+  /** FID-2026-0814-006: clear the bounded compaction lifecycle events. */
+  clearCompactionEvents: () => void
   addToolUsed: (toolName: string) => void
   addToolHistory: (toolName: string) => void
   incrementFilesChanged: (
@@ -202,6 +243,12 @@ export type ChatStoreActions = {
   setFsmPhase: (phase: string) => void
   /** Set the runtime activity indicator (FID-2026-0718-009). */
   setActivity: (activity: AgentActivity) => void
+  /** Append one bounded provenance event for the read-only trust matrix. */
+  addProvenanceEvent: (event: PrintModeProvenanceReceipt) => void
+  /** FID-2026-0813-022: replace the live teacher surface with a fresh snapshot. */
+  setTeacherState: (state: TeacherSessionState) => void
+  /** FID-2026-0813-022: clear the teacher surface (exercise exited). */
+  clearTeacher: () => void
   /** Reset FSM phase to idle when a new user message is sent. */
   onNewUserMessage: () => void
   /**
@@ -250,6 +297,9 @@ type AliasActionKeys =
 type SidebarActionKeys =
   | 'updateContextTokens'
   | 'updateContextTokensMax'
+  | 'setCompactionStatus'
+  | 'recordCompactionRun'
+  | 'clearCompactionEvents'
   | 'addToolUsed'
   | 'addToolHistory'
   | 'incrementFilesChanged'
@@ -258,6 +308,9 @@ type SidebarActionKeys =
   | 'resetSidebarData'
   | 'setFsmPhase'
   | 'setActivity'
+  | 'addProvenanceEvent'
+  | 'setTeacherState'
+  | 'clearTeacher'
   | 'onNewUserMessage'
   | 'onStreamEnded'
   | 'markChunkSeen'

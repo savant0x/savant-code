@@ -23,36 +23,36 @@ describe('prompt-builders ChatGPT-aware base prompts', () => {
       connected = true
     })
 
-    test('/plan delegates to @thinker-gpt', () => {
+    test('/plan delegates to @thinker', () => {
       expect(buildPlanPrompt('add OAuth login', isChatGptConnected)).toContain(
-        '@thinker-gpt',
+        '@thinker',
       )
     })
 
-    test('/review delegates to @thinker-gpt', () => {
+    test('/review delegates to @thinker', () => {
       expect(
         buildReviewPrompt('uncommitted', undefined, isChatGptConnected),
-      ).toContain('@thinker-gpt')
+      ).toContain('@thinker')
       expect(
         buildReviewPromptFromArgs('the parser', isChatGptConnected),
-      ).toContain('@thinker-gpt')
+      ).toContain('@thinker')
     })
   })
 
   describe('when ChatGPT is not connected', () => {
-    test('/plan runs on the selected model (no @thinker-gpt spawn)', () => {
+    test('/plan runs on the selected model (no @thinker spawn)', () => {
       const prompt = buildPlanPrompt('add OAuth login', isChatGptConnected)
-      expect(prompt).not.toContain('@thinker-gpt')
+      expect(prompt).not.toContain('@thinker')
       expect(prompt).toContain('add OAuth login')
     })
 
-    test('/review runs on the selected model (no @thinker-gpt spawn)', () => {
+    test('/review runs on the selected model (no @thinker spawn)', () => {
       expect(
         buildReviewPrompt('uncommitted', undefined, isChatGptConnected),
-      ).not.toContain('@thinker-gpt')
+      ).not.toContain('@thinker')
       expect(
         buildReviewPromptFromArgs('the parser', isChatGptConnected),
-      ).not.toContain('@thinker-gpt')
+      ).not.toContain('@thinker')
     })
   })
 

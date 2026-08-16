@@ -43,8 +43,8 @@ const basher: AgentDefinition = {
   systemPrompt: `You are part of the Savant ECHO Protocol system. You are an expert at analyzing the output of a terminal command.
 
 Your job is to:
-1. Review the terminal command and its output
-2. Analyze the output based on what the user requested
+1. Analyze the output of a terminal command that has already been executed
+2. Focus on the information the user requested
 3. Provide a clear, concise description of the relevant information
 
 Fail fast (FID-2026-0806-016): run_terminal_command is FSM-gated to AUDIT/GREEN/SELF-CORRECT phases. If your first tool attempt returns a phase-gate block ("only available during AUDIT, GREEN, or SELF-CORRECT phases"), reply with ONE line naming the block — e.g. "BLOCKED: run_terminal_command unavailable in current phase — parent must transition_phase before spawning basher" — and stop. Do NOT analyze why it failed, explain the error, or offer alternatives.
@@ -55,11 +55,9 @@ When describing command output:
 - Be concise but thorough
 - If the output is very long, summarize the key points rather than reproducing everything
 - Don't include any follow up recommendations, suggestions, or offers to help`,
-  instructionsPrompt: `The user has provided a command to run and specified what information they want from the output.
+  instructionsPrompt: `The terminal command has already been executed and its output is in your context. The user has specified what information they want from that output.
 
-Run the command and then describe the relevant information from the output, following the user's instructions about what to focus on.
-
-Do not use any tools! Only analyze the output of the command.`,
+Analyze the output and describe the relevant information, following the user's instructions about what to focus on. Do not call any tools — the command has already run; your only job is to summarize its output.`,
   handleSteps: function* ({ params }: AgentStepContext) {
     const command = params?.command as string | undefined
     if (!command) {

@@ -9,8 +9,10 @@
  *
  * Layer 1 (SNPE) is user-initiated via /compact command, handled separately.
  *
- * FID-2026-0809-015: decomposed into `context-compactor/{state,circuit-breaker,phases}`;
- * this path re-exports the full public surface (Law 4 — zero consumer changes).
+ * FID-2026-0809-015: partial decomposition — `context-compactor/{state,circuit-breaker,phases}`
+ * hold the state types, the circuit breaker, and the phase helpers; the
+ * ContextCompactor class body itself remains in this file (Law 4 — zero
+ * consumer changes).
  */
 
 import { CircuitBreaker } from './context-compactor/circuit-breaker'
@@ -28,7 +30,12 @@ import type {
   Thresholds,
 } from './context-compactor/state'
 import type { Logger } from '@savant-code/common/types/contracts/logger'
-import type { Message } from '@savant-code/common/types/messages/savant-code-message'
+import type { JSONValue } from '@savant-code/common/types/json'
+import type { ToolResultOutput } from '@savant-code/common/types/messages/content-part'
+import type {
+  Message,
+  ToolMessage,
+} from '@savant-code/common/types/messages/savant-code-message'
 
 export {
   AUTO_COMPACT_BUFFER,
@@ -53,11 +60,50 @@ export type {
 // run-agent-step.ts. The Message type lives in common, so importing it here
 // introduces no circularity.
 
+/**
+ * FID-2026-0814-004 H-01: build the micro-compact placeholder for a cleared
+ * tool result. Verification tools (`run_readonly_command`, `run_terminal_command`)
+ * carry a structured {command, stdout, stderr, exitCode} JSON value; wiping it
+ * erased the one signal a verification agent needs (PASS/FAIL). The placeholder
+ * preserves `exitCode` + `command` as a tiny JSON object — the token savings
+ * still come from dropping stdout/stderr. Non-JSON values fall back to the
+ * legacy `[compacted]` sentinel (renderer-compatible).
+ */
+export function buildCompactedToolValue(
+  toolName: string | undefined,
+  content: ToolMessage['content'],
+): JSONValue {
+  const isVerificationTool =
+    toolName === 'run_readonly_command' || toolName === 'run_terminal_command'
+  const jsonPart = content.find(
+    (part): part is Extract<ToolResultOutput, { type: 'json' }> =>
+      part.type === 'json',
+  )
+  if (
+    !isVerificationTool ||
+    !jsonPart ||
+    typeof jsonPart.value !== 'object' ||
+    jsonPart.value === null
+  ) {
+    return '[compacted]'
+  }
+  const value = jsonPart.value as Record<string, unknown>
+  return {
+    compacted: true,
+    command: typeof value.command === 'string' ? value.command : undefined,
+    exitCode: typeof value.exitCode === 'number' ? value.exitCode : undefined,
+  } as JSONValue
+}
+
 export class ContextCompactor {
   private logger: Logger
   private contextWindow: number
   private model: string
   private thresholds: Thresholds
+  /** FID-2026-0814-004 H-05: micro-compact off-switch (config `microCompact`). */
+  private readonly microCompactEnabled: boolean
+  /** FID-2026-0814-004 H-06: optional token floor for the pressure gate. */
+  private readonly microCompactFloorTokens: number | undefined
 
   private circuitBreaker: CircuitBreaker
 
@@ -71,15 +117,32 @@ export class ContextCompactor {
 
   constructor(options: CompactorOptions) {
     this.logger = options.logger
+    // FID-2026-0814-006: fail loudly instead of silently defaulting the
+    // context window. An unresolved window makes the display percent and the
+    // pruner trigger diverge from the CLI-resolved window (the operator's
+    // "93% vs 188.3k/262.1k" mismatch). The 200k fallback remains as the
+    // last-resort value, but the divergence is now surfaced as a warning.
     this.contextWindow = options.contextWindow ?? 200_000
+    if (options.contextWindow === undefined) {
+      this.logger.warn(
+        {
+          fallbackContextWindow: this.contextWindow,
+        },
+        'contextWindow was not resolved; falling back to 200_000. ' +
+          'Display percent and pruner trigger may diverge from the CLI-resolved window.',
+      )
+    }
     this.model = options.model ?? 'unknown'
     this.circuitBreaker = new CircuitBreaker(this.logger)
+    // FID-2026-0814-004 H-05/H-06: config-driven micro-compact behavior.
+    this.microCompactEnabled = options.microCompactEnabled ?? true
+    this.microCompactFloorTokens = options.microCompactFloorTokens
 
     // Calculate thresholds based on context window
     this.thresholds = {
       autoCompact: Math.max(this.contextWindow - AUTO_COMPACT_BUFFER, 100_000),
       reactiveCompact: this.contextWindow,
-      microCompactMaxKeepRecent: 3,
+      microCompactMaxKeepRecent: options.microCompactMaxKeepRecent ?? 6,
     }
 
     this.logger.debug(
@@ -97,7 +160,11 @@ export class ContextCompactor {
    * Get the configured thresholds.
    */
   getThresholds(): Thresholds {
-    return { ...this.thresholds }
+    // FID-2026-0815-006 (F-07): return the immutable internal reference
+    // instead of a fresh spread. `this.thresholds` is assigned once in the
+    // constructor and never mutated; every consumer (context-tokens.ts,
+    // loop-context.ts, and the test suites) is read-only (Law-4 verified).
+    return this.thresholds
   }
 
   /**
@@ -109,7 +176,15 @@ export class ContextCompactor {
    * Safety: Only clears tool results where the paired tool_use has been
    * processed (tool_result exists). Prevents orphaned references.
    */
-  microCompact(messages: Message[]): MicroCompactResult {
+  microCompact(
+    messages: Message[],
+    contextTokenCount?: number,
+  ): MicroCompactResult {
+    // FID-2026-0814-004 H-05: the operator's `compression.microCompact`
+    // off-switch. Off = never clear tool results (evidence preservation).
+    if (!this.microCompactEnabled) {
+      return { messages, tokensSaved: 0, messagesCleared: 0 }
+    }
     const originalCount = messages.length
     const compacted: Message[] = []
     const toolResultIndices: number[] = []
@@ -126,12 +201,26 @@ export class ContextCompactor {
       return { messages, tokensSaved: 0, messagesCleared: 0 }
     }
 
+    // FID-2026-0814-004 H-06: pressure gate. Below the configured floor the
+    // compactor keeps ALL evidence — verification-heavy runs at low context
+    // must not have their results erased just because the count exceeds 3.
+    if (
+      this.microCompactFloorTokens !== undefined &&
+      contextTokenCount !== undefined &&
+      contextTokenCount < this.microCompactFloorTokens
+    ) {
+      return { messages, tokensSaved: 0, messagesCleared: 0 }
+    }
+
     // Keep all non-tool messages and the N most recent tool results
     const keepRecent = toolResultIndices.slice(
       -this.thresholds.microCompactMaxKeepRecent,
     )
+    // FID-2026-0815-006 (F-08): Set membership makes the keep-recent test
+    // O(1) instead of the O(n·k) `keepRecent.includes` scan.
+    const keepRecentSet = new Set(keepRecent)
     const clearSet = new Set(
-      toolResultIndices.filter((idx) => !keepRecent.includes(idx)),
+      toolResultIndices.filter((idx) => !keepRecentSet.has(idx)),
     )
 
     for (let i = 0; i < messages.length; i++) {
@@ -143,9 +232,19 @@ export class ContextCompactor {
         // ToolMessage).
         const source = messages[i]
         if (!CompactionMessage_.isToolResult(source)) continue
+        // FID-2026-0814-004 H-01: preserve the machine-readable verification
+        // signal across micro-compaction. run_readonly_command results carry
+        // {command, stdout, stderr, exitCode}; wiping them makes the harness
+        // fight itself (the A–Z agent re-ran ~12 commands to defeat this). The
+        // placeholder keeps the exit code + command identity as a tiny JSON
+        // object — the token savings still come from dropping stdout/stderr.
+        const compactedValue = buildCompactedToolValue(
+          source.toolName,
+          source.content,
+        )
         compacted.push({
           role: 'tool',
-          content: [{ type: 'json', value: '[compacted]' }],
+          content: [{ type: 'json', value: compactedValue }],
           toolName: source.toolName,
           toolCallId: source.toolCallId,
         })
@@ -267,65 +366,61 @@ export class ContextCompactor {
     const keepFromEnd = Math.max(2, Math.floor(messages.length * 0.2))
     const lastMessages = messages.slice(-keepFromEnd)
 
-    // Preserve messages with images (multimodal). Message content parts use
-    // the 'image' type ('image_url' was a loose-shape legacy check from the
-    // pre-Message CompactionMessage type — no such part exists).
-    const imageMessages = messages.filter((msg) => {
-      if (typeof msg.content === 'string') return false
-      return (
-        Array.isArray(msg.content) &&
-        msg.content.some((part) => part.type === 'image')
-      )
-    })
-
-    // P1b (FID-2026-0806-003 Phase 1): preserve compaction-summary /
-    // preserved-state messages. There is at most one <conversation_summary>
-    // message at any time (each pruner run replaces history), so this is a
-    // bounded addition to the preserve set.
-    const preservedStateMessages = messages.filter((msg) =>
-      CompactionMessage_.hasPreservedState(msg),
-    )
-
-    // FID-2026-0806-005 Layer 3: protocol refresh messages are as precious as
-    // the preserved-state block — emergency truncation must never drop them.
-    const criticalMessages = messages.filter((msg) =>
-      CompactionMessage_.hasCriticalContext(msg),
-    )
-
-    // Build preserved set (deduplicate). Preserved messages are excluded from
-    // the middle slice AND re-added to the output so they actually survive
-    // truncation (images, preserved-state, and critical-context alike).
-    const preservedIndices = new Set<number>()
-    preservedIndices.add(0) // first message
-    for (let i = messages.length - keepFromEnd; i < messages.length; i++) {
-      preservedIndices.add(i)
-    }
-    for (const imgMsg of imageMessages) {
-      const idx = messages.indexOf(imgMsg)
-      if (idx >= 0) preservedIndices.add(idx)
-    }
-    for (const stateMsg of preservedStateMessages) {
-      const idx = messages.indexOf(stateMsg)
-      if (idx >= 0) preservedIndices.add(idx)
-    }
-    for (const critMsg of criticalMessages) {
-      const idx = messages.indexOf(critMsg)
-      if (idx >= 0) preservedIndices.add(idx)
+    // FID-2026-0815-006 (F-06): single forward walk builds the preserved-index
+    // set and the ordered image / preserved-state / critical lists, replacing
+    // the previous three `filter` passes plus the repeated `indexOf` scans.
+    const imageMessages: Message[] = []
+    const preservedStateMessages: Message[] = []
+    const criticalMessages: Message[] = []
+    const preservedIndices = new Set<number>([0]) // first message
+    const lastStartIndex = messages.length - keepFromEnd
+    for (let i = 0; i < messages.length; i++) {
+      if (i >= lastStartIndex) {
+        preservedIndices.add(i)
+      }
+      const msg = messages[i]
+      const content = msg.content
+      // Preserve messages with images (multimodal). 'image_url' was a
+      // loose-shape legacy check from the pre-Message CompactionMessage type.
+      const hasImage =
+        typeof content !== 'string' &&
+        Array.isArray(content) &&
+        content.some((part) => part.type === 'image')
+      if (hasImage) {
+        imageMessages.push(msg)
+        preservedIndices.add(i)
+      }
+      // P1b (FID-2026-0806-003): preserve compaction-summary / preserved-state
+      // messages (at most one <conversation_summary> at any time).
+      if (CompactionMessage_.hasPreservedState(msg)) {
+        preservedStateMessages.push(msg)
+        preservedIndices.add(i)
+      }
+      // FID-2026-0806-005 Layer 3: preserve protocol-refresh messages.
+      if (CompactionMessage_.hasCriticalContext(msg)) {
+        criticalMessages.push(msg)
+        preservedIndices.add(i)
+      }
     }
 
     // Middle-preserved messages (images / preserved-state / critical-context)
     // not already covered by the first-message or last-20% slots, deduplicated
-    // and in original order.
-    const reAddedPreserved = [
+    // and in original order. Set membership makes the dedupe and the last-20%
+    // exclusion O(1) per element.
+    const lastMessagesSet = new Set<Message>(lastMessages)
+    const seen = new Set<Message>()
+    const reAddedPreserved: Message[] = []
+    for (const msg of [
       ...imageMessages,
       ...preservedStateMessages,
       ...criticalMessages,
-    ].filter(
-      (msg, idx, arr) =>
-        arr.indexOf(msg) === idx &&
-        msg !== firstMessage &&
-        !lastMessages.includes(msg),
-    )
+    ]) {
+      if (seen.has(msg) || msg === firstMessage || lastMessagesSet.has(msg)) {
+        continue
+      }
+      seen.add(msg)
+      reAddedPreserved.push(msg)
+    }
 
     const truncated = [
       firstMessage,

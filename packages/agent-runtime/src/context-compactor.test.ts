@@ -188,3 +188,32 @@ describe('ContextCompactor.scoreCompactionEffectiveness (P3b anti-thrash)', () =
     expect(check.shouldCompact).toBe(true)
   })
 })
+
+describe('ContextCompactor thresholds (FID-2026-0814-012 — reactiveCompact is the resolved window)', () => {
+  function thresholdsFor(contextWindow: number) {
+    return new ContextCompactor({
+      logger: noopLogger,
+      contextWindow,
+    }).getThresholds()
+  }
+
+  test('reactiveCompact always equals the resolved context window', () => {
+    // A normal window and the practical floor both resolve exactly.
+    expect(thresholdsFor(262_144).reactiveCompact).toBe(262_144)
+    expect(thresholdsFor(128_000).reactiveCompact).toBe(128_000)
+  })
+
+  test('the autoCompact + 30_000 reconstruction coincides for normal windows', () => {
+    const t = thresholdsFor(262_144)
+    expect(t.autoCompact + 30_000).toBe(t.reactiveCompact)
+  })
+
+  test('the autoCompact + 30_000 reconstruction overshoots at the clamp floor (why the fix reads reactiveCompact directly)', () => {
+    // At 128k the Math.max(..., 100_000) clamp floors autoCompact at 100k,
+    // so the reconstruction reads 130k — not the real 128k window.
+    const t = thresholdsFor(128_000)
+    expect(t.autoCompact).toBe(100_000)
+    expect(t.autoCompact + 30_000).not.toBe(t.reactiveCompact)
+    expect(t.autoCompact + 30_000).toBe(130_000)
+  })
+})

@@ -13,7 +13,11 @@ import type { ToolResultOutput } from '@savant-code/common/types/messages/conten
 export function createMultiPromptEditor(): Omit<SecretAgentDefinition, 'id'> {
   return {
     publisher,
-    model: 'anthropic/claude-opus-4.8',
+    // FID-2026-0814-009 B-07: display metadata only. The paid
+    // `claude-opus-4.8` hardcode was removed — this editor inherits the
+    // operator's model via withParentModel at the spawn boundary;
+    // `openrouter/free` is the safe free fallback, never a paid model.
+    model: 'openrouter/free',
     displayName: 'Multi-Prompt Editor',
     spawnerPrompt:
       'Edits code by spawning multiple implementor agents with different strategy prompts, selects the best implementation, and applies the changes. It also returns further suggested improvements which you should take seriously and act on. Pass as input an array of short prompts specifying different implementation approaches or strategies. Make sure to read any files intended to be edited before spawning this agent.',

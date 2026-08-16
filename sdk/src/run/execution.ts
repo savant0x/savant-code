@@ -91,6 +91,9 @@ async function runOnce({
   checkpointDir,
   checkpointTurnId,
   echoCompliance,
+  provenanceMode,
+  contextWindow,
+  compression,
   protocolVariant,
 }: RunExecutionOptions): Promise<RunState> {
   // Transport payloads may be supplied as serialized JSON at this boundary,
@@ -145,6 +148,7 @@ async function runOnce({
         permissionMode,
         designContract,
         echoCompliance,
+        provenanceMode,
         prompt,
         logger,
       },
@@ -327,6 +331,12 @@ async function runOnce({
       ...(extraSavantCodeMetadata ?? {}),
       trace_session_id: traceSessionId,
     },
+    // FID-2026-0725-085 CTX-007 + FID-2026-0814-004 H-05/H-06: the resolved
+    // context window and compression config cross the SDK boundary here —
+    // previously the CLI's values were silently dropped before reaching the
+    // runtime, so ContextCompactor always fell back to 200k.
+    contextWindow,
+    compression,
     signal: signal ?? new AbortController().signal,
   }).catch((error) => {
     resolve(

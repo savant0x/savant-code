@@ -2,9 +2,51 @@ import { castDraft } from 'immer'
 
 import { generateSessionId, initialState } from './initial-state'
 
-import type { ChatSidebarActions, ChatStoreSet } from './types'
+import type {
+  ChatSidebarActions,
+  ChatStoreSet,
+  CompactionLifecycleEvent,
+} from './types'
+import type { CompactionStatus } from '@savant-code/common/types/session-state'
 
 type SetState = ChatStoreSet
+
+/**
+ * FID-2026-0814-006: shared bounded-history helper for the compaction counter
+ * + transcript events. Keeps one record per run and caps the display list.
+ */
+function recordRun(
+  state: {
+    compactionCount: number
+    compactionEvents: CompactionLifecycleEvent[]
+  },
+  event: Omit<CompactionLifecycleEvent, 'at'> & { at?: number },
+): void {
+  state.compactionCount += 1
+  state.compactionEvents.push({ at: Date.now(), ...event })
+  if (state.compactionEvents.length > 5) {
+    state.compactionEvents = state.compactionEvents.slice(-5)
+  }
+}
+
+/**
+ * FID-2026-0815-008 (F-11): shallow field compare for the compaction status.
+ * The runtime rebuilds a fresh object per heartbeat (not reference-stable), so
+ * reference equality would never no-op; comparing the three scalar fields
+ * collapses equal re-deliveries into true change-only notifications.
+ */
+function sameCompactionStatus(
+  a: CompactionStatus | null,
+  b: CompactionStatus | null,
+): boolean {
+  if (a === b) return true
+  if (!a || !b) return false
+  return (
+    a.phase === b.phase &&
+    a.percentUsed === b.percentUsed &&
+    a.tokensSaved === b.tokensSaved
+  )
+}
 
 /**
  * Sidebar data + FSM/activity/stream-lifecycle actions for the zustand store.
@@ -15,12 +57,55 @@ export const createSidebarActions = (set: SetState): ChatSidebarActions => ({
   // Sidebar data actions
   updateContextTokens: (used) =>
     set((state) => {
+      // FID-2026-0815-008 (F-11): no-op on an equal value so the 2s heartbeat
+      // and ~5s snapshot writes don't allocate a new state + notify subscribers.
+      if (Object.is(state.contextTokensUsed, used)) return
       state.contextTokensUsed = used
     }),
 
   updateContextTokensMax: (max) =>
     set((state) => {
+      if (Object.is(state.contextTokensMax, max)) return
       state.contextTokensMax = max
+    }),
+
+  setCompactionStatus: (status) =>
+    set((state) => {
+      // FID-2026-0815-008 (F-11): no-op on an equivalent status so re-delivered
+      // heartbeats don't produce a new state. Shallow compare (not reference)
+      // because the runtime rebuilds a fresh object per heartbeat.
+      if (sameCompactionStatus(state.compactionStatus, status)) return
+      const prev = state.compactionStatus
+      state.compactionStatus = status
+      if (!status) return
+      // FID-2026-0814-006: derive terminal lifecycle events from the runtime
+      // transition, so the counter + transcript stay honest without a new
+      // runtime channel. The runtime writes `compacting` at pruner spawn and
+      // `pruned`/`warning` at completion (spawn-agent-inline.ts); a `warning`
+      // that follows `compacting` is the pruner-ineffective outcome, while a
+      // bare `warning` is the step-boundary threshold state (no run).
+      if (prev?.phase === 'compacting' && status.phase === 'pruned') {
+        recordRun(state, {
+          outcome: 'pruned',
+          tokensSaved: status.tokensSaved,
+          percentUsed: status.percentUsed,
+        })
+      } else if (prev?.phase === 'compacting' && status.phase === 'warning') {
+        recordRun(state, {
+          outcome: 'ineffective',
+          percentUsed: status.percentUsed,
+        })
+      }
+    }),
+
+  recordCompactionRun: (event) =>
+    set((state) => {
+      recordRun(state, event)
+    }),
+
+  clearCompactionEvents: () =>
+    set((state) => {
+      state.compactionEvents = []
     }),
 
   addToolUsed: (toolName) =>
@@ -54,16 +139,23 @@ export const createSidebarActions = (set: SetState): ChatSidebarActions => ({
 
   updateSessionCost: (cost) =>
     set((state) => {
+      if (Object.is(state.sessionCost, cost)) return
       state.sessionCost = cost
     }),
 
   resetSidebarData: () =>
     set((state) => {
       state.contextTokensUsed = 0
-      // contextTokensMax is intentionally NOT reset here. It is derived
-      // from the currently selected model and updated reactively by the
-      // chat screen (FID-2026-0723-062). Resetting it to 200k would make
-      // the sidebar lie after a sidebar reset mid-session.
+      // FID-2026-0813-023: reset the cap too. The old behavior kept the
+      // previous model's window, so a model switch mid-session showed a stale
+      // (often too-large) budget until the next run's startRunMonitors set it.
+      // 0 means "unknown"; the sidebar falls back to the plain token readout.
+      state.contextTokensMax = 0
+      state.compactionStatus = null
+      // FID-2026-0814-006: the counter + transcript history are per-session
+      // activity — reset alongside provenanceEvents on every session reset.
+      state.compactionCount = 0
+      state.compactionEvents = []
       state.toolsUsed = []
       state.toolHistory = []
       state.filesChanged = { modified: 0, created: 0, added: 0, deleted: 0 }
@@ -71,6 +163,8 @@ export const createSidebarActions = (set: SetState): ChatSidebarActions => ({
       state.sessionCost = 0
       state.fsmPhase = initialState.fsmPhase
       state.activity = initialState.activity
+      state.provenanceEvents = []
+      state.teacherState = null
     }),
 
   setFsmPhase: (phase) =>
@@ -81,6 +175,28 @@ export const createSidebarActions = (set: SetState): ChatSidebarActions => ({
   setActivity: (activity) =>
     set((state) => {
       state.activity = activity
+    }),
+
+  addProvenanceEvent: (event) =>
+    set((state) => {
+      state.provenanceEvents.push(event)
+      // FID-2026-0813-009: bounded display history, matching the runtime
+      // provenance event cap so long sessions cannot grow the UI forever.
+      if (state.provenanceEvents.length > 200) {
+        state.provenanceEvents = state.provenanceEvents.slice(-200)
+      }
+    }),
+
+  setTeacherState: (teacherState) =>
+    set((state) => {
+      // castDraft maps the runtime's `readonly` event array onto the immer
+      // draft type; the snapshot is treated as fresh data, never mutated.
+      state.teacherState = castDraft(teacherState)
+    }),
+
+  clearTeacher: () =>
+    set((state) => {
+      state.teacherState = null
     }),
 
   onNewUserMessage: () =>
@@ -175,9 +291,15 @@ export const createSidebarActions = (set: SetState): ChatSidebarActions => ({
       state.suggestedFollowups = null
       state.clickedFollowupsMap = new Map<string, Set<number>>()
 
-      // Reset sidebar data. contextTokensMax is derived from the active
-      // model, so leave it alone — the chat screen effect keeps it correct.
+      // Reset sidebar data. FID-2026-0813-023: reset the cap as well — a
+      // stale previous-model window misled the context meter; 0 = unknown.
       state.contextTokensUsed = 0
+      state.contextTokensMax = 0
+      state.compactionStatus = null
+      // FID-2026-0814-006: the counter + transcript history are per-session
+      // activity — reset alongside provenanceEvents on every session reset.
+      state.compactionCount = 0
+      state.compactionEvents = []
       state.toolsUsed = []
       state.toolHistory = []
       state.filesChanged = { modified: 0, created: 0, added: 0, deleted: 0 }
@@ -185,6 +307,8 @@ export const createSidebarActions = (set: SetState): ChatSidebarActions => ({
       state.sessionCost = 0
       state.fsmPhase = initialState.fsmPhase
       state.activity = initialState.activity
+      state.provenanceEvents = []
+      state.teacherState = null
       state.devMode = initialState.devMode
       state.permissionMode = initialState.permissionMode
     }),

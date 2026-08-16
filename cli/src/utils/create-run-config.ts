@@ -47,6 +47,18 @@ export type CreateRunConfigParams = {
   /** FID-2026-0725-085 CTX-007: Resolved context window from OpenRouter catalog.
    *  Passed to agent runtime for accurate compaction thresholds. */
   contextWindow?: number
+  /** FID-2026-0814-004 H-05/H-06/H-07: compression config from
+   *  `protocol.config.yaml` — `microCompact`, `keepRecentTokens`,
+   *  `autoCompactRatio`, `forceCompactOffset`, and the micro-compact
+   *  keep-recent count. Threaded to the runtime so the config is honored. */
+  compression?: {
+    microCompact?: boolean
+    keepRecentTokens?: number
+    autoCompactRatio?: number
+    forceCompactOffset?: number
+    microCompactMaxKeepRecent?: number
+    microCompactFloorTokens?: number
+  }
   /** FID-2026-0803-004: persistent per-turn file checkpoints (rewind). The
    *  CLI opens/closes the turn on the checkpoint store; the runtime captures
    *  pre-write snapshots into this directory. */
@@ -60,6 +72,9 @@ export type CreateRunConfigParams = {
   /** EHEL enforcement mode — drives which ECHO laws are blocking vs advisory.
    *  hybrid: Laws 1-4 blocking, 5-15 advisory. strict: all 15 blocking. */
   enforcementMode?: 'hybrid' | 'strict'
+  /** FID-2026-0813-004: ZTAP provenance mode. Defaults to `record`; wired from
+   *  `protocol.config.yaml` `provenance.mode` by the CLI. */
+  provenanceMode?: 'off' | 'record' | 'enforce'
 }
 
 const SENSITIVE_EXTENSIONS = new Set([
@@ -203,6 +218,11 @@ export const createRunConfig = (params: CreateRunConfigParams) => {
     },
     // EHEL: enforcement mode drives which laws are blocking vs advisory
     enforcementMode: params.enforcementMode ?? 'hybrid',
+    // FID-2026-0813-004: ZTAP provenance mode (defaults to `record`)
+    provenanceMode: params.provenanceMode ?? 'record',
+    // FID-2026-0814-004 H-05/H-06/H-07: compression config (defaults to the
+    // runtime's built-ins when absent — see ContextCompactor).
+    compression: params.compression,
     fileFilter: ((filePath: string) => {
       if (isSensitiveFile(filePath)) return { status: 'blocked' }
       if (isEnvTemplateFile(filePath)) return { status: 'allow-example' }

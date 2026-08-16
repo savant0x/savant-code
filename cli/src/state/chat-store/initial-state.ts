@@ -42,6 +42,10 @@ export const initialState: ChatStoreState = {
   // Sidebar data initial state
   contextTokensUsed: 0,
   contextTokensMax: 200_000,
+  compactionStatus: null,
+  /** FID-2026-0814-006: session compaction counter + bounded lifecycle events. */
+  compactionCount: 0,
+  compactionEvents: [],
   toolsUsed: [],
   toolHistory: [],
   filesChanged: { modified: 0, created: 0, added: 0, deleted: 0 },
@@ -50,6 +54,8 @@ export const initialState: ChatStoreState = {
   fsmPhase: 'idle',
   devMode: false,
   activity: { kind: 'idle', since: Date.now() },
+  provenanceEvents: [],
+  teacherState: null,
   /** FID-2026-0718-010: anti-thrash window for onStreamEnded (D2/Q17). */
   lastResetAt: 0,
   /**

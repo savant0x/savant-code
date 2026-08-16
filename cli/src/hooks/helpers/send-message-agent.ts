@@ -1,5 +1,5 @@
+import { resolveActiveModel } from '../../state/savant-free-model-store'
 import { getAgentIdForMode } from '../../utils/savant-free-agent-selection'
-import { loadSavantCodeModelPreference } from '../../utils/settings'
 
 import type { AgentMode } from '../../utils/constants'
 import type { AgentDefinition, MessageContent } from '@savant-code/sdk'
@@ -18,12 +18,17 @@ export const resolveAgent = (
   return selectedAgentDefinition ?? agentId ?? getAgentIdForMode(agentMode)
 }
 
-// Apply the user's savant-code model override if one is set.
+// FID-2026-0814-004 H-08/H-09: the UI model store is the SINGLE source of
+// truth for the effective model. The old code-preference-only read left the
+// main agent running a bundled paid default (minimax-m3) whenever the model
+// was selected via the GUI/free store — resolveActiveModel() reads the store,
+// which fail-safes to openrouter/free (paid) or the free-catalog default and
+// can never resolve to a paid model on an empty store.
 export const applySavantCodeModelOverride = (
   agent: AgentDefinition | string,
   agentDefinitions: AgentDefinition[],
 ): AgentDefinition | string => {
-  const modelOverride = loadSavantCodeModelPreference()
+  const modelOverride = resolveActiveModel()
   if (!modelOverride) return agent
 
   // If agent is a string (agent ID), look it up

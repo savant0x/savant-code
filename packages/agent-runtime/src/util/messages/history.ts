@@ -15,6 +15,26 @@ export function expireMessages(
   messages: Message[],
   endOf: 'agentStep' | 'userPrompt',
 ): Message[] {
+  // FID-2026-0815-004 (F-03): fast-path — scan once for a would-expire
+  // message; if none, return the input array unchanged (no allocation).
+  // Semantics are identical to the filter below (same kept elements, same
+  // order); callers reassign `messageHistory` and append via spread copies,
+  // so aliasing the input array is safe.
+  let wouldExpire = false
+  for (const m of messages) {
+    if (m.timeToLive === 'agentStep') {
+      wouldExpire = true
+      break
+    }
+    if (m.timeToLive === 'userPrompt' && endOf === 'userPrompt') {
+      wouldExpire = true
+      break
+    }
+  }
+  if (!wouldExpire) {
+    return messages
+  }
+
   return messages.filter((m) => {
     // Keep messages with no timeToLive
     if (m.timeToLive === undefined) return true

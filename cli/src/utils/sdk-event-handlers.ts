@@ -88,6 +88,12 @@ export const createEventHandler =
         .with({ type: 'compliance_warning' }, (e) =>
           handleComplianceWarning(state, e),
         )
+        // FID-2026-0813-009: provenance events are stored for a read-only
+        // trust-matrix subscription; they never dispatch tools or mutate the
+        // runtime. The store owns the bounded display history.
+        .with({ type: 'provenance_receipt' }, (e) =>
+          useChatStore.getState().addProvenanceEvent(e),
+        )
         .otherwise(() => undefined)
     )
   }

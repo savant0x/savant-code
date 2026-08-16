@@ -17,10 +17,34 @@ export function getSavantContextPrunerMaxContextLength(
 export function getSavantHandleSteps({
   isFree,
   maxContextLength,
+  keepRecentTokens,
+  autoCompactRatio,
+  forceCompactOffset,
 }: {
   isFree: boolean
   maxContextLength: 250_000 | 400_000
+  /** FID-2026-0814-004 H-07 — threaded into the factory (defaults match
+   *  protocol.config.yaml `compression`). */
+  keepRecentTokens?: number
+  autoCompactRatio?: number
+  forceCompactOffset?: number
 }): SavantHandleSteps {
+  // FID-2026-0814-004 H-07: when the caller threads compression config
+  // (protocol.config.yaml), build a fresh variant so the values land in the
+  // serialized literals. Otherwise reuse the pre-baked module variants.
+  if (
+    keepRecentTokens !== undefined ||
+    autoCompactRatio !== undefined ||
+    forceCompactOffset !== undefined
+  ) {
+    return createSavantHandleSteps({
+      defaultMaxContextLength: maxContextLength,
+      cacheExpiryMs: isFree ? 30 * 60 * 1000 : undefined,
+      keepRecentTokens,
+      autoCompactRatio,
+      forceCompactOffset,
+    })
+  }
   if (isFree) {
     if (maxContextLength === 250_000) return handleStepsFree250k
     return handleStepsFree400k
@@ -57,6 +81,16 @@ function createSavantHandleSteps(config: {
     idleAfterSeconds: number
     floorTokens: number
   }
+  /** FID-2026-0814-004 H-07 — pruner tail budget (tokens), from
+   *  `compression.keepRecentTokens`. Baked as a literal; the pruner reads it
+   *  from its spawn params (`agents/context-pruner/main.ts:177-178`). */
+  keepRecentTokens?: number
+  /** FID-2026-0814-004 H-07 — proactive pruner ratio, from
+   *  `compression.autoCompactRatio` (default 0.8). */
+  autoCompactRatio?: number
+  /** FID-2026-0814-013 — force pruner offset (tokens below the window), from
+   *  `compression.forceCompactOffset` (default 15_000). */
+  forceCompactOffset?: number
 }): SavantHandleSteps {
   const {
     defaultMaxContextLength,
@@ -68,30 +102,74 @@ function createSavantHandleSteps(config: {
       idleAfterSeconds: 1800,
       floorTokens: 40_000,
     },
+    keepRecentTokens = 16_384,
+    autoCompactRatio = 0.8,
+    forceCompactOffset = 15_000,
   } = config
   const cacheExpiryParam =
     cacheExpiryMs === undefined ? '' : `cacheExpiryMs: ${cacheExpiryMs},`
+  const keepRecentTokensParam = `keepRecentTokens: ${keepRecentTokens},`
+  const autoCompactRatioLiteral = String(autoCompactRatio)
+  const forceCompactOffsetLiteral = String(forceCompactOffset)
   const amortizedFoldLiteral = amortizedFold ? 'true' : 'false'
   const foldFloorLiteral = String(foldFloorTokens)
   const idleEnabledLiteral = idleCompaction.enabled ? 'true' : 'false'
   const idleAfterMsLiteral = String(idleCompaction.idleAfterSeconds * 1000)
   const idleFloorLiteral = String(idleCompaction.floorTokens)
-  const source = `function* ({ params, agentState }) {
+  const source = `function* ({ params, agentState, logger }) {
     function asNumber(value) {
       return typeof value === 'number' ? value : null
     }
+    // FID-2026-0814-011 C-03: bounded observability channel. The runtime
+    // passes a streaming logger; tests and resumed deserialization may pass
+    // none, so every call is guarded and wrapped — the debug channel must
+    // never break the trigger.
+    function logDebug(data, message) {
+      try {
+        if (logger && typeof logger.debug === 'function') {
+          logger.debug(data, message)
+        }
+      } catch (_) {
+        // ignore — observability must never gate compaction
+      }
+    }
     const p = params ?? {}
+    // FID-2026-0814-011 C-01: never silently adopt the baked fallback. The
+    // resolved window (agentState.maxContextLength, set by the runtime from
+    // the ContextCompactor thresholds) is authoritative; the baked default is
+    // a last resort only, and its use is logged so a divergence is visible.
+    const resolvedMaxContextLength =
+      agentState.maxContextLength ?? asNumber(p.maxContextLength)
     const maxContextLength =
-      agentState.maxContextLength ?? asNumber(p.maxContextLength) ?? ${defaultMaxContextLength}
+      resolvedMaxContextLength ?? ${defaultMaxContextLength}
+    if (resolvedMaxContextLength == null) {
+      logDebug(
+        { fallbackMaxContextLength: ${defaultMaxContextLength} },
+        'savant handleSteps: maxContextLength unresolved — adopting baked default; auto-compact trigger may diverge from the resolved window',
+      )
+    }
     // P3a/P3c/P3d (FID-2026-0806-003) — baked literals; see the factory.
     const amortizedFold = ${amortizedFoldLiteral}
     const foldFloorTokens = ${foldFloorLiteral}
     const idleEnabled = ${idleEnabledLiteral}
     const idleAfterMs = ${idleAfterMsLiteral}
     const idleFloorTokens = ${idleFloorLiteral}
-    const forceRatio = 0.9
+    // FID-2026-0814-004 H-07 / FID-2026-0814-013: compression thresholds
+    // baked from the factory (protocol.config.yaml compression.autoCompactRatio
+    // / forceCompactOffset).
+    const forceCompactOffset = ${forceCompactOffsetLiteral}
+    const autoCompactRatio = ${autoCompactRatioLiteral}
+    // FID-2026-0814-001: after a pruner run completes (stamped by the runtime
+    // spawn boundary), back off the proactive spawn for one cooldown so an
+    // ineffective summary cannot silently re-spawn the pruner every step. The
+    // force path still fires for hard-overflow safety.
+    const prunerCooldownMs = 30_000
     let idleChecked = false
     while (true) {
+      const lastPrunerCompletionAt =
+        typeof agentState.lastPrunerCompletionAt === 'number'
+          ? agentState.lastPrunerCompletionAt
+          : 0
       // P3c idle compaction: evaluate ONCE per run (a run = one user turn, so
       // this is the session-resume moment). Idle gap > idleAfterMs AND context
       // above the floor => compact up front with force so the pruner proceeds
@@ -111,6 +189,7 @@ function createSavantHandleSteps(config: {
             idleMs > idleAfterMs &&
             agentState.contextTokenCount > idleFloorTokens
           ) {
+            agentState.compactionStatus = { phase: 'compacting' }
             yield {
               toolName: 'spawn_agent_inline',
               input: {
@@ -119,6 +198,7 @@ function createSavantHandleSteps(config: {
                   maxContextLength,
                   ...(params ?? {}),
                   force: true,
+                  ${keepRecentTokensParam}
                   ${cacheExpiryParam}
                 },
               },
@@ -127,10 +207,37 @@ function createSavantHandleSteps(config: {
           }
         }
       }
-      // P3d force ratio: above 0.9 the pruner proceeds even for low-value
-      // folds (force: true bypasses the pruner's own gates) rather than
-      // risking a hard overflow. 0.8 proactive trigger stays as-is.
-      if (agentState.contextTokenCount > maxContextLength * forceRatio) {
+      // P3d force offset: above (maxContextLength − forceCompactOffset) the
+      // pruner proceeds even for low-value folds (force: true bypasses the
+      // pruner's own gates) rather than risking a hard overflow. The
+      // autoCompactRatio proactive trigger stays as-is. Both thresholds come
+      // from the factory (H-07 / FID-2026-0814-013).
+      // FID-2026-0814-011 C-02: single trigger authority. autoCompactDue
+      // is set every step by prepareStepContext from the proven
+      // shouldAutoCompact verdict; the ratio arithmetic below is a fallback
+      // only (e.g. a resumed run where the flag was never set). The force
+      // path still fires for hard-overflow safety and bypasses the cooldown.
+      const autoCompactDue = agentState.autoCompactDue === true
+      const forceDue =
+        agentState.contextTokenCount > maxContextLength - forceCompactOffset
+      const proactiveDue =
+        autoCompactDue ||
+        agentState.contextTokenCount > maxContextLength * autoCompactRatio
+      if (proactiveDue || forceDue) {
+        logDebug(
+          {
+            contextTokenCount: agentState.contextTokenCount,
+            maxContextLength,
+            autoCompactDue,
+            forceDue,
+            autoCompactRatio,
+            forceCompactOffset,
+          },
+          'savant handleSteps: auto-compact trigger evaluated',
+        )
+      }
+      if (forceDue) {
+        agentState.compactionStatus = { phase: 'compacting' }
         yield {
           toolName: 'spawn_agent_inline',
           input: {
@@ -139,12 +246,17 @@ function createSavantHandleSteps(config: {
               maxContextLength,
               ...(params ?? {}),
               force: true,
+              ${keepRecentTokensParam}
               ${cacheExpiryParam}
             },
           },
           includeToolCall: false,
         }
-      } else if (agentState.contextTokenCount > maxContextLength * 0.8) {
+      } else if (
+        proactiveDue &&
+        Date.now() - lastPrunerCompletionAt > prunerCooldownMs
+      ) {
+        agentState.compactionStatus = { phase: 'compacting' }
         yield {
           toolName: 'spawn_agent_inline',
           input: {
@@ -152,6 +264,7 @@ function createSavantHandleSteps(config: {
             params: {
               maxContextLength,
               ...(params ?? {}),
+              ${keepRecentTokensParam}
               ${cacheExpiryParam}
             },
           },
@@ -172,13 +285,13 @@ function createSavantHandleSteps(config: {
           yield {
             toolName: 'spawn_agent_inline',
             input: {
-              agent_type: 'context-pruner',
-              params: {
-                maxContextLength,
-                ...(params ?? {}),
-                foldOldestExchange: true,
-                ${cacheExpiryParam}
-              },
+              agent_type: 'context-pruner',                params: {
+                  maxContextLength,
+                  ...(params ?? {}),
+                  foldOldestExchange: true,
+                  ${keepRecentTokensParam}
+                  ${cacheExpiryParam}
+                },
             },
             includeToolCall: false,
           }
@@ -192,6 +305,9 @@ function createSavantHandleSteps(config: {
 
 const handleStepsFree250k = createSavantHandleSteps({
   defaultMaxContextLength: 250_000,
+  keepRecentTokens: 16_384,
+  autoCompactRatio: 0.8,
+  forceCompactOffset: 15_000,
   cacheExpiryMs: 30 * 60 * 1000,
 })
 const handleStepsFree400k = createSavantHandleSteps({

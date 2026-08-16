@@ -125,15 +125,17 @@ const isLoadableAgentFileName = (fileName: string): boolean => {
   )
 }
 
-const getAllAgentFiles = (dir: string): string[] => {
+// FID-2026-0815-007 (F-10): async recursive walk via fs.promises so the boot
+// path never blocks the event loop while `.agents` trees are enumerated.
+const getAllAgentFiles = async (dir: string): Promise<string[]> => {
   const files: string[] = []
   try {
-    const entries = fs.readdirSync(dir, { withFileTypes: true })
+    const entries = await fs.promises.readdir(dir, { withFileTypes: true })
     for (const entry of entries) {
       const fullPath = path.join(dir, entry.name)
       if (entry.isDirectory()) {
         if (shouldSkipAgentDirectory(entry.name)) continue
-        files.push(...getAllAgentFiles(fullPath))
+        files.push(...(await getAllAgentFiles(fullPath)))
         continue
       }
       const isAgentFile = entry.isFile() && isLoadableAgentFileName(entry.name)
@@ -225,7 +227,9 @@ export async function loadLocalAgents({
   const agents: LoadedAgents = {}
 
   const agentDirs = agentsPath ? [agentsPath] : getDefaultAgentDirs()
-  const allAgentFiles = agentDirs.flatMap((dir) => getAllAgentFiles(dir))
+  const allAgentFiles = (
+    await Promise.all(agentDirs.map((dir) => getAllAgentFiles(dir)))
+  ).flat()
 
   if (allAgentFiles.length === 0) {
     return validate ? { agents, validationErrors: [] } : agents

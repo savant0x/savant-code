@@ -1,5 +1,9 @@
+import * as fs from 'node:fs'
+import * as path from 'node:path'
+
 import { SAVANT_FREE_MINIMAX_M3_MODEL_ID } from '@savant-code/common/constants/savant-free-models'
 import { buildArray } from '@savant-code/common/util/array'
+import { readProtocolConfig } from '@savant-code/common/util/protocol-config'
 
 import { publisher } from '../constants'
 import {
@@ -23,6 +27,24 @@ import {
   type SecretAgentDefinition,
   type AllToolNames,
 } from '../types/secret-agent-definition'
+
+// FID-2026-0814-004 H-07: walk upward from this module to find the repo-root
+// protocol.config.yaml (the prebuild imports agents from the repo, and the
+// bundled binary ships from the repo root). Falls back to an empty config so
+// the factory defaults (16_384 / 0.8 / 0.9) apply when the file is absent.
+function resolveRepoProtocolConfig() {
+  let dir = import.meta.dir
+  for (let i = 0; i < 20; i++) {
+    const candidate = path.join(dir, 'protocol.config.yaml')
+    if (fs.existsSync(candidate)) {
+      return readProtocolConfig(dir)
+    }
+    const parent = path.dirname(dir)
+    if (parent === dir) break
+    dir = parent
+  }
+  return readProtocolConfig(process.cwd())
+}
 
 // FID-2026-0802-005 L18: `ENABLE_COMPOSIO_TOOLS = false` made the Composio
 // toolNames branch and the system-prompt addendum dead code (Law 4) — the
@@ -74,6 +96,13 @@ export function createSavant(
   // Verifier inherits parent model via withParentModel().
   const contextPrunerMaxContextLength =
     getSavantContextPrunerMaxContextLength(model)
+  // FID-2026-0814-004 H-07: thread the operator's compression config
+  // (`keepRecentTokens` / `autoCompactRatio` / `forceCompactOffset`) into the
+  // handleSteps factory so the serialized pruner spawn carries the configured
+  // values as baked literals. Resolve protocol.config.yaml by walking up from
+  // this module (the prebuild imports agents from the repo, so the file is
+  // reachable); when absent the factory's defaults (16_384 / 0.8 / 0.9) apply.
+  const protocolConfig = resolveRepoProtocolConfig()
   const defaultProviderOptions = isFree
     ? {
         data_collection: 'deny' as const,
@@ -125,6 +154,11 @@ export function createSavant(
       'glob',
       'render_ui',
       !noGravityIndex && 'gravity_index',
+      // FID-2026-0814-002: durable goal mode tools — main agent only. The
+      // handlers no-op when no goal record exists, so they are safe on every
+      // variant; they never appear on subagent templates.
+      'update_goal',
+      'get_goal',
       !analyzeOnly && 'transition_phase',
       !analyzeOnly && 'write_file',
       !analyzeOnly && 'str_replace',
@@ -214,6 +248,10 @@ export function createSavant(
     handleSteps: getSavantHandleSteps({
       isFree: mode === 'free',
       maxContextLength: contextPrunerMaxContextLength,
+      // FID-2026-0814-004 H-07: compression config threaded as literals.
+      keepRecentTokens: protocolConfig.compression.keepRecentTokens,
+      autoCompactRatio: protocolConfig.compression.autoCompactRatio,
+      forceCompactOffset: protocolConfig.compression.forceCompactOffset,
     }),
   }
 }

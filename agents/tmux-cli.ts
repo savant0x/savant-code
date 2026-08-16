@@ -12,9 +12,11 @@ import type { AgentDefinition } from './types/agent-definition'
 const definition: AgentDefinition = {
   id: 'tmux-cli',
   displayName: 'Tmux CLI Agent',
-  model: 'minimax/minimax-m3',
-  // Provider options are tightly coupled to the model choice above.
-  // If you change the model, update these accordingly.
+  // FID-2026-0814-009 B-08: display metadata only — inherits the operator's
+  // model via withParentModel; `openrouter/free` is the safe free fallback.
+  model: 'openrouter/free',
+  // Privacy, not model billing: infra helpers deny data collection so browser/
+  // DB/token/CLI content never reaches provider training data (B-06).
   providerOptions: {
     data_collection: 'deny',
   },

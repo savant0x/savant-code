@@ -1,23 +1,23 @@
 import { TextAttributes } from '@opentui/core'
 import React from 'react'
 
-import { AgentStack } from './savant-ui'
+import { AgentStack, LearnOverlay } from './savant-ui'
 import { createSidebarSurfaceStyle } from '../chat/styles'
 import { useFids } from '../hooks/use-fids'
 import { useTheme } from '../hooks/use-theme'
 import { useChatStore } from '../state/chat-store'
 import { Branding } from './savant-ui/branding'
-import { useSavantFreeModelStore } from '../state/savant-free-model-store'
-import { IS_SAVANT_FREE } from '../utils/constants'
-import { loadSavantCodeModelPreference } from '../utils/settings'
 import { getVersion } from '../utils/version'
 import { Timeline } from './savant-ui/data-display/timeline'
 import { AgentStatus } from './savant-ui/echo/agent-status'
 import { FidList } from './savant-ui/echo/fid-list'
 import { LoopStatusPanel } from './savant-ui/echo/loop-status-panel'
 import { PerfectionLoop } from './savant-ui/echo/perfection-loop'
+import { TrustMatrix } from './savant-ui/echo/trust-matrix'
 import { KeyValueRow } from './savant-ui/primitives/key-value-row'
 import { SidebarSection } from './savant-ui/primitives/sidebar-section'
+
+import type { CompactionStatus } from '@savant-code/common/types/session-state'
 
 interface ToolCall {
   name: string
@@ -32,6 +32,7 @@ interface AgentInfo {
 
 interface FilesChanged {
   modified: number
+  created: number
   added: number
   deleted: number
 }
@@ -71,6 +72,54 @@ function formatCost(cost: number): string {
   return `$${cost.toFixed(2)}`
 }
 
+/** FID-2026-0813-023: compact the runtime compaction status into a display
+ *  label. Read-only; the runtime is the source of truth. */
+function formatCompactionStatus(status: CompactionStatus): {
+  label: string
+  warning: boolean
+  /** FID-2026-0814-006: OpenClaw-style color band for the percent (of the
+   *  resolved window): green <60, yellow 60-80, orange 80-95, red ≥95. */
+  band?: 'green' | 'yellow' | 'orange' | 'red'
+} {
+  // FID-2026-0814-001: window-relative label (percentUsed denominator is
+  // maxContextLength) and distinct micro vs full-pruner outcomes so the row
+  // states exactly what happened: idle · ✓ micro −N · compacting… · ✓ pruned
+  // −N · ⚠ N% of window.
+  const bandOf = (
+    percent: number | undefined,
+  ): 'green' | 'yellow' | 'orange' | 'red' => {
+    const p = percent ?? 0
+    if (p >= 95) return 'red'
+    if (p >= 80) return 'orange'
+    if (p >= 60) return 'yellow'
+    return 'green'
+  }
+  switch (status.phase) {
+    case 'warning':
+      return {
+        label: `⚠ ${status.percentUsed ?? '?'}% of window`,
+        warning: true,
+        band: bandOf(status.percentUsed),
+      }
+    case 'compacted':
+      return {
+        label: `✓ micro −${formatTokens(status.tokensSaved ?? 0)} tokens`,
+        warning: false,
+        band: bandOf(status.percentUsed),
+      }
+    case 'pruned':
+      return {
+        label: `✓ pruned −${formatTokens(status.tokensSaved ?? 0)} tokens`,
+        warning: false,
+        band: bandOf(status.percentUsed),
+      }
+    case 'compacting':
+      return { label: 'compacting…', warning: false }
+    default:
+      return { label: 'idle', warning: false }
+  }
+}
+
 /**
  * Right sidebar — ECHO Protocol status and session metadata surface.
  *
@@ -97,6 +146,10 @@ export const RightSidebar = React.memo(function RightSidebar({
   const theme = useTheme()
 
   const devMode = useChatStore((s) => s.devMode)
+  const provenanceEvents = useChatStore((s) => s.provenanceEvents)
+  const teacherState = useChatStore((s) => s.teacherState)
+  const compactionStatus = useChatStore((s) => s.compactionStatus)
+  const compactionCount = useChatStore((s) => s.compactionCount)
 
   // FID-2026-0720-033c Phase C: live FID data from dev/fids/ — wires the
   // useFids hook (production consumer of loadFids) into the sidebar. The
@@ -104,14 +157,11 @@ export const RightSidebar = React.memo(function RightSidebar({
   // project's FID history stays visible.
   const { fids: activeFids, archived: archivedFids } = useFids()
 
-  // Resolve the model label based on mode.
-  const displayModel = IS_SAVANT_FREE
-    ? useSavantFreeModelStore.getState().selectedModel
-    : (loadSavantCodeModelPreference() ?? model)
-
   // Pass full FID summaries so the card can display the complete description.
   const fids = activeFids
   const archivedCount = archivedFids.length
+  const compactionLabel =
+    compactionStatus !== null ? formatCompactionStatus(compactionStatus) : null
 
   return (
     <box
@@ -193,15 +243,17 @@ export const RightSidebar = React.memo(function RightSidebar({
 
       <AgentStatus />
 
-      {/* Session */}
+      {/* Session — the bound-agent identity is surfaced by the Active Agents
+          stack (with its streaming fallback) for the default main agent, so
+          only a session explicitly bound to a different agent needs its own
+          row here. */}
       <SidebarSection title="Session" defaultExpanded>
-        <KeyValueRow
-          label="Agent"
-          value={agent === 'main-agent' ? 'Savant' : agent}
-        />
+        {agent !== 'main-agent' && agent !== 'Savant' && (
+          <KeyValueRow label="Agent" value={agent} />
+        )}
         <KeyValueRow label="Cost" value={formatCost(cost)} />
         <KeyValueRow label="Mode" value={mode} />
-        <KeyValueRow label="Model" value={displayModel} />
+        <KeyValueRow label="Model" value={model} />
         {/* P4d (FID-2026-0806-003): live context-usage meter with color
             thresholds (Gemini CLI pattern) — warning at >=70%, error at
             >=100%. tokensMax of 0 means the window is unknown; fall back to
@@ -221,12 +273,61 @@ export const RightSidebar = React.memo(function RightSidebar({
         ) : (
           <KeyValueRow label="Tokens" value={`${formatTokens(tokensUsed)}`} />
         )}
+        {compactionLabel !== null && (
+          <KeyValueRow
+            label="Compaction"
+            value={compactionLabel.label}
+            valueColor={
+              compactionLabel.warning
+                ? theme.warning
+                : compactionLabel.band === 'red'
+                  ? theme.error
+                  : compactionLabel.band === 'orange'
+                    ? theme.warning
+                    : compactionLabel.band === 'yellow'
+                      ? theme.warning
+                      : undefined
+            }
+          />
+        )}
+        {/* FID-2026-0814-006: session compaction counter (OpenClaw pattern).
+            Per-session aggregate, reset alongside the other sidebar data. */}
+        {compactionCount > 0 && (
+          <KeyValueRow label="Compactions" value={compactionCount.toString()} />
+        )}
       </SidebarSection>
+
+      {/* FID-2026-0813-022: read-only live teacher surface. Sourced from the
+          passive store mirror of the runtime singleton; the component has no
+          tool or write authority. */}
+      {teacherState !== null && teacherState.challenge !== null && (
+        <SidebarSection title="Teacher" defaultExpanded>
+          <LearnOverlay
+            challenge={teacherState.challenge}
+            events={teacherState.events}
+            receipt={teacherState.receipt}
+            persisted={teacherState.persisted}
+            competencyState={teacherState.competencyState}
+            phase={teacherState.phase}
+            completionState={teacherState.completionState}
+          />
+        </SidebarSection>
+      )}
 
       {/* Perfection Loop — only show when the FSM is in an active phase
           (not idle). When idle, the loop section is hidden to reduce
           visual clutter. */}
       {fsmPhase !== 'idle' && <PerfectionLoop />}
+
+      {/* FID-2026-0813-009: read-only live governance surface. The SDK event
+          handler stores every provenance_receipt event; the TrustMatrix
+          reducer drops unsigned/unmatched ones, and the component has no tool
+          or write authority. */}
+      {provenanceEvents.length > 0 && (
+        <SidebarSection title="Adversarial Trust Matrix" defaultExpanded>
+          <TrustMatrix events={provenanceEvents} />
+        </SidebarSection>
+      )}
 
       {/* Loop Status — shows active loop cadence, goal condition, and iteration count */}
       <LoopStatusPanel />
@@ -261,10 +362,10 @@ export const RightSidebar = React.memo(function RightSidebar({
           ))}
       </SidebarSection>
 
-      {/* Files Changed */}
+      {/* Files Changed — the SDK emits only `created` and `modified` write
+          events (change-file.ts:32); Added/Deleted were dead counters. */}
       <SidebarSection title="Files Changed" defaultExpanded>
-        <KeyValueRow label="Added" value={filesChanged.added.toString()} />
-        <KeyValueRow label="Deleted" value={filesChanged.deleted.toString()} />
+        <KeyValueRow label="Created" value={filesChanged.created.toString()} />
         <KeyValueRow
           label="Modified"
           value={filesChanged.modified.toString()}

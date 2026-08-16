@@ -240,6 +240,62 @@ describe('incremental update', () => {
     expect(second.filesUnchanged).toBe(1)
     expect(second.filesAdded).toBe(0)
   })
+
+  test('deterministic: two full rebuilds produce identical stats + node/edge rows (FID-2026-0815-009)', async () => {
+    const projectRoot = makeProject({
+      'src/a.ts':
+        "import b from './b'\nclass A {}\nexport function fa() { return fb() }\n",
+      'src/b.ts':
+        "import c from './c'\nclass B {}\nexport function fb() { return fc() }\n",
+      'src/c.ts':
+        "import d from './d'\nclass C {}\nexport function fc() { return fd() }\n",
+      'src/d.ts': 'class D {}\nexport function fd() { return 1 }\n',
+      'src/x.ts':
+        "import y from './y'\nclass X {}\nexport function fx() { return fy() }\n",
+      'src/y.ts':
+        "import z from './z'\nclass Y {}\nexport function fy() { return fz() }\n",
+      'src/z.ts': 'class Z {}\nexport function fz() { return 2 }\n',
+      'src/main.ts': "import a from './a'\nimport x from './x'\nfa()\nfx()\n",
+    })
+    db = makeDb(projectRoot)
+
+    // Compare the semantic graph (paths + symbol names + edge triples), not
+    // raw rowids: `files.id` is AUTOINCREMENT, so ids legitimately shift
+    // across rebuilds while the indexed graph must be byte-identical.
+    const snapshot = () => ({
+      nodes: db!
+        .query(
+          'SELECT f.path AS file, n.type, n.name FROM nodes n JOIN files f ON f.id = n.file_id ORDER BY f.path, n.type, n.name',
+        )
+        .all(),
+      edges: db!
+        .query(
+          'SELECT sf.path AS source, tf.path AS target, e.type, e.weight FROM edges e JOIN files sf ON sf.id = e.source_id JOIN files tf ON tf.id = e.target_id ORDER BY sf.path, tf.path, e.type',
+        )
+        .all(),
+    })
+
+    const firstStats = await updateKnowledgeGraph({
+      projectRoot,
+      db,
+      parseFile: fakeParse,
+      fullRebuild: true,
+    })
+    const first = snapshot()
+
+    const secondStats = await updateKnowledgeGraph({
+      projectRoot,
+      db,
+      parseFile: fakeParse,
+      fullRebuild: true,
+    })
+    const second = snapshot()
+
+    expect(second).toEqual(first)
+    expect(secondStats.nodeCount).toBe(firstStats.nodeCount)
+    expect(secondStats.edgeCount).toBe(firstStats.edgeCount)
+    expect(secondStats.clusterCount).toBe(firstStats.clusterCount)
+  })
 })
 
 describe('blast radius + reachability queries', () => {

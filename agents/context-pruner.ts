@@ -7,7 +7,9 @@ const definition: AgentDefinition = {
   id: 'context-pruner',
   publisher,
   displayName: 'Context Pruner',
-  model: 'anthropic/claude-sonnet-4.6',
+  // FID-2026-0814-009 B-08: display metadata only — inherits the operator's
+  // model via withParentModel; `openrouter/free` is the safe free fallback.
+  model: 'openrouter/free',
 
   spawnerPrompt: `Spawn this agent between steps to prune context, summarizing the conversation into a condensed format when context exceeds the limit.`,
 

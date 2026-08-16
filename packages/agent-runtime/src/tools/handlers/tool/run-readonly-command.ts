@@ -72,42 +72,56 @@ function splitSafeAnd(command: string): string[] {
   return segments
 }
 /**
- * Mask quoted substrings in a command by replacing them with whitespace.
- * Used to detect forbidden metacharacters outside of quoted arguments.
+ * FID-2026-0814-004 H-02: shell-aware metacharacter scan. Replaces the old
+ * maskQuoted + regex-on-masked-string approach, which rejected metacharacters
+ * INSIDE quotes (a quoted `|`, `$` escaped as `\$`, and `$` inside a `[...]`
+ * character class all tripped the denylist even though the shell treats them
+ * as literal). This scanner tracks single-quote / double-quote / backslash-
+ * escape / `[...]` character-class state and only flags UNQUOTED
+ * metacharacters, matching how the shell actually interprets the command.
+ *
+ * Returns true when a forbidden metacharacter appears outside of quotes and
+ * character classes.
  */
-function maskQuoted(command: string): string {
-  let masked = ''
+function hasUnquotedForbiddenMetachar(command: string): boolean {
   let inSingle = false
   let inDouble = false
+  let inClass = false
   let escapeNext = false
-  for (const ch of command) {
+  for (let i = 0; i < command.length; i++) {
+    const ch = command[i]
     if (escapeNext) {
-      masked += ch
       escapeNext = false
       continue
     }
     if (ch === '\\') {
-      masked += ch
       escapeNext = true
       continue
     }
     if (ch === "'" && !inDouble) {
       inSingle = !inSingle
-      masked += ch
       continue
     }
     if (ch === '"' && !inSingle) {
       inDouble = !inDouble
-      masked += ch
       continue
     }
-    if (inSingle || inDouble) {
-      masked += ' '
-    } else {
-      masked += ch
+    if (inSingle || inDouble) continue
+    // `[` starts a character class only when it is not the `[` of a
+    // conditional/glob — treat any `[...]` run as literal (FID H-02). A `]`
+    // outside a class is a literal character and never a metachar.
+    if (ch === '[') {
+      inClass = true
+      continue
     }
+    if (ch === ']' && inClass) {
+      inClass = false
+      continue
+    }
+    if (inClass) continue
+    if (FORBIDDEN_METACHAR_REGEX.test(ch)) return true
   }
-  return masked
+  return false
 }
 function isReadonlyCommand(command: string): {
   valid: boolean
@@ -123,11 +137,12 @@ function isReadonlyCommand(command: string): {
           'Command contains an empty segment (dangling, leading, or consecutive `&&`). Use run_terminal_command in green/audit phase for complex command chains.',
       }
     }
-    const masked = maskQuoted(segment)
     // Check for forbidden metacharacters, but allow Windows stderr redirections
-    // (2>nul, 2>&1) which are read-only diagnostic patterns.
+    // (2>nul, 2>&1) which are read-only diagnostic patterns. The scan is
+    // quote/class-aware (FID-2026-0814-004 H-02): `|`, `$`, `&` inside quotes
+    // or character classes are literal and never flagged.
     if (
-      FORBIDDEN_METACHAR_REGEX.test(masked) &&
+      hasUnquotedForbiddenMetachar(segment) &&
       !WINDOWS_STDERR_REDIRECT_REGEX.test(segment)
     ) {
       return {

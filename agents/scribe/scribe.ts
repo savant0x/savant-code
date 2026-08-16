@@ -5,7 +5,9 @@ import type { AgentDefinition } from '../types/agent-definition'
 const definition: AgentDefinition = {
   id: 'scribe',
   publisher,
-  model: 'anthropic/claude-sonnet-4.6',
+  // FID-2026-0814-009 B-08: display metadata only — inherits the operator's
+  // model via withParentModel; `openrouter/free` is the safe free fallback.
+  model: 'openrouter/free',
   displayName: 'Savant the Scribe',
   spawnerPrompt:
     'Session documentation agent. Spawns at end of session to write session summaries, update LESSONS.md, and capture knowledge files.',

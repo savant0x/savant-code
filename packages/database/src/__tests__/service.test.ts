@@ -124,6 +124,28 @@ describe('database service (FID-006)', () => {
     expect(getMessagesBySessionId(session.id)).toHaveLength(2)
   })
 
+  it('FID-2026-0815-015: omits ephemeral timer/provenance fields on save (no cyclic throw)', () => {
+    const timer = setTimeout(() => {}, 1_000)
+    const session = createSession('chat-cyclic', 'base', {
+      mainAgentState: {
+        activity: { kind: 'thinking', startedAt: 1 },
+        activityIdleTimer: timer,
+        provenance: { ledger: 'in-memory' },
+        messageHistory: [],
+      },
+    })
+    clearTimeout(timer)
+
+    const persisted = session.session_state as {
+      mainAgentState: Record<string, unknown>
+    }
+    expect(persisted.mainAgentState.activityIdleTimer).toBeUndefined()
+    expect(persisted.mainAgentState.provenance).toBeUndefined()
+    expect(persisted.mainAgentState.activity).toBeUndefined()
+    // Durable fields survive the omit.
+    expect(persisted.mainAgentState.messageHistory).toEqual([])
+  })
+
   it('DB2: getTotalCostBySessionId sums persisted delta records', () => {
     const session = createSession('chat-3', 'base', {})
     createCostRecord(session.id, 'base', 10, 2)

@@ -1,6 +1,10 @@
 import fs from 'fs'
 import path from 'path'
 
+import { HOOK_EVENTS } from '../types/hooks'
+
+import type { HookConfig, HookEvent } from '../types/hooks'
+
 export interface ProtocolContractConfig {
   version: string
   strictMode: boolean
@@ -30,8 +34,14 @@ export interface ProtocolCompressionConfig {
   keepRecentTokens: number
   /** P3d auto-compact trigger ratio. */
   autoCompactRatio: number
-  /** P3d force-compact trigger ratio. */
-  forceCompactRatio: number
+  /** P3d force-compact trigger offset (tokens below the window). */
+  forceCompactOffset: number
+  /** FID-2026-0814-004 H-06: recent tool results micro-compact keeps (pressure
+   *  gate). Absent → 6 (runtime default). */
+  microCompactMaxKeepRecent?: number
+  /** FID-2026-0814-004 H-06: token floor below which micro-compact never
+   *  clears (context pressure gate). Absent → no floor (count-only gate). */
+  microCompactFloorTokens?: number
   /** P3c idle compaction — off by default. */
   idleCompaction: {
     enabled: boolean
@@ -69,6 +79,18 @@ export interface ProtocolTelemetryConfig {
   cacheHitAlertDrop: number
 }
 
+/** FID-2026-0813-004 — ZTAP provenance mode from `provenance.mode`. */
+export interface ProtocolProvenanceConfig {
+  /** `off` disables the ledger; `record` signs + appends; `enforce` also
+   *  fail-closes writes before EHEL gates have signed receipts. */
+  mode: 'off' | 'record' | 'enforce'
+}
+
+/** FID-2026-0814-003 — project-scoped lifecycle hooks from `hooks:`. */
+export interface ProtocolHooksConfig {
+  hooks: HookConfig[]
+}
+
 export interface ProtocolConfig {
   strictMode: boolean
   language: string | null
@@ -89,6 +111,10 @@ export interface ProtocolConfig {
   caveman: ProtocolCavemanConfig
   /** P4 token telemetry + cache-hit monitoring. */
   telemetry: ProtocolTelemetryConfig
+  /** FID-2026-0813-004 — ZTAP provenance mode (defaults to `record`). */
+  provenance: ProtocolProvenanceConfig
+  /** FID-2026-0814-003 — project-scoped lifecycle hooks (default: none). */
+  hooks: HookConfig[]
 }
 
 const DEFAULT_COMPRESSION: ProtocolCompressionConfig = {
@@ -96,7 +122,7 @@ const DEFAULT_COMPRESSION: ProtocolCompressionConfig = {
   microCompact: false,
   keepRecentTokens: 16_384,
   autoCompactRatio: 0.8,
-  forceCompactRatio: 0.9,
+  forceCompactOffset: 15_000,
   idleCompaction: {
     enabled: false,
     idleAfterSeconds: 1_800,
@@ -122,6 +148,101 @@ const DEFAULT_CAVEMAN: ProtocolCavemanConfig = {
 const DEFAULT_TELEMETRY: ProtocolTelemetryConfig = {
   enabled: true,
   cacheHitAlertDrop: 0.3,
+}
+
+const DEFAULT_PROVENANCE: ProtocolProvenanceConfig = {
+  mode: 'record',
+}
+
+/**
+ * FID-2026-0814-003: parse the `hooks:` block (a list of hook entries). Each
+ * entry starts with a `- event: ...` line; following indented `key: value`
+ * lines fill in the entry. Invalid entries (unknown event, missing command,
+ * non-positive timeout) are DROPPED fail-safe — a malformed hook can never
+ * brick a session or silently change enforcement semantics.
+ */
+function parseHookConfigs(lines: string[]): HookConfig[] {
+  const hooks: HookConfig[] = []
+  let current: Partial<HookConfig> | null = null
+  let env: Record<string, string> | undefined
+  let inEnv = false
+
+  const flush = () => {
+    if (!current) return
+    if (
+      current.event !== undefined &&
+      HOOK_EVENTS.includes(current.event as HookEvent) &&
+      typeof current.command === 'string' &&
+      current.command.trim() !== ''
+    ) {
+      const timeout =
+        typeof current.timeout === 'number' && current.timeout > 0
+          ? current.timeout
+          : undefined
+      hooks.push({
+        event: current.event as HookEvent,
+        command: current.command.trim(),
+        ...(current.matcher !== undefined ? { matcher: current.matcher } : {}),
+        ...(timeout !== undefined ? { timeout } : {}),
+        ...(current.cwd !== undefined ? { cwd: current.cwd } : {}),
+        ...(env !== undefined && Object.keys(env).length > 0 ? { env } : {}),
+      })
+    }
+    current = null
+    env = undefined
+    inEnv = false
+  }
+
+  const parseValue = (raw: string): string => {
+    const trimmed = raw.trim()
+    const unquoted = trimmed.replace(/^["']|["']$/g, '')
+    // Strip YAML inline comments outside quotes (best-effort).
+    return unquoted.split(/#/)[0].trim()
+  }
+
+  for (const line of lines) {
+    if (line.trim() === '') continue
+    const entryMatch = line.match(/^\s*-\s+event:\s*(.+)$/)
+    if (entryMatch) {
+      flush()
+      current = { event: parseValue(entryMatch[1]) as HookEvent }
+      inEnv = false
+      continue
+    }
+    if (!current) continue
+    const fieldMatch = line.match(/^\s{4,}(\w+):\s*(.*)$/)
+    if (!fieldMatch) {
+      inEnv = false
+      continue
+    }
+    const key = fieldMatch[1]
+    const raw = fieldMatch[2]
+    if (key === 'env') {
+      env = {}
+      inEnv = true
+      continue
+    }
+    if (inEnv && key !== 'command' && key !== 'event') {
+      // env sub-entries are `  key: value` pairs (indent deeper than 4).
+      if (env) env[key] = parseValue(raw)
+      continue
+    }
+    inEnv = false
+    if (key === 'event') {
+      current.event = parseValue(raw) as HookEvent
+    } else if (key === 'command') {
+      current.command = parseValue(raw)
+    } else if (key === 'matcher') {
+      current.matcher = parseValue(raw)
+    } else if (key === 'timeout') {
+      const parsed = Number.parseInt(raw.trim(), 10)
+      if (Number.isFinite(parsed) && parsed > 0) current.timeout = parsed
+    } else if (key === 'cwd') {
+      current.cwd = parseValue(raw)
+    }
+  }
+  flush()
+  return hooks
 }
 
 function extractYamlSection(
@@ -169,6 +290,8 @@ export function readProtocolConfig(cwd: string): ProtocolConfig {
   const yagni: ProtocolYagniConfig = { ...DEFAULT_YAGNI }
   const caveman: ProtocolCavemanConfig = { ...DEFAULT_CAVEMAN }
   const telemetry: ProtocolTelemetryConfig = { ...DEFAULT_TELEMETRY }
+  const provenance: ProtocolProvenanceConfig = { ...DEFAULT_PROVENANCE }
+  const hooks: HookConfig[] = []
 
   try {
     const configPath = path.join(cwd, 'protocol.config.yaml')
@@ -247,9 +370,17 @@ export function readProtocolConfig(cwd: string): ProtocolConfig {
       const microCompact = parseBool(compressionText, 'microCompact')
       const keepRecentTokens = parseNumber(compressionText, 'keepRecentTokens')
       const autoCompactRatio = parseNumber(compressionText, 'autoCompactRatio')
-      const forceCompactRatio = parseNumber(
+      const forceCompactOffset = parseNumber(
         compressionText,
-        'forceCompactRatio',
+        'forceCompactOffset',
+      )
+      const microCompactMaxKeepRecent = parseNumber(
+        compressionText,
+        'microCompactMaxKeepRecent',
+      )
+      const microCompactFloorTokens = parseNumber(
+        compressionText,
+        'microCompactFloorTokens',
       )
       const model = parseString(compressionText, 'model')
       compression.enabled = boolOr(enabled, compression.enabled)
@@ -260,8 +391,14 @@ export function readProtocolConfig(cwd: string): ProtocolConfig {
       if (autoCompactRatio !== undefined) {
         compression.autoCompactRatio = autoCompactRatio
       }
-      if (forceCompactRatio !== undefined) {
-        compression.forceCompactRatio = forceCompactRatio
+      if (forceCompactOffset !== undefined) {
+        compression.forceCompactOffset = forceCompactOffset
+      }
+      if (microCompactMaxKeepRecent !== undefined) {
+        compression.microCompactMaxKeepRecent = microCompactMaxKeepRecent
+      }
+      if (microCompactFloorTokens !== undefined) {
+        compression.microCompactFloorTokens = microCompactFloorTokens
       }
       if (model !== undefined) {
         compression.model = model
@@ -337,6 +474,24 @@ export function readProtocolConfig(cwd: string): ProtocolConfig {
         telemetry.cacheHitAlertDrop = cacheHitAlertDrop
       }
     }
+
+    // FID-2026-0813-004: ZTAP provenance mode. Only `off|record|enforce` are
+    // accepted; anything else (or a missing key) keeps the `record` default.
+    const provenanceLines = extractYamlSection(lines, 'provenance', 0)
+    const provenanceText = provenanceLines.join('\n')
+    if (provenanceLines.length > 0) {
+      const mode = parseString(provenanceText, 'mode')
+      if (mode === 'off' || mode === 'record' || mode === 'enforce') {
+        provenance.mode = mode
+      }
+    }
+
+    // FID-2026-0814-003: project-scoped lifecycle hooks. Invalid entries are
+    // dropped fail-safe (see parseHookConfigs).
+    const hooksLines = extractYamlSection(lines, 'hooks', 0)
+    if (hooksLines.length > 0) {
+      hooks.push(...parseHookConfigs(hooksLines))
+    }
   } catch {
     // File doesn't exist or can't be read — use defaults
   }
@@ -355,6 +510,8 @@ export function readProtocolConfig(cwd: string): ProtocolConfig {
     yagni,
     caveman,
     telemetry,
+    provenance,
+    hooks,
   }
 }
 

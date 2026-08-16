@@ -13,12 +13,90 @@ import { describe, expect, it } from 'bun:test'
 
 import {
   EchoComplianceTracker,
+  classifyFileKind,
   detectsVerificationCommand,
   hasNewApiDeclaration,
   isSecuritySensitivePath,
   meetsVerifierCriteria,
   userRequestedReview,
 } from '../echo-compliance'
+
+describe('EchoComplianceTracker — provenance-ready write record (FID-2026-0813-002)', () => {
+  it('stores agent identity, phase, and law-check outcomes on the write record', () => {
+    const t = new EchoComplianceTracker()
+    t.recordWrite({
+      path: '/proj/src/a.ts',
+      lineDelta: 5,
+      contentKnowledge: false,
+      isNewFile: false,
+      securitySensitive: false,
+      agentId: 'agent-1',
+      agentType: 'forge',
+      fsmPhase: 'green',
+      lawChecks: [{ law: 7, outcome: 'advisory' }],
+    })
+    const writes = t.getWriteRecords()
+    expect(writes).toHaveLength(1)
+    expect(writes[0].agentId).toBe('agent-1')
+    expect(writes[0].agentType).toBe('forge')
+    expect(writes[0].fsmPhase).toBe('green')
+    expect(writes[0].lawChecks).toEqual([{ law: 7, outcome: 'advisory' }])
+  })
+
+  it('resolves fidId exactly against the active-FID set', () => {
+    const t = new EchoComplianceTracker({
+      fidPaths: ['/proj/dev/fids/FID-2026-0813-001-ztap-provenance-master.md'],
+    })
+    t.recordWrite({
+      path: '/proj/dev/fids/FID-2026-0813-001-ztap-provenance-master.md',
+      lineDelta: 3,
+      contentKnowledge: false,
+      isNewFile: false,
+      securitySensitive: false,
+    })
+    expect(t.getWriteRecords()[0].fidId).toBe('FID-2026-0813-001')
+  })
+
+  it('resolves fidId from the active FID directory rule as fallback', () => {
+    const t = new EchoComplianceTracker()
+    t.recordWrite({
+      path: '/proj/dev/fids/FID-2026-0813-004-ztap-write-boundary-interception.md',
+      lineDelta: 3,
+      contentKnowledge: false,
+      isNewFile: false,
+      securitySensitive: false,
+    })
+    expect(t.getWriteRecords()[0].fidId).toBe('FID-2026-0813-004')
+  })
+
+  it('leaves fidId undefined for non-FID writes', () => {
+    const t = new EchoComplianceTracker()
+    t.recordWrite({
+      path: '/proj/src/regular.ts',
+      lineDelta: 3,
+      contentKnowledge: false,
+      isNewFile: false,
+      securitySensitive: false,
+    })
+    expect(t.getWriteRecords()[0].fidId).toBeUndefined()
+  })
+
+  it('does not break existing FID escalation when fields are absent', () => {
+    const t = new EchoComplianceTracker()
+    t.recordWrite({
+      path: '/proj/dev/fids/FID-2026-0813-001-ztap-provenance-master.md',
+      lineDelta: 20,
+      contentKnowledge: false,
+      isNewFile: false,
+      securitySensitive: false,
+    })
+    const violations = t.evaluateAtStepBoundary({
+      stepNumber: 1,
+      endingTurn: true,
+    })
+    expect(violations.some((v) => v.law === 'fid')).toBe(true)
+  })
+})
 
 describe('detectsVerificationCommand', () => {
   it('detects typecheck / test / lint / build-verify commands', () => {
@@ -168,6 +246,43 @@ describe('EchoComplianceTracker — Law 1 (read-before-write)', () => {
       securitySensitive: false,
     })
     expect(v).toBeNull()
+  })
+
+  it('treats a search pattern as a weak read (substring, case/sep normalized)', () => {
+    const t = new EchoComplianceTracker()
+    t.recordPatternRead('AUTH')
+    const v = t.recordWrite({
+      path: '/proj/src/auth/login.ts',
+      lineDelta: 3,
+      contentKnowledge: false,
+      isNewFile: false,
+      securitySensitive: false,
+    })
+    expect(v).toBeNull()
+  })
+
+  it('keeps recording after the pattern window is saturated (bounded, no throw)', () => {
+    const t = new EchoComplianceTracker()
+    for (let i = 0; i < 1000; i += 1) {
+      t.recordPatternRead(`needle-${i}`)
+    }
+    // A still-retained weak signal matches; a fresh write never throws.
+    const retained = t.recordWrite({
+      path: '/proj/src/needle-999/keep.ts',
+      lineDelta: 3,
+      contentKnowledge: false,
+      isNewFile: false,
+      securitySensitive: false,
+    })
+    expect(retained).toBeNull()
+    const unflagged = t.recordWrite({
+      path: '/proj/src/unrelated.ts',
+      lineDelta: 3,
+      contentKnowledge: false,
+      isNewFile: false,
+      securitySensitive: false,
+    })
+    expect(unflagged?.law).toBe('law1')
   })
 
   it('downgrades to info when the user prompt mentions the file', () => {
@@ -368,5 +483,84 @@ describe('EchoComplianceTracker — steering', () => {
     const second = t.takeSteeringMessages()
     expect(first.length).toBeGreaterThan(0)
     expect(second.length).toBe(0)
+  })
+})
+
+describe('classifyFileKind (FID-2026-0814-004 H-03)', () => {
+  it('classifies markdown and harness doc directories as docs', () => {
+    expect(classifyFileKind('/proj/dev/scratchpad/report.md')).toBe('docs')
+    expect(classifyFileKind('/proj/docs/design/ztap.md')).toBe('docs')
+    expect(classifyFileKind('/proj/CHANGELOG.md')).toBe('docs')
+    expect(classifyFileKind('/proj/dev/session-summaries/2026-08-14.md')).toBe(
+      'docs',
+    )
+    expect(classifyFileKind('/proj/dev/test-prompts/az.md')).toBe('docs')
+  })
+
+  it('keeps source paths as code, including markdown under a source tree', () => {
+    expect(classifyFileKind('/proj/src/a.ts')).toBe('code')
+    expect(classifyFileKind('/proj/src/docs/helper.ts')).toBe('code')
+    expect(classifyFileKind('/proj/packages/x/src/a.ts')).toBe('code')
+  })
+})
+
+describe('EchoComplianceTracker — docs classification (FID-2026-0814-004 H-03)', () => {
+  it('doc-only writes do not trigger Law 3 or Verifier criteria nags', () => {
+    const t = new EchoComplianceTracker()
+    t.recordWrite({
+      path: '/proj/dev/scratchpad/report.md',
+      lineDelta: 50,
+      contentKnowledge: false,
+      isNewFile: false,
+      securitySensitive: false,
+    })
+    const violations = t.evaluateAtStepBoundary({
+      stepNumber: 1,
+      endingTurn: true,
+    })
+    // No Law 3 code nag, no verifier_criteria nag for a pure doc write.
+    expect(violations.some((v) => v.law === 'verifier_criteria')).toBe(false)
+    expect(violations.some((v) => v.law === 'fid')).toBe(false)
+    const law3 = violations.filter((v) => v.law === 'law3')
+    // The docs-appropriate info reminder may fire, but never the code nag.
+    for (const v of law3) {
+      expect(v.message).toContain('markdownlint')
+      expect(v.severity).toBe('info')
+    }
+  })
+
+  it('code writes still trigger Law 3 + Verifier criteria exactly as before', () => {
+    const t = new EchoComplianceTracker()
+    t.recordWrite({
+      path: '/proj/src/a.ts',
+      lineDelta: 50,
+      contentKnowledge: false,
+      isNewFile: false,
+      securitySensitive: false,
+    })
+    const violations = t.evaluateAtStepBoundary({
+      stepNumber: 1,
+      endingTurn: true,
+    })
+    expect(violations.some((v) => v.law === 'law3')).toBe(true)
+    expect(violations.some((v) => v.law === 'verifier_criteria')).toBe(true)
+  })
+
+  it('running markdownlint clears a doc-only turn without a code nag', () => {
+    const t = new EchoComplianceTracker()
+    t.recordWrite({
+      path: '/proj/dev/scratchpad/report.md',
+      lineDelta: 50,
+      contentKnowledge: false,
+      isNewFile: false,
+      securitySensitive: false,
+    })
+    t.recordVerification('bun run lint:md')
+    const violations = t.evaluateAtStepBoundary({
+      stepNumber: 1,
+      endingTurn: true,
+    })
+    expect(violations.filter((v) => v.law === 'law3')).toHaveLength(0)
+    expect(violations.some((v) => v.law === 'verifier_criteria')).toBe(false)
   })
 })

@@ -20,10 +20,12 @@ Savant Code takes a different approach. It uses **10 specialized agents** with s
 ## Quick Start
 
 ```bash
-npm install -g savant-code
+npm install -g savant-code   # or: npm i savant-code -g
 cd your-project
 savant-code
 ```
+
+[`savant-code` on npm](https://www.npmjs.com/package/savant-code)
 
 If Ollama is installed and running, it is detected automatically:
 
@@ -74,7 +76,7 @@ No code is written without a plan. No plan is accepted without audit. No audit p
 
 - **Multi-agent orchestration** — 10 canonical agents coordinate through ECHO with explicit separation of duties
 - **Tool permission boundaries** — Each agent gets exactly the tools it needs via strict allowlist filtering
-- **Context compaction** — 4-layer progressive auto-compaction keeps sessions running through large codebases
+- **Context compaction** — 4-layer progressive auto-compaction with a single trigger authority keeps sessions running through large codebases
 - **Checkpoint & Rewind** — Persistent per-turn edit checkpoints with `/rewind` modes for code, conversation, both, or session fork
 - **Fail-closed streaming** — Incomplete or malformed tool calls are rejected, not coerced
 - **Provider flexibility** — Works with Ollama (local-first), OpenRouter (default boot provider, free tier `openrouter/free`), OpenCode Go, TokenHarbor, NVIDIA NIM, CommandCode, or any OpenAI-compatible API
@@ -86,6 +88,11 @@ No code is written without a plan. No plan is accepted without audit. No audit p
 - **Design systems** — `/design` manages a project-local token system (create/edit/import/drafts/reset) that the agent applies to every visual output; built-ins are immutable and persistence is atomic
 - **Release automation** — `/release preview \| diagnose \| go \| resume \| status` drives a fail-closed public-release pipeline with receipts and a structured audit trail
 - **Universal session-init grounding** — every session deterministically boots by reading the harness protocol local-first, with a drift-checked embedded fallback for npm-installed copies (FID-2026-0810-002)
+- **Agent-Steering Teacher (`/learn`)** — local-first exercises for directing and reviewing an AI coding agent, with a capability-sandboxed execution boundary and ZTAP-signed versioned progression
+- **Zero-Trust Agentic Provenance (ZTAP)** — per-role Ed25519-signed write receipts at the native write boundary, an append-only hash-only session ledger, a read-only live Trust Matrix, and `/attest` JSON + offline HTML receipts (see the [ZTAP guide](design/zero-trust-agentic-provenance.md))
+- **Durable budgeted goal mode** — `/goal <objective> [--budget tokens=N turns=N time=MS]` drives a budgeted, resumable goal run with token/turn/wall-clock ceilings and an honest `<untrusted_objective>` injection boundary (see the [goal-mode guide](design/goal-mode.md))
+- **Extensible hook system** — a project-scoped `hooks:` block in `protocol.config.yaml` runs external commands at the tool-executor lifecycle (`PreToolUse`/`PostToolUse`/session/subagent events), composing with the EHEL gate and fail-open by default (see the [hook-system guide](design/hook-system.md))
+- **One model project-wide** — the model selected in the UI panel is the only model used: the main agent, teacher-forge, headless runs, and every spawned subagent resolve the operator's selection (never a hardcoded paid fallback). The paid build resolves its boot model only from the `/model` selection (`openrouter/free` when unset) and never reads the unreleased savant-free catalog or its preference key, so a stale free-model preference cannot silently switch the operator to a paid model (FID-2026-0814-004 H-08..H-12, FID-2026-0814-010)
 
 ---
 
@@ -107,6 +114,10 @@ No code is written without a plan. No plan is accepted without audit. No audit p
 - [Features](features.md)
 - [Knowledge Graph](knowledge-graph.md)
 - [Export Workflows & Code Universe](code-universe-export.md)
+- [Agent-Steering Teacher](design/agent-steering-teacher-overview.md)
+- [Zero-Trust Agentic Provenance](design/zero-trust-agentic-provenance.md)
+- [Hook System](design/hook-system.md)
+- [Goal Mode](design/goal-mode.md)
 - [Installation](installation.md)
 
 ### Reference

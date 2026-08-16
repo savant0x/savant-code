@@ -41,8 +41,6 @@ export const ToolBlockGroup = memo(
       ))
       .filter(Boolean)
 
-    if (groupNodes.length === 0) return null
-
     // Combine all tool texts for copying the group
     const getCopyText = useCallback(() => {
       return toolBlocks
@@ -54,6 +52,8 @@ export const ToolBlockGroup = memo(
         .filter(Boolean)
         .join('\n\n---\n\n')
     }, [toolBlocks])
+
+    if (groupNodes.length === 0) return null
 
     return (
       <CopyableBlock getCopyText={getCopyText}>

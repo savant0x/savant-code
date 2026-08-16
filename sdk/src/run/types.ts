@@ -49,12 +49,10 @@ export type OverrideToolHandlers = {
   }) => Promise<Record<string, string | null>>
 }
 
-export function isRunPauseError<T>(
-  error: T,
-): error is T & { savantCode$1?: boolean; name?: string } {
+export function isRunPauseError<T>(error: T): error is T & { name?: string } {
   if (!error || typeof error !== 'object') return false
-  const err = error as { savantCode$1?: unknown; name?: unknown }
-  return err.savantCode$1 === true || err.name === 'SavantCodeRunPausedError'
+  const err = error as { name?: unknown }
+  return err.name === 'SavantCodeRunPausedError'
 }
 
 export type SavantCodeClientOptions = {
@@ -179,6 +177,28 @@ export type RunOptions = {
   echoCompliance?: {
     mode?: 'warn' | 'off'
     fidPaths?: string[]
+  }
+  /** FID-2026-0813-004: ZTAP provenance mode — `off | record | enforce`.
+   *   Defaults to `record`. `enforce` fails closed: a write that cannot be
+   *   signed is blocked. `off` disables receipts entirely. */
+  provenanceMode?: 'off' | 'record' | 'enforce'
+  /** FID-2026-0725-085 CTX-007: resolved context window (tokens) for the
+   *   model in use. Threaded to the runtime so the ContextCompactor thresholds,
+   *   the display percent, and the pruner trigger all reference the same
+   *   window. Absent → the runtime falls back with a loud warning, never a
+   *   silent 200k default. */
+  contextWindow?: number
+  /** FID-2026-0814-004 H-05/H-06/H-07: compression config threaded from
+   *   `protocol.config.yaml` `compression` — `microCompact` (on/off),
+   *   `keepRecentTokens` (pruner fold floor), `autoCompactRatio` /
+   *   `forceCompactOffset` (pruner trigger). Absent → runtime defaults. */
+  compression?: {
+    microCompact?: boolean
+    keepRecentTokens?: number
+    autoCompactRatio?: number
+    forceCompactOffset?: number
+    microCompactMaxKeepRecent?: number
+    microCompactFloorTokens?: number
   }
 }
 

@@ -4,7 +4,6 @@ import {
   supportsCacheControl,
 } from '@savant-code/common/old-constants'
 import { TOOLS_WHICH_WONT_FORCE_NEXT_STEP } from '@savant-code/common/tools/constants'
-import { buildArray } from '@savant-code/common/util/array'
 import { serializeCacheDebugCorrelation } from '@savant-code/common/util/cache-debug'
 import { systemMessage, userMessage } from '@savant-code/common/util/messages'
 
@@ -21,10 +20,7 @@ import { isThinkOnlyResponse } from '../util/think-tags'
 import { countTokens } from '../util/token-counter'
 
 import type { RunAgentStepParams, RunAgentStepResult } from './types'
-import type {
-  Message,
-  ToolMessage,
-} from '@savant-code/common/types/messages/savant-code-message'
+import type { ToolMessage } from '@savant-code/common/types/messages/savant-code-message'
 
 export const runAgentStep = async (
   params: RunAgentStepParams,
@@ -115,21 +111,27 @@ export const runAgentStep = async (
       additionalToolDefinitions,
     }))
 
-  const agentMessagesUntruncated = buildArray<Message>(
-    ...expireMessages(agentState.messageHistory, 'agentStep'),
-
-    stepPrompt &&
-      userMessage({
+  // FID-2026-0815-004 (F-03): replace the buildArray(…spread…, falsey-filter)
+  // construction with a conditional append. buildArray only ever removed the
+  // `false` from `stepPrompt && …` when stepPrompt was absent; the ternary
+  // below covers that case exactly, and expireMessages' fast-path avoids the
+  // allocation when nothing expires (4 allocations/step → 2, or 1 when there
+  // is no stepPrompt).
+  const filtered = expireMessages(agentState.messageHistory, 'agentStep')
+  const stepPromptMessage = stepPrompt
+    ? userMessage({
         content: stepPrompt,
         tags: ['STEP_PROMPT'],
 
         // James: Deprecate the below, only use tags, which are not prescriptive.
         timeToLive: 'agentStep' as const,
         keepDuringTruncation: true,
-      }),
-  )
+      })
+    : undefined
 
-  agentState.messageHistory = agentMessagesUntruncated
+  agentState.messageHistory = stepPromptMessage
+    ? [...filtered, stepPromptMessage]
+    : filtered
 
   const { model } = agentTemplate
 
@@ -160,8 +162,11 @@ export const runAgentStep = async (
 
   const iterationNum = agentState.messageHistory.length
   // system is a plain string; count it directly rather than JSON-stringifying
-  // it (which would add quotes and escape every newline).
-  const systemTokens = countTokens(system)
+  // it (which would add quotes and escape every newline). FID-2026-0815-011
+  // E-01: reuse the count computed in prepareStepContext so the invariant
+  // system prompt is not re-tokenized every step (fallback covers direct
+  // callers/tests).
+  const systemTokens = params.systemTokens ?? countTokens(system)
 
   const {
     cacheDebugCorrelation,
@@ -365,12 +370,12 @@ export const runAgentStep = async (
       prompt,
       shouldEndTurn,
       duration: Date.now() - startTime,
-      fullResponse,
-      // Summarize instead of logging the full message history: logging it
-      // every step bloats log files quadratically over the course of a chat.
+      // FID-2026-0815-012 G-01: summarize only. `fullResponse`, `toolCalls`,
+      // and `toolResults` are captured by the trace writer (via
+      // messageHistory above) and the persisted chat file, so re-serializing
+      // them here deep-copies large payloads every step for no observability
+      // gain. Keep the cheap scalar summary fields instead.
       messageCount: agentState.messageHistory.length,
-      toolCalls,
-      toolResults,
       stepCreditsUsed,
     },
     `End agent ${agentType} step ${iterationNum} (${userInputId}${prompt ? ` - Prompt: ${prompt.slice(0, 20)}` : ''})`,

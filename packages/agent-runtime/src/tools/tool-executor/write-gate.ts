@@ -137,7 +137,10 @@ export async function runWriteGate(params: {
   // narrowed toolCall, and an empty/non-string path was rejected by
   // resolveAndContain just above.
   if (checkpointDir && typeof input.path === 'string') {
-    captureSnapshot({
+    // FID-2026-0815-005 (F-04): awaited — the async read still completes
+    // before the write dispatches (runWriteGate is already async), so the
+    // pre-edit original is captured exactly once per path.
+    await captureSnapshot({
       checkpointDir,
       turnId: checkpointTurnId ?? clientSessionId,
       filePath: input.path,

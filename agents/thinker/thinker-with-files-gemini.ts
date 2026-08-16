@@ -5,9 +5,12 @@ import type { SecretAgentDefinition } from '../types/secret-agent-definition'
 const definition: SecretAgentDefinition = {
   id: 'thinker-with-files-gemini',
   publisher,
-  model: 'google/gemini-3.1-pro-preview',
-  inheritParentModel: false,
-  displayName: 'Theo the Theorizer with Files (Gemini)',
+  // FID-2026-0814-004 H-11: display metadata only. The Gemini hardcode and
+  // `inheritParentModel: false` escape were removed — this thinker now
+  // inherits the operator's model via withParentModel like every other
+  // sub-agent.
+  model: 'openrouter/free',
+  displayName: 'Theo the Theorizer with Files',
   reasoningOptions: {
     effort: 'medium',
   },

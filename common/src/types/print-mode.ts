@@ -7,6 +7,7 @@ import type {
   ComplianceSeverity,
   ComplianceWarningLaw,
 } from './echo-compliance'
+import type { TrustReceipt } from './provenance'
 
 export const printModeStartSchema = z.object({
   type: z.literal('start'),
@@ -176,6 +177,24 @@ export type PrintModeComplianceWarning = z.infer<
   severity: ComplianceSeverity
 }
 
+// FID-2026-0813-009 — read-only ZTAP event. The receipt is the signed record;
+// a display event without one is deliberately dropped by the matrix reducer.
+// FID-2026-0814-005: `no_verdict` joins the terminal vocabulary — the honest
+// close state for a session that ended without an independent audit.
+export const printModeProvenanceReceiptSchema = z.object({
+  type: z.literal('provenance_receipt'),
+  sessionId: z.string(),
+  seq: z.number().int().positive(),
+  phase: z.enum(['write', 'audit', 'adversarial', 'supersession']),
+  status: z.enum(['pending', 'complete', 'superseded', 'no_verdict']),
+  signed: z.boolean(),
+  receipt: z.custom<TrustReceipt>().optional(),
+  verdictText: z.string().optional(),
+})
+export type PrintModeProvenanceReceipt = z.infer<
+  typeof printModeProvenanceReceiptSchema
+>
+
 export const printModeEventSchema = z.discriminatedUnion('type', [
   printModeDownloadStatusSchema,
   printModeErrorSchema,
@@ -192,6 +211,7 @@ export const printModeEventSchema = z.discriminatedUnion('type', [
   printModeActivitySchema,
 
   printModeComplianceWarningSchema,
+  printModeProvenanceReceiptSchema,
 ])
 
 export type PrintModeEvent = z.infer<typeof printModeEventSchema>

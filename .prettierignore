@@ -8,6 +8,13 @@ resources/
 research/
 .eslint-recovery.json
 
+# Local editor settings — untracked machine-local config, not project source.
+.vscode/
+
+# Better-harness run artifacts — renderer-generated reports (findings.json,
+# canvas.json, report.canvas.tsx) are machine output, not formatted source.
+.qoder/
+
 # /export + /graph-export command output — generated fresh on every export;
 # formatting the artifact is pure churn (a 2MB HTML reflow) and the next
 # export would not match. dev/exports/ is the default single-file-rotation

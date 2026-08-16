@@ -1,47 +1,63 @@
-import { memo, type ReactNode } from 'react'
+import { Component, type ReactNode } from 'react'
 
 import { logger } from '../utils/logger'
 
-interface ErrorBoundaryPlaceholderProps {
+interface ErrorBoundaryProps {
   children: ReactNode
-  fallback: ReactNode
+  fallback: ReactNode | ((error: Error) => ReactNode)
   componentName?: string
 }
 
-/**
- * **WARNING: This component does NOT catch render errors.**
- *
- * This is a placeholder/passthrough component that exists for structural purposes.
- * OpenTUI's JSX types don't support React class components, which are required
- * for true error boundary functionality.
- *
- * For actual error catching in render functions, use `withErrorFallback()` instead.
- *
- * @example
- * // Use withErrorFallback for catching render errors:
- * const safeContent = withErrorFallback(
- *   () => riskyRenderFunction(),
- *   <FallbackComponent />,
- *   'MyComponent'
- * )
- */
-export const ErrorBoundaryPlaceholder = memo(
-  ({ children }: ErrorBoundaryPlaceholderProps) => {
-    // This component does NOT catch errors - it's a passthrough.
-    // Use withErrorFallback() for actual error catching.
-    return <>{children}</>
-  },
-)
+interface ErrorBoundaryState {
+  error: Error | null
+}
 
 /**
- * @deprecated Use `ErrorBoundaryPlaceholder` instead. This alias exists for backward
- * compatibility but the name is misleading since it doesn't actually catch errors.
+ * A real React error boundary (class component, FID-2026-0815-015).
+ *
+ * Catches render/lifecycle errors in its subtree and renders `fallback`
+ * instead of letting the error escape to the process-level
+ * `uncaughtException` handler — which would otherwise kill the whole terminal
+ * session.
+ *
+ * The previous `ErrorBoundary` here was a no-op passthrough because OpenTUI's
+ * JSX types were believed to reject class components. The current JSX namespace
+ * declares `ElementClass extends React.Component`, so class boundaries are
+ * supported at runtime and by the type checker.
  */
-export const ErrorBoundary = ErrorBoundaryPlaceholder
+export class ErrorBoundary extends Component<
+  ErrorBoundaryProps,
+  ErrorBoundaryState
+> {
+  state: ErrorBoundaryState = { error: null }
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { error }
+  }
+
+  componentDidCatch(error: Error): void {
+    logger.error(
+      {
+        componentName: this.props.componentName ?? 'ErrorBoundary',
+        error: error instanceof Error ? error.message : String(error),
+      },
+      'Render error caught by error boundary',
+    )
+  }
+
+  render(): ReactNode {
+    if (this.state.error !== null) {
+      const { fallback } = this.props
+      return typeof fallback === 'function'
+        ? fallback(this.state.error)
+        : fallback
+    }
+    return this.props.children
+  }
+}
 
 /**
- * Helper to safely render content with error handling.
- * Use this when you need to catch render errors in a functional context.
+ * Helper to safely render content with error handling in a functional context.
  */
 export function withErrorFallback<T>(
   renderFn: () => T,

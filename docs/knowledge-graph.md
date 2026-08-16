@@ -103,7 +103,7 @@ into their message history — same evidence, unchanged separation of duties.
 
 ## Related
 
-- [`docs/design/ECHO-Protocol-Knowledge-Graph-Integration.md`](design/ECHO-Protocol-Knowledge-Graph-Integration.md)
-  — the converged design research
+- [`docs/archive/design/ECHO-Protocol-Knowledge-Graph-Integration.md`](archive/design/ECHO-Protocol-Knowledge-Graph-Integration.md)
+  — the converged design research (archived)
 - [`docs/features.md`](features.md) — full feature list
 - [`docs/code-universe-export.md`](code-universe-export.md) — the two export workflows, offline viewer, and Code Universe guide

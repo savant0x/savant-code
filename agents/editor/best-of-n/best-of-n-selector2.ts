@@ -13,11 +13,11 @@ export const createBestOfNSelector2 = (options: {
   const isGpt5 = model === 'gpt-5'
   return {
     publisher,
-    model: isSonnet
-      ? 'anthropic/claude-sonnet-4.5'
-      : isOpus
-        ? 'anthropic/claude-opus-4.8'
-        : 'openai/gpt-5.4',
+    // FID-2026-0814-009 B-07: display metadata only. The paid sonnet/opus/
+    // gpt-5 hardcodes were removed — this selector inherits the operator's
+    // model via withParentModel at the spawn boundary; `openrouter/free` is
+    // the safe free fallback, never a paid model.
+    model: 'openrouter/free',
     ...(isGpt5 && {
       reasoningOptions: {
         effort: 'high',

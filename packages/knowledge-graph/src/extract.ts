@@ -98,6 +98,10 @@ export function extractExtendsRelations(
  * Resolve a bare symbol name to its defining file using the index, with a
  * deterministic tie-break: the shortest defining path wins; equal lengths
  * resolve lexicographically. Returns the defining file path or null.
+ *
+ * FID-2026-0815-009 (F-12): the caller (updateKnowledgeGraph) pre-sorts each
+ * candidate list (shortest path, then lexicographic), so this is an O(1) pick
+ * of the first element — no repeated per-call sort.
  */
 export function resolveSymbolDefiningFile(
   symbol: string,
@@ -107,12 +111,7 @@ export function resolveSymbolDefiningFile(
   if (!candidates || candidates.length === 0) {
     return null
   }
-  if (candidates.length === 1) {
-    return candidates[0]
-  }
-  return [...candidates].sort(
-    (a, b) => a.length - b.length || (a < b ? -1 : a > b ? 1 : 0),
-  )[0]
+  return candidates[0]
 }
 
 /**

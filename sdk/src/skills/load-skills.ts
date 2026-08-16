@@ -95,14 +95,14 @@ export function parseSkillFileContent(
   }
 }
 
-function loadSkillFromFile(
+async function loadSkillFromFile(
   skillDir: string,
   skillFilePath: string,
   verbose: boolean,
-): SkillDefinition | null {
+): Promise<SkillDefinition | null> {
   let content: string
   try {
-    content = fs.readFileSync(skillFilePath, 'utf8')
+    content = await fs.promises.readFile(skillFilePath, 'utf8')
   } catch {
     if (verbose) logger.error(`Failed to read skill file: ${skillFilePath}`)
     return null
@@ -117,16 +117,18 @@ function loadSkillFromFile(
 /**
  * Discovers skills from a skills directory.
  * Looks for <skillsDir>/<skill-name>/SKILL.md files.
+ * Async (fs.promises) so the boot path never blocks the event loop
+ * (FID-2026-0815-007 F-10).
  */
-function discoverSkillsFromDirectory(
+async function discoverSkillsFromDirectory(
   skillsDir: string,
   verbose: boolean,
-): SkillsMap {
+): Promise<SkillsMap> {
   const skills: SkillsMap = {}
 
   let entries: string[]
   try {
-    entries = fs.readdirSync(skillsDir)
+    entries = await fs.promises.readdir(skillsDir)
   } catch {
     return skills
   }
@@ -136,7 +138,7 @@ function discoverSkillsFromDirectory(
 
     // Skip non-directories and invalid skill names
     try {
-      const stat = fs.statSync(skillDir)
+      const stat = await fs.promises.stat(skillDir)
       if (!stat.isDirectory()) continue
     } catch {
       continue
@@ -153,12 +155,12 @@ function discoverSkillsFromDirectory(
 
     // Check if SKILL.md exists
     try {
-      fs.statSync(skillFilePath)
+      await fs.promises.stat(skillFilePath)
     } catch {
       continue
     }
 
-    const skill = loadSkillFromFile(skillDir, skillFilePath, verbose)
+    const skill = await loadSkillFromFile(skillDir, skillFilePath, verbose)
     if (skill) {
       skills[skill.name] = skill
     }
@@ -229,7 +231,9 @@ export type LoadSkillsOptions = {
  * console.log(gitReleaseSkill.description)
  * ```
  */
-export function loadSkillsSync(options: LoadSkillsOptions = {}): SkillsMap {
+export async function loadSkills(
+  options: LoadSkillsOptions = {},
+): Promise<SkillsMap> {
   const { cwd = process.cwd(), skillsPath, verbose = false } = options
 
   const skills: SkillsMap = {}
@@ -237,17 +241,10 @@ export function loadSkillsSync(options: LoadSkillsOptions = {}): SkillsMap {
   const skillsDirs = skillsPath ? [skillsPath] : getDefaultSkillsDirs(cwd)
 
   for (const skillsDir of skillsDirs) {
-    const dirSkills = discoverSkillsFromDirectory(skillsDir, verbose)
+    const dirSkills = await discoverSkillsFromDirectory(skillsDir, verbose)
     // Later directories override earlier ones (project overrides global)
     Object.assign(skills, dirSkills)
   }
 
   return skills
-}
-
-/** Async-compatible public loader retained for existing callers. */
-export async function loadSkills(
-  options: LoadSkillsOptions = {},
-): Promise<SkillsMap> {
-  return loadSkillsSync(options)
 }

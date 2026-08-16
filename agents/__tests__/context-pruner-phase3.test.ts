@@ -325,6 +325,312 @@ describe('P3a + P3d wiring through the savant handleSteps factory', () => {
     expect(source).toContain('amortizedFold')
     expect(source).toContain('foldFloorTokens')
     expect(source).toContain('idleAfterMs')
-    expect(source).toContain('forceRatio')
+    expect(source).toContain('forceCompactOffset')
+    // FID-2026-0814-001: the generated source must stay closure-free while
+    // carrying the compaction lifecycle literals (compacting emit + cooldown).
+    expect(source).toContain("phase: 'compacting'")
+    expect(source).toContain('prunerCooldownMs')
+    expect(source).toContain('lastPrunerCompletionAt')
+  })
+
+  test('FID-2026-0814-004 H-07: threads compression config as baked literals', async () => {
+    const { getSavantHandleSteps } = await import('../savant/handle-steps')
+    const handleSteps = getSavantHandleSteps({
+      isFree: false,
+      maxContextLength: 250_000,
+      keepRecentTokens: 24_576,
+      autoCompactRatio: 0.75,
+      forceCompactOffset: 12_000,
+    })
+    const fn = handleSteps as unknown as { toString(): string }
+    const source = fn.toString()
+    // The configured values must land in the serialized literals, not the
+    // hardcoded 0.8/0.9 defaults.
+    expect(source).toContain('forceCompactOffset = 12000')
+    expect(source).toContain('autoCompactRatio = 0.75')
+    expect(source).toContain('keepRecentTokens: 24576')
+    // The generated function must stay closure-free — the threaded values
+    // are baked as literals, never captured variables.
+    expect(source).not.toContain('keepRecentTokens = ')
+    expect(source).not.toContain('autoCompactRatioRatio')
+  })
+
+  test('FID-2026-0814-004 H-07: pruner spawn carries keepRecentTokens param', async () => {
+    const { getSavantHandleSteps } = await import('../savant/handle-steps')
+    const handleSteps = getSavantHandleSteps({
+      isFree: false,
+      maxContextLength: 250_000,
+      keepRecentTokens: 24_576,
+      autoCompactRatio: 0.75,
+      forceCompactOffset: 12_000,
+    })
+
+    const agentState = makeAgentState([
+      userMessage('big task'),
+      assistantMessage('working...'),
+    ])
+    agentState.contextTokenCount = 220_000 // > 0.75 * 250k = 187.5k
+    agentState.maxContextLength = 250_000
+
+    const generator = handleSteps({
+      agentState,
+      params: {},
+    } as never)
+
+    let keepRecentTokenParam: unknown
+    let result = generator.next()
+    let stepsComplete = false
+    while (!result.done) {
+      const value = result.value
+      if (
+        value &&
+        value !== 'STEP' &&
+        value !== 'STEP_ALL' &&
+        'toolName' in value
+      ) {
+        const call = value as {
+          toolName: string
+          input: { agent_type: string; params?: Record<string, JSONValue> }
+        }
+        if (
+          call.toolName === 'spawn_agent_inline' &&
+          call.input.agent_type === 'context-pruner'
+        ) {
+          keepRecentTokenParam = call.input.params?.keepRecentTokens
+        }
+      }
+      result = generator.next({
+        agentState,
+        toolResult: [],
+        stepsComplete,
+        nResponses: [],
+      })
+      stepsComplete = true
+    }
+    // The pruner reads keepRecentTokens from its spawn params
+    // (agents/context-pruner/main.ts:177-178); the factory must pass it.
+    expect(keepRecentTokenParam).toBe(24_576)
+  })
+})
+
+describe('FID-2026-0814-001 — savant handleSteps compaction lifecycle', () => {
+  async function driveSavant(
+    contextTokenCount: number,
+    opts: { lastPrunerCompletionAt?: number } = {},
+  ): Promise<{
+    spawned: boolean
+    spawnParams: Record<string, JSONValue> | undefined
+    agentState: AgentState
+  }> {
+    const { getSavantHandleSteps } = await import('../savant/handle-steps')
+    const handleSteps = getSavantHandleSteps({
+      isFree: false,
+      maxContextLength: 250_000,
+    })
+    const agentState = makeAgentState([
+      userMessage('big task'),
+      assistantMessage('working...'),
+    ])
+    agentState.contextTokenCount = contextTokenCount
+    agentState.maxContextLength = 250_000
+    if (opts.lastPrunerCompletionAt !== undefined) {
+      agentState.lastPrunerCompletionAt = opts.lastPrunerCompletionAt
+    }
+
+    const generator = handleSteps({
+      agentState,
+      params: {},
+    } as never)
+
+    let spawned = false
+    let spawnParams: Record<string, JSONValue> | undefined
+    let result = generator.next()
+    while (!result.done) {
+      const value = result.value
+      if (
+        value &&
+        value !== 'STEP' &&
+        value !== 'STEP_ALL' &&
+        'toolName' in value
+      ) {
+        const call = value as {
+          toolName: string
+          input: {
+            agent_type: string
+            params?: Record<string, JSONValue>
+          }
+        }
+        if (
+          call.toolName === 'spawn_agent_inline' &&
+          call.input.agent_type === 'context-pruner'
+        ) {
+          spawned = true
+          spawnParams = call.input.params
+        }
+      }
+      result = generator.next({
+        agentState,
+        toolResult: [],
+        stepsComplete: true,
+        nResponses: [],
+      })
+    }
+    return { spawned, spawnParams, agentState }
+  }
+
+  test('the proactive spawn sets a live `compacting` status', async () => {
+    // 220k is between 0.8 × 250k (200k) and 250k − 15k (235k) → proactive path.
+    const { spawned, agentState } = await driveSavant(220_000)
+    expect(spawned).toBe(true)
+    // The status write happens before the yield, so it is observable on the
+    // agentState the runtime snapshots during the pruner run.
+    expect(agentState.compactionStatus?.phase).toBe('compacting')
+  })
+
+  test('a recent pruner completion backs off the proactive spawn (cooldown)', async () => {
+    const { spawned, agentState } = await driveSavant(220_000, {
+      lastPrunerCompletionAt: Date.now(),
+    })
+    expect(spawned).toBe(false)
+    expect(agentState.compactionStatus).toBeUndefined()
+  })
+
+  test('the force path still spawns during cooldown (hard-overflow safety)', async () => {
+    // 240k > 250k − 15k (235k) → force path, which bypasses the cooldown.
+    const { spawned, spawnParams } = await driveSavant(240_000, {
+      lastPrunerCompletionAt: Date.now(),
+    })
+    expect(spawned).toBe(true)
+    expect(spawnParams?.force).toBe(true)
+  })
+})
+
+describe('FID-2026-0814-011 — single trigger authority (autoCompactDue)', () => {
+  async function driveSavantTrigger(opts: {
+    contextTokenCount: number
+    maxContextLength?: number
+    autoCompactDue?: boolean
+    lastPrunerCompletionAt?: number
+    useSerializedRoundTrip?: boolean
+  }): Promise<{
+    spawned: boolean
+    force: unknown
+  }> {
+    const { getSavantHandleSteps } = await import('../savant/handle-steps')
+    let handleSteps = getSavantHandleSteps({
+      isFree: false,
+      maxContextLength: 250_000,
+    })
+    if (opts.useSerializedRoundTrip) {
+      // Reproduce the runtime's serialize→eval round-trip for the bundled
+      // path (prebuild-agents.ts + run-programmatic-step deserializeHandleSteps).
+      const source = (
+        handleSteps as unknown as { toString(): string }
+      ).toString()
+      handleSteps = eval(`(${source})`) as typeof handleSteps
+    }
+    const agentState = makeAgentState([
+      userMessage('big task'),
+      assistantMessage('working...'),
+    ])
+    agentState.contextTokenCount = opts.contextTokenCount
+    agentState.maxContextLength = opts.maxContextLength ?? 250_000
+    if (opts.autoCompactDue !== undefined) {
+      agentState.autoCompactDue = opts.autoCompactDue
+    }
+    if (opts.lastPrunerCompletionAt !== undefined) {
+      agentState.lastPrunerCompletionAt = opts.lastPrunerCompletionAt
+    }
+
+    const generator = handleSteps({
+      agentState,
+      params: {},
+    } as never)
+
+    let spawned = false
+    let force: unknown
+    let result = generator.next()
+    while (!result.done) {
+      const value = result.value
+      if (
+        value &&
+        value !== 'STEP' &&
+        value !== 'STEP_ALL' &&
+        'toolName' in value
+      ) {
+        const call = value as {
+          toolName: string
+          input: { agent_type: string; params?: Record<string, JSONValue> }
+        }
+        if (
+          call.toolName === 'spawn_agent_inline' &&
+          call.input.agent_type === 'context-pruner'
+        ) {
+          spawned = true
+          force = call.input.params?.force
+        }
+      }
+      result = generator.next({
+        agentState,
+        toolResult: [],
+        stepsComplete: true,
+        nResponses: [],
+      })
+    }
+    return { spawned, force }
+  }
+
+  test('autoCompactDue drives the spawn even below the 0.8 ratio threshold', async () => {
+    // 100k < 0.8 × 250k (200k) → the ratio fallback alone would NOT fire;
+    // the proven shouldAutoCompact signal must be the single authority.
+    const { spawned } = await driveSavantTrigger({
+      contextTokenCount: 100_000,
+      autoCompactDue: true,
+    })
+    expect(spawned).toBe(true)
+  })
+
+  test('a recent pruner completion still backs off the autoCompactDue spawn (cooldown)', async () => {
+    const { spawned } = await driveSavantTrigger({
+      contextTokenCount: 100_000,
+      autoCompactDue: true,
+      lastPrunerCompletionAt: Date.now(),
+    })
+    expect(spawned).toBe(false)
+  })
+
+  test('force path fires with autoCompactDue during cooldown (hard-overflow safety)', async () => {
+    const { spawned, force } = await driveSavantTrigger({
+      contextTokenCount: 240_000, // > 250k − 15k (235k)
+      autoCompactDue: true,
+      lastPrunerCompletionAt: Date.now(),
+    })
+    expect(spawned).toBe(true)
+    expect(force).toBe(true)
+  })
+
+  test('serialized round-trip (toString → eval) preserves the single-trigger authority', async () => {
+    const { spawned } = await driveSavantTrigger({
+      contextTokenCount: 100_000,
+      autoCompactDue: true,
+      useSerializedRoundTrip: true,
+    })
+    expect(spawned).toBe(true)
+  })
+
+  test('generated source carries the fail-loud guard and never silently adopts the baked default', async () => {
+    const { getSavantHandleSteps } = await import('../savant/handle-steps')
+    const handleSteps = getSavantHandleSteps({
+      isFree: false,
+      maxContextLength: 250_000,
+    })
+    const source = (handleSteps as unknown as { toString(): string }).toString()
+    expect(source).toContain('resolvedMaxContextLength')
+    expect(source).toContain('autoCompactDue')
+    expect(source).toContain("'savant handleSteps: maxContextLength unresolved")
+    // The old silent fallback chain must be gone.
+    expect(source).not.toContain(
+      'agentState.maxContextLength ?? asNumber(p.maxContextLength) ??',
+    )
   })
 })

@@ -80,7 +80,6 @@ export const createFilePicker = (
       `- Return at most ${isMax ? 20 : 12} files.`,
       '- Keep the report extremely short; do not reproduce large code excerpts.',
       '- Do not use any further tools or spawn any further agents.',
-      '- CRITICAL: Use the set_output tool by calling it as a function with a JSON object argument. Do NOT write XML tags like <set_output> or </set_output>. Call the tool directly.',
       '- Always check exitCode and stderr in tool outputs. If a tool fails, report the failure — do NOT assume success from partial results.',
     ].join('\n'),
 

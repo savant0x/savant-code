@@ -30,7 +30,9 @@ const directoryLister: SecretAgentDefinition = {
   displayName: 'Directory Lister',
   spawnerPrompt:
     'Mechanically lists multiple directories and returns their contents',
-  model: 'anthropic/claude-sonnet-4.5',
+  // FID-2026-0814-009 B-08: display metadata only — inherits the operator's
+  // model via withParentModel; `openrouter/free` is the safe free fallback.
+  model: 'openrouter/free',
   publisher,
   includeMessageHistory: false,
   outputMode: 'structured_output',

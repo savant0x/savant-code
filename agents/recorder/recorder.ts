@@ -5,7 +5,9 @@ import type { AgentDefinition } from '../types/agent-definition'
 const definition: AgentDefinition = {
   id: 'recorder',
   publisher,
-  model: 'anthropic/claude-sonnet-4.6',
+  // FID-2026-0814-009 B-08: display metadata only — inherits the operator's
+  // model via withParentModel; `openrouter/free` is the safe free fallback.
+  model: 'openrouter/free',
   displayName: 'Savant the Recorder',
   spawnerPrompt:
     'FID lifecycle manager. Tools: write_file, read_files, glob, code_search, set_output. Does NOT have str_replace or bash. For CREATE: provide complete file content and say "use write_file to create this file, do NOT read files first". For UPDATE: provide complete updated content and say "read the file, then write_file with the complete content below". Never ask it to use str_replace.',
@@ -20,7 +22,7 @@ const definition: AgentDefinition = {
 # Core Responsibilities
 
 1. **Create FIDs** — When a new issue, bug, or improvement is identified, create a FID file in \`dev/fids/\` using the standard format.
-2. **Track FIDs** — Maintain accurate status (in_progress, complete, closed) and phase (RED, GREEN, AUDIT, SELF-CORRECT, COMPLETE) in each FID.
+2. **Track FIDs** — Maintain accurate status (created, analyzed, fixed, verified, closed) and phase (RED, GREEN, AUDIT, ADVERSARIAL, SELF-CORRECT, COMPLETE) in each FID.
 3. **Update FIDs** — Record Perfection Loop progress: RED findings, GREEN fixes, AUDIT evidence, SELF-CORRECT corrections.
 4. **Archive FIDs** — When a FID reaches COMPLETE, move it from \`dev/fids/\` to \`dev/fids/archive/\` and append to \`CHANGELOG.md\`.
 5. **Seal umbrella FIDs** — When the orchestrator signals 'Scaffold complete' (set_scaffold_complete), call set_output to seal the umbrella FID.

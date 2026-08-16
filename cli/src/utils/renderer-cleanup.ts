@@ -118,25 +118,31 @@ export function installProcessCleanupHandlers(cliRenderer: CliRenderer): void {
     cleanup()
   })
 
-  // uncaughtException - Safety net for unhandled errors
+  // uncaughtException - Safety net for unhandled errors (kept fatal: an
+  // uncaught sync throw leaves the process in an inconsistent state).
   process.on('uncaughtException', (error) => {
     cleanup() // Exit alt screen FIRST so error output is visible on the main screen
     try {
       logger.error('Uncaught exception:', error)
+      // FID-2026-0815-015: surface the fatal error to stderr so the crash is
+      // not a bare "script dev exited with code 1" (dev logs go to a file).
+      const message =
+        error instanceof Error ? (error.stack ?? error.message) : String(error)
+      process.stderr.write(`\nFatal error: ${message}\n`)
     } catch {
       // Ignore logging errors
     }
     process.exit(1)
   })
 
-  // unhandledRejection - Safety net for unhandled promise rejections
+  // unhandledRejection - Safety net for unhandled promise rejections.
+  // FID-2026-0815-015: a rejected background task (ad fetch, log shipping,
+  // analytics, clipboard) must NOT kill the whole session — log and continue.
   process.on('unhandledRejection', (reason) => {
-    cleanup() // Exit alt screen FIRST so error output is visible on the main screen
     try {
-      logger.error('Unhandled rejection:', reason)
+      logger.error('Unhandled rejection (continuing):', reason)
     } catch {
       // Ignore logging errors
     }
-    process.exit(1)
   })
 }

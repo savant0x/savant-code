@@ -1,13 +1,13 @@
 {
   "maxFileLines": 300,
   "trackedFiles": {
-    "agents/adversary/adversary.ts": 92,
+    "agents/adversary/adversary.ts": 94,
     "agents/base-chat.ts": 45,
     "agents/basher.ts": 110,
     "agents/browser-use/browser-use.ts": 299,
     "agents/browser-use/manual-e2e.ts": 234,
     "agents/constants.ts": 2,
-    "agents/context-pruner.ts": 42,
+    "agents/context-pruner.ts": 44,
     "agents/context-pruner/apply-budgets.ts": 105,
     "agents/context-pruner/constants.ts": 134,
     "agents/context-pruner/handle-steps.ts": 79,
@@ -20,19 +20,19 @@
     "agents/context-pruner/summary-parsing.ts": 93,
     "agents/context-pruner/telemetry.ts": 209,
     "agents/database/database.ts": 93,
-    "agents/detective/detective.ts": 173,
+    "agents/detective/detective.ts": 175,
     "agents/editor/best-of-n/best-of-n-selector2.ts": 149,
     "agents/editor/best-of-n/editor-implementor-gpt-5.ts": 8,
     "agents/editor/best-of-n/editor-implementor-opus.ts": 8,
     "agents/editor/best-of-n/editor-implementor.ts": 197,
-    "agents/editor/best-of-n/editor-multi-prompt.ts": 269,
-    "agents/file-explorer/directory-lister.ts": 93,
-    "agents/file-explorer/glob-matcher.ts": 97,
+    "agents/editor/best-of-n/editor-multi-prompt.ts": 273,
+    "agents/file-explorer/directory-lister.ts": 95,
+    "agents/file-explorer/glob-matcher.ts": 99,
     "agents/forge/forge.ts": 175,
     "agents/github/github.ts": 120,
-    "agents/librarian/librarian.ts": 159,
+    "agents/librarian/librarian.ts": 161,
     "agents/librarian/manual-e2e.ts": 289,
-    "agents/recorder/recorder.ts": 105,
+    "agents/recorder/recorder.ts": 107,
     "agents/researcher/researcher-docs.ts": 33,
     "agents/researcher/researcher-web.ts": 52,
     "agents/savant/handle-steps.ts": 207,
@@ -52,12 +52,11 @@
     "agents/savant/savant.ts": 223,
     "agents/savant/system-prompt.ts": 222,
     "agents/scout/scout.ts": 309,
-    "agents/scribe/scribe.ts": 55,
+    "agents/scribe/scribe.ts": 57,
     "agents/thinker/thinker-gemini.ts": 27,
-    "agents/thinker/thinker-gpt.ts": 22,
     "agents/thinker/thinker-with-files-gemini.ts": 67,
-    "agents/thinker/thinker.ts": 100,
-    "agents/tmux-cli.ts": 45,
+    "agents/thinker/thinker.ts": 102,
+    "agents/tmux-cli.ts": 47,
     "agents/tmux-cli/handle-steps.ts": 32,
     "agents/tmux-cli/helper-script.ts": 190,
     "agents/tmux-cli/interaction-body.ts": 249,
@@ -67,7 +66,7 @@
     "agents/types/secret-agent-definition.ts": 106,
     "agents/types/tools.ts": 578,
     "agents/types/util-types.ts": 168,
-    "agents/verifier/verifier.ts": 109,
+    "agents/verifier/verifier.ts": 111,
     "cli/src/__tests__/helpers/mock-api-client.ts": 65,
     "cli/src/__tests__/helpers/terminal-watchdog-fixture.ts": 51,
     "cli/src/__tests__/mocks/hover-toggle-controller.ts": 72,
@@ -215,7 +214,7 @@
     "cli/src/components/feedback-input-mode.tsx": 353,
     "cli/src/components/file-attachment-card.tsx": 90,
     "cli/src/components/grid-layout.tsx": 84,
-    "cli/src/components/help-banner.tsx": 137,
+    "cli/src/components/help-banner.tsx": 156,
     "cli/src/components/highlighted-text.tsx": 53,
     "cli/src/components/image-card.tsx": 168,
     "cli/src/components/image-thumbnail.tsx": 113,
@@ -379,7 +378,7 @@
     "cli/src/hooks/helpers/send-message-failure.ts": 200,
     "cli/src/hooks/helpers/send-message-fn.ts": 345,
     "cli/src/hooks/helpers/send-message-lifecycle.ts": 266,
-    "cli/src/hooks/helpers/send-message-monitors.ts": 89,
+    "cli/src/hooks/helpers/send-message-monitors.ts": 98,
     "cli/src/hooks/helpers/send-message-run-config.ts": 199,
     "cli/src/hooks/helpers/send-message-session.ts": 90,
     "cli/src/hooks/helpers/send-message-sidebar.ts": 59,
@@ -491,7 +490,7 @@
     "cli/src/state/rewind-picker-store.ts": 75,
     "cli/src/state/savant-free-model-store.ts": 60,
     "cli/src/state/savant-free-session-store.ts": 33,
-    "cli/src/test-env.ts": 15,
+    "cli/src/test-env.ts": 42,
     "cli/src/test-setup.ts": 36,
     "cli/src/testing/env.ts": 47,
     "cli/src/types/chat-state.ts": 16,
@@ -1304,9 +1303,14 @@
     "sdk/src/utils/logger.ts": 16,
     "sdk/src/validate-agents.ts": 158,
     "scripts/audit-evidence.ts": 308,
-    "packages/design-systems/src/parser.ts": 327
+    "packages/design-systems/src/parser.ts": 327,
+    "packages/agent-runtime/src/provenance/session.ts": 373
   },
   "approvedGrowth": {
+    "agents/savant/handle-steps.ts": {
+      "maxLines": 323,
+      "rationale": "Measured intentional FID-2026-0814-002..006 + FID-2026-0814-011 + FID-2026-0814-013 implementation growth (durable goal mode, hook system, harness frictions, compaction freshness, trust-matrix terminal states, the single-trigger auto-compaction authority, and the force-offset trigger re-expression); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
     "cli/src/cli-args.ts": {
       "maxLines": 201,
       "rationale": "Measured intentional current-scope growth; decomposition remains tracked work and this ceiling is protected by quality-report validation."
@@ -1328,20 +1332,20 @@
       "rationale": "Measured intentional current-scope growth; decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "cli/src/data/slash-commands.ts": {
-      "maxLines": 368,
-      "rationale": "Measured intentional current-scope growth; decomposition remains tracked work and this ceiling is protected by quality-report validation."
+      "maxLines": 382,
+      "rationale": "Measured intentional teacher /learn command growth (FID-2026-0813-018); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "cli/src/hooks/helpers/send-message-run-config.ts": {
-      "maxLines": 201,
-      "rationale": "Measured intentional current-scope growth; decomposition remains tracked work and this ceiling is protected by quality-report validation."
+      "maxLines": 223,
+      "rationale": "Measured intentional FID-2026-0814-002..006 implementation growth (durable goal mode, hook system, harness frictions, compaction freshness, trust-matrix terminal states); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "cli/src/index.tsx": {
-      "maxLines": 623,
-      "rationale": "Measured intentional v0.0.23 application bootstrap and release/provider wiring growth; exact ceiling is protected by the quality-ratchet validator."
+      "maxLines": 637,
+      "rationale": "Measured intentional 0.0.24 remediation growth (FID-2026-0815 hot-path, crash-recovery, and React Rules-of-Hooks work); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "cli/src/utils/create-run-config.ts": {
-      "maxLines": 213,
-      "rationale": "Measured intentional current-scope growth; decomposition remains tracked work and this ceiling is protected by quality-report validation."
+      "maxLines": 233,
+      "rationale": "Measured intentional FID-2026-0814-002..006 implementation growth (durable goal mode, hook system, harness frictions, compaction freshness, trust-matrix terminal states); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "cli/src/utils/settings/preferences.ts": {
       "maxLines": 181,
@@ -1352,8 +1356,8 @@
       "rationale": "Measured intentional current-scope growth; decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "cli/src/utils/settings/validation.ts": {
-      "maxLines": 164,
-      "rationale": "Measured intentional current-scope growth; decomposition remains tracked work and this ceiling is protected by quality-report validation."
+      "maxLines": 170,
+      "rationale": "Measured intentional current-scope growth (paid-build free-model-preference pass-through gate, IS_SAVANT_FREE-conditional catalog check, 2026-08-14 model-fallback remediation); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "cli/src/utils/theme-config.ts": {
       "maxLines": 156,
@@ -1364,12 +1368,12 @@
       "rationale": "Measured intentional current-scope growth; decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "common/src/types/print-mode.ts": {
-      "maxLines": 198,
-      "rationale": "Measured intentional current-scope growth; decomposition remains tracked work and this ceiling is protected by quality-report validation."
+      "maxLines": 218,
+      "rationale": "Measured intentional FID-2026-0814-002..006 implementation growth (durable goal mode, hook system, harness frictions, compaction freshness, trust-matrix terminal states); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "common/src/types/session-state.ts": {
-      "maxLines": 318,
-      "rationale": "Measured intentional v0.0.23 shared session-state contract growth; exact ceiling is protected by the quality-ratchet validator."
+      "maxLines": 408,
+      "rationale": "Measured intentional FID-2026-0814-002..006 + FID-2026-0814-011 implementation growth (durable goal mode, hook system, harness frictions, compaction freshness, trust-matrix terminal states, and the autoCompactDue single-trigger field); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "common/src/util/file.ts": {
       "maxLines": 378,
@@ -1396,15 +1400,15 @@
       "rationale": "Measured intentional current-scope growth; decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "packages/agent-runtime/src/templates/strings.ts": {
-      "maxLines": 323,
-      "rationale": "Measured intentional current-scope growth; decomposition remains tracked work and this ceiling is protected by quality-report validation."
+      "maxLines": 347,
+      "rationale": "Measured intentional 0.0.24 remediation growth (FID-2026-0815 hot-path, crash-recovery, and React Rules-of-Hooks work); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "packages/agent-runtime/src/templates/types.ts": {
       "maxLines": 64,
       "rationale": "Measured intentional current-scope growth; decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "scripts/validate-repository.ts": {
-      "maxLines": 210,
+      "maxLines": 242,
       "rationale": "Measured intentional current-scope growth; decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "scripts/validation-manifest.ts": {
@@ -1420,16 +1424,16 @@
       "rationale": "Measured intentional current-scope growth; decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "sdk/src/run/execution.ts": {
-      "maxLines": 343,
-      "rationale": "Measured intentional current-scope growth; decomposition remains tracked work and this ceiling is protected by quality-report validation."
+      "maxLines": 353,
+      "rationale": "Measured intentional FID-2026-0814-002..006 implementation growth (durable goal mode, hook system, harness frictions, compaction freshness, trust-matrix terminal states); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "sdk/src/run/execution/session-state.ts": {
-      "maxLines": 160,
-      "rationale": "Measured intentional v0.0.23 SDK execution session-state growth; exact ceiling is protected by the quality-ratchet validator."
+      "maxLines": 170,
+      "rationale": "Measured intentional ZTAP provenance growth; decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "sdk/src/run/types.ts": {
-      "maxLines": 250,
-      "rationale": "Measured intentional current-scope growth; decomposition remains tracked work and this ceiling is protected by quality-report validation."
+      "maxLines": 270,
+      "rationale": "Measured intentional FID-2026-0814-002..006 implementation growth (durable goal mode, hook system, harness frictions, compaction freshness, trust-matrix terminal states); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "scripts/quality-report.ts": {
       "maxLines": 111,
@@ -1440,8 +1444,8 @@
       "rationale": "Measured intentional v0.0.23 CLI interaction growth; exact ceiling is protected by the quality-ratchet validator and is not a blanket exemption."
     },
     "cli/src/chat/panels.tsx": {
-      "maxLines": 370,
-      "rationale": "Measured intentional v0.0.23 chat layout and interaction growth; exact ceiling is protected by the quality-ratchet validator."
+      "maxLines": 376,
+      "rationale": "Measured intentional FID-2026-0814-002..006 implementation growth (durable goal mode, hook system, harness frictions, compaction freshness, trust-matrix terminal states); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "cli/src/chat/styles.ts": {
       "maxLines": 83,
@@ -1455,6 +1459,10 @@
       "maxLines": 257,
       "rationale": "Measured intentional v0.0.23 mode-definition growth; exact ceiling is protected by the quality-ratchet validator."
     },
+    "cli/src/components/help-banner.tsx": {
+      "maxLines": 166,
+      "rationale": "Measured intentional FID-2026-0814-001 + /help overlay growth (compaction-status legend, goal-mode and hook-system entries); exact ceiling is protected by the quality-ratchet validator."
+    },
     "cli/src/components/model-picker.tsx": {
       "maxLines": 373,
       "rationale": "Measured intentional v0.0.23 model-picker capability growth; exact ceiling is protected by the quality-ratchet validator."
@@ -1464,16 +1472,16 @@
       "rationale": "Measured intentional v0.0.23 provider-picker capability growth; exact ceiling is protected by the quality-ratchet validator."
     },
     "cli/src/components/right-sidebar.tsx": {
-      "maxLines": 339,
-      "rationale": "Measured intentional v0.0.23 sidebar interaction growth; exact ceiling is protected by the quality-ratchet validator."
+      "maxLines": 440,
+      "rationale": "Measured intentional FID-2026-0814-002..006 implementation growth (durable goal mode, hook system, harness frictions, compaction freshness, trust-matrix terminal states); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "cli/src/utils/openrouter-models.ts": {
       "maxLines": 41,
       "rationale": "Measured intentional v0.0.23 gateway-model catalog and context-resolution growth; exact ceiling is protected by the quality-ratchet validator."
     },
     "cli/src/utils/openrouter-models/gateway.ts": {
-      "maxLines": 152,
-      "rationale": "Measured intentional v0.0.23 gateway provider-resolution growth; exact ceiling is protected by the quality-ratchet validator."
+      "maxLines": 228,
+      "rationale": "Measured intentional 0.0.24 remediation growth (FID-2026-0815 hot-path, crash-recovery, and React Rules-of-Hooks work); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "cli/src/utils/provider-setup.ts": {
       "maxLines": 319,
@@ -1496,28 +1504,28 @@
       "rationale": "Measured intentional v0.0.23 ECHO protocol-summary growth; exact ceiling is protected by the quality-ratchet validator."
     },
     "packages/agent-runtime/src/run-agent-step/context-tokens.ts": {
-      "maxLines": 208,
-      "rationale": "Measured intentional v0.0.23 runtime context-token accounting growth; exact ceiling is protected by the quality-ratchet validator."
+      "maxLines": 257,
+      "rationale": "Measured intentional 0.0.24 remediation growth (FID-2026-0815 hot-path, crash-recovery, and React Rules-of-Hooks work); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "packages/agent-runtime/src/run-agent-step/loop.ts": {
-      "maxLines": 412,
-      "rationale": "Measured intentional v0.0.23 agent-loop execution growth; exact ceiling is protected by the quality-ratchet validator."
+      "maxLines": 426,
+      "rationale": "Measured intentional 0.0.24 remediation growth (FID-2026-0815 hot-path, crash-recovery, and React Rules-of-Hooks work); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "packages/agent-runtime/src/run-agent-step/loop/reactive-compact.ts": {
       "maxLines": 194,
       "rationale": "Measured intentional v0.0.23 reactive compaction growth; exact ceiling is protected by the quality-ratchet validator."
     },
     "packages/agent-runtime/src/tools/handlers/tool/spawn-agent-inline.ts": {
-      "maxLines": 172,
-      "rationale": "Measured intentional v0.0.23 inline-agent tool-handler growth; exact ceiling is protected by the quality-ratchet validator."
+      "maxLines": 248,
+      "rationale": "Measured intentional ZTAP provenance + FID-2026-0814-001 pruner-result feedback growth; decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "packages/agent-runtime/src/tools/stream-parser.ts": {
       "maxLines": 444,
       "rationale": "Measured intentional v0.0.23 streaming/parser capability growth; exact ceiling is protected by the quality-ratchet validator."
     },
     "packages/agent-runtime/src/tools/tool-executor/native.ts": {
-      "maxLines": 659,
-      "rationale": "Measured intentional v0.0.23 native tool-executor and sandbox integration growth; exact ceiling is protected by the quality-ratchet validator."
+      "maxLines": 852,
+      "rationale": "Measured intentional 0.0.24 remediation growth (FID-2026-0815 hot-path, crash-recovery, and React Rules-of-Hooks work); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "packages/agent-runtime/src/util/agent-output.ts": {
       "maxLines": 110,
@@ -1535,9 +1543,233 @@
       "maxLines": 141,
       "rationale": "Measured intentional v0.0.23 SDK default-inference provider growth; exact ceiling is protected by the quality-ratchet validator."
     },
+    "packages/agent-runtime/src/util/messages/history.ts": {
+      "maxLines": 193,
+      "rationale": "Measured intentional FID-2026-0815-004 expireMessages fast-path growth; decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "packages/agent-runtime/src/util/token-counter.ts": {
+      "maxLines": 158,
+      "rationale": "Measured intentional FID-2026-0815-001 countTokensJsonCached memoization growth; decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "packages/code-map/src/parse.ts": {
+      "maxLines": 311,
+      "rationale": "Measured intentional FID-2026-0815-009 bounded-parallel indexing growth; decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "packages/database/src/service.ts": {
+      "maxLines": 374,
+      "rationale": "Measured intentional FID-2026-0815-015 cyclic-safe DB serialization growth; decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "packages/knowledge-graph/src/update.ts": {
+      "maxLines": 407,
+      "rationale": "Measured intentional FID-2026-0815-009 indexing remediation growth; decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "sdk/src/agents/load-agents.ts": {
+      "maxLines": 344,
+      "rationale": "Measured intentional FID-2026-0815-007 async skill/agent discovery growth; decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
     "sdk/src/run-state/serialization.ts": {
-      "maxLines": 253,
-      "rationale": "Measured intentional v0.0.23 SDK run-state serialization and resume growth; exact ceiling is protected by the quality-ratchet validator."
+      "maxLines": 254,
+      "rationale": "Measured intentional FID-2026-0815-015 provenance omit-list growth; decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "cli/src/commands/defs/core.ts": {
+      "maxLines": 242,
+      "rationale": "Measured intentional teacher /learn command growth (FID-2026-0813-018); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "cli/src/components/savant-ui/index.ts": {
+      "maxLines": 89,
+      "rationale": "Measured intentional teacher LearnOverlay export growth (FID-2026-0813-018); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "cli/src/state/chat-store/initial-state.ts": {
+      "maxLines": 67,
+      "rationale": "Measured intentional FID-2026-0814-002..006 implementation growth (durable goal mode, hook system, harness frictions, compaction freshness, trust-matrix terminal states); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "cli/src/state/chat-store/sidebar-actions.ts": {
+      "maxLines": 316,
+      "rationale": "Measured intentional 0.0.24 remediation growth (FID-2026-0815 hot-path, crash-recovery, and React Rules-of-Hooks work); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "cli/src/state/chat-store/types.ts": {
+      "maxLines": 332,
+      "rationale": "Measured intentional FID-2026-0814-002..006 implementation growth (durable goal mode, hook system, harness frictions, compaction freshness, trust-matrix terminal states); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "cli/src/state/savant-free-model-store.ts": {
+      "maxLines": 113,
+      "rationale": "Measured intentional FID-2026-0814-002..006 + FID-2026-0814-010 implementation growth (durable goal mode, hook system, harness frictions, compaction freshness, trust-matrix terminal states, and the paid-build model-conflation fix); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "cli/src/utils/sdk-event-handlers.ts": {
+      "maxLines": 101,
+      "rationale": "Measured intentional ZTAP provenance growth; decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "common/src/types/echo-compliance.ts": {
+      "maxLines": 132,
+      "rationale": "Measured intentional FID-2026-0814-002..006 implementation growth (durable goal mode, hook system, harness frictions, compaction freshness, trust-matrix terminal states); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "common/src/templates/initial-agents-dir/types/agent-definition.ts": {
+      "maxLines": 516,
+      "rationale": "Measured intentional FID-2026-0814-001 + FID-2026-0814-011 growth (AgentState compactionStatus/lastPrunerCompletionAt/autoCompactDue mirror fields for the serialized handleSteps contract); exact ceiling is protected by the quality-ratchet validator."
+    },
+    "common/src/util/protocol-config.ts": {
+      "maxLines": 537,
+      "rationale": "Measured intentional FID-2026-0814-002..006 implementation growth (durable goal mode, hook system, harness frictions, compaction freshness, trust-matrix terminal states); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "packages/agent-runtime/src/tools/handlers/tool/spawn-agent-utils.ts": {
+      "maxLines": 604,
+      "rationale": "Measured intentional FID-2026-0814-002..006 implementation growth (durable goal mode, hook system, harness frictions, compaction freshness, trust-matrix terminal states) plus FID-2026-0814-009 B-06 providerOptions-preserving model inheritance; decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "packages/agent-runtime/src/tools/handlers/tool/spawn-agents.ts": {
+      "maxLines": 356,
+      "rationale": "Measured intentional ZTAP provenance growth; decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "packages/agent-runtime/src/util/echo-compliance.ts": {
+      "maxLines": 499,
+      "rationale": "Measured intentional 0.0.24 remediation growth (FID-2026-0815 hot-path, crash-recovery, and React Rules-of-Hooks work); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "packages/agent-runtime/src/context-compactor.ts": {
+      "maxLines": 476,
+      "rationale": "Measured intentional 0.0.24 remediation growth (FID-2026-0815 hot-path, crash-recovery, and React Rules-of-Hooks work); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "packages/agent-runtime/src/context-compactor/state.ts": {
+      "maxLines": 66,
+      "rationale": "Measured intentional FID-2026-0814-002..006 implementation growth (durable goal mode, hook system, harness frictions, compaction freshness, trust-matrix terminal states); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "packages/agent-runtime/src/main-prompt.ts": {
+      "maxLines": 287,
+      "rationale": "Measured intentional FID-2026-0814-002..006 implementation growth (durable goal mode, hook system, harness frictions, compaction freshness, trust-matrix terminal states); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "packages/agent-runtime/src/run-agent-step/loop-context.ts": {
+      "maxLines": 365,
+      "rationale": "Measured intentional FID-2026-0814-002..006 + FID-2026-0814-012 implementation growth (durable goal mode, hook system, harness frictions, compaction freshness, trust-matrix terminal states, and the reactiveCompact maxContextLength resolution); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "packages/agent-runtime/src/run-agent-step/types.ts": {
+      "maxLines": 206,
+      "rationale": "Measured intentional 0.0.24 remediation growth (FID-2026-0815 hot-path, crash-recovery, and React Rules-of-Hooks work); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "packages/agent-runtime/src/tools/handlers/list.ts": {
+      "maxLines": 128,
+      "rationale": "Measured intentional FID-2026-0814-002..006 implementation growth (durable goal mode, hook system, harness frictions, compaction freshness, trust-matrix terminal states); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "packages/agent-runtime/src/tools/handlers/tool/run-readonly-command.ts": {
+      "maxLines": 231,
+      "rationale": "Measured intentional FID-2026-0814-002..006 implementation growth (durable goal mode, hook system, harness frictions, compaction freshness, trust-matrix terminal states); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "packages/agent-runtime/src/tools/tool-executor/custom.ts": {
+      "maxLines": 377,
+      "rationale": "Measured intentional FID-2026-0814-002..006 implementation growth (durable goal mode, hook system, harness frictions, compaction freshness, trust-matrix terminal states); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "sdk/src/run/execution/snapshot.ts": {
+      "maxLines": 101,
+      "rationale": "Measured intentional FID-2026-0814-002..006 implementation growth (durable goal mode, hook system, harness frictions, compaction freshness, trust-matrix terminal states); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "packages/agent-runtime/src/provenance/session.ts": {
+      "maxLines": 374,
+      "rationale": "Measured intentional FID-2026-0814-002..006 implementation growth (durable goal mode, hook system, harness frictions, compaction freshness, trust-matrix terminal states); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "agents/savant/savant.ts": {
+      "maxLines": 261,
+      "rationale": "Measured intentional FID-2026-0814-002..006 implementation growth (durable goal mode, hook system, harness frictions, compaction freshness, trust-matrix terminal states); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "agents/thinker/thinker-gemini.ts": {
+      "maxLines": 29,
+      "rationale": "Measured intentional FID-2026-0814-002..006 implementation growth (durable goal mode, hook system, harness frictions, compaction freshness, trust-matrix terminal states); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "agents/thinker/thinker-with-files-gemini.ts": {
+      "maxLines": 70,
+      "rationale": "Measured intentional FID-2026-0814-002..006 implementation growth (durable goal mode, hook system, harness frictions, compaction freshness, trust-matrix terminal states); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "cli/src/commands/goal.ts": {
+      "maxLines": 231,
+      "rationale": "Measured intentional FID-2026-0814-002..006 implementation growth (durable goal mode, hook system, harness frictions, compaction freshness, trust-matrix terminal states); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "cli/src/components/savant-ui/echo/loop-status-panel.tsx": {
+      "maxLines": 108,
+      "rationale": "Measured intentional FID-2026-0814-002..006 implementation growth (durable goal mode, hook system, harness frictions, compaction freshness, trust-matrix terminal states); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "cli/src/headless-run.ts": {
+      "maxLines": 218,
+      "rationale": "Measured intentional FID-2026-0814-002..006 implementation growth (durable goal mode, hook system, harness frictions, compaction freshness, trust-matrix terminal states); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "cli/src/hooks/helpers/send-message-agent.ts": {
+      "maxLines": 69,
+      "rationale": "Measured intentional FID-2026-0814-002..006 implementation growth (durable goal mode, hook system, harness frictions, compaction freshness, trust-matrix terminal states); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "common/src/tools/constants.ts": {
+      "maxLines": 150,
+      "rationale": "Measured intentional FID-2026-0814-002..006 implementation growth (durable goal mode, hook system, harness frictions, compaction freshness, trust-matrix terminal states); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "common/src/tools/list.ts": {
+      "maxLines": 220,
+      "rationale": "Measured intentional FID-2026-0814-002..006 implementation growth (durable goal mode, hook system, harness frictions, compaction freshness, trust-matrix terminal states); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "common/src/tools/safety-registry.ts": {
+      "maxLines": 347,
+      "rationale": "Measured intentional FID-2026-0814-002..006 implementation growth (durable goal mode, hook system, harness frictions, compaction freshness, trust-matrix terminal states); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "cli/src/components/blocks/single-block.tsx": {
+      "maxLines": 214,
+      "rationale": "Measured intentional 0.0.24 remediation growth (FID-2026-0815 hot-path, crash-recovery, and React Rules-of-Hooks work); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "cli/src/components/blocks/thinking-block.tsx": {
+      "maxLines": 82,
+      "rationale": "Measured intentional 0.0.24 remediation growth (FID-2026-0815 hot-path, crash-recovery, and React Rules-of-Hooks work); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "cli/src/components/build-mode-buttons.tsx": {
+      "maxLines": 112,
+      "rationale": "Measured intentional 0.0.24 remediation growth (FID-2026-0815 hot-path, crash-recovery, and React Rules-of-Hooks work); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "cli/src/components/error-boundary.tsx": {
+      "maxLines": 80,
+      "rationale": "Measured intentional 0.0.24 remediation growth (FID-2026-0815 hot-path, crash-recovery, and React Rules-of-Hooks work); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "cli/src/components/message-with-agents.tsx": {
+      "maxLines": 309,
+      "rationale": "Measured intentional 0.0.24 remediation growth (FID-2026-0815 hot-path, crash-recovery, and React Rules-of-Hooks work); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "cli/src/hooks/helpers/send-message-fn.ts": {
+      "maxLines": 347,
+      "rationale": "Measured intentional 0.0.24 remediation growth (FID-2026-0815 hot-path, crash-recovery, and React Rules-of-Hooks work); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "cli/src/hooks/helpers/send-message-lifecycle.ts": {
+      "maxLines": 268,
+      "rationale": "Measured intentional 0.0.24 remediation growth (FID-2026-0815 hot-path, crash-recovery, and React Rules-of-Hooks work); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "cli/src/utils/logger/sanitize.ts": {
+      "maxLines": 73,
+      "rationale": "Measured intentional 0.0.24 remediation growth (FID-2026-0815 hot-path, crash-recovery, and React Rules-of-Hooks work); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "cli/src/utils/renderer-cleanup.ts": {
+      "maxLines": 149,
+      "rationale": "Measured intentional 0.0.24 remediation growth (FID-2026-0815 hot-path, crash-recovery, and React Rules-of-Hooks work); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "cli/src/utils/trace-writer.ts": {
+      "maxLines": 213,
+      "rationale": "Measured intentional 0.0.24 remediation growth (FID-2026-0815 hot-path, crash-recovery, and React Rules-of-Hooks work); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "common/src/types/contracts/trace.ts": {
+      "maxLines": 48,
+      "rationale": "Measured intentional 0.0.24 remediation growth (FID-2026-0815 hot-path, crash-recovery, and React Rules-of-Hooks work); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "common/src/util/dates.ts": {
+      "maxLines": 107,
+      "rationale": "Measured intentional 0.0.24 remediation growth (FID-2026-0815 hot-path, crash-recovery, and React Rules-of-Hooks work); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "packages/agent-runtime/src/echo/pre-write-gates.ts": {
+      "maxLines": 299,
+      "rationale": "Measured intentional 0.0.24 remediation growth (FID-2026-0815 hot-path, crash-recovery, and React Rules-of-Hooks work); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "packages/agent-runtime/src/run-agent-step/step.ts": {
+      "maxLines": 395,
+      "rationale": "Measured intentional 0.0.24 remediation growth (FID-2026-0815 hot-path, crash-recovery, and React Rules-of-Hooks work); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "packages/agent-runtime/src/tools/handlers/tool/checkpoint-store.ts": {
+      "maxLines": 416,
+      "rationale": "Measured intentional 0.0.24 remediation growth (FID-2026-0815 hot-path, crash-recovery, and React Rules-of-Hooks work); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "packages/agent-runtime/src/tools/tool-executor/write-gate.ts": {
+      "maxLines": 152,
+      "rationale": "Measured intentional 0.0.24 remediation growth (FID-2026-0815 hot-path, crash-recovery, and React Rules-of-Hooks work); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "packages/agent-runtime/src/util/activity-tracking.ts": {
+      "maxLines": 288,
+      "rationale": "Measured intentional 0.0.24 remediation growth (FID-2026-0815 hot-path, crash-recovery, and React Rules-of-Hooks work); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     }
   }
 }

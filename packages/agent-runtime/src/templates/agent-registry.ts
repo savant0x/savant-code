@@ -58,13 +58,13 @@ export async function getAgentTemplate(
   const parsed = parsePublishedAgentId(normalizedAgentId)
   if (!parsed) {
     // If agentId doesn't parse as publisher/agent format, try as savant-code/agentId
-    const savantCode$1 = parsePublishedAgentId(
+    const savantCodeParsed = parsePublishedAgentId(
       `${DEFAULT_ORG_PREFIX}${normalizedAgentId}`,
     )
-    if (savantCode$1) {
+    if (savantCodeParsed) {
       const dbAgent = await fetchAgentFromDatabase({
         ...params,
-        parsedAgentId: savantCode$1,
+        parsedAgentId: savantCodeParsed,
       })
       if (dbAgent) {
         databaseAgentCache.set(dbAgent.id, dbAgent)

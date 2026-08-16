@@ -46,6 +46,27 @@ export function countTokensJson(value: JSONValue): number {
   return countTokens(JSON.stringify(value) ?? '')
 }
 
+const JSON_TOKEN_COUNT_CACHE = new WeakMap<object, number>()
+
+/**
+ * Memoize a JSON token count by object identity. `countTokensJson` re-runs
+ * `JSON.stringify` on every call; for an invariant object (e.g. the per-loop
+ * tool-schema list) that stringify is pure waste after the first step. Keys
+ * are WeakMap'd so entries are GC'd with the objects themselves — no explicit
+ * eviction needed (same contract as countTokensMessagesCached). Only object
+ * values are memoized; primitives fall through to countTokensJson directly.
+ */
+export function countTokensJsonCached(value: JSONValue): number {
+  if (value !== null && typeof value === 'object') {
+    const cached = JSON_TOKEN_COUNT_CACHE.get(value)
+    if (cached !== undefined) return cached
+    const count = countTokensJson(value)
+    JSON_TOKEN_COUNT_CACHE.set(value, count)
+    return count
+  }
+  return countTokensJson(value)
+}
+
 /**
  * Estimate tokens for a list of messages by counting the content the model
  * actually tokenizes (text, tool inputs, tool results, a flat cost per image)

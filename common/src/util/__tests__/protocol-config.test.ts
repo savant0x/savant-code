@@ -59,7 +59,7 @@ describe('readProtocolConfig', () => {
         microCompact: false,
         keepRecentTokens: 16_384,
         autoCompactRatio: 0.8,
-        forceCompactRatio: 0.9,
+        forceCompactOffset: 15_000,
         idleCompaction: {
           enabled: false,
           idleAfterSeconds: 1_800,
@@ -83,6 +83,10 @@ describe('readProtocolConfig', () => {
         enabled: true,
         cacheHitAlertDrop: 0.3,
       },
+      provenance: {
+        mode: 'record',
+      },
+      hooks: [],
     })
   })
 
@@ -163,7 +167,7 @@ describe('readProtocolConfig', () => {
         microCompact: false,
         keepRecentTokens: 16_384,
         autoCompactRatio: 0.8,
-        forceCompactRatio: 0.9,
+        forceCompactOffset: 15_000,
         idleCompaction: {
           enabled: false,
           idleAfterSeconds: 1_800,
@@ -187,6 +191,10 @@ describe('readProtocolConfig', () => {
         enabled: true,
         cacheHitAlertDrop: 0.3,
       },
+      provenance: {
+        mode: 'record',
+      },
+      hooks: [],
     })
   })
 
@@ -202,7 +210,9 @@ describe('readProtocolConfig', () => {
         '  microCompact: true',
         '  keepRecentTokens: 8192',
         '  autoCompactRatio: 0.75',
-        '  forceCompactRatio: 0.95',
+        '  forceCompactOffset: 20000',
+        '  microCompactMaxKeepRecent: 8',
+        '  microCompactFloorTokens: 200000',
         '  idleCompaction:',
         '    enabled: true',
         '    idleAfterSeconds: 900',
@@ -230,7 +240,9 @@ describe('readProtocolConfig', () => {
       microCompact: true,
       keepRecentTokens: 8_192,
       autoCompactRatio: 0.75,
-      forceCompactRatio: 0.95,
+      forceCompactOffset: 20_000,
+      microCompactMaxKeepRecent: 8,
+      microCompactFloorTokens: 200_000,
       idleCompaction: {
         enabled: true,
         idleAfterSeconds: 900,
@@ -261,5 +273,75 @@ describe('readProtocolConfig', () => {
     expect(config.compression.enabled).toBe(true)
     expect(config.compression.keepRecentTokens).toBe(16_384)
     expect(config.telemetry.enabled).toBe(true)
+  })
+
+  test('parses the ZTAP provenance mode and rejects invalid values', () => {
+    const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'protocol-config-'))
+    temporaryDirectories.push(cwd)
+    fs.mkdirSync(path.join(cwd, 'dev', 'fids'), { recursive: true })
+    fs.writeFileSync(
+      path.join(cwd, 'protocol.config.yaml'),
+      ['provenance:', "  mode: 'enforce'", ''].join('\n'),
+    )
+    expect(readProtocolConfig(cwd).provenance).toEqual({ mode: 'enforce' })
+
+    // Invalid value falls back to the `record` default (fail-safe, never
+    // silently disabling provenance because of a typo).
+    fs.writeFileSync(
+      path.join(cwd, 'protocol.config.yaml'),
+      ['provenance:', "  mode: 'aggressive'", ''].join('\n'),
+    )
+    expect(readProtocolConfig(cwd).provenance).toEqual({ mode: 'record' })
+
+    // Missing block keeps the default too.
+    fs.writeFileSync(path.join(cwd, 'protocol.config.yaml'), '')
+    expect(readProtocolConfig(cwd).provenance).toEqual({ mode: 'record' })
+  })
+
+  test('parses the hooks block and drops invalid entries fail-safe', () => {
+    const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'protocol-config-'))
+    temporaryDirectories.push(cwd)
+    fs.mkdirSync(path.join(cwd, 'dev', 'fids'), { recursive: true })
+    fs.writeFileSync(
+      path.join(cwd, 'protocol.config.yaml'),
+      [
+        'hooks:',
+        '  - event: PreToolUse',
+        '    matcher: write_file',
+        '    command: node scripts/guard.js',
+        '    timeout: 10',
+        '    env:',
+        '      GUARD_MODE: strict',
+        '  - event: PostToolUse',
+        '    command: node scripts/log.js',
+        '  - event: NotARealEvent',
+        '    command: node scripts/bad.js',
+        '  - event: SessionEnd',
+        '',
+      ].join('\n'),
+    )
+
+    const hooks = readProtocolConfig(cwd).hooks
+    expect(hooks).toEqual([
+      {
+        event: 'PreToolUse',
+        matcher: 'write_file',
+        command: 'node scripts/guard.js',
+        timeout: 10,
+        env: { GUARD_MODE: 'strict' },
+      },
+      {
+        event: 'PostToolUse',
+        command: 'node scripts/log.js',
+      },
+    ])
+  })
+
+  test('missing or empty hooks block yields an empty list', () => {
+    const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'protocol-config-'))
+    temporaryDirectories.push(cwd)
+    fs.mkdirSync(path.join(cwd, 'dev', 'fids'), { recursive: true })
+    fs.writeFileSync(path.join(cwd, 'protocol.config.yaml'), '')
+    expect(readProtocolConfig(cwd).hooks).toEqual([])
   })
 })

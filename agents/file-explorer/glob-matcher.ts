@@ -32,7 +32,9 @@ const globMatcher: SecretAgentDefinition = {
   displayName: 'Glob Matcher',
   spawnerPrompt:
     'Mechanically runs multiple glob pattern matches and returns all matching files',
-  model: 'anthropic/claude-sonnet-4.5',
+  // FID-2026-0814-009 B-08: display metadata only — inherits the operator's
+  // model via withParentModel; `openrouter/free` is the safe free fallback.
+  model: 'openrouter/free',
   publisher,
   outputMode: 'structured_output',
   includeMessageHistory: false,

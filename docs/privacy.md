@@ -3,7 +3,7 @@
 > **Scope:** This document describes what data Savant Code collects, where it
 > goes, and how users control it. It covers the CLI, SDK, and agent-runtime.
 >
-> **Version:** v0.0.23 (pending, unreleased)
+> **Version:** v0.0.24
 >
 > **Applies to:** `cli`, `sdk`, `packages/agent-runtime`, `common`
 
@@ -96,6 +96,10 @@
 - **Endpoint:** Chosen by the user (OpenRouter, Ollama, etc.).
 - **Data sent:** Model prompt and any context required by the model.
 - **Data NOT sent:** Savant Code does not add tracking headers or identifiers.
+- **One model project-wide:** the model selected in the UI panel is the only
+  model used — the main chat agent, teacher-forge, headless runs, and spawned
+  subagents all resolve the operator's active model. Savant Code never silently
+  falls back to a different (e.g. paid) model than the one you selected.
 
 ### Analytics / Telemetry
 

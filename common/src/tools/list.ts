@@ -18,6 +18,7 @@ import {
 import { deepResearchParams } from './params/tool/deep-research'
 import { endTurnParams } from './params/tool/end-turn'
 import { findFilesParams } from './params/tool/find-files'
+import { getGoalParams } from './params/tool/get-goal'
 import { globParams } from './params/tool/glob'
 import {
   queryBlastRadiusParams,
@@ -50,6 +51,7 @@ import { suggestFollowupsParams } from './params/tool/suggest-followups'
 import { taskCompletedParams } from './params/tool/task-completed'
 import { thinkDeeplyParams } from './params/tool/think-deeply'
 import { transitionPhaseParams } from './params/tool/transition-phase'
+import { updateGoalParams } from './params/tool/update-goal'
 import { updateSubgoalParams } from './params/tool/update-subgoal'
 import { webSearchParams } from './params/tool/web-search'
 import { writeFileParams } from './params/tool/write-file'
@@ -103,7 +105,9 @@ export const toolParams = {
   task_completed: taskCompletedParams,
   think_deeply: thinkDeeplyParams,
   transition_phase: transitionPhaseParams,
+  update_goal: updateGoalParams,
   update_subgoal: updateSubgoalParams,
+  get_goal: getGoalParams,
   web_search: webSearchParams,
   write_file: writeFileParams,
   write_todos: writeTodosParams,

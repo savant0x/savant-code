@@ -6,8 +6,10 @@ const definition: SecretAgentDefinition = {
   ...thinker,
   id: 'thinker-gemini',
   displayName: 'Thinker',
-  model: 'google/gemini-3.1-pro-preview',
-  inheritParentModel: false,
+  // FID-2026-0814-004 H-11: display metadata only. The Gemini hardcode and
+  // `inheritParentModel: false` escape were removed — this thinker now inherits
+  // the operator's model via withParentModel like every other sub-agent.
+  model: 'openrouter/free',
   providerOptions: undefined,
   reasoningOptions: {
     effort: 'medium',

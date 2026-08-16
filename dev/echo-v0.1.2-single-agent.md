@@ -60,8 +60,10 @@ Laws 1-4 are the Immutable Process Laws governing workflow. Laws 5-15 are the Ex
 | **Extended** | 5-15 (Code Quality)     | When `strict_mode: true` (default) | `protocol.strict_mode` |
 
 - **Core laws** are non-negotiable and always enforced regardless of config.
-- **Extended laws** are enforced when `strict_mode: true`. Set to `false` for quick exploration or debugging sessions
-  where full rigor is unnecessary.
+- **Extended laws** are enforced when `strict_mode: true`. Set to `false` ONLY for interactive debugging sessions with
+  the operator at the keyboard. **Autonomous or unattended single-agent runs MUST keep `strict_mode: true`** — the escape
+  hatch is for the operator's hands, not the agent running alone. A scope decision made under `strict_mode: false` is not
+  a lawful basis to drop approved work.
 - The boot sequence always confirms Core laws. Extended laws are confirmed only when `strict_mode` is active.
 
 ### Laws 1-4: The Immutable Process Laws
@@ -73,8 +75,10 @@ Laws 1-4 are the Immutable Process Laws governing workflow. Laws 5-15 are the Ex
 | **3** | **Verify Before Proceed**          | Every change verified with build and test commands (from `protocol.config.yaml`) before moving on.                                | No broken builds ever. Zero errors, zero warnings.                                       |
 | **4** | **Verify Call-Graph Reachability** | After wiring any feature, grep production entry points to confirm it is actually called. Compilation is NOT verification.         | Zero grep results = NOT wired. Do not mark complete.                                     |
 
-**Additional Rule:** If you encounter ANY issue — even outside the current scope — you must flag it immediately. Never
-skip past a problem because "it's not what we're working on."
+**Additional Rule:** If you encounter ANY issue — even outside the current scope — you must record it immediately in
+`SCOPE.md` as an `[OPEN-OUT-OF-SCOPE]` item (see Scope Boundary section below). Never skip past a problem because
+"it's not what we're working on." Discovery of an issue is NOT permission to drop it — only the operator can close an
+out-of-scope item, and only after it has been presented.
 
 ### Laws 5-15: The Extended Code Laws
 
@@ -225,6 +229,36 @@ Step 8:  Implementation passes → done
 - When you see an opportunity for improvement
 
 ---
+
+## Scope Boundary & Present-Before-Drop (Mandatory)
+
+Single-agent sessions have no Orchestrator, Verifier, or Adversary to catch a silent scope decision. Law 2 already
+requires approval before dropping approved work — this section makes that *mechanically auditable* so a scope drop can
+never be an internal, invisible reclassification.
+
+**At task intake (before any implementation):**
+
+1. Create `SCOPE.md` at the repository root. List every approved work item as a checked box. This is the authoritative
+   "approved scope" — if an item is not in `SCOPE.md`, it was not approved.
+2. If the task arrives as a loose instruction (not a converged FID), the agent MUST first write the interpreted scope
+   into `SCOPE.md` and present it for confirmation before proceeding. The operator's go-ahead (or explicit confirmation)
+   converts interpreted scope into approved scope.
+
+**Before dropping, deferring, or reclassifying any item as "out of scope":**
+
+1. The item MUST remain in `SCOPE.md` but be marked `[DEFERRED]` or `[OUT-OF-SCOPE]` with a one-line reason.
+2. The decision MUST be presented to the operator as a **blocking step** — the agent does not proceed past the decision
+   point until the operator responds. "Presenting" means stating the item, the reason, and waiting for a reply — not
+   logging it and moving on.
+3. An item is only truly dropped when the operator confirms. Until then, it stays an active approved item.
+
+**Out-of-scope issues discovered mid-work (Law 2 Additional Rule):**
+Any issue found outside the current scope MUST be appended to `SCOPE.md` as an `[OPEN-OUT-OF-SCOPE]` item — never
+silently skipped, never silently absorbed. The operator decides whether to add it to scope.
+
+`SCOPE.md` is the audit trail. After the session, it can be read to see exactly which items were dropped, by what
+reasoning, and whether presentation occurred. A dropped item with no `[DEFERRED]`/`[OUT-OF-SCOPE]` line and no
+presentation record is a Law 2 violation (severity 2, "scope reduction is a silent decision").
 
 ## Double Audit (Single-Agent)
 

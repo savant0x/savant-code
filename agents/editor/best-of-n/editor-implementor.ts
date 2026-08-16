@@ -7,20 +7,16 @@ export const createBestOfNImplementor = (options: {
   model: 'sonnet' | 'opus' | 'gpt-5' | 'gemini'
 }): Omit<SecretAgentDefinition, 'id'> => {
   const { model } = options
-  const isSonnet = model === 'sonnet'
-  const isOpus = model === 'opus'
   const isGpt5 = model === 'gpt-5'
   const isGemini = model === 'gemini'
 
   return {
     publisher,
-    model: isSonnet
-      ? 'anthropic/claude-sonnet-4.5'
-      : isOpus
-        ? 'anthropic/claude-opus-4.8'
-        : isGemini
-          ? 'google/gemini-3-pro-preview'
-          : 'openai/gpt-5.1',
+    // FID-2026-0814-009 B-07: display metadata only. The paid
+    // sonnet/opus/gpt-5/gemini hardcodes were removed — this editor inherits
+    // the operator's model via withParentModel at the spawn boundary;
+    // `openrouter/free` is the safe free fallback, never a paid model.
+    model: 'openrouter/free',
 
     displayName: 'Implementation Generator',
     spawnerPrompt:

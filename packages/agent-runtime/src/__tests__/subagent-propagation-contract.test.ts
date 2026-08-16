@@ -8,6 +8,7 @@ import { describe, expect, it } from 'bun:test'
 import {
   createAgentState,
   extractSubagentContextParams,
+  withParentModel,
 } from '../tools/handlers/tool/spawn-agent-utils'
 
 import type { AgentTemplate } from '@savant-code/common/types/agent-template'
@@ -110,5 +111,42 @@ describe('subagent propagation contract', () => {
   it('publishes bounded fan-out constants for handler enforcement', () => {
     expect(MAX_SUBAGENT_FAN_OUT).toBe(32)
     expect(MAX_SUBAGENT_DEPTH).toBe(8)
+  })
+
+  it('withParentModel inherits the parent model and preserves the child data_collection deny flag (B-06)', () => {
+    const parent: AgentTemplate = {
+      ...template,
+      id: 'parent',
+      model: 'parent/model',
+      providerOptions: {},
+    }
+    const child: AgentTemplate = {
+      ...template,
+      id: 'child',
+      model: 'child/hardcoded',
+      providerOptions: { data_collection: 'deny' },
+    }
+
+    const merged = withParentModel(child, parent)
+    expect(merged.model).toBe('parent/model')
+    expect(merged.providerOptions).toEqual({ data_collection: 'deny' })
+  })
+
+  it('withParentModel keeps parent providerOptions when the child sets none', () => {
+    const parent: AgentTemplate = {
+      ...template,
+      id: 'parent',
+      model: 'parent/model',
+      providerOptions: { data_collection: 'deny' },
+    }
+    const child: AgentTemplate = {
+      ...template,
+      id: 'child',
+      model: 'child/hardcoded',
+    }
+
+    const merged = withParentModel(child, parent)
+    expect(merged.model).toBe('parent/model')
+    expect(merged.providerOptions).toEqual({ data_collection: 'deny' })
   })
 })

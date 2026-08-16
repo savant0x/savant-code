@@ -3,18 +3,36 @@
 This directory contains reusable validation prompts and live harnesses.
 
 - Root-level files are active prompts or current harnesses.
-- The comprehensive `0.0.23` regression prompt is
-  [`v0.0.23-comprehensive-live-test.md`](v0.0.23-comprehensive-live-test.md).
-  It uses the changelog as its coverage index and writes its report to
-  `dev/scratchpad/v0.0.23-comprehensive-live-test-report.md`.
-- The in-harness A–Z prompt is
-  [`az-v0.0.23-harness-live-test.md`](az-v0.0.23-harness-live-test.md). It is
-  executed by the harness agent itself inside `bun dev` (no tmux, no binary
-  build, no isolated copy) using the local Ollama backend for model-dependent
-  tests, and writes its report to
-  `dev/scratchpad/az-v0.0.23-harness-live-test-report.md` (template:
-  `az-v0.0.23-harness-live-test-report.template.md`).
-- [`archive/`](archive/) contains historical prompts and result records.
+- The current comprehensive A–Z harness prompt is
+  [`az-v0.0.24-harness-live-test.md`](az-v0.0.24-harness-live-test.md). It
+  covers the full 0.0.24 delta — ZTAP provenance (FID-2026-0813-001..010), the
+  Agent-Steering Teacher (`011..020` + live sidebar `022`), the canonical
+  version-bump tool (`021`), the harness observability/integrity remediation
+  (`023`), and the goal-engine/hook-system/model-unification/compaction
+  remediation (`FID-2026-0814-002..007`) — with a deterministic trigger path
+  per row and a mandatory **Agent View** report section (§7) for out-of-band
+  findings. It writes its report to
+  `dev/scratchpad/az-v0.0.24-harness-live-test-report.md`.
+- The Agent-Steering Teacher A–Z prompt is
+  [`az-teacher-live-test.md`](az-teacher-live-test.md). It covers the `/learn`
+  lifecycle (Forge → sandbox → graders → critique), the read-only `Teacher`
+  sidebar panel, per-attempt ZTAP receipts, versioned progression, and the
+  zero-authority/private-pack boundary, and writes its report to
+  `dev/scratchpad/az-teacher-live-test-report.md`. The live Forge requires an
+  authenticated Savant Code client; an unauthenticated session must honestly
+  record the fail-closed `unavailable` surface rather than a fabricated pass.
+  Its headless driver is [`az-teacher-driver.ts`](az-teacher-driver.ts)
+  (`bun dev/test-prompts/az-teacher-driver.ts`) — it drives the full lifecycle
+  with a stub Forge + in-memory store so every logic row has a deterministic
+  trigger path and never degrades to `NEEDS-REVIEW`.
+- The design-system live test is
+  [`design-system-live-ux-performance.md`](design-system-live-ux-performance.md).
+  It validates loadable design-system usability, agent feedback, cold/warm
+  latency, resource/context overhead, persistence, headless errors, and
+  enforcement correction.
+- [`archive/`](archive/) contains historical prompts and result records,
+  including the superseded v0.0.21 build/release-system prompt and the
+  v0.0.23 comprehensive + harness prompts.
 - Generated result dumps should live with the relevant archived benchmark
   material, not beside active prompts.
 

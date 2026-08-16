@@ -2,6 +2,28 @@ import crypto from 'crypto'
 
 import { getDb } from './index'
 
+/**
+ * FID-2026-0815-015: cyclic-safe session-state serialization. The runtime
+ * `SessionState` carries ephemeral, non-serializable fields (timer handles,
+ * compliance/provenance engine instances) that can form reference cycles and
+ * make `JSON.stringify` throw. Omit them (and functions) before persisting so
+ * a live state can never fail the DB save.
+ */
+const EPHEMERAL_SESSION_KEYS = new Set([
+  'activity',
+  'activityIdleTimer',
+  'echoCompliance',
+  'provenance',
+])
+
+function stringifySessionState(sessionState: Record<string, unknown>): string {
+  return JSON.stringify(sessionState, (key: string, value: unknown) =>
+    EPHEMERAL_SESSION_KEYS.has(key) || typeof value === 'function'
+      ? undefined
+      : value,
+  )
+}
+
 // Types
 export interface Session {
   id: string
@@ -101,7 +123,13 @@ export function createSession(
     INSERT INTO sessions (id, chat_id, agent_id, session_state, selected_model)
     VALUES (?, ?, ?, ?, ?)
   `)
-  stmt.run(id, chatId, agentId, JSON.stringify(sessionState), selectedModel)
+  stmt.run(
+    id,
+    chatId,
+    agentId,
+    stringifySessionState(sessionState),
+    selectedModel,
+  )
   return requireRow(getSession(id), `read back session ${id} after insert`)
 }
 
@@ -126,7 +154,7 @@ export function updateSession(
     SET session_state = ?, updated_at = CURRENT_TIMESTAMP
     WHERE id = ?
   `)
-  return stmt.run(JSON.stringify(sessionState), id).changes > 0
+  return stmt.run(stringifySessionState(sessionState), id).changes > 0
 }
 
 // FID-2026-0803-002 DB-2: `created_at` is second-granularity, so every

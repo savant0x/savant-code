@@ -1,12 +1,15 @@
 import { trackEvent } from '@savant-code/common/analytics'
 import { AnalyticsEvent } from '@savant-code/common/constants/analytics-events'
 
-import { loopAgentSteps } from './run-agent-step'
+import { buildHookInput, getHookEngine } from './hooks/engine'
+import { driveGoalTurns } from './run-agent-step/goal-driver'
+import { demoteStaleActiveGoal } from './run-agent-step/goal-engine'
 import {
   assembleLocalAgentTemplates,
   getAgentTemplate,
 } from './templates/agent-registry'
 
+import type { loopAgentSteps } from './run-agent-step'
 import type { AgentTemplate } from './templates/types'
 import type { ClientAction } from '@savant-code/common/actions'
 import type {
@@ -112,41 +115,73 @@ export async function mainPrompt(
     throw new Error(`Agent template not found for type: ${agentType}`)
   }
 
-  const { agentState, output } = await loopAgentSteps({
-    ...params,
-    userInputId: promptId,
-    spawnParams: promptParams,
-    agentState: mainAgentState,
-    ancestorRunIds: [],
-    prompt,
-    content,
-    agentType,
-    fingerprintId,
-    fileContext,
-  })
+  // FID-2026-0814-002: a goal left `active` by an interrupted/crashed run must
+  // never silently resume — demote it to `paused` at run start. The
+  // continuation driver below then sees only paused/blocked records (or a
+  // fresh <goal-set>/resume directive from the operator).
+  demoteStaleActiveGoal(mainAgentState.goal)
 
-  // Log a summary only: output can contain the full conversation
-  // (type 'allMessages'), which bloats log files on long chats.
-  logger.debug(
-    {
-      outputType: output?.type,
-      messageCount:
-        output && 'value' in output && Array.isArray(output.value)
-          ? output.value.length
-          : undefined,
-    },
-    'Main prompt finished',
-  )
+  // FID-2026-0814-003: SessionStart/SessionEnd hooks — observation only,
+  // fire-and-forget, fired at the main-agent run boundary (per prompt).
+  const hookProjectRoot = fileContext.projectRoot ?? fileContext.cwd
+  const sessionId = mainAgentState.runId ?? mainAgentState.agentId
+  if (hookProjectRoot) {
+    getHookEngine(hookProjectRoot).fireAndForgetTrigger(
+      buildHookInput({
+        event: 'SessionStart',
+        sessionId,
+        cwd: hookProjectRoot,
+      }),
+    )
+  }
 
-  return {
-    sessionState: {
+  try {
+    const { agentState, output } = await driveGoalTurns({
+      ...params,
+      userInputId: promptId,
+      spawnParams: promptParams,
+      agentState: mainAgentState,
+      ancestorRunIds: [],
+      prompt,
+      content,
+      agentType,
+      fingerprintId,
       fileContext,
-      mainAgentState: agentState,
-    },
-    output: output ?? {
-      type: 'error' as const,
-      message: 'No output from agent',
-    },
+    })
+
+    // Log a summary only: output can contain the full conversation
+    // (type 'allMessages'), which bloats log files on long chats.
+    logger.debug(
+      {
+        outputType: output?.type,
+        messageCount:
+          output && 'value' in output && Array.isArray(output.value)
+            ? output.value.length
+            : undefined,
+      },
+      'Main prompt finished',
+    )
+
+    return {
+      sessionState: {
+        fileContext,
+        mainAgentState: agentState,
+      },
+      output: output ?? {
+        type: 'error' as const,
+        message: 'No output from agent',
+      },
+    }
+  } finally {
+    if (hookProjectRoot) {
+      getHookEngine(hookProjectRoot).fireAndForgetTrigger(
+        buildHookInput({
+          event: 'SessionEnd',
+          sessionId,
+          cwd: hookProjectRoot,
+        }),
+      )
+    }
   }
 }
 

@@ -102,7 +102,9 @@ Be extremely concise.`,
 const definition: SecretAgentDefinition = {
   id: 'verifier',
   publisher,
-  ...createReviewer('anthropic/claude-opus-4.8'),
+  // FID-2026-0814-009 B-08: display metadata only — inherits the operator's
+  // model via withParentModel; `openrouter/free` is the safe free fallback.
+  ...createReviewer('openrouter/free'),
 }
 
 export default definition

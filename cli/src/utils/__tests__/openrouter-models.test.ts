@@ -29,8 +29,18 @@ const makeJsonResponse = (body: unknown): Response =>
     status: 200,
     headers: { 'Content-Type': 'application/json' },
   })
+let tempConfigDir: string
+let originalConfigDirEnv: string | undefined
+
 describe('openrouter-models', () => {
   beforeEach(() => {
+    // FID-2026-0815-007: isolate the gateway disk cache to a temp config dir
+    // so the write-through never touches the real ~/.savant-code* dir.
+    originalConfigDirEnv = process.env.SAVANT_CODE_CONFIG_DIR
+    tempConfigDir = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'savant-gateway-cache-'),
+    )
+    process.env.SAVANT_CODE_CONFIG_DIR = tempConfigDir
     __resetOpenRouterModelsCacheForTest()
     globalThis.fetch = REAL_FETCH
   })
@@ -38,6 +48,12 @@ describe('openrouter-models', () => {
     __resetOpenRouterModelsCacheForTest()
     globalThis.fetch = REAL_FETCH
     mock.restore()
+    if (originalConfigDirEnv === undefined) {
+      delete process.env.SAVANT_CODE_CONFIG_DIR
+    } else {
+      process.env.SAVANT_CODE_CONFIG_DIR = originalConfigDirEnv
+    }
+    fs.rmSync(tempConfigDir, { recursive: true, force: true })
   })
   test('parses the live catalog shape (id, name, context, pricing)', async () => {
     // @ts-expect-error - mock fetch

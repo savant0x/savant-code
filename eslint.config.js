@@ -1,5 +1,6 @@
 import eslintConfigPrettier from 'eslint-config-prettier'
 import pluginImport from 'eslint-plugin-import'
+import pluginReactHooks from 'eslint-plugin-react-hooks'
 import globals from 'globals'
 import tseslint from 'typescript-eslint'
 
@@ -18,6 +19,7 @@ export default tseslint.config(
       'resources/**', // Vendored resource files - not linted (see .prettierignore / .markdownlintignore)
       'research/**', // Vendored research snapshots - not linted (see .prettierignore / .markdownlintignore)
       'dev/scratchpad/**', // Ephemeral working area (gitignored, see .gitignore) — ad-hoc tools may use console freely
+      '.qoder/**', // Better-harness run artifacts (renderer-generated reports) — machine output, not source
       'cli/src/agents/bundled-agents.generated.ts', // Auto-generated agent code with embedded console strings
       'cli/src/agents/bundled-agents.generated.d.ts', // Auto-generated type declarations
       'cli/src/constants/cytoscape.ts', // Auto-generated 373KB inline JS constant (single-token template literal)
@@ -48,6 +50,55 @@ export default tseslint.config(
               importNames: ['ProcessEnv'],
               message:
                 'CLI should use CliEnv from "../types/env" instead of ProcessEnv from common.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // Teacher UI components: zero-authority surface (FID-2026-0813-022).
+  // The sidebar panel + overlay render a passive mirror of the teacher runtime
+  // singleton and must never import runtime, write, filesystem, child-process,
+  // or crypto primitives. The runtime bridge (cli/src/teacher/runtime.ts)
+  // legitimately uses node:fs/crypto/path and is deliberately NOT covered.
+  {
+    files: [
+      'cli/src/components/savant-ui/teacher/*.tsx',
+      'cli/src/components/right-sidebar.tsx',
+    ],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: 'node:fs',
+              message:
+                'Teacher UI is read-only; filesystem access is forbidden.',
+            },
+            {
+              name: 'node:child_process',
+              message:
+                'Teacher UI is read-only; subprocess access is forbidden.',
+            },
+            {
+              name: 'node:path',
+              message: 'Teacher UI is read-only; path access is forbidden.',
+            },
+            {
+              name: 'node:crypto',
+              message: 'Teacher UI is read-only; crypto access is forbidden.',
+            },
+          ],
+          patterns: [
+            {
+              group: [
+                '@savant-code/agent-runtime',
+                '@savant-code/agent-runtime/*',
+              ],
+              message:
+                'Teacher UI must consume the passive store mirror, not the runtime.',
             },
           ],
         },
@@ -99,6 +150,7 @@ export default tseslint.config(
     plugins: {
       import: pluginImport,
       '@typescript-eslint': tseslint.plugin,
+      'react-hooks': pluginReactHooks,
       savant: {
         rules: {
           'no-unknown-in-signatures': noUnknownInSignatures,
@@ -156,6 +208,13 @@ export default tseslint.config(
       // Temporarily disabled while the dedicated unknown-cleanup FID is drafted (see FID-069 notes).
       // NOTE: re-enable as 'error' once all non-guard `unknown` usages are typed or suppressed.
       'savant/no-unknown-in-signatures': 'off',
+      // React Rules of Hooks (FID-2026-0815-014): hooks must run unconditionally
+      // in the same order every render; a conditional `return` before a hook
+      // crashes React with "Rendered more hooks than during the previous render".
+      'react-hooks/rules-of-hooks': 'error',
+      // exhaustive-deps is OFF for now: its pre-existing warnings would fail the
+      // `--max-warnings 0` gate; a separate triage FID owns them.
+      'react-hooks/exhaustive-deps': 'off',
       'no-console': 'warn', // Production code must use the structured logger; suppress locally with a justification comment
       '@next/next/no-img-element': 'off', // Disabled: plugin not configured for all packages
     },

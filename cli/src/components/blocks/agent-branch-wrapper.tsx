@@ -367,6 +367,25 @@ export const AgentBranchWrapper = memo(
       state.streamingAgents.has(agentBlock.agentId),
     )
 
+    const onToggle = useCallback(() => {
+      onToggleCollapsed(agentBlock.agentId)
+    }, [onToggleCollapsed, agentBlock.agentId])
+
+    const getCopyText = useCallback(() => {
+      // Serialize agent blocks with role prefix
+      const lines: string[] = [`[Agent: ${agentBlock.agentName}]`]
+      agentBlock.blocks?.forEach((b) => {
+        if (b.type === 'text') {
+          lines.push(b.content)
+        } else if (b.type === 'tool') {
+          lines.push(
+            `[Tool: ${b.toolName}]\nInput: ${JSON.stringify(b.input)}\nOutput: ${b.output ?? '(no output)'}`,
+          )
+        }
+      })
+      return lines.join('\n\n')
+    }, [agentBlock])
+
     if (shouldRenderAsSimpleText(agentBlock.agentType)) {
       const isStreaming = agentBlock.status === 'running' || agentIsStreaming
 
@@ -469,25 +488,6 @@ export const AgentBranchWrapper = memo(
       label: statusLabel,
       color: statusColor,
     } = getAgentStatusInfo(effectiveStatus, theme)
-
-    const onToggle = useCallback(() => {
-      onToggleCollapsed(agentBlock.agentId)
-    }, [onToggleCollapsed, agentBlock.agentId])
-
-    const getCopyText = useCallback(() => {
-      // Serialize agent blocks with role prefix
-      const lines: string[] = [`[Agent: ${agentBlock.agentName}]`]
-      agentBlock.blocks?.forEach((b) => {
-        if (b.type === 'text') {
-          lines.push(b.content)
-        } else if (b.type === 'tool') {
-          lines.push(
-            `[Tool: ${b.toolName}]\nInput: ${JSON.stringify(b.input)}\nOutput: ${b.output ?? '(no output)'}`,
-          )
-        }
-      })
-      return lines.join('\n\n')
-    }, [agentBlock])
 
     return (
       <CopyableBlock getCopyText={getCopyText} isStreaming={isStreaming}>

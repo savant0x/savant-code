@@ -10,6 +10,8 @@ import {
   extractSubagentContextParams,
   withParentModel,
 } from './spawn-agent-utils'
+import { getOrCreateProvenance } from '../../../provenance'
+import { extractVerdictText } from '../../../provenance/verdict'
 import { filterToolSet } from '../../../tools/filter-tool-set'
 import { setActivity } from '../../../util/activity-tracking'
 
@@ -250,6 +252,43 @@ export const handleSpawnAgents = (async (
             writeToClient(eventWithAgent)
           },
         })
+
+        // FID-2026-0813-004: ZTAP verdict binding — the Verifier (AUDIT) and
+        // Adversary (ADVERSARIAL) verdicts are their final outputs. Bound to
+        // every open receipt of the session as signed verbatim payloads (D7).
+        if (agentType === 'verifier' || agentType === 'adversary') {
+          const verdictText = extractVerdictText(result.agentState)
+          if (verdictText) {
+            const provenance = getOrCreateProvenance(parentAgentState, {
+              projectRoot: params.fileContext?.projectRoot ?? '.',
+            })
+            void provenance
+              .bindVerdict({
+                phase: agentType === 'verifier' ? 'audit' : 'adversarial',
+                agentId: subAgentState.agentId,
+                agentType,
+                verdictText,
+              })
+              .then((receipts) => {
+                for (const receipt of receipts) {
+                  writeToClient({
+                    type: 'provenance_receipt',
+                    sessionId: receipt.sessionId,
+                    seq: receipt.seq,
+                    phase: agentType === 'verifier' ? 'audit' : 'adversarial',
+                    status: receipt.status,
+                    signed: receipt.signatures.length > 0,
+                    receipt,
+                    verdictText,
+                  })
+                }
+              })
+              .catch(() => {
+                // Best-effort: a failed binding never fails the spawn.
+              })
+          }
+        }
+
         return { ...result, agentType, agentName: agentTemplate.displayName }
       },
     ),
