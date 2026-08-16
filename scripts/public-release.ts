@@ -2228,7 +2228,7 @@ export async function verifyReleaseAssets(
     await new Promise((resolve) => setTimeout(resolve, assetPollIntervalMs()))
   }
   fail(
-    `GitHub release v${version} is missing binary assets: ${missing.join(', ')} — check the Actions run for v${version}; dispatch build-release-binaries.yml with release_tag: v${version} and source_ref: <fixed commit>, then run 'bun run release:public:resume'.`,
+    `GitHub release v${version} is missing binary assets: ${missing.join(', ')} — check the Actions run for v${version}; dispatch build-release-binaries.yml with release_tag: v${version} and source_ref: <branch-or-tag-with-the-fix> (a bare commit SHA is not accepted by actions/checkout — push the fix to a branch or tag first), then run 'bun run release:public:resume'.`,
   )
 }
 

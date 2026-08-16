@@ -1412,8 +1412,8 @@
       "rationale": "Measured intentional current-scope growth; decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "scripts/validation-manifest.ts": {
-      "maxLines": 447,
-      "rationale": "Measured intentional current-scope growth (prettier gate switched to allowlisted `bun x` form); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+      "maxLines": 468,
+      "rationale": "Measured intentional FID-2026-0816-001 growth (cli-bundle-resolution release gate so undeclared-dependency/phantom-resolution failures block release before shipping); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "scripts/public-release.ts": {
       "maxLines": 2944,

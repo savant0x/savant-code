@@ -12,7 +12,7 @@ on:
         required: true
         type: string
       source_ref:
-        description: 'Optional source ref; defaults to the release tag'
+        description: 'Optional source ref; defaults to the release tag. Must be a branch or tag name — actions/checkout does not accept a bare commit SHA.'
         required: false
         default: ''
         type: string

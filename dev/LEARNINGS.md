@@ -1,5 +1,46 @@
 # LEARNINGS
 
+## Lesson: Undeclared imports can ride a phantom node_modules outside the repo
+
+- **Date:** 2026-08-16
+- **Failure:** The v0.0.24 release shipped live (commit `05f829a`, tag, GitHub release, npm publish) with
+  zero platform binaries because `@noble/hashes/sha512` was imported but never declared: every local gate
+  passed against a phantom hoist (`C:\Users\spenc\node_modules\@noble\hashes`, outside the repo), and only
+  the CI compile could see the missing dependency — `Could not resolve: "@noble/hashes/sha512"` at
+  `common/src/crypto/keys.ts:2:24`, failing all 5 platform builds.
+- **Evidence:** common/src/crypto/keys.ts → symbol:deriveRoleKeypair@line=48,
+  common/package.json → field:version,
+  scripts/validation-manifest.ts → symbol:repositoryValidationGates
+- **Invariant:** Every source import must resolve from the repo's own node_modules after
+  `bun install --frozen-lockfile`; a resolution that only works from a node_modules outside the repo is a defect.
+- **Guard:** `cli-bundle-resolution` release gate (`bun build cli/src/index.tsx --target=bun`) — the exact
+  phase that failed in CI now fails the release gates before shipping, not the post-release binary workflow.
+- **Verification:** The gate exits non-zero on an undeclared import; `import.meta.resolve` of every
+  dependency points under the repo root, never a parent-directory node_modules.
+- **Scope:** release
+- **Owning FID:** FID-2026-0816-001
+- **Status:** active
+- **Canonical rule:** dependency-resolution-repo-bound
+
+## Lesson: workflow_dispatch source_ref must be a branch or tag, not a SHA
+
+- **Date:** 2026-08-16
+- **Failure:** Re-dispatching `build-release-binaries.yml` with `source_ref: <commit-sha>` failed on all 5
+  platform jobs at the Checkout step — actions/checkout resolved the SHA into `refs/heads/<sha>*` refspecs
+  and the fetch failed (run `31927208483`). A second dispatch with `source_ref: main` (the pushed fix)
+  succeeded.
+- **Evidence:** .github/workflows/build-release-binaries.yml → field:source_ref,
+  scripts/public-release.ts → symbol:verifyReleaseAssets
+- **Invariant:** The workflow's checkout `ref` input is a branch/tag name; a bare commit SHA is not
+  resolvable by actions/checkout.
+- **Guard:** Dispatch with a branch/tag (e.g. `main`); the pipeline's asset-verify failure message now says
+  `<branch-or-tag-with-the-fix>` instead of `<fixed commit>`.
+- **Verification:** Dispatch with a SHA → Checkout failure; dispatch with a branch → builds succeed.
+- **Scope:** release
+- **Owning FID:** FID-2026-0816-001
+- **Status:** active
+- **Canonical rule:** dispatch-ref-branch-or-tag
+
 ## Lesson: Generated artifacts require source-shape validation
 
 - **Date:** 2026-08-11

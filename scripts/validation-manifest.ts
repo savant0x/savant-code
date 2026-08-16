@@ -107,6 +107,25 @@ export function repositoryValidationGates(
       cwd: root,
     },
     {
+      // Bundles the CLI entry with every import resolved — the exact phase that
+      // failed in CI when an undeclared dependency (phantom @noble/hashes) only
+      // resolved from a node_modules outside the repo (FID-2026-0816-001 D-01).
+      // A resolution failure must fail the release gates before shipping, not
+      // the post-release binary workflow. Output lands in the gitignored
+      // cli/bin/ so the worktree-fingerprint check stays clean.
+      label: 'cli-bundle-resolution',
+      command: 'bun',
+      args: [
+        'build',
+        'cli/src/index.tsx',
+        '--production',
+        '--target=bun',
+        '--outdir',
+        'cli/bin/.resolution-check',
+      ],
+      cwd: root,
+    },
+    {
       label: 'typecheck',
       command: 'bun',
       args: ['run', 'typecheck'],
@@ -187,6 +206,7 @@ export function validateGateContract(
   for (const label of [
     'lockfile',
     'build:sdk',
+    'cli-bundle-resolution',
     'typecheck',
     'test',
     'eslint',

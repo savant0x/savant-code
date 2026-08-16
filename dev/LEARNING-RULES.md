@@ -27,3 +27,13 @@ This catalog provides stable names for lessons that explain those authorities.
 
 - **Authority:** `common/src/util/boot-contract.ts`
 - **Validation:** `common/src/util/__tests__/boot-contract.test.ts`
+
+## Rule: dependency-resolution-repo-bound
+
+- **Authority:** `scripts/validation-manifest.ts`
+- **Validation:** `bun run release:public:diagnose` (cli-bundle-resolution gate)
+
+## Rule: dispatch-ref-branch-or-tag
+
+- **Authority:** `.github/workflows/build-release-binaries.yml`
+- **Validation:** `scripts/public-release.test.ts`
