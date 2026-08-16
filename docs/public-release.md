@@ -63,16 +63,19 @@ The workflow is intentionally limited to:
 When both packages are in scope, the SDK is published first because the CLI release
 artifact depends on it. `savant-free` is not public and is never included.
 
-By default both packages are published. Release `v0.0.21` intentionally used the
-CLI-only scope; `savant-code@0.0.21` is public while `@savant-code/sdk@0.0.21` remains
-unpublished.
+By default only `savant-code` is published. The `@savant-code/sdk` npm scope does not
+exist and the SDK is never published in a normal release, so it is catalog-only
+(`defaultPublish: false`) and must be opted into explicitly — the release incident at
+the end of this file is the case that forced this default. Release `v0.0.21`
+intentionally used the CLI-only scope; `savant-code@0.0.21` is public while
+`@savant-code/sdk@0.0.21` remains unpublished.
 
 To scope a release to a subset of the public
 packages, set `SAVANT_CODE_RELEASE_PACKAGES` to a comma-separated list of package names;
 the npm-pack dry-run gates, npm access verification, not-already-published checks,
 publishing, and post-publish verification all follow the scope. Any unknown package
 name aborts the run fail-closed (a typo can never silently publish less than intended).
-For example, release only the CLI package without publishing the SDK:
+The CLI-only scope is the default; explicitly requesting it is still accepted:
 
 ```bash
 SAVANT_CODE_RELEASE_PACKAGES=savant-code SAVANT_CODE_RELEASE_AUTOMATION=1 bun run release:public
@@ -184,16 +187,17 @@ Prepare the next version before invoking the mutation flow:
    bun run release:public:preview
    bun run release:public:diagnose
    ```
-4. For the current CLI-only publication policy, run:
+4. The default publication policy is CLI-only, so run:
    ```bash
-   SAVANT_CODE_RELEASE_PACKAGES=savant-code \
    SAVANT_CODE_RELEASE_AUTOMATION=1 bun run release:public
    ```
+   (`SAVANT_CODE_RELEASE_PACKAGES=savant-code` is still accepted but no longer
+   required — the SDK is opt-in via that variable.)
 5. If a mutation stage fails, inspect the receipt and transcript, fix the cause, then
    use the same package scope with `bun run release:public:resume`.
 
-To publish the SDK in a future release, omit the scope variable (publishes both public
-packages) or explicitly set:
+To publish the SDK in a future release, explicitly opt it in (the default is
+CLI-only):
 
 ```bash
 SAVANT_CODE_RELEASE_PACKAGES=@savant-code/sdk,savant-code \
@@ -206,3 +210,86 @@ The automation mode is not a hidden background release: it is enabled only by an
 environment flag and fails closed on missing credentials, unexpected GitHub HTTP statuses,
 malformed API responses, mismatched tags, changed resume HEADs, failed local gates, and npm
 publication errors. Preview never commits or calls a mutating external endpoint.
+
+## Release incident: v0.0.24 — phantom dependency shipped without binaries
+
+**Date:** 2026-08-16 · **Severity:** high · **FID:** `FID-2026-0816-001` (archived)
+
+### What happened
+
+`v0.0.24` was committed (`05f829a`), tagged, GitHub-released, and published to npm, but
+its `build-release-binaries.yml` run failed on all 5 platforms at the `Build binary`
+step: `error: Could not resolve: "@noble/hashes/sha512"` at
+`common/src/crypto/keys.ts:2:24`. The GitHub release shipped zero binary tarballs.
+
+### Why the impact was limited to missing binaries (the launcher pattern)
+
+The npm `savant-code` package is a thin launcher: `index.js` → `launcher.js` downloads
+`https://github.com/savant0x/savant-code/releases/download/v<version>/savant-code-<platform>.tar.gz`
+and extracts it. The tarball ships zero CLI source and its only dependency is `tar`, so
+the npm package itself was never broken — only the GitHub binaries were missing. A
+release that appears broken is therefore usually a **missing-binaries** problem, not a
+broken npm tarball: verify the GitHub release assets before assuming the npm package
+needs a bump.
+
+### Root cause chain (why every local gate was green)
+
+1. The ZTAP provenance code imports `@noble/hashes/sha512` (`common/src/crypto/keys.ts`).
+2. `@noble/hashes` was never declared in `common/package.json` nor locked in `bun.lock`.
+3. Locally, the import resolved from `C:\Users\spenc\node_modules\@noble\hashes` — a
+   node_modules **outside the repo** (a phantom hoist left by another project) — so
+   typecheck, the full test suite, and all 13 diagnostic gates passed.
+4. Only CI's fresh checkout had nothing up-tree to resolve against, so the compile
+   failed — after the release was already live.
+
+### The fix (commits `d10a916`, `db28c50`)
+
+- `common/package.json` declares `@noble/hashes ^1.8.0`; `bun.lock` locks it at `1.8.0`.
+- `PUBLIC_PACKAGES` in `scripts/public-release.ts` defaults to `savant-code` only; the
+  SDK is catalog-only (`defaultPublish: false`) and opt-in via
+  `SAVANT_CODE_RELEASE_PACKAGES`. This also ended the SDK-scope publish wall that
+  killed the original 0.0.24 run and forced an out-of-pipeline npm publish.
+- `scripts/validation-manifest.ts` adds the `cli-bundle-resolution` release gate
+  (`bun build cli/src/index.tsx --target=bun`, output to the gitignored `cli/bin/`) —
+  the exact CI failure phase now blocks the release **before** commit/tag/publish.
+- The asset-verify failure message and the workflow's `source_ref` input now require a
+  **branch or tag** (a bare commit SHA fails `actions/checkout`).
+
+### Remediation flow for a release that shipped without binaries
+
+1. Fix the root cause; commit and push to `main`.
+2. Dispatch the binary workflow with a **branch/tag** source ref — never a bare SHA:
+
+   ```bash
+   # release_tag = the broken release tag; source_ref = the branch carrying the fix
+   # POST /repos/savant0x/savant-code/actions/workflows/build-release-binaries.yml/dispatches
+   # {"ref": "main", "inputs": {"release_tag": "v0.0.24", "source_ref": "main"}}
+   ```
+3. Watch the run and confirm all 5 tarballs land on the release
+   (`savant-code-{linux-x64,linux-arm64,darwin-x64,darwin-arm64,win32-x64}.tar.gz`).
+4. Do **not** bump the version for a pure binary backfill: the npm launcher serves
+   whatever release its version points at, so once the binaries exist the existing npm
+   version works. npm never allows republishing a version anyway.
+
+### Prevention guardrails (current state)
+
+| Layer | Guard |
+| --- | --- |
+| Pre-ship | 14-gate release manifest incl. `cli-bundle-resolution` (`release:public:diagnose`) |
+| Publish set | Default = `savant-code` only; SDK opt-in |
+| Post-ship | `verifyReleaseAssets` polls for all 5 tarballs and fails closed |
+| CI | Binary workflow fails loudly per platform; `verify-release-assets` job asserts all 5 |
+
+### Rules for future release sessions
+
+- Run `bun run release:public:diagnose` and confirm 14/14 gates before any release.
+- After `bun install --frozen-lockfile`, a source import must resolve from the repo's
+  own node_modules — a resolution that only works from a node_modules outside the repo
+  is a defect (LEARNINGS: "Undeclared imports can ride a phantom node_modules").
+- The npm package is a launcher: check GitHub release assets, not the npm tarball, when
+  a release appears broken.
+- Backfill dispatches take a branch/tag `source_ref`, never a SHA (LEARNINGS:
+  "workflow_dispatch source_ref must be a branch or tag, not a SHA").
+
+See also: `dev/fids/archive/FID-2026-0816-001-*.md` and the two LEARNINGS entries
+referenced above.
