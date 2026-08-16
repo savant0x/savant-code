@@ -130,7 +130,7 @@ describe('public release contract', () => {
     ).toThrow('expected 0.0.21')
   })
 
-  test('targets only public packages in SDK-first order', () => {
+  test('catalogs only public packages; default publish set is the CLI only', () => {
     expect(PUBLIC_PACKAGES.map(({ name }) => name)).toEqual([
       '@savant-code/sdk',
       'savant-code',
@@ -138,15 +138,38 @@ describe('public release contract', () => {
     expect(PUBLIC_PACKAGES.some(({ name }) => name === 'savant-free')).toBe(
       false,
     )
+    // The SDK scope does not exist and is never published in a normal release;
+    // it stays catalog-only and opt-in (FID-2026-0816-001 D-02).
+    expect(
+      PUBLIC_PACKAGES.find(({ name }) => name === '@savant-code/sdk'),
+    ).toMatchObject({ defaultPublish: false })
+    expect(
+      PUBLIC_PACKAGES.find(({ name }) => name === 'savant-code'),
+    ).toMatchObject({ defaultPublish: true })
   })
 
-  test('plans the canonical public mutation sequence', () => {
+  test('plans the canonical public mutation sequence (CLI default; SDK opt-in)', () => {
     const plan = buildPublicReleasePlan('0.0.21')
     expect(plan.join('\n')).toContain(PUBLIC_REPOSITORY)
-    expect(plan.indexOf('npm publish @savant-code/sdk')).toBeLessThan(
-      plan.indexOf('npm publish savant-code'),
-    )
+    // The default publish set is the CLI only — the SDK is never auto-published.
+    expect(plan.join('\n')).toContain('npm publish savant-code')
+    expect(plan.join('\n')).not.toContain('npm publish @savant-code/sdk')
     expect(plan.join('\n')).toContain('GitHub REST release for v0.0.21')
+
+    // With the SDK explicitly opted in, it stays first (the CLI artifact
+    // depends on the SDK build).
+    const previousScope = process.env.SAVANT_CODE_RELEASE_PACKAGES
+    try {
+      process.env.SAVANT_CODE_RELEASE_PACKAGES = '@savant-code/sdk,savant-code'
+      const scoped = buildPublicReleasePlan('0.0.21')
+      expect(scoped.indexOf('npm publish @savant-code/sdk')).toBeLessThan(
+        scoped.indexOf('npm publish savant-code'),
+      )
+    } finally {
+      if (previousScope === undefined)
+        delete process.env.SAVANT_CODE_RELEASE_PACKAGES
+      else process.env.SAVANT_CODE_RELEASE_PACKAGES = previousScope
+    }
   })
 
   test('uses explicit automation mode and token fallback without exposing it', () => {
@@ -341,7 +364,7 @@ describe('public release contract', () => {
     }
   })
 
-  test('builds a deterministic gate manifest with SDK-first package dry runs', () => {
+  test('builds a deterministic gate manifest with the CLI package dry run', () => {
     const first = buildGateManifest(
       '/repo',
       '0.0.21',
@@ -366,7 +389,6 @@ describe('public release contract', () => {
     ).toEqual([...repositoryValidationGates('/repo')])
     expect(first.specs.map((spec) => spec.label)).toEqual([
       ...repositoryValidationGates('/repo').map((spec) => spec.label),
-      'npm-pack:@savant-code/sdk',
       'npm-pack:savant-code',
     ])
   })
@@ -376,7 +398,6 @@ describe('public release contract', () => {
     try {
       delete process.env.SAVANT_CODE_RELEASE_PACKAGES
       expect(configuredReleasePackages().map((target) => target.name)).toEqual([
-        '@savant-code/sdk',
         'savant-code',
       ])
 
@@ -422,7 +443,9 @@ describe('public release contract', () => {
         'npm-pack:savant-code',
       ])
 
-      delete process.env.SAVANT_CODE_RELEASE_PACKAGES
+      // The SDK is catalog-only by default, so the full (both-packages)
+      // manifest requires the explicit opt-in scope.
+      process.env.SAVANT_CODE_RELEASE_PACKAGES = '@savant-code/sdk,savant-code'
       const full = buildGateManifest(
         '/repo',
         '0.0.21',

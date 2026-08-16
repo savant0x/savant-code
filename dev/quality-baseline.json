@@ -1415,6 +1415,10 @@
       "maxLines": 447,
       "rationale": "Measured intentional current-scope growth (prettier gate switched to allowlisted `bun x` form); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
+    "scripts/public-release.ts": {
+      "maxLines": 2944,
+      "rationale": "Measured intentional FID-2026-0816-001 growth (PUBLIC_PACKAGES defaultPublish scope so releases publish the main package only, ending the SDK-scope publish wall); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
     "sdk/src/run-state/initial-state.ts": {
       "maxLines": 182,
       "rationale": "Measured intentional current-scope growth; decomposition remains tracked work and this ceiling is protected by quality-report validation."

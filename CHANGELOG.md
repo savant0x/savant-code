@@ -24,6 +24,31 @@
   and every clean-process submodule remains built-ins-only; the FID-008
   independence purity test now covers the whole module. All files sit  under the 300-line baseline.
 
+## FID-2026-0816-001 — v0.0.24 shipped without binaries: phantom `@noble/hashes` + pipeline scope (2026-08-16)
+
+Closed the release-blocking incident: the `v0.0.24` release was pushed live
+(commit `05f829a`, tag, GitHub release, `npm savant-code@0.0.24`) but its
+`build-release-binaries.yml` run failed on all 5 platforms at the `Build binary`
+step — `error: Could not resolve: "@noble/hashes/sha512"` at
+`common/src/crypto/keys.ts:2:24`. Root cause: the ZTAP provenance work imports
+`@noble/hashes/sha512` but `@noble/hashes` was never declared in
+`common/package.json` nor present in `bun.lock`; every local gate passed against a
+phantom hoist (`C:\Users\spenc\node_modules\@noble\hashes`, outside the repo),
+so only the CI compile could see the missing dependency.
+
+- `common/package.json` now declares `"@noble/hashes": "^1.8.0"`; `bun install`
+  locked `@noble/hashes@1.8.0` into `bun.lock`. Resolution verified in-repo.
+- `PUBLIC_PACKAGES` in `scripts/public-release.ts` now defaults to the main
+  package only: the SDK is catalog-only (`defaultPublish: false`, opt-in via
+  `SAVANT_CODE_RELEASE_PACKAGES`), ending the SDK-scope publish wall that killed
+  the 0.0.24 run and forced an out-of-pipeline npm publish.
+- Remediation: committed + pushed the fix, re-dispatched
+  `build-release-binaries.yml` for `v0.0.24` with `source_ref` = the fixed commit,
+  and verified all 5 binary tarballs landed on the `v0.0.24` release. No version
+  bump required — the npm tarball was never the defect, only the missing binaries.
+- Verification: scripts suite 55/0; `quality:report` PASS; full pre-push sweep
+  (typecheck ×11, test ×11, eslint, lint:md, prettier, credential scan) green.
+
 ## FID-2026-0815-016 — v0.0.24 release-readiness audit completed (2026-08-16)
 
 Closed and archived the release-readiness coordination master. Executed all

@@ -31,6 +31,9 @@ export type PackageTarget = {
   name: string
   directory: string
   stage: 'NPM_PUBLISH_SDK' | 'NPM_PUBLISH_CLI'
+  /** Included in the default publish set. Catalog-only targets (e.g. the SDK,
+   * whose npm scope does not exist) must opt in via SAVANT_CODE_RELEASE_PACKAGES. */
+  defaultPublish: boolean
 }
 
 type ReleaseOptions = {
@@ -105,10 +108,25 @@ export type GateSpec = {
 export const PUBLIC_REPOSITORY = 'https://github.com/savant0x/savant-code.git'
 export const PUBLIC_REPOSITORY_SLUG = 'savant0x/savant-code'
 
-// Keep the SDK first: the CLI package's release artifact depends on it.
+// Publishable package catalog. The CLI is the default publish set: the
+// @savant-code npm scope does not exist and the SDK is never published in a
+// normal release (operator-confirmed 2026-08-16), so it stays catalog-only and
+// must be opted into explicitly via SAVANT_CODE_RELEASE_PACKAGES. The SDK stays
+// first in the catalog so a future explicit publish keeps its npm-pack dry run
+// ahead of the CLI's (the CLI artifact depends on the SDK build).
 export const PUBLIC_PACKAGES: readonly PackageTarget[] = [
-  { name: '@savant-code/sdk', directory: 'sdk', stage: 'NPM_PUBLISH_SDK' },
-  { name: 'savant-code', directory: 'cli/release', stage: 'NPM_PUBLISH_CLI' },
+  {
+    name: '@savant-code/sdk',
+    directory: 'sdk',
+    stage: 'NPM_PUBLISH_SDK',
+    defaultPublish: false,
+  },
+  {
+    name: 'savant-code',
+    directory: 'cli/release',
+    stage: 'NPM_PUBLISH_CLI',
+    defaultPublish: true,
+  },
 ]
 
 /**
@@ -128,16 +146,20 @@ export const RELEASE_BINARY_TARBALLS = [
 ] as const
 
 /**
- * Returns the package targets for this release run. Defaults to every public
- * package. Set SAVANT_CODE_RELEASE_PACKAGES to a comma-separated subset of
- * public package names (e.g. `savant-code`) to scope npm publish/verification
- * and the npm-pack dry-run gates to those packages. Any name that matches no
- * public package aborts the run fail-closed so a typo can never silently
- * publish less than intended.
+ * Returns the package targets for this release run. Defaults to the default
+ * publish set (currently the CLI only — the SDK is catalog-only and never
+ * published in a normal release). Set SAVANT_CODE_RELEASE_PACKAGES to a
+ * comma-separated subset of public package names (e.g. `savant-code` or
+ * `@savant-code/sdk,savant-code`) to scope npm publish/verification and the
+ * npm-pack dry-run gates to those packages. Any name that matches no public
+ * package aborts the run fail-closed so a typo can never silently publish
+ * less than intended.
  */
 export function configuredReleasePackages(): readonly PackageTarget[] {
   const raw = process.env.SAVANT_CODE_RELEASE_PACKAGES
-  if (!raw || !raw.trim()) return PUBLIC_PACKAGES
+  if (!raw || !raw.trim()) {
+    return PUBLIC_PACKAGES.filter((target) => target.defaultPublish !== false)
+  }
   const names = raw
     .split(',')
     .map((name) => name.trim())
