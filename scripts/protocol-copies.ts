@@ -223,7 +223,7 @@ export function extractAuthoringPhrases(echoMd: string): string[] {
     'FID-YYYY-MMDD-NNN',
     'templates/FID-TEMPLATE.md',
     'Only the Recorder',
-    'created | analyzed | fixed | verified | closed',
+    'created | analyzed | fixed | verified | converged | closed',
   ]
   return phrases.filter((phrase) => section.includes(phrase))
 }
@@ -436,7 +436,7 @@ export const FRAMING = {
     'FIDs are Markdown files that live ONLY in `dev/fids/`. NEVER create top-level directories such as `fids/`, `archive/`, or any path that shadows canonical ECHO paths.',
     'Filename format: `FID-YYYY-MMDD-NNN-{kebab-case-title}.md`. Scan the existing FIDs in `dev/fids/` and `dev/fids/archive/` first to allocate the next available number on the date, and never reuse a number on the same date.',
     'Use `templates/FID-TEMPLATE.md` as the exact template. Required metadata fields: **Filename**, **ID**, **Severity**, **Status**, **Created**, **Author**.',
-    'Allowed status values: `created | analyzed | fixed | verified | closed`.',
+    'Allowed status values: `created | analyzed | fixed | verified | converged | closed`.',
     'Non-FID design documents go to `docs/design/`, never at the repo root, and never with a `FID-` prefix.',
   ],
 } as const
