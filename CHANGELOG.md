@@ -1,5 +1,7 @@
 # Changelog
 
+## 0.0.25 — in development (unreleased)
+
 ## 2026-08-16 — UI-overhaul queue closed: FIDs 002/005/009/010/011/012 (all live-test confirmed)
 
 The entire Savant UI-overhaul FID queue is now **closed and archived**

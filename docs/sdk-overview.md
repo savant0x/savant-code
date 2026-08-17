@@ -19,7 +19,7 @@ system, skills and MCP loading, and the native-asset plumbing (ripgrep, tree-sit
 | Field | Value | Notes |
 |-------|-------|-------|
 | Name | `@savant-code/sdk` | |
-| Version | `0.0.24` | Mirrors the monorepo version |
+| Version | `0.0.25` | Mirrors the monorepo version |
 | Visibility | `private: false` | Ready for npm publication structurally |
 | **Published to npm** | **Never** | Registry 404 confirmed by third-party audit; intentionally excluded from the published `0.0.22` release (see `dev/session-summaries/2026-08-08-1500-public-release-complete-handoff.md`) |
 | Runtime targets | Node >= 18 (primary), Bun | Dual ESM/CJS output; verified to load in plain Node |
