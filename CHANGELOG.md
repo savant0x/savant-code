@@ -1,5 +1,108 @@
 # Changelog
 
+## 2026-08-16 — UI-overhaul queue closed: FIDs 002/005/009/010/011/012 (all live-test confirmed)
+
+The entire Savant UI-overhaul FID queue is now **closed and archived**
+(`dev/fids/` active queue empty). Master `FID-2026-0816-002` closed once
+all children closed; `005` (Phase 2 animation), `009` (diff + transition
+redesign), `010` (post-FID-009 polish backfill), `011` (rich terminal
+output), and `012`-trust-matrix all closed after the operator's live-test
+confirmation of every closure check (A–H, 2026-08-16). This entry also
+records the FID-011 rich-terminal implementation, which shipped without a
+CHANGELOG entry of its own:
+
+- **FID-2026-0816-011 — Rich terminal command output redesign (implemented,
+  then closed):** `TerminalCommandDisplay` is now a bordered rounded panel on
+  `theme.surface` with a decorative traffic-light title bar (`● ● ●` in
+  error/warning/success), a command row (green `$` + bold command + status
+  badge — ✓ green on `exitCode 0`, ✗ red on non-zero/`null`, ⏳ amber while
+  `isRunning`, omitted when not running), a meta row (`📁 cwd` + `⏱ timeout`
+  pills, only when present), a line-number gutter (`  N │`, hidden below 50
+  cols), and a clean expand/collapse (no underline web link).
+  `parseTerminalOutput` now extracts `exitCode?: number | null` from the JSON
+  value and forwards it (previously parsed then discarded); the shared
+  component renders in both the ghost-message (`pending-bash-message.tsx`)
+  and history contexts, and `run_readonly_command` aliases to it via the
+  registry. Tests: `exitCode` extraction (number/null/undefined), status
+  badge, panel render smoke. Closed 2026-08-16 (check G confirmed).
+- **FID-2026-0816-002** (master) — closed 2026-08-16 (all children closed;
+  queue empty).
+- **FID-2026-0816-005** (Phase 2) — closed 2026-08-16 (blur → 15fps check A
+  confirmed in live test).
+- **FID-2026-0816-009** — closed 2026-08-16 (see its entry below: diff
+  viewer + filled-chip phase bar PASS).
+- **FID-2026-0816-010** — closed 2026-08-16 (checks E/F confirmed in live
+  test).
+- **FID-2026-0816-012** (`-trust-matrix-stuck-awaiting-audit`) — closed
+  2026-08-16 (check H confirmed; label/icon/title fix).
+
+Closure gates for the batch: typecheck ×4 exit 0; `cli` suite 3158 pass /
+0 fail; eslint 0; lint:md 0; prettier clean; operator live-test
+confirmation on every check. See `dev/fids/archive/README.md` for the
+closure entries.
+
+## 2026-08-16 — Easter-egg popups centered on the chat window (FID-2026-0816-008 follow-up)
+
+Operator feedback: the easter-egg nag/frozen bubbles were centered on the full
+terminal width; they are now centered on the **chat column** (terminal width
+minus the right sidebar), matching where the user actually reads. The overlay
+layer keeps `left: 0` but its `right` is now the live sidebar width (40
+expanded / 14 rail), mirroring `ChatSidebar`'s rail-vs-surface decision —
+including the manual Ctrl+B fold via the store's `sidebarCollapsed`.
+`useSidebarWidth` reads the renderer through `useAppContext` (defaults to
+`null`) instead of `useRenderer` (throws outside an OpenTUI app), keeping the
+overlays SSR-renderable in tests; `WIDTH_BREAKPOINTS` is now exported from
+`use-terminal-breakpoints.ts` so the narrow threshold has one source of truth.
+Gates: cli typecheck exit 0; cli suite 3134 pass / 0 fail; eslint 0; lint:md 0.
+
+## 2026-08-16 — FID-2026-0816-012: Trust Matrix label + icon + title fix (closed)
+
+Closed the Trust Matrix sidebar defects: (1) the live-row label was permanently
+stuck on "awaiting audit" because provenance receipt status never transitions from
+`pending` (events are append-only and most receipts never get a formal verdict) —
+relabelled to the honest "signed" (every rendered row IS signed: the reducer only
+creates rows when `event.signed === true`); (2) removed the redundant tone glyph
+icon (`⚠`/`✓`/`•`) prefix from each live row — the tone is still conveyed via the
+`<text>` element's `fg` color, so no information is lost; (3) renamed the section
+"Adversarial Trust Matrix" → "Trust Matrix" (matches the help banner and barrel
+export). Also removed the now-dead `toneGlyph` function and updated stale
+comments + the test name. Gates: typecheck exit 0; trust-matrix suite 14 pass / 0
+fail. Archived to `dev/fids/archive/`.
+
+## 2026-08-16 — FID-2026-0816-012: native tool-call recovery hardening (closed)
+
+A live Forge subagent run died with `Native tool-call recovery failed twice
+consecutively` — a flash-class model had truncated a large `write_file`
+mid-JSON, the retry re-emitted the same oversized payload and truncated again,
+and the 2-strike cap killed the run with a guidance-free stack trace. This FID
+(created after operator-reported reproduction, run through the Perfection
+Loop, implemented on approval) hardens the recovery path in
+`packages/agent-runtime`:
+
+- **Tool-aware steering** — when an incomplete native call targets a
+  large-payload tool (`write_file`/`str_replace`/`apply_patch` via the
+  canonical `WriteToolName` union + `read_files`), the `TOOL_CALL_ERROR`
+  retry prompt now tells the model to split the work into multiple smaller
+  tool calls instead of re-emitting the same oversized arguments object
+  (`stream-parser.ts`; steering text in `run-agent-step/constants.ts`).
+- **3-strike cap** — `NATIVE_TOOL_CALL_RECOVERY_MAX_STRIKES = 3` (was a hard
+  2), giving the split-guidance a chance to land; streak-reset semantics
+  unchanged.
+- **Actionable exhausted failure** — the failure message now names the last
+  incomplete tool and carries a re-spawn strategy ("split into smaller
+  steps") via `buildNativeToolCallExhaustedMessage`; `lastIncompleteToolName`
+  is threaded `stream-parser → step → loop-iteration`. Message reworded to
+  "failed repeatedly" (accurate at 3 strikes).
+- **Drift observability** — an incomplete call for a tool unknown to the
+  runtime logs a `warn` (provider tool-set drift) instead of being misread
+  as truncation.
+
+Gates: typecheck ×4 exit 0; agent-runtime suite 973 pass / 0 fail; SDK suite
+477 pass / 0 fail; `eslint --max-warnings 0` exit 0; `lint:md` exit 0;
+prettier clean. Tests: 3-strike exhaustion contract, steering present/absent,
+drift warn + tool name on exhaustion, streak-reset at 5 calls. Status
+`closed` — archived to `dev/fids/archive/`.
+
 ## 0.0.24 — 2026-08-13
 
 - Added `/learn progress` to the Agent-Steering Teacher: it reads the local
@@ -23,6 +126,621 @@
   ed25519/schemas/receipt/validate). Every public export surface is unchanged
   and every clean-process submodule remains built-ins-only; the FID-008
   independence purity test now covers the whole module. All files sit  under the 300-line baseline.
+
+## 2026-08-16 — Manual sidebar fold toggle (Ctrl+B + edge handles + store state)
+
+Added a real fold toggle for the right sidebar, which previously only auto-
+collapsed below 60 columns with no manual trigger:
+
+- **Ctrl+B** toggles the sidebar between the full surface and the icon rail at
+  ANY terminal width (deferred to the input's Emacs backward-char while the
+  input is focused with text).
+- **Edge handles** — a `»` at the top-right of the full sidebar collapses it;
+  a `«` on the rail (manual fold at a wide terminal) restores it. The rail's
+  existing hover-expand + Escape/Ctrl+C peek behavior is unchanged.
+- **Store state** — new `sidebarCollapsed` field + `setSidebarCollapsed` in
+  the chat store (`chat-store/types.ts`, `initial-state.ts`,
+  `sidebar-actions.ts`); `ChatSidebar` (`chat/sidebar.tsx`) gives the manual
+  fold precedence over the width breakpoint. The fold is a UI preference that
+  deliberately survives session resets.
+- Tests: `chat-store/__tests__/sidebar-collapse.test.ts` (default expanded,
+  set/toggle, persists across reset).
+
+Gates: typecheck ×4 exit 0; `cli` suite 3126 pass / 18 skip / 0 fail;
+`eslint --max-warnings 0` exit 0; `lint:md` exit 0; prettier clean; tmux
+launch smoke boots clean with the `»` handle rendered. Also fixed two bare
+code-fence MD040 lint errors in the untracked FID-2026-0816-011 doc.
+
+**Round-2 operator feedback (2026-08-16) — folded-rail design:**
+
+- **Sticky manual fold** — a manually folded rail no longer auto-expands the
+  moment the mouse moves over it (`onMouseMove` is gated on the manual-fold
+  state); the only restore affordances are Ctrl+B and the `«` button. The
+  width-based auto-collapse (<60 cols) keeps its hover-peek.
+- **Raised `«` button** — the flat arrow is now a bordered, surface-backed
+  button sitting on the rail's LEFT edge, overlapping the fold line into the
+  adjacent column (`marginLeft: -2`, cyan border on hover).
+- **Centered rail** — the `S` brand mark and every section label are
+  center-aligned.
+- **Cyan hover highlight** — hovering a rail item highlights it in
+  `theme.primary` (+ bold).
+- **Top padding reduced** — `paddingTop` on both the full sidebar and the
+  rail dropped 3 → 1, removing the empty band at the top (operator: "too
+  much empty space at the top").
+- Verified: typecheck exit 0; cli suite 3134 pass / 0 fail; eslint 0;
+  lint:md 0; prettier clean; tmux smoke shows the raised `«` button
+  straddling the rail edge at a wide fold and the centered rail at <60 cols.
+
+**Round-3 operator feedback (2026-08-16) — `»` button matches the rail:**
+
+- The expanded sidebar's `»` handle is now the SAME raised, bordered button
+  as the rail's `«` — on the sidebar's LEFT edge, overlapping the fold line
+  into the chat column — instead of the flat arrow it was, top-right of the
+  sidebar. The rail's `marginLeft: -2` worked because the rail has no
+  horizontal padding; the sidebar's `paddingLeft: 1` absorbed the identical
+  margin, so the button is now absolutely positioned (`position: 'relative'`
+  on the sidebar root + `left: -2, top: 0, zIndex: 10`) — same straddle,
+  independent of padding.
+- Verified: typecheck exit 0; sidebar-collapse suite 5/5; eslint 0;
+  prettier clean; tmux captures show both buttons with identical geometry
+  (box left border one column left of the surface edge, glyph at edge+1).
+
+**Round-4 operator feedback (2026-08-16) — click-to-expand from the rail:**
+
+- Clicking any item on the folded rail now expands it in place to the full
+  `RightSidebar` (`onMouseDown` on each rail item sets the rail's existing
+  `expanded` peek state), instead of doing nothing. The condensed rail can't
+  fit section content, so the click opens the full surface; Escape/Ctrl+C
+  (or the `«` in the expanded chrome) folds back to the rail. Works in both
+  the sticky manual fold and the <60-col auto-collapse.
+- **Round-4b (click-expand chrome fixes)** — the operator found two defects
+  in the expanded state: (1) a big rectangle with a white stroke painted
+  around the rail, and (2) the collapse affordance reverted to the OLD flat
+  top-right `«` arrow. Root causes: the rail root was `focusable`, so the
+  click focused it and OpenTUI painted the default white `focusedBorderColor`
+  outline around the whole 40-col surface (now `focusable={false}` —
+  keyboard collapse is handled globally via `useKeyboard` and needs no
+  focusable root); and the expanded branch still rendered the pre-redesign
+  hover-peek chrome. The expanded state now uses the same raised, bordered,
+  left-edge `«` button as the manual-fold unfold button (absolute
+  `left: -2`, cyan hover), so the two states share one design language.
+- **Round-5 (S-glyph centering)** — the operator reported the folded rail's
+  `S` wordmark looked offset right. Measured in tmux captures: the 3-col S
+  glyph sat at cols 113-115 in the 14-col rail (107-120) — center 114,
+  left/right margins 6/5 — while every label follows the floor convention
+  (center 113 for odd-width items: Session/Tools/Files/History). The S was
+  the only right-leaning item. Wrapped the glyph in a box with
+  `marginRight: 1` so flex centering uses the 4-col margin box → left
+  margin 5, glyph at cols 112-114, center 113 — matching the odd-width
+  labels exactly.
+- **Round-6 (fold-icon centering)** — with the S fixed, the operator
+  flagged that the fold button glyph itself sat 1 col right of the fold
+  line. The rail `«` glyph was at col 107 (edge 106) and the expanded
+  sidebar `»` glyph at col 81 (edge 80): the buttons' boxes straddled the
+  edge but the glyph was inside the sidebar. Nudged both 1 col left — rail
+  `marginLeft: -2 → -3`, absolute `left: -2 → -3` on the expanded-state
+  `«` and the sidebar `»` — so the glyph now sits exactly ON the fold line
+  (glyph col = edge col in both tmux captures).
+- Verified: typecheck exit 0; sidebar-collapse suite 5/5; eslint 0;
+  lint:md 0; prettier clean; cli suite 3134 pass / 0 fail; tmux captures
+  show both fold glyphs centered on their fold lines.
+
+## 2026-08-16 — FID-2026-0816-010: post-FID-009 UI polish backfill (mode-selector cyan strokes + reactive trust matrix)
+
+Backfill FID for two UI changes that shipped during the post-FID-009 polish
+stretch without a formal FID, run through the Perfection Loop, with the four
+loose ends it surfaced folded back in:
+
+**CLOSED 2026-08-16** — operator live-test confirmation of checks E/F
+(mode-selector cyan strokes + reactive trust matrix); archived with the
+batch above.
+
+- **Mode-selector cyan strokes** — the mode chips next to the input
+  (`AgentModeToggle` collapsed button + `SegmentedControl` expanded list)
+  turned their hover/highlight stroke `theme.foreground` (off-white); now
+  `theme.primary` (brand cyan), with the non-hovered stroke staying
+  `theme.border` so cyan appears on hover. Same fix applied to the three
+  remaining white hover-stroke spots the loop caught: `build-mode-buttons.tsx`
+  (Build DEFAULT/MAX/LITE), `load-previous-button.tsx`, and
+  `chatgpt-connect-banner.tsx`.
+- **Reactive trust matrix** — the sidebar Adversarial Trust Matrix was a
+  permanent, expanded-by-default, amber-heavy panel that mounted on *any*
+  provenance event (signed or not) and never cleared its status. Now it
+  mounts only when ≥1 **signed** receipt exists, collapses by default with a
+  live status dot (amber while work is in flight, green when verified), and
+  renders only `pending` rows live — verified/terminal receipts collapse into
+  a `✓ N resolved` count and `no_verdict` is reported separately and muted
+  (a session closed without an independent verdict is not a verified one, so
+  it never turns the panel green). Rows are compact (basename, no redundant
+  header); the empty-placeholder (FID-2026-0813-023) and live-count
+  (FID-2026-0814-001) contracts are preserved.
+- **Wiring:** new `summarizeTrustRows` pure helper + `SidebarSection`
+  `statusTone` prop (amber/green/neutral dot); barrel exports updated.
+
+**Round-2 operator feedback (2026-08-16):** the status dot rendered as an
+unwanted icon left of the "Trust Matrix" title, and the section persisted
+after completion. Fixed: the `statusTone` prop was removed from
+`SidebarSection` (trust matrix was its only consumer) and the sidebar now
+mounts the section only while a receipt is still `pending`
+(`trustSummary.hasPending`) — it unmounts entirely once everything resolves.
+`summarizeTrustRows` keeps `hasPending`/`tone` (tone still tested);
+`SidebarSection` no longer renders a title icon.
+
+Gates: typecheck ×4 exit 0; `cli` suite 3123 pass / 18 skip / 0 fail;
+`eslint --max-warnings 0` exit 0; `lint:md` exit 0; prettier clean. Status
+`fixed` — operator visual pass (mode-selector hover + trust-matrix
+reactivity) is the remaining closure gate.
+
+## 2026-08-16 — UI overhaul status ledger + easter-egg docs, features, and FID organization
+
+Consolidated the UI-overhaul work queue and documentation:
+
+- **FID status ledger (active):** `002` master — `converged` (all phase FIDs
+  routed; step 7 idea-shelf reconciliation **complete**); `005` Phase 2
+  animation engine — `fixed` (blur→15fps Windows verification pending);
+  `009` diff + transition redesign — `fixed` (visual pass pending).
+- **FID status ledger (closed + archived):** Phase 0 (`003`), Phase 1
+  (`004`), Phase 3 (`006`, custom renderer re-verified), Phase 4 (`007`),
+  the logo easter egg (`008`, operator visual pass PASS 2026-08-16), and the
+  release-incident `001`.
+- **New canonical docs:** `docs/design/easter-eggs.md` (sequence,
+  architecture, safety, extension guide for the logo easter egg);
+  `docs/features.md` gained a **Terminal UI** section covering the OpenTUI
+  0.5.3 foundation, animation engine, custom-renderer decision, diff viewer,
+  phase-transition bars, responsive layout, and the easter egg.
+- **`dev/idea-shelf/savant-logo-easter-egg.md`** marked IMPLEMENTED and
+  superseded by the canonical doc. All four open FIDs re-audited for stale
+  claims (master MQ3 now records step 7 done).
+
+## 2026-08-16 — Savant UI overhaul planning FIDs created + repo-wide `lint:md` gate restored
+
+Created six planning FIDs for the terminal UI overhaul (master + five phase
+FIDs) and ran each through the Perfection Loop until its document converged.
+**The FIDs are NOT closed and NOT archived** — they remain open (`analyzed`)
+in `dev/fids/` as the active work queue because the phases are not yet
+implemented; closure requires implementation evidence (FID Ground-Truth
+Verification rule). Fact base: `docs/design/OpenTUI Terminal UI Capabilities.md`
+§14 (corrections) + `docs/design/ui-overhaul-plan.md` (phased plan).
+
+- **FID-2026-0816-002 (high)** — master organizing FID: phase gates,
+  inherited constraints, report-fact verification, idea-shelf reconciliation
+  pending.
+- **FID-2026-0816-003 (high)** — Phase 0: OpenTUI 0.2.2 → 0.5.3 exact-pin
+  upgrade; drop the JS `yoga-layout` dependency (native since 0.4.1);
+  `OPENTUI_FORCE_EXPLICIT_WIDTH=false` guard; teardown audit; savant-free
+  e2e gate. Explicitly excludes the report's fabricated scope-tree keyboard
+  refactor and the unshipped ScrollbackSurface API.
+- **FID-2026-0816-004 (medium)** — Phase 1: design tokens + visual identity
+  (populate the null `ChatHeader`, sidebar hierarchy, status-bar duty
+  split).
+- **FID-2026-0816-005 (medium)** — Phase 2: animation engine adoption
+  (zero `setInterval` in components; animation-budget hook with blur →
+  15fps; smooth scroll; chunked streaming typewriter).
+- **FID-2026-0816-006 (medium)** — Phase 3: native `<code>`/`<line-number>`/
+  `<diff>` components with tree-sitter; `<ascii-font>` branding; image
+  fallback acceptance on the ConHost floor. No work planned on the
+  nonexistent `Markdown` component.
+- **FID-2026-0816-007 (medium)** — Phase 4: layout/responsiveness
+  (breakpoint-aware sidebar collapse via existing hooks, unified picker
+  dialog chrome, toast entry/exit, `cwd:` line folded into chrome).
+
+Also restored the repo-wide `lint:md` gate: the untracked capability report
+was failing MD013; fixed with the repo-standard disable header + an MD001
+heading fix — `bun run lint:md` now exits 0 repo-wide.
+
+## 2026-08-16 — Regression fixes: Phase 2 animation freeze + Phase 3 native-renderable blanking (2026-08-16)
+
+Fixed two regressions the operator found in live terminal testing.
+
+**Phase 2 (FID-2026-0816-005) — animations froze ~1 s in.**
+`useAnimationTimeline` created its `Timeline` as `new Timeline({ autoplay: false })`,
+which inherits `loop: false` + `duration: 1000`, so a looping item (spinner,
+pulse, shimmer, cursor blink, sheen) was halted the moment the timeline reached
+its 1000 ms duration — every continuous animation stopped one second after
+starting. Fixed by adding `loop`/`duration` options to `useAnimationTimeline`
+and having the five looping components pass `{ loop: true, duration: Infinity }`;
+the per-item `loop`/`onLoop` now drives the cycle and the timeline never
+self-stops. `useTypewriter` also got an unbounded duration + explicit pause on
+completion. Regression test added
+(`cli/src/hooks/__tests__/animation-timeline-loop.test.ts`) proving the old
+options halt at 1 s and the new options keep playing.
+
+**Phase 3 (FID-2026-0816-006) — native `<diff>`/`<code>`/`<line-number>`/
+`<image>` rendered nothing in production.** The native renderables verified
+clean against `@opentui/core/testing`'s frame buffer, but in the real CLI
+renderer the diff viewer showed only the `Edit filename` header (no sign
+markers, no line numbers) and code blocks lost their line-number gutter — the
+tree-sitter/highlighting path does not behave the same way outside the test
+renderer. Reverted the adoption: `diff-viewer.tsx` is back to the custom
+line-by-line renderer (`parseDiffLines` + neon tinting), code blocks back to the
+plain `<code>` path, `image-block.tsx` back to the inline-escape/metadata-card
+path, and the now-unused `tree-sitter-highlight.ts` + `phase3-spike.test.tsx`
+were removed. `<ascii-font>` branding (Step 4) is retained — it renders
+correctly in production. The spike's "native wins" conclusion is overturned:
+the test renderer is not a proxy for the production renderer.
+
+Gates: typecheck ×4 exit 0; `cli` suite 3089 pass / 18 skip / 0 fail;
+`eslint --max-warnings 0` exit 0; `lint:md` exit 0; `prettier --check` clean.
+
+## FID-2026-0816-009 — Diff viewer + phase-transition notification visual redesign (2026-08-16)
+
+Implemented both redesign specs (FID-2026-0816-009), all six steps, none
+deferred. Stays on the **custom** diff renderer — the native `<diff>` path
+remains out of scope (production-blanked, FID-006).
+
+- `cli/src/utils/diff-stats.ts` — `parseDiffLines` now tracks `oldLine`/
+  `newLine` per row from each `@@ -a,b +c,d @@` hunk (context advances both,
+  remove advances old, add advances new; zero-start sides and malformed
+  hunks produce a blank gutter, never a fabricated number). New
+  `getDiffHeaderPath` extracts the `+++ b/…` file target.
+- `cli/src/components/tools/diff-viewer.tsx` — bordered rounded container
+  with a header strip (bold file path + `+N −M` counters) and a dual
+  old/new line-number gutter + sign column; the `+`/`-` marker moved out of
+  the content text into the sign column; hunk rows are full-width tinted
+  bars; `diff --git`/`index`/`---`/`+++` rows render muted. `DiffStatsBar`
+  footer contract kept.
+- `cli/src/components/tools/transition-phase.tsx` (new) + registry entry —
+  every `transition_phase` call now renders a full-width phase-tinted bar
+  (glyph + `Phase → GREEN` + muted reason, truncated never wrapped) instead
+  of the bare collapsed `[Tool: transition_phase]` fallback. Reuses the
+  `savant-ui/echo` phase mapping the sidebar consumes.
+- `cli/src/components/savant-ui/echo/phase-info.ts` — added the missing
+  `adversarial` phase mapping (previously fell back to IDLE/muted).
+- Tests: gutter line-numbering suite, framed-layout assertions, transition
+  bar render tests, apply-patch structure updated.
+
+**Second pass (operator feedback 2026-08-16 — notices still low quality):**
+`run_readonly_command` was never registered, so its results still rendered
+through the generic collapsed `ToolCallItem` fallback; and the transition bar
+was wrapped in the `CopyableBlock` frame + copy button. Both fixed:
+
+- `cli/src/components/tools/registry.ts` — `run_readonly_command` now
+  registered with the shared `RunTerminalCommandComponent` (identical
+  `command` + `terminalCommandOutputSchema` schema — Law 13 reuse), so
+  readonly-command notices render exactly like `run_terminal_command`.
+- `cli/src/components/blocks/tool-branch.tsx` — `transition_phase` and
+  `run_readonly_command` excluded from the `CopyableBlock` copy-button
+  chrome, rendering as clean full-width notices with no frame/copy clutter.
+- Registry-reuse test appended to `run-terminal-command.test.ts` proving
+  `run_readonly_command` resolves to the shared renderer.
+
+**Third pass (operator feedback 2026-08-16 — brand header, idle contrast,
+ADVERSARIAL color):**
+
+- `cli/src/components/tools/transition-phase.tsx` — the bar now renders a
+  `SAVANT CODE` brand **title bar on its own row** (bold cyan on the neutral
+  `surface`), with the phase label + reason on the phase-tinted body below —
+  the brand is a header, not a side-by-side label. The **idle** chip inverts
+  its phase text + reason to `theme.background` (near-black on dark) and its
+  border to
+  `theme.border` — root cause of the unreadable idle text: `blendHex`
+  interpolates from the phase color, so the idle chip is 86% `muted`
+  (mid-tone gray) and light-gray text on it vanished.
+- **ADVERSARIAL gets its own color.** New `phaseAdversarial` theme token
+  (dark `#c084fc` violet-400, light `#7c3aed` violet-600) added to
+  `theme-system.ts`, `palette.ts` (dark+light), and the `ThemeColorKey`
+  union; `phase-info.ts` points the `adversarial` mapping at it instead of
+  RED's `error`. The sidebar's ADVERSARIAL indicator picks it up
+  automatically via the shared `phaseMapping`.
+- **Diff header label:** when no file path can be extracted from the diff,
+  the `DiffViewer` header now reads `EDIT` instead of the bare word `diff`
+  (operator feedback 2026-08-16) — regression test added.
+- Tests: transition-phase asserts the header, idle black text (no `muted` in
+  idle markup), and violet ADVERSARIAL (no `error` hex); syntax-theme +
+  segmented-control fixtures updated for the new required theme field.
+
+Gates: typecheck ×4 exit 0; `cli` suite 3118 pass / 18 skip / 0 fail;
+`eslint --max-warnings 0` exit 0; `lint:md` exit 0; prettier clean; tmux
+(WSL) launch smoke renders.
+
+**Fourth pass (operator feedback 2026-08-16 — terminal-uniform rendering):**
+the phase bar drifted between terminals — in Cursor it rendered with dark
+text on a colored chip, in classic PowerShell conhost it collapsed to a
+white header + colored text on near-black (OpenTUI approximates every hex
+color to the nearest ANSI-16 name when truecolor is absent, so a 14% theme
+tint becomes "black background"). The bar is now a **filled chip**:
+
+- `cli/src/components/tools/transition-phase.tsx` — solid **phase-color
+  fill** (no theme tint) with **inverted text**: BLACK on bright fills,
+  WHITE on the red fill (black-on-red unreadable; operator spec), computed
+  via relative luminance with a 0.25 floor so future dark fills never get
+  invisible black text. `SAVANT CODE` header, phase row, and reason all
+  use the inverted color on the fill. The idle chip keeps the approved
+  mid-tone gray (86% muted) with black text. Border darkens to a rim
+  (`fill → bg` 45%) so the rounded frame stays visible against the fill.
+  Because the fill IS the phase color, the bar renders identically in
+  truecolor terminals and ANSI-16 fallbacks — no tint to collapse.
+- `cli/src/utils/diff-stats.ts` — new `relativeLuminance` (WCAG 2.x
+  sRGB-linearized) beside `blendHex`/`parseHex` (Law 13 color-math home).
+- Tests: idle asserts the gray fill + black text; new red→white and
+  green→black contrast cases; luminance suite (0/1 endpoints, neon
+  ordering, 0.25 floor coverage, malformed→0).
+
+**CLOSED 2026-08-16** — operator visual pass PASS: diff viewer confirmed
+working, and the filled-chip phase bar renders identically in Cursor and
+classic PowerShell console (uniformity check passed). FID archived to
+`dev/fids/archive/`; active-queue README, archive README, and master FID-002
+child-status updated to `closed`. Final gates for the closure round:
+typecheck ×4 exit 0; `cli` suite 3158 pass / 0 fail; eslint 0; lint:md 0;
+prettier clean.
+
+## FID-2026-0816-008 — Savant logo easter egg: click-per-message prank (2026-08-16, closed)
+
+Implemented (FID-2026-0816-008), all five steps, none deferred. Hidden
+click-state machine on the Savant wordmark: **one click per message** —
+clicks 1–3 each show a nag bubble (**centered** on the terminal,
+auto-dismisses after 1.5 s back to normal), and the **4th click** plays
+the ~600 ms glitch jitter, a **full-screen** fake terminal "DELETED"
+takeover in the **Savant colorway — cyan on near-black** (a fast ~5 s
+flood: 480 lines through a viewport-height scrolling window), and a centered moral
+bubble that auto-resets after 5 s — then the UI returns to baseline with
+the counter reset. Every phase auto-advances; nothing traps the user.
+Purely cosmetic: `readonly` string literals, no shell/tool-executor
+imports, no store.
+
+- `cli/src/hooks/use-easter-egg.ts` (new) — the state machine
+  (`idle → nag-1..3 → glitch → takeover → frozen → idle`), nag/moral message
+  constants.
+- `cli/src/components/savant-ui/easter-egg-logo.tsx` (new) —
+  `EasterEggProvider` (app-root state) + `EasterEggOverlays` (full-screen
+  overlay layer) + `EasterEggLogo` (wordmark + click trigger). Nag/frozen
+  are small logo-anchored auto-dismiss bubbles; glitch + takeover are driven
+  by the Phase 2 timeline engine (zero `setInterval`); the 1.5 s / 3 s
+  timers are allowlisted UI timers.
+- `cli/src/app.tsx` — the authed surface is wrapped in `EasterEggProvider`
+  and `<EasterEggOverlays />` mounts as a sibling of `AppShell` (the same
+  root-level mount pattern as `ToastContainer`), so every overlay covers the
+  **whole viewport** — the takeover is literally full-screen, not
+  sidebar-scoped.
+- `cli/src/components/right-sidebar.tsx` — wordmark swapped to
+  `<EasterEggLogo />` (trigger only).
+
+**Interaction correction + freeze fix (operator, 2026-08-16, three rounds):**
+the first shipped version required 7 clicks with centered next-click-only
+popups, and its takeover **froze** — `useAnimationTimeline`'s 1000 ms
+default cut the 2000 ms takeover item off, so the timeline stopped ticking
+and `onComplete` never fired, trapping the UI (same class as the
+FID-2026-0816-005 loop regression). Round 1 fixed the freeze (pinned
+timeline durations; `animation-timeline-loop.test.ts` proves it
+mechanically) but over-corrected the interaction to one-click-auto-play.
+Round 2 restored the operator's intended **click-per-message** flow: the
+state machine now carries a `level` counter so a dismissed nag bubble
+returns to `idle` instead of chaining into the next phase — only the 4th
+click starts the takeover chain. Round 3 (visual pass): the takeover is
+now **cyan-on-near-black** (Savant colorway — was green-on-black), the
+bubbles are **centered** on the terminal (were top-right anchored), and
+the flood runs **~5 s** (480 lines through a viewport-height scrolling
+window sized from `useTerminalBreakpoints().height` — was ~2 s with a fixed
+30-row window that left taller terminals' lower half empty).
+
+Tests: click-per-message state-machine cycle (pure transition functions),
+bubble render, and the timeline-completion regression. Gates: typecheck
+×5 (incl. design-systems), `cli` suite (3132 pass / 0 fail), eslint,
+lint:md, prettier all green; tmux launch smoke clean.
+
+**Closed 2026-08-16** after the operator's visual pass PASS in Windows
+Terminal (click-per-message flow, centered bubbles, cyan-on-near-black
+viewport-height 5 s flood, 5 s moral bubble — "absolutely perfect, feature
+is complete"). Archived to `dev/fids/archive/`; canonical design doc:
+`docs/design/easter-eggs.md`.
+
+## 2026-08-16 — Navy/slate neutral family purged project-wide; Savant near-black/cyan restored
+
+Operator directive: the navy scale (`#0f172a` surface, `#1e293b` border,
+`#94a3b8`/`#64748b` muted, `#e2e8f0` foreground, `#020617` logo blocks) is
+pre-fork Freebuff branding — Savant is **near-black + cyan only**
+(`#050508` background, `#18faf9` primary). All product surfaces now use
+neutral near-black grays with cyan accents:
+
+- `cli/src/utils/theme-system/palette.ts` — dark + light neutral scale
+  rewritten (surface `#0b0b11`, border `#20202a`, muted `#8f8f99`,
+  foreground `#e4e4e8`, aiLine/syntaxComment/imageCardBorder `#5c5c66`,
+  code background `#111118`, etc.); semantic accents (cyan/amber/green/red)
+  unchanged.
+- `packages/design-systems` — the `savant-cyberpunk` native contract
+  (`default.ts` tokens + `DEFAULT_SOURCE`), `theme-adapter.ts` FALLBACKS,
+  and `parser.ts` fallbacks mirror the new neutrals; `default.test.ts`
+  gained a no-navy assertion on the neutral family and re-verified contrast
+  ≥ 4.5.
+- `cli/src/commands/export-conversation/template-css-part1.ts` — HTML
+  export CSS variables neutralized (`--surface-2`, `--border`,
+  `--border-user`, `--fg`, `--muted`, `--muted-2`, `--reasoning`, row
+  backgrounds).
+- `cli/src/hooks/use-logo.tsx` + `cli/src/login/utils.ts` — logo block
+  color canonicalized to `#050508`.
+- **Easter-egg takeover** (`easter-egg-logo.tsx`) — now cyan
+  (`theme.primary`) on near-black (`theme.background`); bubbles centered;
+  flood extended to ~5 s (see FID-2026-0816-008 round 3).
+
+Gates: typecheck ×5, cli suite 3132 pass / 0 fail, eslint 0, lint:md 0,
+prettier clean. Grep-verified: zero navy/slate hexes remain in product
+code (`cli/src` + `packages/design-systems/src`).
+
+## FID-2026-0816-006 — Phase 3 closed + master step 7 (idea-shelf reconciliation) done (2026-08-16)
+
+- **FID-2026-0816-006 closed and archived.** After the native-renderable
+  revert (see the regression-fix entry above), the operator confirmed the
+  restored custom diff/code rendering live in the terminal ("Now it's
+  showing the edit") — the closure condition for this FID. The design
+  complaint from that review was routed to FID-2026-0816-009, not reopened
+  here.
+- **Master FID-2026-0816-002 step 7 complete.** The stale idea-shelf copy
+  (`dev/idea-shelf/opentui-design-capabilities-reference.md`) is reconciled:
+  it now carries a correction banner pointing load-bearing decisions to
+  report §14 (no scope-tree keyboard, no ScrollbackSurface, verified
+  component set, `useFocus`/`useBlur` = window events) and its version flag
+  is updated to the post-Phase-0 pins (0.5.3, `yoga-layout` dropped).
+
+## FID-2026-0816-007 — Phase 4 implemented: layout/responsiveness (2026-08-16)
+
+Implemented all six steps of Phase 4 (FID-2026-0816-007): breakpoint-aware
+sidebar collapse, unified picker dialog chrome, focus-containment fix, toast
+stack animation, and the `cwd:` line folded into input-bar chrome. No steps
+deferred or skipped.
+
+- `cli/src/chat/sidebar.tsx` — wired to `useTerminalBreakpoints`: below the
+  narrow breakpoint (<60 cols) the sidebar collapses to a new icon rail
+  (`cli/src/components/sidebar-rail.tsx`, 14-col, full labels on hover);
+  at 60+ cols the full `RightSidebar` is restored. `RightSidebar` exports its
+  prop type for the rail.
+- `cli/src/components/dialog-overlay.tsx` — new centered dialog chrome
+  (absolute positioning, RGBA-dimmed backdrop, `translateY` entry/exit on the
+  Phase 2 timeline engine). `panels.tsx` renders model/provider/rewind pickers
+  through it instead of the inline bottom stack.
+- Focus containment (step 3): found and fixed a leak — the chat dispatcher was
+  disabled for model/provider pickers but not rewind; rewind now routes
+  Escape/Enter through the picker and no longer falls through to chat key
+  handling (`use-chat-keyboard.ts`, `use-chat-interactions.ts`,
+  `use-chat-pickers.ts`, `use-chat-controller.ts`).
+- `cli/src/components/toast.tsx` + `cli/src/hooks/use-toast.ts` — toast stack
+  is absolutely positioned bottom-right, animates in/out via the timeline
+  engine, and is z-index layered (newest on top); two-phase dismiss
+  (closing → remove).
+- `cli/src/components/chat-input-bar.tsx` — step 5: the `cwd:` line is folded
+  into input-bar chrome (border title in normal mode, dim row above the input
+  in compact mode); the data source (`getProjectRoot()`) is unchanged.
+- Acceptance: tmux (WSL) smoke at 50/60/80/120 cols — rail collapse confirmed
+  at 50 (<60), full sidebar at 60+; transcript, input bar, and wordmark render
+  cleanly with no clipped transcript. Measured boundary note: at exactly 60
+  cols the full 40-col sidebar leaves a ~20-col chat column (expected
+  consequence of the <60 threshold, not a regression).
+
+Gates: typecheck ×4 (sdk/common/agent-runtime/cli) exit 0; `cli` suite 3099
+pass / 18 skip / 0 fail; `eslint --max-warnings 0` exit 0; `lint:md` exit 0;
+`prettier --check` clean.
+
+FID-007 **closed** and archived 2026-08-16 after operator visual PASS
+(60/80/120 cols + picker open/navigate/cancel walk in terminal).
+
+## FID-2026-0816-006 — Phase 3 implemented: native code/diff/image components (2026-08-16)
+
+Implemented all six steps of Phase 3 (FID-2026-0816-006): adopted the native
+`<code>`/`<line-number>`/`<diff>`/`<image>` renderables with tree-sitter
+highlighting and verified `<ascii-font>` branding post-Phase-0. No steps
+deferred or skipped.
+
+- `cli/src/utils/tree-sitter-highlight.ts` — lazy, process-wide tree-sitter
+  client resolver that never throws (degrades to plain text on Windows init
+  failure).
+- `cli/src/utils/markdown-leaves.tsx` — code blocks now render
+  `<line-number>` wrapping `<code content filetype syntaxStyle treeSitterClient>`
+  instead of the plain-text span path.
+- `cli/src/components/tools/diff-viewer.tsx` — `DiffViewer` now renders the
+  native `<diff>` (sign gutter + line numbers + tree-sitter highlighting),
+  unified vs split by terminal width (>=100 cols); `detectDiffFiletype` maps
+  the `+++ b/...` header to a filetype. The native view conceals raw
+  `diff --git`/`@@` metadata (cleaner than the old echo-everything renderer).
+- `cli/src/components/blocks/image-block.tsx` — adopted native
+  `<image protocol="blocks">` as the ConHost-floor fallback: terminals without
+  an iTerm2/Kitty inline protocol now get a half-block preview instead of a
+  metadata-only card; decode failure falls back to the metadata card.
+- `cli/src/__tests__/phase3-spike.test.tsx` — 6 committed spike tests against
+  the real OpenTUI frame buffer (diff, code, line-number, ascii-font, image
+  blocks, tree-sitter availability).
+- Step 4 `<ascii-font>` branding: verified it renders the SAVANT wordmark
+  post-Phase-0 (regression check, no upgrade needed — already present).
+- Step 6 `Markdown` component: confirmed nonexistent (report §14.1
+  correction) — no work planned or performed.
+
+Gates: typecheck ×4 (sdk/common/agent-runtime/cli) exit 0; `cli` suite 3097
+pass / 18 skip / 0 fail; `eslint --max-warnings 0` exit 0; `lint:md` exit 0;
+`prettier --check` clean; tmux (WSL) smoke launches + renders the sidebar and
+wordmark cleanly.
+
+FID-006 stays OPEN (`fixed`) — closure pending operator visual pass.
+
+## FID-2026-0816-005 — Phase 2 implemented: animation engine adoption (all 7 steps) (2026-08-16)
+
+Implemented all seven steps of Phase 2 (FID-2026-0816-005): migrated every
+visual `setInterval`/`setTimeout` animation onto the OpenTUI timeline engine,
+added the animation-budget hook with blur throttle + scissor-hidden
+suspension, and implemented smooth scroll, fold/collapse, and the streaming
+typewriter with the engine. No steps deferred.
+
+**CLOSED 2026-08-16** — operator live-test confirmation of the blur → 15fps
+check (A); archived with the batch above.
+
+- `cli/src/hooks/use-animation-timeline.ts` — stable, engine-registered
+  `Timeline` (the stock `useTimeline` constructs a new instance per render but
+  registers only the first).
+- `cli/src/hooks/use-animation-budget.ts` — `useBlur`/`useFocus` → `targetFps`
+  15 when blurred; query layout bounds → suspend when scissor-hidden (ancestor
+  ScrollBox viewport intersection, invisible/transparent ancestors, off-screen);
+  balanced `requestLive`/`dropLive` in effect cleanup.
+- Migrated `Spinner`, `Pulse`, `ShimmerText`, the sheen hook, and `InputCursor`
+  off `setInterval`/`setTimeout` onto looping `timeline.add()`; `Pulse`'s
+  hardcoded `#6b7280` → `theme.muted`. Two 1 Hz wall-clock timers
+  (`elapsed-timer`, `status-bar`) stay allowlisted.
+- Smooth scroll: `use-scroll-management.ts` now uses a timeline-driven damped
+  spring (`springProgress`) on `scrollTop` instead of `setTimeout` +
+  `easeOutCubic`.
+- Fold/collapse: new `use-fold-collapse.ts` tweens section height to 0 and
+  unmounts on `onComplete`; `SidebarSection` folds/unfolds with the tween.
+- Streaming typewriter: new `use-typewriter.ts` commits ~16-char chunks via the
+  timeline engine (not ScrollbackSurface); `Thinking` reveals streamed
+  reasoning progressively.
+- `opentui-spinner` evaluated against its 0.0.7 source and not adopted (runs
+  its own raw `setInterval` heap scheduler — contradicts the engine-driven
+  thesis; no new dependency).
+
+Gates: `grep -rn "setInterval(" cli/src/components` → only the two allowlisted
+1 Hz timers; typecheck ×4 exit 0; cli suite 3087 pass / 0 fail; full
+`bun run test` exit 0; eslint, lint:md, prettier exit 0; tmux (WSL) smoke
+launches + streams without a runaway live loop. FID-005 stays OPEN (`fixed`) —
+blur-throttle Windows verification pending (operator).
+
+## FID-2026-0816-004 — Phase 1 implemented: design tokens + visual identity (2026-08-16)
+
+Implemented the Phase 1 visual-identity pass (FID-2026-0816-004). The
+`ChatHeader` was populated then **reverted to its no-op per operator feedback**
+(2026-08-16): the path/mode/model/connection line is redundant — that data is
+already surfaced in the right sidebar.
+
+- `cli/src/components/savant-ui/theme.ts` is now the canonical token module:
+  `tokens` holds theme-independent structure (spacing/borders) while
+  `useTokens()` resolves semantic color roles, severity badges, and FSM phase
+  tokens from the active `ChatTheme`. No hardcoded hex remains (Law 13; EHEL
+  design-contract scanner enforces this mechanically).
+- Sidebar (`cli/src/components/right-sidebar.tsx`): `Teacher` default-collapsed
+  (History was already collapsed). Section order was already
+  Active Agents → Session → Teacher → Adversarial Trust Matrix → Tools → Files
+  Changed → Active FIDs → History — no reorder needed; the non-section blocks
+  (AgentStatus, PerfectionLoop, LoopStatusPanel) stay in place.
+- Status-bar duty split (status left / timer+actions right, countdown fill) and
+  transcript user/assistant differentiation (`> ` user / `◆ ` assistant) were
+  already present — no change needed (verified).
+
+Gates: typecheck ×4 exit 0, `cli` suite green, design-systems suite 19/0,
+`eslint --max-warnings 0` exit 0, `lint:md` exit 0, `prettier --check` exit 0.
+Operator visual PASS 2026-08-16 (1:1 clean). FID-004 **closed** and archived.
+
+## FID-2026-0816-003 — Phase 0 implemented: OpenTUI 0.2.2 → 0.5.3 exact-pin upgrade (2026-08-16)
+
+Implemented the Phase 0 engine upgrade (FID-2026-0816-003). `cli/package.json`
+pins `@opentui/core` + `@opentui/react` at exact `0.5.3`, drops the JS
+`yoga-layout` dependency (native since 0.4.1; `@opentui/core-win32-x64` and the
+other platform subpackages resolve), and syncs `react-reconciler` to `^0.33.0`
+to match `@opentui/react@0.5.3` (no reconciler drift; React 19.2.8 kept). The
+import surface audited clean against 0.5.x — typecheck passed with zero changes
+to component code.
+
+- Added `shouldSuppressExplicitWidthQuery()` (`cli/src/utils/env.ts`) and wired
+  it in `cli/src/index.tsx` to set `OPENTUI_FORCE_EXPLICIT_WIDTH=false` before
+  `createCliRenderer` on the legacy Windows Console floor (win32 + no
+  `WT_SESSION`), suppressing the OSC 66 "66" artifact while conpty-backed
+  terminals keep explicit-width correctness. 3 unit tests added.
+- Teardown audit: `renderer-cleanup.ts` already routes SIGINT/SIGTERM/SIGHUP/
+  uncaughtException/unhandledRejection → `renderer.destroy()` with a raw
+  terminal-reset fallback — no change needed.
+
+Gates: typecheck ×4 exit 0, full `bun test` (11 workspaces) exit 0, `cli`
+suite 3083 pass / 0 fail, `eslint --max-warnings 0` exit 0, `lint:md` exit 0,
+`prettier --check` exit 0. savant-free build compiles
+(`cli/bin/savant-free.exe` produced); its e2e test suite has pre-existing
+failures unrelated to the upgrade (Windows `.exe` path + `SavantFreeSession`
+export drift). Interactive acceptance completed — tmux (WSL) smoke PASS,
+ConHost guard unit/logic PASS, operator Windows Terminal visual PASS
+(2026-08-16, 1:1 clean). FID-003 **closed** and archived.
 
 ## FID-2026-0816-001 — v0.0.24 shipped without binaries: phantom `@noble/hashes` + pipeline scope (2026-08-16)
 
@@ -849,14 +1567,14 @@ operator actions.
 
 ## Comprehensive v0.0.23 live regression prompt (2026-08-11)
 
-- Added [`dev/test-prompts/v0.0.23-comprehensive-live-test.md`](dev/test-prompts/v0.0.23-comprehensive-live-test.md), an agent-executable live test whose coverage index is the current changelog rather than only the design-system feature.
+- Added an agent-executable comprehensive live test for v0.0.23 whose coverage index is the current changelog rather than only the design-system feature (the prompt file no longer exists in `dev/test-prompts/`; the surviving artifact is the [comprehensive live-test report](dev/scratchpad/archive/benchmarks/v0.0.23-comprehensive-live-test-report.md)).
 - The prompt covers release/audit safety, metadata and FID/LEARNINGS validation, protocol boot and grounding, ECHO enforcement, design-system workflows, provider/configuration parity, Code Universe, SDK/headless behavior, packaging wrappers, CLI modes, performance baselines, user/agent feedback, and cleanup.
-- It writes `dev/scratchpad/v0.0.23-comprehensive-live-test-report.md`, separates static checks from live evidence, classifies environment/timeouts as `NEEDS-REVIEW`, and forbids publish/push/commit/tag/deploy/credential use. No live result or clean-release certification is claimed by this documentation change.
+- It writes `dev/scratchpad/archive/benchmarks/v0.0.23-comprehensive-live-test-report.md`, separates static checks from live evidence, classifies environment/timeouts as `NEEDS-REVIEW`, and forbids publish/push/commit/tag/deploy/credential use. No live result or clean-release certification is claimed by this documentation change.
 
 ## FID-2026-0811-030 — loadable design-system skill library documented (2026-08-11)
 
 - Added the extensive [design-system library guide](docs/design/design-system-library.md), documenting the 74-resource offline catalog, selection precedence, interactive create/edit lifecycle, natural-language confirmation boundary, headless authoring contract, draft recovery, persistence and provenance model, target adapters, EHEL enforcement, packaging matrix, and operational verification.
-- Added `dev/test-prompts/design-system-live-ux-performance.md`, a live CLI test covering usability, agent feedback, cold/warm latency, resource/context overhead, persistence, headless errors, and enforcement correction. Added a separate [independent sign-off request](dev/nova/outbox/2026-08-11-fid-2026-0811-030-design-system-live-test-signoff-request.md) for the prompt and its eventual live report. Updated the English and Chinese READMEs and guide to link it.
+- Added `dev/test-prompts/design-system-live-ux-performance.md`, a live CLI test covering usability, agent feedback, cold/warm latency, resource/context overhead, persistence, headless errors, and enforcement correction. Added a separate [independent sign-off request](dev/nova/outbox/archive/2026-08-11-fid-2026-0811-030-design-system-live-test-signoff-request.md) for the prompt and its eventual live report. Updated the English and Chinese READMEs and guide to link it.
 
 ## FID-2026-0811-030 — loadable design-system skill library closed (2026-08-11)
 
@@ -4185,7 +4903,7 @@ Decomposed the comprehensive TUI rebuild into 5 incremental phase FIDs:
 **Severity:** medium
 **Status:** closed / archived
 **Owner:** Forge
-**Parent FID:** [FID-2026-0719-030](./FID-2026-0719-030-agent-runtime-tests-excluded-for-push.md)
+**Parent FID:** FID-2026-0719-030 (document not in the tree — content recorded inline in this changelog below)
 
 **Summary:** Re-included `packages/agent-runtime/src/__tests__/**/*` in the agent-runtime `tsconfig.json` build and fixed type errors across 25+ test files, reducing errors from 67 → 2 (97% reduction). x4 typecheck gate stays GREEN with tests active.
 

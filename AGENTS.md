@@ -9,7 +9,7 @@ Savant-Code is the multi-agent AI coding assistant built on the ECHO Protocol v0
 
 - **TypeScript monorepo** (`strict: true`, `noImplicitReturns: true`)
 - **Bun runtime + package manager** (≥ 1.3.11; root pins `1.3.14` per `engines.bun`)
-- **OpenTUI + React CLI** (`@opentui/core` 0.2.2, `react` ^19)
+- **OpenTUI + React CLI** (`@opentui/core` 0.5.3, `react` ^19)
 - **JS/TS SDK** — embeddable via `SavantClient`
 - **Composable agent runtime** — ECHO 10-agent roster with separation of duties
 - **ECHO Protocol v0.2.0** — single bootstrap file

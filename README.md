@@ -10,7 +10,7 @@ touches your repo.**
 Built with TypeScript/Bun, governed by the ECHO Protocol, and designed for
 local-first use with Ollama.
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-1.3.14-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![React](https://img.shields.io/badge/React-19-%23000000?style=flat-square&logo=react&logoColor=%2300fbff)](https://react.dev/)[![OpenTUI](https://img.shields.io/badge/OpenTUI-0.2.2-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](https://github.com/anomalyco/opentui)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](ECHO.md)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![Release](https://img.shields.io/badge/Release-v0.0.24-%2300fbff?style=flat-square&logo=semver&logoColor=%2300fbff)](CHANGELOG.md)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-1.3.14-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![React](https://img.shields.io/badge/React-19-%23000000?style=flat-square&logo=react&logoColor=%2300fbff)](https://react.dev/)[![OpenTUI](https://img.shields.io/badge/OpenTUI-0.5.3-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](https://github.com/anomalyco/opentui)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](ECHO.md)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![Release](https://img.shields.io/badge/Release-v0.0.24-%2300fbff?style=flat-square&logo=semver&logoColor=%2300fbff)](CHANGELOG.md)
 
 </div>
 
@@ -214,7 +214,7 @@ pass.
 | --------------- | --------------------------------- | ------------------------------------------------- |
 | Runtime         | Bun                               | 1.3.14 (engines `>=1.3.11`)                       |
 | Language        | TypeScript                        | 5.5.4 (`strict: true`, `noImplicitReturns: true`) |
-| TUI             | OpenTUI + React 19                | `@opentui/core` 0.2.2, `react` ^19.0.0            |
+| TUI             | OpenTUI + React 19                | `@opentui/core` 0.5.3, `react` ^19.0.0            |
 | State           | Zustand + Immer                   | zustand ^5.0.8, immer ^10.1.3                     |
 | Validation      | Zod                               | ^4.2.1                                            |
 | LLM SDK         | Vercel AI SDK                     | `ai` ^5.0.52 + `@ai-sdk/anthropic` 2.0.50         |
@@ -983,8 +983,8 @@ events.
   `/goal` workflow: command reference, state machine, and budgets
 - [`dev/test-prompts/design-system-live-ux-performance.md`](dev/test-prompts/design-system-live-ux-performance.md) —
   live CLI usability, agent-feedback, and performance test prompt
-- `dev/nova/outbox/2026-08-11-fid-2026-0811-030-design-system-live-test-signoff-request.md` —
-  [independent review request for the live test design and captured result](dev/nova/outbox/2026-08-11-fid-2026-0811-030-design-system-live-test-signoff-request.md)
+- `dev/nova/outbox/archive/2026-08-11-fid-2026-0811-030-design-system-live-test-signoff-request.md` —
+  [independent review request for the live test design and captured result](dev/nova/outbox/archive/2026-08-11-fid-2026-0811-030-design-system-live-test-signoff-request.md)
 - [`docs/archive/launch/index.html`](docs/archive/launch/index.html) — Public
   landing page (archived launch artifact)
 - [`dev/LEARNINGS.md`](dev/LEARNINGS.md) — Cross-session lessons

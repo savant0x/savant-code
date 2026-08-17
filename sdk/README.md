@@ -330,7 +330,7 @@ Apache-2.0 — see [LICENSE](../LICENSE) for full text.
 <div align="center">
 
 _This SDK ships from the [savant-code/savant-code monorepo](https://github.com/savant0x/savant-code). It runs on
-the [ECHO Protocol v0.2.0](ECHO.md) engineering governance system — 15 laws, Perfection Loop FSM, separation of
+the [ECHO Protocol v0.2.0](../ECHO.md) engineering governance system — 15 laws, Perfection Loop FSM, separation of
 duties._
 
 **Savant** • 2026

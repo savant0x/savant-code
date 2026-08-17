@@ -3,7 +3,7 @@
 **Filename:** `FID-YYYY-MMDD-NNN-[short-description].md`
 **ID:** FID-YYYY-MMDD-NNN
 **Severity:** critical | high | medium | low
-**Status:** created | analyzed | fixed | verified | closed
+**Status:** created | analyzed | fixed | verified | converged | closed
 **Created:** YYYY-MM-DD HH:MM
 **YAGNI-Compliance:** Pending | Verified | Debt-Incurred
 
@@ -89,6 +89,18 @@ How will we confirm the fix works?
 
 1. [Missed question → answer]
 2. [Missed question → answer]
+
+### Implementation Evidence (REQUIRED for `closed`)
+
+> A FID **cannot** be set to `closed` without this section filled. No silent
+> deferrals — every step must be `implemented`, `blocked`, or `deferred`
+> (operator-approved only).
+
+- [ ] **Commit SHA:** The exact commit(s) where implementation landed
+- [ ] **File:line ranges:** Specific files and line numbers of the key changes
+- [ ] **Gate output:** Pasted output from typecheck/tests/lint proving the implementation is clean
+- [ ] **Reproducibility:** Another agent can grep for the changes and find matches in the working tree
+- [ ] **Step statuses:** Every Proposed Solution step is marked `implemented`, `blocked`, or `deferred` (operator-approved)
 
 ### Code Verification Evidence
 

@@ -500,7 +500,14 @@ date.
 Use `templates/FID-TEMPLATE.md` as the exact template. Required metadata fields: **Filename**, **ID**,
 **Severity**, **Status**, **Created**, **Author**.
 
-Allowed status values: `created | analyzed | fixed | verified | closed`.
+Allowed status values: `created | analyzed | fixed | verified | converged | closed`.
+
+- `converged` — FID document is complete and Perfection Loop-passed, but
+  implementation has **not** started. The plan is approved; code is not
+  written.
+- `closed` — Implementation exists in the codebase **and** gates pass.
+  Requires implementation evidence (commit SHA or file:line ranges + grep
+  match). A `closed` FID with no code violates the Ground-Truth rule.
 
 Non-FID design documents go to `docs/design/`, never at the repo root, and never with a `FID-` prefix.
 

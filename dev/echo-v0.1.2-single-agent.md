@@ -288,7 +288,14 @@ Created → Analyzed → Fixed → Verified → Closed → Archived
 Use `templates/FID-TEMPLATE.md` as the exact template. Required metadata fields: **Filename**, **ID**, **Severity**,
 **Status**, **Created**, **Author**.
 
-Allowed status values: `created | analyzed | fixed | verified | closed`.
+Allowed status values: `created | analyzed | fixed | verified | converged | closed`.
+
+- `converged` — FID document is complete and Perfection Loop-passed, but
+  implementation has **not** started. The plan is approved; code is not
+  written.
+- `closed` — Implementation exists in the codebase **and** gates pass.
+  Requires implementation evidence (commit SHA or file:line ranges + grep
+  match). A `closed` FID with no code violates the Ground-Truth rule.
 
 FIDs are Markdown files that live ONLY in `dev/fids/`. NEVER create top-level directories such as `fids/`, `archive/`,
 or any path that shadows canonical ECHO paths.
@@ -391,6 +398,26 @@ If you've read the same file 2+ times or made the same edit 2+ times:
 4. Come back later with fresh context
 
 ---
+
+## Step-Level Anti-Deferral (Mandatory)
+
+Every step in an approved plan MUST be explicitly accounted for with one of these statuses:
+
+| Status | Meaning | Who Sets It |
+|---|---|---|
+| `implemented` | Code exists, gates pass | Agent (verified by build output) |
+| `blocked` | Agent can't proceed, needs operator input | Agent (must present to operator) |
+| `deferred` | Operator explicitly approved deferral | Operator only |
+| `skipped` | Operator explicitly approved skip | Operator only |
+
+**Rules:**
+
+1. Steps CANNOT be left unmarked. "Not done" always means `blocked`, never silent.
+2. The agent CANNOT mark a step `deferred` or `skipped` without explicit operator approval.
+3. When any step is `blocked`, the agent MUST present the blocked step to the operator and wait for a decision.
+4. `SCOPE.md` records all deferrals with reasons and operator confirmation.
+
+A plan with silent deferrals is a broken plan — the operator approved work that wasn't done.
 
 ## Working Style
 

@@ -1,5 +1,34 @@
 # LEARNINGS
 
+## Lesson: Brand colors must be traced to provenance, not inherited from code
+
+- **Date:** 2026-08-16
+- **Failure:** The dark theme's neutral scale was the Tailwind **slate** family
+  (`surface #0f172a`, `border #1e293b`, `muted #94a3b8`, `foreground
+  #e2e8f0`) — a navy-blue cast inherited from pre-fork Freebuff branding.
+  Every popup, overlay, bubble, and dialog rendered navy, and the operator
+  had to point out that Savant's identity is **near-black + cyan only**
+  (`#050508` background, `#18faf9` primary). The earlier FID-2026-0812-002
+  even *established* the slate values as "native" without questioning their
+  provenance.
+- **Evidence:** cli/src/utils/theme-system/palette.ts → symbol:chatThemes,
+  docs/design/easter-eggs.md → heading:Easter Eggs
+- **Invariant:** A color token's hex is a branding claim. The brand
+  colorway must come from operator-confirmed provenance (design system,
+  brand doc), never from "whatever the pre-fork code shipped with".
+- **Guard:** Before touching theme tokens, ask: where did this hex come
+  from — operator-stated brand, or inherited code? If the latter, confirm
+  with the operator before keeping it. When the operator corrects a
+  colorway, purge it from ALL mirrors (palette, design contract, fallbacks,
+  export templates, logo colors) and grep-verify zero residue.
+- **Verification:** grep for `#0f172a` / `#1e293b` / `#64748b` / `#94a3b8` /
+  `#e2e8f0` in `cli/src` + `packages/design-systems/src` → zero matches
+  (2026-08-16).
+- **Scope:** internal
+- **Owning FID:** FID-2026-0816-008
+- **Status:** active
+- **Canonical rule:** brand-color-provenance-operator-confirmed
+
 ## Lesson: Undeclared imports can ride a phantom node_modules outside the repo
 
 - **Date:** 2026-08-16
@@ -40,6 +69,74 @@
 - **Owning FID:** FID-2026-0816-001
 - **Status:** active
 - **Canonical rule:** dispatch-ref-branch-or-tag
+
+## Lesson: Perfection Loop convergence on a FID document is not FID closure
+
+- **Date:** 2026-08-16
+- **Failure:** Six planning FIDs (FID-2026-0816-002..007) for the UI overhaul
+  were created, loop-converged, then marked `closed` and moved to
+  `dev/fids/archive/` despite zero implementation. The Perfection Loop's
+  COMPLETE state converges the *document*; the FID status vocabulary
+  (`created | analyzed | fixed | verified | closed`) and the Ground-Truth
+  rule describe *implementation* state. A `closed` FID with no code is a
+  status claim that contradicts the codebase — and it hid the work queue
+  from the operator.
+- **Evidence:** ECHO.md → heading:FID Ground-Truth Verification
+- **Invariant:** FID closure requires implementation evidence
+  (fixed/verified ⇒ code exists and gates pass). A converged planning FID
+  stays open as `analyzed` in `dev/fids/` until its phase is implemented.
+- **Guard:** Before setting `closed`/archiving, ask: does the codebase
+  contain the implementation this FID describes? If not, the status must
+  remain `analyzed` regardless of loop convergence.
+- **Verification:** The six FIDs report `analyzed` and sit in `dev/fids/`;
+  CHANGELOG and archive README record the correction.
+- **Scope:** internal
+- **Owning FID:** FID-2026-0816-002
+- **Status:** active
+- **Canonical rule:** fid-closure-requires-implementation-evidence
+
+## Lesson: The test renderer is not a proxy for the production renderer
+
+- **Date:** 2026-08-16
+- **Failure:** Phase 3 adopted native `<diff>`/`<code>`/`<line-number>`/
+  `<image>` renderables after a spike verified them clean against
+  `@opentui/core/testing`'s frame buffer. In the real CLI renderer they
+  painted nothing: the diff viewer showed only the `Edit filename` header and
+  code blocks lost their line-number gutter. The operator found the regression
+  in live terminal testing after the adoption had shipped.
+- **Evidence:** cli/src/components/tools/diff-viewer.tsx → symbol:DiffRow
+- **Invariant:** A renderable verified only against `@opentui/core/testing`
+  must be re-verified against the real CLI renderer before adoption; the test
+  harness's frame buffer does not exercise the same tree-sitter/worker/
+  highlighting path the production renderer uses.
+- **Guard:** Any native-renderable adoption includes a production-smoke step
+  (drive the real TUI to render the component) before declaring it "wins".
+- **Verification:** Reverted to the custom renderers; diff/code/image render
+  again in production.
+- **Scope:** internal
+- **Owning FID:** FID-2026-0816-006
+- **Status:** active
+- **Canonical rule:** test-renderer-not-proxy
+
+## Lesson: OpenTUI Timeline defaults halt looping animations after 1 s
+
+- **Date:** 2026-08-16
+- **Failure:** `new Timeline({ autoplay: false })` inherits `loop: false` +
+  `duration: 1000`, so a looping item (its own `loop: true`) is frozen the
+  moment the timeline reaches 1000 ms — every continuous animation stopped
+  ~1 s after starting.
+- **Evidence:** cli/src/hooks/use-animation-timeline.ts → symbol:useAnimationTimeline
+- **Invariant:** A looping timeline must be constructed with `loop: true` and
+  an unbounded (or cycle-matching) `duration`; otherwise the timeline
+  self-stops and the per-item `loop` never gets to run.
+- **Guard:** `useAnimationTimeline({ loop: true, duration: Infinity })` for
+  looping components; regression test pins it.
+- **Verification:** cli/src/hooks/__tests__/animation-timeline-loop.test.ts
+  (2 tests: default options halt at 1 s; loop+Infinity keeps playing).
+- **Scope:** internal
+- **Owning FID:** FID-2026-0816-005
+- **Status:** active
+- **Canonical rule:** timeline-loop-duration
 
 ## Lesson: Generated artifacts require source-shape validation
 
@@ -920,6 +1017,40 @@ tracking doc).
   release create → workflow `in_progress` → npm publish (`latest` = 0.0.20). Confirming `git ls-remote` for
   main + tag, the release API response, and `npm view` after each step caught nothing, but the discipline
   cost seconds and keeps a 5-surface release honest.
+
+---
+
+## Lesson: A retry that re-emits the same oversized tool call is not recovery
+
+- **Date:** 2026-08-16
+- **Failure:** A Forge subagent run died with `Native tool-call recovery
+  failed twice consecutively` while implementing FID-2026-0816-011. A
+  flash-class model truncated a large `write_file` native call mid-JSON; the
+  runtime retried with only "retry with a complete arguments object"; the
+  model re-emitted the same giant payload and truncated again; the 2-strike
+  cap killed the run with a guidance-free stack trace. The same truncation
+  class had already appeared dozens of times as recovered one-off tool-call
+  errors — the difference was payload size, not model.
+- **Evidence:** `FID-2026-0816-012` (closed, archived);
+  `packages/agent-runtime/src/tools/stream-parser.ts:370-413` (steering +
+  drift warn), `run-agent-step/constants.ts:1-26` (3-strike cap + guidance),
+  `loop-iteration.ts:315-320` (exhausted builder).
+- **Invariant:** When a native tool call fails because its arguments are
+  truncated, the recovery prompt must change the strategy (split large
+  payloads into smaller calls), the strike cap must be large enough for that
+  guidance to land, and the exhausted failure must name the tool and give the
+  parent a re-spawn path. Re-issuing the same oversized arguments object is
+  re-rolling the same die.
+- **Guard:** Before raising the strike count for a truncated native tool
+  call, ask: is the model being told HOW to avoid the truncation, and will
+  the parent get an actionable failure if recovery exhausts?
+- **Verification:** typecheck ×4, agent-runtime 973/0, SDK 477/0, eslint 0,
+  lint:md 0, prettier clean; 3-strike/steering/drift tests in
+  `loop-agent-steps-part-f.test.ts`.
+- **Scope:** agent-runtime recovery
+- **Owning FID:** FID-2026-0816-012
+- **Status:** active
+- **Canonical rule:** recovery-steers-not-just-retries
 
 ---
 

@@ -435,6 +435,56 @@ recorded mechanical process and its integrity — **not** LLM independence.
 
 See the [Zero-Trust Agentic Provenance guide](design/zero-trust-agentic-provenance.md).
 
+## Terminal UI
+
+The TUI runs on OpenTUI 0.5.3 (exact-pinned; native Yoga since 0.4.1, so the
+JS `yoga-layout` dependency is dropped). The 2026-08-16 UI overhaul rebuilt
+it in phases: foundation, design tokens, animation engine, native component
+evaluation, and responsive layout (see `docs/design/ui-overhaul-plan.md`).
+
+- **Design tokens & visual identity** — themed colors, populated headers,
+  sidebar hierarchy, status-bar duty split (`cli/src/chat/styles.ts` +
+  `cli/src/types/theme-system.ts`).
+- **Animation engine** — all visual motion runs on the OpenTUI timeline
+  engine (zero `setInterval` in components): spinners, pulse, shimmer,
+  cursor blink, sheen, smooth scroll, fold/collapse tweens, and a chunked
+  (~16-char) streaming typewriter. A central animation-budget hook drops to
+  15fps when the terminal window is blurred and suspends scissor-hidden
+  animations.
+- **Native code rendering (evaluated, custom retained)** — the native
+  `<code>`/`<line-number>`/`<diff>`/`<image>` renderables verified in the
+  test frame buffer but painted nothing in the production renderer, so the
+  custom renderers remain the shipped path. `<ascii-font>` branding works and
+  is used for the wordmark.
+- **Diff viewer** — framed, professional diff block: bordered container,
+  header strip (file path + `+N −M` counts), dual old/new line-number
+  gutter, sign column, and highlighted hunk bars (`cli/src/components/tools/diff-viewer.tsx`).
+- **Phase-transition notifications** — every ECHO phase change renders as a
+  full-width **solid phase-color filled chip** with a `SAVANT CODE` title
+  row, `Phase → GREEN` + reason, and luminance-inverted text (black on
+  bright fills, white on the red fill) — the solid fill renders identically
+  in truecolor terminals and ANSI-16 fallbacks like classic PowerShell
+  conhost (`cli/src/components/tools/transition-phase.tsx`).
+- **Reactive trust matrix** — the sidebar's Adversarial Trust Matrix is a
+  collapsed, status-driven surface that appears **only while a receipt is
+  still pending** (it unmounts entirely once everything resolves): live
+  pending rows carry their tone color, verified/`no_verdict` receipts
+  collapse into `✓ N resolved` / `N closed without verdict` counts, and the
+  title carries no icon (`cli/src/components/savant-ui/echo/trust-matrix.tsx`).
+- **Cyan hover chrome** — interactive chips and buttons (mode selector,
+  build-mode buttons, load-previous, connect banner) highlight with a brand
+  cyan stroke on hover instead of an off-white one.
+- **Responsive layout** — the sidebar collapses to an icon rail below 60
+  columns automatically, and can be folded/unfolded manually at any width
+  with **Ctrl+B** (or the `»`/`«` edge handles), with the fold persisted for
+  the session; model/provider/rewind pickers share a centered dialog chrome
+  with animated entry/exit; toasts stack bottom-right with entry/exit
+  animations; the `cwd:` line is folded into the input-bar border.
+- **Easter egg** — the Savant wordmark hides an escalating click prank
+  (nag popups → glitch → full-screen fake-terminal takeover → moral
+  freeze). Purely visual and safe. See
+  [Easter Eggs](design/easter-eggs.md).
+
 ## Learn More
 
 - [ECHO Protocol](echo-protocol.md) — The governance system
