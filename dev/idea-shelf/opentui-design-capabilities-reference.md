@@ -6,6 +6,33 @@
 **Compiled:** 2026-08-15
 **Status:** Reference for Savant-Code UI redesign. Flag: Savant-Code currently pins `@opentui/core` **0.2.2** — verify feature availability against this version before implementing.
 
+> **Reconciled 2026-08-16 (master FID-2026-0816-002 step 7).** This shelf copy was
+> compiled before the primary-source audit and is **not load-bearing**. Where this
+> document conflicts with `docs/design/OpenTUI Terminal UI Capabilities.md` §14
+> (Verification & Corrections, 2026-08-16), **§14 wins** — it classifies every
+> claim as VERIFIED / INCORRECT / UNVERIFIED against GitHub releases, the npm
+> registry, and opentui.com. The load-bearing deltas:
+>
+> - **Version:** Savant-Code now pins `@opentui/core` + `@opentui/react` **0.5.3**
+>   (Phase 0 shipped); the JS `yoga-layout` dependency is **dropped** (native
+>   yoga since 0.4.1). §9's "0.2.2 may not expose requestLive/onUpdate" concern is
+>   resolved — Phase 2 adopted the timeline/live-loop engine.
+> - **Keyboard:** there is no scope-tree keyboard model to migrate to — §6/§10's
+>   keyboard isolation claims are INCORRECT (§14.1; issue #638 is an open
+>   proposal). No `useKeyboard` refactoring.
+> - **Streaming:** the §13 typewriter pattern via ScrollbackSurface is
+>   INCORRECT — that API does not exist (§14.1). Savant uses chunked React
+>   commits (Phase 2 typewriter) instead.
+> - **Built-in components:** verified set is text, box, scrollbox, ascii-font,
+>   input, textarea, select, tab-select, code, line-number, diff. No built-in
+>   `Spinner`, no `Markdown`, no `Slider`, no `TextTable` (§14.1/14.3). Spinner
+>   visuals come from the timeline engine (Phase 2) / `opentui-spinner`
+>   (unverified scheduler claims — evaluated and NOT adopted).
+> - **`useFocus`/`useBlur`:** terminal-window focus events (§14.1) — this is the
+>   Phase 2 blur→15fps throttle signal.
+> - **Animating `opacity`:** unverified style property; use RGBA colors +
+>   translate offsets (§14.3).
+
 ---
 
 ## 1. Core Architecture
@@ -129,15 +156,18 @@ Given the above, the visual ceiling you thought existed **does not.** Here is wh
 
 ---
 
-## 9. Version Flag (CRITICAL)
+## 9. Version Flag (CRITICAL — reconciled 2026-08-16)
 
 | Item | Version |
 |---|---|
-| Savant-Code currently pins | `@opentui/core` **0.2.2** |
-| `opentui-spinner` peer dep | `@opentui/core` **^0.3.4** |
-| Animation system (`requestLive`/`onUpdate`) | Verify in 0.2.2 changelog — may require upgrade |
+| Savant-Code now pins (post-Phase-0) | `@opentui/core` + `@opentui/react` **0.5.3** (exact pins, `cli/package.json`) |
+| `yoga-layout` JS dependency | **dropped** (native yoga in the core binary since 0.4.1) |
+| `opentui-spinner` peer dep | `@opentui/core` **^0.3.4** (evaluated and NOT adopted — FID-2026-0816-005 step 6) |
+| Animation system (`requestLive`/`onUpdate`, timeline engine) | **available on 0.5.3** — adopted as the Phase 2 animation engine |
 
-**Before implementing any animation:** check whether `onUpdate`/`requestLive` exist in 0.2.2. If not, the upgrade to a version that exposes them is the single most valuable move — it unlocks everything above.
+**Before implementing any animation:** verify the API surface against
+`@opentui/core`/`@opentui/react` **0.5.3** (installed) and the corrected fact
+base in report §14 — not against this shelf sheet's 0.2.2-era assumptions.
 
 ---
 

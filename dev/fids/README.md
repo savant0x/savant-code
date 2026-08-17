@@ -5,7 +5,97 @@ operator decision, implementation, runtime review, or closure evidence.
 
 ## Current active FIDs
 
-The active queue is **empty**. The 2026-08-14 remediation program — master
+**None — the active queue is empty (2026-08-16).**
+
+The complete Savant UI-overhaul program (master `FID-2026-0816-002` +
+children `003`–`012`) is **closed and archived**: Phase 0 OpenTUI 0.5.3
+upgrade (`003`), Phase 1 design tokens (`004`), Phase 2 animation engine
+(`005`), Phase 3 native code/diff components (`006` — custom renderer
+re-verified), Phase 4 layout/responsiveness (`007`), logo easter egg
+(`008`), diff + transition redesign (`009`), post-FID-009 polish backfill
+(`010`), rich terminal output (`011`), and the two `012` records
+(native tool-call recovery hardening + trust-matrix stuck-awaiting-audit).
+Every child closed with implementation evidence + the operator's
+live-test confirmation (2026-08-16); the master closed once all children
+closed. See `archive/README.md` for the closure entries.
+
+**Status vocabulary (2026-08-16):** `created | analyzed | fixed | verified | converged | closed`
+
+- `created` = findings noted; document not yet loop-passed
+- `analyzed` = issues cataloged + document loop-passed; implementation not started
+- `fixed` = implementation exists and gates pass, but a review/closure gate
+  remains (e.g., an operator visual pass)
+- `verified` = reviewed pass recorded (rarely left open; usually folds into `closed`)
+- `converged` = document is complete and loop-passed, but implementation hasn't started
+- `closed` = implementation exists in codebase AND gates pass (requires evidence)
+
+### Closed records (historical)
+
+`FID-2026-0816-001` (v0.0.24 phantom-dependency incident — the release
+shipped without binaries; `@noble/hashes` declared + main-package-only
+publish default + cli-bundle-resolution gate) — **closed** and archived
+2026-08-16; indexed in `archive/README.md`.
+
+`FID-2026-0816-002` (Savant UI overhaul — master organizing FID, high) —
+**closed** and archived 2026-08-16 after every child closed with
+implementation evidence + the operator's live-test confirmation; the work
+queue is empty. Governance-only (planning, no code of its own).
+
+`FID-2026-0816-005` (Phase 2 — animation engine adoption, medium) —
+**closed** and archived 2026-08-16 after the operator confirmed the
+blur → 15fps check (A) in the live closure test. All 7 steps: timeline
+engine (`use-animation-timeline`), animation budget + blur suspension
+(`use-animation-budget`), smooth scroll, fold/collapse tween,
+streaming typewriter, `opentui-spinner` rejected (raw `setInterval`, YAGNI),
+setInterval grep gate (only the two allowlisted 1 Hz wall-clock timers).
+Regression fix: the 1 s loop-halt (loop/duration options added to
+`useAnimationTimeline`).
+
+`FID-2026-0816-009` (diff viewer + phase-transition notification visual
+redesign — medium) — **closed** and archived 2026-08-16 after the
+operator's visual pass PASS: the diff viewer (bordered frame, header strip,
+old/new gutter, sign column, hunk bars, EDIT fallback) renders correctly,
+and the phase-transition bar renders **identically in Cursor and classic
+PowerShell console** — the Loop-6 filled-chip redesign (solid phase-color
+fill, black text / white-on-red, `relativeLuminance`-driven) eliminated the
+ANSI-16 tint collapse that made the bar drift between terminals. See
+`archive/README.md` for the closure entry.
+
+`FID-2026-0816-010` (post-FID-009 UI polish backfill — mode-selector cyan
+strokes + reactive trust matrix, medium) — **closed** and archived
+2026-08-16 after the operator confirmed checks E/F in the live closure
+test: cyan hover strokes project-wide, and the trust matrix now mounts only
+while receipts are pending, resolves signed rows, carries no title icon,
+and disappears on completion.
+
+`FID-2026-0816-011` (rich terminal command output redesign, medium) —
+**closed** and archived 2026-08-16 after the operator confirmed check G in
+the live closure test: traffic-light title bar, green `$` command row +
+✓/✗/⏳ status badge, cwd/timeout pills, line-number gutter (hidden <50
+cols), clean expand/collapse, and `exitCode` plumbing through
+`parseTerminalOutput`.
+
+`FID-2026-0816-012` (`-trust-matrix-stuck-awaiting-audit`, medium) —
+**closed** and archived 2026-08-16 (operator live-test confirmation):
+Trust Matrix label "awaiting audit"→"signed", tone-glyph icon removed,
+title → "Trust Matrix". **Number note:** collides with the archived
+`FID-2026-0816-012-native-tool-call-recovery-hardening` (closed same day);
+both preserved per the Historical duplicate IDs convention — reference by
+full filename.
+
+`FID-2026-0816-012` (native tool-call recovery hardening — high) — **closed**
+and archived 2026-08-16 after operator approval + full gate sweep. Fixes the
+flash-model truncated-tool-call failure that killed a Forge subagent run
+(FID-011's implementation): tool-aware split steering, a 3-strike cap, an
+actionable exhausted failure naming the tool, and drift warn for unknown
+incomplete tools. See `archive/README.md` for the closure entry.
+
+`FID-2026-0816-008` (Savant logo easter egg) — **closed** and archived
+2026-08-16 after the operator's visual pass PASS (click-per-message flow,
+centered bubbles, cyan-on-near-black viewport-height 5 s flood, 5 s moral
+bubble). Canonical design doc: `docs/design/easter-eggs.md`.
+
+The 2026-08-14 remediation program — master
 `FID-2026-0814-007` and children `FID-2026-0814-002` through `-006` — was
 implemented under the operator's automation level 3 grant (Nova planning PASS
 recorded for each child), fully verified (typecheck ×4, full root suites,
@@ -36,14 +126,14 @@ offset — low) was implemented and archived on 2026-08-14. It re-types the
 `15_000` tokens) across all five layers and switches the serialized trigger from
 `maxContextLength × 0.9` to `maxContextLength - forceCompactOffset`, so the
 force tier keeps a constant 15k margin below the hard limit regardless of window
-size. The active queue is now empty.
+size. The active queue was empty after this closure.
 
 `FID-2026-0814-012` (force threshold anchored to the resolved window — low)
 was implemented and archived on 2026-08-14. It anchors the 0.9 force threshold
 and the sidebar percent denominator to the compactor's `reactiveCompact` (=
 `contextWindow`) instead of the reconstructed `autoCompact + 30_000` — a
 single-source-of-truth (Law 13) reconciliation, not a live defect. The active
-queue is now empty.
+queue was empty after this closure.
 
 `FID-2026-0814-011` (auto-compaction trigger never fires — critical) was
 implemented under operator approval, Nova-audited **PASS** on implementation,
@@ -51,7 +141,7 @@ operator-approved for closure, and archived on 2026-08-14. It collapses the two
 competing compaction trigger systems into a single authority (`autoCompactDue`
 set every step by `prepareStepContext`, consumed by the serialized savant
 `handleSteps`), removes the silent baked-fallback trigger divergence, and adds
-trigger-input debug observability. The active queue is now empty.
+trigger-input debug observability. The active queue was empty after this closure.
 
 `FID-2026-0814-001` (live sidebar surfaces remediation — compaction status
 lifecycle, Trust Matrix live signal, teacher panel terminal state) was

@@ -3,6 +3,212 @@
 This directory contains closed or historically completed FIDs. Files here are
 an audit record, not an active work queue.
 
+> **Correction (2026-08-16):** a closure section for the six planning FIDs
+> (FID-2026-0816-002..007) was briefly added here and then removed — closure
+> requires implementation evidence. As of 2026-08-16, FID-2026-0816-003
+> (Phase 0), FID-2026-0816-004 (Phase 1), FID-2026-0816-006 (Phase 3 —
+> custom renderer re-verified), FID-2026-0816-007 (Phase 4),
+> FID-2026-0816-008 (logo easter egg), and FID-2026-0816-009 (diff +
+> transition redesign) are implemented and archived here. The master (002)
+> and Phase 2 (005) were the last to close — both archived 2026-08-16, and
+> the `dev/fids/` active queue is now empty (see the final-batch closure
+> entry below).
+>
+> **Palette correction (2026-08-16, operator directive):** the navy/slate
+> neutral family (`#0f172a` surface, `#1e293b` border, `#94a3b8`/`#64748b`
+> muted, `#e2e8f0` foreground) that `FID-2026-0812-002` established as
+> "native Savant" is **superseded** — the operator states it is pre-fork
+> Freebuff branding; Savant is near-black (`#050508`) + cyan (`#18faf9`)
+> only. The 2026-08-16 navy purge (see CHANGELOG) replaces the neutral
+> scale project-wide with neutral near-black grays; semantic accents are
+> unchanged. Historical archive records are not rewritten.
+
+## 2026-08-16 closure — FID-2026-0816-009 (diff viewer + phase-transition redesign)
+
+`FID-2026-0816-009-diff-viewer-and-transition-notification-visual-redesign.md`
+(severity: medium) closed and archived 2026-08-16 after the operator's
+visual pass **PASS**: the diff viewer renders correctly (bordered rounded
+container, header strip with file path + `+N −M` counters, dual old/new
+line-number gutter + sign column, full-width hunk bars, muted metadata rows,
+`EDIT` fallback label) and the phase-transition bar renders **identically in
+Cursor and classic PowerShell console** (operator confirmation 2026-08-16:
+"the phase bar renders identically in Cursor and PowerShell now").
+
+Six loop rounds: (1) framed gutter diff layout + registered
+`transition_phase` bar; (2) line-number correctness from `@@` hunk starts;
+(3) phase coverage via shared `phaseMapping`; (4) `run_readonly_command`
+registered with the shared terminal-command renderer + copy-button chrome
+dropped on both notices; (5) `SAVANT CODE` brand title row, idle black text
+(mid-tone gray chip), ADVERSARIAL violet `phaseAdversarial` token; (6)
+**filled-chip redesign** for terminal-uniform rendering — the 14% theme tint
+collapsed to "black background + white header" under ANSI-16 approximation
+(classic conhost lacks truecolor), so the bar is now a solid phase-color
+fill with inverted text (BLACK on bright fills, WHITE on the red fill via
+new `relativeLuminance` in `diff-stats.ts` with a 0.25 floor; idle keeps the
+mid-gray + black). No native `<diff>` (production-blanked, reverted in
+FID-006).
+
+Verification: typecheck ×4 exit 0; cli suite 3158 pass / 0 fail; eslint 0;
+lint:md 0; prettier clean; tmux launch smoke clean; operator visual pass
+PASS (diff + transition bar, both terminals).
+
+## 2026-08-16 closure — FID-2026-0816-002 (UI-overhaul master) + 005 + 010 + 011 + 012-trust (final batch)
+
+The remaining open UI-overhaul FIDs were closed together on 2026-08-16
+after the operator's live-test confirmation ("close all completed fids, all
+have been confirmed in the live tests"). The active queue is now **empty**.
+
+- **`FID-2026-0816-002-savant-ui-overhaul-master.md`** (high) — master
+  organizing FID, governance-only (planning, no code of its own). Closed
+  once every child closed with implementation evidence; step 7
+  (idea-shelf reconciliation) complete.
+- **`FID-2026-0816-005-animation-engine-adoption.md`** (medium, Phase 2) —
+  timeline engine (`use-animation-timeline` with loop/duration options),
+  animation-budget hook (blur → 15fps, scissor-hidden suspension),
+  smooth scroll, fold/collapse tween, streaming typewriter; `opentui-spinner`
+  rejected (raw `setInterval` scheduler — YAGNI); grep gate: only the two
+  allowlisted 1 Hz wall-clock timers remain. Operator confirmed the
+  blur → 15fps check (A) in the live test.
+- **`FID-2026-0816-010-post-fid-009-ui-polish-backfill.md`** (medium) —
+  mode-selector cyan hover strokes project-wide; reactive trust matrix
+  (mounts only while pending, resolves signed rows, no title icon,
+  disappears on completion). Checks E/F confirmed by operator.
+- **`FID-2026-0816-011-rich-terminal-command-output.md`** (medium) — rich
+  terminal panel: traffic-light title bar, `$` command row + ✓/✗/⏳ status
+  badge, cwd/timeout pills, line-number gutter (hidden <50 cols), clean
+  expand/collapse; `exitCode` now parsed and plumbed through
+  `parseTerminalOutput`. Check G confirmed by operator.
+- **`FID-2026-0816-012-trust-matrix-stuck-awaiting-audit.md`** (medium) —
+  Trust Matrix label "awaiting audit"→"signed", tone-glyph icon removed,
+  title → "Trust Matrix". Check H confirmed by operator. (Historical
+  duplicate ID with the 012 hardening record — both preserved by filename.)
+
+Closure gates: typecheck ×4 exit 0; cli suite 3158 pass / 0 fail; eslint 0;
+lint:md 0; prettier clean; operator live-test confirmation on every check
+(A–H). CHANGELOG entries added; active-queue README rewritten (empty).
+
+## 2026-08-16 closure — FID-2026-0816-001 (v0.0.24 phantom-dependency incident)
+
+`FID-2026-0816-001-v0.0.24-bad-build-phantom-dependency-and-pipeline-scope.md`
+was archived 2026-08-16 after the release-blocking incident was closed: the
+`v0.0.24` release shipped without binaries because `@noble/hashes` phantom
+entry made the CLI bundle fail its integrity scan, and the pipeline ran
+`publish:package` for a main package that was never built. Resolved by
+declaring `@noble/hashes` (dependency) and defaulting publication to
+main-package-only with a cli-bundle-resolution release gate + dispatch-ref
+guardrails. Status `closed`; full record in the CHANGELOG 2026-08-16 entry.
+
+## 2026-08-16 closure — FID-2026-0816-012 (native tool-call recovery hardening)
+
+`FID-2026-0816-012-native-tool-call-recovery-hardening.md` (severity: high)
+closed and archived 2026-08-16 after operator approval and the full gate
+sweep. Root cause: a flash-class model truncated a large `write_file` native
+call mid-JSON, the runtime retried once with a generic prompt, the model
+re-emitted the same oversized payload and truncated again, and the 2-strike
+cap killed the whole subagent run with a guidance-free stack trace.
+
+Deliverables in `packages/agent-runtime`: (1) tool-aware split-steering
+appended to the TOOL_CALL_ERROR retry prompt for large-payload tools
+(`write_file`/`str_replace`/`apply_patch`/`read_files` — the write tools via
+the canonical `WriteToolName` union); (2) `NATIVE_TOOL_CALL_RECOVERY_MAX_STRIKES
+= 3` replacing the hard 2; (3) an actionable exhausted failure naming the
+last incomplete tool (`lastIncompleteToolName` threaded stream-parser → step
+→ loop-iteration) plus a re-spawn strategy; (4) a `logger.warn` for
+incomplete calls naming tools unknown to the runtime (provider tool-set
+drift). Recorded deviations: exhausted message reworded to "failed
+repeatedly" (accurate at 3 strikes; tests updated), and the drift check uses
+the canonical native tool list (runtime-observable equivalent of the
+llm-providers `requiredToolKeys`).
+
+Verification: typecheck ×4 exit 0; agent-runtime 973 pass / 0 fail; SDK 477
+pass / 0 fail; eslint 0; lint:md 0; prettier clean. Tests added: 3-strike
+exhaustion, steering present/absent, drift warn + tool name on exhaustion,
+streak-reset at 5 calls.
+
+## 2026-08-16 closure — FID-2026-0816-008 (Savant logo easter egg)
+
+`FID-2026-0816-008-savant-logo-easter-egg.md` (severity: low) closed and
+archived 2026-08-16 after the operator's visual pass **PASS** ("absolutely
+perfect, feature is complete"). Delivered: a click-per-message hidden
+state machine on the Savant wordmark — clicks 1–3 show small **centered**
+auto-dismiss nag bubbles (1.5 s), and the 4th click plays a ~600 ms glitch,
+a **full-screen** fake-terminal "DELETED" takeover in the **cyan-on-
+near-black** Savant colorway (480 lines through a viewport-height scrolling
+window over ~5 s), and a centered moral bubble that auto-resets after 5 s.
+State lives in an app-root `EasterEggProvider` with `<EasterEggOverlays />`
+mounted as a sibling of `AppShell` (full-viewport absolute). Three
+operator-driven correction rounds: (1) freeze fix — the takeover timeline
+pins its `duration` (the 1000 ms default cut the item off; same class as
+the FID-2026-0816-005 loop regression, proven by
+`animation-timeline-loop.test.ts`); (2) interaction — 7-click/next-click
+popups → click-per-message with a `level` counter; (3) colorway/position/
+flood — green-on-black + top-right bubbles + 2 s blip → cyan-on-near-black,
+centered, viewport-height 5 s flood. The round-3 pass also purged the
+**navy/slate neutral family project-wide** (operator directive: pre-fork
+Freebuff branding) — see CHANGELOG 2026-08-16 palette entry. Gates:
+typecheck ×5, cli suite 3132/18/0, eslint/lint:md/prettier green, tmux
+launch smoke clean; operator visual pass PASS. Canonical design doc:
+`docs/design/easter-eggs.md`.
+
+## 2026-08-16 closure — FID-2026-0816-006 (Phase 3: native code/diff components)
+
+`FID-2026-0816-006-native-code-diff-components.md` (severity: medium) closed
+and archived 2026-08-16. The native renderables (`<code>`/`<line-number>`/`<diff>`,
+`<image protocol="blocks">`) were adopted, verified against the test frame
+buffer, then **reverted** after live terminal testing showed they paint
+nothing in the production CLI renderer (diff showed only the `Edit filename`
+header; code blocks lost their line gutter). The spike conclusion "native
+wins" was overturned — the test renderer is not a proxy for production.
+Shipped state: custom `diff-viewer.tsx` (line-by-line + neon tinting),
+`markdown-leaves.tsx` plain `<code>` block, `image-block.tsx` metadata-card
+path; `<ascii-font>` branding retained; the nonexistent `Markdown` component
+stayed out of scope. Closure evidence: typecheck ×4, cli suite 3089/18/0,
+eslint/lint:md/prettier green, and the operator's live confirmation that the
+restored custom diff renders (2026-08-16). Design polish of that diff is now
+tracked by FID-2026-0816-009.
+
+## 2026-08-16 closure — FID-2026-0816-007 (Phase 4: layout/responsiveness)
+
+`FID-2026-0816-007-layout-responsiveness.md` (severity: medium) closed and
+archived 2026-08-16. Delivered: breakpoint-aware sidebar collapse (new
+`sidebar-rail.tsx` icon rail below 60 cols, full `RightSidebar` at 60+);
+unified picker chrome (`dialog-overlay.tsx` — absolute + RGBA backdrop +
+`translateY` entry/exit) for model/provider/rewind pickers; a focus-containment
+fix (rewind picker no longer leaks keys to the chat dispatcher); a toast stack
+that is absolutely positioned, timeline-animated, and z-index layered with
+two-phase dismiss; and the `cwd:` line folded into input-bar chrome (border
+title normal mode / dim row compact mode; data source unchanged). Gates:
+typecheck ×4, cli suite 3099/18/0, eslint, lint:md, prettier all green; tmux
+smoke at 50/60/80/120 cols + provider-picker open/navigate/cancel walk at
+60/80/120 and model-picker open at 80 all PASS; operator visual PASS
+2026-08-16 (60/80/120 cols + picker walk confirmed in terminal).
+
+## 2026-08-16 closure — FID-2026-0816-004 (Phase 1: design tokens + visual identity)
+
+`FID-2026-0816-004-ui-design-tokens-identity.md` (severity: medium) closed and
+archived 2026-08-16. Delivered: `savant-ui/theme.ts` rewritten as the canonical
+token module (`tokens` = spacing/borders + `useTokens()` resolving semantic
+colors/badges/phase tokens from the active `ChatTheme`, zero hardcoded hex);
+sidebar `Teacher` default-collapsed (History already was; section order already
+matched the plan). The `ChatHeader` was populated then reverted to its no-op per
+operator feedback — the path/mode/model/connection line is redundant with the
+right sidebar. Status-bar duty split and transcript differentiation were already
+present. Gates: typecheck ×4, cli suite, design-systems 19/0, eslint, lint:md,
+prettier all green; operator visual PASS 2026-08-16 (1:1 clean).
+
+## 2026-08-16 closure — FID-2026-0816-003 (Phase 0: OpenTUI 0.2.2 → 0.5.3 upgrade)
+
+`FID-2026-0816-003-opentui-0-5-x-upgrade.md` (severity: high) closed and
+archived 2026-08-16. Delivered: exact `@opentui/core`/`@opentui/react` 0.5.3
+pins, JS `yoga-layout` dropped (native since 0.4.1), `react-reconciler` synced
+to ^0.33.0, and the `OPENTUI_FORCE_EXPLICIT_WIDTH=false` ConHost guard
+(`shouldSuppressExplicitWidthQuery`). Interactive acceptance: tmux (WSL) smoke
+(launch/render/resize/input/streaming/interrupt/exit) PASS, ConHost guard
+unit/logic PASS, operator Windows Terminal visual PASS (2026-08-16). Gates:
+typecheck ×4, full `bun test`, eslint, lint:md, prettier, savant-free build all
+green; the savant-free e2e suite has pre-existing Windows harness failures
+recorded out-of-scope in `SCOPE.md`.
+
 ## 2026-08-14 closure — FID-2026-0814-013 (force-compact trigger as a fixed window offset)
 
 `FID-2026-0814-013-force-compact-offset-not-ratio.md` (severity: low) was
@@ -380,6 +586,26 @@ open FIDs without operator direction.
 (2026-08-09 operator-directed close with Nova sign-off). The active queue is
 [`../`](../); its reconciliation record is in [`../README.md`](../README.md).
 
+## 2026-08-16 audit — legacy-status stragglers indexed (no rewrite)
+
+Audit of `archive/` (2026-08-16) found the following records still carrying
+non-closed or absent status metadata. Per the **Legacy status exception**
+above, this is documented drift, not an active-FID claim — they are physical
+archive members and are **not** part of the active queue. Indexed here for
+consistency; the historical files were **not** rewritten (per the convention,
+add a corrective note rather than rewriting historical evidence).
+
+| FID | Stated status | Note |
+|---|---|---|
+| `FID-2026-0806-016-v0.0.21-post-audit-fix-batch.md` | created | legacy release record (named in the exception paragraph) |
+| `FID-2026-0807-008-code-universe-polish-batch.md` | verified | pre-gate legacy wording |
+| `FID-2026-0807-009-code-universe-document-view-polish.md` | `analyzed` → operator-approved → implemented | closed by operator directive per its own record |
+| `FID-2026-0807-010-code-universe-sidebar-drilldown.md` | (none — old format) | `Phase: … COMPLETE` header; historical |
+| `FID-2026-0807-011-code-universe-ui-polish-and-identity-cleanup.md` | (none — old format) | `Phase: … COMPLETE` header; historical |
+| `FID-2026-0807-014-code-universe-qc-polish-pass.md` | complete | operator-approved; implemented + verified 2026-08-07 |
+| `FID-2026-0807-019-graph-export-sidebar-responsive-document-budgets.md` | implemented | pre-gate legacy wording |
+| `FID-2026-0807-020-code-universe-architecture-evaluation.md` | implemented | pre-gate legacy wording |
+
 The active queue is [`../`](../). The current `/dev` lifecycle audit is recorded in
 [`../README.md`](../README.md); the historical cleanup FID remains
 [`FID-2026-0807-016-dev-folder-and-fid-hygiene.md`](FID-2026-0807-016-dev-folder-and-fid-hygiene.md).
@@ -387,7 +613,7 @@ The active queue is [`../`](../). The current `/dev` lifecycle audit is recorded
 `FID-2026-0811-030-loadable-design-system-skill-library.md` was closed and archived on
 2026-08-11 after implementation, focused verification, all-wrapper packaging evidence,
 and an independent PASS review. Its extensive product documentation is maintained at
-[`docs/design/design-system-library.md`](../../docs/design/design-system-library.md).
+[`docs/design/design-system-library.md`](../../../docs/design/design-system-library.md).
 The documentation-and-implementation sign-off request remains an explicit independent
 review boundary for the current working-tree evidence; no release or publication was
 performed.
