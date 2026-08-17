@@ -49,8 +49,9 @@ describe('getOpenTuiNativePackageNames', () => {
   }
 
   test('linux targets install both glibc and musl bundles', () => {
-    expect(getOpenTuiNativePackageNames(info('bun-linux-x64', 'linux', 'x64')))
-      .toEqual(['@opentui/core-linux-x64', '@opentui/core-linux-x64-musl'])
+    expect(
+      getOpenTuiNativePackageNames(info('bun-linux-x64', 'linux', 'x64')),
+    ).toEqual(['@opentui/core-linux-x64', '@opentui/core-linux-x64-musl'])
     expect(
       getOpenTuiNativePackageNames(info('bun-linux-arm64', 'linux', 'arm64')),
     ).toEqual(['@opentui/core-linux-arm64', '@opentui/core-linux-arm64-musl'])
@@ -64,8 +65,9 @@ describe('getOpenTuiNativePackageNames', () => {
   })
 
   test('darwin and win32 targets resolve their unsuffixed bundles', () => {
-    expect(getOpenTuiNativePackageNames(info('bun-darwin-x64', 'darwin', 'x64')))
-      .toEqual(['@opentui/core-darwin-x64'])
+    expect(
+      getOpenTuiNativePackageNames(info('bun-darwin-x64', 'darwin', 'x64')),
+    ).toEqual(['@opentui/core-darwin-x64'])
     expect(
       getOpenTuiNativePackageNames(info('bun-darwin-arm64', 'darwin', 'arm64')),
     ).toEqual(['@opentui/core-darwin-arm64'])
@@ -87,7 +89,9 @@ describe('getOpenTuiNativePackageNames', () => {
     ]
     const produced = [
       ...getOpenTuiNativePackageNames(info('bun-linux-x64', 'linux', 'x64')),
-      ...getOpenTuiNativePackageNames(info('bun-linux-arm64', 'linux', 'arm64')),
+      ...getOpenTuiNativePackageNames(
+        info('bun-linux-arm64', 'linux', 'arm64'),
+      ),
       ...getOpenTuiNativePackageNames(info('bun-darwin-x64', 'darwin', 'x64')),
       ...getOpenTuiNativePackageNames(
         info('bun-darwin-arm64', 'darwin', 'arm64'),
