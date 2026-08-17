@@ -51,7 +51,7 @@ export function findVersionReferences(root: string, version: string): string[] {
 
 /**
  * Update the opt-in soft documentation surfaces (README badges, docs version
- * notes, ARCHITECTURE pending note, and the CHANGELOG in-development header).
+ * notes, ARCHITECTURE current-state note, and the CHANGELOG in-development header).
  * Returns the relative paths that changed.
  */
 export function updateDocSurfaces(
@@ -64,19 +64,16 @@ export function updateDocSurfaces(
     const filePath = path.join(root, rel)
     const content = fs.readFileSync(filePath, 'utf8')
     if (!content.includes(from)) return
-    fs.writeFileSync(filePath, content.replace(from, to))
+    fs.writeFileSync(filePath, content.replaceAll(from, to))
     changed.push(rel)
   }
 
-  replace(
-    'README.md',
-    `**v${oldVersion} (pending, unreleased)**`,
-    `**v${newVersion} (pending, unreleased)**`,
-  )
+  replace('README.md', `Release-v${oldVersion}-`, `Release-v${newVersion}-`)
+  replace('README.md', `**v${oldVersion}** —`, `**v${newVersion}** —`)
   replace(
     'README.zh-CN.md',
-    `**v${oldVersion}（待发布，未发布）**`,
-    `**v${newVersion}（待发布，未发布）**`,
+    `Release-v${oldVersion}-`,
+    `Release-v${newVersion}-`,
   )
   replace(
     'docs/sdk-overview.md',
@@ -85,31 +82,20 @@ export function updateDocSurfaces(
   )
   replace(
     'docs/privacy.md',
-    `> **Version:** v${oldVersion} (pending, unreleased)`,
-    `> **Version:** v${newVersion} (pending, unreleased)`,
+    `> **Version:** v${oldVersion}`,
+    `> **Version:** v${newVersion}`,
   )
   replace(
     'ARCHITECTURE.md',
-    `(${oldVersion} pending)`,
-    `(${newVersion} pending)`,
+    `at version \`${oldVersion}\``,
+    `at version \`${newVersion}\``,
   )
 
-  // docs/SAVANT-VERSIONING.md: pending target advances, and the prior version
-  // becomes the latest published release.
-  {
-    const versioningPath = path.join(root, 'docs', 'SAVANT-VERSIONING.md')
-    const before = fs.readFileSync(versioningPath, 'utf8')
-    const after = before
-      .replace(`\`${oldVersion}\` (unreleased`, `\`${newVersion}\` (unreleased`)
-      .replace(
-        /latest published release is `[^`]+`/,
-        `latest published release is \`${oldVersion}\``,
-      )
-    if (after !== before) {
-      fs.writeFileSync(versioningPath, after)
-      changed.push('docs/SAVANT-VERSIONING.md')
-    }
-  }
+  replace(
+    'docs/SAVANT-VERSIONING.md',
+    `**Current release:** Savant-Code \`${oldVersion}\`.`,
+    `**Current release:** Savant-Code \`${newVersion}\`.`,
+  )
 
   const changelogPath = path.join(root, 'CHANGELOG.md')
   const changelog = fs.readFileSync(changelogPath, 'utf8')
@@ -122,5 +108,5 @@ export function updateDocSurfaces(
     changed.push('CHANGELOG.md')
   }
 
-  return changed
+  return [...new Set(changed)]
 }
