@@ -4,6 +4,7 @@ import {
   CANONICAL_NEXT_PUBLIC_DEFAULTS,
   CANONICAL_RELEASE_RUNTIME_DEFAULTS,
   evaluateBinaryEnvIntegrity,
+  getOpenTuiNativePackageNames,
   getReleaseRuntimeDefaults,
   findBinaryEnvLeaks,
 } from '../../../scripts/build-binary'
@@ -30,6 +31,73 @@ describe('release runtime defaults', () => {
 
   test('preserves Savant-Free backend/session routing', () => {
     expect(getReleaseRuntimeDefaults('savant-free')).toEqual({})
+  })
+})
+
+// Regression: v0.0.25 linux-arm64 release binary was missing because the
+// build fetched only the glibc bundle (@opentui/core-linux-arm64) while Bun's
+// bundler resolved the musl variant (@opentui/core-linux-arm64-musl) on the
+// ubuntu CI runner. Bun's cross-target libc pick is host-dependent (musl on
+// ubuntu, glibc on Windows), so linux targets install BOTH variants.
+describe('getOpenTuiNativePackageNames', () => {
+  function info(bunTarget: string, platform: string, arch: string) {
+    return {
+      bunTarget,
+      platform: platform as NodeJS.Platform,
+      arch,
+    }
+  }
+
+  test('linux targets install both glibc and musl bundles', () => {
+    expect(getOpenTuiNativePackageNames(info('bun-linux-x64', 'linux', 'x64')))
+      .toEqual(['@opentui/core-linux-x64', '@opentui/core-linux-x64-musl'])
+    expect(
+      getOpenTuiNativePackageNames(info('bun-linux-arm64', 'linux', 'arm64')),
+    ).toEqual(['@opentui/core-linux-arm64', '@opentui/core-linux-arm64-musl'])
+  })
+
+  test('linux-arm64 set includes the musl variant the CI runner resolves', () => {
+    const names = getOpenTuiNativePackageNames(
+      info('bun-linux-arm64', 'linux', 'arm64'),
+    )
+    expect(names).toContain('@opentui/core-linux-arm64-musl')
+  })
+
+  test('darwin and win32 targets resolve their unsuffixed bundles', () => {
+    expect(getOpenTuiNativePackageNames(info('bun-darwin-x64', 'darwin', 'x64')))
+      .toEqual(['@opentui/core-darwin-x64'])
+    expect(
+      getOpenTuiNativePackageNames(info('bun-darwin-arm64', 'darwin', 'arm64')),
+    ).toEqual(['@opentui/core-darwin-arm64'])
+    expect(
+      getOpenTuiNativePackageNames(info('bun-windows-x64', 'win32', 'x64')),
+    ).toEqual(['@opentui/core-win32-x64'])
+  })
+
+  test('every produced variant is declared by @opentui/core 0.5.3', () => {
+    const declared = [
+      '@opentui/core-darwin-x64',
+      '@opentui/core-darwin-arm64',
+      '@opentui/core-linux-x64',
+      '@opentui/core-linux-arm64',
+      '@opentui/core-win32-x64',
+      '@opentui/core-win32-arm64',
+      '@opentui/core-linux-x64-musl',
+      '@opentui/core-linux-arm64-musl',
+    ]
+    const produced = [
+      ...getOpenTuiNativePackageNames(info('bun-linux-x64', 'linux', 'x64')),
+      ...getOpenTuiNativePackageNames(info('bun-linux-arm64', 'linux', 'arm64')),
+      ...getOpenTuiNativePackageNames(info('bun-darwin-x64', 'darwin', 'x64')),
+      ...getOpenTuiNativePackageNames(
+        info('bun-darwin-arm64', 'darwin', 'arm64'),
+      ),
+      ...getOpenTuiNativePackageNames(info('bun-windows-x64', 'win32', 'x64')),
+    ]
+    expect(new Set(produced).size).toBe(produced.length)
+    for (const name of produced) {
+      expect(declared).toContain(name)
+    }
   })
 })
 

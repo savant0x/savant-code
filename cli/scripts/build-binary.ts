@@ -639,10 +639,42 @@ function patchOpenTuiAssetPaths() {
   logAlways('Patched OpenTUI core tree-sitter asset paths')
 }
 
+/**
+ * OpenTUI 0.5.3 splits its native bundles into per-platform optional
+ * dependencies. Which libc variant Bun's bundler resolves for a linux
+ * cross-target is HOST-dependent — observed in the v0.0.25 release:
+ * `bun-linux-arm64` resolved `@opentui/core-linux-arm64-musl` on an
+ * ubuntu (glibc) CI runner, but `@opentui/core-linux-arm64` on a Windows
+ * host. Installing only one variant fails on the other host, so every linux
+ * target installs BOTH the glibc and musl bundles of its arch; whichever
+ * Bun resolves is present. Darwin/win32 targets have a single variant.
+ * Exported so the variant mapping is unit-tested (regression: v0.0.25
+ * linux-arm64 release binary missing).
+ */
+export function getOpenTuiNativePackageNames(targetInfo: TargetInfo): string[] {
+  const { platform, arch } = targetInfo
+  if (platform === 'linux') {
+    const base = `@opentui/core-linux-${arch}`
+    return [base, `${base}-musl`]
+  }
+  return [`@opentui/core-${platform}-${arch}`]
+}
+
 async function ensureOpenTuiNativeBundle(targetInfo: TargetInfo) {
-  const packageName = `@opentui/core-${targetInfo.platform}-${targetInfo.arch}`
-  const packageFolder = `core-${targetInfo.platform}-${targetInfo.arch}`
-  const installTargets = [
+  const packageNames = getOpenTuiNativePackageNames(targetInfo)
+
+  // A half-extracted/stub directory (e.g. after a failed fetch) must not
+  // count as "present" — the bundler needs the actual package contents.
+  const isMissingDirectory = (dir: string): boolean => {
+    if (!existsSync(dir)) return true
+    try {
+      return readdirSync(dir).length === 0
+    } catch {
+      return true
+    }
+  }
+
+  const installTargetsFor = (packageFolder: string) => [
     {
       label: 'workspace root',
       packagesDir: join(repoRoot, 'node_modules', '@opentui'),
@@ -655,20 +687,10 @@ async function ensureOpenTuiNativeBundle(targetInfo: TargetInfo) {
     },
   ]
 
-  const missingTargets = installTargets.filter(
-    ({ packageDir }) => !existsSync(packageDir),
-  )
-  if (missingTargets.length === 0) {
-    log(
-      `OpenTUI native bundle already present for ${targetInfo.platform}-${targetInfo.arch}`,
-    )
-    return
-  }
-
-  const corePackagePath =
-    installTargets
-      .map(({ packagesDir }) => join(packagesDir, 'core', 'package.json'))
-      .find((candidate) => existsSync(candidate)) ?? null
+  const corePackagePath = [
+    join(repoRoot, 'node_modules', '@opentui', 'core', 'package.json'),
+    join(cliRoot, 'node_modules', '@opentui', 'core', 'package.json'),
+  ].find((candidate) => existsSync(candidate))
 
   if (!corePackagePath) {
     log('OpenTUI core package metadata missing; skipping native bundle fetch')
@@ -677,96 +699,120 @@ async function ensureOpenTuiNativeBundle(targetInfo: TargetInfo) {
   const corePackageJson = JSON.parse(readFileSync(corePackagePath, 'utf8')) as {
     optionalDependencies?: Record<string, string>
   }
-  const version = corePackageJson.optionalDependencies?.[packageName]
-  if (!version) {
-    log(
-      `No optional dependency declared for ${packageName}; skipping native bundle fetch`,
-    )
-    return
-  }
 
   const registryBase =
     process.env.SAVANT_CODE_NPM_REGISTRY ??
     process.env.NPM_REGISTRY_URL ??
     'https://registry.npmjs.org'
-  const metadataUrl = `${registryBase.replace(/\/$/, '')}/${encodeURIComponent(packageName)}`
-  log(`Fetching OpenTUI native bundle metadata from ${metadataUrl}`)
 
-  const metadataResponse = await fetch(metadataUrl)
-  if (!metadataResponse.ok) {
-    throw new Error(
-      `Failed to fetch metadata for ${packageName}: ${metadataResponse.status} ${metadataResponse.statusText}`,
+  for (const packageName of packageNames) {
+    const packageFolder = packageName.slice('@opentui/'.length)
+    const installTargets = installTargetsFor(packageFolder)
+
+    const missingTargets = installTargets.filter(({ packageDir }) =>
+      isMissingDirectory(packageDir),
     )
-  }
+    if (missingTargets.length === 0) {
+      log(`OpenTUI native bundle ${packageName} already installed`)
+      continue
+    }
+    for (const { packageDir } of missingTargets) {
+      rmSync(packageDir, { recursive: true, force: true })
+    }
 
-  const metadataResponseBody = await metadataResponse.json()
-  const metadata = metadataResponseBody as {
-    versions?: Record<
-      string,
-      {
-        dist?: {
-          tarball?: string
-        }
-      }
-    >
-  }
-  const tarballUrl = metadata.versions?.[version]?.dist?.tarball
-  if (!tarballUrl) {
-    throw new Error(`Tarball URL missing for ${packageName}@${version}`)
-  }
-
-  log(`Downloading OpenTUI native bundle from ${tarballUrl}`)
-  const tarballResponse = await fetch(tarballUrl)
-  if (!tarballResponse.ok) {
-    throw new Error(
-      `Failed to download ${packageName}@${version}: ${tarballResponse.status} ${tarballResponse.statusText}`,
-    )
-  }
-
-  const tempDir = mkdtempSync(join(tmpdir(), 'opentui-'))
-  try {
-    const tarballPath = join(
-      tempDir,
-      `${packageName.split('/').pop() ?? 'package'}-${version}.tgz`,
-    )
-    const tarballBuffer = await tarballResponse.arrayBuffer()
-    await Bun.write(tarballPath, tarballBuffer)
-
-    for (const target of missingTargets) {
-      mkdirSync(target.packagesDir, { recursive: true })
-      mkdirSync(target.packageDir, { recursive: true })
-
-      if (!existsSync(target.packageDir)) {
-        throw new Error(
-          `Failed to create directory for ${packageName}: ${target.packageDir}`,
-        )
-      }
-
-      const tarballForTar =
-        process.platform === 'win32'
-          ? tarballPath.replace(/\\/g, '/')
-          : tarballPath
-      const extractDirForTar =
-        process.platform === 'win32'
-          ? target.packageDir.replace(/\\/g, '/')
-          : target.packageDir
-
-      const tarArgs = [
-        '-xzf',
-        tarballForTar,
-        '--strip-components=1',
-        '-C',
-        extractDirForTar,
-      ]
-      runCommand('tar', tarArgs)
+    const version = corePackageJson.optionalDependencies?.[packageName]
+    if (!version) {
       log(
-        `Installed OpenTUI native bundle for ${targetInfo.platform}-${targetInfo.arch} in ${target.label}`,
+        `No optional dependency declared for ${packageName}; skipping native bundle fetch`,
+      )
+      continue
+    }
+
+    const metadataUrl = `${registryBase.replace(/\/$/, '')}/${encodeURIComponent(packageName)}`
+    log(`Fetching OpenTUI native bundle metadata from ${metadataUrl}`)
+
+    const metadataResponse = await fetch(metadataUrl)
+    if (!metadataResponse.ok) {
+      throw new Error(
+        `Failed to fetch metadata for ${packageName}: ${metadataResponse.status} ${metadataResponse.statusText}`,
       )
     }
-    logAlways(
-      `Fetched OpenTUI native bundle for ${targetInfo.platform}-${targetInfo.arch}`,
-    )
-  } finally {
-    rmSync(tempDir, { recursive: true, force: true })
+
+    const metadataResponseBody = await metadataResponse.json()
+    const metadata = metadataResponseBody as {
+      versions?: Record<
+        string,
+        {
+          dist?: {
+            tarball?: string
+          }
+        }
+      >
+    }
+    const tarballUrl = metadata.versions?.[version]?.dist?.tarball
+    if (!tarballUrl) {
+      throw new Error(`Tarball URL missing for ${packageName}@${version}`)
+    }
+
+    log(`Downloading OpenTUI native bundle from ${tarballUrl}`)
+    const tarballResponse = await fetch(tarballUrl)
+    if (!tarballResponse.ok) {
+      throw new Error(
+        `Failed to download ${packageName}@${version}: ${tarballResponse.status} ${tarballResponse.statusText}`,
+      )
+    }
+
+    const tempDir = mkdtempSync(join(tmpdir(), 'opentui-'))
+    try {
+      const tarballPath = join(
+        tempDir,
+        `${packageName.split('/').pop() ?? 'package'}-${version}.tgz`,
+      )
+      const tarballBuffer = await tarballResponse.arrayBuffer()
+      await Bun.write(tarballPath, tarballBuffer)
+
+      for (const target of missingTargets) {
+        mkdirSync(target.packagesDir, { recursive: true })
+        mkdirSync(target.packageDir, { recursive: true })
+
+        if (!existsSync(target.packageDir)) {
+          throw new Error(
+            `Failed to create directory for ${packageName}: ${target.packageDir}`,
+          )
+        }
+
+        const tarballForTar =
+          process.platform === 'win32'
+            ? tarballPath.replace(/\\/g, '/')
+            : tarballPath
+        const extractDirForTar =
+          process.platform === 'win32'
+            ? target.packageDir.replace(/\\/g, '/')
+            : target.packageDir
+
+        // --force-local: Git Bash on Windows ships GNU tar, which would
+        // otherwise parse `C:/...` paths as remote host specifiers
+        // ("Cannot connect to C: resolve failed"). --force-local treats them
+        // as plain local filenames, accepted by both MinGW and MSYS tar.
+        const tarArgs = [
+          '-xzf',
+          tarballForTar,
+          '--force-local',
+          '--strip-components=1',
+          '-C',
+          extractDirForTar,
+        ]
+        runCommand('tar', tarArgs)
+        if (!existsSync(join(target.packageDir, 'package.json'))) {
+          throw new Error(
+            `OpenTUI native bundle extraction produced no package.json in ${target.packageDir}; refusing to continue with a stub install.`,
+          )
+        }
+        log(`Installed OpenTUI native bundle ${packageName} in ${target.label}`)
+      }
+      logAlways(`Fetched OpenTUI native bundle ${packageName}`)
+    } finally {
+      rmSync(tempDir, { recursive: true, force: true })
+    }
   }
 }
