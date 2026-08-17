@@ -39,6 +39,7 @@ export type ThemeColorKey =
   | 'diffContext'
   | 'diffHunkHeader'
   | 'diffMeta'
+  | 'phaseAdversarial'
   | 'syntaxComment'
   | 'syntaxKeyword'
   | 'syntaxFunction'

@@ -117,13 +117,14 @@ export function useChatPickers({
   const setRewindPickerMode = useRewindPickerStore((s) => s.setMode)
   const closeRewindPicker = useRewindPickerStore((s) => s.close)
 
-  // While the model or provider picker overlay is open, blur the text input
-  // so keystrokes route to the picker, not the input.
+  // While a picker overlay is open, blur the text input so keystrokes route
+  // to the picker, not the input (FID-2026-0816-007 step 3: rewind was
+  // previously missing from this guard, leaking focus to the chat dispatcher).
   useEffect(() => {
-    if (modelPickerOpen || providerPickerOpen) {
+    if (modelPickerOpen || providerPickerOpen || rewindPickerOpen) {
       setInputFocused(false)
     }
-  }, [modelPickerOpen, providerPickerOpen, setInputFocused])
+  }, [modelPickerOpen, providerPickerOpen, rewindPickerOpen, setInputFocused])
 
   // Commit a /rewind picker selection (FID-2026-0803-004): execute the chosen
   // restore mode against the selected turn's checkpoint and report in-chat.

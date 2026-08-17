@@ -82,8 +82,8 @@ function normalizeTokens(
   const colors = sortRecord(asStringRecord(data.colors))
   if (Object.keys(colors).length === 0 && extractedColors.length > 0) {
     colors.primary = extractedColors[0]!
-    colors.foreground = extractedColors[1] ?? '#f8fafc'
-    colors.background = extractedColors[2] ?? '#0f172a'
+    colors.foreground = extractedColors[1] ?? '#e4e4e8'
+    colors.background = extractedColors[2] ?? '#050508'
   }
   const typography = normalizeNestedRecord(data.typography)
   if (Object.keys(typography).length === 0) {

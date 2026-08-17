@@ -80,7 +80,7 @@ export const ChatGptConnectBanner = () => {
     paddingLeft: 1,
     paddingRight: 1,
     borderStyle: 'single' as const,
-    borderColor: hovered ? theme.foreground : theme.border,
+    borderColor: hovered ? theme.primary : theme.border,
   }
 
   const handleClose = () => {

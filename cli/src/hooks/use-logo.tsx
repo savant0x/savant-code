@@ -70,7 +70,7 @@ export const useLogo = ({
   applySheenToChar,
   textColor,
   accentColor = '#18faf9', // Neon cyan — updated from acid green
-  blockColor = '#020617', // Near-black — updated from white
+  blockColor = '#050508', // Near-black — canonical Savant background
   maxHeight,
 }: UseLogoOptions): LogoResult => {
   const ASCII_LOGO_LINES = 3

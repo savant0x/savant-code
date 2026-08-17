@@ -236,7 +236,10 @@ export class EchoEnforcement {
     }
 
     // Track verification for Law 3
-    if (params.toolName === 'run_terminal_command') {
+    if (
+      params.toolName === 'run_terminal_command' ||
+      params.toolName === 'run_readonly_command'
+    ) {
       this.state.hasVerifiedSinceLastDirty = true
     }
 

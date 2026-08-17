@@ -6,14 +6,18 @@ import { createSidebarSurfaceStyle } from '../chat/styles'
 import { useFids } from '../hooks/use-fids'
 import { useTheme } from '../hooks/use-theme'
 import { useChatStore } from '../state/chat-store'
-import { Branding } from './savant-ui/branding'
+import { EasterEggLogo } from './savant-ui/easter-egg-logo'
 import { getVersion } from '../utils/version'
 import { Timeline } from './savant-ui/data-display/timeline'
 import { AgentStatus } from './savant-ui/echo/agent-status'
 import { FidList } from './savant-ui/echo/fid-list'
 import { LoopStatusPanel } from './savant-ui/echo/loop-status-panel'
 import { PerfectionLoop } from './savant-ui/echo/perfection-loop'
-import { TrustMatrix } from './savant-ui/echo/trust-matrix'
+import {
+  reduceTrustMatrixEvents,
+  summarizeTrustRows,
+  TrustMatrix,
+} from './savant-ui/echo/trust-matrix'
 import { KeyValueRow } from './savant-ui/primitives/key-value-row'
 import { SidebarSection } from './savant-ui/primitives/sidebar-section'
 
@@ -37,7 +41,7 @@ interface FilesChanged {
   deleted: number
 }
 
-interface RightSidebarProps {
+export interface RightSidebarProps {
   tokensUsed: number
   tokensMax: number
   cost: number
@@ -52,6 +56,12 @@ interface RightSidebarProps {
   isStreaming: boolean
   isWaitingForResponse: boolean
   fsmPhase: string
+  /** Manual fold (FID-2026-0816-010 follow-up): when provided, renders a `»`
+   *  collapse button on the sidebar's LEFT edge (overlapping the fold line),
+   *  matching the folded rail's `«` button. Omitted when rendered inside the
+   *  SidebarRail's hover-expanded state so the two collapse affordances don't
+   *  stack. */
+  onCollapse?: () => void
 }
 
 /** Max active FIDs rendered before a "+N more active" overflow line. */
@@ -142,14 +152,31 @@ export const RightSidebar = React.memo(function RightSidebar({
   isStreaming,
   isWaitingForResponse,
   fsmPhase,
+  onCollapse,
 }: RightSidebarProps) {
   const theme = useTheme()
+  const [collapseHovered, setCollapseHovered] = React.useState(false)
 
   const devMode = useChatStore((s) => s.devMode)
   const provenanceEvents = useChatStore((s) => s.provenanceEvents)
   const teacherState = useChatStore((s) => s.teacherState)
   const compactionStatus = useChatStore((s) => s.compactionStatus)
   const compactionCount = useChatStore((s) => s.compactionCount)
+
+  // Reactive trust surface (operator feedback 2026-08-16, two rounds): the
+  // section mounts only while at least one receipt is still `pending` (signed,
+  // no verdict yet) — it unmounts entirely once everything resolves, so it
+  // never persists after completion — and it is collapsed by default. Round 2
+  // removed the title status dot: an icon left of the title read as clutter,
+  // and with mount-on-pending the section's presence IS the signal.
+  const trustState = React.useMemo(
+    () => reduceTrustMatrixEvents(provenanceEvents),
+    [provenanceEvents],
+  )
+  const trustSummary = React.useMemo(
+    () => summarizeTrustRows(trustState.rows),
+    [trustState.rows],
+  )
 
   // FID-2026-0720-033c Phase C: live FID data from dev/fids/ — wires the
   // useFids hook (production consumer of loadFids) into the sidebar. The
@@ -167,15 +194,50 @@ export const RightSidebar = React.memo(function RightSidebar({
     <box
       style={{
         ...createSidebarSurfaceStyle(theme.background),
-        paddingTop: 3,
+        paddingTop: 1,
         paddingBottom: 1,
         paddingLeft: 1,
         paddingRight: 1,
         gap: 1,
+        // Positioning context for the fold button: the sidebar's left edge is
+        // the chat/sidebar fold line (FID-2026-0816-010 follow-up round 2).
+        position: 'relative',
       }}
       focusable={false}
       selectable={false}
     >
+      {/* Manual fold handle (FID-2026-0816-010 follow-up): `»` collapses the
+          sidebar to the icon rail at any width. Matches the folded rail's `«`
+          button (operator feedback 2026-08-16): a raised, bordered button
+          sitting on the sidebar's LEFT edge, overlapping the fold line into
+          the chat column. Absolutely positioned at left: -2 so it straddles
+          the edge despite the sidebar's own paddingLeft (the rail needs no
+          such trick — it has no horizontal padding). Only rendered when
+          ChatSidebar passes onCollapse (i.e. the standalone full sidebar, not
+          the rail's hover-expanded copy). */}
+      {onCollapse && (
+        <box
+          style={{ position: 'absolute', left: -3, top: 0, zIndex: 10 }}
+          borderStyle="rounded"
+          borderColor={collapseHovered ? theme.primary : theme.border}
+          backgroundColor={theme.surface}
+          paddingLeft={1}
+          paddingRight={1}
+          onMouseOver={() => setCollapseHovered(true)}
+          onMouseOut={() => setCollapseHovered(false)}
+          onMouseDown={onCollapse}
+          focusable={false}
+          selectable={false}
+        >
+          <text
+            fg={collapseHovered ? theme.primary : theme.muted}
+            attributes={TextAttributes.BOLD}
+            selectable={false}
+          >
+            {'»'}
+          </text>
+        </box>
+      )}
       {/* Header */}
       <box
         flexDirection="column"
@@ -192,7 +254,7 @@ export const RightSidebar = React.memo(function RightSidebar({
           width="100%"
           selectable={false}
         >
-          <Branding font="tiny" text="Savant" color="primary" />
+          <EasterEggLogo />
         </box>
         <box
           flexDirection="column"
@@ -301,7 +363,7 @@ export const RightSidebar = React.memo(function RightSidebar({
           passive store mirror of the runtime singleton; the component has no
           tool or write authority. */}
       {teacherState !== null && teacherState.challenge !== null && (
-        <SidebarSection title="Teacher" defaultExpanded>
+        <SidebarSection title="Teacher">
           <LearnOverlay
             challenge={teacherState.challenge}
             events={teacherState.events}
@@ -322,9 +384,11 @@ export const RightSidebar = React.memo(function RightSidebar({
       {/* FID-2026-0813-009: read-only live governance surface. The SDK event
           handler stores every provenance_receipt event; the TrustMatrix
           reducer drops unsigned/unmatched ones, and the component has no tool
-          or write authority. */}
-      {provenanceEvents.length > 0 && (
-        <SidebarSection title="Adversarial Trust Matrix" defaultExpanded>
+          or write authority. Mounts only while a receipt is still `pending`
+          (operator feedback 2026-08-16 round 2: it must not persist after
+          completion) and collapses by default so it stays subtle. */}
+      {trustSummary.hasPending && (
+        <SidebarSection title="Trust Matrix">
           <TrustMatrix events={provenanceEvents} />
         </SidebarSection>
       )}

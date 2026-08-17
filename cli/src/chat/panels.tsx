@@ -11,6 +11,7 @@ import { SingleAdBanner } from '../components/ad-banner'
 import { ChatHeader } from '../components/chat-header'
 import { ChatInputBar } from '../components/chat-input-bar'
 import { CompactionSignal } from '../components/compaction-signal'
+import { DialogOverlay } from '../components/dialog-overlay'
 import { LoadPreviousButton } from '../components/load-previous-button'
 import { MessageWithAgents } from '../components/message-with-agents'
 import { ModelPicker } from '../components/model-picker'
@@ -264,46 +265,6 @@ export function ChatLayout(props: ChatLayoutProps) {
             />
           ) : (
             <>
-              {modelPickerOpen && (
-                <ModelPicker
-                  models={modelPickerModels}
-                  query={modelPickerQuery}
-                  selectedIndex={modelPickerSelectedIndex}
-                  onQueryChange={onModelPickerQueryChange}
-                  onSelectIndex={onModelPickerSelectIndex}
-                  onSelect={onModelPickerSelect}
-                  onClose={onCloseModelPicker}
-                  terminalHeight={terminalHeight}
-                />
-              )}
-              {providerPickerOpen && (
-                <ProviderPicker
-                  providers={providerPickerProviders}
-                  selectedIndex={providerPickerSelectedIndex}
-                  onSelectIndex={onProviderPickerSelectIndex}
-                  onSelect={onProviderPickerSelect}
-                  onClose={onCloseProviderPicker}
-                  terminalHeight={terminalHeight}
-                />
-              )}
-              {rewindPickerOpen && (
-                <RewindPicker
-                  turns={rewindPickerTurns}
-                  selectedIndex={rewindPickerSelectedIndex}
-                  stage={rewindPickerStage}
-                  mode={rewindPickerMode}
-                  onSelectIndex={onRewindPickerSelectIndex}
-                  onSetStage={onRewindPickerSetStage}
-                  onSetMode={onRewindPickerSetMode}
-                  onConfirm={onRewindPickerConfirm}
-                  onClose={onCloseRewindPicker}
-                />
-              )}
-              <box flexDirection="row" paddingLeft={1} focusable={false}>
-                <text fg={theme.muted} wrapMode="none" selectable={false}>
-                  {`cwd: ${directoryDisplay}`}
-                </text>
-              </box>
               <ChatInputBar
                 inputValue={inputValue}
                 cursorPosition={cursorPosition}
@@ -330,6 +291,7 @@ export function ChatLayout(props: ChatLayoutProps) {
                 separatorWidth={separatorWidth}
                 shouldCenterInputVertically={shouldCenterInputVertically}
                 inputBoxTitle={inputBoxTitle}
+                directoryDisplay={directoryDisplay}
                 isCompactHeight={isCompactHeight}
                 isNarrowWidth={isNarrowWidth}
                 feedbackMode={feedbackMode}
@@ -370,6 +332,56 @@ export function ChatLayout(props: ChatLayoutProps) {
       </box>
 
       <ChatSidebar {...sidebar} />
+
+      {/* FID-2026-0816-007 step 2: pickers render as centered dialog overlays
+          (dimmed backdrop + entry/exit animation) instead of inline stack. */}
+      {modelPickerOpen && (
+        <DialogOverlay onClose={onCloseModelPicker}>
+          {(requestClose) => (
+            <ModelPicker
+              models={modelPickerModels}
+              query={modelPickerQuery}
+              selectedIndex={modelPickerSelectedIndex}
+              onQueryChange={onModelPickerQueryChange}
+              onSelectIndex={onModelPickerSelectIndex}
+              onSelect={onModelPickerSelect}
+              onClose={requestClose}
+              terminalHeight={terminalHeight}
+            />
+          )}
+        </DialogOverlay>
+      )}
+      {providerPickerOpen && (
+        <DialogOverlay onClose={onCloseProviderPicker}>
+          {(requestClose) => (
+            <ProviderPicker
+              providers={providerPickerProviders}
+              selectedIndex={providerPickerSelectedIndex}
+              onSelectIndex={onProviderPickerSelectIndex}
+              onSelect={onProviderPickerSelect}
+              onClose={requestClose}
+              terminalHeight={terminalHeight}
+            />
+          )}
+        </DialogOverlay>
+      )}
+      {rewindPickerOpen && (
+        <DialogOverlay onClose={onCloseRewindPicker}>
+          {(requestClose) => (
+            <RewindPicker
+              turns={rewindPickerTurns}
+              selectedIndex={rewindPickerSelectedIndex}
+              stage={rewindPickerStage}
+              mode={rewindPickerMode}
+              onSelectIndex={onRewindPickerSelectIndex}
+              onSetStage={onRewindPickerSetStage}
+              onSetMode={onRewindPickerSetMode}
+              onConfirm={onRewindPickerConfirm}
+              onClose={requestClose}
+            />
+          )}
+        </DialogOverlay>
+      )}
     </box>
   )
 }

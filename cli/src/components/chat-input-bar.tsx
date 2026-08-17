@@ -62,6 +62,7 @@ interface ChatInputBarProps {
   separatorWidth: number
   shouldCenterInputVertically: boolean
   inputBoxTitle: string | undefined
+  directoryDisplay: string
   isCompactHeight: boolean
   isNarrowWidth: boolean
 
@@ -106,6 +107,7 @@ export const ChatInputBar = ({
   separatorWidth,
   shouldCenterInputVertically,
   inputBoxTitle,
+  directoryDisplay,
   isCompactHeight,
   isNarrowWidth,
   feedbackMode,
@@ -309,6 +311,13 @@ export const ChatInputBar = ({
   const effectivePlaceholder =
     inputMode === 'default' ? inputPlaceholder : modeConfig.placeholder
 
+  // FID-2026-0816-007 step 5: the cwd line is folded into input-bar chrome —
+  // normal mode surfaces it in the border title, compact mode as a dim line.
+  const cwdLabel = `cwd: ${directoryDisplay}`
+  const effectiveTitle = ` ${[cwdLabel, inputBoxTitle?.trim()]
+    .filter(Boolean)
+    .join('   ')} `
+
   if (askUserState) {
     return (
       <box
@@ -335,6 +344,16 @@ export const ChatInputBar = ({
     const compactMaxHeight = Math.floor(terminalHeight / 2)
     return (
       <>
+        {/* FID-2026-0816-007 step 5: compact mode has no border title, so the
+            cwd line is folded in as a single dim row above the input. */}
+        <text
+          fg={theme.muted}
+          wrapMode="none"
+          selectable={false}
+          style={{ paddingLeft: 1 }}
+        >
+          {cwdLabel}
+        </text>
         {/* FID-033d Phase D: slash commands now render as the CommandPalette
             overlay (native <select>) inline above the input. Mention (@)
             suggestions still use the inline SuggestionMenu. */}
@@ -422,7 +441,7 @@ export const ChatInputBar = ({
   return (
     <>
       <box
-        title={inputBoxTitle}
+        title={effectiveTitle}
         titleAlignment="center"
         style={{
           width: '100%',

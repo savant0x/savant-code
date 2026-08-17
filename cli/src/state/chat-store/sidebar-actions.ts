@@ -55,6 +55,15 @@ function sameCompactionStatus(
  */
 export const createSidebarActions = (set: SetState): ChatSidebarActions => ({
   // Sidebar data actions
+  /**
+   * FID-2026-0816-010 follow-up: manual sidebar fold. True collapses the
+   * sidebar to the icon rail at any width; persisted across session resets.
+   */
+  setSidebarCollapsed: (collapsed) =>
+    set((state) => {
+      state.sidebarCollapsed = collapsed
+    }),
+
   updateContextTokens: (used) =>
     set((state) => {
       // FID-2026-0815-008 (F-11): no-op on an equal value so the 2s heartbeat

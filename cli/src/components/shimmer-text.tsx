@@ -1,6 +1,7 @@
 import { TextAttributes } from '@opentui/core'
 import React, { useEffect, useMemo, useState } from 'react'
 
+import { useAnimationTimeline } from '../hooks/use-animation-timeline'
 import { useTheme } from '../hooks/use-theme'
 
 const clamp = (value: number, min: number, max: number): number =>
@@ -144,16 +145,43 @@ export const ShimmerText = ({
 }) => {
   const theme = useTheme()
   const [pulse, setPulse] = useState<number>(0)
+  const timeline = useAnimationTimeline({
+    loop: true,
+    duration: Number.POSITIVE_INFINITY,
+  })
   const chars = text.split('')
   const numChars = chars.length
 
   useEffect(() => {
-    const pulseInterval = setInterval(() => {
-      setPulse((prev) => (prev + 1) % numChars)
-    }, interval)
+    setPulse(0)
+    timeline.items.length = 0
 
-    return () => clearInterval(pulseInterval)
-  }, [interval, numChars])
+    if (numChars === 0) {
+      timeline.pause()
+      return
+    }
+
+    // One timeline cycle advances the shimmer phase 0 → numChars linearly, so
+    // `floor(phase) % numChars` steps by one character every `interval` ms
+    // without a JS timer.
+    timeline.add(
+      { phase: 0 },
+      {
+        phase: numChars,
+        duration: numChars * interval,
+        ease: 'linear',
+        loop: true,
+        onUpdate: (anim) => {
+          setPulse(Math.floor(anim.targets[0]?.phase ?? 0) % numChars)
+        },
+      },
+    )
+    timeline.restart()
+
+    return () => {
+      timeline.pause()
+    }
+  }, [timeline, interval, numChars])
 
   const generateColors = (length: number, colorPalette: string[]): string[] => {
     if (length === 0) return []

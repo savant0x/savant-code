@@ -259,6 +259,7 @@ export function useChatController(props: ChatProps): ChatControllerCore {
     hasSubscription: data.hasSubscription,
     modelPickerOpen: pickers.modelPickerOpen,
     providerPickerOpen: pickers.providerPickerOpen,
+    rewindPickerOpen: pickers.rewindPickerOpen,
   })
 
   const askUserState = useChatStore((state) => state.askUserState)

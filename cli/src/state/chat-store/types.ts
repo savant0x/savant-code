@@ -116,6 +116,13 @@ export type ChatStoreState = {
   // Sidebar data
   contextTokensUsed: number
   contextTokensMax: number
+  /**
+   * Manual sidebar fold (FID-2026-0816-010 follow-up): when true the sidebar
+   * collapses to the icon rail at ANY terminal width (Ctrl+B / edge handle),
+   * independent of the automatic <60-col narrow collapse. UI preference —
+   * deliberately NOT reset on session reset.
+   */
+  sidebarCollapsed: boolean
   /** FID-2026-0813-023: live compaction status for the read-only sidebar row. */
   compactionStatus: CompactionStatus | null
   /**
@@ -239,6 +246,11 @@ export type ChatStoreActions = {
   updateAgentStack: (stack: AgentStackEntry[]) => void
   updateSessionCost: (cost: number) => void
   resetSidebarData: () => void
+  /**
+   * FID-2026-0816-010 follow-up: manual sidebar fold — true collapses the
+   * sidebar to the icon rail at any width (Ctrl+B / edge handle).
+   */
+  setSidebarCollapsed: (collapsed: boolean) => void
   /** Set the current ECHO FSM phase (wired from transition_phase tool results). */
   setFsmPhase: (phase: string) => void
   /** Set the runtime activity indicator (FID-2026-0718-009). */
@@ -297,6 +309,7 @@ type AliasActionKeys =
 type SidebarActionKeys =
   | 'updateContextTokens'
   | 'updateContextTokensMax'
+  | 'setSidebarCollapsed'
   | 'setCompactionStatus'
   | 'recordCompactionRun'
   | 'clearCompactionEvents'

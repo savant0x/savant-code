@@ -46,6 +46,8 @@ const theme: ChatTheme = {
   link: '#3B82F6',
   // Directory
   directory: '#9CA3AF',
+  // Phase colors (FID-009 Loop 5)
+  phaseAdversarial: '#c084fc',
   // Image card
   imageCardBorder: '#3B82F6',
   // Diff colors (FID-033a)
@@ -120,7 +122,7 @@ describe('SegmentedControl - processSegments', () => {
       processed.map((p) => [p.id, p]),
     )
 
-    expect(map['active-HYBRID'].leftBorderColor).toBe(theme.foreground)
+    expect(map['active-HYBRID'].leftBorderColor).toBe(theme.primary)
     expect(map['HYBRID'].leftBorderColor).toBe(theme.border)
   })
 
@@ -136,7 +138,7 @@ describe('SegmentedControl - processSegments', () => {
     )
 
     expect(map.SCAFFOLD.isHovered).toBe(true)
-    expect(map.SCAFFOLD.leftBorderColor).toBe(theme.foreground)
+    expect(map.SCAFFOLD.leftBorderColor).toBe(theme.primary)
     expect(map.HYBRID.leftBorderColor).toBe(theme.border)
   })
 

@@ -68,7 +68,7 @@ export function getSheenColor(
   logoColor: string,
   shadowChars: Set<string>,
   accentColor: string = '#18faf9', // Neon cyan — updated from acid green
-  blockColor: string = '#020617', // Near-black — updated from white
+  blockColor: string = '#050508', // Near-black — canonical Savant background
   isReversing: boolean = false,
 ): string {
   // Block characters use the specified block color

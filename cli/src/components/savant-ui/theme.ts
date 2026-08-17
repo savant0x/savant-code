@@ -1,6 +1,19 @@
 import { useTheme } from '../../hooks/use-theme'
 
-/** Design tokens for the Savant-UI component library. */
+import type { ChatTheme } from '../../types/theme-system'
+
+/**
+ * Canonical design tokens for the Savant-UI component library.
+ *
+ * Structural tokens (spacing, borders) are theme-independent and live on the
+ * exported `tokens` constant. Color tokens resolve from the active `ChatTheme`
+ * via `useTokens()` — the theme system (`types/theme-system.ts` + `palette.ts`
+ * + the design-system adapters in `theme-config.ts`) is the single source of
+ * truth for color, so this module never hardcodes hex (Law 13; EHEL
+ * design-contract scanner).
+ */
+
+/** Theme-independent spacing scale (OpenTUI layout units). */
 export const tokens = {
   spacing: { xs: 1, sm: 2, md: 3, lg: 4, xl: 6 },
   borders: {
@@ -8,38 +21,101 @@ export const tokens = {
     rounded: 'rounded' as const,
     none: 'none' as const,
   },
-  colors: {
-    success: '#22c55e',
-    error: '#ef4444',
-    warning: '#f59e0b',
-    info: '#3b82f6',
-    muted: '#6b7280',
-    primary: '#18faf9',
-    surface: '#0f172a',
-  },
-  badges: {
-    open: { fg: '#18faf9' },
-    closed: { fg: '#22c55e' },
-    critical: { fg: '#ef4444' },
-    high: { fg: '#f59e0b' },
-    medium: { fg: '#3b82f6' },
-    low: { fg: '#6b7280' },
-  },
-  phase: {
-    idle: { fg: '#6b7280', label: 'IDLE' },
-    red: { fg: '#ef4444', label: 'RED' },
-    green: { fg: '#22c55e', label: 'GREEN' },
-    audit: { fg: '#eab308', label: 'AUDIT' },
-    self_correct: { fg: '#f97316', label: 'FIX' },
-    complete: { fg: '#06b6d4', label: 'DONE' },
-  },
 } as const
 
-/** Hook that returns theme-aware tokens. */
-export function useTokens() {
+/** Semantic color roles resolvable from a ChatTheme. */
+export type SemanticColorToken =
+  | 'primary'
+  | 'secondary'
+  | 'success'
+  | 'error'
+  | 'warning'
+  | 'info'
+  | 'link'
+  | 'foreground'
+  | 'background'
+  | 'muted'
+  | 'border'
+  | 'surface'
+  | 'surfaceHover'
+
+export type SemanticColors = Record<SemanticColorToken, string>
+
+/** Resolve the canonical semantic color roles from the active theme. */
+export function resolveSemanticColors(theme: ChatTheme): SemanticColors {
+  return {
+    primary: theme.primary,
+    secondary: theme.secondary,
+    success: theme.success,
+    error: theme.error,
+    warning: theme.warning,
+    info: theme.info,
+    link: theme.link,
+    foreground: theme.foreground,
+    background: theme.background,
+    muted: theme.muted,
+    border: theme.border,
+    surface: theme.surface,
+    surfaceHover: theme.surfaceHover,
+  }
+}
+
+export type BadgeSeverity =
+  'open' | 'closed' | 'critical' | 'high' | 'medium' | 'low'
+
+/** Severity badges resolved from semantic theme colors (no hardcoded hex). */
+export function resolveBadgeColors(
+  theme: ChatTheme,
+): Record<BadgeSeverity, { fg: string }> {
+  return {
+    open: { fg: theme.primary },
+    closed: { fg: theme.success },
+    critical: { fg: theme.error },
+    high: { fg: theme.warning },
+    medium: { fg: theme.info },
+    low: { fg: theme.muted },
+  }
+}
+
+export type PhaseTokenKey =
+  'idle' | 'red' | 'green' | 'audit' | 'self_correct' | 'complete'
+
+/**
+ * FSM phase colors, aligned with the canonical mapping in
+ * `savant-ui/echo/phase-info.ts` (idle→muted, red→error, green→success,
+ * audit/self_correct→warning, complete→primary).
+ */
+export function resolvePhaseTokens(
+  theme: ChatTheme,
+): Record<PhaseTokenKey, { fg: string; label: string }> {
+  return {
+    idle: { fg: theme.muted, label: 'IDLE' },
+    red: { fg: theme.error, label: 'RED' },
+    green: { fg: theme.success, label: 'GREEN' },
+    audit: { fg: theme.warning, label: 'AUDIT' },
+    self_correct: { fg: theme.warning, label: 'FIX' },
+    complete: { fg: theme.primary, label: 'DONE' },
+  }
+}
+
+export interface SavantTokens {
+  spacing: typeof tokens.spacing
+  borders: typeof tokens.borders
+  colors: SemanticColors
+  badges: ReturnType<typeof resolveBadgeColors>
+  phase: ReturnType<typeof resolvePhaseTokens>
+  theme: ChatTheme
+}
+
+/** Hook that returns theme-aware tokens for the active theme. */
+export function useTokens(): SavantTokens {
   const theme = useTheme()
   return {
-    ...tokens,
+    spacing: tokens.spacing,
+    borders: tokens.borders,
+    colors: resolveSemanticColors(theme),
+    badges: resolveBadgeColors(theme),
+    phase: resolvePhaseTokens(theme),
     theme,
   }
 }

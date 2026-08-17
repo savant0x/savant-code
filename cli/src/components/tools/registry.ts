@@ -19,6 +19,7 @@ import { SkillComponent } from './skill'
 import { StrReplaceComponent } from './str-replace'
 import { SuggestFollowupsComponent } from './suggest-followups'
 import { TaskCompleteComponent } from './task-completed'
+import { TransitionPhaseComponent } from './transition-phase'
 import { WebSearchComponent } from './web-search'
 import { WriteFileComponent } from './write-file'
 import { WriteTodosComponent } from './write-todos'
@@ -48,6 +49,12 @@ const toolComponentRegistry = new Map<ToolName, ToolComponent>([
   [GravityIndexComponent.toolName, GravityIndexComponent],
   [ListDirectoryComponent.toolName, ListDirectoryComponent],
   [RunTerminalCommandComponent.toolName, RunTerminalCommandComponent],
+  // `run_readonly_command` shares the exact input/output schema with
+  // `run_terminal_command` (command + terminalCommandOutputSchema), so it
+  // reuses the same TerminalCommandDisplay renderer (Law 13 — one renderer,
+  // two tools). Without this it fell through to the generic collapsed
+  // ToolCallItem fallback.
+  ['run_readonly_command', RunTerminalCommandComponent],
   [ReadDocsComponent.toolName, ReadDocsComponent],
   [ReadFilesComponent.toolName, ReadFilesComponent],
   [ReadSubtreeComponent.toolName, ReadSubtreeComponent],
@@ -57,6 +64,7 @@ const toolComponentRegistry = new Map<ToolName, ToolComponent>([
   [WriteTodosComponent.toolName, WriteTodosComponent],
   [StrReplaceComponent.toolName, StrReplaceComponent],
   [SuggestFollowupsComponent.toolName, SuggestFollowupsComponent],
+  [TransitionPhaseComponent.toolName, TransitionPhaseComponent],
   [WriteFileComponent.toolName, WriteFileComponent],
   [TaskCompleteComponent.toolName, TaskCompleteComponent],
   // Propose tools reuse the same rendering as their base counterparts

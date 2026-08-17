@@ -13,6 +13,7 @@ import {
   tryTransformAgentToolCall,
 } from './tool-executor'
 import { isAgentGrounded } from '../echo/grounding'
+import { NATIVE_TOOL_CALL_STEERING_MESSAGE } from '../run-agent-step/constants'
 import { processStreamWithTools } from '../tool-stream-parser'
 import { withSystemTags } from '../util/messages'
 import { buildFinalMessageHistory } from './stream-parser/finalize'
@@ -31,11 +32,21 @@ import type {
   ToolMessage,
 } from '@savant-code/common/types/messages/savant-code-message'
 import type { PrintModeEvent } from '@savant-code/common/types/print-mode'
+import type { WriteToolName } from '@savant-code/common/types/provenance'
 import type { Subgoal } from '@savant-code/common/types/session-state'
 import type {
   CustomToolDefinitions,
   ProjectFileContext,
 } from '@savant-code/common/util/file'
+
+/** FID-2026-0816-012: native tools whose arguments are commonly large enough to
+ *  truncate mid-stream on flash-class models. Recovery steers the model to
+ *  split these instead of re-emitting the same oversized payload. The write
+ *  tools reuse the canonical `WriteToolName` union (Law 13 — one source of
+ *  truth); `read_files` joins it for multi-path reads. */
+const NATIVE_TOOL_CALL_STEER_SPLIT_TOOLS = new Set<
+  WriteToolName | 'read_files'
+>(['write_file', 'str_replace', 'apply_patch', 'read_files'])
 
 export async function processStream(
   params: {
@@ -81,6 +92,7 @@ export async function processStream(
     ancestorRunIds,
     fileContext,
     fullResponse,
+    logger,
     onCostCalculated,
     onResponseChunk,
     runId,
@@ -178,6 +190,7 @@ export async function processStream(
   const assistantMessages: Message[] = []
   let hadToolCallError = false
   let hasNativeIncompleteToolCall = false
+  let lastIncompleteToolName: string | undefined
   const errorMessages: Message[] = []
   const { promise: streamDonePromise, resolve: resolveStreamDonePromise } =
     Promise.withResolvers<void>()
@@ -359,11 +372,40 @@ export async function processStream(
         hadToolCallError = true
         if ('errorClass' in chunk && chunk.errorClass === 'native-incomplete') {
           hasNativeIncompleteToolCall = true
+          lastIncompleteToolName = chunk.toolName
+          // FID-2026-0816-012 step 4: an incomplete native call for a tool
+          // unknown to the runtime is provider-tool-set drift, not model
+          // truncation — surface it so it is observable instead of being
+          // misread as a payload-size problem.
+          if (
+            chunk.toolName !== undefined &&
+            !toolNames.includes(chunk.toolName as ToolName)
+          ) {
+            logger.warn(
+              {
+                agentType: agentTemplate.id,
+                runId,
+                toolName: chunk.toolName,
+              },
+              'Native tool call flagged incomplete for a tool unknown to the runtime (possible provider tool-set drift)',
+            )
+          }
         }
+        // FID-2026-0816-012: steer large-payload tool retries toward splitting
+        // the work instead of re-emitting the same oversized arguments object.
+        const steering =
+          'errorClass' in chunk &&
+          chunk.errorClass === 'native-incomplete' &&
+          chunk.toolName !== undefined &&
+          NATIVE_TOOL_CALL_STEER_SPLIT_TOOLS.has(
+            chunk.toolName as WriteToolName | 'read_files',
+          )
+            ? NATIVE_TOOL_CALL_STEERING_MESSAGE
+            : ''
         errorMessages.push(
           userMessage({
             content: withSystemTags(
-              `Error during tool call: ${chunk.message}. Please check the tool name and arguments and try again.`,
+              `Error during tool call: ${chunk.message}. Please check the tool name and arguments and try again.${steering}`,
             ),
             tags: ['TOOL_CALL_ERROR'],
           }),
@@ -436,6 +478,7 @@ export async function processStream(
     fullResponseChunks,
     hadToolCallError,
     hasNativeIncompleteToolCall,
+    lastIncompleteToolName,
     messageId,
     toolCalls,
     toolResults,

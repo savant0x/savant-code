@@ -15,6 +15,9 @@ export const CHAT_ROOT_STYLE = {
   flexDirection: 'row', // Horizontal split: chat + sidebar
   gap: 0,
   flexGrow: 1,
+  // FID-2026-0816-007 step 2: the chat root is the positioning context for
+  // absolutely-positioned overlays (picker dialog chrome).
+  position: 'relative',
 } as const
 
 /** Shared base surface for the chat and sidebar; nested wrappers intentionally inherit it. */

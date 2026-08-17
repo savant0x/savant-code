@@ -4,7 +4,10 @@ import { userMessage } from '@savant-code/common/util/messages'
 import { getOrCreateEnforcement } from '../echo/enforcement'
 import { appendGroundingRefresh } from '../echo/grounding'
 import { runProgrammaticStep } from '../run-programmatic-step'
-import { NATIVE_TOOL_CALL_RECOVERY_EXHAUSTED_MESSAGE } from './constants'
+import {
+  buildNativeToolCallExhaustedMessage,
+  NATIVE_TOOL_CALL_RECOVERY_MAX_STRIKES,
+} from './constants'
 import { prepareStepContext } from './context-tokens'
 import { runAgentStep } from './step'
 import { runThinkerConvergenceGate } from '../tools/thinker-convergence-gate'
@@ -277,6 +280,7 @@ export async function runLoopIteration(params: {
     agentState: newAgentState,
     shouldEndTurn: llmShouldEndTurn,
     hasNativeIncompleteToolCall,
+    lastIncompleteToolName,
     messageId,
     nResponses: generatedResponses,
   } = await runAgentStep({
@@ -307,9 +311,13 @@ export async function runLoopIteration(params: {
   let stepErrorMessage: string | undefined
   if (hasNativeIncompleteToolCall) {
     consecutiveNativeIncompleteSteps += 1
-    if (consecutiveNativeIncompleteSteps >= 2) {
+    if (
+      consecutiveNativeIncompleteSteps >= NATIVE_TOOL_CALL_RECOVERY_MAX_STRIKES
+    ) {
       stepStatus = 'failed'
-      stepErrorMessage = NATIVE_TOOL_CALL_RECOVERY_EXHAUSTED_MESSAGE
+      stepErrorMessage = buildNativeToolCallExhaustedMessage(
+        lastIncompleteToolName,
+      )
     }
     shouldEndTurn = false
   } else {

@@ -1,5 +1,7 @@
 import { TextAttributes } from '@opentui/core'
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useState } from 'react'
+
+import { useAnimationTimeline } from '../hooks/use-animation-timeline'
 
 interface InputCursorProps {
   visible: boolean
@@ -19,43 +21,44 @@ export const InputCursor: React.FC<InputCursorProps> = ({
   char = '▍',
   color,
   blinkDelay = 500,
-  blinkInterval = 500, // Faster blinking
+  blinkInterval = 500,
   bold = true,
 }) => {
   // false = normal/visible, true = invisible
   const [isInvisible, setIsInvisible] = useState(false)
-  const blinkIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const timeline = useAnimationTimeline({
+    loop: true,
+    duration: Number.POSITIVE_INFINITY,
+  })
 
-  // Handle blinking (toggle visible/invisible) when idle
   useEffect(() => {
-    // Clear any existing interval
-    if (blinkIntervalRef.current) {
-      clearInterval(blinkIntervalRef.current)
-      blinkIntervalRef.current = null
-    }
-
-    // Reset cursor to visible
+    // Reset cursor to visible and clear any prior blink animation.
     setIsInvisible(false)
+    timeline.items.length = 0
 
-    // Only blink if shouldBlink is enabled, focused, and visible
-    if (!shouldBlink || !focused || !visible) return
-
-    // Set up idle detection
-    const idleTimer = setTimeout(() => {
-      // Start blinking interval (toggle between visible and invisible)
-      blinkIntervalRef.current = setInterval(() => {
-        setIsInvisible((prev) => !prev)
-      }, blinkInterval)
-    }, blinkDelay)
+    if (shouldBlink && focused && visible) {
+      // Idle delay = the animation's startTime; onLoop toggles visibility once
+      // per cycle after that (the original idle-delay + blink-toggle behavior).
+      timeline.add(
+        { step: 0 },
+        {
+          step: 1,
+          duration: blinkInterval,
+          ease: 'linear',
+          loop: true,
+          onLoop: () => setIsInvisible((prev) => !prev),
+        },
+        blinkDelay,
+      )
+      timeline.restart()
+    } else {
+      timeline.pause()
+    }
 
     return () => {
-      clearTimeout(idleTimer)
-      if (blinkIntervalRef.current) {
-        clearInterval(blinkIntervalRef.current)
-        blinkIntervalRef.current = null
-      }
+      timeline.pause()
     }
-  }, [visible, focused, shouldBlink, blinkDelay, blinkInterval])
+  }, [timeline, visible, focused, shouldBlink, blinkDelay, blinkInterval])
 
   if (!visible || !focused) {
     return null

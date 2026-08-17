@@ -147,8 +147,11 @@ export const ToolBranch = memo(
       return null
     }
 
-    // Skip copy button for run_readonly_command results
-    const shouldShowCopyButton = toolBlock.toolName !== 'run_readonly_command'
+    // Skip copy button for notices: run_readonly_command results and the
+    // transition_phase bar are informational, not copy-worthy (FID-009).
+    const shouldShowCopyButton =
+      toolBlock.toolName !== 'run_readonly_command' &&
+      toolBlock.toolName !== 'transition_phase'
 
     if (shouldShowCopyButton) {
       return (

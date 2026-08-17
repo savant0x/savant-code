@@ -30,7 +30,7 @@ export const LoadPreviousButton = memo(
           onMouseOut={() => setIsHovered(false)}
           border
           borderStyle="single"
-          borderColor={isHovered ? theme.foreground : theme.border}
+          borderColor={isHovered ? theme.primary : theme.border}
           customBorderChars={BORDER_CHARS}
           style={{
             paddingLeft: 2,

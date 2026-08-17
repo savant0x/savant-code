@@ -1,7 +1,11 @@
 import { describe, test, expect, afterEach } from 'bun:test'
 
 import { createTestCliEnv } from '../../testing/env'
-import { getCliEnv, isDirectProviderMode } from '../../utils/env'
+import {
+  getCliEnv,
+  isDirectProviderMode,
+  shouldSuppressExplicitWidthQuery,
+} from '../../utils/env'
 
 describe('cli/utils/env', () => {
   describe('getCliEnv', () => {
@@ -164,6 +168,23 @@ describe('cli/utils/env', () => {
       })
       expect(env.HOME).toBe('/custom/home')
       expect(env.NODE_ENV).toBe('production')
+    })
+  })
+
+  describe('shouldSuppressExplicitWidthQuery', () => {
+    test('returns false on non-win32 platforms', () => {
+      expect(shouldSuppressExplicitWidthQuery('linux', {})).toBe(false)
+      expect(shouldSuppressExplicitWidthQuery('darwin', {})).toBe(false)
+    })
+
+    test('returns false on win32 when WT_SESSION is set (conpty-backed terminal)', () => {
+      expect(
+        shouldSuppressExplicitWidthQuery('win32', { WT_SESSION: 'abc-123' }),
+      ).toBe(false)
+    })
+
+    test('returns true on win32 when WT_SESSION is unset (legacy Windows Console)', () => {
+      expect(shouldSuppressExplicitWidthQuery('win32', {})).toBe(true)
     })
   })
 

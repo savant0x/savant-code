@@ -244,7 +244,9 @@ export const AgentModeToggle = ({
             paddingLeft: 1,
             paddingRight: 1,
             borderStyle: 'single',
-            borderColor: isCollapsedHovered ? theme.foreground : theme.border,
+            // Hover stroke is the brand cyan, not off-white (operator
+            // feedback 2026-08-16: mode chip showed a white stroke on hover).
+            borderColor: isCollapsedHovered ? theme.primary : theme.border,
           }}
           customBorderChars={BORDER_CHARS}
           onClick={() => {

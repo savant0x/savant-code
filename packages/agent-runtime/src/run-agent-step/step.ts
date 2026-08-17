@@ -90,6 +90,7 @@ export const runAgentStep = async (
       fullResponse: STEP_WARNING_MESSAGE,
       shouldEndTurn: true,
       hasNativeIncompleteToolCall: false,
+      lastIncompleteToolName: undefined,
       messageId: null,
     }
   }
@@ -259,6 +260,7 @@ export const runAgentStep = async (
     fullResponse: fullResponseAfterStream,
     hadToolCallError,
     hasNativeIncompleteToolCall,
+    lastIncompleteToolName,
     messageId,
     toolCalls,
     toolResults: newToolResults,
@@ -386,6 +388,7 @@ export const runAgentStep = async (
     fullResponse,
     shouldEndTurn,
     hasNativeIncompleteToolCall,
+    lastIncompleteToolName,
     messageId,
     nResponses: undefined,
   }

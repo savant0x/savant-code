@@ -4,18 +4,18 @@
  */
 export const EXPORT_CSS_PART_1 = `
   :root {
-    /* Neon Slate palette (theme-system.ts dark) */
+    /* Savant near-black/cyan palette (theme-system.ts dark) — no navy */
     --bg: #050508;
     --surface: #0a0a0b;
-    --surface-2: #0f172a;
-    --surface-3: #1a1a24;
-    --border: #1e293b;
+    --surface-2: #0b0b11;
+    --surface-3: #1a1a22;
+    --border: #20202a;
     --border-soft: #181818;
-    --border-user: #26324a;
-    --fg: #e2e8f0;
+    --border-user: #26262e;
+    --fg: #e4e4e8;
     --fg-2: #a1a1aa;
-    --muted: #64748b;
-    --muted-2: #8a94a8;
+    --muted: #8f8f99;
+    --muted-2: #8f8f99;
     --brand: #18faf9;
     --brand-dim: #18faf933;
     --success: #39ff14;
@@ -28,7 +28,7 @@ export const EXPORT_CSS_PART_1 = `
     --link: #7ad4d6;
     --tool-badge: #18faf9;
     --tool-badge-fg: #06282a;
-    --reasoning: #8a94a8;
+    --reasoning: #8f8f99;
   }
 
   * { box-sizing: border-box; }
@@ -193,7 +193,7 @@ export const EXPORT_CSS_PART_1 = `
   .row-user {
     padding: 12px 16px;
     border-color: var(--border-user);
-    background: #0d0c16;
+    background: #0c0c12;
   }
 
   .row-error {
@@ -255,7 +255,7 @@ export const EXPORT_CSS_PART_1 = `
   .assistant-prose ul, .assistant-prose ol { margin: 0 0 12px; padding-left: 22px; }
   .assistant-prose li { margin-bottom: 4px; }
   .assistant-prose code {
-    background: #15151f;
+    background: #14141c;
     color: var(--code);
     padding: 1px 5px;
     font-size: 0.9em;

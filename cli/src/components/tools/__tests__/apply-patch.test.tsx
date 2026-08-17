@@ -71,8 +71,10 @@ describe('ApplyPatchComponent', () => {
     const markup = renderToStaticMarkup(result?.content as React.ReactElement)
     expect(markup).toContain('Edit')
     expect(markup).toContain('src/existing.ts')
-    expect(markup).toContain('-oldLine')
-    expect(markup).toContain('+newLine')
+    // FID-2026-0816-009: the +/- marker moved into the sign gutter column, so
+    // the content column carries the line text without its prefix.
+    expect(markup).toContain('oldLine')
+    expect(markup).toContain('newLine')
   })
 
   test('exposes the [-N/+M] footer counter from the diff counts (FID-2026-0804-010)', () => {

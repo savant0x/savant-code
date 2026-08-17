@@ -63,7 +63,6 @@ export type OnSubmitPrompt = (
 ) => Promise<CommandResult>
 
 export type ChatSidebarProps = {
-  showSidebar: boolean
   contextTokensUsed: number
   contextTokensMax: number
   sessionCost: number

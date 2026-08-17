@@ -3,6 +3,7 @@ import { TEST_USER_ID } from '@savant-code/common/old-constants'
 import {
   createTestAgentRuntimeParams,
   emptyMcpServers,
+  testLogger,
 } from '@savant-code/common/testing/fixtures/agent-runtime'
 import { clearMockedModules } from '@savant-code/common/testing/mock-modules'
 import {
@@ -157,7 +158,7 @@ describe('loopAgentSteps - runAgentStep vs runProgrammaticStep behavior', () => 
   })
 
   describe('native tool-call recovery (FID-2026-0801-010)', () => {
-    it('retries once, then fails visibly without a third model call', async () => {
+    it('retries twice, then fails visibly without a fourth model call', async () => {
       const llmOnlyTemplate = {
         ...mockTemplate,
         handleSteps: undefined,
@@ -188,17 +189,20 @@ describe('loopAgentSteps - runAgentStep vs runProgrammaticStep behavior', () => 
         ),
       })
 
-      expect(llmCallCount).toBe(2)
+      expect(llmCallCount).toBe(3)
       expect(result.output.type).toBe('error')
       if (result.output.type === 'error') {
         expect(result.output.message).toContain(
-          'Native tool-call recovery failed twice consecutively',
+          'Native tool-call recovery failed repeatedly',
         )
+        expect(result.output.message).toContain('(tool: sequentialthinking)')
+        expect(result.output.message).toContain('Re-spawn with the work split')
       }
       expect(finishStatus).toBe('failed')
       expect(finishError).toContain(
-        'Native tool-call recovery failed twice consecutively',
+        'Native tool-call recovery failed repeatedly',
       )
+      expect(finishError).toContain('(tool: sequentialthinking)')
 
       const history = result.agentState.messageHistory
       expect(
@@ -279,6 +283,96 @@ describe('loopAgentSteps - runAgentStep vs runProgrammaticStep behavior', () => 
             message.tags?.includes('TOOL_CALL_ERROR'),
         ),
       ).toBe(true)
+
+      // FID-2026-0816-012: non-payload tools keep the generic message — no
+      // split-steering appended.
+      const errorMessage = result.agentState.messageHistory.find(
+        (message) =>
+          message.role === 'user' && message.tags?.includes('TOOL_CALL_ERROR'),
+      )
+      const errorContent = errorMessage
+        ? typeof errorMessage.content === 'string'
+          ? errorMessage.content
+          : JSON.stringify(errorMessage.content)
+        : ''
+      expect(errorContent).not.toContain('split the work into multiple')
+    })
+
+    it('steers large-payload tool retries toward splitting the work', async () => {
+      const llmOnlyTemplate = {
+        ...mockTemplate,
+        handleSteps: undefined,
+      }
+
+      loopAgentStepsBaseParams.promptAiSdkStream = async function* () {
+        llmCallCount++
+        if (llmCallCount === 1) {
+          yield {
+            type: 'error' as const,
+            message: 'Incomplete arguments for tool write_file',
+            errorClass: 'native-incomplete' as const,
+            toolName: 'write_file',
+          }
+        } else {
+          yield createToolCallChunk('end_turn', {})
+        }
+        return promptSuccess(`steer-${llmCallCount}`)
+      }
+
+      const result = await loopAgentSteps({
+        ...loopAgentStepsBaseParams,
+        agentTemplate: llmOnlyTemplate,
+        localAgentTemplates: { 'test-agent': llmOnlyTemplate },
+      })
+
+      expect(llmCallCount).toBe(2)
+      expect(result.output.type).not.toBe('error')
+      const errorMessage = result.agentState.messageHistory.find(
+        (message) =>
+          message.role === 'user' && message.tags?.includes('TOOL_CALL_ERROR'),
+      )
+      const errorContent = errorMessage
+        ? typeof errorMessage.content === 'string'
+          ? errorMessage.content
+          : JSON.stringify(errorMessage.content)
+        : ''
+      expect(errorContent).toContain(
+        'split the work into multiple smaller tool calls',
+      )
+    })
+
+    it('warns on an incomplete call for an unknown tool and names it on exhaustion', async () => {
+      const warnSpy = spyOn(testLogger, 'warn')
+      const llmOnlyTemplate = {
+        ...mockTemplate,
+        handleSteps: undefined,
+      }
+
+      loopAgentStepsBaseParams.promptAiSdkStream = async function* () {
+        llmCallCount++
+        yield {
+          type: 'error' as const,
+          message: 'Incomplete arguments for tool not_a_real_tool',
+          errorClass: 'native-incomplete' as const,
+          toolName: 'not_a_real_tool',
+        }
+        return promptSuccess(`drift-${llmCallCount}`)
+      }
+
+      const result = await loopAgentSteps({
+        ...loopAgentStepsBaseParams,
+        agentTemplate: llmOnlyTemplate,
+        localAgentTemplates: { 'test-agent': llmOnlyTemplate },
+      })
+
+      expect(llmCallCount).toBe(3)
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ toolName: 'not_a_real_tool' }),
+        expect.stringContaining('unknown to the runtime'),
+      )
+      if (result.output.type === 'error') {
+        expect(result.output.message).toContain('(tool: not_a_real_tool)')
+      }
     })
 
     it('resets the native-incomplete streak after an unrelated tool error', async () => {
@@ -315,7 +409,10 @@ describe('loopAgentSteps - runAgentStep vs runProgrammaticStep behavior', () => 
         }),
       })
 
-      expect(llmCallCount).toBe(4)
+      // FID-2026-0816-012: with the 3-strike cap, the reset streak needs 3
+      // consecutive incompletes (calls 3-5) after the unrelated error resets
+      // call 1's streak.
+      expect(llmCallCount).toBe(5)
       expect(result.output.type).toBe('error')
       expect(finishStatus).toBe('failed')
     })

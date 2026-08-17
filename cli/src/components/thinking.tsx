@@ -4,6 +4,7 @@ import React, { memo, type ReactNode } from 'react'
 import { Button } from './button'
 import { useTerminalDimensions } from '../hooks/use-terminal-dimensions'
 import { useTheme } from '../hooks/use-theme'
+import { useTypewriter } from '../hooks/use-typewriter'
 import { getLastNVisualLines } from '../utils/text-layout'
 import { Panel } from './savant-ui/primitives/panel'
 
@@ -30,6 +31,9 @@ export const Thinking = memo(
   }: ThinkingProps): ReactNode => {
     const theme = useTheme()
     const { contentMaxWidth } = useTerminalDimensions()
+    // Reveal the streamed reasoning progressively (chunked commits) while
+    // thinking is in flight; completed content is shown in full immediately.
+    const displayedContent = useTypewriter(content, !isThinkingComplete)
 
     // Special case: single **bold** string under 100 chars gets compact rendering
     const singleBoldMatch =
@@ -40,7 +44,7 @@ export const Thinking = memo(
 
     const width = Math.max(10, availableWidth ?? contentMaxWidth)
     // Normalize content to single line for consistent preview (but preserve in expanded mode)
-    const normalizedContent = content.replace(/\n+/g, ' ').trim()
+    const normalizedContent = displayedContent.replace(/\n+/g, ' ').trim()
     // Account for "..." prefix (3 chars) when calculating line widths
     const effectiveWidth = width - 3
     const { lines, hasMore } = getLastNVisualLines(
@@ -49,7 +53,7 @@ export const Thinking = memo(
       PREVIEW_LINE_COUNT,
     )
     // In expanded mode, preserve original line breaks for proper markdown rendering
-    const expandedContent = content.replace(/\n\n+/g, '\n\n').trim()
+    const expandedContent = displayedContent.replace(/\n\n+/g, '\n\n').trim()
 
     const showFull = thinkingCollapseState === 'expanded'
     const showPreview = thinkingCollapseState === 'preview' && lines.length > 0

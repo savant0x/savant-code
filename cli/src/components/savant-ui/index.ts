@@ -47,7 +47,11 @@ export { FidCard } from './echo/fid-card'
 export { FidList } from './echo/fid-list'
 export { AgentStack } from './echo/agent-stack'
 export { TokenMeter } from './echo/token-meter'
-export { TrustMatrix, reduceTrustMatrixEvents } from './echo/trust-matrix'
+export {
+  TrustMatrix,
+  reduceTrustMatrixEvents,
+  summarizeTrustRows,
+} from './echo/trust-matrix'
 export { LearnOverlay, reduceLearnState } from './teacher/learn-overlay'
 
 // Types
@@ -75,6 +79,7 @@ export type {
   TrustMatrixProps,
   TrustMatrixRow,
   TrustMatrixState,
+  TrustMatrixSummary,
   TrustMatrixTone,
 } from './echo/trust-matrix'
 export type {

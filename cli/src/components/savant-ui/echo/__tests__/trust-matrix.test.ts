@@ -7,6 +7,7 @@ import {
   classifyTone,
   reduceTrustMatrixEvents,
   statusLabel,
+  summarizeTrustRows,
 } from '../trust-matrix'
 
 import type { PrintModeProvenanceReceipt } from '@savant-code/common/types/print-mode'
@@ -117,8 +118,8 @@ describe('Trust Matrix fidelity (FID-2026-0813-009)', () => {
 })
 
 describe('Trust Matrix terminal status semantics (FID-2026-0814-005)', () => {
-  test('statusLabel maps pending to awaiting audit and no_verdict to the terminal label', () => {
-    expect(statusLabel('pending')).toBe('awaiting audit')
+  test('statusLabel maps pending to signed and no_verdict to the terminal label', () => {
+    expect(statusLabel('pending')).toBe('signed')
     expect(statusLabel('no_verdict')).toBe('no independent verdict')
     expect(statusLabel('complete')).toBe('complete')
     expect(statusLabel('superseded')).toBe('superseded')
@@ -166,7 +167,90 @@ describe('Trust Matrix terminal status semantics (FID-2026-0814-005)', () => {
     ])
     expect(state.rows).toHaveLength(1)
     expect(state.rows[0]?.status).toBe('pending')
-    expect(statusLabel(state.rows[0]!.status)).toBe('awaiting audit')
+    expect(statusLabel(state.rows[0]!.status)).toBe('signed')
+  })
+})
+
+describe('Trust Matrix reactive summary (operator feedback 2026-08-16)', () => {
+  test('pending rows are active; terminal rows collapse into a resolved count', () => {
+    const state = reduceTrustMatrixEvents([
+      event({ seq: 1, phase: 'write', status: 'pending', receipt: receipt(1) }),
+      event({
+        seq: 2,
+        phase: 'write',
+        status: 'complete',
+        receipt: receipt(2),
+      }),
+      event({
+        seq: 3,
+        phase: 'audit',
+        status: 'no_verdict',
+        receipt: receipt(3),
+      }),
+    ])
+    const summary = summarizeTrustRows(state.rows)
+    expect(summary.activeRows).toHaveLength(1)
+    expect(summary.activeRows[0]?.status).toBe('pending')
+    // no_verdict is tracked separately — it is NOT a verified "resolved".
+    expect(summary.resolvedCount).toBe(1)
+    expect(summary.noVerdictCount).toBe(1)
+    expect(summary.hasPending).toBe(true)
+    expect(summary.tone).toBe('amber')
+  })
+
+  test('all-resolved rows flip the tone to green and clear the live list', () => {
+    const state = reduceTrustMatrixEvents([
+      event({
+        seq: 1,
+        phase: 'write',
+        status: 'complete',
+        receipt: receipt(1),
+      }),
+      event({
+        seq: 2,
+        phase: 'write',
+        status: 'superseded',
+        receipt: receipt(2),
+      }),
+    ])
+    const summary = summarizeTrustRows(state.rows)
+    expect(summary.activeRows).toHaveLength(0)
+    expect(summary.resolvedCount).toBe(2)
+    expect(summary.noVerdictCount).toBe(0)
+    expect(summary.hasPending).toBe(false)
+    expect(summary.tone).toBe('green')
+  })
+
+  test('an empty row set is neutral (no signal)', () => {
+    const summary = summarizeTrustRows([])
+    expect(summary.activeRows).toHaveLength(0)
+    expect(summary.resolvedCount).toBe(0)
+    expect(summary.noVerdictCount).toBe(0)
+    expect(summary.hasPending).toBe(false)
+    expect(summary.tone).toBe('neutral')
+  })
+
+  test('all no_verdict rows stay neutral — a closed-without-verdict session is not verified', () => {
+    const state = reduceTrustMatrixEvents([
+      event({
+        seq: 1,
+        phase: 'audit',
+        status: 'no_verdict',
+        receipt: receipt(1),
+      }),
+      event({
+        seq: 2,
+        phase: 'audit',
+        status: 'no_verdict',
+        receipt: receipt(2),
+      }),
+    ])
+    const summary = summarizeTrustRows(state.rows)
+    expect(summary.activeRows).toHaveLength(0)
+    expect(summary.resolvedCount).toBe(0)
+    expect(summary.noVerdictCount).toBe(2)
+    expect(summary.hasPending).toBe(false)
+    expect(summary.tone).toBe('neutral')
   })
 })
 

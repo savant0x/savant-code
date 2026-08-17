@@ -105,6 +105,10 @@ export type RunAgentStepResult = {
   fullResponse: string
   shouldEndTurn: boolean
   hasNativeIncompleteToolCall: boolean
+  /** FID-2026-0816-012: name of the tool whose native call was last flagged
+   *  `native-incomplete`, so the exhausted-failure message can name it and
+   *  the parent can re-spawn with a split-task prompt. */
+  lastIncompleteToolName?: string
   messageId: string | null
   nResponses?: string[]
 }

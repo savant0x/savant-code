@@ -197,8 +197,10 @@ export const processSegments = (
     // Emphasis
     const isBold = !!(seg.isBold || isHovered || (isSelected && isHighlighted))
 
-    // Colors
-    const frameColor = isHighlighted ? theme.foreground : theme.border
+    // Colors — the highlight/hover frame is the brand cyan, not off-white
+    // (operator feedback 2026-08-16: mode chips next to the input showed a
+    // white stroke on hover).
+    const frameColor = isHighlighted ? theme.primary : theme.border
     const textMuted = isDisabled || (isSelected && !isHighlighted)
     const textColor = textMuted ? theme.muted : theme.foreground
 

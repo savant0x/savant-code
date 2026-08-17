@@ -126,6 +126,15 @@ export interface ChatTheme {
   modePlanText: string
 
   // ============================================================================
+  // PHASE COLORS (ECHO Perfection Loop)
+  // Distinct identity for the ADVERSARIAL phase so it no longer shares RED's
+  // `error` color in the transition bar / sidebar (FID-2026-0816-009 Loop 5).
+  // ============================================================================
+
+  /** ADVERSARIAL phase color — violet, distinct from RED/GREEN/AUDIT/COMPLETE */
+  phaseAdversarial: string
+
+  // ============================================================================
   // IMAGE CARD
   // ============================================================================
 

@@ -22,11 +22,18 @@ interface TerminalCommandDisplayProps {
   timeoutSeconds?: number
   /** Optional width override for wrapping calculations */
   availableWidth?: number
+  /** Exit code of the command: 0 = success, non-zero = failure, null = signal/timeout, undefined = no result yet */
+  exitCode?: number | null
 }
 
 /**
  * Shared component for displaying terminal command with output.
  * Used in both the ghost message (pending bash) and message history.
+ *
+ * Rich Terminal redesign (FID-2026-0816-011): a bordered rounded panel with
+ * decorative traffic-light title bar, command row + status badge, meta row
+ * (cwd/timeout pills), line-numbered output gutter, and a clean terminal-style
+ * expand/collapse toggle.
  */
 export const TerminalCommandDisplay = ({
   command,
@@ -34,8 +41,10 @@ export const TerminalCommandDisplay = ({
   expandable = true,
   maxVisibleLines,
   isRunning = false,
+  cwd,
   timeoutSeconds,
   availableWidth,
+  exitCode,
 }: TerminalCommandDisplayProps) => {
   const theme = useTheme()
   const { separatorWidth } = useTerminalDimensions()
@@ -51,6 +60,18 @@ export const TerminalCommandDisplay = ({
     timeoutSeconds !== undefined && timeoutSeconds !== DEFAULT_TIMEOUT_SECONDS
       ? formatTimeout(timeoutSeconds)
       : null
+
+  // Status badge logic based on exitCode
+  const statusBadge = (() => {
+    if (exitCode === 0) return { char: '✓', color: theme.success }
+    if (exitCode !== undefined) return { char: '✗', color: theme.error }
+    if (isRunning) return { char: '⏳', color: theme.warning }
+    return null
+  })()
+
+  // Line-number gutter is only shown when there's enough room
+  const width = Math.max(10, availableWidth ?? separatorWidth)
+  const showGutter = width >= 50
 
   // Command header - shared between output and no-output cases
   const commandHeader = (
@@ -71,24 +92,84 @@ export const TerminalCommandDisplay = ({
   // No output case
   if (!output) {
     return (
-      <box style={{ flexDirection: 'column', gap: 0, width: '100%' }}>
-        {commandHeader}
-        {/* Running indicator */}
-        {isRunning && <text fg={theme.muted}>...</text>}
+      <box
+        style={{
+          width: '100%',
+          flexDirection: 'column',
+          backgroundColor: theme.surface,
+          border: true,
+          borderStyle: 'rounded',
+          borderColor: theme.border,
+          paddingLeft: 0,
+          paddingRight: 0,
+          paddingTop: 0,
+          paddingBottom: 0,
+        }}
+      >
+        {/* Title bar — decorative traffic lights. */}
+        <box
+          style={{
+            width: '100%',
+            paddingLeft: 1,
+            paddingRight: 1,
+          }}
+        >
+          <text fg={theme.muted} attributes={TextAttributes.DIM}>
+            ● ● ●
+          </text>
+        </box>
+        {/* Command row. */}
+        <box
+          style={{
+            width: '100%',
+            paddingLeft: 1,
+            paddingRight: 1,
+          }}
+        >
+          {commandHeader}
+        </box>
+        {/* Status / running indicator. */}
+        <box
+          style={{
+            width: '100%',
+            paddingLeft: 1,
+            paddingRight: 1,
+            paddingBottom: 0,
+          }}
+        >
+          {statusBadge && (
+            <text fg={statusBadge.color} attributes={TextAttributes.BOLD}>
+              {statusBadge.char}{' '}
+              {exitCode === 0
+                ? 'success'
+                : exitCode !== undefined
+                  ? 'failed'
+                  : 'running'}
+            </text>
+          )}
+          {isRunning && !statusBadge && <text fg={theme.muted}>...</text>}
+        </box>
       </box>
     )
   }
 
   // With output - calculate visual lines
-  const width = Math.max(10, availableWidth ?? separatorWidth)
   const allLines = output.split('\n')
+
+  // Calculate the gutter width based on line count
+  const gutterWidth = showGutter ? String(allLines.length).length + 2 : 0
+  const contentWidth = Math.max(10, width - gutterWidth)
 
   // Calculate total visual lines across all output lines
   let totalVisualLines = 0
   const visualLinesByOriginalLine: string[][] = []
 
   for (const line of allLines) {
-    const { lines: wrappedLines } = getLastNVisualLines(line, width, Infinity)
+    const { lines: wrappedLines } = getLastNVisualLines(
+      line,
+      contentWidth,
+      Infinity,
+    )
     visualLinesByOriginalLine.push(wrappedLines)
     totalVisualLines += wrappedLines.length
   }
@@ -96,7 +177,7 @@ export const TerminalCommandDisplay = ({
   const hasMoreLines = totalVisualLines > maxLines
   const hiddenLinesCount = totalVisualLines - maxLines
 
-  // Build display output
+  // Build display output with optional line numbers
   let displayOutput: string
   if (isExpanded || !hasMoreLines) {
     displayOutput = output
@@ -104,24 +185,110 @@ export const TerminalCommandDisplay = ({
     // Take first N visual lines
     const displayLines: string[] = []
     let count = 0
+    let lineNumber = 1
 
-    for (const wrappedLines of visualLinesByOriginalLine) {
-      for (const line of wrappedLines) {
+    for (let i = 0; i < visualLinesByOriginalLine.length; i++) {
+      const wrappedLines = visualLinesByOriginalLine[i]
+      for (let j = 0; j < wrappedLines.length; j++) {
         if (count >= maxLines) break
-        displayLines.push(line)
+        const prefix =
+          showGutter && j === 0
+            ? `${String(lineNumber).padStart(gutterWidth - 2)} │ `
+            : showGutter
+              ? ' '.repeat(gutterWidth)
+              : ''
+        displayLines.push(prefix + wrappedLines[j])
         count++
       }
       if (count >= maxLines) break
+      lineNumber++
     }
 
     displayOutput = displayLines.join('\n')
   }
 
   return (
-    <box style={{ flexDirection: 'column', gap: 0, width: '100%' }}>
-      {commandHeader}
-      {/* Output */}
-      <box style={{ flexDirection: 'column', gap: 0, width: '100%' }}>
+    <box
+      style={{
+        width: '100%',
+        flexDirection: 'column',
+        backgroundColor: theme.surface,
+        border: true,
+        borderStyle: 'rounded',
+        borderColor: theme.border,
+        paddingLeft: 0,
+        paddingRight: 0,
+        paddingTop: 0,
+        paddingBottom: 0,
+      }}
+    >
+      {/* Title bar — decorative traffic lights. */}
+      <box
+        style={{
+          width: '100%',
+          paddingLeft: 1,
+          paddingRight: 1,
+        }}
+      >
+        <text fg={theme.muted} attributes={TextAttributes.DIM}>
+          ● ● ●
+        </text>
+      </box>
+      {/* Command row. */}
+      <box
+        style={{
+          width: '100%',
+          paddingLeft: 1,
+          paddingRight: 1,
+        }}
+      >
+        {commandHeader}
+      </box>
+      {/* Meta row — status badge + cwd + timeout pills. */}
+      <box
+        style={{
+          width: '100%',
+          paddingLeft: 1,
+          paddingRight: 1,
+        }}
+      >
+        <text style={{ wrapMode: 'word' }}>
+          {statusBadge && (
+            <>
+              <span fg={statusBadge.color} attributes={TextAttributes.BOLD}>
+                {statusBadge.char}
+              </span>{' '}
+              <span fg={theme.muted}>
+                {exitCode === 0
+                  ? 'success'
+                  : exitCode !== undefined
+                    ? 'failed'
+                    : 'running'}
+              </span>
+            </>
+          )}
+          {cwd && (
+            <span fg={theme.muted}>
+              {statusBadge ? '   ' : ''}📁 {cwd}
+            </span>
+          )}
+          {timeoutLabel && (
+            <span fg={theme.muted}>
+              {statusBadge || cwd ? '   ' : ''}⏱ {timeoutLabel}
+            </span>
+          )}
+        </text>
+      </box>
+      {/* Output body. */}
+      <box
+        style={{
+          flexDirection: 'column',
+          width: '100%',
+          paddingLeft: 1,
+          paddingRight: 1,
+          paddingBottom: 0,
+        }}
+      >
         {hasMoreLines && !expandable && (
           <text fg={theme.muted} attributes={TextAttributes.DIM}>
             ... ({hiddenLinesCount} more lines above)
@@ -135,11 +302,7 @@ export const TerminalCommandDisplay = ({
             style={{ marginTop: 0 }}
             onClick={() => setIsExpanded(!isExpanded)}
           >
-            <text
-              fg={theme.secondary}
-              style={{ wrapMode: 'word' }}
-              attributes={TextAttributes.UNDERLINE}
-            >
+            <text fg={theme.secondary} style={{ wrapMode: 'word' }}>
               {isExpanded
                 ? 'Show less'
                 : `Show ${hiddenLinesCount} more ${hiddenLinesCount === 1 ? 'line' : 'lines'}`}

@@ -56,7 +56,7 @@ export const BuildModeButtons = ({
             paddingRight: 2,
             borderStyle: 'single',
             borderColor:
-              hoveredButton === 'fast' ? theme.foreground : theme.secondary,
+              hoveredButton === 'fast' ? theme.primary : theme.secondary,
           }}
           customBorderChars={BORDER_CHARS}
           onClick={onBuildFast}
@@ -75,7 +75,7 @@ export const BuildModeButtons = ({
             paddingRight: 2,
             borderStyle: 'single',
             borderColor:
-              hoveredButton === 'max' ? theme.foreground : theme.secondary,
+              hoveredButton === 'max' ? theme.primary : theme.secondary,
           }}
           customBorderChars={BORDER_CHARS}
           onClick={onBuildMax}
@@ -94,7 +94,7 @@ export const BuildModeButtons = ({
             paddingRight: 2,
             borderStyle: 'single',
             borderColor:
-              hoveredButton === 'lite' ? theme.foreground : theme.secondary,
+              hoveredButton === 'lite' ? theme.primary : theme.secondary,
           }}
           customBorderChars={BORDER_CHARS}
           onClick={onBuildLite}

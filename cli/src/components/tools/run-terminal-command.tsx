@@ -6,6 +6,7 @@ import type { ToolRenderConfig } from './types'
 export interface ParsedTerminalOutput {
   output: string | null
   startingCwd?: string
+  exitCode?: number | null
 }
 
 /**
@@ -25,16 +26,17 @@ export const parseTerminalOutput = (
     const value = Array.isArray(parsed) ? parsed[0]?.value : parsed
     if (value) {
       const startingCwd = value.startingCwd
+      const exitCode: number | null | undefined = value.exitCode
       // Handle error case
       if (value.errorMessage) {
-        return { output: `Error: ${value.errorMessage}`, startingCwd }
+        return { output: `Error: ${value.errorMessage}`, startingCwd, exitCode }
       }
       // Combine stdout and stderr for display
       // Use trimEnd() to preserve leading spaces (used for UI elements like trees/tables)
       const stdout = value.stdout || ''
       const stderr = value.stderr || ''
       const output = (stdout + stderr).trimEnd() || null
-      return { output, startingCwd }
+      return { output, startingCwd, exitCode }
     }
     return { output: null }
   } catch {
@@ -62,8 +64,10 @@ export const RunTerminalCommandComponent = defineToolComponent({
         ? input.timeout_seconds
         : undefined
 
-    // Extract output and startingCwd from tool result
-    const { output, startingCwd } = parseTerminalOutput(toolBlock.output)
+    // Extract output, startingCwd, and exitCode from tool result
+    const { output, startingCwd, exitCode } = parseTerminalOutput(
+      toolBlock.output,
+    )
 
     // Custom content component using shared TerminalCommandDisplay
     const content = (
@@ -75,6 +79,7 @@ export const RunTerminalCommandComponent = defineToolComponent({
         cwd={startingCwd}
         timeoutSeconds={timeoutSeconds}
         availableWidth={options.availableWidth}
+        exitCode={exitCode}
       />
     )
 

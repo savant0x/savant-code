@@ -17,6 +17,18 @@ export type DiffLineKind = 'add' | 'remove' | 'context' | 'hunk' | 'header'
 export interface DiffLine {
   kind: DiffLineKind
   text: string
+  /**
+   * Old-file line number for `context`/`remove` rows inside an active hunk
+   * (derived from the `@@ -a,b +c,d @@` header). Blank when outside a hunk
+   * or when the old side starts at 0 (create-file).
+   */
+  oldLine?: number
+  /**
+   * New-file line number for `context`/`add` rows inside an active hunk.
+   * Blank when outside a hunk or when the new side starts at 0 (deleted
+   * file).
+   */
+  newLine?: number
 }
 
 export interface DiffStats {
@@ -57,6 +69,12 @@ const HEADER_PREFIXES = [
 ]
 
 /**
+ * `@@ -a,b +c,d @@` hunk header. Captures the old/new hunk START line
+ * numbers (the count parts are irrelevant to gutter numbering).
+ */
+const HUNK_RE = /^@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@/
+
+/**
  * Parse a unified-diff string into classified rows + add/remove counts.
  *
  * Classification order (first match wins):
@@ -66,12 +84,21 @@ const HEADER_PREFIXES = [
  *   remove  → starts with `-`
  *   context → anything else (including blank lines, preserved as rows)
  *
+ * Line numbering (gutter): each `@@ -a,b +c,d @@` resets the old/new
+ * counters to `a`/`c`. `context` prints + advances both; `remove` prints +
+ * advances old only; `add` prints + advances new only. A side whose start is
+ * 0 (create-file old side, delete-file new side) prints no numbers for that
+ * side, and malformed hunk headers deactivate numbering — a blank gutter,
+ * never a fabricated number.
+ *
  * @param diffText - Raw unified diff (`unifiedDiff`/`patch` text).
  */
 export function parseDiffLines(diffText: string): DiffStats {
   const lines: DiffLine[] = []
   let added = 0
   let removed = 0
+  let oldCounter = 0
+  let newCounter = 0
 
   for (const raw of diffText.split('\n')) {
     let kind: DiffLineKind
@@ -88,10 +115,51 @@ export function parseDiffLines(diffText: string): DiffStats {
     } else {
       kind = 'context'
     }
-    lines.push({ kind, text: raw })
+
+    const line: DiffLine = { kind, text: raw }
+    if (kind === 'hunk') {
+      const match = HUNK_RE.exec(raw)
+      oldCounter = match ? Number(match[1]) : 0
+      newCounter = match ? Number(match[2]) : 0
+    } else if (kind === 'context') {
+      if (oldCounter > 0) {
+        line.oldLine = oldCounter
+        oldCounter += 1
+      }
+      if (newCounter > 0) {
+        line.newLine = newCounter
+        newCounter += 1
+      }
+    } else if (kind === 'remove') {
+      if (oldCounter > 0) {
+        line.oldLine = oldCounter
+        oldCounter += 1
+      }
+    } else if (kind === 'add') {
+      if (newCounter > 0) {
+        line.newLine = newCounter
+        newCounter += 1
+      }
+    }
+    lines.push(line)
   }
 
   return { lines, added, removed }
+}
+
+/**
+ * Extract the edited file path from a unified diff for the header strip.
+ *
+ * Prefers the `+++ b/…` side (git's new-file side); falls back to the
+ * `diff --git … b/…` trailer. Empty string when neither is present — the
+ * caller renders a bare counter header.
+ */
+export function getDiffHeaderPath(diffText: string): string {
+  const plus = /^\+\+\+ b?\/(.+)$/m.exec(diffText)
+  if (plus) return plus[1]
+  const git = /^diff --git a\/.+? b\/(.+)$/m.exec(diffText)
+  if (git) return git[1]
+  return ''
 }
 
 function parseHex(color: string): { r: number; g: number; b: number } {
@@ -129,4 +197,18 @@ export function blendHex(a: string, b: string, t: number): string {
   return `#${toHex(mix(ca.r, cb.r))}${toHex(mix(ca.g, cb.g))}${toHex(
     mix(ca.b, cb.b),
   )}`
+}
+
+/**
+ * WCAG 2.x relative luminance of a hex color (0 = black, 1 = white).
+ * sRGB-linearized per the WCAG contrast spec. Malformed input degrades to
+ * black (0), matching `parseHex`'s fallback.
+ */
+export function relativeLuminance(color: string): number {
+  const { r, g, b } = parseHex(color)
+  const linear = (v: number): number => {
+    const s = v / 255
+    return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4
+  }
+  return 0.2126 * linear(r) + 0.7152 * linear(g) + 0.0722 * linear(b)
 }

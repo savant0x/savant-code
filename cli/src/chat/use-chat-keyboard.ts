@@ -88,6 +88,7 @@ export interface UseChatKeyboardAssemblyArgs {
   askUserState: AskUserState | null
   reviewMode: boolean
   providerPickerOpen: boolean
+  rewindPickerOpen: boolean
 }
 
 export function useChatKeyboardAssembly(args: UseChatKeyboardAssemblyArgs): {
@@ -146,6 +147,7 @@ export function useChatKeyboardAssembly(args: UseChatKeyboardAssemblyArgs): {
     askUserState,
     reviewMode,
     providerPickerOpen,
+    rewindPickerOpen,
   } = args
 
   const totalMentionMatches = agentMatchesLength + fileMatchesLength
@@ -294,7 +296,8 @@ export function useChatKeyboardAssembly(args: UseChatKeyboardAssemblyArgs): {
       askUserState !== null ||
       reviewMode ||
       modelPickerOpen ||
-      providerPickerOpen,
+      providerPickerOpen ||
+      rewindPickerOpen,
   })
 
   return { chatKeyboardHandlers }

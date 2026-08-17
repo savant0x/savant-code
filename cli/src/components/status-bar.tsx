@@ -18,6 +18,10 @@ import {
 import type { SavantFreeSession } from '../types/savant-free-session'
 import type { StatusIndicatorState } from '../utils/status-indicator-state'
 
+// test comment: added for feature verification
+// multi-line edit for diff demo
+// line three of the test block
+
 interface StatusActionButtonProps {
   onClick: () => void
   shortcut?: string
@@ -95,6 +99,8 @@ export const StatusBar = ({
     }
 
     updateElapsed()
+    // ALLOWLIST (FID-2026-0816-005): 1 Hz wall-clock timer read, not a visual
+    // animation — the timeline engine is overkill for a once-per-second read.
     const interval = setInterval(updateElapsed, 1000)
 
     return () => clearInterval(interval)

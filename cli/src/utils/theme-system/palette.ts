@@ -18,24 +18,26 @@ const DEFAULT_CHAT_THEMES: Record<ThemeName, ChatTheme> = {
     link: '#3B82F6',
     directory: '#9CA3AF',
 
-    // Neutral scale
-    foreground: '#e2e8f0', // Slate-200 — high contrast on dark
+    // Neutral scale — neutral near-black grays (NO navy/slate — operator
+    // directive 2026-08-16: the navy family was pre-fork Freebuff branding;
+    // Savant is near-black + cyan only)
+    foreground: '#e4e4e8', // Neutral off-white — high contrast on near-black
     background: '#050508', // Deep void — never inherit the host terminal canvas
-    muted: '#94a3b8', // Slate-400 — readable muted text on deep void
-    border: '#1e293b', // Slate-800 — subtle
-    surface: '#0f172a', // Slate-900 — slightly lighter than bg
-    surfaceHover: '#1e293b', // Slate-800
+    muted: '#8f8f99', // Neutral gray — readable muted text on deep void
+    border: '#20202a', // Neutral dark border — subtle, no blue cast
+    surface: '#0b0b11', // Near-black surface — slightly lighter than bg
+    surfaceHover: '#14141c', // Near-black hover lift
 
     // Context-specific
-    aiLine: '#64748b', // Slate-500 — muted
+    aiLine: '#5c5c66', // Neutral muted gray
     userLine: '#18faf9', // Cyan — user messages
 
     // Agent backgrounds
     agentToggleHeaderBg: '#f97316',
     agentToggleExpandedBg: '#1d4ed8',
-    agentFocusedBg: '#1e293b', // Slate-800
-    agentContentBg: '#020617', // Slate-950 — near-black
-    inputFg: '#e2e8f0', // Slate-200
+    agentFocusedBg: '#14141c', // Neutral near-black
+    agentContentBg: '#07070b', // Neutral near-black
+    inputFg: '#e4e4e8', // Neutral off-white
     inputFocusedFg: '#ffffff',
 
     // Mode toggles
@@ -46,22 +48,25 @@ const DEFAULT_CHAT_THEMES: Record<ThemeName, ChatTheme> = {
     modePlanBg: '#1e40af',
     modePlanText: '#1e40af',
 
+    // Phase colors (FID-009 Loop 5) — ADVERSARIAL gets its own identity
+    phaseAdversarial: '#c084fc', // Violet-400 — distinct from RED/GREEN/AUDIT/COMPLETE
+
     // Image card
-    imageCardBorder: '#64748b', // Slate-500
+    imageCardBorder: '#5c5c66', // Neutral gray
 
     // Diff colors (FID-033a) — preserved from prior diff-viewer DIFF_LINE_COLORS.dark
     diffAdded: '#7ACC35', // Soft green — was hardcoded in diff-viewer.tsx
     diffRemoved: '#BF6C69', // Muted red — was hardcoded in diff-viewer.tsx
-    diffContext: '#e2e8f0', // Slate-200 — unchanged lines use foreground
+    diffContext: '#e4e4e8', // Neutral off-white — unchanged lines use foreground
     diffHunkHeader: '#18faf9', // Cyan — was 'cyan' literal in diff-viewer.tsx
-    diffMeta: '#64748b', // Slate-500 — was theme.muted in diff-viewer.tsx
+    diffMeta: '#8f8f99', // Neutral gray — was theme.muted in diff-viewer.tsx
 
     // Syntax highlighting tokens (FID-033a) — fed to OpenTUI SyntaxStyle.
     // Mapping pattern adapted from opencode-dev generateSyntax (theme/index.ts:556).
-    syntaxComment: '#64748b', // Slate-500 — muted, matches textMuted convention
+    syntaxComment: '#8f8f99', // Neutral gray — muted, matches textMuted convention
     syntaxKeyword: '#ffb000', // Amber — readable non-violet keyword accent
     syntaxFunction: '#60a5fa', // Blue-400 — ansiColors.blue equivalent
-    syntaxVariable: '#e2e8f0', // Slate-200 — foreground (variable = fg)
+    syntaxVariable: '#e4e4e8', // Neutral off-white — foreground (variable = fg)
     syntaxString: '#4ade80', // Green-400 — ansiColors.green equivalent
     syntaxNumber: '#fbbf24', // Amber-400 — ansiColors.yellow equivalent
     syntaxType: '#22d3ee', // Cyan-400 — ansiColors.cyan equivalent
@@ -69,10 +74,10 @@ const DEFAULT_CHAT_THEMES: Record<ThemeName, ChatTheme> = {
 
     // Markdown
     markdown: {
-      codeBackground: '#1e293b', // Slate-800
-      codeHeaderFg: '#64748b', // Slate-500
+      codeBackground: '#111118', // Neutral near-black
+      codeHeaderFg: '#8f8f99', // Neutral gray
       inlineCodeFg: '#22d3ee', // Cyan — distinct but on-brand inline-code accent
-      codeTextFg: '#e2e8f0', // Slate-200
+      codeTextFg: '#e4e4e8', // Neutral off-white
       headingFg: {
         1: '#18faf9', // Cyan
         2: '#18faf9',
@@ -82,9 +87,9 @@ const DEFAULT_CHAT_THEMES: Record<ThemeName, ChatTheme> = {
         6: '#18faf9',
       },
       listBulletFg: '#39ff14', // Neon green — semantic, non-violet list accent
-      blockquoteBorderFg: '#1e293b', // Slate-800
-      blockquoteTextFg: '#e2e8f0', // Slate-200
-      dividerFg: '#1e293b', // Slate-800
+      blockquoteBorderFg: '#20202a', // Neutral dark border
+      blockquoteTextFg: '#e4e4e8', // Neutral off-white
+      dividerFg: '#20202a', // Neutral dark border
       codeMonochrome: false,
     },
   },
@@ -100,24 +105,24 @@ const DEFAULT_CHAT_THEMES: Record<ThemeName, ChatTheme> = {
     link: '#2563EB',
     directory: '#6B7280',
 
-    // Neutral scale
-    foreground: '#0f172a', // Slate-900 — near-black
+    // Neutral scale — neutral grays (no navy/slate — operator directive 2026-08-16)
+    foreground: '#111114', // Neutral near-black
     background: '#ffffff', // Explicit light canvas; never inherit the host terminal
-    muted: '#64748b', // Slate-500 — readable muted text on white
-    border: '#cbd5e1', // Slate-300
-    surface: '#f8fafc', // Slate-50
-    surfaceHover: '#f1f5f9', // Slate-100
+    muted: '#5c5c66', // Neutral gray — readable muted text on white
+    border: '#d6d6dc', // Neutral light border
+    surface: '#fafafa', // Neutral off-white surface
+    surfaceHover: '#f3f3f5', // Neutral light hover
 
     // AI/User context
-    aiLine: '#64748b', // Slate-500
+    aiLine: '#5c5c66', // Neutral gray
     userLine: '#0891b2', // Cyan-600
 
     // Agent context
     agentToggleHeaderBg: '#ea580c',
     agentToggleExpandedBg: '#1d4ed8',
-    agentFocusedBg: '#f1f5f9', // Slate-100
+    agentFocusedBg: '#f3f3f5', // Neutral light
     agentContentBg: '#ffffff',
-    inputFg: '#0f172a', // Slate-900
+    inputFg: '#111114', // Neutral near-black
     inputFocusedFg: '#000000',
 
     // Mode toggles
@@ -128,22 +133,25 @@ const DEFAULT_CHAT_THEMES: Record<ThemeName, ChatTheme> = {
     modePlanBg: '#1e40af',
     modePlanText: '#1e40af',
 
+    // Phase colors (FID-009 Loop 5) — ADVERSARIAL gets its own identity
+    phaseAdversarial: '#7c3aed', // Violet-600 — readable on white
+
     // Image card
-    imageCardBorder: '#64748b', // Slate-500
+    imageCardBorder: '#5c5c66', // Neutral gray
 
     // Diff colors (FID-033a) — preserved from prior diff-viewer DIFF_LINE_COLORS.light
     diffAdded: '#4A9E1C', // Readable green on white — was hardcoded in diff-viewer.tsx
     diffRemoved: '#C53030', // Readable red on white — was hardcoded in diff-viewer.tsx
-    diffContext: '#0f172a', // Slate-900 — unchanged lines use foreground
+    diffContext: '#111114', // Neutral near-black — unchanged lines use foreground
     diffHunkHeader: '#0891b2', // Cyan-600 — light-mode primary
-    diffMeta: '#64748b', // Slate-500 — muted
+    diffMeta: '#5c5c66', // Neutral gray — muted
 
     // Syntax highlighting tokens (FID-033a) — light-mode readable equivalents.
     // Mapping pattern adapted from opencode-dev generateSyntax (theme/index.ts:556).
-    syntaxComment: '#64748b', // Slate-500 — muted
+    syntaxComment: '#5c5c66', // Neutral gray — muted
     syntaxKeyword: '#b45309', // Amber-700 — readable non-violet keyword accent
     syntaxFunction: '#2563eb', // Blue-600 — readable blue on white
-    syntaxVariable: '#0f172a', // Slate-900 — foreground
+    syntaxVariable: '#111114', // Neutral near-black — foreground
     syntaxString: '#059669', // Emerald-600 — readable green on white
     syntaxNumber: '#d97706', // Amber-600 — readable yellow on white
     syntaxType: '#0891b2', // Cyan-600 — readable cyan on white
@@ -151,10 +159,10 @@ const DEFAULT_CHAT_THEMES: Record<ThemeName, ChatTheme> = {
 
     // Markdown
     markdown: {
-      codeBackground: '#f1f5f9', // Slate-100
-      codeHeaderFg: '#64748b', // Slate-500
+      codeBackground: '#f3f3f5', // Neutral light
+      codeHeaderFg: '#5c5c66', // Neutral gray
       inlineCodeFg: '#0e7490', // Cyan-700 — readable on white
-      codeTextFg: '#0f172a', // Slate-900
+      codeTextFg: '#111114', // Neutral near-black
       headingFg: {
         1: '#0891b2', // Cyan-600
         2: '#0891b2',
@@ -164,9 +172,9 @@ const DEFAULT_CHAT_THEMES: Record<ThemeName, ChatTheme> = {
         6: '#0891b2',
       },
       listBulletFg: '#047857', // Emerald-700 — readable semantic list accent
-      blockquoteBorderFg: '#cbd5e1', // Slate-300
-      blockquoteTextFg: '#334155', // Slate-700
-      dividerFg: '#e2e8f0', // Slate-200
+      blockquoteBorderFg: '#d6d6dc', // Neutral light border
+      blockquoteTextFg: '#3f3f4a', // Neutral dark gray
+      dividerFg: '#e5e5e8', // Neutral light gray
       codeMonochrome: false,
     },
   },

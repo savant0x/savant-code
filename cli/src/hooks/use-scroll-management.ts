@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
+import { useAnimationTimeline } from './use-animation-timeline'
+
 import type { ChatMessage } from '../types/chat'
 import type { ScrollBoxRenderable } from '@opentui/core'
 
 // Scroll detection threshold - how close to bottom to consider "at bottom"
 const SCROLL_NEAR_BOTTOM_THRESHOLD = 1
 
-// Animation constants
-const ANIMATION_FRAME_INTERVAL_MS = 16 // ~60fps
 const DEFAULT_SCROLL_ANIMATION_DURATION_MS = 200
 
 // Page scroll amount (fraction of viewport height)
@@ -16,12 +16,23 @@ const PAGE_SCROLL_FRACTION = 0.8
 // Delay before auto-scrolling after content changes
 const AUTO_SCROLL_DELAY_MS = 50
 
-const easeOutCubic = (t: number): number => {
-  return 1 - Math.pow(1 - t, 3)
+/**
+ * Damped-spring interpolation for smooth scroll (FID-2026-0816-005 step 3).
+ * Maps linear progress `t` (0..1) to a spring response with one gentle
+ * overshoot, settling at exactly 1 by the end of the animation. `onComplete`
+ * snaps to the exact target, so the tiny residual at t=1 is invisible.
+ */
+const springProgress = (t: number): number => {
+  if (t <= 0) return 0
+  if (t >= 1) return 1
+  const stiffness = 9 // settle speed
+  const damping = 13 // oscillation frequency
+  return 1 - Math.exp(-stiffness * t) * Math.cos(damping * t)
 }
 
 /**
- * Manages scroll behavior for the chat scrollbox with smooth animations and auto-scroll.
+ * Manages scroll behavior for the chat scrollbox with engine-driven smooth
+ * animations (spring-interpolated `scrollTop`) and auto-scroll.
  *
  * @param scrollRef - Reference to the scrollbox component
  * @param messages - Array of chat messages (triggers auto-scroll on change)
@@ -36,15 +47,13 @@ export const useChatScrollbox = (
 ) => {
   const autoScrollEnabledRef = useRef<boolean>(true)
   const programmaticScrollRef = useRef<boolean>(false)
-  const animationFrameRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const timeline = useAnimationTimeline()
   const [isAtBottom, setIsAtBottom] = useState<boolean>(true)
 
   const cancelAnimation = useCallback(() => {
-    if (animationFrameRef.current !== null) {
-      clearTimeout(animationFrameRef.current)
-      animationFrameRef.current = null
-    }
-  }, [])
+    timeline.items.length = 0
+    timeline.pause()
+  }, [timeline])
 
   const animateScrollTo = useCallback(
     (targetScroll: number, duration = DEFAULT_SCROLL_ANIMATION_DURATION_MS) => {
@@ -55,28 +64,39 @@ export const useChatScrollbox = (
 
       const startScroll = scrollbox.scrollTop
       const distance = targetScroll - startScroll
-      const startTime = Date.now()
-      const frameInterval = ANIMATION_FRAME_INTERVAL_MS
 
-      const animate = () => {
-        const elapsed = Date.now() - startTime
-        const progress = Math.min(elapsed / duration, 1)
-        const easedProgress = easeOutCubic(progress)
-        const newScroll = startScroll + distance * easedProgress
-
+      if (Math.abs(distance) < 0.5) {
         programmaticScrollRef.current = true
-        scrollbox.scrollTop = newScroll
-
-        if (progress < 1) {
-          animationFrameRef.current = setTimeout(animate, frameInterval)
-        } else {
-          animationFrameRef.current = null
-        }
+        scrollbox.scrollTop = targetScroll
+        return
       }
 
-      animate()
+      // Spring-interpolated `scrollTop` driven by the timeline engine. The
+      // tween advances `t` 0 → 1 linearly; `springProgress` applies the damped
+      // spring response, and `once` + `onComplete` finish the one-shot so the
+      // engine drops the live loop when the scroll settles.
+      timeline.add(
+        { t: 0 },
+        {
+          t: 1,
+          duration,
+          ease: 'linear',
+          once: true,
+          onUpdate: (anim) => {
+            const progress = anim.targets[0]?.t ?? 0
+            programmaticScrollRef.current = true
+            scrollbox.scrollTop =
+              startScroll + distance * springProgress(progress)
+          },
+          onComplete: () => {
+            programmaticScrollRef.current = true
+            scrollbox.scrollTop = targetScroll
+          },
+        },
+      )
+      timeline.restart()
     },
-    [scrollRef, cancelAnimation],
+    [scrollRef, cancelAnimation, timeline],
   )
 
   const scrollToLatest = useCallback((): void => {

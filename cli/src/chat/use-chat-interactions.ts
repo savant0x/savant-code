@@ -81,6 +81,7 @@ export interface UseChatInteractionsArgs {
   hasSubscription: boolean
   modelPickerOpen: boolean
   providerPickerOpen: boolean
+  rewindPickerOpen: boolean
 }
 
 export function useChatInteractions(args: UseChatInteractionsArgs) {
@@ -131,6 +132,7 @@ export function useChatInteractions(args: UseChatInteractionsArgs) {
     hasSubscription,
     modelPickerOpen,
     providerPickerOpen,
+    rewindPickerOpen,
   } = args
 
   const localAgents = useMemo(() => loadLocalAgents(agentMode), [agentMode])
@@ -319,6 +321,7 @@ export function useChatInteractions(args: UseChatInteractionsArgs) {
     askUserState,
     reviewMode,
     providerPickerOpen,
+    rewindPickerOpen,
   })
 
   return {

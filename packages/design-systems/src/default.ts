@@ -6,7 +6,7 @@ import {
   type DesignSystemResource,
 } from './types'
 
-export const DEFAULT_SOURCE = `savant-cyberpunk-v1\nprimary=#18faf9\nsecondary=#18faf9\nsuccess=#39ff14\nwarning=#ff9500\nerror=#ff2d55\nbackground=#050508\nsurface=#0f172a\nforeground=#e2e8f0\nmuted=#94a3b8\nborder=#1e293b\nsyntaxKeyword=#ffb000\ninlineCodeFg=#22d3ee\nlistBulletFg=#39ff14\nfont=system-ui,sans-serif\nspacing=4px,8px,16px,24px\nradius=0px,4px,8px,9999px\n`
+export const DEFAULT_SOURCE = `savant-cyberpunk-v1\nprimary=#18faf9\nsecondary=#18faf9\nsuccess=#39ff14\nwarning=#ff9500\nerror=#ff2d55\nbackground=#050508\nsurface=#0b0b11\nforeground=#e4e4e8\nmuted=#8f8f99\nborder=#20202a\nsyntaxKeyword=#ffb000\ninlineCodeFg=#22d3ee\nlistBulletFg=#39ff14\nfont=system-ui,sans-serif\nspacing=4px,8px,16px,24px\nradius=0px,4px,8px,9999px\n`
 
 function sha256(value: string): string {
   return createHash('sha256').update(value, 'utf8').digest('hex')
@@ -38,12 +38,12 @@ export function getDefaultDesignSystemResource(): DesignSystemResource {
       error: '#ff2d55',
       warning: '#ff9500',
       info: '#18faf9',
-      foreground: '#e2e8f0',
+      foreground: '#e4e4e8',
       background: '#050508',
-      muted: '#94a3b8',
-      border: '#1e293b',
-      surface: '#0f172a',
-      surfaceHover: '#1e293b',
+      muted: '#8f8f99',
+      border: '#20202a',
+      surface: '#0b0b11',
+      surfaceHover: '#14141c',
       syntaxKeyword: '#ffb000',
       inlineCodeFg: '#22d3ee',
       listBulletFg: '#39ff14',
@@ -78,8 +78,8 @@ export function getDefaultDesignSystemResource(): DesignSystemResource {
         padding: '8px 16px',
       },
       panel: {
-        backgroundColor: '#0f172a',
-        textColor: '#e2e8f0',
+        backgroundColor: '#0b0b11',
+        textColor: '#e4e4e8',
         rounded: '8px',
         padding: '16px',
       },

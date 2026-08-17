@@ -42,6 +42,8 @@ export const initialState: ChatStoreState = {
   // Sidebar data initial state
   contextTokensUsed: 0,
   contextTokensMax: 200_000,
+  // Manual sidebar fold — starts expanded; toggled by Ctrl+B / edge handle.
+  sidebarCollapsed: false,
   compactionStatus: null,
   /** FID-2026-0814-006: session compaction counter + bounded lifecycle events. */
   compactionCount: 0,

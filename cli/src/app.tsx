@@ -9,6 +9,10 @@ import { LoginModal } from './components/login-modal'
 import { ProjectPickerScreen } from './components/project-picker-screen'
 import { SavantFreeLandingScreen } from './components/savant-free-landing-screen'
 import { SavantFreeSupersededScreen } from './components/savant-free-superseded-screen'
+import {
+  EasterEggOverlays,
+  EasterEggProvider,
+} from './components/savant-ui/easter-egg-logo'
 import { ToastContainer } from './components/toast'
 import { useAuthQuery } from './hooks/use-auth-query'
 import { useAuthState } from './hooks/use-auth-state'
@@ -212,7 +216,7 @@ export const App = ({
   const chatKey = resumeChatId ?? 'current'
 
   return (
-    <>
+    <EasterEggProvider>
       <AppShell backgroundColor={theme.background}>
         <AuthedSurface
           chatKey={chatKey}
@@ -236,8 +240,9 @@ export const App = ({
           onNewChat={handleNewChat}
         />
       </AppShell>
+      <EasterEggOverlays />
       <ToastContainer />
-    </>
+    </EasterEggProvider>
   )
 }
 

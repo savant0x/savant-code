@@ -129,8 +129,10 @@ describe('handleExportConversationCommand', () => {
     // user = soft cyan (--link), assistant = brand cyan (--accent)
     expect(html).toContain('.row-user .row-role { color: var(--link); }')
     expect(html).toContain('.row-assistant .row-role { color: var(--brand); }')
-    // Neutral border for user rows — no purple tint
-    expect(html).toContain('--border-user: #26324a')
+    // Neutral border for user rows — no purple tint, no navy (operator
+    // directive 2026-08-16: slate family is pre-fork branding)
+    expect(html).toContain('--border-user: #26262e')
+    expect(html).not.toContain('#26324a')
     expect(html).not.toContain('#2d2b55')
     expect(html).not.toContain('--tool-badge: #5945b1')
 

@@ -83,7 +83,6 @@ export interface UseChatDerivedReturn {
   isSavantFreeSessionOver: boolean
   shouldShowStatusLine: boolean
   handleMouseActivity: () => void
-  showSidebar: boolean
   directoryDisplay: string
 }
 
@@ -258,14 +257,13 @@ export function useChatDerived({
     }
   }, [])
 
-  // FID-2026-0722-045: Hide the right sidebar on narrow terminals so the
-  // chat area keeps enough width to remain usable. The sidebar is 40 cols
-  // and supplemental; below this threshold the left column needs the space.
-  const SIDEBAR_MIN_TERMINAL_WIDTH = 100
-
+  // FID-2026-0816-007 step 1: the sidebar is now breakpoint-driven (icon rail
+  // below 60 cols, full surface above) via useTerminalBreakpoints in
+  // ChatSidebar, so there is no longer a hide threshold here. The cwd display
+  // folds into input-bar chrome (step 5); until then it truncates to the
+  // chat-column width.
   const projectRootDisplay = formatCwd(getProjectRoot())
-  const showSidebar = terminalWidth >= SIDEBAR_MIN_TERMINAL_WIDTH
-  const directoryMaxWidth = showSidebar ? terminalWidth - 42 : terminalWidth - 2
+  const directoryMaxWidth = terminalWidth - 2
   const directoryDisplay =
     projectRootDisplay.length > directoryMaxWidth && directoryMaxWidth > 10
       ? `…${projectRootDisplay.slice(-directoryMaxWidth + 1)}`
@@ -282,7 +280,6 @@ export function useChatDerived({
     isSavantFreeSessionOver,
     shouldShowStatusLine,
     handleMouseActivity,
-    showSidebar,
     directoryDisplay,
   }
 }

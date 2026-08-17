@@ -37,7 +37,9 @@ export const ElapsedTimer = ({
     // Update immediately
     updateElapsed()
 
-    // Then update every second
+    // Then update every second.
+    // ALLOWLIST (FID-2026-0816-005): 1 Hz wall-clock text update, not a visual
+    // animation — the timeline engine is overkill for a once-per-second read.
     const interval = setInterval(updateElapsed, 1000)
 
     return () => clearInterval(interval)

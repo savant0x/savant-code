@@ -44,6 +44,7 @@ import { getAuthToken, getAuthTokenDetails } from './utils/auth'
 import { trimOversizedChatLogs } from './utils/chat-history'
 import { IS_SAVANT_FREE } from './utils/constants'
 import { startEngagementTracking } from './utils/engagement'
+import { shouldSuppressExplicitWidthQuery } from './utils/env'
 import { initializeAgentRegistry } from './utils/local-agent-registry'
 import { clearLogFile, logger } from './utils/logger'
 import {
@@ -590,6 +591,14 @@ async function main(): Promise<void> {
   // process disappears. Started before the renderer begins enabling terminal
   // modes; the clean-shutdown path (renderer-cleanup) disarms it.
   startTerminalWatchdog()
+
+  // Windows Console (legacy conhost) does not answer OpenTUI's OSC 66
+  // explicit-width query, so the escape sequence leaks a literal "66" artifact
+  // into stdout. Suppress the query on the legacy-console floor before the
+  // renderer arms it; conpty-backed terminals (WT_SESSION set) keep it.
+  if (shouldSuppressExplicitWidthQuery()) {
+    process.env.OPENTUI_FORCE_EXPLICIT_WIDTH = 'false'
+  }
 
   const renderer = await createCliRenderer({
     // React's AppShell paints the resolved theme after initializeApp; keep the

@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test'
 
+import { getToolComponent } from '../registry'
 import {
   parseTerminalOutput,
   RunTerminalCommandComponent,
@@ -15,6 +16,7 @@ import type { ReactElement } from 'react'
 interface RenderContentElement extends ReactElement {
   props: {
     timeoutSeconds?: number
+    exitCode?: number | null
   }
 }
 
@@ -35,7 +37,11 @@ const createToolBlock = (
 })
 
 // Helper to create JSON output in the format the component expects
-const createJsonOutput = (stdout: string, stderr = ''): string => {
+const createJsonOutput = (
+  stdout: string,
+  stderr = '',
+  exitCode: number | null = 0,
+): string => {
   return JSON.stringify([
     {
       type: 'json',
@@ -43,7 +49,7 @@ const createJsonOutput = (stdout: string, stderr = ''): string => {
         command: 'test',
         stdout,
         stderr,
-        exitCode: 0,
+        exitCode,
       },
     },
   ])
@@ -76,11 +82,7 @@ describe('RunTerminalCommandComponent', () => {
 
     test('preserves leading whitespace in stdout (tree output)', () => {
       // Simulate tree command output with leading spaces for indentation
-      const treeOutput = `├── src
-│   ├── index.ts
-│   └── utils
-│       └── helper.ts
-└── package.json`
+      const treeOutput = `├── src\n│   ├── index.ts\n│   └── utils\n│       └── helper.ts\n└── package.json`
 
       const { output } = parseTerminalOutput(createJsonOutput(treeOutput))
 
@@ -93,9 +95,7 @@ describe('RunTerminalCommandComponent', () => {
 
     test('preserves leading spaces in table-like output', () => {
       // Simulate output with leading spaces for alignment
-      const tableOutput = `  Name        Size     Modified
-  file1.txt   1.2KB    2024-01-15
-  file2.txt   3.4MB    2024-01-16`
+      const tableOutput = `  Name        Size     Modified\n  file1.txt   1.2KB    2024-01-15\n  file2.txt   3.4MB    2024-01-16`
 
       const { output } = parseTerminalOutput(createJsonOutput(tableOutput))
 
@@ -106,9 +106,7 @@ describe('RunTerminalCommandComponent', () => {
 
     test('preserves leading spaces in indented code output', () => {
       // Simulate indented output like grep with context
-      const indentedOutput = `    function hello() {
-        console.log("world")
-    }`
+      const indentedOutput = `    function hello() {\n        console.log("world")\n    }`
 
       const { output } = parseTerminalOutput(createJsonOutput(indentedOutput))
 
@@ -230,6 +228,122 @@ describe('RunTerminalCommandComponent', () => {
     })
   })
 
+  describe('exitCode extraction', () => {
+    const mockTheme = {} as ChatTheme
+    const mockOptions = {
+      availableWidth: 80,
+      indentationOffset: 0,
+      labelWidth: 10,
+    }
+
+    test('extracts numeric exitCode 0 (success)', () => {
+      const toolBlock = createToolBlock(
+        'ls -la',
+        createJsonOutput('file1\nfile2', '', 0),
+      )
+
+      const result = RunTerminalCommandComponent.render(
+        toolBlock,
+        mockTheme,
+        mockOptions,
+      )
+
+      expect((result.content as RenderContentElement).props.exitCode).toBe(0)
+    })
+
+    test('extracts numeric exitCode 1 (failure)', () => {
+      const toolBlock = createToolBlock(
+        'false',
+        createJsonOutput('', 'error', 1),
+      )
+
+      const result = RunTerminalCommandComponent.render(
+        toolBlock,
+        mockTheme,
+        mockOptions,
+      )
+
+      expect((result.content as RenderContentElement).props.exitCode).toBe(1)
+    })
+
+    test('extracts null exitCode (signal/timeout)', () => {
+      const toolBlock = createToolBlock(
+        'kill -9',
+        createJsonOutput('', '', null),
+      )
+
+      const result = RunTerminalCommandComponent.render(
+        toolBlock,
+        mockTheme,
+        mockOptions,
+      )
+
+      expect((result.content as RenderContentElement).props.exitCode).toBeNull()
+    })
+
+    test('passes undefined exitCode when output is empty', () => {
+      const toolBlock = createToolBlock('ls -la', undefined)
+
+      const result = RunTerminalCommandComponent.render(
+        toolBlock,
+        mockTheme,
+        mockOptions,
+      )
+
+      expect(
+        (result.content as RenderContentElement).props.exitCode,
+      ).toBeUndefined()
+    })
+
+    test('passes undefined exitCode for raw string output (non-JSON)', () => {
+      const toolBlock = createToolBlock('ls -la', 'raw output')
+
+      const result = RunTerminalCommandComponent.render(
+        toolBlock,
+        mockTheme,
+        mockOptions,
+      )
+
+      expect(
+        (result.content as RenderContentElement).props.exitCode,
+      ).toBeUndefined()
+    })
+  })
+
+  describe('run_readonly_command registry reuse (FID-009)', () => {
+    test('resolves to the shared RunTerminalCommandComponent renderer', () => {
+      expect(getToolComponent('run_readonly_command')).toBe(
+        RunTerminalCommandComponent,
+      )
+    })
+
+    test('renders a readonly command block through the shared renderer', () => {
+      const readonlyBlock = {
+        type: 'tool',
+        toolName: 'run_readonly_command',
+        toolCallId: 'test-readonly-id',
+        input: { command: 'bun run typecheck' },
+        output: createJsonOutput('exit 0'),
+      } as unknown as Parameters<typeof RunTerminalCommandComponent.render>[0]
+      const mockTheme = {} as ChatTheme
+      const mockOptions = {
+        availableWidth: 80,
+        indentationOffset: 0,
+        labelWidth: 10,
+      }
+
+      const result = RunTerminalCommandComponent.render(
+        readonlyBlock,
+        mockTheme,
+        mockOptions,
+      )
+
+      expect(result).toBeDefined()
+      expect(result.content).toBeDefined()
+      expect(result.collapsedPreview).toBe('$ bun run typecheck')
+    })
+  })
+
   describe('parseTerminalOutput', () => {
     test('handles error messages', () => {
       const errorPayload = JSON.stringify([
@@ -269,6 +383,48 @@ describe('RunTerminalCommandComponent', () => {
 
       expect(output).toBe('/project')
       expect(startingCwd).toBe('/project')
+    })
+
+    test('extracts exitCode when present', () => {
+      const payloadWithExitCode = JSON.stringify([
+        {
+          type: 'json',
+          value: {
+            command: 'test',
+            stdout: 'done',
+            stderr: '',
+            exitCode: 0,
+          },
+        },
+      ])
+
+      const { exitCode } = parseTerminalOutput(payloadWithExitCode)
+
+      expect(exitCode).toBe(0)
+    })
+
+    test('extracts null exitCode for signal termination', () => {
+      const payloadWithNullExitCode = JSON.stringify([
+        {
+          type: 'json',
+          value: {
+            command: 'kill',
+            stdout: '',
+            stderr: '',
+            exitCode: null,
+          },
+        },
+      ])
+
+      const { exitCode } = parseTerminalOutput(payloadWithNullExitCode)
+
+      expect(exitCode).toBeNull()
+    })
+
+    test('returns undefined exitCode for raw string output', () => {
+      const { exitCode } = parseTerminalOutput('raw string output')
+
+      expect(exitCode).toBeUndefined()
     })
   })
 })

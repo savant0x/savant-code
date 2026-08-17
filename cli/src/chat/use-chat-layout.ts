@@ -184,7 +184,6 @@ export function useChatLayout(
     isSavantFreeSessionOver,
     shouldShowStatusLine,
     handleMouseActivity,
-    showSidebar,
     directoryDisplay,
   } = useChatDerived({
     inputValue,
@@ -320,7 +319,6 @@ export function useChatLayout(
     onPublish: handlePublish,
     onSubmit: handleSubmit,
     sidebar: {
-      showSidebar,
       contextTokensUsed,
       contextTokensMax,
       sessionCost,

@@ -26,6 +26,11 @@ const PHASE_MAP: Record<string, PhaseMapping> = {
   red: { glyph: 'phaseActive', colorKey: 'error', label: 'RED' },
   green: { glyph: 'phaseActive', colorKey: 'success', label: 'GREEN' },
   audit: { glyph: 'phaseAudit', colorKey: 'warning', label: 'AUDIT' },
+  adversarial: {
+    glyph: 'phaseAudit',
+    colorKey: 'phaseAdversarial',
+    label: 'ADVERSARIAL',
+  },
   self_correct: { glyph: 'phaseFix', colorKey: 'warning', label: 'FIX' },
   complete: { glyph: 'phaseDone', colorKey: 'primary', label: 'DONE' },
 }

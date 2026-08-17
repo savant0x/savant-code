@@ -17,7 +17,7 @@ export interface TerminalBreakpoints {
   isTall: boolean // >= 20 rows (alias for backward compatibility)
 }
 
-const WIDTH_BREAKPOINTS = {
+export const WIDTH_BREAKPOINTS = {
   narrow: 60,
   mediumWidth: 100,
 } as const

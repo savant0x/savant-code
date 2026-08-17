@@ -4,9 +4,11 @@ import {
   blendHex,
   DIFF_ADD_FOREGROUND,
   DIFF_REMOVE_FOREGROUND,
+  getDiffHeaderPath,
   NEON_GREEN,
   NEON_RED,
   parseDiffLines,
+  relativeLuminance,
 } from '../diff-stats'
 
 describe('parseDiffLines', () => {
@@ -117,6 +119,80 @@ describe('parseDiffLines', () => {
   })
 })
 
+describe('parseDiffLines line numbering (FID-2026-0816-009)', () => {
+  test('numbers context/add/remove rows from the hunk start', () => {
+    const diff = '@@ -3,3 +10,3 @@\n keep\n-remove\n+added\n'
+    const { lines } = parseDiffLines(diff)
+
+    // Context: old 3 / new 10 (both columns advance).
+    expect(lines[1].kind).toBe('context')
+    expect(lines[1].oldLine).toBe(3)
+    expect(lines[1].newLine).toBe(10)
+    // Remove: old 4, no new.
+    expect(lines[2].kind).toBe('remove')
+    expect(lines[2].oldLine).toBe(4)
+    expect(lines[2].newLine).toBeUndefined()
+    // Add: new 11, no old.
+    expect(lines[3].kind).toBe('add')
+    expect(lines[3].newLine).toBe(11)
+    expect(lines[3].oldLine).toBeUndefined()
+  })
+
+  test('resets numbering per hunk (multi-hunk diff)', () => {
+    const diff = '@@ -5 +5 @@\n ctx\n@@ -100,2 +200,2 @@\n a\n-b\n'
+    const { lines } = parseDiffLines(diff)
+    // lines[2] is the second hunk header itself (no numbers); lines[3] is the
+    // context row that follows it.
+    expect(lines[3].oldLine).toBe(100)
+    expect(lines[3].newLine).toBe(200)
+    expect(lines[4].oldLine).toBe(101)
+  })
+
+  test('blank gutter on zero-start sides (create/delete files)', () => {
+    const created = parseDiffLines('@@ -0,0 +1,3 @@\n+a\n+b\n')
+    expect(created.lines[1].oldLine).toBeUndefined()
+    expect(created.lines[1].newLine).toBe(1)
+    expect(created.lines[2].newLine).toBe(2)
+
+    const deleted = parseDiffLines('@@ -1,3 +0,0 @@\n-x\n')
+    expect(deleted.lines[1].oldLine).toBe(1)
+    expect(deleted.lines[1].newLine).toBeUndefined()
+  })
+
+  test('malformed hunk deactivates numbering (never a fabricated number)', () => {
+    const { lines } = parseDiffLines('@@ nope @@\n text\n')
+    expect(lines[1].oldLine).toBeUndefined()
+    expect(lines[1].newLine).toBeUndefined()
+  })
+
+  test('header and hunk rows carry no line numbers', () => {
+    const { lines } = parseDiffLines('diff --git a/f b/f\n@@ -1 +1 @@\n')
+    expect(lines[0].oldLine).toBeUndefined()
+    expect(lines[0].newLine).toBeUndefined()
+    expect(lines[1].oldLine).toBeUndefined()
+    expect(lines[1].newLine).toBeUndefined()
+  })
+})
+
+describe('getDiffHeaderPath', () => {
+  test('prefers the +++ b/ side', () => {
+    const diff =
+      'diff --git a/src/f.ts b/src/f.ts\n--- a/src/f.ts\n+++ b/src/f.ts\n'
+    expect(getDiffHeaderPath(diff)).toBe('src/f.ts')
+  })
+
+  test('falls back to the diff --git b/ trailer', () => {
+    expect(getDiffHeaderPath('diff --git a/old.ts b/src/new.ts\n')).toBe(
+      'src/new.ts',
+    )
+  })
+
+  test('returns empty when absent', () => {
+    expect(getDiffHeaderPath('@@ -1 +1 @@\n')).toBe('')
+    expect(getDiffHeaderPath('')).toBe('')
+  })
+})
+
 describe('blendHex', () => {
   test('50/50 blend of neon green over black is #1d800a', () => {
     expect(blendHex(NEON_GREEN, '#000000', 0.5)).toBe('#1d800a')
@@ -152,5 +228,28 @@ describe('diff constants', () => {
     expect(NEON_RED).toBe('#ff3131')
     expect(DIFF_ADD_FOREGROUND).toBe('#0a3d0a')
     expect(DIFF_REMOVE_FOREGROUND).toBe('#3d0a0a')
+  })
+})
+
+describe('relativeLuminance', () => {
+  test('black is 0, white is 1', () => {
+    expect(relativeLuminance('#000000')).toBe(0)
+    expect(relativeLuminance('#ffffff')).toBe(1)
+  })
+
+  test('neon green is far brighter than neon red', () => {
+    expect(relativeLuminance('#39ff14')).toBeGreaterThan(0.7)
+    expect(relativeLuminance('#ff2d55')).toBeLessThan(0.4)
+  })
+
+  test('bright fills (cyan/orange/violet) sit above the 0.25 floor', () => {
+    for (const hex of ['#18faf9', '#ff9500', '#c084fc', '#8f8f99']) {
+      expect(relativeLuminance(hex)).toBeGreaterThan(0.25)
+    }
+  })
+
+  test('malformed input degrades to black (0)', () => {
+    expect(relativeLuminance('nope')).toBe(0)
+    expect(relativeLuminance('#12345')).toBe(0)
   })
 })

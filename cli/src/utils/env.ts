@@ -102,6 +102,21 @@ export const isDirectProviderMode = (): boolean => {
 }
 
 /**
+ * Whether to suppress OpenTUI's OSC 66 explicit-width query.
+ *
+ * The query leaks a literal "66" artifact into stdout on terminals that do not
+ * answer it — most notably Windows Console (legacy conhost). Windows Terminal
+ * and other conpty-backed terminals set WT_SESSION; legacy conhost does not, so
+ * on win32 a missing WT_SESSION marks the legacy-console floor. Capable
+ * terminals keep the query (explicit-width correctness); only the legacy floor
+ * opts out.
+ */
+export const shouldSuppressExplicitWidthQuery = (
+  platform: NodeJS.Platform = process.platform,
+  env: NodeJS.ProcessEnv = process.env,
+): boolean => platform === 'win32' && !env.WT_SESSION
+
+/**
  * Get the raw system process.env object.
  * Use this when you need to pass the full environment to subprocesses
  * or when you need to set environment variables at runtime.
