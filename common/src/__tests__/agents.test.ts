@@ -10,7 +10,7 @@ describe('ECHO_PROTOCOL_INSTRUCTIONS', () => {
     expect(ECHO_PROTOCOL_INSTRUCTIONS).toContain('templates/FID-TEMPLATE.md')
     expect(ECHO_PROTOCOL_INSTRUCTIONS).toContain('Only the Recorder')
     expect(ECHO_PROTOCOL_INSTRUCTIONS).toContain(
-      'created | analyzed | fixed | verified | closed',
+      'created | analyzed | fixed | verified | converged | closed',
     )
   })
 })
