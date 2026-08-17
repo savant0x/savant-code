@@ -571,12 +571,12 @@ The implementation and focused suites do not replace a live user-path test.
 For design-system-specific coverage, use the
 [`design-system live UX/performance prompt`](../../dev/test-prompts/design-system-live-ux-performance.md).
 For a complete regression, use the
-[`v0.0.24 harness A–Z live-test prompt`](../../dev/test-prompts/az-v0.0.24-harness-live-test.md),
+[`v0.0.25 harness A–Z live-test prompt`](../../dev/test-prompts/az-v0.0.25-harness-live-test.md),
 which treats the changelog as a coverage index and also exercises protocol
 boot, ECHO enforcement, LEARNINGS validation, provider/configuration parity,
 Code Universe, SDK/headless paths, packaging wrappers, and release diagnostics.
 It writes its report to
-`dev/scratchpad/az-v0.0.24-harness-live-test-report.md` and keeps provider or
+`dev/scratchpad/az-v0.0.25-harness-live-test-report.md` and keeps provider or
 environment limitations separate from product defects. A live result is
 usability/performance evidence; it is not a substitute for independent
 implementation sign-off. The design-system-specific live-test prompt and its

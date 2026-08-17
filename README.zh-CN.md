@@ -8,7 +8,7 @@
 
 基于 TypeScript/Bun 构建，受 ECHO 协议治理，并针对本地优先的 Ollama 使用场景设计。
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-1.3.14-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![React](https://img.shields.io/badge/React-19-%23000000?style=flat-square&logo=react&logoColor=%2300fbff)](https://react.dev/)[![OpenTUI](https://img.shields.io/badge/OpenTUI-0.2.2-%23000000?style=flat-square&logo=opentui&logoColor=%2300fbff)](https://github.com/anomalyco/opentui)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](ECHO.md)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![Release](https://img.shields.io/badge/Release-v0.0.24-%23000000?style=flat-square&logo=semver&logoColor=%2300fbff)](CHANGELOG.md)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-1.3.14-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![React](https://img.shields.io/badge/React-19-%23000000?style=flat-square&logo=react&logoColor=%2300fbff)](https://react.dev/)[![OpenTUI](https://img.shields.io/badge/OpenTUI-0.5.3-%23000000?style=flat-square&logo=opentui&logoColor=%2300fbff)](https://github.com/anomalyco/opentui)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](ECHO.md)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![Release](https://img.shields.io/badge/Release-v0.0.25-%23000000?style=flat-square&logo=semver&logoColor=%2300fbff)](CHANGELOG.md)
 
 </div>
 
@@ -201,7 +201,7 @@ MCP 工具发现、模式切换（`HYBRID` / `SCAFFOLD` / `STRICT` / `ANALYZE`�
   agent 上下文；自定义系统经过校验、版本化保存，并在 EHEL 写入边界进行检查。详细架构、交互式创建/编辑、
   安全边界、持久化、强制检查与打包证据见
   [设计系统库指南](docs/design/design-system-library.md)。如需实时验证 CLI 可用性、智能体反馈与延迟，请运行
-  [设计系统实时测试提示](dev/test-prompts/design-system-live-ux-performance.md)。对于覆盖当前更新全部变更域的完整回归，请运行[v0.0.24 全自动 A–Z 实时测试提示](dev/test-prompts/az-v0.0.24-harness-live-test.md)，结果写入`dev/scratchpad/az-v0.0.24-harness-live-test-report.md`。这些提示及其实时结果均有独立的签核边界。实现已在工作树中关闭；独立的最终文档/实现审查仍在等待中。
+  [设计系统实时测试提示](dev/test-prompts/design-system-live-ux-performance.md)。对于覆盖当前更新全部变更域的完整回归，请运行[v0.0.25 全自动 A–Z 实时测试提示](dev/test-prompts/az-v0.0.25-harness-live-test.md)，结果写入`dev/scratchpad/az-v0.0.25-harness-live-test-report.md`。这些提示及其实时结果均有独立的签核边界。实现已在工作树中关闭；独立的最终文档/实现审查仍在等待中。
 - **提供商设置** —— `/provider` 打开交互式下拉选择器，显示所有提供商及其 ✓/✗ 配置状态。选择提供商后可
   输入其 API 密钥（遮罩输入）。密钥存储在本地 `credentials.json`。
 - **遥测控制** —— `/telemetry status|enable|disable` 切换远程分析与错误上报。主 CLI 默认开启远程分析，但用户可以

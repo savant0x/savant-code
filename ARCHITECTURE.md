@@ -276,6 +276,6 @@ but do NOT constitute independent conversational agents:
 These two counts are NOT in conflict: the 10-agent roster represents runtime conversation entities; the 19-dir count
 represents filesystem entries. Future checklists/audits should not confuse them.
 
-**Current state:** The repository uses the `@savant-code/*` workspace names and import paths at version `0.0.24`.
+**Current state:** The repository uses the `@savant-code/*` workspace names and import paths at version `0.0.25`.
 Historical rebrand and checkpoint decisions remain in the archived session records and release history; this architecture
 document tracks the current repository state.

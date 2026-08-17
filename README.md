@@ -10,11 +10,16 @@ touches your repo.**
 Built with TypeScript/Bun, governed by the ECHO Protocol, and designed for
 local-first use with Ollama.
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-1.3.14-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![React](https://img.shields.io/badge/React-19-%23000000?style=flat-square&logo=react&logoColor=%2300fbff)](https://react.dev/)[![OpenTUI](https://img.shields.io/badge/OpenTUI-0.5.3-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](https://github.com/anomalyco/opentui)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](ECHO.md)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![Release](https://img.shields.io/badge/Release-v0.0.24-%2300fbff?style=flat-square&logo=semver&logoColor=%2300fbff)](CHANGELOG.md)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-1.3.14-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![React](https://img.shields.io/badge/React-19-%23000000?style=flat-square&logo=react&logoColor=%2300fbff)](https://react.dev/)[![OpenTUI](https://img.shields.io/badge/OpenTUI-0.5.3-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](https://github.com/anomalyco/opentui)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](ECHO.md)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![Release](https://img.shields.io/badge/Release-v0.0.25-%2300fbff?style=flat-square&logo=semver&logoColor=%2300fbff)](CHANGELOG.md)
 
 </div>
 
-> **v0.0.24** — this release ships the optimization and automation program
+> **v0.0.25** — this release ships the terminal UI overhaul (FID-2026-0816-002..012:
+> OpenTUI 0.5.3 foundation, near-black/cyan design tokens, the animation engine,
+> the diff-viewer + phase-bar redesign, the rich terminal output panel, the manual
+> sidebar fold, the Savant logo easter egg, and the reactive Trust Matrix) plus the
+> native tool-call recovery hardening (FID-2026-0816-012). Previously shipped: the
+> optimization and automation program
 > (FIDs 003–010), the ECHO remediation package (FID-2026-0811-015..021), and
 > the LEARNINGS feedback-system remediation (FID-2026-0811-022..029), plus
 > four newer programs: Zero-Trust Agentic Provenance (FID-2026-0813-001..010),
@@ -321,8 +326,8 @@ code 2 blocks a tool.
   enforcement behavior, and packaging evidence. For live usability, agent-feedback,
   and latency validation, run the [design-system live test prompt](dev/test-prompts/design-system-live-ux-performance.md).
   For a complete regression across the current feature domains, run the
-  [v0.0.24 harness A–Z live-test prompt](dev/test-prompts/az-v0.0.24-harness-live-test.md), which writes an
-  evidence report to `dev/scratchpad/az-v0.0.24-harness-live-test-report.md`.
+  [v0.0.25 harness A–Z live-test prompt](dev/test-prompts/az-v0.0.25-harness-live-test.md), which writes an
+  evidence report to `dev/scratchpad/az-v0.0.25-harness-live-test-report.md`.
 - **MCP tools** — Model Context Protocol servers discovered at startup, schemas
   published to the LLM API.
 - **`deep_research` tool** — the Researcher role's mechanical multi-query web
