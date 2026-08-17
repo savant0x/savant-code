@@ -129,27 +129,59 @@ export default {
 
 ## Available Tools
 
+Custom agents can use any of the published tools below. See `types/tools.ts`
+for full parameter details and `common/src/tools/params/tool/` for the
+canonical descriptions.
+
 ### File Operations
 
-- **`read_files`**: Read file contents
-- **`write_file`**: Create or modify entire files
-- **`str_replace`**: Make targeted string replacements
-- **`code_search`**: Search for patterns across the codebase
+- **`read_files`** — read file contents; use `offset`/`limit` to read a line range of a large file
+- **`read_subtree`** — read a whole directory subtree
+- **`write_file`** — create or replace an entire file
+- **`str_replace`** — make targeted string replacements
+- **`apply_patch`** — apply a multi-hunk patch
+- **`propose_write_file`** / **`propose_str_replace`** — propose (not apply) an edit
+- **`run_file_change_hooks`** — run post-edit hooks
+- **`list_directory`** / **`glob`** — discover files by name or pattern
+- **`find_files`** — locate files by path
+- **`code_search`** — search file contents with ripgrep
 
 ### Execution
 
-- **`run_terminal_command`**: Execute shell commands
-- **`spawn_agents`**: Delegate tasks to other agents
-- **`end_turn`**: Finish the agent's response
+- **`run_readonly_command`** — read-only shell commands (git status/diff/log,
+  grep, ls, typecheck, tests) available in **every** ECHO phase including idle/red
+- **`run_terminal_command`** — full shell (phase-gated to green/audit/self_correct)
+- **`spawn_agents`** — delegate to sub-agents
+- **`transition_phase`** — move through the Perfection Loop FSM
+- **`end_turn`** — finish the response
 
 ### Web & Research
 
-- **`web_search`**: Search the internet for information
-- **`read_url`**: Fetch a URL and extract readable page text
-- **`read_docs`**: Read technical documentation
-- **`browser_logs`**: Navigate and inspect web pages
+- **`web_search`** — search the web
+- **`read_url`** — fetch a URL's readable text
+- **`read_docs`** — read technical documentation
+- **`deep_research`** — multi-source research
+- **`browser_logs`** — navigate and inspect pages
 
-See `types/tools.ts` for detailed parameter information.
+### Planning, state & output
+
+- **`write_todos`** — track a step-by-step plan
+- **`create_plan`** — formulate a plan
+- **`task_completed`** — signal completion
+- **`suggest_followups`** — suggest next steps
+- **`ask_user`** — ask the user a question
+- **`set_output`** / **`set_messages`** / **`add_message`** — write output/messages
+- **`set_scaffold_complete`** — mark scaffolding done
+- **`update_goal`** / **`get_goal`** — manage the current goal
+
+### Knowledge graph, skills & utilities
+
+- **`query_blast_radius`** / **`query_domain_clusters`** / **`query_node_edges`** — codebase graph queries
+- **`skill`** — load a reusable skill
+- **`gravity_index`** — discover third-party service integrations
+- **`render_ui`** — render a small interactive widget
+- **`lookup_agent_info`** — look up agent metadata
+- **`think_deeply`** / **`sequentialthinking`** — structured reasoning
 
 ## Programmatic Control
 

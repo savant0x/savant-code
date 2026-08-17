@@ -23,6 +23,45 @@ an audit record, not an active work queue.
 > scale project-wide with neutral near-black grays; semantic accents are
 > unchanged. Historical archive records are not rewritten.
 
+## 2026-08-17 closure — FID-2026-0817-001 (TerminalCommandDisplay copy button + traffic-light redesign)
+
+`FID-2026-0817-001-terminal-command-display-copy-button-and-traffic-lights.md`
+(severity: medium) closed and archived 2026-08-17. Delivered: a panel-owned
+copy footer on `TerminalCommandDisplay` that copies the entire block (command
+line, status/meta row, and raw output — no title-bar dots, no line-number
+gutter), so the shared renderer gives every context (history, ghost-message,
+`run_terminal_command`, `run_readonly_command`) a copy affordance;
+`tool-branch.tsx` reconciled so terminal/readonly commands no longer get a
+double copy button; and the decorative traffic lights recolored
+green/yellow/red, right-aligned, with a budget-gated `blendHex` brightness
+pulse (zero `setInterval`, suspends to static dots under the animation budget).
+
+Gates: typecheck ×4 exit 0; new `terminal-command-display.test.ts` 15 pass /
+0 fail; root `bun run test` 0 fail; eslint 0; lint:md 0; prettier clean;
+`validate:repository` PASS.
+
+## 2026-08-17 closure — FID-2026-0817-002 (v0.0.25 harness report — capability completeness + findings)
+
+`FID-2026-0817-002-v025-agent-capability-completeness-and-findings.md`
+(severity: medium) closed and archived 2026-08-17. Root cause: the in-harness
+agent guessed because its capability surface was documented unevenly.
+Delivered: a generated phase-availability table naming `run_readonly_command`
+in every phase with a read-only-shell callout + a `validateToolAvailability`
+drift guard; safe pipes in `run_readonly_command` (split on unquoted `|`,
+per-segment denylist, shell interpreters added to the dangerous-command
+denylist so `cat x | sh` stays blocked); `read_files` `offset`/`limit` line
+ranges; batch `run_readonly_command` (`commands` array); the names-only
+sub-agent addendum upgraded; `initial-agents-dir/README.md` tool list
+rewritten; a `scripts/test-count.ts` helper; the A–Z `V025-160` count
+corrected 5/5 → 3/3. Also resolved the report's two findings: AV-001 (the
+`bun build` gate now passes on win32 via `--external '@opentui/core-*'`) and
+AV-002 (the `contrast.test.ts` slate fixtures replaced with current
+savant-cyberpunk tokens).
+
+Gates: typecheck ×4 exit 0; root `bun run test` 0 fail; eslint 0; lint:md 0;
+prettier clean; `generate:protocol-bundle:check` exit 0; protocol-copies
+token-budget baseline ratified.
+
 ## 2026-08-16 closure — FID-2026-0816-009 (diff viewer + phase-transition redesign)
 
 `FID-2026-0816-009-diff-viewer-and-transition-notification-visual-redesign.md`

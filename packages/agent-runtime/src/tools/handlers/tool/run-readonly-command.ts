@@ -26,7 +26,7 @@ const GIT_MUTATING_REGEX =
   /^\s*git\s+(?:branch\s+-(?:D|d|M|m|--force|--move|--delete)|tag\s+-(?:d|delete|--delete)|remote\s+(?:add|remove|rename|prune|set-url)|(?:checkout|reset|rm|mv|merge|rebase|cherry-pick|revert|apply|am|switch)\b|\S+\s+--output|--force\b)/i
 // Dangerous commands that could execute arbitrary code or access the network.
 const DANGEROUS_COMMAND_REGEX =
-  /^\s*(?:curl|wget|ssh|scp|rsync|nc|ncat|socat|telnet|eval|exec|source|\.\s|pip\s+install|npm\s+(?:install|publish|exec)|npx\s+(?!--version)|yarn\s+(?:add|remove|publish)|cargo\s+(?:install|publish)|go\s+run|python\s+-c|node\s+-e|deno\s+run)\b/i
+  /^\s*(?:curl|wget|ssh|scp|rsync|nc|ncat|socat|telnet|eval|exec|source|sh|bash|zsh|fish|dash|ksh|csh|tcsh|powershell|pwsh|cmd|\.\s|pip\s+install|npm\s+(?:install|publish|exec)|npx\s+(?!--version)|yarn\s+(?:add|remove|publish)|cargo\s+(?:install|publish)|go\s+run|python\s+-c|node\s+-e|deno\s+run)\b/i
 /**
  * Split a command on unquoted `&&` separators. Respects single quotes,
  * double quotes, and backslash escapes so that `echo "a && b"` is not split.
@@ -70,6 +70,63 @@ function splitSafeAnd(command: string): string[] {
   }
   segments.push(current)
   return segments
+}
+/**
+ * FID-2026-0817-002 B1: split a command on unquoted single `|` pipe
+ * separators, mirroring splitSafeAnd's quote/escape awareness. A `||` is NOT
+ * split (it is the OR-operator and stays forbidden); `hasOrOperator` reports it
+ * so the caller rejects it. Each resulting segment is then validated
+ * independently against the denylists, so `cat x | sh` is rejected because the
+ * `sh` segment is a shell interpreter (added to DANGEROUS_COMMAND_REGEX).
+ */
+function splitSafePipes(command: string): {
+  segments: string[]
+  hasOrOperator: boolean
+} {
+  const segments: string[] = []
+  let current = ''
+  let inSingle = false
+  let inDouble = false
+  let escapeNext = false
+  let hasOrOperator = false
+  for (let i = 0; i < command.length; i++) {
+    const ch = command[i]
+    const nextCh = command[i + 1]
+    if (escapeNext) {
+      current += ch
+      escapeNext = false
+      continue
+    }
+    if (ch === '\\') {
+      current += ch
+      escapeNext = true
+      continue
+    }
+    if (ch === "'" && !inDouble) {
+      inSingle = !inSingle
+      current += ch
+      continue
+    }
+    if (ch === '"' && !inSingle) {
+      inDouble = !inDouble
+      current += ch
+      continue
+    }
+    if (!inSingle && !inDouble && ch === '|') {
+      if (nextCh === '|') {
+        hasOrOperator = true
+        current += '||'
+        i++ // skip the second |
+        continue
+      }
+      segments.push(current)
+      current = ''
+      continue
+    }
+    current += ch
+  }
+  segments.push(current)
+  return { segments, hasOrOperator }
 }
 /**
  * FID-2026-0814-004 H-02: shell-aware metacharacter scan. Replaces the old
@@ -123,58 +180,84 @@ function hasUnquotedForbiddenMetachar(command: string): boolean {
   }
   return false
 }
+function validateReadonlySegment(segment: string): {
+  valid: boolean
+  reason?: string
+} {
+  // Check for forbidden metacharacters, but allow Windows stderr redirections
+  // (2>nul, 2>&1) which are read-only diagnostic patterns. The scan is
+  // quote/class-aware (FID-2026-0814-004 H-02): `|`, `$`, `&` inside quotes
+  // or character classes are literal and never flagged. Unquoted `|` is split
+  // into pipe segments before this check, so a remaining `|` here is only
+  // `||` (rejected earlier) or a quoted literal.
+  if (
+    hasUnquotedForbiddenMetachar(segment) &&
+    !WINDOWS_STDERR_REDIRECT_REGEX.test(segment)
+  ) {
+    return {
+      valid: false,
+      reason:
+        'Command contains forbidden shell metacharacters (redirection, command substitution, backgrounding, or `||`). Use run_terminal_command in green/audit phase for complex commands.',
+    }
+  }
+  // Denylist checks: block known-dangerous commands
+  if (DESTRUCTIVE_COMMAND_REGEX.test(segment)) {
+    return {
+      valid: false,
+      reason:
+        'Command is a destructive filesystem operation. Use run_terminal_command in green/audit phase for destructive commands.',
+    }
+  }
+  if (GIT_MUTATING_REGEX.test(segment)) {
+    return {
+      valid: false,
+      reason:
+        'Git invocation contains mutating flags (delete/remove/reset/checkout/etc). Use run_terminal_command in green/audit phase for mutating git operations.',
+    }
+  }
+  if (DANGEROUS_COMMAND_REGEX.test(segment)) {
+    return {
+      valid: false,
+      reason:
+        'Command could execute arbitrary code or access the network. Use run_terminal_command in green/audit phase for such commands.',
+    }
+  }
+  return { valid: true }
+}
 function isReadonlyCommand(command: string): {
   valid: boolean
   reason?: string
 } {
-  const segments = splitSafeAnd(command)
-  for (const rawSegment of segments) {
-    const segment = rawSegment.trim()
-    if (segment.length === 0) {
+  const andSegments = splitSafeAnd(command)
+  for (const rawAndSegment of andSegments) {
+    const andSegment = rawAndSegment.trim()
+    if (andSegment.length === 0) {
       return {
         valid: false,
         reason:
           'Command contains an empty segment (dangling, leading, or consecutive `&&`). Use run_terminal_command in green/audit phase for complex command chains.',
       }
     }
-    // Check for forbidden metacharacters, but allow Windows stderr redirections
-    // (2>nul, 2>&1) which are read-only diagnostic patterns. The scan is
-    // quote/class-aware (FID-2026-0814-004 H-02): `|`, `$`, `&` inside quotes
-    // or character classes are literal and never flagged.
-    if (
-      hasUnquotedForbiddenMetachar(segment) &&
-      !WINDOWS_STDERR_REDIRECT_REGEX.test(segment)
-    ) {
+    const { segments: pipeSegments, hasOrOperator } = splitSafePipes(andSegment)
+    if (hasOrOperator) {
       return {
         valid: false,
         reason:
-          'Command contains forbidden shell metacharacters (redirection, pipes, command substitution, backgrounding, or `||`). Use run_terminal_command in green/audit phase for complex commands.',
+          'Command contains `||` (OR-operator). Use run_terminal_command in green/audit phase for conditional command chains.',
       }
     }
-    // Denylist checks: block known-dangerous commands
-    if (DESTRUCTIVE_COMMAND_REGEX.test(segment)) {
-      return {
-        valid: false,
-        reason:
-          'Command is a destructive filesystem operation. Use run_terminal_command in green/audit phase for destructive commands.',
+    for (const rawPipeSegment of pipeSegments) {
+      const segment = rawPipeSegment.trim()
+      if (segment.length === 0) {
+        return {
+          valid: false,
+          reason:
+            'Command contains an empty pipe segment (dangling or consecutive `|`). Use run_terminal_command in green/audit phase for complex pipelines.',
+        }
       }
+      const result = validateReadonlySegment(segment)
+      if (!result.valid) return result
     }
-    if (GIT_MUTATING_REGEX.test(segment)) {
-      return {
-        valid: false,
-        reason:
-          'Git invocation contains mutating flags (delete/remove/reset/checkout/etc). Use run_terminal_command in green/audit phase for mutating git operations.',
-      }
-    }
-    if (DANGEROUS_COMMAND_REGEX.test(segment)) {
-      return {
-        valid: false,
-        reason:
-          'Command could execute arbitrary code or access the network. Use run_terminal_command in green/audit phase for such commands.',
-      }
-    }
-    // All other commands are allowed (denylist architecture).
-    // This includes: findstr, Windows diagnostic tools, any command not in the denylist.
   }
   return { valid: true }
 }
@@ -197,34 +280,84 @@ export const handleRunReadonlyCommand = (async ({
     toolCall: ClientToolCall<'run_terminal_command'>,
   ) => Promise<SavantCodeToolOutput<'run_terminal_command'>>
 }) => {
-  const { command, cwd, timeout_seconds } = toolCall.input
-  const safety = isReadonlyCommand(command)
-  if (!safety.valid) {
+  const { command, commands, cwd, timeout_seconds } = toolCall.input
+  const isBatch = commands !== undefined
+  const allCommands: string[] = isBatch
+    ? commands
+    : command !== undefined
+      ? [command]
+      : []
+
+  if (allCommands.length === 0) {
     return {
       output: [
         {
           type: 'json',
           value: {
-            command,
+            command: command ?? '',
             stdout: '',
-            stderr: `run_readonly_command rejected: ${safety.reason}`,
+            stderr: 'run_readonly_command rejected: no command provided.',
             exitCode: 1,
           },
         },
       ] as SavantCodeToolOutput<'run_readonly_command'>,
     }
   }
-  const clientToolCall: ClientToolCall<'run_terminal_command'> = {
-    toolName: 'run_terminal_command',
-    toolCallId: toolCall.toolCallId,
-    input: {
-      command,
-      mode: 'assistant',
-      process_type: 'SYNC',
-      timeout_seconds,
-      cwd,
-    },
-  }
+
   await previousToolCallFinished
-  return { output: await requestClientToolCall(clientToolCall) }
+
+  // FID-2026-0817-002 B3: validate + delegate one command. Reused by both the
+  // single-command and batch paths so validation never diverges.
+  const runOne = async (
+    cmd: string,
+  ): Promise<SavantCodeToolOutput<'run_terminal_command'>> => {
+    const safety = isReadonlyCommand(cmd)
+    if (!safety.valid) {
+      return [
+        {
+          type: 'json',
+          value: {
+            command: cmd,
+            stdout: '',
+            stderr: `run_readonly_command rejected: ${safety.reason}`,
+            exitCode: 1,
+          },
+        },
+      ]
+    }
+    const clientToolCall: ClientToolCall<'run_terminal_command'> = {
+      toolName: 'run_terminal_command',
+      toolCallId: toolCall.toolCallId,
+      input: {
+        command: cmd,
+        mode: 'assistant',
+        process_type: 'SYNC',
+        timeout_seconds,
+        cwd,
+      },
+    }
+    return requestClientToolCall(clientToolCall)
+  }
+
+  if (isBatch) {
+    const results: Array<SavantCodeToolOutput<'run_terminal_command'>[number]> =
+      []
+    for (const cmd of allCommands) {
+      const out = await runOne(cmd)
+      results.push(out[0])
+    }
+    return {
+      output: [
+        {
+          type: 'json',
+          value: {
+            commands: allCommands,
+            results: results.map((result) => result.value),
+          },
+        },
+      ] as SavantCodeToolOutput<'run_readonly_command'>,
+    }
+  }
+
+  return { output: await runOne(allCommands[0]) }
 }) as SavantCodeToolHandlerFunction<'run_readonly_command'>

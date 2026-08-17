@@ -141,9 +141,10 @@ describe('protocol-copies: renderers produce parity content', () => {
 
 describe('protocol-copies: token budget discipline (FID-018 preserved)', () => {
   it('instructions stay within ±5% of the previous hand-written array', () => {
-    // Baseline: the pre-FID-0810-003 joined array (8866 chars) recorded from
-    // git HEAD:common/src/constants/agents.ts.
-    const baseline = 8866
+    // Baseline: pre-FID-0810-003 joined array (8866 chars) + the FID-2026-0817-002
+    // read-only-shell phase-gating callout (9691 chars) recorded from
+    // common/src/constants/echo-protocol-instructions.generated.ts.
+    const baseline = 9691
     const current = ECHO_PROTOCOL_INSTRUCTIONS.length
     expect(Math.abs(current - baseline) / baseline).toBeLessThanOrEqual(0.05)
   })

@@ -810,12 +810,12 @@
     "common/src/tools/params/tool/propose-str-replace.ts": 104,
     "common/src/tools/params/tool/propose-write-file.ts": 72,
     "common/src/tools/params/tool/read-docs.ts": 86,
-    "common/src/tools/params/tool/read-files.ts": 62,
+    "common/src/tools/params/tool/read-files.ts": 94,
     "common/src/tools/params/tool/read-subtree.ts": 84,
     "common/src/tools/params/tool/read-url.ts": 82,
     "common/src/tools/params/tool/render-ui.ts": 204,
     "common/src/tools/params/tool/run-file-change-hooks.ts": 58,
-    "common/src/tools/params/tool/run-readonly-command.ts": 77,
+    "common/src/tools/params/tool/run-readonly-command.ts": 93,
     "common/src/tools/params/tool/run-terminal-command.ts": 186,
     "common/src/tools/params/tool/sequential-thinking.ts": 111,
     "common/src/tools/params/tool/set-messages.ts": 43,
@@ -1081,7 +1081,7 @@
     "packages/agent-runtime/src/tools/handlers/tool/propose-write-file.ts": 90,
     "packages/agent-runtime/src/tools/handlers/tool/proposed-content-store.ts": 65,
     "packages/agent-runtime/src/tools/handlers/tool/read-docs.ts": 161,
-    "packages/agent-runtime/src/tools/handlers/tool/read-files.ts": 62,
+    "packages/agent-runtime/src/tools/handlers/tool/read-files.ts": 87,
     "packages/agent-runtime/src/tools/handlers/tool/read-subtree.ts": 199,
     "packages/agent-runtime/src/tools/handlers/tool/read-url.ts": 22,
     "packages/agent-runtime/src/tools/handlers/tool/render-ui.ts": 16,
@@ -1205,13 +1205,13 @@
     "scripts/eslint-rules/__fixtures__/unknown-bad.ts": 22,
     "scripts/eslint-rules/__fixtures__/unknown-good.ts": 36,
     "scripts/fid-ledger.ts": 291,
-    "scripts/generate-protocol-bundle.ts": 363,
+    "scripts/generate-protocol-bundle.ts": 411,
     "scripts/generate-provider-reference.ts": 203,
     "scripts/learnings-references.ts": 384,
     "scripts/learnings.ts": 396,
     "scripts/pre-push-scan.test.ts": 300,
     "scripts/pre-push-scan.ts": 325,
-    "scripts/protocol-copies.ts": 730,
+    "scripts/protocol-copies.ts": 732,
     "scripts/public-release.test.ts": 300,
     "scripts/public-release.ts": 2921,
     "scripts/quality-report.ts": 88,
@@ -1407,8 +1407,8 @@
       "rationale": "Measured intentional 0.0.24 remediation growth (FID-2026-0815 hot-path, crash-recovery, and React Rules-of-Hooks work); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "cli/src/components/blocks/tool-branch.tsx": {
-      "maxLines": 204,
-      "rationale": "Measured intentional 2026-08-16 UI-overhaul program growth (FID-2026-0816-002..012 + FID-2026-0816-012-native-tool-call-recovery-hardening); exact measured count"
+      "maxLines": 208,
+      "rationale": "Measured intentional 2026-08-16 UI-overhaul program growth + FID-2026-0817-001 (copy-button reconciliation); exact measured count"
     },
     "cli/src/components/build-mode-buttons.tsx": {
       "maxLines": 112,
@@ -1499,8 +1499,8 @@
       "rationale": "Measured intentional 2026-08-16 UI-overhaul program growth (FID-2026-0816-002..012 + FID-2026-0816-012-native-tool-call-recovery-hardening); exact measured count"
     },
     "cli/src/components/terminal-command-display.tsx": {
-      "maxLines": 316,
-      "rationale": "Measured intentional 2026-08-16 UI-overhaul program growth (FID-2026-0816-002..012 + FID-2026-0816-012-native-tool-call-recovery-hardening); exact measured count"
+      "maxLines": 483,
+      "rationale": "Measured intentional 2026-08-16 UI-overhaul program growth + FID-2026-0817-001 (copy footer + green/yellow/red right-aligned glowing traffic lights); exact measured count"
     },
     "cli/src/components/thinking.tsx": {
       "maxLines": 113,
@@ -1799,8 +1799,8 @@
       "rationale": "Measured intentional 0.0.24 remediation growth (FID-2026-0815 hot-path, crash-recovery, and React Rules-of-Hooks work); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "packages/agent-runtime/src/tools/handlers/tool/run-readonly-command.ts": {
-      "maxLines": 231,
-      "rationale": "Measured intentional FID-2026-0814-002..006 implementation growth (durable goal mode, hook system, harness frictions, compaction freshness, trust-matrix terminal states); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+      "maxLines": 364,
+      "rationale": "Measured intentional FID-2026-0814-002..006 + FID-2026-0817-002 growth (durable goal mode, hook system, harness frictions, compaction freshness, trust-matrix terminal states, safe pipes + batch command); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "packages/agent-runtime/src/tools/handlers/tool/spawn-agent-inline.ts": {
       "maxLines": 248,
@@ -1895,8 +1895,8 @@
       "rationale": "Measured intentional current-scope growth; decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "scripts/validation-manifest.ts": {
-      "maxLines": 468,
-      "rationale": "Measured intentional FID-2026-0816-001 growth (cli-bundle-resolution release gate so undeclared-dependency/phantom-resolution failures block release before shipping); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+      "maxLines": 478,
+      "rationale": "Measured intentional FID-2026-0816-001 + FID-2026-0817-002 growth (cli-bundle-resolution release gate + `--external '@opentui/core-*'` cross-platform-binary fix so undeclared-dependency/phantom-resolution failures block release before shipping); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "sdk/src/agents/load-agents.ts": {
       "maxLines": 344,

@@ -12,8 +12,16 @@ const inputSchema = z
     command: z
       .string()
       .min(1, 'Command cannot be empty')
+      .optional()
       .describe(
         "Read-only CLI command valid for the user's OS. Only non-destructive commands are allowed (e.g., typecheck, test, ls, grep, git status).",
+      ),
+    commands: z
+      .array(z.string().min(1, 'Command cannot be empty'))
+      .min(1, 'commands cannot be empty')
+      .optional()
+      .describe(
+        'Run several read-only commands in one call. Each command is validated independently and results are returned in order. When provided, `command` is ignored.',
       ),
     cwd: z
       .string()
@@ -28,7 +36,7 @@ const inputSchema = z
       .describe('Set to -1 for no timeout. Default 30'),
   })
   .describe(
-    'Execute a read-only CLI command from the project root. This tool works in any ECHO phase (including idle and red) but rejects commands that could mutate files or spawn sub-shells.',
+    'Execute one or more read-only CLI commands from the project root. This tool works in any ECHO phase (including idle and red) but rejects commands that could mutate files or spawn sub-shells.',
   )
 
 const description = [
@@ -39,6 +47,7 @@ const description = [
   '2. Running tests (e.g., `bun test`).',
   '3. Inspecting state with commands like `ls`, `cat`, `grep`, `find`, `git status`, `git diff`, `git log`.',
   '4. Chaining read-only commands with `&&` (e.g., `cd sdk && bun run typecheck`).',
+  '5. Piping read-only commands with `|` (e.g., `grep x | head -5`) — every pipe segment must itself be read-only.',
   '',
   'Working directory:',
   '- To run a command in a different directory, use the `cwd` parameter.',
@@ -48,10 +57,10 @@ const description = [
   'FORBIDDEN — any command containing the following will be rejected:',
   '- Output redirection: `>`, `>>`',
   '- Command substitution: `$()`, backticks',
-  '- Pipes: `|`',
-  '- Command chaining: `;`, `||`',
+  '- OR-operator / statement chaining: `||`, `;`',
   '- Backgrounding: `&`',
   '- Destructive commands: `rm`, `mv`, `cp`, `chmod`, `chown`, `mkfs`, etc.',
+  '- Shell interpreters and network tools: `sh`, `bash`, `zsh`, `curl`, `wget`, `ssh`, `eval`, `exec`, …',
   '',
   'Do NOT use this tool to create, edit, move, or delete files. Use `run_terminal_command` in `green` or `audit` phase for destructive operations.',
   '',
@@ -67,10 +76,17 @@ const description = [
   })}`,
 ].join('\n')
 
+export const batchReadonlyCommandOutputSchema = z.object({
+  commands: z.array(z.string()),
+  results: z.array(terminalCommandOutputSchema),
+})
+
 export const runReadonlyCommandParams = {
   toolName,
   endsAgentStep,
   description,
   inputSchema,
-  outputSchema: jsonToolResultSchema(terminalCommandOutputSchema),
+  outputSchema: jsonToolResultSchema(
+    z.union([terminalCommandOutputSchema, batchReadonlyCommandOutputSchema]),
+  ),
 } satisfies $ToolParams

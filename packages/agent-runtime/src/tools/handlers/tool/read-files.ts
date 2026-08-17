@@ -14,6 +14,24 @@ import type { AgentState } from '@savant-code/common/types/session-state'
 import type { ProjectFileContext } from '@savant-code/common/util/file'
 
 type ToolName = 'read_files'
+
+/**
+ * FID-2026-0817-002 B2: slice file content to a 1-indexed line window.
+ * `offset` defaults to line 1; `limit` defaults to the end of the file.
+ * Reading past EOF yields an empty string (no fabricated lines).
+ */
+export function sliceLines(
+  content: string,
+  offset: number | undefined,
+  limit: number | undefined,
+): string {
+  if (offset === undefined && limit === undefined) return content
+  const lines = content.split('\n')
+  const start = (offset ?? 1) - 1
+  const end = limit === undefined ? lines.length : start + limit
+  return lines.slice(start, end).join('\n')
+}
+
 export const handleReadFiles = (async (
   params: {
     previousToolCallFinished: Promise<void>
@@ -30,7 +48,7 @@ export const handleReadFiles = (async (
     agentState,
     fileContext,
   } = params
-  const { paths } = toolCall.input
+  const { paths, offset, limit } = toolCall.input
 
   await previousToolCallFinished
 
@@ -51,6 +69,13 @@ export const handleReadFiles = (async (
       requestedFiles: remaining,
     })
     addedFiles = [...embedded, ...fromFs]
+  }
+
+  if (offset !== undefined || limit !== undefined) {
+    addedFiles = addedFiles.map((file) => ({
+      ...file,
+      content: sliceLines(file.content, offset, limit),
+    }))
   }
 
   return {

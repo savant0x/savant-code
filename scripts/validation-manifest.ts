@@ -113,6 +113,15 @@ export function repositoryValidationGates(
       // A resolution failure must fail the release gates before shipping, not
       // the post-release binary workflow. Output lands in the gitignored
       // cli/bin/ so the worktree-fingerprint check stays clean.
+      //
+      // `--external '@opentui/core-*'` keeps the 8 platform-specific native
+      // binaries (declared optionalDependencies, loaded at runtime via dynamic
+      // import) out of the bundle. Only the current-OS binary is ever
+      // installed, so without this the gate false-fails on every single-OS
+      // machine with "Could not resolve: @opentui/core-darwin-x64" etc. — an
+      // environment limitation, not an undeclared import (A–Z v0.0.25 AV-001).
+      // The main `@opentui/core` package does NOT match the wildcard and is
+      // still bundled/resolved, so genuine undeclared-import failures still fire.
       label: 'cli-bundle-resolution',
       command: 'bun',
       args: [
@@ -120,6 +129,8 @@ export function repositoryValidationGates(
         'cli/src/index.tsx',
         '--production',
         '--target=bun',
+        '--external',
+        '@opentui/core-*',
         '--outdir',
         'cli/bin/.resolution-check',
       ],

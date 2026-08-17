@@ -55,6 +55,7 @@ import {
   renderRefresh,
   validateCondensedCopies,
 } from './protocol-copies.js'
+import { toolNames } from '../common/src/tools/constants'
 
 const ROOT = resolve(import.meta.dir, '..')
 const OUT_BUNDLE = resolve(
@@ -197,11 +198,58 @@ function parseFactsForRender(echoMd: string): ReturnType<typeof extractFacts> {
  * - harness-boundary sweep: harness-injected context must contain ZERO
  *   references to the single-agent document.
  */
+/**
+ * FID-2026-0817-002 A1: drift guard for the phase-gating classification in
+ * the generated instructions. The instructions claim "only 5 tools are
+ * phase-gated; everything else (including run_readonly_command) is all-phase";
+ * this asserts that claim against the live tool registry so a reclassified or
+ * renamed tool fails generation instead of silently drifting.
+ */
+function validateToolAvailability(): string[] {
+  const failures: string[] = []
+  const phaseGated = [
+    'write_file',
+    'str_replace',
+    'apply_patch',
+    'run_terminal_command',
+    'sequentialthinking',
+  ] as const
+  const allPhaseSanity = [
+    'run_readonly_command',
+    'read_files',
+    'code_search',
+    'glob',
+    'list_directory',
+  ] as const
+  const registry = new Set(toolNames)
+  for (const name of phaseGated) {
+    if (!registry.has(name)) {
+      failures.push(
+        `phase-gated tool "${name}" is missing from the toolNames registry.`,
+      )
+    }
+  }
+  for (const name of allPhaseSanity) {
+    if (!registry.has(name)) {
+      failures.push(
+        `all-phase tool "${name}" is missing from the toolNames registry.`,
+      )
+    }
+    if ((phaseGated as readonly string[]).includes(name)) {
+      failures.push(
+        `tool "${name}" is documented as all-phase but listed as phase-gated.`,
+      )
+    }
+  }
+  return failures
+}
+
 function runContentAssertions(): string[] {
   const failures: string[] = []
   const echoMd = readFileSync(resolve(ROOT, 'ECHO.md'), 'utf8')
 
   failures.push(...validateCondensedCopies(echoMd))
+  failures.push(...validateToolAvailability())
 
   const curatedLearningPath = resolve(ROOT, 'docs/embedded-learnings.md')
   const curatedLearning = readFileSafe(curatedLearningPath)

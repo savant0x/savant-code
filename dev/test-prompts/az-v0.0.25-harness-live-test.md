@@ -108,7 +108,7 @@ Each row is a deterministic executable path. Record counts and exit codes.
 | ID | Test | Expected result |
 | --- | --- | --- |
 | V025-100 | `grep '"@noble/hashes"' common/package.json` | Present — the formerly-undeclared import is now a declared dependency |
-| V025-101 | `bun build cli/src/index.tsx --target=bun` | Exit 0 (cli-bundle-resolution gate — the exact phase that failed in CI for v0.0.24) |
+| V025-101 | `bun build cli/src/index.tsx --production --target=bun --external '@opentui/core-*' --outdir cli/bin/.resolution-check` | Exit 0 (cli-bundle-resolution gate — resolves every import except the runtime-loaded `@opentui/core-*` platform binaries; the exact phase that failed in CI for v0.0.24) |
 | V025-102 | `grep -n 'cli-bundle-resolution\|cliBundleResolution' scripts/validation-manifest.ts scripts/public-release.ts` | Present — the gate is wired into release validation |
 
 ### 5b. FID-2026-0816-002 — master queue closure
@@ -158,7 +158,7 @@ Each row is a deterministic executable path. Record counts and exit codes.
 
 | ID | Test | Expected result |
 | --- | --- | --- |
-| V025-160 | `cd cli && bun test src/state/chat-store/__tests__/sidebar-collapse.test.ts` | Exit 0 (5/5 — default expanded, set/toggle, persists across reset) |
+| V025-160 | `cd cli && bun test src/state/chat-store/__tests__/sidebar-collapse.test.ts` | Exit 0 (3/3 — default expanded, set/toggle, persists across reset) |
 | V025-161 | `ls cli/src/components/sidebar-rail.tsx cli/src/hooks/use-fold-collapse.ts` | Both present |
 | V025-162 | `grep -n 'sidebarCollapsed' cli/src/state/chat-store/types.ts cli/src/state/chat-store/initial-state.ts cli/src/state/chat-store/sidebar-actions.ts` | Present — store field + setter + manual-fold precedence |
 | V025-163 | `grep -n 'WIDTH_BREAKPOINTS' cli/src/hooks/use-terminal-breakpoints.ts` | Exported (single source of truth for the narrow threshold) |

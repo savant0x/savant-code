@@ -256,7 +256,7 @@ export async function getAgentPrompt<T extends StringField>(
   if (promptType.type === 'instructionsPrompt' && agentState.agentType) {
     // Add subagent tools message when using parent's tools for prompt caching
     if (useParentTools) {
-      addendum += `\n\nYou are a subagent that only has access to the following tools: ${toolNames.length > 0 ? toolNames.join(', ') : 'none'}. Previously referenced tools in the conversation may have only been available to the parent agent. Do not attempt to use any other tools besides these listed here. You will only get tool errors if you do.`
+      addendum += `\n\nYou are a subagent that only has access to the following tools: ${toolNames.length > 0 ? toolNames.join(', ') : 'none'}. Previously referenced tools in the conversation may have only been available to the parent agent. Do not attempt to use any other tools besides these listed here. You will only get tool errors if you do. Each tool's full description (params, examples, constraints) is in your tool schemas — read it before calling.\n\nPhase availability: only write_file, str_replace, apply_patch (green/self_correct), run_terminal_command (green/audit/self_correct), and sequentialthinking (Thinker only) are phase-gated. Every other tool — including run_readonly_command (read-only shell inspection: git status/diff/log, grep, ls, typecheck, tests, with \`&&\` chaining) and read_files/glob/list_directory/code_search — is available in ALL phases including idle and red.`
       addendum += `\n\n## Tool-Call Protocol\n\n${getToolCallFormatInstructions()}`
 
       // For subagents with inheritSystemPrompt, include full spawnable agents spec

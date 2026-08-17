@@ -147,9 +147,13 @@ export const ToolBranch = memo(
       return null
     }
 
-    // Skip copy button for notices: run_readonly_command results and the
-    // transition_phase bar are informational, not copy-worthy (FID-009).
+    // Skip the outer copy button for tools that own their copy affordance:
+    // run_terminal_command/run_readonly_command render through the shared
+    // TerminalCommandDisplay panel, which now ships its own copy footer
+    // (FID-2026-0817-001); the transition_phase bar is informational
+    // (FID-009).
     const shouldShowCopyButton =
+      toolBlock.toolName !== 'run_terminal_command' &&
       toolBlock.toolName !== 'run_readonly_command' &&
       toolBlock.toolName !== 'transition_phase'
 
@@ -180,7 +184,7 @@ export const ToolBranch = memo(
       )
     }
 
-    // Render without copy button for run_readonly_command
+    // Render without the outer copy button for panel-owned / informational tools
     return (
       <box key={keyPrefix}>
         {toolRenderConfig ? (

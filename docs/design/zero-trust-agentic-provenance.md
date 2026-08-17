@@ -297,5 +297,5 @@ where needed; that unrelated document was not rewritten as part of ZTAP.
 | Trust Matrix | `cli/src/components/savant-ui/echo/trust-matrix.tsx` and chat-store event handling |
 | Configuration | `protocol.config.yaml` and CLI/SDK run configuration |
 
-ZTAP is implemented and ships in v0.0.24. Its Nova implementation sign-off is
+ZTAP is implemented and ships in v0.0.25. Its Nova implementation sign-off is
 recorded at `dev/nova/inbox/2026-08-13-fid-2026-0813-001-ztap-implementation-signoff-response.md`.

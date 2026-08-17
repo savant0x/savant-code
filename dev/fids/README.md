@@ -5,7 +5,11 @@ operator decision, implementation, runtime review, or closure evidence.
 
 ## Current active FIDs
 
-**None — the active queue is empty (2026-08-16).**
+The active queue is **empty**. The two most recent records —
+`FID-2026-0817-001` (TerminalCommandDisplay copy button + traffic-light
+redesign) and `FID-2026-0817-002` (v0.0.25 harness report remediation) — were
+closed and archived on 2026-08-17; see `archive/README.md` for the closure
+entries.
 
 The complete Savant UI-overhaul program (master `FID-2026-0816-002` +
 children `003`–`012`) is **closed and archived**: Phase 0 OpenTUI 0.5.3

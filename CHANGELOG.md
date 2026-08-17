@@ -1,6 +1,61 @@
 # Changelog
 
-## 0.0.25 — in development (unreleased)
+## 0.0.25 — 2026-08-17
+
+## 2026-08-17 — FID-2026-0817-001: TerminalCommandDisplay copy button + traffic-light redesign
+
+The rich terminal panel (`TerminalCommandDisplay`) — the boxed panel shown for
+every `run_terminal_command`/`run_readonly_command` notice — gained a
+panel-owned copy button that copies the entire block (command line, status/meta
+row, and raw output), so grep/ls/typecheck notices are now copyable in every
+context (history, ghost-message, terminal, readonly). The traffic-light title
+bar was recolored green/yellow/red, right-aligned, and given a subtle
+budget-gated brightness pulse (zero `setInterval`). `tool-branch.tsx` was
+reconciled so terminal/readonly commands no longer render a double copy button.
+
+Gates: typecheck ×4 exit 0; `terminal-command-display.test.ts` 15 pass / 0 fail;
+root `bun run test` 0 fail; eslint 0; lint:md 0; prettier clean;
+`validate:repository` PASS. Closed and archived 2026-08-17.
+
+## 2026-08-17 — FID-2026-0817-002: agent capability completeness + v0.0.25 report findings remediation
+
+Implemented the remediation FID for the v0.0.25 harness live-test report
+(§7 Agent View AV-001..009 + §11 Agents View feedback). Root cause: the agent's
+capability surface was documented unevenly, so it guessed — it requested
+`git_diff` / "bash in idle" when `run_readonly_command` already works in every
+phase and already allows `git diff` and `&&`.
+
+- **Phase-availability fix (root cause):** the generated
+  `ECHO_PROTOCOL_INSTRUCTIONS` phase-gating table now names
+  `run_readonly_command` as available in EVERY phase with a dedicated
+  "read-only shell in every phase" callout; a `validateToolAvailability` drift
+  guard in `scripts/generate-protocol-bundle.ts` asserts the gated/all-phase
+  classification against the live `toolNames` registry. Token-budget baseline
+  ratified to the new length.
+- **Safe pipes (B1):** `run_readonly_command` splits on unquoted `|` and
+  validates each segment independently (mirroring `&&`); shell interpreters
+  (`sh`/`bash`/`zsh`/…) added to the dangerous-command denylist so `cat x | sh`
+  stays blocked; `||` remains rejected.
+- **`read_files` line ranges (B2/A3):** `offset`/`limit` (1-indexed line window)
+  with an enriched description; `sliceLines` slices in the handler, reading past
+  EOF yields empty (never fabricated) lines.
+- **Batch `run_readonly_command` (B3):** optional `commands` array validates and
+  runs each command independently, returning ordered per-command results.
+- **Sub-agent capability addendum (A4):** the names-only sub-agent tool list now
+  carries phase-availability guidance + a pointer to the tool schemas.
+- **Custom-agent docs (A5):** `initial-agents-dir/README.md` "Available Tools"
+  rewritten to the complete published tool set.
+- **test-count helper (B4):** `scripts/test-count.ts` counts `test(`/`it(`
+  registrations statically (bun has no `--dry-run`).
+- **A–Z count fix (B5):** `V025-160` expected count corrected 5/5 → 3/3.
+
+Also records AV-001 (`--external '@opentui/core-*'` gate fix) and AV-002
+(contrast.test.ts slate fixtures replaced with current savant-cyberpunk tokens),
+AV-003..008 (verified correct, no code), and AV-009 (operator-driven fresh-clone
+clean-release certification).
+
+Gates: typecheck ×4 exit 0; root `bun run test` 0 fail; eslint 0; lint:md 0;
+prettier clean; `generate:protocol-bundle:check` exit 0.
 
 ## 2026-08-16 — UI-overhaul queue closed: FIDs 002/005/009/010/011/012 (all live-test confirmed)
 
