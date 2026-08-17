@@ -2,6 +2,40 @@
 
 ## 0.0.25 — 2026-08-17
 
+## 2026-08-17 — FID-2026-0817-003: linux-arm64 release binary missing (OpenTUI native-bundle variant), closed
+
+Post-release incident during the v0.0.25 publish: npm `savant-code@0.0.25`
+and the GitHub release went live, but the CI `Build linux-arm64` job failed
+with `Could not resolve: "@opentui/core-linux-arm64-musl"`, leaving the
+release with 4 of 5 binary tarballs. The fail-closed asset verification
+(`verifyReleaseAssets`) correctly held finalization until all five
+binaries existed — the second consecutive binary-asset incident after the
+v0.0.24 zero-binary release (FID-2026-0816-001).
+
+- **Root cause:** OpenTUI 0.5.3's per-platform native bundles are split by
+  libc (glibc `@opentui/core-linux-*` vs `-musl`), and Bun's cross-target
+  libc pick is host-dependent — `bun-linux-arm64` resolved the musl bundle
+  on the ubuntu CI runner but the glibc bundle on a Windows host.
+  `ensureOpenTuiNativeBundle` fetched only the glibc variant, so the musl
+  resolution failed in CI. Also fixed latent defects in the same function: a
+  stub/empty package dir was treated as installed (skipping re-fetch), and
+  Git Bash `tar` parsed `C:/` paths as remote hosts (now `--force-local`).
+- **Fix:** new `getOpenTuiNativePackageNames` — every linux target installs
+  BOTH the glibc and musl bundles of its arch (whichever Bun resolves is
+  present); empty dirs are cleaned + re-fetched; extraction sanity-checks
+  for `package.json`. 7 unit tests pin the variant mapping against the
+  declared `@opentui/core@0.5.3` optionalDependencies.
+- **Verification:** local Windows cross-compile of `bun-linux-arm64`
+  produces the binary (exit 0); CI matrix re-run from the fix → 5/5
+  tarballs on the release, workflow `verify-release-assets` PASS; cli
+  typecheck exit 0; `build-binary-env.test.ts` 17 pass / 0 fail; pre-push
+  gate green on both commits.
+- **Release completion:** the pipeline resumed through the built-in
+  `release:public:resume` path — receipt `POST_RELEASE_VERIFY` marked,
+  `restored: true`, operator settings restored, receipt finalized. Fix
+  merged to `main` (`18fec3a`, `8ee1883`) and pushed so future releases
+  build every linux variant on any host.
+
 ## 2026-08-17 — FID-2026-0817-001: TerminalCommandDisplay copy button + traffic-light redesign
 
 The rich terminal panel (`TerminalCommandDisplay`) — the boxed panel shown for

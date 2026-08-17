@@ -23,6 +23,38 @@ an audit record, not an active work queue.
 > scale project-wide with neutral near-black grays; semantic accents are
 > unchanged. Historical archive records are not rewritten.
 
+## 2026-08-17 closure — FID-2026-0817-003 (linux-arm64 release binary missing — OpenTUI native-bundle variant)
+
+`FID-2026-0817-003-linux-arm64-missing-binary-incident.md` (severity: high)
+closed and archived 2026-08-17. Post-release incident from the v0.0.25
+publish: npm + GitHub release went live but the CI `Build linux-arm64` job
+failed with `Could not resolve: "@opentui/core-linux-arm64-musl"`, leaving
+4/5 binary tarballs; the fail-closed `verifyReleaseAssets` held
+finalization until all five existed.
+
+Root cause: OpenTUI 0.5.3 splits native bundles by libc
+(`@opentui/core-linux-*` glibc vs `-musl`), and Bun's cross-target libc pick
+is host-dependent — `bun-linux-arm64` resolved the musl bundle on the
+ubuntu runner but the glibc bundle on Windows. `ensureOpenTuiNativeBundle`
+fetched only the glibc variant; the musl resolution failed in CI. Same
+function's latent defects also fixed: stub/empty package dirs treated as
+installed, and Git Bash GNU tar parsing `C:/` paths as remote hosts
+(now `--force-local`).
+
+Fix: exported `getOpenTuiNativePackageNames` — every linux target installs
+BOTH glibc and musl bundles of its arch (whichever Bun resolves is
+present); empty dirs cleaned + re-fetched; extraction sanity-checks
+`package.json`. 7 unit tests pin the mapping against the declared
+`@opentui/core@0.5.3` optionalDependencies.
+
+Release completion: resume path finalized the transaction — receipt
+`POST_RELEASE_VERIFY` marked, `restored: true`, settings restored,
+receipt finalized; release shows 5/5 binaries. Fix merged to `main`
+(`18fec3a` + `8ee1883`) and pushed so future releases build every linux
+variant on any host. Gates: cli typecheck exit 0; `build-binary-env.test.ts`
+17 pass / 0 fail; full local arm64 cross-compile exit 0; CI matrix + asset
+verify PASS; pre-push gate green on both commits.
+
 ## 2026-08-17 closure — FID-2026-0817-001 (TerminalCommandDisplay copy button + traffic-light redesign)
 
 `FID-2026-0817-001-terminal-command-display-copy-button-and-traffic-lights.md`
