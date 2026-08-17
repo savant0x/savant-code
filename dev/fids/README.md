@@ -5,12 +5,13 @@ operator decision, implementation, runtime review, or closure evidence.
 
 ## Current active FIDs
 
-The active queue is **empty**. The three most recent records —
+The active queue is **empty**. The four most recent records —
 `FID-2026-0817-001` (TerminalCommandDisplay copy button + traffic-light
-redesign), `FID-2026-0817-002` (v0.0.25 harness report remediation), and
+redesign), `FID-2026-0817-002` (v0.0.25 harness report remediation),
 `FID-2026-0817-003` (linux-arm64 release binary missing — OpenTUI
-native-bundle variant) — were closed and archived on 2026-08-17; see
-`archive/README.md` for the closure entries.
+native-bundle variant), and `FID-2026-0817-004` (unauthorized coding-agent
+contributor credit purge + permanent watermark guard) — were closed and
+archived on 2026-08-17; see `archive/README.md` for the closure entries.
 
 The complete Savant UI-overhaul program (master `FID-2026-0816-002` +
 children `003`–`012`) is **closed and archived**: Phase 0 OpenTUI 0.5.3
