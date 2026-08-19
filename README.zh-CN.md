@@ -8,11 +8,11 @@
 
 基于 TypeScript/Bun 构建，受 ECHO 协议治理，并针对本地优先的 Ollama 使用场景设计。
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-1.3.14-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![React](https://img.shields.io/badge/React-19-%23000000?style=flat-square&logo=react&logoColor=%2300fbff)](https://react.dev/)[![OpenTUI](https://img.shields.io/badge/OpenTUI-0.5.3-%23000000?style=flat-square&logo=opentui&logoColor=%2300fbff)](https://github.com/anomalyco/opentui)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](ECHO.md)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![Release](https://img.shields.io/badge/Release-v0.0.25-%23000000?style=flat-square&logo=semver&logoColor=%2300fbff)](CHANGELOG.md)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-1.3.14-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![React](https://img.shields.io/badge/React-19-%23000000?style=flat-square&logo=react&logoColor=%2300fbff)](https://react.dev/)[![OpenTUI](https://img.shields.io/badge/OpenTUI-0.5.3-%23000000?style=flat-square&logo=opentui&logoColor=%2300fbff)](https://github.com/anomalyco/opentui)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](ECHO.md)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![Release](https://img.shields.io/badge/Release-v0.0.26-%23000000?style=flat-square&logo=semver&logoColor=%2300fbff)](CHANGELOG.md)
 
 </div>
 
-> **v0.0.25（待发布，未发布）** —— 优化与自动化计划的实施范围已完成，
+> **v0.0.26（待发布，未发布）** —— 优化与自动化计划的实施范围已完成，
 > 并由独立审计对 FID-2026-0809-003 至 010 全部签署通过。深度审计主计划
 > FID-2026-0811-015 至 021 的 ECHO 合规修复已在自动化级别 3 授权下完成、关闭并归档，
 > Nova 独立实施审计已返回 **PASS — implementation approved for closure**。此前未跟踪的 004–014
@@ -204,6 +204,11 @@ MCP 工具发现、模式切换（`HYBRID` / `SCAFFOLD` / `STRICT` / `ANALYZE`�
   [设计系统实时测试提示](dev/test-prompts/design-system-live-ux-performance.md)。对于覆盖当前更新全部变更域的完整回归，请运行[v0.0.25 全自动 A–Z 实时测试提示](dev/test-prompts/az-v0.0.25-harness-live-test.md)，结果写入`dev/scratchpad/az-v0.0.25-harness-live-test-report.md`。这些提示及其实时结果均有独立的签核边界。实现已在工作树中关闭；独立的最终文档/实现审查仍在等待中。
 - **提供商设置** —— `/provider` 打开交互式下拉选择器，显示所有提供商及其 ✓/✗ 配置状态。选择提供商后可
   输入其 API 密钥（遮罩输入）。密钥存储在本地 `credentials.json`。
+- **调研（默认免密钥）** —— `web_search`、`read_docs` 与 `deep_research` 零密钥即可工作：网络搜索回退到
+  免密钥的 Qwant + DuckDuckGo 适配，`read_docs` 构建自填充的本地 SQLite docset 缓存（`~/.savant-code/docsets/`，
+  7 天 TTL + 免密钥版本感知刷新）。可选 Bring-Your-Own-Key 来源（Serper、Context7、Parallel、Tavily、Exa、
+  Firecrawl）通过 `/research-keys <service>`（遮罩输入，保存到 `credentials.json`）或对应的 `*_API_KEY`
+  环境变量配置。详见 [features.md](docs/features.md)。
 - **遥测控制** —— `/telemetry status|enable|disable` 切换远程分析与错误上报。主 CLI 默认开启远程分析，但用户可以
   随时关闭；关闭后本地日志仍然可用。上下文广告是独立设置：主 CLI 默认关闭广告，并可在适用时单独控制。
 - **`@filename` 与 `@AgentName` 提及** —— 文件与智能体提及，支持行内自动补全。
@@ -635,6 +640,7 @@ savant-code
 | `/health`（`/status`、`/check`） | 检查 Ollama、提供商模式、模型与权限状态 |
 | `/diagnostics`（`/diag`、`/processes`） | 显示本地进程与资源诊断信息 |
 | `/provider` | 使用遮罩输入配置托管提供商密钥 |
+| `/research-keys`（`/research-key`） | 设置调研 API 密钥（`serper`、`context7`、`parallel`、`tavily`、`exa`、`firecrawl`，遮罩输入） |
 | `/mode` | 列出四种模式及其契约，或切换：`/mode <名称>` 或 `/mode:<名称>` |
 | `/model` | 选择或切换当前托管模型 |
 | `/publish` | 通过 Savant 后端发布智能体模板 |

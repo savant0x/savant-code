@@ -85,6 +85,11 @@ savant-graph-*.html
 # CommandCode CLI local state (settings + taste config)
 .commandcode/
 
+# Vendored reference codebase (Hound/master-fetch, the keyless-search design
+# source) — third-party snapshot, not part of the monorepo. Mirrors the
+# .prettierignore + .markdownlintignore entries; never committed.
+master-fetch-master/
+
 # Evals v2 test-generated artifacts
 **/evals/v2/tests/.test-*/
 # Evals v2 harness output — regenerated on every `harness:v2` run
