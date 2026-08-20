@@ -22,9 +22,14 @@ import { useChatStore } from '../state/chat-store'
 import { IS_SAVANT_FREE } from '../utils/constants'
 import { getSystemMessage } from '../utils/message-history'
 import { getVersion } from '../utils/version'
+import {
+  findMasterFidRunLog,
+  renderDriveReportHtml,
+} from './export-conversation/drive-report'
 import { buildExportHtml } from './export-conversation/template'
 
 import type { RouterParams } from './command-registry'
+import type { DriveRecord } from '@savant-code/common/types/session-state'
 
 export async function handleExportConversationCommand(
   params: RouterParams,
@@ -69,12 +74,20 @@ export async function handleExportConversationCommand(
   }
 
   // Generate HTML
+  const drive = useChatStore.getState().runState?.sessionState?.mainAgentState
+    ?.drive as DriveRecord | undefined
+  const runLog = findMasterFidRunLog(process.cwd())
+  const driveReportHtml = renderDriveReportHtml({
+    drive: drive ?? null,
+    runLog,
+  })
   const html = buildExportHtml(
     messages,
     sessionId,
     product,
     brandName,
     getVersion(),
+    driveReportHtml,
   )
 
   try {

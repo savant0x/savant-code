@@ -3,9 +3,24 @@
 # Build Order — Anti-Deferral Gate (FID Step Enforcement)
 
 **Date:** 2026-08-16
-**Status:** DRAFT — awaiting operator approval
+**Status:** SUPERSEDED 2026-08-17 — migrated to FID-2026-0817-005
 **Owner:** Nova (implementation) + ECHO harness (enforcement)
 **Trigger:** Recurring failure — agents unilaterally defer FID steps without operator approval, changing the approved plan silently
+
+---
+
+## Disposition
+
+Never implemented. Verified 2026-08-17: `enforceNoDeferral` has 0
+references in `packages/`, no step-status machinery exists in
+`fid-validator.ts`/`fid-ledger.ts`, and no CHANGELOG entry covers it.
+Planning authority migrated **verbatim** to the converged FID
+`dev/fids/FID-2026-0817-005-anti-deferral-fid-step-enforcement.md`
+(Perfection Loop passed, status `analyzed`, awaiting operator approval),
+with one design change made during the loop (GREEN-G2, SELF-CORRECT-SC3):
+the frontmatter `steps:` YAML array is replaced by a `## Step Status`
+md-checkbox section, consistent with how `fid-validator` parses markdown.
+Do not implement from this file — implement from the FID.
 
 ---
 

@@ -18,6 +18,8 @@ export default tseslint.config(
       'agents-graveyard/**', // Archived/deprecated agents - no need to lint
       'resources/**', // Vendored resource files - not linted (see .prettierignore / .markdownlintignore)
       'research/**', // Vendored research snapshots - not linted (see .prettierignore / .markdownlintignore)
+      'devvy-main/**', // Vendored reference codebase (Discord Rich Presence design source) - not part of the monorepo
+      'master-fetch-master/**', // Vendored reference codebase (Hound keyless-search design source) - not part of the monorepo
       'dev/scratchpad/**', // Ephemeral working area (gitignored, see .gitignore) — ad-hoc tools may use console freely
       '.qoder/**', // Better-harness run artifacts (renderer-generated reports) — machine output, not source
       'cli/src/agents/bundled-agents.generated.ts', // Auto-generated agent code with embedded console strings

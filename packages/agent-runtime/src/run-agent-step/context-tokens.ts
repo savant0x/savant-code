@@ -2,6 +2,7 @@ import { shouldUseLocalTokenCount } from '@savant-code/common/constants/free-age
 import { buildArray } from '@savant-code/common/util/array'
 import { userMessage } from '@savant-code/common/util/messages'
 
+import { shouldBoundaryCompact } from './auto-drive-driver'
 import { getOrCreateEnforcement } from '../echo/enforcement'
 import { appendGroundingRefresh } from '../echo/grounding'
 import { callTokenCountAPI } from '../llm-api/savant-code-web-api'
@@ -151,10 +152,24 @@ export async function prepareStepContext(params: {
   // FID-2026-0725-085: Run micro-compact before each API call to clear stale tool results.
   // This is zero-cost (no LLM call) and reduces context size incrementally.
   const thresholds = contextCompactor.getThresholds()
+  // FID-2026-0818-007 step 5: the FID-boundary compaction checkpoint. When the
+  // drive loop flagged a just-archived boundary and the context is over budget,
+  // the boundary is the deterministic moment to run the L0 micro-compact pass —
+  // over-budget is the trigger, the boundary is the checkpoint (never a forced
+  // pass on a tiny FID). The flag is transient and cleared each step so it can
+  // never go stale.
+  const boundaryCompact = shouldBoundaryCompact({
+    fidBoundaryDue: agentState.fidBoundaryDue === true,
+    contextTokenCount: agentState.contextTokenCount,
+    reactiveCompactThreshold: thresholds.reactiveCompact,
+  })
+  agentState.fidBoundaryDue = false
   const messagesBeforeMicroCompact = agentState.messageHistory.length
   // FID-2026-0814-004 H-05/H-06: the real token count feeds both the
   // config off-switch (microCompactEnabled inside the compactor) and the
-  // pressure gate (below the floor → no clearing).
+  // pressure gate (below the floor → no clearing). The boundary checkpoint
+  // runs the same zero-cost micro-compact; a boundary pass is logged distinctly
+  // so a long drive's checkpoint compaction is visible in the transcript.
   const microResult = contextCompactor.microCompact(
     agentState.messageHistory,
     agentState.contextTokenCount,
@@ -168,14 +183,16 @@ export async function prepareStepContext(params: {
     const percentUsed = Math.round(
       (agentState.contextTokenCount / thresholds.autoCompact) * 100,
     )
+    const boundaryLabel = boundaryCompact ? ' [FID boundary]' : ''
     logger.info(
       {
         messagesCleared:
           messagesBeforeMicroCompact - microResult.messages.length,
         tokensSaved: microResult.tokensSaved,
         percentUsed,
+        fidBoundary: boundaryCompact,
       },
-      `⚙️ Context micro-compacted: cleared stale tool results, ~${microResult.tokensSaved.toLocaleString()} tokens saved. Context at ${percentUsed}% of auto-compact threshold.`,
+      `⚙️ Context micro-compacted${boundaryLabel}: cleared stale tool results, ~${microResult.tokensSaved.toLocaleString()} tokens saved. Context at ${percentUsed}% of auto-compact threshold.`,
     )
     if (!agentState.parentId) {
       appendGroundingRefresh(

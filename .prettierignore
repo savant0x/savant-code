@@ -8,6 +8,16 @@ resources/
 research/
 .eslint-recovery.json
 
+# Vendored reference codebase (Devvy, the Discord Rich Presence design source) —
+# third-party snapshot, not part of the monorepo. Mirrors the eslint.config.js
+# global ignore; reformatting vendored code is pure diff noise.
+devvy-main/
+
+# Vendored reference codebase (Hound/master-fetch, the keyless-search design
+# source) — third-party snapshot, not part of the monorepo. Mirrors the
+# eslint.config.js global ignore; reformatting vendored code is pure diff noise.
+master-fetch-master/
+
 # Local editor settings — untracked machine-local config, not project source.
 .vscode/
 

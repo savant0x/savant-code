@@ -1,36 +1,28 @@
 import { jsonToolResult } from '@savant-code/common/util/messages'
 
-import { callDocsSearchAPI } from '../../../llm-api/savant-code-web-api'
+import { readDocsSource } from '../../../llm-api/research-sources'
 
-import type { fetchContext7LibraryDocumentation } from '../../../llm-api/context7-api'
 import type { SavantCodeToolHandlerFunction } from '../handler-function-type'
 import type {
   SavantCodeToolCall,
   SavantCodeToolOutput,
 } from '@savant-code/common/tools/list'
-import type { ClientEnv, CiEnv } from '@savant-code/common/types/contracts/env'
 import type { Logger } from '@savant-code/common/types/contracts/logger'
-import type { ParamsExcluding } from '@savant-code/common/types/function-params'
 
-export const handleReadDocs = (async (
-  params: {
-    previousToolCallFinished: Promise<void>
-    toolCall: SavantCodeToolCall<'read_docs'>
+export const handleReadDocs = (async (params: {
+  previousToolCallFinished: Promise<void>
+  toolCall: SavantCodeToolCall<'read_docs'>
 
-    agentStepId: string
-    clientSessionId: string
-    fingerprintId: string
-    logger: Logger
-    repoId: string | undefined
-    userId: string | undefined
-    userInputId: string
-    clientEnv: ClientEnv
-    ciEnv: CiEnv
-  } & ParamsExcluding<
-    typeof fetchContext7LibraryDocumentation,
-    'query' | 'topic' | 'tokens'
-  >,
-): Promise<{
+  agentStepId: string
+  clientSessionId: string
+  fingerprintId: string
+  logger: Logger
+  repoId: string | undefined
+  userId: string | undefined
+  userInputId: string
+
+  fetch: typeof globalThis.fetch
+}): Promise<{
   output: SavantCodeToolOutput<'read_docs'>
   creditsUsed: number
 }> => {
@@ -47,10 +39,8 @@ export const handleReadDocs = (async (
     userInputId,
 
     fetch,
-    clientEnv,
-    ciEnv,
   } = params
-  const { libraryTitle, topic, max_tokens } = toolCall.input
+  const { libraryTitle, topic, max_tokens, ecosystem } = toolCall.input
 
   const docsStartTime = Date.now()
   const docsContext = {
@@ -58,6 +48,7 @@ export const handleReadDocs = (async (
     libraryTitle,
     topic,
     max_tokens,
+    ecosystem,
     userId,
     agentStepId,
     clientSessionId,
@@ -70,48 +61,46 @@ export const handleReadDocs = (async (
 
   let creditsUsed = 0
   try {
-    const viaWebApi = await callDocsSearchAPI({
+    const source = await readDocsSource({
       libraryTitle,
       topic,
+      ecosystem,
       maxTokens: max_tokens,
-      repoUrl: null,
       logger,
       fetch,
-      env: { clientEnv, ciEnv },
     })
 
-    if (viaWebApi.error || typeof viaWebApi.documentation !== 'string') {
+    if (source.error || typeof source.documentation !== 'string') {
       const docsDuration = Date.now() - docsStartTime
-      const docMsg = `Error fetching documentation for "${libraryTitle}"${topic ? ` (topic: ${topic})` : ''}: ${viaWebApi.error}`
+      const docMsg = `Error fetching documentation for "${libraryTitle}"${topic ? ` (topic: ${topic})` : ''}: ${source.error}`
       logger.warn(
         {
           ...docsContext,
           docsDuration,
-          usedWebApi: true,
           success: false,
-          error: viaWebApi.error,
+          error: source.error,
         },
-        'Web API docs returned error',
+        'Docs source returned error',
       )
       return {
         output: jsonToolResult({
           documentation: docMsg,
-          ...(viaWebApi.error && { errorMessage: viaWebApi.error }),
+          ...(source.error && { errorMessage: source.error }),
         }),
         creditsUsed,
       }
     }
 
     const docsDuration = Date.now() - docsStartTime
-    const resultLength = viaWebApi.documentation?.length || 0
+    const resultLength = source.documentation?.length || 0
     const hasResults = Boolean(
-      viaWebApi.documentation && viaWebApi.documentation.trim(),
+      source.documentation && source.documentation.trim(),
     )
     const estimatedTokens = Math.ceil(resultLength / 4)
 
-    // Capture credits used from the API response
-    if (typeof viaWebApi.creditsUsed === 'number') {
-      creditsUsed = viaWebApi.creditsUsed
+    // BYOK sources use the user's own key — no SavantCode credits are charged.
+    if (typeof source.creditsUsed === 'number') {
+      creditsUsed = source.creditsUsed
     }
 
     logger.info(
@@ -121,14 +110,13 @@ export const handleReadDocs = (async (
         resultLength,
         estimatedTokens,
         hasResults,
-        usedWebApi: true,
         creditsUsed,
         success: true,
       },
-      'Documentation request completed successfully via web API',
+      'Documentation request completed via research source',
     )
     return {
-      output: jsonToolResult({ documentation: viaWebApi.documentation }),
+      output: jsonToolResult({ documentation: source.documentation }),
       creditsUsed,
     }
   } catch (error) {

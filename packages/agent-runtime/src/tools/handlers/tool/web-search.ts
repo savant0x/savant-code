@@ -1,32 +1,27 @@
 import { jsonToolResult } from '@savant-code/common/util/messages'
 
-import { callWebSearchAPI } from '../../../llm-api/savant-code-web-api'
+import { searchWebSource } from '../../../llm-api/research-sources'
 
 import type { SavantCodeToolHandlerFunction } from '../handler-function-type'
 import type {
   SavantCodeToolCall,
   SavantCodeToolOutput,
 } from '@savant-code/common/tools/list'
-import type { ClientEnv, CiEnv } from '@savant-code/common/types/contracts/env'
 import type { Logger } from '@savant-code/common/types/contracts/logger'
 
 export const handleWebSearch = (async (params: {
   previousToolCallFinished: Promise<void>
   toolCall: SavantCodeToolCall<'web_search'>
   logger: Logger
-  apiKey: string
 
   agentStepId: string
   clientSessionId: string
   fingerprintId: string
   repoId: string | undefined
-  repoUrl: string | undefined
   userInputId: string
   userId: string | undefined
 
   fetch: typeof globalThis.fetch
-  clientEnv: ClientEnv
-  ciEnv: CiEnv
 }): Promise<{
   output: SavantCodeToolOutput<'web_search'>
   creditsUsed: number
@@ -36,18 +31,14 @@ export const handleWebSearch = (async (params: {
     toolCall,
 
     agentStepId,
-    apiKey,
     clientSessionId,
     fingerprintId,
     logger,
     repoId,
-    repoUrl,
     userId,
     userInputId,
 
     fetch,
-    clientEnv,
-    ciEnv,
   } = params
   const { query, depth } = toolCall.input
 
@@ -69,42 +60,33 @@ export const handleWebSearch = (async (params: {
   let creditsUsed = 0
 
   try {
-    const webApi = await callWebSearchAPI({
-      query,
-      depth,
-      repoUrl: repoUrl ?? null,
-      fetch,
-      logger,
-      apiKey,
-      env: { clientEnv, ciEnv },
-    })
+    const source = await searchWebSource({ query, depth, logger, fetch })
 
-    if (webApi.error) {
+    if (source.error) {
       const searchDuration = Date.now() - searchStartTime
       logger.warn(
         {
           ...searchContext,
           searchDuration,
-          usedWebApi: true,
           success: false,
-          error: webApi.error,
+          error: source.error,
         },
-        'Web API search returned error',
+        'Web search source returned error',
       )
       return {
         output: jsonToolResult({
-          errorMessage: webApi.error,
+          errorMessage: source.error,
         }),
         creditsUsed,
       }
     }
     const searchDuration = Date.now() - searchStartTime
-    const resultLength = webApi.result?.length || 0
-    const hasResults = Boolean(webApi.result && webApi.result.trim())
+    const resultLength = source.result?.length || 0
+    const hasResults = Boolean(source.result && source.result.trim())
 
-    // Capture credits used from the API response
-    if (typeof webApi.creditsUsed === 'number') {
-      creditsUsed = webApi.creditsUsed
+    // BYOK sources use the user's own key — no SavantCode credits are charged.
+    if (typeof source.creditsUsed === 'number') {
+      creditsUsed = source.creditsUsed
     }
 
     logger.info(
@@ -113,16 +95,14 @@ export const handleWebSearch = (async (params: {
         searchDuration,
         resultLength,
         hasResults,
-        usedWebApi: true,
-        creditsCharged: 'server',
         creditsUsed,
         success: true,
       },
-      'Search completed via web API',
+      'Search completed via research source',
     )
 
     return {
-      output: jsonToolResult({ result: webApi.result ?? '' }),
+      output: jsonToolResult({ result: source.result ?? '' }),
       creditsUsed,
     }
   } catch (error) {

@@ -18,7 +18,7 @@ import {
   mockFileContext,
   mockResearcherAgent,
 } from './test-utils'
-import * as webApi from '../llm-api/savant-code-web-api'
+import * as webApi from '../llm-api/research-sources'
 import { runAgentStep } from '../run-agent-step'
 import { assembleLocalAgentTemplates } from '../templates/agent-registry'
 
@@ -98,7 +98,7 @@ describe('read_docs tool with researcher agent (via web API facade)', () => {
   test('should successfully fetch documentation with basic query', async () => {
     const mockDocumentation =
       'React is a JavaScript library for building user interfaces...'
-    const spy = spyOn(webApi, 'callDocsSearchAPI').mockResolvedValue({
+    const spy = spyOn(webApi, 'readDocsSource').mockResolvedValue({
       documentation: mockDocumentation,
     })
 
@@ -145,7 +145,7 @@ describe('read_docs tool with researcher agent (via web API facade)', () => {
   test('should fetch documentation with topic and max_tokens', async () => {
     const mockDocumentation =
       'React hooks allow you to use state and other React features...'
-    const spy = spyOn(webApi, 'callDocsSearchAPI').mockResolvedValue({
+    const spy = spyOn(webApi, 'readDocsSource').mockResolvedValue({
       documentation: mockDocumentation,
     })
 
@@ -186,9 +186,51 @@ describe('read_docs tool with researcher agent (via web API facade)', () => {
     )
   }, 10000)
 
+  test('should pass ecosystem through to the docs source', async () => {
+    const mockDocumentation = 'Cobra is a Go CLI library...'
+    const spy = spyOn(webApi, 'readDocsSource').mockResolvedValue({
+      documentation: mockDocumentation,
+    })
+
+    mockAgentStream([
+      createToolCallChunk('read_docs', {
+        libraryTitle: 'github.com/spf13/cobra',
+        topic: 'commands',
+        ecosystem: 'go',
+      }),
+      createToolCallChunk('end_turn', {}),
+    ])
+
+    const sessionState = getInitialSessionState(mockFileContextWithAgents)
+    const agentState = {
+      ...sessionState.mainAgentState,
+      agentType: 'researcher' as const,
+    }
+    const { agentTemplates } = assembleLocalAgentTemplates({
+      ...agentRuntimeImpl,
+      fileContext: mockFileContextWithAgents,
+    })
+
+    await runAgentStep({
+      ...runAgentStepBaseParams,
+      fileContext: mockFileContextWithAgents,
+      localAgentTemplates: agentTemplates,
+      agentTemplate: agentTemplates['researcher'],
+      agentState,
+      prompt: 'Get Cobra Go documentation',
+    })
+
+    expect(spy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        libraryTitle: 'github.com/spf13/cobra',
+        ecosystem: 'go',
+      }),
+    )
+  }, 10000)
+
   test('should handle case when no documentation is found', async () => {
     const msg = 'No documentation found for "NonExistentLibrary"'
-    spyOn(webApi, 'callDocsSearchAPI').mockResolvedValue({ error: msg })
+    spyOn(webApi, 'readDocsSource').mockResolvedValue({ error: msg })
 
     mockAgentStream([
       createToolCallChunk('read_docs', {
@@ -226,7 +268,7 @@ describe('read_docs tool with researcher agent (via web API facade)', () => {
   }, 10000)
 
   test('should handle API errors gracefully', async () => {
-    spyOn(webApi, 'callDocsSearchAPI').mockResolvedValue({
+    spyOn(webApi, 'readDocsSource').mockResolvedValue({
       error: 'Network timeout',
     })
 
@@ -267,7 +309,7 @@ describe('read_docs tool with researcher agent (via web API facade)', () => {
   }, 10000)
 
   test('should include topic in error message when specified', async () => {
-    spyOn(webApi, 'callDocsSearchAPI').mockResolvedValue({ error: 'No docs' })
+    spyOn(webApi, 'readDocsSource').mockResolvedValue({ error: 'No docs' })
 
     mockAgentStream([
       createToolCallChunk('read_docs', {
@@ -306,7 +348,7 @@ describe('read_docs tool with researcher agent (via web API facade)', () => {
   }, 10000)
 
   test('should handle non-Error exceptions', async () => {
-    spyOn(webApi, 'callDocsSearchAPI').mockImplementation(async () => {
+    spyOn(webApi, 'readDocsSource').mockImplementation(async () => {
       throw 'String error'
     })
 
@@ -349,7 +391,7 @@ describe('read_docs tool with researcher agent (via web API facade)', () => {
   test('should track credits used from docs search API in agent state', async () => {
     const mockDocumentation = 'React documentation content'
     const mockCreditsUsed = 2 // Flat 1 credit + profit margin
-    spyOn(webApi, 'callDocsSearchAPI').mockResolvedValue({
+    spyOn(webApi, 'readDocsSource').mockResolvedValue({
       documentation: mockDocumentation,
       creditsUsed: mockCreditsUsed,
     })

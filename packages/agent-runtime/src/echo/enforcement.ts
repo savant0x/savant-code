@@ -12,6 +12,7 @@ import { runPostWriteScanners } from './post-write-scanners'
 import { runPreWriteGates } from './pre-write-gates'
 import { buildProtocolRefreshSummary } from './protocol-summary'
 import { buildSteeringText, formatTurnEndReport } from './violation-handler'
+import { detectsVerificationCommand } from '../util/echo-compliance'
 
 import type {
   AdvisoryWarning,
@@ -235,14 +236,6 @@ export class EchoEnforcement {
       this.state.intentLogged = true
     }
 
-    // Track verification for Law 3
-    if (
-      params.toolName === 'run_terminal_command' ||
-      params.toolName === 'run_readonly_command'
-    ) {
-      this.state.hasVerifiedSinceLastDirty = true
-    }
-
     // Track FID file writes
     const targetPath = this.getTargetPath(params.input)
     if (
@@ -325,17 +318,17 @@ export class EchoEnforcement {
       }
     }
 
-    // Track verification commands for Law 3
-    if (params.toolName === 'run_terminal_command') {
+    // Track verification commands for Law 3 (cumulative — FID-2026-0819-001).
+    // Handles both terminal command types (RED-003) via the shared detector.
+    if (
+      params.toolName === 'run_terminal_command' ||
+      params.toolName === 'run_readonly_command'
+    ) {
       const cmd = (params.input.command as string) ?? ''
-      if (
-        cmd.includes('typecheck') ||
-        cmd.includes('lint') ||
-        cmd.includes('eslint') ||
-        cmd.includes('test')
-      ) {
-        this.state.hasVerifiedSinceLastDirty = true
-        this.state.dirtyFiles.clear()
+      if (detectsVerificationCommand(cmd)) {
+        for (const f of this.state.dirtyFiles) {
+          this.state.verifiedFiles.add(f)
+        }
       }
     }
 
@@ -373,11 +366,12 @@ export class EchoEnforcement {
       }),
     )
 
-    // Law 15: build stays clean
-    if (
-      !this.state.hasVerifiedSinceLastDirty &&
-      this.state.dirtyFiles.size > 0
-    ) {
+    // Law 15: build stays clean (cumulative — a dirty file is clean once
+    // it appears in verifiedFiles; FID-2026-0819-001).
+    const unverifiedDirty = [...this.state.dirtyFiles].filter(
+      (f) => !this.state.verifiedFiles.has(f),
+    )
+    if (unverifiedDirty.length > 0) {
       if (tier === 'all_15') {
         results.push({
           blocked: true,

@@ -159,7 +159,7 @@ export const SessionViewer: React.FC<SessionViewerProps> = ({
       }
     }
 
-    const stdin: NodeJS.ReadStream = process.stdin as any
+    const stdin = process.stdin as NodeJS.ReadStream
     const onData = (chunk: Buffer) => {
       handleKey(chunk.toString())
     }
@@ -170,10 +170,10 @@ export const SessionViewer: React.FC<SessionViewerProps> = ({
 
     return () => {
       // Remove only this listener to avoid interfering with other handlers
-      if (typeof (stdin as any).off === 'function') {
-        ;(stdin as any).off('data', onData)
+      if (typeof stdin.off === 'function') {
+        stdin.off('data', onData)
       } else {
-        stdin.removeListener('data', onData as any)
+        stdin.removeListener('data', onData)
       }
     }
   }, [captures.length, onExit, togglePlay, increaseSpeed, decreaseSpeed])

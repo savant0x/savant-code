@@ -6,8 +6,9 @@
  */
 
 import { AnalyticsEvent } from '@savant-code/common/constants/analytics-events'
-import { useCallback, useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 
+import { extractDrivePlanDirective } from '../commands/auto-drive'
 import { addBashMessageToHistory, routeUserPrompt } from '../commands/router'
 import { createLoopRunHandler } from '../hooks/run-outcome'
 import { useChatStreaming } from '../hooks/use-chat-streaming'
@@ -197,6 +198,25 @@ export function useChatMessaging({
 
   sendMessageRef.current = sendMessage
 
+  // FID-2026-0818-002: when an Auto Drive planning turn completes, detect the
+  // `<drive-plan>` directive the model emitted and present the operator
+  // Confirmation. Only fires on a true streaming → idle transition while the
+  // drive is still in `planning`, so a Revision loop re-detects the updated
+  // plan on the next completion.
+  const driveState = useChatStore((state) => state.driveState)
+  const wasStreamingRef = useRef(false)
+  useEffect(() => {
+    const finished = wasStreamingRef.current && !isStreaming
+    wasStreamingRef.current = isStreaming
+    if (!finished || driveState !== 'planning') return
+    const lastAi = [...messages].reverse().find((m) => m.variant === 'ai')
+    if (!lastAi) return
+    const directive = extractDrivePlanDirective(lastAi.content)
+    if (!directive) return
+    useChatStore.getState().setDrivePlanDraft(directive)
+    useChatStore.getState().setDriveState('awaiting_confirmation')
+  }, [isStreaming, driveState, messages])
+
   // FID-2026-0726-001: mount the loop scheduler so /loop cadence actually
   // recurs. The callback re-submits the loop prompt using the current agentMode.
   useLoopScheduler(
@@ -336,5 +356,6 @@ export function useChatMessaging({
     pauseQueue,
     onSubmitPrompt,
     handleSelectSuggestedPrompt,
+    sendMessage,
   }
 }

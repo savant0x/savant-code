@@ -20,6 +20,7 @@
 import { existsSync } from 'node:fs'
 
 import { assessWrite, parseYagniCheckBlock } from '../yagni-ladder'
+import { validateFidStepStatus } from './fid-validator'
 
 import type {
   EnforcementMode,
@@ -114,6 +115,25 @@ export function runPreWriteGates(params: {
         `FID gate: "${targetPath}" is ${lineCount} lines ` +
         `(> 20). Route through the Recorder agent.`
       return { blocked: true, reason: msg, warnings }
+    }
+
+    // ── Anti-Deferral step-status transition gate (FID-2026-0817-005) ──
+    // A FID write declaring `**Status:** converged|closed` must have every
+    // step in its `## Step Status` section resolved (implemented or
+    // operator-approved). Unresolved steps block the transition at the
+    // write path — the first enforcement point guaranteed to exist (both
+    // custom and native tool executors call the pre-write gates).
+    if (typeof content === 'string') {
+      const stepErrors = validateFidStepStatus(content).filter(
+        (error) => !error.startsWith('advisory:'),
+      )
+      if (stepErrors.length > 0) {
+        const msg =
+          `FID gate: "${targetPath}" declares a converged/closed status ` +
+          `with unresolved steps — ${stepErrors.join('; ')}. Present these ` +
+          'steps to the operator before the transition.'
+        return { blocked: true, reason: msg, warnings }
+      }
     }
   }
 

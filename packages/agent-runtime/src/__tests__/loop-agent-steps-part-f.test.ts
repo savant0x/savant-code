@@ -298,7 +298,7 @@ describe('loopAgentSteps - runAgentStep vs runProgrammaticStep behavior', () => 
       expect(errorContent).not.toContain('split the work into multiple')
     })
 
-    it('steers large-payload tool retries toward splitting the work', async () => {
+    it('steers large-payload tool retries with tool-specific guidance', async () => {
       const llmOnlyTemplate = {
         ...mockTemplate,
         handleSteps: undefined,
@@ -336,9 +336,50 @@ describe('loopAgentSteps - runAgentStep vs runProgrammaticStep behavior', () => 
           ? errorMessage.content
           : JSON.stringify(errorMessage.content)
         : ''
-      expect(errorContent).toContain(
-        'split the work into multiple smaller tool calls',
+      // FID-2026-0819-004: write_file gets tool-specific steering
+      expect(errorContent).toContain('write in chunks using str_replace')
+    })
+
+    it('steers run_terminal_command truncation with tool-specific guidance', async () => {
+      const llmOnlyTemplate = {
+        ...mockTemplate,
+        handleSteps: undefined,
+      }
+
+      loopAgentStepsBaseParams.promptAiSdkStream = async function* () {
+        llmCallCount++
+        if (llmCallCount === 1) {
+          yield {
+            type: 'error' as const,
+            message: 'Incomplete arguments for tool run_terminal_command',
+            errorClass: 'native-incomplete' as const,
+            toolName: 'run_terminal_command',
+          }
+        } else {
+          yield createToolCallChunk('end_turn', {})
+        }
+        return promptSuccess(`steer-terminal-${llmCallCount}`)
+      }
+
+      const result = await loopAgentSteps({
+        ...loopAgentStepsBaseParams,
+        agentTemplate: llmOnlyTemplate,
+        localAgentTemplates: { 'test-agent': llmOnlyTemplate },
+      })
+
+      expect(llmCallCount).toBe(2)
+      expect(result.output.type).not.toBe('error')
+      const errorMessage = result.agentState.messageHistory.find(
+        (message) =>
+          message.role === 'user' && message.tags?.includes('TOOL_CALL_ERROR'),
       )
+      const errorContent = errorMessage
+        ? typeof errorMessage.content === 'string'
+          ? errorMessage.content
+          : JSON.stringify(errorMessage.content)
+        : ''
+      // FID-2026-0819-004: run_terminal_command gets tool-specific steering
+      expect(errorContent).toContain('ONE command per')
     })
 
     it('warns on an incomplete call for an unknown tool and names it on exhaustion', async () => {
@@ -373,6 +414,83 @@ describe('loopAgentSteps - runAgentStep vs runProgrammaticStep behavior', () => 
       if (result.output.type === 'error') {
         expect(result.output.message).toContain('(tool: not_a_real_tool)')
       }
+    })
+
+    it('gives run_terminal_command 5 strikes before exhausting (FID-2026-0819-004)', async () => {
+      const llmOnlyTemplate = {
+        ...mockTemplate,
+        handleSteps: undefined,
+      }
+      let finishStatus: string | undefined
+
+      loopAgentStepsBaseParams.promptAiSdkStream = async function* () {
+        llmCallCount++
+        yield {
+          type: 'error' as const,
+          message: 'Incomplete arguments for tool run_terminal_command',
+          errorClass: 'native-incomplete' as const,
+          toolName: 'run_terminal_command',
+        }
+        return promptSuccess(`terminal-strikes-${llmCallCount}`)
+      }
+
+      const result = await loopAgentSteps({
+        ...loopAgentStepsBaseParams,
+        agentTemplate: llmOnlyTemplate,
+        localAgentTemplates: { 'test-agent': llmOnlyTemplate },
+        finishAgentRun: mock(
+          async (params: { status: string; errorMessage?: string }) => {
+            finishStatus = params.status
+          },
+        ),
+      })
+
+      // FID-2026-0819-004: run_terminal_command gets 5 strikes, not 3
+      expect(llmCallCount).toBe(5)
+      expect(result.output.type).toBe('error')
+      if (result.output.type === 'error') {
+        expect(result.output.message).toContain(
+          'Native tool-call recovery failed repeatedly',
+        )
+        expect(result.output.message).toContain('(tool: run_terminal_command)')
+      }
+      expect(finishStatus).toBe('failed')
+
+      // Verify escalating steering messages were appended (strikes 2-4)
+      const toolCallErrors = result.agentState.messageHistory.filter(
+        (message) =>
+          message.role === 'user' && message.tags?.includes('TOOL_CALL_ERROR'),
+      )
+      // At least 3 error messages: strike 1 from stream-parser + strikes 2-4 from loop-iteration
+      expect(toolCallErrors.length).toBeGreaterThanOrEqual(3)
+    })
+
+    it('gives non-terminal tools 3 strikes before exhausting', async () => {
+      const llmOnlyTemplate = {
+        ...mockTemplate,
+        handleSteps: undefined,
+      }
+
+      loopAgentStepsBaseParams.promptAiSdkStream = async function* () {
+        llmCallCount++
+        yield {
+          type: 'error' as const,
+          message: 'Incomplete arguments for tool write_file',
+          errorClass: 'native-incomplete' as const,
+          toolName: 'write_file',
+        }
+        return promptSuccess(`write-strikes-${llmCallCount}`)
+      }
+
+      const result = await loopAgentSteps({
+        ...loopAgentStepsBaseParams,
+        agentTemplate: llmOnlyTemplate,
+        localAgentTemplates: { 'test-agent': llmOnlyTemplate },
+      })
+
+      // Non-terminal tools still get 3 strikes
+      expect(llmCallCount).toBe(3)
+      expect(result.output.type).toBe('error')
     })
 
     it('resets the native-incomplete streak after an unrelated tool error', async () => {

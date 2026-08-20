@@ -40,15 +40,14 @@ const isDirectProviderModeRuntime = (): boolean =>
   (process.env.DIRECT_PROVIDER ?? '').trim().length > 0
 
 const callSavantCodeV1 = async (params: {
-  endpoint:
-    '/api/v1/web-search' | '/api/v1/docs-search' | '/api/v1/gravity-index'
+  endpoint: '/api/v1/gravity-index'
   payload: JSONValue
   fetch: typeof globalThis.fetch
   logger: Logger
   env: SavantCodeWebApiEnv
   baseUrl?: string
   apiKey?: string
-  requestName: 'web-search' | 'docs-search' | 'gravity-index'
+  requestName: 'gravity-index'
 }): Promise<{ json?: JSONValue; error?: string; creditsUsed?: number }> => {
   if (isDirectProviderModeRuntime()) {
     return {
@@ -165,78 +164,6 @@ const callSavantCodeV1 = async (params: {
   }
 
   return { error: lastError ?? 'Request failed after all retries' }
-}
-
-export async function callWebSearchAPI(params: {
-  query: string
-  depth?: 'standard' | 'deep'
-  repoUrl?: string | null
-  fetch: typeof globalThis.fetch
-  logger: Logger
-  env: SavantCodeWebApiEnv
-  baseUrl?: string
-  apiKey?: string
-}): Promise<{ result?: string; error?: string; creditsUsed?: number }> {
-  const { query, depth = 'standard', repoUrl, fetch, logger, env } = params
-  const payload = { query, depth, ...(repoUrl ? { repoUrl } : {}) }
-
-  const res = await callSavantCodeV1({
-    endpoint: '/api/v1/web-search',
-    payload,
-    fetch,
-    logger,
-    env,
-    baseUrl: params.baseUrl,
-    apiKey: params.apiKey,
-    requestName: 'web-search',
-  })
-  if (res.error) return { error: res.error }
-
-  const result = getStringField(res.json ?? null, 'result')
-  if (result) {
-    return { result, creditsUsed: res.creditsUsed }
-  }
-
-  const error = getStringField(res.json ?? null, 'error')
-  return { error: error ?? 'Invalid response format' }
-}
-
-export async function callDocsSearchAPI(params: {
-  libraryTitle: string
-  topic?: string
-  maxTokens?: number
-  repoUrl?: string | null
-  fetch: typeof globalThis.fetch
-  logger: Logger
-  env: SavantCodeWebApiEnv
-  baseUrl?: string
-  apiKey?: string
-}): Promise<{ documentation?: string; error?: string; creditsUsed?: number }> {
-  const { libraryTitle, topic, maxTokens, repoUrl, fetch, logger, env } = params
-  const payload: Record<string, JSONValue> = { libraryTitle }
-  if (topic) payload.topic = topic
-  if (typeof maxTokens === 'number') payload.maxTokens = maxTokens
-  if (repoUrl) payload.repoUrl = repoUrl
-
-  const res = await callSavantCodeV1({
-    endpoint: '/api/v1/docs-search',
-    payload,
-    fetch,
-    logger,
-    env,
-    baseUrl: params.baseUrl,
-    apiKey: params.apiKey,
-    requestName: 'docs-search',
-  })
-  if (res.error) return { error: res.error }
-
-  const documentation = getStringField(res.json ?? null, 'documentation')
-  if (documentation) {
-    return { documentation, creditsUsed: res.creditsUsed }
-  }
-
-  const error = getStringField(res.json ?? null, 'error')
-  return { error: error ?? 'Invalid response format' }
 }
 
 export async function callGravityIndexAPI(params: {

@@ -25,6 +25,30 @@ export type ParsedArgs = {
   print: boolean
   /** Versioned design-authoring JSON path, or '-' for stdin. */
   designInput?: string
+  /** FID-2026-0818-002: Auto Drive goal (non-TUI entry; routed per child 008). */
+  auto?: string
+  /** FID-2026-0818-002: spec file content that skips the Auto Drive interview. */
+  spec?: string
+  /** FID-2026-0818-008: operator-reviewed plan artifact to execute headlessly. */
+  planFile?: string
+  /** FID-2026-0818-008: explicit non-interactive approval signal. */
+  approve: boolean
+  /** FID-2026-0818-008: emit the plan and exit 0 without executing. */
+  planOnly: boolean
+}
+
+/**
+ * Resolve a CLI-supplied file path against cwd, falling back to the parent
+ * (project root) for nested-workspace invocations. Shared by `--prompt-file`
+ * and `--spec` (Law 13 — one resolution rule).
+ */
+function resolveCliFilePath(filePath: string): string {
+  if (path.isAbsolute(filePath)) return filePath
+  const cwdPath = path.resolve(process.cwd(), filePath)
+  if (fs.existsSync(cwdPath)) return cwdPath
+  const parentPath = path.resolve(process.cwd(), '..', filePath)
+  if (fs.existsSync(parentPath)) return parentPath
+  return cwdPath
 }
 
 export function loadPackageVersion(): string {
@@ -101,6 +125,26 @@ export function parseArgs({
         'Read the initial prompt from a file instead of argv',
       )
       .option(
+        '--auto <goal>',
+        'Start Auto Drive: clarify, plan, and approve a goal, then run it to completion',
+      )
+      .option(
+        '--spec <path>',
+        'Use a spec file as the Auto Drive spec input (skips the interview)',
+      )
+      .option(
+        '--plan-file <path>',
+        'Execute an operator-reviewed Auto Drive plan headlessly',
+      )
+      .option(
+        '--approve',
+        'Approve the Auto Drive goal + resolution policy up front (non-interactive Law 2)',
+      )
+      .option(
+        '--plan-only',
+        'Generate the Auto Drive plan and exit without executing (for review)',
+      )
+      .option(
         '--print',
         'Run the prompt headlessly and print the final answer to stdout (non-zero exit on failure)',
       )
@@ -142,15 +186,7 @@ export function parseArgs({
   if (!isSavantFree) {
     if (options.promptFile) {
       const promptFile = options.promptFile as string
-      const resolvePromptFile = (): string => {
-        if (path.isAbsolute(promptFile)) return promptFile
-        const cwdPath = path.resolve(process.cwd(), promptFile)
-        if (fs.existsSync(cwdPath)) return cwdPath
-        const parentPath = path.resolve(process.cwd(), '..', promptFile)
-        if (fs.existsSync(parentPath)) return parentPath
-        return cwdPath
-      }
-      initialPrompt = fs.readFileSync(resolvePromptFile(), 'utf8')
+      initialPrompt = fs.readFileSync(resolveCliFilePath(promptFile), 'utf8')
     } else if (args.length > 0) {
       initialPrompt = args.join(' ')
     }
@@ -196,5 +232,14 @@ export function parseArgs({
     print: options.print || false,
     designInput:
       typeof options.designInput === 'string' ? options.designInput : undefined,
+    auto: typeof options.auto === 'string' ? options.auto : undefined,
+    spec:
+      typeof options.spec === 'string'
+        ? fs.readFileSync(resolveCliFilePath(options.spec), 'utf8')
+        : undefined,
+    planFile:
+      typeof options.planFile === 'string' ? options.planFile : undefined,
+    approve: options.approve === true,
+    planOnly: options.planOnly === true,
   }
 }

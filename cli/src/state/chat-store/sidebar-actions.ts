@@ -1,6 +1,7 @@
 import { castDraft } from 'immer'
 
 import { generateSessionId, initialState } from './initial-state'
+import { trimAgentStack, trimToolsUsed } from '../../utils/bounded-arrays'
 
 import type {
   ChatSidebarActions,
@@ -121,6 +122,9 @@ export const createSidebarActions = (set: SetState): ChatSidebarActions => ({
     set((state) => {
       if (!state.toolsUsed.includes(toolName)) {
         state.toolsUsed.push(toolName)
+        // FID-2026-0818-007 step 6: cap the tool list so a long drive run
+        // cannot grow it without bound.
+        state.toolsUsed = trimToolsUsed(state.toolsUsed)
       }
     }),
 
@@ -143,7 +147,10 @@ export const createSidebarActions = (set: SetState): ChatSidebarActions => ({
 
   updateAgentStack: (stack) =>
     set((state) => {
-      state.agentStack = stack
+      // FID-2026-0818-007 step 6: destructively trim the subagent trace to a
+      // deterministic cap, preserving every active entry (a live run's
+      // indicator must never drop a running subagent).
+      state.agentStack = trimAgentStack(stack)
     }),
 
   updateSessionCost: (cost) =>
@@ -320,5 +327,11 @@ export const createSidebarActions = (set: SetState): ChatSidebarActions => ({
       state.teacherState = null
       state.devMode = initialState.devMode
       state.permissionMode = initialState.permissionMode
+      // FID-2026-0818-002: a new chat drops any in-flight drive run.
+      state.driveMode = initialState.driveMode
+      state.driveState = initialState.driveState
+      state.activeAutoRunId = initialState.activeAutoRunId
+      state.drivePlanDraft = initialState.drivePlanDraft
+      state.drivePaused = initialState.drivePaused
     }),
 })

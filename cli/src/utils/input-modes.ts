@@ -17,6 +17,7 @@ export type InputMode =
   | 'help'
   | 'connect:chatgpt'
   | 'providerSetup'
+  | 'researchKeySetup'
   | 'outOfCredits'
   | 'subscriptionLimit'
 
@@ -158,6 +159,16 @@ export const INPUT_MODE_CONFIGS: Record<InputMode, InputModeConfig> = {
     color: 'warning',
     placeholder: 'paste the provider API key, then press Enter',
     widthAdjustment: 14,
+    showAgentModeToggle: false,
+    disableSlashSuggestions: true,
+    blockKeyboardExit: false,
+  },
+  researchKeySetup: {
+    icon: '🔍',
+    label: 'Research key',
+    color: 'info',
+    placeholder: 'paste the research API key, then press Enter',
+    widthAdjustment: 15,
     showAgentModeToggle: false,
     disableSlashSuggestions: true,
     blockKeyboardExit: false,

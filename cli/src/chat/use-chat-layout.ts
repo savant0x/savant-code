@@ -137,6 +137,7 @@ export function useChatLayout(
     handleReviewCustom,
     handlePublish,
     handleSubmit,
+    onSubmitPrompt,
     reviewMode,
     publishMode,
     slashContext,
@@ -318,6 +319,7 @@ export function useChatLayout(
     onExitPublish: handleExitPublish,
     onPublish: handlePublish,
     onSubmit: handleSubmit,
+    onSubmitPrompt,
     sidebar: {
       contextTokensUsed,
       contextTokensMax,

@@ -13,7 +13,7 @@ describe('savant-free command aliases', () => {
 
     const result = Bun.spawnSync({
       cmd: [
-        'bun',
+        process.execPath,
         '--eval',
         `
           import { SLASH_COMMANDS } from ${JSON.stringify(slashCommandsUrl)}

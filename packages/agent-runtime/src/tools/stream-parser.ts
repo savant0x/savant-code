@@ -13,7 +13,7 @@ import {
   tryTransformAgentToolCall,
 } from './tool-executor'
 import { isAgentGrounded } from '../echo/grounding'
-import { NATIVE_TOOL_CALL_STEERING_MESSAGE } from '../run-agent-step/constants'
+import { getSteeringMessage } from '../run-agent-step/constants'
 import { processStreamWithTools } from '../tool-stream-parser'
 import { withSystemTags } from '../util/messages'
 import { buildFinalMessageHistory } from './stream-parser/finalize'
@@ -43,10 +43,17 @@ import type {
  *  truncate mid-stream on flash-class models. Recovery steers the model to
  *  split these instead of re-emitting the same oversized payload. The write
  *  tools reuse the canonical `WriteToolName` union (Law 13 — one source of
- *  truth); `read_files` joins it for multi-path reads. */
+ *  truth); `read_files` joins it for multi-path reads; `run_terminal_command`
+ *  joins it because chained bash commands routinely truncate the same way. */
 const NATIVE_TOOL_CALL_STEER_SPLIT_TOOLS = new Set<
-  WriteToolName | 'read_files'
->(['write_file', 'str_replace', 'apply_patch', 'read_files'])
+  WriteToolName | 'read_files' | 'run_terminal_command'
+>([
+  'write_file',
+  'str_replace',
+  'apply_patch',
+  'read_files',
+  'run_terminal_command',
+])
 
 export async function processStream(
   params: {
@@ -391,16 +398,19 @@ export async function processStream(
             )
           }
         }
-        // FID-2026-0816-012: steer large-payload tool retries toward splitting
-        // the work instead of re-emitting the same oversized arguments object.
+        // FID-2026-0819-004: tool-specific steering with progressive
+        // escalation. Strike 1 = hint, strike 2 = explicit, 3+ = example.
+        // We use strike=1 here (first occurrence); loop-iteration.ts may
+        // append a second error with escalating guidance on retries.
         const steering =
           'errorClass' in chunk &&
           chunk.errorClass === 'native-incomplete' &&
           chunk.toolName !== undefined &&
           NATIVE_TOOL_CALL_STEER_SPLIT_TOOLS.has(
-            chunk.toolName as WriteToolName | 'read_files',
+            chunk.toolName as
+              WriteToolName | 'read_files' | 'run_terminal_command',
           )
-            ? NATIVE_TOOL_CALL_STEERING_MESSAGE
+            ? getSteeringMessage(chunk.toolName, 1)
             : ''
         errorMessages.push(
           userMessage({

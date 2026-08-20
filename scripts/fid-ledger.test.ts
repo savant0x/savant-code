@@ -125,3 +125,48 @@ describe('validateActiveFidLedger', () => {
     )
   })
 })
+
+describe('validateActiveFidLedger — Anti-Deferral step-status scan (FID-2026-0817-005)', () => {
+  it('rejects an archived closed FID with unresolved steps', () => {
+    const root = createLedger({})
+    writeFileSync(
+      path.join(root, 'dev', 'fids', 'archive', 'FID-2026-0810-001-old.md'),
+      '# FID: old\n\n**Status:** closed\n\n## Step Status\n' +
+        '- [x] 1. done — implemented\n' +
+        '- [ ] 2. not done\n',
+    )
+    const issues = validateActiveFidLedger(root)
+    expect(issues.map((issue) => issue.code)).toContain('fid.steps.unresolved')
+    expect(
+      issues.find((issue) => issue.code === 'fid.steps.unresolved')?.message,
+    ).toContain('not done')
+  })
+
+  it('accepts an archived closed FID whose steps are all resolved', () => {
+    const root = createLedger({})
+    writeFileSync(
+      path.join(root, 'dev', 'fids', 'archive', 'FID-2026-0810-002-old.md'),
+      '# FID: old\n\n**Status:** closed\n\n## Step Status\n' +
+        '- [x] 1. done — implemented\n',
+    )
+    expect(validateActiveFidLedger(root)).toEqual([])
+  })
+
+  it('accepts an archived closed FID with an operator-approved deferral', () => {
+    const root = createLedger({})
+    writeFileSync(
+      path.join(root, 'dev', 'fids', 'archive', 'FID-2026-0810-003-old.md'),
+      '# FID: old\n\n**Status:** closed\n\n## Step Status\n' +
+        '- [x] 1. done — implemented\n' +
+        '- [ ] 2. later — deferred::operator-approved 2026-08-16\n',
+    )
+    expect(validateActiveFidLedger(root)).toEqual([])
+  })
+
+  it('ignores FIDs without a Step Status section (section-conditional)', () => {
+    const root = createLedger({
+      'FID-2026-0811-003-test.md': fid('FID-2026-0811-003'),
+    })
+    expect(validateActiveFidLedger(root)).toEqual([])
+  })
+})

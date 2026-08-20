@@ -41,6 +41,7 @@ import { runPlainLogin } from './login/plain-login'
 import { getProjectRoot, setProjectRoot } from './project-files'
 import { trackEvent } from './utils/analytics'
 import { getAuthToken, getAuthTokenDetails } from './utils/auth'
+import { runHeadlessAutoDrive } from './utils/auto-drive-headless'
 import { trimOversizedChatLogs } from './utils/chat-history'
 import { IS_SAVANT_FREE } from './utils/constants'
 import { startEngagementTracking } from './utils/engagement'
@@ -56,6 +57,7 @@ import { applyPostProcessing } from './utils/post-processing'
 import { shouldShowProjectPicker } from './utils/project-picker'
 import {
   applyPersistedProviderApiKeys,
+  applyPersistedResearchApiKeys,
   configureDefaultDirectProvider,
 } from './utils/provider-setup'
 import { saveRecentProject } from './utils/recent-projects'
@@ -248,6 +250,11 @@ async function main(): Promise<void> {
     initialPermissionMode,
     print,
     designInput,
+    auto,
+    spec,
+    planFile,
+    approve,
+    planOnly,
   } = parseArgs()
 
   if (designInput) {
@@ -292,6 +299,10 @@ async function main(): Promise<void> {
   // auto-configured Ollama setting.
   applyPersistedProviderApiKeys()
 
+  // Load persisted research BYOK keys (Serper/Context7/Parallel/Tavily/Exa/
+  // Firecrawl). Explicit environment variables remain authoritative.
+  applyPersistedResearchApiKeys()
+
   // Restore any persisted direct-provider choice (e.g. local Ollama) only when
   // no saved provider key or explicit shell provider already selected a mode.
   applyPersistedDirectProviderSettings()
@@ -333,6 +344,34 @@ async function main(): Promise<void> {
       const exitCode = await runStandaloneRelease(releaseOp)
       process.exit(exitCode)
     }
+  }
+
+  // FID-2026-0818-008: Auto Drive headless entry. `--auto` is a headless mode
+  // flag (the TUI `/auto` slash command is the interactive path, child 002) —
+  // it runs the full drive cycle with no TUI and no runtime ask_user, emitting
+  // an exit code as the completion certificate. Handled before the generic
+  // `--print`/stdin/CI branch so an explicit `--auto` never falls through to
+  // a single-turn print.
+  if (auto !== undefined) {
+    const result = await runHeadlessAutoDrive({
+      goal: auto,
+      spec,
+      planFile,
+      approve,
+      planOnly,
+      continueChat,
+      continueId,
+      projectRoot: getProjectRoot(),
+    })
+    if (result.output !== undefined) {
+      // eslint-disable-next-line no-console -- headless stdout contract
+      console.log(result.output)
+    }
+    if (result.error) {
+      // eslint-disable-next-line no-console -- headless stderr contract
+      console.error(red(`Error: ${result.error}`))
+    }
+    process.exit(result.exitCode)
   }
 
   // Headless / non-interactive mode (FID-2026-0806-011): explicit `--print`,

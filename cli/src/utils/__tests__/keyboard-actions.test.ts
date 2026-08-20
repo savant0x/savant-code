@@ -624,6 +624,52 @@ describe('resolveChatKeyboardAction', () => {
     })
   })
 
+  describe('drive-mode Esc (FID-2026-0818-007)', () => {
+    const driveState: ChatKeyboardState = {
+      ...defaultState,
+      driveMode: true,
+      isStreaming: true,
+    }
+
+    test('Esc in drive mode routes to drive-interrupt (not interrupt-stream)', () => {
+      expect(resolveChatKeyboardAction(escapeKey, driveState)).toEqual({
+        type: 'drive-interrupt',
+      })
+    })
+
+    test('Esc in drive mode with no stream still routes to drive-interrupt', () => {
+      const state = {
+        ...driveState,
+        isStreaming: false,
+        isWaitingForResponse: false,
+      }
+      expect(resolveChatKeyboardAction(escapeKey, state)).toEqual({
+        type: 'drive-interrupt',
+      })
+    })
+
+    test('Esc in drive mode wins over the generic input-mode escape', () => {
+      const state = { ...driveState, inputMode: 'bash' as const }
+      expect(resolveChatKeyboardAction(escapeKey, state)).toEqual({
+        type: 'drive-interrupt',
+      })
+    })
+
+    test('Esc without drive mode keeps the generic interrupt', () => {
+      const state = { ...defaultState, isStreaming: true, driveMode: false }
+      expect(resolveChatKeyboardAction(escapeKey, state)).toEqual({
+        type: 'interrupt-stream',
+      })
+    })
+
+    test('Ctrl+C in drive mode still clears input (not drive-interrupt)', () => {
+      const state = { ...driveState, inputValue: 'text' }
+      expect(resolveChatKeyboardAction(ctrlC, state)).toEqual({
+        type: 'clear-input',
+      })
+    })
+  })
+
   describe('toggle all (Ctrl+T)', () => {
     const ctrlT = createKey({ name: 't', ctrl: true })
 

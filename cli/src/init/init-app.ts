@@ -8,11 +8,16 @@ import { enableMapSet } from 'immer'
 import { initializeThemeStore } from '../hooks/use-theme'
 import { setProjectRoot } from '../project-files'
 import { initializeDirenv } from './init-direnv'
+import { bootPresence } from '../state/presence'
 import { initAnalytics } from '../utils/analytics'
 import { getFingerprintId } from '../utils/fingerprint'
 import { initTimestampFormatter } from '../utils/helpers'
 import { logger } from '../utils/logger'
-import { loadAnalyticsEnabled } from '../utils/settings'
+import {
+  SAVANT_DISCORD_CLIENT_ID,
+  loadAnalyticsEnabled,
+  loadPresenceEnabled,
+} from '../utils/settings'
 import { enableManualThemeRefresh } from '../utils/theme-system'
 
 export async function initializeApp(params: { cwd?: string }): Promise<void> {
@@ -41,6 +46,10 @@ export async function initializeApp(params: { cwd?: string }): Promise<void> {
   // Compute the hardware-based fingerprint in the background so it's ready
   // by the time the user finishes reading the login prompt.
   void getFingerprintId()
+
+  // FID-2026-0818-009: boot Discord Rich Presence (non-blocking, silent,
+  // dormant-polling when Discord is absent; client id is hardcoded).
+  bootPresence(loadPresenceEnabled(), SAVANT_DISCORD_CLIENT_ID)
 
   // Refresh ChatGPT OAuth credentials in the background if they exist
   if (CHATGPT_OAUTH_ENABLED) {

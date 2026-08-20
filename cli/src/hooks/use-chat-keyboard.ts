@@ -41,6 +41,9 @@ export type ChatKeyboardHandlers = {
   // Stream handlers
   onInterruptStream: () => void
 
+  // Drive handlers (FID-2026-0818-007)
+  onDriveInterrupt: () => void
+
   // Slash menu handlers
   onSlashMenuDown: () => void
   onSlashMenuUp: () => void
@@ -135,6 +138,9 @@ function dispatchAction(
       return true
     case 'interrupt-stream':
       handlers.onInterruptStream()
+      return true
+    case 'drive-interrupt':
+      handlers.onDriveInterrupt()
       return true
     case 'slash-menu-down':
       handlers.onSlashMenuDown()

@@ -878,6 +878,7 @@ type ProcessResult = {
 const COMMAND_TIMEOUT_MS = 30 * 60 * 1_000
 const ALLOWED_RELEASE_COMMANDS = new Set([
   'bun',
+  'bun.exe',
   'npm',
   'git',
   'gh',
@@ -1067,6 +1068,7 @@ function run(
       stderrFd = openSync(stderrPath, 'w')
       stdio = ['ignore', stdoutFd, stderrFd]
     }
+    const hasCustomEnv = Boolean(extraEnv)
     const result = spawnSync(command, args, {
       cwd,
       encoding: 'utf8',
@@ -1074,12 +1076,20 @@ function run(
       windowsHide: true,
       timeout: COMMAND_TIMEOUT_MS,
       killSignal: 'SIGTERM',
-      shell: false,
+      // On Windows, Bun's spawnSync cannot resolve .cmd shims (bun.cmd,
+      // npm.cmd) when env is an explicit object — even process.env.
+      // When no extraEnv is set, omit env entirely to inherit the parent
+      // environment at the OS level. When extraEnv is set (e.g. sanitized
+      // gate env with secrets stripped), we must create a new env object;
+      // on Windows, enable shell:true so cmd.exe can resolve .cmd shims.
+      // The command allowlist (validateReleaseCommand) gates which commands
+      // can reach this code path.
+      shell: hasCustomEnv && process.platform === 'win32',
       env: extraEnv
         ? replaceEnv
           ? { ...extraEnv }
           : { ...process.env, ...extraEnv }
-        : process.env,
+        : undefined,
     })
     if (stdoutFd !== undefined) closeSync(stdoutFd)
     if (stderrFd !== undefined) closeSync(stderrFd)

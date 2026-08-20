@@ -98,14 +98,14 @@ export function convertToolMessage(message: Message): SavantModelMessage[] {
   if (message.role === 'system') {
     // Defensive: older serialized state may store system content as a plain
     // string instead of TextPart[]. Treat any non-array as the literal text.
-    const content = message.content as unknown as string | TextPart[]
+    const rawContent = message.content
     let textContent: string
-    if (Array.isArray(content)) {
-      textContent = content
+    if (typeof rawContent === 'string') {
+      textContent = rawContent
+    } else if (Array.isArray(rawContent)) {
+      textContent = rawContent
         .map((c) => (c && 'text' in c ? c.text : ''))
         .join('\n\n')
-    } else if (typeof content === 'string') {
-      textContent = content
     } else {
       textContent = ''
     }
@@ -119,17 +119,16 @@ export function convertToolMessage(message: Message): SavantModelMessage[] {
   if (message.role === 'user') {
     // Defensive: older serialized state may store user content as a plain
     // string. Wrap it as a TextPart[] so downstream code always sees an array.
-    const content = message.content as unknown as
-      string | UserMessage['content']
-    if (typeof content === 'string') {
+    const rawContent = message.content
+    if (typeof rawContent === 'string') {
       return [
         cloneDeep({
           ...message,
-          content: [textPartFromString(content)],
+          content: [textPartFromString(rawContent)],
         }),
       ]
     }
-    if (!Array.isArray(content)) {
+    if (!Array.isArray(rawContent)) {
       return [
         cloneDeep({
           ...message,
@@ -142,18 +141,24 @@ export function convertToolMessage(message: Message): SavantModelMessage[] {
   if (message.role === 'assistant') {
     // Defensive: older serialized state may store assistant content as a plain
     // string (or invalid value). Wrap it as a TextPart[] before iterating.
-    const content = message.content as unknown as
-      string | AssistantMessage['content']
-    if (!Array.isArray(content)) {
-      const text = typeof content === 'string' ? content : ''
+    const rawContent = message.content
+    if (typeof rawContent === 'string') {
       return [
         cloneDeep({
           ...message,
-          content: [textPartFromString(text)],
+          content: [textPartFromString(rawContent)],
         }),
       ]
     }
-    return content.map((c) => {
+    if (!Array.isArray(rawContent)) {
+      return [
+        cloneDeep({
+          ...message,
+          content: [textPartFromString('')],
+        }),
+      ]
+    }
+    return rawContent.map((c) => {
       return assistantToSavantCodeMessage({
         ...message,
         content: c,

@@ -18,10 +18,13 @@ import {
 } from '../../utils/pending-attachments'
 import {
   getActiveProviderSetup,
+  getActiveResearchKeyService,
   getMissingProviderSetup,
   getProviderSetupGuidance,
   getProviderSetupInfo,
+  getResearchKeyServiceInfo,
   saveProviderApiKey,
+  saveResearchApiKey,
 } from '../../utils/provider-setup'
 import {
   findCommand,
@@ -247,6 +250,49 @@ export async function routeUserPrompt(
     return
   }
 
+  // Handle research API-key setup (BYOK) — mirrors provider key handling.
+  if (inputMode === 'researchKeySetup') {
+    const service = getActiveResearchKeyService()
+    const info = getResearchKeyServiceInfo(service)
+    if (!info) {
+      setMessages((prev) => [
+        ...prev,
+        getSystemMessage(
+          'Research key setup is unavailable. Use /research-keys to try again.',
+        ),
+      ])
+    } else if (!trimmed) {
+      setMessages((prev) => [
+        ...prev,
+        getSystemMessage(`${info.label} API key cannot be empty.`),
+      ])
+    } else {
+      try {
+        saveResearchApiKey(service, trimmed)
+        setMessages((prev) => [
+          ...prev,
+          getSystemMessage(
+            `${info.label} API key saved locally. Research tools will use it when available.`,
+          ),
+        ])
+      } catch {
+        setMessages((prev) => [
+          ...prev,
+          getSystemMessage(
+            `Could not save the ${info.label} API key. Check your local configuration permissions and try again.`,
+          ),
+        ])
+      }
+    }
+
+    // Never save or display the secret itself, and always return to normal input.
+    setInputValue({ text: '', cursorPosition: 0, lastEditDueToNav: false })
+    setInputMode('default')
+    setInputFocused(true)
+    inputRef.current?.focus()
+    return
+  }
+
   // Handle connect:chatgpt mode input (authorization code)
   if (inputMode === 'connect:chatgpt') {
     if (!CHATGPT_OAUTH_ENABLED) {
@@ -359,6 +405,13 @@ export async function routeUserPrompt(
       getUserMessage(trimmed),
       getSystemMessage(`Command not found: ${trimmed}`),
     ])
+    return
+  }
+
+  // FID-2026-0818-002: drive mode locks ordinary input — the run proceeds
+  // autonomously after the operator's Confirmation. Slash commands are handled
+  // earlier (still reachable); Esc pause/stop lands in child 007.
+  if (useChatStore.getState().driveMode) {
     return
   }
 

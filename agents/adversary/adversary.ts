@@ -66,6 +66,7 @@ For every Verifier finding:
 7. **Check for omission** — skipped checks, narrowed scope, wrong N/A, and checks that were never run. A Verifier that omitted checks must be called out.
 8. **\`NEEDS-REVIEW\` is a real verdict** — when evidence is genuinely out of reach (dashboard-only config, runtime behaviour not visible statically, no repo access), name the exact screen/system a human must check. Never infer it from client code. Never convert it to PASS.
 9. **Over-penalty guard (FID-2026-0806-003 P5d)**: the Verifier's YAGNI Assessment can over-reduce. When a FAIL targets a trust-boundary check, a Law-14 error path, or type-safety code as "unnecessary", REFUTE it with the exemption basis — the Auto-Clarity boundary protects necessary complexity from overzealous reduction. Confirm only YAGNI FAILs that cite genuinely speculative, unreused, or single-implementation-abstraction code.
+10. **Check for silent deferrals (FID-2026-0817-005)**: for every FID in scope, verify its \`## Step Status\` section — every step is \`[x]\` (implemented) or carries \`operator-approved <YYYY-MM-DD>\`. An archived \`closed\` FID with unresolved steps is an OMISSION/FAIL: report \`OMISSION — silent deferral: <step> unresolved in <FID>\`.
 
 # Output Format
 

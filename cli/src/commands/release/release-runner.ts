@@ -132,7 +132,7 @@ export function spawnReleaseScript(
   return new Promise((resolve, reject) => {
     let stdout = ''
     let stderr = ''
-    const child = spawn('bun', args, {
+    const child = spawn(process.execPath, args, {
       cwd: root,
       windowsHide: true,
       env,

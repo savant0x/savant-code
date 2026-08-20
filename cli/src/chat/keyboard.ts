@@ -1,4 +1,5 @@
 import { getSelectedSlashCommand } from './slash-selection'
+import { buildDriveControlMessage } from '../commands/auto-drive'
 import { areCreditsRestored } from '../components/out-of-credits-banner'
 import { WEBSITE_URL } from '../login/constants'
 import { getProjectRoot } from '../project-files'
@@ -25,6 +26,7 @@ import type { MultilineInputHandle } from '../components/multiline-input'
 import type { TriggerContext } from '../hooks/suggestion-engine/parsers'
 import type { ChatKeyboardHandlers } from '../hooks/use-chat-keyboard'
 import type { MatchedSlashCommand } from '../hooks/use-suggestion-engine'
+import type { SendMessageFn } from '../types/contracts/send-message'
 import type { InputValue } from '../types/store'
 import type { AgentMode } from '../utils/constants'
 import type { InputMode } from '../utils/input-modes'
@@ -50,6 +52,8 @@ export type ChatKeyboardStateDeps = {
   nextCtrlCWillExit: boolean
   queuePaused: boolean
   queuedCount: number
+  driveMode: boolean
+  drivePaused: boolean
 }
 
 export function buildChatKeyboardState(
@@ -78,6 +82,8 @@ export function buildChatKeyboardState(
     nextCtrlCWillExit: deps.nextCtrlCWillExit,
     queuePaused: deps.queuePaused,
     queuedCount: deps.queuedCount,
+    driveMode: deps.driveMode,
+    drivePaused: deps.drivePaused,
   }
 }
 
@@ -123,6 +129,7 @@ export type ChatKeyboardHandlersDeps = {
   executeSlashCommand: (
     selected: MatchedSlashCommand | undefined,
   ) => Promise<void>
+  sendMessage: SendMessageFn
 }
 
 /**
@@ -164,6 +171,7 @@ export function buildChatKeyboardHandlers(
     handleToggleAll,
     totalMentionMatches,
     executeSlashCommand,
+    sendMessage,
   } = deps
 
   return {
@@ -181,6 +189,27 @@ export function buildChatKeyboardHandlers(
       if (queuedMessagesLength > 0) {
         pauseQueue()
       }
+    },
+    onDriveInterrupt: () => {
+      // FID-2026-0818-007: drive-mode Esc — pause (first press) / stop
+      // (second press). Aborts the current turn, then routes the control
+      // through the same `<drive-control>` directive the /auto-drive subcommands use,
+      // so the runtime records the pause/stop on the durable drive record.
+      abortControllerRef.current?.abort()
+      const store = useChatStore.getState()
+      const action = store.drivePaused ? 'stop' : 'pause'
+      store.setDrivePaused(action === 'pause')
+      if (action === 'stop') {
+        store.setDriveMode(false)
+        store.setDriveState('blocked')
+      }
+      void sendMessage({
+        content: buildDriveControlMessage(action, 'operator Esc'),
+        agentMode: 'STRICT',
+      }).catch(() => {
+        // Fail closed: a dropped control send must not wedge the drive latch.
+        store.setDrivePaused(false)
+      })
     },
     onSlashMenuDown: () => setSlashSelectedIndex((prev) => prev + 1),
     onSlashMenuUp: () => setSlashSelectedIndex((prev) => prev - 1),

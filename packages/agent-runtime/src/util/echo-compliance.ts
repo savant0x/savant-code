@@ -151,6 +151,8 @@ type WriteRecord = {
   fsmPhase?: string
   fidId?: string
   lawChecks?: { law: number; outcome: 'blocked' | 'advisory' | 'passed' }[]
+  /** Cumulative verification credit (FID-2026-0819-001). */
+  verified: boolean
 }
 
 export class EchoComplianceTracker implements EchoComplianceTrackerLike {
@@ -164,8 +166,6 @@ export class EchoComplianceTracker implements EchoComplianceTrackerLike {
   private readonly fidPaths: string[]
   private readonly userPrompt: string | undefined
 
-  /** True once a verification command has been recorded after the last write. */
-  private verifiedAfterLastWrite = true
   /** Violations emitted at the most recent step boundary (for steering). */
   private pendingSteering: ComplianceViolation[] = []
   private steeringCount = 0
@@ -249,11 +249,9 @@ export class EchoComplianceTracker implements EchoComplianceTrackerLike {
       fsmPhase: params.fsmPhase,
       fidId: params.fidId ?? this.resolveFidId(normalized),
       lawChecks: params.lawChecks,
+      verified: false,
     }
     this.writes.push(record)
-    // A write invalidates "verified after last write" until a verification
-    // command lands after it.
-    this.verifiedAfterLastWrite = false
 
     // Law 1 (read-before-write): new files can't be read (exempt); writes with
     // content knowledge (exact oldString / patch) demonstrably knew the file.
@@ -275,8 +273,11 @@ export class EchoComplianceTracker implements EchoComplianceTrackerLike {
   /** Record a terminal command; detects verification commands for Law 3. */
   recordVerification(command: string): void {
     if (this.mode === 'off') return
-    if (detectsVerificationCommand(command)) {
-      this.verifiedAfterLastWrite = true
+    if (!detectsVerificationCommand(command)) return
+    // Cumulative: credit EVERY write that is still unverified. A later
+    // write does NOT revoke this credit (FID-2026-0819-001).
+    for (const w of this.writes) {
+      if (!w.verified) w.verified = true
     }
   }
 
@@ -310,14 +311,17 @@ export class EchoComplianceTracker implements EchoComplianceTrackerLike {
     const codeWrites = writes.filter((w) => w.fileKind === 'code')
     const docWrites = writes.filter((w) => w.fileKind === 'docs')
 
-    // Law 3 (verify-before-proceed): CODE writes happened but no verification
-    // command ran after the last write. Doc-only turns are covered by
-    // markdownlint; a doc turn with no lint:md is not a Law 3 code violation.
-    if (codeWrites.length > 0 && !this.verifiedAfterLastWrite) {
+    // Law 3 (verify-before-proceed): flag the SPECIFIC code writes that are
+    // still unverified (cumulative — FID-2026-0819-001). A write followed by
+    // a verification command is remembered as verified even if more writes
+    // follow; only genuinely-unverified files are flagged by path.
+    const unverifiedCode = codeWrites.filter((w) => !w.verified)
+    if (unverifiedCode.length > 0) {
+      const paths = unverifiedCode.map((w) => w.path).join(', ')
       violations.push({
         law: 'law3',
         severity: 'warning',
-        message: `ECHO Law 3: made ${codeWrites.length} code file change(s) without running verification (typecheck/test/lint) after writing. Run the project's verification commands before finishing.`,
+        message: `ECHO Law 3: ${unverifiedCode.length} code file(s) written without a subsequent verification command: ${paths}. Run the project's verification commands before finishing.`,
         stepNumber: params.stepNumber,
       })
     }
@@ -343,10 +347,13 @@ export class EchoComplianceTracker implements EchoComplianceTrackerLike {
 
     // FID-2026-0814-004 H-03: doc-only turns that skipped markdownlint get a
     // lightweight docs-appropriate reminder (never a Law 3 / Verifier nag).
+    // Doc-only turns: flag only doc writes that are still unverified
+    // (cumulative — a lint:md command credits doc writes too).
+    const unverifiedDocs = docWrites.filter((w) => !w.verified)
     if (
       docWrites.length > 0 &&
       codeWrites.length === 0 &&
-      !this.verifiedAfterLastWrite
+      unverifiedDocs.length > 0
     ) {
       violations.push({
         law: 'law3',
@@ -360,11 +367,12 @@ export class EchoComplianceTracker implements EchoComplianceTrackerLike {
     const fidTouched = writes.some((w) => this.matchesFidPath(w.path))
     const fidId = fidTouched ? this.getTouchedFidId(writes) : undefined
 
-    // Flag only when the Verifier was NOT spawned AND no verification evidence
-    // (typecheck/test/lint) exists — the prompt's approved direct-write path
-    // (verify with bashers) must not be noisy.
-    const needsIndependentReview =
-      !verifierSpawned && !this.verifiedAfterLastWrite
+    // Flag only when the Verifier was NOT spawned AND at least one write
+    // (code OR doc/FID) is still unverified. Checking all writes — not just
+    // code — preserves the original FID-escalation behavior, where a write to
+    // an active FID (classified as a doc) still needs independent review.
+    const hasUnverifiedWrite = writes.some((w) => !w.verified)
+    const needsIndependentReview = !verifierSpawned && hasUnverifiedWrite
 
     if (
       needsIndependentReview &&
@@ -389,8 +397,10 @@ export class EchoComplianceTracker implements EchoComplianceTrackerLike {
 
     // Dedupe event emission across steps: a violation already surfaced in a
     // prior turn-end is not re-emitted (steering keeps its own dedup set).
+    // Key on message (not path) so that a Law 3 warning naming different
+    // unverified files produces a distinct key per unverified set.
     const fresh = violations.filter((v) => {
-      const key = `${v.law}:${v.path ?? ''}`
+      const key = `${v.law}:${v.message}`
       if (this.emittedKeys.has(key)) return false
       this.emittedKeys.add(key)
       return true

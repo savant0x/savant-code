@@ -3,6 +3,7 @@ dev/fids/archive/**
 CHANGELOG.md
 research/
 resources/
+master-fetch-master/
 packages/design-systems/library/**
 cli/bin/savant-design-systems/SKILL.md
 dev/test-prompts/archive/**
@@ -32,3 +33,11 @@ dev/scratchpad/**
 dev/nova/inbox/**
 dev/nova/outbox/**
 dev/nova/scratchpad/**
+
+# Design research scratch docs (2026-08-19) — long-form research notes with
+# extensive code blocks and tables; not shipped documentation. Line-length
+# exemptions follow the docs/archive/** and dev/idea-shelf/** precedent.
+docs/design/Savant Desktop Architecture Research.md
+docs/design/Savant-Code Keyless Search Research.md
+docs/Savant Desktop App Architecture.md
+dev/session-summaries/2026-08-19-desktop-app-research-planning.md

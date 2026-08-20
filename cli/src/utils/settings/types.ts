@@ -64,4 +64,6 @@ export interface Settings {
   designSystemUser?: string
   /** Optional session-only design-system override, not persisted. */
   designSystemSession?: string
+  /** Discord Rich Presence enable/disable (FID-2026-0818-009). Defaults on. */
+  presenceEnabled?: boolean
 }

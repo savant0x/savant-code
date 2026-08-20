@@ -6,7 +6,9 @@ import { appendGroundingRefresh } from '../echo/grounding'
 import { runProgrammaticStep } from '../run-programmatic-step'
 import {
   buildNativeToolCallExhaustedMessage,
+  getSteeringMessage,
   NATIVE_TOOL_CALL_RECOVERY_MAX_STRIKES,
+  NATIVE_TOOL_CALL_TERMINAL_RECOVERY_MAX_STRIKES,
 } from './constants'
 import { prepareStepContext } from './context-tokens'
 import { runAgentStep } from './step'
@@ -311,13 +313,36 @@ export async function runLoopIteration(params: {
   let stepErrorMessage: string | undefined
   if (hasNativeIncompleteToolCall) {
     consecutiveNativeIncompleteSteps += 1
-    if (
-      consecutiveNativeIncompleteSteps >= NATIVE_TOOL_CALL_RECOVERY_MAX_STRIKES
-    ) {
+    // FID-2026-0819-004: run_terminal_command gets extra retries (5 vs 3)
+    // because flash-class models need more attempts to learn from steering.
+    const maxStrikes =
+      lastIncompleteToolName === 'run_terminal_command'
+        ? NATIVE_TOOL_CALL_TERMINAL_RECOVERY_MAX_STRIKES
+        : NATIVE_TOOL_CALL_RECOVERY_MAX_STRIKES
+    if (consecutiveNativeIncompleteSteps >= maxStrikes) {
       stepStatus = 'failed'
       stepErrorMessage = buildNativeToolCallExhaustedMessage(
         lastIncompleteToolName,
       )
+    } else if (consecutiveNativeIncompleteSteps >= 2) {
+      // FID-2026-0819-004: append escalating steering on retry. The first
+      // error (strike 1) already has a hint from stream-parser.ts. Strikes
+      // 2+ get increasingly specific guidance via getSteeringMessage.
+      const escalatingHint = getSteeringMessage(
+        lastIncompleteToolName,
+        consecutiveNativeIncompleteSteps,
+      )
+      if (escalatingHint) {
+        currentAgentState.messageHistory = [
+          ...currentAgentState.messageHistory,
+          userMessage({
+            content: withSystemTags(
+              `Native tool call still failing. Try a different approach.${escalatingHint}`,
+            ),
+            tags: ['TOOL_CALL_ERROR'],
+          }),
+        ]
+      }
     }
     shouldEndTurn = false
   } else {

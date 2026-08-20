@@ -344,6 +344,84 @@ describe('EchoComplianceTracker — Law 3 (verify-after-write)', () => {
     expect(violations.some((v) => v.law === 'law3')).toBe(false)
   })
 
+  it('is cumulative: passes when verification ran between writes (FID-2026-0819-001)', () => {
+    const t = new EchoComplianceTracker()
+    t.recordWrite({
+      path: '/proj/src/a.ts',
+      lineDelta: 10,
+      contentKnowledge: false,
+      isNewFile: false,
+      securitySensitive: false,
+    })
+    t.recordVerification('bun test src/')
+    t.recordWrite({
+      path: '/proj/src/b.ts',
+      lineDelta: 10,
+      contentKnowledge: false,
+      isNewFile: false,
+      securitySensitive: false,
+    })
+    t.recordVerification('bun run typecheck')
+    const violations = t.evaluateAtStepBoundary({
+      stepNumber: 1,
+      endingTurn: true,
+    })
+    expect(violations.some((v) => v.law === 'law3')).toBe(false)
+  })
+
+  it('is cumulative: flags only the unverified later write (FID-2026-0819-001)', () => {
+    const t = new EchoComplianceTracker()
+    t.recordWrite({
+      path: '/proj/src/a.ts',
+      lineDelta: 10,
+      contentKnowledge: false,
+      isNewFile: false,
+      securitySensitive: false,
+    })
+    t.recordVerification('bun test src/')
+    t.recordWrite({
+      path: '/proj/src/b.ts',
+      lineDelta: 10,
+      contentKnowledge: false,
+      isNewFile: false,
+      securitySensitive: false,
+    })
+    const violations = t.evaluateAtStepBoundary({
+      stepNumber: 1,
+      endingTurn: true,
+    })
+    const law3 = violations.find((v) => v.law === 'law3')
+    expect(law3).toBeDefined()
+    expect(law3!.message).toContain('/proj/src/b.ts')
+    expect(law3!.message).not.toContain('/proj/src/a.ts')
+  })
+
+  it('flags both writes when no verification runs (FID-2026-0819-001)', () => {
+    const t = new EchoComplianceTracker()
+    t.recordWrite({
+      path: '/proj/src/a.ts',
+      lineDelta: 10,
+      contentKnowledge: false,
+      isNewFile: false,
+      securitySensitive: false,
+    })
+    t.recordWrite({
+      path: '/proj/src/b.ts',
+      lineDelta: 10,
+      contentKnowledge: false,
+      isNewFile: false,
+      securitySensitive: false,
+    })
+    const violations = t.evaluateAtStepBoundary({
+      stepNumber: 1,
+      endingTurn: true,
+    })
+    const law3 = violations.find((v) => v.law === 'law3')
+    expect(law3).toBeDefined()
+    expect(law3!.message).toContain('/proj/src/a.ts')
+    expect(law3!.message).toContain('/proj/src/b.ts')
+  })
+
   it('does not fire mid-batch (endingTurn false)', () => {
     const t = new EchoComplianceTracker()
     t.recordWrite({

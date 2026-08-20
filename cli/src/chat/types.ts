@@ -194,6 +194,8 @@ export type ChatLayoutProps = {
   onExitPublish: () => void
   onPublish: (agentIds: string[]) => Promise<void>
   onSubmit: () => Promise<void>
+  /** FID-2026-0818-002: arbitrary-content submit for the drive confirmation. */
+  onSubmitPrompt: OnSubmitPrompt
 
   // Sidebar
   sidebar: ChatSidebarProps

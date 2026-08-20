@@ -3,6 +3,48 @@
 This directory contains closed or historically completed FIDs. Files here are
 an audit record, not an active work queue.
 
+## 2026-08-19 closure — FID-2026-0819-002 (research tools restored in direct-provider mode)
+
+`FID-2026-0819-002-research-tools-nonfunctional-in-direct-provider-mode.md`
+(severity: high) closed and archived 2026-08-19. `read_docs`, `web_search`,
+and `deep_research` were dead in direct-provider mode (the default
+release-binary boot mode) because they routed exclusively through the
+SavantCode backend web API, which short-circuits there.
+
+Fix: research is decoupled from `DIRECT_PROVIDER` behind a swappable adapter
+(`research-sources.ts`). `web_search` ships a keyless Qwant + DuckDuckGo port
+(default, zero keys) plus BYOK Serper/Parallel/Tavily/Exa/Firecrawl facades;
+`read_docs` ships keyless search-and-fetch plus a self-populating local SQLite
+FTS5 docset cache (`~/.savant-code/docsets/`, 7-day TTL, keyless npm/PyPI/
+crates.io/RubyGems/Go version detection, `ecosystem` pinning) plus BYOK
+Context7; `deep_research` inherits via its injected `SearchFn`. BYOK keys are
+entered via `/research-keys <service>` (masked, saved to `credentials.json`
+under `researchApiKeys`, applied at boot) or as `SERPER_API_KEY` /
+`CONTEXT7_API_KEY` / `PARALLEL_API_KEY` / `TAVILY_API_KEY` / `EXA_API_KEY` /
+`FIRECRAWL_API_KEY` env vars.
+
+Gates (all exit 0): typecheck ×4; agent-runtime 1103 pass / 0 fail; CLI 3242
+pass / 0 fail (18 skip); eslint (changed files) clean; prettier clean;
+Law-4 call-graph grep. Docs updated (`.env.example`, `docs/features.md`,
+`docs/installation.md`, `docs/faq.md`, `docs/index.md`, `README.md`,
+`README.zh-CN.md`). Closed + archived 2026-08-19.
+
+## 2026-08-19 closure — FID-2026-0819-001 (cumulative verification tracking)
+
+`FID-2026-0819-001-cumulative-verification-tracking.md` (severity: medium)
+closed and archived 2026-08-19. Replaced the edge-triggered boolean
+verification latch (`verifiedAfterLastWrite` in `EchoComplianceTracker`,
+`hasVerifiedSinceLastDirty` in `EchoEnforcement`) with cumulative per-write
+`verified` state: each write carries its own flag, a verification command
+credits ALL currently-unverified writes (never revoked by later writes), and
+turn-end evaluation flags only the specific files that are genuinely
+unverified. Also fixes RED-002/RED-003/RED-012: the enforcement layer now uses
+the shared `detectsVerificationCommand` as the single source of truth and
+handles both `run_terminal_command` and `run_readonly_command`.
+
+Gates (all exit 0): agent-runtime typecheck; 1057 pass / 0 fail (3 new
+cumulative-behavior cases in echo-compliance). Closed + archived 2026-08-19.
+
 > **Correction (2026-08-16):** a closure section for the six planning FIDs
 > (FID-2026-0816-002..007) was briefly added here and then removed — closure
 > requires implementation evidence. As of 2026-08-16, FID-2026-0816-003
@@ -22,6 +64,53 @@ an audit record, not an active work queue.
 > only. The 2026-08-16 navy purge (see CHANGELOG) replaces the neutral
 > scale project-wide with neutral near-black grays; semantic accents are
 > unchanged. Historical archive records are not rewritten.
+
+## 2026-08-18 closure — Auto Drive children 002–008 + docs 010 (operator-directed batch archive)
+
+Seven Auto Drive child FIDs and the docs/FAQ FID closed and archived
+2026-08-18 by operator direction ("move the completed ones"). Each record
+carries the FID-2026-0817-005 Step Status inventory with **every step
+`[x]`** — code + unit tests green, no unresolved steps, no silent deferral.
+The two program-level `blocked::` live-smoke steps — **master
+`FID-2026-0818-001` step 8** (live `/auto` smoke) and **`FID-2026-0818-009`
+step 5** (live Discord smoke) — were confirmed by the operator 2026-08-18
+and closed + archived the same day (next section).
+
+| FID | Scope | Step inventory |
+|---|---|---|
+| [`FID-2026-0818-002`](FID-2026-0818-002-drive-mode-entry.md) | drive-mode entry: `/auto-drive` + interview + approval + input lock | 9/9 `[x]` |
+| [`FID-2026-0818-003`](FID-2026-0818-003-decomposition-engine.md) | decomposition engine: spec → master + child FID backlog | 6/6 `[x]` |
+| [`FID-2026-0818-004`](FID-2026-0818-004-drive-loop-supervisor.md) | drive-loop supervisor: queue, phase-evidence, transition driving, archive | 8/8 `[x]` |
+| [`FID-2026-0818-005`](FID-2026-0818-005-self-healing-ladder.md) | self-healing ladder: failure routing + Run Log | 7/7 `[x]` |
+| [`FID-2026-0818-006`](FID-2026-0818-006-completion-certification.md) | completion certification: goal-conformance + gap loop | 6/6 `[x]` |
+| [`FID-2026-0818-007`](FID-2026-0818-007-observability-long-session-bounds.md) | observability + long-session bounds: sidebar, Esc, compaction, trims, `/export` | 8/8 `[x]` |
+| [`FID-2026-0818-008`](FID-2026-0818-008-headless-cli-mode.md) | headless CLI mode: `--auto` + approval + exit codes + resume | 8/8 `[x]` |
+| [`FID-2026-0818-010`](FID-2026-0818-010-auto-drive-discord-docs-and-faq.md) | operator-facing docs + FAQ (Auto Drive + Discord) | 7/7 `[x]` |
+
+Gates (all exit 0): typecheck ×4; agent-runtime + CLI suites; eslint 0;
+lint:md 0; `validate:repository` PASS. Nova issued a program-level
+implementation **PASS** for the original 001–009 scope
+(`dev/nova/outbox/archive/2026-08-18-auto-drive-and-discord-rich-presence-implementation-verdict.md`)
+AND a separate **PASS** for the 009 hardcode revision + 010 docs
+(`dev/nova/outbox/archive/2026-08-18-discord-rich-presence-hardcode-and-docs-nova-verdict.md`).
+
+## 2026-08-18 closure — Auto Drive master 001 + Discord 009 (operator-confirmed live smokes)
+
+The two remaining program records closed and archived 2026-08-18 after the
+operator confirmed the live smokes, completing the Auto Drive + Discord Rich
+Presence program:
+
+- **`FID-2026-0818-001`** (master) — step 8 program certification: the
+  operator confirmed the live `/auto` smoke (TUI + headless + crash resume);
+  all seven children (002–008) closed + archived with evidence.
+- **`FID-2026-0818-009`** (Discord Rich Presence) — step 5 live smoke: the
+  operator confirmed Discord activities working in the live client under
+  `1478095645662380042`.
+
+Both records carry a FID-2026-0817-005 Step Status inventory with **every step
+`[x]`** (the final live-smoke steps flipped `[x]` on the operator confirmation).
+Nova planning + implementation PASS on record for both. The active queue is
+now empty.
 
 ## 2026-08-17 closure — FID-2026-0817-004 (unauthorized coding-agent contributor credit purge + permanent watermark guard)
 
@@ -50,6 +139,36 @@ the operator's own. The existing `.githooks/commit-msg` guard (FID-2026-0812-
 
 Gates: `pre-push-scan.test.ts` 17 pass / 0 fail; hook smoke 4/4; eslint 0;
 lint:md 0. Closed + archived 2026-08-17.
+
+## 2026-08-17 closure — FID-2026-0817-005 (Anti-Deferral Gate: FID step-status enforcement)
+
+`FID-2026-0817-005-anti-deferral-fid-step-enforcement.md` (severity: high)
+closed and archived 2026-08-17. Closes the silent-deferral failure class
+(2026-08-16: 6 planning FIDs closed without implementation; 3-of-7 steps
+silently deferred): approved plans are now machine-checkable at the three
+existing enforcement points.
+
+- `## Step Status` inventory — one md-checkbox per step; `deferred`/
+  `skipped` legal only with `operator-approved <YYYY-MM-DD>`; every other
+  unimplemented step is `blocked` by construction.
+- `validateFidStepStatus` (new, `fid-validator.ts`) — pure validator;
+  errors on missing approval markers and on `converged`/`closed` declared
+  over unresolved steps (listing them); orphan markers are advisories.
+- Pre-write transition gate (`pre-write-gates.ts`) — a FID write declaring
+  `converged`/`closed` with unresolved steps is a hard block at the write
+  path on both executors.
+- Ledger archive scan (`scripts/fid-ledger.ts`) — `validateFidStepLedger`
+  scans active + archived FIDs; an archived `closed` FID with unresolved
+  steps fails `validate:repository` (`fid.steps.unresolved`);
+  section-conditional (legacy FIDs unaffected).
+- Recorder + Adversary instructions updated (present-before-close,
+  never-archive-unresolved, silent-deferral checklist item).
+
+Gates (all exit 0): agent-runtime suite 1001 pass / 0 fail (11 new
+fid-validator + 5 new pre-write-gate cases); `fid-ledger.test.ts` 9 pass /
+0 fail (4 new scan cases); typecheck ×4; eslint 0; lint:md 0; prettier
+clean; `validate:repository` PASS. Closed + archived 2026-08-17 (the
+active queue is now empty).
 
 ## 2026-08-17 closure — FID-2026-0817-003 (linux-arm64 release binary missing — OpenTUI native-bundle variant)
 

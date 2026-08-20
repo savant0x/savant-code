@@ -1,7 +1,7 @@
 {
   "maxFileLines": 300,
   "trackedFiles": {
-    "agents/adversary/adversary.ts": 94,
+    "agents/adversary/adversary.ts": 95,
     "agents/base-chat.ts": 45,
     "agents/basher.ts": 110,
     "agents/browser-use/browser-use.ts": 299,
@@ -20,7 +20,7 @@
     "agents/context-pruner/summary-parsing.ts": 93,
     "agents/context-pruner/telemetry.ts": 209,
     "agents/database/database.ts": 93,
-    "agents/detective/detective.ts": 175,
+    "agents/detective/detective.ts": 188,
     "agents/editor/best-of-n/best-of-n-selector2.ts": 149,
     "agents/editor/best-of-n/editor-implementor-gpt-5.ts": 8,
     "agents/editor/best-of-n/editor-implementor-opus.ts": 8,
@@ -32,10 +32,10 @@
     "agents/github/github.ts": 120,
     "agents/librarian/librarian.ts": 161,
     "agents/librarian/manual-e2e.ts": 289,
-    "agents/recorder/recorder.ts": 107,
+    "agents/recorder/recorder.ts": 139,
     "agents/researcher/researcher-docs.ts": 33,
     "agents/researcher/researcher-web.ts": 52,
-    "agents/savant/handle-steps.ts": 207,
+    "agents/savant/handle-steps.ts": 323,
     "agents/savant/prompts.ts": 211,
     "agents/savant/savant-analyze.ts": 12,
     "agents/savant/savant-free-deepseek-flash.ts": 14,
@@ -49,13 +49,13 @@
     "agents/savant/savant-free.ts": 10,
     "agents/savant/savant-scaffold.ts": 16,
     "agents/savant/savant-strict.ts": 20,
-    "agents/savant/savant.ts": 223,
-    "agents/savant/system-prompt.ts": 222,
+    "agents/savant/savant.ts": 261,
+    "agents/savant/system-prompt.ts": 234,
     "agents/scout/scout.ts": 309,
-    "agents/scribe/scribe.ts": 57,
-    "agents/thinker/thinker-gemini.ts": 27,
-    "agents/thinker/thinker-with-files-gemini.ts": 67,
-    "agents/thinker/thinker.ts": 102,
+    "agents/scribe/scribe.ts": 65,
+    "agents/thinker/thinker-gemini.ts": 29,
+    "agents/thinker/thinker-with-files-gemini.ts": 70,
+    "agents/thinker/thinker.ts": 137,
     "agents/tmux-cli.ts": 47,
     "agents/tmux-cli/handle-steps.ts": 32,
     "agents/tmux-cli/helper-script.ts": 190,
@@ -76,46 +76,60 @@
     "cli/src/agents/bundled-agents.generated.ts": 300,
     "cli/src/app.tsx": 384,
     "cli/src/chat.tsx": 18,
-    "cli/src/chat/keyboard.ts": 301,
-    "cli/src/chat/panels.tsx": 366,
-    "cli/src/chat/sidebar.tsx": 49,
-    "cli/src/chat/styles.ts": 54,
-    "cli/src/chat/types.ts": 202,
+    "cli/src/chat/keyboard.ts": 331,
+    "cli/src/chat/panels.tsx": 390,
+    "cli/src/chat/sidebar.tsx": 102,
+    "cli/src/chat/slash-selection.ts": 10,
+    "cli/src/chat/styles.ts": 86,
+    "cli/src/chat/types.ts": 203,
     "cli/src/chat/use-chat-bootstrap.ts": 89,
-    "cli/src/chat/use-chat-controller.ts": 312,
+    "cli/src/chat/use-chat-controller.ts": 313,
     "cli/src/chat/use-chat-data.ts": 115,
     "cli/src/chat/use-chat-derived.ts": 289,
     "cli/src/chat/use-chat-header-visibility.ts": 66,
-    "cli/src/chat/use-chat-interactions.ts": 365,
-    "cli/src/chat/use-chat-keyboard.ts": 302,
+    "cli/src/chat/use-chat-interactions.ts": 375,
+    "cli/src/chat/use-chat-keyboard.ts": 319,
     "cli/src/chat/use-chat-layout.ts": 340,
-    "cli/src/chat/use-chat-messaging.ts": 341,
+    "cli/src/chat/use-chat-messaging.ts": 362,
     "cli/src/chat/use-chat-overlays.ts": 373,
-    "cli/src/chat/use-chat-pickers.ts": 229,
+    "cli/src/chat/use-chat-pickers.ts": 244,
     "cli/src/chat/use-chat-suggestions.ts": 341,
     "cli/src/chat/use-message-block-sync.ts": 120,
-    "cli/src/cli-args.ts": 193,
+    "cli/src/cli-args.ts": 246,
     "cli/src/commands/ads.ts": 46,
-    "cli/src/commands/command-registry.ts": 225,
+    "cli/src/commands/attest.ts": 244,
+    "cli/src/commands/attest/clean-process-validator.ts": 15,
+    "cli/src/commands/attest/clean-process/ed25519.ts": 38,
+    "cli/src/commands/attest/clean-process/jcs.ts": 27,
+    "cli/src/commands/attest/clean-process/primitives.ts": 36,
+    "cli/src/commands/attest/clean-process/receipt.ts": 151,
+    "cli/src/commands/attest/clean-process/schemas.ts": 40,
+    "cli/src/commands/attest/clean-process/validate.ts": 175,
+    "cli/src/commands/attest/inline-verifier.ts": 203,
+    "cli/src/commands/attest/serializer.ts": 168,
+    "cli/src/commands/attest/template.ts": 195,
+    "cli/src/commands/auto-drive.ts": 264,
+    "cli/src/commands/command-registry.ts": 227,
     "cli/src/commands/command-shared.ts": 153,
     "cli/src/commands/contribute.ts": 328,
     "cli/src/commands/copy-conversation.ts": 387,
     "cli/src/commands/defs/chat.ts": 277,
-    "cli/src/commands/defs/core.ts": 230,
-    "cli/src/commands/defs/misc.ts": 187,
-    "cli/src/commands/defs/modes.ts": 242,
-    "cli/src/commands/design.ts": 619,
-    "cli/src/commands/export-conversation.ts": 105,
+    "cli/src/commands/defs/core.ts": 255,
+    "cli/src/commands/defs/misc.ts": 195,
+    "cli/src/commands/defs/modes.ts": 314,
+    "cli/src/commands/design.ts": 633,
+    "cli/src/commands/export-conversation.ts": 118,
     "cli/src/commands/export-conversation/branding.ts": 10,
     "cli/src/commands/export-conversation/copy-text.ts": 107,
+    "cli/src/commands/export-conversation/drive-report.ts": 202,
     "cli/src/commands/export-conversation/format.ts": 79,
     "cli/src/commands/export-conversation/render-blocks.ts": 130,
     "cli/src/commands/export-conversation/render-message.ts": 85,
     "cli/src/commands/export-conversation/render-text.ts": 102,
     "cli/src/commands/export-conversation/template-css-part1.ts": 271,
-    "cli/src/commands/export-conversation/template-css-part2.ts": 227,
-    "cli/src/commands/export-conversation/template.ts": 133,
-    "cli/src/commands/goal.ts": 88,
+    "cli/src/commands/export-conversation/template-css-part2.ts": 333,
+    "cli/src/commands/export-conversation/template.ts": 135,
+    "cli/src/commands/goal.ts": 231,
     "cli/src/commands/graph-export.ts": 186,
     "cli/src/commands/graph-export/audio-manager.ts": 132,
     "cli/src/commands/graph-export/audio.ts": 89,
@@ -134,9 +148,13 @@
     "cli/src/commands/help.ts": 14,
     "cli/src/commands/image.ts": 21,
     "cli/src/commands/init.ts": 122,
+    "cli/src/commands/learn-progress.ts": 53,
+    "cli/src/commands/learn-result.ts": 55,
+    "cli/src/commands/learn.ts": 249,
     "cli/src/commands/loop.ts": 183,
+    "cli/src/commands/presence.ts": 91,
     "cli/src/commands/process-diagnostics.ts": 121,
-    "cli/src/commands/prompt-builders.ts": 141,
+    "cli/src/commands/prompt-builders.ts": 184,
     "cli/src/commands/publish.ts": 262,
     "cli/src/commands/release/release-command.ts": 234,
     "cli/src/commands/release/release-runner.ts": 315,
@@ -144,13 +162,16 @@
     "cli/src/commands/router-utils.ts": 81,
     "cli/src/commands/router.ts": 3,
     "cli/src/commands/router/bash.ts": 232,
-    "cli/src/commands/router/route-user-prompt.ts": 365,
+    "cli/src/commands/router/route-user-prompt.ts": 426,
     "cli/src/commands/telemetry.ts": 69,
     "cli/src/commands/usage.ts": 27,
     "cli/src/components/__tests__/ad-banner.test.tsx": 85,
+    "cli/src/components/__tests__/app-shell.test.tsx": 37,
     "cli/src/components/__tests__/block-helpers.test.tsx": 140,
     "cli/src/components/__tests__/chat-history-screen.test.tsx": 54,
     "cli/src/components/__tests__/clickable.test.tsx": 40,
+    "cli/src/components/__tests__/dialog-overlay.test.tsx": 73,
+    "cli/src/components/__tests__/error-boundary.test.tsx": 76,
     "cli/src/components/__tests__/grid-layout.integration.test.tsx": 366,
     "cli/src/components/__tests__/grid-layout.test.tsx": 1034,
     "cli/src/components/__tests__/markdown-content.test.tsx": 164,
@@ -165,7 +186,8 @@
     "cli/src/components/__tests__/user-error-banner.test.tsx": 101,
     "cli/src/components/ad-banner.tsx": 352,
     "cli/src/components/agent-checklist.tsx": 386,
-    "cli/src/components/agent-mode-toggle.tsx": 348,
+    "cli/src/components/agent-mode-toggle.tsx": 350,
+    "cli/src/components/app-shell.tsx": 25,
     "cli/src/components/ask-user/components/accordion-question.tsx": 154,
     "cli/src/components/ask-user/components/custom-answer-input.tsx": 67,
     "cli/src/components/ask-user/components/options-list.tsx": 140,
@@ -177,7 +199,7 @@
     "cli/src/components/ask-user/use-keyboard.ts": 253,
     "cli/src/components/ask-user/utils/validation.ts": 86,
     "cli/src/components/attachment-card.tsx": 68,
-    "cli/src/components/blocks/agent-block-grid.tsx": 59,
+    "cli/src/components/blocks/agent-block-grid.tsx": 62,
     "cli/src/components/blocks/agent-branch-item.tsx": 231,
     "cli/src/components/blocks/agent-branch-wrapper.tsx": 525,
     "cli/src/components/blocks/agent-list-branch.tsx": 78,
@@ -191,46 +213,50 @@
     "cli/src/components/blocks/implementor-row.tsx": 454,
     "cli/src/components/blocks/markdown-content.tsx": 361,
     "cli/src/components/blocks/markdown-renderables.tsx": 348,
-    "cli/src/components/blocks/single-block.tsx": 211,
-    "cli/src/components/blocks/thinking-block.tsx": 78,
+    "cli/src/components/blocks/single-block.tsx": 214,
+    "cli/src/components/blocks/thinking-block.tsx": 82,
     "cli/src/components/blocks/tool-block-group.tsx": 73,
-    "cli/src/components/blocks/tool-branch.tsx": 201,
+    "cli/src/components/blocks/tool-branch.tsx": 208,
     "cli/src/components/blocks/user-content-copy.tsx": 172,
     "cli/src/components/bottom-banner.tsx": 146,
-    "cli/src/components/build-mode-buttons.tsx": 111,
+    "cli/src/components/build-mode-buttons.tsx": 112,
     "cli/src/components/button.tsx": 76,
     "cli/src/components/chat-header.tsx": 12,
     "cli/src/components/chat-history-screen.tsx": 434,
-    "cli/src/components/chat-input-bar.tsx": 536,
+    "cli/src/components/chat-input-bar.tsx": 616,
     "cli/src/components/chatgpt-connect-banner.tsx": 235,
     "cli/src/components/clickable.tsx": 150,
     "cli/src/components/collapse-button.tsx": 37,
     "cli/src/components/command-palette.tsx": 167,
+    "cli/src/components/compaction-signal.tsx": 108,
     "cli/src/components/copy-button.tsx": 220,
+    "cli/src/components/dialog-overlay.tsx": 96,
     "cli/src/components/dialog.tsx": 112,
-    "cli/src/components/elapsed-timer.tsx": 57,
-    "cli/src/components/error-boundary.tsx": 64,
+    "cli/src/components/drive-mode/banner.tsx": 37,
+    "cli/src/components/drive-mode/confirmation.tsx": 118,
+    "cli/src/components/elapsed-timer.tsx": 59,
+    "cli/src/components/error-boundary.tsx": 80,
     "cli/src/components/feedback-container.tsx": 207,
     "cli/src/components/feedback-icon-button.tsx": 90,
     "cli/src/components/feedback-input-mode.tsx": 353,
     "cli/src/components/file-attachment-card.tsx": 90,
     "cli/src/components/grid-layout.tsx": 84,
-    "cli/src/components/help-banner.tsx": 156,
+    "cli/src/components/help-banner.tsx": 166,
     "cli/src/components/highlighted-text.tsx": 53,
     "cli/src/components/image-card.tsx": 168,
     "cli/src/components/image-thumbnail.tsx": 113,
-    "cli/src/components/input-cursor.tsx": 78,
+    "cli/src/components/input-cursor.tsx": 81,
     "cli/src/components/input-mode-banner.tsx": 71,
     "cli/src/components/load-previous-button.tsx": 49,
     "cli/src/components/login-modal.tsx": 451,
     "cli/src/components/message-block.tsx": 338,
     "cli/src/components/message-footer.tsx": 270,
-    "cli/src/components/message-with-agents.tsx": 308,
+    "cli/src/components/message-with-agents.tsx": 309,
     "cli/src/components/message-with-agents/agent-message.tsx": 224,
     "cli/src/components/message-with-agents/children-grid.tsx": 86,
     "cli/src/components/mode-divider.tsx": 44,
     "cli/src/components/mode-hovertip.tsx": 61,
-    "cli/src/components/model-picker.tsx": 367,
+    "cli/src/components/model-picker.tsx": 373,
     "cli/src/components/multiline-input.tsx": 361,
     "cli/src/components/multiline-input/enter-deletion-keys.ts": 291,
     "cli/src/components/multiline-input/key-utils.ts": 67,
@@ -248,9 +274,10 @@
     "cli/src/components/out-of-credits-banner.tsx": 156,
     "cli/src/components/pending-attachments-banner.tsx": 126,
     "cli/src/components/pending-bash-message.tsx": 58,
+    "cli/src/components/picker-viewport.ts": 80,
     "cli/src/components/progress-bar.tsx": 82,
     "cli/src/components/project-picker-screen.tsx": 470,
-    "cli/src/components/provider-picker.tsx": 164,
+    "cli/src/components/provider-picker.tsx": 192,
     "cli/src/components/publish-confirmation.tsx": 515,
     "cli/src/components/publish-container.tsx": 320,
     "cli/src/components/publish-container/confirmation-step.tsx": 124,
@@ -263,7 +290,7 @@
     "cli/src/components/renderers/plan-box.tsx": 71,
     "cli/src/components/review-screen.tsx": 115,
     "cli/src/components/rewind-picker.tsx": 277,
-    "cli/src/components/right-sidebar.tsx": 338,
+    "cli/src/components/right-sidebar.tsx": 508,
     "cli/src/components/savant-free-active-session-summary.tsx": 64,
     "cli/src/components/savant-free-landing-screen.tsx": 399,
     "cli/src/components/savant-free-landing-screen/format.ts": 99,
@@ -279,7 +306,8 @@
     "cli/src/components/savant-free-model-selector/use-model-selector-state.ts": 398,
     "cli/src/components/savant-free-referral-banner.tsx": 424,
     "cli/src/components/savant-free-superseded-screen.tsx": 63,
-    "cli/src/components/savant-ui/animation/pulse.tsx": 27,
+    "cli/src/components/savant-ui/__tests__/easter-egg-logo.test.tsx": 24,
+    "cli/src/components/savant-ui/animation/pulse.tsx": 59,
     "cli/src/components/savant-ui/animation/typewriter.tsx": 41,
     "cli/src/components/savant-ui/branding.tsx": 60,
     "cli/src/components/savant-ui/data-display/badge.tsx": 53,
@@ -288,24 +316,26 @@
     "cli/src/components/savant-ui/data-display/sparkline.tsx": 43,
     "cli/src/components/savant-ui/data-display/timeline.tsx": 45,
     "cli/src/components/savant-ui/data-display/tree-view.tsx": 56,
-    "cli/src/components/savant-ui/easter-egg-logo.tsx": 300,
+    "cli/src/components/savant-ui/easter-egg-logo.tsx": 429,
     "cli/src/components/savant-ui/echo/__tests__/sidebar-collapse.test.tsx": 91,
     "cli/src/components/savant-ui/echo/agent-stack.tsx": 73,
     "cli/src/components/savant-ui/echo/agent-status.tsx": 67,
+    "cli/src/components/savant-ui/echo/drive-status-panel.tsx": 66,
     "cli/src/components/savant-ui/echo/fid-card.tsx": 90,
     "cli/src/components/savant-ui/echo/fid-list.tsx": 71,
-    "cli/src/components/savant-ui/echo/loop-status-panel.tsx": 65,
+    "cli/src/components/savant-ui/echo/loop-status-panel.tsx": 108,
     "cli/src/components/savant-ui/echo/perfection-loop.tsx": 119,
     "cli/src/components/savant-ui/echo/phase-indicator.tsx": 69,
-    "cli/src/components/savant-ui/echo/phase-info.ts": 73,
+    "cli/src/components/savant-ui/echo/phase-info.ts": 78,
     "cli/src/components/savant-ui/echo/token-meter.tsx": 40,
+    "cli/src/components/savant-ui/echo/trust-matrix.tsx": 266,
     "cli/src/components/savant-ui/feedback/alert.tsx": 46,
     "cli/src/components/savant-ui/feedback/cost-tracker.tsx": 55,
     "cli/src/components/savant-ui/feedback/progress-bar.tsx": 72,
-    "cli/src/components/savant-ui/feedback/spinner.tsx": 41,
-    "cli/src/components/savant-ui/icon-theme-keys.ts": 68,
+    "cli/src/components/savant-ui/feedback/spinner.tsx": 77,
+    "cli/src/components/savant-ui/icon-theme-keys.ts": 69,
     "cli/src/components/savant-ui/icon.tsx": 54,
-    "cli/src/components/savant-ui/index.ts": 76,
+    "cli/src/components/savant-ui/index.ts": 94,
     "cli/src/components/savant-ui/input/select.tsx": 27,
     "cli/src/components/savant-ui/input/toggle.tsx": 29,
     "cli/src/components/savant-ui/layout/grid.tsx": 53,
@@ -315,35 +345,38 @@
     "cli/src/components/savant-ui/primitives/key-value-row.tsx": 42,
     "cli/src/components/savant-ui/primitives/panel.tsx": 43,
     "cli/src/components/savant-ui/primitives/separator.tsx": 35,
-    "cli/src/components/savant-ui/primitives/sidebar-section.tsx": 65,
+    "cli/src/components/savant-ui/primitives/sidebar-section.tsx": 67,
     "cli/src/components/savant-ui/primitives/spacer.tsx": 14,
     "cli/src/components/savant-ui/primitives/stack.tsx": 36,
-    "cli/src/components/savant-ui/theme.ts": 46,
+    "cli/src/components/savant-ui/teacher/learn-overlay.tsx": 190,
+    "cli/src/components/savant-ui/theme.ts": 122,
     "cli/src/components/scroll-to-bottom-button.tsx": 35,
-    "cli/src/components/segmented-control.tsx": 229,
+    "cli/src/components/segmented-control.tsx": 231,
     "cli/src/components/selectable-list.tsx": 250,
     "cli/src/components/selected-chips.tsx": 87,
     "cli/src/components/separator.tsx": 41,
     "cli/src/components/session-ended-banner.tsx": 184,
-    "cli/src/components/shimmer-text.tsx": 255,
-    "cli/src/components/status-bar.tsx": 280,
+    "cli/src/components/shimmer-text.tsx": 283,
+    "cli/src/components/sidebar-rail.tsx": 244,
+    "cli/src/components/status-bar.tsx": 286,
     "cli/src/components/subscription-limit-banner.tsx": 270,
     "cli/src/components/suggested-prompts.tsx": 185,
     "cli/src/components/suggestion-menu.tsx": 220,
-    "cli/src/components/terminal-command-display.tsx": 153,
+    "cli/src/components/terminal-command-display.tsx": 483,
     "cli/src/components/terminal-link.tsx": 98,
     "cli/src/components/text-attachment-card.tsx": 78,
-    "cli/src/components/thinking.tsx": 109,
-    "cli/src/components/toast.tsx": 110,
-    "cli/src/components/tools/__tests__/apply-patch.test.tsx": 140,
+    "cli/src/components/thinking.tsx": 113,
+    "cli/src/components/toast.tsx": 160,
+    "cli/src/components/tools/__tests__/apply-patch.test.tsx": 142,
     "cli/src/components/tools/__tests__/code-search.test.tsx": 46,
-    "cli/src/components/tools/__tests__/diff-viewer.test.tsx": 76,
+    "cli/src/components/tools/__tests__/diff-viewer.test.tsx": 117,
     "cli/src/components/tools/__tests__/render-ui.test.tsx": 557,
     "cli/src/components/tools/__tests__/tool-call-item.test.tsx": 74,
+    "cli/src/components/tools/__tests__/transition-phase.test.tsx": 123,
     "cli/src/components/tools/apply-patch.tsx": 117,
     "cli/src/components/tools/code-search.tsx": 51,
     "cli/src/components/tools/composio.tsx": 141,
-    "cli/src/components/tools/diff-viewer.tsx": 103,
+    "cli/src/components/tools/diff-viewer.tsx": 226,
     "cli/src/components/tools/glob.tsx": 67,
     "cli/src/components/tools/gravity-index.tsx": 81,
     "cli/src/components/tools/list-directory.tsx": 67,
@@ -351,14 +384,15 @@
     "cli/src/components/tools/read-files.tsx": 98,
     "cli/src/components/tools/read-subtree.tsx": 41,
     "cli/src/components/tools/read-url.tsx": 33,
-    "cli/src/components/tools/registry.ts": 132,
+    "cli/src/components/tools/registry.ts": 140,
     "cli/src/components/tools/render-ui.tsx": 467,
-    "cli/src/components/tools/run-terminal-command.tsx": 87,
+    "cli/src/components/tools/run-terminal-command.tsx": 92,
     "cli/src/components/tools/skill.tsx": 27,
     "cli/src/components/tools/str-replace.tsx": 88,
     "cli/src/components/tools/suggest-followups.tsx": 374,
     "cli/src/components/tools/task-completed.tsx": 17,
     "cli/src/components/tools/tool-call-item.tsx": 164,
+    "cli/src/components/tools/transition-phase.tsx": 170,
     "cli/src/components/tools/types.ts": 107,
     "cli/src/components/tools/web-search.tsx": 33,
     "cli/src/components/tools/write-file.tsx": 21,
@@ -371,17 +405,17 @@
     "cli/src/constants/fontawesome.ts": 22,
     "cli/src/constants/savant-logo.ts": 921,
     "cli/src/constants/sigma.ts": 318,
-    "cli/src/data/slash-commands.ts": 361,
-    "cli/src/headless-run.ts": 215,
+    "cli/src/data/slash-commands.ts": 403,
+    "cli/src/headless-run.ts": 218,
     "cli/src/hooks/activity-query/cache.ts": 310,
     "cli/src/hooks/activity-query/retry-test-helpers.ts": 87,
     "cli/src/hooks/activity-query/run-query.ts": 110,
-    "cli/src/hooks/helpers/send-message-agent.ts": 64,
+    "cli/src/hooks/helpers/send-message-agent.ts": 69,
     "cli/src/hooks/helpers/send-message-failure.ts": 200,
-    "cli/src/hooks/helpers/send-message-fn.ts": 345,
-    "cli/src/hooks/helpers/send-message-lifecycle.ts": 266,
+    "cli/src/hooks/helpers/send-message-fn.ts": 347,
+    "cli/src/hooks/helpers/send-message-lifecycle.ts": 268,
     "cli/src/hooks/helpers/send-message-monitors.ts": 98,
-    "cli/src/hooks/helpers/send-message-run-config.ts": 199,
+    "cli/src/hooks/helpers/send-message-run-config.ts": 223,
     "cli/src/hooks/helpers/send-message-session.ts": 90,
     "cli/src/hooks/helpers/send-message-sidebar.ts": 59,
     "cli/src/hooks/helpers/send-message-stream.ts": 155,
@@ -398,11 +432,13 @@
     "cli/src/hooks/use-active-subagents.ts": 43,
     "cli/src/hooks/use-activity-query.ts": 286,
     "cli/src/hooks/use-agent-validation.ts": 81,
+    "cli/src/hooks/use-animation-budget.ts": 162,
+    "cli/src/hooks/use-animation-timeline.ts": 53,
     "cli/src/hooks/use-ask-user-bridge.ts": 103,
     "cli/src/hooks/use-auth-query.ts": 262,
     "cli/src/hooks/use-auth-state.ts": 156,
     "cli/src/hooks/use-chat-input.ts": 88,
-    "cli/src/hooks/use-chat-keyboard.ts": 326,
+    "cli/src/hooks/use-chat-keyboard.ts": 332,
     "cli/src/hooks/use-chat-messages.ts": 274,
     "cli/src/hooks/use-chat-state.ts": 220,
     "cli/src/hooks/use-chat-streaming.ts": 271,
@@ -410,12 +446,14 @@
     "cli/src/hooks/use-clipboard.ts": 155,
     "cli/src/hooks/use-connection-status.ts": 157,
     "cli/src/hooks/use-directory-browser.ts": 89,
+    "cli/src/hooks/use-easter-egg.ts": 110,
     "cli/src/hooks/use-elapsed-time.ts": 117,
     "cli/src/hooks/use-event.ts": 37,
     "cli/src/hooks/use-exit-handler.ts": 109,
     "cli/src/hooks/use-fetch-login-url.ts": 66,
     "cli/src/hooks/use-fids.ts": 67,
     "cli/src/hooks/use-fingerprint.ts": 65,
+    "cli/src/hooks/use-fold-collapse.ts": 134,
     "cli/src/hooks/use-gravity-ad.ts": 276,
     "cli/src/hooks/use-gravity-ad/helpers.ts": 156,
     "cli/src/hooks/use-gravity-ad/network.ts": 269,
@@ -443,11 +481,11 @@
     "cli/src/hooks/use-savant-free-streak-query.ts": 73,
     "cli/src/hooks/use-scaffold-confirm.ts": 63,
     "cli/src/hooks/use-scaffold-revert-subscriber.ts": 67,
-    "cli/src/hooks/use-scroll-management.ts": 183,
+    "cli/src/hooks/use-scroll-management.ts": 203,
     "cli/src/hooks/use-searchable-list.ts": 100,
     "cli/src/hooks/use-send-message-options.ts": 99,
     "cli/src/hooks/use-send-message.ts": 208,
-    "cli/src/hooks/use-sheen-animation.tsx": 89,
+    "cli/src/hooks/use-sheen-animation.tsx": 104,
     "cli/src/hooks/use-subscription-query.ts": 107,
     "cli/src/hooks/use-suggestion-engine.ts": 280,
     "cli/src/hooks/use-terminal-breakpoints.ts": 78,
@@ -456,14 +494,15 @@
     "cli/src/hooks/use-terminal-layout.ts": 190,
     "cli/src/hooks/use-theme.tsx": 141,
     "cli/src/hooks/use-timeout.ts": 89,
-    "cli/src/hooks/use-toast.ts": 115,
+    "cli/src/hooks/use-toast.ts": 143,
+    "cli/src/hooks/use-typewriter.ts": 99,
     "cli/src/hooks/use-update-preference.ts": 78,
     "cli/src/hooks/use-usage-monitor.ts": 60,
     "cli/src/hooks/use-usage-query.ts": 139,
     "cli/src/hooks/use-user-details-query.ts": 105,
     "cli/src/hooks/use-why-did-you-update.ts": 179,
-    "cli/src/index.tsx": 590,
-    "cli/src/init/init-app.ts": 55,
+    "cli/src/index.tsx": 685,
+    "cli/src/init/init-app.ts": 64,
     "cli/src/init/init-direnv.ts": 134,
     "cli/src/login/constants.ts": 79,
     "cli/src/login/login-flow.ts": 225,
@@ -476,22 +515,33 @@
     "cli/src/project-files.ts": 103,
     "cli/src/state/chat-history-store.ts": 28,
     "cli/src/state/chat-store.ts": 102,
-    "cli/src/state/chat-store/chat-actions.ts": 258,
+    "cli/src/state/chat-store/chat-actions.ts": 283,
     "cli/src/state/chat-store/find-followup.ts": 36,
-    "cli/src/state/chat-store/initial-state.ts": 61,
-    "cli/src/state/chat-store/sidebar-actions.ts": 192,
-    "cli/src/state/chat-store/types.ts": 279,
+    "cli/src/state/chat-store/initial-state.ts": 74,
+    "cli/src/state/chat-store/sidebar-actions.ts": 338,
+    "cli/src/state/chat-store/types.ts": 376,
     "cli/src/state/feedback-store.ts": 163,
     "cli/src/state/gateway-catalog-store.ts": 46,
     "cli/src/state/login-store.ts": 151,
     "cli/src/state/message-block-store.ts": 144,
     "cli/src/state/model-picker-store.ts": 68,
+    "cli/src/state/presence/index.ts": 79,
+    "cli/src/state/presence/presence-ipc.ts": 174,
+    "cli/src/state/presence/presence-mapper.ts": 99,
+    "cli/src/state/presence/presence-privacy.ts": 149,
+    "cli/src/state/presence/presence-selector.ts": 58,
+    "cli/src/state/presence/presence-wire.ts": 81,
     "cli/src/state/provider-picker-store.ts": 54,
     "cli/src/state/publish-store.ts": 142,
     "cli/src/state/review-store.ts": 25,
     "cli/src/state/rewind-picker-store.ts": 75,
-    "cli/src/state/savant-free-model-store.ts": 60,
+    "cli/src/state/savant-free-model-store.ts": 113,
     "cli/src/state/savant-free-session-store.ts": 33,
+    "cli/src/teacher/forge.ts": 156,
+    "cli/src/teacher/progress.ts": 76,
+    "cli/src/teacher/render.ts": 41,
+    "cli/src/teacher/runtime.ts": 289,
+    "cli/src/teacher/seed.ts": 116,
     "cli/src/test-env.ts": 42,
     "cli/src/test-setup.ts": 36,
     "cli/src/testing/env.ts": 47,
@@ -504,7 +554,7 @@
     "cli/src/types/react19-compat.d.ts": 20,
     "cli/src/types/savant-free-session.ts": 18,
     "cli/src/types/store.ts": 113,
-    "cli/src/types/theme-system.ts": 195,
+    "cli/src/types/theme-system.ts": 204,
     "cli/src/types/utils.ts": 4,
     "cli/src/utils/__tests__/markdown-renderer.test.tsx": 519,
     "cli/src/utils/active-run.ts": 23,
@@ -517,6 +567,8 @@
     "cli/src/utils/anonymous-id.ts": 88,
     "cli/src/utils/arrays.ts": 118,
     "cli/src/utils/auth.ts": 259,
+    "cli/src/utils/auto-drive-headless.ts": 335,
+    "cli/src/utils/auto-headless.ts": 67,
     "cli/src/utils/bash-context-processor.ts": 48,
     "cli/src/utils/bash-messages.ts": 109,
     "cli/src/utils/block-margins.ts": 36,
@@ -528,6 +580,7 @@
     "cli/src/utils/block-operations/think-parsing.ts": 255,
     "cli/src/utils/block-operations/thinking-id.ts": 8,
     "cli/src/utils/block-processor.ts": 213,
+    "cli/src/utils/bounded-arrays.ts": 49,
     "cli/src/utils/chat-history.ts": 266,
     "cli/src/utils/chat-input-key-intercept.ts": 53,
     "cli/src/utils/chat-layout.ts": 45,
@@ -546,14 +599,14 @@
     "cli/src/utils/config-dir.ts": 31,
     "cli/src/utils/constants.ts": 181,
     "cli/src/utils/create-event-handler-state.ts": 80,
-    "cli/src/utils/create-run-config.ts": 208,
+    "cli/src/utils/create-run-config.ts": 233,
     "cli/src/utils/db-storage.ts": 255,
-    "cli/src/utils/design-system-service.ts": 765,
+    "cli/src/utils/design-system-service.ts": 813,
     "cli/src/utils/detect-shell.ts": 113,
-    "cli/src/utils/diff-stats.ts": 133,
+    "cli/src/utils/diff-stats.ts": 215,
     "cli/src/utils/directory-browser.ts": 75,
     "cli/src/utils/engagement.ts": 56,
-    "cli/src/utils/env.ts": 110,
+    "cli/src/utils/env.ts": 125,
     "cli/src/utils/error-handling.ts": 247,
     "cli/src/utils/error-messages.ts": 85,
     "cli/src/utils/feedback-helpers.ts": 116,
@@ -579,8 +632,8 @@
     "cli/src/utils/implementor-helpers/identify.ts": 247,
     "cli/src/utils/implementor-helpers/multi-prompt.ts": 162,
     "cli/src/utils/implementor-helpers/timeline.ts": 186,
-    "cli/src/utils/input-modes.ts": 197,
-    "cli/src/utils/keyboard-actions.ts": 395,
+    "cli/src/utils/input-modes.ts": 208,
+    "cli/src/utils/keyboard-actions.ts": 413,
     "cli/src/utils/keypad-keys.ts": 48,
     "cli/src/utils/layout-helpers.ts": 37,
     "cli/src/utils/lazy-response-ads.ts": 2,
@@ -594,7 +647,7 @@
     "cli/src/utils/log-shipper.ts": 117,
     "cli/src/utils/logger.ts": 63,
     "cli/src/utils/logger/context.ts": 41,
-    "cli/src/utils/logger/sanitize.ts": 65,
+    "cli/src/utils/logger/sanitize.ts": 73,
     "cli/src/utils/logger/sink.ts": 319,
     "cli/src/utils/markdown-inline.ts": 182,
     "cli/src/utils/markdown-leaves.tsx": 134,
@@ -618,10 +671,11 @@
     "cli/src/utils/ollama-onboarding.ts": 219,
     "cli/src/utils/open-file.ts": 145,
     "cli/src/utils/open-url.ts": 64,
-    "cli/src/utils/openrouter-models.ts": 35,
-    "cli/src/utils/openrouter-models/gateway.ts": 139,
+    "cli/src/utils/openrouter-models.ts": 41,
+    "cli/src/utils/openrouter-models/gateway.ts": 228,
     "cli/src/utils/openrouter-models/live-catalog.ts": 123,
     "cli/src/utils/openrouter-models/lookup.ts": 250,
+    "cli/src/utils/openrouter-models/nous.ts": 79,
     "cli/src/utils/openrouter-models/nvidia.ts": 52,
     "cli/src/utils/openrouter-models/openrouter.ts": 106,
     "cli/src/utils/openrouter-models/static-catalogs.ts": 166,
@@ -631,9 +685,9 @@
     "cli/src/utils/pending-attachments.ts": 364,
     "cli/src/utils/post-processing.ts": 100,
     "cli/src/utils/project-picker.ts": 13,
-    "cli/src/utils/provider-setup.ts": 285,
+    "cli/src/utils/provider-setup.ts": 422,
     "cli/src/utils/recent-projects.ts": 157,
-    "cli/src/utils/renderer-cleanup.ts": 143,
+    "cli/src/utils/renderer-cleanup.ts": 149,
     "cli/src/utils/response-ad-positions.ts": 2,
     "cli/src/utils/rewind.ts": 176,
     "cli/src/utils/run-state-storage.ts": 29,
@@ -657,7 +711,7 @@
     "cli/src/utils/savant-free-referral-cache.ts": 36,
     "cli/src/utils/savant-free-session-display.ts": 22,
     "cli/src/utils/savant-free-streak-line.ts": 68,
-    "cli/src/utils/sdk-event-handlers.ts": 94,
+    "cli/src/utils/sdk-event-handlers.ts": 100,
     "cli/src/utils/sdk-event-handlers/guards.ts": 100,
     "cli/src/utils/sdk-event-handlers/misc.ts": 51,
     "cli/src/utils/sdk-event-handlers/spawn-results.ts": 168,
@@ -666,11 +720,11 @@
     "cli/src/utils/send-message-helpers.ts": 200,
     "cli/src/utils/send-message-timer.ts": 111,
     "cli/src/utils/settings.ts": 15,
-    "cli/src/utils/settings/constants.ts": 32,
+    "cli/src/utils/settings/constants.ts": 33,
     "cli/src/utils/settings/io.ts": 83,
-    "cli/src/utils/settings/preferences.ts": 176,
-    "cli/src/utils/settings/types.ts": 63,
-    "cli/src/utils/settings/validation.ts": 149,
+    "cli/src/utils/settings/preferences.ts": 209,
+    "cli/src/utils/settings/types.ts": 72,
+    "cli/src/utils/settings/validation.ts": 179,
     "cli/src/utils/skill-registry.ts": 101,
     "cli/src/utils/spawn-agent-matcher.ts": 57,
     "cli/src/utils/status-indicator-state.ts": 101,
@@ -688,16 +742,16 @@
     "cli/src/utils/terminal-title.ts": 114,
     "cli/src/utils/terminal-watchdog.ts": 247,
     "cli/src/utils/text-layout.ts": 154,
-    "cli/src/utils/theme-config.ts": 144,
+    "cli/src/utils/theme-config.ts": 156,
     "cli/src/utils/theme-system.ts": 150,
     "cli/src/utils/theme-system/ide-detect.ts": 320,
     "cli/src/utils/theme-system/ide-paths.ts": 223,
     "cli/src/utils/theme-system/overrides.ts": 114,
-    "cli/src/utils/theme-system/palette.ts": 247,
+    "cli/src/utils/theme-system/palette.ts": 255,
     "cli/src/utils/theme-system/system-detect.ts": 137,
     "cli/src/utils/theme-system/watcher.ts": 166,
     "cli/src/utils/think-tag-parser.ts": 106,
-    "cli/src/utils/trace-writer.ts": 192,
+    "cli/src/utils/trace-writer.ts": 213,
     "cli/src/utils/ui-constants.ts": 70,
     "cli/src/utils/usage-banner-state.ts": 147,
     "cli/src/utils/validation-error-formatting.ts": 93,
@@ -739,6 +793,13 @@
     "common/src/constants/skills.ts": 61,
     "common/src/constants/subscription-plans.ts": 55,
     "common/src/constants/ui.ts": 26,
+    "common/src/crypto/errors.ts": 25,
+    "common/src/crypto/hash.ts": 51,
+    "common/src/crypto/index.ts": 27,
+    "common/src/crypto/jcs.ts": 56,
+    "common/src/crypto/keys.ts": 147,
+    "common/src/crypto/sign.ts": 64,
+    "common/src/env-boundary.ts": 17,
     "common/src/env-ci.ts": 37,
     "common/src/env-process.ts": 96,
     "common/src/env-schema.ts": 47,
@@ -746,17 +807,33 @@
     "common/src/mcp/client.ts": 309,
     "common/src/old-constants.ts": 11,
     "common/src/project-file-tree.ts": 362,
-    "common/src/providers/audit.ts": 316,
+    "common/src/provenance/batch.ts": 76,
+    "common/src/provenance/index.ts": 22,
+    "common/src/provenance/loader.ts": 106,
+    "common/src/provenance/receipt.ts": 168,
+    "common/src/provenance/schemas.ts": 41,
+    "common/src/providers/audit.ts": 325,
     "common/src/providers/derive.ts": 108,
     "common/src/providers/index.ts": 15,
     "common/src/providers/model-catalogs.ts": 24,
     "common/src/providers/org.ts": 40,
-    "common/src/providers/registry.ts": 170,
+    "common/src/providers/registry.ts": 190,
     "common/src/providers/types.ts": 89,
     "common/src/providers/validate.ts": 216,
     "common/src/reddit-capi.ts": 176,
     "common/src/schemas/feedback.ts": 58,
     "common/src/schemas/logs.ts": 67,
+    "common/src/teacher/attempt.ts": 59,
+    "common/src/teacher/challenge.ts": 92,
+    "common/src/teacher/critique.ts": 39,
+    "common/src/teacher/index.ts": 90,
+    "common/src/teacher/mutation.ts": 49,
+    "common/src/teacher/parse.ts": 78,
+    "common/src/teacher/privacy.ts": 27,
+    "common/src/teacher/progression-schemas.ts": 68,
+    "common/src/teacher/progression.ts": 73,
+    "common/src/teacher/sandbox.ts": 66,
+    "common/src/teacher/schemas.ts": 261,
     "common/src/templates/agent-validation.ts": 12,
     "common/src/templates/agent-validation/rules.ts": 114,
     "common/src/templates/agent-validation/validate.ts": 333,
@@ -764,8 +841,8 @@
     "common/src/templates/initial-agents-dir/examples/02-intermediate-git-committer.ts": 79,
     "common/src/templates/initial-agents-dir/examples/03-advanced-file-explorer.ts": 77,
     "common/src/templates/initial-agents-dir/my-custom-agent.ts": 41,
-    "common/src/templates/initial-agents-dir/types/agent-definition.ts": 487,
-    "common/src/templates/initial-agents-dir/types/tools.ts": 453,
+    "common/src/templates/initial-agents-dir/types/agent-definition.ts": 516,
+    "common/src/templates/initial-agents-dir/types/tools.ts": 455,
     "common/src/templates/initial-agents-dir/types/util-types.ts": 168,
     "common/src/testing-env-ci.ts": 16,
     "common/src/testing-env-process.ts": 79,
@@ -787,8 +864,8 @@
     "common/src/testing/mocks/tree-sitter.ts": 128,
     "common/src/testing/setup.ts": 283,
     "common/src/tools/compile-tool-definitions.ts": 195,
-    "common/src/tools/constants.ts": 146,
-    "common/src/tools/list.ts": 216,
+    "common/src/tools/constants.ts": 150,
+    "common/src/tools/list.ts": 220,
     "common/src/tools/params/tool/add-message.ts": 37,
     "common/src/tools/params/tool/add-subgoal.ts": 58,
     "common/src/tools/params/tool/apply-patch.ts": 111,
@@ -801,6 +878,7 @@
     "common/src/tools/params/tool/deep-research.ts": 150,
     "common/src/tools/params/tool/end-turn.ts": 55,
     "common/src/tools/params/tool/find-files.ts": 61,
+    "common/src/tools/params/tool/get-goal.ts": 42,
     "common/src/tools/params/tool/glob.ts": 75,
     "common/src/tools/params/tool/graph.ts": 178,
     "common/src/tools/params/tool/gravity-index.ts": 93,
@@ -809,7 +887,7 @@
     "common/src/tools/params/tool/ponytail-debt.ts": 51,
     "common/src/tools/params/tool/propose-str-replace.ts": 104,
     "common/src/tools/params/tool/propose-write-file.ts": 72,
-    "common/src/tools/params/tool/read-docs.ts": 86,
+    "common/src/tools/params/tool/read-docs.ts": 93,
     "common/src/tools/params/tool/read-files.ts": 94,
     "common/src/tools/params/tool/read-subtree.ts": 84,
     "common/src/tools/params/tool/read-url.ts": 82,
@@ -829,17 +907,19 @@
     "common/src/tools/params/tool/task-completed.ts": 59,
     "common/src/tools/params/tool/think-deeply.ts": 54,
     "common/src/tools/params/tool/transition-phase.ts": 67,
+    "common/src/tools/params/tool/update-goal.ts": 85,
     "common/src/tools/params/tool/update-subgoal.ts": 90,
     "common/src/tools/params/tool/web-search.ts": 74,
     "common/src/tools/params/tool/write-file.ts": 72,
     "common/src/tools/params/tool/write-todos.ts": 68,
     "common/src/tools/params/utils.ts": 153,
-    "common/src/tools/safety-registry.ts": 334,
+    "common/src/tools/safety-registry.ts": 347,
     "common/src/tools/safety.ts": 43,
     "common/src/tools/sequential-thinking.ts": 341,
     "common/src/tools/utils.ts": 26,
     "common/src/types/agent-template.ts": 224,
     "common/src/types/api/agents/publish.ts": 64,
+    "common/src/types/auto-drive.ts": 81,
     "common/src/types/contracts/agent-runtime.ts": 85,
     "common/src/types/contracts/analytics.ts": 13,
     "common/src/types/contracts/bigquery.ts": 56,
@@ -850,14 +930,15 @@
     "common/src/types/contracts/llm.ts": 184,
     "common/src/types/contracts/logger.ts": 30,
     "common/src/types/contracts/logs.ts": 35,
-    "common/src/types/contracts/trace.ts": 46,
+    "common/src/types/contracts/trace.ts": 48,
     "common/src/types/design-system.ts": 26,
     "common/src/types/dynamic-agent-template.ts": 291,
-    "common/src/types/echo-compliance.ts": 103,
+    "common/src/types/echo-compliance.ts": 132,
     "common/src/types/filesystem.ts": 11,
     "common/src/types/function-params.ts": 36,
     "common/src/types/grant.ts": 21,
     "common/src/types/gravity-index.ts": 171,
+    "common/src/types/hooks.ts": 50,
     "common/src/types/json.ts": 27,
     "common/src/types/mcp.ts": 27,
     "common/src/types/messages/content-part.ts": 60,
@@ -865,11 +946,12 @@
     "common/src/types/messages/provider-metadata.ts": 11,
     "common/src/types/messages/savant-code-message.ts": 56,
     "common/src/types/organization.ts": 119,
-    "common/src/types/print-mode.ts": 195,
+    "common/src/types/print-mode.ts": 218,
+    "common/src/types/provenance.ts": 154,
     "common/src/types/publisher.ts": 68,
     "common/src/types/savant-free-session.ts": 296,
     "common/src/types/savant-free-streak.ts": 7,
-    "common/src/types/session-state.ts": 276,
+    "common/src/types/session-state.ts": 478,
     "common/src/types/skill.ts": 57,
     "common/src/types/source.ts": 12,
     "common/src/types/spawn.ts": 14,
@@ -888,7 +970,8 @@
     "common/src/util/cache-debug.ts": 192,
     "common/src/util/credentials.ts": 13,
     "common/src/util/currency.ts": 26,
-    "common/src/util/dates.ts": 82,
+    "common/src/util/dates.ts": 107,
+    "common/src/util/drive-directives.ts": 166,
     "common/src/util/embedded-protocol.ts": 70,
     "common/src/util/engagement-tracker.ts": 134,
     "common/src/util/error.ts": 30,
@@ -898,18 +981,20 @@
     "common/src/util/error/network.ts": 102,
     "common/src/util/error/result.ts": 62,
     "common/src/util/error/types.ts": 91,
-    "common/src/util/file.ts": 367,
+    "common/src/util/file.ts": 378,
     "common/src/util/format-code-search.ts": 116,
+    "common/src/util/goal-directives.ts": 120,
     "common/src/util/lazy-response-ads.ts": 94,
     "common/src/util/log-data.ts": 58,
     "common/src/util/log-mirror.ts": 35,
     "common/src/util/lru-cache.ts": 68,
-    "common/src/util/messages.ts": 20,
+    "common/src/util/messages.ts": 25,
     "common/src/util/messages/aggregate.ts": 162,
     "common/src/util/messages/cache-control.ts": 61,
     "common/src/util/messages/constructors.ts": 142,
     "common/src/util/messages/content-string.ts": 12,
-    "common/src/util/messages/convert.ts": 179,
+    "common/src/util/messages/convert.ts": 184,
+    "common/src/util/messages/internal.ts": 24,
     "common/src/util/messages/types.ts": 22,
     "common/src/util/messages/well-formed.ts": 53,
     "common/src/util/model-utils.ts": 26,
@@ -918,7 +1003,7 @@
     "common/src/util/partial-json-delta.ts": 108,
     "common/src/util/paths.ts": 195,
     "common/src/util/promise.ts": 88,
-    "common/src/util/protocol-config.ts": 380,
+    "common/src/util/protocol-config.ts": 537,
     "common/src/util/random.ts": 16,
     "common/src/util/rate-limit.ts": 57,
     "common/src/util/reddit-capi-events.ts": 41,
@@ -940,7 +1025,7 @@
     "common/src/util/xml.ts": 18,
     "common/src/util/zod-schema.ts": 81,
     "common/src/util/zoned-time.ts": 137,
-    "common/src/utils/ask-user-bridge.ts": 48,
+    "common/src/utils/ask-user-bridge.ts": 51,
     "evals/graph-export-e2e/fixture-generator.ts": 70,
     "evals/graph-export-e2e/playwright.config.ts": 22,
     "evals/node_modules/pino/node_modules/pino-abstract-transport/index.d.ts": 123,
@@ -964,6 +1049,7 @@
     "evals/node_modules/pino/test/types/pino.test-d.ts": 586,
     "evals/node_modules/pino/test/types/pino.ts": 91,
     "evals/playwright.config.ts": 22,
+    "evals/test-env.ts": 24,
     "evals/v2/src/cli.ts": 217,
     "evals/v2/src/golden.ts": 74,
     "evals/v2/src/harness.ts": 294,
@@ -982,56 +1068,80 @@
     "packages/agent-runtime/src/__tests__/propose-tools-fixture.ts": 340,
     "packages/agent-runtime/src/__tests__/test-utils.ts": 97,
     "packages/agent-runtime/src/constants.ts": 13,
-    "packages/agent-runtime/src/context-compactor.ts": 381,
+    "packages/agent-runtime/src/context-compactor.ts": 476,
     "packages/agent-runtime/src/context-compactor/circuit-breaker.ts": 93,
     "packages/agent-runtime/src/context-compactor/phases.ts": 122,
-    "packages/agent-runtime/src/context-compactor/state.ts": 46,
+    "packages/agent-runtime/src/context-compactor/state.ts": 66,
     "packages/agent-runtime/src/echo/advisory-logger.ts": 48,
-    "packages/agent-runtime/src/echo/design-contract.ts": 272,
+    "packages/agent-runtime/src/echo/design-contract.ts": 393,
     "packages/agent-runtime/src/echo/enforcement-state.ts": 55,
-    "packages/agent-runtime/src/echo/enforcement.ts": 516,
-    "packages/agent-runtime/src/echo/fid-validator.ts": 105,
-    "packages/agent-runtime/src/echo/index.ts": 23,
+    "packages/agent-runtime/src/echo/enforcement.ts": 753,
+    "packages/agent-runtime/src/echo/fid-validator.ts": 260,
+    "packages/agent-runtime/src/echo/grounding.ts": 183,
+    "packages/agent-runtime/src/echo/index.ts": 31,
     "packages/agent-runtime/src/echo/law4-turn-end.ts": 71,
     "packages/agent-runtime/src/echo/post-write-scanners.ts": 139,
-    "packages/agent-runtime/src/echo/pre-write-gates.ts": 298,
-    "packages/agent-runtime/src/echo/protocol-summary.ts": 31,
-    "packages/agent-runtime/src/echo/types.ts": 98,
-    "packages/agent-runtime/src/echo/violation-handler.ts": 73,
+    "packages/agent-runtime/src/echo/pre-write-gates.ts": 319,
+    "packages/agent-runtime/src/echo/protocol-summary.ts": 35,
+    "packages/agent-runtime/src/echo/types.ts": 100,
+    "packages/agent-runtime/src/echo/violation-handler.ts": 91,
     "packages/agent-runtime/src/find-files/custom-file-picker-config.ts": 62,
     "packages/agent-runtime/src/find-files/request-files-prompt.ts": 296,
     "packages/agent-runtime/src/find-files/request-files-prompt/prompts.ts": 159,
     "packages/agent-runtime/src/find-files/request-files-prompt/validate.ts": 20,
     "packages/agent-runtime/src/generate-diffs-prompt.ts": 39,
     "packages/agent-runtime/src/get-file-reading-updates.ts": 28,
+    "packages/agent-runtime/src/hooks/__tests__/fixtures/allow-json.ts": 8,
+    "packages/agent-runtime/src/hooks/__tests__/fixtures/deny-json.ts": 11,
+    "packages/agent-runtime/src/hooks/__tests__/fixtures/exit-2.ts": 3,
+    "packages/agent-runtime/src/hooks/__tests__/fixtures/sleep-5.ts": 6,
+    "packages/agent-runtime/src/hooks/engine.ts": 144,
+    "packages/agent-runtime/src/hooks/runner.ts": 207,
+    "packages/agent-runtime/src/hooks/types.ts": 32,
     "packages/agent-runtime/src/llm-api/claude.ts": 8,
     "packages/agent-runtime/src/llm-api/context7-api.ts": 291,
     "packages/agent-runtime/src/llm-api/gemini-with-fallbacks.ts": 105,
+    "packages/agent-runtime/src/llm-api/research-format.ts": 64,
+    "packages/agent-runtime/src/llm-api/research-sources.ts": 286,
     "packages/agent-runtime/src/llm-api/savant-code-web-api.ts": 371,
     "packages/agent-runtime/src/llm-api/serper-api.ts": 194,
-    "packages/agent-runtime/src/main-prompt.ts": 252,
+    "packages/agent-runtime/src/main-prompt.ts": 317,
     "packages/agent-runtime/src/mcp-constants.ts": 13,
     "packages/agent-runtime/src/mcp.ts": 87,
     "packages/agent-runtime/src/process-file-block.ts": 119,
     "packages/agent-runtime/src/process-str-replace.ts": 214,
     "packages/agent-runtime/src/prompt-agent-stream.ts": 120,
-    "packages/agent-runtime/src/provenance/session.ts": 373,
+    "packages/agent-runtime/src/provenance/index.ts": 23,
+    "packages/agent-runtime/src/provenance/ledger.ts": 115,
+    "packages/agent-runtime/src/provenance/receipt.ts": 48,
+    "packages/agent-runtime/src/provenance/registry.ts": 63,
+    "packages/agent-runtime/src/provenance/session.ts": 374,
+    "packages/agent-runtime/src/provenance/validate.ts": 15,
+    "packages/agent-runtime/src/provenance/verdict.ts": 56,
     "packages/agent-runtime/src/run-agent-step.ts": 11,
+    "packages/agent-runtime/src/run-agent-step/auto-drive-driver.ts": 294,
+    "packages/agent-runtime/src/run-agent-step/auto-drive-loop.ts": 194,
     "packages/agent-runtime/src/run-agent-step/cache-debug.ts": 178,
-    "packages/agent-runtime/src/run-agent-step/constants.ts": 9,
-    "packages/agent-runtime/src/run-agent-step/context-tokens.ts": 194,
+    "packages/agent-runtime/src/run-agent-step/constants.ts": 37,
+    "packages/agent-runtime/src/run-agent-step/context-tokens.ts": 274,
+    "packages/agent-runtime/src/run-agent-step/decomposition/manifest-check.ts": 127,
     "packages/agent-runtime/src/run-agent-step/error-output.ts": 80,
+    "packages/agent-runtime/src/run-agent-step/goal-conformance.ts": 186,
+    "packages/agent-runtime/src/run-agent-step/goal-driver.ts": 127,
+    "packages/agent-runtime/src/run-agent-step/goal-engine.ts": 300,
     "packages/agent-runtime/src/run-agent-step/goal-evaluation.ts": 43,
-    "packages/agent-runtime/src/run-agent-step/loop-context.ts": 296,
+    "packages/agent-runtime/src/run-agent-step/ladder-router.ts": 93,
+    "packages/agent-runtime/src/run-agent-step/loop-context.ts": 435,
     "packages/agent-runtime/src/run-agent-step/loop-iteration.ts": 477,
-    "packages/agent-runtime/src/run-agent-step/loop.ts": 401,
-    "packages/agent-runtime/src/run-agent-step/loop/reactive-compact.ts": 186,
+    "packages/agent-runtime/src/run-agent-step/loop.ts": 429,
+    "packages/agent-runtime/src/run-agent-step/loop/reactive-compact.ts": 194,
     "packages/agent-runtime/src/run-agent-step/loop/runtime-events.ts": 20,
     "packages/agent-runtime/src/run-agent-step/n-parameter.ts": 86,
-    "packages/agent-runtime/src/run-agent-step/step.ts": 390,
+    "packages/agent-runtime/src/run-agent-step/run-log.ts": 72,
+    "packages/agent-runtime/src/run-agent-step/step.ts": 398,
     "packages/agent-runtime/src/run-agent-step/token-count.ts": 47,
     "packages/agent-runtime/src/run-agent-step/tool-definitions.ts": 37,
-    "packages/agent-runtime/src/run-agent-step/types.ts": 192,
+    "packages/agent-runtime/src/run-agent-step/types.ts": 210,
     "packages/agent-runtime/src/run-programmatic-step.ts": 343,
     "packages/agent-runtime/src/run-programmatic-step/deserialize.ts": 20,
     "packages/agent-runtime/src/run-programmatic-step/execute-tool-calls.ts": 199,
@@ -1043,20 +1153,42 @@
     "packages/agent-runtime/src/system-prompt/truncate-file-tree.ts": 224,
     "packages/agent-runtime/src/system-prompt/truncate-file-tree/prune.ts": 97,
     "packages/agent-runtime/src/system-prompt/truncate-file-tree/unimportant.ts": 119,
+    "packages/agent-runtime/src/teacher/corpus/index.ts": 20,
+    "packages/agent-runtime/src/teacher/corpus/pack.ts": 53,
+    "packages/agent-runtime/src/teacher/corpus/source.ts": 78,
+    "packages/agent-runtime/src/teacher/corpus/validate.ts": 154,
+    "packages/agent-runtime/src/teacher/exercise/engine.ts": 249,
+    "packages/agent-runtime/src/teacher/exercise/grader.ts": 86,
+    "packages/agent-runtime/src/teacher/exercise/index.ts": 24,
+    "packages/agent-runtime/src/teacher/exercise/state.ts": 78,
+    "packages/agent-runtime/src/teacher/grading/detection.ts": 173,
+    "packages/agent-runtime/src/teacher/grading/equivalence.ts": 63,
+    "packages/agent-runtime/src/teacher/grading/index.ts": 19,
+    "packages/agent-runtime/src/teacher/index.ts": 14,
+    "packages/agent-runtime/src/teacher/mutation.ts": 47,
+    "packages/agent-runtime/src/teacher/progression/index.ts": 17,
+    "packages/agent-runtime/src/teacher/progression/record.ts": 158,
+    "packages/agent-runtime/src/teacher/progression/store.ts": 258,
+    "packages/agent-runtime/src/teacher/sandbox/backend.ts": 29,
+    "packages/agent-runtime/src/teacher/sandbox/capabilities.ts": 41,
+    "packages/agent-runtime/src/teacher/sandbox/index.ts": 17,
+    "packages/agent-runtime/src/teacher/sandbox/policy.ts": 39,
+    "packages/agent-runtime/src/teacher/sandbox/runner.ts": 180,
+    "packages/agent-runtime/src/teacher/sandbox/subprocess.ts": 216,
     "packages/agent-runtime/src/templates/agent-registry.ts": 123,
     "packages/agent-runtime/src/templates/prompts.ts": 190,
-    "packages/agent-runtime/src/templates/strings.ts": 314,
-    "packages/agent-runtime/src/templates/types.ts": 63,
+    "packages/agent-runtime/src/templates/strings.ts": 347,
+    "packages/agent-runtime/src/templates/types.ts": 64,
     "packages/agent-runtime/src/tool-stream-parser.ts": 261,
     "packages/agent-runtime/src/tools/filter-tool-set.ts": 19,
     "packages/agent-runtime/src/tools/handlers/handler-function-type.ts": 78,
-    "packages/agent-runtime/src/tools/handlers/list.ts": 124,
+    "packages/agent-runtime/src/tools/handlers/list.ts": 128,
     "packages/agent-runtime/src/tools/handlers/tool/add-message.ts": 38,
     "packages/agent-runtime/src/tools/handlers/tool/add-subgoal.ts": 31,
     "packages/agent-runtime/src/tools/handlers/tool/apply-patch.ts": 121,
     "packages/agent-runtime/src/tools/handlers/tool/ask-user.ts": 26,
     "packages/agent-runtime/src/tools/handlers/tool/browser-logs.ts": 22,
-    "packages/agent-runtime/src/tools/handlers/tool/checkpoint-store.ts": 379,
+    "packages/agent-runtime/src/tools/handlers/tool/checkpoint-store.ts": 416,
     "packages/agent-runtime/src/tools/handlers/tool/code-search.ts": 22,
     "packages/agent-runtime/src/tools/handlers/tool/composio.ts": 53,
     "packages/agent-runtime/src/tools/handlers/tool/create-plan.ts": 64,
@@ -1068,6 +1200,7 @@
     "packages/agent-runtime/src/tools/handlers/tool/deep-research.ts": 369,
     "packages/agent-runtime/src/tools/handlers/tool/end-turn.ts": 16,
     "packages/agent-runtime/src/tools/handlers/tool/find-files.ts": 162,
+    "packages/agent-runtime/src/tools/handlers/tool/get-goal.ts": 62,
     "packages/agent-runtime/src/tools/handlers/tool/glob.ts": 23,
     "packages/agent-runtime/src/tools/handlers/tool/graph/graph-adapter.ts": 71,
     "packages/agent-runtime/src/tools/handlers/tool/graph/query-blast-radius.ts": 67,
@@ -1086,21 +1219,22 @@
     "packages/agent-runtime/src/tools/handlers/tool/read-url.ts": 22,
     "packages/agent-runtime/src/tools/handlers/tool/render-ui.ts": 16,
     "packages/agent-runtime/src/tools/handlers/tool/run-file-change-hooks.ts": 21,
-    "packages/agent-runtime/src/tools/handlers/tool/run-readonly-command.ts": 216,
+    "packages/agent-runtime/src/tools/handlers/tool/run-readonly-command.ts": 364,
     "packages/agent-runtime/src/tools/handlers/tool/run-terminal-command.ts": 34,
     "packages/agent-runtime/src/tools/handlers/tool/sequential-thinking.ts": 54,
     "packages/agent-runtime/src/tools/handlers/tool/set-messages.ts": 20,
     "packages/agent-runtime/src/tools/handlers/tool/set-output.ts": 105,
     "packages/agent-runtime/src/tools/handlers/tool/set-scaffold-complete.ts": 33,
     "packages/agent-runtime/src/tools/handlers/tool/skill.ts": 147,
-    "packages/agent-runtime/src/tools/handlers/tool/spawn-agent-inline.ts": 160,
-    "packages/agent-runtime/src/tools/handlers/tool/spawn-agent-utils.ts": 552,
-    "packages/agent-runtime/src/tools/handlers/tool/spawn-agents.ts": 317,
+    "packages/agent-runtime/src/tools/handlers/tool/spawn-agent-inline.ts": 248,
+    "packages/agent-runtime/src/tools/handlers/tool/spawn-agent-utils.ts": 604,
+    "packages/agent-runtime/src/tools/handlers/tool/spawn-agents.ts": 355,
     "packages/agent-runtime/src/tools/handlers/tool/str-replace.ts": 136,
     "packages/agent-runtime/src/tools/handlers/tool/suggest-followups.ts": 21,
     "packages/agent-runtime/src/tools/handlers/tool/task-completed.ts": 16,
     "packages/agent-runtime/src/tools/handlers/tool/think-deeply.ts": 26,
     "packages/agent-runtime/src/tools/handlers/tool/transition-phase.ts": 162,
+    "packages/agent-runtime/src/tools/handlers/tool/update-goal.ts": 134,
     "packages/agent-runtime/src/tools/handlers/tool/update-subgoal.ts": 49,
     "packages/agent-runtime/src/tools/handlers/tool/web-search.ts": 152,
     "packages/agent-runtime/src/tools/handlers/tool/write-file.ts": 286,
@@ -1109,52 +1243,65 @@
     "packages/agent-runtime/src/tools/sandbox/engine.ts": 112,
     "packages/agent-runtime/src/tools/sandbox/index.ts": 15,
     "packages/agent-runtime/src/tools/sandbox/shell-denylist.ts": 120,
-    "packages/agent-runtime/src/tools/stream-parser.ts": 390,
+    "packages/agent-runtime/src/tools/stream-parser.ts": 488,
     "packages/agent-runtime/src/tools/stream-parser/finalize.ts": 52,
     "packages/agent-runtime/src/tools/stream-parser/response-handler.ts": 37,
     "packages/agent-runtime/src/tools/thinker-convergence-gate.ts": 163,
     "packages/agent-runtime/src/tools/thought-session-store.ts": 44,
     "packages/agent-runtime/src/tools/tool-call-parse.ts": 386,
     "packages/agent-runtime/src/tools/tool-executor.ts": 22,
-    "packages/agent-runtime/src/tools/tool-executor/custom.ts": 330,
+    "packages/agent-runtime/src/tools/tool-executor/custom.ts": 377,
     "packages/agent-runtime/src/tools/tool-executor/echo-record.ts": 61,
-    "packages/agent-runtime/src/tools/tool-executor/native.ts": 629,
+    "packages/agent-runtime/src/tools/tool-executor/execution-policy.ts": 33,
+    "packages/agent-runtime/src/tools/tool-executor/native.ts": 852,
     "packages/agent-runtime/src/tools/tool-executor/sandbox-gate.ts": 89,
     "packages/agent-runtime/src/tools/tool-executor/spawn-validation.ts": 155,
+    "packages/agent-runtime/src/tools/tool-executor/tool-result-errors.ts": 23,
+    "packages/agent-runtime/src/tools/tool-executor/trusted-custom-tool-definitions.ts": 19,
     "packages/agent-runtime/src/tools/tool-executor/types.ts": 68,
-    "packages/agent-runtime/src/tools/tool-executor/write-gate.ts": 149,
-    "packages/agent-runtime/src/util/activity-tracking.ts": 264,
-    "packages/agent-runtime/src/util/agent-output.ts": 103,
+    "packages/agent-runtime/src/tools/tool-executor/write-gate.ts": 152,
+    "packages/agent-runtime/src/util/activity-tracking.ts": 288,
+    "packages/agent-runtime/src/util/agent-output.ts": 110,
     "packages/agent-runtime/src/util/cache-debug.ts": 352,
     "packages/agent-runtime/src/util/caveman-rules.ts": 112,
-    "packages/agent-runtime/src/util/echo-compliance.ts": 378,
+    "packages/agent-runtime/src/util/echo-compliance.ts": 505,
     "packages/agent-runtime/src/util/format-value.ts": 17,
     "packages/agent-runtime/src/util/graph-injection.ts": 215,
     "packages/agent-runtime/src/util/messages.ts": 13,
     "packages/agent-runtime/src/util/messages/framing.ts": 130,
-    "packages/agent-runtime/src/util/messages/history.ts": 173,
+    "packages/agent-runtime/src/util/messages/history.ts": 193,
     "packages/agent-runtime/src/util/messages/trimming.ts": 204,
     "packages/agent-runtime/src/util/parse-tool-calls-from-text.ts": 123,
     "packages/agent-runtime/src/util/render-read-files-result.ts": 19,
     "packages/agent-runtime/src/util/simplify-tool-results.ts": 198,
     "packages/agent-runtime/src/util/stream-xml-parser.ts": 260,
     "packages/agent-runtime/src/util/think-tags.ts": 34,
-    "packages/agent-runtime/src/util/token-counter.ts": 137,
+    "packages/agent-runtime/src/util/token-counter.ts": 158,
     "packages/agent-runtime/src/util/token-telemetry.ts": 230,
     "packages/agent-runtime/src/yagni-ladder.ts": 269,
     "packages/code-map/__tests__/test-langs/test.ts": 32,
     "packages/code-map/src/index.ts": 5,
     "packages/code-map/src/init-node.ts": 186,
     "packages/code-map/src/languages.ts": 345,
-    "packages/code-map/src/parse.ts": 260,
+    "packages/code-map/src/parse.ts": 311,
     "packages/code-map/src/parse/limits.ts": 70,
     "packages/code-map/src/parse/scoring.ts": 97,
     "packages/code-map/src/parse/types.ts": 37,
     "packages/code-map/src/types.ts": 12,
     "packages/code-map/src/utils.ts": 13,
     "packages/database/src/index.ts": 205,
-    "packages/database/src/service.ts": 346,
+    "packages/database/src/service.ts": 374,
+    "packages/design-systems/src/authoring.ts": 170,
+    "packages/design-systems/src/color-contrast.ts": 25,
+    "packages/design-systems/src/context.ts": 30,
+    "packages/design-systems/src/default.ts": 112,
+    "packages/design-systems/src/drafts.ts": 170,
+    "packages/design-systems/src/index.ts": 63,
+    "packages/design-systems/src/library.ts": 106,
     "packages/design-systems/src/parser.ts": 327,
+    "packages/design-systems/src/selection.ts": 58,
+    "packages/design-systems/src/theme-adapter.ts": 254,
+    "packages/design-systems/src/types.ts": 141,
     "packages/knowledge-graph/src/ambient.d.ts": 12,
     "packages/knowledge-graph/src/clusters.ts": 175,
     "packages/knowledge-graph/src/export-serializer.ts": 16,
@@ -1171,7 +1318,7 @@
     "packages/knowledge-graph/src/schema.ts": 83,
     "packages/knowledge-graph/src/store.ts": 119,
     "packages/knowledge-graph/src/types.ts": 131,
-    "packages/knowledge-graph/src/update.ts": 355,
+    "packages/knowledge-graph/src/update.ts": 407,
     "packages/llm-providers/src/ollama/detect.ts": 114,
     "packages/llm-providers/src/ollama/index.ts": 3,
     "packages/llm-providers/src/openai-compatible/chat/convert-to-openai-compatible-chat-messages.test.ts": 300,
@@ -1201,20 +1348,30 @@
     "packages/llm-providers/src/openai-compatible/openai-compatible-error.ts": 35,
     "packages/llm-providers/src/openai-compatible/openai-compatible-provider.ts": 175,
     "packages/llm-providers/src/openai-compatible/version.ts": 6,
+    "scripts/_rebaseline-quality.ts": 80,
     "scripts/audit-evidence.ts": 308,
+    "scripts/bump-version.ts": 266,
     "scripts/eslint-rules/__fixtures__/unknown-bad.ts": 22,
     "scripts/eslint-rules/__fixtures__/unknown-good.ts": 36,
-    "scripts/fid-ledger.ts": 291,
+    "scripts/fid-ledger.ts": 309,
+    "scripts/generate-design-systems.ts": 138,
     "scripts/generate-protocol-bundle.ts": 411,
-    "scripts/generate-provider-reference.ts": 203,
+    "scripts/generate-provider-reference.ts": 204,
+    "scripts/hygiene.ts": 183,
+    "scripts/learnings-core.ts": 5,
     "scripts/learnings-references.ts": 384,
+    "scripts/learnings-schema.ts": 232,
+    "scripts/learnings-types.ts": 31,
+    "scripts/learnings-validation.ts": 193,
     "scripts/learnings.ts": 396,
     "scripts/pre-push-scan.test.ts": 300,
-    "scripts/pre-push-scan.ts": 325,
+    "scripts/pre-push-scan.ts": 367,
     "scripts/protocol-copies.ts": 732,
     "scripts/public-release.test.ts": 300,
-    "scripts/public-release.ts": 2921,
-    "scripts/quality-report.ts": 88,
+    "packages/agent-runtime/src/llm-api/docset-search.ts": 306,
+    "scripts/public-release.ts": 2953,
+    "scripts/quality-report.ts": 111,
+    "scripts/test-count.ts": 35,
     "scripts/tmux/tmux-viewer/components/session-viewer.tsx": 557,
     "scripts/tmux/tmux-viewer/components/theme.ts": 55,
     "scripts/tmux/tmux-viewer/gif-encoder-2.d.ts": 29,
@@ -1222,10 +1379,12 @@
     "scripts/tmux/tmux-viewer/index.tsx": 238,
     "scripts/tmux/tmux-viewer/session-loader.ts": 235,
     "scripts/tmux/tmux-viewer/types.ts": 77,
-    "scripts/validate-repository.ts": 209,
-    "scripts/validation-manifest.ts": 440,
+    "scripts/validate-repository.ts": 242,
+    "scripts/validation-manifest.ts": 478,
+    "scripts/version-docs.ts": 113,
+    "scripts/version.ts": 167,
     "sdk/src/__tests__/fixtures/windows-stubborn-grandchild.ts": 27,
-    "sdk/src/agents/load-agents.ts": 340,
+    "sdk/src/agents/load-agents.ts": 344,
     "sdk/src/agents/load-mcp-config.ts": 276,
     "sdk/src/client.ts": 93,
     "sdk/src/composio.ts": 93,
@@ -1252,8 +1411,8 @@
     "sdk/src/impl/llm/repair-tool-call.ts": 126,
     "sdk/src/impl/llm/stream.ts": 399,
     "sdk/src/impl/llm/usage.ts": 180,
-    "sdk/src/impl/model-provider.ts": 252,
-    "sdk/src/impl/model-provider/default-inference.ts": 132,
+    "sdk/src/impl/model-provider.ts": 277,
+    "sdk/src/impl/model-provider/default-inference.ts": 141,
     "sdk/src/impl/model-provider/fetch-with-retry.ts": 38,
     "sdk/src/impl/model-provider/model-factories.ts": 183,
     "sdk/src/impl/model-provider/oauth-rate-limit.ts": 36,
@@ -1266,24 +1425,24 @@
     "sdk/src/run-state/child-process.ts": 69,
     "sdk/src/run-state/file-tree.ts": 73,
     "sdk/src/run-state/git-changes.ts": 68,
-    "sdk/src/run-state/initial-state.ts": 176,
+    "sdk/src/run-state/initial-state.ts": 182,
     "sdk/src/run-state/knowledge-files.ts": 165,
     "sdk/src/run-state/mutations.ts": 182,
     "sdk/src/run-state/process-definitions.ts": 66,
     "sdk/src/run-state/project-index.ts": 130,
-    "sdk/src/run-state/serialization.ts": 121,
-    "sdk/src/run-state/types.ts": 39,
+    "sdk/src/run-state/serialization.ts": 254,
+    "sdk/src/run-state/types.ts": 42,
     "sdk/src/run.ts": 21,
     "sdk/src/run/agent-runtime-impl.ts": 180,
     "sdk/src/run/cancelled-state.ts": 113,
-    "sdk/src/run/execution.ts": 341,
-    "sdk/src/run/execution/session-state.ts": 143,
-    "sdk/src/run/execution/snapshot.ts": 82,
+    "sdk/src/run/execution.ts": 353,
+    "sdk/src/run/execution/session-state.ts": 169,
+    "sdk/src/run/execution/snapshot.ts": 101,
     "sdk/src/run/response.ts": 133,
     "sdk/src/run/status-code.ts": 70,
     "sdk/src/run/stream-handlers.ts": 75,
     "sdk/src/run/tool-call.ts": 274,
-    "sdk/src/run/types.ts": 247,
+    "sdk/src/run/types.ts": 270,
     "sdk/src/skills/load-skills.ts": 254,
     "sdk/src/testing/env.ts": 20,
     "sdk/src/tools/apply-patch.ts": 125,
@@ -1314,6 +1473,26 @@
     "sdk/src/validate-agents.ts": 158
   },
   "approvedGrowth": {
+    "agents/adversary/adversary.ts": {
+      "maxLines": 95,
+      "rationale": "Measured intentional FID-2026-0817-005 growth (Anti-Deferral Gate: Adversary checklist silent-deferral check); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "agents/context-pruner/main.ts": {
+      "maxLines": 622,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "agents/context-pruner/structured-summary.ts": {
+      "maxLines": 331,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "agents/detective/detective.ts": {
+      "maxLines": 188,
+      "rationale": "Measured intentional FID-2026-0818-002..009 Auto Drive + Discord Rich Presence implementation growth (drive-mode entry, decomposition engine, drive-loop supervisor, self-healing ladder, completion certification, observability, headless CLI mode, Discord Rich Presence); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "agents/recorder/recorder.ts": {
+      "maxLines": 139,
+      "rationale": "Measured intentional FID-2026-0818-002..009 Auto Drive + Discord Rich Presence implementation growth (drive-mode entry, decomposition engine, drive-loop supervisor, self-healing ladder, completion certification, observability, headless CLI mode, Discord Rich Presence); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
     "agents/savant/handle-steps.ts": {
       "maxLines": 323,
       "rationale": "Measured intentional FID-2026-0814-002..006 + FID-2026-0814-011 + FID-2026-0814-013 implementation growth (durable goal mode, hook system, harness frictions, compaction freshness, trust-matrix terminal states, the single-trigger auto-compaction authority, and the force-offset trigger re-expression); decomposition remains tracked work and this ceiling is protected by quality-report validation."
@@ -1321,6 +1500,18 @@
     "agents/savant/savant.ts": {
       "maxLines": 261,
       "rationale": "Measured intentional FID-2026-0814-002..006 implementation growth (durable goal mode, hook system, harness frictions, compaction freshness, trust-matrix terminal states); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "agents/savant/system-prompt.ts": {
+      "maxLines": 234,
+      "rationale": "Measured intentional FID-2026-0818-002..009 Auto Drive + Discord Rich Presence implementation growth (drive-mode entry, decomposition engine, drive-loop supervisor, self-healing ladder, completion certification, observability, headless CLI mode, Discord Rich Presence); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "agents/scout/scout.ts": {
+      "maxLines": 309,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "agents/scribe/scribe.ts": {
+      "maxLines": 65,
+      "rationale": "Measured intentional FID-2026-0818-002..009 Auto Drive + Discord Rich Presence implementation growth (drive-mode entry, decomposition engine, drive-loop supervisor, self-healing ladder, completion certification, observability, headless CLI mode, Discord Rich Presence); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "agents/thinker/thinker-gemini.ts": {
       "maxLines": 29,
@@ -1330,16 +1521,28 @@
       "maxLines": 70,
       "rationale": "Measured intentional FID-2026-0814-002..006 implementation growth (durable goal mode, hook system, harness frictions, compaction freshness, trust-matrix terminal states); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
+    "agents/thinker/thinker.ts": {
+      "maxLines": 137,
+      "rationale": "Measured intentional FID-2026-0818-002..009 Auto Drive + Discord Rich Presence implementation growth (drive-mode entry, decomposition engine, drive-loop supervisor, self-healing ladder, completion certification, observability, headless CLI mode, Discord Rich Presence); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "agents/types/tools.ts": {
+      "maxLines": 578,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
     "cli/src/agents/bundled-agents.generated.ts": {
       "maxLines": 2273,
       "rationale": "Measured intentional 2026-08-16 UI-overhaul program growth (FID-2026-0816-002..012 + FID-2026-0816-012-native-tool-call-recovery-hardening); exact measured count"
     },
+    "cli/src/app.tsx": {
+      "maxLines": 384,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
     "cli/src/chat/keyboard.ts": {
-      "maxLines": 302,
+      "maxLines": 331,
       "rationale": "Measured intentional v0.0.23 CLI interaction growth; exact ceiling is protected by the quality-ratchet validator and is not a blanket exemption."
     },
     "cli/src/chat/panels.tsx": {
-      "maxLines": 388,
+      "maxLines": 390,
       "rationale": "Measured intentional 2026-08-16 UI-overhaul program growth (FID-2026-0816-002..012 + FID-2026-0816-012-native-tool-call-recovery-hardening); exact measured count"
     },
     "cli/src/chat/sidebar.tsx": {
@@ -1355,48 +1558,128 @@
       "rationale": "Measured intentional 2026-08-16 UI-overhaul program growth (FID-2026-0816-002..012 + FID-2026-0816-012-native-tool-call-recovery-hardening); exact measured count"
     },
     "cli/src/chat/use-chat-interactions.ts": {
-      "maxLines": 368,
+      "maxLines": 375,
       "rationale": "Measured intentional 2026-08-16 UI-overhaul program growth (FID-2026-0816-002..012 + FID-2026-0816-012-native-tool-call-recovery-hardening); exact measured count"
     },
     "cli/src/chat/use-chat-keyboard.ts": {
-      "maxLines": 305,
+      "maxLines": 319,
       "rationale": "Measured intentional 2026-08-16 UI-overhaul program growth (FID-2026-0816-002..012 + FID-2026-0816-012-native-tool-call-recovery-hardening); exact measured count"
+    },
+    "cli/src/chat/use-chat-layout.ts": {
+      "maxLines": 340,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "cli/src/chat/use-chat-messaging.ts": {
+      "maxLines": 362,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "cli/src/chat/use-chat-overlays.ts": {
+      "maxLines": 373,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "cli/src/chat/use-chat-pickers.ts": {
       "maxLines": 244,
       "rationale": "Measured intentional 2026-08-16 UI-overhaul program growth (FID-2026-0816-002..012 + FID-2026-0816-012-native-tool-call-recovery-hardening); exact measured count"
     },
+    "cli/src/chat/use-chat-suggestions.ts": {
+      "maxLines": 341,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
     "cli/src/cli-args.ts": {
-      "maxLines": 201,
-      "rationale": "Measured intentional current-scope growth; decomposition remains tracked work and this ceiling is protected by quality-report validation."
+      "maxLines": 246,
+      "rationale": "Measured intentional FID-2026-0818-002..009 Auto Drive + Discord Rich Presence implementation growth (drive-mode entry, decomposition engine, drive-loop supervisor, self-healing ladder, completion certification, observability, headless CLI mode, Discord Rich Presence); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "cli/src/commands/auto-drive.ts": {
+      "maxLines": 270,
+      "rationale": "Measured intentional FID-2026-0818-010 growth (canonical `/auto` \u00e2\u2020\u2019 `/auto-drive` rename with `/auto` `/drive` `/autodrive` aliases + drive-control message builder); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "cli/src/commands/command-registry.ts": {
       "maxLines": 227,
       "rationale": "Measured intentional current-scope growth; decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
+    "cli/src/commands/contribute.ts": {
+      "maxLines": 328,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "cli/src/commands/copy-conversation.ts": {
+      "maxLines": 387,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
     "cli/src/commands/defs/core.ts": {
-      "maxLines": 242,
-      "rationale": "Measured intentional teacher /learn command growth (FID-2026-0813-018); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+      "maxLines": 255,
+      "rationale": "Measured intentional FID-2026-0818-002..009 Auto Drive + Discord Rich Presence implementation growth (drive-mode entry, decomposition engine, drive-loop supervisor, self-healing ladder, completion certification, observability, headless CLI mode, Discord Rich Presence); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "cli/src/commands/defs/misc.ts": {
+      "maxLines": 197,
+      "rationale": "Measured intentional FID-2026-0818-010 growth (canonical `/auto-drive` command name + `/auto` `/drive` `/autodrive` alias set); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "cli/src/commands/defs/modes.ts": {
-      "maxLines": 257,
-      "rationale": "Measured intentional v0.0.23 mode-definition growth; exact ceiling is protected by the quality-ratchet validator."
+      "maxLines": 314,
+      "rationale": "Measured intentional FID-2026-0819-002 research-tools implementation growth (keyless web_search/read_docs adapter + BYOK facades + self-populating docset cache + version detection + /research-keys UI key management); exact measured count protected by quality-report validation."
     },
     "cli/src/commands/design.ts": {
       "maxLines": 634,
       "rationale": "Measured intentional current-scope growth; decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
+    "cli/src/commands/export-conversation/drive-report.ts": {
+      "maxLines": 207,
+      "rationale": "Measured intentional FID-2026-0818-006 completion-certification growth (drive report + certification sections); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "cli/src/commands/export-conversation/template-css-part2.ts": {
+      "maxLines": 333,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
     "cli/src/commands/goal.ts": {
       "maxLines": 231,
       "rationale": "Measured intentional FID-2026-0814-002..006 implementation growth (durable goal mode, hook system, harness frictions, compaction freshness, trust-matrix terminal states); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
+    "cli/src/commands/graph-export/layout.ts": {
+      "maxLines": 484,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "cli/src/commands/graph-export/universe-app-script.ts": {
+      "maxLines": 1618,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "cli/src/commands/release/release-runner.ts": {
+      "maxLines": 315,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
     "cli/src/commands/router/route-user-prompt.ts": {
-      "maxLines": 373,
-      "rationale": "Measured intentional current-scope growth; decomposition remains tracked work and this ceiling is protected by quality-report validation."
+      "maxLines": 426,
+      "rationale": "Measured intentional FID-2026-0819-002 research-tools implementation growth (keyless web_search/read_docs adapter + BYOK facades + self-populating docset cache + version detection + /research-keys UI key management); exact measured count protected by quality-report validation."
+    },
+    "cli/src/components/ad-banner.tsx": {
+      "maxLines": 352,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "cli/src/components/agent-checklist.tsx": {
+      "maxLines": 386,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "cli/src/components/agent-mode-toggle.tsx": {
       "maxLines": 350,
       "rationale": "Measured intentional 2026-08-16 UI-overhaul program growth (FID-2026-0816-002..012 + FID-2026-0816-012-native-tool-call-recovery-hardening); exact measured count"
+    },
+    "cli/src/components/ask-user/use-form-state.ts": {
+      "maxLines": 380,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "cli/src/components/blocks/agent-branch-wrapper.tsx": {
+      "maxLines": 525,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "cli/src/components/blocks/implementor-row.tsx": {
+      "maxLines": 454,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "cli/src/components/blocks/markdown-content.tsx": {
+      "maxLines": 361,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "cli/src/components/blocks/markdown-renderables.tsx": {
+      "maxLines": 348,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "cli/src/components/blocks/single-block.tsx": {
       "maxLines": 214,
@@ -1414,9 +1697,13 @@
       "maxLines": 112,
       "rationale": "Measured intentional 0.0.24 remediation growth (FID-2026-0815 hot-path, crash-recovery, and React Rules-of-Hooks work); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
+    "cli/src/components/chat-history-screen.tsx": {
+      "maxLines": 434,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
     "cli/src/components/chat-input-bar.tsx": {
-      "maxLines": 555,
-      "rationale": "Measured intentional 2026-08-16 UI-overhaul program growth (FID-2026-0816-002..012 + FID-2026-0816-012-native-tool-call-recovery-hardening); exact measured count"
+      "maxLines": 616,
+      "rationale": "Measured intentional FID-2026-0819-002 research-tools implementation growth (keyless web_search/read_docs adapter + BYOK facades + self-populating docset cache + version detection + /research-keys UI key management); exact measured count protected by quality-report validation."
     },
     "cli/src/components/elapsed-timer.tsx": {
       "maxLines": 59,
@@ -1426,6 +1713,10 @@
       "maxLines": 80,
       "rationale": "Measured intentional 0.0.24 remediation growth (FID-2026-0815 hot-path, crash-recovery, and React Rules-of-Hooks work); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
+    "cli/src/components/feedback-input-mode.tsx": {
+      "maxLines": 353,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
     "cli/src/components/help-banner.tsx": {
       "maxLines": 166,
       "rationale": "Measured intentional FID-2026-0814-001 + /help overlay growth (compaction-status legend, goal-mode and hook-system entries); exact ceiling is protected by the quality-ratchet validator."
@@ -1433,6 +1724,14 @@
     "cli/src/components/input-cursor.tsx": {
       "maxLines": 81,
       "rationale": "Measured intentional 2026-08-16 UI-overhaul program growth (FID-2026-0816-002..012 + FID-2026-0816-012-native-tool-call-recovery-hardening); exact measured count"
+    },
+    "cli/src/components/login-modal.tsx": {
+      "maxLines": 451,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "cli/src/components/message-block.tsx": {
+      "maxLines": 338,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "cli/src/components/message-with-agents.tsx": {
       "maxLines": 309,
@@ -1442,13 +1741,41 @@
       "maxLines": 373,
       "rationale": "Measured intentional v0.0.23 model-picker capability growth; exact ceiling is protected by the quality-ratchet validator."
     },
+    "cli/src/components/multiline-input.tsx": {
+      "maxLines": 361,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "cli/src/components/project-picker-screen.tsx": {
+      "maxLines": 470,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
     "cli/src/components/provider-picker.tsx": {
       "maxLines": 192,
       "rationale": "Measured intentional v0.0.23 provider-picker capability growth; exact ceiling is protected by the quality-ratchet validator."
     },
+    "cli/src/components/publish-confirmation.tsx": {
+      "maxLines": 515,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "cli/src/components/publish-container.tsx": {
+      "maxLines": 320,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
     "cli/src/components/right-sidebar.tsx": {
-      "maxLines": 504,
+      "maxLines": 508,
       "rationale": "Measured intentional 2026-08-16 UI-overhaul program growth (FID-2026-0816-002..012 + FID-2026-0816-012-native-tool-call-recovery-hardening); exact measured count"
+    },
+    "cli/src/components/savant-free-landing-screen.tsx": {
+      "maxLines": 399,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "cli/src/components/savant-free-model-selector/use-model-selector-state.ts": {
+      "maxLines": 398,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "cli/src/components/savant-free-referral-banner.tsx": {
+      "maxLines": 424,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "cli/src/components/savant-ui/animation/pulse.tsx": {
       "maxLines": 59,
@@ -1457,6 +1784,10 @@
     "cli/src/components/savant-ui/easter-egg-logo.tsx": {
       "maxLines": 429,
       "rationale": "Measured intentional 2026-08-16 UI-overhaul program growth (FID-2026-0816-002..012 + FID-2026-0816-012-native-tool-call-recovery-hardening); exact measured count"
+    },
+    "cli/src/components/savant-ui/echo/drive-status-panel.tsx": {
+      "maxLines": 67,
+      "rationale": "Measured intentional FID-2026-0818-007 observability growth (drive status sidebar panel); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "cli/src/components/savant-ui/echo/loop-status-panel.tsx": {
       "maxLines": 108,
@@ -1511,7 +1842,7 @@
       "rationale": "Measured intentional 2026-08-16 UI-overhaul program growth (FID-2026-0816-002..012 + FID-2026-0816-012-native-tool-call-recovery-hardening); exact measured count"
     },
     "cli/src/components/tools/__tests__/diff-viewer.test.tsx": {
-      "maxLines": 77,
+      "maxLines": 117,
       "rationale": "Measured intentional current-scope growth; decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "cli/src/components/tools/diff-viewer.tsx": {
@@ -1522,17 +1853,37 @@
       "maxLines": 140,
       "rationale": "Measured intentional 2026-08-16 UI-overhaul program growth (FID-2026-0816-002..012 + FID-2026-0816-012-native-tool-call-recovery-hardening); exact measured count"
     },
+    "cli/src/components/tools/render-ui.tsx": {
+      "maxLines": 467,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
     "cli/src/components/tools/run-terminal-command.tsx": {
       "maxLines": 92,
       "rationale": "Measured intentional 2026-08-16 UI-overhaul program growth (FID-2026-0816-002..012 + FID-2026-0816-012-native-tool-call-recovery-hardening); exact measured count (prettier reformat +1)"
     },
+    "cli/src/components/tools/suggest-followups.tsx": {
+      "maxLines": 374,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "cli/src/constants/savant-logo.ts": {
+      "maxLines": 921,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "cli/src/constants/sigma.ts": {
+      "maxLines": 318,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
     "cli/src/data/slash-commands.ts": {
-      "maxLines": 382,
-      "rationale": "Measured intentional teacher /learn command growth (FID-2026-0813-018); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+      "maxLines": 403,
+      "rationale": "Measured intentional FID-2026-0819-002 research-tools implementation growth (keyless web_search/read_docs adapter + BYOK facades + self-populating docset cache + version detection + /research-keys UI key management); exact measured count protected by quality-report validation."
     },
     "cli/src/headless-run.ts": {
       "maxLines": 218,
       "rationale": "Measured intentional FID-2026-0814-002..006 implementation growth (durable goal mode, hook system, harness frictions, compaction freshness, trust-matrix terminal states); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "cli/src/hooks/activity-query/cache.ts": {
+      "maxLines": 310,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "cli/src/hooks/helpers/send-message-agent.ts": {
       "maxLines": 69,
@@ -1550,6 +1901,22 @@
       "maxLines": 223,
       "rationale": "Measured intentional FID-2026-0814-002..006 implementation growth (durable goal mode, hook system, harness frictions, compaction freshness, trust-matrix terminal states); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
+    "cli/src/hooks/suggestion-engine/filters.ts": {
+      "maxLines": 308,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "cli/src/hooks/use-chat-keyboard.ts": {
+      "maxLines": 332,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "cli/src/hooks/use-message-queue.ts": {
+      "maxLines": 302,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "cli/src/hooks/use-savant-free-session.ts": {
+      "maxLines": 330,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
     "cli/src/hooks/use-scroll-management.ts": {
       "maxLines": 203,
       "rationale": "Measured intentional 2026-08-16 UI-overhaul program growth (FID-2026-0816-002..012 + FID-2026-0816-012-native-tool-call-recovery-hardening); exact measured count"
@@ -1563,20 +1930,36 @@
       "rationale": "Measured intentional 2026-08-16 UI-overhaul program growth (FID-2026-0816-002..012 + FID-2026-0816-012-native-tool-call-recovery-hardening); exact measured count"
     },
     "cli/src/index.tsx": {
-      "maxLines": 646,
-      "rationale": "Measured intentional 2026-08-16 UI-overhaul program growth (FID-2026-0816-002..012 + FID-2026-0816-012-native-tool-call-recovery-hardening); exact measured count"
+      "maxLines": 685,
+      "rationale": "Measured intentional FID-2026-0819-002 research-tools implementation growth (keyless web_search/read_docs adapter + BYOK facades + self-populating docset cache + version detection + /research-keys UI key management); exact measured count protected by quality-report validation."
+    },
+    "cli/src/init/init-app.ts": {
+      "maxLines": 64,
+      "rationale": "Measured intentional FID-2026-0818-002..009 Auto Drive + Discord Rich Presence implementation growth (drive-mode entry, decomposition engine, drive-loop supervisor, self-healing ladder, completion certification, observability, headless CLI mode, Discord Rich Presence); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "cli/src/state/chat-store/initial-state.ts": {
-      "maxLines": 69,
+      "maxLines": 74,
       "rationale": "Measured intentional 2026-08-16 UI-overhaul program growth (FID-2026-0816-002..012 + FID-2026-0816-012-native-tool-call-recovery-hardening); exact measured count"
     },
     "cli/src/state/chat-store/sidebar-actions.ts": {
-      "maxLines": 325,
+      "maxLines": 338,
       "rationale": "Measured intentional 2026-08-16 UI-overhaul program growth (FID-2026-0816-002..012 + FID-2026-0816-012-native-tool-call-recovery-hardening); exact measured count"
     },
     "cli/src/state/chat-store/types.ts": {
-      "maxLines": 345,
+      "maxLines": 376,
       "rationale": "Measured intentional 2026-08-16 UI-overhaul program growth (FID-2026-0816-002..012 + FID-2026-0816-012-native-tool-call-recovery-hardening); exact measured count"
+    },
+    "cli/src/state/presence/index.ts": {
+      "maxLines": 84,
+      "rationale": "Measured intentional FID-2026-0818-009 stuck-state correction growth (buildStoreSnapshot now carries activityAgentType for the live-activity state line); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "cli/src/state/presence/presence-mapper.ts": {
+      "maxLines": 148,
+      "rationale": "Measured intentional FID-2026-0818-009 layout correction growth (details = project basename only; model + mode moved to the small-image tooltip); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "cli/src/state/presence/presence-privacy.ts": {
+      "maxLines": 179,
+      "rationale": "Measured intentional FID-2026-0818-009 layout + model-label correction growth (sanitizeModel trims the provider prefix + variant suffix and gives openrouter/free a readable label); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "cli/src/state/savant-free-model-store.ts": {
       "maxLines": 113,
@@ -1585,6 +1968,22 @@
     "cli/src/types/theme-system.ts": {
       "maxLines": 204,
       "rationale": "Measured intentional 2026-08-16 UI-overhaul program growth (FID-2026-0816-002..012 + FID-2026-0816-012-native-tool-call-recovery-hardening); exact measured count"
+    },
+    "cli/src/utils/analytics/state.ts": {
+      "maxLines": 412,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "cli/src/utils/auto-drive-headless.ts": {
+      "maxLines": 335,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "cli/src/utils/chatgpt-oauth.ts": {
+      "maxLines": 351,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "cli/src/utils/clipboard.ts": {
+      "maxLines": 308,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "cli/src/utils/create-run-config.ts": {
       "maxLines": 233,
@@ -1602,9 +2001,33 @@
       "maxLines": 125,
       "rationale": "Measured intentional 2026-08-16 UI-overhaul program growth (FID-2026-0816-002..012 + FID-2026-0816-012-native-tool-call-recovery-hardening); exact measured count"
     },
+    "cli/src/utils/image-handler.ts": {
+      "maxLines": 337,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "cli/src/utils/input-modes.ts": {
+      "maxLines": 208,
+      "rationale": "Measured intentional FID-2026-0819-002 research-tools implementation growth (keyless web_search/read_docs adapter + BYOK facades + self-populating docset cache + version detection + /research-keys UI key management); exact measured count protected by quality-report validation."
+    },
+    "cli/src/utils/keyboard-actions.ts": {
+      "maxLines": 413,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
     "cli/src/utils/logger/sanitize.ts": {
       "maxLines": 73,
       "rationale": "Measured intentional 0.0.24 remediation growth (FID-2026-0815 hot-path, crash-recovery, and React Rules-of-Hooks work); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "cli/src/utils/logger/sink.ts": {
+      "maxLines": 319,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "cli/src/utils/markdown-renderers.tsx": {
+      "maxLines": 310,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "cli/src/utils/message-block-helpers/agent-blocks.ts": {
+      "maxLines": 314,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "cli/src/utils/openrouter-models.ts": {
       "maxLines": 41,
@@ -1614,33 +2037,49 @@
       "maxLines": 228,
       "rationale": "Measured intentional 0.0.24 remediation growth (FID-2026-0815 hot-path, crash-recovery, and React Rules-of-Hooks work); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
+    "cli/src/utils/pending-attachments.ts": {
+      "maxLines": 364,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
     "cli/src/utils/provider-setup.ts": {
-      "maxLines": 319,
-      "rationale": "Measured intentional v0.0.23 provider setup and onboarding growth; exact ceiling is protected by the quality-ratchet validator."
+      "maxLines": 422,
+      "rationale": "Measured intentional FID-2026-0819-002 research-tools implementation growth (keyless web_search/read_docs adapter + BYOK facades + self-populating docset cache + version detection + /research-keys UI key management); exact measured count protected by quality-report validation."
     },
     "cli/src/utils/renderer-cleanup.ts": {
       "maxLines": 149,
       "rationale": "Measured intentional 0.0.24 remediation growth (FID-2026-0815 hot-path, crash-recovery, and React Rules-of-Hooks work); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
+    "cli/src/utils/savant-code-api/client.ts": {
+      "maxLines": 348,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
     "cli/src/utils/sdk-event-handlers.ts": {
       "maxLines": 101,
       "rationale": "Measured intentional ZTAP provenance growth; decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
+    "cli/src/utils/settings/constants.ts": {
+      "maxLines": 33,
+      "rationale": "Measured intentional FID-2026-0818-002..009 Auto Drive + Discord Rich Presence implementation growth (drive-mode entry, decomposition engine, drive-loop supervisor, self-healing ladder, completion certification, observability, headless CLI mode, Discord Rich Presence); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
     "cli/src/utils/settings/preferences.ts": {
-      "maxLines": 181,
-      "rationale": "Measured intentional current-scope growth; decomposition remains tracked work and this ceiling is protected by quality-report validation."
+      "maxLines": 209,
+      "rationale": "Measured intentional FID-2026-0818-002..009 Auto Drive + Discord Rich Presence implementation growth (drive-mode entry, decomposition engine, drive-loop supervisor, self-healing ladder, completion certification, observability, headless CLI mode, Discord Rich Presence); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "cli/src/utils/settings/types.ts": {
-      "maxLines": 68,
-      "rationale": "Measured intentional current-scope growth; decomposition remains tracked work and this ceiling is protected by quality-report validation."
+      "maxLines": 72,
+      "rationale": "Measured intentional FID-2026-0818-002..009 Auto Drive + Discord Rich Presence implementation growth (drive-mode entry, decomposition engine, drive-loop supervisor, self-healing ladder, completion certification, observability, headless CLI mode, Discord Rich Presence); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "cli/src/utils/settings/validation.ts": {
-      "maxLines": 170,
-      "rationale": "Measured intentional current-scope growth (paid-build free-model-preference pass-through gate, IS_SAVANT_FREE-conditional catalog check, 2026-08-14 model-fallback remediation); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+      "maxLines": 179,
+      "rationale": "Measured intentional FID-2026-0818-002..009 Auto Drive + Discord Rich Presence implementation growth (drive-mode entry, decomposition engine, drive-loop supervisor, self-healing ladder, completion certification, observability, headless CLI mode, Discord Rich Presence); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "cli/src/utils/theme-config.ts": {
       "maxLines": 156,
       "rationale": "Measured intentional v0.0.23 theme configuration growth; exact ceiling is protected by the quality-ratchet validator."
+    },
+    "cli/src/utils/theme-system/ide-detect.ts": {
+      "maxLines": 320,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "cli/src/utils/theme-system/palette.ts": {
       "maxLines": 255,
@@ -1650,6 +2089,34 @@
       "maxLines": 213,
       "rationale": "Measured intentional 0.0.24 remediation growth (FID-2026-0815 hot-path, crash-recovery, and React Rules-of-Hooks work); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
+    "common/src/browser-actions/schemas.ts": {
+      "maxLines": 306,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "common/src/constants/analytics-events.ts": {
+      "maxLines": 319,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "common/src/constants/free-agents.ts": {
+      "maxLines": 354,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "common/src/constants/model-config/providers.ts": {
+      "maxLines": 335,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "common/src/constants/savant-free-models.ts": {
+      "maxLines": 856,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "common/src/mcp/client.ts": {
+      "maxLines": 309,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "common/src/project-file-tree.ts": {
+      "maxLines": 362,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
     "common/src/providers/audit.ts": {
       "maxLines": 325,
       "rationale": "Measured intentional v0.0.23 shared provider audit growth; exact ceiling is protected by the quality-ratchet validator."
@@ -1658,9 +2125,29 @@
       "maxLines": 190,
       "rationale": "Measured intentional v0.0.23 shared provider registry growth; exact ceiling is protected by the quality-ratchet validator."
     },
+    "common/src/templates/agent-validation/validate.ts": {
+      "maxLines": 333,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
     "common/src/templates/initial-agents-dir/types/agent-definition.ts": {
       "maxLines": 516,
       "rationale": "Measured intentional FID-2026-0814-001 + FID-2026-0814-011 growth (AgentState compactionStatus/lastPrunerCompletionAt/autoCompactDue mirror fields for the serialized handleSteps contract); exact ceiling is protected by the quality-ratchet validator."
+    },
+    "common/src/templates/initial-agents-dir/types/tools.ts": {
+      "maxLines": 455,
+      "rationale": "Measured intentional FID-2026-0819-002 research-tools implementation growth (keyless web_search/read_docs adapter + BYOK facades + self-populating docset cache + version detection + /research-keys UI key management); exact measured count protected by quality-report validation."
+    },
+    "common/src/testing/fixtures/agent-runtime.ts": {
+      "maxLines": 326,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "common/src/testing/mocks/database.ts": {
+      "maxLines": 338,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "common/src/testing/mocks/stream.ts": {
+      "maxLines": 315,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "common/src/tools/constants.ts": {
       "maxLines": 150,
@@ -1670,9 +2157,17 @@
       "maxLines": 220,
       "rationale": "Measured intentional FID-2026-0814-002..006 implementation growth (durable goal mode, hook system, harness frictions, compaction freshness, trust-matrix terminal states); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
+    "common/src/tools/params/tool/read-docs.ts": {
+      "maxLines": 93,
+      "rationale": "Measured intentional FID-2026-0819-002 research-tools implementation growth (keyless web_search/read_docs adapter + BYOK facades + self-populating docset cache + version detection + /research-keys UI key management); exact measured count protected by quality-report validation."
+    },
     "common/src/tools/safety-registry.ts": {
       "maxLines": 347,
       "rationale": "Measured intentional FID-2026-0814-002..006 implementation growth (durable goal mode, hook system, harness frictions, compaction freshness, trust-matrix terminal states); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "common/src/tools/sequential-thinking.ts": {
+      "maxLines": 341,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "common/src/types/contracts/trace.ts": {
       "maxLines": 48,
@@ -1687,8 +2182,8 @@
       "rationale": "Measured intentional FID-2026-0814-002..006 implementation growth (durable goal mode, hook system, harness frictions, compaction freshness, trust-matrix terminal states); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "common/src/types/session-state.ts": {
-      "maxLines": 408,
-      "rationale": "Measured intentional FID-2026-0814-002..006 + FID-2026-0814-011 implementation growth (durable goal mode, hook system, harness frictions, compaction freshness, trust-matrix terminal states, and the autoCompactDue single-trigger field); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+      "maxLines": 478,
+      "rationale": "Measured intentional FID-2026-0818-002..009 Auto Drive + Discord Rich Presence implementation growth (drive-mode entry, decomposition engine, drive-loop supervisor, self-healing ladder, completion certification, observability, headless CLI mode, Discord Rich Presence); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "common/src/util/dates.ts": {
       "maxLines": 107,
@@ -1702,13 +2197,25 @@
       "maxLines": 25,
       "rationale": "Measured intentional v0.0.23 shared message utility growth; exact ceiling is protected by the quality-ratchet validator."
     },
+    "common/src/util/messages/convert.ts": {
+      "maxLines": 184,
+      "rationale": "Measured intentional FID-2026-0819-001 cumulative-verification-tracking implementation growth (per-write verified state in EchoComplianceTracker/EchoEnforcement); exact measured count protected by quality-report validation."
+    },
     "common/src/util/protocol-config.ts": {
       "maxLines": 537,
       "rationale": "Measured intentional FID-2026-0814-002..006 implementation growth (durable goal mode, hook system, harness frictions, compaction freshness, trust-matrix terminal states); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
+    "common/src/util/saxy/stream.ts": {
+      "maxLines": 365,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
     "common/src/utils/ask-user-bridge.ts": {
       "maxLines": 51,
       "rationale": "Measured intentional current-scope growth; decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "evals/v2/src/metrics.ts": {
+      "maxLines": 327,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "evals/v2/tests/metrics.test.ts": {
       "maxLines": 354,
@@ -1730,24 +2237,36 @@
       "maxLines": 753,
       "rationale": "Measured intentional 2026-08-16 UI-overhaul program growth (FID-2026-0816-002..012 + FID-2026-0816-012-native-tool-call-recovery-hardening); exact measured count"
     },
+    "packages/agent-runtime/src/echo/fid-validator.ts": {
+      "maxLines": 260,
+      "rationale": "Measured intentional FID-2026-0818-002..009 Auto Drive + Discord Rich Presence implementation growth (drive-mode entry, decomposition engine, drive-loop supervisor, self-healing ladder, completion certification, observability, headless CLI mode, Discord Rich Presence); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
     "packages/agent-runtime/src/echo/index.ts": {
       "maxLines": 31,
       "rationale": "Measured intentional v0.0.23 ECHO runtime entrypoint growth; exact ceiling is protected by the quality-ratchet validator."
     },
     "packages/agent-runtime/src/echo/pre-write-gates.ts": {
-      "maxLines": 299,
-      "rationale": "Measured intentional 0.0.24 remediation growth (FID-2026-0815 hot-path, crash-recovery, and React Rules-of-Hooks work); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+      "maxLines": 319,
+      "rationale": "Measured intentional FID-2026-0817-005 growth (Anti-Deferral Gate: validateFidStepStatus step-status inventory, pre-write transition gate, ledger archive scan, Recorder/Adversary instructions); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "packages/agent-runtime/src/echo/protocol-summary.ts": {
       "maxLines": 35,
       "rationale": "Measured intentional v0.0.23 ECHO protocol-summary growth; exact ceiling is protected by the quality-ratchet validator."
     },
+    "packages/agent-runtime/src/echo/types.ts": {
+      "maxLines": 100,
+      "rationale": "Measured intentional FID-2026-0819-001 cumulative-verification-tracking implementation growth (per-write verified state in EchoComplianceTracker/EchoEnforcement); exact measured count protected by quality-report validation."
+    },
     "packages/agent-runtime/src/echo/violation-handler.ts": {
       "maxLines": 91,
       "rationale": "Measured intentional current-scope growth; decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
+    "packages/agent-runtime/src/llm-api/savant-code-web-api.ts": {
+      "maxLines": 371,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
     "packages/agent-runtime/src/main-prompt.ts": {
-      "maxLines": 287,
+      "maxLines": 317,
       "rationale": "Measured intentional FID-2026-0814-002..006 implementation growth (durable goal mode, hook system, harness frictions, compaction freshness, trust-matrix terminal states); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "packages/agent-runtime/src/provenance/session.ts": {
@@ -1755,20 +2274,24 @@
       "rationale": "Measured intentional FID-2026-0814-002..006 implementation growth (durable goal mode, hook system, harness frictions, compaction freshness, trust-matrix terminal states); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "packages/agent-runtime/src/run-agent-step/constants.ts": {
-      "maxLines": 31,
-      "rationale": "Measured intentional 2026-08-16 UI-overhaul program growth (FID-2026-0816-002..012 + FID-2026-0816-012-native-tool-call-recovery-hardening); exact measured count"
+      "maxLines": 98,
+      "rationale": "FID-2026-0819-004 native tool-call recovery hardening: tool-specific steering messages + progressive escalation + increased terminal strike cap (5 vs 3). Exact measured count protected by quality-report validation."
     },
     "packages/agent-runtime/src/run-agent-step/context-tokens.ts": {
-      "maxLines": 257,
+      "maxLines": 274,
       "rationale": "Measured intentional 0.0.24 remediation growth (FID-2026-0815 hot-path, crash-recovery, and React Rules-of-Hooks work); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "packages/agent-runtime/src/run-agent-step/loop-context.ts": {
-      "maxLines": 365,
-      "rationale": "Measured intentional FID-2026-0814-002..006 + FID-2026-0814-012 implementation growth (durable goal mode, hook system, harness frictions, compaction freshness, trust-matrix terminal states, and the reactiveCompact maxContextLength resolution); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+      "maxLines": 438,
+      "rationale": "Measured intentional FID-2026-0818-002..009 Auto Drive + Discord Rich Presence implementation growth (drive-mode entry, decomposition engine, drive-loop supervisor, self-healing ladder, completion certification, observability, headless CLI mode, Discord Rich Presence); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "packages/agent-runtime/src/run-agent-step/loop-iteration.ts": {
+      "maxLines": 498,
+      "rationale": "FID-2026-0819-004: escalating steering messages appended on retries + increased terminal strike cap. Exact measured count protected by quality-report validation."
     },
     "packages/agent-runtime/src/run-agent-step/loop.ts": {
-      "maxLines": 426,
-      "rationale": "Measured intentional 0.0.24 remediation growth (FID-2026-0815 hot-path, crash-recovery, and React Rules-of-Hooks work); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+      "maxLines": 429,
+      "rationale": "Measured intentional FID-2026-0819-001 cumulative-verification-tracking implementation growth (per-write verified state in EchoComplianceTracker/EchoEnforcement); exact measured count protected by quality-report validation."
     },
     "packages/agent-runtime/src/run-agent-step/loop/reactive-compact.ts": {
       "maxLines": 194,
@@ -1781,6 +2304,10 @@
     "packages/agent-runtime/src/run-agent-step/types.ts": {
       "maxLines": 210,
       "rationale": "Measured intentional 2026-08-16 UI-overhaul program growth (FID-2026-0816-002..012 + FID-2026-0816-012-native-tool-call-recovery-hardening); exact measured count"
+    },
+    "packages/agent-runtime/src/run-programmatic-step.ts": {
+      "maxLines": 343,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "packages/agent-runtime/src/templates/strings.ts": {
       "maxLines": 347,
@@ -1797,6 +2324,14 @@
     "packages/agent-runtime/src/tools/handlers/tool/checkpoint-store.ts": {
       "maxLines": 416,
       "rationale": "Measured intentional 0.0.24 remediation growth (FID-2026-0815 hot-path, crash-recovery, and React Rules-of-Hooks work); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "packages/agent-runtime/src/tools/handlers/tool/database/sqlite-adapter.ts": {
+      "maxLines": 423,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "packages/agent-runtime/src/tools/handlers/tool/deep-research.ts": {
+      "maxLines": 369,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "packages/agent-runtime/src/tools/handlers/tool/run-readonly-command.ts": {
       "maxLines": 364,
@@ -1815,8 +2350,12 @@
       "rationale": "Measured intentional ZTAP provenance growth; decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "packages/agent-runtime/src/tools/stream-parser.ts": {
-      "maxLines": 487,
-      "rationale": "Measured intentional 2026-08-16 UI-overhaul program growth (FID-2026-0816-002..012 + FID-2026-0816-012-native-tool-call-recovery-hardening); exact measured count"
+      "maxLines": 499,
+      "rationale": "FID-2026-0819-004: tool-specific steering message selection via getSteeringMessage. Exact measured count protected by quality-report validation."
+    },
+    "packages/agent-runtime/src/tools/tool-call-parse.ts": {
+      "maxLines": 386,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "packages/agent-runtime/src/tools/tool-executor/custom.ts": {
       "maxLines": 377,
@@ -1838,9 +2377,13 @@
       "maxLines": 110,
       "rationale": "Measured intentional v0.0.23 agent-output normalization growth; exact ceiling is protected by the quality-ratchet validator."
     },
+    "packages/agent-runtime/src/util/cache-debug.ts": {
+      "maxLines": 352,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
     "packages/agent-runtime/src/util/echo-compliance.ts": {
-      "maxLines": 499,
-      "rationale": "Measured intentional 0.0.24 remediation growth (FID-2026-0815 hot-path, crash-recovery, and React Rules-of-Hooks work); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+      "maxLines": 509,
+      "rationale": "Prettier reformatting drift (blank-line normalization) raised line count from 505 to 509; no logic changes. Exact measured count protected by quality-report validation."
     },
     "packages/agent-runtime/src/util/messages/history.ts": {
       "maxLines": 193,
@@ -1850,6 +2393,10 @@
       "maxLines": 158,
       "rationale": "Measured intentional FID-2026-0815-001 countTokensJsonCached memoization growth; decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
+    "packages/code-map/src/languages.ts": {
+      "maxLines": 345,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
     "packages/code-map/src/parse.ts": {
       "maxLines": 311,
       "rationale": "Measured intentional FID-2026-0815-009 bounded-parallel indexing growth; decomposition remains tracked work and this ceiling is protected by quality-report validation."
@@ -1857,6 +2404,14 @@
     "packages/database/src/service.ts": {
       "maxLines": 374,
       "rationale": "Measured intentional FID-2026-0815-015 cyclic-safe DB serialization growth; decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "packages/design-systems/src/parser.ts": {
+      "maxLines": 327,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "packages/knowledge-graph/src/export/universe-builder.ts": {
+      "maxLines": 377,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "packages/knowledge-graph/src/update.ts": {
       "maxLines": 407,
@@ -1870,25 +2425,57 @@
       "maxLines": 550,
       "rationale": "Measured intentional 2026-08-16 UI-overhaul program growth (FID-2026-0816-002..012 + FID-2026-0816-012-native-tool-call-recovery-hardening); exact measured count"
     },
+    "packages/llm-providers/src/openai-compatible/chat/openai-compatible-chat-language-model.ts": {
+      "maxLines": 472,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "packages/llm-providers/src/openai-compatible/completion/openai-compatible-completion-language-model.ts": {
+      "maxLines": 415,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "scripts/audit-evidence.ts": {
+      "maxLines": 308,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "scripts/fid-ledger.ts": {
+      "maxLines": 309,
+      "rationale": "Measured intentional FID-2026-0817-005 growth (Anti-Deferral Gate: validateFidStepStatus step-status inventory, pre-write transition gate, ledger archive scan, Recorder/Adversary instructions); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "scripts/generate-protocol-bundle.ts": {
+      "maxLines": 411,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
     "scripts/generate-provider-reference.ts": {
       "maxLines": 204,
       "rationale": "Measured intentional v0.0.23 generated provider-reference support growth; exact ceiling is protected by the quality-ratchet validator."
+    },
+    "scripts/learnings-references.ts": {
+      "maxLines": 384,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "scripts/pre-push-scan.test.ts": {
       "maxLines": 332,
       "rationale": "Measured intentional 2026-08-16 UI-overhaul program growth (FID-2026-0816-002..012 + FID-2026-0816-012-native-tool-call-recovery-hardening); exact measured count"
     },
+    "scripts/pre-push-scan.ts": {
+      "maxLines": 367,
+      "rationale": "Measured intentional FID-2026-0817-004 growth (fail-closed pushed-range commit-message watermark scan for Codebuff/CommandCodeBot trailers + deny-list helper); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "scripts/protocol-copies.ts": {
+      "maxLines": 732,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
     "scripts/public-release.test.ts": {
       "maxLines": 1413,
       "rationale": "Measured intentional 2026-08-16 UI-overhaul program growth (FID-2026-0816-002..012 + FID-2026-0816-012-native-tool-call-recovery-hardening); exact measured count"
     },
-    "scripts/public-release.ts": {
-      "maxLines": 2944,
-      "rationale": "Measured intentional FID-2026-0816-001 growth (PUBLIC_PACKAGES defaultPublish scope so releases publish the main package only, ending the SDK-scope publish wall); decomposition remains tracked work and this ceiling is protected by quality-report validation."
-    },
     "scripts/quality-report.ts": {
       "maxLines": 111,
       "rationale": "Measured intentional current-scope growth; decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "scripts/tmux/tmux-viewer/components/session-viewer.tsx": {
+      "maxLines": 557,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "scripts/validate-repository.ts": {
       "maxLines": 242,
@@ -1901,6 +2488,14 @@
     "sdk/src/agents/load-agents.ts": {
       "maxLines": 344,
       "rationale": "Measured intentional FID-2026-0815-007 async skill/agent discovery growth; decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "sdk/src/credentials.ts": {
+      "maxLines": 304,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "sdk/src/impl/llm/stream.ts": {
+      "maxLines": 399,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     },
     "sdk/src/impl/model-provider.ts": {
       "maxLines": 277,
@@ -1937,6 +2532,18 @@
     "sdk/src/run/types.ts": {
       "maxLines": 270,
       "rationale": "Measured intentional FID-2026-0814-002..006 implementation growth (durable goal mode, hook system, harness frictions, compaction freshness, trust-matrix terminal states); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "sdk/src/tools/apply-patch/parser.ts": {
+      "maxLines": 378,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "sdk/src/tools/code-search/executor.ts": {
+      "maxLines": 367,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
+    },
+    "sdk/src/tools/run-terminal-command.ts": {
+      "maxLines": 485,
+      "rationale": "Measured FID-2026-0818-001..008 Auto Drive + Discord presence implementation growth (drive-loop supervisor, self-healing ladder, completion certification, observability + long-session bounds, headless CLI mode, presence pipeline); decomposition remains tracked work and this ceiling is protected by quality-report validation."
     }
   }
 }

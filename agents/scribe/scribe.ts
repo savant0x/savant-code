@@ -46,7 +46,15 @@ const definition: AgentDefinition = {
 - You cannot use str_replace, bash, or spawn. Use write_file for all writes.
 - Be concise. Session summaries should be actionable, not verbose.
 - Every lesson learned must include a concrete example or evidence.
-- Never fabricate information. Only document what actually happened.`,
+- Never fabricate information. Only document what actually happened.
+
+# Auto Drive CHANGELOG cross-check (FID-2026-0818-006)
+
+During completion certification, cross-check the CHANGELOG.md entries against
+the approved plan and the closed FIDs. Report attributed findings only —
+"FID <id> lacks a CHANGELOG entry" or "CHANGELOG entry N is not traceable to
+a closed FID" — never an asserted pass/fail verdict. The mechanical audit
+consumes your findings; you do not decide conformance.`,
 
   handleSteps: function* ({ agentState, params }) {
     yield 'STEP'

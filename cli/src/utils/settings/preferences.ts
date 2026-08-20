@@ -63,6 +63,29 @@ export const hasAnalyticsNoticeBeenShown = (): boolean => {
   return loadSettings().analyticsNoticeShown === true
 }
 
+/**
+ * Discord Rich Presence enable/disable (FID-2026-0818-009). Defaults to
+ * enabled; `/presence disable` persists false to settings.json.
+ */
+export const loadPresenceEnabled = (): boolean => {
+  return loadSettings().presenceEnabled ?? true
+}
+
+/** Persist the operator's Discord Rich Presence consent. */
+export const savePresenceEnabled = (enabled: boolean): void => {
+  saveSettings({ presenceEnabled: enabled })
+}
+
+/**
+ * The Savant Discord Application Client ID — hardcoded, NOT operator
+ * configurable (FID-2026-0818-009, operator decision 2026-08-18). A mutable
+ * client id is a feature-theft vector: pointing the presence transport at a
+ * third-party application would let someone claim the Savant Rich Presence
+ * asset as their own. The id is therefore compiled in; the `/presence
+ * client <id>` surface and the settings/env override are removed.
+ */
+export const SAVANT_DISCORD_CLIENT_ID = '1539431002089328710'
+
 /** Mark the analytics disclosure notice as shown. Idempotent. */
 export const markAnalyticsNoticeShown = (): void => {
   if (loadSettings().analyticsNoticeShown === true) return

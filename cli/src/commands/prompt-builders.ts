@@ -76,6 +76,49 @@ export function buildInterviewPrompt(input: string): string {
 }
 
 /**
+ * FID-2026-0818-002: Auto Drive clarity stage. Reuses the interview ceremony
+ * verbatim (context gathering + ≥3 `ask_user` rounds + a spec file) as the
+ * fallback for underspecified goals — Law 7/13 (search before create).
+ */
+export const AUTO_CLARITY_PROMPT =
+  'Clarify this Auto Drive goal before planning. If the goal is already a ' +
+  'detailed spec, skip to the plan stage immediately. Otherwise gather any ' +
+  'relevant context (read files, do research), then use several rounds of the ' +
+  'ask_user tool to ask non-obvious clarifying questions — edge cases, ' +
+  'constraints, acceptance criteria, and design decisions. Aim for at least ' +
+  '3 rounds. Write a [INSERT_REQUEST_SHORT_NAME]-spec.md file with everything ' +
+  'you gathered. Do NOT make code changes. When the spec is complete, proceed ' +
+  'directly to producing the pre-build plan as instructed. Here is my goal:'
+
+/**
+ * FID-2026-0818-002: Auto Drive pre-build plan stage. Converts the spec into
+ * the master-FID draft (scope, module breakdown, dependency order, acceptance
+ * criteria, resolution policy) and ends by emitting a single `<drive-plan>`
+ * directive so the CLI can present the operator Confirmation (Law 2 gate).
+ */
+export const AUTO_PREBUILD_PLAN_PROMPT =
+  'Now produce the pre-build plan for this Auto Drive goal. Convert the ' +
+  'gathered spec into a master-FID draft: (1) scope, (2) module breakdown, ' +
+  '(3) dependency order, (4) explicit acceptance criteria, and (5) a ' +
+  'resolution policy for how the drive resolves genuine impasses without ' +
+  'asking the operator. Do NOT write any code and do NOT ask the operator any ' +
+  'further questions. End your turn by emitting exactly one directive of the ' +
+  'form <drive-plan goal="..." plan="..." acceptanceCriteria="[...]" ' +
+  'resolutionPolicy="..."/>, with the full plan text (markdown) escaped into ' +
+  'the plan attribute and the acceptance criteria as a JSON array of strings. ' +
+  'Nothing may follow the directive.'
+
+/**
+ * Build the full Auto Drive prompt from the operator's goal. The model
+ * clarifies (if needed) then produces the pre-build plan.
+ */
+export function buildAutoPrompt(input: string): string {
+  const trimmedInput = input.trim()
+  const goal = trimmedInput || 'the goal described in the attached context'
+  return `${AUTO_CLARITY_PROMPT}\n\n${goal}\n\n${AUTO_PREBUILD_PLAN_PROMPT}`
+}
+
+/**
  * Review scope presets for the review screen.
  */
 type ReviewScope = 'conversation' | 'uncommitted' | 'branch' | 'custom'

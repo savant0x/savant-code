@@ -5,6 +5,7 @@ import { useThemeStore } from '../../hooks/use-theme'
 import { useChatStore } from '../../state/chat-store'
 import { END_SESSION_MESSAGE } from '../../utils/constants'
 import { getSystemMessage, getUserMessage } from '../../utils/message-history'
+import { handleAutoCommand } from '../auto-drive'
 import {
   clearInput,
   defineCommand,
@@ -62,6 +63,15 @@ export const MISC_COMMANDS = [
       resetUiToIdleAfterSlashCommand()
       return { openChatHistory: true }
     },
+  }),
+  // FID-2026-0818-002: Auto Drive entry — clarify → pre-build plan → one
+  // operator Confirmation (Law 2), then the run drives autonomously.
+  // Canonical name is `auto-drive` (the feature name); `/auto`, `/drive`, and
+  // `/autodrive` are hidden aliases that resolve to the same handler.
+  defineCommandWithArgs({
+    name: 'auto-drive',
+    aliases: ['auto', 'drive', 'autodrive'],
+    handler: handleAutoCommand,
   }),
   defineCommandWithArgs({
     name: 'interview',

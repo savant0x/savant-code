@@ -12,9 +12,12 @@ import { fetchGatewayModels } from '../../utils/openrouter-models'
 import {
   activateConfiguredProvider,
   beginProviderSetup,
+  beginResearchKeySetup,
   getConfiguredProviderNames,
   getProviderSetupInfo,
+  getResearchKeyServiceInfo,
   PROVIDER_SETUP_CONFIG,
+  RESEARCH_KEY_SERVICES,
 } from '../../utils/provider-setup'
 import {
   loadSavantCodeModelPreference,
@@ -248,6 +251,60 @@ export const MODE_COMMANDS = [
               getUserMessage(params.inputValue.trim()),
               getSystemMessage(
                 `${info.label} selected. Enter your API key below. It will be masked and stored locally in credentials.json. Environment variables take precedence.`,
+              ),
+            ])
+          },
+        }),
+        defineCommandWithArgs({
+          name: 'research-keys',
+          aliases: ['research-key'],
+          handler: (params, args) => {
+            const trimmedArgs = args.trim()
+
+            if (!trimmedArgs) {
+              const lines = Object.entries(RESEARCH_KEY_SERVICES)
+                .map(
+                  ([name, config]) =>
+                    `**${name}** — ${config.label} (${config.envVar})`,
+                )
+                .join('\n')
+              params.setMessages((prev) => [
+                ...prev,
+                getUserMessage(params.inputValue.trim()),
+                getSystemMessage(
+                  `Research API keys (BYOK) — your own key is used and never shared:\n\n${lines}\n\nUse /research-keys <service> to set one.`,
+                ),
+              ])
+              params.saveToHistory(params.inputValue.trim())
+              clearInput(params)
+              return
+            }
+
+            const service = beginResearchKeySetup(trimmedArgs)
+            const info = service
+              ? getResearchKeyServiceInfo(service)
+              : undefined
+            if (!service || !info) {
+              params.setMessages((prev) => [
+                ...prev,
+                getUserMessage(params.inputValue.trim()),
+                getSystemMessage(
+                  `Unknown research service. Use /research-keys followed by one of: ${Object.keys(RESEARCH_KEY_SERVICES).join(', ')}.`,
+                ),
+              ])
+              params.saveToHistory(params.inputValue.trim())
+              clearInput(params)
+              return
+            }
+
+            useChatStore.getState().setInputMode('researchKeySetup')
+            params.setInputFocused(true)
+            params.inputRef.current?.focus()
+            params.setMessages((prev) => [
+              ...prev,
+              getUserMessage(params.inputValue.trim()),
+              getSystemMessage(
+                `${info.label} selected. Enter your ${info.label} API key below. It will be masked and stored locally in credentials.json. Environment variables take precedence.`,
               ),
             ])
           },

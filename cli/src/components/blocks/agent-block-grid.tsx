@@ -35,7 +35,10 @@ export const AgentBlockGrid = memo(
     )
 
     const subGroups = useMemo(
-      () => splitAgentsBySize(agentBlocks),
+      () =>
+        agentBlocks.length === 2
+          ? [agentBlocks]
+          : splitAgentsBySize(agentBlocks),
       [agentBlocks],
     )
 

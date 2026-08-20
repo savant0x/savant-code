@@ -16,8 +16,15 @@ const inputSchema = z
       ),
     topic: z
       .string()
+      .optional()
       .describe(
-        `Specific topic to focus on (e.g., "routing", "hooks", "authentication")`,
+        `Optional specific topic to focus on (e.g., "routing", "hooks", "authentication")`,
+      ),
+    ecosystem: z
+      .enum(['npm', 'pypi', 'crates.io', 'rubygems', 'go'])
+      .optional()
+      .describe(
+        `Optional ecosystem to disambiguate the library when its name exists in multiple registries (e.g., "cobra" is a Go CLI and a Python package). One of "npm", "pypi", "crates.io", "rubygems", "go". When provided, documentation is pinned to that ecosystem's latest version (for "go", pass the full module path as libraryTitle, e.g. "github.com/spf13/cobra").`,
       ),
     max_tokens: z
       .number()

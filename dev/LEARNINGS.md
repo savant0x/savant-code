@@ -1052,6 +1052,44 @@ tracking doc).
 - **Status:** active
 - **Canonical rule:** recovery-steers-not-just-retries
 
+## Lesson: Autonomy is a driver problem, not a governance problem
+
+- **Date:** 2026-08-18
+- **Failure:** The Auto Drive blueprint (Every Code-inspired autonomous
+  execution) framed the work as building new governance: a new FSM layer, a
+  new agent role, and a "Decomposition Engine" on top of the harness. A
+  ground-truth pass against the repo showed the opposite: the full ceremony
+  already exists as STRICT mode (`agents/savant/savant-strict.ts`,
+  `agents/savant/system-prompt.ts:35` — "No direct writes, no phase
+  skipping, no self-verification"), the continuation driver already exists
+  (`run-agent-step/goal-driver.ts`, FID-2026-0814-002), and the anti-deferral
+  gate (FID-2026-0817-005) already turned FID Step Status sections into
+  machine-readable progress records. The genuinely new code is a thin
+  supervisor: queue selection, phase-completion validation from the FID
+  file, legal `transition_phase` invocation, and a failure ladder. An
+  estimate that assumed "new governance" triples the real work.
+- **Evidence:** `agents/savant/savant-strict.ts` (STRICT agent),
+  `packages/agent-runtime/src/run-agent-step/goal-driver.ts` (driver),
+  `packages/agent-runtime/src/echo/fid-validator.ts` (step-status parsers),
+  `scripts/fid-ledger.ts:18-23` (active status set), program FIDs
+  `FID-2026-0818-001..007` (drafted 2026-08-18).
+- **Invariant:** Before designing new enforcement machinery for an
+  autonomy feature, inventory what the harness already enforces mechanically
+  (EHEL gates, FSM transitions, FID ledger, step-status validator) and what
+  it already drives (goal driver, STRICT ceremony). The ceremony exists;
+  autonomy is the driver between it and the operator's one-time approval.
+- **Guard:** When a feature request says "autonomous X", ask: which existing
+  enforcement point becomes the progress signal, and which existing agent
+  contract becomes the execution unit? If neither is answerable, the design
+  is not grounded in the repo yet.
+- **Verification:** `bun run validate:repository` PASS with the seven
+  program FIDs active; markdownlint PASS; every FID's AUDIT section cites
+  file:line evidence verified against the working tree.
+- **Scope:** planning/architecture
+- **Owning FID:** FID-2026-0818-001
+- **Status:** active
+- **Canonical rule:** autonomy-is-a-driver-problem
+
 ---
 
 <!-- Add new entries above this line -->

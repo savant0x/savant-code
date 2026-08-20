@@ -3,6 +3,11 @@ import { z } from 'zod/v4'
 import { jsonValueSchema } from './json'
 import { MAX_AGENT_STEPS_DEFAULT } from '../constants/agents'
 
+import type {
+  DriveCertification,
+  DriveManifest,
+  DriveStatusRecord,
+} from './auto-drive'
 import type { DesignContract } from './design-system'
 import type { EchoComplianceTrackerLike } from './echo-compliance'
 import type { JSONValue } from './json'
@@ -163,6 +168,47 @@ export type GoalRecord = {
   createdAt: number
 }
 
+/**
+ * FID-2026-0818-002: Auto Drive lifecycle state. `planning` (interview +
+ * pre-build plan in progress) → `awaiting_confirmation` (plan presented, Law 2
+ * gate open) → `driving` (operator confirmed; tools stripped, input locked) →
+ * `blocked` (genuine impasse, child 005 ladder) → `complete`. The runtime owns
+ * the durable `DriveRecord`; this enum is the shared state-machine vocabulary
+ * mirrored by the CLI store slice.
+ */
+export type DriveModeState =
+  'planning' | 'awaiting_confirmation' | 'driving' | 'blocked' | 'complete'
+
+/**
+ * FID-2026-0818-002: durable Auto Drive record owned by `agentState`. Created
+ * from the `<drive-lock>` directive — which the CLI serializes ONLY after the
+ * operator Confirms the pre-build plan — and cleared on completion. JSON-safe
+ * so it survives the SDK session-snapshot boundary and session persistence.
+ */
+export type DriveRecord = {
+  driveId: string
+  goal: string
+  planId?: string
+  acceptanceCriteria: string[]
+  resolutionPolicy?: string
+  status: 'active' | 'paused' | 'blocked'
+  startedAt: number
+  /** FID-2026-0818-003: the approved pre-build plan rendered as a manifest. */
+  manifest?: DriveManifest
+  /** FID-2026-0818-004: the FID currently being driven, or null. */
+  activeFid?: string | null
+  /** FID-2026-0818-004: the phase the supervisor expects next. */
+  expectPhase?: 'red' | 'green' | 'audit' | 'adversarial' | 'complete'
+  /** FID-2026-0818-006: completion-certification record (results + gaps). */
+  certification?: DriveCertification
+  /**
+   * FID-2026-0818-007: the open-FID count observed when the drive started —
+   * the baseline for the queue-growth trend (openCount - initialOpenCount).
+   * Set once by the driver; survives the SDK snapshot boundary.
+   */
+  initialOpenCount?: number
+}
+
 export type AgentState = {
   /**
    * @deprecated agentId is replaced by runId
@@ -217,6 +263,15 @@ export type AgentState = {
    */
   autoCompactDue?: boolean
   /**
+   * FID-2026-0818-007 step 5: set true by the drive loop after a COMPLETE
+   * archive — the FID boundary is the deterministic compaction *checkpoint*.
+   * Consumed (and cleared) by the next step's `prepareStepContext`, which
+   * treats the boundary as the safe moment to run the L0-L2 compaction pass
+   * when the context is over budget. Transient: refreshed each step, never
+   * stale, never serialized to the SDK snapshot.
+   */
+  fidBoundaryDue?: boolean
+  /**
    * ECHO Perfection Loop FSM phase. Starts at 'idle'. Transitions via transition_phase tool.
    * Tool gating: write_file/str_replace blocked unless phase is 'green'.
    */
@@ -267,6 +322,21 @@ export type AgentState = {
    * transient (record cleared); `active` demotes to `paused` on run start.
    */
   goal?: GoalRecord
+
+  /**
+   * FID-2026-0818-002: durable Auto Drive record. Created from the
+   * `<drive-lock>` directive at the model-facing boundary; its presence is
+   * what strips the interactive tools for the rest of the run.
+   */
+  drive?: DriveRecord
+
+  /**
+   * FID-2026-0818-007: the observable mirror of the drive loop (goal, active
+   * FID, phase, open count, queue-growth trend, Run Log count). Derived by
+   * the driver from the durable `drive` record + the live FID scan — not an
+   * independent state source. Rendered by the sidebar + `/auto status`.
+   */
+  driveStatus?: DriveStatusRecord
 
   /** Explicitly resolved governance contract for this session. */
   protocolVariant?: ProtocolVariant

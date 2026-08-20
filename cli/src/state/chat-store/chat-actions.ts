@@ -254,4 +254,29 @@ export const createChatActions = (set: SetState): ChatCoreActions => ({
         state.suggestedFollowups.clickedIndices.add(index)
       }
     }),
+
+  setDriveMode: (active) =>
+    set((state) => {
+      state.driveMode = active
+    }),
+
+  setDriveState: (driveState) =>
+    set((state) => {
+      state.driveState = driveState
+    }),
+
+  setActiveAutoRunId: (id) =>
+    set((state) => {
+      state.activeAutoRunId = id
+    }),
+
+  setDrivePlanDraft: (draft) =>
+    set((state) => {
+      state.drivePlanDraft = draft
+    }),
+
+  setDrivePaused: (paused) =>
+    set((state) => {
+      state.drivePaused = paused
+    }),
 })

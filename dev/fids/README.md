@@ -5,13 +5,38 @@ operator decision, implementation, runtime review, or closure evidence.
 
 ## Current active FIDs
 
-The active queue is **empty**. The four most recent records —
+The active queue is **empty**.
+
+`FID-2026-0819-002` (research tools non-functional in direct-provider mode) is
+**closed and archived 2026-08-19** — see
+[`archive/FID-2026-0819-002-research-tools-nonfunctional-in-direct-provider-mode.md`](archive/FID-2026-0819-002-research-tools-nonfunctional-in-direct-provider-mode.md)
+and the closure entry in `archive/README.md`.
+
+Historical: the cumulative verification tracking
+FID (`FID-2026-0819-001`) is **closed and archived 2026-08-19**, and the
+complete Auto Drive + Discord Rich Presence program
+(`FID-2026-0818-001` master + children `002`–`008` + Discord `009` +
+docs/FAQ `010`) is **closed and archived 2026-08-18**:
+
+- Children `002`–`008` and `010` were operator-directed batch-archived
+  2026-08-18 (all Step Status inventories fully `[x]`).
+- Master `001` and Discord `009` closed 2026-08-18 after the operator
+  confirmed the two live smokes: the live `/auto` run (TUI + headless +
+  crash resume) and the live Discord presence under
+  `1539431002089328710` (client id rotated from `1478095645662380042`
+  2026-08-18).
+
+See `archive/README.md` for the full closure index.
+
+The five most recent records —
 `FID-2026-0817-001` (TerminalCommandDisplay copy button + traffic-light
 redesign), `FID-2026-0817-002` (v0.0.25 harness report remediation),
 `FID-2026-0817-003` (linux-arm64 release binary missing — OpenTUI
-native-bundle variant), and `FID-2026-0817-004` (unauthorized coding-agent
-contributor credit purge + permanent watermark guard) — were closed and
-archived on 2026-08-17; see `archive/README.md` for the closure entries.
+native-bundle variant), `FID-2026-0817-004` (unauthorized coding-agent
+contributor credit purge + permanent watermark guard), and
+`FID-2026-0817-005` (Anti-Deferral Gate: FID step-status enforcement) —
+were closed and archived on 2026-08-17; see `archive/README.md` for the
+closure entries.
 
 The complete Savant UI-overhaul program (master `FID-2026-0816-002` +
 children `003`–`012`) is **closed and archived**: Phase 0 OpenTUI 0.5.3

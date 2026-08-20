@@ -1,5 +1,11 @@
 import { buildArray } from '@savant-code/common/util/array'
+import {
+  DRIVE_STRIPPED_TOOL_NAMES,
+  parseDriveControlDirective,
+  parseDriveLockDirective,
+} from '@savant-code/common/util/drive-directives'
 import { userMessage } from '@savant-code/common/util/messages'
+import { generateCompactId } from '@savant-code/common/util/string'
 import { mapValues } from 'lodash'
 
 import { ContextCompactor } from '../context-compactor'
@@ -174,6 +180,73 @@ export async function createLoopContext(params: {
         skills: loopParams.fileContext.skills ?? {},
       })
 
+  // FID-2026-0818-002: drive-mode lock. The CLI serializes a `<drive-lock>`
+  // directive only after the operator Confirms the pre-build plan (Law 2).
+  // Parsing it here records the durable drive record and strips the
+  // interactive tools (ask_user / suggest_followups / end_turn) from the
+  // model-facing set for the rest of the run — the drive then proceeds to
+  // completion without asking again. Idempotent: never overwrites an existing
+  // drive record mid-run.
+  const driveLock = loopParams.prompt
+    ? parseDriveLockDirective(loopParams.prompt)
+    : null
+  const driveControl = loopParams.prompt
+    ? parseDriveControlDirective(loopParams.prompt)
+    : null
+  let effectiveTools = tools
+  if (driveLock && !initialAgentState.drive) {
+    initialAgentState.drive = {
+      driveId: driveLock.driveId ?? generateCompactId(),
+      goal: driveLock.goal,
+      ...(driveLock.planId ? { planId: driveLock.planId } : {}),
+      acceptanceCriteria: driveLock.acceptanceCriteria,
+      ...(driveLock.resolutionPolicy
+        ? { resolutionPolicy: driveLock.resolutionPolicy }
+        : {}),
+      status: 'active',
+      startedAt: Date.now(),
+    }
+    const stripped = new Set(DRIVE_STRIPPED_TOOL_NAMES)
+    effectiveTools = filterToolSet(
+      tools,
+      Object.keys(tools).filter((name) => !stripped.has(name)),
+    )
+    loopParams.logger.info(
+      { driveId: initialAgentState.drive.driveId },
+      'Drive mode locked via <drive-lock> — interactive tools stripped',
+    )
+  }
+
+  // FID-2026-0818-007: drive control surface. pause/stop/resume operate on the
+  // durable drive record (operator control, never a confirmation). `stop` is
+  // terminal and recorded; `resume` restarts a paused drive; a control with no
+  // existing drive record is a no-op (fail closed).
+  if (driveControl && initialAgentState.drive) {
+    const drive = initialAgentState.drive
+    if (driveControl.action === 'pause') {
+      drive.status = 'paused'
+      loopParams.logger.info(
+        { driveId: drive.driveId },
+        'Drive paused via <drive-control>',
+      )
+    } else if (driveControl.action === 'resume') {
+      drive.status = 'active'
+      loopParams.logger.info(
+        { driveId: drive.driveId },
+        'Drive resumed via <drive-control>',
+      )
+    } else if (driveControl.action === 'stop') {
+      drive.status = 'blocked'
+      loopParams.logger.info(
+        {
+          driveId: drive.driveId,
+          reason: driveControl.reason ?? 'operator stop',
+        },
+        'Drive stopped via <drive-control> (terminal)',
+      )
+    }
+  }
+
   const hasUserMessage = Boolean(
     loopParams.prompt ||
     (loopParams.spawnParams &&
@@ -228,7 +301,7 @@ export async function createLoopContext(params: {
   const toolDefinitions: Record<
     string,
     { description: string | undefined; inputSchema: JSONValue }
-  > = mapValues(tools, (tool) => ({
+  > = mapValues(effectiveTools, (tool) => ({
     description: tool.description,
     inputSchema: tool.inputSchema as unknown as JSONValue,
   }))
@@ -354,7 +427,7 @@ export async function createLoopContext(params: {
       agentTemplate,
       runId,
       system,
-      tools,
+      tools: effectiveTools,
       toolsForTokenCount,
       additionalToolDefinitionsWithCache,
       getCachedAdditionalToolDefinitions: () => cachedAdditionalToolDefinitions,

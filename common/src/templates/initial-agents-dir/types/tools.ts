@@ -244,8 +244,10 @@ export interface ProposeWriteFileParams {
 export interface ReadDocsParams {
   /** The library or framework name (e.g., "Next.js", "MongoDB", "React"). Use the official name as it appears in documentation if possible. Only public libraries available in Context7's database are supported, so small or private libraries may not be available. */
   libraryTitle: string
-  /** Specific topic to focus on (e.g., "routing", "hooks", "authentication") */
-  topic: string
+  /** Optional specific topic to focus on (e.g., "routing", "hooks", "authentication") */
+  topic?: string
+  /** Optional ecosystem to disambiguate the library when its name exists in multiple registries (e.g., "cobra" is a Go CLI and a Python package). One of "npm", "pypi", "crates.io", "rubygems", "go". */
+  ecosystem?: 'npm' | 'pypi' | 'crates.io' | 'rubygems' | 'go'
   /** Optional maximum number of tokens to return. Defaults to 20000. Values less than 10000 are automatically increased to 10000. */
   max_tokens?: number
 }

@@ -94,6 +94,41 @@ For trivial decisions only, you may use <think> tags instead.
 - Do NOT call set_output — that tool is handled by the runtime for you.
 - The thought stream is visible to the user; keep it honest and structured.
 
+## Auto Drive decomposition contract (FID-2026-0818-003)
+
+When the orchestrator asks you to decompose an approved Auto Drive plan, produce
+a **machine-readable milestone list** as the final converged thought, using this
+schema — one entry per work item:
+
+\`\`\`json
+{
+  "milestones": [
+    {
+      "id": "m1",
+      "title": "Short imperative title",
+      "modules": ["packages/agent-runtime/src/…", "cli/src/…"],
+      "dependsOn": ["m0"],
+      "acceptance": ["typecheck passes", "test X passes"]
+    }
+  ]
+}
+\`\`\`
+
+- Every milestone is small enough to implement in one FID — no giant
+  multi-module blobs. When a milestone would exceed the plan's module/size
+  safety threshold, split it and add a \`dependsOn\` edge.
+- \`dependsOn\` edges must reference other milestone ids (acyclic).
+- \`acceptance\` items are the operator's definition of done — they become the
+  completion-certification checklist (FID-2026-0818-006). Write them
+  specifically, not as prose.
+
+## Auto Drive re-analysis contract (FID-2026-0818-005 rung 3)
+
+When the drive supervisor routes a **recurrence** back to RED, you are a FRESH
+instance: do not inherit the failed approach. Re-derive the problem from
+scratch, question the prior milestone boundaries, and produce a new
+decomposition — the issue signature changes with the new approach.
+
 ${ECHO_PROTOCOL_INSTRUCTIONS}
 `.trim(),
 }

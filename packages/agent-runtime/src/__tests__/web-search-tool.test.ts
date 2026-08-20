@@ -18,7 +18,7 @@ import {
   mockFileContext,
   mockResearcherAgent,
 } from './test-utils'
-import * as webApi from '../llm-api/savant-code-web-api'
+import * as webApi from '../llm-api/research-sources'
 import { runAgentStep } from '../run-agent-step'
 import { assembleLocalAgentTemplates } from '../templates/agent-registry'
 
@@ -103,7 +103,7 @@ describe('web_search tool with researcher agent (via web API facade)', () => {
 
   test('should call web facade when web_search tool is used', async () => {
     const mockSearchResult = 'Test search result'
-    const spy = spyOn(webApi, 'callWebSearchAPI').mockResolvedValue({
+    const spy = spyOn(webApi, 'searchWebSource').mockResolvedValue({
       result: mockSearchResult,
     })
 
@@ -138,7 +138,7 @@ describe('web_search tool with researcher agent (via web API facade)', () => {
   test('should successfully perform web search with basic query', async () => {
     const mockSearchResult =
       'Next.js 15 introduces features and React 19 support.'
-    spyOn(webApi, 'callWebSearchAPI').mockResolvedValue({
+    spyOn(webApi, 'searchWebSource').mockResolvedValue({
       result: mockSearchResult,
     })
 
@@ -175,7 +175,7 @@ describe('web_search tool with researcher agent (via web API facade)', () => {
   })
 
   test('should handle custom depth parameter', async () => {
-    spyOn(webApi, 'callWebSearchAPI').mockResolvedValue({
+    spyOn(webApi, 'searchWebSource').mockResolvedValue({
       result: 'Deep result',
     })
 
@@ -205,14 +205,14 @@ describe('web_search tool with researcher agent (via web API facade)', () => {
       prompt: 'Search deep',
     })
 
-    expect(webApi.callWebSearchAPI).toHaveBeenCalledWith(
+    expect(webApi.searchWebSource).toHaveBeenCalledWith(
       expect.objectContaining({ depth: 'deep' }),
     )
   })
 
   test('should surface no-results as error in tool output', async () => {
     const msg = 'No search results found for "very obscure"'
-    spyOn(webApi, 'callWebSearchAPI').mockResolvedValue({ error: msg })
+    spyOn(webApi, 'searchWebSource').mockResolvedValue({ error: msg })
 
     mockAgentStream([
       createToolCallChunk('web_search', { query: 'very obscure' }),
@@ -247,7 +247,7 @@ describe('web_search tool with researcher agent (via web API facade)', () => {
   })
 
   test('should handle API errors gracefully', async () => {
-    spyOn(webApi, 'callWebSearchAPI').mockResolvedValue({
+    spyOn(webApi, 'searchWebSource').mockResolvedValue({
       error: 'Serper API timeout',
     })
 
@@ -284,7 +284,7 @@ describe('web_search tool with researcher agent (via web API facade)', () => {
   })
 
   test('should handle non-Error exceptions from facade', async () => {
-    spyOn(webApi, 'callWebSearchAPI').mockImplementation(async () => {
+    spyOn(webApi, 'searchWebSource').mockImplementation(async () => {
       throw 'String error'
     })
 
@@ -322,7 +322,7 @@ describe('web_search tool with researcher agent (via web API facade)', () => {
 
   test('should format search results correctly', async () => {
     const mockSearchResult = 'This is the first search result content.'
-    spyOn(webApi, 'callWebSearchAPI').mockResolvedValue({
+    spyOn(webApi, 'searchWebSource').mockResolvedValue({
       result: mockSearchResult,
     })
 
@@ -361,7 +361,7 @@ describe('web_search tool with researcher agent (via web API facade)', () => {
   test('should track credits used from web search API in agent state', async () => {
     const mockSearchResult = 'Search result content'
     const mockCreditsUsed = 2 // Standard search with profit margin
-    spyOn(webApi, 'callWebSearchAPI').mockResolvedValue({
+    spyOn(webApi, 'searchWebSource').mockResolvedValue({
       result: mockSearchResult,
       creditsUsed: mockCreditsUsed,
     })

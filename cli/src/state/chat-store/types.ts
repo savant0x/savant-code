@@ -23,6 +23,7 @@ import type { PrintModeProvenanceReceipt } from '@savant-code/common/types/print
 import type {
   AgentActivity,
   CompactionStatus,
+  DriveModeState,
 } from '@savant-code/common/types/session-state'
 import type { RunState } from '@savant-code/sdk'
 import type { StateCreator } from 'zustand'
@@ -166,6 +167,26 @@ export type ChatStoreState = {
    * silence and auto-reset to idle.
    */
   _lastChunkAtMs: number
+  /**
+   * FID-2026-0818-002: Auto Drive. `driveMode` true = the operator confirmed
+   * the plan; interactive tools are stripped and ordinary input is locked.
+   */
+  driveMode: boolean
+  /** FID-2026-0818-002: Auto Drive lifecycle state. */
+  driveState: DriveModeState
+  /** FID-2026-0818-002: id of the active `/auto` run, or null. */
+  activeAutoRunId: string | null
+  /**
+   * FID-2026-0818-002: the pre-build plan draft presented for operator
+   * confirmation (editable before approval).
+   */
+  drivePlanDraft: string | null
+  /**
+   * FID-2026-0818-007: the operator's Esc pause latch. True after a first Esc
+   * (pause requested); a second Esc while latched escalates to stop. Cleared
+   * by `/auto-drive resume`, `/auto-drive stop`, and drive completion/reset.
+   */
+  drivePaused: boolean
 }
 
 export type ChatStoreActions = {
@@ -278,6 +299,16 @@ export type ChatStoreActions = {
   setDevMode: (active: boolean) => void
   /** Set the sandbox permission mode. */
   setPermissionMode: (mode: 'safe' | 'prompt' | 'unsafe') => void
+  /** FID-2026-0818-002: set the drive-mode lock flag. */
+  setDriveMode: (active: boolean) => void
+  /** FID-2026-0818-002: set the Auto Drive lifecycle state. */
+  setDriveState: (state: DriveModeState) => void
+  /** FID-2026-0818-002: set the active `/auto` run id. */
+  setActiveAutoRunId: (id: string | null) => void
+  /** FID-2026-0818-002: set the plan draft under confirmation. */
+  setDrivePlanDraft: (draft: string | null) => void
+  /** FID-2026-0818-007: set the Esc pause latch. */
+  setDrivePaused: (paused: boolean) => void
 }
 
 export type ChatStore = ChatStoreState & ChatStoreActions

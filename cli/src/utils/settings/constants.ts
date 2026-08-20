@@ -15,6 +15,7 @@ export const DEFAULT_SETTINGS: Settings = {
   analyticsEnabled: true,
   savantCodeModelPreference: DEFAULT_SAVANT_CODE_MODEL_ID,
   savantCodeModelProviderPreference: DEFAULT_SAVANT_CODE_MODEL_PROVIDER,
+  presenceEnabled: true,
 }
 
 // Legacy mode migration map (FID-031 + FID-2026-0805-001). Old

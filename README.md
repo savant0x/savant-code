@@ -10,11 +10,11 @@ touches your repo.**
 Built with TypeScript/Bun, governed by the ECHO Protocol, and designed for
 local-first use with Ollama.
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-1.3.14-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![React](https://img.shields.io/badge/React-19-%23000000?style=flat-square&logo=react&logoColor=%2300fbff)](https://react.dev/)[![OpenTUI](https://img.shields.io/badge/OpenTUI-0.5.3-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](https://github.com/anomalyco/opentui)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](ECHO.md)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![Release](https://img.shields.io/badge/Release-v0.0.25-%2300fbff?style=flat-square&logo=semver&logoColor=%2300fbff)](CHANGELOG.md)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-1.3.14-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![React](https://img.shields.io/badge/React-19-%23000000?style=flat-square&logo=react&logoColor=%2300fbff)](https://react.dev/)[![OpenTUI](https://img.shields.io/badge/OpenTUI-0.5.3-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](https://github.com/anomalyco/opentui)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](ECHO.md)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![Release](https://img.shields.io/badge/Release-v0.0.26-%2300fbff?style=flat-square&logo=semver&logoColor=%2300fbff)](CHANGELOG.md)
 
 </div>
 
-> **v0.0.25** — this release ships the terminal UI overhaul (FID-2026-0816-002..012:
+> **v0.0.26** — this release ships the terminal UI overhaul (FID-2026-0816-002..012:
 > OpenTUI 0.5.3 foundation, near-black/cyan design tokens, the animation engine,
 > the diff-viewer + phase-bar redesign, the rich terminal output panel, the manual
 > sidebar fold, the Savant logo easter egg, and the reactive Trust Matrix) plus the
@@ -258,11 +258,24 @@ pass.
 - **Provider setup** — `/provider` opens an interactive dropdown picker showing
   all providers with ✓/✗ configuration status. Select a provider to enter its
   API key (masked input). Keys stored in local `credentials.json`.
+- **Research (keyless by default)** — `web_search`, `read_docs`, and
+  `deep_research` work with zero keys: web search falls back to a keyless
+  Qwant + DuckDuckGo port, and `read_docs` builds a self-populating local
+  SQLite docset cache (`~/.savant-code/docsets/`) with 7-day TTL + keyless
+  version-aware freshness. Optional Bring-Your-Own-Key sources (Serper,
+  Context7, Parallel, Tavily, Exa, Firecrawl) via `/research-keys <service>`
+  (masked, saved to `credentials.json`) or the matching `*_API_KEY`
+  environment variables. See [features.md](docs/features.md).
 - **Telemetry controls** — `/telemetry status|enable|disable` toggles remote
   analytics and error reporting. Remote analytics is enabled by default in the
   main CLI but remains user-disableable; local logs remain available when it is
   disabled. Contextual ads are separate: ads are disabled by default in the
   main CLI and can be controlled independently where available.
+- **Discord Rich Presence (`/presence`)** — enabled by default; externalize
+  the active agent, ECHO phase, project basename, and model to Discord with a
+  mechanical privacy boundary (paths, arguments, FID titles, and search queries
+  redacted; fail-closed Zod fallback). `/presence status | enable | disable`
+  (the client id is hardcoded to the Savant Discord application).
 - **`@filename` and `@AgentName` mentions** — file and agent mentions with
   inline autocomplete.
 - **Bash mode** — `!command` or `/bash` to run shell commands inline (with
@@ -281,6 +294,12 @@ verifies completion (`update-goal`), blocks on a genuine impasse, or a budget
 is exhausted. Goal text is injected as `<untrusted_objective>` (data, never
 instructions); `/goal status|pause|resume|cancel` manage the record and the
 sidebar shows live goal + budget consumption.
+- **Auto Drive (`/auto-drive`)** — clarify → plan → approve → run-to-completion
+  autonomous execution that decomposes the plan into a FID backlog, runs it in
+  dependency order, and certifies completion. Aliases `/auto`, `/drive`,
+  `/autodrive`; subcommands `status | pause | resume | stop`; headless via
+  `--auto "<goal>"`. See the [Auto Drive blueprint](docs/design/Auto Drive Architecture Blueprint.md)
+  and the [FAQ](docs/faq.md).
 - **Goal loop** — `/loop <cadence>` schedules recurring prompt execution (e.g.,
   `/loop 5m check build status`). The loop scheduler manages cadence, run
   counts, and convergence detection.
@@ -864,13 +883,16 @@ Commands can be entered with `/`; aliases are shown in parentheses.
 | `/plan` | Create an implementation plan |
 | `/review` | Review code changes |
 | `/goal` (`/g`) | Start or manage a durable, budgeted goal run (`status`, `pause`, `resume`, `cancel`) |
+| `/auto-drive` (`/auto`, `/drive`, `/autodrive`) | Start or manage an Auto Drive run — clarify, plan, approve, then run to completion |
 | `/loop` (`/repeat`) | Run a prompt on a recurring cadence; use `stop` or `status` |
 | `/verify` (`/typecheck`) | Run the four supported core workspace typechecks, all or one selected |
 | `/permissions` (`/sandbox`, `/safety`) | View or set `safe`, `prompt`, or `unsafe` tool policy |
+| `/presence` (`/discord`) | Show or change Discord Rich Presence: `status`, `enable`, `disable` |
 | `/rewind` (`/undo`, `/checkpoint`) | Restore a previous turn’s files and/or conversation |
 | `/health` (`/status`, `/check`) | Check Ollama, provider mode, model, and permission status |
 | `/diagnostics` (`/diag`, `/processes`) | Show local process and resource diagnostics |
 | `/provider` | Configure a hosted provider key with masked input |
+| `/research-keys` (`/research-key`) | Set a research API key (`serper`, `context7`, `parallel`, `tavily`, `exa`, `firecrawl`) with masked input |
 | `/mode` | List the four modes and their contracts, or switch: `/mode <name>` or `/mode:<name>` |
 | `/model` | Select or switch the active hosted model |
 | `/publish` | Publish agent templates through the Savant backend |
@@ -986,6 +1008,17 @@ events.
   lifecycle-hook system: `hooks:` config schema, events, and fail-open protocol
 - [`docs/design/goal-mode.md`](docs/design/goal-mode.md) — the durable budgeted
   `/goal` workflow: command reference, state machine, and budgets
+- [`docs/features.md`](docs/features.md) — full feature reference, including
+  Research (`web_search`/`read_docs`/`deep_research` + BYOK keys),
+  Auto Drive (`/auto-drive`) and Discord Rich Presence (`/presence`)
+- [`docs/faq.md`](docs/faq.md) — FAQ: research keys, `/goal` vs `/auto-drive`,
+  `/presence`, and headless `--auto`
+- [`docs/faq.md`](docs/faq.md) — FAQ: `/goal` vs `/auto-drive` vs its aliases,
+  `/presence`, and headless `--auto`
+- [`docs/design/Auto Drive Architecture Blueprint.md`](docs/design/Auto Drive Architecture Blueprint.md) — the Auto Drive
+  architecture
+- [`docs/design/Discord Presence For Savant-Code.md`](docs/design/Discord Presence For Savant-Code.md) — the Discord
+  Rich Presence blueprint
 - [`dev/test-prompts/design-system-live-ux-performance.md`](dev/test-prompts/design-system-live-ux-performance.md) —
   live CLI usability, agent-feedback, and performance test prompt
 - `dev/nova/outbox/archive/2026-08-11-fid-2026-0811-030-design-system-live-test-signoff-request.md` —

@@ -135,6 +135,7 @@ export function ChatLayout(props: ChatLayoutProps) {
     onExitPublish,
     onPublish,
     onSubmit,
+    onSubmitPrompt,
     sidebar,
   } = props
 
@@ -300,6 +301,7 @@ export function ChatLayout(props: ChatLayoutProps) {
                 handleExitPublish={onExitPublish}
                 handlePublish={onPublish}
                 handleSubmit={onSubmit}
+                onSubmitPrompt={onSubmitPrompt}
                 onPaste={createPasteHandler({
                   text: inputValue,
                   cursorPosition,

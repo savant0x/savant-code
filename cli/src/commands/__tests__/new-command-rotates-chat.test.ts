@@ -13,7 +13,7 @@ describe('/new command', () => {
 
     const result = Bun.spawnSync({
       cmd: [
-        'bun',
+        process.execPath,
         '--eval',
         `
           import { findCommand } from ${JSON.stringify(commandRegistryUrl)}

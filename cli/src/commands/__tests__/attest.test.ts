@@ -415,11 +415,14 @@ describe('/attest command (FID-2026-0813-007)', () => {
     expect(html).toContain('function verifyTrustReceiptBundle')
     expect(html).toContain('Run independent verification')
     // Zero network, zero ads (build order Q4 — pure trust artifact).
+    // NOTE: a standalone substring "ads" check is intentionally omitted — the
+    // embedded JSON bundle carries base64url-encoded Ed25519 signatures whose
+    // random bytes may legitimately contain that substring, producing false
+    // positives. ad-unit + <script src= already cover ad-related content.
     expect(html).not.toContain('http://')
     expect(html).not.toContain('https://')
     expect(html).not.toContain('<iframe')
     expect(html).not.toContain('ad-unit')
-    expect(html).not.toContain('ads')
     expect(html).not.toContain('<script src=')
   })
 

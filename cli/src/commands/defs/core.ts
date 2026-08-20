@@ -20,6 +20,7 @@ import { handleHealthCommand } from '../health-command'
 import { handleHelpCommand } from '../help'
 import { handleLearnCommand } from '../learn'
 import { handleLoopCommand } from '../loop'
+import { handlePresenceCommand } from '../presence'
 import {
   collectProcessDiagnostics,
   formatProcessDiagnostics,
@@ -62,6 +63,18 @@ export const CORE_COMMANDS = [
       params.setMessages((prev) => postUserMessage(prev))
       params.saveToHistory(params.inputValue.trim())
       clearInput(params)
+    },
+  }),
+  // FID-2026-0818-009: Discord Rich Presence control.
+  defineCommandWithArgs({
+    name: 'presence',
+    aliases: ['discord'],
+    handler: (params, args) => {
+      const postUserMessage = handlePresenceCommand(args)
+      params.setMessages((prev) => postUserMessage(prev))
+      params.saveToHistory(params.inputValue.trim())
+      clearInput(params)
+      resetUiToIdleAfterSlashCommand()
     },
   }),
   defineCommand({

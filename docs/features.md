@@ -52,6 +52,38 @@ goal + budget consumption.
 
 ---
 
+## Auto Drive
+
+`/auto-drive "<goal>"` (aliases `/auto`, `/drive`, `/autodrive`) turns a
+one-sentence goal into an approved, fully-specified plan and then runs it to
+completion autonomously — clarify → pre-build plan → one-time operator
+Confirmation (Law 2) → autonomous execution. See the
+[Auto Drive blueprint](design/Auto Drive Architecture Blueprint.md) for the
+architecture and the [FAQ](faq.md) for the `/goal` vs `/auto-drive`
+distinction.
+
+- **Clarity** — if the goal is already a detailed spec it skips straight to
+  planning; otherwise it drives the interview ceremony (context gathering +
+  ≥3 rounds of `ask_user` + a spec file).
+- **Pre-build plan** — a Thinker pass converts the spec into a master-FID
+  draft (scope, module breakdown, dependency order, acceptance criteria,
+  resolution policy) presented as one `ask_user` confirmation: Confirm /
+  Revise / Cancel.
+- **Drive lock** — Confirm is the single Law 2 approval: a `<drive-lock>`
+  directive records the durable drive and strips `ask_user` /
+  `suggest_followups` / `end_turn` for the rest of the run.
+- **Autonomous execution** — the plan decomposes into a FID backlog executed
+  in dependency order, with phase-completion validation, a self-healing
+  ladder for genuine impasses, and a completion certification.
+- **Controls** — `/auto-drive status | pause | resume | stop`; Esc pauses
+  (first press) and stops (second press); the sidebar shows a live drive
+  panel (goal, active FID, phase, open count, Run Log count).
+- **Headless** — `savant-code --auto "<goal>" [--spec <path>] [--plan-file
+  <path>] [--approve] [--plan-only] [--continue]` runs the full cycle without
+  the TUI; exit code `0` only when zero FIDs remain open.
+
+---
+
 ## Extensible Hook System
 
 A project-scoped `hooks:` block in `protocol.config.yaml` registers external
@@ -164,14 +196,51 @@ The launcher never stops a running session (FID-2026-0806-014):
 
 ---
 
-## Deep Research
+## Research — web_search / read_docs / deep_research
 
-The Researcher role ships a mechanical `deep_research` tool:
+The Researcher role is backed by a swappable search/docs adapter, so research
+works in **every** provider mode — including direct-provider mode (no SavantCode
+backend required). Research no longer depends on `DIRECT_PROVIDER`.
 
-- Multi-query web research with concurrency limits
-- URL dedup and domain scoring
-- Citations and graceful degradation
-- Pure search facade — no second LLM
+### Keyless by default (zero keys, zero setup)
+
+- **`web_search`** — a keyless multi-engine port (Qwant + DuckDuckGo, fired in
+  parallel, deduped by URL) returns Serper-compatible results. Works out of the
+  box with no API key.
+- **`read_docs`** — keyless search-and-fetch locates official docs pages and
+  returns the discovered hits (title + link + snippet); full-page extraction is
+  left to the SSRF-guarded `read_url` tool.
+- **`read_docs` indexed docsets** — a self-populating local SQLite FTS5 cache at
+  `~/.savant-code/docsets/<slug>.sqlite`. On a miss, `read_docs` re-discovers
+  docs keylessly and merges them into the cache; a 7-day TTL re-searches before
+  answering so the agent never silently serves stale docs.
+- **Keyless version detection** — the search query is pinned to the current
+  release via free registries (npm / PyPI / crates.io / RubyGems /
+  proxy.golang.org). An ambiguous name that resolves in multiple ecosystems is
+  surfaced for disambiguation rather than silently pinned, and the agent can pin
+  explicitly with `read_docs({ libraryTitle, ecosystem: "go" })`.
+- **`deep_research`** — unchanged mechanically; its injected `SearchFn` now
+  points at the adapter, so it inherits every source below automatically.
+
+### Bring-Your-Own-Key (optional)
+
+Set any of these to promote a paid source to primary (keyless stays the
+fallback). Enter them via `/research-keys <service>` (masked, saved to
+`credentials.json`) or as shell environment variables (shell wins):
+
+| Service | Command | Environment variable |
+|---|---|---|
+| Serper (web search) | `/research-keys serper` | `SERPER_API_KEY` |
+| Context7 (indexed docs) | `/research-keys context7` | `CONTEXT7_API_KEY` |
+| Parallel (web search) | `/research-keys parallel` | `PARALLEL_API_KEY` |
+| Tavily (web search) | `/research-keys tavily` | `TAVILY_API_KEY` |
+| Exa (web search) | `/research-keys exa` | `EXA_API_KEY` |
+| Firecrawl (web search) | `/research-keys firecrawl` | `FIRECRAWL_API_KEY` |
+
+Every source normalizes to one Serper-compatible `organic[]` shape, so
+`deep_research` (URL dedup, domain scoring, source budgets) works identically
+across all of them. A configured key never hard-fails the search — the adapter
+degrades to the next source and ultimately to keyless.
 
 ---
 
@@ -296,6 +365,36 @@ opens a PR via the `gh` CLI (FID-2026-0806-004):
 
 ---
 
+## Discord Rich Presence
+
+`/presence status | enable | disable` (alias `/discord`) — **enabled by
+default** — externalizes your coding activity to Discord Rich Presence: the
+active agent (large image), the project basename + model (`details` line), and
+the live Perfection Loop phase / activity (`state` line, real-time). The
+execution mode (HYBRID/STRICT/SCAFFOLD/ANALYZE) is a hover detail on the mode
+overlay's tooltip; the model label is provider-trimmed
+(`deepseek/deepseek-v4-pro` → `deepseek-v4-pro`,
+`nous/meituan/longcat-2.0:free` → `longcat-2.0`) and the `openrouter/free`
+boot default renders as "OpenRouter Free". The model and the mode are
+distinct axes — never conflated. See the
+[Discord Presence blueprint](design/Discord Presence For Savant-Code.md)
+for the full design.
+
+- **Zero-config, on by default** — presence is booted from persisted settings
+  (default: enabled) and targets the hardcoded Savant Discord application (the
+  client id is compiled in, never operator-mutable — a configurable id is a
+  feature-theft vector); `/presence enable` connects, `/presence disable`
+  clears the activity and closes the socket.
+- **Mechanical privacy** — only the project basename is broadcast (parents
+  discarded); tool arguments are dropped absolutely; the FID kebab title is
+  stripped (it may name a vulnerability); search queries are masked; a Zod
+  schema fails closed to a hardcoded safe payload on any leak.
+- **Dormant polling** — if Discord isn't running the client stays dormant and
+  retries; a mid-session drop degrades silently without interrupting the
+  agent loop.
+
+---
+
 ## Slash Commands
 
 | Command | Purpose |
@@ -312,10 +411,12 @@ opens a PR via the `gh` CLI (FID-2026-0806-004):
 | `/learn` | Practice directing and reviewing an AI coding agent through guided exercises |
 | `/plan` | Create an implementation plan |
 | `/review` | Review code changes |
+| `/auto-drive` (`/auto`, `/drive`, `/autodrive`) | Start or manage an Auto Drive run — clarify, plan, approve, then run to completion |
 | `/goal` | Start or manage a durable, budgeted goal run |
 | `/loop` | Schedule recurring checks |
 | `/verify` | Run typechecks |
 | `/permissions` | View or set the tool permission mode |
+| `/presence` (`/discord`) | Show or change Discord Rich Presence: `status`, `enable`, `disable` |
 | `/rewind` | Restore code and/or conversation from a prior turn |
 | `/health` | Check provider, Ollama, model, and permission status |
 | `/mode` | List the four modes and their contracts |

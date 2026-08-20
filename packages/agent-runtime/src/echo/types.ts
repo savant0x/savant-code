@@ -20,6 +20,8 @@ export interface EnforcementState {
   /** Exact content from a successful write, including the empty string. */
   writtenFileContent: Map<string, string>
   hasVerifiedSinceLastDirty: boolean
+  /** Cumulative verification credits per file (FID-2026-0819-001). */
+  verifiedFiles: Set<string>
   writeCount: number
 
   // Law 4: Call-graph tracking

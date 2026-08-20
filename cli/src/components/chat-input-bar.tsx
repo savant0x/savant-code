@@ -7,12 +7,19 @@ import React from 'react'
 import { AgentModeToggle } from './agent-mode-toggle'
 import { MultipleChoiceForm } from './ask-user'
 import { CommandPalette } from './command-palette'
+import { DriveBanner } from './drive-mode/banner'
+import { DriveModeConfirmation } from './drive-mode/confirmation'
 import { FeedbackContainer } from './feedback-container'
 import { InputModeBanner } from './input-mode-banner'
 import { MultilineInput, type MultilineInputHandle } from './multiline-input'
 import { OutOfCreditsBanner } from './out-of-credits-banner'
 import { PublishContainer } from './publish-container'
 import { SuggestionMenu, type SuggestionItem } from './suggestion-menu'
+import {
+  buildDriveLockMessage,
+  buildReviseMessage,
+  parseDrivePlanForConfirmation,
+} from '../commands/auto-drive'
 import { useAskUserBridge } from '../hooks/use-ask-user-bridge'
 import { useEvent } from '../hooks/use-event'
 import { tryGetProjectRoot } from '../project-files'
@@ -21,6 +28,7 @@ import { shouldInterceptChatInputKey } from '../utils/chat-input-key-intercept'
 import { getInputModeConfig } from '../utils/input-modes'
 import { BORDER_CHARS } from '../utils/ui-constants'
 
+import type { OnSubmitPrompt } from '../chat/types'
 import type { useTheme } from '../hooks/use-theme'
 import type { InputValue } from '../types/store'
 import type { AgentMode } from '../utils/constants'
@@ -79,6 +87,8 @@ interface ChatInputBarProps {
   handleSubmit: () => Promise<void>
   onPaste: (fallbackText?: string) => void
   onInterruptStream: () => void
+  /** FID-2026-0818-002: arbitrary-content submit for the drive confirmation. */
+  onSubmitPrompt: OnSubmitPrompt
 }
 
 export const ChatInputBar = ({
@@ -118,12 +128,17 @@ export const ChatInputBar = ({
   handleSubmit,
   onPaste,
   onInterruptStream,
+  onSubmitPrompt,
 }: ChatInputBarProps) => {
   const inputMode = useChatStore((state) => state.inputMode)
   const setInputMode = useChatStore((state) => state.setInputMode)
 
   const modeConfig = getInputModeConfig(inputMode)
   const askUserState = useChatStore((state) => state.askUserState)
+  const driveMode = useChatStore((state) => state.driveMode)
+  const driveState = useChatStore((state) => state.driveState)
+  const drivePlanDraft = useChatStore((state) => state.drivePlanDraft)
+  const activeAutoRunId = useChatStore((state) => state.activeAutoRunId)
   const hasAnyPreview = hasSuggestionMenu
 
   // In the home directory (or an ancestor) the file tree is only scanned a few
@@ -156,6 +171,48 @@ export const ChatInputBar = ({
       })
     },
   )
+
+  // FID-2026-0818-002: present the pre-build plan for the operator's single
+  // Law 2 approval. Confirm locks drive mode; Revise re-plans; Cancel exits.
+  const drivePlan = drivePlanDraft
+    ? parseDrivePlanForConfirmation(drivePlanDraft)
+    : null
+  if (driveState === 'awaiting_confirmation' && drivePlan) {
+    return (
+      <DriveModeConfirmation
+        plan={drivePlan}
+        onConfirm={(editedPlan) => {
+          useChatStore.getState().setDriveState('driving')
+          useChatStore.getState().setDrivePlanDraft(null)
+          void onSubmitPrompt(
+            buildDriveLockMessage(
+              { ...drivePlan, plan: editedPlan },
+              activeAutoRunId,
+            ),
+            'STRICT',
+          )
+            .then(() => useChatStore.getState().setDriveMode(true))
+            .catch(() => {
+              useChatStore.getState().setDriveMode(false)
+              useChatStore.getState().setDriveState('planning')
+            })
+        }}
+        onRevise={(notes) => {
+          useChatStore.getState().setDriveState('planning')
+          useChatStore.getState().setDrivePlanDraft(null)
+          void onSubmitPrompt(buildReviseMessage(notes), 'STRICT').catch(
+            () => {},
+          )
+        }}
+        onCancel={() => {
+          useChatStore.getState().setDriveMode(false)
+          useChatStore.getState().setDriveState('planning')
+          useChatStore.getState().setDrivePlanDraft(null)
+          useChatStore.getState().setActiveAutoRunId(null)
+        }}
+      />
+    )
+  }
 
   if (feedbackMode) {
     return (
@@ -430,9 +487,12 @@ export const ChatInputBar = ({
             maxHeight={compactMaxHeight}
             ref={inputRef}
             cursorPosition={cursorPosition}
-            maskInput={inputMode === 'providerSetup'}
+            maskInput={
+              inputMode === 'providerSetup' || inputMode === 'researchKeySetup'
+            }
           />
         </box>
+        {driveMode ? <DriveBanner /> : null}
         <InputModeBanner />
       </>
     )
@@ -440,6 +500,7 @@ export const ChatInputBar = ({
 
   return (
     <>
+      {driveMode ? <DriveBanner /> : null}
       <box
         title={effectiveTitle}
         titleAlignment="center"

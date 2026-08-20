@@ -23,10 +23,12 @@ export function buildExportHtml(
   product: string,
   brandName: string,
   version: string,
+  driveReportHtml?: string,
 ): string {
   const now = new Date()
   const timestamp = formatExportTimestamp(now)
   const rowsHtml = messages.map((m, i) => renderMessageHtml(m, i)).join('\n')
+  const driveSection = driveReportHtml ? `\n${driveReportHtml}\n` : ''
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -121,7 +123,7 @@ function copyAll(btn) {
 <main class="transcript">
 ${rowsHtml}
 </main>
-
+${driveSection}
 <footer class="footer">
   <p>Exported from <span class="brand">${brandName}</span> · ${escapeHtml(timestamp)}</p>
   <p style="margin-top: 4px;">${brandName} — AI coding assistant powered by the ECHO Protocol</p>

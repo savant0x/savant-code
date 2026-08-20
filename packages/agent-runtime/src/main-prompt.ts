@@ -2,6 +2,8 @@ import { trackEvent } from '@savant-code/common/analytics'
 import { AnalyticsEvent } from '@savant-code/common/constants/analytics-events'
 
 import { buildHookInput, getHookEngine } from './hooks/engine'
+import { demoteStaleActiveDrive } from './run-agent-step/auto-drive-driver'
+import { driveAutoTurns } from './run-agent-step/auto-drive-loop'
 import { driveGoalTurns } from './run-agent-step/goal-driver'
 import { demoteStaleActiveGoal } from './run-agent-step/goal-engine'
 import {
@@ -121,6 +123,13 @@ export async function mainPrompt(
   // fresh <goal-set>/resume directive from the operator).
   demoteStaleActiveGoal(mainAgentState.goal)
 
+  // FID-2026-0818-007 step 4: a drive left `active` by a crash must never
+  // silently resume — demote it to `paused` at run start (the operator resumes
+  // explicitly via `/auto resume` or `--auto --continue`). Runs before the
+  // turn, so a fresh `<drive-lock>` in the same prompt re-activates a NEW
+  // drive on top of the demoted stale one.
+  demoteStaleActiveDrive(mainAgentState.drive)
+
   // FID-2026-0814-003: SessionStart/SessionEnd hooks — observation only,
   // fire-and-forget, fired at the main-agent run boundary (per prompt).
   const hookProjectRoot = fileContext.projectRoot ?? fileContext.cwd
@@ -136,7 +145,7 @@ export async function mainPrompt(
   }
 
   try {
-    const { agentState, output } = await driveGoalTurns({
+    let { agentState, output } = await driveGoalTurns({
       ...params,
       userInputId: promptId,
       spawnParams: promptParams,
@@ -148,6 +157,27 @@ export async function mainPrompt(
       fingerprintId,
       fileContext,
     })
+
+    // FID-2026-0818-004: Auto Drive supervisor. When the turn created a
+    // durable drive record (from the <drive-lock> directive), drive the FID
+    // queue to completion: scan dev/fids/, inject phase directives, validate
+    // phase evidence from the FID file, and archive at COMPLETE.
+    if (agentState.drive?.status === 'active') {
+      const driveResult = await driveAutoTurns({
+        ...params,
+        userInputId: promptId,
+        spawnParams: promptParams,
+        agentState,
+        ancestorRunIds: [],
+        prompt,
+        content,
+        agentType,
+        fingerprintId,
+        fileContext,
+      })
+      agentState = driveResult.agentState
+      output = driveResult.output
+    }
 
     // Log a summary only: output can contain the full conversation
     // (type 'allMessages'), which bloats log files on long chats.

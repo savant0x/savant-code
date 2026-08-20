@@ -10,6 +10,7 @@ import { EasterEggLogo } from './savant-ui/easter-egg-logo'
 import { getVersion } from '../utils/version'
 import { Timeline } from './savant-ui/data-display/timeline'
 import { AgentStatus } from './savant-ui/echo/agent-status'
+import { DriveStatusPanel } from './savant-ui/echo/drive-status-panel'
 import { FidList } from './savant-ui/echo/fid-list'
 import { LoopStatusPanel } from './savant-ui/echo/loop-status-panel'
 import { PerfectionLoop } from './savant-ui/echo/perfection-loop'
@@ -395,6 +396,9 @@ export const RightSidebar = React.memo(function RightSidebar({
 
       {/* Loop Status — shows active loop cadence, goal condition, and iteration count */}
       <LoopStatusPanel />
+
+      {/* FID-2026-0818-007: live Auto Drive surface (read-only mirror). */}
+      <DriveStatusPanel />
 
       {/* Tools */}
       <SidebarSection title="Tools">

@@ -140,6 +140,8 @@ export function useChatInteractions(args: UseChatInteractionsArgs) {
   const setInputMode = useChatStore((state) => state.setInputMode)
   const askUserState = useChatStore((state) => state.askUserState)
   const adsEnabled = useChatStore((state) => state.adsEnabled)
+  const driveMode = useChatStore((state) => state.driveMode)
+  const drivePaused = useChatStore((state) => state.drivePaused)
 
   const { saveToHistory, navigateUp, navigateDown, resetHistoryNavigation } =
     useInputHistory(inputValue, setInputValue, { inputMode, setInputMode })
@@ -164,6 +166,7 @@ export function useChatInteractions(args: UseChatInteractionsArgs) {
     pauseQueue,
     onSubmitPrompt,
     handleSelectSuggestedPrompt,
+    sendMessage,
   } = useChatMessaging({
     agentMode,
     agentId,
@@ -318,6 +321,9 @@ export function useChatInteractions(args: UseChatInteractionsArgs) {
     scrollDown,
     handleToggleAll,
     executeSlashCommand,
+    sendMessage,
+    driveMode,
+    drivePaused,
     askUserState,
     reviewMode,
     providerPickerOpen,
@@ -349,6 +355,7 @@ export function useChatInteractions(args: UseChatInteractionsArgs) {
     handleReviewCustom,
     handlePublish,
     handleSubmit,
+    onSubmitPrompt,
     reviewMode,
     publishMode,
     slashContext,

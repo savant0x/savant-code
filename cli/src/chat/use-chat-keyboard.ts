@@ -21,6 +21,7 @@ import type {
   MatchedSlashCommand,
   TriggerContext,
 } from '../hooks/use-suggestion-engine'
+import type { SendMessageFn } from '../types/contracts/send-message'
 import type { AskUserState, InputValue } from '../types/store'
 import type { AgentMode } from '../utils/constants'
 import type { InputMode } from '../utils/input-modes'
@@ -48,6 +49,9 @@ export interface UseChatKeyboardAssemblyArgs {
   nextCtrlCWillExit: boolean
   queuePaused: boolean
   queuedCount: number
+  // FID-2026-0818-007: drive-mode Esc state.
+  driveMode: boolean
+  drivePaused: boolean
   // Handler deps
   setInputMode: (mode: InputMode) => void
   handleCloseFeedback: () => void
@@ -84,6 +88,7 @@ export interface UseChatKeyboardAssemblyArgs {
   executeSlashCommand: (
     selected: MatchedSlashCommand | undefined,
   ) => Promise<void>
+  sendMessage: SendMessageFn
   // Disabled state
   askUserState: AskUserState | null
   reviewMode: boolean
@@ -115,6 +120,8 @@ export function useChatKeyboardAssembly(args: UseChatKeyboardAssemblyArgs): {
     nextCtrlCWillExit,
     queuePaused,
     queuedCount,
+    driveMode,
+    drivePaused,
     setInputMode,
     handleCloseFeedback,
     setFeedbackText,
@@ -144,6 +151,7 @@ export function useChatKeyboardAssembly(args: UseChatKeyboardAssemblyArgs): {
     scrollDown,
     handleToggleAll,
     executeSlashCommand,
+    sendMessage,
     askUserState,
     reviewMode,
     providerPickerOpen,
@@ -188,6 +196,8 @@ export function useChatKeyboardAssembly(args: UseChatKeyboardAssemblyArgs): {
         nextCtrlCWillExit,
         queuePaused,
         queuedCount,
+        driveMode,
+        drivePaused,
       }),
     [
       inputMode,
@@ -210,6 +220,8 @@ export function useChatKeyboardAssembly(args: UseChatKeyboardAssemblyArgs): {
       nextCtrlCWillExit,
       queuePaused,
       queuedCount,
+      driveMode,
+      drivePaused,
     ],
   )
 
@@ -250,6 +262,7 @@ export function useChatKeyboardAssembly(args: UseChatKeyboardAssemblyArgs): {
         handleToggleAll,
         totalMentionMatches,
         executeSlashCommand,
+        sendMessage,
       }),
     [
       setInputMode,
@@ -283,6 +296,7 @@ export function useChatKeyboardAssembly(args: UseChatKeyboardAssemblyArgs): {
       scrollUp,
       scrollDown,
       handleToggleAll,
+      sendMessage,
     ],
   )
 

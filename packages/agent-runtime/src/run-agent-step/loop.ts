@@ -406,9 +406,12 @@ export async function loopAgentSteps(
     // carries the session-close record. Subagent loops inherit the parent's
     // session and must not finalize it.
     if (!initialAgentState.parentId) {
-      void initialAgentState.provenance?.finalize().catch(() => {
-        // Best-effort: finalize must never break the run exit path.
-      })
+      const provenance = initialAgentState.provenance
+      if (provenance && typeof provenance.finalize === 'function') {
+        void provenance.finalize().catch(() => {
+          // Best-effort: finalize must never break the run exit path.
+        })
+      }
     }
     recordRuntimeEvent(
       {

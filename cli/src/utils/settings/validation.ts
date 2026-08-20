@@ -165,5 +165,13 @@ export const validateSettings = (parsed: JSONValue): Settings => {
     settings.directProviderBaseUrl = obj.directProviderBaseUrl
   }
 
+  // Discord Rich Presence (FID-2026-0818-009). presenceEnabled defaults on.
+  // The Application Client ID is hardcoded (SAVANT_DISCORD_CLIENT_ID), not a
+  // setting — a mutable id is a feature-theft vector (operator decision
+  // 2026-08-18).
+  if (typeof obj.presenceEnabled === 'boolean') {
+    settings.presenceEnabled = obj.presenceEnabled
+  }
+
   return settings
 }

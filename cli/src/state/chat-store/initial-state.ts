@@ -65,4 +65,9 @@ export const initialState: ChatStoreState = {
    * event. StalledResetWatcher reads this to detect 30s of silence (D2/D5).
    */
   _lastChunkAtMs: Date.now(),
+  driveMode: false,
+  driveState: 'planning',
+  activeAutoRunId: null,
+  drivePlanDraft: null,
+  drivePaused: false,
 }

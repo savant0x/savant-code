@@ -121,6 +121,13 @@ const ALL_SLASH_COMMANDS: SlashCommand[] = [
     aliases: ['analytics'],
   },
   {
+    id: 'presence',
+    label: 'presence',
+    description:
+      'Show or change Discord Rich Presence: /presence [status|enable|disable]',
+    aliases: ['discord'],
+  },
+  {
     id: 'init',
     label: 'init',
     description: 'Create a starter knowledge.md file',
@@ -138,6 +145,13 @@ const ALL_SLASH_COMMANDS: SlashCommand[] = [
     label: 'subscribe',
     description: 'Subscribe to get more usage',
     aliases: ['strong', 'sub', 'buy-credits'],
+  },
+  {
+    id: 'auto-drive',
+    label: 'auto-drive',
+    description:
+      'Auto Drive: clarify, plan, and approve a goal, then run it to completion autonomously',
+    aliases: ['auto', 'drive', 'autodrive'],
   },
   {
     id: 'interview',
@@ -275,6 +289,13 @@ const ALL_SLASH_COMMANDS: SlashCommand[] = [
           label: 'provider',
           description:
             'Configure a provider API key (stored locally and masked)',
+        },
+        {
+          id: 'research-keys',
+          label: 'research-keys',
+          description:
+            'Configure research API keys (Serper/Context7/Parallel/Tavily/Exa/Firecrawl)',
+          aliases: ['research-key'],
         },
       ]),
   {

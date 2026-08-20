@@ -1,14 +1,13 @@
 import { jsonToolResult } from '@savant-code/common/util/messages'
 import { withTimeout } from '@savant-code/common/util/promise'
 
-import { callWebSearchAPI } from '../../../llm-api/savant-code-web-api'
+import { searchWebSource } from '../../../llm-api/research-sources'
 
 import type { SavantCodeToolHandlerFunction } from '../handler-function-type'
 import type {
   SavantCodeToolCall,
   SavantCodeToolOutput,
 } from '@savant-code/common/tools/list'
-import type { ClientEnv, CiEnv } from '@savant-code/common/types/contracts/env'
 import type { Logger } from '@savant-code/common/types/contracts/logger'
 
 /**
@@ -314,24 +313,11 @@ export const handleDeepResearch = (async (params: {
   toolCall: SavantCodeToolCall<'deep_research'>
   logger: Logger
   fetch: typeof globalThis.fetch
-  apiKey: string
-  clientEnv: ClientEnv
-  ciEnv: CiEnv
-  repoUrl: string | undefined
 }): Promise<{
   output: SavantCodeToolOutput<'deep_research'>
   creditsUsed: number
 }> => {
-  const {
-    previousToolCallFinished,
-    toolCall,
-    logger,
-    fetch,
-    apiKey,
-    clientEnv,
-    ciEnv,
-    repoUrl,
-  } = params
+  const { previousToolCallFinished, toolCall, logger, fetch } = params
   const {
     question,
     queries,
@@ -342,15 +328,7 @@ export const handleDeepResearch = (async (params: {
   await previousToolCallFinished
 
   const search: SearchFn = async (query) =>
-    callWebSearchAPI({
-      query,
-      depth: 'standard',
-      repoUrl: repoUrl ?? null,
-      fetch,
-      logger,
-      apiKey,
-      env: { clientEnv, ciEnv },
-    })
+    searchWebSource({ query, depth: 'standard', logger, fetch })
 
   const result = await runDeepResearch({
     question,

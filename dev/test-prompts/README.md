@@ -25,6 +25,15 @@ This directory contains reusable validation prompts and live harnesses.
   (`bun dev/test-prompts/az-teacher-driver.ts`) — it drives the full lifecycle
   with a stub Forge + in-memory store so every logic row has a deterministic
   trigger path and never degrades to `NEEDS-REVIEW`.
+- The Auto Drive + Discord Rich Presence live test is
+  [`az-auto-drive-discord-live-test.md`](az-auto-drive-discord-live-test.md).
+  It covers the Auto Drive program (`FID-2026-0818-001` master + children
+  `002`–`008`) and the Discord Rich Presence subsystem (`009`), with a
+  deterministic trigger path per row (static + executable gates re-run, plus
+  the operator-owned live surfaces: TUI `/auto-drive`, headless `--auto`,
+  crash-resume, and the live Discord client — the Discord application + assets
+  already configured by the operator, so no app setup is required). It writes its report to
+  `dev/scratchpad/az-auto-drive-discord-live-test-report.md`.
 - The design-system live test is
   [`design-system-live-ux-performance.md`](design-system-live-ux-performance.md).
   It validates loadable design-system usability, agent feedback, cold/warm

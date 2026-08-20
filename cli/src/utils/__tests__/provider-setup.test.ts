@@ -8,12 +8,16 @@ import { applyPersistedDirectProviderSettings } from '../ollama-onboarding'
 import {
   activateConfiguredProvider,
   applyPersistedProviderApiKeys,
+  applyPersistedResearchApiKeys,
+  beginResearchKeySetup,
   configureDefaultDirectProvider,
   getConfiguredProviderNames,
   getMissingProviderSetup,
   getProviderSetupGuidance,
   getProviderSetupInfo,
+  getResearchKeyServiceInfo,
   saveProviderApiKey,
+  saveResearchApiKey,
 } from '../provider-setup'
 import { saveSettings } from '../settings'
 
@@ -29,6 +33,12 @@ const PROVIDER_ENV_VARS = [
   'DIRECT_PROVIDER',
   'INFERENCE_BASE_URL',
   'SAVANT_CODE_API_KEY',
+  'SERPER_API_KEY',
+  'CONTEXT7_API_KEY',
+  'PARALLEL_API_KEY',
+  'TAVILY_API_KEY',
+  'EXA_API_KEY',
+  'FIRECRAWL_API_KEY',
 ] as const
 
 describe('provider setup', () => {
@@ -309,6 +319,77 @@ describe('provider setup', () => {
     delete process.env.DIRECT_PROVIDER
     process.env.SAVANT_CODE_API_KEY = 'backend-key'
     expect(getMissingProviderSetup()).toBeUndefined()
+  })
+
+  test('saves a research key in credentials.json and applies it to the current process', () => {
+    saveResearchApiKey('serper', '  test-serper-key  ')
+
+    expect(process.env.SERPER_API_KEY).toBe('test-serper-key')
+    const credentials = JSON.parse(
+      fs.readFileSync(path.join(tempDir, 'credentials.json'), 'utf8'),
+    )
+    expect(credentials.researchApiKeys.SERPER_API_KEY).toBe('test-serper-key')
+    expect(credentials.researchApiKeys.SERPER_API_KEY).not.toContain('  ')
+    // Provider and research sections are independent.
+    expect(credentials.providerApiKeys).toBeUndefined()
+  })
+
+  test('rejects an empty research key', () => {
+    expect(() => saveResearchApiKey('parallel', '  ')).toThrow(
+      'Research API key cannot be empty.',
+    )
+    expect(fs.existsSync(path.join(tempDir, 'credentials.json'))).toBe(false)
+  })
+
+  test('restores persisted research keys without overriding an explicit environment variable', () => {
+    fs.writeFileSync(
+      path.join(tempDir, 'credentials.json'),
+      JSON.stringify({
+        researchApiKeys: {
+          SERPER_API_KEY: 'stored-serper-key',
+          PARALLEL_API_KEY: 'stored-parallel-key',
+        },
+      }),
+    )
+    process.env.SERPER_API_KEY = 'shell-serper-key'
+
+    applyPersistedResearchApiKeys()
+
+    expect(process.env.SERPER_API_KEY).toBe('shell-serper-key')
+    expect(process.env.PARALLEL_API_KEY).toBe('stored-parallel-key')
+    expect(process.env.TAVILY_API_KEY).toBeUndefined()
+  })
+
+  test('preserves unrelated credentials when saving a research key', () => {
+    fs.writeFileSync(
+      path.join(tempDir, 'credentials.json'),
+      JSON.stringify({
+        providerApiKeys: { OPENROUTER_API_KEY: 'existing-provider-key' },
+      }),
+    )
+
+    saveResearchApiKey('context7', 'test-context7-key')
+
+    const credentials = JSON.parse(
+      fs.readFileSync(path.join(tempDir, 'credentials.json'), 'utf8'),
+    )
+    expect(credentials.providerApiKeys.OPENROUTER_API_KEY).toBe(
+      'existing-provider-key',
+    )
+    expect(credentials.researchApiKeys.CONTEXT7_API_KEY).toBe(
+      'test-context7-key',
+    )
+  })
+
+  test('resolves research key services case-insensitively and rejects unknown services', () => {
+    expect(beginResearchKeySetup('Serper')).toBe('serper')
+    expect(getResearchKeyServiceInfo('PARALLEL')).toMatchObject({
+      service: 'parallel',
+      label: 'Parallel',
+      envVar: 'PARALLEL_API_KEY',
+    })
+    expect(beginResearchKeySetup('unknown-service')).toBeUndefined()
+    expect(getResearchKeyServiceInfo('nope')).toBeUndefined()
   })
 
   test('returns setup metadata for supported providers only', () => {

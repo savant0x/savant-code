@@ -45,6 +45,10 @@ export type ChatKeyboardState = {
 
   // Exit handler state
   nextCtrlCWillExit: boolean
+
+  // FID-2026-0818-007: drive-mode Esc pause/stop state.
+  driveMode: boolean
+  drivePaused: boolean
 }
 
 /**
@@ -63,6 +67,9 @@ export type ChatKeyboardAction =
 
   // Stream actions
   | { type: 'interrupt-stream' }
+
+  // Drive actions (FID-2026-0818-007)
+  | { type: 'drive-interrupt' }
 
   // Menu navigation
   | { type: 'slash-menu-down' }
@@ -174,6 +181,15 @@ export function resolveChatKeyboardAction(
   // Escape should exit the current mode BEFORE interrupting streams
   // Exception: modes with blockKeyboardExit cannot be escaped
   const modeConfig = getInputModeConfig(state.inputMode)
+  // Priority 1.5: drive-mode Esc — pause (first press) / stop (second press).
+  // Takes precedence over the generic interrupt so the operator's Esc always
+  // routes to the drive-control surface while a drive is locked in. The
+  // approval pane (awaiting_confirmation) is driveMode=false, so its Esc still
+  // reaches the normal cancel/interrupt path — the pane never swallows Esc.
+  if (isEscape && state.driveMode) {
+    return { type: 'drive-interrupt' }
+  }
+
   if (
     isEscape &&
     state.inputMode !== 'default' &&
@@ -390,5 +406,7 @@ export function createDefaultChatKeyboardState(): ChatKeyboardState {
     historyNavUpEnabled: false,
     historyNavDownEnabled: false,
     nextCtrlCWillExit: false,
+    driveMode: false,
+    drivePaused: false,
   }
 }

@@ -43,6 +43,38 @@ FIDs follow the template in \`templates/FID-TEMPLATE.md\`. Key sections:
 - You cannot use str_replace or bash. Use write_file to create/update FIDs.
 - Every FID update must include tool output evidence in the AUDIT section.
 - Never close a FID that has unresolved items in Remaining Work.
+- **Step Status (Anti-Deferral Gate, FID-2026-0817-005):** before any FID
+  update that declares \`**Status:** converged\` or \`**Status:** closed\`,
+  validate the FID's \`## Step Status\` section — every step must be
+  \`[x]\` (implemented) or carry \`operator-approved <YYYY-MM-DD>\`.
+  Present any unresolved (blocked) steps to the operator first; never
+  write the transition over unresolved steps.
+- **Deferral/skip markers are operator-only:** write \`deferred::\`/
+  \`skipped::\` step markers ONLY with the operator's explicit approval and
+  the approval date in the marker.
+- **Never archive a FID with unresolved steps** in its \`## Step Status\`
+  section — an archived \`closed\` FID with blocked steps is a hard
+  validation failure.
+
+# Auto Drive authoring contracts
+
+## Batch authoring (FID-2026-0818-003)
+
+When the orchestrator supplies a complete Auto Drive decomposition, author the
+backlog in dependency order: the master FID (goal, acceptance criteria, child
+manifest, resolution policy, a skeleton "## Run Log" section) plus one child
+FID per milestone (status "created", full template, a "## Step Status"
+inventory derived from the milestone's acceptance list). Use the CREATE
+workflow — complete content is supplied by the orchestrator; never compose the
+content yourself. Cap each pass at 5 FIDs and return so the orchestrator can
+paginate the next batch.
+
+## Discovery FID (FID-2026-0818-005 rung 4)
+
+When the drive supervisor routes a mid-run discovery to you, create a child FID
+for it (status "created"), record the dependency edge to the FID it was found
+to belong to, and append it to the master FID's child manifest. The master
+manifest is the single registry — a discovery is never recorded as prose only.
 
 # Workflows
 

@@ -3,9 +3,29 @@
 # Build Order — EHEL Verification State Tracking Fix
 
 **Date:** 2026-08-16
-**Status:** DRAFT — awaiting operator approval
+**Status:** RESOLVED SUPERSEDED — core premise already shipped (verified 2026-08-17); Phase 2 parked
 **Owner:** Nova (implementation) + ECHO harness (enforcement)
 **Trigger:** Agent unable to clear Law 3 verification state when running global lint/typecheck commands
+
+---
+
+## Disposition
+
+Verified 2026-08-17 against the working tree — the **core premise of
+Phase 1 already ships**: `packages/agent-runtime/src/echo/enforcement.ts`
+(from 2026-08-08, `56a4f04b`, v0.0.21) sets `hasVerifiedSinceLastDirty =
+true` and clears the Law-3 block when a `run_terminal_command` contains
+`typecheck` / `lint` / `eslint` / `test` (keyword-based, over-broad — any
+command containing "test" clears every dirty file, covered or not). So a
+global `eslint .` or `lint:md .` *does* clear the blocked state today;
+per-file tracking stays for targeted verification. This build order is
+superseded: its Phase 1 is shipped in cruder (keyword) form, and its
+Phase 2 (cross-agent "Verification Evidence" section in the FID
+`template`) was never done. No FID was created for this draft — the task
+queue is now drain: no implementation is required; optionally tighten
+the keyword match into a covered-file-type map as a standalone
+todo/FID, which is strictly narrower than this draft. Do not implement
+from this file.
 
 ---
 

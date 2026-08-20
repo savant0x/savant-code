@@ -1,6 +1,269 @@
 # Changelog
 
+## 0.0.26 — 2026-08-19
+
+## 2026-08-19 — FID-2026-0819-004: Native tool-call recovery hardening — tool-specific steering + progressive strikes (closed)
+
+The native tool-call recovery mechanism hard-killed agent runs after 3 consecutive
+`native-incomplete` strikes. The generic steering message ("split into smaller calls")
+didn't help models re-emitting oversized payloads. Fixed with multi-layered defense:
+
+- **Tool-specific steering:** `NATIVE_TOOL_CALL_STEERING_MESSAGES` map provides
+  targeted guidance per tool — `run_terminal_command` gets "Run ONE command per call",
+  write tools get "Write in chunks using str_replace", etc.
+- **Progressive escalation:** Strike 1 = hint, strike 2 = explicit, 3+ = concrete example.
+  `getSteeringMessage(toolName, strikeNumber)` selects the appropriate level.
+- **Increased terminal strikes:** `run_terminal_command` gets 5 retries (up from 3) because
+  flash-class models need more attempts to learn from steering.
+- **Escalating steering on retries:** `loop-iteration.ts` appends increasingly specific
+  guidance on strikes 2-4 instead of repeating the same message.
+
+## 2026-08-19 — FID-2026-0819-003: Quality-ratchet overstep remediation + research-tools test coverage (closed)
+
+Split `research-sources.ts` under the 300-line cap by extracting pure presentation helpers
+(`parseOrganicHits`, `formatOrganicAsDocumentation`, `boundDocumentation`) into
+`research-format.ts` (64 lines). `research-sources.ts` reduced from 327 to 286 lines;
+`approvedGrowth` exemption removed. Added 8 new selector/adapter tests:
+- `searchWebSource`: Serper BYOK primary, Serper→Parallel fall-through, keyless fallback, all-fail error
+- `readDocsSource`: Context7 BYOK primary, Context7 empty→keyless fallback, no-key→no Context7 call
+- `keylessReadDocs`: cache-hit path (version-detect + docset-cache mocked)
+
+Re-baselined `dev/quality-baseline.json` honestly. All gates pass: typecheck ×4, 1110 tests
+(0 fail), `validate:repository` PASS.
+
+## 2026-08-19 — FID-2026-0819-002: Research tools restored in direct-provider mode — keyless + BYOK (closed)
+
+`read_docs`, `web_search`, and `deep_research` were dead in direct-provider
+mode (`DIRECT_PROVIDER` set — the default release-binary boot mode): all three
+routed exclusively through the SavantCode backend web API, which
+short-circuits with `"SavantCode backend services are unavailable in
+direct-provider mode."` The `researcher-docs` agent exposes only `read_docs`,
+so it was 100% non-functional; `researcher-web` lost `web_search` +
+`deep_research`, leaving only `read_url`.
+
+Fixed by decoupling research from `DIRECT_PROVIDER` behind a swappable
+search/docs adapter (`packages/agent-runtime/src/llm-api/research-sources.ts`):
+
+- **Structural fix:** inference mode no longer gates research. The research
+  short-circuit was removed from `savant-code-web-api.ts` (narrowed to
+  gravity-index only); `web_search` / `read_docs` / `deep_research` route
+  through the adapter instead of the dead backend.
+- **Keyless `web_search` (default, zero keys):** a TS port of Hound's keyless
+  layer — Qwant JSON + DuckDuckGo HTML fired in parallel, deduped by URL,
+  normalized to Serper-compatible `organic[]` (`keyless-search.ts`).
+- **Keyless `read_docs`:** search-and-fetch (discovered title + link +
+  snippet; full-page extraction delegated to the SSRF-guarded `read_url`) plus
+  a self-populating local SQLite FTS5 docset cache at
+  `~/.savant-code/docsets/<slug>.sqlite` (`docset-search.ts`,
+  `docset-cache.ts`, `scripts/build-docset.ts`) with a 7-day TTL and keyless
+  version detection (npm / PyPI / crates.io / RubyGems / proxy.golang.org) that
+  pins the search query to the current release; ambiguous multi-ecosystem names
+  are surfaced for disambiguation, and `read_docs({ ecosystem: "go" })` pins
+  one registry explicitly (`version-detect.ts`).
+- **BYOK `web_search`:** Serper + Parallel + Tavily + Exa + Firecrawl facades
+  behind the adapter (`byok-search.ts`), primary when their key is present;
+  **BYOK `read_docs`:** Context7.
+- **BYOK key management UI:** `/research-keys <serper|context7|parallel|tavily|
+  exa|firecrawl>` (alias `/research-key`) with masked input, saved to
+  `credentials.json` under `researchApiKeys` (alongside `providerApiKeys`),
+  applied at boot via `applyPersistedResearchApiKeys` — the same pattern as
+  provider keys, never written to chat history.
+- **`deep_research`** inherits all sources via its already-injected `SearchFn`
+  (no rework).
+
+Research env vars (optional — keyless is the default; shell env takes
+precedence over saved keys): `SERPER_API_KEY`, `CONTEXT7_API_KEY`,
+`PARALLEL_API_KEY`, `TAVILY_API_KEY`, `EXA_API_KEY`, `FIRECRAWL_API_KEY`.
+
+Gates (all exit 0): typecheck ×4; agent-runtime 1103 pass / 0 fail (new
+keyless-search, byok-search, docset-search, docset-cache, version-detect,
+research-sources suites); CLI 3242 pass / 0 fail (18 skip); eslint (changed
+files) 0 errors / 0 warnings; prettier clean; Law-4 call-graph grep confirms
+every previously-dead facade (`searchWeb`, `fetchContext7LibraryDocumentation`)
+and every new facade has a production caller. Docs updated (`.env.example`,
+`docs/features.md`, `docs/installation.md`, `docs/faq.md`, `docs/index.md`,
+`README.md`, `README.zh-CN.md`). Closed + archived 2026-08-19.
+
+## 2026-08-19 — FID-2026-0819-001: Cumulative verification tracking for ECHO compliance (closed)
+
+The `EchoComplianceTracker` and `EchoEnforcement` previously tracked
+verification with an edge-triggered boolean latch (`verifiedAfterLastWrite` /
+`hasVerifiedSinceLastDirty`) that reset on every write. A correct
+write→verify→write→turn-ends sequence within a single turn still emitted a
+Law 3 advisory — the latch had no memory of verification between writes.
+
+Replaced with cumulative per-write state: each write carries a `verified`
+flag; a verification command credits ALL currently-unverified writes (never
+revoked by later writes); turn-end evaluation flags only the specific files
+that are genuinely unverified. The enforcement layer now uses the shared
+`detectsVerificationCommand` as the single source of truth (fixing a
+pattern-mismatch bug where enforcement recognized fewer verification
+commands than the tracker) and handles both `run_terminal_command` and
+`run_readonly_command`.
+
+Gates (all exit 0): agent-runtime typecheck; 1057 pass / 0 fail (3 new
+cumulative-behavior cases in echo-compliance). Closed + archived 2026-08-19.
+
+## 2026-08-18 — FID-2026-0818-001..010: Auto Drive + Discord Rich Presence + docs/FAQ — full program closed + archived
+
+Implemented the full Auto Drive program (master FID-2026-0818-001 + children
+002–008), the Discord Rich Presence subsystem (009), and the operator-facing
+docs + FAQ (010) across the runtime and CLI. The complete program — children
+002–008 + 010 (operator-directed batch archive), master 001, and Discord 009
+— is **closed + archived 2026-08-18**; the two operator-confirmed live smokes
+(TUI `/auto-drive` + headless `--auto` + crash resume, and the live Discord
+client) closed the program. Nova issued a **PASS** on the 009/010 hardcode +
+docs revision (see below).
+
+- **002 drive-mode entry:** `/auto-drive` (canonical; aliases `/auto`, `/drive`,
+  `/autodrive`) + `<drive-lock>` + interactive-tool strip.
+- **003 decomposition engine:** `DriveManifest` + `manifest-check.ts` coverage/
+  dependency/duplicate checks.
+- **004 drive-loop supervisor:** `driveAutoTurns` (queue scan, dependency-ordered
+  selection, phase-evidence validation, COMPLETE archive + CHANGELOG) wired into
+  `main-prompt.ts`; `validateFidPhaseEvidence` in `fid-validator.ts`.
+- **005 self-healing ladder:** `ladder-router.ts` (7 rungs), `run-log.ts` master
+  FID `## Run Log` writer.
+- **006 completion certification:** `goal-conformance.ts` criterion registry +
+  strategies + gap→FID emitter; `/export` certification sections.
+- **007 observability + long-session bounds:** `DriveStatusRecord` + sidebar
+  panel, Esc pause/stop, crash-resume demotion (`demoteStaleActiveDrive`), FID-
+  boundary compaction trigger, bounded TUI arrays (`bounded-arrays.ts`).
+- **008 headless CLI mode:** `--auto` + `--spec`/`--plan-file`/`--approve`/
+  `--plan-only` flags, `runHeadlessAutoDrive` (store-agnostic drive + stdout
+  progress + completion exit codes + `--continue` resume).
+- **009 Discord Rich Presence:** `@xhayper/discord-rpc` + `presence-ipc/privacy/
+  mapper/selector/wire` modules + `/presence status|enable|disable` commands +
+  settings persistence. **Enabled by default.** The Discord Application client
+  id is hardcoded (`SAVANT_DISCORD_CLIENT_ID = 1539431002089328710`); the
+  operator-mutable `client <id>` surface is removed (feature-theft guard).
+- **010 docs + FAQ:** `docs/features.md` Auto Drive + Discord sections + slash-
+  table rows, `docs/index.md` Key Features + Links, `README.md` feature list +
+  slash table, new `docs/faq.md` (`/goal` vs `/auto-drive` disambiguation),
+  blueprint de-duplication (`docs/design/` canonical, root copy a pointer).
+
+Gates (all exit 0): typecheck ×4; agent-runtime suite 1053 pass / 0 fail; CLI
+new-suite 127 pass / 0 fail; eslint 0; lint:md 0; prettier clean;
+`validate:repository` PASS (quality ratchet re-baselined). The anti-deferral gate
+(FID-2026-0817-005) Step Status inventories are `[x]` only where code + tests
+ship; live-smoke steps remain `blocked::` with reasons — nothing silently
+closed.
+
+**2026-08-18 revision (operator-directed):** the Discord client id is hardcoded
+(`SAVANT_DISCORD_CLIENT_ID`) and the `/presence client <id>` subcommand +
+`presenceClientId` setting removed (feature-theft guard); the canonical slash
+command is renamed `/auto` → `/auto-drive` with `/auto` `/drive` `/autodrive`
+kept as silent aliases; docs + FAQ (010) shipped; presence confirmed enabled by
+default. Gates re-run green: cli typecheck, presence/settings/command suites
+(44 pass / 0 fail), `eslint . --max-warnings 0`, `lint:md`,
+`validate:repository` PASS.
+
+**2026-08-18 revision (operator-reported model-vs-mode bug):** the presence
+`details` line was rendering `Model: <mode>` (e.g. `Model: HYBRID`) because
+`buildStoreSnapshot` fed `store.agentMode` (the execution MODE) into the
+`model` field. Fixed in FID-009: `model` now resolves the ACTIVE LLM MODEL via
+`resolveActiveModel()` (the model store, single source of truth), and the mode
+(HYBRID/STRICT/SCAFFOLD/ANALYZE) is surfaced as a distinct `small_image`
+overlay (`mode_hybrid`/`mode_strict`/`mode_scaffold`/`mode_analyze`) that a
+transient tool activity overrides. `PresenceRawState`/`SanitizedPresenceState`
+gained a `mode` field; `presence.test.ts` added mode-overlay + "never renders
+mode in the model slot" assertions (25 pass / 0 fail); docs (`features.md`/
+`faq.md`) now state model and mode are distinct axes.
+
+**2026-08-18 closure (operator-directed, complete):** FIDs 002–008 and 010
+closed + archived (all steps `[x]`), then master 001 and 009 closed +
+archived 2026-08-18 after the operator confirmed the two live smokes (live
+`/auto` run TUI + headless + crash resume; live Discord presence under
+`1478095645662380042`). Both records' final live-smoke steps flipped `[x]`
+on that confirmation — no silent deferral. `dev/fids/README.md` +
+`archive/README.md` indexes updated; the active queue is now empty;
+`validate:repository` PASS.
+
+**2026-08-18 revision (operator-reported stuck-state bug, post-closure):** the
+presence `state` line was stuck on "Awaiting Operator Input" — it was driven
+only by `store.fsmPhase`, which stays `idle` during normal HYBRID-mode work
+even while the agent is actively running tools/thinking/delegating. Fixed in
+FID-009: `presence-mapper.ts` now synthesizes the state line from the live
+`AgentActivity` signal when the phase is `idle` (`resolveStateLine` —
+thinking/subagent/tool/researching each map to a live narrative, with the
+active FID appended), and the `small_image` overlay now always carries the
+execution mode instead of being swapped out for a tool icon.
+`presence-privacy.ts` gained an `activityAgentType` field +
+`sanitizeAgentType` (path separators neutralized); `presence.test.ts` added
+thinking/subagent + state-line-synthesis + mode-overlay cases (28 pass /
+0 fail).
+
+**2026-08-18 revision (operator-reported layout + model-label, post-closure):**
+Discord exposes exactly two single-line text fields (no newlines), so the
+three items map to the two lines as: `details` = project basename + model
+(line 1, both short), `state` = the live phase/activity narrative (line 2,
+real-time — the action stays visible) — and the execution mode moved to the
+`small_image` hover tooltip. The model label is now provider-trimmed and
+variant-stripped (`deepseek/deepseek-v4-pro` → `deepseek-v4-pro`,
+`nous/meituan/longcat-2.0:free` → `longcat-2.0`), and the `openrouter/free`
+boot default renders as "OpenRouter Free". `presence.test.ts` now 30 cases.
+
+**2026-08-18 revision (operator-directed client id rotation, post-closure):**
+the hardcoded `SAVANT_DISCORD_CLIENT_ID` was rotated `1478095645662380042` →
+`1539431002089328710` (operator-owned Discord application change). The
+Law-4 reachability suite (`client-id-reachability.test.ts`) and the
+`presence-command.test.ts` pin were updated to the new id; all presence
+suites re-verified green (34 pass / 0 fail). **Live-confirmed 2026-08-18**
+(operator): presence renders correctly under the new application ("Savant
+Code"); all post-closure issues (model-vs-mode, stuck-state, layout, id
+rotation) resolved and operator-verified.
+
+**Nova verdicts (2026-08-18, both PASS):** planning + implementation PASS for
+the 001–009 program, and a dedicated **PASS** for the 009 hardcode revision +
+010 docs (`dev/nova/outbox/archive/2026-08-18-discord-rich-presence-hardcode-and-docs-nova-verdict.md`)
+— all six claims (hardcoded id, mutable surface removed, enabled by default,
+feature-theft guard test, docs, honest FID records) verified at source.
+
 ## 0.0.25 — 2026-08-17
+
+## 2026-08-17 — FID-2026-0817-005: Anti-Deferral Gate — FID step-status enforcement (closed)
+
+Implemented the Anti-Deferral Gate (FID-2026-0817-005): approved plans can
+no longer be silently changed — agents marking FID steps or entire FIDs
+"done" without implementing the approved scope now hit a mechanical gate.
+The failure class: 2026-08-16 saw 6 planning FIDs closed without
+implementation and a 3-of-7-step silent deferral, both caught only by the
+operator/reader, never by the harness.
+
+- **`## Step Status` inventory (the contract):** planning FIDs carry one
+  md-checkbox line per step — `[x]` = implemented; `[ ] … blocked::<reason>`
+  = must be presented to the operator; `deferred::`/`skipped::` are legal
+  ONLY with an explicit `operator-approved <YYYY-MM-DD>` marker. Every
+  other unimplemented step is `blocked` by construction.
+- **`validateFidStepStatus` (new, `packages/agent-runtime/src/echo/fid-validator.ts`):**
+  pure validator — errors on deferral markers missing the approval date,
+  on `converged`/`closed` declared over unresolved steps (listing them),
+  and reports orphan approval markers as non-blocking advisories. Barrel
+  export added.
+- **Pre-write transition gate (`pre-write-gates.ts`):** any FID write
+  declaring `**Status:** converged|closed` runs the step validator at the
+  write path — unresolved steps are a hard block naming the steps + the
+  mandated presentation line. Fires on both custom and native executors.
+- **Ledger archive scan (`scripts/fid-ledger.ts`):** `validateFidStepLedger`
+  scans active AND archived FIDs with a Step Status section; an archived
+  `closed` FID with unresolved steps fails `validate:repository` closed
+  (`fid.steps.unresolved`) — the class that made the 6-FID incident
+  invisible. Section-conditional: FIDs without the section are unaffected.
+- **Recorder + Adversary (`agents/recorder/recorder.ts`,
+  `agents/adversary/adversary.ts`):** Recorder must present blocked steps
+  before any converged/closed write, never archives unresolved steps, and
+  writes deferral markers only with operator approval + date; the
+  Adversary checklist gains a silent-deferral verification item.
+- **Build order:** `dev/build-orders/2026-0816-anti-deferral-gate-build-order.md`
+  marked SUPERSEDED → this FID (the EHEL verification-state draft was
+  verified already-shipped in cruder form and marked RESOLVED).
+
+Gates (all exit 0): agent-runtime suite 1001 pass / 0 fail (11 new
+fid-validator cases, 5 new pre-write-gate cases); `fid-ledger.test.ts` 9
+pass / 0 fail (4 new scan cases); typecheck ×4; eslint 0; lint:md 0;
+prettier clean; `validate:repository` PASS (the live tree has zero FIDs
+with a Step Status section, so the new scan is a clean no-op today).
+Closed + archived 2026-08-17.
 
 ## 2026-08-17 — FID-2026-0817-004: unauthorized coding-agent contributor credit purged + permanent watermark guard (closed)
 

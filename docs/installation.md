@@ -90,6 +90,33 @@ Shell environment variables take precedence over saved credentials.
 
 ---
 
+## Research keys (optional)
+
+Web search and documentation lookup (`web_search`, `read_docs`, `deep_research`)
+work **keylessly out of the box** — no setup required: search falls back to a
+free Qwant + DuckDuckGo port, and `read_docs` builds a self-populating local
+SQLite docset cache (`~/.savant-code/docsets/`).
+
+For higher-quality results or rate-limit headroom, opt into a
+Bring-Your-Own-Key source:
+
+```text
+/research-keys serper      # Serper web search
+/research-keys context7    # Context7 indexed docs
+/research-keys parallel    # Parallel search
+/research-keys tavily      # Tavily AI search
+/research-keys exa         # Exa neural search
+/research-keys firecrawl   # Firecrawl web search
+```
+
+Each command prompts for the key (masked input) and stores it in
+`credentials.json` alongside provider keys — never in chat history. The
+corresponding environment variables (`SERPER_API_KEY`, `CONTEXT7_API_KEY`,
+`PARALLEL_API_KEY`, `TAVILY_API_KEY`, `EXA_API_KEY`, `FIRECRAWL_API_KEY`) are
+read at boot and take precedence over the saved key.
+
+---
+
 ## First Launch
 
 1. **Install:** `npm install -g savant-code`
