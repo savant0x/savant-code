@@ -2,158 +2,17 @@ import { TextAttributes } from '@opentui/core'
 import React, { useRef, useState } from 'react'
 
 import { Button } from './button'
-import { MultilineInput, type MultilineInputHandle } from './multiline-input'
-import { Separator } from './separator'
+import {
+  CATEGORY_OPTIONS,
+  FEEDBACK_CONTAINER_HORIZONTAL_INSET,
+  FULL_CATEGORY_ROW_WIDTH,
+} from './feedback-category-options'
+import { FeedbackTextSection } from './feedback-text-section'
 import { useTheme } from '../hooks/use-theme'
-import { useChatStore } from '../state/chat-store'
-import { IS_SAVANT_FREE } from '../utils/constants'
-import { createTextPasteHandler } from '../utils/strings'
-import { isPlainEnterKey } from '../utils/terminal-enter-detection'
 import { BORDER_CHARS } from '../utils/ui-constants'
 
+import type { MultilineInputHandle } from './multiline-input'
 import type { FeedbackCategory } from '@savant-code/common/constants/feedback'
-
-type CategoryHighlightKey = 'success' | 'error' | 'warning' | 'info'
-
-type CategoryOption = {
-  id: FeedbackCategory
-  label: string
-  shortLabel: string
-  highlightKey: CategoryHighlightKey
-  placeholder: string
-}
-
-const CATEGORY_OPTIONS = [
-  {
-    id: 'good_result',
-    label: 'Good result',
-    shortLabel: 'Good',
-    highlightKey: 'success',
-    placeholder:
-      'What did you like? (e.g., "Fast and accurate", "Great explanation")',
-  },
-  {
-    id: 'bad_result',
-    label: 'Bad result',
-    shortLabel: 'Bad',
-    highlightKey: 'error',
-    placeholder:
-      'What went wrong? (e.g., "Incorrect changes", "Missed the requirement")',
-  },
-  {
-    id: 'app_bug',
-    label: 'App bug',
-    shortLabel: 'Bug',
-    highlightKey: 'warning',
-    placeholder: IS_SAVANT_FREE
-      ? 'Report a problem with SavantFree (crashes, errors, UI issues, etc.)'
-      : 'Report a problem with SavantCode (crashes, errors, UI issues, etc.)',
-  },
-  {
-    id: 'other',
-    label: 'Other',
-    shortLabel: 'Other',
-    highlightKey: 'info',
-    placeholder: 'Tell us more (what happened, what you expected)...',
-  },
-] as const satisfies readonly CategoryOption[]
-
-// Compile-time exhaustiveness: ensures every FeedbackCategory has a CATEGORY_OPTIONS entry.
-// If a new category is added to FEEDBACK_CATEGORIES, TypeScript will error here until
-// a corresponding entry is added to CATEGORY_OPTIONS above.
-type CoveredCategories = (typeof CATEGORY_OPTIONS)[number]['id']
-type _AssertAllCategoriesCovered = [FeedbackCategory] extends [
-  CoveredCategories,
-]
-  ? true
-  : never
-const _exhaustiveCheck: _AssertAllCategoriesCovered = true
-void _exhaustiveCheck
-
-const FEEDBACK_CONTAINER_HORIZONTAL_INSET = 4 // border + padding on each side
-const CATEGORY_BUTTON_EXTRA_WIDTH = 6 // indicator + padding + border
-const CATEGORY_BUTTON_GAP_WIDTH = 1
-
-const calculateCategoryRowWidth = (labels: readonly string[]): number =>
-  labels.reduce((total, label, idx) => {
-    const buttonWidth = label.length + CATEGORY_BUTTON_EXTRA_WIDTH
-    const gapWidth = idx === 0 ? 0 : CATEGORY_BUTTON_GAP_WIDTH
-    return total + buttonWidth + gapWidth
-  }, 0)
-
-const FULL_CATEGORY_ROW_WIDTH = calculateCategoryRowWidth(
-  CATEGORY_OPTIONS.map((opt) => opt.label),
-)
-
-interface FeedbackTextSectionProps {
-  value: string
-  cursor: number
-  onChange: (text: string) => void
-  onCursorChange: (cursor: number) => void
-  onSubmit: () => void
-  placeholder: string
-  inputRef?: React.MutableRefObject<MultilineInputHandle | null>
-  width: number
-  isSubmitting?: boolean
-}
-
-const FeedbackTextSection: React.FC<FeedbackTextSectionProps> = ({
-  value,
-  cursor,
-  onChange,
-  onCursorChange,
-  onSubmit,
-  placeholder,
-  inputRef,
-  width,
-  isSubmitting = false,
-}) => {
-  const inputFocused = useChatStore((state) => state.inputFocused)
-
-  return (
-    <>
-      {/* Top separator */}
-      <Separator width={width} widthOffset={4} />
-
-      {/* Feedback input */}
-      <box style={{ paddingTop: 0, paddingBottom: 0 }}>
-        <MultilineInput
-          value={value}
-          onChange={({ text, cursorPosition }) => {
-            onChange(text)
-            onCursorChange(cursorPosition)
-          }}
-          onSubmit={onSubmit}
-          onKeyIntercept={(key) => {
-            if (!isPlainEnterKey(key)) return false
-            // Just add newline on Enter
-            const newText = value.slice(0, cursor) + '\n' + value.slice(cursor)
-            onChange(newText)
-            onCursorChange(cursor + 1)
-            return true
-          }}
-          onPaste={createTextPasteHandler(
-            value,
-            cursor,
-            ({ text, cursorPosition }) => {
-              onChange(text)
-              onCursorChange(cursorPosition)
-            },
-          )}
-          placeholder={placeholder}
-          focused={inputFocused && !isSubmitting}
-          maxHeight={5}
-          minHeight={3}
-          ref={inputRef}
-          cursorPosition={cursor}
-        />
-      </box>
-
-      {/* Bottom separator */}
-      <Separator width={width} widthOffset={4} />
-    </>
-  )
-}
 
 interface FeedbackInputModeProps {
   value: string

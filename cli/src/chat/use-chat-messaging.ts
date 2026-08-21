@@ -8,8 +8,9 @@
 import { AnalyticsEvent } from '@savant-code/common/constants/analytics-events'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 
+import { useChatPendingBashFlush } from './use-chat-pending-bash-flush'
 import { extractDrivePlanDirective } from '../commands/auto-drive'
-import { addBashMessageToHistory, routeUserPrompt } from '../commands/router'
+import { routeUserPrompt } from '../commands/router'
 import { createLoopRunHandler } from '../hooks/run-outcome'
 import { useChatStreaming } from '../hooks/use-chat-streaming'
 import { useEvent } from '../hooks/use-event'
@@ -21,50 +22,11 @@ import { showClipboardMessage } from '../utils/clipboard'
 import { logger } from '../utils/logger'
 import { markFirstPromptSubmitted } from '../utils/settings'
 
-import type { MultilineInputHandle } from '../components/multiline-input'
+import type { UseChatMessagingArgs } from './use-chat-messaging-types'
 import type { SuggestedPromptSelection } from '../components/suggested-prompts'
-import type { useAgentValidation } from '../hooks/use-agent-validation'
-import type { ChatMessage } from '../types/chat'
-import type { SendMessageFn } from '../types/contracts/send-message'
-import type { InputValue, PendingBashMessage } from '../types/store'
-import type { User } from '../utils/auth'
 import type { AgentMode } from '../utils/constants'
-import type { UseMutationResult } from '@tanstack/react-query'
-import type { Dispatch, MutableRefObject, SetStateAction } from 'react'
 
-export interface UseChatMessagingArgs {
-  agentMode: AgentMode
-  agentId?: string
-  inputValue: string
-  inputRef: MutableRefObject<MultilineInputHandle | null>
-  messages: ChatMessage[]
-  pendingBashMessages: PendingBashMessage[]
-  setMessages: (
-    value: ChatMessage[] | ((prev: ChatMessage[]) => ChatMessage[]),
-  ) => void
-  setInputValue: (
-    value: InputValue | ((prev: InputValue) => InputValue),
-  ) => void
-  setInputFocused: (focused: boolean) => void
-  terminalWidth: number
-  separatorWidth: number
-  activeAgentStreamsRef: MutableRefObject<number>
-  isChainInProgressRef: MutableRefObject<boolean>
-  activeSubagentsRef: MutableRefObject<Set<string>>
-  abortControllerRef: MutableRefObject<AbortController | null>
-  sendMessageRef: MutableRefObject<SendMessageFn | undefined>
-  scrollToLatest: () => void
-  validateAgents: ReturnType<typeof useAgentValidation>['validate']
-  saveToHistory: (value: string) => void
-  continueChat: boolean
-  continueChatId?: string
-  subscriptionData: Parameters<typeof useSendMessage>[0]['subscriptionData']
-  setIsAuthenticated: Dispatch<SetStateAction<boolean | null>>
-  setUser: Dispatch<SetStateAction<User | null>>
-  logoutMutation: UseMutationResult<boolean, Error, void, unknown>
-  showSuggestedPrompts: boolean
-  setShowSuggestedPrompts: Dispatch<SetStateAction<boolean>>
-}
+export type { UseChatMessagingArgs } from './use-chat-messaging-types'
 
 export function useChatMessaging({
   agentMode,
@@ -136,44 +98,13 @@ export function useChatMessaging({
     sendMessageRef,
   })
 
-  // When streaming completes, flush any pending bash commands into history (ghost mode only)
-  // Non-ghost mode commands are already in history and will be cleared when user sends next message
-  useEffect(() => {
-    if (
-      !isStreaming &&
-      !streamMessageIdRef.current &&
-      !isChainInProgressRef.current &&
-      pendingBashMessages.length > 0
-    ) {
-      // Only flush ghost mode commands (those not already added to history) to UI
-      const ghostModeMessages = pendingBashMessages.filter(
-        (msg) => !msg.isRunning && !msg.addedToHistory,
-      )
-
-      // Add ghost mode messages to UI history
-      for (const msg of ghostModeMessages) {
-        addBashMessageToHistory({
-          command: msg.command,
-          stdout: msg.stdout,
-          stderr: msg.stderr ?? null,
-          exitCode: msg.exitCode,
-          cwd: msg.cwd || process.cwd(),
-          setMessages,
-        })
-      }
-
-      // Mark ghost mode messages as added to history (so they don't show as ghost UI)
-      // but keep them in pendingBashMessages so they get sent to LLM with next user message
-      if (ghostModeMessages.length > 0) {
-        const ghostIds = new Set(ghostModeMessages.map((m) => m.id))
-        useChatStore.setState((state) => ({
-          pendingBashMessages: state.pendingBashMessages.map((m) =>
-            ghostIds.has(m.id) ? { ...m, addedToHistory: true } : m,
-          ),
-        }))
-      }
-    }
-  }, [isStreaming, pendingBashMessages, setMessages])
+  useChatPendingBashFlush({
+    isStreaming,
+    streamMessageIdRef,
+    isChainInProgressRef,
+    pendingBashMessages,
+    setMessages,
+  })
 
   const { sendMessage, clearMessages } = useSendMessage({
     inputRef,

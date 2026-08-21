@@ -1,11 +1,15 @@
 import { AnalyticsEvent } from '@savant-code/common/constants/analytics-events'
-import { CHATGPT_OAUTH_ENABLED } from '@savant-code/common/constants/chatgpt-oauth'
 
 import { runBashCommand } from './bash'
+import { trackUserInputAnalytics } from './route-analytics'
+import {
+  routeChatGptCode,
+  routeImageMode,
+  sendModePrompt,
+} from './route-input-modes'
+import { routeKeySetup } from './route-key-setup'
 import { handleChatGptAuthCode } from '../../components/chatgpt-connect-banner'
-import { getProjectRoot } from '../../project-files'
 import { useChatStore } from '../../state/chat-store'
-import { useSavantFreeSessionStore } from '../../state/savant-free-session-store'
 import { trackEvent } from '../../utils/analytics'
 import { showClipboardMessage } from '../../utils/clipboard'
 import { IS_SAVANT_FREE } from '../../utils/constants'
@@ -14,7 +18,6 @@ import {
   capturePendingAttachments,
   hasProcessingFiles,
   hasProcessingImages,
-  validateAndAddImage,
 } from '../../utils/pending-attachments'
 import {
   getActiveProviderSetup,
@@ -32,11 +35,6 @@ import {
   type CommandResult,
 } from '../command-registry'
 import { handleDesignCreateIntent } from '../design'
-import {
-  buildInterviewPrompt,
-  buildPlanPrompt,
-  buildReviewPrompt,
-} from '../prompt-builders'
 import { isSlashCommand, parseCommandInput } from '../router-utils'
 
 export async function routeUserPrompt(
@@ -73,47 +71,13 @@ export async function routeUserPrompt(
   if (!trimmed && !hasAttachments) return
 
   // Track user input complete
-  // Count @ mentions (simple pattern match - more accurate than nothing)
-  const mentionMatches = trimmed.match(/@\S+/g) || []
-  trackEvent(AnalyticsEvent.USER_INPUT_COMPLETE, {
-    inputLength: trimmed.length,
-    mode: agentMode,
+  trackUserInputAnalytics({
+    trimmed,
+    agentMode,
     inputMode,
-    hasImages: pendingImages.length > 0,
-    imageCount: pendingImages.length,
-    hasTextAttachments: pendingTextAttachments.length > 0,
-    textAttachmentCount: pendingTextAttachments.length,
-    isSlashCommand: isSlashCommand(trimmed),
-    isBashCommand: trimmed.startsWith('!'),
-    hasMentions: mentionMatches.length > 0,
-    mentionCount: mentionMatches.length,
+    pendingImagesCount: pendingImages.length,
+    pendingTextAttachmentsCount: pendingTextAttachments.length,
   })
-
-  // DAU signal: one un-sampled event per user-submitted prompt. The CLI's
-  // distinct id resolves to the canonical savant-code user id (anonymous id is
-  // aliased to the real user id on login), matching the web and chat surfaces
-  // so combined DAU is a single unique-users query. SavantFree-only: savant-code
-  // CLI usage is intentionally excluded.
-  if (IS_SAVANT_FREE) {
-    const savantFreeSession = useSavantFreeSessionStore.getState().session
-    const accessTier: string =
-      savantFreeSession &&
-      typeof (savantFreeSession as { accessTier?: string }).accessTier ===
-        'string'
-        ? (savantFreeSession as { accessTier: string }).accessTier
-        : 'unknown'
-
-    trackEvent(AnalyticsEvent.MESSAGE_SENT, {
-      surface: 'cli',
-      accessTier,
-      mode: agentMode,
-      inputMode,
-      inputLength: trimmed.length,
-      isSlashCommand: isSlashCommand(trimmed),
-      isBashCommand: trimmed.startsWith('!'),
-      hasImages: pendingImages.length > 0,
-    })
-  }
 
   // Handle bash mode commands
   if (inputMode === 'bash') {
@@ -130,49 +94,19 @@ export async function routeUserPrompt(
 
   // Handle plan mode input
   if (inputMode === 'plan') {
-    if (!trimmed) return
-    saveToHistory(trimmed)
-    setInputValue({ text: '', cursorPosition: 0, lastEditDueToNav: false })
-    setInputMode('default')
-    setInputFocused(true)
-    inputRef.current?.focus()
-
-    sendMessage({ content: buildPlanPrompt(trimmed), agentMode })
-    setTimeout(() => {
-      scrollToLatest()
-    }, 0)
+    sendModePrompt(params, setInputMode, 'plan', trimmed)
     return
   }
 
   // Handle interview mode input
   if (inputMode === 'interview') {
-    if (!trimmed) return
-    saveToHistory(trimmed)
-    setInputValue({ text: '', cursorPosition: 0, lastEditDueToNav: false })
-    setInputMode('default')
-    setInputFocused(true)
-    inputRef.current?.focus()
-
-    sendMessage({ content: buildInterviewPrompt(trimmed), agentMode })
-    setTimeout(() => {
-      scrollToLatest()
-    }, 0)
+    sendModePrompt(params, setInputMode, 'interview', trimmed)
     return
   }
 
   // Handle review mode input
   if (inputMode === 'review') {
-    if (!trimmed) return
-    saveToHistory(trimmed)
-    setInputValue({ text: '', cursorPosition: 0, lastEditDueToNav: false })
-    setInputMode('default')
-    setInputFocused(true)
-    inputRef.current?.focus()
-
-    sendMessage({ content: buildReviewPrompt('custom', trimmed), agentMode })
-    setTimeout(() => {
-      scrollToLatest()
-    }, 0)
+    sendModePrompt(params, setInputMode, 'review', trimmed)
     return
   }
 
@@ -187,132 +121,58 @@ export async function routeUserPrompt(
 
   // Handle image mode input
   if (inputMode === 'image') {
-    const imagePath = trimmed
-    const projectRoot = getProjectRoot()
-
-    // Validate and add the image (handles path resolution, format check, and processing)
-    const result = await validateAndAddImage(imagePath, projectRoot)
-    if (!result.success) {
-      setMessages((prev) => [
-        ...prev,
-        getUserMessage(trimmed),
-        getSystemMessage(`❌ ${result.error}`),
-      ])
-    }
-
-    // Note: No system message added here - the PendingImagesBanner shows attached images
-    saveToHistory(trimmed)
-    setInputValue({ text: '', cursorPosition: 0, lastEditDueToNav: false })
-    setInputMode('default')
+    await routeImageMode(params, setInputMode, trimmed)
     return
   }
 
   // Handle provider API-key setup without writing the secret to chat history.
   if (inputMode === 'providerSetup') {
     const provider = getActiveProviderSetup()
-    const info = getProviderSetupInfo(provider)
-    if (!info) {
-      setMessages((prev) => [
-        ...prev,
-        getSystemMessage(
-          'Provider setup is unavailable. Use /provider to try again.',
-        ),
-      ])
-    } else if (!trimmed) {
-      setMessages((prev) => [
-        ...prev,
-        getSystemMessage(`${info.label} API key cannot be empty.`),
-      ])
-    } else {
-      try {
-        saveProviderApiKey(provider, trimmed)
-        setMessages((prev) => [
-          ...prev,
-          getSystemMessage(
-            `${info.label} API key saved locally. You can now use the configured provider model.`,
-          ),
-        ])
-      } catch {
-        setMessages((prev) => [
-          ...prev,
-          getSystemMessage(
-            `Could not save the ${info.label} API key. Check your local configuration permissions and try again.`,
-          ),
-        ])
-      }
-    }
-
-    // Never save or display the secret itself, and always return to normal input.
-    setInputValue({ text: '', cursorPosition: 0, lastEditDueToNav: false })
-    setInputMode('default')
-    setInputFocused(true)
-    inputRef.current?.focus()
+    routeKeySetup({
+      trimmed,
+      setInputValue,
+      setInputMode,
+      setInputFocused,
+      inputRef,
+      setMessages,
+      getInfo: () => getProviderSetupInfo(provider),
+      saveKey: (value) => saveProviderApiKey(provider, value),
+      unavailableMessage:
+        'Provider setup is unavailable. Use /provider to try again.',
+      successMessage: (label) =>
+        `${label} API key saved locally. You can now use the configured provider model.`,
+    })
     return
   }
 
   // Handle research API-key setup (BYOK) — mirrors provider key handling.
   if (inputMode === 'researchKeySetup') {
     const service = getActiveResearchKeyService()
-    const info = getResearchKeyServiceInfo(service)
-    if (!info) {
-      setMessages((prev) => [
-        ...prev,
-        getSystemMessage(
-          'Research key setup is unavailable. Use /research-keys to try again.',
-        ),
-      ])
-    } else if (!trimmed) {
-      setMessages((prev) => [
-        ...prev,
-        getSystemMessage(`${info.label} API key cannot be empty.`),
-      ])
-    } else {
-      try {
-        saveResearchApiKey(service, trimmed)
-        setMessages((prev) => [
-          ...prev,
-          getSystemMessage(
-            `${info.label} API key saved locally. Research tools will use it when available.`,
-          ),
-        ])
-      } catch {
-        setMessages((prev) => [
-          ...prev,
-          getSystemMessage(
-            `Could not save the ${info.label} API key. Check your local configuration permissions and try again.`,
-          ),
-        ])
-      }
-    }
-
-    // Never save or display the secret itself, and always return to normal input.
-    setInputValue({ text: '', cursorPosition: 0, lastEditDueToNav: false })
-    setInputMode('default')
-    setInputFocused(true)
-    inputRef.current?.focus()
+    routeKeySetup({
+      trimmed,
+      setInputValue,
+      setInputMode,
+      setInputFocused,
+      inputRef,
+      setMessages,
+      getInfo: () => getResearchKeyServiceInfo(service),
+      saveKey: (value) => saveResearchApiKey(service, value),
+      unavailableMessage:
+        'Research key setup is unavailable. Use /research-keys to try again.',
+      successMessage: (label) =>
+        `${label} API key saved locally. Research tools will use it when available.`,
+    })
     return
   }
 
   // Handle connect:chatgpt mode input (authorization code)
   if (inputMode === 'connect:chatgpt') {
-    if (!CHATGPT_OAUTH_ENABLED) {
-      setInputMode('default')
-      return
-    }
-
-    const code = trimmed
-    if (code) {
-      const result = await exchangeChatGptAuthCode(code)
-      setMessages((prev) => [
-        ...prev,
-        getUserMessage(trimmed),
-        getSystemMessage(result.message),
-      ])
-    }
-
-    saveToHistory(trimmed)
-    setInputValue({ text: '', cursorPosition: 0, lastEditDueToNav: false })
-    setInputMode('default')
+    await routeChatGptCode(
+      params,
+      setInputMode,
+      trimmed,
+      exchangeChatGptAuthCode,
+    )
     return
   }
 

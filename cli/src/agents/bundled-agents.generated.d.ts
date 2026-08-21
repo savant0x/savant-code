@@ -1,10 +1,9 @@
 /**
  * Type declarations for the auto-generated bundled agents module.
  *
- * The actual file (bundled-agents.generated.ts) is created by
- * cli/scripts/prebuild-agents.ts and is gitignored. This declaration
- * file lets TypeScript resolve the module when the generated file
- * has not been built yet.
+ * The implementation and per-agent data modules are created by
+ * cli/scripts/prebuild-agents.ts and are gitignored. This declaration
+ * file lets TypeScript resolve the public module before generation.
  */
 import type { LocalAgentInfo } from '../utils/local-agent-registry'
 

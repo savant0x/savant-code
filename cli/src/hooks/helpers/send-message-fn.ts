@@ -1,27 +1,13 @@
-import { handleRunCompletion, setupStreamingContext } from './send-message'
-import {
-  prepareUserMessageForSend,
-  validateBeforeSend,
-  type QueueResetDeps,
-} from './send-message-failure'
-import { createRunLifecycle } from './send-message-lifecycle'
+import { handleRunCompletion } from './send-message'
+import { type QueueResetDeps } from './send-message-failure'
 import { startRunMonitors } from './send-message-monitors'
+import { prepareSendRun } from './send-message-prepare'
 import { buildSendRunConfig } from './send-message-run-config'
-import {
-  enforceSavantFreeSession,
-  initSavantCodeClientForSend,
-} from './send-message-session'
 import { createSidebarEventCallbacks } from './send-message-sidebar'
 import { finalizeRunStreaming, handleRunCatch } from './send-message-stream'
 import { useChatStore } from '../../state/chat-store'
 import { loadAgentDefinitions } from '../../utils/local-agent-registry'
 import { logger } from '../../utils/logger'
-import {
-  autoCollapsePreviousMessages,
-  createAiMessageShell,
-  generateAiMessageId,
-} from '../../utils/send-message-helpers'
-import { createSendMessageTimerController } from '../../utils/send-message-timer'
 import { createRunOutcomeReporter } from '../run-outcome'
 
 import type { SendMessageFn } from '../../types/contracts/send-message'
@@ -95,131 +81,60 @@ export const createSendMessageBody = (
       isQueuePausedRef,
     }
 
-    // SavantFree run-start guard: without a live session slot the server
-    // rejects the request outright, consuming the message. It is held at the
-    // head of the queue instead and resumes when the user rejoins from the
-    // session-ended banner (see enforceSavantFreeSession).
-    if (
-      !enforceSavantFreeSession({
-        reportRunOutcome,
-        requeueMessageAtFront,
-        content,
-        attachments,
-        queueReset,
-      })
-    ) {
-      return
-    }
-
-    setHasReceivedPlanResponse(false)
-
-    // Initialize timer for elapsed time tracking
-    const timerController = createSendMessageTimerController({
+    // Pre-stream preparation (SavantFree guard, message prep, validation,
+    // focus/FSM reset, client init, streaming context, AI shell, lifecycle
+    // open) moved verbatim to send-message-prepare.ts (Loop 132).
+    const preparedRun = await prepareSendRun({
+      reportRunOutcome,
+      requeueMessageAtFront,
+      queueReset,
+      setHasReceivedPlanResponse,
       mainAgentTimer,
       onTimerEvent,
       agentId,
-    })
-    setIsRetrying(false)
-
-    // Prepare user message (bash context, images, text attachments, mode divider)
-    const prepared = await prepareUserMessageForSend({
+      setIsRetrying,
       prepareUserMessage,
+      setMessages,
+      onBeforeMessageSend,
+      scrollToLatest,
+      setFocusedAgentId,
+      setInputFocused,
+      inputRef,
+      streamRefs,
+      abortControllerRef,
+      setStreamStatus,
+      setCanProcessQueue,
+      isQueuePausedRef,
+      isProcessingQueueRef,
+      updateChainInProgress,
+      setStreamingAgents,
+      previousRunStateRef,
+      setRunState,
       content,
       agentMode,
       postUserMessage,
       attachments,
-      reportRunOutcome,
-      logger,
-      setMessages,
-      queueReset,
     })
-    if (!prepared) {
+    if (!preparedRun) {
       return
     }
     const {
-      userMessageId,
+      client,
+      updater,
+      hasReceivedContentRef,
+      abortController,
+      aiMessageId,
+      timerController,
+      finalContent,
       messageContent,
       bashContextForPrompt,
-      finalContent,
-    } = prepared
-
-    // Validate before sending (e.g., agent config checks)
-    if (
-      !(await validateBeforeSend({
-        onBeforeMessageSend,
-        userMessageId,
-        setMessages,
-        reportRunOutcome,
-        logger,
-        scrollToLatest,
-        queueReset,
-      }))
-    ) {
-      return
-    }
-
-    // Reset UI focus state
-    setFocusedAgentId(null)
-    setInputFocused(true)
-    inputRef.current?.focus()
-
-    // Reset FSM phase to idle on new user message (FID-2026-0718-008 Fix 9b)
-    useChatStore.getState().onNewUserMessage()
-
-    // Get SDK client (surfaces a branded error banner and resets chain/queue
-    // state when the client can't be initialized).
-    const client = await initSavantCodeClientForSend({
-      reportRunOutcome,
-      setMessages,
-      scrollToLatest,
-      queueReset,
-    })
-    if (!client) {
-      return
-    }
-
-    // Create AI message shell and setup streaming context
-    const aiMessageId = generateAiMessageId()
-    const aiMessage = createAiMessageShell(aiMessageId)
-
-    const { updater, hasReceivedContentRef, abortController } =
-      setupStreamingContext({
-        aiMessageId,
-        timerController,
-        setMessages,
-        streamRefs,
-        abortControllerRef,
-        setStreamStatus,
-        setCanProcessQueue,
-        isQueuePausedRef,
-        isProcessingQueueRef,
-        updateChainInProgress,
-        setIsRetrying,
-        setStreamingAgents,
-      })
-    setStreamStatus('waiting')
-    // Combine auto-collapse and AI message addition into single atomic update
-    // to prevent flicker from intermediate render states
-    setMessages((prev) => [
-      ...autoCollapsePreviousMessages(prev, aiMessageId),
-      aiMessage,
-    ])
+      runLifecycle,
+      checkpointDir,
+    } = preparedRun
     // Note: updateChainInProgress(true) and setCanProcessQueue(false) are already
     // called at the start of sendMessage to ensure they happen synchronously
     // before any async work, so the router can correctly detect busy state.
     let actualCredits: number | undefined
-
-    // Open this run's chat-directory lifecycle (checkpoint, live-state
-    // provider, chat-switch aborter, initial checkpoint save).
-    const runLifecycle = createRunLifecycle({
-      previousRunStateRef,
-      abortController,
-      aiMessageId,
-      finalContent,
-      setRunState,
-      setIsRetrying,
-    })
-    const { checkpointDir } = runLifecycle.start()
 
     // Execute SDK run with streaming handlers
     try {

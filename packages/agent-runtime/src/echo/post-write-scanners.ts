@@ -78,7 +78,18 @@ export function runPostWriteScanners(params: {
   const violations: string[] = []
 
   // ── Law 15: Build stays clean ───────────────────────────────────────
-  if (!params.state.hasVerifiedSinceLastDirty) {
+  // Cumulative verification credit (FID-2026-0819-001): a dirty file is
+  // clean once it appears in verifiedFiles. The legacy
+  // hasVerifiedSinceLastDirty latch deadlocked strict-mode turn end
+  // (FID-2026-0820-014 EC-1): it is set false by every write and only
+  // cleared by resetForNewTurn — which never runs while the scanner keeps
+  // blocking — so a fully verified turn could never complete. Same
+  // unverified-dirty predicate as the pre-write Law 3 gate and
+  // evaluateTurnEnd's Law 15 check — one source of truth.
+  const unverifiedDirty = [...params.state.dirtyFiles].filter(
+    (f) => !params.state.verifiedFiles.has(f),
+  )
+  if (unverifiedDirty.length > 0) {
     const msg =
       'Law 15: Build stays clean — writes exist without ' +
       'verification (typecheck/lint)'

@@ -1,20 +1,18 @@
 import { useRenderer } from '@opentui/react'
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useMemo } from 'react'
 
-import { Button } from './button'
+import { LoginUrlSection } from './login-url-section'
 import { useLoginMutation } from '../hooks/use-auth-query'
 import { useClipboard } from '../hooks/use-clipboard'
 import { useFetchLoginUrl } from '../hooks/use-fetch-login-url'
 import { useLoginKeyboardHandlers } from '../hooks/use-login-keyboard-handlers'
+import { useLoginModalActions } from '../hooks/use-login-modal-actions'
 import { useLoginPolling } from '../hooks/use-login-polling'
 import { useLogo } from '../hooks/use-logo'
 import { useTheme } from '../hooks/use-theme'
 import { formatUrl, calculateResponsiveLayout } from '../login/utils'
 import { useLoginStore } from '../state/login-store'
-import { copyTextToClipboard, isRemoteSession } from '../utils/clipboard'
-import { IS_SAVANT_FREE } from '../utils/constants'
-import { getFingerprintId } from '../utils/fingerprint'
-import { logger } from '../utils/logger'
+import { isRemoteSession } from '../utils/clipboard'
 
 import type { User } from '../utils/auth'
 
@@ -42,20 +40,12 @@ export const LoginModal = ({
     hasOpenedBrowser,
     justCopied,
     setLoginUrl,
-    setLoading,
     setError,
-    setFingerprintId,
     setFingerprintHash,
     setExpiresAt,
     setIsWaitingForEnter,
     setHasOpenedBrowser,
-    setCopyMessage,
-    setJustCopied,
-    setHasClickedLink,
   } = useLoginStore()
-
-  // Track hover state for copy button
-  const [isCopyButtonHovered, setIsCopyButtonHovered] = useState(false)
 
   // Use TanStack Query for login mutation
   const loginMutation = useLoginMutation()
@@ -70,102 +60,17 @@ export const LoginModal = ({
     setError,
   })
 
-  // Copy to clipboard function
-  const copyToClipboard = useCallback(
-    async (text: string) => {
-      if (!text || text.trim().length === 0) return
-
-      setHasClickedLink(true)
-
-      try {
-        await copyTextToClipboard(text, {
-          suppressGlobalMessage: true,
-        })
-
-        setJustCopied(true)
-        setCopyMessage('✓ URL copied to clipboard!')
-        setTimeout(() => {
-          setCopyMessage(null)
-          setJustCopied(false)
-        }, 3000)
-      } catch (err) {
-        // Silently fail - the URL is visible for manual copying
-        logger.error(err, 'Failed to copy to clipboard')
-      }
-    },
-    [setHasClickedLink, setJustCopied, setCopyMessage],
-  )
-
-  // Fetch login URL and open browser using mutation
-  const fetchLoginUrlAndOpenBrowser = useCallback(async () => {
-    if (loading || hasOpenedBrowser) return
-
-    setLoading(true)
-    setError(null)
-
-    // Near-instant after the prefetch in initializeApp; falls back to the
-    // sync legacy fingerprint if hardware hashing fails.
-    const id = await getFingerprintId()
-    setFingerprintId(id)
-
-    fetchLoginUrlMutation.mutate(id, {
-      onSettled: () => {
-        setLoading(false)
-      },
-    })
-  }, [
-    loading,
-    hasOpenedBrowser,
-    setLoading,
-    setError,
-    setFingerprintId,
+  const {
+    copyToClipboard,
+    fetchLoginUrlAndOpenBrowser,
+    handleLoginSuccess,
+    handleTimeout,
+    handlePollingError,
+  } = useLoginModalActions({
+    loginMutation,
     fetchLoginUrlMutation,
-  ])
-
-  // Store mutation and callback in refs to prevent effect re-runs
-  const loginMutationRef = useRef(loginMutation)
-  const onLoginSuccessRef = useRef(onLoginSuccess)
-
-  useEffect(() => {
-    loginMutationRef.current = loginMutation
-  }, [loginMutation])
-
-  useEffect(() => {
-    onLoginSuccessRef.current = onLoginSuccess
-  }, [onLoginSuccess])
-
-  // Handle successful login from polling
-  const handleLoginSuccess = useCallback((user: User) => {
-    loginMutationRef.current.mutate(user, {
-      onSuccess: (validatedUser) => {
-        onLoginSuccessRef.current(validatedUser)
-      },
-      onError: (error) => {
-        logger.error(
-          {
-            error: error instanceof Error ? error.message : String(error),
-          },
-          '❌ Login validation failed, proceeding with raw user',
-        )
-        onLoginSuccessRef.current(user)
-      },
-    })
-  }, [])
-
-  // Handle polling timeout
-  const handleTimeout = useCallback(() => {
-    setError('Login timed out. Please try again.')
-    setIsWaitingForEnter(false)
-  }, [setError, setIsWaitingForEnter])
-
-  // Handle polling error
-  const handlePollingError = useCallback(
-    (pollingError: string) => {
-      setError(pollingError)
-      setIsWaitingForEnter(false)
-    },
-    [setError, setIsWaitingForEnter],
-  )
+    onLoginSuccess,
+  })
 
   // Use custom hook for login polling
   useLoginPolling({
@@ -341,108 +246,20 @@ export const LoginModal = ({
 
         {/* After pressing enter - show URL prominently for all users */}
         {!loading && !error && loginUrl && hasOpenedBrowser && (
-          <box
-            style={{
-              flexDirection: 'column',
-              alignItems: 'center',
-              marginBottom: sectionMarginBottom,
-              maxWidth: contentMaxWidth,
-              flexShrink: 0,
-              gap: isVerySmall ? 0 : 1,
-            }}
-          >
-            <text style={{ wrapMode: 'word' }}>
-              <span fg={theme.foreground}>
-                {isNarrow
-                  ? 'Open this URL to login:'
-                  : 'Open this URL in your browser to login:'}
-              </span>
-            </text>
-            <box
-              style={{
-                width: '100%',
-                flexShrink: 0,
-                flexDirection: 'column',
-                alignItems: 'flex-start',
-              }}
-            >
-              {loginUrlLines.map((line, index) => (
-                <text key={index} style={{ wrapMode: 'none' }}>
-                  <span
-                    fg={
-                      justCopied
-                        ? theme.success
-                        : hasSelection
-                          ? theme.info
-                          : theme.primary
-                    }
-                  >
-                    {line}
-                  </span>
-                </text>
-              ))}
-            </box>
-            {loginUrlWrapped && (
-              <text style={{ wrapMode: 'word' }}>
-                <span fg={theme.warning}>
-                  ⚠ The link wraps across lines — clicking it will cut it off.
-                  Press c to copy the full link instead.
-                </span>
-              </text>
-            )}
-            <box
-              style={{
-                flexDirection: 'column',
-                alignItems: 'center',
-                width: '100%',
-                flexShrink: 0,
-              }}
-            >
-              <Button
-                onClick={() => copyToClipboard(loginUrl)}
-                onMouseOver={() => setIsCopyButtonHovered(true)}
-                onMouseOut={() => setIsCopyButtonHovered(false)}
-              >
-                <text>
-                  <span
-                    fg={
-                      justCopied
-                        ? theme.foreground
-                        : isCopyButtonHovered
-                          ? theme.foreground
-                          : theme.primary
-                    }
-                  >
-                    {justCopied ? '[ ✓ Copied! ]' : '[ Copy link (c) ]'}
-                  </span>
-                </text>
-              </Button>
-            </box>
-            <box
-              style={{
-                marginTop: isVerySmall ? 1 : 2,
-                flexDirection: 'column',
-                alignItems: 'center',
-                width: '100%',
-                flexShrink: 0,
-              }}
-            >
-              <text style={{ wrapMode: 'none' }}>
-                <span fg={theme.secondary}>Waiting for login...</span>
-              </text>
-              {isRemoteSession() && !isVerySmall && (
-                <text style={{ wrapMode: 'word' }}>
-                  <span fg={theme.secondary}>
-                    Tip: Can't copy? Exit and run{' '}
-                  </span>
-                  <span fg={theme.primary}>
-                    {IS_SAVANT_FREE ? 'savant-free' : 'savant-code'} login
-                  </span>
-                  <span fg={theme.secondary}> instead.</span>
-                </text>
-              )}
-            </box>
-          </box>
+          <LoginUrlSection
+            loginUrl={loginUrl}
+            loginUrlLines={loginUrlLines}
+            loginUrlWrapped={loginUrlWrapped}
+            justCopied={justCopied}
+            hasSelection={hasSelection}
+            isVerySmall={isVerySmall}
+            isNarrow={isNarrow}
+            isRemote={isRemoteSession()}
+            contentMaxWidth={contentMaxWidth}
+            sectionMarginBottom={sectionMarginBottom}
+            theme={theme}
+            onCopy={copyToClipboard}
+          />
         )}
       </box>
     </box>

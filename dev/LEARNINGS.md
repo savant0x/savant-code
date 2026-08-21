@@ -1,5 +1,87 @@
 # LEARNINGS
 
+## Lesson: Active-ledger status admission — converged is not an active status
+
+- **Date:** 2026-08-21
+- **Failure:** The desktop master FID was authored with `**Status:** converged`
+  (a value ECHO.md's status vocabulary lists as allowed), and
+  `validate:repository` flagged it as a non-active ledger status — while its
+  six unchecked Step Status items cascaded into hard `fid.steps.unresolved`
+  failures, because the anti-deferral gate treats `converged`/`closed` as
+  closure-claiming statuses.
+- **Evidence:** scripts/fid-ledger.ts → symbol:ALLOWED_ACTIVE_STATUSES,
+  packages/agent-runtime/src/echo/fid-validator.ts → symbol:validateFidStepStatus
+- **Invariant:** Files living in `dev/fids/` may carry only
+  `created | analyzed | fixed | verified`. A loop-converged planning FID stays
+  `analyzed` until its phase is implemented; `converged` documents loop state,
+  not an admissible active-queue status.
+- **Guard:** Before setting a planning FID's status, admit only the four
+  active statuses; re-run `bun run validate:repository` (or the fid-ledger
+  probe) after any FID metadata edit.
+- **Verification:** FID-2026-0820-007 → `analyzed`: fid-ledger probe 32 → 0;
+  `validate:repository` 200 → 168 (quality-only, intentional).
+- **Scope:** internal
+- **Owning FID:** FID-2026-0820-007
+- **Status:** active
+- **Canonical rule:** active-ledger-status-admission
+
+## Lesson: FID metadata carries no attribution fields
+
+- **Date:** 2026-08-21
+- **Failure:** Five desktop-suite FIDs carried `**Author:** Savant
+  (Orchestrator)` metadata; each was flagged by the ledger's
+  forbidden-attribution policy, and the current FID template has no Author
+  field at all — it was replaced by `YAGNI-Compliance:` in the
+  no-attribution governance sweep.
+- **Evidence:** scripts/fid-ledger.ts → symbol:FORBIDDEN_ATTRIBUTION
+- **Invariant:** FID documents carry no author/attribution metadata — lines
+  matching `**Author:`, `**Fixed By:`, `**Verified By:`, or `**Signed By:`
+  are forbidden; documents speak for themselves.
+- **Guard:** Author new FIDs from the current `templates/FID-TEMPLATE.md`
+  (never from older FIDs' headers); grep new FIDs for the four forbidden
+  prefixes before writing. ECHO.md's stale required-Author rule is a known
+  doc bug (see session summary 2026-08-21-0314).
+- **Verification:** All five Author lines removed across
+  FID-2026-0820-007..011; fid-ledger probe reports zero attribution findings.
+- **Scope:** internal
+- **Owning FID:** FID-2026-0820-007
+- **Status:** active
+- **Canonical rule:** no-attribution-fid-metadata
+
+## Lesson: Files over the 100k-character tool read limit break string-replace editing
+
+- **Date:** 2026-08-21
+- **Failure:** str_replace and read_files silently fail to match content near the tail of `SCOPE.md` once it reached
+  102,314 chars (the read path truncates at 100,000), reporting old-string-not-found for content that grep confirms
+  exists — and six apply_patch attempts with removal-style hunks also failed to serialize.
+- **Evidence:** SCOPE.md → heading:Task 7 — Quality-ratchet manual remediation (2026-08-20)
+- **Invariant:** For any file near or above 100,000 chars, tail edits go through apply_patch with exact FULL-LINE
+  context (partial context lines are rejected), never str_replace.
+- **Guard:** Check `wc -c` before choosing the edit tool; prefer insert-only apply_patch hunks; removal hunks whose
+  removed line begins with a dash repeatedly failed to serialize.
+- **Verification:** The QR-HH/QR-II/QR-IJ and pause-record edits succeeded via apply_patch after str_replace failures;
+  the full record is in FID-2026-0819-005 (Program Paused section); markdownlint and Prettier pass on the edited file.
+- **Scope:** internal
+- **Owning FID:** FID-2026-0819-005
+- **Status:** active
+- **Canonical rule:** large-file-edits-via-apply-patch
+
+## Lesson: Static-string decompositions require a byte-identity hash gate
+
+- **Date:** 2026-08-21
+- **Failure:** Splitting a static template-literal payload across modules can silently corrupt whitespace or escape
+  sequences, and tests may not catch it.
+- **Evidence:** cli/src/commands/graph-export/universe-app-script.ts → symbol:UNIVERSE_APP_SCRIPT
+- **Invariant:** Capture length + SHA-256 of the original constant BEFORE splitting; after the split,
+  the concatenating facade must reproduce both exactly or the loop fails.
+- **Guard:** A bun -e probe with node:crypto runs before and after the split; any mismatch aborts the loop.
+- **Verification:** Loop 135 (len=7056) and Loop 136 (len=82450) probes byte-identical — the same gate applied to
+  EXPORT_CSS_PART_2; recorded in FID-2026-0819-005.
+- **Scope:** internal
+- **Owning FID:** FID-2026-0819-005
+- **Status:** active
+- **Canonical rule:** string-split-byte-identity-gate
+
 ## Lesson: Brand colors must be traced to provenance, not inherited from code
 
 - **Date:** 2026-08-16

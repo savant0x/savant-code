@@ -5,8 +5,8 @@
 // - logAsErrorIfNeeded.toTrack.data       → `unknown` → `LogValue`; inline safeToJSONValue conversion for logError
 // - logger wrappers (data: unknown, msg?: string, ...args: unknown[]) → `LogValue`
 // - pino call site                        → typed with `LogValue` and final `as unknown as Record<LogLevel, pino.LogFn>` cast
-import { appendFileSync, existsSync, mkdirSync, unlinkSync } from 'fs'
-import path, { dirname } from 'path'
+import { appendFileSync } from 'fs'
+import path from 'path'
 import { format as stringFormat } from 'util'
 
 import { AnalyticsEvent } from '@savant-code/common/constants/analytics-events'
@@ -19,7 +19,6 @@ import {
 } from '@savant-code/common/util/analytics-sampling'
 import { getAxiomOnlyLogEvent } from '@savant-code/common/util/axiom-only-log'
 import { safeToJSONValue } from '@savant-code/common/util/type-narrowing'
-import { pino } from 'pino'
 
 import { getCurrentChatDir, getProjectRoot } from '../../project-files'
 import {
@@ -36,14 +35,19 @@ import {
   isEmptyObject,
   type LoggerContext,
 } from './context'
+import {
+  CHAT_LOG_FILENAME,
+  getLogPath,
+  getPinoLogger,
+  setLogPath,
+} from './file-sink'
 import { sanitizeSecrets, safeStringify } from './sanitize'
+
+export { CHAT_LOG_FILENAME, clearLogFile } from './file-sink'
 
 import type { LogRecordInput } from '@savant-code/common/schemas/logs'
 import type { LogValue } from '@savant-code/common/types/contracts/logger'
 import type { JSONValue } from '@savant-code/common/types/json'
-
-/** Name of the per-chat debug log file written in production builds */
-export const CHAT_LOG_FILENAME = 'log.jsonl'
 
 export const loggingLevels = [
   'info',
@@ -53,9 +57,6 @@ export const loggingLevels = [
   'fatal',
 ] as const
 export type LogLevel = (typeof loggingLevels)[number]
-
-let logPath: string | undefined = undefined
-let pinoLogger: pino.Logger | undefined = undefined
 
 const analyticsDispatcher = createAnalyticsDispatcher({
   envName: env.NEXT_PUBLIC_CB_ENVIRONMENT,
@@ -67,58 +68,6 @@ registerAnalyticsConsentListener((enabled) => {
     analyticsDispatcher.clearBuffer()
   }
 })
-
-function setLogPath(p: string): void {
-  if (p === logPath) return // nothing to do
-
-  logPath = p
-  mkdirSync(dirname(p), { recursive: true })
-
-  // ──────────────────────────────────────────────────────────────
-  //  pino.destination(..) → SonicBoom stream, no worker thread
-  // ──────────────────────────────────────────────────────────────
-  const fileStream = pino.destination({
-    dest: p, // absolute or relative file path
-    mkdir: true, // create parent dirs if they don't exist
-    sync: true, // set true if you *must* block on every write
-  })
-
-  pinoLogger = pino(
-    {
-      level: 'debug',
-      formatters: {
-        level: (label) => ({ level: label.toUpperCase() }),
-      },
-      timestamp: () => `,"timestamp":"${new Date().toISOString()}"`,
-    },
-    fileStream, // <-- no worker thread involved
-  )
-}
-
-export function clearLogFile(): void {
-  const projectRoot = getProjectRoot()
-  const debugDir = path.join(projectRoot, 'debug')
-  const targets = new Set<string>()
-
-  if (logPath) {
-    targets.add(logPath)
-  }
-  targets.add(path.join(debugDir, 'cli.jsonl'))
-  targets.add(path.join(debugDir, 'trace.jsonl'))
-
-  for (const target of targets) {
-    try {
-      if (existsSync(target)) {
-        unlinkSync(target)
-      }
-    } catch {
-      // Ignore errors when clearing logs
-    }
-  }
-
-  logPath = undefined
-  pinoLogger = undefined
-}
 
 export function sendAnalyticsAndLog(
   level: LogLevel,
@@ -268,7 +217,9 @@ export function sendAnalyticsAndLog(
 
   // In dev mode, use appendFileSync for real-time logging (Bun has issues with pino sync)
   // In prod mode, use pino for better performance
-  if (IS_DEV && logPath) {
+  const currentLogPath = getLogPath()
+  const currentPinoLogger = getPinoLogger()
+  if (IS_DEV && currentLogPath) {
     const logEntry = safeStringify({
       level: level.toUpperCase(),
       timestamp: new Date().toISOString(),
@@ -277,14 +228,14 @@ export function sendAnalyticsAndLog(
       msg: stringFormat(normalizedMsg ?? '', ...args),
     })
     try {
-      appendFileSync(logPath, logEntry + '\n')
+      appendFileSync(currentLogPath, logEntry + '\n')
     } catch {
       // Ignore write errors
     }
-  } else if (pinoLogger !== undefined) {
+  } else if (currentPinoLogger !== undefined) {
     const base = { ...loggerContext }
     const obj = includeData ? { ...base, data: sanitizedData } : base
-    pinoLogger[level](obj, normalizedMsg, ...args)
+    currentPinoLogger[level](obj, normalizedMsg, ...args)
   }
 }
 

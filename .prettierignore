@@ -46,3 +46,8 @@ cli/src/constants/cytoscape.ts
 # watermark (FID-2026-0807-009) — regenerate via
 # cli/scripts/generate-character-watermark.ts.
 cli/src/commands/graph-export/character.ts
+
+# Sigma packaging intermediates (cli/scripts/generate-sigma.ts writes the
+# runtime bundle here during binary builds) — machine output, regenerated
+# fresh on every build; formatting it is pure churn.
+cli/.tmp/

@@ -7,3 +7,4 @@ debug/
 
 # Generated files
 src/agents/bundled-agents.generated.ts
+src/agents/bundled-agents.generated-data/

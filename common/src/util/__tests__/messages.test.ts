@@ -16,6 +16,61 @@ import type { JSONValue } from '../../types/json'
 import type { Message } from '../../types/messages/savant-code-message'
 import type { ToolResultPart } from 'ai'
 
+describe('convertCbToModelMessages — fail-fast validation (FID-2026-0820-013)', () => {
+  // Passes Savant conversion (user array content is cloned through) but
+  // fails the AI SDK's modelMessageSchema: file parts require mediaType.
+  const invalidFilePartUserMessage = {
+    role: 'user',
+    content: [{ type: 'file', data: 'abc' }],
+  } as unknown as Message
+
+  it('throws the actionable schema error on the NON-cache-control path', () => {
+    // Regression: this path previously returned before validation, so the
+    // invalid shape reached the AI SDK as an opaque AI_InvalidPromptError.
+    expect(() =>
+      convertCbToModelMessages({
+        messages: [invalidFilePartUserMessage],
+        includeCacheControl: false,
+      }),
+    ).toThrow(/failed schema validation/)
+    expect(() =>
+      convertCbToModelMessages({
+        messages: [invalidFilePartUserMessage],
+        includeCacheControl: false,
+      }),
+    ).toThrow(/Role: user/)
+  })
+
+  it('throws the same actionable schema error on the cache-control path', () => {
+    expect(() =>
+      convertCbToModelMessages({
+        messages: [invalidFilePartUserMessage],
+        includeCacheControl: true,
+      }),
+    ).toThrow(/failed schema validation/)
+  })
+
+  it('still converts valid media tool results to file parts with mediaType', () => {
+    const result = convertCbToModelMessages({
+      messages: [
+        {
+          role: 'tool',
+          toolCallId: 'call-1',
+          content: mediaToolResult({ data: 'aGk=', mediaType: 'image/png' }),
+        } as unknown as Message,
+      ],
+      includeCacheControl: false,
+    })
+    const convertedUser = result.find((m) => m.role === 'user')
+    expect(convertedUser).toBeDefined()
+    const firstPart = (
+      convertedUser as { content: { type: string; mediaType?: string }[] }
+    ).content[0]
+    expect(firstPart.type).toBe('file')
+    expect(firstPart.mediaType).toBe('image/png')
+  })
+})
+
 // Test helper types for provider options with cache control
 type CacheControlValue = { type: string }
 type ProviderWithCacheControl = Record<string, JSONValue> & {

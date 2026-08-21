@@ -1,8 +1,7 @@
-import fs from 'fs'
-import os from 'os'
-import path from 'path'
 import { pathToFileURL } from 'url'
 
+import { getAllAgentFiles, getDefaultAgentDirs } from './agent-file-discovery'
+import { resolveAgentMcpEnv } from './mcp-env'
 import { logger } from '../utils/logger'
 import { validateAgents } from '../validate-agents'
 
@@ -25,66 +24,6 @@ export type LoadedAgentDefinition = AgentDefinition & {
 export type LoadedAgents = Record<string, LoadedAgentDefinition>
 
 /**
- * Resolves environment variable references in MCP server configs.
- * Values starting with `$` are treated as env var references (e.g., `'$NOTION_TOKEN'`).
- *
- * @param env - The env object from MCP config with possible $VAR_NAME references
- * @param agentId - The agent ID for error messages
- * @param mcpServerName - The MCP server name for error messages
- * @returns Resolved env object with all $VAR_NAME values replaced with actual values
- * @throws Error if a referenced environment variable is missing
- */
-export function resolveMcpEnv(
-  env: Record<string, string> | undefined,
-  agentId: string,
-  mcpServerName: string,
-): Record<string, string> {
-  if (!env) return {}
-
-  const resolved: Record<string, string> = {}
-
-  for (const [key, value] of Object.entries(env)) {
-    if (value.startsWith('$')) {
-      // $VAR_NAME reference - resolve from process.env
-      const envVarName = value.slice(1) // Remove the leading $
-      // Allow dynamic process.env access
-      const envName = 'env'
-      const envValue = process[envName][envVarName]
-
-      if (envValue === undefined) {
-        throw new Error(
-          `Missing environment variable '${envVarName}' required by agent '${agentId}' in mcpServers.${mcpServerName}.env.${key}`,
-        )
-      }
-
-      resolved[key] = envValue
-    } else {
-      // Plain string value - use as-is
-      resolved[key] = value
-    }
-  }
-
-  return resolved
-}
-
-/**
- * Resolves all MCP server env references in an agent definition.
- * Mutates the mcpServers object to replace $VAR_NAME references with resolved values.
- *
- * @param agent - The agent definition to process
- * @throws Error if any referenced environment variable is missing
- */
-export function resolveAgentMcpEnv(agent: AgentDefinition): void {
-  if (!agent.mcpServers) return
-
-  for (const [serverName, config] of Object.entries(agent.mcpServers)) {
-    if ('command' in config && config.env) {
-      config.env = resolveMcpEnv(config.env, agent.id, serverName)
-    }
-  }
-}
-
-/**
  * Validation error for an agent that failed validation.
  */
 export type AgentValidationError = {
@@ -105,55 +44,6 @@ export type LoadLocalAgentsResult = {
   agents: LoadedAgents
   /** Validation errors for agents that failed validation */
   validationErrors: AgentValidationError[]
-}
-
-const agentFileExtensions = new Set(['.ts', '.tsx', '.js', '.mjs', '.cjs'])
-
-const shouldSkipAgentDirectory = (name: string): boolean =>
-  name.startsWith('.') ||
-  name === 'node_modules' ||
-  name === 'scripts' ||
-  name === 'skills' ||
-  name.startsWith('skills-')
-
-const isLoadableAgentFileName = (fileName: string): boolean => {
-  const extension = path.extname(fileName).toLowerCase()
-  return (
-    agentFileExtensions.has(extension) &&
-    !fileName.endsWith('.d.ts') &&
-    !/[./](test|spec)\.[cm]?[tj]sx?$/.test(fileName)
-  )
-}
-
-// FID-2026-0815-007 (F-10): async recursive walk via fs.promises so the boot
-// path never blocks the event loop while `.agents` trees are enumerated.
-const getAllAgentFiles = async (dir: string): Promise<string[]> => {
-  const files: string[] = []
-  try {
-    const entries = await fs.promises.readdir(dir, { withFileTypes: true })
-    for (const entry of entries) {
-      const fullPath = path.join(dir, entry.name)
-      if (entry.isDirectory()) {
-        if (shouldSkipAgentDirectory(entry.name)) continue
-        files.push(...(await getAllAgentFiles(fullPath)))
-        continue
-      }
-      const isAgentFile = entry.isFile() && isLoadableAgentFileName(entry.name)
-      if (isAgentFile) {
-        files.push(fullPath)
-      }
-    }
-  } catch {
-    // Expected for user agent directories that may not exist
-  }
-  return files
-}
-
-const getDefaultAgentDirs = () => {
-  const cwdAgents = path.join(process.cwd(), '.agents')
-  const parentAgents = path.join(process.cwd(), '..', '.agents')
-  const homeAgents = path.join(os.homedir(), '.agents')
-  return [cwdAgents, parentAgents, homeAgents]
 }
 
 /**

@@ -18,6 +18,57 @@ import {
   resolveEnforcementMode,
 } from '../enforcement'
 
+describe('EchoEnforcement — Law 3 re-arm on re-modification (FID-2026-0820-012)', () => {
+  it('re-blocks a file that is modified again after passing verification', () => {
+    const enforcement = new EchoEnforcement('hybrid')
+    // Satisfy the session-init gate so the pre-write gates are exercised.
+    enforcement.beforeToolCall({
+      toolName: 'read_files',
+      input: { paths: ['ECHO.md'] },
+      agentId: 'savant',
+    })
+    const path = '/proj/src/a.ts'
+
+    // Write 1 dirties the file.
+    enforcement.afterToolCall({
+      toolName: 'write_file',
+      input: { path },
+      result: { text: 'ok' },
+      writeSucceeded: true,
+    })
+    // A verification command credits the dirty file.
+    enforcement.afterToolCall({
+      toolName: 'run_readonly_command',
+      input: { command: 'bun run typecheck' },
+      result: { text: 'ok' },
+    })
+    // Follow-up writes are allowed under the cumulative credit.
+    const allowed = enforcement.beforeToolCall({
+      toolName: 'str_replace',
+      input: { path: '/proj/src/b.ts' },
+      agentId: 'savant',
+    })
+    expect(allowed.blocked).toBe(false)
+
+    // Re-modifying the verified file must revoke its stale credit: the
+    // next write blocks again until fresh verification runs.
+    enforcement.afterToolCall({
+      toolName: 'str_replace',
+      input: { path },
+      result: { text: 'ok' },
+      writeSucceeded: true,
+    })
+    const reblocked = enforcement.beforeToolCall({
+      toolName: 'str_replace',
+      input: { path: '/proj/src/c.ts' },
+      agentId: 'savant',
+    })
+    expect(reblocked.blocked).toBe(true)
+    expect(reblocked.reason).toContain('Law 3')
+    expect(reblocked.reason).toContain('/proj/src/a.ts')
+  })
+})
+
 describe('EchoEnforcement — pre-write steering', () => {
   const tempDirs: string[] = []
 

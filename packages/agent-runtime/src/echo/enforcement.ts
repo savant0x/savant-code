@@ -297,6 +297,13 @@ export class EchoEnforcement {
       if (path && params.writeSucceeded !== false) {
         this.state.filesWritten.add(path)
         this.state.dirtyFiles.add(path)
+        // A fresh modification revokes any prior verification credit for
+        // this file (FID-2026-0820-012 AUDIT): the cumulative
+        // dirtyFiles-minus-verifiedFiles predicate (pre-write gate and
+        // turn-end Law 15) must re-arm for re-modified files, or a
+        // verified-then-edited file would keep its stale credit and never
+        // block again.
+        this.state.verifiedFiles.delete(path)
         this.state.hasVerifiedSinceLastDirty = false
         this.state.writeCount++
 

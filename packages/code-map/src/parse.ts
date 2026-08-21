@@ -2,6 +2,7 @@ import * as fs from 'fs'
 import * as path from 'path'
 
 import { getLanguageConfig } from './languages'
+import { mapWithConcurrency } from './parse/concurrency'
 import {
   MAX_PARSE_FILE_BYTES,
   MAX_PARSE_FILES,
@@ -30,30 +31,6 @@ export const DEBUG_PARSING = false
 
 /** FID-2026-0815-009 (F-12): bounded fan-out for the per-file pipeline. */
 const PARSE_CONCURRENCY = 6
-
-/**
- * Runs `fn` over `items` with bounded concurrency, preserving result order.
- * The cursor increment is atomic on the single-threaded event loop, so each
- * item is processed exactly once.
- */
-async function mapWithConcurrency<T, R>(
-  items: readonly T[],
-  concurrency: number,
-  fn: (item: T, index: number) => Promise<R>,
-): Promise<R[]> {
-  const results = new Array<R>(items.length)
-  let cursor = 0
-  const worker = async (): Promise<void> => {
-    while (cursor < items.length) {
-      const index = cursor
-      cursor += 1
-      results[index] = await fn(items[index], index)
-    }
-  }
-  const workerCount = Math.max(1, Math.min(concurrency, items.length))
-  await Promise.all(Array.from({ length: workerCount }, () => worker()))
-  return results
-}
 
 export async function getFileTokenScores(
   projectRoot: string,

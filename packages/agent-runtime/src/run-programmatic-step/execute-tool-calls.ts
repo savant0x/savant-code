@@ -90,6 +90,12 @@ export async function executeSingleToolCall(
   }
 
   const toolResultsToAddToMessageHistory: ToolMessage[] = []
+  // FID-2026-0820-016: gate blocks (FSM phase, sandbox policy, EHEL, hooks,
+  // ZTAP, spawn validation) emit an `error` chunk and then return from the
+  // executor WITHOUT creating a tool result. Capturing the reason here lets
+  // the synthesis below deliver it to the generator instead of dropping it
+  // silently.
+  let lastBlockReason: string | undefined = undefined
   // Execute with a narrow template copy that exposes only this validated
   // programmatic tool to the executor. No caller-provided bypass flag or
   // capability set is trusted by the executor.
@@ -118,6 +124,12 @@ export async function executeSingleToolCall(
       if (typeof chunk === 'string') {
         onResponseChunk(chunk)
         return
+      }
+
+      // FID-2026-0820-016: all gate-block sites emit an `error` chunk before
+      // their bare early return — capture the reason for the synthesis below.
+      if (chunk.type === 'error') {
+        lastBlockReason = chunk.message
       }
 
       // Only add parentAgentId if this programmatic agent has a parent (i.e., it's nested)
@@ -158,6 +170,34 @@ export async function executeSingleToolCall(
   })
 
   agentState.messageHistory.push(...toolResultsToAddToMessageHistory)
+
+  // FID-2026-0820-016: a gate block (FSM phase, sandbox policy, EHEL, hooks,
+  // ZTAP, spawn validation) returns from the executor without creating a tool
+  // result — leaving an orphaned tool-call part in history and delivering
+  // nothing to the generator (the silent relay loss). Synthesize the blocking
+  // result so the call/result pair stays complete and the model sees the
+  // actual reason. Scoped to the gate-block signature (a captured error
+  // chunk): result-less tools like end_turn never emit one and are
+  // unaffected. The abort gate emits no chunk by design — an aborted run
+  // surfaces as an LLM AbortError before any STEP completes, so its
+  // transient orphan is discarded with the run.
+  if (
+    toolResultsToAddToMessageHistory.length === 0 &&
+    lastBlockReason !== undefined
+  ) {
+    const blockedResult: ToolMessage = {
+      role: 'tool',
+      toolName: toolCallToExecute.toolName,
+      toolCallId,
+      content: [
+        { type: 'json', value: { blocked: true, reason: lastBlockReason } },
+      ],
+    }
+    if (!excludeToolFromMessageHistory) {
+      agentState.messageHistory.push(blockedResult)
+    }
+    return blockedResult.content
+  }
 
   // Get the latest tool result
   return toolResults[toolResults.length - 1]?.content

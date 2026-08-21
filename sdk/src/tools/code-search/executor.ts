@@ -8,7 +8,8 @@ import {
   buildLimitedOutput,
   buildPartialOutput,
 } from './format'
-import { INCLUDED_HIDDEN_DIRS, parseRipgrepEventLine } from './schema'
+import { RipgrepMatchCollector } from './match-collector'
+import { INCLUDED_HIDDEN_DIRS } from './schema'
 import { getBundledRgPath } from '../../native/ripgrep'
 
 import type { SavantCodeToolOutput } from '../../../../common/src/tools/list'
@@ -106,13 +107,11 @@ export function codeSearch({
     let jsonRemainder = ''
     let stderrBuf = ''
     // Track matches by file for grouping and limiting
-    const fileGroups = new Map<string, string[]>()
-    // Track match count per file separately from total lines
-    const fileMatchCounts = new Map<string, number>()
-    const filesLimitedByMaxResults = new Set<string>()
-    let matchesGlobal = 0
-    let estimatedOutputLen = 0
-    let killedForLimit = false
+    const collector = new RipgrepMatchCollector(
+      maxResults,
+      globalMaxResults,
+      maxOutputStringLength,
+    )
 
     // Guard to prevent double-settlement from concurrent timeout and process close events
     let killTimeoutId: ReturnType<typeof setTimeout> | null = null
@@ -159,7 +158,11 @@ export function codeSearch({
       hardKill()
 
       settle({
-        stdout: buildPartialOutput(fileGroups, matchesGlobal, 1000),
+        stdout: buildPartialOutput(
+          collector.fileGroups,
+          collector.matchesGlobal,
+          1000,
+        ),
         message: 'Code search cancelled: the run was aborted by the user.',
       })
     }
@@ -170,8 +173,8 @@ export function codeSearch({
       hardKill()
 
       const truncatedStdout = buildPartialOutput(
-        fileGroups,
-        matchesGlobal,
+        collector.fileGroups,
+        collector.matchesGlobal,
         1000,
       )
       const truncatedStderr =
@@ -199,69 +202,17 @@ export function codeSearch({
 
       for (const line of lines) {
         if (!line) continue
-        const evt = parseRipgrepEventLine(line)
-        if (!evt) {
-          continue
-        }
+        if (collector.addEventLine(line, 'stream') === 'limit-hit') {
+          hardKill()
 
-        // Process both match and context events
-        if (evt.type === 'match' || evt.type === 'context') {
-          const filePath = evt.data.path?.text ?? evt.data.path?.bytes ?? ''
-          const lineNumber = evt.data.line_number ?? 0
-          const rawText = evt.data.lines?.text ?? ''
-          const lineText = rawText.replace(/\r?\n$/, '')
+          const limited = buildLimitedOutput(
+            collector.fileGroups,
+            collector.matchesGlobal,
+            globalMaxResults,
+            maxOutputStringLength,
+          )
 
-          // Format as ripgrep output: filename:line_number:content
-          const formattedLine = `${filePath}:${lineNumber}:${lineText}`
-
-          // Group by file
-          if (!fileGroups.has(filePath)) {
-            fileGroups.set(filePath, [])
-            fileMatchCounts.set(filePath, 0)
-          }
-          const fileLines = fileGroups.get(filePath)!
-          const fileMatchCount = fileMatchCounts.get(filePath)!
-
-          // Only count matches toward limits, not context lines
-          const isMatch = evt.type === 'match'
-
-          // Check if we should include this line
-          // For matches: only if we haven't hit the per-file limit
-          // For context: always include (they don't count toward limit)
-          const shouldInclude = !isMatch || fileMatchCount < maxResults
-          if (isMatch && !shouldInclude) {
-            filesLimitedByMaxResults.add(filePath)
-          }
-
-          if (shouldInclude) {
-            // Add the line to output
-            fileLines.push(formattedLine)
-            estimatedOutputLen += formattedLine.length + 1
-
-            // Only increment match counters for actual matches
-            if (isMatch) {
-              fileMatchCounts.set(filePath, fileMatchCount + 1)
-              matchesGlobal++
-
-              // Check global limit or output size limit
-              if (
-                matchesGlobal >= globalMaxResults ||
-                estimatedOutputLen >= maxOutputStringLength
-              ) {
-                killedForLimit = true
-                hardKill()
-
-                const limited = buildLimitedOutput(
-                  fileGroups,
-                  matchesGlobal,
-                  globalMaxResults,
-                  maxOutputStringLength,
-                )
-
-                return settle(limited)
-              }
-            }
-          }
+          return settle(limited)
         }
       }
     })
@@ -291,56 +242,17 @@ export function codeSearch({
           for (const ln of maybeMany.split('\n')) {
             if (!ln) continue
             try {
-              const evt = parseRipgrepEventLine(ln)
-              if (evt) {
-                const filePath =
-                  evt.data.path?.text ?? evt.data.path?.bytes ?? ''
-                const lineNumber = evt.data.line_number ?? 0
-                const rawText = evt.data.lines?.text ?? ''
-                const lineText = rawText.replace(/\r?\n$/, '')
-                const formattedLine = `${filePath}:${lineNumber}:${lineText}`
-
-                if (!fileGroups.has(filePath)) {
-                  fileGroups.set(filePath, [])
-                  fileMatchCounts.set(filePath, 0)
-                }
-                const fileLines = fileGroups.get(filePath)!
-                const fileMatchCount = fileMatchCounts.get(filePath)!
-                const isMatch = evt.type === 'match'
-
-                // Check if we should include this line
-                const shouldInclude =
-                  !isMatch ||
-                  (fileMatchCount < maxResults &&
-                    matchesGlobal < globalMaxResults)
-                if (
-                  isMatch &&
-                  fileMatchCount >= maxResults &&
-                  matchesGlobal < globalMaxResults
-                ) {
-                  filesLimitedByMaxResults.add(filePath)
-                }
-
-                if (shouldInclude) {
-                  fileLines.push(formattedLine)
-
-                  // Only increment match counter for actual matches
-                  if (isMatch) {
-                    fileMatchCounts.set(filePath, fileMatchCount + 1)
-                    matchesGlobal++
-                  }
-                }
-              }
+              collector.addEventLine(ln, 'flush')
             } catch {}
           }
         }
       } catch {}
 
       const closeOutput = buildCloseOutput({
-        fileGroups,
-        filesLimitedByMaxResults,
-        matchesGlobal,
-        killedForLimit,
+        fileGroups: collector.fileGroups,
+        filesLimitedByMaxResults: collector.filesLimitedByMaxResults,
+        matchesGlobal: collector.matchesGlobal,
+        killedForLimit: collector.killedForLimit,
         maxResults,
         globalMaxResults,
         maxOutputStringLength,
@@ -351,7 +263,7 @@ export function codeSearch({
         ...closeOutput,
         message:
           code !== null
-            ? `Exit code: ${code}${killedForLimit ? ' (early stop)' : ''}`
+            ? `Exit code: ${code}${collector.killedForLimit ? ' (early stop)' : ''}`
             : '',
       })
     })

@@ -39,5 +39,5 @@ dev/nova/scratchpad/**
 # exemptions follow the docs/archive/** and dev/idea-shelf/** precedent.
 docs/design/Savant Desktop Architecture Research.md
 docs/design/Savant-Code Keyless Search Research.md
-docs/Savant Desktop App Architecture.md
+docs/design/Savant Desktop App Architecture.md
 dev/session-summaries/2026-08-19-desktop-app-research-planning.md

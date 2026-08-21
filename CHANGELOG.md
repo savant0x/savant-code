@@ -1,5 +1,98 @@
 # Changelog
 
+## 2026-08-20 — FID-2026-0820-016: Programmatic gate blocks silently drop results — orphaned tool-calls and evidence-free NO-OUTPUT (closed)
+
+Root-caused and fixed the FID-2026-0820-013 Round 3 output-injection open item:
+when any execution gate blocks a programmatic (handleSteps-generator) tool
+call — FSM phase gate, sandbox policy, EHEL, hooks, ZTAP, spawn validation —
+the executor returned early without creating a tool result, leaving an
+orphaned tool-call in history, delivering nothing to the generator, and
+hiding the block reason from the model entirely.
+
+- **Live-confirmed root cause (basher artifact probes):** under the default
+  `'prompt'` permission mode, `run_terminal_command` returns a prompt
+  decision that `checkSandboxPolicy` downgrades to deny (no subagent
+  approval channel — documented Phase-1 limitation), so the basher's command
+  never executes in any FSM phase; RED/idle-phase spawns are additionally
+  hard-blocked by the FSM gate.
+- **Fix (single boundary, Law 13):** `executeSingleToolCall`
+  (execute-tool-calls.ts) now captures gate error chunks and synthesizes the
+  blocking tool result — `{ blocked: true, reason }` with the shared
+  pre-execution toolCallId — completing the call/result pair in history and
+  returning the reason to the generator, which reports it honestly instead
+  of NO-OUTPUT. Scoped to the gate-block signature; result-less tools
+  (end_turn, set_output) are byte-identical.
+- **Q8 verified:** the EHEL verification tracker (echo-record.ts +
+  enforcement.ts afterToolCall) credits from the INPUT at post-gate call
+  sites — blocked calls never reach either credit point; the synthesized
+  history-only result cannot corrupt the dirty/verified ledger.
+
+Gates: agent-runtime typecheck exit 0; focused suite 2 pass / 0 fail; full
+agent-runtime suite 1130 pass / 0 fail / 2988 expect() across 129 files;
+ESLint 0 warnings; Prettier clean; lint:md clean. Perfection Loop complete:
+RED (live probe matrix) → GREEN (Thinker, 6 thoughts, 2 material
+refinements) → AUDIT (Verifier PASS, 2 NEEDS-REVIEW resolved at source) →
+ADVERSARIAL (CLEAN, 11/11 gate-site emission matrix verified). Live-behavior
+check (basher reporting the sandbox block reason instead of NO-OUTPUT)
+awaits the next session relaunch (process-lifetime module caching).
+Closed + archived 2026-08-20.
+
+## 2026-08-20 — FID-2026-0820-015: Subagent spawn reliability cluster — basher silent no-execution fabrication, scout reasoning-400, conversion-crash evidence (closed)
+
+Three live subagent-spawn defects reproduced and fixed in one session:
+
+- **BASHER-1 (critical):** the basher agent never executed its `command` param yet reported
+  success — its summarization prompt asserted the output was already in context, so the model
+  fabricated plausible output (reproduced 2/2, including a false "Exit status: 0" on a
+  never-run command chain). Fixed in `agents/basher.ts`: the generator now verifies a
+  delivered tool result (`'json' | 'media'`) before the summarization STEP and returns an
+  explicit no-output error otherwise; the prompt premise is conditional with the honest
+  `NO-OUTPUT: result not delivered` escape hatch.
+- **SCOUT-1 (high):** scout spawns failed with HTTP 400 "Reasoning is mandatory for this
+  endpoint and cannot be disabled." — `agents/scout/scout.ts` hardcoded
+  `reasoningOptions: { enabled: false }` against the inherited reasoning-mandatory model.
+  Removed; the runtime default applies.
+- **CONV-1 (high, evidence only):** 5 crashes of `convertCbToModelMessages`
+  (`common/src/util/messages/aggregate.ts:86` → `sdk/src/impl/llm/stream.ts:99`) recorded —
+  every history-inheriting agent spawn (Recorder/Verifier/Adversary) crashed on
+  object-valued tool results while `includeMessageHistory: false` agents spawned cleanly.
+  Owned by FID-2026-0820-013's in-tree fix; root-cause correlation documented for its
+  relaunch check. Multi-agent spawn schema cleared of suspicion (caller-side malformed
+  params, correctly caught).
+
+Gates: agents typecheck exit 0; agents suite 84 pass / 0 fail; ESLint 0 warnings; prettier
+clean; markdownlint clean; bundled agents regenerated via prebuild (grep-verified in
+`02-basher.ts` / `33-scout.ts`). AUDIT tool-mediated (Verifier/Adversary spawns unavailable —
+themselves CONV-1 reproductions #4/#5, recorded in the FID). Live behavioral verification
+deferred to relaunch from the working tree (same stale-binary caveat as
+FID-2026-0820-012/-013/-014). Closed + archived 2026-08-20.
+
+## 2026-08-20 — FID-2026-0820-014: EHEL enforcement cluster — stale turn-end latch, apply_patch gate bypass, readonly verification credit (closed)
+
+Three sibling defects around the FID-2026-0820-012 Law-3 deadlock family, all fixed and audited:
+
+- **EC-1 (critical):** `post-write-scanners.ts` gated strict-mode Law 15 on the stale
+  `hasVerifiedSinceLastDirty` latch (set false by every write, cleared only by
+  `resetForNewTurn` — which never runs while the scanner blocks), so a fully verified
+  strict-mode turn could never end. Now uses the cumulative `dirtyFiles`-minus-
+  `verifiedFiles` predicate — one source of truth with the pre-write Law 3 gate and
+  `evaluateTurnEnd`.
+- **EC-2 (high):** `pre-write-gates.ts` `getTargetPath` ignored `input.operation.path`,
+  so every `apply_patch` call bypassed the Law 1/Law 7 gates and the FID
+  Recorder/anti-deferral checks. Now resolves `operation.path` and the FID gate reads
+  `operation.diff`; the new-file exemption and exempt-path carve-out apply to the
+  resolved target.
+- **EC-3 (high):** the compliance tracker credited verification only from
+  `run_terminal_command`; `run_readonly_command` verification (the safer channel) never
+  reached it, producing false Law 3 steering. Both channels now credit.
+
+Tests: 10 new/updated regression tests (`post-write-scanners.test.ts`,
+`pre-write-gates-apply-patch.test.ts` new, `echo-record.test.ts` new). Gates: agent-runtime
+typecheck exit 0, focused 34/0, full suite 1128/0, ESLint 0 warnings, prettier clean,
+lint:md clean. Verifier PASS + Adversary CLEAN (prettier FAIL refuted by tool output).
+Live-behavior check deferred to relaunch from the working tree (stale binary — same
+caveat as FID-2026-0820-012/-013).
+
 ## 0.0.26 — 2026-08-19
 
 ## 2026-08-19 — FID-2026-0819-004: Native tool-call recovery hardening — tool-specific steering + progressive strikes (closed)

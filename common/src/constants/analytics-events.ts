@@ -1,3 +1,5 @@
+import { SavantFreeReferralAnalyticsEvent } from './savant-free-referral-events'
+
 /**
  * Enum of analytics event types used throughout the application
  */
@@ -193,35 +195,13 @@ export enum AnalyticsEvent {
   CHATGPT_OAUTH_RATE_LIMITED = 'sdk.chatgpt_oauth_rate_limited',
   CHATGPT_OAUTH_AUTH_ERROR = 'sdk.chatgpt_oauth_auth_error',
 
-  // SavantFree - Creator Attribution
-  SAVANT_FREE_REFERRER_ATTRIBUTED = 'savant-free.referrer_attributed',
-
-  // SavantFree - Referral program server lifecycle (emitted from packages/billing
-  // via the server logger → Axiom `event` column). Funnel: redeemed → completed
-  // (both low-volume per-referral transitions). The "why is this still pending"
-  // breakdown (account_too_new / no_github_account / not_activated) is NOT a
-  // per-evaluation event — that would fire on every live trigger and dominate
-  // ingest; it rides on `sweep`, which aggregates outcomes across the whole
-  // pending population once per run (see ReferralSweepResult.outcomes).
-  SAVANT_FREE_REFERRAL_REDEEMED = 'savant-free.referral.redeemed',
-  // A redemption attempt that hit one of the one-shot eligibility guards
-  // (signup_too_old, user_banned, referrer_limit_reached, reverse_referral,
-  // self_referral). Deliberately EXCLUDES the two repeat-prone errors —
-  // invalid_code (cookie intentionally kept for legacy codes) and
-  // already_referred (cookie can outlive redemption on the /onboard RSC hop)
-  // — which would otherwise re-fire on every <=10-min token mint; those log
-  // at debug only. Without this event, a "my friend's invite didn't count"
-  // support case is undiagnosable — the guards otherwise return silently.
-  SAVANT_FREE_REFERRAL_REDEEM_FAILED = 'savant-free.referral.redeem_failed',
-  // Attribution went through and the referred user redeemed from an IP or
-  // browser the REFERRER was recently seen on. Evidence, NOT a verdict: this
-  // is also exactly what a genuine in-person referral looks like ("try it,
-  // here's my laptop" — a sibling on the family computer shares both). Only
-  // suspicious when corroborated by real farm signals (dormant GitHub, burst
-  // velocity, no product use); the sweep + scripts do that weighing.
-  SAVANT_FREE_REFERRAL_SOCK_SIGNAL = 'savant-free.referral.sock_signal',
-  SAVANT_FREE_REFERRAL_COMPLETED = 'savant-free.referral.completed',
-  SAVANT_FREE_REFERRAL_SWEEP = 'savant-free.referral.sweep',
+  // SavantFree referral lifecycle; detailed semantics live in the extracted enum.
+  SAVANT_FREE_REFERRER_ATTRIBUTED = SavantFreeReferralAnalyticsEvent.REFERRER_ATTRIBUTED,
+  SAVANT_FREE_REFERRAL_REDEEMED = SavantFreeReferralAnalyticsEvent.REFERRAL_REDEEMED,
+  SAVANT_FREE_REFERRAL_REDEEM_FAILED = SavantFreeReferralAnalyticsEvent.REFERRAL_REDEEM_FAILED,
+  SAVANT_FREE_REFERRAL_SOCK_SIGNAL = SavantFreeReferralAnalyticsEvent.REFERRAL_SOCK_SIGNAL,
+  SAVANT_FREE_REFERRAL_COMPLETED = SavantFreeReferralAnalyticsEvent.REFERRAL_COMPLETED,
+  SAVANT_FREE_REFERRAL_SWEEP = SavantFreeReferralAnalyticsEvent.REFERRAL_SWEEP,
 
   // SavantFree - Get Started Page (referral onboarding funnel, in order:
   //   viewed → sign_in_clicked → signed_in → eligibility_resolved →

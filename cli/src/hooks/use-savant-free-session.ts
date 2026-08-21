@@ -2,10 +2,7 @@ import {
   FALLBACK_SAVANT_FREE_MODEL_ID,
   LIMITED_SAVANT_FREE_MODEL_ID,
 } from '@savant-code/common/constants/savant-free-models'
-import {
-  getRateLimitsByModel,
-  getReferralInfo,
-} from '@savant-code/common/types/savant-free-session'
+import { getRateLimitsByModel } from '@savant-code/common/types/savant-free-session'
 import { useEffect } from 'react'
 
 import {
@@ -22,6 +19,7 @@ import {
   recordSavantFreeInstanceOwner,
 } from '../utils/savant-free-instance-owner'
 import { rememberReferral } from '../utils/savant-free-referral-cache'
+import { runLandingRestart } from './use-savant-free-session/landing-restart'
 import {
   callSession,
   nextDelayMs,
@@ -32,7 +30,6 @@ import {
   getSavantFreeInstanceId,
   holdsLiveSavantFreeSlot,
   setPollController,
-  toLandingSession,
 } from './use-savant-free-session/session-state'
 
 import type { SavantFreeSession } from '../types/savant-free-session'
@@ -255,49 +252,17 @@ export function useSavantFreeSession(): UseSavantFreeSessionResult {
           // tick/apply path because a server-side row that hasn't been
           // swept yet would trip the startup-takeover branch into an
           // auto-POST — the exact silent-rejoin this mode exists to
-          // prevent. But the picker still needs live quota snapshots, so kick
-          // off a fire-and-forget GET and extract only picker metadata from
-          // the response, ignoring whatever status it claims. Polling resumes
-          // when the user commits to a model via startSavantFreeSession.
-          const landingSession = toLandingSession(
-            useSavantFreeSessionStore.getState().session,
-          )
-          apply(landingSession)
-          const fetchController = abortController
-          callSession('GET', token, { signal: fetchController.signal })
-            .then((response) => {
-              if (
-                cancelled ||
-                fetchController.signal.aborted ||
-                generation !== restartGeneration
-              ) {
-                return
-              }
-              if (response.status === 'none') {
-                apply({
-                  status: 'none',
-                  accessTier: response.accessTier ?? landingSession.accessTier,
-                  rateLimitsByModel:
-                    response.rateLimitsByModel ??
-                    landingSession.rateLimitsByModel,
-                  // Carry the referral block so the "change model" picker shows
-                  // the GLM banner too (the server only attaches it to `none`).
-                  referral:
-                    getReferralInfo(response) ?? landingSession.referral,
-                  countryCode:
-                    response.countryCode ?? landingSession.countryCode,
-                  countryBlockReason:
-                    response.countryBlockReason ??
-                    landingSession.countryBlockReason,
-                  ipPrivacySignals:
-                    response.ipPrivacySignals ??
-                    landingSession.ipPrivacySignals,
-                })
-              }
-            })
-            .catch(() => {
-              // Silent — blank hints are acceptable if the fetch fails.
-            })
+          // prevent. But the picker still needs live quota snapshots, so
+          // kick off a fire-and-forget GET and extract only picker metadata
+          // from the response, ignoring whatever status it claims. Polling
+          // resumes when the user commits to a model via
+          // startSavantFreeSession.
+          runLandingRestart({
+            token,
+            signal: abortController.signal,
+            isStale: () => cancelled || generation !== restartGeneration,
+            apply,
+          })
           return
         }
         nextMethod = 'POST'

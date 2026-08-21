@@ -1,19 +1,9 @@
 import {
-  BASE_AGENTS,
   MAX_AGENT_STEPS_DEFAULT,
   MAX_SUBAGENT_DEPTH,
 } from '@savant-code/common/constants/agents'
-import { toolNames } from '@savant-code/common/tools/constants'
-import {
-  normalizeAgentIdForLookup,
-  parseAgentId,
-} from '@savant-code/common/util/agent-id-parsing'
 import { generateCompactId } from '@savant-code/common/util/string'
 
-import { buildHookInput, getHookEngine } from '../../../hooks/engine'
-import { loopAgentSteps } from '../../../run-agent-step'
-import { getAgentTemplate } from '../../../templates/agent-registry'
-import { formatValueForError } from '../../../util/format-value'
 import {
   buildGraphInjectionMessage,
   buildGraphInjectionUserMessage,
@@ -23,43 +13,18 @@ import {
   withSystemTags,
 } from '../../../util/messages'
 
+import type { SubagentPropagationSnapshot } from './execute-subagent'
 import type { AgentTemplate } from '@savant-code/common/types/agent-template'
 import type {
   AgentRuntimeDeps,
   AgentRuntimeScopedDeps,
 } from '@savant-code/common/types/contracts/agent-runtime'
-import type { Logger } from '@savant-code/common/types/contracts/logger'
-import type {
-  ParamsExcluding,
-  OptionalFields,
-} from '@savant-code/common/types/function-params'
-import type { JSONValue } from '@savant-code/common/types/json'
 import type { Message } from '@savant-code/common/types/messages/savant-code-message'
-import type { PrintModeEvent } from '@savant-code/common/types/print-mode'
 import type {
   AgentState,
-  AgentTemplateType,
   Subgoal,
 } from '@savant-code/common/types/session-state'
 import type { ProjectFileContext } from '@savant-code/common/util/file'
-import type { ToolSet } from 'ai'
-
-/**
- * Common context params needed for spawning subagents.
- * These are the params that don't change between different spawn calls
- * and are passed through from the parent agent runtime.
- */
-export type SubagentPropagationSnapshot = {
-  parentAgentId: string
-  parentRunId: string | undefined
-  ancestorRunIds: string[]
-  protocolVariant: AgentState['protocolVariant']
-  protocolFile: string | undefined
-  protocolVersion: string | undefined
-  protocolStrictMode: boolean | undefined
-  checkpointTurnId: string | undefined
-  hasTraceWriter: boolean
-}
 
 export type SubagentContextParams = AgentRuntimeDeps &
   AgentRuntimeScopedDeps & {
@@ -75,6 +40,15 @@ export type SubagentContextParams = AgentRuntimeDeps &
     signal: AbortSignal
     userId: string | undefined
   }
+
+export {
+  getMatchingSpawn,
+  resolveSpawnableAgent,
+  validateAndGetAgentTemplate,
+  validateAgentInput,
+} from './spawn-agent-resolution'
+export { executeSubagent } from './execute-subagent'
+export type { SubagentPropagationSnapshot } from './execute-subagent'
 
 /**
  * Extracts the common context params needed for spawning subagents.
@@ -149,178 +123,6 @@ export function extractSubagentContextParams(
           },
         }
       : {}),
-  }
-}
-
-/**
- * Checks if a parent agent is allowed to spawn a child agent
- */
-export function getMatchingSpawn(
-  spawnableAgents: AgentTemplateType[],
-  childFullAgentId: string,
-) {
-  const {
-    publisherId: childPublisherId,
-    agentId: childAgentId,
-    version: childVersion,
-  } = parseAgentId(normalizeAgentIdForLookup(childFullAgentId))
-
-  if (!childAgentId) {
-    return null
-  }
-
-  for (const spawnableAgent of spawnableAgents) {
-    const {
-      publisherId: spawnablePublisherId,
-      agentId: spawnableAgentId,
-      version: spawnableVersion,
-    } = parseAgentId(normalizeAgentIdForLookup(spawnableAgent))
-
-    if (!spawnableAgentId) {
-      continue
-    }
-
-    if (
-      spawnableAgentId === childAgentId &&
-      spawnablePublisherId === childPublisherId &&
-      spawnableVersion === childVersion
-    ) {
-      return spawnableAgent
-    }
-    if (!childVersion && childPublisherId) {
-      if (
-        spawnablePublisherId === childPublisherId &&
-        spawnableAgentId === childAgentId
-      ) {
-        return spawnableAgent
-      }
-    }
-    if (!childPublisherId && childVersion) {
-      if (
-        spawnableAgentId === childAgentId &&
-        spawnableVersion === childVersion
-      ) {
-        return spawnableAgent
-      }
-    }
-
-    if (!childVersion && !childPublisherId) {
-      if (spawnableAgentId === childAgentId) {
-        return spawnableAgent
-      }
-    }
-  }
-  return null
-}
-
-/**
- * Resolves a child agent for a spawn: applies the spawnableAgents allowlist
- * (or the base-agent bypass), then loads the template. FID-2026-0802-005 H4:
- * this is the single implementation shared by the executor's spawn_agents
- * pre-validation and the spawn handlers — getMatchingSpawn + getAgentTemplate
- * run in exactly one place instead of twice per agent.
- */
-export async function resolveSpawnableAgent(
-  params: {
-    agentTypeStr: string
-    parentAgentTemplate: AgentTemplate
-  } & ParamsExcluding<typeof getAgentTemplate, 'agentId'>,
-): Promise<
-  | { ok: true; agentType: string; agentTemplate: AgentTemplate }
-  | { ok: false; code: 'not-spawnable' | 'not-found' | 'load-failed' }
-> {
-  const { agentTypeStr, parentAgentTemplate } = params
-  const isBaseAgent = BASE_AGENTS.includes(parentAgentTemplate.id)
-  const agentType = isBaseAgent
-    ? normalizeAgentIdForLookup(agentTypeStr)
-    : getMatchingSpawn(parentAgentTemplate.spawnableAgents, agentTypeStr)
-
-  if (!agentType) {
-    return { ok: false, code: 'not-spawnable' }
-  }
-
-  try {
-    const agentTemplate = await getAgentTemplate({
-      ...params,
-      agentId: agentType,
-    })
-    if (!agentTemplate) {
-      return { ok: false, code: 'not-found' }
-    }
-    return { ok: true, agentType, agentTemplate }
-  } catch {
-    return { ok: false, code: 'load-failed' }
-  }
-}
-
-/**
- * Validates agent template and permissions (thin wrapper over
- * resolveSpawnableAgent that converts the result into the handler-facing
- * throw contract).
- */
-export async function validateAndGetAgentTemplate(
-  params: {
-    agentTypeStr: string
-    parentAgentTemplate: AgentTemplate
-    localAgentTemplates: Record<string, AgentTemplate>
-    logger: Logger
-  } & ParamsExcluding<typeof getAgentTemplate, 'agentId'>,
-): Promise<{ agentTemplate: AgentTemplate; agentType: string }> {
-  const { agentTypeStr, parentAgentTemplate } = params
-  const resolved = await resolveSpawnableAgent({
-    ...params,
-    parentAgentTemplate,
-  })
-
-  if (!resolved.ok) {
-    if ((toolNames as readonly string[]).includes(agentTypeStr)) {
-      throw new Error(
-        `"${agentTypeStr}" is a tool, not an agent. Call it directly as a tool instead of wrapping it in spawn_agents.`,
-      )
-    }
-    if (resolved.code === 'not-spawnable') {
-      throw new Error(
-        `Agent type ${parentAgentTemplate.id} is not allowed to spawn child agent type ${agentTypeStr}.`,
-      )
-    }
-    throw new Error(`Agent type ${agentTypeStr} not found.`)
-  }
-
-  return {
-    agentTemplate: resolved.agentTemplate,
-    agentType: resolved.agentType,
-  }
-}
-
-/**
- * Validates prompt and params against agent schema
- */
-export function validateAgentInput(
-  agentTemplate: AgentTemplate,
-  agentType: string,
-  prompt?: string,
-  params?: JSONValue,
-): void {
-  const { inputSchema } = agentTemplate
-
-  // Validate prompt requirement
-  if (inputSchema.prompt) {
-    const result = inputSchema.prompt.safeParse(prompt ?? '')
-    if (!result.success) {
-      throw new Error(
-        `Invalid prompt for agent ${agentType}: ${JSON.stringify(result.error.issues, null, 2)}\n\nOriginal prompt value:\n${formatValueForError(prompt ?? '')}`,
-      )
-    }
-  }
-
-  // Validate params if schema exists
-  if (inputSchema.params) {
-    const result = inputSchema.params.safeParse(params ?? {})
-    if (!result.success) {
-      throw new Error(
-        `Invalid params for agent ${agentType}: ${JSON.stringify(result.error.issues, null, 2)}\n\nOriginal params value:\n${formatValueForError(params ?? {})}`,
-      )
-    }
   }
 }
 
@@ -445,159 +247,4 @@ export function withParentModel(
       ...agentTemplate.providerOptions,
     },
   }
-}
-
-/**
- * Executes a subagent using loopAgentSteps
- */
-export async function executeSubagent(
-  options: OptionalFields<
-    {
-      propagation: SubagentPropagationSnapshot
-      agentTemplate: AgentTemplate
-      parentAgentState: AgentState
-      parentTools?: ToolSet
-      onResponseChunk: (chunk: string | PrintModeEvent) => void
-      isOnlyChild?: boolean
-      ancestorRunIds: string[]
-    } & ParamsExcluding<typeof loopAgentSteps, 'agentType' | 'ancestorRunIds'>,
-    'isOnlyChild' | 'clearUserPromptMessagesAfterResponse'
-  >,
-) {
-  const withDefaults = {
-    isOnlyChild: false,
-    clearUserPromptMessagesAfterResponse: true,
-    ...options,
-  }
-  const {
-    onResponseChunk,
-    agentTemplate,
-    parentAgentState,
-    isOnlyChild,
-    ancestorRunIds,
-    prompt,
-    spawnParams,
-  } = withDefaults
-
-  const propagation = withDefaults.propagation
-  if (!propagation) {
-    throw new Error('Subagent propagation context is missing.')
-  }
-  if (
-    propagation.parentAgentId !== parentAgentState.agentId ||
-    propagation.parentRunId !== parentAgentState.runId ||
-    propagation.protocolVariant !== parentAgentState.protocolVariant ||
-    propagation.protocolFile !== parentAgentState.protocolFile ||
-    propagation.protocolVersion !== parentAgentState.protocolVersion ||
-    propagation.protocolStrictMode !== parentAgentState.protocolStrictMode ||
-    propagation.ancestorRunIds.length !==
-      parentAgentState.ancestorRunIds.length ||
-    propagation.ancestorRunIds.some(
-      (runId: string, index: number) =>
-        runId !== parentAgentState.ancestorRunIds[index],
-    )
-  ) {
-    throw new Error('Subagent propagation context does not match parent state.')
-  }
-  const expectedChildAncestorRunIds = [
-    ...propagation.ancestorRunIds,
-    propagation.parentRunId ?? 'NULL',
-  ]
-  if (
-    withDefaults.agentState.parentId !== propagation.parentAgentId ||
-    withDefaults.agentState.ancestorRunIds.length !==
-      expectedChildAncestorRunIds.length ||
-    withDefaults.agentState.ancestorRunIds.some(
-      (runId: string, index: number) =>
-        runId !== expectedChildAncestorRunIds[index],
-    ) ||
-    withDefaults.agentState.protocolVariant !==
-      parentAgentState.protocolVariant ||
-    withDefaults.agentState.protocolFile !== parentAgentState.protocolFile ||
-    withDefaults.agentState.protocolVersion !==
-      parentAgentState.protocolVersion ||
-    withDefaults.agentState.protocolStrictMode !==
-      parentAgentState.protocolStrictMode ||
-    withDefaults.checkpointTurnId !== propagation.checkpointTurnId ||
-    (withDefaults.traceWriter !== undefined) !== propagation.hasTraceWriter
-  ) {
-    throw new Error(
-      'Constructed child state does not match propagation context.',
-    )
-  }
-
-  const startEvent = {
-    type: 'subagent_start' as const,
-    agentId: withDefaults.agentState.agentId,
-    agentType: agentTemplate.id,
-    displayName: agentTemplate.displayName,
-    onlyChild: isOnlyChild,
-    parentAgentId: parentAgentState.agentId,
-    prompt,
-    params: spawnParams,
-  }
-  onResponseChunk(startEvent)
-
-  // FID-2026-0814-003: SubagentStart/SubagentStop hooks — observation only,
-  // fire-and-forget, fired at the subagent lifecycle boundary (this is the
-  // single funnel shared by spawn_agents and spawn_agent_inline).
-  const hookProjectRoot =
-    withDefaults.fileContext?.projectRoot ?? withDefaults.fileContext?.cwd ?? ''
-  const subagentSessionId =
-    withDefaults.agentState.runId ?? withDefaults.agentState.agentId
-  if (hookProjectRoot) {
-    getHookEngine(hookProjectRoot).fireAndForgetTrigger(
-      buildHookInput({
-        event: 'SubagentStart',
-        sessionId: subagentSessionId,
-        cwd: hookProjectRoot,
-        subagentType: agentTemplate.id,
-        toolInput: {
-          parentAgentId: parentAgentState.agentId,
-          ...(prompt !== undefined ? { prompt } : {}),
-        },
-      }),
-    )
-  }
-
-  let result
-  try {
-    result = await loopAgentSteps({
-      ...withDefaults,
-      // Don't propagate parent's image content to subagents.
-      // If subagents need to see images, they get them through includeMessageHistory,
-      // not by creating new image-containing messages for their prompts.
-      content: undefined,
-      ancestorRunIds: [...ancestorRunIds, parentAgentState.runId ?? ''],
-      agentType: agentTemplate.id,
-    })
-  } finally {
-    if (hookProjectRoot) {
-      getHookEngine(hookProjectRoot).fireAndForgetTrigger(
-        buildHookInput({
-          event: 'SubagentStop',
-          sessionId: subagentSessionId,
-          cwd: hookProjectRoot,
-          subagentType: agentTemplate.id,
-        }),
-      )
-    }
-  }
-
-  onResponseChunk({
-    type: 'subagent_finish',
-    agentId: result.agentState.agentId,
-    agentType: agentTemplate.id,
-    displayName: agentTemplate.displayName,
-    onlyChild: isOnlyChild,
-    parentAgentId: parentAgentState.agentId,
-    prompt,
-    params: spawnParams,
-  })
-
-  if (result.agentState.runId) {
-    parentAgentState.childRunIds.push(result.agentState.runId)
-  }
-
-  return result
 }

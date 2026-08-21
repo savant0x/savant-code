@@ -4,10 +4,8 @@ import { memo, useState } from 'react'
 import { BlocksRenderer } from './blocks/blocks-renderer'
 import { UserContentWithCopyButton } from './blocks/user-content-copy'
 import { Button } from './button'
-import { FileAttachmentCard } from './file-attachment-card'
-import { ImageCard } from './image-card'
+import { MessageAttachments } from './message-attachments'
 import { MessageFooter } from './message-footer'
-import { TextAttachmentCard } from './text-attachment-card'
 import { UserErrorBanner } from './user-error-banner'
 import { ValidationErrorPopover } from './validation-error-popover'
 import { useTheme } from '../hooks/use-theme'
@@ -63,58 +61,6 @@ interface MessageBlockProps {
   metadata?: ChatMessageMetadata
   isLastMessage?: boolean
 }
-
-const MessageAttachments = memo(
-  ({
-    imageAttachments,
-    textAttachments,
-    fileAttachments,
-  }: {
-    imageAttachments: ImageAttachment[]
-    textAttachments: TextAttachment[]
-    fileAttachments: FileAttachment[]
-  }) => {
-    if (
-      imageAttachments.length === 0 &&
-      textAttachments.length === 0 &&
-      fileAttachments.length === 0
-    ) {
-      return null
-    }
-
-    return (
-      <box
-        style={{
-          flexDirection: 'row',
-          gap: 1,
-          flexWrap: 'wrap',
-        }}
-      >
-        {imageAttachments.map((attachment) => (
-          <ImageCard
-            key={attachment.path}
-            image={attachment}
-            showRemoveButton={false}
-          />
-        ))}
-        {textAttachments.map((attachment) => (
-          <TextAttachmentCard
-            key={attachment.id}
-            attachment={attachment}
-            showRemoveButton={false}
-          />
-        ))}
-        {fileAttachments.map((attachment) => (
-          <FileAttachmentCard
-            key={attachment.path}
-            attachment={attachment}
-            showRemoveButton={false}
-          />
-        ))}
-      </box>
-    )
-  },
-)
 
 export const MessageBlock = memo(
   ({

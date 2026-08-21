@@ -1,57 +1,29 @@
 /**
  * Main orchestration for the context-pruner handleSteps generator (extracted
- * verbatim from the original in-body implementation). Calls the extracted
- * Phase 1 (summarizeMessages) and Phase 2+3 (applyBudgets) modules.
+ * verbatim from the original in-body implementation; delegates summarization phases to serializable extracted modules.
  * Embedded via .toString() at factory time; the constants/helpers it
  * references are baked/embedded into the same generated scope.
  */
-import { applyBudgets } from './apply-budgets'
 import {
   ASSISTANT_TOOL_BUDGET,
   CHARS_PER_TOKEN,
   FIXED_TAIL_BUDGET_TOKENS,
-  SUMMARY_DISCLAIMER,
-  SUMMARY_HEADER,
   TOKEN_COUNT_FUDGE_FACTOR,
   USER_BUDGET,
 } from './constants'
+import { runFoldOldestExchange } from './fold-exchange'
 import { asNumber, getTextContent } from './helpers'
-import {
-  buildPreservedState,
-  extractPreservedState,
-  mergePreservedState,
-  serializePreservedState,
-} from './preserved-state'
-import {
-  buildStructuredSummary,
-  findFirstUserTurnText,
-} from './structured-summary'
-import { summarizeMessages } from './summarize-messages'
+import { buildFullSummary } from './summary-assembly'
 import {
   extractSummaryContent,
   isConversationSummary,
   parseSummaryIntoEntries,
   shouldExcludeMessage,
 } from './summary-parsing'
-import {
-  buildFoldTelemetryBase,
-  logCompletion,
-  logFoldCompleted,
-  logFoldNoop,
-  logPostCompact,
-} from './telemetry'
+import { logCompletion, logPostCompact } from './telemetry'
 
-import type { SummaryEntry } from './summarize-messages'
 import type { AgentState, ToolCall } from '../types/agent-definition'
-import type {
-  FilePart,
-  ImagePart,
-  JSONValue,
-  Logger,
-  Message,
-  TextPart,
-  UserMessage,
-} from '../types/util-types'
+import type { JSONValue, Logger, Message } from '../types/util-types'
 
 export function* runContextPrunerMain(
   agentState: AgentState,
@@ -126,9 +98,8 @@ export function* runContextPrunerMain(
   const contextLimitExceeded =
     agentState.contextTokenCount + TOKEN_COUNT_FUDGE_FACTOR > maxContextLength
 
-  // P3a: amortized fold mode — fold exactly ONE oldest un-absorbed exchange
-  // into the running summary and keep everything else verbatim (Hermes
-  // micro-compaction pattern; off by default in the trigger, opt-in).
+  // P3a: amortized fold mode folds one oldest un-absorbed exchange and keeps
+  // everything else verbatim (Hermes micro-compaction; opt-in by the trigger).
   const foldOldestExchange: boolean = p.foldOldestExchange === true
   // P3d: force ratio — proceed even for low-value folds rather than risking
   // a hard overflow. Bypasses the cache-will-miss/context-limit gates below.
@@ -211,342 +182,49 @@ export function* runContextPrunerMain(
           !shouldExcludeMessage(message) && !isConversationSummary(message),
       )
 
-  // === P3a FOLD MODE (amortized, Hermes pattern) ===
-  // Fold exactly ONE oldest un-absorbed exchange (user message + following
-  // assistant/tool messages, bounded by the next user message) into the
-  // running summary. Everything after the folded exchange is kept verbatim —
-  // the summary grows by one exchange per fold instead of a full rewrite.
   if (foldOldestExchange) {
-    // Locate the last prior <conversation_summary> (the already-absorbed
-    // prefix). The oldest un-absorbed exchange starts at the first real user
-    // message after it.
-    let lastSummaryIndex = -1
-    for (let i = currentMessages.length - 1; i >= 0; i--) {
-      if (isConversationSummary(currentMessages[i])) {
-        lastSummaryIndex = i
-        break
-      }
-    }
-
-    let exchangeStart = -1
-    for (let i = lastSummaryIndex + 1; i < currentMessages.length; i++) {
-      const m = currentMessages[i]
-      if (shouldExcludeMessage(m)) continue
-      if (m.role === 'user') {
-        exchangeStart = i
-        break
-      }
-    }
-
-    const nothingToFold =
-      exchangeStart === -1 || exchangeStart >= currentMessages.length - 1
-
-    // Telemetry fields shared with the full path below.
-    const nowFold = Date.now()
-    const foldTelemetryBase = buildFoldTelemetryBase({
+    yield runFoldOldestExchange({
       agentState,
-      maxContextLength,
+      assistantToolBudget,
       cacheExpiryMs: CACHE_EXPIRY_MS,
-      previousSummaryEntryCount: previousSummaryEntries.length,
-      userBudget,
-      assistantToolBudget,
-      keepRecentTokens,
+      currentMessages,
       forceCompact,
+      instructionsPromptMessage,
       isMidTurnPrune,
-      liveUserPromptFound: latestLiveUserPromptMessage !== null,
-    })
-
-    if (nothingToFold) {
-      logFoldNoop(logger, foldTelemetryBase, currentMessages.length)
-      yield {
-        toolName: 'set_messages',
-        input: { messages: currentMessages },
-        includeToolCall: false,
-      }
-      return
-    }
-
-    let exchangeEnd = currentMessages.length
-    for (let i = exchangeStart + 1; i < currentMessages.length; i++) {
-      if (currentMessages[i].role === 'user') {
-        exchangeEnd = i
-        break
-      }
-    }
-
-    const exchangeMessages = currentMessages.slice(exchangeStart, exchangeEnd)
-    const remainingMessages = currentMessages.slice(exchangeEnd)
-
-    // Summarize ONLY the folded exchange; merge with the prior summary's
-    // entries (Continue re-distill rule — the absorbed prefix stays absorbed).
-    const { entries: foldEntries } = summarizeMessages(exchangeMessages, null)
-    // Mid-turn parity with the full path: when the live user prompt is NOT the
-    // oldest un-absorbed exchange (it sits after the folded exchange), keep its
-    // [USER] entry in the historical record so its text is never dropped — the
-    // Goal section already carries it verbatim for the current turn.
-    let foldEntriesAll = foldEntries
-    if (
-      isMidTurnPrune &&
-      latestLiveUserPromptMessage &&
-      !exchangeMessages.includes(latestLiveUserPromptMessage)
-    ) {
-      const liveEntry = summarizeMessages(
-        [latestLiveUserPromptMessage],
-        latestLiveUserPromptMessage,
-      ).entries
-      foldEntriesAll = [...foldEntries, ...liveEntry]
-    }
-    const allFoldEntries: SummaryEntry[] = [
-      ...previousSummaryEntries,
-      ...foldEntriesAll,
-    ]
-    const foldBudgetResult = applyBudgets(
-      allFoldEntries,
-      assistantToolBudget,
-      userBudget,
       keepRecentTokens,
-    )
-
-    // P1 structured block + preserved state (accumulates across folds — the
-    // preserved-state JSON is built from the FULL current history, and prior
-    // state is merged in, so todos/files/skills never regress).
-    const foldPreservedState = buildPreservedState(currentMessages)
-    const foldPreviousPreservedState = extractPreservedState(
+      latestLiveUserPromptMessage,
+      logger,
+      maxContextLength,
       previousSummaryContent,
-    )
-    const foldMergedPreservedState = mergePreservedState(
-      foldPreviousPreservedState,
-      foldPreservedState,
-    )
-    const foldPreservedStateJson = serializePreservedState(
-      foldMergedPreservedState,
-    )
-    const foldFirstUserTurnPinned =
-      findFirstUserTurnText(currentMessages) !== null
-    const foldStructuredBlock = buildStructuredSummary({
-      messages: currentMessages,
-      goalText: latestLiveUserPromptMessage
-        ? getTextContent(latestLiveUserPromptMessage).trim()
-        : null,
-      preservedState: foldMergedPreservedState,
+      previousSummaryEntries,
+      userBudget,
     })
-    const foldStructuredSummaryText = `${foldStructuredBlock}\n\n---\n\n${foldBudgetResult.summaryText}`
-    const foldTaggedSummaryText = `<compaction-summary>\n${foldStructuredSummaryText}\n</compaction-summary>`
-
-    const foldTextPart: TextPart = {
-      type: 'text',
-      text: `<conversation_summary>\n${SUMMARY_HEADER}\n\n<historical_memory>\n${foldTaggedSummaryText}\n</historical_memory>\n</conversation_summary>\n\n${SUMMARY_DISCLAIMER}`,
-    }
-
-    // Preserve images from the last user message in the REMAINING history (a
-    // folded exchange's images are summarized away; the model still needs the
-    // ones attached to turns it hasn't seen summarized).
-    const foldImageParts: Array<ImagePart | FilePart> = []
-    for (let i = remainingMessages.length - 1; i >= 0; i--) {
-      const msg = remainingMessages[i]
-      if (msg.role === 'user' && Array.isArray(msg.content)) {
-        const imageParts = msg.content.filter(
-          (part): part is ImagePart | FilePart =>
-            part.type === 'image' || part.type === 'file',
-        )
-        if (imageParts.length > 0) {
-          foldImageParts.push(...imageParts)
-          break
-        }
-      }
-    }
-    const foldSummaryMessage: UserMessage = {
-      role: 'user',
-      content: [foldTextPart, ...foldImageParts],
-      sentAt: nowFold,
-    }
-
-    // Final assembly: new summary first, then the verbatim remaining history
-    // (with the live user prompt guaranteed last, exactly like the full path).
-    const foldFinalMessages: Message[] = [foldSummaryMessage]
-    if (instructionsPromptMessage) {
-      foldFinalMessages.push({
-        ...instructionsPromptMessage,
-        sentAt: nowFold,
-      })
-    }
-    for (const message of remainingMessages) {
-      if (shouldExcludeMessage(message)) continue
-      if (isConversationSummary(message)) continue
-      if (message === latestLiveUserPromptMessage) continue
-      foldFinalMessages.push(message)
-    }
-    if (isMidTurnPrune) {
-      // The live user prompt is mid-turn; keep it in the remaining verbatim
-      // history and append the same continuation prompt the full path uses.
-      foldFinalMessages.push({
-        role: 'user',
-        content: [
-          {
-            type: 'text',
-            text: 'Continue the existing assistant turn from the historical memory above. The original user request and completed assistant/tool work are recorded there. Do not restart completed work; resume with the next necessary real tool call or final response.',
-          },
-        ],
-        sentAt: nowFold,
-      })
-    } else if (latestLiveUserPromptMessage) {
-      foldFinalMessages.push({
-        ...latestLiveUserPromptMessage,
-        sentAt: nowFold,
-      })
-    }
-
-    logFoldCompleted(logger, foldTelemetryBase, {
-      foldedExchangeMessageCount: exchangeMessages.length,
-      remainingMessageCount: remainingMessages.length,
-      firstUserTurnPinned: foldFirstUserTurnPinned,
-      structuredBlockChars: foldStructuredBlock.length,
-      preservedStateJsonChars: foldPreservedStateJson.length,
-      newestEntryForced: foldBudgetResult.newestEntryForced,
-      taggedSummaryText: foldTaggedSummaryText,
-    })
-
-    yield {
-      toolName: 'set_messages',
-      input: { messages: foldFinalMessages },
-      includeToolCall: false,
-    }
     return
   }
 
-  // Filter out excluded, conversation summary, and live-prompt messages for summarization
-  const messagesToSummarize = currentMessages
-    .filter(
-      (_message, index) =>
-        isMidTurnPrune || index !== latestLiveUserPromptIndex,
-    )
-    .filter(
-      (message) =>
-        !shouldExcludeMessage(message) && !isConversationSummary(message),
-    )
-
-  // Find the last user message with images to preserve in the final output
-  let lastUserImageParts: Array<ImagePart | FilePart> = []
-  for (let i = messagesToSummarize.length - 1; i >= 0; i--) {
-    const msg = messagesToSummarize[i]
-    if (msg.role === 'user' && Array.isArray(msg.content)) {
-      const imageParts = msg.content.filter(
-        (part): part is ImagePart | FilePart =>
-          part.type === 'image' || part.type === 'file',
-      )
-      if (imageParts.length > 0) {
-        lastUserImageParts = imageParts
-        break
-      }
-    }
-  }
-
-  const { entries: summarizedEntries, liveUserPromptEntry } = summarizeMessages(
-    messagesToSummarize,
-    latestLiveUserPromptMessage,
-  )
-
-  // Combine with new entries (previousSummaryEntries computed above — shared
-  // with the P3a fold path).
-  const allEntries: SummaryEntry[] = [
-    ...previousSummaryEntries,
-    ...summarizedEntries,
-  ]
-
-  const { includedEntries, newestEntryForced, summaryText } = applyBudgets(
+  const {
     allEntries,
+    firstUserTurnPinned,
+    finalMessages,
+    includedEntries,
+    liveUserPromptEntry,
+    newestEntryForced,
+    preservedStateJson,
+    structuredBlock,
+    structuredSummaryText,
+    taggedSummaryText,
+  } = buildFullSummary({
     assistantToolBudget,
-    userBudget,
+    currentMessages,
+    instructionsPromptMessage,
+    isMidTurnPrune,
     keepRecentTokens,
-  )
-
-  // === P1 STRUCTURED STATE (FID-2026-0806-003 Phase 1) ===
-  // Build the <structured_state> block (P1a required sections) carrying the
-  // preserved-state JSON (P1b), merged with any state carried by a prior
-  // summary (Continue re-distill rule), and pin the first user turn verbatim
-  // (P1c). The block leads the condensed memory; the budgeted role-tagged
-  // entries follow as the historical record.
-  const preservedState = buildPreservedState(currentMessages)
-  const previousPreservedState = extractPreservedState(previousSummaryContent)
-  const mergedPreservedState = mergePreservedState(
-    previousPreservedState,
-    preservedState,
-  )
-  const preservedStateJson = serializePreservedState(mergedPreservedState)
-  const firstUserTurnPinned = findFirstUserTurnText(currentMessages) !== null
-  const structuredBlock = buildStructuredSummary({
-    messages: currentMessages,
-    goalText: latestLiveUserPromptMessage
-      ? getTextContent(latestLiveUserPromptMessage).trim()
-      : null,
-    preservedState: mergedPreservedState,
+    latestLiveUserPromptIndex,
+    latestLiveUserPromptMessage,
+    previousSummaryContent,
+    previousSummaryEntries,
+    userBudget,
   })
-  // Deliberate duplication (P1c guarantee, FID-2026-0806-003): user intent
-  // appears twice — verbatim in Standing facts (≤12k tokens) AND in the
-  // budgeted [USER] historical entries (≤50k tokens). This is the tested
-  // invariant that user messages are never paraphrased or dropped; do not
-  // "dedupe" it away without re-testing the user-message guarantee.
-  const structuredSummaryText = `${structuredBlock}\n\n---\n\n${summaryText}`
-
-  // P2d: <compaction-summary> tags (DeepSeek pattern) so the model can
-  // distinguish the condensed memory from live input and skip it when
-  // reasoning about the current turn. Wrapped inside <historical_memory> so
-  // the existing summary parsers (extractSummaryContent / parseSummaryIntoEntries
-  // / extractPreservedState) keep working unchanged.
-  const taggedSummaryText = `<compaction-summary>\n${structuredSummaryText}\n</compaction-summary>`
-
-  // Create the summarized message with fresh sentAt timestamp
-  // Include any images from the last user message that had images
-  const now = Date.now()
-  const textPart: TextPart = {
-    type: 'text',
-    text: `<conversation_summary>
-${SUMMARY_HEADER}
-
-<historical_memory>
-${taggedSummaryText}
-</historical_memory>
-</conversation_summary>
-
-${SUMMARY_DISCLAIMER}`,
-  }
-  // Build content array with text and any preserved images
-  const summaryContentParts: (TextPart | ImagePart | FilePart)[] = [textPart]
-  // Append image parts (they're already typed correctly from the original message)
-  for (const part of lastUserImageParts) {
-    summaryContentParts.push(part)
-  }
-  const summarizedMessage: UserMessage = {
-    role: 'user',
-    content: summaryContentParts,
-    sentAt: now,
-  }
-
-  const continuationMessage: UserMessage = {
-    role: 'user',
-    content: [
-      {
-        type: 'text',
-        text: 'Continue the existing assistant turn from the historical memory above. The original user request and completed assistant/tool work are recorded there. Do not restart completed work; resume with the next necessary real tool call or final response.',
-      },
-    ],
-    sentAt: now,
-  }
-
-  // Build final messages array: summary first, then INSTRUCTIONS_PROMPT if it
-  // exists, then either the live user prompt or a mid-turn continuation prompt.
-  // Keeping a real user message last makes the next model step continue from
-  // normal user input instead of the condensed memory format.
-  const finalMessages: Message[] = [summarizedMessage]
-  if (instructionsPromptMessage) {
-    // Update sentAt to current time so future cache miss checks use fresh timestamps
-    finalMessages.push({ ...instructionsPromptMessage, sentAt: now })
-  }
-  if (isMidTurnPrune) {
-    finalMessages.push(continuationMessage)
-  } else if (latestLiveUserPromptMessage) {
-    finalMessages.push({ ...latestLiveUserPromptMessage, sentAt: now })
-  }
 
   const userEntryCount = allEntries.filter(
     (entry) => entry.role === 'user',

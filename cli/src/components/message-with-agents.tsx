@@ -174,6 +174,41 @@ export const MessageWithAgents = memo(
     // changing the content-width contract between message variants.
     const showRootPrefix = isUser || isAi
 
+    const messageBlock = (
+      <MessageBlock
+        messageId={message.id}
+        blocks={message.blocks}
+        content={message.content}
+        isUser={isUser}
+        isAi={isAi}
+        isLoading={isLoading}
+        timestamp={message.timestamp}
+        isComplete={message.isComplete}
+        completionTime={message.completionTime}
+        credits={message.credits}
+        timerStartTime={timerStartTime}
+        textColor={textColor}
+        timestampColor={timestampColor}
+        markdownOptions={markdownOptions}
+        availableWidth={messageContentWidth}
+        markdownPalette={markdownPalette!}
+        onToggleCollapsed={onToggleCollapsed}
+        onBuildFast={onBuildFast}
+        onBuildMax={onBuildMax}
+        onBuildLite={onBuildLite}
+        onFeedback={onFeedback}
+        onCloseFeedback={onCloseFeedback}
+        validationErrors={message.validationErrors}
+        userError={message.userError}
+        onOpenFeedback={onOpenFeedback}
+        attachments={message.attachments}
+        textAttachments={message.textAttachments}
+        fileAttachments={message.fileAttachments}
+        metadata={message.metadata}
+        isLastMessage={isLastMessage}
+      />
+    )
+
     return (
       <box
         key={message.id}
@@ -220,74 +255,12 @@ export const MessageWithAgents = memo(
                 </text>
               )}
               <box selectable={false} style={contentBoxStyle}>
-                <MessageBlock
-                  messageId={message.id}
-                  blocks={message.blocks}
-                  content={message.content}
-                  isUser={isUser}
-                  isAi={isAi}
-                  isLoading={isLoading}
-                  timestamp={message.timestamp}
-                  isComplete={message.isComplete}
-                  completionTime={message.completionTime}
-                  credits={message.credits}
-                  timerStartTime={timerStartTime}
-                  textColor={textColor}
-                  timestampColor={timestampColor}
-                  markdownOptions={markdownOptions}
-                  availableWidth={messageContentWidth}
-                  markdownPalette={markdownPalette!}
-                  onToggleCollapsed={onToggleCollapsed}
-                  onBuildFast={onBuildFast}
-                  onBuildMax={onBuildMax}
-                  onBuildLite={onBuildLite}
-                  onFeedback={onFeedback}
-                  onCloseFeedback={onCloseFeedback}
-                  validationErrors={message.validationErrors}
-                  userError={message.userError}
-                  onOpenFeedback={onOpenFeedback}
-                  attachments={message.attachments}
-                  textAttachments={message.textAttachments}
-                  fileAttachments={message.fileAttachments}
-                  metadata={message.metadata}
-                  isLastMessage={isLastMessage}
-                />
+                {messageBlock}
               </box>
             </box>
           ) : (
             <box selectable={false} style={contentBoxStyle}>
-              <MessageBlock
-                messageId={message.id}
-                blocks={message.blocks}
-                content={message.content}
-                isUser={isUser}
-                isAi={isAi}
-                isLoading={isLoading}
-                timestamp={message.timestamp}
-                isComplete={message.isComplete}
-                completionTime={message.completionTime}
-                credits={message.credits}
-                timerStartTime={timerStartTime}
-                textColor={textColor}
-                timestampColor={timestampColor}
-                markdownOptions={markdownOptions}
-                availableWidth={messageContentWidth}
-                markdownPalette={markdownPalette!}
-                onToggleCollapsed={onToggleCollapsed}
-                onBuildFast={onBuildFast}
-                onBuildMax={onBuildMax}
-                onBuildLite={onBuildLite}
-                onFeedback={onFeedback}
-                onCloseFeedback={onCloseFeedback}
-                validationErrors={message.validationErrors}
-                userError={message.userError}
-                onOpenFeedback={onOpenFeedback}
-                attachments={message.attachments}
-                textAttachments={message.textAttachments}
-                fileAttachments={message.fileAttachments}
-                metadata={message.metadata}
-                isLastMessage={isLastMessage}
-              />
+              {messageBlock}
             </box>
           )}
         </box>

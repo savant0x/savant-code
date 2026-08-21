@@ -76,10 +76,25 @@ export function convertToolResultMessage(
   }
   return message.content.map((c) => {
     if (c.type === 'json') {
+      // FID-2026-0820-013: in-memory tool results may carry undefined fields
+      // (optional result fields like cwd/timeout, batch wrappers), which fail
+      // the AI SDK's JSONValue schema and crash subagent spawn conversion.
+      // Sanitize to strict JSON — the same shape the persisted-history path
+      // already produces via session serialization. The persisted path never
+      // saw this because JSON serialization drops undefined on write.
+      const sanitized = JSON.parse(
+        JSON.stringify(c.value ?? null),
+      ) as typeof c.value
       return cloneDeep<ToolModelMessage>({
         ...message,
         role: 'tool',
-        content: [{ ...message, output: c, type: 'tool-result' }],
+        content: [
+          {
+            ...message,
+            output: { type: 'json', value: sanitized },
+            type: 'tool-result',
+          },
+        ],
       })
     }
     if (c.type === 'media') {

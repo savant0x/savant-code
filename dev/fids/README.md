@@ -5,7 +5,21 @@ operator decision, implementation, runtime review, or closure evidence.
 
 ## Current active FIDs
 
-The active queue is **empty**.
+**2026-08-21 ledger refresh:** the table below replaces the stale "the active
+queue is empty" claim (flagged by FID-2026-0820-007 Loop 1 as operator
+hygiene): eight FIDs are active on disk. Historical closure notes further down
+are unchanged.
+
+| FID | Status | Purpose / blocking gate |
+|---|---|---|
+| [`FID-2026-0819-005`](FID-2026-0819-005-quality-ratchet-file-remediation.md) | `analyzed` | Quality-ratchet file-length remediation program — **paused by operator decision 2026-08-21** ("call it good for now"); 168 violations intentional / fail-closed |
+| [`FID-2026-0820-007`](FID-2026-0820-007-savant-desktop-app-tauri-master.md) | `analyzed` | Savant Desktop App master (Tauri v2) — planning loop-converged; Commit Gate: design doc + five suite FIDs committed to main before any child GREEN |
+| [`FID-2026-0820-008`](FID-2026-0820-008-desktop-session-gateway.md) | `created` | Desktop Session Gateway (WebSocket) — Phase 1 child |
+| [`FID-2026-0820-009`](FID-2026-0820-009-tauri-shell-sidecar-supervisor.md) | `created` | Tauri Shell + Sidecar Supervisor — Phase 2 child |
+| [`FID-2026-0820-010`](FID-2026-0820-010-chat-ui-structured-no-terminal.md) | `created` | Chat UI (Structured, No Terminal) — Phase 3 child |
+| [`FID-2026-0820-011`](FID-2026-0820-011-packaging-distribution.md) | `created` | Packaging & Distribution — Phase 4 child |
+| [`FID-2026-0820-012`](FID-2026-0820-012-ehel-law3-verification-tracker-false-positive.md) | `fixed` | EHEL Law-3 tracker deadlock fix landed with regression coverage; post-relaunch live re-verification outstanding |
+| [`FID-2026-0820-013`](FID-2026-0820-013-subagent-spawn-model-message-conversion.md) | `fixed` | Spawn ModelMessage conversion fixed + live-verified; `basher` output-relay loss blocks closure |
 
 `FID-2026-0819-002` (research tools non-functional in direct-provider mode) is
 **closed and archived 2026-08-19** — see
@@ -59,6 +73,12 @@ closed. See `archive/README.md` for the closure entries.
 - `verified` = reviewed pass recorded (rarely left open; usually folds into `closed`)
 - `converged` = document is complete and loop-passed, but implementation hasn't started
 - `closed` = implementation exists in codebase AND gates pass (requires evidence)
+
+Ledger admission note (2026-08-21): the validator (`scripts/fid-ledger.ts`)
+accepts only `created | analyzed | fixed | verified` for files living in
+`dev/fids/`. A loop-converged planning FID stays `analyzed` until its phase
+is implemented (2026-08-16 Ground-Truth lesson); `converged` documents the
+loop state, not an admissible active-queue status.
 
 ### Closed records (historical)
 

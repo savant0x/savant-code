@@ -3,18 +3,17 @@ import {
   createEventSourceResponseHandler,
   createJsonErrorResponseHandler,
   createJsonResponseHandler,
-  parseProviderOptions,
   postJsonToApi,
 } from '@ai-sdk/provider-utils'
-import { z } from 'zod/v4'
 
-import { defaultOpenAICompatibleErrorStructure } from '../openai-compatible-error'
-import { convertToOpenAICompatibleCompletionPrompt } from './convert-to-openai-compatible-completion-prompt'
-// FID-2026-0803-010 LLM-C: byte-identical copies of these helpers lived in
-// completion/; the chat/ versions are canonical now.
-import { openaiCompatibleCompletionProviderOptions } from './openai-compatible-completion-options'
+import { buildOpenAICompatibleCompletionArgs } from './openai-compatible-completion-args'
+import {
+  createOpenAICompatibleCompletionChunkSchema,
+  openaiCompatibleCompletionResponseSchema,
+} from './openai-compatible-completion-schema'
 import { getResponseMetadata } from '../chat/get-response-metadata'
 import { mapOpenAICompatibleFinishReason } from '../chat/map-openai-compatible-finish-reason'
+import { defaultOpenAICompatibleErrorStructure } from '../openai-compatible-error'
 
 import type { OpenAICompatibleCompletionModelId } from './openai-compatible-completion-options'
 import type {
@@ -24,7 +23,6 @@ import type {
 import type {
   APICallError,
   LanguageModelV2,
-  LanguageModelV2CallWarning,
   LanguageModelV2Content,
   LanguageModelV2FinishReason,
   LanguageModelV2StreamPart,
@@ -35,6 +33,7 @@ import type {
   ParseResult,
   ResponseHandler,
 } from '@ai-sdk/provider-utils'
+import type { z } from 'zod/v4'
 
 type OpenAICompatibleCompletionConfig = {
   provider: string
@@ -86,99 +85,12 @@ export class OpenAICompatibleCompletionLanguageModel implements LanguageModelV2 
     return this.config.supportedUrls?.() ?? {}
   }
 
-  private async getArgs({
-    prompt,
-    maxOutputTokens,
-    temperature,
-    topP,
-    topK,
-    frequencyPenalty,
-    presencePenalty,
-    stopSequences: userStopSequences,
-    responseFormat,
-    seed,
-    providerOptions,
-    tools,
-    toolChoice,
-  }: Parameters<LanguageModelV2['doGenerate']>[0]) {
-    const warnings: LanguageModelV2CallWarning[] = []
-
-    // Parse provider options
-    const completionOptionsResult = await parseProviderOptions({
-      provider: this.providerOptionsName,
-      providerOptions,
-      schema: openaiCompatibleCompletionProviderOptions,
+  private async getArgs(options: Parameters<LanguageModelV2['doGenerate']>[0]) {
+    return buildOpenAICompatibleCompletionArgs({
+      modelId: this.modelId,
+      providerOptionsName: this.providerOptionsName,
+      options,
     })
-    const completionOptions = completionOptionsResult ?? {}
-
-    if (topK != null) {
-      warnings.push({ type: 'unsupported-setting', setting: 'topK' })
-    }
-
-    if (tools?.length) {
-      warnings.push({ type: 'unsupported-setting', setting: 'tools' })
-    }
-
-    if (toolChoice != null) {
-      warnings.push({ type: 'unsupported-setting', setting: 'toolChoice' })
-    }
-
-    if (responseFormat != null && responseFormat.type !== 'text') {
-      warnings.push({
-        type: 'unsupported-setting',
-        setting: 'responseFormat',
-        details: 'JSON response format is not supported.',
-      })
-    }
-
-    const { prompt: completionPrompt, stopSequences } =
-      convertToOpenAICompatibleCompletionPrompt({ prompt })
-
-    const stop = [...(stopSequences ?? []), ...(userStopSequences ?? [])]
-
-    return {
-      args: {
-        // model specific settings:
-        echo: completionOptions.echo,
-        logit_bias: completionOptions.logitBias,
-        suffix: completionOptions.suffix,
-        user: completionOptions.user,
-
-        // standardized settings:
-        max_tokens: maxOutputTokens,
-        temperature,
-        top_p: topP,
-        frequency_penalty: frequencyPenalty,
-        presence_penalty: presencePenalty,
-        seed,
-        // FID-2026-0803-002 LLM-2: filter out the known option keys from the
-        // raw spread (mirroring the chat model) so a caller passing e.g.
-        // `logitBias` does not send BOTH `logit_bias` (mapped) and `logitBias`
-        // (raw camelCase) on the wire.
-        ...Object.fromEntries(
-          Object.entries(
-            providerOptions?.[this.providerOptionsName] ?? {},
-          ).filter(
-            ([key]) =>
-              !Object.keys(
-                openaiCompatibleCompletionProviderOptions.shape,
-              ).includes(key),
-          ),
-        ),
-
-        // model id (FID-006 LLM2): re-asserted AFTER the provider-options
-        // spread so a provider option can never override the requested model
-        // (billing/routing integrity).
-        model: this.modelId,
-
-        // prompt:
-        prompt: completionPrompt,
-
-        // stop sequences:
-        stop: stop.length > 0 ? stop : undefined,
-      },
-      warnings,
-    }
   }
 
   async doGenerate(
@@ -367,48 +279,3 @@ export class OpenAICompatibleCompletionLanguageModel implements LanguageModelV2 
     }
   }
 }
-
-const usageSchema = z.object({
-  prompt_tokens: z.number(),
-  completion_tokens: z.number(),
-  total_tokens: z.number(),
-})
-
-// limited version of the schema, focussed on what is needed for the implementation
-// this approach limits breakages when the API changes and increases efficiency
-const openaiCompatibleCompletionResponseSchema = z.object({
-  id: z.string().nullish(),
-  created: z.number().nullish(),
-  model: z.string().nullish(),
-  choices: z.array(
-    z.object({
-      text: z.string(),
-      finish_reason: z.string(),
-    }),
-  ),
-  usage: usageSchema.nullish(),
-})
-
-// limited version of the schema, focussed on what is needed for the implementation
-// this approach limits breakages when the API changes and increases efficiency
-const createOpenAICompatibleCompletionChunkSchema = <
-  ERROR_SCHEMA extends z.core.$ZodType,
->(
-  errorSchema: ERROR_SCHEMA,
-) =>
-  z.union([
-    z.object({
-      id: z.string().nullish(),
-      created: z.number().nullish(),
-      model: z.string().nullish(),
-      choices: z.array(
-        z.object({
-          text: z.string(),
-          finish_reason: z.string().nullish(),
-          index: z.number(),
-        }),
-      ),
-      usage: usageSchema.nullish(),
-    }),
-    errorSchema,
-  ])

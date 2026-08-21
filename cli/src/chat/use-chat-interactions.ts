@@ -5,90 +5,21 @@
  * hook owns the values the layout needs (submit, menus, overlay state).
  */
 
-import { useMemo } from 'react'
-
+import { useChatInteractionInput } from './use-chat-interaction-input'
+import { useChatInteractionState } from './use-chat-interaction-state'
+import { useChatInteractionSuggestions } from './use-chat-interaction-suggestions'
 import { useChatKeyboardAssembly } from './use-chat-keyboard'
 import { useChatMessaging } from './use-chat-messaging'
 import { useChatOverlays } from './use-chat-overlays'
-import { useChatSuggestions } from './use-chat-suggestions'
-import { useChatInput } from '../hooks/use-chat-input'
-import { useInputHistory } from '../hooks/use-input-history'
-import { useChatStore } from '../state/chat-store'
-import { loadLocalAgents } from '../utils/local-agent-registry'
 
-import type { MultilineInputHandle } from '../components/multiline-input'
-import type { useAgentValidation } from '../hooks/use-agent-validation'
-import type { useSendMessage } from '../hooks/use-send-message'
-import type { ChatMessage } from '../types/chat'
-import type { SendMessageFn } from '../types/contracts/send-message'
-import type { InputValue, PendingBashMessage } from '../types/store'
-import type { User } from '../utils/auth'
-import type { AgentMode } from '../utils/constants'
-import type { FileTreeNode } from '@savant-code/common/util/file'
-import type { UseMutationResult } from '@tanstack/react-query'
-import type { Dispatch, MutableRefObject, SetStateAction } from 'react'
+import type { UseChatInteractionsArgs } from './use-chat-interactions-types'
 
-export interface UseChatInteractionsArgs {
-  agentMode: AgentMode
-  agentId?: string
-  initialPrompt: string | null
-  inputValue: string
-  cursorPosition: number
-  lastEditDueToNav: boolean
-  inputRef: MutableRefObject<MultilineInputHandle | null>
-  messages: ChatMessage[]
-  pendingBashMessages: PendingBashMessage[]
-  setMessages: (
-    value: ChatMessage[] | ((prev: ChatMessage[]) => ChatMessage[]),
-  ) => void
-  setInputValue: (
-    value: InputValue | ((prev: InputValue) => InputValue),
-  ) => void
-  setInputFocused: (focused: boolean) => void
-  setAgentMode: (mode: AgentMode) => void
-  focusedAgentId: string | null
-  setFocusedAgentId: (
-    value: string | null | ((prev: string | null) => string | null),
-  ) => void
-  toggleAgentMode: () => void
-  slashSelectedIndex: number
-  setSlashSelectedIndex: (value: number | ((prev: number) => number)) => void
-  agentSelectedIndex: number
-  setAgentSelectedIndex: (value: number | ((prev: number) => number)) => void
-  activeAgentStreamsRef: MutableRefObject<number>
-  isChainInProgressRef: MutableRefObject<boolean>
-  activeSubagentsRef: MutableRefObject<Set<string>>
-  abortControllerRef: MutableRefObject<AbortController | null>
-  sendMessageRef: MutableRefObject<SendMessageFn | undefined>
-  terminalWidth: number
-  separatorWidth: number
-  isCompactHeight: boolean
-  isNarrowWidth: boolean
-  scrollToLatest: () => void
-  scrollUp: () => void
-  scrollDown: () => void
-  handleToggleAll: () => void
-  validateAgents: ReturnType<typeof useAgentValidation>['validate']
-  continueChat: boolean
-  continueChatId?: string
-  subscriptionData: Parameters<typeof useSendMessage>[0]['subscriptionData']
-  setIsAuthenticated: Dispatch<SetStateAction<boolean | null>>
-  setUser: Dispatch<SetStateAction<User | null>>
-  logoutMutation: UseMutationResult<boolean, Error, void, unknown>
-  showSuggestedPrompts: boolean
-  setShowSuggestedPrompts: Dispatch<SetStateAction<boolean>>
-  fileTree: FileTreeNode[]
-  hasSubscription: boolean
-  modelPickerOpen: boolean
-  providerPickerOpen: boolean
-  rewindPickerOpen: boolean
-}
+export type { UseChatInteractionsArgs } from './use-chat-interactions-types'
 
 export function useChatInteractions(args: UseChatInteractionsArgs) {
   const {
     agentMode,
     agentId,
-    initialPrompt,
     inputValue,
     cursorPosition,
     lastEditDueToNav,
@@ -98,7 +29,6 @@ export function useChatInteractions(args: UseChatInteractionsArgs) {
     setMessages,
     setInputValue,
     setInputFocused,
-    setAgentMode,
     focusedAgentId,
     setFocusedAgentId,
     toggleAgentMode,
@@ -128,23 +58,25 @@ export function useChatInteractions(args: UseChatInteractionsArgs) {
     logoutMutation,
     showSuggestedPrompts,
     setShowSuggestedPrompts,
-    fileTree,
     hasSubscription,
     modelPickerOpen,
     providerPickerOpen,
     rewindPickerOpen,
   } = args
 
-  const localAgents = useMemo(() => loadLocalAgents(agentMode), [agentMode])
-  const inputMode = useChatStore((state) => state.inputMode)
-  const setInputMode = useChatStore((state) => state.setInputMode)
-  const askUserState = useChatStore((state) => state.askUserState)
-  const adsEnabled = useChatStore((state) => state.adsEnabled)
-  const driveMode = useChatStore((state) => state.driveMode)
-  const drivePaused = useChatStore((state) => state.drivePaused)
-
-  const { saveToHistory, navigateUp, navigateDown, resetHistoryNavigation } =
-    useInputHistory(inputValue, setInputValue, { inputMode, setInputMode })
+  const {
+    localAgents,
+    inputMode,
+    setInputMode,
+    askUserState,
+    adsEnabled,
+    driveMode,
+    drivePaused,
+    saveToHistory,
+    navigateUp,
+    navigateDown,
+    resetHistoryNavigation,
+  } = useChatInteractionState({ agentMode, inputValue, setInputValue })
 
   const {
     isConnected,
@@ -241,35 +173,23 @@ export function useChatInteractions(args: UseChatInteractionsArgs) {
     executeSlashCommand,
     applySlashInsertText,
     selectMentionAt,
-  } = useChatSuggestions({
-    inputValue,
-    cursorPosition,
+  } = useChatInteractionSuggestions({
+    ...args,
     inputMode,
-    agentMode,
-    fileTree,
     localAgents,
     adsEnabled,
     hasSubscription,
-    setInputValue,
-    slashSelectedIndex,
-    setSlashSelectedIndex,
-    agentSelectedIndex,
-    setAgentSelectedIndex,
     onSubmitPrompt,
     handleCommandResult,
   })
 
   const { inputWidth, handleBuildFast, handleBuildMax, handleBuildLite } =
-    useChatInput({
-      setInputValue,
-      agentMode,
-      setAgentMode,
-      separatorWidth,
-      initialPrompt,
+    useChatInteractionInput(
+      args,
       onSubmitPrompt,
       isCompactHeight,
       isNarrowWidth,
-    })
+    )
 
   const { chatKeyboardHandlers } = useChatKeyboardAssembly({
     inputMode,

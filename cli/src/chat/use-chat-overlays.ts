@@ -4,70 +4,31 @@
  * chat.tsx verbatim; depends on the messaging hook's onSubmitPrompt.
  */
 
-import { AnalyticsEvent } from '@savant-code/common/constants/analytics-events'
 import { useCallback, useEffect, useRef } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 
+import { useChatFollowupListener } from './use-chat-followup-listener'
 import { usePublishMutation } from '../hooks/use-publish-mutation'
 import { useChatHistoryStore } from '../state/chat-history-store'
-import { useChatStore } from '../state/chat-store'
 import { useFeedbackStore } from '../state/feedback-store'
 import { usePublishStore } from '../state/publish-store'
 import { useReviewStore } from '../state/review-store'
 import { reportActivity } from '../utils/activity-tracker'
-import { trackEvent } from '../utils/analytics'
 import { showClipboardMessage } from '../utils/clipboard'
 import { logger } from '../utils/logger'
 import { setTerminalTitle } from '../utils/terminal-title'
 
-import type { OnSubmitPrompt } from './types'
+import type {
+  UseChatOverlaysArgs,
+  UseChatOverlaysReturn,
+} from './use-chat-overlays-types'
 import type { CommandResult } from '../commands/command-registry'
-import type { MultilineInputHandle } from '../components/multiline-input'
-import type { AskUserState, InputValue } from '../types/store'
-import type { AgentMode } from '../utils/constants'
-import type { InputMode } from '../utils/input-modes'
 import type { FeedbackCategory } from '@savant-code/common/constants/feedback'
-import type { MutableRefObject } from 'react'
 
-export interface UseChatOverlaysArgs {
-  onSubmitPrompt: OnSubmitPrompt
-  agentMode: AgentMode
-  inputValue: string
-  cursorPosition: number
-  inputRef: MutableRefObject<MultilineInputHandle | null>
-  setInputValue: (
-    value: InputValue | ((prev: InputValue) => InputValue),
-  ) => void
-  setInputFocused: (focused: boolean) => void
-  setInputMode: (mode: InputMode) => void
-  resetHistoryNavigation: () => void
-  askUserState: AskUserState | null
-}
-
-export interface UseChatOverlaysReturn {
-  feedbackMode: boolean
-  feedbackText: string
-  setFeedbackText: (text: string) => void
-  handleMessageFeedback: (
-    id: string,
-    options?: {
-      category?: FeedbackCategory
-      footerMessage?: string
-      errors?: Array<{ id: string; message: string }>
-    },
-  ) => void
-  handleCloseFeedback: () => void
-  handleExitFeedback: () => void
-  handleExitPublish: () => void
-  handleReviewOptionSelect: (reviewText: string) => void
-  handleCloseReviewScreen: () => void
-  handleReviewCustom: () => void
-  handlePublish: (agentIds: string[]) => Promise<void>
-  handleSubmit: () => Promise<void>
-  handleCommandResult: (result?: CommandResult) => void
-  reviewMode: boolean
-  publishMode: boolean
-}
+export type {
+  UseChatOverlaysArgs,
+  UseChatOverlaysReturn,
+} from './use-chat-overlays-types'
 
 export function useChatOverlays({
   onSubmitPrompt,
@@ -296,61 +257,7 @@ export function useChatOverlays({
     }
   }, [onSubmitPrompt, inputValue, agentMode, handleCommandResult])
 
-  // Handle followup suggestion clicks
-  useEffect(() => {
-    const handleFollowupClick = (event: Event) => {
-      const customEvent = event as CustomEvent<{
-        prompt: string
-        index: number
-        toolCallId: string
-      }>
-      const { prompt, index, toolCallId } = customEvent.detail
-
-      logger.info(
-        { promptLength: prompt.length, index, toolCallId, agentMode },
-        '[followup-click] Followup clicked',
-      )
-
-      // Track analytics event
-      trackEvent(AnalyticsEvent.FOLLOWUP_CLICKED, {
-        promptLength: prompt.length,
-        index,
-        agentMode,
-      })
-
-      // Mark this followup as clicked (persisted per toolCallId)
-      useChatStore.getState().markFollowupClicked(toolCallId, index)
-
-      // Send the followup prompt directly, preserving the user's current input
-      onSubmitPrompt(prompt, agentMode, {
-        preserveInputValue: true,
-      })
-        .then((result) => {
-          logger.info(
-            { hasResult: !!result },
-            '[followup-click] onSubmitPrompt completed',
-          )
-        })
-        .catch((error) => {
-          logger.error(
-            { error },
-            '[followup-click] onSubmitPrompt failed with error',
-          )
-          showClipboardMessage('Failed to send followup', { durationMs: 3000 })
-        })
-    }
-
-    globalThis.addEventListener(
-      'savant-code:send-followup',
-      handleFollowupClick,
-    )
-    return () => {
-      globalThis.removeEventListener(
-        'savant-code:send-followup',
-        handleFollowupClick,
-      )
-    }
-  }, [onSubmitPrompt, agentMode])
+  useChatFollowupListener({ onSubmitPrompt, agentMode })
 
   return {
     feedbackMode,

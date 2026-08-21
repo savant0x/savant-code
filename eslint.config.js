@@ -15,6 +15,7 @@ export default tseslint.config(
       '**/.contentlayer/*',
       '**/node_modules/*',
       'cli/bin/**', // Generated compiled binaries and sibling release assets; never lint build output
+      'cli/.tmp/**', // Generated sigma bundle artifacts (cli/scripts/generate-sigma.ts) — machine output, never source
       'agents-graveyard/**', // Archived/deprecated agents - no need to lint
       'resources/**', // Vendored resource files - not linted (see .prettierignore / .markdownlintignore)
       'research/**', // Vendored research snapshots - not linted (see .prettierignore / .markdownlintignore)

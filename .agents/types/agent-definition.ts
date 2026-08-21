@@ -51,65 +51,8 @@ export interface AgentDefinition {
       }
   )
 
-  /**
-   * Provider routing options for OpenRouter.
-   * Controls which providers to use and fallback behavior.
-   * See https://openrouter.ai/docs/features/provider-routing
-   */
-  providerOptions?: {
-    /**
-     * List of provider slugs to try in order (e.g. ["anthropic", "openai"])
-     */
-    order?: string[]
-    /**
-     * Whether to allow backup providers when primary is unavailable (default: true)
-     */
-    allow_fallbacks?: boolean
-    /**
-     * Only use providers that support all parameters in your request (default: false)
-     */
-    require_parameters?: boolean
-    /**
-     * Control whether to use providers that may store data
-     */
-    data_collection?: 'allow' | 'deny'
-    /**
-     * List of provider slugs to allow for this request
-     */
-    only?: string[]
-    /**
-     * List of provider slugs to skip for this request
-     */
-    ignore?: string[]
-    /**
-     * List of quantization levels to filter by (e.g. ["int4", "int8"])
-     */
-    quantizations?: Array<
-      | 'int4'
-      | 'int8'
-      | 'fp4'
-      | 'fp6'
-      | 'fp8'
-      | 'fp16'
-      | 'bf16'
-      | 'fp32'
-      | 'unknown'
-    >
-    /**
-     * Sort providers by price, throughput, or latency
-     */
-    sort?: 'price' | 'throughput' | 'latency'
-    /**
-     * Maximum pricing you want to pay for this request
-     */
-    max_price?: {
-      prompt?: number | string
-      completion?: number | string
-      image?: number | string
-      audio?: number | string
-      request?: number | string
-    }
-  }
+  /** Provider routing options for OpenRouter. */
+  providerOptions?: ProviderOptions
 
   // ============================================================================
   // Tools and Subagents
@@ -283,204 +226,32 @@ export interface AgentDefinition {
       >)
 }
 
-// ============================================================================
-// Supporting Types
-// ============================================================================
-
-export interface AgentState {
-  agentId: string
-  runId?: string
-  parentId?: string
-
-  /** The agent's conversation history: messages from the user and the assistant. */
-  messageHistory: Message[]
-
-  /** The last value set by the set_output tool. This is a plain object or undefined if not set. */
-  output?: Record<string, JSONValue>
-
-  /** The system prompt for this agent. */
-  systemPrompt: string
-
-  /** The tool definitions for this agent. */
-  toolDefinitions: Record<
-    string,
-    { description: string | undefined; inputSchema: JSONValue }
-  >
-
-  /**
-   * The token count from the Anthropic API.
-   * This is updated on every agent step via the /api/v1/token-count endpoint.
-   */
-  contextTokenCount: number
-
-  /**
-   * FID-2026-0725-085: Resolved context window for this model.
-   * Set by the CLI via CTX-007 wiring. Used by handleSteps to determine
-   * when to trigger context-pruner spawning (auto-compact Layer 3).
-   * Falls back to hardcoded defaults if not set.
-   */
-  maxContextLength?: number
-}
-
-/**
- * Context provided to handleSteps generator function
- */
-export interface AgentStepContext {
-  agentState: AgentState
-  prompt?: string
-  params?: Record<string, JSONValue>
-  logger: Logger
-}
-
-export type StepText = { type: 'STEP_TEXT'; text: string }
-export type GenerateN = { type: 'GENERATE_N'; n: number }
-
-/**
- * Tool call object for handleSteps generator
- */
-export type ToolCall<T extends ToolName = ToolName> = {
-  [K in T]: {
-    toolName: K
-    input: GetToolParams<K>
-    includeToolCall?: boolean
-  }
-}[T]
-
-// ============================================================================
-// Available Tools
-// ============================================================================
-
-/**
- * File operation tools
- */
-export type FileEditingTools = 'read_files' | 'write_file' | 'str_replace'
-
-/**
- * Code analysis tools
- */
-export type CodeAnalysisTools = 'code_search' | 'find_files' | 'read_files'
-
-/**
- * Terminal and system tools
- */
-export type TerminalTools = 'run_terminal_command' | 'code_search'
-
-/**
- * Web and browser tools
- */
-export type WebTools = 'web_search' | 'read_docs' | 'read_url'
-
-/**
- * Agent management tools
- */
-export type AgentTools = 'spawn_agents'
-
-/**
- * Output and control tools
- */
-export type OutputTools = 'set_output'
-
-// ============================================================================
-// Available Models (see: https://openrouter.ai/models)
-// ============================================================================
-
-/**
- * AI models available for agents. Pick from our selection of recommended models or choose any model in OpenRouter.
- *
- * See available models at https://openrouter.ai/models
- */
-export type ModelName =
-  // Recommended Models
-
-  // OpenAI
-  | 'openai/gpt-5.3'
-  | 'openai/gpt-5.3-codex'
-  | 'openai/gpt-5.2'
-  | 'openai/gpt-5.1'
-  | 'openai/gpt-5.1-chat'
-  | 'openai/gpt-5-mini'
-  | 'openai/gpt-5-nano'
-
-  // Anthropic
-  | 'anthropic/claude-fable-5'
-  | 'anthropic/claude-sonnet-4.6'
-  | 'anthropic/claude-opus-4.8'
-  | 'anthropic/claude-opus-4.7'
-  | 'anthropic/claude-opus-4.6'
-  | 'anthropic/claude-opus-4.5'
-  | 'anthropic/claude-haiku-4.5'
-  | 'anthropic/claude-sonnet-4.5'
-  | 'anthropic/claude-opus-4.1'
-
-  // Gemini
-  | 'google/gemini-3.1-pro-preview'
-  | 'google/gemini-3-pro-preview'
-  | 'google/gemini-3-flash-preview'
-  | 'google/gemini-3.1-flash-lite'
-  | 'google/gemini-2.5-pro'
-  | 'google/gemini-2.5-flash'
-  | 'google/gemini-2.5-flash-lite'
-
-  // X-AI
-  | 'x-ai/grok-4-fast'
-  | 'x-ai/grok-4.1-fast'
-  | 'x-ai/grok-code-fast-1'
-
-  // Qwen
-  | 'qwen/qwen3-max'
-  | 'qwen/qwen3-coder-plus'
-  | 'qwen/qwen3-coder'
-  | 'qwen/qwen3-coder:nitro'
-  | 'qwen/qwen3-coder-flash'
-  | 'qwen/qwen3-235b-a22b-2507'
-  | 'qwen/qwen3-235b-a22b-2507:nitro'
-  | 'qwen/qwen3-235b-a22b-thinking-2507'
-  | 'qwen/qwen3-235b-a22b-thinking-2507:nitro'
-  | 'qwen/qwen3-30b-a3b'
-  | 'qwen/qwen3-30b-a3b:nitro'
-
-  // DeepSeek
-  | 'deepseek/deepseek-v4-pro'
-  | 'deepseek-v4-pro'
-  | 'deepseek/deepseek-v4-flash'
-  | 'deepseek-v4-flash'
-  | 'deepseek/deepseek-chat-v3-0324'
-  | 'deepseek/deepseek-chat-v3-0324:nitro'
-  | 'deepseek/deepseek-r1-0528'
-  | 'deepseek/deepseek-r1-0528:nitro'
-
-  // Xiaomi MiMo
-  | 'mimo/mimo-v2.5'
-  | 'mimo-v2.5'
-  | 'mimo/mimo-v2.5-pro'
-  | 'mimo-v2.5-pro'
-
-  // Other open source models
-  | 'moonshotai/kimi-k2'
-  | 'moonshotai/kimi-k2:nitro'
-  | 'moonshotai/kimi-k2.6'
-  | 'moonshotai/kimi-k2.7-code'
-  | 'z-ai/glm-5'
-  | 'z-ai/glm-5.1'
-  | 'z-ai/glm-4.6'
-  | 'z-ai/glm-4.6:nitro'
-  | 'z-ai/glm-4.7'
-  | 'z-ai/glm-4.7:nitro'
-  | 'z-ai/glm-4.7-flash'
-  | 'z-ai/glm-4.7-flash:nitro'
-  | 'minimax/minimax-m2.5'
-  | 'minimax/minimax-m3'
-  | (string & {})
-
-import type { ToolName, GetToolParams } from './tools'
 import type {
-  Message,
-  ToolResultOutput,
+  AgentState,
+  AgentStepContext,
+  GenerateN,
+  StepText,
+  ToolCall,
+} from './agent-runtime'
+import type { ModelName } from './model-name'
+import type { ProviderOptions } from './provider-options'
+import type { ToolName } from './tools'
+import type {
   JsonObjectSchema,
   JsonStringSchema,
   MCPConfig,
-  Logger,
-  JSONValue,
+  ToolResultOutput,
 } from './util-types'
 
-export type { ToolName, GetToolParams }
+export type { AgentState, AgentStepContext, GenerateN, StepText, ToolCall }
+export type {
+  AgentTools,
+  CodeAnalysisTools,
+  FileEditingTools,
+  OutputTools,
+  TerminalTools,
+  WebTools,
+} from './available-tools'
+export type { ModelName } from './model-name'
+export type { ProviderOptions } from './provider-options'
+export type { ToolName }

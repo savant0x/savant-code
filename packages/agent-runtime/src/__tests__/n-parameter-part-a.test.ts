@@ -3,6 +3,7 @@ import { TEST_USER_ID } from '@savant-code/common/old-constants'
 import {
   createTestAgentRuntimeParams,
   emptyMcpServers,
+  testLogger,
 } from '@savant-code/common/testing/fixtures/agent-runtime'
 import { getInitialSessionState } from '@savant-code/common/types/session-state'
 import { promptSuccess } from '@savant-code/common/util/error'
@@ -28,15 +29,7 @@ import {
 import { mockFileContext } from './test-utils'
 
 import type { AgentTemplate } from '../templates/types'
-import type { Logger } from '@savant-code/common/types/contracts/logger'
 import type { AgentState } from '@savant-code/common/types/session-state'
-
-const logger: Logger = {
-  debug: () => {},
-  error: () => {},
-  info: () => {},
-  warn: () => {},
-}
 
 describe('n parameter and GENERATE_N functionality', () => {
   let mockTemplate: AgentTemplate
@@ -122,7 +115,7 @@ describe('n parameter and GENERATE_N functionality', () => {
 
   afterEach(() => {
     mock.restore()
-    clearAgentGeneratorCache({ logger })
+    clearAgentGeneratorCache({ logger: testLogger })
   })
 
   describe('runAgentStep with n parameter', () => {
@@ -254,7 +247,7 @@ describe('n parameter and GENERATE_N functionality', () => {
           system: 'Test system prompt',
           stepsComplete: false,
           stepNumber: 1,
-          logger,
+          logger: testLogger,
           signal: new AbortController().signal,
           tools: {},
         })
@@ -262,7 +255,7 @@ describe('n parameter and GENERATE_N functionality', () => {
         expect(result.generateN).toBe(nValue)
 
         // Clear the generator cache between iterations
-        clearAgentGeneratorCache({ logger })
+        clearAgentGeneratorCache({ logger: testLogger })
       }
     })
 
@@ -294,7 +287,7 @@ describe('n parameter and GENERATE_N functionality', () => {
         system: 'Test system prompt',
         stepsComplete: false,
         stepNumber: 1,
-        logger,
+        logger: testLogger,
         signal: new AbortController().signal,
         tools: {},
       })

@@ -2,13 +2,10 @@ import { isRetryableStatusCode, getErrorStatusCode } from '@savant-code/sdk'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 
-import { Chat } from './chat'
+import { AuthedSurface } from './components/app-authed-surface'
 import { AppShell } from './components/app-shell'
-import { ChatHistoryScreen } from './components/chat-history-screen'
 import { LoginModal } from './components/login-modal'
 import { ProjectPickerScreen } from './components/project-picker-screen'
-import { SavantFreeLandingScreen } from './components/savant-free-landing-screen'
-import { SavantFreeSupersededScreen } from './components/savant-free-superseded-screen'
 import {
   EasterEggOverlays,
   EasterEggProvider,
@@ -16,19 +13,16 @@ import {
 import { ToastContainer } from './components/toast'
 import { useAuthQuery } from './hooks/use-auth-query'
 import { useAuthState } from './hooks/use-auth-state'
-import { useSavantFreeSession } from './hooks/use-savant-free-session'
 import { useTerminalFocus } from './hooks/use-terminal-focus'
 import { useTheme } from './hooks/use-theme'
 import { getProjectRoot, startNewChat } from './project-files'
 import { useChatHistoryStore } from './state/chat-history-store'
 import { useChatStore } from './state/chat-store'
 import { abortActiveRun } from './utils/active-run'
-import { IS_SAVANT_FREE } from './utils/constants'
 import { findGitRoot } from './utils/git'
 
 import type { MultilineInputHandle } from './components/multiline-input'
 import type { TopBannerType } from './types/store'
-import type { User } from './utils/auth'
 import type { AgentMode } from './utils/constants'
 import type { PermissionMode } from './utils/settings'
 import type { AuthStatus } from './utils/status-indicator-state'
@@ -243,98 +237,5 @@ export const App = ({
       <EasterEggOverlays />
       <ToastContainer />
     </EasterEggProvider>
-  )
-}
-
-interface AuthedSurfaceProps {
-  chatKey: string
-  initialPrompt: string | null
-  agentId?: string
-  fileTree: FileTreeNode[]
-  inputRef: React.MutableRefObject<MultilineInputHandle | null>
-  setIsAuthenticated: React.Dispatch<React.SetStateAction<boolean | null>>
-  setUser: React.Dispatch<React.SetStateAction<User | null>>
-  logoutMutation: ReturnType<typeof useAuthState>['logoutMutation']
-  continueChat: boolean
-  continueChatId: string | undefined
-  authStatus: AuthStatus
-  initialMode: AgentMode | undefined
-  initialPermissionMode?: PermissionMode
-  gitRoot: string | null | undefined
-  onSwitchToGitRoot: () => void
-  showChatHistory: boolean
-  onSelectChat: (chatId: string) => void
-  onCancelChatHistory: () => void
-  onNewChat: () => void
-}
-
-const AuthedSurface = ({
-  chatKey,
-  initialPrompt,
-  agentId,
-  fileTree,
-  inputRef,
-  setIsAuthenticated,
-  setUser,
-  logoutMutation,
-  continueChat,
-  continueChatId,
-  authStatus,
-  initialMode,
-  initialPermissionMode,
-  gitRoot,
-  onSwitchToGitRoot,
-  showChatHistory,
-  onSelectChat,
-  onCancelChatHistory,
-  onNewChat,
-}: AuthedSurfaceProps) => {
-  const { session, error: sessionError } = useSavantFreeSession()
-
-  if (IS_SAVANT_FREE && session?.status === 'superseded') {
-    return <SavantFreeSupersededScreen />
-  }
-
-  if (
-    IS_SAVANT_FREE &&
-    (session === null ||
-      session.status === 'none' ||
-      session.status === 'country_blocked' ||
-      session.status === 'banned' ||
-      session.status === 'rate_limited' ||
-      session.status === 'takeover_prompt')
-  ) {
-    return <SavantFreeLandingScreen session={session} error={sessionError} />
-  }
-
-  if (showChatHistory) {
-    return (
-      <ChatHistoryScreen
-        onSelectChat={onSelectChat}
-        onCancel={onCancelChatHistory}
-        onNewChat={onNewChat}
-      />
-    )
-  }
-
-  return (
-    <Chat
-      key={chatKey}
-      initialPrompt={initialPrompt}
-      agentId={agentId}
-      fileTree={fileTree}
-      inputRef={inputRef}
-      setIsAuthenticated={setIsAuthenticated}
-      setUser={setUser}
-      logoutMutation={logoutMutation}
-      continueChat={continueChat}
-      continueChatId={continueChatId}
-      authStatus={authStatus}
-      initialMode={initialMode}
-      initialPermissionMode={initialPermissionMode}
-      gitRoot={gitRoot}
-      onSwitchToGitRoot={onSwitchToGitRoot}
-      savantFreeSession={session}
-    />
   )
 }

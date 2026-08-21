@@ -1,57 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { getOptionLabel, CUSTOM_OPTION_INDEX } from './constants'
+import { CUSTOM_OPTION_INDEX } from './constants'
+import { formatAnswer, formatFormAnswers } from './format-answers'
 import { useChatStore } from '../../state/chat-store'
 
 import type { AccordionAnswer } from './components/accordion-question'
+import type { MultipleChoiceFormState } from './multiple-choice-form-state-types'
 import type { AskUserQuestion } from '../../types/store'
 
-/** Everything the render + keyboard layers need, computed from the questions
- *  and the store's focus state. Kept out of the component so the JSX shell
- *  stays under the 400-line bar. */
-export interface MultipleChoiceFormState {
-  terminalFocused: boolean
-  suppressNextHoverFocusRef: React.MutableRefObject<boolean>
-  expandedIndex: number | null
-  setExpandedIndex: React.Dispatch<React.SetStateAction<number | null>>
-  answers: Map<number, AccordionAnswer>
-  focusedOptionIndex: number | null
-  setFocusedOptionIndex: React.Dispatch<React.SetStateAction<number | null>>
-  focusedQuestionIndex: number
-  setFocusedQuestionIndex: React.Dispatch<React.SetStateAction<number>>
-  submitFocused: boolean
-  setSubmitFocused: React.Dispatch<React.SetStateAction<boolean>>
-  submitHovered: boolean
-  setSubmitHovered: React.Dispatch<React.SetStateAction<boolean>>
-  showFocusHighlight: boolean
-  setShowFocusHighlight: React.Dispatch<React.SetStateAction<boolean>>
-  lastFocusBeforeSubmit: {
-    questionIndex: number
-    optionIndex: number
-  } | null
-  isTypingCustom: boolean
-  setIsTypingCustom: React.Dispatch<React.SetStateAction<boolean>>
-  customCursorPositions: Map<number, number>
-  openQuestion: (questionIndex: number, optionIndex: number) => void
-  focusSubmit: (from?: { questionIndex: number; optionIndex: number }) => void
-  handleSetCustomText: (
-    questionIndex: number,
-    text: string,
-    cursorPosition: number,
-  ) => void
-  handleCustomSubmit: (questionIndex: number) => void
-  handleSelectOption: (
-    questionIndex: number,
-    optionIndex: number,
-    source?: 'keyboard' | 'mouse',
-  ) => void
-  handleToggleOption: (questionIndex: number, optionIndex: number) => void
-  formatAnswer: (
-    question: AskUserQuestion,
-    answer: AccordionAnswer | undefined,
-  ) => { question: string; answer: string }
-  handleSubmit: () => void
-}
+export type { MultipleChoiceFormState } from './multiple-choice-form-state-types'
 
 export function useMultipleChoiceFormState(opts: {
   questions: AskUserQuestion[]
@@ -291,48 +248,10 @@ export function useMultipleChoiceFormState(opts: {
     [],
   )
 
-  const formatAnswer = useCallback(
-    (question: AskUserQuestion, answer: AccordionAnswer | undefined) => {
-      if (!answer) {
-        return { question: question.question, answer: 'Skipped' }
-      }
-
-      const selectedOptions = question.multiSelect
-        ? Array.from(answer.selectedIndices ?? [])
-            .map((idx) => getOptionLabel(question.options[idx]))
-            .filter(Boolean)
-        : answer.selectedIndex !== undefined
-          ? [getOptionLabel(question.options[answer.selectedIndex])]
-          : []
-
-      const customText =
-        answer.isCustom && (answer.customText?.trim().length ?? 0) > 0
-          ? (answer.customText ?? '').trim()
-          : ''
-
-      const parts = customText
-        ? [...selectedOptions, customText]
-        : selectedOptions
-      if (parts.length === 0) {
-        return { question: question.question, answer: 'Skipped' }
-      }
-
-      return {
-        question: question.question,
-        answer: question.multiSelect ? parts.join(', ') : parts[0],
-      }
-    },
-    [],
-  )
-
   // Handle submit
   const handleSubmit = useCallback(() => {
-    const formattedAnswers = questions.map((question, index) =>
-      formatAnswer(question, answers.get(index)),
-    )
-
-    onSubmit(formattedAnswers)
-  }, [questions, answers, onSubmit, formatAnswer])
+    onSubmit(formatFormAnswers(questions, answers))
+  }, [questions, answers, onSubmit])
 
   // Sync focusedQuestionIndex when expandedIndex changes
   useEffect(() => {

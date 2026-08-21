@@ -1,44 +1,23 @@
-import { TextAttributes } from '@opentui/core'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 
-import { Button } from './button'
+import { ChatHistoryBottomBar, ChatHistoryTitle } from './chat-history-chrome'
+import {
+  LAYOUT,
+  computeChatColumnWidths,
+  formatChatRow,
+} from './chat-history-format'
 import { MultilineInput } from './multiline-input'
 import { SelectableList } from './selectable-list'
+import { useChatHistoryKeyboard } from './use-chat-history-keyboard'
 import { useSearchableList } from '../hooks/use-searchable-list'
 import { useTerminalLayout } from '../hooks/use-terminal-layout'
 import { useTheme } from '../hooks/use-theme'
-import {
-  deleteChatSession,
-  formatRelativeTime,
-  getAllChats,
-} from '../utils/chat-history'
-import { isPlainEnterKey } from '../utils/terminal-enter-detection'
+import { deleteChatSession, getAllChats } from '../utils/chat-history'
 
 import type { SelectableListItem } from './selectable-list'
-import type { ChatHistoryEntry } from '../utils/chat-history'
 
-/**
- * True when every listed chat is explicitly marked interrupted (completed ===
- * false) and at least one chat exists. Unreadable chats carry undefined and
- * suppress the hint — corruption is not the same as an interrupted session.
- */
-export function allChatsInterrupted(chats: ChatHistoryEntry[]): boolean {
-  return chats.length > 0 && chats.every((c) => c.completed === false)
-}
-
-const LAYOUT = {
-  CONTENT_PADDING: 4,
-  COMPACT_MODE_THRESHOLD: 20, // Hide header when terminal height is below this
-  NARROW_WIDTH_THRESHOLD: 70, // Hide buttons when terminal width is below this
-  MAIN_CONTENT_PADDING: 2,
-  INITIAL_CHATS: 25, // Load this many immediately for fast display
-  BACKGROUND_CHATS: 475, // Load this many more in the background for search
-  MAX_RENDERED_CHATS: 100, // Only render this many in the list
-  TIME_COL_WIDTH: 12, // e.g., "2 hours ago"
-  MSGS_COL_WIDTH: 9, // e.g., "!999 msgs"
-  DELETE_COL_WIDTH: 6, // e.g., "[×]" + marginRight
-  GAP_WIDTH: 3, // gap between columns
-} as const
+// Re-export the pure helper from the original path (focused-test call-graph).
+export { allChatsInterrupted } from './chat-history-format'
 
 interface ChatHistoryScreenProps {
   onSelectChat: (chatId: string) => void
@@ -56,6 +35,7 @@ export const ChatHistoryScreen: React.FC<ChatHistoryScreenProps> = ({
 
   // Layout calculations - use full width
   const contentWidth = terminalWidth - LAYOUT.CONTENT_PADDING
+  const maxPromptWidth = computeChatColumnWidths(contentWidth)
 
   // Two-phase loading: load initial chats immediately, then more in background
   const [chats, setChats] = useState(() => getAllChats(LAYOUT.INITIAL_CHATS))
@@ -81,65 +61,10 @@ export const ChatHistoryScreen: React.FC<ChatHistoryScreenProps> = ({
     setStatusMessage('Could not delete chat')
   }, [])
 
-  // Calculate available width for the prompt text (last column, variable width)
-  // Format: "[time]   [msgs]   [prompt...] [×]"
-  // reservedWidth accounts for: time col, msgs col, delete button area,
-  // 2 gaps between columns, list border (2), scrollbar (1), and button padding (2)
-  const reservedWidth =
-    LAYOUT.TIME_COL_WIDTH +
-    LAYOUT.MSGS_COL_WIDTH +
-    LAYOUT.DELETE_COL_WIDTH +
-    LAYOUT.GAP_WIDTH * 2 +
-    5 // border + scrollbar + button padding
-  const maxPromptWidth = Math.max(20, contentWidth - reservedWidth)
-
-  // Truncate text to fit single line
-  const truncateText = (text: string, maxLen: number): string => {
-    const singleLine = text.replace(/\n/g, ' ').trim()
-    if (singleLine.length <= maxLen) return singleLine
-    return singleLine.slice(0, maxLen - 1) + '…'
-  }
-
-  // Pad text to fixed width (right-pad with spaces)
-  const padRight = (text: string, width: number): string => {
-    // Use Array.from to count code points so emoji/wide chars don't break padding
-    const len = Array.from(text).length
-    if (len >= width) return text
-    return text + ' '.repeat(width - len)
-  }
-
   // Convert chats to SelectableListItem format with aligned columns
   // Order: time | message count | prompt
   const chatItems: SelectableListItem[] = useMemo(
-    () =>
-      chats.map((chat) => {
-        const time = padRight(
-          formatRelativeTime(chat.timestamp),
-          LAYOUT.TIME_COL_WIDTH,
-        )
-        const msgs = padRight(
-          chat.unreadable
-            ? '—'
-            : chat.completed === false
-              ? `!${chat.messageCount} msgs`
-              : `${chat.messageCount} msgs`,
-          LAYOUT.MSGS_COL_WIDTH,
-        )
-        const prompt = padRight(
-          truncateText(chat.lastPrompt, maxPromptWidth),
-          maxPromptWidth,
-        )
-
-        return {
-          id: chat.chatId,
-          // Combine all columns into label for correct display order: time | msgs | prompt
-          // The full prompt is kept in secondary for search filtering
-          label: `${time}${' '.repeat(LAYOUT.GAP_WIDTH)}${msgs}${' '.repeat(LAYOUT.GAP_WIDTH)}${prompt}`,
-          icon: undefined,
-          secondary: chat.lastPrompt, // Keep original prompt for search
-          hideSecondary: true, // Don't display secondary, only use for filtering
-        }
-      }),
+    () => chats.map((chat) => formatChatRow(chat, maxPromptWidth)),
     [chats, maxPromptWidth],
   )
 
@@ -201,56 +126,15 @@ export const ChatHistoryScreen: React.FC<ChatHistoryScreenProps> = ({
   )
 
   // Handle keyboard input
-  const handleKeyIntercept = useCallback(
-    (key: {
-      name?: string
-      sequence?: string
-      shift?: boolean
-      ctrl?: boolean
-      meta?: boolean
-      option?: boolean
-    }) => {
-      if (key.name === 'escape') {
-        if (searchQuery.length > 0) {
-          setSearchQuery('')
-        } else {
-          onCancel()
-        }
-        return true
-      }
-      if (key.name === 'up') {
-        setFocusedIndex((prev) => Math.max(0, prev - 1))
-        return true
-      }
-      if (key.name === 'down') {
-        const maxIndex =
-          Math.min(filteredItems.length, LAYOUT.MAX_RENDERED_CHATS) - 1
-        setFocusedIndex((prev) => Math.min(maxIndex, prev + 1))
-        return true
-      }
-      if (isPlainEnterKey(key)) {
-        const focused = filteredItems[focusedIndex]
-        if (focused) {
-          selectChat(focused.id)
-        }
-        return true
-      }
-      if (key.name === 'c' && key.ctrl) {
-        onCancel()
-        return true
-      }
-      return false
-    },
-    [
-      searchQuery,
-      setSearchQuery,
-      setFocusedIndex,
-      filteredItems,
-      focusedIndex,
-      selectChat,
-      onCancel,
-    ],
-  )
+  const handleKeyIntercept = useChatHistoryKeyboard({
+    searchQuery,
+    setSearchQuery,
+    focusedIndex,
+    setFocusedIndex,
+    filteredItems,
+    selectChat,
+    onCancel,
+  })
 
   return (
     <box
@@ -279,29 +163,7 @@ export const ChatHistoryScreen: React.FC<ChatHistoryScreenProps> = ({
         }}
       >
         {/* Title */}
-        {!isCompactMode && (
-          <box
-            style={{
-              flexDirection: 'column',
-              alignItems: 'center',
-              marginBottom: 1,
-              marginTop: 1,
-              flexShrink: 0,
-            }}
-          >
-            <text
-              style={{ fg: theme.foreground, attributes: TextAttributes.BOLD }}
-            >
-              Select a chat to resume
-            </text>
-            {allChatsInterrupted(chats) && (
-              <text style={{ fg: theme.muted, marginTop: 1 }}>
-                All sessions show as interrupted — this may be a display quirk;
-                resume one to verify.
-              </text>
-            )}
-          </box>
-        )}
+        {!isCompactMode && <ChatHistoryTitle chats={chats} />}
 
         {/* Search input */}
         <box
@@ -357,77 +219,13 @@ export const ChatHistoryScreen: React.FC<ChatHistoryScreenProps> = ({
       </box>
 
       {/* Bottom bar */}
-      <box
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: '100%',
-          paddingTop: 0,
-          paddingBottom: 0,
-          borderStyle: 'single',
-          borderColor: theme.border,
-          flexShrink: 0,
-          backgroundColor: theme.surface,
-        }}
-        border={['top']}
-      >
-        <box
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            width: contentWidth,
-          }}
-        >
-          {/* Help text */}
-          <box style={{ flexGrow: 1, flexShrink: 1 }}>
-            <text style={{ fg: theme.muted }}>
-              ↑↓ navigate · Enter select · Click [×] to remove · Esc cancel
-            </text>
-            {statusMessage && (
-              <text style={{ fg: theme.muted }}>
-                {' · '}
-                {statusMessage}
-              </text>
-            )}
-          </box>
-
-          {/* Buttons - hidden on narrow screens */}
-          {!isNarrowWidth && (
-            <box style={{ flexDirection: 'row', gap: 1 }}>
-              <Button
-                onClick={onNewChat}
-                style={{
-                  paddingLeft: 2,
-                  paddingRight: 2,
-                  paddingTop: 0,
-                  paddingBottom: 0,
-                  borderStyle: 'single',
-                  borderColor: theme.primary,
-                }}
-                border={['top', 'bottom', 'left', 'right']}
-              >
-                <text style={{ fg: theme.primary }}>New Chat</text>
-              </Button>
-              <Button
-                onClick={onCancel}
-                style={{
-                  paddingLeft: 2,
-                  paddingRight: 2,
-                  paddingTop: 0,
-                  paddingBottom: 0,
-                  borderStyle: 'single',
-                  borderColor: theme.muted,
-                }}
-                border={['top', 'bottom', 'left', 'right']}
-              >
-                <text style={{ fg: theme.muted }}>Cancel</text>
-              </Button>
-            </box>
-          )}
-        </box>
-      </box>
+      <ChatHistoryBottomBar
+        contentWidth={contentWidth}
+        isNarrowWidth={isNarrowWidth}
+        statusMessage={statusMessage}
+        onNewChat={onNewChat}
+        onCancel={onCancel}
+      />
     </box>
   )
 }

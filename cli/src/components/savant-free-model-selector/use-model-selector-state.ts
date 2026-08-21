@@ -6,7 +6,6 @@ import {
   getRecommendedSavantFreeModelId,
   isSavantFreeGlmV52ModelId,
   isSavantFreeModelAvailable,
-  isSavantFreePremiumModelId,
 } from '@savant-code/common/constants/savant-free-models'
 import {
   getRateLimitsByModel,
@@ -21,14 +20,19 @@ import {
   useState,
 } from 'react'
 
+import { computeSelectorLayout, estimateSelectorHeight } from './layout'
 import {
-  TOGGLE_ID,
-  computeSelectorLayout,
-  estimateSelectorHeight,
-} from './layout'
+  buildRenderedModelIds,
+  buildSelectorNavIds,
+  buildSelectorSections,
+} from './model-selector-core'
 import { useModelSelectorKeyboard } from './use-keyboard-nav'
+import { useSelectorActions } from './use-selector-actions'
+import {
+  useKeepSelectorFocusValid,
+  useSelectorScrollSync,
+} from './use-selector-effects'
 import { useNow } from '../../hooks/use-now'
-import { startSavantFreeSession } from '../../hooks/use-savant-free-session'
 import { useTerminalDimensions } from '../../hooks/use-terminal-dimensions'
 import { useSavantFreeModelStore } from '../../state/savant-free-model-store'
 import { useSavantFreeSessionStore } from '../../state/savant-free-session-store'
@@ -37,62 +41,20 @@ import {
   getSavantFreePremiumResetAt,
 } from '../../utils/savant-free-premium-reset'
 
-import type { Section } from './layout'
+import type { ModelSelectorState } from './model-selector-core'
 import type { SavantFreeReferralFocusTarget } from '../savant-free-referral-banner'
 import type { BoxRenderable, ScrollBoxRenderable } from '@opentui/core'
-import type {
-  SavantFreeAccessTier,
-  SavantFreeModel,
-} from '@savant-code/common/constants/savant-free-models'
+import type { SavantFreeAccessTier } from '@savant-code/common/constants/savant-free-models'
 
-/** Everything the render path needs, computed from session state + the
- *  terminal's width budget. The picker component stays a thin presentational
- *  shell; all state, effects, and callbacks live here. */
-export interface ModelSelectorState {
-  accessTier: SavantFreeAccessTier
-  deploymentAvailabilityLabel: string
-  pending: string | null
-  hoveredId: string | null
-  setHoveredId: React.Dispatch<React.SetStateAction<string | null>>
-  availableModels: readonly SavantFreeModel[]
-  recommendedModel: SavantFreeModel
-  canCollapse: boolean
-  expanded: boolean
-  focusedId: string
-  setFocusedId: React.Dispatch<React.SetStateAction<string>>
-  extraTargets: readonly SavantFreeReferralFocusTarget[]
-  setExtraTargets: React.Dispatch<
-    React.SetStateAction<SavantFreeReferralFocusTarget[]>
-  >
-  sections: readonly Section[]
-  navIds: readonly string[]
-  committedModelId: string | null
-  referral: ReturnType<typeof getReferralInfo>
-  premiumUsed: number
-  premiumExhausted: boolean
-  premiumResetCountdown: string | null
-  wrapDetails: boolean
-  buttonOuterWidth: number
-  nameColumnWidth: number
-  recommendedOneLineLen: number
-  contentHeight: number
-  needsScroll: boolean
-  scrollViewportHeight: number
-  scrollRef: React.MutableRefObject<ScrollBoxRenderable | null>
-  contentRef: React.MutableRefObject<BoxRenderable | null>
-  syncContentHeight: () => void
-  isJoinable: (modelId: string) => boolean
-  pick: (modelId: string) => void
-  toggleExpanded: () => void
-}
+// Re-export the state contract from the original path (public API kept).
+export type { ModelSelectorState } from './model-selector-core'
 
 export function useModelSelectorState(opts: {
   maxHeight: number
   onExpandedChange?: (expanded: boolean) => void
 }): ModelSelectorState {
   const { maxHeight, onExpandedChange } = opts
-  // contentMaxWidth (capped at 80 cols by the landing screen) is the real
-  // budget — not terminalWidth.
+  // contentMaxWidth (capped at 80 cols by the landing screen) is the real budget.
   const { contentMaxWidth } = useTerminalDimensions()
   const selectedModel = useSavantFreeModelStore((s) => s.selectedModel)
   const setSelectedModel = useSavantFreeModelStore((s) => s.setSelectedModel)
@@ -109,8 +71,7 @@ export function useModelSelectorState(opts: {
   const [hoveredId, setHoveredId] = useState<string | null>(null)
 
   const availableModels = useMemo(
-    // GLM 5.2 is a referral reward, not a freely-pickable model, so it's
-    // surfaced by the separate SavantFreeReferralBanner rather than this grid.
+    // GLM 5.2 is a referral reward (SavantFreeReferralBanner), not a grid model.
     () =>
       getSavantFreeModelsForAccessTier(accessTier).filter(
         (m) => !isSavantFreeGlmV52ModelId(m.id),
@@ -125,14 +86,12 @@ export function useModelSelectorState(opts: {
     () => availableModels.filter((m) => m.id !== recommendedModel.id),
     [availableModels, recommendedModel],
   )
-  // Only worth collapsing when the toggle actually hides something. With a
-  // single "other" model (limited tier) we just show both — a "see 1 more
-  // model" toggle is noise.
+  // Only worth collapsing when the toggle actually hides something (a single
+  // "other" model just shows both — a "see 1 more" toggle is noise).
   const canCollapse = otherModels.length >= 2
 
-  // Collapsed by default only on the landing screen and only when the
-  // saved/active selection IS the recommended model — a returning user with a
-  // different preference gets the expanded list so their pick is visible.
+  // Collapsed by default only on the landing screen when the saved selection
+  // IS the recommended model; other preferences start expanded.
   const isLanding = session?.status === 'none' || !session
   const [expanded, setExpanded] = useState(
     () => !canCollapse || !isLanding || selectedModel !== recommendedModel.id,
@@ -142,12 +101,10 @@ export function useModelSelectorState(opts: {
     onExpandedChange?.(expanded)
   }, [expanded, onExpandedChange])
 
-  // Keyboard cursor — separate from the selected model so Tab/arrow can
-  // preview without committing. Starts on the saved/active pick.
+  // Keyboard cursor — separate from the selected model (preview without commit).
   const [focusedId, setFocusedId] = useState<string>(() => selectedModel)
 
-  // The referral banner contributes its GLM/copy actions to the navigation
-  // order; kept local to avoid a global focus bridge.
+  // Referral banner GLM/copy actions join the nav order (kept local).
   const [extraTargets, setExtraTargets] = useState<
     SavantFreeReferralFocusTarget[]
   >([])
@@ -166,67 +123,32 @@ export function useModelSelectorState(opts: {
       current === nextHeight ? current : nextHeight,
     )
   }, [])
-  const sections = useMemo(() => {
-    if (!expanded) return [] as readonly Section[]
-    if (accessTier === 'limited') {
-      return [
-        { key: 'limited', label: '', models: otherModels },
-      ] satisfies readonly Section[]
-    }
-    return (
-      [
-        {
-          key: 'premium',
-          label: 'PREMIUM',
-          models: otherModels.filter((m) => isSavantFreePremiumModelId(m.id)),
-        },
-        {
-          key: 'unlimited',
-          label: 'UNLIMITED',
-          models: otherModels.filter((m) => !isSavantFreePremiumModelId(m.id)),
-        },
-      ] satisfies readonly Section[]
-    ).filter((section) => section.models.length > 0)
-  }, [expanded, accessTier, otherModels])
+  const sections = useMemo(
+    () => buildSelectorSections(expanded, accessTier, otherModels),
+    [expanded, accessTier, otherModels],
+  )
 
   // Model rows in render order: recommended hero first, then the grouped rest.
   const renderedModelIds = useMemo(
-    () => [
-      recommendedModel.id,
-      ...sections.flatMap((section) => section.models.map((m) => m.id)),
-    ],
+    () => buildRenderedModelIds(recommendedModel, sections),
     [recommendedModel, sections],
   )
-  // Keyboard-navigable ids: the model rows, then the toggle, then any focus
-  // targets the referral banner registered (so arrowing down past "see all
-  // models" reaches its buttons; nextSavantFreeModelId wraps back to the top).
+  // Keyboard-navigable ids: model rows, then the toggle, then referral focus
+  // targets (arrowing down past "see all models" reaches its buttons).
   const navIds = useMemo(
-    () => [
-      ...renderedModelIds,
-      ...(canCollapse ? [TOGGLE_ID] : []),
-      ...extraTargetIds,
-    ],
+    () => buildSelectorNavIds(renderedModelIds, canCollapse, extraTargetIds),
     [canCollapse, renderedModelIds, extraTargetIds],
   )
 
   // Keep focus valid as the list expands/collapses or the selection changes
-  // server-side; only an out-of-range focus snaps back to the selection.
-  useEffect(() => {
-    setFocusedId((curr) =>
-      navIds.includes(curr)
-        ? curr
-        : navIds.includes(selectedModel)
-          ? selectedModel
-          : navIds[0]!,
-    )
-  }, [navIds, selectedModel])
+  // server-side; only out-of-range focus snaps back to the selection.
+  useKeepSelectorFocusValid({ navIds, selectedModel, setFocusedId })
 
   useEffect(() => {
-    // Landing-screen safety net: if the in-memory selection becomes
-    // unavailable (e.g. deployment hours close while the picker is open),
-    // swap to the always-available fallback so Enter doesn't POST a model
-    // the server will immediately reject. In-memory only — the user's saved
-    // preference (e.g. Kimi or DeepSeek) is preserved for the next launch.
+    // Landing-screen safety net: if the in-memory selection becomes unavailable
+    // (e.g. deployment hours close while the picker is open), swap to the
+    // always-available fallback so Enter doesn't POST a rejected model.
+    // In-memory only — the saved preference is preserved for the next launch.
     if (
       (session?.status === 'none' || !session) &&
       (!renderedModelIds.includes(selectedModel) ||
@@ -241,9 +163,9 @@ export function useModelSelectorState(opts: {
   const rateLimitsByModel = getRateLimitsByModel(session)
   const referral = getReferralInfo(session)
 
-  // Premium quota surfaced on the PREMIUM header: "N of M used · resets in …".
-  // All premium models share one pool; any entry has the right count. The pool
-  // resets on a Pacific-day boundary, so the countdown shows even at zero used.
+  // Premium quota surfaced on the PREMIUM header: all premium models share
+  // one pool; the pool resets on a Pacific-day boundary, so the countdown
+  // shows even at zero used.
   const sharedRateLimit = rateLimitsByModel
     ? Object.values(rateLimitsByModel)[0]
     : undefined
@@ -297,54 +219,25 @@ export function useModelSelectorState(opts: {
 
   // Keep the focused element inside the viewport while arrowing through a
   // taller list; reset stale offsets when a resize makes everything fit.
-  useLayoutEffect(() => {
-    const sb = scrollRef.current
-    if (!sb) return
-    if (!needsScroll) {
-      sb.scrollTop = 0
-      return
-    }
-    sb.scrollChildIntoView(focusedId)
-    // When the final referral action is focused, reveal the measured bottom.
-    if (focusedId === extraTargetIds.at(-1)) {
-      sb.scrollTop = Math.max(0, sb.scrollHeight - sb.viewport.height)
-    }
-  }, [focusedId, contentHeight, needsScroll, extraTargetIds])
+  useSelectorScrollSync({
+    scrollRef,
+    focusedId,
+    contentHeight,
+    needsScroll,
+    extraTargetIds,
+  })
 
-  const isJoinable = useCallback(
-    (modelId: string) => {
-      if (!isSavantFreeModelAvailable(modelId, new Date(now))) return false
-      const rateLimit = rateLimitsByModel?.[modelId]
-      return !rateLimit || rateLimit.recentCount < rateLimit.limit
-    },
-    [now, rateLimitsByModel],
-  )
-
-  const pick = useCallback(
-    (modelId: string) => {
-      if (pending) return
-      if (modelId === committedModelId) return
-      if (!isJoinable(modelId)) return
-      setPending(modelId)
-      startSavantFreeSession(modelId).finally(() => setPending(null))
-    },
-    [pending, committedModelId, isJoinable],
-  )
-
-  const toggleExpanded = useCallback(() => {
-    setExpanded((prev) => {
-      const next = !prev
-      // After revealing the list, drop focus onto the first newly-shown row so
-      // the next arrow press walks into it; after collapsing, return to the
-      // hero so Enter starts.
-      setFocusedId(
-        next
-          ? (otherModels[0]?.id ?? recommendedModel.id)
-          : recommendedModel.id,
-      )
-      return next
-    })
-  }, [otherModels, recommendedModel])
+  const { isJoinable, pick, toggleExpanded } = useSelectorActions({
+    now,
+    rateLimitsByModel,
+    pending,
+    setPending,
+    committedModelId,
+    setExpanded,
+    otherModels,
+    recommendedModel,
+    setFocusedId,
+  })
 
   // Tab/arrows move the highlight only; Enter/Space commits or fires toggle.
   useModelSelectorKeyboard({

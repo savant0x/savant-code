@@ -4,21 +4,21 @@ import {
   createJsonErrorResponseHandler,
   createJsonResponseHandler,
   generateId,
-  parseProviderOptions,
   postJsonToApi,
 } from '@ai-sdk/provider-utils'
-import { z } from 'zod/v4'
 
-import { convertToOpenAICompatibleChatMessages } from './convert-to-openai-compatible-chat-messages'
 import { getResponseMetadata } from './get-response-metadata'
 import { mapOpenAICompatibleFinishReason } from './map-openai-compatible-finish-reason'
-import { openaiCompatibleProviderOptions } from './openai-compatible-chat-options'
-import { defaultOpenAICompatibleErrorStructure } from '../openai-compatible-error'
-import { prepareTools } from './openai-compatible-prepare-tools'
+import { buildOpenAICompatibleChatArgs } from './openai-compatible-chat-args'
+import {
+  OpenAICompatibleChatResponseSchema,
+  createOpenAICompatibleChatChunkSchema,
+} from './openai-compatible-chat-schema'
 import {
   createChatStreamTransformer,
   getRequiredToolKeys,
 } from './stream-transform'
+import { defaultOpenAICompatibleErrorStructure } from '../openai-compatible-error'
 
 import type { OpenAICompatibleChatModelId } from './openai-compatible-chat-options'
 import type {
@@ -29,7 +29,6 @@ import type { MetadataExtractor } from './openai-compatible-metadata-extractor'
 import type {
   APICallError,
   LanguageModelV2,
-  LanguageModelV2CallWarning,
   LanguageModelV2Content,
   SharedV2ProviderMetadata,
 } from '@ai-sdk/provider'
@@ -96,123 +95,13 @@ export class OpenAICompatibleChatLanguageModel implements LanguageModelV2 {
     return this.config.supportedUrls?.() ?? {}
   }
 
-  private async getArgs({
-    prompt,
-    maxOutputTokens,
-    temperature,
-    topP,
-    topK,
-    frequencyPenalty,
-    presencePenalty,
-    providerOptions,
-    stopSequences,
-    responseFormat,
-    seed,
-    toolChoice,
-    tools,
-  }: Parameters<LanguageModelV2['doGenerate']>[0]) {
-    const warnings: LanguageModelV2CallWarning[] = []
-
-    // Parse provider options. FID-2026-0803-010 LLM-B: the base key and the
-    // configured provider name coincide by default ('openai-compatible'), so
-    // re-parsing the same key is redundant — reuse the base result. Custom
-    // provider names still parse their own key.
-    const baseOptionsResult = await parseProviderOptions({
-      provider: 'openai-compatible',
-      providerOptions,
-      schema: openaiCompatibleProviderOptions,
+  private async getArgs(options: Parameters<LanguageModelV2['doGenerate']>[0]) {
+    return buildOpenAICompatibleChatArgs({
+      modelId: this.modelId,
+      providerOptionsName: this.providerOptionsName,
+      supportsStructuredOutputs: this.supportsStructuredOutputs,
+      options,
     })
-    const providerOptionsResult =
-      this.providerOptionsName === 'openai-compatible'
-        ? baseOptionsResult
-        : await parseProviderOptions({
-            provider: this.providerOptionsName,
-            providerOptions,
-            schema: openaiCompatibleProviderOptions,
-          })
-    const compatibleOptions = Object.assign(
-      baseOptionsResult ?? {},
-      providerOptionsResult ?? {},
-    )
-
-    if (topK != null) {
-      warnings.push({ type: 'unsupported-setting', setting: 'topK' })
-    }
-
-    if (
-      responseFormat?.type === 'json' &&
-      responseFormat.schema != null &&
-      !this.supportsStructuredOutputs
-    ) {
-      warnings.push({
-        type: 'unsupported-setting',
-        setting: 'responseFormat',
-        details:
-          'JSON response format schema is only supported with structuredOutputs',
-      })
-    }
-
-    const {
-      tools: openaiTools,
-      toolChoice: openaiToolChoice,
-      toolWarnings,
-    } = prepareTools({
-      tools,
-      toolChoice,
-    })
-
-    return {
-      args: {
-        // model id:
-        model: this.modelId,
-
-        // model specific settings:
-        user: compatibleOptions.user,
-
-        // standardized settings:
-        max_tokens: maxOutputTokens,
-        temperature,
-        top_p: topP,
-        frequency_penalty: frequencyPenalty,
-        presence_penalty: presencePenalty,
-        response_format:
-          responseFormat?.type === 'json'
-            ? this.supportsStructuredOutputs === true &&
-              responseFormat.schema != null
-              ? {
-                  type: 'json_schema',
-                  json_schema: {
-                    schema: responseFormat.schema,
-                    name: responseFormat.name ?? 'response',
-                    description: responseFormat.description,
-                  },
-                }
-              : { type: 'json_object' }
-            : undefined,
-
-        stop: stopSequences,
-        seed,
-        ...Object.fromEntries(
-          Object.entries(
-            providerOptions?.[this.providerOptionsName] ?? {},
-          ).filter(
-            ([key]) =>
-              !Object.keys(openaiCompatibleProviderOptions.shape).includes(key),
-          ),
-        ),
-
-        reasoning_effort: compatibleOptions.reasoningEffort,
-        verbosity: compatibleOptions.textVerbosity,
-
-        // messages:
-        messages: convertToOpenAICompatibleChatMessages(prompt),
-
-        // tools:
-        tools: openaiTools,
-        tool_choice: openaiToolChoice,
-      },
-      warnings: [...warnings, ...toolWarnings],
-    }
   }
 
   async doGenerate(
@@ -374,98 +263,3 @@ export {
   parseToolCallArguments,
 } from './stream-transform'
 export type { ParsedToolArguments } from './stream-transform'
-
-const openaiCompatibleTokenUsageSchema = z
-  .object({
-    prompt_tokens: z.number().nullish(),
-    completion_tokens: z.number().nullish(),
-    total_tokens: z.number().nullish(),
-    prompt_tokens_details: z
-      .object({
-        cached_tokens: z.number().nullish(),
-      })
-      .nullish(),
-    completion_tokens_details: z
-      .object({
-        reasoning_tokens: z.number().nullish(),
-        accepted_prediction_tokens: z.number().nullish(),
-        rejected_prediction_tokens: z.number().nullish(),
-      })
-      .nullish(),
-  })
-  .nullish()
-
-// limited version of the schema, focussed on what is needed for the implementation
-// this approach limits breakages when the API changes and increases efficiency
-const OpenAICompatibleChatResponseSchema = z.object({
-  id: z.string().nullish(),
-  created: z.number().nullish(),
-  model: z.string().nullish(),
-  choices: z.array(
-    z.object({
-      message: z.object({
-        role: z.literal('assistant').nullish(),
-        content: z.string().nullish(),
-        reasoning_content: z.string().nullish(),
-        reasoning: z.string().nullish(),
-        tool_calls: z
-          .array(
-            z.object({
-              id: z.string().nullish(),
-              function: z.object({
-                name: z.string(),
-                arguments: z.string(),
-              }),
-            }),
-          )
-          .nullish(),
-      }),
-      finish_reason: z.string().nullish(),
-    }),
-  ),
-  usage: openaiCompatibleTokenUsageSchema,
-})
-
-// limited version of the schema, focussed on what is needed for the implementation
-// this approach limits breakages when the API changes and increases efficiency
-const createOpenAICompatibleChatChunkSchema = <
-  ERROR_SCHEMA extends z.core.$ZodType,
->(
-  errorSchema: ERROR_SCHEMA,
-) =>
-  z.union([
-    z.object({
-      id: z.string().nullish(),
-      created: z.number().nullish(),
-      model: z.string().nullish(),
-      choices: z.array(
-        z.object({
-          delta: z
-            .object({
-              role: z.enum(['assistant']).nullish(),
-              content: z.string().nullish(),
-              // Most openai-compatible models set `reasoning_content`, but some
-              // providers serving `gpt-oss` set `reasoning`. See #7866
-              reasoning_content: z.string().nullish(),
-              reasoning: z.string().nullish(),
-              tool_calls: z
-                .array(
-                  z.object({
-                    index: z.number(),
-                    id: z.string().nullish(),
-                    function: z.object({
-                      name: z.string().nullish(),
-                      arguments: z.string().nullish(),
-                    }),
-                  }),
-                )
-                .nullish(),
-            })
-            .nullish(),
-          finish_reason: z.string().nullish(),
-        }),
-      ),
-      usage: openaiCompatibleTokenUsageSchema,
-    }),
-    errorSchema,
-  ])

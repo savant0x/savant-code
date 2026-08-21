@@ -4,92 +4,23 @@ import {
 } from '@savant-code/common/project-file-tree'
 import React from 'react'
 
-import { AgentModeToggle } from './agent-mode-toggle'
-import { MultipleChoiceForm } from './ask-user'
-import { CommandPalette } from './command-palette'
-import { DriveBanner } from './drive-mode/banner'
-import { DriveModeConfirmation } from './drive-mode/confirmation'
+import { ChatInputAskUserForm } from './chat-input-bar-ask-user'
+import { ChatInputCompact } from './chat-input-bar-compact'
+import { ChatInputDriveConfirmation } from './chat-input-bar-drive-confirm'
+import { ChatInputNormal } from './chat-input-bar-normal'
 import { FeedbackContainer } from './feedback-container'
 import { InputModeBanner } from './input-mode-banner'
-import { MultilineInput, type MultilineInputHandle } from './multiline-input'
 import { OutOfCreditsBanner } from './out-of-credits-banner'
 import { PublishContainer } from './publish-container'
-import { SuggestionMenu, type SuggestionItem } from './suggestion-menu'
-import {
-  buildDriveLockMessage,
-  buildReviseMessage,
-  parseDrivePlanForConfirmation,
-} from '../commands/auto-drive'
-import { useAskUserBridge } from '../hooks/use-ask-user-bridge'
+import { parseDrivePlanForConfirmation } from '../commands/auto-drive'
 import { useEvent } from '../hooks/use-event'
 import { tryGetProjectRoot } from '../project-files'
 import { useChatStore } from '../state/chat-store'
 import { shouldInterceptChatInputKey } from '../utils/chat-input-key-intercept'
-import { getInputModeConfig } from '../utils/input-modes'
-import { BORDER_CHARS } from '../utils/ui-constants'
 
-import type { OnSubmitPrompt } from '../chat/types'
-import type { useTheme } from '../hooks/use-theme'
+import type { ChatInputBarProps } from './chat-input-bar-types'
+import type { SuggestionItem } from './suggestion-menu'
 import type { InputValue } from '../types/store'
-import type { AgentMode } from '../utils/constants'
-
-type Theme = ReturnType<typeof useTheme>
-
-interface ChatInputBarProps {
-  // Input state
-  inputValue: string
-  cursorPosition: number
-  setInputValue: (
-    value: InputValue | ((prev: InputValue) => InputValue),
-  ) => void
-  inputFocused: boolean
-  inputRef: React.MutableRefObject<MultilineInputHandle | null>
-  inputPlaceholder: string
-  lastEditDueToNav: boolean
-
-  // Agent mode
-  agentMode: AgentMode
-  toggleAgentMode: () => void
-  setAgentMode: (mode: AgentMode) => void
-
-  // Suggestion menus
-  hasSlashSuggestions: boolean
-  hasMentionSuggestions: boolean
-  hasSuggestionMenu: boolean
-  slashSuggestionItems: SuggestionItem[]
-  agentSuggestionItems: SuggestionItem[]
-  fileSuggestionItems: SuggestionItem[]
-  slashSelectedIndex: number
-  agentSelectedIndex: number
-  onSlashItemClick?: (index: number) => void
-  onMentionItemClick?: (index: number) => void
-
-  // Layout
-  theme: Theme
-  terminalHeight: number
-  separatorWidth: number
-  shouldCenterInputVertically: boolean
-  inputBoxTitle: string | undefined
-  directoryDisplay: string
-  isCompactHeight: boolean
-  isNarrowWidth: boolean
-
-  // Feedback mode
-  feedbackMode: boolean
-  handleExitFeedback: () => void
-
-  // Publish mode
-  publishMode: boolean
-  handleExitPublish: () => void
-  handlePublish: (agentIds: string[]) => Promise<void>
-
-  // Handlers
-  handleSubmit: () => Promise<void>
-  onPaste: (fallbackText?: string) => void
-  onInterruptStream: () => void
-  /** FID-2026-0818-002: arbitrary-content submit for the drive confirmation. */
-  onSubmitPrompt: OnSubmitPrompt
-}
 
 export const ChatInputBar = ({
   inputValue,
@@ -133,12 +64,9 @@ export const ChatInputBar = ({
   const inputMode = useChatStore((state) => state.inputMode)
   const setInputMode = useChatStore((state) => state.setInputMode)
 
-  const modeConfig = getInputModeConfig(inputMode)
   const askUserState = useChatStore((state) => state.askUserState)
-  const driveMode = useChatStore((state) => state.driveMode)
   const driveState = useChatStore((state) => state.driveState)
   const drivePlanDraft = useChatStore((state) => state.drivePlanDraft)
-  const activeAutoRunId = useChatStore((state) => state.activeAutoRunId)
   const hasAnyPreview = hasSuggestionMenu
 
   // In the home directory (or an ancestor) the file tree is only scanned a few
@@ -149,8 +77,6 @@ export const ChatInputBar = ({
 
   // Increase menu size on larger screen heights
   const normalModeMaxVisible = terminalHeight > 35 ? 15 : 10
-  const { submitAnswers, skip } = useAskUserBridge()
-  const [askUserTitle] = React.useState('Some questions for you')
 
   // Shared key intercept handler for suggestion menu navigation and history navigation
   const handleKeyIntercept = useEvent(
@@ -179,37 +105,9 @@ export const ChatInputBar = ({
     : null
   if (driveState === 'awaiting_confirmation' && drivePlan) {
     return (
-      <DriveModeConfirmation
+      <ChatInputDriveConfirmation
         plan={drivePlan}
-        onConfirm={(editedPlan) => {
-          useChatStore.getState().setDriveState('driving')
-          useChatStore.getState().setDrivePlanDraft(null)
-          void onSubmitPrompt(
-            buildDriveLockMessage(
-              { ...drivePlan, plan: editedPlan },
-              activeAutoRunId,
-            ),
-            'STRICT',
-          )
-            .then(() => useChatStore.getState().setDriveMode(true))
-            .catch(() => {
-              useChatStore.getState().setDriveMode(false)
-              useChatStore.getState().setDriveState('planning')
-            })
-        }}
-        onRevise={(notes) => {
-          useChatStore.getState().setDriveState('planning')
-          useChatStore.getState().setDrivePlanDraft(null)
-          void onSubmitPrompt(buildReviseMessage(notes), 'STRICT').catch(
-            () => {},
-          )
-        }}
-        onCancel={() => {
-          useChatStore.getState().setDriveMode(false)
-          useChatStore.getState().setDriveState('planning')
-          useChatStore.getState().setDrivePlanDraft(null)
-          useChatStore.getState().setActiveAutoRunId(null)
-        }}
+        onSubmitPrompt={onSubmitPrompt}
       />
     )
   }
@@ -297,77 +195,6 @@ export const ChatInputBar = ({
     setInputValue(value)
   }
 
-  const handleFormSubmit = (
-    answers: { question: string; answer: string }[],
-  ) => {
-    if (!askUserState) return
-
-    // Convert accordion-style answers to the format expected by submitAnswers
-    const formattedAnswers = askUserState.questions.map((q, idx) => {
-      const answerObj = answers[idx]
-      if (!answerObj || answerObj.answer === 'Skipped') {
-        return { questionIndex: idx }
-      }
-
-      // For multi-select questions, always use selectedOptions array format
-      if (q.multiSelect) {
-        // Split by ', ' to get individual options (even if just one)
-        const selectedOptions = answerObj.answer.split(', ').filter(Boolean)
-
-        // Check if all selected options match known options (not "other" text)
-        const allMatchKnownOptions = selectedOptions.every((selected) =>
-          q.options.some((opt) => {
-            const label = typeof opt === 'string' ? opt : opt.label
-            return label === selected
-          }),
-        )
-
-        if (allMatchKnownOptions && selectedOptions.length > 0) {
-          return {
-            questionIndex: idx,
-            selectedOptions,
-          }
-        }
-
-        // Otherwise it's an "other" text answer for multi-select
-        return {
-          questionIndex: idx,
-          otherText: answerObj.answer,
-        }
-      }
-
-      // For single-select questions, check if the answer matches one of the options
-      const matchingOptionIndex = q.options.findIndex((opt) => {
-        const label = typeof opt === 'string' ? opt : opt.label
-        return label === answerObj.answer
-      })
-
-      if (matchingOptionIndex >= 0) {
-        return {
-          questionIndex: idx,
-          selectedOption: answerObj.answer,
-        }
-      }
-
-      // Otherwise it's an "other" text answer
-      return {
-        questionIndex: idx,
-        otherText: answerObj.answer,
-      }
-    })
-
-    submitAnswers(formattedAnswers)
-  }
-
-  const handleFormSkip = () => {
-    if (!askUserState) return
-    skip()
-    onInterruptStream()
-  }
-
-  const effectivePlaceholder =
-    inputMode === 'default' ? inputPlaceholder : modeConfig.placeholder
-
   // FID-2026-0816-007 step 5: the cwd line is folded into input-bar chrome —
   // normal mode surfaces it in the border title, compact mode as a dim line.
   const cwdLabel = `cwd: ${directoryDisplay}`
@@ -377,239 +204,78 @@ export const ChatInputBar = ({
 
   if (askUserState) {
     return (
-      <box
-        title={askUserTitle}
-        titleAlignment="center"
-        style={{
-          width: '100%',
-          borderStyle: 'single',
-          borderColor: theme.primary,
-        }}
-        customBorderChars={BORDER_CHARS}
-      >
-        <MultipleChoiceForm
-          questions={askUserState.questions}
-          onSubmit={handleFormSubmit}
-          onSkip={handleFormSkip}
-        />
-      </box>
+      <ChatInputAskUserForm
+        theme={theme}
+        onInterruptStream={onInterruptStream}
+      />
     )
   }
 
   // Compact mode: no border, minimal chrome, supports menus and multiline
   if (isCompactHeight) {
-    const compactMaxHeight = Math.floor(terminalHeight / 2)
     return (
-      <>
-        {/* FID-2026-0816-007 step 5: compact mode has no border title, so the
-            cwd line is folded in as a single dim row above the input. */}
-        <text
-          fg={theme.muted}
-          wrapMode="none"
-          selectable={false}
-          style={{ paddingLeft: 1 }}
-        >
-          {cwdLabel}
-        </text>
-        {/* FID-033d Phase D: slash commands now render as the CommandPalette
-            overlay (native <select>) inline above the input. Mention (@)
-            suggestions still use the inline SuggestionMenu. */}
-        {hasSlashSuggestions ? (
-          <CommandPalette
-            items={slashSuggestionItems}
-            prefix="/"
-            selectedIndex={slashSelectedIndex}
-            title="Slash Commands"
-            onSelect={handleSlashSelect}
-            onClose={handleSlashClose}
-          />
-        ) : null}
-        {hasMentionSuggestions ? (
-          <SuggestionMenu
-            items={[...agentSuggestionItems, ...fileSuggestionItems]}
-            selectedIndex={agentSelectedIndex}
-            maxVisible={5}
-            prefix="@"
-            onItemClick={onMentionItemClick}
-            footer={mentionMenuFooter}
-          />
-        ) : null}
-        <box
-          style={{
-            flexDirection: 'row',
-            alignItems: 'flex-start',
-            width: '100%',
-            paddingLeft: 1,
-            paddingRight: 1,
-            gap: 1,
-            backgroundColor: theme.surface,
-          }}
-        >
-          {modeConfig.label && (
-            <box
-              style={{
-                flexShrink: 0,
-                paddingLeft: 1,
-                paddingRight: 1,
-                backgroundColor: theme.info,
-              }}
-            >
-              <text fg={theme.background} selectable={false}>
-                {modeConfig.label}
-              </text>
-            </box>
-          )}
-          {modeConfig.icon && (
-            <box style={{ flexShrink: 0 }}>
-              <text fg={theme[modeConfig.color]} selectable={false}>
-                {modeConfig.icon}
-              </text>
-            </box>
-          )}
-          {/* In default modes the compact box has no border or label, so it can
-              read as a passive status line. A shell-style prompt glyph signals
-              that it's a focusable input — costs no extra height. */}
-          {!modeConfig.label && !modeConfig.icon && (
-            <box style={{ flexShrink: 0 }}>
-              <text fg={theme.success} selectable={false}>
-                ❯
-              </text>
-            </box>
-          )}
-          <MultilineInput
-            value={inputValue}
-            onChange={handleInputChange}
-            onSubmit={handleSubmit}
-            onPaste={onPaste}
-            onKeyIntercept={handleKeyIntercept}
-            placeholder={effectivePlaceholder}
-            focused={inputFocused && !feedbackMode}
-            maxHeight={compactMaxHeight}
-            ref={inputRef}
-            cursorPosition={cursorPosition}
-            maskInput={
-              inputMode === 'providerSetup' || inputMode === 'researchKeySetup'
-            }
-          />
-        </box>
-        {driveMode ? <DriveBanner /> : null}
-        <InputModeBanner />
-      </>
+      <ChatInputCompact
+        inputValue={inputValue}
+        cursorPosition={cursorPosition}
+        inputRef={inputRef}
+        inputFocused={inputFocused}
+        feedbackMode={feedbackMode}
+        theme={theme}
+        terminalHeight={terminalHeight}
+        inputPlaceholder={inputPlaceholder}
+        hasSlashSuggestions={hasSlashSuggestions}
+        slashSuggestionItems={slashSuggestionItems}
+        slashSelectedIndex={slashSelectedIndex}
+        hasMentionSuggestions={hasMentionSuggestions}
+        agentSuggestionItems={agentSuggestionItems}
+        fileSuggestionItems={fileSuggestionItems}
+        agentSelectedIndex={agentSelectedIndex}
+        onMentionItemClick={onMentionItemClick}
+        handleSubmit={handleSubmit}
+        onPaste={onPaste}
+        cwdLabel={cwdLabel}
+        mentionMenuFooter={mentionMenuFooter}
+        onSlashSelect={handleSlashSelect}
+        onSlashClose={handleSlashClose}
+        onInputChange={handleInputChange}
+        onKeyIntercept={handleKeyIntercept}
+      />
     )
   }
 
   return (
-    <>
-      {driveMode ? <DriveBanner /> : null}
-      <box
-        title={effectiveTitle}
-        titleAlignment="center"
-        style={{
-          width: '100%',
-          borderStyle: 'single',
-          borderColor: theme.border,
-          paddingLeft: 1,
-          paddingRight: 1,
-          paddingTop: 0,
-          paddingBottom: 0,
-          flexDirection: 'column',
-          gap: hasAnyPreview ? 1 : 0,
-        }}
-      >
-        {/* FID-033d Phase D: slash commands now render as the CommandPalette
-            overlay (native <select>) inline above the input. Mention (@)
-            suggestions still use the inline SuggestionMenu. */}
-        {hasSlashSuggestions ? (
-          <CommandPalette
-            items={slashSuggestionItems}
-            prefix="/"
-            selectedIndex={slashSelectedIndex}
-            title="Slash Commands"
-            onSelect={handleSlashSelect}
-            onClose={handleSlashClose}
-          />
-        ) : null}
-        {hasMentionSuggestions ? (
-          <SuggestionMenu
-            items={[...agentSuggestionItems, ...fileSuggestionItems]}
-            selectedIndex={agentSelectedIndex}
-            maxVisible={normalModeMaxVisible}
-            prefix="@"
-            onItemClick={onMentionItemClick}
-            footer={mentionMenuFooter}
-          />
-        ) : null}
-        <box
-          style={{
-            flexDirection: 'column',
-            justifyContent: shouldCenterInputVertically
-              ? 'center'
-              : 'flex-start',
-            minHeight: shouldCenterInputVertically ? 3 : undefined,
-            gap: 0,
-          }}
-        >
-          <box
-            style={{
-              flexDirection: 'row',
-              alignItems: shouldCenterInputVertically ? 'center' : 'flex-start',
-              gap: 1,
-              width: '100%',
-            }}
-          >
-            {modeConfig.label && (
-              <box
-                style={{
-                  flexShrink: 0,
-                  paddingLeft: 1,
-                  paddingRight: 1,
-                  backgroundColor: theme.info,
-                }}
-              >
-                <text fg={theme.background} selectable={false}>
-                  {modeConfig.label}
-                </text>
-              </box>
-            )}
-            {modeConfig.icon && (
-              <box style={{ flexShrink: 0 }}>
-                <text fg={theme[modeConfig.color]} selectable={false}>
-                  {modeConfig.icon}
-                </text>
-              </box>
-            )}
-            <box style={{ flexGrow: 1, minWidth: 0 }}>
-              <MultilineInput
-                value={inputValue}
-                onChange={handleInputChange}
-                onSubmit={handleSubmit}
-                onPaste={onPaste}
-                onKeyIntercept={handleKeyIntercept}
-                placeholder={effectivePlaceholder}
-                focused={inputFocused && !feedbackMode}
-                maxHeight={Math.floor(terminalHeight / 2)}
-                ref={inputRef}
-                cursorPosition={cursorPosition}
-              />
-            </box>
-            {modeConfig.showAgentModeToggle && !isNarrowWidth && (
-              <box
-                style={{
-                  flexShrink: 0,
-                  paddingLeft: 2,
-                }}
-              >
-                <AgentModeToggle
-                  mode={agentMode}
-                  onToggle={toggleAgentMode}
-                  onSelectMode={setAgentMode}
-                />
-              </box>
-            )}
-          </box>
-        </box>
-      </box>
-      <InputModeBanner />
-    </>
+    <ChatInputNormal
+      inputValue={inputValue}
+      cursorPosition={cursorPosition}
+      inputRef={inputRef}
+      inputFocused={inputFocused}
+      feedbackMode={feedbackMode}
+      theme={theme}
+      terminalHeight={terminalHeight}
+      inputPlaceholder={inputPlaceholder}
+      agentMode={agentMode}
+      toggleAgentMode={toggleAgentMode}
+      setAgentMode={setAgentMode}
+      hasSlashSuggestions={hasSlashSuggestions}
+      slashSuggestionItems={slashSuggestionItems}
+      slashSelectedIndex={slashSelectedIndex}
+      hasMentionSuggestions={hasMentionSuggestions}
+      agentSuggestionItems={agentSuggestionItems}
+      fileSuggestionItems={fileSuggestionItems}
+      agentSelectedIndex={agentSelectedIndex}
+      onMentionItemClick={onMentionItemClick}
+      shouldCenterInputVertically={shouldCenterInputVertically}
+      isNarrowWidth={isNarrowWidth}
+      handleSubmit={handleSubmit}
+      onPaste={onPaste}
+      effectiveTitle={effectiveTitle}
+      mentionMenuFooter={mentionMenuFooter}
+      normalModeMaxVisible={normalModeMaxVisible}
+      hasAnyPreview={hasAnyPreview}
+      onSlashSelect={handleSlashSelect}
+      onSlashClose={handleSlashClose}
+      onInputChange={handleInputChange}
+      onKeyIntercept={handleKeyIntercept}
+    />
   )
 }

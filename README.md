@@ -735,7 +735,9 @@ threshold.
 | `cli/`                    | `@savant-code/cli`           | CLI source — UI, commands, state, hooks, OpenTUI/React components |
 | `common/`                 | `@savant-code/common`        | Shared types, tool definitions, utilities                         |
 | `evals/`                  | `@savant-code/evals`         | ECHO-native benchmark v2 runner + legacy eval fixtures            |
+| `savant-free/`            | `@savant-code/savant-free`   | CLI release + e2e tests for the free variant                      |
 | `packages/agent-runtime/` | `@savant-code/agent-runtime` | Agent loop, tool executor, LLM API integration                    |
+| `packages/design-systems/`| `@savant-code/design-systems`| Offline design-system presets and visual contracts                |
 | `packages/code-map/`      | `@savant-code/code-map`      | tree-sitter code indexing, language detection                     |
 | `packages/database/`      | `@savant-code/database`      | Database abstraction layer                                        |
 | `packages/knowledge-graph/` | `@savant-code/knowledge-graph` | Deterministic codebase knowledge-graph engine (indexer, queries, clustering, export serializer) |

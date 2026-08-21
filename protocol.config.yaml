@@ -45,9 +45,8 @@ paths:
   session_summaries: 'dev/session-summaries/'
   learnings: 'dev/LEARNINGS.md'
 
-# ADVISORY — documented quality bar only. Not enforced by any lint/test gate;
-# core files intentionally exceed max_file_lines (e.g. savant.ts, run.ts).
-# FID-2026-0803-001 ECHO-3.
+# LIVE quality policy — the quality report enforces the 300-line absolute ceiling
+# for all project-owned TypeScript/TSX files, including tests and core modules.
 quality:
   max_file_lines: 300
   max_function_lines: 50

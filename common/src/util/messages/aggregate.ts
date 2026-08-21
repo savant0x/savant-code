@@ -64,6 +64,33 @@ export function convertCbToModelMessages({
     }
   }
 
+  // Validate each message against the AI SDK schema (FID-2026-0820-013).
+  // This MUST run on BOTH paths: includeCacheControl is per-model
+  // (run-agent-step/step.ts supportsCacheControl), and the non-cache-
+  // control path previously returned before validation, letting
+  // schema-invalid shapes surface only as the AI SDK's opaque
+  // AI_InvalidPromptError ("The messages must be a ModelMessage[]") from
+  // standardizePrompt — intermittent and correlated with session growth
+  // (rare message shapes appear late). Fail fast here instead, with the
+  // actionable role/index/zod error below.
+  for (let i = 0; i < aggregated.length; i++) {
+    const message = aggregated[i]
+    const result = modelMessageSchema.safeParse(message)
+    if (!result.success) {
+      if (logger) {
+        logger.error(
+          { message, aggregated, error: result.error },
+          `convertCbToModelMessages: Message at index ${i} failed schema validation.`,
+        )
+      }
+      throw new Error(
+        `convertCbToModelMessages: Message at index ${i} failed schema validation.\n` +
+          `Role: ${message.role}\n` +
+          `Message:\n${result.error.message}`,
+      )
+    }
+  }
+
   if (!includeCacheControl) {
     return aggregated
   }
@@ -135,25 +162,6 @@ export function convertCbToModelMessages({
         break addCacheControlLoop
       }
       break
-    }
-  }
-
-  // Validate each message against the AI SDK schema
-  for (let i = 0; i < aggregated.length; i++) {
-    const message = aggregated[i]
-    const result = modelMessageSchema.safeParse(message)
-    if (!result.success) {
-      if (logger) {
-        logger.error(
-          { message, aggregated, error: result.error },
-          `convertCbToModelMessages: Message at index ${i} failed schema validation.`,
-        )
-      }
-      throw new Error(
-        `convertCbToModelMessages: Message at index ${i} failed schema validation.\n` +
-          `Role: ${message.role}\n` +
-          `Message:\n${result.error.message}`,
-      )
     }
   }
 

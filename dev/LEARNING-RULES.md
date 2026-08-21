@@ -58,3 +58,23 @@ This catalog provides stable names for lessons that explain those authorities.
 - **Authority:** `cli/src/utils/theme-system/palette.ts`
 - **Validation:** `packages/design-systems/src/__tests__/default.test.ts`
   (no-navy neutral-family assertion)
+
+## Rule: large-file-edits-via-apply-patch
+
+- **Authority:** `SCOPE.md`
+- **Validation:** `bun run learnings:check`
+
+## Rule: string-split-byte-identity-gate
+
+- **Authority:** `cli/src/commands/graph-export/universe-app-script.ts`
+- **Validation:** `bun test cli/src/commands/__tests__/graph-export.test.ts`
+
+## Rule: active-ledger-status-admission
+
+- **Authority:** `scripts/fid-ledger.ts` (`ALLOWED_ACTIVE_STATUSES`)
+- **Validation:** `bun run validate:repository`
+
+## Rule: no-attribution-fid-metadata
+
+- **Authority:** `scripts/fid-ledger.ts` (`FORBIDDEN_ATTRIBUTION`)
+- **Validation:** `bun run validate:repository`

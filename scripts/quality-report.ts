@@ -3,15 +3,9 @@
 import fs from 'node:fs'
 import path from 'node:path'
 
-type ApprovedGrowth = {
-  maxLines: number
-  rationale: string
-}
-
-type QualityBaseline = {
+export type QualityBaseline = {
   maxFileLines: number
   trackedFiles: Record<string, number>
-  approvedGrowth?: Record<string, ApprovedGrowth>
 }
 
 type QualityIssue = {
@@ -22,19 +16,26 @@ type QualityIssue = {
 const root = path.resolve(import.meta.dir, '..')
 const baselinePath = path.join(root, 'dev', 'quality-baseline.json')
 const sourceRoots = [
+  '.agents',
   'agents',
-  'cli/src',
-  'common/src',
+  'cli',
+  'common',
   'evals',
   'packages',
-  'sdk/src',
+  'savant-free',
   'scripts',
+  'sdk',
+  'templates',
+  'test',
 ]
-const excluded =
-  /(^|[\\/])(__tests__|node_modules)([\\/]|$)|\.test\.ts$|\.spec\.ts$|generated\./
+const excluded = /(^|[\\/])node_modules([\\/]|$)/
 
 export function readQualityBaseline(): QualityBaseline {
   return JSON.parse(fs.readFileSync(baselinePath, 'utf8')) as QualityBaseline
+}
+
+function hasUnsupportedApprovedGrowth(baseline: QualityBaseline): boolean {
+  return Object.prototype.hasOwnProperty.call(baseline, 'approvedGrowth')
 }
 
 function sourceFiles(): string[] {
@@ -56,37 +57,30 @@ export function collectQualityIssues(
   baseline: QualityBaseline,
 ): QualityIssue[] {
   const issues: QualityIssue[] = []
+  if (hasUnsupportedApprovedGrowth(baseline)) {
+    issues.push({
+      file: 'dev/quality-baseline.json',
+      message: 'approvedGrowth is not supported; remove the exemption field',
+    })
+  }
+
   for (const filePath of sourceFiles()) {
     const relative = path.relative(root, filePath).replaceAll(path.sep, '/')
     const lineCount = fs.readFileSync(filePath, 'utf8').split(/\r?\n/).length
     const baselineLines = baseline.trackedFiles[relative]
-    const approvedGrowth = baseline.approvedGrowth?.[relative]
-    const effectiveBaseline = approvedGrowth?.maxLines ?? baselineLines
-    if (
-      approvedGrowth !== undefined &&
-      (baselineLines === undefined ||
-        approvedGrowth.maxLines < baselineLines ||
-        approvedGrowth.maxLines < lineCount ||
-        approvedGrowth.rationale.trim().length === 0)
-    ) {
+
+    if (lineCount > baseline.maxFileLines) {
       issues.push({
         file: relative,
-        message:
-          'approved growth must reference a tracked file, have a non-empty rationale, and have a maxLines value covering the current measured line count without lowering the baseline',
+        message: `${lineCount} lines exceeds absolute maximum ${baseline.maxFileLines}`,
       })
       continue
     }
 
-    if (lineCount > baseline.maxFileLines && effectiveBaseline === undefined) {
+    if (baselineLines !== undefined && lineCount > baselineLines) {
       issues.push({
         file: relative,
-        message: `${lineCount} lines exceeds new-file baseline`,
-      })
-    }
-    if (effectiveBaseline !== undefined && lineCount > effectiveBaseline) {
-      issues.push({
-        file: relative,
-        message: `${lineCount} lines exceeds baseline ${effectiveBaseline}`,
+        message: `${lineCount} lines exceeds baseline ${baselineLines}`,
       })
     }
   }
@@ -101,7 +95,7 @@ if (import.meta.main) {
       `quality: PASS (${Object.keys(baseline.trackedFiles).length} baselined files)`,
     )
   } else {
-    console.error(`quality: FAIL (${issues.length} ratchet violation(s))`)
+    console.error(`quality: FAIL (${issues.length} quality violation(s))`)
     for (const issue of issues.slice(0, 50))
       console.error(`- ${issue.file}: ${issue.message}`)
     if (issues.length > 50) console.error(`- (+${issues.length - 50} more)`)

@@ -19,6 +19,7 @@ import {
   searchParallel,
   searchTavily,
 } from '../byok-search'
+import { respondWith } from './byok-search-fixtures'
 
 import type { Logger } from '@savant-code/common/types/contracts/logger'
 
@@ -31,17 +32,6 @@ const baseOptions = {
 } as const
 
 type BaseOptions = Omit<typeof baseOptions, 'query'>
-
-function respondWith(body: unknown, status = 200): typeof globalThis.fetch {
-  return mock(() =>
-    Promise.resolve(
-      new Response(JSON.stringify(body), {
-        status,
-        headers: { 'Content-Type': 'application/json' },
-      }),
-    ),
-  ) as unknown as typeof globalThis.fetch
-}
 
 describe('BYOK search facades', () => {
   beforeAll(async () => {

@@ -11,19 +11,16 @@ import { env } from '@savant-code/common/env'
 import { userSchema } from '@savant-code/common/util/credentials'
 import { z } from 'zod/v4'
 
+import { chatGptOAuthSchema } from './chatgpt-oauth-schema'
 import { getChatGptOAuthTokenFromEnv } from './env'
 import { logger } from './utils/logger'
 
+import type { ChatGptOAuthCredentials } from './chatgpt-oauth-schema'
 import type { ClientEnv } from '@savant-code/common/types/contracts/env'
 import type { JSONValue } from '@savant-code/common/types/json'
 import type { User } from '@savant-code/common/util/credentials'
 
-const chatGptOAuthSchema = z.object({
-  accessToken: z.string(),
-  refreshToken: z.string(),
-  expiresAt: z.number(),
-  connectedAt: z.number(),
-})
+export type { ChatGptOAuthCredentials } from './chatgpt-oauth-schema'
 
 /**
  * Unified schema for the credentials file.
@@ -96,16 +93,6 @@ export const getUserCredentials = (clientEnv: ClientEnv = env): User | null => {
     logger.error('Error reading credentials', error)
     return null
   }
-}
-
-/**
- * ChatGPT OAuth credentials stored in the credentials file.
- */
-export interface ChatGptOAuthCredentials {
-  accessToken: string
-  refreshToken: string
-  expiresAt: number // Unix timestamp in milliseconds
-  connectedAt: number // Unix timestamp in milliseconds
 }
 
 /**

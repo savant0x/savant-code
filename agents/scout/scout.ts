@@ -1,6 +1,7 @@
 import { GEMINI_3_1_FLASH_LITE_MODEL_ID } from '@savant-code/common/constants/gemini'
 
 import { publisher } from '../constants'
+import { handleStepsMax } from './handle-steps-max'
 import {
   PLACEHOLDER,
   type SecretAgentDefinition,
@@ -23,11 +24,9 @@ export const createFilePicker = (
     displayName: 'Savant the Scout',
     publisher,
     model,
-    reasoningOptions: {
-      enabled: false,
-      effort: 'low',
-      exclude: false,
-    },
+    // FID-2026-0820-015 SCOUT-1: no hardcoded reasoningOptions here — a
+    // reasoning disable crashes spawns with HTTP 400 on reasoning-mandatory
+    // endpoints (the inherited operator-selected model). Runtime default applies.
     spawnerPrompt: `Spawn to find relevant files in a codebase related to the prompt. Outputs up to ${isMax ? 20 : 12} file paths with short summaries for each file. Cannot do string searches on the codebase, but does a fuzzy search. Unless you know which directories are relevant, omit the directories parameter. This agent is extremely effective at finding files in the codebase that could be relevant to the prompt.`,
     inputSchema: {
       prompt: {
@@ -183,111 +182,6 @@ const handleStepsDefault: SecretAgentDefinition['handleSteps'] = function* ({
 
   // 2. Yield STEP — let the LLM interpret results, drive deeper exploration
   //    (LLM can call list_directory, read_files, read_subtree, glob, set_output)
-  yield 'STEP'
-
-  // 3. LLM calls set_output with final results
-  yield {
-    toolName: 'set_output',
-    input: {
-      message: `Scout found these files for: ${prompt}`,
-    },
-  } satisfies ToolCall
-}
-
-/**
- * handleSteps for max mode — same programmatic glob + deeper LLM exploration.
- * Max mode encourages the LLM to explore directories more deeply during STEP.
- */
-const handleStepsMax: SecretAgentDefinition['handleSteps'] = function* ({
-  prompt,
-  params,
-}) {
-  function isStringArray(value: JSONValue): value is string[] {
-    return (
-      Array.isArray(value) && value.every((item) => typeof item === 'string')
-    )
-  }
-  const p = params ?? {}
-  const rawDirectories = p.directories
-  const directories = isStringArray(rawDirectories) ? rawDirectories : []
-  const cwd = directories.length > 0 ? directories[0] : undefined
-
-  // Inlined extractKeywords (must be self-contained for .toString() serialization)
-  function _extractKeywords(p: string): string[] {
-    const STOP_WORDS = new Set([
-      'find',
-      'search',
-      'look',
-      'for',
-      'files',
-      'file',
-      'related',
-      'to',
-      'the',
-      'a',
-      'an',
-      'in',
-      'on',
-      'of',
-      'and',
-      'or',
-      'that',
-      'which',
-      'about',
-      'with',
-      'show',
-      'me',
-      'list',
-      'get',
-      'all',
-      'any',
-      'where',
-      'what',
-      'how',
-      'please',
-      'can',
-      'you',
-      'i',
-      'we',
-      'need',
-      'want',
-    ])
-    const raw = p
-      .toLowerCase()
-      .replace(/[^a-z0-9\s\-_./]/g, ' ')
-      .split(/\s+/)
-      .map((t) => t.trim())
-      .filter((t) => t.length > 1 && !STOP_WORDS.has(t))
-    const seen = new Set<string>()
-    const unique = raw.filter((t) =>
-      seen.has(t) ? false : (seen.add(t), true),
-    )
-    if (unique.length === 0) {
-      const fallback = p
-        .replace(/[^a-z0-9\s\-_./]/gi, ' ')
-        .trim()
-        .split(/\s+/)[0]
-      return fallback ? [fallback.toLowerCase()] : ['*']
-    }
-    return unique
-  }
-
-  // 1. Programmatic glob: extract keywords, search file NAMES
-  if (prompt) {
-    const keywords = _extractKeywords(prompt)
-    for (const keyword of keywords) {
-      yield {
-        toolName: 'glob',
-        input: {
-          pattern: `**/*${keyword}*`,
-          ...(cwd ? { cwd } : {}),
-        },
-      } satisfies ToolCall
-    }
-  }
-
-  // 2. Yield STEP — in max mode, the LLM should explore more deeply:
-  //    read key files, explore directory structures, find related modules
   yield 'STEP'
 
   // 3. LLM calls set_output with final results

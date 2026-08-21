@@ -34,7 +34,15 @@ export function recordEchoComplianceActivity(params: {
         ? effectiveInput.pattern
         : undefined
     if (pattern) echoCompliance.recordPatternRead(pattern)
-  } else if (toolName === 'run_terminal_command') {
+  } else if (
+    toolName === 'run_terminal_command' ||
+    toolName === 'run_readonly_command'
+  ) {
+    // Both terminal-command channels are first-class verification paths —
+    // enforcement.ts credits verifiedFiles for both. The tracker must
+    // agree, or it emits false Law 3 / verifier_criteria steering for
+    // writes that were verified via the read-only channel
+    // (FID-2026-0820-014 EC-3).
     if (typeof effectiveInput.command === 'string') {
       echoCompliance.recordVerification(effectiveInput.command)
     }

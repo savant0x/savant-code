@@ -1,5 +1,5 @@
 import { AnalyticsEvent } from '@savant-code/common/constants/analytics-events'
-import { describe, test, expect, beforeEach, mock } from 'bun:test'
+import { describe, test, expect, beforeEach } from 'bun:test'
 
 import {
   initAnalytics,
@@ -7,59 +7,31 @@ import {
   identifyUser,
   disableAnalytics,
   resetAnalyticsState,
-  type AnalyticsDeps,
 } from '../analytics'
+import {
+  createAnalyticsTestFixture,
+  TEST_ANONYMOUS_ID,
+} from './analytics-client-fixtures'
 
-import type { AnalyticsClientWithIdentify } from '@savant-code/common/analytics-core'
+import type { mock } from 'bun:test'
 
 describe('analytics with PostHog alias', () => {
   // Store references to track calls
   let captureMock: ReturnType<typeof mock>
   let identifyMock: ReturnType<typeof mock>
   let aliasMock: ReturnType<typeof mock>
-  let flushMock: ReturnType<typeof mock>
   let captureExceptionMock: ReturnType<typeof mock>
   let disableMock: ReturnType<typeof mock>
 
-  // Fixed anonymous ID for predictable testing
-  const TEST_ANONYMOUS_ID = 'anon_test-uuid-1234'
-
-  // Create mock client factory
-  function createMockClient(): AnalyticsClientWithIdentify {
-    return {
-      capture: captureMock,
-      identify: identifyMock,
-      alias: aliasMock,
-      flush: flushMock,
-      captureException: captureExceptionMock,
-      disable: disableMock,
-    }
-  }
-
-  // Create test dependencies with production-like config
-  function createTestDeps(): AnalyticsDeps {
-    return {
-      env: {
-        NEXT_PUBLIC_POSTHOG_API_KEY: 'test-api-key',
-        NEXT_PUBLIC_POSTHOG_HOST_URL: 'https://test.posthog.com',
-      },
-      isProd: true,
-      createClient: () => createMockClient(),
-      generateAnonymousId: () => TEST_ANONYMOUS_ID,
-    }
-  }
-
   beforeEach(() => {
-    // Reset mocks
-    captureMock = mock(() => {})
-    identifyMock = mock(() => {})
-    aliasMock = mock(() => {})
-    flushMock = mock(() => Promise.resolve())
-    captureExceptionMock = mock(() => {})
-    disableMock = mock(() => Promise.resolve())
+    const fixture = createAnalyticsTestFixture()
+    captureMock = fixture.captureMock
+    identifyMock = fixture.identifyMock
+    aliasMock = fixture.aliasMock
+    captureExceptionMock = fixture.captureExceptionMock
+    disableMock = fixture.disableMock
 
-    // Reset analytics state with test dependencies
-    resetAnalyticsState(createTestDeps())
+    resetAnalyticsState(fixture.deps)
   })
 
   describe('anonymous tracking before identification', () => {
@@ -211,7 +183,7 @@ describe('analytics with PostHog alias', () => {
 
     test('leaves analytics disabled when initialization fails', () => {
       resetAnalyticsState({
-        ...createTestDeps(),
+        ...createAnalyticsTestFixture().deps,
         env: {},
       })
 
@@ -248,7 +220,7 @@ describe('analytics with PostHog alias', () => {
 
     test('should throw when tracking events before initAnalytics in prod', () => {
       // Don't call initAnalytics - client is not initialized
-      resetAnalyticsState(createTestDeps())
+      resetAnalyticsState(createAnalyticsTestFixture().deps)
 
       // In prod mode, this should throw since client is not initialized
       expect(() => {
@@ -257,7 +229,7 @@ describe('analytics with PostHog alias', () => {
     })
 
     test('should throw when identifying before initAnalytics in prod', () => {
-      resetAnalyticsState(createTestDeps())
+      resetAnalyticsState(createAnalyticsTestFixture().deps)
 
       expect(() => {
         identifyUser('user-123')

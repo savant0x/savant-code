@@ -9,6 +9,15 @@ import React, { useCallback, useEffect, useState } from 'react'
 
 import { Button } from './button'
 import { useCopyToClipboard } from './copy-button'
+import {
+  COPY_FOCUS_ID,
+  GLM_FOCUS_ID,
+  CopyInviteLinkButton,
+  firstLabelThatFits,
+  referralLink,
+  shouldStackSavantFreeReferralActions,
+} from './referral-copy-button'
+import { ReferralQuietLine } from './referral-quiet-line'
 import { useNow } from '../hooks/use-now'
 import { startSavantFreeSession } from '../hooks/use-savant-free-session'
 import { useTheme } from '../hooks/use-theme'
@@ -17,126 +26,18 @@ import { safeOpen } from '../utils/open-url'
 import { formatSavantFreePremiumResetCountdown } from '../utils/savant-free-premium-reset'
 import { BORDER_CHARS } from '../utils/ui-constants'
 
+import type { SavantFreeReferralFocusTarget } from './referral-copy-button'
 import type { SavantFreeAccessTier } from '@savant-code/common/constants/savant-free-models'
 import type { SavantFreeReferralInfo } from '@savant-code/common/types/savant-free-session'
 
-/** Build a friend's share link from the referral code. Points at the
- *  /get-started page (CLI install walkthrough + hero + FAQs) rather than the
- *  bare landing page; the `?ref=` code is still captured into the attribution
- *  cookie there via the root layout's ReferralCodeCapture. When we know the
- *  inviter's name we pass `?referrer=` too so the page greets the friend with
- *  "X invited you to try SavantFree!". */
-function referralLink(code: string, referrerName: string | null): string {
-  const params = new URLSearchParams({ ref: code })
-  if (referrerName) params.set('referrer', referrerName)
-  return `${LOGIN_WEBSITE_URL}/get-started?${params.toString()}`
-}
-
-// Navigation ids for the banner's keyboard-focusable buttons. The model
-// selector owns the landing keyboard handler and appends these after its rows.
-const COPY_FOCUS_ID = '__savant_free_referral_copy__'
-const GLM_FOCUS_ID = '__savant_free_referral_glm__'
-const BUTTON_HORIZONTAL_CHROME = 6 // two border + four padding columns
-
-export interface SavantFreeReferralFocusTarget {
-  id: string
-  activate: () => void
-}
-
-/** Below this menu width, the two unlocked-card actions no longer fit beside
- * each other. */
-const shouldStackSavantFreeReferralActions = (width: number): boolean =>
-  width < 62
-
-const firstLabelThatFits = (
-  availableWidth: number,
-  labels: readonly string[],
-): string =>
-  labels.find(
-    (label) => label.length + BUTTON_HORIZONTAL_CHROME <= availableWidth,
-  ) ?? labels.at(-1)!
+// Re-export the focus-target contract from the original path (consumers:
+// use-model-selector-state + use-keyboard-nav import it as a type).
+export type { SavantFreeReferralFocusTarget } from './referral-copy-button'
 
 /**
- * A bordered, button-styled "copy invite link" control. Reads as clickable
- * (rounded border + hover/keyboard-focus highlight) and flips to an accent
- * "✔ Copied!" confirmation for a couple seconds after a successful copy.
- * Presentational: the copy action and copied flag are owned by the banner so
- * the same action can be fired by keyboard navigation from the model picker.
- */
-const CopyInviteLinkButton: React.FC<{
-  isCopied: boolean
-  focused: boolean
-  onCopy: () => void
-  availableWidth: number
-  labels?: readonly string[]
-}> = ({
-  isCopied,
-  focused,
-  onCopy,
-  availableWidth,
-  labels = ['⎘ Copy invite link', '⎘ Copy link', '⎘ Copy'],
-}) => {
-  const theme = useTheme()
-  const [isHovered, setIsHovered] = useState(false)
-  const label = firstLabelThatFits(availableWidth, labels)
-  const copiedLabel = firstLabelThatFits(availableWidth, ['✔ Copied!', '✔'])
-  // Keyboard focus and mouse hover share the highlighted look; a keyboard-
-  // focused row gets the brighter accent border so it matches the picker's
-  // focused-row treatment above it.
-  const borderColor = isCopied
-    ? theme.primary
-    : focused
-      ? theme.primary
-      : isHovered
-        ? theme.foreground
-        : theme.border
-  const fg = isCopied
-    ? theme.primary
-    : focused || isHovered
-      ? theme.foreground
-      : theme.muted
-
-  return (
-    <Button
-      id={COPY_FOCUS_ID}
-      onClick={onCopy}
-      onMouseOver={() => setIsHovered(true)}
-      onMouseOut={() => setIsHovered(false)}
-      border
-      borderStyle="rounded"
-      borderColor={borderColor}
-      customBorderChars={BORDER_CHARS}
-      style={{
-        paddingLeft: 2,
-        paddingRight: 2,
-        backgroundColor: 'transparent',
-        // Hug the label and never let a width-constrained row squash the
-        // bordered box (which would clip the label and mangle the border).
-        flexShrink: 0,
-      }}
-    >
-      <text style={{ wrapMode: 'none' }}>
-        <span fg={fg}>{isCopied ? copiedLabel : label}</span>
-      </text>
-    </Button>
-  )
-}
-
-/**
- * Advertises the "invite friends" reward on the landing model screen. The
- * reward — and the presentation — depends on the session's access tier:
- *
- *   - LIMITED tier: referrals earn a daily free-session bonus (not GLM). One
- *     quiet muted line ("refer friends → more sessions per day") + the copy
- *     button, so it advertises the perk without crowding the picker.
- *   - FULL tier, UNLOCKED (you have weekly GLM sessions): a flashy accent-
- *     bordered card with your remaining sessions and a prominent "Use GLM 5.2 ↵"
- *     launch button, so the reward feels earned and inviting.
- *   - FULL tier, LOCKED (no GLM sessions yet): a single quiet muted line
- *     inviting referrals.
- *
- * Renders nothing unless the server attached a `referral` block, so
- * pre-referral-code users never see it.
+ * Landing-screen "invite friends" reward ad, tiered by access: LIMITED and
+ * FULL-locked render the quiet line + share button; FULL-unlocked renders the
+ * GLM 5.2 accent card. Renders nothing without a server `referral` block.
  */
 interface SavantFreeReferralBannerProps {
   width: number
@@ -197,45 +98,31 @@ export const SavantFreeReferralBanner: React.FC<
   if (accessTier === 'limited') {
     const atCap = qualifiedCount >= REFERRAL_CLI_DAILY_SESSION_BONUS_CAP
     return (
-      <box
-        style={{
-          flexDirection: 'column',
-          alignItems: 'flex-start',
-          gap: 0,
-          marginTop: 1,
-          // Never let a height-starved landing column squash the banner — that
-          // would draw the bordered copy button on top of the line above it.
-          flexShrink: 0,
-        }}
+      <ReferralQuietLine
+        isCopied={isCopied}
+        focused={copyFocused}
+        onCopy={copy}
+        width={width}
       >
-        <text style={{ wrapMode: 'word' }}>
-          <span fg={theme.muted}>✦ </span>
-          {qualifiedCount > 0 ? (
-            <>
-              <span fg={theme.foreground}>
-                +{pluralize(qualifiedCount, 'session')}/day
-              </span>
-              <span fg={theme.muted}>
-                {' '}
-                from referrals
-                {atCap
-                  ? ''
-                  : ` — refer more (${qualifiedCount}/${REFERRAL_CLI_DAILY_SESSION_BONUS_CAP}):`}
-              </span>
-            </>
-          ) : (
-            <span fg={theme.muted}>
-              Refer friends to unlock more free sessions per day:
+        {qualifiedCount > 0 ? (
+          <>
+            <span fg={theme.foreground}>
+              +{pluralize(qualifiedCount, 'session')}/day
             </span>
-          )}
-        </text>
-        <CopyInviteLinkButton
-          isCopied={isCopied}
-          focused={copyFocused}
-          onCopy={copy}
-          availableWidth={width}
-        />
-      </box>
+            <span fg={theme.muted}>
+              {' '}
+              from referrals
+              {atCap
+                ? ''
+                : ` — refer more (${qualifiedCount}/${REFERRAL_CLI_DAILY_SESSION_BONUS_CAP}):`}
+            </span>
+          </>
+        ) : (
+          <span fg={theme.muted}>
+            Refer friends to unlock more free sessions per day:
+          </span>
+        )}
+      </ReferralQuietLine>
     )
   }
 
@@ -255,45 +142,29 @@ export const SavantFreeReferralBanner: React.FC<
   // it's locked — no referrals yet vs. this week's sessions already spent.
   if (weeklySessionsRemaining <= 0) {
     return (
-      <box
-        style={{
-          flexDirection: 'column',
-          alignItems: 'flex-start',
-          gap: 0,
-          marginTop: 1,
-          // Never let a height-starved landing column squash the banner — that
-          // would draw the bordered copy button on top of the line above it.
-          flexShrink: 0,
-        }}
+      <ReferralQuietLine
+        isCopied={isCopied}
+        focused={copyFocused}
+        onCopy={copy}
+        width={width}
       >
-        <text style={{ wrapMode: 'word' }}>
-          <span fg={theme.muted}>✦ </span>
-          {qualifiedCount > 0 ? (
-            <>
-              <span fg={theme.foreground}>GLM 5.2</span>
-              <span fg={theme.muted}>
-                {' '}
-                — weekly sessions used, resets in {resetsIn}. Refer more (
-                {qualifiedCount}/{SAVANT_FREE_GLM_V52_REFERRAL_CAP}):
-              </span>
-            </>
-          ) : (
-            <>
-              <span fg={theme.muted}>Refer friends to access </span>
-              <span fg={theme.foreground}>GLM 5.2</span>
-              <span fg={theme.muted}>
-                , the most powerful open-source model:
-              </span>
-            </>
-          )}
-        </text>
-        <CopyInviteLinkButton
-          isCopied={isCopied}
-          focused={copyFocused}
-          onCopy={copy}
-          availableWidth={width}
-        />
-      </box>
+        {qualifiedCount > 0 ? (
+          <>
+            <span fg={theme.foreground}>GLM 5.2</span>
+            <span fg={theme.muted}>
+              {' '}
+              — weekly sessions used, resets in {resetsIn}. Refer more (
+              {qualifiedCount}/{SAVANT_FREE_GLM_V52_REFERRAL_CAP}):
+            </span>
+          </>
+        ) : (
+          <>
+            <span fg={theme.muted}>Refer friends to access </span>
+            <span fg={theme.foreground}>GLM 5.2</span>
+            <span fg={theme.muted}>, the most powerful open-source model:</span>
+          </>
+        )}
+      </ReferralQuietLine>
     )
   }
 

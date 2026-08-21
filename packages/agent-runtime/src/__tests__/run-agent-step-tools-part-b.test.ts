@@ -22,6 +22,7 @@ import {
 
 import { runAgentStep } from '../run-agent-step'
 import { clearAgentGeneratorCache } from '../run-programmatic-step'
+import { mockFileContext } from './run-agent-step-tools-fixtures'
 import { createToolCallChunk } from './test-utils'
 import { asUserMessage } from '../util/messages'
 
@@ -32,7 +33,6 @@ import type {
   AgentRuntimeScopedDeps,
 } from '@savant-code/common/types/contracts/agent-runtime'
 import type { ParamsExcluding } from '@savant-code/common/types/function-params'
-import type { ProjectFileContext } from '@savant-code/common/util/file'
 
 describe('runAgentStep - set_output tool', () => {
   let testAgent: AgentTemplate
@@ -133,33 +133,6 @@ describe('runAgentStep - set_output tool', () => {
   afterAll(() => {
     clearAgentGeneratorCache(agentRuntimeImpl)
   })
-
-  const mockFileContext: ProjectFileContext = {
-    projectRoot: '/test',
-    cwd: '/test',
-    fileTree: [],
-    fileTokenScores: {},
-    knowledgeFiles: {},
-    gitChanges: {
-      status: '',
-      diff: '',
-      diffCached: '',
-      lastCommitMessages: '',
-    },
-    changesSinceLastChat: {},
-    shellConfigFiles: {},
-    systemInfo: {
-      platform: 'test',
-      shell: 'test',
-      nodeVersion: 'test',
-      arch: 'test',
-      homedir: '/home/test',
-      cpus: 1,
-      chromeAvailable: false,
-    },
-    agentTemplates: {},
-    customToolDefinitions: {},
-  }
 
   it('should handle empty output parameter', async () => {
     runAgentStepBaseParams.promptAiSdkStream = async function* ({}) {

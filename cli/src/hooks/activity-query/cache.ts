@@ -1,3 +1,13 @@
+import { bumpGeneration, clearRetryState, resetRetryState } from './retry-state'
+
+export {
+  clearRetryState,
+  clearRetryTimeout,
+  getGeneration,
+  retryCounts,
+  retryTimeouts,
+} from './retry-state'
+
 // Global query cache
 type CacheEntry<T> = {
   // allow error-only entries (first fetch failure) without pretending data exists
@@ -167,31 +177,6 @@ export function serializeQueryKey(queryKey: readonly unknown[]): string {
 // Module-level map to track GC timeouts (survives component unmount)
 const gcTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
 
-// Per-key retry state (so unmounting one observer doesn’t cancel retries for others)
-// Exported for the test helpers.
-export const retryCounts = new Map<string, number>()
-export const retryTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
-
-// Per-key generation to prevent "resurrecting" deleted entries from late in-flight responses
-const generations = new Map<string, number>()
-function bumpGeneration(key: string) {
-  generations.set(key, (generations.get(key) ?? 0) + 1)
-}
-export function getGeneration(key: string) {
-  return generations.get(key) ?? 0
-}
-
-export function clearRetryTimeout(key: string) {
-  const t = retryTimeouts.get(key)
-  if (t) clearTimeout(t)
-  retryTimeouts.delete(key)
-}
-
-export function clearRetryState(key: string) {
-  clearRetryTimeout(key)
-  retryCounts.delete(key)
-}
-
 export function deleteCacheEntry(key: string): void {
   bumpGeneration(key)
   clearRetryState(key)
@@ -270,9 +255,7 @@ export function resetActivityQueryCache(): void {
   for (const timeoutId of gcTimeouts.values()) clearTimeout(timeoutId)
   gcTimeouts.clear()
 
-  for (const t of retryTimeouts.values()) clearTimeout(t)
-  retryTimeouts.clear()
-  retryCounts.clear()
+  resetRetryState()
 
   cache.entries.clear()
   cache.keyListeners.clear()
@@ -281,7 +264,6 @@ export function resetActivityQueryCache(): void {
 
   inFlight.clear()
   snapshotMemo.clear()
-  generations.clear()
 }
 
 /**

@@ -1,9 +1,11 @@
 import { TextAttributes } from '@opentui/core'
 import React, { useEffect, useRef, useState } from 'react'
 
+import { resolveAgentModeClick } from './agent-mode-click'
 import { Button } from './button'
 import { ModeHovertip } from './mode-hovertip'
 import { SegmentedControl } from './segmented-control'
+import { useHoverToggle } from './use-hover-toggle'
 import { useScaffoldConfirm } from '../hooks/use-scaffold-confirm'
 import { useTheme } from '../hooks/use-theme'
 import { useChatStore } from '../state/chat-store'
@@ -17,89 +19,14 @@ import { BORDER_CHARS } from '../utils/ui-constants'
 import type { Segment } from './segmented-control'
 import type { AgentMode } from '../utils/constants'
 
-export const OPEN_DELAY_MS = 0 // Delay before expanding on hover
-export const CLOSE_DELAY_MS = 250 // Delay before collapsing when mouse leaves
-export const REOPEN_SUPPRESS_MS = 250 // Time to block reopening after explicit close (prevents flicker)
-
-/**
- * Manages the open/close state with hover delays and reopen suppression.
- * Provides timer-based state transitions to create smooth hover interactions.
- */
-export function useHoverToggle() {
-  const [isOpen, setIsOpen] = useState(false)
-  const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const openTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const reopenBlockedUntilRef = useRef<number>(0)
-
-  // Timer cleanup helpers
-  const clearOpenTimer = () => {
-    clearTimeout(openTimeoutRef.current!)
-    openTimeoutRef.current = null
-  }
-
-  const clearCloseTimer = () => {
-    clearTimeout(closeTimeoutRef.current!)
-    closeTimeoutRef.current = null
-  }
-
-  const clearAllTimers = () => {
-    clearOpenTimer()
-    clearCloseTimer()
-  }
-
-  // State transition actions
-  const openNow = () => {
-    clearAllTimers()
-    setIsOpen(true)
-  }
-
-  const closeNow = (suppressReopen = false) => {
-    clearAllTimers()
-    setIsOpen(false)
-    if (suppressReopen) {
-      reopenBlockedUntilRef.current = Date.now() + REOPEN_SUPPRESS_MS
-    }
-  }
-
-  const scheduleOpen = () => {
-    if (isOpen) return
-    if (Date.now() < reopenBlockedUntilRef.current) return
-
-    clearOpenTimer()
-    openTimeoutRef.current = setTimeout(() => {
-      openNow()
-    }, OPEN_DELAY_MS)
-  }
-
-  const scheduleClose = () => {
-    if (!isOpen) return
-
-    clearCloseTimer()
-    closeTimeoutRef.current = setTimeout(() => {
-      closeNow()
-    }, CLOSE_DELAY_MS)
-  }
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => clearAllTimers()
-  }, [])
-
-  return {
-    isOpen,
-    openNow,
-    closeNow,
-    scheduleOpen,
-    scheduleClose,
-    // Expose individual timer clear helpers so callers can
-    // cancel the opposite pending action during hover transitions.
-    // These were used by the component but not returned previously,
-    // causing runtime errors when hover events fired.
-    clearOpenTimer,
-    clearCloseTimer,
-    clearAllTimers,
-  }
-}
+export { useHoverToggle } from './use-hover-toggle'
+export {
+  OPEN_DELAY_MS,
+  CLOSE_DELAY_MS,
+  REOPEN_SUPPRESS_MS,
+} from './use-hover-toggle'
+export { resolveAgentModeClick } from './agent-mode-click'
+export type { AgentModeClickAction } from './agent-mode-click'
 
 /**
  * Builds the segment configuration for the expanded state.
@@ -124,28 +51,6 @@ export function buildExpandedSegments(currentMode: AgentMode): Segment[] {
       description: MODE_DESCRIPTIONS[currentMode],
     },
   ]
-}
-
-export type AgentModeClickAction =
-  | { type: 'closeActive' }
-  | { type: 'selectMode'; mode: AgentMode }
-  | { type: 'toggleMode'; mode: AgentMode }
-
-/**
- * Decide what high-level action a click on a segment should perform.
- * Extracted for unit testing and clarity.
- */
-export const resolveAgentModeClick = (
-  currentMode: AgentMode,
-  clickedId: string,
-  hasOnSelectMode: boolean,
-): AgentModeClickAction => {
-  if (clickedId.startsWith('active-')) return { type: 'closeActive' }
-  const target = clickedId as AgentMode
-  if (hasOnSelectMode) {
-    return { type: 'selectMode', mode: target }
-  }
-  return { type: 'toggleMode', mode: target }
 }
 
 /**

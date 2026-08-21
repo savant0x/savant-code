@@ -146,3 +146,36 @@ export function installProcessCleanupHandlers(cliRenderer: CliRenderer): void {
     }
   })
 }
+
+/**
+ * Pre-renderer fatal handler (FID-2026-0819-005 Loop 133): installed BEFORE
+ * renderer creation so a crash during init is visible — exits the alternate
+ * screen buffer before printing the error. The caller removes it once the
+ * proper cleanup handlers (above) take over. Moved verbatim from index.tsx.
+ */
+export function createEarlyFatalHandler(): (error: unknown) => void {
+  return (error: unknown) => {
+    stopTerminalWatchdog() // we reset the terminal ourselves below
+    try {
+      if (process.stdin.isTTY && process.stdin.setRawMode) {
+        process.stdin.setRawMode(false)
+      }
+    } catch {
+      // stdin may be closed
+    }
+    try {
+      if (process.stdout.isTTY) {
+        process.stdout.write(TERMINAL_RESET_SEQUENCES)
+      }
+    } catch {
+      // stdout may be closed
+    }
+    try {
+      // eslint-disable-next-line no-console -- Fatal startup error before logger is available
+      console.error('Fatal error during startup:', error)
+    } catch {
+      // stderr may be closed
+    }
+    process.exit(1)
+  }
+}

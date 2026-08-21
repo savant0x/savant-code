@@ -1,14 +1,4 @@
 import * as analytics from '@savant-code/common/analytics'
-import { TEST_USER_ID } from '@savant-code/common/old-constants'
-import {
-  createTestAgentRuntimeParams,
-  emptyMcpServers,
-} from '@savant-code/common/testing/fixtures/agent-runtime'
-import { getInitialSessionState } from '@savant-code/common/types/session-state'
-import {
-  assistantMessage,
-  userMessage,
-} from '@savant-code/common/util/messages'
 import {
   afterEach,
   beforeEach,
@@ -20,38 +10,26 @@ import {
 } from 'bun:test'
 
 import {
+  createNParameterFixture,
+  type NParameterFixture,
+} from './n-parameter-part-b-fixtures'
+import {
   clearAgentGeneratorCache,
   runProgrammaticStep,
 } from '../run-programmatic-step'
-import { mockFileContext } from './test-utils'
 
-import type { AgentTemplate, StepGenerator } from '../templates/types'
-import type { Logger } from '@savant-code/common/types/contracts/logger'
-import type { ParamsOf } from '@savant-code/common/types/function-params'
-import type { AgentState } from '@savant-code/common/types/session-state'
-
-const logger: Logger = {
-  debug: () => {},
-  error: () => {},
-  info: () => {},
-  warn: () => {},
-}
+import type { StepGenerator } from '../templates/types'
 
 describe('n parameter and GENERATE_N functionality', () => {
-  let mockTemplate: AgentTemplate
-  let mockAgentState: AgentState
-  let agentRuntimeImpl: any
-  // Built by beforeEach; the edge-case tests construct their own params from
-  // agentRuntimeImpl and never read this one.
-  let _runAgentStepBaseParams: any
+  let mockTemplate: NParameterFixture['mockTemplate']
+  let createParams: NParameterFixture['createParams']
+  let logger: NParameterFixture['logger']
 
   beforeEach(() => {
-    agentRuntimeImpl = {
-      ...createTestAgentRuntimeParams(),
-      addAgentStep: async () => 'test-agent-step-id',
-
-      sendAction: () => {},
-    }
+    const fixture = createNParameterFixture()
+    mockTemplate = fixture.mockTemplate
+    createParams = fixture.createParams
+    logger = fixture.logger
 
     // Mock analytics
     spyOn(analytics, 'trackEvent').mockImplementation(() => {})
@@ -61,64 +39,6 @@ describe('n parameter and GENERATE_N functionality', () => {
       () =>
         'mock-uuid-0000-0000-0000-000000000000' as `${string}-${string}-${string}-${string}-${string}`,
     )
-
-    // Create mock template
-    mockTemplate = {
-      id: 'test-agent',
-      displayName: 'Test Agent',
-      spawnerPrompt: 'Testing',
-      model: 'claude-3-5-sonnet-20241022',
-      inputSchema: {},
-      outputMode: 'structured_output',
-      includeMessageHistory: true,
-      inheritParentSystemPrompt: false,
-      mcpServers: emptyMcpServers,
-      toolNames: ['read_files', 'write_file', 'end_turn'],
-      spawnableAgents: [],
-      systemPrompt: 'Test system prompt',
-      instructionsPrompt: 'Test user prompt',
-      stepPrompt: 'Test agent step prompt',
-      handleSteps: undefined,
-    } as AgentTemplate
-
-    // Create mock agent state
-    const sessionState = getInitialSessionState(mockFileContext)
-    mockAgentState = {
-      ...sessionState.mainAgentState,
-      agentId: 'test-agent-id',
-      runId:
-        'test-run-id' as `${string}-${string}-${string}-${string}-${string}`,
-      messageHistory: [
-        userMessage('Initial message'),
-        assistantMessage('Initial response'),
-      ],
-      output: undefined,
-      directCreditsUsed: 0,
-      childRunIds: [],
-    }
-
-    _runAgentStepBaseParams = {
-      ...agentRuntimeImpl,
-      additionalToolDefinitions: () => Promise.resolve({}),
-      runId: 'test-run-id',
-      ancestorRunIds: [],
-      repoId: undefined,
-      repoUrl: undefined,
-      userId: TEST_USER_ID,
-      userInputId: 'test-input',
-      clientSessionId: 'test-session',
-      fingerprintId: 'test-fingerprint',
-      fileContext: mockFileContext,
-      onResponseChunk: () => {},
-      agentType: 'test-agent',
-      localAgentTemplates: { 'test-agent': mockTemplate },
-      agentState: mockAgentState,
-      prompt: 'Test prompt',
-      spawnParams: undefined,
-      system: 'Test system',
-      signal: new AbortController().signal,
-      tools: {},
-    }
   })
 
   afterEach(() => {
@@ -132,31 +52,9 @@ describe('n parameter and GENERATE_N functionality', () => {
         yield { type: 'GENERATE_N', n: 1 }
       } as () => StepGenerator
 
-      const result = await runProgrammaticStep({
-        ...agentRuntimeImpl,
-        runId: 'test-run-id',
-        ancestorRunIds: [],
-        repoId: undefined,
-        repoUrl: undefined,
-        agentState: mockAgentState,
-        template: mockTemplate,
-        prompt: 'Test',
-        toolCallParams: {},
-        userId: TEST_USER_ID,
-        userInputId: 'test-input',
-        clientSessionId: 'test-session',
-        fingerprintId: 'test-fingerprint',
-        onResponseChunk: () => {},
-        onCostCalculated: async () => {},
-        fileContext: mockFileContext,
-        localAgentTemplates: {},
-        system: 'Test system prompt',
-        stepsComplete: false,
-        stepNumber: 1,
-        logger,
-        signal: new AbortController().signal,
-        tools: {},
-      })
+      const result = await runProgrammaticStep(
+        createParams({ prompt: 'Test', userInputId: 'test-input' }),
+      )
 
       expect(result.generateN).toBe(1)
       expect(result.endTurn).toBe(false)
@@ -171,31 +69,10 @@ describe('n parameter and GENERATE_N functionality', () => {
         yield { toolName: 'end_turn', input: {} }
       } as () => StepGenerator
 
-      const mockParams: ParamsOf<typeof runProgrammaticStep> = {
-        ...agentRuntimeImpl,
-        runId: 'test-run-id',
-        ancestorRunIds: [],
-        repoId: undefined,
-        repoUrl: undefined,
-        agentState: mockAgentState,
-        template: mockTemplate,
+      const mockParams = createParams({
         prompt: 'Test',
-        toolCallParams: {},
-        userId: TEST_USER_ID,
         userInputId: 'test-input',
-        clientSessionId: 'test-session',
-        fingerprintId: 'test-fingerprint',
-        onResponseChunk: () => {},
-        onCostCalculated: async () => {},
-        fileContext: mockFileContext,
-        localAgentTemplates: {},
-        system: 'Test system prompt',
-        stepsComplete: false,
-        stepNumber: 1,
-        logger,
-        signal: new AbortController().signal,
-        tools: {},
-      }
+      })
 
       await runProgrammaticStep(mockParams)
 
@@ -218,31 +95,10 @@ describe('n parameter and GENERATE_N functionality', () => {
         yield { toolName: 'end_turn', input: {} }
       } as () => StepGenerator
 
-      const mockParams: ParamsOf<typeof runProgrammaticStep> = {
-        ...agentRuntimeImpl,
-        runId: 'test-run-id',
-        ancestorRunIds: [],
-        repoId: undefined,
-        repoUrl: undefined,
-        agentState: mockAgentState,
-        template: mockTemplate,
+      const mockParams = createParams({
         prompt: 'Test',
-        toolCallParams: {},
-        userId: TEST_USER_ID,
         userInputId: 'test-input',
-        clientSessionId: 'test-session',
-        fingerprintId: 'test-fingerprint',
-        onResponseChunk: () => {},
-        onCostCalculated: async () => {},
-        fileContext: mockFileContext,
-        localAgentTemplates: {},
-        system: 'Test system prompt',
-        stepsComplete: false,
-        stepNumber: 1,
-        logger,
-        signal: new AbortController().signal,
-        tools: {},
-      }
+      })
 
       await runProgrammaticStep(mockParams)
 
@@ -262,31 +118,10 @@ describe('n parameter and GENERATE_N functionality', () => {
         throw new Error('Unexpected error after GENERATE_N')
       } as () => StepGenerator
 
-      const mockParams: ParamsOf<typeof runProgrammaticStep> = {
-        ...agentRuntimeImpl,
-        runId: 'test-run-id',
-        ancestorRunIds: [],
-        repoId: undefined,
-        repoUrl: undefined,
-        agentState: mockAgentState,
-        template: mockTemplate,
+      const mockParams = createParams({
         prompt: 'Test',
-        toolCallParams: {},
-        userId: TEST_USER_ID,
         userInputId: 'test-input',
-        clientSessionId: 'test-session',
-        fingerprintId: 'test-fingerprint',
-        onResponseChunk: () => {},
-        onCostCalculated: async () => {},
-        fileContext: mockFileContext,
-        localAgentTemplates: {},
-        system: 'Test system prompt',
-        stepsComplete: false,
-        stepNumber: 1,
-        logger,
-        signal: new AbortController().signal,
-        tools: {},
-      }
+      })
 
       const result1 = await runProgrammaticStep(mockParams)
       expect(result1.generateN).toBe(3)
@@ -325,31 +160,10 @@ describe('n parameter and GENERATE_N functionality', () => {
 
       mockTemplate.toolNames = ['set_output', 'end_turn']
 
-      const mockParams: ParamsOf<typeof runProgrammaticStep> = {
-        ...agentRuntimeImpl,
-        runId: 'test-run-id',
-        ancestorRunIds: [],
-        repoId: undefined,
-        repoUrl: undefined,
-        agentState: mockAgentState,
-        template: mockTemplate,
+      const mockParams = createParams({
         prompt: 'Test',
-        toolCallParams: {},
-        userId: TEST_USER_ID,
         userInputId: 'test-input',
-        clientSessionId: 'test-session',
-        fingerprintId: 'test-fingerprint',
-        onResponseChunk: () => {},
-        onCostCalculated: async () => {},
-        fileContext: mockFileContext,
-        localAgentTemplates: {},
-        system: 'Test system prompt',
-        stepsComplete: false,
-        stepNumber: 1,
-        logger,
-        signal: new AbortController().signal,
-        tools: {},
-      }
+      })
 
       // First call yields GENERATE_N
       const result1 = await runProgrammaticStep(mockParams)
@@ -373,31 +187,9 @@ describe('n parameter and GENERATE_N functionality', () => {
         // Generator ends immediately
       } as () => StepGenerator
 
-      const result = await runProgrammaticStep({
-        ...agentRuntimeImpl,
-        runId: 'test-run-id',
-        ancestorRunIds: [],
-        repoId: undefined,
-        repoUrl: undefined,
-        agentState: mockAgentState,
-        template: mockTemplate,
-        prompt: 'Test',
-        toolCallParams: {},
-        userId: TEST_USER_ID,
-        userInputId: 'test-input',
-        clientSessionId: 'test-session',
-        fingerprintId: 'test-fingerprint',
-        onResponseChunk: () => {},
-        onCostCalculated: async () => {},
-        fileContext: mockFileContext,
-        localAgentTemplates: {},
-        system: 'Test system prompt',
-        stepsComplete: false,
-        stepNumber: 1,
-        logger,
-        signal: new AbortController().signal,
-        tools: {},
-      })
+      const result = await runProgrammaticStep(
+        createParams({ prompt: 'Test', userInputId: 'test-input' }),
+      )
 
       // Should still set generateN even though endTurn will be true
       expect(result.generateN).toBe(2)

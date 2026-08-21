@@ -1,5 +1,5 @@
 <!-- markdownlint-disable MD041 -->
-<img src="../../assets/banner.png" alt="@savant-code/database — Postgres + Drizzle schema, types, services"
+<img src="../../assets/banner.png" alt="@savant-code/database — SQLite persistence layer for sessions, agents, and messages"
 width="650" />
 
 # @savant-code/database

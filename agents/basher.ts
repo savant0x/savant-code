@@ -55,9 +55,11 @@ When describing command output:
 - Be concise but thorough
 - If the output is very long, summarize the key points rather than reproducing everything
 - Don't include any follow up recommendations, suggestions, or offers to help`,
-  instructionsPrompt: `The terminal command has already been executed and its output is in your context. The user has specified what information they want from that output.
+  instructionsPrompt: `The terminal command has already been executed and its output should be in your context. The user has specified what information they want from that output.
 
-Analyze the output and describe the relevant information, following the user's instructions about what to focus on. Do not call any tools — the command has already run; your only job is to summarize its output.`,
+Analyze the output and describe the relevant information, following the user's instructions about what to focus on. Do not call any tools.
+
+If no command output appears in your context, reply exactly: NO-OUTPUT: result not delivered — never invent, reconstruct, or estimate output.`,
   handleSteps: function* ({ params }: AgentStepContext) {
     const command = params?.command as string | undefined
     if (!command) {
@@ -83,17 +85,36 @@ Analyze the output and describe the relevant information, following the user's i
       },
     }
 
+    const firstResult = toolResult?.[0]
+
     if (!what_to_summarize) {
       // Return the raw command output without summarization
-      const result = toolResult?.[0]
       // Only return object values (command output objects), not plain strings
       const output =
-        result?.type === 'json' && typeof result.value === 'object'
-          ? result.value
+        firstResult?.type === 'json' && typeof firstResult.value === 'object'
+          ? firstResult.value
           : ''
       yield {
         toolName: 'set_output',
         input: { output },
+        includeToolCall: false,
+      }
+      return
+    }
+
+    // FID-2026-0820-015 BASHER-1: never hand a blocked/failed/relay-lost
+    // command to the summarization step — the model would fabricate output
+    // to satisfy the "output is in your context" premise. A delivered result
+    // is a ToolResultOutput ('json' | 'media'); anything else is a failure.
+    const hasDeliveredResult =
+      firstResult?.type === 'json' || firstResult?.type === 'media'
+    if (!hasDeliveredResult) {
+      yield {
+        toolName: 'set_output',
+        input: {
+          output:
+            'ERROR: command produced no output — blocked, failed, or result relay lost',
+        },
         includeToolCall: false,
       }
       return

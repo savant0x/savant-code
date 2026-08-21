@@ -3,6 +3,7 @@
  * apply-patch.ts verbatim.
  */
 
+import { findContext } from './context-matcher'
 import {
   END_FILE,
   END_PATCH,
@@ -12,46 +13,14 @@ import {
 
 import type { Chunk, ParserState } from './types'
 
-export function normalizeLineEndings(input: string): string {
-  return input.replace(/\r\n/g, '\n')
-}
-
-export function ensureTrailingNewline(input: string): string {
-  return input.endsWith('\n') ? input : `${input}\n`
-}
-
-export function stripTrailingNewline(input: string): string {
-  return input.endsWith('\n') ? input.slice(0, -1) : input
-}
-
-export function sanitizeUnifiedDiff(rawDiff: string): string {
-  const diffFenceMatch = rawDiff.match(/```diff\r?\n([\s\S]*?)\r?\n```/i)
-  if (diffFenceMatch) {
-    return diffFenceMatch[1]!
-  }
-
-  const trimmed = rawDiff.trim()
-  const fencedMatch = trimmed.match(
-    /^```(?:[a-zA-Z0-9_-]+)?\r?\n([\s\S]*?)\r?\n```$/,
-  )
-  if (fencedMatch) {
-    return fencedMatch[1]!
-  }
-
-  return rawDiff
-}
-
-export function patchHasIntendedChanges(diff: string): boolean {
-  return normalizeLineEndings(diff)
-    .split('\n')
-    .some((line) => {
-      if (line.startsWith('+++') || line.startsWith('---')) {
-        return false
-      }
-
-      return line.startsWith('+') || line.startsWith('-')
-    })
-}
+// Re-export the diff string helpers for backwards compatibility
+export {
+  ensureTrailingNewline,
+  normalizeLineEndings,
+  patchHasIntendedChanges,
+  sanitizeUnifiedDiff,
+  stripTrailingNewline,
+} from './diff-utils'
 
 export function normalizeDiffLines(diff: string): string[] {
   return diff
@@ -238,75 +207,6 @@ export function readSection(
   }
 
   return { nextContext: context, sectionChunks, endIndex: index, eof: false }
-}
-
-export function equalsSlice(
-  source: string[],
-  target: string[],
-  start: number,
-  mapFn: (value: string) => string,
-): boolean {
-  if (start + target.length > source.length) {
-    return false
-  }
-
-  for (let i = 0; i < target.length; i += 1) {
-    if (mapFn(source[start + i]!) !== mapFn(target[i]!)) {
-      return false
-    }
-  }
-
-  return true
-}
-
-export function findContextCore(
-  lines: string[],
-  context: string[],
-  start: number,
-): { newIndex: number; fuzz: number } {
-  if (context.length === 0) {
-    return { newIndex: start, fuzz: 0 }
-  }
-
-  for (let i = start; i < lines.length; i += 1) {
-    if (equalsSlice(lines, context, i, (value) => value)) {
-      return { newIndex: i, fuzz: 0 }
-    }
-  }
-
-  for (let i = start; i < lines.length; i += 1) {
-    if (equalsSlice(lines, context, i, (value) => value.trimEnd())) {
-      return { newIndex: i, fuzz: 1 }
-    }
-  }
-
-  for (let i = start; i < lines.length; i += 1) {
-    if (equalsSlice(lines, context, i, (value) => value.trim())) {
-      return { newIndex: i, fuzz: 100 }
-    }
-  }
-
-  return { newIndex: -1, fuzz: 0 }
-}
-
-export function findContext(
-  lines: string[],
-  context: string[],
-  start: number,
-  eof: boolean,
-): { newIndex: number; fuzz: number } {
-  if (eof) {
-    const endStart = Math.max(0, lines.length - context.length)
-    const endMatch = findContextCore(lines, context, endStart)
-    if (endMatch.newIndex !== -1) {
-      return endMatch
-    }
-
-    const fallback = findContextCore(lines, context, start)
-    return { newIndex: fallback.newIndex, fuzz: fallback.fuzz + 10000 }
-  }
-
-  return findContextCore(lines, context, start)
 }
 
 export function parseUpdateDiff(

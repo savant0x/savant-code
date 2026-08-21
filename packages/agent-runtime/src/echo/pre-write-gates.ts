@@ -6,7 +6,8 @@
  * Recorder gate.
  *
  * - Law 1: Path must be in filesRead (or be a new file)
- * - Law 3: dirtyFiles must be empty OR hasVerifiedSinceLastDirty must be true
+ * - Law 3: every dirty file must be verified (dirtyFiles minus
+ *   verifiedFiles; FID-2026-0819-001 cumulative credit)
  * - Law 7 (Strict): hasSearchedSinceGreen before writing a new file
  * - Law 8 (Strict): intentLogged before first write
  * - FID gate: Orchestrator → FID > 20 lines → route through Recorder
@@ -19,8 +20,8 @@
 
 import { existsSync } from 'node:fs'
 
-import { assessWrite, parseYagniCheckBlock } from '../yagni-ladder'
 import { validateFidStepStatus } from './fid-validator'
+import { runYagniPreWriteGate } from './yagni-pre-write-gate'
 
 import type {
   EnforcementMode,
@@ -79,14 +80,29 @@ export function runPreWriteGates(params: {
   }
 
   // ── Law 3: Verify Before Proceed ────────────────────────────────────
+  // Cumulative verification (FID-2026-0819-001): a dirty file that has
+  // passed a subsequent verification command is recorded in verifiedFiles
+  // and must not block follow-up writes. Gating on the raw
+  // hasVerifiedSinceLastDirty flag deadlocked the write flow until turn
+  // end (FID-2026-0820-012): that flag is only cleared by resetForNewTurn,
+  // so post-write verification runs left the gate closed. Use the same
+  // unverified-dirty predicate as evaluateTurnEnd's Law 15 check — one
+  // source of truth. Exempt-path targets (the same prefixes the FSM write
+  // gate classifies as exempt: dev/fids/, dev/nova/, dev/scratchpad/) are
+  // never blocked by pending source-file verification — governance
+  // bookkeeping must not be wedged by unverified code (FID-2026-0718-008,
+  // FID-2026-0820-012).
+  const unverifiedDirty = [...params.state.dirtyFiles].filter(
+    (f) => !params.state.verifiedFiles.has(f),
+  )
   if (
-    params.state.dirtyFiles.size > 0 &&
-    !params.state.hasVerifiedSinceLastDirty
+    unverifiedDirty.length > 0 &&
+    !(targetPath && isExemptWritePath(targetPath))
   ) {
-    const count = params.state.dirtyFiles.size
+    const count = unverifiedDirty.length
     const msg =
       `Law 3: Verify before proceeding — ${count} unverified ` +
-      `file(s): [${Array.from(params.state.dirtyFiles).join(', ')}]. ` +
+      `file(s): [${unverifiedDirty.join(', ')}]. ` +
       `Run typecheck/lint before more writes.`
     return { blocked: true, reason: msg, warnings }
   }
@@ -97,7 +113,10 @@ export function runPreWriteGates(params: {
   // documented debt marker is a hard block (the research doc's warning —
   // unstructured "write one-liners" drops trust-boundary guards). Exempted
   // domains (Law 6 type safety / Law 14 error paths) never trip the gate.
-  const yagniResult = runYagniGate(params)
+  const yagniResult = runYagniPreWriteGate({
+    ...params,
+    targetPath,
+  })
   if (yagniResult.blocked) {
     return yagniResult
   }
@@ -107,7 +126,18 @@ export function runPreWriteGates(params: {
 
   // ── FID Recorder Gate (narrow) ──────────────────────────────────────
   if (targetPath && FID_FILE_PATTERN.test(targetPath)) {
-    const content = params.input.content ?? params.input.newString ?? ''
+    // apply_patch carries the payload under operation.diff (EC-2,
+    // FID-2026-0820-014); without this fallback its FID writes bypassed
+    // the Recorder-routing and anti-deferral checks.
+    const operation = params.input.operation
+    const operationDiff =
+      operation && typeof operation === 'object'
+        ? (operation as Record<string, unknown>).diff
+        : undefined
+    const content =
+      params.input.content ??
+      params.input.newString ??
+      (typeof operationDiff === 'string' ? operationDiff : '')
     const lineCount = countLines(content)
 
     if (params.agentId === 'orchestrator' && lineCount > 20) {
@@ -137,9 +167,9 @@ export function runPreWriteGates(params: {
     }
   }
 
-  // ── Extended laws (Strict mode only) ────────────────────────────────
+  // ── Extended laws (Strict mode only) ──────────────────────────────
   if (params.tier === 'all_15') {
-    // ── Law 7: Search Before Create ───────────────────────────────────
+    // ── Law 7: Search Before Create ───────────────────────────────
     if (targetPath && !params.state.filesWritten.has(targetPath)) {
       if (!params.state.hasSearchedSinceGreen) {
         const blocked = params.tier === 'all_15'
@@ -162,7 +192,7 @@ export function runPreWriteGates(params: {
       }
     }
 
-    // ── Law 8: Log Intent Before Coding ───────────────────────────────
+    // ── Law 8: Log Intent Before Coding ─────────────────────────────
     if (!params.state.intentLogged && params.state.writeCount === 0) {
       const blocked = params.tier === 'all_15'
       const warning: AdvisoryWarning = {
@@ -187,95 +217,19 @@ export function runPreWriteGates(params: {
 }
 
 /**
- * P5b — YAGNI gate (FID-2026-0806-003).
- *
- * Extracts the Forge's `yagni_check` JSON block from the write input (the
- * block precedes the code inside the `content`/`newString` payload per the
- * Forge prompt), validates it with the ladder module, and blocks speculative
- * writes that lack a documented debt marker. Records the assessment on the
- * enforcement state so the Verifier's YAGNI Assessment can audit it.
+ * A path that does not exist on disk is a brand-new file — Law 1 cannot
+ * require reading a file that has not been created yet.
  */
-function runYagniGate(params: {
-  toolName: string
-  input: Record<string, unknown>
-  agentId: string
-  state: EnforcementState
-  mode: EnforcementMode
-  tier: 'core_4' | 'all_15'
-}): EnforcementResult {
-  const { input, state } = params
-  // Only gate the Forge (and only its actual write tools). Other agents
-  // (Scout/Recorder/Orchestrator writes) are outside the Forge's YAGNI
-  // contract.
-  if (params.agentId !== 'forge') {
-    return { blocked: false, warnings: [] }
-  }
-
-  const payload = input.content ?? input.newString ?? ''
-  if (typeof payload !== 'string') {
-    return { blocked: false, warnings: [] }
-  }
-
-  const blockMatch = payload.match(
-    /<yagni_check>([\s\S]*?)<\/yagni_check>|<yagni_check\s*\/?>([\s\S]*?)(?:<\/yagni_check>)?$/i,
+/** Exempt FSM write-gate prefixes (write-gate.ts): governance bookkeeping
+ * paths whose writes are never blocked by pending code verification
+ * (FID-2026-0820-012). */
+function isExemptWritePath(path: string): boolean {
+  const normalized = path.replace(/\\/g, '/').toLowerCase()
+  return (
+    normalized.includes('dev/fids/') ||
+    normalized.includes('dev/nova/') ||
+    normalized.includes('dev/scratchpad/')
   )
-  if (!blockMatch) {
-    // Forge writes without a yagni_check block are a compliance warning, not
-    // a hard block — the block is a thinking aid; the code itself is still
-    // audited by the Verifier.
-    return {
-      blocked: false,
-      warnings: [
-        {
-          law: 0,
-          severity: 'info',
-          message:
-            'P5b YAGNI: Forge write without a <yagni_check> block — audit the diff for speculative scope (Verifier YAGNI Assessment).',
-          file: getTargetPath(params.toolName, input),
-        },
-      ],
-    }
-  }
-
-  const { assessment, reason } = parseYagniCheckBlock(blockMatch[1] ?? '')
-  if (reason) {
-    return {
-      blocked: false,
-      warnings: [
-        {
-          law: 0,
-          severity: 'warning',
-          message: `P5b YAGNI: malformed yagni_check block (${reason}) — treat as speculative until Verifier assessment.`,
-          file: getTargetPath(params.toolName, input),
-        },
-      ],
-    }
-  }
-
-  // Record the assessment for the Verifier / analytics.
-  state.yagni = {
-    ...state.yagni,
-    lastAssessment: {
-      isSpeculative: assessment.isSpeculative,
-      reusedEntities: assessment.reusedEntities,
-      debtMarkersInserted: assessment.debtMarkersInserted,
-    },
-  }
-
-  const verdict = assessWrite({ assessment })
-  if (verdict.verdict === 'rejected') {
-    state.yagni = {
-      ...state.yagni,
-      speculativeWritesRejected: state.yagni.speculativeWritesRejected + 1,
-    }
-    return {
-      blocked: true,
-      reason: `${verdict.reason} (${getTargetPath(params.toolName, input) ?? params.toolName})`,
-      warnings: [],
-    }
-  }
-
-  return { blocked: false, warnings: [] }
 }
 
 /**
@@ -307,8 +261,18 @@ function getTargetPath(
   toolName: string,
   input: Record<string, unknown>,
 ): string | undefined {
-  const raw = input.path
-  return typeof raw === 'string' ? raw : undefined
+  if (typeof input.path === 'string') return input.path
+  // apply_patch nests the target under `operation.path`
+  // (sdk/src/tools/apply-patch.ts). Without this branch every apply_patch
+  // call resolved an undefined target and silently bypassed the Law 1/7
+  // gates and the FID gate (FID-2026-0820-014 EC-2) — while
+  // enforcement.ts's own getTargetPath tracked the write as dirty.
+  const operation = input.operation
+  if (operation && typeof operation === 'object') {
+    const path = (operation as Record<string, unknown>).path
+    if (typeof path === 'string') return path
+  }
+  return undefined
 }
 
 /** Count newlines in a string to estimate line count. */

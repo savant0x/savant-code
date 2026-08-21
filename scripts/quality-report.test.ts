@@ -1,83 +1,62 @@
 import { describe, expect, it } from 'bun:test'
 
-import { collectQualityIssues, readQualityBaseline } from './quality-report'
+import { collectQualityIssues, type QualityBaseline } from './quality-report'
 
 describe('quality ratchet', () => {
-  it('passes the checked-in baseline without ratchet violations', () => {
-    expect(collectQualityIssues(readQualityBaseline())).toEqual([])
-  })
-
-  it('accepts measured approved growth with a rationale', () => {
+  it('enforces the absolute ceiling even when the historical baseline is higher', () => {
     const issues = collectQualityIssues({
-      maxFileLines: 10_000,
-      trackedFiles: { 'scripts/quality-report.ts': 1 },
-      approvedGrowth: {
-        'scripts/quality-report.ts': {
-          maxLines: 500,
-          rationale:
-            'Temporary bounded ceiling while the quality split is implemented.',
-        },
-      },
+      maxFileLines: 10,
+      trackedFiles: { 'scripts/quality-report.ts': 10_000 },
     })
-    expect(issues).toEqual([])
+
+    expect(
+      issues.some(
+        (issue) =>
+          issue.file === 'scripts/quality-report.ts' &&
+          /^\d+ lines exceeds absolute maximum 10$/.test(issue.message),
+      ),
+    ).toBe(true)
   })
 
-  it('rejects approved growth below the current measured line count', () => {
+  it('includes project-owned hidden source roots in the absolute check', () => {
     const issues = collectQualityIssues({
-      maxFileLines: 10_000,
-      trackedFiles: { 'scripts/quality-report.ts': 1 },
-      approvedGrowth: {
-        'scripts/quality-report.ts': {
-          maxLines: 2,
-          rationale: 'Too small for the current measured file.',
-        },
-      },
+      maxFileLines: 10,
+      trackedFiles: { '.agents/types/tools.ts': 10_000 },
     })
-    expect(issues).toContainEqual({
-      file: 'scripts/quality-report.ts',
-      message: expect.stringContaining('current measured line count'),
-    })
+
+    expect(
+      issues.some(
+        (issue) =>
+          issue.file === '.agents/types/tools.ts' &&
+          /^\d+ lines exceeds absolute maximum 10$/.test(issue.message),
+      ),
+    ).toBe(true)
   })
 
-  it('rejects approved growth without a rationale or below the baseline', () => {
-    const issues = collectQualityIssues({
-      maxFileLines: 10_000,
-      trackedFiles: { 'scripts/quality-report.ts': 10 },
-      approvedGrowth: {
-        'scripts/quality-report.ts': { maxLines: 9, rationale: '' },
-      },
-    })
-    expect(issues).toContainEqual({
-      file: 'scripts/quality-report.ts',
-      message: expect.stringContaining('approved growth'),
-    })
-  })
-
-  it('rejects approved growth for an untracked file', () => {
-    const issues = collectQualityIssues({
-      maxFileLines: 10_000,
-      trackedFiles: {},
-      approvedGrowth: {
-        'scripts/quality-report.ts': {
-          maxLines: 500,
-          rationale: 'Untracked files are not eligible for approved growth.',
-        },
-      },
-    })
-    expect(issues).toContainEqual({
-      file: 'scripts/quality-report.ts',
-      message: expect.stringContaining('reference a tracked file'),
-    })
-  })
-
-  it('reports a tracked file that exceeds its baseline', () => {
+  it('reports ratchet growth below the absolute ceiling', () => {
     const issues = collectQualityIssues({
       maxFileLines: 10_000,
       trackedFiles: { 'scripts/quality-report.ts': 1 },
     })
+
+    expect(
+      issues.some(
+        (issue) =>
+          issue.file === 'scripts/quality-report.ts' &&
+          /^\d+ lines exceeds baseline 1$/.test(issue.message),
+      ),
+    ).toBe(true)
+  })
+
+  it('rejects the unsupported approvedGrowth field', () => {
+    const legacyBaseline = JSON.parse(
+      '{"maxFileLines":300,"trackedFiles":{},"approvedGrowth":{}}',
+    ) as QualityBaseline
+    const issues = collectQualityIssues(legacyBaseline)
+
     expect(issues).toContainEqual({
-      file: 'scripts/quality-report.ts',
-      message: expect.stringContaining('exceeds baseline 1'),
+      file: 'dev/quality-baseline.json',
+      message: 'approvedGrowth is not supported; remove the exemption field',
     })
   })
 })

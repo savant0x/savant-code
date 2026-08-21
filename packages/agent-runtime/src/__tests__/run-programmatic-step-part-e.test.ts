@@ -1,6 +1,9 @@
 import * as analytics from '@savant-code/common/analytics'
 import { TEST_USER_ID } from '@savant-code/common/old-constants'
-import { emptyMcpServers } from '@savant-code/common/testing/fixtures/agent-runtime'
+import {
+  emptyMcpServers,
+  testLogger,
+} from '@savant-code/common/testing/fixtures/agent-runtime'
 import { TEST_AGENT_RUNTIME_IMPL } from '@savant-code/common/testing/impl/agent-runtime'
 import { getInitialSessionState } from '@savant-code/common/types/session-state'
 import {
@@ -30,16 +33,8 @@ import type {
   AgentRuntimeDeps,
   AgentRuntimeScopedDeps,
 } from '@savant-code/common/types/contracts/agent-runtime'
-import type { Logger } from '@savant-code/common/types/contracts/logger'
 import type { ParamsOf } from '@savant-code/common/types/function-params'
 import type { AgentState } from '@savant-code/common/types/session-state'
-
-const logger: Logger = {
-  debug: () => {},
-  error: () => {},
-  info: () => {},
-  warn: () => {},
-}
 
 describe('runProgrammaticStep', () => {
   let mockTemplate: AgentTemplate
@@ -132,7 +127,7 @@ describe('runProgrammaticStep', () => {
       stepNumber: 1,
       tools: {},
 
-      logger,
+      logger: testLogger,
       signal: new AbortController().signal,
     }
   })
@@ -140,7 +135,7 @@ describe('runProgrammaticStep', () => {
   afterEach(() => {
     mock.restore()
     // Clear the generator cache between tests
-    clearAgentGeneratorCache({ logger })
+    clearAgentGeneratorCache({ logger: testLogger })
   })
 
   describe('stepsComplete parameter', () => {

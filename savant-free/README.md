@@ -24,7 +24,7 @@ paid-only features (credits UI, mode switching, MAX/PLAN prompts).
 ## Install
 
 > **Status:** `@savant-code/savant-free` is not yet published on the npm registry (private
-> workspace, v0.0.23 pending — version-aligned with the monorepo). For
+> workspace, v0.0.26 — version-aligned with the monorepo). For
   now, **build from source** (see below) to produce a local `savant-free` binary. The npm install command will be
   `npm install -g @savant-code/savant-free` once the free variant ships.
 

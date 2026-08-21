@@ -1,11 +1,13 @@
 import { applyBudgets } from './apply-budgets'
 import { CONTEXT_PRUNER_CONSTANTS } from './constants'
+import { runFoldOldestExchange } from './fold-exchange'
 import * as helpers from './helpers'
 import { runContextPrunerMain } from './main'
 import * as preservedState from './preserved-state'
 import * as structuredSummary from './structured-summary'
 import { summarizeMessages } from './summarize-messages'
 import { summarizeToolCall } from './summarize-tool-call'
+import { buildFullSummary } from './summary-assembly'
 import * as summaryParsing from './summary-parsing'
 import * as telemetry from './telemetry'
 
@@ -19,17 +21,15 @@ type ContextPrunerHandleSteps = Extract<
 /**
  * Builds the context-pruner handleSteps generator as a fully self-contained
  * source string (the savant pattern, FID-2026-0802-005 L5): handleSteps is
- * serialized via .toString() (prebuild-agents.ts) and re-eval'd
- * (deserializeHandleSteps), so the generated function MUST reference only
+ * serialized/re-eval'd via `.toString()` (prebuild-agents.ts,
+ * deserializeHandleSteps), so the generated function MUST reference only
  * literals, params, and locals — no closure variables.
  *
  * Composition:
  *   - constants are baked in as `const NAME = <JSON literal>` declarations;
- *   - the pure helper modules and the extracted Phase 1 / Phase 2+3 / main
- *     orchestrator functions are embedded via .toString(). Bun transpiles
- *     TypeScript on import, so each serialized body is already plain JS; all
- *     cross-references between them resolve inside the generated generator
- *     scope (function declarations hoist, constants evaluate first).
+ *   - pure helper, phase, and orchestrator functions are embedded via
+ *     .toString(); Bun transpiles TypeScript on import, so bodies are plain JS
+ *     and cross-references resolve in the generated scope.
  *   - the generator delegates to runContextPrunerMain via `yield*`.
  *
  * The eval runs once at module load with string literals only — the same
@@ -45,24 +45,22 @@ export function createContextPrunerHandleSteps(): ContextPrunerHandleSteps {
     summarizeToolCall.toString(),
     summarizeMessages.toString(),
     applyBudgets.toString(),
-    // P1 modules (FID-2026-0806-003 Phase 1): filter to functions only —
-    // exported interfaces are type-only (erased) and there are no exported
-    // runtime constants in these modules.
+    // P1 modules: filter to functions; interfaces erase and have no runtime constants.
     ...Object.values(preservedState)
       .filter((v) => typeof v === 'function')
       .map((fn) => (fn as () => unknown).toString()),
     ...Object.values(structuredSummary)
       .filter((v) => typeof v === 'function')
       .map((fn) => (fn as () => unknown).toString()),
-    // FID-2026-0809-015: summary-parsing + telemetry helpers extracted from
-    // main.ts — embedded the same way so the generator's calls resolve
-    // in-scope.
+    // Summary-parsing and telemetry helpers extracted from main.ts.
     ...Object.values(summaryParsing)
       .filter((v) => typeof v === 'function')
       .map((fn) => (fn as () => unknown).toString()),
     ...Object.values(telemetry)
       .filter((v) => typeof v === 'function')
       .map((fn) => (fn as () => unknown).toString()),
+    buildFullSummary.toString(),
+    runFoldOldestExchange.toString(),
     runContextPrunerMain.toString(),
   ].join('\n\n')
 
