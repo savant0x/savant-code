@@ -228,9 +228,9 @@ const issues = [
   ...validateGateContract(repositoryValidationGates(root), root),
   ...validateActiveFidLedger(root),
   ...validateLearningsContent(),
-  // SAVALANT_CODE_SKIP_QUALITY_RATCHET: temporarily exempt ratchet for releases
+  // SAVANT_CODE_SKIP_QUALITY_RATCHET: temporarily exempt ratchet for releases
   // (operator-paused FID-2026-0819-005)
-  ...(process.env.SAVALANT_CODE_SKIP_QUALITY_RATCHET === '1'
+  ...(process.env.SAVANT_CODE_SKIP_QUALITY_RATCHET === '1'
     ? []
     : collectQualityIssues(readQualityBaseline()).map((issue) => ({
         code: 'quality.ratchet',
