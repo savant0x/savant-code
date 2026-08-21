@@ -1,6 +1,6 @@
 {
   "name": "@savant-code/savant-free",
-  "version": "0.0.26",
+  "version": "0.0.27",
   "private": true,
   "scripts": {
     "build:binary": "bun cli/build.ts 0.0.0-dev",
