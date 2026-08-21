@@ -1593,6 +1593,16 @@ const CREDENTIAL_FILE_PATTERNS = [
   /(?:^|\/)(?:credentials|secrets)(?:\.|\/|$)/i,
 ]
 
+// Tracked source modules whose *names* legitimately match the filename
+// heuristic (credentials.ts / credentials.test.ts are common module names).
+// The exemption covers the filename check ONLY — the content scan below still
+// runs against these paths, so a real secret in an exempted file is caught.
+const CREDENTIAL_FILENAME_EXEMPTIONS = [
+  'common/src/util/credentials.ts',
+  'sdk/src/__tests__/credentials.test.ts',
+  'sdk/src/credentials.ts',
+]
+
 // Shannon entropy floor (bits/char) applied to captured token bodies, plus a
 // minimum character-class count. This is the gitleaks-style discriminator:
 // repeated characters (`AAAA…`) fail entropy, and sequential alphabets
@@ -1699,7 +1709,10 @@ export function scanStagedCredentials(
 ): string[] {
   const flagged: string[] = []
   for (const file of files) {
-    if (CREDENTIAL_FILE_PATTERNS.some((pattern) => pattern.test(file))) {
+    if (
+      CREDENTIAL_FILE_PATTERNS.some((pattern) => pattern.test(file)) &&
+      !CREDENTIAL_FILENAME_EXEMPTIONS.includes(file)
+    ) {
       flagged.push(`${file} (filename matches a credential pattern)`)
       continue
     }

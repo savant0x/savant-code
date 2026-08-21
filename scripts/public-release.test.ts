@@ -1019,6 +1019,19 @@ describe('public release contract', () => {
       expect(scanStagedCredentials(['.env.example'], repo)).toEqual([])
       // Sequential/alphabetic token-shaped prose must not block a commit.
       expect(scanStagedCredentials(['docs-example.txt'], repo)).toEqual([])
+      // Verified-legit tracked modules whose *names* match the filename
+      // heuristic are exempt from the filename check alone — but their
+      // content is still scanned, so a real secret in them still flags.
+      const credentialsModule = path.join(repo, 'sdk/src/credentials.ts')
+      mkdirSync(path.dirname(credentialsModule), { recursive: true })
+      writeFileSync(credentialsModule, 'export const apiKey = getApiKey()\n')
+      expect(scanStagedCredentials(['sdk/src/credentials.ts'], repo)).toEqual(
+        [],
+      )
+      writeFileSync(credentialsModule, `export const apiKey = '${fakeToken}'\n`)
+      expect(
+        scanStagedCredentials(['sdk/src/credentials.ts'], repo),
+      ).toHaveLength(1)
     } finally {
       rmSync(repo, { recursive: true, force: true })
     }
