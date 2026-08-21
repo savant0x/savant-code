@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.0.27 — 2026-08-21
+
+Checkpoint release: quality-ratchet decompositions, documentation sync,
+and harness fixes.
+
+- **Quality-ratchet remediation:** decomposed 169 files over the 300-line
+  ceiling into focused modules while preserving all public surfaces, test
+  coverage, and type safety. Net reduction: ~30k deletions across cli,
+  common, packages, and sdk workspaces.
+- **Documentation sync:** README.md (added 3 missing workspaces),
+  CONTRIBUTING.md (updated typecheck/test references), agents/README.md
+  (added Adversary), packages/knowledge-graph/README.md and
+  packages/design-systems/README.md (created), common/README.md and
+  savant-free/README.md (updated references), docs/sdk-overview.md
+  (fixed stale import count).
+- **Harness fixes:** all 7 pre-push gates pass (typecheck ×11, test suite,
+  ESLint, lint:md, Prettier, credential scan, protocol bundle).
+
 ## 2026-08-20 — FID-2026-0820-016: Programmatic gate blocks silently drop results — orphaned tool-calls and evidence-free NO-OUTPUT (closed)
 
 Root-caused and fixed the FID-2026-0820-013 Round 3 output-injection open item:
