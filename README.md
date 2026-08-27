@@ -266,6 +266,17 @@ pass.
   Context7, Parallel, Tavily, Exa, Firecrawl) via `/research-keys <service>`
   (masked, saved to `credentials.json`) or the matching `*_API_KEY`
   environment variables. See [features.md](docs/features.md).
+- **Self-improving harness & agent-created skills** — Savant captures its
+  own tool failures mechanically (in-process hook, no prompt compliance),
+  promotes recurring patterns into canonical rules and versioned skills, and
+  lets the operator trust or reject everything it authors. `skill_manage`
+  (Scribe + Orchestrator) authors skills into `.quarantine/` with on-disk
+  versioning (`versions/` + `VERSIONS.jsonl`); `/skills
+  list|show|trust|untrust|rollback` is the operator-only release boundary;
+  `immutable: true` skills reject every mutation; SessionEnd review,
+  lessons→skills drafts, LEARNINGS retirement, and the evolution ritual run
+  as `bun run session-end:review|lessons:to-skills|learnings:retire|skills:evolve`.
+  Full guide: [docs/self-improving-harness.md](docs/self-improving-harness.md).
 - **Telemetry controls** — `/telemetry status|enable|disable` toggles remote
   analytics and error reporting. Remote analytics is enabled by default in the
   main CLI but remains user-disableable; local logs remain available when it is
@@ -419,7 +430,9 @@ code 2 blocks a tool.
   (aggressive reduction). Preserves critical context while reducing token usage.
   A live in-stream signal (`⚙ Compacting context…` → `✓ Compaction complete
   (−N tokens)`) and a window-consistent sidebar `Compaction` row give real-time
-  visual feedback instead of silent compaction.
+  visual feedback instead of silent compaction. A single trigger authority
+  (same verdict that fires the warning) drives the pruner spawn, and `/compact`
+  forces an on-demand compact-and-stop pass.
 - **Context window resolution** — gateway models (e.g. `opencode-go/mimo-v2.5`)
   resolve their real context length from the OpenRouter catalog at runtime.
 - **Universal copy buttons** — hover-to-copy on code blocks, tool outputs, and
@@ -678,7 +691,7 @@ mode's one-line contract.
 
 | Mode | Agent | Contract |
 | --- | --- | --- |
-| `HYBRID` (default) | `savant` | Direct, low-friction writing bounded by the harness: deterministic Law 1/3 + Verifier-criteria receipts at `warn`, with the full Perfection Loop auto-escalating past the 20-line ceremony threshold (FID-2026-0804-009/010). |
+| `HYBRID` (default) | `savant` | Direct, low-friction writing bounded by the harness: deterministic Law 1/3 + Verifier-criteria receipts at `warn`, with the full Perfection Loop auto-escalating past the 100-line ceremony threshold; anything above that routes through the Recorder for the FID. |
 | `SCAFFOLD` | `savant-scaffold` | Umbrella-FID project initialization; scaffolds once, then hands back to HYBRID. |
 | `STRICT` | `savant-strict` | Full ECHO ceremony for **every** code change — FID per change, Forge writes, Verifier audits, Law-4 greps. |
 | `ANALYZE` | `savant-analyze` | Read-only: search, inspect, and reason without writing files. |
@@ -711,16 +724,16 @@ writes) stays ceremony-free even in STRICT.
 
 | Consideration | `HYBRID` | `STRICT` |
 | --- | --- | --- |
-| Speed | Fastest — write freely; the full loop auto-engages past 20 lines | Slower — every change pays the full loop |
+| Speed | Fastest — write freely; the full loop auto-engages past 100 lines | Slower — every change pays the full loop |
 | Friction | Minimal — the harness warns + steers, never blocks | Maximal — ceremony is required, not optional |
 | Audit trail | FIDs only for escalated changes | A FID per change, archived with a CHANGELOG entry |
-| Verification | Harness receipts at `warn` + self-escalation past 20 lines | Verifier + Law-4 greps on every change |
+| Verification | Harness receipts at `warn` + self-escalation past 100 lines | Verifier + Law-4 greps on every change |
 | Best for | Day-to-day building, exploration, prototypes, quick iterations | Security-sensitive or long-lived code, paid-API surfaces, team review, anything needing a durable audit trail |
 
 **Rule of thumb:** if a change would hurt to get wrong — auth, payments,
 migrations, anything shipping to users — use `STRICT`. If you are exploring or
 iterating quickly, `HYBRID` is the right default: the harness still watches Law
-1/3 and the Verifier criteria, and the full loop still engages past the 20-line
+1/3 and the Verifier criteria, and the full loop still engages past the 100-line
 threshold.
 
 ---
@@ -884,6 +897,7 @@ Commands can be entered with `/`; aliases are shown in parentheses.
 | `/interview` | Turn an idea into a structured specification |
 | `/plan` | Create an implementation plan |
 | `/review` | Review code changes |
+| `/compact` | Force an immediate context compaction (compact-and-stop) |
 | `/goal` (`/g`) | Start or manage a durable, budgeted goal run (`status`, `pause`, `resume`, `cancel`) |
 | `/auto-drive` (`/auto`, `/drive`, `/autodrive`) | Start or manage an Auto Drive run — clarify, plan, approve, then run to completion |
 | `/loop` (`/repeat`) | Run a prompt on a recurring cadence; use `stop` or `status` |
@@ -930,14 +944,18 @@ Call-Graph Reachability) + 11 extended code laws. `strict: true` in TypeScript.
 
 ### Key Files
 
-| File                     | Purpose                                           |
-| ------------------------ | ------------------------------------------------- |
-| `ECHO.md`                | The 15 Laws + Perfection Loop FSM + FID lifecycle |
-| `ARCHITECTURE.md`        | Agent roster and tool restrictions                |
-| `protocol.config.yaml`   | Build commands, quality bar, paths                |
-| `dev/fids/`              | Feature Implementation Documents                  |
-| `dev/session-summaries/` | Session audit trail                               |
-| `dev/LEARNINGS.md`       | Cross-session lessons                             |
+| File                             | Purpose                                                    |
+| -------------------------------- | ---------------------------------------------------------- |
+| `ECHO.md`                        | The 15 Laws + Perfection Loop FSM + FID lifecycle          |
+| `ARCHITECTURE.md`                | Agent roster and tool restrictions                         |
+| `protocol.config.yaml`           | Build commands, quality bar, paths                         |
+| `dev/fids/`                      | Feature Implementation Documents                           |
+| `dev/session-summaries/`         | Session audit trail                                        |
+| `dev/LEARNINGS.md`               | Cross-session lessons                                      |
+| `dev/agenda.md`                  | Session-end learning agenda (≤50 lines)                    |
+| `dev/experiences/`               | Raw experience traces (unloaded, deduped)                  |
+| `.agents/skills/`                | Skills + `versions/` + `VERSIONS.jsonl` + `.quarantine/`   |
+| `docs/self-improving-harness.md` | Self-improving harness + agent-created skills (full guide) |
 
 ---
 

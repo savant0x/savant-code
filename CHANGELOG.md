@@ -1,5 +1,1184 @@
 # Changelog
 
+## 2026-08-26 — FID-2026-0823-011 Recorder stall closed fixed-with-waiver (closed + archived)
+
+The Recorder read-then-stop behavioral boundary is PERMANENTLY ACCEPTED by operator waiver. Evidence state at close: three controlled live probes (UPDATE stalled twice in bounded ~26-30K contexts even with the Turn Contract and the corrective retry suffix naming the exact failure; CREATE shape with immediate-write instruction succeeded once), plus real-world recurrences during 08-24/25 work — establishing that prompt-level levers cannot reliably make this model execute an UPDATE-shaped write, while every harness mechanism around it is proven live and correct (context isolation via includeMessageHistory:false cutting inherited context from ~654K to ~26K tokens; the -012 corrective retry ladder firing correctly; the -014 guard canonicalization). The accepted mitigation is structural: the operator-approved Orchestrator direct-write convention has carried all Recorder duties since 2026-08-23. Gates fresh at closure: typecheck agents + cli exit 0, run-programmatic-step suite exit 0 within the 45/0 agent-runtime battery; receipt re-stamped at the archived path (3/3 declared gates live PASS); repo-wide fid:verify --check sweep PASS. Honest framing preserved in the record: accepted, never claimed fixed.
+
+## 2026-08-26 — Enforcement-layer pair closed after live-evidence boundary discharge (closed + archived)
+
+Two `fixed` records whose sole remaining boundary was a post-restart live probe were closed by operator directive with the boundary discharged by accumulated live evidence: FID-2026-0824-001 (Law 3/Law 4 verification credit ignored run_readonly_command commands[] arrays — batch-first terminalCommandCandidates extractor wired into both credit blocks, 7 regression cases; the batched path has run continuously across many harness restarts since 2026-08-24 with zero recurrences of the false turn-end BLOCK or wedged dirty flags) and FID-2026-0824-010 (design-contract scanner word-boundary false positives — lookbehind guard, value-plausibility filter, non-surface scope narrowing, 5 regression cases; neither false-positive class has recurred since, and a successor precision refinement landed 2026-08-25 on top of the fix). Both receipts re-stamped at the archived paths with 2/2 declared gates live PASS (agent-runtime typecheck · law4-turn-end / design-contract suites); repo-wide fid:verify --check sweep PASS.
+
+## 2026-08-25 — Operator waiver closes the deck visual trio (closed + archived)
+
+Three `fixed` records whose sole remaining boundary was the formal production-webview re-smoke were closed by operator waiver directive 2026-08-25: FID-2026-0822-012 (holographic command deck master — P1–P6 plus robot-cast hotfix, hologram-station, nameplate, activity-overlay, station-rework passes; 7/7 declared gates live PASS), FID-2026-0824-011 (deck live event driver — gateway stream → FloorAdapter → Walker/Station/StateFx layers mounted in production; 3/3 gates live PASS), and FID-2026-0824-032 (robot cast invisible under reduced motion — onCastSettled repaint fix + VERSION single-sourcing; 2/2 gates live PASS). Waiver rationale recorded in each Loop record: the night-session eye-tuning loop exercised exactly this surface in the real webview through multiple operator-directed iterations. All desktop floor gates re-ran fresh green this session before stamping (typecheck exit 0 · floor battery 50/0 across 8 files); receipts re-stamped at the archived paths; repo-wide fid:verify --check sweep PASS.
+
+## 2026-08-25 — FID-2026-0824-013: eval system rebuild v3 master (closed + archived)
+
+Program master closed after all six increments (`-014`…`-019`) landed and archived in strict blueprint order: FSM alignment + trajectory_assertions; sandbox hardening with a live Windows orphan-process teardown proof; skill-efficacy engine with the paired-trial `prove` CLI wired end-to-end; deterministic governance corpus + out-of-process forced-choice autorater + Tier-1 pre-push smoke; erosion regression guard gating the skill trust/evolve boundary; capability ingestion (A7 license audit as a RED hard gate, NOTICE attribution) + Tier-3 release pipeline with a deterministic rotation registry, token ceiling, and fail-closed release gate. The v2 core survived intact behind additive-only schema extensions (schema_version stayed `"2.0"` tasks / `"1.0"` proof artifacts, round-trip-proven per child). Master gates ran live at closure: evals typecheck exit 0, harness suite 5/0; receipt stamped at the archived path (2/2 declared gates live PASS) after unfencing the gate block per the parser contract; repo-wide `fid:verify --check` sweep PASS. Cumulative suites across children: metrics-fsm 14/0, sandbox 11/0 + siblings 44/0, efficacy 8/0 + prove 4/0, governance 114/0, erosion 21/0, ingest 8/0 + public-release contract 56/0.
+
+## 2026-08-25 — FID-2026-0824-019: capability ingestion + Tier-3 release pipeline (closed + archived)
+
+Increment 5 of the eval rebuild (`-013` master) landed and closed. NEW `evals/v2/src/ingest/issues.ts` — offline-first time-windowed closed-issue ingestion with operator repo allowlist, a CodeScaleBench-inspired keyword classifier mapping onto four ADDITIVE categories (`cross_repo_navigation`, `dependency_tracing`, `codebase_comprehension`, `security_remediation`; old enum values parse unchanged), sha256 content provenance persisted through an optional `ingest_provenance` schema block (schema_version stays 2.0), and a curated/draft split so check-less drafts intentionally fail the schema until an operator completes them. NEW `ingest/rotation.ts` — deterministic per-version selection across category/difficulty strata (sha256(version::task_id)) plus fail-closed token-ceiling enforcement (2M default). Release wiring lands in `scripts/validation-manifest.ts` as an OPT-IN gate (`SAVANT_CODE_RELEASE_EVAL_TIER=full`) spread into the same gate manifest public-release.ts already consumes at preflight — zero touches to the 3064-line release engine. NOTICE attributions recorded for both sources; the A7 license audit executed FIRST and passed (SWE-rebench MIT code / CC-BY-4.0 dataset; CodeScaleBench Apache-2.0 — ideas-not-ports, original implementations). Gates: eval typecheck exit 0 · ingest tests **8/0** · public-release contract suite **56/0** unchanged · eslint ×6 clean · prettier ×7 clean · Tier-3 dry run live: 7 tasks selected across governance/error_recovery/multi_agent/pure_coding strata at 700k tokens vs the 2M ceiling, exit 0 · receipt stamped at archived path (3/3 declared gates live PASS) · `fid:verify --check` sweep PASS. Master `FID-2026-0824-013` remains open pending `-014`/`-015` closure passes (both sit at `fixed`). Closed and archived to `dev/fids/archive/` 2026-08-25.
+
+## 2026-08-25 — FID-2026-0824-018: self-improvement regression guard (closed + archived)
+
+Increment 4 of the eval rebuild (`-013` master) landed and closed. NEW `evals/v2/src/erosion/` — pure deterministic metrics over code-map-shaped inputs (`volumeRatio` = lines/(identifiers+1), text-based `cyclomaticEstimate` = decisions+1, `couplingConcentration` = maxFanIn/(meanFanIn+1), snapshot aggregation), a baseline-vs-active delta engine (verbosity delta % + composite structural erosion %), and the threshold gate (>5% structural or >25% verbosity increase, or pass^k degradation ⇒ BLOCK). The `-016` proof-artifact schema gains an ADDITIVE optional `erosion` block (schema_version stays 1.0 — pre-guard artifacts parse unchanged); `runSkillProve` grows an injectable `measureErosion` seam that attaches the block before the round-trip only when both arms are measured; `/skills trust` + prove surfaces render a prominent EROSION BLOCK advisory; `skills:evolve` forces HIGH risk on blocked proofs; protocol.config.yaml documents module-owned defaults (ADVISORY). Reuse boundary recorded: metrics consume code-map-shaped data without importing the wasm-loading package (hermetic runtime; a runner-level adapter feeds real output). The worked example required by the spec ships as the bloated-fixture regression test. Gates: eval typecheck exit 0 · erosion+prove suites **21/0** · eslint zero warnings ×8 touched files · prettier clean ×9 · receipt stamped at archived path (3/3 declared gates live PASS) · `fid:verify --check` sweep PASS. Closed and archived to `dev/fids/archive/` 2026-08-25.
+
+## 2026-08-25 — FID-2026-0824-017: governance corpus + bounded autorater + Tier-1 smoke (closed + archived)
+
+Increment 3 of the eval rebuild (`-013` master) landed and closed. Five zero-token governance replay tasks (FSM legality, Law-1 read completeness, Verifier write refusal, provenance-denied writes, anti-deferral refusal) under `evals/v2/tasks/governance/`; additive `governance` metadata/category + `governance_replay` schema support; fail-closed drift-checked `evals:smoke` wired into `.githooks/pre-push`; deterministic-first grading (`deterministic → trajectory → autorater`, halt-on-failure semantics); bounded forced-choice autorater with origin masking and strict A/B parsing; NEW in Loop 3 the operator-configured endpoint contract (`evals/v2/src/raters/endpoint.ts`) — env-only (`SAVANT_CODE_AUTORATER_URL/_KEY/_TIMEOUT_MS`), disabled when absent, fail-closed on invalid values naming variables never values, embedded URL credentials rejected, `redirect:error`, masking applied before egress; Tier 1 constructs no transport (zero-network by construction). Gates: eval typecheck exit 0 · v2 suite **133/0** across 17 files · smoke **5/5** under budget · root typecheck ×12 exit 0 · eslint zero warnings · `bun run test` chain exit 0 · bundle regen + drift check PASS · receipt stamped at the archived path (4/4 declared gates live PASS) · `fid:verify --check` sweep PASS. Honest boundaries recorded: gates ran individually in parallel rather than one sequential hook invocation (operator interrupted the monolithic run twice); credential scan is push-context-gated (stdin refs; fail-closed verified by source read); repo-wide prettier/markdownlint drift (59 files; docs/design + ledger prose) is pre-existing cross-session state preserved untouched, owned by the tree-drain migration. Closed and archived to `dev/fids/archive/` 2026-08-25.
+
+## 2026-08-25 — FID-2026-0820-010: Chat UI and Auto Drive dashboard (closed + archived)
+
+Completed the structured no-terminal desktop chat surface: bounded transcript virtualization, structured verification output, diff/phase/approval/EHEL/compaction visuals, scoped FID queue, and the Auto Drive right rail. The dashboard now projects authoritative FID lifecycle counts, deterministic parent-child dependency edges from optional `Parent` metadata, and a gateway-driven Emergency Halt lifecycle with requested/accepted/failed feedback recorded in the transcript. Verification passed: common/CLI/desktop typechecks; scoped desktop suite **229/0** across 39 files; CLI loader/gateway coverage; ESLint `--max-warnings 0`; Prettier; renderer production build; Tauri `cargo check`; and live compiled sidecar E2E **4/0**. Interactive Tauri/WebView visual review remains an operator-owned boundary and is not claimed as automated evidence. Closed and archived 2026-08-25.
+
+## 2026-08-25 — FID-2026-0820-010: Auto Drive dashboard projection and parent graph (in progress)
+
+The Chat UI now includes an Auto Drive right-rail projection over authoritative FID lifecycle events, deterministic total/open/per-status counts, an Emergency Halt control wired to `interrupt_stream`, and a parent-child graph sourced from optional FID `Parent` metadata. The shared event amendment remains backward-compatible; unknown parent references stay as roots and edge ordering is deterministic. Common/CLI/desktop typechecks, CLI loader/gateway coverage, desktop focused tests **2/0**, full desktop suite **201/0**, ESLint, and Prettier pass. Halt confirmation/history, broader dashboard interactions, and final visual review remain open; this FID remains active.
+
+## 2026-08-25 — FID-2026-0824-009: workspace regions and scoped FID events (closed + archived)
+
+The desktop workspace now has the canonical ten-role roster rail, project/global scoped thread persistence, read-only scoped history hydration, persisted unread/pin state, and a formal project-scoped `fid_update` amendment. The gateway derives one stable project-root identity, returns it during hello, and emits it on every FID lifecycle event; Project views filter by exact identity while Fleet retains the aggregate stream. Verification passed: common/CLI/desktop typechecks; CLI gateway suite **25/0**; desktop suite **199/0**; live compiled sidecar E2E **4/0**; renderer production build; Tauri `cargo check`; gateway drift guard; ESLint; and Prettier. The interactive WebView visual pass was waived as an operator-only boundary and is not claimed as automated evidence. Closed and archived 2026-08-25.
+
+## 2026-08-25 — FID-2026-0824-016: skill-efficacy engine implemented (closed + archived)
+
+Increment 2 of the eval rebuild (`-013` master) landed. NEW `evals/v2/src/stats/skill-efficacy.ts` — pure deterministic core: `pass@k = 1−(1−p̂)^k` capability + `pass^k = p̂^k` reliability with clamping, paired lift = E[active] − E[baseline], activation verdict, and the immutable-promotion gate (STRICTLY above threshold; ≥ minTrials active trials) over zod-validated `TrialOutcome`/`proofArtifactSchema` (schema_version 1.0). NEW `evals/v2/src/prove/skill-prove.ts` — paired-trial orchestrator: baseline arm first, per-trial sha256 trace hashing, Coder-Eval-adapted activation heuristic (`scanActivation`, ≥2 citations), schema round-trip guarantee, artifact at `.savant/skill-proofs/<name>.json`; runner injected via a mock-friendly `runTrial` seam. NEW `prove/skill-proof-file.ts` — `skillProofPath`/`readSkillProofArtifact` (schema-validated, fail-open) + step-4 ZTAP receipt binding: when ztapMode ≠ off, loads the provenance session ledger via `@savant-code/common/provenance/loader`, fingerprints the newest SIGNED receipt, embeds as `ztap.receipt_fingerprint` (fail-open). CLI surface in `cli/src/commands/skills.ts`: NEW `skills prove <name>` subcommand (usage guidance or existing-artifact ADVISORY status) via dependency-light `readProofGate`; `/skills trust` appends the same ADVISORY proof-status block after a successful trust; usage table updated. All four Verifier substrate advisories discharged (MIN_SKILL_CITATIONS constant · fail-fast contract documented · events-only hash scope documented · test tmpdir cleanup). Gates: typecheck evals exit 0 · typecheck cli exit 0 · stats 8/0 · skill-prove 4/0 · harness baseline 5/0 · eslint --max-warnings 0 ×6 files · prettier clean ×8 files · receipt stamped sha256:c04d7a6c…b9ee (--write/--check green ×3 + repo-wide sweep PASS post-restamp). Next: increment 3 (`-017` governance corpus + bounded autorater + Tier-1 pre-push smoke).
+
+CLOSED + ARCHIVED 2026-08-25 — operator-directed closeout: the five MD013 line-length violations were wrapped pre-archive (wording byte-preserved), the record moved to `dev/fids/archive/`, and the receipt was re-stamped at the archived path (`sha256:5c9ff647b82462b6212a92af457173c4577d140235fc2cbd920bd19fd830ddb2`, superseding `c04d7a6c…b9ee`) — verification gates live-green ×4/4 across two runs, per-FID printed-receipt fingerprint match, repo-wide `fid:verify --check` sweep PASS.
+
+## 2026-08-25 — FID-2026-0825-001: /compact "No response from agent" root-caused + fixed (closed + archived)
+
+Operator-reported symptom: `/compact` errors with `error, No response from agent`. Root cause chain (five sites, file:line evidence): manual /compact takes the serialized savant interceptor's compact-and-stop path (`handle-steps-factory.ts` — force context-pruner spawn then `return`, zero LLM turns); the spawn boundary swaps in compacted history + a USER-role COMPACTION_NOTICE; `loopAgentSteps` output assembly calls `getAgentOutput`, whose `last_message` mode treats a ZERO-assistant-message history as `{type:'error','No response from agent'}` (`util/agent-output.ts:87`), which the CLI renders via setError (`run-results.ts`). Trigger is deterministic: post-compaction histories legitimately contain no assistant messages (full-sweep absorbs every turn), so every /compact issued right after a previous successful one hard-errors; when older assistant turns DO survive they were echoed stale as a fake "/compact response". Fix: one-shot `compactAndStop` flag on AgentState stamped by the interceptor's manual-compact branch, wiped unconditionally at loop start (stale-persistence safety), consumed-and-cleared at the success-return to emit `{type:'lastMessage', value:[]}` — intentional silence is SUCCESS (CompactionSignal already surfaces pruned/ineffective truth). Bundle regenerated; all 13 savant chunks carry the stamp (grep proof). Gates: root typecheck ×12 workspaces exit 0 · eslint --max-warnings 0 ×3 touched files · prettier clean ×3 · receipt stamped (--check green). Cross-stream note: -015's sandbox session hit this workspace's transient TS2300 duplicate while the flag landed mid-flight and removed their own copy, keeping THIS definition. Live TUI smoke was restart-gated at fix time (the running process predated it); the operator confirmed the fix on 2026-08-25 and directed closure — record closed (`sha256:8f4b14ba…43ea6` re-stamped on the closed content, `--check` PASS) and archived to `dev/fids/archive/`.
+
+## 2026-08-25 — FID-2026-0824-015: eval sandbox hardening implemented (fixed)
+
+Increment 1 of the eval rebuild (`-013` master) landed. NEW `sandboxes/process-tree.ts` — capability-probed tree teardown (win32 `taskkill /PID /T /F`; POSIX detached process-group SIGKILL with direct fallback), idempotent never-throw. `tempdir.ts`: timeout handler ends the WHOLE tree (was shell-only `child.kill()`); spawn gains POSIX detached group + windowsHide; `buildEnv` full-host spread replaced by exported deny-by-default `buildAllowlistedEnv` (PATH/PATHEXT/COMSPEC/SystemRoot/SYSTEMROOT/SystemDrive/SYSTEMDRIVE/TEMP/TMP/APPDATA/LOCALAPPDATA/HOME + overrides); optional bounded log capture (`logFile`/`maxLogBytes`, default 1 MB, head+tail truncation marker) flushed BEFORE resolve. `runner.ts` RunnerConfig += `permissionMode?: 'safe'`; `runners/savant.ts` defaults every eval run to safe at the boundary. HARD GATE DISCHARGED — live Windows orphan-process proof: bun grandchild writes its PID then sleeps, timeout fires, tasklist polling confirms dead (~4 s); plus allowlist strip/keep/override + live leak-probe, teardown idempotence, truncation-marker bound, dead-PID no-throw. Cross-stream: concurrent FID-2026-0825-001 landed compactAndStop writers without its AgentState field, breaking this workspace's typecheck — resolved by keeping THEIR definition once it landed (duplicate removed), fix-forward per -0823-009 precedent. Gates: typecheck evals exit 0 · tempdir-sandbox 11/0 incl. live proof · siblings 44/0 · harness baseline 5/0 · eslint --max-warnings 0 ×6 · prettier clean ×8 · receipt `sha256:beb5e1a0…b94e` stamped (--check green ×2 + repo-wide sweep PASS). Observed anomaly flagged: one transient sweep-mode stale-fingerprint report between stamp contexts did not recur post-restamp — root-cause of per-invocation vs sweep fingerprint divergence left as a tracked follow-up. Next: increment 2 (`-016` skill-efficacy engine).
+
+## 2026-08-25 — Desktop night session: robot-cast visibility solved, native dev flow, version single-sourcing
+
+Overnight hybrid session on the desktop app (operator-directed, eye-scaling
+visual loop):
+
+- **FID-2026-0824-032 (fixed)** — robots invisible under reduced motion: OS
+  `CLIENTAREAANIMATION=OFF` mechanically confirmed (registry probe
+  byte0=0x9E → WebView2 reports prefers-reduced-motion); the P6 static frame
+  painted BEFORE any async figure resolved, stranding the roster unpainted
+  forever. Fix: `WalkerLayer.onCastSettled` fires exactly once when every
+  factory settles; the runtime repaints then — reduced motion still freezes
+  animation, but mounted objects always get painted.
+- **FID-2026-0824-033 (fixed)** — desktop boot delay: models kept calling
+  `read_files` with `{ path }` while sibling tools genuinely take a singular
+  `path`, and every rejection burned a round-trip during the ECHO boot reads.
+  `aliasRepairs` in tool-call-repair.ts normalizes
+  `{path}`→`{paths:[...]}` pre-validation; patterns THROW loudly when they
+  match nothing (silent dead syncs impossible) + fixture-pinned tests.
+- **Silent-exit root cause SOLVED** — exes spawned by cargo INSIDE WSL are
+  WSL-interop children bound to the spawning session; those were silently
+  reaped ~25-55s post-boot (no crash dumps, no WER records — bisect-proven:
+  the identical binary launched natively survived 60s+ with a live window
+  handle and composed title). NEW `dev/scratchpad/launch-deck-native.sh`
+  runs vite + shell BOTH on the Windows side — the permanent dev flow.
+- **Version single-sourcing (032 Loop 2)** — the root VERSION file drives
+  package.json / tauri.conf.json / Cargo.toml via `sync-version.ts`
+  (patterns throw loudly on drift; fixture tests incl. dependency-pin
+  safety); wired ahead of dev/build renderers; titles compose at runtime
+  (`%VITE_APP_VERSION%` html placeholder proven served; native title from
+  CARGO_PKG_VERSION).
+- **Branding + favicon** — productName/window/webview titles =
+  "Savant Code v{VERSION}"; favicon set wired (public/ assets, index.html
+  links, site.webmanifest, exe icon via bundle.icon).
+- **Composer polish** — emoji quick-pick popover inserting at caret;
+  single-row input.
+- **Visual pass** — mech-scale cast (eye-tuning loop with the operator),
+  hologram depth pass (translucent bodies 0.92 + inner wireframe
+  scan-lattice strokes + additive glow halos; a stroke-of-stroke traversal
+  recursion was caught by the test suite mid-flight and fixed
+  collect-then-apply), camera default 34→22, agent nameplates chest-height
+  reseat (0.4×), explicit scrollbar rules on thread/composer (engines skip
+  :root inheritance into textareas).
+- **Gates throughout:** desktop typecheck exit 0 · suite green at every
+  close (final 203 pass / 0 fail, 1002 expect()) · eslint/prettier clean ·
+  receipts stamped on -032/-033 · `fid:verify --check` PASS tree-wide.
+- **Open (next session):** floor asset redesign (the wireframe grid reads as
+  the core issue), per-agent distinct models, center-glow intensity tune,
+  session-bridge FID so the deck mirrors EXTERNAL harness sessions (the deck
+  binds only to its own gateway session — verified behavior, not a bug),
+  teacher-corpus repeatability timeout flake in agent-runtime (pre-existing,
+  unrelated subsystem).
+
+## 2026-08-25 — FID-2026-0824-014: eval FSM alignment + trajectory_assertions implemented (fixed)
+
+Increment 0 of the eval rebuild (`-013` master) landed. `EchoPhase` gains `'adversarial'` (`evals/v2/src/runner.ts`) with VALID_TRANSITIONS edges audit→adversarial and adversarial→{complete, self_correct, idle} + `normalizePhase` acceptance; `trace.ts` VALID_PHASES widens so the collector records adversarial `transition_phase` calls. NEW additive `trajectory_assertions` channel (`{agent_type, denied_tools[], required_tools[]}`) in `schema.ts`, mirrored into `schema/task.schema.json` (schema_version stays `"2.0"` — back-compat proven by round-trip incl. channel-omitted parse). `metrics-fsm.ts` enforces role denials per agent_type via a toolsByAgentType map (orthogonal to phase counters) and required_tools end-of-run; new counters `denied_tool_violations` / `required_tool_missing` join the MetricAggregator pass gate in `metrics.ts`. NEW `tests/metrics-fsm.test.ts` (14 tests): adversarial legality/retreat/illegal-edges · forge-no-terminal · verifier-no-write isolated from the phase write counter · required-tool missing/satisfied · expected-sequence interplay · aggregate gate wiring · zod round-trip. Loop-1 forward-declared gate reconciled: `metrics-fsm.test.ts` now exists and all three declared gates run live. Gates: typecheck evals exit 0 · suites 14/0 + 29/0 · harness:v2 baseline 5/0 · eslint --max-warnings 0 ×6 files · prettier clean ×7 files · receipt stamped `sha256:e981ef18…13d3` (--check green). Next: increment 1 (`-015` sandbox hardening).
+
+## 2026-08-24 — Design-contract scanner: prettier-collapsed single-line quoted literals accepted (hybrid)
+
+Operator directive ending the recurring compaction-signal advisory class: prettier collapses simple `<text fg="#hex">` tags onto one line, and the DYNAMIC_VISUAL_DECLARATION capture (`[^;}\n]*`) swallowed the trailing `>` / sibling attributes, so quoted hex values failed `dynamicVisualProperties`' literal test (probe: `dynamic:["fg"]`). Fix in `design-contract-scan.ts`: when a capture HEAD is a quoted string, evaluate exactly that quoted literal — trailing JSX punctuation is formatting noise; quoting never launders dynamic expressions (`"theme.primary"` still flags). Gates: agent-runtime typecheck exit 0 · design-contract suite 18/0 incl. two new regressions (collapsed single-line literal accepted across fg + multi-attribute bg form · quoted dynamic expression still flagged) · eslint --max-warnings 0 · prettier clean · live probe compaction-signal.tsx + context-pruner/main.ts both `dynamic:[]`. Restart-gated note unchanged: the running harness loads the scanner at boot.
+
+## 2026-08-24 — Compaction rebuild post-closure sweep: every silently-deferred item folded in (hybrid)
+
+Operator directive "no deferrals permitted": all five GREEN-amendment deferrals from the archived compaction-integrity suite (-022 master / -023..-027) implemented end-to-end. (1) Reactive layer joins the ledger — `retryAfterReactiveCompact` appends its `layer:"reactive"` row + `compactionMetrics` increment (`loopParams.fileContext.projectRoot` was already in scope; no deps threading). (2)+(5) Region/item granularity — NEW pure `diffRemovedSpans` + `describeRemovedToolItem` in `evidence/inventory.ts` derive maximal removed spans (pre-compaction coordinates) + bounded tool-result items ({toolCallId, toolName, byteSize}, cap 64) by reference identity at all three append sites; rows carry optional `regions`/`items` (omitted when empty); supersedes the planner-side handoff sketch by covering every removal cause universally. (3) `-023` V2 completion — persisted excerpt cap 800→4000 chars; CompactionSignal renders the FULL stored summary beneath the one-line preview (OpenTUI primitives expose no click props in this version → always-visible block replaces a toggle; nothing hidden). (4) `-024` config surface — `compression.digestHeadChars/digestTailChars`: protocol-config parser → createRunConfig → SDK RunConfig → LoopAgentStepsParams → loop-context stamps `AgentState.digestCaps` → spawn-agent-inline injects into context-pruner spawn params post-validation → main.ts → result-digests caps. Gates: typecheck ×4 workspaces exit 0 · suites 43/0 pruner · 9/0 signal · 5/0 inventory (incl. new diffRemovedSpans regression) · eslint --max-warnings 0 on all touched files · prettier clean. Carried NEEDS-REVIEW: operator live-TUI smoke of the full-excerpt block during a real compaction; per-record GREEN-AMENDMENT appends to the four archived FIDs.
+
+## 2026-08-24 — FID-2026-0824-031: Forge Law-1 deadlock — read_files granted + forced protocol grounding (closed + archived)
+
+Forge — the GREEN implementer — structurally could not satisfy EHEL Law 1 on existing-file edits: its toolNames omitted
+read_files, so the per-child tracker never registered a read and every edit hard-blocked (10 blocked edits in one live
+spawn during FID-2026-0824-029; new-file creation worked only via the isNewFile exemption). Fix (Remedy A, operator-
+approved): toolNames += read_files; the "You cannot read more files" prohibition replaced with an explicit
+Read-before-edit mandate; spawnerPrompt admission replaced with a self-read statement; PLUS operator-directed forced
+grounding — handleSteps now yields `read_files ECHO.md` programmatically before the model's first turn so the full
+protocol (Laws 1-4 unconditional / 5-15 strict-only) is in context regardless of model behavior. Bundle regenerated
+(read_files present in the serialized forge chunk). Scope-expanded model audit per operator concern over hardcoded
+slugs: VERIFIED INTACT — `withParentModel` (`spawn-agent-utils.ts:257`) unconditionally overrides child.model with
+parent.model on both spawn paths, zero `inheritParentModel:false` opt-outs remain (even the Gemini-named thinkers
+inherit; they are alive Free-tier reasoners spawned by base-chat/free-savant prompts, misnamed only), definition
+literals like openrouter/free are inert fallback metadata (FID-2026-0814-009 B-08, never paid). Roster sweep:
+ECHO.md + ARCHITECTURE.md Forge rows updated. Gates: typecheck agents + cli exit 0 · sdk validate-agents-part-a 7 pass /
+0 fail · eslint forge.ts exit 0 · markdownlint ECHO.md/ARCHITECTURE.md clean · fid:verify receipt stamped (3/3 gates
+live PASS, check-mode PASS). Verifier AUDIT PASS (stale-prompt-assertion risk retired by grep — old strings survive only
+in editor-multi-prompt, a different agent). Carried NEEDS-REVIEW: restart-gated live probe (programmatic ECHO.md read
+credits tracker via enforcement.ts:237; unread-file still blocks; relay nuance). Deferred: remedy B (history-derived
+read credit) as a systemic follow-up needing freshness + spoofing design.
+
+## 2026-08-24 — FID-2026-0824-029: adversarial verdict / structured output markdown formatting (closed + archived)
+
+The Adversary agent's verdict output rendered as a wall of unformatted bold text inside the correct TrafficLightPanel
+chrome: every string leaf in the structured-card layer flattened through scalarToDisplayString → String(value) with no
+markdown awareness, while a full ChatTheme-aware renderer (`renderMarkdown`, `cli/src/utils/markdown-renderer.tsx`) sat
+unused one directory over. Fix (operator-approved Approach A): NEW `structured-card/rich-text.tsx` — conservative
+`isRichTextCandidate` gate (newline | code fence | line-starting block syntax; deliberately NOT `hasMarkdown()`, which
+fires on bare `-`/`_` anywhere) + a `RichTextValue` dual-branch component routing candidates through
+`renderMarkdown(value, { theme })` with byte-stable legacy fallbacks. Wired at every scalar-leaf exit: hierarchy
+KeyValueRow value cell, SuccessCard message, RecordCard non-object + NestedItems scalars, ListCard bullet text,
+ErrorCard scalar branch + errorMessage. All `set_output` payloads AND ~13 OutputResultComponent-aliased tools inherit
+the fix. Gates: cli typecheck exit 0 · focused suites 82 pass / 0 fail across 7 files · eslint --max-warnings 0 ·
+prettier clean · fid:verify receipt stamped (5/5 gates live PASS, sha256:51b77765…). Verifier AUDIT PASS ×7;
+Adversary STANDS (6 CONFIRMED / 1 ADJUSTED prettier drift → discharged). Carried NEEDS-REVIEW: live TUI smoke of a
+real adversarial verdict (test-renderer-is-not-a-proxy). Harness flags recorded in Lessons Learned: Forge lacks any
+read tool → permanent Law-1 deadlock editing existing files (Orchestrator completed mechanical wiring per FID-085
+precedent); root-cwd bun test filters collide with vendored resources/freebuff-main copies (unsound as fid gates).
+
+## 2026-08-24 — FID-2026-0824-022 + -023..-027: compaction integrity rebuild IMPLEMENTED and CLOSED (live smokes waived)
+
+Full rebuild landed and closed same-day: visibility layer ('compacted' phase
++ micro events in CompactionSignal, design-token fg literals), preservation
+contract (result-digest fallback ends the drop-list), minimal surgery
+(budget.ts fold-until-target planner composed with runFoldOldestExchange;
+protected head/tail; full-sweep fallback), evidence spill + requiresRawEvidence
+splice (raw bytes restored to Verifier/Adversary at spawn), inventory ledger +
+COMPACTION_NOTICE + compactionMetrics. Gates: typechecks common/agents/
+agent-runtime/cli exit 0 · suites 18/0 · 37/0 · 43/0 (incl. seeded 200-iteration
+fuzz) · 4/0 · 3/0 · eslint clean · receipts stamped `--check` green ×6
+(4f3ad082 / fef329e5 / cce77973 / cde6df3d / bc5b3566 / master sync). Batched
+Verifier+Adversary closure audit PASS (stale-receipt + amendment findings
+discharged); operator live-smoke WAIVER directive recorded — never claimed
+passed. Children + master archived to dev/fids/archive/.
+
+## 2026-08-24 — FID-2026-0824-020..-027: compaction integrity investigation + rebuild suite planned (analyzed)
+
+Operator-reported persistent symptom ('data passed but compacted',
+inter-agent) root-caused across three records: subagents inherit the parent's
+already-compacted history (`createAgentState` copies post-compaction state;
+live Verifier specimen in this session), the auto-compact summary is a
+deterministic drop-list digest discarding read/search/web results entirely
+(`agents/context-pruner/summarize-messages.ts`), micro-compact renders null
+in CompactionSignal ('compacted' phase unhandled, no events appended), and
+pruner streaming is suppressed with no record of removed content.
+`resources/hermes-agent/trajectory_compressor.py` reviewed 0-EOF as baseline
+(protect/budget/boundary-snap/notice/metrics disciplines we lack); openclaw
+context-engine surfaced as registry plumbing (layer mechanics already
+adopted). Rebuild planned: master -022 + -023 visibility layer
+(TrafficLightPanel ALL phases, HIGHLY visible firing per operator directive,
+expandable summary viewer), -024 preservation contract + ResultDigest schema,
+-025 minimal-surgery algorithm (hermes port), -026 evidence spill +
+requiresRawEvidence splice (resolves -020), -027 removed-content ledger +
+metrics + model notice. Gates: markdownlint ×9 exit 0 · fid-ledger probe
+exit 0 · batched Verifier (1 FAIL discharged: master Impact Assessment) ·
+Adversary refuted the gate-path NEEDS-REVIEW against disk glob; sweep clean.
+All eight records `analyzed`; implementation sequence -023 → -024 → -025 →
+-026 ∥ -027.
+
+## 2026-08-24 — FID-2026-0824-013..-019: eval system rebuild v3 planning suite authored (analyzed)
+
+Operator-directed planning read of `docs/design/Savant Eval System Rebuild.md`
+produced a master + six-child FID suite for rebuilding `@savant-code/evals` from
+benchmark v2 to v3: -014 FSM alignment + trajectory assertions (the harness cannot
+represent the runtime's adversarial phase — EchoPhase/VALID_TRANSITIONS predate
+FID-2026-0805-004), -015 sandbox hardening (process-tree teardown, env allowlist,
+safe-mode injection), -016 skill-efficacy engine (`skills prove`, pass@k/pass^k,
+ZTAP receipt binding, immutable-promotion gate), -017 governance corpus + bounded
+out-of-process autorater + Tier-1 smoke wired into `.githooks/pre-push`, -018
+SlopCodeBench-style regression guard over the existing code-map dependency, -019
+capability ingestion + Tier-3 release pipeline. Binding amendments A1–A8 from a
+working-tree grounding pass: tempdir sandbox already default (Phase 1 narrowed),
+single-model rule retained, trust-boundary retargeting per FID-2026-0824-012,
+license audit ordered first. Operator directives: blueprint order enforced,
+master+children now, Tier 1 = pre-push. Gates: markdownlint exit 0 ×7 · fid-ledger
+probe exit 0 · batched Verifier audit (6 mechanical FAILs found → discharged) ·
+Adversary disk-resolution (5 CONFIRMED / 1 ADJUSTED, no omissions). All records
+`analyzed`; implementation starts strictly sequentially at -014.
+
+## 2026-08-24 — FID-2026-0824-011: deck LIVE event driver — stations + walkers on the real gateway stream (fixed)
+
+Operator smoke reported the deck as "all I see is a grid". Root cause: only
+AtmosphereLayer was mounted (`deck-runtime.ts:99`) under the stale
+no-live-feed-pre-FID-008 exemption while the gateway stream was already live
+in chat, plus sub-visible motes. Fix: NEW `floor/driver/deck-live-driver.ts`
+subscribes the shared GatewayClient singleton and folds batches through the
+pure adapter (one performance.now() per batch, MQ-M); `mountDeckRuntime`
+gains `DeckLiveBundle` — six station pedestals mount unconditionally,
+walkers/state-FX sync per tick against live FloorState; `DeckCanvas` wires
+the driver on both branches (WebGL + analytical SVG via `useLiveFloorState`);
+motes retuned 0.05→0.14 / α 0.25→0.45 / radius 40→26; companion grid fix —
+floor recentres on the orbit target snapped to the 2u cell + size bump
+240→400 so panning reads as infinite. Gates: desktop typecheck exit 0 · full
+desktop suite 163 pass / 0 fail · eslint + prettier clean · G4 inert-only ·
+Law-4 chain use-gateway.ts:32 → deck-live-driver.ts:43 → deck-view.tsx:
+67/96/99 → App-mounted DeckView · receipt stamped; `fid:verify --check`
+PASS. Carried boundary: operator live re-smoke of stations + walkers during
+real subagent traffic (NEEDS-REVIEW). Bookkeeping: two Recorder UPDATE
+stalls (-0823-011 class) → direct Hybrid-mode landing per that precedent.
+
+## 2026-08-24 — FID-2026-0822-012 Loops 5–9: command deck P2–P6 implemented — status fixed (supersedes the Loop-4 note below)
+
+Loops 5–9 implemented the holographic command deck through P6 overnight
+(operator auto-drive level 3, hybrid mode): P2 Savant console unit +
+role-walker lifecycle (`roles.ts` casting registry parity-pinned to the
+canonical 10-role ECHO roster, pure `floor-adapter.ts` reducer, procedural
+bipedal figures in `deck-walkers.ts`), P3 six-station registry + tool-class
+routing + walk cycles, P4 interim FSM auras via the G2 pairing rule + result
+sparks + packet lanes (`deck-state-fx.ts`), P5 deterministic thinker glyph
+rings + Linux analytical SVG fallback, P6 reduced-motion + trail pool +
+atmosphere + perf HUD + the continuous runtime ticker (`mountDeckRuntime`).
+All six Step Status items [x]; status advanced `analyzed` → `fixed` with a
+valid verification receipt stamped 2026-08-24T10:32Z. Gates at Loop 9 close:
+desktop typecheck exit 0 · suite 149 pass / 0 fail across 23 files · eslint
+--max-warnings 0 · prettier clean · G4 sweep inert-only · Law-4 reachability
+App→DeckView→mountDeckRuntime. This entry SUPERSEDES the "status STAYS
+`analyzed`" claim of the Loop-4 entry below (which described pre-P2 state
+only). Sole remaining closure boundary: live production-webview smoke of the
+ANIMATED floor (operator eyeball at next launch) — honestly never claimed
+passed.
+
+## 2026-08-24 — Housekeeping: duplicate FID numbers de-duplicated (operator directive)
+
+Concurrent overnight streams allocated date-numbers independently, leaving
+two same-day collisions. Chronological renumbering (earliest record keeps
+the number), minimal churn — four renames:
+
+| Record | Old | New |
+|---|---|---|
+| Agents-as-Contacts command-surface MASTER (planning) | FID-2026-0824-001 | FID-2026-0824-008 |
+| Workspace regions child (planning) | FID-2026-0824-002 | FID-2026-0824-009 |
+| Design-contract scanner false positives (fixed) | FID-2026-0824-002 | FID-2026-0824-010 |
+| Law-1 path-form mismatch + yield crashes (closed, archive) | FID-2026-0823-009 | FID-2026-0823-015 |
+
+Keepers: `FID-2026-0824-001` (law4/law3 credit fix, created 00:41) and
+`FID-2026-0823-009` (fid verification gates enforcement, created 16:05 vs
+18:28). Updated: internal Filename/ID fields; Parent pointers on children
+-003..-007 + regions; active-ledger and archive-index rows; live
+cross-references (recorder-context-bloat -011 ×3, archived -014, SCOPE.md
+collision item → RESOLVED). The templates/FID-TEMPLATE.md citation targets
+the keeper and is unchanged. Scanner (-010), recorder-context-bloat (-011),
+and command-deck (-0822-012) verification receipts re-stamped via
+`fid:verify --write`; `fid:verify --check` green after re-stamping.
+Historical prose (session summaries, scratchpad scripts, prior CHANGELOG
+entries) intentionally unrewritten per audit-channel convention. The
+0805-006/-007 and 0816-012 archive pairs remain intentional legacy
+collisions per the README convention — untouched.
+
+## 2026-08-24 — FID-2026-0822-012 Loop 4: P1 command-deck scene shell (hybrid)
+
+P1 of the holographic command deck landed at `desktop/src/floor/` per the
+Loop 2 PATH DECISION: Deck/Chat toggle (`deck-view.tsx`; zustand local store,
+`savant.deck.viewMode` persistence, WebGL-failure fallback message), Void+grid
+Three.js stage with fog-based distance fade (`stage/deck-stage.ts`;
+SAMPLE_ALPHA_TO_COVERAGE, DPR clamp [1,2], context-lost/restored floor
+rebuild, idempotent dispose), three-free pure camera orbit math
+(`stage/camera-controls.ts`; dolly clamp [8,90], yaw-aware ground pan), and
+the generated `deckTokens.generated.ts` subset incl. inlineCodeFg #22d3ee
+with drift tests. Deps declared at GREEN per spec: three ^0.185.1,
+three-custom-shader-material ^6.4.0, @types/three ^0.185.4.
+Gates: desktop typecheck exit 0 · focused suites 23 pass / 0 fail ·
+eslint --max-warnings 0 on all touched files · prettier clean · gen:tokens
+byte-stable. Boundaries: production Tauri-webview smoke NEEDS-REVIEW
+(test-renderer lesson); Amendment Gate G1–G4 untouched; status STAYS
+`analyzed` (P2–P6 open). Carried: EHEL Law-3 tracker wedge on
+generate-design-tokens.ts (passing verifies never cleared it) flagged to the
+harness stream.
+## 2026-08-23 — FID-2026-0823-014: Recorder relay guard path-form mismatch (closed + archived)
+
+The FID-2026-0823-008 relay guard missed SDK-absolutized write paths (raw
+`startsWith('dev/fids/')` vs `C:\…\dev\fids\x.md`), so successful Recorder
+writes relayed as false stalls. Rev 1 (canonicalize + repo-root scoping)
+was falsified live post-restart — its `canonicalizePath('.')` scope baked
+in the launch-dependent cwd. Rev 2 (cwd-independent canonical matching:
+`/dev/fids/` segment or `/CHANGELOG.md` suffix) landed with a rebuilt
+5-case regression net incl. the rev-1 blind spot; live-confirmed
+end-to-end (Probe C: real absolutized CREATE write relayed normally, no
+stall, no retry needed). Gates: typecheck packages/agent-runtime exit 0;
+focused suites 21 pass / 0 fail; eslint --max-warnings 0; receipt stamped.
+All Step Status items [x]; closed by operator directive with the
+live-confirmation boundary genuinely discharged (first-hand relay
+evidence).
+## 2026-08-23 — FID-2026-0823-012: Recorder corrective retry ladder (closed + archived)
+
+The -008 relay guard now auto-retries a stalled Recorder spawn ONCE with a
+failure-naming corrective suffix instead of forcing identical blind
+re-spawns: recorder-stall-check.ts gains RECORDER_STALL_RETRY_LIMIT (=1) +
+pure buildRecorderRetryPrompt; spawn-agents.ts extracts runChild(state,
+prompt) and drives a bounded loop off the limit on a fresh child state,
+merging stalled-attempt credits into parent aggregation; the post-run relay
+guard stays the single outcome authority. Gates: agent-runtime typecheck
+exit 0; focused suites 16 pass / 0 fail; eslint --max-warnings 0 ×4 files;
+fid:verify receipt stamped (3/3 gates PASS); Verifier AUDIT 5 PASS with its
+single FAIL (decorative limit constant) discharged before closure. Live
+CLI-smoke boundary waived by the close directive — never claimed passed.
+## 2026-08-23 — FID-2026-0823-011: Recorder context-bloat stall root-caused + fixed (fixed — restart-gated verification)
+
+Three Recorder read-without-write stalls root-caused to model behavior, not
+harness gating: the child inherits the ENTIRE parent conversation
+(includeMessageHistory:true; 653K-token spawns observed) and ends its turn
+with text instead of calling write_file — mechanically confirmed by +3
+messageCount deltas on all three stalls vs the historical +6 success class.
+Fix: agents/recorder/recorder.ts — includeMessageHistory:false;
+scaffold seal re-threaded via params.scaffoldComplete (OR'd with the legacy
+history scan); instructionsPrompt Turn Contract terminal condition. Bundle
+regenerated; agents+cli typecheck exit 0; eslint --max-warnings 0;
+fid:verify receipt stamped (3/3 gates PASS); ECHO.md Spawning-the-Recorder
+contract updated (Context Contract + seal channel + stall-evidence mistake
+line). Status `fixed`: definitive live Recorder UPDATE probe is RESTART-
+GATED (running process predates the fix) — carried NEEDS-REVIEW, never
+claimed passed. [Post-restart update 2026-08-23: the probe RAN under the
+fixed definition and stalled again — bounded 30K context proved the
+isolation fix mechanically while the behavioral read-then-stop persisted;
+the boundary was reclassified BEHAVIORAL/open on the active record and the
+-012 corrective retry ladder landed as the mitigation.]
+## 2026-08-23 — FID-2026-0823-007: Laws 1/4 universal hard blocks (closed + archived)
+
+Tier conditions removed from the Law 1 pre-write gate and the Law 4 turn-end
+gate (both unconditional, bounded by main-agent-only enforcement + the
+FID-2026-0822-003 breaker); contract-flip tests + NEW law4-turn-end.test.ts
+coverage (focused battery 65 pass / 0 fail / 142 expect; agent-runtime
+typecheck exit 0; eslint --max-warnings 0). Closure flips the live-HYBRID-
+session-confirmation boundary to waived-by-operator-directive — never
+claimed passed. Residual prettier drift on touched files remains the
+documented binary/config mismatch class (canonical pre-push formatter
+settles at release).
+## 2026-08-23 — FID-2026-0822-014: structured output cards (closed + archived)
+
+Implementation landed + audited (Loop 2): shape-detected semantic cards
+replaced the YAML fallback inside the unchanged TrafficLightPanel chrome
+(OutputResultComponent's 13 aliased tools + SetOutputComponent); copy/export
+serialization byte-pinned by the formatToolOutput suite; focused suites 50
+pass / 0 fail; zero-toYaml-in-components grep clean. Closure flips the
+carried production-TUI-smoke NEEDS-REVIEW boundary to waived-by-operator-
+directive — never claimed passed; Adversary-routed follow-ups
+(tool-branch.tsx unregistered-component yaml fallback;
+use-scaffold-revert-subscriber latent dead outputRaw check) remain recorded.
+## 2026-08-23 — FID-2026-0820-009: Tauri shell + sidecar supervisor (closed + archived)
+
+All eight steps implemented across Loops 2–4 (Tauri v2 workspace scaffold;
+triple-renamed sidecar build pipeline; Rust supervisor — lifecycle FSM,
+exponential-backoff restart/give-up, stdin-watchdog, pipe-drain threads,
+env-only token, ephemeral port; WebView2-absence native recovery gate; boot
+splash + failure states; CSP hardening; desktop-ci.yml 3-OS matrix). Gates
+green at the Loop 4 bookkeeping pass: desktop bun 19 pass / 0 fail incl. the
+live real-sidecar gateway E2E 4/4; cargo test 14/0; fmt/clippy/typecheck/
+prettier/eslint clean. Carried GUI live-smoke boundary waived by the close
+directive — never claimed passed. Desktop master FID-2026-0820-007 stays
+open until remaining children (-010/-011/-012) close.
+## 2026-08-23 — Closure pass: four `fixed` FIDs closed + archived (operator directive)
+
+Operator-approved closure of the four `fixed` records whose sole remaining
+boundaries were operator-side live-smoke checks, explicitly waived by the
+close directive (FID-2026-0823-005 waiver precedent) — every boundary honestly recorded as never
+claimed passed. Working-tree closures (release-only-commits convention);
+archive moves executed; archive/README.md indexed; fid-ledger probe clean.
+## 2026-08-23 — Hybrid Mode escalation threshold: 20 lines → 100 lines; Recorder routing made explicit (hybrid)
+
+Operator directive 2026-08-23 (via ask_user): the hybrid escalation limit is now **100 lines** — anything above
+100 changed lines needs the Recorder; at or below it the Orchestrator writes directly (including `dev/fids/`
+bookkeeping) without spawning the Recorder for routine FID work.
+
+- **Mechanical gate:** `packages/agent-runtime/src/echo/pre-write-gates.ts` — the Orchestrator FID-write gate now
+  blocks at > 100 payload lines (`lineCount > 100`) with a route-through-Recorder message (was > 20).
+- **Prompt layers:** `agents/savant/prompts.ts` implementation bullet and `agents/savant/system-prompt.ts` hybrid
+  section updated to the 100-line threshold + explicit "do NOT spawn the Recorder for routine FID bookkeeping in
+  hybrid mode" routing paragraph; smart-phase RED-skip row aligned to < 100 lines.
+- **Governance:** `ECHO.md` — Separation-of-Duties row, FID-Bound criteria, HYBRID mode-table row, a new Hybrid
+  Recorder-routing note, and a HYBRID-mode exception appended to the FID Authoring Rules (Orchestrator may write its
+  own FID records when no sub-agent authored the content). Condensed copies regenerated via
+  `generate:protocol-bundle` (+ `--check` PASS); bundled agents regenerated via `prebuild:agents`; zero residual
+  20-line phrasing across live surfaces (grep census clean).
+- **UI copy/docs:** `cli/src/utils/constants.ts` MODE_DESCRIPTIONS.HYBRID and README mode tables → 100-line
+  threshold.
+- **Bookkeeping:** FID-2026-0823-007 Resolution annotated — the vendored-ripgrep out-of-scope flag is RESOLVED with
+  disk evidence (all five platform binaries present + tracked, rg.exe 14.1.1 executes, sdk ripgrep suite 13/0 incl.
+  manifest pins); receipt re-stamped via `fid:verify --write`, full `fid:verify --check` PASS on all active
+  fixed/verified FIDs (the concurrent stream separately closed + archived the law1 path-form-mismatch record).
+- **Gates:** agent-runtime typecheck exit 0 · pre-write-gates suite 30 pass / 0 fail · fid:verify gates all exit 0 ·
+  agents + cli typechecks exit 0 · eslint --max-warnings 0 on all touched files · markdownlint clean on ECHO.md +
+  README.md · generate:protocol-bundle:check PASS.
+
+## 2026-08-23 — Phase-transition banner: Corner Ticks rails → Glow Frame rounded panel (hybrid)
+
+Operator rejected the Corner Ticks targeting-HUD frame after live use; design direction chosen via ask_user
+(Glow Frame over Minimal signal line / Solid chip revert / Underline rule; SAVANT CODE kept inline).
+`cli/src/components/tools/transition-phase.tsx`: the half-block corner rails (`▛▀…▜` / `▙▄…▟`) and their
+glow-fade segments are replaced by a clean `borderStyle="rounded"` panel whose border carries the phase color
+on the surface background — the familiar transcript chrome language tinted per phase. Label row holds
+`◆ PHASE // LABEL` (bold neon) left and a dim `SAVANT CODE` whisper right; reason below in plain foreground.
+Still light-only (fg-driven colors, no fills/inversions) so truecolor and ANSI-16 terminals render alike;
+`phaseMapping` stays the single glyph/color truth shared with the sidebar. blendHex dependency dropped.
+
+- **Tests:** `transition-phase.test.tsx` rewritten for the new rendering — 9 pass / 0 fail.
+- **Gates:** cli typecheck exit 0 · eslint `--max-warnings 0` on both touched files.
+- **Boundaries:** banner only (sidebar phase indicator + agent-status chips untouched); no FID authored —
+  Hybrid Mode direct write with operator-approved design via ask_user. Live TUI smoke carried NEEDS-REVIEW
+  (operator restart to eyeball the new frame in dark + light themes).
+
+## 2026-08-23 — FID-2026-0823-009: Law-1 path-form mismatch + undefined yield keys fixed (closed + archived)
+
+Two live harness failures root-caused and fixed in one FID:
+
+- **Law-1 spurious hard blocks:** reads registered under raw RELATIVE paths
+  while write checks received absolutized forms — raw-string Set membership
+  could never match, so every verified write blocked ("has not been read").
+  Lethal since FID-2026-0823-007 made Law 1 unconditional. Fix: NEW
+  `echo/path-canonicalization.ts` wired at BOTH boundaries (enforcement.ts
+  registration stores canonical form; pre-write-gates.ts compares canonical
+  forms on both sides behind a raw fast path). isNewFile exemption intact.
+- **Generator crashes on undefined yield keys:** Detective's handleSteps
+  yielded inputs with explicit `undefined` values; z.record(jsonValueSchema)
+  rejected them and killed entire runs (operator-visible zod dumps). Fix: NEW
+  `run-programmatic-step/sanitize-yield-input.ts` deep-cleans undefined keys
+  at any depth before validation/execution.
+
+Gates: agent-runtime typecheck exit 0; focused suites green incl. 3
+cross-form cases + never-read-still-blocks control + integration test at the
+exact crash site; eslint --max-warnings 0; fid:verify receipt stamped (4/4
+gates PASS). LIVE PROBES post-restart: Detective optional-key spawn survived;
+Orchestrator read->str_replace succeeded first try; Recorder UPDATE stalled a
+third time (root cause NOT the path mismatch — residual recorded as
+follow-up); closure completed via direct Hybrid-mode FID writes per operator
+directive. Housekeeping: accidental duplicate record at -010 (same slug,
+interrupted-turn artifact) deleted same day.
+
+## 2026-08-23 — Phase-transition banner: solid-fill chip → Corner Ticks cyberpunk redesign (hybrid)
+
+Operator-directed restyle of the FSM `transition_phase` banner
+(`cli/src/components/tools/transition-phase.tsx`): the solid phase-color fill
+(FID-2026-0816-009 chip) is replaced by a black-ground targeting-HUD frame —
+two half-block neon rails (`▛▀…▜` / `▙▄…▟`, RAIL_WIDTH 60) with dimmed
+glow-fade ends (blendHex falloff, OpenTUI has no alpha), the phase label
+`{glyph} PHASE // {LABEL}` in full phase color, the reason in plain
+foreground, and a faint gray `SAVANT CODE` whisper row. Light-only colors
+(fg-driven, no fills/inversions) render identically across truecolor and
+ANSI-16 terminals; `phaseMapping` stays the single glyph/color truth shared
+with the sidebar; idle renders as a dim gray signal.
+
+- **Tests:** `transition-phase.test.tsx` rewritten for the new rendering —
+  9 pass / 0 fail.
+- **Gates:** cli typecheck exit 0 · eslint `--max-warnings 0` on both touched
+  files.
+- **Boundaries:** banner only (sidebar phase indicator + agent-status chips
+  untouched); no FID authored — Hybrid Mode direct write with operator-approved
+  design via ask_user (Corner Ticks over Glow Frame / HUD Bracket / Signal
+  Strip; Boot Sequence rejected mid-review).
+- **Carried:** EHEL Law-1/Law-3 gate misfires during this session (fresh
+  0-EOF reads not credited; basher-run typecheck/lint not credited toward Law
+  3) — evidence added to the open FID-2026-0823-009/-010
+  law1-path-form-mismatch investigation. Live TUI smoke in dark + light themes
+  carried NEEDS-REVIEW (operator restart).
+
+## 2026-08-23 — FID-2026-0823-009: FID verification gates — skipped/forgotten verification made mechanically impossible (closed + archived)
+
+FIDs reached `fixed` on prose alone: `fid-ledger.ts:19-23` accepted the status without asking
+*why*, and the strongest evidence check (`validateFidPhaseEvidence('audit')`,
+`fid-validator.ts:230-235`) was a keyword regex (`/PASS|pass|✓|0 fail|exit 0/`) satisfiable by
+writing words. The observed failure (FID-2026-0823-004): recorded `fixed` with claimed gate
+evidence that a follow-up session reported as never executed — caught only by a human re-run
+request. Three mechanical layers now make the skip structurally impossible:
+
+- **L1 — declarative gates + fingerprint-pinned receipts:** `## Verification Gates` grammar
+  (`- gate: typecheck|test|probe <arg>`, allowlisted shapes only) plus a machine-generated
+  `### Verification Receipt` (exit codes + sha256 fingerprint of the FID content minus the
+  receipt). Any edit after verification invalidates the receipt (freshness).
+  NEW `packages/agent-runtime/src/echo/fid-verification-gates.ts` (pure parser/validator,
+  20 tests) — exported from the echo index.
+- **L2 — live re-run at `validate:repository` (authoritative):** NEW `scripts/fid-gates.ts`
+  wired at `validate-repository.ts:231` re-executes every declared gate (C1/C2 structural +
+  C3 live re-run, deduplicated across FIDs, argv-array allowlist — hostile args fail validation,
+  never execute). A `fixed` FID whose tree is red fails the repo gate even with a green receipt.
+  Zero `fid.gates.*` issues from this change in validate:repository.
+- **L3 — write-time tripwire:** `pre-write-gates.ts:190-213` blocks flipping a FID to
+  `fixed`/`verified` unless the proposed content carries a valid receipt — same enforcement
+  point as the existing anti-deferral step gate.
+- **Executor + wiring:** `bun run fid:verify <fid> [--write] | --check`
+  (NEW `scripts/fid-verify.ts`, root `package.json:39`); `.githooks/pre-push` structural scan;
+  `templates/FID-TEMPLATE.md` contract docs.
+- **Migration:** all 4 active `fixed` FIDs (0820-009, 0822-014, 0823-004, 0823-007) declared
+  gates + stamped green receipts; `fid:verify --check` PASS on all 5 active fixed FIDs incl.
+  this record. The gate caught a real mid-flight regression (a concurrent stream's untracked
+  test file broke agent-runtime typecheck; its 4 mechanical `toEqual` typing errors were fixed
+  preserving the 5/5 test intent; full agent-runtime suite 1253/0).
+- **Gates:** agent-runtime typecheck exit 0 · full agent-runtime suite 1253 pass / 0 fail ·
+  echo suites 134/0 · scripts 24/0 · ledger 9/0 · manifest 8/0 · eslint --max-warnings 0 on
+  all touched files · prettier clean · lint:md clean. Working-tree closure
+  (release-only-commits convention).
+
+## 2026-08-23 — FID-2026-0822-013 U10: master completion plan superseded + archived (closed)
+
+Queue-to-zero unit U10: the pre-overnight coordination master is closed as **SUPERSEDED** by
+FID-2026-0823-003 (whose Summary states: "This master supersedes FID-2026-0822-013 as the
+queue-to-zero coordinator") and moved to `dev/fids/archive/` per the auto-archive contract.
+
+- **Sequencing substantially executed before supersession:** Track B drained in full (-0821-004,
+  -0822-004, -0822-008, -0822-007 all closed + archived 2026-08-22); Track A step 1 closed +
+  archived (-008 Session Gateway) with step 2 at `fixed` (-009, GUI smoke pending); deck fixtures
+  landed via -003/U7 (8/0); ratchet HOLD honored throughout.
+- **Open items NOT silently dropped:** -010 close, -011 operator-gated close, and final
+  queue-at-zero are live rows in FID-2026-0823-003's Step Status; each child's own FID remains the
+  implementation record.
+- **Bookkeeping:** Step Status carries honest at-supersession dispositions; Resolution records the
+  supersession chain; active-ledger row removed with a corrective note; `archive/README.md`
+  closure entry added; fid-ledger probe + markdownlint clean on all touched records.
+
+## 2026-08-23 — FID-2026-0820-007 U9: desktop master child-status reconciliation (master stays analyzed)
+
+Queue-to-zero unit U9: the Savant Desktop App master architecture FID is reconciled with its
+now-landed children (Loop 4 entry, Manifest Sync discipline).
+
+- **Child manifest refreshed from disk:** -008 Session Gateway `closed` + archived 2026-08-23;
+  -009 Tauri Shell `fixed` (all 8 steps [x], GUI live smoke carried); -010 Chat UI `analyzed`
+  (Loop 3 transport/thread core audited, Steps 4–7 open); -011 Packaging `analyzed` (day-0 signing
+  gate holds).
+- **Discovery children appended** per the Resolution Policy: -012 Holographic Command Deck
+  (fixtures substrate landed at `desktop/src/floor/`, P1–P6 gated on this chain) and -014
+  Structured Output Cards (`fixed`).
+- **Step Status synced:** -008 implemented+closed; -009 implemented-pending-closure; integration
+  bullet annotated with the live real-sidecar E2E evidence (4/4) while full three-platform
+  driver-matrix coverage lands with Phase 4.
+- **Master status STAYS `analyzed`** — it may not close until all children close; closure follows
+  the last child closure per the master's own Resolution Policy.
+- **Gates:** markdownlint + fid-ledger probe clean on all touched records.
+
+## 2026-08-23 — FID-2026-0822-012 U7: deck replay-fixture corpus green (fixtures landed; P1-P6 gated)
+
+Queue-to-zero unit U7: the holographic command deck's Tier-1/Tier-2 replay-fixture substrate is
+landed and green at `desktop/src/floor/` — five recorded-shape PrintModeEvent sequences over the
+EXISTING union types only (orchestrator turn, walker lifecycle with parentAgentId join traffic,
+thinker reasoning_delta bursts, six-station tool-class routing incl. the interim transition_phase
+aura-pairing pair, mixed activity/compliance/provenance/error) plus three SYNTHETIC-PENDING-FID-008
+drafts (approval docking, compaction ripple, objective pylons) carrying the Gate G3/G4 markers and
+deliberately excluded from schema validation.
+
+- **Validation harness** (`desktop/src/floor/__tests__/fixtures.test.ts`, 8 pass / 0 fail): every
+  Tier-1 event parses against the LIVE `printModeEventSchema`; AMENDMENT-FREE signal-family
+  coverage pinned via the exported `AMENDMENT_FREE_SIGNAL_FAMILIES`; walker identity fields present
+  for P2 role casting; ≥6 distinct toolNames pinned for P3 station routing; Tier-2 markers greppable
+  + genuinely out-of-union.
+- **Drive-by defect fix** (`common/src/types/print-mode.ts`): the harness exposed a latent zod v4
+  defect — `printModeActivitySchema` spread raw const values into `z.object()`, so ANY parse through
+  the full union threw lazily; fixed to proper `z.literal()` discriminators (inferred types
+  unchanged; the new harness is the repo's first runtime parser through the union).
+- **Audited:** Verifier PASS + Adversary STANDS first-hand; both MINORs discharged (six-station
+  pin, exported signal constant); path decision recorded — fixture substrate lives at
+  `desktop/src/floor/`; P1 floor modules adopt or move it explicitly.
+- **Gates:** desktop/sdk/cli typecheck exit 0 · eslint `--max-warnings 0` · prettier clean ·
+  markdownlint + fid-ledger probe clean.
+- **Boundaries:** no live feed, no adapter, no renderer — P1-P6 stay queued behind the desktop
+  chain prerequisites; live wiring remains post-amendment work per Amendment Gate G1-G4.
+
+## 2026-08-23 — FID-2026-0822-014 U6: structured output cards replace YAML dumps (fixed)
+
+Queue-to-zero unit U6 executed behind the converged Loop-1 spec: the generic tool-output fallback no
+longer dumps machine-format YAML into the transcript — shape-detected semantic cards render inside
+the unchanged TrafficLightPanel chrome for OutputResultComponent (13 aliased tools) and
+SetOutputComponent.
+
+- **New module** `cli/src/components/tools/structured-card/`: pure classifier (`classifyPayload` —
+  error/success/list/record/empty; unknown shapes fail open to record), typographic hierarchy
+  primitives (dim-key/bold-value rows, indented nesting under border lines), ReceiptCollapse
+  (threshold 8, snap toggle), SuccessCard/ErrorCard/ListCard/RecordCard, and a `StructuredCard`
+  dispatcher.
+- **Key enabler:** `ToolBlock.outputRaw` existed with readers but zero writers;
+  `updateToolBlockWithOutput` now stores the raw serialized parts there while the formatted `output`
+  string stays byte-identical for copy/export — guarded by a NEW formatToolOutput byte-pin suite
+  (7 fixtures).
+- **Audited:** Verifier PASS WITH CONDITIONS + Adversary STANDS; conditions discharged same round
+  (vacuous collapse test removed with strengthened assertion, triplicated preview constant
+  consolidated into exported `SUMMARY_MAX_LENGTH`, NestedItems depth threading aligned). Adversary
+  omission hunt routed two pre-existing residuals as follow-ups: `tool-branch.tsx` unregistered-
+  component yaml fallback; `use-scaffold-revert-subscriber` latent dead outputRaw check.
+- **Gates:** cli typecheck exit 0 · eslint `--max-warnings 0` on all touched files · prettier clean ·
+  focused suites 50 pass / 0 fail · zero-toYaml grep over `cli/src/components` → zero matches ·
+  Law 4 chain grepped (registry aliases → dispatcher → pipeline writer) · markdownlint + fid-ledger
+  probe clean.
+- **Honest boundary:** production TUI smoke (deep_research result, browser_logs dump, get_goal
+  object, error payload) carried NEEDS-REVIEW — operator visual pass required before closure.
+
+## 2026-08-23 — FID-2026-0823-008: Recorder read-but-no-write stall → write-required relay guard (closed + archived)
+
+Main-agent report (2026-08-23): the Recorder stalled twice with a
+"read-but-no-write" outcome — it read a FID, returned a text turn, and the run
+ended without any `write_file`. Root cause: the Recorder's write requirement
+lives only in its prompt ("NEVER return without calling write_file"); the loop
+terminates on any text turn, `getAgentOutput` relays the last turn as a
+`last_message` result, and `spawn-agents.ts` wrapped it into a normal-looking
+report — so the Orchestrator got a silent pass and the missing FID was only
+caught by the operator's post-hoc disk ground-truth checks.
+
+- **Write-required relay guard:** NEW pure `checkRecorderOutcome`
+  (`packages/agent-runtime/src/tools/handlers/tool/recorder-stall-check.ts`)
+  inspects the child's message history at the subagent-finish boundary: a
+  `recorder` run that ended without a successful `write_file` to its allowed
+  targets (`dev/fids/**` incl. archive, `CHANGELOG.md`) and without
+  `set_output` (the scaffold-seal path) relays as
+  `{ errorMessage: "Recorder stalled: read without write — ..." }` instead of
+  a silent pass (`spawn-agents.ts:315-327`). The Orchestrator now sees a
+  retryable failure; the CLI already renders `errorMessage` reports visibly,
+  so no client change was needed. Mirrors the FID-2026-0821-005 A10
+  relay-digest discipline.
+- **Tests:** 8 checker unit cases (read-only stall / FID write / archive
+  write / CHANGELOG write / out-of-set write / failed write / set_output
+  seal / empty history) + 2 spawn-agents integration cases (stall relay →
+  errorMessage; FID-write relay unchanged).
+- **Gates:** agent-runtime typecheck exit 0 · full agent-runtime suite
+  1210 pass / 0 fail (one transient 1-fail/1-error run, clean on re-run ×2) ·
+  eslint `--max-warnings 0` clean · prettier clean. Closed + archived
+  2026-08-23 (working-tree closure, release-only-commits convention).
+- **Carried:** the companion "Detective relay validation error" from the same
+  report could not be reproduced (no error text available) — root-cause
+  deferred, flagged in SCOPE.md. Live smoke: a real Recorder spawn where the
+  model reads-but-doesn't-write should show the stall errorMessage in the
+  agent block (NEEDS-REVIEW, operator restarted harness).
+
+## 2026-08-23 — FID-2026-0823-006: write_file full-document diff wall → compact summary + markdown-aware expansion (closed + archived)
+
+Operator report: the Recorder agent's output looked like a "massive wall of unorganized text" that
+"does not parse markdown". Root cause: the Recorder's FID-update workflow (`read_files` → `write_file`
+with the complete document) rendered the **entire document** as an all-additions `+`-prefixed diff —
+`extractDiff`/`constructDiffFromWriteFile` (`cli/src/utils/implementor-helpers/edit-analysis.ts`)
+convert any `write_file` content into a full-file "diff", `shouldShowEditDiff` passes for overwrites
+("Overwrote file successfully." is a successful edit but not a create), and no tool collapses by
+default, so a 300-line FID painted as a green wall of raw markdown source with gutter line numbers
+and a misleading `+300 -0` count.
+
+- **Compact write_file renderer:** `WriteFileComponent` (`cli/src/components/tools/write-file.tsx`)
+  no longer delegates to `StrReplaceComponent`. It renders a compact traffic-light summary by default
+  (`▸ Write <path> (<N> lines)`) and reveals content only on expansion — `.md`/`.markdown` targets
+  render as formatted markdown, all other targets as a fenced code block. `str_replace` keeps its real
+  per-line diff.
+- **Collapse wiring (Law 13 — one affordance, reusable):** `ToolRenderOptions` gains optional
+  `isCollapsed`/`onToggle`; `ToolBranch` resolves collapse from registry membership and hands both to
+  custom components (`cli/src/components/blocks/tool-branch.tsx`), so any custom renderer can offer
+  expand/collapse chrome.
+- **Default state:** `write_file` + `propose_write_file` added to
+  `COLLAPSED_BY_DEFAULT_TOOL_NAMES` (`cli/src/utils/constants.ts`) — whole-file snapshots stop
+  rendering as unreadable walls for everyone, not just the Recorder.
+- **Tests:** NEW `write-file.test.tsx` (7 cases: compact summary w/o wall, markdown expansion,
+  code-block expansion, Create label, expand affordance, empty content).
+- **Gates:** scoped cli typecheck exit 0 (full-project tsc blocked by a pre-existing untracked WIP
+  landmine — `structured-card/classify.ts`, FID-2026-0822-014, unreferenced; recorded as
+  `[OPEN-OUT-OF-SCOPE]` in SCOPE.md); 135 pass / 0 fail across 10 relevant suites; eslint
+  `--max-warnings 0` clean; prettier clean.
+- **Honest boundaries:** live-TUI smoke carried NEEDS-REVIEW (operator restart + one Recorder FID
+  update to eyeball the compact panel). Closed + archived 2026-08-23 (working-tree closure,
+  release-only-commits convention).
+
+## 2026-08-23 — FID-2026-0823-007: Laws 1 and 4 elevated to universal hard blocks (fixed)
+
+Operator directive: "laws 1-4 should be a hard block." ECHO.md declares Laws 1-4 immutable/always-enforced,
+but Law 1 (read-before-write) blocked only in strict mode and Law 4 (call-graph reachability turn-end) was
+advisory-only outside strict (law4-turn-end.ts). In HYBRID — the default mode — unread-file edits merely
+produced tracker advisories.
+
+Changes: Law 1 gate condition is now tier-independent (new-file existsSync exemption preserved in both
+tiers; NO exempt-path carve-out by design — updating an existing dev/fids|nova|scratchpad file requires a
+prior read_files); Law 4 turn-end block unconditional (bounded by main-agent-only
+applyTurnEndEnforcement + FID-2026-0822-003 breaker — hard block, not infinite hold);
+violation-handler disjoint-law invariant doc updated; pre-write-gates.test.ts contract flipped to
+universal blocking; NEW law4-turn-end.test.ts closes the Detective zero-coverage finding;
+echo-compliance-wiring hot-path proof flipped to assert the block error with zero duplicate law1
+receipts (blocked writes never reach recordWrite).
+
+Law 2 remains procedural (approval semantics, no tool-gate surface — documented); Law 3 was already
+universal (no change). Accepted consequence: files inspected only via terminal channels (cat/grep) will
+hard-block on edit until a read_files call — operator-directed strictness; block message names the path.
+
+Gates: agent-runtime typecheck exit 0 · focused echo battery 65 pass / 0 fail / 142 expect · eslint
+--max-warnings 0 on all touched sources · scoped markdownlint on FID OK. Residual: prettier style drift
+on touched files (binary/config mismatch class — canonical pre-push formatter settles before release).
+Status `fixed`; closure awaits one live HYBRID-session confirmation post-restart.
+
+## 2026-08-23 — FID-2026-0820-010 Loop 3: desktop chat UI core landed (transport + transcript + thread; Verifier PASS WITH CONDITIONS, C1–C3 discharged, C4 adversarial pending)
+
+Resumed the queue-to-zero drive at U5 and implemented the chat-thread foundation behind the
+FID-008 gateway, per the converged FID spec (plain CSS + generated tokens; no new deps).
+
+- **Transport stack:** NEW `gateway-protocol.ts` (client mirror of the frozen v1 contract —
+  error codes byte-matched to `cli/src/server/json-rpc.ts`, hello carries only
+  `{protocolVersion, token}`, replay `continueId` correctly rides `user_message` as
+  `{prompt}`), `gateway-transport.ts` (injectable socket seam + browser factory + backoff
+  1s→15s), `gateway-requests.ts` (RequestCorrelator: pending map/timeouts/envelope
+  resolution), `listener-set.ts`, and `gateway-client.ts` (status machine with fail-closed
+  version check and backoff reconnect).
+- **Transcript + surface:** pure `applyEventBatch` reducer + zustand vanilla store
+  (deterministic position-derived ids, tool_call/tool_result lifecycle, duplicate-call
+  guard); chat components MarkdownBlock/markdown-inline (React-elements-only renderer,
+  scheme-allowlisted links, zero innerHTML), ToolCard, ConnectionPill, Composer,
+  ChatThread (pinned-to-bottom); use-gateway hook; App shell rewritten onto
+  `lib/gateway-config.ts` (deletes the duplicated inline IPC schema — RED finding D2) with
+  a sticky everReady gate so transient drops keep the thread mounted with the pill visible
+  (Verifier condition C1).
+- **Tests:** five new suites — protocol 8, client 9, store 7, contract drift guard 2
+  (byte-pins mirrored constants to the server source), markdown-renderer 9 (C3:
+  javascript:/data:/relative hrefs rejected to inert literal text; fence/list/heading
+  parsing). Desktop battery 54 pass / 0 fail incl. live real-sidecar E2E 4/4.
+- **Gates:** desktop typecheck exit 0; eslint `--max-warnings 0` exit 0; ceilings —
+  every touched file measured ≤300 on wc -l record (356-line client breach cured via the
+  three-module extraction); prettier clean except TWO files pending one whitespace-only
+  `--write` (App.tsx, markdown-renderer.test.ts) at operator-directed pause.
+- **Honest boundaries:** Steps 4–7 open (diff viewer, interactive approvals, thinker/
+  EHEL visuals, Auto Drive dashboard — dashboard blocked by D3: `fid_update` has zero
+  cli-side emitters); D4 (`approval_request` hardcodes requestType:'deferral' + `as
+  never`) routed as cli-side follow-up; virtualization deferred per Loop-1 Q3; status
+  stays `analyzed`. Full resume checklist:
+  `dev/session-summaries/2026-08-23-1432-handoff-fid-010-loop3-paused.md`.
+
+## 2026-08-23 — FID-2026-0823-005: unified edit line-count format + traffic-lights chrome (closed + archived)
+
+Operator-directed unification of the Edit line-count display (2026-08-23): the two divergent formats —
+the diff header's `+5 −1` (Unicode minus, added-first) and the `DiffStatsBar` footer's `[-1/+5]`
+(bracket, removed-first) — are replaced project-wide by one wrapper-free `+N -N` form from a shared
+utility, and the Edit diff output is re-skinned onto the system chrome used by command output.
+
+- **Utility pair (Law 13):** `formatDiffCountSide(count, sign)` → `+5`/`-1` and
+  `formatDiffCounts(added, removed)` → `+5 -1` (the pair delegates to the per-side helper — one
+  sign+number concatenation site) added to `cli/src/utils/diff-stats.ts`.
+- **Count surfaces unified:** `DiffViewer` header strip + `DiffStatsBar` copy-footer counter both
+  render `+N -N` via the pair utility (ASCII hyphen, added-first, no wrapper); `CompactFileStats`
+  bar strings and their width math route through the per-side helper (byte-identical output, layout
+  untouched).
+- **Chrome migration:** `DiffViewer`'s hand-rolled bordered box → the shared `TrafficLightPanel`
+  primitive (traffic-lights title bar), matching `TerminalCommandDisplay`/`CompactionSignal`/
+  `OutputResult`; the dual old/new sidebar gutter, sign column, neon tinting, and hunk bars preserved
+  (operator-confirmed interpretation of "sidebar line counts").
+- **Zero residue:** `[-N/+M]` and `\u2212` greps return zero across all of `cli/src`, including
+  comments; unrelated literal `−` uses (token-savings labels, graph-export font controls, publish
+  bullets, generated serialized agents) documented as out of scope.
+- **Tests:** 3 new `formatDiffCountSide`/`formatDiffCounts` units; diff-viewer assertions →
+  `+20 -5`/`+0 -0`/`+3 -2` + new traffic-lights chrome (`●`) assertion; apply-patch assertions →
+  `+3 -2`/`+1 -0`; static-render mock wired into both component suites.
+- **Gates:** cli typecheck exit 0 · full cli suite 3320 pass / 18 skip / 0 fail (9181 expects) ·
+  focused 145/0 · eslint --max-warnings 0 on 8 touched files · prettier clean · fid-ledger probe 0
+  issues · markdownlint clean. Working-tree closure (release-only-commits). Operator-directed close
+  2026-08-23 (carried live-TUI-smoke boundary waived by the close directive).
+
+## 2026-08-23 — FID-2026-0823-004: processAgentDefinitions drops string-valued handleSteps — bundled programmatic agents restored (fixed)
+
+Operator report: basher "only outputs no output". Root cause: `sdk/src/run-state/process-definitions.ts` destructured `handleSteps` out of every definition and re-added it only when `typeof === 'function'`, but ALL production inputs arrive string-valued (bundled agents serialize handleSteps as source text; the SDK loader stringifies local agents pre-ingestion). Every bundled programmatic agent lost its step path silently — basher never executed commands (children replied the instructionsPrompt's fail-fast "NO-OUTPUT" line), savant lost `/compact` interception (legacy fallback masked it), recorder/pruner/forge/librarian/editor generators degraded behind native-tool fallbacks.
+
+Fix: single else-if branch preserving the string verbatim; runtime's `deserializeHandleSteps` handles it as designed. Regression net `sdk/src/__tests__/process-definitions.test.ts` (string preserved verbatim / fn dual-form unchanged / absent-field pass-through — the exact coverage hole that hid this). End-to-end probe drives the REAL bundled basher through the real processor to a healthy `run_terminal_command` → STEP cycle with relayDigest parked.
+
+Gates: sdk + cli typecheck exit 0 · focused suite 3/0 · eslint --max-warnings 0 · e2e probe PASS. Residual: `bunx prettier --check` style drift on the two files (binary/config mismatch class, cf. LEARNINGS two-prettier-binaries) — canonical pre-push formatter settles it at release. Deferred hardening documented in FID (gate alignment for Fn-only templates at loop-iteration.ts:218 / run-programmatic-step.ts:61 / step.ts:336). Status `fixed`; closure awaits one live basher echo-probe in a restarted harness.
+
+## 2026-08-23 — FID-2026-0820-009: Tauri sidecar supervisor Loop 4 — externalBin + real-sidecar E2E + desktop CI (implementation green; bookkeeping handoff-pending)
+
+All three remaining -009 items landed (status `analyzed` → `fixed` pending FID/ledger bookkeeping,
+see `dev/session-summaries/2026-08-23-0425-handoff-overnight-autodrive.md`):
+
+- **externalBin declared:** `tauri.conf.json` gains `bundle.externalBin:
+  ["binaries/savant-sidecar"]` — the Loop 2 deferral, unblocked by the FID-008 closure. The real
+  sidecar builds from `cli/src/server-command.ts` via `scripts/build-sidecar.ts` (112 MB exe, exit 0,
+  exact triple-renamed contract filename).
+- **REAL DEFECT caught by the new E2E:** the compiled sidecar booted, printed its env banner, and
+  idled silently — `server-command.ts` had NO `import.meta.main` guard, so `runServerCommand` was
+  never invoked (the documented operator command was equally dead). Guard added; sidecar rebuilt;
+  E2E green.
+- **NEW E2E** (`desktop/scripts/sidecar-e2e.integration.test.ts`, self-skipping when the binary is
+  absent): ready-line parse, hello ok / bad-token `-32001` over real WebSocket with the Tauri origin
+  (allowlist exercised), stdin-close watchdog exit-0, and parent-kill zombie-free reaping (ESRCH-only
+  liveness probe — EPERM means alive).
+- **NEW desktop CI** (`.github/workflows/desktop-ci.yml`): windows/macos/ubuntu matrix,
+  `setup-rust-toolchain@v1` with `rust-src-dir: desktop/src-tauri` (honors the 1.97.1 pin; invalid
+  `workspaces` input caught by Verifier + docs research before first run), embedded rust-cache,
+  sidecar-build-before-cargo (tauri-build externalBin requirement), fmt/clippy `-D warnings`/test,
+  renderer typecheck, bun tests incl. E2E. GUI never built or driven.
+- **Gates:** E2E 4/4 in ~5s vs the real binary; desktop battery 19/19; cargo fmt/clippy `-D
+  warnings`/test 14/14 all exit 0 with externalBin declared; cli + desktop typecheck exit 0;
+  eslint/prettier clean on touched files; Verifier AUDIT **PASS WITH CONDITIONS** — README
+  build-prerequisite note + workflow input fix landed in remediation; two MINOR hygiene notes
+  (TAURI_ORIGIN const, spawnSidecar failure-path proc kill) landed.
+
+Remaining for closure: FID Step Status/Resolution/Loop-4 bookkeeping via Recorder, ledger row
+`analyzed` → `fixed`, two trailing-newline fixes (see handoff), and the operator-gated GUI live
+smoke (carried NEEDS-REVIEW).
+
+## 2026-08-23 — Scrollbar tokenization: vendor-gray fallback eliminated (closed + archived)
+
+FID-2026-0823-002 — all 8 vertical scrollboxes in the Savant CLI TUI now render
+from theme tokens; zero surfaces fall back to OpenTUI's vendored gray defaults
+(thumb #9a9ea3 / track #252527). Root cause of the operator-reported gray bar
+near sub-agent branches: the transcript was themed in FID-2026-0812-002 but
+that FID explicitly narrowed scrollbar theming to the transcript only, leaving
+every sibling surface on upstream defaults, and ChatTheme had no scrollbar
+tokens at all.
+
+- **Tokens:** ChatTheme gains required `scrollbarThumb` + `scrollbarTrack`
+  (dark #18faf9/#050508 — byte-identical to the transcript's established look;
+  light #0891b2/#ffffff), auto-overridable via the existing customColors merge.
+- **Single factory:** `createChatScrollbarOptions(theme)` evolved into the one
+  theme-driven scrollbar styling path (Law 13); transcript migrated onto it.
+- **Migration:** 7 previously unstyled surfaces moved off vendor grays:
+  multiline input dock, model picker, provider picker, Savant-Free model
+  selector, selectable list (chat history/project screens), publish agent
+  sections, agent checklist.
+- **Tests:** styles.test.ts rewritten — both-themes token contract, updated
+  panels wiring regex, NEW 8-consumer regression net asserting every scrollbox
+  consumer spreads the factory and no bare width-1 trackOptions survives;
+  two ChatTheme test fixtures repaired for the required tokens.
+- **Gates:** cli typecheck exit 0; focused suites 6/0 + 14/0; eslint
+  --max-warnings 0 on all 14 touched files; prettier clean. Verifier PASS
+  (zero FAILs); Adversary CONFIRMED every finding first-hand (zero
+  refutations). Closed + archived 2026-08-23. Carried NEEDS-REVIEW: operator
+  restart + live TUI smoke of one overflow surface in dark AND light themes.
+
+## 2026-08-23 — FID-2026-0823-001: savant-motion native skill shipped (closed + archived)
+
+Full transposition of the MIT scroll-craft skill (Nate Herk;
+oscroll-world credit preserved via oso95/scroll-world) into an ECHO-governed
+native skill at `.agents/skills/savant-motion/` — local-first, BYOK, zero
+paid APIs:
+
+- **SKILL.md:** interview-first procedure mapped onto the Perfection Loop
+  (Detective loads registry; Thinker/Orchestrator pick grammar + signature
+  move + feeling curve and run the gate; Verifier consumes evidence.json;
+  Adversary attacks signature-move novelty; Recorder records the row).
+- **Deterministic uniqueness gate:** weighted Hamming ≥5 of 8 vs every
+  registry row (grammar+signatureMove weight 2), exhaustion circuit breaker
+  after 2 failed convergence attempts, operator-only `--allow-collision`
+  recorded as `overriddenBy:"operator"`; append-only `motion/registry.json`.
+- **Verification harness:** Playwright JSON evidence — dead-scroll raster
+  compare, cue opacity ==1±0.01 at viewport center, WCAG 2.1 AA contrast on
+  composited pixels at each line's brightest background frame, reduced-motion
+  static readability, console errors; chrome channel preferred, chromium
+  fallback marks video metrics `skipped` honestly; zero-dep PNG decoder.
+- **Read-only kinematics engine template:** native `data-sm-*` rewrite
+  (pin/scrub/pan/dwell acts, blob-fetched video scrub, canvas sequences,
+  cues/reveals/parallax/count-ups/kinetic split/drift tint/dwell linger,
+  worldflight crossfade layers, pointer magnet+spotlight guarded off touch,
+  reduced-motion static floor, `--sm-p`/`--sm-vy`/`sm:waypoint` publication).
+- **Governance wiring:** NOTICE third-party MIT block; eslint tooling override
+  extended to `.agents/skills/**/templates/engine/**`.
+- **Gates:** eslint/prettier/markdownlint exit 0 across the new tree; both
+  script self-test suites pass (gate scoring canon 4/4; luminance/ratio math
+  4/4 incl. a fixture bug the self-test caught); max script 283 < 300 ceiling;
+  quality-report mentions savant-motion zero times.
+- **Named follow-ups:** root eslint script wiring (RED-SM-07); feature-detected
+  WebCodecs scrub path for sparse-GOP assets; live end-to-end verify of a
+  seeded build after `bunx playwright install chromium`.
+
+## 2026-08-23 — FID-2026-0820-008: Desktop Session Gateway closed — `savant-code server` sidecar contract shipped (closed + archived)
+
+The critical-path desktop-chain step for the Tauri supervisor (FID-2026-0820-009) is done. New
+`savant-code server` subcommand: Bun-hosted loopback WebSocket gateway exposing the agent runtime as
+JSON-RPC with structured event streaming — frozen v1 handshake (`GATEWAY_PROTOCOL_VERSION=1`,
+hello-first, reserved error codes -32001..-32004 / -32600..-32603, capability list), env-only token
+delivery (`SAVANT_GATEWAY_TOKEN`; argv rejected, fail-closed exit 2), Origin/Host allowlist enforced
+server-side at the upgrade, single-session model, AskUserBridge approval lifecycle with fail-closed
+deny-on-close, ~50ms event-batch flush emitted as JSON-RPC `event` notifications wrapping batch arrays,
+`interrupt_stream`, reconnect recovery via `previousRun`/`continueId`, stdin-close watchdog as the
+primary cross-platform shutdown. `common` PrintModeEvent family extended only where genuinely new
+(`approval_request`, `fid_update`). Recorded adaptations: event flush wraps a batch array in a JSON-RPC
+notification (wire stays pure 2.0 for FID-009's Rust supervisor); `update_setting` ships as a
+capability-listed no-op ack in v1; watchdog extracted verbatim to light `cli/src/server/stdin-watchdog.ts`
+with re-export preserving the public surface.
+
+Closure blocker root-caused via append-to-disk probes: the two child-spawn tests failed under full-suite
+load because `use-usage-query.test.ts` restored an originally-unset `NEXT_PUBLIC_SAVANT_FREE_APP_URL` by
+assignment — `process.env.X = undefined` coerces to the string `"undefined"`, crashing every later
+spawned child at zod env validation (`common/src/env.ts:74`). Fixed by deleting the key when unset.
+Kept hardening: fail-fast rejection when a spawned child exits before its marker (captured stderr/stdout
+surfaced in the failure).
+
+Gates: full cli suite **3316 pass / 18 skip / 0 fail** exit 0; cli typecheck exit 0; eslint
+--max-warnings 0 on touched files; prettier clean; common + agent-runtime typecheck exit 0; Verifier
+AUDIT PASS (all five items). Closed + archived 2026-08-23 (working-tree closure,
+release-only-commits convention).
+
+## 2026-08-22 — Master-plan Track B: hex-hardcoding → theme-token migration (closed + archived)
+
+FID-2026-0822-007 (final order-free Track B implementable) — 27 hardcoded
+hex color sites across 13 production components migrated to ChatTheme tokens.
+
+- **Zero hex literals left in `cli/src/components/**`** (tests excluded): the
+  zero-hex grep gate returns only the single documented carve-out
+  (`terminal-status-utils.ts` GLOW_BRIGHT_ANCHOR — kept; the two new anchors
+  were promoted to named constants instead so the carve-out doesn't grow).
+- **Semantic token mapping:** badge's 10 severity variants now resolve from
+  theme tokens (primary/success/error/warning/link/muted); ask-user focused
+  options use the new `theme.onPrimary` + the existing `inputFocusedFg`;
+  header/sparkline default to `theme.primary`; login/CTA greens →
+  `theme.success`; ad-banner's CTA-text ternary simplified to exactly
+  `theme.background`.
+- **Palette extensions (both themes):** `onPrimary` (text on primary fill),
+  `diffBarAdded`/`diffBarRemoved` (muted implementor-file-stats bars — dark
+  preserved, light pastels chosen for readable dark text; the dark constants
+  were the classic verbatim light-theme regression).
+- **Promoted documented constants** in utils/ui-constants.ts (gate-exempt):
+  `DIALOG_BACKDROP_COLOR` (RGBA scrim — alpha, not a solid token),
+  `ON_FILL_BRIGHT`/`ON_FILL_DARK` (transition-phase luminance anchors).
+- **Tests:** NEW badge tone-map suite (2); fixed a stale FID-2026-0822-011
+  test (`tool-call-item.test.tsx` still asserted the pre-framing read_files
+  layout — now uses the framed-chrome harness).
+- **Gates:** cli typecheck exit 0; full cli suite 3295 pass / 0 fail (9128
+  expects); eslint --max-warnings 0 on all changed files; prettier clean;
+  light-theme values verified mathematically (onPrimary 5.76:1 on light
+  cyan-600). Closed + archived 2026-08-22.
+
+## 2026-08-22 — Master-plan Track B: execute-tool-calls result plumbing fixed (closed + archived)
+
+FID-2026-0821-004 (third order-free Track B implementable) — the silent
+wrong-output relay for multi-yield programmatic generators is fixed.
+
+- **D1 — per-call result return (fixed):** `executeSingleToolCall` read the
+  last element of the CUMULATIVE `toolResults` array shared across all
+  yields of a run, so a later yield whose tool call was blocked by a
+  no-chunk gate (the abort gate) received the PREVIOUS call's output as if
+  fresh. It now captures the array length before execution and slices only
+  its own call's results — a silently-blocked yield receives `[]` (the
+  BASHER-1 discriminator), never stale output.
+- **D2 — gate-chunk evidence corrected:** the FID's two claimed "silent"
+  gate edges (write gate, sandbox gate) were re-verified — both emit
+  `{type:'error'}` chunks internally on every rejection path
+  (write-gate.ts:77-82/86-89/106-109, sandbox-gate.ts:43-52/73-76/84-87),
+  so the FID-2026-0820-016 block synthesis already fires for them. The only
+  by-design no-chunk edge (abort gate, native.ts:490-492) is now harmless
+  via the D1 fix. Record corrected; no code change needed.
+- **D3 — success-path relay confirmed covered** by the FID-2026-0821-005 A8
+  test (basher-relay-step-context.test.ts asserts the exact
+  [assistant(tool-call), tool(json result), user(STEP_PROMPT)] provider-
+  bound ordering).
+- **Tests:** NEW `run-programmatic-step-per-call-result.test.ts` — RED-
+  first verified (fails against pre-fix code showing the stale leak, passes
+  after). Gates: agent-runtime suite 1194/0, typecheck exit 0, eslint 0
+  warnings, prettier clean. Closed + archived 2026-08-22.
+
+## 2026-08-22 — Master-plan Track B: yagni_check leak fixed, edit-diff fallback fixed (closed + archived)
+
+Operator granted automation level 3 on 2026-08-22; the two order-free Track B
+implementables from FID-2026-0822-013 were executed and closed.
+
+- **FID-2026-0822-004 — `<yagni_check>` blocks no longer leak into the
+  transcript or written files (fixed):** root cause was a channel mismatch —
+  the Forge prompt emits the block in response TEXT, but the P5b gate only
+  parsed the write-payload channel, so the raw block rode the subagent relay
+  into user-visible output and the gate silently never fired on the prompted
+  path. Fix: (a) new streaming stripper (`stripYagniCheckBlocks` +
+  `createYagniCheckStreamStripper`) strips the block at the
+  `emitCommittedText` ingestion boundary — chunk-split-safe, mirroring
+  `stripThinkTags` — while `fullResponseSoFar` keeps the raw text for the
+  gate; (b) the gate now also consumes the assistant-TEXT channel (payload
+  first, then text) and honors `yagni.enforced: false` from
+  `protocol.config.yaml` (resolved per-project-root, cached); (c)
+  write-payload sanitization between gate and handler covers write_file
+  `content`, str_replace `newString`/`replacements`, apply_patch
+  `operation.diff`; (d) Forge prompt aligned to the text-channel contract
+  (bundled agents regenerate via prebuild). Gates: agent-runtime `bun test
+  src/` 1193 pass / 0 fail; typecheck ×3 (agent-runtime/agents/cli); eslint 0
+  warnings; new stream-parser ingestion tests prove the block never reaches
+  history or display chunks.
+- **FID-2026-0822-008 — edit-diff zero-count fallback (fixed):** raw
+  unparseable diffs now report real `+`-prefixed change counts instead of
+  `[-0/+0]`, with zero-change footer suppression in the apply-patch and
+  str-replace tool components. Gates: implementor-helpers 100/100, apply-patch
+  suite 7/7, typecheck/eslint clean.
+
+## 2026-08-22 — Closure batch: 8 fixed FIDs archived (operator directive; live-verification boundaries waived)
+
+Operator directive 2026-08-22 ("archive the completed ones"): eight `fixed`
+FIDs with landed implementations and green gates were closed + archived in
+one pass. Each FID's remaining live-verification boundary (operator smoke /
+natural-event observation) was operator-waived with the directive and is
+carried on the active ledger's observation list (`dev/fids/README.md`), so
+nothing silently drops. All are working-tree closures (release-only-commits
+convention); full per-FID detail in `dev/fids/archive/README.md`.
+
+- **FID-2026-0820-012 — EHEL Law-3 tracker false-positive:** deadlock fix +
+  path normalization with regression coverage (suite 20/0, 36 expect();
+  AUDIT PASS 2026-08-21). Archived 2026-08-22.
+- **FID-2026-0820-013 — subagent spawn ModelMessage conversion:** conversion
+  boundary fix verified live (Rounds 3/4); success-path relay chain verified
+  at HEAD. Residual result-plumbing defects stay tracked in active
+  FID-2026-0821-004. Archived 2026-08-22.
+- **FID-2026-0821-005 — basher relay + ripgrep vendoring:** WS-B
+  deterministic vendoring (B1–B6) + WS-A relay hardening (A8 probe / A10
+  digest defense) landed 2026-08-21. A9 live-path diagnosis carried as an
+  observation. Archived 2026-08-22.
+- **FID-2026-0822-001 — /compact dead intercept + auto-compact no-op loop:**
+  five root causes fixed (XML-frame unwrap, proactive force, wasCompacted
+  guard, pruner-crash phase, command-registry registration); bundled agents
+  regenerated; registry-gating parity flipped green. /compact live-confirmed
+  by operator across two restarts. Archived 2026-08-22.
+- **FID-2026-0822-002 — step-loop runaway guards:** repetition-shaped trip
+  conditions (repeated-tool-call ×4, consecutive-error ×5, think-only ×3)
+  in a pure module wired at the runAgentStep boundary; 12-case unit suite.
+  Archived 2026-08-22.
+- **FID-2026-0822-003 — turn never ends:** post-terminal breaker (N=6,
+  Auto Drive carve-out, enforcement surrender after 3) + exhaustion-respect;
+  wiring-proof integration tests; breaker unit 11/11. Archived 2026-08-22.
+- **FID-2026-0822-010 — reasoning preview mid-word clipping:** root cause =
+  Thinking preview width model (panel chrome allowance) + unmarked
+  mid-word char-splits; fixed via `TRAFFIC_PANEL_WIDTH_ALLOWANCE` + opt-in
+  `ellipsizeMidWordCuts`; 61/0 focused suites. Archived 2026-08-22.
+- **FID-2026-0822-011 — post-unification display gaps:** read_files framed,
+  add_message registered (new AddMessageComponent), Thinking converted to
+  TrafficLightPanel chrome; per-component suites green. Sidebar
+  Context/Model overlap routed to a future sidebar FID. Archived 2026-08-22.
+
+## 2026-08-22 — FID-2026-0822-010: reasoning preview mid-word clipping root-caused + fixed (fixed)
+
+Root cause of the still-OPEN core defect (words cut mid-word flush against
+panel borders — `thinker-spawn│`/`FSM is b│` family) identified and fixed in
+the working tree:
+
+- **Renderer + width source identified:** the Thinking PREVIEW path
+  (`cli/src/components/thinking.tsx` + `getLastNVisualLines`). Live post-fix
+  captures (fid-011-smoke s3/s11) still clipped after -011's chrome
+  conversion: rows wrapped to `width − 3` (35) while the TrafficLightPanel
+  text area is 34 → 1 col over → flush, mid-word, at the border.
+- **Fix 1 (width):** preview wrap width now subtracts
+  `TRAFFIC_PANEL_WIDTH_ALLOWANCE` (4) — the FID-2026-0822-009 Fix 1
+  discipline this component had missed because it computes its own width
+  instead of consuming `options.availableWidth`. Rows now end on word
+  boundaries with breathing room before the border.
+- **Fix 2 (marker):** `getLastNVisualLines` gained opt-in
+  `ellipsizeMidWordCuts` — char-split rows (long URLs/paths) trim to the
+  last word boundary with a visible '…' marker. Default unchanged for the
+  terminal-status gutter path.
+- **Tests:** 5 new text-layout cases + NEW thinking.test.tsx suite (6) with
+  chrome/width/marker assertions; read-files.test.tsx render-signature fix
+  (pre-existing -011 typecheck breakage). Focused suites 61/0.
+
+Drive-by (found by the full-suite sweep): `getMissingProviderSetup` read the
+interactive-session module var (always the openrouter default) instead of the
+persisted `activeProvider` selection — pre-prompt guidance ignored the
+user's `/provider` choice. Now resolves shell DIRECT_PROVIDER → persisted
+selection (`getActiveProvider`, mirroring `configureDefaultDirectProvider`);
+provider-setup suite + router-provider-setup suite 31/0.
+
+Gates: cli typecheck exit 0; eslint --max-warnings 0; prettier clean;
+full utils+components sweep 1643 pass / 0 fail. NEEDS-REVIEW: operator
+restart + 90-col scroll smoke.
+
+## 2026-08-22 — FID-2026-0822-011/010: chrome unification round 2 — reasoning panels framed, read_files + add_message registered (fixed)
+
+Operator reports: tmux-cli and reasoning blocks still showing pre-chrome
+design. Three gaps fixed (working tree; restart `bun run --cwd=cli dev` to
+see them — installed v0.0.27 binaries do not contain today's fixes):
+
+- **Thinking reasoning panels** converted from frameless layout to the
+  unified TrafficLightPanel chrome (display half of FID-2026-0822-010;
+  collapse/streaming UX preserved). Live-verified @90 cols.
+- **read_files blocks** framed (was bare SimpleToolCallItem): muted Read
+  label + blocked/template path labels preserved inside the panel.
+- **add_message blocks** now registered: NEW AddMessageComponent renders
+  role-labeled input.content as markdown inside the panel (tmux-cli narration
+  previously fell to the header-only fallback).
+- **Tests:** NEW AddMessageComponent suite (3) + ReadFilesComponent suite
+  (3), both with ● chrome assertions; registry-gating suites green;
+  typecheck/eslint exit 0.
+- **Open:** FID-2026-0822-010's core mid-word clipping defect (unidentified
+  sibling renderer) stays OPEN; read_files/add_message expanded-state panels
+  NEEDS-REVIEW (subagent tool calls render collapsed post-completion);
+  reminder.-border row triaged mid-stream transient; sidebar Context/Model
+  overlap flagged for follow-up.
+
+## 2026-08-22 — FID-2026-0822-009: streaming-reflow chrome defects — border bleed fixed, live-verified (closed)
+
+Follow-up to the FID-2026-0822-006 production smoke, which captured four chrome
+rendering defect classes. Full Perfection Loop executed with live TUI
+verification at 90 cols across two independent WSL tmux sessions.
+
+- **Root cause (real defects #1-#3):** TrafficLightPanel consumes 4 horizontal
+  columns (border 2 + content padding 2) but framed tool renderers subtracted
+  only 2 → wrapText emitted rows wider than the true interior → OpenTUI
+  re-wrapped residue onto border rows.
+- **Fix 1:** shared `TRAFFIC_PANEL_WIDTH_ALLOWANCE = 4` exported from
+  traffic-light-panel.tsx; consumed by output-result, set-output,
+  sequential-thinking.
+- **Fix 2:** markdown inline text hosts gained `flexShrink: 1` so row-layout
+  paragraph/thought hosts shrink into bounded panel interiors and word-wrap
+  instead of painting past borders.
+- **#4 merged glyphs closed as capture/streaming artifact** (zero occurrences
+  across all preserved -p AND -e captures).
+- **Residuals tracked:** sibling reasoning-tool-call clipping → FID-2026-0822-010
+  (+ Adversary omission route: classify 90-col outer-message pane-edge flush
+  rows); `sixteen.` tail-loss repro owned in the closure record;
+  CompactionSignal parity carried from -006.
+
+Live evidence: byte-checked clean bottom borders (`cat -A`, pure ─ runs), all
+wrapped thought rows strictly inside panels, branch headers fit on one row at
+90 cols (closes -006's narrow-width crowding question). Gates: cli typecheck
+exit 0; eslint --max-warnings 0 on all changed files; focused suites 38/0.
+Verifier PASS; Adversary CONFIRMED every finding first-hand, zero refutations.
+
+## 2026-08-22 — FID-2026-0822-006: TUI chrome unification — TrafficLightPanel as the single panel utility (closed)
+
+Operator directive: reasoning blocks, recorder blocks — every transcript block
+missing the traffic-lights design needed the same chrome. Scope locked with
+Nova review: agent-branch re-skin IN; sidebar explicitly OUT ("this never had
+anything to do with the sidebar"); hex cleanup split to a follow-up FID.
+
+- **Migrated onto `<TrafficLightPanel>`:** TerminalCommandDisplay (both
+  branches — hand-rolled outer-box + titleBar pairs deleted, row gutters now
+  owned by the primitive's content box), CompactionSignal (thin
+  `selectable={false}` wrapper preserves behavior without extending the
+  primitive), set-output + sequential-thinking (+ `availableWidth - 2`
+  border allowance, closing the width-model divergence).
+- **AgentBranchItem re-skinned** to the chrome language: rounded border on
+  `theme.border` over `theme.surface`, compact glowing lights right-aligned
+  in the header row (`space-between`); collapse/streaming UX untouched;
+  BORDER_CHARS import and the expanded↔collapsed border-color flip removed.
+  Single-owner gate amended: exactly one sanctioned direct-TrafficLights site
+  remains (branch header row); zero hand-rolled recipes anywhere else.
+- **Coverage:** NEW CompactionSignal characterization net (6 tests — store
+  driven via capture-and-swap mock.module because zustand v5 serves
+  getInitialState under react-dom/server), NEW AgentBranchItem chrome suite
+  (2 tests), chrome assertions added to set-output/sequential-thinking;
+  cross-file leak probe green (compaction-signal sorts first alphabetically).
+- **Deferred/tracked:** production TUI smoke carried as NEEDS-REVIEW (three
+  live-render boundaries for human spot-check); hex cleanup (12 files) →
+  follow-up FID; RED-04 timeline-mutation hardening tracked.
+
+Gates: cli typecheck exit 0; eslint --max-warnings 0 on every changed file;
+focused suites 59 pass / 0 fail across 8 files; Verifier PASS on all five
+surfaces + YAGNI; Adversary CONFIRMED every finding first-hand.
+
+## 2026-08-22 — FID-2026-0822-001/002/003: /compact fixes + turn terminator (fixed, live confirmation pending)
+
+Overnight session root-causing and fixing the never-ending-turn class plus the dead `/compact` intercept. All three
+FIDs sit at status `fixed` in dev/fids/ (uncommitted per release-only-commits; live confirmation lands next session —
+checklist in dev/session-summaries/2026-08-22-1550-handoff-runaway-saga.md).
+
+- **FID-2026-0822-001 (/compact + auto-compact):** five root causes fixed — XML-frame unwrap in the serialized savant
+  generator (+13 regenerated bundled chunks), force:true on the proactive pruner path, wasCompacted guard for
+  handleSteps agents, pruner-crash blocked-phase emission, and /compact registered in the CLI command registry.
+  /compact live-confirmed by operator across two restarts.
+- **FID-2026-0822-002 (anti-runaway guards v1):** repetition-shaped trip conditions (repeated-tool-call ×4,
+  consecutive-error ×5, think-only ×3) in a new pure module wired at the runAgentStep boundary; necessary but alone
+  insufficient — the real pattern emits varied payloads each cycle.
+- **FID-2026-0822-003 (turn terminator):** progress-without-input root cause; post-terminal breaker (N=6 consecutive
+  overridden terminals → forced end + notice), enforcement surrender after 3 blocked verdicts, exhaustion-respect
+  (synthetic flips yield to stepsRemaining even for Auto Drive), operator-mandated Auto Drive/goal carve-out
+  (regression-tested), wiring-proof integration tests.
+
+Gates: typecheck common+agent-runtime+agents+cli exit 0; breaker unit 11/11; integration 2/2; part-a 11/11; part-b
+4/4; agents 94/94 (earlier rounds); eslint --max-warnings 0; prettier clean; learnings:check PASS; lint:md green;
+Verifier PASS on both implementation rounds.
+
 ## 0.0.27 — 2026-08-21
 
 Checkpoint release: quality-ratchet decompositions, documentation sync,
@@ -17,6 +1196,182 @@ and harness fixes.
   (fixed stale import count).
 - **Harness fixes:** all 7 pre-push gates pass (typecheck ×11, test suite,
   ESLint, lint:md, Prettier, credential scan, protocol bundle).
+
+## 2026-08-22 — FID-2026-0822-005: result-tool outputs render in the TrafficLights panel chrome (closed)
+
+Operator directive: the shared renderer for result-bearing tools
+(FID-2026-0821-007's OutputResultComponent — deep_research + 14 aliases)
+rendered bare YAML code blocks; it now renders inside the TrafficLights
+panel chrome used by TerminalCommandDisplay and CompactionSignal.
+
+- **New primitive:** `TrafficLightPanel`
+  (`cli/src/components/traffic-light-panel.tsx`) — bordered surface panel
+  with the right-aligned glowing title bar; compaction-signal `'100%'`
+  width model (agent-grid cells clamp near 24 columns).
+- **Wiring:** `output-result.tsx` wraps its markdown body in the panel;
+  inner `codeBlockWidth` subtracts the 2-column border allowance; null
+  guards + collapsedPreview byte-equivalent.
+- **Tests:** `traffic-light-panel.test.tsx` (2 tests) + a chrome
+  integration assertion in `output-result.test.tsx` (5 total); test-only
+  `@opentui/react` static-render mock
+  (`__tests__/helpers/mock-opentui-react-static.ts`) — zero production
+  changes for testability.
+
+Gates: cli typecheck exit 0; eslint --max-warnings 0 on all 5 touched
+files; focused suites 7/7; full cli suite 3265 pass / 0 fail / 9046
+expect() calls. NEEDS-REVIEW carried: one human TUI spot-check of visual
+layout inside narrow agent grids.
+
+## 2026-08-21 — FID-2026-0821-008: `sequentialthinking` rendered header-only — reasoning stream renderer (closed)
+
+Third and final item in the input-vs-output rendering audit (FID-2026-0821-006
+`set_output`, FID-2026-0821-007 result tools). The Thinker's
+`sequentialthinking` tool had no renderer, so each reasoning step rendered
+header-only inside the Thinker's agent branch via the generic collapsed
+fallback — contradicting the Thinker prompt's "the thought stream is visible
+to the user".
+
+- **Reasoning renderer:** new `SequentialThinkingComponent`
+  (`cli/src/components/tools/sequential-thinking.tsx`) reads `input.thought`
+  (the handler's `output` is metadata counters only) and renders it inline as
+  markdown with a `💭 Thought N/M` / `↩️ Revising thought #k` / `· branch <id>`
+  label and a one-line `collapsedPreview`; empty thought → `content: null`.
+- **Registration:** wired at `cli/src/components/tools/registry.ts:19,77`.
+
+Gates: cli typecheck clean; `sequential-thinking.test.tsx` 3/3; eslint 0
+warnings on changed files.
+
+## 2026-08-21 — FID-2026-0821-007: output-carrying tools rendered header-only — shared result renderer (closed)
+
+Follow-up to FID-2026-0821-006's input-vs-output audit. A second class was
+found: 14 result-bearing tools (`deep_research`, `find_files`, `list_tables`,
+`describe_table`, `execute_query`, `analyze_query`, `lookup_agent_info`,
+`query_blast_radius`, `query_domain_clusters`, `query_node_edges`,
+`ponytail_debt`, `run_file_change_hooks`, `get_goal`, `browser_logs`) had no
+renderer, so they fell into the generic collapsed fallback and showed only the
+header — their result (already formatted into the tool `output`) was hidden until
+manually expanded.
+
+- **Shared renderer:** new `OutputResultComponent`
+  (`cli/src/components/tools/output-result.tsx`) renders the formatted `output`
+  expanded as a code block with a one-line collapsed preview (Law 13 — one
+  renderer, many tools, mirroring `run_readonly_command` →
+  `RunTerminalCommandComponent`).
+- **Registration:** the component is aliased to the 14 tool names in
+  `cli/src/components/tools/registry.ts:80-93`.
+
+Gates: cli typecheck clean; `output-result.test.tsx` 4/4; eslint 0 warnings on
+changed files; call-graph grep confirms the 14 aliases. Closed uncommitted
+(working-tree closure; file:line evidence in the FID).
+
+## 2026-08-21 — FID-2026-0821-006: `set_output` rendered header-only — dedicated renderer now shows the actual output (closed)
+
+Operator report: every `set_output` tool call in the transcript showed only the
+box-drawing header (`┌─ Set Output ─┐`) and a bare `}` — the subagent's actual
+result was hidden. Root cause: `set_output` had **no dedicated renderer**, so it
+fell into the generic tool fallback, which collapses by default and previews the
+last line of the JSON *input*; and the runtime handler stores the real payload in
+the tool-call input (`data` field, or top-level fields) while returning only
+`{ message: 'Output set' }` as the tool output.
+
+- **Dedicated renderer:** new `SetOutputComponent`
+  (`cli/src/components/tools/set-output.tsx`) extracts the meaningful payload
+  (mirroring the runtime handler's `data` unwrap) and renders it expanded as a
+  YAML code block via the existing `formatToolOutput` serializer + markdown
+  pipeline — no new serialization or rendering machinery (Law 13).
+- **Visible by default:** `set_output` removed from
+  `COLLAPSED_BY_DEFAULT_TOOL_NAMES` (`cli/src/utils/constants.ts`), so it renders
+  expanded instead of behind the collapsed header.
+- **Registration:** `SetOutputComponent` registered in the tool-component
+  registry (`cli/src/components/tools/registry.ts:18,75`) — the single path
+  `ToolBranch` consults for every tool block.
+
+Gates: cli typecheck clean; `set-output.test.tsx` 4/4; eslint 0 warnings on
+changed files; call-graph grep confirms registry wiring + empty collapse list.
+Closed uncommitted (working-tree closure; file:line evidence in the FID).
+
+## 2026-08-21 — FID-2026-0821-003: Context-window display jumping + threshold parity-extraction test (closed)
+
+Follow-up to the auto-compact redesign (FID-2026-0821-001), driven by the session
+handoff's open-issues file (context jumping = operator priority; parity test =
+Verifier Batch A note).
+
+- **Display jumping fixed at the readout boundary (P1):** the sidebar context
+  number oscillated between provider truth (lower) and the ×1.35 estimator
+  (higher) because `reconcileTokenCount` legitimately alternates sources on the
+  freshness boundary and the CLI wired the raw value with no smoothing. Now
+  `reconcileTokenCount` emits an optional per-step debug decision line (chosen
+  source, usage capturedAt, lastPrunerCompletionAt, localEstimate, result — a
+  throwing logger never breaks the count), and the CLI store damps the readout
+  via `dampTokenCount` (5% deadband + 12% max-step per update), so a source flip
+  renders as a bounded ramp instead of a jump. Runtime truth and the pruner
+  trigger are untouched — the CompactionSignal panel still fires on raw values.
+- **Structural threshold parity (P2):** the inline `computeTriggerThreshold` the
+  serialized savant generator bakes is extracted into the shared exported const
+  `TRIGGER_THRESHOLD_INLINE_SOURCE` (interpolated into the template), and a new
+  agents test evals that SAME string against `resolveTriggerThreshold` across a
+  7-window × 5-ratio sweep — future drift fails loudly instead of passing
+  hand-pinned values.
+
+Gates: typecheck ×5 (sdk/common/agent-runtime/cli + agents) clean; agent-runtime
+1147/1147, agents 89/89, cli state 82/82; eslint 0 warnings; lint:md zero
+non-handoff errors.
+
+## 2026-08-21 — FID-2026-0821-002: Release-engine hardening — concurrent-writer detection, failed-run tag recovery, credential-scan source carve-out (closed)
+
+Three hardening items derived from the v0.0.27 release (4 runs: credential-scan false positive → prettier →
+concurrent-FID markdownlint → success):
+
+- **Concurrent-writer interference (P1):** the worktree fingerprint is now captured immediately after the
+  automation commit (not at gate start), so a file landing between commit and gates fails the run with a
+  clear "Release gates changed the tracked worktree" message instead of a confusing random gate failure. The
+  lock dir gains an `IN-PROGRESS.md` release marker as a signal to concurrent sessions, and the automation
+  commit prints a prominent warning when it sweeps `dev/`/`SCOPE.md` files into the public release.
+- **Failed-run tag cleanup (P2):** a fresh run now auto-prunes a local-only `v<version>` tag left by a
+  failed release receipt (guards: tag absent on remote via `git ls-remote`, receipt `headSha` matches the
+  tag commit; any uncertainty fails closed) — no more manual `git tag -d`.
+- **Credential-scan source carve-out (P3):** source files named `credentials*`/`secrets*`
+  (`.ts/.tsx/.js/.mjs/.cjs/.jsx`) fall through to the content scan instead of being filename-blocked;
+  config-shaped stores (`.env`, `.npmrc`, `*.pem`, `credentials.json`…) stay filename-blocked. The 3-file
+  allowlist added during the release is removed.
+
+Gates: public-release.test.ts 56/0, pre-push-scan.test.ts 17/0, eslint 0, prettier clean, lint:md PASS.
+
+## 2026-08-21 — FID-2026-0821-001: Auto-compact silent-failure redesign — visible, reasoned compaction (closed)
+
+Root-caused why auto-compact never visibly fired (operator: BYOK, sidebar
+peaks >85%, zero compaction events, no truncation symptoms) and redesigned
+the system so every compaction decision point emits an observable, reasoned
+state — patterns adopted from the hermes/codex/openclaw reference repos.
+
+- **Silent-failure elimination (P0):** the dropped `shouldAutoCompact`
+  `.reason` is consumed — a new `blocked` compaction phase carries the
+  reason (`circuit-breaker-open | cooldown | escalation-hold |
+  pruner-unavailable | compaction-disabled`); the pruner spawn boundary
+  recounts history and emits explicit `pruned` vs `ineffective` terminal
+  phases; one shared threshold resolver (`resolveTriggerThreshold`,
+  floor-clamped, min-side-wins at small windows) replaces the dual
+  0.8×W / W−30k formulas in both the runtime compactor and the serialized
+  savant generator.
+- **Visibility (P1):** CompactionSignal restyled as a
+  TerminalCommandDisplay-style bordered panel with the glowing
+  TrafficLights title bar; one-shot threshold warning with −10% hysteresis;
+  the CLI store trusts runtime-emitted phases directly (transition
+  inference kept as a legacy fallback); first-class `/compact` command
+  (menu entry + generator intercept → force pruner → compact-and-stop).
+- **Truth + escalation (P2):** provider-reported usage is authoritative in
+  BYOK via the new `reconcileTokenCount` precedence owner (fresh usage >
+  estimator; post-prune recount invalidates stale usage; hosted endpoint
+  counts share the same channel); a two-rung escalation ladder replaces
+  strike-burn-to-silence (ineffective → forced retry bypassing cooldown →
+  visible `blocked('escalation-hold')` with +5% growth re-arm).
+
+Gates: typecheck green (common, sdk, agents, agent-runtime, cli); eslint
+--max-warnings 0 on every changed file; suites — runtime compactor 22/22,
+cli compaction store 10/10, agents pruner trigger/wiring/serialization
+12/12, reconcile precedence 4/4, manual-/compact intercept 2/2; lint:md
+PASS. Closed uncommitted per operator directive (working-tree closure;
+file:line evidence in the FID).
 
 ## 2026-08-20 — FID-2026-0820-016: Programmatic gate blocks silently drop results — orphaned tool-calls and evidence-free NO-OUTPUT (closed)
 

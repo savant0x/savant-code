@@ -73,6 +73,43 @@ filesystem entries in `agents/`.
 - [**dev/nova/inbox/**](dev/nova/inbox/) + [**outbox/**](dev/nova/outbox/) — Third-party audit channel
 - [**dev/scratchpad/**](dev/scratchpad/) — Ephemeral working area (Orchestrator writes via `/dev override`)
 - [**`.agents/skills/`**](.agents/skills/) — 7 coding standards as `SKILL.md` skills (auto-loaded)
+- [**`docs/self-improving-harness.md`**](docs/self-improving-harness.md) —
+  Self-improving harness + agent-created skills (full guide)
+
+## Self-Improving Harness (FID-2026-0824-012)
+
+Savant learns from its own failures and authors its own skills — under strict
+operator governance. The agent can explain/demonstrate this on prompting;
+key facts:
+
+- **Mechanical capture** — `protocol.config.yaml` declares a
+  `PostToolUseFailure` hook with `action: experience-capture` (in-process,
+  fail-open): every tool failure appends one immutable record to
+  `dev/experiences/raw-traces.jsonl` (never boot-read; context-hashed inputs;
+  path-normalized keys). Dedup/recurrence: `bun run experiences:dedup` — a
+  pattern must recur **≥3× within 14 days** to promote; expected failures
+  (e.g. search 404s) never count.
+- **Skill authoring** — the `skill_manage` tool (create/patch/edit/delete/
+  write_file/remove_file/rollback) is **Scribe + Orchestrator only**.
+  Everything an agent writes lands in `.agents/skills/.quarantine/`
+  (invisible until trusted), versioned on-disk via
+  `.agents/skills/<name>/versions/v<N>/` + `VERSIONS.jsonl` (git is NOT the
+  ledger). Patches are capped at a 10% Levenshtein change ratio.
+- **Operator-only release** — `/skills list|show|trust|untrust|rollback`.
+  The agent can author; it cannot release. `immutable: true` skills reject
+  every mutation (engine + EHEL pre-write gate).
+- **Session-end review** — the SessionEnd hook runs `scripts/session-end-review.ts`
+  (refresh `dev/agenda.md` ≤50 lines + FID-routing candidates); the
+  Orchestrator end-of-turn directive spawns Scribe for the full-fidelity
+  review, which routes ≥3-recurrence patterns to FIDs and drafts eligible
+  lessons into quarantine skills (`bun run lessons:to-skills`).
+  LEARNINGS retirement (`bun run learnings:retire`) and the evolution ritual
+  (`bun run skills:evolve`) are operator-run.
+- **When the user asks how it works** — run the live loop: `/skills` status
+  → `bun run experiences:dedup` → author/trust a demo skill → show
+  `VERSIONS.jsonl` + `versions/` → prove quarantine invisibility → show the
+  immutable gate. Mark the NEEDS-REVIEW live boundaries honestly (real TUI
+  smoke, live HYBRID hook behavior, real session-end Scribe review).
 
 ## Validation
 

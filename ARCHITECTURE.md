@@ -25,7 +25,7 @@ FID-2026-0803-001 ECHO-4.
 |---|-------|-------|----------------|-------|
 | 1 | **Orchestrator** | ALL | Routes work through Perfection Loop, enforces protocol compliance, spawns all agents | spawn_agents, read_files, read_subtree, run_readonly_command, write_todos, suggest_followups, ask_user, read_url, skill, set_output, list_directory, glob, render_ui, gravity_index, update_goal, get_goal (durable goal mode, FID-2026-0814-002), transition_phase, write_file, str_replace, apply_patch (phase-gated), set_scaffold_complete (scaffold mode) |
 | 2 | **Detective** | RED | Codebase analysis, grep call-graphs, find issues, catalog evidence with file paths | code_search, set_output, list_directory, glob, read_files, read_subtree, query_blast_radius, query_node_edges, query_domain_clusters |
-| 3 | **Forge** | GREEN | Implementation only. Writes code following the converged FID spec. Cannot self-verify. | write_file, str_replace, set_output |
+| 3 | **Forge** | GREEN | Implementation only. Writes code following the converged FID spec. Cannot self-verify. | read_files, write_file, str_replace, set_output (FID-2026-0824-031) |
 | 4 | **Verifier** | AUDIT | Double-audit, run tests, check call-graph reachability, reject hallucinated claims | *(no tools — reads only via message history)* |
 | 5 | **Recorder** | FID | Create, track, archive FIDs. Update CHANGELOG. Ensure no FID closes without AUDIT evidence | write_file, read_files, glob, code_search, set_output |
 | 6 | **Thinker** | Planning | Deep reasoning via sequential thinking engine. Critiques specs, plans, implementations | sequentialthinking, end_turn |

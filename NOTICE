@@ -13,3 +13,26 @@ SavantCode
 Copyright 2025-2026 SavantCode
 
 This product includes software developed for the SavantCode project.
+
+---
+
+This product includes software derived from the scroll-craft project
+(Copyright (c) 2026 Nate Herk), licensed under the MIT License. The
+savant-motion agent skill (.agents/skills/savant-motion/) is a native,
+ECHO-governed transposition of that design rather than a copy of its code;
+its worldflight mechanics themselves trace upstream to oso95/scroll-world.
+---
+
+This product includes evaluation methodology ideas derived from the
+SWE-rebench project (Copyright (c) 2026 SWE-rebench), licensed under
+the MIT License; its dataset is CC-BY-4.0 by Badertdinov et al.
+(Nebius). No upstream code was copied. The ingestion pipeline is an
+original implementation recorded under FID-2026-0824-019 (A7).
+
+---
+
+This product includes capability-taxonomy ideas derived from
+Sourcegraph CodeScaleBench (github.com/sourcegraph/CodeScaleBench),
+licensed under the Apache License, Version 2.0. The category
+classifier is an original implementation recorded under
+FID-2026-0824-019 (A7).
