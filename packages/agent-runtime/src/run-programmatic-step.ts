@@ -14,6 +14,7 @@ import {
   type ToolCallToExecute,
 } from './run-programmatic-step/execute-tool-calls'
 import { getPublicAgentState } from './run-programmatic-step/public-state'
+import { sanitizeYieldToolCallInput } from './run-programmatic-step/sanitize-yield-input'
 import {
   clearProgrammaticRunState,
   getStoredGenerator,
@@ -178,8 +179,12 @@ export async function runProgrammaticStep(
         break
       }
 
-      // Validate the yield value from handleSteps
-      const parseResult = HandleStepsYieldValueSchema.safeParse(result.value)
+      // FID-2026-0823-009: generators may include optional keys holding
+      // explicit undefined values; z.record(z.string(), jsonValueSchema)
+      // rejects undefined as invalid JSON. Sanitize before validating and
+      // execute the sanitized call so undefined keys never flow downstream.
+      const yieldValue = sanitizeYieldToolCallInput(result.value)
+      const parseResult = HandleStepsYieldValueSchema.safeParse(yieldValue)
       if (!parseResult.success) {
         throw new Error(
           `Invalid yield value from handleSteps in agent ${template.id}: ${parseResult.error.message}. ` +
@@ -229,8 +234,9 @@ export async function runProgrammaticStep(
         break
       }
 
-      // Process tool calls yielded by the generator
-      const toolCall = result.value as ToolCallToExecute
+      // Process tool calls yielded by the generator (sanitized —
+      // FID-2026-0823-009).
+      const toolCall = yieldValue as ToolCallToExecute
 
       toolResult = await executeSingleToolCall(toolCall, {
         ...params,

@@ -96,6 +96,11 @@ export async function executeSingleToolCall(
   // the synthesis below deliver it to the generator instead of dropping it
   // silently.
   let lastBlockReason: string | undefined = undefined
+  // FID-2026-0821-004 D1: the shared toolResults array is cumulative across
+  // all yields of a run (created once in run-programmatic-step.ts). Capture
+  // its length BEFORE this call so the return below slices out ONLY the
+  // results this call produced — never a prior yield's output.
+  const toolResultsStartLength = toolResults.length
   // Execute with a narrow template copy that exposes only this validated
   // programmatic tool to the executor. No caller-provided bypass flag or
   // capability set is trusted by the executor.
@@ -199,8 +204,14 @@ export async function executeSingleToolCall(
     return blockedResult.content
   }
 
-  // Get the latest tool result
-  return toolResults[toolResults.length - 1]?.content
+  // FID-2026-0821-004 D1: return only the results produced by THIS call
+  // (the executor pushed exactly its own result(s) into the shared array
+  // after the captured start length). A silent gate block — one that returns
+  // without an error chunk (e.g. the abort gate, which emits none by design)
+  // — yields an empty slice, so the generator receives undefined instead of
+  // a PRIOR call's output masquerading as this one's.
+  const ownResults = toolResults.slice(toolResultsStartLength)
+  return ownResults[ownResults.length - 1]?.content
 }
 
 /**
