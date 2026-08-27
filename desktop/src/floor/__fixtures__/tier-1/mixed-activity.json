@@ -5,7 +5,7 @@
     "activity": {
       "kind": "thinking",
       "startedAt": 900,
-      "model": "stealth/ox-alpha"
+      "model": "z-ai/glm-5.3-flash"
     },
     "agentId": "orchestrator-1"
   },

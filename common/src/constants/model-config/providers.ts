@@ -42,6 +42,7 @@ export const openrouterModels = {
   openrouter_grok_4: 'x-ai/grok-4-07-09',
   openrouter_tencent_hy3: 'tencent/hy3',
   openrouter_tencent_hy3_free: 'tencent/hy3:free',
+  openrouter_zai_glm_5_3_flash: 'z-ai/glm-5.3-flash',
 } as const
 export type openrouterModel =
   (typeof openrouterModels)[keyof typeof openrouterModels]

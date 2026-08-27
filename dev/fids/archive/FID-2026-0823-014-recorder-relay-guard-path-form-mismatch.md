@@ -28,7 +28,7 @@ working directory and missed legit writes whenever cwd ≠ repo root.
 
 ## Environment
 
-- **OS:** Windows (Git Bash / MSYS); Bun 1.3.14; stealth/ox-alpha
+- **OS:** Windows (Git Bash / MSYS); Bun 1.3.14; z-ai/glm-5.3-flash
 - **Commit/State:** working tree @ v0.0.27 + unreleased hardening
 - **Related records:** FID-2026-0823-008 (guard origin, closed+archived),
   FID-2026-0823-015 (canonicalization lesson + utility),

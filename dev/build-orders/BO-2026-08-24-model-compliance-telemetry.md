@@ -107,7 +107,7 @@ useful; dashboard alone useful; sentinel last).
    opt-in? Recommend default-on (it's local-only, zero-cost) with `telemetry: false`
    escape hatch in protocol.config.yaml.
 3. **Model identity granularity:** record full provider/model slug or normalize
-   aliases (e.g., stealth/ox-alpha vs its eventual claimed name)? Recommend storing
+   aliases (e.g., z-ai/glm-5.3-flash, formerly the stealth-codename ox-alpha)? Recommend storing
    raw slug + letting aggregation normalize later.
 4. **Dashboard placement:** separate panel vs tab within existing workspace regions?
    Depends where Agents-as-Contacts -002 lands; defer final placement to that suite's

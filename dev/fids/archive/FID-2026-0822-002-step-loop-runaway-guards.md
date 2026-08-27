@@ -14,7 +14,7 @@
 Operator report (2026-08-22 ~03:00 EDT), during live re-testing of FID-2026-0822-001: `/compact` worked after relaunch,
 then subsequent normal turns "failed to actually end … happened back to back … continued running without ending" —
 continuous assistant work, ZERO compaction panels, ZERO enforcement messages; session at
-130k/1048.6k (ox alpha via OpenRouter).
+130k/1048.6k (z-ai/glm-5.3-flash via OpenRouter).
 
 ## Perfection Loop
 

@@ -26,7 +26,7 @@ the errorMessage.
 
 ## Environment
 
-- **OS:** Windows (Git Bash / MSYS); Bun 1.3.14; stealth/ox-alpha
+- **OS:** Windows (Git Bash / MSYS); Bun 1.3.14; z-ai/glm-5.3-flash
 - **Commit/State:** working tree @ v0.0.27 + unreleased hardening
 - **Related records:** FID-2026-0823-008 (relay guard — unchanged), FID-2026-
   0823-011 (stall root-cause + live probe evidence); packages/agent-runtime/

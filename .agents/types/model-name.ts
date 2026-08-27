@@ -76,6 +76,7 @@ export type ModelName =
   | 'moonshotai/kimi-k2.7-code'
   | 'z-ai/glm-5'
   | 'z-ai/glm-5.1'
+  | 'z-ai/glm-5.3-flash'
   | 'z-ai/glm-4.6'
   | 'z-ai/glm-4.6:nitro'
   | 'z-ai/glm-4.7'
