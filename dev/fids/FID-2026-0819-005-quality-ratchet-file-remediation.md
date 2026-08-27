@@ -4037,6 +4037,56 @@ No remediation script, codemod, mass rewrite, or script-generated source edit wa
 
 - **Archived:** Pending completion of manual decomposition and independent verification
 
+## Program Pass — 2026-08-21 (Perfection-Loop Trigger; Operator Pause Respected)
+
+- **Trigger:** operator command "run the perfection loop on all open FIDs".
+  The operator pause (2026-08-21, "call it good for now") is unchanged: no
+  decomposition, no rebaselining, and no remediation source edits were
+  performed. This pass refreshed evidence and recorded findings for the
+  first post-pause loop.
+- **Live rerun (supersedes the 168 figure):** `bun run quality:report` on
+  2026-08-21 reports FAIL with 177 violations (exit 1, fail-closed). The
+  +9 drift since the pause is attributable to the 2026-08-21 auto-compact
+  FID work — notably `agents/savant/handle-steps-factory.ts` at 413 lines
+  (itself a Loop 8 extraction product regrown past the ceiling) and
+  `cli/src/components/compaction-signal.tsx` ratchet drift (117 > baseline
+  108). Under the active pause this drift is expected and acceptable.
+- **Validator semantics re-verified (file:line):** scan roots
+  `scripts/quality-report.ts:18-30` (all 11 project-owned roots); sole
+  exclusion node_modules (`:31`); `approvedGrowth` rejection first
+  (`:37-39`, enforced at `:60-65`); absolute ceiling BEFORE ratchet with a
+  `continue` short-circuit (`:72-78`); ratchet comparison after (`:80-85`);
+  unconditional fail-closed main block (`:90-104`).
+  `dev/quality-baseline.json` still contains zero `approvedGrowth` matches
+  and parses cleanly (~1468 tracked files). The four focused regression
+  tests remain in place (`scripts/quality-report.test.ts:5-61`).
+- **Env-hatch semantics mapped:** `SAVANT_CODE_SKIP_QUALITY_RATCHET=1`
+  lives only in `scripts/validate-repository.ts:225-242` and drops the
+  ENTIRE `collectQualityIssues` array — absolute ceiling AND ratchet AND
+  `approvedGrowth` detection — in that one surface; it is documented
+  in-code as the operator-pause release exemption. The primary detector
+  (`bun run quality:report`) has no env escape and was re-verified
+  fail-closed above. Post-pause hardening option (record-only): split the
+  hatch into layered flags so an emergency release can never waive ceiling
+  or `approvedGrowth` detection.
+- **NEW ISSUE-001 (medium, record-only under pause):**
+  `coding-standards/typescript.md:83` still declares the stale TypeScript
+  override `| max_file_lines | 300 | 400 | React components and service
+  files tend to be longer |`, contradicting
+  `.agents/skills/coding-typescript/SKILL.md:87-91` ("No file-length
+  exemptions") and the mechanically enforced 300-line ceiling. ECHO.md's
+  Quality Override Precedence says a language override wins on paper, so
+  the prose could mislead a future pass into assuming an exemption exists.
+  The mechanical checker is ground truth; zero runtime effect.
+  Disposition: FIRST item of the first post-pause loop.
+- **Missed questions (2, record-only):** (1) fix the stale override despite
+  the pause? Decision: no — pause discipline stands; editing policy prose
+  mid-pause normalizes exception-making. (2) harden the env hatch now?
+  Decision: accept-as-documented; the compensating control (unconditional
+  fail-closed `quality:report`) makes today's asymmetry safe.
+- No remediation script, codemod, mass rewrite, or script-generated source
+  edit was used in this pass.
+
 ## Lessons Learned
 
 - A ratchet baseline is not an absolute quality ceiling.

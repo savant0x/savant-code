@@ -99,12 +99,18 @@ emulation.
 
 ## Child FID Manifest
 
+> Statuses reconciled through 2026-08-26 against each child's own header,
+> the active ledger, and the archive directory.
+
 | Child FID | Title | Phase | Status |
 |-----------|-------|-------|--------|
-| FID-2026-0820-008 | Desktop Session Gateway (WebSocket) | Phase 1 | created |
-| FID-2026-0820-009 | Tauri Shell + Sidecar Supervisor | Phase 2 | created |
-| FID-2026-0820-010 | Chat UI (Structured, No Terminal) | Phase 3 | created |
-| FID-2026-0820-011 | Packaging & Distribution | Phase 4 | created |
+| FID-2026-0820-008 | Desktop Session Gateway (WebSocket) | Phase 1 | closed (+ archived 2026-08-23) |
+| FID-2026-0820-009 | Tauri Shell + Sidecar Supervisor | Phase 2 | closed (+ archived; verified against archive header, Loop 5) |
+| FID-2026-0820-010 | Chat UI (Structured, No Terminal) | Phase 3 | closed (+ archived 2026-08-25; Auto Drive dashboard, graph, and halt lifecycle verified) |
+| FID-2026-0820-011 | Packaging & Distribution | Phase 4 | analyzed — SHELVED (operator directive 2026-08-26): increments 1–2 (bundle matrix, CI workflow, fail-closed manifest generator, consent-gated updater) landed + verified; release-time remainder captured as the ordered Loop 4 checklist. **SOLE OPEN BLOCKER for this master** |
+| FID-2026-0822-012 | Holographic Command Deck (Visual Workspace) | Phase 5 | closed (+ archived 2026-08-26 via operator waiver of the webview re-smoke boundary; all seven declared gates live PASS at closure) |
+| FID-2026-0822-014 | Structured Output Cards | Phase 3 | closed (+ archived; verified against archive header, Loop 5) |
+| FID-2026-0824-009 | Workspace Regions | Phase 3 | closed (+ archived 2026-08-25) |
 
 ## Resolution Policy
 
@@ -191,6 +197,95 @@ emulation.
 - **CHANGE DELTA:** master edits limited to the Verification bullet, two Resolution Policy rules, and this
   loop entry; all child scope changes live in the child files.
 
+### Loop 3 — Program-Wide Perfection-Loop Pass (2026-08-21)
+
+- **Trigger:** operator command "run the perfection loop on all open FIDs".
+- **RED:** ground-truth refresh, tool-verified 2026-08-21: the Commit Gate is
+  CLEARED — `git ls-files` confirms `docs/design/Savant Desktop App
+  Architecture.md` and FID-2026-0820-007..013 are all tracked in HEAD (swept
+  into the v0.0.27 release commit). The `type_check` chain remains ×11; the
+  sole CI workflow still has zero cargo/rust/tauri matches; `Bun.serve`
+  remains test-only; Tailwind remains absent from every `package.json`;
+  React 19 (`cli/package.json:49`), Zustand 5 (`cli/package.json:62`), and
+  zod ^4.2.1 (`cli/package.json:61`) reconfirmed. NEW findings:
+  (1) HIGH missed-reuse — `packages/design-systems` already exports a
+  react-targeted token pipeline (`designSystemThemeOverrides`,
+  `resolveActiveDesignSystem`, `selectDesignSystem`, `contrastRatio`, zod
+  canonical schemas) and `cli/package.json:35` already depends on it, yet no
+  desktop FID referenced the package while FID-010 planned hand-porting
+  tokens (Law 7/13); (2) MEDIUM — the design doc prescribes "CSS+Tailwind"
+  but Tailwind is undeclared anywhere (dependency-declaration rule applies).
+- **GREEN:** Manifest Sync executed 2026-08-21: design-systems consumption +
+  Tailwind strike routed to FID-010 (its Loop 1 records both plan changes);
+  the relay design constraint routed to FID-008; relay residuals routed to
+  new FID-2026-0821-004. No new gate machinery: the existing
+  dependency-declaration rule covers the Tailwind strike and any future
+  virtualization-library adoption, and one expectation is recorded — the
+  `desktop/` workspace enters the quality scanner's owned roots at creation,
+  so its files are ≤300 lines from birth (FID-2026-0819-005 ceiling).
+  Missed-questions pass: 2 questions, both documentation-only.
+- **AUDIT:** PASS 2026-08-21 — the Verifier audited all ten items PASS
+  (item 7 = FID-013 PASS-with-note: a static trace is not closure; the
+  actual live-test result must be recorded before any status flip).
+  Binding follow-throughs: record the live-test result, disk-resolve the
+  load-bearing citations, re-paste `git ls-files` — all executed below.
+- **ADVERSARIAL:** UPHELD 2026-08-21 — the Adversary disk-resolved every
+  load-bearing citation (11 CONFIRMED, 2 ADJUSTED: the cumulative
+  `toolResults` array lives inside `execute-tool-calls.ts` ~:100-117, not
+  the nonexistent `run-programmatic-step.ts`; `native.ts:222-235` FSM gate
+  EMITS an error chunk and is never a silent edge) and adjudicated the
+  clean live basher test: guard PASSED ⇒ second-hop loss (FID-013 stays
+  `fixed`; FID-2026-0821-004 gains candidate D4). Commit-Gate-CLEARED
+  confirmed on the re-pasted `git ls-files` output (all seven suite FIDs
+  plus `docs/design/Savant Desktop App Architecture.md` tracked).
+- **CHANGE DELTA:** this loop entry + missed questions 5-6; child-manifest
+  status advances recorded after the AUDIT/ADVERSARIAL verdicts land.
+
+### Loop 4 — Child-Status Reconciliation (2026-08-23, queue-to-zero unit U9)
+
+- **Trigger:** master FID-2026-0823-003 unit U9 — reconcile this record
+  with its now-landed children before the supersession/closure pass (U10).
+- **Manifest Sync:** child statuses refreshed from disk (each verified
+  against its own header + Resolution/Step Status this day): -008
+  `closed`+archived; -009 `fixed` (all 8 steps [x]; GUI live smoke is the
+  only remaining boundary); -010 `analyzed` (Loop 3 chat-thread foundation
+  audited; Steps 4–7 open); -011 `analyzed` (day-0 signing gate holds).
+  Discovery FIDs appended per the Resolution Policy: -012 (deck; fixtures
+  substrate landed at `desktop/src/floor/`, P1–P6 gated on this chain) and
+  -014 (structured output cards; `fixed`).
+- **Step Status sync:** -008 flips to implemented+closed; -009 annotated
+  implemented-pending-closure; -010 annotated partially-implemented;
+  integration bullet annotated with the live real-sidecar E2E evidence
+  (4/4) while full three-platform driver-matrix coverage stays open.
+- **MASTER STATUS:** STAYS `analyzed` — the master may not close until all
+  children close (Resolution Policy), and -009/-010/-011/-012 remain active.
+- **CHANGE DELTA:** manifest table + Step Status annotations + this entry +
+  CVE refresh + Resolution note.
+
+### Loop 5 — Child-Status Reconciliation II (2026-08-23 ~23:00 EDT)
+
+- **Trigger:** operator command "run the perfection loop on the master and
+  all children" (post-restart session).
+- **Manifest Sync (disk-verified):** -009 and -0822-014 are BOTH `closed` +
+  archived since the Loop 4 reconciliation — archive headers checked
+  directly (`**Status:** closed` in both archived files); neither remains
+  in `dev/fids/`. Manifest table rows + Step Status row updated this entry.
+- **Remaining open children:** -010 (`analyzed`; chat-thread foundation
+  landed, Steps 4–7 open), -011 (`analyzed`; signing gate LIFTED ~23:10 EDT
+  via operator decisions — macOS deferred, Windows unsigned-local v1,
+  escrow documented; Windows/Linux scope GREEN-eligible), -012 (`analyzed`;
+  **hard prerequisites now SATISFIED** — gateway closed, shell closed,
+  renderer foundation landed; P1–P6 unblocked for implementation).
+- **Manifest Sync addendum (~23:14 EDT):** -011's own Loop 2 addendum lifted
+  its signing gate minutes after this loop pass opened — folded back here
+  per the Manifest Sync rule.
+- **Readiness verdict (operator question "am I safe to begin?"): YES —
+  immediate implementation front is -010 Steps 4–7; -012 P1 is unblocked;
+  -011 awaits operator signing decisions only.**
+- **MASTER STATUS:** STAYS `analyzed` — three children remain active.
+- **CHANGE DELTA:** manifest rows ×2, reconciliation-note date line,
+  Step Status row ×1, this entry.
+
 ### Missed Questions
 
 > Surfaced during the Loop 1 GREEN pass; each answered with the most robust
@@ -207,6 +302,16 @@ emulation.
    this Perfection Loop section — never by silently editing child scope.
 4. What happens to the retired Electron numbers 001-006? Decision: retired
    for 2026-08-20 and never reused on that date.
+5. With the Commit Gate cleared (2026-08-21), is any new gate machinery
+   needed before child implementation begins? Decision: no — the existing
+   dependency-declaration rule covers new dependencies (Tailwind strike,
+   any virtualization library); one expectation recorded: `desktop/` enters
+   the quality scanner's owned roots at creation, so its files are ≤300
+   lines from birth (2026-08-21 program pass).
+6. Where do the 2026-08-21 program-pass corrections get recorded? Decision:
+   Manifest Sync — design-systems reuse + Tailwind strike to FID-010, the
+   shared-history design constraint to FID-008, and the execute-tool-calls
+   relay residuals to new FID-2026-0821-004.
 
 ### Code Verification Evidence
 
@@ -226,6 +331,13 @@ stays `analyzed` until its phase is implemented — 2026-08-16 lesson).
 - Gate output: none applicable to a planning FID — typecheck/test/lint
   evidence becomes mandatory at each child's implementation AUDIT per the
   Verification section.
+- 2026-08-23 Loop 4 reconciliation (U9): the `desktop/` workspace NOW EXISTS
+  and all four phase children have landed implementation substrate — -008
+  gateway closed/archived (live real-sidecar E2E 4/4), -009 shell supervisor
+  at `fixed`, -010 renderer foundation at Steps 4–7, -011 code-side pending
+the day-0 signing gate. Master status stays `analyzed`; closure follows
+  the last child closure per the Resolution Policy. (Loop 5 supersession
+  note: -009 has since closed + archived — see Loop 5.)
 
 ## Lessons Learned
 
@@ -240,9 +352,16 @@ stays `analyzed` until its phase is implemented — 2026-08-16 lesson).
 
 ## Step Status
 
-- [ ] FID-2026-0820-008 (Session Gateway) implemented
-- [ ] FID-2026-0820-009 (Tauri Shell) implemented
-- [ ] FID-2026-0820-010 (Chat UI) implemented
-- [ ] FID-2026-0820-011 (Packaging) implemented
-- [ ] Integration tests passing
+- [x] FID-2026-0820-008 (Session Gateway) implemented — closed + archived
+      2026-08-23 (`savant-code server` shipped)
+- [x] FID-2026-0820-009 (Tauri Shell) implemented — CLOSED + archived
+      (archive header verified `closed`, Loop 5 disk check)
+- [ ] FID-2026-0820-010 (Chat UI) implemented — Loop 3 transport/thread
+      core landed 2026-08-23 (audited); Steps 4–7 open
+- [ ] FID-2026-0820-011 (Packaging) implemented — signing gate LIFTED
+      (~23:10 EDT via recorded revision: macOS deferred, Windows
+      unsigned-local v1, escrow documented); Windows/Linux scope
+      GREEN-eligible
+- [ ] Integration tests passing — real-sidecar gateway E2E 4/4 green;
+      full three-platform driver-matrix coverage lands with Phase 4
 - [ ] All child FIDs audited and closed

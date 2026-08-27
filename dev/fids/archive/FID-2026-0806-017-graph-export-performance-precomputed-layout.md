@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0806-017-graph-export-performance-precomputed-layout.md`
 **ID:** FID-2026-0806-017
 **Severity:** high
-**Status:** implemented (Loop 3 — implementation verified; evidence below)
+**Status:** closed
 **Created:** 2026-08-06
 **Author:** Savant
 **YAGNI-Compliance:** Verified
@@ -411,7 +411,7 @@ Blob-worker client-side layout is the last-resort ranked fallback.
   updated (15 checks).
 - **Verified By:** Verifier + Adversary (Loop 3) + Nova audit of design (2026-08-06)
 - **Commit/PR:** *(pending operator push)*
-- **Archived:** Yes — moved to `dev/fids/archive/` on close
+- **Archived:** 2026-08-09 — operator-accepted historical closure; moved to `dev/fids/archive/` and indexed in `dev/fids/archive/README.md`. Remaining review boundaries were waived and are not claimed passed.
 
 ## Lessons Learned
 

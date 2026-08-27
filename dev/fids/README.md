@@ -5,21 +5,111 @@ operator decision, implementation, runtime review, or closure evidence.
 
 ## Current active FIDs
 
-**2026-08-21 ledger refresh:** the table below replaces the stale "the active
-queue is empty" claim (flagged by FID-2026-0820-007 Loop 1 as operator
-hygiene): eight FIDs are active on disk. Historical closure notes further down
-are unchanged.
+**2026-08-22 ledger update (four passes):** (1) full inventory — the
+0821/0822 queues were folded into this table; every status below is
+re-verified against the FID's own header + Resolution/Step Status. (2)
+**Closure pass — operator directive ("archive the completed ones"):** eight
+`fixed` FIDs closed + archived (live-verification boundaries waived). (3)
+**Perfection-loop pass + master plan — operator directive:** all pending
+FIDs carry full planning loops (RED/GREEN/AUDIT/ADVERSARIAL); NEW
+coordination master [`FID-2026-0822-013`](FID-2026-0822-013-master-completion-plan.md)
+sequences the whole queue to zero (desktop chain -008→-009→-010, deck
+fixtures-now/live-after-008, four order-free implementables, ratchet HOLD).
+(4) **Master-plan execution — automation level 3:** `-0822-008` (edit-diff
+fallback) and `-0822-004` (yagni_check leak: streaming stripper at the
+ingestion boundary + text-channel gate + payload sanitization + prompt
+alignment, 1193/0 agent-runtime suite) closed + archived. The `-007` number
+collision was resolved earlier the same day — hex keeps `-007`, the deck is
+`FID-2026-0822-012`. Historical closure notes further down are unchanged.
+**2026-08-23 supersession:** `-0822-013` (the master completion plan above)
+was superseded by [`FID-2026-0823-003`](FID-2026-0823-003-overnight-queue-to-zero-master.md)
+as queue-to-zero coordinator and closed + archived (see `archive/README.md`).
 
 | FID | Status | Purpose / blocking gate |
 |---|---|---|
-| [`FID-2026-0819-005`](FID-2026-0819-005-quality-ratchet-file-remediation.md) | `analyzed` | Quality-ratchet file-length remediation program — **paused by operator decision 2026-08-21** ("call it good for now"); 168 violations intentional / fail-closed |
-| [`FID-2026-0820-007`](FID-2026-0820-007-savant-desktop-app-tauri-master.md) | `analyzed` | Savant Desktop App master (Tauri v2) — planning loop-converged; Commit Gate: design doc + five suite FIDs committed to main before any child GREEN |
-| [`FID-2026-0820-008`](FID-2026-0820-008-desktop-session-gateway.md) | `created` | Desktop Session Gateway (WebSocket) — Phase 1 child |
-| [`FID-2026-0820-009`](FID-2026-0820-009-tauri-shell-sidecar-supervisor.md) | `created` | Tauri Shell + Sidecar Supervisor — Phase 2 child |
-| [`FID-2026-0820-010`](FID-2026-0820-010-chat-ui-structured-no-terminal.md) | `created` | Chat UI (Structured, No Terminal) — Phase 3 child |
-| [`FID-2026-0820-011`](FID-2026-0820-011-packaging-distribution.md) | `created` | Packaging & Distribution — Phase 4 child |
-| [`FID-2026-0820-012`](FID-2026-0820-012-ehel-law3-verification-tracker-false-positive.md) | `fixed` | EHEL Law-3 tracker deadlock fix landed with regression coverage; post-relaunch live re-verification outstanding |
-| [`FID-2026-0820-013`](FID-2026-0820-013-subagent-spawn-model-message-conversion.md) | `fixed` | Spawn ModelMessage conversion fixed + live-verified; `basher` output-relay loss blocks closure |
+| [`FID-2026-0819-005`](FID-2026-0819-005-quality-ratchet-file-remediation.md) | `analyzed` | Quality-ratchet file-length remediation program — **paused by operator decision 2026-08-21** ("call it good for now"); Batch 0 + ~13 manual decomposition loops landed; 241 violations intentional / fail-closed |
+| [`FID-2026-0820-007`](FID-2026-0820-007-savant-desktop-app-tauri-master.md) | `analyzed` | Savant Desktop App master (Tauri v2) — planning loop-converged; Commit Gate cleared 2026-08-21; child manifest reconciled through 2026-08-25 (Loop 4/U9: -008 closed+archived, -009 closed+archived, -010 dashboard work open, -011 signing-gated, discovery children -012/-014 appended); master closes when all children close |
+| [`FID-2026-0820-009`](FID-2026-0820-009-tauri-shell-sidecar-supervisor.md) | `fixed` | Tauri Shell + Sidecar Supervisor — Phase 2 child; **Loop 4 landed 2026-08-23** (externalBin declared, real sidecar built, live real-sidecar E2E 4/4, desktop-ci.yml matrix, import.meta.main defect found+fixed); all 8 steps [x]; GUI live smoke carried as the only boundary |
+
+| [`FID-2026-0820-011`](FID-2026-0820-011-packaging-distribution.md) | `analyzed` | Packaging & Distribution — Phase 4 child; gated on 3 operator actions (Apple Developer ID enrollment, Azure Artifact Signing eligibility, minisign key escrow) |
+| [`FID-2026-0822-012`](FID-2026-0822-012-holographic-command-deck.md) | `fixed` | Holographic command deck (WebGL-in-webview) — full planning loop converged 2026-08-22 (Loop 1 RED/GREEN/AUDIT PASS + ADVERSARIAL UPHELD, disk-verified); U7 Tier-1/Tier-2 replay-fixture corpus + validation harness landed 2026-08-23 at `desktop/src/floor/` (gates 8/0; zod-v4 activity-schema defect found+fixed); P1–P6 implemented Loops 4–9 2026-08-24 (desktop typecheck 0 · suite 149/0 · receipt stamped); sole closure boundary = live production-webview smoke of the animated floor. Renumbered from `-007` (collision resolved); cite by full filename |
+| [`FID-2026-0822-014`](FID-2026-0822-014-structured-output-cards.md) | `fixed` | Structured output cards — YAML fallback replaced by shape-detected semantic cards (Loop 2 landed 2026-08-23; Verifier PASS WITH CONDITIONS discharged, Adversary STANDS; gates 50/0 incl. export byte pins, zero-toYaml grep); production TUI smoke carried NEEDS-REVIEW |
+| [`FID-2026-0824-011`](FID-2026-0824-011-deck-live-event-driver.md) | `fixed` | Deck live event driver — walkers/stations/state-FX mounted on the REAL gateway stream (grid-only smoke finding); motes retuned; infinite-feel floor recentring; suite 163/0; live webview re-smoke carried NEEDS-REVIEW |
+| [`FID-2026-0824-012`](FID-2026-0824-012-self-improving-harness-and-agent-created-skills.md) | `fixed` | Self-improving harness + agent-created skills master — **ALL 16 steps implemented** across Phases 0-4 (Loop 5, 2026-08-24): capture (in-process experience-capture hook sink + `ExperienceRecordSchema` + dedup/recurrence/purge), skill system activation (CLI `skills` group, `skills:check`, `version`/`immutable` schema + EHEL immutable gate, `references/` progressive disclosure), `skill_manage` tool (Scribe+Orchestrator) with on-disk versioning (snapshots + VERSIONS.jsonl + semver + rollback), quarantine + operator-only trust, SessionEnd mechanical review (`scripts/session-end-review.ts` hook + Scribe contract + Orchestrator directive), lessons→skills drafts (`scripts/lessons-to-skills.ts`), LEARNINGS retirement tier (`scripts/learnings-retire.ts`), usage-evolution ritual (`scripts/evolve-skills.ts`). Verification receipt stamped 9/9 gates PASS (typecheck ×5 + 4 test files); full batteries green (common 652/0 · sdk 493/0 · hooks+echo 187/0 · tools 195/0 · scripts 193/0). Live boundaries NEEDS-REVIEW: fail-open hooks in HYBRID mode, `/skills trust` in the real TUI, real SessionEnd Scribe review. Loops 1-4 (document convergence) + Loop 5 (implementation) in-record; children FIDs per phase at closure |
+
+**2026-08-25 closures:** `FID-2026-0824-009` Workspace Regions and `FID-2026-0820-010` Chat UI are closed and archived after their documented implementation and verification gates. See `archive/README.md` and the changelog closure entries.
+
+**2026-08-24 suite addition:** agents-as-contacts command surface —
+master [`FID-2026-0824-008`](FID-2026-0824-008-agents-as-contacts-command-surface-master.md)
+and children `-009` (workspace regions), `-003` (computer use / cua daemon /
+MJPEG), `-004` (voice pipeline), `-005` (triggers → goal injection), `-006`
+(mobile companion), `-007` (security: keychain upgrade + consent UX) — authored
+from the Gemini Deep Research report
+(`docs/design/Agents-as-Contacts Architecture Research.md`) under BINDING
+amendments C1–C7 recorded on the master (keyring-rs→Tauri host; cua-daemon
+adoption over Rust port; local-default webhook ingress; MJPEG-only transport;
+existing compactor reused; db-storage extension + Amendment Gate G1–G4;
+single-model rule retained; voice free-mode deferred). Placement decision:
+MERGED into the chat workspace (no separate screen); Deck = WATCH, workspace =
+ACT. Sequencing guard: `-009` was gated on -010 Steps 4–7 and is now closed;
+remaining children are tracked at their own active statuses; batched suite AUDIT
+pending.
+
+**2026-08-24 suite addition:** eval system rebuild v3 — master
+[`FID-2026-0824-013`](FID-2026-0824-013-eval-system-rebuild-v3-master.md)
+and children `-014`..`-019` authored from
+`docs/design/Savant Eval System Rebuild.md` under binding amendments A1–A8:
+stale Phase-1 sandbox premise corrected (TempDirSandbox already default);
+single-model rule retained; Tier 1 into `.githooks/pre-push` (operator decision);
+regression guard retargeted to the `/skills trust` boundary per FID-2026-0824-012;
+autorater strictly out-of-process; license audit as a RED hard gate; FSM scorer
+already substantive — increment 0 is adversarial-phase alignment + trajectory
+assertions. Strict sequence `-014`→`-019` (operator directive: blueprint order).
+Batched Verifier + Adversary audits complete: six mechanical FAILs found and
+discharged, citations 5 CONFIRMED / 1 ADJUSTED on disk, no omissions. All records
+at `analyzed`. Master closes when the last child closes.
+
+**2026-08-25 reconciliation:** root-cause records `FID-2026-0824-020` and
+`FID-2026-0824-021` were closed and archived after resolution by the completed
+`-022` through `-027` rebuild suite. Their carried live-smoke boundaries remain
+explicitly recorded as waived, never passed; the implementation is not duplicated.
+
+**2026-08-24 suite addition:** compaction integrity rebuild — master
+[`FID-2026-0824-022`](FID-2026-0824-022-compaction-integrity-rebuild-master.md)
+with children `-023` (visibility/transparency layer), `-024` (preservation
+contract + digest schema), `-025` (minimal-surgery algorithm), `-026`
+(evidence spill + requiresRawEvidence splice), `-027` (removed-content ledger,
+metrics, model notice) — grown out of the operator-reported 'data passed but
+compacted' symptom: `-020` (subagents inherit compacted history) + `-021`
+(drop-list digest discards read/search/web results; micro-compact invisible;
+pruner output unsurfaced); `resources/hermes-agent/trajectory_compressor.py`
+reviewed 0-EOF as the preservation baseline. Binding amendments V1/V2
+(traffic-light visibility for ALL layers, HIGHLY visible firing, expandable
+summary viewer) + P1–P4/M1/Q1. Sequence `-023` first → `-024` → `-025` →
+`-026` ∥ `-027`. Batched Verifier + Adversary complete: 1 FAIL (master Impact
+Assessment) discharged; 1 convention-based NEEDS-REVIEW refuted against disk.
+All five children IMPLEMENTED, receipt-stamped (`--check` green each), and
+CLOSED 2026-08-24 via operator live-smoke WAIVER directive; master `-022`
+closed per policy. All six records archived to
+[`archive/`](archive/README.md).
+
+**2026-08-24 renumbering (operator directive):** the suite's planning records
+shared date-numbers with same-day harness fixes (concurrent overnight streams
+allocated independently); chronological renumber — master `-001`→`-008`,
+workspace regions `-002`→`-009`, design-contract scanner `-002`→`-010`
+(the law4/law3 credit fix keeps `-001`). Cite by full filename.
+
+**Carried live-observation items (no FID yet — tracked so they cannot silently
+drop):** CompactionSignal parity + `/compact` live re-test (carried from
+FID-2026-0822-001/006; needs a natural compaction event observed live) ·
+anti-runaway guard + turn-terminator live confirmation (carried from
+FID-2026-0822-002/003; next natural runaway-pattern turn is the evidence) ·
+reasoning-panel 90-col scroll repro (carried from FID-2026-0822-010) ·
+expanded-state read_files/add_message confirmation (carried from
+FID-2026-0822-011) · sidebar Context/Model overlap (routed to a future
+sidebar FID) · `sixteen.` tail-loss repro (owned in the FID-2026-0822-009
+closure) · `reminder.` border-row (mid-stream transient; monitor next live
+pass).
 
 `FID-2026-0819-002` (research tools non-functional in direct-provider mode) is
 **closed and archived 2026-08-19** — see
@@ -81,6 +171,15 @@ is implemented (2026-08-16 Ground-Truth lesson); `converged` documents the
 loop state, not an admissible active-queue status.
 
 ### Closed records (historical)
+
+`FID-2026-0825-001` (/compact "No response from agent" — compact-and-stop
+zero-assistant-history false error, high) — **closed + archived 2026-08-25**
+after the operator confirmed the live fix; see
+[`archive/README.md`](archive/README.md) for the closure entry.
+
+`FID-2026-0823-005` (unified edit line-count format `+N -N` via shared
+utility + `DiffViewer` onto `TrafficLightPanel`) — **closed + archived
+2026-08-23**; see `archive/README.md` for the closure entry.
 
 `FID-2026-0816-001` (v0.0.24 phantom-dependency incident — the release
 shipped without binaries; `@noble/hashes` declared + main-package-only

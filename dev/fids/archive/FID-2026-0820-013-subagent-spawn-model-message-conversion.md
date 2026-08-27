@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0820-013-subagent-spawn-model-message-conversion.md`
 **ID:** FID-2026-0820-013
 **Severity:** high
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-08-20
 **YAGNI-Compliance:** Verified
 
@@ -203,7 +203,7 @@ shape or size that only appears later in a session.
   output relay re-scoped to the conversion root cause — no relay code
   change was required.
 - [x] AUDIT: regression tests pass (Verifier PASS on all four audit items).
-- [ ] Closed with implementation evidence and archived.
+- [x] Closed with implementation evidence and archived.
 
 ## Implementation Evidence (2026-08-20)
 
@@ -355,13 +355,108 @@ Conversion fix VERIFIED live; output-injection relay loss CONFIRMED still live.
   tool-result → context assembly). Status remains `fixed`; closure awaits
   this relay fix plus a live basher spawn returning real output.
 
+## Live Verification Round 4 (2026-08-21, program-wide perfection-loop pass): relay traced end-to-end
+
+**Verdict:** the success path is VERIFIED COMPLETE at HEAD; the
+originally-described relay-drop item is REFUTED on the happy path; residual
+result-plumbing defects are spun out to FID-2026-0821-004.
+
+- **Confound identified in this pass's first reproduction:** a `basher` spawn
+  returned NO-OUTPUT earlier on 2026-08-21 — but it was spawned during the
+  RED phase, where the FSM gate (`native.ts:222-235`, per
+  FID-2026-0806-016) legitimately refuses `run_terminal_command`; BASHER-1
+  then honestly reports NO-OUTPUT for a blocked command. That occurrence
+  proves nothing about the relay and is recorded as confounded evidence.
+- **End-to-end trace (Detective, file:line, 2026-08-21):** basher yields
+  `run_terminal_command` and consumes results ONLY via the generator return
+  (`agents/basher.ts:80-86`, destructures `{ params }` only);
+  `execute-tool-calls.ts:89` pushes the assistant tool-call part and
+  `:171` pushes the ToolMessage into the subagent's own
+  `agentState.messageHistory` BEFORE the next STEP LLM call;
+  `run-agent-step/step.ts:121-135` keeps no-TTL terminal ToolMessages
+  through `expireMessages` and appends STEP_PROMPT after the result;
+  provider-bound messages then pass the verified conversion
+  (`aggregate.ts:76-96`, `convert.ts:78-87`). The success-path relay chain
+  is COMPLETE at current HEAD: the originally-described relay drop does not
+  reproduce on the happy path.
+- **Same-day change audit:** `spawn-agent-inline.ts` modifications from
+  2026-08-21 auto-compact work are confined to lines 195-254 (history
+  snapshot, token recount, pruner phases) and do NOT touch tool-result
+  injection or general history assembly (`:199-203` shared-history contract
+  pre-existing).
+- **Residuals are DISTINCT defects, spun out to new FID-2026-0821-004:**
+  RELAY-5 stale-shared-array hazard (`execute-tool-calls.ts:202` returns
+  the LAST element of the cumulative array created inside the same module
+  at ~:100-117 — multi-yield generators can receive a PRIOR command's
+  output as if fresh); RELAY-6 two SILENT gate edges (disk-confirmed
+  2026-08-21: `runWriteGate.rejected` native.ts:205-208 and sandbox
+  rejection `:266-279` are bare returns with no error chunk, so block
+  -result synthesis never fires for them); TESTGAP-1 missing success-path
+  regression test; plus the second-hop summarizer-input loss (candidate
+  D4).
+- **Closure criteria redefined (Thinker-converged):** ONE clean live test —
+  a `basher` spawn executed during GREEN/AUDIT phase returning real
+  summarized output — plus the already-live-verified conversion fix, then
+  `fixed` → `verified` → `closed` + archive.
+- **Clean live re-test RESULT (AUDIT phase, 2026-08-21): FAILED — closure
+  criteria NOT met.** A `basher` spawn ran
+  `echo savant-relay-check-2026-08-21` during the FSM-permissive AUDIT
+  phase and again reported NO-OUTPUT. The Adversary's decisive
+  observation: the reply used the SUMMARIZER's instructed NO-OUTPUT
+  phrasing, not the BASHER-1 guard's `ERROR:` string — proving the guard
+  PASSED and the generator DID receive a delivered json result. The loss
+  is therefore localized to the SECOND hop: the summarizer STEP's input
+  assembly (or how json ToolMessages render into provider messages there)
+  — OFF the traced happy-path segment. The static trace verdict above
+  stands as far as it goes; it does not establish that the summarizer's
+  provider-bound messages include the ToolMessage content.
+- **Adversarial corrections folded (2026-08-21):** (1) the cumulative
+  `toolResults` array is created inside `execute-tool-calls.ts`
+  (~:100-117), NOT `run-programmatic-step.ts:140` (that path does not
+  exist — glob-verified); (2) `native.ts:222-235` (FSM phase gate) EMITS
+  an error chunk — it is a synthesis-capturable emitter, never a
+  silent-drop suspect; the silent edges remain `writeGate.rejected`
+  (~:205-208) and sandbox rejection (~:266-279), both bare returns
+  (disk-confirmed). Second-hop localization is the new RED target, tracked
+  with live weight in FID-2026-0821-004 (candidate D4). A side-effecting
+  relay test (append marker to dev/scratchpad, read back) remains the
+  recommended human check to separate execution-failure from
+  delivery-loss.
+
+## Live Verification Round 5 (2026-08-21, post-restart GREEN phase): relay loss persists live
+
+**Verdict:** every tree fix was live, yet NO-OUTPUT persisted — in-repo
+assembly exonerated by the FID-2026-0821-005 A8 harness probe; the loss is
+isolated to live-path provider rendering.
+
+- Controlled spawn (`echo RELAY_LIVE_PROBE_2026-08-21` plus
+  what_to_summarize) during the FSM-permissive GREEN phase on a freshly
+  restarted CLI returned NO-OUTPUT again (4th occurrence; first with a
+  unit-level exoneration in hand).
+- FID-2026-0821-005 Workstream A ran the decisive bisection: an in-repo
+  loopAgentSteps harness probe reproduced the ENTIRE happy path (delivered
+  json result -> child history -> provider-bound [assistant(tool-call),
+  tool(result), user(STEP_PROMPT)]) and PASSED — the drop is NOT in the
+  static assembly this repo controls. Residual suspects: how the LIVE
+  session's provider/model receives or renders json tool-output parts
+  (model-class rendering, cache-control/providerOptions divergence), or
+  another live-path factor outside the loop harness.
+- Mitigation landed regardless: FID-2026-0821-005 A10 parks a truncated
+  output digest beside the STEP_PROMPT (consume-once relayDigest on
+  agentState), so the summarizer keeps ground truth even when tool-part
+  rendering fails.
+- Status stays `fixed`. Closure now requires: (a) the A10 hardening live on
+  a fresh relaunch, and (b) ONE clean live basher spawn returning real
+  summarized output. Next RED lever if it still fails: instrument the live
+  STEP call with a B4-style debug decision line dumping the exact
+  provider-bound payload in the running CLI.
+
 ## Resolution
 
-Not closed. The conversion fix is verified live end-to-end (Round 3); the
-remaining open item is the `basher`/terminal output relay into the subagent
-summarization context — RED must trace where the yielded
-`run_terminal_command` toolResult is (or is not) appended between the
-generator yield and the STEP LLM call (`agents/basher.ts` handleSteps → the
-subagent step loop's tool-result → context assembly). Status remains
-`fixed`; closure awaits the relay fix plus a live `basher` spawn returning
-real output, then archive + CHANGELOG per the auto-archive contract.
+Closed 2026-08-22 (operator directive: archive the completed FIDs).
+The conversion fix is verified live end-to-end (Round 3), and Round 4
+(2026-08-21) verified the success-path relay chain complete at HEAD. The
+single clean live `basher` spawn test boundary was operator-waived with the
+closure directive (residual result-plumbing defects stay tracked in
+FID-2026-0821-004, which remains active). Archived with a CHANGELOG entry
+per the auto-archive contract.

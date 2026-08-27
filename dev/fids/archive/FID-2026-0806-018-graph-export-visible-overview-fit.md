@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0806-018-graph-export-visible-overview-fit.md`
 **ID:** FID-2026-0806-018
 **Severity:** medium
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-08-06
 **Author:** Savant 
 **YAGNI-Compliance:** Verified
@@ -598,7 +598,7 @@ collapsed overview compact by construction.
 - **Verified By:** Independent code review + headless-Chrome probe of the
   regenerated artifact (zoom 0.39, bbox 1,337 × 764, no drift, 0 errors).
 - **Commit/PR:** Pending operator push
-- **Archived:** Yes — moved to `dev/fids/archive/` on close (operator closeout)
+- **Archived:** 2026-08-09 — operator-accepted historical closure; moved to `dev/fids/archive/` and indexed in `dev/fids/archive/README.md`. Remaining review boundaries were waived and are not claimed passed.
 
 ## Lessons Learned
 
