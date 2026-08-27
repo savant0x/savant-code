@@ -21,7 +21,7 @@ commands:
   test: 'bun run test' # Root `test` script — chains all workspace unit suites, including design-systems. Matches the `type_check` gate coverage.
   # Mirrors the root `typecheck` script — all workspaces including the
   # design-systems package and packages/database + packages/knowledge-graph.
-  type_check: 'bun run --cwd=common typecheck && bun run --cwd=agents typecheck && bun run --cwd=sdk typecheck && bun run --cwd=cli typecheck && bun run --cwd=evals typecheck && bun run --cwd=packages/agent-runtime typecheck && bun run --cwd=packages/design-systems typecheck && bun run --cwd=packages/code-map typecheck && bun run --cwd=packages/database typecheck && bun run --cwd=packages/knowledge-graph typecheck && bun run --cwd=packages/llm-providers typecheck'
+  type_check: 'bun run --cwd=common typecheck && bun run --cwd=agents typecheck && bun run --cwd=sdk typecheck && bun run --cwd=cli typecheck && bun run --cwd=evals typecheck && bun run --cwd=packages/agent-runtime typecheck && bun run --cwd=packages/design-systems typecheck && bun run --cwd=packages/code-map typecheck && bun run --cwd=packages/database typecheck && bun run --cwd=packages/knowledge-graph typecheck && bun run --cwd=packages/llm-providers typecheck && bun run --cwd=desktop typecheck'
   lint: 'bun x eslint . --max-warnings 0' # zero-tolerance gate (matches .githooks/pre-push)
   lint_md: 'bun run lint:md'
   # Full-repo prettier check — LIVE gate since the 0.0.21 hardening session; active target 0.0.23
@@ -165,10 +165,33 @@ provenance:
 # Events: PreToolUse | PostToolUse | PostToolUseFailure | SessionStart |
 # SessionEnd | SubagentStart | SubagentStop | PreCompact | PostCompact | Stop |
 # Interrupt | Notification. `matcher` (optional) is a RegExp on the tool name.
-# Example:
+# Either `command` (external, spawned per event) or `action` (builtin
+# in-process sink — FID-2026-0824-012). Example:
 #   hooks:
 #     - event: PreToolUse
 #       command: node ./hooks/audit-write.js
 #       matcher: write_file|str_replace
 #       timeout: 10
-hooks: []
+hooks:
+  # FID-2026-0824-012 S1-B: deterministic tool-failure capture into
+  # dev/experiences/raw-traces.jsonl. In-process (no spawn per event),
+  # fail-open — a capture failure can never affect execution.
+  - event: PostToolUseFailure
+    action: experience-capture
+  # FID-2026-0824-012 S3-A: mechanical session-end review — refresh
+  # dev/agenda.md (≤50 lines, 1-3 items) from the experience ledger and
+  # print FID-routing candidates. Deterministic (no LLM); the full-fidelity
+  # Scribe synthesis runs on an explicit Orchestrator end-of-turn spawn.
+  - event: SessionEnd
+    command: bun scripts/session-end-review.ts
+    timeout: 60
+
+# ADVISORY — FID-2026-0824-018 erosion-guard documentation-of-defaults.
+# The evals erosion gate (evals/v2/src/erosion/gate.ts) owns these defaults;
+# keys are not parsed by the runtime config loader. Metrics are directional
+# vectors only (amendment A4): /skills trust stays the operator-only decision
+# point, and nothing here auto-blocks writes.
+erosion:
+  enabled: true
+  structural_threshold_pct: 5
+  verbosity_threshold_pct: 25

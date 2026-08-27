@@ -105,3 +105,21 @@ savant-export-*.html
 
 # Playwright and browser harness output — disposable local test artifacts.
 **/test-results/
+
+# Desktop shell build output (FID-2026-0820-009): Cargo target dir, Tauri
+# generated schemas, and compiled sidecar binaries are regenerable artifacts.
+desktop/src-tauri/target/
+desktop/src-tauri/gen/
+desktop/src-tauri/binaries/
+
+# Tauri updater minisign keypair (FID-2026-0820-011 escrow procedure): the
+# PRIVATE key must never enter the repository — a leaked key lets anyone
+# publish malicious updates to every installed client. The public key lives
+# inline in tauri.conf.json; these local files are operator escrow only.
+# Patterns cover every location `tauri signer generate -w <relative-path>`
+# may have landed the pair (repo root, desktop/, or nested).
+tauri-key.key
+tauri-key.key.pub
+**/tauri-key.key
+**/tauri-key.key.pub
+desktop/tauri-key.key.pub

@@ -20,6 +20,7 @@
   "files": [],
   "references": [
     { "path": "./common" },
+    { "path": "./desktop" },
     { "path": "./agents" },
     { "path": "./sdk" },
     { "path": "./cli" },

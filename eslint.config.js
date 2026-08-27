@@ -256,9 +256,11 @@ export default tseslint.config(
   // (cli/src, sdk/src, common/src, packages/*/src, agents) stay governed.
   {
     files: [
+      'desktop/scripts/**', // Sidecar build pipeline (FID-2026-0820-009): console is the output mechanism
       'evals/**',
       'scripts/**',
       '.agents/skills/**/scripts/**', // Skill tooling (FID-2026-0806-007): console is the output mechanism
+      '.agents/skills/**/templates/engine/**', // Skill browser engine templates (FID-2026-0823-001): console is a legitimate output mechanism there too
       'sdk/scripts/**',
       'sdk/test/**',
       'sdk/smoke-test-dist.ts',

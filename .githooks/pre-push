@@ -70,6 +70,25 @@ if [ "$bundle_status" -ne 0 ]; then
   exit "$bundle_status"
 fi
 
+# FID-2026-0823-009: structural verification-contract scan (C1+C2, no
+# execution). Active fixed/verified FIDs must carry a valid gates declaration
+# + receipt; the live re-run (C3) fires at the release gate.
+echo "🔍 pre-push: scanning FID verification receipts (fid:verify --check)..."
+bun run fid:verify --check
+fid_check_status=$?
+if [ "$fid_check_status" -ne 0 ]; then
+  echo "❌ pre-push: fixed/verified FIDs missing valid verification receipts — run \`bun run fid:verify <fid> --write\` before pushing (or use --no-verify)" >&2
+  exit "$fid_check_status"
+fi
+
+echo "🔍 pre-push: running Tier-1 governance smoke (zero-token, deterministic)..."
+bun run evals:smoke
+evals_smoke_status=$?
+if [ "$evals_smoke_status" -ne 0 ]; then
+  echo "❌ pre-push: Tier-1 governance smoke failed — push refused (or use --no-verify)" >&2
+  exit "$evals_smoke_status"
+fi
+
 echo "🔍 pre-push: running typecheck gate (protocol.config.yaml type_check — all workspaces)..."
 
 bun run typecheck
