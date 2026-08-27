@@ -134,6 +134,15 @@ export const orchestrationToolSafetyEntries: Partial<
 
   // Skills / meta
   skill: { effect: read, permission: allow, reason: 'Loads a skill module.' },
+  // FID-2026-0824-012 S2-B: agent skill authoring/versioning. Writes land in
+  // .agents/skills/.quarantine/ only (invisible until operator trust) and are
+  // restricted to Scribe + Orchestrator at the agent-definition level.
+  skill_manage: {
+    effect: write,
+    permission: allow,
+    reason:
+      'Authors/patches/versions skills into quarantine (operator trust boundary).',
+  },
   transition_phase: {
     effect: read,
     permission: allow,

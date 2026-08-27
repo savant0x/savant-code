@@ -76,6 +76,7 @@ export const toolNames = [
   'set_scaffold_complete',
   'sequentialthinking',
   'skill',
+  'skill_manage',
   'spawn_agents',
   'spawn_agent_inline',
   'str_replace',

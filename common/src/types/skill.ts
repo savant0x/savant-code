@@ -4,6 +4,8 @@ import {
   SKILL_NAME_MAX_LENGTH,
   SKILL_NAME_REGEX,
   SKILL_DESCRIPTION_MAX_LENGTH,
+  SKILL_VERSION_MAX_LENGTH,
+  SKILL_VERSION_REGEX,
 } from '../constants/skills'
 
 /**
@@ -26,6 +28,17 @@ export const SkillFrontmatterSchema = z.object({
   description: z.string().min(1).max(SKILL_DESCRIPTION_MAX_LENGTH),
   license: z.string().optional(),
   metadata: SkillMetadataSchema.optional(),
+  // FID-2026-0824-012 internal versioning: semver string; legacy skills
+  // without it default to 0.1.0 at load/manage time.
+  version: z
+    .string()
+    .max(SKILL_VERSION_MAX_LENGTH)
+    .regex(SKILL_VERSION_REGEX, 'Version must be semantic (e.g. 0.1.0)')
+    .optional(),
+  // FID-2026-0824-012: immutable skills may never be mutated by an agent
+  // (skill_manage + pre-write gate reject all mutations). Operator file edits
+  // remain allowed.
+  immutable: z.boolean().optional(),
 })
 
 export type SkillFrontmatter = z.infer<typeof SkillFrontmatterSchema>
@@ -42,6 +55,10 @@ export const SkillDefinitionSchema = z.object({
   license: z.string().optional(),
   /** Optional key-value metadata */
   metadata: SkillMetadataSchema.optional(),
+  /** Optional semantic version (FID-2026-0824-012). */
+  version: z.string().optional(),
+  /** Optional immutability flag (FID-2026-0824-012). */
+  immutable: z.boolean().optional(),
   /** Full SKILL.md content (including frontmatter) */
   content: z.string(),
   /** Source file path */

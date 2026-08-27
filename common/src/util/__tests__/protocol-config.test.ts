@@ -337,6 +337,32 @@ describe('readProtocolConfig', () => {
     ])
   })
 
+  test('parses builtin action hooks and drops unknown actions fail-safe', () => {
+    const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'protocol-config-'))
+    temporaryDirectories.push(cwd)
+    fs.mkdirSync(path.join(cwd, 'dev', 'fids'), { recursive: true })
+    fs.writeFileSync(
+      path.join(cwd, 'protocol.config.yaml'),
+      [
+        'hooks:',
+        '  - event: PostToolUseFailure',
+        '    action: experience-capture',
+        '  - event: SessionStart',
+        '    command: node scripts/hi.js',
+        '  - event: SessionEnd',
+        '    action: not-a-real-action',
+        '  - event: PostToolUse',
+        '',
+      ].join('\n'),
+    )
+
+    const hooks = readProtocolConfig(cwd).hooks
+    expect(hooks).toEqual([
+      { event: 'PostToolUseFailure', action: 'experience-capture' },
+      { event: 'SessionStart', command: 'node scripts/hi.js' },
+    ])
+  })
+
   test('missing or empty hooks block yields an empty list', () => {
     const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'protocol-config-'))
     temporaryDirectories.push(cwd)

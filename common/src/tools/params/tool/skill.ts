@@ -10,6 +10,15 @@ const endsAgentStep = true
 const inputSchema = z
   .object({
     name: z.string().min(1).describe('The name of the skill to load'),
+    // FID-2026-0824-012 S0-D progressive disclosure: Level-2 sub-file load.
+    // Omit to load the core SKILL.md (Level 0/1); provide to load one
+    // references/ file instead — context cost proportional to the answer.
+    path: z
+      .string()
+      .optional()
+      .describe(
+        'Optional references/ sub-path to load (e.g. details/checklist.md) instead of the core SKILL.md',
+      ),
   })
   .describe(
     'Load a skill by name to get its full instructions. Skills provide reusable behaviors and instructions.',

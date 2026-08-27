@@ -134,10 +134,31 @@ export type AgentActivity =
  * row. JSON-safe plain object; set by `prepareStepContext` and read by the CLI
  * heartbeat.
  */
+/**
+ * FID-2026-0821-001 P0-1: why auto-compact did NOT run when the context is
+ * at/above the trigger. Fixed string enum — no user data — safe across the
+ * SDK JSON snapshot boundary.
+ */
+export type CompactionBlockReason =
+  | 'circuit-breaker-open'
+  | 'cooldown'
+  | 'escalation-hold'
+  | 'pruner-unavailable'
+  | 'compaction-disabled'
+
 export type CompactionStatus = {
-  phase: 'idle' | 'compacting' | 'compacted' | 'pruned' | 'warning'
+  phase:
+    | 'idle'
+    | 'compacting'
+    | 'compacted'
+    | 'pruned'
+    | 'warning'
+    | 'ineffective'
+    | 'blocked'
   percentUsed?: number
   tokensSaved?: number
+  /** FID-2026-0821-001 P0-1: present iff phase === 'blocked'. */
+  blockReason?: CompactionBlockReason
 }
 
 /**
@@ -216,6 +237,13 @@ export type AgentState = {
   agentId: string
   agentType: AgentTemplateType | null
   agentContext: Record<string, Subgoal>
+  /**
+   * FID-2026-0821-005 A10: one-shot terminal-output excerpt parked by a
+   * programmatic handleSteps (basher) and injected beside the summarizer
+   * STEP_PROMPT by run-agent-step/step.ts. Consume-once — cleared after
+   * injection.
+   */
+  relayDigest?: string
   ancestorRunIds: string[]
   runId?: string
   subagents: AgentState[]
@@ -245,6 +273,22 @@ export type AgentState = {
    */
   compactionStatus?: CompactionStatus
   /**
+   * FID-2026-0824-027: per-run compaction accounting — event count and
+   * tokens reclaimed across all wired layers (micro / auto). Additive.
+   */
+  compactionMetrics?: { events: number; tokensSaved: number }
+  /**
+   * FID-2026-0824-023 stream-routing: bounded tail of the context-pruner's
+   * streamed summary text plus removed-region counts, captured at the inline
+   * spawn boundary so CompactionSignal surfaces WHAT was compacted.
+   */
+  lastCompactionReport?: {
+    summaryExcerpt: string
+    removedMessages: number
+    tokensSaved?: number
+    percentUsed?: number
+  }
+  /**
    * FID-2026-0814-001: wall-clock stamp of the last context-pruner
    * completion (set at the spawn-agent-inline history-replacement boundary).
    * Read by the serialized savant handleSteps to back off re-spawning the
@@ -263,6 +307,37 @@ export type AgentState = {
    */
   autoCompactDue?: boolean
   /**
+   * FID-2026-0825-001: one-shot stamp set by the serialized savant
+   * handleSteps when a manual /compact takes the compact-and-stop path (the
+   * run intentionally ends without any assistant turn). Consumed and cleared
+   * by loopAgentSteps at output assembly so getAgentOutput's
+   * zero-assistant-history error ("No response from agent") never fires for
+   * an intentional stop, and stale pre-compaction turns are never echoed as
+   * the /compact response. Plain boolean; wiped at loop start so a stale
+   * persisted value can never mask a genuine error on a later run.
+   */
+  compactAndStop?: boolean
+  /**
+   * FID-2026-0821-001 P0-1: set by `prepareStepContext` when the context is
+   * at/above the auto-compact trigger but compaction could not run (breaker
+   * open). Surfaced by the CLI so the UI shows WHY nothing happened instead
+   * of silently skipping (the hermes #62625 pattern).
+   */
+  compactionBlock?: { reason: CompactionBlockReason }
+  /**
+   * FID-2026-0821-001 P1-1: one-shot warning stamp. Set when the context
+   * first crosses the auto-compact trigger; cleared on a successful prune or
+   * when the count falls below trigger −10% hysteresis.
+   */
+  contextWarningIssuedAt?: number
+  /**
+   * FID-2026-0821-001 P2-1: last provider-reported usage, captured at stream
+   * finalize. `capturedAt` is a wall-clock stamp — freshness is judged
+   * against `lastPrunerCompletionAt` (also wall-clock): usage counts only
+   * when it arrived AFTER the most recent history replacement.
+   */
+  lastProviderUsage?: { inputTokens: number; capturedAt: number }
+  /**
    * FID-2026-0818-007 step 5: set true by the drive loop after a COMPLETE
    * archive — the FID boundary is the deterministic compaction *checkpoint*.
    * Consumed (and cleared) by the next step's `prepareStepContext`, which
@@ -271,6 +346,22 @@ export type AgentState = {
    * stale, never serialized to the SDK snapshot.
    */
   fidBoundaryDue?: boolean
+  /**
+   * FID-2026-0822-002: anti-runaway guard counters. Transient — refreshed
+   * every step by runAgentStep; plain values so they survive the SDK JSON
+   * snapshot boundary.
+   */
+  consecutiveToolErrorSteps?: number
+  lastToolCallSignature?: string
+  consecutiveIdenticalToolSignatures?: number
+  consecutiveThinkOnlyResponses?: number
+  /**
+   * FID-2026-0822-003: post-terminal continuation + turn-end block counters.
+   * Transient — refreshed every loop iteration; plain values so they survive
+   * the SDK JSON snapshot boundary.
+   */
+  postTerminalContinuations?: number
+  turnEndBlockCount?: number
   /**
    * ECHO Perfection Loop FSM phase. Starts at 'idle'. Transitions via transition_phase tool.
    * Tool gating: write_file/str_replace blocked unless phase is 'green'.
@@ -295,6 +386,15 @@ export type AgentState = {
    */
   activityIdleTimer?: ReturnType<typeof setTimeout>
 
+  /**
+   * FID-2026-0824-024 post-closure amendment: operator-configured
+   * result-digest caps from `protocol.config.yaml`
+   * `compression.digestHeadChars`/`digestTailChars`, stamped once per run by
+   * loop-context and injected into context-pruner spawn params at the inline
+   * spawn boundary (spawn-agent-inline.ts). Absent → the pruner keeps its
+   * baked defaults (512 head / 256 tail chars).
+   */
+  digestCaps?: { headChars?: number; tailChars?: number }
   /**
    * FID-2026-0725-085: Resolved context window for this model.
    * Set by the CLI via CTX-007 wiring. Used by handleSteps to determine

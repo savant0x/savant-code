@@ -25,6 +25,11 @@ export interface ProtocolCompressionConfig {
   /** FID-2026-0814-004 H-06: token floor below which micro-compact never
    *  clears (context pressure gate). Absent → no floor (count-only gate). */
   microCompactFloorTokens?: number
+  /** FID-2026-0824-024 post-closure amendment: result-digest head/tail char
+   *  caps for otherwise-unpreserved tool outputs in the context-pruner.
+   *  Absent → pruner baked defaults (512 head / 256 tail). */
+  digestHeadChars?: number
+  digestTailChars?: number
   /** P3c idle compaction — off by default. */
   idleCompaction: {
     enabled: boolean

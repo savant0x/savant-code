@@ -28,18 +28,32 @@ export const HOOK_EVENTS = [
 export type HookEvent = (typeof HOOK_EVENTS)[number]
 
 /**
+ * FID-2026-0824-012 — builtin in-process hook actions. A hook declares EITHER
+ * `command` (external, spawned per event) OR `action` (in-process sink, no
+ * spawn). Actions are allowlisted: an unknown action is dropped fail-safe at
+ * parse time, never executed.
+ */
+export const HOOK_BUILTIN_ACTIONS = ['experience-capture'] as const
+
+export type HookBuiltinAction = (typeof HOOK_BUILTIN_ACTIONS)[number]
+
+/**
  * One declared hook. `event` selects the lifecycle point; `matcher` (optional)
  * is a RegExp tested against the tool name for tool events; `command` is the
- * external command (tokenized; args are fine); `timeout` is seconds (default
- * 30); `cwd` overrides the working directory (default: project root); `env`
- * adds environment variables.
+ * external command (tokenized; args are fine); `action` selects a builtin
+ * in-process sink (no process spawn — required for high-frequency events like
+ * PostToolUseFailure, where spawning per event would be prohibitive); `timeout`
+ * is seconds (default 30); `cwd` overrides the working directory (default:
+ * project root); `env` adds environment variables.
  */
 export type HookConfig = {
   event: HookEvent
   /** RegExp tested against the tool name for tool events. */
   matcher?: string
   /** External command to run (tokenized, no shell). */
-  command: string
+  command?: string
+  /** Builtin in-process sink (mutually exclusive with `command`). */
+  action?: HookBuiltinAction
   /** Timeout in seconds (default 30). */
   timeout?: number
   /** Working directory (default: project root). */

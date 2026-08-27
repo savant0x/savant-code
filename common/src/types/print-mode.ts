@@ -112,40 +112,36 @@ export type PrintModeReasoningDelta = z.infer<
 // Fields marked required match AgentActivity's discriminated union shape;
 // optional fields stay optional. The runtime contract is that all writes go
 // through `setActivity()` which enforces the strict shape.
-const idleShape = { kind: 'idle' as const, since: 0 }
-const thinkingShape = { kind: 'thinking' as const, startedAt: 0 }
-const toolShape = { kind: 'tool' as const, toolName: '', startedAt: 0 }
-const subagentShape = { kind: 'subagent' as const, agentType: '', startedAt: 0 }
-const researchingShape = {
-  kind: 'researching' as const,
-  query: '',
-  startedAt: 0,
-  source: 'web' as const,
-}
-
+// FID-2026-0822-012 U7 drive-by fix: the five `kind` discriminators were
+// previously spread from raw const VALUES (`kind: 'idle' as const`), which
+// zod v4 rejects lazily — any parse through the enclosing union threw
+// "Invalid element at key \"kind\": expected a Zod schema". They are proper
+// z.literal schemas now; the inferred types are unchanged.
 export const printModeActivitySchema = z.object({
   type: z.literal('activity'),
   activity: z.union([
-    z.object({ ...idleShape, since: z.number() }),
+    z.object({ kind: z.literal('idle'), since: z.number() }),
     z.object({
-      ...thinkingShape,
+      kind: z.literal('thinking'),
       startedAt: z.number(),
       model: z.string().optional(),
     }),
     z.object({
-      ...toolShape,
+      kind: z.literal('tool'),
+      toolName: z.string(),
       startedAt: z.number(),
       target: z.string().optional(),
     }),
     z.object({
-      ...subagentShape,
+      kind: z.literal('subagent'),
+      agentType: z.string(),
       startedAt: z.number(),
       prompt: z.string().optional(),
     }),
     z.object({
-      ...researchingShape,
-      startedAt: z.number(),
+      kind: z.literal('researching'),
       query: z.string(),
+      startedAt: z.number(),
       source: z.enum(['web', 'docs']),
     }),
   ]),
@@ -195,6 +191,72 @@ export type PrintModeProvenanceReceipt = z.infer<
   typeof printModeProvenanceReceiptSchema
 >
 
+// FID-2026-0820-008 — desktop session gateway events. The gateway streams
+// these over the localhost WebSocket; they are the only genuinely-new members
+// of the PrintModeEvent family (every other design-doc event maps onto a
+// shipped printMode* schema).
+export const printModeApprovalRequestSchema = z.object({
+  type: z.literal('approval_request'),
+  approvalId: z.string(),
+  requestType: z.enum(['diff', 'plan', 'deferral']),
+  content: jsonValueSchema,
+})
+export type PrintModeApprovalRequest = z.infer<
+  typeof printModeApprovalRequestSchema
+>
+
+// FID-2026-0825-009: scoped FID lifecycle amendment. `projectId` is a
+// stable non-path identity supplied by the gateway so fleet consumers can
+// aggregate while project consumers can filter without guessing ownership.
+export const printModeFidQueueUpdateSchema = z.object({
+  type: z.literal('fid_update'),
+  fidId: z.string(),
+  projectId: z.string().min(1),
+  parentId: z.string().min(1).optional(),
+  status: z.enum([
+    'created',
+    'analyzed',
+    'fixed',
+    'verified',
+    'converged',
+    'closed',
+  ]),
+})
+export type PrintModeFidQueueUpdate = z.infer<
+  typeof printModeFidQueueUpdateSchema
+>
+
+// FID-2026-0820-010 Step 7 amendment: runtime compaction lifecycle status
+// crosses the same PrintModeEvent wire used by the desktop gateway. The
+// payload is a snapshot, not a command; consumers may render it without
+// mutating runtime state.
+export const printModeCompactionStatusSchema = z.object({
+  type: z.literal('compaction_status'),
+  phase: z.enum([
+    'idle',
+    'compacting',
+    'compacted',
+    'pruned',
+    'warning',
+    'ineffective',
+    'blocked',
+  ]),
+  percentUsed: z.number().optional(),
+  tokensSaved: z.number().optional(),
+  blockReason: z
+    .enum([
+      'circuit-breaker-open',
+      'cooldown',
+      'escalation-hold',
+      'pruner-unavailable',
+      'compaction-disabled',
+    ])
+    .optional(),
+})
+export type PrintModeCompactionStatus = z.infer<
+  typeof printModeCompactionStatusSchema
+>
+
 export const printModeEventSchema = z.discriminatedUnion('type', [
   printModeDownloadStatusSchema,
   printModeErrorSchema,
@@ -212,6 +274,10 @@ export const printModeEventSchema = z.discriminatedUnion('type', [
 
   printModeComplianceWarningSchema,
   printModeProvenanceReceiptSchema,
+
+  printModeApprovalRequestSchema,
+  printModeFidQueueUpdateSchema,
+  printModeCompactionStatusSchema,
 ])
 
 export type PrintModeEvent = z.infer<typeof printModeEventSchema>

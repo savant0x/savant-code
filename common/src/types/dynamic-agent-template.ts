@@ -161,6 +161,9 @@ export const DynamicAgentDefinitionSchema = z.object({
   // Input and output
   inputSchema: InputSchemaObjectSchema,
   includeMessageHistory: z.boolean().default(false),
+  // FID-2026-0824-026: optional — no default, so templates without the field
+  // keep AgentTemplate.requiresRawEvidence undefined rather than false.
+  requiresRawEvidence: z.boolean().optional(),
   inheritParentSystemPrompt: z.boolean().default(false),
   inheritParentModel: z.boolean().default(true),
   outputMode: z

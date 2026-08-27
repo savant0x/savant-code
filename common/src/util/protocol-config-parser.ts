@@ -1,7 +1,7 @@
-import { HOOK_EVENTS } from '../types/hooks'
+import { HOOK_BUILTIN_ACTIONS, HOOK_EVENTS } from '../types/hooks'
 
 import type { ProtocolContractConfig } from './protocol-config-types'
-import type { HookConfig, HookEvent } from '../types/hooks'
+import type { HookBuiltinAction, HookConfig, HookEvent } from '../types/hooks'
 
 export function parseProtocolContract(
   lines: string[],
@@ -32,11 +32,18 @@ export function parseHookConfigs(lines: string[]): HookConfig[] {
 
   const flush = () => {
     if (!current) return
+    // Valid = known event AND (an external command OR an allowlisted builtin
+    // action). Unknown actions / missing both are DROPPED fail-safe — a
+    // malformed hook can never brick a session or silently change semantics.
+    const hasCommand =
+      typeof current.command === 'string' && current.command.trim() !== ''
+    const hasValidAction =
+      current.action !== undefined &&
+      (HOOK_BUILTIN_ACTIONS as readonly string[]).includes(current.action)
     if (
       current.event !== undefined &&
       HOOK_EVENTS.includes(current.event as HookEvent) &&
-      typeof current.command === 'string' &&
-      current.command.trim() !== ''
+      (hasCommand || hasValidAction)
     ) {
       const timeout =
         typeof current.timeout === 'number' && current.timeout > 0
@@ -44,7 +51,9 @@ export function parseHookConfigs(lines: string[]): HookConfig[] {
           : undefined
       hooks.push({
         event: current.event as HookEvent,
-        command: current.command.trim(),
+        ...(hasCommand
+          ? { command: (current.command as string).trim() }
+          : { action: current.action as HookBuiltinAction }),
         ...(current.matcher !== undefined ? { matcher: current.matcher } : {}),
         ...(timeout !== undefined ? { timeout } : {}),
         ...(current.cwd !== undefined ? { cwd: current.cwd } : {}),
@@ -95,6 +104,8 @@ export function parseHookConfigs(lines: string[]): HookConfig[] {
       current.event = parseValue(raw) as HookEvent
     } else if (key === 'command') {
       current.command = parseValue(raw)
+    } else if (key === 'action') {
+      current.action = parseValue(raw) as HookBuiltinAction
     } else if (key === 'matcher') {
       current.matcher = parseValue(raw)
     } else if (key === 'timeout') {

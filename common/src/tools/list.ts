@@ -44,6 +44,7 @@ import { setMessagesParams } from './params/tool/set-messages'
 import { setOutputParams } from './params/tool/set-output'
 import { setScaffoldCompleteParams } from './params/tool/set-scaffold-complete'
 import { skillParams } from './params/tool/skill'
+import { skillManageParams } from './params/tool/skill-manage'
 import { spawnAgentInlineParams } from './params/tool/spawn-agent-inline'
 import { spawnAgentsParams } from './params/tool/spawn-agents'
 import { strReplaceParams } from './params/tool/str-replace'
@@ -98,6 +99,7 @@ export const toolParams = {
   set_output: setOutputParams,
   set_scaffold_complete: setScaffoldCompleteParams,
   skill: skillParams,
+  skill_manage: skillManageParams,
   spawn_agents: spawnAgentsParams,
   spawn_agent_inline: spawnAgentInlineParams,
   str_replace: strReplaceParams,

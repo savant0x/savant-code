@@ -157,6 +157,21 @@ export function readProtocolConfig(cwd: string): ProtocolConfig {
       if (microCompactFloorTokens !== undefined) {
         compression.microCompactFloorTokens = microCompactFloorTokens
       }
+      // FID-2026-0824-024 post-closure amendment: digest caps.
+      const digestHeadChars = parseYamlNumber(
+        compressionText,
+        'digestHeadChars',
+      )
+      if (digestHeadChars !== undefined) {
+        compression.digestHeadChars = digestHeadChars
+      }
+      const digestTailChars = parseYamlNumber(
+        compressionText,
+        'digestTailChars',
+      )
+      if (digestTailChars !== undefined) {
+        compression.digestTailChars = digestTailChars
+      }
       if (model !== undefined) {
         compression.model = model
       }

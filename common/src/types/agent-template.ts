@@ -153,7 +153,13 @@ export type AgentTemplate<
     prompt?: z.ZodSchema<P>
     params?: z.ZodSchema<T>
   }
-  includeMessageHistory: boolean
+includeMessageHistory: boolean
+  /**
+   * FID-2026-0824-026: when true, spawn-time splices raw tool results from
+   * the evidence spill over compaction sentinels so zero-tool audit agents
+   * verify against bytes instead of digests. Default false.
+   */
+  requiresRawEvidence?: boolean
   inheritParentSystemPrompt: boolean
   outputMode: 'last_message' | 'all_messages' | 'structured_output'
   outputSchema?: z.ZodTypeAny

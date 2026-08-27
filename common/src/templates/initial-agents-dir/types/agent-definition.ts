@@ -187,6 +187,13 @@ export interface AgentDefinition {
    */
   includeMessageHistory?: boolean
 
+  /**
+   * FID-2026-0824-026: when true, spawn-time splices raw tool results from
+   * the evidence spill over compaction sentinels so zero-tool audit agents
+   * verify against bytes instead of digests. Defaults to false.
+   */
+  requiresRawEvidence?: boolean
+
   /** Whether to inherit the parent agent's model instead of using this agent's own model.
    *
    * Defaults to true.
@@ -329,9 +336,30 @@ export interface AgentState {
    * (full context-pruner summarization), warning.
    */
   compactionStatus?: {
-    phase: 'idle' | 'compacting' | 'compacted' | 'pruned' | 'warning'
+    /**
+     * FID-2026-0821-001 P0-1/P0-2: extended with the runtime-emitted
+     * terminal phases. Structural twin of the canonical CompactionStatus in
+     * `common/src/types/session-state.ts` — this template file stays
+     * dependency-free by design, so keep the unions in sync when either
+     * side changes.
+     */
+    phase:
+      | 'idle'
+      | 'compacting'
+      | 'compacted'
+      | 'pruned'
+      | 'warning'
+      | 'ineffective'
+      | 'blocked'
     percentUsed?: number
     tokensSaved?: number
+    /** Present iff phase === 'blocked'. Twin of CompactionBlockReason. */
+    blockReason?:
+      | 'circuit-breaker-open'
+      | 'cooldown'
+      | 'escalation-hold'
+      | 'pruner-unavailable'
+      | 'compaction-disabled'
   }
 
   /**
@@ -349,6 +377,16 @@ export interface AgentState {
    * ratio arithmetic is only a fallback.
    */
   autoCompactDue?: boolean
+
+  /**
+   * FID-2026-0821-005 A10: one-shot terminal-output excerpt parked by this
+   * handleSteps and injected beside the summarizer STEP_PROMPT by
+   * run-agent-step/step.ts (consume-once). Structural twin of the canonical
+   * optional `relayDigest` in `common/src/types/session-state.ts` — this
+   * template file stays dependency-free by design, so keep both sides in
+   * sync when either changes.
+   */
+  relayDigest?: string
 }
 
 /**
