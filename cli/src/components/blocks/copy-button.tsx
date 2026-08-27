@@ -80,7 +80,9 @@ export const CopyButton = memo(function CopyButton({
       break
     case 'copied':
       displayIcon = '✓'
-      fg = theme.success ?? '#22c55e'
+      // FID-2026-0822-007: the hex fallback was dead code — success is
+      // always defined on ChatTheme.
+      fg = theme.success
       attributes = 0
       break
     case 'failed':

@@ -194,7 +194,11 @@ export const renderInlineTextHost = (
   }
 
   return (
-    <text key={key} style={{ wrapMode: 'word' }}>
+    // FID-2026-0822-009: flexShrink lets row-layout hosts (see
+    // renderSemanticBlock's compactInlineFlow paragraphs) shrink below
+    // max-content inside bounded parents (TrafficLightPanel interiors), so
+    // wrapMode 'word' engages instead of painting past the panel border.
+    <text key={key} style={{ wrapMode: 'word', flexShrink: 1 }}>
       {segments.map((segment, index) => (
         <span
           key={`${key}-segment-${index}`}

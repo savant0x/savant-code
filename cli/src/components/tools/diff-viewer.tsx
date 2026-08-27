@@ -6,11 +6,13 @@ import {
   blendHex,
   DIFF_ADD_FOREGROUND,
   DIFF_REMOVE_FOREGROUND,
+  formatDiffCounts,
   getDiffHeaderPath,
   NEON_GREEN,
   NEON_RED,
   parseDiffLines,
 } from '../../utils/diff-stats'
+import { TrafficLightPanel } from '../traffic-light-panel'
 
 import type { DiffLine } from '../../utils/diff-stats'
 
@@ -117,13 +119,14 @@ const DiffRow = memo(
 )
 
 /**
- * DiffViewer — framed, gutter-style diff renderer.
+ * DiffViewer — traffic-lights-chromed, gutter-style diff renderer.
  *
- * Redesign (FID-2026-0816-009): wraps the proven line-by-line renderer
- * (parseDiffLines + neon tinting) in a bordered container with a header strip
- * (file path + `+N −M` counts) and a dual old/new line-number + sign gutter.
- * Hunk headers render as tinted full-width bars; `diff --git`/`index`/`---`/
- * `+++` metadata rows render muted so the change content dominates.
+ * Redesign (FID-2026-0816-009) + chrome migration (FID-2026-0823-005): wraps
+ * the proven line-by-line renderer (parseDiffLines + neon tinting) in the
+ * shared TrafficLightPanel primitive with a header strip (file path +
+ * `+N -N` counts) and a dual old/new line-number + sign gutter. Hunk headers
+ * render as tinted full-width bars; `diff --git`/`index`/`---`/`+++`
+ * metadata rows render muted so the change content dominates.
  */
 export const DiffViewer = memo(({ diffText }: DiffViewerProps) => {
   const theme = useTheme()
@@ -156,21 +159,7 @@ export const DiffViewer = memo(({ diffText }: DiffViewerProps) => {
   }, [lines])
 
   return (
-    <box
-      style={{
-        flexDirection: 'column',
-        gap: 0,
-        width: '100%',
-        border: true,
-        borderStyle: 'rounded',
-        borderColor: theme.border,
-        backgroundColor: theme.surface,
-        paddingLeft: 1,
-        paddingRight: 1,
-        paddingTop: 0,
-        paddingBottom: 0,
-      }}
-    >
+    <TrafficLightPanel>
       <box
         style={{
           flexDirection: 'row',
@@ -184,7 +173,7 @@ export const DiffViewer = memo(({ diffText }: DiffViewerProps) => {
           </span>
         </text>
         <text style={{ wrapMode: 'none' }}>
-          <span fg={theme.muted}>{` +${added} \u2212${removed}`}</span>
+          <span fg={theme.muted}>{` ${formatDiffCounts(added, removed)}`}</span>
         </text>
       </box>
       {lines.map((line, index) => (
@@ -197,29 +186,6 @@ export const DiffViewer = memo(({ diffText }: DiffViewerProps) => {
           hunkBackground={hunkBackground}
         />
       ))}
-    </box>
+    </TrafficLightPanel>
   )
 })
-
-interface DiffStatsBarProps {
-  removed: number
-  added: number
-}
-
-/**
- * DiffStatsBar — the `[-N/+M]` add/remove counter (FID-2026-0804-010).
- *
- * Rendered in the CopyableBlock footer row, immediately left of the copy
- * button, so the edit section's bottom-right shows the change magnitude at a
- * glance. Muted comment foreground to match the edit-header styling.
- */
-export const DiffStatsBar = ({ removed, added }: DiffStatsBarProps) => {
-  const theme = useTheme()
-  return (
-    <text>
-      <span fg={theme.syntaxComment}>
-        [-{removed}/+{added}]
-      </span>
-    </text>
-  )
-}

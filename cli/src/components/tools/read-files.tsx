@@ -1,12 +1,12 @@
 import { TextAttributes } from '@opentui/core'
 
-import { SimpleToolCallItem } from './tool-call-item'
 import { defineToolComponent } from './types'
 import { useTheme } from '../../hooks/use-theme'
 import {
   isEnvTemplateFile,
   isSensitiveFile,
 } from '../../utils/create-run-config'
+import { TrafficLightPanel } from '../traffic-light-panel'
 
 import type { ToolRenderConfig } from './types'
 
@@ -54,8 +54,24 @@ function FilePathsDescription({ filePaths }: { filePaths: string[] }) {
 
 /**
  * UI component for read_files tool.
- * Displays file paths with labels for blocked/template files.
+ *
+ * FID-2026-0822-011: framed in the unified TrafficLightPanel chrome (was a
+ * bare SimpleToolCallItem). Displays file paths with labels for
+ * blocked/template files.
  */
+function FramedPaths({ filePaths }: { filePaths: string[] }) {
+  const theme = useTheme()
+
+  return (
+    <TrafficLightPanel>
+      <box style={{ flexDirection: 'column', gap: 0 }}>
+        <text fg={theme.muted}>Read</text>
+        <FilePathsDescription filePaths={filePaths} />
+      </box>
+    </TrafficLightPanel>
+  )
+}
+
 export const ReadFilesComponent = defineToolComponent({
   toolName: 'read_files',
 
@@ -74,24 +90,8 @@ export const ReadFilesComponent = defineToolComponent({
       return { content: null }
     }
 
-    // Check if any files need special labels
-    const hasSpecialFiles = filePaths.some(
-      (fp) => isSensitiveFile(fp) || isEnvTemplateFile(fp),
-    )
-
     return {
-      content: (
-        <SimpleToolCallItem
-          name="Read"
-          description={
-            hasSpecialFiles ? (
-              <FilePathsDescription filePaths={filePaths} />
-            ) : (
-              filePaths.join(', ')
-            )
-          }
-        />
-      ),
+      content: <FramedPaths filePaths={filePaths} />,
     }
   },
 })

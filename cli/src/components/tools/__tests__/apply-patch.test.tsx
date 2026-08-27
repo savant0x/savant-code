@@ -1,6 +1,9 @@
 import { describe, expect, test } from 'bun:test'
 import { renderToStaticMarkup } from 'react-dom/server'
 
+// ApplyPatchComponent renders DiffViewer → TrafficLightPanel, whose
+// TrafficLights hooks throw under static render without these inert stubs.
+import { mockOpentuiReactForStaticRender } from './helpers/mock-opentui-react-static'
 import { initializeThemeStore } from '../../../hooks/use-theme'
 import { chatThemes } from '../../../utils/theme-system'
 import { getToolComponent, renderToolComponent } from '../registry'
@@ -9,6 +12,7 @@ import type { ToolBlock } from '../types'
 import type { JSONValue } from '@savant-code/common/types/json'
 import type React from 'react'
 
+mockOpentuiReactForStaticRender()
 initializeThemeStore()
 
 const createToolBlock = (
@@ -77,7 +81,7 @@ describe('ApplyPatchComponent', () => {
     expect(markup).toContain('newLine')
   })
 
-  test('exposes the [-N/+M] footer counter from the diff counts (FID-2026-0804-010)', () => {
+  test('renders the +N -N count in the DiffViewer header strip, not the footer (FID-2026-0823-005)', () => {
     const toolBlock = createToolBlock({
       type: 'update_file',
       path: 'src/existing.ts',
@@ -90,14 +94,15 @@ describe('ApplyPatchComponent', () => {
       renderOptions,
     )
 
-    expect(result?.footerLeft).toBeDefined()
-    const footerMarkup = renderToStaticMarkup(
-      result?.footerLeft as React.ReactElement,
+    // The count lives in the DiffViewer header (top); no footer counter.
+    expect(result?.footerLeft).toBeUndefined()
+    const contentMarkup = renderToStaticMarkup(
+      result?.content as React.ReactElement,
     )
-    expect(footerMarkup).toContain('[-2/+3]')
+    expect(contentMarkup).toContain('+3 -2')
   })
 
-  test('create_file reports its additions (new-file diff is all + rows)', () => {
+  test('create_file renders no change counter (no diff body is shown)', () => {
     const toolBlock = createToolBlock({
       type: 'create_file',
       path: 'src/new-file.ts',
@@ -110,11 +115,14 @@ describe('ApplyPatchComponent', () => {
       renderOptions,
     )
 
-    expect(result?.footerLeft).toBeDefined()
-    const footerMarkup = renderToStaticMarkup(
-      result?.footerLeft as React.ReactElement,
+    // create_file renders the "Create" header only — no DiffViewer, so no
+    // `+N -N` count anywhere in the block.
+    expect(result?.footerLeft).toBeUndefined()
+    const contentMarkup = renderToStaticMarkup(
+      result?.content as React.ReactElement,
     )
-    expect(footerMarkup).toContain('[-0/+1]')
+    expect(contentMarkup).toContain('Create')
+    expect(contentMarkup).not.toContain('+1 -0')
   })
 
   test('renders delete_file operation', () => {
@@ -135,7 +143,7 @@ describe('ApplyPatchComponent', () => {
     const markup = renderToStaticMarkup(result?.content as React.ReactElement)
     expect(markup).toContain('Delete')
     expect(markup).toContain('src/remove-me.ts')
-    // delete_file carries no diff in the payload — no footer counter.
+    // delete_file carries no diff in the payload — no change counter.
     expect(result?.footerLeft).toBeUndefined()
   })
 })

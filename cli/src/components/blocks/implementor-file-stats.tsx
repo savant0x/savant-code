@@ -2,6 +2,7 @@ import { TextAttributes } from '@opentui/core'
 import { memo, useState } from 'react'
 
 import { useTheme } from '../../hooks/use-theme'
+import { formatDiffCountSide } from '../../utils/diff-stats'
 import {
   truncateWithEllipsis,
   type FileStats,
@@ -39,11 +40,15 @@ export const CompactFileStats = memo(
     // Calculate max string widths for alignment (so all bars meet at center axis)
     // Always include +0/-0 in width calculation since we always show them
     const maxAddedStrWidth = Math.max(
-      ...fileStats.map((f) => `+${f.stats.linesAdded}`.length),
+      ...fileStats.map(
+        (f) => formatDiffCountSide(f.stats.linesAdded, '+').length,
+      ),
       2, // Minimum "+0"
     )
     const maxRemovedStrWidth = Math.max(
-      ...fileStats.map((f) => `-${f.stats.linesRemoved}`.length),
+      ...fileStats.map(
+        (f) => formatDiffCountSide(f.stats.linesRemoved, '-').length,
+      ),
       2, // Minimum "-0"
     )
 
@@ -93,8 +98,10 @@ const CompactFileRow = memo(
     const [isHovered, setIsHovered] = useState(false)
 
     // Format numbers - always show counts, including +0 and -0
-    const addedStr = `+${file.stats.linesAdded}`
-    const removedStr = `-${file.stats.linesRemoved}`
+    // FID-2026-0823-005: sign+number text comes from the shared per-side
+    // formatter (byte-identical to the previous template literals).
+    const addedStr = formatDiffCountSide(file.stats.linesAdded, '+')
+    const removedStr = formatDiffCountSide(file.stats.linesRemoved, '-')
 
     // Full-width colored sections with numbers inside:
     // - Added section: green bar extending to center with +N in white (right-aligned)
@@ -158,12 +165,14 @@ const CompactFileRow = memo(
 
           {/* Bar visualization: full-width bars meeting at center with numbers inside */}
           <text style={{ flexShrink: 0, wrapMode: 'none' }}>
-            {/* Added section: muted gray-green bar with +N inside */}
-            <span fg={theme.foreground} bg="#3A5A3A">
+            {/* Added section: muted green bar with +N inside
+                (FID-2026-0822-007: theme.diffBarAdded) */}
+            <span fg={theme.foreground} bg={theme.diffBarAdded}>
               {addedContent}
             </span>
-            {/* Removed section: muted gray-red bar with -N inside */}
-            <span fg={theme.foreground} bg="#5A3A3A">
+            {/* Removed section: muted red bar with -N inside
+                (FID-2026-0822-007: theme.diffBarRemoved) */}
+            <span fg={theme.foreground} bg={theme.diffBarRemoved}>
               {removedContent}
             </span>
           </text>

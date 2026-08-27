@@ -1,9 +1,8 @@
 import { TextAttributes } from '@opentui/core'
 
-import { DiffStatsBar, DiffViewer } from './diff-viewer'
+import { DiffViewer } from './diff-viewer'
 import { defineToolComponent } from './types'
 import { useTheme } from '../../hooks/use-theme'
-import { parseDiffLines } from '../../utils/diff-stats'
 import {
   extractDiff,
   extractFilePath,
@@ -65,11 +64,8 @@ export const StrReplaceComponent = defineToolComponent({
     const showDiff = shouldShowEditDiff(toolBlock)
     const renderedDiff = showDiff ? (diff ?? '') : ''
 
-    // FID-2026-0804-010: `[-N/+M]` counter in the copy-button footer row.
-    // Hidden when no diff is rendered (e.g. create_file bodies or edits whose
-    // diff was suppressed) — a `[-0/+0]` receipt next to no diff is noise.
-    const { added, removed } = parseDiffLines(renderedDiff)
-
+    // The `+N -N` change count lives in the DiffViewer header strip (top of
+    // the traffic-light panel); no footer counter is rendered.
     return {
       content: (
         <EditBody
@@ -79,9 +75,6 @@ export const StrReplaceComponent = defineToolComponent({
           isCreate={isCreate}
         />
       ),
-      footerLeft: renderedDiff ? (
-        <DiffStatsBar removed={removed} added={added} />
-      ) : undefined,
     }
   },
 })

@@ -1,3 +1,4 @@
+import { AddMessageComponent } from './add-message'
 import { ApplyPatchComponent } from './apply-patch'
 import { CodeSearchComponent } from './code-search'
 import {
@@ -9,12 +10,15 @@ import {
 import { GlobComponent } from './glob'
 import { GravityIndexComponent } from './gravity-index'
 import { ListDirectoryComponent } from './list-directory'
+import { OutputResultComponent } from './output-result'
 import { ReadDocsComponent } from './read-docs'
 import { ReadFilesComponent } from './read-files'
 import { ReadSubtreeComponent } from './read-subtree'
 import { ReadURLComponent } from './read-url'
 import { RenderUIComponent } from './render-ui'
 import { RunTerminalCommandComponent } from './run-terminal-command'
+import { SequentialThinkingComponent } from './sequential-thinking'
+import { SetOutputComponent } from './set-output'
 import { SkillComponent } from './skill'
 import { StrReplaceComponent } from './str-replace'
 import { SuggestFollowupsComponent } from './suggest-followups'
@@ -71,6 +75,28 @@ const toolComponentRegistry = new Map<ToolName, ToolComponent>([
   ['propose_str_replace', StrReplaceComponent],
   ['propose_write_file', WriteFileComponent],
   [SkillComponent.toolName, SkillComponent],
+  [SequentialThinkingComponent.toolName, SequentialThinkingComponent],
+  [SetOutputComponent.toolName, SetOutputComponent],
+  // FID-2026-0822-011: tmux-cli narration calls previously fell through to
+  // the generic collapsed fallback (header-only, pre-chrome).
+  [AddMessageComponent.toolName, AddMessageComponent],
+  // FID-2026-0821-007: result-bearing tools share one renderer — their
+  // meaningful content is the formatted `output`, so they reuse
+  // OutputResultComponent (Law 13, mirroring run_readonly_command above).
+  [OutputResultComponent.toolName, OutputResultComponent], // deep_research
+  ['find_files', OutputResultComponent],
+  ['list_tables', OutputResultComponent],
+  ['describe_table', OutputResultComponent],
+  ['execute_query', OutputResultComponent],
+  ['analyze_query', OutputResultComponent],
+  ['lookup_agent_info', OutputResultComponent],
+  ['query_blast_radius', OutputResultComponent],
+  ['query_domain_clusters', OutputResultComponent],
+  ['query_node_edges', OutputResultComponent],
+  ['ponytail_debt', OutputResultComponent],
+  ['run_file_change_hooks', OutputResultComponent],
+  ['get_goal', OutputResultComponent],
+  ['browser_logs', OutputResultComponent],
 ])
 
 /**

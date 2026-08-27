@@ -15,6 +15,14 @@ export type ToolRenderOptions = {
   indentationOffset: number
   previewPrefix?: string
   labelWidth: number
+  /**
+   * FID-2026-0823-006: collapse state + toggle, supplied by ToolBranch for
+   * custom components that render their own expand/collapse chrome (mirrors
+   * the AgentBranchItem/ToolCallItem affordance). Optional — components that
+   * don't consume it are unaffected.
+   */
+  isCollapsed?: boolean
+  onToggle?: () => void
 }
 
 export type ToolRenderConfig = {

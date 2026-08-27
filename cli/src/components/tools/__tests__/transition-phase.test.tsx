@@ -3,7 +3,6 @@ import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 
 import { initializeThemeStore, useThemeStore } from '../../../hooks/use-theme'
-import { blendHex } from '../../../utils/diff-stats'
 import { glyph } from '../../../utils/glyphs'
 import { phaseMapping } from '../../savant-ui/echo/phase-info'
 import { TransitionPhaseComponent } from '../transition-phase'
@@ -33,26 +32,40 @@ function renderTransition(input: unknown): string {
   return renderToStaticMarkup(<>{config.content}</>)
 }
 
-describe('TransitionPhaseComponent (FID-2026-0816-009)', () => {
-  test('renders a full-width bordered bar with the SAVANT CODE header + phase label + reason', () => {
+describe('TransitionPhaseComponent (glow-frame redesign)', () => {
+  test('renders a rounded phase-colored frame with label + reason', () => {
     const markup = renderTransition({
       phase: 'green',
       reason: 'All issues fixed',
     })
 
-    expect(markup).toContain('SAVANT CODE')
-    expect(markup).toContain('PHASE → GREEN')
-    expect(markup).toContain('All issues fixed')
-    // Bordered phase-colored notification chrome, not a bare text row.
+// Rounded border panel chrome, border tinted with the phase color.
+    // Static markup cannot draw OpenTUI border glyphs; 'rounded' matches the
+    // serialized borderstyle attribute (smoke-level pin for the prop itself).
     expect(markup).toContain('rounded')
-    expect(markup).toContain('width')
+    expect(markup).toContain(theme.success)
+    expect(markup).toContain('PHASE // GREEN')
+    expect(markup).toContain('All issues fixed')
+    // Panel sits on the surface background — no inverted white-on-fill text.
+    expect(markup).toContain(theme.surface)
+  })
+
+  test('carries the dim SAVANT CODE brand on the same row as the label', () => {
+    const markup = renderTransition({ phase: 'green', reason: 'Fix applied' })
+    expect(markup).toContain('SAVANT CODE')
+    expect(markup).toContain(theme.muted)
   })
 
   test('renders the phase glyph from the shared phase mapping', () => {
     const markup = renderTransition({ phase: 'audit', reason: 'Verifying' })
     // phaseMapping('audit') → phaseAudit glyph; default tier is Unicode.
     expect(markup).toContain(glyph(phaseMapping('audit').glyph))
-    expect(markup).toContain('PHASE → AUDIT')
+    expect(markup).toContain('PHASE // AUDIT')
+  })
+
+  test('carries the phase color as light only (border + bold label)', () => {
+    const markup = renderTransition({ phase: 'green', reason: 'Fix applied' })
+    expect(markup).toContain(theme.success)
   })
 
   test('renders the adversarial phase with its own violet color (not RED)', () => {
@@ -60,40 +73,26 @@ describe('TransitionPhaseComponent (FID-2026-0816-009)', () => {
       phase: 'adversarial',
       reason: 'Re-audit',
     })
-    expect(markup).toContain('PHASE → ADVERSARIAL')
+    expect(markup).toContain('PHASE // ADVERSARIAL')
     expect(markup).toContain('Re-audit')
-    // ADVERSARIAL no longer shares RED's error color (FID-009 Loop 5).
+    // ADVERSARIAL does not share RED's error color (FID-009 Loop 5).
     expect(markup).toContain(theme.phaseAdversarial)
     expect(markup).not.toContain(theme.error)
   })
 
-  test('idle phase renders black text on the mid-tone gray fill', () => {
+  test('idle renders in the muted gray (dim signal, same structure)', () => {
     const markup = renderTransition({ phase: 'idle', reason: 'Waiting' })
-    expect(markup).toContain('PHASE → IDLE')
+    expect(markup).toContain('PHASE // IDLE')
     expect(markup).toContain('Waiting')
-    // Filled-chip design: the idle chip stays the approved mid-tone gray
-    // (86% muted) with BLACK text — never muted-gray text on gray, which was
-    // unreadable (operator feedback 2026-08-16).
-    const idleFill = blendHex(theme.muted, theme.background, 0.14)
-    expect(markup).toContain(idleFill)
-    expect(markup).toContain('#000000')
-    expect(markup).not.toContain(theme.muted)
+    // Light-only redesign: idle's muted gray is the border + label color.
+    expect(markup).toContain(theme.muted)
   })
 
-  test('red phase renders WHITE text on the solid error fill (black-on-red unreadable)', () => {
+  test('red phase uses the error color without inverted white-on-fill text', () => {
     const markup = renderTransition({ phase: 'red', reason: 'Issue found' })
-    expect(markup).toContain('PHASE → RED')
+    expect(markup).toContain('PHASE // RED')
     expect(markup).toContain(theme.error)
-    // Operator spec: the only fill that gets white text is the red one.
-    expect(markup).toContain('#ffffff')
-    expect(markup).not.toContain('#000000')
-  })
-
-  test('bright phase fills (green) render black text', () => {
-    const markup = renderTransition({ phase: 'green', reason: 'Fix applied' })
-    expect(markup).toContain('PHASE → GREEN')
-    expect(markup).toContain(theme.success)
-    expect(markup).toContain('#000000')
+    // Light-only redesign: no white/black inversion on fills.
     expect(markup).not.toContain('#ffffff')
   })
 
@@ -102,7 +101,7 @@ describe('TransitionPhaseComponent (FID-2026-0816-009)', () => {
       phase: 'self_correct',
       reason: 'Addressing audit findings',
     })
-    expect(markup).toContain('PHASE → FIX')
+    expect(markup).toContain('PHASE // FIX')
     expect(markup).not.toContain('SELF_CORRECT')
   })
 

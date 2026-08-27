@@ -162,6 +162,23 @@ export function getDiffHeaderPath(diffText: string): string {
   return ''
 }
 
+/**
+ * Signed count text for one side of an edit: `+5` / `-1`. Shared by the
+ * per-side bar sections (FID-2026-0823-005, operator decision 2026-08-23).
+ */
+export function formatDiffCountSide(count: number, sign: '+' | '-'): string {
+  return `${sign}${count}`
+}
+
+/**
+ * Canonical edit line-count text: `+5 -1` (added first, ASCII hyphen, no
+ * wrapper). Single source of truth for every edit line-count surface
+ * (FID-2026-0823-005).
+ */
+export function formatDiffCounts(added: number, removed: number): string {
+  return `${formatDiffCountSide(added, '+')} ${formatDiffCountSide(removed, '-')}`
+}
+
 function parseHex(color: string): { r: number; g: number; b: number } {
   let hex = color.trim().replace(/^#/, '')
   if (hex.length === 3) {

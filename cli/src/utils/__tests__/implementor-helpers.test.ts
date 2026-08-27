@@ -252,6 +252,36 @@ describe('extractDiff', () => {
     const diff = extractDiff(block)
     expect(diff).toBe('+ line1\n+ line2')
   })
+
+  // FID-2026-0822-008: the generic input.content fallback must route through
+  // constructDiffFromWriteFile so content-shaped payloads classify as
+  // additions (correct +N -0 counts) instead of context rows that parse as
+  // a zero-change receipt (+0 -0).
+  test('constructs sign-prefixed diff from generic input.content fallback', () => {
+    const block: ToolContentBlock = {
+      type: 'tool',
+      toolCallId: 'test-1',
+      toolName: 'str_replace',
+      input: { content: 'plain line one\nplain line two' },
+      output: 'message: String replace applied successfully.',
+    }
+    const diff = extractDiff(block)
+    expect(diff).toBe('+ plain line one\n+ plain line two')
+  })
+
+  test('generic content fallback yields nonzero parseDiffLines counts', () => {
+    const block: ToolContentBlock = {
+      type: 'tool',
+      toolCallId: 'test-1',
+      toolName: 'write_file',
+      input: { content: 'alpha\nbeta\ngamma' },
+      output: 'message: Overwrote file successfully.',
+    }
+    const diff = extractDiff(block)
+    const stats = parseDiffStats(diff ?? '')
+    expect(stats.linesAdded).toBe(3)
+    expect(stats.linesRemoved).toBe(0)
+  })
 })
 
 describe('parseDiffStats', () => {

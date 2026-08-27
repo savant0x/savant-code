@@ -143,9 +143,19 @@ export function extractDiff(toolBlock: ToolContentBlock): string | null {
     return constructDiffFromWriteFile(input.content)
   }
 
-  // Fallback: get from input.content (for other tools)
+  // FID-2026-0822-008: route the raw-content fallback through the existing
+  // write-file constructor so content-shaped payloads classify as
+  // additions (correct +N -0 counts, tinted rows) instead of context rows
+  // that parse as a zero-change receipt (`+0 -0`). Already-signed diff
+  // payloads (e.g. `{ type: 'patch', content: '- old\n+ new' }`) pass
+  // through unchanged; space-prefixed signs are NOT treated as a diff
+  // (they parse as context too — the FID-2026-0822-008 reproduced shape).
   if (input.content !== undefined && typeof input.content === 'string') {
-    return input.content
+    const content = input.content
+    const hasSignedDiffLines = content
+      .split('\n')
+      .some((line) => /^[+\-@]|^(diff |index |--- |\+\+\+ )/.test(line))
+    return hasSignedDiffLines ? content : constructDiffFromWriteFile(content)
   }
 
   return null

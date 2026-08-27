@@ -5,10 +5,10 @@ import { useTheme } from '../../hooks/use-theme'
 import { useWhyDidYouUpdateById } from '../../hooks/use-why-did-you-update'
 import { getCliEnv } from '../../utils/env'
 import { MAX_COLLAPSED_LINES, truncateToLines } from '../../utils/strings'
-import { BORDER_CHARS } from '../../utils/ui-constants'
 import { Button } from '../button'
 import { CollapseButton } from '../collapse-button'
 import { ShimmerText } from '../shimmer-text'
+import { TrafficLights } from '../traffic-lights'
 import { renderExpandedContent } from './block-helpers'
 
 interface AgentBranchItemProps {
@@ -55,7 +55,6 @@ export const AgentBranchItem = memo((props: AgentBranchItemProps) => {
   }
 
   const isExpanded = !isCollapsed
-  const toggleFrameColor = isExpanded ? theme.secondary : theme.muted
   const toggleIconColor = isStreaming ? theme.primary : theme.foreground
   const bulletChar = '• '
   const toggleIndicator = onToggle ? (isCollapsed ? '▸ ' : '▾ ') : ''
@@ -80,14 +79,19 @@ export const AgentBranchItem = memo((props: AgentBranchItemProps) => {
         width: '100%',
       }}
     >
+      {/* FID-2026-0822-006: frame re-skinned to the unified TrafficLightPanel
+          chrome language — rounded border on theme.border over the surface
+          background, matching every panel in the transcript. Collapse and
+          streaming UX are unchanged (chevron, status, shimmer preserved);
+          state signaling stays on the icon color + bold + status text. */}
       <box
         border
-        borderStyle="single"
-        borderColor={toggleFrameColor}
-        customBorderChars={BORDER_CHARS}
+        borderStyle="rounded"
+        borderColor={theme.border}
         style={{
           flexDirection: 'column',
           gap: 0,
+          backgroundColor: theme.surface,
           paddingLeft: 0,
           paddingRight: 0,
           paddingTop: 0,
@@ -99,6 +103,7 @@ export const AgentBranchItem = memo((props: AgentBranchItemProps) => {
           style={{
             flexDirection: 'row',
             alignItems: 'center',
+            justifyContent: 'space-between',
             paddingLeft: 1,
             paddingRight: 1,
             paddingTop: 0,
@@ -139,6 +144,11 @@ export const AgentBranchItem = memo((props: AgentBranchItemProps) => {
                 {` ${statusText}`}
               </text>
             ) : null}
+          </box>
+          {/* Compact chrome lights — right-aligned like every panel title
+              bar (FID-2026-0822-006 unification). */}
+          <box selectable={false} style={{ flexShrink: 0 }}>
+            <TrafficLights />
           </box>
         </Button>
 
@@ -181,10 +191,10 @@ export const AgentBranchItem = memo((props: AgentBranchItemProps) => {
                   marginBottom: children ? 1 : 0,
                 }}
               >
-                <box
+<box
                   style={{
                     width: 1,
-                    backgroundColor: theme.aiLine,
+                    backgroundColor: theme.primary,
                     marginTop: 0,
                     marginBottom: 0,
                   }}

@@ -2,12 +2,15 @@ import { describe, expect, test } from 'bun:test'
 import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 
-import { initializeThemeStore } from '../../../hooks/use-theme'
+// FID-2026-0822-011: ReadFilesComponent renders in the TrafficLightPanel
+// chrome, whose hooks throw under static render without these inert stubs
+// (mirrors read-files.test.tsx).
+import { mockOpentuiReactForStaticRender } from './helpers/mock-opentui-react-static'
+import { initializeThemeStore, useThemeStore } from '../../../hooks/use-theme'
 import { ReadFilesComponent } from '../read-files'
 import { SimpleToolCallItem } from '../tool-call-item'
 
-import type { ChatTheme } from '../../../types/theme-system'
-
+mockOpentuiReactForStaticRender()
 initializeThemeStore()
 
 describe('SimpleToolCallItem', () => {
@@ -52,7 +55,7 @@ describe('SimpleToolCallItem', () => {
         toolCallId: 'read-files-host-test',
         input: { paths: ['.env', 'example.env'] },
       },
-      {} as ChatTheme,
+      useThemeStore.getState().theme,
       {
         availableWidth: 80,
         indentationOffset: 0,
@@ -61,13 +64,13 @@ describe('SimpleToolCallItem', () => {
     )
 
     const markup = renderToStaticMarkup(<>{result.content}</>)
-    const richDescriptionBox = markup.match(
-      /<box style="flex-direction:row;flex-shrink:1">([\s\S]*?)<\/box>/,
-    )?.[1]
 
-    expect(richDescriptionBox).toBeDefined()
-    expect(richDescriptionBox).toMatch(/^<text(?:\s[^>]*)?>/)
-    expect(richDescriptionBox).toContain('wrap-mode:word')
-    expect(richDescriptionBox).toContain('(blocked)')
+    // FID-2026-0822-011 framed chrome: the panel carries the Read label and
+    // the word-wrapped path description with the (blocked) label.
+    expect(markup).toContain('Read')
+    expect(markup).toContain('wrap-mode:word')
+    expect(markup).toContain('(blocked)')
+    expect(markup).toContain('.env')
+    expect(markup).toContain('example.env')
   })
 })

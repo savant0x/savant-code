@@ -2,11 +2,14 @@ import { TextAttributes } from '@opentui/core'
 import React, { memo, type ReactNode } from 'react'
 
 import { Button } from './button'
+import {
+  TRAFFIC_PANEL_WIDTH_ALLOWANCE,
+  TrafficLightPanel,
+} from './traffic-light-panel'
 import { useTerminalDimensions } from '../hooks/use-terminal-dimensions'
 import { useTheme } from '../hooks/use-theme'
 import { useTypewriter } from '../hooks/use-typewriter'
 import { getLastNVisualLines } from '../utils/text-layout'
-import { Panel } from './savant-ui/primitives/panel'
 
 import type { ThinkingCollapseState } from '../types/chat'
 
@@ -45,12 +48,25 @@ export const Thinking = memo(
     const width = Math.max(10, availableWidth ?? contentMaxWidth)
     // Normalize content to single line for consistent preview (but preserve in expanded mode)
     const normalizedContent = displayedContent.replace(/\n+/g, ' ').trim()
+    // FID-2026-0822-010: the preview wraps its lines INSIDE the
+    // TrafficLightPanel chrome, which consumes 4 horizontal columns around
+    // its content. Subtract that allowance before wrapping (same discipline
+    // as the framed tool renderers) or the pre-wrapped rows run flush
+    // against the border glyph and words end mid-word against it (`FSM is
+    // b│`, `suggest_follo│` — live captures fid-011-smoke/s3,s11). The
+    // expanded path wraps natively (wrapMode:'word' at the box width) and
+    // does not need the deduction.
+    const previewTextWidth = Math.max(1, width - TRAFFIC_PANEL_WIDTH_ALLOWANCE)
     // Account for "..." prefix (3 chars) when calculating line widths
-    const effectiveWidth = width - 3
+    const effectiveWidth = Math.max(1, previewTextWidth - 3)
     const { lines, hasMore } = getLastNVisualLines(
       normalizedContent,
       effectiveWidth,
       PREVIEW_LINE_COUNT,
+      // FID-2026-0822-010: getLastNVisualLines char-splits oversize tokens
+      // (long URLs, paths); trim those rows to a word boundary with a
+      // visible ellipsis marker so no word is ever clipped mid-word.
+      { ellipsizeMidWordCuts: true },
     )
     // In expanded mode, preserve original line breaks for proper markdown rendering
     const expandedContent = displayedContent.replace(/\n\n+/g, '\n\n').trim()
@@ -66,8 +82,11 @@ export const Thinking = memo(
           ? '• '
           : '▸ '
 
+    // FID-2026-0822-010: reasoning panels speak the unified
+    // TrafficLightPanel chrome language (bordered surface panel + glowing
+    // title bar) instead of the bare frameless layout.
     return (
-      <Panel border="none" padding={0} flexDirection="column" gap={0}>
+      <TrafficLightPanel>
         <Button
           style={{
             flexDirection: 'column',
@@ -106,7 +125,7 @@ export const Thinking = memo(
             </box>
           )}
         </Button>
-      </Panel>
+      </TrafficLightPanel>
     )
   },
 )

@@ -1,10 +1,9 @@
 import { TextAttributes } from '@opentui/core'
 import { safeParseJSONObject } from '@savant-code/common/util/type-narrowing'
 
-import { DiffStatsBar, DiffViewer } from './diff-viewer'
+import { DiffViewer } from './diff-viewer'
 import { defineToolComponent } from './types'
 import { useTheme } from '../../hooks/use-theme'
-import { parseDiffLines } from '../../utils/diff-stats'
 
 import type { ToolRenderConfig } from './types'
 
@@ -91,26 +90,14 @@ export const ApplyPatchComponent = defineToolComponent({
       return { content: null }
     }
 
-    // FID-2026-0804-010: `[-N/+M]` counter shown in the copy-button footer row
-    // (only real content lines count — `+++`/`---` headers and `@@` hunks are
-    // excluded by parseDiffLines). create_file's diff is all `+` rows so it
-    // reports its additions; delete_file carries no diff in the payload, so no
-    // counter is shown.
-    const { added, removed } =
-      operation.type === 'delete_file'
-        ? { added: 0, removed: 0 }
-        : parseDiffLines(operation.diff)
-
+    // The `+N -N` change count lives in the DiffViewer header strip (top of
+    // the traffic-light panel); no footer counter is rendered.
     return {
       content: (
         <box style={{ flexDirection: 'column', gap: 0, width: '100%' }}>
           <PatchOperationItem operation={operation} />
         </box>
       ),
-      footerLeft:
-        operation.type === 'delete_file' ? undefined : (
-          <DiffStatsBar removed={removed} added={added} />
-        ),
     }
   },
 })

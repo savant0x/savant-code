@@ -7,7 +7,7 @@ import { useTheme } from '../../hooks/use-theme'
 import { useChatStore } from '../../state/chat-store'
 import { shouldCollapseToolByDefault } from '../../utils/constants'
 import { getToolDisplayInfo } from '../../utils/savant-code-client'
-import { renderToolComponent } from '../tools/registry'
+import { getToolComponent, renderToolComponent } from '../tools/registry'
 import { ToolCallItem } from '../tools/tool-call-item'
 
 import type { ContentBlock } from '../../types/chat'
@@ -40,21 +40,34 @@ export const ToolBranch = memo(
 
     const displayInfo = getToolDisplayInfo(toolBlock.toolName)
 
+    // Tools without a registered component (fallback rendering) should be
+    // collapsed by default. Resolved from registry membership (not render
+    // success) so the same `isCollapsed` can feed both the custom-component
+    // options below and the generic ToolCallItem fallback.
+    const hasRegisteredComponent =
+      getToolComponent(toolBlock.toolName) !== undefined
+    const isCollapsed =
+      toolBlock.isCollapsed ??
+      (hasRegisteredComponent
+        ? shouldCollapseToolByDefault(toolBlock.toolName)
+        : true)
+
+    const handleToggle = useCallback(() => {
+      onToggleCollapsed(toolBlock.toolCallId)
+    }, [onToggleCollapsed, toolBlock.toolCallId])
+
     // Check if there's a registered custom component for this tool
     const toolRenderConfig = renderToolComponent(toolBlock, theme, {
       availableWidth,
       indentationOffset: 0,
       previewPrefix: '',
       labelWidth: 0,
+      // FID-2026-0823-006: hand the block's collapse state + toggle to
+      // custom components so they can render their own expand/collapse
+      // chrome (e.g. the compact write_file summary).
+      isCollapsed,
+      onToggle: handleToggle,
     })
-
-    // Tools without a registered component (fallback rendering) should be collapsed by default
-    const hasRegisteredComponent = toolRenderConfig !== undefined
-    const isCollapsed =
-      toolBlock.isCollapsed ??
-      (hasRegisteredComponent
-        ? shouldCollapseToolByDefault(toolBlock.toolName)
-        : true)
 
     const inputContent = `\`\`\`json\n${JSON.stringify(toolBlock.input, null, 2)}\n\`\`\``
     const codeBlockLang =
@@ -128,10 +141,6 @@ export const ToolBranch = memo(
     })
 
     const headerName = displayInfo.name
-
-    const handleToggle = useCallback(() => {
-      onToggleCollapsed(toolBlock.toolCallId)
-    }, [onToggleCollapsed, toolBlock.toolCallId])
 
     const getCopyText = useCallback(() => {
       return `[Tool: ${toolBlock.toolName}]\nInput:\n${JSON.stringify(toolBlock.input, null, 2)}\n\nOutput:\n${toolBlock.output ?? '(no output)'}`

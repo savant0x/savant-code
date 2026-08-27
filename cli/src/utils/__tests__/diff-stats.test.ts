@@ -4,6 +4,8 @@ import {
   blendHex,
   DIFF_ADD_FOREGROUND,
   DIFF_REMOVE_FOREGROUND,
+  formatDiffCounts,
+  formatDiffCountSide,
   getDiffHeaderPath,
   NEON_GREEN,
   NEON_RED,
@@ -46,7 +48,7 @@ describe('parseDiffLines', () => {
     expect(lines[8].kind).toBe('add')
   })
 
-  test('counts [-5/+20] from a large edit', () => {
+  test('counts a large edit (5 removed / 20 added)', () => {
     const removedLines = Array.from({ length: 5 }, (_, i) => `-old${i}`)
     const addedLines = Array.from({ length: 20 }, (_, i) => `+new${i}`)
     const diff = ['@@ -1,5 +1,20 @@', ...removedLines, ...addedLines].join('\n')
@@ -251,5 +253,27 @@ describe('relativeLuminance', () => {
   test('malformed input degrades to black (0)', () => {
     expect(relativeLuminance('nope')).toBe(0)
     expect(relativeLuminance('#12345')).toBe(0)
+  })
+})
+
+describe('formatDiffCountSide + formatDiffCounts (FID-2026-0823-005)', () => {
+  test('formatDiffCountSide emits the signed count text', () => {
+    expect(formatDiffCountSide(5, '+')).toBe('+5')
+    expect(formatDiffCountSide(1, '-')).toBe('-1')
+    expect(formatDiffCountSide(0, '+')).toBe('+0')
+    expect(formatDiffCountSide(0, '-')).toBe('-0')
+  })
+
+  test('formatDiffCounts emits +N -N (added first, ASCII hyphen, no wrapper)', () => {
+    expect(formatDiffCounts(20, 5)).toBe('+20 -5')
+    expect(formatDiffCounts(0, 0)).toBe('+0 -0')
+    expect(formatDiffCounts(1, 0)).toBe('+1 -0')
+    expect(formatDiffCounts(0, 3)).toBe('+0 -3')
+  })
+
+  test('pair delegates to the per-side helper (one concatenation site)', () => {
+    expect(formatDiffCounts(3, 2)).toBe(
+      `${formatDiffCountSide(3, '+')} ${formatDiffCountSide(2, '-')}`,
+    )
   })
 })

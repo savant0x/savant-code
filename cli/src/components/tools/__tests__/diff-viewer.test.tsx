@@ -2,15 +2,18 @@ import { describe, expect, test } from 'bun:test'
 import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 
+// TrafficLightPanel mounts TrafficLights whose hooks throw under static
+// render without these inert @opentui/react stubs.
+import { mockOpentuiReactForStaticRender } from './helpers/mock-opentui-react-static'
 import { initializeThemeStore, useThemeStore } from '../../../hooks/use-theme'
 import { blendHex, NEON_GREEN, NEON_RED } from '../../../utils/diff-stats'
-import { CopyableBlock } from '../../blocks/copyable-block'
-import { DiffStatsBar, DiffViewer } from '../diff-viewer'
+import { DiffViewer } from '../diff-viewer'
 
+mockOpentuiReactForStaticRender()
 initializeThemeStore()
 
 describe('DiffViewer (FID-2026-0816-009 redesign)', () => {
-  test('frames the diff with a header strip (file path + +N −N counts)', () => {
+  test('frames the diff in traffic-lights chrome with a header strip (file path + +N -N counts)', () => {
     const diff = [
       'diff --git a/src/app.ts b/src/app.ts',
       '@@ -1,3 +1,3 @@',
@@ -21,9 +24,11 @@ describe('DiffViewer (FID-2026-0816-009 redesign)', () => {
 
     const markup = renderToStaticMarkup(<DiffViewer diffText={diff} />)
 
+    // Traffic-light title bar (shared TrafficLightPanel chrome).
+    expect(markup).toContain('●')
     // Header strip: file path (extracted from diff --git b/ side) + counts.
     expect(markup).toContain('src/app.ts')
-    expect(markup).toContain('+1 −1')
+    expect(markup).toContain('+1 -1')
     // Muted metadata row keeps the raw header line visible.
     expect(markup).toContain('diff --git')
     // Hunk row preserved as a bar.
@@ -78,39 +83,5 @@ describe('DiffViewer (FID-2026-0816-009 redesign)', () => {
 
     expect(markup).toContain('EDIT')
     expect(markup).not.toContain('>diff<')
-  })
-})
-
-describe('DiffStatsBar (FID-2026-0804-010)', () => {
-  test('renders the [-N/+M] counter with removed first', () => {
-    const markup = renderToStaticMarkup(<DiffStatsBar removed={5} added={20} />)
-    expect(markup).toContain('[-5/+20]')
-  })
-
-  test('renders zero/zero', () => {
-    const markup = renderToStaticMarkup(<DiffStatsBar removed={0} added={0} />)
-    expect(markup).toContain('[-0/+0]')
-  })
-
-  test('sits immediately left of the copy button in the CopyableBlock footer row', () => {
-    const markup = renderToStaticMarkup(
-      <CopyableBlock
-        getCopyText={() => 'body text'}
-        footerLeft={<DiffStatsBar removed={2} added={3} />}
-      >
-        <text>diff body</text>
-      </CopyableBlock>,
-    )
-
-    const bodyIndex = markup.indexOf('diff body')
-    const statsIndex = markup.indexOf('[-2/+3]')
-    const copyIndex = markup.indexOf('⎘')
-
-    expect(bodyIndex).toBeGreaterThan(-1)
-    expect(statsIndex).toBeGreaterThan(-1)
-    expect(copyIndex).toBeGreaterThan(-1)
-    // Same footer row: body first, counter next, copy button last.
-    expect(bodyIndex).toBeLessThan(statsIndex)
-    expect(statsIndex).toBeLessThan(copyIndex)
   })
 })
