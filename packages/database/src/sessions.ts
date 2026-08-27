@@ -3,11 +3,17 @@ import crypto from 'crypto'
 import { parseStoredJson, prepare, requireRow } from './sqlite'
 
 // Types
+export type SessionScopeType = 'project' | 'global'
+
 export interface Session {
   id: string
   chat_id: string
   agent_id: string
   selected_model: string
+  scope_type: SessionScopeType
+  scope_id: string
+  unread: boolean
+  pinned: boolean
   session_state: Record<string, unknown>
   status: string
   created_at: string
@@ -42,11 +48,21 @@ export function createSession(
   agentId: string,
   sessionState: Record<string, unknown>,
   selectedModel: string = '',
+  scopeType: SessionScopeType = 'project',
+  scopeId: string = chatId,
 ): Session {
   const id = crypto.randomUUID()
   const stmt = prepare(`
-    INSERT INTO sessions (id, chat_id, agent_id, session_state, selected_model)
-    VALUES (?, ?, ?, ?, ?)
+    INSERT INTO sessions (
+      id,
+      chat_id,
+      agent_id,
+      session_state,
+      selected_model,
+      scope_type,
+      scope_id
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?)
   `)
   stmt.run(
     id,
@@ -54,19 +70,25 @@ export function createSession(
     agentId,
     stringifySessionState(sessionState),
     selectedModel,
+    scopeType,
+    scopeId,
   )
   return requireRow(getSession(id), `read back session ${id} after insert`)
+}
+
+function mapSession(row: Record<string, unknown>): Session {
+  return {
+    ...row,
+    unread: Boolean(row.unread),
+    pinned: Boolean(row.pinned),
+    session_state: parseStoredJson(row.session_state, {}),
+  } as Session
 }
 
 export function getSession(id: string): Session | null {
   const stmt = prepare('SELECT * FROM sessions WHERE id = ?')
   const row = stmt.get(id) as Record<string, unknown> | null
-  if (row) {
-    return {
-      ...row,
-      session_state: parseStoredJson(row.session_state, {}),
-    } as Session
-  }
+  if (row) return mapSession(row)
   return null
 }
 
@@ -85,15 +107,60 @@ export function updateSession(
 // FID-2026-0803-002 DB-2: `created_at` is second-granularity, so every
 // ordering query gets a deterministic `rowid` tiebreaker — same-second rows
 // now return in insertion order instead of an unspecified order.
+export function getSessionsByScope(
+  scopeType: SessionScopeType,
+  scopeId: string,
+): Session[] {
+  const stmt = prepare(
+    'SELECT * FROM sessions WHERE scope_type = ? AND scope_id = ? ORDER BY created_at DESC, rowid DESC',
+  )
+  const rows = stmt.all(scopeType, scopeId) as Record<string, unknown>[]
+  return rows.map(mapSession)
+}
+
+export function updateSessionScope(
+  sessionId: string,
+  scopeType: SessionScopeType,
+  scopeId: string,
+): boolean {
+  const stmt = prepare(`
+    UPDATE sessions
+    SET scope_type = ?, scope_id = ?, updated_at = CURRENT_TIMESTAMP
+    WHERE id = ?
+  `)
+  return stmt.run(scopeType, scopeId, sessionId).changes > 0
+}
+
+export function updateSessionUnread(
+  sessionId: string,
+  unread: boolean,
+): boolean {
+  const stmt = prepare(`
+    UPDATE sessions
+    SET unread = ?, updated_at = CURRENT_TIMESTAMP
+    WHERE id = ?
+  `)
+  return stmt.run(unread ? 1 : 0, sessionId).changes > 0
+}
+
+export function updateSessionPinned(
+  sessionId: string,
+  pinned: boolean,
+): boolean {
+  const stmt = prepare(`
+    UPDATE sessions
+    SET pinned = ?, updated_at = CURRENT_TIMESTAMP
+    WHERE id = ?
+  `)
+  return stmt.run(pinned ? 1 : 0, sessionId).changes > 0
+}
+
 export function getSessionsByChatId(chatId: string): Session[] {
   const stmt = prepare(
     'SELECT * FROM sessions WHERE chat_id = ? ORDER BY created_at DESC, rowid DESC',
   )
   const rows = stmt.all(chatId) as Record<string, unknown>[]
-  return rows.map((row) => ({
-    ...row,
-    session_state: parseStoredJson(row.session_state, {}),
-  })) as Session[]
+  return rows.map(mapSession)
 }
 
 // FID-2026-0803-002 DB-6: UPDATEs report whether a row was actually changed

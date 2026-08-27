@@ -9,8 +9,12 @@ export {
   getLatestModel,
   getSession,
   getSessionsByChatId,
+  getSessionsByScope,
   updateSession,
   updateSessionModel,
+  updateSessionPinned,
+  updateSessionScope,
+  updateSessionUnread,
 } from './sessions'
 export {
   createCostRecord,
@@ -21,7 +25,7 @@ export {
   getTotalCostBySessionId,
 } from './history'
 
-export type { Session } from './sessions'
+export type { Session, SessionScopeType } from './sessions'
 export type { CostTracking, MessageHistory } from './history'
 
 export interface AgentTemplate {

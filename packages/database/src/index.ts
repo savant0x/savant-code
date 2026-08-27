@@ -53,6 +53,43 @@ const DB_PATH =
   process.env.SAVANT_DB_PATH ||
   path.join(os.homedir(), '.savant-free', 'echo.db')
 
+function hasColumn(
+  connection: Database,
+  table: string,
+  column: string,
+): boolean {
+  const rows = connection
+    .prepare(`PRAGMA table_info(${table})`)
+    .all() as Array<{ name?: string }>
+  return rows.some((row) => row.name === column)
+}
+
+// FID-2026-0824-009: migrate the existing sessions seam instead of creating a
+// parallel thread database. The migration is idempotent for existing installs
+// and is also applied to fresh databases created from the canonical schema.
+function applySchemaMigrations(connection: Database): void {
+  if (!hasColumn(connection, 'sessions', 'scope_type')) {
+    connection.exec(
+      "ALTER TABLE sessions ADD COLUMN scope_type TEXT NOT NULL DEFAULT 'project'",
+    )
+  }
+  if (!hasColumn(connection, 'sessions', 'scope_id')) {
+    connection.exec(
+      "ALTER TABLE sessions ADD COLUMN scope_id TEXT NOT NULL DEFAULT ''",
+    )
+  }
+  if (!hasColumn(connection, 'sessions', 'unread')) {
+    connection.exec(
+      'ALTER TABLE sessions ADD COLUMN unread INTEGER NOT NULL DEFAULT 0',
+    )
+  }
+  if (!hasColumn(connection, 'sessions', 'pinned')) {
+    connection.exec(
+      'ALTER TABLE sessions ADD COLUMN pinned INTEGER NOT NULL DEFAULT 0',
+    )
+  }
+}
+
 // Create schema (uses the passed connection so the fail-open fallback can
 // initialize an in-memory database the same way).
 function createSchema(connection: Database): void {
@@ -71,6 +108,10 @@ function createSchema(connection: Database): void {
       selected_model TEXT DEFAULT '',
       session_state TEXT NOT NULL,
       status TEXT DEFAULT 'active',
+      scope_type TEXT NOT NULL DEFAULT 'project',
+      scope_id TEXT NOT NULL DEFAULT '',
+      unread INTEGER NOT NULL DEFAULT 0,
+      pinned INTEGER NOT NULL DEFAULT 0,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
@@ -144,8 +185,15 @@ function initDatabase(dbPath: string): Database {
     // the schema_version table was created but never written; it now anchors a
     // migration path — see getSchemaVersion).
     createSchema(connection)
+    applySchemaMigrations(connection)
     connection
       .prepare('INSERT OR IGNORE INTO schema_version (version) VALUES (1)')
+      .run()
+    connection
+      .prepare('INSERT OR IGNORE INTO schema_version (version) VALUES (2)')
+      .run()
+    connection
+      .prepare('INSERT OR IGNORE INTO schema_version (version) VALUES (3)')
       .run()
     return connection
   }

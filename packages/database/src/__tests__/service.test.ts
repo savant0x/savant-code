@@ -9,12 +9,16 @@ const {
   createSession,
   getSession,
   getSessionsByChatId,
+  getSessionsByScope,
   updateSession,
   createMessage,
   getMessagesBySessionId,
   createCostRecord,
   getTotalCostBySessionId,
   updateSessionModel,
+  updateSessionPinned,
+  updateSessionScope,
+  updateSessionUnread,
   getLatestModel,
   createAgentTemplate,
   getAgentTemplate,
@@ -92,7 +96,53 @@ describe('database service (FID-006)', () => {
   })
 
   it('DB4: records and reads the schema version', () => {
-    expect(getSchemaVersion()).toBe(1)
+    expect(getSchemaVersion()).toBe(3)
+  })
+
+  it('FID-2026-0824-009: persists and moves project/global session scope', () => {
+    const project = createSession(
+      'chat-scope',
+      'base',
+      {},
+      '',
+      'project',
+      'repo-a',
+    )
+    const globalSession = createSession(
+      'chat-scope-global',
+      'base',
+      {},
+      '',
+      'global',
+      'fleet',
+    )
+    expect(
+      getSessionsByScope('project', 'repo-a').map((row) => row.id),
+    ).toEqual([project.id])
+    expect(getSessionsByScope('global', 'fleet').map((row) => row.id)).toEqual([
+      globalSession.id,
+    ])
+    expect(updateSessionScope(project.id, 'global', 'fleet')).toBe(true)
+    expect(getSessionsByScope('project', 'repo-a')).toHaveLength(0)
+    expect(getSessionsByScope('global', 'fleet')).toHaveLength(2)
+  })
+
+  it('FID-2026-0824-009: persists unread and pinned thread state', () => {
+    const session = createSession(
+      'chat-thread-state',
+      'base',
+      {},
+      '',
+      'project',
+      'repo-a',
+    )
+    expect(session.unread).toBe(false)
+    expect(session.pinned).toBe(false)
+    expect(updateSessionUnread(session.id, true)).toBe(true)
+    expect(updateSessionPinned(session.id, true)).toBe(true)
+    expect(getSession(session.id)).toMatchObject({ unread: true, pinned: true })
+    expect(updateSessionUnread('missing', false)).toBe(false)
+    expect(updateSessionPinned('missing', false)).toBe(false)
   })
 
   it('DB1: createMessage deduplicates by stable id (INSERT OR IGNORE)', () => {
