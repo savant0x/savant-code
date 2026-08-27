@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SavantMotion build</title>
+    <link rel="stylesheet" href="savant-motion.css" />
+    <!--
+      Theme block: the ONLY place raw colour values live in a build.
+      Six roles + two fonts rebrand everything; markup consumes tokens only.
+      Delete this block to inherit the engine defaults.
+    -->
+    <style>
+      :root {
+        --sm-canvas: #0a0a0f;
+        --sm-surface: #14141c;
+        --sm-ink: #eceef2;
+        --sm-ink-soft: #8f8f99;
+        --sm-accent: #18faf9;
+        --sm-accent-ink: #050508;
+        --sm-font-display: 'Archivo', system-ui, sans-serif;
+        --sm-font-text: 'Geist', system-ui, sans-serif;
+      }
+    </style>
+  </head>
+  <body data-sm-root>
+    <!-- PIN ACT: the stage holds while the argument advances. -->
+    <section data-sm-act="pin" data-sm-span="1.6">
+      <div class="sm-stage">
+        <h1 data-sm-kinetic style="font-size: var(--sm-t-3xl)">
+          Your headline assembles here
+        </h1>
+      </div>
+    </section>
+
+    <!-- SCRUB ACT: media timeline under the wheel (swap in your own clip). -->
+    <section
+      data-sm-act="scrub"
+      data-sm-span="2"
+      data-sm-drift-from="#0a0a0f"
+      data-sm-drift-to="#101418"
+    >
+      <div class="sm-stage">
+        <video
+          class="sm-media"
+          data-sm-scrub
+          data-sm-src="assets/hero.mp4"
+          muted
+          playsinline
+        ></video>
+        <div class="sm-layer">
+          <p data-sm-cue class="sm-copy" style="--sm-measure: 42ch">
+            One line of real text the reader can always finish reading.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- FLOW ACT: reveals and counts ride normal scrolling. -->
+    <section data-sm-act="flow" data-sm-span="1.2">
+      <div class="sm-copy">
+        <h2 data-sm-reveal="up">Substance</h2>
+        <p data-sm-reveal="up">Real sentences. No invented statistics.</p>
+        <p
+          data-sm-count="12000"
+          style="font-size: var(--sm-t-xl); font-family: var(--sm-font-display)"
+        >
+          0
+        </p>
+      </div>
+    </section>
+
+    <!-- CLOSE: resolves and holds; never fades to empty. -->
+    <section data-sm-act="pin" data-sm-span="1.15">
+      <div class="sm-stage sm-copy">
+        <p data-sm-cue>
+          The ask, set as a sentence with <a href="#start">one action</a> inside
+          it.
+        </p>
+      </div>
+    </section>
+
+    <script src="savant-motion.js"></script>
+  </body>
+</html>

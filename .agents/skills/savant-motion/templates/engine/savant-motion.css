@@ -1,0 +1,264 @@
+/*
+ * SavantMotion — token-first taste floor.
+ *
+ * Derived from scroll-craft (MIT, Copyright (c) 2026 Nate Herk); native
+ * rewrite. THE ENGINE IS THE MECHANISM AND IS NEVER EDITED PER PROJECT:
+ * rebrand by overriding the six colour roles + two fonts in your page's own
+ * :root block; everything downstream compiles from these custom properties.
+ * Raw values belong ONLY here (the definition site) — markup consumes tokens.
+ */
+
+:root {
+  /* Six colour roles: the entire rebrand surface. */
+  --sm-canvas: #0a0a0f;
+  --sm-surface: #14141c;
+  --sm-ink: #eceef2;
+  --sm-ink-soft: #8f8f99;
+  --sm-accent: #18faf9;
+  --sm-accent-ink: #050508;
+
+  /* Two fonts, display and text. */
+  --sm-font-display: 'Archivo', system-ui, sans-serif;
+  --sm-font-text: 'Geist', system-ui, sans-serif;
+
+  /* Fluid type ramp (clamp): tracking tightens as size grows. */
+  --sm-t-xs: clamp(0.72rem, 0.68rem + 0.2vw, 0.82rem);
+  --sm-t-sm: clamp(0.85rem, 0.8rem + 0.25vw, 0.98rem);
+  --sm-t-md: clamp(1rem, 0.92rem + 0.4vw, 1.2rem);
+  --sm-t-lg: clamp(1.35rem, 1.15rem + 1vw, 2rem);
+  --sm-t-xl: clamp(2rem, 1.5rem + 2.5vw, 3.5rem);
+  --sm-t-2xl: clamp(2.8rem, 1.9rem + 4.5vw, 6rem);
+  --sm-t-3xl: clamp(3.6rem, 2.2rem + 7vw, 9rem);
+  --sm-t-4xl: clamp(4.5rem, 2.4rem + 10vw, 13rem);
+
+  /* Leading scales inverse to size; measure held to reading comfort. */
+  --sm-track-xs: 0.08em;
+  --sm-track-sm: 0.04em;
+  --sm-track-md: 0em;
+  --sm-track-lg: -0.01em;
+  --sm-track-xl: -0.02em;
+  --sm-track-2xl: -0.03em;
+  --sm-track-3xl: -0.035em;
+  --sm-track-4xl: -0.04em;
+  --sm-lead-tight: 1.05;
+  --sm-lead-body: 1.55;
+  --sm-measure: 62ch;
+
+  /* Spacing on a 4px base with intentional odd steps. */
+  --sm-1: 4px;
+  --sm-2: 8px;
+  --sm-3: 12px;
+  --sm-4: 16px;
+  --sm-5: 24px;
+  --sm-6: 32px;
+  --sm-7: 48px;
+  --sm-8: 64px;
+  --sm-9: 96px;
+  --sm-10: 128px;
+  --sm-11: 192px;
+
+  /* Fluid section rhythm so phones do not inherit desktop air. */
+  --sm-section: clamp(var(--sm-8), 12vw, var(--sm-11));
+  --sm-gutter: clamp(var(--sm-4), 5vw, var(--sm-7));
+  --sm-maxw: 1200px;
+
+  /* Radius, tinted elevation (offset+blur toward canvas hue), edge light. */
+  --sm-radius: 14px;
+  --sm-e1: 0 1px 2px rgba(5, 5, 8, 0.4);
+  --sm-e2: 0 8px 24px rgba(5, 5, 8, 0.45);
+  --sm-e3: 0 24px 64px rgba(5, 5, 8, 0.55);
+  --sm-edge-light: inset 0 1px 0 rgba(236, 238, 242, 0.06);
+
+  /* One easing family; durations scale to distance. */
+  --sm-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --sm-dur-fast: 240ms;
+  --sm-dur-mid: 600ms;
+  --sm-dur-slow: 1100ms;
+
+  /* Z scale for device layers. */
+  --sm-z-media: 1;
+  --sm-z-copy: 10;
+  --sm-z-chrome: 100;
+}
+
+/* Reset — minimal, motion-safe. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--sm-canvas);
+  color: var(--sm-ink);
+  font-family: var(--sm-font-text);
+  font-size: var(--sm-t-md);
+  line-height: var(--sm-lead-body);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--sm-font-display);
+  line-height: var(--sm-lead-tight);
+  margin-block: 0 var(--sm-4);
+}
+
+p,
+li {
+  max-width: var(--sm-measure);
+  color: color-mix(in srgb, var(--sm-ink) 88%, var(--sm-canvas));
+}
+
+a {
+  color: var(--sm-accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+img,
+video,
+canvas {
+  max-width: 100%;
+  display: block;
+}
+
+/* Act stages. The engine pins .sm-stage inside non-flow acts. */
+[data-sm-act] {
+  position: relative;
+}
+
+.sm-stage {
+  position: relative;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.sm-stage-pinned {
+  position: sticky;
+  top: 0;
+}
+
+.sm-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.sm-layer > * {
+  pointer-events: auto;
+}
+
+.sm-media {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: var(--sm-z-media);
+}
+
+.sm-copy {
+  position: relative;
+  z-index: var(--sm-z-copy);
+  padding: var(--sm-section) var(--sm-gutter);
+}
+
+/* Kinetic words: engine splits [data-sm-kinetic] into .sm-w spans. */
+.sm-w {
+  display: inline-block;
+  will-change: transform;
+}
+
+/* One-shot reveals: engine adds .is-in past threshold; CSS owns the motion. */
+.sm-reveal {
+  transition:
+    opacity var(--sm-dur-mid) var(--sm-ease),
+    transform var(--sm-dur-mid) var(--sm-ease),
+    clip-path var(--sm-dur-slow) var(--sm-ease);
+}
+
+.sm-reveal[data-sm-reveal='up'] {
+  opacity: 0;
+  transform: translateY(6vh);
+}
+.sm-reveal[data-sm-reveal='down'] {
+  opacity: 0;
+  transform: translateY(-6vh);
+}
+.sm-reveal[data-sm-reveal='left'] {
+  opacity: 0;
+  transform: translateX(8vw);
+}
+.sm-reveal[data-sm-reveal='right'] {
+  opacity: 0;
+  transform: translateX(-8vw);
+}
+.sm-reveal[data-sm-reveal='iris'] {
+  opacity: 0;
+  clip-path: circle(0% at 50% 50%);
+}
+
+.sm-reveal.is-in {
+  opacity: 1;
+  transform: none;
+  clip-path: none;
+}
+
+/* Worldflight fixed-stage layers ([data-sm-world]). */
+[data-sm-worldflight] [data-sm-world] {
+  position: fixed;
+  inset: 0;
+  z-index: var(--sm-z-media);
+  will-change: opacity;
+}
+[data-sm-worldflight] [data-sm-spacer] {
+  position: relative;
+  z-index: var(--sm-z-copy);
+  pointer-events: none;
+}
+[data-sm-worldflight] [data-sm-spacer] > * {
+  pointer-events: auto;
+}
+
+/* Pointer devices (never fire on touch; engine guards). */
+[data-sm-spotlight] {
+  --sm-spot-r: 22vh;
+  -webkit-mask-image: radial-gradient(
+    circle var(--sm-spot-r) at calc(var(--sm-mx, 50vw)) calc(var(--sm-my, 50vh)),
+    #000 55%,
+    transparent 100%
+  );
+  mask-image: radial-gradient(
+    circle var(--sm-spot-r) at calc(var(--sm-mx, 50vw)) calc(var(--sm-my, 50vh)),
+    #000 55%,
+    transparent 100%
+  );
+}
+
+/* Reduced motion: a fully readable static page — no transforms, all visible. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .sm-reveal,
+  .sm-w,
+  [data-sm-parallax],
+  [data-sm-pan-track],
+  [data-sm-worldflight] [data-sm-world] {
+    opacity: 1 !important;
+    transform: none !important;
+    clip-path: none !important;
+    -webkit-mask-image: none !important;
+    mask-image: none !important;
+    transition: none !important;
+  }
+}
