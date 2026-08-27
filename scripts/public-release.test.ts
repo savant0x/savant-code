@@ -22,6 +22,7 @@ import {
   buildDiagnosticReceipt,
   ensurePinnedBunOnPath,
   pinnedBunCandidates,
+  pruneLocalOnlyFailedTag,
   resolvePinnedBun,
   assetPollIntervalMs,
   assetRetryTimeoutMs,
@@ -32,6 +33,7 @@ import {
   fingerprintWorktree,
   ignoredPathDelta,
   readCapturedOutput,
+  receiptPath,
   redactSecretText,
   releaseLockPath,
   sanitizedGateEnv,
@@ -873,12 +875,84 @@ describe('public release contract', () => {
     }
   })
 
+  test('prunes a local-only failed-run tag but never a remote or unowned tag', () => {
+    const version = '9.9.9-prune'
+    const receipt = receiptPath(version)
+    const repo = mkdtempSync(path.join(os.tmpdir(), 'savant-release-prune-'))
+    const remote = mkdtempSync(
+      path.join(os.tmpdir(), 'savant-release-prune-remote-'),
+    )
+    const runGit = (args: string[], cwd: string) => {
+      const result = Bun.spawnSync({
+        cmd: ['git', ...args],
+        cwd,
+        stdout: 'pipe',
+        stderr: 'pipe',
+      })
+      if (result.exitCode !== 0)
+        throw new Error(new TextDecoder().decode(result.stderr))
+      return new TextDecoder().decode(result.stdout).trim()
+    }
+    try {
+      runGit(['init', '--bare'], remote)
+      runGit(['init'], repo)
+      runGit(['config', 'user.email', 'release-test@example.invalid'], repo)
+      runGit(['config', 'user.name', 'Release Test'], repo)
+      runGit(['remote', 'add', 'origin', remote], repo)
+      writeFileSync(path.join(repo, 'a.txt'), 'x')
+      runGit(['add', '--all'], repo)
+      runGit(['commit', '-m', 'base'], repo)
+      const head = runGit(['rev-parse', 'HEAD'], repo)
+
+      // No receipt -> nothing pruned, tag untouched.
+      runGit(['tag', '-a', `v${version}`, '-m', 't'], repo)
+      expect(pruneLocalOnlyFailedTag(repo, version, head)).toBe(false)
+      expect(runGit(['tag', '-l', `v${version}`], repo)).toBe(`v${version}`)
+
+      // Failed receipt owning this head + tag absent on remote -> pruned.
+      writeFileSync(
+        receipt,
+        JSON.stringify({
+          schemaVersion: 'release-receipt/v2',
+          version,
+          mode: 'automation',
+          headSha: head,
+          completedStages: ['TAG'],
+          failedStage: 'Stage command failed: git push origin main',
+          restored: true,
+        }),
+      )
+      expect(pruneLocalOnlyFailedTag(repo, version, head)).toBe(true)
+      expect(runGit(['tag', '-l', `v${version}`], repo)).toBe('')
+
+      // Receipt owns it but the tag IS on the remote -> refuse to prune.
+      runGit(['tag', '-a', `v${version}`, '-m', 't'], repo)
+      runGit(['push', 'origin', `v${version}`], repo)
+      expect(pruneLocalOnlyFailedTag(repo, version, head)).toBe(false)
+      expect(runGit(['tag', '-l', `v${version}`], repo)).toBe(`v${version}`)
+
+      // Receipt head mismatch -> refuse to prune.
+      runGit(['tag', '-d', `v${version}`], repo)
+      runGit(['push', 'origin', `:refs/tags/v${version}`], repo)
+      runGit(['tag', '-a', `v${version}`, '-m', 't2'], repo)
+      expect(pruneLocalOnlyFailedTag(repo, version, '0'.repeat(40))).toBe(false)
+      expect(runGit(['tag', '-l', `v${version}`], repo)).toBe(`v${version}`)
+    } finally {
+      rmSync(receipt, { force: true })
+      rmSync(repo, { recursive: true, force: true })
+      rmSync(remote, { recursive: true, force: true })
+    }
+  })
+
   test('rejects a live-owner lock and releases it for the next process', () => {
     const version = '9.9.9'
     const lockPath = releaseLockPath(version)
     let release: (() => void) | undefined
     try {
       release = acquireReleaseLock(version, 'test')
+      // P1-A (FID-2026-0821-002): the lock dir carries a release-in-progress
+      // marker as a signal to concurrent sessions, removed with the lock.
+      expect(existsSync(path.join(lockPath, 'IN-PROGRESS.md'))).toBe(true)
       expect(() => acquireReleaseLock(version, 'test')).toThrow(
         'owns the release lock',
       )
@@ -1019,9 +1093,9 @@ describe('public release contract', () => {
       expect(scanStagedCredentials(['.env.example'], repo)).toEqual([])
       // Sequential/alphabetic token-shaped prose must not block a commit.
       expect(scanStagedCredentials(['docs-example.txt'], repo)).toEqual([])
-      // Verified-legit tracked modules whose *names* match the filename
-      // heuristic are exempt from the filename check alone — but their
-      // content is still scanned, so a real secret in them still flags.
+      // Source files named credentials* / secrets* are content-scanned, not
+      // filename-blocked (FID-2026-0821-002 P3): clean modules pass, and a
+      // real secret inside one still flags via the content scan.
       const credentialsModule = path.join(repo, 'sdk/src/credentials.ts')
       mkdirSync(path.dirname(credentialsModule), { recursive: true })
       writeFileSync(credentialsModule, 'export const apiKey = getApiKey()\n')
@@ -1032,6 +1106,17 @@ describe('public release contract', () => {
       expect(
         scanStagedCredentials(['sdk/src/credentials.ts'], repo),
       ).toHaveLength(1)
+      writeFileSync(path.join(repo, 'secrets.ts'), 'export const s = 1\n')
+      expect(scanStagedCredentials(['secrets.ts'], repo)).toEqual([])
+      writeFileSync(
+        path.join(repo, 'secrets.js'),
+        '-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEA7vR2abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789\n-----END RSA PRIVATE KEY-----\n',
+      )
+      expect(scanStagedCredentials(['secrets.js'], repo)).toHaveLength(1)
+      // Config-shaped credential stores stay filename-blocked regardless of
+      // content: credentials.json is the canonical secret-store name.
+      writeFileSync(path.join(repo, 'credentials.json'), '{}\n')
+      expect(scanStagedCredentials(['credentials.json'], repo)).toHaveLength(1)
     } finally {
       rmSync(repo, { recursive: true, force: true })
     }

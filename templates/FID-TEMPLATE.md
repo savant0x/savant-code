@@ -72,6 +72,37 @@ How should this be fixed?
 
 How will we confirm the fix works?
 
+## Verification Gates
+
+> FID-2026-0823-009 (mandatory once status flips to `fixed`/`verified`). Declare
+> the gates that PROVE this FID's claimed verification against the current tree.
+> Allowlisted shapes only (never free-form shell):
+>
+> - `- gate: typecheck <workspace>` — workspace must be in `VALIDATION_WORKSPACE_POLICY`
+> - `- gate: test <repo-relative-path>` — must exist, `*.test.ts`/`*.test.tsx`
+> - `- gate: probe <repo-relative-path>` — must exist, `*.ts`
+>
+> Stamp the receipt with `bun run fid:verify <fid-path> --write`. The receipt's
+> fingerprint binds it to the document: any edit after verification invalidates
+> it until re-verified. `validate:repository` LIVE RE-RUNS the declared gates
+> (C3) and the pre-write gate blocks flipping status without a valid receipt.
+
+```markdown
+## Verification Gates
+
+- gate: typecheck sdk
+- gate: test sdk/src/__tests__/process-definitions.test.ts
+- gate: probe dev/scratchpad/process-defs-probe.ts
+
+### Verification Receipt
+
+- fingerprint: sha256:<machine-generated>
+- verified: YYYY-MM-DDTHH:MM:SSZ
+- typecheck sdk: exit 0
+- test sdk/src/__tests__/process-definitions.test.ts: exit 0
+- probe dev/scratchpad/process-defs-probe.ts: exit 0
+```
+
 ## Perfection Loop
 
 ### Loop 1 — RED

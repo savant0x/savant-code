@@ -10,6 +10,7 @@ import {
 } from '@savant-code/common/providers/audit'
 import { PROVIDER_REGISTRY } from '@savant-code/common/providers/registry'
 
+import { validateFidVerificationGates } from './fid-gates.js'
 import { validateActiveFidLedger } from './fid-ledger.js'
 import { collectHygieneIssues } from './hygiene.js'
 import {
@@ -227,6 +228,7 @@ const issues = [
   ...validateCommandParity(collectParity()),
   ...validateGateContract(repositoryValidationGates(root), root),
   ...validateActiveFidLedger(root),
+  ...validateFidVerificationGates(root),
   ...validateLearningsContent(),
   // SAVANT_CODE_SKIP_QUALITY_RATCHET: temporarily exempt ratchet for releases
   // (operator-paused FID-2026-0819-005)

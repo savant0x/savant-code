@@ -581,7 +581,7 @@ function settingsPath(): string {
   return candidates.find((candidate) => existsSync(candidate)) ?? candidates[0]
 }
 
-function receiptPath(version: string): string {
+export function receiptPath(version: string): string {
   return path.join(os.tmpdir(), `savant-public-release-${version}.json`)
 }
 
@@ -1413,12 +1413,63 @@ function verifyPreflight(
     }
   }
   if (tagExists && !allowExistingTag) {
-    const message = `Tag v${version} already exists; use --resume with its receipt.`
-    if (mutationMode) fail(message)
-    warnings.push(message)
+    const pruned = mutationMode
+      ? pruneLocalOnlyFailedTag(root, version, headSha)
+      : false
+    if (!pruned) {
+      const message = `Tag v${version} already exists; use --resume with its receipt.`
+      if (mutationMode) fail(message)
+      warnings.push(message)
+    }
   }
 
   return { notes, warnings, headSha }
+}
+
+/**
+ * P2 (FID-2026-0821-002): recover from a failed release run that created the
+ * annotated tag but never pushed it. Prunes the local-only tag ONLY when both
+ * guards pass: (a) the tag is absent on the remote (git ls-remote — never
+ * touch remote state), and (b) a failed release receipt for this version binds
+ * its headSha to this tag's commit. Any uncertainty fails closed (false), so
+ * the caller's normal "tag already exists" error stands.
+ */
+export function pruneLocalOnlyFailedTag(
+  root: string,
+  version: string,
+  expectedHead: string,
+): boolean {
+  let receipt: ReleaseReceipt | undefined
+  try {
+    receipt = JSON.parse(
+      readFileSync(receiptPath(version), 'utf8'),
+    ) as ReleaseReceipt
+  } catch {
+    return false
+  }
+  if (!receipt.failedStage || receipt.headSha !== expectedHead) return false
+  const tagCommit = run(
+    'git',
+    ['rev-parse', `refs/tags/v${version}^{}`],
+    root,
+    true,
+  )
+  if (tagCommit.status !== 0 || tagCommit.stdout.trim() !== expectedHead) {
+    return false
+  }
+  const remote = run(
+    'git',
+    ['ls-remote', '--tags', 'origin', `refs/tags/v${version}`],
+    root,
+    true,
+  )
+  if (remote.status !== 0 || remote.stdout.trim()) return false
+  const removed = run('git', ['tag', '-d', `v${version}`], root, true)
+  if (removed.status !== 0) return false
+  console.log(
+    `Pruned local-only tag v${version} left by the failed run (receipt ${receiptPath(version)}); the remote never carried it.`,
+  )
+  return true
 }
 
 type GitHubApiOptions = {
@@ -1593,15 +1644,22 @@ const CREDENTIAL_FILE_PATTERNS = [
   /(?:^|\/)(?:credentials|secrets)(?:\.|\/|$)/i,
 ]
 
-// Tracked source modules whose *names* legitimately match the filename
-// heuristic (credentials.ts / credentials.test.ts are common module names).
-// The exemption covers the filename check ONLY — the content scan below still
-// runs against these paths, so a real secret in an exempted file is caught.
-const CREDENTIAL_FILENAME_EXEMPTIONS = [
-  'common/src/util/credentials.ts',
-  'sdk/src/__tests__/credentials.test.ts',
-  'sdk/src/credentials.ts',
-]
+// Source-code carve-out: a file named credentials.ts / secrets.ts is an
+// idiomatic module whose NAME alone proves nothing — its content is what
+// matters, and the content scan below enforces that (token entropy, PEM
+// blocks, AUTHORIZATION headers). Config-shaped files (credentials.json,
+// secrets.yaml, .env, *.pem …) stay filename-blocked because those names
+// denote actual secret stores.
+const CREDENTIAL_SOURCE_NAME_PATTERN =
+  /(?:^|\/)(?:credentials|secrets)(?:\.|$)/i
+const SOURCE_CODE_EXTENSION_PATTERN = /\.(?:[cm]?[jt]sx?)$/i
+
+function isCredentialNamedSourceFile(file: string): boolean {
+  return (
+    CREDENTIAL_SOURCE_NAME_PATTERN.test(file) &&
+    SOURCE_CODE_EXTENSION_PATTERN.test(file)
+  )
+}
 
 // Shannon entropy floor (bits/char) applied to captured token bodies, plus a
 // minimum character-class count. This is the gitleaks-style discriminator:
@@ -1711,7 +1769,7 @@ export function scanStagedCredentials(
   for (const file of files) {
     if (
       CREDENTIAL_FILE_PATTERNS.some((pattern) => pattern.test(file)) &&
-      !CREDENTIAL_FILENAME_EXEMPTIONS.includes(file)
+      !isCredentialNamedSourceFile(file)
     ) {
       flagged.push(`${file} (filename matches a credential pattern)`)
       continue
@@ -1833,6 +1891,19 @@ export function commitAllAutomationChanges(
   }
   console.log(`Automation release commit will include ${files.length} file(s):`)
   for (const file of files) console.log(`  - ${file}`)
+  // P1-B (FID-2026-0821-002): flag governance/scratch files swept into the
+  // public release. Concurrent sessions write FIDs to dev/ — the release
+  // cannot refuse ("commit all worktree changes" is documented automation
+  // semantics), but it must surface the sweep prominently.
+  const governanceFiles = files.filter(
+    (file) => file === 'SCOPE.md' || file.startsWith('dev/'),
+  )
+  if (governanceFiles.length > 0) {
+    console.warn(
+      `⚠️  This commit sweeps ${governanceFiles.length} governance/scratch file(s) (dev/ or SCOPE.md) into the public release — confirm they are intended:`,
+    )
+    for (const file of governanceFiles) console.warn(`  - ${file}`)
+  }
   runRequired(
     'git',
     ['commit', '-m', `chore(release): prepare v${version}`],
@@ -2118,6 +2189,22 @@ export function acquireReleaseLock(version: string, mode: string): () => void {
         `Release lock ownership was replaced during acquisition: ${lockPath}`,
       )
     }
+    // P1-A (FID-2026-0821-002): signal to concurrent sessions that a public
+    // release is running and the tree must stay quiescent. Lives inside the
+    // lock dir, so lock release removes it automatically.
+    writeFileSync(
+      path.join(lockPath, 'IN-PROGRESS.md'),
+      [
+        '# Release in progress',
+        '',
+        `A public release (v${version}, ${mode}) is running from ${os.hostname()} (pid ${process.pid}, started ${new Date().toISOString()}).`,
+        'Concurrent sessions should pause writes under dev/ (FIDs, scratchpad, session summaries) until this marker disappears:',
+        'automation mode commits the entire worktree and fails closed if the tree changes mid-gates.',
+        `Owner token: ${ownerToken}`,
+        '',
+      ].join('\n'),
+      { encoding: 'utf8' },
+    )
   } catch (error) {
     if (
       error instanceof Error &&
@@ -2482,6 +2569,13 @@ async function runReleaseTransaction(): Promise<void> {
     await withLocalStateRestoration(
       snapshot,
       async () => {
+        // P1-C (FID-2026-0821-002): fingerprint the tree immediately after
+        // the automation commit so a concurrent file landing between commit
+        // and gates is caught by the after-gates comparison below — instead
+        // of surfacing as a confusing random gate failure. Non-automation
+        // runs capture it at gate start (??= below), as before.
+        let beforeFingerprint: WorktreeFingerprint | undefined
+        let beforeIgnored: string | undefined
         if (
           options.automation &&
           !isStageComplete(receipt, 'AUTOMATION_COMMIT_ALL')
@@ -2492,6 +2586,8 @@ async function runReleaseTransaction(): Promise<void> {
           preflight = verifyPreflight(root, version, true, true, true)
           receipt.headSha = preflight.headSha
           markStage(receipt, 'AUTOMATION_COMMIT_ALL')
+          beforeFingerprint = fingerprintWorktree(root)
+          beforeIgnored = ignoredPathList(root)
         }
         markStage(receipt, 'PREFLIGHT')
 
@@ -2513,8 +2609,8 @@ async function runReleaseTransaction(): Promise<void> {
         markStage(receipt, 'PUBLIC_PROFILE')
 
         if (!isStageComplete(receipt, 'GATES_AND_PACKAGE_DRY_RUNS')) {
-          const beforeFingerprint = fingerprintWorktree(root)
-          const beforeIgnored = ignoredPathList(root)
+          beforeFingerprint ??= fingerprintWorktree(root)
+          beforeIgnored ??= ignoredPathList(root)
           const bunVersion = run('bun', ['--version'], root, true)
           const npmVersion = run('npm', ['--version'], root, true)
           if (
@@ -2558,9 +2654,12 @@ async function runReleaseTransaction(): Promise<void> {
           }
           const afterFingerprint = fingerprintWorktree(root)
           receipt.ignoredChanges = ignoredPathDelta(
-            beforeIgnored,
+            beforeIgnored ?? '',
             ignoredPathList(root),
           )
+          if (!beforeFingerprint) {
+            fail('Release worktree was never fingerprinted before gates.')
+          }
           if (beforeFingerprint.hash !== afterFingerprint.hash) {
             const changed = changedWorktreePaths(
               beforeFingerprint,

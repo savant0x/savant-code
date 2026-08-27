@@ -20,6 +20,7 @@ const sourceRoots = [
   'agents',
   'cli',
   'common',
+  'desktop',
   'evals',
   'packages',
   'savant-free',
