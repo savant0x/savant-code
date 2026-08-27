@@ -9,6 +9,7 @@ import {
   buildComplianceWarningChunks,
   formatBlockingError,
 } from '../../echo/violation-handler'
+import { resolveYagniEnforced } from '../../echo/yagni-pre-write-gate'
 import { buildHookInput, getHookEngine } from '../../hooks/engine'
 import { getMCPToolData } from '../../mcp'
 import { MCP_TOOL_SEPARATOR } from '../../mcp-constants'
@@ -186,6 +187,11 @@ export async function executeCustomToolCall(
     toolName,
     input: toolCall.input as Record<string, unknown>,
     agentId: agentState.agentId,
+    // FID-2026-0822-004: yagni gate text channel + config-respect. Custom
+    // tools are read/network-only so the gate is inert here, but the thread
+    // keeps the enforcement surface consistent.
+    assistantText: params.fullResponse,
+    yagniEnforced: resolveYagniEnforced(params.fileContext?.projectRoot),
   })
   for (const chunk of buildComplianceWarningChunks(enforceResult.warnings)) {
     onResponseChunk(chunk)

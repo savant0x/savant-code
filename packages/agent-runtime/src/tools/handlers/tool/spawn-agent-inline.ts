@@ -1,3 +1,9 @@
+/** FID-2026-0824-023 stream-routing: bounded capture of the pruner's streamed summary text. */
+const PRUNER_SUMMARY_BUFFER_CHARS = 8_000
+// FID-2026-0824-023 V2 completion: persist half the buffer so the
+// CompactionSignal expander can reveal a genuinely full summary excerpt.
+const PRUNER_SUMMARY_EXCERPT_CHARS = 4_000
+
 import { mapValues } from 'lodash'
 
 import {
@@ -10,9 +16,17 @@ import {
 } from './spawn-agent-utils'
 import { getOrCreateEnforcement } from '../../../echo/enforcement'
 import { appendGroundingRefresh } from '../../../echo/grounding'
+import {
+  appendCompactionInventory,
+  buildCompactionModelNotice,
+  describeRemovedToolItem,
+  diffRemovedSpans,
+} from '../../../evidence/inventory'
 import { getOrCreateProvenance } from '../../../provenance'
 import { extractVerdictText } from '../../../provenance/verdict'
 import { filterToolSet } from '../../../tools/filter-tool-set'
+import { withSystemTags } from '../../../util/messages'
+import { countTokensMessagesCached } from '../../../util/token-counter'
 
 import type { SavantCodeToolHandlerFunction } from '../handler-function-type'
 import type {
@@ -98,6 +112,28 @@ export const handleSpawnAgentInline = (async (
 
   validateAgentInput(agentTemplate, agentType, prompt, spawnParams)
 
+  // FID-2026-0824-024 post-closure amendment: inject operator-configured
+  // digest caps (`compression.digestHeadChars/TailChars` → AgentState.
+  // digestCaps, stamped by loop-context) into the pruner's spawn params AFTER
+  // validation — harness-controlled numbers bypass template schema
+  // strictness while model-provided params stay guarded.
+  const digestCaps = parentAgentState.digestCaps
+  const effectiveSpawnParams =
+    agentType === 'context-pruner' && digestCaps
+      ? {
+          ...(spawnParams ?? {}),
+          ...(digestCaps.headChars !== undefined
+            ? { digestHeadChars: digestCaps.headChars }
+            : {}),
+          ...(digestCaps.tailChars !== undefined
+            ? { digestTailChars: digestCaps.tailChars }
+            : {}),
+        }
+      : spawnParams
+
+  // FID-2026-0824-023: bounded capture of streamed summary text.
+  let prunerSummaryBuffer = ''
+
   // Override template for inline agent to share system prompt & message history with parent
   const inlineTemplate = {
     ...agentTemplate,
@@ -140,7 +176,7 @@ export const handleSpawnAgentInline = (async (
     ancestorRunIds: parentAgentState.ancestorRunIds,
     userInputId: `${userInputId}-inline-${agentType}${childAgentState.agentId}`,
     prompt: prompt || '',
-    spawnParams,
+    spawnParams: effectiveSpawnParams,
     agentTemplate: inlineTemplate,
     parentAgentState,
     agentState: childAgentState,
@@ -148,12 +184,39 @@ export const handleSpawnAgentInline = (async (
     parentSystemPrompt: system,
     parentTools: inheritedTools,
     onResponseChunk: (chunk) => {
-      // Inherits parent's onResponseChunk, except for context-pruner (NOTE: add an option for it to be silent?)
-      if (agentType !== 'context-pruner') {
-        writeToClient(chunk)
+      // FID-2026-0824-023 stream-routing: context-pruner chunks feed the
+      // bounded summary buffer instead of being dropped; everything else
+      // inherits the parent's chunk path unchanged.
+      if (agentType === 'context-pruner') {
+        if (typeof chunk === 'string') {
+          prunerSummaryBuffer = (prunerSummaryBuffer + chunk).slice(
+            -PRUNER_SUMMARY_BUFFER_CHARS,
+          )
+        }
+        return
       }
+      writeToClient(chunk)
     },
     clearUserPromptMessagesAfterResponse: false,
+  }).catch((error: unknown) => {
+    // FID-2026-0822-001 RC4: a crashed inline context-pruner used to leave
+    // compactionStatus stuck at 'compacting' forever - the terminal-phase
+    // emission below runs only on success. Emit the truthful blocked state
+    // and stamp the attempt BEFORE propagating, so the CLI panel and the
+    // anti-thrash cooldown see terminal reality instead of eternal silence.
+    if (agentType === 'context-pruner' && !parentAgentState.parentId) {
+      parentAgentState.lastPrunerCompletionAt = Date.now()
+      parentAgentState.compactionStatus = {
+        phase: 'blocked',
+        percentUsed: Math.round(
+          (parentAgentState.contextTokenCount /
+            (parentAgentState.maxContextLength ?? 200_000)) *
+            100,
+        ),
+        blockReason: 'pruner-unavailable',
+      }
+    }
+    throw error
   })
 
   // FID-2026-0813-004: ZTAP verdict binding (inline spawn path). The
@@ -196,14 +259,14 @@ export const handleSpawnAgentInline = (async (
   // context-pruner replaces history through set_messages in the child; append
   // the freshness refresh at the parent mutation boundary so it cannot be
   // discarded by that replacement.
-  const prunerMessagesRemoved =
-    agentType === 'context-pruner'
-      ? Math.max(
-          0,
-          parentAgentState.messageHistory.length -
-            result.agentState.messageHistory.length,
-        )
-      : 0
+  const previousHistoryLength = parentAgentState.messageHistory.length
+  const previousTokenEstimate = countTokensMessagesCached(
+    parentAgentState.messageHistory,
+  )
+  // FID-2026-0824-025/-027 post-closure amendment: capture the PRE-history
+  // reference so this replacement boundary can diff removed spans/items by
+  // object identity (kept messages keep identity across set_messages).
+  const previousHistory = parentAgentState.messageHistory
   parentAgentState.messageHistory = result.agentState.messageHistory
   if (agentType === 'context-pruner' && !parentAgentState.parentId) {
     appendGroundingRefresh(
@@ -212,18 +275,79 @@ export const handleSpawnAgentInline = (async (
         .refreshText,
     )
     // FID-2026-0814-001: live pruner result feedback + re-spawn cooldown
-    // stamp. The child's history is now the compacted history; estimate tokens
-    // freed with the same convention as micro-compact (~200 tokens per removed
-    // message). The next step boundary recomputes the accurate window-relative
-    // percent, and the anti-thrash score at that boundary is authoritative.
+    // stamp. FID-2026-0821-001 P0-2: runtime-emitted terminal truth — recount
+    // the compacted history locally (provider usage is stale after
+    // truncation) and emit an explicit `pruned` vs `ineffective` phase so the
+    // CLI records outcomes verbatim instead of inferring them from
+    // transitions. The next step boundary recomputes the accurate
+    // window-relative percent, and the anti-thrash score at that boundary is
+    // authoritative.
     parentAgentState.lastPrunerCompletionAt = Date.now()
-    const prunerMaxContextLength = parentAgentState.maxContextLength ?? 200_000
-    const prunerTokensSaved = prunerMessagesRemoved * 200
-    const prunerPercentUsed = Math.round(
-      ((parentAgentState.contextTokenCount ?? 0) / prunerMaxContextLength) *
-        100,
+    const recountedTokens = countTokensMessagesCached(
+      parentAgentState.messageHistory,
     )
-    if (prunerTokensSaved > 0) {
+    const prunerMessagesRemoved = Math.max(
+      0,
+      previousHistoryLength - parentAgentState.messageHistory.length,
+    )
+    const prunerTokensSaved = Math.max(
+      0,
+      previousTokenEstimate - recountedTokens,
+    )
+    const prunerMaxContextLength = parentAgentState.maxContextLength ?? 200_000
+    parentAgentState.contextTokenCount = recountedTokens
+    const prunerPercentUsed = Math.round(
+      (recountedTokens / prunerMaxContextLength) * 100,
+    )
+    // FID-2026-0824-027: inventory row + bounded model-facing notice at the
+    // replacement boundary (fail-open; never carries payloads).
+    // FID-2026-0824-025/-027 post-closure amendment: region indices +
+    // bounded per-item rows derived by identity diff at this boundary
+    // (append omits empty arrays, keeping rows minimal).
+    const removalDiff = diffRemovedSpans({
+      prev: previousHistory,
+      next: parentAgentState.messageHistory,
+      describeItem: describeRemovedToolItem,
+    })
+    void appendCompactionInventory({
+      projectRoot: params.fileContext?.projectRoot ?? '',
+      runId: parentAgentState.runId ?? parentAgentState.agentId,
+      layer: 'auto',
+      removedMessages: prunerMessagesRemoved,
+      tokensSaved: prunerTokensSaved,
+      percentUsed: prunerPercentUsed,
+      regions: removalDiff.regions,
+      items: removalDiff.items,
+    })
+    parentAgentState.messageHistory.push({
+      role: 'user',
+      content: [
+        {
+          type: 'text',
+          text: withSystemTags(buildCompactionModelNotice('auto')),
+        },
+      ],
+      tags: ['COMPACTION_NOTICE'],
+    })
+    const autoMetrics = parentAgentState.compactionMetrics ?? {
+      events: 0,
+      tokensSaved: 0,
+    }
+    parentAgentState.compactionMetrics = {
+      events: autoMetrics.events + 1,
+      tokensSaved: autoMetrics.tokensSaved + prunerTokensSaved,
+    }
+
+    // FID-2026-0824-023 stream-routing: persist the bounded summary excerpt
+    // + removed-region counts so CompactionSignal surfaces WHAT was compacted.
+    parentAgentState.lastCompactionReport = {
+      summaryExcerpt: prunerSummaryBuffer.slice(-PRUNER_SUMMARY_EXCERPT_CHARS),
+      removedMessages: prunerMessagesRemoved,
+      ...(prunerTokensSaved > 0
+        ? { tokensSaved: prunerTokensSaved, percentUsed: prunerPercentUsed }
+        : {}),
+    }
+    if (prunerMessagesRemoved > 0 && prunerTokensSaved > 0) {
       parentAgentState.compactionStatus = {
         phase: 'pruned',
         tokensSaved: prunerTokensSaved,
@@ -234,10 +358,11 @@ export const handleSpawnAgentInline = (async (
         ?.foldOldestExchange
     ) {
       // A real proactive/force compaction that removed nothing is ineffective:
-      // surface the warning instead of leaving a stale status. The amortized
-      // fold no-ops by design (nothing un-absorbed), so it never overwrites.
+      // emit the explicit terminal phase instead of leaving a stale status.
+      // The amortized fold no-ops by design (nothing un-absorbed), so it
+      // never overwrites.
       parentAgentState.compactionStatus = {
-        phase: 'warning',
+        phase: 'ineffective',
         percentUsed: prunerPercentUsed,
       }
     }

@@ -22,6 +22,35 @@ const bareStringFieldRepairAllowlist: Partial<
   web_search: ['query'],
 }
 
+/** Recurring key-alias confusions repaired BEFORE schema validation
+ * (desktop boot-delay root cause, 2026-08-24): providers/models keep
+ * emitting `{ path }` for tools whose canonical shape is `{ paths: [] }` —
+ * most sibling tools genuinely take a singular `path`, so the habit is
+ * sticky, and every rejection burned a full round-trip during the ECHO boot
+ * reads. Each entry maps a tool to a normalizer returning the corrected
+ * input, or undefined when nothing applies. */
+const aliasRepairs: Partial<
+  Record<
+    string,
+    (input: Record<string, unknown>) => Record<string, unknown> | undefined
+  >
+> = {
+  read_files: unwrapSingularPath,
+  read_subtree: unwrapSingularPath,
+}
+
+/** `{ path: "x" }` -> `{ paths: ["x"] }`; never touches a real paths field
+ * or a call carrying both shapes. */
+function unwrapSingularPath(
+  input: Record<string, unknown>,
+): Record<string, unknown> | undefined {
+  const { path, ...rest } = input
+  if (typeof path !== 'string' || path.trim() === '' || 'paths' in input) {
+    return undefined
+  }
+  return { ...rest, paths: [path] }
+}
+
 function repairBareStringFieldObject(
   input: string,
   toolName: string,
@@ -77,6 +106,18 @@ export function parseStringifiedToolInput(
         parseError = error instanceof Error ? error.message : String(error)
       }
       break
+    }
+  }
+
+  // Key-alias normalization runs only on successfully parsed objects so a
+  // wrong-key call still reaches validation as the right shape.
+  if (parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed)) {
+    const repair = aliasRepairs[toolName]
+    if (repair) {
+      const normalized = repair(parsed as Record<string, unknown>)
+      // Shape proven by unwrapSingularPath (flat string-keyed record) — the
+      // cast only re-widens to JSONValue for the caller's contract.
+      if (normalized !== undefined) parsed = normalized as JSONValue
     }
   }
 

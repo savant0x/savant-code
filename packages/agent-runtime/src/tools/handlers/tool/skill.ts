@@ -5,12 +5,14 @@ import path from 'path'
 import {
   SKILLS_DIR_NAME,
   SKILL_FILE_NAME,
+  isValidSkillName,
 } from '@savant-code/common/constants/skills'
 import {
   SkillFrontmatterSchema,
   type SkillDefinition,
 } from '@savant-code/common/types/skill'
 import { jsonToolResult } from '@savant-code/common/util/messages'
+import { validateReferencePath } from '@savant-code/common/util/skill-management'
 import matter from 'gray-matter'
 
 import type { SavantCodeToolHandlerFunction } from '../handler-function-type'
@@ -28,6 +30,14 @@ async function loadSkillFromDisk(
   projectRoot: string,
   skillName: string,
 ): Promise<SkillDefinition | null> {
+  // FID-2026-0824-012: defense in depth — reject anything that is not a
+  // valid skill name BEFORE touching disk. This excludes `.quarantine` (which
+  // fails the regex) and any path-traversal spelling; quarantined drafts are
+  // invisible until an operator runs `skills trust`.
+  if (!isValidSkillName(skillName)) {
+    return null
+  }
+
   const home = os.homedir()
   const skillsDirs = [
     // Global directories first
@@ -89,13 +99,27 @@ async function loadSkillFromDisk(
 
 type ToolName = 'skill'
 
+/**
+ * FID-2026-0824-012 S0-D — progressive disclosure Level-2 load: resolve a
+ * `references/<relPath>` sub-file of a skill and return its content. Path is
+ * validated against traversal before any disk access; a missing/invalid file
+ * fails with an explicit message, never a raw error.
+ */
+function loadReferenceFile(skillDir: string, relPath: string): string | null {
+  const invalid = validateReferencePath(relPath)
+  if (invalid) return null
+  const file = path.join(skillDir, 'references', relPath)
+  if (!fs.existsSync(file)) return null
+  return fs.readFileSync(file, 'utf8')
+}
+
 export const handleSkill = (async (params: {
   previousToolCallFinished: Promise<void>
   toolCall: SavantCodeToolCall<ToolName>
   fileContext: ProjectFileContext
 }): Promise<{ output: SavantCodeToolOutput<ToolName> }> => {
   const { previousToolCallFinished, toolCall, fileContext } = params
-  const { name } = toolCall.input
+  const { name, path: relPath } = toolCall.input
 
   await previousToolCallFinished
 
@@ -109,6 +133,39 @@ export const handleSkill = (async (params: {
     : null
 
   const skill = diskSkill ?? skills[name]
+
+  // Progressive disclosure: a `path` asks for a references/ sub-file. The
+  // core SKILL.md stays Level 0/1 (name + description in listings); bulk
+  // procedural data is loaded only when explicitly queried.
+  if (relPath !== undefined) {
+    if (!skill) {
+      return {
+        output: jsonToolResult({
+          name,
+          description: '',
+          content: `Error: Skill '${name}' not found (cannot resolve references path '${relPath}').`,
+        }),
+      }
+    }
+    const skillDir = path.dirname(skill.filePath)
+    const referenceContent = loadReferenceFile(skillDir, relPath)
+    if (referenceContent === null) {
+      return {
+        output: jsonToolResult({
+          name,
+          description: skill.description,
+          content: `Error: references/'${relPath}' not found for skill '${name}'. Available paths can be discovered from the skill's SKILL.md content.`,
+        }),
+      }
+    }
+    return {
+      output: jsonToolResult({
+        name,
+        description: skill.description,
+        content: referenceContent,
+      }),
+    }
+  }
 
   if (!skill) {
     const availableSkills = Object.keys(skills)

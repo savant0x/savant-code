@@ -5,6 +5,10 @@ import {
 import { generateCompactId } from '@savant-code/common/util/string'
 
 import {
+  buildRestoredEvidenceNote,
+  spliceRawEvidence,
+} from '../../../evidence/splice'
+import {
   buildGraphInjectionMessage,
   buildGraphInjectionUserMessage,
 } from '../../../util/graph-injection'
@@ -14,6 +18,7 @@ import {
 } from '../../../util/messages'
 
 import type { SubagentPropagationSnapshot } from './execute-subagent'
+import type { EvidenceSpillRecord } from '../../../evidence/spill'
 import type { AgentTemplate } from '@savant-code/common/types/agent-template'
 import type {
   AgentRuntimeDeps,
@@ -135,6 +140,7 @@ export function createAgentState(
   parentAgentState: AgentState,
   agentContext: Record<string, Subgoal>,
   graphInjectionProjectRoot?: string,
+  rawEvidenceRecords?: EvidenceSpillRecord[],
 ): AgentState {
   if (parentAgentState.ancestorRunIds.length >= MAX_SUBAGENT_DEPTH) {
     throw new Error(
@@ -150,7 +156,24 @@ export function createAgentState(
   let messageHistory: Message[] = []
 
   if (agentTemplate.includeMessageHistory) {
-    messageHistory = filterUnfinishedToolCalls(parentAgentState.messageHistory)
+messageHistory = filterUnfinishedToolCalls(parentAgentState.messageHistory)
+    // FID-2026-0824-026: restore raw evidence over compaction sentinels for
+    // audit agents (requiresRawEvidence) BEFORE knowledge-graph/spawn markers.
+    if (rawEvidenceRecords && rawEvidenceRecords.length > 0) {
+      const recordsById = new Map(
+        rawEvidenceRecords.map((record) => [record.toolCallId, record]),
+      )
+      const spliced = spliceRawEvidence(messageHistory, recordsById)
+      messageHistory = spliced.messages
+      const note = buildRestoredEvidenceNote(spliced.restoredToolCallIds)
+      if (note !== null) {
+        messageHistory.push({
+          role: 'user',
+          content: [{ type: 'text', text: withSystemTags(note) }],
+          tags: ['EVIDENCE_RESTORED'],
+        })
+      }
+    }
     // FID-2026-0806-002 Phase 3c: harness-injected knowledge-graph evidence.
     // Zero-tool agents (Verifier) and restricted agents (Thinker) may not call
     // the graph query tools; the harness computes the evidence and injects it

@@ -15,12 +15,15 @@ import {
   buildComplianceWarningChunks,
   formatBlockingError,
 } from '../../echo/violation-handler'
+import { resolveYagniEnforced } from '../../echo/yagni-pre-write-gate'
+import { recordEvidence } from '../../evidence/spill'
 import { buildHookInput, getHookEngine } from '../../hooks/engine'
 import { getOrCreateProvenance } from '../../provenance'
 import { toolActivity, setActivity } from '../../util/activity-tracking'
 import { isSecuritySensitivePath } from '../../util/echo-compliance'
 import { formatValueForError } from '../../util/format-value'
 import { buildUserMessageContent } from '../../util/messages'
+import { stripYagniCheckBlocksFromWritePayload } from '../../util/think-tags'
 import { savantCodeToolHandlers } from '../handlers/list'
 import { getSuccessfulFileContent } from '../handlers/tool/write-file'
 import { countWriteLines, parseRawToolCall } from '../tool-call-parse'
@@ -293,6 +296,11 @@ export async function executeToolCall<T extends ToolName>(
         toolName: toolCall.toolName,
         input: toolCall.input as Record<string, unknown>,
         agentId: agentState.agentId,
+        // FID-2026-0822-004: the yagni gate also consumes the assistant TEXT
+        // channel (the Forge emits the block at the top of its response) and
+        // honors `yagni.enforced` from protocol.config.yaml.
+        assistantText: params.fullResponse,
+        yagniEnforced: resolveYagniEnforced(params.fileContext?.projectRoot),
       })
       if (!enforceResult.blocked && enforceResult.warnings.length > 0) {
         writeLawChecks = enforceResult.warnings.map((warning) => ({
@@ -335,6 +343,19 @@ export async function executeToolCall<T extends ToolName>(
         }
         injectEhelSteering(agentState, enforcement)
       }
+    }
+
+    // FID-2026-0822-004: sanitize write payloads AFTER the gate parsed the
+    // <yagni_check> block (the gate's regex extraction is read-only) but
+    // BEFORE execution, so a payload-embedded block never pollutes the
+    // written file — or the tool-call display/history/Z TAP receipt, which all
+    // derive from the same input object below. Covers write_file `content`,
+    // str_replace `newString`/`replacements[].newString`, and apply_patch
+    // `operation.diff`.
+    if (isWriteToolName(toolCall.toolName)) {
+      stripYagniCheckBlocksFromWritePayload(
+        toolCall.input as Record<string, unknown>,
+      )
     }
 
     // FID-2026-0814-003: PreToolUse hooks — an ADDITIONAL project gate at the
@@ -576,12 +597,23 @@ export async function executeToolCall<T extends ToolName>(
 
     return await toolResultPromise.then(
       async ({ output, creditsUsed }) => {
-        const toolResult: ToolMessage = {
+const toolResult: ToolMessage = {
           role: 'tool',
           toolName,
           toolCallId: toolCall.toolCallId,
           content: output,
         }
+
+        // FID-2026-0824-026: fail-open evidence capture BEFORE any compaction
+        // layer can clear this result. Never blocks tool execution.
+        void recordEvidence({
+          projectRoot: params.fileContext?.projectRoot ?? '',
+          runId: agentState.runId ?? agentState.agentId,
+          agentId: agentState.agentId,
+          toolCallId: toolCall.toolCallId,
+          toolName,
+          raw: JSON.stringify(output),
+        })
 
         // FID-2026-0718-009: M2 — on tool completion, model reasoning resumes.
         setActivity(

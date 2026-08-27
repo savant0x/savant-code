@@ -17,13 +17,17 @@ function writeSkill(projectRoot: string, name: string, description: string) {
   )
 }
 
-function callSkill(name: string, fileContext: Partial<ProjectFileContext>) {
+function callSkill(
+  name: string,
+  fileContext: Partial<ProjectFileContext>,
+  inputPath?: string,
+) {
   return handleSkill({
     previousToolCallFinished: Promise.resolve(),
     toolCall: {
       toolCallId: 'test-call',
       toolName: 'skill' as const,
-      input: { name },
+      input: inputPath ? { name, path: inputPath } : { name },
     },
     fileContext: fileContext as ProjectFileContext,
   })
@@ -94,5 +98,29 @@ describe('handleSkill', () => {
     const value = (output as { value: Record<string, string> }[])[0].value
 
     expect(value.content).toContain("Skill 'missing' not found")
+  })
+
+  // FID-2026-0824-012 S0-D progressive disclosure
+  it('loads a references/ sub-file when a path is given', async () => {
+    const skillDir = path.join(projectRoot, '.claude', 'skills', 'demo')
+    fs.mkdirSync(path.join(skillDir, 'references', 'details'), {
+      recursive: true,
+    })
+    fs.writeFileSync(path.join(skillDir, 'SKILL.md'), `---\nname: demo\ndescription: progressive\n---\n# Demo\n`)
+    fs.writeFileSync(
+      path.join(skillDir, 'references', 'details', 'checklist.md'),
+      '# Deep checklist\n',
+    )
+
+    const { output } = await callSkill('demo', { projectRoot, skills: {} }, 'details/checklist.md')
+    const value = (output as { value: Record<string, string> }[])[0].value
+    expect(value.content).toContain('# Deep checklist')
+  })
+
+  it('rejects traversal in the references path', async () => {
+    writeSkill(projectRoot, 'demo', 'traversal test')
+    const { output } = await callSkill('demo', { projectRoot, skills: {} }, '../secret.md')
+    const value = (output as { value: Record<string, string> }[])[0].value
+    expect(value.content).toContain('not found')
   })
 })

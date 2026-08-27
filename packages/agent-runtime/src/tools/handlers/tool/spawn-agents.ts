@@ -3,6 +3,11 @@ import { jsonToolResult } from '@savant-code/common/util/messages'
 import { safeToJSONValue } from '@savant-code/common/util/type-narrowing'
 
 import {
+  buildRecorderRetryPrompt,
+  checkRecorderOutcome,
+  RECORDER_STALL_RETRY_LIMIT,
+} from './recorder-stall-check'
+import {
   validateAndGetAgentTemplate,
   validateAgentInput,
   createAgentState,
@@ -10,6 +15,7 @@ import {
   extractSubagentContextParams,
   withParentModel,
 } from './spawn-agent-utils'
+import { loadEvidenceRecords } from '../../../evidence/spill'
 import { getOrCreateProvenance } from '../../../provenance'
 import { extractVerdictText } from '../../../provenance/verdict'
 import { filterToolSet } from '../../../tools/filter-tool-set'
@@ -129,7 +135,18 @@ export const handleSpawnAgents = (async (
           parentAgentTemplate,
         )
 
-        validateAgentInput(agentTemplate, agentType, prompt, spawnParams)
+validateAgentInput(agentTemplate, agentType, prompt, spawnParams)
+
+        // FID-2026-0824-026: preload raw evidence for audit agents so the
+        // spawn-time splice can restore sentinel-compacted results verbatim.
+        const rawEvidenceRecords =
+          agentTemplate.requiresRawEvidence === true &&
+          !parentAgentState.parentId
+            ? await loadEvidenceRecords(
+                params.fileContext?.projectRoot ?? '',
+                parentAgentState.runId ?? '',
+              )
+            : undefined
 
         const subAgentState = createAgentState(
           agentType,
@@ -137,6 +154,7 @@ export const handleSpawnAgents = (async (
           parentAgentState,
           {},
           params.fileContext?.projectRoot,
+          rawEvidenceRecords,
         )
 
         // FID-2026-0718-009 M3: surface sub-agent activity on parent.
@@ -165,93 +183,150 @@ export const handleSpawnAgents = (async (
           throw new Error('Subagent propagation context is missing.')
         }
 
-        const result = await executeSubagent({
-          propagation,
-          ...contextParams,
+// FID-2026-0823-012 ISSUE-D: the child-run invocation is parameterized
+        // by (state, prompt) so a stalled recorder can be retried on a FRESH
+        // state with a corrective failure-naming suffix instead of forcing
+        // the parent into an identical blind re-spawn (identical prompts
+        // reproduce identical stalls).
+        const runChild = (childState: AgentState, effectivePrompt: string) =>
+          executeSubagent({
+            propagation,
+            ...contextParams,
 
-          // Spawn-specific params
-          ancestorRunIds: parentAgentState.ancestorRunIds,
-          userInputId: `${userInputId}-${agentType}${subAgentState.agentId}`,
-          prompt: prompt || '',
-          spawnParams,
-          agentTemplate,
-          parentAgentState,
-          agentState: subAgentState,
-          fingerprintId,
-          isOnlyChild: agents.length === 1,
-          excludeToolFromMessageHistory: false,
-          parentSystemPrompt,
-          // FID-2026-0802-005 L12: filterToolSet only when the child actually
-          // inherits the parent's system prompt (avoid redundant computation
-          // per spawn). The runtime boundary in run-agent-step.ts applies the
-          // same subset filter again for defense in depth — both boundaries
-          // are intentional per FID-005.
-          parentTools: agentTemplate.inheritParentSystemPrompt
-            ? filterToolSet(parentTools, agentTemplate.toolNames)
-            : undefined,
-          onResponseChunk: (chunk: string | PrintModeEvent) => {
-            if (typeof chunk === 'string') {
-              sendSubagentChunk({
-                userInputId,
-                agentId: subAgentState.agentId,
-                agentType,
-                chunk,
-                prompt,
-              })
-              return
-            }
-
-            if (chunk.type === 'text') {
-              if (chunk.text) {
-                writeToClient({
-                  type: 'text' as const,
-                  agentId: subAgentState.agentId,
-                  text: chunk.text,
+            // Spawn-specific params
+            ancestorRunIds: parentAgentState.ancestorRunIds,
+            userInputId: `${userInputId}-${agentType}${childState.agentId}`,
+            prompt: effectivePrompt,
+            spawnParams,
+            agentTemplate,
+            parentAgentState,
+            agentState: childState,
+            fingerprintId,
+            isOnlyChild: agents.length === 1,
+            excludeToolFromMessageHistory: false,
+            parentSystemPrompt,
+            // FID-2026-0802-005 L12: filterToolSet only when the child actually
+            // inherits the parent's system prompt (avoid redundant computation
+            // per spawn). The runtime boundary in run-agent-step.ts applies the
+            // same subset filter again for defense in depth — both boundaries
+            // are intentional per FID-005.
+            parentTools: agentTemplate.inheritParentSystemPrompt
+              ? filterToolSet(parentTools, agentTemplate.toolNames)
+              : undefined,
+            onResponseChunk: (chunk: string | PrintModeEvent) => {
+              if (typeof chunk === 'string') {
+                sendSubagentChunk({
+                  userInputId,
+                  agentId: childState.agentId,
+                  agentType,
+                  chunk,
+                  prompt,
                 })
+                return
               }
-              return
-            }
 
-            // Add parentAgentId for proper nesting in UI
-            const ensureParentAgentId = () => {
-              if (
-                chunk.type === 'subagent_start' ||
-                chunk.type === 'subagent_finish'
-              ) {
-                return (
-                  chunk.parentAgentId ??
-                  subAgentState.parentId ??
-                  parentAgentState?.agentId
-                )
-              }
-              if (chunk.type === 'tool_call' || chunk.type === 'tool_result') {
-                const printableEvent = chunk as unknown as {
-                  parentAgentId?: string
+              if (chunk.type === 'text') {
+                if (chunk.text) {
+                  writeToClient({
+                    type: 'text' as const,
+                    agentId: childState.agentId,
+                    text: chunk.text,
+                  })
                 }
-                return printableEvent.parentAgentId ?? subAgentState.agentId
+                return
               }
-              return undefined
-            }
 
-            const parentAgentId = ensureParentAgentId()
-            if (
-              parentAgentId !== undefined &&
-              (chunk.type === 'subagent_start' ||
-                chunk.type === 'subagent_finish' ||
-                chunk.type === 'tool_call' ||
-                chunk.type === 'tool_result')
-            ) {
-              writeToClient({ ...chunk, parentAgentId })
-              return
-            }
+              // Add parentAgentId for proper nesting in UI
+              const ensureParentAgentId = () => {
+                if (
+                  chunk.type === 'subagent_start' ||
+                  chunk.type === 'subagent_finish'
+                ) {
+                  return (
+                    chunk.parentAgentId ??
+                    childState.parentId ??
+                    parentAgentState?.agentId
+                  )
+                }
+                if (
+                  chunk.type === 'tool_call' ||
+                  chunk.type === 'tool_result'
+                ) {
+                  const printableEvent = chunk as unknown as {
+                    parentAgentId?: string
+                  }
+                  return printableEvent.parentAgentId ?? childState.agentId
+                }
+                return undefined
+              }
 
-            const eventWithAgent = {
-              ...chunk,
-              agentId: subAgentState.agentId,
+              const parentAgentId = ensureParentAgentId()
+              if (
+                parentAgentId !== undefined &&
+                (chunk.type === 'subagent_start' ||
+                  chunk.type === 'subagent_finish' ||
+                  chunk.type === 'tool_call' ||
+                  chunk.type === 'tool_result')
+              ) {
+                writeToClient({ ...chunk, parentAgentId })
+                return
+              }
+
+              const eventWithAgent = {
+                ...chunk,
+                agentId: childState.agentId,
+              }
+              writeToClient(eventWithAgent)
+            },
+          })
+
+        let result = await runChild(subAgentState, prompt || '')
+
+// FID-2026-0823-012 ISSUE-D: -008-guard-aware corrective retry
+        // ladder. A stalled recorder (no successful write_file/set_output)
+        // is retried on a fresh state with a corrective suffix naming the
+        // exact relay-guard reason. Bounded by RECORDER_STALL_RETRY_LIMIT —
+        // the ladder's only bound, so constant and behavior cannot drift;
+        // the post-run relay guard below stays the single outcome authority —
+        // an exhausted ladder still relays errorMessage.
+        if (agentType === 'recorder') {
+          let stalledCredits = 0
+          for (
+            let attempt = 0;
+            attempt < RECORDER_STALL_RETRY_LIMIT;
+            attempt += 1
+          ) {
+            const outcome = checkRecorderOutcome(
+              result.agentState.messageHistory,
+            )
+            if (outcome.ok) break
+            // Preserve each stalled attempt's spend so parent-side cost
+            // aggregation stays exact (aggregation below sees only the
+            // final attempt's state).
+            stalledCredits += result.agentState.creditsUsed || 0
+            const retryState = createAgentState(
+              agentType,
+              agentTemplate,
+              parentAgentState,
+              {},
+              params.fileContext?.projectRoot,
+            )
+            result = await runChild(
+              retryState,
+              buildRecorderRetryPrompt(prompt || '', outcome.reason),
+            )
+          }
+          if (stalledCredits > 0) {
+            result = {
+              ...result,
+              agentState: {
+                ...result.agentState,
+                creditsUsed:
+                  (result.agentState.creditsUsed || 0) + stalledCredits,
+              },
             }
-            writeToClient(eventWithAgent)
-          },
-        })
+          }
+        }
 
         // FID-2026-0813-004: ZTAP verdict binding — the Verifier (AUDIT) and
         // Adversary (ADVERSARIAL) verdicts are their final outputs. Bound to
@@ -307,6 +382,23 @@ export const handleSpawnAgents = (async (
     results.map(async (result, index) => {
       if (result.status === 'fulfilled') {
         const { output, agentType, agentName } = result.value
+        // FID-2026-0823-008: write-required relay guard — a recorder run that
+        // ended without a successful FID/CHANGELOG write and without
+        // set_output must not relay as a silent pass (read-but-no-write
+        // stall). The errorMessage surfaces in the CLI agent block and lets
+        // the Orchestrator re-spawn instead of trusting a no-op "done".
+        if (agentType === 'recorder') {
+          const outcome = checkRecorderOutcome(
+            result.value.agentState.messageHistory,
+          )
+          if (!outcome.ok) {
+            return {
+              agentName,
+              agentType,
+              value: { errorMessage: outcome.reason },
+            }
+          }
+        }
         return {
           agentName,
           agentType,

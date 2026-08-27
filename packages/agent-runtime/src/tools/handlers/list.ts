@@ -42,6 +42,7 @@ import { handleSetMessages } from './tool/set-messages'
 import { handleSetOutput } from './tool/set-output'
 import { handleSetScaffoldComplete } from './tool/set-scaffold-complete'
 import { handleSkill } from './tool/skill'
+import { handleSkillManage } from './tool/skill-manage'
 import { handleSpawnAgentInline } from './tool/spawn-agent-inline'
 import { handleSpawnAgents } from './tool/spawn-agents'
 import { handleStrReplace } from './tool/str-replace'
@@ -112,6 +113,7 @@ export const savantCodeToolHandlers: {
   set_output: handleSetOutput,
   set_scaffold_complete: handleSetScaffoldComplete,
   skill: handleSkill,
+  skill_manage: handleSkillManage,
   spawn_agents: handleSpawnAgents,
   spawn_agent_inline: handleSpawnAgentInline,
   str_replace: handleStrReplace,

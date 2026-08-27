@@ -16,6 +16,7 @@ import { isAgentGrounded } from '../echo/grounding'
 import { getSteeringMessage } from '../run-agent-step/constants'
 import { processStreamWithTools } from '../tool-stream-parser'
 import { withSystemTags } from '../util/messages'
+import { createYagniCheckStreamStripper } from '../util/think-tags'
 import { buildFinalMessageHistory } from './stream-parser/finalize'
 import { createResponseHandler } from './stream-parser/response-handler'
 
@@ -111,6 +112,13 @@ export async function processStream(
   // `fullResponseChunks.join('')` on every tool call was O(k·L) copying for
   // tool-dense responses. The chunks array is kept only for the final return.
   let fullResponseSoFar = fullResponse
+  // FID-2026-0822-004: the Forge emits a <yagni_check> JSON block at the top
+  // of its response. This streaming stripper removes the block (and truncated
+  // fragments) from what persists/renders — assistantMessages and
+  // onResponseChunk — while `fullResponseSoFar` below keeps the RAW text so
+  // the enforcement gate's assistant-text channel can still parse the block
+  // (gate read is non-destructive; strip is emit-time only).
+  const yagniStripper = createYagniCheckStreamStripper()
   // FID-2026-0812-005: stage all main-agent assistant output until the
   // grounding checkpoint is complete. The completion gate runs after stream
   // consumption, so forwarding text or reasoning immediately would let an
@@ -128,14 +136,25 @@ export async function processStream(
 
   const emitCommittedText = (text: string): void => {
     if (!text) return
-    assistantMessages.push(assistantMessage(text))
-    onResponseChunk(text)
+    // fullResponseSoFar keeps the RAW text (FID-2026-0822-004): the YAGNI
+    // gate's assistant-text channel reads it at beforeToolCall time and must
+    // see the <yagni_check> block the model emitted. Only the user-visible
+    // channel below (assistantMessages + onResponseChunk) is stripped — the
+    // block never reaches the transcript or the relayed message history.
     fullResponseSoFar += text
     if (fullResponseChunks[0] === fullResponse) {
       fullResponseChunks[0] = fullResponse + text
     } else {
       fullResponseChunks.push(text)
     }
+    // FID-2026-0822-004: strip <yagni_check> scaffolding from the
+    // user-visible + persisted channels. A block may span chunks, so the
+    // stateful stripper holds text from an unclosed opener until its closer
+    // arrives (or the stream ends via flush).
+    const cleaned = yagniStripper.push(text)
+    if (cleaned.length === 0) return
+    assistantMessages.push(assistantMessage(cleaned))
+    onResponseChunk(cleaned)
   }
   const emitCommittedReasoning = (text: string): void => {
     if (!text) return
@@ -457,6 +476,11 @@ export async function processStream(
       // Generator cleanup failed; assistantMessages may be incomplete but
       // we must not swallow the original error.
     }
+
+    // FID-2026-0822-004: stream ended — drop any held unclosed <yagni_check>
+    // block (truncated scaffolding). Held text was never emitted to
+    // assistantMessages/onResponseChunk, so dropping it leaves both clean.
+    yagniStripper.flush()
 
     // This runs even when the stream throws (e.g., AbortError mid-iteration).
     // Build message history from the current agentState.messageHistory so that
