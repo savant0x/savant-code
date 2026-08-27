@@ -4,6 +4,206 @@
 > scope for the current task. Operator confirmation converts interpreted scope
 > into approved scope. Any drop/deferral requires a blocking presentation.
 
+## Task 11 — FID-2026-0823-004 verification battery (2026-08-23)
+
+> Session resumed after an interrupted run; the prior session report states the
+> three closure gates were never executed. The converged FID (status `fixed`)
+> prescribes this battery in its Verification section. All items are
+> non-destructive verification commands; no code changes are in scope unless a
+> gate fails.
+
+- [x] **T11-A.** Typecheck: `bun run --cwd=sdk typecheck` + `bun run --cwd=cli
+      typecheck`, both exit 0 (FID Verification: "Typecheck sdk+cli exit 0").
+      **Done 2026-08-23** — SDK_TSC_EXIT=0, CLI_TSC_EXIT=0 (pasted below).
+- [x] **T11-B.** Focused regression net:
+      `bun test sdk/src/__tests__/process-definitions.test.ts` — 3 pass / 0
+      fail (string preserved verbatim; fn dual-form unchanged; absent-field
+      pass-through). **Done 2026-08-23** — 3 pass / 0 fail / 7 expect.
+- [x] **T11-C.** E2E offline probe: `bun run dev/scratchpad/process-defs-probe.ts`
+      — real bundled basher through the real processor; RESULT: PASS (string
+      survives verbatim; generator yields run_terminal_command -> STEP;
+      relayDigest parked). **Done 2026-08-23** — RESULT: PASS, exit 0.
+- [x] **T11-D.** eslint `--max-warnings 0` on the two sdk files
+      (process-definitions.ts + its test). **Done 2026-08-23** — LINT_EXIT=0.
+- [x] **T11-E.** Reproducibility grep: `grep -c "FID-2026-0823-004"` over both
+      sdk files (≥1 match each). **Done 2026-08-23** — both files: 1 match
+      each.
+- [x] **T11-F.** Report results with pasted tool output; update FID/finalize
+      closure path. **Done 2026-08-23** — results presented to operator.
+      **NOT in scope here:** live basher echo-probe in a restarted harness
+      (operator-gated — needs a restarted TUI session); prettier style drift
+      on the two sdk files (known two-prettier-binaries class, settled at
+      release); deferred Fn-only gate alignment (loop-iteration.ts:218 /
+      run-programmatic-step.ts:61 / step.ts:336).
+
+## Task 12 — FID verification gates: make skipped verification impossible (2026-08-23)
+
+> Operator-directed after the T11 battery exposed the root defect: FIDs reach
+> `fixed` on prose evidence alone (keyword regex, not execution); the
+> observed FID-2026-0823-004 case recorded claimed gates that were never
+> run, caught only by a human re-run request. Operator approved FULL STACK
+> (1+2+3) via ask_user 2026-08-23: receipt+freshness, live re-run at
+> validate:repository, write-time tripwire. FID-2026-0823-009 authored,
+> Perfection Loop run (Loops 1-2 converged; citations corrected via Method-2
+> audit), markdownlint clean — **presented for approval**.
+
+- [ ] **T12-A.** Pure gate-declaration + receipt validators (C1/C2) with unit tests
+- [ ] **T12-B.** `scripts/fid-verify.ts` allowlisted executor + `fid:verify` root script
+- [ ] **T12-C.** `scripts/fid-gates.ts` wired into validate-repository (C1+C2+C3 live re-run)
+- [ ] **T12-D.** pre-write-gates.ts L3 write-time tripwire + tests
+- [ ] **T12-E.** FID template contract docs + optional pre-push structural gate
+- [ ] **T12-F.** Migrate 4 active fixed FIDs (0820-009, 0822-014, 0823-004, 0823-007) —
+      declare gates + stamp receipts; honest downgrade fallback
+- [x] **T12-A.** Pure gate-declaration + receipt validators (C1/C2) with unit tests. **Done
+      2026-08-23** — `fid-verification-gates.ts` + 20-test suite (grammar, hostile args,
+      fingerprint freshness, C1/C2) in agent-runtime echo; exported from index.
+- [x] **T12-B.** `scripts/fid-verify.ts` allowlisted executor + `fid:verify` root script. **Done
+      2026-08-23** — 16 tests; allowlisted typecheck/test/probe argv mapping, path containment,
+      `--check` structural scan, `--write` stamping.
+- [x] **T12-C.** `scripts/fid-gates.ts` wired into validate-repository (C1+C2+C3 live re-run).
+      **Done 2026-08-23** — 8 tests incl. red-tree-fails-despite-green-receipt + dedupe +
+      hostile-gate safety. Zero `fid.gates.*` issues from this change in validate:repository.
+- [x] **T12-D.** pre-write-gates.ts L3 write-time tripwire + tests. **Done 2026-08-23** — 5 tests
+      (fixed/verified blocked without receipt, allowed with fresh receipt, analyzed unblocked,
+      non-FID unblocked); full echo suite 134/0.
+- [x] **T12-E.** FID template contract docs + pre-push structural gate. **Done 2026-08-23** —
+      template `## Verification Gates` section + `.githooks/pre-push` `fid:verify --check` step.
+- [x] **T12-F.** Migrate 4 active fixed FIDs. **Done 2026-08-23** — gates declared + receipts
+      stamped for 0820-009, 0822-014, 0823-004 (green); **0823-007 STALE** — its
+      `typecheck packages/agent-runtime` gate is red because the concurrent law1 stream's
+      untracked `sanitize-yield-input-nested.test.ts` has 4 type errors (see
+      [OPEN-OUT-OF-SCOPE] entry). Honest outcome: the gate refuses the stale receipt; no
+      downgrade applied yet — awaiting operator decision once the stream lands its fix.
+- [x] **T12-G.** Full gate sweep. **Done 2026-08-23** — agent-runtime typecheck exit 0; full
+      agent-runtime suite 1253/0; echo 134/0; scripts 24/0; ledger 9/0; manifest 8/0; eslint
+      --max-warnings 0 on all touched files; prettier clean; lint:md clean; `fid:verify
+      --check` PASS on all 5 active fixed FIDs. The concurrent-stream typecheck regression
+      was unblocked (operator stopped all other agents; the orphaned
+      `sanitize-yield-input-nested.test.ts`'s 4 mechanical `toEqual` typing errors were fixed
+      preserving its 5/5 test intent — 1253/0 full suite). FID-2026-0823-009 **closed +
+      archived 2026-08-23** with CHANGELOG entry; receipt re-stamped after the status flips
+      (freshness property fired twice — proving itself on its own record). validate:repository
+      red remains pre-existing only (quality ratchet FID-2026-0819-005 + concurrent-stream
+      law1 FID metadata, both operator-recorded out-of-scope); zero fid.gates issues.
+
+## Task 8 — Edit line-count format unification + traffic-lights chrome (2026-08-23)
+
+> New task intake. Interpreted scope below — operator confirmation (via FID
+> presentation) converts it into approved scope.
+
+- [x] **T8-A.** Create `FID-2026-0823-005` (edit line-count format + chrome
+      unification; renumbered from 004 — the overnight drive allocated 004
+      first), run the Perfection Loop on the document, and present it for
+      approval. **Done 2026-08-23** — FID loop-converged (Loops 1-5 incl.
+      operator-decision re-run), operator-approved, **closed + archived**
+      (carried live-TUI-smoke boundary waived by the close directive).
+- [x] **T8-B.** Implement the converged FID (operator-approved 2026-08-23).
+      **Done 2026-08-23** — `formatDiffCountSide` + `formatDiffCounts` in
+      `diff-stats.ts`; header + `DiffStatsBar` → `+N -N`; `DiffViewer` onto
+      `TrafficLightPanel`; `CompactFileStats` bars → per-side helper. Gates:
+      cli typecheck exit 0; full cli suite 3320/18/0; focused 145/0;
+      eslint 0; prettier clean; bracket format 0 across cli/src. **Closed +
+      archived 2026-08-23** (CHANGELOG + archive index entries;      smoke boundary waived by operator's close directive).
+
+## Task 9 — write_file full-document diff wall → compact summary + markdown-aware expansion (2026-08-23)
+
+> New task intake. Interpreted scope below — operator approval (via FID
+> presentation, ask_user 2026-08-23) converts it into approved scope.
+
+- [x] **T9-A.** Diagnose the Recorder's "massive wall of unorganized text":
+      `write_file` of an existing FID renders the entire document as an
+      all-additions `+`-prefixed diff in the `DiffViewer` traffic-light panel
+      (`edit-analysis.ts` `constructDiffFromWriteFile`; `write-file.tsx`
+      delegates to `StrReplaceComponent`). **Done 2026-08-23** — RED evidence
+      in `FID-2026-0823-006`.
+- [x] **T9-B.** Direction approved by operator (ask_user 2026-08-23):
+      **A+B combined** — compact `write_file` summary panel (path + line
+      count) with content behind expansion; `.md` targets render as
+      markdown when expanded, other targets as a code block; `str_replace`
+      keeps its real diff. Process: **run FID + Perfection Loop now**.
+- [x] **T9-C.** Implement the converged FID: `ToolRenderOptions`
+      `isCollapsed`/`onToggle`; `ToolBranch` passes them; new
+      `WriteFileComponent`; `write_file`/`propose_write_file` collapsed by
+      default; `write-file.test.tsx`; gates (scoped typecheck 0, 135/0
+      tests, eslint 0, prettier clean). **Done 2026-08-23.**
+- [x] **T9-D.** Update FID-2026-0823-006 to closed + archive, CHANGELOG
+      entry. **Done 2026-08-23.** Carried NEEDS-REVIEW: operator restart +
+      live-TUI smoke of one Recorder FID update (compact panel).
+
+## Task 10 — Recorder read-but-no-write stall → write-required relay guard (2026-08-23)
+
+> Main-agent report (2026-08-23): "the Recorder agents stalled twice today
+> (read-but-no-write, plus a Detective relay validation error) — both are
+> known harness failure classes; edits were ground-truth verified on disk
+> after every relay per the handoff rhythm." Operator approved FID + loop
+> (ask_user 2026-08-23).
+
+- [x] **T10-A.** Root-cause: the Recorder's write requirement is prompt-text
+      only; the loop terminates on any text turn and spawn-agents relays the
+      lastMessage as a silent pass. **Done 2026-08-23** (RED evidence in
+      FID-2026-0823-008).
+- [x] **T10-B.** Implement: pure `checkRecorderOutcome`
+      (recorder-stall-check.ts) + wiring in spawn-agents.ts; 8 unit + 2
+      integration tests. Gates: typecheck 0; full agent-runtime suite 1210/0;
+      eslint 0; prettier clean. **Done 2026-08-23.**
+- [x] **T10-C.** Close + archive FID-2026-0823-008, CHANGELOG entry.
+      **Done 2026-08-23.** Carried NEEDS-REVIEW: live smoke — a real
+      Recorder spawn that reads-without-writes should show the stall
+      errorMessage in the agent block.
+- [ ] **T10-D. Detective relay validation error (deferred, root-cause
+      pending):** could not be reproduced from the report (no error text/
+      log line available). Closest candidates found: the propagation-context
+      invariant in execute-subagent.ts ("Subagent propagation context does
+      not match parent state") and validateAgentInput (spawn prompt/params
+      schema) — neither Detective-specific. Needs the actual error text;
+      flagged here so it is not dropped.
+
+## [OPEN-OUT-OF-SCOPE] — concurrent-stream WIP breaks agent-runtime typecheck (sanitize-yield-input-nested.test.ts)
+
+Discovered during T12 gate sweep: untracked
+`packages/agent-runtime/src/run-programmatic-step/__tests__/sanitize-yield-input-nested.test.ts`
+(concurrent law1 stream, FID-2026-0823-010 work on generator undefined
+yields) has 4 type errors (TS2769, z.record/jsonValue variance) that fail
+`bun run --cwd=packages/agent-runtime typecheck` (exit 2). Zero errors in
+T12 files (fid-verification-gates, fid-verify, fid-gates, pre-write-gates).
+Not touched here — the stream owns the file mid-edit; scoped typecheck of
+T12 files passes. Owner: the law1 stream. Operator decides.
+
+## [OPEN-OUT-OF-SCOPE] — stale FID-2026-0823-009-law1 draft collides with 009 (concurrent stream)
+
+Discovered during T12 (FID-2026-0823-009 verification-gates): a concurrent
+stream registered `FID-2026-0823-009-law1-path-form-mismatch...` (18:28),
+then renumbered itself to `-010` (18:31, documented in its own record:
+"allocated as -010 after a concurrent session registered -009
+(fid-verification-gates-enforcement)") but left the stale `-009-law1` draft
+on disk (untracked). This trips `fid.metadata.duplicate-active-id` in
+validate:repository. Operator decision 2026-08-23: **leave it; record as
+out-of-scope** — the concurrent stream cleans up its own leftover. My FID
+(009, created 18:19) keeps its number. Zero `fid.gates.*` issues from T12.
+
+**RESOLVED 2026-08-24 (operator de-duplication directive):** the stale
+duplicate was not deleted — it was RENUMBERED instead:
+`FID-2026-0823-009-law1-path-form-mismatch-and-generator-undefined-yields.md`
+is now
+`FID-2026-0823-015-law1-path-form-mismatch-and-generator-undefined-yields.md`,
+clearing this pair's duplicate-active-id trip while preserving the closed
+record. Live cross-references updated (recorder-context-bloat -011,
+archived -014, both ledger READMEs); the verification-gates record keeps
+-009.
+
+## [OPEN-OUT-OF-SCOPE] — structured-card WIP breaks full-project cli typecheck
+
+Discovered mid-work (Law 2 additional rule): untracked
+`cli/src/components/tools/structured-card/classify.ts` (FID-2026-0822-014
+structured-output-cards, unreferenced anywhere — grep finds zero consumers)
+has 3 intrinsic type errors (`truncate(value.errorMessage)` JSONValue→string at
+114/117; `scalarToDisplayString(firstValue)` JSONValue variance at 126) that
+fail `tsc --noEmit -p .` (exit 2). Written by a concurrent stream mid-session
+(mtime 2026-08-23 15:25). Not touched here — scoped typecheck excluding that
+dir passes (TSC_EXIT=0) and the runtime build is unaffected (unreferenced).
+Owner: the FID-2026-0822-014 stream. Fix = narrow the value types at
+classify.ts:114/117/126. Operator decides whether to fold into scope.
+
 ## Approved work items (pending operator confirmation)
 
 - [x] **A. Review the current Savant-Code UI** (code-based review of cli/src:
@@ -1487,3 +1687,122 @@
   embedded as base64, but the implementation uses the character logo
   (FID-2026-0807-009 alignment). Operator decision 2026-08-20: record only;
   the comment is not corrected in this program.
+
+## Task 8 — Release-engine hardening (2026-08-21) — APPROVED
+
+> Operator approved all three items on 2026-08-21 after the v0.0.27 release
+> (which took 4 runs: credential-scan false positive → prettier → concurrent
+> FID markdownlint → success). FID-2026-0821-002 records RED/GREEN/AUDIT and
+> drives implementation.
+
+- [x] **RH-A. P1 — Concurrent-writer interference:** (a) release-in-progress
+      marker in the lock dir as a signal to concurrent sessions, (b) automation
+      commit warns when it sweeps files under `dev/` (governance area),
+      (c) worktree fingerprint captured immediately after the automation
+      commit so concurrent writes during gates fail the run fast with a clear
+      message instead of a confusing random gate failure.
+- [x] **RH-B. P2 — Local-tag cleanup after failed runs:** auto-prune a
+      local-only `v<version>` tag left by a failed release receipt (absent on
+      remote + receipt headSha matches) instead of hard-failing "tag already
+      exists" and forcing manual `git tag -d`.
+- [x] **RH-C. P3 — Credential-scan pattern refinement:** source files
+      (`.ts/.tsx/.js/.mjs/.cjs/.jsx`) named `credentials*`/`secrets*` fall
+      through to the content scan (the real discriminator) instead of being
+      filename-blocked; config-shaped files (`.env`, `.npmrc`, `*.pem`,
+      `credentials.json`, …) stay hard-blocked. Replaces the 3-file allowlist
+      added during the release.
+
+## Task 9 — Post-0821-001 follow-up: context-window jumping + threshold parity (2026-08-21) — APPROVED
+
+> Operator directed on 2026-08-21: "we need a fid to address the issues" from
+> the auto-compact handoff (`dev/session-summaries/2026-08-21-1858-open-issues-next-run.md`).
+> FID-2026-0821-003 records RED/GREEN/AUDIT and drives the work. The other
+> handoff issues (#2-#7, #8 process notes) are session-process notes already
+> captured in the issues file + LEARNINGS, not FID code work — registered
+> here so nothing is dropped silently.
+
+- [x] **FID-2026-0821-003-A. P1 — Context-window display jumping (OPERATOR
+      PRIORITY):** investigate the reconcile source alternation
+      (provider-truth vs ×1.35 estimator vs post-prune recount) with per-step
+      logging; then apply the least-invasive fix the logs support — display
+      damping preferred, runtime truth untouched. Implemented: per-step
+      reconcile decision line (optional logger, throwing-logger-safe) +
+      `dampTokenCount` (5% deadband / 12% max-step) in the CLI store.
+      FID closed + archived 2026-08-21.
+- [x] **FID-2026-0821-003-B. P2 — Threshold parity-extraction test:** execute
+      the serialized generator's inline `computeTriggerThreshold` against
+      `resolveTriggerThreshold` over a window/ratio sweep (structural parity),
+      replacing/augmenting the value-pinned cases. Implemented:
+      `TRIGGER_THRESHOLD_INLINE_SOURCE` extracted + sweep test (7 windows ×
+      5 ratios). FID closed + archived 2026-08-21.
+- [ ] **Handoff issue #2 — basher NO-OUTPUT:** process rule (never trust
+      basher mutations without ground-truth check) — recorded, no code work.
+- [ ] **Handoff issue #3 — payload truncation:** transport workarounds —
+      recorded, no code work.
+- [ ] **Handoff issue #4 — backtick landmine:** factory rule — recorded, no
+      code work.
+- [ ] **Handoff issue #5 — EHEL per-file gating:** pattern — recorded, no
+      code work.
+- [ ] **Handoff issue #6 — glob blindness to `resources/**`:** shell-reads
+      rule — recorded, no code work.
+- [ ] **Handoff issue #7 — interleaved workstream:** path-scoped `git add`
+      rule for the eventual commit — recorded, no code work.
+- [ ] **Handoff issue #8 — process notes:** FSM ordering + parity test (the
+      parity test IS task 0821-003-B) — recorded.
+
+## Task 13 — Housekeeping + official release + continue the build (2026-08-27)
+
+> New task intake. Operator direction: "continue the build and we need to do
+> some housekeeping. A lot has happened without an official release." Last
+> official release: v0.0.27 (2026-08-21). Working tree carries 644 changed
+> paths (214 tracked +8319/−2454 + 231 untracked) under the
+> release-only-commits convention. Interpreted scope below — operator
+> confirmation converts it into approved scope; any drop requires a blocking
+> presentation.
+
+### Phase A — Housekeeping (reconcile the uncommitted tree)
+
+- [ ] **H-A1.** Establish a clean baseline: full gate sweep on the current tree
+      (typecheck ×12, full test chain, eslint, lint:md, prettier check,
+      fid:verify --check). Record results in this task.
+- [ ] **H-A2.** Reconcile FID state against disk ground truth: every closure
+      recorded in session summaries / CHANGELOG but not yet reflected on disk
+      gets closed + archived (verify each against the archive dir and its
+      receipt); fix stale `dev/fids/README.md` rows (e.g. -0820-009,
+      -0822-012, -0822-014, -0824-011 listed active but already archived).
+- [ ] **H-A3.** Reconcile master manifests (-0820-007, -0823-003) against disk.
+- [ ] **H-A4.** Ensure CHANGELOG + session summaries capture the full
+      post-v0.0.27 delta; write the v0.0.28 release section.
+
+### Phase B — Official release v0.0.28
+
+- [ ] **H-B1.** Bump 0.0.27 → 0.0.28 (scripts/bump-version.ts) with full
+      doc-surface propagation; verify no version drift.
+- [ ] **H-B2.** Run the full release gate battery (build, test, typecheck,
+      lint, lint:md, prettier, credential scan, fid:verify --check).
+- [ ] **H-B3.** Commit the backlog **granularly** per the approved Git
+      Workflow Optimization (Nine Rules G1–G9): path-scoped atomic commits
+      per closed FID/area (G3/G4), G8-formatted messages (`<type>(<scope>):
+      <desc> (<FID-ID>)`), no monolithic release commit (G6).
+      **SUPERSEDED 2026-08-27:** operator confirmed the new push workflow
+      replaces release-only-commits; the earlier "one release commit"
+      answer is void. Commits remain operator-authorized (G1) — agent
+      prepares the path-scoped staging plan, operator executes or approves.
+- [ ] **H-B4.** Present the release plan (tag, granular push, GitHub release,
+      publish) for operator approval. Executing scripts/public-release.ts
+      (push/publish) is operator-gated; prepare everything, operator fires.
+- [ ] **H-B0.** Git-workflow adoption (Phase 0 of the BO, operator-directed):
+      fold G1–G9 into ECHO.md + LEARNINGS.md; wire `.gitmessage` +
+      `git maintenance start`; then execute the BO's Migration Checklist to
+      drain the current 644-path tree into path-scoped atomic commits.
+      FIDs from BO Phase 1 (.gitmessage, Commit: field, bundle script,
+      preflight) emitted after Phase 0 settles — operator call.
+
+### Phase C — Continue the build (operator picks the program)
+
+- [ ] **H-C1.** Resume the highest-priority roadmap program: -0824-003
+      (computer use / CUA daemon + MJPEG), -0824-004 (voice pipeline),
+      -0824-005 (triggers/webhooks), -0824-006 (mobile companion),
+      -0824-007 (security keychain), -0824-008 (agents-as-contacts), or the
+      packaging release-time checklist (-0820-011 Loop 4). Operator decides
+      the first target.

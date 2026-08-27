@@ -1,5 +1,33 @@
 # LEARNINGS
 
+## Lesson: Environment-dependent guards need live probes — cwd-scoped path matching passed tests and failed production
+
+- **Date:** 2026-08-23
+- **Failure:** Relay-guard rev 1 scoped canonicalized-path matches to
+  `canonicalizePath('.')` (process.cwd() at module load); the CLI's
+  launch-dependent cwd made every legit absolutized write fail the check
+  while all repo-root unit tests passed — a successful Recorder CREATE
+  write was falsely relayed as a stall.
+- **Evidence:**
+  packages/agent-runtime/src/tools/handlers/tool/recorder-stall-check.ts →
+  symbol:isAllowedWritePath,
+  packages/agent-runtime/src/tools/handlers/tool/__tests__/recorder-stall-check.test.ts →
+  test:counts an SDK-absolutized FID write (the live false-stall form)
+- **Invariant:** A guard matcher must never depend on launch-environment
+  state; match path-intrinsic structure, and treat green suites as silent
+  about environment-dependence when the tests share the same assumption.
+- **Guard:** Path-classification helpers match intrinsic segments or
+  suffixes (e.g. includes('/dev/fids/')); any environment-derived anchor
+  requires an injected seam or a live-probe verification step before the
+  fix is called done.
+- **Verification:** typecheck packages/agent-runtime exit 0; focused
+  suites 21 pass / 0 fail incl. the arbitrary-NON-cwd-root case; Probe C
+  first-hand normal relay under rev 2.
+- **Scope:** internal
+- **Owning FID:** FID-2026-0823-014
+- **Status:** active
+- **Canonical rule:** no-environment-dependent-guards
+
 ## Lesson: Active-ledger status admission — converged is not an active status
 
 - **Date:** 2026-08-21
@@ -1171,6 +1199,31 @@ tracking doc).
 - **Owning FID:** FID-2026-0818-001
 - **Status:** active
 - **Canonical rule:** autonomy-is-a-driver-problem
+
+## Lesson: Local commits ≠ publishes — granular history beats the monolithic release commit
+
+- **Date:** 2026-08-27
+- **Failure:** The "release-only-commits" convention (one giant release commit
+  per version) accumulated 644 changed paths over a multi-day build and left
+  the tree uncommitted for a week — destroying per-FID audit trails and
+  risking catastrophic WIP loss on a single disk. Post-hoc LLM review of a
+  100+ file diff degrades from signal dilution, not raw size.
+- **Evidence:** `docs/design/Solo Git Workflow Optimization.md` (research),
+  `dev/nova/outbox/2026-08-23-git-workflow-echo-amendment-draft.md` (G1–G9),
+  `ECHO.md` → "Version-Control Workflow Laws (G1–G9)".
+- **Invariant:** Local commits are safety + audit checkpoints, not publishes.
+  Commit atomically at FID/area boundaries; push granularly at release time
+  (G6) so public history stays bisectable; back up between releases via git
+  bundles (G5).
+- **Guard:** No monolithic release commit; no `git add .` while sessions are
+  active (G4); every commit message references its FID (G8); the operator
+  (never the agent) executes git (G1).
+- **Verification:** ECHO.md G-rules section adopted 2026-08-27; tree drained
+  into path-scoped atomic commits; `git log --grep="FID-"` aggregatable.
+- **Scope:** process/workflow
+- **Owning FID:** (build-order BO-2026-08-23-git-workflow-enforcement)
+- **Status:** active
+- **Canonical rule:** local-commits-are-not-publishes
 
 ---
 

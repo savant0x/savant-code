@@ -1,0 +1,7 @@
+# <type>(<scope>): <imperative description> (<FID-ID>)
+#
+# Types: feat | fix | refactor | test | docs | chore | perf
+# Description: imperative mood, lowercase, <= 72 chars.
+# FID reference: mandatory when a FID drove the change (e.g. FID-2026-0824-012).
+#
+# Optional body explaining the 'why' — wrapped at 72 chars.

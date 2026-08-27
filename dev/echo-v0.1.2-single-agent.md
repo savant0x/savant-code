@@ -427,6 +427,13 @@ A plan with silent deferrals is a broken plan — the operator approved work tha
 - **Commit atomic changes.** Each commit should be independently revertible.
 - **Track progress visually.** Update TODO lists after each completed task.
 
+> **Version control:** The Version-Control Workflow Laws (G1–G9) in `ECHO.md`
+> apply in single-agent sessions too: the agent never executes git (G1),
+> FID closure requires a committed hash (G2), commits are logical-atomic and
+> path-scoped (G3/G4), history is preserved granularly through release (G6),
+> and messages follow `<type>(<scope>): <desc> (<FID-ID>)` (G8). The agent
+> prepares path-scoped staging plans and the operator executes or approves.
+
 ---
 
 ## Quick Reference

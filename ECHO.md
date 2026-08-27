@@ -65,7 +65,7 @@ another agent's role.
 |---|-------|-------|----------------|-------|------------------|
 | 1 | **Orchestrator** | ALL | Primary coder (Hybrid Mode) + routes complex work through Perfection Loop. Writes code directly for most tasks, spawns Forge for complex changes. | spawn_agents, read_files, read_subtree, run_readonly_command, write_todos, suggest_followups, ask_user, read_url, skill, set_output, list_directory, glob, render_ui, gravity_index, transition_phase, write_file, str_replace, apply_patch (phase-gated), set_scaffold_complete (scaffold mode) | bash, sequentialthinking |
 | 2 | **Detective** | RED | Codebase analysis, grep call-graphs, find issues, catalog evidence | code_search, set_output, list_directory, glob, read_files, read_subtree | write_file, str_replace, bash |
-| 3 | **Forge** | GREEN | Implementation only. Writes code following converged FID spec. | write_file, str_replace, set_output | spawn_agents, ask_user |
+| 3 | **Forge** | GREEN | Implementation only. Writes code following converged FID spec. | read_files, write_file, str_replace, set_output (FID-2026-0824-031) | spawn_agents, ask_user |
 | 4 | **Verifier** | AUDIT | Double-audit, evaluate test/grep results mechanically injected by EHEL into your context. Do not hallucinate or assume test output if injection is missing — request it or mark `NEEDS-REVIEW`. Cite `file:line` evidence per PASS/FAIL, `NEEDS-REVIEW` for out-of-reach evidence (FID-2026-0805-004) | *(no tools — receives evidence via EHEL harness injection into message history)* | ALL write/bash tools |
 | 5 | **Recorder** | FID | Create, track, archive FIDs. Update CHANGELOG. | write_file, read_files, glob, code_search, set_output | str_replace, bash |
 | 6 | **Thinker** | Planning | Deep reasoning via sequential thinking engine | sequentialthinking, end_turn | write_file, str_replace, bash |
@@ -78,7 +78,7 @@ another agent's role.
 
 | Rule | Enforced By |
 |------|-------------|
-| The Orchestrator writes code directly in Hybrid Mode (most tasks). For complex tasks (> 20 lines + new APIs, novel architecture, verification fails twice), delegate to Forge via FID-Bound Execution. | Hybrid Mode + FID criteria |
+| The Orchestrator writes code directly in Hybrid Mode (most tasks). For complex tasks (> 100 lines + new APIs, novel architecture, verification fails twice), delegate to Forge via FID-Bound Execution; anything above 100 changed lines routes through the Recorder for the FID (operator directive 2026-08-23). | Hybrid Mode + FID criteria |
 | Forge (GREEN) cannot verify its own work | No bash (test) access |
 | Verifier (AUDIT) cannot write anything | toolNames: [] (zero tools) |
 | Detective (RED) cannot implement fixes | No write_file/str_replace |
@@ -332,7 +332,7 @@ This rule is the inter-agent version of the AUDIT phase's call-graph reachabilit
 
 The full FID-Bound Execution flow is reserved for genuinely complex tasks:
 
-- Touches > 20 lines AND requires new imports/APIs, OR
+- Touches > 100 lines AND requires new imports/APIs, OR
 - Novel architecture or patterns not in the codebase, OR
 - Verification fails twice with direct fixes, OR
 - User explicitly requests Forge
@@ -365,6 +365,11 @@ Step 4:  Spawn Verifier for code review (see criteria below)
 Step 5:  If verification passes → done
 Step 6:  If verification fails → spawn Forge to fix, then re-verify
 ```
+
+**Recorder routing in Hybrid Mode:** do NOT spawn the Recorder for routine FID bookkeeping — the Orchestrator
+maintains `dev/fids/` records directly via its exempt-path writes. Anything above 100 changed lines needs the
+Recorder: spawn it to create/update the FID before proceeding with the loop. The harness enforces this mechanically
+(Orchestrator FID writes > 100 lines are blocked with a route-through-Recorder message).
 
 ### Verifier Trigger Criteria (Objective)
 
@@ -408,6 +413,38 @@ Self-reporting is prohibited. The Orchestrator that writes code must not be the 
 - **Track progress visually.** Update TODO lists after each completed task.
 - **Use the right path.** For most tasks, write code directly (Hybrid Mode). For complex tasks, delegate to Forge
   via FID-Bound Execution. The Orchestrator is the primary coder; Forge is the specialist for complex work.
+
+---
+
+## Version-Control Workflow Laws (G1–G9)
+
+> Adopted 2026-08-27 from `docs/design/Solo Git Workflow Optimization.md`
+> (Gemini Deep Research v2, operator-approved) + the Nova amendment draft
+> (`dev/nova/outbox/2026-08-23-git-workflow-echo-amendment-draft.md`). These
+> rules govern version control in the single-committer, agent-coordinated
+> operation. **Agents never execute git commands** (G1) — this section is the
+> contract the operator enforces, not a tool grant.
+
+| Rule | Directive |
+| ---- | --------- |
+| **G1** | **Exclusive Operator Commit Authority** — Git operations (stage, commit, push, branch, merge, revert) are executed exclusively by the operator. AI agents perform file-system mutations only; their tool manifests contain no git execution tools. Exactly one committer at all times. |
+| **G2** | **FID Closure Requires a Commit** — An FID is closed only when its changes are committed locally. Working-tree closure is deprecated. The commit hash is recorded in the FID's Resolution section alongside existing evidence. |
+| **G3** | **Logical Atomic Commits** — One commit per coherent change (normally one FID or a self-contained sub-change). No numeric size cap: a coherent 3,000-line FID diff is one commit; unrelated fixes never share a commit. Preserves independent revertibility. |
+| **G4** | **Path-Scoped Staging During Active Sessions** — Global staging (`git add .`, `git commit -a`) is prohibited while sessions are active. The committer stages explicit paths per completed area, reviews the scoped diff, and commits per area — sequentially. |
+| **G5** | **Offline Durability: Incremental Bundles** — Between releases, back up via incremental git bundles to the OneDrive sync folder (baseline full bundle once, then `last-backup..main` incrementals, `git bundle verify` before advancing the `last-backup` marker). Restore-from-zero: clone full bundle → fetch incrementals → re-link origin. Public remote stays release-only. |
+| **G6** | **Granular History Preserved Through Release** — The release pipeline pushes the week's local commits granularly to public main — no squash into a monolithic release commit. Public history retains per-FID attribution for bisect and audit; the annotated tag marks the release point. |
+| **G7** | **Local Git Hygiene Automation** — `git maintenance start` once per clone (commit-graph updates + incremental repack; default strategy does not run disruptive gc while agents operate). |
+| **G8** | **Commit Message Convention** — `<type>(<scope>): <description> (<FID-ID>)`; types `feat | fix | refactor | test | docs | chore | perf`; imperative lowercase ≤72 chars; FID reference mandatory when an FID drove the change. Enforced friction-free via `.gitmessage` (`git config commit.template .gitmessage`). |
+| **G9** | **Worktree Escape Hatch (deferred infrastructure)** — `git worktree` is not standing infrastructure. Provision only when two concurrent sessions must mutate the same cross-cutting directory simultaneously and cannot be sequenced. Provision → complete → merge → remove immediately. |
+
+### Recovery Playbook (reference card)
+
+| Scenario | Procedure |
+| -------- | --------- |
+| Bad change found later | `git log --grep="<FID>" --oneline` → `git revert <hash> --no-edit`; reopen FID, fix forward |
+| Overnight regression | `git bisect start && git bisect bad && git bisect good <last-tag>` then `git bisect run bun test`; wrapper must exit 125 on unbuildable commits |
+| Accidental destructive command | `git reflog` → `git reset --hard HEAD@{n}` to the pre-mistake state |
+| Full disk loss | Clone from the OneDrive full bundle → fetch incrementals → re-link origin |
 
 ---
 
@@ -486,7 +523,11 @@ Created → Analyzed → Fixed → Verified → Closed → Archived
 
 Only the Recorder agent may create, update, or archive FID files. Agents without write tools (Thinker, Scout,
 Researcher) must route FID content through the Recorder. Parent agents with write tools must not write FID files
-directly from a sub-agent's output. (Archive note, FID-2026-0803-001 ECHO-6: the Recorder has no filesystem
+directly from a sub-agent's output. HYBRID-mode exception (operator directive 2026-08-23): the Orchestrator may create,
+update, and close its own FID records directly when no sub-agent authored the content — including executing
+the archive move per the ECHO-6 split — while the Recorder remains required for work above the 100-line escalation
+threshold, STRICT mode, and loop-closure ceremony. (Archive note,
+FID-2026-0803-001 ECHO-6: the Recorder has no filesystem
 move tool — the CLI/orchestrator executes the `dev/fids/ → dev/fids/archive/` move while the Recorder authors the
 FID content, CHANGELOG entry, and audit evidence.)
 
@@ -519,6 +560,19 @@ fixed tool set and specific behavioral patterns — incorrect prompts cause sile
 **Recorder tools:** `write_file`, `read_files`, `glob`, `code_search`, `set_output`
 **Recorder does NOT have:** `str_replace`, `bash`, `apply_patch`
 
+**Context contract (FID-2026-0823-011):** the Recorder runs with
+`includeMessageHistory: false` — its ONLY context is its system prompt plus
+your spawn prompt. Do NOT rely on shared conversation history; every fact the
+Recorder needs must be in the prompt itself. History inheritance pulled in
+entire parent conversations (653K-token spawns observed) and drove
+read-then-stop stalls: the child read the target file, then ended its turn
+without ever calling write_file.
+
+**Scaffold seal (SCAFFOLD mode):** thread the seal signal via spawn params —
+`params: { scaffoldComplete: true }`. The child's handleSteps seals via
+set_output when it sees it (the legacy message-history scan remains as a
+backward-compatible fallback channel).
+
 #### CREATE workflow
 
 - Provide the COMPLETE file content in the prompt — do not expect the Recorder to compose it
@@ -539,6 +593,9 @@ fixed tool set and specific behavioral patterns — incorrect prompts cause sile
 - ❌ "Use str_replace to update the FID" — Recorder does not have str_replace
 - ❌ "Read the template and create the FID" — Recorder reads then stops without writing
 - ❌ Providing partial content and expecting the Recorder to fill in gaps
+- ❌ Edit-instructions prompts ("apply these three edits") instead of complete
+  content — combined with large inherited contexts this produced
+  read-without-write stalls (FID-2026-0823-011)
 - ✅ "Use write_file to create this file immediately with the content below"
 - ✅ "Read [file], then write_file with the complete updated content below"
 
@@ -656,7 +713,7 @@ active mode is set by the user via UI or `/mode`.
 
 | Mode | Behavior | When to use |
 |------|----------|-------------|
-| **HYBRID** (Default) | Orchestrator writes directly. Full Perfection Loop auto-escalates past 20 lines. EHEL laws block mechanically. | Day-to-day building, quick iterations. |
+| **HYBRID** (Default) | Orchestrator writes directly. Full Perfection Loop auto-escalates past 100 lines; above that the Recorder owns the FID. EHEL laws block mechanically. | Day-to-day building, quick iterations. |
 | **STRICT** | Full ECHO ceremony for EVERY change. FID per change, Forge writes, Verifier+Adversary audits. | Security-sensitive, auth, paid-APIs, team review. |
 | **SCAFFOLD** | Project initialization. Scaffolds once, then hands back to HYBRID. | New repo setup. |
 | **ANALYZE** | Read-only. Search, inspect, and reason without writing files. | Codebase exploration, Q&A. |
