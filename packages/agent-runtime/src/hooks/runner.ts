@@ -47,6 +47,12 @@ export function runHookCommand(
   input: HookInputData,
 ): Promise<HookRunResult> {
   return new Promise((resolve) => {
+    // Action configs (in-process sinks) never reach the external runner —
+    // the engine dispatches them before this point. Defensive fail-open.
+    if (config.command === undefined) {
+      resolve({ outcome: 'allowed', spawnError: 'action config without command' })
+      return
+    }
     const argv = tokenizeCommand(config.command)
     if (argv.length === 0) {
       resolve({ outcome: 'allowed', spawnError: 'empty command' })

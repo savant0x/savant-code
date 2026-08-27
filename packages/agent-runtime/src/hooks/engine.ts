@@ -1,5 +1,6 @@
 import { readProtocolConfig } from '@savant-code/common/util/protocol-config'
 
+import { runExperienceCapture } from './experience-capture'
 import { runHookCommand } from './runner'
 
 import type { HookInputData, HookRunResult } from './types'
@@ -14,9 +15,22 @@ import type { JSONValue } from '@savant-code/common/types/json'
  *   that blocks blocks the action; failures fail-open.
  * - `fireAndForgetTrigger` is the observation path (session/subagent/compact
  *   events, PostToolUse): it never blocks and never throws.
+ * - FID-2026-0824-012: configs declaring a builtin `action` dispatch to the
+ *   in-process sink (experience-capture) instead of spawning a process.
  * - The factory caches one engine per project cwd (same precedent as the
  *   transition-phase max-iterations cache); tests construct engines directly.
  */
+
+/**
+ * Dispatch one hook config: builtin in-process actions run in-process
+ * (no spawn); everything else is the external-command runner. Never throws.
+ */
+export function runHook(config: HookConfig, input: HookInputData) {
+  if (config.action === 'experience-capture') {
+    return Promise.resolve(runExperienceCapture(input))
+  }
+  return runHookCommand(config, input)
+}
 
 export type HookTriggerResult = {
   blocked: boolean
@@ -69,7 +83,7 @@ export class HookEngine {
     }
     const results = await Promise.all(
       hooks.map((config) =>
-        runHookCommand(config, input).catch((error): HookRunResult => ({
+        runHook(config, input).catch((error): HookRunResult => ({
           outcome: 'allowed',
           spawnError: error instanceof Error ? error.message : String(error),
         })),
