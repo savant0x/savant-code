@@ -12,6 +12,10 @@ import { createCacheDebugSetup } from './cache-debug'
 import { STEP_WARNING_MESSAGE } from './constants'
 import { evaluateGoalCondition } from './goal-evaluation'
 import { handleNParameterStep } from './n-parameter'
+import {
+  buildToolCallSignature,
+  updateAndEvaluateRunawayGuards,
+} from './runaway-guards'
 import { getAgentPrompt } from '../templates/strings'
 import { processStream } from '../tools/stream-parser'
 import { setActivity } from '../util/activity-tracking'
@@ -134,6 +138,28 @@ export const runAgentStep = async (
     ? [...filtered, stepPromptMessage]
     : filtered
 
+  // FID-2026-0821-005 A10: one-shot relay digest. A programmatic handleSteps
+  // (basher) parks a truncated terminal-output excerpt on agentState so the
+  // summarizer STEP keeps ground truth even when the full json ToolMessage
+  // fails to render downstream. Consume-once: cleared after this assembly.
+  if (
+    typeof agentState.relayDigest === 'string' &&
+    agentState.relayDigest.length > 0
+  ) {
+    agentState.messageHistory = [
+      ...agentState.messageHistory,
+      userMessage({
+        content: withSystemTags(
+          `Terminal output excerpt (relay safeguard): ${agentState.relayDigest}`,
+        ),
+        tags: ['STEP_RELAY_DIGEST'],
+        timeToLive: 'agentStep' as const,
+        keepDuringTruncation: true,
+      }),
+    ]
+    delete agentState.relayDigest
+  }
+
   const { model } = agentTemplate
 
   // A step can start with the history ending on an assistant message — e.g. a
@@ -184,6 +210,16 @@ export const runAgentStep = async (
     agentStepId,
     model,
     messageHistory: agentState.messageHistory,
+    // FID-2026-0821-001 P2-1: stamp provider-reported usage onto agentState
+    // so prepareStepContext's reconcile path can prefer provider truth over
+    // the ×1.35 local estimator (BYOK) and keep hosted endpoint counts
+    // authoritative via the same freshness channel.
+    onUsage: (usage) => {
+      agentState.lastProviderUsage = {
+        inputTokens: usage.inputTokens,
+        capturedAt: Date.now(),
+      }
+    },
   })
 
   // Full message histories go to the trace writer, which appends each message
@@ -289,9 +325,15 @@ export const runAgentStep = async (
     'agentStep',
   )
 
-  // Handle /compact command: replace message history with the summary
+  // Handle /compact command: replace message history with the summary.
+  // FID-2026-0822-001 RC3: legacy fallback ONLY for agents without
+  // handleSteps. handleSteps agents own /compact through the serialized
+  // savant interceptor (force context-pruner pipeline); letting this run
+  // for them races that pipeline and can replace structured memory with a
+  // raw model response (or error text).
   const wasCompacted =
     prompt &&
+    !agentTemplate.handleSteps &&
     (prompt.toLowerCase() === '/compact' || prompt.toLowerCase() === 'compact')
   if (wasCompacted) {
     agentState.messageHistory = [
@@ -346,6 +388,39 @@ export const runAgentStep = async (
     fullResponse,
     logger,
   })
+
+  // FID-2026-0822-002: mechanical anti-runaway guards. Detect non-progress
+  // patterns (identical repeated tool calls, consecutive tool-error retry
+  // steps, consecutive think-only responses) and end the turn here instead
+  // of burning LLM steps to the MAX_AGENT_STEPS cap.
+  const guardVerdict = updateAndEvaluateRunawayGuards(
+    {
+      lastToolCallSignature: agentState.lastToolCallSignature,
+      consecutiveIdenticalToolSignatures:
+        agentState.consecutiveIdenticalToolSignatures ?? 0,
+      consecutiveToolErrorSteps: agentState.consecutiveToolErrorSteps ?? 0,
+      consecutiveThinkOnlyResponses:
+        agentState.consecutiveThinkOnlyResponses ?? 0,
+    },
+    {
+      toolSignature: buildToolCallSignature(toolCalls),
+      hadToolCallError,
+      isThinkOnly,
+    },
+  )
+  agentState.lastToolCallSignature = guardVerdict.counters.lastToolCallSignature
+  agentState.consecutiveIdenticalToolSignatures =
+    guardVerdict.counters.consecutiveIdenticalToolSignatures
+  agentState.consecutiveToolErrorSteps =
+    guardVerdict.counters.consecutiveToolErrorSteps
+  agentState.consecutiveThinkOnlyResponses =
+    guardVerdict.counters.consecutiveThinkOnlyResponses
+  if (guardVerdict.tripReason) {
+    const notice = `Turn auto-ended by anti-runaway guard (${guardVerdict.tripReason}). The last several steps made no progress; send a new message to continue.`
+    logger.warn({ tripReason: guardVerdict.tripReason }, notice)
+    onResponseChunk(`\n\n${notice}\n`)
+    shouldEndTurn = true
+  }
 
   agentState = {
     ...agentState,

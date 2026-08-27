@@ -408,6 +408,7 @@ export async function createLoopContext(params: {
     // `compression` — `microCompact` off honors the off-switch, and
     // `microCompactMaxKeepRecent` drives the pressure gate.
     microCompactEnabled: loopParams.compression?.microCompact,
+    autoCompactRatio: loopParams.compression?.autoCompactRatio,
     microCompactMaxKeepRecent:
       loopParams.compression?.microCompactMaxKeepRecent,
     microCompactFloorTokens: loopParams.compression?.microCompactFloorTokens,
@@ -420,6 +421,22 @@ export async function createLoopContext(params: {
   // clamp kicks in at small windows, and duplicates the buffer magic number).
   initialAgentState.maxContextLength =
     contextCompactor.getThresholds().reactiveCompact
+  // FID-2026-0824-024 post-closure amendment: stamp operator-configured
+  // digest caps onto the root state so the inline spawn boundary can inject
+  // them into context-pruner spawn params (see spawn-agent-inline.ts).
+  if (
+    loopParams.compression?.digestHeadChars !== undefined ||
+    loopParams.compression?.digestTailChars !== undefined
+  ) {
+    initialAgentState.digestCaps = {
+      ...(loopParams.compression.digestHeadChars !== undefined
+        ? { headChars: loopParams.compression.digestHeadChars }
+        : {}),
+      ...(loopParams.compression.digestTailChars !== undefined
+        ? { tailChars: loopParams.compression.digestTailChars }
+        : {}),
+    }
+  }
 
   return {
     ok: true,

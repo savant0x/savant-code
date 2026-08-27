@@ -149,6 +149,10 @@ export type LoopAgentStepsParams = {
     forceCompactOffset?: number
     microCompactMaxKeepRecent?: number
     microCompactFloorTokens?: number
+    /** FID-2026-0824-024 post-closure amendment: result-digest caps,
+     *  stamped onto AgentState.digestCaps by loop-context. */
+    digestHeadChars?: number
+    digestTailChars?: number
   }
 } & ParamsExcluding<typeof additionalToolDefinitions, 'agentTemplate'> &
   ParamsExcluding<

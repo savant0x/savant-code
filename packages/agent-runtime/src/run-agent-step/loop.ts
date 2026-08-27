@@ -105,6 +105,13 @@ export async function loopAgentSteps(
     contextCompactor,
   } = setupResult.ctx
 
+  // FID-2026-0825-001: the compactAndStop stamp is single-run coordination
+  // between the serialized savant handleSteps interceptor and the output
+  // assembly at the end of this loop. Wipe any stale value inherited through
+  // a persisted snapshot so it can never mask a genuine error on this run;
+  // the interceptor re-stamps it fresh when /compact actually fires.
+  initialAgentState.compactAndStop = undefined
+
   recordRuntimeEvent(
     {
       event: 'run_started',
@@ -238,6 +245,24 @@ export async function loopAgentSteps(
       },
       params.traceWriter,
     )
+
+    // FID-2026-0825-001: a manual /compact run ends via compact-and-stop —
+    // the interceptor spawns the pruner and returns without any LLM step, so
+    // NO assistant turn exists for this run. getAgentOutput treats a
+    // zero-assistant history as an error ("No response from agent"), which
+    // fired deterministically whenever the compacted history contained no
+    // surviving assistant messages (e.g. every /compact issued right after a
+    // previous successful one); and even when older turns survived, they were
+    // echoed as a stale fake "/compact response". Consume the one-shot stamp
+    // and report an explicitly empty last-turn output instead — success with
+    // nothing new to render (CompactionSignal carries the outcome).
+    if (initialAgentState.compactAndStop === true) {
+      initialAgentState.compactAndStop = undefined
+      return {
+        agentState: initialAgentState,
+        output: { type: 'lastMessage', value: [] },
+      }
+    }
 
     return {
       agentState: initialAgentState,

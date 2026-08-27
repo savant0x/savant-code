@@ -11,6 +11,11 @@ import {
   NATIVE_TOOL_CALL_TERMINAL_RECOVERY_MAX_STRIKES,
 } from './constants'
 import { prepareStepContext } from './context-tokens'
+import {
+  isAutonomousContinuation,
+  updatePostTerminalCounter,
+  updateTurnEndBlockCounter,
+} from './post-terminal-breaker'
 import { runAgentStep } from './step'
 import { runThinkerConvergenceGate } from '../tools/thinker-convergence-gate'
 import { buildUserMessageContent, withSystemTags } from '../util/messages'
@@ -131,6 +136,9 @@ export async function runLoopIteration(params: {
     currentParams,
   } = state
   let currentAgentState = state.agentState
+  // FID-2026-0822-003: raw terminal verdict seen during this iteration
+  // (before any gate overrides it).
+  let sawTerminalVerdict = false
 
   if (signal.aborted) {
     throw new AbortError()
@@ -155,11 +163,24 @@ export async function runLoopIteration(params: {
   // FID-2026-0811-015: one shared turn-end evaluator is used by both
   // programmatic and LLM completion paths. It emits bounded corrective
   // context and keeps blocked turns inside the loop for self-correction.
+  // FID-2026-0822-003: bounded blocking. After N consecutive blocked
+  // turn-end verdicts the enforcement surrenders (logs + allows the end)
+  // instead of injecting forever — unless the run is an autonomous
+  // continuation (Auto Drive / active goal), where behavior is preserved
+  // by explicit operator direction.
   const applyTurnEndEnforcement = (ending: boolean): boolean => {
     if (!ending || currentAgentState.parentId) return ending
     const enforcement = getOrCreateEnforcement(currentAgentState)
     const result = enforcement.evaluateTurnEnd()
-    if (!result.blocked && !result.report) return ending
+    if (!result.blocked && !result.report) {
+      currentAgentState.turnEndBlockCount = 0
+      return ending
+    }
+    // FID-2026-0822-003: enforcement blocking must not outrun the
+    // stepsRemaining backstop either.
+    if (currentAgentState.stepsRemaining <= 0) {
+      return ending
+    }
     currentAgentState.messageHistory = [
       ...currentAgentState.messageHistory,
       userMessage({
@@ -172,7 +193,23 @@ export async function runLoopIteration(params: {
         keepDuringTruncation: true,
       }),
     ]
-    return result.blocked ? false : ending
+    if (result.blocked) {
+      const verdict = updateTurnEndBlockCounter(
+        currentAgentState.turnEndBlockCount ?? 0,
+        { blocked: true },
+      )
+      currentAgentState.turnEndBlockCount = verdict.count
+      if (verdict.surrender && !isAutonomousContinuation(currentAgentState)) {
+        logger.warn(
+          { blocks: verdict.count },
+          'ECHO turn-end enforcement surrendered after repeated blocks',
+        )
+        currentAgentState.turnEndBlockCount = 0
+        return ending
+      }
+      return false
+    }
+    return ending
   }
 
   // 1. Run programmatic step first if it exists
@@ -207,6 +244,9 @@ export async function runLoopIteration(params: {
       generateN,
     } = programmaticResult
     n = generateN
+    if (endTurn) {
+      sawTerminalVerdict = true
+    }
 
     Object.assign(initialAgentState, programmaticAgentState)
     currentAgentState = initialAgentState
@@ -304,6 +344,10 @@ export async function runLoopIteration(params: {
     systemTokens,
     customToolDefinitions: getCachedAdditionalToolDefinitions(),
   })
+
+  if (llmShouldEndTurn) {
+    sawTerminalVerdict = true
+  }
 
   Object.assign(initialAgentState, newAgentState)
   currentAgentState = initialAgentState
@@ -457,7 +501,10 @@ export async function runLoopIteration(params: {
         })
       }
       const steering = echoCompliance.takeSteeringMessages()
-      if (steering.length > 0) {
+      // FID-2026-0822-003: synthetic steering must never outrun the
+      // stepsRemaining backstop — once the step budget is spent, let the
+      // turn end (Auto Drive keeps its own driver-level budgets).
+      if (steering.length > 0 && currentAgentState.stepsRemaining >= 1) {
         currentAgentState.messageHistory = [
           ...currentAgentState.messageHistory,
           ...steering.map((text) =>
@@ -471,6 +518,30 @@ export async function runLoopIteration(params: {
         shouldEndTurn = false
       }
     }
+  }
+
+  // FID-2026-0822-003: post-terminal continuation breaker. A terminal
+  // verdict overridden by synthetic inputs must not loop the turn forever.
+  // Genuine operator input (steered user messages) resets; ordinary working
+  // steps reset; Auto Drive / active-goal runs bypass entirely.
+  const genuineUserInput = (steered?.length ?? 0) > 0
+  const postTerminal = updatePostTerminalCounter(
+    currentAgentState.postTerminalContinuations ?? 0,
+    {
+      sawTerminalVerdict,
+      shouldEndTurn,
+      genuineUserInput,
+    },
+  )
+  currentAgentState.postTerminalContinuations = postTerminal.count
+  const hardEnd =
+    postTerminal.trip && !isAutonomousContinuation(currentAgentState)
+  if (hardEnd) {
+    const notice =
+      'Turn auto-ended: no operator input after repeated post-completion continuations.'
+    logger.warn({ postTerminalContinuations: postTerminal.count }, notice)
+    loopParams.onResponseChunk(notice)
+    shouldEndTurn = true
   }
 
   // Adaptive grounding refreshes are evaluated at every internal step. The
@@ -493,5 +564,7 @@ export async function runLoopIteration(params: {
     currentParams,
   })
 
-  return { shouldContinue: true }
+  // FID-2026-0822-003: a hard post-terminal end must stop the caller even
+  // if it only honors the returned flag.
+  return { shouldContinue: !hardEnd }
 }
