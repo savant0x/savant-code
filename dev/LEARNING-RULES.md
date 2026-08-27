@@ -38,6 +38,11 @@ This catalog provides stable names for lessons that explain those authorities.
 - **Authority:** `.github/workflows/build-release-binaries.yml`
 - **Validation:** `scripts/public-release.test.ts`
 
+## Rule: release-only-commits
+
+- **Authority:** `scripts/public-release.ts` (automation commit sweeps the whole worktree at release time)
+- **Validation:** `dev/session-summaries/2026-08-21-1629-v0.0.27-release-and-release-engine-hardening.md`
+
 ## Rule: fid-closure-requires-implementation-evidence
 
 - **Authority:** `ECHO.md` (FID Ground-Truth Verification)
@@ -78,3 +83,19 @@ This catalog provides stable names for lessons that explain those authorities.
 
 - **Authority:** `scripts/fid-ledger.ts` (`FORBIDDEN_ATTRIBUTION`)
 - **Validation:** `bun run validate:repository`
+
+## Rule: post-terminal-breaker-autonomy-carveout
+
+- **Authority:** `packages/agent-runtime/src/run-agent-step/post-terminal-breaker.ts`
+- **Validation:** `packages/agent-runtime/src/__tests__/post-terminal-breaker.test.ts`
+
+## Rule: kill-proof-probes-and-forge-relay
+
+- **Authority:** `packages/agent-runtime/src/__tests__/post-terminal-breaker-integration.test.ts`
+- **Validation:** `bun run learnings:check`
+
+## Rule: no-environment-dependent-guards
+
+- **Authority:** `packages/agent-runtime/src/tools/handlers/tool/recorder-stall-check.ts` (`isAllowedWritePath`)
+- **Validation:** `packages/agent-runtime/src/tools/handlers/tool/__tests__/recorder-stall-check.test.ts`
+  (cwd-independence case: arbitrary NON-cwd root must count)
