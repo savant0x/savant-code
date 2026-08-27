@@ -8,12 +8,12 @@
  *   been read, so Law 1 does not apply. The unconditional block previously
  *   short-circuited every new-file write in the default hybrid mode (the
  *   `mainPrompt > should handle write_file tool call` failure).
- * - In HYBRID (core_4) mode the Law 1 gate is inert: the non-blocking
- *   EchoComplianceTracker (FID-2026-0804-009) emits the advisory receipt,
- *   and a duplicate block/warning here would double-report (the
- *   `echo-compliance-wiring` law1-receipt failure).
- * - In STRICT (all_15) mode the gate blocks writes to existing files that
- *   were never read — hard enforcement is preserved.
+ * - FID-2026-0823-007 (operator directive 2026-0823): Laws 1-4 are
+ *   immutable and block in EVERY execution mode — the former HYBRID
+ *   (core_4) inertness was revoked. Blocked writes never reach the
+ *   tracker's receipt path, so no double-reporting occurs.
+ * - STRICT (all_15) keeps identical Law 1 semantics plus extended-law
+ *   gates (Laws 7/8) and the post-write scanners.
  * - Law 3 (verify-before-proceed) still blocks unverified follow-up writes.
  */
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
@@ -23,6 +23,7 @@ import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'bun:test'
 
 import { createEnforcementState } from '../enforcement-state'
+import { computeFidFingerprint } from '../fid-verification-gates'
 import { runPreWriteGates } from '../pre-write-gates'
 
 describe('runPreWriteGates — Law 1 (read-before-write)', () => {
@@ -92,9 +93,21 @@ describe('runPreWriteGates — Law 1 (read-before-write)', () => {
     expect(result.blocked).toBe(false)
   })
 
-  it('does NOT block an unread existing file in hybrid mode (tracker owns the advisory)', () => {
+  it('BLOCKS an unread existing file in hybrid mode (FID-2026-0823-007)', () => {
     const target = existingFilePath()
     const result = runGate({ targetPath: target, tier: 'core_4' })
+    expect(result.blocked).toBe(true)
+    expect(result.reason).toContain('Law 1')
+    expect(result.reason).toContain('has not been read')
+  })
+
+  it('does NOT block an existing file that was read first, even in hybrid mode', () => {
+    const target = existingFilePath()
+    const result = runGate({
+      targetPath: target,
+      tier: 'core_4',
+      readPaths: [target],
+    })
     expect(result.blocked).toBe(false)
   })
 
@@ -189,6 +202,72 @@ describe('runPreWriteGates — P5b YAGNI gate (FID-2026-0806-003)', () => {
     })
     expect(result.blocked).toBe(false)
   })
+
+  it('BLOCKS a speculative write when the block lands in assistant TEXT (FID-2026-0822-004)', () => {
+    const state = createEnforcementState()
+    const result = runPreWriteGates({
+      toolName: 'write_file',
+      // The payload carries NO block — the model emitted it at the top of its
+      // response text per the Forge prompt.
+      input: { path: '/proj/x.ts', content: 'const x = 1' },
+      agentId: 'forge',
+      assistantText: yagniSpeculativeNoMarker,
+      state,
+      mode: 'hybrid',
+      tier: 'core_4',
+    })
+    expect(result.blocked).toBe(true)
+    expect(result.reason).toContain('YAGNI')
+    expect(state.yagni.speculativeWritesRejected).toBe(1)
+  })
+
+  it('passes a verified block extracted from assistant TEXT (FID-2026-0822-004)', () => {
+    const state = createEnforcementState()
+    const result = runPreWriteGates({
+      toolName: 'write_file',
+      input: { path: '/proj/x.ts', content: 'const x = 1' },
+      agentId: 'forge',
+      assistantText: yagniVerified,
+      state,
+      mode: 'hybrid',
+      tier: 'core_4',
+    })
+    expect(result.blocked).toBe(false)
+    expect(state.yagni.lastAssessment?.isSpeculative).toBe(false)
+  })
+
+  it('prefers the payload channel over assistant TEXT (FID-2026-0822-004)', () => {
+    const state = createEnforcementState()
+    const result = runPreWriteGates({
+      toolName: 'write_file',
+      // Payload declares verified; text declares speculative. The payload wins
+      // so the block the gate historically parsed still governs.
+      input: { path: '/proj/x.ts', content: yagniVerified },
+      agentId: 'forge',
+      assistantText: yagniSpeculativeNoMarker,
+      state,
+      mode: 'hybrid',
+      tier: 'core_4',
+    })
+    expect(result.blocked).toBe(false)
+    expect(state.yagni.lastAssessment?.isSpeculative).toBe(false)
+  })
+
+  it('disables the gate entirely when yagni.enforced is false (FID-2026-0822-004)', () => {
+    const state = createEnforcementState()
+    const result = runPreWriteGates({
+      toolName: 'write_file',
+      input: { path: '/proj/x.ts', content: yagniSpeculativeNoMarker },
+      agentId: 'forge',
+      yagniEnforced: false,
+      state,
+      mode: 'hybrid',
+      tier: 'core_4',
+    })
+    expect(result.blocked).toBe(false)
+    expect(result.warnings.length).toBe(0)
+    expect(state.yagni.speculativeWritesRejected).toBe(0)
+  })
 })
 
 describe('runPreWriteGates — Anti-Deferral FID step-status gate (FID-2026-0817-005)', () => {
@@ -248,6 +327,77 @@ describe('runPreWriteGates — Anti-Deferral FID step-status gate (FID-2026-0817
       input: {
         path: '/proj/src/x.ts',
         content: '**Status:** closed\n## Step Status\n- [ ] 1. x\n',
+      },
+      agentId: 'savant',
+      state,
+      mode: 'hybrid',
+      tier: 'core_4',
+    })
+    expect(result.blocked).toBe(false)
+  })
+})
+
+describe('runPreWriteGates — FID verification receipt tripwire (FID-2026-0823-009)', () => {
+  const FID_PATH = '/proj/dev/fids/FID-2026-0823-010-x.md'
+
+  function fidWithStatus(status: string, includeReceipt: boolean): string {
+    const gates =
+      '## Verification Gates\n\n- gate: probe scripts/__tests__/fixtures/fid-verify-echo.ts\n'
+    const content = `# FID: test\n\n**Status:** ${status}\n\n${gates}`
+    if (!includeReceipt) return content
+    // Receipt goes AFTER the gate lines (the same shape stampReceipt emits).
+    const receipt = `### Verification Receipt\n\n- verified: 2026-08-23T15:04:00Z\n- probe scripts/__tests__/fixtures/fid-verify-echo.ts: exit 0\n`
+    const withReceipt = content.replace(/(- gate: [^\n]*\n)/, `$1\n${receipt}`)
+    const fingerprint = computeFidFingerprint(withReceipt)
+    return withReceipt.replace(
+      '- verified: 2026-08-23T15:04:00Z',
+      `- fingerprint: sha256:${fingerprint}\n- verified: 2026-08-23T15:04:00Z`,
+    )
+  }
+
+  function runFidWrite(content: string) {
+    const state = createEnforcementState()
+    return runPreWriteGates({
+      toolName: 'write_file',
+      input: { path: FID_PATH, content },
+      agentId: 'savant',
+      state,
+      mode: 'hybrid',
+      tier: 'core_4',
+    })
+  }
+
+  it('BLOCKS flipping to fixed without a verification receipt', () => {
+    const result = runFidWrite(fidWithStatus('fixed', false))
+    expect(result.blocked).toBe(true)
+    expect(result.reason).toContain('FID gate')
+    expect(result.reason).toContain('verification receipt')
+    expect(result.reason).toContain('fid:verify')
+  })
+
+  it('BLOCKS flipping to verified without a verification receipt', () => {
+    const result = runFidWrite(fidWithStatus('verified', false))
+    expect(result.blocked).toBe(true)
+    expect(result.reason).toContain('verification receipt')
+  })
+
+  it('ALLOWS flipping to fixed with a valid fresh receipt', () => {
+    const result = runFidWrite(fidWithStatus('fixed', true))
+    expect(result.blocked).toBe(false)
+  })
+
+  it('does NOT gate analyzed writes (section-conditional)', () => {
+    const result = runFidWrite(fidWithStatus('analyzed', false))
+    expect(result.blocked).toBe(false)
+  })
+
+  it('does NOT gate non-FID paths', () => {
+    const state = createEnforcementState()
+    const result = runPreWriteGates({
+      toolName: 'write_file',
+      input: {
+        path: '/proj/src/x.ts',
+        content: fidWithStatus('fixed', false),
       },
       agentId: 'savant',
       state,
@@ -319,7 +469,7 @@ describe('runPreWriteGates — Law 3 cumulative verification (FID-2026-0820-012)
     expect(result.blocked).toBe(false)
   })
 
-  it('does NOT block exempt-path writes under dev/scratchpad/ and dev/nova/', () => {
+it('does NOT block exempt-path writes under dev/scratchpad/ and dev/nova/', () => {
     for (const target of [
       '/proj/dev/scratchpad/notes.md',
       '/proj/dev/nova/outbox.md',
@@ -332,3 +482,46 @@ describe('runPreWriteGates — Law 3 cumulative verification (FID-2026-0820-012)
     }
   })
 })
+
+describe(
+  'runPreWriteGates — FID Recorder routing gate (>100 lines, operator directive 2026-08-23)',
+  () => {
+    const FID_PATH = '/proj/dev/fids/FID-2026-0823-100-x.md'
+
+    /** Build content whose countLines() (split on '\n') is exactly `lines`. */
+    function fidContent(lines: number): string {
+      const rows: string[] = []
+      for (let i = 0; i < lines; i++) rows.push(`line ${i}`)
+      return rows.join('\n')
+    }
+
+    function runOrchestratorFidWrite(content: string, agentId?: string) {
+      const state = createEnforcementState()
+      return runPreWriteGates({
+        toolName: 'write_file',
+        input: { path: FID_PATH, content },
+        agentId: agentId ?? 'orchestrator',
+        state,
+        mode: 'hybrid',
+        tier: 'core_4',
+      })
+    }
+
+    it('ALLOWS an Orchestrator FID write at exactly 100 payload lines', () => {
+      const result = runOrchestratorFidWrite(fidContent(100))
+      expect(result.blocked).toBe(false)
+    })
+
+    it('BLOCKS an Orchestrator FID write above 100 lines with route-through-Recorder', () => {
+      const result = runOrchestratorFidWrite(fidContent(101))
+      expect(result.blocked).toBe(true)
+      expect(result.reason).toContain('> 100')
+      expect(result.reason).toContain('Route through the Recorder')
+    })
+
+    it('does NOT gate non-Orchestrator agents (Forge relays unaffected)', () => {
+      const result = runOrchestratorFidWrite(fidContent(150), 'forge')
+      expect(result.blocked).toBe(false)
+    })
+  },
+)

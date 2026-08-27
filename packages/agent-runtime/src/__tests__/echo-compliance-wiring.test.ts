@@ -2,10 +2,12 @@
  * ECHO compliance wiring test — FID-2026-0804-009.
  *
  * Drives a real `write_file` tool call through `processStream` with an
- * `EchoComplianceTracker` attached to the agent state and asserts the Law 1
- * gate emits a `compliance_warning` event at write time — proof the harness
- * enforcement fires on the actual tool-executor hot path (not just in the
- * tracker's unit tests).
+* `EchoComplianceTracker` attached to the agent state and asserts Law 1
+ * enforcement fires on the actual tool-executor hot path. Since
+ * FID-2026-0823-007 (universal immutable-law blocks), a never-read write is
+ * BLOCKED by the pre-write gate BEFORE the tracker's receipt path — so the
+ * hot-path proof is an [ECHO Enforcement] block error with zero law1
+ * receipts.
  */
 
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
@@ -57,7 +59,7 @@ describe('ECHO compliance Law 1 gate (tool-executor wiring)', () => {
     }
   }
 
-  it('emits a compliance_warning law1 receipt when writing a never-read file', async () => {
+  it('BLOCKS a never-read file write before any law1 receipt (FID-2026-0823-007)', async () => {
     const projectRoot = mkdtempSync(join(tmpdir(), 'echo-compliance-'))
     tempDirs.push(projectRoot)
     const srcDir = join(projectRoot, 'src')
@@ -145,9 +147,16 @@ describe('ECHO compliance Law 1 gate (tool-executor wiring)', () => {
       ): chunk is Extract<PrintModeEvent, { type: 'compliance_warning' }> =>
         typeof chunk !== 'string' && chunk.type === 'compliance_warning',
     )
-    expect(warnings.length).toBe(1)
-    expect(warnings[0].law).toBe('law1')
-    expect(warnings[0].message).toContain('ECHO Law 1')
+// Universal Law 1 blocks the dispatch BEFORE the tracker's recordWrite
+    // path — no law1 receipt can fire; the block surfaces as an error event.
+    expect(warnings.length).toBe(0)
+    const blockedError = responseChunks.find(
+      (chunk): chunk is Extract<PrintModeEvent, { type: 'error' }> =>
+        typeof chunk !== 'string' && chunk.type === 'error',
+    )
+    expect(blockedError).toBeDefined()
+    expect(blockedError?.message).toContain('[ECHO Enforcement] BLOCKED')
+    expect(blockedError?.message).toContain('Law 1')
   })
 
   it('emits a compliance_warning with the ACTUAL law (law7) when the strict Law 7 gate blocks', async () => {

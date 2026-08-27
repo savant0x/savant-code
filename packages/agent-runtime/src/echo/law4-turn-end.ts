@@ -7,8 +7,13 @@
  * callers to confirm reachability. If features were wired but not
  * verified, this gate fires.
  *
- * In strict mode: blocking violation.
- * In hybrid mode: advisory warning only.
+ * FID-2026-0823-007 (operator directive 2026-0823): Laws 1-4 are immutable
+ * process laws and block in EVERY execution mode — the former
+ * strict-only tier condition was removed. The hold stays bounded:
+ * loop-iteration's applyTurnEndEnforcement is main-agent-only and
+ * surrenders after the FID-2026-0822-003 breaker limits, surfacing the
+ * violation instead of looping forever — a hard block, not an infinite
+ * hold.
  */
 
 import type {
@@ -24,7 +29,8 @@ import type {
  * Compares `featuresWired` against `featuresVerified` to detect
  * features that were exported but whose callers were never grepped.
  *
- * @returns EnforcementResult — blocked in strict mode, advisory in hybrid.
+ * @returns EnforcementResult — always blocked when unwired features exist,
+ *          regardless of execution mode.
  */
 export function evaluateLaw4TurnEnd(params: {
   state: EnforcementState
@@ -52,19 +58,16 @@ export function evaluateLaw4TurnEnd(params: {
     `wired but not verified for callers: [${featureList}]. ` +
     `Run code_search or grep for production entry points.`
 
-  const warning: AdvisoryWarning = {
+  warnings.push({
     law: 4,
     severity: 'warning',
     message: msg,
-  }
-  warnings.push(warning)
+  })
 
-  // In strict mode: block. In hybrid: advisory only.
-  const blocked = params.tier === 'all_15'
-
+  // FID-2026-0823-007: immutable law — blocks in every mode.
   return {
-    blocked,
-    reason: blocked ? msg : undefined,
+    blocked: true,
+    reason: msg,
     warnings,
   }
 }

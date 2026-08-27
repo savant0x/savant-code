@@ -8,6 +8,7 @@ import {
   normalizeGroundingPath,
 } from './grounding'
 import { evaluateLaw4TurnEnd } from './law4-turn-end'
+import { canonicalizePath } from './path-canonicalization'
 import { runPostWriteScanners } from './post-write-scanners'
 import { runPreWriteGates } from './pre-write-gates'
 import { buildProtocolRefreshSummary } from './protocol-summary'
@@ -38,6 +39,25 @@ export function resolveEnforcementMode(
 
 function getTier(mode: EnforcementMode): 'core_4' | 'all_15' {
   return mode === 'strict' ? 'all_15' : 'core_4'
+}
+
+/**
+ * FID-2026-0824-001: terminal tool calls carry their payload in EITHER the
+ * singular `command` field or the plural `commands` batch array
+ * (`run_readonly_command`). The tool schema states `command` is IGNORED when
+ * `commands` is present, so extraction is BATCH-FIRST; credit detectors must
+ * evaluate every executed entry or batched verification silently earns no
+ * credit (the live false-block/wedged-tracker failure this fixes).
+ */
+function terminalCommandCandidates(input: Record<string, unknown>): string[] {
+  const batch = input.commands
+  if (Array.isArray(batch)) {
+    return batch.filter(
+      (entry): entry is string => typeof entry === 'string' && entry.length > 0,
+    )
+  }
+  const singular = input.command
+  return typeof singular === 'string' ? [singular] : []
 }
 
 /**
@@ -172,6 +192,11 @@ export class EchoEnforcement {
     toolName: string
     input: Record<string, unknown>
     agentId: string
+    /** FID-2026-0822-004: the agent's assistant TEXT so far in this step —
+     *  threaded to the P5b YAGNI gate (text channel). */
+    assistantText?: string
+    /** FID-2026-0822-004: `yagni.enforced: false` disables the P5b gate. */
+    yagniEnforced?: boolean
   }): EnforcementResult {
     const tier = getTier(this.mode)
 
@@ -216,7 +241,9 @@ export class EchoEnforcement {
     ) {
       const paths = this.extractPaths(params.input)
       for (const p of paths) {
-        this.state.filesRead.add(p)
+        // FID-2026-0823-009: store the canonical form so raw-string
+        // membership matches writes arriving in any path spelling.
+        this.state.filesRead.add(canonicalizePath(p))
       }
     }
 
@@ -255,6 +282,10 @@ export class EchoEnforcement {
         state: this.state,
         mode: this.mode,
         tier,
+        // FID-2026-0822-004: thread the text channel + enforced flag to the
+        // P5b YAGNI gate so it fires on the Forge's prompted emission point.
+        assistantText: params.assistantText,
+        yagniEnforced: params.yagniEnforced,
       })
 
       // Any advisory attached to a gate result (Law 7/8) also becomes
@@ -331,26 +362,31 @@ export class EchoEnforcement {
       params.toolName === 'run_terminal_command' ||
       params.toolName === 'run_readonly_command'
     ) {
-      const cmd = (params.input.command as string) ?? ''
-      if (detectsVerificationCommand(cmd)) {
+      const verified = terminalCommandCandidates(params.input).some(
+        detectsVerificationCommand,
+      )
+      if (verified) {
         for (const f of this.state.dirtyFiles) {
           this.state.verifiedFiles.add(f)
         }
       }
     }
 
-    // Track grep/search for Law 4 (call-graph verification)
+    // Track grep/search for Law 4 (call-graph verification).
+    // run_readonly_command is included: it is the Orchestrator's
+    // always-available read-only shell. RED-003 added both terminal types
+    // for Law 3 but missed this Law 4 path, deadlocking hybrid sessions
+    // whose only direct shell could never credit featuresVerified.
     if (
       params.toolName === 'code_search' ||
-      params.toolName === 'run_terminal_command'
+      params.toolName === 'run_terminal_command' ||
+      params.toolName === 'run_readonly_command'
     ) {
       const pattern = (params.input.pattern as string) ?? ''
-      const cmd = (params.input.command as string) ?? ''
-      if (
-        pattern.includes('grep') ||
-        cmd.includes('grep') ||
-        cmd.includes('find')
-      ) {
+      const grepHit = terminalCommandCandidates(params.input).some(
+        (cmd) => cmd.includes('grep') || cmd.includes('find'),
+      )
+      if (pattern.includes('grep') || grepHit) {
         for (const wired of this.state.featuresWired) {
           this.state.featuresVerified.add(wired)
         }
@@ -453,8 +489,8 @@ export class EchoEnforcement {
     const checkpoint = this.ensureCheckpoint()
     const now = Date.now()
     const lastRefreshTurn = checkpoint?.lastRefreshTurn ?? this.lastRefreshTurn
-    const turnGap = this.state.turnCount - lastRefreshTurn
-    const cadenceDue = turnGap >= CONDENSED_REFRESH_USER_TURNS
+    const turnsSinceRefresh = this.state.turnCount - lastRefreshTurn
+    const cadenceDue = turnsSinceRefresh >= CONDENSED_REFRESH_USER_TURNS
     const backstopDue =
       this.internalStepsSinceRefresh >= MAX_INTERNAL_STEPS_WITHOUT_REFRESH ||
       (this.lastRefreshAtMs !== null &&

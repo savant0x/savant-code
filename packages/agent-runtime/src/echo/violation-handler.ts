@@ -58,11 +58,12 @@ export function formatTurnEndReport(results: EnforcementResult[]): string {
  * (7 → `law7`, 8 → `law8`). The template-literal `ComplianceWarningLaw`
  * accepts any future numeric law without a code change.
  *
- * Disjoint-law invariant: the EHEL pre-write gates only ever produce
- * advisories for Laws 7 and 8. Laws 1 and 3 block (strict) or are inert
- * (hybrid) WITHOUT attaching an advisory, so this mapping can never emit a
- * `law1`/`law3` receipt that would collide with the tracker's own receipts.
- * Keep that invariant if a future gate gains non-blocking advisories.
+* Disjoint-law invariant (updated FID-2026-0823-007): Laws 1, 3 and 4
+ * block UNIVERSALLY (tier-independent), and blocked writes attach empty
+ * advisory lists — Laws 7 and 8 remain the only non-blocking advisories
+ * here. This mapping therefore still cannot emit a `law1`/`law3`/`law4`
+ * receipt colliding with the tracker's own receipts. Keep that invariant
+ * if a future gate gains non-blocking advisories.
  */
 export function lawNumberToComplianceLaw(law: number): ComplianceWarningLaw {
   return `law${law}`

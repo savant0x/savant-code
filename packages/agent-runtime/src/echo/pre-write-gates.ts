@@ -10,7 +10,9 @@
  *   verifiedFiles; FID-2026-0819-001 cumulative credit)
  * - Law 7 (Strict): hasSearchedSinceGreen before writing a new file
  * - Law 8 (Strict): intentLogged before first write
- * - FID gate: Orchestrator → FID > 20 lines → route through Recorder
+* - FID gate: Orchestrator → FID > 100 lines → route through Recorder
+ *   (operator directive 2026-08-23: hybrid escalation threshold raised
+ *   from 20 to 100 — anything above 100 lines needs the Recorder)
  * - P5b YAGNI gate (FID-2026-0806-003): Forge writes that declare
  *   speculative scope (`yagni_check.isSpeculative`) are blocked unless a
  *   documented `ponytail:` debt marker was recorded. Safe-by-construction
@@ -19,8 +21,17 @@
  */
 
 import { existsSync } from 'node:fs'
+import { basename } from 'node:path'
+
+import { isValidSkillName } from '@savant-code/common/constants/skills'
+import {
+  readSkillFile,
+  skillCanonicalDir,
+} from '@savant-code/common/util/skill-management'
 
 import { validateFidStepStatus } from './fid-validator'
+import { validateFidVerification } from './fid-verification-gates'
+import { canonicalizePath } from './path-canonicalization'
 import { runYagniPreWriteGate } from './yagni-pre-write-gate'
 
 import type {
@@ -32,6 +43,29 @@ import type {
 
 /** Regex matching FID file paths under dev/fids/. */
 const FID_FILE_PATTERN = /dev\/fids\/FID-[\w.-]+\.md$/
+
+/**
+ * FID-2026-0824-012 — block raw writes to any file under an `immutable:
+ * true` skill's directory (live or quarantine). Returns the block reason or
+ * null when the write is not an immutable-skill target.
+ */
+function immutableSkillBlockReason(targetPath: string): string | null {
+  const canonical = canonicalizePath(targetPath)
+  const match = canonical.match(
+    /\/\.agents\/skills\/(?:\.quarantine\/)?([a-z0-9]+(?:-[a-z0-9]+)*)\//,
+  )
+  if (!match) return null
+  const name = match[1]
+  if (!isValidSkillName(name)) return null
+  const live = readSkillFile(skillCanonicalDir(process.cwd(), name))
+  if (live?.immutable) {
+    return (
+      `Immutable skill gate: skill '${name}' declares immutable: true — ` +
+      'agent mutations are rejected (operator-only; FID-2026-0824-012 S2-A)'
+    )
+  }
+  return null
+}
 
 /** Minimum unanswered questions required in strict mode. */
 /**
@@ -47,6 +81,11 @@ export function runPreWriteGates(params: {
   state: EnforcementState
   mode: EnforcementMode
   tier: 'core_4' | 'all_15'
+  /** FID-2026-0822-004: the agent's assistant TEXT so far in this step — the
+   *  yagni gate's second extraction channel (payload first, then text). */
+  assistantText?: string
+  /** FID-2026-0822-004: `yagni.enforced: false` disables the P5b gate. */
+  yagniEnforced?: boolean
 }): EnforcementResult {
   if (!isWriteTool(params.toolName)) {
     return { blocked: false, warnings: [] }
@@ -58,24 +97,58 @@ export function runPreWriteGates(params: {
   // ── Law 1: Read 0-EOF Before Touch ──────────────────────────────────
   // New files are exempt: a path that does not exist on disk cannot have
   // been read, so Law 1 cannot apply to it (matches the documented contract
-  // "Path must be in filesRead (or be a new file)"). In hybrid (core_4)
-  // mode the gate is deliberately inert — the non-blocking
-  // EchoComplianceTracker (FID-2026-0804-009) records the read-before-write
-  // receipt on the tool-executor hot path, and emitting a duplicate warning
-  // here would double-report the same violation. This inertness depends on
-  // the tracker being attached to agentState (the harness always does so);
-  // do not re-enable a hybrid block here without also suppressing the
-  // tracker's receipt. Strict (all_15) mode keeps hard enforcement: the
-  // write is blocked until the file is read.
+  // "Path must be in filesRead (or be a new file)"). FID-2026-0823-007
+  // (operator directive 2026-0823): Laws 1-4 are immutable process laws and
+  // BLOCK in every execution mode — the former core_4 inertness (deferring
+  // to tracker advisories) is revoked, and the existsSync new-file probe
+  // now runs in both tiers instead of only under `tier === 'all_15'`.
+  // FID-2026-0823-007 (operator directive 2026-0823): Laws 1-4 are immutable
+  // process laws and BLOCK in every execution mode — the former core_4
+  // inertness (deferring to tracker advisories) is revoked; the existsSync
+  // new-file probe now runs in both tiers.
   //
-  // The `isNewFile` probe is a synchronous `existsSync` (FID-2026-0815-011
-  // E-03): it only pays off in strict mode where the block actually fires,
-  // so it is gated behind `tier === 'all_15'`. Hybrid mode skips the disk
-  // probe entirely — the gate is inert there regardless of its result.
-  if (targetPath && !params.state.filesRead.has(targetPath)) {
-    if (params.tier === 'all_15' && !isNewFile(targetPath)) {
-      const msg = `Law 1: Read 0-EOF before touch — "${targetPath}" has not been read`
-      return { blocked: true, reason: msg, warnings }
+  // No exempt-path carve-out exists for Law 1 by design: isExemptWritePath
+  // belongs to the Law 3 gate only, so UPDATING an existing dev/fids|nova|
+  // scratchpad file requires a prior tracked read_files/read_subtree call;
+  // CREATEs stay exempt via isNewFile.
+  //
+  // Duplicate-receipt safety: recordWrite (native.ts:444) sits AFTER these
+  // gates on the dispatch path, so a blocked write never produces a tracker
+  // law1 receipt and a passing write had a tracked read — no double-report.
+  // FID-2026-0823-009: reads may be registered under ANY path spelling
+  // (raw relative pre-fix entries, canonicalized post-fix) while writes can
+  // arrive absolutized by SDK-side resolution. Compare canonical forms on
+  // both sides so one registered read satisfies any spelling of the same
+  // file. The raw-equality fast path keeps the common case allocation-free.
+  let wasRead = false
+  if (targetPath && params.state.filesRead.size > 0) {
+    const targetCanonical = canonicalizePath(targetPath)
+    for (const registered of params.state.filesRead) {
+      if (
+        registered === targetPath ||
+        canonicalizePath(registered) === targetCanonical
+      ) {
+        wasRead = true
+        break
+      }
+    }
+  }
+  if (targetPath && !wasRead && !isNewFile(targetPath)) {
+    const msg = `Law 1: Read 0-EOF before touch — "${targetPath}" has not been read`
+    return { blocked: true, reason: msg, warnings }
+  }
+
+  // ── Immutable skill gate (FID-2026-0824-012 S2-A) ──────────────────
+  // Governance/safety/compliance skills declare `immutable: true` in their
+  // frontmatter. Raw write tools (write_file/str_replace/apply_patch) to ANY
+  // file under such a skill's directory (SKILL.md, references/, versions/,
+  // VERSIONS.jsonl) are hard-blocked — the same contract the skill_manage
+  // engine enforces in-process, now enforced at the EHEL boundary too
+  // (defense in depth; the engine gate cannot be bypassed by a raw write).
+  if (targetPath) {
+    const immutableReason = immutableSkillBlockReason(targetPath)
+    if (immutableReason) {
+      return { blocked: true, reason: immutableReason, warnings }
     }
   }
 
@@ -140,10 +213,15 @@ export function runPreWriteGates(params: {
       (typeof operationDiff === 'string' ? operationDiff : '')
     const lineCount = countLines(content)
 
-    if (params.agentId === 'orchestrator' && lineCount > 20) {
+// Scope note: the gate measures PER-CALL payload lines (one tool call's
+    // content), not cumulative per-session FID delta. N sequential <=100-line
+    // edits can grow one document past 100 total lines without tripping this
+    // gate — an accepted limitation; cumulative tracking deliberately not
+    // built (operator directive governs single-write routing).
+    if (params.agentId === 'orchestrator' && lineCount > 100) {
       const msg =
         `FID gate: "${targetPath}" is ${lineCount} lines ` +
-        `(> 20). Route through the Recorder agent.`
+        `(> 100). Route through the Recorder agent.`
       return { blocked: true, reason: msg, warnings }
     }
 
@@ -162,6 +240,26 @@ export function runPreWriteGates(params: {
           `FID gate: "${targetPath}" declares a converged/closed status ` +
           `with unresolved steps — ${stepErrors.join('; ')}. Present these ` +
           'steps to the operator before the transition.'
+        return { blocked: true, reason: msg, warnings }
+      }
+
+      // ── Verification receipt tripwire (FID-2026-0823-009, L3) ───────
+      // A FID write declaring `**Status:** fixed|verified` must carry a
+      // valid `## Verification Gates` declaration + matching
+      // `### Verification Receipt` (fresh fingerprint, exit 0) in the
+      // PROPOSED content. Skipping verification is impossible at the write
+      // boundary: the flip is blocked until `bun run fid:verify <fid>
+      // --write` has stamped a valid receipt. This mirrors the step-status
+      // gate — same enforcement point, structural (C1+C2) only; the live
+      // re-run (C3) happens at validate:repository.
+      const verificationErrors = validateFidVerification(content)
+      if (verificationErrors.length > 0) {
+        const msg =
+          `FID gate: "${targetPath}" declares a fixed/verified status ` +
+          `without a valid verification receipt — ` +
+          `${verificationErrors.join('; ')}. Run \`bun run fid:verify ` +
+          `${basename(targetPath)} --write\` after implementing, ` +
+          'then flip the status.'
         return { blocked: true, reason: msg, warnings }
       }
     }
@@ -240,9 +338,9 @@ function isNewFile(path: string): boolean {
   try {
     return !existsSync(path)
   } catch {
-    // Defensive: on stat failure treat as an existing file. Worst case in
-    // strict mode the gate blocks; in hybrid mode the tracker's own
-    // existsSync (native.ts) fails identically and still emits its receipt.
+    // Defensive: on stat failure treat as an existing file. Worst case the
+    // gate blocks in every mode (FID-2026-0823-007); recovery is one
+    // read_files call.
     return false
   }
 }

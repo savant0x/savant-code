@@ -13,6 +13,17 @@ export { runDesignContractScanner } from './design-contract'
 export { evaluateLaw4TurnEnd } from './law4-turn-end'
 export { validateFid, validateFidStepStatus, isFidFile } from './fid-validator'
 export {
+  computeFidFingerprint,
+  parseVerificationGates,
+  parseVerificationReceipt,
+  validateFidVerification,
+} from './fid-verification-gates'
+export type {
+  VerificationGate,
+  VerificationGateKind,
+  VerificationReceipt,
+} from './fid-verification-gates'
+export {
   buildComplianceWarningChunks,
   formatBlockingError,
   formatTurnEndReport,

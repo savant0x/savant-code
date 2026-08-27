@@ -14,6 +14,8 @@ const VISUAL_EXTENSIONS = new Set([
   '.vue',
   '.svelte',
 ])
+/** FID-2026-0824-002: directory segments that are never visual surfaces. */
+const NON_VISUAL_SEGMENTS = new Set(['scripts', '__tests__', 'handlers'])
 const COLOR_LITERAL = /#[0-9a-f]{3,8}\b|rgba?\([^)]*\)|hsla?\([^)]*\)/gi
 const CSS_VALUE =
   /-?(?:\d+(?:\.\d+)?)(?:px|rem|em|vh|vw|vmin|vmax|ch|ex|cm|mm|in|pt|pc|%)(?:\b|$)/gi
@@ -25,7 +27,7 @@ const FONT_DECLARATION =
 const TYPOGRAPHY_VALUE_DECLARATION =
   /(?:font-size|fontSize|font-weight|fontWeight|line-height|lineHeight|letter-spacing|letterSpacing|text-transform|textTransform)\s*(?::|=)\s*([^;}\n,]+)/gi
 const DYNAMIC_VISUAL_DECLARATION =
-  /(?:color|text-color|textColor|foreground|fg|background|background-color|backgroundColor|bg|border(?:-[a-z-]+)?|borderColor|outline(?:-color)?|outlineColor|fill|stroke|accentColor|padding|paddingTop|paddingBottom|paddingLeft|paddingRight|margin|marginTop|marginBottom|marginLeft|marginRight|gap|border-radius|borderRadius|font-family|fontFamily|font-size|fontSize|font-weight|fontWeight|line-height|lineHeight|letter-spacing|letterSpacing)\s*(?::|=)\s*([^;}\n]*)/gi
+  /(?<![\w$])(?<!const\s)(?<!let\s)(?<!var\s)(?:color|text-color|textColor|foreground|fg|background|background-color|backgroundColor|bg|border(?:-[a-z-]+)?|borderColor|outline(?:-color)?|outlineColor|fill|stroke|accentColor|padding|paddingTop|paddingBottom|paddingLeft|paddingRight|margin|marginTop|marginBottom|marginLeft|marginRight|gap|border-radius|borderRadius|font-family|fontFamily|font-size|fontSize|font-weight|fontWeight|line-height|lineHeight|letter-spacing|letterSpacing)\s*(?::|=)\s*([^;}\n]*)/gi
 const OPEN_TUI_SPACING_DECLARATION =
   /(?:padding|paddingTop|paddingBottom|paddingLeft|paddingRight|margin|marginTop|marginBottom|marginLeft|marginRight|gap|border-radius|borderRadius)\s*:\s*([^,;}\n]*)/gi
 const CSS_COLOR_KEYWORDS = new Set(
@@ -35,7 +37,17 @@ const CSS_COLOR_KEYWORDS = new Set(
 )
 
 export function isVisualPath(filePath: string): boolean {
-  return VISUAL_EXTENSIONS.has(path.extname(filePath).toLowerCase())
+  if (!VISUAL_EXTENSIONS.has(path.extname(filePath).toLowerCase())) {
+    return false
+  }
+  // FID-2026-0824-002: extension alone over-matches — build tooling, tests,
+  // handlers, and generated artifacts are never visual surfaces.
+  const normalized = filePath.replaceAll('\\', '/')
+  if (/\.generated\.[cm]?[jt]sx?$/i.test(normalized)) return false
+  return !normalized
+    .split('/')
+    .slice(0, -1)
+    .some((segment) => NON_VISUAL_SEGMENTS.has(segment.toLowerCase()))
 }
 
 /** Replace comments while preserving strings and line boundaries for scanning. */
@@ -203,10 +215,28 @@ export function dynamicVisualProperties(content: string): string[] {
     // CSS variables are token indirections and are intentionally allowed. A
     // non-literal expression cannot be mapped deterministically without
     // evaluating application code, so it requires explicit review.
-    const isVariable = /var\(\s*--/i.test(value)
+    // A leading custom-property reference (`--token-name`) — quoted or not,
+    // including as the HEAD of a captured shorthand — is token indirection,
+    // not a dynamic expression (FID-2026-0824-002 lookup-table false
+    // positive). The declaration capture runs past closing quotes when no
+    // semicolon follows, so an anchored capture takes only the leading
+    // optional quote + custom property, never trailing punctuation.
+    const isVariable =
+      /var\(\s*--/i.test(value) || /^['"]?(--[\w-]+)/.test(value.trim())
+    // FID-2026-0824-002 post-closure amendment: prettier collapses
+    // single-attribute JSX tags onto one line, so the declaration capture
+    // swallows trailing layout noise after the quoted value ("#hex"> or
+    // "#hex" attributes={X}>). When the capture HEAD is a quoted string,
+    // evaluate exactly that quoted literal — trailing JSX punctuation is
+    // formatting, not part of the visual value. Quoting never launders a
+    // dynamic expression ("theme.x" still fails the literal test).
+    const quotedHead = /^(['"]).*?\1/.exec(value)
+    const literalCandidate = quotedHead
+      ? value.slice(1, quotedHead[0].length - 1)
+      : value.replace(/^['"]|['"]$/g, '')
     const isLiteral =
       /^(?:var\(\s*--[^)]+\s*\)|#[0-9a-f]{3,8}|rgba?\([^)]*\)|hsla?\([^)]*\)|[a-z]+|\d+(?:\.\d+)?(?:px|rem|em|vh|vw|%)?)(?:\s+(?:var\(\s*--[^)]+\s*\)|#[0-9a-f]{3,8}|rgba?\([^)]*\)|hsla?\([^)]*\)|[a-z]+|\d+(?:\.\d+)?(?:px|rem|em|vh|vw|%)?))*$/i.test(
-        value.replace(/^['"]|['"]$/g, ''),
+        literalCandidate,
       )
     if (!isVariable && !isLiteral) {
       properties.push(match[0].split(/\s*(?::|=)/, 1)[0]?.trim() ?? 'visual')
