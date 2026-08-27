@@ -1,9 +1,15 @@
 import { applyBudgets } from './apply-budgets'
+import {
+  planFoldsToReachTarget,
+  segmentExchanges,
+  tokensForRange,
+} from './budget'
 import { CONTEXT_PRUNER_CONSTANTS } from './constants'
 import { runFoldOldestExchange } from './fold-exchange'
 import * as helpers from './helpers'
 import { runContextPrunerMain } from './main'
 import * as preservedState from './preserved-state'
+import { buildResultDigest } from './result-digests'
 import * as structuredSummary from './structured-summary'
 import { summarizeMessages } from './summarize-messages'
 import { summarizeToolCall } from './summarize-tool-call'
@@ -42,6 +48,7 @@ export function createContextPrunerHandleSteps(): ContextPrunerHandleSteps {
 
   const embeddedHelpers = [
     ...Object.values(helpers).map((fn) => fn.toString()),
+buildResultDigest.toString(),
     summarizeToolCall.toString(),
     summarizeMessages.toString(),
     applyBudgets.toString(),
@@ -59,8 +66,11 @@ export function createContextPrunerHandleSteps(): ContextPrunerHandleSteps {
     ...Object.values(telemetry)
       .filter((v) => typeof v === 'function')
       .map((fn) => (fn as () => unknown).toString()),
-    buildFullSummary.toString(),
+buildFullSummary.toString(),
     runFoldOldestExchange.toString(),
+    planFoldsToReachTarget.toString(),
+    segmentExchanges.toString(),
+    tokensForRange.toString(),
     runContextPrunerMain.toString(),
   ].join('\n\n')
 

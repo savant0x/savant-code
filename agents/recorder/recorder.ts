@@ -14,7 +14,12 @@ const definition: AgentDefinition = {
   outputMode: 'last_message',
   toolNames: ['write_file', 'read_files', 'glob', 'code_search', 'set_output'],
 
-  includeMessageHistory: true,
+  // FID-2026-0823-011: history inheritance pulled in the ENTIRE parent
+  // conversation (653K-token spawns observed) and drove read-then-stop
+  // stalls — the child acts on its spawn prompt alone now. The scaffold
+  // seal signal is threaded via spawn params (params.scaffoldComplete)
+  // instead of message-history scanning; see handleSteps below.
+  includeMessageHistory: false,
   inheritParentSystemPrompt: true,
 
   instructionsPrompt: `You are the Recorder, a specialized agent in the Savant ECHO Protocol system. Your sole responsibility is FID (Feature Implementation Document) lifecycle management.
@@ -25,7 +30,7 @@ const definition: AgentDefinition = {
 2. **Track FIDs** — Maintain accurate status (created, analyzed, fixed, verified, closed) and phase (RED, GREEN, AUDIT, ADVERSARIAL, SELF-CORRECT, COMPLETE) in each FID.
 3. **Update FIDs** — Record Perfection Loop progress: RED findings, GREEN fixes, AUDIT evidence, SELF-CORRECT corrections.
 4. **Archive FIDs** — When a FID reaches COMPLETE, move it from \`dev/fids/\` to \`dev/fids/archive/\` and append to \`CHANGELOG.md\`.
-5. **Seal umbrella FIDs** — When the orchestrator signals 'Scaffold complete' (set_scaffold_complete), call set_output to seal the umbrella FID.
+5. **Seal umbrella FIDs** — When the Orchestrator signals 'Scaffold complete' (a set_scaffold_complete result in shared history OR \`scaffoldComplete: true\` in your spawn params), immediately call set_output with value "Umbrella FID sealed. Scaffold session complete; reverting to HYBRID mode." and end the run.
 6. **Enforce AUDIT evidence** — No FID may close without tool output evidence in the AUDIT section. Self-reporting is prohibited.
 
 # FID Format
@@ -96,9 +101,20 @@ If the Orchestrator asks you to use a tool you don't have (e.g., str_replace, ba
 - Do NOT stop without writing
 - Instead: read the file if needed, then write_file with the complete content
 - If the Orchestrator asks you to read the template first, do so, but then IMMEDIATELY call write_file with the content they provided
-- NEVER return without calling write_file. Your job is to write FID files.`,
+- NEVER return without calling write_file. Your job is to write FID files.
 
-  handleSteps: function* ({ agentState }) {
+# Turn Contract (FID-2026-0823-011)
+
+Ending your turn WITHOUT a successful write_file (or a set_output seal) is a FAILED run — never narrate intended edits instead of performing them. Your context is intentionally small: act on this prompt alone.`,
+
+  handleSteps: function* ({ agentState, params }) {
+    // FID-2026-0823-011: with includeMessageHistory:false the parent's
+    // set_scaffold_complete tool-result no longer rides messageHistory —
+    // the Orchestrator threads the seal signal via spawn params instead.
+    const sealViaParams =
+      params !== null &&
+      typeof params === 'object' &&
+      (params as Record<string, unknown>).scaffoldComplete === true
     const scaffoldCompleteSignal = agentState.messageHistory.some((message) => {
       if (message.role !== 'assistant') return false
       return message.content.some((part) => {
@@ -120,7 +136,7 @@ If the Orchestrator asks you to use a tool you don't have (e.g., str_replace, ba
       })
     })
 
-    if (scaffoldCompleteSignal) {
+    if (scaffoldCompleteSignal || sealViaParams) {
       yield {
         toolName: 'set_output',
         input: {

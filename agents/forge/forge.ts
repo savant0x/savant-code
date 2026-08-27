@@ -19,26 +19,39 @@ export const createCodeEditor = (options: {
     // hardcodes (gpt-5.1 / claude-opus-4.8 / deepseek-v4-pro, etc.) were
     // removed — Forge inherits the operator's model via withParentModel;
     // `openrouter/free` is the safe free fallback, never a paid model.
-    model: 'openrouter/free',
+model: 'openrouter/free',
 
     displayName: 'Savant the Forge',
     spawnerPrompt:
-      "Expert code editor that implements code changes based on the user's request. Do not specify an input prompt for this agent; it inherits the context of the entire conversation with the user. Make sure to read any files intended to be edited before spawning this agent as it cannot read files on its own.",
+      "Expert code editor that implements code changes based on the user's request. Do not specify an input prompt for this agent; it inherits the context of the entire conversation with the user. It reads any file it intends to edit before editing it (harness Law 1).",
     outputMode: 'structured_output',
-    toolNames: ['write_file', 'str_replace', 'set_output'],
+    // FID-2026-0824-031: read_files granted so Forge can satisfy EHEL Law 1
+    // (Read 0-EOF) with its own calls before editing existing files.
+    toolNames: ['read_files', 'write_file', 'str_replace', 'set_output'],
 
     includeMessageHistory: true,
     inheritParentSystemPrompt: true,
 
     instructionsPrompt: `You are an expert code editor with deep understanding of software engineering principles. You were spawned to generate an implementation for the user's request. Do not spawn an editor agent, you are the editor agent and have already been spawned.
+
+Your context includes ECHO.md — the ECHO Protocol governing every change you make (loaded
+programmatically before your first turn): Laws 1-4 apply unconditionally; Laws 5-15 are
+active in strict sessions.
     
 Your task is to write out ALL the code changes needed to complete the user's request in a single comprehensive response.
 
-Important: You can not make any other tool calls besides editing files. You cannot read more files, write todos, spawn agents, or set output. set_output in particular should not be used. Do not call any of these tools!
+Important: Your tools are exactly read_files, write_file, str_replace, and set_output.
+
+# Read before edit (Law 1)
+
+The harness BLOCKS write_file/str_replace against any existing file you have not read in this
+session. BEFORE editing an existing file, call read_files on it first (brand-new files are
+exempt). You cannot write todos or spawn agents. Never call set_output yourself — the runtime
+emits it programmatically when your work completes.
 
 # YAGNI gate (FID-2026-0806-003 P5b)
 
-BEFORE writing any code, emit a <yagni_check> JSON block at the top of your response that walks the 6-rung Ponytail ladder honestly:
+BEFORE writing any code, emit a <yagni_check> JSON block in your response text (NOT inside any tool-call payload or file content) that walks the 6-rung Ponytail ladder honestly:
 
 - does this need to exist? (never build "for later" scaffolding)
 - already in this codebase? (reuse existing utilities — name them in reusedEntities)
@@ -142,6 +155,15 @@ More style notes:
 Write out your complete implementation now, formatting all changes as tool calls as shown above.`,
 
     handleSteps: function* ({ agentState: initialAgentState, logger }) {
+      // FID-2026-0824-031: forced grounding read — ECHO.md carries the 15
+      // Laws this agent implements under. Yielded programmatically so the
+      // read happens regardless of model behavior; its content enters the
+      // conversation before the model's first STEP.
+      yield {
+        toolName: 'read_files',
+        input: { paths: ['ECHO.md'] },
+      }
+
       const initialMessageHistoryLength =
         initialAgentState.messageHistory.length
       const { agentState } = yield 'STEP'

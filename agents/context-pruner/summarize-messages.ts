@@ -19,6 +19,7 @@ import {
   getTextContent,
   truncateLongText,
 } from './helpers'
+import { buildResultDigest } from './result-digests'
 import { summarizeToolCall } from './summarize-tool-call'
 
 import type {
@@ -36,6 +37,7 @@ export type SummaryEntry = {
 export function summarizeMessages(
   messagesToSummarize: Message[],
   latestLiveUserPromptMessage: Message | null,
+  digestCaps?: { headChars?: number; tailChars?: number },
 ): { entries: SummaryEntry[]; liveUserPromptEntry: SummaryEntry | undefined } {
   // Phase 1: Summarize ALL messages into tagged entries
   const summarizedEntries: SummaryEntry[] = []
@@ -216,6 +218,19 @@ export function summarizeMessages(
               entryParts.push(`Agent results:\n${resultSummaries.join('\n')}`)
             }
           }
+        }
+      }
+
+      // FID-2026-0824-024 preservation contract: a tool result matching no
+      // special case above still contributes a bounded digest — never silence.
+      if (entryParts.length === 0) {
+        const digest = buildResultDigest(
+          toolMessage.toolName,
+          toolMessage.content,
+          digestCaps,
+        )
+        if (digest !== null) {
+          entryParts.push(digest)
         }
       }
 

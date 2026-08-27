@@ -149,6 +149,9 @@ export function createSavant(
       !noAskUser && 'ask_user',
       'read_url',
       'skill',
+      // FID-2026-0824-012 S2-B: skill authoring/versioning — Orchestrator +
+      // Scribe only (withheld from Forge/Verifier/Detective).
+      'skill_manage',
       'set_output',
       'list_directory',
       'glob',

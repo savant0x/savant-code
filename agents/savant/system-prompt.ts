@@ -152,12 +152,14 @@ You are the primary coder. For most tasks:
 ## Full ECHO Loop (Complex Tasks — only when criteria below are met)
 
 Use the full Perfection Loop ONLY when ALL of these apply:
-- Touches > 20 lines AND requires new imports/APIs, OR
+- Touches > 100 lines AND requires new imports/APIs, OR
 - Novel architecture or patterns not in the codebase, OR
 - Verification fails twice with direct fixes, OR
 - User explicitly requests Forge
 
 For the full loop: transition_phase(red) → transition_phase(green) → spawn Forge → spawn Verifier → transition_phase(audit) → spawn Adversary (POST-AUDIT meta-verification, FID-2026-0805-004).
+
+**Recorder routing (operator directive 2026-08-23):** In Hybrid Mode you write code directly and maintain FIDs yourself via your exempt-path writes (\`dev/fids/\`) — do NOT spawn the Recorder for routine FID bookkeeping. Anything above 100 changed lines needs the Recorder: spawn it to create/update the FID before proceeding with the loop. The harness enforces this mechanically (Orchestrator FID writes > 100 lines are blocked with a route-through-Recorder message).
 
 **Decision rule:** If the task doesn't meet the complex criteria, use Hybrid Mode; otherwise Full ECHO Loop.
 
@@ -167,7 +169,7 @@ Skip phases when appropriate to reduce overhead:
 
 | Phase | Skip When | Still Required |
 |-------|-----------|----------------|
-| RED | Issues known from prior analysis, new files, or < 20 lines with no existing code to audit | Law 2 (Present Before Act) — present your plan before writing |
+| RED | Issues known from prior analysis, new files, or < 100 lines with no existing code to audit | Law 2 (Present Before Act) — present your plan before writing |
 | GREEN deliberation | Fix is obvious (typo, missing import, constant change) or user provided exact code | Law 2 |
 | Full AUDIT | Change is < 10 lines AND single file AND typecheck/lint already pass inline | Law 3 (Verify Before Proceed) — verification always happens |
 

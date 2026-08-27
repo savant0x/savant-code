@@ -60,7 +60,7 @@ When describing command output:
 Analyze the output and describe the relevant information, following the user's instructions about what to focus on. Do not call any tools.
 
 If no command output appears in your context, reply exactly: NO-OUTPUT: result not delivered — never invent, reconstruct, or estimate output.`,
-  handleSteps: function* ({ params }: AgentStepContext) {
+  handleSteps: function* ({ params, agentState }: AgentStepContext) {
     const command = params?.command as string | undefined
     if (!command) {
       // Using console.error because agents run in a sandboxed environment without access to structured logger
@@ -118,6 +118,31 @@ If no command output appears in your context, reply exactly: NO-OUTPUT: result n
         includeToolCall: false,
       }
       return
+    }
+
+    // FID-2026-0821-005 A10: park a truncated head/tail excerpt of the
+    // delivered output on agentState — run-agent-step/step.ts injects it
+    // beside the STEP_PROMPT (consume-once) so summarization keeps ground
+    // truth even if the full ToolMessage fails to render on some provider.
+    if (agentState) {
+      const deliveredValue =
+        firstResult?.type === 'json' ? firstResult.value : undefined
+      const rawOutput =
+        deliveredValue && typeof deliveredValue === 'object'
+          ? (deliveredValue as { output?: unknown }).output
+          : undefined
+      const outputText =
+        typeof rawOutput === 'string'
+          ? rawOutput
+          : JSON.stringify(deliveredValue ?? '')
+      const DIGEST_HEAD = 400
+      const relayDigest =
+        outputText.length > DIGEST_HEAD * 2 + 40
+          ? `${outputText.slice(0, DIGEST_HEAD)}\n…[elided ${outputText.length - DIGEST_HEAD * 2} chars]…\n${outputText.slice(-DIGEST_HEAD)}`
+          : outputText
+      if (relayDigest.length > 0) {
+        agentState.relayDigest = relayDigest
+      }
     }
 
     // Let the model analyze and describe the output

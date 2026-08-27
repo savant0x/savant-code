@@ -20,6 +20,33 @@ export type SavantHandleSteps = Extract<
 // force ratio (Hermes pattern, off by default) are baked the same way — the
 // factory is the ONLY surface where compression config becomes trigger
 // behavior; protocol.config.yaml values are threaded in here by the caller.
+// FID-2026-0821-003-B: the EXACT source text baked into the serialized
+// generator for the auto-compact trigger. Serialized generators cannot
+// import runtime modules, so the resolver formula is duplicated inline; this
+// const is both interpolated into the template below AND evaled by the parity
+// test (agents/__tests__/trigger-threshold-parity.test.ts), so the executed
+// body IS the emitted body — future drift fails the sweep loudly.
+//
+// No backticks in this content (handle-steps-factory template rule). The
+// 4-space prefix matches the template body indentation for readability.
+export const TRIGGER_THRESHOLD_INLINE_SOURCE = `    const minTriggerTokens = 100000
+    const autoCompactBuffer = 30000
+    // FID-2026-0821-001 P0-3 / FID-2026-0821-003-B: single threshold owner.
+    // Mirrors resolveTriggerThreshold in packages/agent-runtime (parity
+    // pinned by the trigger-threshold-parity sweep test); serialized
+    // generators cannot import runtime modules.
+    function computeTriggerThreshold(windowTokens, ratio) {
+      const scaled = windowTokens * ratio
+      const upperBound = windowTokens - autoCompactBuffer
+      if (upperBound < minTriggerTokens) {
+        return Math.floor(Math.min(scaled, upperBound))
+      }
+      return Math.floor(
+        Math.max(minTriggerTokens, Math.min(scaled, upperBound)),
+      )
+    }
+`
+
 export function createSavantHandleSteps(config: {
   defaultMaxContextLength: 250_000 | 400_000
   cacheExpiryMs?: number
@@ -85,6 +112,7 @@ export function createSavantHandleSteps(config: {
         // ignore — observability must never gate compaction
       }
     }
+    ${TRIGGER_THRESHOLD_INLINE_SOURCE.trimEnd()}
     const p = params ?? {}
     // FID-2026-0814-011 C-01: never silently adopt the baked fallback. The
     // resolved window (agentState.maxContextLength, set by the runtime from
@@ -117,7 +145,96 @@ export function createSavantHandleSteps(config: {
     // force path still fires for hard-overflow safety.
     const prunerCooldownMs = 30_000
     let idleChecked = false
+    // FID-2026-0821-001 P2-2: two-rung escalation ladder (generator-local;
+    // fresh per turn). Stage 0 = idle; stage 1 = one ineffective pass (the
+    // immediate retry escalates to a forced second pass that bypasses the
+    // cooldown); stage 2 = escalation hold — a visible blocked(
+    // 'escalation-hold') state until the count grows ≥5% past the held
+    // baseline. The force path stays OUTSIDE the ladder: hard-overflow
+    // safety never counts strikes and never holds.
+    let escalationStage = 0
+    let awaitingEffectCheck = false
+    let holdBaselineCount = 0
+    // FID-2026-0821-001 P1-4: manual /compact detection runs once per run.
+    let manualCompactChecked = false
     while (true) {
+      // FID-2026-0821-001 P1-4: first-class manual /compact. Detected ONCE
+      // per run from the trailing USER_PROMPT; routes through the force
+      // context-pruner (bypasses cooldown) then compact-and-stop — no LLM
+      // summary pass (codex semantics). The spawn boundary emits the
+      // truthful pruned/ineffective terminal phase on its own.
+      if (!manualCompactChecked) {
+        manualCompactChecked = true
+        let isManualCompact = false
+        const history = agentState.messageHistory
+        for (let i = history.length - 1; i >= 0; i--) {
+          const m = history[i]
+          if ((m.tags ?? []).indexOf('USER_PROMPT') === -1) continue
+          const c = m.content
+          let text = ''
+          if (typeof c === 'string') {
+            text = c
+          } else if (Array.isArray(c)) {
+            for (const part of c) {
+              if (
+                part &&
+                part.type === 'text' &&
+                typeof part.text === 'string'
+              ) {
+                text += part.text
+              }
+            }
+          }
+          // FID-2026-0822-001 RC1: production USER_PROMPT content is
+          // XML-framed by buildUserMessageContent/asUserMessage - the text
+          // arrives as '<user_message>/compact</user_message>', so a raw
+          // equality compare never matched and /compact silently fell
+          // through to a normal LLM step (the model was asked to summarize
+          // and the near-window request errored). Unwrap the frame first
+          // (parseUserMessage equivalent via indexOf/slice: serialized
+          // generators cannot import runtime modules, and regex backslash
+          // escapes would cook inside this template literal), keeping bare
+          // text as the fallback form.
+          const openTag = '<user_message>'
+          const closeTag = '</user_message>'
+          const openIndex = text.indexOf(openTag)
+          const closeIndex = text.indexOf(closeTag)
+          const compactCandidate =
+            openIndex !== -1 && closeIndex > openIndex
+              ? text.slice(openIndex + openTag.length, closeIndex)
+              : text
+          if (compactCandidate.trim().toLowerCase() === '/compact') {
+            isManualCompact = true
+          }
+break
+        }
+        if (isManualCompact) {
+          agentState.compactionStatus = { phase: 'compacting' }
+          // FID-2026-0825-001: one-shot flag consumed by loopAgentSteps at
+          // output assembly. This run ends via compact-and-stop with no LLM
+          // turn, so an explicitly empty last-turn output is SUCCESS — never
+          // the zero-assistant-history error ("No response from agent") and
+          // never a stale pre-compaction turn echoed as the response.
+          agentState.compactAndStop = true
+          yield {
+            toolName: 'spawn_agent_inline',
+            input: {
+              agent_type: 'context-pruner',
+              params: {
+                maxContextLength,
+                ...(params ?? {}),
+                force: true,
+                ${keepRecentTokensParam}
+                ${cacheExpiryParam}
+              },
+            },
+            includeToolCall: false,
+          }
+          // Compact-and-stop: history has been replaced and recounted by the
+          // spawn boundary — end the turn here.
+          return
+        }
+      }
       const lastPrunerCompletionAt =
         typeof agentState.lastPrunerCompletionAt === 'number'
           ? agentState.lastPrunerCompletionAt
@@ -170,11 +287,53 @@ export function createSavantHandleSteps(config: {
       // only (e.g. a resumed run where the flag was never set). The force
       // path still fires for hard-overflow safety and bypasses the cooldown.
       const autoCompactDue = agentState.autoCompactDue === true
+      const compactTrigger = computeTriggerThreshold(
+        maxContextLength,
+        autoCompactRatio,
+      )
       const forceDue =
         agentState.contextTokenCount > maxContextLength - forceCompactOffset
+      // P2-2: judge the PREVIOUS pass before arming a new one — the spawn
+      // boundary recounts history synchronously, so this count is already
+      // post-compaction.
+      if (awaitingEffectCheck) {
+        awaitingEffectCheck = false
+        if (agentState.contextTokenCount > compactTrigger) {
+          escalationStage += 1
+          if (escalationStage >= 2) {
+            holdBaselineCount = agentState.contextTokenCount
+          }
+        } else {
+          escalationStage = 0
+        }
+      }
+      if (
+        escalationStage >= 2 &&
+        agentState.contextTokenCount >= holdBaselineCount * 1.05
+      ) {
+        escalationStage = 0
+      }
+      const escalationHold =
+        escalationStage >= 2 &&
+        !forceDue &&
+        agentState.contextTokenCount < holdBaselineCount * 1.05
+      if (escalationHold) {
+        agentState.compactionStatus = {
+          phase: 'blocked',
+          percentUsed: Math.round(
+            (agentState.contextTokenCount / maxContextLength) * 100,
+          ),
+          blockReason: 'escalation-hold',
+        }
+        logDebug(
+          { escalationStage, count: agentState.contextTokenCount },
+          'savant handleSteps: escalation hold — blocked(escalation-hold)',
+        )
+      }
       const proactiveDue =
-        autoCompactDue ||
-        agentState.contextTokenCount > maxContextLength * autoCompactRatio
+        (autoCompactDue ||
+          agentState.contextTokenCount > compactTrigger) &&
+        !escalationHold
       if (proactiveDue || forceDue) {
         logDebug(
           {
@@ -209,6 +368,7 @@ export function createSavantHandleSteps(config: {
         Date.now() - lastPrunerCompletionAt > prunerCooldownMs
       ) {
         agentState.compactionStatus = { phase: 'compacting' }
+        awaitingEffectCheck = true
         yield {
           toolName: 'spawn_agent_inline',
           input: {
@@ -216,6 +376,16 @@ export function createSavantHandleSteps(config: {
             params: {
               maxContextLength,
               ...(params ?? {}),
+              // FID-2026-0822-001 RC2: ALWAYS force on the proactive path.
+              // The single threshold owner (autoCompactDue /
+              // compactTrigger) already decided compaction is due; without
+              // force, the pruner's own ~window-level admission gate
+              // (count + fudge > maxContextLength) no-oped every
+              // trigger-threshold spawn, so auto-compact only ever ran at
+              // hard overflow. Manual, idle, and hard-overflow spawns
+              // already forced. The escalation ladder still judges
+              // post-force outcomes honestly.
+              force: true,
               ${keepRecentTokensParam}
               ${cacheExpiryParam}
             },

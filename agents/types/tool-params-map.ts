@@ -35,6 +35,7 @@ export interface ToolParamsMap {
   set_messages: Core.SetMessagesParams
   set_output: Core.SetOutputParams
   skill: Core.SkillParams
+  skill_manage: Core.SkillManageParams
   spawn_agent_inline: Core.SpawnAgentInlineParams
   spawn_agents: Core.SpawnAgentsParams
   str_replace: Core.StrReplaceParams

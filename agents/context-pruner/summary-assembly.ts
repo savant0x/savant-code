@@ -25,6 +25,9 @@ import type {
 
 type SummaryAssemblyContext = {
   assistantToolBudget: number
+  /** FID-2026-0824-024 post-closure amendment: operator-configured
+   *  result-digest caps forwarded to the summarizer. */
+  digestCaps?: { headChars?: number; tailChars?: number }
   currentMessages: Message[]
   instructionsPromptMessage: Message | null
   isMidTurnPrune: boolean
@@ -51,6 +54,7 @@ export type SummaryAssemblyResult = {
 
 export function buildFullSummary({
   assistantToolBudget,
+  digestCaps,
   currentMessages,
   instructionsPromptMessage,
   isMidTurnPrune,
@@ -89,6 +93,7 @@ export function buildFullSummary({
   const { entries: summarizedEntries, liveUserPromptEntry } = summarizeMessages(
     messagesToSummarize,
     latestLiveUserPromptMessage,
+    digestCaps,
   )
   const allEntries: SummaryEntry[] = [
     ...previousSummaryEntries,

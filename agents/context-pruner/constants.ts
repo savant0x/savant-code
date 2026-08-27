@@ -95,6 +95,26 @@ export const MAX_SKILL_NAME_CHARS = 120
 export const MAX_FID_CHARS = 200
 export const MAX_PRESERVED_STATE_JSON_CHARS = 8_192
 
+// =============================================================================
+// Preservation-contract digest caps (FID-2026-0824-024)
+// =============================================================================
+
+/** Head slice preserved per digested tool result (chars). */
+export const DIGEST_HEAD_CHARS = 512
+
+/** Tail slice preserved per digested tool result (chars). */
+export const DIGEST_TAIL_CHARS = 256
+
+// =============================================================================
+// Minimal-surgery fold planner (FID-2026-0824-025)
+// =============================================================================
+
+/** Newest exchanges kept verbatim when planning minimal folds. */
+export const COMPACTION_PROTECTED_TAIL_TURNS = 4
+
+/** Token allowance for the merged summary written after folding. */
+export const COMPACTION_SUMMARY_ALLOWANCE_TOKENS = 2_000
+
 /**
  * Single object for factory-time baking: { NAME: value } pairs are emitted as
  * `const NAME = <JSON literal>` inside the generated generator source.
@@ -128,6 +148,9 @@ export const CONTEXT_PRUNER_CONSTANTS = {
   MAX_FILE_PATH_CHARS,
   MAX_SKILLS,
   MAX_SKILL_NAME_CHARS,
-  MAX_FID_CHARS,
-  MAX_PRESERVED_STATE_JSON_CHARS,
+  MAX_FID_CHARS,MAX_PRESERVED_STATE_JSON_CHARS,
+  DIGEST_HEAD_CHARS,
+  DIGEST_TAIL_CHARS,
+  COMPACTION_PROTECTED_TAIL_TURNS,
+  COMPACTION_SUMMARY_ALLOWANCE_TOKENS,
 } as const

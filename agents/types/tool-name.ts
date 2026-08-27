@@ -30,6 +30,7 @@ export type ToolName =
   | 'set_messages'
   | 'set_output'
   | 'skill'
+  | 'skill_manage'
   | 'spawn_agents'
   | 'str_replace'
   | 'spawn_agent_inline'

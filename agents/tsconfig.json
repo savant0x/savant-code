@@ -5,7 +5,8 @@
     "types": ["bun", "node"],
     "paths": {
       "@savant-code/sdk": ["../sdk/src/index.ts"],
-      "@savant-code/common/*": ["../common/src/*"]
+      "@savant-code/common/*": ["../common/src/*"],
+      "@savant-code/agent-runtime/*": ["../packages/agent-runtime/src/*"]
     }
   },
   "include": ["**/*.ts"]

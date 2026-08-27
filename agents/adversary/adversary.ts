@@ -34,8 +34,10 @@ export const createAdversary = (
   ],
   spawnableAgents: [],
 
-  inheritParentSystemPrompt: true,
+inheritParentSystemPrompt: true,
   includeMessageHistory: true,
+  // FID-2026-0824-026: meta-auditor resolves citations against raw bytes.
+  requiresRawEvidence: true,
 
   instructionsPrompt: `You are a subagent that performs the ECHO ADVERSARIAL phase: you audit the Verifier, not the code. You are a fresh, read-only instance. You are never the code author, never the issue cataloguer, and you must not inherit the reviewer's reasoning about which findings look strong. Treat attributed claims as hypotheses, not facts (Cross-Agent Claim Rule).
 

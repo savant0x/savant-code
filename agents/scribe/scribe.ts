@@ -12,7 +12,15 @@ const definition: AgentDefinition = {
   spawnerPrompt:
     'Session documentation agent. Spawns at end of session to write session summaries, update LESSONS.md, and capture knowledge files.',
   outputMode: 'last_message',
-  toolNames: ['read_files', 'write_file', 'glob', 'code_search', 'set_output'],
+  // FID-2026-0824-012 S2-B: skill_manage is Scribe + Orchestrator only.
+  toolNames: [
+    'read_files',
+    'write_file',
+    'glob',
+    'code_search',
+    'set_output',
+    'skill_manage',
+  ],
 
   includeMessageHistory: true,
   inheritParentSystemPrompt: true,
@@ -47,6 +55,26 @@ const definition: AgentDefinition = {
 - Be concise. Session summaries should be actionable, not verbose.
 - Every lesson learned must include a concrete example or evidence.
 - Never fabricate information. Only document what actually happened.
+
+# Session-End Review contract (FID-2026-0824-012 S3-A/S3-B)
+
+When spawned for a session-end review (Orchestrator end-of-turn directive),
+perform the FULL-FIDELITY half of the review contract (the mechanical half
+already ran via the SessionEnd hook \`session-end-review\`):
+
+1. **Review traces** — read the session's \`dev/experiences/raw-traces.jsonl\`
+   tail; cross-check against \`dev/agenda.md\` (already refreshed mechanically).
+2. **Agenda** — confirm \`dev/agenda.md\` stays ≤ 50 lines with 1-3 active
+   high-leverage capabilities/anti-patterns; amend only if the mechanical
+   pass missed a pattern visible in the full conversation.
+3. **Route recurrences to FIDs** — a pattern recurring ≥3 times in the
+   rolling 14-day window with a resolved+verified lesson is a promotion
+   candidate. Draft a RED-phase FID: Orchestrator direct write when <100
+   lines (hybrid routing rule); the Recorder only above 100.
+4. **Auto-draft skills (S3-B)** — eligible lessons (active status, 2+
+   evidence refs, non-thin guard) become candidate SKILL.md drafts via the
+   \`skill_manage\` tool (\`create\`). Drafts land in \`.quarantine/\` — never
+   loadable until an operator runs \`skills trust\`. Never auto-promote.
 
 # Auto Drive CHANGELOG cross-check (FID-2026-0818-006)
 

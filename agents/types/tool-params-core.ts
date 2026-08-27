@@ -31,6 +31,30 @@ export interface SetOutputParams {}
 
 export interface SkillParams {
   name: string
+  /** FID-2026-0824-012 S0-D: optional references/ sub-path (Level-2 load). */
+  path?: string
+}
+
+export interface SkillManageParams {
+  action:
+    | 'create'
+    | 'patch'
+    | 'edit'
+    | 'delete'
+    | 'write_file'
+    | 'remove_file'
+    | 'rollback'
+  name: string
+  description?: string
+  body?: string
+  oldString?: string
+  newString?: string
+  relPath?: string
+  content?: string
+  seq?: number
+  bump?: 'patch' | 'minor' | 'major'
+  reason: string
+  provenanceRef?: string
 }
 
 export interface SpawnAgentInlineParams {

@@ -5,8 +5,15 @@
  * references are baked/embedded into the same generated scope.
  */
 import {
+  planFoldsToReachTarget,
+  segmentExchanges,
+  tokensForRange,
+} from './budget'
+import {
   ASSISTANT_TOOL_BUDGET,
   CHARS_PER_TOKEN,
+  COMPACTION_PROTECTED_TAIL_TURNS,
+  COMPACTION_SUMMARY_ALLOWANCE_TOKENS,
   FIXED_TAIL_BUDGET_TOKENS,
   TOKEN_COUNT_FUDGE_FACTOR,
   USER_BUDGET,
@@ -147,6 +154,22 @@ export function* runContextPrunerMain(
   // P2a: fixed verbatim recent-tail token budget (DeepSeek 16 384 default).
   const keepRecentTokens: number =
     asNumber(p.keepRecentTokens) ?? FIXED_TAIL_BUDGET_TOKENS
+  // FID-2026-0824-024 post-closure amendment: operator-configured digest
+  // caps injected via spawn params override the baked defaults. Forwarded to
+  // the full-sweep summarizer; the fold path keeps baked defaults.
+  const digestHeadCharsParam = asNumber(p.digestHeadChars) ?? undefined
+  const digestTailCharsParam = asNumber(p.digestTailChars) ?? undefined
+  const digestCaps =
+    digestHeadCharsParam !== undefined || digestTailCharsParam !== undefined
+      ? {
+          ...(digestHeadCharsParam !== undefined
+            ? { headChars: digestHeadCharsParam }
+            : {}),
+          ...(digestTailCharsParam !== undefined
+            ? { tailChars: digestTailCharsParam }
+            : {}),
+        }
+      : undefined
 
   // Extract previous summary content from all messages
   let previousSummaryContent = ''
@@ -182,6 +205,66 @@ export function* runContextPrunerMain(
           !shouldExcludeMessage(message) && !isConversationSummary(message),
       )
 
+  // FID-2026-0824-025: minimal surgery — fold oldest exchanges until the
+  // projected total reaches the window target (hermes accumulate-until-
+  // target). Protected head keeps early framing; last N exchanges stay
+  // verbatim. Falls back to the full sweep below when folds cannot reach
+  // the target (degradation, not failure).
+  let surgeryMessages = currentMessages
+  if (!forceCompact && !foldOldestExchange) {
+    const segments = segmentExchanges(currentMessages)
+    const estimates = segments.map((segment) =>
+      tokensForRange(currentMessages, segment.start, segment.end),
+    )
+    const totalEstimate = estimates.reduce((sum, count) => sum + count, 0)
+    const plan = planFoldsToReachTarget({
+      exchangeTokenEstimates: estimates,
+      totalTokens: Math.max(totalEstimate, agentState.contextTokenCount),
+      targetTokens: maxContextLength,
+      summaryAllowanceTokens: COMPACTION_SUMMARY_ALLOWANCE_TOKENS,
+      protectedHeadSegments: 1,
+      protectedTailSegments: COMPACTION_PROTECTED_TAIL_TURNS,
+    })
+    let foldsDone = 0
+    for (let foldIndex = 0; foldIndex < plan.folds; foldIndex++) {
+      const foldedCall = runFoldOldestExchange({
+        agentState,
+        assistantToolBudget,
+        cacheExpiryMs: CACHE_EXPIRY_MS,
+        currentMessages: surgeryMessages,
+        forceCompact,
+        instructionsPromptMessage,
+        isMidTurnPrune,
+        keepRecentTokens,
+        latestLiveUserPromptMessage,
+        logger,
+        maxContextLength,
+        previousSummaryContent,
+        previousSummaryEntries,
+        userBudget,
+      })
+      const nextMessages = foldedCall.input.messages
+      if (nextMessages.length >= surgeryMessages.length) break
+      surgeryMessages = nextMessages
+      foldsDone += 1
+    }
+    if (foldsDone > 0) {
+      const recounted = tokensForRange(
+        surgeryMessages,
+        0,
+        surgeryMessages.length,
+      )
+      currentMessages = surgeryMessages
+      if (recounted <= maxContextLength) {
+        yield {
+          toolName: 'set_messages',
+          input: { messages: currentMessages },
+          includeToolCall: false,
+        }
+        return
+      }
+    }
+  }
   if (foldOldestExchange) {
     yield runFoldOldestExchange({
       agentState,
@@ -215,6 +298,7 @@ export function* runContextPrunerMain(
     taggedSummaryText,
   } = buildFullSummary({
     assistantToolBudget,
+    digestCaps,
     currentMessages,
     instructionsPromptMessage,
     isMidTurnPrune,
