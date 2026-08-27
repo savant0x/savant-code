@@ -56,6 +56,13 @@ const theme: ChatTheme = {
   diffContext: '#fff',
   diffHunkHeader: '#0ff',
   diffMeta: '#777',
+  // Diff-bar fills + on-primary (FID-2026-0822-007)
+  diffBarAdded: '#3A5A3A',
+  diffBarRemoved: '#5A3A3A',
+  onPrimary: '#000000',
+  // Scrollbar tokens (FID-2026-0823-002)
+  scrollbarThumb: '#18faf9',
+  scrollbarTrack: '#050508',
   // Syntax tokens (FID-033a)
   syntaxComment: '#777',
   syntaxKeyword: '#c084fc',

@@ -58,6 +58,10 @@ export type CreateRunConfigParams = {
     forceCompactOffset?: number
     microCompactMaxKeepRecent?: number
     microCompactFloorTokens?: number
+    /** FID-2026-0824-024 post-closure amendment: digest caps threaded to the
+     *  context-pruner via AgentState.digestCaps. */
+    digestHeadChars?: number
+    digestTailChars?: number
   }
   /** FID-2026-0803-004: persistent per-turn file checkpoints (rewind). The
    *  CLI opens/closes the turn on the checkpoint store; the runtime captures

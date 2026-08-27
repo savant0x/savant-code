@@ -8,6 +8,7 @@ export interface FidData {
   status: string
   severity: string
   summary: string
+  parentId?: string
   /** Absolute file path (populated by the loader; FID-2026-0804-009 harness uses it). */
   path?: string
 }

@@ -8,6 +8,7 @@ import {
   type ProviderSetupName,
 } from './provider-key-store'
 import {
+  getActiveProvider,
   saveActiveProvider,
   saveSavantCodeModelProviderPreference,
 } from './settings'
@@ -71,8 +72,12 @@ export function getMissingProviderSetup(): MissingProviderSetup | undefined {
 
   // Readiness follows the active provider (Phase 4): shell DIRECT_PROVIDER
   // first, else the persisted selection (activeProvider -> picker preference ->
-  // default). Ollama needs no key, so it never produces guidance.
-  const provider = configuredProvider || getActiveProviderSetup()
+  // default). getActiveProvider() reads the persisted settings — the module
+  // activeProvider var is interactive-session state for the /provider flow
+  // (inputMode 'providerSetup'), not the persisted selection, so it must not
+  // be consulted here (FID-2026-0822-010 follow-up test failure). Ollama needs
+  // no key, so it never produces guidance.
+  const provider = configuredProvider || getActiveProvider()
   if (provider.toLowerCase() === 'ollama') return undefined
 
   const info = getProviderSetupInfo(provider)

@@ -1,5 +1,6 @@
 import { TextAttributes } from '@opentui/core'
 
+import { createChatScrollbarOptions } from '../../chat/styles'
 import { supportsTruecolor } from '../../utils/theme-system'
 import { InputCursor } from '../input-cursor'
 
@@ -71,7 +72,7 @@ export function MultilineView(props: MultilineViewProps) {
       scrollbarOptions={{ visible: false }}
       verticalScrollbarOptions={{
         visible: showScrollbar && layoutMetrics.isScrollable,
-        trackOptions: { width: 1 },
+        ...createChatScrollbarOptions(theme),
       }}
       onPaste={onScrollboxPaste}
       onMouseDown={onMouseDown}

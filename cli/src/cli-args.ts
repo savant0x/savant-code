@@ -35,6 +35,8 @@ export type ParsedArgs = {
   approve: boolean
   /** FID-2026-0818-008: emit the plan and exit 0 without executing. */
   planOnly: boolean
+  /** FID-2026-0820-008: `server` subcommand ephemeral port (--port=<n>). */
+  port?: number
 }
 
 /**
@@ -145,6 +147,10 @@ export function parseArgs({
         'Generate the Auto Drive plan and exit without executing (for review)',
       )
       .option(
+        '--port <number>',
+        'Server subcommand: bind this port (default: ephemeral)',
+      )
+      .option(
         '--print',
         'Run the prompt headlessly and print the final answer to stdout (non-zero exit on failure)',
       )
@@ -162,7 +168,7 @@ export function parseArgs({
       )
       .addHelpText(
         'after',
-        '\nCommands:\n  login                          Log in to your account\n  publish                        Publish agents to the registry\n  release <op>                    Run the public release flow (preview | diagnose | go | resume | status)',
+        '\nCommands:\n  login                          Log in to your account\n  publish                        Publish agents to the registry\n  release <op>                    Run the public release flow (preview | diagnose | go | resume | status)\n  server                         Start the desktop session gateway (WebSocket JSON-RPC)',
       )
       .helpOption('-h, --help', 'Show this help message')
       .argument('[prompt...]', 'Initial prompt to send to the agent')
@@ -241,5 +247,9 @@ export function parseArgs({
       typeof options.planFile === 'string' ? options.planFile : undefined,
     approve: options.approve === true,
     planOnly: options.planOnly === true,
+    port:
+      typeof options.port === 'string' && options.port.trim().length > 0
+        ? Number(options.port)
+        : undefined,
   }
 }

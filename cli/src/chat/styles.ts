@@ -1,3 +1,5 @@
+import type { ChatTheme } from '../types/theme-system'
+
 // FID-007 S2: sidebar tool list — hoisted (stable identity so RightSidebar's
 // React.memo can skip) and cross-checked against
 // common/src/tools/constants.ts. The previous inline list named tools that do
@@ -37,15 +39,19 @@ export const createSidebarSurfaceStyle = (backgroundColor: string) => ({
   backgroundColor,
 })
 
-/** Theme-driven OpenTUI scrollbar colors for the existing chat transcript. */
-export const createChatScrollbarOptions = (
-  trackColor: string,
-  thumbColor: string,
-) => ({
+/**
+ * Single sanctioned scrollbar factory app-wide (FID-2026-0823-002): every
+ * vertical scrollbox must spread this into verticalScrollbarOptions so no
+ * surface ever falls back to OpenTUI's vendored gray defaults (#9a9ea3
+ * thumb / #252527 track). OpenTUI SliderRenderable semantics verified against
+ * the vendored source: foregroundColor renders the THUMB, backgroundColor the
+ * track.
+ */
+export const createChatScrollbarOptions = (theme: ChatTheme) => ({
   trackOptions: {
     width: 1,
-    backgroundColor: trackColor,
-    foregroundColor: thumbColor,
+    backgroundColor: theme.scrollbarTrack,
+    foregroundColor: theme.scrollbarThumb,
   },
 })
 

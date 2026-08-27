@@ -287,7 +287,8 @@ export const ProjectPickerScreen: React.FC<ProjectPickerScreenProps> = ({
             }}
             border={['top', 'bottom', 'left', 'right']}
           >
-            <text style={{ fg: '#1a1a1a' }}>Open</text>
+            {/* FID-2026-0822-007: text on the primary fill → theme.onPrimary */}
+            <text style={{ fg: theme.onPrimary }}>Open</text>
           </Button>
         </box>
       </box>

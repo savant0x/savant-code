@@ -6,6 +6,7 @@ import { normalizeReleaseCommand } from './commands/release/release-runner'
 import { runHeadlessPrint } from './headless-run'
 import { runPlainLogin } from './login/plain-login'
 import { getProjectRoot } from './project-files'
+import { runServerCommand } from './server-command'
 import { runHeadlessAutoDrive } from './utils/auto-drive-headless'
 import { initializeAgentRegistry } from './utils/local-agent-registry'
 import { readStdin } from './utils/read-stdin'
@@ -40,6 +41,18 @@ export async function dispatchCommandsAndHeadless(
   const hasAgentOverride = Boolean(agent?.trim())
   const isLoginCommand = command === 'login'
   const isReleaseCommand = command === 'release'
+  const isServerCommand = command === 'server'
+
+  // FID-2026-0820-008: the `server` subcommand starts the desktop session
+  // gateway — a LONG-RUNNING third headless mode (not one-shot like --print/
+  // --auto). It must be handled before the generic non-TTY routing below so a
+  // sidecar spawned with piped stdin is not mistaken for a headless prompt.
+  // Returns true after starting; the process stays alive until the stdin
+  // watchdog (parent death) or a stop signal terminates it.
+  if (isServerCommand) {
+    await runServerCommand({ port: args.port })
+    return true
+  }
 
   // Handle explicit command invocations before generic non-TTY routing.
   // Login is a command, not a prompt: in smoke tests, CI, and scripted shells

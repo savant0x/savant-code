@@ -67,6 +67,8 @@ export function saveChatStateToDb(
           agentId,
           runState.sessionState,
           selectedModel,
+          'project',
+          chatId,
         )
       }
     }

@@ -236,6 +236,41 @@ export const CHAT_COMMANDS = [
     },
   }),
   defineCommand({
+    name: 'compact',
+    handler: async (params) => {
+      const trimmed = params.inputValue.trim()
+
+      // FID-2026-0821-001 P1-4 / FID-2026-0822-001 RC5: dispatch the literal
+      // "/compact" prompt. The serialized savant interceptor force-spawns
+      // the context-pruner, then compact-and-stops — the router must SEND
+      // the prompt. Without this registry entry the typed input died at
+      // route-user-prompt.ts "Command not found" and never reached the model.
+      params.saveToHistory(trimmed)
+      clearInput(params)
+
+      // Check streaming/queue state
+      if (
+        params.isStreaming ||
+        params.streamMessageIdRef.current ||
+        params.isChainInProgressRef.current
+      ) {
+        const pendingAttachments = capturePendingAttachments()
+        params.addToQueue(trimmed, pendingAttachments)
+        params.setInputFocused(true)
+        params.inputRef.current?.focus()
+        return
+      }
+
+      params.sendMessage({
+        content: trimmed,
+        agentMode: params.agentMode,
+      })
+      setTimeout(() => {
+        params.scrollToLatest()
+      }, 0)
+    },
+  }),
+  defineCommand({
     name: 'usage',
     aliases: ['credits'],
     handler: async (params) => {

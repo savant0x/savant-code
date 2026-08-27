@@ -8,7 +8,7 @@ import {
   computeTerminalDisplayOutput,
   getTerminalStatus,
 } from './terminal-status-utils'
-import { TrafficLights } from './traffic-lights'
+import { TrafficLightPanel } from './traffic-light-panel'
 import { useTerminalDimensions } from '../hooks/use-terminal-dimensions'
 import { useTheme } from '../hooks/use-theme'
 import { formatTimeout } from '../utils/format-timeout'
@@ -116,30 +116,17 @@ export const TerminalCommandDisplay = ({
     </text>
   )
 
-  // Title bar — traffic lights, right-aligned, glowing.
-  const titleBar = (
-    <box
-      style={{
-        width: '100%',
-        paddingLeft: 1,
-        paddingRight: 1,
-        flexDirection: 'row',
-        justifyContent: 'flex-end',
-      }}
-    >
-      <TrafficLights />
-    </box>
-  )
-
   // Copy footer — right-aligned, hidden while the command is still running.
+  // FID-2026-0822-006: the outer chrome + title bar pair is owned by the
+  // shared TrafficLightPanel primitive (Law 13); rows below keep only their
+  // own vertical paddings because the panel content box provides the 1-col
+  // horizontal gutter both branches used to hand-roll.
   const copyFooter = !isRunning ? (
     <box
       style={{
         width: '100%',
         flexDirection: 'row',
         justifyContent: 'flex-end',
-        paddingLeft: 1,
-        paddingRight: 1,
         paddingTop: 0,
         paddingBottom: 0,
       }}
@@ -151,40 +138,11 @@ export const TerminalCommandDisplay = ({
   // No output case
   if (!output) {
     return (
-      <box
-        style={{
-          width: '100%',
-          flexDirection: 'column',
-          backgroundColor: theme.surface,
-          border: true,
-          borderStyle: 'rounded',
-          borderColor: theme.border,
-          paddingLeft: 0,
-          paddingRight: 0,
-          paddingTop: 0,
-          paddingBottom: 0,
-        }}
-      >
-        {titleBar}
+      <TrafficLightPanel>
         {/* Command row. */}
-        <box
-          style={{
-            width: '100%',
-            paddingLeft: 1,
-            paddingRight: 1,
-          }}
-        >
-          {commandHeader}
-        </box>
+        <box style={{ width: '100%' }}>{commandHeader}</box>
         {/* Status / running indicator. */}
-        <box
-          style={{
-            width: '100%',
-            paddingLeft: 1,
-            paddingRight: 1,
-            paddingBottom: 0,
-          }}
-        >
+        <box style={{ width: '100%', paddingBottom: 0 }}>
           {statusBadge && (
             <text fg={statusBadge.color} attributes={TextAttributes.BOLD}>
               {statusBadge.char} {statusBadge.word}
@@ -193,7 +151,7 @@ export const TerminalCommandDisplay = ({
           {isRunning && !statusBadge && <text fg={theme.muted}>...</text>}
         </box>
         {copyFooter}
-      </box>
+      </TrafficLightPanel>
     )
   }
 
@@ -208,39 +166,11 @@ export const TerminalCommandDisplay = ({
     })
 
   return (
-    <box
-      style={{
-        width: '100%',
-        flexDirection: 'column',
-        backgroundColor: theme.surface,
-        border: true,
-        borderStyle: 'rounded',
-        borderColor: theme.border,
-        paddingLeft: 0,
-        paddingRight: 0,
-        paddingTop: 0,
-        paddingBottom: 0,
-      }}
-    >
-      {titleBar}
+    <TrafficLightPanel>
       {/* Command row. */}
-      <box
-        style={{
-          width: '100%',
-          paddingLeft: 1,
-          paddingRight: 1,
-        }}
-      >
-        {commandHeader}
-      </box>
+      <box style={{ width: '100%' }}>{commandHeader}</box>
       {/* Meta row — status badge + cwd + timeout pills. */}
-      <box
-        style={{
-          width: '100%',
-          paddingLeft: 1,
-          paddingRight: 1,
-        }}
-      >
+      <box style={{ width: '100%' }}>
         <text style={{ wrapMode: 'word' }}>
           {statusBadge && (
             <>
@@ -267,8 +197,6 @@ export const TerminalCommandDisplay = ({
         style={{
           flexDirection: 'column',
           width: '100%',
-          paddingLeft: 1,
-          paddingRight: 1,
           paddingBottom: 0,
         }}
       >
@@ -294,6 +222,6 @@ export const TerminalCommandDisplay = ({
         )}
       </box>
       {copyFooter}
-    </box>
+    </TrafficLightPanel>
   )
 }

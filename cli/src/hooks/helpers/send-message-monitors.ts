@@ -89,6 +89,12 @@ export const startRunMonitors = (params: StartRunMonitorsParams): void => {
     if (compactionStatus) {
       useChatStore.getState().setCompactionStatus(compactionStatus)
     }
+    // FID-2026-0824-023 stream-routing: surface WHAT was compacted.
+    const lastCompactionReport =
+      snap?.sessionState?.mainAgentState?.lastCompactionReport
+    if (lastCompactionReport) {
+      useChatStore.getState().setLastCompactionReport(lastCompactionReport)
+    }
   }, 2_000)
   // Bump the chunk-seen watermark (FID-2026-0718-010 D5).
   markChunkSeen('send-message-start')

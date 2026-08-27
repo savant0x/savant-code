@@ -8,6 +8,7 @@ import {
   DepTree,
 } from './agent-checklist-dep-tree'
 import { Button } from './button'
+import { createChatScrollbarOptions } from '../chat/styles'
 import { useTheme } from '../hooks/use-theme'
 
 import type { LocalAgentInfo } from '../utils/local-agent-registry'
@@ -130,7 +131,7 @@ export const AgentChecklist: React.FC<AgentChecklistProps> = ({
         scrollbarOptions={{ visible: false }}
         verticalScrollbarOptions={{
           visible: needsScroll,
-          trackOptions: { width: 1 },
+          ...createChatScrollbarOptions(theme),
         }}
         style={{
           height: maxHeight,

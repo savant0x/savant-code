@@ -1,6 +1,8 @@
 import { TextAttributes } from '@opentui/core'
 import React from 'react'
 
+import { useTheme } from '../../../hooks/use-theme'
+
 export interface HeaderProps {
   title: string
   subtitle?: string
@@ -8,6 +10,7 @@ export interface HeaderProps {
 }
 
 export function Header({ title, subtitle, actions }: HeaderProps) {
+  const theme = useTheme()
   return (
     <box flexDirection="row" justifyContent="space-between" paddingBottom={1}>
       <box flexDirection="row" gap={1}>
@@ -17,7 +20,7 @@ export function Header({ title, subtitle, actions }: HeaderProps) {
       {actions && actions.length > 0 && (
         <box flexDirection="row" gap={1}>
           {actions.map((action, i) => (
-            <text key={i} fg="#18faf9">
+            <text key={i} fg={theme.primary}>
               [{action.label}]
             </text>
           ))}

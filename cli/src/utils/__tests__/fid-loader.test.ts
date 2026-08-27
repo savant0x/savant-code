@@ -114,6 +114,23 @@ describe('loadFidInventory — legacy format (**Field:** value)', () => {
   })
 })
 
+describe('loadFidInventory — parent metadata', () => {
+  test('preserves an optional Parent field for dependency projections', () => {
+    const dir = setupFidsDir()
+    writeFileSync(
+      join(dir, 'FID-2026-0804-009-child.md'),
+      LEGACY_FORMAT_FID.replace(
+        '**ID:** FID-2026-0804-001',
+        '**ID:** FID-2026-0804-009',
+      ).replace(
+        '**Author:** Savant Orchestrator',
+        '**Author:** Savant Orchestrator\n**Parent:** FID-2026-0804-008',
+      ),
+    )
+    expect(loadFids(dir)[0]?.parentId).toBe('FID-2026-0804-008')
+  })
+})
+
 describe('loadFidInventory — active + archived split', () => {
   test('counts archived FIDs separately from active', () => {
     const dir = setupFidsDir()

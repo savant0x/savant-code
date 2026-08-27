@@ -185,7 +185,11 @@ export const AdCard: React.FC<{
       >
         <text
           style={{
-            fg: theme.name === 'light' ? '#ffffff' : theme.background,
+            // FID-2026-0822-007: text on the muted/primary fill. The prior
+            // ternary was exactly theme.background in BOTH themes (the light
+            // background is the pure-white canvas), so it simplifies to the
+            // token directly.
+            fg: theme.background,
             bg: isHovered ? theme.primary : theme.muted,
             attributes: TextAttributes.BOLD,
           }}

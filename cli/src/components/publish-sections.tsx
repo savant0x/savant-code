@@ -1,5 +1,6 @@
 import { TextAttributes } from '@opentui/core'
 
+import { createChatScrollbarOptions } from '../chat/styles'
 import { BORDER_CHARS } from '../utils/ui-constants'
 
 import type { useTheme } from '../hooks/use-theme'
@@ -90,7 +91,7 @@ export const AgentSection: React.FC<AgentSectionProps> = ({
             scrollbarOptions={{ visible: false }}
             verticalScrollbarOptions={{
               visible: needsScroll,
-              trackOptions: { width: 1 },
+              ...createChatScrollbarOptions(theme),
             }}
             style={{
               height: Math.min(agents.length, maxHeight),

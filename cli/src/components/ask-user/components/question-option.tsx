@@ -36,7 +36,10 @@ export const QuestionOption: React.FC<QuestionOptionProps> = memo(
     const description =
       typeof option === 'object' ? option.description : undefined
 
-    const selectedFg = theme.name === 'dark' ? '#ffffff' : '#000000'
+    // FID-2026-0822-007: selected emphasis text is the focused-input token
+    // (exact white/black match); focused text sits on the primary fill and
+    // uses theme.onPrimary.
+    const selectedFg = theme.inputFocusedFg
     const symbol = isMultiSelect
       ? isSelected
         ? SYMBOLS.CHECKBOX_CHECKED
@@ -44,7 +47,11 @@ export const QuestionOption: React.FC<QuestionOptionProps> = memo(
       : isSelected
         ? SYMBOLS.SELECTED
         : SYMBOLS.UNSELECTED
-    const fg = isFocused ? '#000000' : isSelected ? selectedFg : theme.muted
+    const fg = isFocused
+      ? theme.onPrimary
+      : isSelected
+        ? selectedFg
+        : theme.muted
     const attributes = isFocused || isSelected ? TextAttributes.BOLD : undefined
 
     return (
@@ -67,7 +74,7 @@ export const QuestionOption: React.FC<QuestionOptionProps> = memo(
         {isFocused && description && (
           <text
             style={{
-              fg: '#000000',
+              fg: theme.onPrimary,
               marginLeft: 2,
             }}
           >

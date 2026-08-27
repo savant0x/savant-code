@@ -43,12 +43,16 @@ const DEFAULT_FIDS_DIR = join('dev', 'fids')
  * Returns the trimmed value (backticks stripped), or `undefined`.
  */
 function extractField(content: string, field: string): string | undefined {
-  const match = content.match(
+  const legacy = content.match(
+    new RegExp(`^\\s*\\*\\*${field}:\\*\\*[ \\t]+([^\\r\\n|]+)`, 'im'),
+  )
+  const table = content.match(
     new RegExp(
-      `\\*\\*${field}:?\\*\\*[ \\t]*:?[ \\t]*\\|?[ \\t]*([^\\r\\n|]+)`,
+      `\\|[ \\t]*\\*\\*${field}\\*\\*[ \\t]*\\|[ \\t]*([^\\r\\n|]+)`,
+      'im',
     ),
   )
-  const raw = match?.[1]
+  const raw = legacy?.[1] ?? table?.[1]
   if (!raw) return undefined
   const value = raw.replace(/`/g, '').trim()
   return value && value.length > 0 ? value : undefined
@@ -102,10 +106,18 @@ function parseFidFile(filePath: string): FidData | undefined {
     const status = extractField(content, 'Status') ?? 'unknown'
     const severity = extractField(content, 'Severity') ?? 'medium'
     const summary = extractSummary(content) ?? id ?? 'Untitled FID'
+    const parentId = extractField(content, 'Parent')
 
     if (!id) return undefined
 
-    return { id, status, severity, summary, path: filePath }
+    return {
+      id,
+      status,
+      severity,
+      summary,
+      ...(parentId !== undefined ? { parentId } : {}),
+      path: filePath,
+    }
   } catch {
     // Law 14: per-file error isolation — one unreadable file doesn't block others
     return undefined

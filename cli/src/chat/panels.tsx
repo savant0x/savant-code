@@ -108,7 +108,7 @@ export function ChatLayout(props: ChatLayoutProps) {
           scrollbarOptions={{ visible: false }}
           verticalScrollbarOptions={{
             visible: !isStreaming && !isWaitingForResponse && hasOverflow,
-            ...createChatScrollbarOptions(theme.background, theme.primary),
+            ...createChatScrollbarOptions(theme),
           }}
           {...appliedScrollboxProps}
           style={SCROLLBOX_STYLE}

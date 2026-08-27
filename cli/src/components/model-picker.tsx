@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { buildGroupedItems, type ListItem } from './model-picker-grouping'
 import { ModelPickerHeaderRow, ModelPickerModelRow } from './model-picker-rows'
 import { getPickerViewport, normalizeSelectableIndex } from './picker-viewport'
+import { createChatScrollbarOptions } from '../chat/styles'
 import { useTerminalDimensions } from '../hooks/use-terminal-dimensions'
 import { useTheme } from '../hooks/use-theme'
 
@@ -204,7 +205,7 @@ export const ModelPicker: React.FC<ModelPickerProps> = ({
         scrollbarOptions={{ visible: false }}
         verticalScrollbarOptions={{
           visible: viewport.needsScroll,
-          trackOptions: { width: 1 },
+          ...createChatScrollbarOptions(theme),
         }}
         style={{
           height: viewport.visibleRows + 1,

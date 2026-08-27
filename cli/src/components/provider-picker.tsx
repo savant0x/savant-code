@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef } from 'react'
 
 import { Button } from './button'
 import { getPickerViewport } from './picker-viewport'
+import { createChatScrollbarOptions } from '../chat/styles'
 import { useTheme } from '../hooks/use-theme'
 
 import type { ProviderSetupName } from '../utils/provider-setup'
@@ -127,7 +128,7 @@ export const ProviderPicker: React.FC<ProviderPickerProps> = ({
         scrollbarOptions={{ visible: false }}
         verticalScrollbarOptions={{
           visible: viewport.needsScroll,
-          trackOptions: { width: 1 },
+          ...createChatScrollbarOptions(theme),
         }}
         style={{
           height: viewport.visibleRows,

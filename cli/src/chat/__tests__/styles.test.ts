@@ -3,6 +3,7 @@ import { resolve } from 'node:path'
 
 import { describe, expect, test } from 'bun:test'
 
+import { chatThemes } from '../../utils/theme-system/palette'
 import {
   createChatScrollbarOptions,
   createChatSurfaceStyle,
@@ -26,12 +27,19 @@ describe('chat surface styles', () => {
     })
   })
 
-  test('uses the Savant palette for the existing chat scrollbar', () => {
-    expect(createChatScrollbarOptions('#050508', '#18faf9')).toEqual({
+  test('uses the Savant scrollbar tokens for both themes (FID-2026-0823-002)', () => {
+    expect(createChatScrollbarOptions(chatThemes.dark)).toEqual({
       trackOptions: {
         width: 1,
         backgroundColor: '#050508',
         foregroundColor: '#18faf9',
+      },
+    })
+    expect(createChatScrollbarOptions(chatThemes.light)).toEqual({
+      trackOptions: {
+        width: 1,
+        backgroundColor: '#ffffff',
+        foregroundColor: '#0891b2',
       },
     })
   })
@@ -43,8 +51,31 @@ describe('chat surface styles', () => {
     )
 
     expect(panelsSource).toMatch(
-      /verticalScrollbarOptions=\{\{[\s\S]*\.\.\.createChatScrollbarOptions\(theme\.background, theme\.primary\),[\s\S]*\}\}/,
+      /verticalScrollbarOptions=\{\{[\s\S]*\.\.\.createChatScrollbarOptions\(theme\),[\s\S]*\}\}/,
     )
+  })
+
+  test('every vertical scrollbox consumer uses the themed factory (no vendor-gray fallback)', () => {
+    const consumers = [
+      '../panels.tsx',
+      '../../components/multiline-input/view.tsx',
+      '../../components/model-picker.tsx',
+      '../../components/provider-picker.tsx',
+      '../../components/savant-free-model-selector.tsx',
+      '../../components/selectable-list.tsx',
+      '../../components/publish-sections.tsx',
+      '../../components/agent-checklist.tsx',
+    ]
+
+    const unstyled = consumers.filter((rel) => {
+      const source = readFileSync(resolve(import.meta.dir, rel), 'utf8')
+      return (
+        !source.includes('...createChatScrollbarOptions(theme)') ||
+        /trackOptions:\s*\{\s*width:\s*1\s*\}/.test(source)
+      )
+    })
+
+    expect(unstyled).toEqual([])
   })
 
   test('keeps the pinned header non-focusable in source', () => {

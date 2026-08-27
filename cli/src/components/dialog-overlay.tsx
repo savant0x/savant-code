@@ -1,15 +1,17 @@
 import { useCallback, useEffect, useRef } from 'react'
 
 import { useAnimationTimeline } from '../hooks/use-animation-timeline'
+import { DIALOG_BACKDROP_COLOR } from '../utils/ui-constants'
 
 import type { BoxRenderable } from '@opentui/core'
 import type { ReactNode } from 'react'
 
 /**
  * Dimmed-backdrop RGBA token (report §14.2 verified Porter-Duff blending:
- * the 80-suffix encodes ~50% alpha over the chat surface).
+ * the 80-suffix encodes ~50% alpha over the chat surface). FID-2026-0822-007:
+ * promoted to the documented constant in utils/ui-constants.ts.
  */
-const BACKDROP_COLOR = '#00000080'
+const BACKDROP_COLOR = DIALOG_BACKDROP_COLOR
 const ENTRY_DURATION = 180
 const EXIT_DURATION = 140
 /** Entry slide offset in rows — the dialog rises from slightly below center. */

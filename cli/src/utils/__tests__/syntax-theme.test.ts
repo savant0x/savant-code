@@ -45,6 +45,12 @@ const makeTheme = (overrides: Partial<ChatTheme> = {}): ChatTheme => ({
   diffContext: '#e4e4e8',
   diffHunkHeader: '#18faf9',
   diffMeta: '#8f8f99',
+  diffBarAdded: '#3A5A3A',
+  diffBarRemoved: '#5A3A3A',
+  onPrimary: '#000000',
+  // Scrollbar tokens (FID-2026-0823-002)
+  scrollbarThumb: '#18faf9',
+  scrollbarTrack: '#050508',
   syntaxComment: '#8f8f99',
   syntaxKeyword: '#c084fc',
   syntaxFunction: '#60a5fa',

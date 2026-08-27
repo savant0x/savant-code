@@ -46,7 +46,7 @@ export function CostTracker({ cost, trend, model, budget }: CostTrackerProps) {
       {trend && trend.length > 1 && (
         <box flexDirection="row" gap={1}>
           <text fg={theme.muted}>{'trend'.padEnd(10)}</text>
-          <Sparkline data={trend} color="#18faf9" />
+          <Sparkline data={trend} />
         </box>
       )}
     </box>

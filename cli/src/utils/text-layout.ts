@@ -57,14 +57,44 @@ function measureLines(text: string, cols: number): number {
   return lines
 }
 
+export interface GetLastNVisualLinesOptions {
+  /**
+   * FID-2026-0822-010: when an oversize token is char-split and a row ends
+   * mid-word, trim that row back to the last word boundary and append an
+   * ellipsis marker ('…') so no word is ever clipped flush against a panel
+   * border without a visible truncation indicator. Defaults to false — the
+   * terminal-status gutter slice path relies on exact-width hard slices.
+   */
+  ellipsizeMidWordCuts?: boolean
+}
+
 export function getLastNVisualLines(
   text: string,
   cols: number,
   n: number,
+  options: GetLastNVisualLinesOptions = {},
 ): { lines: string[]; hasMore: boolean } {
+  const { ellipsizeMidWordCuts = false } = options
   if (n <= 0 || cols <= 0) return { lines: [], hasMore: false }
   const lines: string[] = []
   if (!text) return { lines, hasMore: false }
+
+  // Trim a char-split row back to the last word boundary and mark the cut —
+  // but only when the row actually ends mid-word. A char-split row ends on a
+  // word character (the oversize token continues); a clean word-boundary
+  // wrap ends on whitespace or punctuation and must stay untouched.
+  const ellipsizeMidWordRow = (line: string): string => {
+    const trimmed = line.trimEnd()
+    if (trimmed.length === 0) return trimmed
+    const lastChar = Array.from(trimmed).at(-1)!
+    if (!/[\p{L}\p{N}]/u.test(lastChar)) return trimmed
+    const lastWhitespace = trimmed.search(/\s+\S*$/)
+    if (lastWhitespace === -1) {
+      // Single unbroken fragment — keep a marker on the cut.
+      return trimmed.length > 1 ? `${trimmed.slice(0, -1)}…` : '…'
+    }
+    return `${trimmed.slice(0, lastWhitespace).trimEnd()}…`
+  }
 
   const tokens = text.split(/(\s+)/)
   let current = ''
@@ -83,7 +113,12 @@ export function getLastNVisualLines(
     if (segWidth > cols) {
       for (const ch of Array.from(segment)) {
         const w = stringWidth(ch)
-        if (currentWidth + w > cols) pushLine()
+        if (currentWidth + w > cols) {
+          if (ellipsizeMidWordCuts) {
+            current = ellipsizeMidWordRow(current)
+          }
+          pushLine()
+        }
         current += ch
         currentWidth += w
       }

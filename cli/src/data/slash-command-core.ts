@@ -166,6 +166,13 @@ export const CORE_SLASH_COMMANDS: SlashCommand[] = [
       'Open the Agent-Steering Teacher: practice directing and reviewing an AI coding agent',
     aliases: ['teacher'],
   },
+  {
+    id: 'skills',
+    label: 'skills',
+    description:
+      'Manage skills: list/show/trust/untrust/rollback (FID-2026-0824-012 operator boundary)',
+    aliases: ['skill-manage'],
+  },
 
   {
     id: 'feedback',

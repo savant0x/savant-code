@@ -26,6 +26,7 @@ import {
   formatProcessDiagnostics,
 } from '../process-diagnostics'
 import { runBashCommand } from '../router'
+import { handleSkillsCommand } from '../skills'
 import { handleTelemetryCommand } from '../telemetry'
 
 // Core slash commands: ads, telemetry, help, goal, loop, health, diagnostics,
@@ -154,6 +155,14 @@ export const CORE_COMMANDS = [
     name: 'learn',
     aliases: ['teacher'],
     handler: handleLearnCommand,
+  }),
+  // FID-2026-0824-012 S0-A/S0-B/S2-E: operator skills CLI (list/show/trust/
+  // untrust/rollback). The operator trust boundary — no agent can release a
+  // quarantined skill.
+  defineCommandWithArgs({
+    name: 'skills',
+    aliases: ['skill-manage'],
+    handler: handleSkillsCommand,
   }),
   defineCommandWithArgs({
     name: 'graph-refresh',

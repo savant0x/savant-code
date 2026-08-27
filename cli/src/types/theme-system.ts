@@ -155,6 +155,21 @@ export interface ChatTheme {
   /** Context (unchanged) line color */
   diffContext: string
 
+  /** Muted background fill for the added-lines bar (implementor-file-stats) */
+  diffBarAdded: string
+
+  /** Muted background fill for the removed-lines bar (implementor-file-stats) */
+  diffBarRemoved: string
+
+  /** Text color on the primary fill (focused ask-user options, Open button) */
+  onPrimary: string
+
+  /** Scrollbar thumb color (FID-2026-0823-002) — every vertical scrollbox */
+  scrollbarThumb: string
+
+  /** Scrollbar track/channel color (FID-2026-0823-002) */
+  scrollbarTrack: string
+
   /** Hunk header color (lines starting with `@@`) */
   diffHunkHeader: string
 

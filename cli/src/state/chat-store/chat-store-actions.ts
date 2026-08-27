@@ -90,7 +90,15 @@ export type ChatStoreActions = {
   updateContextTokens: (used: number) => void
   updateContextTokensMax: (max: number) => void
   /** FID-2026-0813-023: set the live compaction status for the sidebar row. */
-  setCompactionStatus: (status: CompactionStatus | null) => void
+setCompactionStatus: (status: CompactionStatus | null) => void
+  setLastCompactionReport: (
+    report: {
+      summaryExcerpt: string
+      removedMessages: number
+      tokensSaved?: number
+      percentUsed?: number
+    } | null,
+  ) => void
   /** FID-2026-0814-006: bump the session compaction counter (per pruned run). */
   recordCompactionRun: (event: CompactionLifecycleEvent) => void
   /** FID-2026-0814-006: clear the bounded compaction lifecycle events. */
@@ -166,7 +174,8 @@ type SidebarActionKeys =
   | 'updateContextTokens'
   | 'updateContextTokensMax'
   | 'setSidebarCollapsed'
-  | 'setCompactionStatus'
+| 'setCompactionStatus'
+  | 'setLastCompactionReport'
   | 'recordCompactionRun'
   | 'clearCompactionEvents'
   | 'addToolUsed'

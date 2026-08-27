@@ -89,6 +89,36 @@ describe('compaction lifecycle store (FID-2026-0814-006)', () => {
     expect(state.compactionCount).toBe(1)
     expect(state.compactionEvents[0]?.outcome).toBe('pruned')
   })
+
+  test('runtime-emitted ineffective records verbatim without a predecessor (P1-3)', () => {
+    // FID-2026-0821-001 P0-2/P1-3: the runtime now writes an explicit
+    // `ineffective` terminal phase; the store records it directly instead of
+    // inferring it from a compacting → warning transition.
+    setStatus({ phase: 'ineffective', percentUsed: 88 })
+
+    const state = useChatStore.getState()
+    expect(state.compactionCount).toBe(1)
+    expect(state.compactionEvents[0]).toMatchObject({
+      outcome: 'ineffective',
+      percentUsed: 88,
+    })
+  })
+
+  test('a blocked phase surfaces the status but records no lifecycle run', () => {
+    setStatus({
+      phase: 'blocked',
+      blockReason: 'circuit-breaker-open',
+      percentUsed: 90,
+    })
+
+    const state = useChatStore.getState()
+    expect(state.compactionStatus).toMatchObject({
+      phase: 'blocked',
+      blockReason: 'circuit-breaker-open',
+    })
+    // A block is persistent panel state, not a completed run — no event.
+    expect(state.compactionCount).toBe(0)
+  })
 })
 
 describe('CompactionSignal render-only boundary (FID-2026-0814-006)', () => {

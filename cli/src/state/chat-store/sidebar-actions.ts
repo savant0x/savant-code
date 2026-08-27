@@ -1,6 +1,10 @@
 import { castDraft } from 'immer'
 
-import { recordRun, sameCompactionStatus } from './compaction-helpers'
+import {
+  dampTokenCount,
+  recordRun,
+  sameCompactionStatus,
+} from './compaction-helpers'
 import { generateSessionId, initialState } from './initial-state'
 import { trimAgentStack, trimToolsUsed } from '../../utils/bounded-arrays'
 
@@ -26,10 +30,18 @@ export const createSidebarActions = (set: SetState): ChatSidebarActions => ({
 
   updateContextTokens: (used) =>
     set((state) => {
+      // FID-2026-0821-003-A: display-only damping. The runtime count
+      // alternates between provider truth and the ×1.35 estimator across
+      // freshness boundaries, so the raw value can jump several percent
+      // between heartbeats; the damped readout renders that as a bounded
+      // ramp. The pruner still acts on the raw runtime count (untouched).
+      const damped = dampTokenCount(state.contextTokensUsed, used)
       // FID-2026-0815-008 (F-11): no-op on an equal value so the 2s heartbeat
-      // and ~5s snapshot writes don't allocate a new state + notify subscribers.
-      if (Object.is(state.contextTokensUsed, used)) return
-      state.contextTokensUsed = used
+      // and ~5s snapshot writes don't allocate a new state + notify
+      // subscribers. The deadband returns the current value, so a
+      // sub-deadband change short-circuits exactly like today.
+      if (Object.is(state.contextTokensUsed, damped)) return
+      state.contextTokensUsed = damped
     }),
 
   updateContextTokensMax: (max) =>
@@ -59,12 +71,45 @@ export const createSidebarActions = (set: SetState): ChatSidebarActions => ({
           tokensSaved: status.tokensSaved,
           percentUsed: status.percentUsed,
         })
-      } else if (prev?.phase === 'compacting' && status.phase === 'warning') {
+      } else if (status.phase === 'ineffective') {
+        // FID-2026-0821-001 P0-2/P1-3: trust the runtime-emitted terminal
+        // phase directly (runtime speaks truth) — no transition inference.
         recordRun(state, {
           outcome: 'ineffective',
           percentUsed: status.percentUsed,
         })
+} else if (prev?.phase === 'compacting' && status.phase === 'warning') {
+        // Back-compat fallback for older paired binaries whose runtime still
+        // writes `warning` at an ineffective pruner completion.
+        recordRun(state, {
+          outcome: 'ineffective',
+          percentUsed: status.percentUsed,
+        })
+      } else if (status.phase === 'compacted') {
+        // FID-2026-0824-023: Layer-2 micro-compact outcomes become visible
+        // lifecycle events — stale tool results were cleared and the operator
+        // sees it (data destruction is never silent).
+recordRun(state, {
+          outcome: 'compacted',
+          tokensSaved: status.tokensSaved,
+          percentUsed: status.percentUsed,
+        })
       }
+    }),
+
+  // FID-2026-0824-023 stream-routing: dedupe on identity fields so repeated
+  // snapshots never re-render the panel needlessly.
+  setLastCompactionReport: (report) =>
+    set((state) => {
+      if (
+        state.lastCompactionReport?.summaryExcerpt ===
+          report?.summaryExcerpt &&
+        state.lastCompactionReport?.removedMessages ===
+          report?.removedMessages
+      ) {
+        return
+      }
+      state.lastCompactionReport = report
     }),
 
   recordCompactionRun: (event) =>

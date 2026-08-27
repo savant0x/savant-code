@@ -25,6 +25,11 @@ afterEach(() => {
 
 describe('fetchUsageData', () => {
   const originalFetch = globalThis.fetch
+  // The original may legitimately be unset (machines without the var in
+  // .env.local). Restoring with `= undefined` coerces to the STRING
+  // "undefined", poisoning every later spawned child's zod env validation
+  // (root cause of the gateway ready-line child crash under the full
+  // suite) — so an unset original is restored by DELETING the key.
   const originalEnv = process.env.NEXT_PUBLIC_SAVANT_FREE_APP_URL
 
   beforeEach(() => {
@@ -34,7 +39,11 @@ describe('fetchUsageData', () => {
 
   afterEach(() => {
     globalThis.fetch = originalFetch
-    process.env.NEXT_PUBLIC_SAVANT_FREE_APP_URL = originalEnv
+    if (originalEnv === undefined) {
+      delete process.env.NEXT_PUBLIC_SAVANT_FREE_APP_URL
+    } else {
+      process.env.NEXT_PUBLIC_SAVANT_FREE_APP_URL = originalEnv
+    }
     mock.restore()
   })
 

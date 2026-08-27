@@ -1,20 +1,20 @@
 import React from 'react'
 
+import { useTheme } from '../../../hooks/use-theme'
+
 export interface SparklineProps {
   data: number[]
   width?: number
+  /** Override color; defaults to the active theme's primary (FID-2026-0822-007). */
   color?: string
   label?: string
 }
 
 const BLOCKS = ['▁', '▂', '▃', '▄', '▅', '▆', '▇', '█']
 
-export function Sparkline({
-  data,
-  width = 10,
-  color = '#18faf9',
-  label,
-}: SparklineProps) {
+export function Sparkline({ data, width = 10, color, label }: SparklineProps) {
+  const theme = useTheme()
+  const resolvedColor = color ?? theme.primary
   if (data.length === 0) {
     return <text>No data</text>
   }
@@ -36,7 +36,7 @@ export function Sparkline({
   return (
     <box flexDirection="row" gap={0}>
       {label && <text>{label}: </text>}
-      <text fg={color}>{chars.join('')}</text>
+      <text fg={resolvedColor}>{chars.join('')}</text>
     </box>
   )
 }

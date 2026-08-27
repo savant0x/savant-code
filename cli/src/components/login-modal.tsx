@@ -239,7 +239,8 @@ export const LoginModal = ({
             }}
           >
             <text style={{ wrapMode: 'word' }}>
-              <span fg={'#00cc00'}>Press ENTER to login...</span>
+              {/* FID-2026-0822-007: go/ready green → theme.success */}
+              <span fg={theme.success}>Press ENTER to login...</span>
             </text>
           </box>
         )}

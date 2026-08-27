@@ -61,6 +61,24 @@ const DEFAULT_CHAT_THEMES: Record<ThemeName, ChatTheme> = {
     diffHunkHeader: '#18faf9', // Cyan — was 'cyan' literal in diff-viewer.tsx
     diffMeta: '#8f8f99', // Neutral gray — was theme.muted in diff-viewer.tsx
 
+    // Muted diff-bar fills (FID-2026-0822-007) — consumed by
+    // implementor-file-stats.tsx bars. Dark: preserved from the prior
+    // hardcoded #3A5A3A/#5A3A3A; light: pastel equivalents so dark
+    // foreground text stays readable on the light canvas.
+    diffBarAdded: '#3A5A3A',
+    diffBarRemoved: '#5A3A3A',
+
+    // Text on the primary fill (FID-2026-0822-007) — focused ask-user
+    // options, project-picker Open button. Black reads on both the dark
+    // cyan (#18faf9) and light cyan-600 (#0891b2, 5.76:1 passes AA).
+    onPrimary: '#000000',
+
+    // Scrollbar tokens (FID-2026-0823-002) — cyan thumb on the void track,
+    // byte-identical to the transcript's established rendering. Consumed by
+    // createChatScrollbarOptions for every vertical scrollbox app-wide.
+    scrollbarThumb: '#18faf9',
+    scrollbarTrack: '#050508',
+
     // Syntax highlighting tokens (FID-033a) — fed to OpenTUI SyntaxStyle.
     // Mapping pattern adapted from opencode-dev generateSyntax (theme/index.ts:556).
     syntaxComment: '#8f8f99', // Neutral gray — muted, matches textMuted convention
@@ -145,6 +163,21 @@ const DEFAULT_CHAT_THEMES: Record<ThemeName, ChatTheme> = {
     diffContext: '#111114', // Neutral near-black — unchanged lines use foreground
     diffHunkHeader: '#0891b2', // Cyan-600 — light-mode primary
     diffMeta: '#5c5c66', // Neutral gray — muted
+
+    // Muted diff-bar fills (FID-2026-0822-007) — light pastels so the dark
+    // foreground numbers inside the bars stay readable on white.
+    diffBarAdded: '#CDE6CD',
+    diffBarRemoved: '#F2D0D0',
+
+    // Text on the primary fill (FID-2026-0822-007) — black on cyan-600
+    // (5.76:1, passes AA).
+    onPrimary: '#000000',
+
+    // Scrollbar tokens (FID-2026-0823-002) — cyan-600 thumb on the light
+    // canvas. White-on-white track intentionally reproduces today's light
+    // transcript rendering (invisible channel, visible thumb).
+    scrollbarThumb: '#0891b2',
+    scrollbarTrack: '#ffffff',
 
     // Syntax highlighting tokens (FID-033a) — light-mode readable equivalents.
     // Mapping pattern adapted from opencode-dev generateSyntax (theme/index.ts:556).

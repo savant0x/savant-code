@@ -7,6 +7,7 @@ import { ModelRowButton } from './savant-free-model-selector/model-row'
 import { SectionBlock } from './savant-free-model-selector/sections'
 import { useModelSelectorState } from './savant-free-model-selector/use-model-selector-state'
 import { SavantFreeReferralBanner } from './savant-free-referral-banner'
+import { createChatScrollbarOptions } from '../chat/styles'
 import { useTheme } from '../hooks/use-theme'
 
 import type { SavantFreeModel } from '@savant-code/common/constants/savant-free-models'
@@ -121,7 +122,7 @@ export const SavantFreeModelSelector: React.FC<
       scrollbarOptions={{ visible: false }}
       verticalScrollbarOptions={{
         visible: s.needsScroll,
-        trackOptions: { width: 1 },
+        ...createChatScrollbarOptions(theme),
       }}
       style={{
         height: s.scrollViewportHeight,

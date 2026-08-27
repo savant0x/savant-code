@@ -42,7 +42,9 @@ export const OptionsList: React.FC<OptionsListProps> = memo(
     const isCustomSelected = answer?.isCustom ?? false
     const isCustomFocused =
       focusedOptionIndex === question.options.length || isTypingCustom
-    const selectedFg = theme.name === 'dark' ? '#ffffff' : '#000000'
+    // FID-2026-0822-007: selected emphasis text is the focused-input token
+    // (exact white/black match); text on the primary fill is theme.onPrimary.
+    const selectedFg = theme.inputFocusedFg
     const customSymbol = isMultiSelect
       ? isCustomSelected
         ? SYMBOLS.CHECKBOX_CHECKED
@@ -51,7 +53,7 @@ export const OptionsList: React.FC<OptionsListProps> = memo(
         ? SYMBOLS.SELECTED
         : SYMBOLS.UNSELECTED
     const customFg = isCustomFocused
-      ? '#000000'
+      ? theme.onPrimary
       : isCustomSelected
         ? selectedFg
         : theme.muted
@@ -123,7 +125,7 @@ export const OptionsList: React.FC<OptionsListProps> = memo(
           {isCustomFocused && (
             <text
               style={{
-                fg: '#000000',
+                fg: theme.onPrimary,
                 marginLeft: 2,
               }}
             >

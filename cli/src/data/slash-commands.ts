@@ -73,11 +73,25 @@ export const SAVANT_FREE_ONLY_COMMAND_IDS = new Set([
   'end-session',
 ])
 
+// FID-2026-0821-001 P1-4: first-class manual compaction. Selecting the
+// entry dispatches the literal `/compact` prompt; the savant handleSteps
+// generator intercepts it — force context-pruner spawn, compact-and-stop.
+const COMPACT_COMMANDS: SlashCommand[] = [
+  {
+    id: 'compact',
+    label: 'compact',
+    description:
+      'Summarize older turns now to free context window, then pause',
+  },
+]
+
 // The mode commands are spliced between the core and feature groups, matching
-// their original position in the flat menu array.
+// their original position in the flat menu array. The compact command rides
+// between modes and features (FID-2026-0821-001 P1-4).
 const ALL_SLASH_COMMANDS: SlashCommand[] = [
   ...CORE_SLASH_COMMANDS,
   ...MODE_COMMANDS,
+  ...COMPACT_COMMANDS,
   ...FEATURE_SLASH_COMMANDS,
 ]
 

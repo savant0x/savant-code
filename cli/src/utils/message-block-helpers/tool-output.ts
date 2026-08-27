@@ -42,7 +42,12 @@ export const updateToolBlockWithOutput = (
           output = formatToolOutput(toolOutput.map(safeToJSONValue))
         }
       } else {
-        output = formatToolOutput(toolOutput.map(safeToJSONValue))
+        const parts = toolOutput.map(safeToJSONValue)
+        output = formatToolOutput(parts)
+        // FID-2026-0822-014: raw parts feed the display layer's shape
+        // classifier (structured cards); `output` stays byte-identical for
+        // the copy/export paths.
+        return { ...block, output, outputRaw: parts }
       }
       return { ...block, output }
     } else if (block.type === 'agent' && block.blocks) {

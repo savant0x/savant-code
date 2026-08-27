@@ -15,10 +15,17 @@ export const END_SESSION_MESSAGE =
 // Agent IDs that should not be rendered in the CLI UI
 export const HIDDEN_AGENT_IDS = ['savant-code/context-pruner'] as const
 
-// Tool names that should be collapsed by default when rendered
-// Uses ToolName type to ensure only valid tool names are added
+// Tool names that should be collapsed by default when rendered.
+// Uses ToolName type to ensure only valid tool names are added.
+// FID-2026-0823-006: whole-file writes (write_file/propose_write_file)
+// collapse to a compact summary by default — a full-file replace is a
+// snapshot, and rendering the entire document as an all-additions diff was
+// an unreadable wall (see WriteFileComponent, which renders the expand
+// chrome when given the collapse state). `set_output` intentionally stays
+// expanded (FID-2026-0821-006) so it actually shows its output.
 export const COLLAPSED_BY_DEFAULT_TOOL_NAMES: readonly ToolName[] = [
-  'set_output',
+  'write_file',
+  'propose_write_file',
 ] as const
 
 /**
@@ -148,8 +155,8 @@ export const AGENT_MODES = Object.keys(AGENT_MODE_TO_ID) as AgentMode[]
  * the mode-toggle hovertip and any future /mode help surface.
  */
 export const MODE_DESCRIPTIONS: Record<AgentMode, string> = {
-  HYBRID:
-    'Default. Write directly with harness-enforced read-before-write and verification; escalate ceremony past 20 lines.',
+HYBRID:
+    'Default. Write directly with harness-enforced read-before-write and verification; escalate ceremony past 100 lines.',
   SCAFFOLD:
     'Initialize a new project under a single umbrella FID; project-root writes only.',
   STRICT:
