@@ -76,7 +76,7 @@ No code is written without a plan. No plan is accepted without audit. No audit p
 
 - **Multi-agent orchestration** — 10 canonical agents coordinate through ECHO with explicit separation of duties
 - **Tool permission boundaries** — Each agent gets exactly the tools it needs via strict allowlist filtering
-- **Context compaction** — 4-layer progressive auto-compaction with a single trigger authority keeps sessions running through large codebases
+- **Context compaction** — 4-layer progressive auto-compaction with a single trigger authority keeps sessions running through large codebases; `/compact` forces an immediate compact-and-stop pass
 - **Checkpoint & Rewind** — Persistent per-turn edit checkpoints with `/rewind` modes for code, conversation, both, or session fork
 - **Fail-closed streaming** — Incomplete or malformed tool calls are rejected, not coerced
 - **Provider flexibility** — Works with Ollama (local-first), OpenRouter (default boot provider, free tier `openrouter/free`), OpenCode Go, TokenHarbor, NVIDIA NIM, CommandCode, or any OpenAI-compatible API
@@ -117,6 +117,7 @@ No code is written without a plan. No plan is accepted without audit. No audit p
 - [Knowledge Graph](knowledge-graph.md)
 - [Export Workflows & Code Universe](code-universe-export.md)
 - [Agent-Steering Teacher](design/agent-steering-teacher-overview.md)
+- [Self-Improving Harness & Agent-Created Skills](self-improving-harness.md)
 - [Zero-Trust Agentic Provenance](design/zero-trust-agentic-provenance.md)
 - [Hook System](design/hook-system.md)
 - [Goal Mode](design/goal-mode.md)

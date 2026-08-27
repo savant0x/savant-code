@@ -35,7 +35,7 @@ Each agent gets exactly the tools it needs via strict allowlist filtering. Detec
 
 ## Context Compaction
 
-Four-layer progressive auto-compaction keeps large repositories within model limits. A live in-stream signal (`⚙ Compacting context…` → `✓ Compaction complete (−N tokens)`) and a window-consistent sidebar `Compaction` row give real-time feedback. The display denominator, warning threshold, and pruner trigger all resolve from one model context window (no silent fallback), and the pruner spawn is driven by a single authority — the same `shouldAutoCompact` verdict that fires the warning — so auto-compaction can never silently fail to trigger while the context climbs past the window. Sessions can run through massive codebases without hitting context limits.
+Four-layer progressive auto-compaction keeps large repositories within model limits. A live in-stream signal (`⚙ Compacting context…` → `✓ Compaction complete (−N tokens)`) and a window-consistent sidebar `Compaction` row give real-time feedback. The display denominator, warning threshold, and pruner trigger all resolve from one model context window (no silent fallback), and the pruner spawn is driven by a single authority — the same `shouldAutoCompact` verdict that fires the warning — so auto-compaction can never silently fail to trigger while the context climbs past the window. `/compact` forces a compact-and-stop pass on demand (force-spawns the context pruner, bypassing cooldown, then ends the turn — no model summary pass). Sessions can run through massive codebases without hitting context limits.
 
 ---
 
@@ -113,7 +113,49 @@ Retention is bounded to the most recent 20 turns. No Git repository is required.
 
 Incomplete or malformed tool calls are rejected, not coerced. Stale-fragment replacement for placeholder arguments. Tool errors, cancellation, retry, and child-agent failures are surfaced rather than silently treated as success.
 
+## Turn Termination Safety
+
+Turns can never silently run away to the 200-step cap:
+
+- **Anti-runaway guards** — repetition-shaped non-progress patterns trip an
+  early auto-end with a visible notice: repeated identical tool calls (×4),
+  consecutive tool-error retries (×5), or think-only continuation loops (×3).
+- **Post-terminal breaker** — steps that begin after a step already satisfied
+  its end-of-turn condition, with no genuine operator input in between, auto-
+  end after 6 such continuations (`Turn auto-ended: no operator input…`).
+- **Auto Drive / goal-engine carve-out** — autonomous continuation is real
+  product behavior: the breaker and the enforcement surrender are bypassed
+  entirely while a drive (`/auto-drive`) or active goal (`/goal`) run is in
+  progress, so the feature is never killed by the safety net.
+
+## Checkpoint and Rewind
+
 ---
+
+## Self-Improving Harness & Agent-Created Skills
+
+Savant learns from its own usage and authors its own skills under strict
+operator governance (FID-2026-0824-012). Full guide:
+[docs/self-improving-harness.md](self-improving-harness.md).
+
+- **Mechanical capture** — a `PostToolUseFailure` hook with the builtin
+  `experience-capture` action appends one immutable record per failure to
+  `dev/experiences/raw-traces.jsonl` (in-process, fail-open, context-hashed
+  inputs, path-normalized keys). No prompt compliance required.
+- **Dedup + recurrence** — `sha256(tool+error)` grouping with a persistent
+  cross-session counter: promotion needs **≥3 occurrences within a rolling
+  14-day window**; expected-failure noise never counts.
+- **Versioned agent-created skills** — the `skill_manage` tool
+  (Scribe + Orchestrator only) authors skills into `.agents/skills/.quarantine/`
+  with on-disk versioning (snapshots + `VERSIONS.jsonl`, semver rules,
+  10% patch cap). Nothing an agent writes is loadable until an operator runs
+  `/skills trust`; `/skills list|show|trust|untrust|rollback` is the full
+  operator boundary; `immutable: true` skills reject every mutation.
+- **Proactive evolution** — SessionEnd mechanical review refreshes
+  `dev/agenda.md` (≤50 lines); the Scribe's full-fidelity review routes
+  recurrences to FIDs and drafts eligible lessons into quarantine skills;
+  `learnings:retire` is move-only; `skills:evolve` emits proposals without
+  ever mutating.
 
 ## Crash Recovery & Resilience
 
@@ -412,6 +454,7 @@ for the full design.
 | `/plan` | Create an implementation plan |
 | `/review` | Review code changes |
 | `/auto-drive` (`/auto`, `/drive`, `/autodrive`) | Start or manage an Auto Drive run — clarify, plan, approve, then run to completion |
+| `/compact` | Force an immediate context compaction (compact-and-stop) |
 | `/goal` | Start or manage a durable, budgeted goal run |
 | `/loop` | Schedule recurring checks |
 | `/verify` | Run typechecks |
@@ -595,6 +638,7 @@ evaluation, and responsive layout (see `docs/design/ui-overhaul-plan.md`).
 - [Agent-Steering Teacher](design/agent-steering-teacher-overview.md) — The complete `/learn` overview
 - [Zero-Trust Agentic Provenance](design/zero-trust-agentic-provenance.md) — The `/attest` trust-receipt system
 - [Hook System](design/hook-system.md) — The extensible lifecycle-hook configuration
+- [Self-Improving Harness](self-improving-harness.md) — Mechanical capture, versioned agent-created skills, operator trust
 - [Goal Mode](design/goal-mode.md) — The durable budgeted `/goal` workflow
 - [Public Release Workflow](public-release.md) — The governed `/release` pipeline
 - [Installation](installation.md) — Getting started

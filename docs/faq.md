@@ -167,6 +167,61 @@ multiple ecosystems is surfaced for disambiguation; pin it explicitly with
 
 ---
 
+## Self-Improving Harness & Agent-Created Skills
+
+### What is the self-improving harness?
+
+It is the loop that lets Savant learn from its own usage — FID-2026-0824-012.
+Every tool failure is captured mechanically (a `PostToolUseFailure` hook with
+an in-process `experience-capture` action), deduped into recurring patterns,
+and promoted — through the ECHO Perfection Loop — into canonical rules in
+`dev/LEARNINGS.md` and versioned skills. The agent can also author skills
+itself via `skill_manage`; the human keeps the release key. Full guide:
+[docs/self-improving-harness.md](self-improving-harness.md).
+
+### Can the agent modify its own skills?
+
+Yes — but only through `skill_manage`, which is restricted to the Scribe and
+Orchestrator, and everything it writes lands in
+`.agents/skills/.quarantine/` with a version snapshot and a `VERSIONS.jsonl`
+ledger entry. Quarantined skills are invisible to the runtime until a human
+runs `/skills trust <name>`. Nothing the agent authors is ever loadable
+without operator approval.
+
+### How do I approve (trust) an agent-created skill?
+
+Run `/skills` to see the quarantined drafts, `/skills show <name>` to inspect
+a draft's content and version history, then `/skills trust <name>` to release
+it. `/skills untrust <name>` demotes it back, and
+`/skills rollback <name> <seq>` restores a versioned snapshot. Trust is
+operator-only — neither the Verifier's tests nor the Adversary's audit can
+release a skill.
+
+### Can an agent-authored skill overwrite my governance rules?
+
+No. Skills that declare `immutable: true` in their frontmatter reject every
+mutation — at both the `skill_manage` engine and the EHEL pre-write gate (a
+raw `write_file` to an immutable skill is hard-blocked). Only operator file
+edits can change them.
+
+### Does this eat my context window?
+
+No. Raw traces live unloaded in `dev/experiences/` (append-only, deduped,
+context-hashed inputs — never raw arguments). Only promoted, curated rules
+reach the boot-read `dev/LEARNINGS.md`, and the session-end agenda
+(`dev/agenda.md`) is capped at 50 lines. Skill listings show only name +
+description; bulk reference data loads on demand via `references/`.
+
+### Is this shipped?
+
+The code is implemented, all repository gates pass, and the FID is `fixed`
+with a stamped verification receipt. Live smoke boundaries remain
+NEEDS-REVIEW: the fail-open hooks in a live session, the `/skills trust`
+release path in the real TUI, and a real session-end Scribe review producing
+an agenda + a lesson-derived draft skill.
+
+---
+
 ## Status & Availability
 
 ### Are Auto Drive and Discord Rich Presence fully shipped?
