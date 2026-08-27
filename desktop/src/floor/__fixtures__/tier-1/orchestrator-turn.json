@@ -1,0 +1,36 @@
+[
+  { "type": "start", "agentId": "orchestrator-1", "messageHistoryLength": 4 },
+  {
+    "type": "activity",
+    "activity": { "kind": "thinking", "startedAt": 1000 },
+    "agentId": "orchestrator-1"
+  },
+  {
+    "type": "text",
+    "text": "Scanning the ledger before the edit.",
+    "agentId": "orchestrator-1"
+  },
+  {
+    "type": "tool_call",
+    "toolCallId": "tc-001",
+    "toolName": "read_files",
+    "input": { "paths": ["dev/YAGNI-LEDGER.md"] }
+  },
+  {
+    "type": "activity",
+    "activity": {
+      "kind": "tool",
+      "toolName": "read_files",
+      "startedAt": 1200,
+      "target": "dev/YAGNI-LEDGER.md"
+    },
+    "agentId": "orchestrator-1"
+  },
+  {
+    "type": "tool_result",
+    "toolCallId": "tc-001",
+    "toolName": "read_files",
+    "output": [{ "type": "json", "value": { "message": "2 files read" } }]
+  },
+  { "type": "finish", "agentId": "orchestrator-1", "totalCost": 0.014 }
+]

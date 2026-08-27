@@ -1,0 +1,40 @@
+[
+  { "type": "activity", "activity": { "kind": "idle", "since": 500 } },
+  {
+    "type": "activity",
+    "activity": {
+      "kind": "thinking",
+      "startedAt": 900,
+      "model": "stealth/ox-alpha"
+    },
+    "agentId": "orchestrator-1"
+  },
+  {
+    "type": "activity",
+    "activity": {
+      "kind": "researching",
+      "query": "quaternius walker license cc0",
+      "startedAt": 1100,
+      "source": "web"
+    },
+    "agentId": "orchestrator-1"
+  },
+  {
+    "type": "compliance_warning",
+    "law": "law3",
+    "severity": "info",
+    "message": "Verification recorded after the write batch."
+  },
+  {
+    "type": "provenance_receipt",
+    "sessionId": "sess-deck-u7",
+    "seq": 12,
+    "phase": "write",
+    "status": "complete",
+    "signed": true
+  },
+  {
+    "type": "error",
+    "message": "webglcontextlost recovered via ticker recreation."
+  }
+]

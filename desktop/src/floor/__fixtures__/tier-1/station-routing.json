@@ -1,0 +1,103 @@
+[
+  {
+    "type": "tool_call",
+    "toolCallId": "tc-f1",
+    "toolName": "write_file",
+    "input": { "path": "src/a.ts", "content": "export {}\n" }
+  },
+  {
+    "type": "tool_result",
+    "toolCallId": "tc-f1",
+    "toolName": "write_file",
+    "output": [{ "type": "json", "value": { "written": true } }]
+  },
+  {
+    "type": "tool_call",
+    "toolCallId": "tc-f2",
+    "toolName": "str_replace",
+    "input": {
+      "path": "src/a.ts",
+      "oldString": "export {}",
+      "newString": "export const a = 1"
+    }
+  },
+  {
+    "type": "tool_result",
+    "toolCallId": "tc-f2",
+    "toolName": "str_replace",
+    "output": [{ "type": "json", "value": { "replaced": true } }]
+  },
+  {
+    "type": "tool_call",
+    "toolCallId": "tc-c1",
+    "toolName": "run_terminal_command",
+    "input": { "command": "bun test src/" }
+  },
+  {
+    "type": "tool_result",
+    "toolCallId": "tc-c1",
+    "toolName": "run_terminal_command",
+    "output": [
+      {
+        "type": "json",
+        "value": { "stdout": "50 pass / 0 fail", "exitCode": 0 }
+      }
+    ]
+  },
+  {
+    "type": "tool_call",
+    "toolCallId": "tc-m1",
+    "toolName": "code_search",
+    "input": { "pattern": "classifyPayload" }
+  },
+  {
+    "type": "tool_result",
+    "toolCallId": "tc-m1",
+    "toolName": "code_search",
+    "output": [{ "type": "json", "value": { "matches": [] } }]
+  },
+  {
+    "type": "tool_call",
+    "toolCallId": "tc-e1",
+    "toolName": "web_search",
+    "input": { "query": "three.js custom shader material hologram" }
+  },
+  {
+    "type": "tool_result",
+    "toolCallId": "tc-e1",
+    "toolName": "web_search",
+    "output": [{ "type": "json", "value": { "results": [] } }]
+  },
+  {
+    "type": "tool_call",
+    "toolCallId": "tc-x1",
+    "toolName": "github",
+    "input": { "task": "check CI status" }
+  },
+  {
+    "type": "tool_result",
+    "toolCallId": "tc-x1",
+    "toolName": "github",
+    "output": [{ "type": "json", "value": { "status": "green" } }]
+  },
+  {
+    "type": "tool_call",
+    "toolCallId": "tc-p1",
+    "toolName": "transition_phase",
+    "input": { "phase": "audit", "reason": "GREEN complete" }
+  },
+  {
+    "type": "tool_result",
+    "toolCallId": "tc-p1",
+    "toolName": "transition_phase",
+    "output": [
+      {
+        "type": "json",
+        "value": {
+          "phase": "audit",
+          "message": "FSM transition: green → audit."
+        }
+      }
+    ]
+  }
+]

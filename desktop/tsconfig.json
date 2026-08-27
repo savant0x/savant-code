@@ -1,0 +1,10 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "types": ["bun", "vite/client"]
+  },
+  "include": ["src/**/*", "scripts/**/*", "vite.config.ts"],
+  "exclude": ["node_modules", "dist", "src-tauri"]
+}

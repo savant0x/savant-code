@@ -1,0 +1,42 @@
+[package]
+name = "savant-desktop"
+version = "0.0.27"
+description = "Savant desktop shell: Tauri v2 supervisor for the agent-runtime sidecar (FID-2026-0820-009)"
+edition = "2021"
+rust-version = "1.97"
+
+[lib]
+name = "savant_desktop_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+getrandom = "0.3"
+log = "0.4"
+# Required at the crate root: tauri::generate_context! expands plugin
+# configs (updater) into code that references serde_json directly
+# (FID-2026-0820-011 increment 2).
+serde_json = "1"
+serde = { version = "1", features = ["derive"] }
+tauri = { version = "2", features = [] }
+tauri-plugin-log = "2"
+tauri-plugin-single-instance = "2"
+# Consent-gated auto-updater (FID-2026-0820-011 Step 4): signature-verified
+# updates from GitHub Releases via the minisign pubkey pinned in
+# tauri.conf.json plugins.updater.
+tauri-plugin-updater = "2"
+
+[profile.release]
+codegen-units = 1
+lto = true
+strip = true
+
+# Windows-only shell support: pre-webview WebView2 detection and the native
+# recovery dialog (FID-2026-0820-009 missed question 7). Scoped cfg(windows)
+# so macOS/Linux builds compile none of the win32 stacks.
+[target."cfg(windows)".dependencies]
+open = "5"
+rfd = "0.15"
+winreg = "0.52"

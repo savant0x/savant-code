@@ -1,0 +1,38 @@
+{
+  "name": "@savant-code/desktop",
+  "version": "0.0.27",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "sync:version": "bun scripts/sync-version.ts",
+    "dev:renderer": "bun scripts/sync-version.ts && vite",
+    "build:renderer": "bun scripts/sync-version.ts && vite build",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test scripts/ src/",
+    "tauri": "tauri",
+    "build:sidecar": "bun scripts/build-sidecar.ts",
+    "gen:icon": "bun scripts/generate-icon.ts",
+    "gen:tokens": "bun scripts/generate-design-tokens.ts"
+  },
+  "dependencies": {
+    "@savant-code/common": "workspace:*",
+    "@savant-code/design-systems": "workspace:*",
+    "@tauri-apps/api": "^2.0.0",
+    "@tauri-apps/plugin-updater": "^2.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "three": "^0.185.1",
+    "three-custom-shader-material": "^6.4.0",
+    "zod": "^4.2.1",
+    "zustand": "^5.0.8"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.0.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@types/three": "^0.185.4",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.11"
+  }
+}

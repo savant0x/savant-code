@@ -1,0 +1,25 @@
+{
+  "syntheticPendingFid008": true,
+  "marker": "SYNTHETIC-PENDING-FID-008",
+  "title": "Compaction collapse ripple",
+  "note": "Contract draft only — compaction status lives in SessionState alone (Loop 1 RED finding 003); no wire event exists. Ripple semantics invented pending the FID-2026-0820-008 amendment. Excluded from coverage claims per Amendment Gate G3; reconciled-or-deleted by that amendment's own loop.",
+  "events": [
+    {
+      "type": "compaction_started",
+      "agentId": "orchestrator-1",
+      "layer": "auto"
+    },
+    {
+      "type": "compaction_collapse_ripple",
+      "agentId": "orchestrator-1",
+      "originStation": "core",
+      "radiusStations": 3
+    },
+    {
+      "type": "compaction_complete",
+      "agentId": "orchestrator-1",
+      "tokensBefore": 148000,
+      "tokensAfter": 41000
+    }
+  ]
+}

@@ -1,0 +1,82 @@
+# FID-2026-0820-009 Step 7 — Desktop CI integration checklist.
+#
+# Scope contract (missed question 5): CI NEVER builds or drives the GUI.
+# This workflow compiles the crate, runs its unit tests, typechecks the
+# renderer/scripts, and exercises the REAL sidecar E2E headlessly — it never
+# invokes `tauri build`/`tauri dev` or any bundling (that remains
+# FID-2026-0820-011 Packaging, operator-gated).
+#
+# Toolchain pinning comes from desktop/rust-toolchain.toml via
+# actions-rust-lang/setup-rust-toolchain (its embedded rust-cache keys on
+# rust-src-dir). Clippy is enforced at -D warnings here (CI-first gate per
+# the FID; local parity verified during Loop 4).
+
+name: desktop-ci
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'desktop/**'
+      - 'cli/src/server-command.ts'
+      - '.github/workflows/desktop-ci.yml'
+  pull_request:
+    paths:
+      - 'desktop/**'
+      - 'cli/src/server-command.ts'
+      - '.github/workflows/desktop-ci.yml'
+
+jobs:
+  crate-and-renderer:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            bun-target: bun-windows-x64
+          - os: macos-latest
+            bun-target: bun-darwin-arm64
+          - os: ubuntu-latest
+            bun-target: bun-linux-x64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      # Honors the exact pin in desktop/src-tauri/rust-toolchain.toml (1.97.1):
+      # rust-src-dir makes the action read the toolchain file from the crate
+      # subdirectory and auto-defaults its embedded rust-cache to it.
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          rust-src-dir: desktop/src-tauri
+
+      - name: Install workspace dependencies
+        run: bun install
+
+      # tauri-build hard-fails while bundle.externalBin is declared but the
+      # triple-renamed binary is missing — build it before every cargo step.
+      - name: Build native sidecar (externalBin contract)
+        run: >
+          bun desktop/scripts/build-sidecar.ts
+          --entry cli/src/server-command.ts
+          --target ${{ matrix.bun-target }}
+
+      - name: cargo fmt --check
+        run: cargo fmt --check --manifest-path desktop/src-tauri/Cargo.toml
+
+      - name: cargo clippy (deny warnings)
+        run: cargo clippy --all-targets --manifest-path desktop/src-tauri/Cargo.toml -- -D warnings
+
+      - name: cargo test
+        run: cargo test --manifest-path desktop/src-tauri/Cargo.toml
+
+      - name: Renderer + scripts typecheck
+        run: bun run --cwd=desktop typecheck
+
+      # Includes the real-sidecar E2E (handshake + parent-kill zombie paths);
+      # self-skips only if the binary above failed to appear, which would
+      # already have failed the build step.
+      - name: Desktop bun tests (incl. real-sidecar E2E)
+        working-directory: desktop
+        run: bun test scripts/

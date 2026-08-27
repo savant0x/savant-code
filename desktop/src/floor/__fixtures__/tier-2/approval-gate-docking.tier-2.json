@@ -1,0 +1,25 @@
+{
+  "syntheticPendingFid008": true,
+  "marker": "SYNTHETIC-PENDING-FID-008",
+  "title": "Approval Gate docking sequence",
+  "note": "Contract draft only — approval lifecycle events exist on no PrintModeEvent schema today beyond the bare approval_request carrier (Loop 1 RED finding 001). Docking/walk/resolution semantics are invented pending the FID-2026-0820-008 amendment. Excluded from coverage claims per Amendment Gate G3; reconciled-or-deleted by that amendment's own loop.",
+  "events": [
+    {
+      "type": "approval_walk_docked",
+      "approvalId": "apx-1",
+      "agentId": "orchestrator-1",
+      "station": "approval-gate",
+      "requestType": "diff"
+    },
+    {
+      "type": "approval_gate_halt",
+      "approvalId": "apx-1",
+      "agentId": "orchestrator-1"
+    },
+    {
+      "type": "approval_resolved",
+      "approvalId": "apx-1",
+      "outcome": "approved"
+    }
+  ]
+}

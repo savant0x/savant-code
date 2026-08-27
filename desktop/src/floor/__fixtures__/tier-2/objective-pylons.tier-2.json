@@ -1,0 +1,24 @@
+{
+  "syntheticPendingFid008": true,
+  "marker": "SYNTHETIC-PENDING-FID-008",
+  "title": "Objective pylons and milestones",
+  "note": "Contract draft only — durable-goal state lives in the goal engine record (types only; milestone completion transient by design per Loop 1 RED finding 004); no wire event exists. Pylon set/advance/milestone semantics invented pending the FID-2026-0820-008 amendment. Excluded from coverage claims per Amendment Gate G3; reconciled-or-deleted by that amendment's own loop.",
+  "events": [
+    {
+      "type": "objective_pylon_set",
+      "objectiveId": "obj-u7",
+      "label": "Queue-to-zero: deck fixtures",
+      "agentId": "orchestrator-1"
+    },
+    {
+      "type": "objective_pylon_advance",
+      "objectiveId": "obj-u7",
+      "step": "fixtures-green"
+    },
+    {
+      "type": "objective_milestone_complete",
+      "objectiveId": "obj-u7",
+      "milestone": "tier1-corpus-validates"
+    }
+  ]
+}

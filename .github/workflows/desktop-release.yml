@@ -1,0 +1,103 @@
+name: Desktop Release Artifacts
+
+# FID-2026-0820-011 Step 5: build Windows + Linux desktop bundles and the
+# fail-closed updater manifest. Manual promotion gate (missed-Q3): artifacts
+# upload to the draft release; a human smoke-tests BOTH platform installers
+# before publishing. Updater signatures require the `desktop-updater-signing`
+# ENVIRONMENT secret (TAURI_SIGNING_PRIVATE_KEY / _PASSWORD) — environment-
+# scoped per missed-Q2, never repo-wide, never echoed.
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Release tag to build (for example v0.0.27)'
+        required: true
+        type: string
+      source_ref:
+        description: 'Optional branch or tag ref; defaults to release_tag.'
+        required: false
+        default: ''
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build-desktop:
+    name: Build ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    environment: desktop-updater-signing
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: windows-x86_64
+            os: windows-latest
+            bun-target: bun-windows-x64
+            bundles: nsis,msi
+          - name: linux-x86_64
+            os: ubuntu-latest
+            bun-target: bun-linux-x64
+            bundles: appimage,deb
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_ref || inputs.release_tag }}
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - name: Build sidecar (${{ matrix.bun-target }})
+        run: >
+          bun run --cwd=desktop build:sidecar --
+          --entry cli/src/server-command.ts
+          --target ${{ matrix.bun-target }}
+      - name: Tauri build (${{ matrix.bundles }})
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        # The committed target list is the full v1 matrix; each runner builds
+        # only its own platform bundles (Linux bundle types cannot build on
+        # Windows hosts and vice versa).
+        run: bun run --cwd=desktop tauri build --bundles ${{ matrix.bundles }}
+      - name: Collect bundle artifacts
+        shell: bash
+        run: |
+          mkdir -p dist-out
+          find desktop/src-tauri/target/release/bundle -type f \
+            \( -name '*.exe' -o -name '*.msi' -o -name '*.AppImage' \
+               -o -name '*.deb' -o -name '*.sig' \) \
+            -not -path '*savant-sidecar*' -exec cp {} dist-out/ \;
+          ls -la dist-out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-${{ matrix.name }}
+          path: dist-out/*
+          if-no-files-found: error
+
+  latest-json:
+    name: Fail-closed latest.json
+    needs: build-desktop
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_ref || inputs.release_tag }}
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: desktop-*
+          merge-multiple: true
+          path: dist-all
+      - name: Generate latest.json (fails closed on any missing artifact/.sig)
+        run: >
+          bun desktop/scripts/generate-latest-json.ts
+          --version "${{ inputs.release_tag }}"
+          --artifacts-dir dist-all
+          --base-download-url
+          "https://github.com/${{ github.repository }}/releases/download/${{ inputs.release_tag }}"
+          --out dist-all/latest.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-latest-json
+          path: dist-all/latest.json
+          if-no-files-found: error
