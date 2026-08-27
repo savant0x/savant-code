@@ -7,6 +7,7 @@ const VALID_PHASES: EchoPhase[] = [
   'red',
   'green',
   'audit',
+  'adversarial',
   'self_correct',
   'complete',
 ]

@@ -10,8 +10,15 @@ export const taskCategorySchema = z.enum([
   'mcp_tool',
   'skill_driven',
   'programmatic_agent',
-  'slash_cli',
+'slash_cli',
   'error_recovery',
+  'governance',
+  // FID-2026-0824-019: CodeScaleBench-inspired capability taxonomy.
+  // Additive — every pre-existing value parses unchanged.
+  'cross_repo_navigation',
+  'dependency_tracing',
+  'codebase_comprehension',
+  'security_remediation',
 ])
 
 export const deterministicCheckSchema = z.object({
@@ -26,6 +33,17 @@ export const fsmAssertionSchema = z.object({
   strict_phase_order: z.boolean().default(true),
   allow_write_in_red: z.boolean().default(false),
   expected_phase_sequence: z.array(z.string()).optional(),
+})
+
+/**
+ * FID-2026-0824-014: per-agent separation-of-duties assertion. Evaluated
+ * against the trace's subagent map; additive to validation (schema_version
+ * stays "2.0"), mirroring fsm_assertions.
+ */
+export const trajectoryAssertionSchema = z.object({
+  agent_type: z.string().min(1),
+  denied_tools: z.array(z.string().min(1)).default([]),
+  required_tools: z.array(z.string().min(1)).default([]),
 })
 
 export const customToolCheckSchema = z.object({
@@ -59,6 +77,22 @@ export const taskDefinitionSchema = z.object({
   environment: environmentSchema,
   /** Optional path to a golden patch (unified diff) for this task. */
   golden_patch: z.string().optional(),
+/** Links a YAML task manifest to the deterministic governance replay corpus. */
+  governance_replay: z
+    .object({
+      task_id: z.string().min(1),
+    })
+    .optional(),
+  /** FID-2026-0824-019: provenance for auto-ingested capability tasks. */
+  ingest_provenance: z
+    .object({
+      source: z.string().min(1),
+      issue_number: z.number().int().positive().optional(),
+      window_start: z.string().min(1),
+      window_end: z.string().min(1),
+      content_hash: z.string().length(64),
+    })
+    .optional(),
   inputs: z.object({
     prompt: z.string().min(1),
   }),
@@ -68,6 +102,8 @@ export const taskDefinitionSchema = z.object({
     fsm_assertions: fsmAssertionSchema.optional(),
     /** Agent types the run is expected to spawn (e.g. ["detective", "forge"]). */
     required_agents: z.array(z.string().min(1)).optional(),
+    /** FID-2026-0824-014: per-agent tool denials/requirements scored from the trace subagent map. */
+    trajectory_assertions: z.array(trajectoryAssertionSchema).optional(),
     custom_tool_checks: z.array(customToolCheckSchema).optional(),
   }),
 })
@@ -77,6 +113,7 @@ export type TaskCategory = z.infer<typeof taskCategorySchema>
 export type TaskDifficulty = z.infer<typeof taskDifficultySchema>
 export type DeterministicCheck = z.infer<typeof deterministicCheckSchema>
 export type FsmAssertion = z.infer<typeof fsmAssertionSchema>
+export type TrajectoryAssertion = z.infer<typeof trajectoryAssertionSchema>
 
 export const taskRegistrySchema = z.record(z.string(), taskDefinitionSchema)
 

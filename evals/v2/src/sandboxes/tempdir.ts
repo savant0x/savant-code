@@ -1,9 +1,67 @@
 import { spawn } from 'node:child_process'
-import { mkdtemp, rm } from 'node:fs/promises'
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 
+import { killProcessTree } from './process-tree'
+
 import type { Sandbox, CommandOptions, CommandResult } from '../sandbox'
+
+/**
+ * FID-2026-0824-015: deny-by-default environment allowlist. Host secrets
+ * never reach eval commands unless explicitly passed via overrides.
+ */
+const ENV_ALLOWLIST = [
+  'PATH',
+  'PATHEXT',
+  'COMSPEC',
+  'SystemRoot',
+  'SYSTEMROOT',
+  'SystemDrive',
+  'SYSTEMDRIVE',
+  'TEMP',
+  'TMP',
+  'APPDATA',
+  'LOCALAPPDATA',
+  'HOME',
+] as const
+
+export const DEFAULT_MAX_LOG_BYTES = 1_000_000
+
+/**
+ * Build an eval-command environment from an allowlist over `base` plus
+ * explicit overrides (overrides always win). Pure + exported for tests.
+ */
+export function buildAllowlistedEnv(
+  base: NodeJS.ProcessEnv,
+  overrides?: Record<string, string>,
+): NodeJS.ProcessEnv {
+  const env: NodeJS.ProcessEnv = {}
+  for (const key of ENV_ALLOWLIST) {
+    const value = base[key]
+    if (value !== undefined) {
+      env[key] = value
+    }
+  }
+  return { ...env, ...(overrides ?? {}) }
+}
+
+/** Bound combined output, keeping head and tail around a truncation marker. */
+function truncateBounded(
+  stdout: string,
+  stderr: string,
+  maxBytes: number,
+): string {
+  const combined = `--- stdout ---\n${stdout}\n--- stderr ---\n${stderr}\n`
+  const totalBytes = Buffer.byteLength(combined, 'utf8')
+  if (totalBytes <= maxBytes) {
+    return combined
+  }
+  const half = Math.floor(maxBytes / 2)
+  const head = combined.slice(0, half)
+  const tail = combined.slice(-half)
+  return `${head}\n…[truncated ${totalBytes - maxBytes} bytes]…\n${tail}`
+}
 
 export interface TempDirSandboxOptions {
   /** Optional prefix for the temp directory name. */
@@ -47,11 +105,23 @@ export class TempDirSandbox implements Sandbox {
     const cwd = this.getWorkingDir()
     const resolvedCwd = options.cwd ? path.join(cwd, options.cwd) : cwd
 
+    const logFile = options.logFile
+      ? path.isAbsolute(options.logFile)
+        ? options.logFile
+        : path.join(resolvedCwd, options.logFile)
+      : undefined
+    if (logFile) {
+      await mkdir(path.dirname(logFile), { recursive: true })
+    }
+
     const child = spawn(command, [], {
       cwd: resolvedCwd,
       shell: options.shell ?? true,
-      env: this.buildEnv(options.env),
+      env: buildAllowlistedEnv(process.env, options.env),
       stdio: ['ignore', 'pipe', 'pipe'],
+      // POSIX: own process group so the pgid kill reaches grandchildren.
+      detached: process.platform !== 'win32',
+      windowsHide: true,
     })
 
     return new Promise((resolve, reject) => {
@@ -71,14 +141,10 @@ export class TempDirSandbox implements Sandbox {
         timeout && timeout > 0
           ? setTimeout(() => {
               killed = true
-              // Best-effort termination. On Windows this only kills the shell
-              // process; a future Docker/Firecracker sandbox should be used for
-              // stronger isolation.
-              try {
-                child.kill()
-              } catch {
-                // Process may have already exited naturally.
-              }
+              // FID-2026-0824-015: end the WHOLE tree via the capability-
+              // probed mechanism (taskkill /T /F on Windows, process-group
+              // SIGKILL on POSIX). The old child.kill() orphaned grandchildren.
+              void killProcessTree(child.pid ?? -1).catch(() => {})
             }, timeout)
           : undefined
 
@@ -89,12 +155,31 @@ export class TempDirSandbox implements Sandbox {
 
       child.on('close', (exitCode) => {
         if (timeoutId) clearTimeout(timeoutId)
-        resolve({
-          exitCode: exitCode ?? (killed ? 124 : 1),
-          stdout,
-          stderr,
-          timedOut: killed,
-        })
+
+        // FID-2026-0824-015: flush the bounded log BEFORE resolving so a
+        // caller that awaits runCommand sees the durable file immediately
+        // (fire-and-forget raced existsSync in the gate test).
+        const finalize = async () => {
+          if (logFile) {
+            try {
+              const bounded = truncateBounded(
+                stdout,
+                stderr,
+                options.maxLogBytes ?? DEFAULT_MAX_LOG_BYTES,
+              )
+              await writeFile(logFile, bounded, 'utf8')
+            } catch {
+              // Log capture is best-effort; never mask the command result.
+            }
+          }
+          resolve({
+            exitCode: exitCode ?? (killed ? 124 : 1),
+            stdout,
+            stderr,
+            timedOut: killed,
+          })
+        }
+        void finalize()
       })
     })
   }
@@ -105,16 +190,5 @@ export class TempDirSandbox implements Sandbox {
     }
     await rm(this.workingDir, { recursive: true, force: true })
     this.workingDir = ''
-  }
-
-  private buildEnv(
-    overrides: Record<string, string> | undefined,
-  ): NodeJS.ProcessEnv {
-    // MVP: inherit the host environment. This leaks host env variables, but it
-    // keeps temp-dir sandbox simple. Use Docker/Firecracker for real isolation.
-    return {
-      ...process.env,
-      ...(overrides ?? {}),
-    }
   }
 }

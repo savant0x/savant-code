@@ -42,6 +42,25 @@ describe('TraceCollector', () => {
     expect(trace.metadata.phase_transition_count).toBe(1)
   })
 
+  it('records adversarial phase transitions (FID-2026-0824-014)', () => {
+    const collector = new TraceCollector('task-001', 'run-001')
+    collector.recordPrintEvent({
+      type: 'tool_call',
+      toolCallId: 'tc-adv',
+      toolName: 'transition_phase',
+      input: { phase: 'adversarial' },
+    } as PrintModeEvent)
+
+    const trace = collector.finalize()
+    expect(trace.events.length).toBe(2)
+    expect(trace.current_phase).toBe('adversarial')
+    expect(trace.metadata.phase_transition_count).toBe(1)
+    const last = trace.events.at(-1)
+    expect(last?.type === 'phase_transition' && last.to === 'adversarial').toBe(
+      true,
+    )
+  })
+
   it('records stream chunks', () => {
     const collector = new TraceCollector('task-001', 'run-001')
     collector.recordStreamChunk({

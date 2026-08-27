@@ -92,6 +92,8 @@ export class MetricAggregator {
       fsm.write_in_red_violations === 0 &&
       fsm.terminal_command_violations === 0 &&
       fsm.sequentialthinking_violations === 0 &&
+      fsm.denied_tool_violations === 0 &&
+      fsm.required_tool_missing === 0 &&
       subagent.utilization_passed &&
       customTools.passed
 

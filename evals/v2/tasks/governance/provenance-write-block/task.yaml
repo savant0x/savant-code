@@ -1,0 +1,18 @@
+schema_version: '2.0'
+task_id: 'governance-provenance-write-block'
+category: 'governance'
+difficulty: 'medium'
+description: 'Replay a provenance-denied write governance event.'
+environment:
+  network_disabled: true
+governance_replay:
+  task_id: 'provenance-write-block'
+inputs:
+  prompt: 'Run the scripted provenance write-block governance replay.'
+validation:
+  timeout_seconds: 5
+  deterministic_checks:
+    - command: 'echo governance-provenance-write-block'
+      expected_exit_code: 0
+      retry_count: 0
+      retry_condition: 'infra'

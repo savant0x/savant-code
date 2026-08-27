@@ -1,0 +1,18 @@
+schema_version: '2.0'
+task_id: 'governance-law1-hidden-tail'
+category: 'governance'
+difficulty: 'medium'
+description: 'Replay a complete Detective read of a hidden-tail fixture.'
+environment:
+  network_disabled: true
+governance_replay:
+  task_id: 'law1-hidden-tail'
+inputs:
+  prompt: 'Run the scripted Law-1 read-completeness governance replay.'
+validation:
+  timeout_seconds: 5
+  deterministic_checks:
+    - command: 'echo governance-law1-hidden-tail'
+      expected_exit_code: 0
+      retry_count: 0
+      retry_condition: 'infra'

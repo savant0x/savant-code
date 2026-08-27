@@ -1,9 +1,19 @@
+import { readFileSync } from 'node:fs'
 import { mkdir } from 'node:fs/promises'
 import path from 'node:path'
 
 import { loadLocalAgents } from '@savant-code/sdk'
 
+import { GOVERNANCE_TASKS, runGovernanceSmoke } from './governance'
 import { BenchmarkHarness } from './harness'
+import {
+  assertTokenCeiling,
+  DEFAULT_RELEASE_TOKEN_CEILING,
+  estimateTokens,
+  selectForRelease,
+} from './ingest/rotation'
+import { runProveCommand } from './prove/prove-cli'
+import { loadTaskRegistry } from './registry'
 import { writeJsonReport, writeMarkdownReport } from './reports'
 import { SavantAgentRunner } from './runners/savant'
 import { TempDirSandbox } from './sandboxes/tempdir'
@@ -13,6 +23,39 @@ import {
   type TaskCategory,
   type TaskDifficulty,
 } from './schema'
+
+export async function runTierOneGovernanceSmoke(
+  tasksDir = path.resolve(import.meta.dir, '..', 'tasks', 'governance'),
+): Promise<void> {
+  const registry = await loadTaskRegistry(tasksDir)
+  const manifests = Object.values(registry)
+  if (manifests.length !== GOVERNANCE_TASKS.length) {
+    throw new Error(
+      `Tier-1 governance manifest count mismatch: expected ${GOVERNANCE_TASKS.length}, found ${manifests.length}`,
+    )
+  }
+  const replayIds = new Set<string>(
+    GOVERNANCE_TASKS.map((task) => task.task_id),
+  )
+  for (const manifest of manifests) {
+    const replayId = manifest.governance_replay?.task_id
+    if (
+      manifest.category !== 'governance' ||
+      replayId === undefined ||
+      !replayIds.has(replayId)
+    ) {
+      throw new Error(`Invalid Tier-1 governance manifest: ${manifest.task_id}`)
+    }
+  }
+  const results = runGovernanceSmoke()
+  const failures = results.filter((result) => !result.passed)
+  if (failures.length > 0) {
+    throw new Error(
+      `Tier-1 governance smoke failed: ${failures.map((result) => `${result.task_id}: ${result.failures.join(', ')}`).join('; ')}`,
+    )
+  }
+  console.log(`Tier-1 governance smoke passed: ${results.length} tasks`)
+}
 
 export interface CliArgs {
   tasksDir: string
@@ -46,8 +89,26 @@ Options:
   --agent-id <id>         Agent ID to run in evaluate mode (default: savant)
   --max-steps <n>         Maximum agent steps per task (default: 100)
   --category <cat>        Only run tasks in this category (e.g. pure_coding)
-  --difficulty <level>    Only run tasks with this difficulty (easy|medium|hard)
+--difficulty <level>    Only run tasks with this difficulty (easy|medium|hard)
   --help                  Show this help message
+
+Skill proof (paired trials via runSkillProve):
+
+  bun run cli prove <skillName> --task <taskId> --tasks-dir <path>
+    [--project-root <p>] [--trials <n>] [--k <n>]
+    [--ztap off|record|enforce] [--api-key <key>] [--agent-id <id>]
+    [--max-steps <n>]
+
+Exits 0 only when the artifact proves immutable eligibility.
+
+Tier-3 release rotation (FID-2026-0824-019, structural rehearsal):
+
+  bun run cli --release-tier [<version>]
+
+  Deterministic per-version corpus selection across category/difficulty
+  strata plus the hard token-ceiling check. Baseline-only by design —
+  live capability runs are operator-keyed. Exits non-zero when rotation
+  selects nothing or the ceiling is breached.
 `)
 }
 
@@ -140,9 +201,70 @@ function validateArgs(args: Partial<CliArgs>): CliArgs {
   }
 }
 
+const ROOT_VERSION_PATTERN = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/
+
+/**
+ * FID-2026-0824-019: Tier-3 structural rehearsal — deterministic rotation
+ * plan + token ceiling against the current corpus. Baseline-only by design
+ * (zero tokens); live evaluate-mode runs stay operator-keyed.
+ */
+async function runReleaseTier(versionOverride?: string): Promise<void> {
+  const version =
+    versionOverride ??
+    (() => {
+      const raw = readFileSync(
+        path.resolve(import.meta.dir, '..', '..', '..', 'VERSION'),
+        'utf8',
+      ).trim()
+      if (!ROOT_VERSION_PATTERN.test(raw)) {
+        throw new Error(`root VERSION is malformed: ${raw}`)
+      }
+      return raw
+    })()
+
+  const registry = await loadTaskRegistry(
+    path.resolve(import.meta.dir, '..', 'tasks'),
+  )
+  const selected = selectForRelease(Object.values(registry), version)
+  const estimate = estimateTokens(selected.length)
+
+  console.log(`Tier-3 rotation plan for v${version}:`)
+  for (const task of selected) {
+    console.log(`  - [${task.category}/${task.difficulty}] ${task.task_id}`)
+  }
+  console.log(
+    `selected ${selected.length} task(s); estimated tokens ${estimate} (ceiling ${DEFAULT_RELEASE_TOKEN_CEILING})`,
+  )
+  if (selected.length === 0) {
+    throw new Error('Tier-3 rotation selected zero tasks — corpus empty?')
+  }
+  assertTokenCeiling(estimate)
+  console.log(
+    'Baseline structural rehearsal complete; live capability runs are operator-keyed.',
+  )
+}
+
 export async function main(
   argv: string[] = process.argv.slice(2),
 ): Promise<void> {
+  if (argv.length === 1 && argv[0] === '--governance-smoke') {
+    await runTierOneGovernanceSmoke()
+    return
+  }
+
+  // FID-2026-0824-016 production surface: paired-trial skill proofs.
+  if (argv[0] === 'prove') {
+    const { exitCode } = await runProveCommand(argv.slice(1))
+    process.exitCode = exitCode
+    return
+  }
+
+  // FID-2026-0824-019: Tier-3 structural rehearsal.
+  if (argv[0] === '--release-tier') {
+    await runReleaseTier(argv.length > 1 ? argv[1] : undefined)
+    return
+  }
+
   const raw = parseArgs(argv)
   if (argv.length === 0) {
     printHelp()

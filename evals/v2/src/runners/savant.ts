@@ -65,6 +65,8 @@ export class SavantAgentRunner implements AgentRunner {
       agentDefinitions: this.config.agentDefinitions,
       maxAgentSteps: this.config.maxAgentSteps,
       env: this.config.env,
+      // FID-2026-0824-015: eval runs are forced into safe mode by default.
+      permissionMode: this.config.permissionMode ?? 'safe',
       customToolDefinitions: this.config.customToolDefinitions,
       projectFiles: this.config.projectFiles,
       drainSteeringMessages: this.config.drainSteeringMessages,

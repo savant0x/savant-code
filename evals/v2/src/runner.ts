@@ -10,9 +10,18 @@ import type {
 /**
  * ECHO phases that the harness tracks.
  * The unknown value is used when a phase has not been observed yet.
+ * FID-2026-0824-014: `adversarial` aligns the harness with the runtime FSM
+ * (live since FID-2026-0805-004).
  */
 export type EchoPhase =
-  'idle' | 'red' | 'green' | 'audit' | 'self_correct' | 'complete' | 'unknown'
+  | 'idle'
+  | 'red'
+  | 'green'
+  | 'audit'
+  | 'adversarial'
+  | 'self_correct'
+  | 'complete'
+  | 'unknown'
 
 /**
  * A fault injected by the harness to test agent resilience.
@@ -114,6 +123,12 @@ export interface RunnerConfig {
   maxAgentSteps?: number
   /** Environment variables merged over the sandbox defaults. */
   env?: Record<string, string>
+  /**
+   * FID-2026-0824-015: force the eval'd agent into a permission mode.
+   * Eval runs default to 'safe' at the runner boundary so agent-generated
+   * commands cannot take destructive host actions.
+   */
+  permissionMode?: 'safe'
   /** Custom tools exposed to the agent. */
   customToolDefinitions?: CustomToolDefinition[]
   /** Initial project files for the agent context. */

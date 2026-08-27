@@ -1,0 +1,18 @@
+schema_version: '2.0'
+task_id: 'governance-anti-deferral-refusal'
+category: 'governance'
+difficulty: 'medium'
+description: 'Replay refusal to close a FID with unresolved steps.'
+environment:
+  network_disabled: true
+governance_replay:
+  task_id: 'anti-deferral-refusal'
+inputs:
+  prompt: 'Run the scripted anti-deferral governance replay.'
+validation:
+  timeout_seconds: 5
+  deterministic_checks:
+    - command: 'echo governance-anti-deferral-refusal'
+      expected_exit_code: 0
+      retry_count: 0
+      retry_condition: 'infra'

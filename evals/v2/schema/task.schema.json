@@ -34,7 +34,8 @@
         "skill_driven",
         "programmatic_agent",
         "slash_cli",
-        "error_recovery"
+        "error_recovery",
+        "governance"
       ]
     },
     "difficulty": {
@@ -51,6 +52,17 @@
     "golden_patch": {
       "type": "string",
       "description": "Path to a canonical unified-diff golden patch. Relative paths are resolved against the task file's directory."
+    },
+    "governance_replay": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["task_id"],
+      "properties": {
+        "task_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
     },
     "environment": {
       "type": "object",
@@ -139,6 +151,34 @@
               "type": "array",
               "items": {
                 "type": "string"
+              }
+            }
+          }
+        },
+        "trajectory_assertions": {
+          "type": "array",
+          "description": "Per-agent separation-of-duties assertions scored from the trace subagent map (FID-2026-0824-014).",
+          "items": {
+            "type": "object",
+            "required": ["agent_type"],
+            "properties": {
+              "agent_type": {
+                "type": "string",
+                "minLength": 1
+              },
+              "denied_tools": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "default": []
+              },
+              "required_tools": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "default": []
               }
             }
           }

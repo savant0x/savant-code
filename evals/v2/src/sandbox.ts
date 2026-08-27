@@ -15,6 +15,14 @@ export interface CommandOptions {
   cwd?: string
   /** If true, run the command through the system shell. */
   shell?: boolean
+  /**
+   * FID-2026-0824-015: optional durable log file. Combined stdout+stderr is
+   * written here (bounded to maxLogBytes) once the command settles, so
+   * assertions can read full output even where in-memory capture truncates.
+   */
+  logFile?: string
+  /** Upper bound for the log file in bytes (default 1_000_000). */
+  maxLogBytes?: number
 }
 
 export interface CommandResult {
