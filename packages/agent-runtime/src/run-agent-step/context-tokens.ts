@@ -3,8 +3,14 @@ import { buildArray } from '@savant-code/common/util/array'
 import { userMessage } from '@savant-code/common/util/messages'
 
 import { shouldBoundaryCompact } from './auto-drive-driver'
+import { reconcileTokenCount } from './reconcile-token-count'
 import { getOrCreateEnforcement } from '../echo/enforcement'
 import { appendGroundingRefresh } from '../echo/grounding'
+import {
+  appendCompactionInventory,
+  describeRemovedToolItem,
+  diffRemovedSpans,
+} from '../evidence/inventory'
 import { callTokenCountAPI } from '../llm-api/savant-code-web-api'
 import { getAgentPrompt } from '../templates/strings'
 import {
@@ -18,8 +24,28 @@ import type { LoopAgentStepsParams } from './types'
 import type { AgentTemplate } from '@savant-code/common/types/agent-template'
 import type { Logger } from '@savant-code/common/types/contracts/logger'
 import type { JSONValue } from '@savant-code/common/types/json'
-import type { AgentState } from '@savant-code/common/types/session-state'
+import type { PrintModeCompactionStatus } from '@savant-code/common/types/print-mode'
+import type {
+  AgentState,
+  CompactionBlockReason,
+} from '@savant-code/common/types/session-state'
 import type { CustomToolDefinitions } from '@savant-code/common/util/file'
+
+/** FID-2026-0821-001 P1-1: one-shot warning clears below trigger −10%. */
+const WARNING_CLEAR_HYSTERESIS = 0.9
+const lastEmittedCompactionStatus = new WeakMap<AgentState, string>()
+
+function emitCompactionStatus(
+  agentState: AgentState,
+  onResponseChunk: (chunk: string | PrintModeCompactionStatus) => void,
+): void {
+  const status = agentState.compactionStatus
+  if (!status) return
+  const key = JSON.stringify(status)
+  if (lastEmittedCompactionStatus.get(agentState) === key) return
+  lastEmittedCompactionStatus.set(agentState, key)
+  onResponseChunk({ type: 'compaction_status', ...status })
+}
 
 /**
  * Computes the step prompt once per step and updates the agent state's
@@ -132,6 +158,12 @@ export async function prepareStepContext(params: {
     })
     if (tokenCountResult.inputTokens !== undefined) {
       agentState.contextTokenCount = tokenCountResult.inputTokens
+      // FID-2026-0821-001 P2-1: the endpoint count is provider-grade —
+      // stamp it so the reconcile entry point sees freshest-known truth.
+      agentState.lastProviderUsage = {
+        inputTokens: tokenCountResult.inputTokens,
+        capturedAt: Date.now(),
+      }
     } else if (tokenCountResult.error) {
       logger.warn(
         { error: tokenCountResult.error },
@@ -140,6 +172,20 @@ export async function prepareStepContext(params: {
       agentState.contextTokenCount = estimateContextTokensLocally()
     }
   }
+
+  // FID-2026-0821-001 P2-1: single precedence owner — fresh provider usage
+  // overrides the estimator; stale usage (post-prune) loses to the fresher
+  // lastPrunerCompletionAt stamp, so the spawn-boundary recount stands.
+  // Hosted runs stamp the endpoint count as usage too, so both modes
+  // converge through this one entry point.
+  // FID-2026-0821-003-A: pass the step logger so each reconcile decision is
+  // visible (chosen source + inputs) — the observability channel for the
+  // estimator↔truth alternation.
+  agentState.contextTokenCount = reconcileTokenCount({
+    agentState,
+    localEstimate: agentState.contextTokenCount,
+    logger,
+  })
 
   // P3b (FID-2026-0806-003): score any compaction that ran during the
   // PREVIOUS step against the real post-response token count just computed
@@ -170,6 +216,10 @@ export async function prepareStepContext(params: {
   // pressure gate (below the floor → no clearing). The boundary checkpoint
   // runs the same zero-cost micro-compact; a boundary pass is logged distinctly
   // so a long drive's checkpoint compaction is visible in the transcript.
+  // FID-2026-0824-027 post-closure amendment: PRE-history reference for the
+  // identity diff below (micro-compact filters indices over the original
+  // array, so kept messages keep object identity).
+  const historyBeforeMicroCompactRef = agentState.messageHistory
   const microResult = contextCompactor.microCompact(
     agentState.messageHistory,
     agentState.contextTokenCount,
@@ -194,6 +244,32 @@ export async function prepareStepContext(params: {
       },
       `⚙️ Context micro-compacted${boundaryLabel}: cleared stale tool results, ~${microResult.tokensSaved.toLocaleString()} tokens saved. Context at ${percentUsed}% of auto-compact threshold.`,
     )
+    // FID-2026-0824-027: inventory row + metrics increment (fail-open).
+    // FID-2026-0824-025/-027 post-closure amendment: region indices + bounded
+    // per-item rows derived by identity diff at this boundary.
+    const removalDiff = diffRemovedSpans({
+      prev: historyBeforeMicroCompactRef,
+      next: microResult.messages,
+      describeItem: describeRemovedToolItem,
+    })
+    void appendCompactionInventory({
+      projectRoot: loopParams.fileContext?.projectRoot ?? '',
+      runId: agentState.runId ?? agentState.agentId,
+      layer: 'micro',
+      removedMessages: messagesBeforeMicroCompact - microResult.messages.length,
+      tokensSaved: microResult.tokensSaved,
+      percentUsed,
+      regions: removalDiff.regions,
+      items: removalDiff.items,
+    })
+    const microMetrics = agentState.compactionMetrics ?? {
+      events: 0,
+      tokensSaved: 0,
+    }
+    agentState.compactionMetrics = {
+      events: microMetrics.events + 1,
+      tokensSaved: microMetrics.tokensSaved + microResult.tokensSaved,
+    }
     if (!agentState.parentId) {
       appendGroundingRefresh(
         agentState,
@@ -251,23 +327,68 @@ export async function prepareStepContext(params: {
 
   // FID-2026-0813-023: surface live compaction status to the read-only CLI
   // sidebar row. The heartbeat reads this off the snapshot's mainAgentState.
-  if (autoCompactCheck.shouldCompact) {
-    agentState.compactionStatus = {
-      phase: 'warning',
-      percentUsed: percentOfWindow,
+  // FID-2026-0821-001 P0-1: consume the previously-dropped `.reason`. At or
+  // above the trigger with shouldCompact=false, the only runtime cause is a
+  // blocking breaker — surface WHY instead of silently skipping (the hermes
+  // #62625 pattern). Cleared on any non-blocked step so it can never go
+  // stale. P1-1: the one-shot warning stamp clears below trigger −10%.
+  const atOrAboveTrigger =
+    agentState.contextTokenCount >= thresholds.autoCompact
+  if (!autoCompactCheck.shouldCompact && atOrAboveTrigger) {
+    const breaker = contextCompactor.describeBreaker()
+    const blockReason: CompactionBlockReason = breaker.blocking
+      ? 'circuit-breaker-open'
+      : 'compaction-disabled'
+    agentState.compactionBlock = { reason: blockReason }
+    if (!agentState.contextWarningIssuedAt) {
+      agentState.contextWarningIssuedAt = Date.now()
     }
-  } else if (microResult.tokensSaved > 0) {
     agentState.compactionStatus = {
-      phase: 'compacted',
-      tokensSaved: microResult.tokensSaved,
+      phase: 'blocked',
       percentUsed: percentOfWindow,
+      blockReason,
     }
+    logger.warn(
+      {
+        contextTokenCount: agentState.contextTokenCount,
+        threshold: thresholds.autoCompact,
+        reason: blockReason,
+      },
+      `⚠️ Auto-compact BLOCKED at ${percentOfWindow}% of window (${blockReason})`,
+    )
   } else {
-    agentState.compactionStatus = {
-      phase: 'idle',
-      percentUsed: percentOfWindow,
+    agentState.compactionBlock = undefined
+    if (autoCompactCheck.shouldCompact) {
+      if (!agentState.contextWarningIssuedAt) {
+        agentState.contextWarningIssuedAt = Date.now()
+      }
+      agentState.compactionStatus = {
+        phase: 'warning',
+        percentUsed: percentOfWindow,
+      }
+    } else {
+      if (
+        agentState.contextWarningIssuedAt !== undefined &&
+        agentState.contextTokenCount <
+          thresholds.autoCompact * WARNING_CLEAR_HYSTERESIS
+      ) {
+        agentState.contextWarningIssuedAt = undefined
+      }
+      if (microResult.tokensSaved > 0) {
+        agentState.compactionStatus = {
+          phase: 'compacted',
+          tokensSaved: microResult.tokensSaved,
+          percentUsed: percentOfWindow,
+        }
+      } else {
+        agentState.compactionStatus = {
+          phase: 'idle',
+          percentUsed: percentOfWindow,
+        }
+      }
     }
   }
 
+  emitCompactionStatus(agentState, loopParams.onResponseChunk)
   return { stepPrompt, systemTokens }
 }

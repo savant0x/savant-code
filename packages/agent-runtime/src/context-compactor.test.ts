@@ -203,17 +203,23 @@ describe('ContextCompactor thresholds (FID-2026-0814-012 — reactiveCompact is 
     expect(thresholdsFor(128_000).reactiveCompact).toBe(128_000)
   })
 
-  test('the autoCompact + 30_000 reconstruction coincides for normal windows', () => {
+  test('autoCompact is ratio-governed by the shared resolver (FID-2026-0821-001 P0-3)', () => {
+    // The legacy max(W − 30k, 100k) formula made autoCompact + 30k
+    // reconstruct the window; P0-3 replaces it with floor(clamp(W × ratio))
+    // — so the window itself must always be read from reactiveCompact
+    // directly.
     const t = thresholdsFor(262_144)
-    expect(t.autoCompact + 30_000).toBe(t.reactiveCompact)
+    expect(t.autoCompact).toBe(209_715)
+    expect(t.reactiveCompact).toBe(262_144)
   })
 
-  test('the autoCompact + 30_000 reconstruction overshoots at the clamp floor (why the fix reads reactiveCompact directly)', () => {
-    // At 128k the Math.max(..., 100_000) clamp floors autoCompact at 100k,
-    // so the reconstruction reads 130k — not the real 128k window.
+  test('small-window inversion: min side wins, ordering invariant preserved (P0-3)', () => {
+    // At 128k the clamp range inverts ((W − 30k) = 98k < floor 100k), so the
+    // resolver takes the min side — 98k, not the legacy 100k clamp floor.
+    // Ordering invariant holds: window > force > trigger.
     const t = thresholdsFor(128_000)
-    expect(t.autoCompact).toBe(100_000)
-    expect(t.autoCompact + 30_000).not.toBe(t.reactiveCompact)
-    expect(t.autoCompact + 30_000).toBe(130_000)
+    expect(t.autoCompact).toBe(98_000)
+    expect(t.autoCompact).toBeLessThan(128_000 - 15_000)
+    expect(t.reactiveCompact).toBe(128_000)
   })
 })

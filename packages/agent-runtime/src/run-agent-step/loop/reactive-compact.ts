@@ -3,6 +3,11 @@ import { getErrorObject } from '@savant-code/common/util/error'
 import { ContextCompactor } from '../../context-compactor'
 import { getOrCreateEnforcement } from '../../echo/enforcement'
 import { appendGroundingRefresh } from '../../echo/grounding'
+import {
+  appendCompactionInventory,
+  describeRemovedToolItem,
+  diffRemovedSpans,
+} from '../../evidence/inventory'
 import { getAgentOutput } from '../../util/agent-output'
 import { recordPostCompact } from '../../util/token-telemetry'
 import { runAgentStep } from '../step'
@@ -94,6 +99,10 @@ export async function retryAfterReactiveCompact(params: {
   }
 
   const beforeCount = initialAgentState.messageHistory.length
+  // FID-2026-0824-027 post-closure amendment: PRE-history reference for the
+  // inventory identity diff below (reactive truncation slices/filters
+  // indices over the original array, so kept messages keep identity).
+  const historyBeforeReactive = initialAgentState.messageHistory
   initialAgentState.messageHistory = reactiveResult.messages
   if (!initialAgentState.parentId) {
     appendGroundingRefresh(
@@ -108,6 +117,32 @@ export async function retryAfterReactiveCompact(params: {
     },
     `Layer 4 reactive compact: truncated ${beforeCount - reactiveResult.messages.length} messages, saved ~${reactiveResult.tokensSaved.toLocaleString()} tokens. Retrying API call once.`,
   )
+  // FID-2026-0824-027 post-closure amendment: the emergency truncation layer
+  // now writes its inventory row (+ metrics) like every other layer. The
+  // deferral assumed ReactiveCompactDeps lacked projectRoot, but loopParams
+  // already carries fileContext here — no deps threading required.
+  const removalDiff = diffRemovedSpans({
+    prev: historyBeforeReactive,
+    next: initialAgentState.messageHistory,
+    describeItem: describeRemovedToolItem,
+  })
+  void appendCompactionInventory({
+    projectRoot: loopParams.fileContext?.projectRoot ?? '',
+    runId,
+    layer: 'reactive',
+    removedMessages: beforeCount - reactiveResult.messages.length,
+    tokensSaved: reactiveResult.tokensSaved,
+    regions: removalDiff.regions,
+    items: removalDiff.items,
+  })
+  const reactiveMetrics = initialAgentState.compactionMetrics ?? {
+    events: 0,
+    tokensSaved: 0,
+  }
+  initialAgentState.compactionMetrics = {
+    events: reactiveMetrics.events + 1,
+    tokensSaved: reactiveMetrics.tokensSaved + reactiveResult.tokensSaved,
+  }
   // P4c (FID-2026-0806-003): PostCompact event (Axon pattern) with the
   // ratio metrics; feeds analytics + the CLI status surface. Non-blocking.
   try {

@@ -19,7 +19,10 @@ import { CircuitBreaker } from './context-compactor/circuit-breaker'
 import { runMicroCompact } from './context-compactor/micro-compact'
 import { isPromptTooLongError } from './context-compactor/phases'
 import { runReactiveCompact } from './context-compactor/reactive-compact'
-import { AUTO_COMPACT_BUFFER } from './context-compactor/state'
+import {
+  DEFAULT_AUTO_COMPACT_RATIO,
+  resolveTriggerThreshold,
+} from './context-compactor/state'
 
 import type {
   AutoCompactCheck,
@@ -101,7 +104,12 @@ export class ContextCompactor {
 
     // Calculate thresholds based on context window
     this.thresholds = {
-      autoCompact: Math.max(this.contextWindow - AUTO_COMPACT_BUFFER, 100_000),
+      // FID-2026-0821-001 P0-3: single threshold owner — the shared resolver
+      // replaces the local Math.max formula.
+      autoCompact: resolveTriggerThreshold(
+        this.contextWindow,
+        options.autoCompactRatio ?? DEFAULT_AUTO_COMPACT_RATIO,
+      ),
       reactiveCompact: this.contextWindow,
       microCompactMaxKeepRecent: options.microCompactMaxKeepRecent ?? 6,
     }
@@ -222,6 +230,17 @@ export class ContextCompactor {
         'Anti-thrash: compaction did NOT get context under the threshold — re-compaction loop risk, scoring as failure',
       )
     }
+  }
+
+  /**
+   * FID-2026-0821-001 P0-1: observable breaker state so callers never
+   * re-derive internals. `reason` is populated exactly when the breaker
+   * would block a compaction right now.
+   */
+  describeBreaker(): { blocking: boolean; reason?: string } {
+    const verdict = this.circuitBreaker.checkCooldown()
+    if (verdict.allowed) return { blocking: false }
+    return { blocking: true, reason: verdict.reason }
   }
 
   /**

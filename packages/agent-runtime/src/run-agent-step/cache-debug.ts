@@ -52,6 +52,13 @@ export function createCacheDebugSetup(params: {
   agentStepId: string
   model: AgentTemplate['model'] | undefined
   messageHistory: Message[]
+  /**
+   * FID-2026-0821-001 P2-1: always-on provider-usage sink — fires for every
+   * stream finalize regardless of CACHE_DEBUG_FULL_LOGGING. The caller
+   * stamps `agentState.lastProviderUsage` here so the reconcile path can
+   * prefer provider truth over the local estimator.
+   */
+  onUsage?: (usage: CacheDebugUsageData) => void
 }): CacheDebugSetup {
   const {
     agentType,
@@ -64,6 +71,7 @@ export function createCacheDebugSetup(params: {
     agentStepId,
     model,
     messageHistory,
+    onUsage,
   } = params
 
   let cacheDebugCorrelation:
@@ -137,36 +145,41 @@ export function createCacheDebugSetup(params: {
     }
   }
 
-  const onCacheDebugUsageReceived = cacheDebugCorrelation
-    ? (usage: CacheDebugUsageData) => {
-        enrichCacheDebugSnapshotWithUsage({
-          correlation: cacheDebugCorrelation,
-          usage,
-          logger,
-        })
-        // P4a/P4b (FID-2026-0806-003): emit the TokenUsageEvent from the
-        // EXISTING usage hook (R2 — extend, don't duplicate) and feed the
-        // cache-hit monitor.
-        cacheHitMonitor.onUsage(usage)
-        recordAgentTurn(
-          {
-            agentId: String(agentType),
-            phase: 'agent_step',
-            promptTokens: usage.inputTokens,
-            completionTokens: usage.outputTokens,
-            cachedTokens: isCachedTokenCountKnown(usage)
-              ? usage.cachedInputTokens
-              : null,
-            estimatedCostUsd: estimateCostUsd(
-              usage.inputTokens,
-              usage.outputTokens,
-              isCachedTokenCountKnown(usage) ? usage.cachedInputTokens : 0,
-            ),
-          },
-          logger,
-        )
-      }
-    : undefined
+  // FID-2026-0821-001 P2-1: the usage callback is now ALWAYS defined — the
+  // reconcile path (agentState.lastProviderUsage stamp via `onUsage`) must
+  // fire in every run, not only under CACHE_DEBUG_FULL_LOGGING.
+  // Correlation-gated internals preserve the previous behavior exactly when
+  // the snapshot is absent.
+  const onCacheDebugUsageReceived = (usage: CacheDebugUsageData) => {
+    onUsage?.(usage)
+    if (!cacheDebugCorrelation) return
+    enrichCacheDebugSnapshotWithUsage({
+      correlation: cacheDebugCorrelation,
+      usage,
+      logger,
+    })
+    // P4a/P4b (FID-2026-0806-003): emit the TokenUsageEvent from the
+    // EXISTING usage hook (R2 — extend, don't duplicate) and feed the
+    // cache-hit monitor.
+    cacheHitMonitor.onUsage(usage)
+    recordAgentTurn(
+      {
+        agentId: String(agentType),
+        phase: 'agent_step',
+        promptTokens: usage.inputTokens,
+        completionTokens: usage.outputTokens,
+        cachedTokens: isCachedTokenCountKnown(usage)
+          ? usage.cachedInputTokens
+          : null,
+        estimatedCostUsd: estimateCostUsd(
+          usage.inputTokens,
+          usage.outputTokens,
+          isCachedTokenCountKnown(usage) ? usage.cachedInputTokens : 0,
+        ),
+      },
+      logger,
+    )
+  }
 
   return {
     cacheDebugCorrelation,
