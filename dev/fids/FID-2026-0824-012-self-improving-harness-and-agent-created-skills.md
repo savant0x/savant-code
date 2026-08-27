@@ -319,8 +319,8 @@ for everything else.
 
 ### Verification Receipt
 
-- fingerprint: sha256:a48960c76a75d509d387dc3b56144f30180c3c7e228a01c87985228457245514
-- verified: 2026-08-24T19:51:03.763Z
+- fingerprint: sha256:0b824afe22d7de56c9643553c228eef96c95f4ea84cc733aa83edf9794d60ed5
+- verified: 2026-08-27T21:51:36.938Z
 - typecheck sdk: exit 0
 - typecheck common: exit 0
 - typecheck packages/agent-runtime: exit 0
