@@ -2,7 +2,6 @@ import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 
-
 import {
   EXPERIENCES_DIR_NAME,
   RAW_TRACES_FILE_NAME,
@@ -90,9 +89,15 @@ describe('buildExperienceRecord', () => {
 describe('appendExperienceRecord + runExperienceCapture', () => {
   test('appends one JSON line per record, creating the store on first use', () => {
     const root = fixtureRoot()
-    const r1 = appendExperienceRecord(root, buildExperienceRecord(FAILURE_INPUT))
+    const r1 = appendExperienceRecord(
+      root,
+      buildExperienceRecord(FAILURE_INPUT),
+    )
     expect(r1.outcome).toBe('allowed')
-    const r2 = appendExperienceRecord(root, buildExperienceRecord(FAILURE_INPUT))
+    const r2 = appendExperienceRecord(
+      root,
+      buildExperienceRecord(FAILURE_INPUT),
+    )
     expect(r2.outcome).toBe('allowed')
 
     const file = path.join(root, EXPERIENCES_DIR_NAME, RAW_TRACES_FILE_NAME)

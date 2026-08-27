@@ -156,7 +156,7 @@ export function createAgentState(
   let messageHistory: Message[] = []
 
   if (agentTemplate.includeMessageHistory) {
-messageHistory = filterUnfinishedToolCalls(parentAgentState.messageHistory)
+    messageHistory = filterUnfinishedToolCalls(parentAgentState.messageHistory)
     // FID-2026-0824-026: restore raw evidence over compaction sentinels for
     // audit agents (requiresRawEvidence) BEFORE knowledge-graph/spawn markers.
     if (rawEvidenceRecords && rawEvidenceRecords.length > 0) {

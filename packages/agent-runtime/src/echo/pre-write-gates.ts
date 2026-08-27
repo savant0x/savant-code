@@ -10,7 +10,7 @@
  *   verifiedFiles; FID-2026-0819-001 cumulative credit)
  * - Law 7 (Strict): hasSearchedSinceGreen before writing a new file
  * - Law 8 (Strict): intentLogged before first write
-* - FID gate: Orchestrator → FID > 100 lines → route through Recorder
+ * - FID gate: Orchestrator → FID > 100 lines → route through Recorder
  *   (operator directive 2026-08-23: hybrid escalation threshold raised
  *   from 20 to 100 — anything above 100 lines needs the Recorder)
  * - P5b YAGNI gate (FID-2026-0806-003): Forge writes that declare
@@ -213,7 +213,7 @@ export function runPreWriteGates(params: {
       (typeof operationDiff === 'string' ? operationDiff : '')
     const lineCount = countLines(content)
 
-// Scope note: the gate measures PER-CALL payload lines (one tool call's
+    // Scope note: the gate measures PER-CALL payload lines (one tool call's
     // content), not cumulative per-session FID delta. N sequential <=100-line
     // edits can grow one document past 100 total lines without tripping this
     // gate — an accepted limitation; cumulative tracking deliberately not

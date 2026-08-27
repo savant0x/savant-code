@@ -78,7 +78,7 @@ export const createSidebarActions = (set: SetState): ChatSidebarActions => ({
           outcome: 'ineffective',
           percentUsed: status.percentUsed,
         })
-} else if (prev?.phase === 'compacting' && status.phase === 'warning') {
+      } else if (prev?.phase === 'compacting' && status.phase === 'warning') {
         // Back-compat fallback for older paired binaries whose runtime still
         // writes `warning` at an ineffective pruner completion.
         recordRun(state, {
@@ -89,7 +89,7 @@ export const createSidebarActions = (set: SetState): ChatSidebarActions => ({
         // FID-2026-0824-023: Layer-2 micro-compact outcomes become visible
         // lifecycle events — stale tool results were cleared and the operator
         // sees it (data destruction is never silent).
-recordRun(state, {
+        recordRun(state, {
           outcome: 'compacted',
           tokensSaved: status.tokensSaved,
           percentUsed: status.percentUsed,
@@ -102,10 +102,8 @@ recordRun(state, {
   setLastCompactionReport: (report) =>
     set((state) => {
       if (
-        state.lastCompactionReport?.summaryExcerpt ===
-          report?.summaryExcerpt &&
-        state.lastCompactionReport?.removedMessages ===
-          report?.removedMessages
+        state.lastCompactionReport?.summaryExcerpt === report?.summaryExcerpt &&
+        state.lastCompactionReport?.removedMessages === report?.removedMessages
       ) {
         return
       }

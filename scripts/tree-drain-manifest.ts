@@ -527,7 +527,13 @@ export const GROUPS: DrainGroup[] = [
       '',
       'Docs only.',
     ].join('\n'),
-    paths: ['CHANGELOG.md', 'README.md', 'AGENTS.md', 'ARCHITECTURE.md', 'NOTICE'],
+    paths: [
+      'CHANGELOG.md',
+      'README.md',
+      'AGENTS.md',
+      'ARCHITECTURE.md',
+      'NOTICE',
+    ],
   },
   {
     message: [

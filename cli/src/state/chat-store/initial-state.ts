@@ -46,7 +46,7 @@ export const initialState: ChatStoreState = {
   sidebarCollapsed: false,
   compactionStatus: null,
   /** FID-2026-0814-006: session compaction counter + bounded lifecycle events. */
-compactionCount: 0,
+  compactionCount: 0,
   compactionEvents: [],
   lastCompactionReport: null,
   toolsUsed: [],

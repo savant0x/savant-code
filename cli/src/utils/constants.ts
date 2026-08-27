@@ -155,7 +155,7 @@ export const AGENT_MODES = Object.keys(AGENT_MODE_TO_ID) as AgentMode[]
  * the mode-toggle hovertip and any future /mode help surface.
  */
 export const MODE_DESCRIPTIONS: Record<AgentMode, string> = {
-HYBRID:
+  HYBRID:
     'Default. Write directly with harness-enforced read-before-write and verification; escalate ceremony past 100 lines.',
   SCAFFOLD:
     'Initialize a new project under a single umbrella FID; project-root writes only.',

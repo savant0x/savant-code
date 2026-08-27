@@ -19,7 +19,7 @@ export const createCodeEditor = (options: {
     // hardcodes (gpt-5.1 / claude-opus-4.8 / deepseek-v4-pro, etc.) were
     // removed — Forge inherits the operator's model via withParentModel;
     // `openrouter/free` is the safe free fallback, never a paid model.
-model: 'openrouter/free',
+    model: 'openrouter/free',
 
     displayName: 'Savant the Forge',
     spawnerPrompt:

@@ -8,7 +8,7 @@
     "typecheck": "tsc --noEmit -p .",
     "test:v2": "bun test v2/tests",
     "harness:v2": "bun run v2/src/cli.ts --tasks-dir v2/tasks --output-dir v2/reports --mode baseline",
-"evals:smoke": "bun run v2/src/cli.ts --governance-smoke",
+    "evals:smoke": "bun run v2/src/cli.ts --governance-smoke",
     "prove": "bun run v2/src/cli.ts prove",
     "test:graph-e2e": "playwright test graph-export-e2e",
     "test:graph-e2e:install": "playwright install chromium"

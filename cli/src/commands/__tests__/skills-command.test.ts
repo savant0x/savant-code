@@ -9,7 +9,6 @@ import {
 } from '@savant-code/common/util/skill-management'
 import { afterEach, describe, expect, test } from 'bun:test'
 
-
 import { findCommand } from '../command-registry'
 import { runSkillsCommand } from '../skills'
 
@@ -91,7 +90,14 @@ describe('/skills command (FID-2026-0824-012 S0-A/B, S2-E)', () => {
     expect(untrusted).toContain("untrusted 'cycle'")
     expect(
       fs.existsSync(
-        path.join(root, '.agents', 'skills', '.quarantine', 'cycle', 'SKILL.md'),
+        path.join(
+          root,
+          '.agents',
+          'skills',
+          '.quarantine',
+          'cycle',
+          'SKILL.md',
+        ),
       ),
     ).toBe(true)
   })
@@ -132,8 +138,10 @@ describe('/skills command (FID-2026-0824-012 S0-A/B, S2-E)', () => {
 
   test('unknown skill names produce explicit errors', () => {
     const root = fixtureRoot()
-    expect(runSkillsCommand(root, 'trust ghost')).toContain('no quarantined draft')
-    expect(runSkillsCommand(root, 'show ghost')).toContain("not found")
+    expect(runSkillsCommand(root, 'trust ghost')).toContain(
+      'no quarantined draft',
+    )
+    expect(runSkillsCommand(root, 'show ghost')).toContain('not found')
     expect(runSkillsCommand(root, 'rollback ghost 1')).toContain('no snapshot')
   })
 })

@@ -135,7 +135,7 @@ export const handleSpawnAgents = (async (
           parentAgentTemplate,
         )
 
-validateAgentInput(agentTemplate, agentType, prompt, spawnParams)
+        validateAgentInput(agentTemplate, agentType, prompt, spawnParams)
 
         // FID-2026-0824-026: preload raw evidence for audit agents so the
         // spawn-time splice can restore sentinel-compacted results verbatim.
@@ -183,7 +183,7 @@ validateAgentInput(agentTemplate, agentType, prompt, spawnParams)
           throw new Error('Subagent propagation context is missing.')
         }
 
-// FID-2026-0823-012 ISSUE-D: the child-run invocation is parameterized
+        // FID-2026-0823-012 ISSUE-D: the child-run invocation is parameterized
         // by (state, prompt) so a stalled recorder can be retried on a FRESH
         // state with a corrective failure-naming suffix instead of forcing
         // the parent into an identical blind re-spawn (identical prompts
@@ -282,7 +282,7 @@ validateAgentInput(agentTemplate, agentType, prompt, spawnParams)
 
         let result = await runChild(subAgentState, prompt || '')
 
-// FID-2026-0823-012 ISSUE-D: -008-guard-aware corrective retry
+        // FID-2026-0823-012 ISSUE-D: -008-guard-aware corrective retry
         // ladder. A stalled recorder (no successful write_file/set_output)
         // is retried on a fresh state with a corrective suffix naming the
         // exact relay-guard reason. Bounded by RECORDER_STALL_RETRY_LIMIT —

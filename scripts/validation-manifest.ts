@@ -206,7 +206,7 @@ export function repositoryValidationGates(
       args: ['run', 'lint:md'],
       cwd: root,
     },
-// FID-2026-0824-019: optional Tier-3 capability gate (opt-in via env).
+    // FID-2026-0824-019: optional Tier-3 capability gate (opt-in via env).
     ...[releaseEvalTierGate(root)].filter(
       (gate): gate is ValidationGateSpec => gate !== null,
     ),

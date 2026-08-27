@@ -32,13 +32,17 @@ describe('inline computeTriggerThreshold parity (FID-2026-0821-003-B)', () => {
   // Windows: standard 200k, power-of-two 262144/131072, small-window
   // inversion 128k/100k, baked fallback 250k/400k. Ratios: default 0.8 plus
   // clamp exercises (tiny 0.2, oversized 1.2) and a mid ratio 0.5.
-  const windows = [100_000, 128_000, 131_072, 200_000, 250_000, 262_144, 400_000]
+  const windows = [
+    100_000, 128_000, 131_072, 200_000, 250_000, 262_144, 400_000,
+  ]
   const ratios = [0.2, 0.5, 0.8, 1.0, 1.2]
 
   test('matches resolveTriggerThreshold across the window/ratio sweep', () => {
     for (const window of windows) {
       for (const ratio of ratios) {
-        expect(inline(window, ratio)).toBe(resolveTriggerThreshold(window, ratio))
+        expect(inline(window, ratio)).toBe(
+          resolveTriggerThreshold(window, ratio),
+        )
       }
     }
   })

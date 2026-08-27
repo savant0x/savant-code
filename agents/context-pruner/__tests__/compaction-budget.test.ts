@@ -109,7 +109,7 @@ describe('seeded fuzz — pair integrity under planned folds', () => {
   /** Deterministic LCG so CI failures are reproducible. */
   function lcg(seed: number): () => number {
     let s = seed >>> 0
-    return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 2 ** 32)
+    return () => (s = (s * 1664525 + 1013904223) >>> 0) / 2 ** 32
   }
 
   function buildRandomHistory(rand: () => number): Message[] {

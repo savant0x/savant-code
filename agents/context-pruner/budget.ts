@@ -24,7 +24,9 @@ export type ExchangeSegment = { start: number; end: number }
  * subsequent segments begin at each user message. Boundaries therefore never
  * land between an assistant tool-call and its trailing tool result.
  */
-export function segmentExchanges(messages: readonly Message[]): ExchangeSegment[] {
+export function segmentExchanges(
+  messages: readonly Message[],
+): ExchangeSegment[] {
   const segments: ExchangeSegment[] = []
   const total = messages.length
   let start = 0
@@ -44,7 +46,7 @@ export function tokensForRange(
   start: number,
   end: number,
 ): number {
-let chars = 0
+  let chars = 0
   // Shape-agnostic estimate: JSON.stringify covers text parts, JSON tool
   // payloads, and image metadata uniformly without narrowing Message content.
   for (let i = start; i < end && i < messages.length; i++) {

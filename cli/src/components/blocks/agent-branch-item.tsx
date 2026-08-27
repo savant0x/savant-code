@@ -191,7 +191,7 @@ export const AgentBranchItem = memo((props: AgentBranchItemProps) => {
                   marginBottom: children ? 1 : 0,
                 }}
               >
-<box
+                <box
                   style={{
                     width: 1,
                     backgroundColor: theme.primary,

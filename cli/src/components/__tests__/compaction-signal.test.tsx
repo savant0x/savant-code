@@ -1,11 +1,4 @@
-import {
-  afterAll,
-  beforeEach,
-  describe,
-  expect,
-  mock,
-  test,
-} from 'bun:test'
+import { afterAll, beforeEach, describe, expect, mock, test } from 'bun:test'
 import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 
@@ -33,9 +26,8 @@ const compactionState: {
 } = { compactionStatus: null, compactionEvents: [] }
 
 mock.module('../../state/chat-store', () => ({
-  useChatStore: (
-    selector: (s: typeof compactionState) => unknown,
-  ): unknown => selector(compactionState),
+  useChatStore: (selector: (s: typeof compactionState) => unknown): unknown =>
+    selector(compactionState),
 }))
 
 mockOpentuiReactForStaticRender()
@@ -120,7 +112,7 @@ describe('CompactionSignal (FID-2026-0822-006 characterization)', () => {
     expect(markup).toContain('●')
   })
 
-test('compacted phase renders the micro-compact completion line', () => {
+  test('compacted phase renders the micro-compact completion line', () => {
     compactionState.compactionStatus = { phase: 'compacted', tokensSaved: 850 }
 
     const markup = renderToStaticMarkup(<CompactionSignal />)

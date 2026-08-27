@@ -80,8 +80,7 @@ const COMPACT_COMMANDS: SlashCommand[] = [
   {
     id: 'compact',
     label: 'compact',
-    description:
-      'Summarize older turns now to free context window, then pause',
+    description: 'Summarize older turns now to free context window, then pause',
   },
 ]
 

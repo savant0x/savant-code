@@ -469,7 +469,7 @@ describe('runPreWriteGates — Law 3 cumulative verification (FID-2026-0820-012)
     expect(result.blocked).toBe(false)
   })
 
-it('does NOT block exempt-path writes under dev/scratchpad/ and dev/nova/', () => {
+  it('does NOT block exempt-path writes under dev/scratchpad/ and dev/nova/', () => {
     for (const target of [
       '/proj/dev/scratchpad/notes.md',
       '/proj/dev/nova/outbox.md',
@@ -483,45 +483,42 @@ it('does NOT block exempt-path writes under dev/scratchpad/ and dev/nova/', () =
   })
 })
 
-describe(
-  'runPreWriteGates — FID Recorder routing gate (>100 lines, operator directive 2026-08-23)',
-  () => {
-    const FID_PATH = '/proj/dev/fids/FID-2026-0823-100-x.md'
+describe('runPreWriteGates — FID Recorder routing gate (>100 lines, operator directive 2026-08-23)', () => {
+  const FID_PATH = '/proj/dev/fids/FID-2026-0823-100-x.md'
 
-    /** Build content whose countLines() (split on '\n') is exactly `lines`. */
-    function fidContent(lines: number): string {
-      const rows: string[] = []
-      for (let i = 0; i < lines; i++) rows.push(`line ${i}`)
-      return rows.join('\n')
-    }
+  /** Build content whose countLines() (split on '\n') is exactly `lines`. */
+  function fidContent(lines: number): string {
+    const rows: string[] = []
+    for (let i = 0; i < lines; i++) rows.push(`line ${i}`)
+    return rows.join('\n')
+  }
 
-    function runOrchestratorFidWrite(content: string, agentId?: string) {
-      const state = createEnforcementState()
-      return runPreWriteGates({
-        toolName: 'write_file',
-        input: { path: FID_PATH, content },
-        agentId: agentId ?? 'orchestrator',
-        state,
-        mode: 'hybrid',
-        tier: 'core_4',
-      })
-    }
-
-    it('ALLOWS an Orchestrator FID write at exactly 100 payload lines', () => {
-      const result = runOrchestratorFidWrite(fidContent(100))
-      expect(result.blocked).toBe(false)
+  function runOrchestratorFidWrite(content: string, agentId?: string) {
+    const state = createEnforcementState()
+    return runPreWriteGates({
+      toolName: 'write_file',
+      input: { path: FID_PATH, content },
+      agentId: agentId ?? 'orchestrator',
+      state,
+      mode: 'hybrid',
+      tier: 'core_4',
     })
+  }
 
-    it('BLOCKS an Orchestrator FID write above 100 lines with route-through-Recorder', () => {
-      const result = runOrchestratorFidWrite(fidContent(101))
-      expect(result.blocked).toBe(true)
-      expect(result.reason).toContain('> 100')
-      expect(result.reason).toContain('Route through the Recorder')
-    })
+  it('ALLOWS an Orchestrator FID write at exactly 100 payload lines', () => {
+    const result = runOrchestratorFidWrite(fidContent(100))
+    expect(result.blocked).toBe(false)
+  })
 
-    it('does NOT gate non-Orchestrator agents (Forge relays unaffected)', () => {
-      const result = runOrchestratorFidWrite(fidContent(150), 'forge')
-      expect(result.blocked).toBe(false)
-    })
-  },
-)
+  it('BLOCKS an Orchestrator FID write above 100 lines with route-through-Recorder', () => {
+    const result = runOrchestratorFidWrite(fidContent(101))
+    expect(result.blocked).toBe(true)
+    expect(result.reason).toContain('> 100')
+    expect(result.reason).toContain('Route through the Recorder')
+  })
+
+  it('does NOT gate non-Orchestrator agents (Forge relays unaffected)', () => {
+    const result = runOrchestratorFidWrite(fidContent(150), 'forge')
+    expect(result.blocked).toBe(false)
+  })
+})

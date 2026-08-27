@@ -68,9 +68,9 @@ describe('levenshtein + patch ratio (S2-B circuit breaker)', () => {
   test('patch ratio caps at the 10% threshold', () => {
     const original = 'a'.repeat(100)
     // 5-char change on 100 chars = 5% (passes)
-    expect(patchChangeRatio(original, 'b'.repeat(5) + 'a'.repeat(95))).toBeLessThanOrEqual(
-      PATCH_MAX_CHANGE_RATIO,
-    )
+    expect(
+      patchChangeRatio(original, 'b'.repeat(5) + 'a'.repeat(95)),
+    ).toBeLessThanOrEqual(PATCH_MAX_CHANGE_RATIO)
     // 50-char change = 50% (fails)
     expect(
       patchChangeRatio(original, 'b'.repeat(50) + 'a'.repeat(50)),
@@ -113,7 +113,9 @@ describe('createSkill (S2-B/S2-C)', () => {
     )
     expect(fs.existsSync(draftFile)).toBe(true)
     expect(
-      fs.existsSync(path.join(skillCanonicalDir(root, 'release-runner'), 'SKILL.md')),
+      fs.existsSync(
+        path.join(skillCanonicalDir(root, 'release-runner'), 'SKILL.md'),
+      ),
     ).toBe(false)
 
     // Ledger entry with the full S2-C shape.
@@ -130,7 +132,9 @@ describe('createSkill (S2-B/S2-C)', () => {
 
     // Snapshot v1 exists for rollback.
     expect(
-      fs.existsSync(path.join(skillVersionsDir(root, 'release-runner'), 'v1', 'SKILL.md')),
+      fs.existsSync(
+        path.join(skillVersionsDir(root, 'release-runner'), 'v1', 'SKILL.md'),
+      ),
     ).toBe(true)
   })
 
@@ -356,9 +360,9 @@ describe('trust / untrust (S2-D operator boundary)', () => {
     expect(
       fs.existsSync(path.join(skillCanonicalDir(root, 'trustme'), 'SKILL.md')),
     ).toBe(true)
-    expect(fs.existsSync(path.join(skillQuarantineDir(root, 'trustme'), 'SKILL.md'))).toBe(
-      false,
-    )
+    expect(
+      fs.existsSync(path.join(skillQuarantineDir(root, 'trustme'), 'SKILL.md')),
+    ).toBe(false)
   })
 
   test('untrust moves the live copy back to quarantine', () => {
@@ -375,10 +379,14 @@ describe('trust / untrust (S2-D operator boundary)', () => {
     const result = untrustSkill(root, 'untrustme')
     expect(result.ok).toBe(true)
     expect(
-      fs.existsSync(path.join(skillQuarantineDir(root, 'untrustme'), 'SKILL.md')),
+      fs.existsSync(
+        path.join(skillQuarantineDir(root, 'untrustme'), 'SKILL.md'),
+      ),
     ).toBe(true)
     expect(
-      fs.existsSync(path.join(skillCanonicalDir(root, 'untrustme'), 'SKILL.md')),
+      fs.existsSync(
+        path.join(skillCanonicalDir(root, 'untrustme'), 'SKILL.md'),
+      ),
     ).toBe(false)
   })
 
@@ -431,7 +439,13 @@ describe('rollback (S2-E)', () => {
       reason: 'patch',
     })
     // v2 snapshot = the ORIGINAL (pre-patch) content.
-    const result = rollbackDraft({ rootDir: root, name: 'rollme2', seq: 2, sessionId: 's', reason: 'restore' })
+    const result = rollbackDraft({
+      rootDir: root,
+      name: 'rollme2',
+      seq: 2,
+      sessionId: 's',
+      reason: 'restore',
+    })
     expect(result.ok).toBe(true)
     const draft = readCurrentSkill(root, 'rollme2')
     expect(draft.draft?.content).toContain('## Pitfalls\n')
@@ -531,9 +545,16 @@ describe('deleteDraftSkill', () => {
       reason: 'create',
     })
     expect(
-      deleteDraftSkill({ rootDir: root, name: 'doomed', sessionId: 's', reason: 'rejected draft' }).ok,
+      deleteDraftSkill({
+        rootDir: root,
+        name: 'doomed',
+        sessionId: 's',
+        reason: 'rejected draft',
+      }).ok,
     ).toBe(true)
-    expect(fs.existsSync(path.join(skillQuarantineDir(root, 'doomed')))).toBe(false)
+    expect(fs.existsSync(path.join(skillQuarantineDir(root, 'doomed')))).toBe(
+      false,
+    )
   })
 
   test('rejects deleting a trusted (live) skill', () => {

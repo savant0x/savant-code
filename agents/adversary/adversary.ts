@@ -34,7 +34,7 @@ export const createAdversary = (
   ],
   spawnableAgents: [],
 
-inheritParentSystemPrompt: true,
+  inheritParentSystemPrompt: true,
   includeMessageHistory: true,
   // FID-2026-0824-026: meta-auditor resolves citations against raw bytes.
   requiresRawEvidence: true,

@@ -1,3 +1,6 @@
+<!-- markdownlint-disable MD001 MD013 -->
+<!-- MD013 is narrowly disabled for this evidence-heavy research report: long cited prose, wide comparison tables, and the verification appendix are intentionally preserved in source form, per repo convention. -->
+
 # **Governance Protocol and Git Architecture Specification for High-Concurrency Autonomous Development**
 
 ## **1\. Executive Summary**

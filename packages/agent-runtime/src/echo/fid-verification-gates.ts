@@ -74,7 +74,7 @@ const VERIFIED_STATUSES = new Set(['fixed', 'verified'])
  */
 function withoutFencedBlocks(content: string): string {
   return content.replace(/```[^\s]*\n[\s\S]*?```/g, '')
-}/**
+} /**
  * Extract the text of a headed section up to the next heading of the same
  * or higher level (or EOF). `start` must match a heading on its own line
  * (anchored ^ + $) so inline backtick mentions of the heading name inside
@@ -91,9 +91,7 @@ function sectionBetween(
   if (!match || match.index === undefined) return undefined
   const after = without.slice(match.index + match[0].length)
   const nextMatch = after.search(next)
-  return nextMatch === -1
-    ? after
-    : after.slice(0, nextMatch)
+  return nextMatch === -1 ? after : after.slice(0, nextMatch)
 }
 
 /** The `## Verification Gates` section body (declarations + receipt). */
@@ -204,7 +202,8 @@ export function computeFidFingerprint(content: string): string {
   const stripped = withoutFencedBlocks(content)
   const start = stripped.indexOf('### Verification Receipt')
   const withoutReceipt =
-    stripped.slice(0, start) + stripped.slice(start + block.length + '### Verification Receipt'.length)
+    stripped.slice(0, start) +
+    stripped.slice(start + block.length + '### Verification Receipt'.length)
   return createHash('sha256').update(withoutReceipt, 'utf8').digest('hex')
 }
 

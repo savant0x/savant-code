@@ -51,9 +51,7 @@ export type RecorderOutcome = { ok: true } | { ok: false; reason: string }
  */
 function isAllowedWritePath(path: string): boolean {
   const canonical = canonicalizePath(path)
-  return (
-    canonical.includes('/dev/fids/') || canonical.endsWith('/CHANGELOG.md')
-  )
+  return canonical.includes('/dev/fids/') || canonical.endsWith('/CHANGELOG.md')
 }
 
 /** A tool result is a failure when any JSON part carries an errorMessage. */

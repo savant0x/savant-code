@@ -23,7 +23,9 @@ describe('buildResultDigest preservation contract (FID-2026-0824-024)', () => {
   test('long values are bounded to HEAD plus TAIL slices', () => {
     const long = 'x'.repeat(4000)
 
-    const digest = buildResultDigest('read_files', [{ type: 'text', text: long }])
+    const digest = buildResultDigest('read_files', [
+      { type: 'text', text: long },
+    ])
 
     expect(digest).not.toBeNull()
     expect(digest).toContain('…TAIL:')

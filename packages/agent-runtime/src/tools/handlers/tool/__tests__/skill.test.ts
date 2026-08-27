@@ -106,20 +106,31 @@ describe('handleSkill', () => {
     fs.mkdirSync(path.join(skillDir, 'references', 'details'), {
       recursive: true,
     })
-    fs.writeFileSync(path.join(skillDir, 'SKILL.md'), `---\nname: demo\ndescription: progressive\n---\n# Demo\n`)
+    fs.writeFileSync(
+      path.join(skillDir, 'SKILL.md'),
+      `---\nname: demo\ndescription: progressive\n---\n# Demo\n`,
+    )
     fs.writeFileSync(
       path.join(skillDir, 'references', 'details', 'checklist.md'),
       '# Deep checklist\n',
     )
 
-    const { output } = await callSkill('demo', { projectRoot, skills: {} }, 'details/checklist.md')
+    const { output } = await callSkill(
+      'demo',
+      { projectRoot, skills: {} },
+      'details/checklist.md',
+    )
     const value = (output as { value: Record<string, string> }[])[0].value
     expect(value.content).toContain('# Deep checklist')
   })
 
   it('rejects traversal in the references path', async () => {
     writeSkill(projectRoot, 'demo', 'traversal test')
-    const { output } = await callSkill('demo', { projectRoot, skills: {} }, '../secret.md')
+    const { output } = await callSkill(
+      'demo',
+      { projectRoot, skills: {} },
+      '../secret.md',
+    )
     const value = (output as { value: Record<string, string> }[])[0].value
     expect(value.content).toContain('not found')
   })

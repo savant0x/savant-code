@@ -1,3 +1,6 @@
+<!-- markdownlint-disable MD013 MD022 MD032 -->
+<!-- MD013 is narrowly disabled for this evidence-heavy research report: long cited prose, wide comparison tables, and the verification appendix are intentionally preserved in source form, per repo convention. -->
+
 # Git Workflow Optimization for a Solo Operator, Single-Committer, Agent-Coordinated Codebase — Deep Research Prompt (v2)
 
 > **HOW TO USE THIS PROMPT (for Gemini Deep Research):**

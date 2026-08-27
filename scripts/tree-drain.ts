@@ -48,7 +48,9 @@ function groupPaths(
   const owners = new Map<string, string>()
 
   for (const change of changes) {
-    const matches = GROUPS.filter((g) => g.paths.some((p) => change.path === p || change.path.startsWith(`${p}/`)))
+    const matches = GROUPS.filter((g) =>
+      g.paths.some((p) => change.path === p || change.path.startsWith(`${p}/`)),
+    )
     if (matches.length === 0) {
       leftovers.push(change)
       continue
@@ -73,7 +75,9 @@ function groupPaths(
   // Fail-closed: no empty groups
   for (const group of GROUPS) {
     if (!assigned.has(group.message)) {
-      throw new Error(`EMPTY GROUP: "${group.message.split('\n')[0]}" matched zero paths.`)
+      throw new Error(
+        `EMPTY GROUP: "${group.message.split('\n')[0]}" matched zero paths.`,
+      )
     }
   }
   return assigned
@@ -81,9 +85,12 @@ function groupPaths(
 
 function gitAdd(paths: Array<{ status: string; path: string }>): void {
   const args = paths.map((p) => p.path)
-  execSync(`git add -- ${args.map((a) => `"${a.replaceAll('"', '\\"')}"`).join(' ')}`, {
-    stdio: ['ignore', 'inherit', 'inherit'],
-  })
+  execSync(
+    `git add -- ${args.map((a) => `"${a.replaceAll('"', '\\"')}"`).join(' ')}`,
+    {
+      stdio: ['ignore', 'inherit', 'inherit'],
+    },
+  )
 }
 
 function gitCommit(message: string): void {
@@ -92,7 +99,9 @@ function gitCommit(message: string): void {
   // 20+ times. The full battery runs once before the release push (Phase B).
   const tmp = execSync(`mktemp`, { encoding: 'utf8' }).trim()
   require('node:fs').writeFileSync(tmp, message, 'utf8')
-  execSync(`git commit --no-verify -F "${tmp}"`, { stdio: ['ignore', 'inherit', 'inherit'] })
+  execSync(`git commit --no-verify -F "${tmp}"`, {
+    stdio: ['ignore', 'inherit', 'inherit'],
+  })
   execSync(`rm -f "${tmp}"`)
 }
 
@@ -108,8 +117,10 @@ function main(): void {
     if (!APPLY) {
       console.log(`\n=== ${subject}`)
       console.log(`    files: ${files.length}`)
-      for (const f of files.slice(0, 12)) console.log(`      ${f.status} ${f.path}`)
-      if (files.length > 12) console.log(`      … and ${files.length - 12} more`)
+      for (const f of files.slice(0, 12))
+        console.log(`      ${f.status} ${f.path}`)
+      if (files.length > 12)
+        console.log(`      … and ${files.length - 12} more`)
     } else {
       console.log(`\n>>> git add (${files.length} paths) + commit: ${subject}`)
       gitAdd(files)
@@ -117,8 +128,13 @@ function main(): void {
       console.log(`    committed ${files.length} paths`)
     }
   }
-  console.log(`\n${APPLY ? 'APPLIED' : 'DRY-RUN'}: ${GROUPS.length} groups, ${total} paths total.`)
-  if (!APPLY) console.log('Re-run with --apply to execute. Use --no-verify; gates run at push (Phase B).')
+  console.log(
+    `\n${APPLY ? 'APPLIED' : 'DRY-RUN'}: ${GROUPS.length} groups, ${total} paths total.`,
+  )
+  if (!APPLY)
+    console.log(
+      'Re-run with --apply to execute. Use --no-verify; gates run at push (Phase B).',
+    )
 }
 
 main()

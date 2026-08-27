@@ -21,7 +21,9 @@ const inputSchema = z
     name: z
       .string()
       .min(1)
-      .describe('The skill name (lowercase alphanumeric with single hyphen separators)'),
+      .describe(
+        'The skill name (lowercase alphanumeric with single hyphen separators)',
+      ),
     description: z
       .string()
       .optional()
@@ -36,31 +38,34 @@ const inputSchema = z
       .string()
       .optional()
       .describe('Exact anchor text to replace (patch)'),
-    newString: z
-      .string()
-      .optional()
-      .describe('Replacement text (patch)'),
+    newString: z.string().optional().describe('Replacement text (patch)'),
     relPath: z
       .string()
       .optional()
       .describe('references/ sub-path for write_file/remove_file'),
-    content: z
-      .string()
-      .optional()
-      .describe('File content for write_file'),
+    content: z.string().optional().describe('File content for write_file'),
     seq: z
       .number()
       .optional()
-      .describe('Snapshot sequence to restore (rollback, quarantine scope only)'),
-    bump: z.enum(['patch', 'minor', 'major']).optional().describe('Semver bump kind (defaults: patch→patch, edit→minor)'),
+      .describe(
+        'Snapshot sequence to restore (rollback, quarantine scope only)',
+      ),
+    bump: z
+      .enum(['patch', 'minor', 'major'])
+      .optional()
+      .describe('Semver bump kind (defaults: patch→patch, edit→minor)'),
     reason: z
       .string()
       .min(1)
-      .describe('Why this change is being made (audited in the version ledger)'),
+      .describe(
+        'Why this change is being made (audited in the version ledger)',
+      ),
     provenanceRef: z
       .string()
       .optional()
-      .describe('Source lesson/session evidence reference (FID-2026-0824-012 provenance)'),
+      .describe(
+        'Source lesson/session evidence reference (FID-2026-0824-012 provenance)',
+      ),
   })
   .describe(
     'Author, patch, or version skills (Scribe/Orchestrator only — FID-2026-0824-012). Every mutation snapshots the current state into the version ledger and lands in .quarantine/ pending operator trust. Agent rollback is quarantine-scoped only; operator rollback uses the CLI.',

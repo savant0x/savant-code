@@ -597,7 +597,7 @@ export async function executeToolCall<T extends ToolName>(
 
     return await toolResultPromise.then(
       async ({ output, creditsUsed }) => {
-const toolResult: ToolMessage = {
+        const toolResult: ToolMessage = {
           role: 'tool',
           toolName,
           toolCallId: toolCall.toolCallId,

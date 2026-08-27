@@ -10,7 +10,7 @@ export const taskCategorySchema = z.enum([
   'mcp_tool',
   'skill_driven',
   'programmatic_agent',
-'slash_cli',
+  'slash_cli',
   'error_recovery',
   'governance',
   // FID-2026-0824-019: CodeScaleBench-inspired capability taxonomy.
@@ -77,7 +77,7 @@ export const taskDefinitionSchema = z.object({
   environment: environmentSchema,
   /** Optional path to a golden patch (unified diff) for this task. */
   golden_patch: z.string().optional(),
-/** Links a YAML task manifest to the deterministic governance replay corpus. */
+  /** Links a YAML task manifest to the deterministic governance replay corpus. */
   governance_replay: z
     .object({
       task_id: z.string().min(1),

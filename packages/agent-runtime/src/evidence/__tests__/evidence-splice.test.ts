@@ -86,7 +86,7 @@ describe('evidence spill + splice (FID-2026-0824-026)', () => {
       records,
     )
 
-expect(restoredToolCallIds).toEqual(['t1'])
+    expect(restoredToolCallIds).toEqual(['t1'])
     const restoredContent = JSON.stringify(out[1]?.content)
     expect(restoredContent).toContain('"body":"real data"')
     expect(restoredContent).not.toContain('[compacted]')

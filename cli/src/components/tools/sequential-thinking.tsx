@@ -94,11 +94,10 @@ export const SequentialThinkingComponent = defineToolComponent({
               // Full panel chrome allowance — border + padding (FID-2026-
               // 0822-009): wrapped lines must stay inside the true interior
               // width or OpenTUI re-wraps residue onto the border row.
-              codeBlockWidth:
-                Math.max(
-                  1,
-                  options.availableWidth - TRAFFIC_PANEL_WIDTH_ALLOWANCE,
-                ),
+              codeBlockWidth: Math.max(
+                1,
+                options.availableWidth - TRAFFIC_PANEL_WIDTH_ALLOWANCE,
+              ),
               palette: createMarkdownPalette(theme),
             }),
             theme,

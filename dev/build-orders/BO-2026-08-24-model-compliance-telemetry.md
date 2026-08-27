@@ -88,7 +88,7 @@ generating ground truth.
 
 ## Dependency Graph
 
-```
+```text
 FID 1 (schema) ──> FID 2 (sink) ──> FID 3 (aggregate) ──> FID 4 (CLI)
                                             │
                                             └──> FID 5 (dashboard panel)

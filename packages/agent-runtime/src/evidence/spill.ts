@@ -1,10 +1,5 @@
 import { createHash } from 'node:crypto'
-import {
-  appendFile,
-  mkdir,
-  readFile,
-  stat,
-} from 'node:fs/promises'
+import { appendFile, mkdir, readFile, stat } from 'node:fs/promises'
 import path from 'node:path'
 
 /**
@@ -29,10 +24,7 @@ export type EvidenceSpillRecord = {
 export const EVIDENCE_MAX_RECORD_BYTES = 512 * 1024
 export const EVIDENCE_MAX_FILE_BYTES = 8 * 1024 * 1024
 
-export function evidenceFilePath(
-  projectRoot: string,
-  runId: string,
-): string {
+export function evidenceFilePath(projectRoot: string, runId: string): string {
   return path.join(projectRoot, '.savant', 'evidence', `${runId}.jsonl`)
 }
 
@@ -70,7 +62,7 @@ export async function recordEvidence(params: {
   toolName: string
   raw: string
 }): Promise<boolean> {
-try {
+  try {
     if (!params.projectRoot) return false
     if (params.raw.length > EVIDENCE_MAX_RECORD_BYTES) return false
     const file = evidenceFilePath(params.projectRoot, params.runId)

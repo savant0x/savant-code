@@ -192,8 +192,7 @@ describe('spawn_agents — Recorder corrective retry ladder (FID-2026-0823-012)'
     expect(execSpy).toHaveBeenCalledTimes(2)
 
     const secondArgs = execSpy.mock.calls[1]?.[0] as
-      | { prompt?: string }
-      | undefined
+      { prompt?: string } | undefined
     expect(secondArgs?.prompt?.startsWith('Update FID\n')).toBe(true)
     expect(secondArgs?.prompt).toContain('CORRECTIVE RETRY')
     expect(secondArgs?.prompt).toContain(

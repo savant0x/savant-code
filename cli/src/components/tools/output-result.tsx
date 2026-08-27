@@ -18,7 +18,7 @@ function previewFromSummary(summary: string | undefined): string | undefined {
   if (!summary) return undefined
   const cleaned = summary.replace(/[#*_`~]/g, '').trim()
   if (!cleaned) return undefined
-return cleaned.length > SUMMARY_MAX_LENGTH
+  return cleaned.length > SUMMARY_MAX_LENGTH
     ? `${cleaned.slice(0, SUMMARY_MAX_LENGTH - 1)}…`
     : cleaned
 }

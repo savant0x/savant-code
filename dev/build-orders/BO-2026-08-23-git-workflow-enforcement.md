@@ -91,7 +91,7 @@ scratch clone (`clone → fetch incrementals → verify refs`).
 
 ## Dependency Graph
 
-```
+```text
 Phase 0 (operator: ECHO.md + LEARNINGS.md)
    │
    ├──> FID 1 (.gitmessage) ──┐

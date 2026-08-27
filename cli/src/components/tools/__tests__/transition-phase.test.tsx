@@ -39,7 +39,7 @@ describe('TransitionPhaseComponent (glow-frame redesign)', () => {
       reason: 'All issues fixed',
     })
 
-// Rounded border panel chrome, border tinted with the phase color.
+    // Rounded border panel chrome, border tinted with the phase color.
     // Static markup cannot draw OpenTUI border glyphs; 'rounded' matches the
     // serialized borderstyle attribute (smoke-level pin for the prop itself).
     expect(markup).toContain('rounded')

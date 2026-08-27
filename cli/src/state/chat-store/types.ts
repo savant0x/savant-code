@@ -115,7 +115,7 @@ export type ChatStoreState = {
    * Incremented on each `pruned` outcome; the bounded event list drives the
    * in-stream transcript signal. Reset per session like `provenanceEvents`.
    */
-compactionCount: number
+  compactionCount: number
   compactionEvents: CompactionLifecycleEvent[]
   /** FID-2026-0824-023 stream-routing: last pruner report (WHAT was compacted). */
   lastCompactionReport: LastCompactionReport | null

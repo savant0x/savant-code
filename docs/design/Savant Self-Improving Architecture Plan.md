@@ -1,3 +1,6 @@
+<!-- markdownlint-disable MD001 MD013 -->
+<!-- MD013 is narrowly disabled for this evidence-heavy research report: long cited prose, wide comparison tables, and the verification appendix are intentionally preserved in source form, per repo convention. -->
+
 # **Architectural Retrofit: Self-Improving Harness and Autonomous Skill Generation within the Savant-Code ECHO Protocol**
 
 The structural evolution of multi-agent coding assistants demands a transition from reactive, human-steered execution to proactive, self-governing capability development. The Savant-Code framework, currently operating under the ECHO Protocol v0.2.0, enforces rigorous software engineering standards through a ten-agent roster, a deterministic Feature Implementation Document (FID) lifecycle, and mechanical verification gates1. While the existing framework ensures that no code is written without convergent verification, it relies entirely on human operators or static prompt directives to expand its capability matrix. The system lacks the architecture to mechanically observe its own tool execution failures, synthesize reusable procedural knowledge, and autonomously generate durable capabilities without human authoring1.  

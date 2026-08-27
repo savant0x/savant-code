@@ -91,7 +91,5 @@ export function resolveTriggerThreshold(
   if (upperBound < MIN_TRIGGER_TOKENS) {
     return Math.floor(Math.min(scaled, upperBound))
   }
-  return Math.floor(
-    Math.max(MIN_TRIGGER_TOKENS, Math.min(scaled, upperBound)),
-  )
+  return Math.floor(Math.max(MIN_TRIGGER_TOKENS, Math.min(scaled, upperBound)))
 }

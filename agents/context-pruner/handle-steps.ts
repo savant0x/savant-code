@@ -48,7 +48,7 @@ export function createContextPrunerHandleSteps(): ContextPrunerHandleSteps {
 
   const embeddedHelpers = [
     ...Object.values(helpers).map((fn) => fn.toString()),
-buildResultDigest.toString(),
+    buildResultDigest.toString(),
     summarizeToolCall.toString(),
     summarizeMessages.toString(),
     applyBudgets.toString(),
@@ -66,7 +66,7 @@ buildResultDigest.toString(),
     ...Object.values(telemetry)
       .filter((v) => typeof v === 'function')
       .map((fn) => (fn as () => unknown).toString()),
-buildFullSummary.toString(),
+    buildFullSummary.toString(),
     runFoldOldestExchange.toString(),
     planFoldsToReachTarget.toString(),
     segmentExchanges.toString(),

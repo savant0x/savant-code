@@ -23,7 +23,7 @@ export const createReviewer = (
   toolNames: [],
   spawnableAgents: [],
 
-inheritParentSystemPrompt: true,
+  inheritParentSystemPrompt: true,
   includeMessageHistory: true,
   // FID-2026-0824-026: zero-tool auditor verifies against raw bytes.
   requiresRawEvidence: true,

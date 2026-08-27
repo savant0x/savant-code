@@ -130,7 +130,7 @@ describe('checkRecorderOutcome (FID-2026-0823-008)', () => {
     expect(checkRecorderOutcome(history)).toEqual({ ok: true })
   })
 
-it('flags an empty history as a stall', () => {
+  it('flags an empty history as a stall', () => {
     const outcome = checkRecorderOutcome([])
     expect(outcome.ok).toBe(false)
   })
@@ -148,7 +148,9 @@ describe('buildRecorderRetryPrompt (FID-2026-0823-012 ISSUE-D)', () => {
 
   it('names the exact relay-guard failure reason', () => {
     const retry = buildRecorderRetryPrompt('Update FID-123 now', STALL_REASON)
-    expect(retry).toContain(`CORRECTIVE RETRY — your previous run FAILED: ${STALL_REASON}`)
+    expect(retry).toContain(
+      `CORRECTIVE RETRY — your previous run FAILED: ${STALL_REASON}`,
+    )
   })
 
   it('restates the write-required terminal contract', () => {
@@ -161,7 +163,7 @@ describe('buildRecorderRetryPrompt (FID-2026-0823-012 ISSUE-D)', () => {
     expect(retry).toContain('Never end this run with a text reply')
   })
 
-it('is bounded at exactly one corrective retry per stalled spawn', () => {
+  it('is bounded at exactly one corrective retry per stalled spawn', () => {
     expect(RECORDER_STALL_RETRY_LIMIT).toBe(1)
   })
 })
@@ -192,11 +194,17 @@ describe('checkRecorderOutcome path-form canonicalization (FID-2026-0823-014)', 
     expect(outcome.ok).toBe(true)
   })
 
-it('counts an absolutized FID write under an arbitrary NON-cwd root (cwd independence)', () => {
+  it('counts an absolutized FID write under an arbitrary NON-cwd root (cwd independence)', () => {
     // Rev 2 regression: rev 1 scoped matches to canonicalizePath('.') — the
     // CLI's launch-dependent cwd — so legit writes missed whenever cwd ≠ repo
     // root. A path under a completely different root must still count.
-    const elsewhere = path.resolve('..', 'some-other-root', 'dev', 'fids', 'x.md')
+    const elsewhere = path.resolve(
+      '..',
+      'some-other-root',
+      'dev',
+      'fids',
+      'x.md',
+    )
     const outcome = checkRecorderOutcome(successfulWriteHistory(elsewhere))
     expect(outcome.ok).toBe(true)
   })

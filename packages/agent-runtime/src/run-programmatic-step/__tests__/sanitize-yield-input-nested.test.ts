@@ -14,7 +14,10 @@ describe('sanitizeYieldToolCallInput — nested undefined keys (FID-2026-0823-00
       toolName: 'code_search',
       input: { pattern: 'x', opts: { cwd: undefined, limit: 5 } },
     }
-    const result = sanitizeYieldToolCallInput(yielded) as { toolName: string; input: Record<string, unknown> }
+    const result = sanitizeYieldToolCallInput(yielded) as {
+      toolName: string
+      input: Record<string, unknown>
+    }
     // The fixture's inferred opts type retains `cwd: undefined`, but the
     // assertion checks the POST-sanitization shape — cast the expected value.
     expect(result.input.opts).toEqual({
@@ -29,7 +32,10 @@ describe('sanitizeYieldToolCallInput — nested undefined keys (FID-2026-0823-00
         items: [{ a: 1 }, { b: undefined }],
       },
     }
-    const result = sanitizeYieldToolCallInput(yielded) as { toolName: string; input: Record<string, unknown> }
+    const result = sanitizeYieldToolCallInput(yielded) as {
+      toolName: string
+      input: Record<string, unknown>
+    }
     expect(result.input.items).toEqual([
       { a: 1 },
       {},
@@ -42,7 +48,10 @@ describe('sanitizeYieldToolCallInput — nested undefined keys (FID-2026-0823-00
       a: { b: { c: undefined, d: 'keep' } },
     }
     const yielded = { toolName: 'x', input }
-    const result = sanitizeYieldToolCallInput(yielded) as { toolName: string; input: Record<string, unknown> }
+    const result = sanitizeYieldToolCallInput(yielded) as {
+      toolName: string
+      input: Record<string, unknown>
+    }
     const nestedA = result.input.a as { b: Record<string, unknown> }
     expect(nestedA.b).toEqual({
       d: 'keep',
@@ -65,7 +74,10 @@ describe('sanitizeYieldToolCallInput — nested undefined keys (FID-2026-0823-00
       toolName: 'x',
       input: { top: undefined, nested: { inner: undefined } },
     }
-    const result = sanitizeYieldToolCallInput(yielded) as { toolName: string; input: Record<string, unknown> }
+    const result = sanitizeYieldToolCallInput(yielded) as {
+      toolName: string
+      input: Record<string, unknown>
+    }
     expect(result.input).toEqual({
       nested: {},
     } as unknown as (typeof yielded)['input'])
