@@ -3,6 +3,7 @@ import os from 'os'
 import path from 'path'
 
 import {
+  QUARANTINE_DIR_NAME,
   SKILLS_DIR_NAME,
   SKILL_FILE_NAME,
   isValidSkillName,
@@ -90,6 +91,8 @@ export function parseSkillFileContent(
     description: frontmatter.description,
     license: frontmatter.license,
     metadata: frontmatter.metadata,
+    version: frontmatter.version ?? '0.1.0',
+    immutable: frontmatter.immutable ?? false,
     content,
     filePath,
   }
@@ -141,6 +144,16 @@ async function discoverSkillsFromDirectory(
       const stat = await fs.promises.stat(skillDir)
       if (!stat.isDirectory()) continue
     } catch {
+      continue
+    }
+
+    // FID-2026-0824-012: explicit quarantine exclusion (defense in depth —
+    // `.quarantine` also fails isValidSkillName, but we never rely on the
+    // regex alone; quarantined drafts are invisible until trusted).
+    if (entry === QUARANTINE_DIR_NAME) {
+      if (verbose) {
+        logger.warn('Skipping quarantine directory (untrusted drafts)')
+      }
       continue
     }
 

@@ -7,6 +7,8 @@ import { delimiter, join } from 'path'
 
 import { generateDtsBundle } from 'dts-bundle-generator'
 
+import { findMissingVendorBinaries } from './vendor-manifest'
+
 const workspaceNodeModules = join(import.meta.dir, '..', 'node_modules')
 const existingNodePath = process.env.NODE_PATH ?? ''
 const nodePathEntries = existingNodePath
@@ -336,12 +338,26 @@ async function copyRipgrepVendor() {
   try {
     await mkdir(vendorDest, { recursive: true })
     await cp(vendorSrc, vendorDest, { recursive: true })
-    console.log('  ✓ Copied vendored ripgrep binaries')
-  } catch (e) {
+  } catch {
     console.warn(
       '  ⚠ No vendored ripgrep found; skipping (use fetch-ripgrep.ts first)',
     )
+    return
   }
+  // FID-2026-0821-005 B1: dev-build loudness — name exactly which platform
+  // binaries are missing instead of a generic success line. The hard
+  // fail-closed gate lives in scripts/verify-ripgrep-vendor.ts and runs at
+  // prepack only; plain dev builds must never fail here.
+  const missing = findMissingVendorBinaries(vendorDest)
+  if (missing.length > 0) {
+    console.warn('  ⚠ Vendored ripgrep incomplete — missing platforms:')
+    for (const entry of missing) {
+      console.warn(`     - ${entry}`)
+    }
+    console.warn('     Remediation: bun run fetch-ripgrep, then rebuild.')
+    return
+  }
+  console.log('  ✓ Copied vendored ripgrep binaries (5/5 platforms)')
 }
 
 if (import.meta.main) {

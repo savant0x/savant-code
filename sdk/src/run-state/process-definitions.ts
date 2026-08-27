@@ -20,13 +20,23 @@ export function processAgentDefinitions(
     // ProcessedAgentTemplate shape without a cast.
     const { handleSteps, ...rest } = definition
     const processedConfig: ProcessedAgentTemplate = rest
-    if (handleSteps && typeof handleSteps === 'function') {
+if (handleSteps && typeof handleSteps === 'function') {
       // Keep the live function for in-process execution: the stringified form
       // of a bundled function can reference out-of-scope bundler helpers
       // (e.g. esbuild keepNames' `__name`) and fail the runtime's eval.
       // JSON serialization of the session state drops it harmlessly.
       processedConfig.handleStepsFn = handleSteps
       processedConfig.handleSteps = handleSteps.toString()
+    } else if (typeof handleSteps === 'string') {
+      // FID-2026-0823-004: preserve serialized generator source verbatim.
+      // Bundled agents ship handleSteps as prebuilt source text (no live fn
+      // survives prebuild), and the SDK loader stringifies local agents
+      // before ingestion — so every production definition arrives here as a
+      // string. Dropping it silently removed the programmatic step from all
+      // bundled agents (basher never executed its command; savant lost
+      // /compact interception). run-programmatic-step deserializes this via
+      // deserializeHandleSteps when no live fn is present.
+      processedConfig.handleSteps = handleSteps
     }
     if (processedConfig.id) {
       processedAgentTemplates[processedConfig.id] = processedConfig

@@ -199,6 +199,10 @@ export type RunOptions = {
     forceCompactOffset?: number
     microCompactMaxKeepRecent?: number
     microCompactFloorTokens?: number
+    /** FID-2026-0824-024 post-closure amendment: result-digest caps for the
+     *  context-pruner preservation contract. Absent → pruner defaults. */
+    digestHeadChars?: number
+    digestTailChars?: number
   }
 }
 

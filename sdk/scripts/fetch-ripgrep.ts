@@ -7,6 +7,12 @@ import { join } from 'path'
 import AdmZip from 'adm-zip'
 import fetch from 'node-fetch'
 
+import {
+  findChecksumMismatches,
+  PINNED_RIPGREP_SHA256,
+  sha256File,
+} from './vendor-manifest'
+
 // Ripgrep version to download
 const RIPGREP_VERSION = '14.1.1'
 
@@ -121,6 +127,16 @@ async function downloadAndExtract(
     } catch {}
   }
 
+  // FID-2026-0821-005 B2: verify the extracted binary against its pinned
+  // digest before declaring success (fail closed on any mismatch).
+  const actualSha256 = sha256File(outputPath)
+  const expectedSha256 = PINNED_RIPGREP_SHA256[platform.name]
+  if (!expectedSha256 || actualSha256 !== expectedSha256) {
+    throw new Error(
+      `SHA-256 mismatch for ${platform.name}: expected ${expectedSha256 ?? '<no pin>'}, got ${actualSha256}. Refusing to vendor an unverified binary.`,
+    )
+  }
+
   // Make executable on Unix systems
   if (platform.executable === 'rg') {
     const { spawn } = require('child_process')
@@ -148,6 +164,20 @@ async function main() {
 
   // Download all platforms in parallel
   await Promise.all(PLATFORMS.map(downloadAndExtract))
+
+  // FID-2026-0821-005 B2: sweep every platform output — this also covers
+  // skip-if-exists hits that bypassed per-download verification.
+  const mismatches = findChecksumMismatches(join('vendor', 'ripgrep'))
+  if (mismatches.length > 0) {
+    for (const mismatch of mismatches) {
+      console.error(
+        `❌ ${mismatch.platformDir}/${mismatch.binaryName}: expected ${mismatch.expected}, got ${mismatch.actual}`,
+      )
+    }
+    throw new Error(
+      `Vendored ripgrep checksum sweep failed for ${mismatches.length} platform(s).`,
+    )
+  }
 
   // Copy COPYING file
   console.log('📄 Downloading COPYING file...')

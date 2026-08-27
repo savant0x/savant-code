@@ -33,7 +33,8 @@
     "smoke-test:dist": "bun run smoke-test-dist.ts",
     "prepare-dist": "bun run scripts/publish.ts --dry-run",
     "fetch-ripgrep": "bun scripts/fetch-ripgrep.ts",
-    "prepack": "bun run build",
+    "verify:vendor": "bun scripts/verify-ripgrep-vendor.ts",
+    "prepack": "bun run build && bun scripts/verify-ripgrep-vendor.ts",
     "dev": "bun run build"
   },
   "engines": {
