@@ -1,3 +1,4 @@
+import { spawnSync } from 'child_process'
 import {
   existsSync,
   mkdirSync,
@@ -12,6 +13,27 @@ import { join } from 'path'
 import { log, logAlways, runCommand } from './build-binary-runtime'
 
 import type { TargetInfo } from './build-binary-target'
+
+/**
+ * Detect GNU tar (which supports --force-local) once per process and cache the
+ * result. `tar --version` prints e.g. "tar (GNU tar) 1.35" on Linux; BSD tar on
+ * macOS prints "bsdtar 3.x.x"; the tar bundled with Git for Windows / Windows
+ * runners is a bsdtar build that rejects the flag.
+ */
+function isGnuTar(): boolean {
+  if (gnuTarDetection !== undefined) return gnuTarDetection
+  const probe = spawnSync('tar', ['--version'], { encoding: 'utf8' })
+  gnuTarDetection =
+    probe.status === 0 &&
+    /GNU tar/i.test(`${probe.stdout ?? ''}${probe.stderr ?? ''}`)
+  if (!gnuTarDetection) {
+    log(
+      'tar is not GNU tar; omitting --force-local from OpenTUI extraction args',
+    )
+  }
+  return gnuTarDetection
+}
+let gnuTarDetection: boolean | undefined
 
 export function getOpenTuiNativePackageNames(targetInfo: TargetInfo): string[] {
   const { platform, arch } = targetInfo
@@ -137,10 +159,16 @@ export async function ensureOpenTuiNativeBundle(
           process.platform === 'win32'
             ? target.packageDir.replace(/\\/g, '/')
             : target.packageDir
+        // GNU tar's --force-local disables the drive-letter colon heuristic
+        // for `file:host`-shaped arguments. BSD tar (macOS) and the tar shipping
+        // with Git for Windows / Windows runners do not implement the flag and
+        // abort with "Option --force-local is not supported", so it must only
+        // be passed when the detected tar actually understands it (v0.0.28
+        // binary-workflow regression on darwin/win32 runners).
         const tarArgs = [
           '-xzf',
           tarballForTar,
-          '--force-local',
+          ...(isGnuTar() ? ['--force-local'] : []),
           '--strip-components=1',
           '-C',
           extractDirForTar,
