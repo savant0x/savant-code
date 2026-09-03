@@ -4,6 +4,7 @@ import { useChatStore } from '../chat-store'
 import {
   CONTEXT_TOKEN_DEADBAND_RATIO,
   CONTEXT_TOKEN_MAX_STEP_RATIO,
+  CONTEXT_TOKEN_SMALL_COUNT_FLOOR,
   dampTokenCount,
 } from '../chat-store/compaction-helpers'
 
@@ -93,6 +94,20 @@ describe('dampTokenCount (FID-2026-0821-003-A)', () => {
 
   test('rounds to a whole token count', () => {
     expect(Number.isInteger(dampTokenCount(1, 2))).toBe(true)
+  })
+
+  test('small counts are adopted exactly so a large window cannot stall near zero', () => {
+    // Real early-session count against a 1M window: a relative deadband/ramp
+    // would pin a small-but-nonzero `current` near zero (FID-2026-0827-001).
+    const current = 1_000
+    const incoming = 5_000
+    expect(dampTokenCount(current, incoming)).toBe(incoming)
+  })
+
+  test('a small count below the floor replaces the display outright', () => {
+    const current = 15_000
+    const incoming = CONTEXT_TOKEN_SMALL_COUNT_FLOOR - 1
+    expect(dampTokenCount(current, incoming)).toBe(incoming)
   })
 })
 

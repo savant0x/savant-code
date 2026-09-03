@@ -5,6 +5,7 @@ import {
   IS_SAVANT_FREE,
   MODE_DESCRIPTIONS,
 } from '../utils/constants'
+import { isDirectProviderMode } from '../utils/env'
 
 import type { SkillsMap } from '@savant-code/common/types/skill'
 
@@ -23,6 +24,14 @@ export interface SlashCommand {
    * instead of executing a command. Useful for agent shortcuts.
    */
   insertText?: string
+  /**
+   * FID-2026-0901-006 P21 command audit: the command is a backend surface
+   * (auth / credits / publishing / ads). It is hidden from the menu in
+   * direct-provider mode, where it can only dead-end with a backend-required
+   * error. The registry keeps the handler so scripts still get that honest
+   * error instead of an unknown-command failure.
+   */
+  requiresBackend?: boolean
 }
 
 // Generate mode commands from the AGENT_MODES constant (excluded in SavantFree)
@@ -94,13 +103,41 @@ const ALL_SLASH_COMMANDS: SlashCommand[] = [
   ...FEATURE_SLASH_COMMANDS,
 ]
 
-export const SLASH_COMMANDS = IS_SAVANT_FREE
-  ? ALL_SLASH_COMMANDS.filter(
-      (cmd) => !SAVANT_FREE_REMOVED_COMMAND_IDS.has(cmd.id),
-    )
-  : ALL_SLASH_COMMANDS.filter(
-      (cmd) => !SAVANT_FREE_ONLY_COMMAND_IDS.has(cmd.id),
-    )
+// FID-2026-0901-006 P21 command audit: in direct-provider mode there is no
+// Savant backend, so backend-only menu entries (login/usage/subscribe/publish/
+// ads:*) would only dead-end. They are removed from the palette/menu here;
+// the executable registry is untouched (scripts get the honest
+// backend-required error, not an unknown-command failure).
+
+/** Pure builder for the slash menu (FID-2026-0901-006 P21) — testable without
+ * env coupling: the same free/paid gating plus the direct-provider filter. */
+export function buildSlashCommands(params: {
+  isFree: boolean
+  directProvider: boolean
+}): SlashCommand[] {
+  const gated = params.isFree
+    ? ALL_SLASH_COMMANDS.filter(
+        (cmd) => !SAVANT_FREE_REMOVED_COMMAND_IDS.has(cmd.id),
+      )
+    : ALL_SLASH_COMMANDS.filter(
+        (cmd) => !SAVANT_FREE_ONLY_COMMAND_IDS.has(cmd.id),
+      )
+  return params.directProvider
+    ? gated.filter((cmd) => !cmd.requiresBackend)
+    : gated
+}
+
+/** Derived from the `requiresBackend` tags (no second list to drift). */
+export const BACKEND_ONLY_COMMAND_IDS = new Set(
+  [...CORE_SLASH_COMMANDS, ...FEATURE_SLASH_COMMANDS]
+    .filter((cmd) => cmd.requiresBackend)
+    .map((cmd) => cmd.id),
+)
+
+export const SLASH_COMMANDS = buildSlashCommands({
+  isFree: IS_SAVANT_FREE,
+  directProvider: isDirectProviderMode(),
+})
 
 export const SLASHLESS_COMMAND_IDS = new Set(
   SLASH_COMMANDS.filter((cmd) => cmd.implicitCommand).map((cmd) =>

@@ -19,6 +19,7 @@ import {
 import { fetchWithRetryableNetworkErrors } from './fetch-with-retry'
 
 import type { ProviderConfig } from '@savant-code/common/providers/types'
+import type { JSONValue } from '@savant-code/common/types/json'
 import type { LanguageModel } from 'ai'
 
 /**
@@ -50,25 +51,10 @@ export function createOpenAIOAuthModel(
   })
 }
 
-/**
- * Create a model for a registry provider (FID-2026-0809-001 Phase 2).
- *
- * One generic factory reads everything it needs from the registry entry —
- * base URL, wire protocol, id transform, protocol map — replacing the seven
- * hand-written per-provider factories. Behavior is byte-for-byte the previous
- * per-provider behavior:
- *
- * - `idTransform: 'strip'` removes the `{provider}/` routing prefix.
- * - `idTransform: 'keep'` sends the id unchanged (`openrouter/` is part of the
- *   real slug).
- * - `idTransform: 'cf-rewrite'` strips `cloudflare/` and prepends `@cf/`.
- * - `baseUrl` may contain `{ENV_VAR}` placeholders (Cloudflare account id),
- *   resolved from the extra credentials supplied by the caller.
- * - Dual-protocol providers (`protocol: 'openai-anthropic'`) look up their
- *   protocol map by the FULL prefixed model id, then dispatch to the OpenAI or
- *   Anthropic adapter.
- * - OpenRouter keeps its attribution headers and structured-output support.
- */
+/** Create a registry-provider model from its entry (FID-2026-0809-001).
+ *  `idTransform` strip/keep/cf-rewrite rewrites the id; `baseUrl` may hold
+ *  `{ENV_VAR}` placeholders; dual-protocol providers dispatch via their
+ *  protocol map; OpenRouter keeps its attribution + structured outputs. */
 export function createProviderModel(
   config: ProviderConfig,
   apiKey: string,
@@ -114,7 +100,14 @@ export function createProviderModel(
     fetch: fetchWithRetryableNetworkErrors as typeof globalThis.fetch,
     includeUsage: undefined,
     supportsStructuredOutputs: isOpenRouter,
+    // Nous requires a `user=` tag from raw-key callers (400 "missing tags").
+    extraBody: config.id === 'nous' ? NOUS_REQUIRED_REQUEST_TAGS : undefined,
   })
+}
+
+/** Nous `user=` tag shared by the prefixed and bare-slug routing paths. */
+export const NOUS_REQUIRED_REQUEST_TAGS: Record<string, JSONValue> = {
+  tags: ['user=savant-code'],
 }
 
 /** Apply the registry entry's id transform to a model id. */

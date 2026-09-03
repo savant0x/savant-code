@@ -204,6 +204,25 @@ export const createRunLifecycle = (
       useChatStore.getState().updateContextTokens(contextTokenCount)
     }
 
+    // FID-2026-0828-001: authoritative terminal-state delivery. The 2s
+    // heartbeat mirrors compactionStatus/lastCompactionReport only while the
+    // run is alive, and compact-and-stop runs (manual /compact) resolve
+    // before the next 5s snapshot tick — the terminal `pruned` phase and
+    // summary report were dropped on the floor. Mirror them from the final
+    // run state exactly like the token count (same pattern as
+    // send-message-monitors.ts), so the ⚙ → ✓ transition, the compaction
+    // counter, and the panel excerpt land for every run shape.
+    const terminalCompactionStatus =
+      runState?.sessionState?.mainAgentState?.compactionStatus
+    if (terminalCompactionStatus) {
+      useChatStore.getState().setCompactionStatus(terminalCompactionStatus)
+    }
+    const terminalCompactionReport =
+      runState?.sessionState?.mainAgentState?.lastCompactionReport
+    if (terminalCompactionReport) {
+      useChatStore.getState().setLastCompactionReport(terminalCompactionReport)
+    }
+
     // Drop any queued/in-flight async checkpoint first so a stale write
     // can't land after this authoritative final save.
     await settleCheckpointSave()

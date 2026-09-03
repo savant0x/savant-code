@@ -407,6 +407,26 @@ opens a PR via the `gh` CLI (FID-2026-0806-004):
 
 ---
 
+## Savant Desktop (Tauri v2)
+
+The desktop workspace (`desktop/`) wraps the same engine in a native shell —
+see [`desktop/README.md`](../desktop/README.md) for build/run commands:
+
+- **Rust supervisor + sidecar** — the Tauri shell owns a Bun-compiled
+  agent-runtime sidecar (spawn/backoff/shutdown/watchdog), with WebView2
+  detection + native recovery on Windows.
+- **Structured chat surface** — bounded transcript virtualization, markdown
+  blocks with per-message copy, traffic-light status panels, phase stepper,
+  composer with auto-grow, and the Auto Drive dashboard with Emergency Halt.
+- **Command deck (3D)** — an R3F neon-noir agent office where the 10-agent
+  robot cast mirrors live chat activity: walk-to-station on tool calls,
+  activity beacons, speech bubbles, ambient life (day/night, breaks,
+  obstacle-aware routing), and a mini-chat island in the corner.
+- **Project FIDs rail** — the repo's FID queue over the gateway, seeded by a
+  hello-time inventory push and updated by the file watcher.
+
+---
+
 ## Discord Rich Presence
 
 `/presence status | enable | disable` (alias `/discord`) — **enabled by

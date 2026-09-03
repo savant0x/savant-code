@@ -98,5 +98,6 @@ export const GATEWAY_CAPABILITIES = [
   'update_setting',
   'get_scoped_threads',
   'update_scoped_thread_state',
+  'list_commands',
   'event',
 ] as const

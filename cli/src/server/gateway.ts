@@ -33,6 +33,7 @@
 import { randomUUID } from 'node:crypto'
 import { basename, join } from 'node:path'
 
+import { readProtocolConfig } from '@savant-code/common/util/protocol-config'
 import { AskUserBridge } from '@savant-code/common/utils/ask-user-bridge'
 import {
   getMessagesBySessionId,
@@ -56,10 +57,17 @@ import {
   notification,
   success,
 } from './json-rpc'
-import { resolveAgent } from '../hooks/helpers/send-message-agent'
+import { SLASH_COMMANDS } from '../data/slash-commands'
+import {
+  applySavantCodeModelOverride,
+  resolveAgent,
+} from '../hooks/helpers/send-message-agent'
+import { getProjectRoot } from '../project-files'
 import { loadFidInventory } from '../utils/fid-loader'
 import { startFidWatcher } from '../utils/fid-watcher'
 import { loadAgentDefinitions } from '../utils/local-agent-registry'
+import { fetchGatewayModels } from '../utils/openrouter-models'
+import { resolveContextWindowForModel } from '../utils/openrouter-models/lookup'
 import { loadMostRecentChatState } from '../utils/run-state-storage'
 import { getSavantCodeClient } from '../utils/savant-code-client'
 
@@ -110,6 +118,22 @@ export type GatewayOptions = {
     info?: (...args: unknown[]) => void
     error?: (...args: unknown[]) => void
   }
+  /** FID-2026-0901-005: DI: the slash-command surface the desktop palette
+   *  shows. Defaults to the full CLI registry (data/slash-commands.ts) —
+   *  the same list the TUI autocomplete offers. */
+  listCommands?: () => GatewayCommandDescriptor[]
+}
+
+/** One command in the desktop slash palette (server-provided registry). */
+export type GatewayCommandDescriptor = {
+  /** Command id without the leading slash ('compact', 'mode:plan'). */
+  id: string
+  /** One-line description shown in the palette. */
+  description: string
+  /** 'agent' = dispatched as prompt text through the run path (the runtime
+   *  intercepts command-shaped prompts, e.g. /compact); 'client' = handled
+   *  entirely by the desktop renderer. */
+  dispatch: 'agent' | 'client'
 }
 
 export type GatewayHandle = {
@@ -155,7 +179,47 @@ async function defaultRunPrompt(params: {
     )
   }
   const agentDefinitions = loadAgentDefinitions()
-  const agent = resolveAgent('HYBRID', undefined, agentDefinitions)
+  // P18 (operator: compaction fired non-stop + the desktop ran the wrong
+  // model/window): the CLI resolves the effective agent through
+  // `applySavantCodeModelOverride` — the UI model store is the single
+  // source of truth for the effective model (FID-2026-0814-004 H-08/H-09).
+  // The gateway skipped that override, so the bundled HYBRID default model
+  // (and ITS catalog context window) drove the run — a wrong, too-low
+  // auto-compact threshold made the pruner compact every turn. Mirror the
+  // CLI exactly: override first, THEN resolve the window from the override's
+  // own model (send-message-run-config.ts:107-155 parity).
+  const resolvedAgentRaw = resolveAgent('HYBRID', undefined, agentDefinitions)
+  const agent = applySavantCodeModelOverride(resolvedAgentRaw, agentDefinitions)
+  // FID-2026-0901-006: desktop/CLI parity — the CLI threads `contextWindow`
+  // (resolved from the model catalog) and `compression` (from
+  // protocol.config.yaml, which sets microCompact:false) into client.run. The
+  // gateway previously passed neither, so the runtime defaulted
+  // microCompactEnabled:true and micro-compacted EVERY step/turn — a behavior
+  // the CLI never exhibits. Resolve the same values here so the desktop
+  // session compacts exactly like the terminal.
+  const resolvedAgent =
+    typeof agent === 'string'
+      ? agentDefinitions.find((def) => def.id === agent)
+      : agent
+  const modelId = resolvedAgent?.model
+  const contextWindow = modelId
+    ? resolveContextWindowForModel(modelId)
+    : undefined
+  const compression = readProtocolConfig(
+    getProjectRoot() ?? process.cwd(),
+  ).compression
+  // P19 (operator: "the deck does not even show the model"): seed the model
+  // on run-accept so the desktop header badge + deck tag render the model
+  // immediately — before the first thinking activity event arrives (which
+  // now carries the model too; both paths agree, belt-and-suspenders). The
+  // override-resolved agent's model IS the run's effective model. Root-level
+  // only (no agentId), so the desktop's root-activity reducer accepts it.
+  if (typeof modelId === 'string' && modelId.length > 0) {
+    params.onEvent({
+      type: 'activity',
+      activity: { kind: 'thinking', startedAt: Date.now(), model: modelId },
+    })
+  }
   return client.run({
     agent,
     prompt: params.prompt,
@@ -165,6 +229,8 @@ async function defaultRunPrompt(params: {
     protocolVariant: 'harness',
     devMode: false,
     agentDefinitions,
+    contextWindow,
+    compression,
     handleEvent: (event) => params.onEvent(event),
     handleStreamChunk: (chunk) => {
       if (typeof chunk === 'string') {
@@ -187,6 +253,48 @@ function defaultUpdateScopedThreadState(params: {
     changed = updateSessionPinned(params.sessionId, params.pinned) || changed
   }
   return changed
+}
+
+/**
+ * FID-2026-0901-005: the server-side command surface — the FULL CLI slash
+ * registry (the same one the TUI autocomplete shows). Commands whose handlers
+ * are TUI-local (pickers, overlays that need a terminal) are marked 'client'
+ * so the desktop can show them honestly or skip them; everything else
+ * dispatches as prompt text through the run path, where the runtime's
+ * command-shaped-prompt interception (e.g. /compact) makes it real.
+ */
+const TUI_ONLY_COMMAND_IDS = new Set([
+  // Pure-TUI overlays: they open pickers/menus that cannot exist in a
+  // renderer and have no prompt-shaped fallback.
+  'review',
+  'rewind',
+  'history',
+  'permissions',
+  'diagnostics',
+  'teacher',
+  'contribute',
+  'design',
+  'design-authoring',
+  'auto-drive',
+  'fid',
+  'graph',
+])
+
+function defaultListCommands(): GatewayCommandDescriptor[] {
+  return SLASH_COMMANDS.map((command) => ({
+    id: command.id,
+    description: command.description,
+    dispatch: TUI_ONLY_COMMAND_IDS.has(command.id) ? 'client' : 'agent',
+  }))
+}
+
+/** Serve the registry to the desktop palette. */
+function handleListCommands(
+  send: (data: string) => void,
+  id: number | string,
+  commands: GatewayCommandDescriptor[],
+): void {
+  send(JSON.stringify(success(id, { commands })))
 }
 
 type ScopedThreadRecord = {
@@ -246,8 +354,20 @@ export async function startGateway(
     fidsDir = join(process.cwd(), 'dev', 'fids'),
     loadScopedThreads = defaultLoadScopedThreads,
     updateScopedThreadState = defaultUpdateScopedThreadState,
+    listCommands = defaultListCommands,
   } = options
   const logger = options.logger
+  // P19 (operator: "the window is x/200k, which is clearly a hardcoded value"):
+  // the interactive CLI warms the live model catalog at boot (index.tsx), but
+  // the gateway sidecar never did — so the sidecar's
+  // resolveContextWindowForModel always fell through to the 200k heuristic and
+  // the desktop context meter/pruner thresholds diverged from the terminal.
+  // Fire-and-forget warm: the run path resolves the window AFTER this catalog
+  // has had a chance to populate; the disk warm-start cache (FID-2026-0815-007
+  // F-09) covers the cold-boot window. Never derails startup on failure.
+  void fetchGatewayModels().catch(() => {})
+  // FID-2026-0901-005: the command registry served to the desktop palette.
+  const commands = listCommands()
 
   // Per-session state. Single-session v1: one active run at a time; pending
   // approvals are keyed by a gateway-generated approvalId (the bridge's
@@ -743,6 +863,9 @@ export async function startGateway(
         break
       case 'update_scoped_thread_state':
         handleUpdateScopedThreadState(send, id, params)
+        break
+      case 'list_commands':
+        handleListCommands(send, id, commands)
         break
       default:
         send(

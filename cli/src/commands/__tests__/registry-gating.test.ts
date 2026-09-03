@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'bun:test'
 
 import {
+  BACKEND_ONLY_COMMAND_IDS,
+  buildSlashCommands,
   SAVANT_FREE_ONLY_COMMAND_IDS,
   SAVANT_FREE_REMOVED_COMMAND_IDS,
   SLASH_COMMANDS,
@@ -93,13 +95,47 @@ describe('registry gating matrix (FID-007)', () => {
       }
     }
     // And every registry command name is discoverable via the menu or is a
-    // known hidden command (/dev, skill: prefix).
+    // known hidden command (/dev, skill: prefix) or a backend-only command
+    // (FID-2026-0901-006 P21: hidden from the menu in direct-provider mode,
+    // where the dev/test env resolves direct-provider as active).
     for (const cmd of COMMAND_REGISTRY) {
       const inMenu = SLASH_COMMANDS.some((m) => m.id === cmd.name)
-      const hidden = cmd.name === 'dev' || cmd.name.startsWith('skill:')
+      const hidden =
+        cmd.name === 'dev' ||
+        cmd.name.startsWith('skill:') ||
+        BACKEND_ONLY_COMMAND_IDS.has(cmd.name)
       expect(
         inMenu || hidden,
         `registry ${cmd.name} should be discoverable`,
+      ).toBe(true)
+    }
+  })
+
+  it('P21 command audit: direct-provider menu hides exactly the backend-only set', () => {
+    // The pure builder is authoritative — the module-level SLASH_COMMANDS
+    // snapshot depends on ambient env at import time (DIRECT_PROVIDER),
+    // which other suite files mutate, so the builder is the only
+    // order-independent surface to assert against.
+    const directMenu = buildSlashCommands({
+      isFree: false,
+      directProvider: true,
+    })
+    for (const id of BACKEND_ONLY_COMMAND_IDS) {
+      expect(
+        directMenu.some((cmd) => cmd.id === id),
+        `direct-provider menu should hide ${id}`,
+      ).toBe(false)
+    }
+    // With the backend available the backend commands return to the menu
+    // (they still execute there).
+    const backendMenu = buildSlashCommands({
+      isFree: false,
+      directProvider: false,
+    })
+    for (const id of BACKEND_ONLY_COMMAND_IDS) {
+      expect(
+        backendMenu.some((cmd) => cmd.id === id),
+        `backend menu should include ${id}`,
       ).toBe(true)
     }
   })

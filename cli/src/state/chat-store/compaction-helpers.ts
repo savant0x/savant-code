@@ -38,8 +38,23 @@ export function recordRun(
 export const CONTEXT_TOKEN_DEADBAND_RATIO = 0.05
 export const CONTEXT_TOKEN_MAX_STEP_RATIO = 0.12
 
+/**
+ * Below this count the deadband/ramp trade their jitter-suppression value for
+ * a real correctness cost: with a large context window (e.g. 1M tokens) a real
+ * early-session count is only a few thousand tokens, and a relative deadband
+ * of ±5% plus a 12% maximum step pin the readout near zero for a long stretch
+ * — the operator sees "context stuck at 0/x". Small counts are therefore
+ * adopted outright (exact), so the meter tracks the truth until the count is
+ * large enough that relative damping is safe.
+ */
+export const CONTEXT_TOKEN_SMALL_COUNT_FLOOR = 10_000
+
 export function dampTokenCount(current: number, incoming: number): number {
-  if (current <= 0) return incoming
+  // First update: no history to damp against. Small counts: adopt exactly so
+  // a large-window session can't stall near zero (FID-2026-0827-001).
+  if (current <= 0 || incoming <= CONTEXT_TOKEN_SMALL_COUNT_FLOOR) {
+    return incoming
+  }
   const delta = incoming - current
   const rel = Math.abs(delta) / current
   if (rel <= CONTEXT_TOKEN_DEADBAND_RATIO) return current

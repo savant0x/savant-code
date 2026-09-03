@@ -12,9 +12,12 @@ export const RosterRail = memo(function RosterRail({
     (entry) => entry.presence === 'active',
   ).length
   return (
-    <aside className="roster-rail" aria-label="ECHO agent roster">
+    // P20 (operator: "the roster is not called 'echo roster', the system is
+    // Savant"): the product name is Savant — the loop protocol (ECHO) never
+    // leaks into operator-facing labels.
+    <aside className="roster-rail" aria-label="Savant agent roster">
       <div className="roster-head">
-        <span className="roster-title">ECHO roster</span>
+        <span className="roster-title">Savant roster</span>
         <span className="roster-count">{activeCount} active</span>
       </div>
       <div className="roster-list">
@@ -25,7 +28,11 @@ export const RosterRail = memo(function RosterRail({
               aria-hidden="true"
             />
             <span className="roster-label">{entry.label}</span>
-            <span className="roster-state">{entry.presence}</span>
+            {/* P23: the presence word carries the same color as the presence
+                dot — active glows green, standby stays muted. */}
+            <span className={`roster-state roster-state-${entry.presence}`}>
+              {entry.presence}
+            </span>
           </div>
         ))}
       </div>

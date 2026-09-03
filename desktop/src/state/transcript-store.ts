@@ -47,9 +47,15 @@ export type WorkspaceThread = {
   messages: PersistedTranscriptMessage[]
 }
 
+export type CurrentActivity =
+  | { kind: 'thinking'; startedAt: number; model?: string }
+  | { kind: 'tool'; toolName: string; startedAt: number; target?: string }
+  | { kind: 'subagent'; agentType: string; startedAt: number; prompt?: string }
+  | { kind: 'researching'; query: string; startedAt: number }
+
 export type ChatBlock =
-  | { kind: 'text'; id: number; agentId?: string; text: string }
-  | { kind: 'user'; id: number; text: string }
+  | { kind: 'text'; id: number; agentId?: string; text: string; ts: number }
+  | { kind: 'user'; id: number; text: string; ts: number }
   | { kind: 'reasoning'; id: number; agentId: string; text: string }
   | {
       kind: 'tool'
@@ -69,6 +75,14 @@ export type ChatBlock =
       message: string
     }
   | { kind: 'notice'; id: number; message: string }
+  | {
+      kind: 'compaction_summary'
+      id: number
+      summary: string
+      removedMessages: number
+      tokensSaved?: number
+      percentUsed?: number
+    }
   | {
       kind: 'approval'
       id: number
@@ -90,6 +104,12 @@ export type TranscriptState = {
   /** Current Perfection Loop phase — derived ONLY from transition_phase
    * tool_result payloads (the G2 interim rule; never scraped or guessed). */
   fsmPhase: string | null
+  /** FID-2026-0901-006 P2: latest runtime `activity` event — the CLI-parity
+   * running-status source. Null when the agent is idle. */
+  currentActivity: CurrentActivity | null
+  /** FID-2026-0901-006 P17: the active model, captured from the runtime
+   * `activity.thinking.model` event. Null until the first thinking event. */
+  model: string | null
 }
 
 export const initialTranscriptState: TranscriptState = {
@@ -101,6 +121,8 @@ export const initialTranscriptState: TranscriptState = {
   running: false,
   turnClosed: false,
   fsmPhase: null,
+  currentActivity: null,
+  model: null,
 }
 
 function safeJson(value: unknown): string {
@@ -151,13 +173,18 @@ function mergeOrAppendText(
     last.kind === 'text' &&
     last.agentId === agentId
   ) {
-    const merged: ChatBlock = { ...last, text: last.text + text }
+    const merged: ChatBlock = {
+      ...last,
+      text: last.text + text,
+      ts: Date.now(),
+    }
     return { ...state, blocks: [...state.blocks.slice(0, -1), merged] }
   }
   const fresh: ChatBlock = {
     kind: 'text',
     id: state.blocks.length,
     text,
+    ts: Date.now(),
     ...(agentId !== undefined ? { agentId } : {}),
   }
   return { ...state, turnClosed: false, blocks: [...state.blocks, fresh] }
@@ -198,7 +225,14 @@ function applyEvent(
         roster: applyRosterEvent(state.roster, event),
       }
     case 'finish':
-      return { ...state, running: false, turnClosed: true }
+      return {
+        ...state,
+        running: false,
+        turnClosed: true,
+        // P2: the run is over — the CLI status bar clears its indicator on
+        // finish too, so a stale 'tool' label never survives the turn.
+        currentActivity: null,
+      }
     case 'text':
       return mergeOrAppendText(state, event.agentId, event.text)
     case 'reasoning_delta':
@@ -316,19 +350,55 @@ function applyEvent(
           : state.fidQueue.map((entry, index) =>
               index === existing ? nextEntry : entry,
             )
-      return {
-        ...noticeLine(
-          state,
-          `FID ${event.projectId}/${event.fidId} → ${event.status}`,
-        ),
-        fidQueue,
-      }
+      // P17: FID queue updates are already surfaced in the FID panel — a
+      // per-FID transcript notice turned a run into a wall of
+      // "FID … → analyzed/closed" lines. Update the queue only.
+      return { ...state, fidQueue }
     }
     case 'compaction_status':
       return { ...state, compactionStatus: event }
-    case 'activity':
-      // Runtime activity indicator — no chat-thread surface in Loop 3 scope.
-      return state
+    case 'compaction_summary': {
+      // FID-2026-0828-001 desktop parity: the post-compaction summary is a
+      // real transcript block (the CLI renders CompactionSummaryBlock), not
+      // a status chip — the operator reads WHAT the pruner removed.
+      return {
+        ...state,
+        blocks: [
+          ...state.blocks,
+          {
+            kind: 'compaction_summary',
+            id: state.blocks.length,
+            summary: event.summary,
+            removedMessages: event.removedMessages,
+            ...(event.tokensSaved !== undefined
+              ? { tokensSaved: event.tokensSaved }
+              : {}),
+            ...(event.percentUsed !== undefined
+              ? { percentUsed: event.percentUsed }
+              : {}),
+          },
+        ],
+      }
+    }
+    case 'activity': {
+      // FID-2026-0901-006 P2: surface the runtime activity indicator — the
+      // same stream the CLI's status bar consumes. Root-level events only
+      // (no agentId); sub-agent activity stays on the deck.
+      if (event.agentId !== undefined) return state
+      // P17: capture the running model from the thinking activity event so the
+      // header can show what's actually driving the turn (mirrors the CLI's
+      // AgentStatus `activity.model` read).
+      const model =
+        event.activity.kind === 'thinking'
+          ? (event.activity.model ?? state.model)
+          : state.model
+      return {
+        ...state,
+        currentActivity:
+          event.activity.kind === 'idle' ? null : { ...event.activity },
+        model,
+      }
+    }
     default:
       return state
   }
@@ -379,7 +449,15 @@ export function pushLocalError(message: string): void {
 export function pushLocalUserMessage(text: string): void {
   transcriptStore.setState((state) => ({
     ...state,
-    blocks: [...state.blocks, { kind: 'user', id: state.blocks.length, text }],
+    blocks: [
+      ...state.blocks,
+      {
+        kind: 'user',
+        id: state.blocks.length,
+        text,
+        ts: Date.now(),
+      },
+    ],
   }))
 }
 
@@ -424,13 +502,14 @@ export function hydratePersistedTranscript(
   messages: PersistedTranscriptMessage[],
 ): void {
   const blocks: ChatBlock[] = messages.map((message, index) => {
+    const ts = new Date(message.createdAt).getTime() || Date.now()
     if (message.role === 'user') {
-      return { kind: 'user', id: index, text: message.content }
+      return { kind: 'user', id: index, text: message.content, ts }
     }
     if (message.role === 'error') {
       return { kind: 'error', id: index, message: message.content }
     }
-    return { kind: 'text', id: index, text: message.content }
+    return { kind: 'text', id: index, text: message.content, ts }
   })
   transcriptStore.setState((state) => ({
     ...state,
@@ -438,6 +517,7 @@ export function hydratePersistedTranscript(
     running: false,
     turnClosed: true,
     fsmPhase: null,
+    currentActivity: null,
   }))
 }
 

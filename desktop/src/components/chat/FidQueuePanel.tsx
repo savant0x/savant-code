@@ -1,8 +1,28 @@
-import { memo } from 'react'
+import { memo, useState } from 'react'
 
 import type { FidQueueEntry } from '../../state/transcript-store'
 import type { WorkspaceScope } from '../../state/workspace-scope'
 import type { JSX } from 'react'
+
+// P21 (operator: "project fids is entirely too tall … should only show 1-10,
+// with a foldable div"): the list is capped to a visible preview (header row
+// + first N rows) with a full expand/collapse toggle, and locked to a
+// bounded height so the rail never balloons.
+export const PREVIEW_ROWS = 6
+export const MAX_EXPANDED_ROWS = 10
+
+/** Bound a queue to the fold window — pure so the preview logic is testable. */
+export function boundFidRows(
+  ordered: FidQueueEntry[],
+  expanded: boolean,
+): FidQueueEntry[] {
+  return ordered.slice(0, expanded ? MAX_EXPANDED_ROWS : PREVIEW_ROWS)
+}
+
+// P20 (operator: "project fids still show 'fixed/closed' fids in the
+// sidebars"): the rail is an ACTIVE queue — a closed FID is done and belongs
+// in the archive, not the sidebar. `fixed` is mid-loop (GREEN done, audit
+// pending), so it stays.
 
 const STATUS_ORDER = [
   'created',
@@ -42,6 +62,11 @@ export function filterFidQueue(
     : queue
 }
 
+/** FIDs still moving through the loop — closed entries are dropped. */
+export function activeFidQueue(queue: FidQueueEntry[]): FidQueueEntry[] {
+  return queue.filter((entry) => entry.status !== 'closed')
+}
+
 export const FidQueuePanel = memo(function FidQueuePanel({
   queue,
   scope,
@@ -49,29 +74,40 @@ export const FidQueuePanel = memo(function FidQueuePanel({
   queue: FidQueueEntry[]
   scope: WorkspaceScope
 }): JSX.Element {
-  const visibleQueue = filterFidQueue(queue, scope)
+  const [expanded, setExpanded] = useState(false)
+  const visibleQueue = activeFidQueue(filterFidQueue(queue, scope))
   const ordered = [...visibleQueue].sort((left, right) => {
     const rankDelta = statusRank(left.status) - statusRank(right.status)
     return rankDelta === 0 ? left.fidId.localeCompare(right.fidId) : rankDelta
   })
-  const openCount = ordered.filter((entry) => entry.status !== 'closed').length
+  const openCount = ordered.length
   const presentation = fidQueuePresentation(scope)
+
+  // Bounded preview: first PREVIEW_ROWS collapsed, up to MAX_EXPANDED_ROWS
+  // when the operator opens the fold. The header row always stays visible.
+  const visibleRows = boundFidRows(ordered, expanded)
+  const hasMore = openCount > visibleRows.length
 
   return (
     <aside
       className="fid-queue"
       aria-label={`${presentation.title} for ${presentation.label}`}
     >
-      <div className="fid-queue-head">
+      <button
+        type="button"
+        className="fid-queue-head"
+        aria-expanded={expanded}
+        onClick={() => setExpanded((value) => !value)}
+      >
         <span className="fid-queue-title">{presentation.title}</span>
         <span className="fid-queue-count">{openCount} open</span>
-      </div>
+      </button>
       <p className="fid-queue-scope">{presentation.label}</p>
       {ordered.length === 0 ? (
-        <p className="fid-queue-empty">Waiting for queue events.</p>
+        <p className="fid-queue-empty">No open FIDs — queue is clear.</p>
       ) : (
         <div className="fid-queue-list">
-          {ordered.map((entry) => (
+          {visibleRows.map((entry) => (
             <div className="fid-queue-row" key={entry.fidId}>
               <code>{entry.fidId}</code>
               <span className={`fid-status fid-status-${entry.status}`}>
@@ -79,8 +115,21 @@ export const FidQueuePanel = memo(function FidQueuePanel({
               </span>
             </div>
           ))}
+          {hasMore ? (
+            <button
+              type="button"
+              className="fid-queue-more"
+              onClick={() => setExpanded((value) => !value)}
+            >
+              {expanded
+                ? collapseLabel
+                : `show ${Math.min(openCount - PREVIEW_ROWS, MAX_EXPANDED_ROWS - PREVIEW_ROWS)} more`}
+            </button>
+          ) : null}
         </div>
       )}
     </aside>
   )
 })
+
+const collapseLabel = 'show less'

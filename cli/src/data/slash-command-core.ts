@@ -40,15 +40,21 @@ export const CORE_SLASH_COMMANDS: SlashCommand[] = [
       ]
     : []),
 
+  // FID-2026-0901-006 P21 command audit: ads + credits + publishing are
+  // backend-surface features (gravity/subscription/registry). They are tagged
+  // requiresBackend and hidden from the menu in direct-provider mode where
+  // they can only dead-end, instead of lurking as broken entries.
   {
     id: 'ads:enable',
     label: 'ads:enable',
     description: 'Enable contextual ads',
+    requiresBackend: true,
   },
   {
     id: 'ads:disable',
     label: 'ads:disable',
     description: 'Disable contextual ads',
+    requiresBackend: true,
   },
   {
     id: 'telemetry',
@@ -75,12 +81,14 @@ export const CORE_SLASH_COMMANDS: SlashCommand[] = [
     label: 'usage',
     description: 'View credits and subscription quota',
     aliases: ['credits'],
+    requiresBackend: true,
   },
   {
     id: 'subscribe',
     label: 'subscribe',
     description: 'Subscribe to get more usage',
     aliases: ['strong', 'sub', 'buy-credits'],
+    requiresBackend: true,
   },
   {
     id: 'auto-drive',
@@ -197,6 +205,7 @@ export const CORE_SLASH_COMMANDS: SlashCommand[] = [
     id: 'publish',
     label: 'publish',
     description: 'Publish an agent to the registry',
+    requiresBackend: true,
   },
   {
     id: 'release',

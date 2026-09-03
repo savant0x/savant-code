@@ -56,14 +56,38 @@ const CORE_RADIUS = 0.22
 const CORE_HOVER_HEIGHT = 1.55
 const BEAM_BOTTOM_RADIUS = 0.32
 const BEAM_TOP_RADIUS = 0.16
-/** Emissive levels — rings glow hard; the core burns brighter when BUSY. */
-const RING_EMISSIVE = 0.9
-const CORE_EMISSIVE = 0.7
-const CORE_EMISSIVE_BUSY = 1.2
-const BEAM_OPACITY = 0.1
-const BEAM_OPACITY_BUSY = 0.22
+/** Emissive levels — rings glow; the core burns brighter when BUSY.
+ * FID-2026-0828-002 (operator: "the light is a glowing ball, it's become a
+ * part of the scene"): with the rig dimmed, the station cores at 0.7/1.2
+ * plus the additive beams read as self-luminous balls floating AT item
+ * level instead of projection fixtures. Retuned so the pedestal reads as
+ * a landed hologram projector: steady core at half the previous burn,
+ * busy only slightly brighter, beam at a whisper. */
+const RING_EMISSIVE = 1.5
+const CORE_EMISSIVE = 0.5
+const CORE_EMISSIVE_BUSY = 2.5
+const BEAM_OPACITY = 0.08
+const BEAM_OPACITY_BUSY = 0.4
 /** Deterministic core spin (deck clock discipline — injected clock only). */
 const CORE_SPIN_RAD_PER_SEC = 0.8
+
+/**
+ * FID-2026-0828-002 — the single name-plate plane (world units, y-up).
+ * Every chip in the deck — station plates AND cast-agent plates — anchors
+ * at this ONE height, so labels read as a holographic HUD band hovering at
+ * a consistent altitude across the floor. Coherent-world value: with the
+ * 6-unit cast, 5.5 sits clearly above every head (Savant ≈ 7.8) without
+ * the plates floating off into the void.
+ */
+export const NAMEPLATE_PLANE_Y = 5.5
+
+/** Station pedestals are floor fixtures; 1.4× keeps them readable next to
+ * the coherent 6-unit cast while the pad footprint stays well inside the
+ * ~8.3-unit specialist-pad spacing so neighbors never overlap. The
+ * nameplate is a child of this group, so its local altitude compensates
+ * (world y = local × PAD_SCALE) to keep every chip on the single shared
+ * HUD plane. */
+const PAD_SCALE = 1.4
 
 interface StationParts {
   readonly core: Mesh<OctahedronGeometry, MeshStandardMaterial>
@@ -167,13 +191,18 @@ export class StationLayer {
         statusLabels: { active: 'BUSY', idle: 'IDLE' },
         worldWidth: 2.8,
       })
-      nameplate.sprite.position.y = CORE_HOVER_HEIGHT + 0.75
-      group.add(nameplate.sprite)
       this.nameplates.push(nameplate)
       this.parts.push({ core: coreMesh, beam: beamMesh })
       this.busy.push(false)
       const pad = stationPosition(index)
       group.position.set(pad.x, 0, pad.z)
+      // FID-2026-0828-002: scale the whole pedestal to the coherent cast
+      // (1.4×). The nameplate is a child of this group, so its local
+      // altitude compensates (world y = local × PAD_SCALE) to keep every
+      // chip on the single shared HUD plane.
+      group.scale.setScalar(PAD_SCALE)
+      nameplate.sprite.position.y = NAMEPLATE_PLANE_Y / PAD_SCALE
+      group.add(nameplate.sprite)
       this.root.add(group)
     }
     scene.add(this.root)

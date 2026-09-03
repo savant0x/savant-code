@@ -16,6 +16,8 @@ import {
   helloRequest,
   helloResultSchema,
   interruptRequest,
+  listCommandsRequest,
+  listCommandsResultSchema,
   parseInboundFrame,
   userMessageRequest,
   type InboundFrame,
@@ -67,6 +69,8 @@ export class GatewayClient {
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null
   private manualClose = false
   private projectIdValue: string | null = null
+  /** P35: set by connect(); reset by close(). Gates connectOnce(). */
+  private connectStarted = false
 
   constructor(opts?: {
     factory?: TransportFactory
@@ -101,12 +105,30 @@ export class GatewayClient {
     this.reconnectAttempt = 0
     this.config = config
     this.clearReconnectTimer()
+    this.connectStarted = true
     this.openSocket()
+  }
+
+  /**
+   * P35 (operator: "Project FIDs shows 0 open" while the boot batch provably
+   * flows): the boot connect was gated by a module-level flag in use-gateway,
+   * which is fragile across HMR module generations — a remount could render
+   * the full UI while the shared client sat `offline` forever, silently
+   * missing the gateway's hello-time FID inventory batch (254 events on this
+   * repo). connectOnce() moves the idempotence onto the client instance
+   * itself: every effect run / HMR remount may call it; only the first call
+   * on a given instance opens a socket. close() resets the gate so an
+   * explicit teardown can reconnect.
+   */
+  connectOnce(config: GatewayConfig): void {
+    if (this.connectStarted) return
+    this.connect(config)
   }
 
   close(): void {
     this.manualClose = true
     this.clearReconnectTimer()
+    this.connectStarted = false
     const connection = this.connection
     this.connection = null
     connection?.close()
@@ -155,6 +177,15 @@ export class GatewayClient {
       updateScopedThreadStateRequest(this.nextId(), sessionId, state),
     )
     return updateScopedThreadStateResultSchema.parse(result)
+  }
+
+  /** FID-2026-0901-005: the server-side slash-command registry — the full
+   *  CLI command surface with honest dispatch classes. */
+  async listCommands(): Promise<
+    Array<{ id: string; description: string; dispatch: 'agent' | 'client' }>
+  > {
+    const result = await this.dispatch(listCommandsRequest(this.nextId()))
+    return listCommandsResultSchema.parse(result).commands
   }
 
   async respondApproval(

@@ -50,6 +50,13 @@ export type OpenAICompatibleChatConfig = {
   supportsStructuredOutputs?: boolean
 
   /**
+   * Provider-enforced extra body fields merged into the chat-completions
+   * request (e.g. the required `tags` array the Nous inference API demands
+   * from raw-key callers). Omitted when undefined.
+   */
+  extraBody?: Record<string, JSONValue>
+
+  /**
    * The supported URLs for the model.
    */
   supportedUrls?: () => LanguageModelV2['supportedUrls']
@@ -101,6 +108,9 @@ export class OpenAICompatibleChatLanguageModel implements LanguageModelV2 {
       providerOptionsName: this.providerOptionsName,
       supportsStructuredOutputs: this.supportsStructuredOutputs,
       options,
+      ...(this.config.extraBody !== undefined
+        ? { extraBody: this.config.extraBody }
+        : {}),
     })
   }
 

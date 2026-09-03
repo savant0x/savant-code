@@ -4,6 +4,7 @@ import React, { memo, useCallback, type ReactNode } from 'react'
 import { AgentBranchWrapper } from './agent-branch-wrapper'
 import { AgentListBranch } from './agent-list-branch'
 import { AskUserBranch } from './ask-user-branch'
+import { CompactionSummaryBlock } from '../compaction-summary-block'
 import { trimNewlines, isReasoningTextBlock } from './block-helpers'
 import { renderContentWithMarkdown } from './content-with-markdown'
 import { CopyableBlock } from './copyable-block'
@@ -61,8 +62,7 @@ export const SingleBlock = memo(
     const theme = useTheme()
     const codeBlockWidth = Math.max(1, availableWidth)
 
-    // Hoisted above the switch so `useCallback` runs unconditionally (Rules of
-    // Hooks). For non-text blocks it resolves to '' and is unused.
+    // Hoisted above the switch for unconditional useCallback (Rules of Hooks).
     const isStreamingText = isLoading || !isComplete
     const filteredContent =
       block.type === 'text'
@@ -138,15 +138,20 @@ export const SingleBlock = memo(
         )
       }
 
+      case 'compaction-summary':
+        return (
+          <CompactionSummaryBlock
+            key={`${messageId}-compaction-summary-${block.id}`}
+            block={block}
+            onToggleCollapsed={onToggleCollapsed}
+          />
+        )
+
       case 'html': {
         return (
           <box
             key={`${messageId}-html-${idx}`}
-            style={{
-              flexDirection: 'column',
-              gap: 0,
-              width: '100%',
-            }}
+            style={{ flexDirection: 'column', gap: 0, width: '100%' }}
           >
             {block.render({ textColor, theme })}
           </box>

@@ -8,13 +8,14 @@
  * by the parity test in __tests__/roles.test.ts — it must always equal the
  * canonical roster, never grow a fictional member.
  *
- * Accents draw exclusively from the generated contract-token subset
- * (`DECK_TOKENS`) — no raw hex lives here. Ten roles map onto eight usable
- * accent tokens; the documented v1 collisions (scout≡researcher≡savant on
- * primary, scribe≡thinker on muted) are accepted and may split at polish
- * when the token whitelist grows.
+ * Accents draw exclusively from the floor-local palette (`deck-accents.ts`)
+ * — no raw hex lives here. Ten roles map onto ten distinct floor accents;
+ * the v1 collisions (scout≡researcher≡savant on primary, scribe≡thinker on
+ * muted) were split in FID-2026-0828-002 B so every role reads distinctly
+ * on the floor.
  */
 
+import { ROLE_FLOOR_ACCENTS } from './deck-accents'
 import { DECK_TOKENS } from './deck-tokens.generated'
 
 /** The canonical ECHO cast: Orchestrator first, then the nine specialists. */
@@ -53,17 +54,13 @@ export const GENERIC_ROLE_ID = 'generic' as const
 export type DeckRoleId = DeckCoreRoleId | typeof GENERIC_ROLE_ID
 
 const ROLE_ACCENTS: Readonly<Record<DeckCoreRoleId, string>> = {
-  savant: DECK_TOKENS.primary,
-  detective: DECK_TOKENS.inlineCodeFg,
-  forge: DECK_TOKENS.warning,
-  verifier: DECK_TOKENS.success,
-  recorder: DECK_TOKENS.foreground,
-  thinker: DECK_TOKENS.muted,
-  scout: DECK_TOKENS.primary,
-  researcher: DECK_TOKENS.primary,
-  scribe: DECK_TOKENS.muted,
-  adversary: DECK_TOKENS.error,
-}
+  // FID-2026-0828-002: accents read from the floor-local desaturated palette
+  // (`deck-accents.ts`) — the raw contract tokens saturated under the deck's
+  // additive/emissive pipeline (the operator's cyan/yellow floor wash). The
+  // muted generic-silhouette color below stays the contract token: it is
+  // deliberately dim and never additively stacked.
+  ...ROLE_FLOOR_ACCENTS,
+} as unknown as Readonly<Record<DeckCoreRoleId, string>>
 
 /** Contract-token accent for a cast role; the silhouette renders muted. */
 export function roleAccent(roleId: DeckRoleId): string {

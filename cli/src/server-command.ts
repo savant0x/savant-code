@@ -11,6 +11,8 @@
 // child environment. Nothing secret is ever on argv, disk, or the network.
 // Missing token → fail-closed exit (no server starts).
 
+import { join } from 'node:path'
+
 import { setProjectRoot } from './project-files'
 import { startGateway } from './server/gateway'
 import {
@@ -18,6 +20,7 @@ import {
   GATEWAY_PROTOCOL_VERSION,
 } from './server/json-rpc'
 import { installStdinWatchdog } from './server/stdin-watchdog'
+import { findGitRoot } from './utils/git'
 
 // Re-exported so the public surface is unchanged by the extraction.
 export { installStdinWatchdog } from './server/stdin-watchdog'
@@ -26,16 +29,28 @@ export { installStdinWatchdog } from './server/stdin-watchdog'
 export const GATEWAY_TOKEN_ENV = 'SAVANT_GATEWAY_TOKEN'
 
 /** Optional env override for the server-mode project root (env-only, like
- *  GATEWAY_TOKEN_ENV). Absent/blank falls back to the launch directory —
- *  the same base-cwd rule the TUI applies in initializeApp. Without this
- *  seeding, every gateway run dies with 'Project root not set'. */
+ *  GATEWAY_TOKEN_ENV). Absent/blank falls back to the git root of the launch
+ *  directory. Without this seeding, every gateway run dies with 'Project root
+ *  not set'. */
 export const PROJECT_ROOT_ENV = 'SAVANT_PROJECT_ROOT'
 
-/** Resolve the server-mode project root: env override wins; otherwise the
- *  launch directory (mirrors initializeApp's baseCwd behavior). */
+/**
+ * Resolve the server-mode project root: env override wins; otherwise the GIT
+ * ROOT of the launch directory; the launch directory itself only when there
+ * is no enclosing repository.
+ *
+ * FID-2026-0901-004 (operator: "talking in the desktop app seems locked to
+ * src-tauri, not the actual root"): in dev, `cargo run` launches the shell
+ * from `desktop/src-tauri`, and the sidecar inherits that cwd — so raw
+ * `process.cwd()` anchored the whole agent to the Tauri crate instead of the
+ * repo. Anchoring to the git root means the desktop shell always operates on
+ * the real project, regardless of where the binary was launched from.
+ */
 export function resolveServerProjectRoot(env?: NodeJS.ProcessEnv): string {
   const override = (env ?? process.env)[PROJECT_ROOT_ENV]?.trim()
-  return override ? override : process.cwd()
+  if (override) return override
+  const launchDir = process.cwd()
+  return findGitRoot({ cwd: launchDir }) ?? launchDir
 }
 
 /** Ready-line protocol marker — the supervisor's parse anchor. */
@@ -86,11 +101,20 @@ export async function runServerCommand(
   // Seed the project-root module state before any run can start: the run
   // path (session persistence, tool executor scoping) reads it via
   // getProjectRoot(), which throws when unset.
-  setProjectRoot(resolveServerProjectRoot())
+  const projectRoot = resolveServerProjectRoot()
+  setProjectRoot(projectRoot)
+
+  // FID-2026-0901-004 P2 (operator: "the project still shows src-tauri only"):
+  // the gateway's fidsDir/projectId used `process.cwd()` directly, which is
+  // `desktop/src-tauri` in dev — so the PROJECT chip read "src-tauri" even
+  // though the run path was anchored to the real repo. Anchor BOTH to the
+  // resolved root so the chip and the FID rail agree with the codebase.
+  const fidsDir = join(projectRoot, 'dev', 'fids')
 
   const handle = await startGateway({
     token,
     port,
+    fidsDir,
     onReady: ({ port: boundPort }) => {
       // The ready line is the supervisor's parse anchor (single JSON line).
       // eslint-disable-next-line no-console -- headless stdout contract

@@ -25,6 +25,7 @@ import type { WorkspaceScopeType } from '../lib/gateway-protocol'
 import type {
   ChatBlock,
   CompactionStatus,
+  CurrentActivity,
   FidQueueEntry,
   RosterEntry,
   WorkspaceThread,
@@ -32,7 +33,6 @@ import type {
 } from '../state/transcript-store'
 
 let sharedClient: GatewayClient | null = null
-let connectStarted = false
 
 function getClient(): GatewayClient {
   if (sharedClient === null) {
@@ -57,6 +57,10 @@ export type UseGatewayResult = {
   running: boolean
   /** Current Perfection Loop phase (G2-derived from transition_phase results). */
   fsmPhase: string | null
+  /** FID-2026-0901-006 P2: live runtime activity for the status bar. */
+  currentActivity: CurrentActivity | null
+  /** FID-2026-0901-006 P17: active model name for the header badge. */
+  model: string | null
   fidQueue: FidQueueEntry[]
   compactionStatus: CompactionStatus | null
   haltState: AutoDriveHaltState
@@ -64,6 +68,12 @@ export type UseGatewayResult = {
   roster: RosterEntry[]
   workspaceThreads: WorkspaceThread[]
   projectId: string | null
+  /** FID-2026-0901-005: gateway slash-command registry for the palette. */
+  serverCommands: Array<{
+    id: string
+    description: string
+    dispatch: 'agent' | 'client'
+  }>
   loadScope(scopeType: WorkspaceScopeType, scopeId: string): Promise<void>
   updateThreadState(
     sessionId: string,
@@ -79,10 +89,21 @@ export function useGateway(): UseGatewayResult {
   const [status, setStatus] = useState<GatewayStatus>('offline')
   const [projectId, setProjectId] = useState<string | null>(null)
   const [haltState, setHaltState] = useState<AutoDriveHaltState>('idle')
+  // FID-2026-0901-005: the server-side slash-command registry for the
+  // composer palette (fetched once when the gateway becomes ready).
+  const [serverCommands, setServerCommands] = useState<
+    Array<{ id: string; description: string; dispatch: 'agent' | 'client' }>
+  >([])
   const scopeRequestRef = useRef(0)
   const blocks = useStore(transcriptStore, (state) => state.blocks)
   const running = useStore(transcriptStore, (state) => state.running)
   const fsmPhase = useStore(transcriptStore, (state) => state.fsmPhase)
+  // FID-2026-0901-006 P2: runtime activity stream for the running status bar.
+  const currentActivity = useStore(
+    transcriptStore,
+    (state) => state.currentActivity,
+  )
+  const model = useStore(transcriptStore, (state) => state.model)
   const fidQueue = useStore(transcriptStore, (state) => state.fidQueue)
   const roster = useStore(transcriptStore, (state) => state.roster)
   const workspaceThreads = useStore(
@@ -98,7 +119,15 @@ export function useGateway(): UseGatewayResult {
     const client = getClient()
     const offStatus = client.onStatus((nextStatus) => {
       setStatus(nextStatus)
-      if (nextStatus === 'ready') setProjectId(client.getProjectId())
+      if (nextStatus === 'ready') {
+        setProjectId(client.getProjectId())
+        // Palette registry: fetch once per ready transition; failure just
+        // leaves the local-only palette (graceful degradation).
+        client
+          .listCommands()
+          .then(setServerCommands)
+          .catch(() => setServerCommands([]))
+      }
     })
     const offEvents = client.onEvents(ingestEvents)
     const offRunComplete = client.onRunComplete((info: RunCompleteInfo) => {
@@ -107,16 +136,19 @@ export function useGateway(): UseGatewayResult {
         pushLocalError(`run failed: ${info.error}`)
       }
     })
-    if (!connectStarted) {
-      connectStarted = true
-      getGatewayConfig()
-        .then((config: GatewayConfig) => {
-          client.connect(config)
-        })
-        .catch((error: unknown) => {
-          setBootError(describeError(error))
-        })
-    }
+    // P35: boot connect is idempotent ON THE CLIENT (connectOnce) — the old
+    // module-level `connectStarted` flag could strand a fresh HMR module
+    // generation with a never-connected shared client (offline forever, boot
+    // FID batch silently missed → "Project FIDs 0 open"). Every effect run
+    // may call connectOnce; only the first call on the instance opens a
+    // socket, and an explicit close() resets the gate.
+    getGatewayConfig()
+      .then((config: GatewayConfig) => {
+        client.connectOnce(config)
+      })
+      .catch((error: unknown) => {
+        setBootError(describeError(error))
+      })
     return () => {
       offStatus()
       offEvents()
@@ -133,6 +165,18 @@ export function useGateway(): UseGatewayResult {
         if (scopeRequestRef.current !== requestId) return
         setWorkspaceThreads(result.threads)
         const messages = result.threads.flatMap((thread) => thread.messages)
+        // P32 (operator: "it showed up in the deck initially, then
+        // disappeared after 3-5 seconds"): a scope re-fire (boot settle,
+        // status flip, projectId set) used to hydrate the transcript with
+        // the gateway's persisted history — which is EMPTY for desktop
+        // runs — wiping the live exchange seconds after the operator sent
+        // it (proven via CDP: blocks replaced user,text → text,tool,text).
+        // Hydration may never destroy state: skip while a run is live, and
+        // skip when the fetch has nothing to restore but the transcript is
+        // showing content.
+        const { blocks, running } = transcriptStore.getState()
+        if (running) return
+        if (messages.length === 0 && blocks.length > 0) return
         hydratePersistedTranscript(messages)
       } catch (error) {
         if (scopeRequestRef.current !== requestId) return
@@ -214,12 +258,15 @@ export function useGateway(): UseGatewayResult {
     blocks,
     running,
     fsmPhase,
+    currentActivity,
+    model,
     fidQueue,
     compactionStatus,
     haltState,
     roster,
     workspaceThreads,
     projectId,
+    serverCommands,
     loadScope,
     updateThreadState,
     send,

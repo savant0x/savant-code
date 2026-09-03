@@ -46,6 +46,13 @@ on-disk records missing from the table added (-0823-003, -0824-003…-008,
 | [`FID-2026-0824-012`](FID-2026-0824-012-self-improving-harness-and-agent-created-skills.md) | `fixed` | Self-improving harness + agent-created skills master — **ALL 16 steps implemented** (Loop 5, 2026-08-24); receipt stamped 9/9 gates PASS; live boundaries NEEDS-REVIEW (fail-open hooks in HYBRID, `/skills trust` in real TUI, SessionEnd Scribe review) |
 | [`FID-2026-0824-028`](FID-2026-0824-028-robot-cast-never-renders-recovery.md) | `fixed` | Robot cast never rendered — recovery record (deck shows nameplate chips over empty floor since asset pass; critical) — closure boundary outstanding |
 | [`FID-2026-0824-030`](FID-2026-0824-030-robot-cast-mount-telemetry-and-recovery.md) | `fixed` | Robot cast mount telemetry + recovery (critical; companion to -028) — closure boundary outstanding |
+| [`FID-2026-0828-001`](FID-2026-0828-001-compaction-summary-output.md) | `fixed` | /compact post-compaction summary output — terminal-state mirror race fixed (`adoptAndPersist` now delivers `pruned`/report) + new `compaction_summary` event rendered through TrafficLightPanel as turn output; receipt stamped 7/7 gates live PASS; live `/compact` smoke is the operator-gated boundary |
+
+**2026-09-02 audit sweep:** seven deck/desktop session FIDs closed + archived
+(-0828-002, -0829-001, -0831-001, -0831-002, -0901-001, -0901-003, -0901-006)
+— statuses corrected to the honest implemented state, gate receipts
+re-stamped PASS, changelog entries added. See `archive/README.md`
+(2026-09-02 closure) and CHANGELOG.
 
 **2026-08-25 closures:** `FID-2026-0824-009` Workspace Regions and `FID-2026-0820-010` Chat UI are
 closed and archived after their documented implementation and verification gates. See
@@ -183,6 +190,13 @@ is implemented (2026-08-16 Ground-Truth lesson); `converged` documents the
 loop state, not an admissible active-queue status.
 
 ### Closed records (historical)
+
+`FID-2026-0827-001` (sidebar context readout stall near zero — `dampTokenCount`
+small-count floor `CONTEXT_TOKEN_SMALL_COUNT_FLOOR = 10_000`, medium) —
+**closed + archived 2026-08-27** by operator directive after the gate surface
+(12/0 suite, cli typecheck, Verifier PASS) proved the formula change and the
+live visual meter was recorded as the operator's boundary; see
+[`archive/README.md`](archive/README.md) for the closure entry.
 
 `FID-2026-0825-001` (/compact "No response from agent" — compact-and-stop
 zero-assistant-history false error, high) — **closed + archived 2026-08-25**

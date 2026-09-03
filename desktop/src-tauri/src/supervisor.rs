@@ -9,6 +9,73 @@ use std::time::{Duration, Instant};
 
 use crate::gateway::{SpawnSpec, GATEWAY_TOKEN_ENV};
 
+/// Keys forwarded from `.env.local` to the sidecar process, in addition to
+/// every `NEXT_PUBLIC_*` variable. The sidecar runs inference in direct-
+/// provider mode, so it needs the routing + key variables below.
+const SIDECAR_ENV_KEYS: &[&str] = &[
+    "DIRECT_PROVIDER",
+    "INFERENCE_BASE_URL",
+    "OR_MASTER_KEY",
+    "OPENROUTER_API_KEY",
+    "INFERENCE_API_KEY",
+    "SAVANT_CODE_API_KEY",
+];
+
+/// Loads env pairs from `.env.local` (repo root in dev) so the sidecar's env
+/// validation passes at startup and inference routing works. Missing file
+/// yields an empty set; parse errors are ignored (the sidecar reports its
+/// own validation error).
+pub fn sidecar_env_vars() -> Vec<(String, String)> {
+    let mut vars = Vec::new();
+    // Repo root is two levels above the desktop crate (dev layout); the
+    // release layout ships the sidecar beside the shell, so also try the
+    // exe dir and its parent.
+    let mut candidates = Vec::new();
+    if let Ok(cwd) = std::env::current_dir() {
+        candidates.push(cwd.join(".env.local"));
+        candidates.push(cwd.join("..").join(".env.local"));
+        candidates.push(cwd.join("..").join("..").join(".env.local"));
+    }
+    let exe_dir = crate::current_exe_dir();
+    candidates.push(exe_dir.join(".env.local"));
+    candidates.push(exe_dir.parent().map(|p| p.join(".env.local")).unwrap_or_else(|| PathBuf::from(".env.local")));
+    for candidate in candidates {
+        let Ok(contents) = std::fs::read_to_string(&candidate) else {
+            continue;
+        };
+        for line in contents.lines() {
+            let line = line.trim();
+            if line.is_empty() || line.starts_with('#') {
+                continue;
+            }
+            let Some((key, value)) = line.split_once('=') else {
+                continue;
+            };
+            let key = key.trim();
+            let forwards = key.starts_with("NEXT_PUBLIC_")
+                || SIDECAR_ENV_KEYS.contains(&key);
+            if !forwards {
+                continue;
+            }
+            vars.push((key.to_string(), value.trim().to_string()));
+        }
+        if !vars.is_empty() {
+            // FID-2026-0901-001 diagnostic: log which keys (never values)
+            // are forwarded to the sidecar child process, so a missing
+            // provider key is provable from the shell log.
+            log::info!(
+                target: "savant_desktop",
+                "sidecar env: forwarded {} keys from {}: {:?}",
+                vars.len(),
+                candidate.display(),
+                vars.iter().map(|(k, _)| k.as_str()).collect::<Vec<_>>()
+            );
+            break;
+        }
+    }
+    vars
+}
+
 pub const BACKOFF_BASE_MS: u64 = 1_000;
 pub const BACKOFF_CAP_MS: u64 = 30_000;
 pub const MAX_CRASHES_PER_WINDOW: usize = 5;
@@ -140,6 +207,7 @@ pub fn spawn_sidecar(spec: &SpawnSpec) -> io::Result<SidecarHandle> {
     let mut child = Command::new(&spec.program)
         .args(&spec.args)
         .env(GATEWAY_TOKEN_ENV, &spec.token)
+        .envs(sidecar_env_vars())
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())

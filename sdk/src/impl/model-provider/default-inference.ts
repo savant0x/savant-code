@@ -5,6 +5,7 @@ import {
 } from '@savant-code/llm-providers/openai-compatible'
 
 import { fetchWithRetryableNetworkErrors } from './fetch-with-retry'
+import { NOUS_REQUIRED_REQUEST_TAGS } from './model-factories'
 import { getWebsiteUrl } from '../../constants'
 import {
   getByokOpenrouterApiKeyFromEnv,
@@ -47,13 +48,8 @@ export async function createDefaultInferenceModel(
 
   const openrouterApiKey = getByokOpenrouterApiKeyFromEnv()
   const inferenceBaseUrl = getInferenceBaseUrlFromEnv()
-  const resolvedOpenRouterKey = await resolveOpenRouterApiKey()
-  // FID-2026-0809-001 decision 10: when getModelForRequest resolved the ACTIVE
-  // provider's own key, it is authoritative (the OpenRouter master-key chain
-  // must not beat e.g. a TokenHarbor key). Otherwise the legacy env fallbacks
-  // win over a caller-supplied key — preserving the custom-endpoint
-  // INFERENCE_API_KEY flow and backend-mode master-key override (review
-  // finding, Loop 7).
+  const resolvedOpenRouterKey = await resolveOpenRouterApiKey() // Decision 10: the ACTIVE provider's own key is authoritative when
+  // resolved; otherwise legacy env fallbacks win over a caller key.
   const authorizationKey = options?.preferApiKey
     ? apiKey
     : (resolvedOpenRouterKey ?? getInferenceApiKeyFromEnv() ?? apiKey)
@@ -131,10 +127,10 @@ export async function createDefaultInferenceModel(
         },
       }),
     },
-    // Cast: Bun's fetch type also declares a `preconnect` helper, but the AI
-    // SDK only ever invokes fetch as a plain function.
     fetch: fetchWithRetryableNetworkErrors as typeof globalThis.fetch,
     includeUsage: undefined,
     supportsStructuredOutputs: isOpenRouterCompatible,
+    extraBody:
+      options?.providerId === 'nous' ? NOUS_REQUIRED_REQUEST_TAGS : undefined,
   })
 }

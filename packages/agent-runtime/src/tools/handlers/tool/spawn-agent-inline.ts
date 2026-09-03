@@ -4,6 +4,102 @@ const PRUNER_SUMMARY_BUFFER_CHARS = 8_000
 // CompactionSignal expander can reveal a genuinely full summary excerpt.
 const PRUNER_SUMMARY_EXCERPT_CHARS = 4_000
 
+const CONVERSATION_SUMMARY_OPEN = '<conversation_summary>'
+const CONVERSATION_SUMMARY_CLOSE = '</conversation_summary>'
+const HISTORICAL_MEMORY_OPEN = '<historical_memory>'
+const HISTORICAL_MEMORY_CLOSE = '</historical_memory>'
+const COMPACTION_SUMMARY_OPEN = '<compaction-summary>'
+const COMPACTION_SUMMARY_CLOSE = '</compaction-summary>'
+const STRUCTURED_STATE_OPEN = '<structured_state>'
+const STRUCTURED_STATE_CLOSE = '</structured_state>'
+
+/**
+ * Extract the pruner's summary text from the compacted history's memory
+ * message. The context-pruner writes the summary into
+ * `<conversation_summary>` → `<historical_memory>` → `<compaction-summary>`
+ * as `finalMessages[0]` (summary-assembly.ts) — the same single source of
+ * truth the pruner itself parses via extractSummaryContent. Mirrors that
+ * tag-walking order so the transcript block surfaces the EXACT text the
+ * pruner embedded (FID-2026-0828-001, Law 13). Falls back to '' when no
+ * summary message is present or the compaction-summary wrapper is absent.
+ *
+ * This is the production source of truth for a PROGRAMMATIC context-pruner
+ * (handleSteps generator): it never streams text through onResponseChunk,
+ * so the FID-2026-0824-023 streamed-text buffer stays empty and the summary
+ * must be recovered from the history it emitted.
+ */
+export function extractPrunerSummaryFromHistory(
+  messageHistory: readonly unknown[],
+): string {
+  for (const raw of messageHistory) {
+    if (raw === null || typeof raw !== 'object') continue
+    const message = raw as {
+      role?: unknown
+      content?: unknown
+    }
+    if (message.role !== 'user') continue
+    let text = ''
+    const content = message.content
+    if (typeof content === 'string') {
+      text = content
+    } else if (Array.isArray(content)) {
+      for (const part of content) {
+        if (
+          part !== null &&
+          typeof part === 'object' &&
+          (part as { type?: unknown }).type === 'text' &&
+          typeof (part as { text?: unknown }).text === 'string'
+        ) {
+          text += (part as { text?: string }).text
+        }
+      }
+    }
+    const convMatch = text.match(
+      new RegExp(
+        `${CONVERSATION_SUMMARY_OPEN}([\\s\\S]*?)${CONVERSATION_SUMMARY_CLOSE}`,
+      ),
+    )
+    if (!convMatch) continue
+    const memoryMatch = convMatch[1].match(
+      new RegExp(
+        `${HISTORICAL_MEMORY_OPEN}([\\s\\S]*?)${HISTORICAL_MEMORY_CLOSE}`,
+      ),
+    )
+    const memoryContent = memoryMatch ? memoryMatch[1] : convMatch[1]
+    const summaryMatch = memoryContent.match(
+      new RegExp(
+        `${COMPACTION_SUMMARY_OPEN}([\\s\\S]*?)${COMPACTION_SUMMARY_CLOSE}`,
+      ),
+    )
+    if (summaryMatch) {
+      // The pruner's structured block is framed in XML wire tags intended for
+      // the MODEL's history (<structured_state>…</structured_state>). For a
+      // user-facing transcript block they are formatting noise, so unwrap them
+      // the same way the pruner's own extractSummaryContent unwraps its wire
+      // tags — the interior (headings, bullets, preserved state) is the real
+      // readable summary. stripStructuredStateWrappers keeps everything else,
+      // including the '---' assigned-user/assistant budget section that follows.
+      return stripStructuredStateWrappers(summaryMatch[1]).trim()
+    }
+  }
+  return ''
+}
+
+/**
+ * Remove the <structured_state> and </structured_state> framing tags, keeping
+ * the interior (and any surrounding separator + budgeted-entries text) intact.
+ * Tag order is deterministic (structured-summary.ts buildPreservedStateSection
+ * closes the block last), so a targeted strip is safe and never deletes the
+ * readable content between the tags.
+ */
+export function stripStructuredStateWrappers(text: string): string {
+  return text.replace(
+    new RegExp(`${STRUCTURED_STATE_OPEN}[\\s\\S]*?${STRUCTURED_STATE_CLOSE}`),
+    (match) =>
+      match.slice(STRUCTURED_STATE_OPEN.length, -STRUCTURED_STATE_CLOSE.length),
+  )
+}
+
 import { mapValues } from 'lodash'
 
 import {
@@ -340,12 +436,44 @@ export const handleSpawnAgentInline = (async (
 
     // FID-2026-0824-023 stream-routing: persist the bounded summary excerpt
     // + removed-region counts so CompactionSignal surfaces WHAT was compacted.
+    // FID-2026-0828-001: hoisted so the transcript event below carries the
+    // SAME excerpt (single source of truth, Law 13). The context-pruner is a
+    // PROGRAMMATIC agent — it never streams text through onResponseChunk, so
+    // the streamed-text buffer is empty here; recover the summary from the
+    // compacted history's conversation_summary memory message instead (the
+    // exact text the pruner embedded). The buffer remains the fallback for
+    // any future streaming pruner variant.
+    const streamedExcerpt = prunerSummaryBuffer.slice(
+      -PRUNER_SUMMARY_EXCERPT_CHARS,
+    )
+    const prunerSummaryExcerpt =
+      streamedExcerpt.trim().length > 0
+        ? streamedExcerpt
+        : extractPrunerSummaryFromHistory(result.agentState.messageHistory)
     parentAgentState.lastCompactionReport = {
-      summaryExcerpt: prunerSummaryBuffer.slice(-PRUNER_SUMMARY_EXCERPT_CHARS),
+      summaryExcerpt: prunerSummaryExcerpt,
       removedMessages: prunerMessagesRemoved,
       ...(prunerTokensSaved > 0
         ? { tokensSaved: prunerTokensSaved, percentUsed: prunerPercentUsed }
         : {}),
+    }
+    // FID-2026-0828-001: the post-compaction summary crosses the wire as a
+    // structured event BEFORE the run resolves — the manual /compact turn's
+    // visible end-of-turn output (compact-and-stop) and a mid-turn block for
+    // auto-compaction (the run proceeds afterward). Fired only for real
+    // compactions with a non-empty summary — the same condition that records
+    // the `pruned` phase; fold no-ops and summary-less completions stay
+    // silent. Direct writeToClient: the onResponseChunk override diverts only
+    // the pruner's streamed text chunks, not this structured notice.
+    if (prunerMessagesRemoved > 0 && prunerSummaryExcerpt.trim().length > 0) {
+      writeToClient({
+        type: 'compaction_summary',
+        summary: prunerSummaryExcerpt,
+        removedMessages: prunerMessagesRemoved,
+        ...(prunerTokensSaved > 0
+          ? { tokensSaved: prunerTokensSaved, percentUsed: prunerPercentUsed }
+          : {}),
+      })
     }
     if (prunerMessagesRemoved > 0 && prunerTokensSaved > 0) {
       parentAgentState.compactionStatus = {

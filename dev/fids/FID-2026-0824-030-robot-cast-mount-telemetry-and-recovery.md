@@ -5,7 +5,6 @@
 **Severity:** critical
 **Status:** fixed
 **Created:** 2026-08-24 20:37
-**Author:** Orchestrator (hybrid auto-drive, operator directive 2026-08-24, automation level 3)
 **YAGNI-Compliance:** Verified
 
 ---
@@ -119,8 +118,8 @@ timeout (WebView2 timer throttling in a hidden/occluded webview).
 
 ### Verification Receipt
 
-- fingerprint: sha256:734b42360743f03e279cf3e8f7bb399e906c4ac503b1432204ef67d578911b18
-- verified: 2026-08-25T01:03:46.906Z
+- fingerprint: sha256:3bca82d904a7bce005d20c96f920e71a43874e15edadc0cc0b10308724fb200c
+- verified: 2026-09-03T00:18:02.066Z
 - typecheck desktop: exit 0
 - test desktop/src/floor/__tests__/deck-walkers.test.ts: exit 0
 

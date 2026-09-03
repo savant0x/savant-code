@@ -80,6 +80,40 @@ describe('updateMessageCollapse identity preservation (FID-007 P2)', () => {
     expect(result[1].metadata?.isCollapsed).toBe(true)
   })
 
+  it('toggles a compaction-summary block by its id (FID-2026-0828-001)', () => {
+    const messages: ChatMessage[] = [
+      {
+        ...makeMessage('m1', false),
+        blocks: [
+          {
+            type: 'compaction-summary',
+            id: 'compaction-summary-7',
+            summary: 'line one\nline two\nline three',
+            removedMessages: 3,
+            isCollapsed: true,
+          },
+        ],
+      },
+    ]
+
+    // Expand the collapsed-by-default summary block.
+    const expanded = updateMessageCollapse(messages, 'compaction-summary-7')
+    const expBlock = expanded[0].blocks?.[0]
+    expect(
+      expBlock && 'isCollapsed' in expBlock ? expBlock.isCollapsed : null,
+    ).toBe(false)
+    expect(
+      expBlock && 'userOpened' in expBlock ? expBlock.userOpened : null,
+    ).toBe(true)
+
+    // Collapse it again.
+    const reCollapsed = updateMessageCollapse(expanded, 'compaction-summary-7')
+    const colBlock = reCollapsed[0].blocks?.[0]
+    expect(
+      colBlock && 'isCollapsed' in colBlock ? colBlock.isCollapsed : null,
+    ).toBe(true)
+  })
+
   it('no-op for an unknown id: every message keeps its identity', () => {
     const messages = [
       makeMessage('m1', true),

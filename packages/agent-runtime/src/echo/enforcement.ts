@@ -222,6 +222,11 @@ export class EchoEnforcement {
           blocked: true,
           reason: `Must read ${this.requiredProtocolFile} 0-EOF before using tools`,
           warnings: [],
+          // FID-2026-0901-002: this gate self-heals — the agent reads the
+          // protocol and retries within the same turn. Surface the block to
+          // the agent via steering only; a visible error chunk in the
+          // transcript reads as a crash to the operator.
+          silent: true,
         }
       } else if (
         this.groundingReadPending &&

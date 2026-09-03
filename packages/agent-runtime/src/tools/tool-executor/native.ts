@@ -318,13 +318,19 @@ export async function executeToolCall<T extends ToolName>(
         )) {
           onResponseChunk(chunk)
         }
-        onResponseChunk({
-          type: 'error',
-          message: formatBlockingError(
-            enforceResult.reason ?? 'ECHO violation',
-            enforceResult.classification,
-          ),
-        })
+        // FID-2026-0901-002: self-healing gates (e.g. session-init
+        // grounding) mark their result `silent` — the agent still gets
+        // corrective steering below, but no visible BLOCKED error chunk in
+        // the transcript.
+        if (!enforceResult.silent) {
+          onResponseChunk({
+            type: 'error',
+            message: formatBlockingError(
+              enforceResult.reason ?? 'ECHO violation',
+              enforceResult.classification,
+            ),
+          })
+        }
         // Steer the running agent: inject budgeted corrective text ("search
         // first" / "log intent first") so it self-corrects instead of seeing
         // only a block error.
@@ -616,9 +622,14 @@ export async function executeToolCall<T extends ToolName>(
         })
 
         // FID-2026-0718-009: M2 — on tool completion, model reasoning resumes.
+        // P19: carry the effective model id (parity with step.ts thinking emit).
         setActivity(
           agentState,
-          { kind: 'thinking', startedAt: Date.now() },
+          {
+            kind: 'thinking',
+            startedAt: Date.now(),
+            model: agentTemplate.model,
+          },
           onResponseChunk,
         )
 

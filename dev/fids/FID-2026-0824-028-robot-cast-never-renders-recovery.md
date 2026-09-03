@@ -5,7 +5,6 @@
 **Severity:** critical
 **Status:** fixed
 **Created:** 2026-08-24 19:30
-**Author:** Orchestrator (hybrid auto-drive, operator directive 2026-08-24)
 **YAGNI-Compliance:** Verified
 
 ---
@@ -147,8 +146,8 @@ silently, and leave permanent diagnostics that name whichever path fired.
 
 ### Verification Receipt
 
-- fingerprint: sha256:4dbc027f0f6d4920bc593176f79590bc559fc90b61905a44a110209db8dcb78c
-- verified: 2026-08-24T23:59:23.411Z
+- fingerprint: sha256:17709d659eb2264c0bdda0d4826532165f03bda7bc8e5d514ae3f52213d37eb9
+- verified: 2026-09-03T00:17:54.624Z
 - typecheck desktop: exit 0
 - test desktop/src/floor/__tests__/deck-robots.test.ts: exit 0
 

@@ -87,6 +87,12 @@ or guide the manual `/compact` verification (FIDs -0821-001, -0822-001,
 ## Cleanup notes
 
 - Kill stray test CLIs:
-  `powershell -Command "Get-CimInstance Win32_Process -Filter \"Name='bun.exe'\" | Where-Object { $_.CommandLine -match 'cli-shim' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }"`
+
+```powershell
+powershell -Command "Get-CimInstance Win32_Process -Filter \"Name='bun.exe'\" |
+  Where-Object { $_.CommandLine -match 'cli-shim' } |
+ForEach-Object { Stop-Process -Id $_.ProcessId -Force }"
+```
+
 - `dev/scratchpad/*.ts` are gitignored; the driver's tmp dirs live under
   `%TEMP%/savant-compact-*` and `%TEMP%/savant-ptyprobe`.

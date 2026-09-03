@@ -93,6 +93,7 @@ No code is written without a plan. No plan is accepted without audit. No audit p
 - **Durable budgeted goal mode** — `/goal <objective> [--budget tokens=N turns=N time=MS]` drives a budgeted, resumable goal run with token/turn/wall-clock ceilings and an honest `<untrusted_objective>` injection boundary (see the [goal-mode guide](design/goal-mode.md))
 - **Auto Drive (`/auto-drive`)** — clarify → plan → approve → run-to-completion autonomous execution that decomposes the plan into a FID backlog, runs it in dependency order, and certifies completion (aliases `/auto`, `/drive`, `/autodrive`; see the [Auto Drive blueprint](design/Auto Drive Architecture Blueprint.md) and the [FAQ](faq.md))
 - **Discord Rich Presence (`/presence`)** — externalizes the active agent, phase, project basename, and model to Discord with a mechanical privacy boundary (paths, arguments, FID titles, and search queries redacted; fail-closed Zod fallback) — see the [Discord Presence blueprint](design/Discord Presence For Savant-Code.md)
+- **Savant Desktop (Tauri v2)** — a native desktop shell wrapping the same engine: Rust sidecar supervisor, structured chat surface, the 3D command deck (a neon-noir office where the 10-agent cast mirrors live chat activity in real time), and the Auto Drive dashboard — see [`desktop/README.md`](../desktop/README.md)
 - **Extensible hook system** — a project-scoped `hooks:` block in `protocol.config.yaml` runs external commands at the tool-executor lifecycle (`PreToolUse`/`PostToolUse`/session/subagent events), composing with the EHEL gate and fail-open by default (see the [hook-system guide](design/hook-system.md))
 - **One model project-wide** — the model selected in the UI panel is the only model used: the main agent, teacher-forge, headless runs, and every spawned subagent resolve the operator's selection (never a hardcoded paid fallback). The paid build resolves its boot model only from the `/model` selection (`openrouter/free` when unset) and never reads the unreleased savant-free catalog or its preference key, so a stale free-model preference cannot silently switch the operator to a paid model (FID-2026-0814-004 H-08..H-12, FID-2026-0814-010)
 
@@ -123,6 +124,7 @@ No code is written without a plan. No plan is accepted without audit. No audit p
 - [Goal Mode](design/goal-mode.md)
 - [Auto Drive](design/Auto Drive Architecture Blueprint.md)
 - [Discord Rich Presence](design/Discord Presence For Savant-Code.md)
+- [Desktop Shell](../desktop/README.md)
 - [FAQ](faq.md)
 - [Installation](installation.md)
 

@@ -3,6 +3,7 @@ import { match } from 'ts-pattern'
 import { useChatStore } from '../state/chat-store'
 import { appendRootChunk, ensureStreaming } from './sdk-event-handlers/guards'
 import {
+  handleCompactionSummary,
   handleComplianceWarning,
   handleFinish,
 } from './sdk-event-handlers/misc'
@@ -93,6 +94,12 @@ export const createEventHandler =
         // runtime. The store owns the bounded display history.
         .with({ type: 'provenance_receipt' }, (e) =>
           useChatStore.getState().addProvenanceEvent(e),
+        )
+        // FID-2026-0828-001: the post-compaction summary becomes a
+        // transcript block (TrafficLightPanel chrome) — the turn's visible
+        // output for manual /compact and a mid-turn block for auto-compact.
+        .with({ type: 'compaction_summary' }, (e) =>
+          handleCompactionSummary(state, e),
         )
         .otherwise(() => undefined)
     )

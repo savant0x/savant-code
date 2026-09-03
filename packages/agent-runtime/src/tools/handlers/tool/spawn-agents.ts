@@ -372,9 +372,14 @@ export const handleSpawnAgents = (async (
   // FID-2026-0718-009 M8: After sub-agent work resolves, parent resumes
   // 'thinking' so the sidebar reflects parent awaiting next sub-agent or
   // the model step. Single setActivity after all sub-agents resolve.
+  // P19: carry the parent's effective model id (parity with step.ts).
   setActivity(
     parentAgentState,
-    { kind: 'thinking', startedAt: Date.now() },
+    {
+      kind: 'thinking',
+      startedAt: Date.now(),
+      model: parentAgentTemplate.model,
+    },
     writeToClient,
   )
 

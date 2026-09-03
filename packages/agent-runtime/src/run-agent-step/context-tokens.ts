@@ -37,14 +37,26 @@ const lastEmittedCompactionStatus = new WeakMap<AgentState, string>()
 
 function emitCompactionStatus(
   agentState: AgentState,
+  contextCompactor: ContextCompactor,
   onResponseChunk: (chunk: string | PrintModeCompactionStatus) => void,
 ): void {
   const status = agentState.compactionStatus
   if (!status) return
-  const key = JSON.stringify(status)
+  // FID-2026-0901-006 P4: piggyback absolute token counts so the desktop
+  // context meter can render a true window tracker ("84k / 200k") rather
+  // than deriving one from the rounded percent. The window denominator is
+  // reactiveCompact (FID-2026-0814-001 single source of truth).
+  const contextTokens = agentState.contextTokenCount
+  const windowTokens = contextCompactor.getThresholds().reactiveCompact
+  const key = JSON.stringify({ ...status, contextTokens, windowTokens })
   if (lastEmittedCompactionStatus.get(agentState) === key) return
   lastEmittedCompactionStatus.set(agentState, key)
-  onResponseChunk({ type: 'compaction_status', ...status })
+  onResponseChunk({
+    type: 'compaction_status',
+    ...status,
+    ...(contextTokens !== undefined ? { contextTokens } : {}),
+    ...(windowTokens !== undefined ? { windowTokens } : {}),
+  })
 }
 
 /**
@@ -389,6 +401,6 @@ export async function prepareStepContext(params: {
     }
   }
 
-  emitCompactionStatus(agentState, loopParams.onResponseChunk)
+  emitCompactionStatus(agentState, contextCompactor, loopParams.onResponseChunk)
   return { stepPrompt, systemTokens }
 }

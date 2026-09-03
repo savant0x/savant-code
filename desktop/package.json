@@ -1,6 +1,6 @@
 {
   "name": "@savant-code/desktop",
-  "version": "0.0.27",
+  "version": "0.0.28",
   "private": true,
   "type": "module",
   "scripts": {
@@ -15,6 +15,9 @@
     "gen:tokens": "bun scripts/generate-design-tokens.ts"
   },
   "dependencies": {
+    "@react-three/drei": "^10.7.8",
+    "@react-three/fiber": "^9.7.0",
+    "@react-three/postprocessing": "^3.1.1",
     "@savant-code/common": "workspace:*",
     "@savant-code/design-systems": "workspace:*",
     "@tauri-apps/api": "^2.0.0",

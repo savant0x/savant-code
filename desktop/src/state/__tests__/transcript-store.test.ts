@@ -8,9 +8,10 @@ import {
   isAwaitingFirstOutput,
   pushLocalUserMessage,
   transcriptStore,
+  type ChatBlock,
+  type FidQueueEntry,
 } from '../transcript-store'
 
-import type { ChatBlock } from '../transcript-store'
 import type { PrintModeEvent } from '@savant-code/common/types/print-mode'
 
 function text(value: string): PrintModeEvent {
@@ -92,7 +93,7 @@ describe('applyEventBatch', () => {
     expect(duped.blocks).toHaveLength(1)
   })
 
-  test('errors, approvals, EHEL cards, and notices append typed blocks deterministically', () => {
+  test('errors, approvals, and EHEL cards append typed blocks deterministically', () => {
     const events: PrintModeEvent[] = [
       { type: 'error', message: 'boom' },
       {
@@ -116,11 +117,12 @@ describe('applyEventBatch', () => {
       },
     ]
     const state = applyEventBatch(initialTranscriptState, events)
+    // fid_update is silent (P17) — the queue panel surfaces it, the
+    // transcript gets no per-FID notice line.
     expect(state.blocks.map((b) => `${b.kind}:${b.id}`)).toEqual([
       'error:0',
       'approval:1',
       'ehel:2',
-      'notice:3',
     ])
     expect(state.fidQueue).toEqual([
       {
@@ -230,9 +232,11 @@ describe('hydratePersistedTranscript', () => {
         createdAt: '2026-08-25T00:00:02Z',
       },
     ])
+    const t0 = new Date('2026-08-25T00:00:00Z').getTime()
+    const t1 = new Date('2026-08-25T00:00:01Z').getTime()
     expect(transcriptStore.getState().blocks).toEqual([
-      { kind: 'user', id: 0, text: 'hello' },
-      { kind: 'text', id: 1, text: 'world' },
+      { kind: 'user', id: 0, text: 'hello', ts: t0 },
+      { kind: 'text', id: 1, text: 'world', ts: t1 },
       { kind: 'error', id: 2, message: 'failed' },
     ])
     expect(transcriptStore.getState().running).toBe(false)
@@ -276,7 +280,7 @@ describe('pushLocalUserMessage', () => {
 describe('isAwaitingFirstOutput', () => {
   test('false when no run is in flight', () => {
     expect(isAwaitingFirstOutput([], false)).toBe(false)
-    const blocks: ChatBlock[] = [{ kind: 'user', id: 0, text: 'hi' }]
+    const blocks: ChatBlock[] = [{ kind: 'user', id: 0, text: 'hi', ts: 1 }]
     expect(isAwaitingFirstOutput(blocks, false)).toBe(false)
   })
 
@@ -285,7 +289,7 @@ describe('isAwaitingFirstOutput', () => {
   })
 
   test('true while the last block is the operator message', () => {
-    const blocks: ChatBlock[] = [{ kind: 'user', id: 0, text: 'go' }]
+    const blocks: ChatBlock[] = [{ kind: 'user', id: 0, text: 'go', ts: 1 }]
     expect(isAwaitingFirstOutput(blocks, true)).toBe(true)
   })
 
@@ -316,5 +320,47 @@ describe('isAwaitingFirstOutput', () => {
       },
     ])
     expect(isAwaitingFirstOutput(reasoned.blocks, true)).toBe(false)
+  })
+})
+
+describe('fid_update silencing (FID-2026-0901-006 P17)', () => {
+  test('updates the queue but emits no transcript notice line', () => {
+    const state = applyEventBatch(initialTranscriptState, [
+      {
+        type: 'fid_update',
+        projectId: 'savant-code',
+        fidId: 'FID-2026-0824-003',
+        status: 'analyzed',
+      },
+    ])
+    // Queue is populated for the sidebar.
+    const entry = state.fidQueue.find(
+      (e: FidQueueEntry) => e.fidId === 'FID-2026-0824-003',
+    )
+    expect(entry?.status).toBe('analyzed')
+    // No per-FID notice block in the transcript (the wall of FID lines).
+    expect(state.blocks.some((b) => b.kind === 'notice')).toBe(false)
+    expect(state.blocks.length).toBe(0)
+  })
+
+  test('dedupes repeated updates by fidId+projectId', () => {
+    const one = applyEventBatch(initialTranscriptState, [
+      {
+        type: 'fid_update',
+        projectId: 'savant-code',
+        fidId: 'FID-1',
+        status: 'created',
+      },
+    ])
+    const two = applyEventBatch(one, [
+      {
+        type: 'fid_update',
+        projectId: 'savant-code',
+        fidId: 'FID-1',
+        status: 'analyzed',
+      },
+    ])
+    expect(two.fidQueue.length).toBe(1)
+    expect(two.fidQueue[0]?.status).toBe('analyzed')
   })
 })

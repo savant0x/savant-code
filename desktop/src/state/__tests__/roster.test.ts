@@ -18,6 +18,21 @@ describe('desktop ECHO roster', () => {
     ])
   })
 
+  test('is always active for savant, never standby (P21)', () => {
+    const initial = initialRoster()
+    expect(initial.find((entry) => entry.roleId === 'savant')?.presence).toBe(
+      'active',
+    )
+    // A `start` event keeps savant active.
+    const started = applyRosterEvent(initial, {
+      type: 'start',
+      agentId: 's1',
+    })
+    expect(started.find((entry) => entry.roleId === 'savant')?.presence).toBe(
+      'active',
+    )
+  })
+
   test('tracks known subagent presence and ignores unknown agents', () => {
     const started = applyRosterEvent(initialRoster(), {
       type: 'subagent_start',

@@ -10,11 +10,21 @@
 
 import { Color, MeshBasicMaterial, MeshStandardMaterial } from 'three'
 
-import { DECK_TOKENS } from '../deck-tokens.generated'
-
 /** Landmark emissive level — stations glow steadily between robot states
  * (standby 0.32 / active 0.95 in the cast; stations sit between). */
 export const STATION_EMISSIVE = 0.45
+
+/**
+ * FID-2026-0828-002 B: the body must read as its ROLE accent, not the
+ * stage lighting. The previous recipe (near-black `surface` base +
+ * metalness 0.55) let the cyan key/fill lights dominate the metallic
+ * diffuse response, so every figure rendered the reigning scene tint and
+ * the accent never read. Fix: tint the base toward the accent (dark, so
+ * the chassis stays dark) and drop metalness so the lights cannot
+ * re-tint the body; the emissive then carries the role hue.
+ */
+export const ROBOT_METALNESS = 0.2
+export const ROBOT_ROUGHNESS = 0.45
 
 export interface HologramOptions {
   /** <1 renders the body translucent so inner scan-lattice detail reads
@@ -22,19 +32,27 @@ export interface HologramOptions {
   readonly opacity?: number
 }
 
-/** Build one hologram material for an accent color at an emissive level. */
+/** Build one hologram material for an accent color at an emissive level.
+ * The body base is a dark tint OF THE ACCENT (not the neutral surface), so
+ * diffuse + emissive agree on the role hue under any lighting rig. */
 export function createHologramMaterial(
   accent: string,
   emissiveIntensity: number,
   options: HologramOptions = {},
 ): MeshStandardMaterial {
   const opacity = options.opacity ?? 1
+  const accentColor = new Color(accent)
+  // Dark-accent base: 50% of the accent — the deck must be unmistakably
+  // alive (FID-2026-0829-001 L1). At 0.35 the diffuse was still dim enough
+  // to read as scene tint under bright lighting; 0.50 makes the body read
+  // the accent even at standby, while keeping the chassis dark. */
+  const bodyBase = accentColor.clone().multiplyScalar(0.5)
   return new MeshStandardMaterial({
-    color: new Color(DECK_TOKENS.surface),
-    emissive: new Color(accent),
+    color: bodyBase,
+    emissive: accentColor,
     emissiveIntensity,
-    metalness: 0.55,
-    roughness: 0.4,
+    metalness: ROBOT_METALNESS,
+    roughness: ROBOT_ROUGHNESS,
     transparent: opacity < 1,
     opacity,
   })

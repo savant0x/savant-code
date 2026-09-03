@@ -1,5 +1,142 @@
 # Changelog
 
+## 0.0.28 — 2026-09-02
+
+Release delta since v0.0.27 (2026-08-21). Detailed per-FID entries follow below in
+reverse-chronological order; the highlights:
+
+- **Compaction integrity rebuild** — master FID-2026-0824-022 + children -023…-027
+  (visibility/transparency layer, preservation contract + digest schema,
+  minimal-surgery algorithm, evidence spill + requiresRawEvidence splice,
+  removed-content ledger + metrics + model notice) all implemented and closed
+  2026-08-24.
+- **Eval system rebuild v3** — master FID-2026-0824-013 + children -014…-019 (FSM
+  alignment, sandbox hardening, skill-efficacy engine, governance corpus + bounded
+  autorater + Tier-1 pre-push smoke, erosion regression guard, capability ingestion
+  + Tier-3 release pipeline) closed 2026-08-25.
+- **Desktop chat surface + Auto Drive dashboard** — FID-2026-0820-010 closed
+  2026-08-25 (structured no-terminal chat, dashboard projection, Emergency Halt,
+  parent graph); workspace regions FID-2026-0824-009 closed 2026-08-25.
+- **Compaction summary output** — FID-2026-0828-001: `/compact` (and auto-compaction)
+  now emit the pruner's summary of the window as a first-class transcript entry
+  rendered through TrafficLightPanel, and the terminal-state mirror race that dropped
+  the `pruned` phase + summary report on compact-and-stop runs is fixed. Summary is
+  recovered from the pruner's compacted history (the pruner is a programmatic agent
+  that never streams text) and stripped of `<structured_state>` framing tags; the
+  block renders collapsed-by-default with easy expand/collapse and a whole-block copy
+  button. Live `/compact` verified by the operator 2026-08-28.
+- **Nous free-model 400 "missing tags" fix** — the Nous inference API requires a
+  `tags: ['user=…']` body from raw-key (Bearer) callers; without it every
+  `nous/…` (and bare-slug `DIRECT_PROVIDER=nous`) request was rejected `400 missing
+  tags`. Fixed by injecting the required tag on both routing paths, single shared
+  constant.
+- **Sidebar context readout fix** — FID-2026-0827-001: `CONTEXT_TOKEN_SMALL_COUNT_FLOOR`
+  small-count exact adoption in `dampTokenCount` ("context stuck at 0/x").
+- **Enforcement-layer + Recorder closures** — FID-2026-0823-011 (accepted with waiver),
+  FID-2026-0824-001/-010 (live-evidence discharge), deck visual trio (waiver).
+- **Model migration** — stealth/ox-alpha → z-ai/glm-5.3-flash (API-valid; prod config
+  updated).
+- **Repo hygiene** — tree-drain migration drained the 644-path backlog into 27
+  path-scoped atomic commits under the G1–G9 git-workflow adoption; protocol bundle
+  regenerated; all gate surfaces green at release.
+- **Discord Rich Presence refinements** — presence enabled by default, client id
+  hardcoded to the Savant Discord application (feature-theft guard), three-line
+  activity layout (project / model / action), provider-trimmed model labels
+  (`nous/meituan/longcat-2.0:free` → `longcat-2.0`), `openrouter/free` rendered
+  as "OpenRouter Free". Operator live-confirmed.
+
+## 2026-09-02 — Release-ready audit: deck rebuild closed, desktop CLI-parity program closed, sidecar env fix closed (7 FIDs archived)
+
+The 2026-08-29…09-02 sessions rebuilt the desktop command deck and closed the
+desktop parity program. All seven FIDs are archived with re-stamped gate
+receipts; the repo-wide `validate:repository` FID-ledger issues went 40 → 0.
+
+- **Deck rebuild: neon-noir agent office (R3F)** — FID-2026-0831-001 +
+  FID-2026-0831-002 closed: `@react-three/fiber` office replacing the stage
+  renderer — 10-agent robot cast with per-role accents and glowing rims,
+  walk-to-station on live tool calls, obstacle-aware routing, activity
+  beacons + ThinkingDots/SparkBurst, speech bubbles from the driver text
+  snapshot, day/night cycle, break furniture, click-to-focus + follow-cam,
+  real Savant emblem. Floor suites 178/0 across the passes; live smoke
+  discharged by the operator across five native sessions.
+- **Desktop CLI-parity program** — FID-2026-0901-006 closed after 36 passes:
+  timestamps under messages, model display + real context window (no more
+  hardcoded x/200k), markdown chat bubbles with traffic-light headers,
+  "Savant roster" rename, FID queue initial-sync fix (`connectOnce` boot-path
+  idempotence + hello-time inventory push, panel went 0 → 27 open),
+  deck mini-chat island with semi-transparent backdrop, `dev/scratchpad`
+  auto-management (hygiene guard + README contract).
+- **Sidecar env + SDK client init** — FID-2026-0901-001 closed: the Tauri
+  supervisor now forwards `NEXT_PUBLIC_*` + inference keys to the sidecar
+  child process, fixing the desktop boot crash-loop and chat send failures.
+- **Deck live fidelity + visual activity** — FID-2026-0828-002 (defect B:
+  emissive/body-base/palette trio) and FID-2026-0829-001 (six activity
+  layers + lane-alignment fix) closed; their remaining surfaces were
+  superseded by the 0831 rebuild.
+- **Ledger hygiene** — forbidden `**Author:**` attribution fields removed
+  (FID-2026-0824-028/-030), archived FID-2026-0822-013 superseded steps given
+  explicit `deferred::operator-approved` markers, stale gate receipts
+  re-stamped PASS via `bun run fid:verify … --write`.
+
+## 2026-08-28 — Compaction summary: history recovery + collapsed transcript block, and Nous free-model `tags` fix (fixed, live confirmed)
+
+Two session fixes landed while soft-testing the `/compact` summary output
+(FID-2026-0828-001) and the v0.0.28 release live run:
+
+- **Compaction summary actually renders now.** The original capture primitive
+  (`prunerSummaryBuffer`, FID-2026-0824-023) only fills from `onResponseChunk`
+  STRING chunks, but the context-pruner is a PROGRAMMATIC (handleSteps) agent
+  that never streams text — so the buffer was always empty in production and the
+  emission gate never fired (`/compact` produced literally zero output, operator
+  live test). Fix: recover the summary from the compacted history's
+  `<conversation_summary>` → `<historical_memory>` → `<compaction-summary>` memory
+  message the pruner always writes (`extractPrunerSummaryFromHistory`,
+  `spawn-agent-inline.ts`), stripping the `<structured_state>`/`</structured_state>`
+  framing wire tags so the block shows clean readable text. The streamed buffer
+  stays only as a defensive fallback.
+- **Block polish (operator-directed).** The summary transcript entry now renders
+  COLLAPSED BY DEFAULT — header (`✓ Compaction summary — removed N messages ·
+  −X tokens · Y% of window`) + first line only, so `/compact` reads as a one-line
+  confirmation instead of a multi-row wall; a clickable `▾ expand`/`▴ collapse`
+  header plus a dedicated `▴ collapse` button under the expanded content make the
+  fold round-trip easy; and the whole block carries the shared `⎘` copy button
+  (copies the header + full summary). `CompactionSummaryContentBlock` gained an
+  `id` + `isCollapsed`/`userOpened` so the standard block-toggle handler
+  (`updateMessageCollapse`) expands/contracts it.
+- **Nous free-model `tags` fix.** Messaging `nous/tencent/hy3:free` returned
+  `400 This request is not valid… missing tags`: the Nous inference API requires a
+  `tags` array with a `user=…` entry from raw-key (Bearer) callers (undocumented in
+  its OpenAPI because the supported path is OAuth). Added an `extraBody` seam to the
+  OpenAI-compatible chat model and set `tags: ['user=savant-code']` for the Nous
+  provider on BOTH routing paths (prefixed `nous/…` via `createProviderModel` and
+  bare-slug via `createDefaultInferenceModel`), mirrored from a single shared
+  constant. Operator-verified live 2026-08-28.
+
+Gates: typecheck common/agent-runtime/cli exit 0; compaction suites (agent-runtime
+9/0 incl. programmatic-pruner recovery + `<structured_state>` strip; cli 15/0 incl.
+collapsed/expand/copy block + id-toggle); Nous SDK suite 15/0 incl. the `tags` body
+assertions; eslint `--max-warnings 0`; prettier clean; `fid:verify --check` sweep PASS.
+
+## 2026-08-27 — FID-2026-0827-001: sidebar context readout stall near zero fixed (closed + archived)
+
+Operator-reported "context seems stuck at 0/x" during a live 2026-08-27 session — the
+sidebar `Tokens used/max` readout showed `used = 0` while the denominator resolved to the
+real ~1M window. Root cause: `dampTokenCount` (display-only damper from FID-2026-0821-003-A)
+applies a ±5% relative deadband + 12% max-step ramp against the **currently displayed**
+value, so a small early-session count against a large window ramps imperceptibly from ~0.
+Fix: NEW `CONTEXT_TOKEN_SMALL_COUNT_FLOOR = 10_000` in
+`cli/src/state/chat-store/compaction-helpers.ts` — any count at or below the floor (incl.
+any transition out of zero) is adopted exactly; deadband/ramp unchanged above the floor.
+2 regression tests in `chat-store-noop-guards.test.ts` (small-count exact adoption;
+below-floor replacement). Gates: cli typecheck exit 0 · suite 12 pass / 0 fail (15 expect
+calls) · eslint/prettier/markdownlint clean · Verifier audit PASS 4/4 with evidence
+(guard fixes the reported stall, tests fail pre-fix, receipt ↔ reality match, metadata
+consistent) · two cosmetic observations recorded, no action needed. Receipt re-stamped at
+the archived path `sha256:787cb606...2402` (2/2 declared gates live PASS); repo-wide
+`fid:verify --check` sweep PASS. Live visual-meter confirmation recorded as the
+operator's boundary, resolved by directive — never claimed passed. Closed + archived to
+`dev/fids/archive/` 2026-08-27.
+
 ## 2026-08-26 — FID-2026-0823-011 Recorder stall closed fixed-with-waiver (closed + archived)
 
 The Recorder read-then-stop behavioral boundary is PERMANENTLY ACCEPTED by operator waiver. Evidence state at close: three controlled live probes (UPDATE stalled twice in bounded ~26-30K contexts even with the Turn Contract and the corrective retry suffix naming the exact failure; CREATE shape with immediate-write instruction succeeded once), plus real-world recurrences during 08-24/25 work — establishing that prompt-level levers cannot reliably make this model execute an UPDATE-shaped write, while every harness mechanism around it is proven live and correct (context isolation via includeMessageHistory:false cutting inherited context from ~654K to ~26K tokens; the -012 corrective retry ladder firing correctly; the -014 guard canonicalization). The accepted mitigation is structural: the operator-approved Orchestrator direct-write convention has carried all Recorder duties since 2026-08-23. Gates fresh at closure: typecheck agents + cli exit 0, run-programmatic-step suite exit 0 within the 45/0 agent-runtime battery; receipt re-stamped at the archived path (3/3 declared gates live PASS); repo-wide fid:verify --check sweep PASS. Honest framing preserved in the record: accepted, never claimed fixed.

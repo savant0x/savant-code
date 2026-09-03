@@ -181,6 +181,24 @@ export function interruptRequest(id: JsonRpcId): JsonRpcRequest {
   return { jsonrpc: '2.0', id, method: 'interrupt_stream' }
 }
 
+// FID-2026-0901-005: server-provided slash-command registry ---------------
+
+export const listCommandsResultSchema = z.object({
+  commands: z.array(
+    z.object({
+      /** Command id WITHOUT the leading slash ('compact', 'mode:plan'). */
+      id: z.string().min(1),
+      description: z.string(),
+      /** 'agent' = dispatch as prompt text; 'client' = renderer-local only. */
+      dispatch: z.enum(['agent', 'client']),
+    }),
+  ),
+})
+
+export function listCommandsRequest(id: JsonRpcId): JsonRpcRequest {
+  return { jsonrpc: '2.0', id, method: 'list_commands', params: {} }
+}
+
 // ---------------------------------------------------------------------------
 // Inbound frames — classified, never thrown on
 // ---------------------------------------------------------------------------

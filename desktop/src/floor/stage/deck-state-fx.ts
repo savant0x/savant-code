@@ -36,19 +36,27 @@ import {
   padPosition,
   THINKER_BURST_CAP,
   type FloorState,
+  type PadPosition,
+  type WalkerState,
 } from '../adapter/floor-adapter'
 import { DECK_TOKENS } from '../deck-tokens.generated'
-import { phaseAccent } from '../stations'
+import { phaseAccent, stationIndex, stationPosition } from '../stations'
 
 import type { AnimationSyncOptions } from './motion'
 import type { Scene } from 'three'
 
-const SPARK_LIFETIME_MS = 600
-const MAX_LIVE_SPARKS = 64
-const SPARKS_PER_BURST = 6
+export interface WalkerWorldPosition {
+  readonly agentId: string
+  readonly x: number
+  readonly z: number
+}
+
+const SPARK_LIFETIME_MS = 900
+const MAX_LIVE_SPARKS = 96
+const SPARKS_PER_BURST = 8
 /** Outward drift speed so bursts visibly scatter (audit fix: dir fields
  * were stored but never applied). */
-const SPARK_SPEED_UNITS_PER_SEC = 6
+const SPARK_SPEED_UNITS_PER_SEC = 8
 const AURA_RADIUS = 2.6
 const PACKET_PERIOD_MS = 2400
 /** Glyph-ring geometry/pulse (P5): flat ring of tiles above the console. */
@@ -66,8 +74,9 @@ interface Spark {
 }
 
 interface Lane {
-  readonly beam: Group
   readonly packet: Mesh
+  beam: Group
+  target: PadPosition
 }
 
 function disposeMesh(mesh: Mesh): void {
@@ -131,12 +140,13 @@ export class StateFxLayer {
     floor: FloorState,
     nowMs: number,
     options: AnimationSyncOptions = {},
+    positions?: ReadonlyMap<string, WalkerWorldPosition>,
   ): void {
     if (this.disposed) return
     const reduced = options.reduced === true
     this.syncAura(floor.fsmPhase)
     this.syncSparks(floor, nowMs, reduced)
-    this.syncLanes(floor, nowMs, reduced)
+    this.syncLanes(floor, nowMs, reduced, positions)
     this.syncGlyphs(floor.thinkerBursts.length, nowMs, reduced)
   }
 
@@ -230,7 +240,7 @@ export class StateFxLayer {
       }
       const angle = (i / SPARKS_PER_BURST) * Math.PI * 2
       const mesh = new Mesh(
-        new OctahedronGeometry(0.09),
+        new OctahedronGeometry(0.18),
         new MeshBasicMaterial({ color: new Color(DECK_TOKENS.primary) }),
       )
       mesh.position.set(x, LANE_HEIGHT_Y(), z)
@@ -246,24 +256,40 @@ export class StateFxLayer {
     }
   }
 
-  private syncLanes(floor: FloorState, nowMs: number, reduced: boolean): void {
+  private syncLanes(
+    floor: FloorState,
+    nowMs: number,
+    reduced: boolean,
+    positions?: ReadonlyMap<string, WalkerWorldPosition>,
+  ): void {
     const active = new Set<string>()
     for (const [agentId, walker] of floor.walkers) {
       if (walker.phase !== 'active') continue
       active.add(agentId)
+      const target = positions?.get(agentId) ?? laneTarget(walker)
       let lane = this.lanes.get(agentId)
       if (lane === undefined) {
-        lane = this.buildLane(walker.padIndex)
+        lane = this.buildLane(target)
         this.lanes.set(agentId, lane)
         this.root.add(lane.beam)
         this.root.add(lane.packet)
+      } else if (!samePosition(lane.target, target)) {
+        // A walker can be observed first at its home pad, then receive a
+        // tool_call and move to a station. Repoint the existing lane instead
+        // of leaving the beam/dot at the stale pad endpoint.
+        this.root.remove(lane.beam)
+        lane.beam.traverse((child) => {
+          if (child instanceof Mesh) disposeMesh(child)
+        })
+        lane.beam = this.buildBeam(target)
+        lane.target = target
+        this.root.add(lane.beam)
       }
-      const pad = padPosition(walker.padIndex)
       // Ping-pong 0..1..0 over the period; deterministic in replay.
       // Reduced motion parks the packet at the exact lane midpoint.
       const t = (nowMs % PACKET_PERIOD_MS) / PACKET_PERIOD_MS
       const u = reduced ? 0.5 : t <= 0.5 ? t * 2 : 2 - t * 2
-      lane.packet.position.set(pad.x * u, LANE_HEIGHT_Y(), pad.z * u)
+      lane.packet.position.set(target.x * u, LANE_HEIGHT_Y(), target.z * u)
     }
     for (const [agentId, lane] of this.lanes) {
       if (active.has(agentId)) continue
@@ -277,30 +303,58 @@ export class StateFxLayer {
     }
   }
 
-  private buildLane(padIndex: number): Lane {
-    const pad = padPosition(padIndex)
+  private buildLane(target: PadPosition): Lane {
+    const beam = this.buildBeam(target)
+    const packet = new Mesh(
+      new OctahedronGeometry(0.22),
+      new MeshBasicMaterial({ color: new Color(DECK_TOKENS.inlineCodeFg) }),
+    )
+    return { beam, packet, target }
+  }
+
+  private buildBeam(target: PadPosition): Group {
     const material = new MeshBasicMaterial({
       color: new Color(DECK_TOKENS.border),
       transparent: true,
-      opacity: 0.8,
+      opacity: 0.9,
     })
-    const length = Math.hypot(pad.x, pad.z)
+    const length = Math.hypot(target.x, target.z)
     const beam = new Group()
-    const strip = new Mesh(new BoxGeometry(length, 0.02, 0.04), material)
-    // Local +X rotated by theta+PI/2 points from the pad toward the console.
-    beam.rotation.y = Math.atan2(pad.x, pad.z) + Math.PI / 2
-    strip.position.set(-length / 2, LANE_HEIGHT_Y(), 0)
+    const strip = new Mesh(new BoxGeometry(length, 0.04, 0.08), material)
+    // FID-2026-0828-002 D-fix: local +X aligned with the console→target
+    // radial. Strip centered at beam origin (midpoint) so it spans the
+    // full console→target distance. The old PI/2 offset ran strips
+    // tangent to the ring; the old -length/2 shift covered only half.
+    beam.rotation.y = Math.atan2(target.x, target.z)
+    strip.position.y = LANE_HEIGHT_Y()
     beam.add(strip)
-    beam.position.set(pad.x / 2, 0, pad.z / 2)
-    const packet = new Mesh(
-      new OctahedronGeometry(0.14),
-      new MeshBasicMaterial({ color: new Color(DECK_TOKENS.inlineCodeFg) }),
-    )
-    return { beam, packet }
+    beam.position.set(target.x / 2, 0, target.z / 2)
+    return beam
   }
+}
+
+function samePosition(left: PadPosition, right: PadPosition): boolean {
+  return Math.abs(left.x - right.x) < 1e-6 && Math.abs(left.z - right.z) < 1e-6
 }
 
 /** Shared hover height so sparks, beams, and packets sit on one plane. */
 function LANE_HEIGHT_Y(): number {
   return 0.15
+}
+
+/**
+ * The lane's far endpoint = WHERE THE AGENT ACTUALLY STANDS. FID-2026-0829-001
+ * (operator: "neon lines are not properly aligned with the actual agents —
+ * size is off, location is not aligned"): lanes used to run console→home
+ * pad (the 16-radius outer ring), but agents doing tool work stand AT their
+ * station pedestal (the 9-radius hexagon) — a different angle and a shorter
+ * distance, so the neon line ended past the agent in empty floor. While a
+ * walker holds a station contract the lane now points at that station;
+ * idle active walkers keep the console→pad link (their standing spot).
+ */
+function laneTarget(walker: WalkerState): PadPosition {
+  if (walker.stationTarget !== null) {
+    return stationPosition(stationIndex(walker.stationTarget))
+  }
+  return padPosition(walker.padIndex)
 }

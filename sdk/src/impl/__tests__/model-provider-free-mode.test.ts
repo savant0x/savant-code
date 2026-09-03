@@ -234,9 +234,11 @@ describe('getModelForRequest ChatGPT OAuth fallback behavior', () => {
     expect(headers.get('authorization')).toBe('Bearer nous-test-key')
     expect(headers.get('HTTP-Referer')).toBeNull()
     expect(headers.get('X-OpenRouter-Title')).toBeNull()
-    expect(JSON.parse(String(init?.body)).model).toBe(
-      'anthropic/claude-sonnet-4.6',
-    )
+    const body = JSON.parse(String(init?.body))
+    expect(body.model).toBe('anthropic/claude-sonnet-4.6')
+    // Nous requires a `user=` tag from raw-key (Bearer) callers — without it
+    // the endpoint rejects with 400 "missing tags".
+    expect(body.tags).toEqual(['user=savant-code'])
   })
 
   test('requires the CommandCode API key', async () => {
@@ -412,9 +414,42 @@ describe('getModelForRequest ChatGPT OAuth fallback behavior', () => {
     expect(headers.get('authorization')).toBe('Bearer nous-bare-slug-key')
     expect(headers.get('HTTP-Referer')).toBeNull()
     expect(headers.get('X-OpenRouter-Title')).toBeNull()
-    expect(JSON.parse(String(init?.body)).model).toBe(
-      'anthropic/claude-sonnet-4.6',
+    const body = JSON.parse(String(init?.body))
+    expect(body.model).toBe('anthropic/claude-sonnet-4.6')
+    // Bare-slug Nous must carry the same required `user=` tag as prefixed
+    // `nous/` models (single shared contract).
+    expect(body.tags).toEqual(['user=savant-code'])
+  })
+
+  test('non-Nous providers omit the required tags body field', async () => {
+    process.env.TOKENHARBOR_API_KEY = 'tokenharbor-test-key'
+    const fetchMock = mock(() =>
+      Promise.resolve(
+        new Response('data: [DONE]\n\n', {
+          status: 200,
+          headers: { 'content-type': 'text/event-stream' },
+        }),
+      ),
     )
+    // @ts-expect-error - test fetch has the same runtime contract
+    globalThis.fetch = fetchMock
+
+    const { getModelForRequest } = await importFresh()
+    const result = await getModelForRequest({
+      apiKey: 'test-key',
+      model: TOKEN_HARBOR_MODEL,
+    })
+    await (result.model as LanguageModelV2).doStream({
+      prompt: COMMAND_CODE_PROMPT,
+    })
+
+    const [, init] = fetchMock.mock.calls[0] as unknown as [
+      RequestInfo | URL,
+      RequestInit | undefined,
+    ]
+    const body = JSON.parse(String(init?.body))
+    // Tags are a Nous-only contract; other providers must not receive them.
+    expect(body.tags).toBeUndefined()
   })
 
   test('bare-slug models use the ACTIVE provider key (FID-2026-0809-001 decision 10)', async () => {

@@ -197,10 +197,14 @@ export async function executeCustomToolCall(
     onResponseChunk(chunk)
   }
   if (enforceResult.blocked) {
-    onResponseChunk({
-      type: 'error',
-      message: formatBlockingError(enforceResult.reason ?? 'ECHO violation'),
-    })
+    // FID-2026-0901-002: silent blocks (self-healing gates) get steering
+    // only — no visible BLOCKED error chunk in the transcript.
+    if (!enforceResult.silent) {
+      onResponseChunk({
+        type: 'error',
+        message: formatBlockingError(enforceResult.reason ?? 'ECHO violation'),
+      })
+    }
     finishToolEvent('failed')
     return previousToolCallFinished
   }

@@ -25,9 +25,19 @@ export async function buildOpenAICompatibleChatArgs(params: {
   providerOptionsName: string
   supportsStructuredOutputs: boolean
   options: Parameters<LanguageModelV2['doGenerate']>[0]
+  /** Provider-enforced extra body fields merged into the request (e.g. the
+   *  required `tags` array the Nous inference API demands from raw-key
+   *  callers). Omitted when undefined. Caller-provided `providerOptions` win
+   *  over these defaults so a caller can still override. */
+  extraBody?: Record<string, unknown>
 }): Promise<OpenAICompatibleChatArgsResult> {
-  const { modelId, providerOptionsName, supportsStructuredOutputs, options } =
-    params
+  const {
+    modelId,
+    providerOptionsName,
+    supportsStructuredOutputs,
+    options,
+    extraBody,
+  } = params
   const {
     prompt,
     maxOutputTokens,
@@ -95,6 +105,11 @@ export async function buildOpenAICompatibleChatArgs(params: {
 
   return {
     args: {
+      // Provider-enforced body fields (e.g. the required `tags` array for
+      // Nous) spread first so the exact-key `providerOptions` spread and the
+      // explicit keys below still win on collision.
+      ...(extraBody ?? {}),
+
       // model id:
       model: modelId,
 

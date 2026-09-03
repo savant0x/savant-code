@@ -149,16 +149,42 @@ describe('floor adapter — walker-lifecycle fixture (FID-2026-0822-012 P2)', ()
     expect(state.walkers.get(`w${PAD_COUNT}`)?.padIndex).toBe(0)
   })
 
-  test('unrelated events return the same reference (purity contract)', () => {
-    const state = createFloorState()
-    expect(
-      applyFloorEvent(state, {
-        type: 'tool_call',
-        toolCallId: 'tc',
-        toolName: 'read_files',
-        input: {},
-      }),
-    ).toBe(state)
+  test('unattributed orchestrator tool calls route to Savant (FID-2026-0828-002 D)', () => {
+    // Supersedes the old purity-contract pin: unattributed calls are no
+    // longer dropped — they drive Savant's station visit so an
+    // orchestrator-only run animates the floor.
+    const state = applyFloorEvent(createFloorState(), {
+      type: 'tool_call',
+      toolCallId: 'tc',
+      toolName: 'read_files',
+      input: {},
+    })
+    const walker = state.walkers.get('savant')
+    expect(walker?.phase).toBe('active')
+    expect(walker?.stationTarget).not.toBeNull()
+    expect(state.pendingTools.get('tc')?.agentId).toBe('savant')
+  })
+
+  test('attributed call to an UNKNOWN agent routes to Savant (FID-2026-0828-002 D)', () => {
+    // The live orchestrator's own tool calls carry agentId like
+    // 'orchestrator-1' but never spawn a walker record. The old rule dropped
+    // every such call (its owning walker wasn't active), which left the deck
+    // dead on orchestrator-only runs: batch after batch showed tools=0,
+    // walkers=0 while chat visibly used tools. Now any tool_call whose
+    // owning active walker is absent drives Savant at the console instead.
+    const state = applyFloorEvent(createFloorState(), {
+      type: 'tool_call',
+      toolCallId: 'tc-x',
+      toolName: 'read_files',
+      input: {},
+      agentId: 'orchestrator-1',
+    })
+    const savant = state.walkers.get('savant')
+    expect(savant).toBeDefined()
+    if (savant === undefined) throw new Error('savant walker missing')
+    expect(savant.phase).toBe('active')
+    expect(savant.stationTarget).toBe('file-forge') // read_files class
+    expect(state.pendingTools.get('tc-x')?.agentId).toBe('savant')
   })
 
   test('no-op tool edges preserve reference identity (Law-14 edges)', () => {
@@ -225,8 +251,10 @@ describe('floor adapter — walker-lifecycle fixture (FID-2026-0822-012 P2)', ()
       output: [{ type: 'json', value: { phase: 'green' } }],
     })
     expect(resolved.fsmPhase).toBe('green')
-    // Aura-only entry: pulse attributes to the console (null agentId).
-    expect(resolved.lastPulse?.agentId).toBeNull()
+    // FID-2026-0828-002 D: the aura call now routes to the orchestrator
+    // walker record (agentId 'savant') instead of a null-attributed pulse —
+    // the pulse lands on Savant at the console.
+    expect(resolved.lastPulse?.agentId).toBe('savant')
   })
 
   test('G2 aura pairing: transition_phase RESULT yields the FSM phase', () => {

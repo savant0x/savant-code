@@ -10,16 +10,27 @@ touches your repo.**
 Built with TypeScript/Bun, governed by the ECHO Protocol, and designed for
 local-first use with Ollama.
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-1.3.14-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![React](https://img.shields.io/badge/React-19-%23000000?style=flat-square&logo=react&logoColor=%2300fbff)](https://react.dev/)[![OpenTUI](https://img.shields.io/badge/OpenTUI-0.5.3-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](https://github.com/anomalyco/opentui)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](ECHO.md)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![Release](https://img.shields.io/badge/Release-v0.0.26-%2300fbff?style=flat-square&logo=semver&logoColor=%2300fbff)](CHANGELOG.md)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-1.3.14-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![React](https://img.shields.io/badge/React-19-%23000000?style=flat-square&logo=react&logoColor=%2300fbff)](https://react.dev/)[![OpenTUI](https://img.shields.io/badge/OpenTUI-0.5.3-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](https://github.com/anomalyco/opentui)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](ECHO.md)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![Release](https://img.shields.io/badge/Release-v0.0.28-%2300fbff?style=flat-square&logo=semver&logoColor=%2300fbff)](CHANGELOG.md)
 
 </div>
 
-> **v0.0.26** — this release ships the terminal UI overhaul (FID-2026-0816-002..012:
-> OpenTUI 0.5.3 foundation, near-black/cyan design tokens, the animation engine,
-> the diff-viewer + phase-bar redesign, the rich terminal output panel, the manual
-> sidebar fold, the Savant logo easter egg, and the reactive Trust Matrix) plus the
-> native tool-call recovery hardening (FID-2026-0816-012). Previously shipped: the
-> optimization and automation program
+> **v0.0.28** — this release ships the compaction integrity rebuild (master
+> FID-2026-0824-022 + children -023…-027: preservation contract + digest
+> schema, minimal-surgery algorithm, evidence spill, removed-content ledger),
+> the eval system rebuild v3 (master FID-2026-0824-013 + children -014…-019:
+> FSM alignment, sandbox hardening, skill-efficacy engine, governance corpus +
+> bounded autorater + Tier-1 pre-push smoke), the desktop chat surface + Auto
+> Drive dashboard (FID-2026-0820-010), the compaction summary output
+> (FID-2026-0828-001), and the Discord Rich Presence refinements (enabled by
+> default, hardcoded Savant client id, three-line activity layout).
+> Previously shipped in v0.0.26/27: the terminal UI overhaul
+> (FID-2026-0816-002..012), Auto Drive (`/auto-drive`) and Discord Rich
+> Presence (`/presence`), the quality-ratchet decomposition passes, and the
+> model migration to `z-ai/glm-5.3-flash`. See [CHANGELOG.md](CHANGELOG.md)
+> for the full history.
+>
+> **v0.0.26 background** — the release shipped the optimization and automation
+> program
 > (FIDs 003–010), the ECHO remediation package (FID-2026-0811-015..021), and
 > the LEARNINGS feedback-system remediation (FID-2026-0811-022..029), plus
 > four newer programs: Zero-Trust Agentic Provenance (FID-2026-0813-001..010),
@@ -639,6 +650,23 @@ trail, while the second preserves the visual codebase artifact that the session
 examined. See the full [Export Workflows guide](docs/code-universe-export.md)
 for detailed usage, troubleshooting, and the offline architecture.
 
+### Desktop (`@savant-code/desktop`)
+
+- **Native shell** — Tauri v2 workspace with a Rust supervisor that owns the
+  Bun-compiled agent-runtime sidecar lifecycle (spawn/backoff/shutdown/watchdog)
+  and hosts the React 19 renderer. See
+  [`desktop/README.md`](desktop/README.md).
+- **Structured chat surface** — the same engine, no terminal: bounded
+  transcript virtualization, markdown message blocks with per-message copy,
+  traffic-light status panels, phase stepper, and the Auto Drive dashboard with
+  Emergency Halt.
+- **Command deck (3D)** — a neon-noir agent office rendered with R3F where the
+  10-agent robot cast mirrors live chat activity in real time: agents walk to
+  tool stations while calls run, speech bubbles track the conversation, and a
+  mini-chat island lets the operator message the agent without leaving the deck.
+- **Project FIDs rail** — a live view of the repo's FID queue over the gateway
+  (authoritative diff-baseline inventory + watcher updates).
+
 ### SDK (`@savant-code/sdk`)
 
 - **`SavantCodeClient` class** — single entry point for running agents from any
@@ -1033,8 +1061,8 @@ events.
   Auto Drive (`/auto-drive`) and Discord Rich Presence (`/presence`)
 - [`docs/faq.md`](docs/faq.md) — FAQ: research keys, `/goal` vs `/auto-drive`,
   `/presence`, and headless `--auto`
-- [`docs/faq.md`](docs/faq.md) — FAQ: `/goal` vs `/auto-drive` vs its aliases,
-  `/presence`, and headless `--auto`
+- [`desktop/README.md`](desktop/README.md) — the Tauri v2 desktop shell:
+  sidecar lifecycle, renderer, 3D command deck, build/run commands
 - [`docs/design/Auto Drive Architecture Blueprint.md`](docs/design/Auto Drive Architecture Blueprint.md) — the Auto Drive
   architecture
 - [`docs/design/Discord Presence For Savant-Code.md`](docs/design/Discord Presence For Savant-Code.md) — the Discord

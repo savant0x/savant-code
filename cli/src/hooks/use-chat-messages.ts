@@ -252,6 +252,19 @@ function updateBlocksCollapseRecursively(
       }
     }
 
+    // FID-2026-0828-001: compaction-summary blocks toggle by their id.
+    // Collapsed by default: header + first line; expanded reveals the full
+    // summary.
+    if (block.type === 'compaction-summary' && block.id === id) {
+      foundTarget = true
+      const wasCollapsed = block.isCollapsed ?? true
+      return {
+        ...block,
+        isCollapsed: !wasCollapsed,
+        userOpened: wasCollapsed, // Mark as user-opened if expanding
+      }
+    }
+
     // Recursively update nested blocks inside agent blocks
     if (block.type === 'agent' && block.blocks) {
       const updatedBlocks = updateBlocksCollapseRecursively(block.blocks, id)

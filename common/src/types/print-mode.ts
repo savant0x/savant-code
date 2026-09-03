@@ -242,6 +242,11 @@ export const printModeCompactionStatusSchema = z.object({
     'blocked',
   ]),
   percentUsed: z.number().optional(),
+  // FID-2026-0901-006 P4: absolute token accounting so a UI can render a
+  // real window tracker ("84k / 200k") instead of deriving one from the
+  // percent. Optional — older emitters stay wire-compatible.
+  contextTokens: z.number().optional(),
+  windowTokens: z.number().optional(),
   tokensSaved: z.number().optional(),
   blockReason: z
     .enum([
@@ -255,6 +260,22 @@ export const printModeCompactionStatusSchema = z.object({
 })
 export type PrintModeCompactionStatus = z.infer<
   typeof printModeCompactionStatusSchema
+>
+
+// FID-2026-0828-001: post-compaction summary output (the OpenClaw
+// `isCompactionNotice` analog). Emitted once by the spawn boundary when a
+// real context-pruner compaction completes (removedMessages > 0), carrying
+// the pruner's summary of the window + the removal metrics. Consumers render
+// it as a dedicated transcript block; unknown-event consumers ignore it.
+export const printModeCompactionSummarySchema = z.object({
+  type: z.literal('compaction_summary'),
+  summary: z.string().min(1),
+  removedMessages: z.number().int().nonnegative(),
+  tokensSaved: z.number().int().nonnegative().optional(),
+  percentUsed: z.number().optional(),
+})
+export type PrintModeCompactionSummary = z.infer<
+  typeof printModeCompactionSummarySchema
 >
 
 export const printModeEventSchema = z.discriminatedUnion('type', [
@@ -278,6 +299,7 @@ export const printModeEventSchema = z.discriminatedUnion('type', [
   printModeApprovalRequestSchema,
   printModeFidQueueUpdateSchema,
   printModeCompactionStatusSchema,
+  printModeCompactionSummarySchema,
 ])
 
 export type PrintModeEvent = z.infer<typeof printModeEventSchema>

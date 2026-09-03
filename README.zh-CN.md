@@ -8,10 +8,18 @@
 
 基于 TypeScript/Bun 构建，受 ECHO 协议治理，并针对本地优先的 Ollama 使用场景设计。
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-1.3.14-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![React](https://img.shields.io/badge/React-19-%23000000?style=flat-square&logo=react&logoColor=%2300fbff)](https://react.dev/)[![OpenTUI](https://img.shields.io/badge/OpenTUI-0.5.3-%23000000?style=flat-square&logo=opentui&logoColor=%2300fbff)](https://github.com/anomalyco/opentui)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](ECHO.md)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![Release](https://img.shields.io/badge/Release-v0.0.27-%23000000?style=flat-square&logo=semver&logoColor=%2300fbff)](CHANGELOG.md)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-1.3.14-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![React](https://img.shields.io/badge/React-19-%23000000?style=flat-square&logo=react&logoColor=%2300fbff)](https://react.dev/)[![OpenTUI](https://img.shields.io/badge/OpenTUI-0.5.3-%23000000?style=flat-square&logo=opentui&logoColor=%2300fbff)](https://github.com/anomalyco/opentui)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](ECHO.md)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![Release](https://img.shields.io/badge/Release-v0.0.28-%23000000?style=flat-square&logo=semver&logoColor=%2300fbff)](CHANGELOG.md)
 
 </div>
 
+> **v0.0.28** —— 本次发布包含压缩完整性重建（主计划 FID-2026-0824-022 + 子项 -023…-027：
+> 保留契约 + 摘要 schema、最小手术算法、证据外溢、已删内容台账）、eval 系统重建 v3
+> （主计划 FID-2026-0824-013 + 子项 -014…-019：FSM 对齐、沙箱加固、技能效能引擎、
+> 治理语料 + 有界自动评分 + Tier-1 预推送冒烟）、桌面聊天界面 + Auto Drive 仪表盘
+> （FID-2026-0820-010）、压缩摘要输出（FID-2026-0828-001），以及 Discord Rich Presence
+> 优化（默认启用、硬编码 Savant 客户端 ID、三行活动布局）。完整历史见
+> [CHANGELOG.md](CHANGELOG.md)。
+>
 > **v0.0.27** —— 检查点发布（质量棘轮分解、文档同步、harness 修复）。此前版本内容：优化与自动化计划的实施范围已完成，
 > 并由独立审计对 FID-2026-0809-003 至 010 全部签署通过。深度审计主计划
 > FID-2026-0811-015 至 021 的 ECHO 合规修复已在自动化级别 3 授权下完成、关闭并归档，
@@ -231,6 +239,20 @@ MCP 工具发现、模式切换（`HYBRID` / `SCAFFOLD` / `STRICT` / `ANALYZE`�
 - **流式与取消** —— 逐 token 的 SSE 流式输出，支持流中取消、退避重试，以及并行工作的子智能体流式输出。
 - **知识文件** —— 项目级 `knowledge.md` 外加每用户主目录知识，自动载入 agent 上下文。
 - **技能（Skills）** —— 启动时发现 OpenClaw 格式的 `SKILL.md` 文件，schema 发送给 LLM，作为原生工具使用。
+- **自我改进式 harness 与智能体自建技能** —— Savant 通过进程内钩子（无提示词合规依赖）机械式捕获自身工具失败，
+  将复现模式提升为规范规则与版本化技能，并由操作员信任或拒绝其创作的每一项。`skill_manage`
+  （Scribe + Orchestrator）将技能写入 `.quarantine/` 并带磁盘版本管理（`versions/` + `VERSIONS.jsonl`）；
+  `/skills list|show|trust|untrust|rollback` 是仅操作员可用的发布边界；`immutable: true` 的技能拒绝一切变更；
+  SessionEnd 审查、lessons→skills 草稿、LEARNINGS 退役与演化仪式以
+  `bun run session-end:review|lessons:to-skills|learnings:retire|skills:evolve` 运行。完整指南：
+  [docs/self-improving-harness.md](docs/self-improving-harness.md)。
+- **Auto Drive（`/auto-drive`）** —— 澄清 → 计划 → 批准 → 运行至完成的自主执行：将计划分解为 FID 待办、
+  按依赖顺序运行并认证完成（别名 `/auto`、`/drive`、`/autodrive`；无头入口 `savant-code --auto "<goal>"`
+  需 `--plan-file` 或 `--approve` 才能 fail-closed 地执行）。详见
+  [Auto Drive 蓝图](docs/design/Auto Drive Architecture Blueprint.md)。
+- **Discord Rich Presence（`/presence`）** —— 默认启用；将当前智能体、ECHO 阶段、项目名与模型外化到
+  Discord Rich Presence，带机械式隐私边界（路径、参数、FID 标题与搜索查询全部脱敏；fail-closed Zod 回退）。
+  `/presence status | enable | disable`（别名 `/discord`；客户端 ID 硬编码为 Savant Discord 应用）。
 - **MCP 工具** —— 启动时发现 Model Context Protocol 服务器，schema 发布给 LLM API。
 - **`deep_research` 工具** —— Researcher 角色的机械式多查询网络研究工具（`question` + 模型提供的
   `queries[]`、`research_depth`、`max_sources`）：最大 3 并发、查询间隔 ≥1 秒、URL 去重、域名评分、引用 +
@@ -504,6 +526,7 @@ STRICT 下也保持无仪式。
 | `packages/knowledge-graph/` | `@savant-code/knowledge-graph` | 确定性代码知识图谱引擎（索引器、查询、聚类、导出序列化器）         |
 | `packages/llm-providers/` | `@savant-code/llm-providers`  | 公开 LLM 提供商适配层                                           |
 | `sdk/`                    | `@savant-code/sdk`            | 公开 SDK——`SavantCodeClient`、类型、构建 + 验证脚本             |
+| `desktop/`                | `@savant-code/desktop`        | Tauri v2 桌面外壳——Rust sidecar 监管器、React 19 渲染器、3D 指挥甲板 |
 | `scripts/tmux/`           | `@savant-code/tmux`           | 交互式测试运行中使用的 tmux CLI 辅助工具                         |
 
 <!-- markdownlint-enable MD013 MD060 -->
@@ -633,6 +656,7 @@ savant-code
 | `/plan` | 创建实现计划 |
 | `/review` | 审查代码改动 |
 | `/goal`（`/g`） | 持续迭代直到可验证目标满足 |
+| `/auto-drive`（`/auto`、`/drive`、`/autodrive`） | 启动或管理 Auto Drive 运行 —— 澄清、计划、批准，然后运行至完成 |
 | `/loop`（`/repeat`） | 按周期运行提示；使用 `stop` 或 `status` |
 | `/verify`（`/typecheck`） | 运行四个受支持的核心工作区类型检查，可全部运行或指定一个 |
 | `/permissions`（`/sandbox`、`/safety`） | 查看或设置 `safe`、`prompt`、`unsafe` 工具策略 |
@@ -641,6 +665,7 @@ savant-code
 | `/diagnostics`（`/diag`、`/processes`） | 显示本地进程与资源诊断信息 |
 | `/provider` | 使用遮罩输入配置托管提供商密钥 |
 | `/research-keys`（`/research-key`） | 设置调研 API 密钥（`serper`、`context7`、`parallel`、`tavily`、`exa`、`firecrawl`，遮罩输入） |
+| `/presence`（`/discord`） | 查看或更改 Discord Rich Presence：`status`、`enable`、`disable` |
 | `/mode` | 列出四种模式及其契约，或切换：`/mode <名称>` 或 `/mode:<名称>` |
 | `/model` | 选择或切换当前托管模型 |
 | `/publish` | 通过 Savant 后端发布智能体模板 |

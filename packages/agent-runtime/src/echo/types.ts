@@ -91,6 +91,12 @@ export interface EnforcementResult {
   reason?: string
   classification?: 'echo' | 'design_contract'
   warnings: AdvisoryWarning[]
+  /** FID-2026-0901-002: when true the block is NOT surfaced as a visible
+   *  error chunk in the transcript. The agent still receives corrective
+   *  steering (injectEhelSteering) so it can self-correct — the operator
+   *  just no longer sees a scary BLOCKED line for a self-healing retry
+   *  (session-init grounding gate). */
+  silent?: boolean
 }
 
 export interface FidValidationResult {

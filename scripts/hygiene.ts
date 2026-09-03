@@ -4,7 +4,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 
 export type HygieneIssue = {
-  code: 'stale-reference' | 'production-placeholder'
+  code: 'stale-reference' | 'production-placeholder' | 'scratchpad-clutter'
   file: string
   message: string
 }
@@ -127,6 +127,42 @@ function isIntentionalLine(relative: string, line: string): boolean {
   )
 }
 
+/**
+ * P36 (FID-2026-0901-006, operator: "looking in this folder it looks like
+ * absolute madness - is this not auto-managed?"): the scratchpad is a
+ * convention-managed area — its root must stay at README + active/ +
+ * archive/ (+ .gitkeep for git). Loose probes, specs, screenshots, and
+ * ad-hoc folders at the root are how it decayed into 35+ orphans across
+ * sessions. Enforced mechanically here: every foreign root entry is a
+ * `scratchpad-clutter` issue. Sessions must drop live artifacts in /tmp (or
+ * a purpose folder under archive/) — never at the root. Hygiene never
+ * deletes; the operator decides retention.
+ */
+const SCRATCHPAD_ROOT_ENTRIES = new Set([
+  'README.md',
+  'active',
+  'archive',
+  '.gitkeep',
+])
+
+export function collectScratchpadIssues(
+  scanRoot: string = root,
+): HygieneIssue[] {
+  const scratchpad = path.join(scanRoot, 'dev', 'scratchpad')
+  const issues: HygieneIssue[] = []
+  if (!fs.existsSync(scratchpad)) return issues
+  for (const entry of fs.readdirSync(scratchpad)) {
+    if (SCRATCHPAD_ROOT_ENTRIES.has(entry)) continue
+    issues.push({
+      code: 'scratchpad-clutter',
+      file: `dev/scratchpad/${entry}`,
+      message:
+        'Scratchpad root must stay README + active/ + archive/ — move this under archive/ (or active/ for reusable validation tooling). Live probes belong in /tmp.',
+    })
+  }
+  return issues
+}
+
 export function collectHygieneIssues(scanRoot: string = root): HygieneIssue[] {
   const issues: HygieneIssue[] = []
   const scanFiles = [
@@ -164,7 +200,7 @@ export function collectHygieneIssues(scanRoot: string = root): HygieneIssue[] {
       })
     }
   }
-  return issues
+  return [...issues, ...collectScratchpadIssues(scanRoot)]
 }
 
 if (import.meta.main) {

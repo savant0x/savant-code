@@ -81,12 +81,15 @@ export class DeckStage {
     this.scene.background = new Color(DECK_TOKENS.background)
     this.scene.fog = new Fog(DECK_TOKENS.background, FOG_NEAR, FOG_FAR)
     // Asset-pass lighting rig: the cast robots are lit MeshStandardMaterial
-    // figures — with zero lights they would render black. Hemisphere bounce
-    // + warm key + cyan fill give the cast readable form on the void.
-    const hemisphere = new HemisphereLight('#1b2a38', '#050508', 0.9)
-    const key = new DirectionalLight('#bfe9ff', 1.4)
+    // figures — with zero lights they would render black. FID-2026-0828-002
+    // (operator: "background is still too bright by a lot"): hemisphere and
+    // key intensities are cut roughly in half and the fill is nearly off, so
+    // the void stays a calm dark base and the accent emissive carries the
+    // hologram read instead of the light rig.
+    const hemisphere = new HemisphereLight('#101a24', '#020204', 0.45)
+    const key = new DirectionalLight('#bfe9ff', 0.7)
     key.position.set(12, 20, 8)
-    const fill = new DirectionalLight('#18faf9', 0.35)
+    const fill = new DirectionalLight('#18faf9', 0.12)
     fill.position.set(-10, 12, -8)
     this.scene.add(hemisphere, key, fill)
     this.buildFloor()
@@ -149,18 +152,21 @@ export class DeckStage {
 
   private buildFloor(): void {
     const voidGeometry = new PlaneGeometry(VOID_SIZE, VOID_SIZE)
+    // FID-2026-0828-002 (operator: "background is still too bright by a lot"):
+    // the void plane is darkened to near-black instead of the contract
+    // background token, and the grid uses the contract border color only —
+    // the "calm base" of the blueprint, with the emissive layers as the
+    // sole bright elements.
     const voidMaterial = new MeshBasicMaterial({
-      color: DECK_TOKENS.background,
+      color: new Color(0x020204),
     })
     const voidMesh = new Mesh(voidGeometry, voidMaterial)
     voidMesh.rotation.x = -Math.PI / 2
     voidMesh.position.y = VOID_Y_OFFSET
-    const grid = new GridHelper(
-      GRID_SIZE,
-      GRID_DIVISIONS,
-      DECK_TOKENS.border,
-      DECK_TOKENS.border,
-    )
+    // Grid dimmed to ~40% of the border token — the operator read the full-
+    // brightness lattice as part of the overall floor wash.
+    const gridColor = new Color(DECK_TOKENS.border).multiplyScalar(0.4)
+    const grid = new GridHelper(GRID_SIZE, GRID_DIVISIONS, gridColor, gridColor)
     this.scene.add(voidMesh)
     this.scene.add(grid)
     this.floor = { grid, voidMesh }

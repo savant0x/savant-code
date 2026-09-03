@@ -25,7 +25,7 @@ import {
   OctahedronGeometry,
 } from 'three'
 
-import { DECK_TOKENS } from '../deck-tokens.generated'
+import { DECK_ACCENTS } from '../deck-accents'
 
 import type { Scene } from 'three'
 
@@ -34,8 +34,22 @@ export const MOTE_COUNT = 96
 /** Vertical wrap span; motes rise through [0, SPAN) forever. */
 export const MOTE_HEIGHT_SPAN = 6
 
+// FID-2026-0828-002 A: the original mote pass (radius 0.14, opacity 0.5,
+// drift 0.45 u/s) was PERCEPTUALLY STATIC in the live webview — the operator
+// read the whole deck as frozen even with the ticker running. Bounded
+// retune: bigger geometry, brighter additive presence, and a drift speed
+// that clears one body height in ~8s so upward motion is visible at camera
+// distance ~34 without becoming a distraction.
+// FID-2026-0829-001 L6: further increase mote visibility — bigger radius,
+// higher opacity, faster drift so motes are unmistakably alive.
+// FID-2026-0828-002 D: damping floor glow wash — reduced radius and opacity
+// so additive blending compounds less at center; drift speed stays high
+// so motion is visible (FID-0829-001 L6 preserved).
+const MOTE_RADIUS = 0.28
+const MOTE_OPACITY = 0.55
+const MOTE_DRIFT_UNITS_PER_SEC = 2.2
+
 const MOTE_AREA_RADIUS = 26
-const MOTE_DRIFT_UNITS_PER_SEC = 0.45
 
 interface Mote {
   readonly mesh: Mesh<OctahedronGeometry, MeshBasicMaterial>
@@ -51,11 +65,11 @@ function moteY(mote: Mote, nowMs: number): number {
 export class AtmosphereLayer {
   private readonly root = new Group()
   private readonly motes: Mote[] = []
-  private readonly geometry = new OctahedronGeometry(0.14)
+  private readonly geometry = new OctahedronGeometry(MOTE_RADIUS)
   private readonly material = new MeshBasicMaterial({
-    color: new Color(DECK_TOKENS.primary),
+    color: new Color(DECK_ACCENTS.primary),
     transparent: true,
-    opacity: 0.5,
+    opacity: MOTE_OPACITY,
     blending: AdditiveBlending,
     depthWrite: false,
   })

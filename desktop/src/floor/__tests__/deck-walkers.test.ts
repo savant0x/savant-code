@@ -56,6 +56,7 @@ function fakeFigure(): FakeFigure {
   const activeStates: boolean[] = []
   const figure: RobotFigure = {
     root: new Group(),
+    visualGroundOffset: { x: 0, z: 0 },
     update(_dtMs, s) {
       state.updates += 1
       state.lastMoving = s.moving
@@ -111,6 +112,10 @@ describe('persistent robot cast (FID-2026-0822-012 asset pass)', () => {
       expect(scene.children).toHaveLength(1)
       expect(scene.children[0].children).toHaveLength(10)
       // Savant anchors the console, scaled taller.
+      // FID-2026-0828-002 coherent-world rescale: mount scale is 1× — the
+      // 6-unit normalized height IS the body height. The 2.5× multiplier
+      // over the 25-unit normalization made 62-unit giants that stacked on
+      // a floor designed for a ~5-unit cast.
       const savant = figureAt(scene, 0)
       expect(savant.position.x).toBe(0)
       expect(savant.position.z).toBe(0)
@@ -143,7 +148,9 @@ describe('persistent robot cast (FID-2026-0822-012 asset pass)', () => {
       const spawned = applyFloorEvents(createFloorState(), [DETECTIVE_SPAWN])
       const atStation = applyFloorEvents(spawned, [CODE_SEARCH_CALL])
       layer.sync(atStation, 0) // zero delta: target set, no step yet
-      layer.sync(atStation, 1000) // clamped 1s => exactly 3 units
+      layer.sync(atStation, 1000) // one clamped 1s beat: 8.0 units traveled
+      // (FID-2026-0829-001 L3: speed 3 → 8 u/s, crossing a pad spacing
+      // ~8.3 units in ~1s so the movement is unmistakable at camera 22.)
       const detective = harness.byRole.get('detective')
       expect(detective).toBeDefined()
       if (detective === undefined) throw new Error('detective figure missing')
@@ -157,7 +164,7 @@ describe('persistent robot cast (FID-2026-0822-012 asset pass)', () => {
         figure.position.x - pad.x,
         figure.position.z - pad.z,
       )
-      expect(distToPad).toBeCloseTo(3, 5)
+      expect(distToPad).toBeCloseTo(8.0, 5)
     } finally {
       layer.dispose()
     }
@@ -227,7 +234,7 @@ describe('persistent robot cast (FID-2026-0822-012 asset pass)', () => {
         figure.position.x - pad.x,
         figure.position.z - pad.z,
       )
-      expect(distToPad).toBeLessThanOrEqual(3.001)
+      expect(distToPad).toBeLessThanOrEqual(8.001)
     } finally {
       layer.dispose()
     }
@@ -330,12 +337,13 @@ describe('persistent cast: reduced motion + trails (FID-2026-0822-012)', () => {
       expect(detective).toBeDefined()
       if (detective === undefined) throw new Error('detective missing')
       expect(detective.state.lastReduced).toBe(true)
-      // State truth still walks (6 units over two clamped 1s beats)...
+      // State truth still walks (16.0 units over two clamped 1s beats at the
+      // FID-2026-0829-001 L3 8.0 walk speed)...
       const figure = figureAt(scene, 1)
       const pad = padPosition(0)
       expect(
         Math.hypot(figure.position.x - pad.x, figure.position.z - pad.z),
-      ).toBeCloseTo(6, 5)
+      ).toBeCloseTo(16.0, 5)
       // ...but no trail meshes join the 10 cast figures.
       expect(scene.children[0].children).toHaveLength(10)
     } finally {

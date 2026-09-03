@@ -10,9 +10,15 @@ import {
 } from '../adapter/floor-adapter'
 import { DECK_TOKENS } from '../deck-tokens.generated'
 import { StateFxLayer } from '../stage/deck-state-fx'
-import { phaseAccent } from '../stations'
+import {
+  phaseAccent,
+  STATION_RING_RADIUS,
+  stationIndex,
+  stationPosition,
+} from '../stations'
 
 import type { PrintModeEvent } from '@savant-code/common/types/print-mode'
+import type { BoxGeometry, Mesh } from 'three'
 
 const SCOUT_SPAWN = {
   type: 'subagent_start',
@@ -171,6 +177,37 @@ describe('state effects layer (FID-2026-0822-012 P4)', () => {
     }
   })
 
+  test('lanes on contract point at the STATION, not the home pad (FID-2026-0829-001)', () => {
+    const scene = new Scene()
+    const layer = new StateFxLayer(scene)
+    try {
+      const state = applyFloorEvents(createFloorState(), [
+        START,
+        SCOUT_SPAWN,
+        WRITE_CALL,
+      ])
+      layer.sync(state, 0)
+      const root = scene.children[0]
+      // Lane children: beam(9), packet(10).
+      const beam = root.children[9]
+      const pad = padPosition(0)
+      const station = stationPosition(stationIndex('file-forge'))
+      // The lane must span the console→station radial: beam midpoint sits
+      // at half the station vector (NOT the pad vector at radius 16).
+      expect(beam.position.x).toBeCloseTo(station.x / 2, 3)
+      expect(beam.position.z).toBeCloseTo(station.z / 2, 3)
+      // The strip spans the full console→station distance (rate = 9), not
+      // the pad distance (rate = 16) — the old "size off" half-lane bug.
+      const strip = beam.children[0] as Mesh
+      const box = strip.geometry as BoxGeometry
+      expect(box.parameters.width).toBeCloseTo(STATION_RING_RADIUS, 3)
+      // Sanity: the two radials genuinely differ (that was the alignment bug).
+      expect(station.z).not.toBeCloseTo(pad.z, 3)
+    } finally {
+      layer.dispose()
+    }
+  })
+
   test('lanes exist only while their walker is active', () => {
     const scene = new Scene()
     const layer = new StateFxLayer(scene)
@@ -240,12 +277,17 @@ describe('state effects P6: reduced motion (FID-2026-0822-012)', () => {
       const walker = state.walkers.get('a')
       expect(walker).toBeDefined()
       if (walker === undefined) throw new Error('walker missing')
-      const pad = padPosition(walker.padIndex)
-      expect(packet.position.x).toBeCloseTo(pad.x * (1000 / 2400), 3)
+      // Walker holds a file-forge contract -> the packet travel the
+      // console→STATION radial, not the console→pad radial.
+      const target =
+        walker.stationTarget !== null
+          ? stationPosition(stationIndex(walker.stationTarget))
+          : padPosition(walker.padIndex)
+      expect(packet.position.x).toBeCloseTo(target.x * (1000 / 2400), 3)
 
       layer.sync(state, 900, { reduced: true })
-      expect(packet.position.x).toBeCloseTo(pad.x * 0.5, 10)
-      expect(packet.position.z).toBeCloseTo(pad.z * 0.5, 10)
+      expect(packet.position.x).toBeCloseTo(target.x * 0.5, 10)
+      expect(packet.position.z).toBeCloseTo(target.z * 0.5, 10)
       // Lit glyph tiles lock at scale exactly 1 under reduced motion.
       expect(root.children[1].scale.x).toBe(1)
     } finally {

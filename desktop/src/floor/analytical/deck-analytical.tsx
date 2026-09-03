@@ -19,6 +19,7 @@ import {
   phaseAccent,
   STATION_ACCENTS,
   STATION_COUNT,
+  stationIndex,
   stationPosition,
 } from '../stations'
 
@@ -67,16 +68,22 @@ export function AnalyticalFloor({
           strokeWidth={2}
         />
       ) : null}
-      {/* Packet-lane beams: console to each active walker's pad. */}
+      {/* Packet-lane beams: console to where each active walker stands.
+       * FID-2026-0829-001 (parity with StateFxLayer): an agent working a
+       * station contract stands AT its pedestal, so the lane ends at the
+       * station; idle active walkers keep the console→home-pad link. */}
       {activeWalkers.map((walker) => {
-        const pad = padPosition(walker.padIndex)
+        const target =
+          walker.stationTarget !== null
+            ? stationPosition(stationIndex(walker.stationTarget))
+            : padPosition(walker.padIndex)
         return (
           <line
             key={`lane-${walker.agentId}`}
             x1={CENTER}
             y1={CENTER}
-            x2={px(pad.x)}
-            y2={px(pad.z)}
+            x2={px(target.x)}
+            y2={px(target.z)}
             stroke={DECK_TOKENS.border}
             strokeWidth={1}
           />

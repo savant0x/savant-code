@@ -18,9 +18,10 @@ import { FidQueuePanel } from './components/chat/FidQueuePanel'
 import { PhaseStepper } from './components/chat/PhaseStepper'
 import { RosterRail } from './components/chat/RosterRail'
 import { ScopeSwitcher } from './components/chat/ScopeSwitcher'
-import { ThreadRail } from './components/chat/ThreadRail'
+import { SessionStatusPanel } from './components/chat/SessionStatusPanel'
 import { DeckView } from './floor/deck-view'
 import { useGateway } from './hooks/use-gateway'
+import { formatModelLabel } from './lib/model-label'
 import { useUpdater, type UpdaterPhase } from './lib/updater'
 import { SplashScreen } from './SplashScreen'
 import {
@@ -149,7 +150,19 @@ export function App(): JSX.Element {
       {showChat ? (
         <>
           <div className="chat-topbar">
-            <PhaseStepper phase={gateway.fsmPhase} />
+            <PhaseStepper
+              phase={gateway.fsmPhase}
+              activity={gateway.currentActivity}
+            />
+            {/* P17: active model badge — captured from the runtime thinking
+                activity, mirroring the CLI's AgentStatus model read. P19:
+                rendered through the shared display formatter (provider
+                trimmed, tier suffixes stripped). */}
+            {gateway.model !== null ? (
+              <span className="model-badge">
+                {formatModelLabel(gateway.model)}
+              </span>
+            ) : null}
             <CompactionStatusBar status={gateway.compactionStatus} />
             <ScopeSwitcher
               scope={workspaceScope}
@@ -165,23 +178,33 @@ export function App(): JSX.Element {
             <ConnectionPill status={gateway.status} />
           </div>
           <DeckView
+            disabled={gateway.status !== 'ready'}
             chat={
               <div className="chat-workspace">
                 <div className="workspace-left-rail">
                   <RosterRail roster={gateway.roster} />
-                  <ThreadRail
-                    threads={gateway.workspaceThreads}
-                    onUpdate={(sessionId, state) => {
-                      void gateway.updateThreadState(sessionId, state)
-                    }}
+                  {/* P21: the empty Threads rail is replaced with the live
+                      session status card (model, context, run state, phase)
+                      — genuinely useful at a glance. */}
+                  <SessionStatusPanel
+                    model={gateway.model}
+                    phase={gateway.fsmPhase}
+                    running={gateway.running}
+                    activity={gateway.currentActivity}
+                    compaction={gateway.compactionStatus}
                   />
                 </div>
                 <ChatThread
                   blocks={gateway.blocks}
                   running={gateway.running}
                   disabled={gateway.status !== 'ready'}
+                  currentActivity={gateway.currentActivity}
+                  serverCommands={gateway.serverCommands}
                   onSend={(text) => {
                     void gateway.send(text)
+                  }}
+                  onSendFollowup={(prompt) => {
+                    void gateway.send(prompt)
                   }}
                   onRespondApproval={(approvalId, skipped) => {
                     void gateway.respondApproval(approvalId, skipped)

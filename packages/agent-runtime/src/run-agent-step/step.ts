@@ -271,9 +271,15 @@ export const runAgentStep = async (
   const toolResults: ToolMessage[] = []
 
   // FID-2026-0718-009 M4: model stream starting — set activity to thinking.
+  // P19 (operator: "the deck does not even show the model" + header badge
+  // stayed empty): the thinking activity now carries the effective model id
+  // (already UI-override-resolved via the agent template), so consumers can
+  // display it without guessing. Schema allows the optional field
+  // (print-mode.ts thinking variant) and the CLI's AgentStatus already reads
+  // `activity.model` — this emit is the parity fix.
   setActivity(
     agentState,
-    { kind: 'thinking', startedAt: Date.now() },
+    { kind: 'thinking', startedAt: Date.now(), model: agentTemplate.model },
     onResponseChunk,
   )
 

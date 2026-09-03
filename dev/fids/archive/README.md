@@ -3,6 +3,53 @@
 This directory contains closed or historically completed FIDs. Files here are
 an audit record, not an active work queue.
 
+## 2026-09-02 closure — deck + desktop session FIDs (release-ready audit batch)
+
+Seven FIDs closed + archived by the 0.0.29 release-ready audit (all gate
+receipts re-stamped PASS at their new paths via `bun run fid:verify … --write`;
+statuses corrected to the honest implemented state; ledger README table
+updated):
+
+- `FID-2026-0828-002-deck-live-fidelity.md` (high) — defect B fixed
+  (emissive/body-base/palette); defects C/D superseded by the 0831 rebuild.
+- `FID-2026-0829-001-deck-visual-activity.md` (critical) — six activity
+  layers + lane-alignment fix; superseded surface replaced by 0831 rebuild.
+- `FID-2026-0831-001-deck-rebuild-neon-noir-office.md` (high) — R3F
+  neon-noir office rebuild P0–P3; live smoke discharged by operator.
+- `FID-2026-0831-002-deck-office-visual-correction.md` (critical) — office
+  correction passes P4–P8 (robot cast, accents, heading, beacons).
+- `FID-2026-0901-001-sidecar-env-and-sdk-client-init.md` (critical) —
+  sidecar env forwarding + SDK client init; operator live use confirmed.
+- `FID-2026-0901-003-deck-ambient-life-interaction.md` (medium) — six
+  ambient-life features + P9 obstacle routing.
+- `FID-2026-0901-006-desktop-cli-ui-parity.md` (medium) — 36-pass desktop
+  CLI-parity program (timestamps, model, context window, bubbles, traffic
+  lights, FID queue initial sync, scratchpad auto-management, mini-chat
+  island, connectOnce boot fix).
+
+Also 2026-09-02: `FID-2026-0824-028/-030` forbidden `**Author:**` attribution
+fields removed (fid.policy.attribution) and receipts re-stamped; archived
+`FID-2026-0822-013` superseded steps given explicit
+`deferred::operator-approved 2026-08-23` markers (fid.steps.unresolved).
+
+## 2026-08-27 closure — FID-2026-0827-001 (sidebar context readout stalls near zero in the small-count regime)
+
+`FID-2026-0827-001-sidebar-context-readout-damping-small-count-stall.md` (severity: medium)
+closed + archived 2026-08-27 by operator directive. Operator-reported "context stuck at 0/x"
+during a live session with the denominator correctly resolved to the real ~1M window. Root
+cause: `dampTokenCount` (display-only damper from FID-2026-0821-003-A) applies a relative
+±5% deadband + 12% max-step ramp against the currently displayed value, so a small
+early-session count against a large window reads ~0 for a long stretch. Fix: NEW
+`CONTEXT_TOKEN_SMALL_COUNT_FLOOR = 10_000` in `cli/src/state/chat-store/compaction-helpers.ts`
+— counts ≤ the floor (and any transition out of zero) are adopted exactly; deadband/ramp
+unchanged above the floor. 2 regression tests in `chat-store-noop-guards.test.ts` (small-count
+exact adoption; below-floor replacement). Gates: cli typecheck exit 0 · suite 12 pass / 0
+fail · eslint/prettier/markdownlint clean · Verifier audit PASS (4/4). Receipt re-stamped at
+the archived path `sha256:787cb606...2402` (2/2 declared gates live PASS) after `### Perfection
+Loop` was promoted to `##` per the fid-verification parser contract (gate section window runs
+to the next level-2 heading); repo-wide `fid:verify --check` sweep PASS. Live visual-meter
+confirmation = operator boundary, recorded, never claimed passed.
+
 ## 2026-08-25 closure — FID-2026-0820-010 Chat UI and Auto Drive dashboard
 
 `FID-2026-0820-010-chat-ui-structured-no-terminal.md` is closed and archived

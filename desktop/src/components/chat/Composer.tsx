@@ -36,39 +36,45 @@ const EMOJIS = [
 ]
 
 import {
-  filterSlashCommands,
-  findSlashCommand,
+  filterCommands,
+  findCommand,
+  mergeCommands,
   slashQueryOf,
 } from './slash-commands'
+import { useAutoGrowTextarea } from './use-autogrow'
 import { useDeckStore } from '../../floor/deck-store'
 import { clearTranscript, pushLocalNotice } from '../../state/transcript-store'
 
-import type { SlashCommand } from './slash-commands'
+import type { PaletteCommand } from './slash-commands'
 import type { JSX, KeyboardEvent } from 'react'
 
-function executeCommand(name: string): void {
+/** Execute a renderer-local command; returns true when handled. */
+function executeLocalCommand(name: string): boolean {
   switch (name) {
     case '/clear':
       clearTranscript()
-      break
+      return true
     case '/deck':
       useDeckStore.getState().setViewMode('deck')
-      break
+      return true
     case '/chat':
       useDeckStore.getState().setViewMode('chat')
-      break
-    case '/help':
-      pushLocalNotice(
-        'desktop commands: /clear, /deck, /chat, /help — gateway-backed ' +
-          'commands (/model, /usage, /goal …) are not wired in the desktop yet',
-      )
-      break
+      return true
+    default:
+      return false
   }
 }
 
 export function Composer(props: {
   disabled: boolean
   running: boolean
+  /** FID-2026-0901-005: the gateway's list_commands result — the full CLI
+   *  registry with dispatch classes. Empty until the gateway is ready. */
+  serverCommands?: ReadonlyArray<{
+    id: string
+    description: string
+    dispatch: string
+  }>
   onSend(text: string): void
   onInterrupt(): void
 }): JSX.Element {
@@ -77,11 +83,18 @@ export function Composer(props: {
   const [selected, setSelected] = useState(0)
   const [emojiOpen, setEmojiOpen] = useState(false)
   const inputRef = useRef<HTMLTextAreaElement | null>(null)
+  // P28: the composer grows with the draft (up to ~5 lines) instead of
+  // scrolling inside a one-line box; Shift+Enter stays the newline path.
+  useAutoGrowTextarea(inputRef, draft, 120)
   const trimmed = draft.trim()
   const slashQuery = slashQueryOf(draft)
-  const matches = useMemo<SlashCommand[]>(
-    () => (slashQuery === null ? [] : filterSlashCommands(slashQuery)),
-    [slashQuery],
+  const registry = useMemo(
+    () => mergeCommands(props.serverCommands ?? []),
+    [props.serverCommands],
+  )
+  const matches = useMemo<PaletteCommand[]>(
+    () => (slashQuery === null ? [] : filterCommands(registry, slashQuery)),
+    [registry, slashQuery],
   )
   const menuOpen = slashQuery !== null && !dismissed && matches.length > 0
 
@@ -89,10 +102,20 @@ export function Composer(props: {
     setSelected(0)
   }, [slashQuery])
 
-  const accept = (command: SlashCommand): void => {
+  const accept = (command: PaletteCommand): void => {
     setDraft('')
     setDismissed(false)
-    executeCommand(command.name)
+    // Local commands execute in the renderer. Agent commands dispatch as
+    // prompt text through the run path — the runtime intercepts command-
+    // shaped prompts (e.g. /compact), so this is real execution, not a stub.
+    if (executeLocalCommand(command.name)) return
+    if (command.origin === 'agent') {
+      props.onSend(command.name)
+      return
+    }
+    pushLocalNotice(
+      `/${command.name.slice(1)} is only available in the terminal UI`,
+    )
   }
 
   /** Insert at the caret (or append) and restore focus/selection — the
@@ -115,7 +138,7 @@ export function Composer(props: {
 
   const submit = (): void => {
     if (trimmed === '') return
-    const command = findSlashCommand(trimmed)
+    const command = findCommand(registry, trimmed)
     if (command !== null) {
       accept(command)
       return
@@ -174,7 +197,11 @@ export function Composer(props: {
               }}
             >
               <span className="slash-name">{command.name}</span>
-              <span className="slash-desc">{command.description}</span>
+              <span className="slash-desc">
+                {command.origin === 'client'
+                  ? `${command.description} — terminal only`
+                  : command.description}
+              </span>
             </button>
           ))}
         </div>

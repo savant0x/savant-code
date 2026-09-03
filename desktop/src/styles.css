@@ -298,13 +298,68 @@ body {
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--muted);
-  padding: 3px 8px;
+  padding: 3px 9px;
   border-radius: 9999px;
+  transition:
+    background 140ms ease,
+    color 140ms ease,
+    box-shadow 140ms ease;
 }
 
+/* P21 (operator: "the color highlight on the selected item is too dull"):
+   the active chip is now a vivid, saturated pill — strong accent fill, bright
+   foreground, and a soft outer glow that reads on the dark surface. Each
+   phase colours its own active state so the rail is unambiguous at a glance. */
 .fsm-chip.fsm-active {
+  background: rgba(24, 250, 249, 0.2);
+  color: var(--primary);
+  font-weight: 600;
+  text-shadow: 0 0 6px rgba(24, 250, 249, 0.6);
+  box-shadow: 0 0 10px rgba(24, 250, 249, 0.35);
+}
+
+/* P20: the at-rest idle chip — a calm cyan state, distinct from an engaged
+   phase but never dead/dark. */
+.fsm-chip.fsm-idle {
   background: rgba(24, 250, 249, 0.12);
   color: var(--primary);
+}
+
+.fsm-chip.fsm-red.fsm-active {
+  background: rgba(255, 45, 85, 0.22);
+  color: #ff6b8b;
+  text-shadow: 0 0 6px rgba(255, 45, 85, 0.7);
+  box-shadow: 0 0 10px rgba(255, 45, 85, 0.4);
+}
+
+.fsm-chip.fsm-green.fsm-active,
+.fsm-chip.fsm-complete.fsm-active {
+  background: rgba(57, 255, 20, 0.2);
+  color: #7dff5e;
+  text-shadow: 0 0 6px rgba(57, 255, 20, 0.7);
+  box-shadow: 0 0 10px rgba(57, 255, 20, 0.4);
+}
+
+.fsm-chip.fsm-audit.fsm-active,
+.fsm-chip.fsm-self_correct.fsm-active {
+  background: rgba(255, 149, 0, 0.22);
+  color: #ffc457;
+  text-shadow: 0 0 6px rgba(255, 149, 0, 0.7);
+  box-shadow: 0 0 10px rgba(255, 149, 0, 0.4);
+}
+
+.fsm-chip.fsm-adversarial.fsm-active {
+  background: rgba(255, 45, 85, 0.24);
+  color: #ff5c7f;
+  text-shadow: 0 0 6px rgba(255, 45, 85, 0.7);
+  box-shadow: 0 0 10px rgba(255, 45, 85, 0.45);
+}
+
+/* P17: live-activity chip — a real signal shown on non-loop chat runs so the
+   rail never reads as dead. Warning-tinted to distinguish from an FSM phase. */
+.fsm-chip.fsm-activity {
+  background: rgba(255, 149, 0, 0.12);
+  color: var(--warning);
 }
 
 .scope-switcher {
@@ -336,6 +391,110 @@ body {
 }
 
 /* --- Compaction status (Step 7 amendment) ------------------------------- */
+
+/* FID-2026-0901-006 P3: persistent context meter (idle phase included). */
+.context-meter {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  max-width: 240px;
+  padding: 4px 9px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  font-size: 11px;
+  line-height: 1.3;
+  color: var(--muted);
+}
+
+.context-meter-track {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 56px;
+  height: 5px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--border) 70%, transparent);
+  overflow: hidden;
+}
+
+.context-meter-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 3px;
+  background: var(--success);
+  transition: width 300ms ease;
+}
+
+.context-meter-label {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.context-warn .context-meter-fill {
+  background: var(--warning);
+}
+.context-warn {
+  color: var(--warning);
+  border-color: var(--warning);
+}
+
+.context-danger .context-meter-fill {
+  background: var(--error);
+}
+.context-danger {
+  color: var(--error);
+  border-color: var(--error);
+}
+
+/* FID-2026-0901-006 P2: CLI-parity running status (activity + elapsed). */
+.run-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.run-status-pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--primary, #22d3ee);
+  animation: run-status-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes run-status-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+
+.run-status-label {
+  color: var(--fg);
+}
+
+.run-status-elapsed {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .run-status-pulse {
+    animation: none;
+    opacity: 0.9;
+  }
+}
 
 .compaction-status {
   max-width: 260px;
@@ -540,9 +699,12 @@ body {
   padding: 0 16px;
 }
 
+/* P20 (operator: "these are not wide enough and the overall design feels
+   very low effort"): rails widened — 176px clipped FID ids and wrapped every
+   label; the FID panel's 270px content overflowed its 176px rail. */
 .workspace-left-rail,
 .workspace-right-rail {
-  flex: 0 0 176px;
+  flex: 0 0 216px;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -555,9 +717,9 @@ body {
 
 .auto-drive {
   flex: 0 0 auto;
-  padding: 10px;
+  padding: 12px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 10px;
   background: var(--surface);
 }
 
@@ -578,23 +740,16 @@ body {
   text-transform: uppercase;
 }
 
-.auto-drive-count,
-.auto-drive-state,
-.auto-drive-graph-note {
+.auto-drive-count {
   color: var(--muted);
   font-size: 10px;
-}
-
-.auto-drive-state {
-  padding: 8px 0 6px;
-  color: var(--primary);
-  text-transform: uppercase;
 }
 
 .auto-drive-statuses {
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 4px 8px;
+  padding: 8px 0;
   font-size: 10px;
 }
 
@@ -611,34 +766,8 @@ body {
   font-weight: 600;
 }
 
-.auto-drive-graph {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin: 10px 0;
-  padding-top: 8px;
-  border-top: 1px solid var(--border);
-}
-
-.auto-drive-graph-title {
-  color: var(--muted);
-  font-size: 10px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.auto-drive-graph-note,
-.auto-drive-edge {
-  color: var(--muted);
-  font-size: 10px;
-  line-height: 1.45;
-  overflow-wrap: anywhere;
-}
-
-.auto-drive-edge {
-  color: var(--primary);
-  font-family: ui-monospace, monospace;
-}
+/* P20: the dependency-graph section was removed from the widget — its CSS
+   block went with it. */
 
 .auto-drive-halt {
   width: 100%;
@@ -658,14 +787,16 @@ body {
   opacity: 0.45;
 }
 
+/* P20 sidebar quality pass: shared card treatment — larger radius + inner
+   row padding so the panels read as designed surfaces, not bare boxes. */
 .roster-rail {
   flex: 0 0 auto;
   height: fit-content;
   max-height: calc(100vh - 92px);
   margin-top: 64px;
-  padding: 10px;
+  padding: 12px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 10px;
   background: var(--surface);
   overflow: auto;
 }
@@ -693,10 +824,19 @@ body {
   font-size: 10px;
 }
 
+/* P23 (operator: "on the savant roster, 'active' should also be the same
+   green as the active agent name"): the presence word matches the presence
+   dot's color — full --success with the same glow family. */
+.roster-state-active {
+  color: var(--success);
+  text-shadow: 0 0 6px rgba(57, 255, 20, 0.45);
+  font-weight: 600;
+}
+
 .roster-list {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
   padding-top: 8px;
 }
 
@@ -704,8 +844,14 @@ body {
   display: grid;
   grid-template-columns: 7px minmax(0, 1fr) auto;
   align-items: center;
-  gap: 6px;
-  min-height: 24px;
+  gap: 8px;
+  min-height: 26px;
+  padding: 0 6px;
+  border-radius: 6px;
+}
+
+.roster-row:hover {
+  background: rgba(24, 250, 249, 0.04);
 }
 
 .roster-presence {
@@ -733,28 +879,54 @@ body {
   height: 100vh;
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 
-.thread-rail {
-  flex: 0 0 auto;
-  max-height: 260px;
-  padding: 10px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--surface);
-  overflow: auto;
-}
-
-.thread-rail-head {
+/* P21 (operator: "the chat should have a very dim and large Savant logo in
+   the middle background w/a cyan glow/stroke"): decorative watermark pinned
+   behind the transcript — pointer-events:none keeps the scroll/click surface
+   untouched; the drop-shadow filter supplies the cyan stroke/glow. */
+.chat-watermark {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
   display: flex;
-  align-items: baseline;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.chat-watermark img {
+  width: min(46vh, 560px);
+  height: auto;
+  max-height: 80%;
+  opacity: 0.055;
+  filter: drop-shadow(0 0 14px rgba(24, 250, 249, 0.5))
+    drop-shadow(0 0 42px rgba(24, 250, 249, 0.22));
+  user-select: none;
+}
+
+/* P21 (operator: "threads needs to be changed to something useful"): the
+   left rail's live-session status card — model, run state, context, phase. */
+.session-status {
+  flex: 0 0 auto;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.session-status-head {
+  display: flex;
+  align-items: center;
   justify-content: space-between;
   gap: 6px;
   padding-bottom: 8px;
   border-bottom: 1px solid var(--border);
 }
 
-.thread-rail-title {
+.session-status-title {
   color: var(--fg);
   font-size: 11px;
   font-weight: 700;
@@ -762,83 +934,88 @@ body {
   text-transform: uppercase;
 }
 
-.thread-rail-count,
-.thread-rail-empty {
-  color: var(--muted);
-  font-size: 10px;
-}
-
-.thread-rail-empty {
-  margin: 10px 2px 2px;
-}
-
-.thread-rail-list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding-top: 8px;
-}
-
-.thread-rail-row {
-  display: grid;
-  grid-template-columns: 7px minmax(0, 1fr) 22px 22px;
-  align-items: center;
-  gap: 4px;
-  min-height: 26px;
-}
-
-.thread-rail-row-unread .thread-rail-label {
-  color: var(--primary);
-  font-weight: 600;
-}
-
-.thread-rail-unread {
+.session-status-live {
   width: 7px;
   height: 7px;
   border-radius: 50%;
   background: var(--muted);
 }
 
-.thread-rail-row-unread .thread-rail-unread {
-  background: var(--warning);
-  box-shadow: 0 0 6px rgba(255, 149, 0, 0.5);
+.session-status-live.live {
+  background: var(--success);
+  box-shadow: 0 0 7px rgba(57, 255, 20, 0.55);
 }
 
-.thread-rail-label {
+.session-status-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px 0;
+}
+
+.session-status-key {
+  color: var(--muted);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.session-status-value {
   min-width: 0;
   color: var(--fg);
-  font-size: 10px;
+  font-size: 11px;
+  font-weight: 500;
+  text-align: right;
   overflow-wrap: anywhere;
 }
 
-.thread-rail-action {
-  width: 22px;
-  height: 22px;
-  padding: 0;
-  border: 1px solid transparent;
-  border-radius: 4px;
-  background: none;
-  color: var(--muted);
-  cursor: pointer;
-  font-size: 13px;
-  line-height: 1;
-}
-
-.thread-rail-action:hover,
-.thread-rail-action:focus-visible,
-.thread-rail-action-active {
-  border-color: var(--border);
+.session-status-value.session-active {
   color: var(--primary);
 }
 
+.session-status-value.session-phase {
+  color: var(--primary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.session-meter {
+  margin-top: 4px;
+  height: 4px;
+  border-radius: 9999px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.session-meter-fill {
+  display: block;
+  height: 100%;
+  border-radius: 9999px;
+  background: var(--primary);
+}
+
+.session-status-empty {
+  margin: 1px 0 0;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.4;
+}
+
 .fid-queue {
-  flex: 0 0 270px;
-  height: fit-content;
-  max-height: calc(100vh - 92px);
-  margin-top: 64px;
-  padding: 10px;
+  /* P20: fill the rail width. P21 (operator: "the wrapper is not dynamic,
+     it has massive white space, it should collapse the space properly"):
+     the card sizes to its content (flex: 0 0 auto), never stretches to
+     fill the rail's height. A bounded max-height caps runaway lists.
+     P22 (operator: "huge blank space between FID STATUS and PROJECT
+     FIDS"): the stale `margin-top: 64px` from the pre-rail layout is
+     gone — the rail's own 10px column gap is the only spacing. */
+  flex: 0 0 auto;
+  height: auto;
+  max-height: 400px;
+  padding: 12px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 10px;
   background: var(--surface);
   overflow: auto;
 }
@@ -848,8 +1025,20 @@ body {
   align-items: baseline;
   justify-content: space-between;
   gap: 8px;
-  padding-bottom: 8px;
+  width: 100%;
+  /* P21: reset the native <button> chrome (border/padding) — the default
+     2px outset border was the "weird glow border" around the head row. */
+  appearance: none;
+  border: 0;
   border-bottom: 1px solid var(--border);
+  padding: 0 0 8px;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.fid-queue-head:hover .fid-queue-title {
+  color: var(--primary);
 }
 
 .fid-queue-title {
@@ -901,6 +1090,24 @@ body {
   overflow-wrap: anywhere;
 }
 
+.fid-queue-more {
+  align-self: flex-start;
+  margin-top: 2px;
+  padding: 2px 6px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+}
+
+.fid-queue-more:hover {
+  color: var(--primary);
+  border-color: rgba(24, 250, 249, 0.4);
+}
+
 .fid-status {
   flex: 0 0 auto;
   font-size: 10px;
@@ -924,6 +1131,8 @@ body {
 }
 
 .thread {
+  position: relative;
+  z-index: 1;
   flex: 1;
   overflow-y: auto;
   scrollbar-width: thin;
@@ -931,7 +1140,16 @@ body {
   padding: 64px 20px 12px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  /* P25 (operator: "there is no spacing between the message and the
+       'suggest followups'"): blocks breathe — the fixed windowing that
+       collapsed this to 10px is gone, and each child keeps real margins. */
+  gap: 14px;
+}
+
+/* P25: the last transcript child also clears the thread's bottom padding so
+   the tail of the final card is never flush against the composer. */
+.thread > :last-child {
+  margin-bottom: 8px;
 }
 
 .thread-empty {
@@ -946,35 +1164,32 @@ body {
   overflow-wrap: anywhere;
 }
 
-/* Copy affordance (Loop 9): hover-revealed in the block's top-right corner,
-   keyboard-reachable via :focus-visible, and sticky while in a copied/failed
-   state so the feedback is never invisible. */
+/* Copy affordance (Loop 9). P21 (operator: "the copy button is missing from
+   each message"): the hover-reveal made it look absent — it is now always
+   visible in every assistant message footer, quiet but present. */
 .blk-text {
   position: relative;
 }
 
 .blk-copy {
-  position: absolute;
-  top: 0;
-  right: 0;
-  padding: 2px 8px;
-  font-size: 10.5px;
+  padding: 1px 7px;
+  font-size: 10px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--muted);
-  background: var(--surface);
+  background: transparent;
   border: 1px solid var(--border);
   border-radius: 4px;
   cursor: pointer;
-  opacity: 0;
-  transition: opacity 120ms ease;
+  opacity: 1;
+  transition:
+    color 120ms ease,
+    border-color 120ms ease;
 }
 
-.blk-text:hover .blk-copy,
-.blk-copy:focus-visible,
-.blk-copy.copied,
-.blk-copy.failed {
-  opacity: 1;
+.blk-copy:hover {
+  color: var(--fg);
+  border-color: var(--muted);
 }
 
 .blk-copy.copied {
@@ -1113,16 +1328,276 @@ body {
   font-size: 12.5px;
 }
 
+/* FID-2026-0828-001 desktop parity: post-compaction summary block. */
+.blk-compaction-summary {
+  border: 1px solid color-mix(in srgb, var(--warning, #f59e0b) 35%, transparent);
+  border-radius: 8px;
+  padding: 8px 12px;
+  background: color-mix(in srgb, var(--warning, #f59e0b) 7%, transparent);
+}
+
+.blk-compaction-summary-title {
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--warning, #f59e0b);
+  margin-bottom: 4px;
+}
+
+.blk-compaction-summary-body {
+  font-size: 12.5px;
+  color: var(--fg);
+  white-space: pre-wrap;
+}
+
+.blk-timestamp {
+  display: block;
+  font-size: 10.5px;
+  color: var(--muted);
+  opacity: 0.7;
+  letter-spacing: 0.03em;
+  /* FID-2026-0901-006 P5: time reads best *under* the message, like every
+     mainstream chat surface. */
+  margin-top: 3px;
+  margin-bottom: 0;
+  /* P19 (operator): timestamps are always small + right-aligned — both
+     assistant and user messages, consistent with mainstream chat surfaces. */
+  text-align: right;
+}
+
+/* P20 (operator: "copy button is at the very top of the message, needs better
+   placement"): assistant messages get a footer row under the content — copy
+   affordance on the left, timestamp on the right. */
+.blk-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+/* P21 (operator: "use the traffic lights design for these content boxes")
+   — the CLI TrafficLightPanel chrome: a bounded surface card with a
+   right-aligned traffic-light title bar around each assistant-facing block. */
+.tl-card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.tl-card-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 5px 10px;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 60%, transparent);
+}
+
+.tl-card-label {
+  margin-right: auto;
+  color: var(--muted);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.tl-card-warning .tl-card-label {
+  color: var(--warning);
+}
+
+.tl-card-error .tl-card-label {
+  color: var(--error);
+}
+
+.tl-card-body {
+  padding: 4px 12px 10px;
+}
+
+/* The inner blocks carry their own border/padding for the standalone case;
+   inside a card those would double up against the card chrome, so strip
+   them (the card owns the surface + border now). */
+.tl-card-body .blk-ehel,
+.tl-card-body .blk-reasoning,
+.tl-card-body .blk-compaction-summary {
+  border: 0;
+  border-radius: 0;
+  background: none;
+  padding: 4px 0 2px;
+}
+
+.tl-card-body .blk-reasoning summary {
+  padding: 2px 0;
+}
+
+/* Traffic light dots (decorative, CLI parity). */
+.traffic-lights {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.traffic-light-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+/* P22: CLI parity — the dots breathe a subtle glow (the CLI timeline's
+   2400ms GLOW_CYCLE_MS, staggered per dot). P23: always — the CLI never
+   dims its lights. */
+.traffic-lights .traffic-light-dot:nth-child(1) {
+  animation: breathe 2.4s ease-in-out infinite;
+}
+.traffic-lights .traffic-light-dot:nth-child(2) {
+  animation: breathe 2.4s ease-in-out 0.4s infinite;
+}
+.traffic-lights .traffic-light-dot:nth-child(3) {
+  animation: breathe 2.4s ease-in-out 0.8s infinite;
+}
+
+/* P19: the user bubble's timestamp keeps its own right alignment via the
+   block-level rule above — the sibling selector is no longer needed. */
+
+.followup-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.followup-card {
+  text-align: left;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--fg);
+  padding: 8px 10px;
+  cursor: pointer;
+  transition:
+    border-color 140ms ease,
+    background 140ms ease;
+}
+
+.followup-card:hover {
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 8%, var(--surface));
+}
+
+/* P24 (operator: "the hover tooltip does not show up for the items"): the
+   CLI hover turns the label acid-green + bold (suggest-followups.tsx) — the
+   desktop hover now does the same, so the hover state is unmistakable. */
+.followup-card:hover .followup-card-label {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+/* P25: WebView2 suppresses native `title` tooltips, so the followup prompt
+   renders as a real CSS tooltip from the `data-tip` attribute — above the
+   card, bounded to the thread width, and keyboard-reachable via :focus. */
+.followup-card {
+  position: relative;
+}
+
+.followup-card::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  max-width: min(420px, 90vw);
+  padding: 6px 9px;
+  border: 1px solid rgba(24, 250, 249, 0.35);
+  border-radius: 6px;
+  background: rgba(8, 12, 16, 0.96);
+  color: var(--fg);
+  font-size: 12px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  transform: translateY(4px);
+  pointer-events: none;
+  transition:
+    opacity 120ms ease 300ms,
+    transform 120ms ease 300ms;
+  z-index: 30;
+}
+
+.followup-card:hover::after,
+.followup-card:focus-visible::after {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.followup-card-label {
+  display: block;
+  font-size: 13px;
+}
+
+.followup-card-prompt {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.tool-preview {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--muted);
+  max-width: 40%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.thinking-block {
+  /* P14: CLI TrafficLightPanel parity — a bordered surface panel with the
+     traffic-light header row, not a bare indented list. */
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  padding: 8px 10px;
+  margin-top: 2px;
+}
+
+.thinking-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fg);
+  margin-bottom: 4px;
+}
+
 .blk-reasoning {
   font-size: 13px;
   color: var(--muted);
-  border-left: 2px solid var(--border);
-  padding-left: 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  padding: 8px 10px;
 }
 
 .blk-reasoning summary {
   cursor: pointer;
   color: var(--muted);
+  letter-spacing: 0.02em;
+  /* P20: the collapsed preview — em-dash + first line of the actual thought,
+     truncated so the header stays one line. */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.blk-reasoning summary::marker {
+  color: var(--muted);
+}
+
+.blk-reasoning[open] summary {
+  color: var(--fg);
+  margin-bottom: 4px;
 }
 
 .blk-approval {
@@ -1172,20 +1647,20 @@ body {
   text-align: left;
 }
 
-.tool-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 9999px;
+/* P23 (operator: "the design does not match the cli traffic lights we use" +
+   "the traffic lights should always be on the right side"): the CLI title
+   bar right-aligns its lights (TrafficLightPanel). The head's flex order
+   becomes name/preview → toggle → lights: the toggle's own auto margin
+   pushes the tail right, and the lights (order 10) land at the far right
+   regardless of DOM position. */
+.tool-card-head .traffic-lights {
+  flex: 0 0 auto;
+  order: 10;
 }
 
-.dot-run {
-  background: var(--warning);
-  animation: breathe 1.2s ease-in-out infinite;
-}
-
-.dot-done {
-  background: var(--success);
-}
+/* P22: the `tool-dot` run/done indicator was removed from the tool-card
+   head — the traffic lights already encode state (lit running, dim done)
+   and the extra dot made four. */
 
 .tool-name {
   font-weight: 600;
@@ -1211,6 +1686,36 @@ body {
   color: var(--muted);
 }
 
+/* P15: CopyableBlock footer parity — right-aligned row under the card:
+   optional [-N/+M] diff counter, then the copy button. */
+.tool-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 3px 8px 6px;
+}
+
+.tool-diff-stats {
+  display: inline-flex;
+  gap: 6px;
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+}
+
+.tool-diff-added {
+  color: var(--success);
+}
+
+.tool-diff-removed {
+  color: var(--error);
+}
+
+.tool-footer .blk-copy {
+  position: static;
+  opacity: 1;
+}
+
 .tool-pre {
   margin: 0;
   padding: 8px;
@@ -1223,6 +1728,108 @@ body {
   overflow-wrap: anywhere;
   max-height: 260px;
   overflow-y: auto;
+}
+
+/* P14: terminal tools get a tinted terminal panel (CLI TerminalCommandDisplay
+   lineage) — darker surface, monospace, primary-tinted edge. */
+.tool-pre.tool-pre-terminal {
+  background: #030307;
+  border-color: rgba(24, 250, 249, 0.22);
+  box-shadow: inset 0 0 24px rgba(24, 250, 249, 0.05);
+}
+
+/* P14: whole-file write compact summary (CLI FID-2026-0823-006 parity). */
+.write-summary {
+  font-size: 12px;
+  color: var(--fg);
+  padding: 6px 8px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.write-summary .write-path {
+  color: var(--primary);
+}
+
+.write-summary .write-count {
+  color: var(--muted);
+}
+
+/* P16: simple tool items (CLI SimpleToolCallItem parity) — web_search,
+   read_url, skill: `• Name description` with a muted description. */
+.simple-item {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  font-size: 13px;
+  padding: 2px 0;
+}
+
+.simple-item-bullet {
+  color: var(--muted);
+  flex: none;
+}
+
+.simple-item-name {
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.simple-item-desc {
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+/* P14: write_todos checklist card (CLI write-todos.tsx parity). */
+.todos-block {
+  font-size: 13px;
+}
+
+.todos-title {
+  font-weight: 600;
+  color: var(--fg);
+  margin-bottom: 4px;
+}
+
+.todos-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.todo-item {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  color: var(--fg);
+}
+
+.todo-mark {
+  color: var(--muted);
+  flex: none;
+}
+
+.todo-done .todo-mark {
+  color: var(--success);
+}
+
+.todo-done .todo-task {
+  color: var(--muted);
+}
+
+.model-badge {
+  font-size: 10.5px;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  border: 1px solid rgba(24, 250, 249, 0.28);
+  background: var(--surface);
+  color: var(--primary);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .pill {
@@ -1273,6 +1880,10 @@ body {
   font-size: 14px;
   font-family: inherit;
   line-height: 1.5;
+  /* P28: auto-grow cap (~5 lines) — beyond it the textarea scrolls
+     internally instead of pushing the thread shorter. */
+  max-height: 120px;
+  overflow-y: auto;
 }
 
 .composer-input:focus {
@@ -1492,6 +2103,215 @@ body {
 }
 
 /* Caption floats over the analytical floor — never silent about the tier. */
+/* P26 (operator: "add a small little chat interface in the bottom left hand
+   corner"): the deck mini-chat island. Fixed to the lower-left, above the
+   stage (z-index 11, same layer as the deck toggle); its box is the only
+   thing that captures the pointer, so orbit/zoom keeps working everywhere
+   else. Shares the chat Composer's surface/border/typography language. */
+.deck-minichat {
+  position: fixed;
+  left: 16px;
+  bottom: 16px;
+  z-index: 11;
+  /* P33 (operator: "it is not wide enough"): widened 340px → 480px so
+     markdown replies land without dense wrapping; the tail area carries a
+     semi-transparent black backdrop ("the chat should have a semi-transparent
+     black background") so text stays legible over the 3D floor. */
+  width: min(480px, calc(100vw - 32px));
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* P33: semi-transparent black backdrop for the exchange surface — the pill
+   and composer row ride on it too, one cohesive panel instead of floating
+   fragments. Blurred edge keeps it readable without fully hiding the floor. */
+.deck-minichat::before {
+  content: '';
+  position: absolute;
+  inset: -8px -10px;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  backdrop-filter: blur(6px);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.deck-minichat > * {
+  position: relative;
+}
+
+/* P28: collapsed pill on the chat branch — width hugs its content, no
+   composer row underneath (the chat Composer owns that surface). The
+   collapsed pill must NOT get the panel backdrop. */
+.deck-minichat.minichat-collapsed {
+  width: auto;
+  max-width: min(480px, calc(100vw - 32px));
+}
+
+.deck-minichat.minichat-collapsed::before {
+  display: none;
+}
+
+/* P30: the island's transcript tail — the same store the Chat tab renders,
+   windowed to the last few user/text blocks. Bounded height, internal
+   scroll, pinned to the bottom by the component's scroll effect. */
+.minichat-tail {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 300px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(24, 250, 249, 0.35) transparent;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.minichat-user {
+  align-self: flex-end;
+  max-width: 85%;
+  padding: 7px 10px;
+  border: 1px solid rgba(24, 250, 249, 0.3);
+  border-radius: 10px 10px 3px 10px;
+  background: color-mix(in srgb, var(--primary) 12%, var(--surface));
+  color: var(--fg);
+  font-size: 12.5px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.minichat-agent {
+  align-self: flex-start;
+  max-width: 92%;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px 10px 10px 3px;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  color: var(--fg);
+  font-size: 12.5px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+/* The island reuses MarkdownBlock; the chat's .md sizing (14px/1.6) is too
+   large for the island — compact override scoped to .minichat-agent. */
+.minichat-agent .md {
+  font-size: 12.5px;
+  line-height: 1.45;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.minichat-agent .md pre {
+  font-size: 11px;
+  margin: 0;
+}
+
+.minichat-agent .md table {
+  font-size: 11.5px;
+}
+
+.minichat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  max-width: 100%;
+  padding: 3px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.minichat-pill-live {
+  border-color: rgba(24, 250, 249, 0.35);
+  color: var(--fg);
+  cursor: pointer;
+}
+
+.minichat-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 6px var(--success);
+  animation: breathe 2.4s ease-in-out infinite;
+  flex: 0 0 auto;
+}
+
+.minichat-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.minichat-input {
+  flex: 1;
+  resize: none;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  color: var(--fg);
+  font: inherit;
+  font-size: 13px;
+  padding: 8px 10px;
+  min-height: 34px;
+  /* P28: auto-grow cap (~3 lines) so the island stays an island. */
+  max-height: 72px;
+  overflow-y: auto;
+  outline: none;
+  transition: border-color 140ms ease;
+}
+
+.minichat-input:focus {
+  border-color: rgba(24, 250, 249, 0.45);
+}
+
+.minichat-input:disabled {
+  opacity: 0.5;
+}
+
+.minichat-send {
+  border: 1px solid rgba(24, 250, 249, 0.45);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--primary) 16%, var(--surface));
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition:
+    border-color 140ms ease,
+    background 140ms ease;
+}
+
+.minichat-send:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.minichat-send:not(:disabled):hover {
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 26%, var(--surface));
+}
+
+.minichat-stop {
+  border-color: rgba(255, 45, 85, 0.5);
+  background: color-mix(in srgb, var(--error) 14%, var(--surface));
+  color: var(--error);
+}
+
 .deck-fallback {
   position: fixed;
   left: 50%;
@@ -1513,11 +2333,13 @@ body {
 
 .blk-user {
   display: flex;
-  justify-content: flex-end;
+  flex-direction: column;
+  align-items: flex-end;
 }
 
 .blk-user-bubble {
   max-width: 78%;
+  box-sizing: border-box;
   padding: 8px 12px;
   border-radius: 12px 12px 3px 12px;
   background: rgba(24, 250, 249, 0.1);

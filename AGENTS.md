@@ -42,6 +42,7 @@ filesystem entries in `agents/`.
 | `common/` | `@savant-code/common` | Shared types, tool definitions, utilities |
 | `evals/` | `@savant-code/evals` | Eval benchmark runner + public eval fixtures |
 | `savant-free/` | `@savant-code/savant-free` | CLI release + e2e tests for the free variant |
+| `desktop/` | `@savant-code/desktop` | Tauri v2 desktop shell — Rust sidecar supervisor, React 19 renderer, 3D command deck |
 | `packages/database/` | `@savant-code/database` | Database abstraction layer |
 | `packages/agent-runtime/` | `@savant-code/agent-runtime` | Agent loop, tool executor, LLM API integration |
 | `packages/code-map/` | `@savant-code/code-map` | tree-sitter code indexing, language detection |

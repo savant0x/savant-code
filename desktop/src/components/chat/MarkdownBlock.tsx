@@ -248,6 +248,17 @@ function renderBlock(block: RawBlock): JSX.Element {
     case 'hr':
       return <hr key={block.key} className="md-hr" />
     case 'table':
+      // FID-2026-0901-006 P6: a body row may legitimately carry MORE cells
+      // than the header (the Thinker's plan tables do). Rendering exactly
+      // `header.length` columns silently drops everything past the header,
+      // which is why the risk column looked truncated/misaligned. Render the
+      // widest column count across header + rows and pad short rows — no data
+      // loss, and header alignment still governs the first columns.
+      const columnCount = Math.max(
+        block.header.length,
+        ...block.rows.map((row) => row.length),
+        0,
+      )
       return (
         <div key={block.key} className="md-table-wrap">
           <table className="md-table">
@@ -266,7 +277,7 @@ function renderBlock(block: RawBlock): JSX.Element {
             <tbody>
               {block.rows.map((row, rowIndex) => (
                 <tr key={`${block.key}-r${rowIndex}`}>
-                  {block.header.map((_, column) => (
+                  {Array.from({ length: columnCount }, (_, column) => (
                     <td
                       key={`${block.key}-r${rowIndex}c${column}`}
                       style={alignStyle(block.aligns[column] ?? null)}

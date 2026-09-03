@@ -13,7 +13,10 @@ export function initialRoster(): RosterEntry[] {
   return DECK_ROLE_IDS.map((roleId) => ({
     roleId,
     label: ROLE_LABELS[roleId],
-    presence: 'standby',
+    // P21 (operator: "savant should NEVER be on standby, it's always
+    // active"): the orchestrator/centerpiece is the always-live system — it
+    // is never idle. Only sub-agents come and go.
+    presence: roleId === 'savant' ? 'active' : 'standby',
   }))
 }
 
@@ -29,6 +32,7 @@ export function applyRosterEvent(
       entry.roleId === 'savant'
         ? {
             ...entry,
+            // Savant is always active — never returned to standby.
             presence: 'active',
             ...(event.agentId ? { agentId: event.agentId } : {}),
           }

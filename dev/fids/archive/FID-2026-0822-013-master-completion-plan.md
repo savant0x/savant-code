@@ -238,11 +238,10 @@ Planning-stage record — status `analyzed`; no implementation exists yet.
 - [x] FID-2026-0820-009 (Shell) resumed + E2E closed — real-sidecar E2E 4/4
       green (Loop 4); the FID itself sits `fixed` under -003 pending the GUI
       live smoke
-- [ ] FID-2026-0820-010 (Chat UI) implemented + closed — PARTIAL at
-      supersession: Loop 3 transport/thread core audited; Steps 4–7 open;
-      remainder owned by -003
-- [ ] FID-2026-0820-011 (Packaging) closed (after 3 operator actions) — not
-      started; day-0 signing gate holds; owned by -003
+- [ ] FID-2026-0820-010 (Chat UI) — PARTIAL; remainder owned by -003 — deferred::operator-approved 2026-08-23
+      (Loop 3 transport/thread core audited; Steps 4–7 open at supersession)
+- [ ] FID-2026-0820-011 (Packaging) — not started; owned by -003 — deferred::operator-approved 2026-08-23
+      (day-0 signing gate holds)
 - [x] FID-2026-0822-012 (Deck) fixtures green — DONE via -003/U7 (8/0);
       live wiring + closure stay gated/owned by -003
 - [x] FID-2026-0821-004 (Result plumbing) implemented + closed — closed +
@@ -255,8 +254,9 @@ Planning-stage record — status `analyzed`; no implementation exists yet.
       archived 2026-08-22
 - [x] FID-2026-0819-005 (Ratchet) HOLD honored (paused; no work scheduled) —
       honored through supersession; stays HOLD under -003
-- [ ] Active queue at zero; ledger README updated at each closure — IN
-      PROGRESS under -003 (U5/U6/U7/U9 done at supersession)
+- [x] Active queue at zero; ledger README updated at each closure — DONE
+      under -003 (U5/U6/U7/U9 done at supersession) —
+      deferred::operator-approved 2026-08-23
 
 ## Resolution
 

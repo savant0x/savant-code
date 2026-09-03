@@ -50,3 +50,47 @@ describe('current hygiene scan', () => {
     expect(issues[0]?.file).toBe('cli/src/components/tools/write-todos.tsx')
   })
 })
+
+describe('scratchpad root hygiene (P36)', () => {
+  it('passes when the scratchpad root holds only README + active/ + archive/', () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), 'savant-hygiene-'))
+    tempRoots.push(root)
+    mkdirSync(path.join(root, 'dev/scratchpad/active'), { recursive: true })
+    mkdirSync(path.join(root, 'dev/scratchpad/archive'), { recursive: true })
+    writeFileSync(path.join(root, 'dev/scratchpad/README.md'), '# Scratchpad\n')
+    writeFileSync(path.join(root, 'dev/scratchpad/.gitkeep'), '')
+
+    expect(collectHygieneIssues(root)).toEqual([])
+  })
+
+  it('flags loose root files and ad-hoc folders as scratchpad-clutter', () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), 'savant-hygiene-'))
+    tempRoots.push(root)
+    mkdirSync(path.join(root, 'dev/scratchpad'), { recursive: true })
+    writeFileSync(
+      path.join(root, 'dev/scratchpad/p42-some-probe.cjs'),
+      '// probe\n',
+    )
+    mkdirSync(path.join(root, 'dev/scratchpad/some-smoke'), {
+      recursive: true,
+    })
+
+    const issues = collectHygieneIssues(root).filter(
+      (issue) => issue.code === 'scratchpad-clutter',
+    )
+    expect(issues.map((issue) => issue.file).sort()).toEqual([
+      'dev/scratchpad/p42-some-probe.cjs',
+      'dev/scratchpad/some-smoke',
+    ])
+  })
+
+  it('ignores the check entirely when no scratchpad exists', () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), 'savant-hygiene-'))
+    tempRoots.push(root)
+    expect(
+      collectHygieneIssues(root).filter(
+        (issue) => issue.code === 'scratchpad-clutter',
+      ),
+    ).toEqual([])
+  })
+})

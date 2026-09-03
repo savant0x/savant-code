@@ -121,6 +121,24 @@ export type ImageContentBlock = {
   userOpened?: boolean
 }
 
+/**
+ * FID-2026-0828-001: post-compaction summary transcript block. Carries the
+ * pruner's summary of the window + removal metrics delivered via the
+ * `compaction_summary` PrintModeEvent; rendered through TrafficLightPanel.
+ */
+export type CompactionSummaryContentBlock = {
+  type: 'compaction-summary'
+  /** Stable id used by the collapse toggle (matches onToggleCollapsed). */
+  id: string
+  summary: string
+  removedMessages: number
+  tokensSaved?: number
+  percentUsed?: number
+  /** Defaults to collapsed: show the header + first line, fold the rest. */
+  isCollapsed?: boolean
+  userOpened?: boolean
+}
+
 export type ImageAttachment = {
   filename: string
   path: string
@@ -145,6 +163,7 @@ export type ContentBlock =
   | AgentContentBlock
   | AgentListContentBlock
   | AskUserContentBlock
+  | CompactionSummaryContentBlock
   | HtmlContentBlock
   | ImageContentBlock
   | ModeDividerContentBlock
@@ -239,4 +258,10 @@ export function isAskUserBlock(
 
 export function isImageBlock(block: ContentBlock): block is ImageContentBlock {
   return block.type === 'image'
+}
+
+export function isCompactionSummaryBlock(
+  block: ContentBlock,
+): block is CompactionSummaryContentBlock {
+  return block.type === 'compaction-summary'
 }

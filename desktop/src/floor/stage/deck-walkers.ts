@@ -39,12 +39,33 @@ import type { FloorState, WalkerState } from '../adapter/floor-adapter'
 import type { DeckCoreRoleId } from '../roles'
 import type { Scene } from 'three'
 
-/** Ground speed for pad<->station walks (world units per second). */
-const WALK_SPEED_UNITS_PER_SEC = 3
+/** Ground speed for pad<->station walks (world units per second).
+ * FID-2026-0829-001 L3: 3 → 8 u/s — crosses a pad spacing (~8.3 units)
+ * in ~1s so the movement is unmistakable at camera distance 22. */
+const WALK_SPEED_UNITS_PER_SEC = 8.0
 /** Clock-delta clamp: one huge gap never teleports a figure across the floor. */
 const MAX_SYNC_DELTA_MS = 1000
 /** Savant stands taller at the console. */
 const SAVANT_SCALE = 1.3
+/**
+ * FID-2026-0828-002 coherent-world rescale: the mount scale is 1× — the
+ * 6-unit normalized height IS the final body height. The earlier 2.5×
+ * multiplier (over a 25-unit normalization) produced ~62-unit giants on a
+ * floor designed for a ~5-unit cast: pads ~8.3 units apart meant bodies
+ * overlapping and "everything stacked at one x/y point." The bigger-on-
+ * screen read now comes from the truthful 6-unit height plus the camera
+ * default (22), not a scale multiplier.
+ */
+const CAST_SCALE_FACTOR = 1
+
+/**
+ * FID-2026-0828-002 E (REVOKED by operator review): idle-cast wander made
+ * the deck a screensaver — "if the chat is idle, the robots should not be
+ * walking in circles." The deck is a 1:1 mirror of chat activity: cast
+ * members stand at their pads while idle (dimmed); they move ONLY when the
+ * adapter reports a live station contract. The wander machinery (waypoints,
+ * dwell timing, golden-angle layout) is fully removed.
+ */
 
 export type FigureFactory = (
   roleId: DeckCoreRoleId,
@@ -65,6 +86,8 @@ export interface WalkerLayerOptions {
 
 interface CastEntry {
   readonly roleId: DeckCoreRoleId
+  /** Position in DECK_ROLE_IDS (deterministic layout). */
+  readonly roleIndex: number
   readonly accent: string
   readonly homeX: number
   readonly homeZ: number
@@ -92,6 +115,22 @@ function advanceAxis(current: number, target: number, maxStep: number): number {
   const delta = target - current
   if (Math.abs(delta) <= maxStep) return target
   return current + Math.sign(delta) * maxStep
+}
+
+/** Yaw a figure so it FACES a world point (operator: all subagents face
+ * Savant at the center). The GLB's forward axis is +Z; atan2 of the
+ * direction vector gives the rotation that turns +Z toward the target. */
+function faceTowards(
+  root: { rotation: { y: number } },
+  fromX: number,
+  fromZ: number,
+  toX: number,
+  toZ: number,
+): void {
+  const dx = toX - fromX
+  const dz = toZ - fromZ
+  if (Math.abs(dx) < 1e-6 && Math.abs(dz) < 1e-6) return
+  root.rotation.y = Math.atan2(dx, dz)
 }
 
 /** Production factory: the vendored robot, or the solid fallback silhouette. */
@@ -126,9 +165,10 @@ export class WalkerLayer {
       const roleId = DECK_ROLE_IDS[index]
       const isSavant = roleId === 'savant'
       const home = isSavant ? { x: 0, z: 0 } : padPosition(index - 1)
-      const scale = isSavant ? SAVANT_SCALE : 1
+      const scale = (isSavant ? SAVANT_SCALE : 1) * CAST_SCALE_FACTOR
       const entry: CastEntry = {
         roleId,
+        roleIndex: index,
         accent: roleAccent(roleId),
         homeX: home.x,
         homeZ: home.z,
@@ -155,8 +195,8 @@ export class WalkerLayer {
         .catch((error: unknown) => {
           const message = error instanceof Error ? error.message : String(error)
           // eslint-disable-next-line no-console
-          console.warn(
-            `[deck] cast figure ${entry.roleId} fell back: ${message}`,
+          console.error(
+            `[deck] cast figure ${entry.roleId} factory failed: ${message}`,
           )
           this.mountFigure(entry, null)
         })
@@ -170,6 +210,13 @@ export class WalkerLayer {
 
   /** Mount one figure (+ nameplate) into the layer; null mounts the fallback. */
   private mountFigure(entry: CastEntry, figure: RobotFigure | null): void {
+    // FID-2026-0828-002: the live cast was stuck at 0/10 — the GLB loaded
+    // but no figure attached. Instrument the exact failure so the console
+    // shows WHERE it breaks instead of silently leaving an empty cast.
+    // eslint-disable-next-line no-console
+    console.info(
+      `[deck] mount ${entry.roleId}: ${figure === null ? 'fallback' : 'glb'}`,
+    )
     if (this.disposed) {
       figure?.dispose()
       return
@@ -177,20 +224,40 @@ export class WalkerLayer {
     const settled = figure ?? buildFallbackFigure(entry.accent)
     settled.root.position.set(entry.homeX, 0, entry.homeZ)
     settled.root.scale.setScalar(entry.scale)
+    // Face the console on mount (operator: the crew faces Savant).
+    faceTowards(settled.root, entry.homeX, entry.homeZ, 0, 0)
     entry.figure = settled
     const nameplate = createNameplate({
       title: ROLE_LABELS[entry.roleId],
       subtitle: entry.roleId,
       accent: entry.accent,
-      worldWidth: 2.2,
+      // Coherent-world rescale: 2.2 world units was authored when bodies
+      // were ~25 units tall; against a 6-unit body the plate must shrink
+      // proportionally (≈1/3 body height). Height follows the 4:1 canvas.
+      worldWidth: 1.9,
     })
-    // Chest-height proportional placement — the old HEIGHT+0.6 flew the plate
-    // to the top of the mech when the cast went mech-scale (operator report
-    // 2026-08-25 01:33); station plates sit at their own designed heights.
+    // FID-2026-0828-002 C (operator directive 2026-08-29): cast nameplates
+    // sit at CHEST height on each figure — a proportional fraction of the
+    // normalized body height. The plate is a child of the scaled figure
+    // root, so the local fraction lands proportionally on every body size
+    // (Savant taller, specialists standard). The earlier shared-plane
+    // revision (all chips on NAMEPLATE_PLANE_Y) was revoked by the operator:
+    // it lifted agent chips far above their bodies. Station plates keep
+    // their own NAMEPLATE_PLANE_Y altitude.
     nameplate.sprite.position.y = ROBOT_TARGET_HEIGHT * 0.4
     settled.root.add(nameplate.sprite)
     entry.nameplate = nameplate
     this.root.add(settled.root)
+  }
+
+  /** Current visual ground anchor of a mounted role figure. */
+  figurePosition(roleId: DeckCoreRoleId): { x: number; z: number } | null {
+    const entry = this.cast.get(roleId)
+    if (entry?.figure === null || entry?.figure === undefined) return null
+    return {
+      x: entry.figure.root.position.x + entry.figure.visualGroundOffset.x,
+      z: entry.figure.root.position.z + entry.figure.visualGroundOffset.z,
+    }
   }
 
   /** Cast mount + robot-template state for the activity overlay
@@ -227,21 +294,52 @@ export class WalkerLayer {
           ? 0
           : Math.min(MAX_SYNC_DELTA_MS, Math.max(0, nowMs - entry.lastNowMs))
       entry.lastNowMs = nowMs
+      // FID-2026-0828-002 D: Savant now honors orchestrator station targets.
+      // The adapter routes unattributed (orchestrator) tool calls to agentId
+      // 'savant'; previously the walker layer hard-pinned Savant to the
+      // console, so an orchestrator-only run produced zero floor motion.
+      // Savant keeps the console as HOME — with no in-flight call he returns
+      // there — and departs to a pedestal exactly like a specialist while
+      // one is in flight.
+      const savantWalker = floor.walkers.get('savant')
       const walker =
-        entry.roleId === 'savant' ? null : activeWalkerFor(floor, entry.roleId)
+        entry.roleId === 'savant'
+          ? savantWalker !== undefined && savantWalker.phase === 'active'
+            ? savantWalker
+            : null
+          : activeWalkerFor(floor, entry.roleId)
       const isActive =
-        entry.roleId === 'savant' ? floor.savantPresent : walker !== null
-      const desired =
-        walker !== null && walker.stationTarget !== null
-          ? stationPosition(stationIndex(walker.stationTarget))
-          : { x: entry.homeX, z: entry.homeZ }
-      const maxStep = (WALK_SPEED_UNITS_PER_SEC * dtMs) / 1000
-      const nextX = advanceAxis(figure.root.position.x, desired.x, maxStep)
-      const nextZ = advanceAxis(figure.root.position.z, desired.z, maxStep)
+        entry.roleId === 'savant'
+          ? floor.savantPresent || savantWalker !== undefined
+          : walker !== null
+      // FID-2026-0828-002 E REVOKED: the ONLY movement driver is a station
+      // contract from live chat events. Idle = home pad, dimmed (1:1 chat
+      // mirror; the wander screensaver is retired).
+      let desiredX = entry.homeX
+      let desiredZ = entry.homeZ
+      let speed = WALK_SPEED_UNITS_PER_SEC
+      const onContract = walker !== null && walker.stationTarget !== null
+      if (onContract) {
+        const station = stationPosition(stationIndex(walker.stationTarget))
+        desiredX = station.x
+        desiredZ = station.z
+      }
+      const maxStep = (speed * dtMs) / 1000
+      const nextX = advanceAxis(figure.root.position.x, desiredX, maxStep)
+      const nextZ = advanceAxis(figure.root.position.z, desiredZ, maxStep)
       const moving =
         Math.abs(nextX - figure.root.position.x) > 1e-9 ||
         Math.abs(nextZ - figure.root.position.z) > 1e-9
       figure.root.position.set(nextX, 0, nextZ)
+      // Operator: subagents always face Savant at the center — both on
+      // their pads and while walking a contract (heading tracks motion).
+      faceTowards(
+        figure.root,
+        nextX,
+        nextZ,
+        onContract ? desiredX : 0,
+        onContract ? desiredZ : 0,
+      )
       figure.setActive(isActive)
       entry.nameplate?.update(isActive)
       figure.update(dtMs, { moving, reduced })

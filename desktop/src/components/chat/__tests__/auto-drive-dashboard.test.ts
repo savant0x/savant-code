@@ -14,7 +14,7 @@ describe('Auto Drive dashboard projection', () => {
     expect(autoDriveHaltLabel('failed')).toBe('Retry emergency halt')
   })
 
-  test('summarizes lifecycle statuses without inventing dependency edges', () => {
+  test('summarizes lifecycle statuses (P20: no passive run-state, no graph)', () => {
     expect(
       summarizeAutoDrive([
         { ...base, fidId: 'FID-A', status: 'created' },
@@ -32,12 +32,10 @@ describe('Auto Drive dashboard projection', () => {
         converged: 0,
         closed: 1,
       },
-      roots: ['FID-A', 'FID-B'],
-      edges: [{ parentId: 'FID-A', childId: 'FID-C' }],
     })
   })
 
-  test('empty inventory is an idle zero summary', () => {
+  test('empty inventory is a zero summary', () => {
     expect(summarizeAutoDrive([])).toEqual({
       total: 0,
       open: 0,
@@ -49,8 +47,6 @@ describe('Auto Drive dashboard projection', () => {
         converged: 0,
         closed: 0,
       },
-      roots: [],
-      edges: [],
     })
   })
 })

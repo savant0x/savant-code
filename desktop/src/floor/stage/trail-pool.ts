@@ -14,11 +14,11 @@ import { Color, Mesh, MeshBasicMaterial, OctahedronGeometry } from 'three'
 import type { Group } from 'three'
 
 /** Marker lifetime; opacity fades linearly to zero over this window. */
-export const TRAIL_LIFETIME_MS = 700
+export const TRAIL_LIFETIME_MS = 1000
 /** Hard FIFO cap across ALL walkers (spec-class bounded-resource rule). */
-export const MAX_TRAILS = 96
+export const MAX_TRAILS = 128
 /** Minimum clock gap between two markers on one walker's wake. */
-export const TRAIL_SPACING_MS = 120
+export const TRAIL_SPACING_MS = 80
 
 /** Trails hug the ground beneath the lane plane (LANE_HEIGHT_Y = 0.15). */
 const TRAIL_Y = 0.06
@@ -46,7 +46,7 @@ export class TrailPool {
       if (evicted !== undefined) this.disposeTrail(evicted)
     }
     const mesh = new Mesh(
-      new OctahedronGeometry(0.07),
+      new OctahedronGeometry(0.12),
       new MeshBasicMaterial({
         color: new Color(accent),
         transparent: true,

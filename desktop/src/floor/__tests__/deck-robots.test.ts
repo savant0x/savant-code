@@ -32,6 +32,7 @@ describe('robot figure factory (visibility hotfix)', () => {
     try {
       // Hologram depth pass (2026-08-25): every solid mesh carries a
       // wireframe scan-lattice twin — 2 solids + 2 strokes per figure.
+      // FID-2026-0829-001 L1: glow ring adds 1 more MeshBasicMaterial.
       let solids = 0
       let strokes = 0
       figure.root.traverse((child) => {
@@ -46,7 +47,7 @@ describe('robot figure factory (visibility hotfix)', () => {
         }
       })
       expect(solids).toBe(2)
-      expect(strokes).toBe(2)
+      expect(strokes).toBe(3) // 2 strokes + 1 glow ring
     } finally {
       figure.dispose()
     }
@@ -78,8 +79,9 @@ describe('robot figure factory (visibility hotfix)', () => {
       })
       figure.setActive(true)
       // A 1s delta drives the blend factor to 1: full ACTIVE emissive.
+      // FID-2026-0829-001 L1: active 2.2 → 4.0, standby 0.7 → 1.2.
       figure.update(1000, { moving: false, reduced: false })
-      expect(found[0]?.emissiveIntensity).toBeCloseTo(1.2, 5)
+      expect(found[0]?.emissiveIntensity).toBeCloseTo(4.0, 5)
     } finally {
       figure.dispose()
     }
@@ -96,7 +98,10 @@ describe('robot figure factory (visibility hotfix)', () => {
       })
       figure.setActive(true)
       figure.update(1000, { moving: false, reduced: true })
-      expect(found[0]?.emissiveIntensity).toBeCloseTo(0.7, 5)
+      // FID-2026-0829-001 L1: the mixer freeze means the
+      // emissive blend also never advances, so the intensity stays at the
+      // constructor level (STANDBY 1.2 — FID-2026-0829-001 L1).
+      expect(found[0]?.emissiveIntensity).toBeCloseTo(1.2, 5)
     } finally {
       figure.dispose()
     }

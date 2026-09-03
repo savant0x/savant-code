@@ -31,6 +31,7 @@ import {
   resolveServerProjectRoot,
   runServerCommand,
 } from '../../server-command'
+import { findGitRoot } from '../../utils/git'
 import { EVENT_FLUSH_INTERVAL_MS, startGateway } from '../gateway'
 import { GATEWAY_PROTOCOL_VERSION } from '../json-rpc'
 
@@ -345,6 +346,35 @@ describe('gateway hello handshake (frozen v1)', () => {
       error?: { code: number }
     }
     expect(response.error?.code).toBe(-32600)
+    socket.close()
+  })
+
+  test('list_commands serves the full CLI registry with dispatch classes (FID-2026-0901-005)', async () => {
+    gateway = await startTestGateway()
+    const socket = await openSocket(gateway.port)
+    await request(
+      socket,
+      'hello',
+      { protocolVersion: GATEWAY_PROTOCOL_VERSION, token: TEST_TOKEN },
+      30,
+    )
+    const response = (await request(socket, 'list_commands', {}, 31)) as {
+      result?: { commands?: { id: string; dispatch: string }[] }
+    }
+    const commands = response.result?.commands ?? []
+    // The full registry — far more than the desktop's old 4 hardcoded names.
+    expect(commands.length).toBeGreaterThan(20)
+    // Every entry is well-formed and dispatch-classified.
+    for (const command of commands) {
+      expect(typeof command.id).toBe('string')
+      expect(['agent', 'client']).toContain(command.dispatch)
+    }
+    // Known backend commands are present and agent-dispatched.
+    const compact = commands.find((command) => command.id === 'compact')
+    expect(compact?.dispatch).toBe('agent')
+    // TUI-only commands are honestly marked 'client' (not faked).
+    const review = commands.find((command) => command.id === 'review')
+    expect(review?.dispatch).toBe('client')
     socket.close()
   })
 
@@ -958,24 +988,35 @@ describe('gateway server command + watchdog', () => {
     )
   })
 
-  test('resolveServerProjectRoot prefers the env override, then falls back to cwd', () => {
+  test('resolveServerProjectRoot prefers the env override, then git root, then cwd', () => {
     // Env override (trimmed) wins — env-only delivery mirrors GATEWAY_TOKEN_ENV.
     expect(
       resolveServerProjectRoot({ [PROJECT_ROOT_ENV]: '  /tmp/repo  ' }),
     ).toBe('/tmp/repo')
-    // Blank/absent override falls back to the launch directory.
-    expect(resolveServerProjectRoot({ [PROJECT_ROOT_ENV]: '   ' })).toBe(
-      process.cwd(),
-    )
-    expect(resolveServerProjectRoot({})).toBe(process.cwd())
+    // FID-2026-0901-004: blank/absent override anchors to the GIT ROOT of the
+    // launch dir — the desktop sidecar must operate on the real project, not
+    // whatever subdirectory the binary happened to launch from (dev launches
+    // from desktop/src-tauri).
+    const gitRoot = findGitRoot({ cwd: process.cwd() })
+    if (gitRoot !== null) {
+      expect(resolveServerProjectRoot({ [PROJECT_ROOT_ENV]: '   ' })).toBe(
+        gitRoot,
+      )
+      expect(resolveServerProjectRoot({})).toBe(gitRoot)
+    } else {
+      // No enclosing repo: launch directory remains the fallback.
+      expect(resolveServerProjectRoot({})).toBe(process.cwd())
+    }
   })
 
   test('runServerCommand seeds project root before the gateway starts', async () => {
     // Regression: server mode never called setProjectRoot, so every gateway
     // run died with 'Project root not set' (project-files.ts getProjectRoot).
+    // FID-2026-0901-004: the seed is the RESOLVED root (git root when the
+    // launch dir lives inside a repo), not raw process.cwd().
     const { tryGetProjectRoot } = await import('../../project-files')
     await runServerCommand({ token: 'seed-check-token', port: 0 })
-    expect(tryGetProjectRoot()).toBe(process.cwd())
+    expect(tryGetProjectRoot()).toBe(resolveServerProjectRoot())
   })
 
   test('installStdinWatchdog exits on stdin close (parent-death path)', async () => {

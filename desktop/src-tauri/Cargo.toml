@@ -1,6 +1,6 @@
 [package]
 name = "savant-desktop"
-version = "0.0.27"
+version = "0.0.28"
 description = "Savant desktop shell: Tauri v2 supervisor for the agent-runtime sidecar (FID-2026-0820-009)"
 edition = "2021"
 rust-version = "1.97"

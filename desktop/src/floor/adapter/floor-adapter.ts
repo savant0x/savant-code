@@ -34,8 +34,12 @@ import type {
   PrintModeToolResult,
 } from '@savant-code/common/types/print-mode'
 
-/** Spawn pads form a deterministic ring around the central console. */
-export const PAD_COUNT = 12
+/** Spawn pads form a deterministic ring around the central console.
+ * FID-2026-0828-002: 12 pads on a 16-radius ring left a visible gap arc
+ * ("moon shape") because the 10-role cast only occupies 9 slots — the
+ * empty 12th sector read as a missing crescent. PAD_COUNT now matches the
+ * cast: 9 evenly spaced pads form a FULL circle around Savant. */
+export const PAD_COUNT = 9
 /** Pad-ring radius in world units (camera default distance is 34). */
 export const PAD_RING_RADIUS = 16
 /** Attribution-map bound (FID spec: cap 512 FIFO). */
@@ -206,6 +210,27 @@ export function applyFloorEvent(
     return { ...state, savantPresent: true }
   }
 
+  // FID-2026-0828-002 (operator: chat idle = floor idle, 1:1 mirror):
+  // `finish` closes the run — Savant dims (no longer present) and every
+  // still-active subagent walker dissolves. Stale walkers from an earlier
+  // batch must not keep the floor lit after the chat goes quiet.
+  if (event.type === 'finish') {
+    if (!state.savantPresent && state.walkers.size === 0) return state
+    const walkers = new Map()
+    for (const [agentId, walker] of state.walkers) {
+      if (walker.phase === 'active') {
+        walkers.set(agentId, {
+          ...walker,
+          phase: 'dissolved',
+          stationTarget: null,
+        })
+      } else {
+        walkers.set(agentId, walker)
+      }
+    }
+    return { ...state, savantPresent: false, walkers }
+  }
+
   if (event.type === 'subagent_start') {
     const existing = state.walkers.get(event.agentId)
     if (existing !== undefined && existing.phase === 'active') return state
@@ -236,19 +261,30 @@ export function applyFloorEvent(
   }
 
   if (event.type === 'tool_call') {
-    // Aura-only entries admit ORCHESTRATOR transition_phase calls (no
-    // agentId — the primary G2 input); every other unattributed call is
-    // ignored, and duplicate toolCallIds are no-ops (first call owns the key).
+    // FID-2026-0828-002 D: the orchestrator's own tool calls carry NO
+    // agentId. The old rule admitted only `transition_phase` (aura-only)
+    // and DROPPED every other unattributed call — so an orchestrator-only
+    // run (the default HYBRID flow) produced zero floor activity and the
+    // deck read as dead while chat visibly worked. Fix: unattributed calls
+    // now route to the ORCHESTRATOR (Savant, always present at the
+    // console) and drive station visits like an attributed call. The G2
+    // aura flag still applies for transition_phase phase pairing.
     const isAuraCall = event.toolName === 'transition_phase'
-    const agentId = event.agentId
-    const attributed = agentId !== undefined
-    if (!isAuraCall && !attributed) return state
     if (state.pendingTools.has(event.toolCallId)) return state
-    const walker =
-      agentId !== undefined ? state.walkers.get(agentId) : undefined
-    if (attributed && (walker === undefined || walker.phase !== 'active')) {
-      return state
-    }
+    // FID-2026-0828-002 D (REVISED): the live orchestrator's own tool calls
+    // carry agentId like 'orchestrator-1' — NOT undefined — and the
+    // orchestrator never emits a subagent_start, so its pad walker record
+    // is absent. The old rule DROPPED every such call (its owning walker
+    // wasn't active), which is exactly why the deck stayed dead: every
+    // batch showed `tools=0 in-flight | walkers=0` even while chat visibly
+    // used tools. Fix: any tool_call whose owning active walker isn't found
+    // (incl. the orchestrator) routes to SAVANT at the console, so tool
+    // traffic always drives a station visit.
+    const callerWalker =
+      event.agentId !== undefined ? state.walkers.get(event.agentId) : undefined
+    const hasActiveWalker =
+      callerWalker !== undefined && callerWalker.phase === 'active'
+    const agentId = hasActiveWalker ? (event.agentId as string) : 'savant'
     const station = routeToolClass(event.toolName)
     const pendingTools = new Map(state.pendingTools)
     // Bounded attribution map: FIFO eviction past the cap (FID spec).
@@ -257,18 +293,30 @@ export function applyFloorEvent(
       if (oldest !== undefined) pendingTools.delete(oldest)
     }
     pendingTools.set(event.toolCallId, {
-      agentId: agentId ?? null,
+      agentId,
       station,
       aura: isAuraCall,
       toolName: event.toolName,
     })
     const walkers = new Map(state.walkers)
-    if (
-      agentId !== undefined &&
-      walker !== undefined &&
-      walker.phase === 'active'
-    ) {
-      walkers.set(agentId, { ...walker, stationTarget: station })
+    const targetWalker = hasActiveWalker
+      ? callerWalker
+      : state.walkers.get('savant')
+    if (targetWalker !== undefined && targetWalker.phase === 'active') {
+      walkers.set(agentId, { ...targetWalker, stationTarget: station })
+    } else {
+      // Materialize the Savant (orchestrator) walker record on first use.
+      // Savant is a persistent cast member who never receives a
+      // `subagent_start`; without this record the walker layer (which reads
+      // floor.walkers) would never see the orchestrator's station target.
+      walkers.set('savant', {
+        agentId: 'savant',
+        roleId: 'savant',
+        displayName: 'Savant',
+        padIndex: 0,
+        phase: 'active',
+        stationTarget: station,
+      })
     }
     return { ...state, pendingTools, walkers }
   }

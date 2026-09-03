@@ -1,91 +1,120 @@
-<!-- markdownlint-disable MD013 -->
+<!-- markdownlint-disable MD013 MD022 MD032 MD060 -->
 
 # Savant-Code v0.0.28 — Release Notes
 
-> **Status: in preparation (draft release body for the next version).** This
-> document is the v0.0.28 release body; the full changelog is assembled from
-> closed FIDs at release time (Keep a Changelog convention via `CHANGELOG.md`).
+> **Status: pending release.** This document is the v0.0.28 release body for the GitHub
+> release and the npm publish announcement. Detailed per-FID records live in
+> [CHANGELOG.md](../CHANGELOG.md).
 
-**v0.0.28 is the self-improvement release.** Savant stops waiting to be told
-how to be useful: it captures its own failures mechanically, promotes what
-repeats into durable rules and skills, and authors new capabilities itself —
-under strict operator governance. This release lands the full
-**Self-Improving Harness & Agent-Created Skills** feature
-(FID-2026-0824-012, status `fixed`) and activates the skill system that was
-previously wired but passive.
+**v0.0.28 is the integrity, evaluation, and desktop release.** Six days of work
+(2026-08-21 → 09-02, 650 files, +80k lines) delivered two rebuilt core subsystems —
+context-compaction integrity and the evaluation/benchmark harness — plus the desktop
+app coming of age: a structured chat surface, an Auto Drive dashboard, and a 3D command
+deck rebuilt as a neon-noir agent office where the 10-agent cast mirrors your coding
+session in real time. **35 FIDs closed + archived**; the benchmark suite runs **9/9 PASS**.
 
 ## What's new
 
-### Self-improving harness (FID-2026-0824-012 — headline)
+### Compaction integrity rebuild (FID-2026-0824-022 + children)
 
-A closed loop turns the agent's own usage into capability — no human authors
-every skill, and no agent mutates its own rules silently:
+The auto-compaction pipeline was rebuilt end-to-end so that compaction is now
+**inspectable, accountable, and honest** about what it removes:
 
-- **Mechanical capture** — a `PostToolUseFailure` hook with a builtin
-  in-process `experience-capture` action appends one immutable record per
-  failure to `dev/experiences/raw-traces.jsonl`. No per-event process spawn,
-  no prompt compliance required, fail-open (capture can never break
-  execution). Raw tool arguments are never persisted — only context hashes.
-- **Dedup + cross-session recurrence** — `bun run experiences:dedup` groups
-  failures by `sha256(tool + normalized error)` with a persistent counter;
-  promotion needs **≥ 3 occurrences within a rolling 14-day window**.
-  Expected-failure noise (search 404s) never counts; `--purge` compacts
-  expired traces.
-- **Versioned agent-created skills** — the new `skill_manage` tool
-  (`create | patch | edit | delete | write_file | remove_file | rollback`),
-  restricted to the **Scribe + Orchestrator**. Every mutation snapshots the
-  prior state to `.agents/skills/<name>/versions/v<N>/` and appends to a
-  `VERSIONS.jsonl` ledger (git is not the ledger). Patches are capped at a
-  10% Levenshtein change ratio; semver rules (patch→patch, edit→minor).
-- **Operator-only trust boundary** — everything an agent authors lands in
-  `.agents/skills/.quarantine/` and is **invisible to the runtime** until a
-  human runs `/skills trust <name>`. `/skills list|show|trust|untrust|
-  rollback` is the full operator surface. `immutable: true` skills reject
-  every mutation (engine + EHEL pre-write gate).
-- **Proactive evolution** — SessionEnd mechanical review refreshes
-  `dev/agenda.md` (≤ 50 lines, 1-3 active capabilities); the Scribe's
-  full-fidelity review routes recurrences to FIDs and drafts eligible lessons
-  into quarantine skills (`bun run lessons:to-skills`); `learnings:retire`
-  is a move-only retirement tier for the ~1,200-line LEARNINGS cap;
-  `skills:evolve` emits usage-evidence proposals without ever mutating.
+- **Visibility & transparency layer** — every compaction pass surfaces what it did.
+- **Preservation contract + digest schema** — pinned content is provably preserved
+  (sha256 digest, not a promise).
+- **Minimal-surgery algorithm** — the pruner removes the least-controversial material
+  first instead of truncating.
+- **Evidence spill + `requiresRawEvidence` splice** — oversized evidence goes to disk,
+  not into the void; consumers that need raw evidence get it rehydrated.
+- **Removed-content ledger + metrics + model notice** — a running account of what was
+  removed and why, surfaced to both the operator and the model.
+- **`/compact` summary output (FID-2026-0828-001)** — forcing a compact now emits the
+  pruner's summary as a first-class, collapsed-by-default transcript block with
+  expand/collapse and a whole-block copy button. Live-verified 2026-08-28.
 
-### Skill system activated (was wired but passive)
+### Eval system rebuild v3 (FID-2026-0824-013 + children)
 
-- **`skills:check` validator** — frontmatter, description policy (60-char
-  agent-authored), section order, command allowlist, line ceiling, version
-  presence; project-scoped hermetic (home-dir skills advisory).
-- **`version` + `immutable` frontmatter** with EHEL pre-write enforcement.
-- **`references/` progressive disclosure** — the `skill` tool loads
-  sub-files on demand (`path: "details/checklist.md"`); listings stay
-  name + description so context cost is proportional to the answer.
+The benchmark harness was rebuilt to measure what actually matters:
 
-## Verification (at FID-2026-0824-012 `fixed`)
+- **FSM alignment + trajectory assertions** — evals assert the Perfection Loop path taken,
+  not just the final text.
+- **Sandbox hardening** — eval tasks run fail-closed.
+- **Skill-efficacy engine + erosion regression guard** — skills are measured for effect and
+  regressions trip the gate.
+- **Governance corpus + bounded autorater + Tier-1 pre-push smoke** — a governance task
+  family runs on every push.
+- **Capability ingestion + Tier-3 release pipeline** — release promotion is evidence-gated.
+
+**Results: benchmark v2 = 9/9 PASS (0 errors, 0 timeouts); Tier-1 governance smoke = 5/5.**
+
+### Desktop (Tauri v2): chat, dashboard, and the command deck
+
+- **Structured chat surface (FID-2026-0820-010)** — the full engine without a terminal:
+  bounded transcript virtualization, markdown blocks with per-message copy,
+  traffic-light status panels, phase stepper, composer auto-grow, timestamps under
+  messages, real model-resolved context window.
+- **Auto Drive dashboard** — authoritative lifecycle counts, run controls, and
+  **Emergency Halt**.
+- **Project FIDs rail** — the repo's live FID queue over the gateway, with the boot-sync
+  fix (initial inventory now arrives on connect — panel went 0 → 27 open).
+- **Sidecar boot fix (FID-2026-0901-001)** — env forwarding to the sidecar fixed the
+  desktop boot crash-loop and chat-send failures.
+- **Command deck rebuilt (FID-2026-0831-001/-002)** — the 3D floor is now a neon-noir
+  agent office rendered with React Three Fiber: a 10-agent robot cast with per-role
+  accents and glowing rims, agents walking to tool stations on live tool calls,
+  obstacle-aware routing, activity beacons + thinking dots + spark bursts, speech
+  bubbles tracking the conversation, day/night lighting, break furniture,
+  click-to-focus + follow-cam, and a mini-chat island so you can message the agent
+  without leaving the deck.
+
+### Discord Rich Presence refinements
+
+Enabled by default with a mechanical privacy boundary (paths, tool arguments, FID titles,
+and search queries redacted; fail-closed Zod fallback). The three-line activity layout
+(project / model / action) replaces the single dense line, model labels are
+provider-trimmed (`nous/meituan/longcat-2.0:free` → `longcat-2.0`,
+`openrouter/free` → "OpenRouter Free"), and the client id is compiled in against the
+Savant Discord application — never operator-mutable.
+
+### Harness hardening & fixes
+
+- **Laws 1/4 universal hard blocks** (FID-2026-0823-007) and Forge Law-1 deadlock fix
+  (FID-2026-0824-031) at the EHEL enforcement layer.
+- **Recorder reliability** — context-bloat stall root-caused and fixed with a corrective
+  retry ladder (FID-2026-0823-011/-012/-014).
+- **Sidebar context readout** — no more "context stuck at 0/x" near session start
+  (FID-2026-0827-001).
+- **Nous free-model 400 fix** — the undocumented required `tags` body field is injected
+  on both routing paths.
+- **Hybrid-mode retuning** — full Perfection Loop escalation threshold moved 20 → 100 lines.
+- **Model migration** — default model is now `z-ai/glm-5.3-flash`.
+- **Repo hygiene** — the 644-path backlog drained into 27 path-scoped atomic commits;
+  `dev/scratchpad/` is now auto-managed by a hygiene guard.
+
+## Verification (all gates re-run 2026-09-02)
 
 | Gate | Result |
 |---|---|
-| Typecheck × 5 workspaces (sdk, common, agent-runtime, cli, agents) | ✅ |
-| `fid:verify` receipt (9/9 declared gates) | ✅ stamped |
-| common suite | ✅ 652 / 0 fail |
-| sdk suite | ✅ 493 / 0 fail |
-| agent-runtime hooks + echo + tools suites | ✅ 187 / 0 + 195 / 0 |
-| scripts suite | ✅ 193 / 0 fail |
-| ESLint `--max-warnings 0` (all touched files) | ✅ |
-| Prettier (touched files) | ✅ |
-| `skills:check` | ✅ exit 0 (hermetic) |
-| `learnings:check` · `fid:verify --check` | ✅ PASS |
+| Typecheck ×4 (sdk, common, agent-runtime, cli) + desktop | exit 0 |
+| Suites (desktop / cli / common / sdk / echo) | 352 / 1362 / 658 / 493 / 157 pass — 0 fail |
+| ESLint (`--max-warnings 0`) · Prettier · markdownlint · hygiene | PASS |
+| Benchmark v2 | **9/9 PASS** |
+| Tier-1 governance smoke | **5/5 PASS** |
+| `fid:verify --check` | PASS (291 archived + 13 active FIDs) |
 
-## Notes
+**Known debt (declared, not hidden):** 298 `quality.ratchet` file-length violations remain
+under the deliberately paused decomposition program (FID-2026-0819-005) — 287 pre-existed
+at v0.0.27; the deck/desktop growth added the rest and is queued for that program. Nova's
+independent release audit returned **PASS on all five verdicts — cleared for ship**
+(2026-09-02: `dev/nova/outbox/2026-09-02-release-ready-audit-v0.0.28-nova-signoff.md`, with
+the audit request at `…-nova-signoff-request.md`).
 
-- **No breaking changes.** Existing skills keep working (legacy skills
-  without `version` default to `0.1.0` with a warning); the hook engine stays
-  fail-open; the `/skills` commands are additive.
-- **Governance:** the harness is designed to be self-governing — capture is
-  mechanical, promotion runs through the ECHO Perfection Loop (Law 2 present-
-  before-act on every new capability), and no agent path can release a skill.
-- **Honest boundaries (NEEDS-REVIEW):** fail-open hooks in a live HYBRID
-  session, the `/skills trust` release path in the real TUI, and a real
-  session-end Scribe review producing an agenda + a lesson-derived draft
-  skill require operator live smoke before the FID closes.
+## Install / upgrade
 
-Full documentation: [docs/self-improving-harness.md](self-improving-harness.md) ·
-FID record: [dev/fids/FID-2026-0824-012-self-improving-harness-and-agent-created-skills.md](../dev/fids/FID-2026-0824-012-self-improving-harness-and-agent-created-skills.md).
+```sh
+npm install -g savant-code@0.0.28
+```
+
+Existing sessions upgrade in place; `/presence` is on by default (disable with
+`/presence disable`). Desktop builds ride the same version from the `desktop/` workspace.
