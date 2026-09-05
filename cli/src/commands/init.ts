@@ -4,12 +4,7 @@ import path from 'path'
 import { AnalyticsEvent } from '@savant-code/common/constants/analytics-events'
 import { PRIMARY_KNOWLEDGE_FILE_NAME } from '@savant-code/common/constants/knowledge'
 
-// @ts-expect-error - Bun text import attribute not supported by TypeScript
-import agentDefinitionSource from '../../../common/src/templates/initial-agents-dir/types/agent-definition' with { type: 'text' }
-// @ts-expect-error - Bun text import attribute not supported by TypeScript
-import toolsSource from '../../../common/src/templates/initial-agents-dir/types/tools' with { type: 'text' }
-// @ts-expect-error - Bun text import attribute not supported by TypeScript
-import utilTypesSource from '../../../common/src/templates/initial-agents-dir/types/util-types' with { type: 'text' }
+import { COMMON_TYPE_FILES } from './init-type-files'
 import { getProjectRoot } from '../project-files'
 import { trackEvent } from '../utils/analytics'
 import { IS_SAVANT_FREE } from '../utils/constants'
@@ -18,7 +13,6 @@ import { getSystemMessage } from '../utils/message-history'
 import type { PostUserMessageFn } from '../types/contracts/send-message'
 
 const brandName = IS_SAVANT_FREE ? 'SavantFree' : 'SavantCode'
-
 const INITIAL_KNOWLEDGE_FILE = `# Project knowledge
 
 This file gives ${brandName} context about your project: goals, commands, conventions, and gotchas.
@@ -37,21 +31,6 @@ This file gives ${brandName} context about your project: goals, commands, conven
 - Patterns to follow:
 - Things to avoid:
 `
-
-const COMMON_TYPE_FILES = [
-  {
-    fileName: 'agent-definition.ts',
-    source: agentDefinitionSource,
-  },
-  {
-    fileName: 'tools.ts',
-    source: toolsSource,
-  },
-  {
-    fileName: 'util-types.ts',
-    source: utilTypesSource,
-  },
-]
 
 export function handleInitializationFlowLocally(): {
   postUserMessage: PostUserMessageFn

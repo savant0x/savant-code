@@ -1,66 +1,35 @@
-import {
-  createPostHogClient,
-  type AnalyticsClientWithIdentify,
-  type PostHogClientOptions,
-} from '@savant-code/common/analytics-core'
-import { AnalyticsEvent } from '@savant-code/common/constants/analytics-events'
-import {
-  env as defaultEnv,
-  IS_PROD as defaultIsProd,
-  DEBUG_ANALYTICS,
-} from '@savant-code/common/env'
 import { shouldTrackAnalyticsEvent } from '@savant-code/common/util/analytics-sampling'
-import { shouldMirrorAnalyticsEvent } from '@savant-code/common/util/log-mirror'
 
-import { getOrCreatePersistentAnonymousId } from '../anonymous-id'
-import { clearClientLogs, enqueueClientLog } from '../log-shipper'
+import { clearClientLogs } from '../log-shipper'
+import { mirrorAnalyticsEventToAxiom } from './axiom-mirror'
+import { resolveDeps, type AnalyticsDeps } from './contracts'
+import {
+  AnalyticsErrorStage,
+  logAnalyticsError,
+  type AnalyticsErrorContext,
+} from './errors'
+import { emitIdentifyUser, emitTrackEvent } from './event-emitters'
 
-import type { Logger } from '@savant-code/common/types/contracts/logger'
+// Public contract re-export — the analytics surface (cli/src/utils/
+// analytics.ts and test fixtures) has always exposed AnalyticsDeps from
+// this module.
+export type { AnalyticsDeps } from './contracts'
+
+import type { AnalyticsClientWithIdentify } from '@savant-code/common/analytics-core'
+import type { AnalyticsEvent } from '@savant-code/common/constants/analytics-events'
 import type { JSONValue } from '@savant-code/common/types/json'
 
 /**
  * Analytics module state + internal helpers.
  * (FID-2026-0809-016: extracted from `cli/src/utils/analytics.ts`.)
+ * (FID-2026-0819-005 Loop 148: contracts → ./contracts, debug logger →
+ * ./debug-log, Axiom mirror → ./axiom-mirror, error plumbing → ./errors.
+ * All public API is re-exported from here so the module surface is
+ * unchanged.)
  */
 
-export enum AnalyticsErrorStage {
-  Init = 'init',
-  Track = 'track',
-  Identify = 'identify',
-  Flush = 'flush',
-  CaptureException = 'captureException',
-}
-
-export type AnalyticsErrorContext = {
-  stage: AnalyticsErrorStage
-  [key: string]: JSONValue
-}
-
-export type AnalyticsErrorLogger = (
-  error: unknown,
-  context: AnalyticsErrorContext,
-) => void
-
-type ResolvedAnalyticsDeps = {
-  env: AnalyticsDeps['env']
-  isProd: boolean
-  createClient: AnalyticsDeps['createClient']
-  generateAnonymousId: NonNullable<AnalyticsDeps['generateAnonymousId']>
-}
-
-/** Dependencies that can be injected for testing */
-export interface AnalyticsDeps {
-  env: {
-    NEXT_PUBLIC_POSTHOG_API_KEY?: string
-    NEXT_PUBLIC_POSTHOG_HOST_URL?: string
-  }
-  isProd: boolean
-  createClient: (
-    apiKey: string,
-    options: PostHogClientOptions,
-  ) => AnalyticsClientWithIdentify
-  generateAnonymousId?: () => string
-}
+export { setAnalyticsErrorLogger } from './errors'
+export type { AnalyticsErrorLogger } from './errors'
 
 // Anonymous ID used before user identification (for PostHog alias)
 let anonymousId: string | undefined
@@ -73,50 +42,23 @@ let analyticsEnabled = true
 let injectedDeps: AnalyticsDeps | undefined
 
 export let identified: boolean = false
-let analyticsErrorLogger: AnalyticsErrorLogger | undefined
 let consentChangeListener: ((enabled: boolean) => void) | undefined
-
-function resolveDeps(): ResolvedAnalyticsDeps {
-  return {
-    env: injectedDeps?.env ?? defaultEnv,
-    isProd: injectedDeps?.isProd ?? defaultIsProd,
-    createClient: injectedDeps?.createClient ?? createPostHogClient,
-    generateAnonymousId:
-      injectedDeps?.generateAnonymousId ?? getOrCreatePersistentAnonymousId,
-  }
-}
-
-let loggerModulePromise: Promise<{ logger: Logger }> | null = null
-
-const loadLogger = () => {
-  if (!loggerModulePromise) {
-    loggerModulePromise = import('../logger')
-  }
-  return loggerModulePromise
-}
-
-function logAnalyticsDebug(message: string, data: Record<string, JSONValue>) {
-  if (!DEBUG_ANALYTICS) {
-    return
-  }
-  loadLogger()
-    .then(({ logger }) => {
-      logger.debug(data, message)
-    })
-    .catch((error) => {
-      try {
-        console.debug(message, data) // eslint-disable-line no-console -- logger not yet available in bootstrap path
-      } catch {
-        // Ignore console errors in restricted environments
-      }
-      // Log the error to help diagnose logger issues in debug mode
-      console.debug('Failed to load logger for analytics:', error) // eslint-disable-line no-console -- logger not yet available in bootstrap path
-    })
-}
 
 /** Get current distinct ID (real user ID if identified, otherwise anonymous ID) */
 function getDistinctId(): string | undefined {
   return currentUserId ?? anonymousId
+}
+
+/** Bridge the module's mutable session state into the emitter context. */
+function emitterContext() {
+  if (!client) {
+    throw new Error('Analytics client not initialized')
+  }
+  return {
+    client,
+    isProd: resolveDeps(injectedDeps).isProd,
+    mirrorAnalyticsEventToAxiom,
+  }
 }
 
 /** Reset analytics state - for testing only */
@@ -171,18 +113,6 @@ export function registerAnalyticsConsentListener(
   consentChangeListener = listener
 }
 
-export function setAnalyticsErrorLogger(loggerFn: AnalyticsErrorLogger) {
-  analyticsErrorLogger = loggerFn
-}
-
-function logAnalyticsError(error: unknown, context: AnalyticsErrorContext) {
-  try {
-    analyticsErrorLogger?.(error, context)
-  } catch {
-    // Never throw from error reporting
-  }
-}
-
 export function initAnalytics(enabled = true) {
   if (!enabled) {
     disableAnalytics()
@@ -195,7 +125,8 @@ export function initAnalytics(enabled = true) {
     return
   }
 
-  const { env, isProd, createClient, generateAnonymousId } = resolveDeps()
+  const { env, isProd, createClient, generateAnonymousId } =
+    resolveDeps(injectedDeps)
 
   if (!env.NEXT_PUBLIC_POSTHOG_API_KEY || !env.NEXT_PUBLIC_POSTHOG_HOST_URL) {
     const error = new Error(
@@ -255,7 +186,7 @@ export function trackEvent(
     return
   }
 
-  const { isProd } = resolveDeps()
+  const { isProd } = resolveDeps(injectedDeps)
   const distinctId = getDistinctId()
 
   if (!client) {
@@ -276,54 +207,19 @@ export function trackEvent(
     return
   }
 
-  if (!isProd) {
-    if (DEBUG_ANALYTICS) {
-      logAnalyticsDebug(`[analytics] ${event}`, {
-        event,
-        properties: properties ?? null,
-        distinctId,
-      })
-    }
-    return
-  }
-
   if (!shouldTrackAnalyticsEvent({ event, distinctId, properties })) {
     return
   }
 
-  try {
-    client.capture({
-      distinctId,
-      event,
-      properties,
-    })
-  } catch (error) {
-    logAnalyticsError(error, {
-      stage: AnalyticsErrorStage.Track,
-      event,
-      properties: properties ?? null,
-    } as AnalyticsErrorContext)
-  }
-
-  // Mirror analytics events into the Axiom logs sink too (PostHog stays the
-  // product-analytics source of truth). The shipper batches and ships even
-  // before login (anonymously), so pre-auth events like app_launched reach
-  // Axiom — making install→login funnels queryable in APL. We correlate on the
-  // anonymous/run id so pre- and post-login events join. CLI_LOG is excluded
-  // because the logger already mirrors log rows to Axiom (avoids double-ship).
-  if (event !== AnalyticsEvent.CLI_LOG && shouldMirrorAnalyticsEvent(event)) {
-    try {
-      enqueueClientLog({
-        level: 'info',
-        event,
-        message: event,
-        client_session_id: anonymousId ?? currentUserId,
-        data: properties,
-      })
-    } catch {
-      // Best-effort mirror; never let it affect analytics or the app.
-    }
-  }
+  // Capture + Axiom mirroring extracted to ./event-emitters
+  // (FID-2026-0819-005 Loop 166).
+  emitTrackEvent(emitterContext(), {
+    event,
+    distinctId,
+    properties,
+    anonymousId,
+    currentUserId,
+  })
 }
 
 export function identifyUser(
@@ -343,46 +239,19 @@ export function identifyUser(
     throw error
   }
 
-  const { isProd } = resolveDeps()
   const previousAnonymousId = anonymousId
 
   // Store the real user ID for future events
   currentUserId = userId
   identified = true
 
-  if (!isProd) {
-    if (DEBUG_ANALYTICS) {
-      logAnalyticsDebug('[analytics] user identified', {
-        userId,
-        previousAnonymousId: previousAnonymousId ?? null,
-        properties: properties ?? null,
-      })
-    }
-    return
-  }
-
-  try {
-    // If we had an anonymous ID, alias it FIRST to the real user ID
-    // This must be called BEFORE identify to properly merge the event histories
-    // See: https://posthog.com/docs/libraries/node
-    if (previousAnonymousId) {
-      client.alias({
-        distinctId: userId,
-        alias: previousAnonymousId,
-      })
-    }
-
-    // Then identify the user with their properties
-    client.identify({
-      distinctId: userId,
-      properties,
-    })
-  } catch (error) {
-    logAnalyticsError(error, {
-      stage: AnalyticsErrorStage.Identify,
-      properties: properties ?? null,
-    } as AnalyticsErrorContext)
-  }
+  // Alias + identify extracted to ./event-emitters
+  // (FID-2026-0819-005 Loop 166).
+  emitIdentifyUser(emitterContext(), {
+    userId,
+    previousAnonymousId,
+    properties,
+  })
 }
 
 export function logError(

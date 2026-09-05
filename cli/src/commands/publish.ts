@@ -45,7 +45,7 @@ async function publishAgentTemplates(
 
   try {
     const response = await apiClient.publish(
-      data as Record<string, JSONValue>[],
+      data as unknown as Record<string, JSONValue>[],
       allLocalAgentIds,
     )
 

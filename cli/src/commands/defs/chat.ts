@@ -1,18 +1,16 @@
-import { runTerminalCommand } from '@savant-code/sdk'
-
 import { WEBSITE_URL } from '../../login/constants'
 import { startNewChat } from '../../project-files'
 import { useChatStore } from '../../state/chat-store'
 import { abortActiveRun } from '../../utils/active-run'
-import { getSystemMessage, getUserMessage } from '../../utils/message-history'
 import { safeOpen } from '../../utils/open-url'
 import { capturePendingAttachments } from '../../utils/pending-attachments'
-import { savePermissionModePreference } from '../../utils/settings'
 import {
   clearInput,
   defineCommand,
   defineCommandWithArgs,
 } from '../command-shared'
+import { handlePermissionsCommand } from './chat-permissions'
+import { handleVerifyCommand } from './chat-verify'
 import { handleImageCommand } from '../image'
 import { handleInitializationFlowLocally } from '../init'
 import { handleRewindCommand } from '../rewind'
@@ -24,56 +22,7 @@ export const CHAT_COMMANDS = [
   defineCommandWithArgs({
     name: 'permissions',
     aliases: ['sandbox', 'safety'],
-    handler: (params, args) => {
-      const trimmedArgs = args.trim().toLowerCase()
-      const currentMode = useChatStore.getState().permissionMode
-      const validModes = ['safe', 'prompt', 'unsafe'] as const
-      const modeDescriptions: Record<(typeof validModes)[number], string> = {
-        safe: 'Risky tools are denied automatically.',
-        prompt:
-          'Risky tools are blocked; interactive prompts are not yet implemented, so they currently downgrade to deny.',
-        unsafe: 'Risky tools are allowed. Use with caution.',
-      }
-
-      if (!trimmedArgs) {
-        params.setMessages((prev) => [
-          ...prev,
-          getUserMessage(params.inputValue.trim()),
-          getSystemMessage(
-            `Current permission mode: **${currentMode}**\n\n${modeDescriptions[currentMode]}`,
-          ),
-        ])
-        params.saveToHistory(params.inputValue.trim())
-        clearInput(params)
-        return
-      }
-
-      if (!validModes.includes(trimmedArgs as (typeof validModes)[number])) {
-        params.setMessages((prev) => [
-          ...prev,
-          getUserMessage(params.inputValue.trim()),
-          getSystemMessage(
-            `Unknown permission mode: "${trimmedArgs}". Use "/permissions safe", "/permissions prompt", or "/permissions unsafe".`,
-          ),
-        ])
-        params.saveToHistory(params.inputValue.trim())
-        clearInput(params)
-        return
-      }
-
-      const newMode = trimmedArgs as (typeof validModes)[number]
-      useChatStore.getState().setPermissionMode(newMode)
-      savePermissionModePreference(newMode)
-      params.setMessages((prev) => [
-        ...prev,
-        getUserMessage(params.inputValue.trim()),
-        getSystemMessage(
-          `Permission mode set to **${newMode}**.\n\n${modeDescriptions[newMode]}`,
-        ),
-      ])
-      params.saveToHistory(params.inputValue.trim())
-      clearInput(params)
-    },
+    handler: handlePermissionsCommand,
   }),
   defineCommandWithArgs({
     name: 'rewind',
@@ -87,80 +36,7 @@ export const CHAT_COMMANDS = [
   defineCommandWithArgs({
     name: 'verify',
     aliases: ['typecheck'],
-    handler: async (params, args) => {
-      const trimmedArgs = args.trim().toLowerCase()
-
-      const workspaceMap: Record<string, string> = {
-        sdk: 'sdk',
-        common: 'common',
-        'agent-runtime': 'packages/agent-runtime',
-        cli: 'cli',
-      }
-
-      const workspaces =
-        trimmedArgs === ''
-          ? Object.entries(workspaceMap)
-          : [[trimmedArgs, workspaceMap[trimmedArgs]]]
-
-      if (!workspaces.length || workspaces.some(([, dir]) => !dir)) {
-        params.setMessages((prev) => [
-          ...prev,
-          getUserMessage(params.inputValue.trim()),
-          getSystemMessage('Usage: /verify [sdk|common|agent-runtime|cli]'),
-        ])
-        params.saveToHistory(params.inputValue.trim())
-        clearInput(params)
-        return
-      }
-
-      params.saveToHistory(params.inputValue.trim())
-      clearInput(params)
-
-      const results = await Promise.all(
-        workspaces.map(async ([name, dir]) => {
-          try {
-            const [{ value }] = await runTerminalCommand({
-              command: 'bun run typecheck',
-              process_type: 'SYNC',
-              cwd: dir,
-              timeout_seconds: 120,
-            })
-            const stdout = 'stdout' in value ? value.stdout || '' : ''
-            const stderr = 'stderr' in value ? value.stderr || '' : ''
-            const exitCode = 'exitCode' in value ? (value.exitCode ?? 1) : 1
-            return { name, exitCode, stdout, stderr }
-          } catch (error) {
-            return {
-              name,
-              exitCode: 1,
-              stdout: '',
-              stderr: error instanceof Error ? error.message : String(error),
-            }
-          }
-        }),
-      )
-
-      const allPassed = results.every((r) => r.exitCode === 0)
-      const summary = results
-        .map((r) => {
-          const status = r.exitCode === 0 ? 'PASS' : 'FAIL'
-          const detail =
-            r.exitCode === 0
-              ? 'No TypeScript errors'
-              : `exit ${r.exitCode}\n${(r.stderr || r.stdout).slice(0, 300)}`
-          return `${r.name}: ${status}\n${detail}`
-        })
-        .join('\n\n')
-
-      const overall = allPassed
-        ? '✅ All typechecks passed'
-        : '❌ Some typechecks failed'
-
-      params.setMessages((prev) => [
-        ...prev,
-        getSystemMessage(`${overall}\n\n${summary}`),
-      ])
-    },
+    handler: handleVerifyCommand,
   }),
   defineCommandWithArgs({
     name: 'new',

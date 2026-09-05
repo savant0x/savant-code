@@ -1,6 +1,5 @@
 import { describe, test, expect, mock } from 'bun:test'
 
-import { useFeedbackStore } from '../../state/feedback-store'
 import {
   COMMAND_REGISTRY,
   defineCommand,
@@ -272,56 +271,6 @@ describe('command factory pattern', () => {
       // Should disable queue and NOT send message
       expect(setCanProcessQueue).toHaveBeenCalledWith(false)
       expect(sendMessage).not.toHaveBeenCalled()
-    })
-  })
-
-  describe('feedback command arg handling', () => {
-    test('pre-populates feedback text when args are provided', () => {
-      const feedbackCmd = COMMAND_REGISTRY.find((c) => c.name === 'feedback')
-      expect(feedbackCmd).toBeDefined()
-
-      // Reset the feedback store
-      useFeedbackStore.getState().reset()
-
-      const params = createMockParams({ inputValue: '/feedback my bug report' })
-      feedbackCmd!.handler(params, 'my bug report')
-
-      // Check that feedback text was pre-populated
-      const state = useFeedbackStore.getState()
-      expect(state.feedbackText).toBe('my bug report')
-      expect(state.feedbackCursor).toBe('my bug report'.length)
-    })
-
-    test('opens feedback mode without pre-populating when no args', () => {
-      const feedbackCmd = COMMAND_REGISTRY.find((c) => c.name === 'feedback')
-      expect(feedbackCmd).toBeDefined()
-
-      // Reset the feedback store
-      useFeedbackStore.getState().reset()
-
-      const params = createMockParams({ inputValue: '/feedback' })
-      const result = feedbackCmd!.handler(params, '')
-
-      // Should return openFeedbackMode
-      expect(result).toEqual({ openFeedbackMode: true })
-
-      // Feedback text should remain empty
-      const state = useFeedbackStore.getState()
-      expect(state.feedbackText).toBe('')
-    })
-
-    test('returns openFeedbackMode even with args', () => {
-      const feedbackCmd = COMMAND_REGISTRY.find((c) => c.name === 'feedback')
-      expect(feedbackCmd).toBeDefined()
-
-      // Reset the feedback store
-      useFeedbackStore.getState().reset()
-
-      const params = createMockParams({ inputValue: '/feedback test' })
-      const result = feedbackCmd!.handler(params, 'test')
-
-      // Should still return openFeedbackMode
-      expect(result).toEqual({ openFeedbackMode: true })
     })
   })
 })

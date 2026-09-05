@@ -16,6 +16,7 @@ import type { RouterParams } from '../command-registry'
 describe('routeUserPrompt providerSetup mode', () => {
   let originalConfigDir: string | undefined
   let originalApiKey: string | undefined
+  let originalSharedApiKey: string | undefined
   let originalTokenrouterApiKey: string | undefined
   let originalNousApiKey: string | undefined
   let originalDirectProvider: string | undefined
@@ -26,6 +27,7 @@ describe('routeUserPrompt providerSetup mode', () => {
   beforeEach(() => {
     originalConfigDir = process.env.SAVANT_CODE_CONFIG_DIR
     originalApiKey = process.env.OPENCODE_GO_API_KEY
+    originalSharedApiKey = process.env.OPENCODE_API_KEY
     originalTokenrouterApiKey = process.env.TOKENROUTER_API_KEY
     originalNousApiKey = process.env.NOUS_API_KEY
     originalDirectProvider = process.env.DIRECT_PROVIDER
@@ -34,6 +36,7 @@ describe('routeUserPrompt providerSetup mode', () => {
     tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'savant-provider-route-'))
     process.env.SAVANT_CODE_CONFIG_DIR = tempDir
     delete process.env.OPENCODE_GO_API_KEY
+    delete process.env.OPENCODE_API_KEY
     delete process.env.TOKENROUTER_API_KEY
     delete process.env.NOUS_API_KEY
     delete process.env.DIRECT_PROVIDER
@@ -51,6 +54,8 @@ describe('routeUserPrompt providerSetup mode', () => {
     else process.env.SAVANT_CODE_CONFIG_DIR = originalConfigDir
     if (originalApiKey === undefined) delete process.env.OPENCODE_GO_API_KEY
     else process.env.OPENCODE_GO_API_KEY = originalApiKey
+    if (originalSharedApiKey === undefined) delete process.env.OPENCODE_API_KEY
+    else process.env.OPENCODE_API_KEY = originalSharedApiKey
     if (originalTokenrouterApiKey === undefined)
       delete process.env.TOKENROUTER_API_KEY
     else process.env.TOKENROUTER_API_KEY = originalTokenrouterApiKey
@@ -229,12 +234,12 @@ describe('routeUserPrompt providerSetup mode', () => {
     await routeUserPrompt(params)
 
     expect(saveToHistory).not.toHaveBeenCalled()
-    expect(process.env.OPENCODE_GO_API_KEY).toBe(secret)
+    expect(process.env.OPENCODE_API_KEY).toBe(secret)
     expect(useChatStore.getState().inputMode).toBe('default')
     expect(setInputFocused).toHaveBeenCalledWith(true)
 
     const setupInfo = getProviderSetupInfo('opencode-go')
-    expect(setupInfo?.envVar).toBe('OPENCODE_GO_API_KEY')
+    expect(setupInfo?.envVar).toBe('OPENCODE_API_KEY')
     expect(JSON.stringify(renderedMessages)).not.toContain(secret)
   })
 })

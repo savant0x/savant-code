@@ -1,4 +1,8 @@
 import { getInputModeConfig } from './input-modes'
+import {
+  resolveMentionMenuAction,
+  resolveSlashMenuAction,
+} from './keyboard-menu-actions'
 import { isPlainEnterKey } from './terminal-enter-detection'
 
 import type {
@@ -117,82 +121,28 @@ export function resolveChatKeyboardAction(
   }
 
   // Priority 6: Slash menu navigation (when active and not disabled)
-  // Skip menu navigation for Up/Down if history navigation is enabled (user is paging through history)
-  if (
-    state.slashMenuActive &&
-    state.slashMatchesLength > 0 &&
-    !state.disableSlashSuggestions
-  ) {
-    if (isDown) {
-      // If user is navigating history (historyNavDownEnabled), skip menu navigation entirely
-      if (state.historyNavDownEnabled) {
-        // Fall through to history navigation
-      } else if (state.slashSelectedIndex < state.slashMatchesLength - 1) {
-        return { type: 'slash-menu-down' }
-      } else {
-        return { type: 'none' } // At bottom, don't navigate
-      }
-    }
-    if (isUp) {
-      // If user is navigating history (historyNavUpEnabled), skip menu navigation entirely
-      if (state.historyNavUpEnabled) {
-        // Fall through to history navigation
-      } else if (state.slashSelectedIndex > 0) {
-        return { type: 'slash-menu-up' }
-      } else {
-        return { type: 'none' } // At top, don't navigate
-      }
-    }
-    if (isTab || isShiftTab) {
-      // Tab accepts the highlighted command into the input without executing
-      // it, leaving the cursor after it so the user can keep typing (e.g. extra
-      // params for a skill). Tab no longer navigates between items — use the
-      // arrow keys for that. Enter (below) selects and submits immediately.
-      return { type: 'slash-menu-complete' }
-    }
-    if (isEnter) {
-      return { type: 'slash-menu-select' }
-    }
-  }
+  // (extracted to keyboard-menu-actions.ts, FID-2026-0819-005 Loop 146;
+  // null → fall through to the next priority, as before)
+  const slashMenuAction = resolveSlashMenuAction(state, {
+    isUp,
+    isDown,
+    isTab,
+    isShiftTab,
+    isEnter,
+  })
+  if (slashMenuAction) return slashMenuAction
 
   // Priority 7: Mention menu navigation (when active)
-  // Skip menu navigation for Up/Down if history navigation is enabled (user is paging through history)
-  if (state.mentionMenuActive && state.totalMentionMatches > 0) {
-    if (isDown) {
-      // If user is navigating history (historyNavDownEnabled), skip menu navigation entirely
-      if (state.historyNavDownEnabled) {
-        // Fall through to history navigation
-      } else if (state.agentSelectedIndex < state.totalMentionMatches - 1) {
-        return { type: 'mention-menu-down' }
-      } else {
-        return { type: 'none' } // At bottom, don't navigate
-      }
-    }
-    if (isUp) {
-      // If user is navigating history (historyNavUpEnabled), skip menu navigation entirely
-      if (state.historyNavUpEnabled) {
-        // Fall through to history navigation
-      } else if (state.agentSelectedIndex > 0) {
-        return { type: 'mention-menu-up' }
-      } else {
-        return { type: 'none' } // At top, don't navigate
-      }
-    }
-    if (isShiftTab) {
-      return { type: 'mention-menu-shift-tab' }
-    }
-    if (isTab) {
-      // Multiple matches: cycle through options
-      // Single match: complete the word without executing
-      if (state.totalMentionMatches > 1) {
-        return { type: 'mention-menu-tab' }
-      }
-      return { type: 'mention-menu-complete' }
-    }
-    if (isEnter) {
-      return { type: 'mention-menu-select' }
-    }
-  }
+  // (extracted to keyboard-menu-actions.ts, FID-2026-0819-005 Loop 146;
+  // null → fall through to the next priority, as before)
+  const mentionMenuAction = resolveMentionMenuAction(state, {
+    isUp,
+    isDown,
+    isTab,
+    isShiftTab,
+    isEnter,
+  })
+  if (mentionMenuAction) return mentionMenuAction
 
   // Priority 8: Tab to open file menu (when not in a menu, not shift-tab, and suggestions enabled)
   // This is handled by the hook since it needs to check word at cursor
