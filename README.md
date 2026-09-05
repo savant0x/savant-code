@@ -129,7 +129,8 @@ history. The supported hosted providers are:
 | --- | --- | --- | --- |
 | Ollama | automatic detection | — | Local inference; no API key required |
 | OpenRouter | `/provider openrouter` or `DIRECT_PROVIDER=openrouter` | `OR_MASTER_KEY`, `OPENROUTER_API_KEY`, or `INFERENCE_API_KEY` | **Default provider**; free tier (`openrouter/free`) is the boot default; master key, regular key, then inference key precedence |
-| OpenCode Go | `/provider opencode-go` | `OPENCODE_GO_API_KEY` | Hosted gateway |
+| OpenCode Go | `/provider opencode-go` | `OPENCODE_API_KEY` | Hosted gateway (shared OpenCode key; legacy `OPENCODE_GO_API_KEY` still honored) |
+| OpenCode Zen | `/provider opencode-zen` | `OPENCODE_API_KEY` | Pay-per-use gateway, 70 models incl. free tier (shared OpenCode key) |
 | TokenRouter | `/provider tokenrouter` | `TOKENROUTER_API_KEY` | Multi-provider gateway |
 | TokenHarbor | `/provider tokenharbor` | `TOKENHARBOR_API_KEY` | OpenAI-compatible gateway at `https://tokenharbor.ai/v1` |
 | NVIDIA NIM | `/provider nvidia` | `NVIDIA_API_KEY` | NVIDIA-hosted inference |
@@ -145,7 +146,7 @@ launching Savant-Code:
 ```powershell
 # PowerShell — choose one provider key (OpenRouter is the boot default)
 $env:OPENROUTER_API_KEY = "your-key"
-# $env:OPENCODE_GO_API_KEY = "your-key"
+# $env:OPENCODE_API_KEY = "your-key"
 # $env:TOKENROUTER_API_KEY = "your-key"
 # $env:TOKENHARBOR_API_KEY = "your-key"
 # $env:NVIDIA_API_KEY = "your-key"
@@ -157,7 +158,7 @@ savant-code
 ```cmd
 :: Command Prompt — choose one provider key (OpenRouter is the boot default)
 set OPENROUTER_API_KEY=your-key
-:: set OPENCODE_GO_API_KEY=your-key
+:: set OPENCODE_API_KEY=your-key
 :: set TOKENROUTER_API_KEY=your-key
 :: set TOKENHARBOR_API_KEY=your-key
 :: set NVIDIA_API_KEY=your-key
@@ -169,7 +170,7 @@ savant-code
 ```bash
 # macOS/Linux — choose one provider key (OpenRouter is the boot default)
 export OPENROUTER_API_KEY="your-key"
-# export OPENCODE_GO_API_KEY="your-key"
+# export OPENCODE_API_KEY="your-key"
 # export TOKENROUTER_API_KEY="your-key"
 # export TOKENHARBOR_API_KEY="your-key"
 # export NVIDIA_API_KEY="your-key"
@@ -448,8 +449,8 @@ code 2 blocks a tool.
   resolve their real context length from the OpenRouter catalog at runtime.
 - **Universal copy buttons** — hover-to-copy on code blocks, tool outputs, and
   file diffs throughout the TUI.
-- **Gateway providers** — TokenRouter, TokenHarbor, NVIDIA NIM, OpenCode Go, CommandCode,
-  Nous Research, and Cloudflare Workers AI via `@savant-code/llm-providers`. Nous Research
+- **Gateway providers** — TokenRouter, TokenHarbor, NVIDIA NIM, OpenCode Go, OpenCode Zen, CommandCode,
+  Nous Research, KiosAPI, and Cloudflare Workers AI via `@savant-code/llm-providers`. Nous Research
   uses the direct OpenAI-compatible API; Portal OAuth is a separate integration.
 - **Default model** — `openrouter/free` via OpenRouter (configurable via
   `/model`). One model project-wide: the model selected in the UI panel is the
@@ -877,7 +878,8 @@ picker or choose one directly:
 ```
 
 The supported environment variables are `OPENROUTER_API_KEY`,
-`OPENCODE_GO_API_KEY`,
+`OPENCODE_API_KEY` (shared by OpenCode Go and OpenCode Zen; legacy
+`OPENCODE_GO_API_KEY` still honored),
 `TOKENROUTER_API_KEY`, `TOKENHARBOR_API_KEY`, `NVIDIA_API_KEY`, and
 `COMMAND_CODE_API_KEY`. The key
 prompt is masked and stores the key globally in the Savant-Code config

@@ -41,3 +41,8 @@ docs/design/Savant Desktop Architecture Research.md
 docs/design/Savant-Code Keyless Search Research.md
 docs/design/Savant Desktop App Architecture.md
 dev/session-summaries/2026-08-19-desktop-app-research-planning.md
+
+# Rust/tauri build output (FID-2026-0820-011 Loop 5 local bundling smoke,
+# 2026-09-03) — generated codegen assets under target/ are binary/ephemeral
+# build artifacts, not documentation.
+desktop/src-tauri/target/

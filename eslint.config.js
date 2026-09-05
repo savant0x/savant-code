@@ -22,6 +22,7 @@ export default tseslint.config(
       'devvy-main/**', // Vendored reference codebase (Discord Rich Presence design source) - not part of the monorepo
       'master-fetch-master/**', // Vendored reference codebase (Hound keyless-search design source) - not part of the monorepo
       'dev/scratchpad/**', // Ephemeral working area (gitignored, see .gitignore) — ad-hoc tools may use console freely
+      'desktop/src-tauri/target/**', // Rust/tauri build output (FID-2026-0820-011 Loop 5 local bundling smoke) — machine artifacts, never source
       '.qoder/**', // Better-harness run artifacts (renderer-generated reports) — machine output, not source
       'cli/src/agents/bundled-agents.generated.ts', // Auto-generated agent code with embedded console strings
       'cli/src/agents/bundled-agents.generated.d.ts', // Auto-generated type declarations

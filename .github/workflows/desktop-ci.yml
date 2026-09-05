@@ -14,16 +14,26 @@
 name: desktop-ci
 
 on:
+  # FID-2026-0820-011 Loop 6: dispatch lets the operator validate desktop
+  # toolchain changes (e.g. the bundled-agents prebuild fix) on demand,
+  # BEFORE a release cut — without touching main.
+  workflow_dispatch:
   push:
     branches: [main]
     paths:
       - 'desktop/**'
       - 'cli/src/server-command.ts'
+      - 'agents/**'
+      - 'cli/scripts/prebuild-agents.ts'
+      - 'cli/package.json'
       - '.github/workflows/desktop-ci.yml'
   pull_request:
     paths:
       - 'desktop/**'
       - 'cli/src/server-command.ts'
+      - 'agents/**'
+      - 'cli/scripts/prebuild-agents.ts'
+      - 'cli/package.json'
       - '.github/workflows/desktop-ci.yml'
 
 jobs:
@@ -53,6 +63,14 @@ jobs:
 
       - name: Install workspace dependencies
         run: bun install
+
+      # The sidecar entry's import chain includes the gitignored generated
+      # agent bundle (cli/src/agents/bundled-agents.generated.ts). Fresh CI
+      # checkouts never contain it — generate it exactly as the CLI binary
+      # pipeline does (cli/scripts/build-binary-main.ts) before any sidecar or
+      # cargo step can import the gap and fail.
+      - name: Generate bundled agents bundle
+        run: bun run --cwd=cli prebuild:agents
 
       # tauri-build hard-fails while bundle.externalBin is declared but the
       # triple-renamed binary is missing — build it before every cargo step.

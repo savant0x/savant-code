@@ -70,7 +70,8 @@ Or configure one directly:
 | Provider | Command | Environment Variable |
 |----------|---------|---------------------|
 | OpenRouter | `/provider openrouter` | `OR_MASTER_KEY`, `OPENROUTER_API_KEY`, or `INFERENCE_API_KEY` (default provider) |
-| OpenCode Go | `/provider opencode-go` | `OPENCODE_GO_API_KEY` |
+| OpenCode Go | `/provider opencode-go` | `OPENCODE_API_KEY` (shared OpenCode key; legacy `OPENCODE_GO_API_KEY` still honored) |
+| OpenCode Zen | `/provider opencode-zen` | `OPENCODE_API_KEY` (shared OpenCode key) |
 | TokenRouter | `/provider tokenrouter` | `TOKENROUTER_API_KEY` |
 | TokenHarbor | `/provider tokenharbor` | `TOKENHARBOR_API_KEY` |
 | NVIDIA NIM | `/provider nvidia` | `NVIDIA_API_KEY` |

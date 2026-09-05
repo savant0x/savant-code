@@ -522,3 +522,209 @@ presentation layer, then re-run visual smoke. T15-F/T15-H remain blocked.
       parents decrease from 307 to 277 and 308 to 270 lines; the new modules are
       44, 4, and 43 lines; the audit/ledger suites pass 12/0, ESLint/Prettier pass,
       and the inventory decreases from 265 to 2
+
+## Task 8 — Add KiosAPI provider (2026-09-05) — COMPLETE (closed + archived 2026-09-05)
+
+> Operator wants `https://kiosapi.com/` added as a provider. Research complete
+> (agent-reach web via Jina Reader + web search, 2026-09-05): KiosAPI is a
+> fully OpenAI-compatible unified gateway (GPT, Claude, Gemini through one
+> endpoint + key). No repo references exist yet. Nothing implemented —
+> presentation only until the operator confirms the open questions below.
+
+- [x] **K8-A. Confirm service identity: kiosapi.com (not kiosapi.id).**
+      CONFIRMED by operator 2026-09-05 ("go").
+      Research found TWO different services: `kiosapi.com` (global gateway,
+      keys `sk-kilo-…`/`sk-…`, base `https://kiosapi.com/v1/`, docs
+      `kiosapi.mintlify.app`, GitHub `kiosapi/docs`) vs `kiosapi.id`
+      (Indonesian gateway by PT Mura Teras Kreatif, keys `kios_live_…`, base
+      `https://api.kiosapi.id/v1`). Interpreted target is **kiosapi.com** per
+      the operator's URL. BLOCKED on operator confirmation.
+- [ ] **K8-B. [Post-approval] Add Path-A registry entry** in
+      `common/src/providers/registry.ts` (`kiosapi`: gateway, `KIOSAPI_API_KEY`,
+      `https://kiosapi.com/v1`, protocol `openai`, idTransform `strip`,
+      live catalog `https://kiosapi.com/v1/models`, setupAvailable true,
+      domain `kiosapi.com`, order 4). No new shim — generic factory
+      (`sdk/src/impl/model-provider/model-factories.ts:58-106`) handles it.
+      Derived surfaces (prefixes, domains, validProviders, picker) update
+      automatically. **Done 2026-09-05** — entry live at
+      `common/src/providers/registry.ts:186-205`; FID-2026-0905-002 Steps
+      1-5 `implemented`.
+- [x] **K8-C. [Post-approval] Verify**: 2026-09-05 — cli typecheck
+      exit 0; sdk typecheck exit 0; common provider suites 21/0 (24/0 at
+      closure re-run); catalog family 28/0; gateway 12/0 (16/0 at closure
+      re-run, 4 new KiosAPI tests); eslint 7 files exit 0; prettier clean;
+      lint:md exit 0; reachability grep proves wiring; `fid:verify` 5 PASS /
+      1 FAIL (`typecheck common` — pre-existing, see OOS below). **Live
+      verification DONE** — operator confirmed ("kiosapi works")
+      2026-09-05: authed `/v1/models` + chat round-trip.
+- [ ] **K8-D. Operator answers received 2026-09-05**: kiosapi.com confirmed
+      (FID scope); env var **`KIOSAPI_API_KEY`** confirmed; key lives in
+      **`.env.local`** AND submittable via **`/provider kiosapi`** CLI
+      (both work with zero extra code — FID §Evidence). Remaining defaults
+      taken: `/provider` picker visible, live catalog, `strip` transform.
+      Only open item: the actual command is **`/model`** (not `/models`) —
+      confirm that is what the operator means.
+- [x] **K8-E. FID-2026-0905-002 converged, operator said "go", implemented
+      2026-09-05.** Live verification received same day ("kiosapi works");
+      FID **closed + archived 2026-09-05**.
+- [x] **K8-F. HARD REQUIREMENT (operator 2026-09-05): GLM-5.3-free must be
+      included.** Parser + 4 tests encode it (shared gateway suite); live
+      confirmation received 2026-09-05 ("kiosapi works") — the pass-through
+      parser guarantees client-side carriage; escalate-if-absent rule
+      stands.
+
+## Task 10 — Zen runtime rejection: recursive JSON schemas (2026-09-05) — CLOSED + ARCHIVED
+
+> Operator live-confirmed the fix ("it works") 2026-09-05:
+> FID-2026-0905-004 status `closed`, moved to `dev/fids/archive/`,
+> CHANGELOG entry appended, archival logged in the session summary.
+
+> Operator said "go": **implemented 2026-09-05, FID-2026-0905-004 status
+> `fixed` (Loop 2 audited); NOT `closed`.** Shared sanitizer
+> (`schema-sanitize.ts`) + factory middleware on all 3 SDK branches;
+> chat path byte-identical (suite green). Static gates: sdk/llm/cli
+> typecheck 0; llm 87/0; zen 10/0; eslint/prettier/lint:md clean;
+> `fid:verify` 3/1 (pre-existing). **BLOCKED on operator key**: live
+> Spark-with-tools turn to confirm the upstream rejection is gone.
+> Scratch repro suite removed after evidence capture (findings in FID).
+
+> Operator testing a Zen model gets `Upstream request failed:
+> [invalid_request_error] Recursive JSON schemas are not currently
+> supported`. Code homework done (no fix yet): chat-path
+> `inlineLocalSchemaRefs`
+> (`packages/llm-providers/.../openai-compatible-prepare-tools.ts:34-75`)
+> provably cuts `$ref` cycles to `{}` and strips `$defs` — a recursive
+> payload CANNOT survive it, so a chat-protocol model should be immune;
+> responses/Anthropic paths send SDK-serialized schemas raw (no inlining).
+> No `z.lazy` in tool inputs; no `strict:true` injection found;
+> `jsonValueSchema` uses are validation-only. BLOCKED on operator facts
+> (model id, blast radius, cross-provider comparison) — see questions.
+
+## [OPEN-OUT-OF-SCOPE] — common typecheck red in untouched test file
+
+`bun run typecheck` in `common/` fails with 30 errors, ALL in
+`common/src/__tests__/model-config.test.ts` (TS2593/TS2304 — missing
+`bun:test` globals `describe`/`test`/`expect`). Zero errors in any file
+touched by the KiosAPI work (verified by filtered re-run). The file was
+already modified in the working tree before this session and the error
+class cannot be caused by a registry entry. NOT silently fixed (Law 2 —
+needs a blocking presentation): operator decides whether to authorize a
+fix (likely a tsconfig `types` gap) or leave it. Consequence: `fid:verify`
+for FID-2026-0905-002 reports 5 PASS / 1 FAIL and no receipt is stamped.
+
+## Task 9 — Add OpenCode Zen provider (2026-09-05) — COMPLETE (closed + archived 2026-09-05)
+
+> Operator wants OpenCode Zen (`https://opencode.ai/zen/v1`) as a provider:
+> multi-model incl. free ones; "look into this deeper". Deep research done
+> (official `opencode.ai/docs/zen` 0-EOF + live `GET /zen/v1/models` probe:
+> HTTP 200, 70 models, public, no auth). This is NOT the existing
+> `opencode-go` entry (different base `/zen/go/v1`, subscription-only,
+> open-source-only, `OPENCODE_GO_API_KEY`). Nothing implemented — presentation
+> only until the operator picks an option below.
+
+- [ ] **Z9-A. Findings.** Zen = pay-per-use gateway, key `OPENCODE_API_KEY`
+      (same key works for Go per Docker docs, but separate env var per repo
+      convention). 70 live models, bare ids, `owned_by: opencode`. FOUR wire
+      formats: chat/completions (~19: DeepSeek, MiniMax, GLM 5/5.1/5.2/5.3/
+      5.3-flash, Kimi, Big Pickle free, MiMo/Ling/Nemotron free,
+      deepseek-v4-flash-free), Anthropic messages (15: Claude ×11, Qwen ×4),
+      Responses API (~29: all GPT/Grok/Muse Spark incl.
+      muse-spark-*-contributor-free), Gemini custom path (7). Factory
+      supports the first two via protocolMap (opencode-go precedent); the
+      latter two have NO factory support (only precedent: ChatGPT-OAuth
+      Responses transform, `model-factories.ts:29-52`).
+- [ ] **Z9-B. Option A (recommended): Go-mirror Phase 1.** New `opencode`
+      entry (label OpenCode Zen, `OPENCODE_API_KEY`, base
+      `https://opencode.ai/zen/v1`, protocol `openai-anthropic`, `strip`,
+      static catalog of the ~34 factory-supported models, new
+      `OPENCODE_ZEN_PROTOCOLS` map + `ProviderProtocolMap` union extension,
+      live or static picker catalog). Responses/Gemini models explicitly out
+      (documented, fail-closed if requested). Effort ≈ KiosAPI × 3.
+- [ ] **Z9-C. Option B: live catalog + map.** Same as A but picker reads
+      live `/v1/models` (public, always fresh incl. deprecations) while
+      dispatch stays map-gated; unsupported models visible but fail closed
+      with a clear error. Risk: picker/requested-model disagreement.
+- [ ] **Z9-D. Option C: full Zen (deferred).** Add Responses-API factory
+      support for GPT/Grok/Spark + decide Gemini path. Large scope, needs
+      its own FID. NOT recommended now.
+- [x] **Z9-E. Scope settled 2026-09-05: FULL (option C), no phases.**
+      Routing id **`opencode-zen`**, picker visible, GLM rides along.
+      Operator said "code": **implemented 2026-09-05; live verification
+      discharged by operator confirmation ("zen works") same day;
+      FID-2026-0905-003 closed + archived 2026-09-05.** Static gates:
+      cli/sdk typecheck 0; common suites 28/0 (24/0 closure re-run);
+      gateway 16/0; catalog family + setup combos 59/0; sdk free-mode 13/0
+      (all 4 protocols); eslint/prettier/lint:md clean; `fid:verify` 5/1
+      (pre-existing). **ATTENTION at commit**:
+      `model-config/providers.ts` + `model-config.ts` carry
+      `assume-unchanged` bits (edits on disk, invisible to git), and
+      several test files present on disk are untracked — see summary.
+- [x] **Z9-F. GLM clarification (operator: "glm was completed already?").**
+      Resolved 2026-09-05: (i) KiosAPI GLM (K8-F) live-confirmed by the
+      operator ("kiosapi works"); (ii) Zen's own glm-5.3 + glm-5.3-flash
+      ride the supported chat/completions protocol and were included in the
+      shipped scope. Both tracks done.
+
+## Task 12 — Residue-backlog monolith decompositions (2026-09-05)
+
+> Continues the accepted-residue backlog recorded in closed
+> `FID-2026-0819-005` (5 source monoliths). Operator approved running the
+> Perfection Loop + implementation on `-0905-001` (native.ts) and then
+> opening the next monolith FID.
+
+- [x] **R1. FID-2026-0905-001 (native.ts) — Perfection Loop + implementation
+      approved and executed 2026-09-05.** RED-first: 12 characterization
+      pins green on the 894-line monolith before any extraction. Extracted
+      10 stage modules (`gate-context`, `gate-chain`, `pre-dispatch-gates`,
+      `ehel-gate`, `hook-gate`, `result-lifecycle`, `client-tool-bridge`,
+      `trace`, `steering`, `write-bookkeeping`); facade `native.ts` 894 →
+      249 lines. Suite parity 1335/0 (3399 expects) pre/post; barrel
+      byte-identical; typecheck/eslint/prettier/lint:md clean; receipt
+      stamped 4/4 PASS; baseline 852 → 249. **Step 5 `blocked` (operator):**
+      G2 commit hash for closure + archive.
+- [x] **R2. Next monolith FID opened + implemented: `FID-2026-0905-004`
+      (gateway.ts).** Target chosen over `public-release.ts` (sequencing:
+      -0903-001 lands in that file at the next release cut). Measured
+      1,327 lines; single production caller (`server-command.ts:17`).
+      Perfection Loop ran to convergence (Loop 2: state contract + transport
+      stays in facade + fidStatuses encapsulated; Loop 3: <2% delta) and the
+      operator approved implementation 2026-09-05. RED: 5 injectTriggerRun
+      pins green on the monolith (plus RED finding 5 — a real `request()`
+      race in `gateway-test-harness.ts` that made `gateway.test.ts` flaky
+      under the repo-root gate runner; fixed by returning the id-matched
+      frame). Extracted 8 `gateway/` stage modules; facade 1,327 → 236
+      lines; suite parity 35/0 / 163 expects both cwds; receipt 6/6 PASS;
+      quality-report unlisted. **Step 6 `blocked` (operator):** G2 commit
+      hash for closure + archive.
+- [x] **R2.5. Next monolith FID opened: `FID-2026-0905-005`
+      (office-scene.tsx).** Measured 2,126 lines; single production caller
+      (`deck-view.tsx:24/:164`); RED gap: the scene's pure logic (labelFor,
+      makeThinkingPredicate) is module-private, zero direct coverage — RED
+      step 1 = minimal verbatim logic extraction + pins before any component
+      move. T15-H boundary respected (old stage modules untouched). Gates
+      validated live at authoring (desktop typecheck 0, sibling suites
+      green). **Implemented 2026-09-05 (operator approved the full loop):**
+      RED 13/0 pins; Loop 2 settled bus single-ownership, targetFor
+      cohesion, environment promotion; 14 `scene-*` modules + 179-line
+      facade (2,126 → 179; four stage modules ceiling-split at audit:
+      desk-props, identity, agent-fx); suite parity 413/0 / 5,718 expects;
+      receipt 6/6 PASS; quality-report unlisted. **Step 6 `blocked`
+      (operator):** G2 commit hash for closure + archive.
+- [x] **R3. [RESOLVED 2026-09-05 → FID-2026-0905-007 `fixed`] Remaining
+      residue after R1/R2/R2.5:** `desktop/src/floor/office/office-scene.tsx`
+      resolved by -0905-005; `scripts/public-release.ts` (3,065 → 178 facade
+      over 23 domain modules, largest 294; surface-verified; 57/0/216 parity);
+      `scripts/__nt-before-snapshot.ts` (895) deleted as a superseded untracked
+      snapshot of pre-decomposition native.ts ("before" state is in git
+      history at 2cc377e). **quality:report now 0 violations.** Closure
+      awaits the G2 commit hash.
+- [x] **R4. [RESOLVED 2026-09-05 → FID-2026-0905-006 `fixed`] Provider-drift
+      baseline violations (13):** 10 baseline regenerations, 2 test splits,
+      1 data-catalog exemption; env-sanitize lists derived from config
+      (leak class eliminated); quality:report 15 → 2. R5 also resolved
+      (bun:test imports in common model-config.test.ts; common typecheck 0).
+      Closure awaits the G2 commit hash.
+- [ ] **R5. [RESOLVED 2026-09-05] `common/` typecheck red (30 errors):**
+      missing `bun:test` globals in `model-config.test.ts` — fixed via
+      explicit `bun:test` imports (repo convention); common typecheck 0,
+      suite 6/0. Recorded in FID-2026-0905-006.

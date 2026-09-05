@@ -1,5 +1,87 @@
 # Changelog
 
+## Unreleased
+
+- **FID-2026-0905-002 (closed 2026-09-05)** — KiosAPI added as a first-class
+  provider (Path A registry entry + authenticated live model catalog in the
+  Nous pattern): `kiosapi/<model>` routes to `https://kiosapi.com/v1` with
+  `KIOSAPI_API_KEY` (Bearer, `strip` transform), key entry via `.env.local`
+  or `/provider kiosapi`, models surfaced in the `/model` picker via the
+  combined gateway catalog, missing-key errors fail closed naming the env
+  var. 4 new gateway tests (parser incl. GLM-5.3-free preservation,
+  combined-catalog inclusion, persisted-key refresh, failure isolation).
+  Closed on operator live confirmation ("kiosapi works"); static gates
+  green (common provider 24/0, gateway 16/0, sdk free-mode 4/0).
+- **FID-2026-0905-003 (closed 2026-09-05)** — OpenCode Zen added end-to-end
+  under routing id `opencode-zen`: registry entry, `ProviderProtocol` union
+  extension (`responses`, `gemini`, `multi`), 70-entry
+  `OPENCODE_ZEN_PROTOCOLS` map + shared `PROVIDER_PROTOCOL_MAPS` record,
+  Responses factory branch (`@ai-sdk/openai@2.0.50`) and Gemini branch
+  (`@ai-sdk/google@2`), public live catalog wired into the gateway picker,
+  key `OPENCODE_API_KEY` (`.env.local` or `/provider opencode-zen`),
+  unknown models fail closed with a clear error. Includes the
+  operator-ordered credential merge: Go + Zen share `OPENCODE_API_KEY` via
+  the `opencode` resolver chain (legacy `OPENCODE_GO_API_KEY` fallback).
+  6 SDK routing tests (all 4 protocols + key-required + fail-closed), 4
+  CLI catalog tests, map-structure coverage test. Closed on operator live
+  confirmation ("zen works", per-protocol paths + Gemini tolerance
+  included); static gates green.
+
+- **FID-2026-0905-004 (closed 2026-09-05)** — Zen Responses-path runtime
+  rejection fixed (`Upstream request failed: [invalid_request_error]
+  Recursive JSON schemas are not currently supported` on
+  `opencode-zen/muse-spark-1.3-contributor-free`; chat-path models were
+  immune). Root cause: five tools (`gravity_index`, `render_ui`,
+  `set_output`, `spawn_agents`, `spawn_agent_inline`) serialize to
+  genuinely recursive `$defs` schemas, and SDK-native branches sent them
+  raw. Fix: shared outbound cycle-cut (`schema-sanitize.ts`) applied as
+  fetch middleware to the anthropic/responses/gemini factory branches;
+  chat path byte-identical. Verified: 9 sanitizer unit + 4 branch
+  round-trip tests, full static gates, and operator live confirmation
+  ("it works"). Closed by explicit operator ship directive; `fid:verify`
+  receipt unstamped (pre-existing `model-config.test.ts` red tree).
+- **FID-2026-0819-005 (fixed)** — quality-ratchet file-remediation program
+  completed (operator-held → closed 2026-09-05): live inventory driven from 62
+  violations to **5** — every test file and every type-definition file in the
+  repo is now under the 300-line ceiling. Final phase (Loops 348–358): 11
+  test monoliths decomposed at exact test/assert parity (savant-code-api,
+  sqlite-adapter, error-handling, init-direnv, loop-agent-steps part-a,
+  skill-management, llm chat-language-model, use-usage-query,
+  loop-agent-steps part-f rebalance, openai-compatible chat-model), and the
+  two template type files split into re-export hubs (agent-definition.ts →
+  agent-definition-support.ts + agent-models.ts; tools.ts →
+  tool-params-core/-discovery/-research) with zero import-surface change —
+  24 consumers verified, including the `init.ts` raw-text scaffold, which
+  now copies all 8 `.agents/types` files via the new
+  `init-type-files.ts` inventory module. One downstream contract fix:
+  publish.ts bridges its API cast through `unknown` because named
+  intersection aliases lack TypeScript's implicit index signature.
+- **FID-2026-0824-005 (fixed)** — triggers: local webhook receiver + injection
+  bridge + cron scheduler + relay enablement + desktop rail panel. Opt-in
+  (`SAVANT_TRIGGERS=1`): loopback-only receiver on gatewayPort+1 (bearer
+  constant-time auth, nonce+timestamp replay guard, per-trigger rate limiting
+  5/60s with 429+Retry-After), fixed-template directive injection through the
+  gateway run seam (payloads are data, never prompts; (triggerId, eventId)
+  idempotency; 409 busy), dependency-free 5-field cron scheduler with the
+  run-latest-on-resume missed-run policy (startup resume sweep + 30 s tick,
+  deterministic eventIds), `triggers_*` JSON-RPC management surface (secret
+  shown exactly once; sanitized list) with the desktop TriggersPanel in the
+  workspace right rail (calendar receipts, enable/disable, delete,
+  secret-once flow, capability-gated), relay guide (docs/triggers-relay.md:
+  Tailscale Funnel / cloudflared; ngrok anti-recommended). Two pre-existing
+  gate-integrity bugs found and fixed en route: the in-process gateway test
+  armed the stdin-watchdog on the runner (silently truncating the pre-push
+  suite to ~37% of files) and a leaked fetch mock turned later fetch-based
+  tests into fake 200s (receiver probes now node:http, mock-immune).
+- **Maus-parity suite dissolved (operator decision, 2026-09-03)** —
+  FID-2026-0824-003 (computer use/CUA), -004 (voice pipeline), -006 (mobile
+  companion), -007 (security keychain) closed out-of-scope; master -008
+  closed with the suite (its shipped children -009 workspace regions and
+  -005 triggers had already closed). All five archived with the decision
+  recorded in each Resolution; the roadmap program is removed from the
+  project. The quality-ratchet program (-0819-005, operator-held) and the
+  desktop-packaging integration (-0903-001, next release cut) remain active.
+
 ## 0.0.28 — 2026-09-02
 
 Release delta since v0.0.27 (2026-08-21). Detailed per-FID entries follow below in
@@ -44,6 +126,51 @@ reverse-chronological order; the highlights:
   activity layout (project / model / action), provider-trimmed model labels
   (`nous/meituan/longcat-2.0:free` → `longcat-2.0`), `openrouter/free` rendered
   as "OpenRouter Free". Operator live-confirmed.
+
+## 2026-09-03 — Desktop packaging release-time ceremony + pipeline re-homing (3 FIDs archived; successor created)
+
+FID-2026-0820-011 closed: the release-time remainder was executed as a local ceremony — signed-bundle
+E2E (`tauri build --bundles msi,nsis` with a throwaway minisign key wired via the exact CI env contract,
+`.sig` sidecars materialized, fail-closed + positive `latest.json` proven against real bundle outputs),
+Windows installer smoke both flavors (NSIS per-user and MSI per-machine, full install → launch →
+uninstall cycles; the updater's first real remote check degraded gracefully against the empty release
+channel, `302 → 404`), a release-blocking blank-console sidecar bug found + fixed (`CREATE_NO_WINDOW` in
+release builds) + verified (`MainWindowHandle = 0`), the WiX `InstallLocation` ARP skew audited to
+cosmetic, and the CI-sidecar prebuild gap fixed in both workflows with a `workflow_dispatch` validation
+scaffold. The Savant AI agent install (`C:\Program Files\Savant`) was identified as a separate program
+and verified untouched. Operator directive: the standing release-time process is **re-homed into the
+automatic release system** (`scripts/public-release.ts`) — successor FID-2026-0903-001 tracks desktop
+packaging as pipeline stages (bundle build, artifact attach, updater-manifest publish, endpoint verify)
+for the next cut. Masters FID-2026-0820-007 (all children closed) and FID-2026-0823-003 (U1–U11
+resolved) closed with it; receipts stamped PASS at all archived paths.
+
+## 2026-09-03 — Ground-truth closure: self-improving harness + robot-cast recovery pair + compaction summary output (4 FIDs archived)
+
+Four `fixed` records closed by ground-truth audit (implementation verified in the working tree, commit
+hashes resolved per G2, fresh gate battery green, operator-gated boundaries discharged by accumulated
+live evidence):
+
+- **FID-2026-0824-012** (high) — self-improving harness + agent-created skills master: all 16 steps
+  committed across `6ef39b8`/`a1f13b8`/`b588f9c`/`23621ba`/`2611380`; live boundaries FULLY
+  DISCHARGED (both lesson-derived drafts operator-trusted to top level with `VERSIONS.jsonl`
+  provenance; the experience-capture sink holds 19 production records across sessions with zero
+  execution interruptions; trusted skills load end-to-end through the `skill` tool). YAGNI-Compliance
+  corrected `Pending` → `Verified`. Receipt 9/9 gates re-stamped at the archived path.
+- **FID-2026-0824-028** (critical) — robot-cast loader timeout + honest diagnostics + brightened
+  cast/fallback: re-smoke discharged by the T16-F CDP smoke 2026-08-29 (all 10 GLB figures mounted,
+  zero fallbacks) and by the FID-2026-0824-032 root-cause fix; implementation in `51fa261` (v0.0.28,
+  tagged). Receipt 2/2 re-stamped.
+- **FID-2026-0824-030** (critical) — catch-to-fallback mount chain + CAST telemetry: same discharge
+  evidence; production wiring re-verified (`deck-runtime.ts` consumes `castTelemetry()`);
+  implementation in `51fa261`. Receipt 2/2 re-stamped.
+- **FID-2026-0828-001** (medium) — `/compact` summary output: the last open item was the G2 commit
+  hash, resolved to `51fa261` (v0.0.28, tagged); live `/compact` smoke already operator-confirmed
+  2026-08-28. Receipt 8/8 re-stamped.
+
+Fresh closure battery 2026-09-03: 101 tests / 0 fail across 11 gate files (deck-robots, deck-walkers,
+print-mode schema, skill-management, spawn-agent-inline emission, experience-capture,
+adopt-and-persist mirror, compaction-summary handler + block, skills-command, experiences-dedup).
+Active FID ledger drops to 10 records.
 
 ## 2026-09-02 — Release-ready audit: deck rebuild closed, desktop CLI-parity program closed, sidecar env fix closed (7 FIDs archived)
 

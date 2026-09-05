@@ -46,6 +46,11 @@ jobs:
           ref: ${{ inputs.source_ref || inputs.release_tag }}
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
+      # Same contract as desktop-ci.yml: the gitignored generated agent bundle
+      # must exist before the sidecar bundle can resolve its import chain.
+      - name: Generate bundled agents bundle
+        run: bun run --cwd=cli prebuild:agents
+
       - name: Build sidecar (${{ matrix.bun-target }})
         run: >
           bun run --cwd=desktop build:sidecar --

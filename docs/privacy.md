@@ -53,7 +53,8 @@
 
 - Environment-provided BYOK keys are read at runtime and are never copied to
   disk by Savant Code. Current direct-provider variables include
-  `OPENCODE_GO_API_KEY`, `TOKENROUTER_API_KEY`, `TOKENHARBOR_API_KEY`,
+  `OPENCODE_API_KEY` (shared by OpenCode Go and OpenCode Zen),
+  `TOKENROUTER_API_KEY`, `TOKENHARBOR_API_KEY`,
   `NVIDIA_API_KEY`, `COMMAND_CODE_API_KEY`, and `NOUS_API_KEY`.
 - Keys entered through the masked `/provider` flow are stored in the user's
   local `credentials.json` so npm-installed users can configure a provider

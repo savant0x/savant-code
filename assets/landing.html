@@ -1,0 +1,2549 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SAVANT CODE — Multi-Agent AI Coding Assistant | ECHO Protocol</title>
+    <meta
+      name="description"
+      content="A terminal-native AI coding assistant that audits every change before it touches your repo. 10 agents. 15 laws. One Perfection Loop."
+    />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23030408'/%3E%3Cpath d='M16 4 L28 16 L16 28 L4 16 Z' fill='none' stroke='%2300fbff' stroke-width='2'/%3E%3Ccircle cx='16' cy='16' r='3' fill='%23ff2a6d'/%3E%3C/svg%3E"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* ============ TOKENS ============ */
+      :root {
+        --bg0: #030408;
+        --bg1: #070b14;
+        --bg2: #0b1120;
+        --cyan: #00fbff;
+        --mag: #ff2a6d;
+        --pur: #b537f2;
+        --yel: #fcee0a;
+        --grn: #00ff9f;
+        --red: #ff003c;
+        --org: #ff9e2c;
+        --ink: #c9d4e8;
+        --dim: #66748f;
+        --line: rgba(0, 251, 255, 0.14);
+        --mono: 'JetBrains Mono', monospace;
+        --disp: 'Orbitron', sans-serif;
+        --body: 'Rajdhani', sans-serif;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+        scroll-padding-top: 84px;
+      }
+      body {
+        background: var(--bg0);
+        color: var(--ink);
+        font-family: var(--body);
+        font-size: 17px;
+        line-height: 1.6;
+        overflow-x: hidden;
+      }
+      ::selection {
+        background: var(--cyan);
+        color: var(--bg0);
+      }
+      ::-webkit-scrollbar {
+        width: 10px;
+      }
+      ::-webkit-scrollbar-track {
+        background: var(--bg0);
+      }
+      ::-webkit-scrollbar-thumb {
+        background: linear-gradient(var(--cyan), var(--pur));
+        border: 2px solid var(--bg0);
+      }
+      a {
+        color: var(--cyan);
+        text-decoration: none;
+      }
+      .wrap {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 0 24px;
+        position: relative;
+        z-index: 2;
+      }
+
+      /* ============ GLOBAL OVERLAYS ============ */
+      .scanlines {
+        position: fixed;
+        inset: 0;
+        z-index: 9990;
+        pointer-events: none;
+        opacity: 0.28;
+        background: repeating-linear-gradient(
+          to bottom,
+          transparent 0 2px,
+          rgba(0, 0, 0, 0.16) 2px 4px
+        );
+      }
+      .noise {
+        position: fixed;
+        inset: 0;
+        z-index: 9991;
+        pointer-events: none;
+        opacity: 0.05;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.6'/%3E%3C/svg%3E");
+      }
+      .vignette {
+        position: fixed;
+        inset: 0;
+        z-index: 9989;
+        pointer-events: none;
+        background: radial-gradient(
+          120% 90% at 50% 40%,
+          transparent 55%,
+          rgba(0, 0, 0, 0.55) 100%
+        );
+      }
+
+      /* ============ NAV ============ */
+      nav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        gap: 28px;
+        padding: 14px 28px;
+        background: rgba(3, 4, 8, 0.4);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        border-bottom: 1px solid transparent;
+        transition: 0.4s;
+      }
+      nav.scrolled {
+        background: rgba(3, 4, 8, 0.82);
+        border-bottom-color: var(--line);
+        box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+      }
+      .logo {
+        font-family: var(--disp);
+        font-weight: 900;
+        font-size: 1.05rem;
+        letter-spacing: 0.14em;
+        color: #eafcff;
+        text-shadow: 0 0 14px rgba(0, 251, 255, 0.6);
+      }
+      .logo b {
+        color: var(--cyan);
+      }
+      .logo i {
+        font-style: normal;
+        color: var(--mag);
+      }
+      .nav-links {
+        display: flex;
+        gap: 26px;
+        margin-left: auto;
+      }
+      .nav-links a {
+        font-family: var(--mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.18em;
+        color: var(--dim);
+        transition: 0.25s;
+      }
+      .nav-links a:hover {
+        color: var(--cyan);
+        text-shadow: 0 0 12px rgba(0, 251, 255, 0.8);
+      }
+      .ver-chip {
+        font-family: var(--mono);
+        font-size: 0.62rem;
+        color: var(--mag);
+        border: 1px solid rgba(255, 42, 109, 0.4);
+        padding: 2px 8px;
+        letter-spacing: 0.12em;
+      }
+      .nav-cta {
+        font-family: var(--mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.14em;
+        color: var(--bg0);
+        background: var(--cyan);
+        padding: 8px 16px;
+        position: relative;
+        box-shadow: 0 0 22px rgba(0, 251, 255, 0.35);
+        transition: 0.25s;
+      }
+      .nav-cta:hover {
+        box-shadow: 0 0 34px rgba(0, 251, 255, 0.8);
+        transform: translateY(-1px);
+      }
+      @media (max-width: 900px) {
+        .nav-links {
+          display: none;
+        }
+        .nav-cta {
+          margin-left: auto;
+        }
+      }
+
+      /* ============ HUD CORNERS (shared) ============ */
+      .hud {
+        position: relative;
+        border: 1px solid rgba(0, 251, 255, 0.16);
+        background: rgba(7, 11, 20, 0.6);
+      }
+      .hud::before,
+      .hud::after {
+        content: '';
+        position: absolute;
+        width: 14px;
+        height: 14px;
+        border: 2px solid var(--cyan);
+        transition: 0.3s;
+        pointer-events: none;
+      }
+      .hud::before {
+        top: -2px;
+        left: -2px;
+        border-right: none;
+        border-bottom: none;
+      }
+      .hud::after {
+        bottom: -2px;
+        right: -2px;
+        border-left: none;
+        border-top: none;
+      }
+      .hud:hover::before,
+      .hud:hover::after {
+        width: 22px;
+        height: 22px;
+        box-shadow: 0 0 12px rgba(0, 251, 255, 0.5);
+      }
+
+      /* ============ HERO / PARALLAX SCENE ============ */
+      .hero {
+        position: relative;
+        height: 100vh;
+        height: 100svh;
+        min-height: 640px;
+        overflow: hidden;
+        background:
+          radial-gradient(
+            60% 46% at 50% 78%,
+            rgba(181, 55, 242, 0.2),
+            transparent 62%
+          ),
+          linear-gradient(
+            180deg,
+            #020308 0%,
+            #050810 46%,
+            #0a1226 74%,
+            #170b2b 96%
+          );
+      }
+      .layer {
+        position: absolute;
+        inset: 0;
+        will-change: transform;
+      }
+      #stars i {
+        position: absolute;
+        background: #cfe6ff;
+        border-radius: 50%;
+      }
+      @keyframes tw {
+        to {
+          opacity: 0.1;
+        }
+      }
+
+      .sun-wrap {
+        position: absolute;
+        left: 50%;
+        bottom: 44vh;
+        transform: translateX(-50%);
+        width: 38vmin;
+        height: 38vmin;
+      }
+      .sun {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: linear-gradient(
+          180deg,
+          #00fbff 0%,
+          #5fd8ff 30%,
+          #ff2a6d 68%,
+          #b537f2 100%
+        );
+        -webkit-mask: linear-gradient(
+          to bottom,
+          #000 0 38%,
+          transparent 38% 45%,
+          #000 45% 54%,
+          transparent 54% 61%,
+          #000 61% 69%,
+          transparent 69% 76%,
+          #000 76% 82%,
+          transparent 82% 87%,
+          #000 87%
+        );
+        mask: linear-gradient(
+          to bottom,
+          #000 0 38%,
+          transparent 38% 45%,
+          #000 45% 54%,
+          transparent 54% 61%,
+          #000 61% 69%,
+          transparent 69% 76%,
+          #000 76% 82%,
+          transparent 82% 87%,
+          #000 87%
+        );
+        box-shadow:
+          0 0 90px rgba(255, 42, 109, 0.45),
+          0 0 200px rgba(0, 251, 255, 0.25);
+        animation: sunpulse 6s ease-in-out infinite;
+      }
+      @keyframes sunpulse {
+        0%,
+        100% {
+          filter: brightness(1);
+        }
+        50% {
+          filter: brightness(1.18);
+        }
+      }
+
+      .sky {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 36vh;
+      }
+      .sky.far {
+        height: 20vh;
+        opacity: 0.85;
+        filter: blur(0.5px);
+      }
+      .sky.near {
+        height: 34vh;
+      }
+      .sky svg {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+      .bc {
+        animation: beak 2.4s infinite;
+      }
+      .sky .bc:nth-child(odd) {
+        animation-delay: 0.9s;
+      }
+      .sky .bc:nth-child(3n) {
+        animation-delay: 1.5s;
+      }
+      @keyframes beak {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.1;
+        }
+      }
+
+      .specks i {
+        position: absolute;
+        display: block;
+      }
+      .specks i::before {
+        content: '';
+        display: block;
+        width: 3px;
+        height: 3px;
+        border-radius: 50%;
+        background: currentColor;
+        box-shadow: 0 0 9px currentColor;
+      }
+      @keyframes fl {
+        0%,
+        100% {
+          transform: translateY(0);
+          opacity: 0.9;
+        }
+        50% {
+          transform: translateY(-28px);
+          opacity: 0.3;
+        }
+      }
+      .specks i {
+        animation: fl 9s ease-in-out infinite;
+      }
+
+      /* perspective grid floor */
+      .floor {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 36vh;
+        perspective: 620px;
+        overflow: hidden;
+        -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 10%);
+        mask-image: linear-gradient(to bottom, transparent 0, #000 10%);
+      }
+      .floor::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: linear-gradient(
+          to right,
+          var(--bg0),
+          transparent 22%,
+          transparent 78%,
+          var(--bg0)
+        );
+      }
+      .grid-plane {
+        position: absolute;
+        top: -2px;
+        left: -70%;
+        width: 240%;
+        height: 170%;
+        background-image:
+          linear-gradient(
+            to right,
+            rgba(0, 251, 255, 0.3) 1px,
+            transparent 1px
+          ),
+          linear-gradient(
+            to bottom,
+            rgba(255, 42, 109, 0.28) 1px,
+            rgba(0, 251, 255, 0.14) 2px,
+            transparent 2px
+          );
+        background-size: 56px 56px;
+        transform: rotateX(61deg);
+        transform-origin: 50% 0;
+        animation: gridflow 1.1s linear infinite;
+      }
+      @keyframes gridflow {
+        to {
+          background-position:
+            0 56px,
+            0 56px;
+        }
+      }
+      .horizon {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 35.7vh;
+        height: 3px;
+        z-index: 7;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(0, 251, 255, 0.9) 30%,
+          rgba(255, 42, 109, 0.9) 70%,
+          transparent
+        );
+        box-shadow:
+          0 0 18px rgba(0, 251, 255, 0.7),
+          0 0 44px rgba(255, 42, 109, 0.5);
+      }
+
+      /* hero content */
+      .content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        z-index: 10;
+        padding: 0 24px;
+      }
+      .eyebrow {
+        font-family: var(--mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.28em;
+        color: var(--cyan);
+        border: 1px solid rgba(0, 251, 255, 0.35);
+        padding: 7px 16px;
+        margin-bottom: 30px;
+        background: rgba(0, 251, 255, 0.05);
+      }
+      .hero-title {
+        font-family: var(--disp);
+        font-weight: 900;
+        line-height: 0.95;
+        letter-spacing: 0.02em;
+        font-size: clamp(3.4rem, 11vw, 8.4rem);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        user-select: none;
+      }
+      .glitch {
+        position: relative;
+        display: inline-block;
+        color: #eafcff;
+        text-shadow:
+          2px 0 rgba(255, 42, 109, 0.5),
+          -2px 0 rgba(0, 251, 255, 0.5),
+          0 0 44px rgba(0, 251, 255, 0.4);
+      }
+      .glitch::before,
+      .glitch::after {
+        content: attr(data-text);
+        position: absolute;
+        inset: 0;
+        opacity: 0.9;
+        pointer-events: none;
+      }
+      .glitch::before {
+        color: var(--cyan);
+        z-index: -1;
+        animation: gl1 3.9s infinite;
+      }
+      .glitch::after {
+        color: var(--mag);
+        z-index: -2;
+        animation: gl2 3.3s infinite;
+      }
+      @keyframes gl1 {
+        0%,
+        86%,
+        100% {
+          clip-path: inset(0 0 100% 0);
+          transform: none;
+        }
+        87% {
+          clip-path: inset(8% 0 62% 0);
+          transform: translate(-7px, -2px);
+        }
+        90% {
+          clip-path: inset(58% 0 10% 0);
+          transform: translate(6px, 2px);
+        }
+        93% {
+          clip-path: inset(30% 0 48% 0);
+          transform: translate(-4px, 1px);
+        }
+        96% {
+          clip-path: inset(0 0 100% 0);
+          transform: none;
+        }
+      }
+      @keyframes gl2 {
+        0%,
+        80%,
+        100% {
+          clip-path: inset(0 0 100% 0);
+          transform: none;
+        }
+        81% {
+          clip-path: inset(64% 0 6% 0);
+          transform: translate(6px, 1px);
+        }
+        85% {
+          clip-path: inset(12% 0 72% 0);
+          transform: translate(-6px, -1px);
+        }
+        89% {
+          clip-path: inset(0 0 100% 0);
+          transform: none;
+        }
+      }
+      .outline {
+        color: transparent;
+        -webkit-text-stroke: 2.5px rgba(0, 251, 255, 0.9);
+        text-shadow: 0 0 40px rgba(0, 251, 255, 0.28);
+      }
+      .outline .cursor {
+        font-style: normal;
+        color: var(--cyan);
+        -webkit-text-stroke: 0;
+        animation: blink 1s steps(1) infinite;
+      }
+      @keyframes blink {
+        50% {
+          opacity: 0;
+        }
+      }
+      .tagline {
+        margin-top: 30px;
+        max-width: 640px;
+        font-size: clamp(1.05rem, 2.3vw, 1.45rem);
+        font-weight: 500;
+        color: #dbe6f5;
+      }
+      .tagline b {
+        color: var(--cyan);
+        text-shadow: 0 0 16px rgba(0, 251, 255, 0.6);
+      }
+      .sub {
+        margin-top: 12px;
+        font-family: var(--mono);
+        font-size: 0.74rem;
+        letter-spacing: 0.14em;
+        color: var(--dim);
+      }
+      .cta-row {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-top: 38px;
+      }
+      .btn {
+        font-family: var(--mono);
+        font-size: 0.8rem;
+        letter-spacing: 0.14em;
+        padding: 15px 30px;
+        cursor: pointer;
+        transition: 0.25s;
+        position: relative;
+      }
+      .btn.primary {
+        color: var(--bg0);
+        background: var(--cyan);
+        box-shadow:
+          0 0 30px rgba(0, 251, 255, 0.4),
+          inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+      }
+      .btn.primary:hover {
+        box-shadow: 0 0 55px rgba(0, 251, 255, 0.85);
+        transform: translateY(-3px);
+      }
+      .btn.primary::before,
+      .btn.primary::after {
+        content: '';
+        position: absolute;
+        width: 12px;
+        height: 12px;
+        border: 2px solid var(--bg0);
+      }
+      .btn.primary::before {
+        top: 4px;
+        left: 4px;
+        border-right: none;
+        border-bottom: none;
+      }
+      .btn.primary::after {
+        bottom: 4px;
+        right: 4px;
+        border-left: none;
+        border-top: none;
+      }
+      .btn.ghost {
+        color: var(--cyan);
+        background: rgba(0, 251, 255, 0.05);
+        border: 1px solid rgba(0, 251, 255, 0.45);
+      }
+      .btn.ghost:hover {
+        background: rgba(0, 251, 255, 0.14);
+        box-shadow: 0 0 30px rgba(0, 251, 255, 0.3);
+        transform: translateY(-3px);
+      }
+      .btn.ghost.done {
+        color: var(--grn);
+        border-color: var(--grn);
+      }
+      .badges {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-top: 34px;
+      }
+      .chip {
+        font-family: var(--mono);
+        font-size: 0.62rem;
+        letter-spacing: 0.12em;
+        color: var(--dim);
+        border: 1px solid rgba(102, 116, 143, 0.35);
+        padding: 4px 10px;
+      }
+      .chip:hover {
+        color: var(--cyan);
+        border-color: var(--cyan);
+      }
+      .hero-fade {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 170px;
+        z-index: 11;
+        pointer-events: none;
+        background: linear-gradient(to bottom, transparent, var(--bg0));
+      }
+      .scroll-cue {
+        position: absolute;
+        bottom: 26px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 12;
+        font-family: var(--mono);
+        font-size: 0.6rem;
+        letter-spacing: 0.3em;
+        color: var(--dim);
+        text-align: center;
+      }
+      .scroll-cue::after {
+        content: '▼';
+        display: block;
+        margin-top: 8px;
+        color: var(--cyan);
+        animation: cue 1.6s ease-in-out infinite;
+      }
+      @keyframes cue {
+        0%,
+        100% {
+          transform: translateY(0);
+          opacity: 0.4;
+        }
+        50% {
+          transform: translateY(7px);
+          opacity: 1;
+        }
+      }
+
+      /* ============ STATS ============ */
+      .stats {
+        background: var(--bg1);
+        border-top: 1px solid var(--line);
+        border-bottom: 1px solid var(--line);
+        position: relative;
+        overflow: hidden;
+      }
+      .stats .wrap {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      }
+      .stat {
+        padding: 44px 20px;
+        text-align: center;
+        position: relative;
+      }
+      .stat + .stat::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 22%;
+        bottom: 22%;
+        width: 1px;
+        background: var(--line);
+      }
+      .num {
+        font-family: var(--disp);
+        font-weight: 900;
+        font-size: 3.2rem;
+        line-height: 1;
+        display: block;
+      }
+      .stat:nth-child(1) .num {
+        color: var(--cyan);
+        text-shadow: 0 0 26px rgba(0, 251, 255, 0.5);
+      }
+      .stat:nth-child(2) .num {
+        color: var(--mag);
+        text-shadow: 0 0 26px rgba(255, 42, 109, 0.5);
+      }
+      .stat:nth-child(3) .num {
+        color: var(--pur);
+        text-shadow: 0 0 26px rgba(181, 55, 242, 0.5);
+      }
+      .stat:nth-child(4) .num {
+        color: var(--grn);
+        text-shadow: 0 0 26px rgba(0, 255, 159, 0.5);
+        animation: flick 5s infinite;
+      }
+      @keyframes flick {
+        0%,
+        91%,
+        100% {
+          opacity: 1;
+        }
+        92% {
+          opacity: 0.3;
+        }
+        93% {
+          opacity: 1;
+        }
+        95% {
+          opacity: 0.55;
+        }
+        96% {
+          opacity: 1;
+        }
+      }
+      .stat .lbl {
+        display: block;
+        margin-top: 10px;
+        font-family: var(--mono);
+        font-size: 0.62rem;
+        letter-spacing: 0.2em;
+        color: var(--dim);
+      }
+
+      /* ============ SECTIONS ============ */
+      .sec {
+        position: relative;
+        padding: 110px 0;
+        overflow: hidden;
+        border-top: 1px solid var(--line);
+      }
+      .sec.alt {
+        background: var(--bg1);
+      }
+      .bg-word {
+        position: absolute;
+        font-family: var(--disp);
+        font-weight: 900;
+        white-space: nowrap;
+        pointer-events: none;
+        user-select: none;
+        font-size: clamp(90px, 16vw, 240px);
+        color: transparent;
+        -webkit-text-stroke: 1px rgba(0, 251, 255, 0.08);
+        letter-spacing: 0.04em;
+        z-index: 1;
+        will-change: transform;
+      }
+      .bw1 {
+        top: -30px;
+        left: -2%;
+      }
+      .bw2 {
+        bottom: 4%;
+        right: -3%;
+        -webkit-text-stroke-color: rgba(255, 42, 109, 0.07);
+      }
+      .deco {
+        position: absolute;
+        z-index: 1;
+        pointer-events: none;
+      }
+      .deco.bracket {
+        width: 30px;
+        height: 30px;
+        border-left: 2px solid rgba(0, 251, 255, 0.25);
+        border-top: 2px solid rgba(0, 251, 255, 0.25);
+      }
+      .deco.bar {
+        width: 150px;
+        height: 5px;
+        background: linear-gradient(90deg, var(--cyan), transparent);
+        opacity: 0.3;
+      }
+      .sec-head {
+        margin-bottom: 60px;
+        position: relative;
+      }
+      .sec-tag {
+        font-family: var(--mono);
+        font-size: 0.66rem;
+        letter-spacing: 0.3em;
+        color: var(--mag);
+        display: block;
+        margin-bottom: 14px;
+      }
+      .sec-head h2 {
+        font-family: var(--disp);
+        font-weight: 700;
+        font-size: clamp(1.7rem, 4.4vw, 2.8rem);
+        letter-spacing: 0.06em;
+        color: #eafcff;
+        text-shadow: 0 0 30px rgba(0, 251, 255, 0.35);
+      }
+      .sec-head h2 em {
+        font-style: normal;
+        color: var(--cyan);
+      }
+      .sec-sub {
+        margin-top: 14px;
+        max-width: 680px;
+        color: var(--dim);
+        font-size: 1.05rem;
+      }
+      .sec-sub code {
+        font-family: var(--mono);
+        font-size: 0.82em;
+        color: var(--cyan);
+      }
+
+      /* ============ PERFECTION LOOP ============ */
+      .loop-scroll {
+        overflow-x: auto;
+        padding-bottom: 8px;
+        scrollbar-width: thin;
+      }
+      .loop-wrap {
+        position: relative;
+        min-width: 960px;
+        padding-bottom: 104px;
+      }
+      .loop-track {
+        display: flex;
+        align-items: stretch;
+        gap: 0;
+      }
+      .loop-node {
+        flex: 1;
+        min-width: 128px;
+        border: 1px solid rgba(102, 116, 143, 0.3);
+        background: rgba(7, 11, 20, 0.75);
+        padding: 20px 16px 18px;
+        position: relative;
+        transition: 0.35s;
+      }
+      .loop-node .ln-idx {
+        font-family: var(--mono);
+        font-size: 0.6rem;
+        letter-spacing: 0.2em;
+        color: var(--dim);
+      }
+      .loop-node .ln-name {
+        font-family: var(--disp);
+        font-weight: 700;
+        font-size: 1.02rem;
+        margin-top: 8px;
+        letter-spacing: 0.08em;
+        transition: 0.35s;
+      }
+      .loop-node .ln-agent {
+        font-family: var(--mono);
+        font-size: 0.58rem;
+        letter-spacing: 0.16em;
+        color: var(--dim);
+        margin-top: 6px;
+        text-transform: uppercase;
+      }
+      .loop-node .ln-desc {
+        font-size: 0.86rem;
+        color: var(--dim);
+        margin-top: 12px;
+        line-height: 1.5;
+      }
+      .connector {
+        flex: none;
+        width: 38px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: rgba(0, 251, 255, 0.3);
+        font-family: var(--mono);
+        font-size: 1rem;
+      }
+      .loop-node.active {
+        border-color: var(--pc);
+        box-shadow:
+          0 0 34px -6px var(--pc),
+          inset 0 0 22px -14px var(--pc);
+        transform: translateY(-5px);
+      }
+      .loop-node.active .ln-name {
+        color: var(--pc);
+        text-shadow: 0 0 18px var(--pc);
+      }
+      .loop-node.active .ln-idx {
+        color: var(--pc);
+      }
+      .loop-back {
+        position: absolute;
+        left: 20px;
+        right: 20px;
+        bottom: 0;
+        height: 78px;
+      }
+      .loop-back path {
+        fill: none;
+        stroke: rgba(255, 42, 109, 0.5);
+        stroke-width: 1.5;
+        stroke-dasharray: 7 6;
+        animation: march 1.1s linear infinite;
+        transition: 0.4s;
+      }
+      .loop-back polygon {
+        fill: var(--mag);
+      }
+      .loop-back.hot path {
+        stroke: var(--mag);
+        filter: drop-shadow(0 0 6px var(--mag));
+        animation-duration: 0.4s;
+      }
+      @keyframes march {
+        to {
+          stroke-dashoffset: -26;
+        }
+      }
+      .loop-back-label {
+        position: absolute;
+        bottom: 26px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-family: var(--mono);
+        font-size: 0.6rem;
+        letter-spacing: 0.2em;
+        color: var(--mag);
+        background: var(--bg0);
+        padding: 3px 12px;
+        border: 1px solid rgba(255, 42, 109, 0.35);
+      }
+      .post-fid {
+        margin-top: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        flex-wrap: wrap;
+      }
+      .pf-step {
+        font-family: var(--mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.16em;
+        padding: 10px 18px;
+        border: 1px solid rgba(102, 116, 143, 0.4);
+      }
+      .pf-step.first {
+        color: var(--yel);
+        border-color: rgba(252, 238, 10, 0.45);
+        animation: flick 6s infinite;
+      }
+      .pf-step.forge {
+        color: var(--grn);
+        border-color: rgba(0, 255, 159, 0.45);
+      }
+      .pf-step.verify {
+        color: var(--cyan);
+        border-color: rgba(0, 251, 255, 0.45);
+      }
+      .pf-arrow {
+        color: var(--dim);
+        font-family: var(--mono);
+      }
+      .pf-note {
+        text-align: center;
+        margin-top: 22px;
+        color: var(--dim);
+        font-size: 1rem;
+      }
+      .pf-note em {
+        color: var(--cyan);
+        font-style: normal;
+        text-shadow: 0 0 14px rgba(0, 251, 255, 0.5);
+      }
+
+      /* ============ AGENTS ============ */
+      .agents-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 18px;
+      }
+      .agent {
+        border: 1px solid rgba(102, 116, 143, 0.28);
+        background: linear-gradient(
+          160deg,
+          rgba(11, 17, 32, 0.9),
+          rgba(7, 11, 20, 0.9)
+        );
+        padding: 22px;
+        position: relative;
+        overflow: hidden;
+        transition: 0.35s;
+      }
+      .agent::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -80%;
+        width: 60%;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, var(--pc), transparent);
+        transition: 0.6s;
+      }
+      .agent:hover {
+        transform: translateY(-5px);
+        border-color: var(--pc);
+        box-shadow: 0 14px 40px -14px var(--pc);
+      }
+      .agent:hover::before {
+        left: 120%;
+      }
+      .agent header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .a-idx {
+        font-family: var(--mono);
+        font-size: 0.6rem;
+        color: var(--dim);
+        letter-spacing: 0.18em;
+      }
+      .a-phase {
+        font-family: var(--mono);
+        font-size: 0.56rem;
+        letter-spacing: 0.16em;
+        color: var(--pc);
+        border: 1px solid;
+        padding: 2px 8px;
+        transition: 0.3s;
+      }
+      .agent:hover .a-phase {
+        background: var(--pc);
+        color: var(--bg0);
+      }
+      .a-name {
+        font-family: var(--disp);
+        font-weight: 700;
+        font-size: 1.06rem;
+        letter-spacing: 0.09em;
+        margin-top: 14px;
+        color: #eafcff;
+        transition: 0.3s;
+      }
+      .agent:hover .a-name {
+        color: var(--pc);
+        text-shadow: 0 0 16px var(--pc);
+      }
+      .a-role {
+        margin-top: 10px;
+        color: var(--dim);
+        font-size: 0.92rem;
+        line-height: 1.55;
+      }
+      .a-tools {
+        margin-top: 16px;
+        font-family: var(--mono);
+        font-size: 0.62rem;
+        color: #3f4d66;
+        letter-spacing: 0.04em;
+        border-top: 1px dashed rgba(102, 116, 143, 0.25);
+        padding-top: 12px;
+      }
+      .agent.featured {
+        grid-column: 1/-1;
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 26px;
+        align-items: center;
+        border-color: rgba(252, 238, 10, 0.35);
+        padding: 28px 32px;
+      }
+      .agent.featured .a-name {
+        font-size: 1.5rem;
+        margin: 0;
+        color: var(--yel);
+        text-shadow: 0 0 22px rgba(252, 238, 10, 0.5);
+      }
+      .agent.featured .a-role {
+        margin: 8px 0 0;
+        color: var(--ink);
+      }
+      .agent.featured:hover {
+        border-color: var(--yel);
+      }
+      .f-badge {
+        font-family: var(--mono);
+        font-size: 0.58rem;
+        letter-spacing: 0.18em;
+        color: var(--bg0);
+        background: var(--yel);
+        padding: 6px 12px;
+      }
+      .agents-note {
+        margin-top: 26px;
+        font-family: var(--mono);
+        font-size: 0.66rem;
+        color: var(--dim);
+        letter-spacing: 0.06em;
+      }
+      @media (max-width: 700px) {
+        .agent.featured {
+          grid-template-columns: 1fr;
+          gap: 14px;
+        }
+      }
+
+      /* ============ RUNTIME / TERMINAL ============ */
+      .split {
+        display: grid;
+        grid-template-columns: 1fr 1.15fr;
+        gap: 44px;
+        align-items: start;
+      }
+      @media (max-width: 980px) {
+        .split {
+          grid-template-columns: 1fr;
+        }
+      }
+      .features {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .features li {
+        border: 1px solid rgba(102, 116, 143, 0.24);
+        background: rgba(7, 11, 20, 0.7);
+        padding: 18px 20px;
+        transition: 0.3s;
+      }
+      .features li:hover {
+        border-color: rgba(0, 251, 255, 0.4);
+        transform: translateX(6px);
+      }
+      .fx-tag {
+        display: inline-block;
+        font-family: var(--mono);
+        font-size: 0.56rem;
+        letter-spacing: 0.18em;
+        color: var(--cyan);
+        border: 1px solid rgba(0, 251, 255, 0.4);
+        padding: 2px 8px;
+        margin-bottom: 8px;
+      }
+      .features strong {
+        color: #eafcff;
+        font-weight: 600;
+        display: block;
+        font-size: 1.02rem;
+      }
+      .features p {
+        color: var(--dim);
+        font-size: 0.92rem;
+        margin-top: 4px;
+      }
+      .modes {
+        margin-top: 26px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+        gap: 10px;
+      }
+      .mode {
+        border-left: 3px solid var(--mc);
+        background: rgba(7, 11, 20, 0.7);
+        padding: 10px 14px;
+      }
+      .mode b {
+        font-family: var(--mono);
+        font-size: 0.64rem;
+        letter-spacing: 0.16em;
+        color: var(--mc);
+        display: block;
+      }
+      .mode span {
+        font-size: 0.82rem;
+        color: var(--dim);
+      }
+      .term {
+        border: 1px solid rgba(0, 251, 255, 0.25);
+        background: #04060c;
+        box-shadow: 0 0 60px -18px rgba(0, 251, 255, 0.35);
+        position: sticky;
+        top: 100px;
+      }
+      .term-bar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 16px;
+        border-bottom: 1px solid rgba(0, 251, 255, 0.18);
+        background: rgba(7, 11, 20, 0.9);
+      }
+      .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+      }
+      .dot.r {
+        background: var(--red);
+        box-shadow: 0 0 8px var(--red);
+      }
+      .dot.y {
+        background: var(--yel);
+        box-shadow: 0 0 8px var(--yel);
+      }
+      .dot.g {
+        background: var(--grn);
+        box-shadow: 0 0 8px var(--grn);
+      }
+      .term-title {
+        margin-left: 10px;
+        font-family: var(--mono);
+        font-size: 0.64rem;
+        color: var(--dim);
+        letter-spacing: 0.1em;
+      }
+      .term-body {
+        padding: 20px 20px 26px;
+        font-family: var(--mono);
+        font-size: 0.78rem;
+        line-height: 1.85;
+        min-height: 420px;
+        max-height: 480px;
+        overflow-y: auto;
+        position: relative;
+        transition: opacity 0.5s;
+      }
+      .term-body.fade-out {
+        opacity: 0;
+      }
+      .term-body::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0.2;
+        background: repeating-linear-gradient(
+          to bottom,
+          transparent 0 3px,
+          rgba(0, 0, 0, 0.3) 3px 4px
+        );
+      }
+      .tl {
+        min-height: 1.85em;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      .tl.cmd {
+        color: #eafcff;
+      }
+      .tl.cmd::before {
+        content: '$ ';
+        color: var(--grn);
+      }
+      .tl.sys {
+        color: #8fa3c4;
+      }
+      .tl.dim {
+        color: #4a587a;
+      }
+      .tl.user {
+        color: var(--yel);
+      }
+      .tl.user::before {
+        content: '> ';
+        color: var(--yel);
+      }
+      .tl.p-red {
+        color: #ff5c86;
+      }
+      .tl.p-grn {
+        color: var(--grn);
+      }
+      .tl.p-cyn {
+        color: var(--cyan);
+      }
+      .tl.p-pur {
+        color: #cf8bff;
+      }
+      .tl.p-yel {
+        color: var(--yel);
+      }
+      .tl.p-org {
+        color: var(--org);
+      }
+      .tl.ok {
+        color: var(--grn);
+        text-shadow: 0 0 14px rgba(0, 255, 159, 0.6);
+      }
+      .tl.typing::after {
+        content: '▍';
+        color: var(--cyan);
+        animation: blink 1s steps(1) infinite;
+      }
+
+      /* ============ INSTALL ============ */
+      .install {
+        text-align: center;
+      }
+      .cmd-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 16px;
+        margin: 14px 6px;
+        padding: 16px 22px;
+        border: 1px solid rgba(0, 251, 255, 0.3);
+        background: rgba(4, 6, 12, 0.9);
+      }
+      .cmd-chip code {
+        font-family: var(--mono);
+        font-size: 0.88rem;
+        color: var(--cyan);
+        text-shadow: 0 0 12px rgba(0, 251, 255, 0.4);
+      }
+      .cmd-chip code::before {
+        content: '$ ';
+        color: var(--grn);
+      }
+      .copy-btn {
+        font-family: var(--mono);
+        font-size: 0.6rem;
+        letter-spacing: 0.16em;
+        color: var(--dim);
+        background: none;
+        border: 1px solid rgba(102, 116, 143, 0.4);
+        padding: 5px 12px;
+        cursor: pointer;
+        transition: 0.25s;
+      }
+      .copy-btn:hover {
+        color: var(--cyan);
+        border-color: var(--cyan);
+      }
+      .copy-btn.done {
+        color: var(--grn);
+        border-color: var(--grn);
+      }
+      .install-note {
+        max-width: 600px;
+        margin: 26px auto 0;
+        color: var(--dim);
+        font-size: 0.98rem;
+      }
+      .install-note code {
+        font-family: var(--mono);
+        font-size: 0.82em;
+        color: var(--mag);
+      }
+      .providers {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-top: 30px;
+      }
+      .p-chip {
+        font-family: var(--mono);
+        font-size: 0.6rem;
+        letter-spacing: 0.14em;
+        color: var(--dim);
+        border: 1px solid rgba(102, 116, 143, 0.3);
+        padding: 5px 12px;
+        transition: 0.25s;
+      }
+      .p-chip:hover {
+        color: var(--cyan);
+        border-color: var(--cyan);
+        box-shadow: 0 0 16px -4px rgba(0, 251, 255, 0.5);
+      }
+
+      /* ============ MARQUEE ============ */
+      .marquee {
+        overflow: hidden;
+        border-top: 1px solid var(--line);
+        border-bottom: 1px solid var(--line);
+        padding: 20px 0;
+        background: var(--bg1);
+      }
+      .m-track {
+        display: flex;
+        gap: 0;
+        width: max-content;
+        animation: marq 38s linear infinite;
+      }
+      .marquee:hover .m-track {
+        animation-play-state: paused;
+      }
+      .m-item {
+        font-family: var(--mono);
+        font-size: 0.74rem;
+        letter-spacing: 0.22em;
+        color: var(--dim);
+        padding: 0 28px;
+        white-space: nowrap;
+      }
+      .m-item::after {
+        content: '◆';
+        color: var(--cyan);
+        margin-left: 56px;
+        font-size: 0.6rem;
+      }
+      @keyframes marq {
+        to {
+          transform: translateX(-50%);
+        }
+      }
+
+      /* ============ FOOTER ============ */
+      footer {
+        padding: 70px 0 0;
+        background: var(--bg0);
+      }
+      .foot-grid {
+        display: grid;
+        grid-template-columns: 1.4fr 1fr 1fr;
+        gap: 40px;
+      }
+      @media (max-width: 800px) {
+        .foot-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .foot-brand .logo {
+        font-size: 1.3rem;
+      }
+      .foot-brand p {
+        margin-top: 16px;
+        color: var(--dim);
+        font-size: 0.92rem;
+        max-width: 340px;
+      }
+      .foot-brand p em {
+        color: var(--cyan);
+        font-style: normal;
+      }
+      .foot-h {
+        font-family: var(--mono);
+        font-size: 0.62rem;
+        letter-spacing: 0.26em;
+        color: var(--mag);
+        margin-bottom: 18px;
+      }
+      .foot-links a {
+        display: block;
+        font-family: var(--mono);
+        font-size: 0.72rem;
+        color: var(--dim);
+        margin-bottom: 10px;
+        letter-spacing: 0.06em;
+        transition: 0.25s;
+      }
+      .foot-links a:hover {
+        color: var(--cyan);
+        text-shadow: 0 0 10px rgba(0, 251, 255, 0.6);
+      }
+      .foot-links a::before {
+        content: '▸ ';
+        color: var(--cyan);
+      }
+      .foot-meta {
+        font-family: var(--mono);
+        font-size: 0.66rem;
+        color: #414f68;
+        line-height: 2.1;
+        letter-spacing: 0.04em;
+      }
+      .foot-bar {
+        margin-top: 56px;
+        border-top: 1px solid var(--line);
+        padding: 22px 0;
+        text-align: center;
+        font-family: var(--mono);
+        font-size: 0.6rem;
+        letter-spacing: 0.24em;
+        color: #3a4760;
+      }
+      .foot-bar b {
+        color: var(--cyan);
+        font-weight: 400;
+      }
+
+      /* ============ REVEAL ============ */
+      .reveal {
+        opacity: 0;
+        transform: translateY(30px);
+        transition:
+          opacity 0.7s ease,
+          transform 0.7s ease;
+        transition-delay: var(--d, 0s);
+      }
+      .reveal.in {
+        opacity: 1;
+        transform: none;
+      }
+
+      /* ============ REDUCED MOTION ============ */
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation: none !important;
+          transition: none !important;
+        }
+        .reveal {
+          opacity: 1;
+          transform: none;
+        }
+        .hero .layer {
+          transform: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="scanlines"></div>
+    <div class="noise"></div>
+    <div class="vignette"></div>
+
+    <nav id="nav">
+      <a class="logo" href="#top">◈ SAVANT<i>//</i><b>CODE</b></a>
+      <span class="ver-chip">v0.0.28</span>
+      <div class="nav-links">
+        <a href="#protocol">PROTOCOL</a><a href="#agents">AGENTS</a
+        ><a href="#runtime">RUNTIME</a><a href="#install">INSTALL</a>
+      </div>
+      <a
+        class="nav-cta"
+        href="https://github.com/savant0x/savant-code"
+        target="_blank"
+        rel="noopener"
+        >GITHUB ▸</a
+      >
+    </nav>
+
+    <!-- ============ HERO ============ -->
+    <header class="hero" id="top">
+      <div class="layer" data-depth="0.06" data-lag="0.08" id="stars"></div>
+      <div class="layer" data-depth="0.14" data-lag="0.05">
+        <div class="sun-wrap"><div class="sun"></div></div>
+      </div>
+      <div class="layer" data-depth="0.3" data-lag="0.3">
+        <div class="sky far" id="skyFar"></div>
+      </div>
+      <div class="layer" data-depth="0.42" data-lag="0.2">
+        <div class="specks" id="specks"></div>
+      </div>
+      <div class="layer" data-depth="0.6" data-lag="0.45">
+        <div class="sky near" id="skyNear"></div>
+      </div>
+      <div class="layer floor" data-depth="0.85" data-lag="-0.12">
+        <div class="grid-plane"></div>
+      </div>
+      <div class="horizon"></div>
+      <div class="layer content" data-depth="0.05" data-lag="0.25">
+        <span class="eyebrow">ECHO PROTOCOL v0.2.0 // MULTI-AGENT RUNTIME</span>
+        <h1 class="hero-title">
+          <span class="glitch" data-text="SAVANT">SAVANT</span>
+          <span class="outline">CODE<i class="cursor">_</i></span>
+        </h1>
+        <p class="tagline">
+          A terminal-native AI coding assistant that
+          <b>audits every change</b> before it touches your repo.
+        </p>
+        <p class="sub">
+          10 AGENTS · 15 LAWS · ONE PERFECTION LOOP · ZERO CODE WITHOUT A
+          CONVERGED FID
+        </p>
+        <div class="cta-row">
+          <a
+            class="btn primary"
+            href="https://github.com/savant0x/savant-code"
+            target="_blank"
+            rel="noopener"
+            >▶ GITHUB — savant0x/savant-code</a
+          >
+          <button class="btn ghost" data-copy="npm install -g savant-code">
+            $ npm install -g savant-code
+          </button>
+        </div>
+        <div class="badges">
+          <span class="chip">TYPESCRIPT 5.5</span
+          ><span class="chip">BUN 1.3</span><span class="chip">REACT 19</span>
+          <span class="chip">OPENTUI</span><span class="chip">ECHO v0.2.0</span
+          ><span class="chip">APACHE-2.0</span>
+        </div>
+      </div>
+      <div class="hero-fade"></div>
+      <a class="scroll-cue" href="#stats">SCROLL TO DESCEND</a>
+    </header>
+
+    <!-- ============ STATS ============ -->
+    <section class="stats" id="stats">
+      <div class="wrap">
+        <div class="stat reveal">
+          <span class="num" data-count="10">0</span
+          ><span class="lbl">AGENTS ON THE ROSTER</span>
+        </div>
+        <div class="stat reveal" style="--d: 0.08s">
+          <span class="num" data-count="15">0</span
+          ><span class="lbl">ECHO LAWS ENFORCED</span>
+        </div>
+        <div class="stat reveal" style="--d: 0.16s">
+          <span class="num" data-count="6">0</span
+          ><span class="lbl">FSM PHASES TO COMPLETE</span>
+        </div>
+        <div class="stat reveal" style="--d: 0.24s">
+          <span class="num">0</span
+          ><span class="lbl">UNVERIFIED CHANGES SHIPPED</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ PERFECTION LOOP ============ -->
+    <section class="sec" id="protocol">
+      <div class="bg-word bw1" data-para="0.16">PERFECTION</div>
+      <div class="bg-word bw2" data-para="-0.1">LOOP</div>
+      <div
+        class="deco bracket"
+        style="top: 80px; right: 6%"
+        data-para="0.1"
+      ></div>
+      <div class="wrap">
+        <div class="sec-head reveal">
+          <span class="sec-tag">// SECTION 01 — GOVERNANCE</span>
+          <h2>THE <em>PERFECTION</em> LOOP</h2>
+          <p class="sec-sub">
+            No code is written until a <code>FID</code> — a Feature
+            Implementation Document — converges through the loop. Hard
+            10-iteration cap. 10% Levenshtein change-cap per pass. The loop runs
+            on the document, not the code.
+          </p>
+        </div>
+        <div class="loop-scroll reveal">
+          <div class="loop-wrap">
+            <div class="loop-track">
+              <div class="loop-node" style="--pc: #ff003c">
+                <span class="ln-idx">PHASE 01</span>
+                <div class="ln-name">RED</div>
+                <div class="ln-agent">Detective</div>
+                <p class="ln-desc">
+                  Issue catalog with file:line evidence, grep call-graphs.
+                </p>
+              </div>
+              <div class="connector">▸▸</div>
+              <div class="loop-node" style="--pc: #00ff9f">
+                <span class="ln-idx">PHASE 02</span>
+                <div class="ln-name">GREEN</div>
+                <div class="ln-agent">Thinker + Recorder</div>
+                <p class="ln-desc">
+                  Converged fix spec in the FID, all questions answered.
+                </p>
+              </div>
+              <div class="connector">▸▸</div>
+              <div class="loop-node" style="--pc: #00fbff">
+                <span class="ln-idx">PHASE 03</span>
+                <div class="ln-name">AUDIT</div>
+                <div class="ln-agent">Verifier</div>
+                <p class="ln-desc">
+                  Double-audit, tests, call-graph reachability greps.
+                </p>
+              </div>
+              <div class="connector">▸▸</div>
+              <div class="loop-node" style="--pc: #b537f2">
+                <span class="ln-idx">PHASE 04</span>
+                <div class="ln-name">ADVERSARIAL</div>
+                <div class="ln-agent">Adversary</div>
+                <p class="ln-desc">
+                  Refutes FAILs, re-audits PASSes. Verdicts override.
+                </p>
+              </div>
+              <div class="connector">▸▸</div>
+              <div class="loop-node" style="--pc: #fcee0a">
+                <span class="ln-idx">PHASE 05</span>
+                <div class="ln-name">SELF-CORRECT</div>
+                <div class="ln-agent">Thinker</div>
+                <p class="ln-desc">Revised fix, updated FID sections.</p>
+              </div>
+              <div class="connector">▸▸</div>
+              <div class="loop-node is-complete" style="--pc: #ff9e2c">
+                <span class="ln-idx">PHASE 06</span>
+                <div class="ln-name">COMPLETE</div>
+                <div class="ln-agent">Recorder</div>
+                <p class="ln-desc">FID archived, CHANGELOG updated.</p>
+              </div>
+            </div>
+            <svg
+              class="loop-back"
+              id="loopBack"
+              viewBox="0 0 1000 78"
+              preserveAspectRatio="none"
+              aria-hidden="true"
+            >
+              <path
+                d="M 985 4 C 985 62, 640 70, 500 70 C 360 70, 15 62, 15 4"
+              />
+              <polygon points="15,0 8,14 22,14" />
+            </svg>
+            <div class="loop-back-label">↺ NEW ISSUES RE-ENTER RED</div>
+          </div>
+        </div>
+        <div class="post-fid reveal">
+          <span class="pf-step first">FID CONVERGED</span
+          ><span class="pf-arrow">──▸</span>
+          <span class="pf-step forge">FORGE WRITES</span
+          ><span class="pf-arrow">──▸</span>
+          <span class="pf-step verify">VERIFIER VALIDATES</span>
+        </div>
+        <p class="pf-note reveal">
+          Implementation begins only after convergence —
+          <em>the agent that writes the code cannot verify it.</em>
+        </p>
+      </div>
+    </section>
+
+    <!-- ============ AGENTS ============ -->
+    <section class="sec alt" id="agents">
+      <div class="bg-word bw1" data-para="0.14">SEPARATION</div>
+      <div class="bg-word bw2" data-para="-0.12">OF DUTIES</div>
+      <div
+        class="deco bar"
+        style="bottom: 120px; left: 4%"
+        data-para="0.12"
+      ></div>
+      <div class="wrap">
+        <div class="sec-head reveal">
+          <span class="sec-tag">// SECTION 02 — THE ROSTER</span>
+          <h2>TEN AGENTS. <em>ONE JOB EACH.</em></h2>
+          <p class="sec-sub">
+            Ten runtime roles with restricted tool sets. The Orchestrator
+            routes; everyone else does exactly one thing — and nothing outside
+            their phase.
+          </p>
+        </div>
+        <div class="agents-grid">
+          <article class="agent featured reveal" style="--pc: #fcee0a">
+            <span class="f-badge">RUNS IN EVERY PHASE</span>
+            <div>
+              <h3 class="a-name">ORCHESTRATOR</h3>
+              <p class="a-role">
+                Routes work through the Perfection Loop, enforces protocol
+                compliance, spawns every agent. The only write access outside
+                GREEN — and only to exempt FID paths.
+              </p>
+            </div>
+            <footer class="a-tools">
+              spawn_agents · transition_phase · render_ui · goal
+            </footer>
+          </article>
+          <article class="agent reveal" style="--pc: #ff003c">
+            <header>
+              <span class="a-idx">AGENT 02</span
+              ><span class="a-phase">RED</span>
+            </header>
+            <h3 class="a-name">DETECTIVE</h3>
+            <p class="a-role">
+              Codebase analysis, grep call-graphs, issue cataloging — every
+              finding cited with file paths.
+            </p>
+            <footer class="a-tools">code_search · query_blast_radius</footer>
+          </article>
+          <article class="agent reveal" style="--pc: #00ff9f; --d: 0.06s">
+            <header>
+              <span class="a-idx">AGENT 03</span
+              ><span class="a-phase">GREEN</span>
+            </header>
+            <h3 class="a-name">FORGE</h3>
+            <p class="a-role">
+              Implementation only. Writes code from the converged FID spec — and
+              cannot self-verify.
+            </p>
+            <footer class="a-tools">write_file · str_replace</footer>
+          </article>
+          <article class="agent reveal" style="--pc: #00fbff; --d: 0.12s">
+            <header>
+              <span class="a-idx">AGENT 04</span
+              ><span class="a-phase">AUDIT</span>
+            </header>
+            <h3 class="a-name">VERIFIER</h3>
+            <p class="a-role">
+              Double-audit, run tests, prove call-graph reachability, reject
+              hallucinated claims.
+            </p>
+            <footer class="a-tools">zero tools — reads via history</footer>
+          </article>
+          <article class="agent reveal" style="--pc: #ff9e2c">
+            <header>
+              <span class="a-idx">AGENT 05</span
+              ><span class="a-phase">FID</span>
+            </header>
+            <h3 class="a-name">RECORDER</h3>
+            <p class="a-role">
+              Creates, tracks and archives FIDs. Updates CHANGELOG. No FID
+              closes without AUDIT evidence.
+            </p>
+            <footer class="a-tools">write_file · glob · code_search</footer>
+          </article>
+          <article class="agent reveal" style="--pc: #8f7bff; --d: 0.06s">
+            <header>
+              <span class="a-idx">AGENT 06</span
+              ><span class="a-phase">PLANNING</span>
+            </header>
+            <h3 class="a-name">THINKER</h3>
+            <p class="a-role">
+              Sequential reasoning engine — stacked thoughts, branches,
+              revisions, convergence.
+            </p>
+            <footer class="a-tools">sequentialthinking</footer>
+          </article>
+          <article class="agent reveal" style="--pc: #62b6ff; --d: 0.12s">
+            <header>
+              <span class="a-idx">AGENT 07</span
+              ><span class="a-phase">EXPLORE</span>
+            </header>
+            <h3 class="a-name">SCOUT</h3>
+            <p class="a-role">
+              Globs, lists directories, reads subtrees. Pure context gathering
+              for the roster.
+            </p>
+            <footer class="a-tools">glob · read_subtree</footer>
+          </article>
+          <article class="agent reveal" style="--pc: #ff6ec7">
+            <header>
+              <span class="a-idx">AGENT 08</span
+              ><span class="a-phase">RESEARCH</span>
+            </header>
+            <h3 class="a-name">RESEARCHER</h3>
+            <p class="a-role">
+              Web search, documentation lookup, mechanical multi-query deep
+              research.
+            </p>
+            <footer class="a-tools">web_search · deep_research</footer>
+          </article>
+          <article class="agent reveal" style="--pc: #9ff28d; --d: 0.06s">
+            <header>
+              <span class="a-idx">AGENT 09</span
+              ><span class="a-phase">DOCS</span>
+            </header>
+            <h3 class="a-name">SCRIBE</h3>
+            <p class="a-role">
+              Session summaries, LESSONS.md, knowledge files, end-of-session
+              capture.
+            </p>
+            <footer class="a-tools">read_files · write_file</footer>
+          </article>
+          <article class="agent reveal" style="--pc: #b537f2; --d: 0.12s">
+            <header>
+              <span class="a-idx">AGENT 10</span
+              ><span class="a-phase">ADVERSARIAL</span>
+            </header>
+            <h3 class="a-name">ADVERSARY</h3>
+            <p class="a-role">
+              Meta-verification. Refutes every FAIL, re-audits every unevidenced
+              PASS. Verdicts override.
+            </p>
+            <footer class="a-tools">code_search · read_files</footer>
+          </article>
+        </div>
+        <p class="agents-note reveal">
+          19 directories under agents/ — 10 conversational roles + helper tool
+          libraries (browser, github, database, knowledge-graph…).
+        </p>
+      </div>
+    </section>
+
+    <!-- ============ RUNTIME / TERMINAL ============ -->
+    <section class="sec" id="runtime">
+      <div class="bg-word bw1" data-para="0.15">NEON SLATE</div>
+      <div
+        class="deco bracket"
+        style="bottom: 90px; left: 3%; border-color: rgba(255, 42, 109, 0.3)"
+        data-para="0.1"
+      ></div>
+      <div class="wrap">
+        <div class="sec-head reveal">
+          <span class="sec-tag">// SECTION 03 — RUNTIME</span>
+          <h2>HARD GATES <em>BEFORE</em> THE WRITE</h2>
+          <p class="sec-sub">
+            Enforcement lives at the tool executor — structural, mechanical, and
+            fail-closed. Watch a session run the loop:
+          </p>
+        </div>
+        <div class="split">
+          <div>
+            <ul class="features">
+              <li class="reveal">
+                <span class="fx-tag">EHEL</span
+                ><strong>15 laws at the tool boundary</strong>
+                <p>
+                  Pre-write gates block read-before-touch, verify-before-proceed
+                  and search-before-create before they happen. Hybrid warns.
+                  Strict blocks all fifteen.
+                </p>
+              </li>
+              <li class="reveal" style="--d: 0.06s">
+                <span class="fx-tag">ZTAP</span
+                ><strong>Zero-trust provenance</strong>
+                <p>
+                  Per-role Ed25519-signed write receipts on an append-only
+                  session ledger.
+                  <code
+                    style="
+                      font-family: var(--mono);
+                      font-size: 0.85em;
+                      color: var(--cyan);
+                    "
+                    >/attest</code
+                  >
+                  exports verifiable trust offline.
+                </p>
+              </li>
+              <li class="reveal" style="--d: 0.12s">
+                <span class="fx-tag">GRAPH</span
+                ><strong>Code Universe export</strong>
+                <p>
+                  tree-sitter index → blast-radius queries, Louvain domain
+                  clusters, and a fully offline interactive HTML map of your
+                  repo.
+                </p>
+              </li>
+              <li class="reveal" style="--d: 0.18s">
+                <span class="fx-tag">SKILLS</span
+                ><strong>Self-improving, operator-gated</strong>
+                <p>
+                  Every tool failure is captured mechanically, deduped, and
+                  drafted into quarantined skills you must explicitly trust.
+                </p>
+              </li>
+              <li class="reveal">
+                <span class="fx-tag">LOCAL</span
+                ><strong>Local-first inference</strong>
+                <p>
+                  Ollama auto-detected with zero keys — or route through
+                  OpenRouter's free tier and seven other hosted gateways.
+                </p>
+              </li>
+              <li class="reveal" style="--d: 0.06s">
+                <span class="fx-tag">REWIND</span
+                ><strong>Checkpoints without git</strong>
+                <p>
+                  Per-turn snapshots of every touched file restore code,
+                  conversation, or fork a new session —
+                  <code
+                    style="
+                      font-family: var(--mono);
+                      font-size: 0.85em;
+                      color: var(--cyan);
+                    "
+                    >/rewind</code
+                  >.
+                </p>
+              </li>
+            </ul>
+            <div class="modes reveal">
+              <div class="mode" style="--mc: #00ff9f">
+                <b>HYBRID</b><span>default · loop engages past 100 lines</span>
+              </div>
+              <div class="mode" style="--mc: #ff003c">
+                <b>STRICT</b><span>full ceremony on every change</span>
+              </div>
+              <div class="mode" style="--mc: #fcee0a">
+                <b>SCAFFOLD</b><span>umbrella-FID project init</span>
+              </div>
+              <div class="mode" style="--mc: #00fbff">
+                <b>ANALYZE</b><span>read-only intelligence</span>
+              </div>
+            </div>
+          </div>
+          <div class="term hud reveal" id="term">
+            <div class="term-bar">
+              <span class="dot r"></span><span class="dot y"></span
+              ><span class="dot g"></span
+              ><span class="term-title"
+                >savant@localhost — ECHO v0.2.0 — bash</span
+              >
+            </div>
+            <div class="term-body" id="termBody"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ INSTALL ============ -->
+    <section class="sec alt install" id="install">
+      <div class="bg-word bw2" data-para="-0.12">JACK IN</div>
+      <div class="wrap">
+        <div class="sec-head reveal" style="text-align: center">
+          <span class="sec-tag">// SECTION 04 — BOOT SEQUENCE</span>
+          <h2>THIRTY SECONDS <em>TO FIRST AGENT</em></h2>
+        </div>
+        <div class="reveal">
+          <div class="cmd-chip hud">
+            <code>npm install -g savant-code</code
+            ><button class="copy-btn" data-copy="npm install -g savant-code">
+              COPY
+            </button>
+          </div>
+          <div class="cmd-chip hud">
+            <code>savant-code</code
+            ><button class="copy-btn" data-copy="savant-code">COPY</button>
+          </div>
+        </div>
+        <p class="install-note reveal">
+          Ollama running? Auto-detected —
+          <span style="color: var(--grn)">zero keys, zero setup</span>. No local
+          daemon? The CLI boots to OpenRouter's free tier: type
+          <code>/provider openrouter</code> and paste a key. Then
+          <code>/health</code> to verify.
+        </p>
+        <div class="providers reveal">
+          <span class="p-chip">OLLAMA</span
+          ><span class="p-chip">OPENROUTER</span
+          ><span class="p-chip">NVIDIA NIM</span>
+          <span class="p-chip">TOKENROUTER</span
+          ><span class="p-chip">TOKENHARBOR</span
+          ><span class="p-chip">OPENCODE GO</span>
+          <span class="p-chip">COMMANDCODE</span><span class="p-chip">NOUS</span
+          ><span class="p-chip">CLOUDFLARE</span>
+        </div>
+        <div class="cta-row reveal" style="margin-top: 44px">
+          <a
+            class="btn primary"
+            href="https://github.com/savant0x/savant-code"
+            target="_blank"
+            rel="noopener"
+            >▶ CLONE THE SOURCE</a
+          >
+          <a
+            class="btn ghost"
+            href="https://www.npmjs.com/package/savant-code"
+            target="_blank"
+            rel="noopener"
+            >NPM ▸ savant-code</a
+          >
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ MARQUEE ============ -->
+    <div class="marquee" aria-hidden="true">
+      <div class="m-track" id="mTrack">
+        <span class="m-item">TYPESCRIPT 5.5</span
+        ><span class="m-item">BUN 1.3.14</span
+        ><span class="m-item">REACT 19</span>
+        <span class="m-item">OPENTUI 0.5.3</span
+        ><span class="m-item">ZUSTAND</span><span class="m-item">ZOD 4</span>
+        <span class="m-item">VERCEL AI SDK 5</span
+        ><span class="m-item">MCP</span><span class="m-item">TREE-SITTER</span>
+        <span class="m-item">SQLITE</span><span class="m-item">TAURI v2</span
+        ><span class="m-item">ED25519</span>
+      </div>
+    </div>
+
+    <!-- ============ FOOTER ============ -->
+    <footer>
+      <div class="wrap">
+        <div class="foot-grid">
+          <div class="foot-brand">
+            <span class="logo">◈ SAVANT<i>//</i><b>CODE</b></span>
+            <p>
+              A terminal-native AI coding assistant governed by the ECHO
+              Protocol.
+              <em
+                >No code is written without a FID that has converged through the
+                Perfection Loop.</em
+              >
+            </p>
+          </div>
+          <div class="foot-links">
+            <div class="foot-h">UPLINK</div>
+            <a
+              href="https://github.com/savant0x/savant-code"
+              target="_blank"
+              rel="noopener"
+              >github.com/savant0x/savant-code</a
+            >
+            <a
+              href="https://www.npmjs.com/package/savant-code"
+              target="_blank"
+              rel="noopener"
+              >npmjs.com/package/savant-code</a
+            >
+            <a
+              href="https://github.com/savant0x/savant-code/blob/main/ECHO.md"
+              target="_blank"
+              rel="noopener"
+              >ECHO.md — the 15 laws</a
+            >
+            <a
+              href="https://github.com/savant0x/savant-code/blob/main/ARCHITECTURE.md"
+              target="_blank"
+              rel="noopener"
+              >ARCHITECTURE.md — roster</a
+            >
+            <a
+              href="https://github.com/savant0x/savant-code/blob/main/CHANGELOG.md"
+              target="_blank"
+              rel="noopener"
+              >CHANGELOG.md — FID archive</a
+            >
+          </div>
+          <div>
+            <div class="foot-h">SYSTEM</div>
+            <div class="foot-meta">
+              LICENSE — APACHE-2.0<br />ECHO PROTOCOL — v0.2.0<br />RELEASE —
+              v0.0.28<br />BUILD — TYPESCRIPT 5.5 / BUN 1.3<br />MODES —
+              HYBRID·SCAFFOLD·STRICT·ANALYZE
+            </div>
+          </div>
+        </div>
+        <div class="foot-bar">
+          © 2026 SAVANT-CODE — <b>FORGED THROUGH THE PERFECTION LOOP</b> —
+          RED▸GREEN▸AUDIT▸ADVERSARIAL▸COMPLETE
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      ;(() => {
+        const $ = (s) => document.querySelector(s)
+        const $$ = (s) => [...document.querySelectorAll(s)]
+        const rand = (a, b) => a + Math.random() * (b - a)
+        const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
+        const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches
+
+        /* ---------- stars ---------- */
+        const starBox = $('#stars')
+        for (let i = 0; i < 150; i++) {
+          const s = document.createElement('i')
+          const sz = Math.random() < 0.85 ? rand(0.6, 2.1) : rand(1.4, 3.6)
+          const glow = Math.random() < 0.16
+          s.style.cssText =
+            `left:${rand(0, 100).toFixed(2)}%;top:${rand(0, 72).toFixed(2)}%;` +
+            `width:${sz.toFixed(1)}px;height:${sz.toFixed(1)}px;opacity:${rand(0.25, 0.95).toFixed(2)};` +
+            (glow
+              ? 'background:var(--cyan);box-shadow:0 0 7px var(--cyan);'
+              : '') +
+            `animation:tw ${rand(2, 7).toFixed(1)}s ease-in-out ${rand(0, 4).toFixed(1)}s infinite alternate`
+          starBox.appendChild(s)
+        }
+
+        /* ---------- floating specks ---------- */
+        const sp = $('#specks')
+        for (let i = 0; i < 14; i++) {
+          const d = document.createElement('i')
+          d.style.cssText =
+            `left:${rand(0, 100).toFixed(1)}%;top:${rand(15, 62).toFixed(1)}%;` +
+            `color:${Math.random() < 0.5 ? 'var(--cyan)' : 'var(--mag)'};` +
+            `animation-duration:${rand(6, 14).toFixed(1)}s;animation-delay:${(-rand(0, 10)).toFixed(1)}s`
+          sp.appendChild(d)
+        }
+
+        /* ---------- procedural skyline (two depths) ---------- */
+        function skyline(sel, o) {
+          const el = $(sel)
+          let parts = [],
+            wins = [],
+            beacons = [],
+            x = -20
+          for (let i = 0; i < o.n; i++) {
+            const w = rand(o.wMin, o.wMax),
+              h = rand(o.hMin, o.hMax)
+            parts.push(
+              `<rect x="${x.toFixed(1)}" y="${(o.H - h).toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}"/>`,
+            )
+            if (Math.random() < 0.5) {
+              // antenna + beacon
+              const sx = x + w * rand(0.2, 0.8),
+                ah = rand(8, 24)
+              parts.push(
+                `<rect x="${sx.toFixed(1)}" y="${(o.H - h - ah).toFixed(1)}" width="2" height="${(ah + 6).toFixed(1)}"/>`,
+              )
+              if (o.beacon && Math.random() < 0.75)
+                beacons.push(
+                  `<circle class="bc" cx="${(sx + 1).toFixed(1)}" cy="${(o.H - h - ah + 2).toFixed(1)}" r="2.1"/>`,
+                )
+            }
+            for (let wy = o.H - h + 9; wy < o.H - 7; wy += o.ys)
+              for (let wx = x + 5; wx < x + w - 6; wx += o.xs)
+                if (Math.random() < o.p) {
+                  const r = Math.random(),
+                    a = o.alpha
+                  const fill =
+                    r < 0.45
+                      ? `rgba(0,251,255,${a})`
+                      : r < 0.62
+                        ? `rgba(255,42,109,${(a * 0.8).toFixed(2)})`
+                        : r < 0.68
+                          ? `rgba(252,238,10,${(a * 0.7).toFixed(2)})`
+                          : `rgba(190,214,255,${(a * 0.5).toFixed(2)})`
+                  wins.push(
+                    `<rect x="${wx.toFixed(1)}" y="${wy.toFixed(1)}" width="3.2" height="4.6" fill="${fill}"/>`,
+                  )
+                }
+            x += w + rand(o.gap * 0.4, o.gap)
+          }
+          el.innerHTML =
+            `<svg viewBox="0 0 ${(x + 20).toFixed(0)} ${o.H}" preserveAspectRatio="none">` +
+            `<g fill="${o.fill}">${parts.join('')}</g>${wins.join('')}<g fill="#ff2a6d">${beacons.join('')}</g></svg>`
+        }
+        skyline('#skyFar', {
+          n: 26,
+          wMin: 26,
+          wMax: 64,
+          hMin: 40,
+          hMax: 150,
+          H: 200,
+          gap: 16,
+          xs: 8,
+          ys: 10,
+          p: 0.14,
+          alpha: 0.45,
+          fill: '#0d1526',
+          beacon: false,
+        })
+        skyline('#skyNear', {
+          n: 17,
+          wMin: 40,
+          wMax: 100,
+          hMin: 70,
+          hMax: 330,
+          H: 360,
+          gap: 22,
+          xs: 9,
+          ys: 12,
+          p: 0.2,
+          alpha: 0.85,
+          fill: '#060a13',
+          beacon: true,
+        })
+
+        /* ---------- parallax engine (mouse + scroll, lerped) ---------- */
+        if (!reduced) {
+          let tx = 0,
+            ty = 0,
+            mx = 0,
+            my = 0
+          const fine = matchMedia('(pointer:fine)').matches
+          if (fine)
+            addEventListener(
+              'pointermove',
+              (e) => {
+                tx = e.clientX / innerWidth - 0.5
+                ty = e.clientY / innerHeight - 0.5
+              },
+              { passive: true },
+            )
+          const heroLayers = $$('.hero .layer')
+          const content = $('.hero .content')
+          const paraEls = $$('[data-para]')
+          ;(function frame() {
+            mx += (tx - mx) * 0.055
+            my += (ty - my) * 0.055
+            const sy = scrollY,
+              vh = innerHeight
+            for (const el of heroLayers) {
+              const d = +el.dataset.depth || 0,
+                lag = +el.dataset.lag || 0
+              el.style.transform = `translate3d(${(-mx * d * 110).toFixed(1)}px,${(-my * d * 55 + sy * lag).toFixed(1)}px,0)`
+            }
+            if (sy < vh)
+              content.style.opacity = Math.max(0, 1 - (sy / vh) * 1.1).toFixed(
+                2,
+              )
+            for (const el of paraEls) {
+              const r = el.parentElement.getBoundingClientRect()
+              const delta = r.top + r.height / 2 - vh / 2
+              el.style.transform = `translate3d(0,${(-delta * +el.dataset.para).toFixed(1)}px,0)`
+            }
+            requestAnimationFrame(frame)
+          })()
+        }
+
+        /* ---------- nav state ---------- */
+        const nav = $('#nav')
+        addEventListener(
+          'scroll',
+          () => nav.classList.toggle('scrolled', scrollY > 30),
+          { passive: true },
+        )
+
+        /* ---------- scroll reveals ---------- */
+        const io = new IntersectionObserver(
+          (es) =>
+            es.forEach((e) => {
+              if (e.isIntersecting) {
+                e.target.classList.add('in')
+                io.unobserve(e.target)
+              }
+            }),
+          { threshold: 0.12 },
+        )
+        $$('.reveal').forEach((el) => io.observe(el))
+
+        /* ---------- stat count-up ---------- */
+        const ioNum = new IntersectionObserver(
+          (es) =>
+            es.forEach((e) => {
+              if (!e.isIntersecting) return
+              ioNum.unobserve(e.target)
+              const el = e.target,
+                t = +el.dataset.count,
+                t0 = performance.now(),
+                dur = 1400
+              ;(function step(n) {
+                const k = Math.min((n - t0) / dur, 1)
+                el.textContent = Math.round(t * (1 - Math.pow(1 - k, 3)))
+                if (k < 1) requestAnimationFrame(step)
+              })(t0)
+            }),
+          { threshold: 0.5 },
+        )
+        $$('.num[data-count]').forEach((el) => ioNum.observe(el))
+
+        /* ---------- FSM phase runner ---------- */
+        const nodes = $$('.loop-node'),
+          lb = $('#loopBack')
+        if (nodes.length && !reduced) {
+          const delays = [1400, 1400, 1600, 1600, 1400, 3200]
+          let li = 0
+          ;(function tick() {
+            nodes.forEach((n) => n.classList.remove('active'))
+            const n = nodes[li]
+            n.classList.add('active')
+            if (n.classList.contains('is-complete')) {
+              lb.classList.add('hot')
+              setTimeout(() => lb.classList.remove('hot'), 900)
+            }
+            const d = delays[li] || 1400
+            li = (li + 1) % nodes.length
+            setTimeout(tick, d)
+          })()
+        }
+
+        /* ---------- simulated terminal session ---------- */
+        const SCRIPT = [
+          { t: '$ savant-code', c: 'cmd', type: true },
+          { t: ' ' },
+          { t: '▌ SAVANT-CODE v0.0.28 :: ECHO PROTOCOL v0.2.0', c: 'sys' },
+          { t: '▌ 10 agents online · FSM: idle → hybrid', c: 'sys' },
+          { t: '▌ provider: ollama (local) — auto-detected ✓', c: 'dim' },
+          { t: ' ' },
+          {
+            t: '> refactor the auth middleware, then verify it',
+            c: 'user',
+            type: true,
+          },
+          { t: ' ' },
+          {
+            t: '[RED]          detective ▸ grep call-graph · 12 findings · file:line evidence',
+            c: 'p-red',
+          },
+          {
+            t: '[GREEN]        thinker ▸ FID-2026-0828-031 converged (3 revisions)',
+            c: 'p-grn',
+          },
+          {
+            t: '[AUDIT]        verifier ▸ typecheck ✓ · tests 41/41 ✓ · law-4 grep ✓',
+            c: 'p-cyn',
+          },
+          {
+            t: '[ADVERSARIAL]  adversary ▸ 1 FAIL refuted · 2 PASSes re-audited',
+            c: 'p-pur',
+          },
+          {
+            t: '[SELF-CORRECT] thinker ▸ FID §3 revised · defaults hardened',
+            c: 'p-yel',
+          },
+          {
+            t: '[COMPLETE]     recorder ▸ FID archived → CHANGELOG.md',
+            c: 'p-org',
+          },
+          { t: ' ' },
+          {
+            t: '▌ forge ▸ wrote 148 lines / 4 files — from the FID, nothing more',
+            c: 'sys',
+          },
+          {
+            t: '▌ verifier ▸ blast-radius query ✓ · citations confirmed',
+            c: 'sys',
+          },
+          { t: ' ' },
+          { t: '✓ RUN COMPLETE — 0 unverified changes shipped', c: 'ok' },
+        ]
+        const body = $('#termBody')
+        async function runTerm() {
+          for (;;) {
+            body.innerHTML = ''
+            for (const line of SCRIPT) {
+              const div = document.createElement('div')
+              div.className = 'tl ' + (line.c || '')
+              body.appendChild(div)
+              if (line.type && !reduced) {
+                div.classList.add('typing')
+                for (const ch of line.t) {
+                  div.textContent += ch
+                  body.scrollTop = body.scrollHeight
+                  await sleep(26 + Math.random() * 38)
+                }
+                div.classList.remove('typing')
+              } else {
+                div.textContent = line.t
+                await sleep(reduced ? 0 : line.type ? 200 : 340)
+              }
+              body.scrollTop = body.scrollHeight
+            }
+            if (reduced) break
+            await sleep(4800)
+            body.classList.add('fade-out')
+            await sleep(600)
+            body.classList.remove('fade-out')
+          }
+        }
+        const ioTerm = new IntersectionObserver(
+          (es) => {
+            if (es.some((e) => e.isIntersecting)) {
+              ioTerm.disconnect()
+              runTerm()
+            }
+          },
+          { threshold: 0.25 },
+        )
+        ioTerm.observe($('#term'))
+
+        /* ---------- copy buttons ---------- */
+        $$('[data-copy]').forEach((b) =>
+          b.addEventListener('click', async () => {
+            const txt = b.dataset.copy
+            try {
+              await navigator.clipboard.writeText(txt)
+            } catch {
+              const ta = document.createElement('textarea')
+              ta.value = txt
+              document.body.appendChild(ta)
+              ta.select()
+              document.execCommand('copy')
+              ta.remove()
+            }
+            const old = b.childNodes.length
+            b.classList.add('done')
+            const label = b.querySelector('.copy-btn') || null
+            if (b.classList.contains('copy-btn')) {
+              b.textContent = 'COPIED ✓'
+            } else {
+              const last = b.lastChild
+              if (last) {
+                last.textContent = '  ✓ COPIED'
+              }
+            }
+            setTimeout(() => {
+              b.classList.remove('done')
+              if (b.classList.contains('copy-btn')) b.textContent = 'COPY'
+              else if (b.lastChild) b.lastChild.textContent = ''
+            }, 1500)
+          }),
+        )
+
+        /* ---------- duplicate marquee content for seamless loop ---------- */
+        const mt = $('#mTrack')
+        mt.innerHTML += mt.innerHTML
+
+        console.log(
+          '%c◈ ECHO PROTOCOL v0.2.0 %c— no code without a converged FID.',
+          'color:#00fbff;font-weight:bold',
+          'color:#ff2a6d',
+        )
+      })()
+    </script>
+  </body>
+</html>

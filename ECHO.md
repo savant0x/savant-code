@@ -422,16 +422,17 @@ Self-reporting is prohibited. The Orchestrator that writes code must not be the 
 > (Gemini Deep Research v2, operator-approved) + the Nova amendment draft
 > (`dev/nova/outbox/2026-08-23-git-workflow-echo-amendment-draft.md`). These
 > rules govern version control in the single-committer, agent-coordinated
-> operation. **Agents never execute git commands** (G1) — this section is the
-> contract the operator enforces, not a tool grant.
+> operation. **Amended 2026-09-05 (operator):** agents may now execute
+> stage/commit/push for granular local commits to origin main (see G1);
+> force-push, history rewrite, and release mutations remain prohibited.
 
 | Rule | Directive |
 | ---- | --------- |
-| **G1** | **Exclusive Operator Commit Authority** — Git operations (stage, commit, push, branch, merge, revert) are executed exclusively by the operator. AI agents perform file-system mutations only; their tool manifests contain no git execution tools. Exactly one committer at all times. |
+| **G1** | **Commit Authority** — Git operations are executed exclusively by the operator. AI agents perform file-system mutations only; their tool manifests contain no git execution tools. Exactly one committer at all times. **Amended 2026-09-05 (operator):** because the release pipeline is complete and the repo is live, agents are **permitted to stage, commit, and push granular local commits to origin main**. Still prohibited: force-push (any ref), history rewrite on main, tag creation or mutation outside the release pipeline, and any operation on published releases or npm packages. The operator retains sole authority over releases. |
 | **G2** | **FID Closure Requires a Commit** — An FID is closed only when its changes are committed locally. Working-tree closure is deprecated. The commit hash is recorded in the FID's Resolution section alongside existing evidence. |
 | **G3** | **Logical Atomic Commits** — One commit per coherent change (normally one FID or a self-contained sub-change). No numeric size cap: a coherent 3,000-line FID diff is one commit; unrelated fixes never share a commit. Preserves independent revertibility. |
 | **G4** | **Path-Scoped Staging During Active Sessions** — Global staging (`git add .`, `git commit -a`) is prohibited while sessions are active. The committer stages explicit paths per completed area, reviews the scoped diff, and commits per area — sequentially. |
-| **G5** | **Offline Durability: Incremental Bundles** — Between releases, back up via incremental git bundles to the OneDrive sync folder (baseline full bundle once, then `last-backup..main` incrementals, `git bundle verify` before advancing the `last-backup` marker). Restore-from-zero: clone full bundle → fetch incrementals → re-link origin. Public remote stays release-only. |
+| **G5** | **Offline Durability: Incremental Bundles** — Between releases, back up via incremental git bundles to the OneDrive sync folder (baseline full bundle once, then `last-backup..main` incrementals, `git bundle verify` before advancing the `last-backup` marker). Restore-from-zero: clone full bundle → fetch incrementals → re-link origin. **Amended 2026-09-05:** origin main now accepts daily granular agent pushes, and the bundle layer is retained as the recovery point of record (a bad push, forced reset, or account compromise is recovered from bundles, not origin). Implemented: `scripts/git-bundle-backup.ts` (FID-2026-0905-008). |
 | **G6** | **Granular History Preserved Through Release** — The release pipeline pushes the week's local commits granularly to public main — no squash into a monolithic release commit. Public history retains per-FID attribution for bisect and audit; the annotated tag marks the release point. |
 | **G7** | **Local Git Hygiene Automation** — `git maintenance start` once per clone (commit-graph updates + incremental repack; default strategy does not run disruptive gc while agents operate). |
 | **G8** | **Commit Message Convention** — `<type>(<scope>): <description> (<FID-ID>)`; types `feat | fix | refactor | test | docs | chore | perf`; imperative lowercase ≤72 chars; FID reference mandatory when an FID drove the change. Enforced friction-free via `.gitmessage` (`git config commit.template .gitmessage`). |
