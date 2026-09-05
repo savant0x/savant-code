@@ -52,13 +52,13 @@ function renderEnvSection(): string {
     // Local runtimes (ollama) have no key env var — handled by detection.
     if (!config.credentials.envVar) continue
 
-    lines.push(
-      `# ${config.label}: ${config.baseUrl}${
-        config.credentials.resolver === 'openrouter'
-          ? ' (resolver: OR_MASTER_KEY → OPENROUTER_API_KEY → INFERENCE_API_KEY)'
+    const resolverNote =
+      config.credentials.resolver === 'openrouter'
+        ? ' (resolver: OR_MASTER_KEY → OPENROUTER_API_KEY → INFERENCE_API_KEY)'
+        : config.credentials.resolver === 'opencode'
+          ? ' (shared OpenCode key; legacy OPENCODE_GO_API_KEY honored)'
           : ''
-      }`,
-    )
+    lines.push(`# ${config.label}: ${config.baseUrl}${resolverNote}`)
     lines.push(
       `${config.credentials.envVar}=${ENV_DUMMY(config.credentials.envVar)}`,
     )
@@ -85,6 +85,9 @@ const TABLE_NOTES: Record<string, string> = {
   'opencode-go': 'Hosted gateway (dual-protocol)',
   commandcode: 'OpenAI-compatible hosted inference (dual-protocol)',
   nous: 'OpenAI-compatible direct inference; Portal OAuth is separate',
+  kiosapi: 'OpenAI-compatible gateway (live catalog)',
+  'opencode-zen':
+    'Pay-per-use gateway, 70 models incl. free tier (multi-protocol)',
   cloudflare:
     'Env-only — not in the `/provider` picker; requires the account id too',
 }

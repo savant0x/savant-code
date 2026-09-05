@@ -103,7 +103,10 @@ describe('runSessionEndReview', () => {
       ].join('\n') + '\n',
       'utf8',
     )
-    const review = runSessionEndReview(root)
+    // Inject the fixture's frozen clock — runSessionEndReview forwards `now`
+    // to the 14-day recurrence window, so the fixture records stay in-window
+    // regardless of the real date (date-bomb guard).
+    const review = runSessionEndReview(root, { now: NOW })
     const agenda = fs.readFileSync(path.join(root, 'dev', 'agenda.md'), 'utf8')
     expect(review.items).toHaveLength(1)
     expect(agenda).toContain('run_command')

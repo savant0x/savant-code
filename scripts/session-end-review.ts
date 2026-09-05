@@ -90,9 +90,12 @@ export function buildAgenda(
 }
 
 /** Refresh dev/agenda.md from the ledger. Returns the review result. */
-export function runSessionEndReview(rootDir: string): SessionEndReview {
+export function runSessionEndReview(
+  rootDir: string,
+  opts: { now?: number } = {},
+): SessionEndReview {
   const records = readExperienceLedger(rootDir)
-  const recurrences = computeRecurrences(records)
+  const recurrences = computeRecurrences(records, { now: opts.now })
   const built = buildAgenda(recurrences)
   const agendaFile = path.join(rootDir, AGENDA_PATH)
   fs.mkdirSync(path.dirname(agendaFile), { recursive: true })

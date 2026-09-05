@@ -130,7 +130,10 @@ describe('draftCandidates', () => {
       `# LEARNINGS\n\n${LESSON_TEMPLATE}`,
       'utf8',
     )
-    const drafted = draftCandidates(root)
+    // Inject the fixture's frozen clock — draftCandidates forwards `now` to
+    // the 14-day recurrence window, so the Aug 21–23 fixture records stay
+    // in-window regardless of the real date (date-bomb guard).
+    const drafted = draftCandidates(root, { now: NOW })
     expect(drafted.length).toBeGreaterThan(0)
     const draftDir = path.join(
       root,

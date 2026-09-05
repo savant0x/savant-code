@@ -48,14 +48,12 @@ import { resolve } from 'path'
 
 import { format as formatWithPrettier } from 'prettier'
 
-import { validateEmbeddedLearningSource } from './learnings-core.js'
+import { runContentAssertions } from './protocol-bundle-assertions.js'
 import {
   extractFacts,
   renderInstructions,
   renderRefresh,
-  validateCondensedCopies,
 } from './protocol-copies.js'
-import { toolNames } from '../common/src/tools/constants'
 
 const ROOT = resolve(import.meta.dir, '..')
 const OUT_BUNDLE = resolve(
@@ -192,127 +190,6 @@ function parseFactsForRender(echoMd: string): ReturnType<typeof extractFacts> {
   return extractFacts(echoMd)
 }
 
-/**
- * Content assertions (run in both modes):
- * - condensed-copy validation against ECHO.md (protocol-copies);
- * - harness-boundary sweep: harness-injected context must contain ZERO
- *   references to the single-agent document.
- */
-/**
- * FID-2026-0817-002 A1: drift guard for the phase-gating classification in
- * the generated instructions. The instructions claim "only 5 tools are
- * phase-gated; everything else (including run_readonly_command) is all-phase";
- * this asserts that claim against the live tool registry so a reclassified or
- * renamed tool fails generation instead of silently drifting.
- */
-function validateToolAvailability(): string[] {
-  const failures: string[] = []
-  const phaseGated = [
-    'write_file',
-    'str_replace',
-    'apply_patch',
-    'run_terminal_command',
-    'sequentialthinking',
-  ] as const
-  const allPhaseSanity = [
-    'run_readonly_command',
-    'read_files',
-    'code_search',
-    'glob',
-    'list_directory',
-  ] as const
-  const registry = new Set(toolNames)
-  for (const name of phaseGated) {
-    if (!registry.has(name)) {
-      failures.push(
-        `phase-gated tool "${name}" is missing from the toolNames registry.`,
-      )
-    }
-  }
-  for (const name of allPhaseSanity) {
-    if (!registry.has(name)) {
-      failures.push(
-        `all-phase tool "${name}" is missing from the toolNames registry.`,
-      )
-    }
-    if ((phaseGated as readonly string[]).includes(name)) {
-      failures.push(
-        `tool "${name}" is documented as all-phase but listed as phase-gated.`,
-      )
-    }
-  }
-  return failures
-}
-
-function runContentAssertions(): string[] {
-  const failures: string[] = []
-  const echoMd = readFileSync(resolve(ROOT, 'ECHO.md'), 'utf8')
-
-  failures.push(...validateCondensedCopies(echoMd))
-  failures.push(...validateToolAvailability())
-
-  const curatedLearningPath = resolve(ROOT, 'docs/embedded-learnings.md')
-  const curatedLearning = readFileSafe(curatedLearningPath)
-  if (curatedLearning === undefined) {
-    failures.push(
-      'docs/embedded-learnings.md is missing — embedded learning source is required.',
-    )
-  } else {
-    failures.push(
-      ...validateEmbeddedLearningSource(
-        'docs/embedded-learnings.md',
-        curatedLearning,
-      ).map((issue) => `[${issue.code}] ${issue.message}`),
-    )
-  }
-
-  // Harness-injected context (hand-written + generated copies that ship in
-  // prompts/refresh). Generator scripts are build tooling, not injected.
-  const boundaryFiles: Array<[string, string | undefined]> = [
-    [
-      'packages/agent-runtime/src/echo/protocol-summary.ts',
-      readFileSafe(
-        resolve(ROOT, 'packages/agent-runtime/src/echo/protocol-summary.ts'),
-      ),
-    ],
-    [
-      'agents/savant/system-prompt.ts',
-      readFileSafe(resolve(ROOT, 'agents/savant/system-prompt.ts')),
-    ],
-    [
-      'agents/savant/prompts.ts',
-      readFileSafe(resolve(ROOT, 'agents/savant/prompts.ts')),
-    ],
-    [
-      'agents/thinker/thinker.ts',
-      readFileSafe(resolve(ROOT, 'agents/thinker/thinker.ts')),
-    ],
-    [
-      'common/src/constants/agents.ts',
-      readFileSafe(resolve(ROOT, 'common/src/constants/agents.ts')),
-    ],
-    [
-      'common/src/constants/echo-protocol-instructions.generated.ts',
-      readFileSafe(OUT_INSTRUCTIONS),
-    ],
-    [
-      'packages/agent-runtime/src/echo/protocol-refresh.generated.ts',
-      readFileSafe(OUT_REFRESH),
-    ],
-  ]
-  for (const [filePath, content] of boundaryFiles) {
-    if (content === undefined) continue // not yet generated this run — covered by drift check
-    const match = content.match(/single[ _-]?agent/i)
-    if (match) {
-      failures.push(
-        `${filePath} references the single-agent document ("${match[0].trim()}") in harness-injected context — purge it.`,
-      )
-    }
-  }
-
-  return failures
-}
-
 /** Resolve repo prettier config (explicitly — resolveConfig returns null here). */
 function loadPrettierConfig(): Record<string, unknown> {
   try {
@@ -326,7 +203,10 @@ function loadPrettierConfig(): Record<string, unknown> {
 
 async function main(): Promise<void> {
   const check = process.argv.includes('--check')
-  const failures = runContentAssertions()
+  const failures = runContentAssertions({
+    outInstructions: OUT_INSTRUCTIONS,
+    outRefresh: OUT_REFRESH,
+  })
   if (failures.length > 0) {
     for (const failure of failures) {
       console.error(`protocol-bundle: ${failure}`)
@@ -397,14 +277,6 @@ async function main(): Promise<void> {
   console.log(
     `protocol bundle: ${changedCount > 0 ? `updated (${changedCount} file(s))` : 'unchanged'} (${GROUNDING_FILES.length} grounding files, harness v${readHarnessContract().version})`,
   )
-}
-
-function readFileSafe(filePath: string): string | undefined {
-  try {
-    return readFileSync(filePath, 'utf8')
-  } catch {
-    return undefined
-  }
 }
 
 main()

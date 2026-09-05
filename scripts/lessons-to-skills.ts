@@ -181,9 +181,12 @@ export function findCandidates(
 }
 
 /** Draft candidate skills into quarantine via the shared engine path. */
-export function draftCandidates(rootDir: string): string[] {
+export function draftCandidates(
+  rootDir: string,
+  opts: { now?: number } = {},
+): string[] {
   const drafted: string[] = []
-  for (const candidate of findCandidates(rootDir)) {
+  for (const candidate of findCandidates(rootDir, opts)) {
     if (candidate.reasons.length > 0) continue
     const name = candidate.canonicalRule
       .replace(/[^a-z0-9]+/g, '-')

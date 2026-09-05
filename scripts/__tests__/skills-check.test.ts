@@ -180,59 +180,8 @@ describe('checkSkillContent', () => {
     expect(sectionErrors.length).toBeGreaterThan(0)
   })
 
-  test('flags blocklisted shell patterns on any skill', () => {
-    const root = fixtureRoot()
-    const file = writeSkill(
-      root,
-      'demo',
-      STANDARD_BODY.replace('Run `bun test`.', 'Run `sudo rm -rf /tmp/x`.'),
-    )
-    const findings = checkSkillContent({
-      entry: 'demo',
-      filePath: file,
-      content: fs.readFileSync(file, 'utf8'),
-      quarantined: false,
-    })
-    expect(findings.some((f) => f.rule === 'command-blocklist')).toBe(true)
-  })
-
-  test('flags an unknown command word on agent-authored skills', () => {
-    const root = fixtureRoot()
-    const file = agentSkill(
-      root,
-      'demo',
-      STANDARD_BODY.replace(
-        'Run `bun test`.',
-        'Run `evil-mystery-tool --flag`.',
-      ),
-    )
-    const findings = checkSkillContent({
-      entry: 'demo',
-      filePath: file,
-      content: fs.readFileSync(file, 'utf8'),
-      quarantined: false,
-    })
-    expect(
-      findings.some(
-        (f) =>
-          f.rule === 'command-allowlist' &&
-          f.message.includes('evil-mystery-tool'),
-      ),
-    ).toBe(true)
-  })
-
-  test('flags the line ceiling', () => {
-    const root = fixtureRoot()
-    const body = Array.from({ length: 320 }, (_, i) => `line ${i}`).join('\n')
-    const file = writeSkill(root, 'demo', body)
-    const findings = checkSkillContent({
-      entry: 'demo',
-      filePath: file,
-      content: fs.readFileSync(file, 'utf8'),
-      quarantined: false,
-    })
-    expect(findings.some((f) => f.rule === 'line-ceiling')).toBe(true)
-  })
+  // FID-2026-0819-005 Loop 187: the blocklist/allowlist/line-ceiling rule
+  // tests moved to skills-check-rules.test.ts.
 
   test('warns on missing version for hand-written and errors for agent-authored', () => {
     const root = fixtureRoot()

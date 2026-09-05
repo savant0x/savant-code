@@ -23,6 +23,9 @@ export const VALIDATION_WORKSPACE_POLICY: readonly WorkspacePolicy[] = [
   { workspace: 'agents', requiredTypecheck: true, requiredTest: true },
   { workspace: 'cli', requiredTypecheck: true, requiredTest: true },
   { workspace: 'common', requiredTypecheck: true, requiredTest: true },
+  // Desktop shell (FID-2026-0820-009): typecheck joins the ×12 chain; runtime
+  // tests are owned by `cargo test` in src-tauri and stay outside bun chains.
+  { workspace: 'desktop', requiredTypecheck: true, requiredTest: false },
   { workspace: 'evals', requiredTypecheck: true, requiredTest: true },
   { workspace: 'savant-free', requiredTypecheck: false, requiredTest: false },
   {
@@ -84,6 +87,76 @@ export type ValidationGateSpec = {
   command: string
   args: string[]
   cwd: string
+}
+
+/** Validates the shared root gate contract without executing any commands. */
+export function validateGateContract(
+  gates: readonly ValidationGateSpec[],
+  root: string,
+): ValidationIssue[] {
+  const issues: ValidationIssue[] = []
+  const seen = new Set<string>()
+  for (const gate of gates) {
+    if (seen.has(gate.label)) {
+      issues.push({
+        code: 'gate.duplicate',
+        message: `${gate.label} appears more than once in the root gate contract.`,
+      })
+    }
+    seen.add(gate.label)
+    if (!gate.command || gate.args.length === 0 || gate.cwd !== root) {
+      issues.push({
+        code: 'gate.malformed',
+        message: `${gate.label} is malformed or is not bound to repository root ${root}.`,
+      })
+    }
+  }
+  for (const label of [
+    'lockfile',
+    'build:sdk',
+    'cli-bundle-resolution',
+    'typecheck',
+    'test',
+    'eslint',
+    'repository-validation',
+    'provider-reference',
+    'current-hygiene',
+    'protocol-bundle',
+    'markdownlint',
+    'prettier',
+  ]) {
+    if (!seen.has(label)) {
+      issues.push({
+        code: 'gate.missing',
+        message: `${label} is missing from the root gate contract.`,
+      })
+    }
+  }
+  return issues
+}
+
+/** FID-2026-0824-019: opt-in switch for the Tier-3 capability gate. */
+export const RELEASE_EVAL_TIER_ENV = 'SAVANT_CODE_RELEASE_EVAL_TIER'
+
+/**
+ * Optional Tier-3 capability stage (FID-2026-0824-019). Inactive unless the
+ * operator exports SAVANT_CODE_RELEASE_EVAL_TIER=full — the rotated corpus
+ * run costs ~2M tokens and stays opt-in by design. The gate executes the
+ * evals CLI's structural rehearsal (deterministic rotation + token
+ * ceiling), failing closed on breach; live evaluate-mode runs remain
+ * operator-keyed.
+ */
+export function releaseEvalTierGate(
+  root: string,
+  env: Record<string, string | undefined> = process.env,
+): ValidationGateSpec | null {
+  if ((env[RELEASE_EVAL_TIER_ENV] ?? '').trim() !== 'full') return null
+  return {
+    label: 'release-eval-tier3',
+    command: 'bun',
+    args: ['run', '--cwd=evals', 'v2/src/cli.ts', '--release-tier'],
+    cwd: root,
+  }
 }
 
 /**
@@ -179,6 +252,10 @@ export function repositoryValidationGates(
       args: ['run', 'lint:md'],
       cwd: root,
     },
+    // FID-2026-0824-019: optional Tier-3 capability gate (opt-in via env).
+    ...[releaseEvalTierGate(root)].filter(
+      (gate): gate is ValidationGateSpec => gate !== null,
+    ),
     {
       // `bun x` (not `bunx`) so the release subprocess allowlist
       // (ALLOWED_RELEASE_COMMANDS in public-release.ts) accepts it.

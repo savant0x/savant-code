@@ -86,6 +86,14 @@ const intentionalLinePatterns = new Map<string, readonly RegExp[]>([
     [/not implemented in test runtime/],
   ],
   [
+    'common/src/testing/fixtures/agent-runtime-deps.ts',
+    [/not implemented in test runtime/],
+  ],
+  [
+    'common/src/testing/fixtures/agent-runtime-primitives.ts',
+    [/not implemented in test runtime/],
+  ],
+  [
     'packages/agent-runtime/src/echo/fid-validator.ts',
     [/placeholder text/, /PLACEHOLDER_PATTERN/, /Contains placeholder text/],
   ],
