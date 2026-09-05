@@ -15,18 +15,16 @@
  * stronger than a one-time module-load parse.
  */
 import { MODEL_CATALOGS } from './model-catalogs'
-import {
-  COMMANDCODE_PROTOCOLS,
-  OPENCODE_GO_PROTOCOLS,
-} from '../constants/model-config'
+import { PROVIDER_PROTOCOL_MAPS } from '../constants/model-config'
 
-import type { ProviderConfig, ProviderProtocolMap } from './types'
+import type { ProviderConfig } from './types'
 
 const KINDS = new Set<ProviderConfig['kind']>(['gateway', 'local', 'env-only'])
 const PROTOCOLS = new Set<ProviderConfig['protocol']>([
   'openai',
   'anthropic',
   'openai-anthropic',
+  'multi',
 ])
 const ID_TRANSFORMS = new Set<ProviderConfig['idTransform']>([
   'strip',
@@ -35,13 +33,7 @@ const ID_TRANSFORMS = new Set<ProviderConfig['idTransform']>([
 ])
 const CATALOG_SOURCES = new Set(['live', 'static', 'none'])
 
-const PROTOCOL_MAPS: Record<
-  ProviderProtocolMap,
-  Record<string, 'openai' | 'anthropic'>
-> = {
-  OPENCODE_GO_PROTOCOLS,
-  COMMANDCODE_PROTOCOLS,
-}
+const PROTOCOL_MAPS = PROVIDER_PROTOCOL_MAPS
 
 /**
  * Parse a registry URL, tolerating `{ENV_VAR}` placeholders (Cloudflare's
@@ -72,17 +64,30 @@ export function validateProviderRegistry(
   registry: Record<string, ProviderConfig>,
 ): string[] {
   const problems: string[] = []
-  const envVarOwners = new Map<string, string>()
+  const envVarOwners = new Map<
+    string,
+    { owner: string; resolver: ProviderConfig['credentials']['resolver'] }
+  >()
   const ids = Object.keys(registry)
 
-  const claimEnvVar = (envVar: string, owner: string): void => {
+  const claimEnvVar = (
+    envVar: string,
+    owner: string,
+    resolver: ProviderConfig['credentials']['resolver'],
+  ): void => {
     const existing = envVarOwners.get(envVar)
     if (existing !== undefined) {
+      // Intentional sharing: entries behind the SAME named resolver chain
+      // resolve one shared credential (opencode-go + opencode-zen). Anything
+      // else sharing a var is an accidental collision.
+      if (resolver !== undefined && resolver === existing.resolver) {
+        return
+      }
       problems.push(
-        `Env var ${envVar} is used by both '${existing}' and '${owner}' — must be unique`,
+        `Env var ${envVar} is used by both '${existing.owner}' and '${owner}' — must be unique`,
       )
     } else {
-      envVarOwners.set(envVar, owner)
+      envVarOwners.set(envVar, { owner, resolver })
     }
   }
 
@@ -150,10 +155,14 @@ export function validateProviderRegistry(
       )
     }
     if (config.credentials.envVar) {
-      claimEnvVar(config.credentials.envVar, key)
+      claimEnvVar(
+        config.credentials.envVar,
+        key,
+        config.credentials.resolver,
+      )
     }
     for (const extra of config.credentials.extra ?? []) {
-      claimEnvVar(extra.envVar, key)
+      claimEnvVar(extra.envVar, key, undefined)
     }
 
     // Static catalog: every model id must carry the routing prefix so
@@ -169,12 +178,14 @@ export function validateProviderRegistry(
       }
     }
 
-    // Dual-protocol providers: protocol map required, and every catalog model
-    // must be present in it (or routing fails closed at request time).
-    if (config.protocol === 'openai-anthropic') {
+    // Map-dispatched providers (`openai-anthropic` dual or `multi`):
+    // protocol map required, and every static catalog model must be present
+    // in it (or routing fails closed at request time). Live catalogs are not
+    // enumerated — coverage is enforced by catalog tests, not here.
+    if (config.protocol === 'openai-anthropic' || config.protocol === 'multi') {
       if (!config.protocolMap) {
         problems.push(
-          `'${key}' is dual-protocol but has no protocolMap — the generic factory fails closed without one`,
+          `'${key}' is map-dispatched (${config.protocol}) but has no protocolMap — the generic factory fails closed without one`,
         )
       } else {
         const map = PROTOCOL_MAPS[config.protocolMap]

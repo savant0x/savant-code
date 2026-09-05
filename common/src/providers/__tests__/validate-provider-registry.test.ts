@@ -183,5 +183,33 @@ describe('validateProviderRegistry (FID-2026-0809-001 Phase 5)', () => {
       })
       expect(problems.some((p) => p.includes('invalid order'))).toBe(true)
     })
+
+    test('entries sharing one resolver may share its env var (opencode merge)', () => {
+      const problems = validateProviderRegistry({
+        a: base({
+          id: 'a',
+          credentials: { envVar: 'SHARED_KEY', resolver: 'opencode' },
+        }),
+        b: base({
+          id: 'b',
+          credentials: { envVar: 'SHARED_KEY', resolver: 'opencode' },
+        }),
+      })
+      expect(problems.some((p) => p.includes('used by both'))).toBe(false)
+    })
+
+    test('entries with different resolvers may not share an env var', () => {
+      const problems = validateProviderRegistry({
+        a: base({
+          id: 'a',
+          credentials: { envVar: 'SHARED_KEY', resolver: 'opencode' },
+        }),
+        b: base({
+          id: 'b',
+          credentials: { envVar: 'SHARED_KEY', resolver: 'openrouter' },
+        }),
+      })
+      expect(problems.some((p) => p.includes('used by both'))).toBe(true)
+    })
   })
 })

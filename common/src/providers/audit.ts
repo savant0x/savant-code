@@ -27,6 +27,7 @@ function requiredExceptionKinds(
     kinds.add('credential-resolver')
   if (config.catalog.source === 'live') kinds.add('live-catalog')
   if (config.protocol === 'openai-anthropic') kinds.add('dual-protocol')
+  if (config.protocol === 'multi') kinds.add('multi-protocol')
   if ((config.credentials.extra?.length ?? 0) > 0)
     kinds.add('extra-credentials')
   if (config.idTransform === 'cf-rewrite') kinds.add('id-rewrite')

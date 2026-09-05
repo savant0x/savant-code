@@ -9,6 +9,7 @@ export type ProviderExceptionKind =
   | 'credential-resolver'
   | 'live-catalog'
   | 'dual-protocol'
+  | 'multi-protocol'
   | 'extra-credentials'
   | 'id-rewrite'
   | 'local-runtime'
@@ -44,7 +45,7 @@ export const PROVIDER_EXCEPTION_MANIFEST: readonly ProviderExceptionManifestEntr
     },
     {
       providerId: 'opencode-go',
-      kinds: ['dual-protocol'],
+      kinds: ['credential-resolver', 'dual-protocol'],
       owner: 'common/src/constants/model-config.ts',
       evidence: ['sdk/src/impl/model-provider/model-factories.ts'],
     },
@@ -60,6 +61,26 @@ export const PROVIDER_EXCEPTION_MANIFEST: readonly ProviderExceptionManifestEntr
       owner: 'cli/src/utils/openrouter-models/nous.ts',
       evidence: [
         'cli/src/utils/openrouter-models/nous.ts',
+        'cli/src/utils/openrouter-models/gateway.ts',
+      ],
+    },
+    {
+      providerId: 'kiosapi',
+      kinds: ['live-catalog'],
+      owner: 'cli/src/utils/openrouter-models/kiosapi.ts',
+      evidence: [
+        'cli/src/utils/openrouter-models/kiosapi.ts',
+        'cli/src/utils/openrouter-models/gateway.ts',
+      ],
+    },
+    {
+      providerId: 'opencode-zen',
+      kinds: ['credential-resolver', 'live-catalog', 'multi-protocol'],
+      owner: 'common/src/constants/model-config/provider-protocols.ts',
+      evidence: [
+        'common/src/constants/model-config/provider-protocols.ts',
+        'sdk/src/impl/model-provider/model-factories.ts',
+        'cli/src/utils/openrouter-models/opencode-zen.ts',
         'cli/src/utils/openrouter-models/gateway.ts',
       ],
     },

@@ -2,14 +2,17 @@ import fs from 'fs'
 import path from 'path'
 
 import {
-  boolOr,
   extractYamlSection,
-  parseHookConfigs,
   parseProtocolContract,
-  parseYamlBool,
-  parseYamlNumber,
-  parseYamlString,
 } from './protocol-config-parser'
+import {
+  applyCavemanSection,
+  applyCompressionSection,
+  applyHooksSection,
+  applyProvenanceSection,
+  applyTelemetrySection,
+  applyYagniSection,
+} from './protocol-config-sections'
 import {
   DEFAULT_CAVEMAN,
   DEFAULT_COMPRESSION,
@@ -111,168 +114,22 @@ export function readProtocolConfig(cwd: string): ProtocolConfig {
       language = langMatch[1]
     }
 
-    // Token-optimization settings (FID-2026-0806-003, design doc §5). All
-    // keys are optional — missing keys keep the defaults above.
-    const compressionLines = extractYamlSection(lines, 'compression', 0)
-    const compressionText = compressionLines.join('\n')
-
-    if (compressionLines.length > 0) {
-      const enabled = parseYamlBool(compressionText, 'enabled')
-      const microCompact = parseYamlBool(compressionText, 'microCompact')
-      const keepRecentTokens = parseYamlNumber(
-        compressionText,
-        'keepRecentTokens',
-      )
-      const autoCompactRatio = parseYamlNumber(
-        compressionText,
-        'autoCompactRatio',
-      )
-      const forceCompactOffset = parseYamlNumber(
-        compressionText,
-        'forceCompactOffset',
-      )
-      const microCompactMaxKeepRecent = parseYamlNumber(
-        compressionText,
-        'microCompactMaxKeepRecent',
-      )
-      const microCompactFloorTokens = parseYamlNumber(
-        compressionText,
-        'microCompactFloorTokens',
-      )
-      const model = parseYamlString(compressionText, 'model')
-      compression.enabled = boolOr(enabled, compression.enabled)
-      compression.microCompact = boolOr(microCompact, compression.microCompact)
-      if (keepRecentTokens !== undefined) {
-        compression.keepRecentTokens = keepRecentTokens
-      }
-      if (autoCompactRatio !== undefined) {
-        compression.autoCompactRatio = autoCompactRatio
-      }
-      if (forceCompactOffset !== undefined) {
-        compression.forceCompactOffset = forceCompactOffset
-      }
-      if (microCompactMaxKeepRecent !== undefined) {
-        compression.microCompactMaxKeepRecent = microCompactMaxKeepRecent
-      }
-      if (microCompactFloorTokens !== undefined) {
-        compression.microCompactFloorTokens = microCompactFloorTokens
-      }
-      // FID-2026-0824-024 post-closure amendment: digest caps.
-      const digestHeadChars = parseYamlNumber(
-        compressionText,
-        'digestHeadChars',
-      )
-      if (digestHeadChars !== undefined) {
-        compression.digestHeadChars = digestHeadChars
-      }
-      const digestTailChars = parseYamlNumber(
-        compressionText,
-        'digestTailChars',
-      )
-      if (digestTailChars !== undefined) {
-        compression.digestTailChars = digestTailChars
-      }
-      if (model !== undefined) {
-        compression.model = model
-      }
-
-      const idleLines = extractYamlSection(
-        compressionLines,
-        'idleCompaction',
-        2,
-      )
-      const idleText = idleLines.join('\n')
-      if (idleLines.length > 0) {
-        compression.idleCompaction.enabled = boolOr(
-          parseYamlBool(idleText, 'enabled'),
-          compression.idleCompaction.enabled,
-        )
-        const idleAfterSeconds = parseYamlNumber(idleText, 'idleAfterSeconds')
-        if (idleAfterSeconds !== undefined) {
-          compression.idleCompaction.idleAfterSeconds = idleAfterSeconds
-        }
-        const floorTokens = parseYamlNumber(idleText, 'floorTokens')
-        if (floorTokens !== undefined) {
-          compression.idleCompaction.floorTokens = floorTokens
-        }
-      }
-
-      const summaryLines = extractYamlSection(compressionLines, 'summary', 2)
-      const summaryText = summaryLines.join('\n')
-      if (summaryLines.length > 0) {
-        compression.summary.requiredSections = boolOr(
-          parseYamlBool(summaryText, 'requiredSections'),
-          compression.summary.requiredSections,
-        )
-        const exactIdentifiers = parseYamlString(
-          summaryText,
-          'exactIdentifiers',
-        )
-        if (exactIdentifiers === 'strict' || exactIdentifiers === 'normal') {
-          compression.summary.exactIdentifiers = exactIdentifiers
-        }
-      }
-    }
-
-    const yagniLines = extractYamlSection(lines, 'yagni', 0)
-    const yagniText = yagniLines.join('\n')
-    if (yagniLines.length > 0) {
-      yagni.enforced = boolOr(
-        parseYamlBool(yagniText, 'enforced'),
-        yagni.enforced,
-      )
-      const ledger = parseYamlString(yagniText, 'ledger')
-      if (ledger !== undefined) {
-        yagni.ledger = ledger
-      }
-    }
-
-    const cavemanLines = extractYamlSection(lines, 'caveman', 0)
-    const cavemanText = cavemanLines.join('\n')
-    if (cavemanLines.length > 0) {
-      caveman.enabled = boolOr(
-        parseYamlBool(cavemanText, 'enabled'),
-        caveman.enabled,
-      )
-      caveman.autoClarity = boolOr(
-        parseYamlBool(cavemanText, 'autoClarity'),
-        caveman.autoClarity,
-      )
-    }
-
-    const telemetryLines = extractYamlSection(lines, 'telemetry', 0)
-    const telemetryText = telemetryLines.join('\n')
-    if (telemetryLines.length > 0) {
-      telemetry.enabled = boolOr(
-        parseYamlBool(telemetryText, 'enabled'),
-        telemetry.enabled,
-      )
-      const cacheHitAlertDrop = parseYamlNumber(
-        telemetryText,
-        'cacheHitAlertDrop',
-      )
-      if (cacheHitAlertDrop !== undefined) {
-        telemetry.cacheHitAlertDrop = cacheHitAlertDrop
-      }
-    }
-
-    // FID-2026-0813-004: ZTAP provenance mode. Only `off|record|enforce` are
-    // accepted; anything else (or a missing key) keeps the `record` default.
-    const provenanceLines = extractYamlSection(lines, 'provenance', 0)
-    const provenanceText = provenanceLines.join('\n')
-    if (provenanceLines.length > 0) {
-      const mode = parseYamlString(provenanceText, 'mode')
-      if (mode === 'off' || mode === 'record' || mode === 'enforce') {
-        provenance.mode = mode
-      }
-    }
-
-    // FID-2026-0814-003: project-scoped lifecycle hooks. Invalid entries are
-    // dropped fail-safe (see parseHookConfigs).
-    const hooksLines = extractYamlSection(lines, 'hooks', 0)
-    if (hooksLines.length > 0) {
-      hooks.push(...parseHookConfigs(hooksLines))
-    }
+    // Token-optimization settings (FID-2026-0806-003, design doc §5).
+    // Section appliers extracted verbatim to protocol-config-sections.ts
+    // (FID-2026-0819-005 Loop 150); each applies YAML overrides onto the
+    // defaults above.
+    applyCompressionSection(
+      extractYamlSection(lines, 'compression', 0),
+      compression,
+    )
+    applyYagniSection(extractYamlSection(lines, 'yagni', 0), yagni)
+    applyCavemanSection(extractYamlSection(lines, 'caveman', 0), caveman)
+    applyTelemetrySection(extractYamlSection(lines, 'telemetry', 0), telemetry)
+    applyProvenanceSection(
+      extractYamlSection(lines, 'provenance', 0),
+      provenance,
+    )
+    applyHooksSection(extractYamlSection(lines, 'hooks', 0), hooks)
   } catch {
     // File doesn't exist or can't be read — use defaults
   }

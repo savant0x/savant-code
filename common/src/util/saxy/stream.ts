@@ -6,6 +6,7 @@ import { StringDecoder } from 'string_decoder'
 
 import { findIndexOutside, parseAttrs, parseEntities } from './parse'
 import { TagProcessor } from './tag-processor'
+import { flushTextBuffer, handleTextRun, isXMLTagStart } from './text-handler'
 import { Node } from './types'
 
 import type {
@@ -28,11 +29,13 @@ export interface Saxy {
  * to the different tokens encountered.
  */
 export class Saxy extends Transform {
-  private _decoder: StringDecoder
-  private _tags: TagProcessor
-  private _waiting: { token: string; data: unknown } | null
-  private _textBuffer: string // NEW: Text buffer as class member
-  private _shouldParseEntities: boolean
+  // Package-private fields: the text-handler module (same directory,
+  // FID-2026-0819-005 Loop 151) operates on this minimal context surface.
+  _decoder: StringDecoder
+  _tags: TagProcessor
+  _waiting: { token: string; data: unknown } | null
+  _textBuffer: string // NEW: Text buffer as class member
+  _shouldParseEntities: boolean
 
   /**
    * Parse a string of XML attributes to a map of attribute names
@@ -145,7 +148,7 @@ export class Saxy extends Transform {
    * @param token Type of token that is being parsed.
    * @param data Pending data.
    */
-  private _wait(token: string, data: unknown) {
+  _wait(token: string, data: unknown) {
     this._waiting = { token, data }
   }
 
@@ -164,19 +167,10 @@ export class Saxy extends Transform {
     return data
   }
 
-  /**
-   * Emit any buffered text node, clearing the buffer.
-   */
+  /** Emit any buffered text node (delegates to text-handler.ts,
+   *  FID-2026-0819-005 Loop 151). */
   private _flushTextBuffer() {
-    if (this._textBuffer.length === 0) {
-      return
-    }
-
-    const parsedText = this._shouldParseEntities
-      ? parseEntities(this._textBuffer)
-      : this._textBuffer
-    this.emit(Node.text, { contents: parsedText })
-    this._textBuffer = ''
+    flushTextBuffer(this)
   }
 
   /**
@@ -234,9 +228,9 @@ export class Saxy extends Transform {
     while (chunkPos < end) {
       if (
         input[chunkPos] !== '<' ||
-        (chunkPos + 1 < end && !this._isXMLTagStart(input, chunkPos + 1))
+        (chunkPos + 1 < end && !isXMLTagStart(input, chunkPos + 1))
       ) {
-        chunkPos = this._handleText(input, chunkPos, end)
+        chunkPos = handleTextRun(this, input, chunkPos, end)
         if (chunkPos >= end) {
           break
         }
@@ -274,91 +268,7 @@ export class Saxy extends Transform {
     callback()
   }
 
-  /**
-   * Handle a run of text, buffering it and optionally splitting off
-   * an incomplete entity at the end for the next chunk.
-   *
-   * @param input The input string.
-   * @param chunkPos Position of the first text character.
-   * @param end End of the input string.
-   * @return The new cursor position (the next tag start, or `end` if the
-   * rest of the chunk is text).
-   */
-  private _handleText(input: string, chunkPos: number, end: number): number {
-    // Find next potential tag, but verify it's actually a tag
-    let nextTag = input.indexOf('<', chunkPos)
-    while (
-      nextTag !== -1 &&
-      nextTag + 1 < end &&
-      !this._isXMLTagStart(input, nextTag + 1)
-    ) {
-      nextTag = input.indexOf('<', nextTag + 1)
-    }
-
-    // We read a TEXT node but there might be some
-    // more text data left, so we wait
-    if (nextTag === -1) {
-      let chunk = input.slice(chunkPos)
-
-      if (this._tags.stack.length === 1 && !chunk.trim()) {
-        chunk = ''
-      }
-
-      // Check for incomplete entity at end
-      const lastAmp = chunk.lastIndexOf('&')
-      if (
-        this._shouldParseEntities &&
-        lastAmp !== -1 &&
-        chunk.indexOf(';', lastAmp) === -1
-      ) {
-        // Only consider it a pending entity if it looks like the start of one
-        const postAmp = chunk.slice(lastAmp + 1)
-        const isPotentialEntity =
-          /^(#\d*)?$/.test(postAmp) || // Numeric entity
-          /^[a-zA-Z]{0,6}$/.test(postAmp) // Named entity
-        if (isPotentialEntity) {
-          // Store incomplete entity for next chunk
-          this._wait(Node.text, chunk.slice(lastAmp))
-          chunk = chunk.slice(0, lastAmp)
-        }
-      }
-
-      if (chunk.length > 0) {
-        this._textBuffer += chunk
-      }
-
-      return end
-    }
-
-    // A tag follows, so we can be confident that
-    // we have all the data needed for the TEXT node
-    let chunk = input.slice(chunkPos, nextTag)
-
-    if (this._tags.stack.length === 1 && !chunk.trim()) {
-      chunk = ''
-    }
-
-    // Only emit non-whitespace text or text within a single tag (not between tags)
-    if (chunk.length > 0) {
-      this._textBuffer += chunk
-    }
-
-    // We've reached a tag boundary, emit any buffered text
-    this._flushTextBuffer()
-
-    return nextTag
-  }
-
-  /**
-   * Check if a potential XML tag start is actually a valid tag
-   * @param input The input string
-   * @param pos Position after the < character
-   * @returns true if this is a valid XML tag start
-   */
-  private _isXMLTagStart(input: string, pos: number): boolean {
-    // Valid XML tags must start with a letter, underscore or colon
-    // https://www.w3.org/TR/xml/#NT-NameStartChar
-    const firstChar = input[pos]
-    return /[A-Za-z_:]/.test(firstChar) || firstChar === '/'
-  }
+  // _handleText and _isXMLTagStart moved to text-handler.ts
+  // (FID-2026-0819-005 Loop 151); _parseChunk calls the extracted
+  // functions directly.
 }

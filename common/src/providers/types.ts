@@ -17,7 +17,15 @@ import type { MODEL_CATALOGS } from './model-catalogs'
 export type ProviderKind = 'gateway' | 'local' | 'env-only'
 
 /** Wire protocol(s) the provider endpoint speaks. */
-export type ProviderProtocol = 'openai' | 'anthropic' | 'openai-anthropic'
+export type ProviderProtocol =
+  'openai' | 'anthropic' | 'openai-anthropic' | 'multi'
+
+/**
+ * Per-model wire protocol for protocol-mapped providers. `responses` is the
+ * OpenAI Responses API; `gemini` is the provider-native Gemini path.
+ */
+export type ProviderModelProtocol =
+  'openai' | 'anthropic' | 'responses' | 'gemini'
 
 /**
  * How a model id is rewritten before hitting the provider API:
@@ -27,12 +35,17 @@ export type ProviderProtocol = 'openai' | 'anthropic' | 'openai-anthropic'
  */
 export type ProviderIdTransform = 'strip' | 'keep' | 'cf-rewrite'
 
-/** Shared dual-protocol maps (see common/src/constants/model-config.ts). */
+/** Shared multi-protocol maps (see common/src/constants/model-config.ts). */
 export type ProviderProtocolMap =
-  'OPENCODE_GO_PROTOCOLS' | 'COMMANDCODE_PROTOCOLS'
+  'OPENCODE_GO_PROTOCOLS' | 'COMMANDCODE_PROTOCOLS' | 'OPENCODE_ZEN_PROTOCOLS'
 
-/** Key resolution strategy. `openrouter` = master-key exchange chain. */
-export type ProviderResolver = 'default' | 'openrouter'
+/**
+ * Key resolution strategy. `openrouter` = master-key exchange chain.
+ * `opencode` = shared OpenCode credential (`OPENCODE_API_KEY`, legacy
+ * `OPENCODE_GO_API_KEY` fallback) — the only resolver two registry entries
+ * may share one env var through (see validate claimEnvVar).
+ */
+export type ProviderResolver = 'default' | 'openrouter' | 'opencode'
 
 export interface ProviderConfig {
   /** Routing prefix, e.g. 'tokenharbor'. Must match the registry object key. */

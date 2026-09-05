@@ -11,8 +11,9 @@
  * - (b) derived ModelProvider union / settings.validProviders gain `cloudflare`
  * - (c) derived providerDomains gains `openrouter`
  * - (d) `order` values replicate the current picker sort exactly
- *       (openrouter 0, tokenrouter 1, nvidia 2, opencode-go 3, and the 5-way
- *       tie of tokenharbor/commandcode/nous/ollama/cloudflare at 4)
+ *       (openrouter 0, tokenrouter 1, nvidia 2, opencode-go 3, and the 7-way
+ *       tie of tokenharbor/commandcode/nous/ollama/cloudflare/kiosapi/opencode-zen
+ *       at 4)
  */
 import type { ProviderConfig } from './types'
 
@@ -94,7 +95,10 @@ export const PROVIDER_REGISTRY = {
     id: 'opencode-go',
     label: 'OpenCode Go',
     kind: 'gateway',
-    credentials: { envVar: 'OPENCODE_GO_API_KEY' },
+    // Shared OpenCode credential (FID-2026-0905-003): one key powers Go and
+    // Zen. `OPENCODE_GO_API_KEY` remains honored as a legacy fallback via
+    // the `opencode` resolver chain.
+    credentials: { envVar: 'OPENCODE_API_KEY', resolver: 'opencode' },
     baseUrl: 'https://opencode.ai/zen/go/v1',
     protocol: 'openai-anthropic',
     idTransform: 'strip',
@@ -181,6 +185,50 @@ export const PROVIDER_REGISTRY = {
     idTransform: 'keep',
     catalog: { source: 'none' },
     setupAvailable: false,
+    order: 4,
+  },
+  kiosapi: {
+    id: 'kiosapi',
+    label: 'KiosAPI',
+    kind: 'gateway',
+    credentials: {
+      envVar: 'KIOSAPI_API_KEY',
+      // /provider hint is part of the canonical message.
+      missingKeyMessage:
+        'KiosAPI key not set. Set KIOSAPI_API_KEY environment variable or run /provider kiosapi.',
+    },
+    baseUrl: 'https://kiosapi.com/v1',
+    protocol: 'openai',
+    // KiosAPI takes bare upstream ids (e.g. `gpt-4o-mini`); the internal
+    // `kiosapi/` routing prefix is stripped before sending.
+    idTransform: 'strip',
+    catalog: { source: 'live', url: 'https://kiosapi.com/v1/models' },
+    setupAvailable: true,
+    domain: 'kiosapi.com',
+    order: 4,
+  },
+  'opencode-zen': {
+    id: 'opencode-zen',
+    label: 'OpenCode Zen',
+    kind: 'gateway',
+    credentials: {
+      resolver: 'opencode',
+      envVar: 'OPENCODE_API_KEY',
+      // /provider hint is part of the canonical message.
+      missingKeyMessage:
+        'OpenCode Zen API key not set. Set OPENCODE_API_KEY environment variable or run /provider opencode-zen.',
+    },
+    baseUrl: 'https://opencode.ai/zen/v1',
+    // Four wire protocols (chat, Anthropic messages, Responses, Gemini);
+    // per-model dispatch comes from OPENCODE_ZEN_PROTOCOLS.
+    protocol: 'multi',
+    protocolMap: 'OPENCODE_ZEN_PROTOCOLS',
+    // Zen takes bare upstream ids (e.g. `gpt-5.5`); the internal
+    // `opencode-zen/` routing prefix is stripped before sending.
+    idTransform: 'strip',
+    catalog: { source: 'live', url: 'https://opencode.ai/zen/v1/models' },
+    setupAvailable: true,
+    domain: 'opencode.ai',
     order: 4,
   },
 } as const satisfies Record<string, ProviderConfig>
