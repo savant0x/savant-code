@@ -4,29 +4,13 @@
  * Embedded via .toString() at factory time; the constants/helpers it
  * references are baked/embedded into the same generated scope.
  */
-import {
-  planFoldsToReachTarget,
-  segmentExchanges,
-  tokensForRange,
-} from './budget'
-import {
-  ASSISTANT_TOOL_BUDGET,
-  CHARS_PER_TOKEN,
-  COMPACTION_PROTECTED_TAIL_TURNS,
-  COMPACTION_SUMMARY_ALLOWANCE_TOKENS,
-  FIXED_TAIL_BUDGET_TOKENS,
-  TOKEN_COUNT_FUDGE_FACTOR,
-  USER_BUDGET,
-} from './constants'
+import { CHARS_PER_TOKEN, TOKEN_COUNT_FUDGE_FACTOR } from './constants'
 import { runFoldOldestExchange } from './fold-exchange'
 import { asNumber, getTextContent } from './helpers'
+import { runMinimalSurgery } from './minimal-surgery'
+import { preparePruneContext } from './prepare-prune-context'
+import { buildSummarizationContext } from './summarization-context'
 import { buildFullSummary } from './summary-assembly'
-import {
-  extractSummaryContent,
-  isConversationSummary,
-  parseSummaryIntoEntries,
-  shouldExcludeMessage,
-} from './summary-parsing'
 import { logCompletion, logPostCompact } from './telemetry'
 
 import type { AgentState, ToolCall } from '../types/agent-definition'
@@ -42,65 +26,17 @@ export function* runContextPrunerMain(
   /** Prompt cache expiry time (Anthropic caches for 5 minutes by default) */
   const CACHE_EXPIRY_MS: number = asNumber(p.cacheExpiryMs) ?? 5 * 60 * 1000
 
-  const messages = agentState.messageHistory
   const maxContextLength: number = asNumber(p.maxContextLength) ?? 200_000
 
-  // STEP 0: Always remove the last INSTRUCTIONS_PROMPT and SUBAGENT_SPAWN
-  // (these are inserted for the context-pruner subagent itself)
-  let currentMessages = [...messages]
-  const lastInstructionsPromptIndex = currentMessages.findLastIndex((message) =>
-    message.tags?.includes('INSTRUCTIONS_PROMPT'),
-  )
-  if (lastInstructionsPromptIndex !== -1) {
-    currentMessages.splice(lastInstructionsPromptIndex, 1)
-  }
-  const lastSubagentSpawnIndex = currentMessages.findLastIndex((message) =>
-    message.tags?.includes('SUBAGENT_SPAWN'),
-  )
-  if (lastSubagentSpawnIndex !== -1) {
-    currentMessages.splice(lastSubagentSpawnIndex, 1)
-  }
-
-  // Also remove the params USER_PROMPT if params were provided to this agent
-  // (this is the message like <user_message>{"cacheExpiryMs": 600000}</user_message>)
-  if (params && Object.keys(params).length > 0) {
-    const lastUserPromptIndex = currentMessages.findLastIndex((message) =>
-      message.tags?.includes('USER_PROMPT'),
-    )
-    if (lastUserPromptIndex !== -1) {
-      currentMessages.splice(lastUserPromptIndex, 1)
-    }
-  }
-
-  // Check for prompt cache miss (>5 min gap before the USER_PROMPT message)
-  // The USER_PROMPT is the actual user message; INSTRUCTIONS_PROMPT comes after it
-  // We need to find the USER_PROMPT and check the gap between it and the last assistant message
-  let cacheWillMiss = false
-  let cacheGapMs: number | null = null
-  const userPromptIndex = currentMessages.findLastIndex((message) =>
-    message.tags?.includes('USER_PROMPT'),
-  )
-  if (userPromptIndex > 0) {
-    const userPromptMsg = currentMessages[userPromptIndex]
-    // Find the last assistant message before USER_PROMPT (tool messages don't have sentAt)
-    let lastAssistantMsg: Message | undefined
-    for (let i = userPromptIndex - 1; i >= 0; i--) {
-      if (currentMessages[i].role === 'assistant') {
-        lastAssistantMsg = currentMessages[i]
-        break
-      }
-    }
-    if (
-      userPromptMsg !== undefined &&
-      typeof userPromptMsg.sentAt === 'number' &&
-      lastAssistantMsg !== undefined &&
-      typeof lastAssistantMsg.sentAt === 'number'
-    ) {
-      const gap = userPromptMsg.sentAt - lastAssistantMsg.sentAt
-      cacheGapMs = gap
-      cacheWillMiss = gap > CACHE_EXPIRY_MS
-    }
-  }
+  // Loop 141: STEP 0 tag-strip + cache-miss probe extracted to
+  // preparePruneContext (embedded via handle-steps.ts).
+  const prepared = preparePruneContext({
+    agentState,
+    params,
+    cacheExpiryMs: CACHE_EXPIRY_MS,
+  })
+  let currentMessages = prepared.currentMessages
+  const { cacheWillMiss, cacheGapMs } = prepared
 
   const contextLimitExceeded =
     agentState.contextTokenCount + TOKEN_COUNT_FUDGE_FACTOR > maxContextLength
@@ -143,127 +79,49 @@ export function* runContextPrunerMain(
     currentMessages.splice(lastRemainingInstructionsIndex, 1)
   }
 
-  // === SUMMARIZATION STRATEGY ===
-  // 1. Summarize ALL messages (apply transformations: truncation, tool summaries, etc.)
-  // 2. Walk backwards through summarized parts to apply token budgets
-  // 3. Older summarized parts beyond the budgets are dropped
+  // Loop 141: summarization-parameter preparation extracted to
+  // buildSummarizationContext (embedded via handle-steps.ts).
+  const {
+    assistantToolBudget,
+    userBudget,
+    keepRecentTokens,
+    digestCaps,
+    previousSummaryContent,
+    previousSummaryEntries,
+    latestLiveUserPromptIndex,
+    latestLiveUserPromptMessage,
+    isMidTurnPrune,
+  } = buildSummarizationContext({ currentMessages, params: p })
 
-  const assistantToolBudget: number =
-    asNumber(p.assistantToolBudget) ?? ASSISTANT_TOOL_BUDGET
-  const userBudget: number = asNumber(p.userBudget) ?? USER_BUDGET
-  // P2a: fixed verbatim recent-tail token budget (DeepSeek 16 384 default).
-  const keepRecentTokens: number =
-    asNumber(p.keepRecentTokens) ?? FIXED_TAIL_BUDGET_TOKENS
-  // FID-2026-0824-024 post-closure amendment: operator-configured digest
-  // caps injected via spawn params override the baked defaults. Forwarded to
-  // the full-sweep summarizer; the fold path keeps baked defaults.
-  const digestHeadCharsParam = asNumber(p.digestHeadChars) ?? undefined
-  const digestTailCharsParam = asNumber(p.digestTailChars) ?? undefined
-  const digestCaps =
-    digestHeadCharsParam !== undefined || digestTailCharsParam !== undefined
-      ? {
-          ...(digestHeadCharsParam !== undefined
-            ? { headChars: digestHeadCharsParam }
-            : {}),
-          ...(digestTailCharsParam !== undefined
-            ? { tailChars: digestTailCharsParam }
-            : {}),
-        }
-      : undefined
-
-  // Extract previous summary content from all messages
-  let previousSummaryContent = ''
-  for (const message of currentMessages) {
-    if (isConversationSummary(message)) {
-      previousSummaryContent = extractSummaryContent(message)
+  // Loop 141: minimal-surgery fold loop extracted to runMinimalSurgery
+  // (embedded via handle-steps.ts). Returns the possibly-reduced messages and
+  // whether it already emitted the early-return set_messages.
+  const surgery = runMinimalSurgery({
+    agentState,
+    assistantToolBudget,
+    cacheExpiryMs: CACHE_EXPIRY_MS,
+    contextTokenCount: agentState.contextTokenCount,
+    currentMessages,
+    forceCompact,
+    foldOldestExchange,
+    instructionsPromptMessage,
+    isMidTurnPrune,
+    keepRecentTokens,
+    latestLiveUserPromptMessage,
+    logger,
+    maxContextLength,
+    previousSummaryContent,
+    previousSummaryEntries,
+    userBudget,
+  })
+  currentMessages = surgery.currentMessages
+  if (surgery.earlyReturn) {
+    yield {
+      toolName: 'set_messages',
+      input: { messages: currentMessages },
+      includeToolCall: false,
     }
-  }
-
-  // Parse the previous summary into role-tagged entries up front — both the
-  // full path and the P3a fold path merge them with new entries (Continue
-  // re-distill rule).
-  const previousSummaryEntries = parseSummaryIntoEntries(previousSummaryContent)
-
-  // If pruning happens before the assistant has started responding to the
-  // current user prompt, preserve that prompt as a real message after the
-  // memory artifact. If pruning happens mid-turn, keep the prompt in the
-  // historical memory with the assistant/tool progress that followed it and
-  // append a synthetic continuation prompt instead.
-  const latestLiveUserPromptIndex = currentMessages.findLastIndex((message) =>
-    message.tags?.includes('USER_PROMPT'),
-  )
-  const latestLiveUserPromptMessage =
-    latestLiveUserPromptIndex !== -1
-      ? currentMessages[latestLiveUserPromptIndex]
-      : null
-  const isMidTurnPrune =
-    latestLiveUserPromptIndex !== -1 &&
-    currentMessages
-      .slice(latestLiveUserPromptIndex + 1)
-      .some(
-        (message) =>
-          !shouldExcludeMessage(message) && !isConversationSummary(message),
-      )
-
-  // FID-2026-0824-025: minimal surgery — fold oldest exchanges until the
-  // projected total reaches the window target (hermes accumulate-until-
-  // target). Protected head keeps early framing; last N exchanges stay
-  // verbatim. Falls back to the full sweep below when folds cannot reach
-  // the target (degradation, not failure).
-  let surgeryMessages = currentMessages
-  if (!forceCompact && !foldOldestExchange) {
-    const segments = segmentExchanges(currentMessages)
-    const estimates = segments.map((segment) =>
-      tokensForRange(currentMessages, segment.start, segment.end),
-    )
-    const totalEstimate = estimates.reduce((sum, count) => sum + count, 0)
-    const plan = planFoldsToReachTarget({
-      exchangeTokenEstimates: estimates,
-      totalTokens: Math.max(totalEstimate, agentState.contextTokenCount),
-      targetTokens: maxContextLength,
-      summaryAllowanceTokens: COMPACTION_SUMMARY_ALLOWANCE_TOKENS,
-      protectedHeadSegments: 1,
-      protectedTailSegments: COMPACTION_PROTECTED_TAIL_TURNS,
-    })
-    let foldsDone = 0
-    for (let foldIndex = 0; foldIndex < plan.folds; foldIndex++) {
-      const foldedCall = runFoldOldestExchange({
-        agentState,
-        assistantToolBudget,
-        cacheExpiryMs: CACHE_EXPIRY_MS,
-        currentMessages: surgeryMessages,
-        forceCompact,
-        instructionsPromptMessage,
-        isMidTurnPrune,
-        keepRecentTokens,
-        latestLiveUserPromptMessage,
-        logger,
-        maxContextLength,
-        previousSummaryContent,
-        previousSummaryEntries,
-        userBudget,
-      })
-      const nextMessages = foldedCall.input.messages
-      if (nextMessages.length >= surgeryMessages.length) break
-      surgeryMessages = nextMessages
-      foldsDone += 1
-    }
-    if (foldsDone > 0) {
-      const recounted = tokensForRange(
-        surgeryMessages,
-        0,
-        surgeryMessages.length,
-      )
-      currentMessages = surgeryMessages
-      if (recounted <= maxContextLength) {
-        yield {
-          toolName: 'set_messages',
-          input: { messages: currentMessages },
-          includeToolCall: false,
-        }
-        return
-      }
-    }
+    return
   }
   if (foldOldestExchange) {
     yield runFoldOldestExchange({

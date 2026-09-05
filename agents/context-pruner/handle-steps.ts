@@ -8,9 +8,12 @@ import { CONTEXT_PRUNER_CONSTANTS } from './constants'
 import { runFoldOldestExchange } from './fold-exchange'
 import * as helpers from './helpers'
 import { runContextPrunerMain } from './main'
+import { runMinimalSurgery } from './minimal-surgery'
+import { preparePruneContext } from './prepare-prune-context'
 import * as preservedState from './preserved-state'
 import { buildResultDigest } from './result-digests'
 import * as structuredSummary from './structured-summary'
+import { buildSummarizationContext } from './summarization-context'
 import { summarizeMessages } from './summarize-messages'
 import { summarizeToolCall } from './summarize-tool-call'
 import { buildFullSummary } from './summary-assembly'
@@ -68,6 +71,9 @@ export function createContextPrunerHandleSteps(): ContextPrunerHandleSteps {
       .map((fn) => (fn as () => unknown).toString()),
     buildFullSummary.toString(),
     runFoldOldestExchange.toString(),
+    preparePruneContext.toString(),
+    buildSummarizationContext.toString(),
+    runMinimalSurgery.toString(),
     planFoldsToReachTarget.toString(),
     segmentExchanges.toString(),
     tokensForRange.toString(),

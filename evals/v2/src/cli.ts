@@ -1,4 +1,3 @@
-import { readFileSync } from 'node:fs'
 import { mkdir } from 'node:fs/promises'
 import path from 'node:path'
 
@@ -6,14 +5,9 @@ import { loadLocalAgents } from '@savant-code/sdk'
 
 import { GOVERNANCE_TASKS, runGovernanceSmoke } from './governance'
 import { BenchmarkHarness } from './harness'
-import {
-  assertTokenCeiling,
-  DEFAULT_RELEASE_TOKEN_CEILING,
-  estimateTokens,
-  selectForRelease,
-} from './ingest/rotation'
 import { runProveCommand } from './prove/prove-cli'
 import { loadTaskRegistry } from './registry'
+import { runReleaseTier } from './release-tier'
 import { writeJsonReport, writeMarkdownReport } from './reports'
 import { SavantAgentRunner } from './runners/savant'
 import { TempDirSandbox } from './sandboxes/tempdir'
@@ -199,49 +193,6 @@ function validateArgs(args: Partial<CliArgs>): CliArgs {
     category: args.category,
     difficulty: args.difficulty,
   }
-}
-
-const ROOT_VERSION_PATTERN = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/
-
-/**
- * FID-2026-0824-019: Tier-3 structural rehearsal — deterministic rotation
- * plan + token ceiling against the current corpus. Baseline-only by design
- * (zero tokens); live evaluate-mode runs stay operator-keyed.
- */
-async function runReleaseTier(versionOverride?: string): Promise<void> {
-  const version =
-    versionOverride ??
-    (() => {
-      const raw = readFileSync(
-        path.resolve(import.meta.dir, '..', '..', '..', 'VERSION'),
-        'utf8',
-      ).trim()
-      if (!ROOT_VERSION_PATTERN.test(raw)) {
-        throw new Error(`root VERSION is malformed: ${raw}`)
-      }
-      return raw
-    })()
-
-  const registry = await loadTaskRegistry(
-    path.resolve(import.meta.dir, '..', 'tasks'),
-  )
-  const selected = selectForRelease(Object.values(registry), version)
-  const estimate = estimateTokens(selected.length)
-
-  console.log(`Tier-3 rotation plan for v${version}:`)
-  for (const task of selected) {
-    console.log(`  - [${task.category}/${task.difficulty}] ${task.task_id}`)
-  }
-  console.log(
-    `selected ${selected.length} task(s); estimated tokens ${estimate} (ceiling ${DEFAULT_RELEASE_TOKEN_CEILING})`,
-  )
-  if (selected.length === 0) {
-    throw new Error('Tier-3 rotation selected zero tasks — corpus empty?')
-  }
-  assertTokenCeiling(estimate)
-  console.log(
-    'Baseline structural rehearsal complete; live capability runs are operator-keyed.',
-  )
 }
 
 export async function main(

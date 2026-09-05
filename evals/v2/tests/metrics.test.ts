@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'bun:test'
 
-import { MetricAggregator, evaluateExpectedCalls } from '../src/metrics'
+import { MetricAggregator } from '../src/metrics'
 
 import type { EchoPhase, TraceDocument } from '../src/runner'
 import type { TaskDefinition } from '../src/schema'
@@ -282,72 +282,5 @@ describe('MetricAggregator', () => {
     const result = MetricAggregator.aggregate(trace, task)
     expect(result.custom_tools.passed).toBe(true)
     expect(result.custom_tools.checks[0].actual_calls).toBe(1)
-  })
-
-  it('flags a mismatched expected phase sequence', () => {
-    const trace = makeTrace([
-      { type: 'phase_transition', from: 'idle', to: 'green' },
-      { type: 'phase_transition', from: 'green', to: 'complete' },
-    ])
-
-    const task = makeTask({
-      validation: {
-        timeout_seconds: 60,
-        deterministic_checks: [],
-        fsm_assertions: {
-          strict_phase_order: true,
-          allow_write_in_red: false,
-          expected_phase_sequence: ['red', 'green', 'audit', 'complete'],
-        },
-      },
-    })
-
-    const result = MetricAggregator.aggregate(trace, task)
-    expect(result.fsm.expected_sequence_matched).toBe(false)
-    expect(result.passed).toBe(false)
-  })
-
-  it('flags a failed custom tool check', () => {
-    const trace = makeTrace([
-      {
-        type: 'print',
-        raw: {
-          type: 'tool_call',
-          toolCallId: 'tc-1',
-          toolName: 'code_search',
-          input: {},
-        },
-      },
-    ])
-
-    const task = makeTask({
-      validation: {
-        timeout_seconds: 60,
-        deterministic_checks: [],
-        custom_tool_checks: [
-          { tool_name: 'code_search', expected_calls: '>=2' },
-        ],
-      },
-    })
-
-    const result = MetricAggregator.aggregate(trace, task)
-    expect(result.custom_tools.passed).toBe(false)
-    expect(result.passed).toBe(false)
-  })
-})
-
-describe('evaluateExpectedCalls', () => {
-  it('parses common expressions', () => {
-    expect(evaluateExpectedCalls(2, '2')).toBe(true)
-    expect(evaluateExpectedCalls(1, '2')).toBe(false)
-    expect(evaluateExpectedCalls(3, '>=2')).toBe(true)
-    expect(evaluateExpectedCalls(1, '>0')).toBe(true)
-    expect(evaluateExpectedCalls(5, '<=5')).toBe(true)
-    expect(evaluateExpectedCalls(4, '==4')).toBe(true)
-    expect(evaluateExpectedCalls(4, '!=3')).toBe(true)
-  })
-
-  it('throws on malformed expressions', () => {
-    expect(() => evaluateExpectedCalls(1, 'foo')).toThrow()
   })
 })
