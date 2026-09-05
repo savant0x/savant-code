@@ -22,6 +22,14 @@ export const SIDECAR_TARGETS: readonly SidecarTarget[] = [
   { bun: 'bun-linux-x64', rust: 'x86_64-unknown-linux-gnu' },
 ]
 
+// Repo-root anchor derived from this file's location (desktop/scripts/ ->
+// desktop/ -> repo root). Relative --entry paths MUST resolve against this
+// anchor, never process cwd: `bun run --cwd=desktop` (used by both the
+// release workflow and local invocations) sets cwd to desktop/, where a
+// repo-relative path like cli/src/server-command.ts does not exist.
+// Canonical rule: no-environment-dependent-guards.
+const REPO_ROOT = path.resolve(import.meta.dir, '..', '..')
+
 export interface SidecarBuildRequest {
   readonly entry: string
   readonly target: string
@@ -64,8 +72,14 @@ export function resolveSidecarBuild(
       `Unknown --target "${request.target}"; expected one of: ${knownTargets()}`,
     )
   } // The emitted name is contract-fixed, independent of the entry filename.
+  // Relative entry paths resolve against the repo-root anchor above so the
+  // resolution is identical from every working directory.
+  const entry = path.isAbsolute(request.entry)
+    ? request.entry
+    : path.join(REPO_ROOT, request.entry)
   return {
     ...request,
+    entry,
     rustTriple: match.rust,
     outfile: path.join(
       request.outDir,

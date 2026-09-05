@@ -2421,3 +2421,177 @@ body {
 ::-webkit-scrollbar-corner {
   background: var(--bg);
 }
+
+/* FID-2026-0824-005 step 5 — Triggers rail panel (configuration region +
+   calendar receipts). Follows the fid-queue card language exactly. */
+.triggers-panel {
+  flex: 0 0 auto;
+  height: auto;
+  max-height: 420px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  overflow: auto;
+}
+
+.triggers-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+}
+
+.triggers-title {
+  color: var(--fg);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.triggers-count {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.triggers-empty {
+  margin: 12px 2px 2px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.triggers-error {
+  margin: 8px 0 0;
+  color: var(--danger, #ff6b6b);
+  font-size: 11px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.triggers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 8px;
+  list-style: none;
+  margin: 0;
+}
+
+.trigger-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 4px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.trigger-row.trigger-disabled {
+  opacity: 0.55;
+}
+
+.trigger-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.trigger-name {
+  color: var(--fg);
+  font-size: 12px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.trigger-receipt,
+.trigger-last {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.trigger-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+
+.trigger-btn {
+  appearance: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: none;
+  color: var(--fg);
+  font-size: 10px;
+  padding: 3px 8px;
+  cursor: pointer;
+}
+
+.trigger-btn:hover:not(:disabled) {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.trigger-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.trigger-danger:hover:not(:disabled) {
+  border-color: var(--danger, #ff6b6b);
+  color: var(--danger, #ff6b6b);
+}
+
+.trigger-secret-once {
+  margin-top: 10px;
+  padding: 8px;
+  border: 1px dashed var(--primary);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.trigger-secret-label {
+  margin: 0;
+  color: var(--fg);
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.trigger-secret-value {
+  color: var(--primary);
+  font-size: 11px;
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
+.trigger-create {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.trigger-input {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--fg);
+  font-size: 11px;
+  padding: 5px 8px;
+}
+
+.trigger-create-btn {
+  align-self: flex-start;
+}

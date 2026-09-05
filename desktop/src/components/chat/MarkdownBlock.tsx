@@ -10,6 +10,7 @@
 
 import { memo } from 'react'
 
+import { renderBlockTable } from './markdown-block-table'
 import { renderInline } from './markdown-inline'
 
 import type { JSX } from 'react'
@@ -17,6 +18,8 @@ import type { JSX } from 'react'
 const MAX_CODE_CHARS = 20_000
 
 type TableColumnAlign = 'left' | 'center' | 'right' | null
+// (alignStyle + the table renderer live in ./markdown-block-table,
+// FID-2026-0819-005 Loop 160; the aligns field keeps this local type.)
 
 type RawBlock =
   | { kind: 'heading'; level: number; text: string; key: string }
@@ -71,12 +74,6 @@ function parseColumnAlign(cell: string): TableColumnAlign {
   if (right) return 'right'
   if (left) return 'left'
   return null
-}
-
-function alignStyle(
-  align: TableColumnAlign,
-): { textAlign: 'left' | 'center' | 'right' } | undefined {
-  return align === null ? undefined : { textAlign: align }
 }
 
 export function parseMarkdown(source: string): RawBlock[] {
@@ -248,52 +245,10 @@ function renderBlock(block: RawBlock): JSX.Element {
     case 'hr':
       return <hr key={block.key} className="md-hr" />
     case 'table':
-      // FID-2026-0901-006 P6: a body row may legitimately carry MORE cells
-      // than the header (the Thinker's plan tables do). Rendering exactly
-      // `header.length` columns silently drops everything past the header,
-      // which is why the risk column looked truncated/misaligned. Render the
-      // widest column count across header + rows and pad short rows — no data
-      // loss, and header alignment still governs the first columns.
-      const columnCount = Math.max(
-        block.header.length,
-        ...block.rows.map((row) => row.length),
-        0,
-      )
-      return (
-        <div key={block.key} className="md-table-wrap">
-          <table className="md-table">
-            <thead>
-              <tr>
-                {block.header.map((cell, column) => (
-                  <th
-                    key={`${block.key}-h${column}`}
-                    style={alignStyle(block.aligns[column] ?? null)}
-                  >
-                    {renderInline(cell, `${block.key}-h${column}`)}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {block.rows.map((row, rowIndex) => (
-                <tr key={`${block.key}-r${rowIndex}`}>
-                  {Array.from({ length: columnCount }, (_, column) => (
-                    <td
-                      key={`${block.key}-r${rowIndex}c${column}`}
-                      style={alignStyle(block.aligns[column] ?? null)}
-                    >
-                      {renderInline(
-                        row[column] ?? '',
-                        `${block.key}-r${rowIndex}c${column}`,
-                      )}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )
+      // Table rendering extracted verbatim to markdown-block-table.tsx
+      // (FID-2026-0819-005 Loop 160; FID-2026-0901-006 P6 padding comment
+      // lives there).
+      return renderBlockTable(block)
     case 'para':
       return (
         <p key={block.key} className="md-p">

@@ -19,8 +19,9 @@ import { PhaseStepper } from './components/chat/PhaseStepper'
 import { RosterRail } from './components/chat/RosterRail'
 import { ScopeSwitcher } from './components/chat/ScopeSwitcher'
 import { SessionStatusPanel } from './components/chat/SessionStatusPanel'
+import { TriggersPanel } from './components/chat/TriggersPanel'
 import { DeckView } from './floor/deck-view'
-import { useGateway } from './hooks/use-gateway'
+import { useGateway, getSharedGatewayClient } from './hooks/use-gateway'
 import { formatModelLabel } from './lib/model-label'
 import { useUpdater, type UpdaterPhase } from './lib/updater'
 import { SplashScreen } from './SplashScreen'
@@ -225,6 +226,16 @@ export function App(): JSX.Element {
                   <FidQueuePanel
                     queue={gateway.fidQueue}
                     scope={workspaceScope}
+                  />
+                  {/* FID-2026-0824-005 step 5: trigger configuration region +
+                      calendar receipts. Degrades to an "off" card when the
+                      server did not advertise the capability. */}
+                  <TriggersPanel
+                    api={getSharedGatewayClient()}
+                    enabled={
+                      gateway.status === 'ready' &&
+                      getSharedGatewayClient().getTriggersAvailable()
+                    }
                   />
                 </div>
               </div>

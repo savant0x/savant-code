@@ -1,3 +1,6 @@
+import fs from 'node:fs'
+import path from 'node:path'
+
 import { describe, expect, test } from 'bun:test'
 
 import {
@@ -97,6 +100,33 @@ describe('resolveSidecarBuild', () => {
         outDir: 'binaries',
       }),
     ).toThrow(/Unknown --target/)
+  })
+
+  test('resolves relative entries against the repo root, not process cwd', () => {
+    const resolved = resolveSidecarBuild({
+      entry: 'cli/src/server-command.ts',
+      target: 'bun-windows-x64',
+      outDir: 'binaries',
+    })
+    expect(path.isAbsolute(resolved.entry)).toBe(true)
+    expect(
+      resolved.entry
+        .replaceAll('\\', '/')
+        .endsWith('/cli/src/server-command.ts'),
+    ).toBe(true)
+    // The exact entrypoint the desktop-release workflow passes must exist
+    // on disk — the release pipeline compiles it verbatim.
+    expect(fs.existsSync(resolved.entry)).toBe(true)
+  })
+
+  test('absolute entries pass through unchanged', () => {
+    const absolute = path.resolve(import.meta.dir, 'build-sidecar.ts')
+    const resolved = resolveSidecarBuild({
+      entry: absolute,
+      target: 'bun-linux-x64',
+      outDir: 'binaries',
+    })
+    expect(resolved.entry).toBe(absolute)
   })
 
   test('declares exactly one target per supported platform family', () => {

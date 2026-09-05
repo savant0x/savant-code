@@ -7,9 +7,81 @@ import {
   parseInboundFrame,
   scopedThreadsRequest,
   scopedThreadsResultSchema,
+  triggersCreateRequest,
+  triggersCreateResultSchema,
+  triggersDeleteRequest,
+  triggersListRequest,
+  triggersListResultSchema,
+  triggersSetEnabledRequest,
+  triggersSetRecurrenceRequest,
+  triggersSetResultSchema,
   updateScopedThreadStateRequest,
   userMessageRequest,
 } from '../gateway-protocol'
+
+describe('trigger management frames (FID-2026-0824-005 step 5)', () => {
+  test('triggers_list request and sanitized result parse', () => {
+    const frame = triggersListRequest(7)
+    expect(frame.method).toBe('triggers_list')
+    const result = triggersListResultSchema.parse({
+      triggers: [
+        {
+          id: 'trg_1',
+          name: 'ci',
+          createdAt: '2026-09-03T00:00:00.000Z',
+          recurrence: '*/5 * * * *',
+          nextRunAt: '2026-09-03T01:00:00.000Z',
+          enabled: true,
+        },
+      ],
+    })
+    expect(result.triggers[0].name).toBe('ci')
+    // Optional fields stay optional.
+    expect(result.triggers[0].lastFiredAt).toBeUndefined()
+  })
+
+  test('triggers_create parses the secret-once response shape', () => {
+    const frame = triggersCreateRequest(8, {
+      name: 'deploy',
+      recurrence: '0 9 * * 1-5',
+    })
+    expect(frame.method).toBe('triggers_create')
+    expect(frame.params).toEqual({
+      name: 'deploy',
+      recurrence: '0 9 * * 1-5',
+    })
+    const parsed = triggersCreateResultSchema.parse({
+      trigger: {
+        id: 'trg_2',
+        name: 'deploy',
+        secret: 'svt_abc',
+        createdAt: '2026-09-03T00:00:00.000Z',
+      },
+    })
+    expect(parsed.trigger.secret).toBe('svt_abc')
+  })
+
+  test('set_recurrence accepts a cron string or explicit null', () => {
+    expect(
+      triggersSetRecurrenceRequest(9, 'trg_1', '0 3 * * *').params,
+    ).toEqual({ triggerId: 'trg_1', recurrence: '0 3 * * *' })
+    expect(triggersSetRecurrenceRequest(10, 'trg_1', null).params).toEqual({
+      triggerId: 'trg_1',
+      recurrence: null,
+    })
+  })
+
+  test('set_enabled / delete frames carry exact params', () => {
+    expect(triggersSetEnabledRequest(11, 'trg_1', false).params).toEqual({
+      triggerId: 'trg_1',
+      enabled: false,
+    })
+    expect(triggersDeleteRequest(12, 'trg_1').params).toEqual({
+      triggerId: 'trg_1',
+    })
+    expect(triggersSetResultSchema.parse({ updated: true }).updated).toBe(true)
+  })
+})
 
 describe('parseInboundFrame', () => {
   test('classifies an event notification carrying a PrintModeEvent batch', () => {

@@ -7,6 +7,10 @@ use std::process::{Child, Command, Stdio};
 use std::thread;
 use std::time::{Duration, Instant};
 
+// Windows-only: `creation_flags` on Command (see spawn_sidecar).
+#[cfg(windows)]
+use std::os::windows::process::CommandExt;
+
 use crate::gateway::{SpawnSpec, GATEWAY_TOKEN_ENV};
 
 /// Keys forwarded from `.env.local` to the sidecar process, in addition to
@@ -38,7 +42,12 @@ pub fn sidecar_env_vars() -> Vec<(String, String)> {
     }
     let exe_dir = crate::current_exe_dir();
     candidates.push(exe_dir.join(".env.local"));
-    candidates.push(exe_dir.parent().map(|p| p.join(".env.local")).unwrap_or_else(|| PathBuf::from(".env.local")));
+    candidates.push(
+        exe_dir
+            .parent()
+            .map(|p| p.join(".env.local"))
+            .unwrap_or_else(|| PathBuf::from(".env.local")),
+    );
     for candidate in candidates {
         let Ok(contents) = std::fs::read_to_string(&candidate) else {
             continue;
@@ -52,8 +61,7 @@ pub fn sidecar_env_vars() -> Vec<(String, String)> {
                 continue;
             };
             let key = key.trim();
-            let forwards = key.starts_with("NEXT_PUBLIC_")
-                || SIDECAR_ENV_KEYS.contains(&key);
+            let forwards = key.starts_with("NEXT_PUBLIC_") || SIDECAR_ENV_KEYS.contains(&key);
             if !forwards {
                 continue;
             }
@@ -204,14 +212,28 @@ fn spawn_stream_drain(label: &'static str, stream: impl io::Read + Send + 'stati
 }
 
 pub fn spawn_sidecar(spec: &SpawnSpec) -> io::Result<SidecarHandle> {
-    let mut child = Command::new(&spec.program)
+    let mut command = Command::new(&spec.program);
+    command
         .args(&spec.args)
         .env(GATEWAY_TOKEN_ENV, &spec.token)
         .envs(sidecar_env_vars())
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()?;
+        .stderr(Stdio::piped());
+
+    // FID-2026-0820-011 installer-smoke find: release builds are GUI-subsystem
+    // (main.rs `windows_subsystem = "windows"`), so a Windows console-subsystem
+    // child would otherwise get its OWN visible console — the blank
+    // `savant-sidecar.exe` window seen during the smoke. CREATE_NO_WINDOW (0x0800_0000)
+    // suppresses it. Debug builds inherit the dev console and keep it for
+    // direct log visibility.
+    #[cfg(windows)]
+    if !cfg!(debug_assertions) {
+        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+        command.creation_flags(CREATE_NO_WINDOW);
+    }
+
+    let mut child = command.spawn()?;
     // Both output streams MUST be drained for the child's lifetime.
     if let Some(stdout) = child.stdout.take() {
         spawn_stream_drain("stdout", stdout);

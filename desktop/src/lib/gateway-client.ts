@@ -4,37 +4,48 @@
 // socket sits behind the TransportFactory seam (./gateway-transport) and the
 // request lifecycle behind ./gateway-requests — tests substitute fakes
 // (dependency injection, never module mocks).
+//
+// FID-2026-0819-005 Loop 246: the typed request surface lives in
+// ./gateway-client-requests and the connection lifecycle in
+// ./gateway-client-connection — free functions / controller over seams, with
+// the public method signatures here unchanged.
 
 import {
-  GATEWAY_ERROR_CODES,
-  GATEWAY_PROTOCOL_VERSION,
-  approvalResponseRequest,
-  scopedThreadsRequest,
-  scopedThreadsResultSchema,
-  updateScopedThreadStateRequest,
-  updateScopedThreadStateResultSchema,
-  helloRequest,
-  helloResultSchema,
-  interruptRequest,
-  listCommandsRequest,
-  listCommandsResultSchema,
-  parseInboundFrame,
-  userMessageRequest,
-  type InboundFrame,
-  type JsonRpcId,
-  type JsonRpcRequest,
-  type WorkspaceScopeType,
-} from './gateway-protocol'
+  GatewayConnectionController,
+  type GatewayStatus,
+  type RunCompleteFrame,
+  type RunCompleteInfo,
+} from './gateway-client-connection'
+import {
+  getScopedThreadsVia,
+  interruptVia,
+  listCommandsVia,
+  respondApprovalVia,
+  sendUserMessageVia,
+  triggersCreateVia,
+  triggersDeleteVia,
+  triggersListVia,
+  triggersSetEnabledVia,
+  triggersSetRecurrenceVia,
+  updateScopedThreadStateVia,
+  type GatewayRequestContext,
+} from './gateway-client-requests'
+import { GATEWAY_ERROR_CODES } from './gateway-protocol'
 import { GatewayRequestError, RequestCorrelator } from './gateway-requests'
 import {
-  backoffDelayMs,
   browserTransportFactory,
-  type TransportConnection,
   type TransportFactory,
 } from './gateway-transport'
 import { ListenerSet } from './listener-set'
 
 import type { GatewayConfig } from './gateway-config'
+import type {
+  CreatedTriggerInfo,
+  JsonRpcId,
+  JsonRpcRequest,
+  TriggerRecord,
+  WorkspaceScopeType,
+} from './gateway-protocol'
 import type { PrintModeEvent } from '@savant-code/common/types/print-mode'
 
 // Public surface re-exported for consumers (and the drift-tested API used by
@@ -46,31 +57,30 @@ export type {
   TransportFactory,
   TransportHandlers,
 } from './gateway-transport'
-
-export type GatewayStatus =
-  'connecting' | 'authenticating' | 'ready' | 'reconnecting' | 'offline'
+export type {
+  GatewayStatus,
+  RunCompleteInfo,
+} from './gateway-client-connection'
 
 const DEFAULT_REQUEST_TIMEOUT_MS = 10_000
-
-export type RunCompleteInfo = { ok: boolean; error?: string; runId?: string }
 
 export class GatewayClient {
   private readonly factory: TransportFactory
   private readonly requestTimeoutMs: number
-  private connection: TransportConnection | null = null
-  private config: GatewayConfig | null = null
+  private readonly requests = new RequestCorrelator()
   private statusValue: GatewayStatus = 'offline'
   private readonly statusListeners = new ListenerSet<GatewayStatus>()
   private readonly eventListeners = new ListenerSet<PrintModeEvent[]>()
   private readonly runCompleteListeners = new ListenerSet<RunCompleteInfo>()
-  private readonly requests = new RequestCorrelator()
   private nextRequestId = 1
-  private reconnectAttempt = 0
-  private reconnectTimer: ReturnType<typeof setTimeout> | null = null
-  private manualClose = false
   private projectIdValue: string | null = null
+  private triggersAvailableValue = false
   /** P35: set by connect(); reset by close(). Gates connectOnce(). */
   private connectStarted = false
+  /** Loop 246: the connection lifecycle (socket, handshake, reconnect). */
+  private readonly connection: GatewayConnectionController
+  /** Loop 246: the public context the extracted request functions bind to. */
+  private readonly requestCtx: GatewayRequestContext
 
   constructor(opts?: {
     factory?: TransportFactory
@@ -78,6 +88,29 @@ export class GatewayClient {
   }) {
     this.factory = opts?.factory ?? browserTransportFactory
     this.requestTimeoutMs = opts?.requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS
+    this.connection = new GatewayConnectionController(
+      this.factory,
+      this.requestTimeoutMs,
+      this.requests,
+      () => this.nextId(),
+      {
+        setStatus: (status) => this.setStatus(status),
+        emitEvents: (events) => this.eventListeners.emit(events),
+        emitRunComplete: (frame: RunCompleteFrame) => {
+          this.runCompleteListeners.emit(frame)
+        },
+        onHello: (projectId, triggersAvailable) => {
+          this.projectIdValue = projectId
+          // FID-2026-0824-005 step 5: the server's capability list decides the
+          // triggers panel's availability (graceful degradation, no probing).
+          this.triggersAvailableValue = triggersAvailable
+        },
+      },
+    )
+    this.requestCtx = {
+      dispatch: async (frame) => this.dispatch(frame),
+      nextId: () => this.nextId(),
+    }
   }
 
   getStatus(): GatewayStatus {
@@ -86,6 +119,12 @@ export class GatewayClient {
 
   getProjectId(): string | null {
     return this.projectIdValue
+  }
+
+  /** FID-2026-0824-005 step 5: whether the server advertised trigger
+   *  management (SAVANT_TRIGGERS=1) in its hello capabilities. */
+  getTriggersAvailable(): boolean {
+    return this.triggersAvailableValue
   }
 
   onStatus(listener: (s: GatewayStatus) => void): () => void {
@@ -101,12 +140,8 @@ export class GatewayClient {
   }
 
   connect(config: GatewayConfig): void {
-    this.manualClose = false
-    this.reconnectAttempt = 0
-    this.config = config
-    this.clearReconnectTimer()
     this.connectStarted = true
-    this.openSocket()
+    this.connection.connect(config)
   }
 
   /**
@@ -126,21 +161,15 @@ export class GatewayClient {
   }
 
   close(): void {
-    this.manualClose = true
-    this.clearReconnectTimer()
     this.connectStarted = false
-    const connection = this.connection
-    this.connection = null
-    connection?.close()
-    this.requests.rejectAll('gateway closed by client')
-    this.setStatus('offline')
+    this.connection.close()
   }
 
   async sendUserMessage(
     prompt: string,
     opts?: { continueId?: string },
   ): Promise<void> {
-    await this.dispatch(userMessageRequest(this.nextId(), prompt, opts))
+    await sendUserMessageVia(this.requestCtx, prompt, opts)
   }
 
   async getScopedThreads(
@@ -163,20 +192,14 @@ export class GatewayClient {
       }>
     }>
   }> {
-    const result = await this.dispatch(
-      scopedThreadsRequest(this.nextId(), scopeType, scopeId),
-    )
-    return scopedThreadsResultSchema.parse(result)
+    return getScopedThreadsVia(this.requestCtx, scopeType, scopeId)
   }
 
   async updateScopedThreadState(
     sessionId: string,
     state: { unread?: boolean; pinned?: boolean },
   ): Promise<{ updated: boolean }> {
-    const result = await this.dispatch(
-      updateScopedThreadStateRequest(this.nextId(), sessionId, state),
-    )
-    return updateScopedThreadStateResultSchema.parse(result)
+    return updateScopedThreadStateVia(this.requestCtx, sessionId, state)
   }
 
   /** FID-2026-0901-005: the server-side slash-command registry — the full
@@ -184,8 +207,44 @@ export class GatewayClient {
   async listCommands(): Promise<
     Array<{ id: string; description: string; dispatch: 'agent' | 'client' }>
   > {
-    const result = await this.dispatch(listCommandsRequest(this.nextId()))
-    return listCommandsResultSchema.parse(result).commands
+    return listCommandsVia(this.requestCtx)
+  }
+
+  // --- FID-2026-0824-005 step 5: trigger management (rail panel) ----------
+
+  /** Sanitized trigger list (never the secret or its hash). */
+  async triggersList(): Promise<TriggerRecord[]> {
+    return triggersListVia(this.requestCtx)
+  }
+
+  /** Create a trigger. The response carries the plaintext secret EXACTLY
+   *  once — the server persists only its hash. */
+  async triggersCreate(params: {
+    name: string
+    recurrence?: string
+  }): Promise<CreatedTriggerInfo> {
+    return triggersCreateVia(this.requestCtx, params)
+  }
+
+  /** Set (or null-clear) the cron recurrence. */
+  async triggersSetRecurrence(
+    triggerId: string,
+    recurrence: string | null,
+  ): Promise<{ updated: boolean }> {
+    return triggersSetRecurrenceVia(this.requestCtx, triggerId, recurrence)
+  }
+
+  /** Enable/disable (disable pauses scheduled fires). */
+  async triggersSetEnabled(
+    triggerId: string,
+    enabled: boolean,
+  ): Promise<{ updated: boolean }> {
+    return triggersSetEnabledVia(this.requestCtx, triggerId, enabled)
+  }
+
+  /** Delete a trigger. */
+  async triggersDelete(triggerId: string): Promise<{ deleted: boolean }> {
+    return triggersDeleteVia(this.requestCtx, triggerId)
   }
 
   async respondApproval(
@@ -193,13 +252,11 @@ export class GatewayClient {
     answers: Array<Record<string, unknown>>,
     skipped: boolean,
   ): Promise<void> {
-    await this.dispatch(
-      approvalResponseRequest(this.nextId(), approvalId, answers, skipped),
-    )
+    await respondApprovalVia(this.requestCtx, approvalId, answers, skipped)
   }
 
   async interrupt(): Promise<void> {
-    await this.dispatch(interruptRequest(this.nextId()))
+    await interruptVia(this.requestCtx)
   }
 
   private nextId(): JsonRpcId {
@@ -209,7 +266,7 @@ export class GatewayClient {
   }
 
   private async dispatch(frame: JsonRpcRequest): Promise<unknown> {
-    const connection = this.connection
+    const connection = this.connection.activeConnection
     if (connection === null || this.statusValue !== 'ready') {
       throw new GatewayRequestError(
         GATEWAY_ERROR_CODES.invalidRequest,
@@ -217,93 +274,6 @@ export class GatewayClient {
       )
     }
     return this.requests.send(connection, frame, this.requestTimeoutMs)
-  }
-
-  private openSocket(): void {
-    if (this.config === null) {
-      throw new Error('connect(config) must be called before opening a socket')
-    }
-    this.setStatus(this.reconnectAttempt === 0 ? 'connecting' : 'reconnecting')
-    const url = `ws://127.0.0.1:${this.config.port}/ws`
-    this.connection = this.factory(url, {
-      onOpen: () => {
-        this.setStatus('authenticating')
-        void this.handshake(this.connection)
-      },
-      onMessage: (raw: string) => {
-        this.handleFrame(raw)
-      },
-      onClose: () => {
-        this.handleDisconnect('socket closed')
-      },
-      onError: () => {
-        // Detail-free by spec; the following close event drives recovery.
-      },
-    })
-  }
-
-  private async handshake(socket: TransportConnection | null): Promise<void> {
-    if (this.config === null || socket === null) return
-    try {
-      const result = await this.requests.send(
-        socket,
-        helloRequest(this.nextId(), this.config.token),
-        this.requestTimeoutMs,
-      )
-      const parsed = helloResultSchema.safeParse(result)
-      if (
-        !parsed.success ||
-        parsed.data.protocolVersion !== GATEWAY_PROTOCOL_VERSION
-      ) {
-        // Fail-closed: never stream against an unexpected contract version.
-        this.connection?.close()
-        return
-      }
-      this.projectIdValue = parsed.data.projectId
-      this.reconnectAttempt = 0
-      this.setStatus('ready')
-    } catch {
-      // Auth rejected (-32001/-32003) or timed out — close drives backoff.
-      this.connection?.close()
-    }
-  }
-
-  private handleFrame(raw: string): void {
-    const outcome = parseInboundFrame(raw)
-    if (!outcome.ok) return
-    const frame: InboundFrame = outcome.frame
-    if (frame.kind === 'events') {
-      this.eventListeners.emit(frame.events)
-      return
-    }
-    if (frame.kind === 'runComplete') {
-      this.runCompleteListeners.emit(frame)
-      return
-    }
-    this.requests.applyInbound(frame)
-  }
-
-  private handleDisconnect(reason: string): void {
-    this.connection = null
-    this.requests.rejectAll(`connection lost: ${reason}`)
-    if (this.manualClose) {
-      this.setStatus('offline')
-      return
-    }
-    this.reconnectAttempt += 1
-    const delay = backoffDelayMs(this.reconnectAttempt)
-    this.setStatus('reconnecting')
-    this.reconnectTimer = setTimeout(() => {
-      this.reconnectTimer = null
-      this.openSocket()
-    }, delay)
-  }
-
-  private clearReconnectTimer(): void {
-    if (this.reconnectTimer !== null) {
-      clearTimeout(this.reconnectTimer)
-      this.reconnectTimer = null
-    }
   }
 
   private setStatus(status: GatewayStatus): void {

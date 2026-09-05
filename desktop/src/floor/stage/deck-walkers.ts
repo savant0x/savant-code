@@ -20,21 +20,19 @@
 import { Group } from 'three'
 
 import { padPosition } from '../adapter/floor-adapter'
-import { DECK_ROLE_IDS, ROLE_LABELS, roleAccent } from '../roles'
+import { DECK_ROLE_IDS, roleAccent } from '../roles'
 import { stationIndex, stationPosition } from '../stations'
+import { ROBOT_TARGET_HEIGHT, lastTemplateOutcome } from './deck-robots'
 import {
-  ROBOT_TARGET_HEIGHT,
-  buildFallbackFigure,
-  createRobotFigure,
-  lastTemplateOutcome,
-  loadRobotTemplate,
-} from './deck-robots'
-import { createNameplate } from './nameplate'
+  defaultFigureFactory,
+  faceTowards,
+  mountFigure,
+  type CastEntry,
+} from './deck-walkers-mount'
 import { TRAIL_SPACING_MS, TrailPool } from './trail-pool'
 
 import type { RobotFigure } from './deck-robots'
 import type { AnimationSyncOptions } from './motion'
-import type { Nameplate } from './nameplate'
 import type { FloorState, WalkerState } from '../adapter/floor-adapter'
 import type { DeckCoreRoleId } from '../roles'
 import type { Scene } from 'three'
@@ -84,21 +82,6 @@ export interface WalkerLayerOptions {
   onCastSettled?: () => void
 }
 
-interface CastEntry {
-  readonly roleId: DeckCoreRoleId
-  /** Position in DECK_ROLE_IDS (deterministic layout). */
-  readonly roleIndex: number
-  readonly accent: string
-  readonly homeX: number
-  readonly homeZ: number
-  readonly scale: number
-  figure: RobotFigure | null
-  nameplate: Nameplate | null
-  lastNowMs: number | null
-  lastTrailMs: number | null
-  active: boolean
-}
-
 /** First ACTIVE walker whose cast role matches; Map order = spawn order. */
 function activeWalkerFor(
   floor: FloorState,
@@ -115,35 +98,6 @@ function advanceAxis(current: number, target: number, maxStep: number): number {
   const delta = target - current
   if (Math.abs(delta) <= maxStep) return target
   return current + Math.sign(delta) * maxStep
-}
-
-/** Yaw a figure so it FACES a world point (operator: all subagents face
- * Savant at the center). The GLB's forward axis is +Z; atan2 of the
- * direction vector gives the rotation that turns +Z toward the target. */
-function faceTowards(
-  root: { rotation: { y: number } },
-  fromX: number,
-  fromZ: number,
-  toX: number,
-  toZ: number,
-): void {
-  const dx = toX - fromX
-  const dz = toZ - fromZ
-  if (Math.abs(dx) < 1e-6 && Math.abs(dz) < 1e-6) return
-  root.rotation.y = Math.atan2(dx, dz)
-}
-
-/** Production factory: the vendored robot, or the solid fallback silhouette. */
-function defaultFigureFactory(
-  roleId: DeckCoreRoleId,
-  accent: string,
-  height: number,
-): Promise<RobotFigure | null> {
-  return loadRobotTemplate().then((template) =>
-    template === null
-      ? buildFallbackFigure(accent)
-      : createRobotFigure(template, accent, { height }),
-  )
 }
 
 export class WalkerLayer {
@@ -210,44 +164,10 @@ export class WalkerLayer {
 
   /** Mount one figure (+ nameplate) into the layer; null mounts the fallback. */
   private mountFigure(entry: CastEntry, figure: RobotFigure | null): void {
-    // FID-2026-0828-002: the live cast was stuck at 0/10 — the GLB loaded
-    // but no figure attached. Instrument the exact failure so the console
-    // shows WHERE it breaks instead of silently leaving an empty cast.
-    // eslint-disable-next-line no-console
-    console.info(
-      `[deck] mount ${entry.roleId}: ${figure === null ? 'fallback' : 'glb'}`,
-    )
-    if (this.disposed) {
-      figure?.dispose()
-      return
-    }
-    const settled = figure ?? buildFallbackFigure(entry.accent)
-    settled.root.position.set(entry.homeX, 0, entry.homeZ)
-    settled.root.scale.setScalar(entry.scale)
-    // Face the console on mount (operator: the crew faces Savant).
-    faceTowards(settled.root, entry.homeX, entry.homeZ, 0, 0)
-    entry.figure = settled
-    const nameplate = createNameplate({
-      title: ROLE_LABELS[entry.roleId],
-      subtitle: entry.roleId,
-      accent: entry.accent,
-      // Coherent-world rescale: 2.2 world units was authored when bodies
-      // were ~25 units tall; against a 6-unit body the plate must shrink
-      // proportionally (≈1/3 body height). Height follows the 4:1 canvas.
-      worldWidth: 1.9,
+    mountFigure(entry, figure, {
+      isDisposed: () => this.disposed,
+      root: this.root,
     })
-    // FID-2026-0828-002 C (operator directive 2026-08-29): cast nameplates
-    // sit at CHEST height on each figure — a proportional fraction of the
-    // normalized body height. The plate is a child of the scaled figure
-    // root, so the local fraction lands proportionally on every body size
-    // (Savant taller, specialists standard). The earlier shared-plane
-    // revision (all chips on NAMEPLATE_PLANE_Y) was revoked by the operator:
-    // it lifted agent chips far above their bodies. Station plates keep
-    // their own NAMEPLATE_PLANE_Y altitude.
-    nameplate.sprite.position.y = ROBOT_TARGET_HEIGHT * 0.4
-    settled.root.add(nameplate.sprite)
-    entry.nameplate = nameplate
-    this.root.add(settled.root)
   }
 
   /** Current visual ground anchor of a mounted role figure. */
