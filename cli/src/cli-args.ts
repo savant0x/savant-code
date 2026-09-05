@@ -37,6 +37,10 @@ export type ParsedArgs = {
   planOnly: boolean
   /** FID-2026-0820-008: `server` subcommand ephemeral port (--port=<n>). */
   port?: number
+  /** FID-062: comma-separated tool allowlist for headless runs. Filters the
+   *  resolved agent's toolNames so a delegating parent (Savant core) can pin
+   *  the child's tool surface without authoring a custom agent definition. */
+  allowedTools?: string
 }
 
 /**
@@ -166,6 +170,10 @@ export function parseArgs({
         '--permission-mode <mode>',
         'Sandbox permission mode: safe, prompt, or unsafe (default: prompt)',
       )
+      .option(
+        '--allowed-tools <tools>',
+        'Comma-separated tool allowlist for headless runs (filters the agent toolNames)',
+      )
       .addHelpText(
         'after',
         '\nCommands:\n  login                          Log in to your account\n  publish                        Publish agents to the registry\n  release <op>                    Run the public release flow (preview | diagnose | go | resume | status)\n  server                         Start the desktop session gateway (WebSocket JSON-RPC)',
@@ -235,6 +243,11 @@ export function parseArgs({
     cwd: options.cwd,
     initialMode,
     initialPermissionMode,
+    allowedTools:
+      typeof options.allowedTools === 'string' &&
+      options.allowedTools.trim().length > 0
+        ? options.allowedTools
+        : undefined,
     print: options.print || false,
     designInput:
       typeof options.designInput === 'string' ? options.designInput : undefined,

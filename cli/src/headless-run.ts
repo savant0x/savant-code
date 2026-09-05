@@ -35,6 +35,9 @@ export const DEFAULT_RUN_TIMEOUT_MS = 10 * 60 * 1000
 export type HeadlessRunParams = {
   prompt: string
   agentId?: string
+  /** FID-062: comma-separated tool allowlist. Filters the resolved agent's
+   *  toolNames so a delegating parent can pin the child's tool surface. */
+  allowedTools?: string
   continueChat?: boolean
   continueId?: string | null
   /** Timeout in ms. Defaults to SAVANT_CODE_RUN_TIMEOUT_MS or 10 minutes. */
@@ -128,7 +131,7 @@ export function extractFinalAnswer(runState: RunState): string {
 export async function runHeadlessPrint(
   params: HeadlessRunParams,
 ): Promise<HeadlessRunResult> {
-  const { prompt, agentId, continueChat, continueId } = params
+  const { prompt, agentId, allowedTools, continueChat, continueId } = params
   const timeoutMs =
     params.timeoutMs ?? resolveRunTimeoutMs(process.env[RUN_TIMEOUT_ENV])
 
@@ -157,10 +160,33 @@ export async function runHeadlessPrint(
   // applySavantCodeModelOverride). The `resolvedAgent` DI escape hatch only
   // supplies the agent *shape* (definition/id); the model is still overridden
   // so a headless run can never bill a bundled paid default.
-  const agent = applySavantCodeModelOverride(
-    params.resolvedAgent ?? resolveAgent('HYBRID', agentId, agentDefinitions),
-    agentDefinitions,
-  )
+  const resolved: AgentDefinition | string =
+    params.resolvedAgent ?? resolveAgent('HYBRID', agentId, agentDefinitions)
+  const overridden = applySavantCodeModelOverride(resolved, agentDefinitions)
+  // FID-062: a delegating parent can pin the child's tool surface via
+  // --allowed-tools. Filtering (never extending) the resolved agent's
+  // toolNames keeps this a restriction: the union of tools can only shrink,
+  // so the flag cannot grant a tool the agent does not already have. The
+  // model is steered away from excluded tools by the runtime's standard
+  // restricted-tool error → user-message conversion (survivable, unlike a
+  // sandbox crash). Ignored when it would be a no-op or empty. Applied AFTER
+  // the model override — applySavantCodeModelOverride re-spreads the registry
+  // definition, which would otherwise discard this filter.
+  let agent: AgentDefinition | string = overridden
+  if (typeof agent === 'object' && allowedTools?.trim()) {
+    const allow = new Set(
+      allowedTools
+        .split(',')
+        .map((t) => t.trim())
+        .filter(Boolean),
+    )
+    if (allow.size > 0) {
+      agent = {
+        ...agent,
+        toolNames: (agent.toolNames ?? []).filter((t) => allow.has(t)),
+      }
+    }
+  }
 
   let previousRun: RunState | undefined = params.previousRun
   if (previousRun === undefined && continueChat) {
@@ -189,6 +215,21 @@ export async function runHeadlessPrint(
       // (operator directive 2026-08-10).
       protocolVariant: 'harness',
       devMode: false,
+      // FID-062: observe error events instead of aborting on them. The SDK's
+      // default handleEvent throws on error-type events, and safeDispatch
+      // turns a throwing handler into a full run rejection — so one
+      // survivable tool-level denial (sandbox deny in safe mode, a
+      // restricted-tool error) kills the entire run even though the runtime
+      // has already converted it into a user message the model can
+      // self-correct from. Interactive sessions pass a real handler and
+      // survive the same denials; headless must not be stricter than the TUI.
+      // The run's real outcome still comes from runState.output below.
+      handleEvent: (event) => {
+        if (event.type === 'error') {
+          // eslint-disable-next-line no-console -- headless diagnostics go to stderr
+          console.error(`[savant-code] ${event.message}`)
+        }
+      },
     })
 
     const output = runState.output

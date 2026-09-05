@@ -20,6 +20,10 @@ import {
   GATEWAY_PROTOCOL_VERSION,
 } from './server/json-rpc'
 import { installStdinWatchdog } from './server/stdin-watchdog'
+import {
+  createGatewayTriggerManager,
+  startTriggersSubsystem,
+} from './server/triggers/server-wiring'
 import { findGitRoot } from './utils/git'
 
 // Re-exported so the public surface is unchanged by the extraction.
@@ -53,6 +57,17 @@ export function resolveServerProjectRoot(env?: NodeJS.ProcessEnv): string {
   return findGitRoot({ cwd: launchDir }) ?? launchDir
 }
 
+/**
+ * FID-2026-0824-005: triggers are OPT-IN for v1 (the receiver occupies the
+ * port next to the gateway and accepts local webhook deliveries; default ON
+ * may change after the rail UI lands in step 5). Env-only, like the token.
+ */
+export const TRIGGERS_ENABLED_ENV = 'SAVANT_TRIGGERS'
+
+/** Scheduler tick cadence (step 3): minute-resolution cron + resume sweep
+ *  make 30 s plenty; the reentrancy guard absorbs slow deliveries. */
+export const TRIGGER_SCHEDULER_TICK_MS = 30_000
+
 /** Ready-line protocol marker — the supervisor's parse anchor. */
 export const GATEWAY_READY_MARKER = 'savant-gateway-ready'
 
@@ -60,6 +75,13 @@ export type ServerCommandOptions = {
   /** --port=<ephemeral> CLI arg. 0 / absent → ephemeral bind. */
   port?: number
   token?: string
+  /** Test seam: skip installStdinWatchdog. In-process callers (bun test)
+   *  MUST opt out — otherwise the watchdog treats the HARNESS's piped
+   *  stdin as a dead parent and exits the whole test runner mid-suite
+   *  (exit 0, truncated output). Production wiring is unaffected: the
+   *  supervisor runs the binary with a live stdin pipe.
+   */
+  skipStdinWatchdog?: boolean
 }
 
 /** Parse `--port=<n>` (or `--port <n>`) from argv. Unknown/malformed → 0. */
@@ -111,10 +133,17 @@ export async function runServerCommand(
   // resolved root so the chip and the FID rail agree with the codebase.
   const fidsDir = join(projectRoot, 'dev', 'fids')
 
+  const seenTriggerKeys = new Set<string>()
+  // FID-2026-0824-005 step 5: the trigger-management surface for the desktop
+  // rail panel. The feature is opt-in via SAVANT_TRIGGERS=1 — when off, the
+  // manager stays undefined and the RPC methods degrade gracefully.
+  const triggersOn = (process.env[TRIGGERS_ENABLED_ENV] ?? '') === '1'
+  const triggerManager = triggersOn ? createGatewayTriggerManager() : undefined
   const handle = await startGateway({
     token,
     port,
     fidsDir,
+    triggerManager,
     onReady: ({ port: boundPort }) => {
       // The ready line is the supervisor's parse anchor (single JSON line).
       // eslint-disable-next-line no-console -- headless stdout contract
@@ -129,7 +158,23 @@ export async function runServerCommand(
     },
   })
 
-  installStdinWatchdog()
+  // FID-2026-0824-005 steps 1–3: opt-in local webhook receiver + injection
+  // bridge + cron scheduler (extracted verbatim to server/triggers/
+  // server-wiring.ts, FID-2026-0819-005 Loop 144). The receiver binds
+  // gatewayPort+1 (loopback only); a port conflict or bind failure is
+  // LOGGED, never fatal to the gateway session.
+  if ((process.env[TRIGGERS_ENABLED_ENV] ?? '') === '1') {
+    await startTriggersSubsystem({
+      gatewayPort: handle.port,
+      seenTriggerKeys,
+      drive: async (prompt) =>
+        handle.injectTriggerRun({ prompt, source: 'trigger' }),
+    })
+  }
+
+  if (!options.skipStdinWatchdog) {
+    installStdinWatchdog()
+  }
 
   return handle.port
 }

@@ -100,4 +100,10 @@ export const GATEWAY_CAPABILITIES = [
   'update_scoped_thread_state',
   'list_commands',
   'event',
+  // FID-2026-0824-005 step 5: trigger management (desktop rail panel).
+  'triggers_list',
+  'triggers_create',
+  'triggers_set_recurrence',
+  'triggers_set_enabled',
+  'triggers_delete',
 ] as const

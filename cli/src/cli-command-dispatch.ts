@@ -29,6 +29,7 @@ export async function dispatchCommandsAndHeadless(
     initialPrompt,
     command,
     agent,
+    allowedTools,
     continue: continueChat,
     continueId,
     print,
@@ -132,6 +133,7 @@ export async function dispatchCommandsAndHeadless(
     const result = await runHeadlessPrint({
       prompt: headlessPrompt ?? '',
       agentId: hasAgentOverride ? agent : undefined,
+      allowedTools,
       continueChat,
       continueId,
     })
