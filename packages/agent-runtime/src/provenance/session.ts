@@ -9,9 +9,10 @@ import {
 } from '@savant-code/common/crypto'
 import { receiptBase } from '@savant-code/common/provenance'
 
+import { resolveOpenReceiptsAtClose } from './close-annotations'
 import { ProvenanceLedger } from './ledger'
 import { buildWriteReceipt } from './receipt'
-import { buildVerdictPayload } from './verdict'
+import { bindVerdicts } from './verdict-binding'
 
 import type { ProvenanceSessionOptions } from './registry'
 import type { JSONValue } from '@savant-code/common/types/json'
@@ -189,144 +190,38 @@ export class ProvenanceSession implements ProvenanceSessionLike {
     agentType: string
     verdictText: string
   }): Promise<TrustReceipt[]> {
-    if (this.mode === 'off') return []
-    const { phase, agentId, agentType, verdictText } = params
-    if (verdictText.trim().length === 0) return []
-    const pending = [...this.receipts.values()].filter(
-      (receipt) => !receipt.verdicts.some((v) => v.phase === phase),
+    // Engine extracted to verdict-binding.ts (FID-2026-0819-005 Loop 165);
+    // the session supplies its own context.
+    return bindVerdicts(
+      {
+        sessionId: this.sessionId,
+        mode: this.mode,
+        receipts: this.receipts,
+        ledger: this.ledger,
+        emit: (event) => this.emit(event),
+        getRoleKey: (role) => this.getRoleKey(role),
+        emitNotice: (message) => this.emitNotice(message),
+      },
+      params,
     )
-    if (pending.length === 0) return []
-    let keypair: RoleKeypair
-    try {
-      keypair = await this.getRoleKey(agentType)
-    } catch (error) {
-      this.emitNotice(
-        `verdict signing unavailable for ${agentType}: ${String(error)}`,
-      )
-      return []
-    }
-    for (const receipt of pending) {
-      const timestamp = new Date().toISOString()
-      const payload = buildVerdictPayload({
-        changeHash: receipt.changeHash,
-        phase,
-        agentType,
-        agentId,
-        verdictText,
-        timestamp,
-      })
-      const canonical = jcsCanonicalize(payload as unknown as JSONValue)
-      const { sig, over } = signPayload(keypair, { kind: 'jcs', canonical })
-      receipt.verdicts.push({
-        phase,
-        agentType,
-        agentId,
-        verdictText,
-        timestamp,
-        over,
-        sig,
-      })
-      const hasAudit = receipt.verdicts.some((v) => v.phase === 'audit')
-      const hasAdversarial = receipt.verdicts.some(
-        (v) => v.phase === 'adversarial',
-      )
-      if (hasAudit && hasAdversarial) {
-        receipt.status = 'complete'
-      }
-      this.ledger.enqueue({
-        type: 'verdict',
-        sessionId: this.sessionId,
-        seq: receipt.seq,
-        phase,
-        agentType,
-        agentId,
-        verdictText,
-        timestamp,
-        changeHash: receipt.changeHash,
-        over,
-        sig,
-      })
-      this.emit({
-        type: 'verdict_bound',
-        sessionId: this.sessionId,
-        phase,
-        receipt,
-      })
-    }
-    return pending
   }
 
   /**
-   * FID-2026-0814-005: honest terminal for receipts that never received an
-   * independent Verifier/Adversary verdict. A system-role close annotation is
-   * signed onto the ledger per open receipt (documenting the ABSENCE of an
-   * audit — never fabricating one) and the receipt status becomes
-   * `no_verdict`, which the Trust Matrix renders as a terminal row.
+   * FID-2026-0814-005: resolve open receipts BEFORE the session-close entry
+   * (extracted to close-annotations.ts, FID-2026-0819-005 Loop 157) so the
+   * ledger order is receipt → verdict → session_close and the close
+   * annotation is verifiable in the same chain.
    */
-  private async resolveOpenReceiptsAtClose(): Promise<TrustReceipt[]> {
-    if (this.mode === 'off') return []
-    const open = [...this.receipts.values()].filter(
-      (receipt) => receipt.status === 'pending',
-    )
-    if (open.length === 0) return []
-    let keypair: RoleKeypair
-    try {
-      keypair = await this.getRoleKey('system')
-    } catch (error) {
-      this.emitNotice(
-        `close annotation signing unavailable (system role): ${String(error)}`,
-      )
-      // Honest degradation: without a signing key the annotation cannot be
-      // ledgered — leave the receipts pending rather than fake a close.
-      return []
-    }
-    const resolved: TrustReceipt[] = []
-    for (const receipt of open) {
-      const timestamp = new Date().toISOString()
-      const verdictText =
-        'No independent verdict — session closed without Verifier/Adversary verdicts'
-      const payload = buildVerdictPayload({
-        changeHash: receipt.changeHash,
-        phase: 'audit',
-        agentType: 'system',
-        agentId: 'session-close',
-        verdictText,
-        timestamp,
-      })
-      const canonical = jcsCanonicalize(payload as unknown as JSONValue)
-      const { sig, over } = signPayload(keypair, { kind: 'jcs', canonical })
-      receipt.verdicts.push({
-        phase: 'audit',
-        agentType: 'system',
-        agentId: 'session-close',
-        verdictText,
-        timestamp,
-        over,
-        sig,
-      })
-      receipt.status = 'no_verdict'
-      this.ledger.enqueue({
-        type: 'verdict',
-        sessionId: this.sessionId,
-        seq: receipt.seq,
-        phase: 'audit',
-        agentType: 'system',
-        agentId: 'session-close',
-        verdictText,
-        timestamp,
-        changeHash: receipt.changeHash,
-        over,
-        sig,
-      })
-      this.emit({
-        type: 'verdict_bound',
-        sessionId: this.sessionId,
-        phase: 'audit',
-        receipt,
-      })
-      resolved.push(receipt)
-    }
-    return resolved
+  private async resolveOpenReceipts(): Promise<TrustReceipt[]> {
+    return resolveOpenReceiptsAtClose({
+      sessionId: this.sessionId,
+      mode: this.mode,
+      receipts: this.receipts,
+      ledger: this.ledger,
+      emit: (event) => this.emit(event),
+      getRoleKey: (role) => this.getRoleKey(role),
+      emitNotice: (message) => this.emitNotice(message),
+    })
   }
 
   async finalize(): Promise<void> {
@@ -335,7 +230,7 @@ export class ProvenanceSession implements ProvenanceSessionLike {
     // FID-2026-0814-005: resolve open receipts BEFORE the session-close entry
     // so the ledger order is receipt → verdict → session_close and the close
     // annotation is verifiable in the same chain.
-    await this.resolveOpenReceiptsAtClose()
+    await this.resolveOpenReceipts()
     this.ledger.enqueue({
       type: 'session_close',
       sessionId: this.sessionId,

@@ -1,26 +1,17 @@
 import { AnalyticsEvent } from '@savant-code/common/constants/analytics-events'
-import {
-  supportsAssistantPrefill,
-  supportsCacheControl,
-} from '@savant-code/common/old-constants'
-import { TOOLS_WHICH_WONT_FORCE_NEXT_STEP } from '@savant-code/common/tools/constants'
+import { supportsCacheControl } from '@savant-code/common/old-constants'
 import { serializeCacheDebugCorrelation } from '@savant-code/common/util/cache-debug'
 import { systemMessage, userMessage } from '@savant-code/common/util/messages'
 
 import { getAgentStreamFromTemplate } from '../prompt-agent-stream'
 import { createCacheDebugSetup } from './cache-debug'
 import { STEP_WARNING_MESSAGE } from './constants'
-import { evaluateGoalCondition } from './goal-evaluation'
 import { handleNParameterStep } from './n-parameter'
-import {
-  buildToolCallSignature,
-  updateAndEvaluateRunawayGuards,
-} from './runaway-guards'
-import { getAgentPrompt } from '../templates/strings'
+import { finalizeStep } from './step/finalize-step'
+import { prepareStepHistory } from './step/prepare-step-history'
 import { processStream } from '../tools/stream-parser'
 import { setActivity } from '../util/activity-tracking'
 import { withSystemTags, expireMessages } from '../util/messages'
-import { isThinkOnlyResponse } from '../util/think-tags'
 import { countTokens } from '../util/token-counter'
 
 import type { RunAgentStepParams, RunAgentStepResult } from './types'
@@ -35,7 +26,6 @@ export const runAgentStep = async (
     fileContext,
     agentTemplate,
     fingerprintId,
-    localAgentTemplates,
     logger,
     prompt,
     repoId,
@@ -45,7 +35,6 @@ export const runAgentStep = async (
     userInputId,
     onResponseChunk,
     trackEvent,
-    additionalToolDefinitions,
   } = params
   let agentState = params.agentState
 
@@ -99,85 +88,12 @@ export const runAgentStep = async (
     }
   }
 
-  // FID-2026-0802-005 L15: the step prompt is computed ONCE per step in
-  // loopAgentSteps (which needs it for token counting) and passed down —
-  // previously runAgentStep recomputed it for identical inputs. Callers that
-  // invoke runAgentStep directly (tests) still get the computed fallback.
-  const stepPrompt =
-    params.stepPrompt ??
-    (await getAgentPrompt({
-      ...params,
-      agentTemplate,
-      promptType: { type: 'stepPrompt' },
-      fileContext,
-      agentState,
-      agentTemplates: localAgentTemplates,
-      logger,
-      additionalToolDefinitions,
-    }))
-
-  // FID-2026-0815-004 (F-03): replace the buildArray(…spread…, falsey-filter)
-  // construction with a conditional append. buildArray only ever removed the
-  // `false` from `stepPrompt && …` when stepPrompt was absent; the ternary
-  // below covers that case exactly, and expireMessages' fast-path avoids the
-  // allocation when nothing expires (4 allocations/step → 2, or 1 when there
-  // is no stepPrompt).
-  const filtered = expireMessages(agentState.messageHistory, 'agentStep')
-  const stepPromptMessage = stepPrompt
-    ? userMessage({
-        content: stepPrompt,
-        tags: ['STEP_PROMPT'],
-
-        // James: Deprecate the below, only use tags, which are not prescriptive.
-        timeToLive: 'agentStep' as const,
-        keepDuringTruncation: true,
-      })
-    : undefined
-
-  agentState.messageHistory = stepPromptMessage
-    ? [...filtered, stepPromptMessage]
-    : filtered
-
-  // FID-2026-0821-005 A10: one-shot relay digest. A programmatic handleSteps
-  // (basher) parks a truncated terminal-output excerpt on agentState so the
-  // summarizer STEP keeps ground truth even when the full json ToolMessage
-  // fails to render downstream. Consume-once: cleared after this assembly.
-  if (
-    typeof agentState.relayDigest === 'string' &&
-    agentState.relayDigest.length > 0
-  ) {
-    agentState.messageHistory = [
-      ...agentState.messageHistory,
-      userMessage({
-        content: withSystemTags(
-          `Terminal output excerpt (relay safeguard): ${agentState.relayDigest}`,
-        ),
-        tags: ['STEP_RELAY_DIGEST'],
-        timeToLive: 'agentStep' as const,
-        keepDuringTruncation: true,
-      }),
-    ]
-    delete agentState.relayDigest
-  }
+  // FID-2026-0819-005 Loop 274: step-prompt resolution, message assembly,
+  // relay digest, and the assistant-prefill guard (extracted verbatim to
+  // step/prepare-step-history.ts).
+  await prepareStepHistory(params, agentState)
 
   const { model } = agentTemplate
-
-  // A step can start with the history ending on an assistant message — e.g. a
-  // continuation after a think-only response for an agent with no stepPrompt.
-  // Claude 4.6+ rejects such requests as unsupported assistant prefill, so end
-  // the conversation with a user message instead.
-  const lastMessage =
-    agentState.messageHistory[agentState.messageHistory.length - 1]
-  if (lastMessage?.role === 'assistant' && !supportsAssistantPrefill(model)) {
-    agentState.messageHistory = [
-      ...agentState.messageHistory,
-      userMessage({
-        content: withSystemTags('Continue from where you left off.'),
-        timeToLive: 'agentStep' as const,
-        keepDuringTruncation: true,
-      }),
-    ]
-  }
 
   let stepCreditsUsed = 0
 
@@ -267,7 +183,6 @@ export const runAgentStep = async (
     })
   }
 
-  let fullResponse = ''
   const toolResults: ToolMessage[] = []
 
   // FID-2026-0718-009 M4: model stream starting — set activity to thinking.
@@ -298,181 +213,34 @@ export const runAgentStep = async (
     onCostCalculated,
   })
 
-  const {
-    fullResponse: fullResponseAfterStream,
-    hadToolCallError,
-    hasNativeIncompleteToolCall,
-    lastIncompleteToolName,
-    messageId,
-    toolCalls,
-    toolResults: newToolResults,
-  } = await processStream({
+  const streamOutcome = await processStream({
     ...params,
     agentContext,
     agentState,
     agentStepId,
     agentTemplate,
-    fullResponse,
+    fullResponse: '',
     messages: agentState.messageHistory,
     repoId,
     stream,
     onCostCalculated,
   })
 
-  toolResults.push(...newToolResults)
+  toolResults.push(...streamOutcome.toolResults)
 
-  fullResponse = fullResponseAfterStream
-
-  // FID-2026-0718-009 M5: model stream complete — idle until next event.
-  setActivity(agentState, { kind: 'idle', since: Date.now() }, onResponseChunk)
-
-  agentState.messageHistory = expireMessages(
-    agentState.messageHistory,
-    'agentStep',
-  )
-
-  // Handle /compact command: replace message history with the summary.
-  // FID-2026-0822-001 RC3: legacy fallback ONLY for agents without
-  // handleSteps. handleSteps agents own /compact through the serialized
-  // savant interceptor (force context-pruner pipeline); letting this run
-  // for them races that pipeline and can replace structured memory with a
-  // raw model response (or error text).
-  const wasCompacted =
-    prompt &&
-    !agentTemplate.handleSteps &&
-    (prompt.toLowerCase() === '/compact' || prompt.toLowerCase() === 'compact')
-  if (wasCompacted) {
-    agentState.messageHistory = [
-      userMessage(
-        withSystemTags(
-          `The following is a summary of the conversation between you and the user. The conversation continues after this summary:\n\n${fullResponse}`,
-        ),
-      ),
-    ]
-    logger.debug({ summary: fullResponse }, 'Compacted messages')
-  }
-
-  const hasNoToolResults =
-    toolCalls.filter(
-      (call) => !TOOLS_WHICH_WONT_FORCE_NEXT_STEP.includes(call.toolName),
-    ).length === 0 &&
-    toolResults.filter(
-      (result) => !TOOLS_WHICH_WONT_FORCE_NEXT_STEP.includes(result.toolName),
-    ).length === 0 &&
-    !hadToolCallError // Tool call errors should also force another step so the agent can retry
-
-  const hasTaskCompleted = toolCalls.some(
-    (call) =>
-      call.toolName === 'task_completed' || call.toolName === 'end_turn',
-  )
-
-  // If the response is only <think>...</think> scaffolding (including orphan
-  // </think> closes that native-reasoning providers sometimes leak into
-  // content), the model was just thinking and should continue rather than end.
-  const isThinkOnly = hasNoToolResults && isThinkOnlyResponse(fullResponse)
-
-  // If the agent has the task_completed tool, it must be called to end its turn.
-  const requiresExplicitCompletion =
-    agentTemplate.toolNames.includes('task_completed')
-
-  let shouldEndTurn: boolean
-  if (requiresExplicitCompletion) {
-    // For models requiring explicit completion, only end turn when:
-    // - task_completed is called, OR
-    // - end_turn is called (backward compatibility)
-    shouldEndTurn = hasTaskCompleted
-  } else {
-    // For other models, also end turn when there are no tool calls
-    // Exception: if the response is only <think> tags, continue the turn
-    shouldEndTurn = hasTaskCompleted || (hasNoToolResults && !isThinkOnly)
-  }
-
-  // FID-2026-0725-083: Goal evaluation — see evaluateGoalCondition.
-  shouldEndTurn = evaluateGoalCondition({
-    shouldEndTurn,
-    goalCondition: agentState.goalCondition,
-    fullResponse,
-    logger,
-  })
-
-  // FID-2026-0822-002: mechanical anti-runaway guards. Detect non-progress
-  // patterns (identical repeated tool calls, consecutive tool-error retry
-  // steps, consecutive think-only responses) and end the turn here instead
-  // of burning LLM steps to the MAX_AGENT_STEPS cap.
-  const guardVerdict = updateAndEvaluateRunawayGuards(
-    {
-      lastToolCallSignature: agentState.lastToolCallSignature,
-      consecutiveIdenticalToolSignatures:
-        agentState.consecutiveIdenticalToolSignatures ?? 0,
-      consecutiveToolErrorSteps: agentState.consecutiveToolErrorSteps ?? 0,
-      consecutiveThinkOnlyResponses:
-        agentState.consecutiveThinkOnlyResponses ?? 0,
-    },
-    {
-      toolSignature: buildToolCallSignature(toolCalls),
-      hadToolCallError,
-      isThinkOnly,
-    },
-  )
-  agentState.lastToolCallSignature = guardVerdict.counters.lastToolCallSignature
-  agentState.consecutiveIdenticalToolSignatures =
-    guardVerdict.counters.consecutiveIdenticalToolSignatures
-  agentState.consecutiveToolErrorSteps =
-    guardVerdict.counters.consecutiveToolErrorSteps
-  agentState.consecutiveThinkOnlyResponses =
-    guardVerdict.counters.consecutiveThinkOnlyResponses
-  if (guardVerdict.tripReason) {
-    const notice = `Turn auto-ended by anti-runaway guard (${guardVerdict.tripReason}). The last several steps made no progress; send a new message to continue.`
-    logger.warn({ tripReason: guardVerdict.tripReason }, notice)
-    onResponseChunk(`\n\n${notice}\n`)
-    shouldEndTurn = true
-  }
-
-  agentState = {
-    ...agentState,
-    stepsRemaining: agentState.stepsRemaining - 1,
-    agentContext,
-  }
-
-  // Capture the assistant response and tool results added during this step
-  params.traceWriter?.recordStep({
-    agentId: agentState.agentId,
-    agentType: String(agentType),
-    runId: agentState.runId,
-    userInputId,
-    step: iterationNum,
-    system,
-    messages: agentState.messageHistory,
-  })
-
-  logger.debug(
-    {
-      iteration: iterationNum,
-      agentId: agentState.agentId,
-      model,
-      prompt,
-      shouldEndTurn,
-      duration: Date.now() - startTime,
-      // FID-2026-0815-012 G-01: summarize only. `fullResponse`, `toolCalls`,
-      // and `toolResults` are captured by the trace writer (via
-      // messageHistory above) and the persisted chat file, so re-serializing
-      // them here deep-copies large payloads every step for no observability
-      // gain. Keep the cheap scalar summary fields instead.
-      messageCount: agentState.messageHistory.length,
-      stepCreditsUsed,
-    },
-    `End agent ${agentType} step ${iterationNum} (${userInputId}${prompt ? ` - Prompt: ${prompt.slice(0, 20)}` : ''})`,
-  )
-
-  return {
+  // FID-2026-0819-005 Loop 274: post-stream normalization, decisions,
+  // anti-runaway guards, and settlement (extracted verbatim to
+  // step/finalize-step.ts; streamOutcome carries the processStream fields
+  // and fullResponse is passed explicitly).
+  return finalizeStep({
+    params,
     agentState,
-    fullResponse,
-    shouldEndTurn,
-    hasNativeIncompleteToolCall,
-    lastIncompleteToolName,
-    messageId,
-    nResponses: undefined,
-  }
+    fullResponse: streamOutcome.fullResponse,
+    stream: streamOutcome,
+    iterationNum,
+    startTime,
+    stepCreditsUsed,
+  })
 }
 
 export type RunAgentStepFn = typeof runAgentStep

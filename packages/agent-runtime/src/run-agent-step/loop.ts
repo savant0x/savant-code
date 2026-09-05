@@ -1,18 +1,20 @@
-import { isAbortError, getErrorObject } from '@savant-code/common/util/error'
-import { userMessage } from '@savant-code/common/util/messages'
+import { isAbortError } from '@savant-code/common/util/error'
 
+import { createLoopContext } from './loop-context'
+import {
+  runLoopIteration,
+  type LoopIterationContext,
+  type LoopIterationState,
+} from './loop-iteration'
 import { getOrCreateEnforcement } from '../echo/enforcement'
 import { appendGroundingRefresh } from '../echo/grounding'
-import { clearProgrammaticRunState } from '../run-programmatic-step'
-import { buildLoopErrorOutput } from './error-output'
-import { createLoopContext } from './loop-context'
-import { runLoopIteration, type LoopIterationState } from './loop-iteration'
-import { resetThinkerConvergenceState } from '../tools/thinker-convergence-gate'
-import { cleanupThoughtSession } from '../tools/thought-session-store'
-import { clearActivityIdleTimer } from '../util/activity-tracking'
 import { getAgentOutput } from '../util/agent-output'
-import { withSystemTags, expireMessages } from '../util/messages'
-import { retryAfterReactiveCompact } from './loop/reactive-compact'
+import { expireMessages } from '../util/messages'
+import {
+  handleLoopAbort,
+  handleLoopError,
+  runLoopCleanup,
+} from './loop/exit-paths'
 import { recordRuntimeEvent } from './loop/runtime-events'
 
 import type { LoopAgentStepsParams, LoopAgentStepsResult } from './types'
@@ -144,6 +146,28 @@ export async function loopAgentSteps(
     currentParams: spawnParams,
   }
 
+  // FID-2026-0819-005 Loop 271: the per-iteration context is immutable
+  // across iterations (verified: no consumer mutates ctx fields), so it is
+  // built once and shared by the step loop and the exit-path handlers.
+  const iterationCtx: LoopIterationContext = {
+    agentTemplate,
+    system,
+    tools,
+    runId,
+    toolsForTokenCount,
+    contextCompactor,
+    additionalToolDefinitionsWithCache,
+    getCachedAdditionalToolDefinitions,
+    localAgentTemplates,
+    logger,
+    signal,
+    initialAgentState,
+  }
+
+  // Everything the extracted exit paths (loop/exit-paths.ts) need. `state`
+  // is passed by reference so cleanup observes the post-run totalSteps.
+  const exitDeps = { params, state, ctx: iterationCtx, initialAgentState }
+
   try {
     while (true) {
       const stepStartedAt = Date.now()
@@ -163,20 +187,7 @@ export async function loopAgentSteps(
         iteration = await runLoopIteration({
           loopParams: params,
           state,
-          ctx: {
-            agentTemplate,
-            system,
-            tools,
-            runId,
-            toolsForTokenCount,
-            contextCompactor,
-            additionalToolDefinitionsWithCache,
-            getCachedAdditionalToolDefinitions,
-            localAgentTemplates,
-            logger,
-            signal,
-            initialAgentState,
-          },
+          ctx: iterationCtx,
         })
       } catch (error) {
         recordRuntimeEvent(
@@ -271,183 +282,10 @@ export async function loopAgentSteps(
   } catch (error) {
     // Handle user-initiated aborts separately - don't log as errors
     if (isAbortError(error)) {
-      if (clearUserPromptMessagesAfterResponse) {
-        initialAgentState.messageHistory = expireMessages(
-          initialAgentState.messageHistory,
-          'userPrompt',
-        )
-      }
-
-      initialAgentState.messageHistory = [
-        ...initialAgentState.messageHistory,
-        userMessage(
-          withSystemTags(
-            "User interrupted the response. The assistant's previous work has been preserved.",
-          ),
-        ),
-      ]
-
-      logger.info(
-        {
-          agentType,
-          agentId: initialAgentState.agentId,
-          runId,
-          totalSteps: state.totalSteps,
-          messageHistory: initialAgentState.messageHistory,
-        },
-        'Agent run cancelled by user (abort error)',
-      )
-
-      await finishAgentRun({
-        ...params,
-        runId,
-        status: 'cancelled',
-        totalSteps: state.totalSteps,
-        directCredits: initialAgentState.directCreditsUsed,
-        totalCredits: initialAgentState.creditsUsed,
-      })
-      recordRuntimeEvent(
-        {
-          event: 'terminal',
-          runId,
-          agentId: initialAgentState.agentId,
-          agentType,
-          status: 'cancelled',
-          phase: 'step',
-          step: state.totalSteps,
-        },
-        params.traceWriter,
-      )
-
-      return {
-        agentState: initialAgentState,
-        output: {
-          type: 'error',
-          message: 'Run cancelled by user',
-        },
-      }
+      return await handleLoopAbort(exitDeps, error)
     }
-
-    // FID-2026-0725-085 Layer 4: Reactive compact — catch prompt-too-long errors,
-    // aggressively truncate, and retry once before surfacing the error.
-    const reactiveRetry = await retryAfterReactiveCompact({
-      loopParams: params,
-      error,
-      deps: {
-        contextCompactor,
-        initialAgentState,
-        runId,
-        logger,
-        signal,
-        traceWriter: params.traceWriter,
-        finishAgentRun,
-        agentTemplate,
-        system,
-        tools,
-        additionalToolDefinitionsWithCache,
-        getCachedAdditionalToolDefinitions,
-        totalSteps: state.totalSteps,
-        currentPrompt: state.currentPrompt,
-        currentParams: state.currentParams,
-      },
-    })
-    if (reactiveRetry) {
-      return reactiveRetry
-    }
-
-    logger.error(
-      {
-        error: getErrorObject(error),
-        agentType,
-        agentId: initialAgentState.agentId,
-        runId,
-        totalSteps: state.totalSteps,
-        directCreditsUsed: initialAgentState.directCreditsUsed,
-        creditsUsed: initialAgentState.creditsUsed,
-        messageHistory: initialAgentState.messageHistory,
-        systemPrompt: system,
-      },
-      'Agent execution failed',
-    )
-
-    const { status, errorMessage, statusCode, output } = buildLoopErrorOutput({
-      error,
-      signal,
-    })
-
-    if (status !== 'cancelled' && !initialAgentState.parentId) {
-      const completionRefresh =
-        getOrCreateEnforcement(initialAgentState).recordLogicalUserTurn()
-      appendGroundingRefresh(initialAgentState, completionRefresh.refreshText)
-    }
-    await finishAgentRun({
-      ...params,
-      runId,
-      status,
-      totalSteps: state.totalSteps,
-      directCredits: initialAgentState.directCreditsUsed,
-      totalCredits: initialAgentState.creditsUsed,
-      errorMessage,
-    })
-    recordRuntimeEvent(
-      {
-        event: 'terminal',
-        runId,
-        agentId: initialAgentState.agentId,
-        agentType,
-        status: status === 'cancelled' ? 'cancelled' : 'failed',
-        phase: 'step',
-        step: state.totalSteps,
-        reason: errorMessage,
-      },
-      params.traceWriter,
-    )
-
-    // Payment required errors (402) should propagate
-    if (statusCode === 402) {
-      throw error
-    }
-
-    return {
-      agentState: initialAgentState,
-      output,
-    }
+    return await handleLoopError(exitDeps, error)
   } finally {
-    // The endTurn path inside runProgrammaticStep handles normal completion,
-    // but abort/error exits (e.g. chat SSE disconnects) would otherwise leak
-    // the run's generator, STEP_ALL flag, and proposed file content forever.
-    clearProgrammaticRunState(runId)
-    // FID-2026-0815-015: disarm the idle heartbeat on every exit path so a
-    // cancelled/failed run never leaves a live timer that mutates a frozen
-    // agentState ~5s later (the confirmed "readonly property" crash).
-    clearActivityIdleTimer(initialAgentState)
-    // FID-2026-0801-012: per-run ThoughtSession and retry counters must not
-    // leak across abort/error exits; cleanup is idempotent and marks an
-    // in-flight session cancelled.
-    cleanupThoughtSession(runId)
-    resetThinkerConvergenceState(runId)
-    // FID-2026-0813-004: finalize the ZTAP provenance session for the main
-    // agent (best-effort, idempotent) so the ledger flushes and the manifest
-    // carries the session-close record. Subagent loops inherit the parent's
-    // session and must not finalize it.
-    if (!initialAgentState.parentId) {
-      const provenance = initialAgentState.provenance
-      if (provenance && typeof provenance.finalize === 'function') {
-        void provenance.finalize().catch(() => {
-          // Best-effort: finalize must never break the run exit path.
-        })
-      }
-    }
-    recordRuntimeEvent(
-      {
-        event: 'cleanup_finished',
-        runId,
-        agentId: initialAgentState.agentId,
-        agentType,
-        phase: 'cleanup',
-        step: state.totalSteps,
-      },
-      params.traceWriter,
-    )
+    await runLoopCleanup(exitDeps)
   }
 }

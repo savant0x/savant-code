@@ -1,37 +1,30 @@
 import { HandleStepsYieldValueSchema } from '@savant-code/common/types/agent-template'
 import { getErrorObject } from '@savant-code/common/util/error'
 import { assistantMessage } from '@savant-code/common/util/messages'
-import {
-  toLogValue,
-  safeToJSONValue,
-} from '@savant-code/common/util/type-narrowing'
-import { cloneDeep } from 'lodash'
+import { toLogValue } from '@savant-code/common/util/type-narrowing'
 
-import { deserializeHandleSteps } from './run-programmatic-step/deserialize'
+import { ensureProgrammaticGenerator } from './run-programmatic-step/ensure-generator'
 import {
   executeSegmentsArray,
   executeSingleToolCall,
   type ToolCallToExecute,
 } from './run-programmatic-step/execute-tool-calls'
+import { handleStepsErrorMessage } from './run-programmatic-step/handle-steps-error'
 import { getPublicAgentState } from './run-programmatic-step/public-state'
 import { sanitizeYieldToolCallInput } from './run-programmatic-step/sanitize-yield-input'
 import {
   clearProgrammaticRunState,
-  getStoredGenerator,
   runIdToStepAll,
-  storeGenerator,
 } from './run-programmatic-step/state'
+import { initToolExecutionState } from './run-programmatic-step/step-state'
 import { parseTextWithToolCalls } from './util/parse-tool-calls-from-text'
 
 import type {
   RunProgrammaticStepParams,
   RunProgrammaticStepResult,
 } from './run-programmatic-step/types'
-import type { FileProcessingState } from './tools/handlers/tool/write-file'
-import type { SavantCodeToolCall } from '@savant-code/common/tools/list'
 import type { JSONValue } from '@savant-code/common/types/json'
 import type { ToolResultOutput } from '@savant-code/common/types/messages/content-part'
-import type { ToolMessage } from '@savant-code/common/types/messages/savant-code-message'
 import type { AgentState } from '@savant-code/common/types/session-state'
 
 // Function to handle programmatic agents
@@ -67,52 +60,19 @@ export async function runProgrammaticStep(
     throw new Error('Agent state has no run ID')
   }
 
-  // Run with either a generator or a sandbox.
-  let generator = getStoredGenerator(agentState.runId)
-
-  // Check if we need to initialize a generator
-  if (!generator) {
-    const createLogMethod =
-      (level: 'debug' | 'info' | 'warn' | 'error') =>
-      (data: unknown, msg?: string) => {
-        const logValue = toLogValue(data)
-        const jsonValue = safeToJSONValue(data)
-        logger[level](logValue, msg) // Log to backend
-        handleStepsLogChunk({
-          userInputId,
-          runId: agentState.runId ?? 'undefined',
-          level,
-          data: jsonValue,
-          message: msg,
-        })
-      }
-
-    const streamingLogger = {
-      debug: createLogMethod('debug'),
-      info: createLogMethod('info'),
-      warn: createLogMethod('warn'),
-      error: createLogMethod('error'),
-    }
-
-    // Prefer the live function when present: the stringified form of a
-    // bundled function can reference out-of-scope bundler helpers (esbuild
-    // keepNames' `__name`, minified to a bare identifier), which makes the
-    // eval'd generator throw ReferenceError on its first step.
-    const generatorFn =
-      template.handleStepsFn ??
-      (typeof template.handleSteps === 'string'
-        ? deserializeHandleSteps(template.handleSteps)
-        : template.handleSteps)
-
-    // Initialize native generator
-    generator = generatorFn({
-      agentState,
-      prompt,
-      params: toolCallParams as Record<string, JSONValue> | undefined,
-      logger: streamingLogger,
-    })
-    storeGenerator(agentState.runId, generator)
-  }
+  // Run with either a generator or a sandbox. Creation phase extracted to
+  // run-programmatic-step/ensure-generator.ts (FID-2026-0819-005 Loop 156);
+  // the streaming logger's chunk payload keeps the original userInputId.
+  const generator = ensureProgrammaticGenerator({
+    runId: agentState.runId,
+    agentState,
+    prompt,
+    toolCallParams: toolCallParams as Record<string, JSONValue> | undefined,
+    template,
+    logger,
+    handleStepsLogChunk: (input) =>
+      handleStepsLogChunk({ ...input, userInputId }),
+  })
 
   // Definite-assignment guard (FID-2026-0803-005 C3): generatorFn may be an
   // eval'd/deserialized function that returns undefined at runtime. Fail with
@@ -136,17 +96,10 @@ export async function runProgrammaticStep(
 
   const agentStepId = crypto.randomUUID()
 
-  // Initialize state for tool execution
-  const toolCalls: SavantCodeToolCall[] = []
-  const toolResults: ToolMessage[] = []
-  const fileProcessingState: FileProcessingState = {
-    promisesByPath: {},
-    allPromises: [],
-    fileChangeErrors: [],
-    fileChanges: [],
-    firstFileProcessed: false,
-  }
-  const agentContext = cloneDeep(agentState.agentContext)
+  // Initialize state for tool execution (factory extracted to
+  // run-programmatic-step/step-state.ts — FID-2026-0819-005 Loop 164).
+  const { toolCalls, toolResults, fileProcessingState, agentContext } =
+    initToolExecutionState(agentState)
   // FID-2026-0802-005 L7: `_sendSubagentChunk` (and its sendAction wiring)
   // were removed — defined but never called (Law 4 dead code).
 
@@ -283,19 +236,9 @@ export async function runProgrammaticStep(
   } catch (error) {
     endTurn = true
 
-    // A ReferenceError from an eval'd handleSteps string almost always means
-    // the source was serialized from a bundled/minified function and
-    // references an out-of-scope bundler helper. Call it out so the failure
-    // is diagnosable from the message alone.
-    const minifiedSourceHint =
-      error instanceof ReferenceError &&
-      !template.handleStepsFn &&
-      typeof template.handleSteps === 'string'
-        ? ' (handleSteps was deserialized from a string that references an out-of-scope identifier — likely a minified bundle serialized the function; ship the live function or unminified source)'
-        : ''
-    const errorMessage = `Error executing handleSteps for agent ${template.id}: ${
-      error instanceof Error ? error.message : 'Unknown error'
-    }${minifiedSourceHint}`
+    // Message construction extracted to run-programmatic-step/
+    // handle-steps-error.ts (FID-2026-0819-005 Loop 164).
+    const errorMessage = handleStepsErrorMessage(error, template)
     logger.error(
       { error: getErrorObject(error), template: template.id },
       errorMessage,

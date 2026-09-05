@@ -23,6 +23,7 @@ import {
 import { createToolCallChunk, mockFileContext } from './test-utils'
 import { loopAgentSteps } from '../run-agent-step'
 import { clearAgentGeneratorCache } from '../run-programmatic-step'
+import { findMessageArray } from './basher-relay-helpers'
 import * as toolExecutor from '../tools/tool-executor'
 
 import type { AgentTemplate, StepGenerator } from '../templates/types'
@@ -43,42 +44,6 @@ import type { AgentState } from '@savant-code/common/types/session-state'
  * in order. A failure emits the observed roles sequence — that sequence IS
  * the A9 bisection evidence.
  */
-
-type RoleRecord = Record<string, unknown>
-
-function isRoleRecord(value: unknown): value is RoleRecord {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'role' in value &&
-    typeof (value as RoleRecord).role === 'string'
-  )
-}
-
-/** Recursively locate the first array whose members all look like messages. */
-function findMessageArray(source: unknown): RoleRecord[] | undefined {
-  if (Array.isArray(source)) {
-    if (source.length > 0 && source.every((el) => isRoleRecord(el))) {
-      return source as RoleRecord[]
-    }
-    for (const element of source) {
-      const found = findMessageArray(element)
-      if (found) {
-        return found
-      }
-    }
-    return undefined
-  }
-  if (typeof source === 'object' && source !== null) {
-    for (const value of Object.values(source as Record<string, unknown>)) {
-      const found = findMessageArray(value)
-      if (found) {
-        return found
-      }
-    }
-  }
-  return undefined
-}
 
 describe('basher relay — summarizer STEP context (FID-2026-0821-005 A8)', () => {
   let mockTemplate: AgentTemplate

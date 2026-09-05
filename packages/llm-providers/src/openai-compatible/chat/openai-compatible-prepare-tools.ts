@@ -1,78 +1,12 @@
 import { UnsupportedFunctionalityError } from '@ai-sdk/provider'
 
+import { inlineLocalSchemaRefs } from '../../schema-sanitize'
+
 import type {
   LanguageModelV2CallOptions,
   LanguageModelV2CallWarning,
 } from '@ai-sdk/provider'
 import type { JSONValue } from '@savant-code/common/types/json'
-
-function isRecord(value: JSONValue): value is Record<string, JSONValue> {
-  return value !== null && typeof value === 'object' && !Array.isArray(value)
-}
-
-function decodeJsonPointerSegment(segment: string) {
-  return segment.replace(/~1/g, '/').replace(/~0/g, '~')
-}
-
-function lookupJsonPointer(
-  root: JSONValue,
-  pointer: string,
-): JSONValue | undefined {
-  if (!pointer.startsWith('#/')) return undefined
-
-  let current: JSONValue = root
-  for (const segment of pointer
-    .slice(2)
-    .split('/')
-    .map(decodeJsonPointerSegment)) {
-    if (!isRecord(current) && !Array.isArray(current)) return undefined
-    current = (current as Record<string, JSONValue>)[segment]
-  }
-  return current
-}
-
-function inlineLocalSchemaRefs(schema: JSONValue): JSONValue {
-  const root: JSONValue =
-    isRecord(schema) && 'jsonSchema' in schema ? schema.jsonSchema : schema
-
-  const visit = (value: JSONValue, refStack: Set<string>): JSONValue => {
-    if (Array.isArray(value)) {
-      return value.map((item) => visit(item, refStack))
-    }
-
-    if (!isRecord(value)) return value
-
-    const ref = typeof value.$ref === 'string' ? value.$ref : undefined
-    if (ref?.startsWith('#/')) {
-      if (refStack.has(ref)) return {}
-
-      const target = lookupJsonPointer(root, ref)
-      const siblings = { ...value }
-      delete siblings.$ref
-
-      if (target !== undefined) {
-        const nextRefStack = new Set(refStack)
-        nextRefStack.add(ref)
-        const resolved = visit(target, nextRefStack)
-        if (isRecord(resolved) && Object.keys(siblings).length > 0) {
-          return visit({ ...resolved, ...siblings }, refStack)
-        }
-        return resolved
-      }
-
-      if (Object.keys(siblings).length === 0) return {}
-      return visit(siblings, refStack)
-    }
-    const result: Record<string, JSONValue> = {}
-    for (const [key, child] of Object.entries(value)) {
-      if (key === '$defs' || key === 'definitions') continue
-      result[key] = visit(child, refStack)
-    }
-    return result
-  }
-
-  return visit(root, new Set())
-}
 
 export function prepareTools({
   tools,

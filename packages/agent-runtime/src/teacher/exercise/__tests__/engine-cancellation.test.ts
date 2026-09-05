@@ -1,0 +1,283 @@
+// FID-2026-0819-005 Loop 181: cancellation/timeout/retry lifecycle suites
+// split verbatim from engine.test.ts (fixtures + helpers copied verbatim so
+// the file is self-contained).
+
+import { hashChange } from '@savant-code/common/crypto'
+import { describe, expect, test } from 'bun:test'
+
+import { subprocessSandboxBackend } from '../../sandbox'
+import { ExerciseEngine } from '../engine'
+
+import type { DetectionGrader, EquivalenceGrader, ForgeFn } from '../grader'
+import type {
+  CritiqueSubmission,
+  MutationContract,
+  PrivateChallengePack,
+  PublicChallenge,
+} from '@savant-code/common/teacher'
+
+const CHALLENGE_HASH = hashChange('vs-max-challenge-v1')
+
+const CHALLENGE: PublicChallenge = {
+  id: 'teacher-vs-max',
+  version: 1,
+  skill: 'behavioral-invariants',
+  objective: 'Implement a max(a, b) function',
+  prompt: 'Write a function max(a, b) that returns the larger of a and b.',
+  visibleGuidance: 'Handle equal values and negative numbers.',
+  inputContract: {
+    signature: 'function max(a, b)',
+    examples: ['max(1, 2) === 2'],
+  },
+  outputContract: {
+    description: 'the larger of a and b',
+    examples: ['max(1, 2) === 2'],
+  },
+  limits: { timeLimitMs: 200, maxOutputBytes: 1024 },
+  prerequisites: [],
+  challengeHash: CHALLENGE_HASH,
+}
+
+const KNOWN_GOOD_SOURCE = `
+function max(a, b) { return a > b ? a : b }
+`
+
+const HIDDEN_TESTS = `
+recordTest('positive', () => max(1, 2) === 2)
+recordTest('negative', () => max(-1, -2) === -1)
+recordTest('equal', () => max(5, 5) === 5)
+`
+
+const MUTATION: MutationContract = {
+  mutationId: 'max-lt-flip',
+  skillTarget: 'behavioral-invariants',
+  changedBehavior: 'returns the smaller value instead of the larger',
+  surface: 'the a > b comparison',
+  witness: 'max(1, 2) === 1 (should be 2)',
+  impact: 'wrong result for every distinct pair',
+  severity: 'critical',
+  acceptableConcepts: [
+    'comparison',
+    'greater',
+    'larger',
+    'flipped',
+    'wrong direction',
+  ],
+  patch: { find: 'a > b', replace: 'a < b' },
+  hiddenFromVisibleTests: false,
+  graderVersion: 'detection-v1',
+}
+
+const PACK: PrivateChallengePack = {
+  challengeHash: CHALLENGE_HASH,
+  knownGoodHash: hashChange(KNOWN_GOOD_SOURCE),
+  hiddenTests: HIDDEN_TESTS,
+  mutationContracts: [MUTATION],
+  critiqueRubric: {
+    concepts: MUTATION.acceptableConcepts,
+    requiredEvidence: ['location', 'witness'],
+  },
+  gradingVersion: 'teacher-grading-v1',
+}
+
+const EQUIVALENCE: EquivalenceGrader = {
+  graderVersion: 'equivalence-v1',
+  async grade({ solutionSource, sandboxResult }) {
+    const hardcoded = /return\s+\d+\s*;/.test(solutionSource)
+    return {
+      passed: sandboxResult.status === 'passed' && !hardcoded,
+      testSummary: sandboxResult.testSummary,
+      antiCheat: {
+        passed: !hardcoded,
+        findings: hardcoded ? ['test-specific hardcoding'] : [],
+      },
+      graderVersion: 'equivalence-v1',
+    }
+  },
+}
+
+const DETECTION: DetectionGrader = {
+  graderVersion: 'detection-v1',
+  inject({ knownGoodSource, pack }) {
+    const mutation = pack.mutationContracts[0]
+    return {
+      mutation,
+      mutatedSource: knownGoodSource.replace(
+        mutation.patch.find,
+        mutation.patch.replace,
+      ),
+    }
+  },
+  grade({ critique, mutation }) {
+    const text =
+      `${critique.statement} ${critique.location ?? ''} ${critique.witness ?? ''} ${critique.impact ?? ''}`.toLowerCase()
+    const identified = mutation.acceptableConcepts.some((concept) =>
+      text.includes(concept.toLowerCase()),
+    )
+    const evidenceCoverage = {
+      location: Boolean(critique.location),
+      witness: Boolean(critique.witness),
+      impact: Boolean(critique.impact),
+    }
+    return {
+      mutationId: mutation.mutationId,
+      grade: {
+        mutationId: mutation.mutationId,
+        identified,
+        evidenceCoverage,
+        locationMatch: Boolean(critique.location),
+        witnessMatch: Boolean(critique.witness),
+        impactMatch: Boolean(critique.impact),
+        confidence: identified ? 1 : 0,
+        reasonCode: identified ? 'identified' : 'vague',
+        graderVersion: 'detection-v1',
+      },
+      graderVersion: 'detection-v1',
+    }
+  },
+}
+
+const CORRECT_CRITIQUE: CritiqueSubmission = {
+  statement: 'The comparison is flipped so it returns the smaller value',
+  location: 'the a > b check',
+  witness: 'max(1, 2) returns 1 instead of 2',
+  impact: 'wrong result for all distinct pairs',
+}
+
+const VAGUE_CRITIQUE: CritiqueSubmission = {
+  statement: 'this seems wrong',
+}
+
+function makeEngine(
+  forge: ForgeFn,
+  overrides: Partial<Parameters<typeof makeDeps>[0]> = {},
+) {
+  return new ExerciseEngine(makeDeps(forge, overrides))
+}
+
+type Deps = {
+  forge?: ForgeFn
+  sandbox?: typeof subprocessSandboxBackend
+  challenge?: PublicChallenge
+  pack?: PrivateChallengePack
+}
+
+function makeDeps(forge: ForgeFn, overrides: Deps = {}) {
+  return {
+    challenge: overrides.challenge ?? CHALLENGE,
+    pack: overrides.pack ?? PACK,
+    sandbox: overrides.sandbox ?? subprocessSandboxBackend,
+    forge,
+    equivalence: EQUIVALENCE,
+    detection: DETECTION,
+    knownGoodSource: KNOWN_GOOD_SOURCE,
+    now: () => new Date('2026-08-13T12:00:00.000Z'),
+  }
+}
+
+const correctForge: ForgeFn = async () => KNOWN_GOOD_SOURCE
+
+describe('headless exercise engine — lifecycle behaviors', () => {
+  test('cancellation during forge yields cancelled', async () => {
+    const slowForge: ForgeFn = async () => {
+      await new Promise((resolve) => setTimeout(resolve, 150))
+      return KNOWN_GOOD_SOURCE
+    }
+    const controller = new AbortController()
+    const engine = makeEngine(slowForge)
+    setTimeout(() => controller.abort(), 20)
+
+    const result = await engine.run(
+      'return the larger value',
+      CORRECT_CRITIQUE,
+      { signal: controller.signal },
+    )
+    expect(result.completionState).toBe('cancelled')
+  })
+
+  test('cancellation during sandbox run yields cancelled', async () => {
+    const spinningForge: ForgeFn = async () => `
+function max(a, b) { while (true) {} }
+`
+    const controller = new AbortController()
+    const engine = makeEngine(spinningForge)
+    setTimeout(() => controller.abort(), 100)
+
+    const result = await engine.run('spin forever', CORRECT_CRITIQUE, {
+      signal: controller.signal,
+    })
+    expect(result.completionState).toBe('cancelled')
+  })
+
+  test('sandbox timeout surfaces as a failed attempt', async () => {
+    const spinner: ForgeFn = async () => `
+function max(a, b) { while (true) {} }
+`
+    const engine = makeEngine(spinner)
+    const result = await engine.run('spin forever', CORRECT_CRITIQUE)
+
+    expect(result.completionState).toBe('failed')
+    expect(result.equivalenceResult.passed).toBe(false)
+  })
+
+  test('retry creates a new attempt id and never overwrites history', async () => {
+    const first = makeEngine(correctForge)
+    const second = makeEngine(correctForge)
+
+    const firstResult = await first.run(
+      'return the larger value',
+      VAGUE_CRITIQUE,
+    )
+    const secondResult = await second.run(
+      'return the larger value',
+      CORRECT_CRITIQUE,
+    )
+
+    expect(first.attemptId).not.toBe(second.attemptId)
+    expect(firstResult.completionState).toBe('failed')
+    expect(secondResult.completionState).toBe('passed')
+    expect(firstResult.attemptId).toBe(first.attemptId)
+  })
+
+  test('events are emitted in lifecycle order with a terminal result', async () => {
+    const engine = makeEngine(correctForge)
+    const events: string[] = []
+    engine.onEvent((event) => events.push(event.type))
+
+    await engine.run('return the larger value', CORRECT_CRITIQUE)
+
+    expect(events).toEqual([
+      'steering_submitted',
+      'forge_running',
+      'sandbox_running',
+      'equivalence_review',
+      'detection_review',
+      'learner_critique',
+      'adjudication',
+      'result',
+    ])
+  })
+
+  test('invalid transitions throw', async () => {
+    const engine = makeEngine(correctForge)
+    expect(() => engine.submitCritique(CORRECT_CRITIQUE)).toThrow(
+      /invalid exercise transition|from phase/,
+    )
+  })
+
+  test('evidence hashes are valid and the result redacts private data', async () => {
+    const engine = makeEngine(correctForge)
+    const result = await engine.run('return the larger value', CORRECT_CRITIQUE)
+
+    const sha = /^sha256:[0-9a-f]{64}$/
+    expect(result.evidenceHashes.submissionHash).toMatch(sha)
+    expect(result.evidenceHashes.sandboxResultHash).toMatch(sha)
+    expect(result.evidenceHashes.equivalenceHash).toMatch(sha)
+    expect(result.evidenceHashes.detectionHash).toMatch(sha)
+
+    const serialized = JSON.stringify(result)
+    expect(serialized).not.toContain(HIDDEN_TESTS)
+    expect(serialized).not.toContain(CORRECT_CRITIQUE.statement)
+    expect(serialized).not.toContain(KNOWN_GOOD_SOURCE)
+  })
+})

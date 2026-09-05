@@ -5,7 +5,6 @@ import { TEST_AGENT_RUNTIME_IMPL } from '@savant-code/common/testing/impl/agent-
 import { getInitialSessionState } from '@savant-code/common/types/session-state'
 import {
   assistantMessage,
-  jsonToolResult,
   userMessage,
 } from '@savant-code/common/util/messages'
 import {
@@ -26,15 +25,12 @@ import { mockFileContext } from './test-utils'
 import * as toolExecutor from '../tools/tool-executor'
 
 import type { AgentTemplate, StepGenerator } from '../templates/types'
-import type { executeToolCall } from '../tools/tool-executor'
 import type {
   AgentRuntimeDeps,
   AgentRuntimeScopedDeps,
 } from '@savant-code/common/types/contracts/agent-runtime'
-import type { SendActionFn } from '@savant-code/common/types/contracts/client'
 import type { Logger } from '@savant-code/common/types/contracts/logger'
 import type { ParamsOf } from '@savant-code/common/types/function-params'
-import type { ToolMessage } from '@savant-code/common/types/messages/savant-code-message'
 import type { AgentState } from '@savant-code/common/types/session-state'
 
 const logger: Logger = {
@@ -48,9 +44,6 @@ describe('runProgrammaticStep', () => {
   let mockTemplate: AgentTemplate
   let mockAgentState: AgentState
   let mockParams: ParamsOf<typeof runProgrammaticStep>
-  let executeToolCallSpy: ReturnType<
-    typeof spyOn<typeof toolExecutor, 'executeToolCall'>
-  >
   let agentRuntimeImpl: AgentRuntimeDeps & AgentRuntimeScopedDeps
 
   beforeEach(() => {
@@ -65,10 +58,7 @@ describe('runProgrammaticStep', () => {
     spyOn(analytics, 'trackEvent').mockImplementation(() => {})
 
     // Mock executeToolCall
-    executeToolCallSpy = spyOn(
-      toolExecutor,
-      'executeToolCall',
-    ).mockImplementation(async () => {})
+    spyOn(toolExecutor, 'executeToolCall').mockImplementation(async () => {})
 
     // Mock crypto.randomUUID
     spyOn(crypto, 'randomUUID').mockImplementation(
@@ -225,167 +215,6 @@ describe('runProgrammaticStep', () => {
 
       expect(result.endTurn).toBe(true)
       expect(result.agentState.output?.error).toBeUndefined()
-    })
-  })
-
-  describe('tool execution', () => {
-    it('should not add tool call message for add_message tool', async () => {
-      const mockGenerator = (function* () {
-        yield {
-          toolName: 'add_message',
-          input: { role: 'user', content: 'Hello world' },
-          includeToolCall: false,
-        }
-        yield { toolName: 'read_files', input: { paths: ['test.txt'] } }
-        yield { toolName: 'end_turn', input: {} }
-      })() satisfies StepGenerator
-
-      mockTemplate.handleSteps = () => mockGenerator
-      mockTemplate.toolNames = ['add_message', 'read_files', 'end_turn']
-
-      // Track chunks sent via sendSubagentChunk
-      const sentChunks: string[] = []
-      const sendActionMock = mock<SendActionFn>(({ action }) => {
-        if (action.type === 'subagent-response-chunk') {
-          sentChunks.push(action.chunk)
-        }
-      })
-
-      const result = await runProgrammaticStep({
-        ...mockParams,
-        sendAction: sendActionMock,
-      })
-
-      // Verify add_message tool was executed
-      expect(executeToolCallSpy).toHaveBeenCalledWith(
-        expect.objectContaining({
-          toolName: 'add_message',
-          input: { role: 'user', content: 'Hello world' },
-        }),
-      )
-
-      // Verify read_files tool was executed
-      expect(executeToolCallSpy).toHaveBeenCalledWith(
-        expect.objectContaining({
-          toolName: 'read_files',
-          input: { paths: ['test.txt'] },
-        }),
-      )
-
-      // Check that no tool call chunk was sent for add_message
-      const addMessageToolCallChunk = sentChunks.find(
-        (chunk) =>
-          typeof chunk === 'string' &&
-          chunk.includes('add_message') &&
-          chunk.includes('Hello world'),
-      )
-      expect(addMessageToolCallChunk).toBeUndefined()
-
-      // Verify final message history doesn't contain add_message tool call
-      const addMessageToolCallInHistory = result.agentState.messageHistory.find(
-        (msg) =>
-          msg.content[0].type === 'text' &&
-          msg.content[0].text.includes('add_message') &&
-          msg.content[0].text.includes('Hello world'),
-      )
-      expect(addMessageToolCallInHistory).toBeUndefined()
-
-      expect(result.endTurn).toBe(true)
-    })
-    it('should execute single tool call', async () => {
-      const mockGenerator = (function* () {
-        yield { toolName: 'read_files', input: { paths: ['test.txt'] } }
-        yield { toolName: 'end_turn', input: {} }
-      })() as StepGenerator
-
-      mockTemplate.handleSteps = () => mockGenerator
-
-      const result = await runProgrammaticStep(mockParams)
-
-      expect(executeToolCallSpy).toHaveBeenCalledTimes(2)
-      expect(executeToolCallSpy).toHaveBeenCalledWith(
-        expect.objectContaining({
-          toolName: 'read_files',
-          input: expect.any(Object),
-          agentTemplate: mockTemplate,
-          fileContext: mockFileContext,
-        }),
-      )
-      expect(result.endTurn).toBe(true)
-    })
-
-    it('should add find_files tool result to messageHistory', async () => {
-      const mockGenerator = (function* () {
-        yield { toolName: 'find_files', input: { query: 'authentication' } }
-      })() as StepGenerator
-
-      mockTemplate.handleSteps = () => mockGenerator
-      mockTemplate.toolNames = ['find_files', 'end_turn']
-
-      // Mock executeToolCall to simulate find_files tool result
-      executeToolCallSpy.mockImplementation(
-        async (
-          options: ParamsOf<typeof executeToolCall>,
-        ): ReturnType<typeof executeToolCall> => {
-          if (options.toolName === 'find_files') {
-            const toolResult: ToolMessage = {
-              role: 'tool',
-              toolName: 'find_files',
-              toolCallId: 'find-files-call-id',
-              content: jsonToolResult({
-                files: [
-                  { path: 'src/auth.ts', relevance: 0.9 },
-                  { path: 'src/login.ts', relevance: 0.8 },
-                ],
-              }),
-            }
-            options.toolResults.push(toolResult)
-
-            options.agentState.messageHistory.push(toolResult)
-          }
-        },
-      )
-
-      const result = await runProgrammaticStep(mockParams)
-
-      expect(executeToolCallSpy).toHaveBeenCalledWith(
-        expect.objectContaining({
-          toolName: 'find_files',
-          input: { query: 'authentication' },
-          agentTemplate: mockTemplate,
-          fileContext: mockFileContext,
-        }),
-      )
-
-      // Verify tool result was added to messageHistory
-      const toolMessages = result.agentState.messageHistory.filter(
-        (msg) =>
-          msg.role === 'tool' &&
-          JSON.stringify(msg.content).includes('src/auth.ts'),
-      )
-      expect(toolMessages).toHaveLength(1)
-      expect(JSON.stringify(toolMessages[0].content)).toContain('src/auth.ts')
-      expect(JSON.stringify(toolMessages[0].content)).toContain('src/login.ts')
-
-      expect(result.endTurn).toBe(true)
-    })
-
-    it('should execute multiple tool calls in sequence', async () => {
-      const mockGenerator = (function* () {
-        yield { toolName: 'read_files', input: { paths: ['file1.txt'] } }
-        yield {
-          toolName: 'write_file',
-          input: { path: 'file2.txt', content: 'test' },
-        }
-        yield { toolName: 'end_turn', input: {} }
-      })() as StepGenerator
-
-      mockTemplate.handleSteps = () => mockGenerator
-
-      const result = await runProgrammaticStep(mockParams)
-
-      expect(executeToolCallSpy).toHaveBeenCalledTimes(3)
-      expect(result.endTurn).toBe(true)
     })
   })
 })

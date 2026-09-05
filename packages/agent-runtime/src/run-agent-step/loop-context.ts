@@ -1,38 +1,25 @@
-import { buildArray } from '@savant-code/common/util/array'
-import {
-  DRIVE_STRIPPED_TOOL_NAMES,
-  parseDriveControlDirective,
-  parseDriveLockDirective,
-} from '@savant-code/common/util/drive-directives'
-import { userMessage } from '@savant-code/common/util/messages'
-import { generateCompactId } from '@savant-code/common/util/string'
+// FID-2026-0819-005 Loop 272: directive/messaging passes extracted to
+// loop-context-drive.ts (drive lock + control), loop-context-messages.ts
+// (initial history build), loop-context-goals.ts (goal directives). This
+// module keeps the core setup: template resolution, run start, prompt/tool
+// assembly, token-count shaping, and the ContextCompactor.
 import { mapValues } from 'lodash'
 
 import { ContextCompactor } from '../context-compactor'
-import {
-  createGoalRecord,
-  parseGoalControlDirective,
-  parseGoalSetDirective,
-  pauseGoal,
-  resumeGoal,
-} from './goal-engine'
+import { applyDriveDirectives } from './loop-context-drive'
+import { applyGoalDirectives } from './loop-context-goals'
+import { buildInitialMessages } from './loop-context-messages'
 import { toTokenCountInputSchema } from './token-count'
 import { additionalToolDefinitions } from './tool-definitions'
-import { additionalSystemPrompts } from '../system-prompt/prompts'
 import { getAgentTemplate } from '../templates/agent-registry'
 import { buildAgentToolSet } from '../templates/prompts'
 import { getAgentPrompt } from '../templates/strings'
 import { filterToolSet } from '../tools/filter-tool-set'
 import { getToolSet } from '../tools/prompts'
-import {
-  withSystemInstructionTags,
-  buildUserMessageContent,
-} from '../util/messages'
 
 import type { LoopAgentStepsParams } from './types'
 import type { AgentTemplate } from '@savant-code/common/types/agent-template'
 import type { JSONValue } from '@savant-code/common/types/json'
-import type { Message } from '@savant-code/common/types/messages/savant-code-message'
 import type { AgentState } from '@savant-code/common/types/session-state'
 import type { CustomToolDefinitions } from '@savant-code/common/util/file'
 import type { ToolSet } from 'ai'
@@ -180,117 +167,21 @@ export async function createLoopContext(params: {
         skills: loopParams.fileContext.skills ?? {},
       })
 
-  // FID-2026-0818-002: drive-mode lock. The CLI serializes a `<drive-lock>`
-  // directive only after the operator Confirms the pre-build plan (Law 2).
-  // Parsing it here records the durable drive record and strips the
-  // interactive tools (ask_user / suggest_followups / end_turn) from the
-  // model-facing set for the rest of the run — the drive then proceeds to
-  // completion without asking again. Idempotent: never overwrites an existing
-  // drive record mid-run.
-  const driveLock = loopParams.prompt
-    ? parseDriveLockDirective(loopParams.prompt)
-    : null
-  const driveControl = loopParams.prompt
-    ? parseDriveControlDirective(loopParams.prompt)
-    : null
-  let effectiveTools = tools
-  if (driveLock && !initialAgentState.drive) {
-    initialAgentState.drive = {
-      driveId: driveLock.driveId ?? generateCompactId(),
-      goal: driveLock.goal,
-      ...(driveLock.planId ? { planId: driveLock.planId } : {}),
-      acceptanceCriteria: driveLock.acceptanceCriteria,
-      ...(driveLock.resolutionPolicy
-        ? { resolutionPolicy: driveLock.resolutionPolicy }
-        : {}),
-      status: 'active',
-      startedAt: Date.now(),
-    }
-    const stripped = new Set(DRIVE_STRIPPED_TOOL_NAMES)
-    effectiveTools = filterToolSet(
-      tools,
-      Object.keys(tools).filter((name) => !stripped.has(name)),
-    )
-    loopParams.logger.info(
-      { driveId: initialAgentState.drive.driveId },
-      'Drive mode locked via <drive-lock> — interactive tools stripped',
-    )
-  }
-
-  // FID-2026-0818-007: drive control surface. pause/stop/resume operate on the
-  // durable drive record (operator control, never a confirmation). `stop` is
-  // terminal and recorded; `resume` restarts a paused drive; a control with no
-  // existing drive record is a no-op (fail closed).
-  if (driveControl && initialAgentState.drive) {
-    const drive = initialAgentState.drive
-    if (driveControl.action === 'pause') {
-      drive.status = 'paused'
-      loopParams.logger.info(
-        { driveId: drive.driveId },
-        'Drive paused via <drive-control>',
-      )
-    } else if (driveControl.action === 'resume') {
-      drive.status = 'active'
-      loopParams.logger.info(
-        { driveId: drive.driveId },
-        'Drive resumed via <drive-control>',
-      )
-    } else if (driveControl.action === 'stop') {
-      drive.status = 'blocked'
-      loopParams.logger.info(
-        {
-          driveId: drive.driveId,
-          reason: driveControl.reason ?? 'operator stop',
-        },
-        'Drive stopped via <drive-control> (terminal)',
-      )
-    }
-  }
-
-  const hasUserMessage = Boolean(
-    loopParams.prompt ||
-    (loopParams.spawnParams &&
-      Object.keys(loopParams.spawnParams).length > 0) ||
-    (loopParams.content && loopParams.content.length > 0),
+  // FID-2026-0818-002/-007: drive-lock and drive-control directives
+  // (extracted verbatim to loop-context-drive.ts). Returns the effective
+  // tool set — interactive tools stripped when a drive locks.
+  const effectiveTools = applyDriveDirectives(
+    loopParams,
+    initialAgentState,
+    tools,
   )
 
-  const initialMessages = buildArray<Message>(
-    ...initialAgentState.messageHistory,
-
-    hasUserMessage && [
-      {
-        // Actual user message!
-        role: 'user' as const,
-        content: buildUserMessageContent(
-          loopParams.prompt,
-          loopParams.spawnParams,
-          loopParams.content,
-        ),
-        tags: ['USER_PROMPT'],
-        sentAt: Date.now(),
-
-        // James: Deprecate the below, only use tags, which are not prescriptive.
-        keepDuringTruncation: true,
-      },
-      loopParams.prompt &&
-        loopParams.prompt in additionalSystemPrompts &&
-        userMessage(
-          withSystemInstructionTags(
-            additionalSystemPrompts[
-              loopParams.prompt as keyof typeof additionalSystemPrompts
-            ],
-          ),
-        ),
-    ],
-
-    instructionsPrompt &&
-      userMessage({
-        content: instructionsPrompt,
-        tags: ['INSTRUCTIONS_PROMPT'],
-
-        // James: Deprecate the below, only use tags, which are not prescriptive.
-        keepLastTags: ['INSTRUCTIONS_PROMPT'],
-      }),
+  // Initial message history (extracted verbatim to
+  // loop-context-messages.ts); hasUserMessage guards the goal directives.
+  const { hasUserMessage, initialMessages } = buildInitialMessages(
+    loopParams,
+    initialAgentState,
+    instructionsPrompt,
   )
 
   // Convert tools to a serializable format for context-pruner token counting.
@@ -331,71 +222,10 @@ export async function createLoopContext(params: {
     },
   )
 
-  // FID-2026-0725-083: Parse goal condition from the initial message.
-  // The /goal command sends <goal condition="..."> in the message content.
-  // We extract it and store it in agentState.goalCondition for evaluation
-  // after each task_completed call.
-  if (hasUserMessage && loopParams.prompt) {
-    const goalMatch = loopParams.prompt.match(/<goal condition="([^"]+)">/)
-    if (goalMatch && !initialAgentState.goalCondition) {
-      initialAgentState.goalCondition = goalMatch[1]
-      loopParams.logger.info(
-        { goalCondition: goalMatch[1] },
-        'Goal condition detected from message — will evaluate after each task_completed',
-      )
-    }
-  }
-
-  // FID-2026-0814-002: structured durable-goal directives from the /goal slash
-  // surface. `<goal-set>` creates the durable record (idempotent — never
-  // overwrites an existing record mid-run) and supersedes the legacy
-  // `goalCondition`; `<goal-control>` applies pause/resume/cancel to the
-  // existing record. Directive text is parsed as DATA — the CLI escapes
-  // attribute values, so user text cannot break the parse or leak into
-  // instruction context.
-  if (hasUserMessage && loopParams.prompt) {
-    const goalSet = parseGoalSetDirective(loopParams.prompt)
-    if (goalSet && !initialAgentState.goal) {
-      initialAgentState.goal = createGoalRecord({
-        goalId: goalSet.goalId,
-        objective: goalSet.objective,
-        completionCriterion: goalSet.completionCriterion,
-        budgetTokens: goalSet.budgetTokens,
-        budgetTurns: goalSet.budgetTurns,
-        budgetTimeMs: goalSet.budgetTimeMs,
-      })
-      initialAgentState.goalCondition = undefined
-      loopParams.logger.info(
-        {
-          goalId: initialAgentState.goal.goalId,
-          budgetLimits: initialAgentState.goal.budgetLimits,
-        },
-        'Durable goal created from <goal-set> directive',
-      )
-    }
-    const goalControl = parseGoalControlDirective(loopParams.prompt)
-    if (goalControl && initialAgentState.goal) {
-      if (goalControl.action === 'pause') {
-        pauseGoal(initialAgentState.goal, goalControl.reason)
-        loopParams.logger.info(
-          { goalId: initialAgentState.goal.goalId },
-          'Durable goal paused via <goal-control>',
-        )
-      } else if (goalControl.action === 'resume') {
-        resumeGoal(initialAgentState.goal)
-        loopParams.logger.info(
-          { goalId: initialAgentState.goal.goalId },
-          'Durable goal resumed via <goal-control>',
-        )
-      } else if (goalControl.action === 'cancel') {
-        loopParams.logger.info(
-          { goalId: initialAgentState.goal.goalId },
-          'Durable goal cancelled via <goal-control> — record cleared',
-        )
-        initialAgentState.goal = undefined
-      }
-    }
-  }
+  // FID-2026-0725-083 / FID-2026-0814-002: goal condition capture and the
+  // durable <goal-set>/<goal-control> directives (extracted verbatim to
+  // loop-context-goals.ts).
+  applyGoalDirectives(loopParams, initialAgentState, hasUserMessage)
 
   // FID-2026-0725-085: Initialize ContextCompactor for micro-compact before each API call.
   // This runs at the start of the agent loop so it's available for every iteration.

@@ -21,7 +21,6 @@
  */
 
 import { existsSync } from 'node:fs'
-import { basename } from 'node:path'
 
 import { isValidSkillName } from '@savant-code/common/constants/skills'
 import {
@@ -29,9 +28,8 @@ import {
   skillCanonicalDir,
 } from '@savant-code/common/util/skill-management'
 
-import { validateFidStepStatus } from './fid-validator'
-import { validateFidVerification } from './fid-verification-gates'
 import { canonicalizePath } from './path-canonicalization'
+import { runFidGates } from './pre-write-gates-fid'
 import { runYagniPreWriteGate } from './yagni-pre-write-gate'
 
 import type {
@@ -40,9 +38,6 @@ import type {
   EnforcementState,
   AdvisoryWarning,
 } from './types'
-
-/** Regex matching FID file paths under dev/fids/. */
-const FID_FILE_PATTERN = /dev\/fids\/FID-[\w.-]+\.md$/
 
 /**
  * FID-2026-0824-012 — block raw writes to any file under an `immutable:
@@ -197,118 +192,20 @@ export function runPreWriteGates(params: {
     warnings.push(...yagniResult.warnings)
   }
 
-  // ── FID Recorder Gate (narrow) ──────────────────────────────────────
-  if (targetPath && FID_FILE_PATTERN.test(targetPath)) {
-    // apply_patch carries the payload under operation.diff (EC-2,
-    // FID-2026-0820-014); without this fallback its FID writes bypassed
-    // the Recorder-routing and anti-deferral checks.
-    const operation = params.input.operation
-    const operationDiff =
-      operation && typeof operation === 'object'
-        ? (operation as Record<string, unknown>).diff
-        : undefined
-    const content =
-      params.input.content ??
-      params.input.newString ??
-      (typeof operationDiff === 'string' ? operationDiff : '')
-    const lineCount = countLines(content)
-
-    // Scope note: the gate measures PER-CALL payload lines (one tool call's
-    // content), not cumulative per-session FID delta. N sequential <=100-line
-    // edits can grow one document past 100 total lines without tripping this
-    // gate — an accepted limitation; cumulative tracking deliberately not
-    // built (operator directive governs single-write routing).
-    if (params.agentId === 'orchestrator' && lineCount > 100) {
-      const msg =
-        `FID gate: "${targetPath}" is ${lineCount} lines ` +
-        `(> 100). Route through the Recorder agent.`
-      return { blocked: true, reason: msg, warnings }
-    }
-
-    // ── Anti-Deferral step-status transition gate (FID-2026-0817-005) ──
-    // A FID write declaring `**Status:** converged|closed` must have every
-    // step in its `## Step Status` section resolved (implemented or
-    // operator-approved). Unresolved steps block the transition at the
-    // write path — the first enforcement point guaranteed to exist (both
-    // custom and native tool executors call the pre-write gates).
-    if (typeof content === 'string') {
-      const stepErrors = validateFidStepStatus(content).filter(
-        (error) => !error.startsWith('advisory:'),
-      )
-      if (stepErrors.length > 0) {
-        const msg =
-          `FID gate: "${targetPath}" declares a converged/closed status ` +
-          `with unresolved steps — ${stepErrors.join('; ')}. Present these ` +
-          'steps to the operator before the transition.'
-        return { blocked: true, reason: msg, warnings }
-      }
-
-      // ── Verification receipt tripwire (FID-2026-0823-009, L3) ───────
-      // A FID write declaring `**Status:** fixed|verified` must carry a
-      // valid `## Verification Gates` declaration + matching
-      // `### Verification Receipt` (fresh fingerprint, exit 0) in the
-      // PROPOSED content. Skipping verification is impossible at the write
-      // boundary: the flip is blocked until `bun run fid:verify <fid>
-      // --write` has stamped a valid receipt. This mirrors the step-status
-      // gate — same enforcement point, structural (C1+C2) only; the live
-      // re-run (C3) happens at validate:repository.
-      const verificationErrors = validateFidVerification(content)
-      if (verificationErrors.length > 0) {
-        const msg =
-          `FID gate: "${targetPath}" declares a fixed/verified status ` +
-          `without a valid verification receipt — ` +
-          `${verificationErrors.join('; ')}. Run \`bun run fid:verify ` +
-          `${basename(targetPath)} --write\` after implementing, ` +
-          'then flip the status.'
-        return { blocked: true, reason: msg, warnings }
-      }
-    }
-  }
-
-  // ── Extended laws (Strict mode only) ──────────────────────────────
-  if (params.tier === 'all_15') {
-    // ── Law 7: Search Before Create ───────────────────────────────
-    if (targetPath && !params.state.filesWritten.has(targetPath)) {
-      if (!params.state.hasSearchedSinceGreen) {
-        const blocked = params.tier === 'all_15'
-        const warning: AdvisoryWarning = {
-          law: 7,
-          severity: blocked ? 'warning' : 'info',
-          message:
-            'Law 7: Search for existing code before creating new — ' +
-            'no search performed since entering GREEN phase',
-          file: targetPath,
-        }
-        if (blocked) {
-          return {
-            blocked: true,
-            reason: warning.message,
-            warnings: [...warnings, warning],
-          }
-        }
-        warnings.push(warning)
-      }
-    }
-
-    // ── Law 8: Log Intent Before Coding ─────────────────────────────
-    if (!params.state.intentLogged && params.state.writeCount === 0) {
-      const blocked = params.tier === 'all_15'
-      const warning: AdvisoryWarning = {
-        law: 8,
-        severity: blocked ? 'warning' : 'info',
-        message:
-          'Law 8: Log intent before coding — no intent logged in ' +
-          'session summary or FID before first write',
-      }
-      if (blocked) {
-        return {
-          blocked: true,
-          reason: warning.message,
-          warnings: [...warnings, warning],
-        }
-      }
-      warnings.push(warning)
-    }
+  // ── FID Recorder Gate + Anti-Deferral tripwires + extended laws ────
+  // FID-2026-0819-005 Loop 250: extracted verbatim to
+  // pre-write-gates-fid.ts; null = no gate fired. Advisory warnings are
+  // pushed into the same `warnings` array as before.
+  const fidResult = runFidGates({
+    targetPath,
+    input: params.input,
+    agentId: params.agentId,
+    tier: params.tier,
+    state: params.state,
+    warnings,
+  })
+  if (fidResult) {
+    return fidResult
   }
 
   return { blocked: false, warnings }
@@ -371,10 +268,4 @@ function getTargetPath(
     if (typeof path === 'string') return path
   }
   return undefined
-}
-
-/** Count newlines in a string to estimate line count. */
-function countLines(content: unknown): number {
-  if (typeof content !== 'string') return 0
-  return content.split('\n').length
 }

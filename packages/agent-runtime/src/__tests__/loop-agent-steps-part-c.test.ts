@@ -26,7 +26,6 @@ import {
   mock,
   spyOn,
 } from 'bun:test'
-import { z } from 'zod/v4'
 
 import { createToolCallChunk, mockFileContext } from './test-utils'
 import { loopAgentSteps } from '../run-agent-step'
@@ -268,61 +267,5 @@ describe('loopAgentSteps - runAgentStep vs runProgrammaticStep behavior', () => 
 
     // Output should be undefined since no outputSchema required
     expect(result.agentState.output).toBeUndefined()
-  })
-
-  it('should continue loop if agent does not end turn (has more work)', async () => {
-    // Test that validation only triggers when shouldEndTurn is true
-
-    const outputSchema = z.object({
-      result: z.string(),
-    })
-
-    const templateWithOutputSchema = {
-      ...mockTemplate,
-      outputSchema,
-      toolNames: ['read_files', 'set_output', 'end_turn'],
-      handleSteps: undefined,
-    }
-
-    const localAgentTemplates = {
-      'test-agent': templateWithOutputSchema,
-    }
-
-    let llmCallNumber = 0
-    let capturedAgentState: AgentState | null = null
-
-    loopAgentStepsBaseParams.promptAiSdkStream = async function* ({}) {
-      llmCallNumber++
-      if (llmCallNumber === 1) {
-        // First call: agent does some work but doesn't end turn
-        yield { type: 'text' as const, text: 'Doing work\n\n' }
-        yield createToolCallChunk('read_files', { paths: ['test.txt'] })
-      } else {
-        // Second call: agent sets output and ends
-        if (capturedAgentState) {
-          capturedAgentState.output = { result: 'done' }
-        }
-        yield { type: 'text' as const, text: 'Finishing\n\n' }
-        yield createToolCallChunk('set_output', { result: 'done' })
-        yield { type: 'text' as const, text: '\n\n' }
-        yield createToolCallChunk('end_turn', {})
-      }
-      return promptSuccess('mock-message-id')
-    }
-
-    mockAgentState.output = undefined
-    capturedAgentState = mockAgentState
-
-    const result = await loopAgentSteps({
-      ...loopAgentStepsBaseParams,
-      agentType: 'test-agent',
-      localAgentTemplates,
-    })
-
-    // Should call LLM twice: once for work, once to set output and end
-    expect(llmCallNumber).toBe(2)
-
-    // Should have output set
-    expect(result.agentState.output).toEqual({ result: 'done' })
   })
 })

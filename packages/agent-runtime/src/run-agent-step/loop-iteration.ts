@@ -1,24 +1,22 @@
 import { AbortError } from '@savant-code/common/util/error'
-import { userMessage } from '@savant-code/common/util/messages'
 
+import { prepareStepContext } from './context-tokens'
 import { getOrCreateEnforcement } from '../echo/enforcement'
 import { appendGroundingRefresh } from '../echo/grounding'
-import { runProgrammaticStep } from '../run-programmatic-step'
 import {
-  buildNativeToolCallExhaustedMessage,
-  getSteeringMessage,
-  NATIVE_TOOL_CALL_RECOVERY_MAX_STRIKES,
-  NATIVE_TOOL_CALL_TERMINAL_RECOVERY_MAX_STRIKES,
-} from './constants'
-import { prepareStepContext } from './context-tokens'
+  applyStepBoundaryTail,
+  applyTurnEndEnforcement,
+} from './loop/boundary-gates'
+import { applyUngroundedCompletionGate } from './loop/completion-gate'
+import { runLlmStepPhase } from './loop/llm-step-phase'
 import {
-  isAutonomousContinuation,
-  updatePostTerminalCounter,
-  updateTurnEndBlockCounter,
-} from './post-terminal-breaker'
-import { runAgentStep } from './step'
-import { runThinkerConvergenceGate } from '../tools/thinker-convergence-gate'
-import { buildUserMessageContent, withSystemTags } from '../util/messages'
+  applyNativeStrikeHandling,
+  buildStepExhaustedError,
+} from './loop/native-strikes'
+import { applyOutputSchemaRestart } from './loop/output-schema'
+import { runProgrammaticPhase } from './loop/programmatic-phase'
+import { recordAgentStep } from './loop/step-record'
+import { applyThinkerConvergenceGate } from './loop/thinker-gate'
 
 import type { ContextCompactor } from '../context-compactor'
 import type { LoopAgentStepsParams } from './types'
@@ -57,48 +55,7 @@ export type LoopIterationContext = {
   logger: Logger
   signal: AbortSignal
   initialAgentState: AgentState
-}
-
-/**
- * FID-2026-0810-002 Change 5: first-turn completion gate. When a MAIN agent
- * would end its turn while the protocol is unread (and the enforcement gate is
- * armed), inject corrective steering mirroring the existing ECHO_COMPLIANCE
- * pattern and force the loop to continue so the boot reads actually happen.
- * After the retry cap the completion gate disarms with a one-time notice and
- * the turn is allowed to proceed. Subagents (parentId) are exempt.
- */
-function applyUngroundedCompletionGate(
-  agentState: AgentState,
-  wouldEndTurn: boolean,
-): { agentState: AgentState; shouldEndTurn: boolean } {
-  if (!wouldEndTurn || agentState.parentId) {
-    return { agentState, shouldEndTurn: wouldEndTurn }
-  }
-  const enforcement = getOrCreateEnforcement(agentState)
-  if (!enforcement) {
-    return { agentState, shouldEndTurn: wouldEndTurn }
-  }
-  const result = enforcement.evaluateUngroundedTurnEnd()
-  const text = result.steering ?? result.notice
-  if (!result.blocked && !text) {
-    return { agentState, shouldEndTurn: wouldEndTurn }
-  }
-  agentState.messageHistory = [
-    ...agentState.messageHistory,
-    userMessage({
-      content: buildUserMessageContent(text!, undefined, undefined),
-      tags: ['ECHO_COMPLIANCE'],
-      keepDuringTruncation: true,
-    }),
-  ]
-  if (result.blocked) {
-    return { agentState, shouldEndTurn: false }
-  }
-  // Disarm notice: allow the turn to proceed (bounded escape hatch).
-  return { agentState, shouldEndTurn: wouldEndTurn }
-}
-
-/**
+} /**
  * Runs one iteration of the agent loop: step prompt + token counting +
  * compaction, the programmatic step, the output-schema retry, the LLM step
  * (runAgentStep), step bookkeeping, steering, and the ECHO compliance step
@@ -115,13 +72,10 @@ export async function runLoopIteration(params: {
   const {
     agentTemplate,
     system,
-    tools,
     runId,
     toolsForTokenCount,
     contextCompactor,
     additionalToolDefinitionsWithCache,
-    getCachedAdditionalToolDefinitions,
-    localAgentTemplates,
     logger,
     signal,
     initialAgentState,
@@ -146,6 +100,7 @@ export async function runLoopIteration(params: {
 
   totalSteps++
   const startTime = new Date()
+  let n: number | undefined = undefined
 
   // FID-2026-0802-005 L15/H8: compute the step prompt and refresh the context
   // token count / compaction state for this iteration.
@@ -159,150 +114,38 @@ export async function runLoopIteration(params: {
     logger,
     additionalToolDefinitionsWithCache,
   })
+  const prog = await runProgrammaticPhase({
+    loopParams,
+    agentTemplate,
+    state,
+    ctx,
+    currentAgentState,
+    shouldEndTurn,
+    totalSteps,
+    nResponses,
+    currentPrompt,
+    currentParams,
+  })
+  sawTerminalVerdict = prog.sawTerminalVerdict
+  n = prog.n
+  totalSteps = prog.totalSteps
+  shouldEndTurn = prog.shouldEndTurn
+  currentAgentState = state.agentState
 
-  // FID-2026-0811-015: one shared turn-end evaluator is used by both
-  // programmatic and LLM completion paths. It emits bounded corrective
-  // context and keeps blocked turns inside the loop for self-correction.
-  // FID-2026-0822-003: bounded blocking. After N consecutive blocked
-  // turn-end verdicts the enforcement surrenders (logs + allows the end)
-  // instead of injecting forever — unless the run is an autonomous
-  // continuation (Auto Drive / active goal), where behavior is preserved
-  // by explicit operator direction.
-  const applyTurnEndEnforcement = (ending: boolean): boolean => {
-    if (!ending || currentAgentState.parentId) return ending
-    const enforcement = getOrCreateEnforcement(currentAgentState)
-    const result = enforcement.evaluateTurnEnd()
-    if (!result.blocked && !result.report) {
-      currentAgentState.turnEndBlockCount = 0
-      return ending
-    }
-    // FID-2026-0822-003: enforcement blocking must not outrun the
-    // stepsRemaining backstop either.
-    if (currentAgentState.stepsRemaining <= 0) {
-      return ending
-    }
-    currentAgentState.messageHistory = [
-      ...currentAgentState.messageHistory,
-      userMessage({
-        content: buildUserMessageContent(
-          result.report || 'ECHO turn-end enforcement blocked completion.',
-          undefined,
-          undefined,
-        ),
-        tags: ['ECHO_COMPLIANCE'],
-        keepDuringTruncation: true,
-      }),
-    ]
-    if (result.blocked) {
-      const verdict = updateTurnEndBlockCounter(
-        currentAgentState.turnEndBlockCount ?? 0,
-        { blocked: true },
-      )
-      currentAgentState.turnEndBlockCount = verdict.count
-      if (verdict.surrender && !isAutonomousContinuation(currentAgentState)) {
-        logger.warn(
-          { blocks: verdict.count },
-          'ECHO turn-end enforcement surrendered after repeated blocks',
-        )
-        currentAgentState.turnEndBlockCount = 0
-        return ending
-      }
-      return false
-    }
-    return ending
-  }
-
-  // 1. Run programmatic step first if it exists
-  let n: number | undefined = undefined
-
-  if (agentTemplate.handleSteps) {
-    const programmaticResult = await runProgrammaticStep({
-      ...loopParams,
-
-      agentState: currentAgentState,
-      localAgentTemplates,
-      nResponses,
-      onCostCalculated: async (credits: number) => {
-        currentAgentState.creditsUsed += credits
-        currentAgentState.directCreditsUsed += credits
-      },
-      prompt: currentPrompt,
-      runId,
-      stepNumber: totalSteps,
-      stepsComplete: shouldEndTurn,
-      system,
-      tools,
-      template: agentTemplate,
-      toolCallParams: currentParams as
-        | Record<string, string | number | boolean | null | undefined>
-        | undefined,
-    })
-    const {
-      agentState: programmaticAgentState,
-      endTurn,
-      stepNumber,
-      generateN,
-    } = programmaticResult
-    n = generateN
-    if (endTurn) {
-      sawTerminalVerdict = true
-    }
-
-    Object.assign(initialAgentState, programmaticAgentState)
-    currentAgentState = initialAgentState
-    totalSteps = stepNumber
-
-    shouldEndTurn = endTurn
-
-    // FID-2026-0810-002 Change 5: the completion gate runs on the
-    // programmatic end-turn path TOO — before the output-schema restart
-    // branch and before the `if (!shouldContinue) return` below — so a
-    // handleSteps main agent that ends its turn programmatically cannot skip
-    // grounding. Steering runs before the output-schema restart, so a
-    // structured-output agent's "must use set_output" restart is never
-    // starved while ungrounded: grounding completes first.
-    ;({ agentState: currentAgentState, shouldEndTurn } =
-      applyUngroundedCompletionGate(currentAgentState, shouldEndTurn))
-    shouldEndTurn = applyTurnEndEnforcement(shouldEndTurn)
-  }
-
-  // Check if output is required but missing
-  if (
-    agentTemplate.outputSchema &&
-    currentAgentState.output === undefined &&
-    shouldEndTurn &&
-    !hasRetriedOutputSchema
-  ) {
-    hasRetriedOutputSchema = true
-    logger.warn(
-      {
-        agentType: loopParams.agentType,
-        agentId: currentAgentState.agentId,
-        runId,
-      },
-      'Agent finished without setting required output, restarting loop',
-    )
-
-    // Add system message instructing to use set_output
-    const outputSchemaMessage = withSystemTags(
-      `You must use the "set_output" tool to provide a result that matches the output schema before ending your turn. The output schema is required for this agent.`,
-    )
-
-    currentAgentState.messageHistory = [
-      ...currentAgentState.messageHistory,
-      userMessage({
-        content: outputSchemaMessage,
-        keepDuringTruncation: true,
-      }),
-    ]
-
-    // Reset shouldEndTurn to continue the loop
-    shouldEndTurn = false
-  }
+  // Check if output is required but missing — restart-once latch (Loop 300:
+  // body extracted to loop/output-schema.ts).
+  ;({ hasRetriedOutputSchema, shouldEndTurn } = applyOutputSchemaRestart({
+    loopParams,
+    agentTemplate,
+    currentAgentState,
+    shouldEndTurn,
+    hasRetriedOutputSchema,
+    logger,
+    runId,
+  }))
 
   // End turn if programmatic step ended turn, or if the previous runAgentStep ended turn
-  const shouldContinue = !shouldEndTurn
-  if (!shouldContinue) {
+  const writeBack = (): void => {
     Object.assign(state, {
       agentState: currentAgentState,
       shouldEndTurn,
@@ -313,37 +156,35 @@ export async function runLoopIteration(params: {
       currentPrompt,
       currentParams,
     })
+  }
+  const shouldContinue = !shouldEndTurn
+  if (!shouldContinue) {
+    writeBack()
     return { shouldContinue }
   }
-
   const creditsBefore = currentAgentState.directCreditsUsed
   const childrenBefore = currentAgentState.childRunIds.length
+
+  const llm = await runLlmStepPhase({
+    loopParams,
+    ctx,
+    currentAgentState,
+    n,
+    currentPrompt,
+    currentParams,
+    stepPrompt,
+    systemTokens,
+    totalSteps,
+    shouldEndTurn,
+  })
   const {
     agentState: newAgentState,
-    shouldEndTurn: llmShouldEndTurn,
+    llmShouldEndTurn,
     hasNativeIncompleteToolCall,
     lastIncompleteToolName,
     messageId,
-    nResponses: generatedResponses,
-  } = await runAgentStep({
-    ...loopParams,
-
-    agentState: currentAgentState,
-    agentTemplate,
-    n,
-    prompt: currentPrompt,
-    runId,
-    spawnParams: currentParams,
-    system,
-    tools,
-    additionalToolDefinitions: additionalToolDefinitionsWithCache,
-    // FID-2026-0802-005 L15/H8: reuse the step prompt already computed
-    // above and the step-built custom tool data.
-    stepPrompt,
-    // FID-2026-0815-011 E-01: reuse the system-prompt token count too.
-    systemTokens,
-    customToolDefinitions: getCachedAdditionalToolDefinitions(),
-  })
+  } = llm
+  nResponses = llm.nResponses
 
   if (llmShouldEndTurn) {
     sawTerminalVerdict = true
@@ -351,42 +192,19 @@ export async function runLoopIteration(params: {
 
   Object.assign(initialAgentState, newAgentState)
   currentAgentState = initialAgentState
-  nResponses = generatedResponses
 
   let stepStatus: 'completed' | 'failed' = 'completed'
   let stepErrorMessage: string | undefined
   if (hasNativeIncompleteToolCall) {
     consecutiveNativeIncompleteSteps += 1
-    // FID-2026-0819-004: run_terminal_command gets extra retries (5 vs 3)
-    // because flash-class models need more attempts to learn from steering.
-    const maxStrikes =
-      lastIncompleteToolName === 'run_terminal_command'
-        ? NATIVE_TOOL_CALL_TERMINAL_RECOVERY_MAX_STRIKES
-        : NATIVE_TOOL_CALL_RECOVERY_MAX_STRIKES
-    if (consecutiveNativeIncompleteSteps >= maxStrikes) {
+    const strike = applyNativeStrikeHandling({
+      currentAgentState,
+      consecutiveNativeIncompleteSteps,
+      lastIncompleteToolName,
+    })
+    if (strike.exhausted) {
       stepStatus = 'failed'
-      stepErrorMessage = buildNativeToolCallExhaustedMessage(
-        lastIncompleteToolName,
-      )
-    } else if (consecutiveNativeIncompleteSteps >= 2) {
-      // FID-2026-0819-004: append escalating steering on retry. The first
-      // error (strike 1) already has a hint from stream-parser.ts. Strikes
-      // 2+ get increasingly specific guidance via getSteeringMessage.
-      const escalatingHint = getSteeringMessage(
-        lastIncompleteToolName,
-        consecutiveNativeIncompleteSteps,
-      )
-      if (escalatingHint) {
-        currentAgentState.messageHistory = [
-          ...currentAgentState.messageHistory,
-          userMessage({
-            content: withSystemTags(
-              `Native tool call still failing. Try a different approach.${escalatingHint}`,
-            ),
-            tags: ['TOOL_CALL_ERROR'],
-          }),
-        ]
-      }
+      stepErrorMessage = buildStepExhaustedError(lastIncompleteToolName)
     }
     shouldEndTurn = false
   } else {
@@ -397,12 +215,13 @@ export async function runLoopIteration(params: {
     shouldEndTurn = llmShouldEndTurn
   }
 
+  const boundaryDeps = { currentAgentState, logger }
+
   // FID-2026-0810-002 Change 5: first-turn completion gate (LLM path). A
   // text-only completion by an ungrounded main agent is blocked, steered,
   // and looped; after the retry cap the gate disarms with a one-time notice.
   ;({ agentState: currentAgentState, shouldEndTurn } =
     applyUngroundedCompletionGate(currentAgentState, shouldEndTurn))
-
   // FID-2026-0801-012: Thinker convergence gate.
   // Runs at the runtime boundary AFTER the native step's tool results are
   // committed to history, and BEFORE the loop-top `output === undefined &&
@@ -412,38 +231,29 @@ export async function runLoopIteration(params: {
   // the "You must use set_output" message and reintroduce
   // `structuredOutput: null` (set_output is not in the Thinker's
   // toolNames). Retries keep the loop going with a typed message.
-  shouldEndTurn = applyTurnEndEnforcement(shouldEndTurn)
+  shouldEndTurn = applyTurnEndEnforcement(boundaryDeps, shouldEndTurn)
 
-  if (
-    agentTemplate.outputMode === 'structured_output' &&
-    agentTemplate.toolNames.includes('sequentialthinking')
-  ) {
-    const gateResult = runThinkerConvergenceGate({
-      runId,
-      agentState: currentAgentState,
-      shouldEndTurn,
-      logger,
-    })
-    if (gateResult.retryAppended) {
-      shouldEndTurn = false
-    }
-  }
+  ;({ shouldEndTurn } = applyThinkerConvergenceGate({
+    agentTemplate,
+    currentAgentState,
+    shouldEndTurn,
+    logger,
+    runId,
+  }))
 
-  if (newAgentState.runId) {
-    await loopParams.addAgentStep({
-      ...loopParams,
-      agentRunId: newAgentState.runId,
-      stepNumber: totalSteps,
-      credits: newAgentState.directCreditsUsed - creditsBefore,
-      childRunIds: newAgentState.childRunIds.slice(childrenBefore),
-      messageId,
-      status: stepStatus,
-      errorMessage: stepErrorMessage,
-      startTime,
-    })
-  } else {
-    logger.error('No runId found for agent state after finishing agent run')
-  }
+  await recordAgentStep({
+    addAgentStep: loopParams.addAgentStep,
+    loopParams,
+    agentState: newAgentState,
+    stepNumber: totalSteps,
+    credits: newAgentState.directCreditsUsed - creditsBefore,
+    childrenBefore,
+    messageId,
+    status: stepStatus,
+    errorMessage: stepErrorMessage,
+    startTime,
+    logger,
+  })
 
   if (stepErrorMessage !== undefined) {
     throw new Error(stepErrorMessage)
@@ -452,97 +262,18 @@ export async function runLoopIteration(params: {
   currentPrompt = undefined
   currentParams = undefined
 
-  // Steering: if the host fed user messages while this step ran, append them
-  // now (the step's LLM call + tools have completed, so history is in a clean
-  // state) and keep the turn going so the agent runs a second step that can
-  // see (and act on) the new message.
   const steered = loopParams.drainSteeringMessages?.()
-  if (steered?.length) {
-    currentAgentState.messageHistory = [
-      ...currentAgentState.messageHistory,
-      ...steered.map((text) =>
-        userMessage({
-          content: buildUserMessageContent(text, undefined, undefined),
-          tags: ['USER_PROMPT'],
-          keepDuringTruncation: true,
-        }),
-      ),
-    ]
-    shouldEndTurn = false
-  }
 
-  // FID-2026-0804-009: harness ECHO compliance — Law 3 (verify-after-write)
-  // + mechanical Verifier-criteria flag + FID escalation, evaluated at each
-  // step boundary (no-op mid-batch; only fires when the turn is ending).
-  // Emits non-blocking compliance_warning receipts and, when violations
-  // exist, injects corrective steering so the running agent self-corrects
-  // (bounded by the tracker's steering budget — never loops forever).
-  // MAIN-LOOP ONLY (code-review finding): subagent loops share the parent
-  // run's tracker for RECORDING (tool-executor) but must never evaluate or
-  // steer here — a Forge/basher subagent can't act on a Verifier-spawn
-  // directive injected into its own message history. Programmatic-only
-  // turns exit at the `if (shouldEndTurn) break` above before this block,
-  // so handleSteps-driven runs intentionally never evaluate here.
-  const echoCompliance = currentAgentState.echoCompliance
-  if (
-    echoCompliance &&
-    echoCompliance.mode !== 'off' &&
-    !currentAgentState.parentId
-  ) {
-    const violations = echoCompliance.evaluateAtStepBoundary({
-      stepNumber: totalSteps,
-      endingTurn: shouldEndTurn,
-    })
-    if (violations.length > 0) {
-      for (const violation of violations) {
-        loopParams.onResponseChunk({
-          type: 'compliance_warning',
-          ...violation,
-        })
-      }
-      const steering = echoCompliance.takeSteeringMessages()
-      // FID-2026-0822-003: synthetic steering must never outrun the
-      // stepsRemaining backstop — once the step budget is spent, let the
-      // turn end (Auto Drive keeps its own driver-level budgets).
-      if (steering.length > 0 && currentAgentState.stepsRemaining >= 1) {
-        currentAgentState.messageHistory = [
-          ...currentAgentState.messageHistory,
-          ...steering.map((text) =>
-            userMessage({
-              content: buildUserMessageContent(text, undefined, undefined),
-              tags: ['ECHO_COMPLIANCE'],
-              keepDuringTruncation: true,
-            }),
-          ),
-        ]
-        shouldEndTurn = false
-      }
-    }
-  }
-
-  // FID-2026-0822-003: post-terminal continuation breaker. A terminal
-  // verdict overridden by synthetic inputs must not loop the turn forever.
-  // Genuine operator input (steered user messages) resets; ordinary working
-  // steps reset; Auto Drive / active-goal runs bypass entirely.
-  const genuineUserInput = (steered?.length ?? 0) > 0
-  const postTerminal = updatePostTerminalCounter(
-    currentAgentState.postTerminalContinuations ?? 0,
-    {
-      sawTerminalVerdict,
-      shouldEndTurn,
-      genuineUserInput,
-    },
-  )
-  currentAgentState.postTerminalContinuations = postTerminal.count
-  const hardEnd =
-    postTerminal.trip && !isAutonomousContinuation(currentAgentState)
-  if (hardEnd) {
-    const notice =
-      'Turn auto-ended: no operator input after repeated post-completion continuations.'
-    logger.warn({ postTerminalContinuations: postTerminal.count }, notice)
-    loopParams.onResponseChunk(notice)
-    shouldEndTurn = true
-  }
+  // Steering flush → ECHO compliance → post-terminal breaker (Loop 300:
+  // composed sequence extracted to loop/boundary-gates.ts).
+  const boundary = applyStepBoundaryTail(boundaryDeps, {
+    loopParams,
+    steered: steered ?? [],
+    sawTerminalVerdict,
+    shouldEndTurn,
+    stepNumber: totalSteps,
+  })
+  shouldEndTurn = boundary.shouldEndTurn
 
   // Adaptive grounding refreshes are evaluated at every internal step. The
   // helper is the single writer for the replacement refresh message; this
@@ -552,19 +283,9 @@ export async function runLoopIteration(params: {
     const refresh = getOrCreateEnforcement(currentAgentState).onStepBoundary()
     appendGroundingRefresh(currentAgentState, refresh.refreshText)
   }
-
-  Object.assign(state, {
-    agentState: currentAgentState,
-    shouldEndTurn,
-    totalSteps,
-    nResponses,
-    consecutiveNativeIncompleteSteps,
-    hasRetriedOutputSchema,
-    currentPrompt,
-    currentParams,
-  })
+  writeBack()
 
   // FID-2026-0822-003: a hard post-terminal end must stop the caller even
   // if it only honors the returned flag.
-  return { shouldContinue: !hardEnd }
+  return { shouldContinue: !boundary.hardEnd }
 }

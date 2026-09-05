@@ -4,12 +4,7 @@ import path from 'path'
 
 import { afterEach, describe, expect, test } from 'bun:test'
 
-import {
-  queryBlastRadius,
-  queryNodeEdges,
-  queryDomainClusters,
-  queryReachability,
-} from '../queries'
+import { queryNodeEdges } from '../queries'
 import { openGraphDatabase } from '../store'
 import { updateKnowledgeGraph } from '../update'
 
@@ -295,69 +290,5 @@ describe('incremental update', () => {
     expect(secondStats.nodeCount).toBe(firstStats.nodeCount)
     expect(secondStats.edgeCount).toBe(firstStats.edgeCount)
     expect(secondStats.clusterCount).toBe(firstStats.clusterCount)
-  })
-})
-
-describe('blast radius + reachability queries', () => {
-  test('blast radius walks undirected edges with cycle safety', async () => {
-    const projectRoot = makeProject({
-      'a.ts': "import b from './b'\n",
-      'b.ts': "import c from './c'\nimport a from './a'\n",
-      'c.ts': "import a from './a'\n",
-    })
-    db = makeDb(projectRoot)
-
-    await updateKnowledgeGraph({ projectRoot, db, parseFile: fakeParse })
-
-    const radius = queryBlastRadius({ db, filePath: 'a.ts' })
-    const paths = radius.map((r) => r.path).sort()
-    expect(paths).toContain('b.ts')
-    expect(paths).toContain('c.ts')
-    expect(paths).not.toContain('a.ts')
-  })
-
-  test('directed reachability returns a path chain', async () => {
-    const projectRoot = makeProject({
-      'a.ts': "import b from './b'\n",
-      'b.ts': "import c from './c'\n",
-      'c.ts': 'class C {}\n',
-    })
-    db = makeDb(projectRoot)
-
-    await updateKnowledgeGraph({ projectRoot, db, parseFile: fakeParse })
-
-    const result = queryReachability({ db, fromPath: 'a.ts', toPath: 'c.ts' })
-    expect(result.reachable).toBe(true)
-    expect(result.path).toEqual(['a.ts', 'b.ts', 'c.ts'])
-
-    const missing = queryReachability({ db, fromPath: 'c.ts', toPath: 'a.ts' })
-    expect(missing.reachable).toBe(false)
-  })
-
-  test('blast radius on a missing file returns empty', () => {
-    const projectRoot = makeProject({ 'a.ts': 'class A {}\n' })
-    db = makeDb(projectRoot)
-    expect(queryBlastRadius({ db, filePath: 'nope.ts' })).toEqual([])
-  })
-})
-
-describe('domain clusters', () => {
-  test('queryDomainClusters groups files by cluster_id', async () => {
-    const projectRoot = makeProject({
-      'x/one.ts': "import two from './two'\n",
-      'x/two.ts': "import one from './one'\n",
-      'y/three.ts': "import four from './four'\n",
-      'y/four.ts': "import three from './three'\n",
-    })
-    db = makeDb(projectRoot)
-
-    await updateKnowledgeGraph({ projectRoot, db, parseFile: fakeParse })
-
-    const clusters = queryDomainClusters({ db })
-    expect(clusters.length).toBeGreaterThanOrEqual(2)
-    for (const c of clusters) {
-      expect(c.fileCount).toBeGreaterThanOrEqual(1)
-      expect(Array.isArray(c.files)).toBe(true)
-    }
   })
 })

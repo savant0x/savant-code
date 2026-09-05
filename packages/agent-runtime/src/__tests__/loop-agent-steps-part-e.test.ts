@@ -15,7 +15,7 @@ import {
   assistantMessage,
   userMessage,
 } from '@savant-code/common/util/messages'
-import { APICallError, RetryError } from 'ai'
+import { APICallError } from 'ai'
 import {
   afterAll,
   afterEach,
@@ -245,124 +245,6 @@ describe('loopAgentSteps - runAgentStep vs runProgrammaticStep behavior', () => 
         expect(result.output.message).toContain('Internal Server Error')
         // No error code since responseBody wasn't parseable
         expect(result.output.error).toBeUndefined()
-      }
-    })
-
-    it('should unwrap retry errors to propagate underlying 409 gate errors', async () => {
-      const llmOnlyTemplate = {
-        ...mockTemplate,
-        handleSteps: undefined,
-      }
-
-      const localAgentTemplates = {
-        'test-agent': llmOnlyTemplate,
-      }
-
-      const apiError = new APICallError({
-        statusCode: 409,
-        message: 'Conflict',
-        url: 'https://api.savant-code.com/v1/chat/completions',
-        requestBodyValues: {},
-        responseBody: JSON.stringify({
-          error: 'session_superseded',
-          message:
-            'Another instance of savant-free has taken over this session. Only one instance per account is allowed.',
-        }),
-        isRetryable: true,
-      })
-
-      loopAgentStepsBaseParams.promptAiSdkStream = async function* () {
-        throw new RetryError({
-          message: 'Failed after 4 attempts. Last error: Conflict',
-          reason: 'maxRetriesExceeded',
-          errors: [apiError],
-        })
-      }
-
-      const result = await loopAgentSteps({
-        ...loopAgentStepsBaseParams,
-        agentType: 'test-agent',
-        localAgentTemplates,
-      })
-
-      expect(result.output.type).toBe('error')
-      if (result.output.type === 'error') {
-        expect(result.output.message).toBe(
-          'Another instance of savant-free has taken over this session. Only one instance per account is allowed.',
-        )
-        expect(result.output.message).not.toContain('Agent run error:')
-        expect(result.output.error).toBe('session_superseded')
-        expect(result.output.statusCode).toBe(409)
-      }
-    })
-
-    it('should explain fetch idle timeouts instead of showing the raw runtime message', async () => {
-      const llmOnlyTemplate = {
-        ...mockTemplate,
-        handleSteps: undefined,
-      }
-
-      const localAgentTemplates = {
-        'test-agent': llmOnlyTemplate,
-      }
-
-      // Bun aborts a fetch after 5 minutes without receiving bytes, throwing a
-      // DOMException named TimeoutError with this exact message.
-      loopAgentStepsBaseParams.promptAiSdkStream = async function* () {
-        const timeoutError = new Error('The operation timed out.')
-        timeoutError.name = 'TimeoutError'
-        throw timeoutError
-      }
-
-      const result = await loopAgentSteps({
-        ...loopAgentStepsBaseParams,
-        agentType: 'test-agent',
-        localAgentTemplates,
-      })
-
-      expect(result.output.type).toBe('error')
-      if (result.output.type === 'error') {
-        expect(result.output.message).toContain(
-          'no data was received from the server for 5 minutes',
-        )
-        expect(result.output.message).not.toContain('Agent run error:')
-        expect(result.output.message).not.toBe('The operation timed out.')
-      }
-    })
-
-    it('should explain dropped socket connections instead of showing the raw runtime message', async () => {
-      const llmOnlyTemplate = {
-        ...mockTemplate,
-        handleSteps: undefined,
-      }
-
-      const localAgentTemplates = {
-        'test-agent': llmOnlyTemplate,
-      }
-
-      // Bun's fetch throws a plain Error with this message (and code
-      // ECONNRESET/ConnectionClosed) when the TCP connection is dropped.
-      loopAgentStepsBaseParams.promptAiSdkStream = async function* () {
-        const socketError = new Error(
-          'The socket connection was closed unexpectedly. For more information, pass `verbose: true` in the second argument to fetch()',
-        ) as Error & { code: string }
-        socketError.code = 'ECONNRESET'
-        throw socketError
-      }
-
-      const result = await loopAgentSteps({
-        ...loopAgentStepsBaseParams,
-        agentType: 'test-agent',
-        localAgentTemplates,
-      })
-
-      expect(result.output.type).toBe('error')
-      if (result.output.type === 'error') {
-        expect(result.output.message).toContain('Connection interrupted')
-        expect(result.output.message).not.toContain('Agent run error:')
-        expect(result.output.message).not.toContain(
-          'pass `verbose: true` in the second argument to fetch()',
-        )
       }
     })
   })

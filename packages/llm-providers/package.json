@@ -16,6 +16,12 @@
       "types": "./src/ollama/index.ts",
       "default": "./src/ollama/index.ts"
     },
+    "./schema-sanitize": {
+      "bun": "./src/schema-sanitize.ts",
+      "import": "./src/schema-sanitize.ts",
+      "types": "./src/schema-sanitize.ts",
+      "default": "./src/schema-sanitize.ts"
+    },
     "./*": {
       "bun": "./src/*.ts",
       "import": "./src/*.ts",

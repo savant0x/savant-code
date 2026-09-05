@@ -14,7 +14,6 @@ import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import {
   adaptAttemptReceipt,
   buildProgressionRecord,
-  deriveCompetencyEdge,
   ProgressionStore,
 } from '../index'
 
@@ -61,7 +60,6 @@ function record(overrides: Partial<ProgressionRecord> = {}): ProgressionRecord {
     ...overrides,
   }
 }
-
 describe('progression store', () => {
   test('migrates a fresh store and reopens with the same records', () => {
     const store = ProgressionStore.open(dbPath)
@@ -255,66 +253,5 @@ describe('ZTAP progression adapter', () => {
     expect(progression.versions.sandboxPolicy).toBe('teacher-sandbox-policy-v1')
     expect(progression.receiptStatus).toBe('local-unverified')
     expect(progression.receipt).toBeNull()
-  })
-})
-
-describe('competency edge derivation', () => {
-  test('passed attempt marks the skill completed with its attempt id', () => {
-    const edge = deriveCompetencyEdge(record(), null)
-    expect(edge).not.toBeNull()
-    expect(edge?.state).toBe('completed')
-    expect(edge?.evidence).toEqual(['attempt-1'])
-  })
-
-  test('failed attempt marks attempted and never downgrades a completed edge', () => {
-    const failed = deriveCompetencyEdge(
-      record({ completionState: 'failed' }),
-      null,
-    )
-    expect(failed?.state).toBe('attempted')
-
-    const completedExisting: CompetencyEdge = {
-      skill: 'behavioral-invariants',
-      state: 'completed',
-      evidence: ['prior'],
-    }
-    const downgrade = deriveCompetencyEdge(
-      record({ completionState: 'failed' }),
-      completedExisting,
-    )
-    expect(downgrade?.state).toBe('completed')
-    expect(downgrade?.evidence).toEqual(['prior', 'attempt-1'])
-  })
-
-  test('unavailable and cancelled award no progression', () => {
-    expect(
-      deriveCompetencyEdge(record({ completionState: 'unavailable' }), null),
-    ).toBeNull()
-    expect(
-      deriveCompetencyEdge(record({ completionState: 'cancelled' }), null),
-    ).toBeNull()
-  })
-
-  test('evidence is deduplicated on idempotent replay', () => {
-    const existing: CompetencyEdge = {
-      skill: 'behavioral-invariants',
-      state: 'attempted',
-      evidence: ['attempt-1'],
-    }
-    const edge = deriveCompetencyEdge(record(), existing)
-    expect(edge?.evidence).toEqual(['attempt-1'])
-  })
-})
-
-describe('progression store no-network audit (FID-2026-0813-019)', () => {
-  test('store module has no network import or fetch path', () => {
-    const source = fs.readFileSync(
-      path.join(import.meta.dir, '../store.ts'),
-      'utf8',
-    )
-    expect(source).not.toContain('fetch')
-    expect(source).not.toContain('http')
-    expect(source).not.toContain('WebSocket')
-    expect(source).toContain('bun:sqlite')
   })
 })

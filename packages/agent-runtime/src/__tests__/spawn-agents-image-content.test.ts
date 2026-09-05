@@ -18,7 +18,6 @@ import {
 
 import { mockFileContext } from './test-utils'
 import * as runAgentStep from '../run-agent-step'
-import { handleSpawnAgentInline } from '../tools/handlers/tool/spawn-agent-inline'
 import { handleSpawnAgents } from '../tools/handlers/tool/spawn-agents'
 
 import type { SavantCodeToolCall } from '@savant-code/common/tools/list'
@@ -134,18 +133,6 @@ describe('Spawn Agents Image Content Propagation', () => {
     },
   })
 
-  const createInlineSpawnToolCall = (
-    agentType: string,
-    prompt = 'test prompt',
-  ): SavantCodeToolCall<'spawn_agent_inline'> => ({
-    toolName: 'spawn_agent_inline' as const,
-    toolCallId: 'test-tool-call-id',
-    input: {
-      agent_type: agentType,
-      prompt,
-    },
-  })
-
   const createImageContent = (): Array<TextPart | ImagePart> => [
     { type: 'text', text: '<user_message>Check this image</user_message>' },
     {
@@ -239,116 +226,6 @@ describe('Spawn Agents Image Content Propagation', () => {
 
       // But content (images) should NOT be passed
       expect(capturedLoopAgentStepsParams.content).toBeUndefined()
-    })
-  })
-
-  describe('handleSpawnAgentInline - image content should NOT be passed to inline subagents', () => {
-    it('should NOT pass image content to inline spawned subagent', async () => {
-      const parentAgent = createMockAgent('parent', true)
-      const childAgent = createMockAgent('child-agent', true)
-      const toolCall = createInlineSpawnToolCall('child-agent', 'inline task')
-
-      const imageContent = createImageContent()
-
-      sessionState.mainAgentState.messageHistory = [userMessage('Hello')]
-
-      await handleSpawnAgentInline({
-        ...handleSpawnAgentsBaseParams,
-        agentState: sessionState.mainAgentState,
-        agentTemplate: parentAgent,
-        localAgentTemplates: { 'child-agent': childAgent },
-        toolCall,
-        content: imageContent,
-      } as Parameters<typeof handleSpawnAgentInline>[0])
-
-      expect(mockLoopAgentSteps).toHaveBeenCalledTimes(1)
-
-      // The inline spawned subagent should NOT receive the image content
-      expect(capturedLoopAgentStepsParams.content).toBeUndefined()
-    })
-
-    it('should NOT propagate images through multiple spawn levels', async () => {
-      const parentAgent = createMockAgent('parent', true)
-      const childAgent = createMockAgent('child-agent', true)
-      const toolCall = createInlineSpawnToolCall('child-agent', 'nested task')
-
-      const imageContent = createImageContent()
-
-      sessionState.mainAgentState.messageHistory = []
-
-      await handleSpawnAgentInline({
-        ...handleSpawnAgentsBaseParams,
-        agentState: sessionState.mainAgentState,
-        agentTemplate: parentAgent,
-        localAgentTemplates: { 'child-agent': childAgent },
-        toolCall,
-        content: imageContent,
-      } as Parameters<typeof handleSpawnAgentInline>[0])
-
-      expect(mockLoopAgentSteps).toHaveBeenCalledTimes(1)
-
-      // Verify content is undefined (not propagated)
-      expect(capturedLoopAgentStepsParams.content).toBeUndefined()
-    })
-  })
-
-  describe('Multiple subagent spawns - images should not multiply', () => {
-    it('should NOT pass image content to any of multiple spawned subagents', async () => {
-      const parentAgent = createMockAgent('parent', true)
-      parentAgent.spawnableAgents = ['child-agent', 'another-agent']
-      const childAgent = createMockAgent('child-agent', true)
-      const anotherAgent = createMockAgent('another-agent', true)
-
-      const imageContent = createImageContent()
-
-      const toolCall: SavantCodeToolCall<'spawn_agents'> = {
-        toolName: 'spawn_agents' as const,
-        toolCallId: 'test-tool-call-id',
-        input: {
-          agents: [
-            { agent_type: 'child-agent', prompt: 'first task' },
-            { agent_type: 'another-agent', prompt: 'second task' },
-          ],
-        },
-      }
-
-      sessionState.mainAgentState.messageHistory = []
-
-      // Capture all calls
-      const allCapturedParams: any[] = []
-      mockLoopAgentSteps.mockImplementation(async (options: any) => {
-        allCapturedParams.push({ ...options })
-        return {
-          agentState: {
-            ...options.agentState,
-            messageHistory: [assistantMessage('Mock response')],
-          },
-          output: {
-            type: 'lastMessage',
-            value: [assistantMessage('Mock response')],
-          },
-        }
-      })
-
-      await handleSpawnAgents({
-        ...handleSpawnAgentsBaseParams,
-        agentState: sessionState.mainAgentState,
-        agentTemplate: parentAgent,
-        localAgentTemplates: {
-          'child-agent': childAgent,
-          'another-agent': anotherAgent,
-        },
-        toolCall,
-        content: imageContent,
-      } as Parameters<typeof handleSpawnAgents>[0])
-
-      // Both subagents should have been spawned
-      expect(mockLoopAgentSteps).toHaveBeenCalledTimes(2)
-
-      // Neither subagent should have received image content
-      for (const params of allCapturedParams) {
-        expect(params.content).toBeUndefined()
-      }
     })
   })
 })

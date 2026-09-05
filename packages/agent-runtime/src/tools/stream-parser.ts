@@ -1,99 +1,29 @@
 import { toolNames } from '@savant-code/common/tools/constants'
 import { AbortError } from '@savant-code/common/util/error'
-import {
-  assistantMessage,
-  userMessage,
-} from '@savant-code/common/util/messages'
-import { generateCompactId } from '@savant-code/common/util/string'
 
-import { INCLUDE_REASONING_IN_MESSAGE_HISTORY } from '../constants'
-import {
-  executeCustomToolCall,
-  executeToolCall,
-  tryTransformAgentToolCall,
-} from './tool-executor'
-import { isAgentGrounded } from '../echo/grounding'
-import { getSteeringMessage } from '../run-agent-step/constants'
 import { processStreamWithTools } from '../tool-stream-parser'
-import { withSystemTags } from '../util/messages'
-import { createYagniCheckStreamStripper } from '../util/think-tags'
+import { handleStreamErrorChunk } from './stream-parser/error-chunk'
 import { buildFinalMessageHistory } from './stream-parser/finalize'
-import { createResponseHandler } from './stream-parser/response-handler'
+import { createGroundingStager } from './stream-parser/grounding-stager'
+import { createStreamDoneHolder } from './stream-parser/stream-done'
+import { createToolExecutionCallbackFactory } from './stream-parser/tool-execution'
 
-import type { CustomToolCall, ExecuteToolCallParams } from './tool-executor'
-import type { AgentTemplate } from '../templates/types'
 import type { FileProcessingState } from './handlers/tool/write-file'
-import type { ToolName } from '@savant-code/common/tools/constants'
+import type { ProcessStreamParams } from './stream-parser/types'
+import type { CustomToolCall } from './tool-executor'
 import type { SavantCodeToolCall } from '@savant-code/common/tools/list'
-import type { Logger as RuntimeLogger } from '@savant-code/common/types/contracts/logger'
-import type { ParamsExcluding } from '@savant-code/common/types/function-params'
-import type { JSONValue } from '@savant-code/common/types/json'
 import type {
-  Message,
   ToolMessage,
+  Message,
 } from '@savant-code/common/types/messages/savant-code-message'
-import type { PrintModeEvent } from '@savant-code/common/types/print-mode'
-import type { WriteToolName } from '@savant-code/common/types/provenance'
-import type { Subgoal } from '@savant-code/common/types/session-state'
-import type {
-  CustomToolDefinitions,
-  ProjectFileContext,
-} from '@savant-code/common/util/file'
 
-/** FID-2026-0816-012: native tools whose arguments are commonly large enough to
- *  truncate mid-stream on flash-class models. Recovery steers the model to
- *  split these instead of re-emitting the same oversized payload. The write
- *  tools reuse the canonical `WriteToolName` union (Law 13 — one source of
- *  truth); `read_files` joins it for multi-path reads; `run_terminal_command`
- *  joins it because chained bash commands routinely truncate the same way. */
-const NATIVE_TOOL_CALL_STEER_SPLIT_TOOLS = new Set<
-  WriteToolName | 'read_files' | 'run_terminal_command'
->([
-  'write_file',
-  'str_replace',
-  'apply_patch',
-  'read_files',
-  'run_terminal_command',
-])
-
-export async function processStream(
-  params: {
-    agentContext: Record<string, Subgoal>
-    agentTemplate: AgentTemplate
-    ancestorRunIds: string[]
-    fileContext: ProjectFileContext
-    fingerprintId: string
-    fullResponse: string
-    logger: RuntimeLogger
-    messages: Message[]
-    repoId: string | undefined
-    runId: string
-    signal: AbortSignal
-    userId: string | undefined
-    /** FID-2026-0802-005 H8: step-built custom tool data (incl. MCP tools). */
-    customToolDefinitions?: CustomToolDefinitions
-
-    onCostCalculated: (credits: number) => Promise<void>
-    onResponseChunk: (chunk: string | PrintModeEvent) => void
-  } & Omit<
-    ExecuteToolCallParams<string>,
-    | 'fileProcessingState'
-    | 'fullResponse'
-    | 'input'
-    | 'previousToolCallFinished'
-    | 'state'
-    | 'toolCallId'
-    | 'toolCalls'
-    | 'toolCallsToAddToMessageHistory'
-    | 'toolName'
-    | 'toolResults'
-    | 'toolResultsToAddToMessageHistory'
-  > &
-    ParamsExcluding<
-      typeof processStreamWithTools,
-      'processors' | 'defaultProcessor' | 'loggerOptions' | 'executeXmlToolCall'
-    >,
-) {
+/**
+ * Consumes a model stream, executing tool calls as they arrive and building
+ * the assistant message history (FID-2026-0819-005 Loop 299: decomposed into
+ * `stream-parser/` modules — grounding stager, tool execution, error-chunk
+ * handling, shared types — with this file as the orchestrator).
+ */
+export async function processStream(params: ProcessStreamParams) {
   const {
     agentState,
     agentTemplate,
@@ -107,105 +37,6 @@ export async function processStream(
     signal,
     userId,
   } = params
-  const fullResponseChunks: string[] = [fullResponse]
-  // FID-2026-0802-005 H1: incremental accumulator — the previous
-  // `fullResponseChunks.join('')` on every tool call was O(k·L) copying for
-  // tool-dense responses. The chunks array is kept only for the final return.
-  let fullResponseSoFar = fullResponse
-  // FID-2026-0822-004: the Forge emits a <yagni_check> JSON block at the top
-  // of its response. This streaming stripper removes the block (and truncated
-  // fragments) from what persists/renders — assistantMessages and
-  // onResponseChunk — while `fullResponseSoFar` below keeps the RAW text so
-  // the enforcement gate's assistant-text channel can still parse the block
-  // (gate read is non-destructive; strip is emit-time only).
-  const yagniStripper = createYagniCheckStreamStripper()
-  // FID-2026-0812-005: stage all main-agent assistant output until the
-  // grounding checkpoint is complete. The completion gate runs after stream
-  // consumption, so forwarding text or reasoning immediately would let an
-  // ungrounded first response flash in the host UI. Staged output is flushed
-  // only after successful grounding reads settle; otherwise it is discarded.
-  const pendingGroundingOutput: Array<{
-    kind: 'text' | 'reasoning'
-    text: string
-  }> = []
-  // Match the enforcement factory's arming predicate rather than the optional
-  // protocolVariant field. Legacy/SDK states may have a protocol file without
-  // a variant; those sessions are still gated and must stage output.
-  const groundingGateArmed =
-    !agentState.parentId && Boolean(agentState.protocolFile)
-
-  const emitCommittedText = (text: string): void => {
-    if (!text) return
-    // fullResponseSoFar keeps the RAW text (FID-2026-0822-004): the YAGNI
-    // gate's assistant-text channel reads it at beforeToolCall time and must
-    // see the <yagni_check> block the model emitted. Only the user-visible
-    // channel below (assistantMessages + onResponseChunk) is stripped — the
-    // block never reaches the transcript or the relayed message history.
-    fullResponseSoFar += text
-    if (fullResponseChunks[0] === fullResponse) {
-      fullResponseChunks[0] = fullResponse + text
-    } else {
-      fullResponseChunks.push(text)
-    }
-    // FID-2026-0822-004: strip <yagni_check> scaffolding from the
-    // user-visible + persisted channels. A block may span chunks, so the
-    // stateful stripper holds text from an unclosed opener until its closer
-    // arrives (or the stream ends via flush).
-    const cleaned = yagniStripper.push(text)
-    if (cleaned.length === 0) return
-    assistantMessages.push(assistantMessage(cleaned))
-    onResponseChunk(cleaned)
-  }
-  const emitCommittedReasoning = (text: string): void => {
-    if (!text) return
-    if (INCLUDE_REASONING_IN_MESSAGE_HISTORY) {
-      const last = assistantMessages[assistantMessages.length - 1]
-      const lastPart =
-        last?.role === 'assistant' && Array.isArray(last.content)
-          ? last.content[last.content.length - 1]
-          : undefined
-      if (lastPart?.type === 'reasoning') {
-        lastPart.text += text
-      } else {
-        assistantMessages.push(assistantMessage({ type: 'reasoning', text }))
-      }
-    }
-    onResponseChunk({
-      type: 'reasoning_delta',
-      text,
-      ancestorRunIds,
-      runId,
-      agentId: agentState.agentId,
-    })
-  }
-  const emitGroundedText = (text: string): void => {
-    if (!text) return
-    if (groundingGateArmed && !isAgentGrounded(agentState)) {
-      pendingGroundingOutput.push({ kind: 'text', text })
-      return
-    }
-    emitCommittedText(text)
-  }
-  const emitGroundedReasoning = (text: string): void => {
-    if (!text) return
-    if (groundingGateArmed && !isAgentGrounded(agentState)) {
-      pendingGroundingOutput.push({ kind: 'reasoning', text })
-      return
-    }
-    emitCommittedReasoning(text)
-  }
-  const flushGroundingOutput = (): void => {
-    if (groundingGateArmed && !isAgentGrounded(agentState)) {
-      pendingGroundingOutput.length = 0
-      return
-    }
-    const staged = pendingGroundingOutput.splice(0)
-    for (const output of staged) {
-      if (output.kind === 'text') emitCommittedText(output.text)
-      else emitCommittedReasoning(output.text)
-    }
-  }
-
   // === MUTABLE STATE ===
   const toolResults: ToolMessage[] = []
   const toolResultsToAddToMessageHistory: ToolMessage[] = []
@@ -218,10 +49,7 @@ export async function processStream(
   let hasNativeIncompleteToolCall = false
   let lastIncompleteToolName: string | undefined
   const errorMessages: Message[] = []
-  const { promise: streamDonePromise, resolve: resolveStreamDonePromise } =
-    Promise.withResolvers<void>()
-  let previousToolCallFinished = streamDonePromise
-
+  const streamDone = createStreamDoneHolder()
   const fileProcessingState: FileProcessingState = {
     promisesByPath: {},
     allPromises: [],
@@ -229,101 +57,39 @@ export async function processStream(
     fileChanges: [],
     firstFileProcessed: false,
   }
-
-  // === RESPONSE HANDLER ===
-  // Creates a response handler that captures tool events into assistantMessages.
-  // When isXmlMode=true, also captures tool_result events for interleaved ordering.
-  const createResponseHandlerForStream = () =>
-    createResponseHandler({
-      onResponseChunk,
-      errorMessages,
-      markToolCallError: () => {
-        hadToolCallError = true
-      },
-    })
-
-  // === TOOL EXECUTION ===
-  // Unified callback factory for both native and custom tools.
-  function createToolExecutionCallback(toolName: string, isXmlMode: boolean) {
-    const responseHandler = createResponseHandlerForStream()
-    return {
-      onTagStart: () => {},
-      onTagEnd: async (_: string, input: Record<string, JSONValue>) => {
-        if (signal.aborted) {
-          return
-        }
-        const toolCallId = generateCompactId()
-        const isNativeTool = toolNames.includes(toolName as ToolName)
-
-        // Check if this is an agent tool call that should be transformed to spawn_agents
-        const transformed = !isNativeTool
-          ? tryTransformAgentToolCall({
-              toolName,
-              input,
-              spawnableAgents: agentTemplate.spawnableAgents,
-            })
-          : null
-
-        // Read previousToolCallFinished at execution time to ensure proper sequential chaining.
-        // For XML mode, if this is the first tool call (still pointing to streamDonePromise),
-        // start with a resolved promise so we don't wait for the stream to complete.
-        const previousPromise =
-          isXmlMode && previousToolCallFinished === streamDonePromise
-            ? Promise.resolve()
-            : previousToolCallFinished
-
-        // Determine which executor to use and with what parameters
-        let toolPromise: Promise<void>
-        if (isNativeTool || transformed) {
-          // Use executeToolCall for native tools or transformed agent calls
-          toolPromise = executeToolCall({
-            ...params,
-            toolName: transformed
-              ? transformed.toolName
-              : (toolName as ToolName),
-            input: transformed ? transformed.input : input,
-            fileProcessingState,
-            fullResponse: fullResponseSoFar,
-            previousToolCallFinished: previousPromise,
-            toolCallId,
-            toolCalls,
-            toolCallsToAddToMessageHistory,
-            toolResults,
-            toolResultsToAddToMessageHistory,
-            excludeToolFromMessageHistory: false,
-            onCostCalculated,
-            onResponseChunk: responseHandler,
-          })
-        } else {
-          // Use executeCustomToolCall for custom/MCP tools
-          toolPromise = executeCustomToolCall({
-            ...params,
-            toolName,
-            input,
-
-            fileProcessingState,
-            fullResponse: fullResponseSoFar,
-            previousToolCallFinished: previousPromise,
-            toolCallId,
-            toolCalls,
-            toolCallsToAddToMessageHistory,
-            toolResults,
-            toolResultsToAddToMessageHistory,
-            excludeToolFromMessageHistory: false,
-            onResponseChunk: responseHandler,
-          })
-        }
-
-        previousToolCallFinished = toolPromise
-
-        // For XML mode, await execution so results appear inline before stream continues
-        if (isXmlMode) {
-          await toolPromise
-        }
-      },
-    }
-  }
-
+  const stager = createGroundingStager({
+    agentState,
+    fullResponse,
+    assistantMessages,
+    onResponseChunk,
+    ancestorRunIds,
+    runId,
+  })
+  const {
+    fullResponseChunks,
+    yagniStripper,
+    emitGroundedText,
+    emitGroundedReasoning,
+    flushGroundingOutput,
+  } = stager
+  const createToolExecutionCallback = createToolExecutionCallbackFactory({
+    baseParams: params,
+    agentTemplate,
+    signal,
+    stager,
+    fileProcessingState,
+    toolResults,
+    toolResultsToAddToMessageHistory,
+    toolCalls,
+    toolCallsToAddToMessageHistory,
+    onCostCalculated,
+    onResponseChunk,
+    errorMessages,
+    markToolCallError: () => {
+      hadToolCallError = true
+    },
+    streamDone,
+  })
   // === STREAM PROCESSING ===
   const streamWithTags = processStreamWithTools({
     ...params,
@@ -396,49 +162,28 @@ export async function processStream(
       } else if (chunk.type === 'error') {
         onResponseChunk(chunk)
         hadToolCallError = true
-        if ('errorClass' in chunk && chunk.errorClass === 'native-incomplete') {
-          hasNativeIncompleteToolCall = true
-          lastIncompleteToolName = chunk.toolName
-          // FID-2026-0816-012 step 4: an incomplete native call for a tool
-          // unknown to the runtime is provider-tool-set drift, not model
-          // truncation — surface it so it is observable instead of being
-          // misread as a payload-size problem.
-          if (
-            chunk.toolName !== undefined &&
-            !toolNames.includes(chunk.toolName as ToolName)
-          ) {
+        const errorOutcome = handleStreamErrorChunk({
+          chunk,
+          errorMessages,
+          loggerWarn: (payload, message) => {
             logger.warn(
-              {
-                agentType: agentTemplate.id,
-                runId,
-                toolName: chunk.toolName,
+              payload as {
+                agentType: string
+                runId: string
+                toolName: string
               },
-              'Native tool call flagged incomplete for a tool unknown to the runtime (possible provider tool-set drift)',
+              message,
             )
-          }
+          },
+          agentTemplate,
+          runId,
+        })
+        hasNativeIncompleteToolCall =
+          hasNativeIncompleteToolCall ||
+          errorOutcome.hasNativeIncompleteToolCall
+        if (errorOutcome.lastIncompleteToolName !== undefined) {
+          lastIncompleteToolName = errorOutcome.lastIncompleteToolName
         }
-        // FID-2026-0819-004: tool-specific steering with progressive
-        // escalation. Strike 1 = hint, strike 2 = explicit, 3+ = example.
-        // We use strike=1 here (first occurrence); loop-iteration.ts may
-        // append a second error with escalating guidance on retries.
-        const steering =
-          'errorClass' in chunk &&
-          chunk.errorClass === 'native-incomplete' &&
-          chunk.toolName !== undefined &&
-          NATIVE_TOOL_CALL_STEER_SPLIT_TOOLS.has(
-            chunk.toolName as
-              WriteToolName | 'read_files' | 'run_terminal_command',
-          )
-            ? getSteeringMessage(chunk.toolName, 1)
-            : ''
-        errorMessages.push(
-          userMessage({
-            content: withSystemTags(
-              `Error during tool call: ${chunk.message}. Please check the tool name and arguments and try again.${steering}`,
-            ),
-            tags: ['TOOL_CALL_ERROR'],
-          }),
-        )
       } else if (chunk.type === 'tool-call') {
       } else {
         chunk satisfies never
@@ -449,9 +194,9 @@ export async function processStream(
     // FID-2026-0802-005 H7: settle the initial tool-call chain before
     // awaiting it on the normal path (in native mode the first call is
     // chained on streamDonePromise, so it must be resolved first).
-    resolveStreamDonePromise()
+    streamDone.resolve()
     if (!signal.aborted) {
-      await previousToolCallFinished
+      await streamDone.previous
       // Native tool results (including grounding reads) settle after the
       // provider stream ends. Flush staged assistant output only after those
       // results positively complete; otherwise the safety contract discards it.
@@ -463,7 +208,7 @@ export async function processStream(
     // observe signal.aborted) instead of dangling forever with lost credits.
     // Idempotent: already resolved on the normal path. Trade-off (per FID): a
     // resumed handler runs to completion bounded by its own signal checks.
-    resolveStreamDonePromise()
+    streamDone.resolve()
     // === FINALIZATION ===
     // Trigger cleanup of the processStreamWithTools generator so it flushes any
     // remaining buffered text to assistantMessages before we build the history.
@@ -508,7 +253,7 @@ export async function processStream(
   }
 
   return {
-    fullResponse: fullResponseSoFar,
+    fullResponse: stager.fullResponseSoFar,
     fullResponseChunks,
     hadToolCallError,
     hasNativeIncompleteToolCall,

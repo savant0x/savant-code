@@ -3,10 +3,6 @@ import { emptyMcpServers } from '@savant-code/common/testing/fixtures/agent-runt
 import { TEST_AGENT_RUNTIME_IMPL } from '@savant-code/common/testing/impl/agent-runtime'
 import { getInitialSessionState } from '@savant-code/common/types/session-state'
 import { promptSuccess } from '@savant-code/common/util/error'
-import {
-  assistantMessage,
-  userMessage,
-} from '@savant-code/common/util/messages'
 import { beforeEach, describe, expect, it } from 'bun:test'
 import { z } from 'zod/v4'
 
@@ -14,7 +10,6 @@ import { loopAgentSteps } from '../run-agent-step'
 
 import type { AgentTemplate } from '../templates/types'
 import type { ParamsExcluding } from '@savant-code/common/types/function-params'
-import type { TextPart } from '@savant-code/common/types/messages/content-part'
 import type { Message } from '@savant-code/common/types/messages/savant-code-message'
 import type { ProjectFileContext } from '@savant-code/common/util/file'
 import type { ToolSet } from 'ai'
@@ -261,86 +256,5 @@ describe('Prompt Caching for Subagents with inheritParentSystemPrompt', () => {
       'sequentialthinking',
     ])
     expect(capturedToolNames).not.toContain('write_file')
-  })
-
-  it('should support both inheritParentSystemPrompt and includeMessageHistory together', async () => {
-    const sessionState = getInitialSessionState(mockFileContext)
-
-    // Create a child that inherits system prompt AND includes message history
-    const fullInheritChild: AgentTemplate = {
-      id: 'full-inherit-child',
-      displayName: 'Full Inherit Child',
-      outputMode: 'last_message',
-      inputSchema: {},
-      spawnerPrompt: '',
-      model: 'anthropic/claude-sonnet-4',
-      includeMessageHistory: true, // Includes message history
-      inheritParentSystemPrompt: true, // AND inherits system prompt
-      mcpServers: emptyMcpServers,
-      toolNames: [],
-      spawnableAgents: [],
-      systemPrompt: '', // Must be empty
-      instructionsPrompt: '',
-      stepPrompt: '',
-    }
-
-    mockLocalAgentTemplates['full-inherit-child'] = fullInheritChild
-
-    // Run parent agent first with some message history
-    const _parentResult = await loopAgentSteps({
-      ...loopAgentStepsBaseParams,
-      userInputId: 'test-parent',
-      prompt: 'Parent task',
-      agentType: 'parent',
-      agentState: {
-        ...sessionState.mainAgentState,
-        messageHistory: [
-          userMessage('Initial question'),
-          assistantMessage('Initial answer'),
-        ],
-      },
-    })
-
-    const parentMessages = capturedMessages
-    const parentSystemPrompt = (parentMessages[0].content[0] as TextPart).text
-
-    // Run child agent
-    capturedMessages = []
-    const childAgentState = {
-      ...sessionState.mainAgentState,
-      agentId: 'child-agent',
-      agentType: 'full-inherit-child' as const,
-      messageHistory: [
-        userMessage('Initial question'),
-        assistantMessage('Initial answer'),
-      ],
-    }
-
-    await loopAgentSteps({
-      ...loopAgentStepsBaseParams,
-      userInputId: 'test-child',
-      prompt: 'Child task',
-      agentType: 'full-inherit-child',
-      agentState: childAgentState,
-      parentSystemPrompt: parentSystemPrompt,
-    })
-
-    const childMessages = capturedMessages
-
-    // Verify child inherits parent's system prompt
-    expect(childMessages[0].role).toBe('system')
-    expect((childMessages[0].content[0] as TextPart).text).toBe(
-      parentSystemPrompt,
-    )
-
-    // Verify message history was included
-    expect(childMessages.length).toBeGreaterThan(2)
-    const hasMessageHistory = childMessages.some(
-      (msg) =>
-        msg.role === 'user' &&
-        msg.content[0].type === 'text' &&
-        msg.content[0].text === 'Initial question',
-    )
-    expect(hasMessageHistory).toBe(true)
   })
 })

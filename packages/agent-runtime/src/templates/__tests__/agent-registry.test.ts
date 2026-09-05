@@ -1,148 +1,20 @@
-import * as validationModule from '@savant-code/common/templates/agent-validation'
+// Agent Registry test family — agent-ID parsing and database fetch.
+// Sibling of the Loop-341 decomposition (shared lifecycle in
+// ./agent-registry-test-harness).
 import { emptyMcpServers } from '@savant-code/common/testing/fixtures/agent-runtime'
-import { TEST_AGENT_RUNTIME_IMPL } from '@savant-code/common/testing/impl/agent-runtime'
-import { getStubProjectFileContext } from '@savant-code/common/util/file'
-import {
-  describe,
-  expect,
-  it,
-  beforeEach,
-  afterEach,
-  spyOn,
-  mock,
-} from 'bun:test'
+import { describe, expect, it } from 'bun:test'
 
+import { getAgentTemplate } from '../agent-registry'
 import {
-  getAgentTemplate,
-  assembleLocalAgentTemplates,
-} from '../agent-registry'
+  getImpl,
+  registerAgentRegistryLifecycle,
+  setImpl,
+} from './agent-registry-test-harness'
 
 import type { AgentTemplate } from '../types'
-import type {
-  AgentRuntimeDeps,
-  AgentRuntimeScopedDeps,
-} from '@savant-code/common/types/contracts/agent-runtime'
-import type { Logger } from '@savant-code/common/types/contracts/logger'
-import type { DynamicAgentTemplate } from '@savant-code/common/types/dynamic-agent-template'
-import type { ProjectFileContext } from '@savant-code/common/util/file'
-
-let agentRuntimeImpl: AgentRuntimeDeps & AgentRuntimeScopedDeps
-
-// Create mock static templates that will be used by the agent registry
-const mockStaticTemplates: Record<string, AgentTemplate> = {
-  base: {
-    id: 'base',
-    displayName: 'Base Agent',
-    systemPrompt: 'Test',
-    instructionsPrompt: 'Test',
-    stepPrompt: 'Test',
-    mcpServers: emptyMcpServers,
-    toolNames: ['end_turn'],
-    spawnableAgents: [],
-    outputMode: 'last_message',
-    includeMessageHistory: true,
-    inheritParentSystemPrompt: false,
-    model: 'anthropic/claude-4-sonnet-20250522',
-    spawnerPrompt: 'Test',
-    inputSchema: {},
-  },
-  file_picker: {
-    id: 'scout',
-    displayName: 'File Picker',
-    systemPrompt: 'Test',
-    instructionsPrompt: 'Test',
-    stepPrompt: 'Test',
-    mcpServers: emptyMcpServers,
-    toolNames: ['find_files'],
-    spawnableAgents: [],
-    outputMode: 'last_message',
-    includeMessageHistory: true,
-    inheritParentSystemPrompt: false,
-    model: 'google/gemini-2.5-flash',
-    spawnerPrompt: 'Test',
-    inputSchema: {},
-  },
-}
-
-// We'll spy on the validation functions instead of mocking the entire module
 
 describe('Agent Registry', () => {
-  let mockFileContext: ProjectFileContext
-
-  beforeEach(async () => {
-    agentRuntimeImpl = {
-      ...TEST_AGENT_RUNTIME_IMPL,
-    }
-
-    agentRuntimeImpl.databaseAgentCache.clear()
-
-    mockFileContext = getStubProjectFileContext()
-
-    // Spy on validation functions
-    spyOn(validationModule, 'validateAgents').mockImplementation(
-      ({
-        agentTemplates = {},
-        logger,
-      }: {
-        agentTemplates?: Record<string, object>
-        logger: Logger
-      }) => {
-        // Start with static templates (simulating the real behavior)
-        const templates: Record<string, AgentTemplate> = {
-          ...mockStaticTemplates,
-        }
-        const validationErrors: any[] = []
-
-        for (const key in agentTemplates) {
-          const template = agentTemplates[key] as DynamicAgentTemplate
-          if (template.id === 'invalid-agent') {
-            validationErrors.push({
-              filePath: key,
-              message: 'Invalid agent configuration',
-            })
-            // Don't add invalid agents to templates (this simulates validation failure)
-          } else {
-            templates[template.id] = template as AgentTemplate
-          }
-        }
-
-        return {
-          templates,
-          dynamicTemplates: agentTemplates as Record<
-            string,
-            DynamicAgentTemplate
-          >,
-          validationErrors,
-        }
-      },
-    )
-
-    spyOn(validationModule, 'validateSingleAgent').mockImplementation(
-      ({ template }: { template: object; filePath?: string }) => {
-        const typedTemplate = template as DynamicAgentTemplate
-        // Check for malformed agents (missing required fields)
-        if (
-          typedTemplate.id === 'malformed-agent' ||
-          !typedTemplate.systemPrompt ||
-          !typedTemplate.instructionsPrompt ||
-          !typedTemplate.stepPrompt
-        ) {
-          return {
-            success: false,
-            error: 'Invalid agent configuration - missing required fields',
-          }
-        }
-        return {
-          success: true,
-          agentTemplate: typedTemplate as AgentTemplate,
-        }
-      },
-    )
-  })
-
-  afterEach(() => {
-    mock.restore()
-  })
+  registerAgentRegistryLifecycle()
 
   describe('parseAgentId (tested through getAgentTemplate)', () => {
     it('should handle agent IDs without publisher (local agents)', async () => {
@@ -166,7 +38,7 @@ describe('Agent Registry', () => {
       }
 
       const result = await getAgentTemplate({
-        ...agentRuntimeImpl,
+        ...getImpl(),
         agentId: 'my-agent',
         localAgentTemplates: localAgents,
       })
@@ -176,7 +48,7 @@ describe('Agent Registry', () => {
 
     it('should handle agent IDs with publisher but no version', async () => {
       const result = await getAgentTemplate({
-        ...agentRuntimeImpl,
+        ...getImpl(),
         agentId: 'publisher/agent-name',
         localAgentTemplates: {},
       })
@@ -185,7 +57,7 @@ describe('Agent Registry', () => {
 
     it('should handle agent IDs with publisher and version', async () => {
       const result = await getAgentTemplate({
-        ...agentRuntimeImpl,
+        ...getImpl(),
         agentId: 'publisher/agent-name@1.0.0',
         localAgentTemplates: {},
       })
@@ -194,7 +66,7 @@ describe('Agent Registry', () => {
 
     it('should return null for invalid agent ID formats', async () => {
       const result = await getAgentTemplate({
-        ...agentRuntimeImpl,
+        ...getImpl(),
         agentId: 'invalid/format/with/too/many/slashes',
         localAgentTemplates: {},
       })
@@ -205,7 +77,7 @@ describe('Agent Registry', () => {
   describe('fetchAgentFromDatabase', () => {
     it('should return null when agent not found in database', async () => {
       const result = await getAgentTemplate({
-        ...agentRuntimeImpl,
+        ...getImpl(),
         agentId: 'nonexistent/agent@1.0.0',
         localAgentTemplates: {},
       })
@@ -230,260 +102,18 @@ describe('Agent Registry', () => {
         spawnerPrompt: 'Test',
       }
 
-      agentRuntimeImpl = {
-        ...agentRuntimeImpl,
+      setImpl({
+        ...getImpl(),
         fetchAgentFromDatabase: async () => mockAgentData,
-      }
+      })
 
       const result = await getAgentTemplate({
-        ...agentRuntimeImpl,
+        ...getImpl(),
         agentId: 'test-publisher/test-agent@1.0.0',
         localAgentTemplates: {},
       })
       expect(result).toBeTruthy()
       expect(result?.id).toBe('test-publisher/test-agent@1.0.0')
-    })
-  })
-
-  describe('getAgentTemplate priority order', () => {
-    it('should prioritize local agents over database agents', async () => {
-      const localAgents = {
-        'test-agent': {
-          id: 'test-agent',
-          displayName: 'Local Test Agent',
-          systemPrompt: 'Local system prompt',
-          instructionsPrompt: 'Local instructions',
-          stepPrompt: 'Local step prompt',
-          mcpServers: emptyMcpServers,
-          toolNames: ['end_turn'],
-          spawnableAgents: [],
-          outputMode: 'last_message',
-          includeMessageHistory: true,
-          inheritParentSystemPrompt: false,
-          model: 'anthropic/claude-4-sonnet-20250522',
-          spawnerPrompt: 'Local test',
-          inputSchema: {},
-        } as AgentTemplate,
-      }
-
-      const result = await getAgentTemplate({
-        ...agentRuntimeImpl,
-        agentId: 'test-agent',
-        localAgentTemplates: localAgents,
-      })
-      expect(result).toBeTruthy()
-      expect(result?.displayName).toBe('Local Test Agent')
-    })
-
-    it('should use database cache when available', async () => {
-      const mockAgentData: AgentTemplate = {
-        id: 'test-publisher/cached-agent@1.0.0',
-        displayName: 'Cached Agent',
-        systemPrompt: 'Cached system prompt',
-        instructionsPrompt: 'Cached instructions',
-        stepPrompt: 'Cached step prompt',
-        inputSchema: {},
-        mcpServers: emptyMcpServers,
-        toolNames: ['end_turn'],
-        spawnableAgents: [],
-        outputMode: 'last_message',
-        includeMessageHistory: true,
-        inheritParentSystemPrompt: false,
-        model: 'anthropic/claude-4-sonnet-20250522',
-        spawnerPrompt: 'Cached test',
-      }
-
-      const spy = mock(async () => mockAgentData)
-      agentRuntimeImpl = {
-        ...agentRuntimeImpl,
-        fetchAgentFromDatabase: spy,
-      }
-
-      // First call - should hit database
-      const result1 = await getAgentTemplate({
-        ...agentRuntimeImpl,
-        agentId: 'test-publisher/cached-agent@1.0.0',
-        localAgentTemplates: {},
-      })
-      expect(result1).toBeTruthy()
-      expect(spy).toHaveBeenCalled()
-
-      const spy2 = mock(async () => mockAgentData)
-      agentRuntimeImpl = {
-        ...agentRuntimeImpl,
-        fetchAgentFromDatabase: spy2,
-      }
-
-      // Second call - should use cache
-      const result2 = await getAgentTemplate({
-        ...agentRuntimeImpl,
-        agentId: 'test-publisher/cached-agent@1.0.0',
-        localAgentTemplates: {},
-      })
-      expect(result2).toBeTruthy()
-      expect(result2?.displayName).toBe('Cached Agent')
-      expect(spy2).not.toHaveBeenCalled()
-    })
-  })
-
-  describe('assembleLocalAgentTemplates', () => {
-    it('should merge static and dynamic templates', () => {
-      const fileContext: ProjectFileContext = {
-        ...mockFileContext,
-        agentTemplates: {
-          'custom-agent.ts': {
-            id: 'custom-agent',
-            displayName: 'Custom Agent',
-            systemPrompt: 'Custom system prompt',
-            instructionsPrompt: 'Custom instructions',
-            stepPrompt: 'Custom step prompt',
-            toolNames: ['end_turn'],
-            spawnableAgents: [],
-            outputMode: 'last_message',
-            includeMessageHistory: true,
-            model: 'anthropic/claude-4-sonnet-20250522',
-            spawnerPrompt: 'Custom test',
-          },
-        },
-      }
-
-      const result = assembleLocalAgentTemplates({
-        ...agentRuntimeImpl,
-        fileContext,
-      })
-
-      // Should have dynamic template
-      expect(result.agentTemplates).toHaveProperty('custom-agent')
-      expect(result.agentTemplates['custom-agent'].displayName).toBe(
-        'Custom Agent',
-      )
-
-      // Should have no validation errors
-      expect(result.validationErrors).toHaveLength(0)
-    })
-
-    it('should handle validation errors in dynamic templates', () => {
-      const fileContext: ProjectFileContext = {
-        ...mockFileContext,
-        agentTemplates: {
-          'invalid-agent.ts': {
-            id: 'invalid-agent',
-            displayName: 'Invalid Agent',
-            // Missing required fields to trigger validation error
-          } as Partial<DynamicAgentTemplate>, // invalid - missing required fields
-        },
-      }
-
-      const result = assembleLocalAgentTemplates({
-        ...agentRuntimeImpl,
-        fileContext,
-      })
-
-      // Should not have invalid template
-      expect(result.agentTemplates).not.toHaveProperty('invalid-agent')
-
-      // Should have validation errors
-      expect(result.validationErrors.length).toBeGreaterThan(0)
-    })
-
-    it('should handle empty agentTemplates', () => {
-      const fileContext: ProjectFileContext = {
-        ...mockFileContext,
-        agentTemplates: {},
-      }
-
-      const result = assembleLocalAgentTemplates({
-        ...agentRuntimeImpl,
-        fileContext,
-      })
-
-      // Should have no validation errors
-      expect(result.validationErrors).toHaveLength(0)
-
-      // Should return some agent templates (static ones from our mock)
-      expect(Object.keys(result.agentTemplates).length).toBeGreaterThan(0)
-    })
-  })
-
-  describe('clearDatabaseCache', () => {
-    it('should clear the database cache', async () => {
-      const mockAgentData: AgentTemplate = {
-        id: 'test-publisher/cache-test-agent@1.0.0',
-        displayName: 'Cache Test Agent',
-        systemPrompt: 'Cache test system prompt',
-        instructionsPrompt: 'Cache test instructions',
-        stepPrompt: 'Cache test step prompt',
-        inputSchema: {},
-        mcpServers: emptyMcpServers,
-        toolNames: ['end_turn'],
-        spawnableAgents: [],
-        outputMode: 'last_message',
-        includeMessageHistory: true,
-        inheritParentSystemPrompt: false,
-        model: 'anthropic/claude-4-sonnet-20250522',
-        spawnerPrompt: 'Cache test',
-      }
-
-      const selectSpy = mock(async () => mockAgentData)
-      agentRuntimeImpl = {
-        ...agentRuntimeImpl,
-        fetchAgentFromDatabase: selectSpy,
-      }
-
-      // First call - should hit database and populate cache
-      await getAgentTemplate({
-        ...agentRuntimeImpl,
-        agentId: 'test-publisher/cache-test-agent@1.0.0',
-        localAgentTemplates: {},
-      })
-      expect(selectSpy).toHaveBeenCalledTimes(1)
-
-      // Second call - should use cache
-      await getAgentTemplate({
-        ...agentRuntimeImpl,
-        agentId: 'test-publisher/cache-test-agent@1.0.0',
-        localAgentTemplates: {},
-      })
-      expect(selectSpy).toHaveBeenCalledTimes(1)
-
-      agentRuntimeImpl.databaseAgentCache.clear()
-
-      // Third call - should hit database again after cache clear
-      await getAgentTemplate({
-        ...agentRuntimeImpl,
-        agentId: 'test-publisher/cache-test-agent@1.0.0',
-        localAgentTemplates: {},
-      })
-      expect(selectSpy).toHaveBeenCalledTimes(2)
-    })
-  })
-
-  describe('edge cases', () => {
-    it('should handle empty agent ID', async () => {
-      const result = await getAgentTemplate({
-        ...agentRuntimeImpl,
-        agentId: '',
-        localAgentTemplates: {},
-      })
-      expect(result).toBeNull()
-    })
-
-    it('should handle agent ID with multiple @ symbols', async () => {
-      const result = await getAgentTemplate({
-        ...agentRuntimeImpl,
-        agentId: 'publisher/agent@1.0.0@extra',
-        localAgentTemplates: {},
-      })
-      expect(result).toBeNull()
-    })
-
-    it('should handle agent ID with only @ symbol', async () => {
-      const result = await getAgentTemplate({
-        ...agentRuntimeImpl,
-        agentId: 'publisher/agent@',
-        localAgentTemplates: {},
-      })
-      expect(result).toBeNull()
     })
   })
 })

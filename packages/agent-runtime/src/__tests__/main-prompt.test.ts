@@ -1,214 +1,35 @@
-import path from 'path'
+import { emptyMcpServers } from '@savant-code/common/testing/fixtures/agent-runtime'
+import { getInitialSessionState } from '@savant-code/common/types/session-state'
+import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test'
 
-import * as analytics from '@savant-code/common/analytics'
-import { TEST_USER_ID } from '@savant-code/common/old-constants'
 import {
-  createTestAgentRuntimeParams,
-  emptyMcpServers,
-} from '@savant-code/common/testing/fixtures/agent-runtime'
-import {
-  AgentTemplateTypes as _AgentTemplateTypes,
-  getInitialSessionState,
-} from '@savant-code/common/types/session-state'
-import { promptSuccess } from '@savant-code/common/util/error'
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  mock,
-  spyOn,
-} from 'bun:test'
-
+  makeMockAgentStream,
+  mockFileContext,
+  setupMainPromptTest,
+  type MainPromptBaseParams,
+} from './main-prompt-harness'
 import { mainPrompt } from '../main-prompt'
-import * as processFileBlockModule from '../process-file-block'
-import { createToolCallChunk } from './test-utils'
 
 import type { AgentTemplate } from '@savant-code/common/types/agent-template'
-import type {
-  RequestFilesFn,
-  RequestOptionalFileFn,
-  RequestToolCallFn,
-} from '@savant-code/common/types/contracts/client'
-import type {
-  PromptAiSdkStreamFn,
-  StreamChunk,
-} from '@savant-code/common/types/contracts/llm'
-import type { ParamsOf } from '@savant-code/common/types/function-params'
-import type { ProjectFileContext } from '@savant-code/common/util/file'
-let mainPromptBaseParams: Omit<Parameters<typeof mainPrompt>[0], 'action'>
-const mockAgentStream = (chunks: StreamChunk[]) => {
-  const stream: PromptAiSdkStreamFn = async function* () {
-    for (const chunk of chunks) {
-      yield chunk
-    }
-    return promptSuccess('mock-message-id')
-  }
-  mainPromptBaseParams.promptAiSdkStream = stream
-}
+import type { StreamChunk } from '@savant-code/common/types/contracts/llm'
+
 describe('mainPrompt', () => {
+  let mainPromptBaseParams: MainPromptBaseParams
   let mockLocalAgentTemplates: Record<string, AgentTemplate>
+
+  const mockAgentStream = (chunks: StreamChunk[]) => {
+    makeMockAgentStream(mainPromptBaseParams)(chunks)
+  }
+
   beforeEach(() => {
-    // Setup common mock agent templates
-    mockLocalAgentTemplates = {
-      savant: {
-        id: 'savant',
-        displayName: 'Savant',
-        outputMode: 'last_message',
-        inputSchema: {},
-        spawnerPrompt: '',
-        model: 'gpt-4o-mini',
-        includeMessageHistory: true,
-        inheritParentSystemPrompt: false,
-        mcpServers: emptyMcpServers,
-        toolNames: [
-          'glob',
-          'list_directory',
-          'read_files',
-          'read_subtree',
-          'write_file',
-          'end_turn',
-        ],
-        spawnableAgents: [],
-        systemPrompt: '',
-        instructionsPrompt: '',
-        stepPrompt: '',
-      } satisfies AgentTemplate,
-      scout: {
-        id: 'scout',
-        displayName: 'Savant the Scout',
-        outputMode: 'last_message',
-        inputSchema: {},
-        spawnerPrompt: '',
-        model: 'gpt-4o-mini',
-        includeMessageHistory: true,
-        inheritParentSystemPrompt: false,
-        mcpServers: emptyMcpServers,
-        toolNames: ['glob', 'list_directory', 'read_files', 'read_subtree'],
-        spawnableAgents: [],
-        systemPrompt: '',
-        instructionsPrompt: '',
-        stepPrompt: '',
-      } satisfies AgentTemplate,
-      thinker: {
-        id: 'thinker',
-        displayName: 'Savant the Thinker',
-        outputMode: 'last_message',
-        inputSchema: {},
-        spawnerPrompt: '',
-        model: 'gpt-4o',
-        includeMessageHistory: true,
-        inheritParentSystemPrompt: false,
-        mcpServers: emptyMcpServers,
-        toolNames: ['sequentialthinking'],
-        spawnableAgents: [],
-        systemPrompt: '',
-        instructionsPrompt: '',
-        stepPrompt: '',
-      } satisfies AgentTemplate,
-    }
-    mainPromptBaseParams = {
-      ...createTestAgentRuntimeParams(),
-      repoId: undefined,
-      repoUrl: undefined,
-      userId: TEST_USER_ID,
-      clientSessionId: 'test-session',
-      onResponseChunk: () => {},
-      localAgentTemplates: mockLocalAgentTemplates,
-      signal: new AbortController().signal,
-      // Mock fetch to return a token count response
-      fetch: Object.assign(
-        async () =>
-          ({
-            ok: true,
-            text: async () => JSON.stringify({ inputTokens: 1000 }),
-          }) as Response,
-        { preconnect: async () => {} },
-      ),
-    }
-    // Mock analytics
-    spyOn(analytics, 'trackEvent').mockImplementation(() => {})
-    // Mock processFileBlock
-    spyOn(processFileBlockModule, 'processFileBlock').mockImplementation(
-      async (params) => {
-        return promptSuccess({
-          tool: 'write_file' as const,
-          path: params.path,
-          content: params.newContent,
-          patch: undefined,
-          messages: [],
-        })
-      },
-    )
-    // Mock LLM APIs
-    mockAgentStream([{ type: 'text', text: 'Test response' }])
-    // Mock websocket actions
-    mainPromptBaseParams.requestFiles = async ({
-      filePaths,
-    }: ParamsOf<RequestFilesFn>) => {
-      const results: Record<string, string | null> = {}
-      filePaths.forEach((p) => {
-        if (p === 'test.txt') {
-          results[p] = 'mock content for test.txt'
-        } else {
-          results[p] = null
-        }
-      })
-      return results
-    }
-    mainPromptBaseParams.requestOptionalFile = async ({
-      filePath,
-    }: ParamsOf<RequestOptionalFileFn>) => {
-      if (filePath === 'test.txt') {
-        return 'mock content for test.txt'
-      }
-      return null
-    }
-    mainPromptBaseParams.requestToolCall = mock(
-      async ({
-        toolName,
-        input,
-      }: ParamsOf<RequestToolCallFn>): ReturnType<RequestToolCallFn> => ({
-        output: [
-          {
-            type: 'json',
-            value: `Tool call success: ${{ toolName, input }}`,
-          },
-        ],
-      }),
-    )
+    const setup = setupMainPromptTest()
+    mainPromptBaseParams = setup.mainPromptBaseParams
+    mockLocalAgentTemplates = setup.mockLocalAgentTemplates
   })
   afterEach(() => {
     // Clear all mocks after each test
     mock.restore()
   })
-  const mockFileContext: ProjectFileContext = {
-    projectRoot: '/test',
-    cwd: '/test',
-    fileTree: [],
-    fileTokenScores: {},
-    knowledgeFiles: {},
-    gitChanges: {
-      status: '',
-      diff: '',
-      diffCached: '',
-      lastCommitMessages: '',
-    },
-    changesSinceLastChat: {},
-    shellConfigFiles: {},
-    agentTemplates: {},
-    customToolDefinitions: {},
-    systemInfo: {
-      platform: 'test',
-      shell: 'test',
-      nodeVersion: 'test',
-      arch: 'test',
-      homedir: '/home/test',
-      cpus: 1,
-      chromeAvailable: false,
-    },
-  }
   it('does not include other local agents in spawnableAgents when agentId is provided', async () => {
     // When a specific agentId is provided, we only use the spawnable agents
     // defined in that agent's template - we don't auto-add all available agents
@@ -269,102 +90,6 @@ describe('mainPrompt', () => {
       localAgentId,
     )
     expect(localAgentTemplates[mainAgentId].spawnableAgents).toEqual([])
-  })
-  it('should handle write_file tool call', async () => {
-    // Mock LLM to return a write_file tool call using native tool call chunks
-    mockAgentStream([
-      createToolCallChunk('write_file', {
-        path: 'new-file.txt',
-        instructions: 'Added Hello World',
-        content: 'Hello, world!',
-      }),
-      createToolCallChunk('end_turn', {}),
-    ])
-    // Get reference to the spy so we can check if it was called
-    const requestToolCallSpy = mainPromptBaseParams.requestToolCall
-    const sessionState = getInitialSessionState(mockFileContext)
-    sessionState.mainAgentState.fsmPhase = 'green'
-    const action = {
-      type: 'prompt' as const,
-      prompt: 'Write hello world to new-file.txt',
-      sessionState,
-      fingerprintId: 'test',
-      promptId: 'test',
-      toolResults: [],
-    }
-    await mainPrompt({
-      ...mainPromptBaseParams,
-      action,
-      localAgentTemplates: {
-        savant: {
-          id: 'savant',
-          displayName: 'Savant',
-          outputMode: 'last_message',
-          inputSchema: {},
-          spawnerPrompt: '',
-          model: 'gpt-4o-mini',
-          includeMessageHistory: true,
-          inheritParentSystemPrompt: false,
-          mcpServers: emptyMcpServers,
-          toolNames: [
-            'glob',
-            'list_directory',
-            'read_files',
-            'read_subtree',
-            'write_file',
-            'end_turn',
-          ],
-          spawnableAgents: [],
-          systemPrompt: '',
-          instructionsPrompt: '',
-          stepPrompt: '',
-        } satisfies AgentTemplate,
-        scout: {
-          id: 'scout',
-          displayName: 'Savant the Scout',
-          outputMode: 'last_message',
-          inputSchema: {},
-          spawnerPrompt: '',
-          model: 'gpt-4o-mini',
-          includeMessageHistory: true,
-          inheritParentSystemPrompt: false,
-          mcpServers: emptyMcpServers,
-          toolNames: ['glob', 'list_directory', 'read_files', 'read_subtree'],
-          spawnableAgents: [],
-          systemPrompt: '',
-          instructionsPrompt: '',
-          stepPrompt: '',
-        },
-        thinker: {
-          id: 'thinker',
-          displayName: 'Savant the Thinker',
-          outputMode: 'last_message',
-          inputSchema: {},
-          spawnerPrompt: '',
-          model: 'gpt-4o',
-          includeMessageHistory: true,
-          inheritParentSystemPrompt: false,
-          mcpServers: emptyMcpServers,
-          toolNames: ['sequentialthinking'],
-          spawnableAgents: [],
-          systemPrompt: '',
-          instructionsPrompt: '',
-          stepPrompt: '',
-        },
-      },
-    })
-    // Assert that requestToolCall was called exactly once
-    expect(requestToolCallSpy).toHaveBeenCalledTimes(1)
-    // Verify the write_file call was made with the correct arguments
-    expect(requestToolCallSpy).toHaveBeenCalledWith({
-      userInputId: expect.any(String), // userInputId
-      toolName: 'write_file',
-      input: expect.objectContaining({
-        type: 'file',
-        path: path.resolve(mockFileContext.projectRoot, 'new-file.txt'),
-        content: 'Hello, world!',
-      }),
-    })
   })
   it('should force end of response after MAX_CONSECUTIVE_ASSISTANT_MESSAGES', async () => {
     const sessionState = getInitialSessionState(mockFileContext)

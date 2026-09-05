@@ -3,10 +3,6 @@ import { emptyMcpServers } from '@savant-code/common/testing/fixtures/agent-runt
 import { TEST_AGENT_RUNTIME_IMPL } from '@savant-code/common/testing/impl/agent-runtime'
 import { getInitialSessionState } from '@savant-code/common/types/session-state'
 import { promptSuccess } from '@savant-code/common/util/error'
-import {
-  assistantMessage,
-  userMessage,
-} from '@savant-code/common/util/messages'
 import { beforeEach, describe, expect, it } from 'bun:test'
 
 import { loopAgentSteps } from '../run-agent-step'
@@ -259,78 +255,6 @@ describe('Prompt Caching for Subagents with inheritParentSystemPrompt', () => {
     expect(text).toContain('Standalone child system prompt')
   })
 
-  it('should work independently: includeMessageHistory without inheritParentSystemPrompt', async () => {
-    const sessionState = getInitialSessionState(mockFileContext)
-
-    // Create a child that includes message history but uses its own system prompt
-    const messageHistoryChild: AgentTemplate = {
-      id: 'message-history-child',
-      displayName: 'Message History Child',
-      outputMode: 'last_message',
-      inputSchema: {},
-      spawnerPrompt: '',
-      model: 'anthropic/claude-sonnet-4',
-      includeMessageHistory: true, // Includes message history
-      inheritParentSystemPrompt: false, // But uses own system prompt
-      mcpServers: emptyMcpServers,
-      toolNames: [],
-      spawnableAgents: [],
-      systemPrompt: 'Child with message history system prompt',
-      instructionsPrompt: '',
-      stepPrompt: '',
-    }
-
-    mockLocalAgentTemplates['message-history-child'] = messageHistoryChild
-
-    // Run parent agent first
-    await loopAgentSteps({
-      ...loopAgentStepsBaseParams,
-      userInputId: 'test-parent',
-      prompt: 'Parent task',
-      agentType: 'parent',
-      agentState: sessionState.mainAgentState,
-    })
-
-    const parentMessages = capturedMessages
-    const parentSystemPrompt = (parentMessages[0].content[0] as TextPart).text
-
-    // Run child agent
-    capturedMessages = []
-    const childAgentState = {
-      ...sessionState.mainAgentState,
-      agentId: 'child-agent',
-      agentType: 'message-history-child' as const,
-      messageHistory: [
-        userMessage('Previous message'),
-        assistantMessage('Previous response'),
-      ],
-    }
-
-    await loopAgentSteps({
-      ...loopAgentStepsBaseParams,
-      userInputId: 'test-child',
-      prompt: 'Child task',
-      agentType: 'message-history-child',
-      agentState: childAgentState,
-      parentSystemPrompt: parentSystemPrompt,
-    })
-
-    const childMessages = capturedMessages
-
-    // Verify child uses its own system prompt (not parent's)
-    expect(childMessages[0].role).toBe('system')
-    const text = (childMessages[0].content[0] as TextPart).text
-    expect(text).not.toBe(parentSystemPrompt)
-    expect(text).toContain('Child with message history system prompt')
-
-    // Verify message history was included
-    expect(childMessages.length).toBeGreaterThan(2)
-    const hasMessageHistory = childMessages.some(
-      (msg) =>
-        msg.role === 'user' &&
-        msg.content[0].type === 'text' &&
-        msg.content[0].text === 'Previous message',
-    )
-    expect(hasMessageHistory).toBe(true)
-  })
+  // FID-2026-0819-005 Loop 185: the includeMessageHistory-independence test
+  // moved to prompt-caching-subagents-independence.test.ts.
 })

@@ -1,7 +1,13 @@
-import { describe, expect, it, spyOn } from 'bun:test'
+import { afterEach, describe, expect, it, spyOn } from 'bun:test'
 
-import { runProgrammaticStep } from '../run-programmatic-step'
-import { createRunProgrammaticStepFixture } from './run-programmatic-step-part-c-fixtures'
+import {
+  clearAgentGeneratorCache,
+  runProgrammaticStep,
+} from '../run-programmatic-step'
+import {
+  createRunProgrammaticStepFixture,
+  logger,
+} from './run-programmatic-step-part-c-fixtures'
 import * as executeModule from '../run-programmatic-step/execute-tool-calls'
 
 /**
@@ -14,6 +20,13 @@ import * as executeModule from '../run-programmatic-step/execute-tool-calls'
  * the run survives and executes the SANITIZED call.
  */
 describe('runProgrammaticStep — undefined-keyed yields (FID-2026-0823-009)', () => {
+  // The generator cache is module-level and keyed by the fixture's shared
+  // runId; without this cleanup the consumed generator leaks into whichever
+  // sibling file reuses the runId next (test-order-dependent pollution).
+  afterEach(() => {
+    clearAgentGeneratorCache({ logger })
+  })
+
   it('survives an undefined-keyed tool-call yield and executes the sanitized input', async () => {
     const { mockTemplate, mockParams } = createRunProgrammaticStepFixture()
     // The Detective crash shape: optional params set to explicit undefined.

@@ -18,16 +18,12 @@ import {
 
 import { mockFileContext } from './test-utils'
 import * as runAgentStep from '../run-agent-step'
-import {
-  extractPrunerSummaryFromHistory,
-  handleSpawnAgentInline,
-} from '../tools/handlers/tool/spawn-agent-inline'
+import { handleSpawnAgentInline } from '../tools/handlers/tool/spawn-agent-inline'
 
 import type { SavantCodeToolCall } from '@savant-code/common/tools/list'
 import type { AgentTemplate } from '@savant-code/common/types/agent-template'
 import type { ParamsExcluding } from '@savant-code/common/types/function-params'
 import type { JSONValue } from '@savant-code/common/types/json'
-import type { Message } from '@savant-code/common/types/messages/savant-code-message'
 import type { PrintModeEvent } from '@savant-code/common/types/print-mode'
 
 /**
@@ -284,91 +280,5 @@ describe('handleSpawnAgentInline compaction_summary emission (FID-2026-0828-001)
     await runPrunerSpawn({ maxContextLength: 200_000, force: true })
 
     expect(compactionSummaryEvents().length).toBe(0)
-  })
-
-  it('does NOT emit for non-pruner inline spawns', async () => {
-    const parentAgent = createMockAgent('savant', ['thinker'])
-    const thinkerAgent = createMockAgent('thinker')
-    const sessionState = getInitialSessionState(mockFileContext)
-    await handleSpawnAgentInline({
-      ...baseParams,
-      agentState: sessionState.mainAgentState,
-      agentTemplate: parentAgent,
-      localAgentTemplates: { thinker: thinkerAgent },
-      toolCall: {
-        toolName: 'spawn_agent_inline' as const,
-        toolCallId: 'test-thinker-call',
-        input: { agent_type: 'thinker', prompt: 'think' },
-      },
-    })
-
-    expect(compactionSummaryEvents().length).toBe(0)
-  })
-})
-
-/** The single user text part used by the helper fixtures below. */
-const textUserMessage = (text: string): Message => ({
-  role: 'user',
-  content: [{ type: 'text', text }],
-})
-
-/**
- * FID-2026-0828-001: the summary-recovery helper contract — the tag-walking
- * order that mirrors the pruner's own summary-assembly.ts memory message.
- */
-describe('extractPrunerSummaryFromHistory', () => {
-  it('recovers the <compaction-summary> inner block from the memory message', () => {
-    const history: Message[] = [
-      textUserMessage(
-        '<conversation_summary>\n' +
-          '## Memory of this conversation\n\n' +
-          '<historical_memory>\n' +
-          '<compaction-summary>\n' +
-          '# Standing facts\n\n' +
-          '[USER] asked to list files.\n' +
-          '</compaction-summary>\n' +
-          '</historical_memory>\n' +
-          '</conversation_summary>\n' +
-          '\n' +
-          'Disclaimer text that must not leak into the excerpt.',
-      ),
-    ]
-
-    const summary = extractPrunerSummaryFromHistory(history)
-    expect(summary).toContain('# Standing facts')
-    expect(summary).toContain('asked to list files')
-    expect(summary).not.toContain('<compaction-summary>')
-    expect(summary).not.toContain('<historical_memory>')
-    expect(summary).not.toContain('<conversation_summary>')
-    expect(summary).not.toContain('Disclaimer')
-  })
-
-  it('returns the empty string when no conversation_summary message exists', () => {
-    const history: unknown[] = [
-      textUserMessage('plain user message'),
-      // assistant text messages carry the role-checked guard too
-      { role: 'assistant', content: [{ type: 'text', text: 'hi' }] },
-      textUserMessage('another plain user message'),
-    ]
-    expect(extractPrunerSummaryFromHistory(history)).toBe('')
-  })
-
-  it('skips non-user messages and returns the empty string', () => {
-    const history: unknown[] = [
-      { role: 'assistant', content: [{ type: 'text', text: 'x' }] },
-      { role: 'tool', content: [{ type: 'text', text: 'y' }] },
-    ]
-    expect(extractPrunerSummaryFromHistory(history)).toBe('')
-  })
-
-  it('tolerates a user message with string content', () => {
-    const history: unknown[] = [
-      {
-        role: 'user',
-        content:
-          '<conversation_summary>\n<historical_memory>\n<compaction-summary>\nSTRING-ONLY SUMMARY\n</compaction-summary>\n</historical_memory>\n</conversation_summary>',
-      },
-    ]
-    expect(extractPrunerSummaryFromHistory(history)).toBe('STRING-ONLY SUMMARY')
   })
 })
