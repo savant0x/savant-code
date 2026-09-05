@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0823-003-overnight-queue-to-zero-master.md`
 **ID:** FID-2026-0823-003
 **Severity:** high
-**Status:** analyzed
+**Status:** closed
 **Created:** 2026-08-23
 **YAGNI-Compliance:** Satisfied — reuses the FID pipeline + ledger +
 auto-archive contract; adds one coordination record, no new machinery.
@@ -160,11 +160,12 @@ for U5-U8 become mandatory at each child's AUDIT.
 - [x] U7 FID-2026-0822-012 Tier-1 fixtures green (live wiring gated) — DONE 2026-08-23
       (5 Tier-1 + 3 Tier-2 SYNTHETIC drafts + validation harness 8/0, Verifier PASS +
       Adversary STANDS; zod-v4 activity-schema latent defect found+fixed; P1-P6 stay gated)
-- [ ] U8 FID-2026-0820-011 code-side deliverables landed — code-side work
-      COMPLETE + verified (increments 1–2 landed 2026-08-26: bundle matrix,
-      CI workflow, fail-closed manifest generator, consent-gated updater);
-      child SHELVED per operator directive — release-time remainder lives as
-      the ordered checklist in `-011` Loop 4. SOLE OPEN UNIT of this master
+- [x] U8 FID-2026-0820-011 code-side deliverables landed — CLOSED
+      2026-09-03: child -011 closed after its release-time remainder was
+      executed locally (signed-bundle E2E, Windows installer smoke,
+      console + CI-prebuild fixes) and re-homed to successor
+      FID-2026-0903-001 (desktop packaging as automatic-release-pipeline
+      stages). No open units remain in any U-row.
 - [x] U9 FID-2026-0820-007 reconciled — DONE 2026-08-23 (Loop 4 child-status
       reconciliation: manifest refreshed from disk incl. discovery children -012/-014 appended;
       step flips -008/-009; CVE refresh; README row; master STAYS analyzed until all children close)
@@ -172,13 +173,33 @@ for U5-U8 become mandatory at each child's AUDIT.
       2026-08-23 (status closed as SUPERSEDED by this master; moved to dev/fids/archive/;
       archive/README.md closure entry; active-ledger row removed + supersession note;
       CHANGELOG entry prepended)
-- [ ] U11 Scribe closeout
-- [ ] FID-2026-0819-005 exclusion honored (untouched)
+- [x] U11 Scribe closeout — session summaries on disk
+      (`2026-08-23-0434`, `2026-08-23-1920`, `2026-08-24-0112`) plus the
+      live `2026-09-03-0848` grounding summary; LESSONS entries recorded
+      in-session
+- [x] FID-2026-0819-005 exclusion honored (untouched) — ratchet HOLD
+      respected through this master's full lifetime
+
+## Verification Gates
+
+- gate: typecheck cli
+- gate: test desktop/scripts/build-sidecar.test.ts
+
+### Verification Receipt
+
+- fingerprint: sha256:2ac2da8b40095577b4cfc685f5b10321884b475837529e2495abd16156c95c93
+- verified: 2026-09-03T16:40:05.619Z
+- typecheck cli: exit 0
+- test desktop/scripts/build-sidecar.test.ts: exit 0
 
 ## Resolution
 
-Not closed (coordination master; closes last after U10, recording every
-child outcome).
+CLOSED 2026-09-03 (coordination master; every unit resolved): U1–U11 all
+complete across the 08-23/08-24/08-26 drives and today's ceremony —
+last holdout U8 resolved by -011's closure; U11's closeouts verified on
+disk (doc-drift flip; the work existed, the checkbox lagged). The
+exclusion FID (-0819-005 ratchet) remains HOLD by operator decision,
+exactly as scoped.
 
 ## Lessons Learned
 

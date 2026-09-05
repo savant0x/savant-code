@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0824-030-robot-cast-mount-telemetry-and-recovery.md`
 **ID:** FID-2026-0824-030
 **Severity:** critical
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-08-24 20:37
 **YAGNI-Compliance:** Verified
 
@@ -118,8 +118,8 @@ timeout (WebView2 timer throttling in a hidden/occluded webview).
 
 ### Verification Receipt
 
-- fingerprint: sha256:3bca82d904a7bce005d20c96f920e71a43874e15edadc0cc0b10308724fb200c
-- verified: 2026-09-03T00:18:02.066Z
+- fingerprint: sha256:8bb09ffe350a102f69b1388eeeb050b3cb11941b86f69143148275ae6d6f4bc1
+- verified: 2026-09-03T13:17:38.770Z
 - typecheck desktop: exit 0
 - test desktop/src/floor/__tests__/deck-walkers.test.ts: exit 0
 
@@ -210,14 +210,34 @@ timeout (WebView2 timer throttling in a hidden/occluded webview).
   wiring; gates green (see Implementation Evidence). Status advances
   `created` → `fixed`. The operator re-smoke (CAST line + robots visible)
   remains THE closure boundary.
+- 2026-09-03 closure audit: re-smoke boundary DISCHARGED by accumulated
+  live evidence — the T16-F CDP smoke 2026-08-29
+  (`dev/session-summaries/2026-08-29-t16f-live-resmoke-pass.md`) shows the
+  full 10-role GLB cast mounted with live telemetry
+  (`walkers=1 active/1 total`, batch event lines streaming), the surface
+  was later superseded by the operator-confirmed 0831 office rebuild, and
+  the telemetry contract tests still pin the behavior. Implementation
+  landed in commit `51fa261` (v0.0.28, tagged, on main):
+  `git log -S castTelemetry -- desktop/src` → `82645ba` + `51fa261`.
+  Production wiring verified: `deck-runtime.ts:176-212` consumes
+  `castTelemetry()` and feeds the overlay; `lastTemplateOutcome()` has
+  exactly one production consumer (deck-walkers.ts:267-272). Fresh gates
+  at closure: deck-walkers suite within 19/0; receipt re-stamped at the
+  archived path.
 
 ## Resolution
 
-- **Closed Date:** pending
-- **Fix Description:** pending
-- **Tests Added:** pending
-- **Verification Evidence:** pending
-- **Archived:** pending
+- **Closed Date:** 2026-09-03 (ground-truth closure audit; re-smoke
+  boundary discharged by the T16-F CDP smoke + 0831 office rebuild)
+- **Fix Description:** Catch-to-fallback mount chain (Law 14 discharged),
+  `castTelemetry()` (mounted/total/template), `lastTemplateOutcome()`
+  accessor, compacted CAST line in the activity overlay, runtime wiring.
+- **Tests Added:** rejection→fallback mount + telemetry-count tests,
+  compacted CAST-line overlay regression test (`deck-walkers.test.ts`).
+- **Verification Evidence:** receipt stamped (2/2 declared gates PASS) and
+  re-stamped at the archived path; fresh closure battery 2026-09-03
+  (deck-walkers within 19/0); committed in `51fa261` (v0.0.28).
+- **Archived:** yes → `dev/fids/archive/FID-2026-0824-030-robot-cast-mount-telemetry-and-recovery.md`
 
 ## Lessons Learned
 

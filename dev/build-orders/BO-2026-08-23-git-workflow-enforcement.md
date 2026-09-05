@@ -73,7 +73,7 @@ Not agent work. Listed first because every downstream gate depends on it.
 | --- | --- | --- | --- | --- |
 | 1 | Commit message template | Create `.gitmessage` matching Rule G8 (`<type>(<scope>): <desc> (<FID>)`, imperative lowercase ≤72); wire `git config commit.template .gitmessage` via root `prepare` script alongside existing hooksPath setup; add format doc comment inside template | Phase 0 | File exists; `prepare` script idempotent; template shown in `git commit` dry-run; typecheck ×4 unaffected |
 | 2 | FID template `Commit:` field | Update FID template (Recorder domain): add required `Commit:` field to Resolution section; update Recorder instructions + auto-archive checks to verify hash presence; document that working-tree closure is deprecated (Rule G2 supersedes) | Phase 0 | New FIDs created after merge include the field; Recorder validation rejects empty field; archived FID examples updated where cheap |
-| 3 | Bundle backup script | `scripts/git-bundle-backup.ts`: wraps baseline + incremental bundle commands from Rule G5 (full bundle once, then `last-backup..main` incrementals), writes to configurable OneDrive path, runs `git bundle verify` after create, advances/moves the `last-backup` marker only on verify success; `--baseline` flag for one-time full archive | Phase 0 | Script creates + verifies bundles end-to-end on a scratch clone; failure mid-way does NOT advance marker; path configurable via env/config; zero warnings under eslint |
+| 3 | Bundle backup script | **BUILT 2026-09-05 → FID-2026-0905-008 (`fixed`, receipt stamped).** `scripts/git-bundle-backup.ts`: baseline + `last-backup..main` incrementals, `git bundle verify` after create, marker advanced only on verify success, `--baseline` flag, `SAVANT_BUNDLE_DIR` env override. 7/0 tests incl. the restore drill. Destination pending operator confirmation (Open Question 2). | Phase 0 | Script creates + verifies bundles end-to-end on a scratch clone; failure mid-way does NOT advance marker; path configurable via env/config; zero warnings under eslint |
 | 4 | Push-strat preflight check (optional but recommended) | Extend release tooling docs or a small check script: before `public-release.ts` cut, assert (a) working tree clean, (b) all closed FIDs this week have recorded commit hashes (Rule G2 audit), (c) latest bundle verified (Rule G5). Fail-closed output naming exactly which condition failed | 1–3 | Check runs green on compliant state; red on each violated condition individually; integrates as documented pre-release step without modifying public-release.ts behavior |
 
 ### Phase 2 — Migration execution (OPERATOR + committer session, no new FIDs needed)
@@ -121,3 +121,17 @@ settle).
 - No agent git execution anywhere (G1 absolute).
 - No force-push policies introduced; existing AGENTS.md "do not force-push main" stands.
 - No squash-to-release; granular public history is the accepted new normal (G6).
+
+## Amendment (2026-09-05, operator)
+
+- **G1 relaxed:** agents are now permitted to stage, commit, and push
+  granular local commits to origin main (recorded in `ECHO.md` G1).
+  Rationale: the release pipeline is complete and the operator is
+  comfortable with push-based durability. Releases remain
+  pipeline-only; force-push and history rewrite remain prohibited.
+- **G5 retained alongside push:** bundles remain the recovery point of
+  record; daily pushes make origin the sync layer, not the backup.
+- **FID 4 (preflight) remains open** — cheap to build; recommended
+  before the next public release.
+- **Open Question 2 still pending:** confirm the OneDrive backup path
+  so `SAVANT_BUNDLE_DIR` gets a real default.

@@ -33,20 +33,93 @@ on-disk records missing from the table added (-0823-003, -0824-003…-008,
 
 | FID | Status | Purpose / blocking gate |
 |---|---|---|
-| [`FID-2026-0819-005`](FID-2026-0819-005-quality-ratchet-file-remediation.md) | `analyzed` | Quality-ratchet file-length remediation program — **paused by operator decision 2026-08-21** ("call it good for now"); Batch 0 + ~13 manual decomposition loops landed; 241 violations intentional / fail-closed |
-| [`FID-2026-0820-007`](FID-2026-0820-007-savant-desktop-app-tauri-master.md) | `analyzed` | Savant Desktop App master (Tauri v2) — planning loop-converged; child manifest reconciled through 2026-08-26; **SOLE OPEN BLOCKER = -0820-011** (packaging, shelved w/ release-time checklist in its Loop 4); master closes when all children close |
-| [`FID-2026-0820-011`](FID-2026-0820-011-packaging-distribution.md) | `analyzed` | Packaging & Distribution — **SHELVED 2026-08-26** (desktop release "a while out"): increments 1–2 (bundle matrix, CI, fail-closed latest.json generator, consent-gated updater) landed + verified; release-time remainder = ordered Loop 4 checklist |
-| [`FID-2026-0823-003`](FID-2026-0823-003-overnight-queue-to-zero-master.md) | `analyzed` | Overnight queue-to-zero coordinator — superseded -0822-013; sole open unit U8 = the -0820-011 release checklist; closes with -0820-007 |
-| [`FID-2026-0824-003`](FID-2026-0824-003-computer-use-cua-daemon-and-mjpeg-transport.md) | `analyzed` | Computer use — CUA daemon adoption + MJPEG screen transport (critical; child of -0824-008) — unstarted roadmap program |
-| [`FID-2026-0824-004`](FID-2026-0824-004-voice-pipeline-stt-tts-barge-in.md) | `analyzed` | Voice pipeline — STT/TTS + barge-in (child of -0824-008) — unstarted |
-| [`FID-2026-0824-005`](FID-2026-0824-005-triggers-webhook-receiver-and-goal-injection.md) | `analyzed` | Triggers — webhook receiver + goal injection (child of -0824-008) — unstarted |
-| [`FID-2026-0824-006`](FID-2026-0824-006-mobile-companion-pairing-and-streaming.md) | `analyzed` | Mobile companion — pairing + streaming (child of -0824-008) — unstarted |
-| [`FID-2026-0824-007`](FID-2026-0824-007-security-keychain-upgrade-and-consent-ux.md) | `analyzed` | Security — keychain upgrade + consent UX (critical; child of -0824-008) — unstarted |
-| [`FID-2026-0824-008`](FID-2026-0824-008-agents-as-contacts-command-surface-master.md) | `analyzed` | Agents-as-contacts command surface master (critical) — child manifest -003..-007; roadmap programs unstarted |
-| [`FID-2026-0824-012`](FID-2026-0824-012-self-improving-harness-and-agent-created-skills.md) | `fixed` | Self-improving harness + agent-created skills master — **ALL 16 steps implemented** (Loop 5, 2026-08-24); receipt stamped 9/9 gates PASS; live boundaries NEEDS-REVIEW (fail-open hooks in HYBRID, `/skills trust` in real TUI, SessionEnd Scribe review) |
-| [`FID-2026-0824-028`](FID-2026-0824-028-robot-cast-never-renders-recovery.md) | `fixed` | Robot cast never rendered — recovery record (deck shows nameplate chips over empty floor since asset pass; critical) — closure boundary outstanding |
-| [`FID-2026-0824-030`](FID-2026-0824-030-robot-cast-mount-telemetry-and-recovery.md) | `fixed` | Robot cast mount telemetry + recovery (critical; companion to -028) — closure boundary outstanding |
-| [`FID-2026-0828-001`](FID-2026-0828-001-compaction-summary-output.md) | `fixed` | /compact post-compaction summary output — terminal-state mirror race fixed (`adoptAndPersist` now delivers `pruned`/report) + new `compaction_summary` event rendered through TrafficLightPanel as turn output; receipt stamped 7/7 gates live PASS; live `/compact` smoke is the operator-gated boundary |
+| [`FID-2026-0903-001`](FID-2026-0903-001-desktop-packaging-auto-release-integration.md) | `analyzed` | Desktop packaging integrated into the automatic release pipeline (`release:public`) as new stages — successor to closed -0820-011; implementation on the NEXT release cut per operator directive 2026-09-03 |
+| [`FID-2026-0905-001`](FID-2026-0905-001-native-tool-executor-decomposition.md) | `fixed` | Architectural decomposition of `tool-executor/native.ts` (894 → 249 lines) into pipeline stages with gate-order-pinning tests — residue item 1 of 5 from closed -0819-005; implemented 2026-09-05 (1335/0 suite parity, receipt re-stamped 4/4 PASS, status corrected `analyzed`→`fixed` per ground-truth rule); closure awaits the G2 commit hash |
+| [`FID-2026-0905-004`](FID-2026-0905-004-gateway-decomposition.md) | `fixed` | Architectural decomposition of `cli/src/server/gateway.ts` (1,327 → 236 lines) into 8 `gateway/` stage modules behind a byte-identical facade — residue item 2 of 5 from closed -0819-005; implemented 2026-09-05 (RED baseline 35/0 parity, receipt 6/6 PASS, quality-report unlisted); closure awaits the G2 commit hash |
+| [`FID-2026-0905-005`](FID-2026-0905-005-office-scene-decomposition.md) | `fixed` | Architectural decomposition of `desktop/src/floor/office/office-scene.tsx` (2,126 → 179 lines) into 14 `scene-*` stage modules behind a byte-identical facade — residue item 3 of 5 from closed -0819-005; implemented 2026-09-05 (RED-first logic extraction + 13 pins, suite parity 413/0 / 5,718 expects, receipt 6/6 PASS, quality-report unlisted); closure awaits the G2 commit hash |
+| [`FID-2026-0905-006`](FID-2026-0905-006-provider-drift-baseline-resolution.md) | `fixed` | R4 resolution: 13 provider-drift quality violations from 2026-09-04/05 sessions — 10 baseline regenerations (+3..+48, feature growth), 2 test splits (529 → 281+273, 374 → 181+218), 1 data-catalog exemption (providers.ts, -0819-005 class, growth-frozen at 335); bonus: env-sanitize lists now DERIVED from PROVIDER_SETUP_CONFIG + RESEARCH_KEY_SERVICES (KIOSAPI_API_KEY leak class eliminated); R5 also resolved (bun:test imports); quality:report 15 → 2; receipt 7/7 PASS; closure awaits the G2 commit hash |
+| [`FID-2026-0905-007`](FID-2026-0905-007-public-release-decomposition.md) | `fixed` | Public-release pipeline decomposition: 3,065 → 178 facade (−94%) over 23 domain modules, largest 294; facade export surface verified item-by-item against `git show HEAD` (52 values + 7 types, zero missing/leaked via runtime check); 57/0/216 sibling-suite parity with the RED baseline; the pre-existing `bun test scripts/` directory-recursion hang (vendored `resources/openclaude/scripts/` network tests matched by bun's fuzzy path matching) is documented as NOT a decomposition regression — the pre-push gate uses workspace-scoped `bun run test`, which is unaffected; quality:report reached **0 violations**; closure awaits the G2 commit hash |
+
+**2026-09-05 closure — provider integrations:**
+[`FID-2026-0905-002`](archive/FID-2026-0905-002-kiosapi-provider.md) (KiosAPI)
+and [`FID-2026-0905-003`](archive/FID-2026-0905-003-opencode-zen-provider.md)
+(OpenCode Zen) **closed + archived 2026-09-05** — the operator's live tests
+("kiosapi works", "zen works") discharged the key-gated boundaries; fresh
+gate re-runs green (common 24/0, gateway 16/0, sdk 10/0 + 4/0). Active
+queue is now `-0903-001` + `-0905-001`.
+
+**2026-09-05 closure (quality-ratchet program complete):**
+[`FID-2026-0819-005`](archive/FID-2026-0819-005-quality-ratchet-file-remediation.md)
+closed after Loops 348–358 drove the live inventory from 16 to 5 violations —
+every test file and every type file in the repo is now under the 300-line
+ceiling. Remaining 5 are source monoliths (public-release, office-scene,
+gateway, native, `__nt-before-snapshot`) recorded in the Resolution as
+follow-on backlog. Template type files split into re-export hubs with zero
+import-surface change; `init-type-files.ts` now owns the 8-file `.agents/types`
+raw-text scaffold. Final gates: typecheck × 4 clean, all four workspace suites
+0 fail, eslint `--max-warnings 0`, lint:md, Prettier. Active queue is now
+-0903-001 only.
+
+**2026-09-05 monolith-FID opening (residue backlog, item 2 of 5):**
+[`FID-2026-0905-004`](FID-2026-0905-004-gateway-decomposition.md)
+opened scoping the architectural decomposition of
+`cli/src/server/gateway.ts` (the desktop session gateway), measured
+1,327 lines — the 4th of the 5 residue monoliths. Sequenced ahead of
+`public-release.ts` because -0903-001 lands in that file at the next
+release cut. Loop-1 RED recorded: 9 existing test files form the
+characterization base (per-method coverage map verified), with one gap —
+`injectTriggerRun` has no direct pins — to be closed RED-first before any
+extraction. **Superseded same day:** the Perfection Loop ran to convergence
+(Loop 2 + 3) and the operator approved implementation; see the table row
+and the FID's own Loop sections for the full record, including the
+`request()` harness-race fix (RED finding 5) and the 1,327 → 236 facade
+result. (The item-1 note below predates the -0905-001 implementation.)
+
+**2026-09-05 monolith-FID opening (residue backlog, item 3 of 5):**
+[`FID-2026-0905-005`](FID-2026-0905-005-office-scene-decomposition.md)
+opened scoping the architectural decomposition of
+`desktop/src/floor/office/office-scene.tsx` (the R3F office deck scene),
+measured 2,126 lines. Sequenced ahead of `public-release.ts` (-0903-001
+landing zone). Loop-1 RED recorded: the scene's pure logic (labelFor,
+makeThinkingPredicate) is module-private with ZERO test coverage — RED
+step 1 is the minimal verbatim logic extraction + pins before any
+component move. Live gate validation at authoring: desktop typecheck 0,
+4 sibling office suites green. **Implemented 2026-09-05** (operator
+approved the full loop): Loop 2 settled the bus single-ownership
+(`scene-focus-bus.ts`), targetFor cohesion, and the environment promotion;
+RED extracted the pure logic first (13/0 pins), then 14 `scene-*` stage
+modules behind a 179-line facade (2,126 → 179; four modules ceiling-split
+at audit: desk-props, identity, agent-fx); suite parity 413/0 / 5,718
+expects; receipt 6/6 PASS; quality-report unlisted. Status `fixed`;
+closure awaits the G2 commit hash.
+
+**2026-09-03 Maus-suite dissolution (operator decision):** -003, -004,
+-006, -007 closed out-of-scope and master -008 closed (suite dissolved) —
+all archived with the decision recorded in each Resolution. The Maus-parity
+roadmap program is removed from the project; -009 and -005 had already
+closed shipped. Active queue is now -0903-001 (next release cut) — the
+operator-held ratchet (-0819-005) closed 2026-09-05; see below.
+
+**2026-09-03 closure (ground-truth audit):** four `fixed` FIDs closed +
+archived — FID-2026-0824-012 (self-improving harness master; live boundaries
+fully discharged: both lesson-derived drafts operator-trusted, 19 production
+capture records), FID-2026-0824-028/-030 (robot-cast recovery pair; re-smoke
+discharged by the T16-F CDP smoke + the 0824-032 root-cause fix),
+FID-2026-0828-001 (compaction summary; G2 hash resolved to `51fa261`, v0.0.28).
+All receipts re-stamped PASS at the archived paths; fresh closure battery
+101 tests / 0 fail across 11 gate files. See `archive/README.md` and CHANGELOG.
+
+**2026-09-03 closure ceremony (release-time remainder + re-homing):** three
+`analyzed` FIDs closed + archived after the desktop packaging release-time
+ceremony — [`FID-2026-0820-011`](archive/FID-2026-0820-011-packaging-distribution.md)
+(signed-bundle E2E, Windows installer smoke both flavors, blank-console fix,
+CI prebuild fix + dispatch scaffold), [`FID-2026-0820-007`](archive/FID-2026-0820-007-savant-desktop-app-tauri-master.md)
+(desktop master; all children closed), [`FID-2026-0823-003`](archive/FID-2026-0823-003-overnight-queue-to-zero-master.md)
+(coordination master; U1–U11 resolved). Operator directive: the standing
+release-time process is **re-homed into the automatic release system** —
+successor [`FID-2026-0903-001`](FID-2026-0903-001-desktop-packaging-auto-release-integration.md)
+tracks the pipeline integration for the next cut. Receipts stamped PASS at
+all archived paths.
 
 **2026-09-02 audit sweep:** seven deck/desktop session FIDs closed + archived
 (-0828-002, -0829-001, -0831-001, -0831-002, -0901-001, -0901-003, -0901-006)

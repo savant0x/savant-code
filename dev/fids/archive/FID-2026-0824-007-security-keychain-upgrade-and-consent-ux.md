@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0824-007-security-keychain-upgrade-and-consent-ux.md`
 **ID:** FID-2026-0824-007
 **Severity:** critical
-**Status:** analyzed
+**Status:** closed
 **Created:** 2026-08-24 01:04
 **YAGNI-Compliance:** Verified
 **Parent:** FID-2026-0824-008
@@ -123,4 +123,12 @@ FID-2026-0823-009 before any status flips past analyzed.
 
 ## Resolution
 
-- (pending)
+- **Closed Date:** 2026-09-03 — **Archived:** 2026-09-03 →
+  `dev/fids/archive/`
+- **Resolution:** CLOSED OUT-OF-SCOPE by operator decision (2026-09-03,
+  session: active-FID review). The Maus-parity program was removed from the
+  roadmap in its entirety: the keychain upgrade and risk-adaptive consent
+  UX are not planned work. The EXISTING credential layers (config-dir
+  storage, constant-time compare discipline) remain the governing security
+  substrate. Loop 1 converged design is preserved in this archived record;
+  no implementation existed and nothing in the codebase references it.

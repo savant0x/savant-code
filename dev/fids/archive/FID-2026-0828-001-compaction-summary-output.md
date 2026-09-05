@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0828-001-compaction-summary-output.md`
 **ID:** FID-2026-0828-001
 **Severity:** medium
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-08-28 18:15
 **YAGNI-Compliance:** Verified
 
@@ -251,8 +251,8 @@ messages · −X tokens · Y% of window` header line, full summary text beneath
 
 ### Verification Receipt
 
-- fingerprint: sha256:089d2f7078ad58511286831fef3010e5ee55c729fb7da526a78d1ae01168b8bc
-- verified: 2026-08-28T21:00:24.319Z
+- fingerprint: sha256:1d3989a781e0ab9fa489050086220defaf7a6d9d31ec9e074762dfb09c2d64c1
+- verified: 2026-09-03T13:18:17.507Z
 - typecheck common: exit 0
 - typecheck packages/agent-runtime: exit 0
 - typecheck cli: exit 0
@@ -341,9 +341,8 @@ messages · −X tokens · Y% of window` header line, full summary text beneath
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [ ] **Commit SHA:** pending — commit is operator-executed (G1/G2); this
-      record cites the working tree at `main` `68e8c09` + this FID's delta.
-      Closure waits for the committed hash.
+- [x] **Commit SHA:** `51fa261` (chore(release): prepare v0.0.28 — tagged
+      v0.0.28, on main; carries the compaction-summary delta)
 - [x] **File:line ranges:**
       - `common/src/types/print-mode.ts:258-274` —
         `printModeCompactionSummarySchema` + type; `:297` union membership
@@ -382,8 +381,12 @@ messages · −X tokens · Y% of window` header line, full summary text beneath
          the history-recovery fix: the summary now actually renders as the
          turn's output (recovered from the compacted history). Two follow-on
          operator-directed polish items also landed (collapsed-by-default
-         fold + expand/collapse toggle + whole-block copy). Closure still
-         waits for the committed hash (G1/G2 — operator-executed).
+         fold + expand/collapse toggle + whole-block copy). G2 SATISFIED at
+         closure: implementation landed in commit `51fa261` (v0.0.28,
+         tagged, on main) — `git show 51fa261 --stat` touches
+         compaction-summary-block.tsx + send-message-lifecycle.ts;
+         `git log -S compaction_summary -- spawn-agent-inline.ts` →
+         `51fa261`.
 
 ### Code Verification Evidence
 
@@ -430,11 +433,22 @@ messages · −X tokens · Y% of window` header line, full summary text beneath
 
 ## Resolution
 
-- **Closed Date:** (pending)
-- **Fix Description:** (pending)
-- **Tests Added:** (pending)
-- **Verification Evidence:** (pending)
-- **Archived:** (pending)
+- **Closed Date:** 2026-09-03 (ground-truth closure audit: G2 commit hash
+  resolved to `51fa261`, live smoke already operator-confirmed 2026-08-28,
+  gates fresh green)
+- **Fix Description:** Three-piece additive delivery — terminal-state
+  mirror in `adoptAndPersist` (closes the compact-and-stop race),
+  structured `compaction_summary` PrintModeEvent emitted at the pruner
+  completion boundary, TrafficLightPanel transcript block (collapsed by
+  default + expand/collapse + whole-block copy).
+- **Tests Added:** schema round-trip, emission/no-op guards, store-mirror,
+  handler-append, and block-render regressions (21 focused tests; 5
+  declared gate files).
+- **Verification Evidence:** receipt stamped 7/7 gates PASS 2026-08-28;
+  fresh closure battery 2026-09-03 (schema 6/0 · emission 9/0 · mirror 5/0
+  · handler 2/0 · block 4/0 = 26/0); committed in `51fa261` (v0.0.28);
+  receipt re-stamped at the archived path.
+- **Archived:** yes → `dev/fids/archive/FID-2026-0828-001-compaction-summary-output.md`
 
 ## Lessons Learned
 

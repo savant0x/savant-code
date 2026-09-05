@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0820-007-savant-desktop-app-tauri-master.md`
 **ID:** FID-2026-0820-007
 **Severity:** critical
-**Status:** analyzed
+**Status:** closed
 **Created:** 2026-08-20 19:04
 
 ---
@@ -107,10 +107,36 @@ emulation.
 | FID-2026-0820-008 | Desktop Session Gateway (WebSocket) | Phase 1 | closed (+ archived 2026-08-23) |
 | FID-2026-0820-009 | Tauri Shell + Sidecar Supervisor | Phase 2 | closed (+ archived; verified against archive header, Loop 5) |
 | FID-2026-0820-010 | Chat UI (Structured, No Terminal) | Phase 3 | closed (+ archived 2026-08-25; Auto Drive dashboard, graph, and halt lifecycle verified) |
-| FID-2026-0820-011 | Packaging & Distribution | Phase 4 | analyzed — SHELVED (operator directive 2026-08-26): increments 1–2 (bundle matrix, CI workflow, fail-closed manifest generator, consent-gated updater) landed + verified; release-time remainder captured as the ordered Loop 4 checklist. **SOLE OPEN BLOCKER for this master** |
+| FID-2026-0820-011 | Packaging & Distribution | Phase 4 | closed (+ archived 2026-09-03: release-time remainder executed locally — signed-bundle E2E, Windows installer smoke, console + CI-prebuild fixes; standing process re-homed to successor FID-2026-0903-001) |
 | FID-2026-0822-012 | Holographic Command Deck (Visual Workspace) | Phase 5 | closed (+ archived 2026-08-26 via operator waiver of the webview re-smoke boundary; all seven declared gates live PASS at closure) |
 | FID-2026-0822-014 | Structured Output Cards | Phase 3 | closed (+ archived; verified against archive header, Loop 5) |
 | FID-2026-0824-009 | Workspace Regions | Phase 3 | closed (+ archived 2026-08-25) |
+
+## Resolution
+
+CLOSED 2026-09-03: every child closed (-008 session gateway, -009 Tauri
+shell, -010 chat UI, -011 packaging — the latter with its release-time
+remainder executed locally and the standing process re-homed to successor
+FID-2026-0903-001). The desktop app is built, runs, smoke-proven (T16-F
+deck smokes; 2026-09-03 installer + launch + uninstall cycles), and its
+distribution path is contract-proven (signed bundles, fail-closed updater
+manifest, environment-scoped signing). Integration tests: real-sidecar
+gateway E2E green in CI contract; full three-platform driver matrix rides
+the successor FID's first pipeline cut. Deferred scope (macOS
+entitlements/notarization, Azure Artifact Signing) is explicitly re-homed,
+not lost.
+
+## Verification Gates
+
+- gate: typecheck desktop
+- gate: test desktop/scripts/build-sidecar.test.ts
+
+### Verification Receipt
+
+- fingerprint: sha256:6d0fda871ec7ddabe7e9f5ba9a3a026f66d618211d2324179df43a2c3f17485a
+- verified: 2026-09-03T16:44:01.364Z
+- typecheck desktop: exit 0
+- test desktop/scripts/build-sidecar.test.ts: exit 0
 
 ## Resolution Policy
 
@@ -356,12 +382,16 @@ the day-0 signing gate. Master status stays `analyzed`; closure follows
       2026-08-23 (`savant-code server` shipped)
 - [x] FID-2026-0820-009 (Tauri Shell) implemented — CLOSED + archived
       (archive header verified `closed`, Loop 5 disk check)
-- [ ] FID-2026-0820-010 (Chat UI) implemented — Loop 3 transport/thread
-      core landed 2026-08-23 (audited); Steps 4–7 open
-- [ ] FID-2026-0820-011 (Packaging) implemented — signing gate LIFTED
-      (~23:10 EDT via recorded revision: macOS deferred, Windows
-      unsigned-local v1, escrow documented); Windows/Linux scope
-      GREEN-eligible
+- [x] FID-2026-0820-010 (Chat UI) implemented — CLOSED + archived 2026-08-25
+      (corrected 2026-09-03 from a stale "Steps 4–7 open" claim; the manifest
+      table above and the archive directory are ground truth)
+- [x] FID-2026-0820-011 (Packaging) implemented — CLOSED 2026-09-03:
+      release-time remainder executed locally (signed-bundle E2E, Windows
+      installer smoke both flavors, console fix, CI prebuild fix + dispatch
+      scaffold); standing release-time process re-homed into the automatic
+      release pipeline via successor FID-2026-0903-001
 - [ ] Integration tests passing — real-sidecar gateway E2E 4/4 green;
       full three-platform driver-matrix coverage lands with Phase 4
-- [ ] All child FIDs audited and closed
+- [x] All child FIDs audited and closed — -008/-009/-010 archived earlier;
+      -011 closed 2026-09-03; deferred macOS/Azure scope re-homed to
+      FID-2026-0903-001

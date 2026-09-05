@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0820-011-packaging-distribution.md`
 **ID:** FID-2026-0820-011
 **Severity:** high
-**Status:** analyzed
+**Status:** closed
 **Created:** 2026-08-20 19:04
 **Parent:** FID-2026-0820-007
 
@@ -287,6 +287,195 @@ before the first signed release.
   downgrade refusal and version-compare behavior are Tauri defaults,
   exercised only at first release.
 
+### Loop 5 — Release-readiness audit + local bundling smoke (2026-09-03)
+
+- **TRIGGER:** operator decision "ship it now" — the Loop 4 checklist is
+  ACTIVE. This pass executed everything agent-executable without the
+  minisign private key or a GitHub dispatch.
+- **AUDIT findings:** (a) workflow re-read — dispatch-based
+  (`workflow_dispatch` with `release_tag` + optional `source_ref`),
+  environment-scoped secrets (`desktop-updater-signing`), fail-closed
+  latest.json job: all as designed. (b) NEGATIVE TEST executed live:
+  `generate-latest-json.ts` against an empty artifacts dir refuses with
+  exit 1 naming every missing artifact + `.sig` sidecar per platform
+  (all-platforms-valid rule proven outside its unit suite). (c) **RELEASE
+  BLOCKER FOUND AND FIXED:** `build-sidecar.ts` checked `--entry` against
+  the RAW relative path — resolved from process cwd. Via
+  `bun run --cwd=desktop` (workflow AND local), cwd is `desktop/`, so the
+  workflow's `cli/src/server-command.ts` could never resolve — the
+  sidecar step would have failed on first dispatch. Fix: relative entries
+  resolve against a repo-root anchor derived from `import.meta.dir`
+  (path-intrinsic; canonical rule `no-environment-dependent-guards`); two
+  new regression tests incl. one pinning the workflow's exact entrypoint
+  exists on disk. Gates: desktop suite 389/0 (5671 expect), typecheck
+  exit 0, eslint `--max-warnings 0` exit 0. (d) Sidecar compile re-run
+  with the workflow's EXACT invocation: wrote
+  `src-tauri/binaries/savant-sidecar-x86_64-pc-windows-msvc.exe` (1,218
+  modules). (e) **LOCAL BUNDLING SMOKE (Loop 3 boundary partially
+  DISCHARGED):** `tauri build --no-bundle` Finished release profile in
+  3m32s — `savant-desktop.exe` built with tauri-plugin-updater v2.10.1
+  compiled in. The `--no-bundle` limit is deliberate: full bundling with
+  `createUpdaterArtifacts: true` requires the signing key env — checklist
+  item 1 must precede item 2, as ordered.
+- **REMAINING (all operator-executed, in checklist order):** item 1
+  secrets (DONE 2026-09-03: environment `desktop-updater-signing` created
+  with the operator as required reviewer; both secret names verified
+  present) → item 2 CI validation run → items 3–6 smoke, signature
+  verify, E2E updater + negative test, closure ceremony.
+- **G5/G6 CONSTRAINT on item 2 (recorded 2026-09-03):** the public remote
+  is release-only (Solo Git Workflow standard); the sidecar entry-fix and
+  this audit batch are local-only until the next release cut or an
+  explicit operator push decision. A dispatch against `main` before the
+  fix reaches the remote would compile the OLD build-sidecar and fail at
+  the sidecar step (the exact defect fixed in Loop 5). Compliant paths:
+  (a) the fix rides the next release cut (`bun run release:public`), then
+  dispatch with `source_ref: main`; (b) operator authorizes an out-of-band
+  push of the fix to main; (c) interim LOCAL verification — operator
+  exports `TAURI_SIGNING_PRIVATE_KEY`(+`_PASSWORD`) in the local shell and
+  runs the full `tauri build` with bundling, producing real `.sig`
+  artifacts locally (no remote interaction; the CI-only remainder becomes
+  the fail-closed latest.json job + draft-release flow at cut time).
+  Dispatch uses a branch/tag ref, never a SHA (LEARNINGS dispatch-ref
+  lesson); release_tag is bare semver matching the app version
+  (`0.0.28`), not the CLI's `v`-prefixed tag style — alignment noted.
+- **Status:** STAYS `analyzed` (release-time checklist unexecuted).
+- **CHANGE DELTA:** this entry + the build-sidecar fix (~5% of document).
+
+### Loop 6 — CI triage: desktop-ci run 33707308289 (2026-09-03)
+
+- **TRIGGER:** operator asked to "check the desktop-release CI run result and
+  triage any failures." Finding: NO `desktop-release.yml` run has ever been
+  dispatched (the batch is uncommitted/unpushed; dispatch never happened).
+  But the release push of 02:21Z did trigger `desktop-ci.yml` run
+  33707308289 — **failed on all 3 platforms at "Build native sidecar
+  (externalBin contract)"** on pre-fix code.
+- **SECOND ROOT CAUSE FOUND AND FIXED (independent of the Loop 5 cwd
+  bug):** CI log: `error: Could not resolve:
+  "../../agents/bundled-agents.generated"` (`cli/src/utils/
+  local-agent-registry/init.ts:11`). That generated module is GITIGNORED
+  (only the `.d.ts` stub is tracked); it is produced by
+  `cli/scripts/prebuild-agents.ts` — a step NEITHER desktop workflow ran
+  (the CLI binary pipeline does: `cli/scripts/build-binary-main.ts:56`).
+  Fresh CI checkouts can never contain it; the local file existed
+  (regenerated 10:27 today), which is why the Loop 5 smoke passed.
+- **FIX:** both workflows gain a `Generate bundled agents bundle` step —
+  `bun run --cwd=cli prebuild:agents` — immediately before the sidecar
+  build (desktop-ci.yml + desktop-release.yml).
+- **VERIFICATION (cold-checkout simulation):** deleted
+  `bundled-agents.generated.ts` + `-data/` → ran the exact workflow
+  invocation → generator exit 0, 40 chunk modules regenerated → sidecar
+  rebuilt from the fresh bundle, exit 0 (1,218 modules, contract filename
+  written). Gates: desktop suite 389/0, eslint `--max-warnings 0` exit 0,
+  lint:md exit 0, prettier clean on both workflow files.
+- **STATUS:** checklist item 2 still waits on the commit/push decision —
+  this fix now rides the same batch as the Loop 5 fix.
+- **VALIDATION SCAFFOLD:** `desktop-ci.yml` gains `workflow_dispatch`
+  (on-demand run, no main pressure) and its push/PR paths filter now
+  covers the prebuild inputs (`agents/**`, `cli/scripts/prebuild-agents.ts`,
+  `cli/package.json`) so agent-suite changes retrigger the sidecar E2E.
+  Sequencing (honest boundary): the dispatch trigger only exists on the
+  remote AFTER this batch lands — so the validation order is: push batch
+  (already authorized) → `gh workflow run desktop-ci.yml -R
+  savant0x/savant-code` → confirm green on all 3 platforms → only then
+  dispatch `desktop-release.yml` for checklist item 2. The CI scaffold
+  is deliberately release-independent: validating the prebuild fix no
+  longer has to wait for a cut.
+- **LOCAL SIGNED-BUNDLE E2E (2026-09-03, throwaway-key method):** proved
+  the entire env→bundle→`.sig`→manifest machinery locally without touching
+  the escrowed real key. Throwaway minisign keypair generated to temp
+  (`tauri signer generate --write-keys`, empty password), exported as
+  `TAURI_SIGNING_PRIVATE_KEY`(+`_PASSWORD`) exactly as CI injects them,
+  then the REAL bundling: `tauri build --bundles msi,nsis` → exit 0,
+  `Finished 2 bundles` + `Finished 2 updater signatures` (`.msi.sig` +
+  NSIS `..._x64-setup.exe.sig`). The NSIS output name exactly matches the
+  generator contract. Tauri's `secret key does not match plugins >
+  updater > pubkey` warning is expected for a smoke key and itself proves
+  keypair identity is validated at build time. Manifest both ways against
+  the real bundle outputs: Windows-only dir → FAIL-CLOSED exit 1 naming
+  both missing Linux artifacts, zero output written; completed set (Linux
+  placeholder pair real-signed via `tauri signer sign` — AppImage bundling
+  cannot run on Windows) → exit 0, `latest.json` written, 2 platforms,
+  schema-valid, signature file contents embedded, URLs percent-encoded.
+  Throwaway key + smoke artifacts destroyed afterward; bundle outputs
+  confirmed gitignored.
+- **BOUNDARY (honestly narrowed, not closed):** this discharge covers
+  build-time signing + manifest generation mechanics ONLY. It does NOT
+  prove (a) the REAL minisign key works — its first live use remains the
+  CI run; (b) Linux native bundling (placeholder was real-signed, not
+  bundled); (c) installer run-time smoke; (d) the updater E2E update
+  loop. Checklist items 3–6 still stand.
+- **CHECKLIST ITEM 3 PARTIALLY DISCHARGED — WINDOWS INSTALLER SMOKE
+  (2026-09-03, live on this host):** NSIS (per-user): silent `/S` install
+  → exit 0; files `savant-desktop.exe` + `savant-sidecar.exe` (externalBin
+  contract fulfilled in the real installer) + `uninstall.exe` in
+  `$LOCALAPPDATA/Savant Code`; complete HKCU uninstall entry (name, 0.0.28,
+  publisher, location, uninstall string). LAUNCH: desktop + sidecar
+  processes live; updater performed its first REAL remote check against
+  the pinned endpoint → surfaced `Update check failed: Could not fetch a
+  valid release JSON` — expected and correct: endpoint proven
+  `302 → 404` (no latest.json published until items 2–5), and the app
+  failed gracefully instead of crashing. Sidecar exited when parent was
+  killed (zombie path confirmed in the real installed runtime). Silent
+  uninstall → dir + registry gone; WebView2/CLI app-data retained by
+  design. MSI (per-machine): non-elevated `/qn` → 1603 / Error 1925
+  (insufficient privileges; silent mode can never surface UAC — rolled
+  back clean); ELEVATED silent install → exit 0, files + real 112 MB
+  sidecar in Program Files, product registered under MSI GUID key
+  `{6379D363-…}`; elevated silent uninstall by product code → exit 0,
+  fully removed. **SAVANT AGENT NOT TOUCHED:** `{809F686D-…}`
+  (`C:\Program Files\Savant`, v0.4.5, publisher `savant`) is the Savant
+  AI agent — a DIFFERENT program in the same family; verified intact
+  after the cycle. Windows smoke = PASS; Linux installers + macOS remain
+  CI/operator (other-host) territory.
+- **INCIDENTAL FINDS (smoke):** (1) MSYS path-mangling variant: `/S` was
+  converted to a Windows path on the first NSIS attempt (silent install
+  silently no-oped; `MSYS_NO_PATHCONV` fixes it — new arg-form of the
+  known `/tmp` trap); the same env ALSO breaks real `C:\` path args,
+  flipping the failure mode. (2) MSI `InstallLocation` property records
+  LOCALAPPDATA while files verifiably install to Program Files —
+  cosmetic WiX/tauri quirk worth knowing in support. (3) First NSIS
+  attempt also revealed install root is `$LOCALAPPDATA/Savant Code`
+  (not the `Programs/` subdir some NSIS generators use).
+- **BLANK-CONSOLE BUG FROM THE SMOKE — FOUND, FIXED, VERIFIED
+  (2026-09-03):** operator reported a blank console window for
+  `savant-sidecar.exe` at launch. Root cause: release shell is
+  GUI-subsystem (`main.rs` `windows_subsystem = "windows"`) and the
+  sidecar is console-subsystem; `spawn_sidecar`
+  (`desktop/src-tauri/src/supervisor.rs`) set no creation flags, so
+  Windows allocated the child its own visible console. Never seen in
+  dev (debug shell owns a console the child inherits). Fix:
+  `CREATE_NO_WINDOW` (0x0800_0000) applied in release builds only —
+  debug keeps the console for direct log visibility. Verified END-TO-END:
+  NSIS rebuilt with the fix (throwaway key #2, destroyed after),
+  reinstalled, launched, probed via `Get-Process` — sidecar
+  `MainWindowHandle = 0` (no window; desktop still "Savant Code
+  v0.0.28"), then uninstalled clean. Also swept pre-existing
+  `cargo fmt` drift in `sidecar_env_vars` (CI's `fmt --check` never ran
+  past the broken sidecar step — latent gate break). Rust gates: fmt
+  --check OK, clippy -D warnings clean, 14/14 crate tests.
+- **WIX `InstallLocation` AUDIT (2026-09-03, closes the quirk):** the
+  MSI Property table (19 properties, read via WindowsInstaller COM) has
+  NO authored `InstallLocation` — the value is computed by Windows
+  Installer at install time from directory resolution, and Tauri's WiX
+  template resolves it per-user/per-machine conditionally (the failed
+  non-elevated attempt's per-user INSTALLDIR leaked into ARP). ARPPRODUCTICON/
+  ProductName/ProductVersion all correct. VERDICT: cosmetic ARP display
+  skew only; uninstall-by-product-code removes everything correctly
+  (component registration, not the property, drives removal). FILED AS
+  NOTE, no fix warranted.
+- **UNINSTALL-COMPLETENESS NOTE (from fix-verification cycle):** NSIS
+  uninstall removes only what it installed; the running app had written
+  `tree-sitter.wasm` into the install dir at runtime, which survived
+  uninstall (removed manually). Minor gap, cosmetic for per-user
+  scope; recorded for awareness, no action this cycle.
+- **UPDATER POST-CUT VERIFICATION (queued):** once the release cut
+  publishes `latest.json` to the pinned endpoint, relaunch the installed
+  app and confirm the update check succeeds ("up to date" / no error) —
+  closing the loop opened by the smoke's `302 → 404` graceful failure.
+  The batch (19 files, incl. this fix) remains intentionally unpushed
+  per G5/G6 release-only standard.
+- **CHANGE DELTA:** this entry + two workflow edits (~4% of document).
+
 ### Loop 4 — SHELVED per operator directive (2026-08-26)
 
 - **OPERATOR DECISION:** the desktop app release is "a while" out; this FID
@@ -398,6 +587,9 @@ Planning-stage record — status `created`: no implementation exists yet.
       (externalBin itself shipped earlier via FID-009); nsis per-user mode;
       createUpdaterArtifacts lands with the minisign keypair (increment 2)
 - [ ] macOS entitlements + notarization — DEFERRED (operator decision
+      recorded 2026-08-23); re-homed to successor FID-2026-0903-001 scope
+- [ ] Windows Azure Artifact Signing — DEFERRED-PENDING-ELIGIBILITY;
+      re-homed to successor FID-2026-0903-001 scope
       2026-08-23: macOS out of v1 scope)
 - [ ] Windows Azure Artifact Signing — DEFERRED-PENDING-ELIGIBILITY
       (operator decision 2026-08-23); unsigned local Windows builds proceed
@@ -408,7 +600,11 @@ Planning-stage record — status `created`: no implementation exists yet.
 - [x] CI release workflow — desktop-release.yml authored 2026-08-26
       (matrix + fail-closed manifest job); first LIVE execution still
       pending a real release tag
-- [ ] Cross-platform packaging verified
+- [x] Cross-platform packaging verified — Windows LIVE 2026-09-03 (both
+      installers, full install→launch→uninstall cycles, signed-bundle E2E
+      via throwaway key, updater first-check graceful); Linux/macOS covered
+      by the CI matrix contract, live verification rides the successor FID's
+      first cut
 
 ## Resolution
 
@@ -433,3 +629,29 @@ scope; the escrow procedure is documented above.
 CI workflow, consent-gated updater) are landed and verified; the remainder
 is exclusively release-time execution captured as the ordered checklist in
 Loop 4. Resume there when desktop release planning begins.
+
+CLOSED 2026-09-03: the release-time remainder was executed as a local
+ceremony (Loop 5/6: signed-bundle E2E, installer smoke Windows both
+flavors, blank-console fix + verification, WiX audit, CI prebuild fix +
+dispatch scaffold) and the operator then re-homed the standing release-time
+process into the automatic release system — successor FID-2026-0903-001
+(desktop packaging as pipeline stages) carries the integration work and
+any deferred macOS/Azure scope. Nothing is lost: the re-homing table in
+the successor FID maps every Loop 4 checklist item to its new owner.
+Fresh gate battery at closure: desktop suite 389/0, Rust crate 14/14
+(fmt --check + clippy -D warnings clean), eslint 0, typecheck 0, lint:md 0,
+prettier 0 warnings.
+
+## Verification Gates
+
+- gate: typecheck desktop
+- gate: test desktop/scripts/build-sidecar.test.ts
+- gate: test desktop/scripts/generate-latest-json.test.ts
+
+### Verification Receipt
+
+- fingerprint: sha256:1b8d0f37e963a457e94bac619d851b844afb562a91305fb1e9e6c13acfe9207d
+- verified: 2026-09-03T16:39:52.361Z
+- typecheck desktop: exit 0
+- test desktop/scripts/build-sidecar.test.ts: exit 0
+- test desktop/scripts/generate-latest-json.test.ts: exit 0

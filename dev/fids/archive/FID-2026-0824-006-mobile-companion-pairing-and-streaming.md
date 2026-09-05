@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0824-006-mobile-companion-pairing-and-streaming.md`
 **ID:** FID-2026-0824-006
 **Severity:** medium
-**Status:** analyzed
+**Status:** closed
 **Created:** 2026-08-24 01:04
 **YAGNI-Compliance:** Verified
 **Parent:** FID-2026-0824-008
@@ -110,4 +110,12 @@ past analyzed.
 
 ## Resolution
 
-- (pending)
+- **Closed Date:** 2026-09-03 — **Archived:** 2026-09-03 →
+  `dev/fids/archive/`
+- **Resolution:** CLOSED OUT-OF-SCOPE by operator decision (2026-09-03,
+  session: active-FID review). The Maus-parity program was removed from the
+  roadmap in its entirety: mobile pairing (mDNS+Noise), push, and live
+  screen streaming are not planned work. The hard gate on -003's MJPEG path
+  is moot with -003 closed. Loop 1 converged design is preserved in this
+  archived record; no implementation existed and nothing in the codebase
+  references it.

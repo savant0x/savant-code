@@ -3,6 +3,79 @@
 This directory contains closed or historically completed FIDs. Files here are
 an audit record, not an active work queue.
 
+## 2026-09-05 closure — provider integrations (2 FIDs archived)
+
+Two `fixed` provider FIDs closed after the operator's live tests
+("kiosapi works", "zen works", 2026-09-05) discharged the last
+key-gated boundaries; gate receipts re-run green at closure (common
+provider suites 24 pass / 0 fail, gateway suite 16 pass / 0 fail, sdk
+zen routing 10 pass / 0 fail + free-mode 4 pass / 0 fail) plus
+ground-truth grep of registry/map/fetcher/factory wiring:
+
+- `FID-2026-0905-002-kiosapi-provider.md` (medium) — KiosAPI gateway
+  provider (Path A registry entry, authenticated live catalog, `/model`
+  picker, `KIOSAPI_API_KEY`, pass-through parser preserving GLM-5.3-free).
+- `FID-2026-0905-003-opencode-zen-provider.md` (medium) — OpenCode Zen
+  full four-protocol support (`multi` protocol, `OPENCODE_ZEN_PROTOCOLS`
+  map, Responses + Gemini factory branches, public live catalog,
+  `OPENCODE_API_KEY`, Go/Zen credential merge via the `opencode` resolver
+  chain).
+
+CHANGELOG `## Unreleased` entries appended for both. Active queue is now
+`-0903-001` + `-0905-001`.
+
+## 2026-09-03 closure ceremony — release-time remainder + masters (3 FIDs archived)
+
+Three `analyzed` FIDs closed + archived after the desktop packaging
+release-time ceremony; gate receipts stamped PASS at their archived paths
+via `bun run fid:verify … --write`:
+
+- `FID-2026-0820-011-packaging-distribution.md` (high) — release-time
+  remainder executed locally 2026-09-03: signed-bundle E2E (throwaway-key
+  method), Windows installer smoke both flavors (NSIS per-user + MSI
+  per-machine, full install→launch→uninstall cycles), blank-console
+  sidecar bug found+fixed+verified, CI prebuild fix + dispatch scaffold;
+  standing release-time process re-homed into the automatic release
+  pipeline via successor `FID-2026-0903-001`; receipt 3/3.
+- `FID-2026-0820-007-savant-desktop-app-tauri-master.md` (critical) —
+  desktop master; all children closed (-008/-009/-010/-011 plus the deck
+  and regions children); deferred macOS/Azure scope re-homed to the
+  successor FID; receipt 2/2.
+- `FID-2026-0823-003-overnight-queue-to-zero-master.md` (high) —
+  coordination master; U1–U11 all resolved (U8 by -011's closure, U11's
+  closeouts verified on disk); ratchet exclusion honored throughout;
+  receipt 2/2.
+
+Successor: [`FID-2026-0903-001`](../FID-2026-0903-001-desktop-packaging-auto-release-integration.md)
+— desktop packaging as stages of `scripts/public-release.ts` (the automatic
+release system), implementation on the next release cut per operator
+directive 2026-09-03.
+
+## 2026-09-03 closure — ground-truth audit batch (4 FIDs archived)
+
+Four `fixed` FIDs closed + archived by ground-truth closure audit (all gate
+receipts re-stamped PASS at their new paths via `bun run fid:verify … --write`;
+implementation verified in the working tree + commit hashes resolved per G2;
+ledger README table updated):
+
+- `FID-2026-0824-012-self-improving-harness-and-agent-created-skills.md` (high) —
+  all 16 steps implemented + committed (`6ef39b8`…`2611380`); live boundaries
+  fully discharged (both lesson-derived drafts operator-trusted with
+  `VERSIONS.jsonl` provenance; 19 production capture records; trusted skills
+  load end-to-end); YAGNI-Compliance corrected to `Verified`; receipt 9/9.
+- `FID-2026-0824-028-robot-cast-never-renders-recovery.md` (critical) — loader
+  timeout + honest diagnostics + brightened cast/fallback; re-smoke discharged
+  by the T16-F CDP smoke 2026-08-29 (10/10 GLB figures) + the 0824-032
+  root-cause fix; implementation in `51fa261` (v0.0.28); receipt 2/2.
+- `FID-2026-0824-030-robot-cast-mount-telemetry-and-recovery.md` (critical) —
+  catch-to-fallback mount chain + CAST telemetry; same discharge evidence;
+  production wiring re-verified; implementation in `51fa261`; receipt 2/2.
+- `FID-2026-0828-001-compaction-summary-output.md` (medium) — `/compact`
+  summary output; G2 hash resolved to `51fa261` (live smoke
+  operator-confirmed 2026-08-28); receipt 8/8.
+
+Fresh closure battery: 101 tests / 0 fail across 11 gate files (2026-09-03).
+
 ## 2026-09-02 closure — deck + desktop session FIDs (release-ready audit batch)
 
 Seven FIDs closed + archived by the 0.0.29 release-ready audit (all gate
@@ -1238,3 +1311,65 @@ and an independent PASS review. Its extensive product documentation is maintaine
 The documentation-and-implementation sign-off request remains an explicit independent
 review boundary for the current working-tree evidence; no release or publication was
 performed.
+
+## 2026-09-05 closure — quality-ratchet program complete (1 FID archived)
+
+- `FID-2026-0819-005-quality-ratchet-file-remediation.md` (critical) —
+  closed 2026-09-05 by operator directive under automation level 3. Final
+  phase (Loops 348–358) decomposed the last 11 test monoliths at exact
+  test/assert parity and split both template type files into re-export
+  hubs with zero import-surface change (24 consumers verified including
+  the `init.ts` raw-text scaffold — now 8 files via
+  `cli/src/commands/init-type-files.ts`). Live inventory closed at **5
+  violations, all source monoliths** (public-release 3065, office-scene
+  2127, gateway 1327, native 895, `__nt-before-snapshot` 895), recorded in
+  the Resolution as follow-on backlog to be FID-scoped individually.
+  Final gates: typecheck × 4 clean; sdk 491 / common 658 / agent-runtime
+  1323 / CLI 3482 — 0 fail; eslint `--max-warnings 0`; lint:md; Prettier.
+  Successor scope: none opened — the five source monoliths await
+  individual FIDs when the operator prioritizes them.
+
+## 2026-09-05 closure — maus-parity suite dissolution + status-drift correction (6 FIDs archived)
+
+Six FIDs from the agents-as-contacts program were closed out-of-scope on
+2026-09-03 by operator decision (CHANGELOG `Unreleased`); the archive
+copies were moved on disk but never `git add`-staged, leaving the source
+entries in the active directory's index as ghost deletions. This entry
+formally archives the move and records the headers' status correction
+(`fixed` → `closed`) for the one record that still carried pre-gate wording:
+
+- `FID-2026-0824-003-computer-use-cua-daemon-and-mjpeg-transport.md`
+  (critical) — closed 2026-09-03 (maus-parity dissolution; cua-daemon
+  adoption over Rust port deferred per master -008 C2).
+- `FID-2026-0824-004-voice-pipeline-stt-tts-barge-in.md` (medium) —
+  closed 2026-09-03 (maus-parity dissolution; voice free-mode deferred
+  per master -008 C7).
+- `FID-2026-0824-005-triggers-webhook-receiver-and-goal-injection.md`
+  (high) — closed 2026-09-03 (maus-parity program reclassified; receiver
+  + injection bridge + cron scheduler + relay enablement + desktop rail
+  panel shipped under the parent -008 amendment gate, then the
+  whole maus-parity program was dissolved on operator decision). Header
+  `**Status:** fixed` → `closed` corrected at archive time (the pre-gate
+  `fixed` wording was the only non-`closed` Maus record on disk;
+  corresponds to the CHANGELOG `Unreleased` "triggers" closure line).
+- `FID-2026-0824-006-mobile-companion-pairing-and-streaming.md` (medium)
+  — closed 2026-09-03 (maus-parity dissolution).
+- `FID-2026-0824-007-security-keychain-upgrade-and-consent-ux.md`
+  (critical) — closed 2026-09-03 (maus-parity dissolution; keyring-rs
+  → Tauri host path deferred per master -008 C1).
+- `FID-2026-0824-008-agents-as-contacts-command-surface-master.md`
+  (critical) — closed 2026-09-03 (maus-parity suite dissolution; all
+  children closed out-of-scope; deck-region children `-009` had already
+  closed shipped).
+
+Gates (recorded at the parent program / dissolution event 2026-09-03,
+re-verified at archive time): agents/common/sdk/agent-runtime/cli
+typechecks exit 0; eslint `--max-warnings 0`; lint:md; Prettier;
+`validate:repository` PASS. The dissolution CHANGELOG `Unreleased`
+section ("Maus-parity suite dissolved (operator decision, 2026-09-03)")
+is the authoritative release-note source. Source-side git state: 6
+tracked deletions + 6 untracked archive copies — the operator's
+G1 `git rm` + `git add` (or a single `git mv` per pair) is the commit
+ceremony that registers these as proper renames; until then the work
+queue remains consistent in the filesystem and the active ledger's
+2-FID table is already correct.

@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0824-003-computer-use-cua-daemon-and-mjpeg-transport.md`
 **ID:** FID-2026-0824-003
 **Severity:** critical
-**Status:** analyzed
+**Status:** closed
 **Created:** 2026-08-24 01:04
 **YAGNI-Compliance:** Verified
 **Parent:** FID-2026-0824-008
@@ -122,4 +122,13 @@ analyzed.
 
 ## Resolution
 
-- (pending)
+- **Closed Date:** 2026-09-03 — **Archived:** 2026-09-03 →
+  `dev/fids/archive/`
+- **Resolution:** CLOSED OUT-OF-SCOPE by operator decision (2026-09-03,
+  session: active-FID review). The Maus-parity program was removed from the
+  roadmap in its entirety: computer-use/CUA daemon adoption, the MJPEG
+  screen transport, and the kill switch are not planned work. Loop 1
+  converged design and Detective evidence are preserved in this archived
+  record for retrieval if direction changes. No implementation existed
+  (zero code was ever written against this record); nothing in the
+  codebase references it.

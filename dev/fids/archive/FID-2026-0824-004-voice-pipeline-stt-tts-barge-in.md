@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0824-004-voice-pipeline-stt-tts-barge-in.md`
 **ID:** FID-2026-0824-004
 **Severity:** medium
-**Status:** analyzed
+**Status:** closed
 **Created:** 2026-08-24 01:04
 **YAGNI-Compliance:** Verified
 **Parent:** FID-2026-0824-008
@@ -114,4 +114,12 @@ analyzed.
 
 ## Resolution
 
-- (pending)
+- **Closed Date:** 2026-09-03 — **Archived:** 2026-09-03 →
+  `dev/fids/archive/`
+- **Resolution:** CLOSED OUT-OF-SCOPE by operator decision (2026-09-03,
+  session: active-FID review). The Maus-parity program was removed from the
+  roadmap in its entirety: local STT, BYO-key TTS, and barge-in call mode
+  are not planned work. The recorded operator deferral of the voice
+  free-mode stance (2026-08-24) is superseded by this closure. Loop 1
+  converged design is preserved in this archived record; no implementation
+  existed and nothing in the codebase references it.

@@ -149,7 +149,7 @@
   `common/src/crypto/keys.ts:2:24`, failing all 5 platform builds.
 - **Evidence:** common/src/crypto/keys.ts → symbol:deriveRoleKeypair@line=48,
   common/package.json → field:version,
-  scripts/validation-manifest.ts → symbol:repositoryValidationGates
+  scripts/validation-gates.ts → symbol:repositoryValidationGates
 - **Invariant:** Every source import must resolve from the repo's own node_modules after
   `bun install --frozen-lockfile`; a resolution that only works from a node_modules outside the repo is a defect.
 - **Guard:** `cli-bundle-resolution` release gate (`bun build cli/src/index.tsx --target=bun`) — the exact
@@ -252,7 +252,7 @@
 
 - **Date:** 2026-08-11
 - **Failure:** A generator can silently accept the wrong source shape and emit incomplete guidance.
-- **Evidence:** scripts/generate-protocol-bundle.ts → symbol:runContentAssertions
+- **Evidence:** scripts/protocol-bundle-assertions.ts → symbol:runContentAssertions
 - **Invariant:** Generated content is trustworthy only when extraction validates the source's observed structure.
 - **Guard:** `bun run generate:protocol-bundle:check`
 - **Verification:** Regenerate twice and compare the generated files byte-for-byte.
@@ -310,7 +310,7 @@
 - **Date:** 2026-08-11
 - **Failure:** Broad boundary wording can confuse a separate governance contract with the harness contract.
 - **Evidence:** common/src/util/boot-contract.ts → symbol:resolveBootContract,
-  scripts/generate-protocol-bundle.ts → symbol:runContentAssertions
+  scripts/protocol-bundle-assertions.ts → symbol:runContentAssertions
 - **Invariant:** The harness selects and injects only its own contract; explicit
   variant markers remain separate and fail closed.
 - **Guard:** `bun run generate:protocol-bundle:check`

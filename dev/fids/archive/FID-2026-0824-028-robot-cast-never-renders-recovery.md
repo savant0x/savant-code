@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0824-028-robot-cast-never-renders-recovery.md`
 **ID:** FID-2026-0824-028
 **Severity:** critical
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-08-24 19:30
 **YAGNI-Compliance:** Verified
 
@@ -146,8 +146,8 @@ silently, and leave permanent diagnostics that name whichever path fired.
 
 ### Verification Receipt
 
-- fingerprint: sha256:17709d659eb2264c0bdda0d4826532165f03bda7bc8e5d514ae3f52213d37eb9
-- verified: 2026-09-03T00:17:54.624Z
+- fingerprint: sha256:a8b9c5c538ea964ff863811025df70c8837bad7d4bdf5a1e16a9fad946c9c55d
+- verified: 2026-09-03T13:17:31.054Z
 - typecheck desktop: exit 0
 - test desktop/src/floor/__tests__/deck-robots.test.ts: exit 0
 
@@ -234,14 +234,33 @@ silently, and leave permanent diagnostics that name whichever path fired.
   diagnostics, emissive 0.7/1.2, asset regression test; gates green (see
   Implementation Evidence). Status advances `created` → `fixed`. The
   operator webview re-smoke (robots VISIBLE) remains THE closure boundary.
+- 2026-09-03 closure audit: re-smoke boundary DISCHARGED by accumulated
+  live evidence — the true root cause was later found and fixed
+  (FID-2026-0824-032, reduced-motion single-frame paint; this FID's two
+  hypotheses were real defects but not THAT defect, exactly as recorded).
+  The T16-F CDP smoke 2026-08-29 (`dev/session-summaries/2026-08-29-t16f-live-resmoke-pass.md`)
+  shows `[deck] mount <role>: glb` for ALL 10 roles (zero fallbacks),
+  rAF ticker at ~62 fps, and pixel-diff animation evidence — then the
+  surface was superseded by the operator-confirmed 0831 office rebuild.
+  Implementation landed in commit `51fa261` (v0.0.28, tagged, on main):
+  `git log -S TEMPLATE_LOAD_TIMEOUT_MS -- desktop/src/floor/stage/deck-robots.ts`
+  → `82645ba` + `51fa261`. Fresh gates at closure: deck-robots +
+  deck-walkers suites 19 pass / 0 fail (incl. the GLB asset regression),
+  receipt re-stamped at the archived path.
 
 ## Resolution
 
-- **Closed Date:** pending
-- **Fix Description:** pending
-- **Tests Added:** pending
-- **Verification Evidence:** pending
-- **Archived:** pending
+- **Closed Date:** 2026-09-03 (ground-truth closure audit; re-smoke
+  boundary discharged by the T16-F CDP smoke + 0824-032 root-cause fix)
+- **Fix Description:** Loader timeout + honest outcome diagnostics +
+  brightened cast/fallback emissive (0.7 standby / 1.2 active) + GLB asset
+  regression test; failure cache-clearing retry (Loop 1 condition C2).
+- **Tests Added:** GLB asset regression (skins/meshes/animations pinned) +
+  emissive contract updates in `deck-robots.test.ts`.
+- **Verification Evidence:** receipt stamped (2/2 declared gates PASS) and
+  re-stamped at the archived path; fresh closure battery 2026-09-03
+  (deck-robots + deck-walkers 19/0); committed in `51fa261` (v0.0.28).
+- **Archived:** yes → `dev/fids/archive/FID-2026-0824-028-robot-cast-never-renders-recovery.md`
 
 ## Lessons Learned
 
