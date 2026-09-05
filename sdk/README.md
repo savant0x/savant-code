@@ -22,7 +22,7 @@ The CLI's interactive `/provider` credentials are a separate local CLI onboardin
 SDK clients.
 
 For direct provider routing, configure the provider-specific environment variables documented by the runtime, including
-`OPENCODE_GO_API_KEY`, `TOKENROUTER_API_KEY`, `TOKENHARBOR_API_KEY`,
+`OPENCODE_API_KEY` (shared by OpenCode Go and OpenCode Zen), `TOKENROUTER_API_KEY`, `TOKENHARBOR_API_KEY`,
 `NVIDIA_API_KEY`, `COMMAND_CODE_API_KEY`, and `NOUS_API_KEY`. Nous Research uses
 its direct OpenAI-compatible API; Nous Portal OAuth is a separate integration and
 is not implicitly implemented by this SDK.

@@ -110,3 +110,28 @@ export function createErrorRunStateFrom(params: {
     }
   }
 }
+
+/**
+ * FID-2026-0819-005 Loop 230b: the run() pre-abort RunState builder,
+ * extracted verbatim from execution.ts — D2: omit sessionState when there is
+ * no previous run; callers must not assume a session exists on pre-abort.
+ */
+export function buildPreAbortRunState(options: {
+  previousRun?: RunState
+  abortError: Error
+}): RunState {
+  const { previousRun, abortError } = options
+  return {
+    schemaVersion: 1,
+    // FID-2026-0802-008 D2: omit sessionState when there is no previous
+    // run — callers must not assume a session exists on pre-abort.
+    ...(previousRun?.sessionState
+      ? { sessionState: previousRun.sessionState }
+      : {}),
+    traceSessionId: previousRun?.traceSessionId ?? crypto.randomUUID(),
+    output: {
+      type: 'error',
+      message: abortError.message,
+    },
+  }
+}

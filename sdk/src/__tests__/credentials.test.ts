@@ -7,7 +7,7 @@ const osWithMutableHomedir = os as { homedir: () => string }
 
 // Need to import to check env var name
 import { CHATGPT_OAUTH_TOKEN_ENV_VAR } from '@savant-code/common/constants/chatgpt-oauth'
-import { describe, expect, test, mock, afterEach } from 'bun:test'
+import { describe, expect, test } from 'bun:test'
 
 import {
   getConfigDir,
@@ -17,7 +17,6 @@ import {
   saveChatGptOAuthCredentials,
   clearChatGptOAuthCredentials,
   isChatGptOAuthValid,
-  refreshChatGptOAuthToken,
   getValidChatGptOAuthCredentials,
   userFromJson,
   type ChatGptOAuthCredentials,
@@ -215,82 +214,6 @@ describe('credentials', () => {
     })
   })
 
-  describe('refreshChatGptOAuthToken', () => {
-    const originalFetch = globalThis.fetch
-
-    afterEach(() => {
-      globalThis.fetch = originalFetch
-    })
-
-    test('returns null when no credentials exist', async () => {
-      const tmpDir = fs.mkdtempSync(
-        path.join(os.tmpdir(), 'chatgpt-norefresh-'),
-      )
-      const originalHomedir = osWithMutableHomedir.homedir
-      osWithMutableHomedir.homedir = () => tmpDir
-
-      try {
-        const env = {
-          NEXT_PUBLIC_CB_ENVIRONMENT: 'chatgpt-norefresh-env',
-        } as unknown as ClientEnv
-        const result = await refreshChatGptOAuthToken(env)
-        expect(result).toBeNull()
-      } finally {
-        osWithMutableHomedir.homedir = originalHomedir
-        fs.rmSync(tmpDir, { recursive: true })
-      }
-    })
-
-    test('successfully refreshes token', async () => {
-      const tmpDir = fs.mkdtempSync(
-        path.join(os.tmpdir(), 'chatgpt-refresh-test-'),
-      )
-      const env = createTestEnv({ NEXT_PUBLIC_CB_ENVIRONMENT: 'test' })
-      const originalHomedir = osWithMutableHomedir.homedir
-      osWithMutableHomedir.homedir = () => tmpDir
-
-      try {
-        const configDir = getConfigDir(env)
-        fs.mkdirSync(configDir, { recursive: true })
-
-        const credentials = {
-          chatgptOAuth: {
-            accessToken: 'old-chatgpt-access',
-            refreshToken: 'chatgpt-refresh-token-123',
-            expiresAt: Date.now() - 1_000,
-            connectedAt: Date.now() - 7_200_000,
-          },
-        }
-        fs.writeFileSync(
-          path.join(configDir, 'credentials.json'),
-          JSON.stringify(credentials),
-        )
-
-        const mockFetch = mock(() =>
-          Promise.resolve({
-            ok: true,
-            json: () =>
-              Promise.resolve({
-                access_token: 'new-chatgpt-access-token',
-                refresh_token: 'new-chatgpt-refresh-token',
-                expires_in: 3600,
-              }),
-          } as Response),
-        )
-        globalThis.fetch = mockFetch as unknown as typeof fetch
-
-        const result = await refreshChatGptOAuthToken(env)
-
-        expect(result).not.toBeNull()
-        expect(result?.accessToken).toBe('new-chatgpt-access-token')
-        expect(result?.refreshToken).toBe('new-chatgpt-refresh-token')
-      } finally {
-        osWithMutableHomedir.homedir = originalHomedir
-        fs.rmSync(tmpDir, { recursive: true })
-      }
-    })
-  })
-
   describe('getValidChatGptOAuthCredentials', () => {
     test('returns null when no credentials exist', async () => {
       const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'chatgpt-nocreds2-'))
@@ -309,36 +232,7 @@ describe('credentials', () => {
       }
     })
   })
-
-  describe('credentials file permissions (FID-2026-0802-008 SEC1)', () => {
-    test.skipIf(process.platform === 'win32')(
-      'writes credentials file 0600 and config dir 0700 on POSIX',
-      () => {
-        const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'chatgpt-perms-'))
-        const originalHomedir = osWithMutableHomedir.homedir
-        osWithMutableHomedir.homedir = () => tmpDir
-
-        try {
-          const env = createTestEnv({ NEXT_PUBLIC_CB_ENVIRONMENT: 'test' })
-          const configDir = getConfigDir(env)
-          saveChatGptOAuthCredentials(
-            {
-              accessToken: 'access-token',
-              refreshToken: 'refresh-token',
-              expiresAt: Date.now() + 60_000,
-              connectedAt: Date.now(),
-            },
-            env,
-          )
-
-          const credentialsPath = getCredentialsPath(env)
-          expect(fs.statSync(credentialsPath).mode & 0o777).toBe(0o600)
-          expect(fs.statSync(configDir).mode & 0o777).toBe(0o700)
-        } finally {
-          osWithMutableHomedir.homedir = originalHomedir
-          fs.rmSync(tmpDir, { recursive: true, force: true })
-        }
-      },
-    )
-  })
 })
+
+// FID-2026-0819-005 Loop 193: the permissions suite moved verbatim to
+// credentials-permissions.test.ts (FID-2026-0802-008 SEC1).

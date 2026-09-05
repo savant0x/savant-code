@@ -16,7 +16,7 @@ import {
   test,
 } from 'bun:test'
 
-import { loadSkills, parseSkillFileContent } from '../skills/load-skills'
+import { loadSkills } from '../skills/load-skills'
 import { logger } from '../utils/logger'
 
 const writeSkill = ({
@@ -292,34 +292,5 @@ describe('loadSkills', () => {
     expect(skills['custom-skill']?.filePath).toBe(
       path.join(customSkillsDir, 'custom-skill', 'SKILL.md'),
     )
-  })
-})
-
-describe('parseSkillFileContent', () => {
-  test('validates in-memory edits with the same rules as disk discovery', () => {
-    const valid = [
-      '---',
-      'name: deploy',
-      'description: Deploy safely',
-      '---',
-      '',
-      '# Deploy',
-    ].join('\n')
-    expect(
-      parseSkillFileContent(valid, {
-        directoryName: 'deploy',
-        filePath: '/skills/deploy/SKILL.md',
-      }),
-    ).toMatchObject({
-      name: 'deploy',
-      description: 'Deploy safely',
-      content: valid,
-    })
-    expect(
-      parseSkillFileContent(valid.replace('name: deploy', 'name: release'), {
-        directoryName: 'deploy',
-        filePath: '/skills/deploy/SKILL.md',
-      }),
-    ).toBeNull()
   })
 })

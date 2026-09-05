@@ -3,14 +3,9 @@
 import { AnalyticsEvent } from '@savant-code/common/constants/analytics-events'
 import { type PromptAiSdkStreamFn } from '@savant-code/common/types/contracts/llm'
 import { buildArray } from '@savant-code/common/util/array'
-import {
-  getErrorObject,
-  promptAborted,
-  promptSuccess,
-} from '@savant-code/common/util/error'
+import { getErrorObject } from '@savant-code/common/util/error'
 import { convertCbToModelMessages } from '@savant-code/common/util/messages'
 import { StopSequenceHandler } from '@savant-code/common/util/stop-sequence'
-import { safeToJSONValue } from '@savant-code/common/util/type-narrowing'
 import {
   streamText,
   NoSuchToolError,
@@ -21,25 +16,16 @@ import {
 } from 'ai'
 
 import { refreshChatGptOAuthToken } from '../../credentials'
-import {
-  getModelForRequest,
-  markChatGptOAuthRateLimited,
-} from '../model-provider'
+import { markChatGptOAuthRateLimited } from '../model-provider'
 import {
   classifyChatGptOAuthStreamError,
   normalizeNativeToolCallStreamError,
 } from './errors'
-import { transformSpawnableAgentToolCall } from './repair-tool-call'
-import {
-  calculateUsedCredits,
-  emitCacheDebugProviderRequest,
-  emitCacheDebugUsage,
-  extractCostOverrideDollars,
-  getModelProvider,
-  getProviderOptions,
-} from './usage'
+import { createRepairToolCall } from './repair-tool-call-callback'
+import { finalizeLlmStream } from './stream-finalize'
+import { prepareLlmStreamRequest } from './stream-request-setup'
+import { getProviderOptions } from './usage'
 
-import type { ModelRequestParams } from '../model-provider'
 import type { OpenRouterProviderOptions } from '@savant-code/common/types/agent-template'
 import type { ParamsOf } from '@savant-code/common/types/function-params'
 
@@ -61,36 +47,12 @@ export async function* promptAiSdkStream(
   const agentChunkMetadata =
     params.agentId != null ? { agentId: params.agentId } : undefined
 
-  if (params.signal.aborted) {
-    logger.info(
-      {
-        userId: params.userId,
-        userInputId: params.userInputId,
-      },
-      'Skipping stream due to canceled user input',
-    )
-    return promptAborted('User cancelled input')
-  }
-
-  const modelParams: ModelRequestParams = {
-    apiKey: params.apiKey,
-    model: params.model,
-    skipChatGptOAuth: params.skipChatGptOAuth,
-  }
-  const { model: aiSDKModel, isChatGptOAuth } =
-    await getModelForRequest(modelParams)
-
-  if (isChatGptOAuth) {
-    trackEvent({
-      event: AnalyticsEvent.CHATGPT_OAUTH_REQUEST,
-      userId: userId ?? '',
-      properties: {
-        model: requestedModel,
-        userInputId,
-      },
-      logger,
-    })
-  }
+  const prepared = await prepareLlmStreamRequest(params, {
+    logger,
+    trackEvent,
+  })
+  if (prepared.aborted) return prepared.result
+  const { aiSDKModel, isChatGptOAuth } = prepared
 
   const response = streamText({
     ...streamParams,
@@ -110,50 +72,13 @@ export async function* promptAiSdkStream(
         }),
     // Handle tool call errors gracefully by passing them through to our validation layer
     // instead of throwing (which would halt the agent). The only special case is when
+    // the tool name matches a spawnable agent - transform those to spawn_agents calls.    // Handle tool call errors gracefully by passing them through to our validation layer
+    // instead of throwing (which would halt the agent). The only special case is when
     // the tool name matches a spawnable agent - transform those to spawn_agents calls.
-    experimental_repairToolCall: async ({ toolCall, tools, error }) => {
-      const { spawnableAgents = [], localAgentTemplates = {} } = params
-      const toolName = toolCall.toolName
-
-      // Check if this is a NoSuchToolError for a spawnable agent
-      // If so, transform to spawn_agents call
-      if (NoSuchToolError.isInstance(error) && 'spawn_agents' in tools) {
-        const transformed = transformSpawnableAgentToolCall({
-          toolName,
-          toolCallInput: toolCall.input,
-          spawnableAgents,
-          localAgentTemplates,
-        })
-
-        if (transformed) {
-          logger.info(
-            {
-              originalToolName: toolName,
-              transformedInput: transformed.spawnAgentsInput,
-            },
-            'Transformed agent tool call to spawn_agents',
-          )
-
-          return {
-            ...toolCall,
-            toolName: transformed.toolName,
-            input: transformed.input,
-          }
-        }
-      }
-
-      // For all other cases (invalid args, unknown tools, etc.), pass through
-      // the original tool call.
-      logger.info(
-        {
-          toolName,
-          errorType: error.name,
-          error: error.message,
-        },
-        'Tool error - passing through for graceful error handling',
-      )
-      return toolCall
-    },
+    experimental_repairToolCall: createRepairToolCall({
+      logger,
+      params,
+    }),
   })
 
   const stopSequenceHandler = new StopSequenceHandler(params.stopSequences)
@@ -363,36 +288,5 @@ export async function* promptAiSdkStream(
     }
   }
 
-  const responseValue = await response.response
-  const messageId = responseValue.id
-
-  const requestMetadata = await response.request
-  emitCacheDebugProviderRequest({
-    callback: params.onCacheDebugProviderRequestBuilt,
-    provider: getModelProvider(aiSDKModel),
-    rawBody: safeToJSONValue(requestMetadata.body),
-  })
-
-  const usageResult = await response.usage
-  emitCacheDebugUsage({
-    callback: params.onCacheDebugUsageReceived,
-    usage: usageResult,
-  })
-
-  // Skip cost tracking for ChatGPT OAuth (user is on their own subscription)
-  if (!isChatGptOAuth) {
-    const providerMetadataResult = await response.providerMetadata
-    const providerMetadata = providerMetadataResult ?? {}
-
-    const costOverrideDollars = extractCostOverrideDollars(providerMetadata)
-
-    // Call the cost callback if provided
-    if (params.onCostCalculated && costOverrideDollars) {
-      await params.onCostCalculated(
-        calculateUsedCredits({ costDollars: costOverrideDollars }),
-      )
-    }
-  }
-
-  return promptSuccess(messageId)
+  return finalizeLlmStream(response, aiSDKModel, isChatGptOAuth, params)
 }

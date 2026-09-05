@@ -26,6 +26,7 @@ import {
   isChatGptOAuthRateLimited,
   resetChatGptOAuthRateLimit,
 } from './model-provider/oauth-rate-limit'
+import { resolveOpencodeApiKey } from './opencode-key-resolver'
 import { resolveOpenRouterApiKey } from './openrouter-key-resolver'
 
 import type { ModelRequestParams, ModelResult } from './model-provider/types'
@@ -171,14 +172,19 @@ async function resolveActiveProviderKey(
 /**
  * Resolve the API key for a registry provider. Providers with
  * `credentials.resolver: 'openrouter'` use the master-key exchange chain
- * (OR_MASTER_KEY → OPENROUTER_API_KEY → INFERENCE_API_KEY); all others read
- * their primary env var directly.
+ * (OR_MASTER_KEY → OPENROUTER_API_KEY → INFERENCE_API_KEY); providers with
+ * `credentials.resolver: 'opencode'` share one OpenCode credential
+ * (OPENCODE_API_KEY → legacy OPENCODE_GO_API_KEY); all others read their
+ * primary env var directly.
  */
 async function resolveProviderKey(
   config: ProviderConfig,
 ): Promise<string | undefined> {
   if (config.credentials.resolver === 'openrouter') {
     return resolveOpenRouterApiKey()
+  }
+  if (config.credentials.resolver === 'opencode') {
+    return resolveOpencodeApiKey()
   }
   const envVar = config.credentials.envVar
   return envVar === undefined ? undefined : process.env[envVar]

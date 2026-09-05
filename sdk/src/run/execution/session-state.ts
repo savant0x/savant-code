@@ -1,6 +1,7 @@
 import { EchoComplianceTracker } from '@savant-code/agent-runtime/util/echo-compliance'
 import { COMPOSIO_META_TOOL_NAMES } from '@savant-code/common/constants/composio'
 import { resolveBootContract } from '@savant-code/common/util/boot-contract'
+import { cloneDeep } from 'lodash'
 
 import {
   applyOverridesToSessionState,
@@ -13,6 +14,30 @@ import type { AgentDefinition } from '@savant-code/common/templates/initial-agen
 import type { SavantCodeFileSystem } from '@savant-code/common/types/filesystem'
 import type { SessionState } from '@savant-code/common/types/session-state'
 import type { SavantCodeSpawn } from '@savant-code/common/types/spawn'
+
+/**
+ * FID-2026-0819-005 Loop 231b: the runOnce agent-identity normalization,
+ * extracted verbatim from execution.ts — inline agent objects are appended
+ * (cloned) to the definitions list; string ids pass through.
+ */
+export function resolveAgentIdentity(options: {
+  agent: RunExecutionOptions['agent']
+  agentDefinitions?: AgentDefinition[]
+}): { agentDefinitions: AgentDefinition[]; agentId: string } {
+  let agentId: string
+  let agentDefinitions: AgentDefinition[]
+  if (typeof options.agent !== 'string') {
+    const clonedDefs = options.agentDefinitions
+      ? cloneDeep(options.agentDefinitions)
+      : []
+    agentDefinitions = [...clonedDefs, options.agent]
+    agentId = options.agent.id
+  } else {
+    agentDefinitions = options.agentDefinitions ?? []
+    agentId = options.agent
+  }
+  return { agentDefinitions, agentId }
+}
 
 /** Options needed by {@link resolveSessionState}, sliced from the full run options. */
 type ResolveSessionStateOptions = Pick<
