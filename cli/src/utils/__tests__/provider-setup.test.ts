@@ -4,41 +4,26 @@ import path from 'path'
 
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 
-import { applyPersistedDirectProviderSettings } from '../ollama-onboarding'
 import {
+  PROVIDER_SETUP_CONFIG,
+  RESEARCH_KEY_SERVICES,
   activateConfiguredProvider,
   applyPersistedProviderApiKeys,
-  applyPersistedResearchApiKeys,
-  beginResearchKeySetup,
   configureDefaultDirectProvider,
   getConfiguredProviderNames,
   getMissingProviderSetup,
   getProviderSetupGuidance,
-  getProviderSetupInfo,
-  getResearchKeyServiceInfo,
   saveProviderApiKey,
-  saveResearchApiKey,
 } from '../provider-setup'
 import { saveSettings } from '../settings'
 
+// Derived (rationale in provider-setup-gateway.test.ts — FID-2026-0905-006).
 const PROVIDER_ENV_VARS = [
-  'OPENROUTER_API_KEY',
-  'TOKENROUTER_API_KEY',
-  'OPENCODE_GO_API_KEY',
-  'TOKENHARBOR_API_KEY',
-  'NVIDIA_API_KEY',
-  'COMMAND_CODE_API_KEY',
-  'NOUS_API_KEY',
-  'CLOUDFLARE_API_TOKEN',
+  ...Object.values(PROVIDER_SETUP_CONFIG).map((config) => config.envVar),
+  ...Object.values(RESEARCH_KEY_SERVICES).map((service) => service.envVar),
   'DIRECT_PROVIDER',
   'INFERENCE_BASE_URL',
   'SAVANT_CODE_API_KEY',
-  'SERPER_API_KEY',
-  'CONTEXT7_API_KEY',
-  'PARALLEL_API_KEY',
-  'TAVILY_API_KEY',
-  'EXA_API_KEY',
-  'FIRECRAWL_API_KEY',
 ] as const
 
 describe('provider setup', () => {
@@ -73,14 +58,14 @@ describe('provider setup', () => {
   test('saves the provider key in credentials.json and loads it for the current process', () => {
     saveProviderApiKey('opencode-go', '  test-opencode-key  ')
 
-    expect(process.env.OPENCODE_GO_API_KEY).toBe('test-opencode-key')
+    expect(process.env.OPENCODE_API_KEY).toBe('test-opencode-key')
     const credentials = JSON.parse(
       fs.readFileSync(path.join(tempDir, 'credentials.json'), 'utf8'),
     )
-    expect(credentials.providerApiKeys.OPENCODE_GO_API_KEY).toBe(
+    expect(credentials.providerApiKeys.OPENCODE_API_KEY).toBe(
       'test-opencode-key',
     )
-    expect(credentials.providerApiKeys.OPENCODE_GO_API_KEY).not.toContain('  ')
+    expect(credentials.providerApiKeys.OPENCODE_API_KEY).not.toContain('  ')
     expect(getConfiguredProviderNames()).toContain('opencode-go')
   })
 
@@ -221,196 +206,18 @@ describe('provider setup', () => {
       path.join(tempDir, 'credentials.json'),
       JSON.stringify({
         providerApiKeys: {
-          OPENCODE_GO_API_KEY: 'stored-key',
+          OPENCODE_API_KEY: 'stored-key',
           TOKENHARBOR_API_KEY: 'stored-tokenharbor-key',
           NVIDIA_API_KEY: 'stored-nvidia-key',
         },
       }),
     )
-    process.env.OPENCODE_GO_API_KEY = 'shell-key'
+    process.env.OPENCODE_API_KEY = 'shell-key'
 
     applyPersistedProviderApiKeys()
 
-    expect(process.env.OPENCODE_GO_API_KEY).toBe('shell-key')
+    expect(process.env.OPENCODE_API_KEY).toBe('shell-key')
     expect(process.env.TOKENHARBOR_API_KEY).toBe('stored-tokenharbor-key')
     expect(process.env.NVIDIA_API_KEY).toBe('stored-nvidia-key')
-  })
-
-  test('rejects an empty provider key', () => {
-    expect(() => saveProviderApiKey('opencode-go', '  ')).toThrow(
-      'Provider API key cannot be empty.',
-    )
-    expect(fs.existsSync(path.join(tempDir, 'credentials.json'))).toBe(false)
-  })
-
-  test('restores direct mode from a persisted provider key', () => {
-    fs.writeFileSync(
-      path.join(tempDir, 'credentials.json'),
-      JSON.stringify({
-        providerApiKeys: { OPENCODE_GO_API_KEY: 'stored-key' },
-      }),
-    )
-
-    applyPersistedProviderApiKeys()
-
-    expect(process.env.DIRECT_PROVIDER).toBe('opencode-go')
-    expect(process.env.INFERENCE_BASE_URL).toBe('https://opencode.ai/zen/go/v1')
-  })
-
-  test('configures the default gateway without inventing a provider key', () => {
-    configureDefaultDirectProvider()
-
-    expect(process.env.DIRECT_PROVIDER).toBe('openrouter')
-    expect(process.env.INFERENCE_BASE_URL).toBe('https://openrouter.ai/api/v1')
-    expect(process.env.OPENROUTER_API_KEY).toBeUndefined()
-  })
-
-  test('does not override an explicit direct provider or backend token', () => {
-    process.env.DIRECT_PROVIDER = 'ollama'
-    process.env.INFERENCE_BASE_URL = 'http://localhost:11434/v1'
-
-    configureDefaultDirectProvider()
-
-    expect(process.env.DIRECT_PROVIDER).toBe('ollama')
-    expect(process.env.INFERENCE_BASE_URL).toBe('http://localhost:11434/v1')
-  })
-
-  test('saved gateway key takes precedence over persisted Ollama mode', () => {
-    saveSettings({
-      directProvider: 'ollama',
-      directProviderBaseUrl: 'http://localhost:11434/v1',
-    })
-
-    fs.writeFileSync(
-      path.join(tempDir, 'credentials.json'),
-      JSON.stringify({
-        providerApiKeys: { OPENCODE_GO_API_KEY: 'stored-key' },
-      }),
-    )
-
-    // Startup restores provider keys before persisted Ollama settings. This
-    // test mirrors that ordering and ensures the key wins.
-    applyPersistedProviderApiKeys()
-    applyPersistedDirectProviderSettings()
-
-    expect(process.env.DIRECT_PROVIDER).toBe('opencode-go')
-    expect(process.env.INFERENCE_BASE_URL).toBe('https://opencode.ai/zen/go/v1')
-  })
-
-  test('identifies missing setup only for the active gateway provider', () => {
-    process.env.DIRECT_PROVIDER = 'opencode-go'
-
-    const missing = getMissingProviderSetup()
-
-    expect(missing?.provider).toBe('opencode-go')
-    if (!missing) throw new Error('Expected missing provider setup')
-    const guidance = getProviderSetupGuidance(missing)
-    expect(guidance).toContain('/provider opencode-go')
-    expect(guidance).toContain('OPENCODE_GO_API_KEY')
-
-    process.env.OPENCODE_GO_API_KEY = 'shell-key'
-    expect(getMissingProviderSetup()).toBeUndefined()
-  })
-
-  test('bypasses gateway guidance for Ollama and backend auth', () => {
-    process.env.DIRECT_PROVIDER = 'ollama'
-    expect(getMissingProviderSetup()).toBeUndefined()
-
-    delete process.env.DIRECT_PROVIDER
-    process.env.SAVANT_CODE_API_KEY = 'backend-key'
-    expect(getMissingProviderSetup()).toBeUndefined()
-  })
-
-  test('saves a research key in credentials.json and applies it to the current process', () => {
-    saveResearchApiKey('serper', '  test-serper-key  ')
-
-    expect(process.env.SERPER_API_KEY).toBe('test-serper-key')
-    const credentials = JSON.parse(
-      fs.readFileSync(path.join(tempDir, 'credentials.json'), 'utf8'),
-    )
-    expect(credentials.researchApiKeys.SERPER_API_KEY).toBe('test-serper-key')
-    expect(credentials.researchApiKeys.SERPER_API_KEY).not.toContain('  ')
-    // Provider and research sections are independent.
-    expect(credentials.providerApiKeys).toBeUndefined()
-  })
-
-  test('rejects an empty research key', () => {
-    expect(() => saveResearchApiKey('parallel', '  ')).toThrow(
-      'Research API key cannot be empty.',
-    )
-    expect(fs.existsSync(path.join(tempDir, 'credentials.json'))).toBe(false)
-  })
-
-  test('restores persisted research keys without overriding an explicit environment variable', () => {
-    fs.writeFileSync(
-      path.join(tempDir, 'credentials.json'),
-      JSON.stringify({
-        researchApiKeys: {
-          SERPER_API_KEY: 'stored-serper-key',
-          PARALLEL_API_KEY: 'stored-parallel-key',
-        },
-      }),
-    )
-    process.env.SERPER_API_KEY = 'shell-serper-key'
-
-    applyPersistedResearchApiKeys()
-
-    expect(process.env.SERPER_API_KEY).toBe('shell-serper-key')
-    expect(process.env.PARALLEL_API_KEY).toBe('stored-parallel-key')
-    expect(process.env.TAVILY_API_KEY).toBeUndefined()
-  })
-
-  test('preserves unrelated credentials when saving a research key', () => {
-    fs.writeFileSync(
-      path.join(tempDir, 'credentials.json'),
-      JSON.stringify({
-        providerApiKeys: { OPENROUTER_API_KEY: 'existing-provider-key' },
-      }),
-    )
-
-    saveResearchApiKey('context7', 'test-context7-key')
-
-    const credentials = JSON.parse(
-      fs.readFileSync(path.join(tempDir, 'credentials.json'), 'utf8'),
-    )
-    expect(credentials.providerApiKeys.OPENROUTER_API_KEY).toBe(
-      'existing-provider-key',
-    )
-    expect(credentials.researchApiKeys.CONTEXT7_API_KEY).toBe(
-      'test-context7-key',
-    )
-  })
-
-  test('resolves research key services case-insensitively and rejects unknown services', () => {
-    expect(beginResearchKeySetup('Serper')).toBe('serper')
-    expect(getResearchKeyServiceInfo('PARALLEL')).toMatchObject({
-      service: 'parallel',
-      label: 'Parallel',
-      envVar: 'PARALLEL_API_KEY',
-    })
-    expect(beginResearchKeySetup('unknown-service')).toBeUndefined()
-    expect(getResearchKeyServiceInfo('nope')).toBeUndefined()
-  })
-
-  test('returns setup metadata for supported providers only', () => {
-    expect(getProviderSetupInfo('OpenRouter')).toMatchObject({
-      provider: 'openrouter',
-      envVar: 'OPENROUTER_API_KEY',
-    })
-    expect(getProviderSetupInfo('OpenCode-Go')).toMatchObject({
-      provider: 'opencode-go',
-      envVar: 'OPENCODE_GO_API_KEY',
-    })
-    expect(getProviderSetupInfo('TokenHarbor')).toMatchObject({
-      provider: 'tokenharbor',
-      envVar: 'TOKENHARBOR_API_KEY',
-      baseUrl: 'https://tokenharbor.ai/v1',
-    })
-    expect(getProviderSetupInfo('Nous')).toMatchObject({
-      provider: 'nous',
-      envVar: 'NOUS_API_KEY',
-      baseUrl: 'https://inference-api.nousresearch.com/v1',
-    })
-    expect(getProviderSetupInfo('unknown')).toBeUndefined()
   })
 })

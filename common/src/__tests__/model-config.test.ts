@@ -3,6 +3,7 @@ import { describe, expect, test } from 'bun:test'
 import {
   COMMANDCODE_PROTOCOLS,
   commandcodeModels,
+  openrouterModels,
   supportsAssistantPrefill,
   tokenharborModels,
 } from '../constants/model-config'
@@ -49,6 +50,30 @@ describe('TokenHarbor catalog', () => {
     expect(modelIds).toEqual(expectedModelIds)
     expect(new Set(modelIds).size).toBe(modelIds.length)
     expect(modelIds.every((id) => id.startsWith('tokenharbor/'))).toBe(true)
+  })
+})
+
+describe('OpenRouter catalog', () => {
+  test('defines stable upstream slugs with provider attribution', () => {
+    const modelIds = Object.values(openrouterModels)
+
+    expect(modelIds.length).toBeGreaterThan(0)
+    expect(new Set(modelIds).size).toBe(modelIds.length)
+    // Every static OpenRouter catalog entry must include the upstream
+    // vendor prefix (e.g. `z-ai/glm-5.3-free`). The live fetch can reshare
+    // bare upstream slugs, but the static table must preserve attribution so
+    // provider/prefix lookup logic stays predictable.
+    expect(
+      modelIds.every(
+        (id) =>
+          id.startsWith('anthropic/') ||
+          id.startsWith('google/') ||
+          id.startsWith('openai/') ||
+          id.startsWith('x-ai/') ||
+          id.startsWith('tencent/') ||
+          id.startsWith('z-ai/'),
+      ),
+    ).toBe(true)
   })
 })
 
