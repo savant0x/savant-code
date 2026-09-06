@@ -169,7 +169,7 @@
   and the fetch failed (run `31927208483`). A second dispatch with `source_ref: main` (the pushed fix)
   succeeded.
 - **Evidence:** .github/workflows/build-release-binaries.yml → field:source_ref,
-  scripts/public-release.ts → symbol:verifyReleaseAssets
+  scripts/public-release/assets.ts → symbol:verifyReleaseAssets
 - **Invariant:** The workflow's checkout `ref` input is a branch/tag name; a bare commit SHA is not
   resolvable by actions/checkout.
 - **Guard:** Dispatch with a branch/tag (e.g. `main`); the pipeline's asset-verify failure message now says
@@ -279,8 +279,9 @@
 - **Date:** 2026-08-11
 - **Failure:** A historical clean-shell recipe required manual environment and
   settings restoration and could be followed without proving restoration.
-- **Evidence:** scripts/public-release.ts → symbol:withLocalStateRestoration,
-  scripts/public-release.ts → symbol:restoreLocalState
+- **Evidence:** scripts/public-release/local-state.ts →
+  symbol:withLocalStateRestoration,
+  scripts/public-release/local-state.ts → symbol:restoreLocalState
 - **Invariant:** Release preparation uses the existing reversible preflight contract;
   historical recipes are context only.
 - **Guard:** `bun run release:public:diagnose`
@@ -295,7 +296,8 @@
 
 - **Date:** 2026-08-11
 - **Failure:** An earlier manual environment recipe did not prove restoration.
-- **Evidence:** scripts/public-release.ts → symbol:withLocalStateRestoration
+- **Evidence:** scripts/public-release/local-state.ts →
+  symbol:withLocalStateRestoration
 - **Invariant:** Historical recipes remain context and must point to the current reversible release contract.
 - **Guard:** `bun run release:public:diagnose`
 - **Verification:** The replacement contract is exercised by restoration and failure-path tests.

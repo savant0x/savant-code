@@ -21,7 +21,10 @@ import { fail, PROFILE_ENV, PROFILE_ENV_KEYS } from './fail'
 import type { LocalSnapshot } from './catalog'
 
 export function repositoryRoot(): string {
-  return path.resolve(import.meta.dir, '..')
+  // Module lives at <root>/scripts/public-release/; the monolith's original
+  // '..' was correct from <root>/scripts/ and must gain a level per directory
+  // moved (live-preview regression caught 2026-09-05, FID-007).
+  return path.resolve(import.meta.dir, '..', '..')
 }
 
 function settingsPath(): string {

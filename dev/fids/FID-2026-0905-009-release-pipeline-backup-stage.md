@@ -96,8 +96,8 @@ passes.
 
 ### Verification Receipt
 
-- fingerprint: sha256:7abe84a4057cc9ad7fecf2ccca72279282b363323e3dc5af3267614d8c716019
-- verified: 2026-09-06T01:02:09.271Z
+- fingerprint: sha256:8fc0f2e0b256452c0f9400041330614c70f5f8aef6359cc4602ea74da8a6f27c
+- verified: 2026-09-06T01:17:28.663Z
 - test scripts/public-release-backup-stage.test.ts: exit 0
 - test scripts/public-release.test.ts: exit 0
 - test scripts/public-release-assets.test.ts: exit 0
@@ -137,47 +137,113 @@ passes.
 
 - **CHANGE DELTA:** initial authoring.
 
-## Implementation Evidence (Double Audit, 2026-09-05)
+### Missed Questions
 
-- **File:line ranges:** `scripts/public-release/fail.ts` (RELEASE_STAGES
-  13 → 14 entries, BACKUP_BUNDLE between GIT_PUSH and GITHUB_RELEASE);
-  `scripts/public-release/backup-stage.ts` (new, 41 lines:
-  runBackupBundleStage — resume-skip via isStageComplete, core call,
-  throw-and-result fail-closed translation, markStage, console line);
-  `scripts/public-release/transaction.ts` (import + one call between
-  runGitPushStage and runGitHubReleaseStage inside the
-  withLocalStateRestoration guard); `scripts/public-release/catalog.ts`
-  (preview plan line between push and GitHub-release steps);
-  `scripts/public-release-backup-stage.test.ts` (new, 238 lines, 6
-  tests / 11 expects on scratch repos with env-isolated bundle dirs).
-- **Gate output:** backup-stage suite 6 pass / 0 fail; sibling parity
-  56/0 across the 11 pre-existing public-release test files (see parity
-  note); adjacent suites (git-bundle-backup, audit-evidence,
-  pre-push-scan) 20/0; eslint `--max-warnings 0` clean on `scripts/`;
-  prettier clean; lint:md 0.
-- **Parity note (ground-truth correction):** FID-007's ledger line said
-  "12 files, 57/216"; the tree carries **11** pre-existing public-release
-  test files measuring **56 pass / 205 expects** — the FID-007 summary
-  glob over-counted by one file. Verified non-regression: `git diff
-  --stat 32255bb..HEAD -- scripts/` shows zero test-file changes, and
-  `git ls-tree 32255bb scripts/` confirms 11 public-release test files
-  at the FID-007 commit. No pin broke; the FID-009 baseline is the
-  measured 56/205 + the new 6/11.
-- **Loop-2 corrections folded in:** (1) resume contract — a pre-009
-  receipt runs the incremental for real instead of retro-marking;
-  (2) stage fail-closed translation — the core's precondition throws are
-  wrapped into the uniform `BACKUP_BUNDLE failed` abort so the receipt's
-  failedStage carries context either way; (3) test isolation —
-  `withIsolatedBundleDir` env override (the stage resolves its
-  destination from `SAVANT_BUNDLE_DIR` by design; the first run wrote
-  12 junk incrementals into the real OneDrive dir before isolation,
-  removed and re-verified clean).
-- **Tests Added:** Yes — `scripts/public-release-backup-stage.test.ts`
-  (6 tests): stage-list ordering, mark-on-verified-incremental,
-  fail-closed-no-mark (missing marker), resume-skip, pre-009
-  runs-for-real + incremental file asserted, destination failure throws
-  with marker unchanged.
-- **Verification Evidence:** suites green (6/11 new + 56/205 parity +
-  20/0 adjacent); eslint/prettier/lint:md clean; `fid:verify` receipt
-  stamped below.
-- **Archived:** (set when moved to `dev/fids/archive/`)
+1. *Does a mid-transaction backup failure lose the already-pushed tag?*
+   → No: the stage runs after GIT_PUSH; a backup failure aborts the
+   release with the tag already on the remote, and `--resume` skips to
+   BACKUP_BUNDLE (retry) then continues — the receipt's completedStages
+   carries everything before it.
+2. *What if the operator has never run the baseline?* → The stage fails
+   closed with the core's explicit "run with --baseline first" message;
+   the release aborts before any public artifact — the same contract as
+   the operator-run script (fail-closed without a verified chain).
+3. *Should the stage run before TAG instead?* → No: the bundle range is
+   `last-backup..main`; running before the automation commit/tag risks
+   capturing a stale HEAD relative to the receipt's headSha. After
+   GIT_PUSH the pushed commit IS the receipt's HEAD — the exact commit
+   the release publishes.
+4. *Does the OneDrive sync need to complete before the release continues?*
+   → No: the durability contract is write + `git bundle verify` on the
+   local file; OneDrive replication is asynchronous by design and is the
+   operator's off-site layer, not the pipeline's.
+5. *Why not reuse the existing `runBackupBundleStage`-shaped hook from
+   the desktop packaging FID (-0903-001)?* → That FID adds packaging
+   stages on a future cut; sequencing with it is recorded in Related,
+   and its stages can slot after BACKUP_BUNDLE without re-ordering.
+
+### Implementation Evidence (REQUIRED for `closed`)
+
+- [x] **Commit SHA (G2):** stamped post-drain (this FID is implemented
+      and committed under the 2026-09-05 G1 amendment).
+- [x] **File:line ranges:** `scripts/public-release/fail.ts` (RELEASE_STAGES
+      13 → 14 entries, BACKUP_BUNDLE between GIT_PUSH and GITHUB_RELEASE);
+      `scripts/public-release/backup-stage.ts` (new, 41 lines:
+      runBackupBundleStage — resume-skip via isStageComplete, core call,
+      throw-and-result fail-closed translation, markStage, console line);
+      `scripts/public-release/transaction.ts` (import + one call between
+      runGitPushStage and runGitHubReleaseStage inside the
+      withLocalStateRestoration guard); `scripts/public-release/catalog.ts`
+      (preview plan line between push and GitHub-release steps);
+      `scripts/public-release-backup-stage.test.ts` (new, 238 lines, 6
+      tests / 11 expects on scratch repos with env-isolated bundle dirs).
+- [x] **Gate output:** backup-stage suite 6 pass / 0 fail; sibling parity
+      56/0 across the 11 pre-existing public-release test files (see parity
+      note); adjacent suites (git-bundle-backup, audit-evidence,
+      pre-push-scan) 20/0; eslint `--max-warnings 0` clean on `scripts/`;
+      prettier clean; lint:md 0.
+- [x] **Parity note (ground-truth correction):** FID-007's ledger line said
+      "12 files, 57/216"; the tree carries **11** pre-existing public-release
+      test files measuring **56 pass / 205 expects** — the FID-007 summary
+      glob over-counted by one file. Verified non-regression: `git diff
+      --stat 32255bb..HEAD -- scripts/` shows zero test-file changes, and
+      `git ls-tree 32255bb scripts/` confirms 11 public-release test files
+      at the FID-007 commit. No pin broke; the FID-009 baseline is the
+      measured 56/205 + the new 6/11.
+- [x] **Loop-2 corrections folded in:** (1) resume contract — a pre-009
+      receipt runs the incremental for real instead of retro-marking;
+      (2) stage fail-closed translation — the core's precondition throws are
+      wrapped into the uniform `BACKUP_BUNDLE failed` abort so the receipt's
+      failedStage carries context either way; (3) test isolation —
+      `withIsolatedBundleDir` env override (the stage resolves its
+      destination from `SAVANT_BUNDLE_DIR` by design; the first run wrote
+      12 junk incrementals into the real OneDrive dir before isolation,
+      removed and re-verified clean).
+- [x] **Tests Added:** Yes — `scripts/public-release-backup-stage.test.ts`
+      (6 tests): stage-list ordering, mark-on-verified-incremental,
+      fail-closed-no-mark (missing marker), resume-skip, pre-009
+      runs-for-real + incremental file asserted, destination failure throws
+      with marker unchanged.
+- [x] **Verification Evidence:** suites green (6/11 new + 56/205 parity +
+      20/0 adjacent); eslint/prettier/lint:md clean; `fid:verify` receipt
+      stamped below; **live preview smoke 2026-09-05**: `release:public
+      --preview` ran end-to-end after fixing the decomposition regression
+      (below) and the preview plan shows the backup step between push and
+      GitHub release.
+- [ ] **Archived:** (set when moved to `dev/fids/archive/`)
+
+### Live smoke finding (decomposition regression, fixed)
+
+- **Finding:** `release:public --preview` failed immediately —
+  `ENOENT ... scripts/VERSION`. Root cause: the monolith's
+  `repositoryRoot()` used `path.resolve(import.meta.dir, '..')`, correct
+  from `<root>/scripts/`; the FID-007 move into
+  `scripts/public-release/` put the module one directory deeper, so the
+  unqualified `'..'` resolved to `scripts/` instead of the repo root.
+  The sibling tests never caught it because they construct explicit
+  root paths and never call the module-level `repositoryRoot()`.
+- **Fix:** both `import.meta.dir` sites (`local-state.ts` `repositoryRoot`,
+  `command-runner.ts` private copy) resolved to `'..','..'` with a
+  comment explaining the per-directory-move rule; re-ran the preview:
+  full plan output including the BACKUP_BUNDLE line, exit 0.
+- **Lesson:** a facade can be surface-identical and test-parity green
+  while module-relative path derivations rot one level deep — the live
+  entrypoint is the only pin for those.
+
+### Code Verification Evidence
+
+- [x] Files referenced in Affected Components exist (stage module,
+      test file, transaction/catalog/fail edits — all on disk and
+      committed); `grep -rn "import.meta.dir" scripts/public-release/`
+      → exactly 2 sites, both fixed to `'..','..'`.
+- [x] Implementation matches the Proposed Solution + the two Loop-2
+      corrections (run-for-real pre-009; throw-translation fail-closed).
+- [x] Typecheck/tests/lint pass with pasted tool output (Gate output
+      above + 13 fid:verify gate receipts PASS).
+- [x] Production call-graph evidence — the stage is called from
+      `transaction.ts` between runGitPushStage and
+      runGitHubReleaseStage (the Law-4 wiring grep; preview plan line
+      is the user-visible surface).
+- [x] FID status reflects the actual implementation state — `fixed`;
+      `closed` after the operator's first real release cut exercises
+      the stage end-to-end.

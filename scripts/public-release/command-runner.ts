@@ -173,5 +173,7 @@ export function runRequired(
 }
 
 function repositoryRoot(): string {
-  return path.resolve(import.meta.dir, '..')
+  // Moved one directory deeper by the FID-007 decomposition; see
+  // local-state.ts repositoryRoot for the same fix rationale.
+  return path.resolve(import.meta.dir, '..', '..')
 }
