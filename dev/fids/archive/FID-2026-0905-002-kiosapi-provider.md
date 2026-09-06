@@ -229,17 +229,14 @@ gated gateway test file, so no gate-path changes were needed.
 
 ### Verification Receipt
 
-- fingerprint: _pending (stamp blocked — see typecheck common note)_
-- verified: _pending_
-- typecheck common: PARTIAL (touched files clean; pre-existing untouched failure — see Loop 2)
+- fingerprint: sha256:1052e62f9de8d4dbdd7c76fa8971457ea86af4ce85a1d9064847324ec81c227a
+- verified: 2026-09-06T22:28:22.509Z
+- typecheck common: exit 0
 - typecheck cli: exit 0
 - typecheck sdk: exit 0
-- test common/src/providers/__tests__/provider-registry.test.ts: 21 pass / 0 fail (both suites, 224 expects)
-- test common/src/providers/__tests__/validate-provider-registry.test.ts: included above (21 pass / 0 fail)
-- test cli/src/utils/__tests__/openrouter-models-gateway.test.ts: 12 pass / 0 fail (4 new KiosAPI tests)
-- eslint (7 touched files, --max-warnings 0): exit 0
-- prettier (touched files + READMEs): clean
-- lint:md: exit 0 (this FID rewrapped in Loop 2)
+- test common/src/providers/__tests__/provider-registry.test.ts: exit 0
+- test common/src/providers/__tests__/validate-provider-registry.test.ts: exit 0
+- test cli/src/utils/__tests__/openrouter-models-gateway.test.ts: exit 0
 
 ## Perfection Loop
 
@@ -313,7 +310,9 @@ gated gateway test file, so no gate-path changes were needed.
 > Implementation complete; live verification discharged by operator live
 > test 2026-09-05 ("kiosapi works"). Status `closed` 2026-09-05.
 
-- [ ] **Commit SHA:** _pending_ — no commit made; operator executes git (G1)
+- [x] **Commit SHA:** `cb6288aa` — feat(common): provider registry, kiosapi/zen
+  catalogs, and type decomposition (FID-2026-0905-002/-006); ground-truth
+  filled 2026-09-06 via `git log -S kiosapi -- common/src/providers/registry.ts`
 - [x] **File:line ranges:**
   `common/src/providers/registry.ts:186-205` (entry),
   `cli/src/utils/openrouter-models/kiosapi.ts:1-97` (fetcher),

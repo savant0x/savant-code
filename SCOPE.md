@@ -60,11 +60,32 @@
       once the live smoke approves the office (no dead code, Law 5/15).
       Awaiting T15-F.
 
-## [OPEN-OUT-OF-SCOPE] — desktop bundle size (+R3F deps)
+## [OPEN-OUT-OF-SCOPE → promoted to work item, 2026-09-06] — desktop bundle size (+R3F deps)
 
 Adding @react-three/fiber + drei + postprocessing grows the renderer bundle
-(~+150KB gz estimated in FID Loop 3). Accepted for the desktop shell; no
-lazy-loading unless the operator asks (YAGNI). No action.
+(~+150KB gz estimated in FID Loop 3). **Operator ruling 2026-09-06: authorize
+optimization** — lazy-load the 3D stack so the shell's first paint does not
+carry it. FID-first per protocol; see Task 16 desktop item below.
+
+> **Operator ruling 2026-09-06:** Authorize optimization. Lazy-load the 3D
+> stack in the desktop renderer so the initial shell does not carry the R3F
+> bundle; target the FID for it before code.
+
+> **[PROMOTED → work item, 2026-09-06]** Operator ruled: lazy-load the 3D
+> stack rather than accept the eager bundle. See the desktop task entry below
+> for the contracted plan.
+
+## [OPEN-OUT-OF-SCOPE → authorized, 2026-09-06] — T15-F visual smoke reveals incomplete office presentation
+
+Operator smoke 2026-08-31 reports mostly black output, Savant framed near the
+bottom, no office details, no visible robots/models, and no Hermes3D-like
+movement. Ground-truth review confirms the current P1–P3 implementation only
+renders capsule/sphere characters and six tool desks; it does not yet render
+walls, room zones, personal desk furniture, articulated character detail,
+or speech bubbles in-scene. **Operator ruling 2026-09-06: authorize build** —
+the environment + character presentation layer is approved as a new work
+item (FID-first), after which visual smoke is re-run. T15-F/T15-H unblock on
+a passing smoke, not on authorization.
 
 ## [OPEN-OUT-OF-SCOPE] — T15-F visual smoke reveals incomplete office presentation
 
@@ -612,6 +633,14 @@ needs a blocking presentation): operator decides whether to authorize a
 fix (likely a tsconfig `types` gap) or leave it. Consequence: `fid:verify`
 for FID-2026-0905-002 reports 5 PASS / 1 FAIL and no receipt is stamped.
 
+> **[RESOLVED — closed 2026-09-06]** Operator ruling: close as resolved.
+> Live ground truth: `bun run typecheck` in `common/` exits 0 (verified
+> 2026-09-06; the 30 errors no longer exist). The blocked receipt is now
+> stamped — `bun run fid:verify dev/fids/archive/FID-2026-0905-002-… --write`
+> → **6/6 PASS**, fingerprint `sha256:7be7d8ed…`, verified
+> 2026-09-06T22:27Z; pending Commit-SHA evidence filled (`cb6288aa`, via
+> `git log -S kiosapi`). Item closed with no code change required.
+
 ## Task 9 — Add OpenCode Zen provider (2026-09-05) — COMPLETE (closed + archived 2026-09-05)
 
 > Operator wants OpenCode Zen (`https://opencode.ai/zen/v1`) as a provider:
@@ -831,3 +860,43 @@ for FID-2026-0905-002 reports 5 PASS / 1 FAIL and no receipt is stamped.
       2026-09-06; the git-committed audit trail lands with the T16 commit.
 - [ ] **T16-H.** G2 commit hash stamps into both FID Implementation
       Evidence sections + path-scoped commits (G1/G3/G8).
+
+## Task 17 — Operator rulings on the three OPEN-OUT-OF-SCOPE items (2026-09-06)
+
+All three open items presented with current ground truth; operator ruled on
+each 2026-09-06. This section is the audit trail.
+
+- [x] **Ruling 1 — desktop bundle size (+R3F deps): AUTHORIZED
+      OPTIMIZATION.** Lazy-load the 3D stack in the desktop renderer so the
+      initial shell does not carry the R3F/drei/postprocessing bundle
+      (~+150KB gz). Reverses the earlier YAGNI acceptance. Contracted as
+      **T17-A** (FID-first).
+- [x] **Ruling 2 — office visual presentation: AUTHORIZED BUILD.** The
+      environment + character presentation layer (walls, room zones, personal
+      desk furniture, articulated character detail, in-scene speech bubbles)
+      is approved as a work item; visual smoke is re-run after it. T15-F and
+      T15-H unblock on a **passing smoke**, not on this authorization.
+      Contracted as **T17-B** (FID-first).
+- [x] **Ruling 3 — common typecheck red in untouched test file: CLOSED AS
+      RESOLVED.** Ground truth 2026-09-06: `bun run typecheck` in `common/`
+      exits 0 — the 30 `model-config.test.ts` errors no longer exist. The
+      consequence is also gone: `fid:verify
+      dev/fids/archive/FID-2026-0905-002-kiosapi-provider.md --write` →
+      **6/6 PASS**, fingerprint `sha256:7be7d8ed…` stamped (verified
+      2026-09-06T22:27Z), and the FID's pending Commit-SHA evidence filled
+      with `cb6288aa` (via `git log -S kiosapi --
+      common/src/providers/registry.ts`). No code change was required.
+
+### New work items from the rulings
+
+- [ ] **T17-A.** Desktop renderer: lazy-load the 3D stack (R3F + drei +
+      postprocessing) behind a dynamic import so first paint of the shell is
+      bundle-clean. FID-first: author the FID, converge, then implement.
+      Verification: desktop typecheck + renderer test suite + a bundle
+      composition check proving the 3D chunk is separate.
+- [ ] **T17-B.** Office environment + character presentation layer for the
+      desktop 3D scene: walls, room zones, personal desk furniture,
+      articulated character detail, in-scene speech bubbles (P1–P3 render
+      capsules/spheres + six tool desks only). FID-first; ends with a
+      re-run of the visual smoke that failed 2026-08-31. **T15-F/T15-H
+      unblock on a passing smoke.**
