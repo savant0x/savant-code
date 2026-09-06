@@ -771,6 +771,18 @@ for FID-2026-0905-002 reports 5 PASS / 1 FAIL and no receipt is stamped.
       bypass (`desktop-stages.ts:72-74`, `desktop-workflow.ts:75`). The
       three actual guards: hidden index-state detection, clean-checkout
       compile gate, empty-SHA fail-closed. NOT yet implemented.
+- [x] **T16-I.** Desktop Linux icon defect (discovered during the T16-F
+      scratch run 34044435124, run 3): `tauri-build`'s compile-time macro
+      embeds `icons/icon.png` for non-Windows targets; only `icon.ico`
+      existed (committed `icon.ico`, no png anywhere — `git ls-files` +
+      `ls icons/` empty for pngs), so every Linux build died at
+      "failed to open icon .../icon.png: No such file or directory"
+      (job 101516846405). Fixed 2026-09-06: generated
+      `icon.png`/`128x128.png`/`32x32.png` from the .ico's 48x48 32bpp
+      BGRA layer (alpha mask honored; 41.6% opaque; round-trip-verified
+      encoder in `dev/scratchpad/generate-desktop-icons.ts`) and extended
+      `tauri.conf.json` `bundle.icon` to include them. RED evidence = the
+      CI failure log above; GREEN = generator verification output.
 - [ ] **T16-E.** OPERATOR (outside the repo): re-create
       `TAURI_SIGNING_PRIVATE_KEY` in the `desktop-updater-signing`
       environment (key line only, base64-decodable); blocks the first green
