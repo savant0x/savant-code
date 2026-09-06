@@ -193,8 +193,8 @@ the fact (which is exactly what happened).
 
 ### Verification Receipt
 
-- fingerprint: sha256:dfe593280d333c1a24816966d41abf34fbd3f5d56e175faf3d45506ec251a680
-- verified: 2026-09-06T14:55:36.822Z
+- fingerprint: sha256:9ee2e50ed93d7be116fc394195c0582a38d5cb9dbf5ea5fd1ac848dbac4e3c75
+- verified: 2026-09-06T15:05:49.765Z
 - test scripts/public-release-desktop.test.ts: exit 0
 - test scripts/public-release-desktop-claim.test.ts: exit 0
 - test scripts/public-release-desktop-manifest.test.ts: exit 0

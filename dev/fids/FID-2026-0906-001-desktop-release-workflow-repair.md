@@ -193,8 +193,8 @@ The CLI release is unaffected.
 
 ### Verification Receipt
 
-- fingerprint: sha256:f72f5f7b596a0da81757243856493c20509965fd6cfeeda484c6a410385934b4
-- verified: 2026-09-06T14:59:41.219Z
+- fingerprint: sha256:424f2acd52597a06f9bf2dbfcfc68f64d0fbd6786d6193b855146a736151beee
+- verified: 2026-09-06T15:05:37.404Z
 - test scripts/public-release-desktop-workflow.test.ts: exit 0
 - test scripts/public-release-desktop.test.ts: exit 0
 - test scripts/public-release.test.ts: exit 0
