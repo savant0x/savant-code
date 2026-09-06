@@ -193,8 +193,8 @@ the fact (which is exactly what happened).
 
 ### Verification Receipt
 
-- fingerprint: sha256:9ee2e50ed93d7be116fc394195c0582a38d5cb9dbf5ea5fd1ac848dbac4e3c75
-- verified: 2026-09-06T15:05:49.765Z
+- fingerprint: sha256:d7e64afb1e02a1bb3c2bb36481b36f9fe7f7fb18b30df089f41f6cbf79e466b0
+- verified: 2026-09-06T18:39:23.129Z
 - test scripts/public-release-desktop.test.ts: exit 0
 - test scripts/public-release-desktop-claim.test.ts: exit 0
 - test scripts/public-release-desktop-manifest.test.ts: exit 0
@@ -382,10 +382,18 @@ the fact (which is exactly what happened).
 
 ## Resolution
 
-- (pending — closure after the next release cut demonstrates the loud
-  desktop decision in the receipt and plan output. Implementation
-  complete 2026-09-06: all four surfaces live, 46/0 gates, receipt
-  stamped.)
+- (closure condition: the next **pipeline release cut** demonstrates the
+  loud desktop decision in the receipt. Closure is a live-cut ceremony —
+  operator-held — per the same rule as the v0.0.29 FIDs.)
+- **Live dual-branch preview proof (2026-09-06, post-run-7):** with the
+  flag **unset**, `bun run release:public:preview` prints all three
+  desktop lines as `SKIPPED — SAVANT_CODE_RELEASE_DESKTOP not set` (exit
+  0) — the exact decision that was invisible on v0.0.29 night. With
+  `SAVANT_CODE_RELEASE_DESKTOP=1`, the same preview prints the three
+  active desktop stages (dispatch-and-watch, attach, verify manifest at
+  the per-release URL) with no SKIPPED lines. The scratch-run pipeline
+  does not exercise the full receipt path (no npm publish occurred), so
+  the receipt field's live cut remains the closure condition.
 
 ## Lessons Learned
 
