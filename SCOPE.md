@@ -761,14 +761,16 @@ for FID-2026-0905-002 reports 5 PASS / 1 FAIL and no receipt is stamped.
       sibling parity 44/0 + live `--preview` SKIPPED lines + quality PASS;
       test split for the 300-line ratchet (claim file 136 lines); Loop 4
       recorded; receipt stamped 5/5 PASS; status `fixed`.
-- [ ] **[OPEN-OUT-OF-SCOPE]** Release-provenance guard (discovered during
-      the T16 audit): the v0.0.29 phantom-source incident (assume-unchanged
-      files silently excluded 21 source lines from commits; local gates
-      passed while clean checkouts broke) remains UNGUARDED — nothing in
-      the pipeline detects assume-unchanged/skip-worktree state, verifies a
-      clean checkout builds, or asserts tag/asset/commit binding. Proposed
-      as FID-2026-0906-003 (medium-high); NOT implemented — operator
-      decides whether to add it to scope.
+- [x] **[OPEN-OUT-OF-SCOPE → resolved]** Release-provenance guard:
+      authored 2026-09-06 as
+      `dev/fids/FID-2026-0906-003-release-provenance-guard.md` (status
+      `analyzed`, receipt 2/2 PASS) after the operator added it to scope.
+      Audit corrections vs. this entry's draft claims: tag↔commit binding
+      already exists (`git-publish.ts:76`, `github-api.ts:74`) and desktop
+      SHA binding partially exists — the real gap is the empty-`head_sha`
+      bypass (`desktop-stages.ts:72-74`, `desktop-workflow.ts:75`). The
+      three actual guards: hidden index-state detection, clean-checkout
+      compile gate, empty-SHA fail-closed. NOT yet implemented.
 - [ ] **T16-E.** OPERATOR (outside the repo): re-create
       `TAURI_SIGNING_PRIVATE_KEY` in the `desktop-updater-signing`
       environment (key line only, base64-decodable); blocks the first green
