@@ -282,8 +282,8 @@ The CLI release is unaffected.
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [x] **Commit SHA:** pending G2 stamp (this FID is implemented and staged
-      for commit under the G1 amendment; hash recorded at commit time)
+- [x] **Commit SHA:** `2c1ea600` (fix(desktop): release workflow secret
+      preflight + Linux system deps — 4 files, 506 insertions)
 - [x] **File:line ranges:** `.github/workflows/desktop-release.yml:60-78`
       (secret preflight step — decode check, remediation stderr, exit 1,
       no secret output), `:80-95` (Linux apt step, 9 packages,

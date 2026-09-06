@@ -276,8 +276,8 @@ the fact (which is exactly what happened).
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [x] **Commit SHA:** pending G2 stamp (implemented and staged for commit
-      under the G1 amendment; hash recorded at commit time)
+- [x] **Commit SHA:** `e6f44d80` (feat(release): loud desktop-stage skips
+      + flag-independent updater verification — 8 files, 699 insertions)
 - [x] **File:line ranges:** `scripts/public-release/catalog.ts:69-78`
       (receipt fields `desktopStagesSkipped`/`desktopStagesSkipReason`),
       `:205-215` (unconditional plan lines — SKIPPED form when the flag

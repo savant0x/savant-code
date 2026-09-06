@@ -728,3 +728,56 @@ for FID-2026-0905-002 reports 5 PASS / 1 FAIL and no receipt is stamped.
       missing `bun:test` globals in `model-config.test.ts` — fixed via
       explicit `bun:test` imports (repo convention); common typecheck 0,
       suite 6/0. Recorded in FID-2026-0905-006.
+
+## Task 16 — v0.0.29 release-night audit + desktop release blockers (2026-09-06)
+
+> Operator directive: "we shipped 0.0.29 last night — see where we stand,
+> why we had so many issues" then "the real story is the desktop is still
+> unreleased — dig deeper" then "make the 2 files, run perfection then
+> present". Audit findings (all tool-evidenced): phantom-source
+> assume-unchanged incident (fixed at 4d85b6b), gateway watchdog flake
+> (gate attempt 1, 2 tests), desktop stages silently skipped
+> (SAVANT_CODE_RELEASE_DESKTOP unset), desktop workflow failed on both
+> platforms (corrupted signing secret; missing Linux apt deps), latest.json
+> never produced. Desktop has never shipped (only 2 runs of
+> desktop-release.yml ever, both 2026-09-06).
+
+- [x] **T16-A.** Author `FID-2026-0906-001-desktop-release-workflow-repair.md`
+      (signing-secret preflight + Linux system deps) with Perfection Loop
+      converged, gates declared and run green (28/0), operator presented.
+- [x] **T16-B.** Author `FID-2026-0906-002-release-pipeline-desktop-visibility.md`
+      (loud skips + receipt record + flag-independent POST_RELEASE_VERIFY
+      assert) with Perfection Loop converged, gates declared and run green
+      (28/0), operator presented.
+- [x] **T16-C.** Implement FID-2026-0906-001 Steps 1-3 (RED pins → YAML
+      edits → audit) — **done 2026-09-06 (automation level 3):** 3 workflow
+      pins RED-first (8/3), GREEN edits to both workflows, audit 11/0 +
+      YAML parse OK; Loop 4 recorded; receipt stamped 4/4 PASS; status
+      `fixed`.
+- [x] **T16-D.** Implement FID-2026-0906-002 Steps 1-4 (RED pins →
+      catalog/transaction/stages-verify → parity audit) — **done
+      2026-09-06 (automation level 3):** 8 pins RED-first, GREEN across
+      catalog/desktop-stages/transaction/stages-verify, audit 46/0 +
+      sibling parity 44/0 + live `--preview` SKIPPED lines + quality PASS;
+      test split for the 300-line ratchet (claim file 136 lines); Loop 4
+      recorded; receipt stamped 5/5 PASS; status `fixed`.
+- [ ] **[OPEN-OUT-OF-SCOPE]** Release-provenance guard (discovered during
+      the T16 audit): the v0.0.29 phantom-source incident (assume-unchanged
+      files silently excluded 21 source lines from commits; local gates
+      passed while clean checkouts broke) remains UNGUARDED — nothing in
+      the pipeline detects assume-unchanged/skip-worktree state, verifies a
+      clean checkout builds, or asserts tag/asset/commit binding. Proposed
+      as FID-2026-0906-003 (medium-high); NOT implemented — operator
+      decides whether to add it to scope.
+- [ ] **T16-E.** OPERATOR (outside the repo): re-create
+      `TAURI_SIGNING_PRIVATE_KEY` in the `desktop-updater-signing`
+      environment (key line only, base64-decodable); blocks the first green
+      desktop run.
+- [ ] **T16-F.** Live validation: first green `desktop-release.yml` run
+      (FID-001 closure) + next release cut's loud desktop decision
+      (FID-002 closure).
+- [ ] **T16-G.** Session summary `2026-09-06-v0.0.29-release-night-audit.md`
+      + LEARNINGS entry (`assume-unchanged-phantom-source`) — written
+      2026-09-06; the git-committed audit trail lands with the T16 commit.
+- [ ] **T16-H.** G2 commit hash stamps into both FID Implementation
+      Evidence sections + path-scoped commits (G1/G3/G8).

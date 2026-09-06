@@ -1229,4 +1229,37 @@ tracking doc).
 
 ---
 
+## Lesson: Assume-unchanged files are phantom source invisible to every local gate
+
+- **Date:** 2026-09-06
+- **Failure:** Three tracked files sat in assume-unchanged state from the
+  OpenCode Zen integration, silently excluding 21 lines of source
+  (`PROVIDER_PROTOCOL_MAPS` re-exports, `TOKENROUTER` names, the GLM 5.3
+  Free catalog entry) from every commit. Local typecheck, tests, and all
+  20+ release gates passed against worktree content; any clean checkout
+  failed to compile — first surfaced by CI (desktop-ci failed twice,
+  3 platforms each, `No matching export ... PROVIDER_PROTOCOL_MAPS`) and
+  the v0.0.29 release binary workflow, hours after the npm publish.
+- **Evidence:** commit `4d85b6b` (the fix; its message documents the
+  incident and the three files); GH run 34009246538 (desktop-ci, all 3
+  platforms, the export error); v0.0.29 receipt
+  (`savant-public-release-0.0.29.json`, all gates exit 0 on the
+  worktree-shaped tree).
+- **Invariant:** A gate that runs against the working tree verifies the
+  worktree, not the commit. Published artifacts derive from committed
+  content; anything that makes the index diverge from the worktree
+  (assume-unchanged, skip-worktree, smudge filters) makes every local
+  gate a lie about what ships.
+- **Guard:** (proposed, not yet implemented — SCOPE.md Task 16
+  [OPEN-OUT-OF-SCOPE]) pipeline PREFLIGHT fails closed on
+  `git ls-files -v` lowercase flags; clean-checkout build gate;
+  tag/asset/commit binding assert at POST_RELEASE_VERIFY.
+- **Verification:** `git ls-files -v | grep '^[a-z]'` → empty on the
+  current tree; the 21 lines are committed at `4d85b6b`.
+- **Scope:** release/provenance
+- **Owning FID:** proposed FID-2026-0906-003 (not yet authored — see
+  SCOPE.md Task 16 OPEN-OUT-OF-SCOPE; operator decides)
+- **Status:** active
+- **Canonical rule:** assume-unchanged-phantom-source
+
 <!-- Add new entries above this line -->
