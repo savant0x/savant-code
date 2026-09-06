@@ -621,21 +621,15 @@ presentation layer, then re-run visual smoke. T15-F/T15-H remain blocked.
 > `jsonValueSchema` uses are validation-only. BLOCKED on operator facts
 > (model id, blast radius, cross-provider comparison) — see questions.
 
-## [OPEN-OUT-OF-SCOPE] — desktop sidecar E2E: spawn-time env starvation + absent from root test chain
+## [OPEN-OUT-OF-SCOPE → RESOLVED via FID-2026-0906-007, 2026-09-06] — desktop sidecar E2E: spawn-time env starvation + absent from root test chain
 
-> **Discovered 2026-09-06 (T17-A verification leg).**
-> `desktop/scripts/sidecar-e2e.integration.test.ts` fails 2/4 without env
-> ("sidecar never printed the ready line", 20-32s spawn timeouts) and
-> passes 4/4 in 5.8s with
-> `NEXT_PUBLIC_CB_ENVIRONMENT=dev NEXT_PUBLIC_SAVANT_CODE_APP_URL=…
-> NEXT_PUBLIC_WEB_PORT=3000` — the spawned sidecar imports
-> `common/src/env.ts`, which throws at import time without those keys,
-> and (like the pre-push hook, see the smoke gap) the harness never
-> loads `.env.local` for children. Additionally, desktop is absent from
-> the root `test` chain (11 workspaces; desktop's typecheck is in, its
-> tests are not), so this class never surfaces in the standard battery.
-> Operator decides: FID for a test-env loader in the spawn path and/or
-> adding `--cwd=desktop test` to the root chain.
+> **Discovered 2026-09-06 (T17-A verification leg); RESOLVED same session**
+> by FID-2026-0906-007 (closed + archived): `env.ts` gained the `.env.local`
+> bootstrap leg (two-pass findUp incl. a cwd fallback for compiled
+> artifacts), and desktop joined the root `test` chain (12 workspaces).
+> Live acceptance bare: smoke exit 0, sidecar E2E 4/0 in 5.9s, desktop
+> suite 420/0 in 6.9s. The operator decision this item requested is
+> discharged by the implemented fix — no separate ruling needed.
 
 ## [OPEN-OUT-OF-SCOPE] — common typecheck red in untouched test file
 

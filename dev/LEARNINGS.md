@@ -1361,6 +1361,29 @@ tracking doc).
 - **Status:** active
 - **Canonical rule:** cli-output-layout-is-contract
 
+## Lesson: A bootstrap that covers one context imports the failure into all others
+
+- **Context:** FID-2026-0906-007: `env.ts` self-bootstrapped the release
+  env.json leg but not `.env.local`; the CLI compensated in its own
+  pre-init, so CLI-routed processes worked while the pre-push smoke,
+  spawned sidecars, and any sub-package entrypoint threw at import — and
+  three pushes needed a hand-rolled env prefix before the class was
+  named.
+- **Invariant:** A convergence-point module must bootstrap every context
+  it can be imported from, or each uncompensated consumer re-imports the
+  failure. Compiled artifacts add a second rule: their `import.meta.dir`
+  is virtual (cwd fallback required) and a bootstrap fix is only live
+  after the artifact is rebuilt.
+- **Guard:** `common/src/env-bootstrap.ts` (findUp + existing-env-wins)
+  wired into `env.ts` (binary-env XOR two-pass findUp); the spawned-import
+  class pin in `env-bootstrap.test.ts` is the regression guard;
+  desktop's suite now rides the root test chain so the class can never
+  silently leave every standard gate again.
+- **Scope:** env, bootstrapping, spawned processes
+- **Owning FID:** FID-2026-0906-007
+- **Status:** active
+- **Canonical rule:** bootstrap-covers-every-import-context
+
 ## Lesson: One dynamic-import seam is only as durable as its pin
 
 - **Context:** FID-2026-0906-005 (T17-A): the shell statically imported

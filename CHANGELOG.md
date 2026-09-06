@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+- **FID-2026-0906-007 — high — Spawned-process env starvation: env.ts gains
+  the .env.local bootstrap leg (closed + archived 2026-09-06).**
+  `common/src/env.ts` bootstrapped only the release-binary env.json leg;
+  the CLI's pre-init loader owned `.env.local` alone, so every other
+  entrypoint importing `@savant-code/common` threw at import: the pre-push
+  hook's `evals:smoke` gate failed on every unattended push (three session
+  pushes needed a manual env prefix), and the desktop sidecar E2E
+  false-failed 2/4 with 20-32s spawn timeouts (23× slowdown). New
+  `env-bootstrap.ts` mirrors the CLI's loader semantics (findUp,
+  existing-env-wins); `env.ts` runs binary-env XOR a two-pass findUp
+  (module dir, cwd fallback for compiled artifacts whose `import.meta.dir`
+  is virtual). Desktop joined the root test chain (now 12 workspaces).
+  Live acceptance bare: smoke exit 0 ("Tier-1 governance smoke passed: 5
+  tasks"), sidecar E2E 4/0 in 5.9s, desktop suite 420/0 in 6.9s.
 - **FID-2026-0906-005 — medium — Desktop lazy 3D chunk: dynamic office/stage
   boundary at DeckView (fixed 2026-09-06).** The shell statically imported
   the entire 3D graph (`three`, R3F, drei, postprocessing) through one edge
