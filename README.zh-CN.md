@@ -8,16 +8,32 @@
 
 基于 TypeScript/Bun 构建，受 ECHO 协议治理，并针对本地优先的 Ollama 使用场景设计。
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-1.3.14-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![React](https://img.shields.io/badge/React-19-%23000000?style=flat-square&logo=react&logoColor=%2300fbff)](https://react.dev/)[![OpenTUI](https://img.shields.io/badge/OpenTUI-0.5.3-%23000000?style=flat-square&logo=opentui&logoColor=%2300fbff)](https://github.com/anomalyco/opentui)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](ECHO.md)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![Release](https://img.shields.io/badge/Release-v0.0.28-%23000000?style=flat-square&logo=semver&logoColor=%2300fbff)](CHANGELOG.md)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-1.3.14-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![React](https://img.shields.io/badge/React-19-%23000000?style=flat-square&logo=react&logoColor=%2300fbff)](https://react.dev/)[![OpenTUI](https://img.shields.io/badge/OpenTUI-0.5.3-%23000000?style=flat-square&logo=opentui&logoColor=%2300fbff)](https://github.com/anomalyco/opentui)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](ECHO.md)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![Release](https://img.shields.io/badge/Release-v0.0.29-%23000000?style=flat-square&logo=semver&logoColor=%2300fbff)](CHANGELOG.md)
 
 </div>
 
-> **v0.0.28** —— 本次发布包含压缩完整性重建（主计划 FID-2026-0824-022 + 子项 -023…-027：
-> 保留契约 + 摘要 schema、最小手术算法、证据外溢、已删内容台账）、eval 系统重建 v3
-> （主计划 FID-2026-0824-013 + 子项 -014…-019：FSM 对齐、沙箱加固、技能效能引擎、
-> 治理语料 + 有界自动评分 + Tier-1 预推送冒烟）、桌面聊天界面 + Auto Drive 仪表盘
-> （FID-2026-0820-010）、压缩摘要输出（FID-2026-0828-001），以及 Discord Rich Presence
-> 优化（默认启用、硬编码 Savant 客户端 ID、三行活动布局）。完整历史见
+> **v0.0.29** —— 本次发布包含质量攻坚收尾——全部残留源码单体完成分解
+> （`native.ts`、`gateway.ts`、`office-scene.tsx`、`public-release.ts`），
+> 质量棘轮达到零违规；同时加入发布管线耐久性与桌面集成：经验证的增量
+> git-bundle 备份（`scripts/git-bundle-backup.ts`）与三个新管线阶段——
+> `BACKUP_BUNDLE`（在任何公开产物生成前写入经验证的 OneDrive 同步备份包）、
+> `DESKTOP_BUNDLES` / `DESKTOP_RELEASE`（桌面打包作为管线阶段，配备
+> fail-closed 更新清单，由 `SAVANT_CODE_RELEASE_DESKTOP=1` 门控）以及按版本
+> 的更新清单验证——外加新增提供商（KiosAPI 与 OpenCode Zen，四协议，附带
+> 面向严格上游的递归 schema 清洗器）、Triggers 计划（可选
+> `SAVANT_TRIGGERS=1`：环回 webhook 接收器（bearer 认证 + 重放/速率防护）、
+> "负载是数据而非提示"的指令注入、带漏跑恢复的免依赖 cron 调度器、
+> `triggers_*` JSON-RPC 管理面、桌面 TriggersPanel 面板与中继指南），
+> 以及质量棘轮文件治理（违规 62 → 5；全部测试与类型文件压入 300 行上限）。
+> Maus 对标路线图套件经操作员决议解散（计算机使用、语音、移动伴侣、
+> 安全钥匙串各 FID 一并关闭，路线图计划移除）。治理变更：代理可本地提交并推送；
+> 公开发布仅通过加固后的发布管线进行。此前 v0.0.28 发布内容：压缩完整性重建
+> （主计划 FID-2026-0824-022 + 子项 -023…-027：保留契约 + 摘要 schema、
+> 最小手术算法、证据外溢、已删内容台账）、eval 系统重建 v3
+> （主计划 FID-2026-0824-013 + 子项 -014…-019：FSM 对齐、沙箱加固、
+> 技能效能引擎、治理语料 + 有界自动评分 + Tier-1 预推送冒烟）、
+> 桌面聊天界面 + Auto Drive 仪表盘（FID-2026-0820-010）、压缩摘要输出
+> （FID-2026-0828-001），以及 Discord Rich Presence 优化。完整历史见
 > [CHANGELOG.md](CHANGELOG.md)。
 >
 > **v0.0.27** —— 检查点发布（质量棘轮分解、文档同步、harness 修复）。此前版本内容：优化与自动化计划的实施范围已完成，

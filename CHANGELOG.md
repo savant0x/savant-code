@@ -23,6 +23,20 @@ below in reverse-chronological order; the highlights:
 - **Providers:** KiosAPI and OpenCode Zen (four-protocol) added end-to-end
   with live operator confirmation; recursive-schema sanitizer for strict
   upstreams.
+- **Triggers (FID-2026-0824-005, opt-in `SAVANT_TRIGGERS=1`):** loopback
+  webhook receiver with bearer auth + replay/rate guards, fixed-template
+  directive injection (payloads are data, never prompts), dependency-free
+  cron scheduler with missed-run resume, `triggers_*` JSON-RPC management
+  surface, desktop TriggersPanel, and the relay guide (Tailscale Funnel /
+  cloudflared). En route: two gate-integrity bugs fixed (stdin-watchdog
+  truncating the pre-push suite; a leaked fetch mock faking later tests).
+- **Quality-ratchet file remediation (FID-2026-0819-005):** live inventory
+  62 → 5 violations; 11 test monoliths decomposed at exact parity and the
+  two template type files split into re-export hubs — every test and type
+  file now under the 300-line ceiling.
+- **Roadmap:** the Maus-parity suite dissolved by operator decision —
+  computer use, voice, mobile companion, and security keychain FIDs closed
+  out-of-scope with the master; the roadmap program is removed.
 - **Governance:** G1/G6 amendment — agents permitted local commits + push;
   public releases flow exclusively through this pipeline.
 

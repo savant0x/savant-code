@@ -10,19 +10,38 @@ touches your repo.**
 Built with TypeScript/Bun, governed by the ECHO Protocol, and designed for
 local-first use with Ollama.
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-1.3.14-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![React](https://img.shields.io/badge/React-19-%23000000?style=flat-square&logo=react&logoColor=%2300fbff)](https://react.dev/)[![OpenTUI](https://img.shields.io/badge/OpenTUI-0.5.3-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](https://github.com/anomalyco/opentui)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](ECHO.md)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![Release](https://img.shields.io/badge/Release-v0.0.28-%2300fbff?style=flat-square&logo=semver&logoColor=%2300fbff)](CHANGELOG.md)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-1.3.14-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![React](https://img.shields.io/badge/React-19-%23000000?style=flat-square&logo=react&logoColor=%2300fbff)](https://react.dev/)[![OpenTUI](https://img.shields.io/badge/OpenTUI-0.5.3-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](https://github.com/anomalyco/opentui)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](ECHO.md)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![Release](https://img.shields.io/badge/Release-v0.0.29-%2300fbff?style=flat-square&logo=semver&logoColor=%2300fbff)](CHANGELOG.md)
 
 </div>
 
-> **v0.0.28** — this release ships the compaction integrity rebuild (master
+> **v0.0.29** — this release ships the quality-campaign closeout — every
+> residue source monolith decomposed (`native.ts`, `gateway.ts`,
+> `office-scene.tsx`, `public-release.ts`) with the quality ratchet at zero
+> violations — plus release-pipeline durability and desktop integration: a
+> verified incremental git-bundle backup (`scripts/git-bundle-backup.ts`) and
+> three new pipeline stages — `BACKUP_BUNDLE` (a verified, OneDrive-synced
+> bundle written before any public artifact is cut), `DESKTOP_BUNDLES` /
+> `DESKTOP_RELEASE` (desktop packaging as pipeline stages with the fail-closed
+> updater manifest, gated on `SAVANT_CODE_RELEASE_DESKTOP=1`), and a
+> per-release updater-manifest verification — plus the provider additions
+> (KiosAPI and OpenCode Zen, four-protocol, with a recursive-schema sanitizer
+> for strict upstreams), the **Triggers program** (opt-in `SAVANT_TRIGGERS=1`:
+> loopback webhook receiver with bearer auth + replay/rate guards, payload-
+> are-data directive injection, a dependency-free cron scheduler with
+> missed-run resume, `triggers_*` JSON-RPC management, the desktop
+> TriggersPanel, and the relay guide), and the quality-ratchet file
+> remediation (62 → 5 violations; every test and type file under the
+> 300-line ceiling). The Maus-parity roadmap suite was dissolved by operator
+> decision. Governance: agents may commit and push locally; public releases
+> flow exclusively through the hardened release pipeline.
+> Previously shipped in v0.0.28: the compaction integrity rebuild (master
 > FID-2026-0824-022 + children -023…-027: preservation contract + digest
 > schema, minimal-surgery algorithm, evidence spill, removed-content ledger),
 > the eval system rebuild v3 (master FID-2026-0824-013 + children -014…-019:
 > FSM alignment, sandbox hardening, skill-efficacy engine, governance corpus +
 > bounded autorater + Tier-1 pre-push smoke), the desktop chat surface + Auto
 > Drive dashboard (FID-2026-0820-010), the compaction summary output
-> (FID-2026-0828-001), and the Discord Rich Presence refinements (enabled by
-> default, hardcoded Savant client id, three-line activity layout).
+> (FID-2026-0828-001), and the Discord Rich Presence refinements.
 > Previously shipped in v0.0.26/27: the terminal UI overhaul
 > (FID-2026-0816-002..012), Auto Drive (`/auto-drive`) and Discord Rich
 > Presence (`/presence`), the quality-ratchet decomposition passes, and the
