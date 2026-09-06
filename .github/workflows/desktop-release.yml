@@ -101,6 +101,13 @@ jobs:
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          # FID-2026-0906-001 (run 34045779966): linuxdeploy ships as an
+          # AppImage and needs FUSE to execute; ubuntu-latest no longer has
+          # libfuse2, so the AppImage bundling stage dies with "failed to
+          # run linuxdeploy" after the full Rust compile succeeds. This
+          # standard Tauri-documented switch makes linuxdeploy extract
+          # itself to a temp dir instead of mounting — no FUSE required.
+          APPIMAGE_EXTRACT_AND_RUN: '1'
         # The committed target list is the full v1 matrix; each runner builds
         # only its own platform bundles (Linux bundle types cannot build on
         # Windows hosts and vice versa).

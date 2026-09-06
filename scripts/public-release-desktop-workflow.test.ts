@@ -249,6 +249,15 @@ describe('desktop-release workflow contract (FID-2026-0906-001)', () => {
     expect(yaml).toContain("if: runner.os == 'Linux'")
   })
 
+  test('AppImage bundling extracts linuxdeploy instead of requiring FUSE', () => {
+    const yaml = readRepoFile('.github/workflows/desktop-release.yml')
+    const tauriBuild = yaml.indexOf('Tauri build (')
+    const appimageEnv = yaml.indexOf('APPIMAGE_EXTRACT_AND_RUN')
+    expect(tauriBuild).toBeGreaterThan(-1)
+    expect(appimageEnv).toBeGreaterThan(tauriBuild)
+    expect(yaml).toContain("APPIMAGE_EXTRACT_AND_RUN: '1'")
+  })
+
   test('desktop-ci ubuntu leg shares the same declared dependency surface', () => {
     const ci = readRepoFile('.github/workflows/desktop-ci.yml')
     const apt = ci.indexOf('Install Linux desktop build dependencies (apt)')
