@@ -178,8 +178,8 @@ Defect 2 would have failed the next real cut closed at `DESKTOP_RELEASE`
 
 ### Verification Receipt
 
-- fingerprint: sha256:19c74699e1c14320b8f14a6e05326ede3e2bde26b896fb018a3c1ec42880b42f
-- verified: 2026-09-06T19:32:25.756Z
+- fingerprint: sha256:a520cf56f17440a68e3852e92e814297835948a50504d238482f81e05b4b67a1
+- verified: 2026-09-06T19:35:13.585Z
 - test desktop/scripts/generate-latest-json.test.ts: exit 0
 - test scripts/public-release-desktop.test.ts: exit 0
 - test scripts/public-release-desktop-workflow.test.ts: exit 0
