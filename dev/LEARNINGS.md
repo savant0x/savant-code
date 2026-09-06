@@ -1293,4 +1293,30 @@ tracking doc).
 - **Status:** active
 - **Canonical rule:** unproven-leg-layered-failures
 
+## Lesson: A test whose runtime approaches the harness timeout is flaky by construction
+
+- **Context:** `post-terminal-breaker-integration.test.ts` ran 30 full
+  agent-loop iterations to prove the Auto Drive carve-out; measured
+  3.8–6.5s across loads against Bun's default 5s per-test timeout, and
+  died at exactly 5004.91ms under full-suite load — blocking one pre-push
+  gate and one release-gate run while the test passed in isolation every
+  time it was retried.
+- **Invariant:** Timeout flakes are *time-budget races*, not logic bugs —
+  the signature is death at exactly the timeout value plus high variance
+  across machine load. A loop-exhaustion test's iteration count is a
+  time budget: set it to the smallest value that still distinguishes the
+  property (here `LIMIT + 2`), never a large round number, and add an
+  explicit per-test timeout belt when the harness default is the cliff.
+- **Guard:** Backstop reduced 30 → 8 (> breaker `LIMIT` 6, so a falsely
+  firing breaker still flips both assertions: `llmCallCount` 6 ≠ 8 and
+  the terminator chunk appears) + explicit `{ timeout: 60_000 }` per repo
+  precedent (`gateway-server-command.test.ts:126`). Sibling survey: every
+  other large-backstop test terminates early (<600ms) — only
+  exhaustion-style tests need this scrutiny.
+- **Scope:** agent-runtime/testing
+- **Owning FID:** none (maintenance fix; 2-recurrence pattern, tracked
+  via experience capture — a third strike promotes it to a FID)
+- **Status:** active
+- **Canonical rule:** test-timeout-budget-race
+
 <!-- Add new entries above this line -->

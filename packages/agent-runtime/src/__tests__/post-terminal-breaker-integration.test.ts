@@ -168,6 +168,14 @@ describe('FID-2026-0822-003 post-terminal terminator wiring', () => {
 
   it('never fires for Auto Drive continuations (operator carve-out)', async () => {
     mockAgentState.echoCompliance = complianceTracker()
+    // Backstop of 8, not the shared 30: the carve-out property only needs
+    // the loop to run PAST POST_TERMINAL_CONTINUATION_LIMIT (6) — a
+    // falsely-firing breaker would trip at 6 (ending the loop early and
+    // emitting the terminator chunk), flipping both assertions below. 30
+    // full mocked iterations made the suite sit at ~4.7-5.0s against bun's
+    // 5s default per-test timeout (it died at 5004.91ms once under load —
+    // the flake that blocked a push on 2026-09-06).
+    mockAgentState.stepsRemaining = 8
     mockAgentState.drive = {
       driveId: 'drive-1',
       goal: 'autonomous work',
@@ -179,8 +187,8 @@ describe('FID-2026-0822-003 post-terminal terminator wiring', () => {
     await loopAgentSteps({ ...baseParams })
 
     // The breaker is bypassed entirely: the run proceeds until the generic
-    // stepsRemaining backstop (30) ends it, with NO terminator notice.
-    expect(llmCallCount).toBe(30)
+    // stepsRemaining backstop (8) ends it, with NO terminator notice.
+    expect(llmCallCount).toBe(8)
     expect(
       chunks.some(
         (chunk) =>
@@ -188,5 +196,5 @@ describe('FID-2026-0822-003 post-terminal terminator wiring', () => {
           chunk.includes('Turn auto-ended: no operator input'),
       ),
     ).toBe(false)
-  })
+  }, 30000)
 })
