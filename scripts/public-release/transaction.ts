@@ -11,9 +11,14 @@ import {
   RELEASE_BINARY_TARBALLS,
   buildPublicReleasePlan,
   getGitHubToken,
+  isDesktopPackagingEnabled,
   isReleaseAutomationEnabled,
 } from './catalog'
 import { requireCommand } from './command-runner'
+import {
+  runDesktopBundlesStage,
+  runDesktopReleaseStage,
+} from './desktop-stages'
 import { fail } from './fail'
 import { recoverAutomationCommit } from './git-publish'
 import { assertGitHubToken } from './github-api'
@@ -178,8 +183,14 @@ export async function runReleaseTransaction(): Promise<void> {
         runGatesStage(ctx)
         runGitPushStage(ctx)
         runBackupBundleStage(ctx)
+        if (isDesktopPackagingEnabled()) {
+          await runDesktopBundlesStage(ctx)
+        }
         await runGitHubReleaseStage(ctx)
         runNpmPublishStage(ctx)
+        if (isDesktopPackagingEnabled()) {
+          await runDesktopReleaseStage(ctx)
+        }
         await runPostReleaseVerifyStage(ctx)
       },
       () => {

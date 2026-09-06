@@ -1,0 +1,236 @@
+// FID-2026-0903-001 — desktop packaging stage-level tests.
+//
+// Pins the two stage functions end-to-end over stubbed global fetch:
+// DESKTOP_BUNDLES (dispatch + watch + mark + head-SHA binding), resume
+// no-op, the opt-in flag refusal, and the plan-text opt-in surface with
+// execution-order assertions. Async rejections are captured explicitly —
+// never sync .toThrow() on a promise (the hang class this suite
+// originally had).
+
+import { mkdtempSync, rmSync } from 'fs'
+import os from 'os'
+import path from 'path'
+
+import { describe, expect, test } from 'bun:test'
+
+import { buildPublicReleasePlan } from './public-release/catalog'
+import { runDesktopBundlesStage } from './public-release/desktop-stages'
+import { RELEASE_STAGES } from './public-release/fail'
+
+import type {
+  ReleaseReceipt,
+  TransactionContext,
+} from './public-release/catalog'
+
+const HEAD = 'a'.repeat(40)
+
+function makeContext(
+  root: string,
+  completedStages: string[] = [],
+  automation = true,
+): TransactionContext {
+  const receipt: ReleaseReceipt = {
+    schemaVersion: 'release-receipt/v2',
+    version: '0.0.29',
+    mode: automation ? 'automation' : 'publish',
+    completedStages,
+    restored: false,
+    receiptPath: path.join(root, 'receipt.json'),
+    repositoryKey: 'testkey1',
+    gateAttempts: [],
+    evidenceFinalized: false,
+  }
+  return {
+    root,
+    version: '0.0.29',
+    plan: [],
+    options: { preview: false, resume: false, automation },
+    receipt,
+    githubToken: 'token-for-tests',
+    snapshot: undefined as never,
+    preflight: { notes: '', warnings: [], headSha: HEAD },
+  }
+}
+
+function scratch(): { dir: string; cleanup: () => void } {
+  const dir = mkdtempSync(path.join(os.tmpdir(), 'desktop-stage-'))
+  return { dir, cleanup: () => rmSync(dir, { recursive: true, force: true }) }
+}
+
+function completedRun(
+  id: number,
+  sha: string,
+): { id: number; status: string; conclusion: string | null; head_sha: string } {
+  return { id, status: 'completed', conclusion: 'success', head_sha: sha }
+}
+
+/** Captures a rejection as an Error (or null on resolve) — async-safe. */
+async function rejectionOf(promise: Promise<unknown>): Promise<Error | null> {
+  return promise.then(
+    () => null,
+    (error: unknown) =>
+      error instanceof Error ? error : new Error(String(error)),
+  )
+}
+
+/** Stubs global fetch for dispatches (204) and run lists (envelope). */
+function stubGithubFetch(runs: () => unknown[]): {
+  restore: () => void
+  dispatches: string[]
+} {
+  const dispatches: string[] = []
+  const original = globalThis.fetch
+  globalThis.fetch = (async (input: RequestInfo | URL) => {
+    const url = String(input)
+    if (url.includes('/dispatches')) {
+      dispatches.push(url)
+      return new Response(null, { status: 204 })
+    }
+    return new Response(JSON.stringify({ workflow_runs: runs() }), {
+      status: 200,
+    })
+  }) as typeof fetch
+  return {
+    dispatches,
+    restore: () => {
+      globalThis.fetch = original
+    },
+  }
+}
+
+function enableDesktop(): () => void {
+  const previous = process.env.SAVANT_CODE_RELEASE_DESKTOP
+  process.env.SAVANT_CODE_RELEASE_DESKTOP = '1'
+  return () => {
+    if (previous === undefined) delete process.env.SAVANT_CODE_RELEASE_DESKTOP
+    else process.env.SAVANT_CODE_RELEASE_DESKTOP = previous
+  }
+}
+
+describe('desktop packaging stages (FID-2026-0903-001)', () => {
+  test('stage list ordering: DESKTOP_BUNDLES and DESKTOP_RELEASE sandwich the canonical pipeline', () => {
+    const stages = [...RELEASE_STAGES]
+    expect(stages.indexOf('BACKUP_BUNDLE')).toBeLessThan(
+      stages.indexOf('DESKTOP_BUNDLES'),
+    )
+    expect(stages.indexOf('DESKTOP_BUNDLES')).toBeLessThan(
+      stages.indexOf('GITHUB_RELEASE'),
+    )
+    expect(stages.indexOf('NPM_PUBLISH_CLI')).toBeLessThan(
+      stages.indexOf('DESKTOP_RELEASE'),
+    )
+    expect(stages.indexOf('DESKTOP_RELEASE')).toBeLessThan(
+      stages.indexOf('POST_RELEASE_VERIFY'),
+    )
+  })
+
+  test('plan text: desktop steps appear only when opted in, in execution order', () => {
+    const previous = process.env.SAVANT_CODE_RELEASE_DESKTOP
+    try {
+      delete process.env.SAVANT_CODE_RELEASE_DESKTOP
+      const plain = buildPublicReleasePlan('0.0.29').join('\n')
+      expect(plain).not.toContain('desktop-release.yml')
+      expect(plain).not.toContain('updater manifest')
+
+      process.env.SAVANT_CODE_RELEASE_DESKTOP = '1'
+      const plan = buildPublicReleasePlan('0.0.29')
+      const text = plan.join('\n')
+      expect(text).toContain('Dispatch desktop-release.yml for v0.0.29')
+      expect(text).toContain('Attach the verified desktop bundles')
+      expect(text).toContain('per-release URL')
+      const lines = plan.filter((line) => /desktop|updater/i.test(line))
+      expect(lines.length).toBe(3)
+      expect(text.indexOf('Dispatch desktop-release.yml')).toBeGreaterThan(
+        text.indexOf('backup bundle'),
+      )
+      expect(
+        text.indexOf('Attach the verified desktop bundles'),
+      ).toBeGreaterThan(text.indexOf('npm publish'))
+    } finally {
+      if (previous === undefined) delete process.env.SAVANT_CODE_RELEASE_DESKTOP
+      else process.env.SAVANT_CODE_RELEASE_DESKTOP = previous
+    }
+  })
+
+  test('runDesktopBundlesStage: dispatch + watch + mark, run bound to the release HEAD', async () => {
+    const { dir, cleanup } = scratch()
+    try {
+      const restore = enableDesktop()
+      const stub = stubGithubFetch(() => [completedRun(11, HEAD)])
+      try {
+        const ctx = makeContext(dir)
+        await runDesktopBundlesStage(ctx)
+        expect(stub.dispatches.length).toBe(1)
+        expect(stub.dispatches[0]).toContain('/actions/workflows/')
+        expect(
+          (ctx.receipt.completedStages as string[]).includes('DESKTOP_BUNDLES'),
+        ).toBe(true)
+      } finally {
+        stub.restore()
+        restore()
+      }
+    } finally {
+      cleanup()
+    }
+  })
+
+  test('runDesktopBundlesStage: fails closed when the run built a foreign SHA', async () => {
+    const { dir, cleanup } = scratch()
+    try {
+      const restore = enableDesktop()
+      const stub = stubGithubFetch(() => [completedRun(12, 'b'.repeat(40))])
+      try {
+        const ctx = makeContext(dir)
+        const error = await rejectionOf(runDesktopBundlesStage(ctx))
+        expect(error?.message).toMatch(/do not belong to this cut/)
+        expect(
+          (ctx.receipt.completedStages as string[]).includes('DESKTOP_BUNDLES'),
+        ).toBe(false)
+      } finally {
+        stub.restore()
+        restore()
+      }
+    } finally {
+      cleanup()
+    }
+  })
+
+  test('runDesktopBundlesStage: completed stage is a resume no-op (zero dispatches)', async () => {
+    const { dir, cleanup } = scratch()
+    try {
+      const restore = enableDesktop()
+      const stub = stubGithubFetch(() => {
+        throw new Error('network must not be touched on resume')
+      })
+      try {
+        const ctx = makeContext(dir, ['DESKTOP_BUNDLES'])
+        await runDesktopBundlesStage(ctx)
+        expect(stub.dispatches).toEqual([])
+      } finally {
+        stub.restore()
+        restore()
+      }
+    } finally {
+      cleanup()
+    }
+  })
+
+  test('runDesktopBundlesStage refuses without the opt-in flag', async () => {
+    const { dir, cleanup } = scratch()
+    try {
+      const previous = process.env.SAVANT_CODE_RELEASE_DESKTOP
+      delete process.env.SAVANT_CODE_RELEASE_DESKTOP
+      try {
+        const ctx = makeContext(dir)
+        const error = await rejectionOf(runDesktopBundlesStage(ctx))
+        expect(error?.message).toMatch(/without SAVANT_CODE_RELEASE_DESKTOP=1/)
+      } finally {
+        if (previous === undefined)
+          delete process.env.SAVANT_CODE_RELEASE_DESKTOP
+        else process.env.SAVANT_CODE_RELEASE_DESKTOP = previous
+      }
+    } finally {
+      cleanup()
+    }
+  })
+})

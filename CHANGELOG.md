@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+- **FID-2026-0903-001 (fixed 2026-09-05)** — desktop packaging integrated
+  into the automatic release pipeline: `DESKTOP_BUNDLES` (after
+  `BACKUP_BUNDLE`, before `GITHUB_RELEASE`) dispatches
+  `desktop-release.yml` with the cut's tag and watches the run fail-closed
+  (conclusion + HEAD-SHA binding to the release commit); `DESKTOP_RELEASE`
+  (after the npm publishes, before `POST_RELEASE_VERIFY`) locates the
+  successful run (re-derived from the Actions list, never persisted),
+  downloads artifacts, re-runs the fail-closed `latest.json` generator
+  locally, and attaches bundles + manifest via `gh release upload
+  --clobber`. POST_RELEASE_VERIFY now asserts the updater manifest at the
+  per-release URL (the pinned `releases/latest` endpoint excludes
+  prereleases — its check stays with the operator's post-promotion smoke).
+  Gated on `SAVANT_CODE_RELEASE_DESKTOP=1` for the first integrated cut;
+  workflow amendment derives the bare version from the tag for the
+  generator (Loop 1 AUDIT V2). 18-test desktop suite; receipt stamped;
+  live validation on the next release cut.
+
 - **FID-2026-0905-009 (fixed 2026-09-05)** — `BACKUP_BUNDLE` release stage
   wired into the public-release pipeline between `GIT_PUSH` and
   `GITHUB_RELEASE`: after the release commit is pushed, the pipeline writes

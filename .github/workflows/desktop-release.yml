@@ -93,10 +93,20 @@ jobs:
           pattern: desktop-*
           merge-multiple: true
           path: dist-all
+      # FID-2026-0903-001 (Loop 1 AUDIT V2 + Loop 2 correction 3): the
+      # generator's --version must be BARE X.Y.Z (VERSION_PATTERN rejects a
+      # v prefix; artifact filenames are unprefixed too), while asset URLs
+      # need the v-tag verbatim — so the tag's `v` is stripped only here.
+      - name: Derive bare version from the release tag
+        id: bare-version
+        shell: bash
+        run: echo "bare=${RELEASE_TAG#v}" >> "$GITHUB_OUTPUT"
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
       - name: Generate latest.json (fails closed on any missing artifact/.sig)
         run: >
           bun desktop/scripts/generate-latest-json.ts
-          --version "${{ inputs.release_tag }}"
+          --version "${{ steps.bare-version.outputs.bare }}"
           --artifacts-dir dist-all
           --base-download-url
           "https://github.com/${{ github.repository }}/releases/download/${{ inputs.release_tag }}"

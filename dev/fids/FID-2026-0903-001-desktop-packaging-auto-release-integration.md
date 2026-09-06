@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0903-001-desktop-packaging-auto-release-integration.md`
 **ID:** FID-2026-0903-001
 **Severity:** high
-**Status:** analyzed
+**Status:** fixed
 **Created:** 2026-09-03
 **Parent:** FID-2026-0820-011 (closed 2026-09-03 — this FID succeeds its release-time remainder)
 
@@ -151,7 +151,25 @@ the workflow's proven contract rather than duplicating it:
 
 ## Verification Gates
 
+- gate: test scripts/public-release-desktop.test.ts
+- gate: test scripts/public-release-desktop-manifest.test.ts
+- gate: test scripts/public-release-desktop-workflow.test.ts
 - gate: test scripts/public-release.test.ts
+- gate: test scripts/public-release-backup-stage.test.ts
+- gate: test scripts/public-release-receipts.test.ts
+- gate: test scripts/git-bundle-backup.test.ts
+
+### Verification Receipt
+
+- fingerprint: sha256:18d96a8b79092ea67f6498defde55d4f635848fa1004636e9aa6330a8c4685ae
+- verified: 2026-09-06T02:27:07.811Z
+- test scripts/public-release-desktop.test.ts: exit 0
+- test scripts/public-release-desktop-manifest.test.ts: exit 0
+- test scripts/public-release-desktop-workflow.test.ts: exit 0
+- test scripts/public-release.test.ts: exit 0
+- test scripts/public-release-backup-stage.test.ts: exit 0
+- test scripts/public-release-receipts.test.ts: exit 0
+- test scripts/git-bundle-backup.test.ts: exit 0
 
 ## Perfection Loop
 
@@ -224,6 +242,47 @@ the workflow's proven contract rather than duplicating it:
    safely. Flipping the default is an explicit operator decision recorded
    in this FID when taken.
 
+## Gate provenance
+
+Gates re-declared 2026-09-05 at implementation (the original single gate
+predated the decomposition-era suite layout; the original
+`test scripts/public-release.test.ts` line is retained above). Live-cut
+evidence (bundles + `latest.json` attached to the release, updater
+endpoint resolving) is recorded at closure per the original plan.
+
+## Implementation-audit corrections (Loop 2, 2026-09-05)
+
+1. **Stage split around an UNCHANGED GITHUB_RELEASE.** The original
+   approach extended GITHUB_RELEASE with asset upload; the decomposed
+   pipeline (FID-007) preserves that body verbatim and the release must
+   EXIST before `gh release upload`. Corrected: `DESKTOP_BUNDLES`
+   (dispatch desktop-release.yml with `release_tag=v<version>`, watch the
+   run fail-closed) sits after `BACKUP_BUNDLE` (FID-009) and before
+   `GITHUB_RELEASE`; `DESKTOP_RELEASE` (locate run, download artifacts,
+   re-run the fail-closed generator, `gh release upload --clobber`) sits
+   after the npm publishes, before `POST_RELEASE_VERIFY`. GITHUB_RELEASE
+   itself is not modified.
+2. **Updater-endpoint assert targets the per-release URL, not the
+   `releases/latest` redirect.** `releases/latest/download/latest.json`
+   (tauri.conf.json:46-48) excludes prereleases, and the pipeline ships
+   `prerelease: true` until the operator's installer smoke — asserting it
+   in-pipeline would fail every integrated cut. POST_RELEASE_VERIFY
+   asserts `releases/download/v<version>/latest.json` (asset-existence +
+   structural checks: version match, exact platform key set, non-empty
+   signatures, correct URL base). The pinned-endpoint check moves to the
+   operator's post-promotion smoke, where it belongs temporally.
+3. **Workflow v-strip (Loop 1 V2) lands with this work:** the
+   `latest-json` job derives the bare X.Y.Z from `inputs.release_tag`
+   (strip `v`) before `--version`, because the generator's
+   `VERSION_PATTERN` rejects v-prefixed input while artifact URLs need
+   the v-tag verbatim. Verified live in the workflow file 2026-09-05.
+4. **Resume run-location is re-derived, never persisted:** the receipt
+   schema stays frozen (`completedStages` absorbs the new stage names);
+   `DESKTOP_RELEASE` re-locates the successful workflow run for the tag
+   via the Actions run list and fails closed on ambiguity with the exact
+   remediation commands. Artifacts land in a deterministic
+   per-version temp directory so a mid-stage crash resumes cleanly.
+
 ### Code Verification Evidence
 
 Planning/convergence-phase record: implementation is deliberately deferred
@@ -242,7 +301,10 @@ FID-2026-0823-009.
 
 ## Resolution
 
-- (pending — closes after steps 2–5 with stamped receipt)
+- (pending — closes after the first integrated live cut; implementation
+  status `fixed` 2026-09-05: stages implemented, 18-test desktop suite
+  green, plan/resume/receipt contract pinned, workflow v-strip landed.
+  Live evidence per the original plan lands here at closure.)
 
 ## Re-Homing Record (from FID-2026-0820-011 Loop 4, archived)
 

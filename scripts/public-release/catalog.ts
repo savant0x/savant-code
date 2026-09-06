@@ -194,10 +194,32 @@ export function buildPublicReleasePlan(
     `Create annotated tag v${version}`,
     `git push origin main and v${version}`,
     'Write the verified incremental backup bundle (OneDrive-synced)',
+    ...(isDesktopPackagingEnabled()
+      ? [`Dispatch desktop-release.yml for v${version} and watch the run`]
+      : []),
     `Create the GitHub REST release for v${version} with the current CHANGELOG section`,
     ...packages.map((target) => `npm publish ${target.name}`),
+    ...(isDesktopPackagingEnabled()
+      ? [
+          'Attach the verified desktop bundles + updater manifest to the release',
+          `Verify the desktop updater manifest for v${version} at the per-release URL`,
+        ]
+      : []),
     'Verify public versions and restore local state',
   ]
+}
+
+/**
+ * Desktop packaging integration (FID-2026-0903-001): when set to `1`, the
+ * release cut also builds the desktop bundles (DESKTOP_BUNDLES) and attaches
+ * the verified updater manifest to the release (DESKTOP_RELEASE). Opt-in for
+ * the first integrated cut so it can fail safely; flipping the default is an
+ * explicit operator decision recorded in the FID.
+ */
+export function isDesktopPackagingEnabled(
+  env: Record<string, string | undefined> = process.env,
+): boolean {
+  return env.SAVANT_CODE_RELEASE_DESKTOP === '1'
 }
 
 export function isReleaseAutomationEnabled(

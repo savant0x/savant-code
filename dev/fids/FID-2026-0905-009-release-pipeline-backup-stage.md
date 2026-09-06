@@ -96,8 +96,8 @@ passes.
 
 ### Verification Receipt
 
-- fingerprint: sha256:8fc0f2e0b256452c0f9400041330614c70f5f8aef6359cc4602ea74da8a6f27c
-- verified: 2026-09-06T01:17:28.663Z
+- fingerprint: sha256:523926cb5ef6518b813fe28efa1401d4e4342d3982e3d90c71dcfd03ece49033
+- verified: 2026-09-06T02:22:52.319Z
 - test scripts/public-release-backup-stage.test.ts: exit 0
 - test scripts/public-release.test.ts: exit 0
 - test scripts/public-release-assets.test.ts: exit 0
@@ -247,3 +247,9 @@ passes.
 - [x] FID status reflects the actual implementation state — `fixed`;
       `closed` after the operator's first real release cut exercises
       the stage end-to-end.
+
+## Resolution
+
+- (pending — closes after the operator's first real release cut drives a
+  pipeline-authored BACKUP_BUNDLE; all static gates green and the preview
+  smoke passed 2026-09-05 — commits `8ff0657b`, `6dc45811`.)

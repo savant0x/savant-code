@@ -8,6 +8,10 @@
 import { verifyReleaseAssets } from './assets'
 import { PUBLIC_REPOSITORY_SLUG, configuredReleasePackages } from './catalog'
 import { run } from './command-runner'
+import {
+  assertUpdaterManifestShape,
+  fetchUpdaterManifest,
+} from './desktop-manifest'
 import { fail } from './fail'
 import { verifyGitHubTagHead } from './git-publish'
 import { githubApiRequest, verifyGitHubTagHeadApi } from './github-api'
@@ -59,6 +63,16 @@ export async function runPostReleaseVerifyStage(
   )
   for (const target of configuredReleasePackages()) {
     verifyPublishedPackage(root, target, version)
+  }
+  // Desktop packaging integration (FID-2026-0903-001): when the cut built
+  // desktop bundles, the updater manifest must be resolvable at the
+  // per-release URL and structurally sound (version match, platform
+  // entries, non-empty signatures, asset-base URLs). The pinned
+  // releases/latest endpoint excludes prereleases, so its check belongs to
+  // the operator's post-promotion smoke, not this stage.
+  if (isStageComplete(receipt, 'DESKTOP_RELEASE')) {
+    const manifest = await fetchUpdaterManifest(version)
+    assertUpdaterManifestShape(manifest, version)
   }
   // A resumed release may carry a historical failedStage from an earlier
   // attempt (for example, transient npm registry propagation). Clear it
