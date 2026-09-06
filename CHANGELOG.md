@@ -2,6 +2,30 @@
 
 ## Unreleased
 
+- (nothing yet — the accumulated 2026-09-05/06 entries shipped in 0.0.29
+  below)
+
+## 0.0.29 — 2026-09-06
+
+Release delta since v0.0.28 (2026-09-02). Detailed per-FID entries follow
+below in reverse-chronological order; the highlights:
+
+- **Quality campaign to zero:** all five residue source monoliths
+  decomposed (native.ts, gateway.ts, office-scene.tsx, public-release.ts,
+  plus the 811-path dirty-tree drain), 6 FIDs closed + archived, and
+  `quality:report` reached 0 violations.
+- **Release pipeline durability + desktop integration:**
+  `git-bundle-backup.ts` (FID-008) and two new pipeline stages —
+  `BACKUP_BUNDLE` (verified incremental bundle before any public artifact;
+  FID-009) and `DESKTOP_BUNDLES`/`DESKTOP_RELEASE` (desktop packaging as
+  pipeline stages with the fail-closed updater manifest;
+  FID-2026-0903-001), desktop gated on `SAVANT_CODE_RELEASE_DESKTOP=1`.
+- **Providers:** KiosAPI and OpenCode Zen (four-protocol) added end-to-end
+  with live operator confirmation; recursive-schema sanitizer for strict
+  upstreams.
+- **Governance:** G1/G6 amendment — agents permitted local commits + push;
+  public releases flow exclusively through this pipeline.
+
 - **FID-2026-0903-001 (fixed 2026-09-05)** — desktop packaging integrated
   into the automatic release pipeline: `DESKTOP_BUNDLES` (after
   `BACKUP_BUNDLE`, before `GITHUB_RELEASE`) dispatches
