@@ -1262,4 +1262,35 @@ tracking doc).
 - **Status:** active
 - **Canonical rule:** assume-unchanged-phantom-source
 
+- **What happened:** Six consecutive scratch dispatches of
+  `desktop-release.yml` peeled one failure layer per run: corrupted
+  signing secret (fixed by *recovery* — the original keypair was on disk,
+  gitignored and never committed, and paired with the committed updater
+  pubkey) → missing Linux system deps → missing compile-time icon.png →
+  linuxdeploy without FUSE → linuxdeploy strip crash → the real root
+  cause: the GTK plugin's second linuxdeploy pass core-dumps on `ldd`
+  against the patchelf-rewritten static bun single-file sidecar
+  (oven-sh/bun#28281; tauri-apps/tauri#14796, fix pending #12491) — and a
+  bundling that survived would have shipped the corrupted sidecar anyway.
+- **Evidence:** runs 34042941045 / 34044435124 / 34045779966 /
+  34047404386 / 34048699120 / 34050762638 (the last all-green);
+  FID-2026-0906-001 live-cut table; run-6 verbose log exposing the
+  swallowed stderr (`Failed to run ldd: exited with code 1`, exit 134).
+- **Invariant:** An unproven platform leg fails one layer at a time, and
+  each layer's failure message names the *next* layer, not the root
+  cause — only `--verbose` (or equivalent) stderr exposure reveals it.
+  A build step that *transforms* an opaque vendor binary (patchelf on a
+  static bun exe) can corrupt it silently: bundling success is not
+  artifact integrity.
+- **Guard:** RED-first workflow pins for every fix
+  (`public-release-desktop-workflow.test.ts`); fail-closed generator key
+  set as the single platform-contract authority; prefer RECOVERY of an
+  existing key over regeneration whenever the pubkey is already in the
+  field.
+- **Scope:** desktop/release
+- **Owning FID:** FID-2026-0906-001 (closed; Linux auto-update deferred
+  to tauri#12491)
+- **Status:** active
+- **Canonical rule:** unproven-leg-layered-failures
+
 <!-- Add new entries above this line -->

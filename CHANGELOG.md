@@ -2,6 +2,31 @@
 
 ## Unreleased
 
+- **FID-2026-0906-001 — high — Desktop release workflow repair: signing
+  secret + Linux deps + the AppImage saga (closed 2026-09-06).** The
+  desktop channel never shipped; v0.0.29's two desktop jobs died on a
+  corrupted signing secret (base64-invalid, caught only after the 40-min
+  compile) and a Linux leg with zero declared system deps. Fixed with a
+  fail-fast secret preflight (decode check with remediation, key never
+  echoed), the Tauri apt step in both desktop workflows, and the missing
+  desktop icon PNGs (compile-time embed + bundlers). The live-validation
+  runs then peeled four more layers, each fixed with a RED-first pin:
+  `APPIMAGE_EXTRACT_AND_RUN=1` (no libfuse2 on ubuntu-24.04), `NO_STRIP=1`,
+  and — with `--verbose` exposing the swallowed stderr — the root cause:
+  the GTK plugin's second linuxdeploy pass core-dumps on `ldd` against the
+  patchelf-rewritten static bun sidecar (oven-sh/bun#28281,
+  tauri-apps/tauri#14796; fix pending tauri#12491; a surviving bundling
+  would ship a corrupted sidecar). Operator decision: **windows-only
+  updater manifest** (`PLATFORM_ARTIFACTS` key set = fail-closed
+  authority), deb-only Linux leg attaching as a plain asset, appimage
+  dropped from `tauri.conf.json` targets. The signing secret was resolved
+  by recovery — the original keypair found at `desktop/tauri-key.key`
+  (gitignored, never committed), verified paired with the committed
+  updater pubkey, re-set via `gh secret set`. Closure: scratch run
+  34050762638 all-green (78.9 MB signed Windows bundles, **first Linux
+  desktop build in project history** — 45.1 MB deb, fail-closed
+  windows-only `latest.json` with a genuine minisign signature).
+  45/0 across the six desktop suites; receipt re-stamped at closure.
 - (nothing yet — the accumulated 2026-09-05/06 entries shipped in 0.0.29
   below)
 

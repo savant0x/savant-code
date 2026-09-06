@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0906-001-desktop-release-workflow-repair.md`
 **ID:** FID-2026-0906-001
 **Severity:** high
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-09-06
 **YAGNI-Compliance:** Verified
 **Related:** FID-2026-0820-011 (archived — packaging ceremony), FID-2026-0903-001
@@ -193,8 +193,8 @@ The CLI release is unaffected.
 
 ### Verification Receipt
 
-- fingerprint: sha256:f422b1f0e7765b6cad069443a276dc903a3ea5c095314878627e82a4741960cb
-- verified: 2026-09-06T18:04:59.951Z
+- fingerprint: sha256:cffdd1fb793f863fecb9b36899eb2d21f30fa347ec196919f82db87f3bc2884a
+- verified: 2026-09-06T18:28:33.618Z
 - test scripts/public-release-desktop-workflow.test.ts: exit 0
 - test scripts/public-release-desktop.test.ts: exit 0
 - test scripts/public-release.test.ts: exit 0
@@ -289,6 +289,7 @@ The CLI release is unaffected.
 | 34045779966 | 8c451a90 | icon fix proven; Linux Rust compile **completed**; died at linuxdeploy (ubuntu 24.04 has no libfuse2) → `APPIMAGE_EXTRACT_AND_RUN=1` |
 | 34047404386 | b10c9624 | extract-and-run insufficient → `NO_STRIP=1` + `--verbose` added |
 | 34048699120 | 374e206 | verbose exposed the real crash: the GTK plugin's second linuxdeploy pass core-dumps on `ldd` against the patchelf-rewritten static bun sidecar (`Failed to run ldd: exited with code 1`, exit 134) — oven-sh/bun#28281 class; tauri-apps/tauri#14796; fix pending tauri#12491 |
+| **34050762638** | **3e4d7c6e** | **ALL GREEN — windows-x86_64 success (78.9 MB signed NSIS+MSI), linux-x86_64 success (45.1 MB deb; first Linux desktop build in project history), fail-closed latest.json success (windows-only manifest, genuine minisign signature from the recovered key)** |
 
 **Operator decision (2026-09-06):** the updater manifest is WINDOWS-ONLY —
 the Linux AppImage cannot carry the static bun sidecar (the bundler's
@@ -327,10 +328,14 @@ with the committed updater pubkey, and re-set via `gh secret set` at
       → line 85; `bun test scripts/public-release-desktop-workflow.test.ts`
       green
 - [x] **Step statuses:** Steps 1-3 `implemented` (build output above);
-      Step 4 `blocked` (operator: GitHub environment secret — outside
-      agent reach); Step 5 `blocked` (depends on Step 4; recorded per the
-      anti-deferral gate)
-- [ ] **Archived:** (set when moved to `dev/fids/archive/`)
+      Step 4 `implemented` — secret RESOLVED BY RECOVERY (original keypair
+      found at `desktop/tauri-key.key`, gitignored, never committed;
+      pairing with the committed updater pubkey verified;
+      `gh secret set` at 2026-09-06T15:38:22Z; proven by four consecutive
+      green Windows builds); Step 5 `implemented` — closure run
+      34050762638 all-green (see Live-Cut Evidence)
+- [x] **Archived:** 2026-09-06 (moved to `dev/fids/archive/` with the
+  CHANGELOG entry in the same commit)
 
 ### Code Verification Evidence
 
@@ -407,9 +412,27 @@ with the committed updater pubkey, and re-set via `gh secret set` at
 
 ## Resolution
 
-- (pending — closure after Steps 4-5: operator secret re-paste + first
-  green desktop-release run records its run id here. Implementation
-  complete 2026-09-06: workflow repaired, 11/0 pins, receipt stamped.)
+- **Closed Date:** 2026-09-06 (closure condition met: first green
+  `desktop-release.yml` run — 34050762638, all three jobs success on
+  `3e4d7c6e`)
+- **Fix Description:** signing-secret preflight (fail-fast decode check
+  with remediation, never echoing the key), Linux apt dependency step in
+  both desktop workflows, desktop icon PNG set (compile-time embed +
+  bundlers), `APPIMAGE_EXTRACT_AND_RUN=1` + `NO_STRIP=1` + `--verbose`
+  on the Tauri build, and — after the operator decision — the
+  windows-only updater manifest with a deb-only Linux leg (Linux
+  auto-update returns when tauri#12491 lands)
+- **Tests Added:** Yes — 12 workflow-contract pins in
+  `scripts/public-release-desktop-workflow.test.ts` (RED-first each),
+  generator suite rewritten to the windows-only contract (10 tests),
+  manifest fixture updated; 45/0 across the six desktop suites at
+  closure
+- **Verification Evidence:** run 34050762638 — Build windows-x86_64
+  success, Build linux-x86_64 success (first in project history),
+  Fail-closed latest.json success; downloaded manifest verified:
+  windows-only key set, version 0.0.29, valid minisign signature header,
+  per-release URL
+- **Archived:** 2026-09-06
 
 ## Lessons Learned
 
