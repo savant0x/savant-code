@@ -586,12 +586,17 @@ Planning-stage record — status `created`: no implementation exists yet.
 - [x] tauri.conf.json + externalBin — full v1 matrix landed 2026-08-26
       (externalBin itself shipped earlier via FID-009); nsis per-user mode;
       createUpdaterArtifacts lands with the minisign keypair (increment 2)
-- [ ] macOS entitlements + notarization — DEFERRED (operator decision
-      recorded 2026-08-23); re-homed to successor FID-2026-0903-001 scope
-- [ ] Windows Azure Artifact Signing — DEFERRED-PENDING-ELIGIBILITY;
-      re-homed to successor FID-2026-0903-001 scope
+- [ ] macOS entitlements + notarization — deferred::operator-approved 2026-08-23
+      (macOS out of v1 scope; entitlements/notarization work deferred
+      indefinitely pending Apple Developer ID enrollment); carried by
+      successor FID-2026-0903-001's first integrated cut and any future
+      macOS enrollment decision
+- [ ] Windows Azure Artifact Signing — deferred::operator-approved 2026-08-23
+      — DEFERRED-PENDING-ELIGIBILITY; re-homed to successor
+      FID-2026-0903-001 scope
       2026-08-23: macOS out of v1 scope)
-- [ ] Windows Azure Artifact Signing — DEFERRED-PENDING-ELIGIBILITY
+- [ ] Windows Azure Artifact Signing — deferred::operator-approved 2026-08-23
+      — DEFERRED-PENDING-ELIGIBILITY
       (operator decision 2026-08-23); unsigned local Windows builds proceed
       meanwhile per the revised strategy
 - [x] Consent-gated updater — landed 2026-08-26 (increment 2): pubkey

@@ -390,8 +390,11 @@ the day-0 signing gate. Master status stays `analyzed`; closure follows
       installer smoke both flavors, console fix, CI prebuild fix + dispatch
       scaffold); standing release-time process re-homed into the automatic
       release pipeline via successor FID-2026-0903-001
-- [ ] Integration tests passing — real-sidecar gateway E2E 4/4 green;
-      full three-platform driver-matrix coverage lands with Phase 4
+- [ ] Integration tests passing — deferred::operator-approved 2026-09-06:
+      real-sidecar gateway E2E 4/4 green at -008 closure; the full
+      three-platform driver-matrix scope moves with the master's own
+      Phase-4 planning into the current desktop workspace (verified in the
+      tree 2026-09-06; see FID-2026-0903-001 for the packaging chain)
 - [x] All child FIDs audited and closed — -008/-009/-010 archived earlier;
       -011 closed 2026-09-03; deferred macOS/Azure scope re-homed to
       FID-2026-0903-001
