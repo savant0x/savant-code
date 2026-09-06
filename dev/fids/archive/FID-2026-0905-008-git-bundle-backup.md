@@ -77,6 +77,8 @@ advanced only on verify success.
 - Honest boundary: the first real `--baseline` run targets the OneDrive
   path once the operator confirms it (BO Open Question 2); the shipped
   `SAVANT_BUNDLE_DIR_DEFAULT` is a documented placeholder.
+  **Discharged 2026-09-05** — operator directed the first live run (see
+  Live Verification in Resolution).
 
 ## Perfection Loop
 
@@ -118,6 +120,17 @@ advanced only on verify success.
 - **Verification Evidence:** bun test 7/7; eslint `--max-warnings 0`;
   prettier clean; fid:verify receipt stamped; commit `32255bb`.
 - **Archived:** 2026-09-05 (moved to `dev/fids/archive/`)
+- **Live Verification (2026-09-05):** first real baseline taken and
+  restore-drilled. Pre-flight: full (non-shallow) history, no prior
+  marker, OneDrive root present. `bun scripts/git-bundle-backup.ts
+  --baseline` → `C:/Users/spenc/OneDrive/savant-backups/baseline.bundle`
+  (37 MB, `--all`) created from HEAD `dee19226c4a7` (the 0905-campaign
+  closeout push); `git bundle verify` passed before the marker advanced;
+  `last-backup` → `dee19226c4a7`. Independent restore drill: `git clone`
+  from the bundle into a scratch dir reproduced HEAD `dee1922` + the tip
+  subject exactly, then cleaned up. Incremental rerun → idempotent no-op
+  ("no new commits since dee19226c4a7", exit 0). Session record:
+  `dev/session-summaries/2026-09-05-bundle-backup-baseline-drill.md`.
 
 ## Lessons Learned
 
