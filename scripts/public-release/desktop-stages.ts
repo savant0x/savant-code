@@ -37,6 +37,23 @@ export function desktopArtifactDir(version: string): string {
   return path.join(os.tmpdir(), `savant-desktop-bundles-v${version}`)
 }
 
+/**
+ * Loud skip record (FID-2026-0906-002): the receipt must say the desktop
+ * stages did not run — the v0.0.29 receipt ended at NPM_PUBLISH_CLI with no
+ * trace of the decision, reading as a complete release. Idempotent; the
+ * reason is the fixed flag name so the record never carries free text.
+ */
+export const DESKTOP_SKIP_REASON =
+  'SAVANT_CODE_RELEASE_DESKTOP not set — desktop stages did not run.'
+
+export function recordDesktopStagesSkipped(receipt: {
+  desktopStagesSkipped?: boolean
+  desktopStagesSkipReason?: string
+}): void {
+  receipt.desktopStagesSkipped = true
+  receipt.desktopStagesSkipReason = DESKTOP_SKIP_REASON
+}
+
 function assertEnabled(ctx: TransactionContext): void {
   if (!isDesktopPackagingEnabled()) {
     fail(

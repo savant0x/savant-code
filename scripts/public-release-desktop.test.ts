@@ -14,7 +14,10 @@ import path from 'path'
 import { describe, expect, test } from 'bun:test'
 
 import { buildPublicReleasePlan } from './public-release/catalog'
-import { runDesktopBundlesStage } from './public-release/desktop-stages'
+import {
+  recordDesktopStagesSkipped,
+  runDesktopBundlesStage,
+} from './public-release/desktop-stages'
 import { RELEASE_STAGES } from './public-release/fail'
 
 import type {
@@ -124,18 +127,31 @@ describe('desktop packaging stages (FID-2026-0903-001)', () => {
     )
   })
 
-  test('plan text: desktop steps appear only when opted in, in execution order', () => {
+  test('plan text: desktop decision always visible, both modes (FID-2026-0906-002)', () => {
     const previous = process.env.SAVANT_CODE_RELEASE_DESKTOP
     try {
       delete process.env.SAVANT_CODE_RELEASE_DESKTOP
-      const plain = buildPublicReleasePlan('0.0.29').join('\n')
-      expect(plain).not.toContain('desktop-release.yml')
-      expect(plain).not.toContain('updater manifest')
+      const plain = buildPublicReleasePlan('0.0.29')
+      const plainText = plain.join('\n')
+      expect(plainText).toContain(
+        'Dispatch desktop-release.yml for v0.0.29 (SKIPPED — SAVANT_CODE_RELEASE_DESKTOP not set)',
+      )
+      expect(plainText).toContain(
+        'Attach the verified desktop bundles + updater manifest to the release (SKIPPED — attach step also skipped)',
+      )
+      expect(plainText).toContain(
+        'Verify the desktop updater manifest for v0.0.29 (SKIPPED — attach step also skipped)',
+      )
+      const plainLines = plain.filter((line) => /desktop|updater/i.test(line))
+      expect(plainLines.length).toBe(3)
 
       process.env.SAVANT_CODE_RELEASE_DESKTOP = '1'
       const plan = buildPublicReleasePlan('0.0.29')
       const text = plan.join('\n')
-      expect(text).toContain('Dispatch desktop-release.yml for v0.0.29')
+      expect(text).toContain(
+        'Dispatch desktop-release.yml for v0.0.29 and watch the run',
+      )
+      expect(text).not.toContain('SKIPPED')
       expect(text).toContain('Attach the verified desktop bundles')
       expect(text).toContain('per-release URL')
       const lines = plan.filter((line) => /desktop|updater/i.test(line))
@@ -229,6 +245,19 @@ describe('desktop packaging stages (FID-2026-0903-001)', () => {
           delete process.env.SAVANT_CODE_RELEASE_DESKTOP
         else process.env.SAVANT_CODE_RELEASE_DESKTOP = previous
       }
+    } finally {
+      cleanup()
+    }
+  })
+
+  test('recordDesktopStagesSkipped: writes the loud skip flag (idempotent)', () => {
+    const { dir, cleanup } = scratch()
+    try {
+      const ctx = makeContext(dir)
+      recordDesktopStagesSkipped(ctx.receipt)
+      expect(ctx.receipt.desktopStagesSkipped).toBe(true)
+      recordDesktopStagesSkipped(ctx.receipt)
+      expect(ctx.receipt.desktopStagesSkipped).toBe(true)
     } finally {
       cleanup()
     }

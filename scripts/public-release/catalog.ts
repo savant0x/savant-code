@@ -68,6 +68,13 @@ export type ReleaseReceipt = {
   /** Repo identity (first 8 hex of the canonical root hash) so receipt scans
    *  never mistake another clone's crash evidence for this repository's. */
   repositoryKey?: string
+  /** Desktop-stage visibility (FID-2026-0906-002): true when the cut
+   *  completed without the desktop stages (SAVANT_CODE_RELEASE_DESKTOP
+   *  unset at POST_RELEASE_VERIFY time). Absence of both this flag and the
+   *  DESKTOP_* stage names is impossible on any post-002 receipt. */
+  desktopStagesSkipped?: boolean
+  /** Human-readable reason recorded alongside desktopStagesSkipped. */
+  desktopStagesSkipReason?: string
 }
 
 export type GateSpec = {
@@ -194,9 +201,12 @@ export function buildPublicReleasePlan(
     `Create annotated tag v${version}`,
     `git push origin main and v${version}`,
     'Write the verified incremental backup bundle (OneDrive-synced)',
-    ...(isDesktopPackagingEnabled()
-      ? [`Dispatch desktop-release.yml for v${version} and watch the run`]
-      : []),
+    // FID-2026-0906-002: the desktop decision is ALWAYS in the plan — the
+    // v0.0.29 cut completed green with the desktop stages silently skipped
+    // because the plan omitted them when the flag was unset.
+    isDesktopPackagingEnabled()
+      ? `Dispatch desktop-release.yml for v${version} and watch the run`
+      : `Dispatch desktop-release.yml for v${version} (SKIPPED — SAVANT_CODE_RELEASE_DESKTOP not set)`,
     `Create the GitHub REST release for v${version} with the current CHANGELOG section`,
     ...packages.map((target) => `npm publish ${target.name}`),
     ...(isDesktopPackagingEnabled()
@@ -204,7 +214,10 @@ export function buildPublicReleasePlan(
           'Attach the verified desktop bundles + updater manifest to the release',
           `Verify the desktop updater manifest for v${version} at the per-release URL`,
         ]
-      : []),
+      : [
+          'Attach the verified desktop bundles + updater manifest to the release (SKIPPED — attach step also skipped)',
+          `Verify the desktop updater manifest for v${version} (SKIPPED — attach step also skipped)`,
+        ]),
     'Verify public versions and restore local state',
   ]
 }

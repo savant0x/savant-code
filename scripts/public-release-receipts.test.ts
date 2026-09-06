@@ -57,6 +57,23 @@ describe('public release contract — receipts & evidence', () => {
     expect(receipt).not.toContain('Z2l0LXNlY3JldA==')
   })
 
+  test('receipt round-trip preserves the desktop skip flag (FID-2026-0906-002)', () => {
+    const serialized = redactReceipt({
+      version: '0.0.21',
+      mode: 'publish',
+      schemaVersion: 'release-receipt/v2',
+      completedStages: ['POST_RELEASE_VERIFY'],
+      desktopStagesSkipped: true,
+      desktopStagesSkipReason:
+        'SAVANT_CODE_RELEASE_DESKTOP not set — desktop stages did not run.',
+      restored: true,
+      receiptPath: '/tmp/receipt.json',
+    })
+    expect(serialized).toContain('desktopStagesSkipped')
+    expect(serialized).toContain('desktopStagesSkipReason')
+    expect(serialized).toContain('SAVANT_CODE_RELEASE_DESKTOP not set')
+  })
+
   test('rejects completed gate evidence without an explicit HEAD binding', () => {
     const receipt = {
       schemaVersion: 'release-receipt/v2' as const,

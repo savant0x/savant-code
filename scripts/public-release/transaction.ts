@@ -16,6 +16,7 @@ import {
 } from './catalog'
 import { requireCommand } from './command-runner'
 import {
+  recordDesktopStagesSkipped,
   runDesktopBundlesStage,
   runDesktopReleaseStage,
 } from './desktop-stages'
@@ -175,10 +176,28 @@ export async function runReleaseTransaction(): Promise<void> {
 
   await runAuthenticationStage(ctx)
 
+  // FID-2026-0906-002: when a resume flips the flag from skipped to enabled,
+  // a stale skip record from a prior receipt must not survive into the
+  // terminal receipt next to DESKTOP_* stage marks.
+  if (isDesktopPackagingEnabled()) {
+    delete receipt.desktopStagesSkipped
+    delete receipt.desktopStagesSkipReason
+  }
+
   try {
     await withLocalStateRestoration(
       ctx.snapshot,
       async () => {
+        // FID-2026-0906-002: the desktop decision must be loud in the live
+        // run too — the v0.0.29 cut completed green with the stages silently
+        // absent (an unadorned `if` with no else).
+        if (!isDesktopPackagingEnabled()) {
+          console.log('')
+          console.log(
+            '  ⚠ DESKTOP STAGES SKIPPED — SAVANT_CODE_RELEASE_DESKTOP is not set; this release will ship without desktop bundles or an updater manifest.',
+          )
+          recordDesktopStagesSkipped(receipt)
+        }
         await runProfileStage(ctx)
         runGatesStage(ctx)
         runGitPushStage(ctx)
