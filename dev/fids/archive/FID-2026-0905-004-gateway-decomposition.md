@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0905-004-gateway-decomposition.md`
 **ID:** FID-2026-0905-004
 **Severity:** medium
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-09-05 (session in progress)
 **YAGNI-Compliance:** Verified
 
@@ -231,8 +231,9 @@ untouched.
       exit 0; quality:report 17 → 16 violations with `cli/src/server/
       gateway.ts` UNLISTED and no new entries; Law-4 grep: single production
       caller unchanged (`server-command.ts:17`).
-- [ ] Step 6 (Closure) — `blocked` (operator): G2 commit hash required to
-      flip `closed` + archive + CHANGELOG.
+- [x] Step 6 (Closure) — `implemented` 2026-09-05: commit hash stamped
+      below (G1 amendment permits agent commits); `closed` + archive +
+      CHANGELOG entry recorded.
 
 ### Verification
 
@@ -261,8 +262,8 @@ declared gate paths to exist on disk).
 
 ### Verification Receipt
 
-- fingerprint: sha256:f1ca53cf788e86bf1acd9ef918f68cf3a07c8b139c91f9b0d2492c26db9d15f3
-- verified: 2026-09-05T20:09:50.685Z
+- fingerprint: sha256:703ddf86b0887c11502e4fa3a74a7732a7de2163703c0621e6b0470d321c3ecf
+- verified: 2026-09-06T00:05:19.375Z
 - typecheck cli: exit 0
 - test cli/src/server/__tests__/gateway.test.ts: exit 0
 - test cli/src/server/__tests__/gateway-handshake.test.ts: exit 0
@@ -354,7 +355,11 @@ frame") without touching any gateway code.
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [ ] **Commit SHA:** pending (G2 — operator executes git)
+- [x] **Commit SHA (G2):** `7e4be78` — feat(cli): session wave
+      decomposition and command surface growth (FID-2026-0905-003/-006);
+      **closed 2026-09-05**. Prior note (pre-drain): closure `blocked` on the
+      G2 commit hash (operator executes git) — resolved by the 2026-09-05 G1
+      amendment (agents permitted local commits + push).
 - [x] **File:line ranges:** `cli/src/server/gateway.ts` (facade, 236 lines:
       startGateway composition + Bun.serve transport + stop/handle);
       `cli/src/server/gateway/types.ts` (public contracts + internal types);
@@ -466,12 +471,26 @@ frame") without touching any gateway code.
 
 ## Resolution
 
-- **Closed Date:** (set when closure is independently verified)
-- **Fix Description:** pending
-- **Tests Added:** pending
-- **Verification Evidence:** pending
-- **Archived:** (set when moved to `dev/fids/archive/`)
+- **Closed Date:** 2026-09-05
+- **Fix Description:** `cli/src/server/gateway.ts` (1,327 lines) decomposed
+  into a 236-line facade plus 8 stage modules under `cli/src/server/gateway/`
+  (types, state, fid-events, run-lifecycle, default-run-prompt,
+  triggers-rpc, scoped-threads-rpc, commands-registry, handshake-rpc) with a
+  byte-identical export surface; per-session state consolidated in a
+  GatewayContext bundle; the RED finding (request() id-match) fixed in
+  gateway-test-harness.ts and pinned by 5 new inject-trigger tests.
+- **Tests Added:** Yes — `gateway-inject-trigger.test.ts` (5 tests); server
+  suite parity 35 pass / 0 fail / 163 expect() across 10 files.
+- **Verification Evidence:** cli typecheck 0; eslint `--max-warnings 0`;
+  prettier clean; lint:md 0; quality:report — gateway.ts unlisted, no new
+  entries; fid:verify receipt stamped 6/6 PASS; commit `7e4be78`.
+- **Archived:** 2026-09-05 (moved to `dev/fids/archive/`)
 
 ## Lessons Learned
 
-*(filled at closure)*
+- Extract a shared state contract (the GatewayContext bundle) before moving
+  any stage — retrofitting ownership after the first module lands causes
+  cross-domain writes (the fidBus encapsulation fixed exactly this).
+- A thin facade owns composition, not routing: `createDispatch(ctx)` as a
+  pure function of the context keeps wire-level consumers untouched while
+  letting handlers live in their domain modules.

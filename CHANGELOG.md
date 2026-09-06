@@ -2,6 +2,39 @@
 
 ## Unreleased
 
+- **FID-2026-0905-001/-004/-005/-007 (closed 2026-09-05)** — the source-
+  monolith decomposition campaign completed; all five residue monoliths of
+  closed -0819-005 are gone and `quality:report` sits at **0 violations**:
+  `tool-executor/native.ts` 894 → 249 facade + pipeline stages with
+  gate-order-pinning tests (`24fae6f0`); `cli/src/server/gateway.ts`
+  1,327 → 236 + 8 `gateway/` stage modules behind a byte-identical facade
+  with per-session GatewayContext state and a `fid-events` bus (`7e4be78`);
+  `desktop office-scene.tsx` 2,126 → 179 + 14 `scene-*` modules with
+  RED-first pure-logic extraction and a single-owner focus bus (`3c737fb`);
+  `scripts/public-release.ts` 3,065 → 178 + 23 domain modules, the ~420-line
+  `runReleaseTransaction` refactored into stage helpers with statement order
+  preserved and the export surface mechanically verified identical
+  (`32255bb`). Suite parity held at every step (1335/0, 35/0/163, 413/0/
+  5,718, 57/0/216 respectively); `fid:verify` receipts stamped for all.
+- **FID-2026-0905-006 (closed 2026-09-05)** — provider-drift baseline
+  violations resolved: 10 over-ceiling test files split under 300 at exact
+  suite parity, the `providers.ts` data-constant exemption merged into the
+  existing `dataConstantExemptions` block (growth-frozen at 335), and the
+  env-sanitize lists in all three provider-setup test files now DERIVED
+  from `PROVIDER_SETUP_CONFIG` + `RESEARCH_KEY_SERVICES` so the next
+  provider cannot re-create the KIOSAPI_API_KEY leak class (commits
+  `98129016`…`7e4be78`); also resolved R5 (`bun:test` imports in
+  `model-config.test.ts`).
+- **FID-2026-0905-008 (closed 2026-09-05)** — `scripts/git-bundle-backup.ts`:
+  the G5 backup durability layer replacing "push often" — baseline bundle
+  once, incrementals over `last-backup..main`, verify-or-no-advance (the
+  `last-backup` tag moves only after the written bundle verifies),
+  idempotent no-op at marker==HEAD, `SAVANT_BUNDLE_DIR` for the
+  OneDrive-synced destination; 7 scratch-repo tests (`32255bb`).
+- **Governance (2026-09-05)** — operator amendment to the G1/G6 version-
+  control workflow recorded in ECHO.md and BO-2026-08-23: agents are
+  permitted local commits + push; public releases flow exclusively through
+  the `release:public` pipeline (local push + pipeline releases).
 - **FID-2026-0905-002 (closed 2026-09-05)** — KiosAPI added as a first-class
   provider (Path A registry entry + authenticated live model catalog in the
   Nous pattern): `kiosapi/<model>` routes to `https://kiosapi.com/v1` with

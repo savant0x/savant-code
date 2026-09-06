@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0905-008-git-bundle-backup.md`
 **ID:** FID-2026-0905-008
 **Severity:** high
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-09-05
 **YAGNI-Compliance:** Pending
 
@@ -56,8 +56,8 @@ advanced only on verify success.
 
 ### Verification Receipt
 
-- fingerprint: sha256:5627b778825a948555a27e920464b137041d7765aa567bf001cd6fe06abd0121
-- verified: 2026-09-05T23:44:26.690Z
+- fingerprint: sha256:6dcebb9bd2e1999fb20224e996cccbd4ac54a877976b43c4f1ab1f64e8428021
+- verified: 2026-09-06T00:06:45.735Z
 - test scripts/git-bundle-backup.test.ts: exit 0
 
 ## Implementation Evidence (Double Audit, 2026-09-05)
@@ -101,3 +101,29 @@ advanced only on verify success.
   constant is a documented placeholder; the script prints the resolved
   destination and fails closed if it cannot create the directory.
 - **CHANGE DELTA:** initial authoring.
+
+## Resolution
+
+- **Closed Date:** 2026-09-05
+- **Fix Description:** `scripts/git-bundle-backup.ts` (196 lines) — the
+  G5 durability layer replacing "push often": baseline bundle once,
+  incrementals over `last-backup..main`, verify-or-no-advance (the tag
+  moves only after the written bundle verifies), idempotent no-op when the
+  marker already equals HEAD, operator-configurable destination via
+  `SAVANT_BUNDLE_DIR` for the OneDrive-synced path.
+- **Tests Added:** Yes — `scripts/git-bundle-backup.test.ts` (7 tests on
+  scratch repos): baseline + verify, incremental, idempotent rerun,
+  verify-or-no-advance, dirty-tree refusal, --baseline flag, destination
+  resolution.
+- **Verification Evidence:** bun test 7/7; eslint `--max-warnings 0`;
+  prettier clean; fid:verify receipt stamped; commit `32255bb`.
+- **Archived:** 2026-09-05 (moved to `dev/fids/archive/`)
+
+## Lessons Learned
+
+- Verify-or-no-advance turns backups from best-effort into a protocol: the
+  tag marker only ever moves forward over a verified bundle, so a failed
+  or truncated backup cannot silently become the new recovery point.
+- Treat marker === HEAD as success, not an empty bundle: git correctly
+  refuses empty incremental bundles, and the rerun-after-incremental case
+  is the common one, not the edge case.

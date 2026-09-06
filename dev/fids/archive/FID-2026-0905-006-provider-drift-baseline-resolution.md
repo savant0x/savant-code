@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0905-006-provider-drift-baseline-resolution.md`
 **ID:** FID-2026-0905-006
 **Severity:** medium
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-09-05 (session in progress)
 **YAGNI-Compliance:** Pending
 
@@ -97,8 +97,8 @@ valid gate nor this FID's to fix — operator decision stands).
 
 ### Verification Receipt
 
-- fingerprint: sha256:45ea5c6b7de84491d11e12b60def91ad223353cdc205f543d02a86466327392a
-- verified: 2026-09-05T22:13:46.342Z
+- fingerprint: sha256:70baedd6a2eccbf4b5158bdb1b8bd112b9a8f4b947c27886a303b4cd2c69b285
+- verified: 2026-09-06T00:06:06.988Z
 - typecheck sdk: exit 0
 - typecheck cli: exit 0
 - test cli/src/utils/__tests__/provider-setup-gateway.test.ts: exit 0
@@ -161,3 +161,38 @@ valid gate nor this FID's to fix — operator decision stands).
 5. AUDIT: eslint full repo, prettier, lint:md, suite parity counts recorded;
    `fid:verify` receipt stamped.
 6. Bookkeeping: fids README, SCOPE R4, session summary.
+
+## Resolution
+
+- **Closed Date:** 2026-09-05
+- **Fix Description:** (R4) provider-drift test failures fixed by deriving
+  the env-sanitize lists in all three provider-setup test files from
+  `PROVIDER_SETUP_CONFIG` + `RESEARCH_KEY_SERVICES` (re-exported via
+  provider-setup.ts) instead of hand-maintained arrays — kiosapi/zen vars
+  now covered by construction, so the next provider cannot re-create the
+  drift. (R5) `common/src/__tests__/model-config.test.ts` migrated to the
+  repo-conventional explicit `bun:test` imports. (R3-baseline) 10 over-
+  ceiling test files split under 300 with exact suite parity; the
+  `providers.ts` data-constant exemption merged into the EXISTING
+  `dataConstantExemptions` block (first attempt created a duplicate JSON
+  key — last-wins parsing shadowed it, caught by probe).
+- **Tests Added:** Yes — split halves of openrouter-models-gateway
+  (16/0), free-mode cyclic-tools (10/0), plus parity across all touched
+  suites: sdk 507/0, cli 3497/0, common 6/0, provider-setup trio 27/0.
+- **Verification Evidence:** typecheck × 4 exit 0; eslint
+  `--max-warnings 0`; prettier clean; lint:md 0; `quality:report` —
+  15 → 2 violations at FID-006 close (the two R3 monoliths, since cleared
+  by FID-007); fid:verify receipt stamped 7/7 PASS.
+- **Commits (G2):** `98129016` (env-sanitize derivation), `cb6288a` +
+  `6942b46` (common registry + splits), `395424f` (sdk), `1d7ee41` +
+  `7e4be78` (cli).
+- **Archived:** 2026-09-05 (moved to `dev/fids/archive/`)
+
+## Lessons Learned
+
+- Hand-maintained provider-constant lists are a drift generator: deriving
+  them from the setup config (single source of truth) eliminates the
+  failure class rather than patching the latest instance.
+- Merging into an existing JSON block beats appending a new key with the
+  same name — duplicate keys parse last-wins and silently shadow the new
+  entry (caught only by a runtime probe, not by the editor).

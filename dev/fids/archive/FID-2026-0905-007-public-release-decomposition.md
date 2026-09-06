@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0905-007-public-release-decomposition.md`
 **ID:** FID-2026-0905-007
 **Severity:** high
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-09-05 (session in progress)
 **YAGNI-Compliance:** Pending
 
@@ -64,8 +64,8 @@ keeps the `import.meta.main` entrypoint.
 
 ### Verification Receipt
 
-- fingerprint: sha256:e039640796d9c33840064d737130d81242b25f21a2fb3c98ee727492263aed9d
-- verified: 2026-09-05T23:36:47.275Z
+- fingerprint: sha256:c048526e2e129c2145c9a223fb3358a07f5717f63b99259b0915f9d5cb6ce240
+- verified: 2026-09-06T00:06:37.674Z
 - test scripts/public-release.test.ts: exit 0
 - test scripts/public-release-assets.test.ts: exit 0
 - test scripts/public-release-credential-scan.test.ts: exit 0
@@ -144,3 +144,36 @@ keeps the `import.meta.main` entrypoint.
   the pre-push gate uses workspace-scoped `bun run test` and is unaffected.
 - Honest boundary: the next `bun run release:public --preview` by the
   operator is the live smoke for the transaction-stage refactor.
+
+## Resolution
+
+- **Closed Date:** 2026-09-05
+- **Fix Description:** `scripts/public-release.ts` (3,065 lines — the last
+  absolute-max monolith) decomposed into a 178-line facade plus 23 domain
+  modules under `scripts/public-release/` (fail, catalog, changelog,
+  redaction, local-state, process-tree, command-runner, output, pinned-bun,
+  gates, github-api, lock, npm-guards, prompt, receipts, credential-scan,
+  git-publish, preflight, assets, diagnostics, stages, stages-verify,
+  transaction); the ~420-line `runReleaseTransaction` refactored into stage
+  helpers over a shared TransactionContext with statement order and control
+  flow preserved; export surface mechanically verified identical (missing=
+  NONE, leaked=NONE).
+- **Tests Added:** No new tests — the 12 sibling characterization files pin
+  behavior; parity held at 57 pass / 0 fail / 216 expects before and after.
+- **Verification Evidence:** sibling suites 57/0/216 (exact RED-baseline
+  parity, re-verified after every trim); eslint `--max-warnings 0`;
+  prettier clean; lint:md 0; fid:verify receipt stamped 11/11 PASS;
+  `quality:report` PASS (1467 baselined files) — zero violations; commit
+  `32255bb`.
+- **Archived:** 2026-09-05 (moved to `dev/fids/archive/`)
+
+## Lessons Learned
+
+- The wc+1 lesson holds at every scale: measure files with the report's
+  exact metric, not `wc -l`, or a "281-line" file is actually 305 and the
+  trim happens twice.
+- Stage-refactor decompositions need a mechanical surface check, not just
+  green tests: diffing the facade's runtime export surface against the
+  original caught 17 leaked internals AND two wrong-module re-exports
+  (`readCapturedOutput`, `runDiagnostic`) that the suites surfaced only
+  one at a time.

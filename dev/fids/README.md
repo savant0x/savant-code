@@ -34,11 +34,25 @@ on-disk records missing from the table added (-0823-003, -0824-003…-008,
 | FID | Status | Purpose / blocking gate |
 |---|---|---|
 | [`FID-2026-0903-001`](FID-2026-0903-001-desktop-packaging-auto-release-integration.md) | `analyzed` | Desktop packaging integrated into the automatic release pipeline (`release:public`) as new stages — successor to closed -0820-011; implementation on the NEXT release cut per operator directive 2026-09-03 |
-| [`FID-2026-0905-001`](FID-2026-0905-001-native-tool-executor-decomposition.md) | `fixed` | Architectural decomposition of `tool-executor/native.ts` (894 → 249 lines) into pipeline stages with gate-order-pinning tests — residue item 1 of 5 from closed -0819-005; implemented 2026-09-05 (1335/0 suite parity, receipt re-stamped 4/4 PASS, status corrected `analyzed`→`fixed` per ground-truth rule); closure awaits the G2 commit hash |
-| [`FID-2026-0905-004`](FID-2026-0905-004-gateway-decomposition.md) | `fixed` | Architectural decomposition of `cli/src/server/gateway.ts` (1,327 → 236 lines) into 8 `gateway/` stage modules behind a byte-identical facade — residue item 2 of 5 from closed -0819-005; implemented 2026-09-05 (RED baseline 35/0 parity, receipt 6/6 PASS, quality-report unlisted); closure awaits the G2 commit hash |
-| [`FID-2026-0905-005`](FID-2026-0905-005-office-scene-decomposition.md) | `fixed` | Architectural decomposition of `desktop/src/floor/office/office-scene.tsx` (2,126 → 179 lines) into 14 `scene-*` stage modules behind a byte-identical facade — residue item 3 of 5 from closed -0819-005; implemented 2026-09-05 (RED-first logic extraction + 13 pins, suite parity 413/0 / 5,718 expects, receipt 6/6 PASS, quality-report unlisted); closure awaits the G2 commit hash |
-| [`FID-2026-0905-006`](FID-2026-0905-006-provider-drift-baseline-resolution.md) | `fixed` | R4 resolution: 13 provider-drift quality violations from 2026-09-04/05 sessions — 10 baseline regenerations (+3..+48, feature growth), 2 test splits (529 → 281+273, 374 → 181+218), 1 data-catalog exemption (providers.ts, -0819-005 class, growth-frozen at 335); bonus: env-sanitize lists now DERIVED from PROVIDER_SETUP_CONFIG + RESEARCH_KEY_SERVICES (KIOSAPI_API_KEY leak class eliminated); R5 also resolved (bun:test imports); quality:report 15 → 2; receipt 7/7 PASS; closure awaits the G2 commit hash |
-| [`FID-2026-0905-007`](FID-2026-0905-007-public-release-decomposition.md) | `fixed` | Public-release pipeline decomposition: 3,065 → 178 facade (−94%) over 23 domain modules, largest 294; facade export surface verified item-by-item against `git show HEAD` (52 values + 7 types, zero missing/leaked via runtime check); 57/0/216 sibling-suite parity with the RED baseline; the pre-existing `bun test scripts/` directory-recursion hang (vendored `resources/openclaude/scripts/` network tests matched by bun's fuzzy path matching) is documented as NOT a decomposition regression — the pre-push gate uses workspace-scoped `bun run test`, which is unaffected; quality:report reached **0 violations**; closure awaits the G2 commit hash |
+
+**2026-09-05 closure — quality campaign to zero (6 FIDs archived):**
+[`FID-2026-0905-001`](archive/FID-2026-0905-001-native-tool-executor-decomposition.md)
+(native.ts 894 → 249, `24fae6f0`),
+[`FID-2026-0905-004`](archive/FID-2026-0905-004-gateway-decomposition.md)
+(gateway.ts 1,327 → 236, `7e4be78`),
+[`FID-2026-0905-005`](archive/FID-2026-0905-005-office-scene-decomposition.md)
+(office-scene.tsx 2,126 → 179, `3c737fb`),
+[`FID-2026-0905-006`](archive/FID-2026-0905-006-provider-drift-baseline-resolution.md)
+(provider-drift baselines + derived env-sanitize lists, `98129016`),
+[`FID-2026-0905-007`](archive/FID-2026-0905-007-public-release-decomposition.md)
+(public-release.ts 3,065 → 178 over 23 modules, `32255bb`), and
+[`FID-2026-0905-008`](archive/FID-2026-0905-008-git-bundle-backup.md)
+(git-bundle-backup G5 durability layer, `32255bb`) **closed + archived
+2026-09-05**. G2 commit hashes stamped in every FID (resolved by the
+2026-09-05 G1 amendment permitting agent commits + push). All five residue
+monoliths of closed -0819-005 are now decomposed; `quality:report` at
+**0 violations**; receipts re-verified via `fid:verify --check`. Active
+queue is now `-0903-001` only.
 
 **2026-09-05 closure — provider integrations:**
 [`FID-2026-0905-002`](archive/FID-2026-0905-002-kiosapi-provider.md) (KiosAPI)
@@ -61,7 +75,7 @@ raw-text scaffold. Final gates: typecheck × 4 clean, all four workspace suites
 -0903-001 only.
 
 **2026-09-05 monolith-FID opening (residue backlog, item 2 of 5):**
-[`FID-2026-0905-004`](FID-2026-0905-004-gateway-decomposition.md)
+[`FID-2026-0905-004`](archive/FID-2026-0905-004-gateway-decomposition.md)
 opened scoping the architectural decomposition of
 `cli/src/server/gateway.ts` (the desktop session gateway), measured
 1,327 lines — the 4th of the 5 residue monoliths. Sequenced ahead of
@@ -76,7 +90,7 @@ and the FID's own Loop sections for the full record, including the
 result. (The item-1 note below predates the -0905-001 implementation.)
 
 **2026-09-05 monolith-FID opening (residue backlog, item 3 of 5):**
-[`FID-2026-0905-005`](FID-2026-0905-005-office-scene-decomposition.md)
+[`FID-2026-0905-005`](archive/FID-2026-0905-005-office-scene-decomposition.md)
 opened scoping the architectural decomposition of
 `desktop/src/floor/office/office-scene.tsx` (the R3F office deck scene),
 measured 2,126 lines. Sequenced ahead of `public-release.ts` (-0903-001

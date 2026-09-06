@@ -4,6 +4,10 @@
 // provider-cluster tests live in openrouter-models-gateway-providers.test.ts
 // (FID-2026-0905-006 ceiling split).
 
+import fs from 'fs'
+import os from 'os'
+import path from 'path'
+
 import { describe, expect, mock, test } from 'bun:test'
 
 import {
@@ -21,9 +25,6 @@ import {
   registerGatewayCatalogLifecycle,
 } from './openrouter-models-test-harness'
 
-import fs from 'fs'
-import os from 'os'
-import path from 'path'
 
 describe('openrouter-models', () => {
   registerGatewayCatalogLifecycle()

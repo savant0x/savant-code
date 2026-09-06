@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0905-005-office-scene-decomposition.md`
 **ID:** FID-2026-0905-005
 **Severity:** medium
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-09-05 (session in progress)
 **YAGNI-Compliance:** Verified
 
@@ -235,8 +235,8 @@ claimed as a visual pass.
 
 ### Verification Receipt
 
-- fingerprint: sha256:9493a38cf4fe604b651c6ac04df45358efdaada40041a0786f03934400339cbb
-- verified: 2026-09-05T21:01:44.830Z
+- fingerprint: sha256:388026a465993f6b3f11804d9dd0ad6b962e711692a21072805e244863e5fe89
+- verified: 2026-09-06T00:05:36.777Z
 - typecheck desktop: exit 0
 - test desktop/src/floor/office/__tests__/scene-agent-logic.test.ts: exit 0
 - test desktop/src/floor/office/__tests__/office-motion.test.ts: exit 0
@@ -302,7 +302,12 @@ claimed as a visual pass.
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [ ] **Commit SHA:** pending (G2 — operator executes git)
+- [x] **Commit SHA (G2):** `3c737fb` — refactor(desktop): decompose
+      office-scene into 14 domain modules with facade
+      (FID-2026-0905-005); **closed 2026-09-05**. Prior note (pre-drain):
+      closure `blocked` on the G2 commit hash (operator executes git) —
+      resolved by the 2026-09-05 G1 amendment (agents permitted local
+      commits + push).
 - [x] **File:line ranges:** `desktop/src/floor/office/office-scene.tsx`
       (2,126 → 179 facade) + 14 new `scene-*` modules (see Code
       Verification Evidence); consumer wires: `deck-view.tsx:24` (unchanged),
@@ -396,12 +401,29 @@ claimed as a visual pass.
 
 ## Resolution
 
-- **Closed Date:** (set when closure is independently verified)
-- **Fix Description:** pending
-- **Tests Added:** pending
-- **Verification Evidence:** pending
-- **Archived:** (set when moved to `dev/fids/archive/`)
+- **Closed Date:** 2026-09-05
+- **Fix Description:** `desktop/src/floor/office/office-scene.tsx`
+  (2,126 lines) decomposed into a 179-line facade plus 14 `scene-*` modules
+  (frame-loop, agent-logic, agent-fx, agent-ui, decor, environment, identity,
+  focus-bus, fx-lights, plan, walker) with verbatim JSX/logic moves; pure
+  logic extracted where the 4 sibling test files could pin it; module-level
+  focus bus preserved (P9b) in its single owner.
+- **Tests Added:** Yes — RED pin file (13 tests / 20 expects) covering
+  labelFor, makeThinkingPredicate, and targetFor; desktop suite parity
+  413 pass / 0 fail / 5,718 expects across 66 files.
+- **Verification Evidence:** desktop typecheck 0; eslint `--max-warnings 0`;
+  prettier clean; lint:md 0; quality:report — office-scene unlisted (was
+  2,126 > 300), all 14 modules under ceiling; fid:verify receipt stamped;
+  commit `3c737fb`; visual look remains the operator's live smoke
+  (recorded honest boundary).
+- **Archived:** 2026-09-05 (moved to `dev/fids/archive/`)
 
 ## Lessons Learned
 
-*(filled at closure)*
+- Decide bus/ownership BEFORE extraction: AgentCharacter's writes to
+  deckFocus/agentWorldPositions meant a camera-owned bus would have created
+  a cross-domain write — the dedicated scene-focus-bus single owner was the
+  correct seam, and it was only found by auditing the write sites first.
+- Extract pure logic the existing tests already pin; leave JSX structure to
+  typecheck and record the visual-look boundary honestly rather than
+  claiming screenshot-level parity the pin set cannot provide.

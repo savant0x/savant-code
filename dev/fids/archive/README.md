@@ -3,6 +3,38 @@
 This directory contains closed or historically completed FIDs. Files here are
 an audit record, not an active work queue.
 
+## 2026-09-05 closure — quality campaign to zero (6 FIDs archived)
+
+Six FIDs from the 2026-09-04/05 quality campaign closed after the
+phase-2 drain (13 coherent commits) stamped G2 commit hashes into every
+record — the prior `blocked`-on-operator closure gate was resolved by the
+2026-09-05 G1 amendment (agents permitted local commits + push; releases
+go through the public-release pipeline only). Receipts re-verified via
+`fid:verify --check` (all PASS) before the move:
+
+- `FID-2026-0905-001-native-tool-executor-decomposition.md` (medium) —
+  native.ts 894 → 249 facade + stage modules; 1335/0 parity; commit
+  `24fae6f0`.
+- `FID-2026-0905-004-gateway-decomposition.md` (medium) — gateway.ts
+  1,327 → 236 + 8 stage modules; 35/0/163 parity; commit `7e4be78`.
+- `FID-2026-0905-005-office-scene-decomposition.md` (medium) —
+  office-scene.tsx 2,126 → 179 + 14 scene modules; 413/0/5,718 parity;
+  commit `3c737fb`.
+- `FID-2026-0905-006-provider-drift-baseline-resolution.md` (medium) —
+  10 baseline regenerations, 2 test splits, providers.ts exemption,
+  derived env-sanitize lists; commits `98129016`, `cb6288a`, `6942b46`,
+  `395424f`, `1d7ee41`, `7e4be78`.
+- `FID-2026-0905-007-public-release-decomposition.md` (medium) —
+  public-release.ts 3,065 → 178 facade + 23 modules; 57/0/216 parity;
+  export surface mechanically verified identical; `quality:report` 0
+  violations; commit `32255bb`.
+- `FID-2026-0905-008-git-bundle-backup.md` (medium) — G5 bundle-backup
+  durability layer (baseline once, `last-backup..main` incrementals,
+  verify-or-no-advance); 7/0 scratch-repo tests; commit `32255bb`.
+
+All five residue monoliths of closed -0819-005 are now decomposed.
+Active queue is now `-0903-001` only.
+
 ## 2026-09-05 closure — provider integrations (2 FIDs archived)
 
 Two `fixed` provider FIDs closed after the operator's live tests

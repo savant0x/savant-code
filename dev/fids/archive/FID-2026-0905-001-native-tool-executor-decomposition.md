@@ -252,8 +252,8 @@ Hard invariants to pin with characterization tests in RED, before any extraction
 
 ### Verification Receipt
 
-- fingerprint: sha256:d656ce904459aac8335585db6fe627e154d2a304149c357cff9974bd4f90447f
-- verified: 2026-09-05T23:38:17.015Z
+- fingerprint: sha256:6372fe657766a100888b13fe4370add130e3846350eb5f7fe4ac33390720610f
+- verified: 2026-09-06T00:04:51.080Z
 - typecheck packages/agent-runtime: exit 0
 - test packages/agent-runtime/src/__tests__/echo-compliance-wiring.test.ts: exit 0
 - test packages/agent-runtime/src/__tests__/run-programmatic-step-part-a.test.ts: exit 0
@@ -392,7 +392,11 @@ Hard invariants to pin with characterization tests in RED, before any extraction
       disk (file:line ranges in Resolution); facade 249 lines; characterization
       suites green pre- and post-extraction (1335 pass / 0 fail both runs)
 - [x] Status reflects actual state: `analyzed` → steps 1–4 implemented with gate
-      receipts; closure `blocked` on the G2 commit hash (operator executes git)
+- **Commit SHA (G2):** `24fae6f0` — refactor(agent-runtime): decompose
+  native.ts into tool-executor domain modules; **closed 2026-09-05**.
+  Prior note (pre-drain): closure `blocked` on the G2 commit hash
+  (operator executes git) — resolved by the 2026-09-05 G1 amendment
+  (agents permitted local commits + push).
 
 ## Resolution
 
