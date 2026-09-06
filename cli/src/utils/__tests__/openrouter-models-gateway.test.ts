@@ -25,7 +25,6 @@ import {
   registerGatewayCatalogLifecycle,
 } from './openrouter-models-test-harness'
 
-
 describe('openrouter-models', () => {
   registerGatewayCatalogLifecycle()
 

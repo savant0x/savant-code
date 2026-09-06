@@ -33,10 +33,9 @@ describe('getAgentPrompt', () => {
           toolNames: ['sequentialthinking', 'end_turn'],
           instructionsPrompt: 'Think step by step.',
         })
-        const agentTemplates: Record<string, AgentTemplate> =
-          {
-            'thinker-like-agent': agentTemplate,
-          }
+        const agentTemplates: Record<string, AgentTemplate> = {
+          'thinker-like-agent': agentTemplate,
+        }
 
         const result = await getAgentPrompt({
           agentTemplate,
@@ -69,10 +68,9 @@ describe('getAgentPrompt', () => {
           toolNames: ['set_output', 'end_turn'],
           instructionsPrompt: 'Report results with set_output.',
         })
-        const agentTemplates: Record<string, AgentTemplate> =
-          {
-            'tmux-cli-like-agent': agentTemplate,
-          }
+        const agentTemplates: Record<string, AgentTemplate> = {
+          'tmux-cli-like-agent': agentTemplate,
+        }
 
         const result = await getAgentPrompt({
           agentTemplate,

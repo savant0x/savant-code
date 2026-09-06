@@ -3,10 +3,7 @@
 // (parent: enforcement.test.ts).
 import { describe, expect, it } from 'bun:test'
 
-import {
-  getOrCreateEnforcement,
-  resolveEnforcementMode,
-} from '../enforcement'
+import { getOrCreateEnforcement, resolveEnforcementMode } from '../enforcement'
 
 describe('FID-0811-005 typed contract boundary', () => {
   it('keeps valid modes and defaults an absent mode to hybrid', () => {

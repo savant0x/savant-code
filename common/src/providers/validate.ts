@@ -155,11 +155,7 @@ export function validateProviderRegistry(
       )
     }
     if (config.credentials.envVar) {
-      claimEnvVar(
-        config.credentials.envVar,
-        key,
-        config.credentials.resolver,
-      )
+      claimEnvVar(config.credentials.envVar, key, config.credentials.resolver)
     }
     for (const extra of config.credentials.extra ?? []) {
       claimEnvVar(extra.envVar, key, undefined)

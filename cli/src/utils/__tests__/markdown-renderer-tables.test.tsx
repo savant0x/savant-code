@@ -7,7 +7,7 @@ import React from 'react'
 import { renderMarkdown } from '../markdown-renderer'
 import { flattenChildren, flattenNodes } from './markdown-renderer-test-harness'
 
-import type { El} from './markdown-renderer-test-harness';
+import type { El } from './markdown-renderer-test-harness'
 
 describe('markdown renderer', () => {
   test('renders tables with GFM', () => {

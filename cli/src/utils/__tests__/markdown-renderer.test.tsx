@@ -15,7 +15,7 @@ import { renderMarkdown, renderStreamingMarkdown } from '../markdown-renderer'
 import { chatThemes } from '../theme-system'
 import { flattenChildren, flattenNodes } from './markdown-renderer-test-harness'
 
-import type { El} from './markdown-renderer-test-harness';
+import type { El } from './markdown-renderer-test-harness'
 
 describe('markdown renderer', () => {
   test('renders bold and italic emphasis', () => {

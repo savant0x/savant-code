@@ -6,11 +6,13 @@ describe('TokenRouter static catalog', () => {
   test('returns one entry per cli-side model id', () => {
     const models = fetchTokenRouterModels()
 
-expect(models.length).toBe(35)
-    expect(models.find((m) => m.id === 'tokenrouter/z-ai/glm-5.3-free')).toBeDefined()
-    expect(models.find((m) => m.id === 'tokenrouter/z-ai/glm-5.3-free')?.name).toBe(
-      'GLM 5.3 Free',
-    )
+    expect(models.length).toBe(35)
+    expect(
+      models.find((m) => m.id === 'tokenrouter/z-ai/glm-5.3-free'),
+    ).toBeDefined()
+    expect(
+      models.find((m) => m.id === 'tokenrouter/z-ai/glm-5.3-free')?.name,
+    ).toBe('GLM 5.3 Free')
   })
 
   test('assigns every known display name through the cli-side map', () => {

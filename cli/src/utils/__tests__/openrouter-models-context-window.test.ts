@@ -4,7 +4,10 @@
 
 import { describe, expect, mock, test } from 'bun:test'
 
-import { fetchGatewayModels, resolveContextWindowForModel } from '../openrouter-models'
+import {
+  fetchGatewayModels,
+  resolveContextWindowForModel,
+} from '../openrouter-models'
 import {
   makeJsonResponse,
   registerGatewayCatalogLifecycle,

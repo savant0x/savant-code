@@ -9,7 +9,7 @@ import stringWidth from 'string-width'
 import { renderMarkdown } from '../markdown-renderer'
 import { flattenChildren, flattenNodes } from './markdown-renderer-test-harness'
 
-import type { El} from './markdown-renderer-test-harness';
+import type { El } from './markdown-renderer-test-harness'
 
 describe('markdown renderer', () => {
   test('wraps table columns when content exceeds available width', () => {
