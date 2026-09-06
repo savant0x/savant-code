@@ -621,7 +621,7 @@ presentation layer, then re-run visual smoke. T15-F/T15-H remain blocked.
 > `jsonValueSchema` uses are validation-only. BLOCKED on operator facts
 > (model id, blast radius, cross-provider comparison) — see questions.
 
-## [OPEN-OUT-OF-SCOPE → RESOLVED via FID-2026-0906-007, 2026-09-06] — desktop sidecar E2E: spawn-time env starvation + absent from root test chain
+## [OPEN-OUT-OF-SCOPE → RESOLVED via FID-2026-0906-007, 2026-09-06] — desktop sidecar E2E env starvation
 
 > **Discovered 2026-09-06 (T17-A verification leg); RESOLVED same session**
 > by FID-2026-0906-007 (closed + archived): `env.ts` gained the `.env.local`
