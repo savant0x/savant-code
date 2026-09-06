@@ -55,7 +55,17 @@ const TOKENROUTER_NAMES: Record<string, string> = {
   'tokenrouter/qwen/qwen3.5-397b-a17b': 'Qwen 3.5 397B',
   'tokenrouter/qwen/qwen3.5-122b-a10b': 'Qwen 3.5 122B',
   'tokenrouter/openai/gpt-oss-120b': 'GPT-OSS 120B',
+  'tokenrouter/z-ai/glm-5.3-free': 'GLM 5.3 Free',
 }
+
+/** The TokenRouter model id keys, exported so tests can compare the static
+ * catalog against the live common model config without importing runtime
+ * helpers. This is the single source of truth for the keys the CLI tests
+ * enumerate; do not read `tokenrouterModels` here because that object is
+ * statically generated from common and re-exported under the same keys. */
+export const TOKENROUTER_MODEL_IDS = Object.keys(tokenrouterModels) as Array<
+  keyof typeof tokenrouterModels
+>
 
 const TOKENHARBOR_NAMES: Record<string, string> = {
   'tokenharbor/claude-opus-5': 'Claude Opus 5',

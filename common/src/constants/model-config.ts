@@ -31,8 +31,11 @@ export {
   openCodeZenModels,
   opencodeGoModels,
   OPENCODE_GO_PROTOCOLS,
+  OPENCODE_ZEN_PROTOCOLS,
   openrouterModels,
+  PROVIDER_PROTOCOL_MAPS,
   tokenharborModels,
+  TOKENROUTER_NAMES,
   tokenrouterModels,
 } from './model-config/providers'
 

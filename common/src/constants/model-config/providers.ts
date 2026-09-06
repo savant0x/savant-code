@@ -8,6 +8,8 @@
 export {
   COMMANDCODE_PROTOCOLS,
   OPENCODE_GO_PROTOCOLS,
+  OPENCODE_ZEN_PROTOCOLS,
+  PROVIDER_PROTOCOL_MAPS,
 } from './provider-protocols'
 
 export const openaiModels = {
@@ -43,6 +45,7 @@ export const openrouterModels = {
   openrouter_tencent_hy3: 'tencent/hy3',
   openrouter_tencent_hy3_free: 'tencent/hy3:free',
   openrouter_zai_glm_5_3_flash: 'z-ai/glm-5.3-flash',
+  openrouter_zai_glm_5_3_free: 'z-ai/glm-5.3-free',
 } as const
 export type openrouterModel =
   (typeof openrouterModels)[keyof typeof openrouterModels]
@@ -52,6 +55,10 @@ export const openCodeZenModels = {
 } as const
 export type OpenCodeZenModel =
   (typeof openCodeZenModels)[keyof typeof openCodeZenModels]
+
+export const TOKENROUTER_NAMES = {
+  'tokenrouter/z-ai/glm-5.3-free': 'GLM 5.3 Free',
+}
 
 export const tokenrouterModels = {
   // Tier 1 — Elite Flagships
@@ -101,6 +108,7 @@ export const tokenrouterModels = {
   tokenrouter_qwen_qwen3_5_397b: 'tokenrouter/qwen/qwen3.5-397b-a17b',
   tokenrouter_qwen_qwen3_5_122b: 'tokenrouter/qwen/qwen3.5-122b-a10b',
   tokenrouter_openai_gpt_oss_120b: 'tokenrouter/openai/gpt-oss-120b',
+  tokenrouter_zai_glm_5_3_free: 'tokenrouter/z-ai/glm-5.3-free',
 } as const
 export type TokenrouterModel =
   (typeof tokenrouterModels)[keyof typeof tokenrouterModels]
