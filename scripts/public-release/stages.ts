@@ -44,8 +44,8 @@ import {
 } from './npm-guards'
 import { validateToolVersions } from './pinned-bun'
 import { verifyPreflight } from './preflight'
-import { assertReleaseHeadCompiles } from './provenance'
 import { confirm } from './prompt'
+import { assertReleaseHeadCompiles } from './provenance'
 import {
   isNotFoundResult,
   isStageComplete,
