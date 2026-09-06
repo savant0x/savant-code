@@ -678,7 +678,7 @@
     "cli/src/utils/openrouter-models/nous.ts": 79,
     "cli/src/utils/openrouter-models/nvidia.ts": 52,
     "cli/src/utils/openrouter-models/openrouter.ts": 106,
-    "cli/src/utils/openrouter-models/static-catalogs.ts": 174,
+    "cli/src/utils/openrouter-models/static-catalogs.ts": 176,
     "cli/src/utils/openrouter-models/types.ts": 103,
     "cli/src/utils/path-completion.ts": 112,
     "cli/src/utils/path-helpers.ts": 39,

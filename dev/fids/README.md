@@ -34,6 +34,7 @@ on-disk records missing from the table added (-0823-003, -0824-003…-008,
 | FID | Status | Purpose / blocking gate |
 |---|---|---|
 | [`FID-2026-0903-001`](FID-2026-0903-001-desktop-packaging-auto-release-integration.md) | `analyzed` | Desktop packaging integrated into the automatic release pipeline (`release:public`) as new stages — successor to closed -0820-011; implementation on the NEXT release cut per operator directive 2026-09-03 |
+| [`FID-2026-0905-009`](FID-2026-0905-009-release-pipeline-backup-stage.md) | `fixed` | `BACKUP_BUNDLE` release stage (between GIT_PUSH and GITHUB_RELEASE): the pipeline writes the verified incremental bundle via git-bundle-backup (FID-008) before public artifacts are cut, fail-closed with resume-awareness (pre-009 receipts run the backup for real); 6-test scratch-repo suite + 13 gate receipts; operator live smoke on the next release cut |
 
 **2026-09-05 closure — quality campaign to zero (6 FIDs archived):**
 [`FID-2026-0905-001`](archive/FID-2026-0905-001-native-tool-executor-decomposition.md)

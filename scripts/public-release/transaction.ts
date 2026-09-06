@@ -6,6 +6,7 @@
 // live in stages.ts / stages-verify.ts; this module preserves the exact
 // statement order and control flow of the monolith.
 
+import { runBackupBundleStage } from './backup-stage'
 import {
   RELEASE_BINARY_TARBALLS,
   buildPublicReleasePlan,
@@ -176,6 +177,7 @@ export async function runReleaseTransaction(): Promise<void> {
         await runProfileStage(ctx)
         runGatesStage(ctx)
         runGitPushStage(ctx)
+        runBackupBundleStage(ctx)
         await runGitHubReleaseStage(ctx)
         runNpmPublishStage(ctx)
         await runPostReleaseVerifyStage(ctx)

@@ -193,6 +193,7 @@ export function buildPublicReleasePlan(
     'Run public SDK/CLI build, typecheck, test, lint, format, and package gates',
     `Create annotated tag v${version}`,
     `git push origin main and v${version}`,
+    'Write the verified incremental backup bundle (OneDrive-synced)',
     `Create the GitHub REST release for v${version} with the current CHANGELOG section`,
     ...packages.map((target) => `npm publish ${target.name}`),
     'Verify public versions and restore local state',

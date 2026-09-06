@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+- **FID-2026-0905-009 (fixed 2026-09-05)** — `BACKUP_BUNDLE` release stage
+  wired into the public-release pipeline between `GIT_PUSH` and
+  `GITHUB_RELEASE`: after the release commit is pushed, the pipeline writes
+  the verified incremental bundle (`last-backup..main`) to the
+  OneDrive-synced destination via the FID-008 backup core before the GitHub
+  release and npm publishes run — a backup failure aborts the release
+  (fail-closed; the marker never advances on an unverified bundle), and the
+  stage is resume-aware (a pre-009 receipt runs the backup for real rather
+  than retro-marking). New `scripts/public-release/backup-stage.ts` (41
+  lines) + 6-test scratch-repo suite; 13 `fid:verify` gate receipts PASS;
+  preview plan line added. Operator live smoke on the next release cut.
+
 - **FID-2026-0905-001/-004/-005/-007 (closed 2026-09-05)** — the source-
   monolith decomposition campaign completed; all five residue monoliths of
   closed -0819-005 are gone and `quality:report` sits at **0 violations**:
