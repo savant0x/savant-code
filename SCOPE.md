@@ -783,10 +783,25 @@ for FID-2026-0905-002 reports 5 PASS / 1 FAIL and no receipt is stamped.
       encoder in `dev/scratchpad/generate-desktop-icons.ts`) and extended
       `tauri.conf.json` `bundle.icon` to include them. RED evidence = the
       CI failure log above; GREEN = generator verification output.
-- [ ] **T16-E.** OPERATOR (outside the repo): re-create
-      `TAURI_SIGNING_PRIVATE_KEY` in the `desktop-updater-signing`
-      environment (key line only, base64-decodable); blocks the first green
-      desktop run.
+- [x] **T16-E.** Signing secret RESOLVED BY RECOVERY 2026-09-06: the
+      original keypair was found at `desktop/tauri-key.key` (gitignored,
+      never committed), verified paired with the committed updater pubkey
+      (`tauri.conf.json`), and re-set via `gh secret set` — proven by three
+      consecutive green Windows bundle builds (runs 34042941045 /
+      34044435124 / 34045779966 / 34048699120). No regeneration needed;
+      existing installs keep trusting the key.
+- [x] **T16-J.** Linux AppImage saga (runs 4/5/6) + operator decision:
+      linuxdeploy dies without FUSE (fix: APPIMAGE_EXTRACT_AND_RUN), then
+      still dies at strip (fix: NO_STRIP), then — with --verbose exposing
+      the swallowed stderr — the real crash: the GTK plugin's second
+      linuxdeploy pass core-dumps on `ldd` against the patchelf-rewritten
+      static bun sidecar (oven-sh/bun#28281 class; tauri-apps/tauri#14796;
+      fix pending tauri#12491; a surviving bundling would ship a corrupted
+      sidecar; excluding the sidecar breaks the updater key-set/.sig
+      contract). Operator chose the WINDOWS-ONLY updater manifest: deb-only
+      Linux leg (plain asset), generator key set windows-only, appimage
+      dropped from tauri.conf.json targets. 45/0 across the six desktop
+      suites.
 - [ ] **T16-F.** Live validation: first green `desktop-release.yml` run
       (FID-001 closure) + next release cut's loud desktop decision
       (FID-002 closure).

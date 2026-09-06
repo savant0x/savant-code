@@ -39,7 +39,14 @@ jobs:
           - name: linux-x86_64
             os: ubuntu-latest
             bun-target: bun-linux-x64
-            bundles: appimage,deb
+            # deb only (FID-2026-0906-001, operator decision 2026-09-06):
+            # AppImage bundling core-dumps in linuxdeploy over the static
+            # bun sidecar (oven-sh/bun#28281, tauri-apps/tauri#14796, fix
+            # pending tauri#12491), and the bundler's patchelf pass would
+            # corrupt the sidecar even if bundling survived. deb has no
+            # linuxdeploy stage; Linux auto-update returns when tauri#12491
+            # lands. The manifest is windows-only (generator contract).
+            bundles: deb
     steps:
       - uses: actions/checkout@v4
         with:

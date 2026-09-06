@@ -17,12 +17,18 @@ import path from 'node:path'
 
 import { z } from 'zod'
 
-/** Updater platform entries for the v1 scope (Windows + Linux; macOS deferred). */
+/**
+ * Updater platform entries. WINDOWS-ONLY as of 2026-09-06
+ * (FID-2026-0906-001): Linux AppImage bundling core-dumps in linuxdeploy
+ * over the static bun single-file sidecar (oven-sh/bun#28281,
+ * tauri-apps/tauri#14796; fix pending in tauri-apps/tauri#12491), and the
+ * bundler's patchelf pass would corrupt the sidecar even if it survived.
+ * Linux bundles (deb) still build and attach as plain release assets; the
+ * key set here is the fail-closed authority (Loop 1 AUDIT V2).
+ */
 const PLATFORM_ARTIFACTS = {
   'windows-x86_64': (version: string): string =>
     `Savant Code_${version}_x64-setup.exe`,
-  'linux-x86_64': (version: string): string =>
-    `Savant Code_${version}_amd64.AppImage`,
 } as const
 
 export type UpdaterPlatform = keyof typeof PLATFORM_ARTIFACTS

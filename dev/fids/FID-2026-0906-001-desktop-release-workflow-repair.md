@@ -193,8 +193,8 @@ The CLI release is unaffected.
 
 ### Verification Receipt
 
-- fingerprint: sha256:424f2acd52597a06f9bf2dbfcfc68f64d0fbd6786d6193b855146a736151beee
-- verified: 2026-09-06T15:05:37.404Z
+- fingerprint: sha256:f422b1f0e7765b6cad069443a276dc903a3ea5c095314878627e82a4741960cb
+- verified: 2026-09-06T18:04:59.951Z
 - test scripts/public-release-desktop-workflow.test.ts: exit 0
 - test scripts/public-release-desktop.test.ts: exit 0
 - test scripts/public-release.test.ts: exit 0
@@ -279,6 +279,30 @@ The CLI release is unaffected.
 5. *Pin apt package versions?* → No. The runner image owns system-package
    versions; pinning creates maintenance debt against GitHub's drift
    contract. The Tauri-documented package list is the declared surface.
+
+### Live-Cut Evidence (scratch runs, 2026-09-06)
+
+| Run | Commit | Result |
+|---|---|---|
+| 34042941045 | 4d85b6b (pre-fix remote) | Linux: glib-sys recurrence (apt step not yet pushed); Windows: passed preflight, built signed bundles with the **recovered secret** — first proof |
+| 34044435124 | d9c85fd | preflight ✅ both platforms; apt ✅; Linux died at compile-time icon embed (`icons/icon.png` never committed) |
+| 34045779966 | 8c451a90 | icon fix proven; Linux Rust compile **completed**; died at linuxdeploy (ubuntu 24.04 has no libfuse2) → `APPIMAGE_EXTRACT_AND_RUN=1` |
+| 34047404386 | b10c9624 | extract-and-run insufficient → `NO_STRIP=1` + `--verbose` added |
+| 34048699120 | 374e206 | verbose exposed the real crash: the GTK plugin's second linuxdeploy pass core-dumps on `ldd` against the patchelf-rewritten static bun sidecar (`Failed to run ldd: exited with code 1`, exit 134) — oven-sh/bun#28281 class; tauri-apps/tauri#14796; fix pending tauri#12491 |
+
+**Operator decision (2026-09-06):** the updater manifest is WINDOWS-ONLY —
+the Linux AppImage cannot carry the static bun sidecar (the bundler's
+patchelf pass corrupts it even when bundling survives; excluding it breaks
+the updater key-set contract, and the `.sig` binds the pack). Linux leg now
+builds **deb only** (no linuxdeploy stage) and attaches as a plain release
+asset; Linux auto-update returns when tauri#12491 lands. Implemented:
+`PLATFORM_ARTIFACTS` windows-only (generator, fail-closed authority),
+workflow matrix `bundles: deb`, `tauri.conf.json` targets dropped appimage,
+test suites rewritten RED-first (45/0 across the six desktop suites).
+T16-E (signing secret) resolved by recovery: the original keypair was found
+at `desktop/tauri-key.key` (gitignored, never committed), verified paired
+with the committed updater pubkey, and re-set via `gh secret set` at
+2026-09-06T15:38:22Z — Windows builds prove it three times.
 
 ### Implementation Evidence (REQUIRED for `closed`)
 

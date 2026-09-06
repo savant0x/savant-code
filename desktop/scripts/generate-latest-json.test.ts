@@ -2,6 +2,12 @@
 // updater `latest.json` generator — output is written ONLY when every
 // expected platform artifact and non-empty `.sig` sidecar exists, versions
 // match exactly, and the emitted JSON round-trips the schema.
+//
+// Updater scope is WINDOWS-ONLY as of 2026-09-06 (FID-2026-0906-001):
+// Linux AppImage bundling core-dumps in linuxdeploy over the static bun
+// single-file sidecar (oven-sh/bun#28281; tauri-apps/tauri#14796; fix
+// pending in tauri-apps/tauri#12491). Linux bundles (deb) still build and
+// attach as plain release assets.
 
 import fs from 'node:fs'
 import os from 'node:os'
@@ -21,19 +27,12 @@ const BASE_URL = 'https://example.com/download/v0.0.27'
 
 let workspace = ''
 
-function artifactName(
-  platform: (typeof UPDATER_PLATFORM_KEYS)[number],
-): string {
-  return platform === 'windows-x86_64'
-    ? `Savant Code_${VERSION}_x64-setup.exe`
-    : `Savant Code_${VERSION}_amd64.AppImage`
+function artifactName(): string {
+  return `Savant Code_${VERSION}_x64-setup.exe`
 }
 
-function seedPlatform(
-  platform: (typeof UPDATER_PLATFORM_KEYS)[number],
-  options: { sig?: string | null } = {},
-): void {
-  const name = artifactName(platform)
+function seedPlatform(options: { sig?: string | null } = {}): void {
+  const name = artifactName()
   fs.writeFileSync(path.join(workspace, name), 'binary-goes-here')
   if (options.sig !== null) {
     fs.writeFileSync(
@@ -110,17 +109,17 @@ describe('parseArgs', () => {
 })
 
 describe('buildLatestJson (fail-closed core)', () => {
-  it('succeeds when both platforms carry artifacts + non-empty signatures', () => {
-    seedPlatform('windows-x86_64')
-    seedPlatform('linux-x86_64')
+  it('emits the exact windows-only updater key set', () => {
+    expect([...UPDATER_PLATFORM_KEYS]).toEqual(['windows-x86_64'])
+  })
+
+  it('succeeds when the platform carries artifact + non-empty signature', () => {
+    seedPlatform()
     const outcome = buildLatestJson(inputs())
     expect(outcome.ok).toBe(true)
     if (!outcome.ok) return
     expect(outcome.json.version).toBe(VERSION)
-    expect(Object.keys(outcome.json.platforms).sort()).toEqual([
-      'linux-x86_64',
-      'windows-x86_64',
-    ])
+    expect(Object.keys(outcome.json.platforms)).toEqual(['windows-x86_64'])
     const win = outcome.json.platforms['windows-x86_64']
     expect(win.signature.length).toBeGreaterThan(0)
     expect(win.url).toBe(
@@ -128,29 +127,24 @@ describe('buildLatestJson (fail-closed core)', () => {
     )
   })
 
-  it('fails closed when one platform is missing entirely', () => {
-    seedPlatform('windows-x86_64')
+  it('fails closed when the artifact is missing entirely', () => {
     const outcome = buildLatestJson(inputs())
     expect(outcome.ok).toBe(false)
     if (outcome.ok) return
-    expect(outcome.errors.some((e) => e.includes('linux-x86_64'))).toBe(true)
+    expect(outcome.errors.some((e) => e.includes('windows-x86_64'))).toBe(true)
     expect(fs.existsSync(inputs().outPath)).toBe(false)
   })
 
   it('fails closed when a signature sidecar is missing', () => {
-    seedPlatform('windows-x86_64')
-    seedPlatform('linux-x86_64', { sig: null })
+    seedPlatform({ sig: null })
     const outcome = buildLatestJson(inputs())
     expect(outcome.ok).toBe(false)
     if (outcome.ok) return
-    expect(
-      outcome.errors.some((e) => e.includes('.sig') && e.includes('linux')),
-    ).toBe(true)
+    expect(outcome.errors.some((e) => e.includes('.sig'))).toBe(true)
   })
 
   it('fails closed when a signature file is empty', () => {
-    seedPlatform('windows-x86_64')
-    seedPlatform('linux-x86_64', { sig: '   ' })
+    seedPlatform({ sig: '   ' })
     const outcome = buildLatestJson(inputs())
     expect(outcome.ok).toBe(false)
     if (outcome.ok) return
@@ -158,16 +152,25 @@ describe('buildLatestJson (fail-closed core)', () => {
   })
 
   it('fails closed on version drift between --version and artifact names', () => {
-    seedPlatform('windows-x86_64')
-    seedPlatform('linux-x86_64')
+    seedPlatform()
     // Artifacts were seeded at VERSION; claim a different release version.
     const drifted = { ...inputs(), version: '9.9.9' }
     const outcome = buildLatestJson(drifted)
     expect(outcome.ok).toBe(false)
     if (outcome.ok) return
-    // Both platforms must be named missing (their filenames embed VERSION).
+    // The artifact filename embeds VERSION, so it must be named missing.
     expect(
       outcome.errors.filter((e) => e.includes('missing artifact')),
     ).toHaveLength(UPDATER_PLATFORM_KEYS.length)
+  })
+
+  it('ignores non-updater artifacts sharing the directory (deb etc.)', () => {
+    seedPlatform()
+    fs.writeFileSync(
+      path.join(workspace, `Savant Code_${VERSION}_amd64.deb`),
+      'plain-asset',
+    )
+    const outcome = buildLatestJson(inputs())
+    expect(outcome.ok).toBe(true)
   })
 })

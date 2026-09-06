@@ -29,16 +29,15 @@ describe('desktop manifest contract (FID-2026-0903-001)', () => {
   })
 
   test('assertUpdaterManifestShape: accepts a valid manifest', () => {
+    // Windows-only key set is the generated reality since FID-2026-0906-001
+    // (Linux AppImage bundling core-dumps on the static bun sidecar —
+    // oven-sh/bun#28281); the structural check stays key-set agnostic.
     const manifest = {
       version: '0.0.29',
       platforms: {
         'windows-x86_64': {
           signature: 'sig-content',
           url: 'https://github.com/savant0x/savant-code/releases/download/v0.0.29/Savant%20Code_0.0.29_x64-setup.exe',
-        },
-        'linux-x86_64': {
-          signature: 'sig-content',
-          url: 'https://github.com/savant0x/savant-code/releases/download/v0.0.29/Savant%20Code_0.0.29_amd64.AppImage',
         },
       },
     }
