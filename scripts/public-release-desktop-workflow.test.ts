@@ -7,6 +7,7 @@
 // never sync .toThrow() on a promise (the hang class this suite
 // originally had).
 
+import { readFileSync } from 'fs'
 import os from 'os'
 import path from 'path'
 
@@ -49,6 +50,11 @@ function runsFetcher(runs: unknown[]): typeof fetch {
     new Response(JSON.stringify({ workflow_runs: runs }), {
       status: 200,
     })) as unknown as typeof fetch
+}
+
+function readRepoFile(relativePath: string): string {
+  // scripts/ → repo root is exactly one '..' (the repositoryRoot depth rule).
+  return readFileSync(path.resolve(import.meta.dir, '..', relativePath), 'utf8')
 }
 
 describe('desktop workflow primitives (FID-2026-0903-001)', () => {
@@ -214,5 +220,41 @@ describe('desktop workflow primitives (FID-2026-0903-001)', () => {
       ]),
     )
     expect(runs).toEqual([completedRun(42, 'c'.repeat(40))])
+  })
+})
+
+describe('desktop-release workflow contract (FID-2026-0906-001)', () => {
+  test('signing-secret preflight runs before the Tauri build step', () => {
+    const yaml = readRepoFile('.github/workflows/desktop-release.yml')
+    const preflight = yaml.indexOf('Verify updater signing secret decodes')
+    const tauriBuild = yaml.indexOf('Tauri build (')
+    expect(preflight).toBeGreaterThan(-1)
+    expect(tauriBuild).toBeGreaterThan(-1)
+    expect(preflight).toBeLessThan(tauriBuild)
+    expect(yaml).toContain(
+      'TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}',
+    )
+    expect(yaml).toContain('secret did not decode')
+    expect(yaml).toContain('base64 -d')
+  })
+
+  test('Linux job installs the Tauri system dependencies before building', () => {
+    const yaml = readRepoFile('.github/workflows/desktop-release.yml')
+    const apt = yaml.indexOf('Install Linux desktop build dependencies (apt)')
+    const tauriBuild = yaml.indexOf('Tauri build (')
+    expect(apt).toBeGreaterThan(-1)
+    expect(apt).toBeLessThan(tauriBuild)
+    expect(yaml).toContain('libwebkit2gtk-4.1-dev')
+    expect(yaml).toContain('libayatana-appindicator3-dev')
+    expect(yaml).toContain("if: runner.os == 'Linux'")
+  })
+
+  test('desktop-ci ubuntu leg shares the same declared dependency surface', () => {
+    const ci = readRepoFile('.github/workflows/desktop-ci.yml')
+    const apt = ci.indexOf('Install Linux desktop build dependencies (apt)')
+    const sidecar = ci.indexOf('Build native sidecar (externalBin contract)')
+    expect(apt).toBeGreaterThan(-1)
+    expect(apt).toBeLessThan(sidecar)
+    expect(ci).toContain('libwebkit2gtk-4.1-dev')
   })
 })

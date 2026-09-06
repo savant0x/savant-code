@@ -72,6 +72,26 @@ jobs:
       - name: Generate bundled agents bundle
         run: bun run --cwd=cli prebuild:agents
 
+      # FID-2026-0906-001: the Tauri crate's Linux build needs the GTK/WebKit
+      # system libraries; declare them here too so desktop-ci's ubuntu leg
+      # (cargo clippy/test) exercises the same dependency surface as the
+      # release workflow's bundle job. Versions follow the runner image; no
+      # pinning.
+      - name: Install Linux desktop build dependencies (apt)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libwebkit2gtk-4.1-dev \
+            build-essential \
+            curl \
+            wget \
+            file \
+            libxdo-dev \
+            libssl-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev
+
       # tauri-build hard-fails while bundle.externalBin is declared but the
       # triple-renamed binary is missing — build it before every cargo step.
       - name: Build native sidecar (externalBin contract)

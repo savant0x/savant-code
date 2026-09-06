@@ -51,6 +51,47 @@ jobs:
       - name: Generate bundled agents bundle
         run: bun run --cwd=cli prebuild:agents
 
+      # FID-2026-0906-001: the signing secret is consumed by the Tauri
+      # signer after a 40+ minute Rust compile; a corrupted value must fail
+      # here, in under a second, with a remediation message instead. The
+      # v0.0.29 cut lost its Windows desktop job to an undecodable secret
+      # ("Invalid symbol 33, offset 10") that no gate ever checked. The key
+      # is never printed — only the pass/fail shape reaches the log.
+      - name: Verify updater signing secret decodes (fail fast, never echo)
+        shell: bash
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        run: |
+          if printf '%s' "$TAURI_SIGNING_PRIVATE_KEY" | base64 -d > /dev/null 2>&1; then
+            echo "Updater signing secret: base64 decode OK."
+          else
+            echo "Updater signing secret did not decode as base64. Re-create" >&2
+            echo "TAURI_SIGNING_PRIVATE_KEY in the desktop-updater-signing" >&2
+            echo "environment: private-key line ONLY (no 'untrusted comment:'" >&2
+            echo "header), no quotes, no trailing whitespace." >&2
+            exit 1
+          fi
+
+      # FID-2026-0906-001: the Tauri Linux build needs the GTK/WebKit system
+      # libraries; the v0.0.29 Linux job died at glib-sys with
+      # "Package 'glib-2.0', required by 'virtual:world', not found". This is
+      # the Tauri-documented ubuntu package set. Versions follow the runner
+      # image (GitHub owns that drift); no pinning.
+      - name: Install Linux desktop build dependencies (apt)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libwebkit2gtk-4.1-dev \
+            build-essential \
+            curl \
+            wget \
+            file \
+            libxdo-dev \
+            libssl-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev
+
       - name: Build sidecar (${{ matrix.bun-target }})
         run: >
           bun run --cwd=desktop build:sidecar --
