@@ -621,6 +621,22 @@ presentation layer, then re-run visual smoke. T15-F/T15-H remain blocked.
 > `jsonValueSchema` uses are validation-only. BLOCKED on operator facts
 > (model id, blast radius, cross-provider comparison) — see questions.
 
+## [OPEN-OUT-OF-SCOPE] — desktop sidecar E2E: spawn-time env starvation + absent from root test chain
+
+> **Discovered 2026-09-06 (T17-A verification leg).**
+> `desktop/scripts/sidecar-e2e.integration.test.ts` fails 2/4 without env
+> ("sidecar never printed the ready line", 20-32s spawn timeouts) and
+> passes 4/4 in 5.8s with
+> `NEXT_PUBLIC_CB_ENVIRONMENT=dev NEXT_PUBLIC_SAVANT_CODE_APP_URL=…
+> NEXT_PUBLIC_WEB_PORT=3000` — the spawned sidecar imports
+> `common/src/env.ts`, which throws at import time without those keys,
+> and (like the pre-push hook, see the smoke gap) the harness never
+> loads `.env.local` for children. Additionally, desktop is absent from
+> the root `test` chain (11 workspaces; desktop's typecheck is in, its
+> tests are not), so this class never surfaces in the standard battery.
+> Operator decides: FID for a test-env loader in the spawn path and/or
+> adding `--cwd=desktop test` to the root chain.
+
 ## [OPEN-OUT-OF-SCOPE] — common typecheck red in untouched test file
 
 `bun run typecheck` in `common/` fails with 30 errors, ALL in
