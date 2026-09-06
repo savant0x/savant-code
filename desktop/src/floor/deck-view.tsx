@@ -12,7 +12,7 @@
  * mode is never silent.
  */
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useStore } from 'zustand'
 
 import { DeckMiniChat } from '../components/chat/DeckMiniChat'
@@ -21,7 +21,10 @@ import { createFloorState } from './adapter/floor-adapter'
 import { AnalyticalFloor } from './analytical/deck-analytical'
 import { useDeckStore } from './deck-store'
 import { getSharedDeckDriver } from './driver/deck-live-driver'
-import { OfficeScene } from './office/office-scene'
+// FID-2026-0906-005: the office 3D graph loads through the single
+// dynamic-import seam in office-lazy.tsx — a static import here would
+// pull three/@react-three/* into the eager shell chunk.
+import { DeckChunkLoading, OfficeSceneLazy } from './office-lazy'
 
 import type { FloorState } from './adapter/floor-adapter'
 import type { DeckViewMode } from './deck-view-mode'
@@ -161,12 +164,14 @@ function DeckCanvas(): JSX.Element {
   }
   return (
     <div className="deck-stage-wrap">
-      <OfficeScene
-        floor={liveFloor}
-        bubbles={liveBubbles}
-        processing={processing}
-        model={model}
-      />
+      <Suspense fallback={<DeckChunkLoading />}>
+        <OfficeSceneLazy
+          floor={liveFloor}
+          bubbles={liveBubbles}
+          processing={processing}
+          model={model}
+        />
+      </Suspense>
     </div>
   )
 }

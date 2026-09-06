@@ -2102,6 +2102,29 @@ body {
   height: 100%;
 }
 
+/* FID-2026-0906-005: Suspense placeholder while the lazy 3D chunk loads
+   (first Deck navigation only) — centered on the stage surface, same
+   footprint the scene occupies so layout never shifts on load. Reuses the
+   shared .ring spinner (Law 13 — one spinner, one truth). */
+.deck-chunk-loading {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.deck-chunk-loading .ring {
+  width: 22px;
+  height: 22px;
+}
+
 /* Caption floats over the analytical floor — never silent about the tier. */
 /* P26 (operator: "add a small little chat interface in the bottom left hand
    corner"): the deck mini-chat island. Fixed to the lower-left, above the
