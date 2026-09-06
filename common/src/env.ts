@@ -1,6 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 
+import { applyEnvLocalInto } from './env-bootstrap'
 import { allowsDevelopmentDefaults } from './env-boundary'
 import { clientEnvSchema, clientEnvVars } from './env-schema'
 
@@ -10,15 +11,15 @@ import { clientEnvSchema, clientEnvVars } from './env-schema'
  * gets its runtime environment even when Bun's `--define` replacement misses
  * minified `process.env` references in pre-built workspace packages files.
  */
-function loadBinaryEnvIfPresent(): void {
+function loadBinaryEnvIfPresent(): boolean {
   const execPath = process.execPath
-  if (!execPath) return
+  if (!execPath) return false
 
   const envJsonPath = path.join(path.dirname(execPath), 'env.json')
   try {
-    if (!fs.existsSync(envJsonPath)) return
+    if (!fs.existsSync(envJsonPath)) return false
     const parsed = JSON.parse(fs.readFileSync(envJsonPath, 'utf-8')) as unknown
-    if (!parsed || typeof parsed !== 'object') return
+    if (!parsed || typeof parsed !== 'object') return false
 
     for (const [key, value] of Object.entries(
       parsed as Record<string, unknown>,
@@ -27,13 +28,26 @@ function loadBinaryEnvIfPresent(): void {
         process.env[key] = value
       }
     }
+    return true
   } catch {
     // Ignore a missing or corrupt env.json; normal dev/test runs rely on
     // .env.local or shell exports instead.
+    return false
   }
 }
 
-loadBinaryEnvIfPresent()
+// Release binaries ship their own env.json; everything else loads the
+// repo-root .env.local (FID-2026-0906-007 — the leg the CLI's pre-init
+// used to own alone, leaving spawned processes and sub-package entrypoints
+// starving). Shell exports always outrank both (existing-env-wins).
+if (!loadBinaryEnvIfPresent()) {
+  applyEnvLocalInto(process.env, import.meta.dir)
+  // Compiled executables (e.g. the sidecar binary the desktop E2E spawns)
+  // have a virtual import.meta.dir no findUp can anchor; the process cwd is
+  // the only meaningful anchor there. Existing-env-wins makes this a pure
+  // fallback pass: it fills only keys the first pass could not find.
+  applyEnvLocalInto(process.env, process.cwd())
+}
 
 // FID-2026-0811-011: development defaults are a convenience only. They are
 // disabled for CI, production, release automation, and any explicit unknown
