@@ -249,13 +249,19 @@ describe('desktop-release workflow contract (FID-2026-0906-001)', () => {
     expect(yaml).toContain("if: runner.os == 'Linux'")
   })
 
-  test('AppImage bundling extracts linuxdeploy instead of requiring FUSE', () => {
+  test('AppImage bundling runs linuxdeploy without FUSE or strip', () => {
     const yaml = readRepoFile('.github/workflows/desktop-release.yml')
     const tauriBuild = yaml.indexOf('Tauri build (')
     const appimageEnv = yaml.indexOf('APPIMAGE_EXTRACT_AND_RUN')
+    const noStrip = yaml.indexOf("NO_STRIP: '1'")
     expect(tauriBuild).toBeGreaterThan(-1)
     expect(appimageEnv).toBeGreaterThan(tauriBuild)
     expect(yaml).toContain("APPIMAGE_EXTRACT_AND_RUN: '1'")
+    expect(noStrip).toBeGreaterThan(appimageEnv)
+    // linuxdeploy's strip step fails on modern toolchains and aborts
+    // bundling (tauri-apps/tauri#14796 class); skip it in CI.
+    expect(yaml).toContain('NO_STRIP')
+    expect(yaml).toContain('--verbose')
   })
 
   test('desktop-ci ubuntu leg shares the same declared dependency surface', () => {

@@ -101,17 +101,20 @@ jobs:
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-          # FID-2026-0906-001 (run 34045779966): linuxdeploy ships as an
-          # AppImage and needs FUSE to execute; ubuntu-latest no longer has
-          # libfuse2, so the AppImage bundling stage dies with "failed to
-          # run linuxdeploy" after the full Rust compile succeeds. This
           # standard Tauri-documented switch makes linuxdeploy extract
           # itself to a temp dir instead of mounting — no FUSE required.
           APPIMAGE_EXTRACT_AND_RUN: '1'
+          # FID-2026-0906-001 (run 34047404386): APPIMAGE_EXTRACT_AND_RUN
+          # alone was not sufficient — linuxdeploy still aborts ~16s in.
+          # The linuxdeploy strip step fails on modern toolchains and
+          # kills the whole bundling run (tauri-apps/tauri#14796 class);
+          # NO_STRIP skips it. Upstream has no fix (issue open); if this
+          # still fails, --verbose surfaces linuxdeploy's swallowed stderr.
+          NO_STRIP: '1'
         # The committed target list is the full v1 matrix; each runner builds
         # only its own platform bundles (Linux bundle types cannot build on
         # Windows hosts and vice versa).
-        run: bun run --cwd=desktop tauri build --bundles ${{ matrix.bundles }}
+        run: bun run --cwd=desktop tauri build --verbose --bundles ${{ matrix.bundles }}
       - name: Collect bundle artifacts
         shell: bash
         run: |
