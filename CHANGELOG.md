@@ -2,6 +2,30 @@
 
 ## Unreleased
 
+- **FID-2026-0906-005 — medium — Desktop lazy 3D chunk: dynamic office/stage
+  boundary at DeckView (fixed 2026-09-06).** The shell statically imported
+  the entire 3D graph (`three`, R3F, drei, postprocessing) through one edge
+  (`deck-view.tsx` → `office/office-scene`), so every launch downloaded and
+  parsed it before first paint. The graph now loads through a single
+  dynamic-import seam (`office-lazy.tsx`: `React.lazy` + `Suspense` with a
+  spinner placeholder reusing the shared `.ring`), pinned by structural
+  tests that fail if any static edge to the office tree reappears. Build
+  evidence: eager shell 540.42 kB / 151.75 kB gz (zero three/R3F markers by
+  grep), 3D chunk 1,207.63 kB / 339.80 kB gz fetched only on first Deck
+  navigation — ~190 kB gz off first paint (ruling estimated ~150 kB).
+  Closes on the operator's v0.0.30 smoke.
+- **FID-2026-0906-006 — medium — Office presentation ruling audit (T17-B):
+  scope superseded; audit + smoke handoff (converged 2026-09-06).** The
+  2026-09-06 operator ruling authorized building the office presentation
+  layer from the 2026-08-31 smoke finding; ground-truth audit proved that
+  finding stale — FID-2026-0905-005 (2026-09-05) already built and composed
+  walls, windows, bookshelves, procedural textures, a 15-prop layer, 6 tool
+  + 9 home desks, the rigged GLB robot cast, in-scene speech bubbles, and
+  the neon-noir atmosphere (per-element `file:line` audit table in the
+  FID). Re-building would duplicate working code (Law 7). The FID converges
+  to the audit + the operator visual smoke (the 08-31 acceptance bar,
+  never yet run against the current scene); T15-F closes and T15-H (P4
+  stage retirement) unblocks on a passing smoke at the v0.0.30 pre-cut.
 - **FID-2026-0906-003 — high — Release-provenance guard: assume-unchanged
   detection + clean-checkout compile gate (fixed 2026-09-06).** The
   v0.0.29 phantom-source incident had three unguarded surfaces, now all

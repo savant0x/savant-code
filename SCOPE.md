@@ -889,14 +889,30 @@ each 2026-09-06. This section is the audit trail.
 
 ### New work items from the rulings
 
-- [ ] **T17-A.** Desktop renderer: lazy-load the 3D stack (R3F + drei +
+- [x] **T17-A.** Desktop renderer: lazy-load the 3D stack (R3F + drei +
       postprocessing) behind a dynamic import so first paint of the shell is
-      bundle-clean. FID-first: author the FID, converge, then implement.
-      Verification: desktop typecheck + renderer test suite + a bundle
-      composition check proving the 3D chunk is separate.
-- [ ] **T17-B.** Office environment + character presentation layer for the
-      desktop 3D scene: walls, room zones, personal desk furniture,
-      articulated character detail, in-scene speech bubbles (P1–P3 render
-      capsules/spheres + six tool desks only). FID-first; ends with a
-      re-run of the visual smoke that failed 2026-08-31. **T15-F/T15-H
-      unblock on a passing smoke.**
+      bundle-clean. **Done 2026-09-06 (FID-2026-0906-005):** single seam in
+      `office-lazy.tsx` + Suspense placeholder; structural pins hold the
+      boundary. Build evidence: eager shell 151.75 kB gz with zero
+      three/R3F content; 3D chunk 339.80 kB gz loads on first Deck
+      navigation only (~190 kB gz saved, ruling estimated ~150 kB). Closes
+      on the v0.0.30 operator smoke.
+- [x] **T17-B.** Office environment + character presentation layer —
+      **premise superseded, executed as audit + smoke handoff
+      (FID-2026-0906-006, converged 2026-09-06):** FID-2026-0905-005
+      (2026-09-05) already built and composed the full layer (walls,
+      windows, bookshelves, textures, 15-prop layer, 6+9 desks, rigged GLB
+      robot cast, in-scene bubbles, neon-noir atmosphere) — the 08-31
+      smoke finding predated it. Per-element audit table in the FID;
+      re-building rejected (Law 7). Acceptance = the operator visual
+      smoke at the v0.0.30 pre-cut; T15-F closes and T15-H unblocks on a
+      passing smoke.
+- [ ] **T17-C. v0.0.30 cut — operator-held (automation level 3: local
+      commits only, no push to main).** The cut is the closure event for
+      five `fixed` FIDs pinned to it by contract: FID-2026-0903-001
+      (desktop stages), FID-2026-0905-009 (backup stage), FID-2026-0906-002
+      (desktop visibility receipt), FID-2026-0906-003 (provenance guards),
+      FID-2026-0906-004 (repaired DESKTOP_RELEASE stage) — plus FID-005's
+      smoke arm and FID-006's audit branch. Operator runs the cut
+      (2026-09-07 afternoon); `blocked` here until then — recorded, not
+      silently deferred.

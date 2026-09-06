@@ -1361,6 +1361,46 @@ tracking doc).
 - **Status:** active
 - **Canonical rule:** cli-output-layout-is-contract
 
+## Lesson: One dynamic-import seam is only as durable as its pin
+
+- **Context:** FID-2026-0906-005 (T17-A): the shell statically imported
+  the whole three/R3F graph (~190 kB gz) through a single edge. Converting
+  it to a `React.lazy` boundary put the 3D graph in its own chunk
+  (540→shell, 1,208 kB lazy) — but nothing structural stops a future
+  "cleanup" from re-adding a static import and silently collapsing the
+  split back into the eager chunk.
+- **Invariant:** A bundler split survives only while its import edges
+  stay dynamic; any new static edge to the lazy subtree undoes it
+  silently (no test fails, no type error). Structure must be pinned by
+  test, and size by build evidence.
+- **Guard:** `desktop/src/floor/__tests__/office-lazy.test.tsx` pins the
+  boundary (deck-view imports the wrapper, never office-scene statically;
+  the wrapper uses `import()`); the vite chunk listing (pasted in the
+  FID) is the size evidence.
+- **Scope:** desktop, bundling
+- **Owning FID:** FID-2026-0906-005
+- **Status:** active
+- **Canonical rule:** lazy-boundary-pinned-structurally
+
+## Lesson: A ledger ruling inherits the freshness of its evidence
+
+- **Context:** FID-2026-0906-006 (T17-B): the 2026-09-06 ruling authorized
+  building the office presentation layer from a 2026-08-31 smoke finding;
+  FID-2026-0905-005 had already built and composed the entire layer on
+  09-05. Executing the ruling literally would have duplicated working
+  code behind an approval.
+- **Invariant:** Before executing an approved item, re-ground its premise
+  against the current tree; a scope item is only as fresh as the evidence
+  it was authored from. Present the ground-truth shift (Law 2) and
+  converge the record — never build duplicates, never silently drop.
+- **Guard:** the per-element audit table in FID-2026-0906-006 (every
+  ruled element → `file:line` of composed, rendered code); acceptance
+  stays with the operator visual smoke, the original bar.
+- **Scope:** governance, scope-grounding
+- **Owning FID:** FID-2026-0906-006
+- **Status:** active
+- **Canonical rule:** ruling-premise-regrounded-at-execution
+
 ## Lesson: Status-based guards inherit git's index-state blindness
 
 - **Context:** The v0.0.29 phantom-source incident: three tracked files
