@@ -39,6 +39,16 @@ export const UPDATER_PLATFORM_KEYS = Object.keys(
 
 const VERSION_PATTERN = /^\d+\.\d+\.\d+(?:[-+][\w.-]+)?$/
 
+/**
+ * GitHub asset-store name mapping: spaces become dots on upload
+ * (`gh api` asset listings confirm) and the percent-encoded form is not
+ * aliased. Tauri's bundler emits product names with spaces (`Savant
+ * Code_...`), so every updater URL must be rewritten to the stored form.
+ */
+function storedAssetName(artifactName: string): string {
+  return artifactName.replace(/ /g, '.')
+}
+
 const platformEntrySchema = z.object({
   signature: z.string().min(1),
   url: z.string().url(),
@@ -160,7 +170,12 @@ export function buildLatestJson(inputs: GeneratorInputs): GenerateOutcome {
       } else {
         platforms[key] = {
           signature,
-          url: `${inputs.baseDownloadUrl}/${encodeURIComponent(artifactName)}`,
+          // GitHub stores release assets with spaces normalized to dots
+          // and does NOT alias the percent-encoded form, so the updater
+          // URL must target the STORED name (live-verified 2026-09-06 on
+          // v0.0.29: the `%20` URL 404s while the dotted name serves the
+          // asset byte-identically).
+          url: `${inputs.baseDownloadUrl}/${storedAssetName(artifactName)}`,
         }
       }
     }

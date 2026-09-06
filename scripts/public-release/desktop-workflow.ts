@@ -153,7 +153,8 @@ export async function locateSuccessfulDesktopRun(
 
 /**
  * Downloads the workflow run's bundle artifacts into destinationDir via
- * `gh run download` (runner injectable for tests).
+ * `gh run download` (runner injectable for tests). Returns destinationDir
+ * so callers can chain into flattenDownloadedArtifacts.
  */
 export function downloadDesktopArtifacts(
   runId: number,
@@ -161,7 +162,7 @@ export function downloadDesktopArtifacts(
   root: string,
   runner: (command: string, args: string[]) => unknown = (command, args) =>
     run(command, args, root, true),
-): void {
+): string {
   const result = runner('gh', [
     'run',
     'download',
@@ -176,6 +177,7 @@ export function downloadDesktopArtifacts(
       `Failed to download desktop artifacts for run ${runId}: ${result.stderr ?? 'no stderr'}`,
     )
   }
+  return destinationDir
 }
 
 /**

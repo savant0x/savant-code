@@ -122,8 +122,34 @@ describe('buildLatestJson (fail-closed core)', () => {
     expect(Object.keys(outcome.json.platforms)).toEqual(['windows-x86_64'])
     const win = outcome.json.platforms['windows-x86_64']
     expect(win.signature.length).toBeGreaterThan(0)
-    expect(win.url).toBe(
-      `${BASE_URL}/${encodeURIComponent(`Savant Code_${VERSION}_x64-setup.exe`)}`,
+    // GitHub stores release assets with spaces normalized to dots, and
+    // does NOT alias the encoded form — the URL must target the STORED
+    // name (live-verified on v0.0.29: `Savant%20Code_...` 404s while
+    // `Savant.Code_...` serves the asset byte-identically).
+    expect(win.url).toBe(`${BASE_URL}/Savant.Code_${VERSION}_x64-setup.exe`)
+    expect(win.url).not.toContain('%20')
+  })
+
+  it('maps spaces to dots exactly as GitHub stores release assets', () => {
+    // The real v0.0.29 installer name, as the bundler emits it locally.
+    fs.writeFileSync(
+      path.join(workspace, `Savant Code_0.0.29_x64-setup.exe`),
+      'binary-goes-here',
+    )
+    fs.writeFileSync(
+      path.join(workspace, `Savant Code_0.0.29_x64-setup.exe.sig`),
+      'dW5zaWduZWQgdGVzdCBzaWc=',
+    )
+    const outcome = buildLatestJson({
+      ...inputs(),
+      version: '0.0.29',
+      baseDownloadUrl:
+        'https://github.com/savant0x/savant-code/releases/download/v0.0.29',
+    })
+    expect(outcome.ok).toBe(true)
+    if (!outcome.ok) return
+    expect(outcome.json.platforms['windows-x86_64'].url).toBe(
+      'https://github.com/savant0x/savant-code/releases/download/v0.0.29/Savant.Code_0.0.29_x64-setup.exe',
     )
   })
 

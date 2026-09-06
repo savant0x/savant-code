@@ -9,7 +9,7 @@
 // and attach bundles + latest.json to the release. Both stages are
 // resume-aware via isStageComplete, matching every other stage.
 
-import { existsSync, readdirSync } from 'fs'
+import { existsSync, mkdirSync, readdirSync, renameSync } from 'fs'
 import os from 'os'
 import path from 'path'
 
@@ -28,6 +28,34 @@ import { fail } from './fail'
 import { isStageComplete, markStage } from './receipts'
 
 import type { TransactionContext } from './catalog'
+
+/**
+ * `gh run download <id> --dir X` (no `-n`) creates one subdirectory per
+ * artifact name — proven live on the v0.0.29 attach (run 34050762638):
+ * `desktop-windows-x86_64/…`, `desktop-linux-x86_64/…`,
+ * `desktop-latest-json/latest.json`. The manifest generator reads bundle
+ * + `.sig` FLAT in artifactsDir, so the stage hoists every FILE out of
+ * the per-artifact subdirectories first. `latest.json` is deliberately
+ * NOT hoisted: the stage regenerates it locally and never trusts the CI
+ * copy (CI output is informational; the local regeneration exit is the
+ * fail-closed assertion that every artifact + sidecar survived download).
+ */
+export function flattenDownloadedArtifacts(
+  downloadedDir: string,
+  parentDir: string,
+): string {
+  const flatDir = path.join(parentDir, 'artifacts-flat')
+  mkdirSync(flatDir, { recursive: true })
+  for (const entry of readdirSync(downloadedDir, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue
+    const sub = path.join(downloadedDir, entry.name)
+    for (const name of readdirSync(sub)) {
+      if (name === 'latest.json') continue
+      renameSync(path.join(sub, name), path.join(flatDir, name))
+    }
+  }
+  return flatDir
+}
 
 /**
  * Deterministic per-version scratch directory for downloaded artifacts so a
@@ -103,13 +131,18 @@ export async function runDesktopReleaseStage(
     ctx.githubToken,
   )
   const artifactDir = desktopArtifactDir(ctx.version)
-  downloadDesktopArtifacts(runRecord.id, artifactDir, ctx.root)
-  const latestPath = path.join(artifactDir, 'latest.json')
+  const downloadedDir = downloadDesktopArtifacts(
+    runRecord.id,
+    artifactDir,
+    ctx.root,
+  )
+  const bundleDir = flattenDownloadedArtifacts(downloadedDir, artifactDir)
+  const latestPath = path.join(bundleDir, 'latest.json')
   // Re-run the fail-closed generator locally: its exit is the assertion
   // that every platform artifact + .sig survived the artifact round-trip.
   const generate = run(
     'bun',
-    generatorArgs(ctx.version, artifactDir, latestPath),
+    generatorArgs(ctx.version, bundleDir, latestPath),
     ctx.root,
     true,
   )
@@ -118,11 +151,9 @@ export async function runDesktopReleaseStage(
       `Desktop updater manifest generation failed for v${ctx.version}: ${generate.stderr.trim() || generate.stdout.trim()}`,
     )
   }
-  const bundleDir = path.join(artifactDir, 'desktop-windows-x86_64')
-  const bundleDirLinux = path.join(artifactDir, 'desktop-linux-x86_64')
-  const files = [bundleDir, bundleDirLinux]
-    .filter((dir) => existsSync(dir))
-    .flatMap((dir) => readdirSync(dir).map((name) => path.join(dir, name)))
+  const files = readdirSync(bundleDir)
+    .filter((name) => name !== 'latest.json')
+    .map((name) => path.join(bundleDir, name))
   if (!existsSync(latestPath)) {
     fail('Desktop updater manifest latest.json was not produced.')
   }

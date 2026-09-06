@@ -802,9 +802,22 @@ for FID-2026-0905-002 reports 5 PASS / 1 FAIL and no receipt is stamped.
       Linux leg (plain asset), generator key set windows-only, appimage
       dropped from tauri.conf.json targets. 45/0 across the six desktop
       suites.
+- [x] **T16-K.** Desktop assets ATTACHED to v0.0.29 (2026-09-06, operator
+      approved): run 34050762638's artifacts — signed NSIS+MSI, Linux deb,
+      `.sig` sidecars — uploaded via the pipeline's own
+      `uploadDesktopAssets` after regenerating `latest.json` locally with
+      the fail-closed generator (its exit is the assertion the artifacts
+      survived the round-trip). Live-proof caught the updater URL defect
+      (GitHub stores spaces as dots; `%20` form 404s) — fixed
+      (FID-2026-0906-004), manifest re-uploaded, updater chain verified
+      end-to-end: pinned endpoint → manifest → artifact URL HTTP 200 →
+      sha256 byte-identical to the CI build. **Windows desktop
+      auto-update is live for v0.0.29.** The attach also proved the
+      `DESKTOP_RELEASE` download-layout defect RED-first
+      (`flattenDownloadedArtifacts`).
 - [ ] **T16-F.** Live validation: first green `desktop-release.yml` run
-      (FID-001 closure) + next release cut's loud desktop decision
-      (FID-002 closure).
+      (FID-001 closure — met, run 34050762638; archived) + next release
+      cut's loud desktop decision (FID-002 closure).
 - [ ] **T16-G.** Session summary `2026-09-06-v0.0.29-release-night-audit.md`
       + LEARNINGS entry (`assume-unchanged-phantom-source`) — written
       2026-09-06; the git-committed audit trail lands with the T16 commit.

@@ -2,6 +2,25 @@
 
 ## Unreleased
 
+- **FID-2026-0906-004 — high — Desktop attach defects: updater URL
+  asset-name mapping + stage download layout (fixed 2026-09-06).**
+  Attaching run 34050762638's artifacts to v0.0.29 exercised the
+  `DESKTOP_RELEASE` surface live for the first time and caught two
+  defects no prior test could see: (1) the manifest generator
+  percent-encoded artifact URLs (`Savant%20Code_…`) but GitHub stores
+  assets with spaces normalized to dots and does not alias the encoded
+  form — the updater's first download would have 404'd; caught by
+  simulating the updater's fetch chain right after upload, fixed with
+  `storedAssetName()` (spaces → dots) RED-first, manifest regenerated and
+  re-uploaded before any client saw it. (2) The pipeline's
+  `DESKTOP_RELEASE` stage pointed the generator at the `gh run download`
+  root, but the CLI nests one subdirectory per artifact — the next real
+  cut would have failed closed at generation; fixed with
+  `flattenDownloadedArtifacts()` (hoists bundles flat, never trusts the
+  CI `latest.json`) RED-first. Live proof: v0.0.29 updater chain
+  end-to-end (pinned endpoint → manifest → artifact URL HTTP 200 →
+  sha256 byte-identical to the CI build). 35/0 across the four desktop
+  suites.
 - **FID-2026-0906-001 — high — Desktop release workflow repair: signing
   secret + Linux deps + the AppImage saga (closed 2026-09-06).** The
   desktop channel never shipped; v0.0.29's two desktop jobs died on a

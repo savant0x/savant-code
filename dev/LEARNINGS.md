@@ -1319,4 +1319,46 @@ tracking doc).
 - **Status:** active
 - **Canonical rule:** test-timeout-budget-race
 
+## Lesson: Generated download URLs must target the asset store, not the encoder's inverse
+
+- **Context:** The updater manifest generator percent-encoded artifact
+  names (`Savant%20Code_…`) while GitHub stores release assets with
+  spaces normalized to dots and serves no alias — probing the manifest's
+  own URL right after uploading v0.0.29 returned HTTP 404, meaning every
+  Windows client's first auto-update would have failed.
+- **Invariant:** A URL emitted from `encodeURIComponent` (or any encoder)
+  describes a *theory* of the target system; only the stored form on the
+  receiving system is real. Pin generated URLs against the external
+  system's stored representation — and beware tautological tests, where
+  the assertion mirrors the implementation instead of the world.
+- **Guard:** `storedAssetName()` in `desktop/scripts/generate-latest-json.ts`
+  maps spaces to dots with two pins (encoded form rejected, real v0.0.29
+  name pinned); the fix was verified live by fetching the artifact
+  through the manifest URL and sha256-matching the original bytes.
+- **Scope:** desktop/release, release-tooling
+- **Owning FID:** FID-2026-0906-004
+- **Status:** active
+- **Canonical rule:** generated-urls-match-asset-store
+
+## Lesson: A stage that shells out to a CLI inherits that CLI's layout
+
+- **Context:** The pipeline's `DESKTOP_RELEASE` stage pointed the
+  fail-closed manifest generator at the `gh run download` root, but the
+  CLI creates one subdirectory per artifact name — proven live on the
+  v0.0.29 attach; the next real cut would have failed closed with
+  "missing artifact" for every platform, on a stage that had never run.
+- **Invariant:** When a helper's real output shape is load-bearing,
+  stubbing the helper at its function boundary hides the shape; pin the
+  real layout as a test fixture. The first live exercise of an unproven
+  stage is a layout audit, not a formality.
+- **Guard:** `flattenDownloadedArtifacts()` in
+  `scripts/public-release/desktop-stages.ts` hoists bundle + `.sig`
+  files flat (excluding the CI `latest.json`, which is never trusted —
+  the local regeneration exit is the fail-closed assertion) with a
+  fixture pin encoding the real `gh` layout.
+- **Scope:** release-pipeline
+- **Owning FID:** FID-2026-0906-004
+- **Status:** active
+- **Canonical rule:** cli-output-layout-is-contract
+
 <!-- Add new entries above this line -->
