@@ -109,10 +109,15 @@ export async function runDesktopBundlesStage(
     },
     ctx.version,
   )
-  if (
-    completed.head_sha !== '' &&
-    completed.head_sha !== ctx.preflight.headSha
-  ) {
+  // FID-2026-0906-003: an omitted head_sha (the REST mapper defaults it
+  // to '') makes provenance UNPROVABLE — the binding assertion must fail
+  // closed, not skip. A mismatch fails for the same reason it always has.
+  if (completed.head_sha === '') {
+    fail(
+      `Desktop release workflow run ${completed.id} reported no head_sha — cannot bind bundles to this cut.`,
+    )
+  }
+  if (completed.head_sha !== ctx.preflight.headSha) {
     fail(
       `Desktop release workflow run ${completed.id} built ${completed.head_sha.slice(0, 12)}, not the release HEAD ${ctx.preflight.headSha.slice(0, 12)} — the bundles do not belong to this cut.`,
     )

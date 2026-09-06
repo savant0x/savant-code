@@ -815,6 +815,14 @@ for FID-2026-0905-002 reports 5 PASS / 1 FAIL and no receipt is stamped.
       auto-update is live for v0.0.29.** The attach also proved the
       `DESKTOP_RELEASE` download-layout defect RED-first
       (`flattenDownloadedArtifacts`).
+- [x] **T16-L.** FID-2026-0906-003 (release-provenance guard)
+      IMPLEMENTED 2026-09-06: index-state assertion via `git ls-files -v`
+      wired mode-aware into `verifyPreflight`; clean-checkout compile gate
+      (detached worktree at HEAD + frozen-lockfile install + typecheck
+      chain, removed on every path) wired into the GATES stage before
+      evidence finalization; desktop `head_sha: ''` now fails closed.
+      48/0 across the six pipeline suites; quality ratchet PASS. Status
+      `fixed` — closes on the first cut running all three guards.
 - [ ] **T16-F.** Live validation: first green `desktop-release.yml` run
       (FID-001 closure — met, run 34050762638; archived) + next release
       cut's loud desktop decision (FID-002 closure).

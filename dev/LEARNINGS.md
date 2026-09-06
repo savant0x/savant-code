@@ -1361,4 +1361,26 @@ tracking doc).
 - **Status:** active
 - **Canonical rule:** cli-output-layout-is-contract
 
+## Lesson: Status-based guards inherit git's index-state blindness
+
+- **Context:** The v0.0.29 phantom-source incident: three tracked files
+  marked assume-unchanged kept 21 lines of real source out of every
+  commit while every gate stayed green — `git status` does not render
+  hidden index-state flags, so every guard built on status was blind to
+  the exact mechanism of the corruption.
+- **Invariant:** Any git state that hides content from `git status`
+  hides it from every check built on `git status`. Provenance guards
+  must query the index directly (`git ls-files -v`: `S`/lowercase tags =
+  hidden) and prove the *committed* tree independently of the worktree.
+- **Guard:** `scripts/public-release/provenance.ts` — index-state
+  uniformity assertion in `verifyPreflight` (fail in mutation/automation,
+  warn in preview) plus a clean-checkout compile gate in the GATES stage
+  (detached temp worktree at HEAD, frozen-lockfile install, typecheck
+  chain, removed on every path). The two cover disjoint classes: the
+  flag, and committed-vs-worktree content drift.
+- **Scope:** release-pipeline, provenance
+- **Owning FID:** FID-2026-0906-003
+- **Status:** active
+- **Canonical rule:** index-state-asserted-directly
+
 <!-- Add new entries above this line -->

@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+- **FID-2026-0906-003 — high — Release-provenance guard: assume-unchanged
+  detection + clean-checkout compile gate (fixed 2026-09-06).** The
+  v0.0.29 phantom-source incident had three unguarded surfaces, now all
+  fail-closed: (1) index-state blindness — tracked files marked
+  assume-unchanged/skip-worktree are invisible to `git status`, so every
+  status-based guard passed while 21 source lines were silently excluded
+  from commits; `verifyPreflight` now asserts index-state uniformity via
+  `git ls-files -v`, naming every hidden file with its exact remediation.
+  (2) No committed-tree compile proof — every gate ran against the
+  worktree, the state that lied on release night; the GATES stage now
+  proves the committed tree compiles from a detached temp worktree at the
+  release HEAD (frozen-lockfile install + the canonical typecheck chain,
+  removed even on failure) before evidence is finalized. (3) The desktop
+  bundle binding skipped its assertion when the Actions API omitted
+  `head_sha`; an omitted SHA now fails closed as unprovable provenance.
+  RED-first pins in a dedicated provenance suite (11 tests) + the desktop
+  attach suite; 48/0 across the six pipeline suites, quality ratchet
+  PASS. Status flip to `closed` on the next real release cut.
 - **FID-2026-0906-004 — high — Desktop attach defects: updater URL
   asset-name mapping + stage download layout (fixed 2026-09-06).**
   Attaching run 34050762638's artifacts to v0.0.29 exercised the

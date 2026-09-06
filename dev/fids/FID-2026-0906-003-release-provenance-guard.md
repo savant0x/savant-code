@@ -3,9 +3,9 @@
 **Filename:** `FID-2026-0906-003-release-provenance-guard.md`
 **ID:** FID-2026-0906-003
 **Severity:** high
-**Status:** analyzed
+**Status:** fixed
 **Created:** 2026-09-06 15:20
-**YAGNI-Compliance:** Pending
+**YAGNI-Compliance:** Verified
 
 ---
 
@@ -169,8 +169,8 @@ delivered by FID-2026-0906-001).
 
 ### Verification Receipt
 
-- fingerprint: sha256:9e1076d6fb82cce39d35cbc01a212163af80173207399d68ef973f032d226ee2
-- verified: 2026-09-06T15:24:00.091Z
+- fingerprint: sha256:da95c461ed093a233280b4d4563901ce573bc6c986a684a3c181a0590ad6e9c9
+- verified: 2026-09-06T20:06:29.353Z
 - test scripts/public-release.test.ts: exit 0
 - test scripts/public-release-desktop-workflow.test.ts: exit 0
 
@@ -217,22 +217,54 @@ delivered by FID-2026-0906-001).
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [ ] **Commit SHA:** pending implementation
-- [ ] **File:line ranges:** pending implementation
-- [ ] **Gate output:** pending implementation
-- [ ] **Reproducibility:** pending implementation
-- [ ] **Step statuses:** Step 1 `blocked` (awaiting implementation approval),
-      Step 2 `blocked`, Step 3 `blocked`, Step 4 `blocked`
+- [x] **Commit SHA:** pending live cut (implementation commit recorded in
+      the CHANGELOG entry; this field is filled at closure per contract)
+- [x] **File:line ranges:** `scripts/public-release/provenance.ts`
+      (new module — `HIDDEN_INDEX_TAGS` + `parseGitLsFilesVerbose` +
+      `hiddenTrackedFiles`/`hiddenIndexStateMessage`/
+      `assertNoHiddenTrackedFiles` + `assertCleanCheckoutCompiles` +
+      `assertReleaseHeadCompiles`);
+      `scripts/public-release/preflight.ts` (index-state assertion wired
+      after the status check, mode-aware fail/warn);
+      `scripts/public-release/stages.ts` (clean-checkout compile gate
+      before `evidenceFinalized = true`);
+      `scripts/public-release/desktop-stages.ts` (empty-`head_sha`
+      fail-closed branch); `scripts/public-release-desktop-attach.test.ts`
+      + `scripts/public-release-provenance.test.ts` +
+      `scripts/public-release-desktop-testkit.ts` (new pins/fixtures)
+- [x] **Gate output:** `bun test scripts/public-release-provenance.test.ts`
+      → 11 pass / 0 fail; 6-suite pipeline battery → 48 pass / 0 fail;
+      `bun run quality:report` → PASS (1467 baselined files) after the
+      300-line-ceiling family split; `bun run fid:verify --write` receipt
+      below
+- [x] **Reproducibility:** `bun -e` running `hiddenTrackedFiles(cwd)` on
+      the live tree → 0 hidden files (guard passes on a uniform tree);
+      `grep -c "assertNoHiddenTrackedFiles\|assertReleaseHeadCompiles"
+      scripts/public-release/preflight.ts scripts/public-release/stages.ts`
+      → 1 wired call site each
+- [x] **Step statuses:** Step 1 `implemented`, Step 2 `implemented` (with
+      the Loop-4 corrections recorded below), Step 3 `implemented`,
+      Step 4 `implemented` (RED-first, suites below). Live acceptance
+      (status flip `fixed` → `closed`) awaits the next real cut.
 
 ### Code Verification Evidence
 
 - [x] Files referenced in Affected Components exist (`preflight.ts`,
       `stages.ts`, `desktop-stages.ts`, `desktop-workflow.ts` — all read
       0-EOF this session)
-- [ ] Implementation matches the Proposed Solution (pending)
+- [x] Implementation matches the Proposed Solution (three guards as
+      scoped; deviations recorded in Loop 4 — sync contract, dedicated
+      provenance suite, `bun install` step added to the worktree sequence)
 - [x] Gate files exist and pass at authoring time (receipt above)
-- [ ] Production call-graph evidence for new wiring (pending)
-- [x] FID status reflects actual state (`analyzed` — authored, not implemented)
+- [x] Production call-graph evidence for new wiring:
+      `verifyPreflight` calls `hiddenTrackedFiles(root)` before returning
+      (both mutation and automation paths re-verify through it —
+      `transaction.ts` and `stages.ts:runProfileStage`); `runGatesStage`
+      calls `assertReleaseHeadCompiles` immediately before
+      `receipt.evidenceFinalized = true`; `runDesktopBundlesStage` fails
+      closed on `completed.head_sha === ''` before the mismatch check
+- [x] FID status reflects actual state (`fixed` — implemented, gates
+      green; `closed` awaits the live cut)
 
 ### Loop 2 — Independent audit and self-correction
 
@@ -264,12 +296,65 @@ delivered by FID-2026-0906-001).
   a live incident shows otherwise).
 - **CHANGE DELTA:** <2% (converged — circuit breaker)
 
+### Loop 4 — Implementation audit (post-GREEN)
+
+- **RED:** implementation self-review found three deviations from the
+  authored plan, each corrected on evidence: (1) the guards are **sync**
+  (`fail()` throws; `verifyPreflight` and `runGatesStage` are sync), so
+  the first test draft's async `rejectionOf` helper was wrong — replaced
+  with a sync `messageOf` capture; (2) the clean-checkout sequence needs
+  `bun install --frozen-lockfile` — a fresh worktree has no
+  `node_modules` (gitignored), so the typecheck chain would fail on
+  missing dependencies, not on committed-tree drift; (3) the pins landed
+  in a dedicated `public-release-provenance.test.ts` plus a desktop
+  family split (`-testkit.ts` fixtures + `-attach.test.ts`) because
+  `public-release.test.ts` (231 lines) and the desktop stage suite would
+  breach the 300-line ceiling the ratchet enforces — caught by
+  `quality:report` failing on `desktop-stages`-suite edits, fixed by the
+  split; `stages.ts` itself was trimmed back under the ceiling after the
+  gate wiring pushed it to 301.
+- **GREEN:** none — the `head_sha` hardening kept the original mismatch
+  message intact so the existing pin's regex still holds (test-output
+  compatibility preserved).
+- **AUDIT:** 11/0 provenance suite; 9/0 desktop family (7 stage + 2
+  attach); 48/0 across the six pipeline suites; `quality:report` PASS;
+  live `hiddenTrackedFiles` run on the operator tree → 0 hidden files
+  (guard green on a uniform tree, matching the authoring baseline grep).
+- **ADVERSARIAL:** "the index-state guard is redundant with the
+  clean-checkout compile gate" → counter: disjoint failure classes — a
+  hidden assume-unchanged file's *content* still lands in the worktree
+  the compile gate runs from (install/typecheck would pass on the very
+  content that will be missing from the commit); only `ls-files -v`
+  sees the flag. "`worktree add` in a temp dir could race a parallel
+  release" → the pipeline already holds an exclusive release lock for
+  the whole transaction; the prune/add/remove sequence is inside it.
+- **CHANGE DELTA:** ~10% (document-only updates + the three recorded
+  corrections; code scope unchanged vs. the Proposed Solution).
+
 ## Resolution
 
-- **Closed Date:** pending (implementation + live cut)
-- **Fix Description:** pending
-- **Tests Added:** pending
-- **Verification Evidence:** pending
+- **Closed Date:** pending (the live cut — a release run with all three
+  guards active — flips this to `closed` and archives the FID)
+- **Fix Description:** `scripts/public-release/provenance.ts` —
+  `git ls-files -v` index-state assertion (`assertNoHiddenTrackedFiles`,
+  wired mode-aware into `verifyPreflight` after the status check) +
+  clean-checkout compile gate (`assertReleaseHeadCompiles` → detached
+  temp worktree at HEAD → `bun install --frozen-lockfile` → the canonical
+  typecheck chain → `worktree remove --force` on every path, wired into
+  `runGatesStage` before `evidenceFinalized`) + desktop
+  `runDesktopBundlesStage` fail-closed on `head_sha === ''` (provenance
+  unprovable ≠ mismatch absent)
+- **Tests Added:** Yes — `scripts/public-release-provenance.test.ts`
+  (11 pins: tag classification, hidden-set contract, remediation exactness,
+  git-failure fail-closed, worktree command sequence, compile-failure
+  fail-closed + cleanup, worktree-add failure) and
+  `scripts/public-release-desktop-attach.test.ts` (empty-`head_sha`
+  rejection + the FID-004 flatten layout), RED-first; fixtures split into
+  `scripts/public-release-desktop-testkit.ts` for the 300-line ceiling
+- **Verification Evidence:** 48 pass / 0 fail across the six pipeline
+  suites; `quality:report` PASS; live `hiddenTrackedFiles` on the operator
+  tree → 0 hidden files (uniform tree passes; the guard's detection path
+  is proven by the pinned synthetic outputs from the incident class)
 - **Archived:** pending
 
 ## Lessons Learned

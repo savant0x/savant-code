@@ -13,6 +13,7 @@ import { extractChangelogSection, validateReleaseVersions } from './changelog'
 import { run } from './command-runner'
 import { fail } from './fail'
 import { pruneLocalOnlyFailedTag } from './git-publish'
+import { hiddenIndexStateMessage, hiddenTrackedFiles } from './provenance'
 
 export function currentVersion(root: string): string {
   const version = readFileSync(path.join(root, 'VERSION'), 'utf8').trim()
@@ -103,6 +104,18 @@ export function verifyPreflight(
       : 'Mutation mode requires a clean worktree.'
     if (mutationMode && !automation) fail(`${message}\n${status.stdout.trim()}`)
     warnings.push(`${message}\n${status.stdout.trim()}`)
+  }
+
+  // FID-2026-0906-003: index-state flags (assume-unchanged/skip-worktree)
+  // hide tracked files from `git status` entirely, so the check above
+  // cannot see them — the exact mechanism of the v0.0.29 phantom-source
+  // incident. Assert index-state uniformity directly; mutation/automation
+  // fail the cut, preview warns (the mode split every check here uses).
+  const hiddenFiles = hiddenTrackedFiles(root)
+  if (hiddenFiles.length > 0) {
+    const message = hiddenIndexStateMessage(hiddenFiles)
+    if (mutationMode) fail(message)
+    warnings.push(message)
   }
 
   const head = run('git', ['rev-parse', 'HEAD'], root, true)

@@ -44,6 +44,7 @@ import {
 } from './npm-guards'
 import { validateToolVersions } from './pinned-bun'
 import { verifyPreflight } from './preflight'
+import { assertReleaseHeadCompiles } from './provenance'
 import { confirm } from './prompt'
 import {
   isNotFoundResult,
@@ -91,8 +92,8 @@ export async function runProfileStage(ctx: TransactionContext): Promise<void> {
     const committed = commitAllAutomationChanges(root, version)
     receipt.committedHead = committed.headSha
     receipt.committedFiles = committed.files
-    // Re-verified preflight after the automation commit (verbatim call
-    // shape from the transaction: mutation on, tag allowed, automation true).
+    // Re-verified preflight after the automation commit (mutation on,
+    // tag allowed, automation true — verbatim transaction call shape).
     ctx.preflight = verifyPreflight(root, version, true, true, true)
     receipt.headSha = ctx.preflight.headSha
     markStage(receipt, 'AUTOMATION_COMMIT_ALL')
@@ -182,14 +183,18 @@ export function runGatesStage(ctx: TransactionContext): void {
       `Release gates changed the tracked worktree (${changed.length} path(s): ${bounded.join(', ')}${suffix}); refusing to continue.`,
     )
   }
+  // FID-2026-0906-003: every gate above ran against the worktree — the
+  // state that lied on v0.0.29 release night. Prove the COMMITTED tree
+  // compiles before the evidence fingerprint is finalized (a detached
+  // temp worktree at HEAD; additive and removed even on failure).
+  assertReleaseHeadCompiles(version, receipt.headSha, root)
   receipt.evidenceFinalized = true
   markStage(receipt, 'GATES_AND_PACKAGE_DRY_RUNS')
 }
 
 /**
  * TAG + GIT_PUSH stages. Verbatim body.
- */
-export function runGitPushStage(ctx: TransactionContext): void {
+ */ export function runGitPushStage(ctx: TransactionContext): void {
   const { root, version, options, receipt, githubToken } = ctx
   if (!isStageComplete(receipt, 'GIT_PUSH')) {
     if (!isStageComplete(receipt, 'TAG')) {
