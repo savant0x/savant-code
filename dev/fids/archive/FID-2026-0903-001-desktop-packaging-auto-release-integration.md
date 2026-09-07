@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0903-001-desktop-packaging-auto-release-integration.md`
 **ID:** FID-2026-0903-001
 **Severity:** high
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-09-03
 **Parent:** FID-2026-0820-011 (closed 2026-09-03 — this FID succeeds its release-time remainder)
 
@@ -161,8 +161,8 @@ the workflow's proven contract rather than duplicating it:
 
 ### Verification Receipt
 
-- fingerprint: sha256:18d96a8b79092ea67f6498defde55d4f635848fa1004636e9aa6330a8c4685ae
-- verified: 2026-09-06T02:27:07.811Z
+- fingerprint: sha256:f2c6e25027bfeb3ff67d41dfae17e8b4d873cb6d568c79d62453360ae014b800
+- verified: 2026-09-07T00:17:36.595Z
 - test scripts/public-release-desktop.test.ts: exit 0
 - test scripts/public-release-desktop-manifest.test.ts: exit 0
 - test scripts/public-release-desktop-workflow.test.ts: exit 0
@@ -301,10 +301,25 @@ FID-2026-0823-009.
 
 ## Resolution
 
-- (pending — closes after the first integrated live cut; implementation
-  status `fixed` 2026-09-05: stages implemented, 18-test desktop suite
-  green, plan/resume/receipt contract pinned, workflow v-strip landed.
-  Live evidence per the original plan lands here at closure.)
+- **Closed Date:** 2026-09-06 — closed by operator ruling ("completed =
+  close + archive + changelog immediately"): implementation, gates, and
+  evidence complete. Live-cut exercise of the dispatch surface
+  (`DESKTOP_BUNDLES` first run) remains operator-held at the v0.0.30 cut
+  (SCOPE T17-C) and is **not** a closure precondition per that ruling; the
+  attach path (`DESKTOP_RELEASE`'s download → flatten → generate → upload
+  chain) was exercised live during the operator-approved v0.0.29 attach
+  (FID-2026-0906-004's record).
+- **Fix Description:** `DESKTOP_BUNDLES` + `DESKTOP_RELEASE` pipeline
+  stages (opt-in `SAVANT_CODE_RELEASE_DESKTOP=1`), workflow v-strip,
+  per-release updater-manifest verify — as recorded in the CHANGELOG
+  0.0.29 section and the Loop-2 corrections above
+- **Commit SHA (G2):** `a7ed2adc` — feat(scripts): integrate desktop
+  packaging into the release pipeline (ground-truth resolved 2026-09-06
+  via `git log -S 'DESKTOP_BUNDLES' -- scripts/public-release/fail.ts`)
+- **Verification Evidence:** fresh consolidated gate battery at closure —
+  66 tests / 0 fail across the 9 public-release suite files (2026-09-06);
+  receipt re-stamped at the archived path
+- **Archived:** 2026-09-06 → `dev/fids/archive/`
 
 ## Re-Homing Record (from FID-2026-0820-011 Loop 4, archived)
 

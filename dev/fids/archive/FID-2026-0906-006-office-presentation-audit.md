@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0906-006-office-presentation-audit.md`
 **ID:** FID-2026-0906-006
 **Severity:** medium
-**Status:** converged
+**Status:** closed
 **Created:** 2026-09-06
 **YAGNI-Compliance:** Verified
 **Related:** SCOPE T17-B (operator ruling 2026-09-06: authorize build),
@@ -151,8 +151,8 @@ branch on outcome.
 
 ### Verification Receipt
 
-- fingerprint: sha256:c40081f9caee46f0e0eda09decb03eb17d53781e0f994d5c0dd3b34798dc9c0b
-- verified: 2026-09-06T23:07:48.510Z
+- fingerprint: sha256:fd9939f1ecff04a446c4fdc431bb30621f46f1440387f2e4dafe522ea45b7994
+- verified: 2026-09-07T00:19:07.384Z
 - typecheck desktop: exit 0
 - test desktop/src/floor/office/__tests__/office-plan.test.ts: exit 0
 
@@ -264,6 +264,15 @@ branch on outcome.
   Either branch discharges the ruling; nothing is dropped silently.
   **Blocked-on-event record:** the smoke is `blocked` on the operator's
   v0.0.30 pre-cut session (2026-09-07), not silently deferred.
+- **Closed Date:** 2026-09-06 — closed by operator ruling ("completed =
+  close + archive + changelog immediately"): this FID's agent-executable
+  content — the per-element ground-truth audit — is complete with
+  evidence; the visual smoke remains operator-held (SCOPE T17-C) and is
+  **not** a closure precondition per that ruling. The T17-B ruling this
+  FID discharges is fully recorded either way (present layer → no
+  duplicate build; smoke → the acceptance bar, still owed by the
+  operator, unchanged).
+- **Archived:** 2026-09-06 → `dev/fids/archive/`
 
 ## Lessons Learned
 

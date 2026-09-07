@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0906-004-desktop-attach-defects.md`
 **ID:** FID-2026-0906-004
 **Severity:** high
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-09-06
 **YAGNI-Compliance:** Verified
 **Related:** FID-2026-0824-011 (generator fail-closed contract), FID-2026-0903-001
@@ -178,8 +178,8 @@ Defect 2 would have failed the next real cut closed at `DESKTOP_RELEASE`
 
 ### Verification Receipt
 
-- fingerprint: sha256:a520cf56f17440a68e3852e92e814297835948a50504d238482f81e05b4b67a1
-- verified: 2026-09-06T19:35:13.585Z
+- fingerprint: sha256:6efc28a79e520217d2d7df7392931552d3d26ba758388150b9c52d0fba0247c7
+- verified: 2026-09-07T00:18:50.380Z
 - test desktop/scripts/generate-latest-json.test.ts: exit 0
 - test scripts/public-release-desktop.test.ts: exit 0
 - test scripts/public-release-desktop-workflow.test.ts: exit 0
@@ -235,9 +235,15 @@ Defect 2 would have failed the next real cut closed at `DESKTOP_RELEASE`
 
 ## Resolution
 
-- **Closed Date:** (pending — closes when a real cut's `DESKTOP_RELEASE`
-  stage runs green end-to-end using `flattenDownloadedArtifacts`; the
-  generator fix is already live-proven on v0.0.29)
+- **Closed Date:** 2026-09-06 — closed by operator ruling ("completed =
+  close + archive + changelog immediately"): implementation, gates, and
+  evidence complete (35/0 four-suite battery; the generator fix
+  live-proven on v0.0.29 — updater chain verified with a sha256-identical
+  download). The repaired stage's first live in-cut run remains
+  operator-held at v0.0.30 (SCOPE T17-C) and is **not** a closure
+  precondition per that ruling.
+- **Commit SHA (G2):** `bea0188` (fix) + `d8514d1b` (receipt re-stamp)
+- **Archived:** 2026-09-06 → `dev/fids/archive/`
 - **Fix Description:** `storedAssetName()` (spaces → dots, GitHub asset
   store mapping) in the manifest generator; `flattenDownloadedArtifacts()`
   hoists real `gh run download` layout flat before local regeneration;

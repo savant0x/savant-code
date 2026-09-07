@@ -2,8 +2,12 @@
 
 ## Unreleased
 
+### Ground-truth closure ceremony — 7 FIDs closed + archived 2026-09-06
+
+Operator ruling ("completed = close + archive + changelog immediately"): every `fixed`/`converged` record below was change-complete with gates green, commit SHAs ground-truth-resolved per G2, fresh consolidated gate battery green (66 tests / 0 fail across the 9 public-release suite files + each FID's declared gates re-run at receipt re-stamp). Live-cut/smoke boundaries were **not** closure preconditions per the ruling — they remain on the operator's v0.0.30 cut-day list (SCOPE T17-C), unchanged.
+
 - **FID-2026-0906-002 — high — Release pipeline desktop-stage visibility:
-  loud skips + flag-independent verification (fixed 2026-09-06).** The
+  loud skips + flag-independent verification (closed 2026-09-06).** The
   v0.0.29 cut reported a full green release while the desktop stages
   silently never ran — the `SAVANT_CODE_RELEASE_DESKTOP` opt-in was unset
   and no surface said so. Three fixes make the desktop decision loud in
@@ -15,7 +19,7 @@
   structurally sound when the stages ran, `latest.json` provably absent
   when they did not (404 → proven absence; any other response fails the
   cut). 46/0 across the gate suites; live dual-branch `--preview` proof;
-  closes on the next real cut's receipt.
+  receipt re-stamped at closure (archived 2026-09-06).
 - **FID-2026-0906-007 — high — Spawned-process env starvation: env.ts gains
   the .env.local bootstrap leg (closed + archived 2026-09-06).**
   `common/src/env.ts` bootstrapped only the release-binary env.json leg;
@@ -31,7 +35,7 @@
   Live acceptance bare: smoke exit 0 ("Tier-1 governance smoke passed: 5
   tasks"), sidecar E2E 4/0 in 5.9s, desktop suite 420/0 in 6.9s.
 - **FID-2026-0906-005 — medium — Desktop lazy 3D chunk: dynamic office/stage
-  boundary at DeckView (fixed 2026-09-06).** The shell statically imported
+  boundary at DeckView (closed 2026-09-06).** The shell statically imported
   the entire 3D graph (`three`, R3F, drei, postprocessing) through one edge
   (`deck-view.tsx` → `office/office-scene`), so every launch downloaded and
   parsed it before first paint. The graph now loads through a single
@@ -39,11 +43,11 @@
   spinner placeholder reusing the shared `.ring`), pinned by structural
   tests that fail if any static edge to the office tree reappears. Build
   evidence: eager shell 540.42 kB / 151.75 kB gz (zero three/R3F markers by
-  grep), 3D chunk 1,207.63 kB / 339.80 kB gz fetched only on first Deck
+  grep),  3D chunk 1,207.63 kB / 339.80 kB gz fetched only on first Deck
   navigation — ~190 kB gz off first paint (ruling estimated ~150 kB).
-  Closes on the operator's v0.0.30 smoke.
+  Visual smoke of the lazy load stays on the operator's cut-day list.
 - **FID-2026-0906-006 — medium — Office presentation ruling audit (T17-B):
-  scope superseded; audit + smoke handoff (converged 2026-09-06).** The
+  scope superseded; audit + smoke handoff (closed 2026-09-06).** The
   2026-09-06 operator ruling authorized building the office presentation
   layer from the 2026-08-31 smoke finding; ground-truth audit proved that
   finding stale — FID-2026-0905-005 (2026-09-05) already built and composed
@@ -55,7 +59,7 @@
   never yet run against the current scene); T15-F closes and T15-H (P4
   stage retirement) unblocks on a passing smoke at the v0.0.30 pre-cut.
 - **FID-2026-0906-003 — high — Release-provenance guard: assume-unchanged
-  detection + clean-checkout compile gate (fixed 2026-09-06).** The
+  detection + clean-checkout compile gate (closed 2026-09-06).** The
   v0.0.29 phantom-source incident had three unguarded surfaces, now all
   fail-closed: (1) index-state blindness — tracked files marked
   assume-unchanged/skip-worktree are invisible to `git status`, so every
@@ -71,9 +75,9 @@
   `head_sha`; an omitted SHA now fails closed as unprovable provenance.
   RED-first pins in a dedicated provenance suite (11 tests) + the desktop
   attach suite; 48/0 across the six pipeline suites, quality ratchet
-  PASS. Status flip to `closed` on the next real release cut.
+  PASS. Receipt re-stamped at closure (archived 2026-09-06).
 - **FID-2026-0906-004 — high — Desktop attach defects: updater URL
-  asset-name mapping + stage download layout (fixed 2026-09-06).**
+  asset-name mapping + stage download layout (closed 2026-09-06).**
   Attaching run 34050762638's artifacts to v0.0.29 exercised the
   `DESKTOP_RELEASE` surface live for the first time and caught two
   defects no prior test could see: (1) the manifest generator
@@ -90,7 +94,7 @@
   CI `latest.json`) RED-first. Live proof: v0.0.29 updater chain
   end-to-end (pinned endpoint → manifest → artifact URL HTTP 200 →
   sha256 byte-identical to the CI build). 35/0 across the four desktop
-  suites.
+  suites. Receipt re-stamped at closure (archived 2026-09-06).
 - **FID-2026-0906-001 — high — Desktop release workflow repair: signing
   secret + Linux deps + the AppImage saga (closed 2026-09-06).** The
   desktop channel never shipped; v0.0.29's two desktop jobs died on a
@@ -154,7 +158,7 @@ below in reverse-chronological order; the highlights:
 - **Governance:** G1/G6 amendment — agents permitted local commits + push;
   public releases flow exclusively through this pipeline.
 
-- **FID-2026-0903-001 (fixed 2026-09-05)** — desktop packaging integrated
+- **FID-2026-0903-001 (closed 2026-09-06)** — desktop packaging integrated
   into the automatic release pipeline: `DESKTOP_BUNDLES` (after
   `BACKUP_BUNDLE`, before `GITHUB_RELEASE`) dispatches
   `desktop-release.yml` with the cut's tag and watches the run fail-closed
@@ -168,10 +172,12 @@ below in reverse-chronological order; the highlights:
   prereleases — its check stays with the operator's post-promotion smoke).
   Gated on `SAVANT_CODE_RELEASE_DESKTOP=1` for the first integrated cut;
   workflow amendment derives the bare version from the tag for the
-  generator (Loop 1 AUDIT V2). 18-test desktop suite; receipt stamped;
-  live validation on the next release cut.
+  generator (Loop 1 AUDIT V2). 18-test desktop suite; receipt stamped.
+  **Closed + archived 2026-09-06** by the ground-truth closure ceremony
+  (G2 SHA `a7ed2adc` resolved; 66/0 consolidated battery; the first live
+  in-cut dispatch remains on the operator's v0.0.30 list).
 
-- **FID-2026-0905-009 (fixed 2026-09-05)** — `BACKUP_BUNDLE` release stage
+- **FID-2026-0905-009 (closed 2026-09-06)** — `BACKUP_BUNDLE` release stage
   wired into the public-release pipeline between `GIT_PUSH` and
   `GITHUB_RELEASE`: after the release commit is pushed, the pipeline writes
   the verified incremental bundle (`last-backup..main`) to the
@@ -181,7 +187,10 @@ below in reverse-chronological order; the highlights:
   stage is resume-aware (a pre-009 receipt runs the backup for real rather
   than retro-marking). New `scripts/public-release/backup-stage.ts` (41
   lines) + 6-test scratch-repo suite; 13 `fid:verify` gate receipts PASS;
-  preview plan line added. Operator live smoke on the next release cut.
+  preview plan line added. **Closed + archived 2026-09-06** by the
+  ground-truth closure ceremony (G2 SHA `8ff0657b` resolved; 66/0
+  consolidated battery; the first live in-cut run remains on the
+  operator's v0.0.30 list).
 
 - **FID-2026-0905-001/-004/-005/-007 (closed 2026-09-05)** — the source-
   monolith decomposition campaign completed; all five residue monoliths of

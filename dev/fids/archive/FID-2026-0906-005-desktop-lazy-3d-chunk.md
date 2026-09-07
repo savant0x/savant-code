@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0906-005-desktop-lazy-3d-chunk.md`
 **ID:** FID-2026-0906-005
 **Severity:** medium
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-09-06
 **YAGNI-Compliance:** Verified
 **Related:** SCOPE T17-A (operator ruling 2026-09-06: authorize
@@ -129,10 +129,12 @@ One dynamic boundary at the single seam; no bundler config in v1.
        `three`/`@react-three/*` modules in it, and the eager chunk free of
        them; desktop typecheck + floor/office test suites green; eslint,
        prettier clean.
-5. [ ] `blocked` (operator, v0.0.30 smoke) — live acceptance: app
-       launches, Deck view opens, first
-       load shows the placeholder at most briefly, scene renders — rides
-       the v0.0.30 smoke, not a separate ceremony.
+5. [x] **Discharged 2026-09-06 by operator ruling:** live acceptance
+       (app launches, Deck view opens, first
+       load shows the placeholder at most briefly, scene renders) is
+       operator-held for the v0.0.30 smoke (SCOPE T17-C) — **not** a
+       closure precondition per the ruling; visual confirmation stays on
+       the operator's cut-day list.
 
 ## Verification
 
@@ -150,8 +152,8 @@ One dynamic boundary at the single seam; no bundler config in v1.
 
 ### Verification Receipt
 
-- fingerprint: sha256:1630f744ca9e00ff4e5eef7359b10b90553fb77c7ded0d28a86bf1565eaa0b00
-- verified: 2026-09-06T23:08:20.707Z
+- fingerprint: sha256:8280b84e294b923fdb8a89d04edbcffb31cd3820a895fbaaca76a94af00478fc
+- verified: 2026-09-07T00:18:58.720Z
 - typecheck desktop: exit 0
 - test desktop/src/floor/__tests__/office-lazy.test.tsx: exit 0
 
@@ -284,10 +286,13 @@ One dynamic boundary at the single seam; no bundler config in v1.
 
 ## Resolution
 
-- **Fixed 2026-09-06** (implementation + gate evidence + build chunk
-  proof above). `closed` when the operator's v0.0.30 smoke confirms the
-  Deck view renders from the lazy chunk with the placeholder observed at
-  most briefly on first open.
+- **Closed Date:** 2026-09-06 — closed by operator ruling ("completed =
+  close + archive + changelog immediately"): implementation, gates, and
+  build-chunk evidence complete (typecheck 0, boundary pins 4/0, floor
+  family 219/0, eager shell grep-proven free of three/R3F). The operator
+  visual smoke of the lazy load remains on the v0.0.30 cut-day list
+  (SCOPE T17-C) and is **not** a closure precondition per that ruling.
+- **Archived:** 2026-09-06 → `dev/fids/archive/`
 
 ## Lessons Learned
 

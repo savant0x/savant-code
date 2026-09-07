@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0906-002-release-pipeline-desktop-visibility.md`
 **ID:** FID-2026-0906-002
 **Severity:** high
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-09-06
 **YAGNI-Compliance:** Verified
 **Related:** FID-2026-0903-001 (desktop pipeline stages — source of the opt-in
@@ -193,8 +193,8 @@ the fact (which is exactly what happened).
 
 ### Verification Receipt
 
-- fingerprint: sha256:d7e64afb1e02a1bb3c2bb36481b36f9fe7f7fb18b30df089f41f6cbf79e466b0
-- verified: 2026-09-06T18:39:23.129Z
+- fingerprint: sha256:db861ac9baba43f76f6bb617783d9bc3759b39e64b70ac47af3dd41f9fc9d557
+- verified: 2026-09-07T00:18:34.649Z
 - test scripts/public-release-desktop.test.ts: exit 0
 - test scripts/public-release-desktop-claim.test.ts: exit 0
 - test scripts/public-release-desktop-manifest.test.ts: exit 0
@@ -305,7 +305,7 @@ the fact (which is exactly what happened).
 - [x] **Step statuses:** Steps 1-4 `implemented` (output above); Step 5
       `blocked` (requires the next release cut — recorded, not silently
       deferred)
-- [ ] **Archived:** (set when moved to `dev/fids/archive/`)
+- [x] **Archived:** 2026-09-06 → `dev/fids/archive/` (moved at closure)
 
 ### Code Verification Evidence
 
@@ -382,9 +382,13 @@ the fact (which is exactly what happened).
 
 ## Resolution
 
-- (closure condition: the next **pipeline release cut** demonstrates the
-  loud desktop decision in the receipt. Closure is a live-cut ceremony —
-  operator-held — per the same rule as the v0.0.29 FIDs.)
+- **Closed Date:** 2026-09-06 — closed by operator ruling ("completed =
+  close + archive + changelog immediately"): implementation, gates, and
+  evidence complete (46/0 gate battery, 44/0 sibling parity, live
+  dual-branch preview proof below). The receipt field's demonstration at
+  a real cut (the former closure condition) remains operator-held at
+  v0.0.30 (SCOPE T17-C) and is **not** a closure precondition per that
+  ruling.
 - **Live dual-branch preview proof (2026-09-06, post-run-7):** with the
   flag **unset**, `bun run release:public:preview` prints all three
   desktop lines as `SKIPPED — SAVANT_CODE_RELEASE_DESKTOP not set` (exit
@@ -394,6 +398,7 @@ the fact (which is exactly what happened).
   the per-release URL) with no SKIPPED lines. The scratch-run pipeline
   does not exercise the full receipt path (no npm publish occurred), so
   the receipt field's live cut remains the closure condition.
+- **Archived:** 2026-09-06 → `dev/fids/archive/`
 
 ## Lessons Learned
 

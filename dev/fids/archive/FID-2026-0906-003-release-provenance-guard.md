@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0906-003-release-provenance-guard.md`
 **ID:** FID-2026-0906-003
 **Severity:** high
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-09-06 15:20
 **YAGNI-Compliance:** Verified
 
@@ -169,8 +169,8 @@ delivered by FID-2026-0906-001).
 
 ### Verification Receipt
 
-- fingerprint: sha256:da95c461ed093a233280b4d4563901ce573bc6c986a684a3c181a0590ad6e9c9
-- verified: 2026-09-06T20:06:29.353Z
+- fingerprint: sha256:4167d520cc88fb39cc182e38674db9035c6278bcd2efcd0a2ab90329c8ad8da1
+- verified: 2026-09-07T00:18:40.104Z
 - test scripts/public-release.test.ts: exit 0
 - test scripts/public-release-desktop-workflow.test.ts: exit 0
 
@@ -217,8 +217,10 @@ delivered by FID-2026-0906-001).
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [x] **Commit SHA:** pending live cut (implementation commit recorded in
-      the CHANGELOG entry; this field is filled at closure per contract)
+- [x] **Commit SHA:** `6222978` — feat(release): provenance guard -
+      index-state assertion + clean-checkout compile gate
+      (FID-2026-0906-003); ground-truth resolved 2026-09-06 per the
+      closure ruling
 - [x] **File:line ranges:** `scripts/public-release/provenance.ts`
       (new module — `HIDDEN_INDEX_TAGS` + `parseGitLsFilesVerbose` +
       `hiddenTrackedFiles`/`hiddenIndexStateMessage`/
@@ -333,8 +335,12 @@ delivered by FID-2026-0906-001).
 
 ## Resolution
 
-- **Closed Date:** pending (the live cut — a release run with all three
-  guards active — flips this to `closed` and archives the FID)
+- **Closed Date:** 2026-09-06 — closed by operator ruling ("completed =
+  close + archive + changelog immediately"): implementation, gates, and
+  evidence complete (48/0 six-suite battery, quality ratchet PASS, live
+  `hiddenTrackedFiles` probe → 0 on the uniform tree). The guards' first
+  live in-cut run remains operator-held at v0.0.30 (SCOPE T17-C) and is
+  **not** a closure precondition per that ruling.
 - **Fix Description:** `scripts/public-release/provenance.ts` —
   `git ls-files -v` index-state assertion (`assertNoHiddenTrackedFiles`,
   wired mode-aware into `verifyPreflight` after the status check) +
@@ -355,7 +361,7 @@ delivered by FID-2026-0906-001).
   suites; `quality:report` PASS; live `hiddenTrackedFiles` on the operator
   tree → 0 hidden files (uniform tree passes; the guard's detection path
   is proven by the pinned synthetic outputs from the incident class)
-- **Archived:** pending
+- **Archived:** 2026-09-06 → `dev/fids/archive/` (moved at closure)
 
 ## Lessons Learned
 

@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0905-009-release-pipeline-backup-stage.md`
 **ID:** FID-2026-0905-009
 **Severity:** medium
-**Status:** fixed
+**Status:** closed
 **Date opened:** 2026-09-05
 **Opened by:** Buffy (single-agent ECHO session, operator directive)
 **Related:** FID-2026-0905-008 (git-bundle-backup, closed), FID-2026-0905-007
@@ -96,8 +96,8 @@ passes.
 
 ### Verification Receipt
 
-- fingerprint: sha256:523926cb5ef6518b813fe28efa1401d4e4342d3982e3d90c71dcfd03ece49033
-- verified: 2026-09-06T02:22:52.319Z
+- fingerprint: sha256:295b4d24cf368779ad72a733e935284f10ea5e1b84861f227ec0583d483b9ad8
+- verified: 2026-09-07T00:18:22.079Z
 - test scripts/public-release-backup-stage.test.ts: exit 0
 - test scripts/public-release.test.ts: exit 0
 - test scripts/public-release-assets.test.ts: exit 0
@@ -210,7 +210,7 @@ passes.
       --preview` ran end-to-end after fixing the decomposition regression
       (below) and the preview plan shows the backup step between push and
       GitHub release.
-- [ ] **Archived:** (set when moved to `dev/fids/archive/`)
+- [x] **Archived:** 2026-09-06 → `dev/fids/archive/` (moved at closure)
 
 ### Live smoke finding (decomposition regression, fixed)
 
@@ -250,6 +250,22 @@ passes.
 
 ## Resolution
 
-- (pending — closes after the operator's first real release cut drives a
-  pipeline-authored BACKUP_BUNDLE; all static gates green and the preview
-  smoke passed 2026-09-05 — commits `8ff0657b`, `6dc45811`.)
+- **Closed Date:** 2026-09-06 — closed by operator ruling ("completed =
+  close + archive + changelog immediately"): implementation, gates, and
+  evidence complete. The stage's first live in-release run remains
+  operator-held at the v0.0.30 cut (SCOPE T17-C) and is **not** a closure
+  precondition per that ruling; the fail-closed/resume contract is
+  gate-pinned (6-test scratch-repo suite) and the preview surface was
+  smoke-proven 2026-09-05.
+- **Fix Description:** `BACKUP_BUNDLE` stage between `GIT_PUSH` and
+  `GITHUB_RELEASE` — verified incremental bundle before any public
+  artifact; resume-aware; fail-closed
+- **Commit SHA (G2):** `8ff0657b` — feat(scripts): add BACKUP_BUNDLE
+  release stage for post-push bundle backup (ground-truth resolved
+  2026-09-06 via `git log -S 'BACKUP_BUNDLE' --
+  scripts/public-release/fail.ts`; preview-smoke companion `6dc45811`)
+- **Verification Evidence:** fresh consolidated gate battery at closure —
+  66 tests / 0 fail across the 9 public-release suite files (2026-09-06);
+  13 `fid:verify` gate receipts PASS (stamped at implementation); receipt
+  re-stamped at the archived path
+- **Archived:** 2026-09-06 → `dev/fids/archive/`

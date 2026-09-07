@@ -93,3 +93,33 @@ moves happen at the v0.0.30 closure ceremony.
    open). Closes FID-005 + FID-006 and unblocks T15-H.
 3. Archive ceremony (move FIDs to `dev/fids/archive/`, CHANGELOG
    release-section moves) runs at closure — per contract, not before.
+
+## Addendum (same session, evening): ground-truth closure ceremony — 7 FIDs closed + archived
+
+**Operator ruling superseded the live-cut closure contracts:**
+"completed = close + archive + changelog immediately — stop worrying about
+the release; more work is planned this session." Executed:
+
+- **G2 SHAs ground-truth-resolved** (`git log -S`): 0903-001 → `a7ed2adc`,
+  0905-009 → `8ff0657b`; 0906-003 → `6222978`, 0906-004 → `bea0188`
+  (+`d8514d1b`), 0906-005 → `dd10723c` (from its own closure commit);
+  0906-002/-006 closed on gate+live evidence.
+- **Fresh consolidated battery:** 66 tests / 0 fail across the 9
+  public-release suite files, plus each FID's declared gates re-run at
+  receipt re-stamp.
+- **All 7 statuses → `closed`**, Resolutions filled with the ruling
+  citation (live-cut/smoke boundaries explicitly recorded as
+  operator-held runtime validations, NOT closure preconditions),
+  receipts re-stamped at the active paths, then moved to
+  `dev/fids/archive/` (git mv). Repo-wide `fid:verify --check` PASS.
+- **CHANGELOG amended:** ceremony header under Unreleased; status words
+  + stale closure-condition phrases fixed across 7 entries (2 in the
+  0.0.29 section).
+- **SCOPE T17-C** updated: superseded-by-ruling record with the full
+  evidence trail; the live validations move to the operator's cut-day
+  list unchanged.
+
+**`dev/fids/` is now empty of active records (README only).** The FID
+board for the first time this session is clean — and the pre-push hook's
+`fid:verify --check` gate now has zero active fixed/verified FIDs to
+re-verify until new work opens.

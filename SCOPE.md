@@ -917,12 +917,17 @@ each 2026-09-06. This section is the audit trail.
       re-building rejected (Law 7). Acceptance = the operator visual
       smoke at the v0.0.30 pre-cut; T15-F closes and T15-H unblocks on a
       passing smoke.
-- [ ] **T17-C. v0.0.30 cut — operator-held (automation level 3: local
-      commits only, no push to main).** The cut is the closure event for
-      five `fixed` FIDs pinned to it by contract: FID-2026-0903-001
-      (desktop stages), FID-2026-0905-009 (backup stage), FID-2026-0906-002
-      (desktop visibility receipt), FID-2026-0906-003 (provenance guards),
-      FID-2026-0906-004 (repaired DESKTOP_RELEASE stage) — plus FID-005's
-      smoke arm and FID-006's audit branch. Operator runs the cut
-      (2026-09-07 afternoon); `blocked` here until then — recorded, not
-      silently deferred.
+- [x] **T17-C. v0.0.30 cut — operator-held (automation level 3: local
+      commits only, no push to main).** **Superseded 2026-09-06 by operator
+      ruling** ("completed = close + archive + changelog immediately; stop
+      worrying about the release"): the ground-truth closure ceremony
+      closed + archived all seven then-active FIDs (0903-001, 0905-009,
+      0906-002/-003/-004, -005, -006) — G2 SHAs ground-truth-resolved
+      (`a7ed2adc`, `8ff0657b`, `6222978`, `bea0188`+`d8514d1b`,
+      `dd10723c`), 66/0 consolidated battery, receipts re-stamped at the
+      archived paths, CHANGELOG amended. The live validations formerly
+      used as closure conditions (first in-cut `DESKTOP_BUNDLES` dispatch,
+      `BACKUP_BUNDLE` run, receipt `desktopStagesSkipped` field,
+      provenance guards' first cut, lazy-chunk visual smoke) remain on
+      the operator's cut-day list as runtime validations — not closure
+      gates. `dev/fids/` now holds only the README.
