@@ -2,8 +2,9 @@
  * Live + hardcoded model catalogs for the /model picker.
  *
  * Split into focused modules: types, the generic live-catalog fetcher
- * (OpenRouter + NVIDIA NIM + Nous Research + KiosAPI + OpenCode Zen instances —
- * FID-2026-0809-001 Phase 3), static catalogs derived from common (TokenRouter /
+ * (OpenRouter + NVIDIA NIM + Nous Research + KiosAPI + OpenCode Zen
+ * + TabiToken + GoRouter + VyceAI instances — FID-2026-0809-001 Phase 3 and
+ * FID-2026-0906-008), static catalogs derived from common (TokenRouter /
  * TokenHarbor / OpenCode Go / CommandCode), model-id lookup + context resolution,
  * and the combined gateway fetch.
  */
@@ -30,6 +31,24 @@ export {
   hasKiosapiCatalog,
   parseKiosapiModelsForTest,
 } from './openrouter-models/kiosapi'
+export {
+  fetchTabitokenModels,
+  getCachedTabitokenModels,
+  hasTabitokenCatalog,
+  parseTabitokenModelsForTest,
+} from './openrouter-models/tabitoken'
+export {
+  fetchGorouterModels,
+  getCachedGorouterModels,
+  hasGorouterCatalog,
+  parseGorouterModelsForTest,
+} from './openrouter-models/gorouter'
+export {
+  fetchVyceaiModels,
+  getCachedVyceaiModels,
+  hasVyceaiCatalog,
+  parseVyceaiModelsForTest,
+} from './openrouter-models/vyceai'
 export {
   fetchZenModels,
   getCachedZenModels,

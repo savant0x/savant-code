@@ -2,6 +2,27 @@
 
 ## Unreleased
 
+### Three new gateway providers — TabiToken, GoRouter, VyceAI (fixed 2026-09-06)
+
+- **FID-2026-0906-008 — medium — TabiToken, GoRouter, and VyceAI added as
+  first-class gateway providers (registry, live catalogs, routing,
+  picker).** All three live-probed 2026-09-06 as OpenAI-compatible
+  gateways with authenticated `/v1/models` catalogs (TabiToken + GoRouter
+  are "New API" instances — canonical `new_api_error` 401; VyceAI a
+  textbook `authentication_error` proxy; the Cloudflare UA shield blocks
+  only curl's exact UA — generic client UAs reach the API layer). Each
+  gets a `PROVIDER_REGISTRY` entry (`tabitoken` / `gorouter` / `vyceai`,
+  `strip` id transform, `TABITOKEN_API_KEY` / `GOROUTER_API_KEY` /
+  `VYCEAI_API_KEY`), a KiosAPI-pattern pass-through live-catalog fetcher
+  wired into the combined gateway catalog, provider-audit manifest
+  coverage, and registry-derived docs (.env.example env vars, release
+  README provider table, README/README.zh-CN lists). Routing, key
+  resolution, `/provider` setup, and `/model` picker visibility derive
+  from the existing generic loops. 30/0 common providers + 22/0 cli
+  gateway suites, typecheck ×3, quality ratchet PASS, repo validation
+  PASS. Keyed live round-trip per provider is the operator acceptance
+  arm (closure-pinned, per the KiosAPI precedent).
+
 ### Ground-truth closure ceremony — 7 FIDs closed + archived 2026-09-06
 
 Operator ruling ("completed = close + archive + changelog immediately"): every `fixed`/`converged` record below was change-complete with gates green, commit SHAs ground-truth-resolved per G2, fresh consolidated gate battery green (66 tests / 0 fail across the 9 public-release suite files + each FID's declared gates re-run at receipt re-stamp). Live-cut/smoke boundaries were **not** closure preconditions per the ruling — they remain on the operator's v0.0.30 cut-day list (SCOPE T17-C), unchanged.

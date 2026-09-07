@@ -931,3 +931,34 @@ each 2026-09-06. This section is the audit trail.
       provenance guards' first cut, lazy-chunk visual smoke) remain on
       the operator's cut-day list as runtime validations — not closure
       gates. `dev/fids/` now holds only the README.
+
+## Task 18 — Three new gateway providers: TabiToken, GoRouter, VyceAI (2026-09-06)
+
+Operator directive: add the three gateways researched live this session
+(`tabitoken.com`, `gorouter.app`, `vyceai.com`). Executed as
+FID-2026-0906-008 (full Perfection Loop, RED-first):
+
+- [x] **Registry ×3** — `tabitoken` / `gorouter` / `vyceai`, all
+      `kind: 'gateway'`, `protocol: 'openai'`, `idTransform: 'strip'`,
+      live catalogs at `https://<host>/v1/models`, env vars
+      `TABITOKEN_API_KEY` / `GOROUTER_API_KEY` / `VYCEAI_API_KEY`,
+      `order: 4` (default-tie convention). Provider-audit manifest gains
+      the three `live-catalog` entries (the FID-2026-0905-002 addendum
+      lesson).
+- [x] **CLI live fetchers ×3** — KiosAPI-pattern modules (pass-through
+      parser, unix-seconds `created` normalization, registry-derived URL
+      guard, per-provider env-key resolver), wired into the combined
+      gateway catalog (`Promise.allSettled` + fulfilled-fallback + reset
+      fns) and the barrel.
+- [x] **Docs** — `.env.example` + `cli/release/README.md` regenerated via
+      `generate:provider-docs` (registry-driven; TABLE_NOTES ×3),
+      README.md + README.zh-CN.md provider lists extended.
+- [x] **Verification** — RED confirmed first (2 registry-pin fails +
+      module-absent); GREEN: common providers 30/0, cli gateway suites
+      22/0 (6 new), full cli suite 3485/0/18 skip, typecheck ×3 exit 0,
+      quality ratchet PASS (honest baseline bumps: gateway.ts 300,
+      barrel 72, registry.ts 298, generator 210), repo validation PASS,
+      receipt stamped.
+- **Open (operator, keyed):** per-provider picker + chat round-trip —
+      the closure arm per the KiosAPI acceptance precedent. `fixed`, not
+      closed, until that runs.

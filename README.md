@@ -469,8 +469,9 @@ code 2 blocks a tool.
 - **Universal copy buttons** — hover-to-copy on code blocks, tool outputs, and
   file diffs throughout the TUI.
 - **Gateway providers** — TokenRouter, TokenHarbor, NVIDIA NIM, OpenCode Go, OpenCode Zen, CommandCode,
-  Nous Research, KiosAPI, and Cloudflare Workers AI via `@savant-code/llm-providers`. Nous Research
-  uses the direct OpenAI-compatible API; Portal OAuth is a separate integration.
+  Nous Research, KiosAPI, TabiToken, GoRouter, VyceAI, and Cloudflare Workers AI via
+  `@savant-code/llm-providers`. Nous Research uses the direct OpenAI-compatible API; Portal OAuth
+  is a separate integration.
 - **Default model** — `openrouter/free` via OpenRouter (configurable via
   `/model`). One model project-wide: the model selected in the UI panel is the
   only model used — main chat agent, teacher-forge, headless runs, and spawned

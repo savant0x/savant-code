@@ -24,10 +24,11 @@ import type { ProviderConfig } from '../types'
  * as its first argument so tests inject a fixture instead of the singleton).
  */
 describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
-  test('covers all eleven current providers', () => {
+  test('covers all fourteen current providers', () => {
     expect(Object.keys(PROVIDER_REGISTRY).sort()).toEqual([
       'cloudflare',
       'commandcode',
+      'gorouter',
       'kiosapi',
       'nous',
       'nvidia',
@@ -35,8 +36,10 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
       'opencode-go',
       'opencode-zen',
       'openrouter',
+      'tabitoken',
       'tokenharbor',
       'tokenrouter',
+      'vyceai',
     ])
   })
 
@@ -81,6 +84,9 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
       'cloudflare',
       'kiosapi',
       'opencode-zen',
+      'tabitoken',
+      'gorouter',
+      'vyceai',
     ]) {
       expect(deriveProviderOrder(PROVIDER_REGISTRY, id)).toBe(4)
     }
@@ -88,18 +94,21 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
     expect(deriveProviderOrder(PROVIDER_REGISTRY, 'unknown')).toBe(4)
   })
 
-  test('setup config derives exactly the nine current setup providers', () => {
+  test('setup config derives exactly the twelve current setup providers', () => {
     const setup = deriveSetupConfig(PROVIDER_REGISTRY)
     expect(Object.keys(setup).sort()).toEqual([
       'commandcode',
+      'gorouter',
       'kiosapi',
       'nous',
       'nvidia',
       'opencode-go',
       'opencode-zen',
       'openrouter',
+      'tabitoken',
       'tokenharbor',
       'tokenrouter',
+      'vyceai',
     ])
     expect(setup.openrouter).toEqual({
       label: 'OpenRouter',
@@ -130,6 +139,22 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
       label: 'OpenCode Zen',
       envVar: 'OPENCODE_API_KEY',
       baseUrl: 'https://opencode.ai/zen/v1',
+    })
+    // FID-2026-0906-008: the three new gateways derive their setup surface.
+    expect(setup.tabitoken).toEqual({
+      label: 'TabiToken',
+      envVar: 'TABITOKEN_API_KEY',
+      baseUrl: 'https://tabitoken.com/v1',
+    })
+    expect(setup.gorouter).toEqual({
+      label: 'GoRouter',
+      envVar: 'GOROUTER_API_KEY',
+      baseUrl: 'https://gorouter.app/v1',
+    })
+    expect(setup.vyceai).toEqual({
+      label: 'VyceAI',
+      envVar: 'VYCEAI_API_KEY',
+      baseUrl: 'https://vyceai.com/v1',
     })
   })
 

@@ -85,6 +85,33 @@ export const PROVIDER_EXCEPTION_MANIFEST: readonly ProviderExceptionManifestEntr
       ],
     },
     {
+      providerId: 'tabitoken',
+      kinds: ['live-catalog'],
+      owner: 'cli/src/utils/openrouter-models/tabitoken.ts',
+      evidence: [
+        'cli/src/utils/openrouter-models/tabitoken.ts',
+        'cli/src/utils/openrouter-models/gateway.ts',
+      ],
+    },
+    {
+      providerId: 'gorouter',
+      kinds: ['live-catalog'],
+      owner: 'cli/src/utils/openrouter-models/gorouter.ts',
+      evidence: [
+        'cli/src/utils/openrouter-models/gorouter.ts',
+        'cli/src/utils/openrouter-models/gateway.ts',
+      ],
+    },
+    {
+      providerId: 'vyceai',
+      kinds: ['live-catalog'],
+      owner: 'cli/src/utils/openrouter-models/vyceai.ts',
+      evidence: [
+        'cli/src/utils/openrouter-models/vyceai.ts',
+        'cli/src/utils/openrouter-models/gateway.ts',
+      ],
+    },
+    {
       providerId: 'cloudflare',
       kinds: ['extra-credentials', 'id-rewrite', 'setup-exclusion'],
       owner: 'sdk/src/impl/model-provider/model-factories.ts',

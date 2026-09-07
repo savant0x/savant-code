@@ -1,13 +1,18 @@
 /**
  * Combined gateway catalog — OpenRouter + TokenRouter + TokenHarbor + NVIDIA NIM
- * + OpenCode Go + CommandCode + Nous Research + KiosAPI + OpenCode Zen — plus
- * subscription plumbing.
+ * + OpenCode Go + CommandCode + Nous Research + KiosAPI + OpenCode Zen
+ * + TabiToken + GoRouter + VyceAI — plus subscription plumbing.
  */
 import fs from 'node:fs'
 import path from 'node:path'
 
 import { getConfigDir } from '../config-dir'
 import { logger } from '../logger'
+import {
+  __resetGorouterCacheForTest,
+  fetchGorouterModels,
+  getCachedGorouterModels,
+} from './gorouter'
 import {
   __resetKiosapiCacheForTest,
   fetchKiosapiModels,
@@ -33,6 +38,16 @@ import {
   fetchOpenRouterModels,
   getCachedOpenRouterModels,
 } from './openrouter'
+import {
+  __resetTabitokenCacheForTest,
+  fetchTabitokenModels,
+  getCachedTabitokenModels,
+} from './tabitoken'
+import {
+  __resetVyceaiCacheForTest,
+  fetchVyceaiModels,
+  getCachedVyceaiModels,
+} from './vyceai'
 import {
   fetchCommandCodeModels,
   fetchOpenCodeGoModels,
@@ -142,7 +157,9 @@ function notifyGatewayCatalogListeners(catalog: OpenRouterModel[]): void {
  * - Nous Research (live API, authenticated)
  * - KiosAPI (live API, authenticated)
  * - OpenCode Zen (live API, public)
- * - KiosAPI (live API, authenticated)
+ * - TabiToken (live API, authenticated)
+ * - GoRouter (live API, authenticated)
+ * - VyceAI (live API, authenticated)
  *
  * Fetches live sources in parallel via Promise.allSettled(). If a source fails,
  * uses cached/empty list for that provider. Returns a combined, sorted list.
@@ -173,14 +190,24 @@ export async function fetchGatewayModels(
   }
 
   gatewayInflight = (async () => {
-    const [orResult, nvidiaResult, nousResult, kiosapiResult, zenResult] =
-      await Promise.allSettled([
-        fetchOpenRouterModels(forceRefresh),
-        fetchNvidiaModels(forceRefresh),
-        fetchNousModels(forceRefresh),
-        fetchKiosapiModels(forceRefresh),
-        fetchZenModels(forceRefresh),
-      ])
+    const [orResult, nvidiaResult, ...restResults] = await Promise.allSettled([
+      fetchOpenRouterModels(forceRefresh),
+      fetchNvidiaModels(forceRefresh),
+      fetchNousModels(forceRefresh),
+      fetchKiosapiModels(forceRefresh),
+      fetchZenModels(forceRefresh),
+      fetchTabitokenModels(forceRefresh),
+      fetchGorouterModels(forceRefresh),
+      fetchVyceaiModels(forceRefresh),
+    ])
+    const [
+      nousResult,
+      kiosapiResult,
+      zenResult,
+      tabitokenResult,
+      gorouterResult,
+      vyceaiResult,
+    ] = restResults
 
     const orModels =
       orResult.status === 'fulfilled'
@@ -200,6 +227,18 @@ export async function fetchGatewayModels(
         : getCachedKiosapiModels()
     const zenModels =
       zenResult.status === 'fulfilled' ? zenResult.value : getCachedZenModels()
+    const tabitokenModels =
+      tabitokenResult.status === 'fulfilled'
+        ? tabitokenResult.value
+        : getCachedTabitokenModels()
+    const gorouterModels =
+      gorouterResult.status === 'fulfilled'
+        ? gorouterResult.value
+        : getCachedGorouterModels()
+    const vyceaiModels =
+      vyceaiResult.status === 'fulfilled'
+        ? vyceaiResult.value
+        : getCachedVyceaiModels()
     const tokenrouterModels = fetchTokenRouterModels()
     const tokenharborModels = getTokenHarborModels()
     const openCodeGoModels = fetchOpenCodeGoModels()
@@ -213,6 +252,9 @@ export async function fetchGatewayModels(
       ...nousModels,
       ...kiosapiModels,
       ...zenModels,
+      ...tabitokenModels,
+      ...gorouterModels,
+      ...vyceaiModels,
       ...openCodeGoModels,
       ...commandCodeModels,
     ]
@@ -238,6 +280,9 @@ export function __resetOpenRouterModelsCacheForTest(): void {
   __resetNousCacheForTest()
   __resetKiosapiCacheForTest()
   __resetZenCacheForTest()
+  __resetTabitokenCacheForTest()
+  __resetGorouterCacheForTest()
+  __resetVyceaiCacheForTest()
   gatewayCache = null
   gatewayCacheAt = 0
   gatewayInflight = null

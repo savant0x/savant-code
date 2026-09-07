@@ -86,6 +86,9 @@ const TABLE_NOTES: Record<string, string> = {
   commandcode: 'OpenAI-compatible hosted inference (dual-protocol)',
   nous: 'OpenAI-compatible direct inference; Portal OAuth is separate',
   kiosapi: 'OpenAI-compatible gateway (live catalog)',
+  tabitoken: 'OpenAI-compatible New API gateway (live catalog)',
+  gorouter: 'OpenAI-compatible New API gateway (live catalog)',
+  vyceai: 'OpenAI-compatible proxy (live catalog)',
   'opencode-zen':
     'Pay-per-use gateway, 70 models incl. free tier (multi-protocol)',
   cloudflare:

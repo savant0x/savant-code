@@ -231,6 +231,66 @@ export const PROVIDER_REGISTRY = {
     domain: 'opencode.ai',
     order: 4,
   },
+  tabitoken: {
+    id: 'tabitoken',
+    label: 'TabiToken',
+    kind: 'gateway',
+    credentials: {
+      envVar: 'TABITOKEN_API_KEY',
+      // /provider hint is part of the canonical message.
+      missingKeyMessage:
+        'TabiToken key not set. Set TABITOKEN_API_KEY environment variable or run /provider tabitoken.',
+    },
+    baseUrl: 'https://tabitoken.com/v1',
+    protocol: 'openai',
+    // New API gateway (live-probed 2026-09-06): bare upstream ids; the
+    // internal `tabitoken/` routing prefix is stripped before sending.
+    idTransform: 'strip',
+    catalog: { source: 'live', url: 'https://tabitoken.com/v1/models' },
+    setupAvailable: true,
+    domain: 'tabitoken.com',
+    order: 4,
+  },
+  gorouter: {
+    id: 'gorouter',
+    label: 'GoRouter',
+    kind: 'gateway',
+    credentials: {
+      envVar: 'GOROUTER_API_KEY',
+      // /provider hint is part of the canonical message.
+      missingKeyMessage:
+        'GoRouter key not set. Set GOROUTER_API_KEY environment variable or run /provider gorouter.',
+    },
+    baseUrl: 'https://gorouter.app/v1',
+    protocol: 'openai',
+    // New API gateway (live-probed 2026-09-06): bare upstream ids; the
+    // internal `gorouter/` routing prefix is stripped before sending.
+    idTransform: 'strip',
+    catalog: { source: 'live', url: 'https://gorouter.app/v1/models' },
+    setupAvailable: true,
+    domain: 'gorouter.app',
+    order: 4,
+  },
+  vyceai: {
+    id: 'vyceai',
+    label: 'VyceAI',
+    kind: 'gateway',
+    credentials: {
+      envVar: 'VYCEAI_API_KEY',
+      // /provider hint is part of the canonical message.
+      missingKeyMessage:
+        'VyceAI key not set. Set VYCEAI_API_KEY environment variable or run /provider vyceai.',
+    },
+    baseUrl: 'https://vyceai.com/v1',
+    protocol: 'openai',
+    // OpenAI-compatible proxy (live-probed 2026-09-06): bare upstream ids;
+    // the internal `vyceai/` routing prefix is stripped before sending.
+    idTransform: 'strip',
+    catalog: { source: 'live', url: 'https://vyceai.com/v1/models' },
+    setupAvailable: true,
+    domain: 'vyceai.com',
+    order: 4,
+  },
 } as const satisfies Record<string, ProviderConfig>
 
 /** Literal union of registry ids, e.g. 'tokenharbor' | 'opencode-go'. */

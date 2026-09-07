@@ -123,3 +123,35 @@ the release; more work is planned this session." Executed:
 board for the first time this session is clean — and the pre-push hook's
 `fid:verify --check` gate now has zero active fixed/verified FIDs to
 re-verify until new work opens.
+
+---
+
+## Addendum — Task 18: three new gateway providers (2026-09-06, later)
+
+Operator directive: add TabiToken, GoRouter, and VyceAI (researched via
+live probes earlier — zero search-index presence, so direct endpoint
+probing was the ground truth). Executed as FID-2026-0906-008, full
+Perfection Loop, RED-first:
+
+- **Research retained in the FID:** all three are OpenAI-compatible
+  gateways with authenticated `/v1/models` (TabiToken + GoRouter are
+  "New API" instances — canonical `new_api_error` 401; VyceAI a textbook
+  `authentication_error` proxy). Cloudflare UA-shield risk retired: only
+  curl's exact UA is blocked; the Bun-runtime fetcher passes (probe
+  matrix in the FID).
+- **Implementation:** 3 registry entries (`strip`, `order: 4`, own env
+  vars) + provider-audit manifest ×3 + 3 KiosAPI-pattern pass-through
+  live-catalog fetchers wired into the combined gateway catalog + barrel
+  exports + registry-regenerated docs (`generate:provider-docs` with
+  TABLE_NOTES ×3, README ×2).
+- **Verification:** RED confirmed (2 registry-pin fails + module-absent)
+  before GREEN; common providers 30/0, cli gateway suites 22/0 (6 new),
+  full cli suite 3485 pass / 0 fail / 18 skip, typecheck ×3 exit 0,
+  quality ratchet PASS (honest baseline bumps — gateway.ts held AT the
+  300 ceiling by a destructuring compression, four growth entries
+  updated, zero exemptions), repo validation PASS, receipt stamped.
+- **Status:** `fixed` — closure pinned to the operator's keyed live
+  round-trip per provider (KiosAPI acceptance precedent); key-blocked
+  locally, nothing release-blocked.
+
+Committed locally (automation level 3 — no push).

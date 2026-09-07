@@ -309,8 +309,8 @@ MCP 工具发现、模式切换（`HYBRID` / `SCAFFOLD` / `STRICT` / `ANALYZE`�
   上下文长度。
 - **通用复制按钮** —— 在整个 TUI 中悬停即可复制代码块、工具输出与文件 diff。
 - **网关提供商** —— 通过 `@savant-code/llm-providers` 支持 TokenRouter、TokenHarbor、NVIDIA NIM、OpenCode Go、OpenCode Zen、
-  CommandCode、Nous Research、KiosAPI 与 Cloudflare Workers AI。Nous Research 使用 OpenAI 兼容直连 API；Portal OAuth
-  是独立集成。
+  CommandCode、Nous Research、KiosAPI、TabiToken、GoRouter、VyceAI 与 Cloudflare Workers AI。Nous Research 使用 OpenAI 兼容直连
+  API；Portal OAuth 是独立集成。
 - **默认模型** —— 通过 OpenRouter 使用 `openrouter/free`（可通过 `/model` 配置）。
 - **无头 / 非交互模式** —— `savant-code --print "<prompt>"` 无需 TUI 即可运行单个提示词，并将最终答案打印到
   stdout。退出码：`0` 成功、`1` 错误或超时、`2` 用法错误。当 stdin 被管道化或环境为 CI 时，CLI 自动进入无头模式并以
