@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+- **FID-2026-0906-002 — high — Release pipeline desktop-stage visibility:
+  loud skips + flag-independent verification (fixed 2026-09-06).** The
+  v0.0.29 cut reported a full green release while the desktop stages
+  silently never ran — the `SAVANT_CODE_RELEASE_DESKTOP` opt-in was unset
+  and no surface said so. Three fixes make the desktop decision loud in
+  every mode: the release plan always prints the desktop lines (active or
+  `SKIPPED — SAVANT_CODE_RELEASE_DESKTOP not set`); the receipt records the
+  skip (`desktopStagesSkipped` + reason) so a post-mortem reads it without
+  release-night context; and `POST_RELEASE_VERIFY` now carries a
+  machine-checked desktop claim in both modes — manifest present and
+  structurally sound when the stages ran, `latest.json` provably absent
+  when they did not (404 → proven absence; any other response fails the
+  cut). 46/0 across the gate suites; live dual-branch `--preview` proof;
+  closes on the next real cut's receipt.
 - **FID-2026-0906-007 — high — Spawned-process env starvation: env.ts gains
   the .env.local bootstrap leg (closed + archived 2026-09-06).**
   `common/src/env.ts` bootstrapped only the release-binary env.json leg;
