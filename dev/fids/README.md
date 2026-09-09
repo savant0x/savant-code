@@ -33,9 +33,7 @@ on-disk records missing from the table added (-0823-003, -0824-003…-008,
 
 | FID | Status | Purpose / blocking gate |
 |---|---|---|
-| [`FID-2026-0909-001`](FID-2026-0909-001-clean-checkout-gate-orphaned-temp-dir.md) | `analyzed` | Clean-checkout gate leaves an orphaned Temp worktree dir on failed runs |
-| [`FID-2026-0909-002`](FID-2026-0909-002-release-gate-environment-parity.md) | `analyzed` | Gate-env parity: three env-dependent defects fixed in-session; structural guard open |
-| [`FID-2026-0909-003`](FID-2026-0909-003-verify-clean-sdk-declaration-gate.md) | `analyzed` | verify:clean omits the SDK dts gate (build:sdk surface) |
+| (empty — the queue drained 2026-09-09; see the closure note below) | | |
 
 **2026-09-09 Perfection Loop pass (all three records → `analyzed`):** each
 FID's Loop 1 ran codebase-grounded (single-agent ECHO v0.1.2). Ground-truth
@@ -50,6 +48,22 @@ Step-1 inventory ran with one residual reasoned exemption found
 and class-3 (`process.env` shape dependence) ruled non-greppable. Coordination
 master: [`dev/build-orders/BO-2026-09-09-gate-chain-hardening.md`](../build-orders/BO-2026-09-09-gate-chain-hardening.md)
 — implementation order 001 → 003 → 002, awaiting operator approval (Law 2).
+**2026-09-09 closure (operator directive: "Approve the full 001→003→002 program
+and implement all three sequentially"):** all three FIDs implemented in the
+mandatory order, closed + archived, CHANGELOG `Unreleased` entries added, and
+receipts re-stamped at the archived paths. Highlights: FID-001's self-healing
+lifecycle (`scripts/public-release/clean-checkout.ts`) + FID-003's
+declaration-surface gate (`extraGates` on `assertCleanCheckoutCompiles`,
+`verify:clean` opts into `build:sdk`) landed in commit `086565b` — with the
+FID-003 live drill proving both FIDs (planted TS2339 → FAIL with no checkout
+debris; clean tree → PASS 146.0s). FID-002's guard (`audit.gate-env-parity`
+in `validate:repository`) caught TWO real class-1 defects on its first live
+run (`scripts/bump-version.ts` bracket-shape `'bun'` spawns, fixed to
+`process.execPath`) and passed the prove-the-guard drill both legs. Program
+gates: scripts surface 326/0 across 45 files; typecheck ×4 exit 0; eslint
+`--max-warnings 0`; lint:md; prettier; `validate:repository` PASS. The
+active queue is empty. See `archive/README.md` (2026-09-09 closure section)
+and the CHANGELOG `Unreleased` entries.
 **2026-09-08 closure (operator directive: "review the fids, if they are done, add
 them to changelog and properly close them out") — FID-2026-0907-007 +
 FID-2026-0908-003 closed + archived:** both records reviewed complete (full

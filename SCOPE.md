@@ -54,18 +54,32 @@
 
 ### Task 24 implementation tracking (T24-G)
 
-- [ ] **T24-G1. FID-2026-0909-001** — RED pins → self-healing lifecycle
-      (`scripts/public-release/clean-checkout.ts` + provenance rewiring) →
-      gates → close + archive + CHANGELOG.
-- [ ] **T24-G2. FID-2026-0909-003** — gate-list pins → parameterized chain
-      + `verify:clean` opt-in → RED drill (planted TS2339) + live PASS →
-      close + archive + CHANGELOG.
-- [ ] **T24-G3. FID-2026-0909-002** — audit gate RED pins →
-      `scripts/audit-gate-env-parity.ts` + `validate:repository` wiring →
-      prove-the-guard → close + archive + CHANGELOG.
-- [ ] **T24-G4.** Program battery (`bun test scripts/`, eslint
-      `--max-warnings 0`, quality report, lint:md, validate:repository) +
-      session summary.
+- [x] **T24-G1. FID-2026-0909-001 [DONE 2026-09-09, commit `086565b`]** —
+      RED pins → self-healing lifecycle (`scripts/public-release/
+clean-checkout.ts` + provenance rewiring) → gates (12/0 + provenance
+      11/0 + verify-clean 9/0; live git-ordering probe) → closed +
+      archived + CHANGELOG.
+- [x] **T24-G2. FID-2026-0909-003 [DONE 2026-09-09, commit `086565b`]** —
+      gate-list pins → parameterized chain + `verify:clean` opt-in →
+      live drill BOTH legs (planted TS2339 on commit `1fbb1e06` → FAIL
+      fail-closed with no checkout debris; clean `086565b6` → PASS
+      146.0s) → closed + archived + CHANGELOG.
+- [x] **T24-G3. FID-2026-0909-002 [DONE 2026-09-09]** — audit gate RED
+      pins → `scripts/audit-gate-env-parity.ts` + `validate:repository`
+      wiring as `audit.gate-env-parity` (minimal gate; classes 1–2
+      mechanical, class 3 behaviorally pinned; one path-exact exemption:
+      the pinned-bun contract probe). The guard's first live run caught
+      TWO real class-1 defects (`scripts/bump-version.ts:138/156`,
+      bracket-shape `Bun.spawnSync(['bun', ...])` the inventory grep
+      missed) — fixed to `process.execPath`, ratchet bumped. Prove-
+      the-guard leg both legs (planted `import.meta.dir` in a scratch
+      worktree → FAIL with file:line precision; restored → PASS).
+      Closed + archived + CHANGELOG.
+- [x] **T24-G4. [DONE 2026-09-09]** Program battery: scripts surface
+      326/0 across 45 files; typecheck ×4 (sdk/common/agent-runtime/cli)
+      exit 0; eslint on all touched files `--max-warnings 0`; lint:md
+      PASS; prettier clean; `validate:repository` PASS with the new
+      audit gate live.
 
 ## Task 15 — Deck rebuild: cyberpunk neon-noir agent office (2026-08-31)
 

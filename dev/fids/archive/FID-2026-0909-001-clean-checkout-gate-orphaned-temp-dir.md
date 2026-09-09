@@ -296,9 +296,8 @@ from the previous run's debris instead of requiring a human `rm -rf`.
 
 ## Resolution
 
-- **Closed Date:** 2026-09-09 (operator-approved program implementation;
-  G2 commit hash to be stamped at the archived path per the repo
-  convention)
+- **Closed Date:** 2026-09-09. G2 commit hash: `086565b` (full sha
+  `086565b6`, resolved via `git log`; verified 2026-09-09).
 - **Fix Description:** self-healing clean-checkout lifecycle — pre-create
   guard clears debris before the add; finally-path cleanup captures its
   result, warns loudly, and falls back to a filesystem removal for

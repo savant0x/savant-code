@@ -3,6 +3,43 @@
 This directory contains closed or historically completed FIDs. Files here are
 an audit record, not an active work queue.
 
+## 2026-09-09 closure — release gate-chain hardening program (3 FIDs archived; queue empty)
+
+Operator directive: "Approve the full 001→003→002 program and implement all
+three sequentially." All three v0.0.30-cut FIDs implemented in the mandatory
+order (BO-2026-09-09-gate-chain-hardening), closed, and archived:
+
+- `FID-2026-0909-001-clean-checkout-gate-orphaned-temp-dir.md` (low) —
+  self-healing clean-checkout lifecycle: pre-create remove-if-exists guard,
+  removal-result capture with loud warning, filesystem `rmSync` fallback
+  (new `scripts/public-release/clean-checkout.ts`; provenance.ts rewired;
+  every command + filesystem surface injected). Live probe confirmed the
+  unregistered-orphan mechanics. Receipt 3/3 PASS; commit `086565b`.
+- `FID-2026-0909-003-verify-clean-sdk-declaration-gate.md` (medium) —
+  `assertCleanCheckoutCompiles` accepts an `extraGates` list (release chain
+  byte-identical); `verify:clean` opts into `build:sdk`. Live drill both
+  legs: planted `import.meta.dir` (drill commit `1fbb1e06`) → verify:clean
+  FAILED fail-closed at the SDK dts surface AND left no checkout debris
+  (FID-001's cleanup proven in the incident scenario); clean commit
+  `086565b6` → PASS 146.0s. Receipt 3/3 PASS; commit `086565b`.
+- `FID-2026-0909-002-release-gate-environment-parity.md` (medium) — the
+  structural guard: `scripts/audit-gate-env-parity.ts` (pure detector +
+  git-tracked-surface collector) wired into `validate:repository` as
+  `audit.gate-env-parity`. Classes 1–2 mechanical (bare runtime-name spawns;
+  Bun-only `import.meta` in `common/src` production), one path-exact
+  exemption (the pinned-bun contract probe), class 3 behaviorally pinned by
+  the env-bootstrap suite. First live run caught TWO real class-1 defects
+  (`scripts/bump-version.ts:138/156` bracket-shape `'bun'` spawns → fixed
+  to `process.execPath`); prove-the-guard drill both legs in a scratch
+  worktree (planted violation → FAIL with file:line precision; restored →
+  PASS). Receipt 2/2 PASS.
+
+Program battery: scripts surface 326/0 across 45 files; typecheck ×4 exit 0;
+eslint `--max-warnings 0` on touched files; lint:md; prettier;
+`validate:repository` PASS. Receipts re-stamped at all three archived paths
+(`fid:verify` exit 0 each). CHANGELOG `## Unreleased` entries are the
+authoritative release-note source. Active queue is empty.
+
 ## 2026-09-08 closure — NDJSON Phase 3 live matrix + code_search caps (2 FIDs archived; queue empty)
 
 Operator closure directive ("review the fids, if they are done, add them to

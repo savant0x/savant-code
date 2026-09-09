@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0909-003-verify-clean-sdk-declaration-gate.md`
 **ID:** FID-2026-0909-003
 **Severity:** medium
-**Status:** analyzed
+**Status:** fixed
 **Created:** 2026-09-09 03:24
 **YAGNI-Compliance:** PASS (2026-09-09 — see Loop 1)
 
@@ -135,21 +135,52 @@ scripts + eslint clean.
 
 ## Verification Gates
 
-Declared at Loop 1 (2026-09-09), to be live-run at implementation:
+- gate: test scripts/__tests__/verify-clean.test.ts
+- gate: test scripts/public-release-provenance.test.ts
+- gate: test scripts/public-release-clean-checkout.test.ts
 
-1. `bun test scripts/__tests__/verify-clean.test.ts` — extended mock-runner
-   suite proves the `build:sdk` gate joins the chain in order (and that the
-   default chain is byte-identical for the release path).
-2. `scripts/public-release-provenance.test.ts` — default-path parity pins
-   stay green (no behavior change when the parameter is omitted).
-3. RED pin — planted `import.meta.dir` violation fails the extended
-   `verify:clean` with the TS2339 transcript (scratch worktree).
-4. Live — one full `bun run verify:clean` PASS on the committed tree
-   including the SDK declaration surface.
-5. Root hygiene — `bun x eslint scripts/verify-clean.ts
-   scripts/public-release/provenance.ts --max-warnings 0` + typecheck of the
-   scripts surface via `bun run --cwd=sdk typecheck` unaffected (scripts are
-   repo-root files; eslint + `bun run validate:repository` are the gates).
+### Verification Receipt
+
+- fingerprint: sha256:99d4c1fa8c113e54290ba5435abe0e3b0575654d6356447bbe9cca707baede22
+- verified: 2026-09-09T16:22:18.833Z
+- test scripts/__tests__/verify-clean.test.ts: exit 0
+- test scripts/public-release-provenance.test.ts: exit 0
+- test scripts/public-release-clean-checkout.test.ts: exit 0
+
+## Implementation Evidence
+
+Implemented 2026-09-09 under the operator-approved 001→003→002 program
+(dev/build-orders/BO-2026-09-09-gate-chain-hardening.md), AFTER FID-001's
+lifecycle fix landed in the same commit (`086565b6`) as planned.
+
+- `scripts/public-release/provenance.ts`: `assertCleanCheckoutCompiles`
+  accepts `CleanCheckoutOptions.extraGates` (`CheckoutGateSpec[]`: label +
+  command + args); extra gates run IN ORDER inside the checkout after the
+  typecheck chain; a failing gate fails closed with
+  `Clean checkout gate failed: <label>` + its transcript. Default (no
+  options) = byte-identical release chain — pinned by the new parity test.
+- `scripts/verify-clean.ts`: `VERIFY_CLEAN_EXTRA_GATES = [build:sdk]`;
+  HELP_TEXT + header comment updated to document the extended chain.
+- Pin migration recorded honestly: the FID-2026-0907-002-era pin
+  `composes prune → add → install → typecheck → remove` was RED after the
+  opt-in (`Received: "bun run build:sdk"`) and was updated to the new
+  6-command contract (`…typecheck → build:sdk → remove`) — the pin change
+  IS the contract change, asserted in both directions.
+- **Live drill (both legs, recorded):** RED — a scratch worktree committed
+  the planted `import.meta.dir` in `common/src/env.ts` (drill commit
+  `1fbb1e06`); `bun scripts/verify-clean.ts --sha <drill>` FAILED with the
+  exact v0.0.30 error shape (`Clean checkout gate failed: build:sdk ...
+  error TS2339: Property 'dir' does not exist on type 'ImportMeta'`,
+  exit 1) AND left no leftover checkout directory (FID-001's cleanup
+  proven in the incident scenario). GREEN — the clean implementation
+  commit `086565b6` PASSED: `verify:clean PASS — committed tree at HEAD
+  (v0.0.30) compiles from a clean checkout (146.0s)` through the extended
+  chain. Drill worktree + branch removed afterward; `git worktree list`
+  clean.
+- Pre-drill baseline: `bun run build:sdk` exit 0 in the worktree (~7s),
+  and the SDK import closure was re-verified `common`-terminal (grep:
+  `@savant-code/common` ×1584, `@savant-code/knowledge-graph` ×6, no
+  deeper deps) — the dts program's inputs are all committed sources.
 
 ## Perfection Loop
 
@@ -214,11 +245,16 @@ Declared at Loop 1 (2026-09-09), to be live-run at implementation:
 
 ### Code Verification Evidence
 
-- [ ] Files referenced in Affected Components exist
-- [ ] Implementation matches the Proposed Solution
-- [ ] Typecheck/tests/lint pass with pasted tool output
-- [ ] Production call-graph evidence is present for new or repaired wiring
-- [ ] FID status reflects the actual implementation state
+- [x] Files referenced in Affected Components exist (`verify-clean.ts`,
+      `provenance.ts`, `sdk/scripts/build.ts`)
+- [x] Implementation matches the Proposed Solution (parameterized gate
+      list; `verify:clean` opts in; release path unchanged)
+- [x] Typecheck/tests/lint pass with pasted tool output (35/0 across the
+      three suites; eslint clean; live drill transcripts recorded)
+- [x] Production call-graph evidence is present (`runVerifyClean` →
+      `assertCleanCheckoutCompiles` with extraGates; release path via
+      `assertReleaseHeadCompiles` keeps the default chain — both pinned)
+- [x] FID status reflects the actual implementation state (`fixed`)
 
 ## Lessons Learned
 
@@ -230,8 +266,16 @@ is ever compiled.
 
 ## Resolution
 
-- **Closed Date:** (pending)
-- **Fix Description:** (pending)
-- **Tests Added:** (pending)
-- **Verification Evidence:** (pending)
-- **Archived:** (pending)
+- **Closed Date:** 2026-09-09. G2 commit hash: `086565b` (full sha
+  `086565b6`).
+- **Fix Description:** `verify:clean`'s committed-tree proof now covers
+  the SDK declaration surface via the `extraGates` parameter (release
+  chain unchanged); drill-proven to catch the planted TS2339 class.
+- **Tests Added:** three gate-list pins (default parity, in-checkout
+  ordering, fail-closed label + transcript) + the migrated
+  verify-clean chain pin (now 6 commands).
+- **Verification Evidence:** 35/0 across the three suites; live drill
+  both legs (RED `1fbb1e06` fail-closed + GREEN `086565b6` PASS 146.0s);
+  eslint clean.
+- **Archived:** 2026-09-09 — moved to `dev/fids/archive/`; CHANGELOG entry
+  added under `## Unreleased`; receipt re-stamped at the archived path.

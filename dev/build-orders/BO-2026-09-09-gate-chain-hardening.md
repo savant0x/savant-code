@@ -1,8 +1,11 @@
 # Build Order — Release Gate-Chain Hardening (FIDs -0909-001/-002/-003)
 
 **Date:** 2026-09-09
-**Status:** PLANNING — awaiting operator approval (Law 2). No code is written
-from this document until the operator approves.
+**Status:** EXECUTED 2026-09-09 — operator approved ("Approve the full
+001→003→002 program and implement all three sequentially"); all three FIDs
+closed + archived, receipts re-stamped, program battery green. See
+`dev/fids/archive/README.md` (2026-09-09 closure) and the CHANGELOG
+`Unreleased` entries.
 **Scope sources:** `dev/fids/FID-2026-0909-001-clean-checkout-gate-orphaned-temp-dir.md`,
 `dev/fids/FID-2026-0909-002-release-gate-environment-parity.md`,
 `dev/fids/FID-2026-0909-003-verify-clean-sdk-declaration-gate.md` — all
@@ -104,8 +107,8 @@ and `import.meta.dir` scoped to `common/src` non-test production files.
 Class 3 (`process.env` shape dependence) is NOT greppable — the minimal
 gate documents it as behaviorally pinned by the env-bootstrap suite; the
 sanitized-env behavioral probe is an optional larger-scope alternative.
-**Operator decision at GREEN:** minimal gate vs +behavioral probe (the
-FID reserves this).
+**Operator decision at GREEN (RESOLVED 2026-09-09): minimal gate** —
+classes 1–2 mechanical, class 3 behaviorally pinned.
 
 **Files touched:** new `scripts/audit-gate-env-parity.ts` + suite,
 `scripts/validate-repository.ts` (one import + one issues-array spread).

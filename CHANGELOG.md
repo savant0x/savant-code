@@ -2,6 +2,59 @@
 
 ## Unreleased
 
+### Gate-environment parity guard — environment-only defects now fail at commit time (closed + archived 2026-09-09)
+
+- **FID-2026-0909-002 — medium — the v0.0.30 "only the release gate could
+  see it" incident class is now mechanically refused.** Three live defects
+  at the cut (Bun-only `import.meta.dir` under the SDK dts program, bare
+  `'bun'` spawns dying with uv_spawn ENOENT under the sanitized gate env,
+  `Path`/`PATH` casing) all shipped green through every local gate. New
+  `scripts/audit-gate-env-parity.ts` (pure detector + git-tracked-surface
+  collector, mirroring the FID-2026-0907-002 exit-code-masking precedent)
+  wired into `validate:repository` as `audit.gate-env-parity`: class 1 —
+  bare runtime-name child spawns (both the `spawn(Sync)('bun'` and
+  `Bun.spawn(Sync)(['bun'` shapes) anywhere on the audited source surface;
+  class 2 — Bun-only `import.meta.dir`/`.main` in `common/src` production
+  (the dts program's input set; test paths exempt); comment lines exempt;
+  one path-exact exemption for the pinned-runtime contract probe
+  (`scripts/public-release-pinned-bun.test.ts`). Class 3 (`process.env`
+  shape-dependence) is deliberately NOT grepped — the same source shape is
+  both the legitimate passthrough pattern and the incident shape — and is
+  behaviorally pinned by the env-bootstrap suite instead. The guard's
+  first live run caught TWO real class-1 defects the inventory grep had
+  missed (bracket-shape `Bun.spawnSync(['bun', ...])` at
+  `scripts/bump-version.ts:138/156`), fixed to `process.execPath` — the
+  guard earning its keep on day one. Prove-the-guard leg: planted
+  `import.meta.dir` in a scratch worktree (line-count-stable edit) →
+  `validate:repository` FAILED with file:line precision; restored → PASS.
+  Detector suite 10/0; affected suites 22/0; eslint `--max-warnings 0`
+  clean. **Closed + archived 2026-09-09.**
+
+### verify:clean covers the SDK declaration surface — the "every gate green, cut red" class closed (closed + archived 2026-09-09)
+
+- **FID-2026-0909-003 — medium — the committed-tree proof now compiles
+  the plain-TS dts program the release consumes.** `verify:clean`'s chain
+  mirrored the workspace typecheck scripts, which load Bun types for
+  `common`; the SDK build's `dts-bundle-generator` step recompiles the
+  SDK-reachable common sources under a plain-TS program WITHOUT Bun types
+  — a surface no local gate exercised (the v0.0.30 cut failed exactly
+  there: TS2339 on `common/src/env.ts:44` with typecheck ×12 +
+  `verify:clean` green). Implementation rides the FID-001-hardened
+  lifecycle: `assertCleanCheckoutCompiles` accepts an `extraGates` list
+  run in order inside the checkout after the typecheck chain (release
+  path's default chain byte-identical — the GATES stage already runs
+  `build:sdk` with transcript capture, so no double build per cut);
+  `verify:clean` opts in with `build:sdk` (~7s; HELP_TEXT updated).
+  `build:savant-free` explicitly ruled out of scope (Loop 1: Bun compile
+  target — no type checking; wrong failure class). The FID-0907-002-era
+  chain pin was migrated with the contract change asserted in both
+  directions. **Live drill both legs:** planted `import.meta.dir`
+  (drill commit `1fbb1e06`) → `verify:clean` FAILED fail-closed with the
+  exact TS2339 shape AND left no checkout debris (FID-001's cleanup
+  proven in the incident scenario); clean commit `086565b6` → `verify:
+  clean PASS (146.0s)` through the extended chain. 35/0 across the three
+  suites; eslint clean; receipt 3/3 PASS. **Closed + archived 2026-09-09.**
+
 ### Self-healing clean-checkout lifecycle — the orphaned Temp worktree incident fixed at the source (closed + archived 2026-09-09)
 
 - **FID-2026-0909-001 — low — a failed gate run no longer blocks every
