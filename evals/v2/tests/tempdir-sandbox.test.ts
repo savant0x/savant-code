@@ -70,13 +70,20 @@ describe('env allowlist (FID-2026-0824-015)', () => {
   })
 
   it('strips host secrets not on the allowlist', () => {
+    // Fixture base, not a process.env spread: materializing the case-
+    // insensitive env proxy re-keys allowlisted vars to the launching shell's
+    // Windows casing (PowerShell spawns `Path`, Git Bash spawns `PATH`), so a
+    // spread made this test assert the host's casing instead of the allowlist
+    // (release-gate test-1.log: env.PATH undefined under PowerShell). The
+    // realistic host-env path — no spread, case-insensitive proxy lookups —
+    // is covered by the runCommand exclusion test below.
     const base = {
-      ...process.env,
+      PATH: '/fixture/bin',
       EVAL_SECRET_PROBE: 'leak-me',
     } as NodeJS.ProcessEnv
     const env = buildAllowlistedEnv(base)
     expect(env.EVAL_SECRET_PROBE).toBeUndefined()
-    expect(env.PATH).toBeTruthy()
+    expect(env.PATH).toBe('/fixture/bin')
   })
 
   it('applies overrides last', () => {
