@@ -96,7 +96,10 @@
 
 ### Task 5: Release cut — four latent layers peeled
 
-- **Status:** completed (cut unblocked; final cut pending operator)
+- **Status:** completed — **v0.0.30 CUT SUCCESSFULLY** (operator ran
+  `bun run release:public` + RELEASE after the final fix; verified
+  post-cut: `git tag -l v0.0.30` → tag exists; `npm view savant-code
+  version` → `0.0.30`)
 - **FIDs Created:** FID-2026-0909-001..003 (Task 6)
 - **Changes Made:**
   - `common/src/env.ts`: `import.meta.dir` → `fileURLToPath`(
@@ -223,19 +226,47 @@
 
 ---
 
-## Next Session
+## Next Session (v0.0.31 — not tonight; session closed 2026-09-09 ~04:25 EDT)
 
-### Priority Tasks
+### Release Outcome (verified)
 
-1. [ ] Operator: re-run `bun run release:public` (type RELEASE) — cut
-       v0.0.30 CLI+npm
-2. [ ] Post-cut verification: npm view savant-code, gh release view
-       v0.0.30, receipt stages
-3. [ ] Perfection-loop the three new FIDs toward `analyzed`
+- **v0.0.30 is LIVE**: local tag `v0.0.30` exists; npm registry reports
+  `savant-code@0.0.30`; operator confirmed the major release was pushed
+  earlier (CLI+npm only; SDK catalog-only; desktop stages skipped by
+  directive)
+- Next version: **0.0.31** (Savant Versioning base-10 iteration counter —
+  `bun run version:bump` when the queue warrants)
+
+### Priority Tasks (next session)
+
+1. [ ] Perfection-loop FID-2026-0909-001..003 toward `analyzed` with
+       robust defaults (all three `created`, full RED evidence in place)
+2. [ ] Implement the two gate extensions from those FIDs when approved:
+       gate-environment parity guard (-002) and `verify:clean` +=
+       `build:sdk` (-003)
+3. [ ] Drain the 0.0.31 work into path-scoped atomic commits per G4/G8
+       as it lands — never let the tree go stale again
 
 ### Blockers
 
-- None — the cut is operator-side only
+- None
+
+### Notes for Next Agent
+
+- v0.0.30 cut succeeded on the first attempt after all four gate layers
+  were fixed — the gate transcripts that guided each fix live at
+  `%TEMP%\savant-public-release-0.0.30-evidence\*.log`
+- The release pushed main granularly through the cut point (G6); any
+  post-cut commits (`92da9d6` session capture) remain local until the
+  next push
+- `--resume` binds to the gate manifest/HEAD of the run it resumes;
+  fresh runs are the default posture
+- `SAVANT_CODE_RELEASE_DESKTOP=1` remains unset by operator directive —
+  desktop bundles + updater manifest did NOT ship in 0.0.30
+- The release automation-mode clean-tree conflict (git-publish.ts:37-38
+  vs the G4 drain workflow) is context-only in FID-2026-0909-002 — an
+  operator decision is needed before 0.0.31 if automation mode should
+  work post-drain
 
 ### Notes for Next Agent
 
