@@ -1446,4 +1446,65 @@ tracking doc).
 - **Status:** active
 - **Canonical rule:** index-state-asserted-directly
 
+## Lesson: The release gate is an environment, not a gate list
+
+- **Date:** 2026-09-09
+- **Failure:** The v0.0.30 cut failed at three successive gates on code that
+  passed every dev-shell run: (1) `build:sdk` — `common/src/env.ts:44` used
+  Bun-only `import.meta.dir`, and the SDK's dts-bundle-generator step
+  recompiles common under a plain-TS program without Bun types (TS2339);
+  (2) `gateway-server-command.test.ts:85/158` spawned children by bare
+  `'bun'` — `uv_spawn` ENOENT under the gate's sanitized spawn environment;
+  (3) `evals/v2/tests/tempdir-sandbox.test.ts` spread `process.env` into a
+  plain object before the allowlist, materializing the launching shell's
+  Windows env casing (PowerShell `Path` vs Git Bash `PATH`) so the
+  case-sensitive lookup missed `PATH`.
+- **Evidence:** release transcripts `build-sdk-1.log` (TS2339) and
+  `test-1.log` ×2 (ENOENT ×2, then `env.PATH → undefined`); fixes `2b22103`,
+  `87bcc44`, `05e2e1a`; owning FID-2026-0909-002 (instances + structural
+  guard proposal).
+- **Invariant:** The release GATES stage is a distinct execution environment
+  (PowerShell-launched, secret-sanitized, plain-TS declaration pass) — code
+  must behave identically across it and every dev shell.
+- **Guard:** Prefer `process.execPath` over bare runtime names in spawned
+  children; standard `import.meta.url` over runtime-specific properties in
+  SDK-reachable common sources; fixture envs (never host-env spreads) in
+  tests feeding env-filtering functions. Structural parity guard proposed
+  in FID-2026-0909-002.
+- **Verification:** Each fix re-ran its exact failing gate green
+  (build:sdk exit 0; gateway suite 6/0; evals suite 166/0) plus typecheck
+  ×12, eslint 0, prettier clean.
+- **Scope:** release/gates, testing
+- **Owning FID:** FID-2026-0909-002
+- **Status:** active
+- **Canonical rule:** gate-environment-parity
+
+## Lesson: "Compiles" is one claim per compiler configuration
+
+- **Date:** 2026-09-09
+- **Failure:** `verify:clean` (the committed-tree compile proof) passed on
+  the exact commit whose `build:sdk` release gate failed — the typecheck
+  chain compiles `common` with Bun types loaded, while the SDK build's
+  dts-bundle-generator declaration pass recompiles the same sources under a
+  plain-TS program without Bun types. That surface is exercised only inside
+  the release pipeline, so a declaration-surface blocker reached the cut
+  with every local gate green.
+- **Evidence:** release transcript `build-sdk-1.log` (`TS2339` on
+  `common/src/env.ts:44`, `durationMs: 7011`) vs `bun run typecheck` exit 0
+  on the same commit; owning FID-2026-0909-003.
+- **Invariant:** "Compiles" is one claim per compiler configuration; every
+  compilation surface a release consumes (workspace tsconfigs, declaration
+  programs, bundle targets) needs its own gate in the committed-tree proof.
+- **Guard:** Proposed (FID-2026-0909-003 Steps): add `build:sdk` (~7s) to
+  `verify:clean`'s chain with transcript capture, plus a RED pin that
+  reverts the anchor fix on a scratch worktree and asserts the extended
+  gate fails.
+- **Verification:** `build:sdk` exit 0 post-fix `2b22103` (the failed gate
+  now passes); the RED pin and chain extension are pending per the owning
+  FID.
+- **Scope:** release/gates, verification
+- **Owning FID:** FID-2026-0909-003
+- **Status:** active
+- **Canonical rule:** compiles-is-per-surface
+
 <!-- Add new entries above this line -->
