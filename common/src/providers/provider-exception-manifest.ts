@@ -74,6 +74,15 @@ export const PROVIDER_EXCEPTION_MANIFEST: readonly ProviderExceptionManifestEntr
       ],
     },
     {
+      providerId: 'apinex',
+      kinds: ['live-catalog'],
+      owner: 'cli/src/utils/openrouter-models/apinex.ts',
+      evidence: [
+        'cli/src/utils/openrouter-models/apinex.ts',
+        'cli/src/utils/openrouter-models/gateway.ts',
+      ],
+    },
+    {
       providerId: 'opencode-zen',
       kinds: ['credential-resolver', 'live-catalog', 'multi-protocol'],
       owner: 'common/src/constants/model-config/provider-protocols.ts',
@@ -81,33 +90,6 @@ export const PROVIDER_EXCEPTION_MANIFEST: readonly ProviderExceptionManifestEntr
         'common/src/constants/model-config/provider-protocols.ts',
         'sdk/src/impl/model-provider/model-factories.ts',
         'cli/src/utils/openrouter-models/opencode-zen.ts',
-        'cli/src/utils/openrouter-models/gateway.ts',
-      ],
-    },
-    {
-      providerId: 'tabitoken',
-      kinds: ['live-catalog'],
-      owner: 'cli/src/utils/openrouter-models/tabitoken.ts',
-      evidence: [
-        'cli/src/utils/openrouter-models/tabitoken.ts',
-        'cli/src/utils/openrouter-models/gateway.ts',
-      ],
-    },
-    {
-      providerId: 'gorouter',
-      kinds: ['live-catalog'],
-      owner: 'cli/src/utils/openrouter-models/gorouter.ts',
-      evidence: [
-        'cli/src/utils/openrouter-models/gorouter.ts',
-        'cli/src/utils/openrouter-models/gateway.ts',
-      ],
-    },
-    {
-      providerId: 'vyceai',
-      kinds: ['live-catalog'],
-      owner: 'cli/src/utils/openrouter-models/vyceai.ts',
-      evidence: [
-        'cli/src/utils/openrouter-models/vyceai.ts',
         'cli/src/utils/openrouter-models/gateway.ts',
       ],
     },

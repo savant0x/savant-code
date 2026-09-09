@@ -1,7 +1,7 @@
 /**
  * Combined gateway catalog — OpenRouter + TokenRouter + TokenHarbor + NVIDIA NIM
- * + OpenCode Go + CommandCode + Nous Research + KiosAPI + OpenCode Zen
- * + TabiToken + GoRouter + VyceAI — plus subscription plumbing.
+ * + OpenCode Go + CommandCode + Nous Research + KiosAPI + APInex + OpenCode Zen
+ * — plus subscription plumbing.
  */
 import fs from 'node:fs'
 import path from 'node:path'
@@ -9,10 +9,10 @@ import path from 'node:path'
 import { getConfigDir } from '../config-dir'
 import { logger } from '../logger'
 import {
-  __resetGorouterCacheForTest,
-  fetchGorouterModels,
-  getCachedGorouterModels,
-} from './gorouter'
+  __resetApinexCacheForTest,
+  fetchApinexModels,
+  getCachedApinexModels,
+} from './apinex'
 import {
   __resetKiosapiCacheForTest,
   fetchKiosapiModels,
@@ -38,16 +38,6 @@ import {
   fetchOpenRouterModels,
   getCachedOpenRouterModels,
 } from './openrouter'
-import {
-  __resetTabitokenCacheForTest,
-  fetchTabitokenModels,
-  getCachedTabitokenModels,
-} from './tabitoken'
-import {
-  __resetVyceaiCacheForTest,
-  fetchVyceaiModels,
-  getCachedVyceaiModels,
-} from './vyceai'
 import {
   fetchCommandCodeModels,
   fetchOpenCodeGoModels,
@@ -156,10 +146,8 @@ function notifyGatewayCatalogListeners(catalog: OpenRouterModel[]): void {
  * - CommandCode (hardcoded, provider catalog)
  * - Nous Research (live API, authenticated)
  * - KiosAPI (live API, authenticated)
+ * - APInex (live API, authenticated)
  * - OpenCode Zen (live API, public)
- * - TabiToken (live API, authenticated)
- * - GoRouter (live API, authenticated)
- * - VyceAI (live API, authenticated)
  *
  * Fetches live sources in parallel via Promise.allSettled(). If a source fails,
  * uses cached/empty list for that provider. Returns a combined, sorted list.
@@ -195,19 +183,10 @@ export async function fetchGatewayModels(
       fetchNvidiaModels(forceRefresh),
       fetchNousModels(forceRefresh),
       fetchKiosapiModels(forceRefresh),
+      fetchApinexModels(forceRefresh),
       fetchZenModels(forceRefresh),
-      fetchTabitokenModels(forceRefresh),
-      fetchGorouterModels(forceRefresh),
-      fetchVyceaiModels(forceRefresh),
     ])
-    const [
-      nousResult,
-      kiosapiResult,
-      zenResult,
-      tabitokenResult,
-      gorouterResult,
-      vyceaiResult,
-    ] = restResults
+    const [nousResult, kiosapiResult, apinexResult, zenResult] = restResults
 
     const orModels =
       orResult.status === 'fulfilled'
@@ -225,20 +204,12 @@ export async function fetchGatewayModels(
       kiosapiResult.status === 'fulfilled'
         ? kiosapiResult.value
         : getCachedKiosapiModels()
+    const apinexModels =
+      apinexResult.status === 'fulfilled'
+        ? apinexResult.value
+        : getCachedApinexModels()
     const zenModels =
       zenResult.status === 'fulfilled' ? zenResult.value : getCachedZenModels()
-    const tabitokenModels =
-      tabitokenResult.status === 'fulfilled'
-        ? tabitokenResult.value
-        : getCachedTabitokenModels()
-    const gorouterModels =
-      gorouterResult.status === 'fulfilled'
-        ? gorouterResult.value
-        : getCachedGorouterModels()
-    const vyceaiModels =
-      vyceaiResult.status === 'fulfilled'
-        ? vyceaiResult.value
-        : getCachedVyceaiModels()
     const tokenrouterModels = fetchTokenRouterModels()
     const tokenharborModels = getTokenHarborModels()
     const openCodeGoModels = fetchOpenCodeGoModels()
@@ -251,10 +222,8 @@ export async function fetchGatewayModels(
       ...nvidiaModels,
       ...nousModels,
       ...kiosapiModels,
+      ...apinexModels,
       ...zenModels,
-      ...tabitokenModels,
-      ...gorouterModels,
-      ...vyceaiModels,
       ...openCodeGoModels,
       ...commandCodeModels,
     ]
@@ -279,10 +248,8 @@ export function __resetOpenRouterModelsCacheForTest(): void {
   __resetNvidiaCacheForTest()
   __resetNousCacheForTest()
   __resetKiosapiCacheForTest()
+  __resetApinexCacheForTest()
   __resetZenCacheForTest()
-  __resetTabitokenCacheForTest()
-  __resetGorouterCacheForTest()
-  __resetVyceaiCacheForTest()
   gatewayCache = null
   gatewayCacheAt = 0
   gatewayInflight = null

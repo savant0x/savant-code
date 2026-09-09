@@ -24,11 +24,11 @@ import type { ProviderConfig } from '../types'
  * as its first argument so tests inject a fixture instead of the singleton).
  */
 describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
-  test('covers all fourteen current providers', () => {
+  test('covers all twelve current providers', () => {
     expect(Object.keys(PROVIDER_REGISTRY).sort()).toEqual([
+      'apinex',
       'cloudflare',
       'commandcode',
-      'gorouter',
       'kiosapi',
       'nous',
       'nvidia',
@@ -36,10 +36,8 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
       'opencode-go',
       'opencode-zen',
       'openrouter',
-      'tabitoken',
       'tokenharbor',
       'tokenrouter',
-      'vyceai',
     ])
   })
 
@@ -77,6 +75,7 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
     expect(deriveProviderOrder(PROVIDER_REGISTRY, 'nvidia')).toBe(2)
     expect(deriveProviderOrder(PROVIDER_REGISTRY, 'opencode-go')).toBe(3)
     for (const id of [
+      'apinex',
       'tokenharbor',
       'commandcode',
       'nous',
@@ -84,9 +83,6 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
       'cloudflare',
       'kiosapi',
       'opencode-zen',
-      'tabitoken',
-      'gorouter',
-      'vyceai',
     ]) {
       expect(deriveProviderOrder(PROVIDER_REGISTRY, id)).toBe(4)
     }
@@ -94,21 +90,19 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
     expect(deriveProviderOrder(PROVIDER_REGISTRY, 'unknown')).toBe(4)
   })
 
-  test('setup config derives exactly the twelve current setup providers', () => {
+  test('setup config derives exactly the ten current setup providers', () => {
     const setup = deriveSetupConfig(PROVIDER_REGISTRY)
     expect(Object.keys(setup).sort()).toEqual([
+      'apinex',
       'commandcode',
-      'gorouter',
       'kiosapi',
       'nous',
       'nvidia',
       'opencode-go',
       'opencode-zen',
       'openrouter',
-      'tabitoken',
       'tokenharbor',
       'tokenrouter',
-      'vyceai',
     ])
     expect(setup.openrouter).toEqual({
       label: 'OpenRouter',
@@ -140,21 +134,10 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
       envVar: 'OPENCODE_API_KEY',
       baseUrl: 'https://opencode.ai/zen/v1',
     })
-    // FID-2026-0906-008: the three new gateways derive their setup surface.
-    expect(setup.tabitoken).toEqual({
-      label: 'TabiToken',
-      envVar: 'TABITOKEN_API_KEY',
-      baseUrl: 'https://tabitoken.com/v1',
-    })
-    expect(setup.gorouter).toEqual({
-      label: 'GoRouter',
-      envVar: 'GOROUTER_API_KEY',
-      baseUrl: 'https://gorouter.app/v1',
-    })
-    expect(setup.vyceai).toEqual({
-      label: 'VyceAI',
-      envVar: 'VYCEAI_API_KEY',
-      baseUrl: 'https://vyceai.com/v1',
+    expect(setup.apinex).toEqual({
+      label: 'APInex',
+      envVar: 'APINEX_API_KEY',
+      baseUrl: 'https://api.apinex.bond/v1',
     })
   })
 
@@ -238,6 +221,28 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
       envVar: 'ACME_API_KEY',
       baseUrl: 'https://api.acme.ai/v1',
     })
+  })
+
+  test('apinex entry matches the llms.txt contract (FID-2026-0907-008)', () => {
+    const apinex = PROVIDER_REGISTRY.apinex
+    expect(apinex.kind).toBe('gateway')
+    expect(apinex.label).toBe('APInex')
+    expect(apinex.protocol).toBe('openai')
+    expect(apinex.idTransform).toBe('strip')
+    // llms.txt: "Base URL: https://api.apinex.bond/v1" — the documented
+    // api. subdomain is authoritative over the apex host.
+    expect(apinex.baseUrl).toBe('https://api.apinex.bond/v1')
+    expect(apinex.credentials.envVar).toBe('APINEX_API_KEY')
+    expect(apinex.credentials.missingKeyMessage).toBe(
+      'APInex API key not set. Set APINEX_API_KEY environment variable or run /provider apinex.',
+    )
+    expect(apinex.catalog).toEqual({
+      source: 'live',
+      url: 'https://api.apinex.bond/v1/models',
+    })
+    expect(apinex.setupAvailable).toBe(true)
+    expect(apinex.domain).toBe('apinex.bond')
+    expect(apinex.order).toBe(4)
   })
 
   test('zen protocol map covers all four wire protocols (FID-2026-0905-003)', () => {

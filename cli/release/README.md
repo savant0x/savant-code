@@ -50,16 +50,14 @@ Or select one of the supported gateway providers directly:
 | TokenRouter | `/provider tokenrouter` or `DIRECT_PROVIDER=tokenrouter` | `TOKENROUTER_API_KEY` | Multi-provider gateway |
 | NVIDIA NIM | `/provider nvidia` or `DIRECT_PROVIDER=nvidia` | `NVIDIA_API_KEY` | NVIDIA-hosted inference |
 | OpenCode Go | `/provider opencode-go` or `DIRECT_PROVIDER=opencode-go` | `OPENCODE_API_KEY` | Hosted gateway (dual-protocol) |
+| APInex | `/provider apinex` or `DIRECT_PROVIDER=apinex` | `APINEX_API_KEY` | Hosted gateway |
 | Cloudflare | Environment configuration | `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` | Env-only — not in the `/provider` picker; requires the account id too |
 | CommandCode | `/provider commandcode` or `DIRECT_PROVIDER=commandcode` | `COMMAND_CODE_API_KEY` | OpenAI-compatible hosted inference (dual-protocol) |
-| GoRouter | `/provider gorouter` or `DIRECT_PROVIDER=gorouter` | `GOROUTER_API_KEY` | OpenAI-compatible New API gateway (live catalog) |
 | KiosAPI | `/provider kiosapi` or `DIRECT_PROVIDER=kiosapi` | `KIOSAPI_API_KEY` | OpenAI-compatible gateway (live catalog) |
 | Nous Research | `/provider nous` or `DIRECT_PROVIDER=nous` | `NOUS_API_KEY` | OpenAI-compatible direct inference; Portal OAuth is separate |
 | Ollama | Automatic detection | `OLLAMA_HOST` (optional) | Local inference; no API key required |
 | OpenCode Zen | `/provider opencode-zen` or `DIRECT_PROVIDER=opencode-zen` | `OPENCODE_API_KEY` | Pay-per-use gateway, 70 models incl. free tier (multi-protocol) |
-| TabiToken | `/provider tabitoken` or `DIRECT_PROVIDER=tabitoken` | `TABITOKEN_API_KEY` | OpenAI-compatible New API gateway (live catalog) |
 | TokenHarbor | `/provider tokenharbor` or `DIRECT_PROVIDER=tokenharbor` | `TOKENHARBOR_API_KEY` | OpenAI-compatible hosted gateway |
-| VyceAI | `/provider vyceai` or `DIRECT_PROVIDER=vyceai` | `VYCEAI_API_KEY` | OpenAI-compatible proxy (live catalog) |
 | Custom endpoint | Environment configuration | `INFERENCE_BASE_URL`, `INFERENCE_API_KEY` | Advanced OpenAI-compatible endpoint |
 <!-- GENERATED:provider-table-end -->
 

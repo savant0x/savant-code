@@ -207,6 +207,33 @@ export const PROVIDER_REGISTRY = {
     domain: 'kiosapi.com',
     order: 4,
   },
+  apinex: {
+    id: 'apinex',
+    label: 'APInex',
+    kind: 'gateway',
+    credentials: {
+      envVar: 'APINEX_API_KEY',
+      // /provider hint is part of the canonical message.
+      missingKeyMessage:
+        'APInex API key not set. Set APINEX_API_KEY environment variable or run /provider apinex.',
+    },
+    // apinex.bond/llms.txt: "Base URL: https://api.apinex.bond/v1 — drop-in
+    // replacement for an OpenAI base URL." The documented api. subdomain is
+    // authoritative (the apex host also answers, but the docs win).
+    baseUrl: 'https://api.apinex.bond/v1',
+    protocol: 'openai',
+    // Upstream ids are vendor-namespaced WITH slashes (gpt/5.6-luna,
+    // free/glm-5.3-flash); `strip` removes only the internal `apinex/`
+    // routing prefix — the same multi-slash shape openrouter serves.
+    idTransform: 'strip',
+    // Authenticated live catalog (llms.txt: "list models (auth required)").
+    // The public /api/public/models table is custom-shaped and unusable by
+    // the generic fetcher; the key is supplied via the Nous-style resolver.
+    catalog: { source: 'live', url: 'https://api.apinex.bond/v1/models' },
+    setupAvailable: true,
+    domain: 'apinex.bond',
+    order: 4,
+  },
   'opencode-zen': {
     id: 'opencode-zen',
     label: 'OpenCode Zen',
@@ -229,66 +256,6 @@ export const PROVIDER_REGISTRY = {
     catalog: { source: 'live', url: 'https://opencode.ai/zen/v1/models' },
     setupAvailable: true,
     domain: 'opencode.ai',
-    order: 4,
-  },
-  tabitoken: {
-    id: 'tabitoken',
-    label: 'TabiToken',
-    kind: 'gateway',
-    credentials: {
-      envVar: 'TABITOKEN_API_KEY',
-      // /provider hint is part of the canonical message.
-      missingKeyMessage:
-        'TabiToken key not set. Set TABITOKEN_API_KEY environment variable or run /provider tabitoken.',
-    },
-    baseUrl: 'https://tabitoken.com/v1',
-    protocol: 'openai',
-    // New API gateway (live-probed 2026-09-06): bare upstream ids; the
-    // internal `tabitoken/` routing prefix is stripped before sending.
-    idTransform: 'strip',
-    catalog: { source: 'live', url: 'https://tabitoken.com/v1/models' },
-    setupAvailable: true,
-    domain: 'tabitoken.com',
-    order: 4,
-  },
-  gorouter: {
-    id: 'gorouter',
-    label: 'GoRouter',
-    kind: 'gateway',
-    credentials: {
-      envVar: 'GOROUTER_API_KEY',
-      // /provider hint is part of the canonical message.
-      missingKeyMessage:
-        'GoRouter key not set. Set GOROUTER_API_KEY environment variable or run /provider gorouter.',
-    },
-    baseUrl: 'https://gorouter.app/v1',
-    protocol: 'openai',
-    // New API gateway (live-probed 2026-09-06): bare upstream ids; the
-    // internal `gorouter/` routing prefix is stripped before sending.
-    idTransform: 'strip',
-    catalog: { source: 'live', url: 'https://gorouter.app/v1/models' },
-    setupAvailable: true,
-    domain: 'gorouter.app',
-    order: 4,
-  },
-  vyceai: {
-    id: 'vyceai',
-    label: 'VyceAI',
-    kind: 'gateway',
-    credentials: {
-      envVar: 'VYCEAI_API_KEY',
-      // /provider hint is part of the canonical message.
-      missingKeyMessage:
-        'VyceAI key not set. Set VYCEAI_API_KEY environment variable or run /provider vyceai.',
-    },
-    baseUrl: 'https://vyceai.com/v1',
-    protocol: 'openai',
-    // OpenAI-compatible proxy (live-probed 2026-09-06): bare upstream ids;
-    // the internal `vyceai/` routing prefix is stripped before sending.
-    idTransform: 'strip',
-    catalog: { source: 'live', url: 'https://vyceai.com/v1/models' },
-    setupAvailable: true,
-    domain: 'vyceai.com',
     order: 4,
   },
 } as const satisfies Record<string, ProviderConfig>

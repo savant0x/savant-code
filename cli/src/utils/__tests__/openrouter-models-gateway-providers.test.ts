@@ -1,9 +1,9 @@
 // Openrouter-models test family — provider-cluster catalogs (KiosAPI,
-// OpenCode Zen, TabiToken, GoRouter, VyceAI). Split from
+// OpenCode Zen). Split from
 // openrouter-models-gateway.test.ts (FID-2026-0905-006 ceiling split; verbatim
-// moves). The TabiToken/GoRouter/VyceAI cluster tests live in
-// openrouter-models-gateway-gateways.test.ts (FID-2026-0906-008), sharing the
-// family lifecycle in ./openrouter-models-test-harness.
+// moves), sharing the family lifecycle in ./openrouter-models-test-harness.
+// (The FID-2026-0906-008 gateway cluster was removed by operator direction —
+// see that FID's Resolution for the live-test findings.)
 
 import fs from 'fs'
 import os from 'os'
