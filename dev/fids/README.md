@@ -33,7 +33,7 @@ on-disk records missing from the table added (-0823-003, -0824-003…-008,
 
 | FID | Status | Purpose / blocking gate |
 |---|---|---|
-| (empty — the queue drained 2026-09-09; see the closure note below) | | |
+| [`FID-2026-0909-005`](FID-2026-0909-005-experience-capture-generic-error-line.md) | `analyzed` | Experience-capture records one generic error line (36/36 degraded) — blocking gate: operator implementation approval (Law 2); design converged, gates declared |
 
 **2026-09-09 Perfection Loop pass (all three records → `analyzed`):** each
 FID's Loop 1 ran codebase-grounded (single-agent ECHO v0.1.2). Ground-truth

@@ -2,6 +2,37 @@
 
 ## Unreleased
 
+### Network research tools run in the default mode — the sandbox now honors its own safety registry (closed + archived 2026-09-09)
+
+- **FID-2026-0909-004 — high — research is no longer dead in the default
+  permission mode.** The sandbox engine's network gate returned `prompt`
+  for every network-classified tool regardless of its registry permission
+  class, and the executor's sandbox gate downgrades every `prompt` decision
+  to `deny` (the interactive approval modal is not yet implemented) — so
+  the default mode was fully offline and the only escape hatch, `unsafe`,
+  also disabled the shell denylist and every other safety surface. Fix
+  (commit `4b03e9b`): the network gate now consults the registry's
+  permission class — outbound-read research tools (web_search, read_url,
+  read_docs, gravity_index, deep_research, composio_search_tools,
+  composio_get_tool_schemas) pass when network is enabled, while
+  state-changing network tools (composio_manage_connections) keep the
+  approval path; headless (`--print`) and desktop-gateway runs flipped
+  from hardcoded `safe` to `prompt` — a strict capability superset
+  (`safe` + exactly the seven outbound reads; shell and side effects still
+  denied); `/permissions` copy and settings/SDK doc comments updated to
+  the honest contract (research reads on, side effects denied, interactive
+  approval still Phase 2). `safe` stays fully offline; `unsafe` unchanged;
+  evals/v2 stays offline by construction (`runner.ts:131` type-level pin).
+  Residual security surface documented honestly: prompt injection via
+  fetched content (pre-existing in unsafe mode; industry norm). Full
+  Perfection Loop: Thinker design pass, Verifier audit (9 PASS / 3 FAIL
+  — all remediated), Adversary confirmation (verdict STANDS; record gaps
+  folded into the closure edit). Gates: typecheck ×4 exit 0; engine 18/0
+  (2 new pins: network+allow allows, network+prompt still prompts);
+  tool-executor-sandbox 2/0; permissions 6/0; prettier ×7 clean;
+  eslint `--max-warnings 0`; receipt re-stamped at the archived path 7/7.
+  Adjacent finding routed separately: the experience-capture ledger's
+  generic error line (36/36 records) needs its own FID.
 ### Gate-environment parity guard — environment-only defects now fail at commit time (closed + archived 2026-09-09)
 
 - **FID-2026-0909-002 — medium — the v0.0.30 "only the release gate could

@@ -3,6 +3,30 @@
 This directory contains closed or historically completed FIDs. Files here are
 an audit record, not an active work queue.
 
+## 2026-09-09 closure — network research tools dead in the default permission mode (1 FID archived; queue empty)
+
+Operator directive: "network access should be enabled by DEFAULT" (after a
+live researcher-web spawn burned its entire run on permission rejections).
+Full Perfection Loop (Thinker design pass; Verifier 9 PASS / 3 FAIL — prettier
+dedent + 2 record gaps, all remediated; Adversary confirmed the verdict and
+re-confirmed every security PASS against live files):
+
+- `FID-2026-0909-004-network-research-tools-dead-in-default-mode.md` (high) —
+  the sandbox engine's network gate now consults the safety registry's
+  permission class (outbound-read research tools pass in the default
+  `prompt` mode; state-changing network tools keep the approval path);
+  headless `--print` and desktop-gateway runs flipped from hardcoded `safe`
+  to `prompt` (strict capability superset: `safe` + the seven registry
+  network+allow reads; shell/side effects still denied); `/permissions`
+  copy + settings/SDK doc comments made honest (research reads on, side
+  effects denied, interactive approval still Phase 2). `safe` stays fully
+  offline; `unsafe` unchanged; evals/v2 stays offline by construction
+  (`evals/v2/src/runner.ts:131` type pin). Residual content-injection
+  surface documented honestly in the FID. Commit `4b03e9b`; receipt 7/7
+  PASS re-stamped at the archived path. Adjacent finding routed separately:
+  the experience-capture ledger's generic error line (36/36 records,
+  `result-lifecycle.ts:244`) needs its own FID.
+
 ## 2026-09-09 closure — release gate-chain hardening program (3 FIDs archived; queue empty)
 
 Operator directive: "Approve the full 001→003→002 program and implement all
