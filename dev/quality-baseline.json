@@ -803,7 +803,7 @@
     "common/src/env-ci.ts": 37,
     "common/src/env-process.ts": 96,
     "common/src/env-schema.ts": 47,
-    "common/src/env.ts": 109,
+    "common/src/env.ts": 123,
     "common/src/mcp/client.ts": 309,
     "common/src/old-constants.ts": 11,
     "common/src/project-file-tree.ts": 362,
