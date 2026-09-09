@@ -82,7 +82,7 @@ describe('gateway server command + watchdog', () => {
       'installStdinWatchdog(() => process.exit(0)); ' +
       'console.error("WATCHDOG_ARMED"); ' +
       'setInterval(() => {}, 1000); '
-    const child = spawn('bun', ['-e', script], {
+    const child = spawn(process.execPath, ['-e', script], {
       stdio: ['pipe', 'pipe', 'pipe'],
       cwd: REPO_ROOT,
     })
@@ -155,7 +155,7 @@ describe('gateway server command + watchdog', () => {
       TEST_TOKEN +
       '", port: 0 }); ' +
       'setInterval(() => {}, 1000); '
-    const child = spawn('bun', ['-e', script], {
+    const child = spawn(process.execPath, ['-e', script], {
       stdio: ['pipe', 'pipe', 'pipe'],
       cwd: REPO_ROOT,
     })
