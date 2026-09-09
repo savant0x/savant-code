@@ -13,9 +13,9 @@ export function handlePermissionsCommand(params: RouterParams, args: string) {
   const currentMode = useChatStore.getState().permissionMode
   const validModes = ['safe', 'prompt', 'unsafe'] as const
   const modeDescriptions: Record<(typeof validModes)[number], string> = {
-    safe: 'Risky tools are denied automatically.',
+    safe: 'Fully offline: network research tools are denied automatically; risky tools are denied automatically.',
     prompt:
-      'Risky tools are blocked; interactive prompts are not yet implemented, so they currently downgrade to deny.',
+      'Outbound research tools (web search, URL read, docs) run; side-effectful tools (shell, SQL writes, external connections) are still denied — interactive approval is not yet implemented.',
     unsafe: 'Risky tools are allowed. Use with caution.',
   }
 

@@ -73,7 +73,10 @@ export async function defaultRunPrompt(
     prompt: params.prompt,
     previousRun: params.previousRun,
     signal: params.signal,
-    permissionMode: 'safe',
+    // FID-2026-0909-004: gateway runs use the default 'prompt' mode — same
+    // capability superset as headless (research reads on; shell and
+    // side-effectful tools still denied without an interactive approver).
+    permissionMode: 'prompt',
     protocolVariant: 'harness',
     devMode: false,
     agentDefinitions,

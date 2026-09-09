@@ -8,9 +8,12 @@ export type PermissionMode = 'safe' | 'prompt' | 'unsafe'
 
 export interface Settings {
   mode?: AgentMode
-  /** Default sandbox permission mode. "safe" denies risky tools, "prompt" asks
-   *  when possible (headless deny fallback), "unsafe" allows the agent to run
-   *  any gated tool. Persisted so it survives across sessions. */
+  /** Default sandbox permission mode. "safe" is fully offline (network
+   *  research denied), "prompt" (default) allows outbound research reads while
+   *  still denying side-effectful tools — interactive approval is not yet
+   *  implemented, so gated tools downgrade to deny (FID-2026-0909-004),
+   *  "unsafe" allows the agent to run any gated tool. Persisted so it
+   *  survives across sessions. */
   permissionMode?: PermissionMode
   adsEnabled?: boolean
   /** Product analytics and remote error reporting consent. Defaults to true for

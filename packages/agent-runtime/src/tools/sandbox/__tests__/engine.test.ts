@@ -93,10 +93,23 @@ describe('sandbox engine', () => {
     expect(decision.type).toBe('allow')
   })
 
-  it('prompts for network tools in prompt mode', () => {
+  // FID-2026-0909-004: outbound-read research tools (registry
+  // permission 'allow') run in prompt mode — the registry taxonomy governs,
+  // not a blanket network prompt.
+  it('allows network+allow research tools in prompt mode', () => {
     const decision = evaluateToolCall({
       toolName: 'web_search',
       input: { query: 'test' },
+      policy: policy('prompt'),
+    })
+    expect(decision.type).toBe('allow')
+  })
+
+  // FID-2026-0909-004: state-changing network tools keep the approval path.
+  it('still prompts for network+prompt tools in prompt mode', () => {
+    const decision = evaluateToolCall({
+      toolName: 'composio_manage_connections',
+      input: {},
       policy: policy('prompt'),
     })
     expect(decision.type).toBe('prompt')

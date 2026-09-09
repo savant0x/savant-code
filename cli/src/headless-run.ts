@@ -216,8 +216,11 @@ export async function runHeadlessPrint(
       agentDefinitions,
       previousRun,
       signal: abortController.signal,
-      // Headless runs are scripted — never pause for interactive approval.
-      permissionMode: 'safe',
+      // FID-2026-0909-004: headless runs use the default 'prompt' mode — a
+      // strict capability superset of 'safe' (adds the outbound-read research
+      // tools). Still no interactive approval: shell and side-effectful tools
+      // downgrade to deny exactly as before; scripted runs never pause.
+      permissionMode: 'prompt',
       // Harness contract (ECHO.md) for headless runs — the single-agent
       // variant is an SDK opt-in for outside agents, not the CLI default
       // (operator directive 2026-08-10).

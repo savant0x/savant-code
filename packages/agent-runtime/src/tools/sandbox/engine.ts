@@ -20,8 +20,10 @@ export function createDefaultSandboxPolicy(
 ): SandboxPolicy {
   return {
     workspaceRoot,
-    // Network access is blocked in safe mode and gated by permission in prompt
-    // mode. Only unsafe mode allows network requests without prompting.
+    // Network access is blocked in safe mode. In prompt mode outbound-read
+    // research tools (registry permission 'allow') run while state-changing
+    // network tools still require approval; only unsafe mode skips approval
+    // (FID-2026-0909-004).
     allowNetwork: mode !== 'safe',
     permissionMode: mode,
   }
@@ -82,7 +84,10 @@ export function evaluateToolCall(params: {
     }
   }
 
-  // Network gate.
+  // Network gate (FID-2026-0909-004): honors the registry's permission
+  // class. Outbound-read research tools (permission 'allow') pass whenever
+  // network is enabled; state-changing network tools (permission 'prompt')
+  // keep the approval path. Safe mode keeps allowNetwork=false → deny.
   if (safety.effect === 'network') {
     if (!policy.allowNetwork) {
       return {
@@ -90,7 +95,7 @@ export function evaluateToolCall(params: {
         reason: `Network access is disabled. Tool \`${toolName}\` requires network.`,
       }
     }
-    if (policy.permissionMode === 'prompt') {
+    if (safety.permission === 'prompt') {
       return {
         type: 'prompt',
         reason: `Tool \`${toolName}\` requires network access.`,

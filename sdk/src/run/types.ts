@@ -150,7 +150,11 @@ export type RunOptions = {
   devMode?: boolean
   /** Active visual design contract for prompt grounding and write enforcement. */
   designContract?: DesignContract
-  /** Optional sandbox permission mode. */
+  /** Optional sandbox permission mode. "safe" is fully offline (network
+   *   research denied); "prompt" (default) allows outbound research reads while
+   *   still denying side-effectful tools — interactive approval is not yet
+   *   implemented, so gated tools downgrade to deny (FID-2026-0909-004);
+   *   "unsafe" allows every gated tool. */
   permissionMode?:
     | 'safe'
     | 'prompt'
