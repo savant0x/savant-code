@@ -34,6 +34,62 @@ const PROJECT_VERSION_PATTERN =
 
 const MANIFEST_VERSION_PATTERN = /^(\s*"version"\s*:\s*)"[^"]*"(,?)\s*$/m
 
+/**
+ * Desktop surfaces that carry a copy of the product version. The three
+ * manifests are synced by `desktop/scripts/sync-version.ts`; the Cargo.lock
+ * workspace-member entry is patched by `cargo update -p savant-desktop` (or
+ * the desktop sync). Enforced by the drift check since 2026-09-07 — these
+ * surfaces sat outside `SYNCHRONIZED_PACKAGE_PATHS` and drifted at the
+ * v0.0.29 bump, caught only by hand (LEARNINGS review, same day).
+ */
+export const DESKTOP_VERSION_SURFACES = [
+  'desktop/package.json',
+  'desktop/src-tauri/tauri.conf.json',
+  'desktop/src-tauri/Cargo.toml',
+  'desktop/src-tauri/Cargo.lock',
+] as const
+
+/** Cargo.lock only records the workspace member's own version once. */
+const CARGO_LOCK_MEMBER_PATTERN =
+  /(name = "savant-desktop"\r?\nversion = ")([^"]+)(")/
+
+const CARGO_TOML_MEMBER_PATTERN = /(^version\s*=\s*")([^"]+)(")/m
+
+/** Drift-check remedy per desktop surface — the check must teach the fix. */
+const DESKTOP_DRIFT_HINTS: Record<
+  (typeof DESKTOP_VERSION_SURFACES)[number],
+  string
+> = {
+  'desktop/package.json': 'run `bun run sync:version` in desktop/',
+  'desktop/src-tauri/tauri.conf.json': 'run `bun run sync:version` in desktop/',
+  'desktop/src-tauri/Cargo.toml': 'run `bun run sync:version` in desktop/',
+  'desktop/src-tauri/Cargo.lock':
+    'run `cargo update -p savant-desktop` in desktop/src-tauri',
+}
+
+function readDesktopSurfaceVersion(
+  root: string,
+  surface: (typeof DESKTOP_VERSION_SURFACES)[number],
+): string | undefined {
+  const filePath = path.join(root, surface)
+  let content: string
+  try {
+    content = fs.readFileSync(filePath, 'utf8')
+  } catch {
+    // A missing desktop surface is itself drift (reported as `missing`).
+    return undefined
+  }
+  switch (surface) {
+    case 'desktop/package.json':
+    case 'desktop/src-tauri/tauri.conf.json':
+      return readManifestVersion(root, surface)
+    case 'desktop/src-tauri/Cargo.toml':
+      return content.match(CARGO_TOML_MEMBER_PATTERN)?.[2]
+    case 'desktop/src-tauri/Cargo.lock':
+      return content.match(CARGO_LOCK_MEMBER_PATTERN)?.[2]
+  }
+}
+
 export function readProductVersion(root: string): string {
   return fs.readFileSync(path.join(root, PRODUCT_VERSION_PATH), 'utf8').trim()
 }
@@ -140,6 +196,8 @@ export function patchLockfileWorkspaceVersions(
 export type VersionDrift = {
   file: string
   version: string | undefined
+  /** Remedy for the surface (desktop family) — surfaced by version:check. */
+  hint?: string
 }
 
 /** Enforced surfaces that differ from the product version. */
@@ -155,6 +213,12 @@ export function collectVersionDrift(root: string): VersionDrift[] {
       file: 'protocol.config.yaml project.version',
       version: configured,
     })
+  }
+  for (const surface of DESKTOP_VERSION_SURFACES) {
+    const version = readDesktopSurfaceVersion(root, surface)
+    if (version !== product) {
+      drift.push({ file: surface, version, hint: DESKTOP_DRIFT_HINTS[surface] })
+    }
   }
   return drift
 }

@@ -1,6 +1,6 @@
 {
   "name": "savant-code",
-  "version": "0.0.29",
+  "version": "0.0.30",
   "license": "Apache-2.0",
   "type": "module",
   "workspaces": [
@@ -37,6 +37,7 @@
     "generate:protocol-bundle:check": "bun run scripts/generate-protocol-bundle.ts --check",
     "lint:md": "markdownlint .",
     "validate:repository": "bun scripts/validate-repository.ts",
+    "verify:clean": "bun scripts/verify-clean.ts",
     "fid:verify": "bun scripts/fid-verify.ts",
     "skills:check": "bun scripts/skills-check.ts",
     "experiences:dedup": "bun scripts/experiences-dedup.ts",

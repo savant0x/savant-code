@@ -57,6 +57,33 @@ function config(): string {
   ].join('\n')
 }
 
+function cargoTomlFixture(): string {
+  return `[package]
+name = "savant-desktop"
+version = "0.0.23"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+`
+}
+
+function cargoLockFixture(): string {
+  return `version = 4
+
+[[package]]
+name = "anyhow"
+version = "1.0.0"
+
+[[package]]
+name = "savant-desktop"
+version = "0.0.23"
+
+[[package]]
+name = "serde"
+version = "1.0.219"
+`
+}
+
 function createFixtureRoot(): string {
   const root = mkdtempSync(path.join(os.tmpdir(), 'savant-version-'))
   tempRoots.push(root)
@@ -67,6 +94,24 @@ function createFixtureRoot(): string {
     writeFileSync(filePath, manifest(relativePath))
   }
   writeFileSync(path.join(root, 'protocol.config.yaml'), config())
+  // The desktop family is part of the drift set (2026-09-07); fixtures keep
+  // the synced-state assertion honest.
+  const desktopManifest = manifest('desktop/package.json')
+  for (const relativePath of [
+    'desktop/package.json',
+    'desktop/src-tauri/tauri.conf.json',
+  ]) {
+    const filePath = path.join(root, relativePath)
+    mkdirSync(path.dirname(filePath), { recursive: true })
+    writeFileSync(filePath, desktopManifest)
+  }
+  const cargoTomlPath = path.join(root, 'desktop/src-tauri/Cargo.toml')
+  mkdirSync(path.dirname(cargoTomlPath), { recursive: true })
+  writeFileSync(cargoTomlPath, cargoTomlFixture())
+  writeFileSync(
+    path.join(root, 'desktop/src-tauri/Cargo.lock'),
+    cargoLockFixture(),
+  )
   return root
 }
 
@@ -110,6 +155,50 @@ describe('version identity writers', () => {
     writeManifestVersion(root, 'sdk/package.json', '0.0.22')
     const drift = collectVersionDrift(root)
     expect(drift.some((entry) => entry.file === 'sdk/package.json')).toBe(true)
+  })
+
+  test('collectVersionDrift covers the desktop family — JSON, Cargo.toml, Cargo.lock', () => {
+    const root = createFixtureRoot()
+
+    writeManifestVersion(root, 'desktop/package.json', '0.0.22')
+    const manifestDrift = collectVersionDrift(root)
+    expect(manifestDrift).toContainEqual({
+      file: 'desktop/package.json',
+      version: '0.0.22',
+      hint: 'run `bun run sync:version` in desktop/',
+    })
+
+    const cargoTomlPath = path.join(root, 'desktop/src-tauri/Cargo.toml')
+    writeFileSync(
+      cargoTomlPath,
+      cargoTomlFixture().replace('"0.0.23"', '"0.0.22"'),
+    )
+    expect(collectVersionDrift(root)).toContainEqual({
+      file: 'desktop/src-tauri/Cargo.toml',
+      version: '0.0.22',
+      hint: 'run `bun run sync:version` in desktop/',
+    })
+
+    writeFileSync(
+      path.join(root, 'desktop/src-tauri/Cargo.lock'),
+      cargoLockFixture().replace('"0.0.23"', '"0.0.22"'),
+    )
+    expect(collectVersionDrift(root)).toContainEqual({
+      file: 'desktop/src-tauri/Cargo.lock',
+      version: '0.0.22',
+      hint: 'run `cargo update -p savant-desktop` in desktop/src-tauri',
+    })
+  })
+
+  test('a missing desktop surface is drift (reported as missing), never skipped', () => {
+    const root = createFixtureRoot()
+    rmSync(path.join(root, 'desktop/src-tauri/tauri.conf.json'))
+    const drift = collectVersionDrift(root)
+    expect(drift).toContainEqual({
+      file: 'desktop/src-tauri/tauri.conf.json',
+      version: undefined,
+      hint: 'run `bun run sync:version` in desktop/',
+    })
   })
 
   test('applyVersionFiles is idempotent', () => {

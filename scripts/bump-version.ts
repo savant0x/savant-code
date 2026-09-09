@@ -168,7 +168,7 @@ function spawnBunInstall(
 export function checkVersion(root: string): string[] {
   return collectVersionDrift(root).map(
     (entry) =>
-      `${entry.file}: ${entry.version ?? 'missing'} (expected ${readProductVersion(root)})`,
+      `${entry.file}: ${entry.version ?? 'missing'} (expected ${readProductVersion(root)})${entry.hint ? ` — ${entry.hint}` : ''}`,
   )
 }
 

@@ -9,6 +9,10 @@
  *   - desktop/src-tauri/tauri.conf.json  ("version"; the native window title
  *     composes "Savant Code v{version}" at runtime from this field)
  *   - desktop/src-tauri/Cargo.toml       ([package] version)
+ *   - desktop/src-tauri/Cargo.lock       (the savant-desktop workspace
+ *     member's own entry — checksum-free for path members, so a textual
+ *     patch is what `cargo` itself would write; kept here so the root
+ *     version:check drift gate can go green without invoking cargo)
  *
  * Idempotent: files already matching VERSION are left untouched on disk.
  */
@@ -32,6 +36,9 @@ export const VERSION_DECLARATIONS = {
   'src-tauri/tauri.conf.json': /("version":\s*")[^"]+(")/,
   // Line-start anchor so [dependencies] version pins are never touched.
   'src-tauri/Cargo.toml': /(^version\s*=\s*")[^"]+(")/m,
+  // Anchored on the member's own name line, so no other package's version
+  // line can match.
+  'src-tauri/Cargo.lock': /(name = "savant-desktop"\r?\nversion = ")[^"]+(")/,
 } as const
 
 /** Pure single-manifest transform: injects newVersion, THROWING when the
