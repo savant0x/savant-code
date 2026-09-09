@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0906-008-three-gateway-providers.md`
 **ID:** FID-2026-0906-008
 **Severity:** medium
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-09-06
 **YAGNI-Compliance:** Verified
 **Related:** FID-2026-0905-002 (KiosAPI — the exact precedent this FID
@@ -18,8 +18,12 @@ live-catalog fetcher pattern)
 
 Operator directive: add three new gateway providers — **TabiToken**
 (`https://tabitoken.com`), **GoRouter** (`https://gorouter.app`), and
-**VyceAI** (`https://vyceai.com`). Live probes (2026-09-06) prove all three
-are OpenAI-compatible gateways with authenticated `/v1/models` catalogs:
+**VyceAI** (`https://vyceai.com`). **Scope amendment (operator, 2026-09-07):
+all three providers are disabled — removed from the registry, catalog
+fetchers, tests, and docs before closure, after live keyed testing showed
+none can serve chat (evidence in Resolution).**
+Live probes (2026-09-06) proved all three are OpenAI-compatible gateways
+with authenticated `/v1/models` catalogs:
 
 - TabiToken + GoRouter are **"New API"** instances (the open-source unified
   AI gateway — both sites serve its dashboard, and their API layer returns
@@ -185,8 +189,8 @@ factory), no per-provider `isXModel` helpers (YAGNI; KiosAPI missed-Q9).
 
 ### Verification Receipt
 
-- fingerprint: sha256:ecb74d08a822866de866cc9e61babb1fb7aeba39d82447c767992cfa39c02542
-- verified: 2026-09-07T00:54:08.091Z
+- fingerprint: sha256:7ea7a6d6c9f2d5e510b36f92a919711382d5c604e3a90f444c3edf09567a9bd3
+- verified: 2026-09-07T15:13:05.256Z
 - test common/src/providers/__tests__/provider-registry.test.ts: exit 0
 - test common/src/providers/__tests__/validate-provider-registry.test.ts: exit 0
 - test cli/src/utils/__tests__/openrouter-models-gateway.test.ts: exit 0
@@ -335,6 +339,37 @@ factory), no per-provider `isXModel` helpers (YAGNI; KiosAPI missed-Q9).
   `scripts/validate-repository.ts` PASS. The three providers route
   project-wide from the registry (SDK generic loop, verified by read —
   no per-provider literals needed).
+- **Scope amendment 2026-09-07 (operator): all three providers disabled
+  after live keyed testing.** Evidence from the operator's persisted keys
+  (`~/.savant-code-dev/credentials.json`, dev-suffix config dir):
+  - **VyceAI** — removed first by operator direction ("disable the vyce
+    provider") before any keyed test.
+  - **GoRouter** — operator's verdict: "gorouter is dead". No key was ever
+    persisted for it; removed without further probing.
+  - **TabiToken** — key valid (51 chars, persisted): GET `/v1/models` →
+    **HTTP 200 with `{"data":[]}`** (auth passes; the gateway serves an
+    **empty catalog**), GET `/v1/dashboard/billing/subscription` → **200**
+    with a real account record (`has_payment_method: true`). But
+    **`/v1/chat/completions` returns 403 Cloudflare "Attention Required"
+    in every variant probed** — GET and POST, bare and browser UAs, Bun
+    fetch and curl (different TLS fingerprints), empty and full bodies —
+    while other `/v1` paths return normal API 404s. The WAF blocks only
+    the chat path; nothing client-side can fix that. Operator ruling:
+    "go ahead and remove tabi too, it's fine".
+- **Removal executed 2026-09-07** for all three: registry entries,
+  exception-manifest entries, `tabitoken.ts` / `gorouter.ts` / `vyceai.ts`
+  fetchers, gateway wiring + reset fns, barrel exports, the
+  `openrouter-models-gateway-gateways.test.ts` cluster suite,
+  README/README.zh-CN lines, generated provider docs.
+- **Gates re-run 2026-09-07:** root + sdk + cli + common typecheck exit 0;
+  common providers suite 30/0; cli gateway suites 16/0;
+  quality ratchet PASS (1467 files); `generate:provider-docs:check` exit 0;
+  `lint:md` clean; `validate:repository` PASS. Registry is back to 11
+  providers / 9 setup providers (the pre-FID-008 state).
+- **Status: closed.** The feature was implemented, live-tested, and then
+  withdrawn by operator decision before any release carried it — nothing
+  ships half-working, and the research + probe evidence is preserved here
+  and in the CHANGELOG entry.
 - **Closure remains pinned to the operator's keyed live test** (set one
   key per provider via `.env.local` or `/provider <id>`, confirm picker
   models + chat round-trip) per the FID-2026-0905-002 acceptance
@@ -344,5 +379,16 @@ factory), no per-provider `isXModel` helpers (YAGNI; KiosAPI missed-Q9).
 
 ## Lessons Learned
 
-(To be filled at closure — expected: UA-shield probing belongs in the
-provider-research checklist alongside the 401-shape probe.)
+- UA-shield probing belongs in the provider-research checklist alongside
+  the 401-shape probe — and **path-scoped probing matters more**: TabiToken
+  passed auth + catalog + billing probes while its chat path was WAF-blocked.
+  A provider is only "working" when a chat round-trip succeeds; catalog
+  probes alone are not acceptance evidence.
+- New API instances can serve an empty `/v1/models` catalog with a valid
+  key (`{"data":[],"success":true}`) — catalog emptiness is an admin-config
+  property, not an auth failure. The degrade-to-empty contract held exactly
+  as designed (no crash, picker falls back to free-text).
+- Operator-persisted keys live in the dev-suffix config dir
+  (`~/.savant-code-dev/credentials.json`), not `.env.local` — acceptance
+  probes must load persisted keys via `applyPersistedProviderApiKeys()`
+  before concluding keys are missing.

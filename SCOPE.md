@@ -865,11 +865,16 @@ for FID-2026-0905-002 reports 5 PASS / 1 FAIL and no receipt is stamped.
 - [ ] **T16-F.** Live validation: first green `desktop-release.yml` run
       (FID-001 closure — met, run 34050762638; archived) + next release
       cut's loud desktop decision (FID-002 closure).
-- [ ] **T16-G.** Session summary `2026-09-06-v0.0.29-release-night-audit.md`
+- [x] **T16-G.** Session summary `2026-09-06-v0.0.29-release-night-audit.md`
       + LEARNINGS entry (`assume-unchanged-phantom-source`) — written
-      2026-09-06; the git-committed audit trail lands with the T16 commit.
-- [ ] **T16-H.** G2 commit hash stamps into both FID Implementation
-      Evidence sections + path-scoped commits (G1/G3/G8).
+      2026-09-06; audit trail verified git-committed 2026-09-07 (`git
+      ls-files` shows the summary tracked; landing commits 7e441d8/3c4f825
+      era).
+- [x] **T16-H.** G2 commit hash stamps into both FID Implementation
+      Evidence sections + path-scoped commits (G1/G3/G8) — discharged by
+      the T17-C closure ceremony (7790bb3): G2 SHAs ground-truth-resolved
+      and receipts re-stamped at the archived FID paths; remaining
+      path-scoped commits continue per operator approval.
 
 ## Task 17 — Operator rulings on the three OPEN-OUT-OF-SCOPE items (2026-09-06)
 
@@ -932,33 +937,301 @@ each 2026-09-06. This section is the audit trail.
       the operator's cut-day list as runtime validations — not closure
       gates. `dev/fids/` now holds only the README.
 
-## Task 18 — Three new gateway providers: TabiToken, GoRouter, VyceAI (2026-09-06)
+## Task 18 — Three new gateway providers: TabiToken, GoRouter, VyceAI (2026-09-06) — CLOSED (withdrawn 2026-09-07)
 
 Operator directive: add the three gateways researched live this session
 (`tabitoken.com`, `gorouter.app`, `vyceai.com`). Executed as
-FID-2026-0906-008 (full Perfection Loop, RED-first):
+FID-2026-0906-008 (full Perfection Loop, RED-first): all three implemented
+2026-09-06 with every static gate green (commit `ff1ea8f`). **Operator
+withdrawal 2026-09-07 after live keyed testing** (keys from
+`~/.savant-code-dev/credentials.json`): VyceAI disabled by directive;
+GoRouter dead per operator; TabiToken auth/catalog/billing all healthy
+(200s) but its `/v1/chat/completions` path is Cloudflare-WAF-blocked (403
+in every client variant probed) and its catalog serves zero models. Per
+operator rulings ("disable the vyce provider", "gorouter is dead", "go
+ahead and remove tabi too"), **all three were removed** — registry
+entries, exception-manifest entries, fetchers (`tabitoken.ts`/
+`gorouter.ts`/`vyceai.ts`), gateway wiring, barrel exports, the cluster
+test suite, README lines, generated provider docs. Registry restored to
+11 providers / 9 setup providers. Gates at removal: typecheck ×4, common
+providers 30/0, cli gateway 16/0, quality ratchet PASS,
+`generate:provider-docs:check` exit 0, `lint:md` clean,
+`validate:repository` PASS. FID-2026-0906-008 **closed + archived** with
+the full evidence matrix in its Resolution + Lessons Learned; CHANGELOG
+entry amended. Side-effect bookkeeping: `use-chat-pickers.ts` baseline
+bumped 244 → 265 (honest measured count; growth belongs to
+FID-2026-0907-001's picker-focus fix, `analyzed`), and the FID index's
+stale `fixed` rows for `-0903-001`/`-0905-009` (archived in the T17-C
+ceremony) were corrected. `dev/fids/` now holds only the README.
+**Amendment 2026-09-07 (post-closure):** FID-2026-0907-001 is now
+**closed + archived** (see Task 19) — the baseline growth it carried was
+its legitimate implementation.
 
-- [x] **Registry ×3** — `tabitoken` / `gorouter` / `vyceai`, all
-      `kind: 'gateway'`, `protocol: 'openai'`, `idTransform: 'strip'`,
-      live catalogs at `https://<host>/v1/models`, env vars
-      `TABITOKEN_API_KEY` / `GOROUTER_API_KEY` / `VYCEAI_API_KEY`,
-      `order: 4` (default-tie convention). Provider-audit manifest gains
-      the three `live-catalog` entries (the FID-2026-0905-002 addendum
-      lesson).
-- [x] **CLI live fetchers ×3** — KiosAPI-pattern modules (pass-through
-      parser, unix-seconds `created` normalization, registry-derived URL
-      guard, per-provider env-key resolver), wired into the combined
-      gateway catalog (`Promise.allSettled` + fulfilled-fallback + reset
-      fns) and the barrel.
-- [x] **Docs** — `.env.example` + `cli/release/README.md` regenerated via
-      `generate:provider-docs` (registry-driven; TABLE_NOTES ×3),
-      README.md + README.zh-CN.md provider lists extended.
-- [x] **Verification** — RED confirmed first (2 registry-pin fails +
-      module-absent); GREEN: common providers 30/0, cli gateway suites
-      22/0 (6 new), full cli suite 3485/0/18 skip, typecheck ×3 exit 0,
-      quality ratchet PASS (honest baseline bumps: gateway.ts 300,
-      barrel 72, registry.ts 298, generator 210), repo validation PASS,
-      receipt stamped.
-- **Open (operator, keyed):** per-provider picker + chat round-trip —
-      the closure arm per the KiosAPI acceptance precedent. `fixed`, not
-      closed, until that runs.
+## Task 19 — Picker dismissal kills chat input focus (2026-09-07)
+
+> Operator report: "after adding a provider, i cannot type or click the
+> input box, it seems very random though, i cannot reproduce the issue."
+> Diagnosis (all files read 0-EOF this session): dismissing any of the
+> three picker overlays (model / provider / rewind) with **Escape or a
+> backdrop click** leaves `inputFocused=false` permanently — only the
+> select paths restore focus (`use-chat-pickers.ts`), the dismissal paths
+> collapse to the raw store close (`build-chat-layout-props.ts:186`), and
+> the input cannot self-recover because both the typing gate
+> (`use-multiline-keyboard.ts:148`) and the click gate (`mouse.ts:19`)
+> early-return on the same `focused` prop. Repro: open `/provider`, press
+> Escape → input dead; reopen and select → input returns. Operator chose
+> "Implement fix + FID" via ask_user 2026-09-07.
+
+- [x] **T19-A.** Author `FID-2026-0907-001-picker-close-focus-loss.md`
+      (RED/GREEN/AUDIT, severity high) and present the fix design. **Done
+      2026-09-07** — fix design presented and approved via ask_user
+      ("Implement fix + FID") before any code (Law 2). **Self-correction
+      recorded:** the FID was initially written with a pre-filled receipt;
+      reverted to `analyzed` with an empty receipt before implementation —
+      receipts are machine-stamped only after gates run.
+- [x] **T19-B.** Implement the single-seam fix: symmetric open/restore
+      focus effect in `use-chat-pickers.ts:119-147` + pure predicate
+      `cli/src/chat/picker-focus-transition.ts` + regression suite
+      `cli/src/chat/__tests__/picker-focus.test.ts` (6/0, RED-first). **Done
+      2026-09-07** — typecheck cli 0, eslint clean, prettier clean,
+      lint:md clean, `fid:verify` receipt 2/2 PASS, FID status `fixed`.
+- [x] **T19-C. Operator live smoke (closure arm):** open `/provider` and
+      `/model`, dismiss with Escape AND with a backdrop click; confirm the
+      input accepts typing and clicks immediately after each dismissal.
+      **Done 2026-09-07** — operator confirmed: "I ran the live smoke —
+      Escape and backdrop dismissal both restore the input."
+- [x] **T19-D. Close + archive FID-2026-0907-001 + CHANGELOG entry after
+      T19-C.** **Done 2026-09-07** — status `closed` with the live
+      acceptance recorded in Resolution + Implementation Evidence;
+      receipt re-stamped 2/2 PASS after the closure edits;
+      moved to `dev/fids/archive/`; CHANGELOG entry added under
+      Unreleased.
+
+## Task 20 — Harness-honesty gates: FID-2026-0907-002 (2026-09-07)
+
+> Operator directive: "Implement FID-2026-0907-002's four honesty gates"
+> (the FID was authored by a parallel learnings-review session, status
+> `analyzed`, Perfection Loop converged 3 loops). Implementation executed
+> 2026-09-07 per the converged plan, with one recorded architecture
+> correction (Loop 4 in the FID).
+
+- [x] **T20-A. Step 1 — Ripgrep honesty.** Resolver's exhausted-candidates
+      throw names every attempted candidate path (never an interpolated
+      `undefined`) + remediation; new memoized `probeRipgrepAvailability`
+      (`sdk/src/native/ripgrep.ts`); boot-time warn-only probe wired in
+      `cli/src/init/init-app.ts:30-44`.
+- [x] **T20-B. Step 2 — Edit-size guidance.** Shared truncation constant
+      canonicalized in `common/src/constants/read-files.ts` (Loop 4
+      correction: the plan's sdk-import would be a workspace cycle — sdk →
+      agent-runtime is the dependency direction); sdk re-exports;
+      `processStrReplace` appends size context + ranged-read remedy to
+      BOTH match-failure shapes over threshold; sibling suite 3/0 (main
+      suite at 264 lines — 300 ceiling forbids extending).
+- [x] **T20-C. Step 3 — Exit-code audit.** `scripts/audit-exit-codes.ts`
+      (pure detector: pipe into tail/head/tee then `echo $?` within 3
+      lines; comments exempt; git-ls-files collector per the learnings
+      rule); wired into `validate:repository` as `audit.exit-code-masking`;
+      suite 8/0.
+- [x] **T20-D. Step 4 — Clean-room verify.** `scripts/verify-clean.ts`
+      composing `assertCleanCheckoutCompiles` (Law 13); root `verify:clean`
+      script; suite 9/0 (mock runner); **live acceptance: `verify:clean
+      PASS — ff1ea8f61 (v0.0.30) compiles from a clean checkout (133.9s)`.**
+- [x] **T20-E. Gates + receipt.** `fid:verify` receipt **5/5 PASS**
+      (typecheck sdk/cli, the three test gates); eslint clean;
+      prettier clean; five honest baseline bumps recorded.
+- [x] **T20-F. [OPEN-OUT-OF-SCOPE → RESOLVED 2026-09-07 (operator ruling):]
+      Parallel-session draft collides with Step 3 and breaks the quality
+      gate.** `scripts/audit-silent-failure.ts` (untracked, 364 lines —
+      over the 300 absolute ceiling, unwired, no FID, no tests) contained
+      its own `checkExitCodeMasking` overlapping T20-C plus three further
+      check families (empty-catch, promise-singleton, withTimeoutNoAbort).
+      It appeared AFTER the 2026-09-07 A-Z review ran `quality: PASS`.
+      **Operator ruling:** the parallel session is no longer running; the
+      surviving agent is in the driver's seat. Resolution: QUARANTINED to
+      `dev/scratchpad/active/audit-silent-failure-draft.ts` (off the
+      gated tree — dev/ is not a quality sourceRoot; the three unwired
+      check families preserved as future-FID material; the wired + tested
+      T20-C stands as the exit-code guard). Gates post-ruling:
+      `quality: PASS (1467 files)`, `validate:repository: PASS`.
+- [x] **T20-G. Close + archive FID-2026-0907-002 + CHANGELOG entry.**
+      **Done 2026-09-07** — status `closed`, receipt re-stamped 5/5 PASS
+      after closure edits, moved to `dev/fids/archive/`, CHANGELOG entry
+      added under Unreleased, FID index updated. Commit SHA pending the
+      G2 stamp at the archived path.
+
+## Task 21 — NDJSON Phase B emitter: FID-067 v2 delegation transport, child side (2026-09-07)
+
+> Operator directive: implement `dev/build-orders/BO-2026-09-07-ndjson-
+> phase-b-emitter.md` (now fully self-contained — the frozen wire contract
+> is embedded verbatim as §Frozen Wire Contract; the canonical copies live
+> in the Savant parent repo). Five FIDs per the BO's phased build order:
+> Phase 1 emit (003 activation+frames, 004 handleEvent tap, 005 artifact+
+> error+stdout purity), Phase 2 control (006 stdin reader), Phase 3 prove
+> (007 handoff matrix + cross-repo smoke). The operator directive to
+> implement converts the BO's planning into approved scope (Law 2).
+> Ground-truth discoveries at intake: the child's `PrintModeEvent` stream
+> has NO native iteration/tokens/success/duration fields — the frozen
+> payload shapes are synthesized child-side (counters, wall-clock, and
+> "completed = tool_result arrived; failures arrive as error events"),
+> documented per-FID; `runHeadlessPrint` RETURNS the answer (the stdout
+> write lives in `cli-command-dispatch.ts`), so artifact emission happens
+> in the run and stdout suppression happens in the dispatch.
+
+- [x] **T21-A. FID-2026-0907-003 — JSON-mode activation + frame module**
+      (BO Phase 1 FID 1): declared `--json` option (Commander = argv-exact),
+      `cli/src/headless-ndjson.ts` frame module (strict envelope
+      `{v:1,type,ts,data}`, real epoch-ms, `JSON.stringify`-per-line
+      newline escaping, control-frame parser). Gates: unit suite. **Done
+      2026-09-07** — module 291 ln + suite 18/0 green (re-run in the
+      2026-09-07 repo audit), typecheck cli 0, receipt 2/2 PASS;
+      audit-confirmed `fixed`/pending (pure module by design — wiring
+      rides FIDs -004/-005/-006, closure sequenced after FID-007's
+      cross-repo smoke).
+- [x] **T21-B. FID-2026-0907-004 — handleEvent tap → progress frames**
+      (BO Phase 1 FID 2): the five ratified kinds mapped from
+      `tool_call`/`tool_result`/`activity`/`reasoning_delta` events;
+      JSON-mode-only emission; non-JSON path untouched. **Done
+      2026-09-07** — pure tap module `headless-ndjson-tap.ts` (96 ln)
+      + `runHeadlessPrint` jsonMode wiring + dispatch `--json`
+      threading; suites 40/0 across tap/ndjson/run; typecheck cli 0;
+      receipt 4/4 PASS; error-event frames deferred to FID-005
+      (recorded in both FIDs, discharged there).
+- [x] **T21-C. FID-2026-0907-005 — artifact + error frames; stdout purity**
+      (BO Phase 1 FID 3): exactly one artifact frame at the answer point,
+      dispatch suppresses the raw stdout write in JSON mode, error frames
+      before nonzero exits. **Done 2026-09-08** — emitter hoisted above
+      every exit boundary (usage/init failures frame too); artifact at
+      the answer point carries the exact `--print` answer; error frames
+      at all four nonzero boundaries + mid-run error events (FID-004's
+      deferral discharged); pure `headless-outcome.ts` seam suppresses
+      the raw stdout write in JSON mode while stderr stays
+      byte-identical both modes; 50/0 across the four suites; honest
+      baseline bump headless-run.ts 284 → 296; receipt 5/5 PASS.
+- [x] **T21-D. FID-2026-0907-006 — stdin control-frame reader** (BO Phase 2
+      FID 4): cancel → abort at boundary; steer accepted + parked; unknown
+      skipped; EOF harmless. **Done 2026-09-08** — authored (full Perfection
+      Loop) and implemented RED-first: `headless-control.test.ts` 5 pins
+      (2 pass/3 fail pre-wiring → 55/0 across the five headless suites),
+      typecheck cli 0, quality PASS after the ceiling-forced
+      `headless-answer.ts` seam move (headless-run.ts 294 ln, comment-only
+      condensation), receipt 5/5 PASS, **closed + archived** same day per
+      the T17-C standing directive. The live parent→child round-trip
+      remains FID-007's Phase 3 boundary (T21-E) — never claimed here.
+- [x] **T21-E. FID-2026-0907-007 — handoff test matrix, live** (BO Phase 3
+      FID 5): the 6-case matrix as real-process tests + the cross-repo
+      smoke (operator-assisted). **Done 2026-09-08** — authored (full
+      Perfection Loop) and executed live to **6/6** against the actual CLI
+      child (deterministic fake gateway + `INFERENCE_BASE_URL` direct-mode
+      bare-slug seam). The matrix caught FOUR transport defects the
+      in-process DI suites structurally could not see, all fixed forward
+      per the BO's Phase 3 contract: (1) the env boot banner polluted
+      stdout in both modes (`console.log` → `console.error`); (2) the
+      default NDJSON frame writer omitted the `\n` delimiter (frames
+      glued on one line); (3) a mid-stream cancel rode the 90s run timeout
+      because a held LLM request yields no stream boundaries →
+      arrival-time `onCancel` abort (run-side semantics extracted to the
+      new `headless-control-plane.ts` for the 300-line ceiling); (4) the
+      SDK's generic cancel message masked the parent reason →
+      `PARENT_CANCEL_REASON` framed when this child consumed the cancel.
+      One test pin corrected to ground truth (v1 emits `answer\n\n`);
+      matrix split harness + part-a + part-b. Gates: typecheck cli 0,
+      headless suites 56/0, eslint/prettier clean, quality PASS (honest
+bump headless-run.ts → 297), receipt 3/3 PASS. **Closed + archived
+      2026-09-08** (operator closure directive; receipt re-stamped at the
+      archived path with all three gates re-run live); the cross-repo
+      smoke (real Savant parent) carries OPEN as the operator-assisted
+      boundary — never claimed by this record.
+
+> **2026-09-08 closure amendment (Task 21):** T21-A/-B/-C (FIDs
+> -003/-004/-005) were **closed + archived 2026-09-08** by the operator
+> closure directive. Each was scope-complete with a green receipt (2/2,
+> 4/4, 5/5 PASS); the recorded "archive after FID-007's cross-repo smoke"
+> sequencing pointed at a FID that was never authored — the honest options
+> were archive-on-own-evidence or hold against a phantom dependency, and
+> the operator's standing directive ("completed = close + archive +
+> changelog immediately", T17-C) chose the former. Any wire defect found
+> at the future live matrix fixes forward against the archived records.
+> Receipts re-stamped at the archived paths with all gates re-run live
+> (28/28 PASS across the six-FID stamping battery).
+
+## Task 22 — APInex gateway provider: FID-2026-0907-008 (2026-09-07)
+
+> Operator request: "i am interested in adding this provider
+> https://apinex.bond/models" (2026-09-07). Contract from the provider's
+> machine-readable `llms.txt`: base `https://api.apinex.bond/v1`, Bearer
+> auth (`sk-apx…` keys), vendor-slash model ids (`gpt/5.6-luna`),
+> authenticated live catalog. The one-entry runbook governed the build
+> (`docs/archive/design/Adding New Providers.md`). Same-day repo audit
+> (this session) ground-truthed the module, tests, and gates.
+
+- [x] **T22-A. Steps 1-3 (registry + wrapper + docs): `implemented`** —
+      `apinex` registry entry (12th provider, post-withdrawal count),
+      Nous-shaped wrapper `cli/src/utils/openrouter-models/apinex.ts`
+      (`resolveKey: () => process.env.APINEX_API_KEY`), `gateway.ts`
+      aggregation, provider-exception-manifest live-catalog entry,
+      regenerated provider docs. All 8 static gates green (typecheck ×4,
+      4 suites); audit re-ran the apinex + ndjson suites 2026-09-07:
+      22/0. Receipt 8/8 PASS (re-stamped after the audit's factual fix:
+      provider count 14 → 12).
+- [x] **T22-B. Step 4 — keyed live acceptance (closure gate, operator):**
+      set `APINEX_API_KEY` (`sk-apx…` from the APInex dashboard), then
+      keyed `/v1/models` returns an OpenAI-shaped list; `/model` lists
+      `apinex/…` entries; one chat round-trip on a `health: "live"`
+      model; missing-key fail-closed message correct. **The FID does not
+      close without this** (FID-2026-0906-008's withdrawal vindicated the
+      keyed gate). After acceptance: close + archive FID-008, CHANGELOG
+      entry. **Done 2026-09-08** — the operator's key (repo `.env.local`)
+      drove the real production chain: `fetchGatewayModels` returned
+      1,116 combined models incl. **22 `apinex/…` entries**; chat
+      round-trip on `free/glm-5.3-flash` (public health table: **live**,
+      all 22 rows live) → **HTTP 200, content `"OK"`**; no-key catalog
+      probe → **401 fail-closed**. Operator UI observation (zero apinex
+      models in `/model`) root-caused to a stale dev session whose
+      process env predates the key landing in `.env.local` — a keyed
+fetch had already written the same 22 models into the dev disk
+      warm-start cache; restart shows them. FID-008 **closed +
+      archived 2026-09-08**, receipt re-stamped 8/8 PASS, CHANGELOG
+      entry added.
+
+## Task 23 — A-Z repo audit: docs sync + bloat sweep before the v0.0.30 cut (2026-09-08)
+
+> Operator directive (desktop skipped again): "first we need an a-z audit done
+> of the entire dir, ensure all docs are fully updated, readme is fully
+> updated, no bloat files and everything is fully organized/updated. No dead
+> files, no outdated info." Executed as a RED discovery pass (Detective
+> evidence sweep + tree inventory + drift gates) → hybrid direct-write
+> remediation.
+
+- [x] **T23-A. Drift gates.** version:check PASS, generate:provider-docs:check
+      PASS, generate:protocol-bundle:check PASS, learnings:check PASS (16
+      entries), hygiene:check PASS. skills:check FAIL (17 errors / 29
+      warnings) — repo-scoped: two half-materialized skill dirs
+      (`.agents/skills/fid-gates-unfenced-parser-contract/` +
+      `minisign-pubkey-vs-secret-key/`: tracked `versions/v1/SKILL.md` +
+      `VERSIONS.jsonl` but no top-level SKILL.md) + `.quarantine/` policy
+      findings; home-dir findings out of repo scope. **Flagged to the
+      operator — skill trust is operator-only, nothing auto-promotes.**
+- [x] **T23-B. Stale version claims fixed.** README.md + README.zh-CN.md
+      Release badges and hero quotes → v0.0.30 (0.0.29 compressed to
+      "previously shipped"), docs/SAVANT-VERSIONING.md, docs/privacy.md.
+- [x] **T23-C. Undocumented features added.** `--print ... --json` NDJSON
+      delegation transport documented in README.md, README.zh-CN.md,
+      docs/features.md, docs/installation.md (FID-2026-0907-003..006);
+      APInex added to every provider list it was missing from (README.md,
+      README.zh-CN.md, docs/features.md — where KiosAPI + OpenCode Zen were
+      also missing — docs/installation.md table, docs/index.md);
+      `verify:clean` added to the docs/public-release.md cut-day checks.
+- [x] **T23-D. Outdated info fixed.** docs/privacy.md BYOK env-var inventory
+      gained `KIOSAPI_API_KEY` + `APINEX_API_KEY`;
+      docs/release-notes-v0.0.28.md "Status: pending release" → shipped
+      2026-09-03.
+- [x] **T23-E. Bloat/dead-file sweep verdict.** Suspected root items are
+      load-bearing, NOT dead: `coding-standards/` (ECHO.md ×8 + protocol
+      bundle + Verifier), root `ECHO-single-agent.md` (intentional boot-gate
+      marker; canonical copy `dev/echo-v0.1.2-single-agent.md`), `assets/`
+      (desktop loaders + README banner). `debug/` + `firebase-debug.log` are
+      gitignored local runtime files. `art/` is tracked brand assets,
+      unreferenced by code — kept (operator may prune). **Zero tracked dead
+      files found; zero deletions made.**
+- [x] **T23-F. Gates.** lint:md exit 0; version:check PASS;
+      validate:repository PASS; quality PASS (1467 baselined files).

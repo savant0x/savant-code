@@ -33,8 +33,83 @@ on-disk records missing from the table added (-0823-003, -0824-003…-008,
 
 | FID | Status | Purpose / blocking gate |
 |---|---|---|
-| [`FID-2026-0903-001`](FID-2026-0903-001-desktop-packaging-auto-release-integration.md) | `fixed` | Desktop packaging integrated into the automatic release pipeline as `DESKTOP_BUNDLES` (dispatch + fail-closed run watch, after BACKUP_BUNDLE) and `DESKTOP_RELEASE` (download + local fail-closed manifest regen + `gh release upload --clobber`, before POST_RELEASE_VERIFY), gated on `SAVANT_CODE_RELEASE_DESKTOP=1`; workflow v-strip landed; 18-test desktop suite; updater-endpoint assert targets the per-release URL (prerelease-aware); live validation on the next release cut |
-| [`FID-2026-0905-009`](FID-2026-0905-009-release-pipeline-backup-stage.md) | `fixed` | `BACKUP_BUNDLE` release stage (between GIT_PUSH and GITHUB_RELEASE): the pipeline writes the verified incremental bundle via git-bundle-backup (FID-008) before public artifacts are cut, fail-closed with resume-awareness (pre-009 receipts run the backup for real); 6-test scratch-repo suite + 13 gate receipts; operator live smoke on the next release cut |
+
+**2026-09-08 closure (operator directive: "review the fids, if they are done, add
+them to changelog and properly close them out") — FID-2026-0907-007 +
+FID-2026-0908-003 closed + archived:** both records reviewed complete (full
+Perfection Loops, receipts stamped), statuses flipped to `closed`, moved to
+`dev/fids/archive/`, and receipts re-stamped live at the archived paths with
+all declared gates re-run (FID-007: typecheck cli + both matrix suites;
+FID-003: typecheck sdk/common + the caps-markers suite); repo-wide
+`fid:verify --check` PASS. The active queue is now empty. FID-007's
+cross-repo smoke (real Savant parent → built CLI) carries OPEN as the
+operator-assisted boundary — never claimed. See `archive/README.md` (2026-09-08
+closure section) and the CHANGELOG 0.0.30 entries.
+
+**2026-09-08 (later) — FID-2026-0908-001 closed + archived; the active queue was
+empty until FID-2026-0908-003 opened the same day** (see `archive/README.md`
+and the CHANGELOG 0.0.30 entry).
+
+**2026-09-08 closure — seven FIDs closed + archived (queue emptied same day):**
+[`FID-2026-0907-003`](archive/FID-2026-0907-003-ndjson-frame-module.md),
+[`FID-2026-0907-004`](archive/FID-2026-0907-004-ndjson-handleevent-tap.md),
+[`FID-2026-0907-005`](archive/FID-2026-0907-005-ndjson-artifact-error-stdout-purity.md),
+[`FID-2026-0907-006`](archive/FID-2026-0907-006-ndjson-stdin-control-reader.md),
+[`FID-2026-0907-008`](archive/FID-2026-0907-008-apinex-gateway-provider.md),
+[`FID-2026-0907-009`](archive/FID-2026-0907-009-provider-key-update.md), and
+[`FID-2026-0907-010`](archive/FID-2026-0907-010-fid-fingerprint-off-by-one.md)
+**closed + archived 2026-09-08** — receipts re-stamped live at their archived
+paths with all declared gates re-run (18:18–18:20Z; FID-006 later the same
+day). The NDJSON trio's recorded "archive after FID-007" sequencing pointed
+at a FID that was never authored; Phase 2 (FID-006, stdin control reader)
+was then implemented + closed the same day under the T17-C standing
+directive (scope-complete, green receipt; the live-matrix dependency
+carries as a never-claimed boundary — defects fix forward), leaving only
+Phase 3 (the FID-007 handoff matrix, SCOPE T21-E) open. Later the same day,
+FID-2026-0908-001 (`skill_manage` output-template parity, the last active
+record) also closed + archived — the active queue is now empty. FID-008's keyed
+live acceptance PASSED (catalog 200/22 models, missing-key 401 fail-closed,
+chat round-trip 200 on `free/glm-5.3-flash`); FID-009's dev-build smoke
+carries as a never-claimed-passed operator boundary per the 2026-09-06
+ground-truth ruling. CHANGELOG entries under Unreleased. See
+`archive/README.md` (2026-09-08 section).
+
+**2026-09-07 closure — FID-2026-0907-002 (harness-honesty gates) closed +
+archived:** [`FID-2026-0907-002`](archive/FID-2026-0907-002-harness-honesty-gates.md)
+— four mechanized honesty gates: ripgrep boot probe + honest resolver
+error, edit-size guidance on over-threshold str_replace failures (shared
+`READ_FILES_MAX_CHARS` constant canonical in `common`), the
+exit-code-masking audit wired into `validate:repository`, and the
+standalone `verify:clean` clean-room proof. Receipt 5/5 PASS; live
+acceptance: `verify:clean PASS — ff1ea8f61 (v0.0.30) compiles from a
+clean checkout (133.9s)`. The colliding parallel draft was quarantined
+to `dev/scratchpad/active/` by operator ruling (three unwired check
+families preserved as future-FID material). The active-FID table was
+empty again until FID-2026-0907-003 opened (BO Phase B, below).
+
+**2026-09-07 closure — FID-2026-0907-001 (picker focus loss) closed +
+archived:** [`FID-2026-0907-001`](archive/FID-2026-0907-001-picker-close-focus-loss.md)
+— dismissing any picker overlay (model / provider / rewind) with Escape or
+a backdrop click left the chat input permanently blurred (only select
+paths restored focus; the input could not self-recover). Fixed with a
+single-seam symmetric open/restore focus effect in `use-chat-pickers.ts`
+plus the pure predicate `picker-focus-transition.ts` plus a regression
+suite (6/0, RED-first). Receipt 2/2 PASS; live acceptance 2026-09-07
+(operator:
+Escape and backdrop dismissal both restore the input).
+
+**2026-09-07 closure — FID-2026-0906-008 (gateway providers) closed +
+archived:** [`FID-2026-0906-008`](archive/FID-2026-0906-008-three-gateway-providers.md)
+was implemented with all static gates green, then **withdrawn by operator
+direction after live keyed testing** showed none of the three gateways can
+serve chat (VyceAI disabled by directive; GoRouter dead; TabiToken auth +
+catalog + billing healthy but its chat path is Cloudflare-WAF-blocked in
+every client variant probed). All three registry entries, fetchers, tests,
+and docs removed; registry back to 11 providers / 9 setup providers.
+Evidence and lessons in the archived FID's Resolution + Lessons Learned.
+(The table above is empty: `-0903-001` and `-0905-009` were closed +
+archived in the 2026-09-06 T17-C ceremony and their rows are removed here
+as stale.)
 
 **2026-09-05 closure — quality campaign to zero (6 FIDs archived):**
 [`FID-2026-0905-001`](archive/FID-2026-0905-001-native-tool-executor-decomposition.md)

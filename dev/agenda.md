@@ -8,3 +8,6 @@
 
 - [ ] **code_search** — tool result contains an error
       recurrences: 5 (total 5) — promote via FID when resolved+verified
+
+- [ ] **str_replace** — tool result contains an error
+      recurrences: 5 (total 5) — promote via FID when resolved+verified

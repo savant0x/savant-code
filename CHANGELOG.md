@@ -1,27 +1,227 @@
 # Changelog
 
-## Unreleased
+## 0.0.30 — 2026-09-08
 
-### Three new gateway providers — TabiToken, GoRouter, VyceAI (fixed 2026-09-06)
+### NDJSON handoff matrix executed live — 6/6, four transport defects fixed forward (closed + archived 2026-09-08)
 
-- **FID-2026-0906-008 — medium — TabiToken, GoRouter, and VyceAI added as
-  first-class gateway providers (registry, live catalogs, routing,
-  picker).** All three live-probed 2026-09-06 as OpenAI-compatible
-  gateways with authenticated `/v1/models` catalogs (TabiToken + GoRouter
-  are "New API" instances — canonical `new_api_error` 401; VyceAI a
-  textbook `authentication_error` proxy; the Cloudflare UA shield blocks
-  only curl's exact UA — generic client UAs reach the API layer). Each
-  gets a `PROVIDER_REGISTRY` entry (`tabitoken` / `gorouter` / `vyceai`,
-  `strip` id transform, `TABITOKEN_API_KEY` / `GOROUTER_API_KEY` /
-  `VYCEAI_API_KEY`), a KiosAPI-pattern pass-through live-catalog fetcher
-  wired into the combined gateway catalog, provider-audit manifest
-  coverage, and registry-derived docs (.env.example env vars, release
-  README provider table, README/README.zh-CN lists). Routing, key
-  resolution, `/provider` setup, and `/model` picker visibility derive
-  from the existing generic loops. 30/0 common providers + 22/0 cli
-  gateway suites, typecheck ×3, quality ratchet PASS, repo validation
-  PASS. Keyed live round-trip per provider is the operator acceptance
-  arm (closure-pinned, per the KiosAPI precedent).
+- **FID-2026-0907-007 — medium — the BO Phase 3 "Prove" gate executed: the
+  6-case handoff matrix ran against the actual CLI child and caught four
+  transport defects every in-process DI suite structurally could not see.**
+  Determinism seam: a local fake OpenAI-compatible SSE gateway +
+  `INFERENCE_BASE_URL` direct-mode routing + a bare-slug model preference in
+  a temp config dir. The four fix-forwards (the BO's explicit Phase 3
+  contract): (1) the dev boot banner polluted stdout in both modes
+  (`common/src/env.ts` `console.log` → `console.error` — stderr is the
+  diagnostics channel); (2) the default NDJSON frame writer omitted the
+  `\n` delimiter, gluing consecutive frames onto one unparseable stdout
+  line (`headless-run.ts` — every DI suite injects a collector, so only the
+  real-process gate could catch it); (3) a mid-stream cancel rode the 90s
+  run timeout because a held LLM request yields NO stream boundaries →
+  cancel now aborts AT ARRIVAL (`onCancel` hook in
+  `createControlFrameReader`; run-side semantics extracted to the new
+  `headless-control-plane.ts` — 300-line ceiling); (4) the SDK's generic
+  "Run cancelled by user" masked the parent-authored reason →
+  `PARENT_CANCEL_REASON` is framed when this child consumed the cancel
+  frame. One test pin corrected to ground truth (v1 emits `answer\n\n`).
+  Matrix split per the 300-line ceiling: `handoff-matrix-harness.ts` (251)
+  + cases 1-3 (`handoff-matrix.test.ts`, 90) + cases 4-6
+  (`handoff-matrix-part-b.test.ts`, 91). Gates: matrix **6 pass / 0 fail
+  (25 expects, case 4 aborts in 6.4s)**; headless DI suites 56/0;
+  typecheck cli 0; eslint `--max-warnings 0` clean; prettier clean;
+  `quality: PASS (1467)` (honest bump `headless-run.ts` → 297); receipt
+3/3 PASS. **Closed + archived 2026-09-08** (receipt re-stamped at the
+  archived path with all three gates re-run live). The cross-repo smoke
+  (real Savant parent → built CLI) carries OPEN as the operator-assisted
+  boundary — never claimed by the record.
+
+### code_search cap parameters + self-remedying truncation markers (closed + archived 2026-09-08)
+
+- **FID-2026-0908-003 — low — `code_search` gains `globalMaxResults` +
+  `maxOutputStringLength` in the tool schema; truncation markers are now
+  self-remedying.** The layered caps (per-file `maxResults` 15, global 250
+  results, 20,000-char output) were executor-internal — only `maxResults`
+  was schema-declared, and the run-layer wiring for the other two
+  (`sdk/src/run/tool-call.ts:199-210`) was dead: zod silently stripped the
+  keys, so a model believing it had raised a cap had not. Both caps are now
+  declared (optional ints, ceilings 5000 / 200000, executor-matching
+  defaults — default callers byte-identical), and every truncation marker
+  names the cap that fired with its value plus both remedies (narrow the
+  pattern/cwd/globs first; raise the named parameter). Surfaced live during
+  the 2026-09-08 A-Z audit when a Detective evidence sweep hit the 20K
+  output cap at 102 matches. RED-first suite `code-search-caps-markers.test.ts`
+  (6 fail → 6/0); 37/0 across the five code-search suites (part-c's
+  marker-prefix pin intact); typecheck ×4 exit 0; receipt 3/3 PASS. Two
+  verify-step discoveries fixed en route: the example patterns were
+  de-tokenized (`TODO|FIXME` tripped the production-placeholder scan —
+  re-patterned to `'deprecated'` / `'deprecated|legacy'`), and a malformed
+  parallel-session `FID-2026-0908-002-usage-telemetry.md` draft was
+quarantined to `dev/scratchpad/active/` per the T20-F operator precedent.
+  **Closed + archived 2026-09-08** (receipt re-stamped at the archived path
+  with all three gates re-run live).
+
+### skill_manage speaks the canonical command-result template (closed 2026-09-08)
+
+- **FID-2026-0908-001 — medium — `skill_manage` output mapped onto the
+  canonical single-command template at the handler boundary.** The handler
+  returned a bespoke `{ok, error}` / `{ok, name, version, action, nextSha,
+  pendingTrust}` envelope while every command-class tool returns the
+  `{stdout, stderr, exitCode}` shape (`run_readonly_command` is the
+  template). Fix: `resultToValue(result, attemptedAction)` maps success →
+  `exitCode: 0` + human-readable `stdout` summary + identity fields, and
+  failure → `exitCode: 1` + the exact engine error on `stderr`; the
+  `ok`/`error`/`message` channels are retired (`exitCode` is the success
+  signal; `message` folds into `stdout`); `outputValueSchema`
+  (`common/src/tools/params/tool/skill-manage.ts`) declares the same shape
+  with `exitCode: z.union([z.literal(0), z.literal(1)])`. Engine +
+  `SkillManageResult` untouched (three CLI script consumers unaffected).
+  RED-first suite `skill-manage.test.ts` (4 pins; 4 fail pre-fix → 4/0,
+  22 expects); live probe PASS (real handler, temp root: create → exit 0
+  quarantined-pending-trust envelope, delete → exit 0, invalid name →
+  exit 1 + `"invalid skill name: Invalid Name!"` on stderr); independent
+  Verifier audit (2 FAIL + 4 NEEDS-REVIEW) fully discharged in Loop 3;
+  receipt 3/3 PASS re-stamped at the archived path. The operator-directed
+  48-tool handler-output sweep (same day) found this was the ONLY bespoke
+  envelope — nil divergence elsewhere; verdict recorded in the FID's
+  Lessons Learned. **Closed + archived 2026-09-08; the active FID queue is
+  now empty.**
+
+### NDJSON delegation transport (Phases 1-2) + provider surface hardening — 7 FIDs closed + archived (2026-09-08)
+
+Operator closure directive ("properly update the changelog and move the completed fids to the
+archive"): the six active `fixed` records closed + archived 2026-09-08 with receipts re-stamped
+live at their archived paths (all gates re-run, 18:18–18:20Z). The active FID queue is now empty.
+BO Phase B FIDs -006/-007 (stdin control reader, live handoff matrix) were never authored at
+that pass — the trio's "archive after FID-007" sequencing pointed at a record that did not
+exist, exposed during this session's ground-truth pass and recorded in each closure. Phase 2
+(FID-006, stdin control reader) was then authored + implemented + closed the same day (below);
+Phase 3 (the FID-007 live handoff matrix, SCOPE T21-E) was executed the same day — 6/6 live,
+four transport defects fixed forward (top entry); the cross-repo smoke carries open as the
+operator-assisted boundary.
+
+- **FID-2026-0907-003 — medium — NDJSON delegation frame module + argv-exact `--json` activation
+  (BO Phase B FID 1/5).** New pure `cli/src/headless-ndjson.ts` (294 lines): `serializeFrame`
+  (strict `{v,type,ts,data}` envelope in wire order, one JSON object per line),
+  `createNdjsonEmitter` (injectable writer, epoch-ms clock, step/duration counters, thinking
+  accumulation, unknown-kind no-op), `parseControlFrame` + `createControlFrameReader` (tolerant
+  control channel: cancel/steer parsed, unknown/`v≠1`/malformed skipped, EOF → end, never
+  blocks). Declared `--json` Commander option (argv-exact). Suite 18/0; receipt 2/2 PASS.
+- **FID-2026-0907-004 — medium — handleEvent tap: progress frames from the headless event stream
+  (BO Phase B FID 2/5).** Pure `headless-ndjson-tap.ts` (97 lines) maps the five ratified kinds
+  from `PrintModeEvent` (`tool_call_started/completed`; `iteration_completed` synthesized per
+  `tool_result`; `thinking_started/completed` with implicit-start + flush-before-next-event span
+  bookkeeping). `runHeadlessPrint` gains `jsonMode`/`jsonFrameWriter` (DI per the headless
+  convention); the tap is created only in JSON mode, composing additively into `handleEvent`
+  (error-event stderr logging preserved); the dispatch threads `--json` on the
+  `--print`/stdin/CI branch. Suites 40/0; receipt 4/4 PASS.
+- **FID-2026-0907-005 — medium — artifact + error frames; stdout purity (BO Phase B FID 3/5).**
+  Emitter hoisted above every exit boundary (usage and client-init failures frame too); exactly
+  one `artifact` frame at the answer point carrying the exact `--print` answer; error frames at
+  all four nonzero-exit boundaries plus mid-run error events (FID-004's recorded deferral
+  discharged); pure `headless-outcome.ts` seam suppresses the raw stdout answer write in JSON
+  mode (the artifact frame owns the answer channel; stderr byte-identical in both modes).
+Suites 50/0; receipt 5/5 PASS; honest baseline bump `headless-run.ts` 284 → 296.
+- **FID-2026-0907-006 — medium — stdin control-frame reader wiring (BO Phase 2 FID 4/5).** The
+  FID-003 pure reader gains its first production caller: in JSON mode the reader attaches to
+  stdin (new `jsonControlInput` DI param; production binds `process.stdin`) and drains at the
+  `handleEvent` step boundary BEFORE the tap — `cancel` → cooperative abort (exit 1 via the
+  existing throw path + one rule-4 error frame; no frames after the ack, including
+  completion-race artifact suppression), `steer` → accepted + parked (`parkedSteerNotes` on the
+  result + one stderr diagnostic), unknown/`v≠1`/malformed skipped by the parser, EOF harmless,
+  non-JSON never attaches (byte-identical v1). Ceiling-forced seam: the four answer helpers
+  moved verbatim to `headless-answer.ts` (61 ln; `extractFinalAnswer` re-exported; headless-run
+  back to 294 ln via comment-only condensation — absolute ceilings take no baseline bumps).
+  RED-first suite `headless-control.test.ts` (5 pins; 2 pass/3 fail pre-wiring); 55/0 across
+  the five headless suites; receipt 5/5 PASS. Closed + archived same day; the live parent→child
+  round-trip carries as FID-007's Phase 3 cross-repo smoke — never claimed here.
+- **FID-2026-0907-008 — low — APInex gateway provider (12th provider) — keyed live acceptance
+  PASSED 2026-09-08.** Registry entry (`apinex`: gateway/openai/`strip`, authenticated live
+  catalog `https://api.apinex.bond/v1/models`, `APINEX_API_KEY`), thin Nous-shaped wrapper
+  (`resolveKey` + single-prefix normalization over multi-slash upstream ids), `gateway.ts`
+  allSettled aggregation, exception-manifest live-catalog entry, regenerated provider docs.
+  Live acceptance (fresh probes): keyed `/v1/models` HTTP 200 (22 OpenAI-shaped models);
+  missing-key HTTP 401 `authentication_error` (fail-closed contract); chat round-trip HTTP 200
+  on `free/glm-5.3-flash` returning the exact probe reply. A paid-tier probe (`gpt/5.6-luna`)
+  returns HTTP 402 `billing_error` — account balance, not integration. Receipt 8/8 PASS.
+- **FID-2026-0907-009 — high — `/provider <name> update` key-replacement path.** A
+  saved-and-enabled provider could never have its key replaced from the UI (both selection
+  surfaces short-circuit via `activateConfiguredProvider()` when any key source exists). The
+  trailing `update` token now force-enters the masked providerSetup prompt with replace
+  messaging (Enter overwrites the stored key via the existing `saveProviderApiKey`; Escape
+  cancels with the current key untouched), and both "existing configured key will be used"
+  messages (command + picker) teach the command. Suite 5/0 + sibling battery 37/0; receipt 4/4
+  PASS. The dev-build live smoke carries as a never-claimed-passed operator boundary per the
+  2026-09-06 ground-truth closure ruling.
+- **FID-2026-0907-010 — high — FID receipt-stamping defects: fingerprint off-by-one +
+  prose-hijack anchor.** `computeFidFingerprint`'s removal slice dropped one byte fewer than the
+  anchored receipt regex consumes, so every FIRST stamp was born stale — the standing "always
+  stamp twice" quirk that masked the bug since FID-2026-0823-009. Fix: reader and hasher now
+  share one `receiptSpan()` locator, making stamp-time and validate-time views byte-identical on
+  both stamp paths. Defect 2 (found live while re-stamping this very FID): `stampReceipt`'s
+  unanchored `indexOf('### Verification Receipt')` was hijacked by prose mentioning the heading,
+  splicing the receipt into the Summary and destroying ~12 lines — heading search and gates
+  anchor are now line-anchored and fence-aware (`findHeadingLine`). Regression pins built
+  WITHOUT self-referential hashing (cross-path identity; prose-mention insert/re-stamp;
+  fenced-example immunity; end-to-end stamp→validate identity): 26/0 + 8/0; receipt 5/5 PASS.
+
+### Four mechanized harness-honesty gates (closed 2026-09-07)
+
+- **FID-2026-0907-002 — medium — converted four recurring,
+  lesson-documented dishonesty classes from prose guards into mechanical
+  checks.** (1) Ripgrep: the resolver's exhausted-candidates error now
+  names every attempted candidate path (never an interpolated
+  `undefined`) with remediation, and a memoized `probeRipgrepAvailability`
+  warns at CLI boot; (2) str_replace match failures on files over the
+  read-truncation limit (now the shared `READ_FILES_MAX_CHARS` constant,
+  canonical in `common`) carry size context + the ranged-read remedy;
+  (3) `validate:repository` refuses the exit-code-masking pattern (pipe
+  into tail/head/tee then `echo $?` — the v0.0.22 crashed-eslint-shipped-
+  green incident) in tracked scripts, git hooks, and workflow YAML;
+  (4) `bun run verify:clean` proves the COMMITTED tree compiles (detached
+  worktree + frozen install + typecheck chain), reusing the
+  release-provenance functions. Suites: audit-exit-codes 8/0,
+  verify-clean 9/0, large-file guidance 3/0; receipt 5/5 PASS; **live
+  clean-room proof: `verify:clean PASS — ff1ea8f61 (v0.0.30) compiles
+  from a clean checkout (133.9s)`.** A colliding parallel-session draft
+  (`scripts/audit-silent-failure.ts`, unwired, over the ceiling) was
+  quarantined to `dev/scratchpad/active/` by operator ruling — its three
+  unwired check families (empty-catch, promise-singleton,
+  withTimeoutNoAbort) are future-FID material.
+
+### Picker dismissal no longer kills chat input focus (closed 2026-09-07)
+
+- **FID-2026-0907-001 — high — dismissing any picker overlay (model,
+  provider, rewind) with Escape or a backdrop click left the chat input
+  permanently blurred: keystrokes dropped, clicks swallowed, no
+  self-recovery (both input gates early-return on the same `focused`
+  prop). Only selecting an item restored focus — which made the defect
+  look random and provider-related during the FID-2026-0906-008
+  acceptance flow.** Fixed with a single-seam symmetric open/restore
+  focus effect in `use-chat-pickers.ts`, driven by the new pure predicate
+  `cli/src/chat/picker-focus-transition.ts`; regression suite
+  `picker-focus.test.ts` (6/0, RED-first). Gates: typecheck cli exit 0,
+  eslint `--max-warnings 0` clean, prettier clean, `lint:md` clean,
+  `fid:verify` receipt 2/2 PASS. Live acceptance 2026-09-07 (operator):
+  Escape and backdrop dismissal both restore the input.
+
+### Gateway providers TabiToken, GoRouter, VyceAI — implemented, live-tested, withdrawn (closed 2026-09-07)
+
+- **FID-2026-0906-008 — medium — the three new gateway providers were
+  implemented 2026-09-06 (registry, live catalogs, routing, picker; see
+  the 2026-09-06 entry below in git history for the full build record)
+  and then withdrawn by operator direction 2026-09-07 after live keyed
+  testing showed none can serve chat.** Evidence (operator-persisted keys,
+  dev config dir): VyceAI disabled by directive before its keyed test;
+  GoRouter dead per operator; TabiToken auth + catalog + billing healthy
+  (200s) but `/v1/chat/completions` is Cloudflare-WAF-blocked (403) in
+  every client variant probed and its catalog serves zero models. All
+  three registry entries, pass-through fetchers, tests, exception-manifest
+  entries, and doc surfaces were removed in one sweep; the registry is
+  back to 11 providers / 9 setup providers. Gates at removal: typecheck
+  ×4, common providers 30/0, cli gateway 16/0, quality ratchet PASS,
+  `generate:provider-docs:check` exit 0, `lint:md` clean,
+  `validate:repository` PASS. Lessons (path-scoped probe matrix,
+  empty-catalog-with-valid-key, persisted-key location) recorded in the
+  archived FID.
 
 ### Ground-truth closure ceremony — 7 FIDs closed + archived 2026-09-06
 

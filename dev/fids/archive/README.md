@@ -3,6 +3,122 @@
 This directory contains closed or historically completed FIDs. Files here are
 an audit record, not an active work queue.
 
+## 2026-09-08 closure — NDJSON Phase 3 live matrix + code_search caps (2 FIDs archived; queue empty)
+
+Operator closure directive ("review the fids, if they are done, add them to
+changelog and properly close them out"). Both records reviewed complete (full
+Perfection Loops, receipts stamped), statuses flipped to `closed`, moved here,
+and receipts re-stamped live at the archived paths with all declared gates
+re-run; repo-wide `fid:verify --check` PASS. **The active FID queue is now
+empty.**
+
+- `FID-2026-0907-007-ndjson-handoff-matrix-live.md` (medium) — the BO Phase 3
+  "Prove" gate executed: the 6-case handoff matrix ran against the actual CLI
+  child and caught FOUR transport defects the in-process DI suites
+  structurally could not see (dev boot banner stdout pollution → stderr;
+  missing NDJSON frame `\n` delimiter — glued frames; held-request cancel
+  timeout → arrival-time abort via the new `headless-control-plane.ts`; SDK
+  generic cancel message masked the parent reason → `PARENT_CANCEL_REASON`
+  framed). Matrix 6/0 (25 expects, case 4 aborts in 6.4s); audit-hardened
+  battery 62/0 across all 7 suites; one test pin corrected to ground truth
+  (v1 emits `answer\n\n`); receipt 3/3. The cross-repo smoke (real Savant
+  parent → built CLI) carries OPEN as the operator-assisted boundary —
+  never claimed; defects fix forward against this archived path.
+- `FID-2026-0908-003-code-search-cap-params-and-remediation-markers.md`
+  (low) — `code_search` gains `globalMaxResults` + `maxOutputStringLength`
+  in the tool schema (zod silent-strip fixed; ceilings 5000/200000) +
+  self-remedying truncation markers (cap value + narrow-first remedy +
+  raise-the-named-param); RED-first suite 6/0; 37/0 across the five
+  code-search suites; receipt 3/3.
+
+## 2026-09-08 (later) — skill_manage output-template parity closed (queue empty)
+
+- `FID-2026-0908-001-skill-manage-output-template-parity.md` (medium) —
+  `skill_manage` mapped onto the canonical single-command template
+  (`{stdout, stderr, exitCode}` + identity fields; `ok`/`error`/`message`
+  retired) at the handler boundary; declared `outputValueSchema` with
+  literal-union `exitCode`; RED-first suite 4/0; live probe PASS (real
+  handler, temp root); receipt 3/3 re-stamped at the archived path. The
+  operator-directed 48-tool handler-output sweep verdict (nil divergence)
+  is recorded in its Lessons Learned. **The active FID queue is now
+  empty**; remaining BO work is Phase 3 only (SCOPE T21-E).
+
+## 2026-09-08 closure — NDJSON emitter + control transport + provider hardening (7 FIDs archived)
+
+Operator closure directive. Receipts re-stamped live at the archived paths
+with all declared gates re-run (18:18–18:20Z; FID-006 later the same day).
+FID-006 was authored + implemented + closed after the six-FID batch, under
+the standing T17-C directive (scope-complete, green receipt; the FID-007
+live-matrix dependency carries as a never-claimed boundary — defects fix
+forward). The active queue held `fixed` FID-2026-0908-001 (closed + archived
+later the same day — see the section above):
+
+- `FID-2026-0907-003-ndjson-frame-module.md` (medium) — NDJSON delegation
+  frame module + argv-exact `--json` activation (BO Phase B 1/5); suite 18/0;
+receipt 2/2. The record's "archive after FID-007" sequencing pointed at a
+  FID never authored — BO Phase 2/3 open fresh as SCOPE T21-D/E (Phase 2
+  since implemented + closed — FID-006 below).
+- `FID-2026-0907-004-ndjson-handleevent-tap.md` (medium) — handleEvent tap,
+  five ratified progress kinds, JSON-mode only (2/5); suites 40/0; receipt
+  4/4; error-event frames deferred to FID-005 (discharged there).
+- `FID-2026-0907-005-ndjson-artifact-error-stdout-purity.md` (medium) —
+  artifact + error frames at every boundary + stdout purity via
+  `headless-outcome.ts` (3/5); suites 50/0; receipt 5/5; honest baseline bump
+  `headless-run.ts` 284 → 296.
+- `FID-2026-0907-006-ndjson-stdin-control-reader.md` (medium) — stdin
+  control-frame reader wiring (BO Phase 2 4/5): cancel → cooperative abort
+  at the `handleEvent` boundary (no frames after the ack), steer parked,
+  unknown/EOF harmless, non-JSON byte-identical; ceiling-forced seam
+  `headless-answer.ts`; RED-first suite within 55/0 across the five
+  headless suites; receipt 5/5.
+- `FID-2026-0907-008-apinex-gateway-provider.md` (low) — APInex gateway (12th
+  provider); keyed live acceptance PASSED: catalog 200/22 models, missing-key
+  401 fail-closed, chat round-trip 200 on `free/glm-5.3-flash` (paid-tier
+  probe 402 = balance, not integration); receipt 8/8.
+- `FID-2026-0907-009-provider-key-update.md` (high) — `/provider <name>
+  update` replace semantics; suite 5/0 + battery 37/0; receipt 4/4; dev-build
+  smoke carried as never-claimed-passed per the 2026-09-06 ruling.
+- `FID-2026-0907-010-fid-fingerprint-off-by-one.md` (high) — fingerprint
+  off-by-one + prose-hijack stamp anchor fixed behind shared `receiptSpan()`
+  / `findHeadingLine()` locators; 26/0 + 8/0 regression pins; receipt 5/5.
+
+## 2026-09-07 closure — picker focus + harness-honesty gates (2 FIDs archived; index backfilled 2026-09-08)
+
+- `FID-2026-0907-001-picker-close-focus-loss.md` (high) — dismissing any
+  picker overlay left the chat input permanently blurred; single-seam
+  open/restore focus effect + pure predicate; suite 6/0 RED-first; receipt
+  2/2; live acceptance operator-confirmed 2026-09-07.
+- `FID-2026-0907-002-harness-honesty-gates.md` (medium) — four mechanized
+  honesty gates (ripgrep boot probe, edit-size guidance, exit-code-masking
+  audit, `verify:clean` clean-room proof); receipt 5/5; live: `verify:clean
+  PASS — ff1ea8f61 (v0.0.30) compiles from a clean checkout (133.9s)`.
+- `FID-2026-0906-008-three-gateway-providers.md` (medium) — TabiToken,
+  GoRouter, VyceAI implemented with all static gates green, then WITHDRAWN
+  by operator direction after live keyed testing showed none can serve chat
+  (chat 403-blocked / dead / disabled; zero-model catalog); full removal
+  sweep; registry restored to 11 providers.
+
+## 2026-09-06 closure — ground-truth ceremony (7 FIDs archived; index backfilled 2026-09-08)
+
+Operator ruling ("completed = close + archive + changelog immediately");
+commit SHAs ground-truth-resolved per G2; consolidated battery 66/0:
+
+- `FID-2026-0906-007-spawned-process-env-bootstrap.md` (high) — env.ts gains
+  the `.env.local` bootstrap leg; desktop joins the root test chain.
+- `FID-2026-0906-006-office-presentation-audit.md` (medium) — scope
+  superseded; audit + operator visual smoke handoff.
+- `FID-2026-0906-005-desktop-lazy-3d-chunk.md` (medium) — dynamic
+  office/stage boundary; ~190 kB gz off first paint.
+- `FID-2026-0906-004-desktop-attach-defects.md` (high) — updater URL
+  asset-name mapping + stage download layout; live v0.0.29 chain proof.
+- `FID-2026-0906-003-release-provenance-guard.md` (high) — assume-unchanged
+  detection + clean-checkout compile gate.
+- `FID-2026-0906-002-release-pipeline-desktop-visibility.md` (high) — loud
+  desktop skips + flag-independent verification.
+- `FID-2026-0906-001-desktop-release-workflow-repair.md` (high) — signing
+  secret recovery + Linux deps + the AppImage saga; first Linux desktop
+  build; windows-only updater manifest by operator decision.
+
 ## 2026-09-05 closure — quality campaign to zero (6 FIDs archived)
 
 Six FIDs from the 2026-09-04/05 quality campaign closed after the
