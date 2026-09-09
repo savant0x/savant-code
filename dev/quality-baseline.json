@@ -1254,7 +1254,7 @@
     "packages/agent-runtime/src/tools/tool-executor/native.ts": 249,
     "packages/agent-runtime/src/tools/tool-executor/sandbox-gate.ts": 89,
     "packages/agent-runtime/src/tools/tool-executor/spawn-validation.ts": 155,
-    "packages/agent-runtime/src/tools/tool-executor/tool-result-errors.ts": 23,
+"packages/agent-runtime/src/tools/tool-executor/tool-result-errors.ts": 75,
     "packages/agent-runtime/src/tools/tool-executor/trusted-custom-tool-definitions.ts": 19,
     "packages/agent-runtime/src/tools/tool-executor/types.ts": 68,
     "packages/agent-runtime/src/tools/tool-executor/write-gate.ts": 152,

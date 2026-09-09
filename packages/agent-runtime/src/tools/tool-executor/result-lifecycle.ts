@@ -1,4 +1,4 @@
-import { hasToolResultError } from './tool-result-errors'
+import { hasToolResultError, toolResultErrorLine } from './tool-result-errors'
 import { isWriteToolName, resolveFidIdForWrite } from './write-bookkeeping'
 import { appendGroundingRefresh } from '../../echo/grounding'
 import { recordEvidence } from '../../evidence/spill'
@@ -241,7 +241,11 @@ export async function runSuccessLifecycle<T extends ToolName>(
         toolName,
         toolInput: toolCall.input as Record<string, JSONValue>,
         toolResult: toolResult.content as unknown as JSONValue,
-        ...(failed ? { errorMessage: 'tool result contains an error' } : {}),
+        // FID-2026-0909-005: surface the real error text so the ledger's
+        // dedup key groups by error class; generic = shape-drift fallback.
+        ...(failed
+          ? { errorMessage: toolResultErrorLine(toolResult.content) }
+          : {}),
       }),
     )
   }
