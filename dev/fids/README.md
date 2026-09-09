@@ -33,7 +33,18 @@ on-disk records missing from the table added (-0823-003, -0824-003…-008,
 
 | FID | Status | Purpose / blocking gate |
 |---|---|---|
-| [`FID-2026-0909-005`](FID-2026-0909-005-experience-capture-generic-error-line.md) | `analyzed` | Experience-capture records one generic error line (36/36 degraded) — blocking gate: operator implementation approval (Law 2); design converged, gates declared |
+| (empty — the queue drained 2026-09-09; FID-2026-0909-005 closed + archived, see `archive/README.md`) | | |
+
+**2026-09-09 closure (FID-2026-0909-005):** implemented on the operator
+approval left standing by the dead session (directive: "Approve: implement
+FID-2026-0909-005 now"). Full Loop 2: RED-leg suite-first run (10/1, the
+failing pin the exact generic-line defect), GREEN wiring with two
+audited deltas (the `toolResultErrorLine` fallback centralizer + the
+300-line-ceiling suite split), Verifier 8 PASS / 1 NEEDS-REVIEW → SHIP
+(the NEEDS-REVIEW was this closure edit itself, discharged by
+documenting the deltas in the FID). Commit `abe4d6a`; receipt 4/4 PASS
+stamped at the archived path. Live boundary open: the next natural
+handler soft-failure appends the first real-line ledger record.
 
 **2026-09-09 Perfection Loop pass (all three records → `analyzed`):** each
 FID's Loop 1 ran codebase-grounded (single-agent ECHO v0.1.2). Ground-truth

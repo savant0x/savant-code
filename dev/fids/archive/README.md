@@ -3,6 +3,27 @@
 This directory contains closed or historically completed FIDs. Files here are
 an audit record, not an active work queue.
 
+## 2026-09-09 closure — experience-capture generic error line (1 FID archived; queue empty)
+
+The adjacent finding from FID-2026-0909-004's closure got its own record and
+fix. Operator approval was left standing by the dead session (the approval
+turn returned empty ×2); re-confirmed via ask_user this session.
+
+- `FID-2026-0909-005-experience-capture-generic-error-line.md` (medium) —
+  every ledger record (36/36) carried the same hardcoded
+  `errorFirstLine`, collapsing the dedup key to tool name alone and
+  blinding the recurrence counter, agenda promotion, FID routing, and
+  the auto-drafted skill pipeline to error classes. Fix (commit
+  `abe4d6a`): `extractToolResultError` mirrors the checker exactly;
+  `toolResultErrorLine` centralizes the generic fallback (Law 13);
+  `result-lifecycle.ts:247` passes the real line. Two audited deltas
+  (fallback centralizer + ceiling-forced suite split) documented in
+  the FID's Loop 2. Gates: RED 10/1 → GREEN 14/0; full agent-runtime
+  1358/0; typecheck/eslint/prettier/quality:report (ratchet 23→75)
+  /lint:md all clean; receipt 4/4 PASS. The 36 legacy records remain
+  one honest bucket (append-only; text unrecoverable). Live boundary
+  open: the next natural handler soft-failure appends the first
+  real-line record.
 ## 2026-09-09 closure — network research tools dead in the default permission mode (1 FID archived; queue empty)
 
 Operator directive: "network access should be enabled by DEFAULT" (after a

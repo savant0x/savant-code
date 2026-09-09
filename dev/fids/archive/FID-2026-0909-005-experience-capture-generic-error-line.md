@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0909-005-experience-capture-generic-error-line.md`
 **ID:** FID-2026-0909-005
 **Severity:** medium
-**Status:** analyzed
+**Status:** closed
 **Created:** 2026-09-09 16:00
 **YAGNI-Compliance:** PASS (one helper beside its sibling checker; no new machinery)
 
@@ -191,13 +191,19 @@ operator-observable live check, never claimed from unit runs alone.
 
 ## Verification Gates
 
-> Declared at Loop 1 (2026-09-09), live-run at implementation. The
-> extraction suite is created by Step 2 (RED-first) before the Step 3
-> wiring, so its declared path exists by the time the receipt is stamped.
-
 - gate: typecheck packages/agent-runtime
 - gate: test packages/agent-runtime/src/tools/tool-executor/tool-result-errors.test.ts
+- gate: test packages/agent-runtime/src/tools/tool-executor/result-lifecycle.test.ts
 - gate: test packages/agent-runtime/src/hooks/__tests__/experience-capture.test.ts
+
+### Verification Receipt
+
+- fingerprint: sha256:4a8896f7836f5fddbe9da2fd24e1eb47c0f22a018a646d41037cd3097d564109
+- verified: 2026-09-09T23:15:40.595Z
+- typecheck packages/agent-runtime: exit 0
+- test packages/agent-runtime/src/tools/tool-executor/tool-result-errors.test.ts: exit 0
+- test packages/agent-runtime/src/tools/tool-executor/result-lifecycle.test.ts: exit 0
+- test packages/agent-runtime/src/hooks/__tests__/experience-capture.test.ts: exit 0
 
 ## Perfection Loop
 
@@ -256,6 +262,61 @@ operator-observable live check, never claimed from unit runs alone.
   the error; the text is gone. The legacy bucket is the honest record.
 - **CHANGE DELTA:** n/a (initial record).
 
+### Loop 2 — IMPLEMENTATION (2026-09-09, operator-approved: last session's directive + this session's confirmation)
+
+- **RED (suite-first):** the co-located suite ran against the unfixed
+  lifecycle — 10 pass / 1 fail, the failing pin exactly the wiring
+  defect: `Expected: "HTTP 404: no results" / Received: "tool result
+  contains an error"` at the ledger assertion. Extractor pins and the
+  mirror invariant passed from the start (pure functions, no wiring).
+- **GREEN:** `extractToolResultError` added to tool-result-errors.ts
+  mirroring the checker exactly; wired at result-lifecycle.ts:247
+  through a new `toolResultErrorLine(content)` helper. Two deltas
+  beyond the Loop-1 spec, both forced by mechanical gates and audited
+  by the Verifier: (1) **`toolResultErrorLine`** centralizes the
+  generic fallback beside the extractor (Law 13 — the literal's single
+  truth; makes the fallback pin non-vacuous) after the inline form
+  pushed result-lifecycle.ts past the 300-line quality ceiling;
+  (2) **suite split** — the single declared suite reached 388 lines
+  against the same ceiling, so the lifecycle end-to-end pins moved to
+  `result-lifecycle.test.ts` beside their subject module (the
+  directory's co-location convention); the split suite's gate line is
+  declared above. Baseline ratchet: tool-result-errors.ts 23 → 75
+  (the quality-report count; `wc -l` reads 74 — the known
+  trailing-newline off-by-one class, FID-2026-0907-010).
+- **AUDIT (Verifier, implementation):** 8 PASS / 1 NEEDS-REVIEW —
+  verdict **SHIP**. PASSes evidence-cited: mirror exactness, fallback
+  reachability (unreachable while the mirror holds; engages on drift),
+  wiring at :247 with the JSONValue cast intact, rejection path
+  untouched (two surgical replacements only), non-tautological pins
+  (RED leg proved sensitivity), Law-6-clean (test casts follow the
+  tool-executor-sandbox.test.ts fixture convention), honest baseline,
+  no regressions (full agent-runtime 1358/0 across 234 files), Law 4
+  call-graph (one production consumer: result-lifecycle.ts:1 + :247,
+  the runSuccessLifecycle hot path). The NEEDS-REVIEW was this
+  closure edit itself — the two deltas documented here are the
+  discharge. One doc-precision nit applied: the corpus tripwire
+  comment no longer claims to catch future checker-field drift (a
+  new checker field needs a matching corpus entry and extractor
+  branch — stated in the suite header).
+- **ADVERSARIAL (self-refutation of the deltas):** "`toolResultErrorLine`
+  is unrequested abstraction" — refuted: it owns the fallback literal
+  (previously inline at the call site), is the only way the fallback
+  behavior is pinned non-vacuously, and kept the hot-path file under
+  the ceiling; YAGNI-Compliance stands (one helper beside its sibling,
+  zero new machinery). "The split violates the declared gate path" —
+  refuted: the split suite's gate line is declared and live-runs in
+  the receipt; the alternative (one 388-line suite) fails a hard
+  quality gate.
+- **Live-boundary honesty:** the ledger still holds exactly the 36
+  legacy records — this session's own tool failures were pre-dispatch
+  gate halts (EHEL Law-1/Law-3 blocks, native.ts:97) which never reach
+  the result lifecycle and so never append records. The live
+  confirmation boundary stands open: the next natural handler
+  soft-failure appends the first real-line record.
+- **CHANGE DELTA:** +`toolResultErrorLine` helper; suite split with
+  added gate line; baseline 23→75; suite-header comment precision.
+
 ### Missed Questions
 
 1. *Multiple error parts/fields — which wins?* First error-carrying part in
@@ -285,27 +346,59 @@ operator-observable live check, never claimed from unit runs alone.
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [ ] **Commit SHA:** (pending implementation)
-- [ ] **File:line ranges:** (pending)
-- [ ] **Gate output:** (pending)
-- [ ] **Reproducibility:** (pending)
-- [ ] **Step statuses:** (pending)
+- [x] **Commit SHA:** `abe4d6a` (code + suites + baseline; governance
+      closure follows) — preceded by `cd3a027` (this FID's authoring +
+      the FID-0909-004 closure records, drained from the dead session).
+- [x] **File:line ranges:** `tool-result-errors.ts` (extractor +
+      `toolResultErrorLine`, 75 report-lines); `result-lifecycle.ts:1`
+      (import) + `:243-249` (the failed-branch wiring);
+      `tool-result-errors.test.ts` (163 lines, 12 tests);
+      `result-lifecycle.test.ts` (261 lines, 2 end-to-end pins);
+      `dev/quality-baseline.json` (tool-result-errors.ts 23→75).
+- [x] **Gate output:** receipt below (`fid:verify --write`, archived
+      path); full agent-runtime 1358/0 across 234 files; eslint
+      `--max-warnings 0` clean; prettier clean; `quality:report` PASS
+      (1467 files); `lint:md` PASS.
+- [x] **Reproducibility:** RED leg — revert `:247` to the hardcoded
+      literal and run `result-lifecycle.test.ts`: the real-line pin
+      fails with the exact quote in Loop 2. GREEN — as committed,
+      14/0 across the two suites.
+- [x] **Step statuses:** Steps 1-3 + 5 complete; Step 4 (doc check)
+      verified — `docs/self-improving-harness.md` shows a real error
+      in its record example (grep for the generic literal: no hits),
+      no doc change needed.
 
 ### Code Verification Evidence
 
-- [ ] Files referenced in Affected Components exist
-- [ ] Implementation matches the Proposed Solution
-- [ ] Typecheck/tests/lint pass with pasted tool output
-- [ ] Production call-graph evidence is present for new or repaired wiring
-- [ ] FID status reflects the actual implementation state
+- [x] Files referenced in Affected Components exist
+- [x] Implementation matches the Proposed Solution (two audited
+      deltas documented in Loop 2)
+- [x] Typecheck/tests/lint pass with pasted tool output (receipt below)
+- [x] Production call-graph evidence is present for new or repaired
+      wiring (`result-lifecycle.ts:247` — the runSuccessLifecycle hot
+      path, exercised by the 1358-test full suite)
+- [x] FID status reflects the actual implementation state
 
 ## Resolution
 
-- **Closed Date:** (pending)
-- **Fix Description:** (pending)
-- **Tests Added:** (pending)
-- **Verification Evidence:** (pending)
-- **Archived:** (pending)
+- **Closed Date:** 2026-09-09
+- **Fix Description:** `extractToolResultError` + `toolResultErrorLine`
+  in `tool-result-errors.ts` extract the real first error line from
+  failed tool results; `result-lifecycle.ts:247` passes it as the
+  PostToolUseFailure `errorMessage`, with the generic line demoted to
+  a shape-drift fallback. New ledger records group by
+  (tool, error class) from commit `abe4d6a` forward; the dedup key,
+  agenda promotion, and auto-drafted skill naming all become
+  error-class-aware.
+- **Tests Added:** `tool-result-errors.test.ts` (12: extractor
+  pins, detection/extraction mirror invariant over a 22-shape corpus,
+  fallback pins) + `result-lifecycle.test.ts` (2: end-to-end ledger
+  record via a real hook engine at a temp capture root; success
+  records nothing).
+- **Verification Evidence:** receipt below; RED 10/1 → GREEN 14/0;
+  full agent-runtime 1358/0; typecheck/eslint/prettier/
+  quality:report/lint:md all clean.
+- **Archived:** 2026-09-09 (`dev/fids/archive/`)
 
 ## Lessons Learned
 

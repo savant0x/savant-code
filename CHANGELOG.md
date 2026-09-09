@@ -2,6 +2,31 @@
 
 ## Unreleased
 
+### The self-improving loop regains its error-class vision — real error lines in the experience ledger (closed + archived 2026-09-09)
+
+- **FID-2026-0909-005 — medium — every ledger record (36/36) carried the
+  same generic `errorFirstLine`** because the soft-failure hook site
+  hardcoded `"tool result contains an error"` while the real error text
+  sat in scope — collapsing the dedup key to tool name alone and blinding
+  the recurrence counter, agenda promotion, FID routing, and the
+  auto-drafted skill pipeline to error classes. Fix (commit `abe4d6a`):
+  `extractToolResultError` in `tool-result-errors.ts` mirrors the sibling
+  checker exactly (same fields, same order); `toolResultErrorLine`
+  centralizes the generic fallback (Law 13 — the literal's single truth);
+  `result-lifecycle.ts:247` passes the real first error line, with the
+  generic line demoted to a shape-drift fallback guarded by a
+  detection/extraction mirror invariant over a 22-shape corpus. Two
+  audited deltas beyond the converged spec (fallback centralizer +
+  300-line-ceiling suite split into co-located `tool-result-errors.test.ts`
+  12 tests + `result-lifecycle.test.ts` 2 end-to-end pins) documented in
+  the FID's Loop 2. Gates: RED leg 10/1 (the failing pin the exact defect)
+  → GREEN 14/0; full agent-runtime 1358/0 across 234 files; typecheck,
+  eslint `--max-warnings 0`, prettier, `quality:report` (ratchet 23→75),
+  lint:md all clean; receipt 4/4 PASS at the archived path. The 36 legacy
+  records stay one honest bucket (append-only; raw text unrecoverable).
+  Live boundary open: the next natural handler soft-failure appends the
+  first real-line record. Operator approval carried over from the dead
+  session's final directive, re-confirmed via ask_user.
 ### Network research tools run in the default mode — the sandbox now honors its own safety registry (closed + archived 2026-09-09)
 
 - **FID-2026-0909-004 — high — research is no longer dead in the default
