@@ -2,6 +2,7 @@ import { CHATGPT_OAUTH_ENABLED } from '@savant-code/common/constants/chatgpt-oau
 import {
   getChatGptOAuthCredentials,
   getValidChatGptOAuthCredentials,
+  probeRipgrepAvailability,
 } from '@savant-code/sdk'
 import { enableMapSet } from 'immer'
 
@@ -42,6 +43,20 @@ export async function initializeApp(params: { cwd?: string }): Promise<void> {
   initializeThemeStore()
   enableManualThemeRefresh()
   initTimestampFormatter()
+
+  // FID-2026-0907-002 (Step 1): probe ripgrep once at boot so a missing
+  // binary surfaces loudly here — with remediation — instead of as a
+  // mid-task search failure. Warn-only: the resolver's fail-closed
+  // behavior at call time is unchanged, and a probe problem must never
+  // break boot.
+  try {
+    const rgProbe = probeRipgrepAvailability()
+    if (!rgProbe.ok) {
+      logger.warn(`Ripgrep unavailable: ${rgProbe.error}`)
+    }
+  } catch (error) {
+    logger.debug('Ripgrep availability probe failed:', error)
+  }
 
   // Compute the hardware-based fingerprint in the background so it's ready
   // by the time the user finishes reading the login prompt.

@@ -36,7 +36,10 @@ export function killProcessGroup(child: ChildProcess, signal: NodeJS.Signals) {
   }
   try {
     child.kill(signal)
-  } catch {}
+  } catch {
+    // Best-effort kill: an already-exited or un-killable child is the
+    // expected outcome here, never a diagnostic to surface.
+  }
 }
 
 export function isProcessGroupAlive(child: ChildProcess): boolean {

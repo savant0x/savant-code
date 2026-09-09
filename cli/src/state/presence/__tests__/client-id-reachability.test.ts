@@ -103,7 +103,7 @@ describe('Discord presence client-id reachability (Law 4)', () => {
       (hit) =>
         !/function bootPresence|export function bootPresence/.test(hit.text),
     )
-    expect(bootCalls.map((c) => c.location)).toEqual(['init/init-app.ts:52'])
+    expect(bootCalls.map((c) => c.location)).toEqual(['init/init-app.ts:67'])
     expect(bootCalls[0].text).toContain('SAVANT_DISCORD_CLIENT_ID')
   })
 

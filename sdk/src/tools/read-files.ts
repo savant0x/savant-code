@@ -1,9 +1,15 @@
+import { READ_FILES_MAX_CHARS } from '@savant-code/common/constants/read-files'
 import { FILE_READ_STATUS } from '@savant-code/common/old-constants'
 import { isFileIgnored } from '@savant-code/common/project-file-tree'
 
 import { resolveFilePath } from './path-utils'
 
 import type { SavantCodeFileSystem } from '@savant-code/common/types/filesystem'
+
+// FID-2026-0907-002: the truncation threshold is canonical in `common` so
+// the edit tool's size guidance can never silently diverge from the read
+// tool's truncation point. Re-exported for SDK consumers.
+export { READ_FILES_MAX_CHARS }
 
 export type FileFilterResult = {
   status: 'blocked' | 'allow-example' | 'allow'
@@ -29,7 +35,7 @@ export async function getFiles(params: {
 
   const result: Record<string, string | null> = {}
   const MAX_FILE_BYTES = 10 * 1024 * 1024 // 10MB - skip reading entirely
-  const MAX_CHARS = 100_000 // 100k characters threshold
+  const MAX_CHARS = READ_FILES_MAX_CHARS // canonical constant (common)
   const numFmt = new Intl.NumberFormat('en-US')
   const fmtNum = (n: number) => numFmt.format(n)
 

@@ -1,3 +1,4 @@
+import { READ_FILES_MAX_CHARS } from '@savant-code/common/constants/read-files'
 import { createPatch } from 'diff'
 
 import { tryToDoStringReplacementWithExtraIndentation } from './generate-diffs-prompt'
@@ -6,6 +7,26 @@ import type { Logger } from '@savant-code/common/types/contracts/logger'
 
 function normalizeLineEndings(params: { str: string }): string {
   return params.str.replace(/\r\n/g, '\n')
+}
+
+/**
+ * FID-2026-0907-002 (Step 2): when an edit fails to match on a file larger
+ * than the read tool's truncation limit, the model may never have seen the
+ * tail of the file — the not-found error is then misleading. Append the
+ * size context + ranged-read remedy to both match-failure error shapes
+ * (not-found and ambiguity) at this single site.
+ */
+function withLargeFileGuidance(error: string, contentLength: number): string {
+  if (contentLength <= READ_FILES_MAX_CHARS) {
+    return error
+  }
+  return (
+    `${error}\n\n` +
+    `This file is ${contentLength.toLocaleString('en-US')} chars; read_files output truncates at ` +
+    `${READ_FILES_MAX_CHARS.toLocaleString('en-US')} chars, so content past that point has not been ` +
+    'shown to you. Use read_files with offset/limit windows to read the ' +
+    'exact region you are editing, then retry.'
+  )
 }
 
 export async function processStrReplace(params: {
@@ -74,7 +95,9 @@ export async function processStrReplace(params: {
     if (match.success) {
       updatedOldStr = match.oldStr
     } else {
-      messages.push(match.error)
+      messages.push(
+        withLargeFileGuidance(match.error, normalizedCurrentContent.length),
+      )
       updatedOldStr = null
     }
 

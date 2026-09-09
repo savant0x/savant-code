@@ -175,10 +175,53 @@ export function getBundledRgPath(
   }
 
   emitDebug(debug, 'ripgrep-resolver: exhausted all candidates')
-  // No fallback available - bundled binaries are required
+  // No fallback available - bundled binaries are required. Name every
+  // concrete candidate attempted (never an interpolated `undefined` —
+  // both fallback paths can be unassigned) plus the remediation.
+  const attempted = [vendorPath, distVendorPath].filter(
+    (candidate): candidate is string => typeof candidate === 'string',
+  )
+  const attemptedList =
+    attempted.length > 0
+      ? attempted.join(' or ')
+      : 'no candidate paths resolved'
   throw new Error(
     `Ripgrep binary not found for ${platform}-${arch}. ` +
-      `Expected at: ${vendorPath} or ${distVendorPath}. ` +
+      `Expected at: ${attemptedList}. ` +
       `Please run 'npm run fetch-ripgrep' or set SAVANT_CODE_RG_PATH environment variable.`,
   )
+}
+
+/** Non-throwing probe result for boot-time availability checks. */
+export type RipgrepAvailabilityProbe =
+  { ok: true; path: string } | { ok: false; error: string }
+
+const probeCache = new Map<string, RipgrepAvailabilityProbe>()
+
+/**
+ * FID-2026-0907-002 (Step 1): probe ripgrep availability WITHOUT throwing,
+ * memoized per process (keyed by importMetaUrl so distinct bundling
+ * contexts probe independently). Callers — CLI boot — use this to warn
+ * loudly with remediation before the first search fails mid-task; the
+ * resolver itself stays fail-closed at call time.
+ */
+export function probeRipgrepAvailability(
+  importMetaUrl?: string,
+): RipgrepAvailabilityProbe {
+  const cacheKey = importMetaUrl ?? 'default'
+  const cached = probeCache.get(cacheKey)
+  if (cached) {
+    return cached
+  }
+  let probe: RipgrepAvailabilityProbe
+  try {
+    probe = { ok: true, path: getBundledRgPath(importMetaUrl) }
+  } catch (error) {
+    probe = {
+      ok: false,
+      error: error instanceof Error ? error.message : String(error),
+    }
+  }
+  probeCache.set(cacheKey, probe)
+  return probe
 }
