@@ -139,15 +139,21 @@ export function codeSearch({
     const hardKill = () => {
       try {
         childProcess.kill('SIGTERM')
-      } catch {}
+      } catch {
+        // Best-effort kill: an already-exited child is the expected outcome.
+      }
       // Store timeout reference so it can be cleared if process closes normally
       killTimeoutId = setTimeout(() => {
         try {
           childProcess.kill('SIGKILL')
         } catch {
+          // Best-effort escalation: the process may have exited between
+          // signals — the fallback kill below shares that contract.
           try {
             childProcess.kill()
-          } catch {}
+          } catch {
+            // Same best-effort contract; nothing actionable remains.
+          }
         }
         killTimeoutId = null
       }, 1000)
@@ -243,10 +249,16 @@ export function codeSearch({
             if (!ln) continue
             try {
               collector.addEventLine(ln, 'flush')
-            } catch {}
+            } catch {
+              // Probe outcome: a partial trailing JSON line may legitimately
+              // fail to parse — the streamed events above are authoritative.
+            }
           }
         }
-      } catch {}
+      } catch {
+        // Probe outcome: the buffered remainder is not parseable JSON —
+        // ignore and close with whatever was streamed.
+      }
 
       const closeOutput = buildCloseOutput({
         fileGroups: collector.fileGroups,

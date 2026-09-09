@@ -31,7 +31,27 @@ const inputSchema = z
       .optional()
       .default(15)
       .describe(
-        `Maximum number of results to return per file. Defaults to 15. There is also a global limit of 250 results across all files.`,
+        `Maximum number of results to return per file. Defaults to 15. Related caps: globalMaxResults (total matches across files) and maxOutputStringLength (total output characters).`,
+      ),
+    globalMaxResults: z
+      .number()
+      .int()
+      .positive()
+      .max(5000)
+      .optional()
+      .default(250)
+      .describe(
+        `Maximum total matching results across all files before the search stops early. Defaults to 250 (ceiling 5000). Prefer narrowing the pattern first; raise only for broad audit-style sweeps.`,
+      ),
+    maxOutputStringLength: z
+      .number()
+      .int()
+      .positive()
+      .max(200000)
+      .optional()
+      .default(20000)
+      .describe(
+        `Maximum total output size in characters before the search stops early. Defaults to 20000 (ceiling 200000). Prefer narrowing the pattern first; raise only for evidence-heavy sweeps.`,
       ),
   })
   .describe(
@@ -79,10 +99,10 @@ Note: Do not use the end_turn tool after this tool! You will want to see the out
 RESULT LIMITING:
 
 - The maxResults parameter limits the number of results shown per file (default: 15)
-- There is also a global limit of 250 total results across all files
-- These limits allow you to see results across multiple files without being overwhelmed by matches in a single file
+- globalMaxResults caps total matches across all files (default: 250, ceiling: 5000)
+- maxOutputStringLength caps the total output size in characters (default: 20000, ceiling: 200000)
+- When a limit fires, the truncation marker names the cap that fired and the remedy: re-run with a narrower pattern, cwd, or -g globs, or pass the named parameter to raise that cap
 - If a file has more matches than maxResults, you'll see a truncation notice indicating how many results were found
-- If the global limit is reached, remaining files will be skipped
 
 Examples:
 ${$getNativeToolCallExampleString({
@@ -112,16 +132,25 @@ ${$getNativeToolCallExampleString({
 ${$getNativeToolCallExampleString({
   toolName,
   inputSchema,
-  input: { pattern: 'TODO', flags: '-n --type-not py' },
+  input: { pattern: 'deprecated', flags: '-n --type-not py' },
   endsAgentStep,
-})}
-${$getNativeToolCallExampleString({
+})}${$getNativeToolCallExampleString({
   toolName,
   inputSchema,
   input: { pattern: 'getUserData', maxResults: 10 },
   endsAgentStep,
 })}
-`.trim()
+${$getNativeToolCallExampleString({
+  toolName,
+  inputSchema,
+  input: {
+    pattern: 'deprecated|legacy',
+    flags: '-g docs/**',
+    globalMaxResults: 1000,
+    maxOutputStringLength: 50000,
+  },
+  endsAgentStep,
+})}`.trim()
 
 export const codeSearchParams = {
   toolName,

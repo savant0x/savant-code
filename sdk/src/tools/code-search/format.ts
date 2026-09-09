@@ -46,8 +46,8 @@ export function buildLimitedOutput(
   )
   const limitReason =
     matchesGlobal >= globalMaxResults
-      ? `[Global limit of ${globalMaxResults} results reached.]`
-      : '[Output size limit reached.]'
+      ? `[Global limit of ${globalMaxResults} results reached. Re-run with a narrower pattern, cwd, or -g globs; or pass globalMaxResults to raise this cap.]`
+      : `[Output size limit reached (cap ${maxOutputStringLength} chars). Re-run with a narrower pattern, cwd, or -g globs; or pass maxOutputStringLength to raise this cap.]`
   return {
     stdout: finalOutput + '\n\n' + limitReason,
     message: `Stopped early after ${matchesGlobal} match(es).`,
@@ -92,12 +92,12 @@ export function buildCloseOutput({
   const truncationMessages: string[] = []
   if (truncatedFiles.length > 0) {
     truncationMessages.push(
-      `Results limited to ${maxResults} per file. Truncated files:\n${truncatedFiles.join('\n')}`,
+      `Results limited to ${maxResults} per file (pass maxResults to raise). Truncated files:\n${truncatedFiles.join('\n')}`,
     )
   }
   if (killedForLimit) {
     truncationMessages.push(
-      `Global limit of ${globalMaxResults} results reached.`,
+      `Global limit of ${globalMaxResults} results reached (pass globalMaxResults to raise), or output size cap ${maxOutputStringLength} chars reached (pass maxOutputStringLength to raise). Re-run with a narrower pattern, cwd, or -g globs first.`,
     )
   }
 
