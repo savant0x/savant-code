@@ -10,6 +10,7 @@ import {
 } from '@savant-code/common/providers/audit'
 import { PROVIDER_REGISTRY } from '@savant-code/common/providers/registry'
 
+import { auditExitCodeMasking } from './audit-exit-codes.js'
 import { validateFidVerificationGates } from './fid-gates.js'
 import { validateActiveFidLedger } from './fid-ledger.js'
 import { collectHygieneIssues } from './hygiene.js'
@@ -223,6 +224,14 @@ const providerAuditIssues = [
   message,
 }))
 
+// FID-2026-0907-002: refuse the exit-code-masking pattern (pipe into
+// tail/head/tee then `echo $?`) in tracked scripts, git hooks, and
+// workflow YAML — the v0.0.22 crashed-eslint-shipped-green incident class.
+const exitCodeMaskingIssues = auditExitCodeMasking(root).map((issue) => ({
+  code: 'audit.exit-code-masking',
+  message: `${issue.file}:${issue.line}: ${issue.message}`,
+}))
+
 const issues = [
   ...validateMetadata(collectMetadata()),
   ...validateCommandParity(collectParity()),
@@ -239,6 +248,7 @@ const issues = [
         message: `${issue.file}: ${issue.message}`,
       }))),
   ...providerAuditIssues,
+  ...exitCodeMaskingIssues,
   ...validateCurrentHygiene(),
   ...validateRebrandCorruption(),
 ]
