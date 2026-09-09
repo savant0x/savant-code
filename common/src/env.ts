@@ -1,5 +1,6 @@
 import fs from 'fs'
 import path from 'path'
+import { fileURLToPath } from 'url'
 
 import { applyEnvLocalInto } from './env-bootstrap'
 import { allowsDevelopmentDefaults } from './env-boundary'
@@ -41,7 +42,20 @@ function loadBinaryEnvIfPresent(): boolean {
 // used to own alone, leaving spawned processes and sub-package entrypoints
 // starving). Shell exports always outrank both (existing-env-wins).
 if (!loadBinaryEnvIfPresent()) {
-  applyEnvLocalInto(process.env, import.meta.dir)
+  // Derive the module directory from import.meta.url — NOT import.meta.dir:
+  // the Bun-only `dir` property breaks the SDK's dts-bundle-generator gate,
+  // which recompiles this file under a plain-TS program without Bun types
+  // (TS2339: Property 'dir' does not exist on type 'ImportMeta'). Both forms
+  // are virtual $bunfs paths inside compiled executables that no findUp can
+  // anchor, so the cwd fallback pass below covers that case either way.
+  let moduleDir: string | undefined
+  try {
+    moduleDir = path.dirname(fileURLToPath(import.meta.url))
+  } catch {
+    // A virtual or unparseable module URL must not brick the importers of
+    // this module at load time; the cwd fallback pass below still runs.
+  }
+  if (moduleDir) applyEnvLocalInto(process.env, moduleDir)
   // Compiled executables (e.g. the sidecar binary the desktop E2E spawns)
   // have a virtual import.meta.dir no findUp can anchor; the process cwd is
   // the only meaningful anchor there. Existing-env-wins makes this a pure
