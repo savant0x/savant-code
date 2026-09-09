@@ -56,8 +56,11 @@ const COMMON_SRC_PATTERN = /^common\/src\//
 const TEST_PATH_PATTERN =
   /(?:^|\/)(?:__tests__|tests|testing)(?:\/|$)|\.(?:test|spec)\.[cm]?[jt]sx?$/
 
-/** Shell/TS comment prefixes that exempt a line from the audit. */
-const COMMENT_PATTERN = /^\s*(?:#|\/\/)/
+/** Shell/TS comment prefixes that exempt a line from the audit. The
+ * `*` alternative covers block-comment/JSDoc continuation lines — their
+ * content is documentation, and the detector's own JSDoc must be allowed
+ * to name the patterns it detects (self-scan). */
+const COMMENT_PATTERN = /^\s*(?:#|\/\/|\*)/
 
 /**
  * The pinned-runtime contract probe (scripts/public-release-pinned-bun.test.ts):

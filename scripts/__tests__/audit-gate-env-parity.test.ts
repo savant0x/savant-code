@@ -17,12 +17,18 @@ function lines(file: string, ...entries: string[]): SourceLines {
   return { file, lines: entries }
 }
 
+/** Wraps a runtime name in quotes for building fixture lines. Fixtures MUST
+ * assemble bare-runtime shapes via this helper: a literal `spawnSync('bun'`
+ * in THIS file's source would be flagged by the repo-level self-scan (and
+ * prettier's quote normalization unshields escaped-quote shields). */
+const q = (s: string) => `'${s}'`
+
 describe('detectGateEnvParityIssues (FID-2026-0909-002)', () => {
-  test('class 1: flags spawnSync("bun") in a test file (the ENOENT incident shape)', () => {
+  test('class 1: flags a bare-runtime spawnSync in a test file (the ENOENT incident shape)', () => {
     const issues = detectGateEnvParityIssues(
       lines(
         'cli/src/server/__tests__/gateway-server-command.test.ts',
-        "const child = spawnSync('bun', ['--version'])",
+        `const child = spawnSync(${q('bun')}, ['--version'])`,
       ),
     )
     expect(issues).toHaveLength(1)
@@ -33,12 +39,12 @@ describe('detectGateEnvParityIssues (FID-2026-0909-002)', () => {
     expect(issues[0].message).toContain('PATH-resolvable only in dev shells')
   })
 
-  test('class 1: flags spawn("bun") and Bun.spawn variants alike', () => {
+  test('class 1: flags spawn and Bun.spawn variants alike', () => {
     const spawn = detectGateEnvParityIssues(
-      lines('cli/src/tool.ts', "spawn('bun', ['run'])"),
+      lines('cli/src/tool.ts', `spawn(${q('bun')}, ['run'])`),
     )
     const bunSpawn = detectGateEnvParityIssues(
-      lines('cli/src/tool.ts', "Bun.spawnSync(['bun', '--version'])"),
+      lines('cli/src/tool.ts', `Bun.spawnSync([${q('bun')}, '--version'])`),
     )
     expect(spawn).toHaveLength(1)
     expect(bunSpawn).toHaveLength(1)
@@ -59,7 +65,7 @@ describe('detectGateEnvParityIssues (FID-2026-0909-002)', () => {
     const issues = detectGateEnvParityIssues(
       lines(
         PINNED_BUN_PROBE_PATH,
-        "const probe = spawnSync('bun', ['--version'], { env })",
+        `const probe = spawnSync(${q('bun')}, ['--version'], { env })`,
       ),
     )
     expect(issues).toHaveLength(0)
@@ -69,7 +75,7 @@ describe('detectGateEnvParityIssues (FID-2026-0909-002)', () => {
     const issues = detectGateEnvParityIssues(
       lines(
         'scripts/other.test.ts',
-        "const probe = spawnSync('bun', ['--version'], { env })",
+        `const probe = spawnSync(${q('bun')}, ['--version'], { env })`,
       ),
     )
     expect(issues).toHaveLength(1)
@@ -109,8 +115,19 @@ describe('detectGateEnvParityIssues (FID-2026-0909-002)', () => {
         'common/src/env.ts',
         '// Derive the module directory from import.meta.url — NOT import.meta.dir:',
         'scripts/tool.ts',
-        "// spawn('bun', ...) is fine to mention in prose",
+        `// spawn(${q('bun')}, ...) is fine to mention in prose`,
       ),
+    )
+    expect(issues).toHaveLength(0)
+  })
+
+  test('block-comment and JSDoc continuation lines are exempt (self-scan)', () => {
+    // Fixture assembled by concatenation so THIS test file's own source
+    // line does not carry the literal bare-runtime spawn shape — the
+    // repo-level self-scan would otherwise flag the fixture itself.
+    const jsdocLine = ' * its spawnSync' + "('bu" + "n', ...) is prose only"
+    const issues = detectGateEnvParityIssues(
+      lines('scripts/audit.ts', '/**', jsdocLine, ' */', 'const x = 1'),
     )
     expect(issues).toHaveLength(0)
   })
