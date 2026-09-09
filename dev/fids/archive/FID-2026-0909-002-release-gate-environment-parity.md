@@ -201,9 +201,10 @@ full program on 2026-09-09 includes this default).
   shape `Bun.spawnSync(['bun', ...])` at lines 138/156 (the inventory
   pattern only matched the paren shape). Fixed to `process.execPath`
   (the FID's own lesson), not exempted.
-- `scripts/__tests__/audit-gate-env-parity.test.ts` (new): 10 pins —
+- `scripts/__tests__/audit-gate-env-parity.test.ts` (new): 11 pins —
   incident shapes, execPath/resolved-path negatives, exemption
-  path-exactness, class-2 scoping, comment exemption, surface args.
+  path-exactness, class-2 scoping, comment exemption (line + block
+  continuation), surface args.
 - `dev/quality-baseline.json`: ratchet bumps for the two growth files
   (`bump-version.ts` 266→274, `validate-repository.ts` 258→269).
 
@@ -224,6 +225,19 @@ full program on 2026-09-09 includes this default).
   (`--max-warnings 0`).
 - Affected suites: 22/0 (bump-version + audit-exit-codes +
   audit-gate-env-parity).
+
+### Amendment (2026-09-09, post-archive self-scan hardening — commit `bec778ff`)
+
+The guard's first repo-wide run flagged its OWN surfaces: (1) its JSDoc
+(`*` block-comment continuation naming the detected shape —
+`COMMENT_PATTERN` did not recognize `*` continuations) and (2) its test
+file's fixtures — where prettier's quote normalization had unshielded
+escaped-quote shields, exposing literal bare-runtime shapes in source.
+Fixes: the detector's comment exemption gained the `*` alternative
+(plus a self-scan pin), and all class-1 fixtures now assemble shapes via
+a quoting helper so the file's source never carries the literal.
+Detector suite 11/0; `validate:repository` PASS with the guard live on
+its own tree; scripts battery 327/0 across 45 files.
 
 ## Perfection Loop
 
@@ -307,8 +321,9 @@ host-env spreads in tests.
   suite). Its first live run caught two real class-1 defects
   (`bump-version.ts` bracket-shape spawns), fixed to `process.execPath`.
 - **Tests Added:** `scripts/__tests__/audit-gate-env-parity.test.ts`
-  (10 pins: incident shapes, negatives, exemption exactness, scoping,
-  comments, surface args).
+  (11 pins: incident shapes, negatives, exemption exactness, scoping,
+  line + block-comment exemptions incl. the self-scan pin, surface
+  args).
 - **Verification Evidence:** detector 10/0; affected suites 22/0; eslint
   `--max-warnings 0` clean; `validate:repository` live-run
   FAIL(two real findings)→fix→PASS; prove-the-guard drill FAIL→PASS in a
