@@ -146,6 +146,31 @@ describe('computeFidFingerprint', () => {
     const content = fid('fixed', ['typecheck sdk'])
     expect(computeFidFingerprint(content)).toMatch(/^[0-9a-f]{64}$/)
   })
+
+  // FID-2026-0907-010: the stamp-time view (receipt-less doc) and the
+  // validate-time view (stamped doc, receipt region removed) MUST hash
+  // identically for BOTH stamp paths. Built without self-referential
+  // hashing: the stamped shape is constructed to mirror fid:verify's
+  // stampReceipt output, then hashed as the validator would.
+  it('stamp-path identity: receipt-less hash equals stamped-doc hash (insert path)', () => {
+    const before =
+      '# FID: test\n\n**Status:** fixed\n\n## Verification Gates\n\n- gate: typecheck sdk\n\n## Perfection Loop\nloop text\n'
+    // stampReceipt's insert branch, replayed: A.trimEnd + \n\n + receipt + \n\n + B.trimStart
+    const receipt =
+      '### Verification Receipt\n\n- fingerprint: sha256:PENDING\n- verified: 2026-09-07T00:00:00Z\n- typecheck sdk: exit 0'
+    const anchor = before.indexOf('## Verification Gates')
+    const after = before.slice(anchor + '## Verification Gates'.length)
+    const next = after.search(/^## |^### /m)
+    const insertAt = anchor + '## Verification Gates'.length + next
+    const stamped =
+      before.slice(0, insertAt).trimEnd() +
+      `\n\n${receipt}\n\n` +
+      before.slice(insertAt).trimStart()
+
+    const stampedHash = computeFidFingerprint(stamped)
+    const beforeHash = computeFidFingerprint(before)
+    expect(stampedHash).toBe(beforeHash)
+  })
 })
 
 const THREE_GATES = [

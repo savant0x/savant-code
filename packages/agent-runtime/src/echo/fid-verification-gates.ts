@@ -67,19 +67,14 @@ const STATUS_LINE = /^\*\*Status:\*\*\s*(.+)$/m
 /** FIDs must be at least one of these to require verification evidence. */
 const VERIFIED_STATUSES = new Set(['fixed', 'verified'])
 
-/**
- * Remove fenced code blocks so a `## Verification Gates` example inside a
- * ```markdown fence (as in templates/FID-TEMPLATE.md) is never parsed as a
- * real declaration. Fence contents are documentation, not contract.
- */
+/** Strip fenced code blocks — documented examples (templates/FID-TEMPLATE.md) are
+ * never parsed as real contract declarations; fence contents are documentation. */
 function withoutFencedBlocks(content: string): string {
   return content.replace(/```[^\s]*\n[\s\S]*?```/g, '')
 } /**
- * Extract the text of a headed section up to the next heading of the same
- * or higher level (or EOF). `start` must match a heading on its own line
- * (anchored ^ + $) so inline backtick mentions of the heading name inside
- * prose never shadow the real section. Fenced examples are excluded first
- * so documented format samples never shadow real sections.
+ * Extract a headed section up to the next same-or-higher heading (or EOF). `start`
+ * is line-anchored (^ + $) so inline prose mentions never shadow the real section;
+ * fenced examples are excluded first (withoutFencedBlocks).
  */
 function sectionBetween(
   content: string,
@@ -99,12 +94,39 @@ function verificationGatesSection(content: string): string | undefined {
   return sectionBetween(content, /^## Verification Gates\s*$/m, /^## /m)
 }
 
+/**
+ * The receipt region on the fence-stripped view, as an exact byte span:
+ * the anchored heading match (heading + consumed line terminator) plus the
+ * body up to the next heading. ONE shared locator so the block reader
+ * (`receiptBlock`) and the fingerprint (`computeFidFingerprint`, which
+ * removes exactly this span) always agree on the region's byte extent
+ * (FID-2026-0907-010: the old literal-length removal was one byte short,
+ * leaving a stray line terminator in the hashed view and making every
+ * FIRST receipt stamp validate as stale).
+ */
+function receiptSpan(
+  stripped: string,
+): { start: number; headingLength: number; length: number } | undefined {
+  const headingMatch = stripped.match(/^### Verification Receipt\s*$/m)
+  if (!headingMatch || headingMatch.index === undefined) return undefined
+  const after = stripped.slice(headingMatch.index + headingMatch[0].length)
+  const next = after.search(/^(## |### )/m)
+  const block = next === -1 ? after : after.slice(0, next)
+  return {
+    start: headingMatch.index,
+    headingLength: headingMatch[0].length,
+    length: headingMatch[0].length + block.length,
+  }
+}
+
 /** The `### Verification Receipt` block inside the gates section. */
 function receiptBlock(content: string): string | undefined {
-  return sectionBetween(
-    content,
-    /^### Verification Receipt\s*$/m,
-    /^(## |### )/m,
+  const stripped = withoutFencedBlocks(content)
+  const span = receiptSpan(stripped)
+  if (!span) return undefined
+  return stripped.slice(
+    span.start + span.headingLength,
+    span.start + span.length,
   )
 }
 
@@ -192,18 +214,18 @@ export function parseVerificationReceipt(content: string): {
  * the document outside the receipt invalidates the fingerprint (freshness).
  */
 export function computeFidFingerprint(content: string): string {
-  // Same anchored + fence-stripped view as receiptBlock, so the fingerprint
-  // covers exactly what fid:verify hashed when it stamped the receipt.
-  const block = receiptBlock(content)
-  if (block === undefined) {
-    const stripped = withoutFencedBlocks(content)
+  // Same fence-stripped view as receiptBlock; the removal consumes the exact
+  // receipt span (anchored heading + body), so the hashed view is
+  // byte-identical to the pre-stamp document fid:verify hashed — for both
+  // the first stamp (insert) and re-stamp (replacement) paths
+  // (FID-2026-0907-010).
+  const stripped = withoutFencedBlocks(content)
+  const span = receiptSpan(stripped)
+  if (!span) {
     return createHash('sha256').update(stripped, 'utf8').digest('hex')
   }
-  const stripped = withoutFencedBlocks(content)
-  const start = stripped.indexOf('### Verification Receipt')
   const withoutReceipt =
-    stripped.slice(0, start) +
-    stripped.slice(start + block.length + '### Verification Receipt'.length)
+    stripped.slice(0, span.start) + stripped.slice(span.start + span.length)
   return createHash('sha256').update(withoutReceipt, 'utf8').digest('hex')
 }
 
