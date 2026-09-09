@@ -33,7 +33,9 @@ on-disk records missing from the table added (-0823-003, -0824-003…-008,
 
 | FID | Status | Purpose / blocking gate |
 |---|---|---|
-
+| [`FID-2026-0909-001`](FID-2026-0909-001-clean-checkout-gate-orphaned-temp-dir.md) | `created` | Clean-checkout gate leaves an orphaned Temp worktree dir on failed runs |
+| [`FID-2026-0909-002`](FID-2026-0909-002-release-gate-environment-parity.md) | `created` | Gate-env parity: three env-dependent defects fixed in-session; structural guard open |
+| [`FID-2026-0909-003`](FID-2026-0909-003-verify-clean-sdk-declaration-gate.md) | `created` | verify:clean omits the SDK dts gate (build:sdk surface) |
 **2026-09-08 closure (operator directive: "review the fids, if they are done, add
 them to changelog and properly close them out") — FID-2026-0907-007 +
 FID-2026-0908-003 closed + archived:** both records reviewed complete (full
