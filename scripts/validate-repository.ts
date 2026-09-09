@@ -11,6 +11,7 @@ import {
 import { PROVIDER_REGISTRY } from '@savant-code/common/providers/registry'
 
 import { auditExitCodeMasking } from './audit-exit-codes.js'
+import { auditGateEnvParity } from './audit-gate-env-parity.js'
 import { validateFidVerificationGates } from './fid-gates.js'
 import { validateActiveFidLedger } from './fid-ledger.js'
 import { collectHygieneIssues } from './hygiene.js'
@@ -232,6 +233,15 @@ const exitCodeMaskingIssues = auditExitCodeMasking(root).map((issue) => ({
   message: `${issue.file}:${issue.line}: ${issue.message}`,
 }))
 
+// FID-2026-0909-002: refuse the two mechanically-expressible release-gate
+// environment-parity defect classes (bare runtime-name spawns; Bun-only
+// import.meta properties in common/src production) — the v0.0.30 incident
+// class that shipped green through every local gate.
+const gateEnvParityIssues = auditGateEnvParity(root).map((issue) => ({
+  code: 'audit.gate-env-parity',
+  message: `${issue.file}:${issue.line}: ${issue.message}`,
+}))
+
 const issues = [
   ...validateMetadata(collectMetadata()),
   ...validateCommandParity(collectParity()),
@@ -249,6 +259,7 @@ const issues = [
       }))),
   ...providerAuditIssues,
   ...exitCodeMaskingIssues,
+  ...gateEnvParityIssues,
   ...validateCurrentHygiene(),
   ...validateRebrandCorruption(),
 ]

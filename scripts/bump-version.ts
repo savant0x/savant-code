@@ -135,11 +135,17 @@ function regenerateProtocolBundle(root: string): {
   ok: boolean
   output: string
 } {
-  const result = Bun.spawnSync(['bun', 'run', 'generate:protocol-bundle'], {
-    cwd: root,
-    stdout: 'pipe',
-    stderr: 'pipe',
-  })
+  // FID-2026-0909-002: process.execPath (the running bun binary, absolute
+  // path) instead of the bare 'bun' name, which is PATH-resolvable only in
+  // dev shells and dies with uv_spawn ENOENT under a sanitized spawn env.
+  const result = Bun.spawnSync(
+    [process.execPath, 'run', 'generate:protocol-bundle'],
+    {
+      cwd: root,
+      stdout: 'pipe',
+      stderr: 'pipe',
+    },
+  )
   return {
     ok: result.exitCode === 0,
     output: [
@@ -153,7 +159,9 @@ function spawnBunInstall(
   root: string,
   args: string[],
 ): { ok: boolean; output: string } {
-  const result = Bun.spawnSync(['bun', 'install', ...args], {
+  // FID-2026-0909-002: process.execPath over the bare 'bun' name — see the
+  // sibling generate:protocol-bundle spawn above.
+  const result = Bun.spawnSync([process.execPath, 'install', ...args], {
     cwd: root,
     stdout: 'pipe',
     stderr: 'pipe',
