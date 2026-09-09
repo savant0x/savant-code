@@ -3,9 +3,9 @@
 **Filename:** `FID-2026-0909-003-verify-clean-sdk-declaration-gate.md`
 **ID:** FID-2026-0909-003
 **Severity:** medium
-**Status:** created
+**Status:** analyzed
 **Created:** 2026-09-09 03:24
-**YAGNI-Compliance:** Pending
+**YAGNI-Compliance:** PASS (2026-09-09 — see Loop 1)
 
 ---
 
@@ -94,24 +94,38 @@ a release round-trip; the guard is cheap.
 
 ### Approach
 
-Extend `verify:clean`'s committed-tree proof to include the SDK build (or,
-for a cheaper chain, a standalone `build:sdk` invocation — its
-`durationMs` was ~7s) so the declaration surface compiles on every clean
-verification. The build already runs green post-fix (2b22103), so the
-addition is a pure gate-chain extension with no code change expected.
+**Corrected 2026-09-09 (Loop 1, codebase-grounded):** the gate chain does not
+live in `scripts/verify-clean.ts` — it lives in
+`assertCleanCheckoutCompiles` (`scripts/public-release/provenance.ts:135-212`),
+which the release GATES stage (`assertReleaseHeadCompiles`) and `verify:clean`
+share. Extending the shared chain with a plain `build:sdk` step would run the
+SDK build twice inside a release cut (wasteful, and the GATES stage already
+runs it with transcript capture). The design is therefore a **parameterized
+gate list**: `assertCleanCheckoutCompiles` gains an options parameter carrying
+the post-install gates (default: the typecheck chain, byte-identical to
+today), `verify:clean` opts in to `build:sdk` appended after typecheck, and
+the release path stays on the default (no duplicated work).
 
 ### Steps
 
 1. Read `scripts/verify-clean.ts` 0-EOF and the gate-chain assembly;
-   confirm `build:sdk` is absent.
-2. Add `build:sdk` (root script: `cd sdk && bun run build`) to the chain
-   after the typecheck gates, with its transcript captured like the
-   others.
+   confirm `build:sdk` is absent. **Done 2026-09-09 (Loop 1):** confirmed —
+   `verify:clean` delegates to `assertCleanCheckoutCompiles`; the chain is
+   `git worktree prune` → `git worktree add --detach` → `bun install
+   --frozen-lockfile` → `bun run typecheck` → `worktree remove --force` in a
+   `finally`. `build:sdk` is absent from both call paths.
+2. Parameterize the post-install gate list in `assertCleanCheckoutCompiles`
+   (default unchanged: the typecheck chain); `runVerifyClean` passes
+   `gates: [...typecheck, build:sdk]`. Transcript capture and fail-closed
+   error shapes stay identical to the existing typecheck step.
 3. RED-first pin: revert `common/src/env.ts` to `import.meta.dir` on a
-   scratch branch/worktree and assert the extended `verify:clean` fails;
-   restore and assert green.
-4. Update `verify:clean`'s documented contract (FID-2026-0907-002 record,
-   README/docs if the chain is documented) and stamp the receipt.
+   scratch worktree and assert the extended `verify:clean` fails with the
+   TS2339 shape; restore and assert green. (Run AFTER FID-2026-0909-001's
+   lifecycle fix — the pin creates deliberate gate failures at the shared
+   Temp path; see the master plan's sequencing.)
+4. Update `verify:clean`'s documented contract (`scripts/verify-clean.ts`
+   header comment + HELP_TEXT, the FID-2026-0907-002 record, README/docs if
+   the chain is documented) and stamp the receipt.
 
 ### Verification
 
@@ -121,32 +135,82 @@ scripts + eslint clean.
 
 ## Verification Gates
 
-Pending — declared at GREEN once the chain extension is implemented
-(live re-run by `validate:repository` from status `fixed` onward).
+Declared at Loop 1 (2026-09-09), to be live-run at implementation:
+
+1. `bun test scripts/__tests__/verify-clean.test.ts` — extended mock-runner
+   suite proves the `build:sdk` gate joins the chain in order (and that the
+   default chain is byte-identical for the release path).
+2. `scripts/public-release-provenance.test.ts` — default-path parity pins
+   stay green (no behavior change when the parameter is omitted).
+3. RED pin — planted `import.meta.dir` violation fails the extended
+   `verify:clean` with the TS2339 transcript (scratch worktree).
+4. Live — one full `bun run verify:clean` PASS on the committed tree
+   including the SDK declaration surface.
+5. Root hygiene — `bun x eslint scripts/verify-clean.ts
+   scripts/public-release/provenance.ts --max-warnings 0` + typecheck of the
+   scripts surface via `bun run --cwd=sdk typecheck` unaffected (scripts are
+   repo-root files; eslint + `bun run validate:repository` are the gates).
 
 ## Perfection Loop
 
-### Loop 1 — RED
+### Loop 1 — RED / GREEN / AUDIT (2026-09-09, codebase-grounded)
 
-- **RED:** Gap cataloged 2026-09-09 after the v0.0.30 `build:sdk` gate
-  failure (evidence above): the declaration surface is release-pipeline-
-  only, uncovered by `verify:clean`.
-- **GREEN:** Not started (the env.ts instance is fixed via 2b22103; this
-  FID's open work is the gate-chain extension).
-- **AUDIT:** Not started.
-- **ADVERSARIAL:** Not started.
-- **CHANGE DELTA:** N/A (planning record).
+- **RED (ground-truth verification):** every claim re-verified against the
+  live code. CONFIRMED: `verify:clean` delegates its whole gate chain to
+  `assertCleanCheckoutCompiles` (`scripts/verify-clean.ts:20,66`);
+  `build:sdk` is absent from the chain (chain = worktree → install →
+  `bun run typecheck` → cleanup, `provenance.ts:151-208`); the release
+  GATES stage reaches the same function via `assertReleaseHeadCompiles`
+  (`provenance.ts:120-126` ← `stages.ts`); `build:sdk` =
+  `cd sdk && bun run build` (root package.json), whose declaration step is
+  `dts-bundle-generator` in `sdk/scripts/build.ts` (imports at
+  `sdk/scripts/build.ts:128` use the build tsconfig). The v0.0.30
+  TS2339-at-cut evidence stands (transcript in the record above).
+- **GREEN (design corrections from grounding):** (1) the chain lives in the
+  shared provenance function, not `verify-clean.ts` — the extension must be
+  parameterized or a release cut would run `build:sdk` twice (the FID's
+  original Step 2 wording implied editing `verify-clean.ts` directly);
+  (2) `runVerifyClean` already owns the opts-in seam (`runner` is already
+  injectable, suite convention at `scripts/__tests__/verify-clean.test.ts`),
+  so the gate list joins the same parameter surface; (3) the Step 3 RED pin
+  has a hidden ordering constraint — it deliberately fails gates at the
+  shared versioned Temp path, which is exactly FID-001's orphan bug, so the
+  pin must run after FID-001's fix (recorded in the master plan).
+- **AUDIT (Missed Questions answered with evidence):**
+  1. *Pre-push vs verify:clean* — UNCHANGED decision, now evidenced:
+     `verify:clean` is the committed-tree proof surface and the live
+     baseline run cost 133.9s; adding ~7s there is proportionate, adding it
+     to every pre-push is not. Operator may still choose both at
+     implementation.
+  2. *Sibling uncovered surfaces* — ANSWERED (closes the open question):
+     `build:savant-free` (`savant-free/cli/build.ts` read 0-EOF) shells to
+     `cli/scripts/build-binary.ts` — a Bun **compile** (bundler) target:
+     it catches module-resolution failures but performs **no type
+     checking**, and costs minutes per run. The plain-TS *type-checking*
+     orphan surface is uniquely `build:sdk`. `build:savant-free` is
+     therefore out of scope for this FID (wrong failure class, disproportionate
+     cost); this record documents the boundary so the class is known.
+- **ADVERSARIAL (self-refutation pass):** strongest objection — "the
+  parameterized gate list is speculative generality." Refuted: the two
+  call paths demonstrably need different gate sets today (release already
+  runs build:sdk outside the chain), so the parameter encodes an existing
+  difference, not a future one. Second objection — "the RED pin is
+  expensive." Accepted as a constraint, not a design change: the pin is
+  one scratch-worktree run and is sequenced after FID-001.
+- **CHANGE DELTA:** planning record; document edits only.
+- **CONVERGENCE:** delta < 2% for this pass; all RED findings resolved in
+  the same pass (no oscillation). Loop closed at 1.
 
 ### Missed Questions
 
-1. Why not add the full `build:sdk` to pre-push? — Cost: the gate runs on
-   every push and the build takes ~7s plus dist churn; `verify:clean` is
-   the committed-tree proof surface where compile coverage belongs.
-   Operator may prefer both; decision at GREEN.
-2. Does the CLI release build have a sibling uncovered surface? — Open
-   question for GREEN: inventory whether `build:savant-free` (or the
-   binary build) introduces additional compiler configurations beyond the
-   typecheck chain, and cover any found in the same step.
+1. ~~Why not add the full `build:sdk` to pre-push?~~ ANSWERED (Loop 1
+   AUDIT): cost-basis — `verify:clean` is the committed-tree proof surface
+   (baseline run 133.9s live); ~7s belongs there, not on every push.
+   Operator may still opt into both at implementation.
+2. ~~Does the CLI release build have a sibling uncovered surface?~~
+   ANSWERED (Loop 1 AUDIT): `build:savant-free` is a Bun compile (bundler)
+   target — module-resolution failures surface there, but no type checking
+   occurs; out of scope for this FID with the boundary documented.
 
 ### Code Verification Evidence
 

@@ -3,9 +3,9 @@
 **Filename:** `FID-2026-0909-002-release-gate-environment-parity.md`
 **ID:** FID-2026-0909-002
 **Severity:** medium
-**Status:** created
+**Status:** analyzed
 **Created:** 2026-09-09 03:17
-**YAGNI-Compliance:** Pending
+**YAGNI-Compliance:** PASS (2026-09-09 — see Loop 1)
 
 ---
 
@@ -115,11 +115,49 @@ functions. Operator decides the scope at GREEN.
 
 1. Inventory: grep the repo for the three banned patterns and record the
    residual hit list (expect: zero after the three fixes).
+   **Done 2026-09-09 (Loop 1) — result is NOT zero; corrected expectation:**
+   - **Bare-runtime test spawns** (`spawn('bun'` / `spawnSync('bun'`):
+     exactly ONE production hit — `scripts/public-release-pinned-bun.test.ts:54`
+     probes `spawnSync('bun', ['--version'])` after `ensurePinnedBunOnPath()`.
+     This is the pinned-runtime CONTRACT test itself (its own comment:
+     "Environment-dependent by design ... the same fail-closed contract the
+     release gate enforces"). It asserts the environment on purpose — it is
+     a probe, not a defect. The guard needs an explicit, reasoned exemption
+     entry rather than a rewrite of the contract test.
+   - **Bun-only `import.meta.dir` in SDK-reachable production sources:**
+     zero defects. Repo-wide hits (~118) are concentrated in Bun-runtime
+     surfaces (test files, `scripts/`, `cli/src` runtime, desktop scripts)
+     where `import.meta.dir` is legal; `common/src` production is clean
+     (`env.ts` hits are comments explaining the fix). The banned class must
+     be scoped to `common/src` non-test production files (the dts program's
+     input set), not the whole repo.
+   - **`process.env` spreads:** ~25 hits, overwhelmingly test fixtures
+     (saving/restoring env — legitimate) and production child-spawn env
+     passthroughs (`command-runner.ts`, `hooks/runner.ts` — legitimate;
+     they pass the env THROUGH, they don't case-depend on its shape). The
+     v0.0.30 defect class was specifically a spread into a PLAIN OBJECT
+     followed by case-sensitive key lookup. A grep ban on `...process.env`
+     cannot distinguish these; class 3 needs the behavioral probe (or
+     stays covered by the env-bootstrap suite) — see the surface choice
+     below.
 2. Choose the guard surface: extend `verify:clean` (already owns the
    committed-tree compile proof) vs a new `scripts/` audit gate wired into
    `validate:repository` (same pattern as the exit-code-masking audit).
-3. Implement the guard RED-first with a failing fixture.
+   **Loop 1 recommendation: `validate:repository`** — the gate is a cheap
+   static audit, and `verify:clean` is the slow (134s) committed-tree proof
+   where a static grep adds cost, not coverage. The exit-code-masking
+   precedent (FID-2026-0907-002: pure detector + git-ls-files collector +
+   `audit.exit-code-masking` wiring) is the exact template. OPERATOR
+   DECISION at GREEN (as the FID reserves); class-3 scope rides the same
+   decision: minimal gate (classes 1-2 grepped, class 3 documented as
+   covered by the env-bootstrap behavioral suite) vs a sanitized-env
+   behavioral probe (larger scope, its own FID if chosen).
+3. Implement the guard RED-first with a failing fixture. (Unchanged;
+   detector pins: planted `spawn('bun'` in a test, planted
+   `import.meta.dir` in a `common/src` production file, exemption honored
+   for the pinned-bun probe.)
 4. Record the guard in this FID's Verification Gates and stamp the receipt.
+   (Unchanged.)
 
 ### Verification
 
@@ -129,24 +167,65 @@ GATES stage produces no new environment-dependent failures.
 
 ## Verification Gates
 
-Pending — declared at GREEN when the guard surface is chosen (live re-run
-by `validate:repository` from status `fixed` onward).
+Declared at Loop 1 (2026-09-09), to be live-run at implementation
+(surface choice pending operator GREEN):
+
+1. Guard unit suite (RED-first): planted class-1 + class-2 violations are
+   detected with file:line precision; the pinned-bun contract probe is
+   honored via its exemption entry; a clean fixture set passes.
+2. `validate:repository` wiring: guard findings appear as
+   `audit.gate-env-parity` issues; clean tree PASSes end-to-end.
+3. `bun x eslint` on the new audit module + suite `--max-warnings 0`;
+   `bun run lint:md` if docs change.
+4. Prove-the-guard leg: temporarily revert one fixed file's guard-relevant
+   hunk (e.g. re-introduce `import.meta.dir` in `common/src/env.ts` on a
+   scratch worktree) and show the guard fails the validation run; restore
+   and show green.
 
 ## Perfection Loop
 
-### Loop 1 — RED
+### Loop 1 — RED / GREEN / AUDIT (2026-09-09, codebase-grounded)
 
-- **RED:** Three environment-dependent defects cataloged with gate
-  transcripts during the v0.0.30 cut attempts (2026-09-09); evidence above.
-- **GREEN:** The three instances fixed and verified in-session (commits
-  `2b22103`, `87bcc44`, `05e2e1a`; each with full gate evidence in the
-  session record). The structural parity guard is the open work.
-- **AUDIT:** Each fix ran the exact failing gate green locally
-  (build:sdk exit 0; gateway suite 6/0; evals suite 166/0) plus typecheck
-  ×12, eslint, prettier.
-- **ADVERSARIAL:** Not started (planning record).
-- **CHANGE DELTA:** N/A (planning record; the fixes' deltas were
-  +15/−1, +2/−2, +9/−2 respectively).
+- **RED (ground-truth verification):** the three fix commits are verified
+  present and shape-correct (`2b22103` env.ts +15/−1, `87bcc44` gateway
+  test +2/−2, `05e2e1a` tempdir-sandbox +9/−2). The Step-1 inventory ran
+  (results above): ONE residual documented-contract spawn site (the
+  pinned-bun contract probe), zero SDK-reachable `import.meta.dir`
+  production defects, and a `...process.env` population that confirms a
+  grep ban for class 3 is not mechanically expressible without massive
+  false positives. The FID's "expect: zero" was wrong by one legitimate
+  site — recorded, not papered over.
+- **GREEN (design corrections from grounding):** (1) the guard's class-2
+  scope is `common/src` non-test production files (the dts program's
+  input set) — a repo-wide ban would flag ~118 legal Bun-runtime sites;
+  (2) class 1 carries one explicit exemption (pinned-bun contract probe,
+  reasoned in the exemption entry); (3) class 3 cannot be a grep — the
+  minimal gate covers classes 1-2 mechanically and documents class 3 as
+  behaviorally pinned by the env-bootstrap suite, with the sanitized-env
+  behavioral probe recorded as the operator's optional larger-scope
+  alternative; (4) recommended surface: `validate:repository` (audit
+  precedent), operator decides at GREEN per the FID's own reservation.
+- **AUDIT (status verification):** the three instance fixes are NOT
+  re-claimed here — each was verified green in-session by its own gates
+  (build:sdk exit 0; gateway suite; evals suite 166/0) and this record's
+  open work is only the structural guard. Status `analyzed` (not `fixed`)
+  is the honest ledger state: the class-level remediation does not exist
+  yet.
+- **ADVERSARIAL (self-refutation pass):** strongest objection — "a grep
+  gate is security theater: it bans toy patterns while the real defect
+  (env-shape dependence) is semantic." Partially accepted: true for class
+  3 (hence no class-3 grep), but classes 1-2 are mechanical because the
+  failure modes are mechanical (uv_spawn resolves PATH or it doesn't;
+  `import.meta.dir` exists in Bun or it doesn't). The v0.0.30 incident
+  proves both classes ship silently through every existing gate — a
+  narrow grep is the cheapest control that moves the detection from
+  release-night to commit-time. Second objection — "two audit gates in
+  validate:repository is precedent creep." Refuted: the exit-code-masking
+  gate demonstrates the pattern is additive, testable, and green; the
+  wiring cost is one import + one issues-array spread.
+- **CHANGE DELTA:** planning record; document edits only.
+- **CONVERGENCE:** all RED findings resolved in one pass (no
+  oscillation); delta < 2% for this pass. Loop closed at 1.
 
 ### Missed Questions
 

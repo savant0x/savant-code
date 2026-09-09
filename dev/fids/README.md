@@ -33,9 +33,23 @@ on-disk records missing from the table added (-0823-003, -0824-003…-008,
 
 | FID | Status | Purpose / blocking gate |
 |---|---|---|
-| [`FID-2026-0909-001`](FID-2026-0909-001-clean-checkout-gate-orphaned-temp-dir.md) | `created` | Clean-checkout gate leaves an orphaned Temp worktree dir on failed runs |
-| [`FID-2026-0909-002`](FID-2026-0909-002-release-gate-environment-parity.md) | `created` | Gate-env parity: three env-dependent defects fixed in-session; structural guard open |
-| [`FID-2026-0909-003`](FID-2026-0909-003-verify-clean-sdk-declaration-gate.md) | `created` | verify:clean omits the SDK dts gate (build:sdk surface) |
+| [`FID-2026-0909-001`](FID-2026-0909-001-clean-checkout-gate-orphaned-temp-dir.md) | `analyzed` | Clean-checkout gate leaves an orphaned Temp worktree dir on failed runs |
+| [`FID-2026-0909-002`](FID-2026-0909-002-release-gate-environment-parity.md) | `analyzed` | Gate-env parity: three env-dependent defects fixed in-session; structural guard open |
+| [`FID-2026-0909-003`](FID-2026-0909-003-verify-clean-sdk-declaration-gate.md) | `analyzed` | verify:clean omits the SDK dts gate (build:sdk surface) |
+
+**2026-09-09 Perfection Loop pass (all three records → `analyzed`):** each
+FID's Loop 1 ran codebase-grounded (single-agent ECHO v0.1.2). Ground-truth
+corrections recorded: FID-001's root-cause hypothesis was refuted by the code
+(the gate failures DO reach the `finally`; the real gaps are silent removal
+failure, no pre-create self-healing, and no filesystem fallback — three-piece
+fix now specified); FID-003's gate chain was located in the shared
+`assertCleanCheckoutCompiles` (not `verify-clean.ts`), so the design is a
+parameterized gate list and its RED pin is sequenced after FID-001; FID-002's
+Step-1 inventory ran with one residual reasoned exemption found
+(`public-release-pinned-bun.test.ts:54`, the pinned-runtime contract probe)
+and class-3 (`process.env` shape dependence) ruled non-greppable. Coordination
+master: [`dev/build-orders/BO-2026-09-09-gate-chain-hardening.md`](../build-orders/BO-2026-09-09-gate-chain-hardening.md)
+— implementation order 001 → 003 → 002, awaiting operator approval (Law 2).
 **2026-09-08 closure (operator directive: "review the fids, if they are done, add
 them to changelog and properly close them out") — FID-2026-0907-007 +
 FID-2026-0908-003 closed + archived:** both records reviewed complete (full

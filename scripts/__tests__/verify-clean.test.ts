@@ -66,7 +66,10 @@ describe('parseVerifyCleanArgs (FID-2026-0907-002)', () => {
 })
 
 describe('runVerifyClean (FID-2026-0907-002)', () => {
-  test('composes prune → worktree add → install → typecheck → remove, in order', () => {
+  // FID-2026-0909-003: verify:clean's chain gained the SDK declaration
+  // build (build:sdk) after the typecheck chain — the plain-TS dts surface
+  // the release consumes and the typecheck chain never compiles.
+  test('composes prune → worktree add → install → typecheck → build:sdk → remove, in order', () => {
     const { calls, runner } = recordingRunner()
     const result = runVerifyClean({
       sha: 'abc123def',
@@ -81,10 +84,13 @@ describe('runVerifyClean (FID-2026-0907-002)', () => {
     expect(shapes[1]).toContain('git worktree add --detach')
     expect(shapes[2]).toBe('bun install --frozen-lockfile')
     expect(shapes[3]).toBe('bun run typecheck')
-    expect(shapes[4]).toContain('git worktree remove --force')
-    // install + typecheck run INSIDE the checkout; git calls run at root
+    expect(shapes[4]).toBe('bun run build:sdk')
+    expect(shapes[5]).toContain('git worktree remove --force')
+    // install + typecheck + build:sdk run INSIDE the checkout; git calls
+    // run at root
     expect(calls[2].cwd).toContain('savant-release-checkout')
     expect(calls[3].cwd).toContain('savant-release-checkout')
+    expect(calls[4].cwd).toContain('savant-release-checkout')
     expect(calls[0].cwd).toBe(REPO_ROOT)
   })
 

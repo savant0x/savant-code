@@ -18,8 +18,16 @@
 import os from 'os'
 import path from 'path'
 
+import {
+  cleanupCheckoutDirectory,
+  defaultCheckoutFilesystem,
+  emitLifecycleWarning,
+  ensureCheckoutDirectoryAbsent,
+} from './clean-checkout'
 import { run } from './command-runner'
 import { fail } from './fail'
+
+import type { CheckoutFilesystem } from './clean-checkout'
 
 export type CommandResult = {
   status: number | null
@@ -157,14 +165,47 @@ export function assertReleaseHeadCompiles(
  * Proves the committed tree compiles: detached temp worktree at the
  * release HEAD → frozen-lockfile install (a fresh worktree has no
  * node_modules — gitignored) → the canonical 12-workspace typecheck chain
- * (root `typecheck` script) → worktree removed even on failure. The
- * cleanup runs on every path so a failed cut never leaves residue.
+ * (root `typecheck` script) → worktree removed even on failure.
+ *
+ * FID-2026-0909-001: the lifecycle is self-healing. A checkout directory
+ * left by a previous failed run is cleared before the worktree is created
+ * (the v0.0.30 incident: debris forced `fatal: ... already exists` on
+ * every later attempt, unrecoverable through git). The finally-path
+ * cleanup captures its outcome — a surviving directory (Windows
+ * node_modules locks) falls back to a filesystem removal and warns
+ * loudly instead of failing silently. Best-effort cleanup never aborts
+ * the run. `options.fs` is the injected filesystem seam (tests wire
+ * memory adapters; production defaults to `node:fs`).
  */
+export interface CheckoutGateSpec {
+  /** Gate label used in error messages (e.g. `build:sdk`). */
+  label: string
+  command: string
+  args: string[]
+}
+
+export interface CleanCheckoutOptions {
+  /** Filesystem seam (tests wire memory adapters; production defaults
+   *  to `node:fs`). */
+  fs?: CheckoutFilesystem
+  /**
+   * Extra post-install gates run INSIDE the checkout after the typecheck
+   * chain, in order (FID-2026-0909-003: `verify:clean` appends the SDK
+   * declaration build so the plain-TS dts compilation surface is covered by
+   * the committed-tree proof; the release path stays on the default chain
+   * because the GATES stage already runs `build:sdk` with transcript
+   * capture — running it twice per cut would be waste). A failing gate
+   * fails closed, citing the gate label.
+   */
+  extraGates?: CheckoutGateSpec[]
+}
+
 export function assertCleanCheckoutCompiles(
   version: string,
   headSha: string,
   root: string,
   runner: CommandRunner = defaultRunner,
+  options: CleanCheckoutOptions = {},
 ): void {
   if (!headSha) {
     fail(
@@ -175,6 +216,17 @@ export function assertCleanCheckoutCompiles(
     os.tmpdir(),
     `savant-release-checkout-v${version}`,
   )
+  const fsAdapter = options.fs ?? defaultCheckoutFilesystem
+  // Self-healing pre-create guard (FID-2026-0909-001): clear debris from a
+  // previous failed run BEFORE the add, then prune.
+  for (const warning of ensureCheckoutDirectoryAbsent(
+    checkoutPath,
+    root,
+    runner,
+    fsAdapter,
+  ).warnings) {
+    emitLifecycleWarning(warning)
+  }
   const prune = runner('git', ['worktree', 'prune'], root)
   if ((prune.status ?? 1) !== 0) {
     fail(`Unable to prune stale release worktrees: ${prune.stderr.trim()}`)
@@ -206,7 +258,22 @@ export function assertCleanCheckoutCompiles(
         `Clean checkout compile proof failed for v${version} (the committed tree does not compile):\n${typecheck.stdout.trim()}${typecheck.stderr.trim()}`,
       )
     }
+    for (const gate of options.extraGates ?? []) {
+      const gateResult = runner(gate.command, gate.args, checkoutPath)
+      if ((gateResult.status ?? 1) !== 0) {
+        fail(
+          `Clean checkout gate failed: ${gate.label} for v${version}\n${gateResult.stdout.trim()}${gateResult.stderr.trim()}`,
+        )
+      }
+    }
   } finally {
-    runner('git', ['worktree', 'remove', '--force', checkoutPath], root)
+    for (const warning of cleanupCheckoutDirectory(
+      checkoutPath,
+      root,
+      runner,
+      fsAdapter,
+    ).warnings) {
+      emitLifecycleWarning(warning)
+    }
   }
 }

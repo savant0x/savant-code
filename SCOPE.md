@@ -4,6 +4,69 @@
 > scope for the current task. Operator confirmation converts interpreted scope
 > into approved scope. Any drop/deferral requires a blocking presentation.
 
+## Task 24 — Perfection Loop on FIDs -0909-001/-002/-003 + master plan (2026-09-09)
+
+> Operator directive: "run perfection loop on all 3 fids then organize them
+> into a master plan so i can do all 3 of them in logical order." Interpreted
+> scope: (1) run the Perfection Loop (RED→GREEN→AUDIT, codebase-grounded) on
+> each of the three 2026-09-09 release-findings FIDs, correcting any drift
+> against the live code found during grounding; (2) author a coordination
+> master/build-order that sequences all three implementations in dependency
+> order. **Planning only — no implementation code this task.** Implementation
+> of each FID remains a separate Law-2 presentation. No drops, no deferrals.
+
+- [x] **T24-A.** Read `ECHO-single-agent.md` + `dev/echo-v0.1.2-single-agent.md`
+      0-EOF (session boot) and ground the project. **Done 2026-09-09.**
+- [x] **T24-B.** Ground-truth all three FIDs against the live code:
+      `scripts/verify-clean.ts` + `scripts/public-release/provenance.ts` read
+      0-EOF (gate chain = `worktree add` → install → `bun run typecheck`,
+      cleanup only in a `finally` that discards its result; no pre-create
+      guard); three FID-002 fix commits verified present (`2b22103`,
+      `87bcc44`, `05e2e1a`); banned-pattern inventory run (one residual
+      documented-contract spawn site found at
+      `scripts/public-release-pinned-bun.test.ts:54`; zero SDK-reachable
+      `import.meta.dir` production sites in `common/src`). **Done 2026-09-09.**
+- [x] **T24-C.** Run the Perfection Loop on each FID (status → `analyzed`)
+      with loop-passed RED/GREEN/AUDIT records + ground-truth corrections
+      recorded in each document. **Done 2026-09-09** — FID-001's root-cause
+      hypothesis corrected by the code read (three-gap mechanism, three-piece
+      fix); FID-003's chain located in the shared `assertCleanCheckoutCompiles`
+      (parameterized gate-list design; RED pin sequenced after FID-001);
+      FID-002's Step-1 inventory run with one reasoned exemption found and
+      class 3 ruled non-greppable.
+- [x] **T24-D.** Author the coordination master plan (build-order doc) that
+      sequences the three implementations with rationale, per-FID scope,
+      verification commands, and shared boundaries. **Done 2026-09-09** —
+      `dev/build-orders/BO-2026-09-09-gate-chain-hardening.md` (order:
+      001 → 003 → 002, with the dependency rationale).
+- [x] **T24-E.** Update `dev/fids/README.md` (statuses + master cross-link)
+      and run the documentation gates (`lint:md`, `validate:repository`).
+      **Done 2026-09-09** — ledger updated to three `analyzed` rows with the
+      loop-pass summary; gates: `lint:md` PASS, `validate:repository` PASS,
+      prettier clean on all touched files.
+- [x] **T24-F. [DONE 2026-09-09 — operator approved]** Presented the three
+      looped FIDs + master plan. **Operator ruling: "Approve the full
+      001→003→002 program and implement all three sequentially."**
+      Implementation scope per FID = the looped Proposed Solution + declared
+      Verification Gates + close/archive/CHANGELOG per the T17-C standing
+      directive. FID-002's surface choice (minimal gate vs + behavioral
+      probe) resolves at its GREEN per the FID's reservation.
+
+### Task 24 implementation tracking (T24-G)
+
+- [ ] **T24-G1. FID-2026-0909-001** — RED pins → self-healing lifecycle
+      (`scripts/public-release/clean-checkout.ts` + provenance rewiring) →
+      gates → close + archive + CHANGELOG.
+- [ ] **T24-G2. FID-2026-0909-003** — gate-list pins → parameterized chain
+      + `verify:clean` opt-in → RED drill (planted TS2339) + live PASS →
+      close + archive + CHANGELOG.
+- [ ] **T24-G3. FID-2026-0909-002** — audit gate RED pins →
+      `scripts/audit-gate-env-parity.ts` + `validate:repository` wiring →
+      prove-the-guard → close + archive + CHANGELOG.
+- [ ] **T24-G4.** Program battery (`bun test scripts/`, eslint
+      `--max-warnings 0`, quality report, lint:md, validate:repository) +
+      session summary.
+
 ## Task 15 — Deck rebuild: cyberpunk neon-noir agent office (2026-08-31)
 
 > Operator decision at the crossroads: the holographic command deck

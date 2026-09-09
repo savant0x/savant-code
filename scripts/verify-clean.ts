@@ -21,6 +21,20 @@ import { readProductVersion } from './version'
 
 import type { CommandRunner } from './public-release/provenance'
 
+/**
+ * FID-2026-0909-003: verify:clean covers the SDK declaration surface. The
+ * SDK release build's dts-bundle-generator step recompiles the SDK-
+ * reachable common sources under a plain-TS program WITHOUT Bun types — a
+ * compilation surface the workspace typecheck chain never exercises (the
+ * v0.0.30 cut failed exactly there: TS2339 on common/src/env.ts with every
+ * local gate green). The release GATES stage runs `build:sdk` separately
+ * with transcript capture, so only THIS committed-tree rehearsal appends
+ * it to the in-checkout chain.
+ */
+const VERIFY_CLEAN_EXTRA_GATES = [
+  { label: 'build:sdk', command: 'bun', args: ['run', 'build:sdk'] },
+]
+
 export interface VerifyCleanArgs {
   sha?: string
   help?: boolean
@@ -65,7 +79,9 @@ export function runVerifyClean(params: {
   const { sha, root, runner } = params
   const resolvedSha = sha ?? resolveHead(root, runner)
   const version = readProductVersion(root)
-  assertCleanCheckoutCompiles(version, resolvedSha, root, runner)
+  assertCleanCheckoutCompiles(version, resolvedSha, root, runner, {
+    extraGates: VERIFY_CLEAN_EXTRA_GATES,
+  })
   return { version, sha: resolvedSha }
 }
 
@@ -85,7 +101,8 @@ const HELP_TEXT = `Usage: bun scripts/verify-clean.ts [--sha <ref>]
 
 Proves the COMMITTED tree compiles: detached temp worktree at the target
 commit → bun install --frozen-lockfile → the canonical 12-workspace
-typecheck chain → worktree removed on every path.
+typecheck chain → the SDK declaration build (build:sdk, the plain-TS dts
+surface — FID-2026-0909-003) → worktree removed on every path.
 
 Options:
   --sha <ref>  Verify a specific commit (default: HEAD)

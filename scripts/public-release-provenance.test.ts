@@ -222,3 +222,73 @@ describe('assertCleanCheckoutCompiles (FID-2026-0906-003)', () => {
     expect(message).toContain('fatal: already registered')
   })
 })
+
+describe('assertCleanCheckoutCompiles — post-install gate list (FID-2026-0909-003)', () => {
+  function shapeRunner(): {
+    calls: Array<{ command: string; args: string[]; cwd: string }>
+    runner: CommandRunner
+  } {
+    const calls: Array<{ command: string; args: string[]; cwd: string }> = []
+    return {
+      calls,
+      runner: (command, args, cwd) => {
+        calls.push({ command, args, cwd })
+        return { status: 0, stdout: '', stderr: '' }
+      },
+    }
+  }
+
+  const HEAD = 'a'.repeat(40)
+
+  test('default (no options) keeps the release-path chain: typecheck only, no build:sdk', () => {
+    const { calls, runner } = shapeRunner()
+    assertCleanCheckoutCompiles('0.0.30', HEAD, '/repo', runner)
+    const shapes = calls.map((c) => `${c.command} ${c.args.join(' ')}`)
+    expect(shapes).toEqual([
+      'git worktree prune',
+      expect.stringContaining('git worktree add --detach'),
+      'bun install --frozen-lockfile',
+      'bun run typecheck',
+      expect.stringContaining('git worktree remove --force'),
+    ])
+    expect(shapes.some((s) => s.includes('build'))).toBe(false)
+  })
+
+  test('extraGates run in order INSIDE the checkout, after the typecheck chain', () => {
+    const { calls, runner } = shapeRunner()
+    assertCleanCheckoutCompiles('0.0.30', HEAD, '/repo', runner, {
+      extraGates: [
+        { command: 'bun', args: ['run', 'build:sdk'], label: 'build:sdk' },
+      ],
+    })
+    const shapes = calls.map((c) => `${c.command} ${c.args.join(' ')}`)
+    expect(shapes[3]).toBe('bun run typecheck')
+    expect(shapes[4]).toBe('bun run build:sdk')
+    expect(shapes[5]).toContain('git worktree remove --force')
+    // Inside the checkout (the declaration surface compiles the CHECKED-OUT
+    // committed tree, not the operator worktree).
+    expect(calls[4].cwd).toContain('savant-release-checkout-v0.0.30')
+  })
+
+  test('a failing extra gate fails closed, citing the gate label and transcript', () => {
+    const runner: CommandRunner = (command, args) => {
+      if (args[0] === 'run' && args[1] === 'build:sdk') {
+        return {
+          status: 1,
+          stdout: '',
+          stderr: 'error TS2339: Property dir does not exist on type ImportMeta',
+        }
+      }
+      return { status: 0, stdout: '', stderr: '' }
+    }
+    const message = messageOf(() =>
+      assertCleanCheckoutCompiles('0.0.30', HEAD, '/repo', runner, {
+        extraGates: [
+          { command: 'bun', args: ['run', 'build:sdk'], label: 'build:sdk' },
+        ],
+      }),
+    )
+    expect(message).toContain('Clean checkout gate failed: build:sdk')
+    expect(message).toContain('TS2339')
+  })
+})

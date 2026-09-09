@@ -1,5 +1,35 @@
 # Changelog
 
+## Unreleased
+
+### Self-healing clean-checkout lifecycle — the orphaned Temp worktree incident fixed at the source (closed + archived 2026-09-09)
+
+- **FID-2026-0909-001 — low — a failed gate run no longer blocks every
+  subsequent release attempt with `fatal: ... already exists`.** The
+  v0.0.30 cut left the `%TEMP%\savant-release-checkout-v0.0.30` directory
+  (plus its full frozen-lockfile `node_modules`) on disk after gate
+  failures; the leftover was unregistered (invisible to `git worktree
+  prune`/`list`), and manual `rm -rf` was the only recovery. Loop-1
+  codebase grounding CORRECTED the record's root-cause hypothesis: gate
+  failures do reach the `finally` — the real gaps were the discarded
+  removal result (silent failure under Windows node_modules locks), no
+  pre-create self-healing, and no filesystem fallback for unregistered
+  orphans (a live probe confirmed `git worktree remove` exits 128 on an
+  unregistered dir, leaving it intact). Fix (new
+  `scripts/public-release/clean-checkout.ts`, 128 lines; provenance.ts
+  212 → 248): pre-create guard clears debris before the add; finally-path
+  cleanup always issues the git removal (registration owner), verifies
+  absence, falls back to `rmSync` with bounded retries for the EBUSY/EPERM
+  lock class, and emits structured stderr warnings naming the path + the
+  manual remediation — best-effort by design, never aborting the run. All
+  command + filesystem surfaces injected (`CheckoutFilesystem` seam; the
+  4-positional call signature preserved via an optional options param —
+  release + verify:clean call sites unchanged). RED-first
+  (`Cannot find module` → 12/0); 32/0 across the three suites; eslint
+  clean; prettier clean; receipt 3/3 PASS. **Closed + archived 2026-09-09**;
+  the release-cut recovery drill carries as the operator-assisted live
+  boundary — never claimed from local runs.
+
 ## 0.0.30 — 2026-09-08
 
 ### NDJSON handoff matrix executed live — 6/6, four transport defects fixed forward (closed + archived 2026-09-08)
