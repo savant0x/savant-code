@@ -20,30 +20,51 @@ import type { SkillManageResult } from '@savant-code/common/util/skill-managemen
 type ToolName = 'skill_manage'
 
 /** Bare JSON value (the wrapper tuple is added by jsonToolResult). */
+/**
+ * FID-2026-0908-001 — output matches the canonical single-command
+ * tool-result template ({stdout, stderr, exitCode}) that every command-class
+ * tool (run_readonly_command / run_terminal_command) returns, plus the
+ * machine-readable identity fields the trust boundary records. The bespoke
+ * {ok, error, message} channels are retired: exitCode is the success signal
+ * and message folds into stdout (one truth per channel).
+ */
 type OutputValue = {
-  ok: boolean
+  action: string
   name?: string
   version?: string
-  action?: string
   nextSha?: string
   pendingTrust?: boolean
-  message?: string
-  error?: string
+  stdout: string
+  stderr: string
+  exitCode: 0 | 1
 }
 
-function resultToValue(result: SkillManageResult): OutputValue {
+function resultToValue(
+  result: SkillManageResult,
+  attemptedAction: string,
+): OutputValue {
   if (result.ok) {
     return {
-      ok: true,
+      action: result.action,
       name: result.name,
       version: result.version,
-      action: result.action,
       nextSha: result.nextSha,
       pendingTrust: result.pendingTrust,
-      message: result.message,
+      stdout:
+        result.message ??
+        `skill '${result.name}' ${result.action} at v${result.version}${
+          result.pendingTrust ? ' — quarantined, pending operator trust' : ''
+        }`,
+      stderr: '',
+      exitCode: 0,
     }
   }
-  return { ok: false, error: result.error }
+  return {
+    action: attemptedAction,
+    stdout: '',
+    stderr: result.error,
+    exitCode: 1,
+  }
 }
 
 /**
@@ -126,5 +147,5 @@ export const handleSkillManage = (async (params: {
       break
   }
 
-  return { output: jsonToolResult(resultToValue(result)) }
+  return { output: jsonToolResult(resultToValue(result, input.action)) }
 }) satisfies SavantCodeToolHandlerFunction<ToolName>

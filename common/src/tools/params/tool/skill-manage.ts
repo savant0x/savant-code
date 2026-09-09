@@ -72,14 +72,14 @@ const inputSchema = z
   )
 
 const outputValueSchema = z.object({
-  ok: z.boolean(),
+  action: z.string(),
   name: z.string().optional(),
   version: z.string().optional(),
-  action: z.string().optional(),
   nextSha: z.string().optional(),
   pendingTrust: z.boolean().optional(),
-  message: z.string().optional(),
-  error: z.string().optional(),
+  stdout: z.string(),
+  stderr: z.string(),
+  exitCode: z.union([z.literal(0), z.literal(1)]),
 })
 
 const baseDescription = `Manage skills: create, patch, edit, delete, write_file, remove_file, rollback.
