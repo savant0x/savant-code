@@ -1,5 +1,16 @@
 import stripAnsi from 'strip-ansi'
 
+import { extractFinalAnswer } from './headless-answer'
+import {
+  createHeadlessControlPlane,
+  PARENT_CANCEL_REASON,
+} from './headless-control-plane'
+import {
+  createNdjsonEmitter,
+  type ControlInputStream,
+  type FrameWriter,
+} from './headless-ndjson'
+import { createHeadlessEventTap } from './headless-ndjson-tap'
 import {
   applySavantCodeModelOverride,
   resolveAgent,
@@ -8,6 +19,7 @@ import { loadAgentDefinitions } from './utils/local-agent-registry'
 import { loadMostRecentChatState } from './utils/run-state-storage'
 import { getSavantCodeClient } from './utils/savant-code-client'
 
+import type { PrintModeEvent } from '@savant-code/common/types/print-mode'
 import type {
   AgentDefinition,
   RunState,
@@ -16,12 +28,10 @@ import type {
 
 /**
  * FID-2026-0806-011 — headless / non-interactive run mode.
- *
  * Contract (conventional exit codes):
  *   - 0 = run completed with a final answer (printed to stdout)
  *   - 1 = run errored or timed out (message on stderr)
  *   - 2 = usage error (no prompt provided)
- *
  * ANSI codes are stripped from the printed answer when stdout is not a TTY.
  */
 export const HEADLESS_EXIT_OK = 0
@@ -50,6 +60,13 @@ export type HeadlessRunParams = {
   agentDefinitions?: AgentDefinition[]
   /** Pre-loaded previous run state; otherwise loaded on --continue. */
   previousRun?: RunState
+  /** FID-2026-0907-004/-005: NDJSON frames — progress taps, artifact at the
+   *  answer, error frames; dispatch suppresses the raw write. Unset → v1. */
+  jsonMode?: boolean
+  /** Injectable frame writer (DI); defaults to `process.stdout.write`. */
+  jsonFrameWriter?: FrameWriter
+  /** FID-2026-0907-006: injectable control input; defaults to process.stdin. */
+  jsonControlInput?: ControlInputStream
 }
 
 export type HeadlessRunResult = {
@@ -58,6 +75,9 @@ export type HeadlessRunResult = {
   output?: string
   /** Error message — present on failure. */
   error?: string
+  /** FID-2026-0907-006: steer notes accepted + parked at control boundaries
+   *  (applied to the run in Phase C). Present only when notes were parked. */
+  parkedSteerNotes?: string[]
 }
 
 export function resolveRunTimeoutMs(envValue: string | undefined): number {
@@ -67,61 +87,10 @@ export function resolveRunTimeoutMs(envValue: string | undefined): number {
   return parsed
 }
 
-function isTextPart(part: unknown): part is { type: 'text'; text: string } {
-  return (
-    part !== null &&
-    typeof part === 'object' &&
-    (part as { type?: unknown }).type === 'text' &&
-    typeof (part as { text?: unknown }).text === 'string'
-  )
-}
-
-function textFromContent(content: unknown): string {
-  if (!Array.isArray(content)) return ''
-  return content
-    .filter(isTextPart)
-    .map((part) => part.text)
-    .join('')
-}
-
-/** Last assistant message with non-empty text, scanning backwards. */
-function lastAssistantText(messages: unknown[] | undefined): string {
-  if (!messages || messages.length === 0) return ''
-  for (let i = messages.length - 1; i >= 0; i--) {
-    const message = messages[i] as { role?: string; content?: unknown }
-    if (message?.role !== 'assistant') continue
-    const text = textFromContent(message.content)
-    if (text.trim().length > 0) return text
-  }
-  return ''
-}
-
-/**
- * Extract the final answer from a completed RunState. Prefers the run output
- * (lastMessage/allMessages), then the full session message history.
- */
-export function extractFinalAnswer(runState: RunState): string {
-  const output = runState.output
-  if (output) {
-    if (output.type === 'lastMessage' || output.type === 'allMessages') {
-      const fromOutput = lastAssistantText(output.value as unknown[])
-      if (fromOutput) return fromOutput
-    }
-    if (output.type === 'structuredOutput' && output.value) {
-      const value = output.value as Record<string, unknown>
-      if (typeof value.message === 'string' && value.message.trim()) {
-        return value.message
-      }
-      if (typeof value.summary === 'string' && value.summary.trim()) {
-        return value.summary
-      }
-    }
-  }
-  return lastAssistantText(
-    runState.sessionState?.mainAgentState?.messageHistory as
-      unknown[] | undefined,
-  )
-}
+// FID-2026-0907-006: the answer-extraction helpers moved verbatim to
+// headless-answer.ts (300-line ceiling; Law 13 re-export hub). The external
+// import surface (headless-run.test.ts) is preserved by re-exporting.
+export { extractFinalAnswer }
 
 /**
  * Run a single prompt headlessly through the SDK and return the outcome. This
@@ -135,23 +104,51 @@ export async function runHeadlessPrint(
   const timeoutMs =
     params.timeoutMs ?? resolveRunTimeoutMs(process.env[RUN_TIMEOUT_ENV])
 
-  if (!prompt || prompt.trim().length === 0) {
+  // FID-2026-0907-005: the emitter is hoisted above EVERY exit boundary so
+  // usage and init failures can frame too (FID-004 had scoped it after the
+  // client init). JSON mode only — non-JSON runs never create it, so they
+  // stay byte-identical to v1 by construction.
+  const jsonEmitter = params.jsonMode
+    ? createNdjsonEmitter({
+        // NDJSON wire contract: every frame is ONE line terminated by \n.
+        // The default stdout writer owns the delimiter — the handoff matrix
+        // (FID-2026-0907-007, case 1, live) caught two frames glued onto a
+        // single stdout line here, which the parent's line reader cannot
+        // parse. Injected writers (tests, delegation) keep receiving the
+        // raw serialized frame.
+        write:
+          params.jsonFrameWriter ??
+          ((line) => process.stdout.write(`${line}\n`)),
+      })
+    : undefined
+  const jsonTap = jsonEmitter ? createHeadlessEventTap(jsonEmitter) : undefined
+  const parkedSteerNotes: string[] = []
+  /** Frame the failure, shape the nonzero result (BO rules 4-5: error
+   *  frames are non-fatal diagnostics; the exit code owns the verdict). */
+  const failWith = (exitCode: number, error: string): HeadlessRunResult => {
+    jsonEmitter?.emitError(error)
     return {
-      exitCode: HEADLESS_EXIT_USAGE,
-      error:
-        '--print requires a prompt (positional argument, --prompt-file, or piped stdin)',
+      exitCode,
+      error,
+      ...(parkedSteerNotes.length > 0 ? { parkedSteerNotes } : {}),
     }
+  }
+
+  if (!prompt || prompt.trim().length === 0) {
+    return failWith(
+      HEADLESS_EXIT_USAGE,
+      '--print requires a prompt (positional argument, --prompt-file, or piped stdin)',
+    )
   }
 
   const client = params.getClient
     ? await params.getClient()
     : await getSavantCodeClient({ headless: true })
   if (!client) {
-    return {
-      exitCode: HEADLESS_EXIT_ERROR,
-      error:
-        'Failed to initialize the SDK client. Set a provider key (e.g. OPENROUTER_API_KEY) or run the login flow first.',
-    }
+    return failWith(
+      HEADLESS_EXIT_ERROR,
+      'Failed to initialize the SDK client. Set a provider key (e.g. OPENROUTER_API_KEY) or run the login flow first.',
+    )
   }
 
   const agentDefinitions = params.agentDefinitions ?? loadAgentDefinitions()
@@ -163,15 +160,10 @@ export async function runHeadlessPrint(
   const resolved: AgentDefinition | string =
     params.resolvedAgent ?? resolveAgent('HYBRID', agentId, agentDefinitions)
   const overridden = applySavantCodeModelOverride(resolved, agentDefinitions)
-  // FID-062: a delegating parent can pin the child's tool surface via
-  // --allowed-tools. Filtering (never extending) the resolved agent's
-  // toolNames keeps this a restriction: the union of tools can only shrink,
-  // so the flag cannot grant a tool the agent does not already have. The
-  // model is steered away from excluded tools by the runtime's standard
-  // restricted-tool error → user-message conversion (survivable, unlike a
-  // sandbox crash). Ignored when it would be a no-op or empty. Applied AFTER
-  // the model override — applySavantCodeModelOverride re-spreads the registry
-  // definition, which would otherwise discard this filter.
+  // FID-062: --allowed-tools FILTERS the resolved agent's toolNames (never
+  // extends; the model is steered off excluded tools by the standard
+  // restricted-tool error conversion). Applied AFTER the model override,
+  // which re-spreads the registry definition and would discard the filter.
   let agent: AgentDefinition | string = overridden
   if (typeof agent === 'object' && allowedTools?.trim()) {
     const allow = new Set(
@@ -201,6 +193,22 @@ export async function runHeadlessPrint(
   }, timeoutMs)
   if (typeof timer.unref === 'function') timer.unref()
 
+  // FID-2026-0907-006/-007: the run-side control plane — ARRIVAL-time cancel
+  // abort (a held LLM request yields no stream boundaries), boundary drain,
+  // steer parking. Non-JSON runs never create one (byte-identical v1).
+  const controlPlane = jsonEmitter
+    ? createHeadlessControlPlane({
+        input: params.jsonControlInput ?? process.stdin,
+        abortController,
+        parkedSteerNotes,
+      })
+    : undefined
+
+  // FID-2026-0907-004: the tap is composed additively into handleEvent so
+  // the pre-existing error-event stderr logging is preserved untouched
+  // (tap, don't fork). FID-005: error events additionally emit a non-fatal
+  // error frame — the deferral recorded in the FID-004 suite.
+
   try {
     const runState = await client.run({
       agent,
@@ -216,16 +224,29 @@ export async function runHeadlessPrint(
       protocolVariant: 'harness',
       devMode: false,
       // FID-062: observe error events instead of aborting on them. The SDK's
-      // default handleEvent throws on error-type events, and safeDispatch
-      // turns a throwing handler into a full run rejection — so one
-      // survivable tool-level denial (sandbox deny in safe mode, a
-      // restricted-tool error) kills the entire run even though the runtime
-      // has already converted it into a user message the model can
-      // self-correct from. Interactive sessions pass a real handler and
-      // survive the same denials; headless must not be stricter than the TUI.
-      // The run's real outcome still comes from runState.output below.
-      handleEvent: (event) => {
+      // default handleEvent throws on error-type events and safeDispatch turns
+      // a throwing handler into a full run rejection, so one survivable
+      // tool-level denial (sandbox deny, restricted-tool error) kills the run
+      // even though the runtime already converted it into a self-correctable
+      // user message; interactive sessions survive the same denials and
+      // headless must not be stricter. The real outcome comes from runState.
+      // FID-2026-0907-007 (live matrix case 4): the SECOND stream lane —
+      // per content delta, so mid-stream cancels drain within the grace
+      // window even when the model never finishes its response.
+      handleStreamChunk: () => {
+        controlPlane?.drain()
+      },
+      handleEvent: (event: PrintModeEvent) => {
+        // FID-2026-0907-006 (BO Phase 2): drain parent→child control frames
+        // at the step boundary BEFORE the tap — the child's observable
+        // per-step yield. cancel → cooperative abort (throw path frames the
+        // rule-4 error; exits per the existing run-loop policy; the parent
+        // owns the verdict); steer → accepted + parked (Phase C applies);
+        // unknown / v≠1 / malformed lines are skipped by the FID-003 parser.
+        if (controlPlane?.drain() === true) return
+        jsonTap?.(event)
         if (event.type === 'error') {
+          jsonEmitter?.emitError(event.message)
           // eslint-disable-next-line no-console -- headless diagnostics go to stderr
           console.error(`[savant-code] ${event.message}`)
         }
@@ -234,24 +255,41 @@ export async function runHeadlessPrint(
 
     const output = runState.output
     if (output?.type === 'error') {
-      return {
-        exitCode: HEADLESS_EXIT_ERROR,
-        error: output.message,
-      }
+      // Case 4 (live): frame the parent reason, not the SDK's generic
+      // cancellation message, when THIS child consumed the cancel frame.
+      return failWith(
+        HEADLESS_EXIT_ERROR,
+        controlPlane?.isCancelled() === true
+          ? PARENT_CANCEL_REASON
+          : output.message,
+      )
     }
 
     const answer = extractFinalAnswer(runState)
     const display =
       answer.length > 0 && !answer.endsWith('\n') ? answer + '\n' : answer
+    const finalAnswer = process.stdout.isTTY ? display : stripAnsi(display)
+    // FID-005 (BO rule 3): exactly one artifact frame per run, at the answer
+    // point — data.output IS the --print answer; in JSON mode this frame, not
+    // raw stdout, is the parent's answer channel (dispatch suppresses the raw
+    // write). FID-006: a run resolving after a drained cancel (completion
+    // race) emits NO artifact — no frames after the ack (parent owns verdict).
+    if (!(controlPlane?.isCancelled() ?? false)) {
+      jsonEmitter?.emitArtifact(finalAnswer)
+    }
     return {
       exitCode: HEADLESS_EXIT_OK,
-      output: process.stdout.isTTY ? display : stripAnsi(display),
+      output: finalAnswer,
+      ...(parkedSteerNotes.length > 0 ? { parkedSteerNotes } : {}),
     }
   } catch (error) {
-    return {
-      exitCode: HEADLESS_EXIT_ERROR,
-      error: error instanceof Error ? error.message : String(error),
-    }
+    const raw = error instanceof Error ? error.message : String(error)
+    // Case 4 (live): the parent-authored reason outranks the SDK's generic
+    // cancellation message when THIS child consumed the cancel frame.
+    return failWith(
+      HEADLESS_EXIT_ERROR,
+      controlPlane?.isCancelled() === true ? PARENT_CANCEL_REASON : raw,
+    )
   } finally {
     clearTimeout(timer)
   }

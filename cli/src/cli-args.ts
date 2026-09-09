@@ -23,6 +23,10 @@ export type ParsedArgs = {
   initialPermissionMode?: PermissionMode
   /** FID-2026-0806-011: run the prompt headlessly and print the result to stdout. */
   print: boolean
+  /** FID-2026-0907-003 / BO Phase B: emit NDJSON delegation frames on stdout
+   *  (Savant FID-067 v2 transport). Consumed by the headless dispatch
+   *  (FID-2026-0907-004/-005); argv-exact via this declared option. */
+  json: boolean
   /** Versioned design-authoring JSON path, or '-' for stdin. */
   designInput?: string
   /** FID-2026-0818-002: Auto Drive goal (non-TUI entry; routed per child 008). */
@@ -159,6 +163,10 @@ export function parseArgs({
         'Run the prompt headlessly and print the final answer to stdout (non-zero exit on failure)',
       )
       .option(
+        '--json',
+        'With --print: emit NDJSON delegation frames on stdout instead of the raw answer (Savant delegation transport; diagnostics stay on stderr)',
+      )
+      .option(
         '--design-input <path>',
         'Create or update a design system from versioned JSON at a path, or - for stdin',
       )
@@ -249,6 +257,7 @@ export function parseArgs({
         ? options.allowedTools
         : undefined,
     print: options.print || false,
+    json: options.json === true,
     designInput:
       typeof options.designInput === 'string' ? options.designInput : undefined,
     auto: typeof options.auto === 'string' ? options.auto : undefined,

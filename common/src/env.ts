@@ -90,10 +90,11 @@ if (!parsedEnv.success) {
 
 export const env = parsedEnv.data
 
-// Only log environment in non-production
+// Only log environment in non-production — on stderr (the diagnostics
+// channel): stdout is the headless answer channel (FID-2026-0907-007).
 if (env.NEXT_PUBLIC_CB_ENVIRONMENT !== 'prod') {
   // eslint-disable-next-line no-console -- deliberate env logging at startup
-  console.log('Using environment:', env.NEXT_PUBLIC_CB_ENVIRONMENT)
+  console.error('Using environment:', env.NEXT_PUBLIC_CB_ENVIRONMENT)
 }
 
 // Derived environment constants for convenience
