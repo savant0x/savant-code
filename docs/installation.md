@@ -77,6 +77,8 @@ Or configure one directly:
 | NVIDIA NIM | `/provider nvidia` | `NVIDIA_API_KEY` |
 | CommandCode | `/provider commandcode` | `COMMAND_CODE_API_KEY` |
 | Nous Research | `/provider nous` | `NOUS_API_KEY` (direct OpenAI-compatible API; Portal OAuth is separate) |
+| KiosAPI | `/provider kiosapi` | `KIOSAPI_API_KEY` (authenticated live model catalog) |
+| APInex | `/provider apinex` | `APINEX_API_KEY` (authenticated live model catalog) |
 
 ---
 
@@ -168,10 +170,15 @@ savant-code --print "refactor the error handling"
 
 # Pipe a prompt in (auto-headless)
 echo "summarize this repo" | savant-code
+
+# NDJSON delegation frames (Savant parent→child transport)
+savant-code --print "..." --json
 ```
 
 Exit codes: `0` success, `1` error/timeout, `2` usage error. Set
-`SAVANT_CODE_RUN_TIMEOUT_MS` to bound long runs.
+`SAVANT_CODE_RUN_TIMEOUT_MS` to bound long runs. With `--json`, stdout carries
+NDJSON delegation frames (progress, one artifact, errors) and stdin control
+frames (`cancel`/`steer`) are honored (FID-2026-0907-003..006).
 
 ### Provider Connection Issues
 

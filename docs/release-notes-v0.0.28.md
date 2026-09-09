@@ -2,8 +2,9 @@
 
 # Savant-Code v0.0.28 — Release Notes
 
-> **Status: pending release.** This document is the v0.0.28 release body for the GitHub
-> release and the npm publish announcement. Detailed per-FID records live in
+> **Status: shipped 2026-09-03** (npm `savant-code@0.0.28`; GitHub release
+> `v0.0.28`). This document was the v0.0.28 release body for the GitHub release
+> and the npm publish announcement. Detailed per-FID records live in
 > [CHANGELOG.md](../CHANGELOG.md).
 
 **v0.0.28 is the integrity, evaluation, and desktop release.** Six days of work

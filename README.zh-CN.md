@@ -8,11 +8,16 @@
 
 基于 TypeScript/Bun 构建，受 ECHO 协议治理，并针对本地优先的 Ollama 使用场景设计。
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-1.3.14-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![React](https://img.shields.io/badge/React-19-%23000000?style=flat-square&logo=react&logoColor=%2300fbff)](https://react.dev/)[![OpenTUI](https://img.shields.io/badge/OpenTUI-0.5.3-%23000000?style=flat-square&logo=opentui&logoColor=%2300fbff)](https://github.com/anomalyco/opentui)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](ECHO.md)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![Release](https://img.shields.io/badge/Release-v0.0.29-%23000000?style=flat-square&logo=semver&logoColor=%2300fbff)](CHANGELOG.md)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-1.3.14-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![React](https://img.shields.io/badge/React-19-%23000000?style=flat-square&logo=react&logoColor=%2300fbff)](https://react.dev/)[![OpenTUI](https://img.shields.io/badge/OpenTUI-0.5.3-%23000000?style=flat-square&logo=opentui&logoColor=%2300fbff)](https://github.com/anomalyco/opentui)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](ECHO.md)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![Release](https://img.shields.io/badge/Release-v0.0.30-%23000000?style=flat-square&logo=semver&logoColor=%2300fbff)](CHANGELOG.md)
 
 </div>
 
-> **v0.0.29** —— 本次发布包含质量攻坚收尾——全部残留源码单体完成分解
+> **v0.0.30** —— 本次发布包含 NDJSON 委托传输（阶段 1-2：`--print --json` 在 stdout 输出 NDJSON 帧——进度、
+> 单个 artifact、错误——并在 stdin 读取父端控制帧，支持协作取消与停泊 steering）、APInex 网关提供商（密钥
+> 实测验收通过）、`/provider <name> update` 密钥替换、四道机械化 harness 诚实门禁（ripgrep 启动探测、编辑
+> 尺寸指引、退出码掩码审计与 `verify:clean`——已提交树可从干净检出编译）、picker 焦点丢失修复、
+> `skill_manage` 对齐规范命令结果模板，以及 FID 回执盖章完整性修复。活跃 FID 队列清空（2026-09-08 归档
+> 8 条记录）。此前 v0.0.29 发布内容：质量攻坚收尾——全部残留源码单体完成分解
 > （`native.ts`、`gateway.ts`、`office-scene.tsx`、`public-release.ts`），
 > 质量棘轮达到零违规；同时加入发布管线耐久性与桌面集成：经验证的增量
 > git-bundle 备份（`scripts/git-bundle-backup.ts`）与三个新管线阶段——
@@ -309,12 +314,14 @@ MCP 工具发现、模式切换（`HYBRID` / `SCAFFOLD` / `STRICT` / `ANALYZE`�
   上下文长度。
 - **通用复制按钮** —— 在整个 TUI 中悬停即可复制代码块、工具输出与文件 diff。
 - **网关提供商** —— 通过 `@savant-code/llm-providers` 支持 TokenRouter、TokenHarbor、NVIDIA NIM、OpenCode Go、OpenCode Zen、
-  CommandCode、Nous Research、KiosAPI、TabiToken、GoRouter、VyceAI 与 Cloudflare Workers AI。Nous Research 使用 OpenAI 兼容直连
+  CommandCode、Nous Research、KiosAPI、APInex 与 Cloudflare Workers AI。Nous Research 使用 OpenAI 兼容直连
   API；Portal OAuth 是独立集成。
 - **默认模型** —— 通过 OpenRouter 使用 `openrouter/free`（可通过 `/model` 配置）。
 - **无头 / 非交互模式** —— `savant-code --print "<prompt>"` 无需 TUI 即可运行单个提示词，并将最终答案打印到
   stdout。退出码：`0` 成功、`1` 错误或超时、`2` 用法错误。当 stdin 被管道化或环境为 CI 时，CLI 自动进入无头模式并以
-  stdin 作为提示词。`SAVANT_CODE_RUN_TIMEOUT_MS`（默认 10 分钟）限制挂起的运行（FID-2026-0806-011）。
+  stdin 作为提示词。`SAVANT_CODE_RUN_TIMEOUT_MS`（默认 10 分钟）限制挂起的运行（FID-2026-0806-011）。使用
+  `--print ... --json` 时，stdout 输出 NDJSON 委托帧（进度、单个 artifact、错误），并在 stdin 读取父端控制帧
+  （`cancel`/`steer`）——Savant 父→子委托传输（FID-2026-0907-003..006）。
 - **同意式自动更新** —— 启动器绝不在会话运行中停止进程：新版本会在下次启动时经 y/N 提示后应用。
   `SAVANT_CODE_NO_AUTO_UPDATE=1` 完全退出（FID-2026-0806-014）。
 - **主题** —— 亮/暗切换（`/theme:toggle`），Neon Slate 美学。

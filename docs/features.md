@@ -190,6 +190,9 @@ Works with multiple inference providers:
 - **OpenCode Go** — Hosted gateway
 - **TokenHarbor** — OpenAI-compatible hosted gateway at `https://tokenharbor.ai/v1`
 - **TokenRouter** — Multi-provider gateway
+- **KiosAPI** — OpenAI-compatible gateway with an authenticated live model catalog (`KIOSAPI_API_KEY`)
+- **OpenCode Zen** — Four-protocol hosted gateway (chat/completions, Anthropic messages, Responses, Gemini)
+- **APInex** — Hosted gateway with an authenticated live model catalog (`APINEX_API_KEY`)
 - **NVIDIA NIM** — NVIDIA-hosted inference
 - **CommandCode** — OpenAI-compatible hosted inference
 - **Nous Research** — OpenAI-compatible direct inference via `NOUS_API_KEY`; Portal OAuth is a separate integration
@@ -224,6 +227,10 @@ stdout (FID-2026-0806-011):
 - `SAVANT_CODE_RUN_TIMEOUT_MS` (default 10 minutes) bounds hung runs; the
   headless client never blocks on interactive `ask_user`
 - Output is ANSI-stripped when piped, so results stay script-friendly
+- `--print ... --json` — the NDJSON delegation transport: stdout carries
+  frames (progress, exactly one artifact, errors) and parent control frames
+  (`cancel`/`steer`) are read on stdin at step boundaries — cooperative
+  cancel, parked steering, unknown frames ignored (FID-2026-0907-003..006)
 
 ---
 

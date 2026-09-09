@@ -180,13 +180,21 @@ Prepare the next version before invoking the mutation flow:
 
 1. Update `VERSION`, the root `package.json`, `cli/package.json`,
    `cli/release/package.json`, and `sdk/package.json` to the same version.
-2. Add exactly one reverse-chronological `v<version>` heading and release notes to
-   `CHANGELOG.md`.
+2. Confirm the `## <version> — <YYYY-MM-DD>` heading was opened at bump time and
+   the release notes beneath it are complete. There is **no `## Unreleased`
+   accumulator** under the pipeline cadence: the engine extracts only the
+   version heading matching the release version, so content parked under an
+   `## Unreleased` section never ships in release notes. Entries accumulate
+   directly beneath the upcoming version heading as each change closes.
 3. Run the read-only checks:
    ```bash
    bun run release:public:preview
    bun run release:public:diagnose
+   bun run verify:clean
    ```
+   `verify:clean` proves the COMMITTED tree compiles (detached worktree +
+   frozen-lockfile install + typecheck chain) — run it after the release
+   commit exists (FID-2026-0907-002).
 4. The default publication policy is CLI-only, so run:
    ```bash
    SAVANT_CODE_RELEASE_AUTOMATION=1 bun run release:public

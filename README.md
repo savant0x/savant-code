@@ -10,30 +10,31 @@ touches your repo.**
 Built with TypeScript/Bun, governed by the ECHO Protocol, and designed for
 local-first use with Ollama.
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-1.3.14-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![React](https://img.shields.io/badge/React-19-%23000000?style=flat-square&logo=react&logoColor=%2300fbff)](https://react.dev/)[![OpenTUI](https://img.shields.io/badge/OpenTUI-0.5.3-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](https://github.com/anomalyco/opentui)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](ECHO.md)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![Release](https://img.shields.io/badge/Release-v0.0.29-%2300fbff?style=flat-square&logo=semver&logoColor=%2300fbff)](CHANGELOG.md)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-1.3.14-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![React](https://img.shields.io/badge/React-19-%23000000?style=flat-square&logo=react&logoColor=%2300fbff)](https://react.dev/)[![OpenTUI](https://img.shields.io/badge/OpenTUI-0.5.3-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](https://github.com/anomalyco/opentui)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](ECHO.md)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![Release](https://img.shields.io/badge/Release-v0.0.30-%2300fbff?style=flat-square&logo=semver&logoColor=%2300fbff)](CHANGELOG.md)
 
 </div>
 
-> **v0.0.29** — this release ships the quality-campaign closeout — every
-> residue source monolith decomposed (`native.ts`, `gateway.ts`,
-> `office-scene.tsx`, `public-release.ts`) with the quality ratchet at zero
-> violations — plus release-pipeline durability and desktop integration: a
-> verified incremental git-bundle backup (`scripts/git-bundle-backup.ts`) and
-> three new pipeline stages — `BACKUP_BUNDLE` (a verified, OneDrive-synced
-> bundle written before any public artifact is cut), `DESKTOP_BUNDLES` /
-> `DESKTOP_RELEASE` (desktop packaging as pipeline stages with the fail-closed
-> updater manifest, gated on `SAVANT_CODE_RELEASE_DESKTOP=1`), and a
-> per-release updater-manifest verification — plus the provider additions
-> (KiosAPI and OpenCode Zen, four-protocol, with a recursive-schema sanitizer
-> for strict upstreams), the **Triggers program** (opt-in `SAVANT_TRIGGERS=1`:
-> loopback webhook receiver with bearer auth + replay/rate guards, payload-
-> are-data directive injection, a dependency-free cron scheduler with
-> missed-run resume, `triggers_*` JSON-RPC management, the desktop
-> TriggersPanel, and the relay guide), and the quality-ratchet file
-> remediation (62 → 5 violations; every test and type file under the
-> 300-line ceiling). The Maus-parity roadmap suite was dissolved by operator
-> decision. Governance: agents may commit and push locally; public releases
-> flow exclusively through the hardened release pipeline.
+> **v0.0.30** — this release ships the NDJSON delegation transport (Phases
+> 1-2: `--print --json` emits NDJSON frames on stdout — progress, one
+> artifact, errors — and reads parent control frames on stdin with
+> cooperative cancel + parked steering), the APInex gateway provider (keyed
+> live acceptance passed), `/provider <name> update` key replacement, four
+> mechanized harness-honesty gates (ripgrep boot probe, edit-size guidance,
+> the exit-code-masking audit, and `verify:clean` — the committed tree
+> proven to compile from a clean checkout), the picker-focus-loss fix,
+> `skill_manage` brought onto the canonical command-result template, and
+> FID receipt-stamping integrity fixes. The active FID queue closed to
+> empty (8 records archived 2026-09-08).
+> Previously shipped in v0.0.29: the quality-campaign closeout (every
+> residue source monolith decomposed — `native.ts`, `gateway.ts`,
+> `office-scene.tsx`, `public-release.ts` — with the quality ratchet at
+> zero violations), release-pipeline durability + desktop integration
+> (`BACKUP_BUNDLE`, `DESKTOP_BUNDLES`/`DESKTOP_RELEASE`, per-release
+> updater-manifest verification), the KiosAPI and OpenCode Zen providers,
+> the Triggers program (opt-in `SAVANT_TRIGGERS=1`), and the
+> quality-ratchet file remediation. Governance: agents may commit and push
+> locally; public releases flow exclusively through the hardened release
+> pipeline.
 > Previously shipped in v0.0.28: the compaction integrity rebuild (master
 > FID-2026-0824-022 + children -023…-027: preservation contract + digest
 > schema, minimal-surgery algorithm, evidence spill, removed-content ledger),
@@ -469,7 +470,7 @@ code 2 blocks a tool.
 - **Universal copy buttons** — hover-to-copy on code blocks, tool outputs, and
   file diffs throughout the TUI.
 - **Gateway providers** — TokenRouter, TokenHarbor, NVIDIA NIM, OpenCode Go, OpenCode Zen, CommandCode,
-  Nous Research, KiosAPI, TabiToken, GoRouter, VyceAI, and Cloudflare Workers AI via
+  Nous Research, KiosAPI, APInex, and Cloudflare Workers AI via
   `@savant-code/llm-providers`. Nous Research uses the direct OpenAI-compatible API; Portal OAuth
   is a separate integration.
 - **Default model** — `openrouter/free` via OpenRouter (configurable via
@@ -482,7 +483,10 @@ code 2 blocks a tool.
   codes: `0` success, `1` error or timeout, `2` usage error. When stdin is piped
   or the environment is CI, the CLI auto-enters headless mode and uses stdin as
   the prompt. `SAVANT_CODE_RUN_TIMEOUT_MS` (default 10 minutes) bounds hung
-  runs (FID-2026-0806-011).
+  runs (FID-2026-0806-011). With `--print ... --json`, stdout carries NDJSON
+  delegation frames (progress, one artifact, errors) and parent control
+  frames (`cancel`/`steer`) are read on stdin — the Savant parent→child
+  delegation transport (FID-2026-0907-003..006).
 - **Consent-gated auto-update** — the launcher never stops a running session:
   a newer version is staged and applied on the next launch after a y/N
   prompt. `SAVANT_CODE_NO_AUTO_UPDATE=1` opts out entirely (FID-2026-0806-014).

@@ -3,7 +3,7 @@
 > **Scope:** This document describes what data Savant Code collects, where it
 > goes, and how users control it. It covers the CLI, SDK, and agent-runtime.
 >
-> **Version:** v0.0.29
+> **Version:** v0.0.30
 >
 > **Applies to:** `cli`, `sdk`, `packages/agent-runtime`, `common`
 
@@ -55,7 +55,8 @@
   disk by Savant Code. Current direct-provider variables include
   `OPENCODE_API_KEY` (shared by OpenCode Go and OpenCode Zen),
   `TOKENROUTER_API_KEY`, `TOKENHARBOR_API_KEY`,
-  `NVIDIA_API_KEY`, `COMMAND_CODE_API_KEY`, and `NOUS_API_KEY`.
+  `NVIDIA_API_KEY`, `COMMAND_CODE_API_KEY`, `KIOSAPI_API_KEY`,
+  `APINEX_API_KEY`, and `NOUS_API_KEY`.
 - Keys entered through the masked `/provider` flow are stored in the user's
   local `credentials.json` so npm-installed users can configure a provider
   without editing shell profiles.
