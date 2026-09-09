@@ -5,8 +5,9 @@
  * the controller only wires them through to the layout.
  */
 
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 
+import { pickerFocusAction } from './picker-focus-transition'
 import { getCheckpointDir } from '../commands/rewind'
 import { getProjectRoot, tryGetProjectRoot } from '../project-files'
 import { useChatStore } from '../state/chat-store'
@@ -120,11 +121,31 @@ export function useChatPickers({
   // While a picker overlay is open, blur the text input so keystrokes route
   // to the picker, not the input (FID-2026-0816-007 step 3: rewind was
   // previously missing from this guard, leaking focus to the chat dispatcher).
+  // FID-2026-0907-001: the close transition now restores focus symmetrically —
+  // Escape and backdrop dismissal previously left the input blurred forever
+  // (typing and click gates both key off this `focused` prop, so the input
+  // could not self-recover). The wasAnyPickerOpen ref scopes the restore to a
+  // genuine open→closed transition so the effect never fights other focus
+  // owners on mount or steady-state closed renders.
+  const wasAnyPickerOpenRef = useRef(false)
   useEffect(() => {
-    if (modelPickerOpen || providerPickerOpen || rewindPickerOpen) {
+    const anyOpen = modelPickerOpen || providerPickerOpen || rewindPickerOpen
+    const action = pickerFocusAction(anyOpen, wasAnyPickerOpenRef.current)
+    if (action === 'blur') {
+      wasAnyPickerOpenRef.current = true
       setInputFocused(false)
+    } else if (action === 'restore') {
+      wasAnyPickerOpenRef.current = false
+      setInputFocused(true)
+      inputRef.current?.focus()
     }
-  }, [modelPickerOpen, providerPickerOpen, rewindPickerOpen, setInputFocused])
+  }, [
+    modelPickerOpen,
+    providerPickerOpen,
+    rewindPickerOpen,
+    setInputFocused,
+    inputRef,
+  ])
 
   // Commit a /rewind picker selection (FID-2026-0803-004): execute the chosen
   // restore mode against the selected turn's checkpoint and report in-chat.
@@ -159,7 +180,7 @@ export function useChatPickers({
           setMessages((prev) => [
             ...prev,
             getSystemMessage(
-              `${info.label} selected. The existing configured key will be used; no key entry is needed.`,
+              `${info.label} selected. The existing configured key will be used; no key entry is needed. To replace the key, run /provider ${info.provider} update.`,
             ),
           ])
           setInputFocused(true)

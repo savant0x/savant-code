@@ -3,6 +3,7 @@ import { red } from 'picocolors'
 
 import { runStandaloneRelease } from './commands/release/release-command'
 import { normalizeReleaseCommand } from './commands/release/release-runner'
+import { writeHeadlessOutcome } from './headless-outcome'
 import { runHeadlessPrint } from './headless-run'
 import { runPlainLogin } from './login/plain-login'
 import { getProjectRoot } from './project-files'
@@ -38,6 +39,7 @@ export async function dispatchCommandsAndHeadless(
     planFile,
     approve,
     planOnly,
+    json,
   } = args
   const hasAgentOverride = Boolean(agent?.trim())
   const isLoginCommand = command === 'login'
@@ -136,17 +138,17 @@ export async function dispatchCommandsAndHeadless(
       allowedTools,
       continueChat,
       continueId,
+      // FID-2026-0907-004: the argv-exact --json flag (FID-003) activates
+      // NDJSON progress-frame emission on the delegation path. Unset →
+      // byte-identical v1 (the tap is never created).
+      jsonMode: json === true,
     })
 
-    if (result.output !== undefined) {
-      // eslint-disable-next-line no-console -- headless stdout contract
-      console.log(result.output)
-    }
-    if (result.error) {
-      // eslint-disable-next-line no-console -- headless stderr contract
-      console.error(red(`Error: ${result.error}`))
-    }
-    process.exit(result.exitCode)
+    // FID-2026-0907-005: the terminal write is the pure outcome seam —
+    // JSON mode suppresses the raw stdout answer (the artifact frame owns
+    // the answer channel; BO rule 5) while stderr diagnostics stay
+    // byte-identical in both modes; non-JSON stays v1 byte-identical.
+    process.exit(writeHeadlessOutcome(result, { json: json === true }))
   }
 
   return false

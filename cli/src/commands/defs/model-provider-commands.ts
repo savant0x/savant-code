@@ -85,7 +85,18 @@ export const MODEL_PROVIDER_COMMANDS = [
         return
       }
 
-      const provider = beginProviderSetup(trimmedArgs)
+      // FID-2026-0907-009: `/provider <name> update` forces the masked key
+      // prompt even when a key is already configured (replace semantics);
+      // a trailing `update` token is stripped before name resolution so
+      // `/provider nous update extra` still resolves to an unknown provider.
+      const argTokens = trimmedArgs.split(/\s+/)
+      const wantsKeyUpdate =
+        argTokens.length > 1 && argTokens[argTokens.length - 1] === 'update'
+      const providerName = wantsKeyUpdate
+        ? argTokens.slice(0, -1).join(' ')
+        : trimmedArgs
+
+      const provider = beginProviderSetup(providerName)
       const info = provider ? getProviderSetupInfo(provider) : undefined
 
       if (!provider || !info) {
@@ -106,13 +117,15 @@ export const MODEL_PROVIDER_COMMANDS = [
         cursorPosition: 0,
         lastEditDueToNav: false,
       })
-      const configured = activateConfiguredProvider(provider)
+      const configured = wantsKeyUpdate
+        ? false
+        : activateConfiguredProvider(provider)
       if (configured) {
         params.setMessages((prev) => [
           ...prev,
           getUserMessage(params.inputValue.trim()),
           getSystemMessage(
-            `${info.label} selected. The existing configured key will be used; no key entry is needed.`,
+            `${info.label} selected. The existing configured key will be used; no key entry is needed. To replace the key, run /provider ${info.provider} update.`,
           ),
         ])
         params.setInputFocused(true)
@@ -127,7 +140,9 @@ export const MODEL_PROVIDER_COMMANDS = [
         ...prev,
         getUserMessage(params.inputValue.trim()),
         getSystemMessage(
-          `${info.label} selected. Enter your API key below. It will be masked and stored locally in credentials.json. Environment variables take precedence.`,
+          wantsKeyUpdate
+            ? `${info.label} key update. Enter the new API key below to replace the stored key. It will be masked and stored locally in credentials.json. Environment variables take precedence. Press Escape to cancel and keep the current key.`
+            : `${info.label} selected. Enter your API key below. It will be masked and stored locally in credentials.json. Environment variables take precedence.`,
         ),
       ])
     },
