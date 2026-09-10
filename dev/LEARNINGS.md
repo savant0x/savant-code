@@ -1507,4 +1507,98 @@ tracking doc).
 - **Status:** active
 - **Canonical rule:** compiles-is-per-surface
 
+## Lesson: A policy scrub must sweep the rule text and its generator anchors, not just the artifacts
+
+- **Date:** 2026-09-10
+- **Failure:** The 2026-08-09 no-signature scrub (FID-2026-0809-014)
+  removed `Author:` attribution from every artifact — but missed the rule
+  itself: `ECHO.md`'s FID Authoring Rules still declared `**Author**` a
+  required metadata field for 20 days. Because the sentence is a generator
+  anchor (`FRAMING.fidAuthoringParagraphs` in
+  `scripts/protocol-copies/content.ts`), the drift guard froze the stale
+  wording into both generated protocol constants — re-teaching the dead
+  rule to every agent — while `fid-ledger.ts` FORBIDDEN_ATTRIBUTION
+  mechanically rejected what the rule required. Live consequence: the
+  FID-2026-0910-001 Verifier correctly FAILED a compliant FID for the
+  missing field. Flagged 2026-08-21 (session summary 0314:53) and never
+  fixed until the audit exposed it.
+- **Evidence:** commit `7031d6b9` (the 3-site atomic fix);
+  `scripts/protocol-copies/content.ts:169`, `dev/echo-v0.1.2-single-agent.md:288-289`
+  (which forbids `Author:` at its own :30), `scripts/fid-ledger.ts:32`.
+- **Invariant:** The sentence declaring a requirement is itself an
+  artifact. When a generator anchors to rule text, the drift guard that
+  normally protects consistency freezes the stale wording until ALL
+  coupled sites are edited in one commit.
+- **Guard:** A policy scrub greps its forbidden patterns across governance
+  docs AND generator sources, not just the artifacts the policy governs;
+  when an auditor fails a document for violating a rule that contradicts
+  policy, the auditor is the signal, not the bug.
+- **Verification:** parity suite 15/0 (pre-regen 14/1 = the drift guard
+  firing by design); `generate:protocol-bundle:check` exit 0; repo-wide
+  grep = 5 fixed sites, zero live residue.
+- **Scope:** governance, generated artifacts
+- **Owning FID:** FID-2026-0910-002 (closed + archived)
+- **Status:** active
+- **Canonical rule:** rule-text-outlives-policy
+
+## Lesson: External research citations are hypotheses until grepped against the tree
+
+- **Date:** 2026-09-10
+- **Failure:** The Gemini Deep Research report on SkillOpt integration
+  correctly identified the presentation-stage gap but built its blueprint
+  on fabricated seams: `cli/src/components/SkillList.tsx:65` (component
+  does not exist), `prompts.ts:415` (file is 211 lines),
+  `session-end-review.ts:140` (file is 117 lines), a quarantine-root
+  `VERSIONS.jsonl` (never existed) — and its SkillOpt Issue #247
+  "fragile backup" rejection rationale was inverted (current SkillOpt
+  main fail-closes; Savant's rollback machinery is ahead). Two claims
+  needed adjustment, not rejection (`/skills` already prints counts on
+  demand; the Levenshtein cap is already engine-enforced).
+- **Evidence:** the adversarial verification pass in session summary
+  `2026-09-10-1245`; FID-2026-0910-001's Evidence section (the verified
+  seam set).
+- **Invariant:** A research report — however well-reasoned its
+  architecture — carries file:line citations that are hypotheses, not
+  facts. Building on an unverified seam propagates the fabrication into
+  the FID record.
+- **Guard:** Before folding any external report into a FID, grep every
+  file:line citation against the working tree; classify each finding
+  CONFIRMED / REFUTED / ADJUSTED, and build only on the verified subset.
+- **Verification:** all three fabricated citations refuted by direct
+  grep/read; the corrected 6-FID plan derived from the verified seams
+  only.
+- **Scope:** research workflow, FID authoring
+- **Owning FID:** FID-2026-0910-001 (analyzed)
+- **Status:** active
+- **Canonical rule:** verify-research-citations-before-building
+
+## Lesson: EHEL verification credit is per-agent — subagent runs do not clear the parent's gate
+
+- **Date:** 2026-09-10
+- **Failure:** After editing two files, `basher` subagents ran the full
+  verification battery (prettier/eslint/markdownlint/typecheck) with all
+  green tool output — but EHEL's Law 3 per-file gate still BLOCKED the
+  parent's next write: the tracker credits verification from the
+  parent's own tool executions, not from a spawned agent's terminal
+  output relayed back through conversation context.
+- **Evidence:** the Law 3 block sequence in session summary
+  `2026-09-10-1245`; the gate cleared only after the parent ran the same
+  chains via its own read-only command tool.
+- **Invariant:** The Law 3 "unverified file" list is scoped to the
+  agent attempting the write; verification evidence must come from that
+  agent's own tool calls. A subagent's green run is real verification of
+  the code but not credit the parent can spend.
+- **Guard:** When EHEL blocks with unverified files after subagent
+  verification, re-run the same lint/typecheck chain directly (the
+  read-only command tool runs in every phase) — do not re-spawn bashers
+  expecting different behavior.
+- **Verification:** each direct re-run cleared the gate immediately;
+  observed consistently across three block/clear cycles this session.
+- **Scope:** harness, EHEL enforcement
+- **Owning FID:** none (harness behavior observation — tracked so it
+  does not silently recur; promote to a FID if a third session confirms
+  an undesired interaction)
+- **Status:** active
+- **Canonical rule:** eHEL-verification-credit-is-per-agent
+
 <!-- Add new entries above this line -->
