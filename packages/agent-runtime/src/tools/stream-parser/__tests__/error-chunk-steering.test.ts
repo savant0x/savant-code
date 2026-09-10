@@ -112,15 +112,37 @@ describe('native-incomplete strike-one steering (FID-2026-0909-007)', () => {
         markToolCallError: () => {},
       })
 
-      handler({
-        type: 'error',
-        message: `Error during tool call: Incomplete arguments for tool read_files. ${SUFFIX}`,
-      })
+      const wrapped = `Error during tool call: Incomplete arguments for tool read_files. ${SUFFIX}`
+      handler({ type: 'error', message: wrapped })
 
       expect(errorMessages).toHaveLength(1)
-      const occurrences =
-        errorContentOf(errorMessages[0]).split(SUFFIX).length - 1
+      const content = errorContentOf(errorMessages[0])
+      const occurrences = content.split(SUFFIX).length - 1
       expect(occurrences).toBe(1)
+      // True pass-through, not strip-and-rewrap: the wrapped input survives
+      // intact (auditor finding — occurrence-count alone cannot distinguish).
+      expect(content).toContain(wrapped)
+    })
+
+    it('(g) passes a wrapped message WITH its steering suffix through unchanged', () => {
+      const errorMessages: Message[] = []
+      const handler = createResponseHandler({
+        onResponseChunk: () => {},
+        errorMessages,
+        markToolCallError: () => {},
+      })
+
+      const steering = getSteeringMessage('write_file', 1)
+      const wrapped = `Error during tool call: Incomplete arguments for tool write_file. ${SUFFIX}${steering}`
+      handler({ type: 'error', message: wrapped })
+
+      expect(errorMessages).toHaveLength(1)
+      const content = errorContentOf(errorMessages[0])
+      // A strip-and-rewrap would drop the steering suffix; pass-through
+      // keeps the whole wrapped message intact.
+      expect(content).toContain(wrapped)
+      expect(content).toContain(steering)
+      expect(content.split(SUFFIX).length - 1).toBe(1)
     })
 
     it('(f) wraps an unwrapped error exactly once', () => {

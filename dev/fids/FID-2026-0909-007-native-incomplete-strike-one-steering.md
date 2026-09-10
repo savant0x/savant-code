@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0909-007-native-incomplete-strike-one-steering.md`
 **ID:** FID-2026-0909-007
 **Severity:** medium
-**Status:** fixed
+**Status:** verified
 **Created:** 2026-09-09 21:50
 **YAGNI-Compliance:** Verified (extends the existing steering map + removes one redundant gate; no new machinery)
 **Related:** FID-2026-0816-012 (strike cap + re-spawn guidance),
@@ -326,6 +326,34 @@ RED leg (pins (c) and (e) fail pre-fix), then: typecheck agent-runtime,
   chain).
 - **CHANGE DELTA:** n/a (initial record).
 
+### Loop 2 — Implementation (2026-09-10, this session)
+
+- **RED (suite-first proof):** pin suite authored before any production
+  change; pre-fix run failed exactly legs (a)/(c)/(e) (map entries
+  missing, Set-gated empty steering, suffix ×2) while (b)/(d)/(f)
+  held — the RED evidence is recorded in the session transcript.
+- **GREEN:** three changes landed (map +3; ungated strike-1 steering
+  with Set deletion; shared idempotent wrap helper at both sites).
+  Committed `7dac5c5b` (5 files, +208/−31).
+- **AUDIT (Verifier, implementation):** PASS on substance — 2 minor
+  FAILs (wrap template produced `object.. Please check` double period
+  for messages already ending in a period; pin (e) occurrence-count
+  too weak to distinguish pass-through from strip-and-rewrap) + 2
+  NEEDS-REVIEW (suite re-execution; FID step bookkeeping — resolved:
+  the Steps section numbers Step 1 = RED-first suite, Step 2 = the
+  three GREEN changes, Step 3 = doc check, Step 4 = closure, so the
+  status line was accurate).
+- **SELF-CORRECT:** both FAILs fixed — trailing-period normalization in
+  `wrapToolCallErrorMessage`; pin (e) strengthened with exact containment
+  + new pin (g) (wrapped-with-steering pass-through — a strip-and-rewrap
+  would drop the steering suffix). Re-verified: 15/15 across three
+  suites (68 expect() calls), typecheck 0, eslint 0, prettier clean.
+  The Verifier's suite re-execution NEEDS-REVIEW resolved by this
+  fresh run with tool output.
+- **Residual (documented, unchanged):** field-less re-emitted errors on
+  the relay path still lack strike-1 steering (Expected Behavior scope;
+  MQ-9 follow-up) — recovered by the strike-2+ ladder.
+
 ### Missed Questions
 
 1. *Why did strike-2+ steering work but strike-1 fail for read_files?*
@@ -377,12 +405,26 @@ RED leg (pins (c) and (e) fail pre-fix), then: typecheck agent-runtime,
 ### Implementation Evidence (REQUIRED for `closed`)
 
 > Implementation landed 2026-09-10 (operator approval, batch order
-> 008 → 007 → 006). Filled at closure below.
+> 008 → 007 → 006). Audit loop complete; evidence below.
 
-- [ ] **Commit SHA:** pending implementation
-- [ ] **File:line ranges:** pending implementation
-- [ ] **Gate output:** pending implementation
-- [ ] **Reproducibility:** pending implementation
+- [x] **Commit SHA:** `7dac5c5b` (implementation, 5 files,
+      +208/−31); audit amendments pending commit this session
+      (double-period template fix + pin (e)/(g) strengthening)
+- [x] **File:line ranges:** `constants.ts` steering map +3 entries
+      (spawn_agents / run_readonly_command / sequentialthinking);
+      `error-chunk.ts` — `TOOL_CALL_ERROR_MESSAGE_PREFIX` +
+      `wrapToolCallErrorMessage` (startsWith guard, trailing-period
+      normalization) + ungated steering; `response-handler.ts` — shared
+      helper import; new pin suite
+      `tools/stream-parser/__tests__/error-chunk-steering.test.ts`
+- [x] **Gate output:** RED legs (a)/(c)/(e) failed pre-fix as designed;
+      post-fix: typecheck exit 0, eslint `--max-warnings 0` clean,
+      prettier clean, steering suite 7/7 (pins a–g), part-f + strikes
+      suites 15/15 aggregate across three files, 68 expect() calls
+- [x] **Reproducibility:** `cd packages/agent-runtime && bun test
+      src/tools/stream-parser/__tests__/error-chunk-steering.test.ts
+      src/__tests__/loop-agent-steps-part-f.test.ts
+      src/__tests__/loop-agent-steps-part-f-strikes.test.ts`
 - [x] **Step statuses:** Steps 1–2 implemented + verified 2026-09-10;
       Step 3 (docs check) verified — `docs/agents-and-tools.md` mentions
       `spawn_agents` only in the agent-roster/tool tables, does NOT
@@ -396,10 +438,17 @@ RED leg (pins (c) and (e) fail pre-fix), then: typecheck agent-runtime,
 > design, not an implementation claim.
 
 - [x] Files referenced in Affected Components exist
-- [ ] Implementation matches the Proposed Solution (pending — not
-      implemented)
-- [ ] Typecheck/tests/lint pass with pasted tool output (pending)
-- [ ] Production call-graph evidence for new/repaired wiring (pending)
+- [x] Implementation matches the Proposed Solution (all three changes +
+      pin suite + docs check — Step 3 verified no doc drift: the docs
+      enumerate the agent roster, not the steering tool set)
+- [x] Typecheck/tests/lint pass with pasted tool output (see Gate
+      output above)
+- [x] Production call-graph evidence: `NATIVE_TOOL_CALL_STEER_SPLIT_TOOLS`
+      grep → zero hits repo-wide (Set fully deleted);
+      `wrapToolCallErrorMessage` → 1 definition + exactly 2 call sites
+      (`error-chunk.ts` handleStreamErrorChunk + `response-handler.ts`
+      relay); `Error during tool call` template → zero sites outside the
+      shared helper + tests (no third wrap site)
 - [x] FID status reflects the actual implementation state (`analyzed` =
       planning converged, no code)
 

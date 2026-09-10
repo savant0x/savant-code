@@ -19,9 +19,13 @@ export const TOOL_CALL_ERROR_MESSAGE_PREFIX = 'Error during tool call: '
 
 /**
  * FID-2026-0909-007: wrap a raw tool-call error message exactly once.
- * Already-wrapped messages pass through as-is; unwrapped messages gain the
+ * Already-wrapped messages pass through as-is (any supplied steering
+ * suffix is intentionally dropped — the pass-through message already
+ * carries the steering from its first wrap); unwrapped messages gain the
  * single canonical wrapper (plus an optional steering suffix). One wrap
- * template for every emission site (Law 13).
+ * template for every emission site (Law 13). A trailing period on the
+ * raw message is normalized so the join never produces a doubled `..`
+ * (the SDK normalizer's messages all end with one).
  */
 export function wrapToolCallErrorMessage(
   message: string,
@@ -30,7 +34,8 @@ export function wrapToolCallErrorMessage(
   if (message.startsWith(TOOL_CALL_ERROR_MESSAGE_PREFIX)) {
     return message
   }
-  return `${TOOL_CALL_ERROR_MESSAGE_PREFIX}${message}. Please check the tool name and arguments and try again.${steeringSuffix}`
+  const body = message.endsWith('.') ? message.slice(0, -1) : message
+  return `${TOOL_CALL_ERROR_MESSAGE_PREFIX}${body}. Please check the tool name and arguments and try again.${steeringSuffix}`
 }
 
 /**
