@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0909-007-native-incomplete-strike-one-steering.md`
 **ID:** FID-2026-0909-007
 **Severity:** medium
-**Status:** analyzed
+**Status:** fixed
 **Created:** 2026-09-09 21:50
 **YAGNI-Compliance:** Verified (extends the existing steering map + removes one redundant gate; no new machinery)
 **Related:** FID-2026-0816-012 (strike cap + re-spawn guidance),
@@ -376,17 +376,18 @@ RED leg (pins (c) and (e) fail pre-fix), then: typecheck agent-runtime,
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-> Planning record — status is `analyzed`; implementation has NOT started.
-> Completed only at closure with commit SHA, file:line ranges, gate
-> output, and reproducibility evidence. A `closed` FID with no code
-> violates the Ground-Truth rule (`fid-closure-requires-implementation-
-> evidence`).
+> Implementation landed 2026-09-10 (operator approval, batch order
+> 008 → 007 → 006). Filled at closure below.
 
 - [ ] **Commit SHA:** pending implementation
 - [ ] **File:line ranges:** pending implementation
 - [ ] **Gate output:** pending implementation
 - [ ] **Reproducibility:** pending implementation
-- [ ] **Step statuses:** Steps 1–4 pending (not started)
+- [x] **Step statuses:** Steps 1–2 implemented + verified 2026-09-10;
+      Step 3 (docs check) verified — `docs/agents-and-tools.md` mentions
+      `spawn_agents` only in the agent-roster/tool tables, does NOT
+      enumerate the steering tool set; no doc drift. Step 4 closure in
+      progress this session.
 
 ### Code Verification Evidence
 

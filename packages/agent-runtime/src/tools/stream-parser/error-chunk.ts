@@ -8,23 +8,30 @@ import type { AgentTemplate } from '../../templates/types'
 import type { ToolName } from '@savant-code/common/tools/constants'
 import type { StreamErrorChunk } from '@savant-code/common/types/contracts/llm'
 import type { Message } from '@savant-code/common/types/messages/savant-code-message'
-import type { WriteToolName } from '@savant-code/common/types/provenance'
 
-/** FID-2026-0816-012: native tools whose arguments are commonly large enough to
- *  truncate mid-stream on flash-class models. Recovery steers the model to
- *  split these instead of re-emitting the same oversized payload. The write
- *  tools reuse the canonical `WriteToolName` union (Law 13 — one source of
- *  truth); `read_files` joins it for multi-path reads; `run_terminal_command`
- *  joins it because chained bash commands routinely truncate the same way. */
-const NATIVE_TOOL_CALL_STEER_SPLIT_TOOLS = new Set<
-  WriteToolName | 'read_files' | 'run_terminal_command'
->([
-  'write_file',
-  'str_replace',
-  'apply_patch',
-  'read_files',
-  'run_terminal_command',
-])
+/**
+ * FID-2026-0909-007: the shared wrap prefix for tool-call error messages.
+ * The idempotence guard matches on it so a re-emitted, already-wrapped
+ * error is never wrapped a second time (the observed doubled-suffix class:
+ * one `Error during tool call:` prefix with the trailing suffix twice).
+ */
+export const TOOL_CALL_ERROR_MESSAGE_PREFIX = 'Error during tool call: '
+
+/**
+ * FID-2026-0909-007: wrap a raw tool-call error message exactly once.
+ * Already-wrapped messages pass through as-is; unwrapped messages gain the
+ * single canonical wrapper (plus an optional steering suffix). One wrap
+ * template for every emission site (Law 13).
+ */
+export function wrapToolCallErrorMessage(
+  message: string,
+  steeringSuffix = '',
+): string {
+  if (message.startsWith(TOOL_CALL_ERROR_MESSAGE_PREFIX)) {
+    return message
+  }
+  return `${TOOL_CALL_ERROR_MESSAGE_PREFIX}${message}. Please check the tool name and arguments and try again.${steeringSuffix}`
+}
 
 /**
  * Handles a stream error chunk (FID-2026-0819-005 Loop 299: extracted
@@ -74,19 +81,21 @@ export function handleStreamErrorChunk(params: {
   // escalation. Strike 1 = hint, strike 2 = explicit, 3+ = example.
   // We use strike=1 here (first occurrence); loop-iteration.ts may
   // append a second error with escalating guidance on retries.
+  // FID-2026-0909-007: steering is ungated — every native-incomplete
+  // chunk steers at strike 1. The old STEER_SPLIT_TOOLS Set duplicated
+  // the map-plus-fallback policy that getSteeringMessage already encodes
+  // (Law 13) and left unmapped tools with EMPTY guidance on the first,
+  // most-important retry.
   const steering =
     'errorClass' in chunk &&
     chunk.errorClass === 'native-incomplete' &&
-    chunk.toolName !== undefined &&
-    NATIVE_TOOL_CALL_STEER_SPLIT_TOOLS.has(
-      chunk.toolName as WriteToolName | 'read_files' | 'run_terminal_command',
-    )
+    chunk.toolName !== undefined
       ? getSteeringMessage(chunk.toolName, 1)
       : ''
   errorMessages.push(
     userMessage({
       content: withSystemTags(
-        `Error during tool call: ${chunk.message}. Please check the tool name and arguments and try again.${steering}`,
+        wrapToolCallErrorMessage(chunk.message, steering),
       ),
       tags: ['TOOL_CALL_ERROR'],
     }),

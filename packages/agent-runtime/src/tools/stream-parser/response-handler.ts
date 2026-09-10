@@ -1,5 +1,6 @@
 import { userMessage } from '@savant-code/common/util/messages'
 
+import { wrapToolCallErrorMessage } from './error-chunk'
 import { withSystemTags } from '../../util/messages'
 
 import type { Message } from '@savant-code/common/types/messages/savant-code-message'
@@ -21,11 +22,13 @@ export function createResponseHandler(params: {
     if (typeof chunk !== 'string') {
       if (chunk.type === 'error') {
         markToolCallError()
+        // FID-2026-0909-007: idempotent wrap — an already-wrapped message
+        // (re-emitted through this relay) passes through once instead of
+        // gaining a second suffix. Uses the shared wrap helper so the
+        // wrap template has exactly one definition (Law 13).
         errorMessages.push(
           userMessage({
-            content: withSystemTags(
-              `Error during tool call: ${chunk.message}. Please check the tool name and arguments and try again.`,
-            ),
+            content: withSystemTags(wrapToolCallErrorMessage(chunk.message)),
             tags: ['TOOL_CALL_ERROR'],
           }),
         )

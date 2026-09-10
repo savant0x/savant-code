@@ -50,6 +50,28 @@ export const NATIVE_TOOL_CALL_STEERING_MESSAGES: Record<
     example:
       ' Read the first file with read_files, then read the next file in a separate call.',
   },
+  // FID-2026-0909-007: the tools that truncated in the 2026-09-09 session.
+  spawn_agents: {
+    hint: ' Spawned agents inherit the conversation context — send the delta only, never restate it. Reference files by path instead of inlining their content.',
+    explicit:
+      ' Your spawn_agents prompt is too large. Send a one-line pointer to the work; the spawned agent reads the shared conversation history itself.',
+    example:
+      ' Spawn with a single-sentence goal (e.g. "Audit X in file Y; the evidence is in the shared history") instead of pasting the evidence into the prompt.',
+  },
+  run_readonly_command: {
+    hint: ' Run ONE command per call instead of chaining many commands with &&, ;, or newlines.',
+    explicit:
+      ' Your run_readonly_command arguments were rejected because the command string is too large. Run ONE command per call.',
+    example:
+      ' First call: grep for the symbol. Second call: read the matching file. One command per call.',
+  },
+  sequentialthinking: {
+    hint: ' Keep each thought concise — history persists server-side, so never restate prior thoughts in a new one.',
+    explicit:
+      ' Your thought text is too large. State only the new reasoning for this step — prior thoughts are already persisted.',
+    example:
+      ' One concise insight per thought (e.g. "Option A fails constraint 2; therefore B"), never a restatement.',
+  },
 }
 
 /** FID-2026-0816-012: appended to the exhausted-failure error so the parent
