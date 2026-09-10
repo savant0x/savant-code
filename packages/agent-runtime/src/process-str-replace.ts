@@ -91,9 +91,18 @@ export async function processStrReplace(params: {
       logger,
     })
     let updatedOldStr: string | null
+    // FID-2026-0910-003 Defect A: when a rescue variant re-indented the
+    // oldString to match the file, the SAME transform was already applied
+    // to the replacement by the helper — write that, not the raw model
+    // newString (the old code discarded the helper's replaceContent, so
+    // every rescued edit landed under-indented content).
+    let updatedNewStr = normalizedNewStr
 
     if (match.success) {
       updatedOldStr = match.oldStr
+      if (match.newStr !== undefined) {
+        updatedNewStr = match.newStr
+      }
     } else {
       messages.push(
         withLargeFileGuidance(match.error, normalizedCurrentContent.length),
@@ -106,7 +115,7 @@ export async function processStrReplace(params: {
         ? normalizedCurrentContent
         : normalizedCurrentContent.replaceAll(
             updatedOldStr,
-            () => normalizedNewStr,
+            () => updatedNewStr,
           )
   }
 
@@ -162,7 +171,9 @@ const tryMatchOldStr = (params: {
   newStr: string
   allowMultiple: boolean
   logger: Logger
-}): { success: true; oldStr: string } | { success: false; error: string } => {
+}):
+  | { success: true; oldStr: string; newStr?: string }
+  | { success: false; error: string } => {
   const { initialContent, oldStr, newStr, allowMultiple, logger } = params
   // count the number of occurrences of oldStr in initialContent
   const count = initialContent.split(oldStr).length - 1
@@ -187,7 +198,13 @@ const tryMatchOldStr = (params: {
   })
   if (newChange) {
     logger.debug('Matched with indentation modification')
-    return { success: true, oldStr: newChange.searchContent }
+    // FID-2026-0910-003 Defect A: carry the re-indented replacement so the
+    // caller writes content whose indentation matches the rescue.
+    return {
+      success: true,
+      oldStr: newChange.searchContent,
+      newStr: newChange.replaceContent,
+    }
   } else {
     // Try matching without any whitespace as a last resort
     const noWhitespaceSearch = oldStr.replace(/\s+/g, '')
@@ -225,6 +242,9 @@ const tryMatchOldStr = (params: {
       )
       if (initialContent.includes(actualContent)) {
         logger.debug('Matched with whitespace removed')
+        // Position rescue only: the file-actual content becomes the match,
+        // and the model's newString lands verbatim (no indent transform —
+        // the whitespace-stripped form has no indent information to mirror).
         return { success: true, oldStr: actualContent }
       }
     }

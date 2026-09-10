@@ -262,3 +262,93 @@ describe('processStrReplace', () => {
     }
   })
 })
+
+describe('indentation rescue (FID-2026-0910-002)', () => {
+  it('(a) uniform-indent rescue writes the re-indented replacement', async () => {
+    const initialContent = '    alpha\n    beta\n'
+
+    const result = await processStrReplace({
+      path: 'test.ts',
+      replacements: [
+        {
+          oldString: 'alpha\nbeta',
+          newString: 'gamma\ndelta',
+          allowMultiple: false,
+        },
+      ],
+      initialContentPromise: Promise.resolve(initialContent),
+      logger,
+    })
+
+    expect('content' in result).toBe(true)
+    if ('content' in result) {
+      expect(result.content).toBe('    gamma\n    delta\n')
+    }
+  })
+
+  it('(b) rescues a first-line-dedented oldString and mirrors the indent', async () => {
+    const initialContent = '  const a = 1;\n  first\n  second\n'
+
+    const result = await processStrReplace({
+      path: 'test.ts',
+      replacements: [
+        {
+          oldString: '\nfirst\n  second',
+          newString: '\nFIRST\n  SECOND',
+          allowMultiple: false,
+        },
+      ],
+      initialContentPromise: Promise.resolve(initialContent),
+      logger,
+    })
+
+    expect('content' in result).toBe(true)
+    if ('content' in result) {
+      expect(result.content).toBe('  const a = 1;\n  FIRST\n  SECOND\n')
+    }
+  })
+
+  it('(c) an exact multi-line match never consults the rescue', async () => {
+    const initialContent = '  alpha\n  beta\n'
+
+    const result = await processStrReplace({
+      path: 'test.ts',
+      replacements: [
+        {
+          oldString: '  alpha\n  beta',
+          newString: '  gamma\n  delta',
+          allowMultiple: false,
+        },
+      ],
+      initialContentPromise: Promise.resolve(initialContent),
+      logger,
+    })
+
+    expect('content' in result).toBe(true)
+    if ('content' in result) {
+      expect(result.content).toBe('  gamma\n  delta\n')
+    }
+  })
+
+  it('(d) a non-matchable oldString still yields the canonical not-found error', async () => {
+    const initialContent = '  const a = 1;\n'
+
+    const result = await processStrReplace({
+      path: 'test.ts',
+      replacements: [
+        {
+          oldString: 'zzz\n  qqq',
+          newString: 'yy',
+          allowMultiple: false,
+        },
+      ],
+      initialContentPromise: Promise.resolve(initialContent),
+      logger,
+    })
+
+    expect('error' in result).toBe(true)
+    if ('error' in result) {
+      expect(result.error).toContain('was not found in the file')
+    }
+  })
+})
