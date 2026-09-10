@@ -78,6 +78,39 @@ describe('normalizeErrorFirstLine payload redaction (FID-2026-0909-006)', () => 
       'tool result contains an error',
     )
   })
+
+  test('(f) redacts an empty quoted span', () => {
+    expect(normalizeErrorFirstLine('The old string "" was not found.')).toBe(
+      'The old string "…" was not found.',
+    )
+  })
+
+  test('(g) consumes escaped quotes inside a span (the JSON.stringify shape)', () => {
+    // Mirror the production shape exactly: process-str-replace.ts embeds
+    // JSON.stringify(oldStr), so a payload containing quotes renders as
+    // \" — the escaped-pair branch must keep the span intact.
+    const line = `The old string ${JSON.stringify('say "hi" now')} was not found.`
+    expect(normalizeErrorFirstLine(line)).toBe(
+      'The old string "…" was not found.',
+    )
+  })
+
+  test('(h) redacts every span on a multi-span line', () => {
+    const line = 'Mismatch: "first payload" vs "second payload" failed.'
+    expect(normalizeErrorFirstLine(line)).toBe('Mismatch: "…" vs "…" failed.')
+  })
+
+  test('(i) a Windows path inside a quoted span is redacted before the path flip', () => {
+    // Designed ordering: the span is payload — it must never reach the
+    // backslash flip (which would corrupt escaped sequences mid-span).
+    const line = 'The old string "C:\\a\\b.ts" was not found.'
+    const once = normalizeErrorFirstLine(line)
+    expect(once).toBe('The old string "…" was not found.')
+    // And the flip still applies to OUTSIDE-span backslashes:
+    expect(normalizeErrorFirstLine('ENOENT C:\\a\\b.ts')).toBe(
+      'ENOENT C:/a/b.ts',
+    )
+  })
 })
 
 describe('parseExperienceLedger', () => {

@@ -313,8 +313,23 @@ claimable from unit runs alone.
   clean on all three touched files; ledger probe 40/10/1 with the +4
   records grep-verified as this session's own 2026-09-10 captures (legacy
   36 unchanged, recurrence group stable at 13×).
-- **AUDIT (Verifier):** pending — spawned after the implementation
-  commit.
+- **AUDIT (Verifier, 2026-09-10):** NEEDS-REVIEW overall — substance
+  PASS (regex/ordering/minimality/idempotency/numeral preservation all
+  verified against the visible writes); 3 minor FAILs (record said
+  `verified` while Loop 2 audit was still pending; Commit-SHA checkbox
+  checked with no value; 4 designed edge cases unpinned) + 5
+  NEEDS-REVIEWs (suite counts, ledger-probe evidence, Law-12 sink seam,
+  slug consumer, final battery).
+- **SELF-CORRECT:** all FAILs/NEEDS-REVIEWs resolved with tool
+  evidence — `experience-capture.ts:42` confirmed to normalize before
+  storing (Law-12 claim holds structurally); `evolve-skills.ts` slug
+  derives from the stored normalized line (stable post-redaction);
+  edge pins (f) empty-span, (g) escaped-quote-in-span (rebuilt with
+  `JSON.stringify` to mirror the production shape exactly), (h)
+  multi-span, (i) Windows-path-in-span ordering — added; dedup suite
+  23/23, capture suite 12/12; prettier + eslint clean. Commit SHA
+  recorded below. Final whole-repo battery deferred to the session
+  close pass (typecheck ×4 + full test run before push).
 
 ### Missed Questions
 
@@ -360,8 +375,9 @@ claimable from unit runs alone.
 > Implementation landed 2026-09-10 (operator approval, batch order
 > 008 → 007 → 006). Evidence below.
 
-- [x] **Commit SHA:** committed with the implementation this session
-      (implementation + pins + this record in one path-scoped commit)
+- [x] **Commit SHA:** `62f46622` (implementation + pins (a)–(e) +
+      record); audit amendments (edge pins (f)–(i) + the Loop 2 audit
+      outcome above) in the session-close closure commit
 - [x] **File:line ranges:** `common/src/util/experiences.ts` —
       `QUOTED_SPAN_RE` + redaction step in `normalizeErrorFirstLine`
       (post-ANSI, pre-path-flip); pins (a)–(e) in
