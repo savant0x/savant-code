@@ -166,7 +166,7 @@ export const FRAMING = {
     "Only the Recorder agent may create, update, or archive FID files. Agents without write tools (Thinker, Scout, Researcher) must route FID content through the Recorder. Parent agents with write tools must not write FID files directly from a sub-agent's output. HYBRID-mode exception (operator directive 2026-08-23): the Orchestrator may create and update FID records directly for its own work when no sub-agent authored the content — the Recorder is required only for work above the 100-line escalation threshold, STRICT mode, and loop-closure ceremony.",
     'FIDs are Markdown files that live ONLY in `dev/fids/`. NEVER create top-level directories such as `fids/`, `archive/`, or any path that shadows canonical ECHO paths.',
     'Filename format: `FID-YYYY-MMDD-NNN-{kebab-case-title}.md`. Scan the existing FIDs in `dev/fids/` and `dev/fids/archive/` first to allocate the next available number on the date, and never reuse a number on the same date.',
-    'Use `templates/FID-TEMPLATE.md` as the exact template. Required metadata fields: **Filename**, **ID**, **Severity**, **Status**, **Created**, **Author**.',
+    'Use `templates/FID-TEMPLATE.md` as the exact template. Required metadata fields: **Filename**, **ID**, **Severity**, **Status**, **Created**.',
     'Allowed status values: `created | analyzed | fixed | verified | converged | closed`.',
     'Non-FID design documents go to `docs/design/`, never at the repo root, and never with a `FID-` prefix.',
   ],

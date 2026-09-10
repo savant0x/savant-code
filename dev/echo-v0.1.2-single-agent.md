@@ -286,7 +286,7 @@ Created → Analyzed → Fixed → Verified → Closed → Archived
 ### FID Format
 
 Use `templates/FID-TEMPLATE.md` as the exact template. Required metadata fields: **Filename**, **ID**, **Severity**,
-**Status**, **Created**, **Author**.
+**Status**, **Created**.
 
 Allowed status values: `created | analyzed | fixed | verified | converged | closed`.
 

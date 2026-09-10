@@ -540,7 +540,7 @@ Filename format: `FID-YYYY-MMDD-NNN-{kebab-case-title}.md`. Scan the existing FI
 date.
 
 Use `templates/FID-TEMPLATE.md` as the exact template. Required metadata fields: **Filename**, **ID**,
-**Severity**, **Status**, **Created**, **Author**.
+**Severity**, **Status**, **Created**.
 
 Allowed status values: `created | analyzed | fixed | verified | converged | closed`.
 
