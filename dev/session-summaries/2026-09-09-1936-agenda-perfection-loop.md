@@ -109,12 +109,49 @@ open another fid to address that and run perfection loop on it."
   write_file burst + a Law-1 read block) — captured as live evidence
   in the FID's Evidence block.
 
-## Open Questions
+## Task 4 — FID-2026-0909-008 (truncation ROOT cause; operator-routed)
 
-- Operator approval to implement FID-2026-0909-006 (~12-line fix + pins;
-  under 100 lines → direct write).
-- Operator approval to implement FID-2026-0909-007 (3 surgical changes +
-  one pin suite; under 100 lines → direct write).
+- **Trigger:** operator: "what's the root of the turnacate? if we expand
+  the scope and find the real root of that this all might be fixed all at
+  once?" + "there's no reason i've been running a model w/ 1.3m context
+  window for a inter-agent com to turnacate anything."
+- **Answer:** the 1.3M window is an INPUT budget; tool-call arguments are
+  model OUTPUT. `maxOutputTokens: undefined` (`prompt-agent-stream.ts:84`)
+  → `max_tokens` omitted from every request body
+  (`openai-compatible-chat-args.ts:120`) → provider default output cap
+  governs → large payloads halt mid-JSON → flush handler detects incomplete
+  args and MASKS the finish reason (`flush-handler.ts:57` overwrites
+  `length` with `error`) → signature-free error invites same-payload
+  retry → strike ladder. Cap-hit mechanism is the leading hypothesis;
+  the finishReason-preserving fix doubles as the confirming instrument.
+- **FID-2026-0909-008** (`analyzed`): 3 fixes — explicit output budget
+  (derivation documented: no output-cap field exists in the catalog,
+  `lookup.ts:234` resolves INPUT windows only — adversarial finding);
+  preserve the finish reason (flag + `finishReason` on the error chunk);
+  cap-aware steering ("output cap hit — split the payload" when
+  `finishReason === 'length'`) + ledger routing follow-up.
+- **AUDIT:** Verifier FAIL overall — 3 textual defects (4k–32k figure
+  asserted as fact contradicting MQ-2; fact/hypothesis conflation;
+  authoring-incident mischaracterization) + 4 evidence clusters.
+- **ADVERSARIAL:** all three FAILs CONFIRMED (counts ADJUSTED: session
+  total ~11, exactly one truncation strike + one Law-1 block during 008
+  authoring); citation `:146-148` → `:97` fixed; zero-ledger claim
+  STANDS (grep exits 1 on zero — 0 matches confirmed); design gap
+  STRENGTHENED (no output-cap machinery). Five amendments applied in
+  self-correct; post-amendment gates clean (markdownlint + prettier
+  exit 0).
+- **Meta:** the truncation class struck the 008 loop twice (part-3 append
+  strike + the Adversary-spawn strike) — consistent with the cataloged
+  root; both recovered via split payloads.
+
+## Open Questions (updated)
+
+- Operator approval to implement FID-2026-0909-006, FID-2026-0909-007, and
+  FID-2026-0909-008 (each under 100 lines → direct write on approval).
+- FID-008 implementation order note: the finishReason-preservation step
+  (Step 2) should land FIRST — it is both the fix and the instrument that
+  confirms the cap-hit mechanism; the output-budget step (Step 4) needs
+  the derivation decision (fraction-of-input-window vs catalog extension).
 
 ## Next Session
 
