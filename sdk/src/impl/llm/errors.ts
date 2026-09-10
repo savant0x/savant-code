@@ -93,10 +93,20 @@ export function normalizeNativeToolCallStreamError(
   }
 
   const nativeError: NativeToolCallError = value
+  // FID-2026-0909-008: a 'length' finish reason means the output budget
+  // was exhausted mid-argument — re-sending the same payload truncates
+  // again. Steer to split payloads instead of a straight retry.
+  const isOutputCapHit = nativeError.finishReason === 'length'
+  const message = isOutputCapHit
+    ? `Incomplete arguments for tool ${nativeError.toolName}: the output token limit was reached before the arguments finished. Split the work into smaller calls — keep each call's arguments compact.`
+    : `Incomplete arguments for tool ${nativeError.toolName}; retry the tool call with a complete arguments object.`
   return {
     type: 'error',
-    message: `Incomplete arguments for tool ${nativeError.toolName}; retry the tool call with a complete arguments object.`,
+    message,
     errorClass: 'native-incomplete',
     toolName: nativeError.toolName,
+    ...(nativeError.finishReason !== undefined && {
+      finishReason: nativeError.finishReason,
+    }),
   }
 }

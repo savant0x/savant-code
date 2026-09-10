@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0909-008-tool-call-argument-truncation-root-cause.md`
 **ID:** FID-2026-0909-008
 **Severity:** high
-**Status:** analyzed
+**Status:** fixed (Steps 1–3; Step 4 pending derivation decision)
 **Created:** 2026-09-09 23:52
 **YAGNI-Compliance:** Verified — three surgical changes to existing plumbing; no new subsystems
 
@@ -161,12 +161,30 @@ Three surgical changes:
 
 ### Step Status
 
-All steps awaiting operator approval (planning record; none started).
+Steps 1–3 implemented and verified 2026-09-10 01:00 (operator approval,
+recommended order). Step 4 (explicit output budget) is NOT implemented —
+the derivation decision (fraction of resolved input window vs catalog
+extension) is pending with the operator; see Missed Questions. Step 5
+remains a deferred follow-up.
 
 ### Verification Results
 
-(to be filled at implementation — typecheck ×5, unit pins, existing suites,
-markdownlint + prettier on this record)
+2026-09-10 01:00 (Steps 1–3):
+
+- Typecheck exit 0: `common`, `sdk`, `packages/llm-providers`,
+  `packages/agent-runtime`.
+- `sdk/src/impl/__tests__/llm-native-tool-call.test.ts`: 6/6 pass —
+  3 original pins + 3 new (cap-hit split steering; non-length retry
+  guidance; hostile non-string finishReason rejected at the guard).
+- `chat-language-model-fail-closed.test.ts`: 10/10 pass — pin H updated
+  for `finishReason: 'tool-calls'`; new H2 (length preservation: error
+  chunk carries `finishReason: 'length'`, finish part keeps `length` —
+  not masked) and H3 (no provider finish reason → field omitted).
+- Full chat test family: 73 pass / 0 fail across 14 files.
+- Strikes suites (`loop-agent-steps-part-f` + `-strikes`): 8/8 pass
+  (FID-007 recovery ladder unaffected).
+- ESLint `--max-warnings 0` + prettier `--check` clean on all six
+  touched files.
 
 ## Missed Questions / Follow-ups
 
@@ -198,12 +216,20 @@ markdownlint + prettier on this record)
 - **ADVERSARIAL** (2026-09-10 00:15): FAILs CONFIRMED (incident counts
   ADJUSTED to ~11); citation `:146-148` → `:97` CONFIRMED; zero-ledger
   claim STANDS; design gap STRENGTHENED (no output-cap machinery exists —
-  input-window resolver only, `lookup.ts:234`); OMISSION: no Step Status
+  input-window resolver only, `lookup.ts:234`);OMISSION: no Step Status
   section. Five amendments applied in self-correct.
+- **GREEN (implementation, 2026-09-10 00:40–01:15)**: Steps 1–3 landed —
+  contract field + hostile-input guard (`llm.ts`), state flag + finish-
+  reason preservation + carry on the error chunk (`state.ts`,
+  `flush-handler.ts`), cap-aware steering branch (`sdk/src/impl/llm/errors.ts`),
+  test pins updated/added (both suites). The truncation class struck this
+  implementation loop twice (batched-edit strike → split edits;
+  first-line-indent-eating on str_replace newStrings ×3 → col-0 anchoring /
+  full-file writes) — both recovered, consistent with the cataloged root.
 
 ## Resolution
 
-Planning record only. Status `analyzed`. Implementation awaits operator
-approval per Law 2; the three changes are scoped and reversible. FID-2026-0909-007
-(steering) remains complementary: 007 improves the ladder, 008 removes the
-reason the ladder was needed.
+Status `fixed`. Steps 1–3 implemented and verified (see Verification
+Results); Step 4 awaits the operator's derivation decision; Step 5 remains
+a tracked follow-up. FID-2026-0909-007 (steering) remains complementary:
+007 improves the ladder, 008 removes the reason the ladder was needed.

@@ -16,6 +16,10 @@ import type z from 'zod/v4'
 export type NativeToolCallError = {
   type: 'native-incomplete'
   toolName: string
+  /** The provider's mapped finish reason at flush time — 'length' marks an
+   *  output-cap hit that cut the arguments mid-stream (FID-2026-0909-008).
+   *  Present only when the provider actually sent a finish reason. */
+  finishReason?: string
 }
 
 export function isNativeToolCallError(
@@ -25,6 +29,11 @@ export function isNativeToolCallError(
     return false
   }
 
+  // FID-2026-0909-008: finishReason is optional, but a hostile provider
+  // must not be able to smuggle a non-string through the guard.
+  if ('finishReason' in value && typeof value.finishReason !== 'string') {
+    return false
+  }
   const candidate = value as {
     type: string
     toolName: string
@@ -45,6 +54,9 @@ export type StreamErrorChunk =
       message: string
       errorClass: 'native-incomplete'
       toolName: string
+      /** Provider finish reason carried through from the native error
+       *  ('length' = output-cap hit). See NativeToolCallError. */
+      finishReason?: string
     }
 
 export type StreamChunk =

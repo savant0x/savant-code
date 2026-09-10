@@ -106,8 +106,50 @@ describe('doStream tool-call accumulation', () => {
     expect(errors[0]?.error).toEqual({
       type: 'native-incomplete',
       toolName: 'sequentialthinking',
+      finishReason: 'tool-calls',
     })
     expect(JSON.stringify(errors[0])).not.toContain('{}')
+  })
+
+  it('H2. output-cap truncation preserves the length finish reason (FID-2026-0909-008)', async () => {
+    const model = createStreamingModel([
+      toolDeltaChunk(0, '{"thought":"unterminated'),
+      finishChunk('length'),
+    ])
+    const parts = await collectStreamParts(model)
+    const calls = toolCallsFrom(parts)
+    const errors = parts.filter((part) => part.type === 'error')
+    const finishes = parts.filter((part) => part.type === 'finish')
+
+    expect(calls).toHaveLength(0)
+    expect(errors).toHaveLength(1)
+    expect(errors[0]?.error).toEqual({
+      type: 'native-incomplete',
+      toolName: 'sequentialthinking',
+      finishReason: 'length',
+    })
+    // The finish part keeps the provider's original reason — not masked.
+    expect(finishes).toHaveLength(1)
+    expect(
+      finishes[0] as Extract<LanguageModelV2StreamPart, { type: 'finish' }>,
+    ).toMatchObject({ finishReason: 'length' })
+    expect(JSON.stringify(errors[0])).not.toContain('unterminated')
+  })
+
+  it('H3. no provider finish reason omits finishReason on the error chunk', async () => {
+    const model = createStreamingModel([
+      toolDeltaChunk(0, '{"thought":"unterminated'),
+    ])
+    const parts = await collectStreamParts(model)
+    const calls = toolCallsFrom(parts)
+    const errors = parts.filter((part) => part.type === 'error')
+
+    expect(calls).toHaveLength(0)
+    expect(errors).toHaveLength(1)
+    expect(errors[0]?.error).toEqual({
+      type: 'native-incomplete',
+      toolName: 'sequentialthinking',
+    })
   })
 
   it('I. terminal empty object is valid for a zero-required-field tool', async () => {
