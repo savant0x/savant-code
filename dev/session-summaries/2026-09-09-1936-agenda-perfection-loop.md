@@ -1,8 +1,8 @@
 # Session Summary: 2026-09-09 19:36
 
 **Session ID:** 2026-09-09-1936-agenda-perfection-loop
-**Status:** completed (loop COMPLETE; FID-0909-006 awaiting operator
-implementation approval)
+**Status:** completed (two loops COMPLETE; FID-0909-006 + FID-0909-007
+awaiting operator implementation approval)
 
 ---
 
@@ -13,7 +13,9 @@ implementation approval)
 
 ## Trigger
 
-Operator: "run the perfection loop on the agenda items."
+Operator: "run the perfection loop on the agenda items." Later:
+"you had another failure we need to look into as well w/ the turnacation,
+open another fid to address that and run perfection loop on it."
 
 ## Work Completed
 
@@ -73,12 +75,50 @@ Operator: "run the perfection loop on the agenda items."
   (status `analyzed`), this summary; refreshed: `dev/agenda.md` (1 item, 13×).
 - No production code touched (planning record).
 
+---
+
+## Task 3 — FID-2026-0909-007 (native-incomplete truncation; operator-routed)
+
+- **Trigger:** the session itself absorbed 9+ truncation incidents (the
+  operator's "turnacation"): one Thinker death on `run_readonly_command`,
+  parent bursts on read_files ×5, run_readonly_command, spawn_agents ×2,
+  write_file.
+- **RED:** 0-EOF reads of the full recovery chain — constants.ts (map,
+  exactly 5 tools; generic fallback non-empty at every tier),
+  error-chunk.ts (strike-1 steering Set-gated), response-handler.ts
+  (unconditional re-wrap, zero steering logic), native-strikes.ts
+  (strike-2+ ladder via loop-tracked name — the part that worked:
+  write_file recovered at strike 2), errors.ts (SDK first-wrap
+  template).
+- **FID-2026-0909-007** (`analyzed`): 3 surgical fixes — steering-map
+  entries for spawn_agents / run_readonly_command / sequentialthinking;
+  ungate strike-1 steering (delete the duplicate-policy Set, Law 13);
+  idempotence guard at BOTH wrap sites.
+- **AUDIT:** Verifier 0 FAIL / NEEDS-REVIEW (citations compacted; guard
+  design gap flagged — strongest finding).
+- **ADVERSARIAL:** all six citations disk-resolved CONFIRMED; doubled
+  suffix within one message CONFIRMED; guard gap CONFIRMED and
+  STRENGTHENED (relay path carries no steering at all — even Set-member
+  read_files lost its strike-1 hint). Four amendments applied in
+  self-correct: guard at both sites; honest Expected-Behavior scoping
+  (relay-path residual, recovered by the strike-2+ ladder); MQ-9
+  records the errorClass/toolName-restoration follow-up as explicitly
+  out of scope; wrap-chain attribution re-labeled inferred. Post-
+  amendment gates clean (markdownlint + prettier exit 0).
+- **Irony noted:** the truncation class struck this very loop (part-2
+  write_file burst + a Law-1 read block) — captured as live evidence
+  in the FID's Evidence block.
+
 ## Open Questions
 
 - Operator approval to implement FID-2026-0909-006 (~12-line fix + pins;
   under 100 lines → direct write).
+- Operator approval to implement FID-2026-0909-007 (3 surgical changes +
+  one pin suite; under 100 lines → direct write).
 
 ## Next Session
 
-- Implement FID-2026-0909-006 steps 1–4 on approval; then close per
-  ceremony (receipt, archive, CHANGELOG, commit).
+- Implement FID-2026-0909-006 and FID-2026-0909-007 steps on approval;
+  then close each per ceremony (receipt, archive, CHANGELOG, commit).
+- Pre-existing prettier drift in scripts/public-release-provenance.test.ts
+  (line 279, commit 086565b) flagged to the operator — one-line wrap fix.
