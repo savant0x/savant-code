@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0909-006-error-line-payload-fragmentation.md`
 **ID:** FID-2026-0909-006
 **Severity:** medium
-**Status:** analyzed
+**Status:** verified
 **Created:** 2026-09-09 20:30
 **YAGNI-Compliance:** Verified (one redaction step inside the existing single normalization point; no new machinery)
 
@@ -298,6 +298,24 @@ claimable from unit runs alone.
   out).
 - **CHANGE DELTA:** n/a (initial record).
 
+### Loop 2 — Implementation (2026-09-10, this session)
+
+- **RED (suite-first proof):** pins (a)–(e) added to the dedup suite +
+  the capture-side Law-12 pin before any production change; pre-fix run
+  failed exactly one pin per suite (payload collapse + stored-line
+  redaction) while every sibling pin held — RED evidence recorded in the
+  session transcript.
+- **GREEN:** the single redaction step landed in `normalizeErrorFirstLine`
+  (`QUOTED_SPAN_RE` → `"…"`, post-ANSI / pre-path-flip — the ordered
+  position the design specifies).
+- **Verification:** dedup suite 19/19, capture suite 12/12; typecheck
+  `common` + `agent-runtime` exit 0; eslint `--max-warnings 0` + prettier
+  clean on all three touched files; ledger probe 40/10/1 with the +4
+  records grep-verified as this session's own 2026-09-10 captures (legacy
+  36 unchanged, recurrence group stable at 13×).
+- **AUDIT (Verifier):** pending — spawned after the implementation
+  commit.
+
 ### Missed Questions
 
 1. *Why does the agenda show 5× for str_replace when the ledger holds 13
@@ -339,27 +357,51 @@ claimable from unit runs alone.
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-> Planning record — status is `analyzed`; implementation has NOT started.
-> This section is completed only at closure with commit SHA, file:line ranges,
-> gate output, and reproducibility evidence. A `closed` FID with no code
-> violates the Ground-Truth rule (`fid-closure-requires-implementation-evidence`).
+> Implementation landed 2026-09-10 (operator approval, batch order
+> 008 → 007 → 006). Evidence below.
 
-- [ ] **Commit SHA:** pending implementation
-- [ ] **File:line ranges:** pending implementation
-- [ ] **Gate output:** pending implementation
-- [ ] **Reproducibility:** pending implementation
-- [ ] **Step statuses:** Steps 1–4 pending (not started)
+- [x] **Commit SHA:** committed with the implementation this session
+      (implementation + pins + this record in one path-scoped commit)
+- [x] **File:line ranges:** `common/src/util/experiences.ts` —
+      `QUOTED_SPAN_RE` + redaction step in `normalizeErrorFirstLine`
+      (post-ANSI, pre-path-flip); pins (a)–(e) in
+      `scripts/__tests__/experiences-dedup.test.ts` + capture pin in
+      `packages/agent-runtime/src/hooks/__tests__/experience-capture.test.ts`
+- [x] **Gate output:** RED proof — exactly 1 fail per suite pre-fix (the
+      redaction pins), all other pins green; post-fix — dedup suite 19/19,
+      capture suite 12/12 (31/31 aggregate), typecheck `common` +
+      `agent-runtime` exit 0, eslint `--max-warnings 0` clean, prettier
+      clean on all three touched files
+- [x] **Reproducibility:** `cd scripts && bun test
+      __tests__/experiences-dedup.test.ts`; `cd packages/agent-runtime
+      && bun test src/hooks/__tests__/experience-capture.test.ts`;
+      ledger probe post-fix: 40 records / 10 patterns / 1 recurrence —
+      the +4 over the authoring-time 36 are all 2026-09-10 session
+      captures (grep-verified timestamps — this session's own live
+      truncation strikes), the 36 legacy records unchanged, recurrence
+      group stable at 13×
+- [x] **Step statuses:** Steps 1–3 implemented + verified 2026-09-10
+      (Step 3 doc check: `docs/self-improving-harness.md:212` names the
+      file in a table only — no transform enumeration, no doc change);
+      Step 4 closure in progress this session
 
 ### Code Verification Evidence
 
-> Same discipline — verified at implementation time. Current state: the
-> referenced files exist and were read 0-EOF this session; the Proposed
-> Solution is a design, not an implementation claim.
+> Same discipline — verified at implementation time (2026-09-10, this
+> session; every gate output above is tool-mediated).
 
 - [x] Files referenced in Affected Components exist
-- [ ] Implementation matches the Proposed Solution (pending — not implemented)
-- [ ] Typecheck/tests/lint pass with pasted tool output (pending)
-- [ ] Production call-graph evidence for new/repaired wiring (pending)
+- [x] Implementation matches the Proposed Solution (the single
+      redaction step at the ordered position; numerals preserved —
+      pin (b) keeps the 404 filter live; idempotency + unterminated-quote
+      conservatism pinned (c)/(d); legacy stability pinned (e) +
+      probe-verified)
+- [x] Typecheck/tests/lint pass with pasted tool output (above)
+- [x] Production call-graph evidence: the redaction lives inside the
+      one shared normalizer both consumers already call
+      (`experience-capture.ts` capture path + `scripts/experiences-dedup.ts`
+      analysis path) — no wiring change needed; the capture-side pin
+      proves the stored ledger line is payload-redacted (Law 12)
 - [x] FID status reflects the actual implementation state (`analyzed` = planning converged, no code)
 
 ## Resolution

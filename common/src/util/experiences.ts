@@ -16,20 +16,37 @@ import { createHash } from 'node:crypto'
 export const ERROR_FIRST_LINE_MAX = 500
 /** ANSI escape sequences (color codes etc.) must not pollute dedup keys. */
 const ANSI_ESCAPE_RE = /\u001b\[[0-9;]*[a-zA-Z]/g
+/**
+ * Double-quoted spans are instance payloads (JSON.stringify'd tool input
+ * echoed in handler error text), not class identity — redact them so every
+ * payload-bearing failure of the same handler template groups under one
+ * dedup key (FID-2026-0909-006). `\\.` consumes escaped pairs; the
+ * placeholder re-matches the pattern, making re-normalization a fixed
+ * point. Unterminated quotes match nothing (conservative no-op).
+ */
+const QUOTED_SPAN_RE = /"(?:[^"\\]|\\.)*"/g
 
 /**
  * Normalize an error into a stable first-line dedup key: strip ANSI codes,
- * collapse whitespace, and normalize Windows path separators so `C:\a\b` and
- * `C:/a/b` hash identically (canonical rule `no-environment-dependent-guards`).
+ * redact quoted payload spans, collapse whitespace, and normalize Windows
+ * path separators so `C:\a\b` and `C:/a/b` hash identically (canonical rule
+ * `no-environment-dependent-guards`). Numerals are deliberately preserved
+ * so the expected-failure filter (`HTTP 404`) keeps working.
  */
 export function normalizeErrorFirstLine(error: string): string {
   const firstLine = error.split(/\r?\n/, 1)[0] ?? ''
-  return firstLine
-    .replace(ANSI_ESCAPE_RE, '')
-    .replace(/\\/g, '/')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .slice(0, ERROR_FIRST_LINE_MAX)
+  return (
+    firstLine
+      .replace(ANSI_ESCAPE_RE, '')
+      // FID-2026-0909-006: payload redaction runs AFTER the ANSI strip and
+      // BEFORE the path flip — the flip corrupts escaped `\"` sequences and
+      // would break span matching.
+      .replace(QUOTED_SPAN_RE, '"…"')
+      .replace(/\\/g, '/')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, ERROR_FIRST_LINE_MAX)
+  )
 }
 
 /**

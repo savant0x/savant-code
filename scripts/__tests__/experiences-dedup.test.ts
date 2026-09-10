@@ -2,7 +2,10 @@ import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 
-import { experienceDedupKey } from '@savant-code/common/util/experiences'
+import {
+  experienceDedupKey,
+  normalizeErrorFirstLine,
+} from '@savant-code/common/util/experiences'
 
 import {
   computeRecurrences,
@@ -37,6 +40,45 @@ function record(
 function fixtureRoot(): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'exp-dedup-'))
 }
+
+describe('normalizeErrorFirstLine payload redaction (FID-2026-0909-006)', () => {
+  test('(a) collapses payload-bearing not-found lines to one dedup key', () => {
+    const a =
+      'The old string "first unique payload" was not found in the file, skipping.'
+    const b =
+      'The old string "totally different payload" was not found in the file, skipping.'
+    expect(normalizeErrorFirstLine(a)).toBe(normalizeErrorFirstLine(b))
+    expect(experienceDedupKey('str_replace', a)).toBe(
+      experienceDedupKey('str_replace', b),
+    )
+  })
+
+  test('(b) preserves numerals so the HTTP-404 expected-failure filter stays live', () => {
+    expect(
+      normalizeErrorFirstLine('HTTP 404: "endpoint" unavailable'),
+    ).toContain('404')
+  })
+
+  test('(c) redaction is idempotent — already-redacted lines are a fixed point', () => {
+    const once = normalizeErrorFirstLine(
+      'The old string "payload" was not found.',
+    )
+    expect(normalizeErrorFirstLine(once)).toBe(once)
+  })
+
+  test('(d) leaves unterminated quotes untouched (conservative no-op)', () => {
+    const line = 'The old string "unterminated was not found.'
+    expect(normalizeErrorFirstLine(line)).toBe(
+      'The old string "unterminated was not found.',
+    )
+  })
+
+  test('(e) the legacy generic line normalizes unchanged', () => {
+    expect(normalizeErrorFirstLine('tool result contains an error')).toBe(
+      'tool result contains an error',
+    )
+  })
+})
 
 describe('parseExperienceLedger', () => {
   test('parses valid lines and skips malformed ones fail-open', () => {

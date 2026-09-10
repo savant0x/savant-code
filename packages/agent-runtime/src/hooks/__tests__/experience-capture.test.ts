@@ -50,6 +50,13 @@ describe('normalizeErrorFirstLine (shared with the dedup layer)', () => {
   test('empty input stays empty', () => {
     expect(normalizeErrorFirstLine('')).toBe('')
   })
+  test('redacts quoted payload spans so the stored line is class-stable (FID-2026-0909-006)', () => {
+    expect(
+      normalizeErrorFirstLine(
+        'The old string "raw model payload" was not found in the file, skipping.',
+      ),
+    ).not.toContain('raw model payload')
+  })
 })
 
 describe('buildExperienceRecord', () => {
