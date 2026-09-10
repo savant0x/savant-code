@@ -35,6 +35,22 @@ on-disk records missing from the table added (-0823-003, -0824-003…-008,
 |---|---|---|
 | (empty — the queue drained 2026-09-09; FID-2026-0909-005 closed + archived, see `archive/README.md`) | | |
 
+**2026-09-10 closure (FID-2026-0910-002 — ECHO.md Author-field residue):**
+exposed live by the FID-2026-0910-001 Verifier audit (a correct FAIL on a
+compliant FID), root-caused to the 2026-08-09 signature scrub missing the
+rule text itself — ECHO.md still required `**Author**`, mirrored into the
+protocol-copies generator source and the single-agent protocol doc, then
+embedded in both generated protocol constants. Fixed at all three source
+sites + bundle regen (commit `7031d6b9`); parity suite 15/0 (the pre-regen
+14/1 was the drift guard firing by design); Verifier PASS 0 FAIL / 4
+NEEDS-REVIEW (all discharged with fresh tool output); Adversary
+SHIPPABLE-for-closure (all discharges CONFIRMED by direct read;
+`fid-ledger.ts:32` FORBIDDEN_ATTRIBUTION corroboration — rule text and
+enforcement were in direct conflict pre-fix). Closed + archived 2026-09-10;
+receipt re-stamped at the archived path. Two non-blocking out-of-scope flags
+ride with the Adversary verdict: `docs/echo-protocol.md` public laws-table
+drift, and vendored ripgrep ENOENT in the SDK dist.
+
 **2026-09-09 closure (FID-2026-0909-005):** implemented on the operator
 approval left standing by the dead session (directive: "Approve: implement
 FID-2026-0909-005 now"). Full Loop 2: RED-leg suite-first run (10/1, the

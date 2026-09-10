@@ -2,6 +2,30 @@
 
 ## Unreleased
 
+### The written protocol no longer requires the Author field its own policy forbids (closed + archived 2026-09-10)
+
+- **FID-2026-0910-002 — low — the 2026-08-09 no-signature scrub
+  (FID-2026-0809-014) swept the artifacts but missed the rule text.**
+  `ECHO.md`'s FID Authoring Rules still declared `**Author**` a required
+  metadata field, mirrored into the protocol-copies generator source
+  (`scripts/protocol-copies/content.ts`, `FRAMING.fidAuthoringParagraphs`)
+  and the single-agent protocol doc — which forbids `Author:` at its own
+  line 30 — and from there into both generated protocol constants every
+  harness agent receives. Live consequence: the FID-2026-0910-001 AUDIT
+  pass produced a correct Verifier FAIL on a compliant FID for omitting a
+  field the governance forbids. Fix (commit `7031d6b9`): one atomic
+  three-source-site edit (the `generate:protocol-bundle` drift guard
+  requires the generator table update in the same commit as the ECHO.md
+  edit) + bundle regen, closing the rule-text vs enforcement conflict
+  (`fid-ledger.ts` FORBIDDEN_ATTRIBUTION had been mechanically rejecting
+  what the rule required). Gates: parity suite 15/0 (pre-regen 14/1 — the
+  drift guard catching the half-landing, by design);
+  `generate:protocol-bundle:check` exit 0; typecheck ×12 exit 0;
+  eslint/prettier/markdownlint clean; Verifier PASS 0 FAIL / 4
+  NEEDS-REVIEW all discharged; Adversary SHIPPABLE-for-closure with all
+  discharges CONFIRMED by direct read. Residue flagged 2026-08-21
+  (session summary 0314) and never fixed until now.
+
 ### The self-improving loop regains its error-class vision — real error lines in the experience ledger (closed + archived 2026-09-09)
 
 - **FID-2026-0909-005 — medium — every ledger record (36/36) carried the

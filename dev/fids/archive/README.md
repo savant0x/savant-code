@@ -3,6 +3,33 @@
 This directory contains closed or historically completed FIDs. Files here are
 an audit record, not an active work queue.
 
+## 2026-09-10 closure — ECHO.md Author-field residue (1 FID archived; queue: 0910-001 analyzed, 0909-006/007/008 active)
+
+The no-signature scrub's own residue: the rule text survived the scrub that
+enforced it. Exposed live when the FID-2026-0910-001 Verifier audit correctly
+FAILED a compliant FID for a missing `Author` field — faithful application
+of a dead rule that FID-2026-0809-014 (2026-08-09) missed when it swept the
+artifacts but not the rule text. The stale sentence lived at three coupled
+source sites (ECHO.md FID Authoring Rules, the protocol-copies generator
+source `FRAMING.fidAuthoringParagraphs`, and the single-agent protocol doc —
+which forbids `Author:` at its own :30) and propagated into both generated
+protocol constants every agent receives. Fixed as one atomic change (the
+drift guard requires generator + ECHO.md updates in the same commit) +
+bundle regen; commit `7031d6b9`. Gates: parity suite 15/0 (the pre-regen
+14/1 was the drift guard catching the half-landing, by design);
+`generate:protocol-bundle:check` exit 0; typecheck ×12 exit 0;
+eslint/prettier/markdownlint clean; Verifier PASS 0 FAIL / 4 NEEDS-REVIEW
+(all discharged with fresh tool output — receipt block, :53 prior-flag
+citation, failing-leg name, repo-wide residue grep); Adversary
+SHIPPABLE-for-closure (all discharges CONFIRMED by direct read;
+`fid-ledger.ts:32` FORBIDDEN_ATTRIBUTION corroboration — pre-fix, rule
+text and enforcement were in direct conflict). Two non-blocking
+out-of-scope flags: `docs/echo-protocol.md` public laws-table drift
+(Law 15 mismatch), vendored ripgrep ENOENT in the SDK dist.
+
+- `FID-2026-0910-002-echo-author-field-residue.md` (low) — receipt 2/2 PASS
+  re-stamped at this archived path.
+
 ## 2026-09-09 closure — experience-capture generic error line (1 FID archived; queue empty)
 
 The adjacent finding from FID-2026-0909-004's closure got its own record and
