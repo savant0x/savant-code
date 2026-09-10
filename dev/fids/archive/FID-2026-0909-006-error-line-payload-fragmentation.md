@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0909-006-error-line-payload-fragmentation.md`
 **ID:** FID-2026-0909-006
 **Severity:** medium
-**Status:** verified
+**Status:** closed
 **Created:** 2026-09-09 20:30
 **YAGNI-Compliance:** Verified (one redaction step inside the existing single normalization point; no new machinery)
 
@@ -422,13 +422,36 @@ claimable from unit runs alone.
 
 ## Resolution
 
-> Pending implementation. Set when the fix lands: Closed Date, Fix Description, Tests Added, Verification Evidence, Archived.
+**Closed:** 2026-09-10 (session close ceremony).
+**Fix:** one redaction step in the shared `normalizeErrorFirstLine` —
+`QUOTED_SPAN_RE` (escaped-pair-safe, linear-time) replaces every
+double-quoted span with `"…"`, ordered post-ANSI / pre-path-flip;
+numerals preserved (HTTP-404 filter intact).
+**Tests added:** dedup suite pins (a)–(i) — payload collapse, numeral
+preservation, idempotency, unterminated-quote conservatism, legacy
+stability, empty span, escaped-quote-in-span (production
+`JSON.stringify` shape), multi-span, path-in-span ordering; capture
+suite Law-12 pin (stored line is payload-redacted).
+**Verification:** RED legs failed pre-fix exactly as designed;
+post-fix dedup 23/23, capture 12/12; typecheck `common` +
+`agent-runtime` exit 0; eslint + prettier clean; ledger probe 40/10/1
+with the +4 records grep-verified as 2026-09-10 session captures
+(legacy 36 unchanged, 13× group stable).
+**Commits:** `62f46622` (implementation + pins + record),
+`ea489102` (audit amendments — edge pins + audit outcome).
+**Archived:** dev/fids/archive/.
+**Live boundary (honest):** class-stable grouping becomes observable
+when the first natural payload-bearing str_replace failure lands
+post-fix — operator-observable, never claimable from unit runs.
 
 ## Lessons Learned
 
-> Captured at closure. Preview: the mirror-defect pattern — fixing
-> over-merging (FID-2026-0909-005) without re-examining the shared
-> normalization contract for the opposite failure mode (over-fragmentation)
-> left the pipeline's dominant class structurally unreachable. When a
-> dedup/grouping key gains a new input source, re-run the grouping-semantics
-> analysis for both directions of failure.
+The mirror-defect pattern — fixing over-merging (FID-2026-0909-005)
+without re-examining the shared normalization contract for the opposite
+failure mode (over-fragmentation) left the pipeline's dominant class
+structurally unreachable. When a dedup/grouping key gains a new input
+source, re-run the grouping-semantics analysis for both directions of
+failure. Secondary: pin the edge cases the design explicitly reasons
+about (empty spans, escaped pairs, ordering interactions) — the first
+pin pass covered the main path only, and the audit correctly flagged
+the gap.

@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0909-007-native-incomplete-strike-one-steering.md`
 **ID:** FID-2026-0909-007
 **Severity:** medium
-**Status:** verified
+**Status:** closed
 **Created:** 2026-09-09 21:50
 **YAGNI-Compliance:** Verified (extends the existing steering map + removes one redundant gate; no new machinery)
 **Related:** FID-2026-0816-012 (strike cap + re-spawn guidance),
@@ -408,8 +408,8 @@ RED leg (pins (c) and (e) fail pre-fix), then: typecheck agent-runtime,
 > 008 → 007 → 006). Audit loop complete; evidence below.
 
 - [x] **Commit SHA:** `7dac5c5b` (implementation, 5 files,
-      +208/−31); audit amendments pending commit this session
-      (double-period template fix + pin (e)/(g) strengthening)
+      +208/−31); audit amendments committed at `6ce730e8`
+      (double-period template fix + pin (e)/(g) strengthening, 3 files)
 - [x] **File:line ranges:** `constants.ts` steering map +3 entries
       (spawn_agents / run_readonly_command / sequentialthinking);
       `error-chunk.ts` — `TOOL_CALL_ERROR_MESSAGE_PREFIX` +
@@ -454,8 +454,25 @@ RED leg (pins (c) and (e) fail pre-fix), then: typecheck agent-runtime,
 
 ## Resolution
 
-> Pending implementation. Set when the fix lands: Closed Date, Fix
-> Description, Tests Added, Verification Evidence, Archived.
+**Closed:** 2026-09-10 (session close ceremony).
+**Fix:** three surgical changes — steering-map entries for
+`spawn_agents` / `run_readonly_command` / `sequentialthinking`; strike-1
+steering ungated for every native-incomplete chunk (the duplicate-policy
+`STEER_SPLIT_TOOLS` Set deleted — Law 13); one shared idempotent wrap
+helper (`wrapToolCallErrorMessage`) at both emission sites with
+trailing-period normalization.
+**Tests added:** `error-chunk-steering.test.ts` — 7 pins (a)–(g): map
+tiers, unmapped-tool fallback, ungated strike-1 steering, mapped hint,
+wrap idempotence + pass-through fidelity (single + with-steering).
+**Verification:** RED legs (a)/(c)/(e) failed pre-fix; post-fix 15/15
+across three suites (steering + part-f + strikes), typecheck exit 0,
+eslint 0, prettier clean; Law-4 greps: Set zero hits, helper 1 def +
+2 call sites, no third wrap site.
+**Commits:** `7dac5c5b` (implementation), `6ce730e8` (audit
+amendments). **Archived:** dev/fids/archive/.
+**Live boundary (honest):** single wrapper text + strike-1 steering on
+the next natural truncation burst — operator-observable, not claimable
+from unit runs.
 
 ## Lessons Learned
 
