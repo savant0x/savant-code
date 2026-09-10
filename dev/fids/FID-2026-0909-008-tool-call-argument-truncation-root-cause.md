@@ -185,6 +185,16 @@ remains a deferred follow-up.
   (FID-007 recovery ladder unaffected).
 - ESLint `--max-warnings 0` + prettier `--check` clean on all six
   touched files.
+- Post-audit amendment (implementation Verifier pass): the
+  `hadIncompleteToolCall` state flag was removed — write-only dead state
+  (Law 13; the error chunk itself signals incompleteness and the
+  conditional spread reads `state.finishReason` directly). Re-verified:
+  typecheck exit 0, eslint 0 warnings, prettier clean, chat family 73/73,
+  SDK suite 6/6, zero grep hits for the flag. The Verifier's four
+  NEEDS-REVIEW clusters resolved by tool output: consumer sweep clean
+  (no `finishReason === 'error'` readers downstream; strikes ladder reads
+  the error chunk, 8/8), `git diff cded5735` confirms surgical rewrite
+  fidelity, SDK suite re-run 6/6, post-edit typechecks exit 0.
 
 ## Missed Questions / Follow-ups
 
@@ -219,13 +229,17 @@ remains a deferred follow-up.
   input-window resolver only, `lookup.ts:234`);OMISSION: no Step Status
   section. Five amendments applied in self-correct.
 - **GREEN (implementation, 2026-09-10 00:40–01:15)**: Steps 1–3 landed —
-  contract field + hostile-input guard (`llm.ts`), state flag + finish-
-  reason preservation + carry on the error chunk (`state.ts`,
-  `flush-handler.ts`), cap-aware steering branch (`sdk/src/impl/llm/errors.ts`),
+  contract field + hostile-input guard (`llm.ts`), finish-reason
+  preservation + carry on the error chunk (`flush-handler.ts`),
+  cap-aware steering branch (`sdk/src/impl/llm/errors.ts`),
   test pins updated/added (both suites). The truncation class struck this
   implementation loop twice (batched-edit strike → split edits;
   first-line-indent-eating on str_replace newStrings ×3 → col-0 anchoring /
   full-file writes) — both recovered, consistent with the cataloged root.
+- **AUDIT (implementation, 2026-09-10 01:20)**: Verifier — 1 FAIL
+  (`hadIncompleteToolCall` write-only dead state) + 4 NEEDS-REVIEW;
+  FAIL fixed in-green (flag deleted from `state.ts` + `flush-handler.ts`),
+  clusters resolved by direct tool output; all gates re-verified green.
 
 ## Resolution
 

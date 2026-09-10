@@ -54,13 +54,13 @@ export function flushStream(params: {
         input: toolCall.function.arguments,
       })
     } else {
-      // FID-2026-0909-008: mark the flush failure without overwriting
-      // the provider's finish reason. The original reason (e.g. 'length'
-      // for an output-cap hit) is carried on the error chunk so
-      // downstream steering can distinguish a cap hit — which needs a
-      // split-payload recovery — from a malformed emission, where a
-      // straight retry is safe.
-      state.hadIncompleteToolCall = true
+      // FID-2026-0909-008: do NOT overwrite the provider's finish reason
+      // here (the old code masked it with 'error'). The original reason
+      // (e.g. 'length' for an output-cap hit) is carried on the error
+      // chunk so downstream steering can distinguish a cap hit — which
+      // needs a split-payload recovery — from a malformed emission, where
+      // a straight retry is safe. The error chunk itself signals the
+      // incomplete call; no separate state flag is needed.
       controller.enqueue({
         type: 'error',
         error: {

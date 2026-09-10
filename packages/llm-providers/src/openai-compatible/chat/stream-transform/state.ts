@@ -27,10 +27,6 @@ export interface ChatStreamTransformerState {
   isFirstChunk: boolean
   isActiveReasoning: boolean
   isActiveText: boolean
-  /** Set at flush when a tool call ended with incomplete arguments
-   *  (FID-2026-0909-008). Preserves the provider's finish reason instead
-   *  of masking it with 'error' on the finish part. */
-  hadIncompleteToolCall: boolean
 }
 
 export function createChatStreamTransformerState(): ChatStreamTransformerState {
@@ -53,6 +49,5 @@ export function createChatStreamTransformerState(): ChatStreamTransformerState {
     isFirstChunk: true,
     isActiveReasoning: false,
     isActiveText: false,
-    hadIncompleteToolCall: false,
   }
 }
