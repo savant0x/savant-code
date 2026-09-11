@@ -1,20 +1,16 @@
 import { z } from 'zod/v4'
 
-import { ALLOWED_MODEL_PREFIXES, models } from '../old-constants'
 import { jsonValueSchema } from './json'
 import { mcpConfigSchema } from './mcp'
 
 import type { StepHandler } from './agent-template'
 import type { JSONSchema } from 'zod/v4/core'
 
-// Filter models to only include those that begin with allowed prefixes
-const filteredModels = Object.values(models).filter((model) =>
-  ALLOWED_MODEL_PREFIXES.some((prefix) => model.startsWith(prefix)),
-)
-
-if (filteredModels.length === 0) {
-  throw new Error('No valid models found with allowed prefixes')
-}
+// FID-2026-0910-004 Step 3: a dead module-load model filtering computation
+// (plus its never-consumed emptiness guard) was removed here — it filtered
+// the static model catalog by the allowed-prefix list and was referenced
+// nowhere, while the schema's `model` field accepts any string. The
+// custom-providers pin suite guards against resurrection.
 
 // Simplified JSON Schema definition - supports object schemas with nested properties
 export const JsonSchemaSchema: z.ZodType<

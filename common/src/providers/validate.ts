@@ -31,16 +31,17 @@ const ID_TRANSFORMS = new Set<ProviderConfig['idTransform']>([
   'keep',
   'cf-rewrite',
 ])
-const CATALOG_SOURCES = new Set(['live', 'static', 'none'])
+const CATALOG_SOURCES = new Set(['live', 'static', 'inline', 'none'])
 
 const PROTOCOL_MAPS = PROVIDER_PROTOCOL_MAPS
 
 /**
  * Parse a registry URL, tolerating `{ENV_VAR}` placeholders (Cloudflare's
  * mid-path account id). Returns null when the string is not a valid http(s)
- * URL.
+ * URL. Exported for reuse by the custom-provider validator
+ * (FID-2026-0910-004) — one URL rule for both registries (Law 13).
  */
-function parseRegistryUrl(url: string): URL | null {
+export function parseRegistryUrl(url: string): URL | null {
   try {
     // Braces are tolerated by the URL parser, but replace placeholders first
     // so the check reads the concrete shape rather than relying on parser
@@ -169,6 +170,18 @@ export function validateProviderRegistry(
         if (!modelId.startsWith(`${config.id}/`)) {
           problems.push(
             `'${key}' catalog model '${mapKey}' = '${modelId}' does not start with the routing prefix '${config.id}/'`,
+          )
+        }
+      }
+    }
+
+    // Inline catalog (FID-2026-0910-004 D3): same invariant as static —
+    // every model id carries the routing prefix.
+    if (config.catalog.source === 'inline') {
+      for (const modelId of Object.keys(config.catalog.models)) {
+        if (!modelId.startsWith(`${config.id}/`)) {
+          problems.push(
+            `'${key}' inline catalog model '${modelId}' does not start with the routing prefix '${config.id}/'`,
           )
         }
       }

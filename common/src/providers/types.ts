@@ -91,6 +91,13 @@ export interface ProviderConfig {
         /** Optional human-readable names map ref for a static catalog. */
         namesRef?: string
       }
+    | {
+        /** FID-2026-0910-004 D3: user-supplied model list (custom providers).
+         *  Keys are full model ids carrying the routing prefix; values are
+         *  display names. */
+        source: 'inline'
+        models: Record<string, string>
+      }
     | { source: 'none' }
   /** Whether the provider appears in the `/provider` setup picker. */
   setupAvailable: boolean
@@ -98,4 +105,28 @@ export interface ProviderConfig {
   domain?: string
   /** Deterministic picker group order (routing order is prefix-disjoint). */
   order: number
+}
+
+/**
+ * User-defined provider record (FID-2026-0910-004 D1) — a flat, JSON-shaped
+ * subset of `ProviderConfig` produced by the `/provider add` wizard, stored
+ * in settings.json, and accepted by `SavantCodeClient({ customProviders })`.
+ * Data only: the D1 constraints (gateway/openai/strip, no resolver, no
+ * protocolMap) are enforced by `parseCustomProviders` and made concrete by
+ * `toProviderConfig`, never hand-written by users.
+ */
+export type CustomProviderConfig = {
+  /** Routing prefix + identity. Immutable after creation (edit never renames). */
+  id: string
+  /** Display label shown in pickers and messages. */
+  label: string
+  /** API root; the protocol layer appends the path suffix. */
+  baseUrl: string
+  /** The provider's own credential env var (resolved via the generic read). */
+  apiKeyEnvVar: string
+  /** Model catalog: live URL fetch, user-supplied inline list, or none. */
+  catalog:
+    | { source: 'live'; url: string }
+    | { source: 'inline'; models: Record<string, string> }
+    | { source: 'none' }
 }
