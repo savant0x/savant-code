@@ -5,7 +5,9 @@
 **Severity:** medium
 **Status:** fixed (Steps 1-3 implemented 2026-09-10; Steps 4-6 implemented +
 gate-verified 2026-09-11; Step 9 union widening + Step 7 wizard implemented +
-gate-verified 2026-09-11; Steps 8 + 10 pending separate approval)
+gate-verified 2026-09-11; Step 8 grammar + picker + docs implemented +
+gate-verified + live-smoked 2026-09-11; Step 9 remainder (catalog fetcher /
+picker merge) + Step 10 pending separate approval)
 **Created:** 2026-09-10 23:30 (converged 2026-09-10, Loops 1-4 recorded)
 **YAGNI-Compliance:** Verified — every step maps to a user-facing
 requirement of the full feature; no speculative abstraction beyond the
@@ -408,8 +410,10 @@ CLI wizard — with built-ins always winning on collision.
 
 > Partial — Steps 1-3 (common layer) implemented and verified 2026-09-10;
 > Steps 4-6 (SDK seam, CLI settings, CLI key store/setup) implemented and
-> gate-verified 2026-09-11. Steps 7-10 remain pending separate approval; the
-> section fills in fully at `closed`.
+> gate-verified 2026-09-11; Step 9 union widening + Step 7 wizard + Step 8
+> grammar/picker/docs implemented and gate-verified 2026-09-11 (Step 8
+> live-smoked). Step 9 remainder + Step 10 remain pending separate approval;
+> the section fills in fully at `closed`.
 
 **Steps 1-3 — implemented (RED-first):**
 
@@ -530,9 +534,12 @@ gate-verified (2026-09-11 fix pass):**
       mask condition `chat-input-bar-compact.tsx:168-171`. The `providerAdd`
       input mode has zero production SETTERS until Step 8's `/provider
       add|edit` grammar — dormant-but-wired, named in Loop 7 ADVERSARIAL.
-- [x] FID status reflects actual implementation state — `fixed`; Steps 1-7
-      + Step 9 union widening implemented and documented above; Steps 8 + 10
-      pending separate approval
+- [x] FID status reflects actual implementation state — `fixed`; Steps 1-8
+      + Step 9 union widening implemented and documented above; Step 9
+      remainder (catalog fetcher / picker merge) + Step 10 pending separate
+      approval
+- [x] Step 8 statuses — grammar + picker + docs implemented, gate-verified,
+      and live-smoked 2026-09-11 (below)
 
 ### Loop 5 — Steps 1-3 implementation (RED-first)
 
@@ -668,6 +675,64 @@ gate-verified (2026-09-11 fix pass):**
 - **CHANGE DELTA:** <5% of the FID (evidence + status lines); circuit
   breaker not triggered.
 
+**Step 8 — implemented (2026-09-11; grammar + picker + docs, RED-first):**
+
+- **Grammar (`add|edit|list|remove`):** `implemented` —
+  `cli/src/commands/provider-subcommands.ts:58` (`parseProviderArgs` — grammar
+  words dispatch before name resolution; the FID-2026-0907-009 trailing
+  `update` token semantics preserved for `<name>`), `:125,136,160,192`
+  (`handleAdd/handleEdit/handleList/handleRemove`), `:254`
+  (`handleProviderSubcommand` dispatch); wired in the `/provider` command
+  definition at `cli/src/commands/defs/model-provider-commands.ts:112-123`.
+  `edit`/`remove` are custom-only (unknown id → hint message; built-ins
+  rejected for remove). Remove captures the active-selection state BEFORE the
+  registry reset (`:221` — the reset invalidates the stored custom selection,
+  so a post-mutation read would silently fall back to default), resets
+  selection to `openrouter`, drops a custom-prefixed model preference, clears
+  the in-process routing env (MQ1), and refreshes the runtime registry via
+  `resetCustomProviders()` + `registerCustomProviders(merged)` (`:226-230` —
+  `registerCustomProviders([])` alone is a D4 no-op, so the empty case resets
+  explicitly).
+- **Wizard id reservation:** `implemented` —
+  `cli/src/utils/provider-wizard.ts:40` (`PROVIDER_GRAMMAR_WORDS` — single
+  truth living in the leaf module so the parser and the wizard share it
+  without an import cycle, Law 13), `:176-179` (the id step rejects
+  `add|edit|list|remove` — a provider named `add` would shadow the grammar on
+  every future selection attempt).
+- **Picker inclusion:** `implemented` —
+  `cli/src/commands/defs/model-provider-commands.ts:93-98` (customs appended
+  after built-ins per D9, labeled `(custom)`, configured badge from
+  `getConfiguredProviderNames`); registration ordering fixed so
+  `loadSettings()` (the registration seam) runs BEFORE the configured-name
+  check reads the effective view.
+- **Wizard input-mode continuity (Step 7 defect found by Step 8 RED):**
+  `fixed` — `cli/src/commands/router/route-provider-wizard.ts:62-69`
+  (`clearWizardInput` keeps `providerAdd`/`providerAddKey` per step — the
+  prior code dropped to `default` after every submit, ending the wizard after
+  step 1 and unmasking the key step; the Step 7 e2e pin had masked this by
+  re-setting the mode manually each round), `:75` (`exitToDefault` — terminal
+  and fail-closed exits only), `:100` (per-step mode), `:108,136`. The
+  contradictory Loop 7 pin asserting `default` was corrected (Loop 8).
+- **Docs (Law 9):** `implemented` — `README.md:202` ("Bring your own provider
+  (custom providers)" section: wizard walkthrough + command table + remove
+  semantics).
+- **Live smoke (operator directive):** PASS — the tmux TUI smoke was not
+  runnable (no tmux on this Windows host); the equivalent live proof drove the
+  REAL production modules (command defs, subcommand module, wizard machine,
+  route handler, settings IO, key store, registry) through the full
+  `add → list → edit → remove` cycle in an isolated config dir: 11/11
+  assertions (wizard opens at id; full walk persists to settings.json;
+  effective registry gains the id; key stored under the env var; secret never
+  in chat history; list shows the custom; edit reopens prefilled with the id
+  locked; remove drops it from registry + disk). NEEDS-REVIEW boundary: the
+  literal alternate-screen keystroke layer (React mount) was not driven.
+- **Pins:** `cli/src/commands/__tests__/provider-commands.test.ts` (12 tests:
+  grammar dispatch ×2 paths, full add walk with mode continuity, edit
+  custom-only + unknown id, list markers, remove + re-registration,
+  active-remove reset, built-in remove rejection, grammar-reserved wizard
+  ids, picker customs + badge, `parseProviderArgs` unit pins incl. the
+  preserved `update` semantics).
+
 ### Loop 7 — Step 9 (union widening) + Step 7 (wizard) implementation (2026-09-11)
 
 - **RED (Step 9):** All 6 `as ModelProvider` bridge-cast sites grep-mapped
@@ -730,6 +795,46 @@ gate-verified (2026-09-11 fix pass):**
   discard leaves no residue (the machine writes nothing; only the terminal
   step persists). The `health-command.ts` effective lookup keeps built-in
   metadata precedence so built-in health rows are unchanged.
+- **CHANGE DELTA:** Evidence + one loop record (<5% of the FID); circuit
+  breaker not triggered.
+
+### Loop 8 — Step 8 (grammar + picker + docs) implementation + live smoke (2026-09-11)
+
+- **RED:** `provider-commands.test.ts` written against the not-yet-existing
+  `provider-subcommands` module — 0 pass / 12 fail captured (module absent;
+  customs missing from the picker; grammar unwired). RED iteration caught ONE
+  REAL Step 7 defect: the route handler's `resetInput` forced `default` mode
+  after every submit, so a live user would fall out of the wizard after step 1
+  and the masked key step would unmask — the Step 7 e2e pin had masked it by
+  re-setting the mode manually each round; that pin is corrected here (an
+  invalid submit keeps the user IN the wizard). RED also caught one pin bug of
+  my own (a walk that submitted an empty models step but expected the inline
+  catalog).
+- **GREEN:** `provider-subcommands.ts` (parse + dispatch + handlers), grammar
+  reservation in the wizard id step (single truth in the leaf module — no
+  import cycle), picker customs after built-ins (D9) with the registration-
+  ordering fix (loadSettings runs before the configured-name read), remove
+  flow with the pre-mutation active-selection capture, mode-continuity fix.
+  Two REAL defects caught by gates during GREEN: (1) the remove handler read
+  the active selection AFTER the registry reset (the reset invalidates the
+  stored custom selection and validation drops it — the warn/reset branch
+  never ran and routing env survived); (2) the picker branch read the
+  effective view before registration. Both fixed and pinned.
+- **AUDIT (gates, own-run 2026-09-11):** typecheck ×4 exit 0 (cli, sdk,
+  common, packages/agent-runtime); Step 8 suite 28 pass / 0 fail (grammar +
+  wizard, 126 expect calls); regression battery 74 pass / 0 fail across 9
+  touched-surface files (router setup/update, key store, settings, setup,
+  gateway, settings-provider); common provider suites 51/0; sdk custom
+  suites 6/0; eslint `--max-warnings 0` → 0 problems; prettier clean;
+  `lint:md` PASS. Live smoke PASS (11/11, real modules, isolated config dir;
+  tmux TUI keystroke layer not driven — no tmux on host — recorded
+  NEEDS-REVIEW in the Step 8 evidence).
+- **ADVERSARIAL:** The grammar shadowing risk is closed at the only entry
+  point (id step rejects command words; parser dispatches them). The remove
+  flow's reset covers selection, model preference, in-process routing env,
+  and the runtime registry — shell env is never touched (the /provider flow
+  never owns it). The dormant-branch note from Loop 7 is discharged: the
+  grammar is the production setter for `providerAdd`.
 - **CHANGE DELTA:** Evidence + one loop record (<5% of the FID); circuit
   breaker not triggered.
 

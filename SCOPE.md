@@ -4,6 +4,63 @@
 > scope for the current task. Operator confirmation converts interpreted scope
 > into approved scope. Any drop/deferral requires a blocking presentation.
 
+## Task 31 — FID-2026-0910-004 Step 8 (grammar + picker + docs) + live smoke (2026-09-11)
+
+> Operator directives: "Run a tmux smoke test of the full /provider add flow
+> end to end in the live CLI" + "Start Step 8: the /provider
+> add|edit|list|remove command grammar wiring the wizard to users". Ordering
+> recorded: the smoke depends on the grammar (the wizard branch is
+> dormant-but-wired until Step 8) — grammar first, smoke as the live proof.
+> Approved scope: `add|edit|list|remove` subcommand dispatch in the /provider
+> handler (edit/remove custom-only; built-ins unremovable), picker inclusion
+> of customs with configured badges via the effective view (Law 13),
+> remove-flow active-provider warn + selection/routing reset (MQ1), user docs
+> (Law 9), tmux smoke of the full add flow in an isolated config dir. Also in
+> scope, discovered during grounding: the Step 7 route handler's
+> mode-continuity defect (resetInput forces 'default' after every submit,
+> breaking live step 2+ and unmasking the key step) — RED-pinned and fixed
+> here. Steps 9-remainder (catalog fetcher/picker merge) + Step 10 remain
+> pending. No drops, no deferrals.
+
+- [x] **T31-A.** Step 8 RED: grammar/picker/remove/mode-continuity pin suite
+      (`provider-commands.test.ts`), failing output captured; correct the
+      contradictory Loop 7 pin (invalid-submit continuity). **Done** — 0
+      pass / 12 fail captured; RED exposed the Step 7 mode-continuity defect.
+- [x] **T31-B.** Step 8 GREEN: subcommand dispatch + custom-only guards,
+      `provider-commands.ts` logic module, picker via effective view,
+      remove flow (warn + reset selection/model/routing), wizard id step
+      rejects grammar-reserved words, mode-continuity fix. **Done** — module
+      is `provider-subcommands.ts` (naming deviation from the FID's C4
+      phrasing, recorded); two GREEN-caught defects fixed (remove-flow
+      post-mutation read; picker registration order).
+- [x] **T31-C.** Docs: README provider section gains the custom-provider
+      workflow (Law 9). **Done** — README.md:202.
+- [x] **T31-D.** Gates: typecheck ×4, suites (new + regression), eslint,
+      prettier, lint:md. **Done** — all exit 0 / pass.
+- [x] **T31-E.** tmux smoke: full `/provider add` flow end-to-end in the live
+      CLI with `SAVANT_CODE_CONFIG_DIR` isolated to a temp dir. **Done with
+      recorded boundary** — tmux does not exist on this Windows host; the
+      equivalent live smoke drove the REAL production modules (command defs,
+      subcommand module, wizard machine, route handler, settings IO, key
+      store, registry) through add → list → edit → remove in an isolated
+      config dir: 11/11 assertions. The literal alternate-screen keystroke
+      layer was not driven (NEEDS-REVIEW, recorded in the FID).
+- [ ] **T31-F.** FID Step 8 evidence + loop record, SCOPE/ledger, path-scoped
+      commit. **Done except commit** — FID Loop 8 + Step 8 evidence, ledger,
+      and SCOPE updated; commit plan below (awaiting G1 path-scoped
+      authorization as with prior steps).
+
+  Commit plan (G3/G4, matching the repo's native no-trailer style): (1)
+  `feat(providers): custom provider Step 8 grammar, picker, docs
+  (FID-2026-0910-004)` — cli/src/commands/provider-subcommands.ts,
+  cli/src/commands/defs/model-provider-commands.ts,
+  cli/src/commands/router/route-provider-wizard.ts,
+  cli/src/utils/provider-wizard.ts,
+  cli/src/commands/__tests__/provider-commands.test.ts,
+  cli/src/commands/__tests__/provider-add-wizard.test.ts, README.md; (2)
+  `docs(governance): FID Step 8 evidence + live smoke record` — the FID,
+  ledger, SCOPE. The smoke driver stays in the gitignored scratchpad.
+
 ## Task 30 — FID-2026-0910-004 Step 9 (union widening) + Step 7 (wizard) (2026-09-11)
 
 > Operator directive: "Start Step 7: the /provider add|edit wizard step
@@ -15,25 +72,30 @@
 > edit modes per D7/MQ12, route handlers, settings + key writes, pin suite
 > per the FID's declared gate). No drops, no deferrals.
 
-- [ ] **T30-A.** Step 9 RED/GREEN: widen `ModelProvider` = `ProviderId |
+- [x] **T30-A.** Step 9 RED/GREEN: widen `ModelProvider` = `ProviderId |
       (string & {})` (`openrouter-models/types.ts`), retire all six
       validation.ts-precedent bridge casts (validation.ts ×2,
       provider-setup.ts ×2, provider-key-store.ts ×2) + the two test-file
       assertion casts; `ProviderSetupName` already carries `(string & {})`
-      from Step 6.
-- [ ] **T30-B.** Step 7 RED: `provider-add-wizard.test.ts` pin suite — the
+      from Step 6. **Done 2026-09-11** (commit `547946c`).
+- [x] **T30-B.** Step 7 RED: `provider-add-wizard.test.ts` pin suite — the
       FID's declared gate — covering: id validation + reserved-id rejection,
       env-var shape + claimed-var rejection, base-URL validation, inline
       model prefix rule, step sequencing, edit prefill, id immutability,
       key-kept-on-empty, fail-closed save on invalid edit, invalid
-      re-prompts, escape.
-- [ ] **T30-C.** Step 7 GREEN: pure step machine (`provider-wizard.ts`),
+      re-prompts, escape. **Done 2026-09-11** (16/0 after RED iteration).
+- [x] **T30-C.** Step 7 GREEN: pure step machine (`provider-wizard.ts`),
       `providerAdd` + `providerAddKey` input modes, route handlers, finalize
       via `parseCustomProviders` (one validation truth, Law 13), writes via
       `saveCustomProviders` + `saveProviderApiKey`, re-activation on baseUrl
-      change.
-- [ ] **T30-D.** Gates: typecheck ×4, suites (new + regression), eslint,
+      change. **Done 2026-09-11** — deviation recorded: settings writes go
+      through `saveSettings({ customProviders })` (no `saveCustomProviders`
+      helper exists); router e2e walk pins persist → register → key →
+      activation.
+- [x] **T30-D.** Gates: typecheck ×4, suites (new + regression), eslint,
       prettier, lint:md; FID evidence + ledger; path-scoped commits.
+      **Done 2026-09-11** — all gates exit 0; commits `547946c`
+      (implementation) + `15074fe` (governance).
 
 ## Task 28 — FID-2026-0910-004 Steps 1-3: common layer (2026-09-10)
 
