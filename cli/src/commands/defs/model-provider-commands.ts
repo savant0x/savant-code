@@ -14,6 +14,7 @@ import {
   PROVIDER_SETUP_CONFIG,
   RESEARCH_KEY_SERVICES,
 } from '../../utils/provider-setup'
+import { PROVIDER_PICKER_ADD_SENTINEL } from '../../utils/provider-wizard'
 import {
   loadSavantCodeModelPreference,
   loadSettings,
@@ -95,7 +96,15 @@ export const MODEL_PROVIDER_COMMANDS = [
           label: `${config.label} (custom)`,
           configured: configuredSet.has(config.id),
         }))
-        const providers = [...builtinProviders, ...customEntries]
+        // FID-2026-0911-001: the add-new ACTION row — selecting it opens the
+        // same wizard as /provider add (single entry seam). The sentinel is
+        // a grammar word, so no custom id can shadow it.
+        const addNewEntry = {
+          name: PROVIDER_PICKER_ADD_SENTINEL as (typeof configured)[number],
+          label: 'Add a custom provider…',
+          configured: false,
+        }
+        const providers = [...builtinProviders, ...customEntries, addNewEntry]
 
         useProviderPickerStore.getState().open(providers)
         params.saveToHistory(params.inputValue.trim())

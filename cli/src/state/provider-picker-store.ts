@@ -1,5 +1,7 @@
 import { create } from 'zustand'
 
+import { PROVIDER_PICKER_ADD_SENTINEL } from '../utils/provider-wizard'
+
 import type { ProviderSetupName } from '../utils/provider-setup'
 
 /**
@@ -37,10 +39,14 @@ export const useProviderPickerStore = create<ProviderPickerStore>((set) => ({
       isOpen: true,
       providers,
       // Start selection on the first unconfigured provider (most likely intent),
-      // or the first provider if all are configured.
+      // or the first provider if all are configured. The add-new ACTION row
+      // (FID-2026-0911-001) is never the seeded selection — it is an action,
+      // not a provider.
       selectedIndex: Math.max(
         0,
-        providers.findIndex((p) => !p.configured),
+        providers.findIndex(
+          (p) => !p.configured && p.name !== PROVIDER_PICKER_ADD_SENTINEL,
+        ),
       ),
     }),
   close: () => set({ isOpen: false, providers: [], selectedIndex: 0 }),

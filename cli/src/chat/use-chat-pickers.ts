@@ -8,6 +8,7 @@
 import { useCallback, useEffect, useRef } from 'react'
 
 import { pickerFocusAction } from './picker-focus-transition'
+import { handleProviderPickerSelection } from '../commands/provider-subcommands'
 import { getCheckpointDir } from '../commands/rewind'
 import { getProjectRoot, tryGetProjectRoot } from '../project-files'
 import { useChatStore } from '../state/chat-store'
@@ -16,11 +17,6 @@ import { useProviderPickerStore } from '../state/provider-picker-store'
 import { useRewindPickerStore } from '../state/rewind-picker-store'
 import { useSavantFreeModelStore } from '../state/savant-free-model-store'
 import { getSystemMessage } from '../utils/message-history'
-import {
-  activateConfiguredProvider,
-  beginProviderSetup,
-  getProviderSetupInfo,
-} from '../utils/provider-setup'
 import { executeRewind } from '../utils/rewind'
 import {
   loadSavantCodeModelPreference,
@@ -168,38 +164,37 @@ export function useChatPickers({
     [closeRewindPicker, setMessages, setInputFocused, inputRef],
   )
 
-  // Commit a provider pick: enter providerSetup mode for the chosen provider.
+  // Commit a provider pick (FID-2026-0911-001 D2): the full branch —
+  // add-new sentinel → wizard, provider → activate/key-setup, unknown →
+  // guidance — lives in the testable subcommand seam; the hook only closes
+  // the overlay and delegates. Picker replies never echo into history (no
+  // typed command exists), so the narrow PickerSelectionParams is exactly
+  // the right contract.
   const handleProviderPickerSelect = useCallback(
     (provider: ProviderSetupName) => {
       closeProviderPicker()
-      beginProviderSetup(provider)
-      const info = getProviderSetupInfo(provider)
-      if (info) {
-        const configured = activateConfiguredProvider(provider)
-        if (configured) {
-          setMessages((prev) => [
-            ...prev,
-            getSystemMessage(
-              `${info.label} selected. The existing configured key will be used; no key entry is needed. To replace the key, run /provider ${info.provider} update.`,
-            ),
-          ])
-          setInputFocused(true)
-          inputRef.current?.focus()
-          return
-        }
-
-        useChatStore.getState().setInputMode('providerSetup')
-        setInputFocused(true)
-        inputRef.current?.focus()
-        setMessages((prev) => [
-          ...prev,
-          getSystemMessage(
-            `${info.label} selected. Enter your API key below. It will be masked and stored locally in credentials.json. Environment variables take precedence.`,
-          ),
-        ])
-      }
+      handleProviderPickerSelection(provider, {
+        inputRef,
+        setInputFocused,
+        setMessages,
+        setInputValue: (value) => {
+          // The chat store keeps inputValue as a raw string while the
+          // router's InputValue carries cursor metadata; the reducer form's
+          // prev is synthesized from the stored text.
+          const state = useChatStore.getState()
+          state.setInputValue(
+            typeof value === 'function'
+              ? value({
+                  text: state.inputValue,
+                  cursorPosition: 0,
+                  lastEditDueToNav: false,
+                })
+              : value,
+          )
+        },
+      })
     },
-    [closeProviderPicker, setInputFocused, inputRef, setMessages],
+    [closeProviderPicker, inputRef, setInputFocused, setMessages],
   )
 
   // Commit a model pick: persist the override, confirm in-chat, and close.

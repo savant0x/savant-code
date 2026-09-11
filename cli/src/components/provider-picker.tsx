@@ -5,6 +5,7 @@ import { Button } from './button'
 import { getPickerViewport } from './picker-viewport'
 import { createChatScrollbarOptions } from '../chat/styles'
 import { useTheme } from '../hooks/use-theme'
+import { PROVIDER_PICKER_ADD_SENTINEL } from '../utils/provider-wizard'
 
 import type { ProviderSetupName } from '../utils/provider-setup'
 import type { KeyEvent, ScrollBoxRenderable } from '@opentui/core'
@@ -143,6 +144,10 @@ export const ProviderPicker: React.FC<ProviderPickerProps> = ({
       >
         {providers.map((provider, idx) => {
           const isSelected = idx === selectedIndex
+          // FID-2026-0911-001: the add-new ACTION row renders without a
+          // ✓/✗ badge and with an accent marker instead of the id suffix —
+          // it is an action, not a provider.
+          const isAddNew = provider.name === PROVIDER_PICKER_ADD_SENTINEL
           const status = provider.configured ? '✓' : '✗'
           const statusColor = provider.configured ? theme.success : theme.muted
 
@@ -169,20 +174,34 @@ export const ProviderPicker: React.FC<ProviderPickerProps> = ({
               <text fg={theme.primary} wrapMode="none" selectable={false}>
                 {isSelected ? '› ' : '  '}
               </text>
-              <text fg={statusColor} wrapMode="none" selectable={false}>
-                {status}
-              </text>
+              {isAddNew ? (
+                <text fg={theme.primary} wrapMode="none" selectable={false}>
+                  +
+                </text>
+              ) : (
+                <text fg={statusColor} wrapMode="none" selectable={false}>
+                  {status}
+                </text>
+              )}
               <text
-                fg={isSelected ? theme.foreground : theme.muted}
+                fg={
+                  isSelected
+                    ? theme.foreground
+                    : isAddNew
+                      ? theme.primary
+                      : theme.muted
+                }
                 attributes={isSelected ? 1 : 0}
                 wrapMode="none"
                 selectable={false}
               >
                 {provider.label}
               </text>
-              <text fg={theme.muted} wrapMode="none" selectable={false}>
-                ({provider.name})
-              </text>
+              {!isAddNew && (
+                <text fg={theme.muted} wrapMode="none" selectable={false}>
+                  ({provider.name})
+                </text>
+              )}
             </Button>
           )
         })}

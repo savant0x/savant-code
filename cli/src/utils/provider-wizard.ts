@@ -39,6 +39,15 @@ import type { CustomProviderConfig } from '@savant-code/common/providers/types'
  */
 export const PROVIDER_GRAMMAR_WORDS = ['add', 'edit', 'list', 'remove'] as const
 
+/**
+ * The /provider picker's add-new action key (FID-2026-0911-001 D1). Lives in
+ * this leaf module next to the grammar words it derives from: the wizard's
+ * id-step reservation already rejects every grammar word, so no custom id can
+ * ever shadow the sentinel, and every consumer (store seed predicate, picker
+ * row render, selection branch) imports the SAME constant.
+ */
+export const PROVIDER_PICKER_ADD_SENTINEL: string = 'add'
+
 // ---------------------------------------------------------------------------
 // Submission replay guard (Loop 9, Law 12 secret hygiene)
 // ---------------------------------------------------------------------------
