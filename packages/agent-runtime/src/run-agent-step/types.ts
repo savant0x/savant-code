@@ -140,6 +140,12 @@ export type LoopAgentStepsParams = {
   agentTemplate?: AgentTemplate
   /** FID-2026-0725-085 CTX-007: Resolved context window from OpenRouter catalog. */
   contextWindow?: number
+  /** FID-2026-0909-008 Step 4: resolved output budget (max_completion_tokens
+   *  from the model catalog), threaded CLI → SDK → loop → stream call site so
+   *  requests carry an explicit model-appropriate max_tokens. Inherited by
+   *  spawned subagents whose effective model matches the parent's
+   *  (childOutputBudget guard in spawn-agent-utils). */
+  maxOutputTokens?: number
   /** FID-2026-0814-004 H-05/H-06/H-07: compression config threaded from
    *  `protocol.config.yaml` `compression`. Absent → runtime defaults. */
   compression?: {
