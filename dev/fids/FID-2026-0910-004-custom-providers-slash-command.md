@@ -6,8 +6,9 @@
 **Status:** fixed (Steps 1-3 implemented 2026-09-10; Steps 4-6 implemented +
 gate-verified 2026-09-11; Step 9 union widening + Step 7 wizard implemented +
 gate-verified 2026-09-11; Step 8 grammar + picker + docs implemented +
-gate-verified + live-smoked 2026-09-11; Step 9 remainder (catalog fetcher /
-picker merge) + Step 10 pending separate approval)
+gate-verified + live-smoked 2026-09-11; Loop 9 replay-guard fix + Step 9
+remainder (catalog fetcher / picker merge) + Step 10 (health edge + Law 4
+sweep) implemented + gate-verified 2026-09-11)
 **Created:** 2026-09-10 23:30 (converged 2026-09-10, Loops 1-4 recorded)
 **YAGNI-Compliance:** Verified — every step maps to a user-facing
 requirement of the full feature; no speculative abstraction beyond the
@@ -880,6 +881,71 @@ gate-verified (2026-09-11 fix pass):**
   a realistic keystroke pattern.
 - **CHANGE DELTA:** Guard module (~60 lines) + handler mark + router drop +
   test additions (<5% of the FID); circuit breaker not triggered.
+
+### Loop 10 — Step 9 remainder: custom catalog fetcher + degradation ladder + picker merge (2026-09-11)
+
+- **RED:** `custom-catalog.test.ts` written against the not-yet-existing
+  `custom-catalog` module — captured module-absent (0 pass, unhandled import
+  error) before GREEN.
+- **GREEN:** `cli/src/utils/openrouter-models/custom-catalog.ts` — per-custom-id
+  live fetchers built LAZILY from the effective registry, reusing
+  `createLiveCatalogFetcher` verbatim (Law 13: bounded timeout, cache/TTL,
+  in-flight dedup, stale-cache fallback, redacted failure logging are the
+  shared core's, not reimplemented); OpenAI `/v1/models` parse with
+  `${id}/` prefixing + already-prefixed passthrough + malformed-entry
+  fail-closed drops; inline catalogs pure synthesis (pinned zero-network);
+  `none`/unknown/built-in ids → `[]` without network. Key resolution: shell
+  env first, then the persisted 0600 store. Merge seam:
+  `fetchAllCustomModels` rides the gateway `Promise.allSettled` — a failing
+  custom fetch degrades to [] per provider (D10 ladder; free-text
+  `/model <exact-id>` always routes) and never masks built-ins. D9 fix:
+  `model-picker-grouping.ts` now derives order from the EFFECTIVE registry
+  (customs carry order 5 from `toProviderConfig`; the built-in-only read
+  would have tied them at the unknown-id fallback 4). `/model` picks customs
+  up through the merged catalog with ZERO command-def changes.
+- **AUDIT (gates, own-run 2026-09-11):** custom-catalog suite 8 pass / 0 fail
+  (16 expect calls); openrouter-models family 34/0 across 5 files; wizard +
+  grammar + health + key-store regression 78/0 across 8 files; typecheck ×4
+  exit 0; eslint `--max-warnings 0` (3 import/order warnings in the new suite
+  caught and fixed via --fix); prettier clean. GREEN self-caught: an initial
+  draft used `require()` in the ESM CLI (the exact Loop 8 anti-pattern) and a
+  nonexistent module — both corrected to a static import before first run.
+- **ADVERSARIAL:** No per-provider special-casing leaked into the fetcher —
+  the module is generic over any registered custom id (the built-in-id guard
+  is a data check, not a name list). Fetchers rebuild via the test reset
+  seam; stale fetchers after re-registration cannot survive a process because
+  registration is boot-time. Cache/TTL semantics are the shared core's.
+- **CHANGE DELTA:** New module (~150 lines) + 2-line merge + grouping read
+  swap + 8 pins (<5% of the FID); circuit breaker not triggered.
+
+### Loop 11 — Step 10 closeout: health edge sweep + Law 4 call-graph proof (2026-09-11)
+
+- **C6 health edge sweep:** the custom-provider pins from the interrupted
+  session were on disk and VERIFIED green (8/0, 25 expect calls) — active
+  custom via the effective registry with secret redaction, keyless custom,
+  stale-selection fallback to default. No new gap found: health reads the
+  effective registry (`health-command.ts:47`) and the D8-widened selection
+  type keeps unknown persisted ids fail-closed via validation.
+- **Law 4 call-graph proof (grep-verified, all production edges Steps 1-9):**
+  registration — `settings/io.ts:56` (boot seam), `sdk/client.ts:42`,
+  `sdk/run/execution.ts:95`, `route-provider-wizard.ts:160`; remove/reset —
+  `provider-subcommands.ts:229-230` (`resetCustomProviders` + rebuild, D4
+  no-op documented); catalog chain — `custom-catalog.ts` →
+  `gateway.ts:196` `fetchAllCustomModels` → `/model` def (`model-provider-
+  commands.ts:54` `fetchGatewayModels`) + boot prewarm (`index.tsx:49`);
+  effective-registry consumers — grouping (`model-picker-grouping.ts:34`),
+  health (`health-command.ts:47`), key store/provider setup;
+  wizard + grammar — `route-user-prompt.ts:75/91` (route + replay guard),
+  `model-provider-commands.ts:112` (`parseProviderArgs` dispatch);
+  repo-validation stays built-in-only — `scripts/validate-repository.ts:11,218`
+  and `scripts/generate-provider-reference.ts:24` import `PROVIDER_REGISTRY`,
+  never the effective view. Compilation + wiring are proven, not assumed.
+- **ADVERSARIAL:** All checkbox gates in the Verification section are now
+  satisfied by tool output; the final status moves to `fixed` with every step
+  implemented + gate-verified (closure remains the operator's). The tmux
+  NEEDS-REVIEW boundary from Loop 8 was discharged by the Loop 9 winpty ConPTY
+  smoke; no other boundary remains open.
+- **CHANGE DELTA:** Evidence + loop record only; circuit breaker not triggered.
 
 ## Resolution
 

@@ -4,6 +4,35 @@
 > scope for the current task. Operator confirmation converts interpreted scope
 > into approved scope. Any drop/deferral requires a blocking presentation.
 
+## Task 34 — FID-2026-0910-004 Step 9 remainder (catalog fetcher + ladder + merge) + Step 10 closeout (2026-09-11)
+
+> Operator directives: "Start the Step 9 remainder: custom catalog fetcher
+> with the degradation ladder and model-picker merge" + "Close out Step 10:
+> health edge sweep and the Law 4 call-graph proof for all wiring". Ordering:
+> Step 9 remainder first (new wiring), then Step 10's Law 4 sweep covers all
+> edges including the new ones.
+
+- **Interpreted scope (Step 9 remainder):** `custom-catalog.ts` — per-custom-id
+  live fetchers built lazily from the effective registry (reusing
+  `createLiveCatalogFetcher`, Law 13), OpenAI `/v1/models` parse with
+  `${id}/` prefixing, inline catalog synthesis, `none`/unknown/built-in ids →
+  `[]` fail-closed; `fetchGatewayModels` merge via `Promise.allSettled`
+  (failure → empty = D10 ladder rung; free-text `/model <exact-id>` always
+  routes); `model-picker-grouping.ts` reads the EFFECTIVE registry so customs
+  resolve their D9 order-5 (built-in-only read would tie them at 4);
+  `/model` picks customs up through the merged gateway catalog with zero
+  command-def changes.
+- **Interpreted scope (Step 10 closeout):** health custom-provider pins
+  (already on disk from the interrupted session — verify, not redo); full
+  Law 4 grep proof over every production wiring edge (registration → merge →
+  consumers) incl. the repo-validation built-in-only grep; FID checkbox
+  closure + status.
+- **Status:** COMPLETE — Step 9 remainder GREEN (8/0 new pins; RED captured
+  module-absent first), typecheck ×4 exit 0, eslint/prettier clean; Step 10
+  health pins verified 8/0; Law 4 sweep grep-complete (all edges incl. new
+  fetcher + repo-validation built-in-only proof); FID Loop 10/11 records
+  landing with the commits.
+
 ## Task 33 — FID-2026-0910-004 Loop 9: TUI-smoke secret-leak fix (replay guard) (2026-09-11)
 
 > Discovered during the Task 32 winpty TUI smoke (operator directive: manual
