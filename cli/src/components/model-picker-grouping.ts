@@ -1,5 +1,5 @@
+import { getEffectiveProviderRegistry } from '@savant-code/common/providers/custom-providers'
 import { deriveProviderOrder } from '@savant-code/common/providers/derive'
-import { PROVIDER_REGISTRY } from '@savant-code/common/providers/registry'
 
 import type { OpenRouterModel } from '../utils/openrouter-models'
 
@@ -27,7 +27,11 @@ export function getProviderOrder(provider: ModelProvider): number {
   // openrouter 0, tokenrouter 1, nvidia 2, opencode-go 3, and the 6-way tie
   // of tokenharbor/commandcode/ollama/cloudflare/kiosapi/opencode-zen at 4 —
   // replicating the historical switch exactly so picker ordering is unchanged.
-  return deriveProviderOrder(PROVIDER_REGISTRY, provider)
+  // Step 9 remainder (D9): the EFFECTIVE registry is the order source —
+  // custom providers carry order 5 from `toProviderConfig`, so they group
+  // after every built-in; the built-in-only registry would tie them at the
+  // unknown-id fallback (4).
+  return deriveProviderOrder(getEffectiveProviderRegistry(), provider)
 }
 
 export function buildGroupedItems(models: OpenRouterModel[]): ListItem[] {

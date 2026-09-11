@@ -14,6 +14,10 @@ import {
   getCachedApinexModels,
 } from './apinex'
 import {
+  __resetCustomCatalogsForTest,
+  fetchAllCustomModels,
+} from './custom-catalog'
+import {
   __resetKiosapiCacheForTest,
   fetchKiosapiModels,
   getCachedKiosapiModels,
@@ -185,8 +189,14 @@ export async function fetchGatewayModels(
       fetchKiosapiModels(forceRefresh),
       fetchApinexModels(forceRefresh),
       fetchZenModels(forceRefresh),
+      // FID-2026-0910-004 Step 9 remainder: all registered custom catalogs
+      // (live fetch + inline synthesis) merge here. A per-provider failure
+      // degrades to [] inside fetchAllCustomModels (D10 ladder) and can
+      // never mask the built-in sources.
+      fetchAllCustomModels(forceRefresh),
     ])
-    const [nousResult, kiosapiResult, apinexResult, zenResult] = restResults
+    const [nousResult, kiosapiResult, apinexResult, zenResult, customResult] =
+      restResults
 
     const orModels =
       orResult.status === 'fulfilled'
@@ -210,6 +220,10 @@ export async function fetchGatewayModels(
         : getCachedApinexModels()
     const zenModels =
       zenResult.status === 'fulfilled' ? zenResult.value : getCachedZenModels()
+    const customModels =
+      customResult && customResult.status === 'fulfilled'
+        ? customResult.value
+        : []
     const tokenrouterModels = fetchTokenRouterModels()
     const tokenharborModels = getTokenHarborModels()
     const openCodeGoModels = fetchOpenCodeGoModels()
@@ -226,6 +240,7 @@ export async function fetchGatewayModels(
       ...zenModels,
       ...openCodeGoModels,
       ...commandCodeModels,
+      ...customModels,
     ]
     combined.sort((a, b) => a.id.localeCompare(b.id))
     gatewayCache = combined
@@ -250,6 +265,8 @@ export function __resetOpenRouterModelsCacheForTest(): void {
   __resetKiosapiCacheForTest()
   __resetApinexCacheForTest()
   __resetZenCacheForTest()
+  // Step 9 remainder: lazily-built custom fetchers are cache state too.
+  __resetCustomCatalogsForTest()
   gatewayCache = null
   gatewayCacheAt = 0
   gatewayInflight = null

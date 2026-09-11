@@ -39,6 +39,12 @@ export {
 } from './openrouter-models/opencode-zen'
 export { fetchNvidiaModels } from './openrouter-models/nvidia'
 export {
+  __resetCustomCatalogsForTest,
+  fetchAllCustomModels,
+  fetchCustomModels,
+  getCustomProviderIds,
+} from './openrouter-models/custom-catalog'
+export {
   fetchCommandCodeModels,
   fetchOpenCodeGoModels,
   fetchTokenRouterModels,
