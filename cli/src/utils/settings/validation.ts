@@ -153,11 +153,9 @@ export const validateSettings = (parsed: JSONValue): Settings => {
   const explicitActive = obj.activeProvider
   const legacyDirect = obj.directProvider
   const migratedActive =
-    typeof explicitActive === 'string' &&
-    validProviders.has(explicitActive)
+    typeof explicitActive === 'string' && validProviders.has(explicitActive)
       ? explicitActive
-      : typeof legacyDirect === 'string' &&
-          validProviders.has(legacyDirect)
+      : typeof legacyDirect === 'string' && validProviders.has(legacyDirect)
         ? legacyDirect
         : undefined
   if (typeof migratedActive === 'string') {

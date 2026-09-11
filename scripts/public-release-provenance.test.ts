@@ -276,7 +276,8 @@ describe('assertCleanCheckoutCompiles — post-install gate list (FID-2026-0909-
         return {
           status: 1,
           stdout: '',
-          stderr: 'error TS2339: Property dir does not exist on type ImportMeta',
+          stderr:
+            'error TS2339: Property dir does not exist on type ImportMeta',
         }
       }
       return { status: 0, stdout: '', stderr: '' }
