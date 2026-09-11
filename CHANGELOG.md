@@ -2,6 +2,42 @@
 
 ## Unreleased
 
+### Custom providers via /provider — the full feature, live-smoked, closed + archived (2026-09-11)
+
+- **FID-2026-0910-004 — medium — users could not bring their own
+  OpenAI-compatible gateways: only built-in registry providers were
+  selectable, and the sole escape hatch (shell env-var pair) was
+  undiscoverable, header-leaking, and prefix-less.** Implemented as ten
+  FID-governed steps across 2026-09-10/11, every step RED-first with
+  own-run gates: validated user-authored provider DATA in `common`
+  (`CustomProviderConfig` + `parseCustomProviders` + a fail-closed merged
+  effective registry — data only, never executable configuration; hostile
+  registrations rejected before any state mutation); the SDK
+  (`SavantCodeClient({ customProviders })`) and CLI settings/key-store
+  seams (registration at boot, 0600 credential storage under the
+  provider's own env var); the `/provider add|edit` wizard — a pure step
+  machine (id → label → baseUrl → envVar → models → key) with per-step
+  inline re-prompts, masked key entry via a dedicated input mode,
+  id-locked prefilled edit, key-kept-on-empty, fail-closed saves, and
+  Escape discarding with zero residue; the `add|edit|list|remove` grammar
+  with custom-only edit/remove, active-remove selection reset, and
+  grammar-word id reservation (single truth in the leaf module — no
+  import cycle); `ModelProvider`/`ProviderSetupName` union widening
+  retiring every bridge cast; a one-shot replay-tombstone guard dropped
+  duplicated submits before chat/record paths (live-smoke discovery —
+  a replayed key submission reached up-arrow history and the agent as
+  chat; Law 12); the generic custom catalog fetcher reusing the shared
+  live-catalog core (inline synthesis offline; live→empty degradation per
+  provider; D9 order-5 grouping via the effective registry); and the
+  health edge sweep + full Law 4 call-graph proof (every production wiring
+  edge grep-verified, repo-validation stays built-in-only). Gates: wizard
+  21/0, grammar 28/0, custom-catalog 8/0, health 8/0, aggregates 60-79/0
+  per loop, common 51/0, sdk 6/0, typecheck ×4 exit 0 at every gate,
+  eslint `--max-warnings 0`, prettier, `lint:md`. Live evidence: 11/11
+  in-process grammar smoke + a winpty ConPTY TUI walk of the full add
+  flow (the smoke that surfaced the Loop 9 leak). Commits `547946c` through
+  `eeca933`. Archived to `dev/fids/archive/`.
+
 ### Skill lifecycle changes render live — traffic-light notification + quarantine surfacing (closed + archived 2026-09-10)
 
 - **FID-2026-0910-001 — high — the self-improving harness drafted skills

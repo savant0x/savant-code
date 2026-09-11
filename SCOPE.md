@@ -4,7 +4,16 @@
 > scope for the current task. Operator confirmation converts interpreted scope
 > into approved scope. Any drop/deferral requires a blocking presentation.
 
-## Task 34 — FID-2026-0910-004 Step 9 remainder (catalog fetcher + ladder + merge) + Step 10 closeout (2026-09-11)
+## Task 35 — FID-2026-0910-004 closure (2026-09-11)
+
+> Operator directive: "Close FID-2026-0910-004: final certification,
+> archive, and CHANGELOG entry".
+
+- **Executed:** Resolution filled (Loop 12 final certification — zero
+  actionable improvements, no open NEEDS-REVIEW), status → `closed`,
+  feature-scale CHANGELOG `Unreleased` entry, `git mv` to
+  `dev/fids/archive/`, archive + active ledger sections updated.
+- **Status:** COMPLETE.
 
 > Operator directives: "Start the Step 9 remainder: custom catalog fetcher
 > with the degradation ladder and model-picker merge" + "Close out Step 10:
@@ -32,6 +41,10 @@
   health pins verified 8/0; Law 4 sweep grep-complete (all edges incl. new
   fetcher + repo-validation built-in-only proof); FID Loop 10/11 records
   landing with the commits.
+
+## Task 34 — FID-2026-0910-004 Step 9 remainder (catalog fetcher + ladder + merge) + Step 10 closeout (2026-09-11)
+
+> Superseded by Task 35 closure; record retained for the audit trail.
 
 ## Task 33 — FID-2026-0910-004 Loop 9: TUI-smoke secret-leak fix (replay guard) (2026-09-11)
 

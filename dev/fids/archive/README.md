@@ -3,6 +3,22 @@
 This directory contains closed or historically completed FIDs. Files here are
 an audit record, not an active work queue.
 
+## 2026-09-11 closure — custom providers via /provider (1 FID archived; active queue: 0909-008 + 0911-001)
+
+Implemented across 2026-09-10/11 in ten FID-governed steps (Loops 5-11),
+every step RED-first with own-run gates; closed by operator directive with
+Loop 12 final certification (zero actionable improvements; no NEEDS-REVIEW
+boundary open — the Loop 8 tmux gap was discharged by the Loop 9 winpty
+ConPTY TUI walk). Gates at closure: wizard 21/0, grammar 28/0,
+custom-catalog 8/0, health 8/0, per-loop aggregates 60-79/0, common 51/0,
+sdk 6/0, typecheck ×4 exit 0, eslint `--max-warnings 0`, prettier,
+`lint:md`. Live evidence: 11/11 in-process grammar smoke + the winpty TUI
+walk that surfaced (and fixed) the Loop 9 secret-hygiene leak. CHANGELOG
+`Unreleased` carries the feature-scale entry.
+
+- `FID-2026-0910-004-custom-providers-slash-command.md` (medium) —
+  closed 2026-09-11; archived 2026-09-11.
+
 ## 2026-09-10 closure — skill lifecycle live notification (1 FID archived; queue: 0909-008 only)
 
 Implemented, committed, closed, and archived in one session. Commit
