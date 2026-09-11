@@ -145,6 +145,24 @@ lives in `references/` and is fetched on demand with
 `skill(name, path: "details/checklist.md")` — context cost is proportional
 to the answer.
 
+### 3.4 Operator visibility (FID-2026-0910-001)
+
+Skill lifecycle changes surface in three places (all state-gated — silent
+when no drafts pend):
+
+1. **Live chat render** — every `skill_manage` call renders with the
+   traffic-light command chrome (`skill {action} {name}` label, ✓/✗ exit
+   badge, expandable output), including Scribe (subagent) calls — the
+   registry entry covers both render paths.
+2. **`/skills list` pointer** — the trusted view appends one line naming
+   pending drafts and the follow-up command (`/skills list --quarantined`)
+   whenever drafts exist.
+3. **SessionEnd net** — `bun run session-end:review` prints a
+   deterministic alert when drafts pend, catching mechanical drafts from
+   `lessons:to-skills` that never pass through the chat.
+
+Nothing auto-promotes; trust remains operator-only.
+
 ## 4. Operator command reference
 
 | Command | What it does |

@@ -13,6 +13,7 @@ import {
   skillCanonicalDir,
   skillLedgerPath,
   skillQuarantineDir,
+  skillQuarantineRootDir,
   skillVersionsDir,
 } from './paths'
 import {
@@ -142,6 +143,27 @@ export function readSkillFile(
   } catch {
     return null
   }
+}
+
+/**
+ * Engine-owned count of quarantined drafts pending operator trust
+ * (FID-2026-0910-001 P3): the single numeric truth for pending drafts; the
+ * CLI keeps its own presentation rows (Law 13 — one count, one truth).
+ * Counts only valid-named quarantine entries that hold a SKILL.md; entries
+ * in `.claude/skills` are CLI presentation compatibility, not engine state.
+ */
+export function countQuarantinedDrafts(rootDir: string): number {
+  const quarantineRoot = skillQuarantineRootDir(rootDir)
+  if (!fs.existsSync(quarantineRoot)) return 0
+  let count = 0
+  for (const entry of fs.readdirSync(quarantineRoot)) {
+    if (!isValidSkillName(entry)) continue
+    if (!fs.existsSync(path.join(quarantineRoot, entry, SKILL_FILE_NAME))) {
+      continue
+    }
+    count += 1
+  }
+  return count
 }
 
 export type CurrentSkill = {

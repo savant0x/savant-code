@@ -136,6 +136,23 @@ describe('/skills command (FID-2026-0824-012 S0-A/B, S2-E)', () => {
     expect(output).toContain('Version history')
   })
 
+  test('list appends the quarantine pointer only when drafts exist', () => {
+    const root = fixtureRoot()
+
+    // Silent at zero: an empty project must not advertise drafts.
+    const empty = runSkillsCommand(root, 'list')
+    expect(empty).not.toContain('quarantined skill draft')
+
+    seedDraft(root, 'pointme')
+    const withDraft = runSkillsCommand(root, 'list')
+    expect(withDraft).toContain('1 quarantined skill draft')
+    expect(withDraft).toContain('/skills list --quarantined')
+
+    // The --quarantined view itself carries no pointer.
+    const drafts = runSkillsCommand(root, 'list --quarantined')
+    expect(drafts).not.toContain('/skills list --quarantined')
+  })
+
   test('unknown skill names produce explicit errors', () => {
     const root = fixtureRoot()
     expect(runSkillsCommand(root, 'trust ghost')).toContain(

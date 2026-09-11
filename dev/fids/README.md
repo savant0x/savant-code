@@ -33,7 +33,22 @@ on-disk records missing from the table added (-0823-003, -0824-003…-008,
 
 | FID | Status | Purpose / blocking gate |
 |---|---|---|
-| (empty — the queue drained 2026-09-09; FID-2026-0909-005 closed + archived, see `archive/README.md`) | | |
+| [`FID-2026-0909-008`](FID-2026-0909-008-tool-call-argument-truncation-root-cause.md) | fixed | Tool-call truncation root cause (unset output budget). Steps 1–4 landed; Step 5 (finish-reason proof) deferred follow-up pending next live occurrence. |
+| [`FID-2026-0910-001`](FID-2026-0910-001-skill-lifecycle-live-notification.md) | fixed | Skill lifecycle live notification — 3 surfaces implemented + gates green 2026-09-10 (Loop 3). Closure/archive pending the path-scoped commit (G2). |
+
+**2026-09-10 implementation (FID-2026-0910-001):** operator directive to
+implement the three converged surfaces; Loop 3 recorded in the FID (RED
+legs first, all four failing pre-fix; gates stamped; Law 4 greps pasted).
+Status `fixed`; closure requires the commit (G2). Ledger table refreshed to
+disk ground truth (the three rows above had not been re-added after the
+2026-09-09 drain).
+
+**2026-09-10 closure ceremony (FID-2026-0910-003 → archive):** the record
+sat `closed` in `dev/fids/` with its CHANGELOG entry already written and
+commits `377e0494` + `17b08fd5` on main — only the archive move + index
+had never executed. Completed 2026-09-10 after Ground-Truth re-verification
+(suite 38/0, typecheck/eslint/prettier clean on the touched files); see
+`archive/README.md` header "str_replace indent rescue".
 
 **2026-09-10 closure (FID-2026-0910-002 — ECHO.md Author-field residue):**
 exposed live by the FID-2026-0910-001 Verifier audit (a correct FAIL on a

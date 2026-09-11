@@ -4,6 +4,8 @@ import * as path from 'node:path'
 
 import { afterEach, describe, expect, test } from 'bun:test'
 
+import { createSkill } from '@savant-code/common/util/skill-management'
+
 import { computeRecurrences } from '../experiences-dedup'
 import {
   AGENDA_MAX_ITEMS,
@@ -30,6 +32,8 @@ afterEach(() => {
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000
 const NOW = Date.UTC(2026, 7, 24, 12)
+
+const BODY = `# Test Skill\n\n## When to Use\nx\n\n## Procedure\n1. y\n\n## Pitfalls\n- z\n\n## Verification\nrun\n`
 
 function record(
   tool: string,
@@ -117,5 +121,42 @@ describe('runSessionEndReview', () => {
     const review = runSessionEndReview(root)
     expect(review.items).toEqual([])
     expect(fs.existsSync(path.join(root, 'dev', 'agenda.md'))).toBe(true)
+  })
+
+  test('prints the quarantine alert when drafts pend (FID-2026-0910-001 P3)', () => {
+    const root = fixtureRoot()
+    const created = createSkill({
+      rootDir: root,
+      name: 'pending-alert',
+      description: 'draft to alert on',
+      body: BODY,
+      sessionId: 's',
+      reason: 'r',
+    })
+    expect(created.ok).toBe(true)
+    const review = runSessionEndReview(root)
+    expect(
+      review.routing.some((note) =>
+        note.includes('1 quarantined skill draft pending operator review'),
+      ),
+    ).toBe(true)
+  })
+
+  test('quarantine alert is silent when no drafts pend', () => {
+    const root = fixtureRoot()
+    fs.mkdirSync(path.join(root, 'dev', 'experiences'), { recursive: true })
+    fs.writeFileSync(
+      path.join(root, 'dev', 'experiences', 'raw-traces.jsonl'),
+      [
+        JSON.stringify(record('run_command', 'boom', 1)),
+        JSON.stringify(record('run_command', 'boom', 2)),
+        JSON.stringify(record('run_command', 'boom', 3)),
+      ].join('\n') + '\n',
+      'utf8',
+    )
+    const review = runSessionEndReview(root, { now: NOW })
+    expect(
+      review.routing.some((note) => note.includes('quarantined skill draft')),
+    ).toBe(false)
   })
 })

@@ -24,6 +24,8 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 
+import { countQuarantinedDrafts } from '@savant-code/common/util/skill-management'
+
 import {
   computeRecurrences,
   readExperienceLedger,
@@ -45,6 +47,21 @@ export type SessionEndReview = {
   agenda: string
   /** Candidate FID-routing notes (line-bounded). */
   routing: string[]
+}
+
+/**
+ * FID-2026-0910-001 P3 — deterministic quarantine alert line printed after
+ * the routing notes when drafts pend (silent at zero). The only surface that
+ * can catch mechanical drafts (`lessons:to-skills`), which never pass through
+ * the chat. Zero LLM; pure read after the agenda write.
+ */
+export function quarantineAlertNote(rootDir: string): string | null {
+  const pending = countQuarantinedDrafts(rootDir)
+  if (pending === 0) return null
+  return (
+    `⚠ ${pending} quarantined skill draft${pending === 1 ? '' : 's'} ` +
+    'pending operator review — run `/skills list --quarantined`'
+  )
 }
 
 /** Build the agenda document from the current recurrences (≤ 50 lines). */
@@ -100,10 +117,14 @@ export function runSessionEndReview(
   const agendaFile = path.join(rootDir, AGENDA_PATH)
   fs.mkdirSync(path.dirname(agendaFile), { recursive: true })
   fs.writeFileSync(agendaFile, built.agenda, 'utf8')
+  // FID-2026-0910-001 P3: the deterministic net for non-chat draft sources.
+  const quarantineNote = quarantineAlertNote(rootDir)
+  const routing =
+    quarantineNote !== null ? [...built.routing, quarantineNote] : built.routing
   return {
     items: built.items,
     agenda: built.agenda,
-    routing: built.routing,
+    routing,
   }
 }
 

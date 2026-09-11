@@ -20,6 +20,7 @@ import { RunTerminalCommandComponent } from './run-terminal-command'
 import { SequentialThinkingComponent } from './sequential-thinking'
 import { SetOutputComponent } from './set-output'
 import { SkillComponent } from './skill'
+import { SkillManageComponent } from './skill-manage'
 import { StrReplaceComponent } from './str-replace'
 import { SuggestFollowupsComponent } from './suggest-followups'
 import { TaskCompleteComponent } from './task-completed'
@@ -59,6 +60,13 @@ const toolComponentRegistry = new Map<ToolName, ToolComponent>([
   // two tools). Without this it fell through to the generic collapsed
   // ToolCallItem fallback.
   ['run_readonly_command', RunTerminalCommandComponent],
+  // FID-2026-0910-001 P1: skill_manage emits the same command-class output
+  // template (FID-2026-0908-001) but carries no `command` input, so it gets a
+  // dedicated component that synthesizes the `skill {action} {name}` label
+  // and delegates to the same TerminalCommandDisplay (Law 13). Without this
+  // it fell through to the generic collapsed ToolCallItem fallback and skill
+  // lifecycle changes were invisible in the chat.
+  [SkillManageComponent.toolName, SkillManageComponent],
   [ReadDocsComponent.toolName, ReadDocsComponent],
   [ReadFilesComponent.toolName, ReadFilesComponent],
   [ReadSubtreeComponent.toolName, ReadSubtreeComponent],

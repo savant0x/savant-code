@@ -16,8 +16,12 @@ export function skillCanonicalDir(rootDir: string, name: string): string {
   return path.join(rootDir, '.agents', 'skills', name)
 }
 
+export function skillQuarantineRootDir(rootDir: string): string {
+  return path.join(rootDir, '.agents', 'skills', QUARANTINE_DIR_NAME)
+}
+
 export function skillQuarantineDir(rootDir: string, name: string): string {
-  return path.join(rootDir, '.agents', 'skills', QUARANTINE_DIR_NAME, name)
+  return path.join(skillQuarantineRootDir(rootDir), name)
 }
 
 export function skillLedgerPath(rootDir: string, name: string): string {

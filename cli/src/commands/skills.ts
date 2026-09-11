@@ -1,4 +1,5 @@
 import {
+  countQuarantinedDrafts,
   trustSkill,
   untrustSkill,
   rollbackLiveSkill,
@@ -50,6 +51,18 @@ export function runSkillsCommand(projectRoot: string, args: string): string {
     output =
       `**${quarantinedOnly ? 'Quarantined drafts' : 'Trusted skills'}**\n\n` +
       formatTable(filtered)
+    // FID-2026-0910-001 P2: state-gated pointer (silent at zero) — the
+    // trusted view must disclose pending drafts without inverting the
+    // command's semantics (default-inversion breaks the separation pin and
+    // makes output depend on hidden state).
+    if (!quarantinedOnly) {
+      const pending = countQuarantinedDrafts(projectRoot)
+      if (pending > 0) {
+        output +=
+          `\n\n⚠ ${pending} quarantined skill draft${pending === 1 ? '' : 's'} ` +
+          'pending operator review — run `/skills list --quarantined`'
+      }
+    }
   } else if (sub === 'show') {
     const name = parts[1]
     if (!name) {

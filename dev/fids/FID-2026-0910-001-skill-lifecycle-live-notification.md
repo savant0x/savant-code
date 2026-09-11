@@ -3,7 +3,8 @@
 **Filename:** `FID-2026-0910-001-skill-lifecycle-live-notification.md`
 **ID:** FID-2026-0910-001
 **Severity:** high
-**Status:** analyzed
+**Status:** fixed (implemented + gates green 2026-09-10; closure/archive
+pending the path-scoped commit per G2)
 **Created:** 2026-09-10 00:20
 **YAGNI-Compliance:** Verified (three surfaces, all reuse of existing chrome; no new
 panels, no new event bus, no sidebar badge)
@@ -20,8 +21,10 @@ The self-improving harness drafts skills into quarantine, but the
 presentation stage does not exist: skill creation/update renders nowhere in
 the chat (skill_manage is absent from the tool renderer registry and falls
 to the header-only collapsed fallback), the mechanical SessionEnd review
-never mentions drafts, and the only on-demand count lives behind flags an
-operator must already know about. In the origin repository this means three
+never mentions drafts, and no proactive surface exists — the quarantine
+count is on-demand only (bare `/skills` prints it, `/skills list
+--quarantined` lists it, but nothing ever pushes it at the operator who
+doesn't already know to look). In the origin repository this means three
 drafts have accumulated invisibly (two 2026-08-26 lesson-derived drafts, one
 2026-09-08 operator-directive edit to release-workflow), `/skills trust` has
 been used zero times ever, and the live release-workflow skill still ships
@@ -121,11 +124,20 @@ packages/agent-runtime/src/tools/handlers/tool/skill-manage.ts:54-58
   v${result.version}${result.pendingTrust
     ? ' — quarantined, pending operator trust' : ''}`
 
-# The reuse seam — parser exported for exactly this kind of reuse:
+# The reuse seam — parser exported (docstring: "Exported for testing.")
+# and consumed here as the command-class output decoder; its body picks
+# known fields only (startingCwd/exitCode/errorMessage/stdout/stderr)
+# with no strict validation — extra skill_manage identity fields
+# (action/name/version/nextSha/pendingTrust) are tolerated, not rejected:
 cli/src/components/tools/run-terminal-command.tsx:16
-  export const parseTerminalOutput = (rawOutput) => { ... }
-  // extracts {output, startingCwd, exitCode} from command-class JSON;
-  // extra skill_manage identity fields are ignored by the parser
+  export const parseTerminalOutput = (rawOutput) => {
+    ... const parsed = JSON.parse(rawOutput)
+    const value = Array.isArray(parsed) ? parsed[0]?.value : parsed
+    const startingCwd = value.startingCwd
+    const exitCode = value.exitCode
+    if (value.errorMessage) { ... }
+    const output = (value.stdout || '' + value.stderr || '').trimEnd()
+  }
 
 # One registration covers BOTH render paths (main + subagent branches):
 cli/src/components/blocks/tool-branch.tsx:48
@@ -270,15 +282,24 @@ operator-observable, never claimable from unit runs alone.
 
 ## Verification Gates
 
-> Planning record — gates declared now; stamped at implementation time
-> (mandatory once status flips to `fixed`/`verified`).
+> Stamped 2026-09-10 at implementation (Loop 3). All exit 0.
 
-- gate: typecheck common
-- gate: typecheck cli
-- gate: test common/src/util/__tests__/skill-management.test.ts
-- gate: test cli/src/components/tools/__tests__/skill-manage.test.tsx
-- gate: test cli/src/commands/__tests__/skills-command.test.ts
-- gate: test scripts/__tests__/session-end-review.test.ts
+- gate: typecheck common — PASS (tsc --noEmit -p ., exit 0)
+- gate: typecheck cli — PASS (exit 0 after one test-helper param fix:
+  `content` is optional on `ToolRenderConfig`)
+- gate: test common/src/util/__tests__/skill-management.test.ts — PASS
+  (7 pass / 0 fail)
+- gate: test common/src/util/__tests__/skill-management-count.test.ts —
+  PASS (3 pass / 0 fail; added at implementation)
+- gate: test cli/src/components/tools/__tests__/skill-manage.test.tsx —
+  PASS (4 pass / 0 fail)
+- gate: test cli/src/commands/__tests__/skills-command.test.ts — PASS
+  (8 pass / 0 fail, `list separates trusted from quarantined` pin intact)
+- gate: test scripts/__tests__/session-end-review.test.ts — PASS (7 pass /
+  0 fail)
+- gate (added at implementation): eslint on the 10 touched source/test
+  files `--max-warnings 0` — PASS; prettier --check on the 12 touched
+  files — PASS; lint:md — PASS
 
 ## Perfection Loop
 
@@ -313,11 +334,87 @@ operator-observable, never claimable from unit runs alone.
   `recovery-steers-not-just-retries` lesson and FID-0909-007's own
   precedent, the critique was resolved from complete 0-EOF evidence
   instead of re-rolling the same oversized payload.
-- **AUDIT:** pending — Verifier double-audit of this authored FID
-  (evidence-cited, per-finding file:line).
-- **ADVERSARIAL:** pending — refutation pass over the Verifier's FAILs
-  and unevidenced PASSes.
+- **AUDIT (Verifier, 2026-09-10):** PASS-on-design — 0 architectural
+  FAILs; template compliance, number allocation, design logic, and honest
+  boundaries all PASS. Findings map: 2 confirmed documentation-integrity
+  defects (the Summary's "behind flags" phrasing contradicted the FID's
+  own Problem §3; the Evidence block glossed the parser's docstring as
+  "exported for exactly this kind of reuse" when it reads "Exported for
+  testing.") — both corrected in Loop 2. 2 FAILs refutable against the
+  disk: the missing-Author template claim (dissolved by FID-2026-0910-002 —
+  ECHO.md:542-543 now ends at `**Created**.`; the field the rule required
+  was the residue of the 2026-08-09 signature scrub) and the
+  `scripts/__tests__/session-end-review.test.ts` path claim (file exists —
+  ls exit 0). A NEEDS-REVIEW cluster of line-number drifts
+  (registry.ts:45 vs an earlier 38-90 read; skills.ts:44-52 vs 46-51;
+  skills-discovery.ts:97 vs 91-97) re-stamped fresh in Loop 2: the Map at
+  registry.ts:45 and the alias at :61 confirmed by grep, the list branch
+  and status-count lines re-read 0-EOF this session.
+- **ADVERSARIAL:** pending — refutation pass over the Loop 2 corrections
+  at presentation time.
 - **CHANGE DELTA:** n/a (initial record).
+
+### Loop 3 — Implementation (2026-09-10, operator-approved session)
+
+- **Trigger:** operator directive — "Implement FID-2026-0910-001's three
+  skill-notification surfaces, entering the Perfection Loop at GREEN."
+  Scope recorded in `SCOPE.md` Task 25 (T25-A..G); no drops, no deferrals.
+- **RED legs (all four captured failing before any production edit):**
+  counter pin — `SyntaxError: Export named 'countQuarantinedDrafts' not
+  found`; renderer pin — `Cannot find module '../skill-manage'`; pointer
+  pin — received `**Trusted skills**\n\n_none_`, expected the pointer
+  line; SessionEnd pin — `Expected: true, Received: false`.
+- **GREEN:** Steps 1–5 implemented exactly as the converged design —
+  `countQuarantinedDrafts` in `common/src/util/skill-management/helpers.ts`
+  (+ `skillQuarantineRootDir` in `paths.ts` so the quarantine layout has
+  one truth; facade re-exports both); `SkillManageComponent` in
+  `cli/src/components/tools/skill-manage.tsx` + one registry line
+  (`registry.ts:69`); pointer appended in the `list` branch of
+  `cli/src/commands/skills.ts` (state-gated, silent at zero);
+  `quarantineAlertNote` in `scripts/session-end-review.ts` appended to the
+  routing notes; docs note `docs/self-improving-harness.md` §3.4. No
+  handler changes (output already render-ready per FID-2026-0908-001);
+  trust boundary untouched; agenda stays a pure function of the ledger.
+- **AUDIT (double audit, single-agent methods):** Method 1 — typecheck
+  common exit 0; typecheck cli exit 0 (one test-helper param fix during
+  the pass: `content` is optional on `ToolRenderConfig`); eslint 10
+  touched files `--max-warnings 0` exit 0 (two import/order warnings fixed
+  mid-pass); prettier clean on all 12 touched files; lint:md PASS.
+  Method 2 — all four suites green (22 pass / 0 fail / 69 assertions):
+  common counter pin 3/3, renderer pin 4/4, skills-command incl. the
+  pre-existing separation pin, session-end-review incl. silent-at-zero
+  leg; main common skill-management suite 7/0 (no drift). Law 4 greps:
+  registry registration `registry.ts:69`; consumption via existing
+  `tool-branch.tsx:48,60`; production counter consumers `skills.ts:59`
+  and `session-end-review.ts:59`.
+- **One test-authoring correction:** the P3 pin initially asserted the
+  placeholder text `draft(s)`; the implementation correctly emits the
+  pluralized form (`draft` at N=1) — the assertion was corrected to the
+  real contract, not the code loosened.
+- **ADVERSARIAL:** pending — presentation-time refutation pass over the
+  implementation vs. the converged design (file:line evidence above).
+- **CHANGE DELTA:** n/a (implementation loop; production surface ≈90
+  lines across 6 files, all reuse, zero new subsystems — YAGNI holds).
+
+### Loop 2 — Self-correct (2026-09-10, this session)
+
+- **RED (Verifier findings):** 2 confirmed documentation-integrity defects
+  (internal Summary contradiction; parser-export gloss) + 2 disk-refutable
+  FAILs + a line-drift NEEDS-REVIEW cluster.
+- **GREEN:** corrections applied — the Summary now states the verified
+  narrower claim (on-demand-only counts, no proactive surface) instead of
+  the self-contradicting "behind flags" phrasing; the Evidence block quotes
+  the parser's real docstring and its verified field-picking body (the
+  design dependency the Verifier flagged is now evidenced, not asserted);
+  the AUDIT record folded into Loop 1 with the full verdict map; all
+  drifted line citations re-stamped from fresh grep/reads (registry.ts:45,
+  :61).
+- **AUDIT:** inline re-verification — markdownlint + prettier on the
+  amended document (tool-mediated, own runs).
+- **ADVERSARIAL:** pending — spawned at presentation; both refutable
+  FAILs carry fresh disk evidence (ECHO.md:542-543 post-0910-002 text;
+  session-end-review.test.ts ls exit 0).
+- **CHANGE DELTA:** ~4% of document text (four surgical edits).
 
 ### Missed Questions
 
@@ -361,17 +458,33 @@ operator-observable, never claimable from unit runs alone.
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-> Planning record — status is `analyzed`; implementation has NOT started.
-> Completed only at closure with commit SHA, file:line ranges, gate
-> output, and reproducibility evidence. A `closed` FID with no code
-> violates the Ground-Truth rule (`fid-closure-requires-implementation-
-> evidence`).
+> Status `fixed` 2026-09-10. Commit-SHA evidence lands at closure (G2:
+> closure requires a committed hash — the path-scoped commit is presented
+> for execution; G1 authority question raised at session boot).
 
-- [ ] **Commit SHA:** pending implementation
-- [ ] **File:line ranges:** pending implementation
-- [ ] **Gate output:** pending implementation
-- [ ] **Reproducibility:** pending implementation
-- [ ] **Step statuses:** Steps 1–6 pending (not started)
+- [x] **File:line ranges:**
+      `common/src/util/skill-management/paths.ts:23-24`
+      (`skillQuarantineRootDir`),
+      `common/src/util/skill-management/helpers.ts:130-155`
+      (`countQuarantinedDrafts`),
+      `common/src/util/skill-management.ts` (facade re-exports),
+      `cli/src/components/tools/skill-manage.tsx` (new,
+      `SkillManageComponent`), `cli/src/components/tools/registry.ts:23,66-73`
+      (import + registration), `cli/src/commands/skills.ts:2,55-65`
+      (pointer), `scripts/session-end-review.ts:27,49-61,84-86`
+      (alert), `docs/self-improving-harness.md` §3.4; tests:
+      `common/src/util/__tests__/skill-management-count.test.ts` (new),
+      `cli/src/components/tools/__tests__/skill-manage.test.tsx` (new),
+      `cli/src/commands/__tests__/skills-command.test.ts`,
+      `scripts/__tests__/session-end-review.test.ts`
+- [x] **Gate output:** Loop 3 AUDIT (typecheck ×2 exit 0; four+one suites
+      22/0; eslint 0; prettier clean; lint:md PASS)
+- [x] **Reproducibility:** RED legs captured failing pre-fix (Loop 3
+      record); each gate command re-runnable as declared above
+- [ ] **Commit SHA:** pending — presented for path-scoped execution
+- [x] **Step statuses:** Steps 1–5 implemented; Step 6 (close/archive/
+      CHANGELOG/commit) blocked on the G1 git-authority confirmation
+      (presented — not silently deferred)
 
 ### Code Verification Evidence
 
@@ -380,13 +493,17 @@ operator-observable, never claimable from unit runs alone.
 > design, not an implementation claim.
 
 - [x] Files referenced in Affected Components exist
-- [ ] Implementation matches the Proposed Solution (pending)
-- [ ] Typecheck/tests/lint pass with pasted tool output (pending)
-- [ ] Production call-graph evidence for new/repaired wiring (pending —
-      post-registration grep: `getToolComponent('skill_manage')` resolves,
-      and tool-branch consumes it via the existing renderToolComponent call)
-- [x] FID status reflects the actual implementation state (`analyzed` =
-      planning converged, no code)
+- [x] Implementation matches the Proposed Solution (Loop 3; all three
+      surfaces + engine counter, reuse-only, no handler/trust changes)
+- [x] Typecheck/tests/lint pass with pasted tool output (Loop 3 AUDIT)
+- [x] Production call-graph evidence for new/repaired wiring — grep:
+      `registry.ts:69` maps `skill_manage` → SkillManageComponent;
+      `tool-branch.tsx:48` (`getToolComponent(...)  !== undefined`) and
+      `:60` (`renderToolComponent(...)`) consume the registry for BOTH
+      render paths; `countQuarantinedDrafts` production consumers at
+      `skills.ts:59` and `session-end-review.ts:59`
+- [x] FID status reflects the actual implementation state (`fixed` =
+      implementation exists and gates pass; closure pending commit)
 
 ## Resolution
 

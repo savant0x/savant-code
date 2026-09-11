@@ -4,6 +4,46 @@
 > scope for the current task. Operator confirmation converts interpreted scope
 > into approved scope. Any drop/deferral requires a blocking presentation.
 
+## Task 25 — Implement FID-2026-0910-001 skill-notification surfaces (2026-09-10)
+
+> Operator directive: "Implement FID-2026-0910-001's three skill-notification
+> surfaces, entering the Perfection Loop at GREEN." The FID is loop-converged
+> (RED/GREEN/Loop-2 recorded in-document, gates declared, Loop-2 corrections
+> applied); this directive is the Law-2 approval to implement the converged
+> Proposed Solution. No drops, no deferrals.
+
+- [x] **T25-A.** RED legs first: extend the four suites (common counter pin,
+      skill-manage render suite, skills-command pointer pin, session-end-review
+      alert pin) and capture failing output pre-fix. **Done 2026-09-10** —
+      all four RED legs captured (missing export / missing module / missing
+      pointer line / missing alert line).
+- [x] **T25-B.** GREEN: `countQuarantinedDrafts` in common skill-management
+      (engine-owned count; facade re-export). **Done 2026-09-10** —
+      `helpers.ts` + `skillQuarantineRootDir` in `paths.ts`.
+- [x] **T25-C.** GREEN: `SkillManageComponent` + registry registration
+      (P1; TerminalCommandDisplay reuse, synthesized label). **Done
+      2026-09-10** — `skill-manage.tsx` + `registry.ts:69`.
+- [x] **T25-D.** GREEN: `/skills list` quarantine pointer line (P2;
+      state-gated, silent at zero). **Done 2026-09-10** — `skills.ts:55-65`.
+- [x] **T25-E.** GREEN: SessionEnd quarantine alert line (P3; deterministic,
+      zero-LLM, silent at zero). **Done 2026-09-10** —
+      `session-end-review.ts` `quarantineAlertNote` + routing append.
+- [x] **T25-F.** Docs: surfaces note in `docs/self-improving-harness.md`
+      (update only what exists). **Done 2026-09-10** — §3.4 added.
+- [x] **T25-G.** Gates: typecheck common + cli, the four suites (+1 new
+      counter suite), eslint/prettier on touched files, lint:md; FID
+      evidence + status update; ledger touch-up; commit plan presented
+      (G1 discrepancy — operator executes or approves git). **Done
+      2026-09-10** — all gates exit 0 / 22-0 tests; FID status `fixed`;
+      commit plan presented below.
+- [x] **T25-H.** FID-2026-0910-003 closure ceremony (operator directive:
+      "Complete the FID-2026-0910-003 closure ceremony: archive move +
+      CHANGELOG entry"). **Done 2026-09-10** — Ground-Truth re-verified
+      (commits `377e0494`/`17b08fd5` on main; pins 38/0; typecheck/
+      eslint/prettier clean); file moved to `dev/fids/archive/`; archive
+      README index entry added; ledger row removed; CHANGELOG entry
+      already existed (no duplicate).
+
 ## Task 24 — Perfection Loop on FIDs -0909-001/-002/-003 + master plan (2026-09-09)
 
 > Operator directive: "run perfection loop on all 3 fids then organize them
