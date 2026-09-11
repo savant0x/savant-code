@@ -15,6 +15,7 @@ import {
   addPendingImageFromFile,
   validateAndAddImage,
 } from '../utils/pending-attachments'
+import { cancelWizardSession } from '../utils/provider-wizard'
 
 import type { CommandResult } from '../commands/command-registry'
 import type { MultilineInputHandle } from '../components/multiline-input'
@@ -117,7 +118,18 @@ export function buildChatKeyboardHandlers(
   } = deps
 
   return {
-    onExitInputMode: () => setInputMode('default'),
+    onExitInputMode: () => {
+      // FID-2026-0910-004 Step 7: leaving the /provider add|edit wizard via
+      // Escape or Backspace discards the in-progress session (fail-closed:
+      // no partial write ever exists; nothing was persisted yet).
+      if (
+        useChatStore.getState().inputMode === 'providerAdd' ||
+        useChatStore.getState().inputMode === 'providerAddKey'
+      ) {
+        cancelWizardSession()
+      }
+      setInputMode('default')
+    },
     onExitFeedbackMode: handleCloseFeedback,
     onClearFeedbackInput: () => {
       setFeedbackText('')
@@ -125,7 +137,14 @@ export function buildChatKeyboardHandlers(
     },
     onClearInput: () =>
       setInputValue({ text: '', cursorPosition: 0, lastEditDueToNav: false }),
-    onBackspaceExitMode: () => setInputMode('default'),
+    onBackspaceExitMode: () => {
+      // Same fail-closed discard as Escape (FID-2026-0910-004 Step 7).
+      const mode = useChatStore.getState().inputMode
+      if (mode === 'providerAdd' || mode === 'providerAddKey') {
+        cancelWizardSession()
+      }
+      setInputMode('default')
+    },
     onInterruptStream: () => {
       abortControllerRef.current?.abort()
       if (queuedMessagesLength > 0) {

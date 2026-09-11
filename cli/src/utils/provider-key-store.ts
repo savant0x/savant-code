@@ -20,7 +20,6 @@ import {
   saveSavantCodeModelProviderPreference,
 } from './settings'
 
-import type { ModelProvider } from './openrouter-models'
 export const PROVIDER_SETUP_DEFAULT = 'openrouter' as const
 
 /**
@@ -206,12 +205,10 @@ export function saveProviderApiKey(provider: string, apiKey: string): void {
     // activeProvider (the registry derives the base URL and env var). The
     // legacy directProvider/directProviderBaseUrl fields are no longer written
     // for gateway providers — only the local (Ollama) path keeps them.
-    // The id is runtime-validated (the effective-setup lookup above
-    // succeeded); the ModelProvider settings union widens at Step 9
-    // (FID-2026-0910-004 D8), so the settings seam takes the
-    // validation.ts-precedent cast until then.
-    saveSavantCodeModelProviderPreference(provider as ModelProvider)
-    saveActiveProvider(provider as ModelProvider)
+    // Step 9 (FID-2026-0910-004 D8): the effective-setup lookup above
+    // validated the id; no cast needed at the settings seam.
+    saveSavantCodeModelProviderPreference(provider)
+    saveActiveProvider(provider)
   }
 
   if (provider === 'openrouter') {

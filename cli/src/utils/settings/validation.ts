@@ -10,7 +10,6 @@ import { AGENT_MODES, IS_SAVANT_FREE } from '../constants'
 import { LEGACY_MODE_MIGRATION } from './constants'
 
 import type { AgentMode } from '../constants'
-import type { ModelProvider } from '../openrouter-models'
 import type { PermissionMode, Settings } from './types'
 import type { JSONValue } from '@savant-code/common/types/json'
 
@@ -137,8 +136,10 @@ export const validateSettings = (parsed: JSONValue): Settings => {
     typeof obj.savantCodeModelProviderPreference === 'string' &&
     validProviders.has(obj.savantCodeModelProviderPreference)
   ) {
+    // Step 9 (D8 widening): ModelProvider accepts custom ids, so the
+    // runtime-validated value narrows without a cast.
     settings.savantCodeModelProviderPreference =
-      obj.savantCodeModelProviderPreference as ModelProvider
+      obj.savantCodeModelProviderPreference
   }
   if (typeof obj.savantCodeModelAutoConfigured === 'boolean') {
     settings.savantCodeModelAutoConfigured = obj.savantCodeModelAutoConfigured
@@ -159,7 +160,9 @@ export const validateSettings = (parsed: JSONValue): Settings => {
         ? legacyDirect
         : undefined
   if (typeof migratedActive === 'string') {
-    settings.activeProvider = migratedActive as ModelProvider
+    // Step 9 (D8 widening): the runtime validation above already proved the
+    // id is a built-in or a registered custom — no cast needed.
+    settings.activeProvider = migratedActive
   }
 
   // Validate direct provider persistence fields. These are used to remember

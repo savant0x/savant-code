@@ -166,7 +166,9 @@ export const ChatInputCompact = ({
           ref={inputRef}
           cursorPosition={cursorPosition}
           maskInput={
-            inputMode === 'providerSetup' || inputMode === 'researchKeySetup'
+            inputMode === 'providerSetup' ||
+            inputMode === 'researchKeySetup' ||
+            inputMode === 'providerAddKey'
           }
         />
       </box>

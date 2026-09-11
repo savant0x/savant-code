@@ -38,22 +38,33 @@ const RESEARCH_KEY_ENV_VARS: ReadonlySet<string> = new Set([
 ])
 
 /** D1 shape: `id` slug charset matches the agent-id rule. */
-const CUSTOM_ID_PATTERN = /^[a-z0-9-]{2,32}$/
+export const CUSTOM_ID_PATTERN = /^[a-z0-9-]{2,32}$/
 /** D1 shape: env var names are uppercase SNAKE_CASE (not starting with a digit). */
-const ENV_VAR_PATTERN = /^[A-Z][A-Z0-9_]*$/
+export const ENV_VAR_PATTERN = /^[A-Z][A-Z0-9_]*$/
 /** D9: custom providers group after built-ins (built-in orders top out at 4). */
 export const CUSTOM_PROVIDER_ORDER = 5
 
 export type { CustomProviderConfig } from './types'
 
 /**
- * Built-in claimed env vars (primary + extra credentials) for reservation.
- * The registry's entries are heterogeneous literal types (not every entry
- * carries `extra`), so this reads the credential fields structurally via a
- * minimal record shape instead of the literal union.
+ * Reserved custom-provider ids (D2): built-in registry ids + ORG_PREFIXES
+ * org slugs. Single validation truth (Law 13) — consumed by
+ * `parseCustomProviders` AND the /provider add wizard's per-step checks, so
+ * the two surfaces can never drift.
  */
-const BUILTIN_ENV_VARS: ReadonlySet<string> = new Set(
-  Object.values(
+export function getReservedCustomProviderIds(): ReadonlySet<string> {
+  return new Set<string>([...Object.keys(PROVIDER_REGISTRY), ...ORG_PREFIXES])
+}
+
+/**
+ * Claimed provider env vars (D2): built-in credentials (primary + extra) +
+ * research BYOK vars. Single validation truth (Law 13) shared by the parser
+ * and the wizard. The registry's entries are heterogeneous literal types (not
+ * every entry carries `extra`), so credential fields are read structurally
+ * via a minimal record shape instead of the literal union.
+ */
+export function getClaimedProviderEnvVars(): ReadonlySet<string> {
+  const builtinEnvVars = Object.values(
     PROVIDER_REGISTRY as unknown as Record<
       string,
       {
@@ -68,8 +79,9 @@ const BUILTIN_ENV_VARS: ReadonlySet<string> = new Set(
       config.credentials.envVar,
       ...(config.credentials.extra ?? []).map((extra) => extra.envVar),
     ].filter((envVar): envVar is string => typeof envVar === 'string'),
-  ),
-)
+  )
+  return new Set<string>([...builtinEnvVars, ...RESEARCH_KEY_ENV_VARS])
+}
 
 /** Result of parsing user-authored custom-provider JSON. Never throws. */
 export type ParseCustomProvidersResult = {
@@ -113,14 +125,8 @@ export function parseCustomProviders(
     return { configs, problems }
   }
 
-  const reservedIds = new Set<string>([
-    ...Object.keys(PROVIDER_REGISTRY),
-    ...ORG_PREFIXES,
-  ])
-  const claimedEnvVars = new Set<string>([
-    ...BUILTIN_ENV_VARS,
-    ...RESEARCH_KEY_ENV_VARS,
-  ])
+  const reservedIds = getReservedCustomProviderIds()
+  const claimedEnvVars = getClaimedProviderEnvVars()
   const seenIds = new Set<string>()
   const seenEnvVars = new Set<string>()
 

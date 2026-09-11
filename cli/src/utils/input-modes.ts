@@ -17,6 +17,8 @@ export type InputMode =
   | 'help'
   | 'connect:chatgpt'
   | 'providerSetup'
+  | 'providerAdd'
+  | 'providerAddKey'
   | 'researchKeySetup'
   | 'outOfCredits'
   | 'subscriptionLimit'
@@ -158,6 +160,31 @@ export const INPUT_MODE_CONFIGS: Record<InputMode, InputModeConfig> = {
     label: 'Provider key',
     color: 'warning',
     placeholder: 'paste the provider API key, then press Enter',
+    widthAdjustment: 14,
+    showAgentModeToggle: false,
+    disableSlashSuggestions: true,
+    blockKeyboardExit: false,
+  },
+  // FID-2026-0910-004 Step 7: /provider add|edit wizard. Two modes because
+  // masking is per-mode (the compact bar's maskInput condition): unmasked
+  // steps run in providerAdd; the key step runs in providerAddKey. The
+  // per-step prompt text renders as chat messages from the route handler;
+  // the placeholder stays generic across steps.
+  providerAdd: {
+    icon: '🧩',
+    label: 'Provider add',
+    color: 'warning',
+    placeholder: 'type the value for the current step, then press Enter',
+    widthAdjustment: 14,
+    showAgentModeToggle: false,
+    disableSlashSuggestions: true,
+    blockKeyboardExit: false,
+  },
+  providerAddKey: {
+    icon: '🔑',
+    label: 'Provider key',
+    color: 'warning',
+    placeholder: 'paste the API key, then press Enter',
     widthAdjustment: 14,
     showAgentModeToggle: false,
     disableSlashSuggestions: true,

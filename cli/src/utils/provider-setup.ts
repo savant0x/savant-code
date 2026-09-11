@@ -13,7 +13,6 @@ import {
   saveSavantCodeModelProviderPreference,
 } from './settings'
 
-import type { ModelProvider } from './openrouter-models'
 // Re-export the provider + research key surfaces from the original module
 // path (call-graph preserved for consumers in commands/router/index).
 export {
@@ -108,12 +107,10 @@ export function activateConfiguredProvider(provider: string): boolean {
   // used when the shell has no key.
   process.env.DIRECT_PROVIDER = provider
   process.env.INFERENCE_BASE_URL = config.baseUrl
-  // The id is runtime-validated (the effective-setup lookup above
-  // succeeded); the ModelProvider settings union widens at Step 9
-  // (FID-2026-0910-004 D8), so the settings seam takes the
-  // validation.ts-precedent cast until then.
-  saveSavantCodeModelProviderPreference(provider as ModelProvider)
-  saveActiveProvider(provider as ModelProvider)
+  // Step 9 (D8 widening): the effective-setup lookup above validated the id;
+  // ModelProvider now accepts custom ids directly — no cast.
+  saveSavantCodeModelProviderPreference(provider)
+  saveActiveProvider(provider)
   return true
 }
 

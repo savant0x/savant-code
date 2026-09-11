@@ -4,11 +4,14 @@ import type { ProviderId } from '@savant-code/common/providers/registry'
 export const CATALOG_TTL_MS = 5 * 60 * 1000
 
 /**
- * Derived from the unified provider registry (FID-2026-0809-001 Phase 1).
+ * Derived from the unified provider registry (FID-2026-0910-004 Phase 1).
  * Phase-1 delta (b): the union gains `cloudflare` (routed in the SDK since
  * FID-2026-0806-009 but missing here — now derived, so it cannot drift).
+ * FID-2026-0910-004 Step 9 (D8 widening): custom provider ids are legal as
+ * plain strings — built-ins keep literal autocomplete, runtime truth stays
+ * the effective-registry id set, so no cast is needed at the settings seams.
  */
-export type ModelProvider = ProviderId
+export type ModelProvider = ProviderId | (string & {})
 
 export type OpenRouterModel = {
   /** Canonical model id, e.g. "anthropic/claude-sonnet-4". */

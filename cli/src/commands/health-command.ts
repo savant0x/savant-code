@@ -1,4 +1,4 @@
-import { PROVIDER_REGISTRY } from '@savant-code/common/providers/registry'
+import { getEffectiveProviderRegistry } from '@savant-code/common/providers/custom-providers'
 import { detectOllama } from '@savant-code/llm-providers/ollama'
 
 import { getSystemMessage } from '../utils/message-history'
@@ -36,10 +36,15 @@ export async function handleHealthCommand(params: RouterParams): Promise<void> {
   // URL derives from the registry (directProviderBaseUrl remains only for the
   // local Ollama path, which is detected at startup).
   const persistedProvider = getActiveProvider()
+  // FID-2026-0910-004 Step 9 (D8 widening): the persisted provider may be a
+  // custom id, so the base-URL lookup reads the effective registry (built-ins
+  // + registered customs). This is C6's effective lookup — pulled forward
+  // from Step 10 because the widening makes the built-in-only index
+  // type-illegal here. Known-id guard preserves the ollama branch exactly.
   const persistedBaseUrl =
     settings.directProviderBaseUrl ??
     (persistedProvider !== 'ollama'
-      ? PROVIDER_REGISTRY[persistedProvider]?.baseUrl
+      ? getEffectiveProviderRegistry()[persistedProvider]?.baseUrl
       : undefined)
   // A custom INFERENCE_BASE_URL without DIRECT_PROVIDER is a custom endpoint —
   // do not overlay the persisted provider onto it.

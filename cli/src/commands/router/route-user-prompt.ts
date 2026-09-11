@@ -8,6 +8,7 @@ import {
   sendModePrompt,
 } from './route-input-modes'
 import { routeKeySetup } from './route-key-setup'
+import { routeProviderWizard } from './route-provider-wizard'
 import { handleChatGptAuthCode } from '../../components/chatgpt-connect-banner'
 import { useChatStore } from '../../state/chat-store'
 import { trackEvent } from '../../utils/analytics'
@@ -66,6 +67,21 @@ export async function routeUserPrompt(
   )
 
   const trimmed = inputValue.trim()
+  // Handle /provider add|edit wizard input BEFORE the empty-input gate: empty
+  // submits are meaningful there (models step -> no catalog; edit-mode key
+  // step -> keep the stored key) (FID-2026-0910-004 Step 7, D7).
+  if (inputMode === 'providerAdd' || inputMode === 'providerAddKey') {
+    routeProviderWizard({
+      trimmed,
+      setInputValue,
+      setInputMode,
+      setInputFocused,
+      inputRef,
+      setMessages,
+    })
+    return
+  }
+
   // Allow empty messages if there are pending attachments (images or text)
   const hasAttachments = pendingAttachments.length > 0
   if (!trimmed && !hasAttachments) return

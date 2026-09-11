@@ -90,8 +90,8 @@ describe('provider key store — custom providers (FID-2026-0910-004 Step 6)', (
     )
     expect(credentials.providerApiKeys.MY_GW_KEY).toBe('gw-key-123')
 
-    // Activation persisted for a custom id (cast discipline — the union
-    // widens in Step 9 per the FID).
+    // Activation persisted for a custom id — Step 9 (D8 widening): the
+    // settings seam takes the custom id cast-free.
     const settings = JSON.parse(
       fs.readFileSync(path.join(tempDir, 'settings.json'), 'utf8'),
     )

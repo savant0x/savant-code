@@ -99,10 +99,10 @@ describe('settings customProviders (FID-2026-0910-004 Step 5)', () => {
     // Field preserved...
     expect(settings.customProviders).toEqual([VALID])
     // ...and the activeProvider field validated against the EFFECTIVE view
-    // (a custom id is valid exactly because registration ran first). The
-    // settings union widens at Step 9 (FID-2026-0910-004 D8), so the read
-    // takes the widened view for the assertion.
-    expect(settings.activeProvider as string | undefined).toBe('my-gateway')
+    // (a custom id is valid exactly because registration ran first).
+    // Step 9 (D8 widening): the custom id is a legal ModelProvider — the
+    // assertion compiles cast-free.
+    expect(settings.activeProvider).toBe('my-gateway')
     expect(getEffectiveProviderRegistry()['my-gateway']).toBeDefined()
   })
 })
