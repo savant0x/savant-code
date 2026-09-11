@@ -4,6 +4,37 @@
 > scope for the current task. Operator confirmation converts interpreted scope
 > into approved scope. Any drop/deferral requires a blocking presentation.
 
+## Task 30 — FID-2026-0910-004 Step 9 (union widening) + Step 7 (wizard) (2026-09-11)
+
+> Operator directive: "Start Step 7: the /provider add|edit wizard step
+> machine" + "Start Step 9 of FID-2026-0910-004: widen the
+> ModelProvider/ProviderSetupName unions to retire the bridge casts."
+> Approved scope: Step 9 = the D8 type widening + cast retirement ONLY (the
+> FID Step 9's catalog fetcher / picker merge parts remain pending); Step 7 =
+> the full wizard (providerAdd input mode, step machine add + pre-filled
+> edit modes per D7/MQ12, route handlers, settings + key writes, pin suite
+> per the FID's declared gate). No drops, no deferrals.
+
+- [ ] **T30-A.** Step 9 RED/GREEN: widen `ModelProvider` = `ProviderId |
+      (string & {})` (`openrouter-models/types.ts`), retire all six
+      validation.ts-precedent bridge casts (validation.ts ×2,
+      provider-setup.ts ×2, provider-key-store.ts ×2) + the two test-file
+      assertion casts; `ProviderSetupName` already carries `(string & {})`
+      from Step 6.
+- [ ] **T30-B.** Step 7 RED: `provider-add-wizard.test.ts` pin suite — the
+      FID's declared gate — covering: id validation + reserved-id rejection,
+      env-var shape + claimed-var rejection, base-URL validation, inline
+      model prefix rule, step sequencing, edit prefill, id immutability,
+      key-kept-on-empty, fail-closed save on invalid edit, invalid
+      re-prompts, escape.
+- [ ] **T30-C.** Step 7 GREEN: pure step machine (`provider-wizard.ts`),
+      `providerAdd` + `providerAddKey` input modes, route handlers, finalize
+      via `parseCustomProviders` (one validation truth, Law 13), writes via
+      `saveCustomProviders` + `saveProviderApiKey`, re-activation on baseUrl
+      change.
+- [ ] **T30-D.** Gates: typecheck ×4, suites (new + regression), eslint,
+      prettier, lint:md; FID evidence + ledger; path-scoped commits.
+
 ## Task 28 — FID-2026-0910-004 Steps 1-3: common layer (2026-09-10)
 
 > Operator directive: "Start implementing FID-2026-0910-004 Steps 1-3

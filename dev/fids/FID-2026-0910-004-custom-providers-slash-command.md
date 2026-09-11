@@ -4,7 +4,8 @@
 **ID:** FID-2026-0910-004
 **Severity:** medium
 **Status:** fixed (Steps 1-3 implemented 2026-09-10; Steps 4-6 implemented +
-gate-verified 2026-09-11; Steps 7-10 pending separate approval)
+gate-verified 2026-09-11; Step 9 union widening + Step 7 wizard implemented +
+gate-verified 2026-09-11; Steps 8 + 10 pending separate approval)
 **Created:** 2026-09-10 23:30 (converged 2026-09-10, Loops 1-4 recorded)
 **YAGNI-Compliance:** Verified — every step maps to a user-facing
 requirement of the full feature; no speculative abstraction beyond the
@@ -448,7 +449,8 @@ overwrite.
 - [x] Commit SHA — implementation `7f95b38f` (source, 5 files) + governance
       record `abbcc7b3` (FID + ledger + SCOPE), landed 2026-09-10
 - [x] Steps 4-6 statuses — implemented + gate-verified 2026-09-11 (below)
-- [ ] Steps 7-10 statuses — pending implementation (separate approval)
+- [x] Step 9 (union widening) + Step 7 (wizard) statuses — implemented +
+      gate-verified 2026-09-11 (below); Steps 8 + 10 pending
 
 **Steps 4-6 — implemented (2026-09-10, crashed session) + re-grounded and
 gate-verified (2026-09-11 fix pass):**
@@ -522,9 +524,15 @@ gate-verified (2026-09-11 fix pass):**
       `io.ts:56`; consumers: `model-provider.ts:91,120,170`,
       `validation.ts:134`, `provider-key-store.ts:61`; repo-validation
       built-in-only confirmed — zero `getEffectiveProviderRegistry` matches
-      under `scripts/`)
-- [ ] FID status reflects actual implementation state — `fixed`, Steps 7-10
-      pending (Steps 4-6 documented above)
+      under `scripts/`). Step 7 wiring edges verified 2026-09-11: input-mode
+      branch `route-user-prompt.ts:73`, route handler + persistence
+      `route-provider-wizard.ts:50,132`, Escape discard `keyboard.ts:129,144`,
+      mask condition `chat-input-bar-compact.tsx:168-171`. The `providerAdd`
+      input mode has zero production SETTERS until Step 8's `/provider
+      add|edit` grammar — dormant-but-wired, named in Loop 7 ADVERSARIAL.
+- [x] FID status reflects actual implementation state — `fixed`; Steps 1-7
+      + Step 9 union widening implemented and documented above; Steps 8 + 10
+      pending separate approval
 
 ### Loop 5 — Steps 1-3 implementation (RED-first)
 
@@ -658,6 +666,71 @@ gate-verified (2026-09-11 fix pass):**
   by Step 9. Status remains `fixed`, not `closed` — Steps 7-10 are pending
   separate operator approval.
 - **CHANGE DELTA:** <5% of the FID (evidence + status lines); circuit
+  breaker not triggered.
+
+### Loop 7 — Step 9 (union widening) + Step 7 (wizard) implementation (2026-09-11)
+
+- **RED (Step 9):** All 6 `as ModelProvider` bridge-cast sites grep-mapped
+  before touching the union (`provider-key-store.ts` ×2, `provider-setup.ts`,
+  `validation.ts` ×2, one test file), plus 2 test-file casts. The widening is
+  mechanical: the runtime truth was already the effective-registry id set.
+- **GREEN (Step 9):** `ModelProvider` widened to the D8 shape —
+  `cli/src/utils/openrouter-models/types.ts:11` (`ProviderId | (string &
+  {})`). Three unused imports + stale bridge comments removed
+  (`provider-setup.ts`, `provider-key-store.ts`, `validation.ts`); both test
+  files de-cast. The widening forced exactly one call-site fix:
+  `cli/src/commands/health-command.ts:42` — the health lookup now reads the
+  effective registry (id-matched in the merged view, built-in metadata
+  preferred) — this is C6's effective-lookup (Step 10's health item),
+  recorded honestly as pulled forward by the widening.
+- **GREEN (Step 7):** One pure step machine serves both entry modes (Law
+  13): `cli/src/utils/provider-wizard.ts:94` (`createWizardSession`),
+  `:121` (`submitWizardStep`), `:269` (`submitKeyStep`), `:288` (finalize
+  re-validated through `parseCustomProviders` — the single validation
+  truth), `:312` (`beginProviderWizard`), `:335` (`cancelWizardSession`).
+  Input modes `providerAdd` (unmasked steps) + `providerAddKey` (masked key
+  step): `cli/src/utils/input-modes.ts:20-21,173-196` — two modes because
+  masking is per-mode on the compact bar
+  (`cli/src/components/chat-input-bar-compact.tsx:168-171`). Route handler
+  `cli/src/commands/router/route-provider-wizard.ts:50`
+  (`routeProviderWizard`), `:123-132` (`persistDefinition` — settings.json
+  replace-by-id + `registerCustomProviders(merged)` re-registration),
+  `:137` (`persistKey` — saved / kept-on-empty / migrated-on-env-var-change),
+  `:163` (`reactivateIfActive` — D7 re-activation for the active edited
+  provider). Router branch `cli/src/commands/router/route-user-prompt.ts:70-82`
+  sits BEFORE the empty-input gate (empty submits are meaningful: models →
+  none-source; edit key → keep stored). Escape/Backspace discard
+  fail-closed: `cli/src/chat/keyboard.ts:129,144` (no partial write ever
+  exists). Command grammar `/provider add|edit` is Step 8 — the branch is
+  dormant-but-wired until then.
+- **RED-first pin suite:** `cli/src/commands/__tests__/provider-add-wizard.test.ts`
+  written against the not-yet-existing machine (module-absent failure
+  captured). RED iteration corrected two pin bugs of my own: the edit-key
+  pin walked only one step (contradicting the baseUrl empty-re-prompt pin);
+  the malformed-slug pin demanded stricter charset than
+  `CUSTOM_ID_PATTERN` — `-ab`/`ab-` match the closed Step-1 parser, so the
+  wizard pins parser parity (Law 13) instead. 16 tests: step sequencing,
+  reserved ids, malformed slug, claimed env vars (`OPENROUTER_API_KEY`,
+  `SERPER_API_KEY`) + shape, baseUrl re-prompt, inline prefix rule + none
+  source, edit prefill + id lock, key-kept-on-empty, add-mode empty key
+  re-prompt, finalize shape, active-session API, per-step instructions,
+  fail-closed draft immutability, and a router end-to-end walk (persist →
+  register → key under env var → `DIRECT_PROVIDER`/`INFERENCE_BASE_URL`
+  activation; secret never in `saveToHistory` or chat messages).
+- **AUDIT (gates, own-run 2026-09-11):** typecheck ×4 exit 0 (cli, sdk,
+  common, packages/agent-runtime); wizard suite 16 pass / 0 fail; combined
+  regression battery 77 pass / 0 fail (212 expect calls, 9 files: wizard,
+  router setup/update, key store, settings, setup, gateway, keyboard,
+  settings-provider); eslint `--max-warnings 0` on the 7 touched files → 0
+  problems; prettier clean after `--write`. grep re-verified every citation
+  in this loop record at write time.
+- **ADVERSARIAL:** The dormant-branch risk is named: `providerAdd` has zero
+  production setters until Step 8's grammar lands (grep evidence:
+  `provider add` matches only in comments/tests/handler strings). Escape
+  discard leaves no residue (the machine writes nothing; only the terminal
+  step persists). The `health-command.ts` effective lookup keeps built-in
+  metadata precedence so built-in health rows are unchanged.
+- **CHANGE DELTA:** Evidence + one loop record (<5% of the FID); circuit
   breaker not triggered.
 
 ## Resolution
