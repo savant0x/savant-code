@@ -34,7 +34,6 @@ on-disk records missing from the table added (-0823-003, -0824-003…-008,
 | FID | Status | Purpose / blocking gate |
 |---|---|---|
 | [`FID-2026-0909-008`](FID-2026-0909-008-tool-call-argument-truncation-root-cause.md) | fixed | Tool-call truncation root cause (unset output budget). Steps 1–4 landed; Step 5 (finish-reason proof) deferred follow-up pending next live occurrence. |
-| [`FID-2026-0910-001`](FID-2026-0910-001-skill-lifecycle-live-notification.md) | fixed | Skill lifecycle live notification — 3 surfaces implemented + gates green 2026-09-10 (Loop 3). Closure/archive pending the path-scoped commit (G2). |
 
 **2026-09-10 implementation (FID-2026-0910-001):** operator directive to
 implement the three converged surfaces; Loop 3 recorded in the FID (RED
@@ -49,6 +48,12 @@ commits `377e0494` + `17b08fd5` on main — only the archive move + index
 had never executed. Completed 2026-09-10 after Ground-Truth re-verification
 (suite 38/0, typecheck/eslint/prettier clean on the touched files); see
 `archive/README.md` header "str_replace indent rescue".
+
+**2026-09-10 closure (FID-2026-0910-001):** implemented, committed
+`b7a4e437`, closed + archived same session. See `archive/README.md` header
+"skill lifecycle live notification"; CHANGELOG `Unreleased` carries the
+full entry (plus the previously-uncommitted 0909-006/007 closure entries).
+Active queue: FID-2026-0909-008 only.
 
 **2026-09-10 closure (FID-2026-0910-002 — ECHO.md Author-field residue):**
 exposed live by the FID-2026-0910-001 Verifier audit (a correct FAIL on a

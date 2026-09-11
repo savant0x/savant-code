@@ -2,6 +2,111 @@
 
 ## Unreleased
 
+### Skill lifecycle changes render live — traffic-light notification + quarantine surfacing (closed + archived 2026-09-10)
+
+- **FID-2026-0910-001 — high — the self-improving harness drafted skills
+  into quarantine, but the presentation stage never existed.**
+  `skill_manage` calls fell through to the generic collapsed fallback
+  (FID-2026-0908-001 had standardized the handler output to the
+  command-class template explicitly so the CLI could render it — the
+  registration never happened), mechanical `lessons:to-skills` drafts
+  never pass through the chat at all, and the quarantine count was
+  on-demand only: in the origin repo three drafts accumulated invisibly
+  and `/skills trust` had been used zero times. Three surfaces, all reuse
+  (commit `b7a4e437`): a dedicated `SkillManageComponent`
+  (synthesized `skill {action} {name}` label — the tool input carries no
+  `command` field, so a raw alias would render an empty row — delegating
+  to `TerminalCommandDisplay`; one registry registration covers both the
+  main-agent and the Scribe subagent render paths); a state-gated
+  `⚠ N quarantined skill draft(s) pending operator review` pointer
+  appended to `/skills list` (default-inversion rejected: it breaks the
+  trusted/quarantined separation pin and makes command semantics
+  state-dependent); a deterministic zero-LLM SessionEnd alert fed by the
+  new engine-owned `countQuarantinedDrafts` (Law 13 — one count, one
+  truth; `skillQuarantineRootDir` extracted so the quarantine layout has
+  a single source). Trust boundary untouched; nothing auto-promotes; all
+  three surfaces silent at zero. Gates: RED legs all failing pre-fix →
+  22/0 across the four suites + counter suite; typecheck common + cli
+  exit 0; eslint `--max-warnings 0`; prettier clean. Live boundary
+  (operator-observable, unit runs cannot prove it): the next real
+  Scribe-drafted skill rendering in the chat with the traffic-light
+  chrome.
+
+### str_replace rescue now lands re-indented replacements + a first-line variant (closed + archived 2026-09-10)
+
+- **FID-2026-0910-003 — medium — the indentation-rescue helper computed
+  a re-indented replacement for every rescued match, and the caller threw
+  it away.** `tryMatchOldStr` returned only the re-indented `oldStr`
+  while `processStrReplace` wrote the raw model `newString` — every
+  uniform-indent rescue silently landed under-indented content (defect
+  A) — and the rescue only tried uniform re-indents, so the session's
+  observed emission shape (first line's indent eaten, interior lines
+  intact) never matched at all (defect B). RED refuted the runtime-trim
+  hypothesis first: zero `trimStart`/`trimEnd` repo-wide, every
+  `.trim()` hit a schema-description tail — the corruption is
+  emission-side (FID-2026-0909-008's family). Fix (commits `377e0494` +
+  `17b08fd5`): the rescue branch carries the helper's `replaceContent`
+  and the caller writes it; `withFirstLineIndent` + first-line-only scan
+  loops (spaces 1..12, tabs 1..6, indent mirrored onto the replacement)
+  cover the observed shape. Matcher-safety invariant: the rescue is
+  failure-only — exact matches never consult it. Gates: RED legs (a)/(b)
+  failed pre-fix (13 pass / 2 fail recorded) → 23/23 aggregate
+  post-remediation (17 process-str-replace pins (a)–(f), incl.
+  uniform-precedence + all-empty-fallback, + 6 helper pins);
+  typecheck, eslint `--max-warnings 0`, prettier clean. Verifier PASS on
+  substance; both minor pin gaps landed; `currentContent!` provenance
+  confirmed pre-existing. Residuals documented: exact-match newString
+  corruption + write_file trailing-newline loss stay prettier-net; the
+  emission root is FID-2026-0909-008 Step 4 (pending).
+
+### Experience dedup keys redact quoted payloads — the recurrence bar is reachable again (closed + archived 2026-09-10)
+
+- **FID-2026-0909-006 — medium — `process-str-replace.ts` embeds the
+  model's payload into its two dominant soft-failure lines via
+  `JSON.stringify(oldStr)`, and `normalizeErrorFirstLine` redacted no
+  payloads,** so `experienceDedupKey` assigned every distinct failed
+  oldString a unique key — the ≥3 recurrence bar was structurally
+  unreachable for the repo's dominant failure class (the mirror defect
+  of FID-2026-0909-005's over-merging: over-fragmentation). Fix
+  (commits `62f46622` + `ea489102`): one redaction step in the single
+  shared normalizer — `QUOTED_SPAN_RE` (escaped-pair-safe, linear-time)
+  replaces every double-quoted span with `"…"`, ordered post-ANSI /
+  pre-path-flip; numerals preserved (HTTP-404 filter intact). Pins
+  (a)–(i) across the dedup suite (payload collapse, numeral
+  preservation, idempotency, unterminated-quote conservatism, legacy
+  stability, empty span, escaped-quote-in-span, multi-span,
+  path-in-span) + the capture-suite Law-12 pin (stored ledger line is
+  payload-redacted). Gates: RED legs failed pre-fix exactly as designed;
+  post-fix dedup 23/23, capture 12/12; typecheck `common` +
+  `agent-runtime` exit 0; eslint + prettier clean; ledger probe 40/10/1
+  with the +4 records grep-verified as same-day session captures
+  (legacy 36 unchanged, 13× group stable). Law-12 posture restored at
+  the single normalization point.
+
+### Native-incomplete recovery steers on strike 1 — universal coverage + idempotent wrap (closed + archived 2026-09-10)
+
+- **FID-2026-0909-007 — medium — the truncation-recovery ladder lost its
+  steering on the first, most-important retry.** The tools that
+  actually failed (`spawn_agents`, `run_readonly_command`,
+  `sequentialthinking`) had no steering-map entries; strike-1 steering
+  was gated on a five-member Set that duplicated the map-plus-fallback
+  policy (Law 13); and the relay re-wrapped already-wrapped errors —
+  doubling the suffix text and stripping classification (the observed
+  "retry the same payload" invitations). Fix (commits `7dac5c5b` +
+  `6ce730e8`): three steering-map entries (spawn prompts → send deltas,
+  children inherit context; one command per call; concise thoughts,
+  history persists server-side); strike-1 steering ungated for every
+  native-incomplete chunk (the Set deleted); one shared idempotent
+  wrap helper (`wrapToolCallErrorMessage`, trailing-period normalized)
+  at both emission sites. Pins (a)–(g) in the new
+  `error-chunk-steering.test.ts` (map tiers, fallback, ungating,
+  wrap idempotence + pass-through fidelity incl. with-steering).
+  Gates: RED legs (a)/(c)/(e) failed pre-fix; post-fix 15/15 across
+  three suites; typecheck exit 0; Law-4 greps: Set zero hits, helper
+  1 def + 2 call sites, no third wrap site. Honest residual: field-less
+  re-emitted relay errors still recover via the strike-2+ ladder
+  (MQ-9 follow-up).
+
 ### The written protocol no longer requires the Author field its own policy forbids (closed + archived 2026-09-10)
 
 - **FID-2026-0910-002 — low — the 2026-08-09 no-signature scrub

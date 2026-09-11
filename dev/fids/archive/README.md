@@ -3,6 +3,39 @@
 This directory contains closed or historically completed FIDs. Files here are
 an audit record, not an active work queue.
 
+## 2026-09-10 closure — skill lifecycle live notification (1 FID archived; queue: 0909-008 only)
+
+Implemented, committed, closed, and archived in one session. Commit
+`b7a4e437` (15 files: the three surfaces + engine counter + pin suites +
+ledger/scope/docs). Gates: RED legs all failing pre-fix → 22/0 across the
+four suites + counter suite; typecheck common + cli exit 0; eslint
+`--max-warnings 0`; prettier clean. Live boundary (operator-observable):
+the next real Scribe-drafted skill renders in the chat with the
+traffic-light chrome — unit runs cannot prove the production renderer.
+CHANGELOG `Unreleased` carries the full entry; the same commit batched the
+previously-uncommitted 0909-006/007 closure entries into the repo history
+(house precedent `e2b32e8` for multi-FID ceremony commits).
+
+- `FID-2026-0910-001-skill-lifecycle-live-notification.md` (high) —
+  closed 2026-09-10; archived 2026-09-10.
+
+## 2026-09-10 closure — str_replace indent rescue (1 FID archived; queue: 0910-001 fixed, 0909-008 fixed)
+
+Implemented on a prior session's operator approval; commits `377e0494`
+(implementation) + `17b08fd5` (remediation pins, label renumber). The file
+sat `closed` in the active directory until this ceremony executed the
+archival half (discrepancy flagged 2026-09-10, closed with no status
+change — Ground-Truth verified: implementation in tree, pins (a)–(f)
+green, CHANGELOG `Unreleased` entry already present). Gates re-verified
+at archive time on the current tree: process-str-replace suite 38/0 (125
+expect), typecheck agent-runtime exit 0, eslint `--max-warnings 0` exit 0,
+prettier clean.
+
+- `FID-2026-0910-003-str-replace-first-line-indent-rescue.md` (medium) —
+  closed 2026-09-10; archived 2026-09-10. Change-log authoritative:
+  `CHANGELOG.md` `Unreleased` → "str_replace rescue now lands re-indented
+  replacements + a first-line variant".
+
 ## 2026-09-10 closure — ECHO.md Author-field residue (1 FID archived; queue: 0910-001 analyzed, 0909-006/007/008 active)
 
 The no-signature scrub's own residue: the rule text survived the scrub that

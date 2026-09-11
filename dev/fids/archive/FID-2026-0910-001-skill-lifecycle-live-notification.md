@@ -3,8 +3,8 @@
 **Filename:** `FID-2026-0910-001-skill-lifecycle-live-notification.md`
 **ID:** FID-2026-0910-001
 **Severity:** high
-**Status:** fixed (implemented + gates green 2026-09-10; closure/archive
-pending the path-scoped commit per G2)
+**Status:** closed (implemented + gates green + committed `b7a4e437`;
+archived 2026-09-10)
 **Created:** 2026-09-10 00:20
 **YAGNI-Compliance:** Verified (three surfaces, all reuse of existing chrome; no new
 panels, no new event bus, no sidebar badge)
@@ -391,8 +391,11 @@ operator-observable, never claimable from unit runs alone.
   placeholder text `draft(s)`; the implementation correctly emits the
   pluralized form (`draft` at N=1) — the assertion was corrected to the
   real contract, not the code loosened.
-- **ADVERSARIAL:** pending — presentation-time refutation pass over the
-  implementation vs. the converged design (file:line evidence above).
+- **ADVERSARIAL (closure re-audit):** single-agent mode has no separate
+  Adversary role (governance: `dev/echo-v0.1.2-single-agent.md`); the
+  meta-verification is this ceremony's ground-truth pass — RED legs
+  re-confirmed failing pre-fix, gates re-run green on the exact committed
+  content, Law 4 greps re-pasted, SHA recorded against the closed record.
 - **CHANGE DELTA:** n/a (implementation loop; production surface ≈90
   lines across 6 files, all reuse, zero new subsystems — YAGNI holds).
 
@@ -481,10 +484,13 @@ operator-observable, never claimable from unit runs alone.
       22/0; eslint 0; prettier clean; lint:md PASS)
 - [x] **Reproducibility:** RED legs captured failing pre-fix (Loop 3
       record); each gate command re-runnable as declared above
-- [ ] **Commit SHA:** pending — presented for path-scoped execution
-- [x] **Step statuses:** Steps 1–5 implemented; Step 6 (close/archive/
-      CHANGELOG/commit) blocked on the G1 git-authority confirmation
-      (presented — not silently deferred)
+- [x] **Commit SHA:** `b7a4e437` — feat(skills): live skill_manage render,
+      /skills list pointer, session-end quarantine alert
+      (FID-2026-0910-001); 15 files, path-scoped staging (the 003
+      archive-move files and shared ledger/scope hunks ride the ceremony
+      commit; disclosed in the message)
+- [x] **Step statuses:** Steps 1–5 implemented; Step 6 complete (commit
+      `b7a4e437` + archive move + CHANGELOG entry, this ceremony)
 
 ### Code Verification Evidence
 
@@ -507,8 +513,23 @@ operator-observable, never claimable from unit runs alone.
 
 ## Resolution
 
-> Pending implementation. Set when the fix lands: Closed Date, Fix
-> Description, Tests Added, Verification Evidence, Archived.
+Closed 2026-09-10. **Fix:** P1 `SkillManageComponent`
+(`cli/src/components/tools/skill-manage.tsx`) registered for `skill_manage`
+(`registry.ts:69`) — synthesized `skill {action} {name}` label,
+TerminalCommandDisplay reuse, covers main-agent + subagent paths via the
+shared registry; P2 state-gated quarantine pointer on `/skills list`
+(`cli/src/commands/skills.ts`); P3 deterministic zero-LLM SessionEnd alert
+(`scripts/session-end-review.ts`) fed by the engine-owned
+`countQuarantinedDrafts` (`common/src/util/skill-management/helpers.ts` +
+`skillQuarantineRootDir` in `paths.ts`). **Tests added:** counter pin suite
+(3), renderer pin suite (4), `/skills` pointer pin, SessionEnd alert pins
+(2) — 22/0 across four suites + counter suite. **Verification:** RED legs
+all failing pre-fix; typecheck common + cli exit 0; eslint
+`--max-warnings 0`; prettier clean; Law 4 greps pasted in Loop 3.
+**Commit:** `b7a4e437`. **Residual (honest):** the live-TUI render of the
+next real Scribe-drafted skill remains the operator-observable boundary
+(unit runs cannot prove the production renderer). **Archived:** moved to
+`dev/fids/archive/`.
 
 ## Lessons Learned
 

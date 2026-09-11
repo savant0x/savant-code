@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0910-003-str-replace-first-line-indent-rescue.md`
 **ID:** FID-2026-0910-003
 **Severity:** medium
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-09-10 13:55
 **YAGNI-Compliance:** Verified — wires existing dead output + one mirror
 rescue variant inside the single indentation-rescue helper; no new machinery
@@ -196,8 +196,24 @@ lines intact — has no rescue and fails to not-found.
   6/6 (21/21 aggregate, 61 expect() calls); typecheck agent-runtime
   exit 0; eslint `--max-warnings 0` clean; prettier clean on all three
   touched files.
-- **AUDIT (Verifier):** pending — spawned after the implementation
-  commit.
+- **AUDIT (Verifier, 2026-09-10):** PASS on substance — wiring,
+  variant, precedence, and gates confirmed; 2 minor FAILs (no pin
+  locking uniform-over-first-line precedence; no pin for the all-empty
+  replacement `?? replaceContent` fallback) + 2 NEEDS-REVIEWs
+  (`currentContent!` provenance — predates this FID, present in the
+  pre-change 0-EOF read, not introduced here; pin (b) fixture soundness
+  — resolved by analysis: uniform i=2 would require `    first` in the
+  fixture file, absent, so the pre-fix failure ran through the
+  whitespace-collapsed path landing under-indented content — the exact
+  defect class).
+- **REMEDIATION (self-correct):** pins (e) (uniform-before-first-line
+  precedence — a both-shapes fixture resolves to the uniform variant)
+  and (f) (all-empty-line replacement lands raw via the `??` fallback)
+  added; the describe label renumbered 002→003 on disk (the pre-commit
+  relabel had not survived to the implementation commit — grep-verified
+  `1` match before staging). Post-remediation: 23/23 aggregate
+  (17 + 6, 65 expect() calls), eslint + prettier clean. Commits:
+  implementation `377e0494`, remediation `17b08fd5`.
 
 ### Missed Questions
 
@@ -224,8 +240,18 @@ lines intact — has no rescue and fails to not-found.
 
 ## Resolution
 
-> Implementation landed 2026-09-10 (Loop 2 above). Commit SHA recorded
-> in the closure commit message; audit outcome in Loop 2 once complete.
+Closed 2026-09-10. **Fix:** `tryMatchOldStr` carries the rescue
+  helper's re-indented `replaceContent` and `processStrReplace` writes
+  it (Defect A); `withFirstLineIndent` + first-line-only scan loops
+  (spaces 1..12, tabs 1..6, indent mirrored onto the replacement) cover
+  the observed emission shape (Defect B). **Tests added:** pins (a)–(f)
+  in `process-str-replace.test.ts`. **Verification:** RED legs (a)/(b)
+  failed pre-fix (13/2 run recorded); post-fix + remediation 23/23
+  aggregate; typecheck, eslint, prettier clean; commits `377e0494` +
+  `17b08fd5`. **Residuals (documented):** exact-match newString
+  corruption and write_file trailing-newline loss remain prettier-net
+  territory; the emission-side root is FID-2026-0909-008's Step 4.
+  **Archived:** moved to `dev/fids/archive/`.
 
 ## Lessons Learned
 
