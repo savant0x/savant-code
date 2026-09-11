@@ -32,6 +32,13 @@ import type { CustomProviderConfig } from '@savant-code/common/providers/types'
  * never emit a record the rest of the system would reject.
  */
 
+/**
+ * /provider subcommand grammar words (Step 8). Defined in this leaf module —
+ * not the command layer — so the id-step reservation and the grammar parser
+ * share one truth without an import cycle (Law 13).
+ */
+export const PROVIDER_GRAMMAR_WORDS = ['add', 'edit', 'list', 'remove'] as const
+
 export type WizardStep =
   'id' | 'label' | 'baseUrl' | 'envVar' | 'models' | 'key' | 'done'
 
@@ -161,6 +168,15 @@ function submitIdStep(session: WizardSession, value: string): WizardSession {
     return rejected(
       session,
       `id '${value}' is reserved (built-in provider or org prefix) — choose a different id.`,
+    )
+  }
+  // Step 8: the /provider grammar words would shadow the subcommands on every
+  // future selection attempt (/provider add would reopen the wizard, never
+  // select the provider) — reject them here, at the only entry point.
+  if ((PROVIDER_GRAMMAR_WORDS as readonly string[]).includes(value)) {
+    return rejected(
+      session,
+      `id '${value}' is reserved (a /provider command word) — choose a different id.`,
     )
   }
   const existingIds = new Set(

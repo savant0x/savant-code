@@ -17,7 +17,10 @@ import {
   saveSettings,
 } from '../../utils/settings'
 
-import type { getActiveWizardSession } from '../../utils/provider-wizard'
+import type {
+  getActiveWizardSession,
+  WizardStep,
+} from '../../utils/provider-wizard'
 import type { RouterParams } from '../command-shared'
 import type { CustomProviderConfig } from '@savant-code/common/providers/types'
 
@@ -26,7 +29,7 @@ type WizardParams = Pick<
   'setInputValue' | 'setInputFocused' | 'inputRef' | 'setMessages'
 > & {
   trimmed: string
-  setInputMode: (mode: 'default') => void
+  setInputMode: (mode: 'default' | 'providerAdd' | 'providerAddKey') => void
 }
 
 /**
@@ -55,8 +58,21 @@ export function routeProviderWizard({
   inputRef,
   setMessages,
 }: WizardParams): void {
-  /** Clear the input bar, leave wizard mode, and restore focus. */
-  function resetInput(): void {
+  /** Clear the input bar and restore focus, keeping the wizard mode. */
+  function clearWizardInput(step: WizardStep): void {
+    setInputValue({ text: '', cursorPosition: 0, lastEditDueToNav: false })
+    // Step 8 fix (mode continuity): the user stays IN the wizard between
+    // steps — the masked key step especially (providerAddKey) must not be
+    // dropped to an unmasked default after every submit. The mode only
+    // changes here when the step itself changes; the terminal branch below
+    // returns to 'default'.
+    setInputMode(step === 'key' ? 'providerAddKey' : 'providerAdd')
+    setInputFocused(true)
+    inputRef.current?.focus()
+  }
+
+  /** Leave the wizard entirely: clear input, restore default mode + focus. */
+  function exitToDefault(): void {
     setInputValue({ text: '', cursorPosition: 0, lastEditDueToNav: false })
     setInputMode('default')
     setInputFocused(true)
@@ -73,7 +89,7 @@ export function routeProviderWizard({
         'Provider wizard is not active. Use /provider add or /provider edit <id> to start over.',
       ),
     ])
-    resetInput()
+    exitToDefault()
     return
   }
 
@@ -81,14 +97,15 @@ export function routeProviderWizard({
     const lines = [getStepInstructions(session.step)]
     if (session.error) lines.push(`⚠ ${session.error}`)
     setMessages((prev) => [...prev, getSystemMessage(lines.join('\n'))])
-    resetInput()
+    clearWizardInput(session.step)
     return
   }
 
   // Terminal step: persist definition + key, re-register, re-activate.
   const final = session.final
   if (!final) {
-    resetInput()
+    cancelWizardSession()
+    exitToDefault()
     return
   }
   try {
@@ -116,7 +133,7 @@ export function routeProviderWizard({
   }
 
   cancelWizardSession()
-  resetInput()
+  exitToDefault()
 }
 
 /** Replace-or-append the validated record; returns the merged set. */

@@ -433,9 +433,10 @@ describe('provider add|edit wizard step machine (FID-2026-0910-004 Step 7)', () 
       params.inputValue = 'openrouter'
       await routeUserPrompt(params)
 
-      // Every handler submit resets to default mode; the wizard's continuity
-      // lives in the active session + the next step's prompt message.
-      expect(useChatStore.getState().inputMode).toBe('default')
+      // Step 8 mode continuity: an invalid submit keeps the user IN the
+      // wizard (same step, re-prompt rendered). Mode returns to default only
+      // on done or Escape — the prior pin asserting 'default' documented the
+      // Step 7 defect as intended behavior and is corrected here (Loop 8).
 
       const session = getActiveWizardSession()
       expect(session?.step).toBe('id')

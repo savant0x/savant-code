@@ -199,6 +199,36 @@ export OPENROUTER_API_KEY="your-key"
 savant-code
 ```
 
+### Bring your own provider (custom providers)
+
+Any OpenAI-compatible endpoint can become a first-class provider — no code, no
+fork. Run `/provider add` and answer the prompts:
+
+```text
+/provider add
+```
+
+The wizard asks for an id (lowercase, 2–32 chars — it becomes the routing
+prefix for the provider's models), a display label, the API base URL, an API
+key name, an optional model list, and finally the API key itself (masked;
+stored locally like any built-in key). Afterwards the provider appears in
+`/provider` and `/provider list` like a built-in, and its models are selectable
+with the `id/model` prefix.
+
+Manage custom providers with:
+
+| Command | Effect |
+| --- | --- |
+| `/provider add` | Add a custom OpenAI-compatible provider (wizard) |
+| `/provider edit <id>` | Edit a custom provider (id is fixed; Enter on the key prompt keeps the stored key) |
+| `/provider list` | List built-in and custom providers with configured markers |
+| `/provider remove <id>` | Remove a custom provider (built-ins cannot be removed) |
+
+Removing the active provider resets the selection to the default. Model
+selection always works through `/model <exact-id>` even without a catalog
+(e.g. `/model my-gateway/model-a`); the id/model form routes through your
+endpoint.
+
 ### OpenRouter direct mode
 
 OpenRouter is the **default boot provider** (free tier `openrouter/free`); any

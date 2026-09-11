@@ -16,9 +16,14 @@ import {
 } from '../../utils/provider-setup'
 import {
   loadSavantCodeModelPreference,
+  loadSettings,
   saveSavantCodeModelPreference,
 } from '../../utils/settings'
 import { clearInput, defineCommandWithArgs } from '../command-shared'
+import {
+  handleProviderSubcommand,
+  parseProviderArgs,
+} from '../provider-subcommands'
 
 export const MODEL_PROVIDER_COMMANDS = [
   defineCommandWithArgs({
@@ -63,10 +68,17 @@ export const MODEL_PROVIDER_COMMANDS = [
     handler: (params, args) => {
       const trimmedArgs = args.trim()
 
-      // No args: open dropdown picker
+      // No args: open dropdown picker — built-ins from the built-in config,
+      // customs appended from the effective setup view (Step 8: customs are
+      // first-class picker entries with a configured badge, ordered after
+      // built-ins per D9).
       if (!trimmedArgs) {
+        // Registration first: loadSettings is the customs registration seam;
+        // the configured checks below must see customs in the effective view.
+        const customProviders = loadSettings().customProviders ?? []
         const configured = getConfiguredProviderNames()
-        const providers = (
+        const configuredSet = new Set(configured)
+        const builtinProviders = (
           Object.entries(PROVIDER_SETUP_CONFIG) as Array<
             [
               string,
@@ -76,8 +88,14 @@ export const MODEL_PROVIDER_COMMANDS = [
         ).map(([name, config]) => ({
           name: name as (typeof configured)[number],
           label: config.label,
-          configured: configured.includes(name as (typeof configured)[number]),
+          configured: configuredSet.has(name),
         }))
+        const customEntries = customProviders.map((config) => ({
+          name: config.id,
+          label: `${config.label} (custom)`,
+          configured: configuredSet.has(config.id),
+        }))
+        const providers = [...builtinProviders, ...customEntries]
 
         useProviderPickerStore.getState().open(providers)
         params.saveToHistory(params.inputValue.trim())
@@ -89,12 +107,17 @@ export const MODEL_PROVIDER_COMMANDS = [
       // prompt even when a key is already configured (replace semantics);
       // a trailing `update` token is stripped before name resolution so
       // `/provider nous update extra` still resolves to an unknown provider.
-      const argTokens = trimmedArgs.split(/\s+/)
-      const wantsKeyUpdate =
-        argTokens.length > 1 && argTokens[argTokens.length - 1] === 'update'
-      const providerName = wantsKeyUpdate
-        ? argTokens.slice(0, -1).join(' ')
-        : trimmedArgs
+      // Step 8 grammar: add|edit|list|remove dispatch before name resolution
+      // (provider-subcommands.ts owns the subcommand surface).
+      const parsedArgs = parseProviderArgs(trimmedArgs)
+      if (parsedArgs.kind === 'subcommand') {
+        params.saveToHistory(params.inputValue.trim())
+        clearInput(params)
+        handleProviderSubcommand(params, parsedArgs.subcommand, parsedArgs.rest)
+        return
+      }
+      const providerName = parsedArgs.name
+      const wantsKeyUpdate = parsedArgs.wantsKeyUpdate
 
       const provider = beginProviderSetup(providerName)
       const info = provider ? getProviderSetupInfo(provider) : undefined
