@@ -4,6 +4,79 @@
 > scope for the current task. Operator confirmation converts interpreted scope
 > into approved scope. Any drop/deferral requires a blocking presentation.
 
+## Task 28 — FID-2026-0910-004 Steps 1-3: common layer (2026-09-10)
+
+> Operator directive: "Start implementing FID-2026-0910-004 Steps 1-3
+> (common layer)." Approved scope: Steps 1 (custom type + validation),
+> 2 (merged registry), 3 (model-validation seam) only — CLI/SDK steps 4-10
+> remain pending until separately approved. Step 3 finding recorded below
+> when investigated.
+
+- [x] **T28-A.** RED: `custom-providers.test.ts` pins (validation rules, merge
+      rules, replace/reset lifecycle, prefix list, dead-code removal pin).
+      **Done 2026-09-10** — RED captured honestly: module-absent failure, then
+      two pin corrections of my own contract ambiguity (parse/register return
+      shapes) re-captured as RED before GREEN; behavior pins failing.
+- [x] **T28-B.** Step 1: `CustomProviderConfig` + `validateCustomProviders` +
+      `inline` catalog variant + `validateProviderRegistry` extension.
+      **Done 2026-09-10** — types.ts:111-142, custom-providers.ts parser,
+      validate.ts `'inline'` in CATALOG_SOURCES.
+- [x] **T28-C.** Step 2: merged registry — register/getEffective/reset with
+      D4 lifecycle, conversion to `ProviderConfig`, effective prefix list.
+      **Done 2026-09-10** — file-name deviation (recorded): consolidated in
+      `custom-providers.ts` rather than a separate `merged.ts` (one module,
+      Law 13). Built-ins-win enforced by fail-closed shadow guard (RED
+      process caught the silent-overwrite gap). Pin suite asserts effective
+      prefixes derive from the merged view.
+- [x] **T28-D.** Step 3: resolve the `dynamic-agent-template.ts` seam per the
+      investigation fork; pin the outcome. **Done 2026-09-10** — fork
+      resolved by evidence: no template-time model validation ever existed,
+      `filteredModels` was dead code (computed, guarded, never consumed).
+      Implemented as dead-code removal + pin; FID Loop 5 records it.
+- [x] **T28-E.** Gates: GREEN run, typecheck ×4, eslint/prettier, existing
+      provider suites green, Law 4 greps; FID evidence updated; commit plan.
+      **Done 2026-09-10** — 51/0 provider suites; 686/4/0 full common;
+      typecheck ×4 exit 0; eslint 0 problems; prettier clean. Law 4: common
+      module's production caller is the Step 4 SDK seam (honest — not yet
+      reachable from production; grep evidence recorded in FID). Commit plan
+      presented, awaiting operator authorization (G1).
+
+## Task 27 — FID-2026-0910-004: user-defined custom providers via /provider (2026-09-10)
+
+> Operator directives: "make the fid, run perfection loop on it then present
+> it", with the scope correction "no v1/v2 — we build the full feature the
+> first time around." Feature: users add their own LLM providers at will
+> through CLI slash commands, as first-class registry entries (prefix
+> routing, catalogs, key storage) — not env-var configuration. Approved
+> scope: author the FID with the full-feature design, run the Perfection
+> Loop to convergence, present. Implementation is a separate approval.
+
+- [x] **T27-A.** RED evidence catalog: registry/derivation/settings/input-mode
+      consumers with file:line citations; cross-workspace coverage check;
+      prefix-collision surface (ORG_PREFIXES) and model-validation seam.
+      **Done 2026-09-10** — 10-cluster consumer map (C1-C10), desktop/
+      savant-free zero-consumer check, evals inheritance check, ORG_PREFIXES
+      + env-var collision surfaces, InputMode union pinned
+      (`input-modes.ts:8-20`).
+- [x] **T27-B.** Author `dev/fids/FID-2026-0910-004-custom-providers-slash-command.md`
+      — full-feature design (merged registry, SDK registration seam, wizard,
+      catalogs, key storage), RED + GREEN documented. **Done 2026-09-10** —
+      D1-D10 decisions, Steps 1-10, 8 declared gates, 11 Missed Questions
+      answered.
+- [x] **T27-C.** Perfection Loop: audit pass with fresh greps on citations +
+      missed-surface hunt; corrections applied; Missed Questions answered.
+      **Done 2026-09-10** — Loop 2 found 5 findings (dangling step label,
+      repo-validation interaction, registration lifecycle, missing citation,
+      missing docs step), all corrected in-place; Loops 2-3 recorded with
+      honest deltas (~6%, ~3%). Loop 4 (operator amendment): `/provider edit
+      <id>` flow folded in per the approved edit-scope decision — prefilled
+      wizard, id immutable, fail-closed save, re-activation rule; MQ12 +
+      wizard edit-path pins added; delta ~2%; gates re-run clean.
+- [x] **T27-D.** Status → `converged`; present FID + commit plan (no git
+      execution without operator approval). **Done 2026-09-10** — FID clean
+      under lint:md + prettier + markdownlint-cli2 (0 issues); presentation
+      below. Commit pending operator authorization per G1.
+
 ## Task 26 — FID-2026-0909-008 Step 5: native-incomplete ledger capture (2026-09-10)
 
 > Operator directive: "Pick up FID-2026-0909-008 Step 5 or run the perfection
