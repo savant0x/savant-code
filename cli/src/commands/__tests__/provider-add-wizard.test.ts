@@ -8,9 +8,12 @@ import { useChatStore } from '../../state/chat-store'
 import {
   beginProviderWizard,
   cancelWizardSession,
+  clearWizardReplayGuard,
   createWizardSession,
   getActiveWizardSession,
   getStepInstructions,
+  isWizardSubmissionReplayed,
+  markWizardSubmissionConsumed,
   submitActiveWizardStep,
   submitWizardStep,
   type WizardSession,
@@ -330,6 +333,7 @@ describe('provider add|edit wizard step machine (FID-2026-0910-004 Step 7)', () 
 
     function makeParams(inputValue: string, messages: ChatMessage[]) {
       const saveToHistory = mock(() => {})
+      const sendMessage = mock(async () => {})
       const setMessages = mock(
         (update: ChatMessage[] | ((prev: ChatMessage[]) => ChatMessage[])) => {
           const next = typeof update === 'function' ? update(messages) : update
@@ -351,7 +355,7 @@ describe('provider add|edit wizard step machine (FID-2026-0910-004 Step 7)', () 
           clearMessages: () => {},
           saveToHistory,
           scrollToLatest: () => {},
-          sendMessage: mock(async () => {}),
+          sendMessage,
           setCanProcessQueue: () => {},
           setInputFocused: mock(() => {}),
           setInputValue: mock(() => {}),
@@ -361,6 +365,7 @@ describe('provider add|edit wizard step machine (FID-2026-0910-004 Step 7)', () 
           stopStreaming: () => {},
         } satisfies RouterParams,
         saveToHistory,
+        sendMessage,
       }
     }
 
@@ -442,5 +447,82 @@ describe('provider add|edit wizard step machine (FID-2026-0910-004 Step 7)', () 
       expect(session?.step).toBe('id')
       expect(JSON.stringify(messages)).toContain('reserved')
     })
+
+    test('a duplicated terminal submit in default mode is dropped, not sent or recorded', async () => {
+      const messages: ChatMessage[] = []
+      const { params, saveToHistory, sendMessage } = makeParams(
+        'anything',
+        messages,
+      )
+
+      beginProviderWizard('add')
+      useChatStore.getState().setInputMode('providerAdd')
+
+      const { routeUserPrompt } = await import('../router')
+      const steps = [
+        'my-gateway',
+        'My Gateway',
+        'https://gw.example.com/v1',
+        'MY_GW_KEY',
+        'my-gateway/m1=M One',
+      ]
+      for (const value of steps) {
+        useChatStore.getState().setInputMode('providerAdd')
+        params.inputValue = value
+        await routeUserPrompt(params)
+      }
+      useChatStore.getState().setInputMode('providerAddKey')
+      params.inputValue = 'gw-replay-secret'
+      await routeUserPrompt(params)
+
+      expect(getActiveWizardSession()).toBeUndefined()
+
+      // The observed live failure (Loop 9): a duplicated/replayed submit of
+      // the same text arrives after the terminal step flipped the mode back
+      // to 'default'. It must be dropped fail-closed — never recorded as a
+      // prompt (up-arrow recall), never sent to the agent as chat.
+      useChatStore.getState().setInputMode('default')
+      params.inputValue = 'gw-replay-secret'
+      await routeUserPrompt(params)
+
+      expect(saveToHistory).not.toHaveBeenCalledWith('gw-replay-secret')
+      expect(sendMessage).not.toHaveBeenCalled()
+      expect(JSON.stringify(messages)).not.toContain('gw-replay-secret')
+      expect(useChatStore.getState().inputMode).toBe('default')
+    })
+  })
+})
+
+describe('wizard submission replay guard (FID-2026-0910-004 Loop 9)', () => {
+  test('marks a submission and drops its identical replay within the TTL', () => {
+    clearWizardReplayGuard()
+    markWizardSubmissionConsumed('gw-tui-secret')
+    expect(isWizardSubmissionReplayed('gw-tui-secret')).toBe(true)
+    // A different submission is never dropped.
+    expect(isWizardSubmissionReplayed('different-submit')).toBe(false)
+  })
+
+  test('a non-wizard payload (slash command) is never tombstoned', () => {
+    clearWizardReplayGuard()
+    markWizardSubmissionConsumed('/provider list')
+    expect(isWizardSubmissionReplayed('/provider list')).toBe(false)
+  })
+
+  test('the tombstone expires after the TTL (replay outside the window passes)', () => {
+    // Injected clock (DI over module mocking): no fake timers needed.
+    const t0 = 1_000_000
+    clearWizardReplayGuard()
+    markWizardSubmissionConsumed('gw-tui-secret', t0)
+    expect(isWizardSubmissionReplayed('gw-tui-secret', t0 + 500)).toBe(true)
+    clearWizardReplayGuard()
+    markWizardSubmissionConsumed('gw-tui-secret', t0)
+    expect(isWizardSubmissionReplayed('gw-tui-secret', t0 + 1_500)).toBe(false)
+  })
+
+  test('cleanup clears the tombstone', () => {
+    clearWizardReplayGuard()
+    markWizardSubmissionConsumed('gw-tui-secret')
+    clearWizardReplayGuard()
+    expect(isWizardSubmissionReplayed('gw-tui-secret')).toBe(false)
   })
 })

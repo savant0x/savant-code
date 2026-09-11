@@ -838,6 +838,49 @@ gate-verified (2026-09-11 fix pass):**
 - **CHANGE DELTA:** Evidence + one loop record (<5% of the FID); circuit
   breaker not triggered.
 
+### Loop 9 — Live TUI smoke secret-leak finding + replay-guard fix (2026-09-11)
+
+- **FINDING (winpty ConPTY smoke, `SAVANT_CODE_CONFIG_DIR=C:/tmp/savant-tui-smoke/config`):
+  the full scripted `/provider add` walk succeeded (all six step prompts
+  rendered, definition + key persisted, "Custom provider added" ×3 from one
+  scripted walk) — but the persisted `message-history.json` contained the
+  env-var answer and the pasted key (`MY_GW_KEY`, `gw-tui-secret`) in the
+  up-arrow recall history, and the session transcript shows one wizard answer
+  (`'My Gateway'`) dispatched to the agent as a chat message. Root cause chain,
+  grep-verified: duplicated/replayed submits from the pty layer (one command
+  echoed 4× in history; entries out of script order) landed AFTER the terminal
+  step flipped the input mode back to 'default' — the stale submit fell
+  through the wizard branch to the regular-message path
+  (`route-user-prompt.ts` `saveToHistory(trimmed)` + `sendMessage`). The
+  unit-proven production paths never call `saveToHistory` (all 83 call sites
+  grep-audited); a human double-pressing Enter at the masked key step hits the
+  same window. This is a REAL Law-12 secret-hygiene defect, not a harness
+  artifact — the unit e2e (mocked params) cannot observe the caller layer.
+- **FIX (fail-closed one-shot replay tombstone):** `provider-wizard.ts` gains
+  `markWizardSubmissionConsumed` / `isWizardSubmissionReplayed` /
+  `clearWizardReplayGuard` (injected `nowMs` clock, 1s TTL, command-shaped
+  payloads never tombstoned, first duplicate swallowed then tombstone
+  cleared). The wizard route handler marks every consumed submit
+  (`route-provider-wizard.ts`) and clears stale tombstones on new wizard
+  input; the router drops an identical default-mode replay before any
+  persistence or send (`route-user-prompt.ts`, before the empty-input gate's
+  siblings). The non-wizard slash-command path is untouched.
+- **AUDIT (gates, own-run 2026-09-11):** wizard suite 21 pass / 0 fail (86
+  expect calls) incl. 4 new guard pins + a router-level replay-drop pin
+  asserting `saveToHistory`/`sendMessage` are never called with the replayed
+  secret; regression battery 79/0 across 9 files; typecheck ×4 exit 0; eslint
+  `--max-warnings 0` (one import/order caught and fixed); prettier clean.
+  RED captured honestly first (export-not-found, 0 pass).
+- **ADVERSARIAL:** The tombstone cannot mask legitimate input — one-shot,
+  TTL-bounded, command-shaped payloads excluded, cleared on new wizard
+  sessions; the drop only fires on EXACT-text duplicates inside 1s. The
+  pty-layer duplication itself is a harness artifact and out of product
+  scope; the product defect (no drop window) is fixed and pinned. Residual:
+  a duplicate >1s apart is theoretically possible but not observed and not
+  a realistic keystroke pattern.
+- **CHANGE DELTA:** Guard module (~60 lines) + handler mark + router drop +
+  test additions (<5% of the FID); circuit breaker not triggered.
+
 ## Resolution
 
 - **Closed Date:** —

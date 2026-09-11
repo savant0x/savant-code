@@ -4,6 +4,26 @@
 > scope for the current task. Operator confirmation converts interpreted scope
 > into approved scope. Any drop/deferral requires a blocking presentation.
 
+## Task 33 — FID-2026-0910-004 Loop 9: TUI-smoke secret-leak fix (replay guard) (2026-09-11)
+
+> Discovered during the Task 32 winpty TUI smoke (operator directive: manual
+> TUI smoke when a pty is available): a duplicated/replayed wizard submit from
+> the pty layer landed after the terminal step restored `default` mode and fell
+> through to the regular-message path — the pasted key reached the up-arrow
+> recall history and one answer was dispatched to the agent as chat. Law 12
+> violation; fix is in-scope under the standing secret-hygiene requirement.
+
+- **Interpreted scope:** one-shot TTL replay tombstone in `provider-wizard.ts`
+  (`markWizardSubmissionConsumed` / `isWizardSubmissionReplayed` /
+  `clearWizardReplayGuard`, injected clock, command-shaped payloads excluded);
+  mark-on-consume in `route-provider-wizard.ts`; drop guard in
+  `route-user-prompt.ts` before any persistence/send; RED-first pins incl. a
+  router-level replay-drop pin; FID Loop 9 record.
+- **Status:** COMPLETE — wizard suite 21/0 (86 expect), regression 79/0 across
+  9 files, typecheck ×4 exit 0, eslint `--max-warnings 0`, prettier clean.
+  Out of scope (recorded): the pty-layer duplication itself (harness artifact);
+  Step 10 closeout + Step 9 remainder remain pending operator approval.
+
 ## Task 31 — FID-2026-0910-004 Step 8 (grammar + picker + docs) + live smoke (2026-09-11)
 
 > Operator directives: "Run a tmux smoke test of the full /provider add flow

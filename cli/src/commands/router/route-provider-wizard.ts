@@ -8,7 +8,9 @@ import {
 } from '../../utils/provider-setup'
 import {
   cancelWizardSession,
+  clearWizardReplayGuard,
   getStepInstructions,
+  markWizardSubmissionConsumed,
   submitActiveWizardStep,
 } from '../../utils/provider-wizard'
 import {
@@ -79,6 +81,9 @@ export function routeProviderWizard({
     inputRef.current?.focus()
   }
 
+  // New wizard work begins: any stale replay tombstones from a previous
+  // session are irrelevant now (Loop 9 guard lifecycle).
+  clearWizardReplayGuard()
   const session = submitActiveWizardStep(trimmed)
   if (!session) {
     // Unreachable via the input modes (the branch implies an active session);
@@ -92,6 +97,12 @@ export function routeProviderWizard({
     exitToDefault()
     return
   }
+
+  // The submit was consumed by the step machine: tombstone its exact text so
+  // a duplicated/replayed submit (pty harness glitch or a double Enter press)
+  // arriving after the mode flips to 'default' is dropped by the router
+  // instead of being recorded in recall history or sent as chat (Loop 9).
+  markWizardSubmissionConsumed(trimmed)
 
   if (session.step !== 'done') {
     const lines = [getStepInstructions(session.step)]

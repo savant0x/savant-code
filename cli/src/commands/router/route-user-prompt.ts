@@ -30,6 +30,7 @@ import {
   saveProviderApiKey,
   saveResearchApiKey,
 } from '../../utils/provider-setup'
+import { isWizardSubmissionReplayed } from '../../utils/provider-wizard'
 import {
   findCommand,
   type RouterParams,
@@ -79,6 +80,15 @@ export async function routeUserPrompt(
       inputRef,
       setMessages,
     })
+    return
+  }
+
+  // FID-2026-0910-004 Loop 9: a duplicated wizard submit can land here after
+  // the terminal step already flipped the mode back to 'default' (pty-layer
+  // glitch, or a double Enter at the key step). Drop it fail-closed — saving
+  // it to recall history or dispatching it as chat would leak pasted key
+  // material (Law 12). One-shot: only the first duplicate is swallowed.
+  if (trimmed && isWizardSubmissionReplayed(trimmed)) {
     return
   }
 
