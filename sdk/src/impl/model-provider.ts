@@ -3,9 +3,10 @@
  *
  * This module handles:
  * - ChatGPT OAuth: Direct requests to OpenAI API using user's OAuth token
- * - Registry gateway providers: one ordered loop over PROVIDER_REGISTRY
- *   (FID-2026-0809-001 Phase 2) — base URL, protocol, id transform, and
- *   credential env vars all come from the registry, not hand-written branches.
+ * - Registry gateway providers: one ordered loop over the effective provider
+ *   registry (FID-2026-0809-001 Phase 2; effective view per FID-2026-0910-004
+ *   Step 4) — base URL, protocol, id transform, and credential env vars all
+ *   come from the registry, not hand-written branches.
  * - Default: generic OpenAI-compatible fallback via createDefaultInferenceModel.
  */
 
@@ -14,7 +15,7 @@ import {
   isChatGptOAuthModelAllowed,
   isOpenAIProviderModel,
 } from '@savant-code/common/constants/chatgpt-oauth'
-import { PROVIDER_REGISTRY } from '@savant-code/common/providers/registry'
+import { getEffectiveProviderRegistry } from '@savant-code/common/providers/custom-providers'
 
 import { getValidChatGptOAuthCredentials } from '../credentials'
 import { createDefaultInferenceModel } from './model-provider/default-inference'
@@ -79,12 +80,15 @@ export async function getModelForRequest(
     }
   }
 
-  // Gateway providers — one ordered loop over the registry
-  // (FID-2026-0809-001 Phase 2). Registry ids are disjoint routing prefixes,
-  // so iteration order is a no-op; iterate in registry order for determinism.
-  // Ollama (kind: 'local') is intentionally not routed here — it uses the
-  // default path with the CLI-set INFERENCE_BASE_URL (ollama-onboarding.ts).
-  for (const config of Object.values(PROVIDER_REGISTRY)) {
+  // Gateway providers — one ordered loop over the EFFECTIVE registry
+  // (FID-2026-0809-001 Phase 2; FID-2026-0910-004 Step 4: the effective view
+  // is built-ins + registered custom providers, so customs route through the
+  // same loop with zero special-casing). Registry ids are disjoint routing
+  // prefixes, so iteration order is a no-op; iterate in registry order for
+  // determinism. Ollama (kind: 'local') is intentionally not routed here — it
+  // uses the default path with the CLI-set INFERENCE_BASE_URL
+  // (ollama-onboarding.ts).
+  for (const config of Object.values(getEffectiveProviderRegistry())) {
     if (config.kind === 'local') continue
     if (!model.startsWith(`${config.id}/`)) continue
 
@@ -113,7 +117,7 @@ export async function getModelForRequest(
   const activeProviderId = getActiveProviderId()
   const activeProviderKey = await resolveActiveProviderKey(activeProviderId)
   const activeProviderConfig = activeProviderId
-    ? (PROVIDER_REGISTRY as Record<string, ProviderConfig>)[activeProviderId]
+    ? getEffectiveProviderRegistry()[activeProviderId]
     : undefined
   if (
     activeProviderConfig !== undefined &&
@@ -160,11 +164,10 @@ async function resolveActiveProviderKey(
   activeProviderId = getActiveProviderId(),
 ): Promise<string | undefined> {
   if (!activeProviderId) return undefined
-  // The env var is arbitrary user input — index via a string record so an
-  // unknown provider id yields undefined instead of a type error.
-  const config = (PROVIDER_REGISTRY as Record<string, ProviderConfig>)[
-    activeProviderId
-  ]
+  // The env var is arbitrary user input — the effective registry is a plain
+  // string record, so an unknown provider id yields undefined instead of a
+  // type error. Custom providers resolve identically (Step 4).
+  const config = getEffectiveProviderRegistry()[activeProviderId]
   if (!config || config.kind === 'local') return undefined
   return resolveProviderKey(config)
 }

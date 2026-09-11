@@ -1,5 +1,6 @@
 import { callMainPrompt } from '@savant-code/agent-runtime/main-prompt'
 import { MAX_AGENT_STEPS_DEFAULT } from '@savant-code/common/constants/agents'
+import { registerCustomProviders } from '@savant-code/common/providers/custom-providers'
 
 import { getUserInfoFromApiKey } from '../impl/database'
 import { deserializeRunState } from '../run-state'
@@ -50,6 +51,7 @@ async function runOnce({
   agentDefinitions,
   maxAgentSteps = MAX_AGENT_STEPS_DEFAULT,
   env,
+  customProviders,
 
   handleEvent,
   handleStreamChunk,
@@ -87,6 +89,11 @@ async function runOnce({
   compression,
   protocolVariant,
 }: RunExecutionOptions): Promise<RunState> {
+  // Standalone run() registration seam (FID-2026-0910-004 Step 4): callers
+  // who never construct a SavantCodeClient (evals, scripts) register custom
+  // providers here — same D4 lifecycle as the constructor path.
+  registerCustomProviders(customProviders)
+
   // Transport payloads may be supplied as serialized JSON at this boundary,
   // but live in-process RunState objects must bypass deserialization so resume
   // can preserve function-valued agent handlers.

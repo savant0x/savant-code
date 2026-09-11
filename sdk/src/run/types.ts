@@ -5,6 +5,7 @@ import type { CustomToolDefinition } from '../custom-tool'
 import type { RunState } from '../run-state'
 import type { OnFileWrittenCallback } from '../tools/change-file'
 import type { FileFilter } from '../tools/read-files'
+import type { CustomProviderConfig } from '@savant-code/common/providers/types'
 import type { AgentDefinition } from '@savant-code/common/templates/initial-agents-dir/types/agent-definition'
 import type { PublishedClientToolName } from '@savant-code/common/tools/list'
 import type { Logger } from '@savant-code/common/types/contracts/logger'
@@ -66,6 +67,12 @@ export type SavantCodeClientOptions = {
   agentDefinitions?: AgentDefinition[]
   maxAgentSteps?: number
   env?: Record<string, string>
+  /** Optional user-defined provider records (FID-2026-0910-004): registered
+   *  into the effective provider registry for this client — validated
+   *  fail-closed at registration (built-in/ORG_PREFIX shadow and env-var
+   *  claim collisions throw; prior state is untouched). Omitting the field
+   *  never clears a previously registered set (D4 lifecycle). */
+  customProviders?: CustomProviderConfig[]
 
   handleEvent?: (event: PrintModeEvent) => void | Promise<void>
   handleStreamChunk?: (

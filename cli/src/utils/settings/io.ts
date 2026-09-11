@@ -1,6 +1,11 @@
 import fs from 'fs'
 import path from 'path'
 
+import {
+  parseCustomProviders,
+  registerCustomProviders,
+} from '@savant-code/common/providers/custom-providers'
+
 import { getConfigDir } from '../auth'
 import { logger } from '../logger'
 import { DEFAULT_SETTINGS } from './constants'
@@ -37,6 +42,19 @@ export const loadSettings = (): Settings => {
   try {
     const settingsFile = fs.readFileSync(settingsPath, 'utf8')
     const parsed = JSON.parse(settingsFile) as JSONValue
+    // Register custom providers BEFORE validation (FID-2026-0910-004 Step 5):
+    // the effective registry gains the customs first, so provider-field
+    // validation below can accept persisted custom selections. Fail-closed:
+    // an invalid stored set throws here — caught by the existing catch, which
+    // logs and returns {} (built-ins only), never a half-registered state.
+    if (
+      typeof parsed === 'object' &&
+      parsed !== null &&
+      'customProviders' in parsed
+    ) {
+      const { configs } = parseCustomProviders(parsed)
+      registerCustomProviders(configs)
+    }
     return validateSettings(parsed)
   } catch (error) {
     logger.debug(

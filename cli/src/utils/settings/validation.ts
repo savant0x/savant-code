@@ -1,4 +1,8 @@
 import { isSupportedSavantFreeModelId } from '@savant-code/common/constants/savant-free-models'
+import {
+  getEffectiveProviderRegistry,
+  parseCustomProviders,
+} from '@savant-code/common/providers/custom-providers'
 import { deriveValidProviderIds } from '@savant-code/common/providers/derive'
 import { PROVIDER_REGISTRY } from '@savant-code/common/providers/registry'
 
@@ -121,13 +125,17 @@ export const validateSettings = (parsed: JSONValue): Settings => {
   // Validate provider settings against the registry — must be registry provider
   // ids (FID-2026-0809-001 Phase 1, delta (b): cloudflare is now valid here).
   // Drop unknown/legacy values so a removed provider doesn't strand the user
-  // on an empty section.
-  const validProviders = new Set<ModelProvider>(
-    deriveValidProviderIds(PROVIDER_REGISTRY),
-  )
+  // on an empty section. FID-2026-0910-004 Step 5: validation runs against the
+  // EFFECTIVE registry (built-ins + customs registered from settings.json by
+  // the loader below) so a persisted custom selection survives the round-trip;
+  // at direct-call time (tests, pre-registration) customs fall back to invalid.
+  const validProviders = new Set<string>([
+    ...deriveValidProviderIds(PROVIDER_REGISTRY),
+    ...Object.keys(getEffectiveProviderRegistry()),
+  ])
   if (
     typeof obj.savantCodeModelProviderPreference === 'string' &&
-    validProviders.has(obj.savantCodeModelProviderPreference as ModelProvider)
+    validProviders.has(obj.savantCodeModelProviderPreference)
   ) {
     settings.savantCodeModelProviderPreference =
       obj.savantCodeModelProviderPreference as ModelProvider
@@ -146,10 +154,10 @@ export const validateSettings = (parsed: JSONValue): Settings => {
   const legacyDirect = obj.directProvider
   const migratedActive =
     typeof explicitActive === 'string' &&
-    validProviders.has(explicitActive as ModelProvider)
+    validProviders.has(explicitActive)
       ? explicitActive
       : typeof legacyDirect === 'string' &&
-          validProviders.has(legacyDirect as ModelProvider)
+          validProviders.has(legacyDirect)
         ? legacyDirect
         : undefined
   if (typeof migratedActive === 'string') {
@@ -171,6 +179,21 @@ export const validateSettings = (parsed: JSONValue): Settings => {
   // 2026-08-18).
   if (typeof obj.presenceEnabled === 'boolean') {
     settings.presenceEnabled = obj.presenceEnabled
+  }
+
+  // User-defined custom providers (FID-2026-0910-004 Step 5). Each entry is
+  // validated by the SAME parseCustomProviders used by the SDK option (one
+  // validation truth — Law 13); malformed entries are dropped individually,
+  // valid ones kept, so one bad record never erases the user's whole set.
+  // Preservation matters: saveSettings round-trips through loadSettings, so
+  // dropping the field here would silently erase user data on every save.
+  if (obj.customProviders !== undefined) {
+    const { configs } = parseCustomProviders({
+      customProviders: obj.customProviders,
+    })
+    if (configs.length > 0 || Array.isArray(obj.customProviders)) {
+      settings.customProviders = configs
+    }
   }
 
   return settings

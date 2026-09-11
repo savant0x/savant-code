@@ -1,5 +1,6 @@
 import type { AgentMode } from '../constants'
 import type { ModelProvider } from '../openrouter-models'
+import type { CustomProviderConfig } from '@savant-code/common/providers/types'
 
 /**
  * Settings schema - add new settings here as the product evolves
@@ -69,4 +70,9 @@ export interface Settings {
   designSystemSession?: string
   /** Discord Rich Presence enable/disable (FID-2026-0818-009). Defaults on. */
   presenceEnabled?: boolean
+  /** User-defined custom providers (FID-2026-0910-004 Step 5). Persisted by
+   *  the /provider add|edit flows; registered into the effective provider
+   *  registry when settings load. Validation is per-entry fail-closed:
+   *  malformed entries are dropped, valid ones kept. */
+  customProviders?: CustomProviderConfig[]
 }

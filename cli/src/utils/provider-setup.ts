@@ -1,8 +1,8 @@
 import { getAuthTokenDetails, getCredentialsPath } from './auth'
 import {
+  getEffectiveProviderSetupConfig,
   applyPersistedProviderApiKeys,
   getProviderSetupInfo,
-  PROVIDER_SETUP_CONFIG,
   PROVIDER_SETUP_DEFAULT,
   type MissingProviderSetup,
   type ProviderSetupName,
@@ -13,6 +13,7 @@ import {
   saveSavantCodeModelProviderPreference,
 } from './settings'
 
+import type { ModelProvider } from './openrouter-models'
 // Re-export the provider + research key surfaces from the original module
 // path (call-graph preserved for consumers in commands/router/index).
 export {
@@ -92,10 +93,11 @@ export function getMissingProviderSetup(): MissingProviderSetup | undefined {
  * applied. Interactive selection is an explicit routing override; ordinary
  * startup configuration continues to preserve explicit shell routing.
  */
-export function activateConfiguredProvider(
-  provider: ProviderSetupName,
-): boolean {
-  const config = PROVIDER_SETUP_CONFIG[provider]
+export function activateConfiguredProvider(provider: string): boolean {
+  // Effective view (FID-2026-0910-004 Step 6): customs activate exactly like
+  // built-ins once registered.
+  const config = getEffectiveProviderSetupConfig()[provider]
+  if (!config) return false
   applyPersistedProviderApiKeys()
   if (!process.env[config.envVar]?.trim()) return false
 
@@ -106,8 +108,12 @@ export function activateConfiguredProvider(
   // used when the shell has no key.
   process.env.DIRECT_PROVIDER = provider
   process.env.INFERENCE_BASE_URL = config.baseUrl
-  saveSavantCodeModelProviderPreference(provider)
-  saveActiveProvider(provider)
+  // The id is runtime-validated (the effective-setup lookup above
+  // succeeded); the ModelProvider settings union widens at Step 9
+  // (FID-2026-0910-004 D8), so the settings seam takes the
+  // validation.ts-precedent cast until then.
+  saveSavantCodeModelProviderPreference(provider as ModelProvider)
+  saveActiveProvider(provider as ModelProvider)
   return true
 }
 

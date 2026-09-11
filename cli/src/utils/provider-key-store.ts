@@ -1,6 +1,10 @@
 import fs from 'fs'
 
-import { deriveSetupConfig } from '@savant-code/common/providers/derive'
+import { getEffectiveProviderRegistry } from '@savant-code/common/providers/custom-providers'
+import {
+  deriveSetupConfig,
+  type ProviderSetupInfo,
+} from '@savant-code/common/providers/derive'
 import { PROVIDER_REGISTRY } from '@savant-code/common/providers/registry'
 import { resetOpenRouterApiKeyCache } from '@savant-code/sdk'
 
@@ -16,6 +20,7 @@ import {
   saveSavantCodeModelProviderPreference,
 } from './settings'
 
+import type { ModelProvider } from './openrouter-models'
 export const PROVIDER_SETUP_DEFAULT = 'openrouter' as const
 
 /**
@@ -26,23 +31,46 @@ export const PROVIDER_SETUP_DEFAULT = 'openrouter' as const
  */
 export const PROVIDER_SETUP_CONFIG = deriveSetupConfig(PROVIDER_REGISTRY)
 
-export type ProviderSetupName = keyof typeof PROVIDER_SETUP_CONFIG
+/**
+ * Setup-flow provider id (FID-2026-0910-004 Step 6, D8 widening): built-in
+ * ids keep literal autocomplete; custom ids are legal as plain strings.
+ * Runtime truth stays the effective-registry id set — getProviderSetupInfo
+ * returns undefined for unknowns, so the widening can never admit an
+ * unvalidated id into the setup flow. The ModelProvider settings union
+ * widens separately at Step 9 (model-picker surface).
+ */
+export type ProviderSetupName =
+  keyof typeof PROVIDER_SETUP_CONFIG | (string & {})
 
-export type MissingProviderSetup =
-  (typeof PROVIDER_SETUP_CONFIG)[ProviderSetupName] & {
-    provider: ProviderSetupName
-  }
+/** Setup metadata for any effective provider — built-in or custom
+ * (FID-2026-0910-004 Step 6). Custom ids are plain strings; the
+ * `ModelProvider` union widens at Step 9 per the FID. */
+export type MissingProviderSetup = ProviderSetupInfo & { provider: string }
+
+/**
+ * The effective setup view (FID-2026-0910-004 Step 6): `deriveSetupConfig`
+ * over the effective registry — the SAME derivation as the built-in const
+ * (one truth, Law 13), applied to built-ins + registered customs. Customs
+ * carry `setupAvailable: true` from `toProviderConfig`, so they appear here
+ * automatically the moment they are registered.
+ */
+export function getEffectiveProviderSetupConfig(): Record<
+  string,
+  ProviderSetupInfo
+> {
+  return deriveSetupConfig(getEffectiveProviderRegistry())
+}
 
 export function getProviderSetupInfo(
   provider: string,
 ): MissingProviderSetup | undefined {
   const normalized = provider.trim().toLowerCase()
-  if (!(normalized in PROVIDER_SETUP_CONFIG)) return undefined
+  const setupConfig = getEffectiveProviderSetupConfig()
+  if (!(normalized in setupConfig)) return undefined
 
-  const providerName = normalized as ProviderSetupName
   return {
-    provider: providerName,
-    ...PROVIDER_SETUP_CONFIG[providerName],
+    provider: normalized,
+    ...setupConfig[normalized],
   }
 }
 
@@ -53,7 +81,7 @@ export function getProviderSetupInfo(
 export function applyPersistedProviderApiKeys(): void {
   const storedKeys = readStoredProviderKeys()
 
-  for (const config of Object.values(PROVIDER_SETUP_CONFIG)) {
+  for (const config of Object.values(getEffectiveProviderSetupConfig())) {
     if (process.env[config.envVar]?.trim()) continue
 
     const storedKey = storedKeys[config.envVar]
@@ -70,11 +98,9 @@ export function applyPersistedProviderApiKeys(): void {
     !process.env.INFERENCE_BASE_URL?.trim() &&
     !getAuthToken()
   ) {
-    const configured = (
-      Object.entries(PROVIDER_SETUP_CONFIG) as Array<
-        [ProviderSetupName, (typeof PROVIDER_SETUP_CONFIG)[ProviderSetupName]]
-      >
-    ).find(([, config]) => Boolean(storedKeys[config.envVar]))
+    const configured = Object.entries(getEffectiveProviderSetupConfig()).find(
+      ([, config]) => Boolean(storedKeys[config.envVar]),
+    )
     if (configured) {
       const [provider, config] = configured
       process.env.DIRECT_PROVIDER = provider
@@ -115,17 +141,21 @@ export function configureDefaultDirectProvider(): void {
   process.env.INFERENCE_BASE_URL = info.baseUrl
 }
 
-/** Save one provider key and make it available to the current process. */
-export function saveProviderApiKey(
-  provider: ProviderSetupName,
-  apiKey: string,
-): void {
+/** Save one provider key and make it available to the current process.
+ * Accepts any effective provider id — built-in or custom
+ * (FID-2026-0910-004 Step 6). */
+export function saveProviderApiKey(provider: string, apiKey: string): void {
   const trimmedKey = apiKey.trim()
   if (!trimmedKey) {
     throw new Error('Provider API key cannot be empty.')
   }
 
-  const config = PROVIDER_SETUP_CONFIG[provider]
+  const config = getEffectiveProviderSetupConfig()[provider]
+  if (!config) {
+    throw new Error(
+      `Unknown provider '${provider}'. Register custom providers or pick a built-in.`,
+    )
+  }
   const credentialsPath = getCredentialsPath()
   const existing = readCredentialsRecord()
   const existingKeys = readStoredProviderKeys()
@@ -176,8 +206,12 @@ export function saveProviderApiKey(
     // activeProvider (the registry derives the base URL and env var). The
     // legacy directProvider/directProviderBaseUrl fields are no longer written
     // for gateway providers — only the local (Ollama) path keeps them.
-    saveSavantCodeModelProviderPreference(provider)
-    saveActiveProvider(provider)
+    // The id is runtime-validated (the effective-setup lookup above
+    // succeeded); the ModelProvider settings union widens at Step 9
+    // (FID-2026-0910-004 D8), so the settings seam takes the
+    // validation.ts-precedent cast until then.
+    saveSavantCodeModelProviderPreference(provider as ModelProvider)
+    saveActiveProvider(provider as ModelProvider)
   }
 
   if (provider === 'openrouter') {
@@ -195,12 +229,11 @@ export function getConfiguredProviderKey(provider: string): string | undefined {
   return readStoredProviderKeys()[info.envVar]
 }
 
-export function getConfiguredProviderNames(): ProviderSetupName[] {
+export function getConfiguredProviderNames(): string[] {
   const storedKeys = readStoredProviderKeys()
-  return (Object.keys(PROVIDER_SETUP_CONFIG) as ProviderSetupName[]).filter(
-    (provider) => {
-      const envVar = PROVIDER_SETUP_CONFIG[provider].envVar
-      return Boolean(process.env[envVar]?.trim() || storedKeys[envVar])
-    },
-  )
+  const setupConfig = getEffectiveProviderSetupConfig()
+  return Object.keys(setupConfig).filter((provider) => {
+    const envVar = setupConfig[provider].envVar
+    return Boolean(process.env[envVar]?.trim() || storedKeys[envVar])
+  })
 }

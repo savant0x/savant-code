@@ -1,4 +1,5 @@
 import { API_KEY_ENV_VAR } from '@savant-code/common/constants/paths'
+import { registerCustomProviders } from '@savant-code/common/providers/custom-providers'
 
 import { getWebsiteUrl } from './constants'
 import { getSavantCodeApiKeyFromEnv, isDirectProviderMode } from './env'
@@ -33,6 +34,12 @@ export class SavantCodeClient {
       fingerprintId: `savant-code-sdk-${Math.random().toString(36).substring(2, 15)}`,
       ...options,
     }
+
+    // Register user-defined custom providers (FID-2026-0910-004 Step 4, D4
+    // lifecycle): a valid set registers/replaces, omitting the field never
+    // clears a previously registered set, and invalid data throws
+    // fail-closed at construction with prior state untouched.
+    registerCustomProviders(options.customProviders)
   }
 
   /**
