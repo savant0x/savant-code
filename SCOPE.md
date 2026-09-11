@@ -12,6 +12,54 @@
 > remain pending until separately approved. Step 3 finding recorded below
 > when investigated.
 
+## Task 29 — FID-2026-0910-004 Steps 4-6: SDK seam + CLI settings + key store (2026-09-10)
+
+> Operator directive: "Authorize the path-scoped commit for Steps 1-3, then
+> continue with Steps 4-6 (CLI wizard layer)." Grounding correction: in the
+> converged FID the wizard is **Step 7** (separate approval); Steps 4-6 are
+> SDK seam / CLI settings / CLI key store + setup. Approved scope: implement
+> Steps 4-6 only.
+
+- [x] **T29-CHECK.** ~~Grounding finding: the common module's research-BYOK
+      reserved list (4 vars) drifted from `research-key-store.ts` ground truth
+      (6 vars: `CONTEXT7_API_KEY`, `PARALLEL_API_KEY` missing).~~ **Withdrawn
+      by operator ruling 2026-09-10:** research keys stay untouched — "they
+      all work 100%" and other systems have replaced most of them natively
+      and for free; no new CLI settings surface for them either. The drift
+      edit was applied and then reverted same-session; committed state
+      (`7f95b38f`) is unchanged. The 4-var list stays: it is a *reservation*
+      list (what custom providers may not claim), not a completeness mirror
+      of the research store.
+- [x] **T29-A.** Step 4 (SDK): `SavantCodeClientOptions.customProviders` +
+      registration in `client.ts` constructor and standalone `run()` (D4
+      lifecycle); `model-provider.ts:17,87,116,165` → effective registry.
+      RED-first pins. **Done (implemented 2026-09-10 by the crashed session;
+      re-grounded + gates green 2026-09-11)** — see the session summary's
+      evidence ledger.
+- [x] **T29-B.** Step 5 (CLI settings): `customProviders` in `Settings` +
+      `validateSettings` preservation via `parseCustomProviders` (save
+      round-trip must never erase user data) + register-before-validate in
+      `loadSettings`. RED-first pins. **Done (same provenance as T29-A).**
+- [x] **T29-C.** Step 6 (CLI key store + setup): effective setup view (C2),
+      custom env-var application, key functions through the effective view,
+      research-env-var collision guard. RED-first pins. **Done (same
+      provenance as T29-A).**
+- [x] **T29-D.** Gates: typecheck ×4, suites, eslint/prettier, Law 4 greps;
+      FID/SCOPE/ledger updates; commit plan. **Done 2026-09-11** — typecheck
+      ×4 exit 0 (cli/sdk/common/agent-runtime); suites 60/0 (cli, 8 files) +
+      51/0 (sdk, 12 files) + 51/0 (common providers); eslint 12 files 0
+      problems; prettier clean; full evidence in the session summary +
+      `dev/handoff.md`. Commit plan presented — awaiting operator
+      authorization (G1).
+
+## Task 28 — FID-2026-0910-004 Steps 1-3: common layer (2026-09-10)
+
+> Operator directive: "Start implementing FID-2026-0910-004 Steps 1-3
+> (common layer)." Approved scope: Steps 1 (custom type + validation),
+> 2 (merged registry), 3 (model-validation seam) only — CLI/SDK steps 4-10
+> remain pending until separately approved. Step 3 finding recorded below
+> when investigated.
+
 - [x] **T28-A.** RED: `custom-providers.test.ts` pins (validation rules, merge
       rules, replace/reset lifecycle, prefix list, dead-code removal pin).
       **Done 2026-09-10** — RED captured honestly: module-absent failure, then

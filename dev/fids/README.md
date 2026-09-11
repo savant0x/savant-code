@@ -34,7 +34,7 @@ on-disk records missing from the table added (-0823-003, -0824-003…-008,
 | FID | Status | Purpose / blocking gate |
 |---|---|---|
 | [`FID-2026-0909-008`](FID-2026-0909-008-tool-call-argument-truncation-root-cause.md) | fixed | Tool-call truncation root cause (unset output budget). Steps 1–4 landed; Step 5 (finish-reason proof) deferred follow-up pending next live occurrence. |
-| [`FID-2026-0910-004`](FID-2026-0910-004-custom-providers-slash-command.md) | fixed | User-defined custom providers via `/provider` (full feature). Steps 1–3 (common layer) landed RED-first (51/0 provider suites, typecheck ×4); Steps 4–10 (CLI wizard, SDK seam, key storage) pending separate approval. |
+| [`FID-2026-0910-004`](FID-2026-0910-004-custom-providers-slash-command.md) | fixed | User-defined custom providers via `/provider` (full feature). Steps 1–3 (common layer) landed RED-first (51/0 provider suites, typecheck ×4); Steps 4–6 (SDK seam, CLI settings, key store/setup) implemented + gate-verified 2026-09-11 (60/0 cli + 51/0 sdk + 51/0 common, typecheck ×4); Steps 7–10 (wizard, picker, docs) pending separate approval. |
 
 **2026-09-10 implementation (FID-2026-0910-004, Steps 1–3):** operator
 directive to implement the common layer only. RED investigation falsified

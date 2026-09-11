@@ -3,7 +3,8 @@
 **Filename:** `FID-2026-0910-004-custom-providers-slash-command.md`
 **ID:** FID-2026-0910-004
 **Severity:** medium
-**Status:** fixed (Steps 1-3 implemented 2026-09-10; Steps 4-10 pending)
+**Status:** fixed (Steps 1-3 implemented 2026-09-10; Steps 4-6 implemented +
+gate-verified 2026-09-11; Steps 7-10 pending separate approval)
 **Created:** 2026-09-10 23:30 (converged 2026-09-10, Loops 1-4 recorded)
 **YAGNI-Compliance:** Verified — every step maps to a user-facing
 requirement of the full feature; no speculative abstraction beyond the
@@ -404,8 +405,10 @@ CLI wizard — with built-ins always winning on collision.
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-> Partial — Steps 1-3 (common layer) implemented and verified 2026-09-10.
-> Steps 4-10 remain pending; the section fills in fully at `closed`.
+> Partial — Steps 1-3 (common layer) implemented and verified 2026-09-10;
+> Steps 4-6 (SDK seam, CLI settings, CLI key store/setup) implemented and
+> gate-verified 2026-09-11. Steps 7-10 remain pending separate approval; the
+> section fills in fully at `closed`.
 
 **Steps 1-3 — implemented (RED-first):**
 
@@ -442,8 +445,69 @@ overwrite.
 
 - [x] File:line ranges (Steps 1-3)
 - [x] Gate output (Steps 1-3)
-- [ ] Commit SHA — pending operator-authorized commit
-- [ ] Steps 4-10 statuses — pending implementation
+- [x] Commit SHA — implementation `7f95b38f` (source, 5 files) + governance
+      record `abbcc7b3` (FID + ledger + SCOPE), landed 2026-09-10
+- [x] Steps 4-6 statuses — implemented + gate-verified 2026-09-11 (below)
+- [ ] Steps 7-10 statuses — pending implementation (separate approval)
+
+**Steps 4-6 — implemented (2026-09-10, crashed session) + re-grounded and
+gate-verified (2026-09-11 fix pass):**
+
+- **Step 4 (SDK registration + routing):** `implemented` —
+  `sdk/src/client.ts:2,42` (constructor registers `options.customProviders`
+  via `registerCustomProviders`, honoring the D4 idempotent-replace
+  lifecycle), `sdk/src/run/execution.ts:3,95` (standalone `run()` seam),
+  `sdk/src/impl/model-provider.ts:18,91,120,170` (the C1 registry reads →
+  `getEffectiveProviderRegistry()`). Pins:
+  `sdk/src/__tests__/client-custom-providers.test.ts` (replace semantics,
+  no-op without the option, built-ins preserved) and
+  `sdk/src/impl/__tests__/model-provider-custom.test.ts` (prefixed routing
+  via the effective view, active-custom key authorization,
+  invalid-registration throw at construction).
+- **Step 5 (CLI settings):** `implemented` —
+  `cli/src/utils/settings/types.ts:77` (`customProviders?:
+  CustomProviderConfig[]`), `cli/src/utils/settings/validation.ts:131-136`
+  (`validProviders` union of built-ins + effective registry), `:190-196`
+  (per-entry fail-closed preservation via `parseCustomProviders` — the save
+  round-trip never erases user data), `cli/src/utils/settings/io.ts:50-58`
+  (register-before-validate in `loadSettings`, fail-closed to `{}`). Pins:
+  `cli/src/utils/settings/__tests__/settings-custom-providers.test.ts`
+  (preservation, per-entry drop, round-trip, effective-view acceptance).
+- **Step 6 (CLI key store + setup):** `implemented` —
+  `cli/src/utils/provider-key-store.ts:57-62`
+  (`getEffectiveProviderSetupConfig` — the same `deriveSetupConfig` over the
+  effective registry, Law 13), `:42-45` (`ProviderSetupName` D8 widening),
+  `:64-73` (`getProviderSetupInfo` through the effective view), `:147-210`
+  (`saveProviderApiKey` accepts custom ids), `:118-145`
+  (`configureDefaultDirectProvider`), `:226-231` (`getConfiguredProviderKey`),
+  `:232-240` (`getConfiguredProviderNames`); `cli/src/utils/provider-setup.ts:52,96`
+  (activation through the effective view). Pins:
+  `cli/src/utils/__tests__/provider-key-store-custom.test.ts` (6 tests — key
+  store, names, activation, shell precedence).
+- **Law 4 call-graph evidence (grep-verified 2026-09-11):** the Step 2 common
+  module is now production-reachable. Registration sites: `client.ts:42`,
+  `execution.ts:95`, `io.ts:56`. Effective-view consumers:
+  `model-provider.ts:91,120,170` (C1), `validation.ts:134` (C3),
+  `provider-key-store.ts:61` (C2 → every setup surface), `provider-setup.ts`
+  (activation). Repo-validation stays built-in-only per MQ11:
+  `scripts/validate-repository.ts:11,218,222` imports and audits
+  `PROVIDER_REGISTRY`; `getEffectiveProviderRegistry` has zero matches under
+  `scripts/`.
+- **Known deviation (recorded):** the settings type seams
+  (`saveSavantCodeModelProviderPreference` / `saveActiveProvider` call sites
+  in `saveProviderApiKey` and one test assertion) take a runtime-validated
+  cast on `ModelProvider` until Step 9's union widening — the documented
+  validation.ts-precedent stopgap, not a silent shortcut.
+- **Gates (2026-09-11, own-run — full output in the session summary):**
+  typecheck ×4 exit 0 (cli, sdk, common, packages/agent-runtime); cli
+  provider/settings suites 60 pass / 0 fail (141 expect calls, 8 files); sdk
+  client/model-provider suites 51 pass / 0 fail (95 expect calls, 12 files);
+  common provider suites 51 pass / 0 fail (334 expect calls, 4 files); eslint
+  `--max-warnings 0` on the 12 touched files → 0 problems; prettier
+  `--check` → clean. The fix pass itself (wrong-module import,
+  env-override self-delete harness bug, delete-narrowing, D8 widening +
+  bridge casts, import-order) is recorded in
+  `dev/session-summaries/2026-09-11-1038-custom-providers-steps-4-6-session-docs.md`.
 
 ### Code Verification Evidence
 
@@ -453,10 +517,14 @@ overwrite.
       deviation (dead-code removal instead of seam validation) documented
       above with the falsifying evidence
 - [x] Typecheck/tests/lint pass with pasted tool output (Steps 1-3)
-- [ ] Production call-graph evidence for new wiring — pending (Steps 4-10;
-      the common-layer module's designated caller is the Step 4 SDK seam)
-- [ ] FID status reflects actual implementation state — `fixed`, Steps 4-10
-      pending
+- [x] Production call-graph evidence for new wiring — Steps 4-6 edges
+      grep-verified 2026-09-11 (registration: `client.ts:42`, `execution.ts:95`,
+      `io.ts:56`; consumers: `model-provider.ts:91,120,170`,
+      `validation.ts:134`, `provider-key-store.ts:61`; repo-validation
+      built-in-only confirmed — zero `getEffectiveProviderRegistry` matches
+      under `scripts/`)
+- [ ] FID status reflects actual implementation state — `fixed`, Steps 7-10
+      pending (Steps 4-6 documented above)
 
 ### Loop 5 — Steps 1-3 implementation (RED-first)
 
@@ -566,6 +634,31 @@ overwrite.
   path? No — same step machine, different initial state; the pin suite
   proves both entry modes.
 - **CHANGE DELTA:** ~2%. Status re-affirmed `converged`.
+
+### Loop 6 — Steps 4-6 implementation evidence (2026-09-11)
+
+- **RED:** The crashed prior session implemented Steps 4-6 but never ran
+  gates; this pass re-grounded and ran the full battery first: 10 TS errors,
+  8 eslint import/order warnings, 2 failing tests, and a harness defect (the
+  new key-store suite's `beforeEach` deleted its own
+  `SAVANT_CODE_CONFIG_DIR` override, polluting the real config dir) — all
+  captured before fixing.
+- **GREEN:** Fix pass (~50 lines): wrong-module import corrected,
+  `SAVANT_CODE_CONFIG_DIR` removed from the harness clear-list, two
+  delete-narrowed env reads fixed, `ProviderSetupName` widened to the D8
+  shape with the validation.ts-precedent bridge casts at four settings-save
+  sites, import-order across 5 files. Battery re-run fully green (evidence
+  above).
+- **AUDIT:** Every Steps 4-6 citation in this section grep-verified on disk
+  at write time (registration sites, effective-view consumers, test files,
+  line ranges). MQ11 re-verified: `scripts/validate-repository.ts` imports
+  and audits `PROVIDER_REGISTRY` only (`:11,:218,:222`).
+- **ADVERSARIAL:** The casts are the honest residue: they are runtime-
+  validated (the effective-setup lookup precedes every save) and are retired
+  by Step 9. Status remains `fixed`, not `closed` — Steps 7-10 are pending
+  separate operator approval.
+- **CHANGE DELTA:** <5% of the FID (evidence + status lines); circuit
+  breaker not triggered.
 
 ## Resolution
 
