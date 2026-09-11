@@ -46,3 +46,10 @@ dev/session-summaries/2026-08-19-desktop-app-research-planning.md
 # 2026-09-03) — generated codegen assets under target/ are binary/ephemeral
 # build artifacts, not documentation.
 desktop/src-tauri/target/
+
+# Pasted session-transcript + design-research artifacts (2026-09-11) — operator-
+# pasted reference records, not shipped documentation. Same exemption precedent
+# as the design research scratch docs above (raw transcripts/design docs with
+# long lines; enforcing MD013 on transcripts is meaningless).
+docs/lastsession.md
+docs/design/SkillOpt Integration into Savant.md

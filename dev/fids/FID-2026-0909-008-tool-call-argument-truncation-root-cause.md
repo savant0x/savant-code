@@ -401,7 +401,8 @@ pre-claimed entries replaced with the actual verdicts.
   defined once (spawn-agent-utils.ts:148-161), exactly 2 production call sites
   (child-run:65, inline:106); the FID audit record now reflects the real
   verdicts (no pre-claimed text remains); every mid-chain spread resolved on
-  disk — including the one link greps alone couldn't prove    (`stream-parser.ts:51+79` `baseParams: params` receives the full
+  disk — including the one link greps alone couldn't prove
+  (`stream-parser.ts:51+79` `baseParams: params` receives the full
     `ProcessStreamParams`, and `RunAgentStepsParams` auto-inherits the field
     via `ParamsExcluding` of both `processStream` and
     `getAgentStreamFromTemplate`), plus the n-parameter terminal link
