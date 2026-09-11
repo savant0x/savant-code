@@ -4,6 +4,37 @@
 > scope for the current task. Operator confirmation converts interpreted scope
 > into approved scope. Any drop/deferral requires a blocking presentation.
 
+## Task 36 — FID-2026-0911-001: /provider picker add-new entry → wizard (2026-09-11)
+
+> Operator directive: "when you type /provider, there should be an option in
+> the drop down to add new, that opens the full wizard easily — make the FID,
+> run the perfection loop and present it".
+
+- **FID authored RED-first:** `dev/fids/FID-2026-0911-001-provider-picker-add-new-entry.md`
+  — discoverability gap (picker rows are ✓/✗ only; wizard reachable only by
+  typing `/provider add`) + latent silent fall-through on unknown selections
+  (`use-chat-pickers.ts:174-176` unconditional `beginProviderSetup` after the
+  picker already closed).
+- **Loop 1 RED:** pins captured failing (export absent) —
+  `cli/src/commands/__tests__/provider-picker-add-new.test.ts` (6 pins).
+- **Loop 2 GREEN:** sentinel `PROVIDER_PICKER_ADD_ENTRY` in the leaf wizard
+  module (reuses the `PROVIDER_GRAMMAR_WORDS` reservation — a custom id can
+  never shadow it); action row appended in the `/provider` no-args branch
+  (`model-provider-commands.ts`); store seed skips the sentinel;
+  `provider-picker.tsx` renders the muted badge-less row; exported seam
+  `handleProviderPickerSelection` (`provider-subcommands.ts`) delegated to by
+  `use-chat-pickers.ts` — closes the overlay, then branches: sentinel →
+  wizard at id step; unknown → explicit no-echo guidance; known → existing
+  setup/activation path.
+- **Loop 3 AUDIT+ADVERSARIAL:** typecheck ×4 exit 0; eslint
+  `--max-warnings 0` (import/order auto-fixed, re-verified); prettier clean;
+  `lint:md` PASS. Runtime: new suite 6/0 (22 expect()), regression battery
+  80/0 across 9 provider-surface files. Law 4 grep: seam called from
+  `use-chat-pickers.ts`, row appended in the command def, wizard entered via
+  `startAddWizard` → `beginProviderWizard`; free build still gates `/provider`
+  (`modes.ts:125`) — MQ1 honored.
+- **Converged `fixed`;** closure (archive + CHANGELOG) is the operator's call.
+
 ## Task 35 — FID-2026-0910-004 closure (2026-09-11)
 
 > Operator directive: "Close FID-2026-0910-004: final certification,

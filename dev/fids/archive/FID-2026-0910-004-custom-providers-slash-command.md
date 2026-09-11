@@ -3,12 +3,13 @@
 **Filename:** `FID-2026-0910-004-custom-providers-slash-command.md`
 **ID:** FID-2026-0910-004
 **Severity:** medium
-**Status:** fixed (Steps 1-3 implemented 2026-09-10; Steps 4-6 implemented +
+**Status:** closed (Steps 1-3 implemented 2026-09-10; Steps 4-6 implemented +
 gate-verified 2026-09-11; Step 9 union widening + Step 7 wizard implemented +
 gate-verified 2026-09-11; Step 8 grammar + picker + docs implemented +
 gate-verified + live-smoked 2026-09-11; Loop 9 replay-guard fix + Step 9
 remainder (catalog fetcher / picker merge) + Step 10 (health edge + Law 4
-sweep) implemented + gate-verified 2026-09-11)
+sweep) implemented + gate-verified 2026-09-11; final certification + closure
+2026-09-11, operator directive)
 **Created:** 2026-09-10 23:30 (converged 2026-09-10, Loops 1-4 recorded)
 **YAGNI-Compliance:** Verified — every step maps to a user-facing
 requirement of the full feature; no speculative abstraction beyond the
@@ -949,11 +950,58 @@ gate-verified (2026-09-11 fix pass):**
 
 ## Resolution
 
-- **Closed Date:** —
-- **Fix Description:** —
-- **Tests Added:** —
-- **Verification Evidence:** —
-- **Archived:** —
+- **Closed Date:** 2026-09-11 (operator directive: final certification,
+  archive, CHANGELOG entry)
+- **Fix Description:** the full custom-provider feature — validated
+  user-authored provider DATA in `common` (parse + fail-closed merged
+  effective registry, D1-D4), the SDK + CLI settings/key-store seams
+  (Steps 4-6), the `/provider add|edit` wizard step machine with masked key
+  entry and per-step inline re-prompts (Step 7, D7), the
+  `add|edit|list|remove` grammar + picker inclusion + README docs (Step 8),
+  the `ModelProvider` union widening retiring all bridge casts (Step 9,
+  D8), a one-shot replay-tombstone secret-hygiene guard discovered by the
+  live TUI smoke (Loop 9, Law 12), the generic custom catalog fetcher with
+  the D10 degradation ladder and D9-effective-order picker merge (Step 9
+  remainder), and the health edge sweep + full Law 4 call-graph proof
+  (Step 10, C6).
+- **Tests Added:** common provider suites (51/0 incl. RED-first Steps 1-3
+  pins), sdk custom suites (6/0), CLI settings/key-store/setup suites,
+  wizard pin suite (21/0 incl. router e2e + replay-guard pins), grammar
+  suite (28/0 with the wizard continuity correction), custom-catalog suite
+  (8/0), health custom-provider pins (8/0) — aggregate gates at each loop
+  record; typecheck ×4 exit 0 at every gate; eslint `--max-warnings 0`,
+  prettier, `lint:md` clean throughout.
+- **Verification Evidence:** per-loop AUDIT blocks above (Loops 5-11), each
+  with own-run tool output; live evidence: 11/11 in-process grammar smoke
+  (isolated config dir) + winpty ConPTY TUI walk (full add flow, secrets
+  persisted only in the 0600 store — which surfaced and fixed the Loop 9
+  leak); Law 4 grep proof over every production wiring edge including the
+  repo-validation built-in-only grep (Loop 11).
+- **Archived:** 2026-09-11 — moved to `dev/fids/archive/` in the closure
+  commit following this edit (Orchestrator executes the Recorder-authored
+  filesystem move; record in `archive/README.md`, 2026-09-11 section).
+
+### Loop 12 — Final certification (2026-09-11)
+
+- **Termination criterion applied:** operator directive to ship — the
+  Perfection Loop terminates with Final Certification (FID §Termination
+  Criteria). Deep-audit sweep across Loops 5-11 yields ZERO actionable
+  improvements: every step implemented RED-first, every gate own-run green,
+  every wiring edge grep-proven, the one live-discovered defect (Loop 9)
+  fixed and pinned, and no NEEDS-REVIEW boundary remains (the Loop 8 tmux
+  gap was discharged by the Loop 9 winpty ConPTY walk).
+- **Five Questions:** ALL cases (edit/remove/malformed/collision paths are
+  pinned, not just the happy path); scales (the registry merge is O(n)
+  over user data with bounded per-entry validation); hostile-attacker safe
+  (hostile hand-built registrations rejected before any state mutation,
+  secrets confined to the 0600 store + masked input, replay guard
+  fail-closed); maintainable (one validation truth per concern — parser,
+  wizard, grammar words, catalog fetcher — every extension seam reused,
+  none duplicated); industry-standard shape (data-only extensibility, no
+  executable configuration).
+- **Certification:** the FID is COMPLETE; code is in tree, gate-verified,
+  and committed (`547946c`, `15074fe`, `7fdbe15`, `7ada1bb`, `4136e9b`,
+  `3b2cecd`, `074cda9`). Archived the same day.
 
 ## Lessons Learned
 
