@@ -1,6 +1,7 @@
 import { toolNames } from '@savant-code/common/tools/constants'
 import { AbortError } from '@savant-code/common/util/error'
 
+import { buildHookInput, getHookEngine } from '../hooks/engine'
 import { processStreamWithTools } from '../tool-stream-parser'
 import { handleStreamErrorChunk } from './stream-parser/error-chunk'
 import { buildFinalMessageHistory } from './stream-parser/finalize'
@@ -183,6 +184,30 @@ export async function processStream(params: ProcessStreamParams) {
           errorOutcome.hasNativeIncompleteToolCall
         if (errorOutcome.lastIncompleteToolName !== undefined) {
           lastIncompleteToolName = errorOutcome.lastIncompleteToolName
+        }
+        // FID-2026-0909-008 Step 5: a native-incomplete stream error never
+        // executes a tool, so the tool-executor's PostToolUseFailure capture
+        // never sees it — the truncation class was invisible to the
+        // recurrence engine (0 ledger records despite ~11 incidents the day
+        // this FID was authored). Route the event to the same
+        // experience-capture sink here: one record per occurrence, deduped
+        // by the FID-2026-0909-006-normalized error line. Fire-and-forget
+        // (fail-open by the hook contract; a no-op when no hook is
+        // configured). No tool_input exists at the stream layer, so nothing
+        // raw is ever persisted.
+        if (errorOutcome.hasNativeIncompleteToolCall) {
+          const hookProjectRoot = fileContext.projectRoot ?? fileContext.cwd
+          if (hookProjectRoot) {
+            getHookEngine(hookProjectRoot).fireAndForgetTrigger(
+              buildHookInput({
+                event: 'PostToolUseFailure',
+                sessionId: agentState.runId ?? agentState.agentId,
+                cwd: hookProjectRoot,
+                toolName: errorOutcome.lastIncompleteToolName,
+                errorMessage: chunk.message,
+              }),
+            )
+          }
         }
       } else if (chunk.type === 'tool-call') {
       } else {

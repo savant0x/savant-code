@@ -4,6 +4,40 @@
 > scope for the current task. Operator confirmation converts interpreted scope
 > into approved scope. Any drop/deferral requires a blocking presentation.
 
+## Task 26 — FID-2026-0909-008 Step 5: native-incomplete ledger capture (2026-09-10)
+
+> Operator directive: "Pick up FID-2026-0909-008 Step 5 or run the perfection
+> loop on it." Step 5 = route native-incomplete stream errors into the
+> experience-capture path (Missed Question #1) — the truncation class is
+> invisible to the recurrence engine (0 ledger records, ~11 incidents).
+> Step 4's uncommitted work landed first as its own commit (G3). No drops,
+> no deferrals.
+
+- [x] **T26-A.** Commit Step 4's uncommitted work path-scoped. **Done
+      2026-09-10** — commit `5859047f` (15 files).
+- [x] **T26-B.** RED pin: a native-incomplete step appends one
+      experience record per occurrence (tool_failure, tool name, normalized
+      error line). **Done 2026-09-10** —
+      `native-incomplete-capture.test.ts`; RED = 0 records pre-fix, GREEN =
+      3 (ladder exhausts: 3 steps × 1 error chunk; pin corrected to the
+      true contract after root-causing, not fitted).
+- [x] **T26-C.** GREEN: capture via the existing hook-engine +
+      experience-capture sink (Law 13 — one sink; fail-open by the hook
+      contract). **Scope deviation, recorded:** implemented at the
+      stream-parser error-chunk site (`stream-parser.ts:186-211`), not the
+      loop strike site as originally scoped — the stream layer is the
+      earliest point with `chunk.message` + `toolName` + `finishReason`,
+      fires once per occurrence (the strike site would double-count on
+      escalation), and `fileContext` is already in params. Same sink, same
+      record shape.
+- [x] **T26-D.** Gates: typecheck (0), new pin suite, strikes + capture
+      suites (15/0), full agent-runtime suite (1379/0 — the 43-failure
+      root-run was the vendored `resources/freebuff-main/` copy, not this
+      repo), eslint 0, prettier clean. **Done 2026-09-10**.
+- [x] **T26-E.** FID Step 5 status + Verification Results + loop record;
+      commit; present. **Done 2026-09-10** — FID stays `fixed` (closure
+      needs the live NEEDS-REVIEW proof); commit below.
+
 ## Task 25 — Implement FID-2026-0910-001 skill-notification surfaces (2026-09-10)
 
 > Operator directive: "Implement FID-2026-0910-001's three skill-notification

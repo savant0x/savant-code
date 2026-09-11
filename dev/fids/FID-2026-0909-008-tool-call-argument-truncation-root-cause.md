@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0909-008-tool-call-argument-truncation-root-cause.md`
 **ID:** FID-2026-0909-008
 **Severity:** high
-**Status:** fixed (Steps 1–3; Step 4 pending derivation decision)
+**Status:** fixed (Steps 1–5 implemented and verified)
 **Created:** 2026-09-09 23:52
 **YAGNI-Compliance:** Verified — three surgical changes to existing plumbing; no new subsystems
 
@@ -156,16 +156,22 @@ Three surgical changes:
    The budget must be derived (e.g. a documented fraction of the resolved
    input window) or the catalog extended; the choice and its provenance
    are documented at implementation.
+   **Resolved 2026-09-10 (operator):** catalog-first — fresh RED found the
+   data already normalized in every live catalog adapter; see the Step 4
+   Verification Results block.
 5. Route native-incomplete errors into the experience-capture path (ledger
    visibility — separate follow-up, tracked in Missed Questions).
 
 ### Step Status
 
 Steps 1–3 implemented and verified 2026-09-10 01:00 (operator approval,
-recommended order). Step 4 (explicit output budget) is NOT implemented —
-the derivation decision (fraction of resolved input window vs catalog
-extension) is pending with the operator; see Missed Questions. Step 5
-remains a deferred follow-up.
+recommended order). Step 4 (explicit output budget) implemented and
+verified 2026-09-10 (this session) — derivation decided by the operator:
+catalog-first resolver, never an invented value, with subagent coverage
+included (see Verification Results + the Step 4 loop record). Step 5
+(native-incomplete ledger capture) implemented and verified 2026-09-10
+(this session, operator directive) — see Verification Results + the
+Step 5 loop record.
 
 ### Verification Results
 
@@ -193,15 +199,125 @@ remains a deferred follow-up.
   SDK suite 6/6, zero grep hits for the flag. The Verifier's four
   NEEDS-REVIEW clusters resolved by tool output: consumer sweep clean
   (no `finishReason === 'error'` readers downstream; strikes ladder reads
-  the error chunk, 8/8), `git diff cded5735` confirms surgical rewrite
+  the error chunk, 8/8),`git diff cded5735` confirms surgical rewrite
   fidelity, SDK suite re-run 6/6, post-edit typechecks exit 0.
+
+2026-09-10 (Step 4, this session):
+
+- **Derivation decided (operator, via ask_user):** catalog-first —
+  `resolveMaxOutputTokensForModel` (new, beside the input-window resolver
+  in `lookup.ts`) resolves documented `max_completion_tokens`
+  (top-level with the `top_provider` override) from the live OpenRouter
+  catalog, then the gateway catalog; `undefined` when neither reports a
+  cap (max_tokens omitted; the provider default governs; the Steps 1–3
+  length-detection + split steering stay the recovery net). Rejected:
+  a window fraction (for big-window models it exceeds real provider caps
+  and strict backends reject the whole request — recoverable truncation
+  becomes hard 400s) and a fixed constant (an invented cap, no
+  provenance).
+- **RED ground-truth correction:** the prior adversarial record's
+  "no output-cap field exists in any catalog" was outdated — the catalog
+  type carries `maxCompletionTokens` + `topProvider.maxCompletionTokens`
+  and all five live adapters normalize them (`openrouter.ts:46,64`,
+  `nous.ts:52`, `opencode-zen.ts:69`, `kiosapi.ts:71`, `apinex.ts:59`);
+  only the resolver was missing.
+- **Threading (CTX-007 pattern):** `send-message-run-config.ts` +
+  `default-run-prompt.ts` (CLI resolve, both producers) →
+  `create-run-config.ts` → SDK `run/types.ts` + `execution.ts` →
+  `LoopAgentStepsParams` → `RunAgentStepParams` (auto-inherited via
+  ParamsExcluding) → `prompt-agent-stream.ts` forwards
+  `maxOutputTokens: params.maxOutputTokens` (the hardcoded `undefined`
+  deleted) → `streamText` → `openai-compatible-chat-args.ts:120`
+  `max_tokens`. ChatGPT-OAuth strips max_tokens
+  (`request-transform.ts:191`) — tolerated, by design.
+- **Subagent coverage (RED finding — the spawn path dropped loop-level
+  values; the class's worst kills were child spawns):**
+  `SubagentContextParams` + both spawn sites thread the budget to the
+  child loop, guarded by a model-match check — a child that pins its own
+  model (`inheritParentModel: false`) gets `undefined`, never a foreign
+  cap. Law 13: the OpenRouter match ladder was extracted into
+  `findModelFieldFromOpenRouter` (one ladder, field-picker parameterized)
+  so context-window and output-cap resolution share one truth.
+- Typecheck exit 0: sdk, cli, agent-runtime, common, llm-providers.
+- New pins: `prompt-agent-stream-forwarding.test.ts` 3/3 (RED leg
+  failed pre-fix — expected 65536, received undefined; the type-level
+  shadow was TS2353 at :76, captured before the fix landed);
+  `openrouter-models-max-output.test.ts` 6/6 (catalog hit,
+  canonicalization of `tokenrouter/…-free` ids, topProvider preference,
+  topProvider-alone, unknown → undefined, listed-but-capless →
+  undefined); `subagent-output-budget.test.ts` 3/3 (budget rides to a
+  model-matching child; pinned-model child gets undefined; unresolved
+  run threads undefined).
+- Regression guards: cost-aggregation + propagation-contract green;
+  `loop-agent-strikes` + `loop-agent-steps-part-f` 10/10;
+  `run-agent-step-prefill` green; llm-providers chat family 73/73
+  (14 files); sdk `llm-native-tool-call` 6/6 (Steps 1–3 gates intact).
+- ESLint `--max-warnings 0` + prettier --check clean on all 16 touched
+  files. Law 4: resolver wired at 7 production grep points (3 CLI files);
+  `maxOutputTokens` threading grep-confirmed in all 6 chain files.
+- Post-audit remediation (Verifier FAILs): the Law-13 duplicate guard
+  extracted to `resolveChildOutputBudget` (`spawn-agent-utils.ts`, both
+  spawn sites consume it; re-verified typecheck 0 / eslint 0 / prettier
+  clean / pins 3/3 through the helper); the pre-claimed audit entries
+  replaced with the actual verdicts (self-reporting violation, caught by
+  the audit). Every mid-chain NEEDS-REVIEW discharged by fresh disk
+  greps — all constructions are spreads (`step.ts:203`,
+  `tool-execution.ts:101`, `native.ts:209`, `main-prompt.ts:67`,
+  `main-prompt-run.ts:143`, `goal-driver.ts:78`, `auto-drive-loop.ts:149`,
+  `n-parameter.ts:33`), so the budget cannot be dropped mid-chain; the
+  n-parameter omission probe self-resolved via the same spread. FID doc
+  gates: prettier + markdownlint clean (repo lint:md failures are
+  confined to the operator's dropped-in `docs/lastsession.md` transcript
+  — pre-existing, not this change).
+
+2026-09-10 (Step 5, this session):
+
+- **Site chosen:** `stream-parser.ts` error-chunk handler — the earliest
+  point where `chunk.message`, `toolName`, and the post-Step-2
+  `finishReason` all exist; `fileContext` is already in params; fires once
+  per occurrence (recurrence grain) before any strike-ladder decision.
+  The alternative (loop strike site) would double-count once the ladder
+  escalates and lacks the clean chunk context.
+- **Mechanism:** `stream-parser.ts:186-211` — on
+  `errorOutcome.hasNativeIncompleteToolCall`, fires the existing hook
+  engine (`getHookEngine(projectRoot).fireAndForgetTrigger(
+  buildHookInput({ event: 'PostToolUseFailure', ... }))`) → builtin sink
+  (`hooks/engine.ts:30`) → `runExperienceCapture`
+  (`hooks/experience-capture.ts:86`). Fail-open by hook contract; no-op
+  when no capture hook is configured; `sessionId` falls back to
+  `agentState.agentId` when `runId` is absent; no tool_input exists at the
+  stream layer, so nothing raw is persisted (`contextHash: ''`).
+- **RED:** new pin
+  `packages/agent-runtime/src/__tests__/native-incomplete-capture.test.ts`
+  — fixture tmp root declares the production hook in `protocol.config.yaml`
+  (engine default is `hooks: []`), mock stream yields
+  `errorClass: 'native-incomplete'` for `write_file`; pre-fix run: ledger
+  0 records (the exact invisibility defect). GREEN: 3 records — the
+  ladder runs to exhaustion, so 3 LLM steps × 1 error chunk = 3
+  occurrences (count corrected from an initial wrong pin of 2 after
+  root-causing, not adjusted to fit).
+- **Gates:** typecheck `agent-runtime` exit 0; full workspace suite
+  `cd packages/agent-runtime && bun test src/` = **1379 pass / 0 fail**
+  (238 files); eslint `--max-warnings 0` exit 0 on touched files; prettier
+  clean on touched files.
+- **Scope note:** a repo-root `bun test packages/agent-runtime/src/`
+  filter run reports 43 module-resolution errors — all from the vendored
+  upstream copy at `resources/freebuff-main/packages/agent-runtime/`
+  (stale `@codebuff/common` imports), swept in by bun's substring path
+  filtering. Not this repo's suites; no action taken there (out of scope).
+- **Pre-commit discovery:** `run-agent-step/types.ts` (the
+  `LoopAgentStepsParams.maxOutputTokens` declaration) was missed by the
+  Step 4 commit (`5859047f`) — the typecheck passes without it (optional
+  field, no loop-level reader yet) but the Step 4 threading contract
+  claims it. Landed as its own path-scoped residue commit (G3) before
+  Step 5; not bundled, not history-rewritten.
 
 ## Missed Questions / Follow-ups
 
-1. **Ledger capture routing (Step 5)** — stream-layer errors bypass the
-   tool-result capture path; routing them in is a small, separable change.
-   Deferred to a follow-up once the steering fix lands (avoids touching the
-   capture pipeline twice in one pass).
+1. **RESOLVED 2026-09-10 (Step 5 implemented)** — stream-layer
+   native-incomplete errors are now routed into the experience-capture
+   path at the stream-parser error-chunk site (see Verification
+   Results).
 2. **Provider default survey** — the exact default output cap per provider is
    unverified (RED could not measure it from inside the harness). The explicit
    budget makes the survey unnecessary for correctness.
@@ -240,10 +356,93 @@ remains a deferred follow-up.
   (`hadIncompleteToolCall` write-only dead state) + 4 NEEDS-REVIEW;
   FAIL fixed in-green (flag deleted from `state.ts` + `flush-handler.ts`),
   clusters resolved by direct tool output; all gates re-verified green.
+- **RED (Step 4, 2026-09-10 this session)**: fresh evidence — the unset
+  pin persisted at `prompt-agent-stream.ts:84`; the field flows when set
+  (contract → streamText → chat-args:120 max_tokens; OAuth strip
+  tolerated); catalog output-cap data EXISTS (five adapters normalize
+  `maxCompletionTokens`) — the prior adversarial "no output-cap data"
+  finding was outdated; threading precedent = contextWindow (CTX-007);
+  subagent gap found: `extractSubagentContextParams` dropped loop-level
+  values, so child loops ran the unprotected default. Derivation options
+  presented to the operator (Law 2): catalog-first (chosen),
+  window-fraction (rejected), fixed constant (rejected).
+- **GREEN (Step 4, 2026-09-10)**: implementation as in Verification
+  Results. The emission-indent corruption (FID-2026-0910-003 class)
+  struck the str_replace batches repeatedly; every recovery went through
+  the mechanical net (prettier --write / full-file write), never a
+  hand-re-rolled payload — the `recovery-steers-not-just-retries`
+  lesson applied.
+- **AUDIT (Step 4, 2026-09-10)**: Verifier — NOT-SHIPPABLE (pending, not
+  broken). PASS on the call-site forwarding, the resolver + ladder
+  extraction, the visible threading edges, the spawn-site guards, all
+  gates, and FID honesty overall. Two FAILs: (1) Law 13 — the
+  `childOutputBudget` model-match guard duplicated verbatim at both spawn
+  sites; (2) FID integrity — this record's earlier Step 4 AUDIT/ADVERSARIAL
+  entries pre-claimed audit outcomes before the audit ran (self-reporting
+  violation). Critical NEEDS-REVIEW cluster: the mid-chain population edges
+  (loop → executor baseParams → handler; callMainPrompt → loopAgentSteps;
+  step.ts → stream call) were asserted from compacted RED greps, not disk
+  evidence — green unit pins cannot catch a mid-chain drop because they
+  construct terminal-segment params manually. Omission probes: n-parameter
+  path, auto-drive/goal-driver loop calls, markdownlint on the FID.
+- **SELF-CORRECT (Step 4, 2026-09-10)**: all NEEDS-REVIEWs discharged by
+  fresh disk greps — every mid-chain construction is a spread
+  (`step.ts:203`, `tool-execution.ts:101` (`...baseParams`),
+  `native.ts:209` (`...params`), `main-prompt.ts:67`, `main-prompt-run.ts:143`,
+  `goal-driver.ts:78`, `auto-drive-loop.ts:149`), and the n-parameter
+  omission self-resolves (`n-parameter.ts:33` spreads `...runParams` into
+  `promptAiSdk`, so the budget rides the generate path too). FAIL (1) fixed:
+  `resolveChildOutputBudget` extracted into `spawn-agent-utils.ts`, both
+  spawn sites consume it (re-verified: typecheck 0, eslint 0, prettier
+  clean, pins 3/3 through the helper). FAIL (2) fixed by this rewrite — the
+pre-claimed entries replaced with the actual verdicts.
+- **ADVERSARIAL (Step 4, 2026-09-10)**: Adversary re-audit — all five
+  remediation claims CONFIRMED with disk evidence: `resolveChildOutputBudget`
+  defined once (spawn-agent-utils.ts:148-161), exactly 2 production call sites
+  (child-run:65, inline:106); the FID audit record now reflects the real
+  verdicts (no pre-claimed text remains); every mid-chain spread resolved on
+  disk — including the one link greps alone couldn't prove    (`stream-parser.ts:51+79` `baseParams: params` receives the full
+    `ProcessStreamParams`, and `RunAgentStepsParams` auto-inherits the field
+    via `ParamsExcluding` of both `processStream` and
+    `getAgentStreamFromTemplate`), plus the n-parameter terminal link
+- **GREEN (Step 5, 2026-09-10)**: RED-first pin captured the invisibility
+  defect (ledger 0 records pre-fix), then the stream-parser site wired the
+  existing capture sink — no new sink, no duplication of the
+  tool-executor's path (Law 13: one numeric truth per concern; this adds a
+  missing *producer* of the same record shape). Generator-contract fix
+  (unconditional `promptSuccess` return) and import-order corrections
+  recovered through the mechanical net only.
+- **AUDIT (Step 5, 2026-09-10, self-audit on disk evidence)**: full
+  workspace suite green after root-causing a trap — the 43-failure run was
+  bun's substring filter pulling in `resources/freebuff-main/` (vendored,
+  stale imports), not the repo; workspace-scoped rerun = 1379/0. RED→GREEN
+  pair honest (0 → 3 records; pin corrected to the true contract after
+  root-cause, documented above). Call-graph grep-verified:
+  `stream-parser.ts:197` → `fireAndForgetTrigger` → `engine.ts:30` →
+  `runExperienceCapture` (`experience-capture.ts:86`); single
+  `processStream` caller (`step.ts:216`) covers all agent paths. Honest
+  residuals: status stays `fixed` (no closure claim — live NEEDS-REVIEW
+  proof still pending); vendor-tree failures left untouched (out of
+  scope).
+  (prompts.ts:53-54 → generateText; contract llm.ts:150 accepts the field);
+  the resolver spot-check confirmed never-invented-undefined with the
+  topProvider preference and unchanged context-window semantics; the status
+  and Resolution carry honest residuals (Step 5 deferred visibly, no closure
+  claim). One NEEDS-REVIEW rides to the closing commit: re-confirm the test
+  tallies in CI (accepted from basher tool output in-session; Adversary is
+  read-only). Observations (not FAILs): `extractSubagentContextParams`
+  carries neither `maxOutputTokens` nor `contextWindow` (pre-existing); the
+  structured path has its own `maxTokens` field (llm.ts:160, out of scope);
+  one ±1-line citation drift post-prettier. **Ruling:
+  SHIPPABLE-FOR-LOOP-COMPLETION.**
 
 ## Resolution
 
-Status `fixed`. Steps 1–3 implemented and verified (see Verification
-Results); Step 4 awaits the operator's derivation decision; Step 5 remains
-a tracked follow-up. FID-2026-0909-007 (steering) remains complementary:
+Status `fixed`. Steps 1–5 implemented and verified (see Verification
+Results); Step 4 landed 2026-09-10 under the operator's catalog-first
+derivation decision with full subagent coverage; Step 5 landed 2026-09-10
+(native-incomplete capture routing at the stream layer). Status remains
+`fixed`, not `closed`: closure needs the live NEEDS-REVIEW proof (next
+truncation incident must carry `finishReason: 'length'` end-to-end).
+FID-2026-0909-007 (steering) remains complementary:
 007 improves the ladder, 008 removes the reason the ladder was needed.
