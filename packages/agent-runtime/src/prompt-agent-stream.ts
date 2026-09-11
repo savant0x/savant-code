@@ -20,6 +20,13 @@ export const getAgentStreamFromTemplate = (params: {
   fingerprintId: string
   includeCacheControl?: boolean
   localAgentTemplates: Record<string, AgentTemplate>
+  /** FID-2026-0909-008 Step 4: the run's resolved output budget
+   *  (max_completion_tokens from the model catalog). Forwarded to the SDK
+   *  stream so requests carry an explicit, model-appropriate max_tokens —
+   *  an unset budget let provider defaults truncate large native tool calls
+   *  mid-JSON. Absent → undefined → the field is omitted from the request
+   *  and the provider default governs. */
+  maxOutputTokens?: number
   logger: Logger
   messages: Message[]
   runId: string
@@ -81,7 +88,7 @@ export const getAgentStreamFromTemplate = (params: {
     includeCacheControl,
     logger,
     localAgentTemplates,
-    maxOutputTokens: undefined,
+    maxOutputTokens: params.maxOutputTokens,
     maxRetries: 3,
     messages,
     model,

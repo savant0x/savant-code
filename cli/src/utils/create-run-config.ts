@@ -47,6 +47,10 @@ export type CreateRunConfigParams = {
   /** FID-2026-0725-085 CTX-007: Resolved context window from OpenRouter catalog.
    *  Passed to agent runtime for accurate compaction thresholds. */
   contextWindow?: number
+  /** FID-2026-0909-008 Step 4: resolved output budget (max_completion_tokens
+   *  from the model catalog) — threaded to the agent stream call site so
+   *  requests carry an explicit, model-appropriate max_tokens. */
+  maxOutputTokens?: number
   /** FID-2026-0814-004 H-05/H-06/H-07: compression config from
    *  `protocol.config.yaml` — `microCompact`, `keepRecentTokens`,
    *  `autoCompactRatio`, `forceCompactOffset`, and the micro-compact
@@ -206,6 +210,7 @@ export const createRunConfig = (params: CreateRunConfigParams) => {
     protocolVariant,
     designContract,
     contextWindow: params.contextWindow,
+    maxOutputTokens: params.maxOutputTokens,
     checkpointDir: params.checkpointDir,
     checkpointTurnId: params.checkpointTurnId,
     // FID-2026-0804-009: harness ECHO compliance is ON by default in the CLI.

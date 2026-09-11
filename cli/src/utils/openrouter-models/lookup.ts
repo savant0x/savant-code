@@ -139,46 +139,73 @@ export function findGatewayModel(modelId: string): OpenRouterModel | undefined {
 }
 
 /**
- * Find the real context length for a model by checking the live OpenRouter
- * catalog. Strips provider prefixes and variant suffixes to find the base
- * model (e.g. "tokenrouter/z-ai/glm-5.2-free" → "z-ai/glm-5.2").
+ * Field picker for {@link findModelFieldFromOpenRouter}: the model's context
+ * length, preferring topProvider when present — the OpenRouter API often
+ * omits the top-level context_length for resold models.
+ */
+const contextLengthOf = (
+  m: OpenRouterModel | undefined,
+): number | undefined => {
+  if (!m) return undefined
+  const tp = m.topProvider?.contextLength
+  if (typeof tp === 'number') return tp
+  if (typeof m.contextLength === 'number') return m.contextLength
+  return undefined
+}
+
+/**
+ * Field picker for {@link findModelFieldFromOpenRouter}: the model's max
+ * completion tokens (the output budget), preferring topProvider when present.
+ */
+const maxCompletionOf = (
+  m: OpenRouterModel | undefined,
+): number | undefined => {
+  if (!m) return undefined
+  const tp = m.topProvider?.maxCompletionTokens
+  if (typeof tp === 'number') return tp
+  if (typeof m.maxCompletionTokens === 'number') return m.maxCompletionTokens
+  return undefined
+}
+
+/**
+ * Find a numeric model field by checking the live OpenRouter catalog.
+ * Strips provider prefixes and variant suffixes to find the base model
+ * (e.g. "tokenrouter/z-ai/glm-5.2-free" → "z-ai/glm-5.2").
  * TokenHarbor model IDs follow the same internal-prefix convention.
  *
- * This is called by {@link resolveContextWindowForModel} when the gateway
- * catalog match has no contextLength or only an inferred one.
+ * FID-2026-0909-008 Step 4: the ladder (canonical → base → family →
+ * name-family → name → fuzzy-name) was extracted from the former
+ * `findContextLengthFromOpenRouter` so context-window and output-cap
+ * resolution share one match truth (Law 13) — the ladder is identical,
+ * only the field picker differs.
+ *
+ * Called by {@link resolveContextWindowForModel} and
+ * {@link resolveMaxOutputTokensForModel}.
  */
-function findContextLengthFromOpenRouter(modelId: string): number | undefined {
+function findModelFieldFromOpenRouter(
+  modelId: string,
+  field: (m: OpenRouterModel | undefined) => number | undefined,
+): number | undefined {
   const openRouterCatalog = getCachedOpenRouterModels()
   if (openRouterCatalog.length === 0) return undefined
 
   const canonical = toCanonicalModelId(modelId)
 
-  // Helper: extract contextLength preferring topProvider if available.
-  const ctx = (m: OpenRouterModel | undefined): number | undefined => {
-    if (!m) return undefined
-    // Prefer topProvider.contextLength when present — the OpenRouter API
-    // often omits the top-level context_length for resold models.
-    const tp = m.topProvider?.contextLength
-    if (typeof tp === 'number') return tp
-    if (typeof m.contextLength === 'number') return m.contextLength
-    return undefined
-  }
-
   // 1. Exact canonical match (e.g. "z-ai/glm-5.2" → "z-ai/glm-5.2")
   const exact = openRouterCatalog.find((m) => m.id === canonical)
-  if (ctx(exact) !== undefined) return ctx(exact)!
+  if (field(exact) !== undefined) return field(exact)!
 
   // 2. Try without any provider prefix at all
   const withoutProvider = canonical.replace(/^[a-z0-9-]+\//, '')
   const byBase = openRouterCatalog.find((m) => m.id === withoutProvider)
-  if (ctx(byBase) !== undefined) return ctx(byBase)!
+  if (field(byBase) !== undefined) return field(byBase)!
 
   // 3. Family match: strip version suffix and match by prefix
   // Handles v-prefixed versions: "mimo-v2.5" → "mimo" → matches "xiaomi/mimo-v2.5"
   const familyId = canonical.replace(/-v?\d+(\.\d+)?$/, '')
   if (familyId && familyId !== canonical) {
     const family = openRouterCatalog.find((m) => m.id.startsWith(familyId))
-    if (ctx(family) !== undefined) return ctx(family)!
+    if (field(family) !== undefined) return field(family)!
   }
 
   // 3b. Name-family match: when the ID-based family match misses (e.g.
@@ -195,7 +222,7 @@ function findContextLengthFromOpenRouter(modelId: string): number | undefined {
           ?.replace(/-v?\d+(\.\d+)?$/, '') ?? ''
       return mFamily === familyName
     })
-    if (ctx(byFamilyName) !== undefined) return ctx(byFamilyName)!
+    if (field(byFamilyName) !== undefined) return field(byFamilyName)!
   }
 
   // 4. Name-based fallback: when gateway model IDs (e.g.
@@ -209,7 +236,7 @@ function findContextLengthFromOpenRouter(modelId: string): number | undefined {
     const byName = openRouterCatalog.find(
       (m) => m.name?.toLowerCase() === nameLower,
     )
-    if (ctx(byName) !== undefined) return ctx(byName)!
+    if (field(byName) !== undefined) return field(byName)!
 
     // Fuzzy: match when one name contains the other (handles suffixes
     // like "MiMo V2.5" vs "MiMo V2.5 Pro").
@@ -217,7 +244,7 @@ function findContextLengthFromOpenRouter(modelId: string): number | undefined {
       const mName = m.name?.toLowerCase() ?? ''
       return mName.includes(nameLower) || nameLower.includes(mName)
     })
-    if (ctx(byFuzzyName) !== undefined) return ctx(byFuzzyName)!
+    if (field(byFuzzyName) !== undefined) return field(byFuzzyName)!
   }
 
   return undefined
@@ -236,7 +263,7 @@ export function resolveContextWindowForModel(modelId: string): number {
   // from the API, whereas hardcoded catalogs (TokenRouter, TokenHarbor,
   // OpenCode Go) use
   // inferred values that may be wrong (e.g. GLM 5.2 has 1M context, not 128k).
-  const fromOpenRouter = findContextLengthFromOpenRouter(modelId)
+  const fromOpenRouter = findModelFieldFromOpenRouter(modelId, contextLengthOf)
   if (typeof fromOpenRouter === 'number') return fromOpenRouter
 
   // Fall back to the gateway catalog (may have inferred context lengths)
@@ -246,4 +273,37 @@ export function resolveContextWindowForModel(modelId: string): number {
   }
 
   return getContextWindowForModel(modelId)
+}
+
+/**
+ * Resolve the model's documented output budget (max completion tokens).
+ * Priority:
+ * 1. Live OpenRouter catalog — top-level `max_completion_tokens` with the
+ *    `top_provider.max_completion_tokens` override, as reported by the API
+ * 2. Cached gateway catalog (same field, normalized by every live adapter)
+ * 3. undefined — NEVER an invented value
+ *
+ * FID-2026-0909-008 Step 4: the resolved budget is threaded CLI → SDK →
+ * agent loop → stream call site so chat-completions requests carry an
+ * explicit, model-appropriate `max_tokens` instead of an unset field that
+ * lets provider defaults truncate large native tool calls mid-JSON.
+ * When no catalog reports a cap, `undefined` omits `max_tokens` from the
+ * request (the provider default governs) and the Steps 1–3
+ * `finishReason: 'length'` detection + split-payload steering remain the
+ * recovery net — an invented number (a fraction of the input window or a
+ * fixed constant) can exceed a provider's true cap and turn recoverable
+ * truncation into hard request rejection.
+ */
+export function resolveMaxOutputTokensForModel(
+  modelId: string,
+): number | undefined {
+  const fromOpenRouter = findModelFieldFromOpenRouter(modelId, maxCompletionOf)
+  if (typeof fromOpenRouter === 'number') return fromOpenRouter
+
+  const fromCatalog = findGatewayModel(modelId)
+  if (typeof fromCatalog?.maxCompletionTokens === 'number') {
+    return fromCatalog.maxCompletionTokens
+  }
+
+  return undefined
 }

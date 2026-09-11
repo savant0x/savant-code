@@ -13,6 +13,7 @@ import {
   executeSubagent,
   createAgentState,
   extractSubagentContextParams,
+  resolveChildOutputBudget,
   withParentModel,
 } from './spawn-agent-utils'
 import { filterToolSet } from '../../../tools/filter-tool-set'
@@ -100,6 +101,14 @@ export const handleSpawnAgentInline = (async (
   // Inherit the parent's model so inline subagents respect the user's selected model.
   const agentTemplate = withParentModel(childTemplate, parentAgentTemplate)
 
+  // FID-2026-0909-008 Step 4: same guarded propagation as the spawn_agents
+  // path (shared guard — see resolveChildOutputBudget).
+  const childOutputBudget = resolveChildOutputBudget(
+    agentTemplate,
+    parentAgentTemplate,
+    params.maxOutputTokens,
+  )
+
   validateAgentInput(agentTemplate, agentType, prompt, spawnParams)
 
   // FID-2026-0824-024 post-closure amendment: inject operator-configured
@@ -171,6 +180,7 @@ export const handleSpawnAgentInline = (async (
     parentAgentState,
     agentState: childAgentState,
     fingerprintId,
+    maxOutputTokens: childOutputBudget,
     parentSystemPrompt: system,
     parentTools: inheritedTools,
     onResponseChunk: (chunk) => {

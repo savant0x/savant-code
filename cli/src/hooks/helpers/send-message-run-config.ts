@@ -16,6 +16,7 @@ import {
   findGatewayModel,
   formatModelInfo,
   resolveContextWindowForModel,
+  resolveMaxOutputTokensForModel,
 } from '../../utils/openrouter-models'
 import { getSavantFreeInstanceId } from '../use-savant-free-session'
 
@@ -153,6 +154,14 @@ export const buildSendRunConfig = (params: BuildSendRunConfigParams) => {
   const resolvedContextWindow = windowModelId
     ? resolveContextWindowForModel(windowModelId)
     : undefined
+  // FID-2026-0909-008 Step 4: resolve the model's documented output budget
+  // (max_completion_tokens) the same way — threaded so chat-completions
+  // requests carry an explicit max_tokens instead of an unset field that
+  // lets provider defaults truncate large native tool calls mid-JSON.
+  // undefined when no catalog reports a cap (never an invented value).
+  const resolvedMaxOutputTokens = windowModelId
+    ? resolveMaxOutputTokensForModel(windowModelId)
+    : undefined
 
   const cachedModel = effectiveModelId
     ? findGatewayModel(effectiveModelId)
@@ -176,6 +185,7 @@ export const buildSendRunConfig = (params: BuildSendRunConfigParams) => {
         : undefined,
     modelInfoText,
     contextWindow: resolvedContextWindow,
+    maxOutputTokens: resolvedMaxOutputTokens,
     checkpointDir,
     checkpointTurnId,
     onStateSnapshot,

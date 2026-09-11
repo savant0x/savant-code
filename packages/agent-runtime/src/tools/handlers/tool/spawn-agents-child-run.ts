@@ -9,6 +9,7 @@ import {
   createAgentState,
   executeSubagent,
   extractSubagentContextParams,
+  resolveChildOutputBudget,
   withParentModel,
 } from './spawn-agent-utils'
 import { loadEvidenceRecords } from '../../../evidence/spill'
@@ -57,6 +58,15 @@ export async function runSingleSubagent({
 
   // Inherit the parent's model so subagents respect the user's selected model.
   const agentTemplate = withParentModel(childTemplate, parentAgentTemplate)
+
+  // FID-2026-0909-008 Step 4: propagate the run's resolved output budget to
+  // the child loop, but only when the child actually runs the model the
+  // budget was resolved for (shared guard — see resolveChildOutputBudget).
+  const childOutputBudget = resolveChildOutputBudget(
+    agentTemplate,
+    parentAgentTemplate,
+    params.maxOutputTokens,
+  )
 
   validateAgentInput(agentTemplate, agentType, prompt, spawnParams)
 
@@ -124,6 +134,7 @@ export async function runSingleSubagent({
       parentAgentState,
       agentState: childState,
       fingerprintId,
+      maxOutputTokens: childOutputBudget,
       isOnlyChild,
       excludeToolFromMessageHistory: false,
       parentSystemPrompt,

@@ -192,6 +192,13 @@ export type RunOptions = {
    *   window. Absent → the runtime falls back with a loud warning, never a
    *   silent 200k default. */
   contextWindow?: number
+  /** FID-2026-0909-008 Step 4: resolved output budget (max_completion_tokens
+   *  from the model catalog) for the run's effective model. Threaded CLI →
+   *  SDK → agent loop → stream call site so chat-completions requests carry
+   *  an explicit, model-appropriate max_tokens — an unset budget let provider
+   *  defaults truncate large native tool calls mid-JSON. Absent → the field
+   *  is omitted and the provider default governs (never an invented value). */
+  maxOutputTokens?: number
   /** FID-2026-0814-004 H-05/H-06/H-07: compression config threaded from
    *   `protocol.config.yaml` `compression` — `microCompact` (on/off),
    *   `keepRecentTokens` (pruner fold floor), `autoCompactRatio` /

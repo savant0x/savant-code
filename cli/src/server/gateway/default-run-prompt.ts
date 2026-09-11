@@ -12,7 +12,10 @@ import {
 } from '../../hooks/helpers/send-message-agent'
 import { getProjectRoot } from '../../project-files'
 import { loadAgentDefinitions } from '../../utils/local-agent-registry'
-import { resolveContextWindowForModel } from '../../utils/openrouter-models/lookup'
+import {
+  resolveContextWindowForModel,
+  resolveMaxOutputTokensForModel,
+} from '../../utils/openrouter-models/lookup'
 import { getSavantCodeClient } from '../../utils/savant-code-client'
 
 import type { GatewayRunPromptParams } from './types'
@@ -53,6 +56,12 @@ export async function defaultRunPrompt(
   const contextWindow = modelId
     ? resolveContextWindowForModel(modelId)
     : undefined
+  // FID-2026-0909-008 Step 4: desktop/CLI parity — resolve the output budget
+  // (max_completion_tokens) alongside the context window so the gateway run
+  // carries the same explicit max_tokens the terminal path threads.
+  const maxOutputTokens = modelId
+    ? resolveMaxOutputTokensForModel(modelId)
+    : undefined
   const compression = readProtocolConfig(
     getProjectRoot() ?? process.cwd(),
   ).compression
@@ -81,6 +90,7 @@ export async function defaultRunPrompt(
     devMode: false,
     agentDefinitions,
     contextWindow,
+    maxOutputTokens,
     compression,
     handleEvent: (event) => params.onEvent(event),
     handleStreamChunk: (chunk) => {

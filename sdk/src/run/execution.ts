@@ -83,6 +83,7 @@ async function runOnce({
   echoCompliance,
   provenanceMode,
   contextWindow,
+  maxOutputTokens,
   compression,
   protocolVariant,
 }: RunExecutionOptions): Promise<RunState> {
@@ -267,6 +268,7 @@ async function runOnce({
     // previously the CLI's values were silently dropped before reaching the
     // runtime, so ContextCompactor always fell back to 200k.
     contextWindow,
+    maxOutputTokens,
     compression,
     signal: signal ?? new AbortController().signal,
   }).catch((error) => {

@@ -39,6 +39,10 @@ export type ExecuteToolCallParams<T extends string = ToolName> = {
   fingerprintId: string
   fullResponse: string
   localAgentTemplates: Record<string, AgentTemplate>
+  /** FID-2026-0909-008 Step 4: the run's resolved output budget, threaded so
+   *  spawn handlers can propagate it to child agent loops (the same value
+   *  the stream call site forwards). */
+  maxOutputTokens?: number
   logger: Logger
   previousToolCallFinished: Promise<void>
   prompt: string | undefined

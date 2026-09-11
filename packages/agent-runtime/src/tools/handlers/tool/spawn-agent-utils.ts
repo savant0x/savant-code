@@ -38,6 +38,11 @@ export type SubagentContextParams = AgentRuntimeDeps &
     propagation?: SubagentPropagationSnapshot
     clientSessionId: string
     extraSavantCodeMetadata?: Record<string, string>
+    /** FID-2026-0909-008 Step 4: the run's resolved output budget. The
+     *  spawn sites pass it to the child loop only when the child runs the
+     *  model the budget was resolved for (see the childOutputBudget guards
+     *  in spawn-agents-child-run.ts / spawn-agent-inline.ts). */
+    maxOutputTokens?: number
     fileContext: ProjectFileContext
     localAgentTemplates: Record<string, AgentTemplate>
     repoId: string | undefined
@@ -129,6 +134,25 @@ export function extractSubagentContextParams(
         }
       : {}),
   }
+}
+
+/**
+ * FID-2026-0909-008 Step 4 (Law 13: one guard, two spawn sites): the run's
+ * resolved output budget propagates to a child agent loop only when the
+ * child actually runs the model the budget was resolved for. withParentModel
+ * already aligned the models unless the child pinned its own
+ * (inheritParentModel: false). A budget from a different model is worse than
+ * none — omit it and let the provider default govern rather than cap the
+ * child at a foreign limit.
+ */
+export function resolveChildOutputBudget(
+  childTemplate: AgentTemplate,
+  parentTemplate: AgentTemplate,
+  maxOutputTokens: number | undefined,
+): number | undefined {
+  return childTemplate.model === parentTemplate.model
+    ? maxOutputTokens
+    : undefined
 }
 
 /**
