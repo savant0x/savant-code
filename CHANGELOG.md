@@ -2,6 +2,30 @@
 
 ## Unreleased
 
+### Skill-evolution suite: SkillOpt + WikiSkill adapted, implemented RED-first, closed + archived (2026-09-12)
+
+- **FID-2026-0912-001..004 — all four implemented + CLOSED (this
+  pass, operator directive: complete all open FIDs at automation
+  level 3).** The self-improving harness's four structural gaps are
+  closed with zero governance change (operator-only trust preserved):
+  trust/untrust now append full ledger entries and trust runs a
+  fail-closed drift gate against the draft's `baselineSha` (-001,
+  commit `d95502f`); the destructive 30-day draft purge is replaced by
+  a monotonic archive move with `ARCHIVED.json` provenance (-002,
+  commit `f83ea32`); a durable pattern wiki (`dev/wiki/`) is written
+  mechanically by the session-end review from dedup-engine promotions,
+  update-only and never boot-read (-003, commit `c36db40`); and a
+  cold-spawned `scribe-proposer` drafts at most one atomic proposal
+  from wiki evidence alone through a shared gate (strict mean lift
+  AND zero per-task regressions — the SkillOpt #67 conjunction) with
+  honest `[✓ PROVEN]`/`[⚠ UNPROVEN — TRUSTING BLIND]` labels,
+  rejected-proposal wiki memory, and a store-enforced one-proposal cap
+  (-004, commit `3921356`). Gates: typecheck ×6, common 721/0, agents
+  109/0, cli + evals suites green, eslint 0, lint:md, prettier.
+  Honest boundary: live proposer behavior (drafting quality under
+  isolation on free-tier models) is operator-observable only;
+  rejection-heavy early output is the gate working, not failing.
+
 ### Open-FID sweep: two closures, two implementations, one vendor-held gate (2026-09-12)
 
 - **FID-2026-0911-001 — closed.** /provider picker add-new entry

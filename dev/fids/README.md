@@ -33,24 +33,15 @@ on-disk records missing from the table added (-0823-003, -0824-003…-008,
 
 | FID | Status | Purpose / blocking gate |
 |---|---|---|
-| [`FID-2026-0912-001`](FID-2026-0912-001-skill-evolution-integrity-ledger-and-drift-gate.md) | analyzed | Skill-evolution integrity: trust/untrust ledger appends + baselineSha drift gate at trust (WikiSkill/SkillOpt adaptation part 1). Awaiting operator approval. |
-| [`FID-2026-0912-002`](FID-2026-0912-002-skill-evolution-archive-not-purge.md) | analyzed | Archive-not-purge: the destructive 30-day draft purge → monotonic move to `.quarantine/.archive/` + ledger line (part 2). Awaiting operator approval. |
-| [`FID-2026-0912-003`](FID-2026-0912-003-skill-evolution-pattern-wiki.md) | analyzed | Durable pattern wiki (`dev/wiki/`) written by the mechanical session-end review from deduped experience (part 3 — the WikiSkill critical layer). Awaiting operator approval. |
-| [`FID-2026-0912-004`](FID-2026-0912-004-skill-evolution-proposer-gate.md) | analyzed | Cold-spawn isolated proposer + gate-before-present PROVEN/UNPROVEN labels + rejected-proposal memory (part 4). Sequenced after 0912-003. Awaiting operator approval. |
 | [`FID-2026-0911-002`](FID-2026-0911-002-orcarouter-gateway-provider.md) | fixed | OrcaRouter gateway provider (13th registry entry). Integration fully gate-verified; keyed live acceptance blocked by the VENDOR's free-tier unlock (`err_free_access_denied` on every free id incl. `z-ai/glm-5.3-flash-free`, re-probed 2026-09-12 post-linkage; paid models 402 on zero credits — vendor-side, not integration). Probe re-runs on vendor fix. |
 
-**2026-09-12 skill-evolution suite authored (SkillOpt + WikiSkill scoping,
-operator directive):** four `analyzed` FIDs adapt the two external
-blueprints onto the existing harness. Provenance: the 2026-09-10 SkillOpt
-adversarial pass's corrections are honored throughout (mode-split isolation,
-per-task no-regression criterion, no EHEL Levenshtein duplication, no
-default-inversion), and WikiSkill's ablation finding (the persistent wiki
-layer is the critical component) drives part 3. One leg of the blueprint is
-ALREADY SHIPPED (recurrence-key payload redaction = closed
-FID-2026-0909-006) and one is superseded as designed (blueprint §3's
-`_backup` replacement — Savant's monotonic ledger is already ahead;
-FID-2026-0912-002 keeps it). Sequencing: 001 ∥ 002 (independent) → 003 →
-004. Implementation is a separate Law-2 approval.
+**2026-09-12 skill-evolution suite CLOSED + ARCHIVED (operator directive:
+"complete ALL open fids in logical order w/ automation level 3").**
+All four suite FIDs (-001..-004) implemented RED-first, gate-verified
+(typecheck ×6, common 721/0, agents 109/0, cli + evals suites green,
+eslint 0, lint:md, prettier), flipped `closed`, and moved to
+`dev/fids/archive/` (see `archive/README.md`). The active queue is the
+single vendor-held OrcaRouter record above.
 
 **2026-09-12 closure — FID-2026-0911-003 (custom-provider hardening)
 closed + archived:**

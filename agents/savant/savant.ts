@@ -188,9 +188,7 @@ export function createSavant(
       'context-pruner',
       'recorder',
       'scribe',
-      // FID-2026-0912-004: the isolated cold-spawned skill proposer
-      // (Scribe-role variant; includeMessageHistory: false).
-      'scribe-proposer',
+      'scribe-proposer', // FID-2026-0912-004 cold-spawned proposer
     ),
 
     systemPrompt: buildSystemPrompt(

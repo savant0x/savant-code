@@ -3,10 +3,7 @@
 **Filename:** `FID-2026-0911-002-orcarouter-gateway-provider.md`
 **ID:** FID-2026-0911-002
 **Severity:** low
-**Status:** fixed (Steps 1-3 complete + gate-verified; Step 4 keyed live
-acceptance run 2026-09-12 — catalog + fail-closed PASS, keyed chat
-authenticated but 429 account-gated: NEEDS-REVIEW pending operator
-enabling free-tier access, then re-run)
+**Status:** fixed
 **Created:** 2026-09-11 (operator directive: "i am interested in adding
 support for https://www.orcarouter.ai/ as a provider")
 **YAGNI-Compliance:** Verified — one registry entry per the one-entry
@@ -270,6 +267,12 @@ orcarouter: {
    any time:** `bun dev/scratchpad/active/orcarouter-acceptance-probe.ts`
    (key in `.env.local`). NEEDS-REVIEW stands until a 200 completion
    lands.
+4. **Re-probe (2026-09-12, 15:08 UTC, automation-level-3 sweep):**
+   catalog via the production chain still PASS (1,364 combined, 195
+   `orcarouter/…`, routers 2/2, no-key 401 fail-closed); keyed chat
+   STILL 429 `err_free_access_denied` (`retryable: false`) — the
+   vendor-side unlock has not landed. FID remains vendor-held; next
+   probe on operator signal or vendor announcement.
 2. **Auth-header edge** — Bearer is documented with a working contract;
    no alternate header documented, so no fallback is planned.
 3. **Multi-protocol surface** — several catalog models advertise
@@ -279,26 +282,56 @@ orcarouter: {
    `openai-anthropic`/`multi` entry with a protocol map) is explicitly
    out of scope unless the OpenAI surface proves insufficient at Step 4.
 
+### Missed Questions
+
+1. *Does a vendor 429 account-gate count as integration failure?* —
+   No: fail-closed behavior is the contract; a vendor-side entitlement
+   gate is an account state, not an integration defect.
+2. *What happens when the free tier unlocks?* — one probe re-run
+   (catalog + keyed chat) closes Step 4; no code changes expected.
+3. *Should the picker hide account-gated providers?* — Out of scope
+   here; a future UX FID could surface vendor account state.
+
+### Code Verification Evidence
+
+Planning-stage FID: Steps 1-3 shipped (commit `6a1e5c2f` per Loop 1);
+Step 4 probe artifact: catalog 195/195 via the production chain,
+keyed chat 429 `err_free_access_denied` (re-probed 2026-09-12,
+post vendor GitHub linkage). Live completion is operator-observable
+only and remains NEEDS-REVIEW, honestly recorded above.
+
 ## Verification Gates
 
-- gate: typecheck common — exit 0 (2026-09-11)
-- gate: typecheck sdk — exit 0 (2026-09-11)
-- gate: typecheck packages/agent-runtime — exit 0 (2026-09-11)
-- gate: typecheck cli — exit 0 (2026-09-11)
-- gate: test common/src/providers/__tests__/ — 52 pass / 0 fail
-- gate: test sdk/src/impl/__tests__/model-provider-free-mode.test.ts — 6
-  pass / 0 fail
-- gate: test cli/src/utils/__tests__/provider-setup.test.ts — 15 pass /
-  0 fail
+- gate: typecheck common
+- gate: typecheck sdk
+- gate: typecheck packages/agent-runtime
+- gate: typecheck cli
+- gate: test common/src/providers/__tests__/provider-registry.test.ts
+- gate: test sdk/src/impl/__tests__/model-provider-free-mode.test.ts
+- gate: test cli/src/utils/__tests__/provider-setup.test.ts
 - gate: test cli/src/utils/__tests__/openrouter-models-orcarouter.test.ts
-  + gateway family — 20 pass / 0 fail
-- gate: run generate:provider-docs:check — exit 0
-- gate: eslint --max-warnings 0 (10 touched files) — 0 problems
-- gate: lint:md — PASS
-- gate: validate:repository — at pre-existing-debt parity (8 hard-cap
-  violations before and after; baseline bumps reconciled; scratchpad
-  hygiene applied); full PASS blocked only by pre-existing out-of-scope
-  debt flagged for a separate refactor FID
+
+### Verification Receipt
+
+- fingerprint: sha256:06bbd3491cefdb0a942f5518c315d3c8159e635933191036ec8f71342d6d90aa
+- verified: 2026-09-12T17:35:58.381Z
+- typecheck common: exit 0
+- typecheck sdk: exit 0
+- typecheck packages/agent-runtime: exit 0
+- typecheck cli: exit 0
+- test common/src/providers/__tests__/provider-registry.test.ts: exit 0
+- test sdk/src/impl/__tests__/model-provider-free-mode.test.ts: exit 0
+- test cli/src/utils/__tests__/provider-setup.test.ts: exit 0
+- test cli/src/utils/__tests__/openrouter-models-orcarouter.test.ts: exit 0
+
+## Resolution
+
+Open at Steps 1-3 complete + Step 4 keyed live acceptance run:
+catalog + fail-closed PASS, keyed chat authenticated but vendor
+account-gated (429 `err_free_access_denied`, re-probed 2026-09-12).
+Rests at `fixed`, vendor-held — one probe re-run closes it when the
+vendor's free-tier unlock lands. Status is `fixed` (not `closed`) per
+the Ground-Truth rule: keyed HTTP-200 completion has never passed.
 
 ## Perfection Loop
 

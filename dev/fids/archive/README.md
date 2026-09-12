@@ -1700,6 +1700,44 @@ formally archives the move and records the headers' status correction
   children closed out-of-scope; deck-region children `-009` had already
   closed shipped).
 
+### Skill-evolution suite (SkillOpt + WikiSkill adaptation) — closed + archived 2026-09-12
+
+- `FID-2026-0912-001-skill-evolution-integrity-ledger-and-drift-gate.md`
+  (medium) — closed 2026-09-12. Trust-boundary ledger appends (full
+  10-field `SkillLedgerEntry`, `trust`/`untrust` union extension) +
+  `baselineSha` captured at draft creation + fail-closed drift gate in
+  `trustSkill`. Commit `d95502f`.
+- `FID-2026-0912-002-skill-evolution-archive-not-purge.md` (high) —
+  closed 2026-09-12. Destructive 30-day draft purge replaced with a
+  monotonic move to `.quarantine/.archive/YYYY-MM/` + an `ARCHIVED.json`
+  provenance record; deletion path eliminated;
+  `countQuarantinedDrafts` excludes the archive. Commit `f83ea32`.
+- `FID-2026-0912-003-skill-evolution-pattern-wiki.md` (medium) — closed
+  2026-09-12. Durable pattern wiki (`dev/wiki/`) written by the
+  session-end review from the dedup engine's promoted patterns
+  (≥3 in 14d, consumed not re-derived); update-only pages, evidence
+  cap 12 with data-signature idempotence, never boot-read (pinned).
+  Commit `c36db40`.
+- `FID-2026-0912-004-skill-evolution-proposer-gate.md` (medium) —
+  closed 2026-09-12. Cold-spawned `scribe-proposer`
+  (`includeMessageHistory: false`, S2-B toolset) drafting at most ONE
+  atomic proposal from wiki + deduped traces + inventory; shared gate
+  (strict mean lift AND zero per-task regressions) via the evals
+  artifact bridge; honest `[✓ PROVEN]` / `[⚠ UNPROVEN — TRUSTING
+  BLIND]` labels on quarantine rows; rejected-proposal memory in wiki
+  pattern pages; one-proposal cap enforced by the proposal store in
+  session-end routing. Commit `3921356`.
+
+Gates at closure (fresh, this pass): typecheck ×6 (common, sdk,
+agent-runtime, cli, agents, evals) exit 0; common 721/0, agents 109/0,
+cli skills suites 12/0, evals proposal-gate 6/0, scripts 345/0; eslint
+`--max-warnings 0`; prettier clean; `lint:md` PASS. Honest boundary:
+the proposer's live behavior (free-tier model drafting usefully under
+isolation) is operator-observable only and expected to be
+rejection-heavy at first — the gate making bad drafts harmless IS the
+design working (WikiSkill's own reference run documents the same
+shape).
+
 Gates (recorded at the parent program / dissolution event 2026-09-03,
 re-verified at archive time): agents/common/sdk/agent-runtime/cli
 typechecks exit 0; eslint `--max-warnings 0`; lint:md; Prettier;

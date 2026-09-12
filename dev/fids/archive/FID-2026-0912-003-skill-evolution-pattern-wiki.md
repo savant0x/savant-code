@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0912-003-skill-evolution-pattern-wiki.md`
 **ID:** FID-2026-0912-003
 **Severity:** medium
-**Status:** fixed
+**Status:** closed (implemented + verified 2026-09-12; archived)
 **Created:** 2026-09-12 (operator directive: scope the SkillOpt blueprint
 and WikiSkill arXiv:2608.27454 into FIDs)
 **YAGNI-Compliance:** Verified — one bounded directory (`dev/wiki/`), one

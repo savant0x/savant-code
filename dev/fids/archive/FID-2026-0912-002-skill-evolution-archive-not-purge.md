@@ -3,8 +3,7 @@
 **Filename:** `FID-2026-0912-002-skill-evolution-archive-not-purge.md`
 **ID:** FID-2026-0912-002
 **Severity:** high
-**Status:** fixed (implemented 2026-09-12; closure ceremony executes with
-the sweep's final battery)
+**Status:** closed (implemented + verified 2026-09-12; archived)
 **Created:** 2026-09-12 (operator directive: scope the SkillOpt blueprint
 and WikiSkill into FIDs)
 **YAGNI-Compliance:** Verified — replaces one `rm`-based purge with a

@@ -3,8 +3,7 @@
 **Filename:** `FID-2026-0912-001-skill-evolution-integrity-ledger-and-drift-gate.md`
 **ID:** FID-2026-0912-001
 **Severity:** medium
-**Status:** fixed (implemented 2026-09-12; closure awaits the G2 commit
-record in the FID — archive move + CHANGELOG per Auto-Archive)
+**Status:** closed (implemented + verified 2026-09-12; archived)
 **Created:** 2026-09-12 (operator directive: scope the SkillOpt blueprint
 and WikiSkill arXiv:2608.27454 into FIDs)
 **YAGNI-Compliance:** Verified — reuses the existing VERSIONS.jsonl ledger

@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0912-004-skill-evolution-proposer-gate.md`
 **ID:** FID-2026-0912-004
 **Severity:** medium
-**Status:** fixed
+**Status:** closed (implemented + verified 2026-09-12; archived)
 **Created:** 2026-09-12 (operator directive: scope the SkillOpt blueprint
 and WikiSkill arXiv:2608.27454 into FIDs)
 **YAGNI-Compliance:** Verified — one cold-spawned Scribe turn at session

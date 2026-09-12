@@ -6,12 +6,8 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 
-import {
-  appendLedgerEntry,
-  nextLedgerSeq,
-  readBaselineSha,
-  readSkillFile,
-} from './helpers'
+import { readBaselineSha } from './baseline-sha'
+import { appendLedgerEntry, nextLedgerSeq, readSkillFile } from './helpers'
 import { currentVersionOf } from './mutations'
 import {
   skillCanonicalDir,
