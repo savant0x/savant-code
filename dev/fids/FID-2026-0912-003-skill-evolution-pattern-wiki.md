@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0912-003-skill-evolution-pattern-wiki.md`
 **ID:** FID-2026-0912-003
 **Severity:** medium
-**Status:** analyzed
+**Status:** fixed
 **Created:** 2026-09-12 (operator directive: scope the SkillOpt blueprint
 and WikiSkill arXiv:2608.27454 into FIDs)
 **YAGNI-Compliance:** Verified — one bounded directory (`dev/wiki/`), one
@@ -217,8 +217,27 @@ store.
 
 ## Resolution
 
-Open — awaiting operator approval to implement (Law 2). Status stays
-`analyzed` until implementation evidence exists.
+Implemented 2026-09-12 (operator pre-approval: "complete ALL open fids in
+logical order w/ automation level 3"). RED-first: 7 pins written against
+`common/src/util/skill-wiki.ts` (module-absent → RED), then GREEN.
+
+### Implementation evidence (Loop 4 — Verifier)
+
+- `common/src/util/skill-wiki.ts` — the wiki engine: `WIKI_MAX_EVIDENCE_ROWS =
+  12`, slug = kebab tool + 12-hex key prefix, `buildPatternPage` /
+  `appendPatternEvidence` (data-signature idempotence — an identical
+  observation appends nothing even on a later date; cap keeps the newest
+  rows), `updateWikiPattern`, `rebuildWikiIndex` (recurrences desc).
+- `scripts/session-end-review.ts` — the writer seam consumes
+  `computeRecurrences` output directly (threshold not re-derived) and calls
+  `updateWikiPattern` per promoted pattern; `SessionEndReview.wikiPages`
+  added (creations only).
+- `common/src/util/__tests__/skill-wiki.test.ts` (9) +
+  `scripts/__tests__/session-end-review.test.ts` (+2: integration incl.
+  idempotent re-review; structural never-boot-read pin). No import of
+  `skill-wiki` in any boot surface (pinned).
+- Gates: common 718 tests 0 fail · scripts 345/0 · typecheck ×3 (common,
+  sdk, agent-runtime) · eslint 0 · prettier clean · `lint:md` PASS.
 
 ### Loop 1 — Authoring (2026-09-12)
 

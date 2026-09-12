@@ -25,6 +25,7 @@ import * as fs from 'node:fs'
 import * as path from 'node:path'
 
 import { countQuarantinedDrafts } from '@savant-code/common/util/skill-management'
+import { updateWikiPattern } from '@savant-code/common/util/skill-wiki'
 
 import {
   computeRecurrences,
@@ -47,6 +48,8 @@ export type SessionEndReview = {
   agenda: string
   /** Candidate FID-routing notes (line-bounded). */
   routing: string[]
+  /** FID-2026-0912-003: pages created this run (updates are not counted). */
+  wikiPages: number
 }
 
 /**
@@ -117,6 +120,16 @@ export function runSessionEndReview(
   const agendaFile = path.join(rootDir, AGENDA_PATH)
   fs.mkdirSync(path.dirname(agendaFile), { recursive: true })
   fs.writeFileSync(agendaFile, built.agenda, 'utf8')
+  // FID-2026-0912-003: distill every promoted pattern (≥3 in 14d — the
+  // recurrence engine's own bar; consumed, not re-derived) into the durable
+  // pattern wiki. Update-only; never boot-read; the operator's knowledge
+  // base and (future FID) the isolated proposer's source material.
+  let wikiPages = 0
+  for (const r of recurrences) {
+    if (updateWikiPattern(rootDir, r, { now: opts.now }) === 'created') {
+      wikiPages++
+    }
+  }
   // FID-2026-0910-001 P3: the deterministic net for non-chat draft sources.
   const quarantineNote = quarantineAlertNote(rootDir)
   const routing =
@@ -125,6 +138,7 @@ export function runSessionEndReview(
     items: built.items,
     agenda: built.agenda,
     routing,
+    wikiPages,
   }
 }
 

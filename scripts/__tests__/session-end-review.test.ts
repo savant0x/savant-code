@@ -159,4 +159,41 @@ describe('runSessionEndReview', () => {
       review.routing.some((note) => note.includes('quarantined skill draft')),
     ).toBe(false)
   })
+
+  test('FID-2026-0912-003 P2 (RED): the review writes one wiki page per promoted pattern', () => {
+    const root = fixtureRoot()
+    fs.mkdirSync(path.join(root, 'dev', 'experiences'), { recursive: true })
+    fs.writeFileSync(
+      path.join(root, 'dev', 'experiences', 'raw-traces.jsonl'),
+      [
+        JSON.stringify(record('run_command', 'boom', 1)),
+        JSON.stringify(record('run_command', 'boom', 2)),
+        JSON.stringify(record('run_command', 'boom', 3)),
+      ].join('\n') + '\n',
+      'utf8',
+    )
+    const review = runSessionEndReview(root, { now: NOW })
+    expect(review.wikiPages).toBe(1)
+    const review2 = runSessionEndReview(root, { now: NOW })
+    expect(review2.wikiPages).toBe(0) // idempotent re-review
+    const files = fs.readdirSync(path.join(root, 'dev', 'wiki', 'patterns'))
+    expect(files).toHaveLength(1)
+    expect(files[0]).toMatch(/^run-command-[0-9a-f]{12}\.md$/)
+  })
+
+  test('FID-2026-0912-003 P2 (RED): the wiki is never boot-read (no import into agent runtime surfaces)', () => {
+    // Structural pin: the wiki module must not be imported by anything the
+    // agent runtime loads at boot. The only legitimate consumers are the
+    // session-end script and (future) the isolated proposer.
+    const runtimeFiles = [
+      'packages/agent-runtime/src/index.ts',
+      'common/src/util/skill-management/index.ts',
+    ]
+    for (const rel of runtimeFiles) {
+      const abs = path.join(import.meta.dir, '..', '..', rel)
+      if (!fs.existsSync(abs)) continue
+      const src = fs.readFileSync(abs, 'utf8')
+      expect(src).not.toContain('skill-wiki')
+    }
+  })
 })
