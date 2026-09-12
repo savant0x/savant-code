@@ -41,6 +41,12 @@
   the operator enabling free-tier access, then re-running
   `dev/scratchpad/active/orcarouter-acceptance-probe.ts`. Integration
   side complete — no code residue.
+- **Operator ruling (2026-09-12):** OrcaRouter's dashboard exposes NO
+  GitHub-link control (their X confirms the 30-day-GitHub-account
+  policy; their error is ahead of their UI), and the operator declines
+  the credits bypass on principle — free tier IS the trial. FID rests
+  at NEEDS-REVIEW pending their UI/support; unlock request is ready to
+  send via Discord (`discord.gg/yAh6Tex6kx`) or X (`@OrcaRouter`).
 
 ## Task 36 — FID-2026-0911-001: /provider picker add-new entry → wizard (2026-09-11)
 

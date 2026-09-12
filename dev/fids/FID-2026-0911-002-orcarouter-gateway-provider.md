@@ -239,6 +239,22 @@ orcarouter: {
    (`bun dev/scratchpad/active/orcarouter-acceptance-probe.ts` with the
    key in `.env.local`). A paid model (`anthropic/claude-haiku-4.5`)
    would also clear the gate if the operator adds credits.
+2. **Account-gate forensics (2026-09-12, second probe + paid diagnostic):**
+   the free gate is NOT rate limiting — re-run returned the identical
+   `err_free_access_denied` (`retryable: false`), and a paid-model call
+   (`deepseek/deepseek-v4-flash`) returned HTTP 402
+   `insufficient_user_quota` ("this request needs $0.0003") — i.e. zero
+   credits AND no free entitlement on the account. OrcaRouter's X
+   account confirms the policy: free-tier users must link a GitHub
+   account **at least 30 days old**. **The dashboard exposes no
+   GitHub-link control** (operator-checked 2026-09-12) — their error
+   message is ahead of their UI. Support channels identified for the
+   unlock request: Discord `discord.gg/yAh6Tex6kx`, X `@OrcaRouter`,
+   GitHub org `Continuum-AI-Corp`. The operator declines the credits
+   route on principle (the free tier IS the trial); the FID therefore
+   rests at NEEDS-REVIEW until OrcaRouter ships the control or answers
+   support. Integration-side work remains complete — this gate is not
+   an integration defect.
 2. **Auth-header edge** — Bearer is documented with a working contract;
    no alternate header documented, so no fallback is planned.
 3. **Multi-protocol surface** — several catalog models advertise
