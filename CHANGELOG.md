@@ -18,21 +18,21 @@
   providers (wizard step + validation + lift), a protocol-aware live
   key probe at the wizard terminal step (never blocks the save),
   `/provider test <id>`, and a `/health` live line — one verify helper
-  behind three surfaces.
+  behind three surfaces. Committed `8984711`.
 - **FID-2026-0911-004 — implemented (this pass).** B.AI gateway
   provider (14th registry entry): OpenAI Chat Completions + Responses +
   Anthropic Messages surfaces behind one `BAI_API_KEY`, authenticated
   live catalog via the resolveKey pattern, uniform-prefix parser pins.
   Closure gated on the operator's keyed probe (no key on hand).
+  Committed `2e58cf06`.
 - **FID-2026-0911-002 — rests at `fixed` (vendor-held).** OrcaRouter
   integration is complete and probe-proven (catalog 195/195 via the
   production chain, key authenticated, fail-closed verified); the HTTP-
-  200 completion is blocked by OrcaRouter's own account gate — their
-  dashboard exposes no GitHub-link control (their X confirms the
-  30-day-GitAccount policy; the error message is ahead of their UI),
-  and the operator declines the credits bypass on principle (the free
-  tier IS the trial). One probe re-run closes it when the vendor ships
-  the control.
+  200 completion is blocked by OrcaRouter's own account gate. The
+  operator linked GitHub per their X-posted policy, but the free tier
+  remains gated (`err_free_access_denied` on every free id, re-probed
+  2026-09-12); propagation delay or a fresh-login token refresh may
+  still land it — one probe re-run closes the FID when it does.
 
 ### Custom providers via /provider — the full feature, live-smoked, closed + archived (2026-09-11)
 
