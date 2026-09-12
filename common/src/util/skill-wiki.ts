@@ -160,6 +160,74 @@ export function appendPatternEvidence(
   return [...head, '', ...kept, ''].join('\n')
 }
 
+export type RejectedProposal = {
+  patternKey: string
+  toolName: string
+  skillName: string
+  proposalSha: string
+  reason: string
+  rejectedAt: string
+}
+
+/** One rejected-proposal evidence line (WikiSkill skill-impact.md analog). */
+function rejectedProposalRow(rejection: RejectedProposal): string {
+  return (
+    `- ${rejection.rejectedAt.slice(0, 10)} — REJECTED ${rejection.skillName} ` +
+    `(${rejection.proposalSha.slice(0, 19)}): ${rejection.reason}`
+  )
+}
+
+/**
+ * FID-2026-0912-004: rejected-proposal memory. On operator rejection or a
+ * gate failure, the proposal summary lands on the owning pattern page so
+ * future proposers never repeat it (WikiSkill's institutional-memory rule).
+ * Idempotent on proposalSha; creates the page shell if it doesn't exist yet.
+ */
+export function appendRejectedProposal(
+  rootDir: string,
+  rejection: RejectedProposal,
+): void {
+  const dir = wikiPatternsDir(rootDir)
+  fs.mkdirSync(dir, { recursive: true })
+  const file = path.join(
+    dir,
+    `${patternSlug({ key: rejection.patternKey, toolName: rejection.toolName })}.md`,
+  )
+  const row = rejectedProposalRow(rejection)
+  let page: string
+  if (fs.existsSync(file)) {
+    page = fs.readFileSync(file, 'utf8')
+  } else {
+    page = buildPatternPage(
+      {
+        key: rejection.patternKey,
+        toolName: rejection.toolName,
+        errorFirstLine: '(no live observation — page created by a rejection)',
+        count: 0,
+        totalCount: 0,
+        firstTs: rejection.rejectedAt,
+        lastTs: rejection.rejectedAt,
+      },
+      rejection.rejectedAt,
+    )
+  }
+  if (page.includes(rejection.proposalSha.slice(0, 19))) return // idempotent (rows render the sha prefix)
+  const lines = page.split('\n')
+  const markerIndex = lines.indexOf('## Rejected Proposals')
+  if (markerIndex === -1) {
+    const trimmed = [...lines]
+    while (trimmed.length > 0 && trimmed[trimmed.length - 1] === '')
+      trimmed.pop()
+    trimmed.push('', '## Rejected Proposals', '', row, '')
+    page = trimmed.join('\n')
+  } else {
+    lines.splice(markerIndex + 2, 0, row) // newest directly under the heading
+    page = lines.join('\n')
+  }
+  fs.writeFileSync(file, page, 'utf8')
+  rebuildWikiIndex(rootDir)
+}
+
 /** Create-or-update the page for a promoted pattern. */
 export function updateWikiPattern(
   rootDir: string,

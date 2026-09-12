@@ -1,9 +1,13 @@
+import { hashChange } from '@savant-code/common/crypto/hash'
 import {
   countQuarantinedDrafts,
   trustSkill,
   untrustSkill,
   rollbackLiveSkill,
 } from '@savant-code/common/util/skill-management'
+// FID-2026-0912-004: gate-before-present — rejected-proposal wiki memory
+// (labels + criterion live in skills-proof-gate/skills-discovery).
+import { appendRejectedProposal } from '@savant-code/common/util/skill-wiki'
 
 import { getProjectRoot } from '../project-files'
 import {
@@ -16,6 +20,7 @@ import {
   formatErosionAdvisory,
   formatProofAdvisory,
   readProofGate,
+  readProposalGate,
 } from './skills-proof-gate'
 import { getSystemMessage } from '../utils/message-history'
 
@@ -101,6 +106,33 @@ export function runSkillsCommand(projectRoot: string, args: string): string {
       output = result.ok
         ? `✅ ${result.message ?? `Untrusted '${name}'`}`
         : `❌ ${result.error}`
+    }
+  } else if (sub === 'reject') {
+    // FID-2026-0912-004: operator rejection lands in the wiki's
+    // rejected-proposal memory so future proposers never repeat it.
+    const name = parts[1]
+    const reason = parts.slice(2).join(' ')
+    if (!name || !reason) {
+      output = 'Usage: `/skills reject <name> <reason>`'
+    } else {
+      const gate = readProposalGate(projectRoot, name)
+      const gateSummary =
+        gate === null
+          ? 'no proof artifact'
+          : gate.accepted
+            ? 'gate accepted'
+            : `gate rejected: ${gate.reasons.join('; ')}`
+      appendRejectedProposal(projectRoot, {
+        patternKey: hashChange(name),
+        toolName: 'skill_manage',
+        skillName: name,
+        proposalSha: hashChange(`${name}:${reason}`),
+        reason: reason || gateSummary,
+        rejectedAt: new Date().toISOString(),
+      })
+      output =
+        `🗑 Rejected '${name}' — recorded in the pattern wiki ` +
+        '(rejected-proposal memory).'
     }
   } else if (sub === 'prove') {
     // FID-2026-0824-016: paired-trial execution lives in @savant-code/evals

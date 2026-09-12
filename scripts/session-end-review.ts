@@ -25,6 +25,7 @@ import * as fs from 'node:fs'
 import * as path from 'node:path'
 
 import { countQuarantinedDrafts } from '@savant-code/common/util/skill-management'
+import { proposalsForSession } from '@savant-code/common/util/skill-proposals'
 import { updateWikiPattern } from '@savant-code/common/util/skill-wiki'
 
 import {
@@ -50,6 +51,13 @@ export type SessionEndReview = {
   routing: string[]
   /** FID-2026-0912-003: pages created this run (updates are not counted). */
   wikiPages: number
+  /**
+   * FID-2026-0912-004: mechanical one-proposal cap — false when this session
+   * already recorded a proposal. The Orchestrator must NOT spawn the
+   * scribe-proposer when this is false (enforced here, not by prompt
+   * discipline).
+   */
+  proposerEligible: boolean
 }
 
 /**
@@ -112,7 +120,7 @@ export function buildAgenda(
 /** Refresh dev/agenda.md from the ledger. Returns the review result. */
 export function runSessionEndReview(
   rootDir: string,
-  opts: { now?: number } = {},
+  opts: { now?: number; sessionId?: string } = {},
 ): SessionEndReview {
   const records = readExperienceLedger(rootDir)
   const recurrences = computeRecurrences(records, { now: opts.now })
@@ -134,11 +142,17 @@ export function runSessionEndReview(
   const quarantineNote = quarantineAlertNote(rootDir)
   const routing =
     quarantineNote !== null ? [...built.routing, quarantineNote] : built.routing
+  // FID-2026-0912-004: the proposer may draft only once per session — read
+  // from the proposal store, not from conversation memory.
+  const proposerEligible =
+    opts.sessionId === undefined ||
+    proposalsForSession(rootDir, opts.sessionId).length === 0
   return {
     items: built.items,
     agenda: built.agenda,
     routing,
     wikiPages,
+    proposerEligible,
   }
 }
 

@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0912-004-skill-evolution-proposer-gate.md`
 **ID:** FID-2026-0912-004
 **Severity:** medium
-**Status:** analyzed
+**Status:** fixed
 **Created:** 2026-09-12 (operator directive: scope the SkillOpt blueprint
 and WikiSkill arXiv:2608.27454 into FIDs)
 **YAGNI-Compliance:** Verified — one cold-spawned Scribe turn at session
@@ -247,9 +247,44 @@ anywhere.
 
 ## Resolution
 
-Open — awaiting operator approval to implement (Law 2). Sequenced after
-0912-003 (consumes the wiki). Status stays `analyzed` until
-implementation evidence exists.
+Implemented 2026-09-12 (operator pre-approval: "complete ALL open fids in
+logical order w/ automation level 3"). RED-first: four pin suites written
+across the four workspaces (common / evals / agents / cli — all failed
+module-absent or contract-absent), then GREEN.
+
+### Implementation evidence (Loop 4 — Verifier)
+
+- **Isolation:** `agents/scribe-proposer/scribe-proposer.ts` — Scribe-role
+  variant (S2-B toolset preserved declaratively) with
+  `includeMessageHistory: false` (the mechanical cold-spawn,
+  spawn-agent-utils.ts:182); roster wired at `agents/savant/savant.ts`
+  (spawnableAgents += scribe-proposer). Summarizing Scribe untouched
+  (mode-split). Pinned by `agents/__tests__/scribe-proposer-isolation.test.ts`
+  (4 pins).
+- **Prompt contract:** `common/src/util/skill-proposals.ts` —
+  `buildDraftingPrompt` (wiki index + pattern pages + deduped traces +
+  inventory, zero parent markers, atomic-proposal clause) + the proposal
+  store `.savant/skill-proposals.json` (`recordProposal` /
+  `proposalsForSession` — the cap enforcement point).
+- **Gate-before-present:** `common/src/util/skill-proposal-gate.ts` —
+  `evaluateProposalGate` (strict mean lift AND zero per-task regressions AND
+  activation AND pass^k reliability AND N >= minTrials — the SkillOpt #67
+  conjunction), `formatProposalLabel` (PROVEN / UNPROVEN — TRUSTING BLIND).
+  Evals bridge `evals/v2/src/prove/proposal-gate-bridge.ts` maps the zod
+  artifact onto the same receipt (single evaluation point).
+- **Honest labels:** quarantine rows render the label
+  (`skills-discovery.ts` via `readProposalGate` in `skills-proof-gate.ts`,
+  which now extracts trial rows). Pinned by
+  `cli/src/commands/__tests__/skills-proposal-labels.test.ts` (4 pins).
+- **Rejected-proposal memory:** `appendRejectedProposal`
+  (`common/src/util/skill-wiki.ts`) — `## Rejected Proposals` section on the
+  owning pattern page, idempotent on sha prefix; `/skills reject <name>
+  <reason>` records operator rejections.
+- **Cap enforcement:** `session-end-review.ts` returns `proposerEligible`
+  (proposal store read, not prompt discipline).
+- Gates: common 721 tests 0 fail · agents 109/0 · cli 12/0 (skills suites) ·
+  evals 6/0 (proposal-gate) · typecheck ×5 (common, sdk, agent-runtime, cli,
+  agents, evals) · eslint 0 · prettier clean · lint:md PASS.
 
 ### Loop 1 — Authoring (2026-09-12)
 

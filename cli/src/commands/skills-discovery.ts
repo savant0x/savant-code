@@ -12,6 +12,10 @@ import {
   skillCanonicalDir,
   skillQuarantineDir,
 } from '@savant-code/common/util/skill-management'
+// FID-2026-0912-004: gate-before-present labels on quarantine rows.
+import { formatProposalLabel } from '@savant-code/common/util/skill-proposal-gate'
+
+import { readProposalGate } from './skills-proof-gate'
 
 // FID-2026-0819-005 Loop 143: skill discovery + rendering cluster,
 // extracted from skills.ts. Reads SKILL.md frontmatter rows across
@@ -24,6 +28,8 @@ export type SkillRow = {
   version: string
   description: string
   quarantined: boolean
+  /** FID-2026-0912-004: [✓ PROVEN] / [⚠ UNPROVEN] on quarantine rows. */
+  proposalLabel?: string
 }
 
 export function readSkillRow(
@@ -63,7 +69,14 @@ export function discoverSkills(projectRoot: string): SkillRow[] {
       for (const entry of fs.readdirSync(quarantineDir)) {
         if (!isValidSkillName(entry)) continue
         const row = readSkillRow(path.join(quarantineDir, entry), true)
-        if (row) rows.push(row)
+        if (row) {
+          // FID-2026-0912-004: every draft carries its honest epistemic
+          // label — absent or failed proof renders UNPROVEN (trusting
+          // blind is made visible).
+          const gate = readProposalGate(projectRoot, row.name)
+          row.proposalLabel = formatProposalLabel(gate)
+          rows.push(row)
+        }
       }
     }
   }
@@ -76,7 +89,7 @@ export function formatTable(rows: SkillRow[]): string {
   const verW = Math.max(...rows.map((r) => r.version.length), 7)
   const lines = rows.map(
     (r) =>
-      `${r.quarantined ? '⏳' : '✓'} ${r.name.padEnd(nameW)}  v${r.version.padEnd(verW - 1)}  ${r.description}`,
+      `${r.quarantined ? '⏳' : '✓'} ${r.name.padEnd(nameW)}  v${r.version.padEnd(verW - 1)}  ${r.proposalLabel ? `${r.proposalLabel} ` : ''}${r.description}`,
   )
   return [
     '```',
@@ -99,6 +112,7 @@ export function statusMessage(projectRoot: string): string {
     '```',
     `/skills list              — trusted skills`,
     `/skills list --quarantined — untrusted drafts`,
+    `/skills reject <name> <reason> — record a rejection in the wiki (FID-2026-0912-004)`,
     `/skills show <name>       — detail + version history`,
     `/skills prove <name>      — paired-run evidence status (ADVISORY)`,
     `/skills trust <name>      — release a draft (operator-only)`,

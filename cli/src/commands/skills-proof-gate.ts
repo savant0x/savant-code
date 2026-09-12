@@ -1,6 +1,10 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 
+import { evaluateProposalGate } from '@savant-code/common/util/skill-proposal-gate'
+
+import type { ProposalGateResult } from '@savant-code/common/util/skill-proposal-gate'
+
 // FID-2026-0819-005 Loop 143: proof + erosion advisory cluster, extracted
 // from skills.ts (FID-2026-0824-016/-018). Reads
 // `.savant/skill-proofs/<name>.json` and renders ADVISORY-only blocks;
@@ -18,6 +22,32 @@ export interface ProofGateSummary {
   verbosity_delta_pct?: number
   structural_erosion_pct?: number
   erosion_reasons?: string[]
+  /** FID-2026-0912-004: paired-trial outcome rows (per-task regression check). */
+  baselineTrials?: { index: number; passed: boolean }[]
+  activeTrials?: { index: number; passed: boolean }[]
+  immutable_threshold?: number
+  min_trials?: number
+}
+
+/**
+ * FID-2026-0912-004: map a raw artifact to the shared gate receipt for the
+ * no-regression criterion. Null when no artifact exists.
+ */
+export function readProposalGate(
+  projectRoot: string,
+  name: string,
+): ProposalGateResult | null {
+  const gate = readProofGate(projectRoot, name)
+  if (gate === null) return null
+  return evaluateProposalGate({
+    baseline: gate.baselineTrials ?? [],
+    active: gate.activeTrials ?? [],
+    activationVerified: gate.activation_verified === true,
+    passPowK: gate.pass_pow_k ?? 0,
+    immutableThreshold: gate.immutable_threshold ?? 0.95,
+    minTrials: gate.min_trials ?? 3,
+    activeTrialCount: gate.activeTrials?.length ?? 0,
+  })
 }
 
 /**
@@ -36,9 +66,17 @@ export function readProofGate(
     const raw = JSON.parse(
       fs.readFileSync(file, 'utf8'),
     ) as Partial<ProofGateSummary> & {
-      gate?: { eligible_for_immutable?: boolean }
+      gate?: {
+        eligible_for_immutable?: boolean
+        immutable_threshold?: number
+        min_trials?: number
+      }
       metrics?: { pass_pow_k?: number }
       ztap?: { receipt_fingerprint?: string }
+      trials?: {
+        baseline?: { index: number; passed: boolean }[]
+        active?: { index: number; passed: boolean }[]
+      }
       erosion?: {
         blocked?: boolean
         measured?: boolean
@@ -58,6 +96,11 @@ export function readProofGate(
       verbosity_delta_pct: raw.erosion?.verbosity_delta_pct,
       structural_erosion_pct: raw.erosion?.structural_erosion_pct,
       erosion_reasons: raw.erosion?.reasons,
+      // FID-2026-0912-004: trial rows for the per-task regression check.
+      baselineTrials: raw.trials?.baseline ?? [],
+      activeTrials: raw.trials?.active ?? [],
+      immutable_threshold: raw.gate?.immutable_threshold,
+      min_trials: raw.gate?.min_trials,
     }
   } catch {
     return null
