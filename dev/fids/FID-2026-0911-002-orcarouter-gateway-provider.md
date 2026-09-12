@@ -4,7 +4,9 @@
 **ID:** FID-2026-0911-002
 **Severity:** low
 **Status:** fixed (Steps 1-3 complete + gate-verified; Step 4 keyed live
-acceptance pending the operator's `sk-orca-` key — the closure gate)
+acceptance run 2026-09-12 — catalog + fail-closed PASS, keyed chat
+authenticated but 429 account-gated: NEEDS-REVIEW pending operator
+enabling free-tier access, then re-run)
 **Created:** 2026-09-11 (operator directive: "i am interested in adding
 support for https://www.orcarouter.ai/ as a provider")
 **YAGNI-Compliance:** Verified — one registry entry per the one-entry
@@ -205,24 +207,38 @@ orcarouter: {
        this FID's files); `validate:repository` at exact pre-existing-debt
        parity (8 hard-cap violations before and after — none in files
        this FID touches; tracked for a separate refactor FID).
-4. [ ] **LIVE (closure gate, keyed) — pending operator key:** run with the
-       operator's key (`sk-orca-…`; value never printed, Law 12) through
-       the REAL production chain (`fetchGatewayModels` → live-catalog
-       fetcher, and the SDK chat path): (a) catalog lists ≥ the probed
-       195 models with `orcarouter/…` internal ids via the same function
-       `/model` invokes; (b) chat round-trip on a catalog model (the
-       `orcarouter/free` router is the natural first probe) → HTTP 200
-       with a completion; (c) missing-key catalog probe is moot (catalog
-       is public — instead: **missing-key chat → 401 fail-closed** as
-       designed). Probes preserved under `dev/scratchpad/`.
+4. [~] **LIVE (closure gate, keyed) — PARTIAL PASS 2026-09-12, one
+       NEEDS-REVIEW boundary:** probe at
+       `dev/scratchpad/active/orcarouter-acceptance-probe.ts` (key loaded
+       from `.env.local`, never printed — Law 12). (a) **Catalog via the
+       REAL production chain PASS:** `fetchGatewayModels(true)` → 1,314
+       combined models, **195 `orcarouter/…` entries** (vendor-prefixed +
+       double-prefixed routers 2/2 exactly as designed) via the same
+       function `/model` invokes; (b) **Keyed chat round-trip → HTTP 429,
+       key AUTHENTICATED but account-gated:** OpenAI-shaped
+       `free_rate_limited` — "Free models are not available to this
+       account yet. Link a GitHub account in your profile settings, or
+       add credits" — the keyed request passes auth (keyless → 401) and
+       reaches an ACCOUNT-level gate, proving endpoint reachability,
+       OpenAI-shape parsing, and key validity; the HTTP-200 completion is
+       blocked on operator account action (GitHub linkage or credits),
+       NOT on integration code; (c) **Missing-key fail-closed PASS:**
+       keyless chat → 401. The 200-round-trip remainder of this gate is
+       NEEDS-REVIEW: a human must enable free-tier access on the
+       OrcaRouter account and re-run the probe — per the Nous precedent,
+       end-to-end inference is NOT claimed until then.
 
 ### Live Unknowns (keyless-unverifiable; resolved at Step 4)
 
-1. **Keyed chat round-trip** — the 401 fail-closed shape proves the
-   endpoint exists and parses OpenAI-shaped requests, but a successful
-   completion (streaming behavior included) is only observable with a
-   key. Non-streaming round-trip is the minimum acceptance; streaming
-   observed during normal use.
+1. **Keyed chat round-trip — PARTIALLY RESOLVED 2026-09-12.** The keyed
+   probe proved: key validity (auth passed), endpoint reachability,
+   OpenAI-shaped request/response parsing. Remaining: the HTTP-200
+   completion itself — the account returns `free_rate_limited` ("link a
+   GitHub account or add credits"). Integration-side work is complete;
+   the residue is an operator account action, then re-run the probe
+   (`bun dev/scratchpad/active/orcarouter-acceptance-probe.ts` with the
+   key in `.env.local`). A paid model (`anthropic/claude-haiku-4.5`)
+   would also clear the gate if the operator adds credits.
 2. **Auth-header edge** — Bearer is documented with a working contract;
    no alternate header documented, so no fallback is planned.
 3. **Multi-protocol surface** — several catalog models advertise

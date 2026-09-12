@@ -33,9 +33,14 @@
 - **Flagged:** the 8 remaining >300-line hard-cap violations are
   pre-existing debt from FID-2026-0910-004/0911-001 growth — needs a
   separate refactor FID (file splits), not silent absorption.
-- **Pending:** Step 4 keyed live acceptance (catalog via production
-  chain + chat round-trip on `orcarouter/free`) — the closure gate,
-  blocked on the operator's `sk-orca-` key.
+- **Step 4 run (2026-09-12, PARTIAL PASS):** catalog via the real
+  production chain — 195 `orcarouter/…` models, router double-prefixing
+  2/2; keyed chat → 429 `free_rate_limited` (key AUTHENTICATED,
+  account-level gate: "link a GitHub account or add credits"); keyless
+  chat → 401 fail-closed. HTTP-200 completion is NEEDS-REVIEW pending
+  the operator enabling free-tier access, then re-running
+  `dev/scratchpad/active/orcarouter-acceptance-probe.ts`. Integration
+  side complete — no code residue.
 
 ## Task 36 — FID-2026-0911-001: /provider picker add-new entry → wizard (2026-09-11)
 
