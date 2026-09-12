@@ -3,8 +3,10 @@
 **Filename:** `FID-2026-0911-003-custom-provider-live-test-and-protocol.md`
 **ID:** FID-2026-0911-003
 **Severity:** medium
-**Status:** created (Loop 1 RED recorded; presented to the operator per
-Law 2 before any code is written)
+**Status:** fixed (scope expanded per operator directive 2026-09-12:
+"address any weak points we found from my questions and expand the scope
+properly … all things we were missing needs to be folded in then rerun
+perfection on all")
 **Created:** 2026-09-12 (operator pre-closure questions on
 FID-2026-0911-001: "is there a 'live test' when going through the
 wizard?" and "is this only openai or does it support anthropic too? some
@@ -21,25 +23,33 @@ concrete Anthropic-outlier motivating the protocol field)
 
 ## Summary
 
-Two gaps in the custom-provider experience, both surfaced by the
-operator's pre-closure due diligence:
+The operator's pre-closure due diligence on FID-2026-0911-001 exposed a
+cluster of weak points sharing one root: **there is no way to verify a
+custom provider actually works, and no way to express non-OpenAI wire
+protocols.** This FID addresses the cluster comprehensively (scope
+expanded by operator directive, not minimally patched):
 
-1. **No live test in the wizard.** A user can complete `/provider add`
-   with a wrong key or wrong base URL and get zero feedback — the first
-   proof anything is wrong is a failed chat message. Add a lightweight
-   live verification at the wizard's terminal step: a GET
-   `{baseUrl}/models` (Bearer) with a three-outcome degradation ladder
-   (verified / rejected / unverifiable) that NEVER blocks the save.
-2. **Customs are OpenAI-only.** `toProviderConfig` hardcodes
-   `protocol: 'openai'` and `CustomProviderConfig` has no protocol
-   field — an Anthropic-compatible outlier endpoint (`/v1/messages`,
-   Claude-style) cannot be used as a custom provider. Add an optional
-   `protocol: 'openai' | 'anthropic'` field (wizard prompt, default
-   openai) and thread it through validation + lifting.
+1. **Wizard live test** — the terminal save path fires a bounded,
+   non-blocking key/catalog probe and reports a three-outcome ladder
+   (verified / rejected / unverifiable) in the summary.
+2. **`/provider test <id>`** — a standalone re-test command reusing the
+   same verify helper, so verification is available any time, not only
+   at add/edit moments. Grammar gains the reserved word `test`.
+3. **`/health` live line** — the health report gains a live-check line
+   for the active custom gateway (timeout-bounded, degrades to "not
+   checked"), reusing the same helper — one truth, three surfaces.
+4. **Protocol field** — `protocol: 'openai' | 'anthropic'` on
+   `CustomProviderConfig` (wizard step, default openai, backward
+   compatible), threading Anthropic-outlier endpoints (`/v1/messages`,
+   Claude-style) through the generic factory.
+5. **`resolveProtocol` latent-bug fix** — the no-map branch returns
+   `'openai'` unconditionally; it must return `config.protocol` BEFORE
+   the protocol field can exist safely.
 
-Includes one **latent routing bug** that must land first (Loop-1
-discovery, "flag ANY issue"): `resolveProtocol`'s no-map branch returns
-`'openai'` unconditionally.
+Everything reuses existing machinery: one verify helper, the existing
+step machine (one inserted step), the existing anthropic factory branch,
+the existing grammar/parser seam. No new persistence shape (one optional
+JSON field), no new input modes, no new dependencies.
 
 ## Environment
 
@@ -92,24 +102,42 @@ discovery, "flag ANY issue"): `resolveProtocol`'s no-map branch returns
 
 ### Expected Behavior
 
-1. At the wizard's key step (add mode; edit mode only when a NEW key is
-   entered), the terminal save path fires GET `{baseUrl}/models` with
-   `Authorization: Bearer <key>` and reports one of:
-   - **200** → "Key verified live against the provider." (catalog models
-     count included when the shape parses)
-   - **401/403** → explicit "The provider rejected this key" warning
-   - **anything else / timeout / parse failure** → "Could not verify
-     (endpoint may not support model listing)" — the save proceeds
-   The result NEVER blocks the save (some gateways 404 their `/models`
-   or gate it differently); it is evidence, not a gate. The summary
-   message carries the outcome.
-2. `/provider add` and `/provider edit` gain a protocol question at the
-   baseUrl step: default `openai`; `anthropic` for endpoints exposing
-   Claude-style `/v1/messages`. Stored on the record; validation accepts
-   exactly `openai | anthropic` (anything else fails closed); missing
-   field on old records defaults to `openai` (backward compatible).
-3. `resolveProtocol`'s no-map branch returns `config.protocol` (fixing
-   the latent misdispatch).
+1. **Wizard live test (terminal path).** At the key step in add mode
+   (edit mode: only when a NEW key is entered), after the definition and
+   key persist, the router fires `verifyCustomProviderKey` and appends
+   one of three outcomes to the summary:
+   - **verified** → "Live check: key accepted (N models listed)." (when
+     the catalog source is `live`, the probe hits the catalog URL;
+     otherwise `{baseUrl}/models`)
+   - **rejected** → "Live check: the provider REJECTED this key (HTTP
+     401/403). The definition was saved — re-run /provider edit `<id>` to
+     fix the key."
+   - **unverifiable** → "Live check: could not verify (timeout or the
+     endpoint does not serve model listing). Saved anyway."
+   The probe NEVER blocks or rolls back the save; it is evidence, not a
+   gate. Header shape follows the protocol: Bearer for openai;
+   `x-api-key` + `anthropic-version: 2023-06-01` for anthropic.
+2. **`/provider test <id>`** — custom-only (built-ins already have
+   keyed live acceptance through their own FIDs); runs the same helper
+   against the stored definition + stored key and replies with the same
+   three-outcome ladder. `test` joins the reserved grammar words, so no
+   custom provider can shadow it.
+3. **`/health` live line** — for the ACTIVE provider, when it is a
+   custom gateway: one line "Live check: verified (N models) / rejected
+   / not checked (timeout)". Timeout-bounded (8s) and skipped entirely
+   when the active provider is a built-in (their keys already have
+   FID-level live acceptance; no new network path for them).
+4. **Protocol step.** The wizard gains a `protocol` step between baseUrl
+   and envVar: "Protocol — press Enter for openai, or type `anthropic`
+   for Claude-style /v1/messages endpoints." Edit mode pre-fills from
+   the stored record; Enter keeps. Stored on the record (optional JSON
+   field, undefined = openai on old records); validation accepts exactly
+   `openai | anthropic` fail-closed; `toProviderConfig` lifts
+   `custom.protocol ?? 'openai'`.
+5. **`resolveProtocol` fix.** The no-map branch returns
+   `config.protocol` (openai or anthropic); map-dispatched protocols
+   without a map keep throwing fail-closed. Pinned so an
+   anthropic-no-map entry dispatches Anthropic-shaped requests.
 
 ### Root Cause
 
@@ -125,17 +153,27 @@ configuration.
 
 ### Affected Components
 
+- `sdk/src/impl/model-provider/model-factories.ts` (the `resolveProtocol`
+  one-line fix + a pin)
 - `common/src/providers/types.ts` (+1 optional field on
   `CustomProviderConfig`)
 - `common/src/providers/custom-providers.ts` (validation + one line in
   `toProviderConfig`)
-- `sdk/src/impl/model-provider/model-factories.ts` (the `resolveProtocol`
-  one-line fix + a pin)
-- `cli/src/utils/provider-wizard.ts` (step instructions + draft field)
+- **NEW** `cli/src/utils/verify-custom-provider.ts` (the single verify
+  helper — protocol-aware headers, 8s abort, three-outcome result union,
+  zero key logging; Law 13: one truth consumed by all three surfaces)
+- `cli/src/utils/provider-wizard.ts` (grammar word `test` added to the
+  reservation; protocol step inserted; draft field)
 - `cli/src/commands/router/route-provider-wizard.ts` (verify call at the
   terminal path + summary text)
+- `cli/src/commands/provider-subcommands.ts` (`/provider test <id>`
+  handler)
+- `cli/src/commands/defs/model-provider-commands.ts` (grammar dispatch
+  for `test`)
+- `cli/src/commands/health-command.ts` (live line for the active custom)
 - Suites: custom-providers validation, model-provider-custom, wizard
-  e2e (mocked-fetch pins), settings round-trip
+  e2e (mocked-fetch pins), settings round-trip, health, new verify-helper
+  suite
 
 ### Risk Level
 
@@ -157,32 +195,39 @@ configuration.
 2. **Protocol field:** `protocol?: 'openai' | 'anthropic'` on
    `CustomProviderConfig`; validation restricts to the two values
    (undefined → openai at lift time); `toProviderConfig` passes
-   `protocol: custom.protocol ?? 'openai'`. Wizard: one extra question
-   after baseUrl ("Protocol — openai (default) or anthropic
-   (Claude-style /v1/messages endpoints); press Enter for openai").
-   Input-mode continuity follows the existing step machine.
-3. **Live test:** a `verifyCustomProviderKey(baseUrl, key)` helper
-   (AbortSignal.timeout(8s), no retry, no logging of key material) on
-   the terminal path; outcome folded into the existing summary message
-   (D9-style single message). Edit mode with kept key → skip (no new
-   material to verify).
+   `protocol: custom.protocol ?? 'openai'`. Wizard: a `protocol` step
+   inserted after baseUrl (default openai; Enter keeps/pre-fills in
+   edit mode). Input-mode continuity follows the existing step machine.
+3. **Verify helper (`verify-custom-provider.ts`).**
+   `verifyCustomProviderKey(def: CustomProviderConfig, key: string)`:
+   protocol-aware headers (openai → Bearer; anthropic → `x-api-key` +
+   `anthropic-version`), GET the catalog URL when `catalog.source ===
+   'live'` else `{baseUrl}/models`, `AbortSignal.timeout(8_000)`, no
+   retry, result = `{ outcome: 'verified' | 'rejected' | 'unverifiable',
+   modelCount?: number, detail?: string }`. Never logs or embeds the key.
+   Consumed by the wizard terminal path, `/provider test`, and
+   `/health` — three surfaces, one helper (Law 13).
 
 ### Steps
 
 1. [ ] **RED:** pins for the `resolveProtocol` fix (anthropic-no-map →
    'anthropic'), validation protocol pins (valid/invalid/missing),
-   `toProviderConfig` lift pin, wizard protocol-step pins, verify-helper
-   pins (200/401/403/404/timeout via mocked fetch), e2e summary-text
-   pin. Capture failing.
-2. [ ] **GREEN:** the three surfaces above, in dependency order
-   (model-factories → common → cli).
+   `toProviderConfig` lift pin, grammar `test` reservation pin,
+   verify-helper suite (200/401/403/404/timeout/network-error via mocked
+   fetch, both header shapes, no-key-logging assertion), wizard
+   protocol-step pins, e2e summary-text pins, `/provider test` handler
+   pins, `/health` live-line pins. Capture failing.
+2. [ ] **GREEN:** dependency order: model-factories fix → common
+   (types/validation/lift) → verify helper → wizard step + grammar →
+   route-handler probe → `test` handler → health line.
 3. [ ] **VERIFY:** typecheck ×4; suites (common providers, sdk
-   model-provider-custom, cli wizard + settings + custom-catalog);
-   eslint; prettier; lint:md; validate:repository parity.
+   model-provider-custom + free-mode, cli wizard + settings + health +
+   commands); eslint; prettier; lint:md; validate:repository parity.
 4. [ ] **LIVE (operator-assisted):** add a real Anthropic-outlier custom
    provider via the wizard and observe the live-test outcome in the
-   summary; a B.AI `/messages` custom entry is the natural candidate
-   once FID-2026-0911-004's key exists.
+   summary; `/provider test` and `/health` against the same record; a
+   B.AI `/messages` custom entry is the natural candidate once
+   FID-2026-0911-004's key exists.
 
 ### Live Unknowns
 
@@ -214,6 +259,30 @@ configuration.
 - **GREEN (initial):** the three-part plan above; bug fix sequenced
   FIRST because the protocol field depends on it for correctness.
 - **CHANGE DELTA:** initial authoring.
+
+### Loop 2 — Scope expansion (operator directive, 2026-09-12)
+
+- **Operator ruling:** "address any weak points we found from my
+  questions and expand the scope properly … all things we were missing
+  needs to be folded in then rerun perfection on all."
+- **Weak-point sweep prompted by the four questions** (each traced to
+  file:line before inclusion):
+  1. No live verification anywhere → wizard probe + `/provider test` +
+     `/health` line (three surfaces, ONE helper — Law 13).
+  2. Protocol expressible nowhere → optional field + step + lift.
+  3. `resolveProtocol` latent misdispatch → fix + pin, sequenced first.
+  4. Grammar reservation must gain `test` (the FID-2026-0911-001
+     lesson: reserve in the leaf module so customs can never shadow it).
+  5. Header shapes differ per protocol (Bearer vs x-api-key +
+     anthropic-version) — the helper must be protocol-aware, not
+     Bearer-only (found while drafting, before any code).
+- **YAGNI re-check:** `/provider test` for BUILT-INS rejected — their
+  keys already have FID-level keyed live acceptance; adding a network
+  probe per built-in would be new surface without new information.
+  Third protocol (Gemini-native) rejected — two values cover every
+  endpoint in evidence; the field is extensible without schema change.
+- **CHANGE DELTA:** summary/behavior/components/steps rewritten; risk
+  unchanged (medium); no code written yet.
 
 ## Lessons Learned
 
