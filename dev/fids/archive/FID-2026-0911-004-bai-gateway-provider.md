@@ -3,8 +3,9 @@
 **Filename:** `FID-2026-0911-004-bai-gateway-provider.md`
 **ID:** FID-2026-0911-004
 **Severity:** low
-**Status:** verified (implemented + audited 2026-09-12, autonomous
-mode 3; keyed live acceptance is the closure gate)
+**Status:** closed (2026-09-12 — keyed live acceptance PASSED:
+catalog 47/47 via the production chain, chat 200 `pong` on
+`qwen3.8-flash`, fail-closed 401 verified; Loop 3 recorded)
 **Created:** 2026-09-12 (operator directive: "make a new fid, i want to
 add this provider as well https://docs.b.ai/llmservice/introduction/")
 **YAGNI-Compliance:** Verified — one registry entry per the one-entry
@@ -178,12 +179,25 @@ path), and this follow-up is NOT required for closure.
    merge + audit-manifest entry + `generate:provider-docs`.
 3. [x] **VERIFY:** typecheck ×4; targeted suites; docs-check; eslint
    `--max-warnings 0`; prettier; lint:md; validate:repository parity.
-4. [ ] **LIVE (closure gate, keyed) — pending operator key:** key in
-   `.env.local` as `BAI_API_KEY` (never printed, Law 12); probe script
-   modeled on `orcarouter-acceptance-probe.ts`: (a) catalog via
-   `fetchGatewayModels` (production chain) with `bai/…` internal ids;
-   (b) chat round-trip on a catalog model → HTTP 200 with content;
-   (c) missing-key chat → 401 fail-closed (already probed keyless).
+4. [x] **LIVE (closure gate, keyed) — PASSED 2026-09-12.** Probe:
+   `dev/scratchpad/active/bai-acceptance-probe.ts` (key loaded from
+   `.env.local` as `BAI_API_KEY`, never printed, Law 12). Results:
+   (a) catalog via `fetchGatewayModels(true)` — 1,363 combined models,
+   **47 `bai/…` entries** through the exact production chain `/model`
+   uses; bare upstream ids (`claude-opus-5`, `qwen3.8-flash`,
+   `gpt-5.6-sol`) confirm the uniform-prefix parser was the right
+   shape-proofing call; (b) keyed chat round-trip on
+   `bai/qwen3.8-flash` → **HTTP 200, content `pong`**; (c) missing-key
+   chat → 401 fail-closed.
+   - Model-family behavior map (keyed diagnostics, 2026-09-12):
+     premium family (`claude-*`, `gpt-5.6-*`, `gpt-5-nano`,
+     `gemini-3.5-flash-lite`) → 403 `access_denied` "Deposit required
+     to unlock premium models"; mid-tier (`deepseek-v4.1-flash`,
+     `glm-5.3-flash`) → 400 `insufficient_user_quota`
+     (balance=0, required=2/102 credits); **`qwen3.8-flash` → 200**
+     (account-entitled). One callable model is sufficient acceptance —
+     the integration (auth, parsing, routing, transform) is fully
+     proven; model entitlement is account state, not integration state.
 
 ### Live Unknowns (keyless-unverifiable; resolved at Step 4)
 
@@ -287,6 +301,19 @@ path), and this follow-up is NOT required for closure.
   and fail closed (401).
 - **Verdict:** all keyless gates pass; loop converges pending the
   keyed closure gate.
+
+### Loop 3 — Keyed live acceptance (2026-09-12, closure gate)
+
+- Operator supplied the key (stored as `B_AI` in `.env.local` —
+  renamed to the registry's `BAI_API_KEY` before probing; value never
+  echoed). All three arms passed (results quoted at Step 4).
+- **Live Unknowns resolved:** (1) keyed `/v1/models` is the OpenAI
+  shape, 47 entries, parser handles it (the `success` extra field
+  did not appear keyed); (2) upstream ids are BARE (`claude-opus-5`,
+  not `anthropic/claude-opus-5`) — uniform prefixing round-trips
+  exactly; (3) chat round-trip 200 with content — `pong` on
+  `qwen3.8-flash`.
+- **Verdict:** closure gate satisfied → `closed`.
 
 ## Lessons Learned
 

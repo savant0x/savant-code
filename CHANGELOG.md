@@ -19,12 +19,15 @@
   key probe at the wizard terminal step (never blocks the save),
   `/provider test <id>`, and a `/health` live line — one verify helper
   behind three surfaces. Committed `8984711`.
-- **FID-2026-0911-004 — implemented (this pass).** B.AI gateway
-  provider (14th registry entry): OpenAI Chat Completions + Responses +
-  Anthropic Messages surfaces behind one `BAI_API_KEY`, authenticated
-  live catalog via the resolveKey pattern, uniform-prefix parser pins.
-  Closure gated on the operator's keyed probe (no key on hand).
-  Committed `2e58cf06`.
+- **FID-2026-0911-004 — implemented + CLOSED (this pass).** B.AI
+  gateway provider (14th registry entry): OpenAI Chat Completions +
+  Responses + Anthropic Messages surfaces behind one `BAI_API_KEY`,
+  authenticated live catalog via the resolveKey pattern,
+  uniform-prefix parser pins. Committed `2e58cf06`. Keyed acceptance
+  PASSED with the operator's key: catalog 47/47 via the production
+  chain, chat **200 `pong`** on `bai/qwen3.8-flash`, fail-closed 401;
+  model-entitlement map recorded (premium 403 deposit-gated, mid-tier
+  400 on zero balance — account state, not integration state).
 - **FID-2026-0911-002 — rests at `fixed` (vendor-held).** OrcaRouter
   integration is complete and probe-proven (catalog 195/195 via the
   production chain, key authenticated, fail-closed verified); the HTTP-

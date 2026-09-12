@@ -3,6 +3,22 @@
 This directory contains closed or historically completed FIDs. Files here are
 an audit record, not an active work queue.
 
+## 2026-09-12 closure — B.AI gateway provider (1 FID archived)
+
+[`FID-2026-0911-004-bai-gateway-provider.md`](FID-2026-0911-004-bai-gateway-provider.md)
+(low) — closed 2026-09-12; archived 2026-09-12. 14th registry entry
+(`api.b.ai/v1`, `BAI_API_KEY`, authenticated live catalog, uniform
+prefixing; implementation commit `2e58cf06`, Loops 1-2). Closure gate
+(Loop 3, keyed acceptance via
+`dev/scratchpad/active/bai-acceptance-probe.ts`): catalog 47/47 through
+`fetchGatewayModels` (production chain), chat **HTTP 200 `pong`** on
+`bai/qwen3.8-flash`, missing-key 401 fail-closed. Model-entitlement map
+recorded honestly in the FID: premium family 403 `access_denied`
+(deposit-gated), mid-tier 400 `insufficient_user_quota` (zero balance),
+`qwen3.8-flash` callable — account state, not integration state. Operator
+key stored as `BAI_API_KEY` in `.env.local` (arrived named `B_AI`;
+renamed to the registry var before probing, value never echoed).
+
 ## 2026-09-11 closure — custom providers via /provider (1 FID archived; active queue: 0909-008 + 0911-001)
 
 Implemented across 2026-09-10/11 in ten FID-governed steps (Loops 5-11),

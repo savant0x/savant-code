@@ -33,9 +33,17 @@ on-disk records missing from the table added (-0823-003, -0824-003…-008,
 
 | FID | Status | Purpose / blocking gate |
 |---|---|---|
-| [`FID-2026-0911-002`](FID-2026-0911-002-orcarouter-gateway-provider.md) | fixed | OrcaRouter gateway provider (13th registry entry). Integration fully gate-verified; keyed live acceptance blocked by the VENDOR's missing free-tier unlock (`err_free_access_denied` persists post-GitHub-linkage — operator ruling recorded in the FID; probe re-runs on vendor fix). |
+| [`FID-2026-0911-002`](FID-2026-0911-002-orcarouter-gateway-provider.md) | fixed | OrcaRouter gateway provider (13th registry entry). Integration fully gate-verified; keyed live acceptance blocked by the VENDOR's free-tier unlock (`err_free_access_denied` on every free id incl. `z-ai/glm-5.3-flash-free`, re-probed 2026-09-12 post-linkage; paid models 402 on zero credits — vendor-side, not integration). Probe re-runs on vendor fix. |
 | [`FID-2026-0911-003`](FID-2026-0911-003-custom-provider-live-test-and-protocol.md) | verified | Custom-provider hardening: protocol-aware verify helper behind three surfaces (wizard probe, `/provider test`, `/health` live line) + `protocol: 'openai' \| 'anthropic'` field + `resolveProtocol` fix. All gates pass; committed `8984711`. |
-| [`FID-2026-0911-004`](FID-2026-0911-004-bai-gateway-provider.md) | verified | B.AI gateway provider (14th registry entry: `api.b.ai/v1`, `BAI_API_KEY`, authenticated catalog, uniform prefixing). All keyless gates pass; committed `2e58cf06`; closure gate = keyed live acceptance (needs operator `BAI_API_KEY`). |
+
+**2026-09-12 closure — FID-2026-0911-004 (B.AI) closed + archived:**
+[`FID-2026-0911-004`](archive/FID-2026-0911-004-bai-gateway-provider.md)
+— 14th registry entry (`api.b.ai/v1`, `BAI_API_KEY`, authenticated live
+catalog, uniform prefixing). Keyed acceptance PASSED: catalog 47/47 via
+the production chain, chat **200 `pong`** on `bai/qwen3.8-flash`,
+fail-closed 401. Model-family entitlement map recorded in the FID
+(premium 403 deposit-gated; mid-tier 400 on zero balance; `qwen3.8-flash`
+callable — account state, not integration state).
 
 **2026-09-11 closure — FID-2026-0910-004 (custom providers via /provider)
 closed + archived:**
@@ -75,10 +83,9 @@ had never executed. Completed 2026-09-10 after Ground-Truth re-verification
 "skill lifecycle live notification"; CHANGELOG `Unreleased` carries the
 full entry (plus the previously-uncommitted 0909-006/007 closure entries).
 Active queue: FID-2026-0911-002 (OrcaRouter — vendor free-tier unlock
-still not effective post-linkage; probe re-runs on vendor fix) and
-FID-2026-0911-004 (B.AI — closure gated on the operator's `BAI_API_KEY`
-keyed acceptance). FID-2026-0911-003 implemented + audited (Loop 3;
-commit `8984711`).
+still not effective post-linkage; probe re-runs on vendor fix).
+FID-2026-0911-003 implemented + audited (Loop 3; commit `8984711`).
+FID-2026-0911-004 CLOSED (keyed acceptance 200 `pong`).
 
 **2026-09-12 closures (automation level 3):**
 [`FID-2026-0909-008`](archive/FID-2026-0909-008-tool-call-argument-truncation-root-cause.md)
