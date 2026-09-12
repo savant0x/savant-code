@@ -123,6 +123,15 @@ describe('provider setup', () => {
     expect(getConfiguredProviderNames()).toContain('tokenharbor')
   })
 
+  test('saves OrcaRouter credentials for direct-provider mode (FID-2026-0911-002)', () => {
+    saveProviderApiKey('orcarouter', '  test-orcarouter-key  ')
+
+    expect(process.env.ORCAROUTER_API_KEY).toBe('test-orcarouter-key')
+    expect(process.env.DIRECT_PROVIDER).toBe('orcarouter')
+    expect(process.env.INFERENCE_BASE_URL).toBe('https://api.orcarouter.ai/v1')
+    expect(getConfiguredProviderNames()).toContain('orcarouter')
+  })
+
   test('saves OpenRouter credentials for direct-provider mode', () => {
     saveProviderApiKey('openrouter', '  test-openrouter-key  ')
 

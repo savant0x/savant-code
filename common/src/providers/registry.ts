@@ -234,6 +234,36 @@ export const PROVIDER_REGISTRY = {
     domain: 'apinex.bond',
     order: 4,
   },
+  orcarouter: {
+    id: 'orcarouter',
+    label: 'OrcaRouter',
+    kind: 'gateway',
+    credentials: {
+      envVar: 'ORCAROUTER_API_KEY',
+      // /provider hint is part of the canonical message.
+      missingKeyMessage:
+        'OrcaRouter API key not set. Set ORCAROUTER_API_KEY environment variable or run /provider orcarouter.',
+    },
+    // docs.orcarouter.ai/introduction: "Point your existing OpenAI SDK at
+    // https://api.orcarouter.ai/v1". The docs' api. subdomain is
+    // authoritative.
+    baseUrl: 'https://api.orcarouter.ai/v1',
+    protocol: 'openai',
+    // Upstream ids are vendor-namespaced WITH slashes (anthropic/
+    // claude-opus-5, deepseek/deepseek-v4-flash) plus orcarouter-native
+    // routers (free, fusion, fusion-flash, fusion-mini). `strip` removes
+    // only the internal `orcarouter/` routing prefix; the multi-slash
+    // remainder goes verbatim — the same shape openrouter and apinex serve.
+    idTransform: 'strip',
+    // Public keyless catalog (probed HTTP 200 keyless: 195 models, OpenAI
+    // shape) — the generic live-catalog fetcher consumes it verbatim, no
+    // resolver wire-in (unlike nous/apinex, whose catalogs are
+    // authenticated).
+    catalog: { source: 'live', url: 'https://api.orcarouter.ai/v1/models' },
+    setupAvailable: true,
+    domain: 'orcarouter.ai',
+    order: 4,
+  },
   'opencode-zen': {
     id: 'opencode-zen',
     label: 'OpenCode Zen',

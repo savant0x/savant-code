@@ -83,6 +83,15 @@ export const PROVIDER_EXCEPTION_MANIFEST: readonly ProviderExceptionManifestEntr
       ],
     },
     {
+      providerId: 'orcarouter',
+      kinds: ['live-catalog'],
+      owner: 'cli/src/utils/openrouter-models/orcarouter.ts',
+      evidence: [
+        'cli/src/utils/openrouter-models/orcarouter.ts',
+        'cli/src/utils/openrouter-models/gateway.ts',
+      ],
+    },
+    {
       providerId: 'opencode-zen',
       kinds: ['credential-resolver', 'live-catalog', 'multi-protocol'],
       owner: 'common/src/constants/model-config/provider-protocols.ts',

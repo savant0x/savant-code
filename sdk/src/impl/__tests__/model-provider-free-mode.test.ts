@@ -8,6 +8,7 @@ import { describe, expect, test, mock } from 'bun:test'
 import {
   setupModelProviderTestHarness,
   TOKEN_HARBOR_MODEL,
+  ORCAROUTER_MODEL,
   COMMAND_CODE_PROMPT,
 } from './model-provider-free-mode-test-setup'
 
@@ -87,6 +88,55 @@ describe('getModelForRequest ChatGPT OAuth fallback behavior', () => {
     expect(new Headers(init?.headers).get('authorization')).toBe(
       'Bearer tokenharbor-test-key',
     )
+    expect(JSON.parse(String(init?.body)).model).toBe('anthropic/claude-opus-5')
+  })
+
+  test('requires the OrcaRouter API key (FID-2026-0911-002)', async () => {
+    const { getModelForRequest } = await importFresh()
+
+    await expect(
+      getModelForRequest({
+        apiKey: 'test-key',
+        model: ORCAROUTER_MODEL,
+      }),
+    ).rejects.toThrow(
+      'OrcaRouter API key not set. Set ORCAROUTER_API_KEY environment variable or run /provider orcarouter.',
+    )
+  })
+
+  test('routes OrcaRouter models with one-prefix normalization (FID-2026-0911-002)', async () => {
+    process.env.ORCAROUTER_API_KEY = 'orcarouter-test-key'
+    const fetchMock = mock(() =>
+      Promise.resolve(
+        new Response('data: [DONE]\n\n', {
+          status: 200,
+          headers: { 'content-type': 'text/event-stream' },
+        }),
+      ),
+    )
+    // @ts-expect-error - test fetch has the same runtime contract
+    globalThis.fetch = fetchMock
+
+    const { getModelForRequest } = await importFresh()
+    const result = await getModelForRequest({
+      apiKey: 'test-key',
+      model: ORCAROUTER_MODEL,
+    })
+    await (result.model as LanguageModelV2).doStream({
+      prompt: COMMAND_CODE_PROMPT,
+    })
+
+    const [input, init] = fetchMock.mock.calls[0] as unknown as [
+      RequestInfo | URL,
+      RequestInit | undefined,
+    ]
+    // Base URL + Bearer auth per the OrcaRouter docs contract.
+    expect(String(input)).toBe('https://api.orcarouter.ai/v1/chat/completions')
+    expect(new Headers(init?.headers).get('authorization')).toBe(
+      'Bearer orcarouter-test-key',
+    )
+    // `strip` removes only the internal `orcarouter/` routing prefix; the
+    // vendor-namespaced remainder goes verbatim (openrouter/apinex shape).
     expect(JSON.parse(String(init?.body)).model).toBe('anthropic/claude-opus-5')
   })
 })

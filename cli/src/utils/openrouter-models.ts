@@ -45,6 +45,11 @@ export {
   getCustomProviderIds,
 } from './openrouter-models/custom-catalog'
 export {
+  fetchOrcarouterModels,
+  getCachedOrcarouterModels,
+  hasOrcarouterCatalog,
+} from './openrouter-models/orcarouter'
+export {
   fetchCommandCodeModels,
   fetchOpenCodeGoModels,
   fetchTokenRouterModels,

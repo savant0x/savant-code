@@ -1,7 +1,7 @@
 /**
  * Combined gateway catalog — OpenRouter + TokenRouter + TokenHarbor + NVIDIA NIM
  * + OpenCode Go + CommandCode + Nous Research + KiosAPI + APInex + OpenCode Zen
- * — plus subscription plumbing.
+ * + OrcaRouter — plus subscription plumbing.
  */
 import fs from 'node:fs'
 import path from 'node:path'
@@ -42,6 +42,11 @@ import {
   fetchOpenRouterModels,
   getCachedOpenRouterModels,
 } from './openrouter'
+import {
+  __resetOrcarouterCacheForTest,
+  fetchOrcarouterModels,
+  getCachedOrcarouterModels,
+} from './orcarouter'
 import {
   fetchCommandCodeModels,
   fetchOpenCodeGoModels,
@@ -188,15 +193,20 @@ export async function fetchGatewayModels(
       fetchNousModels(forceRefresh),
       fetchKiosapiModels(forceRefresh),
       fetchApinexModels(forceRefresh),
+      fetchOrcarouterModels(forceRefresh),
       fetchZenModels(forceRefresh),
-      // FID-2026-0910-004 Step 9 remainder: all registered custom catalogs
-      // (live fetch + inline synthesis) merge here. A per-provider failure
-      // degrades to [] inside fetchAllCustomModels (D10 ladder) and can
-      // never mask the built-in sources.
+      // FID-2026-0910-004 Step 9 remainder: custom catalogs (live + inline)
+      // merge here; per-provider failures degrade to [] (D10 ladder).
       fetchAllCustomModels(forceRefresh),
     ])
-    const [nousResult, kiosapiResult, apinexResult, zenResult, customResult] =
-      restResults
+    const [
+      nousResult,
+      kiosapiResult,
+      apinexResult,
+      orcarouterResult,
+      zenResult,
+      customResult,
+    ] = restResults
 
     const orModels =
       orResult.status === 'fulfilled'
@@ -218,6 +228,10 @@ export async function fetchGatewayModels(
       apinexResult.status === 'fulfilled'
         ? apinexResult.value
         : getCachedApinexModels()
+    const orcarouterModels =
+      orcarouterResult.status === 'fulfilled'
+        ? orcarouterResult.value
+        : getCachedOrcarouterModels()
     const zenModels =
       zenResult.status === 'fulfilled' ? zenResult.value : getCachedZenModels()
     const customModels =
@@ -237,6 +251,7 @@ export async function fetchGatewayModels(
       ...nousModels,
       ...kiosapiModels,
       ...apinexModels,
+      ...orcarouterModels,
       ...zenModels,
       ...openCodeGoModels,
       ...commandCodeModels,
@@ -264,6 +279,7 @@ export function __resetOpenRouterModelsCacheForTest(): void {
   __resetNousCacheForTest()
   __resetKiosapiCacheForTest()
   __resetApinexCacheForTest()
+  __resetOrcarouterCacheForTest()
   __resetZenCacheForTest()
   // Step 9 remainder: lazily-built custom fetchers are cache state too.
   __resetCustomCatalogsForTest()
