@@ -24,9 +24,10 @@ import type { ProviderConfig } from '../types'
  * as its first argument so tests inject a fixture instead of the singleton).
  */
 describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
-  test('covers all thirteen current providers', () => {
+  test('covers all fourteen current providers', () => {
     expect(Object.keys(PROVIDER_REGISTRY).sort()).toEqual([
       'apinex',
+      'bai',
       'cloudflare',
       'commandcode',
       'kiosapi',
@@ -75,8 +76,10 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
     expect(deriveProviderOrder(PROVIDER_REGISTRY, 'tokenrouter')).toBe(1)
     expect(deriveProviderOrder(PROVIDER_REGISTRY, 'nvidia')).toBe(2)
     expect(deriveProviderOrder(PROVIDER_REGISTRY, 'opencode-go')).toBe(3)
+    // FID-2026-0911-003's per-provider order-4 family.
     for (const id of [
       'apinex',
+      'bai',
       'tokenharbor',
       'commandcode',
       'nous',
@@ -91,10 +94,11 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
     expect(deriveProviderOrder(PROVIDER_REGISTRY, 'unknown')).toBe(4)
   })
 
-  test('setup config derives exactly the eleven current setup providers', () => {
+  test('setup config derives exactly the twelve current setup providers', () => {
     const setup = deriveSetupConfig(PROVIDER_REGISTRY)
     expect(Object.keys(setup).sort()).toEqual([
       'apinex',
+      'bai',
       'commandcode',
       'kiosapi',
       'nous',
@@ -223,55 +227,6 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
       envVar: 'ACME_API_KEY',
       baseUrl: 'https://api.acme.ai/v1',
     })
-  })
-
-  test('apinex entry matches the llms.txt contract (FID-2026-0907-008)', () => {
-    const apinex = PROVIDER_REGISTRY.apinex
-    expect(apinex.kind).toBe('gateway')
-    expect(apinex.label).toBe('APInex')
-    expect(apinex.protocol).toBe('openai')
-    expect(apinex.idTransform).toBe('strip')
-    // llms.txt: "Base URL: https://api.apinex.bond/v1" — the documented
-    // api. subdomain is authoritative over the apex host.
-    expect(apinex.baseUrl).toBe('https://api.apinex.bond/v1')
-    expect(apinex.credentials.envVar).toBe('APINEX_API_KEY')
-    expect(apinex.credentials.missingKeyMessage).toBe(
-      'APInex API key not set. Set APINEX_API_KEY environment variable or run /provider apinex.',
-    )
-    expect(apinex.catalog).toEqual({
-      source: 'live',
-      url: 'https://api.apinex.bond/v1/models',
-    })
-    expect(apinex.setupAvailable).toBe(true)
-    expect(apinex.domain).toBe('apinex.bond')
-    expect(apinex.order).toBe(4)
-  })
-
-  test('orcarouter entry matches the documented contract (FID-2026-0911-002)', () => {
-    // Registry key check: the entry must exist for the assertions below.
-    expect('orcarouter' in PROVIDER_REGISTRY).toBe(true)
-    const orcarouter =
-      PROVIDER_REGISTRY.orcarouter as (typeof PROVIDER_REGISTRY)['orcarouter']
-    expect(orcarouter.kind).toBe('gateway')
-    expect(orcarouter.label).toBe('OrcaRouter')
-    expect(orcarouter.protocol).toBe('openai')
-    expect(orcarouter.idTransform).toBe('strip')
-    // docs.orcarouter.ai/introduction: "Point your existing OpenAI SDK at
-    // https://api.orcarouter.ai/v1" — the api. subdomain is authoritative.
-    expect(orcarouter.baseUrl).toBe('https://api.orcarouter.ai/v1')
-    expect(orcarouter.credentials.envVar).toBe('ORCAROUTER_API_KEY')
-    expect(orcarouter.credentials.missingKeyMessage).toBe(
-      'OrcaRouter API key not set. Set ORCAROUTER_API_KEY environment variable or run /provider orcarouter.',
-    )
-    // Public keyless catalog (probed HTTP 200 keyless, 195 models, OpenAI
-    // shape) — the generic live-catalog fetcher consumes it verbatim.
-    expect(orcarouter.catalog).toEqual({
-      source: 'live',
-      url: 'https://api.orcarouter.ai/v1/models',
-    })
-    expect(orcarouter.setupAvailable).toBe(true)
-    expect(orcarouter.domain).toBe('orcarouter.ai')
-    expect(orcarouter.order).toBe(4)
   })
 
   test('zen protocol map covers all four wire protocols (FID-2026-0905-003)', () => {

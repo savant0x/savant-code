@@ -16,6 +16,7 @@ export const COMMAND_CODE_MODEL = 'commandcode/deepseek/deepseek-v4-pro'
 export const COMMAND_CODE_CLAUDE_MODEL = 'commandcode/claude-sonnet-4.6'
 export const TOKEN_HARBOR_MODEL = 'tokenharbor/anthropic/claude-opus-5'
 export const ORCAROUTER_MODEL = 'orcarouter/anthropic/claude-opus-5'
+export const BAI_MODEL = 'bai/deepseek/deepseek-v4-flash'
 export const NOUS_MODEL = 'nous/anthropic/claude-sonnet-4.6'
 export const ZEN_CHAT_MODEL = 'opencode-zen/glm-5.3'
 export const ZEN_CLAUDE_MODEL = 'opencode-zen/claude-sonnet-4-6'
@@ -35,6 +36,7 @@ export function setupModelProviderTestHarness() {
   let originalOpencodeGoApiKey: string | undefined
   let originalTokenHarborApiKey: string | undefined
   let originalOrcarouterApiKey: string | undefined
+  let originalBaiApiKey: string | undefined
   let originalNousApiKey: string | undefined
   let originalOpenRouterApiKey: string | undefined
   let originalOrMasterKey: string | undefined
@@ -53,6 +55,8 @@ export function setupModelProviderTestHarness() {
     delete process.env.TOKENHARBOR_API_KEY
     originalOrcarouterApiKey = process.env.ORCAROUTER_API_KEY
     delete process.env.ORCAROUTER_API_KEY
+    originalBaiApiKey = process.env.BAI_API_KEY
+    delete process.env.BAI_API_KEY
     originalNousApiKey = process.env.NOUS_API_KEY
     delete process.env.NOUS_API_KEY
     originalOpenRouterApiKey = process.env.OPENROUTER_API_KEY
@@ -111,6 +115,11 @@ export function setupModelProviderTestHarness() {
       delete process.env.ORCAROUTER_API_KEY
     } else {
       process.env.ORCAROUTER_API_KEY = originalOrcarouterApiKey
+    }
+    if (originalBaiApiKey === undefined) {
+      delete process.env.BAI_API_KEY
+    } else {
+      process.env.BAI_API_KEY = originalBaiApiKey
     }
     if (originalNousApiKey === undefined) {
       delete process.env.NOUS_API_KEY

@@ -92,6 +92,15 @@ export const PROVIDER_EXCEPTION_MANIFEST: readonly ProviderExceptionManifestEntr
       ],
     },
     {
+      providerId: 'bai',
+      kinds: ['live-catalog'],
+      owner: 'cli/src/utils/openrouter-models/bai.ts',
+      evidence: [
+        'cli/src/utils/openrouter-models/bai.ts',
+        'cli/src/utils/openrouter-models/gateway.ts',
+      ],
+    },
+    {
       providerId: 'opencode-zen',
       kinds: ['credential-resolver', 'live-catalog', 'multi-protocol'],
       owner: 'common/src/constants/model-config/provider-protocols.ts',

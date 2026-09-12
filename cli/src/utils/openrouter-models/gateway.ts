@@ -1,12 +1,10 @@
 /**
  * Combined gateway catalog — OpenRouter + TokenRouter + TokenHarbor + NVIDIA NIM
  * + OpenCode Go + CommandCode + Nous Research + KiosAPI + APInex + OpenCode Zen
- * + OrcaRouter — plus subscription plumbing.
+ * + OrcaRouter + B.AI — plus subscription plumbing.
  */
 import fs from 'node:fs'
-import path from 'node:path'
 
-import { getConfigDir } from '../config-dir'
 import { logger } from '../logger'
 import {
   __resetApinexCacheForTest,
@@ -14,9 +12,19 @@ import {
   getCachedApinexModels,
 } from './apinex'
 import {
+  __resetBaiCacheForTest,
+  fetchBaiModels,
+  getCachedBaiModels,
+} from './bai'
+import {
   __resetCustomCatalogsForTest,
   fetchAllCustomModels,
 } from './custom-catalog'
+import {
+  gatewayCatalogCachePath,
+  loadGatewayCatalogFromDisk,
+  writeGatewayCatalogToDisk,
+} from './gateway-disk-cache'
 import {
   __resetKiosapiCacheForTest,
   fetchKiosapiModels,
@@ -61,56 +69,6 @@ let gatewayCache: OpenRouterModel[] | null = null
 let gatewayCacheAt = 0
 let gatewayInflight: Promise<OpenRouterModel[]> | null = null
 const gatewayCatalogListeners = new Set<(catalog: OpenRouterModel[]) => void>()
-
-/** On-disk warm-start cache filename (FID-2026-0815-007 F-09). */
-const GATEWAY_CATALOG_CACHE_FILE = 'gateway-catalog.json'
-
-type GatewayCatalogDiskCache = {
-  savedAt: number
-  catalog: OpenRouterModel[]
-}
-
-function gatewayCatalogCachePath(): string {
-  return path.join(getConfigDir(), GATEWAY_CATALOG_CACHE_FILE)
-}
-
-/** Loads a fresh gateway catalog from the disk cache, or null when absent/stale/corrupt. */
-function loadGatewayCatalogFromDisk(): {
-  catalog: OpenRouterModel[]
-  savedAt: number
-} | null {
-  try {
-    const raw = fs.readFileSync(gatewayCatalogCachePath(), 'utf8')
-    const parsed = JSON.parse(raw) as GatewayCatalogDiskCache
-    if (
-      !Array.isArray(parsed.catalog) ||
-      typeof parsed.savedAt !== 'number' ||
-      Date.now() - parsed.savedAt >= CATALOG_TTL_MS
-    ) {
-      return null
-    }
-    return { catalog: parsed.catalog, savedAt: parsed.savedAt }
-  } catch {
-    return null
-  }
-}
-
-/** Best-effort write-through of the combined catalog (never throws). */
-async function writeGatewayCatalogToDisk(
-  catalog: OpenRouterModel[],
-): Promise<void> {
-  try {
-    await fs.promises.mkdir(getConfigDir(), { recursive: true })
-    const cache: GatewayCatalogDiskCache = { savedAt: Date.now(), catalog }
-    await fs.promises.writeFile(
-      gatewayCatalogCachePath(),
-      JSON.stringify(cache),
-      'utf8',
-    )
-  } catch {
-    // Best-effort — model metadata is a warm-start convenience only.
-  }
-}
 
 /**
  * Synchronous read of the combined gateway catalog (cached or empty).
@@ -194,6 +152,7 @@ export async function fetchGatewayModels(
       fetchKiosapiModels(forceRefresh),
       fetchApinexModels(forceRefresh),
       fetchOrcarouterModels(forceRefresh),
+      fetchBaiModels(forceRefresh),
       fetchZenModels(forceRefresh),
       // FID-2026-0910-004 Step 9 remainder: custom catalogs (live + inline)
       // merge here; per-provider failures degrade to [] (D10 ladder).
@@ -204,6 +163,7 @@ export async function fetchGatewayModels(
       kiosapiResult,
       apinexResult,
       orcarouterResult,
+      baiResult,
       zenResult,
       customResult,
     ] = restResults
@@ -232,6 +192,8 @@ export async function fetchGatewayModels(
       orcarouterResult.status === 'fulfilled'
         ? orcarouterResult.value
         : getCachedOrcarouterModels()
+    const baiModels =
+      baiResult.status === 'fulfilled' ? baiResult.value : getCachedBaiModels()
     const zenModels =
       zenResult.status === 'fulfilled' ? zenResult.value : getCachedZenModels()
     const customModels =
@@ -252,6 +214,7 @@ export async function fetchGatewayModels(
       ...kiosapiModels,
       ...apinexModels,
       ...orcarouterModels,
+      ...baiModels,
       ...zenModels,
       ...openCodeGoModels,
       ...commandCodeModels,
@@ -280,6 +243,7 @@ export function __resetOpenRouterModelsCacheForTest(): void {
   __resetKiosapiCacheForTest()
   __resetApinexCacheForTest()
   __resetOrcarouterCacheForTest()
+  __resetBaiCacheForTest()
   __resetZenCacheForTest()
   // Step 9 remainder: lazily-built custom fetchers are cache state too.
   __resetCustomCatalogsForTest()

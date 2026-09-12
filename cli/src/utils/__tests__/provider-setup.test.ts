@@ -132,6 +132,15 @@ describe('provider setup', () => {
     expect(getConfiguredProviderNames()).toContain('orcarouter')
   })
 
+  test('saves B.AI credentials for direct-provider mode (FID-2026-0911-004)', () => {
+    saveProviderApiKey('bai', '  test-bai-key  ')
+
+    expect(process.env.BAI_API_KEY).toBe('test-bai-key')
+    expect(process.env.DIRECT_PROVIDER).toBe('bai')
+    expect(process.env.INFERENCE_BASE_URL).toBe('https://api.b.ai/v1')
+    expect(getConfiguredProviderNames()).toContain('bai')
+  })
+
   test('saves OpenRouter credentials for direct-provider mode', () => {
     saveProviderApiKey('openrouter', '  test-openrouter-key  ')
 

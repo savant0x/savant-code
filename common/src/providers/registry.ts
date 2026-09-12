@@ -15,6 +15,8 @@
  *       tie of tokenharbor/commandcode/nous/ollama/cloudflare/kiosapi/opencode-zen
  *       at 4)
  */
+import { PROVIDER_REGISTRY_PARTITION } from './registry-partitioned'
+
 import type { ProviderConfig } from './types'
 
 export const PROVIDER_REGISTRY = {
@@ -187,107 +189,11 @@ export const PROVIDER_REGISTRY = {
     setupAvailable: false,
     order: 4,
   },
-  kiosapi: {
-    id: 'kiosapi',
-    label: 'KiosAPI',
-    kind: 'gateway',
-    credentials: {
-      envVar: 'KIOSAPI_API_KEY',
-      // /provider hint is part of the canonical message.
-      missingKeyMessage:
-        'KiosAPI key not set. Set KIOSAPI_API_KEY environment variable or run /provider kiosapi.',
-    },
-    baseUrl: 'https://kiosapi.com/v1',
-    protocol: 'openai',
-    // KiosAPI takes bare upstream ids (e.g. `gpt-4o-mini`); the internal
-    // `kiosapi/` routing prefix is stripped before sending.
-    idTransform: 'strip',
-    catalog: { source: 'live', url: 'https://kiosapi.com/v1/models' },
-    setupAvailable: true,
-    domain: 'kiosapi.com',
-    order: 4,
-  },
-  apinex: {
-    id: 'apinex',
-    label: 'APInex',
-    kind: 'gateway',
-    credentials: {
-      envVar: 'APINEX_API_KEY',
-      // /provider hint is part of the canonical message.
-      missingKeyMessage:
-        'APInex API key not set. Set APINEX_API_KEY environment variable or run /provider apinex.',
-    },
-    // apinex.bond/llms.txt: "Base URL: https://api.apinex.bond/v1 — drop-in
-    // replacement for an OpenAI base URL." The documented api. subdomain is
-    // authoritative (the apex host also answers, but the docs win).
-    baseUrl: 'https://api.apinex.bond/v1',
-    protocol: 'openai',
-    // Upstream ids are vendor-namespaced WITH slashes (gpt/5.6-luna,
-    // free/glm-5.3-flash); `strip` removes only the internal `apinex/`
-    // routing prefix — the same multi-slash shape openrouter serves.
-    idTransform: 'strip',
-    // Authenticated live catalog (llms.txt: "list models (auth required)").
-    // The public /api/public/models table is custom-shaped and unusable by
-    // the generic fetcher; the key is supplied via the Nous-style resolver.
-    catalog: { source: 'live', url: 'https://api.apinex.bond/v1/models' },
-    setupAvailable: true,
-    domain: 'apinex.bond',
-    order: 4,
-  },
-  orcarouter: {
-    id: 'orcarouter',
-    label: 'OrcaRouter',
-    kind: 'gateway',
-    credentials: {
-      envVar: 'ORCAROUTER_API_KEY',
-      // /provider hint is part of the canonical message.
-      missingKeyMessage:
-        'OrcaRouter API key not set. Set ORCAROUTER_API_KEY environment variable or run /provider orcarouter.',
-    },
-    // docs.orcarouter.ai/introduction: "Point your existing OpenAI SDK at
-    // https://api.orcarouter.ai/v1". The docs' api. subdomain is
-    // authoritative.
-    baseUrl: 'https://api.orcarouter.ai/v1',
-    protocol: 'openai',
-    // Upstream ids are vendor-namespaced WITH slashes (anthropic/
-    // claude-opus-5, deepseek/deepseek-v4-flash) plus orcarouter-native
-    // routers (free, fusion, fusion-flash, fusion-mini). `strip` removes
-    // only the internal `orcarouter/` routing prefix; the multi-slash
-    // remainder goes verbatim — the same shape openrouter and apinex serve.
-    idTransform: 'strip',
-    // Public keyless catalog (probed HTTP 200 keyless: 195 models, OpenAI
-    // shape) — the generic live-catalog fetcher consumes it verbatim, no
-    // resolver wire-in (unlike nous/apinex, whose catalogs are
-    // authenticated).
-    catalog: { source: 'live', url: 'https://api.orcarouter.ai/v1/models' },
-    setupAvailable: true,
-    domain: 'orcarouter.ai',
-    order: 4,
-  },
-  'opencode-zen': {
-    id: 'opencode-zen',
-    label: 'OpenCode Zen',
-    kind: 'gateway',
-    credentials: {
-      resolver: 'opencode',
-      envVar: 'OPENCODE_API_KEY',
-      // /provider hint is part of the canonical message.
-      missingKeyMessage:
-        'OpenCode Zen API key not set. Set OPENCODE_API_KEY environment variable or run /provider opencode-zen.',
-    },
-    baseUrl: 'https://opencode.ai/zen/v1',
-    // Four wire protocols (chat, Anthropic messages, Responses, Gemini);
-    // per-model dispatch comes from OPENCODE_ZEN_PROTOCOLS.
-    protocol: 'multi',
-    protocolMap: 'OPENCODE_ZEN_PROTOCOLS',
-    // Zen takes bare upstream ids (e.g. `gpt-5.5`); the internal
-    // `opencode-zen/` routing prefix is stripped before sending.
-    idTransform: 'strip',
-    catalog: { source: 'live', url: 'https://opencode.ai/zen/v1/models' },
-    setupAvailable: true,
-    domain: 'opencode.ai',
-    order: 4,
-  },
+  // kiosapi/apinex/orcarouter/bai/opencode-zen entries live in
+  // ./registry-partitioned (300-line file split) and are spread in —
+  // Object.keys order is preserved: these five follow ollama, and the
+  // inline object ends immediately after the spread.
+  ...PROVIDER_REGISTRY_PARTITION,
 } as const satisfies Record<string, ProviderConfig>
 
 /** Literal union of registry ids, e.g. 'tokenharbor' | 'opencode-go'. */

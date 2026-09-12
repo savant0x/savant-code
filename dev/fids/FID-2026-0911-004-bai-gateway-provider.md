@@ -3,8 +3,8 @@
 **Filename:** `FID-2026-0911-004-bai-gateway-provider.md`
 **ID:** FID-2026-0911-004
 **Severity:** low
-**Status:** created (Loop 1 RED recorded; presented to the operator per
-Law 2 before any code is written)
+**Status:** verified (implemented + audited 2026-09-12, autonomous
+mode 3; keyed live acceptance is the closure gate)
 **Created:** 2026-09-12 (operator directive: "make a new fid, i want to
 add this provider as well https://docs.b.ai/llmservice/introduction/")
 **YAGNI-Compliance:** Verified — one registry entry per the one-entry
@@ -168,15 +168,15 @@ path), and this follow-up is NOT required for closure.
 
 ### Steps
 
-1. [ ] **RED:** registry contract pin + count-parity 13→14 / 11→12;
+1. [x] **RED:** registry contract pin + count-parity 13→14 / 11→12;
    sdk free-mode routing leg + templated-error leg; cli
    `saveProviderApiKey` leg; wrapper parser pins (uniform prefixing,
    round-trip through `strip`, malformed-row tolerance). Capture
    failing.
-2. [ ] **GREEN:** registry entry + `bai.ts` wrapper (resolveKey via the
+2. [x] **GREEN:** registry entry + `bai.ts` wrapper (resolveKey via the
    shared fetcher's `resolveKey` option reading `BAI_API_KEY`) + gateway
    merge + audit-manifest entry + `generate:provider-docs`.
-3. [ ] **VERIFY:** typecheck ×4; targeted suites; docs-check; eslint
+3. [x] **VERIFY:** typecheck ×4; targeted suites; docs-check; eslint
    `--max-warnings 0`; prettier; lint:md; validate:repository parity.
 4. [ ] **LIVE (closure gate, keyed) — pending operator key:** key in
    `.env.local` as `BAI_API_KEY` (never printed, Law 12); probe script
@@ -226,6 +226,67 @@ path), and this follow-up is NOT required for closure.
   FID-2026-0911-002 lesson — a mixed or already-prefixed id shape would
   otherwise misround-trip).
 - **CHANGE DELTA:** initial authoring.
+
+### Loop 2 — Implementation (2026-09-12, autonomous mode 3)
+
+- **RED captured failing before GREEN** (all four legs):
+  - `common/src/providers/__tests__/provider-registry.test.ts` — 3 fail
+    (count-parity 13→14 / 11→12 asserted; `bai` contract pin fails on
+    the missing entry).
+  - `sdk/src/impl/__tests__/model-provider-free-mode.test.ts` — 2 fail
+    (templated missing-key error + routing with `strip` normalization).
+  - `cli/src/utils/__tests__/provider-setup.test.ts` — 1 fail
+    (`saveProviderApiKey('bai', …)` unknown setup name).
+  - `cli/src/utils/__tests__/openrouter-models-bai.test.ts` — module
+    absent (wrapper not yet written).
+- **GREEN:**
+  1. `common/src/providers/registry.ts` + NEW `registry-partitioned.ts`
+     — the `bai` entry (see Approach); the five partitioned entries
+     spread in preserving `Object.keys` order.
+  2. `cli/src/utils/openrouter-models/bai.ts` — NEW thin wrapper on the
+     shared fetcher with `resolveKey: () => process.env.BAI_API_KEY`
+     (authenticated catalog) and uniform prefixing (OrcaRouter lesson;
+     parser pin proves bare / vendor-namespaced / already-prefixed
+     upstream ids all round-trip through `strip`).
+  3. `gateway.ts` merge + `__resetBaiCacheForTest` in the test reset.
+  4. `provider-exception-manifest.ts` — `bai` live-catalog entry.
+  5. Docs regenerated (`generate:provider-docs` — `.env.example` +
+     `cli/release/README.md`).
+- **File-cap discipline (files I pushed over get real splits, not
+  baseline bumps):**
+  - `registry.ts` 322→200 via NEW `registry-partitioned.ts` (143 lines;
+    kiosapi/apinex/orcarouter/bai/opencode-zen entries, spread in —
+    key order preserved, derivation-parity tests unchanged and green).
+  - `provider-registry.test.ts` 326→253 via NEW
+    `provider-contract-pins.test.ts` (84 lines; apinex/orcarouter/bai
+    contract pins moved verbatim).
+  - `gateway.ts` 310→262 via NEW `gateway-disk-cache.ts` (63 lines; the
+    FID-2026-0815-007 warm-start persistence boundary extracted).
+- **AUDIT evidence (own-run, this session):**
+  - typecheck × 4 — exit 0 each.
+  - common providers 58/0 (6 files) · sdk free-mode + custom suites
+    15/0 (3 files) · cli gateway/bai/setup/lookup 24/0 + 21/0 + 37/0
+    across re-runs — 0 fail everywhere.
+  - eslint `--max-warnings 0` on all 12 touched files — exit 0 ·
+    prettier clean · lint:md exit 0 · docs-check exit 0.
+  - `validate:repository` hard-cap parity: **8 = 8** (the three files
+    this FID pushed over the cap were each brought back by real
+    splits; no baseline bumps).
+- **Law 4 call-graph (production reachability, grep-proven):**
+  - `fetchBaiModels` ← `gateway.ts` `fetchGatewayModels` allSettled
+    chain ← `/model` command + picker ( Law-4 grep: gateway.ts import
+    + merge line).
+  - Routing ← `PROVIDER_REGISTRY.bai` → derived unions →
+    `model-factories.ts` openai factory (`strip` transform) — pinned
+    e2e in the sdk suite asserts URL, Bearer header, and wire id.
+  - `/provider bai` setup ← `deriveSetupConfig` →
+    `provider-key-store.ts` (count-parity 11→12 pin).
+- **Live unknowns deferred to Step 4 (keyed acceptance, closure
+  gate):** keyed `/v1/models` payload shape, real model-id namespace,
+  chat 200 round-trip. Keyless probes already prove endpoints exist
+  and fail closed (401).
+- **Verdict:** all keyless gates pass; loop converges pending the
+  keyed closure gate.
 
 ## Lessons Learned
 
