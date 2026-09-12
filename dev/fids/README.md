@@ -33,8 +33,9 @@ on-disk records missing from the table added (-0823-003, -0824-003…-008,
 
 | FID | Status | Purpose / blocking gate |
 |---|---|---|
-| [`FID-2026-0909-008`](FID-2026-0909-008-tool-call-argument-truncation-root-cause.md) | fixed | Tool-call truncation root cause (unset output budget). Steps 1–4 landed; Step 5 (finish-reason proof) deferred follow-up pending next live occurrence. |
-| [`FID-2026-0911-001`](FID-2026-0911-001-provider-picker-add-new-entry.md) | fixed | /provider picker add-new entry → full wizard (sentinel action row + shared selection seam; fixes latent silent fall-through on unknown selections). Converged Loop 3; awaiting operator closure. |
+| [`FID-2026-0911-002`](FID-2026-0911-002-orcarouter-gateway-provider.md) | fixed | OrcaRouter gateway provider (13th registry entry: OpenAI-compatible, public live catalog, `ORCAROUTER_API_KEY`). Steps 1-3 gate-verified; Step 4 keyed live acceptance pending the operator's `sk-orca-` key. |
+| [`FID-2026-0911-003`](FID-2026-0911-003-custom-provider-live-test-and-protocol.md) | created | Custom-provider hardening: wizard live test (key probe, non-blocking) + optional anthropic protocol for outlier endpoints + `resolveProtocol` latent-bug fix. Awaiting operator approval. |
+| [`FID-2026-0911-004`](FID-2026-0911-004-bai-gateway-provider.md) | created | B.AI gateway provider (OpenAI + Responses + Anthropic surfaces, authenticated catalog, `BAI_API_KEY`). Awaiting operator approval + key. |
 | [`FID-2026-0911-002`](FID-2026-0911-002-orcarouter-gateway-provider.md) | fixed | OrcaRouter gateway provider (13th registry entry: OpenAI-compatible, public live catalog, `ORCAROUTER_API_KEY`). Steps 1-3 gate-verified; Step 4 keyed live acceptance pending the operator's `sk-orca-` key. |
 | [`FID-2026-0911-003`](FID-2026-0911-003-custom-provider-live-test-and-protocol.md) | created | Custom-provider hardening: wizard live test (key probe, non-blocking) + optional anthropic protocol for outlier endpoints + `resolveProtocol` latent-bug fix. Awaiting operator approval. |
 | [`FID-2026-0911-004`](FID-2026-0911-004-bai-gateway-provider.md) | created | B.AI gateway provider (OpenAI + Responses + Anthropic surfaces, authenticated catalog, `BAI_API_KEY`). Awaiting operator approval + key. |
@@ -76,7 +77,21 @@ had never executed. Completed 2026-09-10 after Ground-Truth re-verification
 `b7a4e437`, closed + archived same session. See `archive/README.md` header
 "skill lifecycle live notification"; CHANGELOG `Unreleased` carries the
 full entry (plus the previously-uncommitted 0909-006/007 closure entries).
-Active queue: FID-2026-0909-008 only.
+Active queue: FID-2026-0911-003 (implementation next, operator-approved
+scope expansion), FID-2026-0911-004 (B.AI — implemented this pass,
+closure gated on keyed probe). FID-2026-0911-002 rests at `fixed` with
+the vendor-side NEEDS-REVIEW recorded (OrcaRouter's dashboard exposes
+no GitHub-link control; operator declines the credits bypass on
+principle).
+
+**2026-09-12 closures (automation level 3):**
+[`FID-2026-0909-008`](archive/FID-2026-0909-008-tool-call-argument-truncation-root-cause.md)
+closed — Steps 1-5 shipped; the live finish-reason proof is wired as an
+instrument (experience capture) and cannot be summoned on demand;
+closed-with-instrument per the operator's complete-all directive.
+[`FID-2026-0911-001`](archive/FID-2026-0911-001-provider-picker-add-new-entry.md)
+closed — add-new picker entry converged Loop 3, shipped, and its
+operator due-diligence findings routed to FID-2026-0911-003.
 
 **2026-09-10 closure (FID-2026-0910-002 — ECHO.md Author-field residue):**
 exposed live by the FID-2026-0910-001 Verifier audit (a correct FAIL on a

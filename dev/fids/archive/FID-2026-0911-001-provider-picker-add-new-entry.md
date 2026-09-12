@@ -267,5 +267,24 @@ existing seam (Law 13):
   the recorded GREEN self-catch. Verdict: clean → converge.
 - **Circuit breaker:** 3 loops, all convergent; no oscillation.
 
-**Status: converged — `fixed`.** awaiting operator closure decision
-(archive + CHANGELOG) per the COMPLETE-state rule.
+**Status: converged — `fixed`.** CLOSED 2026-09-12 (operator directive:
+"complete all open fids … automation level 3"). Resolution recorded
+below; archived in the closing commit.
+
+## Resolution
+
+**CLOSED 2026-09-12.** The add-new picker entry ships exactly as
+converged in Loop 3: sentinel action row (grammar-word-reserved in the
+leaf module, shadow-proof), selection seam with the three-way branch
+(sentinel → wizard; unknown → explicit guidance; known → setup path),
+free build untouched. Gates at convergence: typecheck ×4, 6/0 pins,
+80/0 regression, eslint/prettier/lint:md clean. Committed as
+`d2656eb4` (feature) + `df5e743a` (governance).
+
+**Operator due diligence (2026-09-12) folded in:** the four pre-closure
+questions surfaced two feature gaps (no live test; no anthropic
+protocol) and one latent routing bug (`resolveProtocol` no-map branch).
+All are OUT OF SCOPE for this presentation-layer FID and are owned by
+FID-2026-0911-003 (expanded scope: wizard live test, `/provider test`,
+`/health` live line, protocol field, routing-bug fix). No open items
+remain on this FID.

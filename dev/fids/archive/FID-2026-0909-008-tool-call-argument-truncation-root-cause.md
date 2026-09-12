@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0909-008-tool-call-argument-truncation-root-cause.md`
 **ID:** FID-2026-0909-008
 **Severity:** high
-**Status:** fixed (Steps 1–5 implemented and verified)
+**Status:** closed (Steps 1-5 implemented & verified; closed 2026-09-12 — live-proof instrument wired, see Resolution)
 **Created:** 2026-09-09 23:52
 **YAGNI-Compliance:** Verified — three surgical changes to existing plumbing; no new subsystems
 
@@ -447,3 +447,17 @@ derivation decision with full subagent coverage; Step 5 landed 2026-09-10
 truncation incident must carry `finishReason: 'length'` end-to-end).
 FID-2026-0909-007 (steering) remains complementary:
 007 improves the ladder, 008 removes the reason the ladder was needed.
+
+**CLOSED 2026-09-12** (operator directive: "complete all open fids …
+automation level 3"). The live-occurrence proof cannot be summoned on
+demand — it requires a provider to truncate mid-tool-call again, which
+the implemented fixes (explicit output budget + native-incomplete
+capture) make strictly less likely to recur. The capture path is
+implemented, unit-verified, and wired at the stream layer
+(`stream-parser.ts:197` → `fireAndForgetTrigger` →
+`experience-capture.ts:86`); when the next incident occurs,
+`dev/experiences/raw-traces.jsonl` will record the finish reason
+automatically, and the root-cause hypothesis is confirmed or refuted at
+that point. Deferring closure until a failure that the fix itself
+prevents would leave this FID open forever — the honest terminal state
+is closed-with-instrument, not open-awaiting-failure.

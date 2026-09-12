@@ -2,6 +2,38 @@
 
 ## Unreleased
 
+### Open-FID sweep: two closures, two implementations, one vendor-held gate (2026-09-12)
+
+- **FID-2026-0911-001 — closed.** /provider picker add-new entry
+  (sentinel action row → full wizard; unknown-selection silent
+  fall-through fixed) shipped and archived; the operator's pre-closure
+  due-diligence findings routed to FID-2026-0911-003.
+- **FID-2026-0909-008 — closed.** Tool-call truncation root cause:
+  Steps 1-5 shipped; the live finish-reason proof is wired as an
+  always-on instrument (experience capture) rather than left as an
+  open-awaiting-failure status.
+- **FID-2026-0911-003 — implemented (this pass).** Custom-provider
+  hardening from the operator's due diligence: `resolveProtocol`
+  latent-misdispatch fix, optional anthropic protocol for custom
+  providers (wizard step + validation + lift), a protocol-aware live
+  key probe at the wizard terminal step (never blocks the save),
+  `/provider test <id>`, and a `/health` live line — one verify helper
+  behind three surfaces.
+- **FID-2026-0911-004 — implemented (this pass).** B.AI gateway
+  provider (14th registry entry): OpenAI Chat Completions + Responses +
+  Anthropic Messages surfaces behind one `BAI_API_KEY`, authenticated
+  live catalog via the resolveKey pattern, uniform-prefix parser pins.
+  Closure gated on the operator's keyed probe (no key on hand).
+- **FID-2026-0911-002 — rests at `fixed` (vendor-held).** OrcaRouter
+  integration is complete and probe-proven (catalog 195/195 via the
+  production chain, key authenticated, fail-closed verified); the HTTP-
+  200 completion is blocked by OrcaRouter's own account gate — their
+  dashboard exposes no GitHub-link control (their X confirms the
+  30-day-GitAccount policy; the error message is ahead of their UI),
+  and the operator declines the credits bypass on principle (the free
+  tier IS the trial). One probe re-run closes it when the vendor ships
+  the control.
+
 ### Custom providers via /provider — the full feature, live-smoked, closed + archived (2026-09-11)
 
 - **FID-2026-0910-004 — medium — users could not bring their own
