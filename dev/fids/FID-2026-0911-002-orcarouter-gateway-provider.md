@@ -255,6 +255,21 @@ orcarouter: {
    rests at NEEDS-REVIEW until OrcaRouter ships the control or answers
    support. Integration-side work remains complete — this gate is not
    an integration defect.
+3. **Post-unlock verification attempt (2026-09-12, ~02:31-02:38 UTC)** —
+   the operator reports completing the GitHub linkage; the unlock is
+   NOT yet effective on the API surface: all four free ids
+   (`orcarouter/free`, `deepseek/deepseek-v4-flash-free`,
+   `deepseek/deepseek-v4-pro-free`, `z-ai/glm-5.3-flash-free` — the
+   latter newly appeared in the keyless catalog at 196 models) still
+   return 429 `err_free_access_denied`; the paid model still returns
+   402 `insufficient_user_quota`; the keyed `/v1/models` still returns
+   200 with 196 models (the key itself remains valid). Findings: the
+   entitlement likely propagates with delay, requires a page re-auth
+   (token minted pre-linkage), or the linkage did not register — the
+   operator is re-checking the console. **The probe is re-runnable at
+   any time:** `bun dev/scratchpad/active/orcarouter-acceptance-probe.ts`
+   (key in `.env.local`). NEEDS-REVIEW stands until a 200 completion
+   lands.
 2. **Auth-header edge** — Bearer is documented with a working contract;
    no alternate header documented, so no fallback is planned.
 3. **Multi-protocol surface** — several catalog models advertise
