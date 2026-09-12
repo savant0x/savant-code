@@ -12,13 +12,16 @@
   Steps 1-5 shipped; the live finish-reason proof is wired as an
   always-on instrument (experience capture) rather than left as an
   open-awaiting-failure status.
-- **FID-2026-0911-003 — implemented (this pass).** Custom-provider
+- **FID-2026-0911-003 — CLOSED (this pass).** Custom-provider
   hardening from the operator's due diligence: `resolveProtocol`
   latent-misdispatch fix, optional anthropic protocol for custom
   providers (wizard step + validation + lift), a protocol-aware live
   key probe at the wizard terminal step (never blocks the save),
   `/provider test <id>`, and a `/health` live line — one verify helper
-  behind three surfaces. Committed `8984711`.
+  behind three surfaces. Committed `8984711`; closed 2026-09-12 after a
+  ground-truth pass verified every GREEN claim at file:line. Live
+  wizard test with a real Anthropic-outlier entry waived at closure,
+  never passed — first natural use confirms forward. Archived.
 - **FID-2026-0911-004 — implemented + CLOSED (this pass).** B.AI
   gateway provider (14th registry entry): OpenAI Chat Completions +
   Responses + Anthropic Messages surfaces behind one `BAI_API_KEY`,

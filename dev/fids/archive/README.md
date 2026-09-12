@@ -3,6 +3,22 @@
 This directory contains closed or historically completed FIDs. Files here are
 an audit record, not an active work queue.
 
+## 2026-09-12 closure — custom-provider hardening (1 FID archived)
+
+[`FID-2026-0911-003-custom-provider-live-test-and-protocol.md`](FID-2026-0911-003-custom-provider-live-test-and-protocol.md)
+(medium) — closed 2026-09-12; archived 2026-09-12. Implementation commit
+`8984711` (17 files: `resolveProtocol` latent-misdispatch fix, the
+optional `protocol` field + wizard step, the shared protocol-aware
+verify helper behind three surfaces — wizard terminal probe,
+`/provider test <id>`, `/health` live line — plus both pin suites and
+the health-test 300-line split). Closure pass: ground-truth grep
+verified every GREEN claim at file:line (helper callers Law 4-proven,
+fix/field/lift/reservation/live-line all present); gate battery stands
+as recorded in Loop 3 (typecheck ×4, 53/0 cli + 57/0 common + 7/0 sdk,
+eslint 0, prettier, lint:md, hard-cap parity 8=8). Live boundary
+WAIVED at closure, never passed: no real Anthropic-outlier wizard entry
+has been driven end-to-end; first natural use confirms forward.
+
 ## 2026-09-12 closure — B.AI gateway provider (1 FID archived)
 
 [`FID-2026-0911-004-bai-gateway-provider.md`](FID-2026-0911-004-bai-gateway-provider.md)

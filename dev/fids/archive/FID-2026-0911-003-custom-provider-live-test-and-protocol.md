@@ -3,11 +3,12 @@
 **Filename:** `FID-2026-0911-003-custom-provider-live-test-and-protocol.md`
 **ID:** FID-2026-0911-003
 **Severity:** medium
-**Status:** verified (implemented + audited 2026-09-12, autonomous mode 3;
+**Status:** closed (implemented + audited 2026-09-12, autonomous mode 3;
 scope expanded per operator directive 2026-09-12:
 "address any weak points we found from my questions and expand the scope
 properly … all things we were missing needs to be folded in then rerun
-perfection on all")
+perfection on all"; closed by operator directive 2026-09-12 —
+closure ceremony below)
 **Created:** 2026-09-12 (operator pre-closure questions on
 FID-2026-0911-001: "is there a 'live test' when going through the
 wizard?" and "is this only openai or does it support anthropic too? some
@@ -367,3 +368,55 @@ configuration.
   question ("does it support anthropic too?") flushed out a latent
   routing bug that would have misdispatched the very endpoint the
   question was about.
+
+## Resolution
+
+**Closed 2026-09-12 by operator directive ("Close FID-2026-0911-003"),
+after a fresh ground-truth pass against the live codebase.**
+
+Ground-truth verification (grep + file read, closure session):
+
+- Verify helper exists with exactly the three contracted production
+  callers (Law 4): `cli/src/utils/verify-custom-provider.ts:59`
+  (definition) ← `cli/src/commands/health-command.ts:106` (the `/health`
+  live line) · `cli/src/commands/provider-subcommands.ts:253`
+  (the `/provider test <id>` branch) ·
+  `cli/src/commands/router/route-provider-wizard.ts:139` (the wizard
+  terminal-path probe). One truth, three surfaces.
+- `resolveProtocol` fix present:
+  `sdk/src/impl/model-provider/model-factories.ts:204-208` — the no-map
+  branch `return config.protocol` with the FID-tagged comment replacing
+  the unconditional `return 'openai'` misdispatch; the map-dispatched
+  fail-closed throw is unchanged.
+- Protocol field present: `common/src/providers/types.ts:132`
+  (`protocol?: 'openai' | 'anthropic'` on `CustomProviderConfig`) and
+  the lift `protocol: custom.protocol ?? 'openai'` at
+  `common/src/providers/custom-providers.ts:349`.
+- Grammar reservation: `test` present in both reservation lists
+  (`common/src/providers/custom-providers.ts:65`,
+  `cli/src/utils/provider-wizard.ts:45`) — no custom id can shadow the
+  subcommand.
+- `/health` live line renders: `health-command.ts:107`
+  (`**Live check:** ${formatVerifyResult(verify)}`) with the no-key
+  skip line at :109.
+- G2 commit: `8984711` (`feat(providers): custom-provider live test +
+  protocol field + resolveProtocol fix (FID-2026-0911-003)`) — 17 files
+  matching the GREEN list exactly (963 insertions / 160 deletions,
+  including the health-test 300-line split and both pin suites).
+
+Gate status at closure: the Loop 3 audit battery (typecheck ×4, 53/0 cli
+suites across 5 files, 57/0 common providers, 7/0 sdk custom suites,
+eslint `--max-warnings 0`, prettier, lint:md, validate:repository 8=8
+hard-cap parity) stands as recorded — no code changed since commit
+`8984711`.
+
+Live boundary disposition: **Step 4 (operator-assisted live wizard test
+with a real Anthropic-outlier custom entry) is WAIVED at closure, never
+passed** — recorded honestly per house rule, not converted to a PASS. The
+mechanical probes (mocked-fetch pins for both header shapes, 401/403/404
+ladder, timeout, no-key-logging) are the tested surface; the first real
+anthropic-protocol custom entry an operator adds through the wizard is
+the natural live confirmation, and defects fix forward.
+
+Archived to `dev/fids/archive/` per the Auto-Archive rule; CHANGELOG
+`Unreleased` entry updated from "implemented" to "closed".

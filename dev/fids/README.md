@@ -34,7 +34,16 @@ on-disk records missing from the table added (-0823-003, -0824-003…-008,
 | FID | Status | Purpose / blocking gate |
 |---|---|---|
 | [`FID-2026-0911-002`](FID-2026-0911-002-orcarouter-gateway-provider.md) | fixed | OrcaRouter gateway provider (13th registry entry). Integration fully gate-verified; keyed live acceptance blocked by the VENDOR's free-tier unlock (`err_free_access_denied` on every free id incl. `z-ai/glm-5.3-flash-free`, re-probed 2026-09-12 post-linkage; paid models 402 on zero credits — vendor-side, not integration). Probe re-runs on vendor fix. |
-| [`FID-2026-0911-003`](FID-2026-0911-003-custom-provider-live-test-and-protocol.md) | verified | Custom-provider hardening: protocol-aware verify helper behind three surfaces (wizard probe, `/provider test`, `/health` live line) + `protocol: 'openai' \| 'anthropic'` field + `resolveProtocol` fix. All gates pass; committed `8984711`. |
+
+**2026-09-12 closure — FID-2026-0911-003 (custom-provider hardening)
+closed + archived:**
+[`FID-2026-0911-003`](archive/FID-2026-0911-003-custom-provider-live-test-and-protocol.md)
+— ground-truthed against the codebase at closure (helper callers
+Law 4-proven, `resolveProtocol` fix / protocol field / lift /
+reservation / live line all verified at file:line; G2 commit
+`8984711`). Step 4 live wizard test WAIVED, never passed — first
+natural anthropic-protocol entry confirms forward. Active queue:
+FID-2026-0911-002 only (vendor-held).
 
 **2026-09-12 closure — FID-2026-0911-004 (B.AI) closed + archived:**
 [`FID-2026-0911-004`](archive/FID-2026-0911-004-bai-gateway-provider.md)
