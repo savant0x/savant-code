@@ -4,6 +4,47 @@
 > scope for the current task. Operator confirmation converts interpreted scope
 > into approved scope. Any drop/deferral requires a blocking presentation.
 
+## Task 38 — SkillOpt + WikiSkill scoping into FIDs (2026-09-12) — PLANNING ONLY
+
+> Operator directive: "Scope the SkillOpt integration blueprint into FIDs"
+> along with "check this out as welll" pointing at WikiSkill
+> (arXiv:2608.27454 + reference implementation). Approved scope: research
+> both sources, ground-truth against the codebase, author the FID set,
+> run Perfection Loop authoring, present. **No implementation this task** —
+> each FID's implementation is a separate Law-2 approval.
+
+- [x] **T38-A.** Supersession check: the 2026-09-10 SkillOpt session's
+      corrected 6-FID reconciliation plan located (session summary); leg 1
+      (payload redaction) already shipped as closed FID-2026-0909-006;
+      0910-001 (notifications) shipped + closed; legs 3-6 unshipped. The
+      untracked blueprint's stale FID IDs and refuted claims identified
+      (component/file citations refuted by the prior adversarial pass —
+      not re-cited).
+- [x] **T38-B.** WikiSkill absorbed (arXiv HTML + reference repo):
+      three-layer architecture (Raw/Wiki/Skills), Algorithm 1 loop
+      (inference → maintainer → proposer → gate/rollback), ablation finding
+      (the wiki layer is the critical component), gating contract
+      (strict improvement + rollback; wiki never rolled back), and the
+      reference repo's honest negatives (every live gate so far = rejection
+      or no_action).
+- [x] **T38-C.** Ground-truth seam verification (this session, file:line):
+      trust paths append NO ledger (trust.ts:77-121); no baselineSha
+      anywhere; destructive 30-day purge live (lessons-to-skills.ts:38,241,274);
+      no wiki layer (ls dev/); prove machinery advisory-only
+      (skills.ts:82,111); no includeMessageHistory split; VERSIONS.jsonl
+      ledger IO exists in helpers.ts (reused, not rebuilt).
+- [x] **T38-D.** Four FIDs authored RED-first, Perfection Loop Loop-1
+      recorded: 0912-001 (ledger + drift gate) · 0912-002 (archive-not-purge)
+      · 0912-003 (pattern wiki) · 0912-004 (proposer + gate-before-present,
+      sequenced after 003). Deliberate rejections recorded per FID
+      (optimizer model, rollouts, auto-adopt, blanket history flag).
+- [x] **T38-E.** Ledger (dev/fids/README.md) + session summary updated;
+      lint:md + prettier green.
+- [ ] **T38-F.** PRESENT the four FIDs for operator approval (blocking —
+      Law 2). Below.
+
+---
+
 ## Task 37 — FID-2026-0911-002: OrcaRouter gateway provider (2026-09-11)
 
 > Operator directive: "i am interested in adding support for
