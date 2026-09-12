@@ -3,7 +3,8 @@
 **Filename:** `FID-2026-0912-002-skill-evolution-archive-not-purge.md`
 **ID:** FID-2026-0912-002
 **Severity:** high
-**Status:** analyzed
+**Status:** fixed (implemented 2026-09-12; closure ceremony executes with
+the sweep's final battery)
 **Created:** 2026-09-12 (operator directive: scope the SkillOpt blueprint
 and WikiSkill into FIDs)
 **YAGNI-Compliance:** Verified — replaces one `rm`-based purge with a
@@ -195,8 +196,44 @@ production matches; 3 unreviewed drafts currently in quarantine (ls).
 
 ## Resolution
 
-Open — awaiting operator approval to implement (Law 2). Status stays
-`analyzed` until implementation evidence exists.
+**Implemented 2026-09-12 (Loop 4, RED-first).** Status `fixed`.
+
+### Loop 4 — IMPLEMENTATION (2026-09-12, automation level 3)
+
+- **RED:** `archive-not-purge.test.ts` — module-absent error captured
+  (export `archiveRejectedDrafts` did not exist), then behavior pins
+  failing against the purge implementation.
+- **GREEN:** `purgeRejectedDrafts` → `archiveRejectedDrafts` in
+  `scripts/lessons-to-skills.ts` — same 30-day window constant, disposition
+  changed from `rmSync` to `renameSync` into
+  `.quarantine/.archive/<YYYY-MM>/<name>/` (month from the draft's own
+  mtime), bytes intact, plus an `ARCHIVED.json` provenance record
+  (name, archivedAs, archivedAt, originalMtime, windowDays, reason).
+  Collision suffix `-2`, `-3`, …; the `.`-prefixed archive is skipped on
+  re-runs. CLI flag `--purge` → `--archive` with the move-only message.
+- **Loop-2 self-correction applied:** the "ledger travels with the dir"
+  ordering rule was WRONG in detail — the VERSIONS.jsonl ledger lives in
+  the LIVE dir (paths.ts `skillLedgerPath`), which persists; appending a
+  trust-union action for archived drafts would also widen the AGENT-facing
+  tool surface (agents must never archive). Correct design, implemented:
+  a local ARCHIVED.json record inside the archived directory. The
+  append-before-rename hazard (phantom live-dir ledger) is thereby
+  structurally impossible.
+- **Loop-2 count pin honored:** `countQuarantinedDrafts` excludes
+  `.archive/` — new pin in `skill-management-count.test.ts` (archived
+  copy + pending draft → count 1).
+- **Stale pin updated:** the old `purgeRejectedDrafts` behavior pin in
+  `lessons-to-skills.test.ts` pinned the superseded deletion contract;
+  rewritten as a rename-parity pin (fresh untouched; expired bytes
+  SURVIVE in the archive).
+- **AUDIT battery:** scripts suites 14/0 across 3 files (5 new archive
+  pins + 9 regression); count suite 4/0; Law 4 grep: `rmSync`/`unlinkSync`
+  = ZERO matches in lessons-to-skills.ts (no deletion path remains);
+  eslint `--max-warnings 0`; prettier clean.
+- **Out-of-scope note:** `experiences-dedup.ts --purge` rewrites the RAW
+  LEDGER (14-day retention of raw traces) — a different lifecycle from
+  skill drafts, governed by FID-2026-0824-012's capture contract. Not
+  touched. Recorded per the Additional Rule.
 
 ### Loop 1 — Authoring (2026-09-12)
 

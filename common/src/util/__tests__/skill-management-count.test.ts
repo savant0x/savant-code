@@ -93,4 +93,32 @@ describe('countQuarantinedDrafts (FID-2026-0910-001 P3)', () => {
     fs.writeFileSync(path.join(quarantineRoot, 'stray.txt'), 'x', 'utf8')
     expect(countQuarantinedDrafts(root)).toBe(0)
   })
+
+  test('FID-2026-0912-002: archived drafts are invisible to the count', () => {
+    const root = fixtureRoot()
+    const quarantineRoot = path.join(root, '.agents', 'skills', '.quarantine')
+    // One real pending draft.
+    const live = path.join(quarantineRoot, 'pending')
+    fs.mkdirSync(live, { recursive: true })
+    fs.writeFileSync(
+      path.join(live, 'SKILL.md'),
+      '---\nname: pending\nversion: 0.1.0\ndescription: d\n---\n\nx\n',
+      'utf8',
+    )
+    // Archived copies under .archive/ — must NOT resurrect in the count
+    // or notification surfaces.
+    const buried = path.join(
+      quarantineRoot,
+      '.archive',
+      '2026-07',
+      'pending',
+    )
+    fs.mkdirSync(buried, { recursive: true })
+    fs.writeFileSync(
+      path.join(buried, 'SKILL.md'),
+      '---\nname: pending\nversion: 0.1.0\ndescription: d\n---\n\nx\n',
+      'utf8',
+    )
+    expect(countQuarantinedDrafts(root)).toBe(1)
+  })
 })

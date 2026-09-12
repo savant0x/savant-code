@@ -5,10 +5,10 @@ import * as path from 'node:path'
 import { afterEach, describe, expect, test } from 'bun:test'
 
 import {
+  archiveRejectedDrafts,
   draftCandidates,
   findCandidates,
   parseLessons,
-  purgeRejectedDrafts,
 } from '../lessons-to-skills'
 
 import type { ExperienceRecord } from '@savant-code/common/types/experience'
@@ -169,8 +169,8 @@ describe('draftCandidates', () => {
   })
 })
 
-describe('purgeRejectedDrafts', () => {
-  test('purges only drafts older than the 30-day window', () => {
+describe('FID-2026-0912-002: purge → archive rename parity', () => {
+  test('the expired-draft disposition is move-only (no purge remains)', () => {
     const root = fixtureRoot()
     const quarantine = path.join(root, '.agents', 'skills', '.quarantine')
     const oldDir = path.join(quarantine, 'old-draft')
@@ -186,8 +186,16 @@ describe('purgeRejectedDrafts', () => {
     }
     const oldTime = new Date(NOW - 40 * MS_PER_DAY)
     fs.utimesSync(path.join(oldDir, 'SKILL.md'), oldTime, oldTime)
-    const purged = purgeRejectedDrafts(root, { now: NOW })
-    expect(purged).toEqual(['old-draft'])
+    const archived = archiveRejectedDrafts(root, { now: NOW })
+    expect(archived).toEqual(['old-draft'])
+    // The fresh draft is untouched.
     expect(fs.existsSync(freshDir)).toBe(true)
+    // The expired draft's bytes SURVIVE in the archive (deletion parity).
+    // (This file's NOW is Aug 24 → 40 days back lands in 2026-07.)
+    expect(
+      fs.existsSync(
+        path.join(quarantine, '.archive', '2026-07', 'old-draft', 'SKILL.md'),
+      ),
+    ).toBe(true)
   })
 })
