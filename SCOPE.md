@@ -4,6 +4,39 @@
 > scope for the current task. Operator confirmation converts interpreted scope
 > into approved scope. Any drop/deferral requires a blocking presentation.
 
+## Task 37 — FID-2026-0911-002: OrcaRouter gateway provider (2026-09-11)
+
+> Operator directive: "i am interested in adding support for
+> https://www.orcarouter.ai/ as a provider". Approved with the prefix-
+> namespace decision (`idTransform: 'strip'`).
+
+- **Grounded (live probes, keyless):** `GET
+  https://api.orcarouter.ai/v1/models` → HTTP 200 OpenAI-shaped, 195
+  models; keyless chat → 401 OpenAI-shaped; docs contract (Bearer,
+  `sk-orca-` prefix, base `https://api.orcarouter.ai/v1`) quoted in the
+  FID.
+- **FID:** `dev/fids/FID-2026-0911-002-orcarouter-gateway-provider.md` —
+  Loop 1 RED + Loop 2 GREEN/AUDIT/ADVERSARIAL recorded with the
+  self-caught defects (wrapper requirement; uniform-prefixing round-trip
+  requirement).
+- **Implemented:** registry entry (13th provider), `orcarouter.ts`
+  catalog wrapper (shared-fetcher reuse), gateway merge + reset seam,
+  audit-manifest entry, count-parity tests widened 12→13 / 10→11,
+  harness env save/restore, `.env.example` + release README regen.
+- **RED-first:** 4 failing legs + parser pins captured failing before
+  GREEN. Gates: typecheck ×4 exit 0 · common 52/0 · sdk 6/0 · cli setup
+  15/0 · catalog family 20/0 · parser pins 4/0 · eslint
+  `--max-warnings 0` · prettier · lint:md · docs-check exit 0 ·
+  validate:repository at exact pre-existing-debt parity (8 hard-cap
+  violations before/after; 22 baseline bumps reconciled; 3 scratchpad
+  files archived).
+- **Flagged:** the 8 remaining >300-line hard-cap violations are
+  pre-existing debt from FID-2026-0910-004/0911-001 growth — needs a
+  separate refactor FID (file splits), not silent absorption.
+- **Pending:** Step 4 keyed live acceptance (catalog via production
+  chain + chat round-trip on `orcarouter/free`) — the closure gate,
+  blocked on the operator's `sk-orca-` key.
+
 ## Task 36 — FID-2026-0911-001: /provider picker add-new entry → wizard (2026-09-11)
 
 > Operator directive: "when you type /provider, there should be an option in
