@@ -124,6 +124,12 @@ export type CustomProviderConfig = {
   baseUrl: string
   /** The provider's own credential env var (resolved via the generic read). */
   apiKeyEnvVar: string
+  /**
+   * Wire protocol (FID-2026-0911-003). Optional; legacy records without
+   * the field lift to 'openai'. 'anthropic' targets Claude-style
+   * `/v1/messages` outlier endpoints.
+   */
+  protocol?: 'openai' | 'anthropic'
   /** Model catalog: live URL fetch, user-supplied inline list, or none. */
   catalog:
     | { source: 'live'; url: string }

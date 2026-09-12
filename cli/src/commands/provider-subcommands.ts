@@ -5,6 +5,7 @@ import {
 
 import { useChatStore } from '../state/chat-store'
 import { getSystemMessage, getUserMessage } from '../utils/message-history'
+import { readStoredProviderKeys } from '../utils/provider-credentials'
 import {
   activateConfiguredProvider,
   beginProviderSetup,
@@ -27,6 +28,10 @@ import {
   saveSavantCodeModelPreference,
   saveSettings,
 } from '../utils/settings'
+import {
+  formatVerifyResult,
+  verifyCustomProviderKey,
+} from '../utils/verify-custom-provider'
 
 import type { RouterParams } from './command-shared'
 import type { WizardStep } from '../utils/provider-wizard'
@@ -219,6 +224,39 @@ function handleAdd(params: ProviderParams): void {
   startAddWizard(params)
 }
 
+/**
+ * `/provider test <id>` — live-verify a custom provider's stored key
+ * (FID-2026-0911-003). Custom-only: built-ins carry FID-level keyed
+ * acceptance. Same helper as the wizard terminal probe — one truth.
+ */
+async function handleTest(params: ProviderParams, rest: string): Promise<void> {
+  const id = rest.trim()
+  const existing = customProviders()
+  const stored = existing.find((config) => config.id === id)
+  if (!stored) {
+    const hint =
+      existing.length > 0
+        ? `Custom providers: ${existing.map((config) => config.id).join(', ')}.`
+        : 'You have no custom providers yet — use /provider add.'
+    replyAndClear(params, `No custom provider named '${id}'. ${hint}`)
+    return
+  }
+  const key = readStoredProviderKeys()[stored.apiKeyEnvVar]
+  if (!key) {
+    replyAndClear(
+      params,
+      `No key stored for ${stored.label} (${stored.apiKeyEnvVar}) — run /provider ${id} update to set one.`,
+    )
+    return
+  }
+  replyAndClear(params, `Testing ${stored.label} (${id}) against the endpoint…`)
+  const result = await verifyCustomProviderKey(stored, key)
+  replyAndClear(
+    params,
+    `Live check for ${stored.label} (${id}): ${formatVerifyResult(result)}.`,
+  )
+}
+
 /** `/provider edit <id>` — reopen the wizard pre-filled (custom-only). */
 function handleEdit(params: ProviderParams, rest: string): void {
   const id = rest.trim()
@@ -338,11 +376,11 @@ function handleRemove(params: ProviderParams, rest: string): void {
 }
 
 /** Dispatch entry: called from the /provider command definition. */
-export function handleProviderSubcommand(
+export async function handleProviderSubcommand(
   params: ProviderParams,
   subcommand: ProviderSubcommand,
   rest: string,
-): void {
+): Promise<void> {
   switch (subcommand) {
     case 'add':
       handleAdd(params)
@@ -355,6 +393,9 @@ export function handleProviderSubcommand(
       return
     case 'remove':
       handleRemove(params, rest)
+      return
+    case 'test':
+      await handleTest(params, rest)
       return
   }
 }

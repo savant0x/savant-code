@@ -66,7 +66,7 @@ export const MODEL_PROVIDER_COMMANDS = [
   }),
   defineCommandWithArgs({
     name: 'provider',
-    handler: (params, args) => {
+    handler: async (params, args) => {
       const trimmedArgs = args.trim()
 
       // No args: open dropdown picker — built-ins from the built-in config,
@@ -122,7 +122,11 @@ export const MODEL_PROVIDER_COMMANDS = [
       if (parsedArgs.kind === 'subcommand') {
         params.saveToHistory(params.inputValue.trim())
         clearInput(params)
-        handleProviderSubcommand(params, parsedArgs.subcommand, parsedArgs.rest)
+        await handleProviderSubcommand(
+          params,
+          parsedArgs.subcommand,
+          parsedArgs.rest,
+        )
         return
       }
       const providerName = parsedArgs.name

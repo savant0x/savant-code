@@ -121,4 +121,43 @@ describe('model-provider custom providers (FID-2026-0910-004 Step 4)', () => {
     // caller-supplied fallback.
     expect(headers.get('authorization')).toBe('Bearer gw-test-key')
   })
+
+  test('an anthropic-protocol custom gateway dispatches Anthropic-shaped requests (FID-2026-0911-003)', async () => {
+    // FID-2026-0911-003 Loop-1 latent bug: resolveProtocol's no-map branch
+    // returned 'openai' unconditionally, so an anthropic-protocol entry
+    // would send OpenAI-shaped requests to a /v1/messages endpoint.
+    process.env.MY_GW_KEY = 'gw-test-key'
+    registerCustomProviders([{ ...CUSTOM, protocol: 'anthropic' }])
+
+    const fetchMock = mock(() =>
+      Promise.resolve(
+        new Response(JSON.stringify({ content: [] }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        }),
+      ),
+    )
+    // @ts-expect-error - test fetch has the same runtime contract
+    globalThis.fetch = fetchMock
+
+    const { getModelForRequest } = await importFresh()
+    const result = await getModelForRequest({
+      apiKey: 'caller-key',
+      model: 'my-gateway/claude-ish-model',
+    })
+    await (result.model as LanguageModelV2).doStream({ prompt: PROMPT })
+
+    const [input, init] = fetchMock.mock.calls[0] as unknown as [
+      RequestInfo | URL,
+      RequestInit | undefined,
+    ]
+    // Anthropic wire path: /messages endpoint, x-api-key header,
+    // anthropic-version header, anthropic-shaped body.
+    expect(String(input)).toBe('https://gw.example.com/v1/messages')
+    const headers = new Headers(init?.headers)
+    expect(headers.get('x-api-key')).toBe('gw-test-key')
+    expect(headers.get('anthropic-version')).toBe('2023-06-01')
+    const body = JSON.parse(String(init?.body)) as { model?: unknown }
+    expect(body.model).toBe('claude-ish-model')
+  })
 })

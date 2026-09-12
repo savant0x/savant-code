@@ -201,7 +201,11 @@ function resolveProtocol(
         `No protocol map configured for ${config.label} (protocol: ${config.protocol}).`,
       )
     }
-    return 'openai'
+    // FID-2026-0911-003: return the entry's OWN protocol. The previous
+    // unconditional `return 'openai'` silently misdispatched an
+    // anthropic-protocol entry (e.g. a custom /v1/messages gateway) with
+    // OpenAI-shaped requests.
+    return config.protocol
   }
   const map = PROVIDER_PROTOCOL_MAPS[config.protocolMap]
   if (map === undefined) {

@@ -2,6 +2,7 @@ import { getEffectiveProviderRegistry } from '@savant-code/common/providers/cust
 import { detectOllama } from '@savant-code/llm-providers/ollama'
 
 import { getSystemMessage } from '../utils/message-history'
+import { readStoredProviderKeys } from '../utils/provider-credentials'
 import {
   getConfiguredProviderKey,
   getProviderSetupInfo,
@@ -13,8 +14,13 @@ import {
   loadSavantCodeModelPreference,
   loadSettings,
 } from '../utils/settings'
+import {
+  formatVerifyResult,
+  verifyCustomProviderKey,
+} from '../utils/verify-custom-provider'
 
 import type { RouterParams } from './command-registry'
+import type { CustomProviderConfig } from '@savant-code/common/providers/types'
 
 /**
  * Build a markdown-style health report for the current Savant Code install.
@@ -84,12 +90,33 @@ export async function handleHealthCommand(params: RouterParams): Promise<void> {
         : '')
     : '**Provider mode:** SavantCode backend'
 
+  // FID-2026-0911-003: live line for the ACTIVE CUSTOM gateway only.
+  // Built-ins carry FID-level keyed live acceptance (their own probes);
+  // a network probe per built-in would be new surface without new info.
+  // The stored key is verified via the shared helper — timeout-bounded,
+  // never throws, never renders key material. Failure degrades to a
+  // 'not checked' line; the rest of the report always renders.
+  let liveCheckLine = ''
+  const activeCustom = (settings.customProviders ?? []).find(
+    (config: CustomProviderConfig) => config.id === persistedProvider,
+  )
+  if (activeCustom) {
+    const storedKey = readStoredProviderKeys()[activeCustom.apiKeyEnvVar]
+    if (storedKey) {
+      const verify = await verifyCustomProviderKey(activeCustom, storedKey)
+      liveCheckLine = `**Live check:** ${formatVerifyResult(verify)}`
+    } else {
+      liveCheckLine = '**Live check:** skipped (no stored key)'
+    }
+  }
+
   const lines = [
     '# Savant Code Health Check',
     '',
     ollamaSection,
     '',
     providerSection,
+    ...(liveCheckLine ? [liveCheckLine] : []),
     `**Default model:** ${modelPreference ?? 'none (uses agent default)'}`,
     `**Permission mode:** ${permissionMode}`,
     `**Ads enabled:** ${settings.adsEnabled === true ? 'yes' : 'no'}`,

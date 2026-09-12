@@ -53,7 +53,17 @@ export type { CustomProviderConfig } from './types'
  * the two surfaces can never drift.
  */
 export function getReservedCustomProviderIds(): ReadonlySet<string> {
-  return new Set<string>([...Object.keys(PROVIDER_REGISTRY), ...ORG_PREFIXES])
+  return new Set<string>([
+    ...Object.keys(PROVIDER_REGISTRY),
+    ...ORG_PREFIXES,
+    // FID-2026-0911-003: the /provider command grammar (Step 8 words +
+    // 'test') — a custom id must never shadow a subcommand.
+    'add',
+    'edit',
+    'list',
+    'remove',
+    'test',
+  ])
 }
 
 /**
@@ -203,6 +213,22 @@ export function parseCustomProviders(
     )
     entryProblems.push(...catalog.problems)
 
+    // FID-2026-0911-003: optional wire protocol. Absent on legacy records
+    // (undefined lifts to 'openai'); when present it must be exactly
+    // 'openai' or 'anthropic' (fail-closed — anything else would dispatch
+    // with the wrong request schema).
+    let protocol: CustomProviderConfig['protocol']
+    const rawProtocol = record['protocol']
+    if (rawProtocol !== undefined && rawProtocol !== null) {
+      if (rawProtocol === 'openai' || rawProtocol === 'anthropic') {
+        protocol = rawProtocol
+      } else {
+        entryProblems.push(
+          `${label}: protocol must be 'openai' or 'anthropic' (got ${describe(rawProtocol)})`,
+        )
+      }
+    }
+
     problems.push(...entryProblems)
     // Partial records never reach the merged view (fail-closed).
     if (
@@ -218,6 +244,7 @@ export function parseCustomProviders(
         baseUrl,
         apiKeyEnvVar,
         catalog: catalog.catalog,
+        ...(protocol !== undefined ? { protocol } : {}),
       })
     }
   })
@@ -316,7 +343,10 @@ export function toProviderConfig(custom: CustomProviderConfig): ProviderConfig {
     kind: 'gateway',
     credentials: { envVar: custom.apiKeyEnvVar },
     baseUrl: custom.baseUrl,
-    protocol: 'openai',
+    // FID-2026-0911-003: the record may carry an explicit wire protocol
+    // ('anthropic' for Claude-style /v1/messages outlier endpoints);
+    // legacy records without the field default to 'openai'.
+    protocol: custom.protocol ?? 'openai',
     idTransform: 'strip',
     catalog: custom.catalog,
     setupAvailable: true,

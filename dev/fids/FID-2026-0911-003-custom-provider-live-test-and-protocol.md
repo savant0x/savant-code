@@ -3,7 +3,8 @@
 **Filename:** `FID-2026-0911-003-custom-provider-live-test-and-protocol.md`
 **ID:** FID-2026-0911-003
 **Severity:** medium
-**Status:** fixed (scope expanded per operator directive 2026-09-12:
+**Status:** verified (implemented + audited 2026-09-12, autonomous mode 3;
+scope expanded per operator directive 2026-09-12:
 "address any weak points we found from my questions and expand the scope
 properly … all things we were missing needs to be folded in then rerun
 perfection on all")
@@ -283,6 +284,81 @@ configuration.
   endpoint in evidence; the field is extensible without schema change.
 - **CHANGE DELTA:** summary/behavior/components/steps rewritten; risk
   unchanged (medium); no code written yet.
+
+### Loop 3 — Implementation (2026-09-12, autonomous mode 3)
+
+- **RED captured failing before GREEN** (all surfaces):
+  - `common/src/providers/__tests__/custom-provider-protocol.test.ts` —
+    5/5 fail (protocol field absent from type + lift + validation).
+  - `sdk/src/impl/__tests__/model-provider-custom.test.ts` — routing leg
+    fails: anthropic-protocol custom entry dispatched to `/chat/completions`
+    (the `resolveProtocol` no-map branch bug, now pinned).
+  - `cli/src/utils/__tests__/verify-custom-provider.test.ts` — module
+    absent (helper not yet written).
+  - `cli/src/commands/__tests__/health-custom-live.test.ts` — live-line
+    pins fail (no **Live check:** section rendered).
+  - `cli/src/commands/__tests__/provider-add-wizard.test.ts` — protocol
+    step pins fail (step machine has no protocol step; grammar lacks
+    `test`).
+- **GREEN (dependency order):**
+  1. `sdk/src/impl/model-provider/model-factories.ts` — `resolveProtocol`
+     no-map branch now honors the entry's protocol (anthropic maps to the
+     anthropic factory) instead of returning `'openai'` unconditionally.
+  2. `common/src/providers/types.ts` + `custom-providers.ts` — optional
+     `protocol?: 'openai' | 'anthropic'` on `CustomProviderConfig`;
+     validation accepts both values (fail-closed on anything else);
+     `toProviderConfig` lifts the field (default `'openai'`); grammar
+     reservation gains `test`.
+  3. `cli/src/utils/verify-custom-provider.ts` — NEW shared helper:
+     protocol-aware auth headers (Bearer vs `x-api-key` +
+     `anthropic-version: 2023-06-01`), 8s bounded, single-shot, never
+     throws, key-material redacted from any detail text (Law 12);
+     outcome ladder verified / rejected / unverifiable.
+  4. `cli/src/utils/provider-wizard.ts` — protocol step inserted after
+     baseUrl (default openai, Enter to accept); summary includes the
+     protocol; probe wired at the terminal step (never blocks the save).
+  5. `cli/src/commands/provider-subcommands.ts` + `defs/model-provider-commands.ts`
+     — `/provider test <id>` implemented on the same helper.
+  6. `cli/src/commands/health-command.ts` — **Live check:** line for the
+     active CUSTOM provider only (built-ins keep FID-level acceptance).
+  7. `cli/src/commands/router/route-provider-wizard.ts` +
+     `route-user-prompt.ts` — terminal path made async to await the probe.
+- **Loop 3 verification findings (caught and fixed in-pass):**
+  - The health test's in-mock `expect` threw inside Ollama detection's
+    own fetch (also mocked) and its error text leaked into the rendered
+    report via detectOllama's catch-and-render. Fix: URL-scoped mock +
+    post-hoc `seenAuth` assertion — also proves Ollama traffic never
+    reaches the gateway probe.
+  - Test-env `DIRECT_PROVIDER=openrouter` leakage from a prior test in
+    the same file suppressed the custom branch (handler logic was
+    correct; the pin now clears it).
+  - The health test file crossed the 300-line hard cap from the new pins
+    — resolved by a REAL split (`health-custom-live.test.ts`, 268 lines;
+    original back to 146), not a baseline bump.
+- **AUDIT evidence (own-run, this session):**
+  - typecheck × 4 (sdk / common / packages/agent-runtime / cli) — exit 0
+    each.
+  - cli suites: verify-custom-provider 8/0 · provider-add-wizard 27/0 ·
+    health 11/0 across the two files · provider-key-store-custom +
+    settings-custom-providers included → 5 files 53 pass / 0 fail ·
+    common providers 57/0 · sdk custom suites 7/0.
+  - eslint `--max-warnings 0` on all 15 touched files — exit 0 ·
+    prettier — clean · lint:md — exit 0.
+  - `validate:repository` hard-cap parity: **8 = 8** (stash-diff vs HEAD;
+    the health-test split removed the only violation this FID added; the
+    remaining 8 are pre-existing debt flagged for the refactor FID).
+- **Law 4 call-graph (production reachability, grep-proven):**
+  - `verifyCustomProviderKey` ← `health-command.ts:106` ·
+    `provider-subcommands.ts` (`test` branch) ·
+    `route-provider-wizard.ts` (terminal step) — three surfaces, one
+    helper.
+  - `resolveProtocol` anthropic branch ← reachable via custom entry with
+    `protocol: 'anthropic'` through `registerCustomProviders` → lift →
+    `createProviderModel` (pinned e2e in sdk suite).
+  - `/provider test` ← grammar `test` reserved in `custom-providers.ts`
+    + dispatch in `provider-subcommands.ts` + def registration in
+    `model-provider-commands.ts`.
+- **Verdict:** all gates pass; RED→GREEN complete; loop converges.
 
 ## Lessons Learned
 

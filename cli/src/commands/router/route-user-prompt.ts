@@ -72,7 +72,7 @@ export async function routeUserPrompt(
   // submits are meaningful there (models step -> no catalog; edit-mode key
   // step -> keep the stored key) (FID-2026-0910-004 Step 7, D7).
   if (inputMode === 'providerAdd' || inputMode === 'providerAddKey') {
-    routeProviderWizard({
+    await routeProviderWizard({
       trimmed,
       setInputValue,
       setInputMode,

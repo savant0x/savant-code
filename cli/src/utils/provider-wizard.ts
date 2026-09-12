@@ -37,7 +37,13 @@ import type { CustomProviderConfig } from '@savant-code/common/providers/types'
  * not the command layer — so the id-step reservation and the grammar parser
  * share one truth without an import cycle (Law 13).
  */
-export const PROVIDER_GRAMMAR_WORDS = ['add', 'edit', 'list', 'remove'] as const
+export const PROVIDER_GRAMMAR_WORDS = [
+  'add',
+  'edit',
+  'list',
+  'remove',
+  'test',
+] as const
 
 /**
  * The /provider picker's add-new action key (FID-2026-0911-001 D1). Lives in
@@ -114,7 +120,7 @@ export function clearWizardReplayGuard(): void {
 }
 
 export type WizardStep =
-  'id' | 'label' | 'baseUrl' | 'envVar' | 'models' | 'key' | 'done'
+  'id' | 'label' | 'baseUrl' | 'protocol' | 'envVar' | 'models' | 'key' | 'done'
 
 export type WizardMode = 'add' | 'edit'
 
@@ -123,6 +129,7 @@ export type WizardDraft = {
   id?: string
   label?: string
   baseUrl?: string
+  protocol?: CustomProviderConfig['protocol']
   apiKeyEnvVar?: string
   catalog?: CustomProviderConfig['catalog']
 }
@@ -146,6 +153,7 @@ const STEP_ORDER: readonly WizardStep[] = [
   'id',
   'label',
   'baseUrl',
+  'protocol',
   'envVar',
   'models',
   'key',
@@ -160,6 +168,8 @@ export function getStepInstructions(step: WizardStep): string {
       return 'Display label — shown in pickers and messages, e.g. My Gateway.'
     case 'baseUrl':
       return 'Base URL — the OpenAI-compatible API root, e.g. https://api.example.com/v1.'
+    case 'protocol':
+      return 'Protocol — press Enter for openai (the default), or type anthropic for Claude-style /v1/messages endpoints.'
     case 'envVar':
       return 'API key environment variable — uppercase SNAKE_CASE, e.g. MY_GW_KEY. The key is stored locally under this name.'
     case 'models':
@@ -190,6 +200,7 @@ export function createWizardSession(
         id: stored.id,
         label: stored.label,
         baseUrl: stored.baseUrl,
+        protocol: stored.protocol,
         apiKeyEnvVar: stored.apiKeyEnvVar,
         catalog: stored.catalog,
       },
@@ -212,6 +223,8 @@ export function submitWizardStep(
       return submitLabelStep(session, value)
     case 'baseUrl':
       return submitBaseUrlStep(session, value)
+    case 'protocol':
+      return submitProtocolStep(session, value)
     case 'envVar':
       return submitEnvVarStep(session, value)
     case 'models':
@@ -283,6 +296,31 @@ function submitBaseUrlStep(
     )
   }
   return accepted(session, { ...session.draft, baseUrl: value })
+}
+
+/**
+ * FID-2026-0911-003: wire protocol. Enter (empty) defaults to 'openai';
+ * 'anthropic' targets Claude-style /v1/messages outlier endpoints.
+ * Case-insensitive accept; anything else re-prompts fail-closed.
+ */
+function submitProtocolStep(
+  session: WizardSession,
+  value: string,
+): WizardSession {
+  if (!value) {
+    return accepted(session, { ...session.draft, protocol: 'openai' })
+  }
+  const normalized = value.toLowerCase()
+  if (normalized === 'openai' || normalized === 'anthropic') {
+    return accepted(session, {
+      ...session.draft,
+      protocol: normalized,
+    })
+  }
+  return rejected(
+    session,
+    `protocol must be 'openai' or 'anthropic' (got '${value}') — press Enter for the openai default.`,
+  )
 }
 
 function submitEnvVarStep(
@@ -372,6 +410,7 @@ function submitKeyStep(session: WizardSession, value: string): WizardSession {
     baseUrl: draft.baseUrl ?? '',
     apiKeyEnvVar: draft.apiKeyEnvVar ?? '',
     catalog: draft.catalog ?? { source: 'none' },
+    ...(draft.protocol !== undefined ? { protocol: draft.protocol } : {}),
   }
   // Single validation truth (Law 13): the assembled record must pass the same
   // parser settings.json and the SDK option use, or nothing is finalized.

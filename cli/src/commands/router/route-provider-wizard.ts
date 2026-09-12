@@ -18,6 +18,10 @@ import {
   loadSettings,
   saveSettings,
 } from '../../utils/settings'
+import {
+  formatVerifyResult,
+  verifyCustomProviderKey,
+} from '../../utils/verify-custom-provider'
 
 import type {
   getActiveWizardSession,
@@ -52,14 +56,14 @@ type WizardParams = Pick<
  * - If the edited provider is the active selection, activation re-applies so
  *   routing picks up a changed baseUrl immediately (D7).
  */
-export function routeProviderWizard({
+export async function routeProviderWizard({
   trimmed,
   setInputValue,
   setInputMode,
   setInputFocused,
   inputRef,
   setMessages,
-}: WizardParams): void {
+}: WizardParams): Promise<void> {
   /** Clear the input bar and restore focus, keeping the wizard mode. */
   function clearWizardInput(step: WizardStep): void {
     setInputValue({ text: '', cursorPosition: 0, lastEditDueToNav: false })
@@ -124,10 +128,23 @@ export function routeProviderWizard({
     const keyOutcome = persistKey(session, final)
     const activationNote = reactivateIfActive(final)
 
+    // FID-2026-0911-003: non-blocking live verification. The definition
+    // and key are ALREADY saved — the probe is evidence for the user, not
+    // a gate. Verify only when fresh key material exists (edit + kept key
+    // has nothing new to check); the helper never throws and never leaks
+    // the key.
+    let liveCheckLine = ''
+    const keyToVerify = session?.apiKey
+    if (keyToVerify) {
+      const result = await verifyCustomProviderKey(final, keyToVerify)
+      liveCheckLine = `Live check: ${formatVerifyResult(result)}.`
+    }
+
     setMessages((prev) => [
       ...prev,
       getSystemMessage(
-        buildSummaryMessage(final, keyOutcome, activationNote, session.mode),
+        buildSummaryMessage(final, keyOutcome, activationNote, session.mode) +
+          (liveCheckLine ? ` ${liveCheckLine}` : ''),
       ),
     ])
   } catch (error) {
@@ -148,6 +165,7 @@ export function routeProviderWizard({
 }
 
 /** Replace-or-append the validated record; returns the merged set. */
+// (verifyCustomProviderKey/formatVerifyResult imported at the top — see imports)
 function persistDefinition(
   final: CustomProviderConfig,
 ): CustomProviderConfig[] {

@@ -2,6 +2,7 @@ import fs from 'fs'
 import os from 'os'
 import path from 'path'
 
+import { getReservedCustomProviderIds } from '@savant-code/common/providers/custom-providers'
 import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test'
 
 import { useChatStore } from '../../state/chat-store'
@@ -61,7 +62,7 @@ describe('provider add|edit wizard step machine (FID-2026-0910-004 Step 7)', () 
     fs.rmSync(tempDir, { recursive: true, force: true })
   })
 
-  test('steps advance in order: id -> label -> baseUrl -> envVar -> models -> key', () => {
+  test('steps advance in order: id -> label -> baseUrl -> protocol -> envVar -> models -> key (FID-2026-0911-003)', () => {
     const session = createWizardSession('add')
     expect(session.step).toBe('id')
 
@@ -72,13 +73,44 @@ describe('provider add|edit wizard step machine (FID-2026-0910-004 Step 7)', () 
     expect(afterLabel.step).toBe('baseUrl')
 
     const afterUrl = submitWizardStep(afterLabel, VALID_BASE.baseUrl)
-    expect(afterUrl.step).toBe('envVar')
+    expect(afterUrl.step).toBe('protocol')
 
-    const afterEnvVar = submitWizardStep(afterUrl, VALID_BASE.envVar)
+    // Enter defaults to openai.
+    const afterProtocol = submitWizardStep(afterUrl, '')
+    expect(afterProtocol.step).toBe('envVar')
+
+    const afterEnvVar = submitWizardStep(afterProtocol, VALID_BASE.envVar)
     expect(afterEnvVar.step).toBe('models')
 
     const afterModels = submitWizardStep(afterEnvVar, '')
     expect(afterModels.step).toBe('key')
+  })
+
+  test('protocol step: anthropic is accepted and recorded on the draft (FID-2026-0911-003)', () => {
+    let session = createWizardSession('add')
+    session = submitWizardStep(session, 'my-gateway')
+    session = submitWizardStep(session, VALID_BASE.label)
+    session = submitWizardStep(session, VALID_BASE.baseUrl)
+    expect(session.step).toBe('protocol')
+    const afterProtocol = submitWizardStep(session, 'anthropic')
+    expect(afterProtocol.step).toBe('envVar')
+    expect(afterProtocol.draft.protocol).toBe('anthropic')
+  })
+
+  test('protocol step: anything but openai/anthropic (case-insensitive) re-prompts (FID-2026-0911-003)', () => {
+    let session = createWizardSession('add')
+    session = submitWizardStep(session, 'my-gateway')
+    session = submitWizardStep(session, VALID_BASE.label)
+    session = submitWizardStep(session, VALID_BASE.baseUrl)
+    for (const bad of ['gemini', 'grpc', 'openai2']) {
+      const rejected = submitWizardStep(session, bad)
+      expect(rejected.step).toBe('protocol')
+      expect(rejected.error).toContain('protocol')
+    }
+    // Case-insensitive accept + explicit openai.
+    const okLower = submitWizardStep(session, 'Anthropic')
+    expect(okLower.step).toBe('envVar')
+    expect(okLower.draft.protocol).toBe('anthropic')
   })
 
   test('id step: reserved ids (built-in or org slug) re-prompt with the problem', () => {
@@ -87,6 +119,15 @@ describe('provider add|edit wizard step machine (FID-2026-0910-004 Step 7)', () 
       const rejected = submitWizardStep(session, reserved)
       expect(rejected.step).toBe('id')
       expect(rejected.error).toContain('reserved')
+    }
+  })
+
+  test('grammar reservation includes test (FID-2026-0911-003)', () => {
+    // The reserved set must cover the full command grammar — a custom id
+    // named 'test' would shadow /provider test.
+    const reserved = getReservedCustomProviderIds()
+    for (const word of ['add', 'edit', 'list', 'remove', 'test']) {
+      expect(reserved.has(word)).toBe(true)
     }
   })
 
@@ -107,6 +148,7 @@ describe('provider add|edit wizard step machine (FID-2026-0910-004 Step 7)', () 
     session = submitWizardStep(session, 'my-gateway')
     session = submitWizardStep(session, VALID_BASE.label)
     session = submitWizardStep(session, VALID_BASE.baseUrl)
+    session = submitWizardStep(session, '')
 
     const claimed = submitWizardStep(session, 'OPENROUTER_API_KEY')
     expect(claimed.step).toBe('envVar')
@@ -139,6 +181,7 @@ describe('provider add|edit wizard step machine (FID-2026-0910-004 Step 7)', () 
       'my-gateway',
       VALID_BASE.label,
       VALID_BASE.baseUrl,
+      '', // protocol step (FID-2026-0911-003): Enter = openai default
       VALID_BASE.envVar,
     ]) {
       session = submitWizardStep(session, value)
@@ -167,6 +210,7 @@ describe('provider add|edit wizard step machine (FID-2026-0910-004 Step 7)', () 
       'my-gateway',
       VALID_BASE.label,
       VALID_BASE.baseUrl,
+      '', // protocol step (FID-2026-0911-003): Enter = openai default
       VALID_BASE.envVar,
     ]) {
       session2 = submitWizardStep(session2, value)
@@ -206,6 +250,7 @@ describe('provider add|edit wizard step machine (FID-2026-0910-004 Step 7)', () 
     // Full walk: id is locked in edit mode, so the first submit lands at label.
     session = submitWizardStep(session, 'Renamed')
     session = submitWizardStep(session, VALID_BASE.baseUrl)
+    session = submitWizardStep(session, '') // protocol default (0911-003)
     session = submitWizardStep(session, VALID_BASE.envVar)
     session = submitWizardStep(session, '')
     expect(session.step).toBe('key')
@@ -226,6 +271,7 @@ describe('provider add|edit wizard step machine (FID-2026-0910-004 Step 7)', () 
       'my-gateway',
       VALID_BASE.label,
       VALID_BASE.baseUrl,
+      '', // protocol step (FID-2026-0911-003)
       VALID_BASE.envVar,
       '',
     ]) {
@@ -243,6 +289,7 @@ describe('provider add|edit wizard step machine (FID-2026-0910-004 Step 7)', () 
       'my-gateway',
       VALID_BASE.label,
       VALID_BASE.baseUrl,
+      '', // protocol step (FID-2026-0911-003)
       VALID_BASE.envVar,
       'my-gateway/m1=M One',
       'gw-secret-key',
@@ -255,6 +302,7 @@ describe('provider add|edit wizard step machine (FID-2026-0910-004 Step 7)', () 
       label: VALID_BASE.label,
       baseUrl: VALID_BASE.baseUrl,
       apiKeyEnvVar: VALID_BASE.envVar,
+      protocol: 'openai',
       catalog: { source: 'inline', models: { 'my-gateway/m1': 'M One' } },
     })
   })
@@ -381,6 +429,7 @@ describe('provider add|edit wizard step machine (FID-2026-0910-004 Step 7)', () 
         'my-gateway',
         'My Gateway',
         'https://gw.example.com/v1',
+        '', // protocol step (FID-2026-0911-003): Enter = openai default
         'MY_GW_KEY',
         'my-gateway/m1=M One',
       ]
@@ -407,6 +456,7 @@ describe('provider add|edit wizard step machine (FID-2026-0910-004 Step 7)', () 
           label: 'My Gateway',
           baseUrl: 'https://gw.example.com/v1',
           apiKeyEnvVar: 'MY_GW_KEY',
+          protocol: 'openai',
           catalog: {
             source: 'inline',
             models: { 'my-gateway/m1': 'M One' },
@@ -463,6 +513,7 @@ describe('provider add|edit wizard step machine (FID-2026-0910-004 Step 7)', () 
         'my-gateway',
         'My Gateway',
         'https://gw.example.com/v1',
+        '', // protocol step (FID-2026-0911-003): Enter = openai default
         'MY_GW_KEY',
         'my-gateway/m1=M One',
       ]
