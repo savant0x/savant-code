@@ -178,6 +178,45 @@ dream rollouts (synthetic experience), auto-adoption (operator-only trust),
 
 ## Perfection Loop
 
+### Loop 2 — AUDIT (2026-09-12)
+
+- **SELF-CORRECTION of the authoring RED claim:** the FID stated "no
+  `includeMessageHistory` split exists (grep: zero matches)". WRONG —
+  the field exists and is consumed: `agent-template.ts:156`,
+  `dynamic-agent-template.ts:159` (default false),
+  `packages/agent-runtime/src/templates/prompts.ts:139`
+  (conditional history injection), plus the Recorder context contract
+  (ECHO.md, FID-2026-0823-011) that runs on it. The original grep was
+  mis-scoped (agents/ + spawn paths only). CONSEQUENCE: GREEN is
+  SMALLER — the drafting turn is a template/agent-definition change
+  (set `includeMessageHistory: false` + an isolated prompt builder), not
+  new spawn machinery. The mode-split requirement (summarizing Scribe
+  keeps history) is unchanged and now mechanically expressible.
+- **Prove seam re-verified:** skills.ts:82 advisory comment + :111 usage
+  string confirmed by re-read; evolve-skills.ts:65-83 erosion ingestion
+  confirmed. The receipt persistence point for GREEN is the existing
+  ingestion path (no new artifact format).
+- **Rejected-proposal memory seam:** the wiki writer
+  (FID-2026-0912-003) is the storage; this FID's GREEN adds one
+  evidence-append call — no parallel record.
+- **CHANGE DELTA:** one RED claim corrected (the load-bearing fix);
+  contract otherwise unchanged and simpler than authored.
+
+### Loop 3 — ADVERSARIAL self-check (2026-09-12)
+
+- Refutation attempt ("isolation is already default — no work"): the
+  DYNAMIC template default is false, but the Scribe is not dynamic-templated
+  in the drafting path; the drafting turn must explicitly construct the
+  isolated prompt (wiki + deduped traces + inventory only). Work remains;
+  CONFIRMED smaller-than-authored, not zero.
+- Refutation attempt ("labels leak agent state to users"): the labels
+  describe the DRAFT's evidence state, not agent internals; redaction
+  rules (Law 12) apply to content, not the badge. Stands.
+- Omission hunt: the one-proposal-per-session cap needs an enforcement
+  point — pinned to the session-end routing (drafts queued per pattern,
+  max 1 per session-end), not left to prompt discipline alone.
+- **Verdict:** loop converges; document eligible for implementation.
+
 ### Missed Questions
 
 1. *Does the isolated turn break session summaries?* — No: the mode-split

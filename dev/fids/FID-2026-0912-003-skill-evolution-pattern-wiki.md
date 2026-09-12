@@ -159,6 +159,37 @@ training-time wiki access measurably hurt their skill development).
 
 ## Perfection Loop
 
+### Loop 2 — AUDIT (2026-09-12)
+
+- **Threshold citation precision:** the contract text said "≥3
+  recurrences in-window"; ground truth is "≥3 within the rolling 14-day
+  window" (session-end-review.ts:9) and the promote path is
+  `bun run experiences:dedup` → session-end routing. GREEN pins the
+  writer to consume the SAME dedup output object, not a re-derived
+  threshold (Law 13).
+- **Writer seam re-verified:** session-end-review.ts is deterministic,
+  zero-LLM, runs via the SessionEnd hook (FID-2026-0824-012); the wiki
+  write joins the agenda-refresh step. No new hook, no config.
+- **Missed surface found:** the wiki dir must appear in `.gitignore`
+  NEGOTIATION — it is tracked (governance artifact) but
+  `validate:repository`'s quality baselines and scratchpad scanners must
+  not flag `dev/wiki/` as unclassified content. Declared GREEN gate:
+  validator parity before/after.
+- **CHANGE DELTA:** precision corrections + one added gate.
+
+### Loop 3 — ADVERSARIAL self-check (2026-09-12)
+
+- Refutation attempt ("agenda already covers this"): agenda is a ≤50-line
+  rolling buffer by its own header; resolved/displaced rows vanish; the
+  wiki's append-amend pages are the complement. CONFIRMED distinct.
+- Refutation attempt ("write pages from raw traces directly"): rejected —
+  the dedup engine owns recurrence truth; bypassing it re-creates the
+  over-fragmentation the redaction FID fixed. Stands.
+- Half-claim split: "never auto-deleted" holds for the harness; the
+  operator may of course delete tracked files — that's governance, not
+  harness behavior. Recorded as such.
+- **Verdict:** loop converges; document eligible for implementation.
+
 ### Missed Questions
 
 1. *Why not reuse `dev/agenda.md` as the wiki?* — The agenda is a ≤50-line

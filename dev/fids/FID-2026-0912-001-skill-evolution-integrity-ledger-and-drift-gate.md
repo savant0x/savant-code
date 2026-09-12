@@ -61,12 +61,17 @@ fail-closed at trust.
 
 ### Expected Behavior
 
-1. `trustSkill` appends `{seq, action: 'trust', prevSha, nextSha,
-   pendingTrust: false}` to the live skill's ledger before/after migration;
-   `untrustSkill` appends `action: 'untrust'` with `pendingTrust: true`.
-   Fail-open policy decision: ledger append failure must NOT block the
-   operator action (the file move is primary) but MUST surface a warning
-   line in the result message (Law 14: no silent error paths).
+1. `trustSkill` appends a FULL `SkillLedgerEntry` (the `rollbackDraft`
+   pattern, trust.ts:50-66): `{seq, version, action: 'trust', ts,
+   sessionId, reason, prevSha (live bytes before), nextSha (draft bytes),
+   provenanceRef, semanticPreservation: true}` to the live skill's ledger
+   as part of migration; `untrustSkill` appends `action: 'untrust'`.
+   `SKILL_MANAGE_ACTIONS` extends with 'trust' | 'untrust' (consumer
+   sweep gate in GREEN). Fail-open policy decision: ledger append failure
+   must NOT block the operator action (the file move is primary) but MUST
+   surface a warning line in the result message (Law 14: no silent error
+   paths). Signatures widen to params objects `{rootDir, name, sessionId,
+   reason}`; callers pass the CLI session id or literal `'operator'`.
 2. Draft creation (`patchSkill`/`draftSkill` mutations) records
    `baselineSha` = hashChange(live bytes) at authoring time (create drafts:
    baseline = the live skill for patches; `null` for new skills).
@@ -161,6 +166,52 @@ for trusted skills (find).
 
 Open — awaiting operator approval to implement (Law 2). Status stays
 `analyzed` until implementation evidence exists.
+
+### Loop 2 — AUDIT (2026-09-12, fresh greps + missed-surface hunt)
+
+- **Finding 1 (contract imprecision, corrected):** the original GREEN
+  sketch proposed a thin ledger entry `{seq, action, prevSha, nextSha,
+  pendingTrust}`. Ground truth: `SkillLedgerEntry`
+  (types.ts:28-41) REQUIRES `{seq, version, action, ts, sessionId,
+  reason, prevSha, nextSha, provenanceRef, semanticPreservation}`, and
+  `pendingTrust` is a `SkillManageResult` field, not a ledger field.
+  GREEN contract corrected to the full shape.
+- **Finding 2 (action union):** `SKILL_MANAGE_ACTIONS`
+  (types.ts:14-22) = create|patch|edit|delete|write_file|remove_file|
+  rollback — `'trust'`/`'untrust'` are NOT in it (trust currently emits
+  action:'edit'). Decision: EXTEND the union with 'trust' + 'untrust'
+  (honest history beats display convenience); GREEN must sweep action
+  consumers (`grep -rn "action ===" common/src cli/src` + render sites)
+  as a declared gate.
+- **Finding 3 (signature):** `trustSkill(rootDir, name)` /
+  `untrustSkill(rootDir, name)` lack the required `sessionId`/`reason`
+  entry fields. Signature widens to a params object; operator-facing
+  callers (skill_manage handler + `/skills trust` command) pass the CLI
+  session id, or the literal `'operator'` when none exists (default).
+- **Finding 4 (in-repo precedent):** `rollbackDraft`
+  (trust.ts:22-74) already appends exactly the required entry shape with
+  `provenanceRef: \`session:${sessionId}\`` — the GREEN pattern to copy
+  verbatim (Law 13).
+- **Citation re-verification:** trust.ts:77-91/:94-121 confirmed
+  ledger-less (re-read); helpers.ts:79-113 (appendLedgerEntry,
+  readLedgerEntries, nextLedgerSeq) confirmed reusable as-is.
+- **CHANGE DELTA:** targeted GREEN corrections (~8%); RED findings
+  unchanged in substance.
+
+### Loop 3 — ADVERSARIAL self-check (2026-09-12)
+
+- Refutation attempt on Finding 1's premise ("trust appends nothing"):
+  re-read trust.ts 0-95 — no appendLedgerEntry call site; CONFIRMED.
+- Refutation attempt on the union extension ("keep action:'edit' with a
+  reason marker"): rejected — reason strings are free text, not
+  machine-queryable; the ledger's purpose is mechanical audit. Extension
+  stands.
+- Half-claim split: "operator edits always win over harness drafts" is
+  the DESIGN GOAL of the drift gate; the gate enforces it only for
+  baseline-pinned drafts (unpinned drafts warn). Recorded as such.
+- No omissions found in Affected Components; consumer sweep added as a
+  GREEN gate closes the one gap the original authoring missed.
+- **Verdict:** loop converges; document eligible for implementation.
 
 ### Loop 1 — Authoring (2026-09-12)
 

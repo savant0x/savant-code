@@ -136,6 +136,40 @@ semantics (window → archive, not delete).
 
 ## Perfection Loop
 
+### Loop 2 — AUDIT (2026-09-12)
+
+- **Ledger contract corrected:** 'archived' is NOT in
+  `SKILL_MANAGE_ACTIONS` (types.ts:14-22); the archive entry needs the
+  same union extension FID-2026-0912-001 makes ('trust' | 'untrust' |
+  'archived' — one coordinated union change across both FIDs' GREEN).
+  Entry shape = the full `SkillLedgerEntry` (types.ts:28-41), not the
+  thin `{action, from, to}` the authoring sketched.
+- **Sequencing rule made concrete:** append the entry BEFORE
+  `renameSync` so the ledger line travels with the archived directory
+  (the ledger lives inside the skill dir — helpers.ts:80
+  `skillLedgerPath(rootDir, name)`); after the move, the quarantine
+  ledger no longer exists at the old path. Verified by reading
+  `appendLedgerEntry` (helpers.ts:79-87): ledger path derives from the
+  skill dir, so post-move appends would silently create a NEW quarantine
+  ledger — the ordering is load-bearing, pinned in GREEN tests.
+- **Citation re-verification:** lessons-to-skills.ts:38/:241/:246/:274-276
+  re-confirmed (re-read); no existing `.archive` handling anywhere.
+- **CHANGE DELTA:** contract corrections only; approach unchanged.
+
+### Loop 3 — ADVERSARIAL self-check (2026-09-12)
+
+- Refutation attempt ("rename after append loses the entry"): the
+  ordering rule above makes the loss impossible; the failure mode is
+  instead a DUPLICATE quarantine ledger on post-move appends — the
+  before-move pin is the mitigation. CONFIRMED load-bearing.
+- Refutation attempt ("keep purge as fallback for .archive"): rejected —
+  an unbounded archive was the explicit operator-facing contract
+  ("the harness cannot forget"); disk cost is KB-scale markdown. Stands.
+- Omission hunt: loader-ignore pin was present; ADD pin that the
+  quarantine COUNT (`countQuarantinedDrafts`, helpers.ts:155) excludes
+  `.archive/` so notification surfaces don't resurrect archived drafts.
+- **Verdict:** loop converges; document eligible for implementation.
+
 ### Missed Questions
 
 1. *Keep or rename `DRAFT_REJECTION_WINDOW_DAYS`?* — Keep the constant,
