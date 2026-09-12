@@ -19,6 +19,10 @@ export const SKILL_MANAGE_ACTIONS = [
   'write_file',
   'remove_file',
   'rollback',
+  // FID-2026-0912-001: the operator trust boundary gets honest ledger
+  // actions — trust previously masqueraded as 'edit' with no entry at all.
+  'trust',
+  'untrust',
 ] as const
 export type SkillManageAction = (typeof SKILL_MANAGE_ACTIONS)[number]
 

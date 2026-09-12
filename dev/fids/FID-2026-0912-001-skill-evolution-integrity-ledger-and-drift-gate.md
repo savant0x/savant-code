@@ -3,7 +3,8 @@
 **Filename:** `FID-2026-0912-001-skill-evolution-integrity-ledger-and-drift-gate.md`
 **ID:** FID-2026-0912-001
 **Severity:** medium
-**Status:** analyzed
+**Status:** fixed (implemented 2026-09-12; closure awaits the G2 commit
+record in the FID — archive move + CHANGELOG per Auto-Archive)
 **Created:** 2026-09-12 (operator directive: scope the SkillOpt blueprint
 and WikiSkill arXiv:2608.27454 into FIDs)
 **YAGNI-Compliance:** Verified — reuses the existing VERSIONS.jsonl ledger
@@ -164,8 +165,49 @@ for trusted skills (find).
 
 ## Resolution
 
-Open — awaiting operator approval to implement (Law 2). Status stays
-`analyzed` until implementation evidence exists.
+**Implemented 2026-09-12 (Loop 4, RED-first).** Status `fixed`;
+`fixed` → closure ceremony (archive + CHANGELOG) executes with the
+sweep's final battery.
+
+### Loop 4 — IMPLEMENTATION (2026-09-12, automation level 3)
+
+- **RED:** `skill-management-trust-ledger.test.ts` — 2 pass / 9 fail
+  captured pre-fix (all contract pins failing against the ledger-less
+  trust paths).
+- **GREEN:**
+  1. `types.ts` — `SKILL_MANAGE_ACTIONS` extends with 'trust' + 'untrust'
+     (consumer sweep: the union is not exhaustively switched anywhere;
+     only `mutations.ts` type annotations, verified by grep).
+  2. `helpers.ts` — NEW `readBaselineSha` (frontmatter
+     `metadata.baselineSha` extraction, fail-open null) + `withBaselineSha`
+     (pin injection; null sha leaves content unchanged).
+  3. `mutations.ts` — `patchSkill`/`editSkill` pin the draft to
+     `hashChange(live bytes)` at draft time; draft-wins edits (base is the
+     draft, not live) stay unpinned — re-pinning against a live copy the
+     draft no longer reflects would fabricate a baseline.
+  4. `trust.ts` — `trustSkill`/`untrustSkill` gain an optional
+     `{sessionId, reason}` context (callers unchanged — 'operator-cli'
+     default matches the `rollbackLiveSkill` precedent), append FULL
+     `SkillLedgerEntry`s (fail-open: append failure surfaces as a warning
+     line in the result message, never blocks the operator), emit
+     `action: 'trust' | 'untrust'`, and the trust path enforces the drift
+     gate: baseline-pinned draft + changed live hash → terminal
+     "Drift detected … re-draft against the current baseline" refusal
+     (draft preserved, live untouched). Unpinned drafts trust with an
+     explicit warning suffix.
+- **RED-iteration corrections (my pins, not the contract):** (a) the
+  baseline regex assumed bare-hex hashes — `hashChange` returns the house
+  `sha256:<hex>` prefix format; (b) gray-matter single-quotes YAML values
+  containing colons. Contract unchanged; pins corrected to the real
+  formats.
+- **AUDIT battery:** skill-management family 38/0 across 6 files (11 new
+  pins, 27 regression); full common suite 704 pass / 0 fail (708 ran, 4
+  skip) / 2,029 expects; typecheck common + sdk + agent-runtime + cli all
+  exit 0; eslint `--max-warnings 0` on all touched files; prettier clean.
+- **Law 4:** `readBaselineSha` ← trust.ts:100 (drift gate input);
+  `withBaselineSha` ← mutations.ts:214, :263 (draft-time capture);
+  `trustSkill`/`untrustSkill` production caller unchanged (cli/src/commands/
+  skills.ts — operator boundary). Grep evidence pasted in-session.
 
 ### Loop 2 — AUDIT (2026-09-12, fresh greps + missed-surface hunt)
 

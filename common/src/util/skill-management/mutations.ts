@@ -15,6 +15,7 @@ import {
   nextLedgerSeq,
   patchChangeRatio,
   readCurrentSkill,
+  withBaselineSha,
   writeSnapshot,
 } from './helpers'
 import { skillQuarantineDir } from './paths'
@@ -195,10 +196,22 @@ export function patchSkill(params: {
     params.bump ?? 'patch',
   )
   if (!version) return { ok: false, error: 'cannot derive next version' }
+  // FID-2026-0912-001: pin the draft to the LIVE bytes at draft time so
+  // trust can refuse when the live copy has drifted since. Draft-wins
+  // edits (base = draft content) leave whatever pin the draft already
+  // carries — re-pinning against a live copy the draft no longer reflects
+  // would fabricate a baseline.
+  const liveNow = readCurrentSkill(params.rootDir, params.name)
+  const baselineSha =
+    base.base === (liveNow.draft?.content ?? liveNow.live?.content ?? base.base)
+      ? liveNow.live
+        ? hashChange(liveNow.live.content)
+        : null
+      : null
   return applyMutation({
     ...params,
     base: base.base,
-    next,
+    next: withBaselineSha(next, baselineSha),
     version,
     action: 'patch',
     semanticPreservation: true,
@@ -241,10 +254,16 @@ export function editSkill(params: {
     provenanceRef: params.provenanceRef,
   })
   if (!built.ok) return built
+  // FID-2026-0912-001: pin edit drafts to the live baseline (same rule as
+  // patch — live bytes at draft time; null when no live copy exists).
+  const liveNow = readCurrentSkill(params.rootDir, params.name)
   return applyMutation({
     ...params,
     base: base.base,
-    next: built.content,
+    next: withBaselineSha(
+      built.content,
+      liveNow.live ? hashChange(liveNow.live.content) : null,
+    ),
     version,
     action: 'edit',
     semanticPreservation: true,

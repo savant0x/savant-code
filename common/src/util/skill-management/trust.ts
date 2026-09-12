@@ -6,7 +6,12 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 
-import { appendLedgerEntry, nextLedgerSeq, readSkillFile } from './helpers'
+import {
+  appendLedgerEntry,
+  nextLedgerSeq,
+  readBaselineSha,
+  readSkillFile,
+} from './helpers'
 import { currentVersionOf } from './mutations'
 import {
   skillCanonicalDir,
@@ -75,29 +80,94 @@ export function rollbackDraft(params: {
 }
 
 /** Operator-only: trust a draft (migrate quarantine → live). */
-export function trustSkill(rootDir: string, name: string): SkillManageResult {
+export function trustSkill(
+  rootDir: string,
+  name: string,
+  context: { sessionId?: string; reason?: string } = {},
+): SkillManageResult {
   if (!isValidSkillName(name))
     return { ok: false, error: `invalid skill name: ${name}` }
   const draftDir = skillQuarantineDir(rootDir, name)
   const draft = readSkillFile(draftDir)
   if (!draft) return { ok: false, error: `no quarantined draft '${name}'` }
   const liveDir = skillCanonicalDir(rootDir, name)
+  const liveBefore = readSkillFile(liveDir)
+
+  // FID-2026-0912-001 drift gate: a baseline-pinned draft is refused when
+  // the live bytes changed after the draft was authored — operator edits
+  // always win over harness drafts. Unpinned drafts (legacy, or created
+  // with no live baseline) trust with a warning instead (fail-open).
+  const baselineSha = readBaselineSha(draft.content)
+  const currentLiveSha = liveBefore ? hashChange(liveBefore.content) : null
+  if (baselineSha !== null && currentLiveSha !== null) {
+    if (baselineSha !== currentLiveSha) {
+      return {
+        ok: false,
+        error:
+          `Drift detected: the live skill '${name}' changed since this draft ` +
+          `was authored. Trust refused — re-draft against the current baseline. ` +
+          `(draft baseline ${baselineSha.slice(0, 12)}… vs live ` +
+          `${currentLiveSha.slice(0, 12)}…)`,
+      }
+    }
+  }
+
   fs.mkdirSync(liveDir, { recursive: true })
   fs.writeFileSync(path.join(liveDir, SKILL_FILE_NAME), draft.content, 'utf8')
   fs.rmSync(draftDir, { recursive: true, force: true })
+
+  // FID-2026-0912-001: the trust transition is now ledgered (the
+  // rollbackLiveSkill pattern). Fail-open by design: an append failure is
+  // surfaced as a warning, never blocks the operator action (Law 14 —
+  // the error path is explicit, not silent).
+  let warning: string | undefined
+  try {
+    appendLedgerEntry(rootDir, name, {
+      seq: nextLedgerSeq(rootDir, name),
+      version: draft.version,
+      action: 'trust',
+      ts: new Date().toISOString(),
+      sessionId: context.sessionId ?? 'operator-cli',
+      reason:
+        context.reason ??
+        (baselineSha === null && liveBefore
+          ? 'operator trust (unpinned legacy draft)'
+          : 'operator trust'),
+      prevSha: currentLiveSha,
+      nextSha: hashChange(draft.content),
+      provenanceRef: context.sessionId
+        ? `session:${context.sessionId}`
+        : 'operator-cli',
+      semanticPreservation: true,
+    })
+  } catch (error) {
+    warning = `ledger append failed: ${error instanceof Error ? error.message : String(error)}`
+  }
+
+  const baseMessage = `trusted '${name}' v${draft.version}`
+  const unpinnedWarning =
+    baselineSha === null && liveBefore
+      ? ' (draft had no baseline pin — trusted without drift verification)'
+      : ''
   return {
     ok: true,
     name,
     version: draft.version,
-    action: 'edit',
+    action: 'trust',
     nextSha: hashChange(draft.content),
     pendingTrust: false,
-    message: `trusted '${name}' v${draft.version}`,
+    message: warning
+      ? `${baseMessage}${unpinnedWarning} — ${warning}`
+      : `${baseMessage}${unpinnedWarning}`,
   }
 }
 
 /** Operator-only: untrust (live → quarantine), keeping history intact. */
-export function untrustSkill(rootDir: string, name: string): SkillManageResult {
+export function untrustSkill(
+  rootDir: string,
+  name: string,
+  context: { sessionId?: string; reason?: string } = {},
+): SkillManageResult {
   if (!isValidSkillName(name))
     return { ok: false, error: `invalid skill name: ${name}` }
   const liveDir = skillCanonicalDir(rootDir, name)
@@ -110,14 +180,38 @@ export function untrustSkill(rootDir: string, name: string): SkillManageResult {
   fs.mkdirSync(draftDir, { recursive: true })
   fs.writeFileSync(path.join(draftDir, SKILL_FILE_NAME), live.content, 'utf8')
   fs.rmSync(path.join(liveDir, SKILL_FILE_NAME), { force: true })
+
+  // FID-2026-0912-001: ledger the untrust transition (fail-open, same
+  // policy as trust).
+  let warning: string | undefined
+  try {
+    appendLedgerEntry(rootDir, name, {
+      seq: nextLedgerSeq(rootDir, name),
+      version: live.version,
+      action: 'untrust',
+      ts: new Date().toISOString(),
+      sessionId: context.sessionId ?? 'operator-cli',
+      reason: context.reason ?? 'operator untrust',
+      prevSha: hashChange(live.content),
+      nextSha: hashChange(live.content),
+      provenanceRef: context.sessionId
+        ? `session:${context.sessionId}`
+        : 'operator-cli',
+      semanticPreservation: true,
+    })
+  } catch (error) {
+    warning = `ledger append failed: ${error instanceof Error ? error.message : String(error)}`
+  }
+
+  const baseMessage = `untrusted '${name}' v${live.version} (moved to quarantine)`
   return {
     ok: true,
     name,
     version: live.version,
-    action: 'edit',
+    action: 'untrust',
     nextSha: hashChange(live.content),
     pendingTrust: true,
-    message: `untrusted '${name}' v${live.version} (moved to quarantine)`,
+    message: warning ? `${baseMessage} — ${warning}` : baseMessage,
   }
 }
 

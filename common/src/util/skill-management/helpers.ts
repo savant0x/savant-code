@@ -258,6 +258,48 @@ export function buildAgentSkillDocument(params: {
 }
 
 /**
+ * FID-2026-0912-001: extract the drift-gate baseline from a draft's
+ * frontmatter (`metadata.baselineSha` — hash of the LIVE bytes at draft
+ * time). Returns null for legacy/unpinned drafts and unparseable
+ * frontmatter (fail-open trust with a warning, per the FID contract).
+ */
+export function readBaselineSha(content: string): string | null {
+  try {
+    const parsed = matter(content)
+    const meta: unknown = parsed.data?.metadata
+    if (meta !== null && typeof meta === 'object') {
+      const sha: unknown = (meta as Record<string, unknown>).baselineSha
+      if (typeof sha === 'string' && sha.length > 0) return sha
+    }
+  } catch {
+    // Unparseable frontmatter — treat as unpinned.
+  }
+  return null
+}
+
+/**
+ * FID-2026-0912-001: pin a draft to the live baseline by injecting
+ * `metadata.baselineSha` into its frontmatter. A null sha (no live
+ * baseline — e.g. patching a draft with no live copy) leaves the content
+ * unchanged: the draft stays unpinned and trust warns instead of gating.
+ */
+export function withBaselineSha(content: string, sha: string | null): string {
+  if (sha === null) return content
+  try {
+    const parsed = matter(content)
+    const data = (parsed.data ?? {}) as Record<string, unknown>
+    const meta =
+      data.metadata !== null && typeof data.metadata === 'object'
+        ? (data.metadata as Record<string, unknown>)
+        : {}
+    data.metadata = { ...meta, baselineSha: sha }
+    return matter.stringify(parsed.content, data)
+  } catch {
+    return content
+  }
+}
+
+/**
  * Rewrite the `version` in a SKILL.md document's frontmatter, preserving
  * everything else byte-for-byte.
  */
