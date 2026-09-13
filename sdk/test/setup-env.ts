@@ -73,7 +73,10 @@ process.env.BUN_ENV ||= 'test'
 // with test fakes during two v0.0.31 release attempts). Explicit per-test
 // values set after this preload still win.
 
-if (process.env.NEXT_PUBLIC_CB_ENVIRONMENT === 'prod') {
+if (
+  process.env.NEXT_PUBLIC_CB_ENVIRONMENT === 'prod' &&
+  process.env.NODE_ENV === 'test'
+) {
   process.env.NEXT_PUBLIC_CB_ENVIRONMENT = 'test'
 }
 

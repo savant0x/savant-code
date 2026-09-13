@@ -7,18 +7,10 @@
  * the current tree, and either prints or stamps a `### Verification Receipt`
  * into the FID.
  *
- * Usage (from repo root):
- *   bun run fid:verify <fid-path>            # run gates, print receipt, exit 0 iff all green
- *   bun run fid:verify <fid-path> --write    # run gates AND stamp receipt into the FID
- *   bun run fid:verify --check               # structural C1+C2 scan of all active fixed/verified FIDs
- *
- * Allowlisted shapes (argv arrays, no shell interpolation):
- *   - gate: typecheck <workspace>   → bun run --cwd=<workspace> typecheck
- *   - gate: test <path>             → bun test <path>            (path must exist under repo, *.test.ts|*.test.tsx)
- *   - gate: probe <path>            → bun run <path>             (path must exist under repo, *.ts)
- *
- * Exit codes: 0 = all declared gates pass (and receipt is valid for --write);
- *             1 = any gate red, malformed declaration, or unsafe argument.
+ * Usage: `bun run fid:verify <fid-path> [--write]` | `--check`.
+ * Gate shapes: `typecheck <workspace>`, `test <path>` (*.test.ts|tsx),
+ * `probe <path>` (*.ts) — argv arrays only, no shell interpolation.
+ * Exit 0 iff every declared gate passes (or --check is clean).
  */
 import fs from 'node:fs'
 import path from 'node:path'
@@ -131,13 +123,21 @@ export function runGates(gates: { kind: string; arg: string }[]): {
       errors.push(resolved.error)
       continue
     }
-    // Test gates never inherit a release profile (FID-2026-0913-003).
-    const spawned = Bun.spawnSync(resolved.argv, {
-      cwd: resolved.cwd,
-      env: { ...process.env, NODE_ENV: 'test', BUN_ENV: 'test' },
-      stdout: 'pipe',
-      stderr: 'pipe',
-    })
+    // Test gates never inherit a release profile (FID-2026-0913-003); the
+    // runtime spawns by absolute path — bare 'bun' ENOENTs when an env is
+    // passed explicitly (Windows PATH-case resolution; v0.0.30 incident,
+    // audit gate-env-parity).
+    const spawned = Bun.spawnSync(
+      resolved.argv[0] === 'bun'
+        ? [process.execPath, ...resolved.argv.slice(1)]
+        : resolved.argv,
+      {
+        cwd: resolved.cwd,
+        env: { ...process.env, NODE_ENV: 'test', BUN_ENV: 'test' },
+        stdout: 'pipe',
+        stderr: 'pipe',
+      },
+    )
     results.push({
       label: resolved.label,
       exit: spawned.exitCode,

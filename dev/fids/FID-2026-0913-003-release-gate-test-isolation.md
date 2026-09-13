@@ -201,8 +201,8 @@ assertion). Method 1 static — scripts typecheck via
 
 ### Verification Receipt
 
-- fingerprint: sha256:355fc0d427372b2911cb0894921c02762c9e89472458c04478ce56433f105ccd
-- verified: 2026-09-13T19:58:14.560Z
+- fingerprint: sha256:e7ec43d22666c48b5bd0fd569fbabeba250584e1dd912c92f0d4cd4a9c4e3428
+- verified: 2026-09-13T20:09:32.556Z
 - probe scripts/probes/release-gate-isolation-probe.ts: exit 0
 - test cli/src/utils/__tests__/provider-setup.test.ts: exit 0
 - test scripts/__tests__/fid-verify.test.ts: exit 0
@@ -286,6 +286,26 @@ assertion). Method 1 static — scripts typecheck via
   (299 lines) rather than negotiating the baseline. The validator also
   caught the missing structural sections in this FID; added rather than
   bypassed.
+
+### Erratum 1 — release-attempt crash (2026-09-13, post-fix)
+
+The first post-fix release attempt (`bun run release:public`) crashed
+inside `validate-repository` → `fid-gates` → `runGates` with
+`ENOENT: uv_spawn 'bun'`. Root cause: passing an explicit `env` object to
+`Bun.spawnSync` changes Windows runtime-path resolution — `argv[0]` is
+resolved against the PASSED environment, whose platform key is `Path`,
+not `PATH`, so the bare `'bun'` resolution that worked when env was
+inherited now ENOENTs. The repo's own `audit.gate-env-parity` rule flags
+bare runtime-name spawns for exactly this reason (v0.0.30 incident) but
+matched only string literals, and `'bun'` arrived here via `resolveGate`
+argv. Second fix: `runGates` rewrites `'bun'` → `process.execPath` at the
+spawn site (covers all three gate kinds), and the preload demotion gains
+a `NODE_ENV === 'test'` guard per FID-2026-0810-003 (prod lifecycle
+assertions run through `bun test` too, so environment alone is not the
+discriminator). Validation metadata gates now run under the profile with
+`NEXT_PUBLIC_CB_ENVIRONMENT` left intact — they are env-insensitive
+(static string presence checks) and assert the exact values the release
+itself injects.
 
 ## Resolution
 
