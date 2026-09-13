@@ -273,6 +273,44 @@ export async function* promptAiSdkStream(
       }
     }
     if (chunkValue.type === 'tool-call') {
+      // FID-2026-0912-005: vendor SDK transformers (e.g. @ai-sdk/anthropic,
+      // @ai-sdk/google) emit tool-call parts unconditionally — including
+      // parts that `ai` core has marked `invalid: true` (unparseable args,
+      // unknown tool) and filtered from execution. Forwarding them raw
+      // degrades into a generic tool-error in the runtime, bypassing the
+      // native-incomplete machinery (tool-specific steering, strike counting
+      // with exhaustion, and the PostToolUseFailure ledger record). The
+      // OpenAI-compatible family gets this classification from our own flush
+      // gate; vendor families get it here. Reuses the one message factory
+      // (Law 13). A valid part (invalid !== true) is forwarded untouched.
+      if (chunkValue.invalid === true) {
+        logger.warn(
+          {
+            chunk: { ...chunkValue, error: undefined },
+            error: getErrorObject(chunkValue.error),
+            model: params.model,
+          },
+          'Invalid tool call in AI SDK stream - classifying as native-incomplete',
+        )
+        const toolName =
+          typeof chunkValue.toolName === 'string'
+            ? chunkValue.toolName
+            : 'unknown'
+        const nativeErrorChunk = normalizeNativeToolCallStreamError({
+          type: 'native-incomplete',
+          toolName,
+        })
+        // The factory is null for hostile shapes; a non-string toolName was
+        // already normalized above, so null is unreachable here — but the
+        // contract is enforced fail-closed (Law 14) rather than trusted.
+        if (nativeErrorChunk === null) {
+          throw new Error(
+            'FID-2026-0912-005: native-incomplete classification failed for an invalid tool call',
+          )
+        }
+        yield nativeErrorChunk
+        continue
+      }
       // FID-2026-0803-003 SDK-2: tool calls are actionable output — falling
       // back after one is yielded would deliver it twice (double execution).
       hasYieldedContent = true
