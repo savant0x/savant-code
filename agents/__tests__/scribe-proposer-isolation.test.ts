@@ -22,7 +22,6 @@ describe('FID-2026-0912-004: scribe-proposer agent definition (handoff isolation
   })
 
   test('savant roster can spawn the proposer', () => {
-     
     const savant = require('../savant/savant').default as {
       spawnableAgents?: string[]
     }

@@ -107,12 +107,7 @@ describe('countQuarantinedDrafts (FID-2026-0910-001 P3)', () => {
     )
     // Archived copies under .archive/ — must NOT resurrect in the count
     // or notification surfaces.
-    const buried = path.join(
-      quarantineRoot,
-      '.archive',
-      '2026-07',
-      'pending',
-    )
+    const buried = path.join(quarantineRoot, '.archive', '2026-07', 'pending')
     fs.mkdirSync(buried, { recursive: true })
     fs.writeFileSync(
       path.join(buried, 'SKILL.md'),

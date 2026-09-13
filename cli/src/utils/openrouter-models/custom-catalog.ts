@@ -37,9 +37,7 @@ function asOptionalString(value: unknown): string | undefined {
 }
 
 function asOptionalNumber(value: unknown): number | undefined {
-  return typeof value === 'number' && Number.isFinite(value)
-    ? value
-    : undefined
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined
 }
 
 /** Parse an OpenAI-compatible /v1/models body into prefixed models. */

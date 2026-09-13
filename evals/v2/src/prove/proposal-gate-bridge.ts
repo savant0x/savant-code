@@ -10,7 +10,6 @@
 import type { SkillProofArtifact } from '../stats/skill-efficacy'
 import type { ProposalReceipt } from '@savant-code/common/util/skill-proposal-gate'
 
-
 export function gateReceiptFromArtifact(
   artifact: SkillProofArtifact,
 ): ProposalReceipt {

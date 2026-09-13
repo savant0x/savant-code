@@ -41,12 +41,12 @@ function asOptionalString(value: unknown): string | undefined {
 }
 
 function asOptionalNumber(value: unknown): number | undefined {
-  return typeof value === 'number' && Number.isFinite(value)
-    ? value
-    : undefined
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined
 }
 
-function parseOrcarouterCatalog(json: OrcarouterModelsResponse): OpenRouterModel[] {
+function parseOrcarouterCatalog(
+  json: OrcarouterModelsResponse,
+): OpenRouterModel[] {
   const parsed: OpenRouterModel[] = []
   for (const model of json.data ?? []) {
     const upstreamId = asOptionalString(model.id)
