@@ -7,7 +7,7 @@ import {
   routeImageMode,
   sendModePrompt,
 } from './route-input-modes'
-import { routeKeySetup } from './route-key-setup'
+import { routeMaskedKeySetup } from './route-masked-key-setup'
 import { routeProviderWizard } from './route-provider-wizard'
 import { handleChatGptAuthCode } from '../../components/chatgpt-connect-banner'
 import { useChatStore } from '../../state/chat-store'
@@ -21,14 +21,8 @@ import {
   hasProcessingImages,
 } from '../../utils/pending-attachments'
 import {
-  getActiveProviderSetup,
-  getActiveResearchKeyService,
   getMissingProviderSetup,
   getProviderSetupGuidance,
-  getProviderSetupInfo,
-  getResearchKeyServiceInfo,
-  saveProviderApiKey,
-  saveResearchApiKey,
 } from '../../utils/provider-setup'
 import { isWizardSubmissionReplayed } from '../../utils/provider-wizard'
 import {
@@ -151,43 +145,19 @@ export async function routeUserPrompt(
     return
   }
 
-  // Handle provider API-key setup without writing the secret to chat history.
-  if (inputMode === 'providerSetup') {
-    const provider = getActiveProviderSetup()
-    routeKeySetup({
+  // Masked key-setup modes (provider + research BYOK) share one seam
+  // (FID-2026-0913-002): the raw submit goes to routeKeySetup only — the
+  // secret never touches chat history (Law 12).
+  if (
+    routeMaskedKeySetup(inputMode, {
       trimmed,
       setInputValue,
-      setInputMode,
       setInputFocused,
+      setInputMode,
       inputRef,
       setMessages,
-      getInfo: () => getProviderSetupInfo(provider),
-      saveKey: (value) => saveProviderApiKey(provider, value),
-      unavailableMessage:
-        'Provider setup is unavailable. Use /provider to try again.',
-      successMessage: (label) =>
-        `${label} API key saved locally. You can now use the configured provider model.`,
     })
-    return
-  }
-
-  // Handle research API-key setup (BYOK) — mirrors provider key handling.
-  if (inputMode === 'researchKeySetup') {
-    const service = getActiveResearchKeyService()
-    routeKeySetup({
-      trimmed,
-      setInputValue,
-      setInputMode,
-      setInputFocused,
-      inputRef,
-      setMessages,
-      getInfo: () => getResearchKeyServiceInfo(service),
-      saveKey: (value) => saveResearchApiKey(service, value),
-      unavailableMessage:
-        'Research key setup is unavailable. Use /research-keys to try again.',
-      successMessage: (label) =>
-        `${label} API key saved locally. Research tools will use it when available.`,
-    })
+  ) {
     return
   }
 
