@@ -3,6 +3,36 @@
 This directory contains closed or historically completed FIDs. Files here are
 an audit record, not an active work queue.
 
+## 2026-09-13 closure — audited gateway providers (1 FID archived)
+
+[`FID-2026-0913-001-hcnsec-tokenbom-gateway-providers.md`](FID-2026-0913-001-hcnsec-tokenbom-gateway-providers.md)
+(low) — closed 2026-09-13; archived 2026-09-13. 15th/16th registry entries
+(`api.hcnsec.cn/v1` + `tokenbom.com/v1`, `HCNSEC_API_KEY`/`TOKENBOM_API_KEY`,
+static audited-allowlist catalogs — 7 models per gateway, TokenHarbor
+pattern: no wrapper file, no manifest entry; implementation commit
+`5e8cd5c8`, 14 files, Loops 1-4). Closure gate: Step 5 keyed live
+round-trip via the production chain — 1,378-model combined catalog surfaces
+hcnsec 7/7 + tokenbom 7/7 with pinned context windows; HTTP 200 chat on
+both gateways (`hcnsec/glm-5.3-flash` 17 prompt tokens, `tokenbom/gpt-5.5`
+11 — clean, no injected content on the cataloged channels). Trust posture
+recorded in the FID and registry comments: personal-use static allowlists;
+substituted/injected/dead audit exclusions stay excluded.
+
+## 2026-09-13 closure — vendor-path tool-call classification (1 FID archived)
+
+[`FID-2026-0912-005-vendor-path-invalid-tool-input-native-incomplete-classification.md`](FID-2026-0912-005-vendor-path-invalid-tool-input-native-incomplete-classification.md)
+(medium) — closed 2026-09-13; archived 2026-09-13. SDK-boundary fix:
+`promptAiSdkStream`'s `tool-call` branch classifies `invalid === true`
+vendor parts (truncated/malformed args AND unknown tool) through the single
+`normalizeNativeToolCallStreamError` factory with a fail-closed null guard;
+valid parts forward byte-identically; ZERO runtime changes (implementation
+commit `a6853358`, 2 files, Loops 1-2). Gates: RED-first 2 fail / 1 pass
+pre-fix → 9/9 post across the two sdk suites; runtime-integration suites
+16/16; receipt 5/5 PASS (typecheck ×4 incl. cli run separately); re-verified
+on the committed tree 2026-09-13. Residual documented in the FID, not
+silently absorbed: no finishReason on vendor classification → generic retry
+guidance rather than the split-payload hint (follow-up only if observed).
+
 ## 2026-09-12 closure — custom-provider hardening (1 FID archived)
 
 [`FID-2026-0911-003-custom-provider-live-test-and-protocol.md`](FID-2026-0911-003-custom-provider-live-test-and-protocol.md)

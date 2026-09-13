@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0912-005-vendor-path-invalid-tool-input-native-incomplete-classification.md`
 **ID:** FID-2026-0912-005
 **Severity:** medium
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-09-12 15:00
 **YAGNI-Compliance:** Verified
 
@@ -312,7 +312,9 @@ Implemented 2026-09-12 (same session as authoring; operator approved the
 implementation directive). Commit SHA pending — the operator executes or
 authorizes git (G1/G2); closure requires that hash.
 
-- [ ] **Commit SHA:** pending operator commit (G2 — closure gate)
+- [x] **Commit SHA:** `a6853358` (2026-09-13 — `fix(sdk): FID-2026-0912-005
+      classify vendor-path invalid tool-inputs as native-incomplete`,
+      2 files: `stream.ts` + the pin test)
 - [x] **File:line ranges:** `sdk/src/impl/llm/stream.ts:255-292` (the
       `tool-call` branch now classifies `invalid === true` parts via
       `normalizeNativeToolCallStreamError` and fails closed on a null
@@ -351,8 +353,8 @@ authorizes git (G1/G2); closure requires that hash.
       outputs in this record; lint:md + prettier clean)
 - [x] Production call-graph evidence is present (Law 4 greps: producer →
       consumer chain cited; no duplicate factory introduced)
-- [x] FID status reflects the actual implementation state (`fixed`; closure
-      waits on the operator commit per G2)
+- [x] FID status reflects the actual implementation state (`closed`
+      2026-09-13 — commit `a6853358` verified in history)
 
 ### Loop 2 — Independent audit and self-correction
 
@@ -391,11 +393,25 @@ authorizes git (G1/G2); closure requires that hash.
 
 ## Resolution
 
-- **Closed Date:** pending
-- **Fix Description:** pending
-- **Tests Added:** pending (RED pin test authored first, per Step 1)
-- **Verification Evidence:** pending
-- **Archived:** pending
+- **Closed Date:** 2026-09-13
+- **Fix Description:** `promptAiSdkStream`'s `tool-call` branch classifies
+  `invalid === true` vendor parts (truncated/malformed args AND unknown
+  tool) through the single `normalizeNativeToolCallStreamError` factory
+  with a fail-closed null guard; valid parts forward byte-identically.
+  Implementation commit `a6853358`.
+- **Tests Added:** `sdk/src/impl/__tests__/llm-invalid-vendor-tool-call.test.ts`
+  — RED-first (2 fail / 1 pass pre-fix; 9/9 across the two sdk suites
+  post-fix); runtime-integration suites 16/16 (part-f, strikes,
+  experience-capture, steering).
+- **Verification Evidence:** receipt 5/5 PASS (typecheck
+  sdk/common/agent-runtime + both declared test gates; cli typecheck run
+  separately = ×4). Re-verified 2026-09-13 on the committed tree:
+  typecheck ×4 exit 0; `llm-invalid-vendor-tool-call` + free-mode suites
+  15/0. Law 4 greps in the record (producer `stream.ts:299` → consumer
+  `error-chunk.ts:64,96`; factory single at `errors.ts:88`).
+- **Archived:** 2026-09-13 — moved to `dev/fids/archive/`, indexed in
+  `dev/fids/archive/README.md`, CHANGELOG `Unreleased` entry updated from
+  "closure pending commit" to CLOSED.
 
 ## Lessons Learned
 

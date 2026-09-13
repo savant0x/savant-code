@@ -33,9 +33,16 @@ on-disk records missing from the table added (-0823-003, -0824-003…-008,
 
 | FID | Status | Purpose / blocking gate |
 |---|---|---|
-| [`FID-2026-0913-001`](FID-2026-0913-001-hcnsec-tokenbom-gateway-providers.md) | fixed | hcnsec + TokenBom gateway providers with the audited 14-model static allowlist (Tasks 43-E/44-C). Implemented 2026-09-13: RED-first (10 legs), registry entries + gateway-catalogs module + picker derivation + docs regen, typecheck ×4, suites 59/0 + 35/0 + 48/0, Loop 1-4 recorded. Step 5 keyed live round-trip PASS on BOTH gateways (HTTP 200, clean prompt-token counts). Closure waits on the operator commit (G2). |
-| [`FID-2026-0912-005`](FID-2026-0912-005-vendor-path-invalid-tool-input-native-incomplete-classification.md) | fixed | Vendor-path invalid tool-inputs lose `native-incomplete` classification (steering/strikes/ledger bypassed). Implemented 2026-09-12: RED-first pin test + SDK-boundary classification reusing the single message factory; ZERO runtime changes. Receipt 5/5 PASS (typecheck ×3 in-gate + cli separately = ×4, both test gates); runtime-integration suites 16/16. Closure waits on the operator commit (G2). |
 | [`FID-2026-0911-002`](FID-2026-0911-002-orcarouter-gateway-provider.md) | fixed | OrcaRouter gateway provider (13th registry entry). Integration fully gate-verified; keyed live acceptance blocked by the VENDOR's free-tier unlock (`err_free_access_denied` on every free id incl. `z-ai/glm-5.3-flash-free`, re-probed 2026-09-12 post-linkage; paid models 402 on zero credits — vendor-side, not integration). Probe re-runs on vendor fix. |
+| [`FID-2026-0911-002`](FID-2026-0911-002-orcarouter-gateway-provider.md) | fixed | OrcaRouter gateway provider (13th registry entry). Integration fully gate-verified; keyed live acceptance blocked by the VENDOR's free-tier unlock (`err_free_access_denied` on every free id incl. `z-ai/glm-5.3-flash-free`, re-probed 2026-09-12 post-linkage; paid models 402 on zero credits — vendor-side, not integration). Probe re-runs on vendor fix. |
+
+**2026-09-13 closure — FID-2026-0913-001 + FID-2026-0912-005 closed +
+archived:** hcnsec + TokenBom gateway providers (implementation commit
+`5e8cd5c8`, keyed live round-trip PASS on both gateways) and the
+vendor-path native-incomplete classification fix (implementation commit
+`a6853358`). Both `closed`, moved to `dev/fids/archive/`, indexed in
+`archive/README.md`, CHANGELOG `Unreleased` updated. Active queue:
+FID-2026-0911-002 only (vendor-held).
 
 **2026-09-12 skill-evolution suite CLOSED + ARCHIVED (operator directive:
 "complete ALL open fids in logical order w/ automation level 3").**

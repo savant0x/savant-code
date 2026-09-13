@@ -2,9 +2,35 @@
 
 ## Unreleased
 
+### hcnsec + TokenBom gateway providers: audited 14-model static allowlist (2026-09-13)
+
+- **FID-2026-0913-001 — CLOSED + archived 2026-09-13 (implementation
+  commit `5e8cd5c8`).** Adds the two identity-audited gateways as
+  built-in providers (15th/16th registry entries): HCNSec
+  (`api.hcnsec.cn/v1`, `HCNSEC_API_KEY`) and TokenBom
+  (`tokenbom.com/v1`, `TOKENBOM_API_KEY`) — OpenAI protocol,
+  `idTransform: 'strip'`, `order: 4` (TokenHarbor static pattern: no
+  wrapper file, no audit-manifest entry). Both carry STATIC catalogs of
+  exactly the 7-genuine-channel allowlist per gateway that the operator's
+  identity audits confirmed (Tasks 43-E/44-C; full report
+  `docs/provider-identity-audit-2026-09-13.md`) — deliberately not live
+  `/v1/models`, which re-exposes the substituted, injected, and dead
+  listings the audits rejected. Picker surfaces the allowlists with
+  per-model context windows pinned from the OpenRouter catalog (13/14;
+  doubao conservatively defaulted + flagged), a new
+  `common/src/constants/model-config/gateway-catalogs.ts` module (the
+  300-line cap forces the split), gateway merge + setup + docs regen.
+  RED-first 10 legs; gates: typecheck ×4, regression 59/0 + 35/0 + 48/0,
+  eslint 0, prettier, lint:md, `generate:provider-docs:check` exit 0.
+  Closure gate: keyed live round-trip through the production chain —
+  1,378-model combined catalog, hcnsec 7/7 + tokenbom 7/7, HTTP 200 chat
+  on both gateways. Trust posture: personal-use static allowlists;
+  exclusions stay excluded.
+
 ### Vendor-path tool-call classification: native-incomplete machinery extended to Anthropic/Google-compatible families (2026-09-12)
 
-- **FID-2026-0912-005 — implemented, `fixed` (closure pending commit).**
+- **FID-2026-0912-005 — CLOSED + archived 2026-09-13 (implementation
+  commit `a6853358`).**
   Origin: the Task 40 audit of tool-call repair against Pi's fail-closed
   truncated-args rule found that vendor SDK families
   (@ai-sdk/anthropic / @ai-sdk/google via `model-factories.ts`) bypass the

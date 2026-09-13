@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0913-001-hcnsec-tokenbom-gateway-providers.md`
 **ID:** FID-2026-0913-001
 **Severity:** low
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-09-13 (operator directive: "add those 2 providers and those
 14 models, follow the same convention as other providers, make sure you update
 the selection panel, etc. … make a fid for these 2 providers and the models
@@ -537,7 +537,8 @@ path).
   the 1,378-model combined catalog); setup — `deriveSetupConfig`
   derives both (pinned by the 14-id setup list + save-contract legs);
   prefix — `ALLOWED_MODEL_PREFIXES` parity pinned (16-key closed world).
-- **FID status reflects the implementation state:** `fixed` — all five
+- **FID status reflects the implementation state:** `closed` (2026-09-13 —
+  implementation commit `5e8cd5c8` verified in history); all five
   steps implemented and passing; keyed live acceptance PASSED (no
   NEEDS-REVIEW boundary on the integration itself; the model-level
   flags — doubao window, Qwen3.8-Flash-Next inference — are recorded in
@@ -546,10 +547,13 @@ path).
 ## Resolution
 
 Implemented 2026-09-13 per operator approval: all five steps complete,
-both gateways live-verified end-to-end (Step 5 PASS on both). Status
-`fixed`; closure (archive + CHANGELOG) follows the operator commit (G2),
-per the standing git rule. Trust provenance unchanged: personal-use
-static allowlists; excluded listings stay excluded.
+both gateways live-verified end-to-end (Step 5 PASS on both).
+Implementation commit `5e8cd5c8` (2026-09-13 — `feat(providers):
+FID-2026-0913-001 hcnsec + TokenBom gateway providers with audited
+14-model allowlist`, 14 files; governance records committed as
+`259e8d59`). Status `closed` 2026-09-13; archived same day. Trust
+provenance unchanged: personal-use static allowlists; excluded listings
+stay excluded.
 
 ## Lessons Learned
 
