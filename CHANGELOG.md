@@ -1,7 +1,5 @@
 # Changelog
 
-## 0.0.31 — in development (unreleased)
-
 ## 0.0.31 — 2026-09-13
 
 ### Quality rule is ceiling-only; hard-cap split program clears all 9 over-cap files (2026-09-13)

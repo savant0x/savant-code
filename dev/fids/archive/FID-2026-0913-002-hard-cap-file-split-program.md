@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0913-002-hard-cap-file-split-program.md`
 **ID:** FID-2026-0913-002
 **Severity:** medium
-**Status:** fixed (closure pending commit — G2)
+**Status:** closed + archived 2026-09-13
 **Created:** 2026-09-13
 **YAGNI-Compliance:** Verified — nine splits along seams that already exist
 (describe boundaries, cluster boundaries, one pure classifier); zero new
@@ -281,10 +281,11 @@ production consumers still resolve).
 
 ## Resolution
 
-Implemented 2026-09-13. All nine files under the 300-line cap; 16 new
-modules created; zero consumer churn (facades); every suite at exact
-test-count parity. Status `fixed` — closure + archive wait on the
-operator commit (G2).
+Implemented + closed 2026-09-13. All nine files under the 300-line cap;
+16 new modules created; zero consumer churn (facades); every suite at
+exact test-count parity. Implementation chain `39d00fbf`→`3325feee` +
+evidence commit `954bd6b`. Status `closed` — archived same day under the
+Auto-Archive rule.
 
 ## Lessons Learned
 

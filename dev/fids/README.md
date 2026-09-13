@@ -33,8 +33,14 @@ on-disk records missing from the table added (-0823-003, -0824-003…-008,
 
 | FID | Status | Purpose / blocking gate |
 |---|---|---|
-| [`FID-2026-0913-002`](FID-2026-0913-002-hard-cap-file-split-program.md) | fixed | Hard-cap split program: all 9 over-cap files split under the 300 ceiling 2026-09-13 (facade re-exports, zero consumer churn, exact test-count parity per split suite; 16 new modules, largest 279 lines). Commits `39d00fbf`→`3325feee` + baseline refresh (quality: PASS, 1498 files) + archived-FID erratum + CHANGELOG. Closure + archive wait on the operator commit (G2). |
 | [`FID-2026-0911-002`](FID-2026-0911-002-orcarouter-gateway-provider.md) | fixed | OrcaRouter gateway provider (13th registry entry). Integration fully gate-verified; keyed live acceptance blocked by ACCOUNT state under active diagnosis: vendor shipped the settings GitHub-bind fix (X `2098722849364291940`), dashboard now shows `GitHub — Linked · 296677002`, yet the API still 429s `err_free_access_denied` (re-probed 2026-09-13 twice; catalog 195/195 PASS, no-key 401 PASS) — "not linked" ELIMINATED as cause. Next discriminator: fresh post-linkage key (entitlement may bind at key-mint time); if still 429 → vendor-side grant bug → escalate with evidence packet (FID Live-Unknowns §5-6). Duplicate-row defect from the 0913-001 ledger edit caught by the replace-guard and fixed here. |
+
+**2026-09-13 closure — FID-2026-0913-002 closed + archived:** the
+hard-cap file-split program (all 9 over-cap files under the ceiling; 16
+new modules; zero consumer churn; exact test-count parity). Implementation
+chain `39d00fbf`→`3325feee` + evidence `954bd6b`; `closed`, moved to
+`dev/fids/archive/`, indexed in `archive/README.md`, CHANGELOG 0.0.31
+updated. Active queue: FID-2026-0911-002 only (vendor-held).
 
 **2026-09-13 closure — FID-2026-0913-001 + FID-2026-0912-005 closed +
 archived:** hcnsec + TokenBom gateway providers (implementation commit

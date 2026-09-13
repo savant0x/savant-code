@@ -3,6 +3,17 @@
 This directory contains closed or historically completed FIDs. Files here are
 an audit record, not an active work queue.
 
+## 2026-09-13 closure — hard-cap file-split program (1 FID archived)
+
+[`FID-2026-0913-002-hard-cap-file-split-program.md`](FID-2026-0913-002-hard-cap-file-split-program.md)
+(medium) — closed 2026-09-13; archived 2026-09-13. All nine over-cap files
+split under the 300-line ceiling along existing seams: facade re-exports,
+zero consumer churn, exact test-count parity per split suite (16 new
+modules, largest 279 lines). Implementation chain `39d00fbf`→`3325feee`
++ evidence `954bd6b`; baseline refreshed (quality: PASS, 1,498 files);
+archived FID-2026-0912-005 erratum appended; two pre-existing stale test
+pins exposed and repaired honestly (stash-proven at HEAD pre-split).
+
 ## 2026-09-13 closure — audited gateway providers (1 FID archived)
 
 [`FID-2026-0913-001-hcnsec-tokenbom-gateway-providers.md`](FID-2026-0913-001-hcnsec-tokenbom-gateway-providers.md)
