@@ -46,9 +46,20 @@ describe('quality ratchet', () => {
     )
   })
 
-  it('reports ratchet growth below the absolute ceiling', () => {
+  // Operator ruling 2026-09-13: the per-file growth ratchet is removed —
+  // under-cap files may grow freely; only the absolute ceiling fails.
+  it('does NOT report growth of an under-cap file past its historical baseline', () => {
     const issues = collectQualityIssues({
       maxFileLines: 10_000,
+      trackedFiles: { 'scripts/quality-report.ts': 1 },
+    })
+
+    expect(issues).toEqual([])
+  })
+
+  it('reports an over-cap file at the absolute maximum even with a stale low baseline', () => {
+    const issues = collectQualityIssues({
+      maxFileLines: 10,
       trackedFiles: { 'scripts/quality-report.ts': 1 },
     })
 
@@ -56,7 +67,7 @@ describe('quality ratchet', () => {
       issues.some(
         (issue) =>
           issue.file === 'scripts/quality-report.ts' &&
-          /^\d+ lines exceeds baseline 1$/.test(issue.message),
+          /^\d+ lines exceeds absolute maximum 10$/.test(issue.message),
       ),
     ).toBe(true)
   })

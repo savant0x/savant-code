@@ -5,6 +5,10 @@ import path from 'node:path'
 
 export type QualityBaseline = {
   maxFileLines: number
+  /** Historical line counts. Since the 2026-09-13 operator ruling the ONLY
+   *  load-bearing use is the growth-freeze of dataConstantExemptions
+   *  entries; values for regular under-cap files are informational history
+   *  and do NOT fail the report when the file grows below the ceiling. */
   trackedFiles: Record<string, number>
   /** FID-2026-0819-005 (operator decision): generated-data constants exempt
    *  from the absolute ceiling. Each entry must carry a written rationale;
@@ -118,28 +122,27 @@ export function collectQualityIssues(
     lineCountByFile.set(relative, lineCount)
     const baselineLines = baseline.trackedFiles[relative]
 
-    if (lineCount > baseline.maxFileLines) {
-      if (baseline.dataConstantExemptions?.[relative] !== undefined) {
-        // Exempt data constant: still growth-frozen below via trackedFiles.
-        if (baselineLines !== undefined && lineCount > baselineLines) {
-          issues.push({
-            file: relative,
-            message: `${lineCount} lines exceeds baseline ${baselineLines}`,
-          })
-        }
-        continue
+    // Exempt data constants skip the ceiling but stay growth-frozen via
+    // trackedFiles — the freeze is their only constraint (FID-2026-0819-005).
+    if (baseline.dataConstantExemptions?.[relative] !== undefined) {
+      if (baselineLines !== undefined && lineCount > baselineLines) {
+        issues.push({
+          file: relative,
+          message: `${lineCount} lines exceeds baseline ${baselineLines}`,
+        })
       }
-      issues.push({
-        file: relative,
-        message: `${lineCount} lines exceeds absolute maximum ${baseline.maxFileLines}`,
-      })
       continue
     }
 
-    if (baselineLines !== undefined && lineCount > baselineLines) {
+    // The invariant is the absolute ceiling: no authored file exceeds it.
+    // Operator ruling 2026-09-13: under-cap files may grow freely — the
+    // historical per-file ratchet (failing any growth below the ceiling)
+    // is removed. trackedFiles values below the ceiling are history, not
+    // limits.
+    if (lineCount > baseline.maxFileLines) {
       issues.push({
         file: relative,
-        message: `${lineCount} lines exceeds baseline ${baselineLines}`,
+        message: `${lineCount} lines exceeds absolute maximum ${baseline.maxFileLines}`,
       })
     }
   }
