@@ -115,7 +115,13 @@ validator.
 
 ### Verification Receipt
 
-### Perfection Loop
+- fingerprint: sha256:d1c75ac60c0c0591c21836d300b0c05e73ec8fcbc3835fc8c1453f81d65530e3
+- verified: 2026-09-13T21:08:48.009Z
+- test scripts/__tests__/pre-audit.test.ts: exit 0
+- test scripts/__tests__/fid-verify.test.ts: exit 0
+- probe scripts/probes/release-gate-isolation-probe.ts: exit 0
+
+## Perfection Loop
 
 ### Loop 1 — Authoring (2026-09-13)
 
@@ -129,6 +135,42 @@ validator.
   silently. (d) *Preview honesty* — preview never mutates; it lists
   auto-fixables.
 - **CHANGE DELTA:** initial authoring.
+
+### Missed Questions
+
+1. *Why run the audit in `main()` instead of inside the transaction?* —
+   the lock is acquired before `runReleaseTransaction`; audited there, the
+   lock check would see the release's own lock as live and block every
+   run. Placement is part of the fix.
+2. *Why dry-run the real scan instead of reimplementing a lighter blob
+   check?* — a parallel implementation drifts; the audit then passes while
+   the real scan still refuses. One source of truth (`runPrePushSecretScan`
+   + its cap constant) is the whole point.
+3. *Why is the telemetry auto-commit safe?* — the automation path already
+   commits everything (`commitAllAutomationChanges`); the pre-audit only
+   narrows what a manual mutation run will commit to the one churn file
+   the harness itself writes.
+4. *Why warn rather than block when `ls-remote` fails?* — an offline
+   operator must still be able to release; the pre-push scan at push time
+   remains the fail-closed backstop for anything the audit could not
+   verify.
+5. *Does the isolation canary check slow the run?* — one `bun test` spawn
+   of a single 39-line file (~2s); it re-proves the FID-2026-0913-003 fix
+   on the exact machine the release runs on.
+
+### Code Verification Evidence
+
+- [x] Files referenced in Affected Components exist (five pre-audit
+      modules, standalone CLI, transaction wiring, package.json scripts)
+- [x] Implementation matches the Proposed Solution (the check table;
+      tag-deletion guardrails landed as specified: ls-remote-verified
+      absence required, never in resume, never on failure)
+- [x] Tests pass with pasted tool output (13/0 pre-audit units; fid-verify
+      20/0; isolation probe PASS; receipt stamped live)
+- [x] Production call-graph evidence: `runReleaseTransaction.main()` calls
+      `runPreAudit` before `acquireReleaseLock`; `release:preaudit:check`
+      verified PASS on the live repo
+- [x] FID status reflects the actual implementation state (`fixed`)
 
 ## Resolution
 

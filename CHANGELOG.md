@@ -2,6 +2,20 @@
 
 ## 0.0.31 — 2026-09-13
 
+### Release pre-audit stage added (FID-2026-0913-004)
+
+- After four consecutive post-confirmation aborts on v0.0.31 release
+  night, the release now sweeps its precondition surface BEFORE printing
+  the plan: worktree churn (harness telemetry auto-commits), zombie
+  release locks (dead-owner locks removed), leftover unpushed tags
+  (deleted only when ls-remote-verified absent), a dry-run of the real
+  pre-push credential scan including its 2MB blob cap, config-dir
+  pollution detection, and the test-isolation canary. Blocking findings
+  abort before confirmation with exact remediation; safe fixes are
+  applied and logged.
+- Standalone: `bun run release:preaudit` (fixes) / `release:preaudit:check`
+  (report only).
+
 ### Release-gate test isolation fixed; operator credentials restored (FID-2026-0913-003)
 
 - **Defect:** the fid-gate live re-run executes test gates from the repo
