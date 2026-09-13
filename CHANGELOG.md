@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## 0.0.31 — in development (unreleased)
+
+## 0.0.31 — 2026-09-13
 
 ### hcnsec + TokenBom gateway providers: audited 14-model static allowlist (2026-09-13)
 

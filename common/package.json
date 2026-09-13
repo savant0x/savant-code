@@ -1,6 +1,6 @@
 {
   "name": "@savant-code/common",
-  "version": "0.0.30",
+  "version": "0.0.31",
   "description": "Common utilities for Savant-Code",
   "private": true,
   "type": "module",

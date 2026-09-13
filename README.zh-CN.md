@@ -8,11 +8,16 @@
 
 基于 TypeScript/Bun 构建，受 ECHO 协议治理，并针对本地优先的 Ollama 使用场景设计。
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-1.3.14-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![React](https://img.shields.io/badge/React-19-%23000000?style=flat-square&logo=react&logoColor=%2300fbff)](https://react.dev/)[![OpenTUI](https://img.shields.io/badge/OpenTUI-0.5.3-%23000000?style=flat-square&logo=opentui&logoColor=%2300fbff)](https://github.com/anomalyco/opentui)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](ECHO.md)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![Release](https://img.shields.io/badge/Release-v0.0.30-%23000000?style=flat-square&logo=semver&logoColor=%2300fbff)](CHANGELOG.md)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-1.3.14-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![React](https://img.shields.io/badge/React-19-%23000000?style=flat-square&logo=react&logoColor=%2300fbff)](https://react.dev/)[![OpenTUI](https://img.shields.io/badge/OpenTUI-0.5.3-%23000000?style=flat-square&logo=opentui&logoColor=%2300fbff)](https://github.com/anomalyco/opentui)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](ECHO.md)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![Release](https://img.shields.io/badge/Release-v0.0.31-%23000000?style=flat-square&logo=semver&logoColor=%2300fbff)](CHANGELOG.md)
 
 </div>
 
-> **v0.0.30** —— 本次发布包含 NDJSON 委托传输（阶段 1-2：`--print --json` 在 stdout 输出 NDJSON 帧——进度、
+> **v0.0.31** —— 本次发布包含：通过 `/provider` 的用户自定义提供商（完整特性：add/edit/list/remove 向导，
+> 一等注册表条目——前缀路由、目录、密钥存储、在线测试）；四个经审计的新网关提供商（OrcaRouter 与 B.AI
+> 均通过密钥在线验证；HCNSec 与 TokenBom 基于审计的 14 模型静态白名单——注册表现有 16 家提供商）；
+> 技能演进套件（信任边界账本追加 + fail-closed 漂移门禁、归档替代清除的草稿过期、持久模式 wiki、
+> 隔离且受门禁的提案者）；以及 vendor 路径工具调用分类（native-incomplete steering/strikes/经验账本
+> 现已覆盖 Anthropic/Google 兼容族）。此前 v0.0.30 发布内容：NDJSON 委托传输（阶段 1-2：`--print --json` 在 stdout 输出 NDJSON 帧——进度、
 > 单个 artifact、错误——并在 stdin 读取父端控制帧，支持协作取消与停泊 steering）、APInex 网关提供商（密钥
 > 实测验收通过）、`/provider <name> update` 密钥替换、四道机械化 harness 诚实门禁（ripgrep 启动探测、编辑
 > 尺寸指引、退出码掩码审计与 `verify:clean`——已提交树可从干净检出编译）、picker 焦点丢失修复、
