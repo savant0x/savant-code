@@ -33,11 +33,15 @@ import type { CustomProviderConfig } from '@savant-code/common/providers/types'
  * masked the defect; corrected here, recorded in Loop 8).
  */
 
+// [FID-2026-0913-002 repair — protocol added: the fixture predates the
+// FID-2026-0911-003 protocol step; the machine records the 'openai' default
+// on the empty protocol submit, so the persisted-form equality pins need it.]
 const CFG: CustomProviderConfig = {
   id: 'my-gateway',
   label: 'My Gateway',
   baseUrl: 'https://gw.example.com/v1',
   apiKeyEnvVar: 'MY_GW_KEY',
+  protocol: 'openai',
   catalog: {
     source: 'inline',
     models: { 'my-gateway/m1': 'M One' },
@@ -178,10 +182,15 @@ describe('provider command grammar (FID-2026-0910-004 Step 8)', () => {
     // No manual mode re-set anywhere: the handler must carry the mode across
     // steps, including the masked key step (providerAddKey) and back to
     // default on done. The empty models submit is meaningful (no catalog).
+    // [FID-2026-0913-002 repair — pre-existing stale walk: the protocol step
+    // added by FID-2026-0911-003 (commit 89847116) left this walk behind;
+    // proven failing at HEAD pre-split by stash test. The empty submit is the
+    // protocol default (Enter = openai).]
     for (const value of [
       'my-gateway',
       'My Gateway',
       'https://gw.example.com/v1',
+      '', // protocol step (FID-2026-0911-003): Enter = openai default
       'MY_GW_KEY',
       'my-gateway/m1=M One',
     ]) {
