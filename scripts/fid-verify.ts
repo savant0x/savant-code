@@ -131,8 +131,10 @@ export function runGates(gates: { kind: string; arg: string }[]): {
       errors.push(resolved.error)
       continue
     }
+    // Test gates never inherit a release profile (FID-2026-0913-003).
     const spawned = Bun.spawnSync(resolved.argv, {
       cwd: resolved.cwd,
+      env: { ...process.env, NODE_ENV: 'test', BUN_ENV: 'test' },
       stdout: 'pipe',
       stderr: 'pipe',
     })

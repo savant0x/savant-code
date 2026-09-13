@@ -59,6 +59,24 @@ if (process.env.CI !== 'true' && process.env.CI !== '1') {
 process.env.NODE_ENV ||= 'test'
 process.env.BUN_ENV ||= 'test'
 
+// Demote an inherited production environment to the test runtime
+// (FID-2026-0913-003). This file is the ROOT bunfig test preload, so every
+// `bun test` invocation from the repository root resolves through here —
+// including the fid-gate live re-runs (scripts/fid-verify.ts) that the
+// public-release pipeline executes AFTER applying the public profile
+// (`NEXT_PUBLIC_CB_ENVIRONMENT=prod`). Per-workspace bootstraps
+// (cli/src/test-env.ts) do not load for root-cwd invocations, so without
+// this demotion the prod value survives into the test runtime, where
+// getConfigDir()'s production gate then ignores the SAVANT_CODE_CONFIG_DIR
+// test override — and CLI provider tests operate on the real
+// ~/.savant-code/ directory (observed: real credentials.json overwritten
+// with test fakes during two v0.0.31 release attempts). Explicit per-test
+// values set after this preload still win.
+
+if (process.env.NEXT_PUBLIC_CB_ENVIRONMENT === 'prod') {
+  process.env.NEXT_PUBLIC_CB_ENVIRONMENT = 'test'
+}
+
 // Auto-resolve the vendored ripgrep binary for the monorepo layout, where the
 // published-package node_modules path consulted by src/native/ripgrep.ts is
 // absent. Platform mapping comes from the shared single-source table

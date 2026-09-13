@@ -1,4 +1,4 @@
-# FID: Release-gate test isolation — root bunfig preload never demotes the release profile; CLI config-dir override silently defeated; real ~/.savant-code polluted
+# FID: Release-gate test isolation — root preload never demotes the release profile; real config dir polluted
 
 **Filename:** `FID-2026-0913-003-release-gate-test-isolation.md`
 **ID:** FID-2026-0913-003
@@ -71,6 +71,7 @@ Ran 18 tests across 1 file. [2.92s]
   `credentials.json` md5 `b38b18aa…` → `375aabc7…`
   (restored from `/tmp/credentials.good.json` immediately after capture;
   `settings.json` md5 unchanged `f5d0f300…`).
+
 - **Control (proves cwd/preload is the discriminator):** the identical
   command from `cli/` (own bunfig → pin loads) passes 18/0 under the same
   env; 14 consecutive local replications from `cli/` and via
@@ -255,6 +256,40 @@ assertion). Method 1 static — scripts typecheck via
 5. *Windows angle?* — none: the mechanism is cwd/bunfig resolution, OS
    independent; the Windows-specific note in `config-dir.ts` (homedir
    caching) is unrelated.
+
+### Code Verification Evidence
+
+- [x] Files referenced in Affected Components exist (`sdk/test/setup-env.ts`,
+      `scripts/fid-verify.ts`, `scripts/probes/config-dir-isolation.test.ts`,
+      `scripts/probes/release-gate-isolation-probe.ts`)
+- [x] Implementation matches the Proposed Solution (three layers landed:
+      preload demotion, gate-env pin, canary + probe)
+- [x] Tests pass with pasted tool output (repro exit 0 18/18; probe PASS;
+      fid-verify 20/0; fid-gates 8/0)
+- [x] Production call-graph evidence: the fid-gate C3 live re-run
+      (`validate:repository`) is itself the release-shaped consumer and
+      passes after the fix
+- [x] FID status reflects the actual implementation state
+
+### Loop 2 — Independent audit and self-correction
+
+- Adversarial check (c) held: demotion to `'test'` instead of deleting the
+  variable — explicit per-test values still win (sdk credentials tests
+  re-run green). Self-caught during VERIFY: the first gate-env pin
+  implementation pushed `fid-verify.ts` to 311 lines — over the 300 cap —
+  and the repo validator flagged it; compacted to a spread expression
+  (299 lines) rather than negotiating the baseline. The validator also
+  caught the missing structural sections in this FID; added rather than
+  bypassed.
+
+## Resolution
+
+In progress 2026-09-13 — RED captured (release-shaped repro from repo root
+fails 5/18 and re-pollutes the real credentials file; both restored from
+`/tmp` snapshots); GREEN landed in three layers. The exact RED repro now
+exits 0 (18/18) with a byte-identical real config dir, the probe passes,
+and the fid suites are green. Receipt stamping, ledger row, CHANGELOG
+entry, and closure follow the full gate battery.
 
 ## Lessons Learned
 
