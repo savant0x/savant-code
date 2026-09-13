@@ -1,9 +1,5 @@
-import fs from 'fs'
-import os from 'os'
-import path from 'path'
-
 import { getEffectiveProviderRegistry } from '@savant-code/common/providers/custom-providers'
-import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test'
+import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 
 import { useChatStore } from '../../state/chat-store'
 import { useProviderPickerStore } from '../../state/provider-picker-store'
@@ -18,9 +14,17 @@ import {
   loadSavantCodeModelPreference,
   saveActiveProvider,
 } from '../../utils/settings'
+import {
+  CFG,
+  makeParams,
+  readSettings as readSettingsFile,
+  restoreProviderCommandEnv,
+  seedCredentials as seedCredentialsFile,
+  seedSettings as seedSettingsFile,
+  setupProviderCommandEnv,
+} from './provider-commands-harness'
 
 import type { ChatMessage } from '../../types/chat'
-import type { RouterParams } from '../command-registry'
 import type { CustomProviderConfig } from '@savant-code/common/providers/types'
 
 /**
@@ -33,115 +37,27 @@ import type { CustomProviderConfig } from '@savant-code/common/providers/types'
  * masked the defect; corrected here, recorded in Loop 8).
  */
 
-// [FID-2026-0913-002 repair — protocol added: the fixture predates the
-// FID-2026-0911-003 protocol step; the machine records the 'openai' default
-// on the empty protocol submit, so the persisted-form equality pins need it.]
-const CFG: CustomProviderConfig = {
-  id: 'my-gateway',
-  label: 'My Gateway',
-  baseUrl: 'https://gw.example.com/v1',
-  apiKeyEnvVar: 'MY_GW_KEY',
-  protocol: 'openai',
-  catalog: {
-    source: 'inline',
-    models: { 'my-gateway/m1': 'M One' },
-  },
-}
-
 describe('provider command grammar (FID-2026-0910-004 Step 8)', () => {
+  // Shared harness (FID-2026-0913-002): isolated config dir, clean routing
+  // env, store resets, seeding, and the RouterParams mock live in
+  // provider-commands-harness.ts.
   let tempDir = ''
-  let originalConfigDir: string | undefined
-  let originalDirectProvider: string | undefined
-  let originalInferenceBaseUrl: string | undefined
-  let originalMyGwKey: string | undefined
+  let originals: Record<string, string | undefined> = {}
 
   beforeEach(() => {
-    originalConfigDir = process.env.SAVANT_CODE_CONFIG_DIR
-    originalDirectProvider = process.env.DIRECT_PROVIDER
-    originalInferenceBaseUrl = process.env.INFERENCE_BASE_URL
-    originalMyGwKey = process.env.MY_GW_KEY
-    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'savant-provider-cmd-'))
-    process.env.SAVANT_CODE_CONFIG_DIR = tempDir
-    delete process.env.DIRECT_PROVIDER
-    delete process.env.INFERENCE_BASE_URL
-    delete process.env.MY_GW_KEY
-    useChatStore.getState().reset()
-    useProviderPickerStore.getState().close()
-    cancelWizardSession()
+    ;({ tempDir, originals } = setupProviderCommandEnv())
   })
 
   afterEach(() => {
-    useChatStore.getState().reset()
-    useProviderPickerStore.getState().close()
-    cancelWizardSession()
-    if (originalConfigDir === undefined)
-      delete process.env.SAVANT_CODE_CONFIG_DIR
-    else process.env.SAVANT_CODE_CONFIG_DIR = originalConfigDir
-    if (originalDirectProvider === undefined) delete process.env.DIRECT_PROVIDER
-    else process.env.DIRECT_PROVIDER = originalDirectProvider
-    if (originalInferenceBaseUrl === undefined)
-      delete process.env.INFERENCE_BASE_URL
-    else process.env.INFERENCE_BASE_URL = originalInferenceBaseUrl
-    if (originalMyGwKey === undefined) delete process.env.MY_GW_KEY
-    else process.env.MY_GW_KEY = originalMyGwKey
-    fs.rmSync(tempDir, { recursive: true, force: true })
+    restoreProviderCommandEnv(originals, tempDir)
   })
 
-  function seedSettings(customs: CustomProviderConfig[]): void {
-    fs.writeFileSync(
-      path.join(tempDir, 'settings.json'),
-      JSON.stringify({ customProviders: customs }),
-    )
-  }
-
-  function seedCredentials(keys: Record<string, string>): void {
-    fs.writeFileSync(
-      path.join(tempDir, 'credentials.json'),
-      JSON.stringify({ providerApiKeys: keys }),
-    )
-  }
-
-  function readSettings(): { customProviders?: CustomProviderConfig[] } {
-    return JSON.parse(
-      fs.readFileSync(path.join(tempDir, 'settings.json'), 'utf8'),
-    ) as { customProviders?: CustomProviderConfig[] }
-  }
-
-  function makeParams(inputValue: string, messages: ChatMessage[]) {
-    const saveToHistory = mock(() => {})
-    const setMessages = mock(
-      (update: ChatMessage[] | ((prev: ChatMessage[]) => ChatMessage[])) => {
-        const next = typeof update === 'function' ? update(messages) : update
-        messages.length = 0
-        messages.push(...next)
-      },
-    )
-    return {
-      params: {
-        abortControllerRef: { current: null },
-        agentMode: 'HYBRID',
-        inputRef: { current: null },
-        inputValue,
-        isChainInProgressRef: { current: false },
-        isStreaming: false,
-        logoutMutation: {} as RouterParams['logoutMutation'],
-        streamMessageIdRef: { current: null },
-        addToQueue: () => {},
-        clearMessages: () => {},
-        saveToHistory,
-        scrollToLatest: () => {},
-        sendMessage: mock(async () => {}),
-        setCanProcessQueue: () => {},
-        setInputFocused: mock(() => {}),
-        setInputValue: mock(() => {}),
-        setIsAuthenticated: () => {},
-        setMessages,
-        setUser: () => {},
-        stopStreaming: () => {},
-      } satisfies RouterParams,
-      saveToHistory,
-    }
-  }
+  const seedSettings = (customs: CustomProviderConfig[]): void =>
+    seedSettingsFile(tempDir, customs)
+  const seedCredentials = (keys: Record<string, string>): void =>
+    seedCredentialsFile(tempDir, keys)
+  const readSettings = (): { customProviders?: CustomProviderConfig[] } =>
+    readSettingsFile(tempDir)
 
   test('/provider add starts the wizard at the id step', async () => {
     const messages: ChatMessage[] = []
