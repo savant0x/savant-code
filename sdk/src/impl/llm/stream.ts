@@ -8,19 +8,18 @@ import { convertCbToModelMessages } from '@savant-code/common/util/messages'
 import { StopSequenceHandler } from '@savant-code/common/util/stop-sequence'
 import {
   streamText,
-  NoSuchToolError,
-  APICallError,
-  ToolCallRepairError,
-  InvalidToolInputError,
-  TypeValidationError,
 } from 'ai'
 
 import { refreshChatGptOAuthToken } from '../../credentials'
 import { markChatGptOAuthRateLimited } from '../model-provider'
+import { classifyChatGptOAuthStreamError } from './errors'
 import {
-  classifyChatGptOAuthStreamError,
-  normalizeNativeToolCallStreamError,
-} from './errors'
+  buildStreamErrorMessage,
+  classifyInvalidToolCall,
+  classifyNativeToolCallError,
+  isAgentRetryableToolError,
+  streamErrorLogFields,
+} from './stream-error-chunk'
 import { createRepairToolCall } from './repair-tool-call-callback'
 import { finalizeLlmStream } from './stream-finalize'
 import { prepareLlmStreamRequest } from './stream-request-setup'
@@ -101,41 +100,18 @@ export async function* promptAiSdkStream(
     if (chunkValue.type === 'error') {
       // Error chunks from fullStream are non-network errors (tool failures, model issues, rate limits, etc.)
       // Network errors which cannot be recovered from are thrown, not yielded as chunks.
-      // The OpenAI-compatible provider uses a typed object for incomplete native
-      // arguments so this path never relies on parsing a user-facing message.
-      if (typeof chunkValue.error === 'object' && chunkValue.error !== null) {
-        const nativeError = normalizeNativeToolCallStreamError(chunkValue.error)
-        if (nativeError !== null) {
-          yield nativeError
-          continue
-        }
+      const nativeErrorChunk = classifyNativeToolCallError(chunkValue.error)
+      if (nativeErrorChunk !== null) {
+        yield nativeErrorChunk
+        continue
       }
 
-      const errorBody = APICallError.isInstance(chunkValue.error)
-        ? chunkValue.error.responseBody
-        : undefined
-      const mainErrorMessage =
-        chunkValue.error instanceof Error
-          ? chunkValue.error.message
-          : typeof chunkValue.error === 'string'
-            ? chunkValue.error
-            : JSON.stringify(chunkValue.error)
-      const errorMessage = buildArray([mainErrorMessage, errorBody]).join('\n')
+      const errorMessage = buildStreamErrorMessage(chunkValue)
 
       // Pass these errors back to the agent so it can see what went wrong and retry.
-      // Note: If you find any other error types that should be passed through to the agent, add them here!
-      if (
-        NoSuchToolError.isInstance(chunkValue.error) ||
-        InvalidToolInputError.isInstance(chunkValue.error) ||
-        ToolCallRepairError.isInstance(chunkValue.error) ||
-        TypeValidationError.isInstance(chunkValue.error)
-      ) {
+      if (isAgentRetryableToolError(chunkValue.error)) {
         logger.warn(
-          {
-            chunk: { ...chunkValue, error: undefined },
-            error: getErrorObject(chunkValue.error),
-            model: params.model,
-          },
+          streamErrorLogFields(chunkValue, params.model),
           'Tool call error in AI SDK stream - passing through to agent to retry',
         )
         yield {
@@ -273,33 +249,18 @@ export async function* promptAiSdkStream(
       }
     }
     if (chunkValue.type === 'tool-call') {
-      // FID-2026-0912-005: vendor SDK transformers (e.g. @ai-sdk/anthropic,
-      // @ai-sdk/google) emit tool-call parts unconditionally — including
-      // parts that `ai` core has marked `invalid: true` (unparseable args,
-      // unknown tool) and filtered from execution. Forwarding them raw
-      // degrades into a generic tool-error in the runtime, bypassing the
-      // native-incomplete machinery (tool-specific steering, strike counting
-      // with exhaustion, and the PostToolUseFailure ledger record). The
-      // OpenAI-compatible family gets this classification from our own flush
-      // gate; vendor families get it here. Reuses the one message factory
-      // (Law 13). A valid part (invalid !== true) is forwarded untouched.
+      // FID-2026-0912-005: vendor SDK transformers emit tool-call parts
+      // unconditionally — including parts that `ai` core has marked
+      // `invalid: true` (unparseable args, unknown tool) and filtered from
+      // execution. Forwarding them raw degrades into a generic tool-error in
+      // the runtime, bypassing the native-incomplete machinery. Classification
+      // + log fields live in stream-error-chunk.ts (FID-2026-0913-002 split).
       if (chunkValue.invalid === true) {
         logger.warn(
-          {
-            chunk: { ...chunkValue, error: undefined },
-            error: getErrorObject(chunkValue.error),
-            model: params.model,
-          },
+          streamErrorLogFields(chunkValue, params.model),
           'Invalid tool call in AI SDK stream - classifying as native-incomplete',
         )
-        const toolName =
-          typeof chunkValue.toolName === 'string'
-            ? chunkValue.toolName
-            : 'unknown'
-        const nativeErrorChunk = normalizeNativeToolCallStreamError({
-          type: 'native-incomplete',
-          toolName,
-        })
+        const nativeErrorChunk = classifyInvalidToolCall(chunkValue)
         // The factory is null for hostile shapes; a non-string toolName was
         // already normalized above, so null is unreachable here — but the
         // contract is enforced fail-closed (Law 14) rather than trusted.

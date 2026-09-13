@@ -322,6 +322,11 @@ authorizes git (G1/G2); closure requires that hash.
       `sdk/src/impl/__tests__/llm-invalid-vendor-tool-call.test.ts`
       (3 tests: truncated-args classification, NoSuchToolError
       classification, valid-part pass-through). ZERO runtime changes.
+      **[ERRATUM 2026-09-13, FID-2026-0913-002:** the hard-cap split
+      program moved the classification helpers (factory call, log fields)
+      to `sdk/src/impl/llm/stream-error-chunk.ts`; the `tool-call` branch
+      logic is unchanged and the pin suite still passes (9/9). The pinned
+      line ranges above describe the pre-split tree.**]
 - [x] **Gate output:** receipt stamped 5/5 PASS — typecheck
       sdk/common/agent-runtime exit 0, both test gates exit 0; cli typecheck
       run separately exit 0 (typecheck ×4). Re-stamped after these evidence
