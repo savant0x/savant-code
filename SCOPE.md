@@ -64,9 +64,12 @@
       the production chain (1,378-model combined catalog, hcnsec 7/7 +
       tokenbom 7/7, pinned windows verified, HTTP 200 + clean
       prompt_tokens on both chat calls). Keys canonicalized in .env.local
-      per operator permission (values never printed — Law 12). FID
-      status `fixed`; closure + archive waits on the operator commit
-      (G2). Probe retained in gitignored scratchpad for re-verification.
+      per operator permission (values never printed — Law 12).FID
+      status `fixed`; closure + archive waits on the operator commit (G2).
+      Probe retained in gitignored scratchpad for re-verification.
+      **[Ground-truth update 2026-09-13: commits `5e8cd5c8` (implementation)
+      + `259e8d59` (records) landed per operator approval; FID-2026-0913-001
+      CLOSED + archived same day (ceremony commit `106232db`).]**
 
 ## Task 43 — hcnsec.cn provider assessment (2026-09-12) — ASSESS ONLY
 
@@ -306,7 +309,10 @@
       status → `fixed` with Implementation + Code-Verification evidence and
       Loop 2 (self-caught defects: null-return type, gates-grammar
       violation); ledger updated; lint:md + prettier clean. **Remaining for
-      closure (G2): operator commits the changes.**
+      closure (G2): operator commits the changes.** **[Ground-truth update
+      2026-09-13: commit `a6853358` landed per operator approval;
+      FID-2026-0912-005 CLOSED + archived same day (ceremony commit
+      `106232db`).]**
 
 ## Task 38 — SkillOpt + WikiSkill scoping into FIDs (2026-09-12) — PLANNING ONLY
 
