@@ -27,6 +27,8 @@
     "release:public:preview": "bun run scripts/public-release.ts --preview",
     "release:public:resume": "bun run scripts/public-release.ts --resume",
     "release:public:diagnose": "bun run scripts/public-release.ts --diagnose",
+    "release:preaudit": "bun run scripts/release-preaudit.ts",
+    "release:preaudit:check": "bun run scripts/release-preaudit.ts --check",
     "evals:smoke": "bun run --cwd=evals evals:smoke",
     "build:sdk": "cd sdk && bun run build",
     "build:savant-free": "bun savant-free/cli/build.ts 0.0.0-dev",

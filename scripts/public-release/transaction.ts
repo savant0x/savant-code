@@ -26,6 +26,7 @@ import { assertGitHubToken } from './github-api'
 import { repositoryRoot, withLocalStateRestoration } from './local-state'
 import { acquireReleaseLock } from './lock'
 import { ensurePinnedBunOnPath } from './pinned-bun'
+import { runPreAudit } from './pre-audit'
 import { currentVersion, verifyPreflight } from './preflight'
 import {
   isStageComplete,
@@ -229,6 +230,32 @@ export async function main(): Promise<void> {
   ensurePinnedBunOnPath(root)
   const version = currentVersion(root)
   const mode = process.argv.includes('--resume') ? 'resume' : 'release'
+  // FID-2026-0913-004: sweep release preconditions BEFORE the lock is
+  // acquired (the lock check must see a zombie lock, not our own) and
+  // BEFORE preflight — every v0.0.31 failure class surfaced only after the
+  // operator had confirmed RELEASE. Preview reports without fixing;
+  // mutation/resume apply safe fixes and fail closed on blockers.
+  const preAuditMode: 'preview' | 'mutation' | 'resume' = process.argv.includes(
+    '--preview',
+  )
+    ? 'preview'
+    : mode === 'resume'
+      ? 'resume'
+      : 'mutation'
+  const preAudit = runPreAudit(root, version, preAuditMode)
+  for (const message of preAudit.fixedMessages) {
+    console.log(`  [pre-audit fixed] ${message}`)
+  }
+  for (const finding of preAudit.findings) {
+    if (finding.severity === 'block') {
+      console.error(`  [pre-audit BLOCK] ${finding.message}`)
+    } else if (finding.severity === 'warn') {
+      console.log(`  [pre-audit warn] ${finding.message}`)
+    }
+  }
+  if (preAudit.blocked && preAuditMode !== 'preview') {
+    fail('Release pre-audit found blocking preconditions (see above).')
+  }
   const releaseLock = acquireReleaseLock(version, mode)
   try {
     await runReleaseTransaction()
