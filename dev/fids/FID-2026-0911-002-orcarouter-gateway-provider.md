@@ -273,6 +273,36 @@ orcarouter: {
    STILL 429 `err_free_access_denied` (`retryable: false`) — the
    vendor-side unlock has not landed. FID remains vendor-held; next
    probe on operator signal or vendor announcement.
+5. **Re-probe + vendor-fix check (2026-09-13, ~15:13 UTC):** catalog
+   via the production chain still PASS (1,379 combined, 195
+   `orcarouter/…`, routers 2/2, no-key 401 fail-closed); keyed chat
+   STILL 429 `err_free_access_denied` (`retryable: false`, request id
+   `20260913151305…`). NEW vendor signal: OrcaRouter's X account
+   announced (2026-09-12, status `2098722849364291940`): "We just
+   fixed it, you can bind your github accounts under settings" — the
+   settings control this FID previously recorded as missing now
+   EXISTS, and the vendor declares linkage failures fixed. The
+   operator's 2026-09-12 linkage PRE-DATES the vendor fix and
+   evidently did not register. The actionable residue is now an
+   OPERATOR re-bind under dashboard settings (not a vendor wait),
+   then one probe re-run. FID remains account-held until a 200
+   completion lands.
+6. **Linked-dashboard falsification (2026-09-13, ~15:19 UTC):** the
+   operator's dashboard NOW SHOWS `GitHub — Linked · 296677002`
+   (screenshot; account age ~mid-2017, far past the vendor's 30-day
+   minimum), yet the re-probe still returns 429 `err_free_access_denied`
+   (`retryable: false`, request id `20260913151926…`). "Operator has not
+   linked" is therefore ELIMINATED as the cause. Working hypotheses:
+   (a) the entitlement binds at GitHub-auth/key-mint time — the operator's
+   key predates the linkage and the vendor's fix, so a FRESH key minted
+   post-linkage may carry it (dashboard copy calls GitHub a sign-in
+   method that "also counts toward free-model eligibility", supporting
+   session-scoped binding); or (b) server-side entitlement bug (link
+   registered, grant never applied). Discriminator: operator mints a new
+   `sk-orca-` key into `.env.local`, probe re-runs. If still 429 on a
+   fresh key → (b) confirmed → escalate to vendor support with the full
+   evidence packet (timeline, both request ids, screenshot, their own
+   fix announcement).
 2. **Auth-header edge** — Bearer is documented with a working contract;
    no alternate header documented, so no fallback is planned.
 3. **Multi-protocol surface** — several catalog models advertise

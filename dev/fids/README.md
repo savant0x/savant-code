@@ -33,8 +33,7 @@ on-disk records missing from the table added (-0823-003, -0824-003…-008,
 
 | FID | Status | Purpose / blocking gate |
 |---|---|---|
-| [`FID-2026-0911-002`](FID-2026-0911-002-orcarouter-gateway-provider.md) | fixed | OrcaRouter gateway provider (13th registry entry). Integration fully gate-verified; keyed live acceptance blocked by the VENDOR's free-tier unlock (`err_free_access_denied` on every free id incl. `z-ai/glm-5.3-flash-free`, re-probed 2026-09-12 post-linkage; paid models 402 on zero credits — vendor-side, not integration). Probe re-runs on vendor fix. |
-| [`FID-2026-0911-002`](FID-2026-0911-002-orcarouter-gateway-provider.md) | fixed | OrcaRouter gateway provider (13th registry entry). Integration fully gate-verified; keyed live acceptance blocked by the VENDOR's free-tier unlock (`err_free_access_denied` on every free id incl. `z-ai/glm-5.3-flash-free`, re-probed 2026-09-12 post-linkage; paid models 402 on zero credits — vendor-side, not integration). Probe re-runs on vendor fix. |
+| [`FID-2026-0911-002`](FID-2026-0911-002-orcarouter-gateway-provider.md) | fixed | OrcaRouter gateway provider (13th registry entry). Integration fully gate-verified; keyed live acceptance blocked by ACCOUNT state under active diagnosis: vendor shipped the settings GitHub-bind fix (X `2098722849364291940`), dashboard now shows `GitHub — Linked · 296677002`, yet the API still 429s `err_free_access_denied` (re-probed 2026-09-13 twice; catalog 195/195 PASS, no-key 401 PASS) — "not linked" ELIMINATED as cause. Next discriminator: fresh post-linkage key (entitlement may bind at key-mint time); if still 429 → vendor-side grant bug → escalate with evidence packet (FID Live-Unknowns §5-6). Duplicate-row defect from the 0913-001 ledger edit caught by the replace-guard and fixed here. |
 
 **2026-09-13 closure — FID-2026-0913-001 + FID-2026-0912-005 closed +
 archived:** hcnsec + TokenBom gateway providers (implementation commit
