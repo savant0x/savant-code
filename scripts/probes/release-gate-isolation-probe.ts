@@ -87,7 +87,9 @@ export function main(): number {
   const snapshot = snapshotRealDir()
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'savant-isolation-probe-'))
   try {
-    const spawned = Bun.spawnSync(['bun', 'test', CANARY], {
+    // process.execPath, not bare 'bun': the release gate's sanitized spawn
+    // environment has no PATH-resolvable runtime (v0.0.30 ENOENT incident).
+    const spawned = Bun.spawnSync([process.execPath, 'test', CANARY], {
       cwd: root,
       env: childEnv(tmp),
       stdout: 'pipe',

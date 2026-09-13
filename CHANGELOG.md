@@ -2,6 +2,27 @@
 
 ## 0.0.31 — 2026-09-13
 
+### Release-gate test isolation fixed; operator credentials restored (FID-2026-0913-003)
+
+- **Defect:** the fid-gate live re-run executes test gates from the repo
+  root, where only the root `bunfig.toml` preload applies — the CLI's own
+  test-env pin never loads. Under the release's public profile
+  (`NEXT_PUBLIC_CB_ENVIRONMENT=prod`), `getConfigDir()` ignored the tests'
+  `SAVANT_CODE_CONFIG_DIR` override, so CLI provider tests read and wrote
+  the real `~/.savant-code/` directory: two v0.0.31 release attempts failed
+  the `repository-validation` gate deterministically, and the operator's
+  real `credentials.json` was overwritten with test fakes.
+- **Recovery:** all gateway keys restored from the live shell environment;
+  the polluted file preserved as `credentials.json.polluted-by-release-gates.bak`.
+- **Fix (three layers):** the root preload (`sdk/test/setup-env.ts`) demotes
+  an inherited `prod` to the test runtime (explicit per-test values still
+  win); fid-gate children spawn with `NODE_ENV=test`/`BUN_ENV=test`; a
+  canary test plus an executable probe pin the release shape (override
+  honored, real config dir byte-identical) so any regression fails closed.
+- **Evidence:** the exact release-shaped repro went from exit 1 (5/18
+  failing, credentials polluted) to exit 0 (18/18, byte-identical config
+  dir); `validate:repository` PASS.
+
 ### Quality rule is ceiling-only; hard-cap split program clears all 9 over-cap files (2026-09-13)
 
 - **Operator ruling (2026-09-13):** the file-size rule is a pure ceiling —

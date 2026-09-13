@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0913-003-release-gate-test-isolation.md`
 **ID:** FID-2026-0913-003
 **Severity:** critical
-**Status:** created
+**Status:** fixed
 **Created:** 2026-09-13
 **YAGNI-Compliance:** Verified — the fix is two demotion guards plus a probe
 that formalizes the release's own reproduction. No new configuration
@@ -175,14 +175,14 @@ Three minimal layers, no behavior change to any shipped binary:
        pollutes the real credentials file (pasted above; md5 deltas
        recorded). Controls: same command from `cli/` passes; 14 local
        replication passes.
-2. [ ] **GREEN-A:** demotion in `sdk/test/setup-env.ts`.
-3. [ ] **GREEN-B:** `runGates()` env pin in `scripts/fid-verify.ts`.
-4. [ ] **GREEN-C:** probe script + gate declaration (below).
-5. [ ] **VERIFY:** probe exit 0; repro command now exits 0 with **zero**
-       real-dir writes (md5s unchanged); `bun test scripts/` green;
-       `validate:repository` exit 0; typecheck ×4 unchanged-green; the
-       provider-setup pin re-run under profile env from `cli/` still 18/0.
-6. [ ] **GOVERNANCE:** ledger row, receipt, CHANGELOG 0.0.31 entry.
+2. [x] **GREEN-A:** demotion in `sdk/test/setup-env.ts`.
+3. [x] **GREEN-B:** `runGates()` env pin in `scripts/fid-verify.ts`.
+4. [x] **GREEN-C:** canary test + probe script (gate declared below).
+5. [x] **VERIFY:** repro exits 0 (18/18) with byte-identical real-dir
+       md5s; probe PASS; fid-verify 20/0 + fid-gates 8/0 + scripts 347/0;
+       `validate:repository` PASS; typecheck ×4 exit 0; eslint 0;
+       prettier clean; lint:md 0. Commit `1cc4185a`.
+6. [x] **GOVERNANCE:** ledger row, receipt, CHANGELOG 0.0.31 entry.
 
 ### Verification
 
@@ -201,7 +201,12 @@ assertion). Method 1 static — scripts typecheck via
 
 ### Verification Receipt
 
-(stamped by `bun run fid:verify --write` after GREEN)
+- fingerprint: sha256:355fc0d427372b2911cb0894921c02762c9e89472458c04478ce56433f105ccd
+- verified: 2026-09-13T19:58:14.560Z
+- probe scripts/probes/release-gate-isolation-probe.ts: exit 0
+- test cli/src/utils/__tests__/provider-setup.test.ts: exit 0
+- test scripts/__tests__/fid-verify.test.ts: exit 0
+- typecheck cli: exit 0
 
 ## Perfection Loop
 
