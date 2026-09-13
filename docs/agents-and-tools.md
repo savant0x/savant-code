@@ -1,7 +1,7 @@
 # Agents and Tools
 
-> **Last verified:** 2026-08-07 — source reads of all agent definitions + `common/src/tools/constants.ts`
-> (`toolNames` 48 / `publishedTools` 37) + `packages/agent-runtime/src/tools/tool-executor/`.
+> **Last verified:** 2026-09-13 — source reads of all agent definitions + `common/src/tools/constants.ts`
+> (`toolNames` 55 incl. 4 Composio / `publishedTools` 38) + `packages/agent-runtime/src/tools/tool-executor/`.
 
 ## Agents
 
@@ -112,6 +112,10 @@ input schema, output schema, and an `endsAgentStep` flag.
 | `find_files` | Find files by name pattern | None |
 | `read_url` | Fetch content from a URL | None |
 | `read_docs` | Read documentation files | None |
+| `deep_research` | Multi-step cited web research (keyless fallback built in) | None |
+| `query_blast_radius` | Knowledge-graph query: what does this symbol touch | None |
+| `query_domain_clusters` | Knowledge-graph query: domain clusters (FID-2026-0806-002) | None |
+| `query_node_edges` | Knowledge-graph query: node edges | None |
 
 #### Agent Orchestration
 
@@ -153,7 +157,7 @@ input schema, output schema, and an `endsAgentStep` flag.
 | `think_deeply` | Deep thinking prompt | None |
 | `render_ui` | Render visual widgets (table, card, stepper, badge, etc.) | None |
 | `skill` | Load a skill from the skills directory | None |
-| `gravity_index` | Index codebase for gravity-aware search | None |
+| `gravity_index` | Discover, compare, and provision third-party developer services (databases, auth, payments, email, etc.) | None |
 | `web_search` | Search the web | None |
 
 #### Infrastructure
@@ -167,6 +171,12 @@ input schema, output schema, and an `endsAgentStep` flag.
 | `propose_str_replace` | Propose a string replacement (Forge) | None |
 | `propose_write_file` | Propose a file write (Forge) | None |
 | `browser_logs` | Get browser automation logs | None |
+| `analyze_query` | Database query analysis (internal, unpublished) | None |
+| `describe_table` | Database table introspection (internal, unpublished) | None |
+| `execute_query` | Run a database query (internal, unpublished) | None |
+| `list_tables` | List database tables (internal, unpublished) | None |
+| `ponytail_debt` | Debt ledger tool (internal, unpublished) | None |
+| `skill_manage` | Author/patch/trust skill files — Scribe + Orchestrator only (FID-2026-0824-012) | None |
 
 #### Composio (disabled)
 
@@ -182,8 +192,8 @@ input schema, output schema, and an `endsAgentStep` flag.
 
 ### Tool Count
 
-- **Total registered tools:** 48 (including Composio meta-tools)
-- **Published tools (available to agents):** 37
+- **Total registered tools:** 55 (including 4 Composio meta-tools)
+- **Published tools (available to agents):** 38
 - **FSM-gated tools:** 3 (`write_file`, `str_replace`, `apply_patch` →
   GREEN + SELF_CORRECT; `run_terminal_command` → AUDIT + GREEN + SELF_CORRECT)
 - **Agent-exclusive tools:** 1 (`sequentialthinking` → Thinker only)
