@@ -343,8 +343,8 @@ only and remains NEEDS-REVIEW, honestly recorded above.
 
 ### Verification Receipt
 
-- fingerprint: sha256:06bbd3491cefdb0a942f5518c315d3c8159e635933191036ec8f71342d6d90aa
-- verified: 2026-09-12T17:35:58.381Z
+- fingerprint: sha256:2b430d4bb7c55978e479f1b36d3d354fb670e43765f3f2c29808c0929097c249
+- verified: 2026-09-13T17:47:20.232Z
 - typecheck common: exit 0
 - typecheck sdk: exit 0
 - typecheck packages/agent-runtime: exit 0

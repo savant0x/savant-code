@@ -74,11 +74,21 @@ Or configure one directly:
 | OpenCode Zen | `/provider opencode-zen` | `OPENCODE_API_KEY` (shared OpenCode key) |
 | TokenRouter | `/provider tokenrouter` | `TOKENROUTER_API_KEY` |
 | TokenHarbor | `/provider tokenharbor` | `TOKENHARBOR_API_KEY` |
+| OrcaRouter | `/provider orcarouter` | `ORCAROUTER_API_KEY` (live model catalog; free tier currently gated vendor-side on GitHub account linkage) |
+| B.AI | `/provider bai` | `BAI_API_KEY` (authenticated live model catalog) |
+| HCNSec | `/provider hcnsec` | `HCNSEC_API_KEY` (audited static 7-model allowlist) |
+| TokenBom | `/provider tokenbom` | `TOKENBOM_API_KEY` (audited static 7-model allowlist) |
 | NVIDIA NIM | `/provider nvidia` | `NVIDIA_API_KEY` |
 | CommandCode | `/provider commandcode` | `COMMAND_CODE_API_KEY` |
 | Nous Research | `/provider nous` | `NOUS_API_KEY` (direct OpenAI-compatible API; Portal OAuth is separate) |
 | KiosAPI | `/provider kiosapi` | `KIOSAPI_API_KEY` (authenticated live model catalog) |
 | APInex | `/provider apinex` | `APINEX_API_KEY` (authenticated live model catalog) |
+
+You can also define **your own custom providers**: `/provider add` starts a
+guided wizard (id, label, base URL, wire protocol, key env var, inline model
+list, API key). Customs appear in the same picker and support
+`/provider edit` / `test` / `remove`; definitions are stored in
+`settings.json`, keys in the local credentials file.
 
 ---
 

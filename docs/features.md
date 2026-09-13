@@ -190,6 +190,10 @@ Works with multiple inference providers:
 - **OpenCode Go** — Hosted gateway
 - **TokenHarbor** — OpenAI-compatible hosted gateway at `https://tokenharbor.ai/v1`
 - **TokenRouter** — Multi-provider gateway
+- **OrcaRouter** — Multi-provider gateway with a live model catalog (`ORCAROUTER_API_KEY`; the free tier is currently gated vendor-side on GitHub account linkage)
+- **B.AI** — OpenAI-compatible gateway with an authenticated live model catalog (`BAI_API_KEY`)
+- **HCNSec** — OpenAI-compatible gateway on an audited static 7-model allowlist (`HCNSEC_API_KEY`)
+- **TokenBom** — OpenAI-compatible gateway on an audited static 7-model allowlist (`TOKENBOM_API_KEY`)
 - **KiosAPI** — OpenAI-compatible gateway with an authenticated live model catalog (`KIOSAPI_API_KEY`)
 - **OpenCode Zen** — Four-protocol hosted gateway (chat/completions, Anthropic messages, Responses, Gemini)
 - **APInex** — Hosted gateway with an authenticated live model catalog (`APINEX_API_KEY`)
@@ -198,6 +202,11 @@ Works with multiple inference providers:
 - **Nous Research** — OpenAI-compatible direct inference via `NOUS_API_KEY`; Portal OAuth is a separate integration
 - **Cloudflare** — Env-only gateway (Workers AI); requires `CLOUDFLARE_API_TOKEN`
   + `CLOUDFLARE_ACCOUNT_ID`, not in the `/provider` picker
+- **Custom providers** — Define your own OpenAI-compatible providers with
+  `/provider add` (guided wizard: id, label, base URL, wire protocol,
+  key env var, inline model list, API key). Customs live in the same
+  picker, support `/provider edit`/`test`/`remove`, and are stored in
+  `settings.json` with keys in the local credentials file
 - **Custom endpoint** — Any OpenAI-compatible API
 
 Gateway model context lengths can be resolved from the live catalog. In
