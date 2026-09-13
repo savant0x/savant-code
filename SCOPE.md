@@ -532,10 +532,14 @@
       store, registry) through add → list → edit → remove in an isolated
       config dir: 11/11 assertions. The literal alternate-screen keystroke
       layer was not driven (NEEDS-REVIEW, recorded in the FID).
-- [ ] **T31-F.** FID Step 8 evidence + loop record, SCOPE/ledger, path-scoped
+- [x] **T31-F.** FID Step 8 evidence + loop record, SCOPE/ledger, path-scoped
       commit. **Done except commit** — FID Loop 8 + Step 8 evidence, ledger,
       and SCOPE updated; commit plan below (awaiting G1 path-scoped
-      authorization as with prior steps).
+      authorization as with prior steps). **[Swept 2026-09-13: the Step 8
+      commits shipped (Steps 1-10 history; `provider-subcommands.ts` last
+      touched by `89847116`) and FID-2026-0910-004 closed + archived
+      2026-09-11 with Loop 12 certification — box was never ticked. The
+      commit plan below is historical record.]**
 
   Commit plan (G3/G4, matching the repo's native no-trailer style): (1)
   `feat(providers): custom provider Step 8 grammar, picker, docs
@@ -1412,7 +1416,7 @@ presentation layer, then re-run visual smoke. T15-F/T15-H remain blocked.
       (Indonesian gateway by PT Mura Teras Kreatif, keys `kios_live_…`, base
       `https://api.kiosapi.id/v1`). Interpreted target is **kiosapi.com** per
       the operator's URL. BLOCKED on operator confirmation.
-- [ ] **K8-B. [Post-approval] Add Path-A registry entry** in
+- [x] **K8-B. [Post-approval] Add Path-A registry entry** in
       `common/src/providers/registry.ts` (`kiosapi`: gateway, `KIOSAPI_API_KEY`,
       `https://kiosapi.com/v1`, protocol `openai`, idTransform `strip`,
       live catalog `https://kiosapi.com/v1/models`, setupAvailable true,
@@ -1421,7 +1425,9 @@ presentation layer, then re-run visual smoke. T15-F/T15-H remain blocked.
       Derived surfaces (prefixes, domains, validProviders, picker) update
       automatically. **Done 2026-09-05** — entry live at
       `common/src/providers/registry.ts:186-205`; FID-2026-0905-002 Steps
-      1-5 `implemented`.
+      1-5 `implemented`. **[Swept 2026-09-13: verified — entry now at
+      `registry-partitioned.ts:16` after the partition refactor;
+      FID-2026-0905-002 closed + archived 2026-09-05.]**
 - [x] **K8-C. [Post-approval] Verify**: 2026-09-05 — cli typecheck
       exit 0; sdk typecheck exit 0; common provider suites 21/0 (24/0 at
       closure re-run); catalog family 28/0; gateway 12/0 (16/0 at closure
@@ -1430,13 +1436,15 @@ presentation layer, then re-run visual smoke. T15-F/T15-H remain blocked.
       1 FAIL (`typecheck common` — pre-existing, see OOS below). **Live
       verification DONE** — operator confirmed ("kiosapi works")
       2026-09-05: authed `/v1/models` + chat round-trip.
-- [ ] **K8-D. Operator answers received 2026-09-05**: kiosapi.com confirmed
+- [x] **K8-D. Operator answers received 2026-09-05**: kiosapi.com confirmed
       (FID scope); env var **`KIOSAPI_API_KEY`** confirmed; key lives in
       **`.env.local`** AND submittable via **`/provider kiosapi`** CLI
       (both work with zero extra code — FID §Evidence). Remaining defaults
       taken: `/provider` picker visible, live catalog, `strip` transform.
       Only open item: the actual command is **`/model`** (not `/models`) —
-      confirm that is what the operator means.
+      confirm that is what the operator means. **[Swept 2026-09-13:
+      discharged — `/model` shipped and operator-confirmed ("kiosapi
+      works" 2026-09-05, see K8-E).]**
 - [x] **K8-E. FID-2026-0905-002 converged, operator said "go", implemented
       2026-09-05.** Live verification received same day ("kiosapi works");
       FID **closed + archived 2026-09-05**.
@@ -1513,7 +1521,8 @@ for FID-2026-0905-002 reports 5 PASS / 1 FAIL and no receipt is stamped.
 > open-source-only, `OPENCODE_GO_API_KEY`). Nothing implemented — presentation
 > only until the operator picks an option below.
 
-- [ ] **Z9-A. Findings.** Zen = pay-per-use gateway, key `OPENCODE_API_KEY`
+- [x] **Z9-A. Findings.** **[Swept 2026-09-13: findings presented
+      2026-09-05; superseded by Z9-E.]** Zen = pay-per-use gateway, key `OPENCODE_API_KEY`
       (same key works for Go per Docker docs, but separate env var per repo
       convention). 70 live models, bare ids, `owned_by: opencode`. FOUR wire
       formats: chat/completions (~19: DeepSeek, MiniMax, GLM 5/5.1/5.2/5.3/
@@ -1524,18 +1533,23 @@ for FID-2026-0905-002 reports 5 PASS / 1 FAIL and no receipt is stamped.
       supports the first two via protocolMap (opencode-go precedent); the
       latter two have NO factory support (only precedent: ChatGPT-OAuth
       Responses transform, `model-factories.ts:29-52`).
-- [ ] **Z9-B. Option A (recommended): Go-mirror Phase 1.** New `opencode`
+- [x] **Z9-B. Option A (recommended): Go-mirror Phase 1.** **[Swept
+      2026-09-13: not selected — superseded by Z9-E full Option C.]** New `opencode`
       entry (label OpenCode Zen, `OPENCODE_API_KEY`, base
       `https://opencode.ai/zen/v1`, protocol `openai-anthropic`, `strip`,
       static catalog of the ~34 factory-supported models, new
       `OPENCODE_ZEN_PROTOCOLS` map + `ProviderProtocolMap` union extension,
       live or static picker catalog). Responses/Gemini models explicitly out
       (documented, fail-closed if requested). Effort ≈ KiosAPI × 3.
-- [ ] **Z9-C. Option B: live catalog + map.** Same as A but picker reads
+- [x] **Z9-C. Option B: live catalog + map.** **[Swept 2026-09-13: not
+      selected — superseded by Z9-E full Option C.]** Same as A but picker reads
       live `/v1/models` (public, always fresh incl. deprecations) while
       dispatch stays map-gated; unsupported models visible but fail closed
       with a clear error. Risk: picker/requested-model disagreement.
-- [ ] **Z9-D. Option C: full Zen (deferred).** Add Responses-API factory
+- [x] **Z9-D. Option C: full Zen (deferred).** **[Swept 2026-09-13:
+      SELECTED via Z9-E — implemented + closed 2026-09-05; verified
+      `registry-partitioned.ts:119` + `OPENCODE_ZEN_PROTOCOLS` incl.
+      responses + gemini legs.]** Add Responses-API factory
       support for GPT/Grok/Spark + decide Gemini path. Large scope, needs
       its own FID. NOT recommended now.
 - [x] **Z9-E. Scope settled 2026-09-05: FULL (option C), no phases.**
@@ -1615,7 +1629,7 @@ for FID-2026-0905-002 reports 5 PASS / 1 FAIL and no receipt is stamped.
       (leak class eliminated); quality:report 15 → 2. R5 also resolved
       (bun:test imports in common model-config.test.ts; common typecheck 0).
       Closure awaits the G2 commit hash.
-- [ ] **R5. [RESOLVED 2026-09-05] `common/` typecheck red (30 errors):**
+- [x] **R5. [RESOLVED 2026-09-05] `common/` typecheck red (30 errors):**
       missing `bun:test` globals in `model-config.test.ts` — fixed via
       explicit `bun:test` imports (repo convention); common typecheck 0,
       suite 6/0. Recorded in FID-2026-0905-006.
