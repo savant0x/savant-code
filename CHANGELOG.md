@@ -4,6 +4,28 @@
 
 ## 0.0.31 — 2026-09-13
 
+### Quality rule is ceiling-only; hard-cap split program clears all 9 over-cap files (2026-09-13)
+
+- **Operator ruling (2026-09-13):** the file-size rule is a pure ceiling —
+  under-cap files may grow freely; exceeding 300 lines is a hard violation.
+  The growth ratchet ("exceeds baseline N") is removed from
+  `scripts/quality-report.ts`; `dataConstantExemptions` growth-freeze,
+  exemption guards, and `approvedGrowth` rejection are preserved.
+- **FID-2026-0913-002:** nine files over the cap split along existing seams
+  (facade re-exports, zero consumer churn) — stream.ts (331→288 +
+  stream-error-chunk 110), custom-providers (431→153 + parse 245 + catalog
+  82), provider-wizard (467→74 + instructions 117 + steps 279 + replay 63),
+  provider-subcommands (402→40 + parse 36 + replies 63 + picker 72 +
+  handlers 248), route-user-prompt (312→281 + route-masked-key-setup 94),
+  lookup (310→236 + model-info 84), and three over-cap test files split
+  with exact test-count parity (wizard 579→299/261/46, commands 363→278 +
+  harness 142, str-replace 402→267/155). Two pre-existing stale pins
+  exposed and repaired honestly (the commands-file wizard walk + CFG
+  fixture predated the FID-2026-0911-003 protocol step — proven failing at
+  HEAD pre-split by stash test). Baseline refreshed to 1,498 files;
+  `quality: PASS`; archived FID-2026-0912-005 carries an erratum for its
+  shifted pinned line numbers.
+
 ### hcnsec + TokenBom gateway providers: audited 14-model static allowlist (2026-09-13)
 
 - **FID-2026-0913-001 — CLOSED + archived 2026-09-13 (implementation
