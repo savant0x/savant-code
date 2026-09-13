@@ -36,6 +36,17 @@ on-disk records missing from the table added (-0823-003, -0824-003…-008,
 | [`FID-2026-0911-002`](FID-2026-0911-002-orcarouter-gateway-provider.md) | fixed | OrcaRouter gateway provider (13th registry entry). Integration fully gate-verified; keyed live acceptance blocked by ACCOUNT state under active diagnosis: vendor shipped the settings GitHub-bind fix (X `2098722849364291940`), dashboard now shows `GitHub — Linked · 296677002`, yet the API still 429s `err_free_access_denied` (re-probed 2026-09-13 twice; catalog 195/195 PASS, no-key 401 PASS) — "not linked" ELIMINATED as cause. Next discriminator: fresh post-linkage key (entitlement may bind at key-mint time); if still 429 → vendor-side grant bug → escalate with evidence packet (FID Live-Unknowns §5-6). Duplicate-row defect from the 0913-001 ledger edit caught by the replace-guard and fixed here. |
 | [`FID-2026-0913-003`](FID-2026-0913-003-release-gate-test-isolation.md) | fixed | Release-gate test isolation — root bunfig preload never demoted the release profile, so fid-gate live re-runs ran CLI tests with `NEXT_PUBLIC_CB_ENVIRONMENT=prod`, defeated the config-dir override, and wrote test fakes into the real `~/.savant-code/credentials.json` (two v0.0.31 release attempts failed the repository-validation gate). Fixed in three layers (root-preload demotion, gate child-env pin, canary + probe); credentials restored from shell env. |
 
+**2026-09-13 erratum — local history rewrite:** to unblock the v0.0.31
+pre-push credential scan (the unpushed range carried a >2MB blob,
+`docs/lastsession.md`, which the scan refuses to scan fail-closed), the
+101 unpushed commits were rewritten with `filter-branch --index-filter`
+to drop the blob. Content-identical worktree; fast-forward push preserved
+(origin/main remains an ancestor — no force-push; the blob never left
+this machine). All commit SHAs cited in FID records for work authored
+2026-09-13 or earlier that day are stale by this rewrite; the messages
+and diffs are unchanged. Pre-rewrite branch retained as
+`backup-pre-rewrite-20260913`.
+
 **2026-09-13 closure — FID-2026-0913-002 closed + archived:** the
 hard-cap file-split program (all 9 over-cap files under the ceiling; 16
 new modules; zero consumer churn; exact test-count parity). Implementation
