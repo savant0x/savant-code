@@ -11,7 +11,9 @@
 import { inferContextLength } from '@savant-code/common/constants/context-windows'
 import {
   commandcodeModels,
+  hcnsecModels,
   opencodeGoModels,
+  tokenbomModels,
   tokenharborModels,
   tokenrouterModels,
 } from '@savant-code/common/constants/model-config'
@@ -172,4 +174,89 @@ export function fetchCommandCodeModels(): OpenRouterModel[] {
       contextLength: inferContextLength(id),
     }))
     .sort((a, b) => a.id.localeCompare(b.id))
+}
+
+/** Display names for HCNSec model ids (audited allowlist, FID-2026-0913-001). */
+const HCNSEC_NAMES: Record<string, string> = {
+  'hcnsec/glm-5.3-flash': 'GLM 5.3 Flash',
+  'hcnsec/DeepSeek-V4-Flash': 'DeepSeek V4 Flash',
+  'hcnsec/deepseek-v4-flash-vision-exp': 'DeepSeek V4 Flash Vision (Exp)',
+  'hcnsec/Qwen3.6-35B-A3B': 'Qwen 3.6 35B A3B',
+  'hcnsec/Qwen3.8-Flash-Next': 'Qwen 3.8 Flash Next',
+  'hcnsec/step-3.7-flash': 'Step 3.7 Flash',
+  'hcnsec/kimi-k3': 'Kimi K3',
+}
+
+/**
+ * Pinned context windows for HCNSec ids — OpenRouter catalog, 2026-09-13
+ * (source ids in FID-2026-0913-001). The family heuristic is wrong on most
+ * of these (kimi/deepseek really ≥1M); a gateway may still cap lower
+ * (surfaces as a vendor 400, never silent truncation).
+ * Qwen3.8-Flash-Next is a nearest-family inference (NEEDS-REVIEW).
+ */
+const HCNSEC_CONTEXT_WINDOWS: Record<string, number> = {
+  'hcnsec/glm-5.3-flash': 1_310_720,
+  'hcnsec/DeepSeek-V4-Flash': 1_310_720,
+  'hcnsec/deepseek-v4-flash-vision-exp': 1_048_576,
+  'hcnsec/Qwen3.6-35B-A3B': 262_144,
+  'hcnsec/Qwen3.8-Flash-Next': 1_000_000,
+  'hcnsec/step-3.7-flash': 262_144,
+  'hcnsec/kimi-k3': 1_048_576,
+}
+
+/**
+ * Return the HCNSec audited-allowlist catalog (FID-2026-0913-001). Static
+ * by design: the gateway's live listing contains substituted, injected,
+ * and dead ids (identity audit T43-E). Synchronous.
+ */
+export function fetchHcnsecModels(): OpenRouterModel[] {
+  return Object.values(hcnsecModels).map((id) => ({
+    id,
+    name: HCNSEC_NAMES[id] ?? id.slice('hcnsec/'.length),
+    provider: 'hcnsec' as const,
+    contextLength: HCNSEC_CONTEXT_WINDOWS[id] ?? inferContextLength(id),
+  }))
+}
+
+/** Display names for TokenBom model ids (audited allowlist, FID-2026-0913-001). */
+const TOKENBOM_NAMES: Record<string, string> = {
+  'tokenbom/gpt-5.3-codex': 'GPT 5.3 Codex',
+  'tokenbom/grok-4.6': 'Grok 4.6',
+  'tokenbom/kimi-k3': 'Kimi K3',
+  'tokenbom/minimax-m3': 'MiniMax M3',
+  'tokenbom/doubao-seed-2.1-pro': 'Doubao Seed 2.1 Pro',
+  'tokenbom/gpt-5.6-luna': 'GPT-5.6 Luna',
+  'tokenbom/gpt-5.5': 'GPT 5.5',
+}
+
+/**
+ * Pinned context windows for TokenBom ids — OpenRouter catalog, 2026-09-13.
+ * `doubao-seed-2.1-pro` has no OpenRouter listing (ByteDance Seed is not
+ * published there) — conservative default, flagged NEEDS-REVIEW. The
+ * minimax-m3 OR top-supplier cap is 524,288; the pinned value is the
+ * model's advertised max.
+ */
+const TOKENBOM_CONTEXT_WINDOWS: Record<string, number> = {
+  'tokenbom/gpt-5.3-codex': 400_000,
+  'tokenbom/grok-4.6': 500_000,
+  'tokenbom/kimi-k3': 1_048_576,
+  'tokenbom/minimax-m3': 1_048_576,
+  'tokenbom/doubao-seed-2.1-pro': 200_000,
+  'tokenbom/gpt-5.6-luna': 1_050_000,
+  'tokenbom/gpt-5.5': 1_050_000,
+}
+
+/**
+ * Return the TokenBom audited-allowlist catalog (FID-2026-0913-001).
+ * Static by design (gauntlet T44-C): marketplace telemetry measures
+ * availability, not identity integrity. The two M365 Copilot channels are
+ * operator-approved; provenance recorded in the common catalog module.
+ */
+export function fetchTokenBomModels(): OpenRouterModel[] {
+  return Object.values(tokenbomModels).map((id) => ({
+    id,
+    name: TOKENBOM_NAMES[id] ?? id.slice('tokenbom/'.length),
+    provider: 'tokenbom' as const,
+    contextLength: TOKENBOM_CONTEXT_WINDOWS[id] ?? inferContextLength(id),
+  }))
 }

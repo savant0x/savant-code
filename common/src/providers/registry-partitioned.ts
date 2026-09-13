@@ -140,4 +140,55 @@ export const PROVIDER_REGISTRY_PARTITION = {
     domain: 'opencode.ai',
     order: 4,
   },
+  hcnsec: {
+    id: 'hcnsec',
+    label: 'HCNSec',
+    kind: 'gateway',
+    credentials: {
+      envVar: 'HCNSEC_API_KEY',
+      // /provider hint is part of the canonical message.
+      missingKeyMessage:
+        'HCNSec API key not set. Set HCNSEC_API_KEY environment variable or run /provider hcnsec.',
+    },
+    // The api. subdomain is authoritative (the apex host is the marketing
+    // site). OpenAI surface only — the gateway's /v1/messages Anthropic
+    // shim is lossy (identity audit T43-B: burns max_tokens on invisible
+    // reasoning).
+    baseUrl: 'https://api.hcnsec.cn/v1',
+    protocol: 'openai',
+    idTransform: 'strip',
+    // STATIC audited allowlist (identity audit T43-E,
+    // docs/provider-identity-audit-2026-09-13.md): the live /v1/models
+    // listing contains substituted, prompt-injected, and dead ids — the
+    // catalog is exactly the confirmed set. Personal-use provenance.
+    catalog: { source: 'static', modelsRef: 'hcnsec' },
+    setupAvailable: true,
+    domain: 'hcnsec.cn',
+    order: 4,
+  },
+  tokenbom: {
+    id: 'tokenbom',
+    label: 'TokenBom',
+    kind: 'gateway',
+    credentials: {
+      envVar: 'TOKENBOM_API_KEY',
+      // /provider hint is part of the canonical message.
+      missingKeyMessage:
+        'TokenBom API key not set. Set TOKENBOM_API_KEY environment variable or run /provider tokenbom.',
+    },
+    // Same host serves site + API (verified live); `sk-sub-` virtual keys
+    // are Bearer-opaque.
+    baseUrl: 'https://tokenbom.com/v1',
+    protocol: 'openai',
+    idTransform: 'strip',
+    // STATIC audited allowlist (identity gauntlet T44-C): marketplace
+    // telemetry measures availability, NOT identity integrity — the
+    // top-15 gauntlet found substitutions on flagship listings, so only
+    // verified channels are cataloged. The two M365 Copilot channels are
+    // operator-approved (provenance in gateway-catalogs.ts).
+    catalog: { source: 'static', modelsRef: 'tokenbom' },
+    setupAvailable: true,
+    domain: 'tokenbom.com',
+    order: 4,
+  },
 } as const satisfies Record<string, ProviderConfig>

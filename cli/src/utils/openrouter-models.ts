@@ -52,7 +52,9 @@ export {
 export {
   fetchCommandCodeModels,
   fetchOpenCodeGoModels,
+  fetchTokenBomModels,
   fetchTokenRouterModels,
+  fetchHcnsecModels,
   getTokenHarborModels,
 } from './openrouter-models/static-catalogs'
 export {

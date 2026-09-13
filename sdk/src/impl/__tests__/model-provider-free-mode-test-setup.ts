@@ -17,6 +17,8 @@ export const COMMAND_CODE_CLAUDE_MODEL = 'commandcode/claude-sonnet-4.6'
 export const TOKEN_HARBOR_MODEL = 'tokenharbor/anthropic/claude-opus-5'
 export const ORCAROUTER_MODEL = 'orcarouter/anthropic/claude-opus-5'
 export const BAI_MODEL = 'bai/deepseek/deepseek-v4-flash'
+export const HCNSEC_MODEL = 'hcnsec/glm-5.3-flash'
+export const TOKENBOM_MODEL = 'tokenbom/gpt-5.5'
 export const NOUS_MODEL = 'nous/anthropic/claude-sonnet-4.6'
 export const ZEN_CHAT_MODEL = 'opencode-zen/glm-5.3'
 export const ZEN_CLAUDE_MODEL = 'opencode-zen/claude-sonnet-4-6'
@@ -37,6 +39,8 @@ export function setupModelProviderTestHarness() {
   let originalTokenHarborApiKey: string | undefined
   let originalOrcarouterApiKey: string | undefined
   let originalBaiApiKey: string | undefined
+  let originalHcnsecApiKey: string | undefined
+  let originalTokenbomApiKey: string | undefined
   let originalNousApiKey: string | undefined
   let originalOpenRouterApiKey: string | undefined
   let originalOrMasterKey: string | undefined
@@ -57,6 +61,10 @@ export function setupModelProviderTestHarness() {
     delete process.env.ORCAROUTER_API_KEY
     originalBaiApiKey = process.env.BAI_API_KEY
     delete process.env.BAI_API_KEY
+    originalHcnsecApiKey = process.env.HCNSEC_API_KEY
+    delete process.env.HCNSEC_API_KEY
+    originalTokenbomApiKey = process.env.TOKENBOM_API_KEY
+    delete process.env.TOKENBOM_API_KEY
     originalNousApiKey = process.env.NOUS_API_KEY
     delete process.env.NOUS_API_KEY
     originalOpenRouterApiKey = process.env.OPENROUTER_API_KEY
@@ -120,6 +128,16 @@ export function setupModelProviderTestHarness() {
       delete process.env.BAI_API_KEY
     } else {
       process.env.BAI_API_KEY = originalBaiApiKey
+    }
+    if (originalHcnsecApiKey === undefined) {
+      delete process.env.HCNSEC_API_KEY
+    } else {
+      process.env.HCNSEC_API_KEY = originalHcnsecApiKey
+    }
+    if (originalTokenbomApiKey === undefined) {
+      delete process.env.TOKENBOM_API_KEY
+    } else {
+      process.env.TOKENBOM_API_KEY = originalTokenbomApiKey
     }
     if (originalNousApiKey === undefined) {
       delete process.env.NOUS_API_KEY

@@ -132,6 +132,24 @@ describe('provider setup', () => {
     expect(getConfiguredProviderNames()).toContain('orcarouter')
   })
 
+  test('saves HCNSec credentials for direct-provider mode (FID-2026-0913-001)', () => {
+    saveProviderApiKey('hcnsec', '  test-hcnsec-key  ')
+
+    expect(process.env.HCNSEC_API_KEY).toBe('test-hcnsec-key')
+    expect(process.env.DIRECT_PROVIDER).toBe('hcnsec')
+    expect(process.env.INFERENCE_BASE_URL).toBe('https://api.hcnsec.cn/v1')
+    expect(getConfiguredProviderNames()).toContain('hcnsec')
+  })
+
+  test('saves TokenBom credentials for direct-provider mode (FID-2026-0913-001)', () => {
+    saveProviderApiKey('tokenbom', '  test-tokenbom-key  ')
+
+    expect(process.env.TOKENBOM_API_KEY).toBe('test-tokenbom-key')
+    expect(process.env.DIRECT_PROVIDER).toBe('tokenbom')
+    expect(process.env.INFERENCE_BASE_URL).toBe('https://tokenbom.com/v1')
+    expect(getConfiguredProviderNames()).toContain('tokenbom')
+  })
+
   test('saves B.AI credentials for direct-provider mode (FID-2026-0911-004)', () => {
     saveProviderApiKey('bai', '  test-bai-key  ')
 

@@ -39,6 +39,9 @@ export {
   tokenrouterModels,
 } from './model-config/providers'
 
+// Audited gateway catalogs (FID-2026-0913-001).
+export { hcnsecModels, tokenbomModels } from './model-config/gateway-catalogs'
+
 export type {
   AtlasCloudModel,
   CloudflareModel,
@@ -56,3 +59,8 @@ export type {
   TokenHarborModel,
   TokenrouterModel,
 } from './model-config/providers'
+
+export type {
+  HcnsecModel,
+  TokenbomModel,
+} from './model-config/gateway-catalogs'

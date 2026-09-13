@@ -9,7 +9,9 @@
 import {
   cloudflareModels,
   commandcodeModels,
+  hcnsecModels,
   opencodeGoModels,
+  tokenbomModels,
   tokenharborModels,
   tokenrouterModels,
 } from '../constants/model-config'
@@ -20,4 +22,6 @@ export const MODEL_CATALOGS = {
   opencodeGo: opencodeGoModels,
   commandcode: commandcodeModels,
   cloudflare: cloudflareModels,
+  hcnsec: hcnsecModels,
+  tokenbom: tokenbomModels,
 } as const
