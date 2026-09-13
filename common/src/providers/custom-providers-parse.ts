@@ -11,10 +11,10 @@
  * `custom-providers.ts` can re-export it without a cycle.
  */
 
+import { parseCustomCatalog } from './custom-providers-catalog'
 import { ORG_PREFIXES } from './org'
 import { PROVIDER_REGISTRY } from './registry'
 import { parseRegistryUrl } from './validate'
-import { parseCustomCatalog } from './custom-providers-catalog'
 
 import type { CustomProviderConfig } from './types'
 import type { JSONValue } from '../types/json'

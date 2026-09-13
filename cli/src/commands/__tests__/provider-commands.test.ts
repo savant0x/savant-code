@@ -1,19 +1,6 @@
 import { getEffectiveProviderRegistry } from '@savant-code/common/providers/custom-providers'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 
-import { useChatStore } from '../../state/chat-store'
-import { useProviderPickerStore } from '../../state/provider-picker-store'
-import {
-  cancelWizardSession,
-  createWizardSession,
-  getActiveWizardSession,
-  submitWizardStep,
-} from '../../utils/provider-wizard'
-import {
-  getActiveProvider,
-  loadSavantCodeModelPreference,
-  saveActiveProvider,
-} from '../../utils/settings'
 import {
   CFG,
   makeParams,
@@ -23,6 +10,18 @@ import {
   seedSettings as seedSettingsFile,
   setupProviderCommandEnv,
 } from './provider-commands-harness'
+import { useChatStore } from '../../state/chat-store'
+import { useProviderPickerStore } from '../../state/provider-picker-store'
+import {
+  createWizardSession,
+  getActiveWizardSession,
+  submitWizardStep,
+} from '../../utils/provider-wizard'
+import {
+  getActiveProvider,
+  loadSavantCodeModelPreference,
+  saveActiveProvider,
+} from '../../utils/settings'
 
 import type { ChatMessage } from '../../types/chat'
 import type { CustomProviderConfig } from '@savant-code/common/providers/types'

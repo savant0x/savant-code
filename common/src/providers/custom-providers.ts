@@ -24,11 +24,9 @@
  *   fail-closed and leaves prior state untouched.
  */
 
+import { parseCustomProviders as parseCustomProvidersData } from './custom-providers-parse'
 import { PROVIDER_REGISTRY } from './registry'
 import { validateProviderRegistry } from './validate'
-import {
-  parseCustomProviders as parseCustomProvidersData,
-} from './custom-providers-parse'
 
 import type { CustomProviderConfig, ProviderConfig } from './types'
 

@@ -1,3 +1,5 @@
+import { buildArray } from '@savant-code/common/util/array'
+import { getErrorObject } from '@savant-code/common/util/error'
 import {
   APICallError,
   InvalidToolInputError,
@@ -5,9 +7,6 @@ import {
   ToolCallRepairError,
   TypeValidationError,
 } from 'ai'
-
-import { getErrorObject } from '@savant-code/common/util/error'
-import { buildArray } from '@savant-code/common/util/array'
 
 import { normalizeNativeToolCallStreamError } from './errors'
 
@@ -81,9 +80,9 @@ export function isAgentRetryableToolError(error: unknown): boolean {
  * Reuses the one message factory (Law 13). Returns null for a hostile
  * non-string toolName shape — the caller fails closed (Law 14).
  */
-export function classifyInvalidToolCall(
-  chunk: { toolName: unknown },
-): ReturnType<typeof normalizeNativeToolCallStreamError> {
+export function classifyInvalidToolCall(chunk: {
+  toolName: unknown
+}): ReturnType<typeof normalizeNativeToolCallStreamError> {
   const toolName =
     typeof chunk.toolName === 'string' ? chunk.toolName : 'unknown'
   return normalizeNativeToolCallStreamError({

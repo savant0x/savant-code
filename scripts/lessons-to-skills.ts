@@ -26,19 +26,16 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 
-import {
-  createSkill,
-  readSkillFile,
-} from '@savant-code/common/util/skill-management'
+import { createSkill } from '@savant-code/common/util/skill-management'
 
-import {
-  computeRecurrences,
-  readExperienceLedger,
-} from './experiences-dedup.js'
 import {
   archiveRejectedDrafts,
   DRAFT_REJECTION_WINDOW_DAYS,
 } from './draft-archive.js'
+import {
+  computeRecurrences,
+  readExperienceLedger,
+} from './experiences-dedup.js'
 
 // FID-2026-0912-002: re-export — the CLI/`--archive` surface and its tests
 // import from this module; the executor lives in draft-archive.ts.

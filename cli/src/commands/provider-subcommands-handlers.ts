@@ -3,11 +3,11 @@ import {
   resetCustomProviders,
 } from '@savant-code/common/providers/custom-providers'
 
+import { replyAndClear } from './provider-subcommands-replies'
 import { useChatStore } from '../state/chat-store'
 import { readStoredProviderKeys } from '../utils/provider-credentials'
 import {
   getConfiguredProviderNames,
-  getProviderSetupInfo,
   PROVIDER_SETUP_CONFIG,
 } from '../utils/provider-setup'
 import {
@@ -29,10 +29,9 @@ import {
 } from '../utils/verify-custom-provider'
 
 import type { ProviderSubcommand } from './provider-subcommands-parse'
+import type { ProviderParams } from './provider-subcommands-replies'
 import type { WizardStep } from '../utils/provider-wizard'
 import type { CustomProviderConfig } from '@savant-code/common/providers/types'
-import type { ProviderParams } from './provider-subcommands-replies'
-import { replyAndClear } from './provider-subcommands-replies'
 
 /**
  * /provider add|edit|list|remove|test handlers (FID-2026-0910-004 Step 8;

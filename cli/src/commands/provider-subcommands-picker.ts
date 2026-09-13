@@ -1,3 +1,4 @@
+import { replyWithoutTypedEcho } from './provider-subcommands-replies'
 import { useChatStore } from '../state/chat-store'
 import { getSystemMessage } from '../utils/message-history'
 import {
@@ -12,7 +13,6 @@ import {
   PROVIDER_PICKER_ADD_SENTINEL,
 } from '../utils/provider-wizard'
 
-import { replyWithoutTypedEcho } from './provider-subcommands-replies'
 import type { PickerSelectionParams } from './provider-subcommands-replies'
 
 /**

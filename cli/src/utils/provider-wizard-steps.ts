@@ -1,8 +1,4 @@
 import {
-  PROVIDER_GRAMMAR_WORDS,
-  parseInlineModelCatalog,
-} from './provider-wizard-instructions'
-import {
   CUSTOM_ID_PATTERN,
   ENV_VAR_PATTERN,
   getClaimedProviderEnvVars,
@@ -11,13 +7,18 @@ import {
 } from '@savant-code/common/providers/custom-providers'
 import { parseRegistryUrl } from '@savant-code/common/providers/validate'
 
+import {
+  PROVIDER_GRAMMAR_WORDS,
+  parseInlineModelCatalog,
+} from './provider-wizard-instructions'
 import { loadSettings } from './settings'
-import type { CustomProviderConfig } from '@savant-code/common/providers/types'
+
 import type {
   WizardDraft,
   WizardSession,
   WizardStep,
 } from './provider-wizard-instructions'
+import type { CustomProviderConfig } from '@savant-code/common/providers/types'
 
 /**
  * The /provider add|edit wizard step machine (FID-2026-0910-004 Step 7, D7;

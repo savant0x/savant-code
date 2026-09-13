@@ -2,17 +2,15 @@
 
 import { AnalyticsEvent } from '@savant-code/common/constants/analytics-events'
 import { type PromptAiSdkStreamFn } from '@savant-code/common/types/contracts/llm'
-import { buildArray } from '@savant-code/common/util/array'
 import { getErrorObject } from '@savant-code/common/util/error'
 import { convertCbToModelMessages } from '@savant-code/common/util/messages'
 import { StopSequenceHandler } from '@savant-code/common/util/stop-sequence'
-import {
-  streamText,
-} from 'ai'
+import { streamText } from 'ai'
 
 import { refreshChatGptOAuthToken } from '../../credentials'
 import { markChatGptOAuthRateLimited } from '../model-provider'
 import { classifyChatGptOAuthStreamError } from './errors'
+import { createRepairToolCall } from './repair-tool-call-callback'
 import {
   buildStreamErrorMessage,
   classifyInvalidToolCall,
@@ -20,7 +18,6 @@ import {
   isAgentRetryableToolError,
   streamErrorLogFields,
 } from './stream-error-chunk'
-import { createRepairToolCall } from './repair-tool-call-callback'
 import { finalizeLlmStream } from './stream-finalize'
 import { prepareLlmStreamRequest } from './stream-request-setup'
 import { getProviderOptions } from './usage'

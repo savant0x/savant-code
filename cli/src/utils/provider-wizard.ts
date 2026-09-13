@@ -1,9 +1,6 @@
-import {
-  createWizardSession,
-  submitWizardStep,
-} from './provider-wizard-steps'
-import type { WizardSession } from './provider-wizard-instructions'
+import { createWizardSession, submitWizardStep } from './provider-wizard-steps'
 
+import type { WizardSession } from './provider-wizard-instructions'
 import type { CustomProviderConfig } from '@savant-code/common/providers/types'
 
 /**
@@ -22,10 +19,7 @@ import type { CustomProviderConfig } from '@savant-code/common/providers/types'
  * key material passes through memory only on the terminal `done` session.
  */
 
-export {
-  createWizardSession,
-  submitWizardStep,
-} from './provider-wizard-steps'
+export { createWizardSession, submitWizardStep } from './provider-wizard-steps'
 
 export {
   PROVIDER_GRAMMAR_WORDS,
