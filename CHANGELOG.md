@@ -2,6 +2,26 @@
 
 ## Unreleased
 
+### Vendor-path tool-call classification: native-incomplete machinery extended to Anthropic/Google-compatible families (2026-09-12)
+
+- **FID-2026-0912-005 — implemented, `fixed` (closure pending commit).**
+  Origin: the Task 40 audit of tool-call repair against Pi's fail-closed
+  truncated-args rule found that vendor SDK families
+  (@ai-sdk/anthropic / @ai-sdk/google via `model-factories.ts`) bypass the
+  OpenAI-compatible flush gate, so invalid (truncated/unknown-tool) tool
+  calls degraded to a generic tool-error — steering, strike counting with
+  exhaustion, and the PostToolUseFailure experience-capture ledger never
+  fired. Fix is SDK-boundary-only: `promptAiSdkStream`'s `tool-call` branch
+  now classifies `invalid === true` parts through the single
+  `normalizeNativeToolCallStreamError` factory with a fail-closed null
+  guard, and forwards valid parts byte-identically. RED-first: pin test
+  observed 2 fail / 1 pass pre-fix, 9/9 post; runtime-integration suites
+  (part-f, strikes, experience-capture, steering) 16/16 with ZERO runtime
+  changes; typecheck ×4; receipt 5/5 PASS; lint:md + prettier clean.
+  Residual documented in the FID (no finishReason on vendor
+  classification → generic retry guidance rather than the split-payload
+  hint; follow-up only if observed).
+
 ### Skill-evolution suite: SkillOpt + WikiSkill adapted, implemented RED-first, closed + archived (2026-09-12)
 
 - **FID-2026-0912-001..004 — all four implemented + CLOSED (this

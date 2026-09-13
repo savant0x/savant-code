@@ -4,6 +4,310 @@
 > scope for the current task. Operator confirmation converts interpreted scope
 > into approved scope. Any drop/deferral requires a blocking presentation.
 
+## Task 45 — hcnsec + TokenBom gateway providers (2026-09-13) — FID AUTHORING
+
+> Operator directive: "add those 2 providers and those 14 models, follow the
+> same convention as other providers, make sure you update the selection
+> panel, etc. you'll need to pull all the context windows, etc and do all the
+> normal things as we add, make a fid for these 2 providers and the models
+> then run the full perfection loop on it then present for finial approval"
+> — plus clarifications: "fyi, if i spelled the key wrong you can fix it
+> properly" and "https://hcnsec.cn/, is the website, then the other is
+> https://tokenbom.com/". Interpreted scope: full provider-integration FID
+> for the two audited gateways carrying the 14-model operator-approved
+> allowlist from the identity audits (Tasks 43-E/44-C), registry entries,
+> static catalogs, selection-panel derivation, context-window inference,
+> docs regeneration, tests, Perfection Loop, present. Implementation is a
+> separate Law-2 approval. Key canonicalization per operator permission:
+> `TOKENBURN_API_KEY` → `TOKENBOM_API_KEY`, `HCNSECRET_API_KEY` →
+> `HCNSEC_API_KEY` (registry grammar `{PROVIDERID}_API_KEY`; values never
+> printed — Law 12).
+
+- [x] **T45-A.** Grounding complete: runbook ("Adding New Providers.md")
+      read 0-EOF; OrcaRouter precedent (FID-2026-0911-002) read 0-EOF;
+      registry + registry-partitioned + types + validate + derive + audit
+      manifest + model-catalogs + model-config maps/aggregate/shim +
+      context-windows + gateway.ts aggregation + static-catalogs pattern +
+      closed-world test lists (provider-registry.test.ts 14-provider/12-setup,
+      delta-d order family) + sdk free-mode harness + provider-setup test +
+      FID template + ledger + archive numbering (no 0913 FIDs yet) — all
+      file:line mapped.
+- [x] **T45-B.** Design decisions: STATIC allowlist catalogs (the audit IS
+      the catalog — live `/v1/models` would re-expose substituted/dead
+      listings the operator rejected); new `model-config/gateway-catalogs.ts`
+      module (`providers.ts` sits at the 300-line hard cap; registry-partition
+      precedent); TokenHarbor/CommandCode static pattern = NO wrapper file
+      and NO audit-manifest entry (those are live-catalog machinery);
+      `inferContextLength` reuse (step/doubao → conservative 200k default); no
+      aggregate `models` spread (commandcode precedent); env keys canonicalized
+      in `.env.local` (values untouched, never echoed).
+- [x] **T45-C.** FID-2026-0913-001 authored RED-first with Perfection Loop
+      (Loops 1-3); ledger row added; lint:md + prettier green. Loop 3
+      (operator-prompted): context windows pinned per model from the
+      OpenRouter catalog (13/14; heuristic wrong on 9 of 14 — kimi/
+      minimax/deepseek really ≥1M, grok-4.6 500k not 1M); doubao
+      conservatively defaulted + flagged; heuristic untouched as fallback
+      (MQ10).
+- [x] **T45-D.** PRESENT for operator approval (blocking — Law 2).
+      Presented in chat 2026-09-13; operator approved IMPLEMENT with the
+      context-window amendment ruling (Loop 3, applied before
+      implementation).
+- [x] **T45-E.** Implementation (2026-09-13): RED-first 10 failing legs
+      across 4 files; GREEN = registry entries (registry-partitioned.ts),
+      NEW common/src/constants/model-config/gateway-catalogs.ts, shim +
+      MODEL_CATALOGS refs, picker NAMES/CONTEXT_WINDOWS maps + 2 fetch
+      functions + gateway merge + barrel; gates: typecheck ×4 exit 0,
+      suites 59/0 + 35/0 + 48/0, eslint 0, prettier clean, lint:md PASS,
+      generate:provider-docs + check exit 0 (env vars at .env.example:99
+      /:114, release README :57/:63), file caps respected (largest
+      298/300); Step 5 live keyed round-trip PASS on both gateways via
+      the production chain (1,378-model combined catalog, hcnsec 7/7 +
+      tokenbom 7/7, pinned windows verified, HTTP 200 + clean
+      prompt_tokens on both chat calls). Keys canonicalized in .env.local
+      per operator permission (values never printed — Law 12). FID
+      status `fixed`; closure + archive waits on the operator commit
+      (G2). Probe retained in gitignored scratchpad for re-verification.
+
+## Task 43 — hcnsec.cn provider assessment (2026-09-12) — ASSESS ONLY
+
+> Operator directive: "I am interested in adding/testing a new provider
+> https://api.hcnsec.cn/ ... then look at my docs about adding providers, this
+> one seems a bit odd." Operator saved a key at `.env.local` under
+> `HCNSECRET_API_KEY`. Interpreted scope: re-read the single-agent ECHO
+> protocol (done at boot), read the provider runbook (docs/archive/design/
+> "Adding New Providers.md"), ground-truth the registry machinery, run live
+> keyless + keyed probes against https://api.hcnsec.cn (models list, chat
+> completion, streaming), assess the odd/trust factors, and present
+> integration paths (built-in registry entry vs the existing custom-provider
+> wizard). **Zero code changes** — any integration is a separate Law-2
+> approval. Key handling: read from .env.local into shell vars only, never
+> echoed into output/logs (Law 12).
+>
+> **Operator clarification (2026-09-12):** hcnsec is a PAID provider — the
+> account is loaded (30k credits) and live calls are approved. The goal is
+> full integration: wire the complete model list and test the models. Per
+> Law 2 the implementation plan (FID per the OrcaRouter precedent) is still
+> presented before any code is written.
+
+- [x] **T43-A.** Runbook ground truth: registry entry shape (ProviderConfig),
+      catalog sources (static/live/inline/none), derivation surfaces,
+      .env.local loading chain (common/env-bootstrap.ts + cli/pre-init),
+      OrcaRouter FID-2026-0911-002 precedent located (13th provider, live
+      catalog wrapper pattern).
+- [x] **T43-B.** Live probes (keyed, from .env.local HCNSECRET_API_KEY):
+      `GET /v1/models` (keyless 401 fail-closed / keyed 200, 18 models),
+      full per-model chat matrix (15/18 OK; Qwen3.8-27B, sensenova-u1.5-lite,
+      step-explore all HTTP 404 = listed-but-dead), SSE streaming (role,
+      finish_reason, tool_deltas, usage chunk all correct), tool calls
+      (glm-5.3-flash streamed + non-streamed; step-3.7-flash), embeddings
+      (Qwen3-Embedding-8B, 2048 dims), `/v1/messages` Anthropic shim (lossy:
+      burns max_tokens on invisible reasoning — do not use), `/api/pricing`
+      (admin-gated, cannot verify rates programmatically).
+- [x] **T43-C.** Odd-factor assessment: gateway fingerprinted as new-api
+      (QuantumNous) via `new_api_error` + /api/pricing + GA comment; operator
+      account is PAID despite free/public-welfare marketing; `auto` is a
+      hidden meta-router that INJECTS ~1KB of gateway-controlled prompt
+      content (1047 prompt tokens observed) and served poolside/laguna-s-2.1;
+      model identity opacity (DeepSeek-V4-Pro request served by
+      nvidia/nemotron-3-ultra-550b); latency variance 0.8s–35s (+ one 354s
+      response observed in their own playground); Xinjiang-registered
+      operator (新ICP备2026002340号-1), no Western accountability surface.
+- [x] **T43-D.** Assessment + integration paths presented (below, blocking —
+      Law 2): built-in 14th provider (OrcaRouter precedent) vs. zero-code
+      custom-provider via the shipped /provider add wizard. Operator to pick.
+- [x] **T43-E.** Operator follow-up (ask_user custom answer): "they are not
+      using the actual models it claims? Do a full model by model check to get
+      to the bottom of this." Interpreted scope: extend Task 43 with a
+      model-by-model identity audit — four evidence classes per model
+      (self-ID EN/ZH, system-prompt leak probe, tokenizer fingerprint via
+      fixed-string prompt_tokens, upstream served-name + routing variance).
+      Evidence captured in two scratchpad runs (parallel pool + gap-filler);
+      kimi-k3 fingerprint cell unknown (timeout); spark-x2.5 EN cell empty
+      (fin=length, reasoning-only model). Full verdict presented below in
+      chat. Findings: gateway injects operator-controlled system prompts on
+      5+ channels (939c ChatGLM persona, 950c "Ponytail" lazy-dev persona,
+      2117c agentic harness with a phantom `advisor` tool, 310c SenseNova
+      identity+reasoning-effort prompt, ~1K tokens on longcat/DeepSeek-V4-Pro);
+      DeepSeek-V4-Pro is substituted by nvidia/nemotron-3-ultra-550b (EN
+      self-ID admits Nemotron; ZH self-ID names the gateway operator); spark-
+      x2.5-4b self-IDs as a company that is not iFlytek (4B params ≠ Spark
+      X2.5); longcat-2.0 EN self-IDs as Claude vs ZH LongCat (OpenRouter
+      :free upstream); 3 dead listings confirmed. Zero code changes; no
+      integration decision taken pending operator review.
+- [x] **T43-F.** Operator ruling (2026-09-12): "I don't really trust that at
+      all, if it shows a single lie, I'd expect for the entire platform to be
+      a lie. Skip it, I have other options." **Task 43 CLOSED — hcnsec.cn is
+      NOT integrated.** No registry entry, no FID, no code. Audit evidence
+      remains in gitignored `dev/scratchpad/active/hcnsec-*.ts` for the
+      operator's records; `HCNSECRET_API_KEY` left in `.env.local` at the
+      operator's discretion (unused by any Savant surface).
+
+## Task 44 — tokenbom.com review (2026-09-13) — REVIEW ONLY
+
+> Operator directive: "check out this website https://tokenbom.com/".
+> Interpreted scope: characterize the service (public pages, keyless API
+> probes), assess fit/risk against the hcnsec bar (Task 43), present. Zero
+> code changes; integration would be a separate Law-2 approval. No account
+> created; no key held.
+
+- [x] **T44-A.** Characterization complete (see chat): quota-resale
+      marketplace, 110 listed / 104 available, keyless /v1/models + rich
+      /api/models market telemetry, three protocol surfaces verified
+      (OpenAI/Anthropic/Gemini error dialects correct), sk-sub- virtual keys,
+      credit pricing, explicit no-SLA disclaimer. Risk class: ToS/provenance
+      (anonymous upstream quota) higher than hcnsec; transparency higher.
+- [x] **T44-B.** Operator follow-up (in the community-free-provider framing):
+      "what are the risks of using this?" Interpreted scope: present the risk
+      assessment (personal use vs. community-release default), still review-
+      only. Assessment presented in chat 2026-09-13: risks are structural
+      (anonymous rotating upstreams, ToS-violating resale layer, no SLA/entit
+      y/terms, prompt-injection + substitution unverifiable under multi-supplier
+      routing), NOT currently behavioral (no observed scam signals; protocols
+      clean). Recommendation recorded: not as a community default/partnership;
+      gauntlet remains available for personal-use evaluation; first-party
+      free-tier partnerships suggested as the actual community path.
+- [x] **T44-C.** Operator ruling: "Run the identity-audit gauntlet on
+      TokenBom with a key I create, for personal-use data only." Key exists
+      in .env.local as TOKENBURN_API_KEY (sk-sub- virtual key). Interpreted
+      scope: keyed gauntlet, personal-use intelligence only, NOT a provider
+      integration. Adapted for multi-supplier routing: phase 1 = served-name
+      + tokenizer fingerprint sweep across the whole chat catalog (1 call
+      each, the cheapest universal injection tell); phase 2 = leak probes
+      where the fingerprint shows injected content; phase 3 = full self-ID
+      (EN/ZH) + leak on the frontier subset; phase 4 = routing variance on
+      popular models (supplier rotation check).
+>
+> **Scope narrowing (operator, 2026-09-13):** "Check the top 15 most powerful
+> coding models on the list." Gauntlet re-scoped to a 15-model coding-power
+> ranking with 5 evidence cells each (tokenizer fingerprint, served-name,
+> self-ID EN, leak probe, verifiable coding smoke) + routing variance x3 on
+> three popular models. Known caveats recorded: gpt-4.1-nano probe returned
+> model_supply_empty (marketplace supply fluctuates); the operator console's
+> optional "Model fallback" feature could confound served-name mismatch
+> interpretation — check it when reading results. Auth verified:
+> TOKENBURN_API_KEY accepted (sk-sub- virtual key, 55 chars).
+>
+> **Gauntlet results (2026-09-13):** of 15: 4 no-supply/broken (claude-4.8-opus
+> 503, gemini-3.8-flash 503, qwen3-coder 404→dead OpenRouter :free channel,
+> claude-opus-5 empty completions on every cell); 4 substituted/version-swapped
+> (gemini-3.1-pro self-IDs as Gemini 3.6 **Flash**; deepseek-v4-pro self-IDs as
+> **Claude/Anthropic** with 8.4kc reasoning; qwen3.8-max self-IDs as Qwen**3.5**;
+> glm-5.3 self-IDs as GLM-**4.6**); 2 with visible subscription-arbitrage
+> fingerprints (gpt-5.6-luna + gpt-5.5 self-ID as **Microsoft M365 Copilot**,
+> fingerprint 85 vs codex 39 = ~46 tokens of hidden M365 system prompt);
+> 1 ambiguous (gpt-5.3-codex — consistent self-ID, no-echo); 4 genuine
+> (minimax-m3, doubao-seed-2.1-pro, kimi-k3, grok-4.6). Coding smoke PASS on
+> all serving channels except claude-opus-5 (empty). Variance x3: served names
+> stable. Verdict presented; same conclusion as hcnsec — substitutions exist
+> even on flagship listings; marketplace incentives did not prevent them.
+
+## Task 39 — Pi Agent review: novel ideas worth integrating? (2026-09-12) — REVIEW ONLY
+
+> Operator directive: watch the David Andre podcast with Pi's creator (transcript
+> provided), review the checked-out `resources/pi-main` source, and identify
+> anything worth using/integrating into Savant — with specific attention to Pi's
+> "bash-first" thesis. Interpreted scope: research-only review presented in chat;
+> **zero code changes**. Any integration that survives operator selection becomes
+> a separate Law-2-approved task/FID.
+
+- [x] **T39-A.** Transcript reviewed; claims mapped to testable mechanisms.
+- [x] **T39-B.** Pi source read: agent loop, bash tool + executor, extension
+      system, session tree/compaction, skills, system prompt, truncation.
+- [x] **T39-C.** Savant tool-surface ground truth collected (58 handlers,
+      agent-runtime) for the comparison leg.
+- [x] **T39-D.** Review presented (below in chat): bash-thesis verdict + ranked
+      novel-idea list with adopt / adapt / reject calls.
+- [x] **T39-E.** Operator picked the deep-audit follow-up → Task 40 below.
+
+## Task 40 — Deep audit: tool-call repair vs Pi's fail-closed truncated-args rule (2026-09-12) — AUDIT ONLY
+
+> Operator directive (follow-up pick): "Deep-audit tool-call-repair.ts against
+> Pi's fail-closed truncated-args rule and report the verdict." Pi's rule
+> (`pi-main/packages/agent/src/agent-loop.ts` `failToolCallsFromTruncatedMessage`):
+> a `stopReason === "length"` assistant message must have ALL its tool calls
+> failed, never executed — salvaged JSON can parse yet be silently incomplete.
+> Interpreted scope: read-only audit of the Savant repair/execution path with
+> file:line evidence + test-run verification; **zero code changes**. Any fix
+> that survives the verdict is a separate Law-2 approval.
+
+- [x] **T40-A.** tool-call-repair.ts + tool-call-parse.ts read 0-EOF: repair
+      surface = double-JSON.parse (≤3 rounds), allowlisted bare-string-field
+      regex (read-only tools only, requires closing brace), path→paths alias
+      normalization (parsed objects only). No salvage parser at any layer.
+- [x] **T40-B.** Truncation manifests as `errorClass: 'native-incomplete'` from
+      our own flush gate (flush-handler.ts:57-74) gated by
+      isCompleteKnownToolCallArguments (tool-arguments.ts:66-93); XML-tag path
+      holds unclosed calls in buffer and never parses at stream end
+      (stream-xml-parser.ts:154-166, tool-stream-parser.ts:73-82);
+      stream-parser.ts:182-184 sets the step flag; loop-iteration.ts:198-218
+      drives strike counting. Repair output cannot reach execution for
+      truncated inputs (regex needs a closing `}`; alias repair needs a parse).
+- [x] **T40-C.** Runtime evidence: tool-call-repair + stream-xml-parser +
+      chat-language-model-fail-closed suites = 32 pass / 1 fail (fail is the
+      vendored resources/freebuff-main fixture missing its own node_modules,
+      not Savant code). Fail-closed pins D/E/E2/E3/H/H2/H3/I/J/G all green.
+- [x] **T40-D.** Verdict presented (chat): core invariant HOLDS; one residual
+      seam found on the Anthropic/Google-compatible vendor paths
+      (model-factories.ts:1-2,82,105 route through @ai-sdk/anthropic 2.0.50 /
+      @ai-sdk/google, which emit tool-call unconditionally at content_block_stop
+      — vendor dist:2659-2674 — and bypass the native-incomplete
+      steering/strike/experience-capture machinery, though ai@5.0.122 core
+      still marks invalid input and filters it from execution).
+
+## Task 41 — FID for the vendor-path native-incomplete classification seam (2026-09-12) — FID AUTHORING
+
+> Operator directive (Task 40 verdict follow-up pick): "Author a FID for the
+> Anthropic/Google vendor-path seam: classify invalid vendor tool-inputs as
+> native-incomplete so steering/strikes/ledger apply." Interpreted scope:
+> author the FID (RED-first) in `dev/fids/`, run the Perfection Loop on the
+> document, update the FID ledger, and present for approval. **No
+> implementation** — the FID's implementation is a separate Law-2 approval.
+
+- [x] **T41-A.** Next number allocated: FID-2026-0912-005 (001-004 already in
+      archive); template read 0-EOF.
+- [x] **T41-B.** Data flow completed: ai@5.0.122 marks invalid vendor
+      tool-calls `invalid: true` and filters them from execution
+      (ai/dist:1894-1907, 2378-2401); `fixJson` salvage provably NOT in the
+      tool-input path (dist:3401-3411); the SDK `tool-call` branch
+      (stream.ts:255-262) forwards the invalid part verbatim — that is the
+      fix seam. `experimental_repairToolCall` pass-through verified
+      non-interfering; n-parameter path scoped out (Missed Question 3).
+- [x] **T41-C.** FID authored RED-first with Loop 1 (RED/GREEN/AUDIT/
+      ADVERSARIAL) + 6 Missed Questions answered: `dev/fids/FID-2026-0912-005-
+      vendor-path-invalid-tool-input-native-incomplete-classification.md`.
+- [x] **T41-D.** Ledger row added to dev/fids/README.md; lint:md exit 0;
+      prettier clean on FID + README + SCOPE.
+- [x] **T41-E.** PRESENT the FID for operator approval (blocking — Law 2).
+      Presented in chat 2026-09-12; operator approved IMPLEMENT → Task 42.
+
+## Task 42 — Implement FID-2026-0912-005 (2026-09-12) — IMPLEMENTATION
+
+> Operator directive: "Implement FID-2026-0912-005: RED pin test first, then
+> the SDK-boundary classification fix, gates stamped." Approved scope: the
+> FID's Proposed Solution as authored (Steps 1-4): RED pin test first, the
+> SDK `tool-call`-branch classification reusing `normalizeNativeToolCallStreamError`,
+> runtime-integration proof, typecheck ×4 + suites + receipt. Git execution
+> remains operator-side (G1).
+
+- [x] **T42-A.** RED pin test authored and observed FAILING first: 2 fail /
+      1 pass (both classification legs red, valid-part leg green) — captured
+      in the FID.
+- [x] **T42-B.** GREEN: `sdk/src/impl/llm/stream.ts:255-292` classifies
+      `invalid === true` tool-call parts via
+      `normalizeNativeToolCallStreamError` (single factory, Law 13) with a
+      fail-closed null guard (Law 14, typecheck-caught); ZERO runtime
+      changes. 9/9 across the two sdk suites post-fix.
+- [x] **T42-C.** Gates: typecheck ×4 exit 0 (cli run separately); runtime
+      integration suites 16/16 (part-f, strikes, capture, steering); Law 4
+      greps pasted in the FID (producer stream.ts:299 → consumer
+      error-chunk.ts:64,96; factory single at errors.ts:88).
+- [x] **T42-D.** Receipt stamped 5/5 PASS and re-stamped on the final text
+      (fingerprint-binding rule); `fid:verify --check` repo-wide PASS; FID
+      status → `fixed` with Implementation + Code-Verification evidence and
+      Loop 2 (self-caught defects: null-return type, gates-grammar
+      violation); ledger updated; lint:md + prettier clean. **Remaining for
+      closure (G2): operator commits the changes.**
+
 ## Task 38 — SkillOpt + WikiSkill scoping into FIDs (2026-09-12) — PLANNING ONLY
 
 > Operator directive: "Scope the SkillOpt integration blueprint into FIDs"
@@ -40,8 +344,13 @@
       (optimizer model, rollouts, auto-adopt, blanket history flag).
 - [x] **T38-E.** Ledger (dev/fids/README.md) + session summary updated;
       lint:md + prettier green.
-- [ ] **T38-F.** PRESENT the four FIDs for operator approval (blocking —
-      Law 2). Below.
+- [x] **T38-F.** ~~PRESENT the four FIDs for operator approval (blocking —
+      Law 2).~~ **Superseded (ground-truth correction, 2026-09-13):** the
+      skill-evolution suite was approved and implemented in a later session —
+      commits `bb8123a` (author) → `d95502f`/`f83ea32`/`c36db40`/`3921356`
+      (one per FID) → `b34c882` (close + archive 0912-001..004, stamp
+      0911-002 receipt) → `4e6b867` (session summary). Record corrected from
+      the git log; presentation step moot.
 
 ---
 
