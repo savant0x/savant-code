@@ -33,7 +33,19 @@ on-disk records missing from the table added (-0823-003, -0824-003…-008,
 
 | FID | Status | Purpose / blocking gate |
 |---|---|---|
-| [`FID-2026-0913-004`](FID-2026-0913-004-release-pre-audit.md) | fixed | Release pre-audit — six named precondition checks (worktree churn, zombie lock, stale tag, push-range scan dry-run, config-dir pollution, isolation canary) run before the RELEASE prompt; telemetry churn auto-commits, dead locks/tags self-heal, the rest block with remediation. Added after four consecutive post-confirmation release aborts. |
+| *(empty — the active queue is empty as of 2026-09-13)* | | |
+
+**2026-09-13 closure — FID-2026-0913-004 reconciled + closed + archived:**
+release pre-audit — the record's own hold ("kept active until a release
+completes green through the new sweep") is discharged by the shipped
+v0.0.31 tag: `runPreAudit` runs unconditionally before the lock in the
+release transaction, so the green cut is itself the sweep's runtime
+proof. G2 `dd40f9c7` (implementation) + `799dcf0` (closure — receipt,
+ledger, CHANGELOG; the exact commit the v0.0.31 tag points to).
+Post-shipment `release:preaudit --check` [BLOCK]s on the shipped tag by
+design; canary + pollution checks re-verified green in the same pass.
+Receipt re-stamped live at the archived path (3/3 gates). **The active
+FID queue is now empty.**
 
 **2026-09-13 closure — FID-2026-0913-003 reconciled + closed + archived:**
 release-gate test isolation — git ground truth showed the closure had

@@ -55,6 +55,13 @@
   applied and logged.
 - Standalone: `bun run release:preaudit` (fixes) / `release:preaudit:check`
   (report only).
+- **Closure (reconciled):** the standing hold — active until a release
+  completes green through the new sweep — is discharged by the shipped
+  v0.0.31 tag (`runPreAudit` runs unconditionally before the lock, so
+  the green cut is itself the sweep's runtime proof). Closed + archived
+  with the receipt re-stamped live (3/3 gates); G2 `dd40f9c7`, closure
+  `799dcf0`. A post-shipment `release:preaudit --check` [BLOCK]s on the
+  shipped tag by design — the sweep's shipped-version guard.
 
 ### Release-gate test isolation fixed; operator credentials restored (FID-2026-0913-003)
 

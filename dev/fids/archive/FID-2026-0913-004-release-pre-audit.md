@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0913-004-release-pre-audit.md`
 **ID:** FID-2026-0913-004
 **Severity:** medium
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-09-13
 **YAGNI-Compliance:** Verified — six named checks, each mapping 1:1 to a
 failure class actually observed on v0.0.31 release night; no speculative
@@ -115,8 +115,8 @@ validator.
 
 ### Verification Receipt
 
-- fingerprint: sha256:d1c75ac60c0c0591c21836d300b0c05e73ec8fcbc3835fc8c1453f81d65530e3
-- verified: 2026-09-13T21:08:48.009Z
+- fingerprint: sha256:d51bc735e89f94c2c7f26a7c34dafdd2690370fcf6b3b3d180724ac005ff1812
+- verified: 2026-09-14T04:17:13.538Z
 - test scripts/__tests__/pre-audit.test.ts: exit 0
 - test scripts/__tests__/fid-verify.test.ts: exit 0
 - probe scripts/probes/release-gate-isolation-probe.ts: exit 0
@@ -174,11 +174,40 @@ validator.
 
 ## Resolution
 
-Implemented 2026-09-13 after the fourth release attempt. Status `fixed`;
-kept active until the v0.0.31 cut completes green through the new sweep.
+CLOSED 2026-09-13 (reconciled against git ground truth). The hold —
+"kept active until the v0.0.31 cut completes green through the new
+sweep" — is discharged: **v0.0.31 shipped** — the tag exists, is pushed
+(ls-remote), and VERSION is 0.0.31. `runPreAudit` executes
+unconditionally in the release transaction's `main()` BEFORE
+`acquireReleaseLock` (transaction wiring per Affected Components), so
+the successful cut is itself the runtime proof the six-check sweep ran
+green under real release conditions. G2 chain: implementation
+`dd40f9c7` (pre-audit stage, six named checks); closure commit
+`799dcf0` — receipt stamped live, ledger row, CHANGELOG 0.0.31 entry —
+which is the exact commit the v0.0.31 tag points to. Post-shipment
+hygiene confirmation: a standalone `release:preaudit --check` run
+surfaced one [BLOCK] — "tag v0.0.31 already exists on origin — the
+release already shipped" — the sweep correctly refusing a re-cut of a
+shipped version (its `stale-tag-absent` check doing its fail-closed
+job), with the isolation canary and config-dir pollution checks
+re-verified green in the same pass. Receipt re-stamped live at the
+archived path at closure-reconciliation time.
 
 ## Lessons Learned
 
 A release pipeline must audit its own preconditions as a stage, not
 discover them as failures. Every post-confirmation abort is a stage that
 should have run before the prompt.
+
+- The pre-audit's own ship-proof came from its first real customer: the
+  v0.0.31 cut that landed green on top of this change is stronger
+  evidence than any standalone invocation, because `runPreAudit` runs
+  unconditionally in `main()` — the release cannot have completed
+  without the sweep passing. Design safety stages to be unconditional
+  and their success is proven by every subsequent run, not by a
+  dedicated demo.
+- A blocking finding can be the correct verdict: "tag already exists on
+  origin — the release already shipped" looks like a failure in a
+  hygiene report but is the sweep's shipped-version guard firing by
+  design. Read [BLOCK] findings for what they assert, not just whether
+  the run should have been green.

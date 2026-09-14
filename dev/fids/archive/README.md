@@ -3,6 +3,23 @@
 This directory contains closed or historically completed FIDs. Files here are
 an audit record, not an active work queue.
 
+## 2026-09-13 closure — release pre-audit stage (1 FID archived)
+
+[`FID-2026-0913-004-release-pre-audit.md`](FID-2026-0913-004-release-pre-audit.md)
+(medium) — closed 2026-09-13; archived 2026-09-13. Six named precondition
+checks (worktree churn, zombie lock, stale tag, push-range scan dry-run,
+config-dir pollution, isolation canary) run before the RELEASE prompt;
+telemetry churn auto-commits, dead locks/tags self-heal, the rest block
+with remediation. Closed by reconciliation: the record's own hold
+("active until the v0.0.31 cut completes green through the new sweep") is
+discharged by the shipped v0.0.31 tag — `runPreAudit` runs
+unconditionally before the lock in the release transaction, so the green
+cut is itself the sweep's runtime proof. G2 `dd40f9c7` (implementation);
+closure `799dcf0` (receipt, ledger, CHANGELOG) — the exact commit the
+tag points to. Post-shipment `release:preaudit --check` [BLOCK]s on the
+shipped tag by design; canary + pollution checks re-verified green in
+the same pass. Receipt re-stamped live at the archived path (3/3 gates).
+
 ## 2026-09-13 closure — release-gate test isolation (1 FID archived)
 
 [`FID-2026-0913-003-release-gate-test-isolation.md`](FID-2026-0913-003-release-gate-test-isolation.md)
