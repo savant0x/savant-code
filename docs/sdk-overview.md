@@ -67,7 +67,7 @@ Source root: `sdk/src/`. Organization by area (all exports listed are public unl
 | `agents/load-mcp-config.ts` | `loadMCPConfig(Sync)` — `.mcp.json` / mcp config parsing |
 | `skills/load-skills.ts` | `loadSkills`, `parseSkillFileContent` — `SKILL.md` discovery |
 | `tools/` | Tool handlers: `apply-patch`, `change-file`, `code-search`, `glob`, `list-directory`, `read-files`, `read-url`, `run-terminal-command`, `run-file-change-hooks`, SSRF guard |
-| `impl/model-provider/` | The provider routing + factories (see `docs/design/Adding New Providers.md`) |
+| `impl/model-provider/` | The provider routing + factories (see `docs/archive/design/Adding New Providers.md`) |
 | `impl/openrouter-key-resolver.ts` | OpenRouter credential chain: `OR_MASTER_KEY` exchange → `OPENROUTER_API_KEY` → `INFERENCE_API_KEY`; process-lifetime cache + reset hook |
 | `impl/llm/` + `impl/llm.ts` | `promptAiSdk(Stream/Structured)` — the LLM invocation layer, stream chunk handlers, tool-call repair, ChatGPT OAuth request transform |
 | `impl/agent-runtime.ts` | `getAgentRuntimeImpl` — wires LLM, database, analytics, and scoped deps into the agent runtime; bounded agent-template cache (200-entry FIFO) |
@@ -267,10 +267,11 @@ write-gated with LIMIT injection and SQL redaction.
 ## Provider routing and credentials
 
 The SDK is where inference happens. `getModelForRequest()` dispatches on model-id prefix
-(`tokenrouter/`, `tokenharbor/`, `nvidia/`, `opencode-go/`, `opencode-zen/`, `openrouter/`, `commandcode/`,
-`nous/`, `kiosapi/`, `apinex/`, `cloudflare/`, bare slugs). The default path is the generic
-OpenAI-compatible adapter targeting `INFERENCE_BASE_URL`. Full detail and the provider-adding
-runbook live in `docs/design/Adding New Providers.md` — that refactor is engine work inside
+(`openrouter/`, `tokenrouter/`, `tokenharbor/`, `nvidia/`, `opencode-go/`, `opencode-zen/`,
+`commandcode/`, `nous/`, `kiosapi/`, `apinex/`, `orcarouter/`, `bai/`, `hcnsec/`, `tokenbom/`,
+`cloudflare/`, bare slugs). The default path is the generic OpenAI-compatible adapter targeting
+`INFERENCE_BASE_URL`. Full detail and the provider-adding runbook live in
+`docs/archive/design/Adding New Providers.md` — that refactor is engine work inside
 this package.
 
 **Credential chain (OpenRouter):** `OR_MASTER_KEY` (exchanged via `/api/v1/keys`, one fresh key per
@@ -288,7 +289,7 @@ call short-circuits (FID-2026-0806-009).
 | `INFERENCE_BASE_URL` | Direct-mode OpenAI-compatible base URL |
 | `INFERENCE_API_KEY` | SDK-specific inference key |
 | `OR_MASTER_KEY`, `OPENROUTER_API_KEY` | OpenRouter credentials (master-key exchange / regular key) |
-| `TOKENROUTER_API_KEY`, `TOKENHARBOR_API_KEY`, `NVIDIA_API_KEY`, `OPENCODE_API_KEY`, `COMMAND_CODE_API_KEY`, `KIOSAPI_API_KEY`, `APINEX_API_KEY`, `NOUS_API_KEY` | Gateway provider keys (`OPENCODE_API_KEY` is shared by OpenCode Go and OpenCode Zen; legacy `OPENCODE_GO_API_KEY` still honored); KiosAPI and APInex are registry-resolved (`credentials.envVar` → `process.env` in `sdk/src/impl/model-provider.ts`); Nous uses the direct OpenAI-compatible API and does not imply Portal OAuth |
+| `TOKENROUTER_API_KEY`, `TOKENHARBOR_API_KEY`, `NVIDIA_API_KEY`, `OPENCODE_API_KEY`, `COMMAND_CODE_API_KEY`, `KIOSAPI_API_KEY`, `APINEX_API_KEY`, `ORCAROUTER_API_KEY`, `BAI_API_KEY`, `HCNSEC_API_KEY`, `TOKENBOM_API_KEY`, `NOUS_API_KEY` | Gateway provider keys (`OPENCODE_API_KEY` is shared by OpenCode Go and OpenCode Zen; legacy `OPENCODE_GO_API_KEY` still honored); registry-resolved (`credentials.envVar` → `process.env` in `sdk/src/impl/model-provider.ts`); Nous uses the direct OpenAI-compatible API and does not imply Portal OAuth |
 | `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` | Cloudflare Workers AI |
 | `SAVANT_CODE_BYOK_OPENROUTER` | BYOK OpenRouter header override (`x-openrouter-api-key`) |
 | `NEXT_PUBLIC_SAVANT_CODE_APP_URL` / `SAVANT_CODE_APP_URL` | Runtime backend URL override (deploy-time; Convex/Next hosts) |
@@ -341,7 +342,7 @@ subprojects (CJS/ESM load, ripgrep path, tree-sitter queries) — this is the ga
 - **The SDK is unpublished** yet `private: false` with a full publish toolchain and README marketing
   — the public API surface has never been exercised by external consumers.
 - **The provider metadata duplication** (base URLs/env vars in both `sdk` factories and `cli`
-  setup) is a real drift risk — see `docs/design/Adding New Providers.md` for the single-registry
+  setup) is a real drift risk — see `docs/archive/design/Adding New Providers.md` for the single-registry
   fix.
 - **Undeclared workspace dependency**: `sdk/src/index.ts` imports
   `@savant-code/agent-runtime` but `sdk/package.json` does not list it as a dependency — it works

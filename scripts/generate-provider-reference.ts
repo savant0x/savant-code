@@ -3,13 +3,21 @@
  * Generate provider reference docs from PROVIDER_REGISTRY — the single source
  * of truth (FID-2026-0809-001 Phase 5).
  *
- * Renders two checked-in surfaces between explicit markers so the hand-written
- * prose around them survives:
+ * Renders three checked-in surfaces between explicit markers so the
+ * hand-written prose around them survives:
  *
  *   1. `.env.example` — the "Gateway providers" env-var section
  *      (markers: `# GENERATED:provider-gateway-env-start/end`).
  *   2. `cli/release/README.md` — the "Provider Setup" table rows
  *      (markers: `<!-- GENERATED:provider-table-start/end -->`).
+ *   3. `README.md` — the quick-start provider table rows (same markers;
+ *      FID-2026-0913-005 — the main README table drifted two releases
+ *      behind the registry because no generator owned it).
+ *
+ * Hand-maintained surfaces (translations, feature bullets, prefix lists)
+ * cannot be byte-rendered; `--check` additionally runs the window/token
+ * drift checks in ./provider-docs-drift so a provider that lands without
+ * its hand-surface sync fails the same gate.
  *
  * Usage:
  *   bun run generate:provider-docs            # rewrite in place
@@ -22,6 +30,8 @@ import { readFileSync, writeFileSync } from 'fs'
 import { resolve } from 'path'
 
 import { PROVIDER_REGISTRY } from '@savant-code/common/providers/registry'
+
+import { handSurfaceDrift } from './provider-docs-drift'
 
 import type { ProviderConfig } from '@savant-code/common/providers/types'
 
@@ -72,7 +82,7 @@ function renderEnvSection(): string {
 }
 
 // ---------------------------------------------------------------------------
-// cli/release/README.md provider table
+// Provider table rows (shared by cli/release/README.md and README.md)
 // ---------------------------------------------------------------------------
 
 const TABLE_NOTES: Record<string, string> = {
@@ -86,9 +96,12 @@ const TABLE_NOTES: Record<string, string> = {
   commandcode: 'OpenAI-compatible hosted inference (dual-protocol)',
   nous: 'OpenAI-compatible direct inference; Portal OAuth is separate',
   kiosapi: 'OpenAI-compatible gateway (live catalog)',
-  tabitoken: 'OpenAI-compatible New API gateway (live catalog)',
-  gorouter: 'OpenAI-compatible New API gateway (live catalog)',
-  vyceai: 'OpenAI-compatible proxy (live catalog)',
+  apinex: 'Hosted gateway with an authenticated live model catalog',
+  orcarouter:
+    'Multi-provider gateway with a live model catalog (free tier currently gated vendor-side on GitHub account linkage)',
+  bai: 'OpenAI-compatible gateway with an authenticated live model catalog',
+  hcnsec: 'OpenAI-compatible gateway on an audited static 7-model allowlist',
+  tokenbom: 'OpenAI-compatible gateway on an audited static 7-model allowlist',
   'opencode-zen':
     'Pay-per-use gateway, 70 models incl. free tier (multi-protocol)',
   cloudflare:
@@ -100,8 +113,19 @@ const TABLE_SELECTION: Record<string, string> = {
   cloudflare: 'Environment configuration',
 }
 
-function renderTableRows(): string {
-  const rows: string[] = []
+/**
+ * Full contiguous provider table — header + delimiter + rows. The markers
+ * wrap the ENTIRE table: an HTML comment between the delimiter row and the
+ * body rows terminates the table token, which un-exempts the rows from
+ * markdownlint MD013's `tables: false` and breaks strict renderers
+ * (FID-2026-0913-005 Loop 2 — the original marker placement had shipped
+ * broken in cli/release/README.md, masked by that file's MD013 disable).
+ */
+function renderProviderTable(): string {
+  const rows: string[] = [
+    '| Provider | Selection | Environment variable | Notes |',
+    '| --- | --- | --- | --- |',
+  ]
   for (const config of orderedProviders()) {
     const selection =
       TABLE_SELECTION[config.id] ??
@@ -156,35 +180,73 @@ function renderBetween(
   return `${before}\n${replacement}${after}`
 }
 
+type GeneratedSurface = {
+  label: string
+  file: string
+  start: string
+  end: string
+  render: () => string
+}
+
+/** The three byte-exact GENERATED surfaces. */
+const SURFACES: readonly GeneratedSurface[] = [
+  {
+    label: 'provider env reference',
+    file: '.env.example',
+    start: ENV_START,
+    end: ENV_END,
+    render: renderEnvSection,
+  },
+  {
+    label: 'provider table (release README)',
+    file: 'cli/release/README.md',
+    start: TABLE_START,
+    end: TABLE_END,
+    render: renderProviderTable,
+  },
+  {
+    label: 'provider table (README)',
+    file: 'README.md',
+    start: TABLE_START,
+    end: TABLE_END,
+    render: renderProviderTable,
+  },
+] as const
+
 function main(): void {
   const check = process.argv.includes('--check')
-  const envOutput = renderEnvSection()
-  const tableOutput = renderTableRows()
-
-  const envFile = '.env.example'
-  const tableFile = 'cli/release/README.md'
-
-  const render = (file: string, start: string, end: string, output: string) =>
-    renderBetween(file, start, end, output)
 
   if (check) {
     let stale = false
-    for (const [file, start, end, output] of [
-      [envFile, ENV_START, ENV_END, envOutput],
-      [tableFile, TABLE_START, TABLE_END, tableOutput],
-    ] as const) {
+    for (const surface of SURFACES) {
       try {
-        const next = render(file, start, end, output)
-        if (next !== readFileSync(resolve(ROOT, file), 'utf8')) {
-          console.error(`STALE: ${file} is out of sync with the registry`)
+        const next = renderBetween(
+          surface.file,
+          surface.start,
+          surface.end,
+          surface.render(),
+        )
+        if (next !== readFileSync(resolve(ROOT, surface.file), 'utf8')) {
+          console.error(
+            `STALE: ${surface.file} is out of sync with the registry`,
+          )
           stale = true
         }
       } catch (error) {
         console.error(
-          `STALE: ${file} — ${error instanceof Error ? error.message : String(error)}`,
+          `STALE: ${surface.file} — ${error instanceof Error ? error.message : String(error)}`,
         )
         stale = true
       }
+    }
+    const drift = handSurfaceDrift()
+    if (drift.length > 0) {
+      for (const issue of drift) console.error(`DRIFT: ${issue}`)
+      console.error(
+        'Hand-maintained provider surfaces are missing registry entries — ' +
+          'sync them (see scripts/provider-docs-drift.ts).',
+      )
+      stale = true
     }
     if (stale) {
       console.error('Run `bun run generate:provider-docs` to regenerate.')
@@ -194,16 +256,25 @@ function main(): void {
     return
   }
 
-  const envPath = resolve(ROOT, envFile)
-  const tablePath = resolve(ROOT, tableFile)
-  const envNext = render(envFile, ENV_START, ENV_END, envOutput)
-  const tableNext = render(tableFile, TABLE_START, TABLE_END, tableOutput)
-  const envChanged = envNext !== readFileSync(envPath, 'utf8')
-  const tableChanged = tableNext !== readFileSync(tablePath, 'utf8')
-  if (envChanged) writeFileSync(envPath, envNext)
-  if (tableChanged) writeFileSync(tablePath, tableNext)
-  console.log(`provider env reference: ${envChanged ? 'updated' : 'unchanged'}`)
-  console.log(`provider table: ${tableChanged ? 'updated' : 'unchanged'}`)
+  for (const surface of SURFACES) {
+    const path = resolve(ROOT, surface.file)
+    const next = renderBetween(
+      surface.file,
+      surface.start,
+      surface.end,
+      surface.render(),
+    )
+    const changed = next !== readFileSync(path, 'utf8')
+    if (changed) writeFileSync(path, next)
+    console.log(`${surface.label}: ${changed ? 'updated' : 'unchanged'}`)
+  }
+  // Write mode regenerates the byte-exact surfaces only; hand-maintained
+  // surfaces are reported as a sync checklist (never silently ignored).
+  const drift = handSurfaceDrift()
+  if (drift.length > 0) {
+    console.log('Hand-maintained surfaces need sync after this regeneration:')
+    for (const issue of drift) console.log(`  - ${issue}`)
+  }
 }
 
 main()

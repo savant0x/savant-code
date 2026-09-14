@@ -122,43 +122,34 @@ ollama serve
 | NVIDIA NIM | `/provider nvidia` | `NVIDIA_API_KEY` | NVIDIA 托管推理 |
 | CommandCode | `/provider commandcode` | `COMMAND_CODE_API_KEY` | OpenAI 兼容的托管推理 |
 | Nous Research | `/provider nous` | `NOUS_API_KEY` | OpenAI 兼容的直连推理；Portal OAuth 另行处理 |
+| KiosAPI | `/provider kiosapi` | `KIOSAPI_API_KEY` | OpenAI 兼容网关（密钥认证的实时模型目录） |
+| APInex | `/provider apinex` | `APINEX_API_KEY` | 带认证实时模型目录的托管网关 |
+| OrcaRouter | `/provider orcarouter` | `ORCAROUTER_API_KEY` | 多提供商网关，实时模型目录（免费层目前需在供应商侧绑定 GitHub 账号） |
+| B.AI | `/provider bai` | `BAI_API_KEY` | OpenAI 兼容网关（密钥认证的实时模型目录） |
+| HCNSec | `/provider hcnsec` | `HCNSEC_API_KEY` | OpenAI 兼容网关（审计后的 7 模型静态白名单） |
+| TokenBom | `/provider tokenbom` | `TOKENBOM_API_KEY` | OpenAI 兼容网关（审计后的 7 模型静态白名单） |
 
 密钥持久化在 Windows 的 `C:\Users\<username>\.savant-code\credentials.json` 或 macOS/Linux 的
 `~/.savant-code/credentials.json`。环境变量优先于已保存的凭据。自动化时，在启动 Savant-Code 前设置一个提供商密钥：
 
 ```powershell
-# PowerShell —— 选择一个提供商密钥（OpenRouter 为启动默认）
+# PowerShell —— 设置一个提供商密钥（OpenRouter 为启动默认；
+# 上表中的任意网关密钥均可同样使用）
 $env:OPENROUTER_API_KEY = "your-key"
-# $env:OPENCODE_API_KEY = "your-key"
-# $env:TOKENROUTER_API_KEY = "your-key"
-# $env:TOKENHARBOR_API_KEY = "your-key"
-# $env:NVIDIA_API_KEY = "your-key"
-# $env:COMMAND_CODE_API_KEY = "your-key"
-# $env:NOUS_API_KEY = "your-key"
 savant-code
 ```
 
 ```cmd
-:: 命令提示符 —— 选择一个提供商密钥（OpenRouter 为启动默认）
+:: 命令提示符 —— 设置一个提供商密钥（OpenRouter 为启动默认；
+:: 上表中的任意网关密钥均可同样使用）
 set OPENROUTER_API_KEY=your-key
-:: set OPENCODE_API_KEY=your-key
-:: set TOKENROUTER_API_KEY=your-key
-:: set TOKENHARBOR_API_KEY=your-key
-:: set NVIDIA_API_KEY=your-key
-:: set COMMAND_CODE_API_KEY=your-key
-:: set NOUS_API_KEY=your-key
 savant-code
 ```
 
 ```bash
-# macOS/Linux —— 选择一个提供商密钥（OpenRouter 为启动默认）
+# macOS/Linux —— 设置一个提供商密钥（OpenRouter 为启动默认；
+# 上表中的任意网关密钥均可同样使用）
 export OPENROUTER_API_KEY="your-key"
-# export OPENCODE_API_KEY="your-key"
-# export TOKENROUTER_API_KEY="your-key"
-# export TOKENHARBOR_API_KEY="your-key"
-# export NVIDIA_API_KEY="your-key"
-# export COMMAND_CODE_API_KEY="your-key"
-# export NOUS_API_KEY="your-key"
 savant-code
 ```
 
@@ -318,8 +309,9 @@ MCP 工具发现、模式切换（`HYBRID` / `SCAFFOLD` / `STRICT` / `ANALYZE`�
 - **上下文窗口解析** —— 网关模型（例如 `opencode-go/mimo-v2.5`）在运行时从 OpenRouter 目录解析其真实
   上下文长度。
 - **通用复制按钮** —— 在整个 TUI 中悬停即可复制代码块、工具输出与文件 diff。
-- **网关提供商** —— 通过 `@savant-code/llm-providers` 支持 TokenRouter、TokenHarbor、NVIDIA NIM、OpenCode Go、OpenCode Zen、
-  CommandCode、Nous Research、KiosAPI、APInex 与 Cloudflare Workers AI。Nous Research 使用 OpenAI 兼容直连
+- **网关提供商** —— 通过 `@savant-code/llm-providers` 支持 OpenRouter、TokenRouter、TokenHarbor、NVIDIA NIM、
+  OpenCode Go、OpenCode Zen、CommandCode、Nous Research、KiosAPI、APInex、OrcaRouter、B.AI、HCNSec、
+  TokenBom 与 Cloudflare Workers AI。Nous Research 使用 OpenAI 兼容直连
   API；Portal OAuth 是独立集成。
 - **默认模型** —— 通过 OpenRouter 使用 `openrouter/free`（可通过 `/model` 配置）。
 - **无头 / 非交互模式** —— `savant-code --print "<prompt>"` 无需 TUI 即可运行单个提示词，并将最终答案打印到
@@ -638,12 +630,25 @@ savant-code
 ```text
 /provider openrouter
 /provider opencode-go
+/provider opencode-zen
 /provider tokenrouter
 /provider tokenharbor
 /provider nvidia
 /provider commandcode
-```支持的环境变量是 `OPENROUTER_API_KEY`、`OPENCODE_API_KEY`（OpenCode Go 与 Zen 共享；旧版 `OPENCODE_GO_API_KEY` 仍兼容）、`TOKENROUTER_API_KEY`、`TOKENHARBOR_API_KEY`、
-  `NVIDIA_API_KEY` 与 `COMMAND_CODE_API_KEY`。密钥提示为遮罩输入，并将密钥全局存储在 Savant-Code 配置的 `credentials.json` 中；不会加入
+/provider nous
+/provider kiosapi
+/provider apinex
+/provider orcarouter
+/provider bai
+/provider hcnsec
+/provider tokenbom
+```
+
+支持的环境变量是 `OPENROUTER_API_KEY`、`OPENCODE_API_KEY`（OpenCode Go 与 Zen 共享；旧版
+`OPENCODE_GO_API_KEY` 仍兼容）、`TOKENROUTER_API_KEY`、`TOKENHARBOR_API_KEY`、`NVIDIA_API_KEY`、
+`COMMAND_CODE_API_KEY`、`NOUS_API_KEY`、`KIOSAPI_API_KEY`、`APINEX_API_KEY`、`ORCAROUTER_API_KEY`、
+`BAI_API_KEY`、`HCNSEC_API_KEY` 与 `TOKENBOM_API_KEY`。密钥提示为遮罩输入，并将密钥全局存储在
+Savant-Code 配置的 `credentials.json` 中；不会加入
 聊天记录。shell 环境变量优先于已存储的密钥，因此 CI 与托管环境可以不使用本地持久化来配置提供商。高级直接提供商
 集成可以使用 `INFERENCE_BASE_URL` 与 `INFERENCE_API_KEY`；OpenRouter 可使用 `OPENROUTER_API_KEY` 或
 `SAVANT_CODE_BYOK_OPENROUTER`。

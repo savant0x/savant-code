@@ -104,7 +104,7 @@ local-first use with Ollama.
 > `PROVIDER_REGISTRY` the single source of truth for every provider surface
 > (routing, credentials, `/provider` setup, picker sections, model catalogs,
 > generated docs — adding a provider is now one registry entry, see
-> `docs/design/Adding New Providers.md`), with a single `activeProvider`
+> `docs/archive/design/Adding New Providers.md`), with a single `activeProvider`
 > setting and automatic migration from the legacy `directProvider`. The
 > **release system is fully hardened**: a zero-command, token-native,
 > reversible release engine (`release:public`, opt-in automation via
@@ -156,17 +156,27 @@ You can also enter `/provider` to choose from the interactive picker. Paste the
 key into the masked prompt; it is stored globally and is never added to chat
 history. The supported hosted providers are:
 
-| Provider | Command | Environment variable | Notes |
+<!-- GENERATED:provider-table-start -->
+| Provider | Selection | Environment variable | Notes |
 | --- | --- | --- | --- |
-| Ollama | automatic detection | — | Local inference; no API key required |
-| OpenRouter | `/provider openrouter` or `DIRECT_PROVIDER=openrouter` | `OR_MASTER_KEY`, `OPENROUTER_API_KEY`, or `INFERENCE_API_KEY` | **Default provider**; free tier (`openrouter/free`) is the boot default; master key, regular key, then inference key precedence |
-| OpenCode Go | `/provider opencode-go` | `OPENCODE_API_KEY` | Hosted gateway (shared OpenCode key; legacy `OPENCODE_GO_API_KEY` still honored) |
-| OpenCode Zen | `/provider opencode-zen` | `OPENCODE_API_KEY` | Pay-per-use gateway, 70 models incl. free tier (shared OpenCode key) |
-| TokenRouter | `/provider tokenrouter` | `TOKENROUTER_API_KEY` | Multi-provider gateway |
-| TokenHarbor | `/provider tokenharbor` | `TOKENHARBOR_API_KEY` | OpenAI-compatible gateway at `https://tokenharbor.ai/v1` |
-| NVIDIA NIM | `/provider nvidia` | `NVIDIA_API_KEY` | NVIDIA-hosted inference |
-| CommandCode | `/provider commandcode` | `COMMAND_CODE_API_KEY` | OpenAI-compatible hosted inference |
-| Nous Research | `/provider nous` | `NOUS_API_KEY` | OpenAI-compatible direct inference; Portal OAuth is separate |
+| OpenRouter | `/provider openrouter` or `DIRECT_PROVIDER=openrouter` | `OR_MASTER_KEY`, `OPENROUTER_API_KEY`, or `INFERENCE_API_KEY` | Default provider; free tier (`openrouter/free`) is the boot default; direct mode without the Savant backend |
+| TokenRouter | `/provider tokenrouter` or `DIRECT_PROVIDER=tokenrouter` | `TOKENROUTER_API_KEY` | Multi-provider gateway |
+| NVIDIA NIM | `/provider nvidia` or `DIRECT_PROVIDER=nvidia` | `NVIDIA_API_KEY` | NVIDIA-hosted inference |
+| OpenCode Go | `/provider opencode-go` or `DIRECT_PROVIDER=opencode-go` | `OPENCODE_API_KEY` | Hosted gateway (dual-protocol) |
+| APInex | `/provider apinex` or `DIRECT_PROVIDER=apinex` | `APINEX_API_KEY` | Hosted gateway with an authenticated live model catalog |
+| B.AI | `/provider bai` or `DIRECT_PROVIDER=bai` | `BAI_API_KEY` | OpenAI-compatible gateway with an authenticated live model catalog |
+| Cloudflare | Environment configuration | `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` | Env-only — not in the `/provider` picker; requires the account id too |
+| CommandCode | `/provider commandcode` or `DIRECT_PROVIDER=commandcode` | `COMMAND_CODE_API_KEY` | OpenAI-compatible hosted inference (dual-protocol) |
+| HCNSec | `/provider hcnsec` or `DIRECT_PROVIDER=hcnsec` | `HCNSEC_API_KEY` | OpenAI-compatible gateway on an audited static 7-model allowlist |
+| KiosAPI | `/provider kiosapi` or `DIRECT_PROVIDER=kiosapi` | `KIOSAPI_API_KEY` | OpenAI-compatible gateway (live catalog) |
+| Nous Research | `/provider nous` or `DIRECT_PROVIDER=nous` | `NOUS_API_KEY` | OpenAI-compatible direct inference; Portal OAuth is separate |
+| Ollama | Automatic detection | `OLLAMA_HOST` (optional) | Local inference; no API key required |
+| OpenCode Zen | `/provider opencode-zen` or `DIRECT_PROVIDER=opencode-zen` | `OPENCODE_API_KEY` | Pay-per-use gateway, 70 models incl. free tier (multi-protocol) |
+| OrcaRouter | `/provider orcarouter` or `DIRECT_PROVIDER=orcarouter` | `ORCAROUTER_API_KEY` | Multi-provider gateway with a live model catalog (free tier currently gated vendor-side on GitHub account linkage) |
+| TokenBom | `/provider tokenbom` or `DIRECT_PROVIDER=tokenbom` | `TOKENBOM_API_KEY` | OpenAI-compatible gateway on an audited static 7-model allowlist |
+| TokenHarbor | `/provider tokenharbor` or `DIRECT_PROVIDER=tokenharbor` | `TOKENHARBOR_API_KEY` | OpenAI-compatible hosted gateway |
+| Custom endpoint | Environment configuration | `INFERENCE_BASE_URL`, `INFERENCE_API_KEY` | Advanced OpenAI-compatible endpoint |
+<!-- GENERATED:provider-table-end -->
 
 The key is persisted at
 `C:\\Users\\<username>\\.savant-code\\credentials.json` on Windows or
@@ -175,38 +185,23 @@ precedence over saved credentials. For automation, set one provider key before
 launching Savant-Code:
 
 ```powershell
-# PowerShell — choose one provider key (OpenRouter is the boot default)
+# PowerShell — set one provider key (OpenRouter is the boot default;
+# any gateway key from the table above works the same way)
 $env:OPENROUTER_API_KEY = "your-key"
-# $env:OPENCODE_API_KEY = "your-key"
-# $env:TOKENROUTER_API_KEY = "your-key"
-# $env:TOKENHARBOR_API_KEY = "your-key"
-# $env:NVIDIA_API_KEY = "your-key"
-# $env:COMMAND_CODE_API_KEY = "your-key"
-# $env:NOUS_API_KEY = "your-key"
 savant-code
 ```
 
 ```cmd
-:: Command Prompt — choose one provider key (OpenRouter is the boot default)
+:: Command Prompt — set one provider key (OpenRouter is the boot default;
+:: any gateway key from the table above works the same way)
 set OPENROUTER_API_KEY=your-key
-:: set OPENCODE_API_KEY=your-key
-:: set TOKENROUTER_API_KEY=your-key
-:: set TOKENHARBOR_API_KEY=your-key
-:: set NVIDIA_API_KEY=your-key
-:: set COMMAND_CODE_API_KEY=your-key
-:: set NOUS_API_KEY=your-key
 savant-code
 ```
 
 ```bash
-# macOS/Linux — choose one provider key (OpenRouter is the boot default)
+# macOS/Linux — set one provider key (OpenRouter is the boot default;
+# any gateway key from the table above works the same way)
 export OPENROUTER_API_KEY="your-key"
-# export OPENCODE_API_KEY="your-key"
-# export TOKENROUTER_API_KEY="your-key"
-# export TOKENHARBOR_API_KEY="your-key"
-# export NVIDIA_API_KEY="your-key"
-# export COMMAND_CODE_API_KEY="your-key"
-# export NOUS_API_KEY="your-key"
 savant-code
 ```
 
@@ -510,8 +505,9 @@ code 2 blocks a tool.
   resolve their real context length from the OpenRouter catalog at runtime.
 - **Universal copy buttons** — hover-to-copy on code blocks, tool outputs, and
   file diffs throughout the TUI.
-- **Gateway providers** — TokenRouter, TokenHarbor, NVIDIA NIM, OpenCode Go, OpenCode Zen, CommandCode,
-  Nous Research, KiosAPI, APInex, and Cloudflare Workers AI via
+- **Gateway providers** — OpenRouter, TokenRouter, TokenHarbor, NVIDIA NIM,
+  OpenCode Go, OpenCode Zen, CommandCode, Nous Research, KiosAPI, APInex,
+  OrcaRouter, B.AI, HCNSec, TokenBom, and Cloudflare Workers AI via
   `@savant-code/llm-providers`. Nous Research uses the direct OpenAI-compatible API; Portal OAuth
   is a separate integration.
 - **Default model** — `openrouter/free` via OpenRouter (configurable via
@@ -936,17 +932,27 @@ picker or choose one directly:
 ```text
 /provider openrouter
 /provider opencode-go
+/provider opencode-zen
 /provider tokenrouter
 /provider tokenharbor
 /provider nvidia
 /provider commandcode
+/provider nous
+/provider kiosapi
+/provider apinex
+/provider orcarouter
+/provider bai
+/provider hcnsec
+/provider tokenbom
 ```
 
 The supported environment variables are `OPENROUTER_API_KEY`,
 `OPENCODE_API_KEY` (shared by OpenCode Go and OpenCode Zen; legacy
-`OPENCODE_GO_API_KEY` still honored),
-`TOKENROUTER_API_KEY`, `TOKENHARBOR_API_KEY`, `NVIDIA_API_KEY`, and
-`COMMAND_CODE_API_KEY`. The key
+`OPENCODE_GO_API_KEY` still honored), `TOKENROUTER_API_KEY`,
+`TOKENHARBOR_API_KEY`, `NVIDIA_API_KEY`, `COMMAND_CODE_API_KEY`,
+`NOUS_API_KEY`, `KIOSAPI_API_KEY`, `APINEX_API_KEY`,
+`ORCAROUTER_API_KEY`, `BAI_API_KEY`, `HCNSEC_API_KEY`, and
+`TOKENBOM_API_KEY`. The key
 prompt is masked and stores the key globally in the Savant-Code config
 `credentials.json`; it is not added to chat history. Shell environment variables
 take precedence over stored keys, so CI and managed environments can configure
