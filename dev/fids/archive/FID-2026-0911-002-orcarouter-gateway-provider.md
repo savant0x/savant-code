@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0911-002-orcarouter-gateway-provider.md`
 **ID:** FID-2026-0911-002
 **Severity:** low
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-09-11 (operator directive: "i am interested in adding
 support for https://www.orcarouter.ai/ as a provider")
 **YAGNI-Compliance:** Verified — one registry entry per the one-entry
@@ -204,26 +204,20 @@ orcarouter: {
        this FID's files); `validate:repository` at exact pre-existing-debt
        parity (8 hard-cap violations before and after — none in files
        this FID touches; tracked for a separate refactor FID).
-4. [~] **LIVE (closure gate, keyed) — PARTIAL PASS 2026-09-12, one
-       NEEDS-REVIEW boundary:** probe at
+4. [x] **LIVE (closure gate, keyed) — PASS 2026-09-13 (fresh
+       post-linkage key):** probe at
        `dev/scratchpad/active/orcarouter-acceptance-probe.ts` (key loaded
-       from `.env.local`, never printed — Law 12). (a) **Catalog via the
-       REAL production chain PASS:** `fetchGatewayModels(true)` → 1,314
-       combined models, **195 `orcarouter/…` entries** (vendor-prefixed +
-       double-prefixed routers 2/2 exactly as designed) via the same
-       function `/model` invokes; (b) **Keyed chat round-trip → HTTP 429,
-       key AUTHENTICATED but account-gated:** OpenAI-shaped
-       `free_rate_limited` — "Free models are not available to this
-       account yet. Link a GitHub account in your profile settings, or
-       add credits" — the keyed request passes auth (keyless → 401) and
-       reaches an ACCOUNT-level gate, proving endpoint reachability,
-       OpenAI-shape parsing, and key validity; the HTTP-200 completion is
-       blocked on operator account action (GitHub linkage or credits),
-       NOT on integration code; (c) **Missing-key fail-closed PASS:**
-       keyless chat → 401. The 200-round-trip remainder of this gate is
-       NEEDS-REVIEW: a human must enable free-tier access on the
-       OrcaRouter account and re-run the probe — per the Nous precedent,
-       end-to-end inference is NOT claimed until then.
+       from `.env.local`, never printed — Law 12). Final run: (a) **Catalog
+       via the REAL production chain PASS:** `fetchGatewayModels(true)` →
+       1,379 combined models, **195 `orcarouter/…` entries**
+       (vendor-prefixed + double-prefixed routers 2/2 exactly as designed)
+       via the same function `/model` invokes; (b) **Keyed chat
+       round-trip → HTTP 200, content `"OK"`** on `orcarouter/free`;
+       (c) **Missing-key fail-closed PASS:** keyless chat → 401. Earlier
+       partial runs (2026-09-12, 2026-09-13 pre-linkage-key) are recorded
+       in Live Unknowns §2-§7: the 429 `err_free_access_denied` era was an
+       account-entitlement state, never an integration defect, and the
+       discriminator proved the entitlement binds at key-mint time.
 
 ### Live Unknowns (keyless-unverifiable; resolved at Step 4)
 
@@ -301,8 +295,31 @@ orcarouter: {
    registered, grant never applied). Discriminator: operator mints a new
    `sk-orca-` key into `.env.local`, probe re-runs. If still 429 on a
    fresh key → (b) confirmed → escalate to vendor support with the full
-   evidence packet (timeline, both request ids, screenshot, their own
+   evidence   packet (timeline, both request ids, screenshot, their own
    fix announcement).
+7. **Baseline re-probe (2026-09-13, fresh operator-directed session):**
+   catalog via the production chain still PASS (1,379 combined, 195
+   `orcarouter/…`, routers 2/2, no-key 401 fail-closed); keyed chat
+   STILL 429 `err_free_access_denied` (`retryable: false`, request id
+   `202609140329591640720418268d9d6dCivPEpU`). This run used the
+   PRE-LINKAGE key (`.env.local` mtime predates the linkage), so it
+   re-establishes the baseline and does NOT discriminate (a) vs (b).
+   Discriminator armed: operator mints a FRESH post-linkage `sk-orca-`
+   key into `.env.local`, probe re-runs. A 200 closes the FID; a
+   fresh-key 429 confirms hypothesis (b) (server-side grant bug) and
+   triggers the vendor escalation with the full evidence packet.
+8. **DISCRIMINATOR RESOLVED — keyed live acceptance PASS (2026-09-13,
+   ~23:32 local / fresh post-linkage key):** the operator minted a fresh
+   `sk-orca-` key AFTER completing the GitHub linkage; the probe ran
+   with the new key (`ORCAROUTER_API_KEY` length 51, value never
+   printed — Law 12): (a) catalog via the production chain PASS
+   (1,379 combined, 195 `orcarouter/…`, routers 2/2); (b) **keyed chat
+   round-trip → HTTP 200, content `"OK"`** — end-to-end inference
+   proven on the free router model; (c) no-key chat → 401 fail-closed.
+   Hypothesis (a) CONFIRMED: **the free-tier entitlement binds at
+   key-mint time**, not at linkage time — the pre-linkage key could
+   never carry the grant regardless of dashboard state. Step 4's
+   remaining NEEDS-REVIEW is discharged; the FID closes.
 2. **Auth-header edge** — Bearer is documented with a working contract;
    no alternate header documented, so no fallback is planned.
 3. **Multi-protocol surface** — several catalog models advertise
@@ -324,11 +341,18 @@ orcarouter: {
 
 ### Code Verification Evidence
 
-Planning-stage FID: Steps 1-3 shipped (commit `6a1e5c2f` per Loop 1);
-Step 4 probe artifact: catalog 195/195 via the production chain,
-keyed chat 429 `err_free_access_denied` (re-probed 2026-09-12,
-post vendor GitHub linkage). Live completion is operator-observable
-only and remains NEEDS-REVIEW, honestly recorded above.
+- [x] Files referenced in Affected Components exist (`registry` entry at
+      `common/src/providers/registry-partitioned.ts:61`, wrapper
+      `cli/src/utils/openrouter-models/orcarouter.ts`, manifest entry,
+      contract pins in `provider-contract-pins.test.ts:34`)
+- [x] Implementation matches the Proposed Solution (uniform prefixing,
+      shared-fetcher reuse, no resolver wire-in — keyless catalog)
+- [x] All four Step-4 gate runs PASS with pasted tool output (final:
+      keyed chat HTTP 200 `"OK"`, catalog 195/195, no-key 401)
+- [x] Production call-graph evidence: Law 4 greps recorded in Loop 2
+      (routing / catalog / setup / prefix edges all pinned by tests)
+- [x] FID status reflects the actual implementation state (`closed` —
+      keyed HTTP-200 completion landed 2026-09-13)
 
 ## Verification Gates
 
@@ -343,8 +367,8 @@ only and remains NEEDS-REVIEW, honestly recorded above.
 
 ### Verification Receipt
 
-- fingerprint: sha256:2b430d4bb7c55978e479f1b36d3d354fb670e43765f3f2c29808c0929097c249
-- verified: 2026-09-13T17:47:20.232Z
+- fingerprint: sha256:18980a0e767536e915db8ebe313173b1e1e1e8964444acc20cbd3bc7b4126369
+- verified: 2026-09-14T03:46:43.734Z
 - typecheck common: exit 0
 - typecheck sdk: exit 0
 - typecheck packages/agent-runtime: exit 0
@@ -356,12 +380,15 @@ only and remains NEEDS-REVIEW, honestly recorded above.
 
 ## Resolution
 
-Open at Steps 1-3 complete + Step 4 keyed live acceptance run:
-catalog + fail-closed PASS, keyed chat authenticated but vendor
-account-gated (429 `err_free_access_denied`, re-probed 2026-09-12).
-Rests at `fixed`, vendor-held — one probe re-run closes it when the
-vendor's free-tier unlock lands. Status is `fixed` (not `closed`) per
-the Ground-Truth rule: keyed HTTP-200 completion has never passed.
+CLOSED 2026-09-13 — Steps 1-4 complete. Step 4 keyed live acceptance
+PASSED on the fresh post-linkage key: catalog 195/195 via the
+production chain, keyed chat HTTP 200 `"OK"` on `orcarouter/free`,
+no-key 401 fail-closed. The 2026-09-12/13 429 era is fully explained
+in Live Unknowns §2-§7 (account entitlement state; discriminator
+proved key-mint-time binding — hypothesis (a)). All declared gates
+re-run green on the closing tree (typecheck ×4 exit 0; provider-registry
+11/0, sdk free-mode 12/0, cli provider-setup 18/0, orcarouter parser
+pins 4/0); receipt stamped by `fid:verify --write`.
 
 ## Perfection Loop
 
@@ -479,6 +506,23 @@ pending keyed live acceptance. Verdict: clean — no findings.
 
 **Circuit breaker:** 2 loops, convergent; no oscillation.
 
+### Loop 3 — Closure (2026-09-13, operator-directed live acceptance)
+
+- **Step 4 discharged:** fresh post-linkage key → HTTP 200 `"OK"`
+  (Live Unknowns §8); the remaining NEEDS-REVIEW boundary is closed
+  with evidence, not waived. The 30-day GitHub-age rule and the
+  vendor's settings-bind fix were both necessary but not sufficient —
+  the binding happens when the key is minted.
+- **Ground-truth check before closure:** registry entry, wrapper,
+  manifest, and contract pins verified at file:line on the current
+  tree; all four declared gates + typecheck ×4 re-run green on the
+  closing tree (the tree also carries an unrelated uncommitted
+  tokenrouter max-output pin in the catalog family — gates cover it
+  and pass; it is NOT part of this FID).
+- **CHANGE DELTA:** Step 4 record, Live Unknowns §7-§8, Code
+  Verification Evidence, Resolution, Lessons — closure bookkeeping
+  only; no code changes.
+
 ## Lessons Learned
 
 - A public, OpenAI-shaped `/v1/models` makes a gateway integration
@@ -496,3 +540,11 @@ pending keyed live acceptance. Verdict: clean — no findings.
   no upstream id carries the routing prefix (true for nous/apinex,
   false for OrcaRouter). A parser contract pin caught this before it
   shipped.
+- **Account-state gates can outlive their own fix announcements:** a
+  vendor entitlement that binds at key-mint time makes every probe
+  with a stale key a false negative, even after the operator completes
+  the requested account action and the dashboard confirms it. When a
+  429 account gate persists past a documented vendor fix, the
+  discriminator is not "wait and re-probe" — it is "re-mint the
+  credential and re-probe." Two days of 429s were a stale key, not a
+  stale entitlement.

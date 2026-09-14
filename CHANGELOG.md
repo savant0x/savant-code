@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+### OrcaRouter gateway provider closed — keyed live acceptance green (FID-2026-0911-002)
+
+- The final Step-4 closure gate passed: with a fresh post-linkage key,
+  the keyed chat round-trip returned **HTTP 200 `"OK"`** on
+  `orcarouter/free` (catalog 195/195 via the production chain, no-key
+  401 fail-closed). No code changes in this closure — the integration
+  had been complete since 2026-09-11; the residue was an
+  account-entitlement state. Root cause of the two-day 429
+  `err_free_access_denied` era: OrcaRouter binds free-tier entitlement
+  at KEY-MINT time, so the pre-linkage key kept failing after the
+  GitHub linkage registered (hypothesis (a) confirmed by
+  discriminator). FID closed + archived with the receipt re-stamped
+  live at the archived path (8/8 gates).
+
 ### Provider docs synced to the 16-provider registry + drift guard (FID-2026-0913-005)
 
 - Post-0.0.31 sweep: the top-level README provider table (9 rows against a

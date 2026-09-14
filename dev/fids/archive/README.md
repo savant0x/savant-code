@@ -3,6 +3,25 @@
 This directory contains closed or historically completed FIDs. Files here are
 an audit record, not an active work queue.
 
+## 2026-09-13 closure — OrcaRouter gateway provider (1 FID archived)
+
+[`FID-2026-0911-002-orcarouter-gateway-provider.md`](FID-2026-0911-002-orcarouter-gateway-provider.md)
+(low) — closed 2026-09-13; archived 2026-09-13. 13th registry entry
+(`api.orcarouter.ai/v1`, `ORCAROUTER_API_KEY`, keyless live catalog,
+OpenAI surface, `idTransform: 'strip'` with uniform prefixing — the
+first provider where the passthrough branch would fire). Closure gate
+(Step 4 keyed live acceptance) PASSED on the fresh post-linkage key:
+catalog 195/195 via the production chain, keyed chat **HTTP 200
+`"OK"`** on `orcarouter/free`, no-key 401 fail-closed. The 429
+`err_free_access_denied` era (2026-09-12 → 09-13) is recorded as an
+account-entitlement state, never an integration defect; the
+discriminator proved the free-tier grant binds at KEY-MINT time
+(hypothesis (a)) — a stale pre-linkage key kept producing false
+negatives after the dashboard showed linked. Receipt stamped live at
+the archived path by `fid:verify --write` (8/8 PASS: typecheck ×4 +
+provider-registry 11/0 + sdk free-mode 12/0 + cli provider-setup 18/0
++ orcarouter parser pins 4/0).
+
 ## 2026-09-13 closure — provider docs synced + drift guard (1 FID archived)
 
 [`FID-2026-0913-005-provider-docs-drift-guard.md`](FID-2026-0913-005-provider-docs-drift-guard.md)
