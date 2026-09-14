@@ -76,6 +76,13 @@
 - **Evidence:** the exact release-shaped repro went from exit 1 (5/18
   failing, credentials polluted) to exit 0 (18/18, byte-identical config
   dir); `validate:repository` PASS.
+- **Closure (reconciled):** record closed + archived after a git
+  ground-truth pass showed the same-evening closure (`112f0cf`) had
+  executed everything the Resolution prose still claimed pending, and
+  the release completed green through the fixed chain (v0.0.31 tagged
+  and pushed; probe + canary ran under the real public profile in
+  `validate:repository`). Receipt re-stamped live at the archived path
+  (4/4 gates); G2 `1cc4185a`, Erratum-1 `c803926`.
 
 ### Quality rule is ceiling-only; hard-cap split program clears all 9 over-cap files (2026-09-13)
 

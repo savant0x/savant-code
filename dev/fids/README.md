@@ -33,8 +33,19 @@ on-disk records missing from the table added (-0823-003, -0824-003…-008,
 
 | FID | Status | Purpose / blocking gate |
 |---|---|---|
-| [`FID-2026-0913-003`](FID-2026-0913-003-release-gate-test-isolation.md) | fixed | Release-gate test isolation — root bunfig preload never demoted the release profile, so fid-gate live re-runs ran CLI tests with `NEXT_PUBLIC_CB_ENVIRONMENT=prod`, defeated the config-dir override, and wrote test fakes into the real `~/.savant-code/credentials.json` (two v0.0.31 release attempts failed the repository-validation gate). Fixed in three layers (root-preload demotion, gate child-env pin, canary + probe); credentials restored from shell env. |
 | [`FID-2026-0913-004`](FID-2026-0913-004-release-pre-audit.md) | fixed | Release pre-audit — six named precondition checks (worktree churn, zombie lock, stale tag, push-range scan dry-run, config-dir pollution, isolation canary) run before the RELEASE prompt; telemetry churn auto-commits, dead locks/tags self-heal, the rest block with remediation. Added after four consecutive post-confirmation release aborts. |
+
+**2026-09-13 closure — FID-2026-0913-003 reconciled + closed + archived:**
+release-gate test isolation — git ground truth showed the closure had
+executed the same evening (`112f0cf`: receipt, ledger, CHANGELOG) and the
+release completed green through the fixed chain (**v0.0.31 tagged +
+pushed**, tag → `799dcf0`); the Resolution prose was stale, the work was
+not. G2 `1cc4185a` + Erratum-1 `c803926` stamped in the Resolution;
+placeholder Lessons Learned replaced; receipt re-stamped live at the
+archived path (4/4 gates). Active queue: FID-2026-0913-004 only (held for
+its own standing directive — kept active until a release completes green
+through the new sweep, which v0.0.31 satisfied; closure pending its own
+reconciliation pass).
 
 **2026-09-13 closure — FID-2026-0911-002 closed + archived:** OrcaRouter
 gateway provider — keyed live acceptance PASSED on a fresh post-linkage

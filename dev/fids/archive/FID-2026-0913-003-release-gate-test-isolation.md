@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0913-003-release-gate-test-isolation.md`
 **ID:** FID-2026-0913-003
 **Severity:** critical
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-09-13
 **YAGNI-Compliance:** Verified — the fix is two demotion guards plus a probe
 that formalizes the release's own reproduction. No new configuration
@@ -201,8 +201,8 @@ assertion). Method 1 static — scripts typecheck via
 
 ### Verification Receipt
 
-- fingerprint: sha256:e7ec43d22666c48b5bd0fd569fbabeba250584e1dd912c92f0d4cd4a9c4e3428
-- verified: 2026-09-13T20:09:32.556Z
+- fingerprint: sha256:01e899c9b445e7aecef37bafa69d36bffed12d4be477c1a7d45bbb3adff01ad2
+- verified: 2026-09-14T04:09:50.864Z
 - probe scripts/probes/release-gate-isolation-probe.ts: exit 0
 - test cli/src/utils/__tests__/provider-setup.test.ts: exit 0
 - test scripts/__tests__/fid-verify.test.ts: exit 0
@@ -309,13 +309,42 @@ itself injects.
 
 ## Resolution
 
-In progress 2026-09-13 — RED captured (release-shaped repro from repo root
-fails 5/18 and re-pollutes the real credentials file; both restored from
-`/tmp` snapshots); GREEN landed in three layers. The exact RED repro now
-exits 0 (18/18) with a byte-identical real config dir, the probe passes,
-and the fid suites are green. Receipt stamping, ledger row, CHANGELOG
-entry, and closure follow the full gate battery.
+CLOSED 2026-09-13 (reconciled against git ground truth 2026-09-13, late).
+The closure actually executed the same evening this FID was authored —
+the prior Resolution text was stale prose, not missing work: closure
+commit `112f0cf` ("receipt stamped live, ledger row, CHANGELOG entry; probe
+spawns process.execPath"), receipt re-stamped at the archived path by
+`fid:verify --write`, ledger row present, CHANGELOG 0.0.31 entry present.
+G2 implementation commit `1cc4185a` (2026-09-13 15:55, 5 files: root-preload
+demotion +18, gate child-env pin +2, canary +39, probe +120, FID doc); the
+Erratum-1 second fix landed as `c803926` (spawn-site execPath rewrite,
+verified on disk at `scripts/fid-verify.ts:132/:136`). The hold this record
+never named explicitly — the release completing green through the fixed
+chain — is discharged: **v0.0.31 shipped** — tag exists, was pushed
+(ls-remote shows it on origin), and VERSION is 0.0.31; the tag points at
+`799dcf0`, the 0913-004 closure commit, so the isolation probe and canary
+ran green under the real release profile inside `validate:repository` —
+the strongest closure evidence this gate can produce. Receipt re-stamped
+live on the current tree at closure-reconciliation time (8/8 gates).
 
 ## Lessons Learned
 
-(updated at closure)
+- A fix for a release-gate defect is proven by the next release, not by
+  its own repro: the v0.0.31 tag landing on top of the fix chain (probe
+  + canary green under the real public profile) is what separates
+  "defect fixed" from "defect fixed and survived production conditions."
+  Write that condition into the Resolution as an explicit hold at
+  authoring time, or the record reads "in progress" forever while the
+  work silently completes around it.
+- Stale-prose closure risk is real even under G2 discipline: every
+  governance artifact the closure promised (receipt, ledger, CHANGELOG)
+  actually existed, yet the Resolution paragraph kept claiming they were
+  pending — an audit dead-end for the next reader. Reconcile the record
+  against `git log --follow` on the file itself before trusting its own
+  status prose.
+- `Bun.spawnSync` with an explicit `env` object changes Windows
+  argv[0] resolution (platform `Path` key vs `PATH`): bare runtime
+  names that resolve under inherited env ENOENT under explicit env.
+  Spawn test/probe children via `process.execPath` (the repo's
+  `audit.gate-env-parity` rule exists for exactly this class — see
+  Erratum 1 / `c803926`).

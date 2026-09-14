@@ -3,6 +3,24 @@
 This directory contains closed or historically completed FIDs. Files here are
 an audit record, not an active work queue.
 
+## 2026-09-13 closure — release-gate test isolation (1 FID archived)
+
+[`FID-2026-0913-003-release-gate-test-isolation.md`](FID-2026-0913-003-release-gate-test-isolation.md)
+(critical) — closed 2026-09-13; archived 2026-09-13. Root bunfig test
+preload never demoted the release profile, so fid-gate live re-runs ran
+CLI tests with `NEXT_PUBLIC_CB_ENVIRONMENT=prod`, defeated the config-dir
+override, and wrote test fakes into the real `~/.savant-code/credentials.json`
+(two v0.0.31 release attempts failed; credentials restored from shell
+env). Fixed in three layers + the Erratum-1 execPath spawn fix: G2
+`1cc4185a` (preload demotion +18, gate child-env pin +2, canary +39,
+probe +120) and `c803926`. Closure reconciled against git ground truth:
+the same-evening closure commit `112f0cf` had executed everything the
+stale Resolution claimed pending, and the release itself completed green
+through the fixed chain — **v0.0.31 tagged and pushed** (tag → `799dcf0`),
+meaning the probe and canary passed under the real public profile inside
+`validate:repository`. Receipt re-stamped live at the archived path
+(4/4 gates) at reconciliation time.
+
 ## 2026-09-13 closure — OrcaRouter gateway provider (1 FID archived)
 
 [`FID-2026-0911-002-orcarouter-gateway-provider.md`](FID-2026-0911-002-orcarouter-gateway-provider.md)
