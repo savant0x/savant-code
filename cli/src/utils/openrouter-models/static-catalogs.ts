@@ -112,6 +112,20 @@ const OPENCODE_GO_NAMES: Record<string, string> = {
 }
 
 /**
+ * Pinned max output caps for models where the live OpenRouter catalog
+ * reports an incorrect value. Consumed by `resolveMaxOutputTokensForModel`
+ * with priority over both live catalogs — an authoritative pin must beat
+ * a wrong API-reported value.
+ *
+ * GLM 5.3 Free (tokenrouter): OpenRouter reports max_completion_tokens:
+ * 943717 but the actual provider cap is 131072 — the wrong value hard-
+ * rejected every request ("max_tokens must be at most 131072, got 943717").
+ */
+export const TOKENROUTER_MAX_OUTPUT: Record<string, number> = {
+  'tokenrouter/z-ai/glm-5.3-free': 131_072,
+}
+
+/**
  * Return the TokenRouter model catalog, derived from the common model map.
  * TokenRouter requires auth for its /v1/models endpoint, so the id set is a
  * hardcoded common map with cli-side display names. Synchronous.
@@ -124,6 +138,9 @@ export function fetchTokenRouterModels(): OpenRouterModel[] {
       name,
       provider: 'tokenrouter' as const,
       contextLength: inferContextLength(name),
+      ...(id in TOKENROUTER_MAX_OUTPUT
+        ? { maxCompletionTokens: TOKENROUTER_MAX_OUTPUT[id] }
+        : {}),
     }
   })
 }
@@ -135,11 +152,15 @@ export function fetchTokenRouterModels(): OpenRouterModel[] {
  * public models page changes.
  */
 export function getTokenHarborModels(): OpenRouterModel[] {
-  return Object.values(tokenharborModels).map((id) => ({
-    id,
-    name: TOKENHARBOR_NAMES[id] ?? id.slice('tokenharbor/'.length),
-    provider: 'tokenharbor' as const,
-  }))
+  return Object.values(tokenharborModels).map((id) => {
+    const name = TOKENHARBOR_NAMES[id] ?? id.slice('tokenharbor/'.length)
+    return {
+      id,
+      name,
+      provider: 'tokenharbor' as const,
+      contextLength: inferContextLength(name),
+    }
+  })
 }
 
 /**

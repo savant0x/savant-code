@@ -124,5 +124,15 @@ describe('openrouter-models', () => {
         resolveMaxOutputTokensForModel('openai/custom-model'),
       ).toBeUndefined()
     })
+
+    test('authoritative pin beats a wrong live-catalog value', () => {
+      // GLM 5.3 Free: OpenRouter reports max_completion_tokens: 943717 but
+      // the provider caps at 131072 — trusting the API value hard-rejected
+      // every request. The TOKENROUTER_MAX_OUTPUT pin must win over both
+      // live catalogs (the resolver's priority-1 slot).
+      expect(
+        resolveMaxOutputTokensForModel('tokenrouter/z-ai/glm-5.3-free'),
+      ).toBe(131_072)
+    })
   })
 })
