@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0913-005-provider-docs-drift-guard.md`
 **ID:** FID-2026-0913-005
 **Severity:** medium
-**Status:** verified
+**Status:** closed
 **Created:** 2026-09-13 18:44
 **YAGNI-Compliance:** Verified
 
@@ -131,8 +131,8 @@ Two layers, per the operator's "Sync + generator guard" selection:
 
 ### Verification Receipt
 
-- fingerprint: sha256:55407ec81c727baaf5e574129909d7d38df1099492ca296b7e9373d3202c491d
-- verified: 2026-09-14T00:47:14.277Z
+- fingerprint: sha256:9552d5966bc8b7eb1eb1f83634450486c9ff4200396c2a05519b7229aca88daa
+- verified: 2026-09-14T00:58:32.524Z
 - test scripts/__tests__/provider-docs-drift.test.ts: exit 0
 - typecheck common: exit 0
 
@@ -216,14 +216,17 @@ shipped in `cli/release/README.md` since the generator's introduction,
 
 ## Resolution
 
+- **Closed Date:** 2026-09-13 20:55
 - **Fix Description:** third GENERATED surface + registry-driven hand-surface
   drift gate + full 16-provider sync across 7 doc surfaces + legacy-key and
   dead-link corrections.
 - **Tests Added:** `scripts/__tests__/provider-docs-drift.test.ts`
   (4 tests / 45 expects)
-- **Verification Evidence:** Verification Receipt below (fid:verify --write,
-  live gate re-runs)
-- **Archived:** set on closure.
+- **Verification Evidence:** Verification Receipt above (fid:verify --write,
+  live gate re-runs, both exit 0); Verifier PASS (8/9 quoted evidence,
+  bookkeeping findings remediated); `validate:repository` PASS
+- **Commit SHA:** `dec13050` (implementation, 10 files, +1023/−133)
+- **Archived:** 2026-09-13 20:55 — moved to `dev/fids/archive/`
 
 ## Lessons Learned
 

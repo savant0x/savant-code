@@ -1,7 +1,33 @@
 # Changelog
 
-## 0.0.31 — 2026-09-13
+## Unreleased
 
+### Provider docs synced to the 16-provider registry + drift guard (FID-2026-0913-005)
+
+- Post-0.0.31 sweep: the top-level README provider table (9 rows against a
+  16-provider registry — missing KiosAPI, APInex, OrcaRouter, B.AI, HCNSec,
+  TokenBom), the zh-CN mirror, `docs/index.md`, `docs/sdk-overview.md`, and
+  the shipped npm README's shell examples (still teaching the legacy
+  `OPENCODE_GO_API_KEY`) are all synced to the registry; 4 dead
+  `docs/design/Adding New Providers.md` links re-pointed to
+  `docs/archive/design/`.
+- The generator now owns a THIRD GENERATED surface — the main README's
+  provider table — and `--check` additionally runs
+  `scripts/provider-docs-drift.ts`: presence-token pins over every
+  hand-maintained surface (8 windowed + 5 whole-file checks), so the next
+  provider that lands without its doc sync fails `validate:repository`,
+  pre-push, and the release gates with the exact missing token (69 findings
+  pre-fix → 0).
+- RED-first test `scripts/__tests__/provider-docs-drift.test.ts` (4 tests /
+  45 expects) pins the current tree, a stale fixture, and missing anchors.
+- Latent defect fixed en route: GENERATED markers between a markdown
+  table's delimiter row and body rows terminate the table token — the
+  release README had shipped that broken shape since the generator's
+  introduction, masked by its line-1 file-wide MD013 disable. The generator
+  now renders the ENTIRE contiguous table inside the markers
+  (`renderProviderTable`).
+
+## 0.0.31 — 2026-09-13
 ### Release pre-audit stage added (FID-2026-0913-004)
 
 - After four consecutive post-confirmation aborts on v0.0.31 release

@@ -3,6 +3,24 @@
 This directory contains closed or historically completed FIDs. Files here are
 an audit record, not an active work queue.
 
+## 2026-09-13 closure — provider docs synced + drift guard (1 FID archived)
+
+[`FID-2026-0913-005-provider-docs-drift-guard.md`](FID-2026-0913-005-provider-docs-drift-guard.md)
+(medium) — closed 2026-09-13; archived 2026-09-13. Post-0.0.31 doc sweep:
+the main README provider table (9 rows vs the 16-provider registry), the
+zh-CN mirror, `docs/index.md`, `docs/sdk-overview.md`, and the shipped npm
+README's examples (legacy `OPENCODE_GO_API_KEY`) all synced; the generator
+gained a THIRD GENERATED surface (the main README table) plus
+`scripts/provider-docs-drift.ts` presence-token pins over every
+hand-maintained surface, wired into `--check`/`validate:repository` (69
+findings pre-fix → 0). RED-first suite 4/4 (45 expects); Verifier PASS;
+`validate:repository` PASS; implementation commit `dec13050` (10 files,
++1023/−133). Loop 2 fixed a latent table-token defect shipped in the release
+README since the generator's introduction (markers between delimiter and
+body rows terminate the table token, masked by that file's line-1 file-wide
+MD013 disable) — the generator now renders the entire contiguous table
+inside the markers.
+
 ## 2026-09-13 closure — hard-cap file-split program (1 FID archived)
 
 [`FID-2026-0913-002-hard-cap-file-split-program.md`](FID-2026-0913-002-hard-cap-file-split-program.md)
