@@ -107,6 +107,7 @@ because unknown providers default to order 4 — noted; the full-entry pin in
 provider-registry-gateways.test.ts is the exact-shape guard).
 
 GREEN surfaces (all precedent-pattern, zero new mechanisms):
+
 - `common/src/providers/registry-partitioned.ts` — `bazaarlink` entry
   (baseUrl `https://api.bazaarlink.ai/v1`, openai, strip, static modelsRef,
   env `BAZAARLINK_API_KEY`, domain `bazaarlink.ai`, order 4).
