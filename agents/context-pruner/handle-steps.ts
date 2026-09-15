@@ -11,13 +11,16 @@ import { runContextPrunerMain } from './main'
 import { runMinimalSurgery } from './minimal-surgery'
 import { preparePruneContext } from './prepare-prune-context'
 import * as preservedState from './preserved-state'
+import * as preservedStateMerge from './preserved-state-merge'
 import { buildResultDigest } from './result-digests'
 import * as structuredSummary from './structured-summary'
 import { buildSummarizationContext } from './summarization-context'
 import { summarizeMessages } from './summarize-messages'
+import * as summarizeMessagesEntries from './summarize-messages-entries'
 import { summarizeToolCall } from './summarize-tool-call'
 import { buildFullSummary } from './summary-assembly'
 import * as summaryParsing from './summary-parsing'
+import * as summarySections from './summary-sections'
 import * as telemetry from './telemetry'
 
 import type { AgentDefinition } from '../types/agent-definition'
@@ -59,7 +62,20 @@ export function createContextPrunerHandleSteps(): ContextPrunerHandleSteps {
     ...Object.values(preservedState)
       .filter((v) => typeof v === 'function')
       .map((fn) => (fn as () => unknown).toString()),
+    // FID-2026-0915-002 Batch B: merge/normalize cluster + section builders
+    // + tool-branch transcribers extracted to sibling embeddable modules.
+    // (Re-exports of these from preserved-state/structured-summary dedupe to
+    // identical bodies — last definition wins, byte-identical.)
+    ...Object.values(preservedStateMerge)
+      .filter((v) => typeof v === 'function')
+      .map((fn) => (fn as () => unknown).toString()),
     ...Object.values(structuredSummary)
+      .filter((v) => typeof v === 'function')
+      .map((fn) => (fn as () => unknown).toString()),
+    ...Object.values(summarySections)
+      .filter((v) => typeof v === 'function')
+      .map((fn) => (fn as () => unknown).toString()),
+    ...Object.values(summarizeMessagesEntries)
       .filter((v) => typeof v === 'function')
       .map((fn) => (fn as () => unknown).toString()),
     // Summary-parsing and telemetry helpers extracted from main.ts.

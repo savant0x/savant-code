@@ -7,19 +7,16 @@
 import {
   ASSISTANT_MESSAGE_LIMIT,
   CHARS_PER_TOKEN,
-  SPAWN_AGENTS_OUTPUT_BLACKLIST,
   TOOL_ENTRY_LIMIT,
   USER_MESSAGE_LIMIT,
 } from './constants'
-import {
-  asAgentResultList,
-  asAnswerList,
-  asNumber,
-  asObject,
-  getTextContent,
-  truncateLongText,
-} from './helpers'
+import { asNumber, asObject, getTextContent, truncateLongText } from './helpers'
 import { buildResultDigest } from './result-digests'
+import {
+  transcribeAskUserAnswers,
+  transcribeEditResult,
+  transcribeSpawnAgentsResults,
+} from './summarize-messages-entries'
 import { summarizeToolCall } from './summarize-tool-call'
 
 import type {
@@ -194,26 +191,7 @@ export function summarizeMessages(
             }
 
             if (toolMessage.toolName === 'ask_user') {
-              if (value.skipped) {
-                entryParts.push('User skipped question')
-              } else if ('answers' in value) {
-                const answers = asAnswerList(value.answers)
-                if (answers && answers.length > 0) {
-                  const answerTexts = answers
-                    .map((a) => {
-                      if (a.otherText) return a.otherText
-                      if (a.selectedOptions) return a.selectedOptions.join(', ')
-                      if (a.selectedOption) return a.selectedOption
-                      return '(no answer)'
-                    })
-                    .join('; ')
-                  const truncated =
-                    answerTexts.length > 10_000
-                      ? answerTexts.slice(0, 10_000) + '...'
-                      : answerTexts
-                  entryParts.push(`User answered: ${truncated}`)
-                }
-              }
+              entryParts.push(...transcribeAskUserAnswers(value))
             }
 
             if (
@@ -222,61 +200,16 @@ export function summarizeMessages(
               toolMessage.toolName === 'write_file' ||
               toolMessage.toolName === 'propose_write_file'
             ) {
-              const resultStr = JSON.stringify(value)
-              const truncatedResult =
-                resultStr.length > 2000
-                  ? resultStr.slice(0, 2000) + '...'
-                  : resultStr
               entryParts.push(
-                `Edit result from ${toolMessage.toolName}:\n${truncatedResult}`,
+                ...transcribeEditResult(toolMessage.toolName, value),
               )
             }
           }
         }
       }
 
-      if (
-        toolMessage.toolName === 'spawn_agents' &&
-        Array.isArray(toolMessage.content)
-      ) {
-        for (const part of toolMessage.content) {
-          if (part.type === 'json' && Array.isArray(part.value)) {
-            const agentResults = asAgentResultList(part.value)
-            if (!agentResults) continue
-            const includedResults = agentResults.filter(
-              (r) =>
-                r.agentType &&
-                !SPAWN_AGENTS_OUTPUT_BLACKLIST.includes(r.agentType),
-            )
-            if (includedResults.length > 0) {
-              const resultSummaries = includedResults.map((r) => {
-                let outputStr = ''
-                if (r.value?.value !== undefined && r.value?.value !== null) {
-                  if (typeof r.value.value === 'string') {
-                    outputStr = r.value.value
-                  } else {
-                    outputStr = JSON.stringify(r.value.value)
-                  }
-                  outputStr = outputStr
-                    .replace(/<think>[\s\S]*?<\/think>/g, '')
-                    .trim()
-                  if (
-                    outputStr.length >
-                    ASSISTANT_MESSAGE_LIMIT * CHARS_PER_TOKEN
-                  ) {
-                    outputStr =
-                      outputStr.slice(
-                        0,
-                        ASSISTANT_MESSAGE_LIMIT * CHARS_PER_TOKEN,
-                      ) + '...'
-                  }
-                }
-                return `- ${r.agentType}: ${outputStr || '(no output)'}`
-              })
-              entryParts.push(`Agent results:\n${resultSummaries.join('\n')}`)
-            }
-          }
-        }
+      if (toolMessage.toolName === 'spawn_agents') {
+        entryParts.push(...transcribeSpawnAgentsResults(toolMessage))
       }
 
       // FID-2026-0824-024 preservation contract: a tool result matching no
