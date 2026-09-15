@@ -32,7 +32,7 @@
   LIVE probe); pipeline suite 82/342/0 fail; LIVE runs: 16/16 seeds
   tracked (8 boundary-ok, 6 unverifiable, 2 open-relay-rejected — b.ai,
   platform.experientiallabs.ai; safety gate unchanged). FID archived with
-  002. Commit `9d1c5670`.
+  002. Commit `bebc6c1a`.
 
 ## Task 48 — Scratchpad-clutter hygiene remediation (2026-09-15) — DONE
 
