@@ -52,6 +52,7 @@ Or select one of the supported gateway providers directly:
 | OpenCode Go | `/provider opencode-go` or `DIRECT_PROVIDER=opencode-go` | `OPENCODE_API_KEY` | Hosted gateway (dual-protocol) |
 | APInex | `/provider apinex` or `DIRECT_PROVIDER=apinex` | `APINEX_API_KEY` | Hosted gateway with an authenticated live model catalog |
 | B.AI | `/provider bai` or `DIRECT_PROVIDER=bai` | `BAI_API_KEY` | OpenAI-compatible gateway with an authenticated live model catalog |
+| BazaarLink | `/provider bazaarlink` or `DIRECT_PROVIDER=bazaarlink` | `BAZAARLINK_API_KEY` | Hosted gateway |
 | Cloudflare | Environment configuration | `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` | Env-only — not in the `/provider` picker; requires the account id too |
 | CommandCode | `/provider commandcode` or `DIRECT_PROVIDER=commandcode` | `COMMAND_CODE_API_KEY` | OpenAI-compatible hosted inference (dual-protocol) |
 | HCNSec | `/provider hcnsec` or `DIRECT_PROVIDER=hcnsec` | `HCNSEC_API_KEY` | OpenAI-compatible gateway on an audited static 7-model allowlist |
@@ -150,6 +151,7 @@ HCNSEC_API_KEY=dummy-hcnsec-key-replace-me
 TOKENBOM_API_KEY=dummy-tokenbom-key-replace-me
 INFRON_API_KEY=dummy-infron-key-replace-me
 UNOROUTER_API_KEY=dummy-unorouter-key-replace-me
+BAZAARLINK_API_KEY=dummy-bazaarlink_api_key-replace-me
 
 # Local Ollama override (optional)
 # OLLAMA_HOST=http://localhost:11434

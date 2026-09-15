@@ -130,6 +130,7 @@ ollama serve
 | TokenBom | `/provider tokenbom` | `TOKENBOM_API_KEY` | OpenAI 兼容网关（审计后的 7 模型静态白名单） |
 | Infron | `/provider infron` | `INFRON_API_KEY` | OpenAI 兼容推理路由平台（精选的 9 模型静态白名单） |
 | UnoRouter | `/provider unorouter` | `UNOROUTER_API_KEY` | OpenAI 兼容网关（精选的 17 模型静态白名单；`:free` 模型不计费） |
+| BazaarLink | `/provider bazaarlink` | `BAZAARLINK_API_KEY` | OpenAI 兼容网关（审计后的单模型静态白名单：`qwen3.7-flash:free`，1M 上下文） |
 
 密钥持久化在 Windows 的 `C:\Users\<username>\.savant-code\credentials.json` 或 macOS/Linux 的
 `~/.savant-code/credentials.json`。环境变量优先于已保存的凭据。自动化时，在启动 Savant-Code 前设置一个提供商密钥：
@@ -313,7 +314,7 @@ MCP 工具发现、模式切换（`HYBRID` / `SCAFFOLD` / `STRICT` / `ANALYZE`�
 - **通用复制按钮** —— 在整个 TUI 中悬停即可复制代码块、工具输出与文件 diff。
 - **网关提供商** —— 通过 `@savant-code/llm-providers` 支持 OpenRouter、TokenRouter、TokenHarbor、NVIDIA NIM、
   OpenCode Go、OpenCode Zen、CommandCode、Nous Research、KiosAPI、APInex、OrcaRouter、B.AI、HCNSec、
-  TokenBom、Infron、UnoRouter 与 Cloudflare Workers AI。Nous Research 使用 OpenAI 兼容直连
+  TokenBom、Infron、UnoRouter、BazaarLink 与 Cloudflare Workers AI。Nous Research 使用 OpenAI 兼容直连
   API；Portal OAuth 是独立集成。
 - **默认模型** —— 通过 OpenRouter 使用 `openrouter/free`（可通过 `/model` 配置）。
 - **无头 / 非交互模式** —— `savant-code --print "<prompt>"` 无需 TUI 即可运行单个提示词，并将最终答案打印到
@@ -646,12 +647,13 @@ savant-code
 /provider tokenbom
 /provider infron
 /provider unorouter
+/provider bazaarlink
 ```
 
 支持的环境变量是 `OPENROUTER_API_KEY`、`OPENCODE_API_KEY`（OpenCode Go 与 Zen 共享；旧版
 `OPENCODE_GO_API_KEY` 仍兼容）、`TOKENROUTER_API_KEY`、`TOKENHARBOR_API_KEY`、`NVIDIA_API_KEY`、
 `COMMAND_CODE_API_KEY`、`NOUS_API_KEY`、`KIOSAPI_API_KEY`、`APINEX_API_KEY`、`ORCAROUTER_API_KEY`、
-`BAI_API_KEY`、`HCNSEC_API_KEY`、`TOKENBOM_API_KEY`、`INFRON_API_KEY` 与 `UNOROUTER_API_KEY`。密钥提示为遮罩输入，并将密钥全局存储在
+`BAI_API_KEY`、`HCNSEC_API_KEY`、`TOKENBOM_API_KEY`、`INFRON_API_KEY`、`UNOROUTER_API_KEY` 与 `BAZAARLINK_API_KEY`。密钥提示为遮罩输入，并将密钥全局存储在
 Savant-Code 配置的 `credentials.json` 中；不会加入
 聊天记录。shell 环境变量优先于已存储的密钥，因此 CI 与托管环境可以不使用本地持久化来配置提供商。高级直接提供商
 集成可以使用 `INFERENCE_BASE_URL` 与 `INFERENCE_API_KEY`；OpenRouter 可使用 `OPENROUTER_API_KEY` 或

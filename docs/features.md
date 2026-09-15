@@ -196,6 +196,7 @@ Works with multiple inference providers:
 - **TokenBom** — OpenAI-compatible gateway on an audited static 7-model allowlist (`TOKENBOM_API_KEY`)
 - **Infron** — OpenAI-compatible inference-routing platform on a curated static 9-model allowlist (`INFRON_API_KEY`; inference at `llm.onerouter.pro/v1` per vendor docs)
 - **UnoRouter** — OpenAI-compatible gateway on a curated static 17-model allowlist (`UNOROUTER_API_KEY`; `:free` slugs never bill per vendor docs)
+- **BazaarLink** — OpenAI-compatible gateway on a static one-model audited allowlist (`BAZAARLINK_API_KEY`; the identity-audited genuine free channel `qwen/qwen3.7-flash:free`, 1M ctx — substituted channels excluded by ruling)
 - **KiosAPI** — OpenAI-compatible gateway with an authenticated live model catalog (`KIOSAPI_API_KEY`)
 - **OpenCode Zen** — Four-protocol hosted gateway (chat/completions, Anthropic messages, Responses, Gemini)
 - **APInex** — Hosted gateway with an authenticated live model catalog (`APINEX_API_KEY`)
