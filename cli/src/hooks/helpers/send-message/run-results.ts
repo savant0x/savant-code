@@ -1,5 +1,6 @@
 import { getErrorObject } from '@savant-code/common/util/error'
 
+import { appendHint, rateLimitHint } from './fallback-hints'
 import { finalizeQueueState } from './queue-state'
 import { useChatStore } from '../../../state/chat-store'
 import { IS_SAVANT_FREE } from '../../../utils/constants'
@@ -32,6 +33,15 @@ import type { MutableRefObject } from 'react'
 
 const DEFAULT_RUN_OUTPUT_ERROR_MESSAGE = 'No output from agent run'
 
+/** FID-2026-0915-001 (W5): 429 detection on any error shape (throw or output). */
+function isRateLimited(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false
+  const status =
+    (error as { statusCode?: unknown }).statusCode ??
+    (error as { status?: unknown }).status
+  return status === 429
+}
+
 export const handleRunCompletion = (params: {
   runState: RunState
   actualCredits: number | undefined
@@ -51,6 +61,8 @@ export const handleRunCompletion = (params: {
   resumeQueue?: () => void
   isProcessingQueueRef?: MutableRefObject<boolean>
   isQueuePausedRef?: MutableRefObject<boolean>
+  /** FID-2026-0915-001 (W5): keys the 429 fallback hint. */
+  effectiveModelId?: string
 }) => {
   const {
     runState,
@@ -100,6 +112,12 @@ export const handleRunCompletion = (params: {
       finalizeAfterError()
       return
     }
+    // FID-2026-0915-001 (W5): a rate-limited run offers same-family free
+    // alternatives (fail-silent; '' ⇒ banner unchanged).
+    const rateLimitHint429 = rateLimitHint({
+      error: output,
+      modelId: params.effectiveModelId,
+    })
     if (isFreeModeUnavailableError(output)) {
       updater.setError(getFreeModeUnavailableErrorMessage(output))
       if (IS_SAVANT_FREE) {
@@ -124,12 +142,18 @@ export const handleRunCompletion = (params: {
       ? getSavantFreeRateLimitErrorMessage(output)
       : null
     if (rateLimitMsg) {
-      updater.setError(rateLimitMsg)
+      updater.setError(appendHint(rateLimitMsg, rateLimitHint429))
       finalizeAfterError()
       return
     }
     // Pass the raw error message to setError (displayed in UserErrorBanner without additional wrapper formatting)
-    updater.setError(output.message ?? DEFAULT_RUN_OUTPUT_ERROR_MESSAGE)
+    const completionErrorMessage =
+      output.message ?? DEFAULT_RUN_OUTPUT_ERROR_MESSAGE
+    updater.setError(
+      isRateLimited(output)
+        ? appendHint(completionErrorMessage, rateLimitHint429)
+        : completionErrorMessage,
+    )
     finalizeAfterError()
     return
   }
@@ -170,6 +194,8 @@ export const handleRunError = (params: {
   isQueuePausedRef?: MutableRefObject<boolean>
   /** See handleRunCompletion — flags an unprocessed prompt on gate errors. */
   hasReceivedContent?: boolean
+  /** FID-2026-0915-001 (W5): keys the 429 fallback hint. */
+  effectiveModelId?: string
 }) => {
   const {
     error,
@@ -218,16 +244,24 @@ export const handleRunError = (params: {
     })
     return
   }
+  // FID-2026-0915-001 (W5): a rate-limited run offers same-family free
+  // alternatives (fail-silent; '' ⇒ banner unchanged).
+  const w5Hint = rateLimitHint({
+    error,
+    modelId: params.effectiveModelId,
+  })
   const rateLimitMsg = IS_SAVANT_FREE
     ? getSavantFreeRateLimitErrorMessage(error)
     : null
   if (rateLimitMsg) {
-    updater.setError(rateLimitMsg)
+    updater.setError(appendHint(rateLimitMsg, w5Hint))
     return
   }
   // Use setError for all errors so they display in UserErrorBanner consistently
   const errorMessage = errorInfo.message || 'An unexpected error occurred'
-  updater.setError(errorMessage)
+  updater.setError(
+    isRateLimited(error) ? appendHint(errorMessage, w5Hint) : errorMessage,
+  )
 }
 
 /**

@@ -228,5 +228,13 @@ export const buildSendRunConfig = (params: BuildSendRunConfigParams) => {
       ? agentWithModelOverride
       : agentWithModelOverride.id
 
-  return { runConfig, mainAgentName, resolvedContextWindow, effectivePrompt }
+  return {
+    runConfig,
+    mainAgentName,
+    resolvedContextWindow,
+    effectivePrompt,
+    // FID-2026-0915-001 (W5): the effective model id — the 429 fallback-hint
+    // seam keys the model-family lookup on it.
+    effectiveModelId,
+  }
 }

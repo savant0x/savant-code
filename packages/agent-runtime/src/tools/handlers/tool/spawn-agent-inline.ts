@@ -1,5 +1,6 @@
 import { mapValues } from 'lodash'
 
+import { applySemanticSummaryUpgrade } from './semantic-summary-upgrade'
 import { applyPrunerCompactionOutcome } from './spawn-agent-inline-pruner-outcome'
 import {
   PRUNER_SUMMARY_BUFFER_CHARS,
@@ -117,16 +118,22 @@ export const handleSpawnAgentInline = (async (
   // validation — harness-controlled numbers bypass template schema
   // strictness while model-provided params stay guarded.
   const digestCaps = parentAgentState.digestCaps
+  // FID-2026-0914-002: thread the repo root into the pruner's spawn params
+  // (same harness-controlled injection as the digest caps — the embedded
+  // scope cannot read process/env) so preserved-state paths normalize
+  // repo-relative instead of leaking absolute machine paths.
+  const projectRoot = params.fileContext?.projectRoot
   const effectiveSpawnParams =
-    agentType === 'context-pruner' && digestCaps
+    agentType === 'context-pruner' && (digestCaps || projectRoot)
       ? {
           ...(spawnParams ?? {}),
-          ...(digestCaps.headChars !== undefined
+          ...(digestCaps?.headChars !== undefined
             ? { digestHeadChars: digestCaps.headChars }
             : {}),
-          ...(digestCaps.tailChars !== undefined
+          ...(digestCaps?.tailChars !== undefined
             ? { digestTailChars: digestCaps.tailChars }
             : {}),
+          ...(projectRoot ? { projectRoot } : {}),
         }
       : spawnParams
 
@@ -249,10 +256,41 @@ export const handleSpawnAgentInline = (async (
   const streamedExcerpt = prunerSummaryBuffer.slice(
     -PRUNER_SUMMARY_EXCERPT_CHARS,
   )
-  const prunerSummaryExcerpt =
+  let prunerSummaryExcerpt =
     streamedExcerpt.trim().length > 0
       ? streamedExcerpt
       : extractPrunerSummaryFromHistory(result.agentState.messageHistory)
+
+  // FID-2026-0914-002: upgrade the deterministic excerpt into an LLM-written
+  // semantic handoff (kimi pattern) BEFORE it is surfaced. The session model
+  // writes the summary (operator ruling MQ1: main model only — no override
+  // knob); any writer failure degrades to the deterministic excerpt
+  // verbatim inside the upgrade, and user aborts propagate. The parent run
+  // waits one bounded model call here — this replaces the pre-fix behavior
+  // of surfacing a fragment-storm transcription.
+  if (
+    agentType === 'context-pruner' &&
+    !parentAgentState.parentId &&
+    prunerSummaryExcerpt.trim().length > 0
+  ) {
+    const upgrade = await applySemanticSummaryUpgrade({
+      promptAiSdk: params.promptAiSdk,
+      model: parentAgentTemplate.model,
+      apiKey: params.apiKey,
+      runId: parentAgentState.runId ?? 'NULL',
+      clientSessionId: params.clientSessionId,
+      fingerprintId: params.fingerprintId,
+      userInputId,
+      userId: params.userId,
+      deterministicExcerpt: prunerSummaryExcerpt,
+      signal: params.signal,
+      logger,
+      sendAction: params.sendAction,
+      trackEvent: params.trackEvent,
+    })
+    prunerSummaryExcerpt = upgrade.excerpt
+  }
+
   if (agentType === 'context-pruner' && !parentAgentState.parentId) {
     applyPrunerCompactionOutcome({
       parentAgentState,

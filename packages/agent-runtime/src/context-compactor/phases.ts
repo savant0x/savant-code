@@ -47,7 +47,13 @@ export class CompactionMessage_ {
     const text = CompactionMessage_.getTextContent(msg)
     return (
       text.includes('<conversation_summary>') ||
-      text.includes('<structured_state>')
+      text.includes('<structured_state>') ||
+      // FID-2026-0914-002: the summary envelope carried by the current
+      // pruner assembly is <compaction-summary> nested INSIDE
+      // <historical_memory> (summary-assembly.ts / fold-exchange.ts).
+      // Recognize the bare literal too, so a partial envelope can never
+      // slip past the emergency-truncation preserve-set.
+      text.includes('<compaction-summary>')
     )
   }
 

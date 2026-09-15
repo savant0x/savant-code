@@ -137,6 +137,9 @@ export const createSendMessageBody = (
     let actualCredits: number | undefined
 
     // Execute SDK run with streaming handlers
+    // FID-2026-0915-001 (W5): hoisted — the catch path needs the model id
+    // for the 429 fallback hint (try-scoped consts are not visible there).
+    let effectiveModelId: string | undefined
     try {
       const agentDefinitions = loadAgentDefinitions()
       const sidebarCallbacks = createSidebarEventCallbacks({
@@ -152,6 +155,7 @@ export const createSendMessageBody = (
         mainAgentName,
         resolvedContextWindow,
         effectivePrompt,
+        effectiveModelId: resolvedModelId,
       } = buildSendRunConfig({
         logger,
         agentMode,
@@ -179,6 +183,7 @@ export const createSendMessageBody = (
         sidebarCallbacks,
         onStateSnapshot: (snapshot) => runLifecycle.onStateSnapshot(snapshot),
       })
+      effectiveModelId = resolvedModelId
 
       startRunMonitors({
         heartbeatIntervalRef,
@@ -217,6 +222,7 @@ export const createSendMessageBody = (
         aiMessageId,
         wasAbortedByUser: abortController.signal.aborted,
         hasReceivedContent: hasReceivedContentRef.current,
+        effectiveModelId,
         setStreamStatus,
         setCanProcessQueue,
         updateChainInProgress,
@@ -238,6 +244,8 @@ export const createSendMessageBody = (
         hasReceivedContent: hasReceivedContentRef.current,
         getRunChatIsCurrent: runLifecycle.getRunChatIsCurrent,
         persistFailureState: runLifecycle.persistFailureState,
+        // FID-2026-0915-001 (W5): the model id keys the 429 fallback hint.
+        effectiveModelId,
       })
     } finally {
       // Streaming cleanup (run-completed flag, canonical reset, timers,

@@ -104,6 +104,8 @@ export type HandleRunCatchParams = {
   hasReceivedContent: boolean
   getRunChatIsCurrent: () => boolean
   persistFailureState: () => Promise<void>
+  /** FID-2026-0915-001 (W5): keys the 429 fallback-hint lookup. */
+  effectiveModelId?: string
 }
 
 /**
@@ -127,6 +129,7 @@ export const handleRunCatch = async (
     hasReceivedContent,
     getRunChatIsCurrent,
     persistFailureState,
+    effectiveModelId,
   } = params
   reportRunOutcome('failure')
   // If this run was aborted, the abort handler already handled cleanup.
@@ -142,6 +145,7 @@ export const handleRunCatch = async (
       setStreamStatus,
       ...queueReset,
       hasReceivedContent,
+      effectiveModelId,
     })
     // Persist the last checkpoint plus the error banner so a restart
     // after a failed run still shows this turn (see persistFailureState).
