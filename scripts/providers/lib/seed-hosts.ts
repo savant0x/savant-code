@@ -46,7 +46,8 @@ export const SEED_HOSTS: readonly SeedCard[] = [
   {
     host: 'nicked.bond',
     url: 'https://nicked.bond',
-    probeNote: '404 root /v1/models, 530 api. — needs deeper discovery',
+    probeNote:
+      'FID-2026-0915-005 deep-scan: 404 apex, api. behind Cloudflare 530 (origin DNS error) on both paths',
   },
   {
     host: 'b.ai',
@@ -61,7 +62,8 @@ export const SEED_HOSTS: readonly SeedCard[] = [
   {
     host: 'gorouter.app',
     url: 'https://gorouter.app',
-    probeNote: '502 on /v1/models at authorization time — retracked by probe',
+    probeNote:
+      'FID-2026-0915-005 deep-scan: 502 on every variant at scan time — plausibly transient, ring tracks recovery',
   },
   {
     host: 'tabitoken.com',
@@ -75,18 +77,21 @@ export const SEED_HOSTS: readonly SeedCard[] = [
   },
   {
     host: 'www.tokenrouter.com',
-    url: 'https://www.tokenrouter.com',
-    probeNote: 'open 200 model list on /v1/models (LIVE 2026-09-15)',
+    url: 'https://api.tokenrouter.com',
+    probeNote:
+      'FID-2026-0915-005 deep-scan: apex 301, www 200 is the SPA HTML fallback (not JSON), API base api.tokenrouter.com — pipeline probe boundary-ok 401 @ 787ms',
   },
   {
     host: '9router.com',
     url: 'https://9router.com',
-    probeNote: '404 on /v1/models — needs deeper discovery',
+    probeNote:
+      'FID-2026-0915-005 deep-scan: 404 on every variant, no /v1 or /api/v1 surface',
   },
   {
     host: 'use-llm.site',
     url: 'https://use-llm.site',
-    probeNote: '404 on /v1/models — needs deeper discovery',
+    probeNote:
+      'FID-2026-0915-005 deep-scan: 404 on every variant, api. unreachable (000)',
   },
   {
     host: 'platform.experientiallabs.ai',
@@ -105,8 +110,9 @@ export const SEED_HOSTS: readonly SeedCard[] = [
   },
   {
     host: 'freetheai.xyz',
-    url: 'https://freetheai.xyz',
-    probeNote: '404 root, 401 via api. subdomain — pipeline discovers surface',
+    url: 'https://api.freetheai.xyz',
+    probeNote:
+      'FID-2026-0915-005 deep-scan: apex 404, api. answers — pipeline probe boundary-ok 401 @ 1173ms',
   },
 ]
 
