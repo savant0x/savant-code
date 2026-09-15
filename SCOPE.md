@@ -35,8 +35,20 @@
       `down` exclusions; the defect is the feed's, not ours. No action.
 - [x] **T50-F.** bazaarlink.ai proposal scaffold generated (propose tool;
       moved to dev/scratchpad/archive/2026-09-15-provider-proposals/ for
-      scratchpad-root hygiene; 0 validator findings). Awaiting operator
-      key for the curation checklist.
+      scratchpad-root hygiene; 0 validator findings).
+- [x] **T50-G.** Keyed curation checklist COMPLETE (operator added
+      BAZAARLINK_API_KEY): docs base pinned `api.bazaarlink.ai/v1` (two
+      aliases verified equivalent LIVE, identical 174-model roster);
+      keyed 200 with vendor-published context_length (free channels:
+      deepseek-v4-flash 1,048,576 / qwen3.7-flash 1,000,000; auto:free
+      dynamic); `auto:free` round-trip HTTP 200 `"cost": 0` (~88 tokens
+      of routing metadata injected — transparency note); named `:free`
+      channel 402-by-design on zero credit (quota-then-paid per vendor
+      docs); free tier 10 RPM / 50 req/day from the vendor's live config
+      (blog's 150/day stale); privacy policy: prompts never stored,
+      never trained on, keys SHA-256-hashed, upstream-provider training
+      caveat explicit. Evidence in the scaffold file. Registry
+      integration remains a separate Law-2 approval.
 
 ## Task 49 — Operator seed intake into the discovery pipeline (2026-09-15)
 
