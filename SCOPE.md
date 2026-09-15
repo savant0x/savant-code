@@ -44,6 +44,19 @@
       harvest-core.test.ts (impersonator lookalikes still flag).
       LIVE rerun: flags 7 → 6, cohere cleared from the audit trail,
       candidate tracking unchanged. Simple-task path — no FID.
+- [x] **T49-F.** Remaining 6 typosquat flags adjudicated (operator pick,
+      2026-09-15) — all legitimate, two classes: (1) canonical vendor API
+      hosts absent from VENDOR_HOSTS — api.ai21.com (AI21 Labs/Jamba,
+      documented base api.ai21.com/studio/v1, LIVE FastAPI JSON 404) and
+      api.bfl.ai (Black Forest Labs/FLUX, documented host, image-gen API
+      with no /v1/models by design) — added to VENDOR_HOSTS (now also
+      screen future lookalikes; pins prove single-char lookalikes reject
+      at tier 1); (2) brand apexes of already-listed vendors —
+      fireworks.ai, hyperbolic.xyz, novita.ai (LIVE: apexes serve web
+      frontends while their api.* hosts answer in the vendors' API
+      dialects) plus operator-integrated orcarouter.ai (FID-2026-0911-002)
+      — added to LEGITIMATE_ALLOWLIST. LIVE rerun: flags 6 → 0, all
+      candidates still tracked. Simple-task path — no FID.
 
 ## Task 48 — Scratchpad-clutter hygiene remediation (2026-09-15) — DONE
 
