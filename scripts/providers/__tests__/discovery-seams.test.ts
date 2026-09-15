@@ -8,13 +8,13 @@
  */
 import { describe, expect, test } from 'bun:test'
 
+import { shouldRunBootCheck } from '@savant-code/common/providers/discovery-boot'
 import {
   buildDiscoveryContextBlock,
   summarizeForContext,
 } from '@savant-code/common/providers/discovery-context'
+
 import { healthVerdict, PROBE_LAPSED_AFTER_DAYS } from '../lib/health'
-import { parseFeedSites } from '../lib/parse-feed'
-import { shouldRunBootCheck } from '@savant-code/common/providers/discovery-boot'
 import { isPipelineSourced, readStamp, writeStamp } from '../lib/provider-stamp'
 
 describe('provider stamp (round-trip through parseCustomProviders)', () => {
