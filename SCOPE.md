@@ -33,6 +33,17 @@
   tracked (8 boundary-ok, 6 unverifiable, 2 open-relay-rejected — b.ai,
   platform.experientiallabs.ai; safety gate unchanged). FID archived with
   002. Commit `bebc6c1a`.
+- [x] **T49-E.** Typosquat tier-2 adjudication (operator pick, 2026-09-15):
+      `api.cohere.ai` ruled a legitimate vendor host — LIVE evidence:
+      same IP (34.96.76.122) serving byte-identical 401 JSON as
+      api.cohere.com; the Cohere SDK ecosystem documents
+      `https://api.cohere.ai/v1` as the default base URL (the brand
+      cannot impersonate itself). `LEGITIMATE_ALLOWLIST` extended
+      deliberately (the FID-2026-0914-003 mechanism for exactly this
+      class, same as `api.z.ai`); allowlist pin added to
+      harvest-core.test.ts (impersonator lookalikes still flag).
+      LIVE rerun: flags 7 → 6, cohere cleared from the audit trail,
+      candidate tracking unchanged. Simple-task path — no FID.
 
 ## Task 48 — Scratchpad-clutter hygiene remediation (2026-09-15) — DONE
 
