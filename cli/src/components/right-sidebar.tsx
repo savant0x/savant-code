@@ -2,6 +2,7 @@ import { TextAttributes } from '@opentui/core'
 import React from 'react'
 
 import { formatCompactionStatus } from './right-sidebar-format'
+import { SidebarHeader } from './right-sidebar-header'
 import {
   SidebarActiveAgents,
   SidebarActiveFids,
@@ -15,7 +16,6 @@ import { createSidebarSurfaceStyle } from '../chat/styles'
 import { useFids } from '../hooks/use-fids'
 import { useTheme } from '../hooks/use-theme'
 import { useChatStore } from '../state/chat-store'
-import { EasterEggLogo } from './savant-ui/easter-egg-logo'
 import { getVersion } from '../utils/version'
 import { AgentStatus } from './savant-ui/echo/agent-status'
 import { DriveStatusPanel } from './savant-ui/echo/drive-status-panel'
@@ -163,35 +163,7 @@ export const RightSidebar = React.memo(function RightSidebar({
         </box>
       )}
       {/* Header */}
-      <box
-        flexDirection="column"
-        alignItems="center"
-        gap={1}
-        paddingBottom={1}
-        focusable={false}
-        selectable={false}
-      >
-        <box
-          flexDirection="column"
-          alignItems="center"
-          flexShrink={1}
-          width="100%"
-          selectable={false}
-        >
-          <EasterEggLogo />
-        </box>
-        <box
-          flexDirection="column"
-          alignItems="center"
-          flexShrink={1}
-          width="100%"
-          selectable={false}
-        >
-          <text fg={theme.muted} selectable={false}>
-            One Mind. A Thousand Faces.
-          </text>
-        </box>
-      </box>
+      <SidebarHeader />
 
       {devMode && (
         <text
