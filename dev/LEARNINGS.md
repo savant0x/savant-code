@@ -28,7 +28,7 @@
 - **Status:** active
 - **Canonical rule:** no-environment-dependent-guards
 
-## Lesson: Active-ledger status admission — converged is not an active status
+## Lesson: Active-ledger status admission — admissible active-queue statuses
 
 - **Date:** 2026-08-21
 - **Failure:** The desktop master FID was authored with `**Status:** converged`
@@ -39,13 +39,19 @@
   closure-claiming statuses.
 - **Evidence:** scripts/fid-ledger.ts → symbol:ALLOWED_ACTIVE_STATUSES,
   packages/agent-runtime/src/echo/fid-validator.ts → symbol:validateFidStepStatus
-- **Invariant:** Files living in `dev/fids/` may carry only
-  `created | analyzed | fixed | verified`. A loop-converged planning FID stays
-  `analyzed` until its phase is implemented; `converged` documents loop state,
-  not an admissible active-queue status.
-- **Guard:** Before setting a planning FID's status, admit only the four
-  active statuses; re-run `bun run validate:repository` (or the fid-ledger
-  probe) after any FID metadata edit.
+- **Invariant:** Files living in `dev/fids/` may carry
+  `created | analyzed | converged | fixed | verified` (FID-2026-0915-004:
+  the 2026-09-15 operator vocabulary ruling supersedes this lesson's
+  original FID-2026-0820-007 admission rule — `converged` IS an admissible
+  active-queue status meaning "the Perfection Loop completed, awaiting
+  implementation approval", and `fixed` is deprecated-but-accepted legacy
+  language). The anti-deferral step gate is UNCHANGED (converged = planning
+  done, not work done — unchecked steps still fail), and the receipt
+  contract stays keyed to `fixed | verified`. Pin:
+  `scripts/__tests__/fid-ledger-vocab.test.ts`.
+- **Guard:** Before setting a planning FID's status, admit only the
+  admissible active statuses; re-run `bun run validate:repository` (or the
+  fid-ledger probe) after any FID metadata edit.
 - **Verification:** FID-2026-0820-007 → `analyzed`: fid-ledger probe 32 → 0;
   `validate:repository` 200 → 168 (quality-only, intentional).
 - **Scope:** internal

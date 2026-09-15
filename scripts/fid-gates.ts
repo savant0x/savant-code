@@ -27,7 +27,10 @@ import { resolveGate, runGates } from './fid-verify'
 import type { FidLedgerIssue } from './fid-ledger-types'
 
 const STATUS_LINE = /^\*\*Status:\*\*\s*(.+)$/m
-const VERIFIED_STATUSES = new Set(['fixed', 'verified'])
+// FID-2026-0915-004 MQ3: receipts verify IMPLEMENTATION — `converged` is
+// pre-implementation and never satisfies the gate check. Exported for the
+// vocabulary pin test.
+export const VERIFIED_STATUSES = new Set(['fixed', 'verified'])
 
 /** Active FID files under dev/fids/ (not the archive). */
 export function activeFixedFidFiles(root: string): {

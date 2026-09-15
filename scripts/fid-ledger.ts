@@ -16,9 +16,14 @@ type FidRecord = {
 }
 
 const FID_ID_PATTERN = /^FID-\d{4}-\d{4}-\d{3}$/
-const ALLOWED_ACTIVE_STATUSES = new Set([
+// FID-2026-0915-004 (operator vocabulary ruling): `converged` = the
+// Perfection Loop completed, awaiting implementation approval — an
+// admissible ACTIVE-queue status. `fixed` is deprecated-but-accepted
+// legacy language. Exported for the vocabulary pin test.
+export const ALLOWED_ACTIVE_STATUSES = new Set([
   'created',
   'analyzed',
+  'converged',
   'fixed',
   'verified',
 ])
