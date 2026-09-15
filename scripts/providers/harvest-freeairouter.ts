@@ -30,6 +30,7 @@ import { diffCandidates, detectDropouts } from './lib/diff-state'
 import { runProbeMergePhase, runReportWritePhase } from './lib/harvest-phases'
 import { parseFeedSites } from './lib/parse-feed'
 import { type ReportAuditRow } from './lib/report'
+import { SEED_FID, SEED_HOSTS, mergeSeedCards } from './lib/seed-hosts'
 import { stage0Filter } from './lib/stage0-filter'
 import { typosquatReason, typosquatVerdict } from './lib/typosquat'
 
@@ -65,7 +66,14 @@ async function main(): Promise<number> {
   console.log(`[discovery] fetching ${FEED_URL} …`)
   const { raw, fetchedAtUtc } = await fetchFeed()
   const cards = parseFeedSites(raw)
-  const candidates = stage0Filter(cards)
+  // FID-2026-0915-003: operator seeds merge into the stage-0 stream (feed
+  // precedence — a host the feed already carries keeps its feed card).
+  const seededCards = mergeSeedCards(cards)
+  const seedCount = seededCards.length - cards.length
+  if (seedCount > 0) {
+    console.log(`[discovery] +${seedCount} operator seed hosts (${SEED_FID})`)
+  }
+  const candidates = stage0Filter(seededCards)
   const auditTrail: ReportAuditRow[] = []
 
   // Audit trail: WHY every non-candidate was excluded (data-backed report).
@@ -142,6 +150,22 @@ async function main(): Promise<number> {
         reason: 'already a built-in provider in PROVIDER_REGISTRY',
       })
     }
+  }
+
+  // Operator-seed provenance: a seed host's first sight (diff `new`) gets
+  // an audit row citing the FID + authorization-time probe evidence.
+  const seedNotes = new Map(
+    SEED_HOSTS.map((seed) => [seed.host, seed.probeNote]),
+  )
+  for (const entry of entries) {
+    if (entry.classification !== 'new') continue
+    const note = seedNotes.get(entry.host)
+    if (note === undefined) continue
+    auditTrail.push({
+      host: entry.host,
+      decision: 'flagged',
+      reason: `operator seed intake (${SEED_FID}) — ${note}`,
+    })
   }
 
   // Probe new/unverifiable candidates and merge the evidence into state.
