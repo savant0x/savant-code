@@ -4,6 +4,24 @@
 > scope for the current task. Operator confirmation converts interpreted scope
 > into approved scope. Any drop/deferral requires a blocking presentation.
 
+## Task 48 — Scratchpad-clutter hygiene remediation (2026-09-15) — DONE
+
+> Operator directive: "Fix the scratchpad-clutter hygiene items flagged by
+> validate:repository" (the 4 items flagged [OPEN-OUT-OF-SCOPE] at boot,
+> now scoped in). Rule: `scripts/hygiene.ts` collectScratchpadIssues —
+> scratchpad root must stay README + active/ + archive/ + .gitkeep.
+
+- [x] **T48-A.** Moved all 4 root artifacts (day1-announce-key.txt,
+      day1-candidates-snapshot.json, fa-sites.json,
+      typecheck-chain-2026-09-15.log) to
+      `dev/scratchpad/archive/2026-09-15-audit-artifacts/` — retention
+      preserved (hygiene never deletes).
+- [x] **T48-B.** Corrective note added to the 2026-09-15-1800 session
+      summary (the only tracked file referencing a moved path); git grep
+      confirms zero other tracked references.
+- [x] **T48-C.** `validate:repository` re-run: 15 → 11 issues; zero
+      `[hygiene.scratchpad-clutter]` findings remain.
+
 ## Task 47 — Implement FID-2026-0915-002 file-cap split program (2026-09-15) — IMPLEMENTATION
 
 > Operator directive: "Approve implementation of FID-2026-0915-002 (file-cap
@@ -31,22 +49,42 @@
       AND the agent executes them (agent pushes — G1 amendment); FID header
       → `analyzed` + two missing headings; vocabulary modernization
       recorded as [OPEN-OUT-OF-SCOPE], not implemented this task.
-- [ ] **T47-B.** FID-2026-0915-002 metadata: header status → `analyzed` +
+- [x] **T47-B.** FID-2026-0915-002 metadata: header status → `analyzed` +
       `### Missed Questions` + `### Code Verification Evidence` added;
-      ledger row updated; `validate:repository` re-run to confirm the 3
-      fid.* findings clear.
-- [ ] **T47-C.** Pre-split baselines captured (per-suite test counts,
-      affected workspaces) — assertion-parity reference.
-- [ ] **T47-D.** Splits 1-11 per the FID seam table (discovery-state,
-      harvest, report, 2 test files, context-pruner trio Batch B,
-      right-sidebar, run-results, spawn-agent-inline).
-- [ ] **T47-E.** Gates: quality:report PASS, typecheck ×12, suites (assertion
-      counts ≥ pre-split), eslint 0, prettier, lint:md.
-- [ ] **T47-F.** LIVE `providers:harvest --probe` rerun — output shape
-      parity.
-- [ ] **T47-G.** FID → `fixed` with evidence; ledger + session summary;
-      final path-scoped commits + push executed by the agent (G1 amendment;
-      G2 hashes recorded in the Resolution).
+      ledger row updated; `validate:repository` re-run — 18 → 15 issues,
+      zero fid.* findings. (Later superseded by T47-G: status → `fixed` at
+      closure per the operator's vocabulary ruling.)
+- [x] **T47-C.** Pre-split baselines captured: pipeline suites 76 tests /
+      216 expect() / 0 fail; agents phase-1+serialization 45/115; full
+      agents suite 342 tests / 901 expect() (stash-verified at clean HEAD);
+      root gate 421 tests / 5737 expect() / 67 files. Law-4 consumer maps
+      via git grep (code_search tool was misbehaving this session — grep
+      fallback per Loop discipline).
+- [x] **T47-D.** All 12 splits DONE, move-only on pinned seams: rows 1-5
+      (discovery-state 640→268/157/257; harvest 589→214/160/90/288; report
+      423→247/65/176; test suites split with exact 76/216 parity) + rows
+      6-8 via Batch B embeddedHelpers (preserved-state 362→286/111,
+      structured-summary 324→268/89, summarize-messages 310→244/112;
+      handle-steps.ts registers the 3 new modules; serialization tests +
+      prebuild:agents bundle regeneration green) + rows 9-12 (right-sidebar
+      301→272/43; run-results 326→261/77; spawn-agent-inline
+      309→273/144; provider-wizard-steps 301→89/243). Rows 2/3/4 each went
+      one seam deeper than planned (measured shortfall recorded in the FID
+      Lessons); row 9 destination renamed to right-sidebar-header.tsx
+      (recorded deviation).
+- [x] **T47-E.** Gates all PASS: quality:report `PASS (1498 baselined
+      files)`; root typecheck exit 0 + per-workspace chain exit 0; root test
+      gate 421 pass / 0 fail / 5737 expect(); eslint `--max-warnings 0`
+      exit 0 (12 split-residue warnings fixed); prettier + lint:md exit 0;
+      all re-verified after the prettier reformat.
+- [x] **T47-F.** LIVE `providers:harvest --probe` exit 0 — 214 records →
+      55 stage-0; all report sections render; candidates.json
+      `_meta.version: 2` — shape parity confirmed.
+- [x] **T47-G.** FID → `fixed` with full Code Verification Evidence +
+      Lessons; ledger row updated (fixed, implementation complete, awaiting
+      operator archive); 8 path-scoped code commits `67e77d37` → `9fbe5364`
+      + records commit (hashes in the FID Resolution); push executed by the
+      agent (G1 amendment).
 
 - [ ] **[OPEN-OUT-OF-SCOPE] FID status-vocabulary modernization:** operator
       observation "converged = the perfection loop is completed; `fixed` is

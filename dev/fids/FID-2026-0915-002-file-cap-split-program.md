@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0915-002-file-cap-split-program.md`
 **ID:** FID-2026-0915-002
 **Severity:** medium
-**Status:** analyzed
+**Status:** fixed
 **Created:** 2026-09-15 (M2 remediation from the 2026-09-15 A-Z ECHO compliance
 audit; operator directive "Open the file-cap FID")
 **YAGNI-Compliance:** Verified — every split lands on a seam that already
@@ -24,7 +24,10 @@ protocol.config.yaml `quality.max_file_lines: 300` (ceiling-only rule per the
 
 `bun run quality:report` FAILs on 2026-09-15 with **11 project-owned
 TypeScript/TSX files above the 300-line absolute maximum** (release-blocking
-gate). Six are from FID-2026-0915-001 (authored over cap with no declared
+gate). **Inventory addendum:** a 12th file (`provider-wizard-steps.ts`, 301)
+crossed the cap during C1 prettier formatting after this FID was authored —
+row 12 added to the seam table; gate inventory is authoritative.
+Six are from FID-2026-0915-001 (authored over cap with no declared
 split — flagged as violation M2 in the compliance audit), four grew from the
 FID-2026-0914-002 compaction program, one is pre-existing UI debt. The
 authoritative gate inventory is larger than the audit's first hand-count
@@ -102,6 +105,7 @@ embed contract verified against handle-steps.ts + module headers.
 | 9 | `cli/src/components/right-sidebar.tsx` (301) | smallest cohesive subcomponent/const block (pinned at GREEN start by full read; 1 line over) | `right-sidebar-section.tsx` | Plain import (React module graph, not embedded) |
 | 10 | `cli/src/hooks/helpers/send-message/run-results.ts` (326) | `isRateLimited` (l.37-44) + `handleSavantFreeGateError` (l.272-EOF ≈ 55) | `run-result-gates.ts` | Plain import; `handleRunCompletion`/`handleRunError` stay exported from `run-results.ts` (zero consumer churn) |
 | 11 | `packages/agent-runtime/src/tools/handlers/tool/spawn-agent-inline.ts` (309) | one cohesive context-pruner guard block (sibling-extraction precedent: `-summary.ts`, `-pruner-outcome.ts`; exact block pinned at GREEN start) | `spawn-agent-inline-pruner-guards.ts` | Plain import |
+| 12 | `cli/src/utils/provider-wizard-steps.ts` (301) | **Inventory addendum (2026-09-15, mid-implementation):** the file measured 298 at authoring; the C1 prettier reformat (commit `3fa344cc`) pushed it to 301. Gate inventory is authoritative (Loop-1 lesson). Smallest cohesive step-renderer block, pinned by full read at GREEN start | `provider-wizard-steps-sections.ts` | Plain import (React module graph) |
 
 ## Impact Assessment
 
@@ -166,20 +170,87 @@ embed contract verified against handle-steps.ts + module headers.
 
 ### Code Verification Evidence
 
-(Status `analyzed`: planning converged, implementation not started. This
-section records the gate outputs at implementation closure — quality:report
-PASS, 12-workspace typecheck chain, per-suite counts with assertion parity,
-eslint/prettier/lint:md, LIVE harvest rerun — per the exit criteria.)
+(Recorded at implementation closure, 2026-09-15 — per the exit criteria.)
+
+- **quality:report:** `quality: PASS (1498 baselined files)` — 0 violations
+  (was 11 over-cap files + 1 mid-implementation addendum).
+- **Typecheck chain:** root `bun run typecheck` exit 0 (all workspaces);
+  additionally verified per-workspace: sdk, common, packages/database,
+  packages/agent-runtime, packages/code-map, packages/knowledge-graph,
+  packages/llm-providers, agents, cli, evals, desktop — all exit 0.
+- **Root test gate:** `bun run test` → **421 pass / 0 fail / 5737 expect()
+  across 67 files** (identical counts to the pre-split push gate).
+- **Pipeline suites (rows 1-5):** 76 tests / 216 expect() / 0 fail — exact
+  baseline parity, re-verified after the prettier reformat.
+- **Context-pruner suites (rows 6-8):** 45 pass / 115 expect() / 0 fail on
+  the phase-1 + serialization suites (test files untouched — re-exports kept
+  every import path stable); full agents suite 342 tests / 901 expect(),
+  parity with the stash-verified clean-HEAD baseline (the single fail is the
+  pre-existing vendored `resources/console/web` missing-dep failure, present
+  at HEAD before any GREEN edit).
+- **Embeddable scope (exit criterion 6):** serialization tests green;
+  `prebuild:agents` regenerated the shipped bundle from the new Batch B
+  modules (exit 0).
+- **eslint:** `bun x eslint . --max-warnings 0` exit 0 (after fixing 12
+  split-residue warnings: import/order, orphaned imports, type-import).
+- **prettier + lint:md:** both exit 0; all gates re-verified post-format.
+- **LIVE harvest rerun (exit criterion 5):** `providers:harvest --probe`
+  exit 0 — 214 records → 55 stage-0; report renders all sections (Summary /
+  Candidates by readiness / Model availability index / Ecosystem churn /
+  Quality / Audit trail / Health); `candidates.json` `_meta.version: 2`.
+
+## Verification Gates
+
+- gate: typecheck agents
+- gate: typecheck cli
+- gate: typecheck common
+- gate: typecheck packages/agent-runtime
+- gate: test scripts/providers/__tests__/harvest-core.test.ts
+- gate: test scripts/providers/__tests__/intelligence-layer.test.ts
+- gate: test agents/__tests__/context-pruner-serialization.test.ts
+- gate: test agents/__tests__/context-pruner-phase1-preserved-state.test.ts
+
+### Verification Receipt
+
+- fingerprint: sha256:fd53e38af9319cd6dc20c2a290fde717d837d5dfc1eb15ca4d1d1d5ddafa31a7
+- verified: 2026-09-15T17:35:00.904Z
+- typecheck agents: exit 0
+- typecheck cli: exit 0
+- typecheck common: exit 0
+- typecheck packages/agent-runtime: exit 0
+- test scripts/providers/__tests__/harvest-core.test.ts: exit 0
+- test scripts/providers/__tests__/intelligence-layer.test.ts: exit 0
+- test agents/__tests__/context-pruner-serialization.test.ts: exit 0
+- test agents/__tests__/context-pruner-phase1-preserved-state.test.ts: exit 0
 
 ## Resolution
 
-- **Closed Date:** —
-- **Fix Description:** —
-- **Tests Added:** —
-- **Verification Evidence:** —
-- **Commit:** —
-- **Archived:** —
+- **Closed Date:** 2026-09-15
+- **Fix Description:** all 12 over-cap files split move-only on the pinned
+  seams (rows 1-12; rows 2/3/4 each needed one seam deeper than planned —
+  FID-estimated line counts under-measured the extracted cluster; the
+  deeper seam stayed within the row's intent: cohesive existing boundaries,
+  move-only, no signature changes). One recorded deviation: row 9's pinned
+  destination name `right-sidebar-section.tsx` would collide confusingly
+  with the existing `right-sidebar-sections.tsx`; extracted as
+  `right-sidebar-header.tsx` (seam unchanged, name clarity).
+- **Tests Added:** suite splits with exact assertion parity (rows 4-5):
+  probe-boundary / diff-state / report-stable / report-write / ring-buffer
+  + shared `__tests__/helpers.ts`; no behavioral test changes.
+- **Verification Evidence:** the Code Verification Evidence section above;
+  commit `9fbe5364`.
+- **Commit:** 9fbe5364 (rows 9-10/12 cli) — series 67e77d37 → 9fbe5364.
+- **Archived:** no — operator collects; archive per the Auto-Archive rule.
 
 ## Lessons Learned
 
-(written at closure)
+- FID-estimated extracted-cluster line counts under-measured three seams
+  (rows 2/3/4); the correction pattern — split one level deeper on a cohesive
+  existing boundary — stayed within each row's move-only intent. Record the
+  measured shortfall, don't force the file under cap at a bad seam.
+- Batch B (embeddedHelpers) extractions need both the re-export (consumers)
+  and the local import (bare-name call sites inside the origin module) — a
+  re-export alone fails typecheck with TS2552 at the origin's own call sites.
+- Regenerating the shipped agent bundle (`prebuild:agents`) after any Batch B
+  change is part of the change: the bundle is gitignored build output, but
+  serializing the new modules is the embed-scope proof.

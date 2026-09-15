@@ -2,6 +2,28 @@
 
 ## Unreleased
 
+### File-cap split program: all 12 over-cap files split on existing seams (FID-2026-0915-002)
+
+- **`bun run quality:report` now PASSes with 0 violations** (1498 baselined
+  files): every file above the `max_file_lines: 300` absolute ceiling was
+  split move-only along a seam that already existed — no behavior change, no
+  import-path churn for consumers (re-export facades / same-name exports).
+- **Splits:** `discovery-state.ts` → intelligence + io + facade; harvest
+  main → candidates-io + phases + report-phase; `report.ts` → format +
+  sections; `harvest-core` / `intelligence-layer` test suites split on
+  describe boundaries with **exact assertion parity (76/216)**; the
+  context-pruner trio → `preserved-state-merge` / `summary-sections` /
+  `summarize-messages-entries` via the embeddedHelpers Batch B pattern
+  (registered in `handle-steps.ts`; serialization tests + bundle
+  regeneration green); `right-sidebar` → header component; `run-results` →
+  gates module; `spawn-agent-inline` → pruner-guards module;
+  `provider-wizard-steps` → step-sections module.
+- **Verification:** root typecheck exit 0 (all workspaces), root test gate
+  421 pass / 5737 expect(), LIVE `providers:harvest --probe` rerun
+  shape-identical (all report sections render; `candidates.json` v2).
+- **Operator visibility:** commit series `67e77d37` → `9fbe5364`; FID
+  resolution records the measured seams and the two recorded deviations.
+
 ### Free-compute intelligence layer: stability · model index · churn · nudges · fallback hints · quality gauntlet (FID-2026-0915-001)
 
 - **Six workstreams over data the pipeline already collects** (operator:
