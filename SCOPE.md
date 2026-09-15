@@ -4,6 +4,31 @@
 > scope for the current task. Operator confirmation converts interpreted scope
 > into approved scope. Any drop/deferral requires a blocking presentation.
 
+## Task 51 — Bazaarlink identity-audit gauntlet + prorisehub propose (2026-09-15)
+
+> Operator directives: "Run the identity-audit gauntlet on bazaarlink's free
+> channels before integrating" + "Registry-propose newapi.prorisehub.com
+> next". Interpreted scope: keyed gauntlet on the 3 free channels
+> (auto:free, deepseek/deepseek-v4-flash-0731free:free,
+> qwen/qwen3.7-flash:free) per the Tasks 43/44 precedent — tokenizer
+> fingerprint (fixed string, injection tell), served-name from the
+> response `model` field, self-ID EN + ZH, leak probe, routing variance
+> ×3 on auto:free — ~15 calls of the 50/day budget. Prorisehub: propose
+> scaffold only (Stage C). FID authoring follows AFTER gauntlet results;
+> the curated model-set ruling is taken via ask_user before authoring.
+> Personal-use intelligence; zero product code; key never printed (Law 12).
+
+- [x] **T51-A.** SCOPE logged (this block); intent recorded before coding
+      (Law 8).
+- [x] **T51-B.** Prorisehub propose scaffold generated + hygiene-placed
+      (dev/scratchpad/archive/2026-09-15-provider-proposals/).
+- [x] **T51-C.** Gauntlet run (15 cells, serial, ~13 of the 50/day
+      budget). Evidence below; script gitignored in scratchpad/active/.
+- [x] **T51-D.** Verdict presented; operator ruled "Qwen free only" via
+      ask_user; **FID-2026-0915-006 authored** (created; one-model static
+      catalog per the ruling; gauntlet evidence embedded; 5-gate declaration).
+      Implementation is a separate Law-2 approval.
+
 ## Task 50 — Exclusion-list review + zenmux re-rank (2026-09-15) — REVIEW ONLY
 
 > Operator directives: "Wait for a harvest run to verify zenmux.ai's auth
