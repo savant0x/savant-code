@@ -4,6 +4,30 @@
 > scope for the current task. Operator confirmation converts interpreted scope
 > into approved scope. Any drop/deferral requires a blocking presentation.
 
+## Task 49 — Operator seed intake into the discovery pipeline (2026-09-15)
+
+> Operator directive: "expand our free provider list" with a pasted 24-URL
+> list (21 unique hosts). Rulings recorded via ask_user: seed as tracked
+> candidates (flow-injection into the harvest stream — the only mechanism
+> that survives diffCandidates' absent-from-feed drop); probe from site
+> root; default category commercial-aggregator; skip chatanywhere.tech
+> (respected free-relay exclusion) and the three integrated providers
+> (orcarouter/infron/unorouter already live in the registry). FID
+> authored: FID-2026-0915-003 (analyzed, awaiting Law-2 approval).
+
+- [x] **T49-A.** Grounding + LIVE probe evidence gathered (read-only,
+  pipeline UA): 18 of 19 candidate hosts probed; boundary 401/403 ×7,
+  open-200 model lists ×4, redirect/POST-only/502 hosts flagged for the
+  pipeline's manual-redirect probe. Evidence recorded in the FID.
+- [x] **T49-B.** Disposition per operator rulings: 16 seeds + 5 skips
+  (integrated ×3, feed host, chatanywhere). URL normalization recorded
+  (dashboard/profile suffixes stripped to site roots).
+- [x] **T49-C.** FID-2026-0915-003 authored + ledger row added (analyzed).
+- [ ] **T49-D.** Implementation (BLOCKED on operator Law-2 approval):
+  `seed-hosts.ts` module + one merge seam in harvest-freeairouter.ts +
+  seed pins; gates per the FID's Verification Gates section; LIVE
+  `providers:harvest --probe` rerun showing the 16 seeds tracked.
+
 ## Task 48 — Scratchpad-clutter hygiene remediation (2026-09-15) — DONE
 
 > Operator directive: "Fix the scratchpad-clutter hygiene items flagged by
