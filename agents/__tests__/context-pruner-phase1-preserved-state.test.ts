@@ -88,8 +88,11 @@ describe('buildPreservedState (P1b)', () => {
       ]),
     ]
     const state = buildPreservedState(messages)
-    expect(state.readFiles.length).toBe(25)
-    expect(state.readFiles[0]).toBe('src/file0.ts')
+    // FID-2026-0914-002: recency-capped path lists — keeps the NEWEST 12
+    // (RECENT_PATH_CAP) and drops the oldest dead paths; the old 25-entry
+    // head cap preserved stale paths while budgets starved.
+    expect(state.readFiles.length).toBe(12)
+    expect(state.readFiles[11]).toBe('src/file39.ts')
   })
 })
 

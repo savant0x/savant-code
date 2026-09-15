@@ -14,12 +14,12 @@
 import {
   MAX_FID_CHARS,
   MAX_FILE_PATH_CHARS,
-  MAX_FILES_PER_CATEGORY,
   MAX_PRESERVED_STATE_JSON_CHARS,
   MAX_SKILL_NAME_CHARS,
   MAX_SKILLS,
   MAX_TASK_CHARS,
   MAX_TODOS,
+  RECENT_PATH_CAP,
 } from './constants'
 import {
   asObject,
@@ -51,6 +51,37 @@ export interface PreservedState {
 // name inside the eval'd scope. Module-level constants are NOT carried over
 // (only CONTEXT_PRUNER_CONSTANTS is baked), so regexes live inside functions.
 
+/**
+ * FID-2026-0914-002: normalize a file path for the preserved state.
+ *
+ * (1) When the path lives under the project root, it becomes repo-relative
+ * (kills the absolute `C:\Users\...` noise the pasted artifact showed —
+ * portable across machines and budget-cheap). (2) Windows separators always
+ * become forward slashes. (3) Paths outside the project root are kept but
+ * still separator-normalized (they may genuinely point at other locations).
+ * Embeddable-safe: params/locals only.
+ */
+export function normalizePathForState(
+  path: string,
+  projectRoot?: string,
+): string {
+  if (!path) return path
+  let normalized = path.replace(/\\/g, '/')
+  if (projectRoot) {
+    const root = projectRoot.replace(/\\/g, '/').replace(/\/+$/, '')
+    if (root.length > 0) {
+      const lowerRoot = root.toLowerCase()
+      const lowerNorm = normalized.toLowerCase()
+      if (lowerNorm === lowerRoot) {
+        normalized = '.'
+      } else if (lowerNorm.startsWith(lowerRoot + '/')) {
+        normalized = normalized.slice(root.length + 1)
+      }
+    }
+  }
+  return normalized
+}
+
 export function pushUnique(list: string[], values: string[]): void {
   for (const value of values) {
     if (!value) continue
@@ -66,26 +97,33 @@ export function capStringList(
   return list.slice(0, maxCount).map((s) => s.slice(0, maxChars))
 }
 
+/**
+ * FID-2026-0914-002: keep the NEWEST entries of an append-ordered path list
+ * (recency bias). `pushUnique` preserves insertion order = chronological
+ * order, so the newest paths are the list's tail; the cap keeps the last
+ * RECENT_PATH_CAP entries and drops the oldest dead paths (the pasted
+ * artifact carried ~2KB of stale absolute paths that survived every
+ * compaction because the old cap kept the HEAD of the list).
+ */
+export function capRecentFirst(list: string[], maxCount: number): string[] {
+  if (list.length <= maxCount) return list
+  return list.slice(list.length - maxCount)
+}
+
 export function applyPreservedStateCaps(state: PreservedState): PreservedState {
   return {
     todos: state.todos.slice(0, MAX_TODOS).map((t) => ({
       task: t.task.slice(0, MAX_TASK_CHARS),
       completed: t.completed,
     })),
-    readFiles: capStringList(
-      state.readFiles,
-      MAX_FILES_PER_CATEGORY,
-      MAX_FILE_PATH_CHARS,
+    readFiles: capRecentFirst(state.readFiles, RECENT_PATH_CAP).map((s) =>
+      s.slice(0, MAX_FILE_PATH_CHARS),
     ),
-    modifiedFiles: capStringList(
-      state.modifiedFiles,
-      MAX_FILES_PER_CATEGORY,
-      MAX_FILE_PATH_CHARS,
+    modifiedFiles: capRecentFirst(state.modifiedFiles, RECENT_PATH_CAP).map(
+      (s) => s.slice(0, MAX_FILE_PATH_CHARS),
     ),
-    createdFiles: capStringList(
-      state.createdFiles,
-      MAX_FILES_PER_CATEGORY,
-      MAX_FILE_PATH_CHARS,
+    createdFiles: capRecentFirst(state.createdFiles, RECENT_PATH_CAP).map((s) =>
+      s.slice(0, MAX_FILE_PATH_CHARS),
     ),
     skills: capStringList(state.skills, MAX_SKILLS, MAX_SKILL_NAME_CHARS),
     fid: state.fid ? state.fid.slice(0, MAX_FID_CHARS) : null,
@@ -96,8 +134,20 @@ export function applyPreservedStateCaps(state: PreservedState): PreservedState {
  * Extracts structured state from the full message history. The newest
  * write_todos call wins; file ops and skills are deduplicated unions; the
  * most recent FID reference in any user/assistant text is kept.
+ *
+ * FID-2026-0914-002: optional projectRoot (threaded via spawn params — the
+ * embedded scope cannot read process/env). When present, every extracted
+ * path is normalized to repo-relative form before the caps apply; Windows
+ * separators are always forward-slashed.
  */
-export function buildPreservedState(messages: Message[]): PreservedState {
+export function buildPreservedState(
+  messages: Message[],
+  projectRoot?: string,
+): PreservedState {
+  const normalize = (value: string): string =>
+    projectRoot
+      ? normalizePathForState(value, projectRoot)
+      : value.replace(/\\/g, '/')
   const state: PreservedState = {
     todos: [],
     readFiles: [],
@@ -121,19 +171,19 @@ export function buildPreservedState(messages: Message[]): PreservedState {
           case 'read_files':
           case 'read_subtree': {
             const paths = asStringArray(input.paths)
-            if (paths) pushUnique(state.readFiles, paths)
+            if (paths) pushUnique(state.readFiles, paths.map(normalize))
             break
           }
           case 'write_file':
           case 'propose_write_file': {
             const path = asString(input.path)
-            if (path) pushUnique(state.createdFiles, [path])
+            if (path) pushUnique(state.createdFiles, [normalize(path)])
             break
           }
           case 'str_replace':
           case 'propose_str_replace': {
             const path = asString(input.path)
-            if (path) pushUnique(state.modifiedFiles, [path])
+            if (path) pushUnique(state.modifiedFiles, [normalize(path)])
             break
           }
           case 'skill': {
@@ -253,6 +303,13 @@ export function normalizePreservedState(value: unknown): PreservedState | null {
   })
 }
 
+/**
+ * FID-2026-0914-002: merged lists are RE-NORMALIZED NEWEST-FIRST — the
+ * current window's paths lead and the previous summary's paths trail, so
+ * when the recency cap trims, it drops the OLDEST (dead) paths, never the
+ * live ones. The previous order (prev first) made the cap keep stale paths
+ * from before the last compaction while dropping this window's live paths.
+ */
 export function unionNewestFirst(prev: string[], next: string[]): string[] {
   const merged: string[] = []
   pushUnique(merged, next)
@@ -264,17 +321,40 @@ export function unionNewestFirst(prev: string[], next: string[]): string[] {
  * Merges a previously carried state with the state extracted from the current
  * window (Continue re-distill rule): the newest write_todos wins, file ops and
  * skills are unions (newest first), and the most recent FID reference wins.
+ * FID-2026-0914-002: optional projectRoot re-normalizes carried paths
+ * repo-relative (a pre-compaction summary may still carry absolute forms).
  */
 export function mergePreservedState(
   prev: PreservedState | null,
   next: PreservedState,
+  projectRoot?: string,
 ): PreservedState {
-  if (!prev) return next
+  if (!prev) {
+    if (!projectRoot) return next
+    const normalize = (paths: string[]): string[] =>
+      paths.map((p) => normalizePathForState(p, projectRoot))
+    return applyPreservedStateCaps({
+      todos: next.todos,
+      readFiles: normalize(next.readFiles),
+      modifiedFiles: normalize(next.modifiedFiles),
+      createdFiles: normalize(next.createdFiles),
+      skills: next.skills,
+      fid: next.fid,
+    })
+  }
+  const normalize = (paths: string[]): string[] =>
+    projectRoot
+      ? paths.map((p) => normalizePathForState(p, projectRoot))
+      : paths
   return applyPreservedStateCaps({
     todos: next.todos.length > 0 ? next.todos : prev.todos,
-    readFiles: unionNewestFirst(prev.readFiles, next.readFiles),
-    modifiedFiles: unionNewestFirst(prev.modifiedFiles, next.modifiedFiles),
-    createdFiles: unionNewestFirst(prev.createdFiles, next.createdFiles),
+    readFiles: normalize(unionNewestFirst(prev.readFiles, next.readFiles)),
+    modifiedFiles: normalize(
+      unionNewestFirst(prev.modifiedFiles, next.modifiedFiles),
+    ),
+    createdFiles: normalize(
+      unionNewestFirst(prev.createdFiles, next.createdFiles),
+    ),
     skills: unionNewestFirst(prev.skills, next.skills),
     fid: next.fid ?? prev.fid,
   })

@@ -37,6 +37,11 @@ type SummaryAssemblyContext = {
   previousSummaryContent: string
   previousSummaryEntries: SummaryEntry[]
   userBudget: number
+  /**
+   * FID-2026-0914-002: repo-root for preserved-state path normalization.
+   * Threaded from spawn params (the embedded scope cannot read process/env).
+   */
+  projectRoot?: string
 }
 
 export type SummaryAssemblyResult = {
@@ -64,6 +69,7 @@ export function buildFullSummary({
   previousSummaryContent,
   previousSummaryEntries,
   userBudget,
+  projectRoot,
 }: SummaryAssemblyContext): SummaryAssemblyResult {
   const messagesToSummarize = currentMessages
     .filter(
@@ -106,11 +112,12 @@ export function buildFullSummary({
     keepRecentTokens,
   )
 
-  const preservedState = buildPreservedState(currentMessages)
+  const preservedState = buildPreservedState(currentMessages, projectRoot)
   const previousPreservedState = extractPreservedState(previousSummaryContent)
   const mergedPreservedState = mergePreservedState(
     previousPreservedState,
     preservedState,
+    projectRoot,
   )
   const preservedStateJson = serializePreservedState(mergedPreservedState)
   const firstUserTurnPinned = findFirstUserTurnText(currentMessages) !== null

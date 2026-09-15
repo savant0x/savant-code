@@ -52,6 +52,10 @@ export function findFirstUserTurnText(messages: Message[]): string | null {
     if (message.tags?.includes('SUBAGENT_SPAWN')) continue
     const text = getTextContent(message).trim()
     if (!text || text.includes('<conversation_summary>')) continue
+    // FID-2026-0914-002: skip harness-injected protocol/system dumps — pin
+    // the first OPERATOR-authored turn instead. A history of only dumps
+    // pins nothing rather than pinning infrastructure.
+    if (isProtocolInfrastructureDump(text)) continue
     return pinVerbatim(text, firstUserTurnMaxChars)
   }
   return null
@@ -62,6 +66,43 @@ export function pinVerbatim(text: string, maxChars: number): string {
   if (text.length <= maxChars) return text
   const kept = text.slice(0, maxChars - 60)
   return `${kept}\n\n[...pinned text truncated — original continuation omitted...]`
+}
+
+/**
+ * FID-2026-0914-002: infrastructure-dump detector for the first-user-turn
+ * pin. The artifact's "pinned first user turn" was a system/protocol dump
+ * (`<system><compaction-notice>` + ECHO refresh + code fences), not the
+ * operator's ask — the pin then preserved infrastructure across every
+ * compaction while the real request aged out. A turn counts as
+ * infrastructure only when it carries harness-injected system markers AND
+ * the dense majority of its non-empty lines are tags/fences/headings.
+ * Embeddable-safe: regexes live inside the function body.
+ */
+export function isProtocolInfrastructureDump(text: string): boolean {
+  if (!text || text.length < 120) return false
+  if (!/<system>|<\/system>|<compaction-notice/.test(text)) return false
+  const lines = text
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0)
+  if (lines.length === 0) return false
+  let infraLines = 0
+  for (const line of lines) {
+    if (
+      line.startsWith('<system>') ||
+      line.startsWith('</system>') ||
+      line.includes('<system>') ||
+      line.includes('</system>') ||
+      line.includes('<compaction-notice') ||
+      line.startsWith('```') ||
+      /^#{1,3} /.test(line) ||
+      line.startsWith('<!--') ||
+      line.endsWith('-->')
+    ) {
+      infraLines++
+    }
+  }
+  return infraLines / lines.length > 0.4
 }
 
 export function isHarnessMessage(message: Message): boolean {
@@ -141,6 +182,9 @@ export function buildStandingFacts(messages: Message[]): string {
     if (isHarnessMessage(message)) continue
     const text = getTextContent(message).trim()
     if (!text || text.includes('<conversation_summary>')) continue
+    // FID-2026-0914-002: infrastructure dumps never become standing facts
+    // (same rule as the P1c pin below).
+    if (isProtocolInfrastructureDump(text)) continue
     if (seen.has(text)) continue
     seen.add(text)
     userTexts.push(text)

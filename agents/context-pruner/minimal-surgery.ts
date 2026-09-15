@@ -39,6 +39,8 @@ export function runMinimalSurgery(params: {
   previousSummaryContent: string
   previousSummaryEntries: SummaryEntry[]
   userBudget: number
+  /** FID-2026-0914-002: repo root for preserved-state path normalization. */
+  projectRoot?: string
 }): { currentMessages: Message[]; earlyReturn: boolean } {
   const {
     agentState,
@@ -57,6 +59,7 @@ export function runMinimalSurgery(params: {
     previousSummaryContent,
     previousSummaryEntries,
     userBudget,
+    projectRoot,
   } = params
 
   // FID-2026-0824-025: minimal surgery — fold oldest exchanges until the
@@ -96,6 +99,7 @@ export function runMinimalSurgery(params: {
         previousSummaryContent,
         previousSummaryEntries,
         userBudget,
+        projectRoot,
       })
       const nextMessages = foldedCall.input.messages
       if (nextMessages.length >= surgeryMessages.length) break

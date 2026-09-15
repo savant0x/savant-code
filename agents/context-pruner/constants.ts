@@ -88,7 +88,14 @@ export const FIXED_TAIL_BUDGET_TOKENS = 16_384
 
 export const MAX_TODOS = 20
 export const MAX_TASK_CHARS = 200
-export const MAX_FILES_PER_CATEGORY = 25
+/**
+ * FID-2026-0914-002: recency-capped path lists — the kept-NEWEST cap per
+ * path category (read/modified/created). Replaces the old keep-oldest
+ * MAX_FILES_PER_CATEGORY = 25 head cap, which preserved ~2KB of dead
+ * absolute paths in the pasted artifact while budgets starved. Paths beyond
+ * this cap that still matter re-enter via this window's tool calls.
+ */
+export const RECENT_PATH_CAP = 12
 export const MAX_FILE_PATH_CHARS = 300
 export const MAX_SKILLS = 8
 export const MAX_SKILL_NAME_CHARS = 120
@@ -144,7 +151,7 @@ export const CONTEXT_PRUNER_CONSTANTS = {
   FIXED_TAIL_BUDGET_TOKENS,
   MAX_TODOS,
   MAX_TASK_CHARS,
-  MAX_FILES_PER_CATEGORY,
+  RECENT_PATH_CAP,
   MAX_FILE_PATH_CHARS,
   MAX_SKILLS,
   MAX_SKILL_NAME_CHARS,

@@ -23,6 +23,17 @@ export function* runContextPrunerMain(
 ) {
   const p = params ?? {}
 
+  /**
+   * FID-2026-0914-002: repo root for preserved-state path normalization,
+   * injected by the spawn boundary (inline child agents share the parent's
+   * fileContext; the embedded scope cannot read process/env). Optional —
+   * absent means paths stay separator-normalized only.
+   */
+  const projectRoot: string | undefined =
+    typeof p.projectRoot === 'string' && p.projectRoot.length > 0
+      ? p.projectRoot
+      : undefined
+
   /** Prompt cache expiry time (Anthropic caches for 5 minutes by default) */
   const CACHE_EXPIRY_MS: number = asNumber(p.cacheExpiryMs) ?? 5 * 60 * 1000
 
@@ -113,6 +124,7 @@ export function* runContextPrunerMain(
     previousSummaryContent,
     previousSummaryEntries,
     userBudget,
+    projectRoot,
   })
   currentMessages = surgery.currentMessages
   if (surgery.earlyReturn) {
@@ -139,6 +151,7 @@ export function* runContextPrunerMain(
       previousSummaryContent,
       previousSummaryEntries,
       userBudget,
+      projectRoot,
     })
     return
   }
@@ -166,6 +179,7 @@ export function* runContextPrunerMain(
     previousSummaryContent,
     previousSummaryEntries,
     userBudget,
+    projectRoot,
   })
 
   const userEntryCount = allEntries.filter(

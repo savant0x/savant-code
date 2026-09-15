@@ -51,6 +51,32 @@ export function buildResultDigest(
   }
   if (serialized === null || serialized.length === 0) return null
 
+  // FID-2026-0914-002: placeholder short-circuit. Micro-compact (Layer 2)
+  // replaces cleared tool results with `[compacted]` or the tiny JSON
+  // `{compacted:true, command, exitCode}` sentinel (micro-compact.ts
+  // buildCompactedToolValue). Digesting those placeholders produced the
+  // artifact's `[digest] … bytes=11 HEAD: [compacted]` noise — the
+  // placeholder IS the digest. A placeholder-bearing result contributes no
+  // new information, so the preservation contract's "never silence" rule
+  // does not apply: return null and let summarizeMessages skip the entry.
+  if (serialized === '[compacted]' || serialized === '[compacted] ') {
+    return null
+  }
+  if (serialized.startsWith('{')) {
+    try {
+      const parsed: unknown = JSON.parse(serialized)
+      if (
+        parsed !== null &&
+        typeof parsed === 'object' &&
+        (parsed as Record<string, unknown>).compacted === true
+      ) {
+        return null
+      }
+    } catch {
+      // Not JSON — a real payload; fall through to the normal digest.
+    }
+  }
+
   const byteSize = serialized.length
 
   // Identity heuristics over the first JSON-object part: common result fields

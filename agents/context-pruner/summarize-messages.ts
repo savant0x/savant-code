@@ -56,6 +56,32 @@ export function summarizeMessages(
           )
         }
         const imageNote = hasImages ? ' [image(s) were attached]' : ''
+
+        // FID-2026-0914-002 MQ3: consecutive IDENTICAL user turns coalesce
+        // into one entry with an (×N) marker. Mid-turn "resume" spam (the
+        // pasted artifact carried 10 identical `resume` turns) transcribed
+        // verbatim produced 10 near-empty entries that budgets then promoted
+        // over substance. Only exact-text repeats coalesce; any different
+        // turn (or an image attachment) breaks the run.
+        const lastEntry = summarizedEntries[summarizedEntries.length - 1]
+        // Strip a prior (×N) marker so the 3rd+ repeat of a run still
+        // compares equal to the raw turn text (the marker is presentational).
+        const lastEntryText =
+          lastEntry !== undefined &&
+          lastEntry.role === 'user' &&
+          lastEntry.parts.length > 0
+            ? lastEntry.parts[0].replace(/ \(×\d+\)$/, '')
+            : null
+        if (!hasImages && lastEntryText === `[USER]\n${text}`) {
+          const match = lastEntry.parts[0].match(/\(×(\d+)\)$/)
+          const count = match ? Number.parseInt(match[1], 10) + 1 : 2
+          lastEntry.parts[0] = `[USER]\n${text} (×${count})`
+          if (message === latestLiveUserPromptMessage) {
+            liveUserPromptEntry = lastEntry
+          }
+          continue
+        }
+
         const entry: SummaryEntry = {
           role: 'user',
           parts: [`[USER]${imageNote}\n${text}`],
@@ -99,12 +125,44 @@ export function summarizeMessages(
         parts.push(toolSummaries.join('\n'))
       }
 
-      if (parts.length > 0) {
-        summarizedEntries.push({
-          role: 'assistant_tool',
-          parts,
-        })
+      if (parts.length === 0) continue
+
+      // FID-2026-0914-002: coalesce consecutive assistant messages into ONE
+      // turn entry. Streaming checkpoints emit one assistant message per
+      // fragment; the old per-message entries produced the artifact's 2-char
+      // `Progress note:` storm (~300 entries for one streamed response).
+      // Text merges under the SAME per-entry cap, applied once to the merged
+      // text; tool summaries ride along in the shared entry.
+      const lastAssistant = summarizedEntries[summarizedEntries.length - 1]
+      if (
+        lastAssistant !== undefined &&
+        lastAssistant.role === 'assistant_tool' &&
+        lastAssistant.parts.length > 0 &&
+        lastAssistant.parts[0].startsWith('Progress note:')
+      ) {
+        const newNote = parts.find((part) => part.startsWith('Progress note:'))
+        if (newNote !== undefined) {
+          const existingNote = lastAssistant.parts[0].slice(
+            'Progress note:\n'.length,
+          )
+          const newNoteText = newNote.slice('Progress note:\n'.length)
+          const merged = truncateLongText(
+            existingNote ? `${existingNote}\n${newNoteText}` : newNoteText,
+            ASSISTANT_MESSAGE_LIMIT * CHARS_PER_TOKEN,
+          )
+          lastAssistant.parts[0] = `Progress note:\n${merged}`
+          const toolPart = parts.find(
+            (part) => !part.startsWith('Progress note:'),
+          )
+          if (toolPart !== undefined) lastAssistant.parts.push(toolPart)
+          continue
+        }
       }
+
+      summarizedEntries.push({
+        role: 'assistant_tool',
+        parts,
+      })
     } else if (message.role === 'tool') {
       const toolMessage: ToolMessage = message
       const entryParts: string[] = []

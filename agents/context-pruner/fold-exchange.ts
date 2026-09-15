@@ -45,6 +45,8 @@ type FoldExchangeContext = {
   previousSummaryContent: string
   previousSummaryEntries: SummaryEntry[]
   userBudget: number
+  /** FID-2026-0914-002: repo root for preserved-state path normalization. */
+  projectRoot?: string
 }
 
 export function runFoldOldestExchange({
@@ -62,6 +64,7 @@ export function runFoldOldestExchange({
   previousSummaryContent,
   previousSummaryEntries,
   userBudget,
+  projectRoot,
 }: FoldExchangeContext): ToolCall<'set_messages'> {
   let lastSummaryIndex = -1
   for (let i = currentMessages.length - 1; i >= 0; i--) {
@@ -140,13 +143,14 @@ export function runFoldOldestExchange({
     keepRecentTokens,
   )
 
-  const foldPreservedState = buildPreservedState(currentMessages)
+  const foldPreservedState = buildPreservedState(currentMessages, projectRoot)
   const foldPreviousPreservedState = extractPreservedState(
     previousSummaryContent,
   )
   const foldMergedPreservedState = mergePreservedState(
     foldPreviousPreservedState,
     foldPreservedState,
+    projectRoot,
   )
   const foldPreservedStateJson = serializePreservedState(
     foldMergedPreservedState,
