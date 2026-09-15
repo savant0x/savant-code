@@ -1,12 +1,11 @@
 import { mapValues } from 'lodash'
 
-import { applySemanticSummaryUpgrade } from './semantic-summary-upgrade'
-import { applyPrunerCompactionOutcome } from './spawn-agent-inline-pruner-outcome'
 import {
-  PRUNER_SUMMARY_BUFFER_CHARS,
-  PRUNER_SUMMARY_EXCERPT_CHARS,
-  extractPrunerSummaryFromHistory,
-} from './spawn-agent-inline-summary'
+  applyPrunerPostRunGuards,
+  markPrunerBlockedOnCrash,
+  resolvePrunerSpawnParams,
+} from './spawn-agent-inline-pruner-guards'
+import { PRUNER_SUMMARY_BUFFER_CHARS } from './spawn-agent-inline-summary'
 import { applyVerdictReceipts } from './spawn-agent-inline-verdict'
 import {
   validateAndGetAgentTemplate,
@@ -123,19 +122,12 @@ export const handleSpawnAgentInline = (async (
   // scope cannot read process/env) so preserved-state paths normalize
   // repo-relative instead of leaking absolute machine paths.
   const projectRoot = params.fileContext?.projectRoot
-  const effectiveSpawnParams =
-    agentType === 'context-pruner' && (digestCaps || projectRoot)
-      ? {
-          ...(spawnParams ?? {}),
-          ...(digestCaps?.headChars !== undefined
-            ? { digestHeadChars: digestCaps.headChars }
-            : {}),
-          ...(digestCaps?.tailChars !== undefined
-            ? { digestTailChars: digestCaps.tailChars }
-            : {}),
-          ...(projectRoot ? { projectRoot } : {}),
-        }
-      : spawnParams
+  const effectiveSpawnParams = resolvePrunerSpawnParams({
+    agentType,
+    digestCaps,
+    projectRoot,
+    spawnParams,
+  })
 
   // FID-2026-0824-023: bounded capture of streamed summary text.
   let prunerSummaryBuffer = ''
@@ -206,23 +198,11 @@ export const handleSpawnAgentInline = (async (
     },
     clearUserPromptMessagesAfterResponse: false,
   }).catch((error: unknown) => {
-    // FID-2026-0822-001 RC4: a crashed inline context-pruner used to leave
-    // compactionStatus stuck at 'compacting' forever - the terminal-phase
-    // emission below runs only on success. Emit the truthful blocked state
-    // and stamp the attempt BEFORE propagating, so the CLI panel and the
-    // anti-thrash cooldown see terminal reality instead of eternal silence.
-    if (agentType === 'context-pruner' && !parentAgentState.parentId) {
-      parentAgentState.lastPrunerCompletionAt = Date.now()
-      parentAgentState.compactionStatus = {
-        phase: 'blocked',
-        percentUsed: Math.round(
-          (parentAgentState.contextTokenCount /
-            (parentAgentState.maxContextLength ?? 200_000)) *
-            100,
-        ),
-        blockReason: 'pruner-unavailable',
-      }
-    }
+    // FID-2026-0822-001 RC4: a crashed inline context-pruner must not leave
+    // compactionStatus stuck at 'compacting' forever — emit the truthful
+    // blocked state and stamp the attempt BEFORE propagating (moved to
+    // spawn-agent-inline-pruner-guards.ts, FID-2026-0915-002 split 11).
+    markPrunerBlockedOnCrash({ agentType, parentAgentState })
     throw error
   })
 
@@ -253,27 +233,22 @@ export const handleSpawnAgentInline = (async (
   // object identity (kept messages keep identity across set_messages).
   const previousHistory = parentAgentState.messageHistory
   parentAgentState.messageHistory = result.agentState.messageHistory
-  const streamedExcerpt = prunerSummaryBuffer.slice(
-    -PRUNER_SUMMARY_EXCERPT_CHARS,
-  )
-  let prunerSummaryExcerpt =
-    streamedExcerpt.trim().length > 0
-      ? streamedExcerpt
-      : extractPrunerSummaryFromHistory(result.agentState.messageHistory)
 
-  // FID-2026-0914-002: upgrade the deterministic excerpt into an LLM-written
-  // semantic handoff (kimi pattern) BEFORE it is surfaced. The session model
-  // writes the summary (operator ruling MQ1: main model only — no override
-  // knob); any writer failure degrades to the deterministic excerpt
-  // verbatim inside the upgrade, and user aborts propagate. The parent run
-  // waits one bounded model call here — this replaces the pre-fix behavior
-  // of surfacing a fragment-storm transcription.
-  if (
-    agentType === 'context-pruner' &&
-    !parentAgentState.parentId &&
-    prunerSummaryExcerpt.trim().length > 0
-  ) {
-    const upgrade = await applySemanticSummaryUpgrade({
+  // Post-run pruner guards (excerpt → LLM semantic upgrade → compaction
+  // outcome) — moved to spawn-agent-inline-pruner-guards.ts
+  // (FID-2026-0915-002 split 11).
+  await applyPrunerPostRunGuards({
+    agentType,
+    parentAgentState,
+    parentAgentTemplate,
+    resultAgentState: result.agentState,
+    prunerSummaryBuffer,
+    previousHistory,
+    previousHistoryLength,
+    previousTokenEstimate,
+    spawnParams,
+    projectRoot: params.fileContext?.projectRoot ?? '',
+    upgrade: {
       promptAiSdk: params.promptAiSdk,
       model: parentAgentTemplate.model,
       apiKey: params.apiKey,
@@ -282,27 +257,13 @@ export const handleSpawnAgentInline = (async (
       fingerprintId: params.fingerprintId,
       userInputId,
       userId: params.userId,
-      deterministicExcerpt: prunerSummaryExcerpt,
       signal: params.signal,
       logger,
       sendAction: params.sendAction,
       trackEvent: params.trackEvent,
-    })
-    prunerSummaryExcerpt = upgrade.excerpt
-  }
-
-  if (agentType === 'context-pruner' && !parentAgentState.parentId) {
-    applyPrunerCompactionOutcome({
-      parentAgentState,
-      previousHistory,
-      previousHistoryLength,
-      previousTokenEstimate,
-      summaryExcerpt: prunerSummaryExcerpt,
-      spawnParams,
-      projectRoot: params.fileContext?.projectRoot ?? '',
-      writeToClient,
-    })
-  }
+    },
+    writeToClient,
+  })
 
   return { output: [{ type: 'json', value: { message: 'Agent spawned.' } }] }
 }) satisfies SavantCodeToolHandlerFunction<ToolName>
