@@ -117,6 +117,35 @@ describe('typosquatVerdict (two-tier screen)', () => {
     expect(typosquatVerdict('api.cohere.ai.co')).toBe('flag')
   })
 
+  test('vendor-host additions pass and become lookalike references', () => {
+    // Adjudicated 2026-09-15: canonical vendor API hosts that were absent
+    // from VENDOR_HOSTS (AI21 Labs, Black Forest Labs) — their tier-2
+    // flags were false positives of absence, not impersonation.
+    expect(typosquatVerdict('api.ai21.com')).toBe('pass')
+    expect(typosquatVerdict('api.bfl.ai')).toBe('pass')
+    // Once listed, a vendor host also screens future lookalikes of it.
+    expect(typosquatVerdict('api.ai21.com.co')).toBe('flag')
+    // Single-character lookalikes of the newly listed vendor host are
+    // caught at tier 1 (distance 1), not merely flagged.
+    expect(typosquatVerdict('api.bf1.ai')).toBe('reject')
+    expect(typosquatVerdict('api.bfI.ai')).toBe('reject')
+  })
+
+  test('brand apexes of listed vendors pass (allowlist class)', () => {
+    // Adjudicated 2026-09-15 cohort: marketing apexes of vendors whose
+    // api.* hosts are already in VENDOR_HOSTS, plus the operator-
+    // integrated orcarouter. LIVE: apexes serve web frontends; the api.*
+    // hosts answer with the vendors' own API dialects.
+    for (const host of [
+      'fireworks.ai',
+      'hyperbolic.xyz',
+      'novita.ai',
+      'orcarouter.ai',
+    ]) {
+      expect(typosquatVerdict(host)).toBe('pass')
+    }
+  })
+
   test('distance >= 5 passes clean', () => {
     expect(typosquatVerdict('api.my-new-startup-free.ai')).toBe('pass')
   })

@@ -23,6 +23,15 @@ const VENDOR_HOSTS: readonly string[] = [
   'api.sambanova.ai',
   'api.cohere.com',
   'api.x.ai',
+  // Adjudicated additions 2026-09-15 (tier-2 false positives — canonical
+  // vendor API hosts that were simply absent from this list):
+  // - api.ai21.com: AI21 Labs (Jamba); documented base
+  //   https://api.ai21.com/studio/v1; LIVE /v1/models 404 is a real
+  //   FastAPI JSON surface, not an SPA or parked page.
+  // - api.bfl.ai: Black Forest Labs (FLUX); documented API host
+  //   (bfl.ai / docs.bfl.ai); image-gen API — no /v1/models by design.
+  'api.ai21.com',
+  'api.bfl.ai',
   'api.novita.ai',
   'api.hyperbolic.xyz',
   'api.deepseek.com',
@@ -47,6 +56,16 @@ const LEGITIMATE_ALLOWLIST: ReadonlySet<string> = new Set([
   // https://api.cohere.ai/v1 as the default base URL. The brand cannot
   // impersonate itself. (Was: tier-2 flag, distance 3 from api.cohere.com.)
   'api.cohere.ai',
+  // Adjudicated apexes 2026-09-15: marketing domains of vendors whose API
+  // hosts are already in VENDOR_HOSTS — the brand cannot impersonate its
+  // own listed API surface. LIVE: apexes serve web frontends (SPA/301);
+  // their api.* hosts answer with the vendors' own API dialects.
+  'fireworks.ai', // apex of api.fireworks.ai (already listed)
+  'hyperbolic.xyz', // apex of api.hyperbolic.xyz (already listed)
+  'novita.ai', // apex of api.novita.ai (already listed)
+  // orcarouter.ai: operator-integrated provider (FID-2026-0911-002);
+  // api.orcarouter.ai LIVE 200 with the model roster.
+  'orcarouter.ai',
 ])
 
 export type TyposquatVerdict = 'pass' | 'flag' | 'reject'
