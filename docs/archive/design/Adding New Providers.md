@@ -211,10 +211,49 @@ chain: catalog → `/model` selection → persisted `activeProvider` → SDK reg
 loop → generic factory → correct base URL and auth header. Compilation alone is
 not verification; the validation suite plus the end-to-end routing tests are.
 
+## Discovery pipeline: candidate → custom provider (FID-2026-0914-003)
+
+The manual recipe above is for providers YOU chose. The discovery pipeline
+adds a data-backed funnel that finds free-tier candidates daily and hands
+them to the SAME wizard — the registry itself is never auto-touched.
+
+| Stage | Command | What happens |
+|-------|---------|--------------|
+| Harvest + probe | `bun run providers:harvest --probe` | Fetches the freeairouter open feed once, applies the stage-0 filter + two-tier typosquat screen, probes new candidates (`GET /v1/models` + 401-boundary, read-only, no keys) **plus hosts whose standing boundary verdict is `boundary-unverifiable`** (stale measurement artifacts self-correct — e.g. endpoints behind apex→www redirects, whose probes used to die at fetch's POST→GET degradation), diffs against prior state + the built-in registry, health-probes pipeline-sourced custom providers, and **replaces in place**: `dev/provider-candidates/report.md` (data-backed, full audit trail — every rejection carries a reason), `candidates.json` (state v2: per-host 14-day history ring, model roster, `firstSeenUtc`, `downStreak`), `agent-context.txt` (sanitized announce block), `denylist.json` (every rejection/flag ever recorded, with dates) |
+| Boot-check (automatic) | — | On CLI start inside this repo, the harvest runs in the background when the report is >24h old (fail-silent, never blocks the TUI; ordinary users never fetch) |
+| Agent mention | — | The next session's bootstrap carries the sanitized block (hosts, model counts, verdicts, the report path — never feed prose); the agent mentions new candidates conversationally and offers the add path. It has no add/remove authority. When a health-tracked provider degrades and a boundary-ok candidate is >2× faster, the block gains ONE capped suggest-line (suggests, never switches) |
+| Accept | `/provider add <host>` | For a probe-passed candidate, opens the wizard PRE-FILLED (id/label/baseUrl/envVar derived from the host; Enter adopts, typing replaces). The finalized record is stamped `source: 'discovery-pipeline'` + `acceptedAt` and saved as a regular custom provider |
+| Propose (upstream scaffold) | `bun run providers:propose -- <host>` | Writes an FID-001-shaped scaffold into `dev/scratchpad/` (catalog draft, pin skeleton, docs blurb) for curating a proven candidate INTO the built-in registry |
+| Quality (operator-run) | `bun run providers:quality -- <host>` | Runs a fixed 8-prompt coding rubric against ONE candidate with YOUR key (read from the env at invocation — `<SLUG>_API_KEY` or `QUALITY_API_KEY`; used in request headers only, never stored or logged). Writes `quality.json` (gitignored); results render in the report's Quality section on the next harvest. Never scheduled; not a merge gate |
+| Track | (every harvest run) | Stamped providers are re-probed daily: liveness, `/v1/models` shape, and 401-boundary drift — a provider that starts answering unauthenticated requests is flagged as a compromise signal in the report + agent block |
+| Remove | `/provider remove <id>` | The shipped command (custom-only, built-ins protected, active-provider fallback handled). The agent suggests it when health degrades; the human always executes it |
+
+### The intelligence layer (FID-2026-0915-001)
+
+The daily harvest accumulates a time-series; the report turns it into
+decision data: a **Uptime (14d)** column per candidate (from the history
+ring), a readiness-ordered **Model availability index** ("which verified
+hosts serve `deepseek`?" — model-family normalization joins vendor ids,
+feed prose, and bare ids), **dropout detection** (a host silently removing
+a model family is flagged in the audit trail), an **Ecosystem churn**
+section (7-day new-host window, 72h-rule lapses, median lifespan of dead
+hosts), and **429 fallback hints** in the CLI: when a rate-limited request
+fails, the error banner may name up to 2 OTHER boundary-ok hosts serving
+the same model family (fail-silent, once per model per session — a hint,
+never a switch).
+
+Hard invariants: zero auto-merge (the wizard confirmation is the gate); zero
+key handling in the pipeline; `risky`-status and anonymous-relay providers are
+hard-excluded before the report; 72-hour lapse rule prunes dead candidates;
+the agent never receives a destructive tool. Pipeline artifacts are gitignored
+(`dev/provider-candidates/`).
+
 ## Reference FIDs
 
 | FID | Topic |
 |-----|-------|
+| FID-2026-0915-001 | Free-compute intelligence layer — stability ring, model index, churn, nudges, 429 hints, quality gauntlet |
+| FID-2026-0914-003 | Free-compute discovery pipeline — the harvest/probe/propose/track/remove lifecycle above |
 | FID-2026-0809-001 | Unified provider registry — this runbook's source (Phases 1-5) |
 | FID-2026-0807-025 | TokenHarbor provider integration — the canonical full-provider example |
 | FID-2026-0806-010 | OpenRouter-first boot default (`openrouter/` slug preserved) |

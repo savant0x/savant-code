@@ -168,6 +168,7 @@ history. The supported hosted providers are:
 | Cloudflare | Environment configuration | `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` | Env-only — not in the `/provider` picker; requires the account id too |
 | CommandCode | `/provider commandcode` or `DIRECT_PROVIDER=commandcode` | `COMMAND_CODE_API_KEY` | OpenAI-compatible hosted inference (dual-protocol) |
 | HCNSec | `/provider hcnsec` or `DIRECT_PROVIDER=hcnsec` | `HCNSEC_API_KEY` | OpenAI-compatible gateway on an audited static 7-model allowlist |
+| Infron | `/provider infron` or `DIRECT_PROVIDER=infron` | `INFRON_API_KEY` | Hosted gateway |
 | KiosAPI | `/provider kiosapi` or `DIRECT_PROVIDER=kiosapi` | `KIOSAPI_API_KEY` | OpenAI-compatible gateway (live catalog) |
 | Nous Research | `/provider nous` or `DIRECT_PROVIDER=nous` | `NOUS_API_KEY` | OpenAI-compatible direct inference; Portal OAuth is separate |
 | Ollama | Automatic detection | `OLLAMA_HOST` (optional) | Local inference; no API key required |
@@ -175,6 +176,7 @@ history. The supported hosted providers are:
 | OrcaRouter | `/provider orcarouter` or `DIRECT_PROVIDER=orcarouter` | `ORCAROUTER_API_KEY` | Multi-provider gateway with a live model catalog (free tier currently gated vendor-side on GitHub account linkage) |
 | TokenBom | `/provider tokenbom` or `DIRECT_PROVIDER=tokenbom` | `TOKENBOM_API_KEY` | OpenAI-compatible gateway on an audited static 7-model allowlist |
 | TokenHarbor | `/provider tokenharbor` or `DIRECT_PROVIDER=tokenharbor` | `TOKENHARBOR_API_KEY` | OpenAI-compatible hosted gateway |
+| UnoRouter | `/provider unorouter` or `DIRECT_PROVIDER=unorouter` | `UNOROUTER_API_KEY` | Hosted gateway |
 | Custom endpoint | Environment configuration | `INFERENCE_BASE_URL`, `INFERENCE_API_KEY` | Advanced OpenAI-compatible endpoint |
 <!-- GENERATED:provider-table-end -->
 
@@ -507,7 +509,7 @@ code 2 blocks a tool.
   file diffs throughout the TUI.
 - **Gateway providers** — OpenRouter, TokenRouter, TokenHarbor, NVIDIA NIM,
   OpenCode Go, OpenCode Zen, CommandCode, Nous Research, KiosAPI, APInex,
-  OrcaRouter, B.AI, HCNSec, TokenBom, and Cloudflare Workers AI via
+  OrcaRouter, B.AI, HCNSec, TokenBom, Infron, UnoRouter, and Cloudflare Workers AI via
   `@savant-code/llm-providers`. Nous Research uses the direct OpenAI-compatible API; Portal OAuth
   is a separate integration.
 - **Default model** — `openrouter/free` via OpenRouter (configurable via
@@ -944,6 +946,8 @@ picker or choose one directly:
 /provider bai
 /provider hcnsec
 /provider tokenbom
+/provider infron
+/provider unorouter
 ```
 
 The supported environment variables are `OPENROUTER_API_KEY`,
@@ -951,8 +955,8 @@ The supported environment variables are `OPENROUTER_API_KEY`,
 `OPENCODE_GO_API_KEY` still honored), `TOKENROUTER_API_KEY`,
 `TOKENHARBOR_API_KEY`, `NVIDIA_API_KEY`, `COMMAND_CODE_API_KEY`,
 `NOUS_API_KEY`, `KIOSAPI_API_KEY`, `APINEX_API_KEY`,
-`ORCAROUTER_API_KEY`, `BAI_API_KEY`, `HCNSEC_API_KEY`, and
-`TOKENBOM_API_KEY`. The key
+`ORCAROUTER_API_KEY`, `BAI_API_KEY`, `HCNSEC_API_KEY`, `TOKENBOM_API_KEY`,
+`INFRON_API_KEY`, `UNOROUTER_API_KEY`. The key
 prompt is masked and stores the key globally in the Savant-Code config
 `credentials.json`; it is not added to chat history. Shell environment variables
 take precedence over stored keys, so CI and managed environments can configure

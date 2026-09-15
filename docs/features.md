@@ -194,6 +194,8 @@ Works with multiple inference providers:
 - **B.AI** — OpenAI-compatible gateway with an authenticated live model catalog (`BAI_API_KEY`)
 - **HCNSec** — OpenAI-compatible gateway on an audited static 7-model allowlist (`HCNSEC_API_KEY`)
 - **TokenBom** — OpenAI-compatible gateway on an audited static 7-model allowlist (`TOKENBOM_API_KEY`)
+- **Infron** — OpenAI-compatible inference-routing platform on a curated static 9-model allowlist (`INFRON_API_KEY`; inference at `llm.onerouter.pro/v1` per vendor docs)
+- **UnoRouter** — OpenAI-compatible gateway on a curated static 17-model allowlist (`UNOROUTER_API_KEY`; `:free` slugs never bill per vendor docs)
 - **KiosAPI** — OpenAI-compatible gateway with an authenticated live model catalog (`KIOSAPI_API_KEY`)
 - **OpenCode Zen** — Four-protocol hosted gateway (chat/completions, Anthropic messages, Responses, Gemini)
 - **APInex** — Hosted gateway with an authenticated live model catalog (`APINEX_API_KEY`)
@@ -389,6 +391,14 @@ Structural cost controls layered onto the ECHO runtime (FID-2026-0806-003):
 tail pinning, tool-result snip pre-pass with byte/line caps, and
 `<compaction-summary>`/`<structured_state>` tags that preserve exact
 identifiers and decisions instead of collapsing them into prose.
+- **LLM-semantic summaries (FID-2026-0914-002)** — the deterministic
+transcription is upgraded into a first-person handoff by the session model
+at the spawn boundary (settled-vs-open decisions, exact commands/paths,
+named unknowns, forward plan; validated, redacted, deterministic fallback
+on any failure). The deterministic writer stays as the guardrail:
+streamed fragments and repeated user messages coalesce, compaction
+placeholders are never re-digested, and preserved-state paths are
+repo-relative and recency-capped.
 - **Amortization** — optional per-turn fold mode (one oldest exchange folded
 per step), idle-compaction and force-ratio triggers, and anti-thrash scoring.
 - **Token telemetry** — per-agent prompt/completion/cached token events, a

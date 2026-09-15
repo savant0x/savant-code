@@ -78,6 +78,8 @@ Or configure one directly:
 | B.AI | `/provider bai` | `BAI_API_KEY` (authenticated live model catalog) |
 | HCNSec | `/provider hcnsec` | `HCNSEC_API_KEY` (audited static 7-model allowlist) |
 | TokenBom | `/provider tokenbom` | `TOKENBOM_API_KEY` (audited static 7-model allowlist) |
+| Infron | `/provider infron` | `INFRON_API_KEY` (curated static 9-model allowlist; free tier requires a funded team account vendor-side) |
+| UnoRouter | `/provider unorouter` | `UNOROUTER_API_KEY` (curated static 17-model allowlist; `:free` models never bill) |
 | NVIDIA NIM | `/provider nvidia` | `NVIDIA_API_KEY` |
 | CommandCode | `/provider commandcode` | `COMMAND_CODE_API_KEY` |
 | Nous Research | `/provider nous` | `NOUS_API_KEY` (direct OpenAI-compatible API; Portal OAuth is separate) |

@@ -269,7 +269,7 @@ write-gated with LIMIT injection and SQL redaction.
 The SDK is where inference happens. `getModelForRequest()` dispatches on model-id prefix
 (`openrouter/`, `tokenrouter/`, `tokenharbor/`, `nvidia/`, `opencode-go/`, `opencode-zen/`,
 `commandcode/`, `nous/`, `kiosapi/`, `apinex/`, `orcarouter/`, `bai/`, `hcnsec/`, `tokenbom/`,
-`cloudflare/`, bare slugs). The default path is the generic OpenAI-compatible adapter targeting
+`infron/`, `unorouter/`, `cloudflare/`, bare slugs). The default path is the generic OpenAI-compatible adapter targeting
 `INFERENCE_BASE_URL`. Full detail and the provider-adding runbook live in
 `docs/archive/design/Adding New Providers.md` — that refactor is engine work inside
 this package.
@@ -289,7 +289,7 @@ call short-circuits (FID-2026-0806-009).
 | `INFERENCE_BASE_URL` | Direct-mode OpenAI-compatible base URL |
 | `INFERENCE_API_KEY` | SDK-specific inference key |
 | `OR_MASTER_KEY`, `OPENROUTER_API_KEY` | OpenRouter credentials (master-key exchange / regular key) |
-| `TOKENROUTER_API_KEY`, `TOKENHARBOR_API_KEY`, `NVIDIA_API_KEY`, `OPENCODE_API_KEY`, `COMMAND_CODE_API_KEY`, `KIOSAPI_API_KEY`, `APINEX_API_KEY`, `ORCAROUTER_API_KEY`, `BAI_API_KEY`, `HCNSEC_API_KEY`, `TOKENBOM_API_KEY`, `NOUS_API_KEY` | Gateway provider keys (`OPENCODE_API_KEY` is shared by OpenCode Go and OpenCode Zen; legacy `OPENCODE_GO_API_KEY` still honored); registry-resolved (`credentials.envVar` → `process.env` in `sdk/src/impl/model-provider.ts`); Nous uses the direct OpenAI-compatible API and does not imply Portal OAuth |
+| `TOKENROUTER_API_KEY`, `TOKENHARBOR_API_KEY`, `NVIDIA_API_KEY`, `OPENCODE_API_KEY`, `COMMAND_CODE_API_KEY`, `KIOSAPI_API_KEY`, `APINEX_API_KEY`, `ORCAROUTER_API_KEY`, `BAI_API_KEY`, `HCNSEC_API_KEY`, `TOKENBOM_API_KEY`, `INFRON_API_KEY`, `UNOROUTER_API_KEY`, `NOUS_API_KEY` | Gateway provider keys (`OPENCODE_API_KEY` is shared by OpenCode Go and OpenCode Zen; legacy `OPENCODE_GO_API_KEY` still honored); registry-resolved (`credentials.envVar` → `process.env` in `sdk/src/impl/model-provider.ts`); Nous uses the direct OpenAI-compatible API and does not imply Portal OAuth |
 | `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` | Cloudflare Workers AI |
 | `SAVANT_CODE_BYOK_OPENROUTER` | BYOK OpenRouter header override (`x-openrouter-api-key`) |
 | `NEXT_PUBLIC_SAVANT_CODE_APP_URL` / `SAVANT_CODE_APP_URL` | Runtime backend URL override (deploy-time; Convex/Next hosts) |
