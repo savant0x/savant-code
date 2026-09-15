@@ -27,7 +27,15 @@
 - [x] **T51-D.** Verdict presented; operator ruled "Qwen free only" via
       ask_user; **FID-2026-0915-006 authored** (created; one-model static
       catalog per the ruling; gauntlet evidence embedded; 5-gate declaration).
-      Implementation is a separate Law-2 approval.
+- [x] **T51-E.** FID-2026-0915-006 IMPLEMENTED (operator "Implement
+      FID-2026-0915-006"): RED-first widened closed-world pins (2 failing
+      captured); registry entry + catalog map + MODEL_CATALOGS + shim +
+      fallback table + cli fetcher + gateway merge; MQ3 amended to `strip`
+      with evidence; 8 docs surfaces synced; typecheck ×4 + 12-workspace
+      test chain 0 fail + eslint/prettier/lint:md/docs-check/quality all
+      green; Step-5 LIVE keyed round-trip via the production chain PASS
+      (exact echo, no injection class); 5-gate receipt stamped. Status
+      `fixed`; archive awaits operator closure (G2).
 
 ## Task 50 — Exclusion-list review + zenmux re-rank (2026-09-15) — REVIEW ONLY
 

@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0915-006-bazaarlink-gateway-provider.md`
 **ID:** FID-2026-0915-006
 **Severity:** low
-**Status:** created
+**Status:** fixed
 **Created:** 2026-09-15 (operator: "Author the FID for the bazaarlink registry
 integration"; model-set ruling via ask_user: "Qwen free only")
 
@@ -63,9 +63,14 @@ adding them would require a new operator decision plus a gauntlet re-run.
   `qwen/qwen3.7-flash:free` (captured 2026-09-15). Never from the discovery
   feed (the feed's "5 free models†" includes the disqualified channels).
   The pin test cites this value.
-- **MQ3 — idTransform:** `keep`. The id `qwen/qwen3.7-flash:free` is sent
-  upstream verbatim — verified by the keyed round-trip (served `model`
-  echoed the same id family).
+- **MQ3 — idTransform:** `strip` (amended at implementation, evidence-based:
+  the FID draft said `keep`, but ALL five static/curated gateway entries
+  — hcnsec, tokenbom, infron, unorouter, plus the live-catalog apinex —
+  use `strip` with the internal routing prefix; infron carries vendor
+  slashes + `:free` under the same transform. The production wire id
+  `bazaarlink/qwen/qwen3.7-flash:free` strips to `qwen/qwen3.7-flash:free`
+  — exactly the keyed-verified upstream id. `keep` would break the
+  internal routing grammar.)
 - **MQ4 — env var:** `BAZAARLINK_API_KEY` — the operator's actual key name
   in `.env.local`; provider id `bazaarlink` makes the registry grammar
   `{PROVIDERID}_API_KEY` match exactly. No canonicalization needed.
@@ -94,18 +99,74 @@ Ground truth verified BEFORE this FID (keyed, 2026-09-15; scaffold:
   shared beyond routing; keys SHA-256-hashed; upstream-training caveat
   explicit.
 
+### Implementation (2026-09-15)
+
+RED-first: the widened closed-world pins (19 providers, 17 setup, order-4
+family) captured 2 failing before GREEN (the order-4 loop pin passed even RED
+because unknown providers default to order 4 — noted; the full-entry pin in
+provider-registry-gateways.test.ts is the exact-shape guard).
+
+GREEN surfaces (all precedent-pattern, zero new mechanisms):
+- `common/src/providers/registry-partitioned.ts` — `bazaarlink` entry
+  (baseUrl `https://api.bazaarlink.ai/v1`, openai, strip, static modelsRef,
+  env `BAZAARLINK_API_KEY`, domain `bazaarlink.ai`, order 4).
+- `common/src/constants/model-config/gateway-catalogs.ts` —
+  `bazaarlinkModels` (ONE id: `bazaarlink/qwen/qwen3.7-flash:free`) +
+  exclusion provenance in the doc comment.
+- `common/src/providers/model-catalogs.ts` — `MODEL_CATALOGS.bazaarlink`.
+- `common/src/constants/model-config.ts` — shim export + type.
+- `common/src/constants/context-windows.ts` — vendor-published fallback
+  entry (1,000,000) + NAME_CATALOG union.
+- `cli/src/utils/openrouter-models/static-catalogs-gateways.ts` —
+  `fetchBazaarlinkModels()` + display name + pinned window.
+- `cli/src/utils/openrouter-models/gateway.ts` — merge into the combined
+  gateway catalog.
+- Docs: all 8 hand-maintained surfaces synced (`generate:provider-docs:check`
+  exit 0 after generator normalization of the 3 generated blocks).
+
+### Step-5 LIVE Round-Trip (production chain, keyed)
+
+`getModelForRequest({ model: 'bazaarlink/qwen/qwen3.7-flash:free' })` via
+`sdk/src/impl/model-provider.ts` (registry loop → generic OpenAI-compatible
+factory, strip transform, registry-resolved `BAZAARLINK_API_KEY`): finishReason
+`stop`, text exactly `"BAZAARLINK-STEP5-OK"`, usage 26 input / 9 output tokens,
+zero reasoning tokens — clean channel, no injection class. Key never printed
+(Law 12).
+
 ## Verification Gates
 
 - gate: typecheck sdk
 - gate: typecheck common
 - gate: typecheck packages/agent-runtime
 - gate: typecheck cli
-- gate: test cli/src/utils/__tests__/provider-registry.test.ts
+- gate: test common/src/providers/__tests__/provider-registry.test.ts
+
+### Verification Receipt
+
+- fingerprint: sha256:77b0f944ac8cf65602a6f698bdc068ba462f12fd37a7e33aaa9de56a6f48bac3
+- verified: 2026-09-15T23:26:14.913Z
+- typecheck sdk: exit 0
+- typecheck common: exit 0
+- typecheck packages/agent-runtime: exit 0
+- typecheck cli: exit 0
+- test common/src/providers/__tests__/provider-registry.test.ts: exit 0
 
 ## Resolution
 
-(filled at closure)
+Implemented per the operator's "Qwen free only" ruling; MQ3 amended to
+`strip` with evidence (all five prior static/curated gateways use strip; the
+wire id `bazaarlink/qwen/qwen3.7-flash:free` strips to the keyed-verified
+upstream id). Gates: typecheck ×4 exit 0; root test chain 12 workspaces
+0 fail (common suite includes the 3 widened closed-world pins + the
+full-entry pin; cli suite includes the 2 new catalog pins); eslint
+`--max-warnings 0`, prettier, lint:md, docs-check, quality:report PASS.
+Status `fixed` — archive awaits operator closure (G2).
 
 ## Lessons Learned
 
-(filled at closure)
+- The order-4 family pin (loop over provider ids asserting order 4) cannot
+  serve as a RED witness — `deriveProviderOrder` defaults unknown ids to 4.
+  Exact-shape full-entry pins are the real closed-world guard.
+- `bun test <dir>` filters are substring-matched against vendored copies
+  (`resources/freebuff-main/...`) — scope suite runs by workspace script,
+  not path filter, when vendored trees exist.
