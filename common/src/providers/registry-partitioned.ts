@@ -247,4 +247,34 @@ export const PROVIDER_REGISTRY_PARTITION = {
     domain: 'unorouter.com',
     order: 4,
   },
+  bazaarlink: {
+    id: 'bazaarlink',
+    label: 'BazaarLink',
+    kind: 'gateway',
+    credentials: {
+      envVar: 'BAZAARLINK_API_KEY',
+      // /provider hint is part of the canonical message.
+      missingKeyMessage:
+        'BazaarLink API key not set. Set BAZAARLINK_API_KEY environment variable or run /provider bazaarlink.',
+    },
+    // Vendor quickstart (bazaarlink.ai/free) pins the inference base
+    // api.bazaarlink.ai/v1; the apex aliases (bazaarlink.ai/v1 and
+    // /api/v1) were verified byte-equivalent LIVE (FID-2026-0915-006).
+    baseUrl: 'https://api.bazaarlink.ai/v1',
+    protocol: 'openai',
+    // Upstream free ids carry vendor namespaces with slashes
+    // (qwen/qwen3.7-flash:free); `strip` removes only the internal
+    // `bazaarlink/` routing prefix — infron precedent.
+    idTransform: 'strip',
+    // STATIC audited allowlist (identity gauntlet T51-C,
+    // FID-2026-0915-006): the live /v1/models roster mixes the genuine
+    // qwen free channel with substituted deepseek channels (EN self-IDs
+    // claimed GPT-4 and Claude Opus 4.1) and the unreliable auto:free
+    // router — the catalog is exactly the confirmed set. Personal-use
+    // provenance.
+    catalog: { source: 'static', modelsRef: 'bazaarlink' },
+    setupAvailable: true,
+    domain: 'bazaarlink.ai',
+    order: 4,
+  },
 } as const satisfies Record<string, ProviderConfig>

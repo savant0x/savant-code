@@ -90,4 +90,27 @@ describe('gateway registry entries (full-entry pins)', () => {
       order: 4,
     })
   })
+
+  test('bazaarlink entry matches the audited contract (FID-2026-0915-006)', () => {
+    // Vendor quickstart pins api.bazaarlink.ai/v1; STATIC one-model
+    // allowlist per the operator "Qwen free only" ruling + identity
+    // gauntlet T51-C (deepseek channels substituted, auto:free excluded).
+    expect(PROVIDER_REGISTRY.bazaarlink).toEqual({
+      id: 'bazaarlink',
+      label: 'BazaarLink',
+      kind: 'gateway',
+      credentials: {
+        envVar: 'BAZAARLINK_API_KEY',
+        missingKeyMessage:
+          'BazaarLink API key not set. Set BAZAARLINK_API_KEY environment variable or run /provider bazaarlink.',
+      },
+      baseUrl: 'https://api.bazaarlink.ai/v1',
+      protocol: 'openai',
+      idTransform: 'strip',
+      catalog: { source: 'static', modelsRef: 'bazaarlink' },
+      setupAvailable: true,
+      domain: 'bazaarlink.ai',
+      order: 4,
+    })
+  })
 })

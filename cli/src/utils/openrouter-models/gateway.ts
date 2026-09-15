@@ -1,8 +1,8 @@
 /**
  * Combined gateway catalog — OpenRouter + TokenRouter + TokenHarbor + NVIDIA NIM
  * + OpenCode Go + CommandCode + Nous Research + KiosAPI + APInex + OpenCode Zen
- * + OrcaRouter + B.AI + HCNSec + TokenBom + Infron + UnoRouter — plus
- * subscription plumbing.
+ * + OrcaRouter + B.AI + HCNSec + TokenBom + Infron + UnoRouter + BazaarLink —
+ * plus subscription plumbing.
  */
 import fs from 'node:fs'
 
@@ -65,6 +65,7 @@ import {
   getTokenHarborModels,
 } from './static-catalogs'
 import {
+  fetchBazaarlinkModels,
   fetchInfronModels,
   fetchUnorouterModels,
 } from './static-catalogs-gateways'
@@ -215,6 +216,7 @@ export async function fetchGatewayModels(
     const tokenbomCatalog = fetchTokenBomModels()
     const infronCatalog = fetchInfronModels()
     const unorouterCatalog = fetchUnorouterModels()
+    const bazaarlinkCatalog = fetchBazaarlinkModels()
 
     const combined = [
       ...orModels,
@@ -233,6 +235,7 @@ export async function fetchGatewayModels(
       ...tokenbomCatalog,
       ...infronCatalog,
       ...unorouterCatalog,
+      ...bazaarlinkCatalog,
       ...customModels,
     ]
     combined.sort((a, b) => a.id.localeCompare(b.id))

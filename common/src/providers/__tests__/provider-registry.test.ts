@@ -24,10 +24,11 @@ import type { ProviderConfig } from '../types'
  * as its first argument so tests inject a fixture instead of the singleton).
  */
 describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
-  test('covers all eighteen current providers', () => {
+  test('covers all nineteen current providers', () => {
     expect(Object.keys(PROVIDER_REGISTRY).sort()).toEqual([
       'apinex',
       'bai',
+      'bazaarlink',
       'cloudflare',
       'commandcode',
       'hcnsec',
@@ -84,6 +85,7 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
     for (const id of [
       'apinex',
       'bai',
+      'bazaarlink',
       'tokenharbor',
       'commandcode',
       'hcnsec',
@@ -102,11 +104,12 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
     expect(deriveProviderOrder(PROVIDER_REGISTRY, 'unknown')).toBe(4)
   })
 
-  test('setup config derives exactly the sixteen current setup providers', () => {
+  test('setup config derives exactly the seventeen current setup providers', () => {
     const setup = deriveSetupConfig(PROVIDER_REGISTRY)
     expect(Object.keys(setup).sort()).toEqual([
       'apinex',
       'bai',
+      'bazaarlink',
       'commandcode',
       'hcnsec',
       'infron',

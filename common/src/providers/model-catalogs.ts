@@ -7,6 +7,7 @@
  * picker catalogs (TOKENROUTER_CATALOG, OPENCODE_GO_CATALOG) from these maps.
  */
 import {
+  bazaarlinkModels,
   cloudflareModels,
   commandcodeModels,
   hcnsecModels,
@@ -28,4 +29,5 @@ export const MODEL_CATALOGS = {
   tokenbom: tokenbomModels,
   infron: infronModels,
   unorouter: unorouterModels,
+  bazaarlink: bazaarlinkModels,
 } as const

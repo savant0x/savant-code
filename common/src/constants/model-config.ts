@@ -40,8 +40,9 @@ export {
 } from './model-config/providers'
 
 // Audited gateway catalogs (FID-2026-0913-001) + curated gateway catalogs
-// (FID-2026-0914-001).
+// (FID-2026-0914-001) + bazaarlink (FID-2026-0915-006).
 export {
+  bazaarlinkModels,
   hcnsecModels,
   infronModels,
   tokenbomModels,
@@ -67,6 +68,7 @@ export type {
 } from './model-config/providers'
 
 export type {
+  BazaarlinkModel,
   HcnsecModel,
   InfronModel,
   TokenbomModel,

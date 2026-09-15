@@ -17,6 +17,7 @@
  */
 
 import {
+  bazaarlinkModels,
   commandcodeModels,
   hcnsecModels,
   infronModels,
@@ -87,6 +88,8 @@ export const CONTEXT_WINDOW_FALLBACKS: ReadonlyMap<string, number> = new Map([
   ['unorouter/gpt-6-astra', 1_100_000],
   ['unorouter/claude-opus-4.8', 1_000_000],
   ['unorouter/deepseek-v4-pro', 1_000_000],
+  // --- bazaarlink (FID-2026-0915-006) ---
+  ['bazaarlink/qwen/qwen3.7-flash:free', 1_000_000],
 ])
 
 /** How a context window was resolved — surfaced in the UI (MQ4 badge). */
@@ -122,6 +125,7 @@ const NAME_CATALOG_MODEL_IDS: readonly string[] = [
   ...Object.values(tokenbomModels),
   ...Object.values(infronModels),
   ...Object.values(unorouterModels),
+  ...Object.values(bazaarlinkModels),
 ]
 
 /**

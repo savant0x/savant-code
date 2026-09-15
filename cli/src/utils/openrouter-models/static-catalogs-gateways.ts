@@ -10,6 +10,7 @@
  */
 import { getContextWindowFallback } from '@savant-code/common/constants/context-windows'
 import {
+  bazaarlinkModels,
   infronModels,
   unorouterModels,
 } from '@savant-code/common/constants/model-config'
@@ -131,4 +132,37 @@ export function fetchUnorouterModels(): OpenRouterModel[] {
       UNOROUTER_CONTEXT_WINDOWS[id] ??
       getContextWindowFallback(id).contextWindow,
   }))
+}
+
+/** Display names for BazaarLink model ids (FID-2026-0915-006). */
+const BAZAARLINK_NAMES: Record<string, string> = {
+  'bazaarlink/qwen/qwen3.7-flash:free': 'Qwen 3.7 Flash (Free)',
+}
+
+/**
+ * Return the BazaarLink catalog (FID-2026-0915-006) — the ONE
+ * audited-genuine free channel (identity gauntlet T51-C; operator ruling
+ * "Qwen free only"). Static by design: a live catalog would re-expose the
+ * substituted deepseek channels. Synchronous.
+ */
+export function fetchBazaarlinkModels(): OpenRouterModel[] {
+  return Object.values(bazaarlinkModels).map((id) => ({
+    id,
+    name: BAZAARLINK_NAMES[id] ?? id.slice('bazaarlink/'.length),
+    provider: 'bazaarlink' as const,
+    // The vendor's own keyed /v1/models publishes context_length —
+    // pinned in the common fallback table (1,000,000).
+    contextLength:
+      BAZAARLINK_CONTEXT_WINDOWS[id] ??
+      getContextWindowFallback(id).contextWindow,
+  }))
+}
+
+/**
+ * Pinned context window for BazaarLink ids — the vendor's own
+ * `context_length` from the keyed api.bazaarlink.ai/v1/models payload
+ * (2026-09-15, FID-2026-0915-006). NOT the family heuristic.
+ */
+const BAZAARLINK_CONTEXT_WINDOWS: Record<string, number> = {
+  'bazaarlink/qwen/qwen3.7-flash:free': 1_000_000,
 }

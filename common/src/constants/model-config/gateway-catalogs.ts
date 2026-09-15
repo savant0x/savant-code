@@ -105,3 +105,21 @@ export const unorouterModels = {
 } as const
 export type UnorouterModel =
   (typeof unorouterModels)[keyof typeof unorouterModels]
+
+/**
+ * BazaarLink allowlist (FID-2026-0915-006) — the ONE audited-genuine
+ * free channel (identity gauntlet T51-C): consistent EN/ZH self-ID as
+ * Qwen (Alibaba Tongyi Lab), cleanest fingerprint of any audited gateway
+ * (prompt_tokens 23–37 on the fixed string — zero injection class), 1M
+ * vendor-published window. The deepseek free channels are DISQUALIFIED
+ * (substituted: EN self-IDs claimed GPT-4 and Claude Opus 4.1; ~60–70
+ * hidden injected tokens) and `auto:free` is unreliable (429 storm,
+ * 120–265s) routing INTO the disqualified channel — both excluded BY
+ * OPERATOR RULING ("Qwen free only"); adding them back requires a new
+ * operator decision + gauntlet re-run. Personal-use provenance.
+ */
+export const bazaarlinkModels = {
+  bazaarlink_qwen_3_7_flash_free: 'bazaarlink/qwen/qwen3.7-flash:free',
+} as const
+export type BazaarlinkModel =
+  (typeof bazaarlinkModels)[keyof typeof bazaarlinkModels]

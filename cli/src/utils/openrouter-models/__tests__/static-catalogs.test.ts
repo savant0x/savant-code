@@ -6,6 +6,7 @@ import {
   fetchTokenRouterModels,
 } from '../static-catalogs'
 import {
+  fetchBazaarlinkModels,
   fetchInfronModels,
   fetchUnorouterModels,
 } from '../static-catalogs-gateways'
@@ -214,5 +215,29 @@ describe('UnoRouter static catalog (FID-2026-0914-001)', () => {
       'Claude Fable 5.1',
     )
     expect(byId.get('unorouter/gpt-6-astra')?.name).toBe('GPT 6 Astra')
+  })
+})
+
+describe('BazaarLink static catalog (FID-2026-0915-006)', () => {
+  test('returns exactly the ONE audited-genuine free channel', () => {
+    const models = fetchBazaarlinkModels()
+    expect(models.map((m) => m.id)).toEqual([
+      'bazaarlink/qwen/qwen3.7-flash:free',
+    ])
+  })
+
+  test('pins the vendor-published context window and display name', () => {
+    const byId = new Map(fetchBazaarlinkModels().map((m) => [m.id, m] as const))
+    // The vendor's OWN keyed /v1/models publishes context_length 1,000,000
+    // (2026-09-15, FID-2026-0915-006) — NOT the family heuristic.
+    expect(byId.get('bazaarlink/qwen/qwen3.7-flash:free')?.contextLength).toBe(
+      1_000_000,
+    )
+    expect(byId.get('bazaarlink/qwen/qwen3.7-flash:free')?.name).toBe(
+      'Qwen 3.7 Flash (Free)',
+    )
+    expect(byId.get('bazaarlink/qwen/qwen3.7-flash:free')?.provider).toBe(
+      'bazaarlink',
+    )
   })
 })
