@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0915-002-file-cap-split-program.md`
 **ID:** FID-2026-0915-002
 **Severity:** medium
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-09-15 (M2 remediation from the 2026-09-15 A-Z ECHO compliance
 audit; operator directive "Open the file-cap FID")
 **YAGNI-Compliance:** Verified — every split lands on a seam that already
@@ -240,7 +240,8 @@ embed contract verified against handle-steps.ts + module headers.
 - **Verification Evidence:** the Code Verification Evidence section above;
   commit `9fbe5364`.
 - **Commit:** 9fbe5364 (rows 9-10/12 cli) — series 67e77d37 → 9fbe5364.
-- **Archived:** no — operator collects; archive per the Auto-Archive rule.
+- **Archived:** yes — 2026-09-15 (operator automation directive: complete
+  all FIDs in the folder; Auto-Archive rule).
 
 ## Lessons Learned
 

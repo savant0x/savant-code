@@ -2,6 +2,27 @@
 
 ## Unreleased
 
+### Operator seed intake: 16 operator-authorized hosts enter the discovery pipeline (FID-2026-0915-003)
+
+- **New `scripts/providers/lib/seed-hosts.ts`:** the operator's free-provider
+  expansion list (16 hosts after rulings) as typed `SeedCard` data, merged
+  into the stage-0 candidate stream each harvest run with **operator
+  precedence** — an operator-authorized seed overrides the feed's card for
+  the same host (the original feed-precedence design was corrected after
+  the first LIVE run exposed it silently defeating two rulings).
+- **Identical gate chain, no bypass:** seeds pass stage-0, the typosquat
+  screen, registry dedupe, and the LIVE unauthenticated-generation probe
+  exactly like feed hosts — which rejected 2 of the 16 (b.ai,
+  platform.experientiallabs.ai: open relays, LLMjacking class) with
+  evidence recorded in the denylist and report.
+- **LIVE result:** 16/16 seeds tracked in `candidates.json` (8 boundary-ok,
+  6 boundary-unverifiable pending deeper discovery, 2 rejected); 14
+  first-sight provenance rows in the report audit trail; seed pins 6/126
+  (pipeline suite 82/342, 0 fail); removal = delete the seed entry.
+- **File-cap split program closed** (FID-2026-0915-002): all 12 over-cap
+  files split move-only on existing seams; quality:report PASS (1498
+  files); archived with verification receipt.
+
 ### File-cap split program: all 12 over-cap files split on existing seams (FID-2026-0915-002)
 
 - **`bun run quality:report` now PASSes with 0 violations** (1498 baselined

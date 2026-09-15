@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0915-003-operator-seed-intake.md`
 **ID:** FID-2026-0915-003
 **Severity:** low
-**Status:** analyzed
+**Status:** closed
 **Created:** 2026-09-15 (operator directive: "expand our free provider list"
 with a pasted host list; ruled: seed as tracked candidates, probe from site
 root, default category commercial-aggregator, skip chatanywhere.tech and the
@@ -117,6 +117,32 @@ feed hosts.
   same tier-1/tier-2 screen; a seed that trips tier-1 is rejected with the
   standard audit row (operator sees the reason in the report).
 
+
+### Code Verification Evidence
+
+(Recorded at implementation closure, 2026-09-15.)
+
+- **Pins:** `seed-hosts.test.ts` 6 pass / 126 expect() — 16-host set, 5
+  ruled-out skips, stage-0 admissibility without a bypass branch (MQ1),
+  operator precedence, deterministic merge, stable-fingerprint shape.
+- **Pipeline suite:** 82 tests / 342 expect() / 0 fail across 10 files
+  (76/216 baseline + 6 seed pins; pre-existing pins untouched).
+- **Typecheck:** cli exit 0 (covers `scripts/**/*`), common exit 0.
+- **LIVE harvest rerun ×2 (exit 0):** run 1 exposed the feed-precedence
+  defect (2 seeds silently dropped — see Loop record); run 2 after the
+  operator-precedence correction: `214 records → 71 stage-0 → 2 new`, all
+  **16/16 seeds tracked in state** with measured verdicts — 8
+  `boundary-ok`, 6 `boundary-unverifiable` (deeper-discovery hosts), **2
+  `open-relay-reject` (b.ai, platform.experientiallabs.ai — unauthenticated
+  generation succeeded; the safety gate applies to operator seeds
+  unchanged)**. 14 provenance rows written to the audit trail/report.
+- **Lint battery:** eslint `--max-warnings 0` exit 0 (2 import/order
+  warnings auto-fixed), prettier exit 0, quality:report PASS (1498 files).
+- **Known limitation (recorded, not hidden):** seed cards start with an
+  empty model roster (fingerprint-stability design); this run's /v1/models
+  shapes did not parse a roster from the seeds (modelsCount 0), so the
+  model-availability index gains no seed entries until a run parses one.
+
 ## Verification Gates
 
 - gate: typecheck cli
@@ -125,18 +151,40 @@ feed hosts.
 - gate: test scripts/providers/__tests__/harvest-core.test.ts
 - gate: probe scripts/providers/harvest-freeairouter.ts
 
-### Code Verification Evidence
+### Verification Receipt
 
-(Status `analyzed`: LIVE probe evidence gathered pre-authorization and
-recorded above; gate outputs recorded here at implementation closure —
-typecheck cli/common, pipeline pin suite parity 76/216, seed-specific pins,
-LIVE harvest rerun with the 16 seeds present in state/report.)
+- fingerprint: sha256:894edcc00a622ff0939386c31e17f8ae765c2760dbbc4dd6003f2868b53dad8c
+- verified: 2026-09-15T18:46:16.674Z
+- typecheck cli: exit 0
+- typecheck common: exit 0
+- test scripts/providers/__tests__/discovery-seams.test.ts: exit 0
+- test scripts/providers/__tests__/harvest-core.test.ts: exit 0
+- probe scripts/providers/harvest-freeairouter.ts: exit 0
 
 ## Resolution
 
-- **Closed Date:** —
-- **Fix Description:** —
-- **Tests Added:** —
-- **Verification Evidence:** —
-- **Commit:** —
-- **Archived:** —
+- **Closed Date:** 2026-09-15
+- **Fix Description:** `scripts/providers/lib/seed-hosts.ts` (16 typed
+  SeedCards + `toSeedFeedCard` + `mergeSeedCards` with **operator
+  precedence** — an operator-authorized seed overrides the feed's card for
+  the same host, correcting the original feed-precedence design that let
+  the feed's classification silently defeat two operator rulings);
+  `harvest-freeairouter.ts` merge seam (+count log line, +first-sight
+  provenance audit rows); seed pins in `seed-hosts.test.ts`. No registry
+  changes; the two open-relay rejections stand with evidence.
+- **Tests Added:** `scripts/providers/__tests__/seed-hosts.test.ts` (6
+  tests / 126 expect()s) pinning the rulings in data.
+- **Verification Evidence:** the Code Verification Evidence section above;
+  commit hash recorded in the session summary and SCOPE T49.
+- **Commit:** recorded in SCOPE T49-D.
+- **Archived:** yes — 2026-09-15, same session (operator directive:
+  complete all FIDs).
+
+## Lessons Learned
+
+- Feed-precedence for operator seeds was a design defect caught LIVE: the
+  feed's own classification (categoryConfirmed:false, free-product)
+  silently defeated two explicit operator authorizations at stage-0. When
+  an operator authorizes a host, operator precedence must win — the
+  safety gates (typosquat, open-relay probe) remain the non-negotiable
+  layer and still rejected 2 of the 16.

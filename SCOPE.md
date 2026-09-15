@@ -23,10 +23,16 @@
   (integrated ×3, feed host, chatanywhere). URL normalization recorded
   (dashboard/profile suffixes stripped to site roots).
 - [x] **T49-C.** FID-2026-0915-003 authored + ledger row added (analyzed).
-- [ ] **T49-D.** Implementation (BLOCKED on operator Law-2 approval):
-  `seed-hosts.ts` module + one merge seam in harvest-freeairouter.ts +
-  seed pins; gates per the FID's Verification Gates section; LIVE
-  `providers:harvest --probe` rerun showing the 16 seeds tracked.
+- [x] **T49-D.** Implementation COMPLETE (operator automation directive
+  2026-09-15 approved all pending FIDs + full Perfection Loop + archival):
+  `seed-hosts.ts` (16 SeedCards, operator-precedence merge — corrected
+  LIVE after run 1 exposed feed-precedence silently defeating 2 rulings),
+  harvest merge seam + first-sight provenance rows, 6 pins. Gates: 5-gate
+  receipt stamped (typecheck cli/common, discovery-seams + harvest-core,
+  LIVE probe); pipeline suite 82/342/0 fail; LIVE runs: 16/16 seeds
+  tracked (8 boundary-ok, 6 unverifiable, 2 open-relay-rejected — b.ai,
+  platform.experientiallabs.ai; safety gate unchanged). FID archived with
+  002. Commit `9d1c5670`.
 
 ## Task 48 — Scratchpad-clutter hygiene remediation (2026-09-15) — DONE
 
