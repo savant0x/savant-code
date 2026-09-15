@@ -36,6 +36,18 @@
       green; Step-5 LIVE keyed round-trip via the production chain PASS
       (exact echo, no injection class); 5-gate receipt stamped. Status
       `fixed`; archive awaits operator closure (G2).
+- [ ] **T51-F. [BLOCKED — operator]** Identity gauntlet on bazaarlink PAID
+      channels: the account is zero-credit — LIVE 402 probe on `qwen3.8-max`
+      ("Insufficient credits") — every paid cell would fail before serving.
+      Unblocks when the operator tops up (even $1 doubles free limits
+      10→20 RPM / 50→300 day per vendor config).
+- [ ] **T51-G. [BLOCKED — operator]** Prorisehub keyed curation checklist:
+      no `PRORISEHUB*` key in `.env.local` (name-only grep). Unblocked
+      evidence ready: QuantumNous New API instance; base
+      `https://newapi.prorisehub.com/v1` (harvest-probed boundary-ok 401,
+      re-verified 2026-09-15); 40†-model feed listing incl. multimodal
+      (nano-banana, veo-3.1-extend, recraft-v4-pro). Key creation: the
+      host's token console.
 
 ## Task 50 — Exclusion-list review + zenmux re-rank (2026-09-15) — REVIEW ONLY
 
