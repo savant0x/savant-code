@@ -41,6 +41,12 @@ const VENDOR_HOSTS: readonly string[] = [
 const LEGITIMATE_ALLOWLIST: ReadonlySet<string> = new Set([
   'api.z.ai', // Zhipu (zai) — distance-1 from api.x.ai
   'z.ai',
+  // Adjudicated legitimate 2026-09-15: LIVE evidence — api.cohere.ai and
+  // api.cohere.com answer /v1/models from the SAME IP (34.96.76.122) with
+  // byte-identical 401 JSON (envoy); the Cohere SDK ecosystem documents
+  // https://api.cohere.ai/v1 as the default base URL. The brand cannot
+  // impersonate itself. (Was: tier-2 flag, distance 3 from api.cohere.com.)
+  'api.cohere.ai',
 ])
 
 export type TyposquatVerdict = 'pass' | 'flag' | 'reject'

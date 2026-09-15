@@ -105,6 +105,18 @@ describe('typosquatVerdict (two-tier screen)', () => {
     expect(typosquatVerdict('api.gr0qzz.com')).toBe('flag')
   })
 
+  test('tier 2 allowlist: api.cohere.ai passes despite distance-3 to api.cohere.com', () => {
+    // Adjudicated legitimate 2026-09-15: LIVE same-IP (34.96.76.122) +
+    // byte-identical 401 JSON with api.cohere.com; the SDK ecosystem
+    // documents https://api.cohere.ai/v1 as Cohere's default base URL.
+    // The brand cannot impersonate itself — same class as api.z.ai.
+    expect(typosquatVerdict('api.cohere.ai')).toBe('pass')
+    expect(typosquatVerdict('API.COHERE.AI')).toBe('pass')
+    // Impersonators are still caught: a lookalike NOT on the allowlist
+    // keeps its tier-2 flag.
+    expect(typosquatVerdict('api.cohere.ai.co')).toBe('flag')
+  })
+
   test('distance >= 5 passes clean', () => {
     expect(typosquatVerdict('api.my-new-startup-free.ai')).toBe('pass')
   })
