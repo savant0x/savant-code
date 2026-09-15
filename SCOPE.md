@@ -4,6 +4,110 @@
 > scope for the current task. Operator confirmation converts interpreted scope
 > into approved scope. Any drop/deferral requires a blocking presentation.
 
+## Task 47 — Implement FID-2026-0915-002 file-cap split program (2026-09-15) — IMPLEMENTATION
+
+> Operator directive: "Approve implementation of FID-2026-0915-002 (file-cap
+> split program) and begin GREEN." Approved scope: implement the converged
+> FID exactly as authored — 11 over-cap files split along their documented
+> existing seams (move-only + re-export facades; embeddedHelpers Batch B for
+> the context-pruner trio; describe-boundary test splits with assertion
+> parity) — plus the exit-criteria gates (quality:report PASS, 12-workspace
+> typecheck, suites, eslint/prettier/lint:md, LIVE harvest rerun) and the
+> FID metadata normalization flagged at boot (status `converged` →
+> `analyzed` + two missing template headings), pending the operator ruling
+> below. Git execution remains operator-side (G1).
+>
+> **Operator rulings (FINAL, 2026-09-15):** (1) COMMIT C1 FIRST — and the
+> AGENT executes the commit series (stage/commit/push), per the operator's
+> correction "the agent pushes, not the user" (the 2026-09-05 G1 amendment
+> permits agent-executed granular commits to origin main; force-push and
+> release mutation remain prohibited). (2) FID-2026-0915-002 header status
+> → `analyzed` (the admissible active-queue value) + the two missing
+> template headings. The operator's vocabulary observation ("converged =
+> the perfection loop is completed; `fixed` is old language") is recorded
+> as [OPEN-OUT-OF-SCOPE] — separate disposition, not Task 47 scope.
+
+- [x] **T47-A.** Operator rulings FINAL (2026-09-15): C1 commits land first
+      AND the agent executes them (agent pushes — G1 amendment); FID header
+      → `analyzed` + two missing headings; vocabulary modernization
+      recorded as [OPEN-OUT-OF-SCOPE], not implemented this task.
+- [ ] **T47-B.** FID-2026-0915-002 metadata: header status → `analyzed` +
+      `### Missed Questions` + `### Code Verification Evidence` added;
+      ledger row updated; `validate:repository` re-run to confirm the 3
+      fid.* findings clear.
+- [ ] **T47-C.** Pre-split baselines captured (per-suite test counts,
+      affected workspaces) — assertion-parity reference.
+- [ ] **T47-D.** Splits 1-11 per the FID seam table (discovery-state,
+      harvest, report, 2 test files, context-pruner trio Batch B,
+      right-sidebar, run-results, spawn-agent-inline).
+- [ ] **T47-E.** Gates: quality:report PASS, typecheck ×12, suites (assertion
+      counts ≥ pre-split), eslint 0, prettier, lint:md.
+- [ ] **T47-F.** LIVE `providers:harvest --probe` rerun — output shape
+      parity.
+- [ ] **T47-G.** FID → `fixed` with evidence; ledger + session summary;
+      final path-scoped commits + push executed by the agent (G1 amendment;
+      G2 hashes recorded in the Resolution).
+
+- [ ] **[OPEN-OUT-OF-SCOPE] FID status-vocabulary modernization:** operator
+      observation "converged = the perfection loop is completed; `fixed` is
+      old language" — a repo-wide vocabulary update (template, ECHO.md,
+      ledger script, LEARNINGS grammar) is a separate operator-approved
+      change; NOT in Task 47 scope.
+
+## Task 46 — Infron + UnoRouter gateway providers (2026-09-14) — CLOSURE
+
+> Operator directive: "i want to add this provider https://infron.ai/docs,
+> review the docs and review my system for adding new providers.
+> https://infron.ai/models, i need all the free ones
+> https://infron.ai/models?free=true, then the top coding models as well
+> added" — extended mid-session with "i also want to add this provider as
+> well https://unorouter.com/en/models, w/ all the free models and the top
+> 10-20 coding models". Interpreted scope: runbook + registry review, live
+> catalog + keyed probes on both vendors, FID-2026-0914-001 authored with
+> the Perfection Loop, present. Implementation is a separate Law-2 approval.
+> Operator rulings this session (ask_user): Infron free set = "4 clean
+> :free only"; UnoRouter free set = "Core ~12 curated"; Codex/Responses-only
+> family excluded ("Chat only"); keys created by the operator this session
+> (INFRON_API_KEY / UNOROUTER_API_KEY in .env.local — values never printed,
+> Law 12).
+
+- [x] **T46-A.** Grounding: runbook read 0-EOF; FID-2026-0913-001 template
+      read 0-EOF; registry/catalog/picker/test surfaces file:line mapped;
+      file-cap measurements taken (three capped files force declared
+      splits per FID-2026-0913-002).
+- [x] **T46-B.** Live evidence: Infron keyless catalog 458 models (free
+      filter is UI-only; 5 free text models by price-0 determination);
+      keyless 401 fail-closed both hosts; keyed probes show the key
+      AUTHENTICATES but the account is unfunded (paid 403 credits, free
+      429 team-balance ≥ $5) — OrcaRouter-pattern NEEDS-REVIEW. UnoRouter:
+      QuantumNous New API fingerprint; docs contract (BASE_URL api.
+      unorouter.com/v1, :free never bills, 429s at peak documented);
+      catalog 231 rows / 128 free / 89 chat-eligible; keyed gauntlet = 5
+      free channels HTTP 200 clean, rest busy-class only (zero
+      model_not_found).
+- [x] **T46-C.** FID-2026-0914-001 authored RED-first; Loop 1 + Loop 2
+      recorded (Loop 2 self-caught + fixed the claude-haiku-4.5 fc=N
+      defect → gemini-3.1-pro-preview swap); lint:md + prettier green;
+      ledger row added.
+- [x] **T46-D.** PRESENT the FID for operator approval (blocking — Law 2).
+      Presented in chat 2026-09-14; operator ruled: "that's fine, go ahead
+      and fully implement then close them once done and update the
+      changelogs" (approval + closure + CHANGELOG in one directive).
+- [x] **T46-E.** IMPLEMENT (Law-2 approved): RED-first pins across 4 test
+      suites → GREEN (registry +2, gateway-catalogs +2 maps, model-catalogs,
+      model-config shim, new picker module `static-catalogs-gateways.ts`,
+      gateway merge, sdk harness warm-up fix for the one-shot `.env.local`
+      bootstrap re-injection) → gates: typecheck ×4 exit 0, suites 61/0 +
+      30/0 + 16/0 (baseline-parity proven via stash A/B), eslint 0,
+      prettier clean, docs drift guard green, hand-maintained doc surfaces
+      synced.
+- [x] **T46-F.** CLOSE: Step-5 live evidence recorded (catalog 26/26 via
+      production chain; UnoRouter 5×HTTP-200; Infron funding gate
+      NEEDS-REVIEW per OrcaRouter precedent); receipt stamped via
+      `fid:verify --write` (8/8 gates); ledger + archive README closure
+      notes; SCOPE + session summary; CHANGELOG entry. Commit plan handed
+      to the operator (G1/G2) — SHAs pending git execution.
+
 ## Task 45 — hcnsec + TokenBom gateway providers (2026-09-13) — FID AUTHORING
 
 > Operator directive: "add those 2 providers and those 14 models, follow the

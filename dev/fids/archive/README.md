@@ -3,6 +3,23 @@
 This directory contains closed or historically completed FIDs. Files here are
 an audit record, not an active work queue.
 
+## 2026-09-14 closure — Infron + UnoRouter gateway providers (1 FID archived)
+
+[`FID-2026-0914-001-infron-unorouter-gateway-providers.md`](FID-2026-0914-001-infron-unorouter-gateway-providers.md)
+(low) — authored, approved, implemented, closed, and archived the same day
+(single-session Task 46). Two registry entries + curated static catalogs
+(Infron 4 free + 5 coding; UnoRouter 12 free + 5 paid; Codex/Responses-only
+family excluded per operator ruling), picker derivation via a new
+`static-catalogs-gateways.ts` module, additive test legs with closed-world
+widening 16→18 / 14→16. One harness root-cause fix: the one-shot
+`.env.local` bootstrap re-injects real keys after `beforeEach` deletions —
+warm the module graph first (also cured a pre-existing sdk order flake).
+Live: catalog 26/26 through the production chain; UnoRouter 5 free channels
+HTTP-200 (rest busy-class, vendor-documented saturation); Infron verified
+end-to-end with the LIVE 200 NEEDS-REVIEW until the account is funded (free
+tier requires team balance ≥ $5). Receipt stamped via `fid:verify --write`
+(8/8 gates). Commit SHAs pending operator git execution (G1/G2).
+
 ## 2026-09-13 closure — release pre-audit stage (1 FID archived)
 
 [`FID-2026-0913-004-release-pre-audit.md`](FID-2026-0913-004-release-pre-audit.md)
