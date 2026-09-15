@@ -53,3 +53,15 @@ desktop/src-tauri/target/
 # long lines; enforcing MD013 on transcripts is meaningless).
 docs/lastsession.md
 docs/design/SkillOpt Integration into Savant.md
+
+# Deep-research intake docs (FID-2026-0914-003) — pasted research report
+# (Gemini Deep Research output) + its adversarial verification record;
+# reference-only research artifacts, not shipped documentation. Same
+# exemption precedent as the design research scratch docs above.
+docs/design/Free LLM API Aggregator Research.md
+docs/design/Free LLM API Aggregator Research — Verification.md
+
+# Discovery-pipeline daily report (FID-2026-0914-003) — machine-generated
+# per harvest run (replaced in place), gitignored; MD013 on generated
+# evidence tables is meaningless. Same exemption precedent as the scratchpad.
+dev/provider-candidates/**

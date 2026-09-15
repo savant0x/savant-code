@@ -51,6 +51,11 @@ docs/bot-detection.md
 dev/scratchpad/*
 !dev/scratchpad/.gitkeep
 
+# Free-compute discovery pipeline artifacts (FID-2026-0914-003): daily
+# harvest report + candidate state + agent-context sidecars — regenerated
+# in place by every run, never source.
+dev/provider-candidates/
+
 # Materialized by release package prepack scripts and removed by postpack.
 cli/release/launcher.js
 cli/release/http.js
