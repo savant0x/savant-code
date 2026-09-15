@@ -4,6 +4,11 @@
  * (FID-2026-0913-002 split); this module re-exports it so every import path
  * stays stable.
  */
+import {
+  getContextWindowFallback,
+  type ContextWindowSource,
+} from '@savant-code/common/constants/context-windows'
+
 import { getContextWindowForModel } from '../constants'
 import { getCachedGatewayModels } from './gateway'
 import { getCachedOpenRouterModels } from './openrouter'
@@ -183,8 +188,13 @@ function findModelFieldFromOpenRouter(
  * Priority:
  * 1. Live OpenRouter catalog (via canonical model ID lookup)
  * 2. Cached gateway catalog (TokenRouter/TokenHarbor/NVIDIA/OpenCode Go)
- * 3. Name-based heuristic fallback
- * 4. 200k default
+ * 3. Vendor-published fallback table (exact id → window, provenance-tagged)
+ * 4. Conservative default (200k) — explicit, never a family guess
+ *
+ * FID-2026-0914-002: tier 3 was a name-substring heuristic that silently
+ * under-windowed unmatched ids (e.g. a "glm" id missing the table → 200k
+ * vs the real 1M). It is retired: the fallback table + default now close
+ * the ladder with explicit provenance (see resolveContextWindowSourceForModel).
  */
 export function resolveContextWindowForModel(modelId: string): number {
   // Check the live OpenRouter catalog first — it has the real context lengths
@@ -201,6 +211,22 @@ export function resolveContextWindowForModel(modelId: string): number {
   }
 
   return getContextWindowForModel(modelId)
+}
+
+/**
+ * FID-2026-0914-002 (MQ4): provenance of the resolved window — 'catalog'
+ * when the live/cached catalogs answered, else the final-fallback source
+ * ('fallback-table' | 'default'). Surfaced in the sidebar so the operator
+ * can see when a model is running on the conservative default.
+ */
+export function resolveContextWindowSourceForModel(
+  modelId: string,
+): 'catalog' | ContextWindowSource {
+  const fromOpenRouter = findModelFieldFromOpenRouter(modelId, contextLengthOf)
+  if (typeof fromOpenRouter === 'number') return 'catalog'
+  const fromCatalog = findGatewayModel(modelId)
+  if (typeof fromCatalog?.contextLength === 'number') return 'catalog'
+  return getContextWindowFallback(modelId).source
 }
 
 /**

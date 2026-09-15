@@ -8,7 +8,10 @@
  * hardcoded TOKENROUTER_CATALOG and OPENCODE_GO_CATALOG arrays were deleted.
  * Only display names remain cli-side, mirroring the TokenHarbor pattern.
  */
-import { inferContextLength } from '@savant-code/common/constants/context-windows'
+import {
+  getContextWindowFallback,
+  inferContextLength,
+} from '@savant-code/common/constants/context-windows'
 import {
   commandcodeModels,
   hcnsecModels,
@@ -235,7 +238,8 @@ export function fetchHcnsecModels(): OpenRouterModel[] {
     id,
     name: HCNSEC_NAMES[id] ?? id.slice('hcnsec/'.length),
     provider: 'hcnsec' as const,
-    contextLength: HCNSEC_CONTEXT_WINDOWS[id] ?? inferContextLength(id),
+    contextLength:
+      HCNSEC_CONTEXT_WINDOWS[id] ?? getContextWindowFallback(id).contextWindow,
   }))
 }
 
@@ -278,6 +282,8 @@ export function fetchTokenBomModels(): OpenRouterModel[] {
     id,
     name: TOKENBOM_NAMES[id] ?? id.slice('tokenbom/'.length),
     provider: 'tokenbom' as const,
-    contextLength: TOKENBOM_CONTEXT_WINDOWS[id] ?? inferContextLength(id),
+    contextLength:
+      TOKENBOM_CONTEXT_WINDOWS[id] ??
+      getContextWindowFallback(id).contextWindow,
   }))
 }

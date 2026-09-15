@@ -39,8 +39,14 @@ export {
   tokenrouterModels,
 } from './model-config/providers'
 
-// Audited gateway catalogs (FID-2026-0913-001).
-export { hcnsecModels, tokenbomModels } from './model-config/gateway-catalogs'
+// Audited gateway catalogs (FID-2026-0913-001) + curated gateway catalogs
+// (FID-2026-0914-001).
+export {
+  hcnsecModels,
+  infronModels,
+  tokenbomModels,
+  unorouterModels,
+} from './model-config/gateway-catalogs'
 
 export type {
   AtlasCloudModel,
@@ -62,5 +68,7 @@ export type {
 
 export type {
   HcnsecModel,
+  InfronModel,
   TokenbomModel,
+  UnorouterModel,
 } from './model-config/gateway-catalogs'

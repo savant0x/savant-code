@@ -151,6 +151,11 @@ function submitIdStep(session: WizardSession, value: string): WizardSession {
 
 function submitLabelStep(session: WizardSession, value: string): WizardSession {
   if (!value) {
+    // FID-2026-0914-003 (MQ6): on a discovery-prefill session, Enter adopts
+    // the pre-filled label — the consent gesture. Plain adds still re-prompt.
+    if (session.discovery && session.draft.label) {
+      return accepted(session, { ...session.draft })
+    }
     return rejected(session, 'label must be a non-empty string.')
   }
   return accepted(session, { ...session.draft, label: value })
@@ -160,6 +165,10 @@ function submitBaseUrlStep(
   session: WizardSession,
   value: string,
 ): WizardSession {
+  // FID-2026-0914-003 (MQ6): discovery prefill adopt (Enter on pre-filled).
+  if (!value && session.discovery && session.draft.baseUrl) {
+    value = session.draft.baseUrl
+  }
   if (parseRegistryUrl(value) === null) {
     return rejected(
       session,
@@ -198,6 +207,10 @@ function submitEnvVarStep(
   session: WizardSession,
   value: string,
 ): WizardSession {
+  // FID-2026-0914-003 (MQ6): discovery prefill adopt (Enter on pre-filled).
+  if (!value && session.discovery && session.draft.apiKeyEnvVar) {
+    value = session.draft.apiKeyEnvVar
+  }
   if (!ENV_VAR_PATTERN.test(value)) {
     return rejected(
       session,
@@ -258,6 +271,11 @@ function submitKeyStep(session: WizardSession, value: string): WizardSession {
     apiKeyEnvVar: draft.apiKeyEnvVar ?? '',
     catalog: draft.catalog ?? { source: 'none' },
     ...(draft.protocol !== undefined ? { protocol: draft.protocol } : {}),
+    // FID-2026-0914-003 (MQ6): discovery-prefill sessions stamp the accepted
+    // instant onto the finalized record (health tracking keys on this).
+    ...(session.discovery
+      ? { source: 'discovery-pipeline' as const, acceptedAt: session.discovery.acceptedAt }
+      : {}),
   }
   // Single validation truth (Law 13): the assembled record must pass the same
   // parser settings.json and the SDK option use, or nothing is finalized.

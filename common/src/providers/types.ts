@@ -135,4 +135,12 @@ export type CustomProviderConfig = {
     | { source: 'live'; url: string }
     | { source: 'inline'; models: Record<string, string> }
     | { source: 'none' }
+  /**
+   * FID-2026-0914-003: provenance stamp added by the discovery pipeline when
+   * a candidate is accepted through the provider wizard. Unstamped records
+   * are hand-written (never health-tracked). Validated fail-closed in
+   * custom-providers-parse.ts via discovery-stamp.ts (single truth).
+   */
+  source?: 'discovery-pipeline'
+  acceptedAt?: string
 }

@@ -20,6 +20,12 @@ import type { CustomProviderConfig } from '@savant-code/common/providers/types'
  */
 
 export { createWizardSession, submitWizardStep } from './provider-wizard-steps'
+export {
+  createDiscoveryWizardSession,
+  deriveDiscoveryPrefill,
+  readDiscoveryPrefill,
+  type DiscoveryPrefill,
+} from './provider-wizard-discovery'
 
 export {
   PROVIDER_GRAMMAR_WORDS,
@@ -52,6 +58,15 @@ export function beginProviderWizard(
 ): WizardSession {
   activeSession = createWizardSession(mode, stored)
   return activeSession
+}
+
+/**
+ * FID-2026-0914-003 (MQ6): adopt an externally-built session (the discovery
+ * prefill path) into the same single active-wizard registry — one seam for
+ * every entry path.
+ */
+export function adoptActiveSession(session: WizardSession): void {
+  activeSession = session
 }
 
 /** The active session, if a wizard is in progress. */

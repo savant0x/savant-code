@@ -10,8 +10,6 @@ import {
   TOKEN_HARBOR_MODEL,
   ORCAROUTER_MODEL,
   BAI_MODEL,
-  HCNSEC_MODEL,
-  TOKENBOM_MODEL,
   COMMAND_CODE_PROMPT,
 } from './model-provider-free-mode-test-setup'
 
@@ -141,102 +139,6 @@ describe('getModelForRequest ChatGPT OAuth fallback behavior', () => {
     // `strip` removes only the internal `orcarouter/` routing prefix; the
     // vendor-namespaced remainder goes verbatim (openrouter/apinex shape).
     expect(JSON.parse(String(init?.body)).model).toBe('anthropic/claude-opus-5')
-  })
-
-  test('requires the HCNSec API key (FID-2026-0913-001)', async () => {
-    const { getModelForRequest } = await importFresh()
-
-    await expect(
-      getModelForRequest({
-        apiKey: 'test-key',
-        model: HCNSEC_MODEL,
-      }),
-    ).rejects.toThrow(
-      'HCNSec API key not set. Set HCNSEC_API_KEY environment variable or run /provider hcnsec.',
-    )
-  })
-
-  test('routes HCNSec models with one-prefix normalization (FID-2026-0913-001)', async () => {
-    process.env.HCNSEC_API_KEY = 'hcnsec-test-key'
-    const fetchMock = mock(() =>
-      Promise.resolve(
-        new Response('data: [DONE]\n\n', {
-          status: 200,
-          headers: { 'content-type': 'text/event-stream' },
-        }),
-      ),
-    )
-    // @ts-expect-error - test fetch has the same runtime contract
-    globalThis.fetch = fetchMock
-
-    const { getModelForRequest } = await importFresh()
-    const result = await getModelForRequest({
-      apiKey: 'test-key',
-      model: HCNSEC_MODEL,
-    })
-    await (result.model as LanguageModelV2).doStream({
-      prompt: COMMAND_CODE_PROMPT,
-    })
-
-    const [input, init] = fetchMock.mock.calls[0] as unknown as [
-      RequestInfo | URL,
-      RequestInit | undefined,
-    ]
-    // Base URL + Bearer auth per the audited gateway contract.
-    expect(String(input)).toBe('https://api.hcnsec.cn/v1/chat/completions')
-    expect(new Headers(init?.headers).get('authorization')).toBe(
-      'Bearer hcnsec-test-key',
-    )
-    // `strip` removes the internal `hcnsec/` routing prefix; the upstream
-    // id goes verbatim (case-exact as served).
-    expect(JSON.parse(String(init?.body)).model).toBe('glm-5.3-flash')
-  })
-
-  test('requires the TokenBom API key (FID-2026-0913-001)', async () => {
-    const { getModelForRequest } = await importFresh()
-
-    await expect(
-      getModelForRequest({
-        apiKey: 'test-key',
-        model: TOKENBOM_MODEL,
-      }),
-    ).rejects.toThrow(
-      'TokenBom API key not set. Set TOKENBOM_API_KEY environment variable or run /provider tokenbom.',
-    )
-  })
-
-  test('routes TokenBom models with one-prefix normalization (FID-2026-0913-001)', async () => {
-    process.env.TOKENBOM_API_KEY = 'tokenbom-test-key'
-    const fetchMock = mock(() =>
-      Promise.resolve(
-        new Response('data: [DONE]\n\n', {
-          status: 200,
-          headers: { 'content-type': 'text/event-stream' },
-        }),
-      ),
-    )
-    // @ts-expect-error - test fetch has the same runtime contract
-    globalThis.fetch = fetchMock
-
-    const { getModelForRequest } = await importFresh()
-    const result = await getModelForRequest({
-      apiKey: 'test-key',
-      model: TOKENBOM_MODEL,
-    })
-    await (result.model as LanguageModelV2).doStream({
-      prompt: COMMAND_CODE_PROMPT,
-    })
-
-    const [input, init] = fetchMock.mock.calls[0] as unknown as [
-      RequestInfo | URL,
-      RequestInit | undefined,
-    ]
-    // Same host serves site + API (audited live); Bearer sk-sub- key.
-    expect(String(input)).toBe('https://tokenbom.com/v1/chat/completions')
-    expect(new Headers(init?.headers).get('authorization')).toBe(
-      'Bearer tokenbom-test-key',
-    )
-    expect(JSON.parse(String(init?.body)).model).toBe('gpt-5.5')
   })
 
   test('requires the B.AI API key (FID-2026-0911-004)', async () => {

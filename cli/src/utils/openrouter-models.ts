@@ -62,6 +62,7 @@ export {
   formatModelInfo,
   getProviderFromModelId,
   resolveContextWindowForModel,
+  resolveContextWindowSourceForModel,
   resolveMaxOutputTokensForModel,
 } from './openrouter-models/lookup'
 export type { ModelProvider, OpenRouterModel } from './openrouter-models/types'

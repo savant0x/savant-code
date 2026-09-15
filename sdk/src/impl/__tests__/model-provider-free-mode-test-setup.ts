@@ -19,6 +19,8 @@ export const ORCAROUTER_MODEL = 'orcarouter/anthropic/claude-opus-5'
 export const BAI_MODEL = 'bai/deepseek/deepseek-v4-flash'
 export const HCNSEC_MODEL = 'hcnsec/glm-5.3-flash'
 export const TOKENBOM_MODEL = 'tokenbom/gpt-5.5'
+export const INFRON_MODEL = 'infron/deepseek/deepseek-v4-flash:free'
+export const UNOROUTER_MODEL = 'unorouter/glm-5.3-flash:free'
 export const NOUS_MODEL = 'nous/anthropic/claude-sonnet-4.6'
 export const ZEN_CHAT_MODEL = 'opencode-zen/glm-5.3'
 export const ZEN_CLAUDE_MODEL = 'opencode-zen/claude-sonnet-4-6'
@@ -41,6 +43,8 @@ export function setupModelProviderTestHarness() {
   let originalBaiApiKey: string | undefined
   let originalHcnsecApiKey: string | undefined
   let originalTokenbomApiKey: string | undefined
+  let originalInfronApiKey: string | undefined
+  let originalUnorouterApiKey: string | undefined
   let originalNousApiKey: string | undefined
   let originalOpenRouterApiKey: string | undefined
   let originalOrMasterKey: string | undefined
@@ -49,6 +53,15 @@ export function setupModelProviderTestHarness() {
   let originalInferenceBaseUrl: string | undefined
 
   beforeEach(async () => {
+    // FID-2026-0914-001: warm the module graph BEFORE the env deletions
+    // below. The transitive import of @savant-code/common/env applies
+    // .env.local exactly once per process ("Using environment: dev");
+    // when that first application fires inside a test body (importFresh),
+    // keys deleted here re-appear mid-test and the FIRST key-missing leg
+    // in a fresh process resolves instead of throwing. Importing the same
+    // module the tests import guarantees the one-shot bootstrap has fired
+    // before any deletion; the cached import is a no-op afterwards.
+    await import('../model-provider')
     originalCommandCodeApiKey = process.env.COMMAND_CODE_API_KEY
     delete process.env.COMMAND_CODE_API_KEY
     originalOpencodeZenApiKey = process.env.OPENCODE_API_KEY
@@ -65,6 +78,10 @@ export function setupModelProviderTestHarness() {
     delete process.env.HCNSEC_API_KEY
     originalTokenbomApiKey = process.env.TOKENBOM_API_KEY
     delete process.env.TOKENBOM_API_KEY
+    originalInfronApiKey = process.env.INFRON_API_KEY
+    delete process.env.INFRON_API_KEY
+    originalUnorouterApiKey = process.env.UNOROUTER_API_KEY
+    delete process.env.UNOROUTER_API_KEY
     originalNousApiKey = process.env.NOUS_API_KEY
     delete process.env.NOUS_API_KEY
     originalOpenRouterApiKey = process.env.OPENROUTER_API_KEY
@@ -138,6 +155,16 @@ export function setupModelProviderTestHarness() {
       delete process.env.TOKENBOM_API_KEY
     } else {
       process.env.TOKENBOM_API_KEY = originalTokenbomApiKey
+    }
+    if (originalInfronApiKey === undefined) {
+      delete process.env.INFRON_API_KEY
+    } else {
+      process.env.INFRON_API_KEY = originalInfronApiKey
+    }
+    if (originalUnorouterApiKey === undefined) {
+      delete process.env.UNOROUTER_API_KEY
+    } else {
+      process.env.UNOROUTER_API_KEY = originalUnorouterApiKey
     }
     if (originalNousApiKey === undefined) {
       delete process.env.NOUS_API_KEY

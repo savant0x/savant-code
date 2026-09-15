@@ -150,6 +150,24 @@ describe('provider setup', () => {
     expect(getConfiguredProviderNames()).toContain('tokenbom')
   })
 
+  test('saves Infron credentials for direct-provider mode (FID-2026-0914-001)', () => {
+    saveProviderApiKey('infron', '  test-infron-key  ')
+
+    expect(process.env.INFRON_API_KEY).toBe('test-infron-key')
+    expect(process.env.DIRECT_PROVIDER).toBe('infron')
+    expect(process.env.INFERENCE_BASE_URL).toBe('https://llm.onerouter.pro/v1')
+    expect(getConfiguredProviderNames()).toContain('infron')
+  })
+
+  test('saves UnoRouter credentials for direct-provider mode (FID-2026-0914-001)', () => {
+    saveProviderApiKey('unorouter', '  test-unorouter-key  ')
+
+    expect(process.env.UNOROUTER_API_KEY).toBe('test-unorouter-key')
+    expect(process.env.DIRECT_PROVIDER).toBe('unorouter')
+    expect(process.env.INFERENCE_BASE_URL).toBe('https://api.unorouter.com/v1')
+    expect(getConfiguredProviderNames()).toContain('unorouter')
+  })
+
   test('saves B.AI credentials for direct-provider mode (FID-2026-0911-004)', () => {
     saveProviderApiKey('bai', '  test-bai-key  ')
 

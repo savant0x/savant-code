@@ -4,6 +4,7 @@ import {
 } from '@savant-code/common/providers/custom-providers'
 
 import { replyAndClear } from './provider-subcommands-replies'
+import { tryGetProjectRoot } from '../project-files'
 import { useChatStore } from '../state/chat-store'
 import { readStoredProviderKeys } from '../utils/provider-credentials'
 import {
@@ -14,6 +15,9 @@ import {
   getStepInstructions,
   beginProviderWizard,
   cancelWizardSession,
+  adoptActiveSession,
+  createDiscoveryWizardSession,
+  readDiscoveryPrefill,
 } from '../utils/provider-wizard'
 import {
   getActiveProvider,
@@ -66,9 +70,37 @@ function startAddWizard(params: ProviderParams): void {
   )
 }
 
-/** `/provider add` — start a fresh add wizard (through the shared seam). */
-function handleAdd(params: ProviderParams): void {
-  startAddWizard(params)
+/**
+ * `/provider add` — start a fresh add wizard (through the shared seam).
+ * FID-2026-0914-003 (MQ6): `add <host>` for a probe-passed discovery
+ * candidate opens the wizard PRE-FILLED (consent walk); plain `add`
+ * behavior is byte-identical to before.
+ */
+function handleAdd(params: ProviderParams, rest: string): void {
+  const host = rest.trim()
+  if (!host) {
+    startAddWizard(params)
+    return
+  }
+  const prefill = readDiscoveryPrefill(host, tryGetProjectRoot() ?? undefined)
+  if (!prefill) {
+    replyAndClear(
+      params,
+      `No probe-passed discovery candidate named '${host}'. Check today's report (dev/provider-candidates/report.md) for exact host names, or run /provider add without an argument.`,
+    )
+    return
+  }
+  cancelWizardSession()
+  const session = createDiscoveryWizardSession(prefill)
+  // The externally-built session enters the SAME registry the typed and
+  // picker paths use (FID-2026-0911-001 D3) — one active-wizard seam.
+  adoptActiveSession(session)
+  enterWizardMode(session.step)
+  replyAndClear(
+    params,
+    `Discovery candidate: ${prefill.label} — ${prefill.modelsCount ?? '?'} model(s), auth-boundary ${prefill.boundary ?? 'unverified'} (probed by today's harvest). Enter adopts each pre-filled value; type to change it.\n\n` +
+      getStepInstructions(session.step),
+  )
 }
 
 /**
@@ -230,7 +262,7 @@ export async function handleProviderSubcommand(
 ): Promise<void> {
   switch (subcommand) {
     case 'add':
-      handleAdd(params)
+      handleAdd(params, rest)
       return
     case 'edit':
       handleEdit(params, rest)

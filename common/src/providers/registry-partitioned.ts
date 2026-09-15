@@ -191,4 +191,60 @@ export const PROVIDER_REGISTRY_PARTITION = {
     domain: 'tokenbom.com',
     order: 4,
   },
+  infron: {
+    id: 'infron',
+    label: 'Infron',
+    kind: 'gateway',
+    credentials: {
+      envVar: 'INFRON_API_KEY',
+      // /provider hint is part of the canonical message.
+      missingKeyMessage:
+        'Infron API key not set. Set INFRON_API_KEY environment variable or run /provider infron.',
+    },
+    // Docs quickstart pins the INFERENCE host: llm.onerouter.pro/v1 (the
+    // OpenAI SDK examples point there; api.infron.ai is the catalog/site
+    // host only). Keyed probes this session confirmed the host is
+    // authoritative for this key (Infron-specific credit errors).
+    baseUrl: 'https://llm.onerouter.pro/v1',
+    protocol: 'openai',
+    idTransform: 'strip',
+    // STATIC curated allowlist (operator rulings, FID-2026-0914-001): 4
+    // free + 5 top coding, chat-served only — the Responses-only Codex
+    // family is excluded (chat would 404). The 458-entry live catalog
+    // stays unpicked; the free tier additionally requires a funded team
+    // account (429 "Team balance" observed live — OrcaRouter-pattern
+    // NEEDS-REVIEW on the live round-trip).
+    catalog: { source: 'static', modelsRef: 'infron' },
+    setupAvailable: true,
+    domain: 'infron.ai',
+    order: 4,
+  },
+  unorouter: {
+    id: 'unorouter',
+    label: 'UnoRouter',
+    kind: 'gateway',
+    credentials: {
+      envVar: 'UNOROUTER_API_KEY',
+      // /provider hint is part of the canonical message.
+      missingKeyMessage:
+        'UnoRouter API key not set. Set UNOROUTER_API_KEY environment variable or run /provider unorouter.',
+    },
+    // Docs quickstart: BASE_URL = https://api.unorouter.com/v1. The api.
+    // subdomain serves the QuantumNous console ("New API" fingerprint —
+    // same reseller software class as hcnsec).
+    baseUrl: 'https://api.unorouter.com/v1',
+    protocol: 'openai',
+    idTransform: 'strip',
+    // STATIC curated allowlist (operator rulings, FID-2026-0914-001): 12
+    // free (`:free` never bills, per vendor docs) + 5 top coding. The
+    // 128-row free tier stays unpicked. Multi-supplier failover is a
+    // documented substitution surface — personal-use provenance, Trust
+    // Provenance in the FID. 5 free channels live-verified HTTP 200 this
+    // session; the rest failed busy-class only (vendor-documented
+    // peak-hour saturation).
+    catalog: { source: 'static', modelsRef: 'unorouter' },
+    setupAvailable: true,
+    domain: 'unorouter.com',
+    order: 4,
+  },
 } as const satisfies Record<string, ProviderConfig>

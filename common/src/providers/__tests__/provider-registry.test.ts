@@ -24,13 +24,14 @@ import type { ProviderConfig } from '../types'
  * as its first argument so tests inject a fixture instead of the singleton).
  */
 describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
-  test('covers all sixteen current providers', () => {
+  test('covers all eighteen current providers', () => {
     expect(Object.keys(PROVIDER_REGISTRY).sort()).toEqual([
       'apinex',
       'bai',
       'cloudflare',
       'commandcode',
       'hcnsec',
+      'infron',
       'kiosapi',
       'nous',
       'nvidia',
@@ -42,6 +43,7 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
       'tokenbom',
       'tokenharbor',
       'tokenrouter',
+      'unorouter',
     ])
   })
 
@@ -86,6 +88,8 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
       'commandcode',
       'hcnsec',
       'tokenbom',
+      'infron',
+      'unorouter',
       'nous',
       'ollama',
       'cloudflare',
@@ -98,13 +102,14 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
     expect(deriveProviderOrder(PROVIDER_REGISTRY, 'unknown')).toBe(4)
   })
 
-  test('setup config derives exactly the fourteen current setup providers', () => {
+  test('setup config derives exactly the sixteen current setup providers', () => {
     const setup = deriveSetupConfig(PROVIDER_REGISTRY)
     expect(Object.keys(setup).sort()).toEqual([
       'apinex',
       'bai',
       'commandcode',
       'hcnsec',
+      'infron',
       'kiosapi',
       'nous',
       'nvidia',
@@ -115,6 +120,7 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
       'tokenbom',
       'tokenharbor',
       'tokenrouter',
+      'unorouter',
     ])
     expect(setup.openrouter).toEqual({
       label: 'OpenRouter',
@@ -184,43 +190,9 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
     )
   })
 
-  test('hcnsec + tokenbom entries match the audited contracts (FID-2026-0913-001)', () => {
-    // Full-entry pins: literals from the identity audit
-    // (docs/provider-identity-audit-2026-09-13.md) + the runbook template.
-    expect(PROVIDER_REGISTRY.hcnsec).toEqual({
-      id: 'hcnsec',
-      label: 'HCNSec',
-      kind: 'gateway',
-      credentials: {
-        envVar: 'HCNSEC_API_KEY',
-        missingKeyMessage:
-          'HCNSec API key not set. Set HCNSEC_API_KEY environment variable or run /provider hcnsec.',
-      },
-      baseUrl: 'https://api.hcnsec.cn/v1',
-      protocol: 'openai',
-      idTransform: 'strip',
-      catalog: { source: 'static', modelsRef: 'hcnsec' },
-      setupAvailable: true,
-      domain: 'hcnsec.cn',
-      order: 4,
-    })
-    expect(PROVIDER_REGISTRY.tokenbom).toEqual({
-      id: 'tokenbom',
-      label: 'TokenBom',
-      kind: 'gateway',
-      credentials: {
-        envVar: 'TOKENBOM_API_KEY',
-        missingKeyMessage:
-          'TokenBom API key not set. Set TOKENBOM_API_KEY environment variable or run /provider tokenbom.',
-      },
-      baseUrl: 'https://tokenbom.com/v1',
-      protocol: 'openai',
-      idTransform: 'strip',
-      catalog: { source: 'static', modelsRef: 'tokenbom' },
-      setupAvailable: true,
-      domain: 'tokenbom.com',
-      order: 4,
-    })
+  test('hcnsec + tokenbom full-entry pins moved to provider-registry-gateways.test.ts (FID-2026-0914-001 split)', () => {
+    expect(PROVIDER_REGISTRY.hcnsec).toBeDefined()
+    expect(PROVIDER_REGISTRY.tokenbom).toBeDefined()
   })
 
   test('logo lookup derives from registry prefixes', () => {

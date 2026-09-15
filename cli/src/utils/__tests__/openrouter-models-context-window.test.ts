@@ -37,14 +37,18 @@ describe('openrouter-models', () => {
         1048576,
       )
     })
-    test('falls back to heuristic when model is not in catalog', async () => {
+    test('falls back to the conservative default when the model is not in any catalog (FID-2026-0914-002: family guesses retired)', async () => {
       // @ts-expect-error - mock fetch
       globalThis.fetch = mock(() =>
         Promise.resolve(makeJsonResponse({ data: [] })),
       )
       await fetchGatewayModels(true)
-      expect(resolveContextWindowForModel('google/gemini-flash')).toBe(1048576)
-      expect(resolveContextWindowForModel('deepseek/deepseek-v3')).toBe(131072)
+      // Unmatched ids resolve to the conservative default — never a family
+      // guess. The provenance is visible via resolveContextWindowSourceForModel
+      // (sidebar badge), and the live catalog corrects the value as soon as
+      // it loads (the bootstrap effect re-runs on catalog load).
+      expect(resolveContextWindowForModel('google/gemini-flash')).toBe(200000)
+      expect(resolveContextWindowForModel('deepseek/deepseek-v3')).toBe(200000)
       expect(resolveContextWindowForModel('anthropic/claude-opus-4')).toBe(
         200000,
       )

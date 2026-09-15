@@ -46,6 +46,10 @@ export type WizardSession = {
   mode: WizardMode
   /** Edit mode only: the stored definition being edited. */
   stored?: CustomProviderConfig
+  /** FID-2026-0914-003 (MQ6): set on discovery-prefill sessions only. The
+   * acceptedAt instant is stamped onto the finalized record; its PRESENCE
+   * (not its value) also enables the empty-adopt consent gesture. */
+  discovery?: { acceptedAt: string }
   step: WizardStep
   draft: WizardDraft
   /** Human-readable problem from the last submit; cleared on success. */

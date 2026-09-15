@@ -55,6 +55,7 @@ Or select one of the supported gateway providers directly:
 | Cloudflare | Environment configuration | `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` | Env-only — not in the `/provider` picker; requires the account id too |
 | CommandCode | `/provider commandcode` or `DIRECT_PROVIDER=commandcode` | `COMMAND_CODE_API_KEY` | OpenAI-compatible hosted inference (dual-protocol) |
 | HCNSec | `/provider hcnsec` or `DIRECT_PROVIDER=hcnsec` | `HCNSEC_API_KEY` | OpenAI-compatible gateway on an audited static 7-model allowlist |
+| Infron | `/provider infron` or `DIRECT_PROVIDER=infron` | `INFRON_API_KEY` | Hosted gateway |
 | KiosAPI | `/provider kiosapi` or `DIRECT_PROVIDER=kiosapi` | `KIOSAPI_API_KEY` | OpenAI-compatible gateway (live catalog) |
 | Nous Research | `/provider nous` or `DIRECT_PROVIDER=nous` | `NOUS_API_KEY` | OpenAI-compatible direct inference; Portal OAuth is separate |
 | Ollama | Automatic detection | `OLLAMA_HOST` (optional) | Local inference; no API key required |
@@ -62,6 +63,7 @@ Or select one of the supported gateway providers directly:
 | OrcaRouter | `/provider orcarouter` or `DIRECT_PROVIDER=orcarouter` | `ORCAROUTER_API_KEY` | Multi-provider gateway with a live model catalog (free tier currently gated vendor-side on GitHub account linkage) |
 | TokenBom | `/provider tokenbom` or `DIRECT_PROVIDER=tokenbom` | `TOKENBOM_API_KEY` | OpenAI-compatible gateway on an audited static 7-model allowlist |
 | TokenHarbor | `/provider tokenharbor` or `DIRECT_PROVIDER=tokenharbor` | `TOKENHARBOR_API_KEY` | OpenAI-compatible hosted gateway |
+| UnoRouter | `/provider unorouter` or `DIRECT_PROVIDER=unorouter` | `UNOROUTER_API_KEY` | Hosted gateway |
 | Custom endpoint | Environment configuration | `INFERENCE_BASE_URL`, `INFERENCE_API_KEY` | Advanced OpenAI-compatible endpoint |
 <!-- GENERATED:provider-table-end -->
 
@@ -146,6 +148,8 @@ ORCAROUTER_API_KEY=dummy-orcarouter-key-replace-me
 BAI_API_KEY=dummy-bai-key-replace-me
 HCNSEC_API_KEY=dummy-hcnsec-key-replace-me
 TOKENBOM_API_KEY=dummy-tokenbom-key-replace-me
+INFRON_API_KEY=dummy-infron-key-replace-me
+UNOROUTER_API_KEY=dummy-unorouter-key-replace-me
 
 # Local Ollama override (optional)
 # OLLAMA_HOST=http://localhost:11434

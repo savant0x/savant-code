@@ -12,6 +12,7 @@
  */
 
 import { parseCustomCatalog } from './custom-providers-catalog'
+import { PIPELINE_SOURCE, discoveryStampProblems } from './discovery-stamp'
 import { ORG_PREFIXES } from './org'
 import { PROVIDER_REGISTRY } from './registry'
 import { parseRegistryUrl } from './validate'
@@ -215,6 +216,20 @@ export function parseCustomProviders(
       }
     }
 
+    // FID-2026-0914-003: optional discovery-pipeline provenance stamp
+    // (source + acceptedAt). Validated fail-closed via the shared truth in
+    // discovery-stamp.ts; valid stamps are PRESERVED on the parsed config so
+    // the pipeline's health tracking survives settings round-trips. An
+    // absent stamp is the normal hand-written case and is fine.
+    const stampProblems = discoveryStampProblems({
+      source: record['source'],
+      acceptedAt: record['acceptedAt'],
+    })
+    entryProblems.push(
+      ...stampProblems.map((problem) => `${label}: ${problem}`),
+    )
+    const stampValid = stampProblems.length === 0
+
     problems.push(...entryProblems)
     // Partial records never reach the merged view (fail-closed).
     if (
@@ -231,6 +246,13 @@ export function parseCustomProviders(
         apiKeyEnvVar,
         catalog: catalog.catalog,
         ...(protocol !== undefined ? { protocol } : {}),
+        // Preserve the validated provenance stamp (FID-2026-0914-003).
+        ...(stampValid && record['source'] !== undefined
+          ? {
+              source: PIPELINE_SOURCE,
+              acceptedAt: record['acceptedAt'] as string,
+            }
+          : {}),
       })
     }
   })

@@ -1,3 +1,6 @@
+import { getContextWindowFallback } from '@savant-code/common/constants/context-windows'
+
+import type { ContextWindowSource } from '@savant-code/common/constants/context-windows'
 import type { ToolName } from '@savant-code/sdk'
 
 /**
@@ -166,22 +169,22 @@ export const MODE_DESCRIPTIONS: Record<AgentMode, string> = {
 }
 
 /**
- * Fallback context-window heuristic used when the live gateway catalog does not
- * yet contain a model (e.g. on first boot before /model is opened).
- * These values are intentionally conservative / broad; the source of truth is
- * {@link resolveContextWindowForModel}, which checks the cached catalog first.
+ * FID-2026-0914-002: the substring heuristic is RETIRED as a final fallback.
+ * This delegate resolves from the vendor-published fallback table
+ * (exact id → window) and returns the conservative default for unknown ids —
+ * never a family guess. The live catalogs (lookup.ts ladder) take priority.
  */
 export function getContextWindowForModel(model: string): number {
-  const m = model.toLowerCase()
-  // Gemini models: 1M+ token context
-  if (m.includes('gemini')) return 1_048_576
-  // DeepSeek models: 128k context
-  if (m.includes('deepseek')) return 131_072
-  // Claude models (Sonnet, Opus, Haiku): 200k context
-  if (m.includes('claude')) return 200_000
-  // o-series: 200k context. GPT-4 family (including gpt-4o): 128k fallback.
-  if (m.includes('o1') || m.includes('o3') || m.includes('o4')) return 200_000
-  if (m.includes('gpt-4')) return 128_000
-  // Default fallback
-  return 200_000
+  return getContextWindowFallback(model).contextWindow
+}
+
+/**
+ * FID-2026-0914-002 (MQ4): how the final-fallback window for a model id was
+ * resolved — surfaced next to the sidebar Context row so the operator sees
+ * when a model is on the default (the "artificially restricted" tell).
+ */
+export function getContextWindowSourceForModel(
+  model: string,
+): ContextWindowSource {
+  return getContextWindowFallback(model).source
 }
