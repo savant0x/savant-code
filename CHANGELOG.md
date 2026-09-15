@@ -2,6 +2,208 @@
 
 ## Unreleased
 
+### Free-compute intelligence layer: stability · model index · churn · nudges · fallback hints · quality gauntlet (FID-2026-0915-001)
+
+- **Six workstreams over data the pipeline already collects** (operator:
+  "so all 6"; MQ1–MQ4 ruled — all four recommendations accepted: 14-day
+  ring, <½-latency nudge, 8-prompt rubric, gitignored denylist):
+  - **W1 stability ring** — every host accumulates a 14-sample daily history
+    in `candidates.json` (state v2, zero-blip migration; same-day re-runs
+    replace, oldest dropped); the report's candidates tables gain an
+    `Uptime (14d)` column (`100% · 67ms avg`).
+  - **W2 model-first index** — family normalization joins vendor ids
+    (`meta/llama-3.3-70b-instruct`), feed prose (`Llama 3.1/3.3 family`),
+    and bare ids (`llama-3.3-70b`); the report gains a readiness-ordered
+    **Model availability index** (LIVE: deepseek ×23, qwen ×20, llama ×16),
+    and a host silently dropping a model family is flagged in the audit
+    trail (dropout detection).
+  - **W3 churn analytics + denylist** — `firstSeenUtc` is set on first
+    sight and never mutated; the report gains an **Ecosystem churn**
+    section (7-day new-host window, 72h-rule lapses, median lifespan of
+    dead hosts); `denylist.json` accumulates every rejection/flag ever
+    recorded with dates (machine-readable, gitignored).
+  - **W4 better-default nudges** — when a health-tracked pipeline provider
+    degrades AND a boundary-ok candidate is more than 2× faster with ≥1
+    model, the sanitized agent announce block gains ONE capped suggest-line
+    (agent suggests, never switches).
+  - **W5 429 fallback hints** — on a rate-limit failure the CLI offers up
+    to 2 OTHER boundary-ok hosts serving the same model family
+    (fail-silent: missing state ⇒ banner exactly as before; once per model
+    per session; the failing host is excluded via the error URL; wired
+    through both the throw path and the error-output completion path).
+  - **W6 quality gauntlet (operator-run)** — `bun run providers:quality --
+    <host>` runs a fixed 8-prompt coding rubric against one candidate with
+    the operator's key (env at invocation, used in headers only, never
+    stored or logged, refused BEFORE any network call); scores land in
+    `quality.json` and render in the report's **Quality (operator-run)**
+    section. Never scheduled; not a merge gate.
+- **State layer moved to `common`**
+  (`common/src/providers/discovery-state.ts` — Law 13 single truth for the
+  report, the wizard prefill, and the W5 CLI seam; scripts keep a
+  re-export shim). Invariants unchanged: zero auto-merge/switch, zero key
+  storage, agent has no destructive tool, artifacts gitignored.
+- **Verification:** 34 new pin tests (RED-first per workstream; 131 tests
+  across touched suites, 0 fail); typecheck ×4; eslint `--max-warnings 0`;
+  lint:md; prettier; LIVE harvest gate — v2 migration zero-blip (55/55
+  unchanged), ring/index/churn/quality sections rendered, `chutes.ai`
+  still `RELAY ✗` with history. **W6 validated live** (`orcarouter.ai`,
+  operator key, 8/8 · 1607ms): caught a fetch POST→GET redirect defect
+  (apex→www 301) — gauntlet now normalizes `/v1` and re-POSTs manually with
+  auth intact, and **`probeEndpoint` was hardened the same way** (RED-first
+  pins; the harvester re-probes `boundary-unverifiable` hosts so stale
+  measurement artifacts self-correct — LIVE: orcarouter.ai corrected from
+  `boundary-unverifiable` to `boundary-ok` (401, 389ms)).
+
+### Free-compute discovery pipeline: daily harvest → probe → propose → accept → track → remove (FID-2026-0914-003)
+
+- **Daily pipeline** (`bun run providers:harvest [--probe]`): fetches the
+  freeairouter open feed once (transparent UA, 30s timeout, once daily),
+  applies the stage-0 filter (verified + reachable + confirmed
+  first-party-free/commercial-aggregator — 55/214 viable on the live
+  payload), runs the two-tier typosquat screen (tier-1 auto-reject with a
+  legitimate-vendor allowlist — caught `api.celebras.ai`; `api.z.ai`
+  survives), diffs against persisted state + the built-in registry (72-hour
+  lapse prune via `downStreak`), and — with `--probe` — probes new
+  candidates against their own vendor surfaces (`GET /v1/models` +
+  401-boundary check: unauthenticated 2xx = open relay = auto-reject; no
+  keys ever) and health-probes pipeline-sourced custom providers.
+- **Stable data-backed report (MQ8):** `dev/provider-candidates/report.md`
+  (gitignored) is replaced in place every run — full candidate table,
+  complete audit trail (every exclusion/rejection carries a reason),
+  new/changed/lapsed sections, Stage-E health section. `candidates.json`
+  carries the rolling diff state; `agent-context.txt` carries the announce
+  payload.
+- **Stage C** (`bun run providers:propose -- <host>`): writes an
+  FID-001-shaped curation scaffold into `dev/scratchpad/provider-proposals/`
+  (write-guarded to `dev/`); open-relay hosts get a DO-NOT-CURATE banner.
+- **Loop-5 production seams:** `CustomProviderConfig` gains a fail-closed-
+  validated provenance stamp (`source: 'discovery-pipeline'` +
+  `acceptedAt`, preserved by `parseCustomProviders` — single validation
+  truth); the CLI boot-check runs the harvest in the background when the
+  report is >24h old (repo-gated via `isDiscoveryRepo`, fail-silent, never
+  blocks the TUI, `IS_SAVANT_FREE` exempt); session bootstrap surfaces the
+  sanitized announce block once per candidate set (host/count/verdict/
+  report-path facts only — never feed prose; prompt-injection surface zero
+  by construction).
+- **MQ6 one-step add:** `/provider add <host>` for a probe-passed candidate
+  opens the existing wizard pre-filled (id/label/baseUrl/envVar derived
+  from the host; Enter adopts, typing replaces — the consent gesture exists
+  only on discovery sessions); the finalized record is stamped; open-relay
+  hosts refuse to prefill (enforced after the LIVE run caught a real one).
+- **Stage E lifecycle close:** stamped providers are re-probed daily
+  (liveness, `/v1/models` shape, **401-boundary drift = compromise
+  signal**); degradation surfaces in the report + agent block with the
+  exact remediation — the shipped `/provider remove <id>`. The agent never
+  receives a destructive tool.
+- **LIVE gate:** first real run — 214 feed records → 55 candidates → a
+  genuine open relay (`chutes.ai`) auto-rejected in the wild; 7 tier-2
+  flags with exact distance evidence. 54 new pin tests (RED-first for the
+  wizard seam); suites green: cli 3696 / common 724 / sdk 611, typecheck
+  ×4, eslint --max-warnings 0, lint:md, prettier. Day-two verification
+  runs caught and fixed probe-evidence erosion (standing boundary verdicts
+  now carry forward across unchanged re-sights — re-verified live, 55/55
+  verdicts survive; zero classification drift and a silent no-nag announce
+  on unchanged feeds).
+- **Report/state restructure (operator review: "professionally structured,
+  properly organized models"):** the report gained an executive Summary
+  table, a "This run's changes" section (only when non-empty), candidates
+  grouped first-party/aggregator and sorted by readiness (verified
+  boundary → model count → latency, relays last), boundary display as
+  `ok`/`unverified`/`RELAY ✗` from the STANDING verdict, and a capped
+  per-host model roster; the audit trail became counted reason-groups
+  (4 sections replace ~140 bullets; every host still listed). The Models
+  column no longer conflates "list hidden" with "no models": probed count
+  plain, feed-listed count with a † marker, else —. The fingerprint is
+  MODELS-ONLY (the feed's LLM-rewritten quota prose caused false
+  `changed` classifications; live proof: the prose-hash run misflagged 2
+  hosts the models-hash run correctly ignores), stored as an 8-hex
+  FNV-1a hash in a `_meta`+`hosts` candidates.json wrapper (~44% smaller,
+  one-glance records) with bit-identical legacy migration — zero
+  re-classification blip. Renderer/serializer logic moved out of the
+  driver into tested lib modules; 62 pipeline tests green.
+
+### Context-compaction rebuild: LLM-semantic summaries + window-truth audit (FID-2026-0914-002)
+
+- The compaction artifact the operator hit (`Progress note:` fragment
+  storms, `[digest] bytes=11 HEAD: [compacted]` re-digest spam, punctuation
+  "decisions", error-log self-play) was fully diagnosed: the summary was
+  authored by a deterministic TypeScript transcriber
+  (`agents/context-pruner/*`, embedded model-less via `.toString()`), not
+  by a model. All 21 reference compact systems reviewed (openclaw, kimi,
+  hermes, codex, cline, …) use a model call.
+- **LLM semantic writer (new Layer 3):** the session model rewrites the
+  deterministic excerpt into a first-person handoff (kimi pattern:
+  settled-vs-open decisions, exact commands/paths/results, named unknowns,
+  forward plan, evidence honesty) at the spawn boundary — the only seam
+  with model access. Output is validated (800–6000 tokens, no tool-call
+  leakage, secrets `[REDACTED]`); user aborts propagate; every other
+  failure degrades to the deterministic excerpt verbatim. Session model
+  only — no override knob (operator ruling).
+- **Deterministic writer hardened (kept as fallback + input material):**
+  consecutive streamed assistant fragments coalesce into one entry (the
+  2-char-line storm is dead), identical consecutive user messages
+  coalesce with an `(×N)` marker, `[compacted]` sentinels and
+  `{compacted:true}` JSON placeholders are never re-digested, the
+  error-log section is removed from the structured block, preserved-state
+  paths are normalized repo-relative from the threaded `projectRoot` and
+  recency-capped at 12 newest-first (was 25, absolute `C:\...` noise), and
+  the first-user-turn pin skips protocol dumps. Edits land in
+  `agents/context-pruner/*` and regenerate the bundled artifact — the
+  generated file is never hand-edited.
+- **Context-window truth:** both substring heuristics (name-table guess
+  + `inferContextLength` fallbacks, including two live in the gateway
+  catalogs found by the audit) are retired to a vendor-published
+  `CONTEXT_WINDOW_FALLBACKS` table; `resolveContextWindowForModel`
+  returns `{ window, provenance }` and the sidebar now shows a window
+  provenance badge (catalog / gateway / vendor-table / default). Unmatched
+  models get the conservative default — never a wrong family guess.
+- Envelope preservation is pinned across every compaction form
+  (`<conversation_summary>` → `<historical_memory>` →
+  `<compaction-summary>`, plus the bare literal) so emergency truncation
+  can never drop the preserved state. A LIVE gate drove the production
+  `runContextPrunerMain` over a 190-message fragment-storm history:
+  150 fragments → 2 entries, 11 resumes → 1 coalesced entry, zero
+  placeholder re-digests, goal + first turn pinned verbatim (7/7).
+- Gates: typecheck × 4, agents/agent-runtime/sdk/cli suites (all
+  pre-existing vendored-resource and cross-suite-pollution failures
+  proven pre-existing by stash A/B), eslint `--max-warnings 0`,
+  prettier, `lint:md`, regenerated-bundle verification, LIVE compaction
+  gate.
+
+### Infron + UnoRouter gateway providers added (FID-2026-0914-001)
+
+- Two new built-in gateway providers follow the static-allowlist template
+  (FID-2026-0913-001): **Infron** (catalog `api.infron.ai/v1/models`,
+  inference `https://llm.onerouter.pro/v1`; 4 `:free` + 5 top-coding
+  models) and **UnoRouter** (inference `https://api.unorouter.com/v1`; 12
+  curated `:free` + 5 top-coding models, 5 of them live-verified HTTP-200
+  this session). Codex/Responses-API-only models are excluded by operator
+  ruling (chat-only). 26 curated channels total, all context windows
+  vendor-published; picker derivation, setup derivation, and model prefixes
+  all derive from the two registry entries with no new machinery.
+- The CLI picker's static-catalog module split (283/300 cap discipline):
+  the new providers' maps + fetchers live in
+  `cli/src/utils/openrouter-models/static-catalogs-gateways.ts`, leaving
+  `static-catalogs.ts` untouched. Test-suite splits mirror the Task 45
+  pattern (`provider-registry-gateways.test.ts`,
+  `model-provider-free-mode-gateways.test.ts`); closed-world pins widened
+  16→18 registry keys / 14→16 setup ids.
+- Latent harness defect fixed: the SDK's one-shot `.env.local` bootstrap
+  ("Using environment: dev") fires lazily on the first transitive import,
+  re-injecting real keys AFTER a test harness deletes them in
+  `beforeEach` — key-missing fail-closed legs must warm the module graph
+  first. The fix also cured a pre-existing test-order flake in the sdk
+  family (proven by stash A/B: failures 6→5, errors 4→3).
+- Docs synced across all 8 hand-maintained surfaces the drift guard pins
+  (README ×2, docs ×4, release README, `.env.example`);
+  `generate:provider-docs:check` green.
+- Known boundaries: Infron's free tier requires team balance ≥ $5, so its
+  LIVE keyed 200 remains NEEDS-REVIEW until the account is funded
+  (OrcaRouter precedent — the integration itself is verified end-to-end
+  through the production chain); UnoRouter documents 429s at peak hours
+  and multi-supplier failover (personal-use posture, not a community
+  default).
+
 ### OrcaRouter gateway provider closed — keyed live acceptance green (FID-2026-0911-002)
 
 - The final Step-4 closure gate passed: with a fresh post-linkage key,
