@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0915-004-vocabulary-modernization.md`
 **ID:** FID-2026-0915-004
 **Severity:** low
-**Status:** analyzed
+**Status:** closed
 **Created:** 2026-09-15 (operator ruling during FID-2026-0915-002
 sequencing: "converged = the perfection loop is completed, we may need to
 update the language we're using because fixed is old" — recorded as
@@ -66,23 +66,63 @@ done).
 
 ### Code Verification Evidence
 
-(Recorded at implementation closure: typecheck cli exit 0; new pin
-`fid-ledger-vocab.test.ts` green; probe `validate-repository.ts` PASS with
-a synthetic converged-status FID admitted cleanly; learnings:check green
-on the amended lesson.)
+(Recorded at implementation closure, 2026-09-15.)
+
+- **Pin test:** `scripts/__tests__/fid-ledger-vocab.test.ts` — 4 tests
+  pinning: `converged` admitted; all four legacy statuses still accepted
+  (set size 5 — nothing removed); `closed` still not active-queue legal;
+  `VERIFIED_STATUSES` unchanged (`converged` does NOT satisfy the receipt
+  check — MQ3).
+- **Existing fid suites:** fid-gates.test.ts + fid-verify.test.ts green
+  alongside the new pins (32 tests / 55 expect() / 0 fail across the three
+  files) — pre-existing `analyzed` fixtures validate unchanged.
+- **LEARNINGS amendment:** the `active-ledger-status-admission` lesson
+  rewritten (title, Invariant, Guard) to the new rule with the
+  supersession note; `learnings:check` exit 0. First amendment attempt
+  tripped `learning.structure.malformed-prose` (prose inside the field
+  name) + a non-schema date suffix — both caught by the validator and
+  corrected (recorded, not hidden).
+- **Gates:** typecheck cli exit 0; probe `learnings.ts` PASS; eslint
+  `--max-warnings 0` exit 0 on the three touched files (one import/order
+  auto-fixed); prettier + lint:md green; `validate:repository` PASS
+  (run directly, not as a gate — see Lessons).
 
 ## Verification Gates
 
 - gate: typecheck cli
 - gate: test scripts/__tests__/fid-ledger-vocab.test.ts
 - gate: test scripts/__tests__/fid-gates.test.ts
-- gate: probe scripts/validate-repository.ts
+- gate: probe scripts/learnings.ts
+
+### Verification Receipt
+
+- fingerprint: sha256:a7cbe9c710752c6438a0aadab7e915b336324c8ad9678eb7313779df9dea23bf
+- verified: 2026-09-15T19:59:06.528Z
+- typecheck cli: exit 0
+- test scripts/__tests__/fid-ledger-vocab.test.ts: exit 0
+- test scripts/__tests__/fid-gates.test.ts: exit 0
+- probe scripts/learnings.ts: exit 0
+
+## Lessons Learned
+
+- Declaring `probe scripts/validate-repository.ts` inside a Verification
+  Gates section creates infinite recursion: validate:repository's C3
+  LIVE-re-runs every declared gate of every fixed FID, so validating the
+  repo spawns validate:repository, which spawns itself (observed as a
+  fid:verify hang at the 590s timeout). Gate lists must never reference
+  the validator that consumes them.
 
 ## Resolution
 
-- **Closed Date:** —
-- **Fix Description:** —
-- **Tests Added:** —
-- **Verification Evidence:** —
-- **Commit:** —
-- **Archived:** —
+- **Closed Date:** 2026-09-15
+- **Fix Description:** `ALLOWED_ACTIVE_STATUSES` in `scripts/fid-ledger.ts`
+  admits `converged` (exported with the ruling comment); `VERIFIED_STATUSES`
+  in `scripts/fid-gates.ts` exported unchanged with the MQ3 comment; the
+  LEARNINGS lesson amended to the superseded rule; vocabulary pin test
+  added. Implementation-stage status `fixed` remains accepted everywhere
+  (deprecated, not removed).
+- **Tests Added:** `scripts/__tests__/fid-ledger-vocab.test.ts` (4 tests).
+- **Verification Evidence:** the Code Verification Evidence section above;
+  receipt stamped on closure.
+- **Commit:** recorded in the session summary (hash captured post-commit).
+- **Archived:** yes — 2026-09-15, same session (Auto-Archive rule).

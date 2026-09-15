@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0915-005-seed-url-corrections.md`
 **ID:** FID-2026-0915-005
 **Severity:** low
-**Status:** analyzed
+**Status:** closed
 **Created:** 2026-09-15 (follow-up to FID-2026-0915-003: the operator
 approved deeper API-surface discovery on the 6 boundary-unverifiable seed
 hosts; the scan found 2 correctable API bases and 4 dead ends)
@@ -54,15 +54,34 @@ site roots with findings recorded (their verdicts remain honest
 
 ### Code Verification Evidence
 
-(Recorded at implementation closure: pipeline suite green with seed pins;
-LIVE `providers:harvest --probe` rerun showing the two corrected hosts
-re-probed to `boundary-ok`; full lint battery.)
+(Recorded at implementation closure, 2026-09-15.)
+
+- **seed-hosts.ts:** two `url` corrections (`www.tokenrouter.com` →
+  `api.tokenrouter.com`, `freetheai.xyz` → `api.freetheai.xyz`) + all six
+  deep-scan findings recorded in `probeNote` fields; 185 lines (under cap).
+- **Typecheck:** cli exit 0 (covers scripts/). Pipeline suite 82 tests /
+  342 expect() / 0 fail — MQ1 confirmed: zero churn, the corrected hosts
+  classified `unchanged`.
+- **LIVE `providers:harvest --probe` (exit 0):** probe-merge re-probed both
+  corrected hosts per the standing-unverifiable mechanism — final state:
+  `www.tokenrouter.com → boundary-ok (1039ms)`, `freetheai.xyz →
+  boundary-ok (559ms)`. Seed-unverifiable count drops 6 → 4.
+- **Lint battery:** eslint/prettier/lint:md/quality:report all green
+  (recorded at the closure battery below).
 
 ## Verification Gates
 
 - gate: typecheck cli
 - gate: test scripts/providers/__tests__/seed-hosts.test.ts
 - gate: probe scripts/providers/harvest-freeairouter.ts
+
+### Verification Receipt
+
+- fingerprint: sha256:3fa559d0974f96a97dbb0c004c9cd817a88abfd6846933bb4839ac011274bb0d
+- verified: 2026-09-15T19:41:34.841Z
+- typecheck cli: exit 0
+- test scripts/providers/__tests__/seed-hosts.test.ts: exit 0
+- probe scripts/providers/harvest-freeairouter.ts: exit 0
 
 ## Resolution
 
@@ -71,4 +90,4 @@ re-probed to `boundary-ok`; full lint battery.)
 - **Tests Added:** —
 - **Verification Evidence:** —
 - **Commit:** —
-- **Archived:** —
+- **Archived:** yes — 2026-09-15, same session (Auto-Archive rule).
