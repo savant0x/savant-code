@@ -54,7 +54,13 @@
 ### Remediation progress
 
 - **Status:** in progress
-- **M1 done:** full 12-workspace type_check chain green, log at `dev/scratchpad/typecheck-chain-2026-09-15.log`
+- **M1 done:** full 12-workspace type_check chain green, log at
+  `dev/scratchpad/typecheck-chain-2026-09-15.log`. (Corrective note
+  2026-09-15: the scratchpad-root artifacts from this audit — day1 probes,
+  fa-sites.json, and this log — were moved to
+  `dev/scratchpad/archive/2026-09-15-audit-artifacts/` per the
+  scratchpad-clutter hygiene rule; the archive copy of the log is the live
+  pointer.)
 - **M3 done:** backfill summaries written (pipeline, intelligence layer, hardening, this one)
 - **M2 open:** file-cap FID being authored (FID-2026-0915-002) from authoritative `quality:report` evidence
 - **C1 open:** path-scoped per-FID commits + hash backfill (paused pending operator sequencing)
