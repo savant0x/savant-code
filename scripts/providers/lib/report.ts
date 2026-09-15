@@ -6,10 +6,22 @@
  * look at it anytime"). Every gate decision in the audit trail carries its
  * reason — data-backed by construction. `candidates.json` carries the
  * rolling machine state (downStreak + snapshots), also replaced each run.
+ *
+ * FID-2026-0915-002: format helpers moved to `report-format.ts` (seam 3a)
+ * and the optional W2/W3/W6 section builders to `report-sections.ts`
+ * (seam 3b). The public surface is unchanged; renderReport delegates the
+ * optional sections.
  */
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
+import { auditGroupLabel, wrapHosts } from './report-format'
+import {
+  renderCandidatesSection,
+  renderChurnSection,
+  renderModelIndexSection,
+  renderQualitySection,
+} from './report-sections'
 import { assertWithinDev } from './typosquat'
 
 export type ReportCandidate = {
@@ -65,64 +77,6 @@ export type ReportInput = {
 
 export const REPORT_RELATIVE_PATH = 'dev/provider-candidates/report.md'
 export const STATE_RELATIVE_PATH = 'dev/provider-candidates/candidates.json'
-
-/** Display form of an auth-boundary verdict (standing verdicts included). */
-function boundaryDisplay(boundary: string): string {
-  if (boundary === 'boundary-ok') return 'ok'
-  if (boundary === 'open-relay-reject') return 'RELAY ✗'
-  if (boundary === 'boundary-unverifiable') return 'unverified'
-  if (boundary === 'not-probed-this-run' || boundary === '') return '—'
-  return boundary
-}
-
-/** Sort rank: ready-to-use first, open relays last. */
-function boundaryRank(boundary: string): number {
-  if (boundary === 'boundary-ok') return 0
-  if (boundary === 'boundary-unverifiable') return 1
-  return 2
-}
-
-/** Short group label for an audit reason (the counted-group heading). */
-function auditGroupLabel(row: ReportAuditRow): string | null {
-  if (row.decision === 'flagged') return null // unique evidence — listed individually
-  if (row.reason.startsWith('status=risky'))
-    return 'Excluded · status=risky (MQ2 hard-exclusion)'
-  if (row.reason.startsWith('status=down'))
-    return 'Excluded · status=down (dead endpoint)'
-  if (row.reason.startsWith('category=free-relay'))
-    return 'Excluded · category=free-relay (anonymous relay class — LLMjacking)'
-  if (row.reason.startsWith('open relay')) return 'Rejected · open relay'
-  if (row.reason.startsWith('typosquat tier-1'))
-    return 'Rejected · typosquat tier-1'
-  if (row.reason.startsWith('already a built-in'))
-    return 'Deduped · already a built-in provider'
-  return `Excluded · ${row.decision}`
-}
-
-/** Wrap a host list across lines, max per line, comma-joined. */
-function wrapHosts(hosts: string[], perLine = 4): string[] {
-  const lines: string[] = []
-  for (let i = 0; i < hosts.length; i += perLine) {
-    lines.push(hosts.slice(i, i + perLine).join(', '))
-  }
-  return lines
-}
-
-const ROSTER_CAP = 6
-
-/**
- * The Models column never lies: a probed count renders plain; a count from
- * the feed's free-model list carries the † marker (the endpoint hides its
- * list unauthenticated — 0 from the probe ≠ no models); nothing known = —.
- */
-function modelsCell(c: ReportCandidate): string {
-  const listed = c.models?.length ?? 0
-  if (typeof c.modelsCount === 'number' && c.modelsCount > 0) {
-    return String(c.modelsCount)
-  }
-  if (listed > 0) return `${listed}†`
-  return '—'
-}
 
 export function renderReport(input: ReportInput): string {
   const lines: string[] = []
@@ -185,148 +139,19 @@ export function renderReport(input: ReportInput): string {
   }
 
   // ------------------------------------------------------------------
-  // Candidates grouped by category, sorted by readiness. Constant
-  // columns are suppressed (blank = unchanged, — = unmeasured).
+  // Candidates by readiness + roster — moved verbatim to
+  // report-sections.ts (second-level seam when this file still measured
+  // 336 lines).
   // ------------------------------------------------------------------
-  lines.push('## Candidates by readiness')
-  lines.push('')
-  if (input.candidates.length === 0) {
-    lines.push('_No candidates passed stage-0 this run._')
-    lines.push('')
-  } else {
-    const groups: Array<[string, string]> = [
-      ['First-party free tiers', 'first-party-free'],
-      ['Commercial aggregators', 'commercial-aggregator'],
-    ]
-    const sorted = [...input.candidates].sort((a, b) => {
-      const rank = boundaryRank(a.boundary) - boundaryRank(b.boundary)
-      if (rank !== 0) return rank
-      const models = (b.modelsCount ?? 0) - (a.modelsCount ?? 0)
-      if (models !== 0) return models
-      return (
-        (a.latencyMs ?? Number.MAX_SAFE_INTEGER) -
-        (b.latencyMs ?? Number.MAX_SAFE_INTEGER)
-      )
-    })
-    for (const [heading, category] of groups) {
-      const rows = sorted.filter((c) => c.category === category)
-      if (rows.length === 0) continue
-      lines.push(`### ${heading} (${rows.length})`)
-      lines.push('')
-      lines.push(
-        '| Host | Auth boundary | Models | Latency | Uptime (14d) | Status |',
-      )
-      lines.push('|---|---|---|---|---|---|')
-      for (const c of rows) {
-        const status =
-          !c.classification || c.classification === 'unchanged'
-            ? ''
-            : `${c.classification}${c.downStreak > 0 ? ` (down x${c.downStreak})` : ''}`
-        const uptime = c.uptime
-          ? `${c.uptime.pct}% · ${c.uptime.avgMs}ms avg`
-          : '—'
-        lines.push(
-          `| ${c.host} | ${boundaryDisplay(c.boundary)} | ${modelsCell(c)} | ${c.latencyMs !== null ? `${c.latencyMs}ms` : '—'} | ${uptime} | ${status} |`,
-        )
-      }
-      lines.push('')
-    }
-    const other = sorted.filter(
-      (c) => !groups.some(([, cat]) => c.category === cat),
-    )
-    if (other.length > 0) {
-      lines.push(`### Other (${other.length})`)
-      lines.push('')
-      for (const c of other) {
-        lines.push(
-          `- ${c.host} — ${boundaryDisplay(c.boundary)} — ${c.classification}`,
-        )
-      }
-      lines.push('')
-    }
-    // ----------------------------------------------------------------
-    // Model availability roster — WHICH models, capped per host.
-    // ----------------------------------------------------------------
-    const withModels = sorted.filter((c) => (c.models?.length ?? 0) > 0)
-    if (withModels.length > 0) {
-      lines.push('#### Model availability')
-      lines.push('')
-      lines.push(
-        "_Plain counts are from our own `/v1/models` probe; † counts come from the feed's free-model list (the endpoint does not expose its list unauthenticated)._",
-      )
-      lines.push('')
-      for (const c of withModels) {
-        const listed = c.models ?? []
-        const probed = typeof c.modelsCount === 'number' && c.modelsCount > 0
-        const countLabel = probed
-          ? `${c.modelsCount} probed`
-          : `${listed.length} feed-listed†`
-        const shown = listed.slice(0, ROSTER_CAP)
-        const tail =
-          listed.length > shown.length
-            ? ` … (+${listed.length - shown.length} more)`
-            : ''
-        lines.push(
-          `- **${c.host}** (${countLabel}): ${shown.join(', ')}${tail}`,
-        )
-      }
-      lines.push('')
-    }
-  }
+  lines.push(...renderCandidatesSection(input))
 
   // ------------------------------------------------------------------
-  // W2 — Model availability index: who serves model family X, readiness-
-  // ordered. The inverse view of the candidates table.
+  // Optional sections (W2 index, W3 churn, W6 quality) — moved verbatim
+  // to report-sections.ts; each renders only when its rows are present.
   // ------------------------------------------------------------------
-  if (input.modelIndexRows && input.modelIndexRows.length > 0) {
-    lines.push('## Model availability index')
-    lines.push('')
-    lines.push(
-      '_Which verified free hosts serve each model family. Hosts are readiness-ordered (verified boundary first, then latency)._',
-    )
-    lines.push('')
-    for (const row of input.modelIndexRows) {
-      const tail = row.more > 0 ? ` … (+${row.more} more)` : ''
-      lines.push(
-        `- **${row.family}** (${row.hosts.length + row.more}): ${row.hosts.join(', ')}${tail}`,
-      )
-    }
-    lines.push('')
-  }
-
-  // ------------------------------------------------------------------
-  // W3 — Ecosystem churn: first-party appearance/death data.
-  // ------------------------------------------------------------------
-  if (input.churn) {
-    lines.push('## Ecosystem churn')
-    lines.push('')
-    lines.push(
-      `- **New in the last 7 days (${input.churn.newLast7Days.length}):** ${input.churn.newLast7Days.length > 0 ? input.churn.newLast7Days.join(', ') : '—'}`,
-    )
-    lines.push(
-      `- **Lapsed (72h rule, all time): ${input.churn.lapsedHosts.length}**${input.churn.lapsedHosts.length > 0 ? ` — ${input.churn.lapsedHosts.join(', ')}` : ''}`,
-    )
-    lines.push(
-      `- **Median lifespan of dead hosts:** ${input.churn.medianLifespanDays !== null ? `${Math.round(input.churn.medianLifespanDays)} days` : '— (no deaths observed yet)'}`,
-    )
-    lines.push('')
-  }
-
-  // ------------------------------------------------------------------
-  // W6 — Quality (operator-run): only when the gauntlet has been run.
-  // ------------------------------------------------------------------
-  if (input.qualityRows && input.qualityRows.length > 0) {
-    lines.push('## Quality (operator-run gauntlet)')
-    lines.push('')
-    lines.push('| Host | Score | Avg latency | Run date |')
-    lines.push('|---|---|---|---|')
-    for (const q of input.qualityRows) {
-      lines.push(
-        `| ${q.host} | ${q.score} | ${q.latencyMs !== null ? `${q.latencyMs}ms` : '—'} | ${q.runDate} |`,
-      )
-    }
-    lines.push('')
-  }
+  lines.push(...renderModelIndexSection(input.modelIndexRows))
+  lines.push(...renderChurnSection(input.churn))
+  lines.push(...renderQualitySection(input.qualityRows))
 
   // ------------------------------------------------------------------
   // Audit trail: counted, grouped by reason — completeness preserved
