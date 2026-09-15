@@ -144,8 +144,8 @@ zero reasoning tokens — clean channel, no injection class. Key never printed
 
 ### Verification Receipt
 
-- fingerprint: sha256:77b0f944ac8cf65602a6f698bdc068ba462f12fd37a7e33aaa9de56a6f48bac3
-- verified: 2026-09-15T23:26:14.913Z
+- fingerprint: sha256:0fa1a011f2e6f9ee61bda22f27171005f5bb76c22684894406840231c9b768a8
+- verified: 2026-09-15T23:31:47.874Z
 - typecheck sdk: exit 0
 - typecheck common: exit 0
 - typecheck packages/agent-runtime: exit 0
