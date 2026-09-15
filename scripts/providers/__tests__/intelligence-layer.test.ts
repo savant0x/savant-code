@@ -1,196 +1,25 @@
 /**
  * FID-2026-0915-001 — intelligence-layer pins (RED-first).
  *
- * Pure contracts of the six workstreams: W1 history ring + uptime,
- * W2 family normalization + model-first index, W3 churn + firstSeen,
- * W4 nudge threshold, W5 fallback hint selection. State v2 shape and
- * zero-blip migration. Fixtures are synthetic — no live network.
+ * Pure contracts of the intelligence workstreams: W2 family normalization +
+ * model-first index, W3 churn + firstSeen, W4 nudge threshold, W5 fallback
+ * hint selection. Fixtures are synthetic — no live network.
+ *
+ * FID-2026-0915-002 (split 5): the W1 ring/uptime + state-v2 describes
+ * moved to ring-buffer.test.ts; the shared `state()` fixture lives in
+ * helpers.ts.
  */
 import { describe, expect, test } from 'bun:test'
 
+import { DAY, state, T0 } from './helpers'
 import { nudgeLine } from '../../../common/src/providers/discovery-context'
 import {
-  appendHistory,
   buildModelIndex,
   churnSummary,
   familyToken,
   fallbackHint,
-  HISTORY_CAP,
-  parseStateFile,
-  serializeStateFile,
-  uptimeFor,
   type CandidateState,
-  type HistorySample,
 } from '../../../common/src/providers/discovery-state'
-
-const DAY = 24 * 60 * 60 * 1000
-const T0 = 1_757_800_000_000
-
-function state(overrides: Partial<CandidateState> = {}): CandidateState {
-  return {
-    category: 'first-party-free',
-    fingerprint: 'habcdef01',
-    downStreak: 0,
-    lastSeenUtc: new Date(T0).toISOString(),
-    firstSeenUtc: new Date(T0).toISOString(),
-    url: 'https://api.example-free.ai',
-    lastBoundary: 'boundary-ok',
-    models: ['llama-3.3-70b', 'qwen-3-32b'],
-    history: [],
-    lastProbe: {
-      reachable: true,
-      modelsCount: 2,
-      boundary: 'boundary-ok',
-      latencyMs: 320,
-    },
-    ...overrides,
-  }
-}
-
-// ---------------------------------------------------------------------------
-// W1 — history ring
-// ---------------------------------------------------------------------------
-
-describe('appendHistory (W1 ring buffer)', () => {
-  test('appends one sample and returns a NEW map (purity)', () => {
-    const before = new Map([['h', state()]])
-    const sample: HistorySample = {
-      d: '2026-09-15',
-      up: true,
-      ms: 320,
-      b: 'boundary-ok',
-    }
-    const after = appendHistory(before, 'h', sample)
-    expect(after).not.toBe(before)
-    expect(before.get('h')?.history).toEqual([])
-    expect(after.get('h')?.history).toEqual([sample])
-  })
-
-  test(`caps at ${HISTORY_CAP} samples, dropping the OLDEST`, () => {
-    let m = new Map([['h', state()]])
-    for (let i = 0; i < HISTORY_CAP + 5; i++) {
-      m = appendHistory(m, 'h', {
-        d: `2026-09-${String((i % 28) + 1).padStart(2, '0')}`,
-        up: true,
-        ms: 100 + i,
-        b: 'boundary-ok',
-      })
-    }
-    const history = m.get('h')?.history ?? []
-    expect(history.length).toBe(HISTORY_CAP)
-    expect(history[0]?.ms).toBe(100 + 5)
-  })
-
-  test('same-day re-run replaces the sample (idempotent per date)', () => {
-    let m = new Map([['h', state()]])
-    m = appendHistory(m, 'h', { d: '2026-09-15', up: true, ms: 320, b: 'x' })
-    m = appendHistory(m, 'h', { d: '2026-09-15', up: true, ms: 999, b: 'x' })
-    const history = m.get('h')?.history ?? []
-    expect(history.length).toBe(1)
-    expect(history[0]?.ms).toBe(999)
-  })
-
-  test('missing host key is a no-op (no phantom hosts)', () => {
-    const before = new Map([['h', state()]])
-    const after = appendHistory(before, 'ghost', {
-      d: '2026-09-15',
-      up: true,
-      ms: 1,
-      b: 'x',
-    })
-    expect(after.size).toBe(1)
-  })
-})
-
-describe('uptimeFor (W1 report cell)', () => {
-  test('percent up + average latency of non-null samples', () => {
-    const history: HistorySample[] = [
-      { d: '1', up: true, ms: 100, b: 'boundary-ok' },
-      { d: '2', up: true, ms: 300, b: 'boundary-ok' },
-      { d: '3', up: false, ms: null, b: 'down' },
-    ]
-    expect(uptimeFor(history)).toEqual({ pct: 67, avgMs: 200 })
-  })
-
-  test('null latency samples are excluded from the average', () => {
-    const history: HistorySample[] = [
-      { d: '1', up: true, ms: null, b: 'boundary-unverifiable' },
-      { d: '2', up: true, ms: 300, b: 'boundary-ok' },
-    ]
-    expect(uptimeFor(history)).toEqual({ pct: 100, avgMs: 300 })
-  })
-
-  test('empty history renders null (column shows —)', () => {
-    expect(uptimeFor([])).toBeNull()
-  })
-})
-
-// ---------------------------------------------------------------------------
-// State v2 shape + migration
-// ---------------------------------------------------------------------------
-
-describe('state v2 (_meta.version 2) + zero-blip migration', () => {
-  test('serialize writes version 2 with firstSeenUtc and history', () => {
-    const json = serializeStateFile(new Map([['h', state()]]))
-    const parsed = JSON.parse(json) as {
-      _meta: { version: number }
-      hosts: Record<string, CandidateState>
-    }
-    expect(parsed._meta.version).toBe(2)
-    expect(parsed.hosts['h']?.firstSeenUtc).toBe(new Date(T0).toISOString())
-    expect(parsed.hosts['h']?.history).toEqual([])
-  })
-
-  test('v1 file migrates: synthesized 1-entry history from lastProbe, models kept', () => {
-    const v1 = JSON.stringify({
-      _meta: { version: 1, pipeline: 'FID-2026-0914-003' },
-      hosts: {
-        h: {
-          category: 'first-party-free',
-          fingerprint: 'habcdef01',
-          downStreak: 0,
-          lastSeenUtc: new Date(T0).toISOString(),
-          url: 'https://api.example-free.ai',
-          lastBoundary: 'boundary-ok',
-          lastProbe: {
-            reachable: true,
-            modelsCount: 2,
-            boundary: 'boundary-ok',
-            latencyMs: 320,
-          },
-        },
-      },
-    })
-    const parsed = parseStateFile(v1)
-    const h = parsed.get('h')
-    expect(h).toBeDefined()
-    expect(h?.models).toEqual([])
-    expect(h?.history?.length).toBe(1)
-    expect(h?.history?.[0]).toEqual({
-      d: new Date(T0).toISOString().slice(0, 10),
-      up: true,
-      ms: 320,
-      b: 'boundary-ok',
-    })
-  })
-
-  test('legacy bare-map files still parse (shape tolerance preserved)', () => {
-    const parsed = parseStateFile(
-      JSON.stringify({
-        h: {
-          fingerprint: 'habcdef01',
-          lastSeenUtc: new Date(T0).toISOString(),
-          url: 'https://h',
-        },
-      }),
-    )
-    expect(parsed.get('h')?.url).toBe('https://h')
-  })
-})
-
-// ---------------------------------------------------------------------------
-// W2 — family normalization + model-first index
-// ---------------------------------------------------------------------------
 
 describe('familyToken (W2 normalization — the load-bearing join key)', () => {
   test('vendor-prefixed ids, feed prose, and bare ids all join', () => {
@@ -303,10 +132,6 @@ describe('fallbackHint (W5 selection contract)', () => {
     ).toBe('')
   })
 })
-
-// ---------------------------------------------------------------------------
-// W3 — churn
-// ---------------------------------------------------------------------------
 
 describe('churnSummary (W3)', () => {
   test('7-day window counts + median lifespan of lapsed hosts', () => {
