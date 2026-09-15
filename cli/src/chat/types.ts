@@ -65,6 +65,8 @@ export type OnSubmitPrompt = (
 export type ChatSidebarProps = {
   contextTokensUsed: number
   contextTokensMax: number
+  /** FID-2026-0914-002 (MQ4): how the window value was resolved. */
+  contextWindowSource: 'catalog' | 'fallback-table' | 'default'
   sessionCost: number
   sidebarModel: string | null | undefined
   agentId?: string

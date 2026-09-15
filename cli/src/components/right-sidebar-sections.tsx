@@ -157,6 +157,7 @@ export const SidebarSession = ({
   model,
   tokensUsed,
   tokensMax,
+  windowSource,
   compactionStatus,
   compactionCount,
 }: {
@@ -166,6 +167,8 @@ export const SidebarSession = ({
   model: string
   tokensUsed: number
   tokensMax: number
+  /** FID-2026-0914-002 (MQ4): how the window value was resolved. */
+  windowSource: 'catalog' | 'fallback-table' | 'default'
   compactionStatus: ReturnType<typeof formatCompactionStatus> | null
   compactionCount: number
 }) => {
@@ -186,7 +189,16 @@ export const SidebarSession = ({
       {tokensMax > 0 ? (
         <KeyValueRow
           label="Context"
-          value={`${formatTokens(tokensUsed)}/${formatTokens(tokensMax)}`}
+          value={`${formatTokens(tokensUsed)}/${formatTokens(tokensMax)}${
+            // FID-2026-0914-002 (MQ4): surface window provenance — the
+            // operator sees when a model sits on the conservative default
+            // (the "artificially restricted" tell) vs vendor data.
+            windowSource === 'default'
+              ? ' (default)'
+              : windowSource === 'fallback-table'
+                ? ' (table)'
+                : ''
+          }`}
           valueColor={
             tokensUsed >= tokensMax
               ? theme.error

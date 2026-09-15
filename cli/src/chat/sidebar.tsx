@@ -26,6 +26,7 @@ export function ChatSidebar(props: ChatSidebarProps) {
   const {
     contextTokensUsed,
     contextTokensMax,
+    contextWindowSource,
     sessionCost,
     sidebarModel,
     agentId,
@@ -66,6 +67,8 @@ export function ChatSidebar(props: ChatSidebarProps) {
   const sidebarProps = {
     tokensUsed: contextTokensUsed,
     tokensMax: contextTokensMax,
+    // FID-2026-0914-002 (MQ4): window provenance badge.
+    windowSource: contextWindowSource,
     cost: sessionCost,
     model: sidebarModel || 'unknown',
     mode: agentMode,

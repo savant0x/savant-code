@@ -89,6 +89,10 @@ export type ChatStoreActions = {
   // Sidebar data actions
   updateContextTokens: (used: number) => void
   updateContextTokensMax: (max: number) => void
+  /** FID-2026-0914-002 (MQ4): set the sidebar window provenance. */
+  updateContextWindowSource: (
+    source: 'catalog' | 'fallback-table' | 'default',
+  ) => void
   /** FID-2026-0813-023: set the live compaction status for the sidebar row. */
   setCompactionStatus: (status: CompactionStatus | null) => void
   setLastCompactionReport: (
@@ -173,6 +177,7 @@ type AliasActionKeys =
 type SidebarActionKeys =
   | 'updateContextTokens'
   | 'updateContextTokensMax'
+  | 'updateContextWindowSource'
   | 'setSidebarCollapsed'
   | 'setCompactionStatus'
   | 'setLastCompactionReport'

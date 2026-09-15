@@ -30,6 +30,11 @@ export interface UseChatDataReturn {
   agentStack: AgentStackEntry[]
   sessionCost: number
   updateContextTokensMax: (maxTokens: number) => void
+  updateContextWindowSource: (
+    source: 'catalog' | 'fallback-table' | 'default',
+  ) => void
+  /** FID-2026-0914-002 (MQ4): sidebar window provenance. */
+  contextWindowSource: 'catalog' | 'fallback-table' | 'default'
   sidebarModel: string | null | undefined
   statusMessage: string | null
   subscriptionData: ReturnType<typeof useSubscriptionQuery>['data']
@@ -46,6 +51,8 @@ export function useChatData(): UseChatDataReturn {
   // Sidebar data from chat-store
   const contextTokensUsed = useChatStore((s) => s.contextTokensUsed)
   const contextTokensMax = useChatStore((s) => s.contextTokensMax)
+  // FID-2026-0914-002 (MQ4): sidebar window provenance.
+  const contextWindowSource = useChatStore((s) => s.contextWindowSource)
   // FID-007 S1: reactive selector — the previous getState() read during
   // render was non-reactive (stale until some unrelated state forced a
   // re-render).
@@ -56,6 +63,9 @@ export function useChatData(): UseChatDataReturn {
   const agentStack = useChatStore((s) => s.agentStack)
   const sessionCost = useChatStore((s) => s.sessionCost)
   const updateContextTokensMax = useChatStore((s) => s.updateContextTokensMax)
+  const updateContextWindowSource = useChatStore(
+    (s) => s.updateContextWindowSource,
+  )
   const sidebarModel = useSavantFreeModelStore((s) => s.selectedModel)
 
   const { statusMessage } = useClipboard()
@@ -93,6 +103,7 @@ export function useChatData(): UseChatDataReturn {
   return {
     contextTokensUsed,
     contextTokensMax,
+    contextWindowSource,
     fsmPhase,
     toolsUsed,
     toolHistory,
@@ -100,6 +111,7 @@ export function useChatData(): UseChatDataReturn {
     agentStack,
     sessionCost,
     updateContextTokensMax,
+    updateContextWindowSource,
     sidebarModel,
     statusMessage,
     subscriptionData,

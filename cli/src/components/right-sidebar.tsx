@@ -33,6 +33,8 @@ import type { AgentInfo, FilesChanged, ToolCall } from './right-sidebar-format'
 export interface RightSidebarProps {
   tokensUsed: number
   tokensMax: number
+  /** FID-2026-0914-002 (MQ4): how the window value was resolved. */
+  windowSource: 'catalog' | 'fallback-table' | 'default'
   cost: number
   model: string
   mode: string
@@ -61,6 +63,7 @@ export interface RightSidebarProps {
 export const RightSidebar = React.memo(function RightSidebar({
   tokensUsed,
   tokensMax,
+  windowSource,
   cost,
   model,
   mode,
@@ -221,6 +224,7 @@ export const RightSidebar = React.memo(function RightSidebar({
         model={model}
         tokensUsed={tokensUsed}
         tokensMax={tokensMax}
+        windowSource={windowSource}
         compactionStatus={compactionLabel}
         compactionCount={compactionCount}
       />

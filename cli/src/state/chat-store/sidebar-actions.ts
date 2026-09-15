@@ -51,6 +51,13 @@ export const createSidebarActions = (set: SetState): ChatSidebarActions => ({
       state.contextTokensMax = max
     }),
 
+  // FID-2026-0914-002 (MQ4): sidebar window provenance.
+  updateContextWindowSource: (source) =>
+    set((state) => {
+      if (Object.is(state.contextWindowSource, source)) return
+      state.contextWindowSource = source
+    }),
+
   setCompactionStatus: (status) =>
     set((state) => {
       applyCompactionStatus(state, status)

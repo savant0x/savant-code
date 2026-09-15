@@ -100,6 +100,8 @@ export type ChatStoreState = {
   // Sidebar data
   contextTokensUsed: number
   contextTokensMax: number
+  /** FID-2026-0914-002 (MQ4): how the sidebar window was resolved. */
+  contextWindowSource: 'catalog' | 'fallback-table' | 'default'
   /**
    * Manual sidebar fold (FID-2026-0816-010 follow-up): when true the sidebar
    * collapses to the icon rail at ANY terminal width (Ctrl+B / edge handle),

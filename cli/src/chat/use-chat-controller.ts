@@ -99,6 +99,7 @@ export function useChatController(props: ChatProps): ChatControllerCore {
     setMessages,
     sidebarModel: data.sidebarModel,
     updateContextTokensMax: data.updateContextTokensMax,
+    updateContextWindowSource: data.updateContextWindowSource,
     initialMode,
     setAgentMode,
     initialPermissionMode,

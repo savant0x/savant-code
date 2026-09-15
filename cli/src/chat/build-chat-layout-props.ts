@@ -54,6 +54,7 @@ export function buildChatLayoutProps(
   const {
     contextTokensUsed,
     contextTokensMax,
+    contextWindowSource,
     fsmPhase,
     toolsUsed,
     toolHistory,
@@ -233,6 +234,7 @@ export function buildChatLayoutProps(
     sidebar: {
       contextTokensUsed,
       contextTokensMax,
+      contextWindowSource,
       sessionCost,
       sidebarModel,
       agentId,

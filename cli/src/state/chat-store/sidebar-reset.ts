@@ -109,6 +109,8 @@ export function resetSidebarSlice(state: DraftState): void {
   // stale previous-model window misled the context meter; 0 = unknown.
   state.contextTokensUsed = 0
   state.contextTokensMax = 0
+  // FID-2026-0914-002 (MQ4): provenance resets with the window.
+  state.contextWindowSource = 'default'
   state.compactionStatus = null
   // FID-2026-0814-006: the counter + transcript history are per-session
   // activity — reset alongside provenanceEvents on every session reset.
