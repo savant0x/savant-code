@@ -4,6 +4,40 @@
 > scope for the current task. Operator confirmation converts interpreted scope
 > into approved scope. Any drop/deferral requires a blocking presentation.
 
+## Task 50 — Exclusion-list review + zenmux re-rank (2026-09-15) — REVIEW ONLY
+
+> Operator directives: "Wait for a harvest run to verify zenmux.ai's auth
+> boundary, then re-rank" + "Review the discovery pipeline's exclusion lists
+> for over-blocking". Zero code changes; findings recorded, fixes are
+> separate Law-2 approvals.
+
+- [x] **T50-A.** zenmux.ai verified on a fresh LIVE run: still `unverified`
+      boundary AND the latest probe failed (ring 0% this run, was 100%).
+      DROPPED from the proposal shortlist.
+- [x] **T50-B.** Down-class sample LIVE-verified as genuinely API-dead
+      (poe.com 404 no API surface; catgpt/microsand/celebras unreachable).
+      No down-class over-blocking.
+- [x] **T50-C.** Relay + risky classes: exclusions upheld. Relay = the
+      LLMjacking protection (api.llm7.io serves open 200 — exactly the
+      class the gate exists for). Risky = the operator's MQ2 hard-exclusion
+      ruling; LIVE 200s on sampled risky hosts (routerpark, freemodel.dev,
+      togoapi) reflect liveness, not trustworthiness (Tasks 43/44 evidence:
+      substitution + injection). Operator may optionally re-review.
+- [x] **T50-D.** FINDING (audit-trail gap): 112+ feed records (98
+      `categoryConfirmed:false` + 9 `monitor-directory` + 5 `free-product`)
+      drop at stage-0 with ZERO audit-trail representation — the report's
+      "every gate decision" claim is false for >52% of the feed.
+      [OPEN-OUT-OF-SCOPE] Proposed fix: stage-0 silent-class breakdown in
+      the report audit trail (counts + hosts per reason). FID on request.
+- [x] **T50-E.** FINDING (feed pollution, upstream): 11 mangled host
+      strings exist in the raw feed itself (host+`invite` concatenations,
+      100-char `xn--` blobs). Our pipeline renders them faithfully as
+      `down` exclusions; the defect is the feed's, not ours. No action.
+- [x] **T50-F.** bazaarlink.ai proposal scaffold generated (propose tool;
+      moved to dev/scratchpad/archive/2026-09-15-provider-proposals/ for
+      scratchpad-root hygiene; 0 validator findings). Awaiting operator
+      key for the curation checklist.
+
 ## Task 49 — Operator seed intake into the discovery pipeline (2026-09-15)
 
 > Operator directive: "expand our free provider list" with a pasted 24-URL
