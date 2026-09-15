@@ -229,8 +229,7 @@ describe('classifyUnauthBoundary (401-boundary gate)', () => {
           return new Response(null, {
             status: 301,
             headers: {
-              Location:
-                'https://www.orcarouter.example/v1/chat/completions',
+              Location: 'https://www.orcarouter.example/v1/chat/completions',
             },
           })
         }

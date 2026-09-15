@@ -274,7 +274,10 @@ function submitKeyStep(session: WizardSession, value: string): WizardSession {
     // FID-2026-0914-003 (MQ6): discovery-prefill sessions stamp the accepted
     // instant onto the finalized record (health tracking keys on this).
     ...(session.discovery
-      ? { source: 'discovery-pipeline' as const, acceptedAt: session.discovery.acceptedAt }
+      ? {
+          source: 'discovery-pipeline' as const,
+          acceptedAt: session.discovery.acceptedAt,
+        }
       : {}),
   }
   // Single validation truth (Law 13): the assembled record must pass the same
