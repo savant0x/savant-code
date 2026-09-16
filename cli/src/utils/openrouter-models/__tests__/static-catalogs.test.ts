@@ -15,20 +15,23 @@ describe('TokenRouter static catalog', () => {
   test('returns one entry per cli-side model id', () => {
     const models = fetchTokenRouterModels()
 
-    expect(models.length).toBe(35)
+    // FID-2026-0916-002: 31 ids — seedream-5.0-pro (image-only),
+    // glm-5.2-free + glm-5.3-free (LIVE 503) and mirothinker-1-7
+    // (LIVE 503) removed from the 35.
+    expect(models.length).toBe(31)
     expect(
       models.find((m) => m.id === 'tokenrouter/z-ai/glm-5.3-free'),
-    ).toBeDefined()
+    ).toBeUndefined()
     expect(
-      models.find((m) => m.id === 'tokenrouter/z-ai/glm-5.3-free')?.name,
-    ).toBe('GLM 5.3 Free')
+      models.find((m) => m.id === 'tokenrouter/z-ai/glm-5.2-free'),
+    ).toBeUndefined()
   })
 
   test('assigns every known display name through the cli-side map', () => {
     const models = fetchTokenRouterModels()
     const byId = new Map(models.map((m) => [m.id, m.name] as const))
     const known = {
-      'tokenrouter/z-ai/glm-5.3-free': 'GLM 5.3 Free',
+      'tokenrouter/MiniMax-M3': 'MiniMax M3',
       'tokenrouter/anthropic/claude-fable-5': 'Claude Fable 5',
       'tokenrouter/openai/gpt-5.6-sol': 'GPT 5.6 Sol',
     } as const

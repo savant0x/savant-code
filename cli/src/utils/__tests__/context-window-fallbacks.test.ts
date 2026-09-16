@@ -12,7 +12,6 @@ import {
   CONTEXT_WINDOW_DEFAULT,
   CONTEXT_WINDOW_FALLBACKS,
   getContextWindowFallback,
-  inferContextLength,
 } from '@savant-code/common/constants/context-windows'
 import { describe, expect, test } from 'bun:test'
 
@@ -115,11 +114,15 @@ describe('gateway catalogs consume the vendor table (V6 fix)', () => {
     }
   })
 
-  test('name-derived catalogs (tokenrouter/tokenharbor/opencode-go/commandcode) keep EXACT parity with their pre-change estimates', () => {
-    // Parity exit criterion: the table may only ADD resolution. These
-    // catalogs documented conservative name-derived estimates, corrected by
-    // the live catalogs at runtime — their values must be byte-identical
-    // pre/post (same inferContextLength inputs as before the change).
+  test('name-derived catalogs (tokenrouter/tokenharbor/opencode-go/commandcode) resolve through the vendor table (FID-2026-0916-002)', () => {
+    // Supersedes the FID-2026-0914-002 byte-parity pin: the operator mandate
+    // ("tokenharbor deepseek-v4-flash has 131k context window … i thought we
+    // fixed the low windows for all models?") required migrating these four
+    // pre-program catalogs off the family heuristic onto vendor-published
+    // exact-id rows. Coverage of the table itself is pinned in
+    // openrouter-models/__tests__/window-truth.test.ts; this asserts the
+    // fetcher WIRING — every entry reads its window from
+    // getContextWindowFallback, never inferContextLength.
     const nameCatalogs = [
       ...fetchTokenRouterModels(),
       ...getTokenHarborModels(),
@@ -128,7 +131,9 @@ describe('gateway catalogs consume the vendor table (V6 fix)', () => {
     ]
     expect(nameCatalogs.length).toBeGreaterThan(0)
     for (const model of nameCatalogs) {
-      expect(model.contextLength).toBe(inferContextLength(model.name))
+      expect(model.contextLength).toBe(
+        getContextWindowFallback(model.id).contextWindow,
+      )
     }
   })
 })

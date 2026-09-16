@@ -47,8 +47,15 @@ export const PROVIDER_REGISTRY = {
     kind: 'gateway',
     credentials: { envVar: 'TOKENROUTER_API_KEY' },
     baseUrl: 'https://api.tokenrouter.com/v1',
-    protocol: 'openai',
+    // FID-2026-0916-002: four wire protocols are served (vendor roster
+    // supported_endpoint_types) — per-model dispatch comes from
+    // TOKENROUTER_PROTOCOLS. The old `protocol: 'openai'` sent
+    // chat/completions to the Responses-only GPT family (HTTP 404 "Use the
+    // v1/responses endpoint instead"), the Anthropic-only Claude family,
+    // and the Gemini-only id.
+    protocol: 'multi',
     idTransform: 'strip',
+    protocolMap: 'TOKENROUTER_PROTOCOLS',
     catalog: { source: 'static', modelsRef: 'tokenrouter' },
     setupAvailable: true,
     domain: 'tokenrouter.com',

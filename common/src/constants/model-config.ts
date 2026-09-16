@@ -36,6 +36,7 @@ export {
   PROVIDER_PROTOCOL_MAPS,
   tokenharborModels,
   TOKENROUTER_NAMES,
+  TOKENROUTER_PROTOCOLS,
   tokenrouterModels,
 } from './model-config/providers'
 

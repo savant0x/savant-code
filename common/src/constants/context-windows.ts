@@ -10,10 +10,14 @@
  * provenance, and unknown ids get the conservative default FLAGGED as
  * 'default' instead of a false family guess.
  *
- * `inferContextLength` remains for the NAME-derived catalogs whose id sets
- * come from common model maps (tokenrouter/tokenharbor/opencode-go/
- * commandcode) and whose windows are documented conservative estimates
- * corrected by the live catalogs at runtime (lookup.ts ladder).
+ * FID-2026-0916-002: the last four family-heuristic consumers
+ * (tokenrouter/tokenharbor/opencode-go/commandcode static catalogs) now
+ * resolve through `getContextWindowFallback` like every other catalog, and
+ * the fallback table carries exact-id vendor rows for all of them. The
+ * closed-world invariant is pinned in
+ * cli/src/utils/openrouter-models/__tests__/window-truth.test.ts.
+ * `inferContextLength` itself remains only for legacy callers of the
+ * name-derived catalogs and is deprecated for new use.
  */
 
 import {
@@ -104,6 +108,109 @@ export const CONTEXT_WINDOW_FALLBACKS: ReadonlyMap<string, number> = new Map([
   ['bazaarlink/gpt-5.6-terra', 1_050_000],
   ['bazaarlink/gpt-5.6-luna', 1_050_000],
   ['bazaarlink/qwen3.8-max', 1_000_000],
+  // --- tokenrouter (FID-2026-0916-002: the pre-program catalog finally
+  // migrated off the family heuristic. Sources: bazaarlink + orcarouter
+  // keyed /v1/models rosters 2026-09-16; OpenRouter public catalog as
+  // tiebreak. Two vendors publishing the same upstream window is the
+  // cross-check; 2-of-3 votes marked inline. TokenRouter's own roster
+  // publishes NO window fields.) ---
+  ['tokenrouter/anthropic/claude-fable-5', 1_000_000],
+  ['tokenrouter/openai/gpt-5.6-sol', 1_050_000],
+  ['tokenrouter/deepseek/deepseek-v4-pro', 1_048_576],
+  ['tokenrouter/qwen/qwen3.7-max', 1_000_000],
+  ['tokenrouter/z-ai/glm-5.2', 1_048_576], // 2-of-3: bazaarlink+OpenRouter vs orcarouter 1,000,000
+  ['tokenrouter/openai/gpt-5.5-pro', 1_050_000],
+  ['tokenrouter/anthropic/claude-opus-4.8', 1_000_000],
+  ['tokenrouter/anthropic/claude-opus-4.8-fast', 1_000_000],
+  ['tokenrouter/x-ai/grok-4.5', 500_000],
+  ['tokenrouter/moonshotai/kimi-k3', 1_048_576],
+  ['tokenrouter/MiniMax-M3', 1_048_576],
+  ['tokenrouter/anthropic/claude-sonnet-5', 1_000_000],
+  ['tokenrouter/openai/gpt-5.6-terra', 1_050_000],
+  ['tokenrouter/qwen/qwen3.7-plus', 1_000_000],
+  ['tokenrouter/anthropic/claude-opus-4.7', 1_000_000],
+  ['tokenrouter/anthropic/claude-opus-4.7-fast', 1_000_000],
+  ['tokenrouter/openai/gpt-5.5', 1_050_000],
+  ['tokenrouter/deepseek/deepseek-v3.2', 163_840],
+  ['tokenrouter/qwen/qwen3.6-plus', 1_000_000], // 2-of-3: bazaarlink+OpenRouter vs orcarouter 1,048,576
+  ['tokenrouter/moonshotai/kimi-k2.7-code', 262_144],
+  ['tokenrouter/xiaomi/mimo-v2.5-pro', 1_050_000],
+  ['tokenrouter/z-ai/glm-5.1', 204_800], // 2-of-3: bazaarlink+OpenRouter vs orcarouter 200,000
+  ['tokenrouter/openai/gpt-5.4', 1_050_000],
+  ['tokenrouter/x-ai/grok-4.3', 1_000_000],
+  ['tokenrouter/anthropic/claude-opus-4.6', 1_000_000],
+  ['tokenrouter/openai/gpt-5.3-codex', 400_000],
+  ['tokenrouter/nvidia/nemotron-3-super-120b-a12b', 262_144],
+  ['tokenrouter/qwen/qwen3.5-397b-a17b', 262_144],
+  ['tokenrouter/qwen/qwen3.5-122b-a10b', 262_144],
+  ['tokenrouter/openai/gpt-oss-120b', 131_072],
+  ['tokenrouter/google/gemini-3.1-pro-preview', 1_048_576],
+  // --- tokenharbor (FID-2026-0916-002; same sources as tokenrouter) ---
+  ['tokenharbor/claude-opus-5', 1_000_000],
+  ['tokenharbor/claude-fable-5', 1_000_000],
+  ['tokenharbor/gpt-5.6-sol', 1_050_000],
+  ['tokenharbor/kimi-k3', 1_048_576],
+  ['tokenharbor/qwen3.8-max', 1_000_000],
+  ['tokenharbor/gpt-5.6-terra', 1_050_000],
+  ['tokenharbor/grok-4.5', 500_000],
+  ['tokenharbor/claude-sonnet-5', 1_000_000],
+  ['tokenharbor/gemini-3.6-flash', 1_048_576],
+  ['tokenharbor/glm-5.2', 1_048_576], // 2-of-3
+  ['tokenharbor/gpt-5.6-luna', 1_050_000],
+  ['tokenharbor/deepseek-v4-flash', 1_048_576], // the operator-reported 131k bug
+  ['tokenharbor/minimax-m3', 1_048_576],
+  ['tokenharbor/deepseek-v4-pro', 1_048_576],
+  ['tokenharbor/mimo-v2.5-pro', 1_050_000],
+  ['tokenharbor/mimo-v2.5', 1_050_000],
+  ['tokenharbor/kimi-k3:free', 1_048_576],
+  ['tokenharbor/deepseek-v4-flash:free', 1_048_576],
+  ['tokenharbor/mimo-v2.5:free', 1_050_000],
+  ['tokenharbor/th-orchestra', 200_000], // NEEDS-REVIEW: ensemble router, no vendor window published; conservative default pinned
+  // --- opencode-go (FID-2026-0916-002; same sources as tokenrouter) ---
+  ['opencode-go/grok-4.5', 500_000],
+  ['opencode-go/glm-5.2', 1_048_576], // 2-of-3
+  ['opencode-go/glm-5.1', 204_800], // 2-of-3
+  ['opencode-go/kimi-k3', 1_048_576],
+  ['opencode-go/kimi-k2.7-code', 262_144],
+  ['opencode-go/kimi-k2.6', 262_144],
+  ['opencode-go/mimo-v2.5', 1_050_000],
+  ['opencode-go/mimo-v2.5-pro', 1_050_000],
+  ['opencode-go/deepseek-v4-pro', 1_048_576],
+  ['opencode-go/deepseek-v4-flash', 1_048_576],
+  ['opencode-go/minimax-m3', 1_048_576],
+  ['opencode-go/minimax-m2.7', 204_800],
+  ['opencode-go/qwen3.7-max', 1_000_000],
+  ['opencode-go/qwen3.7-plus', 1_000_000],
+  ['opencode-go/qwen3.6-plus', 1_000_000], // 2-of-3
+  // --- commandcode (FID-2026-0916-002; same sources as tokenrouter) ---
+  ['commandcode/claude-opus-5', 1_000_000],
+  ['commandcode/claude-opus-4.8', 1_000_000],
+  ['commandcode/claude-sonnet-5', 1_000_000],
+  ['commandcode/claude-sonnet-4.6', 1_000_000],
+  ['commandcode/claude-haiku-4.5', 200_000],
+  ['commandcode/x-ai/grok-4.5', 500_000],
+  ['commandcode/z-ai/glm-5.2', 1_048_576], // 2-of-3
+  ['commandcode/z-ai/glm-5.1', 204_800], // 2-of-3
+  ['commandcode/moonshotai/kimi-k3', 1_048_576],
+  ['commandcode/moonshotai/kimi-k2.7-code', 262_144],
+  ['commandcode/moonshotai/kimi-k2.6', 262_144],
+  ['commandcode/xiaomi/mimo-v2.5', 1_050_000],
+  ['commandcode/xiaomi/mimo-v2.5-pro', 1_050_000],
+  ['commandcode/deepseek/deepseek-v4-pro', 1_048_576],
+  ['commandcode/deepseek/deepseek-v4-flash', 1_048_576],
+  ['commandcode/deepseek/deepseek-v3.2', 163_840],
+  ['commandcode/openai/gpt-5.6-sol', 1_050_000],
+  ['commandcode/openai/gpt-5.6-terra', 1_050_000],
+  ['commandcode/openai/gpt-5.6-luna', 1_050_000],
+  ['commandcode/openai/gpt-5.5', 1_050_000],
+  ['commandcode/openai/gpt-5.3-codex', 400_000],
+  ['commandcode/qwen/qwen3.7-max', 1_000_000],
+  ['commandcode/qwen/qwen3.7-plus', 1_000_000],
+  ['commandcode/qwen/qwen3.6-plus', 1_000_000], // 2-of-3
+  ['commandcode/minimax-m3', 1_048_576],
+  ['commandcode/minimaxai/minimax-m2.7', 204_800],
+  ['commandcode/lagunaai/laguna-s-2.1', 1_048_576],
+  ['commandcode/minimaxai/ling-3.0-flash', 262_144],
 ])
 
 /** How a context window was resolved — surfaced in the UI (MQ4 badge). */

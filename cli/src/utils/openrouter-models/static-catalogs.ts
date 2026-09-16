@@ -10,7 +10,6 @@
  */
 import {
   getContextWindowFallback,
-  inferContextLength,
 } from '@savant-code/common/constants/context-windows'
 import {
   commandcodeModels,
@@ -34,7 +33,9 @@ const TOKENROUTER_NAMES: Record<string, string> = {
   'tokenrouter/anthropic/claude-opus-4.8': 'Claude Opus 4.8',
   'tokenrouter/x-ai/grok-4.5': 'Grok 4.5',
   'tokenrouter/moonshotai/kimi-k3': 'Kimi K3',
-  'tokenrouter/bytedance-seed/seedream-5.0-pro': 'Seedream 5.0 Pro',
+  // FID-2026-0916-002: seedream-5.0-pro (image-only), glm-5.2-free and
+  // miromind/mirothinker-1-7-deepresearch (LIVE 503 dead channels) removed
+  // alongside the common catalog.
   'tokenrouter/MiniMax-M3': 'MiniMax M3',
   'tokenrouter/anthropic/claude-sonnet-5': 'Claude Sonnet 5',
   'tokenrouter/openai/gpt-5.6-terra': 'GPT 5.6 Terra',
@@ -44,7 +45,6 @@ const TOKENROUTER_NAMES: Record<string, string> = {
   'tokenrouter/anthropic/claude-opus-4.7': 'Claude Opus 4.7',
   'tokenrouter/anthropic/claude-opus-4.7-fast': 'Claude Opus 4.7 Fast',
   'tokenrouter/openai/gpt-5.5': 'GPT 5.5',
-  'tokenrouter/z-ai/glm-5.2-free': 'GLM 5.2 Free',
   'tokenrouter/deepseek/deepseek-v3.2': 'DeepSeek V3.2',
   'tokenrouter/qwen/qwen3.6-plus': 'Qwen 3.6 Plus',
   'tokenrouter/moonshotai/kimi-k2.7-code': 'Kimi K2.7 Code',
@@ -55,8 +55,6 @@ const TOKENROUTER_NAMES: Record<string, string> = {
   'tokenrouter/anthropic/claude-opus-4.6': 'Claude Opus 4.6',
   'tokenrouter/openai/gpt-5.3-codex': 'GPT 5.3 Codex',
   'tokenrouter/nvidia/nemotron-3-super-120b-a12b': 'Nemotron 3 Super 120B',
-  'tokenrouter/miromind/mirothinker-1-7-deepresearch':
-    'MiroThinker 1.7 DeepResearch',
   'tokenrouter/qwen/qwen3.5-397b-a17b': 'Qwen 3.5 397B',
   'tokenrouter/qwen/qwen3.5-122b-a10b': 'Qwen 3.5 122B',
   'tokenrouter/openai/gpt-oss-120b': 'GPT-OSS 120B',
@@ -132,6 +130,11 @@ export const TOKENROUTER_MAX_OUTPUT: Record<string, number> = {
  * Return the TokenRouter model catalog, derived from the common model map.
  * TokenRouter requires auth for its /v1/models endpoint, so the id set is a
  * hardcoded common map with cli-side display names. Synchronous.
+ *
+ * FID-2026-0916-002: windows resolve from the vendor fallback table (exact
+ * id rows sourced from keyed rosters) — NOT the family heuristic, which
+ * displayed 131k for 1M-window models. `getContextWindowFallback` still
+ * returns a conservative default for a future unmapped id, never a guess.
  */
 export function fetchTokenRouterModels(): OpenRouterModel[] {
   return Object.values(tokenrouterModels).map((id) => {
@@ -140,7 +143,7 @@ export function fetchTokenRouterModels(): OpenRouterModel[] {
       id,
       name,
       provider: 'tokenrouter' as const,
-      contextLength: inferContextLength(name),
+      contextLength: getContextWindowFallback(id).contextWindow,
       ...(id in TOKENROUTER_MAX_OUTPUT
         ? { maxCompletionTokens: TOKENROUTER_MAX_OUTPUT[id] }
         : {}),
@@ -161,7 +164,9 @@ export function getTokenHarborModels(): OpenRouterModel[] {
       id,
       name,
       provider: 'tokenharbor' as const,
-      contextLength: inferContextLength(name),
+      // FID-2026-0916-002: vendor fallback table, not the family heuristic
+      // (deepseek-v4-flash showed 131k here; vendor-published is 1,048,576).
+      contextLength: getContextWindowFallback(id).contextWindow,
     }
   })
 }
@@ -178,7 +183,8 @@ export function fetchOpenCodeGoModels(): OpenRouterModel[] {
       id,
       name,
       provider: 'opencode-go' as const,
-      contextLength: inferContextLength(name),
+      // FID-2026-0916-002: vendor fallback table (see fetchTokenRouterModels).
+      contextLength: getContextWindowFallback(id).contextWindow,
     }
   })
 }
@@ -186,8 +192,8 @@ export function fetchOpenCodeGoModels(): OpenRouterModel[] {
 /**
  * Return the CommandCode model catalog.
  * The IDs are maintained in common model configuration so routing and picker
- * entries cannot silently drift apart. Context lengths are conservative
- * family estimates until CommandCode exposes authoritative metadata.
+ * entries cannot silently drift apart. FID-2026-0916-002: windows come from
+ * the vendor fallback table (exact-id rows), not family estimates.
  */
 export function fetchCommandCodeModels(): OpenRouterModel[] {
   return Object.values(commandcodeModels)
@@ -195,7 +201,7 @@ export function fetchCommandCodeModels(): OpenRouterModel[] {
       id,
       name: id.slice('commandcode/'.length),
       provider: 'commandcode' as const,
-      contextLength: inferContextLength(id),
+      contextLength: getContextWindowFallback(id).contextWindow,
     }))
     .sort((a, b) => a.id.localeCompare(b.id))
 }

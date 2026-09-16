@@ -69,12 +69,12 @@ Or configure one directly:
 
 | Provider | Command | Environment Variable |
 |----------|---------|---------------------|
-| OpenRouter | `/provider openrouter` | `OR_MASTER_KEY`, `OPENROUTER_API_KEY`, or `INFERENCE_API_KEY` (default provider) |
+| OpenRouter | `/provider openrouter` | `OR_MASTER_KEY`, `OPENROUTER_API_KEY`, or `INFERENCE_API_KEY` (default provider; a revoked key returns 401 `User not found.` — replace it at openrouter.ai/keys and **restart the CLI**, the key is cached per process) |
 | OpenCode Go | `/provider opencode-go` | `OPENCODE_API_KEY` (shared OpenCode key; legacy `OPENCODE_GO_API_KEY` still honored) |
 | OpenCode Zen | `/provider opencode-zen` | `OPENCODE_API_KEY` (shared OpenCode key) |
 | TokenRouter | `/provider tokenrouter` | `TOKENROUTER_API_KEY` |
 | TokenHarbor | `/provider tokenharbor` | `TOKENHARBOR_API_KEY` |
-| OrcaRouter | `/provider orcarouter` | `ORCAROUTER_API_KEY` (live model catalog; free tier currently gated vendor-side on GitHub account linkage) |
+| OrcaRouter | `/provider orcarouter` | `ORCAROUTER_API_KEY` (live model catalog; free tier currently gated vendor-side on GitHub account linkage. Vendor free-tier cap: free channels reject prompts above an unpublished per-request limit — measured between ~12k and ~36k input tokens, 2026-09-16 — with a "Shorten it, or add credits" error, even on `:free` models) |
 | B.AI | `/provider bai` | `BAI_API_KEY` (authenticated live model catalog) |
 | HCNSec | `/provider hcnsec` | `HCNSEC_API_KEY` (audited static 7-model allowlist) |
 | TokenBom | `/provider tokenbom` | `TOKENBOM_API_KEY` (audited static 7-model allowlist) |

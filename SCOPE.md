@@ -111,6 +111,31 @@
       suite 85 → 101 / 411 expects; typecheck ×2; eslint battery;
       receipt 5/5 LIVE-stamped (probe gate = real harvest rerun).
       Status `fixed` — presented for final operator approval.
+- [x] **T54.** FID-2026-0916-002 IMPLEMENTED (operator: tokenharbor
+      deepseek-v4-flash 131k + "review all windows from token harbor" +
+      orca/tokenrouter vendor errors + "i thought we fixed the low windows
+      for all models?"): grounding — 4 provider catalogs predate the
+      FID-2026-0914-002 window program and still rode the family
+      heuristic (coverage grep: zero table rows for tokenrouter/
+      tokenharbor/commandcode/opencode-go); keyed LIVE rosters pulled
+      (bazaarlink + orcarouter + OpenRouter tiebreak) → 94 exact-id rows
+      into CONTEXT_WINDOW_FALLBACKS; 4 fetchers rewired to
+      getContextWindowFallback; tokenrouter catalog 35 → 31 (both free
+      GLMs + mirothinker keyed-503 dead, seedream image-only;
+      MiniMax-M3 KEPT — keyed HTTP 200 despite roster absence, the MQ3
+      rule vindicated LIVE); TOKENROUTER_PROTOCOLS from vendor
+      supported_endpoint_types (6 Responses-only, 7 Anthropic-only,
+      1 Gemini-only mis-dispatched as chat before) + registry `multi`
+      wiring (operator ruling: fix protocol in this FID); operator error
+      reports adjudicated with production-shaped probes (tiny probes had
+      masked the orcarouter free-tier prompt cap ~12k–36k; the openrouter
+      401 was a replaced key needing a CLI restart — both documented,
+      no code change per public-release ruling); pins RED-first (19
+      window-truth tests incl. closed-world coverage invariant; caught a
+      surviving mirothinker entry mid-loop); 39/39 across 3 suites, 825
+      expects; typecheck ×4; probe gate (verify-window-truth.ts) PASS
+      17/17 sampled rows vs LIVE rosters; eslint/prettier/lint:md clean.
+      Status `fixed` — awaiting operator closure.
 - [ ] **T51-F. [BLOCKED — operator]** Identity gauntlet on bazaarlink PAID
       channels: the account is zero-credit — LIVE 402 probe on `qwen3.8-max`
       ("Insufficient credits") — every paid cell would fail before serving.

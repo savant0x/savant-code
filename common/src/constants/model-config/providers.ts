@@ -10,6 +10,7 @@ export {
   OPENCODE_GO_PROTOCOLS,
   OPENCODE_ZEN_PROTOCOLS,
   PROVIDER_PROTOCOL_MAPS,
+  TOKENROUTER_PROTOCOLS,
 } from './provider-protocols'
 
 export const openaiModels = {
@@ -72,8 +73,10 @@ export const tokenrouterModels = {
     'tokenrouter/anthropic/claude-opus-4.8',
   tokenrouter_xai_grok_4_5: 'tokenrouter/x-ai/grok-4.5',
   tokenrouter_moonshotai_kimi_k3: 'tokenrouter/moonshotai/kimi-k3',
-  tokenrouter_bytedance_seed_seedream_5_0_pro:
-    'tokenrouter/bytedance-seed/seedream-5.0-pro',
+  // FID-2026-0916-002: seedream-5.0-pro removed from the coding catalog —
+  // the vendor roster publishes it as image-generation-only
+  // (supported_endpoint_types: [image-generation]); it can never serve a
+  // chat/completions or responses request.
   tokenrouter_minimax_m3: 'tokenrouter/MiniMax-M3',
   // Tier 2 — Frontier Performers
   tokenrouter_anthropic_claude_sonnet_5:
@@ -89,7 +92,9 @@ export const tokenrouterModels = {
   tokenrouter_anthropic_claude_opus_4_7_fast:
     'tokenrouter/anthropic/claude-opus-4.7-fast',
   tokenrouter_openai_gpt_5_5: 'tokenrouter/openai/gpt-5.5',
-  tokenrouter_zai_glm_5_2_free: 'tokenrouter/z-ai/glm-5.2-free',
+  // FID-2026-0916-002: glm-5.2-free removed — LIVE keyed chat call 503
+  // "No available channel for model z-ai/glm-5.2-free under group default
+  // (distributor)" (operator-reported 2026-09-16, re-confirmed).
   tokenrouter_deepseek_v3_2: 'tokenrouter/deepseek/deepseek-v3.2',
   tokenrouter_qwen_qwen3_6_plus: 'tokenrouter/qwen/qwen3.6-plus',
   tokenrouter_moonshotai_kimi_k2_7_code:
@@ -103,12 +108,20 @@ export const tokenrouterModels = {
   tokenrouter_openai_gpt_5_3_codex: 'tokenrouter/openai/gpt-5.3-codex',
   tokenrouter_nvidia_nemotron_3_super_120b:
     'tokenrouter/nvidia/nemotron-3-super-120b-a12b',
-  tokenrouter_miromind_mirothinker_1_7:
-    'tokenrouter/miromind/mirothinker-1-7-deepresearch',
   tokenrouter_qwen_qwen3_5_397b: 'tokenrouter/qwen/qwen3.5-397b-a17b',
   tokenrouter_qwen_qwen3_5_122b: 'tokenrouter/qwen/qwen3.5-122b-a10b',
   tokenrouter_openai_gpt_oss_120b: 'tokenrouter/openai/gpt-oss-120b',
-  tokenrouter_zai_glm_5_3_free: 'tokenrouter/z-ai/glm-5.3-free',
+  // FID-2026-0916-002 removals (LIVE keyed evidence 2026-09-16):
+  // - z-ai/glm-5.2-free: keyed chat 503 "No available channel … group
+  //   default (distributor)" (operator-reported, re-confirmed).
+  // - z-ai/glm-5.3-free: keyed chat 503, same error class.
+  // - miromind/mirothinker-1-7-deepresearch: keyed chat 503, same error
+  //   class; also absent from the keyed roster.
+  // - bytedance-seed/seedream-5.0-pro: vendor roster publishes it as
+  //   image-generation-only (supported_endpoint_types) — unusable in a
+  //   coding chat catalog.
+  // Kept despite roster absence: MiniMax-M3 (keyed chat HTTP 200 — roster
+  // listing lags channel state; the MQ3 rule).
 } as const
 export type TokenrouterModel =
   (typeof tokenrouterModels)[keyof typeof tokenrouterModels]
