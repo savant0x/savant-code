@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0916-001-pipeline-integrity-hardening.md`
 **ID:** FID-2026-0916-001
 **Severity:** medium
-**Status:** converged
+**Status:** fixed
 **Created:** 2026-09-16 (operator: "make fid to address all 4 issues, run
 perfection loop on it then present for final approval" — the four findings
 from the T52 deep audit, SCOPE Task 52)
@@ -165,8 +165,8 @@ exit 1 and writes nothing. Suite 85 → 101 (16 new pins), 411 expects,
 
 ### Verification Receipt
 
-- fingerprint: sha256:d7a468cbd08fb282cb7f5830d8646eba2c7e7813e55815a526e921cb3485080d
-- verified: 2026-09-16T02:28:56.263Z
+- fingerprint: sha256:1c46a386d062197a20d4db89f466cf97a05c4bbb5b1eb1afde2a33256be3e14e
+- verified: 2026-09-16T02:40:52.127Z
 - typecheck cli: exit 0
 - typecheck common: exit 0
 - test scripts/providers/__tests__/harvest-core.test.ts: exit 0
