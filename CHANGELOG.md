@@ -2,6 +2,28 @@
 
 ## Unreleased
 
+### BazaarLink gateway provider (FID-2026-0915-006)
+
+- **19th provider, static 12-model catalog:** the identity-audited genuine
+  free channel `bazaarlink/qwen/qwen3.7-flash:free` (1M ctx, keyed gauntlet:
+  consistent EN/ZH self-ID, zero injection class) + the 11 gateway-available
+  top-coding paid models (BenchLM SWE-bench Pro leaderboard dated
+  2026-09-15 ∩ the LIVE keyed roster; fable-5.1/fable-5/opus-5/opus-4.8/
+  opus-4.7/sonnet-5 @ 1M, gpt-5.6-sol/terra/luna @ 1.05M, grok-4.5 @ 500k,
+  qwen3.8-max @ 1M). Paid channels added untested per operator ruling;
+  serving-name disclosure (responses echo the routed model) is the carried
+  honesty control.
+- **Excluded by audit evidence, not omission:** deepseek `:free` channels
+  (EN self-IDs claimed GPT-4 and Claude Opus 4.1; ~60–70 hidden injected
+  tokens) and `auto:free` (429 storm, 120–265s latency) — reinstating them
+  requires a new operator decision plus a gauntlet re-run.
+- **Full integration chain:** registry entry (openai-compatible, strip
+  transform, `BAZAARLINK_API_KEY`), `MODEL_CATALOGS` ref, shim export,
+  vendor fallback table, CLI picker fetcher + gateway merge, 8 docs
+  surfaces; Step-5 LIVE keyed round-trip through the production chain
+  (exact echo, no injection class); closed-world pins widened to 19
+  providers / 17 setup.
+
 ### Operator seed intake: 16 operator-authorized hosts enter the discovery pipeline (FID-2026-0915-003)
 
 - **New `scripts/providers/lib/seed-hosts.ts`:** the operator's free-provider

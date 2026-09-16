@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0915-006-bazaarlink-gateway-provider.md`
 **ID:** FID-2026-0915-006
 **Severity:** low
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-09-15 (operator: "Author the FID for the bazaarlink registry
 integration"; model-set ruling via ask_user: "Qwen free only")
 
@@ -178,8 +178,8 @@ zero reasoning tokens — clean channel, no injection class. Key never printed
 
 ### Verification Receipt
 
-- fingerprint: sha256:3d7f8d4aa35d5dc6236a99ee4878ef9931e6f5cc751b168334d14a1438b4f213
-- verified: 2026-09-16T00:26:37.228Z
+- fingerprint: sha256:28188dfcd28d3360f51f5582987ccf8e13ccf55739e0c59d959ab754259683cb
+- verified: 2026-09-16T00:35:50.973Z
 - typecheck sdk: exit 0
 - typecheck common: exit 0
 - typecheck packages/agent-runtime: exit 0
@@ -195,7 +195,9 @@ upstream id). Gates: typecheck ×4 exit 0; root test chain 12 workspaces
 0 fail (common suite includes the 3 widened closed-world pins + the
 full-entry pin; cli suite includes the 2 new catalog pins); eslint
 `--max-warnings 0`, prettier, lint:md, docs-check, quality:report PASS.
-Status `fixed` — archive awaits operator closure (G2).
+Status `fixed` at implementation; **closed 2026-09-16 — archived per
+explicit operator closure (G2) after the 12-model amendment landed**
+(`2af96f90`).
 
 ## Lessons Learned
 
