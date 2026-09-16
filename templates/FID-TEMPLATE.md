@@ -4,6 +4,10 @@
 **ID:** FID-YYYY-MMDD-NNN
 **Severity:** critical | high | medium | low
 **Status:** created | analyzed | fixed | verified | converged | closed
+> (`converged` is the correct pre-implementation status per
+> FID-2026-0915-004; `fixed` is deprecated-but-accepted legacy language —
+> do not use it for new FIDs. The receipt contract still keys to
+> `fixed | verified` so archived records remain valid.)
 **Created:** YYYY-MM-DD HH:MM
 **YAGNI-Compliance:** Pending | Verified | Debt-Incurred
 

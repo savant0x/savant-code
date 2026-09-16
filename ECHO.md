@@ -544,12 +544,23 @@ Use `templates/FID-TEMPLATE.md` as the exact template. Required metadata fields:
 
 Allowed status values: `created | analyzed | fixed | verified | converged | closed`.
 
+Vocabulary per the FID-2026-0915-004 operator ruling: **`converged` is the
+correct active-queue status** for a Perfection Loop-passed FID awaiting
+implementation approval; **`fixed` is deprecated-but-accepted legacy
+language** (archived and in-flight records keep validating; do not use it
+for new FIDs — use `converged` pre-implementation and `closed` after
+closure).
+
 - `converged` — FID document is complete and Perfection Loop-passed, but
   implementation has **not** started. The plan is approved; code is not
-  written.
+  written. (Supersedes the legacy `fixed` usage for this lifecycle point.)
 - `closed` — Implementation exists in the codebase **and** gates pass.
   Requires implementation evidence (commit SHA or file:line ranges + grep
   match). A `closed` FID with no code violates the Ground-Truth rule.
+- `fixed` — **deprecated legacy value.** Historically meant
+  "implementation exists, awaiting closure"; the receipt contract still
+  accepts it (`fixed | verified`) so archived and in-flight records remain
+  valid, but new work must not use it.
 
 Non-FID design documents go to `docs/design/`, never at the repo root, and never with a `FID-` prefix.
 
@@ -606,7 +617,8 @@ See `templates/FID-TEMPLATE.md` for the standard format.
 
 ### FID Ground-Truth Verification
 
-FID status metadata (`created | analyzed | fixed | verified | closed`) is manually maintained and can drift from
+FID status metadata (`created | analyzed | fixed | verified | converged |
+closed`) is manually maintained and can drift from
 reality. **When reporting FID status, verify against the codebase.** FID metadata is a claim, not ground truth.
 
 **Operational rules:**

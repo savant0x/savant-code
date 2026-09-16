@@ -118,7 +118,7 @@ export const PROVIDER_EXCEPTION_MANIFEST: readonly ProviderExceptionManifestEntr
       evidence: [
         'common/src/constants/model-config/provider-protocols.ts',
         'sdk/src/impl/model-provider/model-factories.ts',
-        'dev/fids/FID-2026-0916-002-catalog-window-truth.md',
+        'dev/fids/archive/FID-2026-0916-002-catalog-window-truth.md',
       ],
     },
     {

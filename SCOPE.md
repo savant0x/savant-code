@@ -145,16 +145,16 @@
 - [x] **T55-D.** Path-scoped commits + push executed (G1 amendment); hashes
       recorded in the ledger narrative.
 
-- [ ] **[OPEN-OUT-OF-SCOPE] tokenrouter dead-id residue in cli display
-      maps:** `tokenrouter/z-ai/glm-5.3-free` remains as a key in
+- [x] **[RESOLVED — Task 56] tokenrouter dead-id residue in cli display
+      maps:** `tokenrouter/z-ai/glm-5.3-free` remained as a key in
       `TOKENROUTER_NAMES` + `TOKENROUTER_MAX_OUTPUT`
-      (`cli/src/utils/openrouter-models/static-catalogs.ts:59/:124`) after
+      (`cli/src/utils/openrouter-models/static-catalogs.ts`) after
       FID-2026-0916-002's catalog removal — inert (the picker id set
-      derives from the common catalog; the MAX_OUTPUT entry anchors the
-      pin-resolution probe in `openrouter-models-max-output.test.ts`).
-      Proposed fix: remove the `TOKENROUTER_NAMES` entry + relocate the
-      max-output pin probe to a live catalog id (or keep both deliberately
-      as documentation-of-history). FID on request.
+      derives from the common catalog). Removed 2026-09-16 (commit
+      `ed286c4f`): all three maps cleaned (a third, unreferenced common
+      `TOKENROUTER_NAMES` export was found and removed too), pin mechanism
+      kept wired via `PINNED_MAX_OUTPUT_TOKENS` + injectable param, pin
+      test strengthened to prove pin > live-catalog.
 
 ## Task 51 — Bazaarlink identity-audit gauntlet + prorisehub propose (2026-09-15)
 
@@ -324,8 +324,10 @@
       `categoryConfirmed:false` + 9 `monitor-directory` + 5 `free-product`)
       drop at stage-0 with ZERO audit-trail representation — the report's
       "every gate decision" claim is false for >52% of the feed.
-      [OPEN-OUT-OF-SCOPE] Proposed fix: stage-0 silent-class breakdown in
-      the report audit trail (counts + hosts per reason). FID on request.
+      **[RESOLVED — FID-2026-0916-001]** stage-0 silent-class breakdown
+      implemented via the pure `buildExclusionAuditRows` builder (counts +
+      hosts per reason rendered in the report audit trail; suite parity
+      101/411/0).
 - [x] **T50-E.** FINDING (feed pollution, upstream): 11 mangled host
       strings exist in the raw feed itself (host+`invite` concatenations,
       100-char `xn--` blobs). Our pipeline renders them faithfully as
@@ -483,11 +485,15 @@
       + records commit (hashes in the FID Resolution); push executed by the
       agent (G1 amendment).
 
-- [ ] **[OPEN-OUT-OF-SCOPE] FID status-vocabulary modernization:** operator
-      observation "converged = the perfection loop is completed; `fixed` is
-      old language" — a repo-wide vocabulary update (template, ECHO.md,
-      ledger script, LEARNINGS grammar) is a separate operator-approved
-      change; NOT in Task 47 scope.
+- [x] **[RESOLVED — FID-2026-0915-004] FID status-vocabulary modernization:**
+      operator observation "converged = the perfection loop is completed;
+      `fixed` is old language". Implemented + archived 2026-09-15:
+      `converged` admitted as an active-queue status, `fixed` deprecated-
+      but-accepted, receipt contract unchanged (`VERIFIED_STATUSES =
+      fixed | verified`), LEARNINGS amended, pin
+      `scripts/__tests__/fid-ledger-vocab.test.ts`. Remaining doc drift
+      (ECHO.md:545/:609 inconsistency + template guidance) aligned
+      2026-09-16 (Task 59).
 
 ## Task 46 — Infron + UnoRouter gateway providers (2026-09-14) — CLOSURE
 
