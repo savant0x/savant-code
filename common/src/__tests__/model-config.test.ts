@@ -21,7 +21,7 @@ describe('CommandCode catalog', () => {
 })
 
 describe('TokenHarbor catalog', () => {
-  test('defines the complete published 20-model catalog', () => {
+  test('defines the complete published 17-model catalog', () => {
     const modelIds = Object.values(tokenharborModels)
 
     const expectedModelIds: typeof modelIds = [
@@ -33,15 +33,12 @@ describe('TokenHarbor catalog', () => {
       'tokenharbor/gpt-5.6-terra',
       'tokenharbor/grok-4.5',
       'tokenharbor/claude-sonnet-5',
-      'tokenharbor/gemini-3.6-flash',
       'tokenharbor/glm-5.2',
       'tokenharbor/gpt-5.6-luna',
       'tokenharbor/deepseek-v4-flash',
-      'tokenharbor/minimax-m3',
       'tokenharbor/deepseek-v4-pro',
       'tokenharbor/mimo-v2.5-pro',
       'tokenharbor/mimo-v2.5',
-      'tokenharbor/kimi-k3:free',
       'tokenharbor/deepseek-v4-flash:free',
       'tokenharbor/mimo-v2.5:free',
       'tokenharbor/th-orchestra',

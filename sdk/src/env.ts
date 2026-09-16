@@ -112,13 +112,6 @@ export const getNvidiaApiKeyFromEnv = (): string | undefined => {
 }
 
 /**
- * Get the OpenCode Go API key from environment.
- */
-export const getOpenCodeGoApiKeyFromEnv = (): string | undefined => {
-  return process.env['OPENCODE_GO_API_KEY']
-}
-
-/**
  * Get the Cloudflare Workers AI API token from environment.
  */
 export const getCloudflareApiTokenFromEnv = (): string | undefined => {

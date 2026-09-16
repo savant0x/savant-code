@@ -18,7 +18,6 @@ import { describe, expect, test } from 'bun:test'
 import {
   fetchCommandCodeModels,
   fetchHcnsecModels,
-  fetchOpenCodeGoModels,
   fetchTokenBomModels,
   fetchTokenRouterModels,
   getTokenHarborModels,
@@ -126,7 +125,6 @@ describe('gateway catalogs consume the vendor table (V6 fix)', () => {
     const nameCatalogs = [
       ...fetchTokenRouterModels(),
       ...getTokenHarborModels(),
-      ...fetchOpenCodeGoModels(),
       ...fetchCommandCodeModels(),
     ]
     expect(nameCatalogs.length).toBeGreaterThan(0)

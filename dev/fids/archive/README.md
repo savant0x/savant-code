@@ -18,6 +18,24 @@ accepted it, fixture destroyed):
   fingerprint module, quality). Gates: contract suites 34/0, executor
   suites 35/0, typecheck ×4, `quality:report` PASS.
 
+## 2026-09-16 closure — gateway catalog re-alignment (1 FID archived)
+
+Operator implementation directive; executed in the same session (G1
+amendment). Commandcode catalog re-aligned to the vendor's renormalized
+roster (coding-set additions only), tokenharbor's 3 dead ids removed
+(incl. the ended kimi-k3:free launch channel), opencode-zen +
+opencode-go removed from Savant end-to-end (zen free-tier gate is
+account-type-based, not spoofable). RED pins observed 9 fail / 3 pass
+pre-change; receipt stamped 10/10 LIVE (typecheck common/cli/sdk, six
+suites incl. the new FID-004 pin module, quality); fixtures re-pointed
+to tokenharbor; cyclic-tool regression suite re-pointed to TokenRouter
+per-model protocols (all four wire-protocol legs preserved).
+
+- [`FID-2026-0916-004-gateway-catalog-realignment.md`](FID-2026-0916-004-gateway-catalog-realignment.md)
+  (medium) — closed 2026-09-16; archived 2026-09-16. Receipt 10/10
+  stamped on closed content (3 typecheck gates, 6 test gates, quality).
+  `validate:repository` PASS; lint:md PASS.
+
 ## 2026-09-16 closure — pipeline integrity + catalog window truth (2 FIDs archived)
 
 Operator directive ("Close and archive the two fixed FIDs (001 + 002) with

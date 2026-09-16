@@ -11,9 +11,9 @@
  * - (b) derived ModelProvider union / settings.validProviders gain `cloudflare`
  * - (c) derived providerDomains gains `openrouter`
  * - (d) `order` values replicate the current picker sort exactly
- *       (openrouter 0, tokenrouter 1, nvidia 2, opencode-go 3, and the 7-way
- *       tie of tokenharbor/commandcode/nous/ollama/cloudflare/kiosapi/opencode-zen
- *       at 4)
+ *       (openrouter 0, tokenrouter 1, nvidia 2, and the tie of
+ *       tokenharbor/commandcode/nous/ollama/cloudflare/kiosapi at 4;
+ *       FID-2026-0916-004 removed opencode-go/opencode-zen)
  */
 import { PROVIDER_REGISTRY_PARTITION } from './registry-partitioned'
 
@@ -100,23 +100,6 @@ export const PROVIDER_REGISTRY = {
     domain: 'nvidia.com',
     order: 2,
   },
-  'opencode-go': {
-    id: 'opencode-go',
-    label: 'OpenCode Go',
-    kind: 'gateway',
-    // Shared OpenCode credential (FID-2026-0905-003): one key powers Go and
-    // Zen. `OPENCODE_GO_API_KEY` remains honored as a legacy fallback via
-    // the `opencode` resolver chain.
-    credentials: { envVar: 'OPENCODE_API_KEY', resolver: 'opencode' },
-    baseUrl: 'https://opencode.ai/zen/go/v1',
-    protocol: 'openai-anthropic',
-    idTransform: 'strip',
-    protocolMap: 'OPENCODE_GO_PROTOCOLS',
-    catalog: { source: 'static', modelsRef: 'opencodeGo' },
-    setupAvailable: true,
-    domain: 'opencode.ai',
-    order: 3,
-  },
   commandcode: {
     id: 'commandcode',
     label: 'CommandCode',
@@ -196,12 +179,12 @@ export const PROVIDER_REGISTRY = {
     setupAvailable: false,
     order: 4,
   },
-  // kiosapi/apinex/orcarouter/bai/opencode-zen entries live in
+  // kiosapi/apinex/orcarouter/bai entries live in
   // ./registry-partitioned (300-line file split) and are spread in —
   // Object.keys order is preserved: these five follow ollama, and the
   // inline object ends immediately after the spread.
   ...PROVIDER_REGISTRY_PARTITION,
 } as const satisfies Record<string, ProviderConfig>
 
-/** Literal union of registry ids, e.g. 'tokenharbor' | 'opencode-go'. */
+/** Literal union of registry ids, e.g. 'tokenharbor' | 'commandcode'. */
 export type ProviderId = keyof typeof PROVIDER_REGISTRY

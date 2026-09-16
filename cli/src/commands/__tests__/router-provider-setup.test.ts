@@ -16,7 +16,6 @@ import type { RouterParams } from '../command-registry'
 describe('routeUserPrompt providerSetup mode', () => {
   let originalConfigDir: string | undefined
   let originalApiKey: string | undefined
-  let originalSharedApiKey: string | undefined
   let originalTokenrouterApiKey: string | undefined
   let originalNousApiKey: string | undefined
   let originalDirectProvider: string | undefined
@@ -26,8 +25,7 @@ describe('routeUserPrompt providerSetup mode', () => {
 
   beforeEach(() => {
     originalConfigDir = process.env.SAVANT_CODE_CONFIG_DIR
-    originalApiKey = process.env.OPENCODE_GO_API_KEY
-    originalSharedApiKey = process.env.OPENCODE_API_KEY
+    originalApiKey = process.env.TOKENHARBOR_API_KEY
     originalTokenrouterApiKey = process.env.TOKENROUTER_API_KEY
     originalNousApiKey = process.env.NOUS_API_KEY
     originalDirectProvider = process.env.DIRECT_PROVIDER
@@ -35,15 +33,14 @@ describe('routeUserPrompt providerSetup mode', () => {
     originalBackendApiKey = process.env.SAVANT_CODE_API_KEY
     tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'savant-provider-route-'))
     process.env.SAVANT_CODE_CONFIG_DIR = tempDir
-    delete process.env.OPENCODE_GO_API_KEY
-    delete process.env.OPENCODE_API_KEY
+    delete process.env.TOKENHARBOR_API_KEY
     delete process.env.TOKENROUTER_API_KEY
     delete process.env.NOUS_API_KEY
     delete process.env.DIRECT_PROVIDER
     delete process.env.INFERENCE_BASE_URL
     delete process.env.SAVANT_CODE_API_KEY
     useChatStore.getState().reset()
-    beginProviderSetup('opencode-go')
+    beginProviderSetup('tokenharbor')
     useChatStore.getState().setInputMode('providerSetup')
   })
 
@@ -52,10 +49,8 @@ describe('routeUserPrompt providerSetup mode', () => {
     if (originalConfigDir === undefined)
       delete process.env.SAVANT_CODE_CONFIG_DIR
     else process.env.SAVANT_CODE_CONFIG_DIR = originalConfigDir
-    if (originalApiKey === undefined) delete process.env.OPENCODE_GO_API_KEY
-    else process.env.OPENCODE_GO_API_KEY = originalApiKey
-    if (originalSharedApiKey === undefined) delete process.env.OPENCODE_API_KEY
-    else process.env.OPENCODE_API_KEY = originalSharedApiKey
+    if (originalApiKey === undefined) delete process.env.TOKENHARBOR_API_KEY
+    else process.env.TOKENHARBOR_API_KEY = originalApiKey
     if (originalTokenrouterApiKey === undefined)
       delete process.env.TOKENROUTER_API_KEY
     else process.env.TOKENROUTER_API_KEY = originalTokenrouterApiKey
@@ -73,7 +68,7 @@ describe('routeUserPrompt providerSetup mode', () => {
   })
 
   test('blocks a keyless ordinary prompt before sendMessage', async () => {
-    process.env.DIRECT_PROVIDER = 'opencode-go'
+    process.env.DIRECT_PROVIDER = 'tokenharbor'
     useChatStore.getState().setInputMode('default')
     const sendMessage = mock(async () => {})
     let renderedMessages: ChatMessage[] = []
@@ -110,17 +105,17 @@ describe('routeUserPrompt providerSetup mode', () => {
     await routeUserPrompt(params)
 
     expect(sendMessage).not.toHaveBeenCalled()
-    expect(JSON.stringify(renderedMessages)).toContain('/provider opencode-go')
+    expect(JSON.stringify(renderedMessages)).toContain('/provider tokenharbor')
   })
 
   test('keeps slash-command routing available before provider setup', async () => {
-    process.env.DIRECT_PROVIDER = 'opencode-go'
+    process.env.DIRECT_PROVIDER = 'tokenharbor'
     useChatStore.getState().setInputMode('default')
     const params = {
       abortControllerRef: { current: null },
       agentMode: 'HYBRID',
       inputRef: { current: null },
-      inputValue: '/provider opencode-go',
+      inputValue: '/provider tokenharbor',
       isChainInProgressRef: { current: false },
       isStreaming: false,
       logoutMutation: {} as RouterParams['logoutMutation'],
@@ -205,7 +200,7 @@ describe('routeUserPrompt providerSetup mode', () => {
           typeof update === 'function' ? update(renderedMessages) : update
       },
     )
-    const secret = 'sentinel-opencode-api-key'
+    const secret = 'sentinel-tokenharbor-api-key'
 
     const params = {
       abortControllerRef: { current: null },
@@ -234,12 +229,12 @@ describe('routeUserPrompt providerSetup mode', () => {
     await routeUserPrompt(params)
 
     expect(saveToHistory).not.toHaveBeenCalled()
-    expect(process.env.OPENCODE_API_KEY).toBe(secret)
+    expect(process.env.TOKENHARBOR_API_KEY).toBe(secret)
     expect(useChatStore.getState().inputMode).toBe('default')
     expect(setInputFocused).toHaveBeenCalledWith(true)
 
-    const setupInfo = getProviderSetupInfo('opencode-go')
-    expect(setupInfo?.envVar).toBe('OPENCODE_API_KEY')
+    const setupInfo = getProviderSetupInfo('tokenharbor')
+    expect(setupInfo?.envVar).toBe('TOKENHARBOR_API_KEY')
     expect(JSON.stringify(renderedMessages)).not.toContain(secret)
   })
 })

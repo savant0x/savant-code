@@ -44,12 +44,6 @@ export const PROVIDER_EXCEPTION_MANIFEST: readonly ProviderExceptionManifestEntr
       evidence: ['cli/src/utils/openrouter-models/nvidia.ts'],
     },
     {
-      providerId: 'opencode-go',
-      kinds: ['credential-resolver', 'dual-protocol'],
-      owner: 'common/src/constants/model-config.ts',
-      evidence: ['sdk/src/impl/model-provider/model-factories.ts'],
-    },
-    {
       providerId: 'commandcode',
       kinds: ['dual-protocol'],
       owner: 'common/src/constants/model-config.ts',
@@ -97,17 +91,6 @@ export const PROVIDER_EXCEPTION_MANIFEST: readonly ProviderExceptionManifestEntr
       owner: 'cli/src/utils/openrouter-models/bai.ts',
       evidence: [
         'cli/src/utils/openrouter-models/bai.ts',
-        'cli/src/utils/openrouter-models/gateway.ts',
-      ],
-    },
-    {
-      providerId: 'opencode-zen',
-      kinds: ['credential-resolver', 'live-catalog', 'multi-protocol'],
-      owner: 'common/src/constants/model-config/provider-protocols.ts',
-      evidence: [
-        'common/src/constants/model-config/provider-protocols.ts',
-        'sdk/src/impl/model-provider/model-factories.ts',
-        'cli/src/utils/openrouter-models/opencode-zen.ts',
         'cli/src/utils/openrouter-models/gateway.ts',
       ],
     },

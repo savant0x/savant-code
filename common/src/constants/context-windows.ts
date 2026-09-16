@@ -21,11 +21,11 @@
  */
 
 import {
+  atriaModels,
   bazaarlinkModels,
   commandcodeModels,
   hcnsecModels,
   infronModels,
-  opencodeGoModels,
   tokenbomModels,
   tokenharborModels,
   tokenrouterModels,
@@ -108,6 +108,9 @@ export const CONTEXT_WINDOW_FALLBACKS: ReadonlyMap<string, number> = new Map([
   ['bazaarlink/gpt-5.6-terra', 1_050_000],
   ['bazaarlink/gpt-5.6-luna', 1_050_000],
   ['bazaarlink/qwen3.8-max', 1_000_000],
+  // --- atria (FID-2026-0916-005: single one-model static catalog;
+  // 256K window is vendor-published in api.atria-asi.ai/docs) ---
+  ['atria/Atria-Dawn-Preview', 262_144],
   // --- tokenrouter (FID-2026-0916-002: the pre-program catalog finally
   // migrated off the family heuristic. Sources: bazaarlink + orcarouter
   // keyed /v1/models rosters 2026-09-16; OpenRouter public catalog as
@@ -145,7 +148,7 @@ export const CONTEXT_WINDOW_FALLBACKS: ReadonlyMap<string, number> = new Map([
   ['tokenrouter/qwen/qwen3.5-122b-a10b', 262_144],
   ['tokenrouter/openai/gpt-oss-120b', 131_072],
   ['tokenrouter/google/gemini-3.1-pro-preview', 1_048_576],
-  // --- tokenharbor (FID-2026-0916-002; same sources as tokenrouter) ---
+  // --- tokenharbor (FID-2026-0916-002; re-aligned FID-2026-0916-004) ---
   ['tokenharbor/claude-opus-5', 1_000_000],
   ['tokenharbor/claude-fable-5', 1_000_000],
   ['tokenharbor/gpt-5.6-sol', 1_050_000],
@@ -154,63 +157,54 @@ export const CONTEXT_WINDOW_FALLBACKS: ReadonlyMap<string, number> = new Map([
   ['tokenharbor/gpt-5.6-terra', 1_050_000],
   ['tokenharbor/grok-4.5', 500_000],
   ['tokenharbor/claude-sonnet-5', 1_000_000],
-  ['tokenharbor/gemini-3.6-flash', 1_048_576],
   ['tokenharbor/glm-5.2', 1_048_576], // 2-of-3
   ['tokenharbor/gpt-5.6-luna', 1_050_000],
   ['tokenharbor/deepseek-v4-flash', 1_048_576], // the operator-reported 131k bug
-  ['tokenharbor/minimax-m3', 1_048_576],
   ['tokenharbor/deepseek-v4-pro', 1_048_576],
   ['tokenharbor/mimo-v2.5-pro', 1_050_000],
   ['tokenharbor/mimo-v2.5', 1_050_000],
-  ['tokenharbor/kimi-k3:free', 1_048_576],
   ['tokenharbor/deepseek-v4-flash:free', 1_048_576],
   ['tokenharbor/mimo-v2.5:free', 1_050_000],
   ['tokenharbor/th-orchestra', 200_000], // NEEDS-REVIEW: ensemble router, no vendor window published; conservative default pinned
-  // --- opencode-go (FID-2026-0916-002; same sources as tokenrouter) ---
-  ['opencode-go/grok-4.5', 500_000],
-  ['opencode-go/glm-5.2', 1_048_576], // 2-of-3
-  ['opencode-go/glm-5.1', 204_800], // 2-of-3
-  ['opencode-go/kimi-k3', 1_048_576],
-  ['opencode-go/kimi-k2.7-code', 262_144],
-  ['opencode-go/kimi-k2.6', 262_144],
-  ['opencode-go/mimo-v2.5', 1_050_000],
-  ['opencode-go/mimo-v2.5-pro', 1_050_000],
-  ['opencode-go/deepseek-v4-pro', 1_048_576],
-  ['opencode-go/deepseek-v4-flash', 1_048_576],
-  ['opencode-go/minimax-m3', 1_048_576],
-  ['opencode-go/minimax-m2.7', 204_800],
-  ['opencode-go/qwen3.7-max', 1_000_000],
-  ['opencode-go/qwen3.7-plus', 1_000_000],
-  ['opencode-go/qwen3.6-plus', 1_000_000], // 2-of-3
-  // --- commandcode (FID-2026-0916-002; same sources as tokenrouter) ---
+  // FID-2026-0916-004: opencode-go rows removed with the provider (zen
+  // free-tier gate). commandcode rows re-keyed to the vendor's renormalized
+  // roster spellings (dashed versions, no vendor prefixes, zai-org/GLM,
+  // canonical Kimi casing); removed rows: gemini-3.6-flash, minimax-m3
+  // (roster-absent), kimi-k3:free (launch event ended).
+  // --- commandcode (FID-2026-0916-004 roster spellings) ---
   ['commandcode/claude-opus-5', 1_000_000],
-  ['commandcode/claude-opus-4.8', 1_000_000],
+  ['commandcode/claude-opus-4-8', 1_000_000],
+  ['commandcode/claude-opus-4-7', 1_000_000],
+  ['commandcode/claude-fable-5', 1_000_000],
+  ['commandcode/claude-fable-5-1', 1_000_000],
   ['commandcode/claude-sonnet-5', 1_000_000],
-  ['commandcode/claude-sonnet-4.6', 1_000_000],
-  ['commandcode/claude-haiku-4.5', 200_000],
-  ['commandcode/x-ai/grok-4.5', 500_000],
-  ['commandcode/z-ai/glm-5.2', 1_048_576], // 2-of-3
-  ['commandcode/z-ai/glm-5.1', 204_800], // 2-of-3
-  ['commandcode/moonshotai/kimi-k3', 1_048_576],
-  ['commandcode/moonshotai/kimi-k2.7-code', 262_144],
-  ['commandcode/moonshotai/kimi-k2.6', 262_144],
-  ['commandcode/xiaomi/mimo-v2.5', 1_050_000],
-  ['commandcode/xiaomi/mimo-v2.5-pro', 1_050_000],
+  ['commandcode/claude-sonnet-4-6', 1_000_000],
+  ['commandcode/claude-haiku-4-5-20251001', 200_000],
+  ['commandcode/xai/grok-4.5', 500_000],
+  ['commandcode/xai/grok-4.6', 500_000],
+  ['commandcode/zai-org/glm-5.2', 1_048_576], // 2-of-3
+  ['commandcode/zai-org/glm-5.3', 1_048_576],
+  ['commandcode/moonshotai/Kimi-K3', 1_048_576],
+  ['commandcode/moonshotai/Kimi-K2.7-Code', 262_144],
+  ['commandcode/moonshotai/Kimi-K2.6', 262_144],
+  ['commandcode/MiniMaxAI/MiniMax-M3', 1_048_576],
+  ['commandcode/MiniMaxAI/MiniMax-M2.7', 204_800],
   ['commandcode/deepseek/deepseek-v4-pro', 1_048_576],
   ['commandcode/deepseek/deepseek-v4-flash', 1_048_576],
-  ['commandcode/deepseek/deepseek-v3.2', 163_840],
-  ['commandcode/openai/gpt-5.6-sol', 1_050_000],
-  ['commandcode/openai/gpt-5.6-terra', 1_050_000],
-  ['commandcode/openai/gpt-5.6-luna', 1_050_000],
-  ['commandcode/openai/gpt-5.5', 1_050_000],
-  ['commandcode/openai/gpt-5.3-codex', 400_000],
-  ['commandcode/qwen/qwen3.7-max', 1_000_000],
-  ['commandcode/qwen/qwen3.7-plus', 1_000_000],
-  ['commandcode/qwen/qwen3.6-plus', 1_000_000], // 2-of-3
-  ['commandcode/minimax-m3', 1_048_576],
-  ['commandcode/minimaxai/minimax-m2.7', 204_800],
-  ['commandcode/lagunaai/laguna-s-2.1', 1_048_576],
-  ['commandcode/minimaxai/ling-3.0-flash', 262_144],
+  ['commandcode/deepseek/deepseek-v4.1-flash', 1_048_576],
+  ['commandcode/gpt-5.6-sol', 1_050_000],
+  ['commandcode/gpt-5.6-terra', 1_050_000],
+  ['commandcode/gpt-5.6-luna', 1_050_000],
+  ['commandcode/gpt-5.5', 1_050_000],
+  ['commandcode/gpt-5.3-codex', 400_000],
+  ['commandcode/Qwen/Qwen3.8-Max', 1_000_000],
+  ['commandcode/Qwen/Qwen3.8-27B', 262_144],
+  ['commandcode/Qwen/Qwen3.7-Max', 1_000_000],
+  ['commandcode/Qwen/Qwen3.7-Plus', 1_000_000],
+  ['commandcode/Qwen/Qwen3.7-Flash', 1_000_000],
+  ['commandcode/poolside/laguna-s-2.1-free', 1_048_576],
+  ['commandcode/inclusionai/ling-3.0-flash-sante:free', 262_144],
+  ['commandcode/meituan/LongCat-2.0:free', 1_048_576],
 ])
 
 /** How a context window was resolved — surfaced in the UI (MQ4 badge). */
@@ -240,13 +234,13 @@ export function getContextWindowFallback(
 const NAME_CATALOG_MODEL_IDS: readonly string[] = [
   ...Object.values(tokenrouterModels),
   ...Object.values(tokenharborModels),
-  ...Object.values(opencodeGoModels),
   ...Object.values(commandcodeModels),
   ...Object.values(hcnsecModels),
   ...Object.values(tokenbomModels),
-  ...Object.values(infronModels),
+...Object.values(infronModels),
   ...Object.values(unorouterModels),
   ...Object.values(bazaarlinkModels),
+  ...Object.values(atriaModels),
 ]
 
 /**

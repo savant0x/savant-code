@@ -2,7 +2,6 @@ import { describe, expect, test } from 'bun:test'
 
 import {
   ALLOWED_MODEL_PREFIXES,
-  OPENCODE_ZEN_PROTOCOLS,
   providerDomains,
 } from '../../constants/model-config'
 import {
@@ -24,9 +23,10 @@ import type { ProviderConfig } from '../types'
  * as its first argument so tests inject a fixture instead of the singleton).
  */
 describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
-  test('covers all nineteen current providers', () => {
+  test('covers all eighteen current providers', () => {
     expect(Object.keys(PROVIDER_REGISTRY).sort()).toEqual([
       'apinex',
+      'atria',
       'bai',
       'bazaarlink',
       'cloudflare',
@@ -37,8 +37,6 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
       'nous',
       'nvidia',
       'ollama',
-      'opencode-go',
-      'opencode-zen',
       'openrouter',
       'orcarouter',
       'tokenbom',
@@ -80,7 +78,6 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
     expect(deriveProviderOrder(PROVIDER_REGISTRY, 'openrouter')).toBe(0)
     expect(deriveProviderOrder(PROVIDER_REGISTRY, 'tokenrouter')).toBe(1)
     expect(deriveProviderOrder(PROVIDER_REGISTRY, 'nvidia')).toBe(2)
-    expect(deriveProviderOrder(PROVIDER_REGISTRY, 'opencode-go')).toBe(3)
     // FID-2026-0911-003's per-provider order-4 family.
     for (const id of [
       'apinex',
@@ -96,7 +93,6 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
       'ollama',
       'cloudflare',
       'kiosapi',
-      'opencode-zen',
     ]) {
       expect(deriveProviderOrder(PROVIDER_REGISTRY, id)).toBe(4)
     }
@@ -104,10 +100,11 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
     expect(deriveProviderOrder(PROVIDER_REGISTRY, 'unknown')).toBe(4)
   })
 
-  test('setup config derives exactly the seventeen current setup providers', () => {
+  test('setup config derives exactly the sixteen current setup providers', () => {
     const setup = deriveSetupConfig(PROVIDER_REGISTRY)
     expect(Object.keys(setup).sort()).toEqual([
       'apinex',
+      'atria',
       'bai',
       'bazaarlink',
       'commandcode',
@@ -116,8 +113,6 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
       'kiosapi',
       'nous',
       'nvidia',
-      'opencode-go',
-      'opencode-zen',
       'openrouter',
       'orcarouter',
       'tokenbom',
@@ -140,20 +135,10 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
       envVar: 'NOUS_API_KEY',
       baseUrl: 'https://inference-api.nousresearch.com/v1',
     })
-    expect(setup['opencode-go']).toEqual({
-      label: 'OpenCode Go',
-      envVar: 'OPENCODE_API_KEY',
-      baseUrl: 'https://opencode.ai/zen/go/v1',
-    })
     expect(setup.kiosapi).toEqual({
       label: 'KiosAPI',
       envVar: 'KIOSAPI_API_KEY',
       baseUrl: 'https://kiosapi.com/v1',
-    })
-    expect(setup['opencode-zen']).toEqual({
-      label: 'OpenCode Zen',
-      envVar: 'OPENCODE_API_KEY',
-      baseUrl: 'https://opencode.ai/zen/v1',
     })
     expect(setup.apinex).toEqual({
       label: 'APInex',
@@ -172,10 +157,8 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
       tokenrouter: 'https://api.tokenrouter.com/v1',
       tokenharbor: 'https://tokenharbor.ai/v1',
       nvidia: 'https://integrate.api.nvidia.com/v1',
-      'opencode-go': 'https://opencode.ai/zen/go/v1',
       commandcode: 'https://api.commandcode.ai/provider/v1',
       kiosapi: 'https://kiosapi.com/v1',
-      'opencode-zen': 'https://opencode.ai/zen/v1',
     } as const
     for (const [id, url] of Object.entries(urls)) {
       expect(PROVIDER_REGISTRY[id as keyof typeof urls].baseUrl).toBe(url)
@@ -247,27 +230,5 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
       envVar: 'ACME_API_KEY',
       baseUrl: 'https://api.acme.ai/v1',
     })
-  })
-
-  test('zen protocol map covers all four wire protocols (FID-2026-0905-003)', () => {
-    const entries = Object.entries(OPENCODE_ZEN_PROTOCOLS)
-    expect(entries.length).toBeGreaterThan(0)
-    // Every key carries the routing prefix (validation enforces this too).
-    expect(entries.every(([id]) => id.startsWith('opencode-zen/'))).toBe(true)
-    // Each wire format has at least one model: chat, Anthropic messages,
-    // Responses, and the native Gemini path.
-    for (const protocol of ['openai', 'anthropic', 'responses', 'gemini']) {
-      expect(
-        entries.some(([, value]) => value === protocol),
-        `expected a '${protocol}' entry in OPENCODE_ZEN_PROTOCOLS`,
-      ).toBe(true)
-    }
-    // Spot-check one id per protocol against the documented endpoint table.
-    expect(OPENCODE_ZEN_PROTOCOLS['opencode-zen/glm-5.3']).toBe('openai')
-    expect(OPENCODE_ZEN_PROTOCOLS['opencode-zen/claude-sonnet-4-6']).toBe(
-      'anthropic',
-    )
-    expect(OPENCODE_ZEN_PROTOCOLS['opencode-zen/gpt-5.5']).toBe('responses')
-    expect(OPENCODE_ZEN_PROTOCOLS['opencode-zen/gemini-3-flash']).toBe('gemini')
   })
 })

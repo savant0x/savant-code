@@ -36,17 +36,13 @@ export type ProviderModelProtocol =
 export type ProviderIdTransform = 'strip' | 'keep' | 'cf-rewrite'
 
 /** Shared multi-protocol maps (see common/src/constants/model-config.ts). */
-export type ProviderProtocolMap =
-  | 'OPENCODE_GO_PROTOCOLS'
-  | 'COMMANDCODE_PROTOCOLS'
-  | 'OPENCODE_ZEN_PROTOCOLS'
-  | 'TOKENROUTER_PROTOCOLS'
+export type ProviderProtocolMap = 'COMMANDCODE_PROTOCOLS' | 'TOKENROUTER_PROTOCOLS'
 
 /**
  * Key resolution strategy. `openrouter` = master-key exchange chain.
- * `opencode` = shared OpenCode credential (`OPENCODE_API_KEY`, legacy
- * `OPENCODE_GO_API_KEY` fallback) — the only resolver two registry entries
- * may share one env var through (see validate claimEnvVar).
+ * `opencode` = shared OpenCode credential (legacy — the opencode-zen and
+ * opencode-go providers were removed in FID-2026-0916-004; kept as a type
+ * member so stored settings from older builds still parse fail-closed).
  */
 export type ProviderResolver = 'default' | 'openrouter' | 'opencode'
 

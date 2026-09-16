@@ -31,12 +31,6 @@ export {
   hasKiosapiCatalog,
   parseKiosapiModelsForTest,
 } from './openrouter-models/kiosapi'
-export {
-  fetchZenModels,
-  getCachedZenModels,
-  hasZenCatalog,
-  parseZenModelsForTest,
-} from './openrouter-models/opencode-zen'
 export { fetchNvidiaModels } from './openrouter-models/nvidia'
 export {
   __resetCustomCatalogsForTest,
@@ -51,12 +45,17 @@ export {
 } from './openrouter-models/orcarouter'
 export {
   fetchCommandCodeModels,
-  fetchOpenCodeGoModels,
   fetchTokenBomModels,
   fetchTokenRouterModels,
   fetchHcnsecModels,
   getTokenHarborModels,
 } from './openrouter-models/static-catalogs'
+export {
+  fetchAtriaModels,
+  fetchBazaarlinkModels,
+  fetchInfronModels,
+  fetchUnorouterModels,
+} from './openrouter-models/static-catalogs-gateways'
 export {
   findGatewayModel,
   formatModelInfo,

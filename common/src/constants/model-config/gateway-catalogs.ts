@@ -144,3 +144,17 @@ export const bazaarlinkModels = {
 } as const
 export type BazaarlinkModel =
   (typeof bazaarlinkModels)[keyof typeof bazaarlinkModels]
+
+/**
+ * Atria AI catalog (FID-2026-0916-005) — the single upstream model the
+ * gateway exposes. The vendor's docs (api.atria-asi.ai/docs) publish
+ * exactly one model, `Atria-Dawn-Preview` (case-sensitive). A STATIC map
+ * (not an authenticated-live fetch): the /v1/models endpoint is
+ * key-protected and the one-model set is a checked-in constant (bazaarlink
+ * precedent). Context window pinned to 256K in the fallback table
+ * (vendor-published).
+ */
+export const atriaModels = {
+  atria_dawn_preview: 'atria/Atria-Dawn-Preview',
+} as const
+export type AtriaModel = (typeof atriaModels)[keyof typeof atriaModels]

@@ -22,7 +22,7 @@ import type { OpenRouterModel } from './types'
 export { formatModelInfo, getProviderFromModelId } from './model-info'
 
 /**
- * Strip provider prefixes (tokenrouter/, tokenharbor/, nvidia/, opencode-go/)
+ * Strip provider prefixes (tokenrouter/, tokenharbor/, nvidia/)
  * and variant suffixes (-free, -fast, :free) from a model ID to get the canonical
  * OpenRouter model ID for context-window lookup.
  *
@@ -34,7 +34,7 @@ export { formatModelInfo, getProviderFromModelId } from './model-info'
 function toCanonicalModelId(modelId: string): string {
   let id = modelId
   // Strip gateway provider prefixes while preserving the upstream model path.
-  id = id.replace(/^(?:tokenrouter|tokenharbor|nvidia|opencode-go)\//, '')
+  id = id.replace(/^(?:tokenrouter|tokenharbor|nvidia)\//, '')
   // Strip variant suffixes: -free, -fast, :free, :beta
   id = id.replace(/-(?:free|fast|beta)$/, '')
   id = id.replace(/:(?:free|beta)$/, '')
@@ -162,7 +162,7 @@ function findModelFieldFromOpenRouter(
   }
 
   // 4. Name-based fallback: when gateway model IDs (e.g.
-  //    "opencode-go/mimo-v2.5") don't map 1:1 to OpenRouter IDs
+  //    "tokenharbor/mimo-v2.5") don't map 1:1 to OpenRouter IDs
   //    (e.g. "xiaomi/mimo-v2.5"), match by the human-readable name
   //    which both catalogs share.
   const gatewayModel = findGatewayModel(modelId)

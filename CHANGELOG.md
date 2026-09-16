@@ -2,6 +2,32 @@
 
 ## Unreleased
 
+### Gateway catalogs re-aligned to vendor truth; OpenCode zen/go removed (FID-2026-0916-004)
+
+- **commandcode catalog re-aligned** to the vendor's renormalized roster:
+  dashed versions (`claude-sonnet-4.6` → `claude-sonnet-4-6`), vendor
+  prefixes dropped (`openai/gpt-5.6-sol` → `gpt-5.6-sol`),
+  `zai-org/GLM-5.2` + canonical Kimi casing, plus coding-relevant
+  additions only (GLM-5.3, grok-4.6, Qwen3.8 family,
+  deepseek-v4.1-flash class) — no bulk roster dumps. The `COMMANDCODE_PROTOCOLS`
+  map was re-keyed to the new spellings.
+- **tokenharbor dead ids removed:** `gemini-3.6-flash`, `minimax-m3`, and
+  `kimi-k3:free` (the free channel was a launch promo that has ended —
+  confirmed LIVE by 429).
+- **opencode-zen and opencode-go removed from Savant entirely.** The zen
+  free-tier gate ("free tier can only be used in OpenCode") is
+  account-type-based, not UA-spoofable, so zen cannot serve Savant.
+  Registry entries, catalogs, `OPENCODE_ZEN_PROTOCOLS`/`OPENCODE_GO_PROTOCOLS`,
+  the zen/go cli modules and gateway wiring, context-window rows, the sdk
+  `opencode-key-resolver` chain and `isOpenCodeGoModel`, the
+  `getOpenCodeGoApiKeyFromEnv` getter, and exception-manifest entries are
+  all gone; test fixtures re-pointed to surviving gateways.
+- RED-first pin module observed 9 fail / 3 pass against the pre-change
+  catalogs; receipt stamped 10/10 LIVE (typecheck common/cli/sdk, six
+  test suites, repo-wide quality). The free-mode cyclic-tool regression
+  suite (FID-2026-0905-004) was re-pointed to TokenRouter's per-model
+  protocol ids, preserving all four wire-protocol coverage legs.
+
 ### Receipt stamping fixed for gates-runs-to-EOF FIDs (FID-2026-0916-003)
 
 - **EOF-stamped receipts no longer read as stale.** A FID whose

@@ -12,7 +12,6 @@ import { getContextWindowFallback } from '@savant-code/common/constants/context-
 import {
   commandcodeModels,
   hcnsecModels,
-  opencodeGoModels,
   tokenbomModels,
   tokenharborModels,
   tokenrouterModels,
@@ -76,37 +75,15 @@ const TOKENHARBOR_NAMES: Record<string, string> = {
   'tokenharbor/gpt-5.6-terra': 'GPT-5.6 Terra',
   'tokenharbor/grok-4.5': 'Grok 4.5',
   'tokenharbor/claude-sonnet-5': 'Claude Sonnet 5',
-  'tokenharbor/gemini-3.6-flash': 'Gemini 3.6 Flash',
   'tokenharbor/glm-5.2': 'GLM 5.2',
   'tokenharbor/gpt-5.6-luna': 'GPT-5.6 Luna',
   'tokenharbor/deepseek-v4-flash': 'DeepSeek V4 Flash',
-  'tokenharbor/minimax-m3': 'MiniMax M3',
   'tokenharbor/deepseek-v4-pro': 'DeepSeek V4 Pro',
   'tokenharbor/mimo-v2.5-pro': 'MiMo V2.5 Pro',
   'tokenharbor/mimo-v2.5': 'MiMo V2.5',
-  'tokenharbor/kimi-k3:free': 'Kimi K3 (Free)',
   'tokenharbor/deepseek-v4-flash:free': 'DeepSeek V4 Flash (Free)',
   'tokenharbor/mimo-v2.5:free': 'MiMo V2.5 (Free)',
   'tokenharbor/th-orchestra': 'TH Orchestra',
-}
-
-/** Display names for OpenCode Go model ids (id set derives from common). */
-const OPENCODE_GO_NAMES: Record<string, string> = {
-  'opencode-go/grok-4.5': 'Grok 4.5',
-  'opencode-go/glm-5.2': 'GLM 5.2',
-  'opencode-go/glm-5.1': 'GLM 5.1',
-  'opencode-go/kimi-k3': 'Kimi K3',
-  'opencode-go/kimi-k2.7-code': 'Kimi K2.7 Code',
-  'opencode-go/kimi-k2.6': 'Kimi K2.6',
-  'opencode-go/mimo-v2.5': 'MiMo V2.5',
-  'opencode-go/mimo-v2.5-pro': 'MiMo V2.5 Pro',
-  'opencode-go/deepseek-v4-pro': 'DeepSeek V4 Pro',
-  'opencode-go/deepseek-v4-flash': 'DeepSeek V4 Flash',
-  'opencode-go/minimax-m3': 'MiniMax M3',
-  'opencode-go/minimax-m2.7': 'MiniMax M2.7',
-  'opencode-go/qwen3.7-max': 'Qwen 3.7 Max',
-  'opencode-go/qwen3.7-plus': 'Qwen 3.7 Plus',
-  'opencode-go/qwen3.6-plus': 'Qwen 3.6 Plus',
 }
 
 /**
@@ -169,24 +146,6 @@ export function getTokenHarborModels(): OpenRouterModel[] {
       provider: 'tokenharbor' as const,
       // FID-2026-0916-002: vendor fallback table, not the family heuristic
       // (deepseek-v4-flash showed 131k here; vendor-published is 1,048,576).
-      contextLength: getContextWindowFallback(id).contextWindow,
-    }
-  })
-}
-
-/**
- * Return the OpenCode Go model catalog, derived from the common model map.
- * OpenCode Go requires auth for its API, so the id set is a hardcoded common
- * map with cli-side display names. Synchronous.
- */
-export function fetchOpenCodeGoModels(): OpenRouterModel[] {
-  return Object.values(opencodeGoModels).map((id) => {
-    const name = OPENCODE_GO_NAMES[id] ?? id.slice('opencode-go/'.length)
-    return {
-      id,
-      name,
-      provider: 'opencode-go' as const,
-      // FID-2026-0916-002: vendor fallback table (see fetchTokenRouterModels).
       contextLength: getContextWindowFallback(id).contextWindow,
     }
   })

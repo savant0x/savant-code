@@ -28,10 +28,6 @@ export {
   moonshotModels,
   nvidiaModels,
   openaiModels,
-  openCodeZenModels,
-  opencodeGoModels,
-  OPENCODE_GO_PROTOCOLS,
-  OPENCODE_ZEN_PROTOCOLS,
   openrouterModels,
   PROVIDER_PROTOCOL_MAPS,
   tokenharborModels,
@@ -40,8 +36,10 @@ export {
 } from './model-config/providers'
 
 // Audited gateway catalogs (FID-2026-0913-001) + curated gateway catalogs
-// (FID-2026-0914-001) + bazaarlink (FID-2026-0915-006).
+// (FID-2026-0914-001) + bazaarlink (FID-2026-0915-006) + atria
+// (FID-2026-0916-005).
 export {
+  atriaModels,
   bazaarlinkModels,
   hcnsecModels,
   infronModels,
@@ -60,14 +58,13 @@ export type {
   MoonshotModel,
   NvidiaModel,
   OpenAIModel,
-  OpenCodeZenModel,
-  OpencodeGoModel,
   openrouterModel,
   TokenHarborModel,
   TokenrouterModel,
 } from './model-config/providers'
 
 export type {
+  AtriaModel,
   BazaarlinkModel,
   HcnsecModel,
   InfronModel,

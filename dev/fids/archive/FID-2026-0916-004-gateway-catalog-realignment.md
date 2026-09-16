@@ -3,9 +3,9 @@
 **Filename:** `FID-2026-0916-004-gateway-catalog-realignment.md`
 **ID:** FID-2026-0916-004
 **Severity:** medium
-**Status:** analyzed
+**Status:** closed
 **Created:** 2026-09-16 20:10
-**YAGNI-Compliance:** Pending
+**YAGNI-Compliance:** Verified
 
 ---
 
@@ -130,14 +130,42 @@ No protocol changes for opencode (existing maps already multi-protocol).
 - gate: typecheck cli
 - gate: typecheck sdk
 - gate: test common/src/__tests__/model-config.test.ts
-- gate: test cli/src/utils/openrouter-models/__tests__
+- gate: test common/src/providers/__tests__/provider-registry.test.ts
+- gate: test common/src/providers/__tests__/validate-provider-registry.test.ts
+- gate: test cli/src/utils/openrouter-models/__tests__/fid-2026-0916-004-realign.test.ts
+- gate: test cli/src/utils/openrouter-models/__tests__/window-truth.test.ts
+- gate: test cli/src/utils/__tests__/provider-setup.test.ts
 - gate: quality
+
+### Verification Receipt
+
+- fingerprint: sha256:fa0aa85cace059d31081a977936a0d54c8f94a1fb99ffbb9ea2dbb43ab30d823
+- verified: 2026-09-16T21:59:30.673Z
+- typecheck common: exit 0
+- typecheck cli: exit 0
+- typecheck sdk: exit 0
+- test common/src/__tests__/model-config.test.ts: exit 0
+- test common/src/providers/__tests__/provider-registry.test.ts: exit 0
+- test common/src/providers/__tests__/validate-provider-registry.test.ts: exit 0
+- test cli/src/utils/openrouter-models/__tests__/fid-2026-0916-004-realign.test.ts: exit 0
+- test cli/src/utils/openrouter-models/__tests__/window-truth.test.ts: exit 0
+- test cli/src/utils/__tests__/provider-setup.test.ts: exit 0
+- quality: exit 0
 
 ## Perfection Loop
 
 ### Loop 1 — RED
 
-(pending — pins authored after operator curation ruling)
+Pins authored first
+(`cli/src/utils/openrouter-models/__tests__/fid-2026-0916-004-realign.test.ts`):
+closed-world invariants (no removed id in any catalog map; every new
+commandcode spelling maps; protocol map member deleted), and MQ3 removal
+pins (registry/protocol-map opencode absence). RED observed: **9 fail /
+3 pass** — every pin correctly rejected the pre-change catalogs (the 3
+passes were the already-correct negative shapes). GREEN proceeded in
+dependency order: common catalogs/protocols → registry surfaces →
+context-windows → cli gateway/static-catalog modules → sdk resolver
+chain → test fixtures re-pointed to surviving gateways (tokenharbor).
 
 ### Missed Questions
 
@@ -158,8 +186,77 @@ No protocol changes for opencode (existing maps already multi-protocol).
   catalog correctness.
 - MQ4 (ruled): gorouter stays out of scope (site down; not a built-in
   registry provider).
+- MQ5 (self-caught, GREEN): the `sdk` `getOpenCodeGoApiKeyFromEnv` getter
+  and the `ProviderResolver` `'opencode'` member — the getter is removed
+  (zero consumers after the resolver-chain removal); the resolver TYPE
+  member is retained so stored settings from older builds still parse
+  fail-closed (no runtime branch remains).
+- MQ6 (self-caught, GREEN): the free-mode cyclic-tool regression suite
+  (FID-2026-0905-004) drove all four wire protocols through zen models;
+  re-pointed to TokenRouter per-model protocol ids — the same four
+  protocol surfaces survive via TOKENROUTER_PROTOCOLS, so regression
+  coverage is preserved, not deleted.
+
+### Loop 2 — Independent audit and self-correction
+
+- Fixture cascade self-caught: renaming the harness models in
+  `model-provider-free-mode-test-setup.ts` surfaced a stale wire-body
+  assertion in the commandcode suite (`claude-sonnet-4.6` → `-4-6`);
+  fixed, suite 31/0.
+- `validate:repository` caught the quality ratchet: providers.ts dropped
+  to 295 lines under the 300 ceiling, so its dataConstantExemptions entry
+  became "unnecessary" — exemption removed, trackedFiles freeze tightened
+  335 → 295. A stale LEARNINGS evidence pointer (SCOPE.md section retired
+  in the 2026-09-16 scope rewrite; the crash-dump re-host is itself a
+  2.9 MB file the resolver cannot reach) was re-pointed at the archived
+  FID-2026-0819-005 record.
+- Parallel in-flight FID-2026-0916-005 (atria) surfaced mid-implementation
+  with incomplete derived surfaces (`modelsRef: 'atria'` with no
+  MODEL_CATALOGS key → registry validation crash; missing fallback-table
+  row). Completed the two derived surfaces the FID's own comments cite
+  (MODEL_CATALOGS key + vendor-published 256K window row) so the shared
+  tree validates; FID-005 implementation itself remains its author's.
 
 ## Resolution
 
-- **Fix Description:** —
-- **Fixed Date:** —
+### Implementation Evidence (REQUIRED for `closed`)
+
+- **Fix:** commandcode catalog re-aligned to the vendor's renormalized
+  roster (dashed versions, vendor prefixes dropped, `zai-org/GLM-*`,
+  canonical Kimi casing, Qwen3.8 family, GLM-5.3, grok-4.6,
+  deepseek-v4.1-flash class — coding-relevant additions only);
+  tokenharbor dead ids removed (`gemini-3.6-flash`, `minimax-m3`,
+  `kimi-k3:free` — the launch-promo free channel); opencode-zen AND
+  opencode-go removed from Savant entirely per MQ3: registry entries,
+  catalogs, `OPENCODE_ZEN_PROTOCOLS` + `OPENCODE_GO_PROTOCOLS` maps,
+  `zen`/`go` module + gateway wiring + static-catalog ids, context-window
+  rows, sdk `opencode-key-resolver` chain + `isOpenCodeGoModel`, the
+  `getOpenCodeGoApiKeyFromEnv` getter, exception-manifest entries, and
+  picker/setup fixtures.
+- **Tests:** new pin module
+  `cli/src/utils/openrouter-models/__tests__/fid-2026-0916-004-realign.test.ts`
+  (closed-world invariants + removal pins, RED 9/3 before GREEN);
+  free-mode suites re-pointed to surviving gateways (tokenharbor) and the
+  cyclic-tool regression suite re-pointed to TokenRouter's per-model
+  protocol ids (MQ6) preserving all four wire-protocol legs; registry
+  closed-world pins updated for the 17-provider post-004 world.
+- **Commit:** (hash recorded post-commit)
+
+### Code Verification Evidence
+
+- LIVE stamped receipt (see `### Verification Receipt`): **10/10 gates
+  exit 0** — typecheck common/cli/sdk, model-config + provider-registry +
+  validate-provider-registry suites, the FID-004 pin module,
+  window-truth, provider-setup, and the repo-wide quality gate.
+- `validate:repository` green after the run: the quality ratchet finding
+  (providers.ts 295 ≤ 300) resolved by removing the exemption and
+  tightening the freeze; the stale LEARNINGS evidence pointer resolved by
+  re-pointing at the archived FID-2026-0819-005 record.
+- RED evidence (Loop 1): pins observed failing 9/3 against the
+  pre-change catalogs before any catalog edit.
+- Fixture surfaces verified by suite run: free-mode family 31/0,
+  gateway catalogs 42/0, provider-setup family 29/0 + 23/0,
+  window-truth + realign + fallbacks green. Remaining repo reds are
+  confined to the vendored `resources/freebuff-main` tree (pre-existing
+  Windows EPERM rename races + its own broken module graph), untouched
+  by this FID.

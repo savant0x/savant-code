@@ -116,30 +116,9 @@ export const PROVIDER_REGISTRY_PARTITION = {
     domain: 'b.ai',
     order: 4,
   },
-  'opencode-zen': {
-    id: 'opencode-zen',
-    label: 'OpenCode Zen',
-    kind: 'gateway',
-    credentials: {
-      resolver: 'opencode',
-      envVar: 'OPENCODE_API_KEY',
-      // /provider hint is part of the canonical message.
-      missingKeyMessage:
-        'OpenCode Zen API key not set. Set OPENCODE_API_KEY environment variable or run /provider opencode-zen.',
-    },
-    baseUrl: 'https://opencode.ai/zen/v1',
-    // Four wire protocols (chat, Anthropic messages, Responses, Gemini);
-    // per-model dispatch comes from OPENCODE_ZEN_PROTOCOLS.
-    protocol: 'multi',
-    protocolMap: 'OPENCODE_ZEN_PROTOCOLS',
-    // Zen takes bare upstream ids (e.g. `gpt-5.5`); the internal
-    // `opencode-zen/` routing prefix is stripped before sending.
-    idTransform: 'strip',
-    catalog: { source: 'live', url: 'https://opencode.ai/zen/v1/models' },
-    setupAvailable: true,
-    domain: 'opencode.ai',
-    order: 4,
-  },
+  // FID-2026-0916-004: the opencode-zen entry was removed — Zen's free tier
+  // refuses non-OpenCode clients (account-type gate) and the credit path
+  // duplicates opencode-go, which was removed in the same ruling.
   hcnsec: {
     id: 'hcnsec',
     label: 'HCNSec',
@@ -247,7 +226,7 @@ export const PROVIDER_REGISTRY_PARTITION = {
     domain: 'unorouter.com',
     order: 4,
   },
-  bazaarlink: {
+bazaarlink: {
     id: 'bazaarlink',
     label: 'BazaarLink',
     kind: 'gateway',
@@ -275,6 +254,34 @@ export const PROVIDER_REGISTRY_PARTITION = {
     catalog: { source: 'static', modelsRef: 'bazaarlink' },
     setupAvailable: true,
     domain: 'bazaarlink.ai',
+    order: 4,
+  },
+  atria: {
+    id: 'atria',
+    label: 'Atria AI',
+    kind: 'gateway',
+    credentials: {
+      envVar: 'ATRIA_API_KEY',
+      // /provider hint is part of the canonical message.
+      missingKeyMessage:
+        'Atria AI API key not set. Set ATRIA_API_KEY environment variable or run /provider atria.',
+    },
+    // Docs quickstart (api.atria-asi.ai/docs) pins the OpenAI-compatible
+    // inference base. The vendor also serves Anthropic /v1/messages and
+    // Responses /v1/responses; the OpenAI surface is canonical for this
+    // single-model integration (FID-2026-0916-005).
+    baseUrl: 'https://api.atria-asi.ai/v1',
+    protocol: 'openai',
+    // The upstream id (Atria-Dawn-Preview) is sent verbatim; `strip`
+    // removes only the internal `atria/` routing prefix.
+    idTransform: 'strip',
+    // STATIC one-model allowlist (FID-2026-0916-005): the vendor exposes
+    // exactly one model (Atria-Dawn-Preview) and its /v1/models endpoint is
+    // key-protected (401 without a key) — a static map is the checked-in
+    // set with no authenticated-live fetcher overhead.
+    catalog: { source: 'static', modelsRef: 'atria' },
+    setupAvailable: true,
+    domain: 'atria-asi.ai',
     order: 4,
   },
 } as const satisfies Record<string, ProviderConfig>

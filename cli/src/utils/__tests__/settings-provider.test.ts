@@ -101,13 +101,13 @@ describe('settings telemetry defaults', () => {
     )
   })
 
-  test('opencode-go provider preference round-trips through validation', async () => {
+  test('tokenharbor provider preference round-trips through validation', async () => {
     fs.mkdirSync(getConfigDir(), { recursive: true })
     fs.writeFileSync(
       path.join(getConfigDir(), 'settings.json'),
       JSON.stringify(
         {
-          savantCodeModelProviderPreference: 'opencode-go',
+          savantCodeModelProviderPreference: 'tokenharbor',
         },
         null,
         2,
@@ -116,6 +116,6 @@ describe('settings telemetry defaults', () => {
 
     const { loadSettings } = await import('../settings')
     const settings = loadSettings()
-    expect(settings.savantCodeModelProviderPreference).toBe('opencode-go')
+    expect(settings.savantCodeModelProviderPreference).toBe('tokenharbor')
   })
 })

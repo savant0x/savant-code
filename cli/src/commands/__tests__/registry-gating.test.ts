@@ -144,10 +144,10 @@ describe('registry gating matrix (FID-007)', () => {
     // getProviderSetupGuidance tells users to run /provider — that command is
     // registered in the paid build (where the guidance is shown after FID-007).
     const guidance = getProviderSetupGuidance({
-      provider: 'opencode-go',
-      envVar: 'OPENCODE_GO_API_KEY',
-      label: 'OpenCode Go',
-      baseUrl: 'https://opencode.ai/zen/go/v1',
+      provider: 'tokenharbor',
+      envVar: 'TOKENHARBOR_API_KEY',
+      label: 'TokenHarbor',
+      baseUrl: 'https://tokenharbor.ai/v1',
     })
     expect(guidance).toContain('/provider')
     expect(findCommand('provider')).toBeDefined()

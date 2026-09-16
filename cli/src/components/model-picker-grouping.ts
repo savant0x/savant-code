@@ -24,8 +24,8 @@ export function getProvider(model: OpenRouterModel): ModelProvider {
 
 export function getProviderOrder(provider: ModelProvider): number {
   // Derived from the registry (FID-2026-0809-001 Phase 1, delta (d)):
-  // openrouter 0, tokenrouter 1, nvidia 2, opencode-go 3, and the 6-way tie
-  // of tokenharbor/commandcode/ollama/cloudflare/kiosapi/opencode-zen at 4 —
+  // openrouter 0, tokenrouter 1, nvidia 2, and the order-4 tie
+  // of tokenharbor/commandcode/ollama/cloudflare/kiosapi —
   // replicating the historical switch exactly so picker ordering is unchanged.
   // Step 9 remainder (D9): the EFFECTIVE registry is the order source —
   // custom providers carry order 5 from `toProviderConfig`, so they group

@@ -10,6 +10,7 @@
  */
 import { getContextWindowFallback } from '@savant-code/common/constants/context-windows'
 import {
+  atriaModels,
   bazaarlinkModels,
   infronModels,
   unorouterModels,
@@ -192,4 +193,28 @@ const BAZAARLINK_CONTEXT_WINDOWS: Record<string, number> = {
   'bazaarlink/gpt-5.6-terra': 1_050_000,
   'bazaarlink/gpt-5.6-luna': 1_050_000,
   'bazaarlink/qwen3.8-max': 1_000_000,
+}
+
+/** Display names for Atria AI model ids (FID-2026-0916-005). */
+const ATRIA_NAMES: Record<string, string> = {
+  'atria/Atria-Dawn-Preview': 'Atria Dawn Preview',
+}
+
+/**
+ * Return the Atria AI catalog (FID-2026-0916-005) — the single upstream
+ * model the gateway exposes. Static by design: the /v1/models endpoint is
+ * key-protected (401 without a key) and the one-model set is a checked-in
+ * constant (bazaarlink precedent). The 256K window is vendor-published
+ * (api.atria-asi.ai/docs) and pinned in the common fallback table.
+ * Synchronous.
+ */
+export function fetchAtriaModels(): OpenRouterModel[] {
+  return Object.values(atriaModels).map((id) => ({
+    id,
+    name: ATRIA_NAMES[id] ?? id.slice('atria/'.length),
+    provider: 'atria' as const,
+    // FID-2026-0916-002 (V6): the vendor fallback table replaces the
+    // substring heuristic — every curated Atria id is pinned there.
+    contextLength: getContextWindowFallback(id).contextWindow,
+  }))
 }

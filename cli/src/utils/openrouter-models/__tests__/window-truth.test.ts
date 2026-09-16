@@ -17,7 +17,6 @@ import {
   PROVIDER_PROTOCOL_MAPS,
   TOKENROUTER_PROTOCOLS,
   commandcodeModels,
-  opencodeGoModels,
   tokenharborModels,
   tokenrouterModels,
 } from '@savant-code/common/constants/model-config'
@@ -26,7 +25,6 @@ import { describe, expect, test } from 'bun:test'
 
 import {
   fetchCommandCodeModels,
-  fetchOpenCodeGoModels,
   getTokenHarborModels,
   fetchTokenRouterModels,
 } from '../static-catalogs'
@@ -44,10 +42,6 @@ describe('FID-2026-0916-002: vendor fallback-table coverage', () => {
 
   test('every tokenharbor id has a table row', () => {
     expectFullTableCoverage(Object.values(tokenharborModels))
-  })
-
-  test('every opencode-go id has a table row', () => {
-    expectFullTableCoverage(Object.values(opencodeGoModels))
   })
 
   test('every commandcode id has a table row', () => {
@@ -73,11 +67,6 @@ describe('FID-2026-0916-002: spot windows (keyed rosters 2026-09-16)', () => {
       (m) => m.id === 'tokenrouter/deepseek/deepseek-v4-pro',
     )
     expect(router?.contextLength).toBe(1_048_576)
-
-    const go = fetchOpenCodeGoModels().find(
-      (m) => m.id === 'opencode-go/deepseek-v4-flash',
-    )
-    expect(go?.contextLength).toBe(1_048_576)
 
     const cc = fetchCommandCodeModels().find(
       (m) => m.id === 'commandcode/deepseek/deepseek-v4-flash',

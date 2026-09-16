@@ -13,7 +13,7 @@ import { beforeEach, afterEach, mock } from 'bun:test'
 
 export const REAL_FETCH = globalThis.fetch
 export const COMMAND_CODE_MODEL = 'commandcode/deepseek/deepseek-v4-pro'
-export const COMMAND_CODE_CLAUDE_MODEL = 'commandcode/claude-sonnet-4.6'
+export const COMMAND_CODE_CLAUDE_MODEL = 'commandcode/claude-sonnet-4-6'
 export const TOKEN_HARBOR_MODEL = 'tokenharbor/anthropic/claude-opus-5'
 export const ORCAROUTER_MODEL = 'orcarouter/anthropic/claude-opus-5'
 export const BAI_MODEL = 'bai/deepseek/deepseek-v4-flash'
@@ -22,10 +22,6 @@ export const TOKENBOM_MODEL = 'tokenbom/gpt-5.5'
 export const INFRON_MODEL = 'infron/deepseek/deepseek-v4-flash:free'
 export const UNOROUTER_MODEL = 'unorouter/glm-5.3-flash:free'
 export const NOUS_MODEL = 'nous/anthropic/claude-sonnet-4.6'
-export const ZEN_CHAT_MODEL = 'opencode-zen/glm-5.3'
-export const ZEN_CLAUDE_MODEL = 'opencode-zen/claude-sonnet-4-6'
-export const ZEN_RESPONSES_MODEL = 'opencode-zen/gpt-5.5'
-export const ZEN_GEMINI_MODEL = 'opencode-zen/gemini-3-flash'
 export const COMMAND_CODE_PROMPT = [
   {
     role: 'user' as const,
@@ -36,8 +32,7 @@ export const COMMAND_CODE_PROMPT = [
 export function setupModelProviderTestHarness() {
   const mockGetValidChatGptOAuthCredentials = mock(() => Promise.resolve(null))
   let originalCommandCodeApiKey: string | undefined
-  let originalOpencodeZenApiKey: string | undefined
-  let originalOpencodeGoApiKey: string | undefined
+  let originalTokenRouterApiKey: string | undefined
   let originalTokenHarborApiKey: string | undefined
   let originalOrcarouterApiKey: string | undefined
   let originalBaiApiKey: string | undefined
@@ -64,10 +59,8 @@ export function setupModelProviderTestHarness() {
     await import('../model-provider')
     originalCommandCodeApiKey = process.env.COMMAND_CODE_API_KEY
     delete process.env.COMMAND_CODE_API_KEY
-    originalOpencodeZenApiKey = process.env.OPENCODE_API_KEY
-    delete process.env.OPENCODE_API_KEY
-    originalOpencodeGoApiKey = process.env.OPENCODE_GO_API_KEY
-    delete process.env.OPENCODE_GO_API_KEY
+    originalTokenRouterApiKey = process.env.TOKENROUTER_API_KEY
+    delete process.env.TOKENROUTER_API_KEY
     originalTokenHarborApiKey = process.env.TOKENHARBOR_API_KEY
     delete process.env.TOKENHARBOR_API_KEY
     originalOrcarouterApiKey = process.env.ORCAROUTER_API_KEY
@@ -121,15 +114,10 @@ export function setupModelProviderTestHarness() {
     } else {
       process.env.COMMAND_CODE_API_KEY = originalCommandCodeApiKey
     }
-    if (originalOpencodeZenApiKey === undefined) {
-      delete process.env.OPENCODE_API_KEY
+    if (originalTokenRouterApiKey === undefined) {
+      delete process.env.TOKENROUTER_API_KEY
     } else {
-      process.env.OPENCODE_API_KEY = originalOpencodeZenApiKey
-    }
-    if (originalOpencodeGoApiKey === undefined) {
-      delete process.env.OPENCODE_GO_API_KEY
-    } else {
-      process.env.OPENCODE_GO_API_KEY = originalOpencodeGoApiKey
+      process.env.TOKENROUTER_API_KEY = originalTokenRouterApiKey
     }
     if (originalTokenHarborApiKey === undefined) {
       delete process.env.TOKENHARBOR_API_KEY

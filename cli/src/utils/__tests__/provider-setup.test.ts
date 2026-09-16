@@ -56,17 +56,17 @@ describe('provider setup', () => {
   })
 
   test('saves the provider key in credentials.json and loads it for the current process', () => {
-    saveProviderApiKey('opencode-go', '  test-opencode-key  ')
+    saveProviderApiKey('tokenharbor', '  test-tokenharbor-key  ')
 
-    expect(process.env.OPENCODE_API_KEY).toBe('test-opencode-key')
+    expect(process.env.TOKENHARBOR_API_KEY).toBe('test-tokenharbor-key')
     const credentials = JSON.parse(
       fs.readFileSync(path.join(tempDir, 'credentials.json'), 'utf8'),
     )
-    expect(credentials.providerApiKeys.OPENCODE_API_KEY).toBe(
-      'test-opencode-key',
+    expect(credentials.providerApiKeys.TOKENHARBOR_API_KEY).toBe(
+      'test-tokenharbor-key',
     )
-    expect(credentials.providerApiKeys.OPENCODE_API_KEY).not.toContain('  ')
-    expect(getConfiguredProviderNames()).toContain('opencode-go')
+    expect(credentials.providerApiKeys.TOKENHARBOR_API_KEY).not.toContain('  ')
+    expect(getConfiguredProviderNames()).toContain('tokenharbor')
   })
 
   test('activates Nous from an existing shell key without requiring setup input', () => {
@@ -210,15 +210,15 @@ describe('provider setup', () => {
   })
 
   test('getMissingProviderSetup follows the persisted activeProvider', () => {
-    saveSettings({ activeProvider: 'opencode-go' })
+    saveSettings({ activeProvider: 'tokenharbor' })
 
     const missing = getMissingProviderSetup()
 
-    expect(missing?.provider).toBe('opencode-go')
+    expect(missing?.provider).toBe('tokenharbor')
     const guidance = getProviderSetupGuidance(
       missing as NonNullable<typeof missing>,
     )
-    expect(guidance).toContain('/provider opencode-go')
+    expect(guidance).toContain('/provider tokenharbor')
   })
 
   test('preserves an explicit shell key and routing when replacing a provider key', () => {

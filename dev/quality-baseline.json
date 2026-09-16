@@ -800,7 +800,7 @@
     "common/src/constants/limits.ts": 24,
     "common/src/constants/model-config.ts": 67,
     "common/src/constants/model-config/aggregate.ts": 178,
-    "common/src/constants/model-config/providers.ts": 335,
+    "common/src/constants/model-config/providers.ts": 295,
     "common/src/constants/paths.ts": 70,
     "common/src/constants/savant-code-config.ts": 13,
     "common/src/constants/savant-free-gemini-thinker.ts": 31,
@@ -1502,7 +1502,6 @@
   },
   "dataConstantExemptions": {
     "cli/src/constants/savant-logo.ts": "FID-2026-0819-005 (operator decision 2026-09-03): single base64 PNG payload (SAVANT_LOGO_PNG_BASE64) \u2014 generated data, not authored logic; one string literal cannot be split. Growth-frozen at 921 lines via trackedFiles.",
-    "common/src/constants/savant-free-models.ts": "FID-2026-0819-005 (operator decision 2026-09-03): generated model-catalog constants (108 export consts feeding the waiting-room selector) \u2014 data, not control flow; splitting would scatter one catalog across arbitrary files. Growth-frozen at 856 lines via trackedFiles.",
-    "common/src/constants/model-config/providers.ts": "Per-provider model catalogs (export const <provider>Models = {...} + derived type unions) \u2014 generated-style data, not authored logic; line count is meaningless and splitting a single catalog harms cohesion (FID-2026-0819-005 class, named 'model catalogs' in its rationale). Growth-frozen at 335 lines via trackedFiles. FID-2026-0905-006."
+    "common/src/constants/savant-free-models.ts": "FID-2026-0819-005 (operator decision 2026-09-03): generated model-catalog constants (108 export consts feeding the waiting-room selector) \u2014 data, not control flow; splitting would scatter one catalog across arbitrary files. Growth-frozen at 856 lines via trackedFiles."
   }
 }

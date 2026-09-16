@@ -5,10 +5,10 @@
  */
 
 // Re-export the protocol maps from the sibling module (barrel unchanged).
+// FID-2026-0916-004: OPENCODE_GO_PROTOCOLS + OPENCODE_ZEN_PROTOCOLS removed
+// with the opencode-zen/opencode-go provider removal (zen free-tier gate).
 export {
   COMMANDCODE_PROTOCOLS,
-  OPENCODE_GO_PROTOCOLS,
-  OPENCODE_ZEN_PROTOCOLS,
   PROVIDER_PROTOCOL_MAPS,
   TOKENROUTER_PROTOCOLS,
 } from './provider-protocols'
@@ -50,12 +50,6 @@ export const openrouterModels = {
 } as const
 export type openrouterModel =
   (typeof openrouterModels)[keyof typeof openrouterModels]
-
-export const openCodeZenModels = {
-  opencode_kimi_k2_6: 'opencode/kimi-k2.6',
-} as const
-export type OpenCodeZenModel =
-  (typeof openCodeZenModels)[keyof typeof openCodeZenModels]
 
 export const tokenrouterModels = {
   // Tier 1 — Elite Flagships
@@ -126,6 +120,11 @@ export type TokenrouterModel =
  * TokenHarbor model IDs published on https://tokenharbor.ai/models.
  * Keep the internal provider prefix so direct routing strips exactly one
  * `tokenharbor/` segment and preserves upstream suffixes such as `:free`.
+ *
+ * FID-2026-0916-004 re-alignment (keyed roster + vendor page, 2026-09-16):
+ * removed `gemini-3.6-flash` + `minimax-m3` (absent from the live roster)
+ * and `kimi-k3:free` (the Kimi K3 launch event ended — the vendor's own
+ * 429 confirms the free channel no longer serves).
  */
 export const tokenharborModels = {
   // Frontier
@@ -137,17 +136,14 @@ export const tokenharborModels = {
   tokenharbor_gpt_5_6_terra: 'tokenharbor/gpt-5.6-terra',
   tokenharbor_grok_4_5: 'tokenharbor/grok-4.5',
   tokenharbor_claude_sonnet_5: 'tokenharbor/claude-sonnet-5',
-  tokenharbor_gemini_3_6_flash: 'tokenharbor/gemini-3.6-flash',
   // Value
   tokenharbor_glm_5_2: 'tokenharbor/glm-5.2',
   tokenharbor_gpt_5_6_luna: 'tokenharbor/gpt-5.6-luna',
   tokenharbor_deepseek_v4_flash: 'tokenharbor/deepseek-v4-flash',
-  tokenharbor_minimax_m3: 'tokenharbor/minimax-m3',
   tokenharbor_deepseek_v4_pro: 'tokenharbor/deepseek-v4-pro',
   tokenharbor_mimo_v2_5_pro: 'tokenharbor/mimo-v2.5-pro',
   tokenharbor_mimo_v2_5: 'tokenharbor/mimo-v2.5',
   // Free
-  tokenharbor_kimi_k3_free: 'tokenharbor/kimi-k3:free',
   tokenharbor_deepseek_v4_flash_free: 'tokenharbor/deepseek-v4-flash:free',
   tokenharbor_mimo_v2_5_free: 'tokenharbor/mimo-v2.5:free',
   // Orchestra
@@ -166,61 +162,50 @@ export const nvidiaModels = {
 } as const
 export type NvidiaModel = (typeof nvidiaModels)[keyof typeof nvidiaModels]
 
-export const opencodeGoModels = {
-  // OpenAI-compatible models
-  opencode_go_grok_4_5: 'opencode-go/grok-4.5',
-  opencode_go_glm_5_2: 'opencode-go/glm-5.2',
-  opencode_go_glm_5_1: 'opencode-go/glm-5.1',
-  opencode_go_kimi_k3: 'opencode-go/kimi-k3',
-  opencode_go_kimi_k2_7_code: 'opencode-go/kimi-k2.7-code',
-  opencode_go_kimi_k2_6: 'opencode-go/kimi-k2.6',
-  opencode_go_mimo_v2_5: 'opencode-go/mimo-v2.5',
-  opencode_go_mimo_v2_5_pro: 'opencode-go/mimo-v2.5-pro',
-  opencode_go_deepseek_v4_pro: 'opencode-go/deepseek-v4-pro',
-  opencode_go_deepseek_v4_flash: 'opencode-go/deepseek-v4-flash',
-  // Anthropic-compatible models
-  opencode_go_minimax_m3: 'opencode-go/minimax-m3',
-  opencode_go_minimax_m2_7: 'opencode-go/minimax-m2.7',
-  opencode_go_qwen3_7_max: 'opencode-go/qwen3.7-max',
-  opencode_go_qwen3_7_plus: 'opencode-go/qwen3.7-plus',
-  opencode_go_qwen3_6_plus: 'opencode-go/qwen3.6-plus',
-} as const
-export type OpencodeGoModel =
-  (typeof opencodeGoModels)[keyof typeof opencodeGoModels]
-
-/** Protocol metadata for OpenCode Go models — each model specifies its API protocol. */
+/**
+ * CommandCode model IDs (FID-2026-0916-004 re-alignment, keyed roster
+ * 2026-09-16): the vendor renormalized its roster — dashed versions
+ * (claude-sonnet-4-6), vendor prefixes dropped (gpt-5.6-sol),
+ * zai-org/GLM org spellings, and canonical Kimi casing. The old
+ * dotted/prefixed ids are gone from the vendor's published list.
+ */
 export const commandcodeModels = {
   // Claude models (require Anthropic endpoint)
   commandcode_claude_opus_5: 'commandcode/claude-opus-5',
-  commandcode_claude_opus_4_8: 'commandcode/claude-opus-4.8',
+  commandcode_claude_opus_4_8: 'commandcode/claude-opus-4-8',
+  commandcode_claude_opus_4_7: 'commandcode/claude-opus-4-7',
+  commandcode_claude_fable_5: 'commandcode/claude-fable-5',
+  commandcode_claude_fable_5_1: 'commandcode/claude-fable-5-1',
   commandcode_claude_sonnet_5: 'commandcode/claude-sonnet-5',
-  commandcode_claude_sonnet_4_6: 'commandcode/claude-sonnet-4.6',
-  commandcode_claude_haiku_4_5: 'commandcode/claude-haiku-4.5',
+  commandcode_claude_sonnet_4_6: 'commandcode/claude-sonnet-4-6',
+  commandcode_claude_haiku_4_5: 'commandcode/claude-haiku-4-5-20251001',
   // OpenAI-compatible models
-  commandcode_grok_4_5: 'commandcode/x-ai/grok-4.5',
-  commandcode_glm_5_2: 'commandcode/z-ai/glm-5.2',
-  commandcode_glm_5_1: 'commandcode/z-ai/glm-5.1',
-  commandcode_kimi_k3: 'commandcode/moonshotai/kimi-k3',
-  commandcode_kimi_k2_7_code: 'commandcode/moonshotai/kimi-k2.7-code',
-  commandcode_kimi_k2_6: 'commandcode/moonshotai/kimi-k2.6',
-  commandcode_mimo_v2_5: 'commandcode/xiaomi/mimo-v2.5',
-  commandcode_mimo_v2_5_pro: 'commandcode/xiaomi/mimo-v2.5-pro',
+  commandcode_grok_4_5: 'commandcode/xai/grok-4.5',
+  commandcode_grok_4_6: 'commandcode/xai/grok-4.6',
+  commandcode_glm_5_2: 'commandcode/zai-org/glm-5.2',
+  commandcode_glm_5_3: 'commandcode/zai-org/glm-5.3',
+  commandcode_kimi_k3: 'commandcode/moonshotai/Kimi-K3',
+  commandcode_kimi_k2_7_code: 'commandcode/moonshotai/Kimi-K2.7-Code',
+  commandcode_kimi_k2_6: 'commandcode/moonshotai/Kimi-K2.6',
+  commandcode_minimax_m3: 'commandcode/MiniMaxAI/MiniMax-M3',
+  commandcode_minimax_m2_7: 'commandcode/MiniMaxAI/MiniMax-M2.7',
   commandcode_deepseek_v4_pro: 'commandcode/deepseek/deepseek-v4-pro',
   commandcode_deepseek_v4_flash: 'commandcode/deepseek/deepseek-v4-flash',
-  commandcode_deepseek_v3_2: 'commandcode/deepseek/deepseek-v3.2',
-  commandcode_gpt_5_6_sol: 'commandcode/openai/gpt-5.6-sol',
-  commandcode_gpt_5_6_terra: 'commandcode/openai/gpt-5.6-terra',
-  commandcode_gpt_5_6_luna: 'commandcode/openai/gpt-5.6-luna',
-  commandcode_gpt_5_5: 'commandcode/openai/gpt-5.5',
-  commandcode_gpt_5_3_codex: 'commandcode/openai/gpt-5.3-codex',
-  commandcode_qwen3_7_max: 'commandcode/qwen/qwen3.7-max',
-  commandcode_qwen3_7_plus: 'commandcode/qwen/qwen3.7-plus',
-  commandcode_qwen3_6_plus: 'commandcode/qwen/qwen3.6-plus',
-  commandcode_minimax_m3: 'commandcode/minimax-m3',
-  commandcode_minimax_m2_7: 'commandcode/minimaxai/minimax-m2.7',
+  commandcode_deepseek_v4_1_flash: 'commandcode/deepseek/deepseek-v4.1-flash',
+  commandcode_gpt_5_6_sol: 'commandcode/gpt-5.6-sol',
+  commandcode_gpt_5_6_terra: 'commandcode/gpt-5.6-terra',
+  commandcode_gpt_5_6_luna: 'commandcode/gpt-5.6-luna',
+  commandcode_gpt_5_5: 'commandcode/gpt-5.5',
+  commandcode_gpt_5_3_codex: 'commandcode/gpt-5.3-codex',
+  commandcode_qwen3_8_max: 'commandcode/Qwen/Qwen3.8-Max',
+  commandcode_qwen3_8_27b: 'commandcode/Qwen/Qwen3.8-27B',
+  commandcode_qwen3_7_max: 'commandcode/Qwen/Qwen3.7-Max',
+  commandcode_qwen3_7_plus: 'commandcode/Qwen/Qwen3.7-Plus',
+  commandcode_qwen3_7_flash: 'commandcode/Qwen/Qwen3.7-Flash',
   // Free models
-  commandcode_laguna_s_2_1: 'commandcode/lagunaai/laguna-s-2.1',
-  commandcode_ling_3_0_flash: 'commandcode/minimaxai/ling-3.0-flash',
+  commandcode_laguna_s_2_1_free: 'commandcode/poolside/laguna-s-2.1-free',
+  commandcode_ling_3_0_flash_free: 'commandcode/inclusionai/ling-3.0-flash-sante:free',
+  commandcode_longcat_2_0_free: 'commandcode/meituan/LongCat-2.0:free',
 } as const
 export type CommandcodeModel =
   (typeof commandcodeModels)[keyof typeof commandcodeModels]

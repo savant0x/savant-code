@@ -27,7 +27,6 @@ import {
   isChatGptOAuthRateLimited,
   resetChatGptOAuthRateLimit,
 } from './model-provider/oauth-rate-limit'
-import { resolveOpencodeApiKey } from './opencode-key-resolver'
 import { resolveOpenRouterApiKey } from './openrouter-key-resolver'
 
 import type { ModelRequestParams, ModelResult } from './model-provider/types'
@@ -175,19 +174,14 @@ async function resolveActiveProviderKey(
 /**
  * Resolve the API key for a registry provider. Providers with
  * `credentials.resolver: 'openrouter'` use the master-key exchange chain
- * (OR_MASTER_KEY → OPENROUTER_API_KEY → INFERENCE_API_KEY); providers with
- * `credentials.resolver: 'opencode'` share one OpenCode credential
- * (OPENCODE_API_KEY → legacy OPENCODE_GO_API_KEY); all others read their
- * primary env var directly.
+ * (OR_MASTER_KEY → OPENROUTER_API_KEY → INFERENCE_API_KEY); all others read
+ * their primary env var directly.
  */
 async function resolveProviderKey(
   config: ProviderConfig,
 ): Promise<string | undefined> {
   if (config.credentials.resolver === 'openrouter') {
     return resolveOpenRouterApiKey()
-  }
-  if (config.credentials.resolver === 'opencode') {
-    return resolveOpencodeApiKey()
   }
   const envVar = config.credentials.envVar
   return envVar === undefined ? undefined : process.env[envVar]
@@ -222,15 +216,6 @@ function buildMissingKeyError(config: ProviderConfig): string {
     config.credentials.missingKeyMessage ??
     `${config.label} API key not set. Set ${envVar} environment variable.`
   )
-}
-
-/**
- * Check if a model ID targets OpenCode Go (prefix: `opencode-go/`).
- * Subagents inherit the parent's model via `withParentModel()` in
- * spawn-agent-utils.ts — gateway model prefixes propagate correctly.
- */
-export function isOpenCodeGoModel(model: string): boolean {
-  return model.startsWith('opencode-go/')
 }
 
 /**

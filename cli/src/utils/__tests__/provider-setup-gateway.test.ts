@@ -60,7 +60,7 @@ describe('provider setup', () => {
   })
 
   test('rejects an empty provider key', () => {
-    expect(() => saveProviderApiKey('opencode-go', '  ')).toThrow(
+    expect(() => saveProviderApiKey('tokenharbor', '  ')).toThrow(
       'Provider API key cannot be empty.',
     )
     expect(fs.existsSync(path.join(tempDir, 'credentials.json'))).toBe(false)
@@ -70,14 +70,14 @@ describe('provider setup', () => {
     fs.writeFileSync(
       path.join(tempDir, 'credentials.json'),
       JSON.stringify({
-        providerApiKeys: { OPENCODE_API_KEY: 'stored-key' },
+        providerApiKeys: { TOKENHARBOR_API_KEY: 'stored-key' },
       }),
     )
 
     applyPersistedProviderApiKeys()
 
-    expect(process.env.DIRECT_PROVIDER).toBe('opencode-go')
-    expect(process.env.INFERENCE_BASE_URL).toBe('https://opencode.ai/zen/go/v1')
+    expect(process.env.DIRECT_PROVIDER).toBe('tokenharbor')
+    expect(process.env.INFERENCE_BASE_URL).toBe('https://tokenharbor.ai/v1')
   })
 
   test('configures the default gateway without inventing a provider key', () => {
@@ -107,7 +107,7 @@ describe('provider setup', () => {
     fs.writeFileSync(
       path.join(tempDir, 'credentials.json'),
       JSON.stringify({
-        providerApiKeys: { OPENCODE_API_KEY: 'stored-key' },
+        providerApiKeys: { TOKENHARBOR_API_KEY: 'stored-key' },
       }),
     )
 
@@ -116,22 +116,22 @@ describe('provider setup', () => {
     applyPersistedProviderApiKeys()
     applyPersistedDirectProviderSettings()
 
-    expect(process.env.DIRECT_PROVIDER).toBe('opencode-go')
-    expect(process.env.INFERENCE_BASE_URL).toBe('https://opencode.ai/zen/go/v1')
+    expect(process.env.DIRECT_PROVIDER).toBe('tokenharbor')
+    expect(process.env.INFERENCE_BASE_URL).toBe('https://tokenharbor.ai/v1')
   })
 
   test('identifies missing setup only for the active gateway provider', () => {
-    process.env.DIRECT_PROVIDER = 'opencode-go'
+    process.env.DIRECT_PROVIDER = 'tokenharbor'
 
     const missing = getMissingProviderSetup()
 
-    expect(missing?.provider).toBe('opencode-go')
+    expect(missing?.provider).toBe('tokenharbor')
     if (!missing) throw new Error('Expected missing provider setup')
     const guidance = getProviderSetupGuidance(missing)
-    expect(guidance).toContain('/provider opencode-go')
-    expect(guidance).toContain('OPENCODE_API_KEY')
+    expect(guidance).toContain('/provider tokenharbor')
+    expect(guidance).toContain('TOKENHARBOR_API_KEY')
 
-    process.env.OPENCODE_API_KEY = 'shell-key'
+    process.env.TOKENHARBOR_API_KEY = 'shell-key'
     expect(getMissingProviderSetup()).toBeUndefined()
   })
 
@@ -148,10 +148,6 @@ describe('provider setup', () => {
     expect(getProviderSetupInfo('OpenRouter')).toMatchObject({
       provider: 'openrouter',
       envVar: 'OPENROUTER_API_KEY',
-    })
-    expect(getProviderSetupInfo('OpenCode-Go')).toMatchObject({
-      provider: 'opencode-go',
-      envVar: 'OPENCODE_API_KEY',
     })
     expect(getProviderSetupInfo('TokenHarbor')).toMatchObject({
       provider: 'tokenharbor',

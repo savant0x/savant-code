@@ -88,7 +88,7 @@
 - **Failure:** str_replace and read_files silently fail to match content near the tail of `SCOPE.md` once it reached
   102,314 chars (the read path truncates at 100,000), reporting old-string-not-found for content that grep confirms
   exists — and six apply_patch attempts with removal-style hunks also failed to serialize.
-- **Evidence:** SCOPE.md → heading:Task 7 — Quality-ratchet manual remediation (2026-08-20)
+- **Evidence:** dev/fids/archive/FID-2026-0819-005-quality-ratchet-file-remediation.md → heading:Current Evidence
 - **Invariant:** For any file near or above 100,000 chars, tail edits go through apply_patch with exact FULL-LINE
   context (partial context lines are rejected), never str_replace.
 - **Guard:** Check `wc -c` before choosing the edit tool; prefer insert-only apply_patch hunks; removal hunks whose

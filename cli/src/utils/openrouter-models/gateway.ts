@@ -42,11 +42,6 @@ import {
   getCachedNvidiaModels,
 } from './nvidia'
 import {
-  __resetZenCacheForTest,
-  fetchZenModels,
-  getCachedZenModels,
-} from './opencode-zen'
-import {
   __resetOpenRouterCacheForTest,
   fetchOpenRouterModels,
   getCachedOpenRouterModels,
@@ -59,12 +54,12 @@ import {
 import {
   fetchCommandCodeModels,
   fetchHcnsecModels,
-  fetchOpenCodeGoModels,
   fetchTokenBomModels,
   fetchTokenRouterModels,
   getTokenHarborModels,
 } from './static-catalogs'
 import {
+  fetchAtriaModels,
   fetchBazaarlinkModels,
   fetchInfronModels,
   fetchUnorouterModels,
@@ -161,7 +156,6 @@ export async function fetchGatewayModels(
       fetchApinexModels(forceRefresh),
       fetchOrcarouterModels(forceRefresh),
       fetchBaiModels(forceRefresh),
-      fetchZenModels(forceRefresh),
       // FID-2026-0910-004 Step 9 remainder: custom catalogs (live + inline)
       // merge here; per-provider failures degrade to [] (D10 ladder).
       fetchAllCustomModels(forceRefresh),
@@ -172,7 +166,6 @@ export async function fetchGatewayModels(
       apinexResult,
       orcarouterResult,
       baiResult,
-      zenResult,
       customResult,
     ] = restResults
 
@@ -202,21 +195,19 @@ export async function fetchGatewayModels(
         : getCachedOrcarouterModels()
     const baiModels =
       baiResult.status === 'fulfilled' ? baiResult.value : getCachedBaiModels()
-    const zenModels =
-      zenResult.status === 'fulfilled' ? zenResult.value : getCachedZenModels()
     const customModels =
       customResult && customResult.status === 'fulfilled'
         ? customResult.value
         : []
     const tokenrouterModels = fetchTokenRouterModels()
     const tokenharborModels = getTokenHarborModels()
-    const openCodeGoModels = fetchOpenCodeGoModels()
     const commandCodeModels = fetchCommandCodeModels()
     const hcnsecCatalog = fetchHcnsecModels()
     const tokenbomCatalog = fetchTokenBomModels()
     const infronCatalog = fetchInfronModels()
     const unorouterCatalog = fetchUnorouterModels()
-    const bazaarlinkCatalog = fetchBazaarlinkModels()
+const bazaarlinkCatalog = fetchBazaarlinkModels()
+    const atriaCatalog = fetchAtriaModels()
 
     const combined = [
       ...orModels,
@@ -228,14 +219,13 @@ export async function fetchGatewayModels(
       ...apinexModels,
       ...orcarouterModels,
       ...baiModels,
-      ...zenModels,
-      ...openCodeGoModels,
       ...commandCodeModels,
       ...hcnsecCatalog,
       ...tokenbomCatalog,
       ...infronCatalog,
-      ...unorouterCatalog,
+...unorouterCatalog,
       ...bazaarlinkCatalog,
+      ...atriaCatalog,
       ...customModels,
     ]
     combined.sort((a, b) => a.id.localeCompare(b.id))
@@ -262,7 +252,6 @@ export function __resetOpenRouterModelsCacheForTest(): void {
   __resetApinexCacheForTest()
   __resetOrcarouterCacheForTest()
   __resetBaiCacheForTest()
-  __resetZenCacheForTest()
   // Step 9 remainder: lazily-built custom fetchers are cache state too.
   __resetCustomCatalogsForTest()
   gatewayCache = null

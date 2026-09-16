@@ -96,6 +96,6 @@ describe('getModelForRequest ChatGPT OAuth fallback behavior', () => {
     expect(new Headers(init?.headers).get('x-api-key')).toBe(
       'commandcode-test-key',
     )
-    expect(JSON.parse(String(init?.body)).model).toBe('claude-sonnet-4.6')
+    expect(JSON.parse(String(init?.body)).model).toBe('claude-sonnet-4-6')
   })
 })

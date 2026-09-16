@@ -1,5 +1,4 @@
-// Openrouter-models test family — provider-cluster catalogs (KiosAPI,
-// OpenCode Zen). Split from
+// Openrouter-models test family — provider-cluster catalogs (KiosAPI). Split from
 // openrouter-models-gateway.test.ts (FID-2026-0905-006 ceiling split; verbatim
 // moves), sharing the family lifecycle in ./openrouter-models-test-harness.
 // (The FID-2026-0906-008 gateway cluster was removed by operator direction —
@@ -14,11 +13,7 @@ import { describe, expect, mock, test } from 'bun:test'
 import {
   fetchGatewayModels,
   fetchKiosapiModels,
-  fetchZenModels,
-  getCachedZenModels,
   hasKiosapiCatalog,
-  hasZenCatalog,
-  parseZenModelsForTest,
 } from '../openrouter-models'
 import { applyPersistedProviderApiKeys } from '../provider-setup'
 import {
@@ -156,119 +151,5 @@ describe('openrouter-models provider clusters', () => {
       if (originalKiosapiKey === undefined) delete process.env.KIOSAPI_API_KEY
       else process.env.KIOSAPI_API_KEY = originalKiosapiKey
     }
-  })
-
-  test('parses Zen ids pass-through with one internal prefix (GLM + free preserved)', () => {
-    const models = parseZenModelsForTest({
-      data: [
-        { id: 'gpt-5.5', name: 'GPT 5.5', created: 1762047082 },
-        { id: 'glm-5.3' },
-        { id: 'mimo-v2.5-free' },
-        { id: 'claude-sonnet-4-6' },
-        { id: 'opencode-zen/already-prefixed' },
-        { id: '', name: 'invalid' },
-        { id: 42 },
-      ],
-    })
-
-    expect(models.map((model) => model.id)).toEqual([
-      'opencode-zen/already-prefixed',
-      'opencode-zen/claude-sonnet-4-6',
-      'opencode-zen/glm-5.3',
-      'opencode-zen/gpt-5.5',
-      'opencode-zen/mimo-v2.5-free',
-    ])
-    expect(models.every((model) => model.provider === 'opencode-zen')).toBe(
-      true,
-    )
-    // Zen GLM + free variants must survive parsing with ids intact.
-    expect(models).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ id: 'opencode-zen/glm-5.3' }),
-        expect.objectContaining({ id: 'opencode-zen/mimo-v2.5-free' }),
-      ]),
-    )
-  })
-
-  test('includes Zen models in the combined gateway catalog without a key', async () => {
-    const originalZenKey = process.env.OPENCODE_API_KEY
-    delete process.env.OPENCODE_API_KEY
-    try {
-      // @ts-expect-error - mock fetch
-      globalThis.fetch = mock(
-        (input: RequestInfo | URL, init?: RequestInit) => {
-          const url = String(input)
-          if (url.includes('opencode.ai/zen/v1/models')) {
-            // Public endpoint: no Authorization header is sent.
-            expect(new Headers(init?.headers).get('authorization')).toBeNull()
-            return Promise.resolve(
-              makeJsonResponse({
-                data: [{ id: 'glm-5.3' }, { id: 'mimo-v2.5-free' }],
-              }),
-            )
-          }
-          return Promise.resolve(makeJsonResponse({ data: [] }))
-        },
-      )
-
-      const models = await fetchGatewayModels(true)
-
-      expect(hasZenCatalog()).toBe(true)
-      expect(models).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            id: 'opencode-zen/glm-5.3',
-            provider: 'opencode-zen',
-          }),
-          expect.objectContaining({
-            id: 'opencode-zen/mimo-v2.5-free',
-            provider: 'opencode-zen',
-          }),
-        ]),
-      )
-      expect(getCachedZenModels().length).toBeGreaterThan(0)
-    } finally {
-      if (originalZenKey === undefined) delete process.env.OPENCODE_API_KEY
-      else process.env.OPENCODE_API_KEY = originalZenKey
-    }
-  })
-
-  test('isolates Zen catalog failure while retaining other gateway models', async () => {
-    // @ts-expect-error - mock fetch
-    globalThis.fetch = mock((input: RequestInfo | URL) => {
-      const url = String(input)
-      if (url.includes('opencode.ai/zen')) {
-        return Promise.resolve(new Response('error', { status: 500 }))
-      }
-      if (url.includes('openrouter.ai')) {
-        return Promise.resolve(
-          makeJsonResponse({ data: [{ id: 'openai/kept' }] }),
-        )
-      }
-      return Promise.resolve(makeJsonResponse({ data: [] }))
-    })
-
-    const models = await fetchGatewayModels(true)
-
-    expect(hasZenCatalog()).toBe(false)
-    expect(models).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ id: 'openai/kept' }),
-        expect.objectContaining({ id: 'tokenharbor/th-orchestra' }),
-      ]),
-    )
-    expect(models.some((model) => model.id.startsWith('opencode-zen/'))).toBe(
-      false,
-    )
-  })
-
-  test('fetches the Zen catalog directly without credentials', async () => {
-    // @ts-expect-error - mock fetch
-    globalThis.fetch = mock(() =>
-      Promise.resolve(makeJsonResponse({ data: [{ id: 'kimi-k3' }] })),
-    )
-
-    const models = await fetchZenModels(true)
-    expect(models.map((model) => model.id)).toEqual(['opencode-zen/kimi-k3'])
   })
 })

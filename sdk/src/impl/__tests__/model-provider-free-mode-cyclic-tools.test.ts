@@ -1,21 +1,26 @@
-// model-provider free-mode — cyclic tool-schema cutting across every OpenCode
-// Zen protocol path (chat completions, Anthropic messages, Responses API,
-// native Gemini). Split from model-provider-free-mode-opencode-zen.test.ts
-// (FID-2026-0905-006 ceiling split); shared harness in
-// model-provider-free-mode-test-setup. FID-2026-0905-004.
+// model-provider free-mode — cyclic tool-schema cutting across every per-model
+// wire protocol path (chat completions, Anthropic messages, Responses API,
+// native Gemini). Originally driven through OpenCode Zen models; re-pointed to
+// TokenRouter's per-model protocol map (FID-2026-0916-004) after the zen
+// provider removal — same four protocol surfaces, same regression coverage.
+// Split from model-provider-free-mode-opencode-zen.test.ts (FID-2026-0905-006
+// ceiling split); shared harness in model-provider-free-mode-test-setup.
+// FID-2026-0905-004.
 
 import { describe, expect, test, mock } from 'bun:test'
 
 import {
   setupModelProviderTestHarness,
   COMMAND_CODE_PROMPT,
-  ZEN_CHAT_MODEL,
-  ZEN_CLAUDE_MODEL,
-  ZEN_RESPONSES_MODEL,
-  ZEN_GEMINI_MODEL,
 } from './model-provider-free-mode-test-setup'
 
 import type { LanguageModelV2 } from '@ai-sdk/provider'
+
+/** TokenRouter ids exercising each per-model wire protocol. */
+const TR_RESPONSES_MODEL = 'tokenrouter/openai/gpt-5.5'
+const TR_ANTHROPIC_MODEL = 'tokenrouter/anthropic/claude-sonnet-5'
+const TR_GEMINI_MODEL = 'tokenrouter/google/gemini-3.1-pro-preview'
+const TR_CHAT_MODEL = 'tokenrouter/deepseek/deepseek-v4-pro'
 
 /**
  * Genuinely recursive tool schema, mirroring the real `set_output`
@@ -58,11 +63,11 @@ function hasNoRef(value: unknown): boolean {
   return true
 }
 
-describe('getModelForRequest OpenCode Zen cyclic tool schemas', () => {
+describe('getModelForRequest cyclic tool schemas across wire protocols', () => {
   const { importFresh } = setupModelProviderTestHarness()
 
   test('cuts cyclic tool schemas on the responses path (FID-2026-0905-004)', async () => {
-    process.env.OPENCODE_API_KEY = 'zen-test-key'
+    process.env.TOKENROUTER_API_KEY = 'tr-test-key'
     const fetchMock = mock(() =>
       Promise.resolve(
         new Response('data: [DONE]\n\n', {
@@ -77,7 +82,7 @@ describe('getModelForRequest OpenCode Zen cyclic tool schemas', () => {
     const { getModelForRequest } = await importFresh()
     const result = await getModelForRequest({
       apiKey: 'test-key',
-      model: ZEN_RESPONSES_MODEL,
+      model: TR_RESPONSES_MODEL,
     })
     // doStream returns PromiseLike (no .catch) — lift to Promise.
     await Promise.resolve(
@@ -102,7 +107,7 @@ describe('getModelForRequest OpenCode Zen cyclic tool schemas', () => {
   })
 
   test('cuts cyclic tool schemas on the Anthropic path (FID-2026-0905-004)', async () => {
-    process.env.OPENCODE_API_KEY = 'zen-test-key'
+    process.env.TOKENROUTER_API_KEY = 'tr-test-key'
     const fetchMock = mock(() =>
       Promise.resolve(
         new Response('', {
@@ -117,7 +122,7 @@ describe('getModelForRequest OpenCode Zen cyclic tool schemas', () => {
     const { getModelForRequest } = await importFresh()
     const result = await getModelForRequest({
       apiKey: 'test-key',
-      model: ZEN_CLAUDE_MODEL,
+      model: TR_ANTHROPIC_MODEL,
     })
     // doStream returns PromiseLike (no .catch) — lift to Promise.
     await Promise.resolve(
@@ -141,7 +146,7 @@ describe('getModelForRequest OpenCode Zen cyclic tool schemas', () => {
   })
 
   test('cuts cyclic tool schemas on the Gemini path (FID-2026-0905-004)', async () => {
-    process.env.OPENCODE_API_KEY = 'zen-test-key'
+    process.env.TOKENROUTER_API_KEY = 'tr-test-key'
     const fetchMock = mock(() =>
       Promise.resolve(
         new Response('data: [DONE]\n\n', {
@@ -156,7 +161,7 @@ describe('getModelForRequest OpenCode Zen cyclic tool schemas', () => {
     const { getModelForRequest } = await importFresh()
     const result = await getModelForRequest({
       apiKey: 'test-key',
-      model: ZEN_GEMINI_MODEL,
+      model: TR_GEMINI_MODEL,
     })
     // doStream returns PromiseLike (no .catch) — lift to Promise.
     await Promise.resolve(
@@ -182,7 +187,7 @@ describe('getModelForRequest OpenCode Zen cyclic tool schemas', () => {
   })
 
   test('chat path already cuts cyclic tools identically (parity)', async () => {
-    process.env.OPENCODE_API_KEY = 'zen-test-key'
+    process.env.TOKENROUTER_API_KEY = 'tr-test-key'
     const fetchMock = mock(() =>
       Promise.resolve(
         new Response('data: [DONE]\n\n', {
@@ -197,7 +202,7 @@ describe('getModelForRequest OpenCode Zen cyclic tool schemas', () => {
     const { getModelForRequest } = await importFresh()
     const result = await getModelForRequest({
       apiKey: 'test-key',
-      model: ZEN_CHAT_MODEL,
+      model: TR_CHAT_MODEL,
     })
     await (result.model as LanguageModelV2).doStream({
       prompt: COMMAND_CODE_PROMPT,
