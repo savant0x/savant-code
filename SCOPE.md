@@ -4,6 +4,31 @@
 > scope for the current task. Operator confirmation converts interpreted scope
 > into approved scope. Any drop/deferral requires a blocking presentation.
 
+## Task 57 — probe-endpoint.ts ceiling split (2026-09-16)
+
+> Operator directive (approved from Task 56's [OPEN-OUT-OF-SCOPE] item):
+> "Split probe-endpoint.ts under the 300-line ceiling and clear the
+> quality:report FAIL." Interpreted scope: move-only split along the
+> file's natural seam per the FID-2026-0913-002 discipline (re-export
+> facade, zero import churn, exact suite parity). No behavior change.
+
+- [x] **T57-A.** Baselines: probe-boundary + pipeline-integrity 22 pass /
+      76 expect / 0 fail; file at 304 lines (wc); quality FAIL on
+      probe-endpoint.ts 305 lines (gate-reported).
+- [x] **T57-B.** Split DONE, move-only: the two pure static guards
+      (`isPrivateAddress`, `isPublicProbeUrl` — byte-verbatim) moved to NEW
+      `scripts/providers/lib/probe-url-guard.ts` (96 lines) with the MQ4
+      trust-boundary rationale; `probe-endpoint.ts` imports them for the
+      DNS leg and re-exports them (facade) so all four `./probe-endpoint`
+      import sites stay untouched. Result: 221 lines. Zero consumer churn,
+      zero behavior change.
+- [x] **T57-C.** Gates: `quality:report` PASS (1498 files, FAIL cleared);
+      full scripts/providers suite 101 pass / 411 expect / 0 fail — exact
+      FID-2026-0916-001 recorded parity; eslint --max-warnings 0; prettier
+      clean.
+- [x] **T57-D.** SCOPE + session summary; commit + push (G1 amendment);
+      Task 56 OOS item resolved.
+
 ## Task 56 — tokenrouter dead-id residue cleanup (2026-09-16)
 
 > Operator directive (pick from Task 55's [OPEN-OUT-OF-SCOPE] list):
@@ -40,17 +65,15 @@
 - [x] **T56-E.** SCOPE + session summary; path-scoped commit + push
       (G1 amendment).
 
-- [ ] **[OPEN-OUT-OF-SCOPE] quality:report FAIL — probe-endpoint.ts over
+- [ ] **[RESOLVED — Task 57] quality:report FAIL — probe-endpoint.ts over
       the 300-line ceiling (pre-existing, not this task's edit):**
-      `scripts/providers/lib/probe-endpoint.ts` measures 305 lines
+      `scripts/providers/lib/probe-endpoint.ts` measured 305 lines
       (ceiling 300). The file was last modified by FID-2026-0916-001's
       implementation (commit `7d1446d0`), whose declared gates did not
       include `quality:report`; the last recorded quality PASS
       (FID-2026-0915-002) predates that growth. Discovered at Task 56's
-      gate run (my touched files are all within caps). Proposed fix:
-      split along the file's existing seam (static `isPublicProbeUrl`
-      checks vs the `probeEndpoint` runner) per the established
-      FID-2026-0913-002 discipline — on operator approval.
+      gate run. **Resolved by Task 57 (operator-approved split,
+      quality:report PASS).**
 
 ## Task 55 — Close + archive FID-2026-0916-001/-002 (2026-09-16)
 
