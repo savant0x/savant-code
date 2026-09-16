@@ -206,7 +206,7 @@ export async function fetchGatewayModels(
     const tokenbomCatalog = fetchTokenBomModels()
     const infronCatalog = fetchInfronModels()
     const unorouterCatalog = fetchUnorouterModels()
-const bazaarlinkCatalog = fetchBazaarlinkModels()
+    const bazaarlinkCatalog = fetchBazaarlinkModels()
     const atriaCatalog = fetchAtriaModels()
 
     const combined = [
@@ -223,7 +223,7 @@ const bazaarlinkCatalog = fetchBazaarlinkModels()
       ...hcnsecCatalog,
       ...tokenbomCatalog,
       ...infronCatalog,
-...unorouterCatalog,
+      ...unorouterCatalog,
       ...bazaarlinkCatalog,
       ...atriaCatalog,
       ...customModels,

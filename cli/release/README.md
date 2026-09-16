@@ -49,8 +49,8 @@ Or select one of the supported gateway providers directly:
 | OpenRouter | `/provider openrouter` or `DIRECT_PROVIDER=openrouter` | `OR_MASTER_KEY`, `OPENROUTER_API_KEY`, or `INFERENCE_API_KEY` | Default provider; free tier (`openrouter/free`) is the boot default; direct mode without the Savant backend |
 | TokenRouter | `/provider tokenrouter` or `DIRECT_PROVIDER=tokenrouter` | `TOKENROUTER_API_KEY` | Multi-provider gateway |
 | NVIDIA NIM | `/provider nvidia` or `DIRECT_PROVIDER=nvidia` | `NVIDIA_API_KEY` | NVIDIA-hosted inference |
-| OpenCode Go | `/provider opencode-go` or `DIRECT_PROVIDER=opencode-go` | `OPENCODE_API_KEY` | Hosted gateway (dual-protocol) |
 | APInex | `/provider apinex` or `DIRECT_PROVIDER=apinex` | `APINEX_API_KEY` | Hosted gateway with an authenticated live model catalog |
+| Atria AI | `/provider atria` or `DIRECT_PROVIDER=atria` | `ATRIA_API_KEY` | Hosted gateway |
 | B.AI | `/provider bai` or `DIRECT_PROVIDER=bai` | `BAI_API_KEY` | OpenAI-compatible gateway with an authenticated live model catalog |
 | BazaarLink | `/provider bazaarlink` or `DIRECT_PROVIDER=bazaarlink` | `BAZAARLINK_API_KEY` | Hosted gateway |
 | Cloudflare | Environment configuration | `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` | Env-only — not in the `/provider` picker; requires the account id too |
@@ -60,7 +60,6 @@ Or select one of the supported gateway providers directly:
 | KiosAPI | `/provider kiosapi` or `DIRECT_PROVIDER=kiosapi` | `KIOSAPI_API_KEY` | OpenAI-compatible gateway (live catalog) |
 | Nous Research | `/provider nous` or `DIRECT_PROVIDER=nous` | `NOUS_API_KEY` | OpenAI-compatible direct inference; Portal OAuth is separate |
 | Ollama | Automatic detection | `OLLAMA_HOST` (optional) | Local inference; no API key required |
-| OpenCode Zen | `/provider opencode-zen` or `DIRECT_PROVIDER=opencode-zen` | `OPENCODE_API_KEY` | Pay-per-use gateway, 70 models incl. free tier (multi-protocol) |
 | OrcaRouter | `/provider orcarouter` or `DIRECT_PROVIDER=orcarouter` | `ORCAROUTER_API_KEY` | Multi-provider gateway with a live model catalog (free tier currently gated vendor-side on GitHub account linkage) |
 | TokenBom | `/provider tokenbom` or `DIRECT_PROVIDER=tokenbom` | `TOKENBOM_API_KEY` | OpenAI-compatible gateway on an audited static 7-model allowlist |
 | TokenHarbor | `/provider tokenharbor` or `DIRECT_PROVIDER=tokenharbor` | `TOKENHARBOR_API_KEY` | OpenAI-compatible hosted gateway |
@@ -77,19 +76,19 @@ Shell environment variables take precedence over saved credentials. Configure on
 
 ```powershell
 # PowerShell — choose one hosted gateway (any key from the table above)
-$env:OPENCODE_API_KEY = "your-key"
+$env:TOKENHARBOR_API_KEY = "your-key"
 savant-code
 ```
 
 ```cmd
 :: Windows Command Prompt — choose one hosted gateway (any key from the table above)
-set OPENCODE_API_KEY=your-key
+set TOKENHARBOR_API_KEY=your-key
 savant-code
 ```
 
 ```bash
 # macOS/Linux — choose one hosted gateway (any key from the table above)
-export OPENCODE_API_KEY="your-key"
+export TOKENHARBOR_API_KEY="your-key"
 savant-code
 ```
 
@@ -137,7 +136,6 @@ OR_MASTER_KEY=dummy-or-master-key-replace-me
 
 # Supported hosted gateways (choose one at a time)
 # OPENROUTER_API_KEY=dummy-openrouter-key-replace-me
-OPENCODE_API_KEY=dummy-opencode-key-replace-me
 TOKENHARBOR_API_KEY=dummy-tokenharbor-key-replace-me
 TOKENROUTER_API_KEY=dummy-tokenrouter-key-replace-me
 NVIDIA_API_KEY=dummy-nvidia-key-replace-me

@@ -41,7 +41,7 @@ local-first use with Ollama.
 > `office-scene.tsx`, `public-release.ts` — with the quality ratchet at
 > zero violations), release-pipeline durability + desktop integration
 > (`BACKUP_BUNDLE`, `DESKTOP_BUNDLES`/`DESKTOP_RELEASE`, per-release
-> updater-manifest verification), the KiosAPI and OpenCode Zen providers,
+> updater-manifest verification), the KiosAPI provider,
 > the Triggers program (opt-in `SAVANT_TRIGGERS=1`), and the
 > quality-ratchet file remediation. Governance: agents may commit and push
 > locally; public releases flow exclusively through the hardened release
@@ -162,8 +162,8 @@ history. The supported hosted providers are:
 | OpenRouter | `/provider openrouter` or `DIRECT_PROVIDER=openrouter` | `OR_MASTER_KEY`, `OPENROUTER_API_KEY`, or `INFERENCE_API_KEY` | Default provider; free tier (`openrouter/free`) is the boot default; direct mode without the Savant backend |
 | TokenRouter | `/provider tokenrouter` or `DIRECT_PROVIDER=tokenrouter` | `TOKENROUTER_API_KEY` | Multi-provider gateway |
 | NVIDIA NIM | `/provider nvidia` or `DIRECT_PROVIDER=nvidia` | `NVIDIA_API_KEY` | NVIDIA-hosted inference |
-| OpenCode Go | `/provider opencode-go` or `DIRECT_PROVIDER=opencode-go` | `OPENCODE_API_KEY` | Hosted gateway (dual-protocol) |
 | APInex | `/provider apinex` or `DIRECT_PROVIDER=apinex` | `APINEX_API_KEY` | Hosted gateway with an authenticated live model catalog |
+| Atria AI | `/provider atria` or `DIRECT_PROVIDER=atria` | `ATRIA_API_KEY` | Hosted gateway |
 | B.AI | `/provider bai` or `DIRECT_PROVIDER=bai` | `BAI_API_KEY` | OpenAI-compatible gateway with an authenticated live model catalog |
 | BazaarLink | `/provider bazaarlink` or `DIRECT_PROVIDER=bazaarlink` | `BAZAARLINK_API_KEY` | Hosted gateway |
 | Cloudflare | Environment configuration | `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` | Env-only — not in the `/provider` picker; requires the account id too |
@@ -173,7 +173,6 @@ history. The supported hosted providers are:
 | KiosAPI | `/provider kiosapi` or `DIRECT_PROVIDER=kiosapi` | `KIOSAPI_API_KEY` | OpenAI-compatible gateway (live catalog) |
 | Nous Research | `/provider nous` or `DIRECT_PROVIDER=nous` | `NOUS_API_KEY` | OpenAI-compatible direct inference; Portal OAuth is separate |
 | Ollama | Automatic detection | `OLLAMA_HOST` (optional) | Local inference; no API key required |
-| OpenCode Zen | `/provider opencode-zen` or `DIRECT_PROVIDER=opencode-zen` | `OPENCODE_API_KEY` | Pay-per-use gateway, 70 models incl. free tier (multi-protocol) |
 | OrcaRouter | `/provider orcarouter` or `DIRECT_PROVIDER=orcarouter` | `ORCAROUTER_API_KEY` | Multi-provider gateway with a live model catalog (free tier currently gated vendor-side on GitHub account linkage) |
 | TokenBom | `/provider tokenbom` or `DIRECT_PROVIDER=tokenbom` | `TOKENBOM_API_KEY` | OpenAI-compatible gateway on an audited static 7-model allowlist |
 | TokenHarbor | `/provider tokenharbor` or `DIRECT_PROVIDER=tokenharbor` | `TOKENHARBOR_API_KEY` | OpenAI-compatible hosted gateway |
@@ -504,12 +503,12 @@ code 2 blocks a tool.
   visual feedback instead of silent compaction. A single trigger authority
   (same verdict that fires the warning) drives the pruner spawn, and `/compact`
   forces an on-demand compact-and-stop pass.
-- **Context window resolution** — gateway models (e.g. `opencode-go/mimo-v2.5`)
+- **Context window resolution** — gateway models (e.g. `tokenharbor/mimo-v2.5`)
   resolve their real context length from the OpenRouter catalog at runtime.
 - **Universal copy buttons** — hover-to-copy on code blocks, tool outputs, and
   file diffs throughout the TUI.
 - **Gateway providers** — OpenRouter, TokenRouter, TokenHarbor, NVIDIA NIM,
-  OpenCode Go, OpenCode Zen, CommandCode, Nous Research, KiosAPI, APInex,
+  CommandCode, Nous Research, KiosAPI, APInex,
   OrcaRouter, B.AI, HCNSec, TokenBom, Infron, UnoRouter, BazaarLink, and Cloudflare Workers AI via
   `@savant-code/llm-providers`. Nous Research uses the direct OpenAI-compatible API; Portal OAuth
   is a separate integration.
@@ -934,8 +933,6 @@ picker or choose one directly:
 
 ```text
 /provider openrouter
-/provider opencode-go
-/provider opencode-zen
 /provider tokenrouter
 /provider tokenharbor
 /provider nvidia
@@ -953,8 +950,7 @@ picker or choose one directly:
 ```
 
 The supported environment variables are `OPENROUTER_API_KEY`,
-`OPENCODE_API_KEY` (shared by OpenCode Go and OpenCode Zen; legacy
-`OPENCODE_GO_API_KEY` still honored), `TOKENROUTER_API_KEY`,
+`TOKENROUTER_API_KEY`,
 `TOKENHARBOR_API_KEY`, `NVIDIA_API_KEY`, `COMMAND_CODE_API_KEY`,
 `NOUS_API_KEY`, `KIOSAPI_API_KEY`, `APINEX_API_KEY`,
 `ORCAROUTER_API_KEY`, `BAI_API_KEY`, `HCNSEC_API_KEY`, `TOKENBOM_API_KEY`,

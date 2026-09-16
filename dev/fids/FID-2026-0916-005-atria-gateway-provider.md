@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0916-005-atria-gateway-provider.md`
 **ID:** FID-2026-0916-005
 **Severity:** low
-**Status:** analyzed
+**Status:** verified
 **Created:** 2026-09-16
 
 ---
@@ -119,6 +119,26 @@ new architecture — the bazaarlink one-model static pattern verbatim (Law 13).
 - `bun x eslint . --max-warnings 0`, prettier, `lint:md`.
 - Law 4: grep `fetchAtriaModels` production callers (gateway merge).
 
+## Verification Gates
+
+- gate: typecheck common
+- gate: typecheck cli
+- gate: typecheck sdk
+- gate: test cli/src/utils/openrouter-models/__tests__/fid-2026-0916-005-atria.test.ts
+- gate: test common/src/providers/__tests__/provider-registry.test.ts
+- gate: quality
+
+### Verification Receipt
+
+- fingerprint: sha256:30e98f89d5af649767fd406d9fade9fdb3eaf517c6a6315cb3aa454e99949ce1
+- verified: 2026-09-16T22:26:05.255Z
+- typecheck common: exit 0
+- typecheck cli: exit 0
+- typecheck sdk: exit 0
+- test cli/src/utils/openrouter-models/__tests__/fid-2026-0916-005-atria.test.ts: exit 0
+- test common/src/providers/__tests__/provider-registry.test.ts: exit 0
+- quality: exit 0
+
 ## Perfection Loop
 
 ### Loop 1 — RED
@@ -134,7 +154,21 @@ new architecture — the bazaarlink one-model static pattern verbatim (Law 13).
 
 ### Loop 3 — AUDIT
 
-- Pending — verification evidence pasted after gates run.
+- Implementation complete (Steps 1-10). All gates green, evidence pasted below.
+- **Typecheck ×4** (common, sdk, packages/agent-runtime, cli): exit 0 all four.
+- **RED-first pin** `cli/src/utils/openrouter-models/__tests__/fid-2026-0916-005-atria.test.ts`
+  — 4/4 pass (single model cataloged; cli fetcher serves vendor window 262,144;
+  fallback-table pin; registry setupAvailable + ATRIA_API_KEY).
+- **openrouter-models family** (incl. window-truth + 004-realign): 58 pass / 0 fail.
+- **Law 4 reachability** — grep `fetchAtriaModels` in cli/src:
+  - `cli/src/utils/openrouter-models/gateway.ts:62` (import) + `:210`
+    (`const atriaCatalog = fetchAtriaModels()` in the combined merge) — wired.
+  - `cli/src/utils/openrouter-models.ts:54` (re-export) — surfaced.
+  - `static-catalogs-gateways.ts:211` (definition) — consumed.
+- **eslint** 0 warnings; **prettier --check** clean; **lint:md** clean.
+- **Docs regen** `bun run generate:provider-docs` exit 0 (README/cli-release/.env.example
+  tables + env reference regenerated); hand-maintained `docs/index.md` provider
+  bullet + `docs/sdk-overview.md` dispatch prefix list synced to mention Atria.
 
 ### Missed Questions
 
@@ -152,6 +186,6 @@ new architecture — the bazaarlink one-model static pattern verbatim (Law 13).
 
 ### Code Verification Evidence
 
-- [ ] Typecheck ×4 planned
-- [ ] RED-first pin suite planned
-- [ ] Law 4 grep for `fetchAtriaModels` callers planned
+- [x] Typecheck ×4 — exit 0 (common, sdk, packages/agent-runtime, cli)
+- [x] RED-first pin suite — fid-2026-0916-005-atria.test.ts 4/4 pass
+- [x] Law 4 grep for `fetchAtriaModels` callers — gateway.ts:62/210, openrouter-models.ts:54

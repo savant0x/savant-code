@@ -204,7 +204,8 @@ export const commandcodeModels = {
   commandcode_qwen3_7_flash: 'commandcode/Qwen/Qwen3.7-Flash',
   // Free models
   commandcode_laguna_s_2_1_free: 'commandcode/poolside/laguna-s-2.1-free',
-  commandcode_ling_3_0_flash_free: 'commandcode/inclusionai/ling-3.0-flash-sante:free',
+  commandcode_ling_3_0_flash_free:
+    'commandcode/inclusionai/ling-3.0-flash-sante:free',
   commandcode_longcat_2_0_free: 'commandcode/meituan/LongCat-2.0:free',
 } as const
 export type CommandcodeModel =

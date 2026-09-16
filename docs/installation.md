@@ -70,8 +70,6 @@ Or configure one directly:
 | Provider | Command | Environment Variable |
 |----------|---------|---------------------|
 | OpenRouter | `/provider openrouter` | `OR_MASTER_KEY`, `OPENROUTER_API_KEY`, or `INFERENCE_API_KEY` (default provider; a revoked key returns 401 `User not found.` — replace it at openrouter.ai/keys and **restart the CLI**, the key is cached per process) |
-| OpenCode Go | `/provider opencode-go` | `OPENCODE_API_KEY` (shared OpenCode key; legacy `OPENCODE_GO_API_KEY` still honored) |
-| OpenCode Zen | `/provider opencode-zen` | `OPENCODE_API_KEY` (shared OpenCode key) |
 | TokenRouter | `/provider tokenrouter` | `TOKENROUTER_API_KEY` |
 | TokenHarbor | `/provider tokenharbor` | `TOKENHARBOR_API_KEY` |
 | OrcaRouter | `/provider orcarouter` | `ORCAROUTER_API_KEY` (live model catalog; free tier currently gated vendor-side on GitHub account linkage. Vendor gates on a creditless account: `*-free` channels accept prompts up to a measured ~22.4k input tokens, then reject with the vendor's "This prompt is longer than the free tier allows for a single request…" error; PAID rows reject at any size with a 402 "You're out of credits" — the 1M windows shown are the vendor's funded-account values) |

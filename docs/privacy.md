@@ -53,7 +53,6 @@
 
 - Environment-provided BYOK keys are read at runtime and are never copied to
   disk by Savant Code. Current direct-provider variables include
-  `OPENCODE_API_KEY` (shared by OpenCode Go and OpenCode Zen),
   `TOKENROUTER_API_KEY`, `TOKENHARBOR_API_KEY`,
   `NVIDIA_API_KEY`, `COMMAND_CODE_API_KEY`, `KIOSAPI_API_KEY`,
   `APINEX_API_KEY`, and `NOUS_API_KEY`.

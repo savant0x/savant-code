@@ -237,7 +237,7 @@ const NAME_CATALOG_MODEL_IDS: readonly string[] = [
   ...Object.values(commandcodeModels),
   ...Object.values(hcnsecModels),
   ...Object.values(tokenbomModels),
-...Object.values(infronModels),
+  ...Object.values(infronModels),
   ...Object.values(unorouterModels),
   ...Object.values(bazaarlinkModels),
   ...Object.values(atriaModels),

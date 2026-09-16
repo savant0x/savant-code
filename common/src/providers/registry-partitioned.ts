@@ -226,7 +226,7 @@ export const PROVIDER_REGISTRY_PARTITION = {
     domain: 'unorouter.com',
     order: 4,
   },
-bazaarlink: {
+  bazaarlink: {
     id: 'bazaarlink',
     label: 'BazaarLink',
     kind: 'gateway',

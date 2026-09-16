@@ -22,7 +22,10 @@ import {
 import { PROVIDER_REGISTRY } from '@savant-code/common/providers/registry'
 import { describe, expect, test } from 'bun:test'
 
-import { fetchCommandCodeModels, getTokenHarborModels } from '../static-catalogs'
+import {
+  fetchCommandCodeModels,
+  getTokenHarborModels,
+} from '../static-catalogs'
 
 describe('FID-2026-0916-004: commandcode renamed spellings', () => {
   test('dashed claude spelling is cataloged; dotted legacy is gone', () => {

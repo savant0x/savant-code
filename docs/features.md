@@ -187,7 +187,6 @@ Works with multiple inference providers:
 - **OpenRouter** — Multi-provider gateway (**default boot provider**; the free
   tier `openrouter/free` is the boot default, and any `openrouter/` model slug
   routes to `https://openrouter.ai/api/v1` with the resolved key)
-- **OpenCode Go** — Hosted gateway
 - **TokenHarbor** — OpenAI-compatible hosted gateway at `https://tokenharbor.ai/v1`
 - **TokenRouter** — Multi-provider gateway
 - **OrcaRouter** — Multi-provider gateway with a live model catalog (`ORCAROUTER_API_KEY`; the free tier is currently gated vendor-side on GitHub account linkage)
@@ -198,7 +197,6 @@ Works with multiple inference providers:
 - **UnoRouter** — OpenAI-compatible gateway on a curated static 17-model allowlist (`UNOROUTER_API_KEY`; `:free` slugs never bill per vendor docs)
 - **BazaarLink** — OpenAI-compatible gateway on a static 12-model allowlist (`BAZAARLINK_API_KEY`; the identity-audited genuine free channel `qwen/qwen3.7-flash:free` @ 1M ctx + 11 curated paid flagships per the 2026-09-15 top-coding ranking — substituted free channels excluded by ruling)
 - **KiosAPI** — OpenAI-compatible gateway with an authenticated live model catalog (`KIOSAPI_API_KEY`)
-- **OpenCode Zen** — Four-protocol hosted gateway (chat/completions, Anthropic messages, Responses, Gemini)
 - **APInex** — Hosted gateway with an authenticated live model catalog (`APINEX_API_KEY`)
 - **NVIDIA NIM** — NVIDIA-hosted inference
 - **CommandCode** — OpenAI-compatible hosted inference
