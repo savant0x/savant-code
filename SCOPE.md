@@ -49,6 +49,26 @@
       serving-name disclosure (free-channel-verified) is the carried
       honesty control. Gates: typecheck ×4, registry/cli suites 26/0,
       docs regen, eslint/prettier/lint:md, receipt re-stamped 5/5 PASS.
+- [x] **T51-I.** A–Z provider-surface audit (operator: "ensure all
+      providers are shown in the cli and nothing is hidden or was
+      forgotten to be added to the /model & /provider cmds"): registry
+      ground truth = 19 providers. `/provider` picker = 17 + customs +
+      add-new (cloudflare/ollama excluded by `setupAvailable: false`);
+      `/model` picker merges 17 gateway catalogs + customs (static ones
+      always, live ones on boot); `MODEL_CATALOGS` ↔ `modelsRef` 10/10;
+      docs matrix verified per provider — README table 19/19, features
+      19/19, .env.example 19/19. **Findings:** (1) Cloudflare forgotten
+      from discovery surfaces — routable via env vars (SDK resolves the
+      `{CLOUDFLARE_ACCOUNT_ID}` placeholder, cf-rewrite implemented) but
+      `/provider cloudflare` hard-fails "Unknown provider", its 14-model
+      catalog never reaches `/model`, and it was absent from docs/index.md
+      + installation.md — docs fixed this task; picker surfacing needs
+      multi-credential setup support (`extra` field dropped by
+      `deriveSetupConfig` today) → FID recommended, not written without
+      approval. (2) docs/index.md line fused two bullets (fail-closed
+      streaming + provider flexibility) — split this task. (3) Ollama has
+      no /model row — correct by design (dynamic local catalog via
+      onboarding auto-detect).
 - [ ] **T51-F. [BLOCKED — operator]** Identity gauntlet on bazaarlink PAID
       channels: the account is zero-credit — LIVE 402 probe on `qwen3.8-max`
       ("Insufficient credits") — every paid cell would fail before serving.

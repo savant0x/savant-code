@@ -81,11 +81,13 @@ Or configure one directly:
 | Infron | `/provider infron` | `INFRON_API_KEY` (curated static 9-model allowlist; free tier requires a funded team account vendor-side) |
 | UnoRouter | `/provider unorouter` | `UNOROUTER_API_KEY` (curated static 17-model allowlist; `:free` models never bill) |
 | BazaarLink | `/provider bazaarlink` | `BAZAARLINK_API_KEY` (static 12-model allowlist: identity-audited `qwen3.7-flash:free` @ 1M ctx + 11 curated paid flagships per the 2026-09-15 top-coding ranking; free tier 10 req/min · 50/day per vendor config) |
+| Ollama (local) | auto-detected | none — local inference, no key |
 | NVIDIA NIM | `/provider nvidia` | `NVIDIA_API_KEY` |
 | CommandCode | `/provider commandcode` | `COMMAND_CODE_API_KEY` |
 | Nous Research | `/provider nous` | `NOUS_API_KEY` (direct OpenAI-compatible API; Portal OAuth is separate) |
 | KiosAPI | `/provider kiosapi` | `KIOSAPI_API_KEY` (authenticated live model catalog) |
 | APInex | `/provider apinex` | `APINEX_API_KEY` (authenticated live model catalog) |
+| Cloudflare Workers AI | see note | `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` (two credentials — key-store setup flow pending; set both env vars and switch via `/model cloudflare/...`, e.g. `/model cloudflare/meta/llama-3.3-70b-instruct-fp8-fast`) |
 
 You can also define **your own custom providers**: `/provider add` starts a
 guided wizard (id, label, base URL, wire protocol, key env var, inline model
