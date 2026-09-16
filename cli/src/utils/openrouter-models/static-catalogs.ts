@@ -8,9 +8,7 @@
  * hardcoded TOKENROUTER_CATALOG and OPENCODE_GO_CATALOG arrays were deleted.
  * Only display names remain cli-side, mirroring the TokenHarbor pattern.
  */
-import {
-  getContextWindowFallback,
-} from '@savant-code/common/constants/context-windows'
+import { getContextWindowFallback } from '@savant-code/common/constants/context-windows'
 import {
   commandcodeModels,
   hcnsecModels,

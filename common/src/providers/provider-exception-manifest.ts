@@ -112,6 +112,16 @@ export const PROVIDER_EXCEPTION_MANIFEST: readonly ProviderExceptionManifestEntr
       ],
     },
     {
+      providerId: 'tokenrouter',
+      kinds: ['multi-protocol'],
+      owner: 'common/src/constants/model-config/provider-protocols.ts',
+      evidence: [
+        'common/src/constants/model-config/provider-protocols.ts',
+        'sdk/src/impl/model-provider/model-factories.ts',
+        'dev/fids/FID-2026-0916-002-catalog-window-truth.md',
+      ],
+    },
+    {
       providerId: 'cloudflare',
       kinds: ['extra-credentials', 'id-rewrite', 'setup-exclusion'],
       owner: 'sdk/src/impl/model-provider/model-factories.ts',
