@@ -74,3 +74,18 @@ discipline, zero behavior change):
 Every future FID closure must declare and pass `bun run quality:report`
 — the probe-endpoint.ts class of ceiling breach (implemented FID-2026-0916-001
 growth that never met the quality gate) cannot recur silently.
+
+## Erratum — pre-push hook context
+
+Commit landed as `d9719817`, amended (unpushed) to `108458dd` after the
+pre-push drift guard correctly caught the stale embedded protocol bundle
+(the generated bundle embeds templates/FID-TEMPLATE.md; regenerated and
+amended — one atomic change with its bundle regen, the FID-2026-0910-002
+convention). The first push attempt after the amend failed at the hook's
+test gate; the immediate re-run with ZERO changes passed every gate
+(scan, eslint, markdownlint, bundle check, fid:verify --check,
+evals:smoke, typecheck ×12, 421/0 test chain, prettier) and landed. The
+failure is un-reproduced — consistent with the known
+passes-standalone-fails-under-hook-load class (the hook spawns the full
+typecheck ×12 immediately before the test chain). Recorded for
+recurrence tracking per the experience-capture ≥3× rule; no code change.
