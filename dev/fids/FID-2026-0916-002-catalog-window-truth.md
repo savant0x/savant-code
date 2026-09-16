@@ -64,15 +64,18 @@ rows already stay undefined), no new UI surfaces.
    6 Responses-only ids, 7 Anthropic-only, 1 Gemini-only, 1 image-only.
 2. **OrcaRouter paid rows** — "This harness is a public release, we are not
    cutting paid model access." No catalog filtering. The operator also
-   reported 402-style errors **on free models** — verified LIVE: the
-   vendor's free-tier **prompt cap** is ACCOUNT-WIDE (post-loop bisect:
-   boundary between 22,143 accepted and ~22,500 rejected input tokens,
-   2026-09-16; the PAID glm-5.3-flash row returns the identical
-   "Shorten it, or add credits … free-tier cap" error at 22,125 tokens on
-   a creditless account, while a 16-token probe had returned 200 and
-   masked the cap entirely). Resolution: docs note with the measured
-   boundary; catalog untouched — the 1M windows stay (true for funded
-   accounts; the cap is account-tier, not model, enforced).
+   reported the vendor's free-tier-cap error **on the FREE model** —
+   verified LIVE with a token-level bisect on `z-ai/glm-5.3-flash-free`:
+   accepted at 22,143 input tokens, rejected at ~22,500 with exactly the
+   operator's error text. Correction recorded mid-loop: an earlier
+   amendment misread the bisect output as "the PAID row returns the
+   identical error" — the paid row actually returns 402 "You're out of
+   credits" at ANY size on a creditless account (tiny prompt and 30k
+   prompt alike); the free-tier-cap 400 is the FREE-channel long-prompt
+   gate. A 16-token probe on the free channel had returned 200 and masked
+   the cap entirely. Resolution: docs note with both vendor gates
+   documented; catalog untouched — the 1M windows stay (true for funded
+   accounts; both gates are account-tier, not model, enforced).
 3. **OpenRouter "User not found"** — operator: "i added a new key … it
    still happens with a fresh key too." Verified: the stored key 401'd at
    first probe, then validated HTTP 200 minutes later (key replaced
@@ -206,8 +209,8 @@ rows already stay undefined), no new UI surfaces.
 
 ### Verification Receipt
 
-- fingerprint: sha256:6d6a1300ab85d1e9b7476ac1494d2f1bf75865e3a2981eb7f6fc9468bbd01046
-- verified: 2026-09-16T05:12:03.452Z
+- fingerprint: sha256:2431603d796552e7e82a1509a1efea54cddddb21ae3c2877370adb3438161b99
+- verified: 2026-09-16T05:25:47.089Z
 - typecheck cli: exit 0
 - typecheck common: exit 0
 - test cli/src/utils/openrouter-models/__tests__/static-catalogs.test.ts: exit 0

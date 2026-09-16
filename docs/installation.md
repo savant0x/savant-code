@@ -74,7 +74,7 @@ Or configure one directly:
 | OpenCode Zen | `/provider opencode-zen` | `OPENCODE_API_KEY` (shared OpenCode key) |
 | TokenRouter | `/provider tokenrouter` | `TOKENROUTER_API_KEY` |
 | TokenHarbor | `/provider tokenharbor` | `TOKENHARBOR_API_KEY` |
-| OrcaRouter | `/provider orcarouter` | `ORCAROUTER_API_KEY` (live model catalog; free tier currently gated vendor-side on GitHub account linkage. Vendor free-tier cap is ACCOUNT-WIDE: every model — paid rows included — rejects prompts above an unpublished per-request limit on a creditless account; measured boundary 22,143 accepted / ~22,500 rejected input tokens, 2026-09-16 bisect — with the vendor's "Shorten it, or add credits to use this model without the free-tier cap" error) |
+| OrcaRouter | `/provider orcarouter` | `ORCAROUTER_API_KEY` (live model catalog; free tier currently gated vendor-side on GitHub account linkage. Vendor gates on a creditless account: `*-free` channels accept prompts up to a measured ~22.4k input tokens, then reject with the vendor's "This prompt is longer than the free tier allows for a single request…" error; PAID rows reject at any size with a 402 "You're out of credits" — the 1M windows shown are the vendor's funded-account values) |
 | B.AI | `/provider bai` | `BAI_API_KEY` (authenticated live model catalog) |
 | HCNSec | `/provider hcnsec` | `HCNSEC_API_KEY` (audited static 7-model allowlist) |
 | TokenBom | `/provider tokenbom` | `TOKENBOM_API_KEY` (audited static 7-model allowlist) |
