@@ -31,6 +31,19 @@ export function auditGroupLabel(row: ReportAuditRow): string | null {
     return 'Excluded · status=down (dead endpoint)'
   if (row.reason.startsWith('category=free-relay'))
     return 'Excluded · category=free-relay (anonymous relay class — LLMjacking)'
+  // FID-2026-0916-001 (MQ2): the previously-silent classes get their own
+  // counted groups — the reasons render via the group heading, the hosts
+  // via the wrapped list.
+  if (row.reason.startsWith('unconfirmed category'))
+    return 'Excluded · unconfirmed category (feed classification not operator-confirmed)'
+  if (row.reason.startsWith('category=monitor-directory'))
+    return 'Excluded · category=monitor-directory (directory, not a provider)'
+  if (row.reason.startsWith('category=free-product'))
+    return 'Excluded · category=free-product (consumer product, not an API surface)'
+  if (row.reason.startsWith('no probe data'))
+    return 'Excluded · no probe data in the feed record'
+  if (row.reason.startsWith('feed probe reports'))
+    return 'Excluded · feed probe unreachable'
   if (row.reason.startsWith('open relay')) return 'Rejected · open relay'
   if (row.reason.startsWith('typosquat tier-1'))
     return 'Rejected · typosquat tier-1'

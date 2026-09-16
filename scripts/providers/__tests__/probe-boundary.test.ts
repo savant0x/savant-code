@@ -27,6 +27,10 @@ describe('classifyUnauthBoundary (401-boundary gate)', () => {
   test('probeEndpoint maps fetch outcomes through the same verdicts (injected fetch)', async () => {
     const ok = await probeEndpoint({
       baseUrl: 'https://api.example-free.ai',
+      // Trust-boundary bypass: these tests exercise probe MECHANICS with
+      // stubbed fetch + fake hostnames (FID-2026-0916-001); the trust
+      // boundary itself is pinned in pipeline-integrity.test.ts.
+      allowPrivate: true,
       fetchImpl: (async (url: string, init?: RequestInit) => {
         if (String(url).endsWith('/v1/models')) {
           return new Response(JSON.stringify({ data: [{ id: 'm1' }] }), {
@@ -41,6 +45,7 @@ describe('classifyUnauthBoundary (401-boundary gate)', () => {
 
     const open = await probeEndpoint({
       baseUrl: 'https://open.relay.example',
+      allowPrivate: true,
       fetchImpl: (async () =>
         new Response('ok', { status: 200 })) as typeof fetch,
     })
@@ -48,6 +53,7 @@ describe('classifyUnauthBoundary (401-boundary gate)', () => {
 
     const dead = await probeEndpoint({
       baseUrl: 'https://dead.example',
+      allowPrivate: true,
       fetchImpl: (async () => {
         throw new TypeError('fetch failed')
       }) as typeof fetch,
@@ -64,6 +70,7 @@ describe('classifyUnauthBoundary (401-boundary gate)', () => {
     const calls: Array<{ url: string; method: string; body: unknown }> = []
     const result = await probeEndpoint({
       baseUrl: 'https://orcarouter.example',
+      allowPrivate: true, // probe-mechanics test — see the trust-boundary note above
       fetchImpl: (async (url: string, init?: RequestInit) => {
         const u = String(url)
         if (u.endsWith('/v1/models')) {

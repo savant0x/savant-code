@@ -14,6 +14,7 @@
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 
+import { isTrackableCandidateHost } from './lib/propose-guard'
 import { assertWithinDev } from './lib/typosquat'
 
 const CANDIDATES_STATE = 'dev/provider-candidates/candidates.json'
@@ -144,6 +145,23 @@ async function main(): Promise<number> {
     } catch {
       state = null
     }
+  }
+
+  // FID-2026-0916-001 (MQ3): fail-closed — a scaffold for a host the
+  // pipeline never tracked would invent evidence (probe citations,
+  // boundary warnings) outside the pipeline's data.
+  const stateText = existsSync(statePath) ? readFileSync(statePath, 'utf8') : ''
+  if (!isTrackableCandidateHost(host, stateText)) {
+    console.error(
+      `[propose] REFUSED: '${host}' is not a tracked discovery candidate.`,
+    )
+    console.error(
+      '[propose] Scaffolds are generated only for hosts candidates.json carries (evidence-backed curation).',
+    )
+    console.error(
+      '[propose] Remediation: run `bun run providers:harvest --probe` first; an operator-authorized host enters tracking via dev/fids seed intake (lib/seed-hosts.ts).',
+    )
+    return 1
   }
 
   assertWithinDev(`${SCRATCHPAD_DIR}/${host}.md`)

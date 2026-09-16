@@ -25,6 +25,7 @@
 import { candidateSetKey } from '@savant-code/common/providers/discovery-context'
 import { PROVIDER_REGISTRY } from '@savant-code/common/providers/registry'
 
+import { buildExclusionAuditRows } from './lib/audit-trail'
 import { collectTrackedProviders, readPriorState } from './lib/candidates-io'
 import { diffCandidates, detectDropouts } from './lib/diff-state'
 import { runProbeMergePhase, runReportWritePhase } from './lib/harvest-phases'
@@ -74,32 +75,12 @@ async function main(): Promise<number> {
     console.log(`[discovery] +${seedCount} operator seed hosts (${SEED_FID})`)
   }
   const candidates = stage0Filter(seededCards)
-  const auditTrail: ReportAuditRow[] = []
-
-  // Audit trail: WHY every non-candidate was excluded (data-backed report).
-  const candidateHosts = new Set(candidates.map((c) => c.host))
-  for (const card of cards) {
-    if (candidateHosts.has(card.host)) continue
-    if (card.status === 'risky') {
-      auditTrail.push({
-        host: card.host,
-        decision: 'excluded',
-        reason: 'status=risky (MQ2 hard-exclusion)',
-      })
-    } else if (card.category === 'free-relay') {
-      auditTrail.push({
-        host: card.host,
-        decision: 'excluded',
-        reason: 'category=free-relay (anonymous relay class — LLMjacking)',
-      })
-    } else if (card.status === 'down') {
-      auditTrail.push({
-        host: card.host,
-        decision: 'excluded',
-        reason: 'status=down (dead endpoint)',
-      })
-    }
-  }
+  // FID-2026-0916-001 (MQ2): one pure builder owns WHY every non-candidate
+  // was excluded — the three legacy classes keep their exact reason strings
+  // (report-stable parity) and the previously-silent classes
+  // (unconfirmed category / monitor-directory / free-product / unreachable
+  // probe) now render rows too, so the audit trail covers the whole feed.
+  const auditTrail: ReportAuditRow[] = buildExclusionAuditRows(cards)
 
   // Two-tier typosquat screen on the stage-0 survivors.
   const screened = candidates.filter((card) => {

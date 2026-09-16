@@ -119,7 +119,13 @@ export async function runReportWritePhase(params: ReportWriteParams): Promise<{
   }> = []
   if (doProbe) {
     for (const provider of tracked) {
-      const result = await probeEndpoint({ baseUrl: provider.baseUrl })
+      // FID-2026-0916-001 (MQ4): tracked custom-provider URLs are
+      // operator-stamped (an explicit trust act) — a local Ollama custom
+      // must stay health-checkable.
+      const result = await probeEndpoint({
+        baseUrl: provider.baseUrl,
+        allowPrivate: true,
+      })
       const verdict = healthVerdict({
         reachable: result.reachable,
         modelsCount: result.modelsCount,

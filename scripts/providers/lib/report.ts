@@ -99,6 +99,18 @@ export function renderReport(input: ReportInput): string {
   const flagged = input.auditTrail.filter(
     (r) => r.decision === 'flagged',
   ).length
+  // FID-2026-0916-001 (MQ2): the previously-silent classes, now counted
+  // in the executive summary.
+  const SILENT_PREFIXES = [
+    'unconfirmed category',
+    'category=monitor-directory',
+    'category=free-product',
+    'no probe data',
+    'feed probe reports',
+  ] as const
+  const silentClasses = input.auditTrail.filter((r) =>
+    SILENT_PREFIXES.some((p) => r.reason.startsWith(p)),
+  ).length
   lines.push('## Summary')
   lines.push('')
   lines.push('| Metric | Value |')
@@ -113,6 +125,7 @@ export function renderReport(input: ReportInput): string {
   lines.push(`| Auth boundary verified ok | ${boundaryOk} |`)
   lines.push(`| Open-relay rejections | ${relayRejects} |`)
   lines.push(`| Typosquat review flags | ${flagged} |`)
+  lines.push(`| Silent-class exclusions (now audited) | ${silentClasses} |`)
   lines.push(`| Tracked pipeline providers | ${input.sections.health.length} |`)
   lines.push('')
 

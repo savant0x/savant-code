@@ -67,28 +67,40 @@ export function mergeDenylist(
       lastSeenUtc: string
     }
   >()
-  if (Array.isArray(previous)) {
-    for (const e of previous) {
-      if (
-        typeof e === 'object' &&
-        e !== null &&
-        typeof (e as { host?: unknown }).host === 'string' &&
-        typeof (e as { reason?: unknown }).reason === 'string'
-      ) {
-        const rec = e as {
-          host: string
-          decision?: string
-          reason: string
-          firstSeenUtc?: string
-        }
-        entries.set(`${rec.host}::${rec.reason}`, {
-          host: rec.host,
-          decision: rec.decision ?? 'flagged',
-          reason: rec.reason,
-          firstSeenUtc: rec.firstSeenUtc ?? nowIso,
-          lastSeenUtc: nowIso,
-        })
+  // FID-2026-0916-001 (MQ1): accept BOTH persisted shapes — the
+  // `{_meta, entries}` object this function itself writes AND the legacy
+  // bare array. (The LIVE bug: the reader branch only accepted a bare
+  // array, so the previous run's entries were silently dropped every run
+  // and the file never accumulated.)
+  const priorEntries: unknown[] = Array.isArray(previous)
+    ? previous
+    : typeof previous === 'object' &&
+        previous !== null &&
+        Array.isArray((previous as { entries?: unknown }).entries)
+      ? (previous as { entries: unknown[] }).entries
+      : []
+  for (const e of priorEntries) {
+    if (
+      typeof e === 'object' &&
+      e !== null &&
+      typeof (e as { host?: unknown }).host === 'string' &&
+      typeof (e as { reason?: unknown }).reason === 'string'
+    ) {
+      const rec = e as {
+        host: string
+        decision?: string
+        reason: string
+        firstSeenUtc?: string
       }
+      entries.set(`${rec.host}::${rec.reason}`, {
+        host: rec.host,
+        decision: rec.decision ?? 'flagged',
+        reason: rec.reason,
+        firstSeenUtc: rec.firstSeenUtc ?? nowIso,
+        // Preserve the persisted lastSeen — it means "last seen by a gate",
+        // not "last file write"; only a fresh re-sight (below) bumps it.
+        lastSeenUtc: rec.lastSeenUtc ?? rec.firstSeenUtc ?? nowIso,
+      })
     }
   }
   for (const row of auditTrail) {

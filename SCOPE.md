@@ -97,6 +97,20 @@
       possible in a hostile feed; 10s timeout + read-only + no-key
       posture limits blast radius). All four routed to FID candidates —
       none written without operator approval.
+- [x] **T53.** FID-2026-0916-001 IMPLEMENTED (operator: "make fid to
+      address all 4 issues, run perfection loop on it then present for
+      final approval"): full Perfection Loop — FID authored with 5 MQs
+      ruled; RED-first (16 pins, module-missing failure observed); GREEN
+      (4 modules + 4 wiring surfaces); the pins corrected two defects in
+      my own drafts (lastSeen semantics, private-IP hostname overreach);
+      two pre-existing probe-mechanics tests moved to `allowPrivate`
+      (test-only; production call sites unchanged); LIVE proof ×3
+      harvests (denylist 118 → 163, pre-FID firstSeen preserved ×118,
+      flagged rows persisted for the first time; 41 silent-class rows
+      render + summary row; propose refuses untracked hosts exit 1);
+      suite 85 → 101 / 411 expects; typecheck ×2; eslint battery;
+      receipt 5/5 LIVE-stamped (probe gate = real harvest rerun).
+      Status `fixed` — presented for final operator approval.
 - [ ] **T51-F. [BLOCKED — operator]** Identity gauntlet on bazaarlink PAID
       channels: the account is zero-credit — LIVE 402 probe on `qwen3.8-max`
       ("Insufficient credits") — every paid cell would fail before serving.
