@@ -4,6 +4,54 @@
 > scope for the current task. Operator confirmation converts interpreted scope
 > into approved scope. Any drop/deferral requires a blocking presentation.
 
+## Task 56 — tokenrouter dead-id residue cleanup (2026-09-16)
+
+> Operator directive (pick from Task 55's [OPEN-OUT-OF-SCOPE] list):
+> "Clean up the inert glm-5.3-free residue in the two tokenrouter cli
+> maps." Interpreted scope: remove the dead id from the cli maps; keep the
+> max-output pin mechanism wired (Law 13 — parameterize, don't amputate);
+> strengthen the pin test (inject the pin instead of relying on a dead
+> id); sweep for the same residue elsewhere. Zero behavior change by
+> design (the dead id was unreachable in production).
+
+- [x] **T56-A.** Ground truth: the dead id sat in THREE maps, not two —
+      the two reported cli maps (`TOKENROUTER_NAMES`:59,
+      `TOKENROUTER_MAX_OUTPUT`:124 in static-catalogs.ts) PLUS an
+      unreferenced common export `TOKENROUTER_NAMES`
+      (model-config/providers.ts:60-62, zero live-code consumers,
+      vestige of the FID-2026-0809-001 catalog migration) whose sole
+      content was the dead id. Removed from all three (operator intent
+      covers the same residue wherever it lives).
+- [x] **T56-B.** Pin mechanism kept wired per Law 13: `TOKENROUTER_MAX_OUTPUT`
+      → `PINNED_MAX_OUTPUT_TOKENS` (intentionally empty, documented) +
+      `PinnedMaxOutputTokens` type; `resolveMaxOutputTokensForModel`
+      gains an optional injectable pin-map param (default = production
+      map; zero change for the 3 production callers — Law 14/15).
+- [x] **T56-C.** Pin test strengthened: injects a pin and proves the
+      priority-1 leg beats BOTH live catalogs for a live-cataloged id
+      (the old test never actually proved pin > live-catalog — it passed
+      because the dead id was absent from all catalogs). Plus a default-map
+      leg pinning the production map empty and the live-catalog fallback.
+- [x] **T56-D.** Gates: typecheck ×4 exit 0 (common, cli, sdk,
+      agent-runtime); openrouter-models family 69 pass / 916 expect /
+      0 fail across 8 files; max-output suite 7/0; common model-config
+      13/0; eslint --max-warnings 0 on touched files; prettier clean;
+      file caps respected (static-catalogs.ts 298/300).
+- [x] **T56-E.** SCOPE + session summary; path-scoped commit + push
+      (G1 amendment).
+
+- [ ] **[OPEN-OUT-OF-SCOPE] quality:report FAIL — probe-endpoint.ts over
+      the 300-line ceiling (pre-existing, not this task's edit):**
+      `scripts/providers/lib/probe-endpoint.ts` measures 305 lines
+      (ceiling 300). The file was last modified by FID-2026-0916-001's
+      implementation (commit `7d1446d0`), whose declared gates did not
+      include `quality:report`; the last recorded quality PASS
+      (FID-2026-0915-002) predates that growth. Discovered at Task 56's
+      gate run (my touched files are all within caps). Proposed fix:
+      split along the file's existing seam (static `isPublicProbeUrl`
+      checks vs the `probeEndpoint` runner) per the established
+      FID-2026-0913-002 discipline — on operator approval.
+
 ## Task 55 — Close + archive FID-2026-0916-001/-002 (2026-09-16)
 
 > Operator directive: "Close and archive the two fixed FIDs (001 + 002) with

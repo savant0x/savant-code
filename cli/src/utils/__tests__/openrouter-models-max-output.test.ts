@@ -12,6 +12,7 @@ import {
   makeJsonResponse,
   registerGatewayCatalogLifecycle,
 } from './openrouter-models-test-harness'
+import { PINNED_MAX_OUTPUT_TOKENS } from '../openrouter-models/static-catalogs'
 
 describe('openrouter-models', () => {
   registerGatewayCatalogLifecycle()
@@ -125,14 +126,39 @@ describe('openrouter-models', () => {
       ).toBeUndefined()
     })
 
-    test('authoritative pin beats a wrong live-catalog value', () => {
-      // GLM 5.3 Free: OpenRouter reports max_completion_tokens: 943717 but
-      // the provider caps at 131072 — trusting the API value hard-rejected
-      // every request. The TOKENROUTER_MAX_OUTPUT pin must win over both
-      // live catalogs (the resolver's priority-1 slot).
-      expect(
-        resolveMaxOutputTokensForModel('tokenrouter/z-ai/glm-5.3-free'),
-      ).toBe(131_072)
+    test('authoritative pin beats a wrong live-catalog value', async () => {
+      // The pin mechanism (FID-2026-0909-008 Step 4) exists because a wrong
+      // API-reported cap hard-rejected every request: OpenRouter reported
+      // max_completion_tokens: 943717 for GLM 5.3 Free while the provider
+      // caps at 131072. The historical pin entry shipped with the dead
+      // channel and was removed with it (FID-2026-0916-002 closure);
+      // inject a pin to prove the priority-1 leg still beats BOTH live
+      // catalogs for a model id the live catalog DOES report.
+      const pinned: Record<string, number> = {
+        'z-ai/glm-5.2': 131_072,
+      }
+      expect(resolveMaxOutputTokensForModel('z-ai/glm-5.2', pinned)).toBe(
+        131_072,
+      )
+      // Default pin map is the production one (empty since the dead-id
+      // cleanup) — the live catalog answers when no pin exists (seeded
+      // here; the harness lifecycle resets the cache between tests).
+      expect(PINNED_MAX_OUTPUT_TOKENS).toEqual({})
+      // @ts-expect-error - mock fetch
+      globalThis.fetch = mock(() =>
+        Promise.resolve(
+          makeJsonResponse({
+            data: [
+              {
+                id: 'z-ai/glm-5.2',
+                max_completion_tokens: 65536,
+              },
+            ],
+          }),
+        ),
+      )
+      await fetchGatewayModels(true)
+      expect(resolveMaxOutputTokensForModel('z-ai/glm-5.2')).toBe(65536)
     })
   })
 })

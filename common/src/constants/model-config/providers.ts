@@ -57,10 +57,6 @@ export const openCodeZenModels = {
 export type OpenCodeZenModel =
   (typeof openCodeZenModels)[keyof typeof openCodeZenModels]
 
-export const TOKENROUTER_NAMES = {
-  'tokenrouter/z-ai/glm-5.3-free': 'GLM 5.3 Free',
-}
-
 export const tokenrouterModels = {
   // Tier 1 — Elite Flagships
   tokenrouter_anthropic_claude_fable_5: 'tokenrouter/anthropic/claude-fable-5',

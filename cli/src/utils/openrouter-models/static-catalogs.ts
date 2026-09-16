@@ -56,7 +56,6 @@ const TOKENROUTER_NAMES: Record<string, string> = {
   'tokenrouter/qwen/qwen3.5-397b-a17b': 'Qwen 3.5 397B',
   'tokenrouter/qwen/qwen3.5-122b-a10b': 'Qwen 3.5 122B',
   'tokenrouter/openai/gpt-oss-120b': 'GPT-OSS 120B',
-  'tokenrouter/z-ai/glm-5.3-free': 'GLM 5.3 Free',
 }
 
 /** The TokenRouter model id keys, exported so tests can compare the static
@@ -111,18 +110,24 @@ const OPENCODE_GO_NAMES: Record<string, string> = {
 }
 
 /**
- * Pinned max output caps for models where the live OpenRouter catalog
- * reports an incorrect value. Consumed by `resolveMaxOutputTokensForModel`
- * with priority over both live catalogs — an authoritative pin must beat
- * a wrong API-reported value.
+ * Pinned max output caps for models where a catalog reports an incorrect
+ * value. Consumed by `resolveMaxOutputTokensForModel` with priority over
+ * both live catalogs — an authoritative pin must beat a wrong API-reported
+ * value (FID-2026-0909-008 Step 4).
  *
- * GLM 5.3 Free (tokenrouter): OpenRouter reports max_completion_tokens:
- * 943717 but the actual provider cap is 131072 — the wrong value hard-
- * rejected every request ("max_tokens must be at most 131072, got 943717").
+ * Intentionally empty after FID-2026-0916-002: the sole entry
+ * (`tokenrouter/z-ai/glm-5.3-free` → 131_072 — OpenRouter misreported the
+ * cap as 943717, hard-rejecting every request) was removed together with
+ * the dead channel itself; the picker id set derives from common's catalog
+ * so the dead id was never user-selectable and the pin entry was
+ * unreachable in production. The mechanism stays wired: add an entry when
+ * a catalog misreports a cap for a cataloged id again.
  */
-export const TOKENROUTER_MAX_OUTPUT: Record<string, number> = {
-  'tokenrouter/z-ai/glm-5.3-free': 131_072,
-}
+export const PINNED_MAX_OUTPUT_TOKENS: Record<string, number> = {}
+
+/** Shape of the authoritative-pin map consumed by
+ * `resolveMaxOutputTokensForModel` (injectable for tests). */
+export type PinnedMaxOutputTokens = Record<string, number>
 
 /**
  * Return the TokenRouter model catalog, derived from the common model map.
@@ -142,8 +147,8 @@ export function fetchTokenRouterModels(): OpenRouterModel[] {
       name,
       provider: 'tokenrouter' as const,
       contextLength: getContextWindowFallback(id).contextWindow,
-      ...(id in TOKENROUTER_MAX_OUTPUT
-        ? { maxCompletionTokens: TOKENROUTER_MAX_OUTPUT[id] }
+      ...(id in PINNED_MAX_OUTPUT_TOKENS
+        ? { maxCompletionTokens: PINNED_MAX_OUTPUT_TOKENS[id] }
         : {}),
     }
   })

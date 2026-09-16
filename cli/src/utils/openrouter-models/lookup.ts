@@ -12,7 +12,10 @@ import {
 import { getContextWindowForModel } from '../constants'
 import { getCachedGatewayModels } from './gateway'
 import { getCachedOpenRouterModels } from './openrouter'
-import { TOKENROUTER_MAX_OUTPUT } from './static-catalogs'
+import {
+  PINNED_MAX_OUTPUT_TOKENS,
+  type PinnedMaxOutputTokens,
+} from './static-catalogs'
 
 import type { OpenRouterModel } from './types'
 
@@ -232,10 +235,10 @@ export function resolveContextWindowSourceForModel(
 /**
  * Resolve the model's documented output budget (max completion tokens).
  * Priority:
- * 1. Authoritative pin (`TOKENROUTER_MAX_OUTPUT`) — overrides the live
- *    catalogs where the API reports an incorrect value (e.g. GLM 5.3 Free
- *    reports 943717 but the provider caps at 131072; trusting the API value
- *    hard-rejected every request)
+ * 1. Authoritative pin (`PINNED_MAX_OUTPUT_TOKENS`, injectable for tests) —
+ *    overrides the live catalogs where the API reports an incorrect value
+ *    (historically GLM 5.3 Free reported 943717 but capped at 131072;
+ *    trusting the API value hard-rejected every request)
  * 2. Live OpenRouter catalog — top-level `max_completion_tokens` with the
  *    `top_provider.max_completion_tokens` override, as reported by the API
  * 3. Cached gateway catalog (same field, normalized by every live adapter)
@@ -254,11 +257,12 @@ export function resolveContextWindowSourceForModel(
  */
 export function resolveMaxOutputTokensForModel(
   modelId: string,
+  pinnedMaxOutput: PinnedMaxOutputTokens = PINNED_MAX_OUTPUT_TOKENS,
 ): number | undefined {
   // Authoritative pins first — a wrong API-reported value must never win
   // over a verified provider cap. `typeof` guards inherited Object.prototype
   // members for arbitrary model-id inputs ("toString" etc.).
-  const pinned = TOKENROUTER_MAX_OUTPUT[modelId]
+  const pinned = pinnedMaxOutput[modelId]
   if (typeof pinned === 'number') return pinned
 
   const fromOpenRouter = findModelFieldFromOpenRouter(modelId, maxCompletionOf)
