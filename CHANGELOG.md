@@ -2,6 +2,57 @@
 
 ## Unreleased
 
+### Catalog window truth for the pre-program static providers (FID-2026-0916-002)
+
+- **The four static-catalog providers that predate the context-window
+  program — tokenrouter, tokenharbor, commandcode, opencode-go — now
+  resolve windows from vendor truth:** 94 exact-id rows added to
+  `CONTEXT_WINDOW_FALLBACKS` from keyed LIVE rosters (bazaarlink +
+  orcarouter, OpenRouter tiebreak; 2-of-3 vendor votes marked), and all
+  four CLI catalog fetchers switched from the `inferContextLength` family
+  heuristic to `getContextWindowFallback(id)`. Fixes the operator-reported
+  `tokenharbor/deepseek-v4-flash` 131k display (vendor-published:
+  1,048,576). A closed-world coverage invariant pins every curated static
+  id to a table row so this gap class cannot silently reopen.
+- **TokenRouter dead channels removed** (catalog 35 → 31): both free GLMs
+  + mirothinker (keyed 503 "No available channel") and image-only
+  seedream. `MiniMax-M3` kept — keyed HTTP 200 despite roster absence
+  (roster absence ≠ dead, verified by call).
+- **Per-model protocol dispatch:** new `TOKENROUTER_PROTOCOLS` map (vendor
+  `supported_endpoint_types`) + registry `protocol: 'multi'` wiring — 6
+  Responses-only, 7 Anthropic-only, and 1 Gemini-only ids were
+  mis-dispatched as chat before (codex → HTTP 404 "Use the
+  v1/responses endpoint instead"). OrcaRouter free-tier cap + OpenRouter
+  key-rotation notes documented. 39/39 tests across 3 suites (825
+  expects); LIVE window-truth probe 17/17 vs the keyed rosters.
+
+### Pipeline integrity hardening (FID-2026-0916-001)
+
+- **Denylist round-trip fixed:** `mergeDenylist` normalizes both persisted
+  shapes (the `{_meta, entries}` object it writes AND legacy bare arrays)
+  and preserves `firstSeenUtc` while bumping `lastSeenUtc` — the denylist
+  no longer resets every run. LIVE proof: 118 → 163 entries across three
+  harvests with all pre-FID rows keeping their original `firstSeenUtc`;
+  `flagged` rows persisted for the first time.
+- **Silent-class audit trail:** stage-0 exclusions beyond
+  risky/down/free-relay (unconfirmed category, monitor-directory,
+  free-product, no-probe-data, unreachable) now render counted report
+  groups + a summary row via a new pure `buildExclusionAuditRows` builder
+  (legacy three classes byte-identical) — the report's "every gate
+  decision, with reason" claim now covers the whole feed.
+- **`providers:propose` fail-closed tracking guard:** a host absent from
+  the tracked candidate set refuses to scaffold (exit 1 + remediation:
+  run harvest first / use an operator seed); tracked hosts keep the
+  DO-NOT-CURATE warning path.
+- **Probe trust boundary designed, not accidental:** `probe-endpoint`
+  admits only https URLs with public hosts — static checks reject
+  loopback/private/link-local literals and non-canonical integer/hex/octal
+  host forms, and a resolving DNS check (injectable `lookupImpl`) closes
+  the hostname-based SSRF gap; the operator-stamped Stage-E health path
+  passes `allowPrivate: true` (local Ollama custom providers remain
+  health-checkable). Suite 85 → 101 (16 new pins), 411 expects, 0 fail;
+  LIVE harvest receipt 5/5.
+
 ### BazaarLink gateway provider (FID-2026-0915-006)
 
 - **19th provider, static 12-model catalog:** the identity-audited genuine

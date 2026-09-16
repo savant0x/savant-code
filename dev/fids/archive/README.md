@@ -3,6 +3,36 @@
 This directory contains closed or historically completed FIDs. Files here are
 an audit record, not an active work queue.
 
+## 2026-09-16 closure — pipeline integrity + catalog window truth (2 FIDs archived)
+
+Operator directive ("Close and archive the two fixed FIDs (001 + 002) with
+CHANGELOG entries"). Both records ground-truth re-verified in the working
+tree at closure, declared gates re-run green, receipts re-stamped via
+`fid:verify --write` on the closed content, then archived:
+
+- [`FID-2026-0916-001-pipeline-integrity-hardening.md`](FID-2026-0916-001-pipeline-integrity-hardening.md)
+  (medium) — closed 2026-09-16; archived 2026-09-16. All four T52 findings
+  fixed and re-verified at file:line (audit-trail builder, both-shape
+  denylist normalization, fail-closed propose guard, probe trust boundary
+  with the operator-stamped `allowPrivate` Stage-E path). Gates: typecheck
+  cli + common exit 0; harvest-core + pipeline-integrity 28 pass / 89
+  expect / 0 fail; receipt 5/5 (incl. the LIVE harvest probe gate);
+  implementation commits `7d1446d0` + `7e41f075`.
+- [`FID-2026-0916-002-catalog-window-truth.md`](FID-2026-0916-002-catalog-window-truth.md)
+  (medium) — closed 2026-09-16; archived 2026-09-16. 94 vendor-sourced
+  fallback rows for the four pre-program static providers, all four
+  fetchers on `getContextWindowFallback`, tokenrouter dead channels
+  removed, `TOKENROUTER_PROTOCOLS` + registry `multi` wiring. Gates:
+  typecheck cli + common exit 0; static-catalogs + window-truth +
+  context-window-fallbacks 39 pass / 825 expect / 0 fail; receipt 6/6
+  (incl. the LIVE window-truth probe); implementation commits `f825cf25` +
+  `154b98fa`, docs `f4aad581` + `92443b8a`. Ground-truth correction at
+  closure: the "display-name map pruned" claim was partially inaccurate —
+  one dead id survives in two inert cli maps (amended in the FID;
+  cleanup routed [OPEN-OUT-OF-SCOPE]).
+
+**The active FID queue is empty.**
+
 ## 2026-09-14 closure — Infron + UnoRouter gateway providers (1 FID archived)
 
 [`FID-2026-0914-001-infron-unorouter-gateway-providers.md`](FID-2026-0914-001-infron-unorouter-gateway-providers.md)

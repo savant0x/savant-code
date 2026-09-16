@@ -4,6 +4,45 @@
 > scope for the current task. Operator confirmation converts interpreted scope
 > into approved scope. Any drop/deferral requires a blocking presentation.
 
+## Task 55 — Close + archive FID-2026-0916-001/-002 (2026-09-16)
+
+> Operator directive: "Close and archive the two fixed FIDs (001 + 002) with
+> CHANGELOG entries." Interpreted scope: ground-truth re-verification of both
+> records in the working tree, re-run declared gates, flip status to `closed`,
+> re-stamp receipts via `fid:verify --write` on closed content, `git mv` to
+> `dev/fids/archive/`, ledger + archive-index + CHANGELOG updates, SCOPE +
+> session summary, path-scoped commits + push (G1 amendment).
+
+- [x] **T55-A.** Both FIDs read 0-EOF; implementations ground-truth verified
+      at file:line (audit-trail/denylist/propose-guard/probe-endpoint;
+      fallback table/fetchers/protocol maps/registry wiring). One residue
+      found on 002: `tokenrouter/z-ai/glm-5.3-free` survives in two inert
+      cli maps (`static-catalogs.ts:59/:124`; picker id set derives from
+      common — zero user-visible impact). Disclosed below as
+      [OPEN-OUT-OF-SCOPE]; FID claim corrected in the record.
+- [x] **T55-B.** Gates re-run green: typecheck cli + common exit 0;
+      FID-001 suites 28 pass / 89 expect / 0 fail; FID-002 suites 39 pass /
+      825 expect / 0 fail; repo-wide `fid:verify --check` PASS; lint:md +
+      prettier clean on touched files.
+- [x] **T55-C.** Statuses flipped `fixed` → `closed`; receipts re-stamped
+      via `fid:verify --write` on closed content (001: 5/5 incl. LIVE
+      harvest probe; 002: 6/6 incl. LIVE window-truth probe); `git mv` to
+      `dev/fids/archive/`; ledger rows → closed with narrative; archive
+      index section added; CHANGELOG `Unreleased` entries appended.
+- [x] **T55-D.** Path-scoped commits + push executed (G1 amendment); hashes
+      recorded in the ledger narrative.
+
+- [ ] **[OPEN-OUT-OF-SCOPE] tokenrouter dead-id residue in cli display
+      maps:** `tokenrouter/z-ai/glm-5.3-free` remains as a key in
+      `TOKENROUTER_NAMES` + `TOKENROUTER_MAX_OUTPUT`
+      (`cli/src/utils/openrouter-models/static-catalogs.ts:59/:124`) after
+      FID-2026-0916-002's catalog removal — inert (the picker id set
+      derives from the common catalog; the MAX_OUTPUT entry anchors the
+      pin-resolution probe in `openrouter-models-max-output.test.ts`).
+      Proposed fix: remove the `TOKENROUTER_NAMES` entry + relocate the
+      max-output pin probe to a live catalog id (or keep both deliberately
+      as documentation-of-history). FID on request.
+
 ## Task 51 — Bazaarlink identity-audit gauntlet + prorisehub propose (2026-09-15)
 
 > Operator directives: "Run the identity-audit gauntlet on bazaarlink's free

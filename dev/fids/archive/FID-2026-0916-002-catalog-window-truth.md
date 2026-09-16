@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0916-002-catalog-window-truth.md`
 **ID:** FID-2026-0916-002
 **Severity:** medium
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-09-16 (operator report: tokenharbor deepseek-v4-flash
 showed 131k; orcarouter glm-5.3-flash-free rejected a long prompt with a
 vendor free-tier cap error; tokenrouter glm-5.2-free returned "No available
@@ -106,7 +106,14 @@ rows already stay undefined), no new UI surfaces.
   `z-ai/glm-5.2-free`, `z-ai/glm-5.3-free`,
   `miromind/mirothinker-1-7-deepresearch` — keyed 503s; and
   `bytedance-seed/seedream-5.0-pro` — vendor `image-generation`-only).
-  Display-name map pruned in step.
+  Display-name map pruned in step, with one ground-truth correction
+  (2026-09-16 closure): `tokenrouter/z-ai/glm-5.3-free` survives in
+  `TOKENROUTER_NAMES` + `TOKENROUTER_MAX_OUTPUT`
+  (`cli/src/utils/openrouter-models/static-catalogs.ts:59/:124`) — inert
+  (the picker id set derives from the common catalog, which no longer
+  lists the id; the MAX_OUTPUT entry anchors the pin-resolution probe in
+  `openrouter-models-max-output.test.ts`). Routed [OPEN-OUT-OF-SCOPE]
+  (SCOPE Task 55) — cleanup is a separate Law-2 decision.
 - **Protocol fix (operator-approved scope amendment)**: new
   `TOKENROUTER_PROTOCOLS` map (vendor `supported_endpoint_types`,
   2026-09-16) registered in `PROVIDER_PROTOCOL_MAPS`; union member added
@@ -209,14 +216,33 @@ rows already stay undefined), no new UI surfaces.
 
 ### Verification Receipt
 
-- fingerprint: sha256:2431603d796552e7e82a1509a1efea54cddddb21ae3c2877370adb3438161b99
-- verified: 2026-09-16T05:25:47.089Z
+- fingerprint: sha256:f60561e6bf6d849e6f0483e55849f7b704d20318b4ef0c2cd8b91432232d2926
+- verified: 2026-09-16T15:39:11.969Z
 - typecheck cli: exit 0
 - typecheck common: exit 0
 - test cli/src/utils/openrouter-models/__tests__/static-catalogs.test.ts: exit 0
 - test cli/src/utils/openrouter-models/__tests__/window-truth.test.ts: exit 0
 - test cli/src/utils/__tests__/context-window-fallbacks.test.ts: exit 0
 - probe scripts/providers/verify-window-truth.ts: exit 0
+
+## Closure (2026-09-16)
+
+Operator directive: "Close and archive the two fixed FIDs (001 + 002) with
+CHANGELOG entries." Ground-truth re-verification at closure: vendor fallback
+rows confirmed in `common/src/constants/context-windows.ts`
+(`tokenharbor/deepseek-v4-flash` 1,048,576 at :160 — the operator-reported
+131k bug), all four fetchers on `getContextWindowFallback`
+(`static-catalogs.ts:144/167/185/202`), dead-id absence pinned
+(`window-truth.test.ts:117-136`), `TOKENROUTER_PROTOCOLS` + registry
+`multi`/`protocolMap` wiring confirmed (`registry.ts:56-58`). Declared gates
+re-run green — typecheck cli + common exit 0, static-catalogs + window-truth +
+context-window-fallbacks 39 pass / 825 expect / 0 fail, repo-wide
+`fid:verify --check` PASS. One ground-truth correction to this record: the
+"display-name map pruned in step" claim was partially inaccurate — amended
+in the Dead channels bullet above. Receipt re-stamped via
+`fid:verify --write` on the closed content; archived to
+`dev/fids/archive/`. Implementation commits: `f825cf25` + `154b98fa`
+(implementation) + `f4aad581` + `92443b8a` (orcarouter gate-record docs).
 
 ## Lessons Learned
 

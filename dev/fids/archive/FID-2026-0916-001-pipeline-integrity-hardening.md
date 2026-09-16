@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0916-001-pipeline-integrity-hardening.md`
 **ID:** FID-2026-0916-001
 **Severity:** medium
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-09-16 (operator: "make fid to address all 4 issues, run
 perfection loop on it then present for final approval" — the four findings
 from the T52 deep audit, SCOPE Task 52)
@@ -165,13 +165,27 @@ exit 1 and writes nothing. Suite 85 → 101 (16 new pins), 411 expects,
 
 ### Verification Receipt
 
-- fingerprint: sha256:1c46a386d062197a20d4db89f466cf97a05c4bbb5b1eb1afde2a33256be3e14e
-- verified: 2026-09-16T02:40:52.127Z
+- fingerprint: sha256:89b902abf1db9be59c66646aff5abc9e62b6c34dd3f6ebdb59600e05083a69e8
+- verified: 2026-09-16T15:38:38.927Z
 - typecheck cli: exit 0
 - typecheck common: exit 0
 - test scripts/providers/__tests__/harvest-core.test.ts: exit 0
 - test scripts/providers/__tests__/pipeline-integrity.test.ts: exit 0
 - probe scripts/providers/harvest-freeairouter.ts: exit 0
+
+## Closure (2026-09-16)
+
+Operator directive: "Close and archive the two fixed FIDs (001 + 002) with
+CHANGELOG entries." Ground-truth re-verification at closure: all four GREEN
+surfaces confirmed at file:line in the working tree (`lib/audit-trail.ts:18`,
+`lib/candidates-io.ts:55` both-shape normalization, `lib/propose-guard.ts`
++ wiring at `propose-provider.ts:17`, `lib/probe-endpoint.ts:71/167` trust
+boundary with the `allowPrivate` Stage-E path at `harvest-report-phase.ts:127`);
+declared gates re-run green — typecheck cli + common exit 0, harvest-core +
+pipeline-integrity 28 pass / 89 expect / 0 fail, repo-wide `fid:verify --check`
+PASS. Receipt re-stamped via `fid:verify --write` on the closed content;
+archived to `dev/fids/archive/`. Implementation commits: `7d1446d0`
+(implementation) + `7e41f075` (status/receipt record).
 
 ## Lessons Learned
 
