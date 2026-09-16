@@ -188,12 +188,25 @@ export function computeFidFingerprint(content: string): string {
   // (FID-2026-0907-010).
   const stripped = withoutFencedBlocks(content)
   const span = receiptSpan(stripped)
+  // FID-2026-0916-003: the hashed view is tail-normalized to exactly one
+  // trailing newline. stampReceipt's EOF branches rewrite the document tail
+  // (trimEnd + separator reinsertion), so the receipt-span-removed view of a
+  // stamped doc ends in '\n\n' where the pre-stamp view ends in '\n' — a
+  // sha256 mismatch that made every EOF-stamped receipt validate as stale.
+  // The stamp operation itself destroys the exact tail shape and cannot
+  // restore it, so the newline COUNT at EOF is excluded from the identity;
+  // content edits (including the final line's text) still invalidate.
+  const normalizeTail = (view: string): string => view.replace(/\n+$/, '\n')
   if (!span) {
-    return createHash('sha256').update(stripped, 'utf8').digest('hex')
+    return createHash('sha256')
+      .update(normalizeTail(stripped), 'utf8')
+      .digest('hex')
   }
   const withoutReceipt =
     stripped.slice(0, span.start) + stripped.slice(span.start + span.length)
-  return createHash('sha256').update(withoutReceipt, 'utf8').digest('hex')
+  return createHash('sha256')
+    .update(normalizeTail(withoutReceipt), 'utf8')
+    .digest('hex')
 }
 
 /**

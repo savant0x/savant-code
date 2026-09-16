@@ -3,6 +3,21 @@
 This directory contains closed or historically completed FIDs. Files here are
 an audit record, not an active work queue.
 
+## 2026-09-16 closure — stampReceipt EOF fingerprint edge (1 FID archived)
+
+Agent-executed lifecycle per the G1 amendment (simple-task path, operator
+directive picked from the post-Task-58 suggestion menu). RED-first
+EOF-identity pin observed failing; fix = tail-normalize the hashed view in
+`computeFidFingerprint` (single hashing authority); LIVE e2e both legs
+(gates-to-EOF fixture stamped via real `fid:verify --write`, `--check`
+accepted it, fixture destroyed):
+
+- [`FID-2026-0916-003-stamp-receipt-eof-fingerprint.md`](FID-2026-0916-003-stamp-receipt-eof-fingerprint.md)
+  (medium) — closed 2026-09-16; archived 2026-09-16. Receipt 9/9 stamped
+  on closed content (4 typecheck gates, 4 test suites incl. the new
+  fingerprint module, quality). Gates: contract suites 34/0, executor
+  suites 35/0, typecheck ×4, `quality:report` PASS.
+
 ## 2026-09-16 closure — pipeline integrity + catalog window truth (2 FIDs archived)
 
 Operator directive ("Close and archive the two fixed FIDs (001 + 002) with

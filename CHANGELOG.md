@@ -2,6 +2,25 @@
 
 ## Unreleased
 
+### Receipt stamping fixed for gates-runs-to-EOF FIDs (FID-2026-0916-003)
+
+- **EOF-stamped receipts no longer read as stale.** A FID whose
+  `## Verification Gates` section runs to EOF (no heading after it) got a
+  receipt that never validated: the stamp's EOF branches rewrite the
+  document tail (trimEnd + separator reinsertion) while the pre-stamp
+  fingerprint and the validator's receipt-span removal disagreed on the
+  trailing-newline shape — a sha256 mismatch, fail-closed. The fix
+  tail-normalizes the hashed view to exactly one trailing newline inside
+  `computeFidFingerprint` on both paths (the single hashing authority);
+  `stampReceipt` and `buildReceipt` are unchanged, and freshness is
+  preserved — any content edit still invalidates the fingerprint.
+- Verified LIVE end-to-end: a gates-to-EOF fixture stamped via the real
+  `fid:verify --write` chain now passes `fid:verify --check` (single file
+  and repo-wide); the fixture was destroyed after the proof. Contract
+  suites 34/0 + executor suites 35/0; the new fingerprint test module
+  also carries an EOF stamp-path identity pin alongside the existing
+  insert-path pin (FID-2026-0907-010).
+
 ### Catalog window truth for the pre-program static providers (FID-2026-0916-002)
 
 - **The four static-catalog providers that predate the context-window
