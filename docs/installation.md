@@ -80,7 +80,7 @@ Or configure one directly:
 | TokenBom | `/provider tokenbom` | `TOKENBOM_API_KEY` (audited static 7-model allowlist) |
 | Infron | `/provider infron` | `INFRON_API_KEY` (curated static 9-model allowlist; free tier requires a funded team account vendor-side) |
 | UnoRouter | `/provider unorouter` | `UNOROUTER_API_KEY` (curated static 17-model allowlist; `:free` models never bill) |
-| BazaarLink | `/provider bazaarlink` | `BAZAARLINK_API_KEY` (static one-model audited allowlist: `qwen3.7-flash:free` @ 1M ctx; free tier 10 req/min · 50/day per vendor config) |
+| BazaarLink | `/provider bazaarlink` | `BAZAARLINK_API_KEY` (static 12-model allowlist: identity-audited `qwen3.7-flash:free` @ 1M ctx + 11 curated paid flagships per the 2026-09-15 top-coding ranking; free tier 10 req/min · 50/day per vendor config) |
 | NVIDIA NIM | `/provider nvidia` | `NVIDIA_API_KEY` |
 | CommandCode | `/provider commandcode` | `COMMAND_CODE_API_KEY` |
 | Nous Research | `/provider nous` | `NOUS_API_KEY` (direct OpenAI-compatible API; Portal OAuth is separate) |

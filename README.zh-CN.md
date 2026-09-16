@@ -130,7 +130,7 @@ ollama serve
 | TokenBom | `/provider tokenbom` | `TOKENBOM_API_KEY` | OpenAI 兼容网关（审计后的 7 模型静态白名单） |
 | Infron | `/provider infron` | `INFRON_API_KEY` | OpenAI 兼容推理路由平台（精选的 9 模型静态白名单） |
 | UnoRouter | `/provider unorouter` | `UNOROUTER_API_KEY` | OpenAI 兼容网关（精选的 17 模型静态白名单；`:free` 模型不计费） |
-| BazaarLink | `/provider bazaarlink` | `BAZAARLINK_API_KEY` | OpenAI 兼容网关（审计后的单模型静态白名单：`qwen3.7-flash:free`，1M 上下文） |
+| BazaarLink | `/provider bazaarlink` | `BAZAARLINK_API_KEY` | OpenAI 兼容网关（12 模型静态白名单：身份审计的 `qwen3.7-flash:free`，1M 上下文 + 11 个精选付费旗舰模型） |
 
 密钥持久化在 Windows 的 `C:\Users\<username>\.savant-code\credentials.json` 或 macOS/Linux 的
 `~/.savant-code/credentials.json`。环境变量优先于已保存的凭据。自动化时，在启动 Savant-Code 前设置一个提供商密钥：

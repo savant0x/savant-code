@@ -46,10 +46,39 @@ docs regeneration, closed-world pin widening.
 
 ## Scope Boundary
 
-Operator ruling (2026-09-15, ask_user): **Qwen free only.** The catalog is
-exactly one entry. The deepseek free channels and `auto:free` are excluded BY
-RULING with audit evidence recorded above — they are not "to be added later";
-adding them would require a new operator decision plus a gauntlet re-run.
+Operator ruling (2026-09-15, ask_user): **Qwen free only.** The deepseek free
+channels and `auto:free` are excluded BY RULING with audit evidence recorded
+above — they are not "to be added later"; adding them would require a new
+operator decision plus a gauntlet re-run.
+
+### Amendment (2026-09-15): paid top-15 coding expansion (second ruling)
+
+Operator ruling (2026-09-15): "add the top 15 top models ranked on sep 15
+2026 only" + "for coding tasks", with paid channels added WITHOUT identity
+testing ("i'm not topping anything, so you can go ahead and add it without
+testing then call it good for now").
+
+- **Ranking source:** the BenchLM SWE-bench Pro leaderboard dated exactly
+  2026-09-15 (Claude Fable 5.1 leads at 81.2%). Intersection with the LIVE
+  keyed roster (2026-09-15): 4 of the top 15 are NOT served by the gateway —
+  Claude Mythos 5 (#2), Sakana Fugu-Ultra (#5), Tencent Hy4 preview (#8),
+  Ornith-1.5-397B (#9) — so the faithful set is the **11 available**:
+  claude-fable-5.1, claude-fable-5, claude-opus-5, claude-opus-4.8,
+  claude-opus-4.7, claude-sonnet-5, grok-4.5, gpt-5.6-sol, gpt-5.6-terra,
+  gpt-5.6-luna, qwen3.8-max.
+- **Catalog:** 12 ids total (1 audited free + 11 paid). Windows are the
+  vendor's keyed /v1/models `context_length` values (fable-5.1 @ 1M,
+  grok-4.5 @ 500k, opus-4.7 @ 1M). **Untested-paid provenance** recorded on
+  every surface; serving-name disclosure (responses echo the routed model)
+  was verified on the free channels at T51-C and is the one honesty control
+  that carries over.
+- **Correction history:** an earlier 14-paid draft (mid-implementation
+  progress notes) was wrong in both directions — it included
+  kimi-k3/minimax-m3/deepseek-v4-pro/deepseek-v4.1-flash (BenchLM ranks
+  #29–44, not top-15) and missed fable-5.1/grok-4.5/opus-4.7. Caught by
+  re-deriving the ranking from the dated leaderboard instead of trusting
+  the earlier ad-hoc list; all three catalog surfaces + the pin were
+  rewritten before gating.
 
 ## Perfection Loop
 
@@ -124,6 +153,11 @@ GREEN surfaces (all precedent-pattern, zero new mechanisms):
   gateway catalog.
 - Docs: all 8 hand-maintained surfaces synced (`generate:provider-docs:check`
   exit 0 after generator normalization of the 3 generated blocks).
+- Amendment (second ruling): `bazaarlinkModels` → 12 ids (1 free + 11 paid
+  top-15∩roster), context-windows fallback rows → 12, cli names/windows →
+  12, catalog pin rewritten to the exact-12 assertion; installation.md /
+  features.md / README.zh-CN.md moved to "16-model → 12-model static
+  allowlist" language; docs regen re-run (docs-check exit 0).
 
 ### Step-5 LIVE Round-Trip (production chain, keyed)
 
@@ -144,8 +178,8 @@ zero reasoning tokens — clean channel, no injection class. Key never printed
 
 ### Verification Receipt
 
-- fingerprint: sha256:0fa1a011f2e6f9ee61bda22f27171005f5bb76c22684894406840231c9b768a8
-- verified: 2026-09-15T23:31:47.874Z
+- fingerprint: sha256:3d7f8d4aa35d5dc6236a99ee4878ef9931e6f5cc751b168334d14a1438b4f213
+- verified: 2026-09-16T00:26:37.228Z
 - typecheck sdk: exit 0
 - typecheck common: exit 0
 - typecheck packages/agent-runtime: exit 0

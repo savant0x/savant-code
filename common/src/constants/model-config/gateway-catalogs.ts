@@ -107,19 +107,40 @@ export type UnorouterModel =
   (typeof unorouterModels)[keyof typeof unorouterModels]
 
 /**
- * BazaarLink allowlist (FID-2026-0915-006) — the ONE audited-genuine
- * free channel (identity gauntlet T51-C): consistent EN/ZH self-ID as
- * Qwen (Alibaba Tongyi Lab), cleanest fingerprint of any audited gateway
- * (prompt_tokens 23–37 on the fixed string — zero injection class), 1M
- * vendor-published window. The deepseek free channels are DISQUALIFIED
- * (substituted: EN self-IDs claimed GPT-4 and Claude Opus 4.1; ~60–70
- * hidden injected tokens) and `auto:free` is unreliable (429 storm,
- * 120–265s) routing INTO the disqualified channel — both excluded BY
- * OPERATOR RULING ("Qwen free only"); adding them back requires a new
- * operator decision + gauntlet re-run. Personal-use provenance.
+ * BazaarLink catalog (FID-2026-0915-006, amended per operator ruling):
+ * - The ONE audited-genuine free channel (identity gauntlet T51-C):
+ *   consistent EN/ZH self-ID as Qwen (Alibaba Tongyi Lab), cleanest
+ *   fingerprint of any audited gateway (prompt_tokens 23–37 — zero
+ *   injection class), 1M vendor-published window.
+ * - The top-coding paid tier (operator: "add the top 15 top models ranked
+ *   on sep 15 2026 only", "for coding tasks"): the BenchLM SWE-bench Pro
+ *   leaderboard dated exactly 2026-09-15, intersected with the LIVE keyed
+ *   roster. 4 of the top 15 (Claude Mythos 5, Sakana Fugu-Ultra, Tencent
+ *   Hy4 preview, Ornith-1.5-397B) are NOT served by the gateway, so the
+ *   faithful set is the 11 available: Fable 5.1 (#1), Fable 5 (#3),
+ *   Opus 5 (#4), Opus 4.8 (#6), Qwen3.8 Max (#7), Grok 4.5 (#10),
+ *   GPT-5.6 Sol (#11), Opus 4.7 (#12), GPT-5.6 Terra (#13), Sonnet 5 (#14),
+ *   GPT-5.6 Luna (#15). PAID channels added WITHOUT identity testing
+ *   (account zero-credit; live 402 measured). Serving-name disclosure
+ *   verified on the free channels (responses echo the routed model).
+ *   Untested-paid provenance.
+ * - EXCLUDED by the gauntlet: deepseek :free channels (substituted: EN
+ *   self-IDs claimed GPT-4 / Claude Opus 4.1; ~60–70 hidden injected
+ *   tokens) and `auto:free` (429 storm, 120–265s) — both by ruling.
  */
 export const bazaarlinkModels = {
   bazaarlink_qwen_3_7_flash_free: 'bazaarlink/qwen/qwen3.7-flash:free',
+  bazaarlink_claude_fable_5_1: 'bazaarlink/claude-fable-5.1',
+  bazaarlink_claude_fable_5: 'bazaarlink/claude-fable-5',
+  bazaarlink_claude_opus_5: 'bazaarlink/claude-opus-5',
+  bazaarlink_claude_opus_4_8: 'bazaarlink/claude-opus-4.8',
+  bazaarlink_claude_opus_4_7: 'bazaarlink/claude-opus-4.7',
+  bazaarlink_claude_sonnet_5: 'bazaarlink/claude-sonnet-5',
+  bazaarlink_grok_4_5: 'bazaarlink/grok-4.5',
+  bazaarlink_gpt_5_6_sol: 'bazaarlink/gpt-5.6-sol',
+  bazaarlink_gpt_5_6_terra: 'bazaarlink/gpt-5.6-terra',
+  bazaarlink_gpt_5_6_luna: 'bazaarlink/gpt-5.6-luna',
+  bazaarlink_qwen_3_8_max: 'bazaarlink/qwen3.8-max',
 } as const
 export type BazaarlinkModel =
   (typeof bazaarlinkModels)[keyof typeof bazaarlinkModels]

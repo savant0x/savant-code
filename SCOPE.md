@@ -34,8 +34,21 @@
       with evidence; 8 docs surfaces synced; typecheck ×4 + 12-workspace
       test chain 0 fail + eslint/prettier/lint:md/docs-check/quality all
       green; Step-5 LIVE keyed round-trip via the production chain PASS
-      (exact echo, no injection class); 5-gate receipt stamped. Status
+      (exact echo, no injection class); 5-gate receipt stamped.      Status
       `fixed`; archive awaits operator closure (G2).
+- [x] **T51-H.** FID-2026-0915-006 AMENDED (second ruling: "add the top 15
+      top models ranked on sep 15 2026 only" + "for coding tasks", paid
+      channels untested per "add it without testing then call it good for
+      now"): ranking re-derived from the BenchLM SWE-bench Pro leaderboard
+      dated exactly 2026-09-15 (Fable 5.1 leads, 81.2%) ∩ the LIVE keyed
+      roster — 4 of the top 15 are not gateway-served (Mythos 5,
+      Fugu-Ultra, Hy4 preview, Ornith-1.5), so the faithful set is the 11
+      available paid ids + the audited free channel = **12-id catalog**.
+      Caught and corrected a wrong 14-paid draft (had #29–44 models;
+      missed #1/#10/#12) before gating. Untested-paid provenance recorded;
+      serving-name disclosure (free-channel-verified) is the carried
+      honesty control. Gates: typecheck ×4, registry/cli suites 26/0,
+      docs regen, eslint/prettier/lint:md, receipt re-stamped 5/5 PASS.
 - [ ] **T51-F. [BLOCKED — operator]** Identity gauntlet on bazaarlink PAID
       channels: the account is zero-credit — LIVE 402 probe on `qwen3.8-max`
       ("Insufficient credits") — every paid cell would fail before serving.

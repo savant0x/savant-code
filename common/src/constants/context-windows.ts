@@ -88,8 +88,22 @@ export const CONTEXT_WINDOW_FALLBACKS: ReadonlyMap<string, number> = new Map([
   ['unorouter/gpt-6-astra', 1_100_000],
   ['unorouter/claude-opus-4.8', 1_000_000],
   ['unorouter/deepseek-v4-pro', 1_000_000],
-  // --- bazaarlink (FID-2026-0915-006) ---
+  // --- bazaarlink (FID-2026-0915-006, amended: +11 available top-coding
+  // paid ids per the BenchLM SWE-bench Pro leaderboard dated 2026-09-15 ∩
+  // the LIVE keyed roster; windows are the vendor's OWN keyed
+  // /v1/models context_length values, 2026-09-15) ---
   ['bazaarlink/qwen/qwen3.7-flash:free', 1_000_000],
+  ['bazaarlink/claude-fable-5.1', 1_000_000],
+  ['bazaarlink/claude-fable-5', 1_000_000],
+  ['bazaarlink/claude-opus-5', 1_000_000],
+  ['bazaarlink/claude-opus-4.8', 1_000_000],
+  ['bazaarlink/claude-opus-4.7', 1_000_000],
+  ['bazaarlink/claude-sonnet-5', 1_000_000],
+  ['bazaarlink/grok-4.5', 500_000],
+  ['bazaarlink/gpt-5.6-sol', 1_050_000],
+  ['bazaarlink/gpt-5.6-terra', 1_050_000],
+  ['bazaarlink/gpt-5.6-luna', 1_050_000],
+  ['bazaarlink/qwen3.8-max', 1_000_000],
 ])
 
 /** How a context window was resolved — surfaced in the UI (MQ4 badge). */

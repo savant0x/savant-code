@@ -218,18 +218,29 @@ describe('UnoRouter static catalog (FID-2026-0914-001)', () => {
   })
 })
 
-describe('BazaarLink static catalog (FID-2026-0915-006)', () => {
-  test('returns exactly the ONE audited-genuine free channel', () => {
+describe('BazaarLink static catalog (FID-2026-0915-006, amended)', () => {
+  test('returns exactly the audited free channel + the 11 gateway-available top-coding models', () => {
     const models = fetchBazaarlinkModels()
-    expect(models.map((m) => m.id)).toEqual([
+    expect(models.map((m) => m.id).sort()).toEqual([
+      'bazaarlink/claude-fable-5',
+      'bazaarlink/claude-fable-5.1',
+      'bazaarlink/claude-opus-4.7',
+      'bazaarlink/claude-opus-4.8',
+      'bazaarlink/claude-opus-5',
+      'bazaarlink/claude-sonnet-5',
+      'bazaarlink/gpt-5.6-luna',
+      'bazaarlink/gpt-5.6-sol',
+      'bazaarlink/gpt-5.6-terra',
+      'bazaarlink/grok-4.5',
       'bazaarlink/qwen/qwen3.7-flash:free',
+      'bazaarlink/qwen3.8-max',
     ])
   })
 
-  test('pins the vendor-published context window and display name', () => {
+  test('pins vendor-published context windows and display names', () => {
     const byId = new Map(fetchBazaarlinkModels().map((m) => [m.id, m] as const))
-    // The vendor's OWN keyed /v1/models publishes context_length 1,000,000
-    // (2026-09-15, FID-2026-0915-006) — NOT the family heuristic.
+    // Windows are the vendor's OWN keyed /v1/models context_length values
+    // (2026-09-15, FID-2026-0915-006 amended) — NOT the family heuristic.
     expect(byId.get('bazaarlink/qwen/qwen3.7-flash:free')?.contextLength).toBe(
       1_000_000,
     )
@@ -239,5 +250,11 @@ describe('BazaarLink static catalog (FID-2026-0915-006)', () => {
     expect(byId.get('bazaarlink/qwen/qwen3.7-flash:free')?.provider).toBe(
       'bazaarlink',
     )
+    expect(byId.get('bazaarlink/claude-fable-5.1')?.contextLength).toBe(
+      1_000_000,
+    )
+    expect(byId.get('bazaarlink/grok-4.5')?.contextLength).toBe(500_000)
+    expect(byId.get('bazaarlink/gpt-5.6-sol')?.contextLength).toBe(1_050_000)
+    expect(byId.get('bazaarlink/qwen3.8-max')?.name).toBe('Qwen 3.8 Max')
   })
 })

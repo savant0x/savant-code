@@ -134,16 +134,31 @@ export function fetchUnorouterModels(): OpenRouterModel[] {
   }))
 }
 
-/** Display names for BazaarLink model ids (FID-2026-0915-006). */
+/** Display names for BazaarLink model ids (FID-2026-0915-006, amended). */
 const BAZAARLINK_NAMES: Record<string, string> = {
   'bazaarlink/qwen/qwen3.7-flash:free': 'Qwen 3.7 Flash (Free)',
+  'bazaarlink/claude-fable-5.1': 'Claude Fable 5.1',
+  'bazaarlink/claude-fable-5': 'Claude Fable 5',
+  'bazaarlink/claude-opus-5': 'Claude Opus 5',
+  'bazaarlink/claude-opus-4.8': 'Claude Opus 4.8',
+  'bazaarlink/claude-opus-4.7': 'Claude Opus 4.7',
+  'bazaarlink/claude-sonnet-5': 'Claude Sonnet 5',
+  'bazaarlink/grok-4.5': 'Grok 4.5',
+  'bazaarlink/gpt-5.6-sol': 'GPT 5.6 Sol',
+  'bazaarlink/gpt-5.6-terra': 'GPT 5.6 Terra',
+  'bazaarlink/gpt-5.6-luna': 'GPT 5.6 Luna',
+  'bazaarlink/qwen3.8-max': 'Qwen 3.8 Max',
 }
 
 /**
- * Return the BazaarLink catalog (FID-2026-0915-006) — the ONE
- * audited-genuine free channel (identity gauntlet T51-C; operator ruling
- * "Qwen free only"). Static by design: a live catalog would re-expose the
- * substituted deepseek channels. Synchronous.
+ * Return the BazaarLink catalog (FID-2026-0915-006, amended per operator
+ * ruling): the audited-genuine free channel + the 11 gateway-available
+ * top-coding models (BenchLM SWE-bench Pro leaderboard dated 2026-09-15 ∩
+ * the LIVE keyed roster; 4 of the top 15 are not served by the vendor).
+ * PAID channels added WITHOUT identity testing — zero-credit account,
+ * live 402 measured; serving-name disclosure verified on free channels.
+ * Static by design: a live catalog would re-expose the substituted
+ * deepseek :free channels. Synchronous.
  */
 export function fetchBazaarlinkModels(): OpenRouterModel[] {
   return Object.values(bazaarlinkModels).map((id) => ({
@@ -159,10 +174,22 @@ export function fetchBazaarlinkModels(): OpenRouterModel[] {
 }
 
 /**
- * Pinned context window for BazaarLink ids — the vendor's own
- * `context_length` from the keyed api.bazaarlink.ai/v1/models payload
- * (2026-09-15, FID-2026-0915-006). NOT the family heuristic.
+ * Pinned context windows for BazaarLink ids — the vendor's own
+ * `context_length` values from the keyed api.bazaarlink.ai/v1/models
+ * payload (2026-09-15, FID-2026-0915-006 amended). NOT the family
+ * heuristic.
  */
 const BAZAARLINK_CONTEXT_WINDOWS: Record<string, number> = {
   'bazaarlink/qwen/qwen3.7-flash:free': 1_000_000,
+  'bazaarlink/claude-fable-5.1': 1_000_000,
+  'bazaarlink/claude-fable-5': 1_000_000,
+  'bazaarlink/claude-opus-5': 1_000_000,
+  'bazaarlink/claude-opus-4.8': 1_000_000,
+  'bazaarlink/claude-opus-4.7': 1_000_000,
+  'bazaarlink/claude-sonnet-5': 1_000_000,
+  'bazaarlink/grok-4.5': 500_000,
+  'bazaarlink/gpt-5.6-sol': 1_050_000,
+  'bazaarlink/gpt-5.6-terra': 1_050_000,
+  'bazaarlink/gpt-5.6-luna': 1_050_000,
+  'bazaarlink/qwen3.8-max': 1_000_000,
 }
