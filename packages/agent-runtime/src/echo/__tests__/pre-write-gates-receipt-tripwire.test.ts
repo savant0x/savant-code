@@ -13,13 +13,19 @@ describe('runPreWriteGates — FID verification receipt tripwire (FID-2026-0823-
   const FID_PATH = '/proj/dev/fids/FID-2026-0823-010-x.md'
 
   function fidWithStatus(status: string, includeReceipt: boolean): string {
+    // Task 58: `quality` is mandatory for fixed/verified — the fixture
+    // declares it so the tripwire's structural pass/fail legs exercise the
+    // receipt, not the mandatory-gate error.
     const gates =
-      '## Verification Gates\n\n- gate: probe scripts/__tests__/fixtures/fid-verify-echo.ts\n'
+      '## Verification Gates\n\n- gate: probe scripts/__tests__/fixtures/fid-verify-echo.ts\n- gate: quality\n'
     const content = `# FID: test\n\n**Status:** ${status}\n\n${gates}`
     if (!includeReceipt) return content
     // Receipt goes AFTER the gate lines (the same shape stampReceipt emits).
-    const receipt = `### Verification Receipt\n\n- verified: 2026-08-23T15:04:00Z\n- probe scripts/__tests__/fixtures/fid-verify-echo.ts: exit 0\n`
-    const withReceipt = content.replace(/(- gate: [^\n]*\n)/, `$1\n${receipt}`)
+    const receipt = `### Verification Receipt\n\n- verified: 2026-08-23T15:04:00Z\n- probe scripts/__tests__/fixtures/fid-verify-echo.ts: exit 0\n- quality: exit 0\n`
+    const withReceipt = content.replace(
+      /(- gate: [^\n]*\n)(- gate: [^\n]*\n)/,
+      `$1$2\n${receipt}`,
+    )
     const fingerprint = computeFidFingerprint(withReceipt)
     return withReceipt.replace(
       '- verified: 2026-08-23T15:04:00Z',

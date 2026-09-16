@@ -79,6 +79,20 @@ describe('resolveGate', () => {
     expect('error' in resolved).toBe(true)
   })
 
+  it('maps the no-arg quality gate to the quality:report script (Task 58)', () => {
+    const resolved = resolveGate('quality', '')
+    expect('error' in resolved ? resolved.error : resolved.argv).toEqual([
+      'bun',
+      'run',
+      'quality:report',
+    ])
+  })
+
+  it('rejects an argument on the quality gate (repo-wide, singular)', () => {
+    const resolved = resolveGate('quality', 'cli')
+    expect('error' in resolved).toBe(true)
+  })
+
   it('rejects a shell-injection-shaped arg (no spaces, no metachars in path gate)', () => {
     const resolved = resolveGate('probe', 'x.ts; rm -rf /')
     expect('error' in resolved).toBe(true)
@@ -108,6 +122,12 @@ describe('runGates', () => {
     expect(results).toEqual([])
     expect(errors[0]).toContain('unsafe typecheck workspace')
   })
+
+  it('runs the quality gate and reports exit 0 (Task 58)', () => {
+    const { results, errors } = runGates([{ kind: 'quality', arg: '' }])
+    expect(errors).toEqual([])
+    expect(results[0]?.exit).toBe(0)
+  })
 })
 
 describe('buildReceipt + stampReceipt', () => {
@@ -128,6 +148,9 @@ describe('buildReceipt + stampReceipt', () => {
       exit: 0,
       signal: null,
     },
+    // Task 58: the mandatory quality gate result must cover the declared
+    // `- gate: quality` in FID_WITH_PROSE_MENTION for the end-to-end pin.
+    { label: 'quality', exit: 0, signal: null },
   ]
 
   it('builds a receipt with fingerprint + exit lines', () => {
@@ -172,6 +195,7 @@ describe('buildReceipt + stampReceipt', () => {
     '## Verification Gates',
     '',
     '- gate: probe scripts/__tests__/fixtures/fid-verify-echo.ts',
+    '- gate: quality',
     '',
     '## Perfection Loop',
     '',

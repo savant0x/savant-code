@@ -4,6 +4,48 @@
 > scope for the current task. Operator confirmation converts interpreted scope
 > into approved scope. Any drop/deferral requires a blocking presentation.
 
+## Task 58 — quality:report in the FID closure gate battery (2026-09-16)
+
+> Operator directive: "Add quality:report to the standard closure gate
+> battery so ceiling breaches can't recur." Intent (Law 8): add a first-class
+> `quality` gate kind to the FID-2026-0823-009 verification contract —
+> parser/validator (agent-runtime, pure), executor allowlist
+> (scripts/fid-verify.ts → `bun run quality:report`), template doc — and
+> make it MANDATORY for `fixed`/`verified` statuses so a closure cannot
+> omit the repo-wide quality gate. No-arg grammar (`- gate: quality`);
+> receipt line `- quality: exit 0`. RED-first pins in both suites.
+> Timing is safe: the active fixed-FID queue is empty (zero retroactive
+> impact). Simple-task routing: production delta ~25 lines, design fully
+> determined by the existing contract; operator directive = Law-2 approval.
+
+- [x] **T58-A.** Grounding: fid-verification-gates.ts + fid-verify.ts +
+      fid-gates.ts + both test suites + template read 0-EOF; grep confirms
+      the kind allowlist exists ONLY in the two regexes + the error string;
+      C3 dedup and the pre-write gate consume the contract generically.
+- [x] **T58-B.** RED-first observed: contract 19/5 (new parse/receipt/
+      mandatory pins failing), executor 21/2 (quality argv + live-run pins
+      failing); zero pre-existing tests broken.
+- [x] **T58-C.** GREEN: `quality` in the kind union + both grammars
+      (no-arg alternation), mandatory-declaration error in
+      validateFidVerification, `resolveGate('quality', '')` →
+      `bun run quality:report`, shared `gateLabel` helper (caught a real
+      C3 label-mismatch defect: `"quality "` vs `"quality"` broke the C3
+      result lookup), template blockquote + example. Ceiling-driven
+      sub-splits (both target files were at 296/299 lines):
+      fid-verification-gates-locators.ts (73) out of the contract module
+      (271) and fid-receipt-stamp.ts (48) out of the executor (286,
+      stampReceipt facade re-exported). Tripwire + fid-gates fixtures
+      updated to declare the mandatory gate.
+- [x] **T58-D.** Gates: 4-suite battery 60 pass / 0 fail (95 expect; C3
+      legs LIVE-run quality:report); typecheck ×4; quality:report PASS;
+      eslint --max-warnings 0; prettier + lint:md clean. LIVE e2e both
+      legs: positive — throwaway fixed FID stamped via real
+      `fid:verify --write` incl. `[PASS] quality (exit 0)`, repo --check
+      PASS; negative — a stamped fixed FID omitting the gate fails
+      `--check` (exit 1) with exactly `quality gate not declared — add
+      \`- gate: quality\``; fixtures destroyed, tree clean. Records +
+      commit + push.
+
 ## Task 57 — probe-endpoint.ts ceiling split (2026-09-16)
 
 > Operator directive (approved from Task 56's [OPEN-OUT-OF-SCOPE] item):

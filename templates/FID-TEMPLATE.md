@@ -81,6 +81,9 @@ How will we confirm the fix works?
 > - `- gate: typecheck <workspace>` — workspace must be in `VALIDATION_WORKSPACE_POLICY`
 > - `- gate: test <repo-relative-path>` — must exist, `*.test.ts`/`*.test.tsx`
 > - `- gate: probe <repo-relative-path>` — must exist, `*.ts`
+> - `- gate: quality` — no argument; runs the repo-wide `quality:report` file
+>   ceiling/style gate. MANDATORY for `fixed`/`verified` (Task 58): a closure
+>   without it is rejected by the validator and the pre-write tripwire.
 >
 > Stamp the receipt with `bun run fid:verify <fid-path> --write`. The receipt's
 > fingerprint binds it to the document: any edit after verification invalidates
@@ -93,6 +96,7 @@ How will we confirm the fix works?
 - gate: typecheck sdk
 - gate: test sdk/src/__tests__/process-definitions.test.ts
 - gate: probe dev/scratchpad/process-defs-probe.ts
+- gate: quality
 
 ### Verification Receipt
 
@@ -101,6 +105,7 @@ How will we confirm the fix works?
 - typecheck sdk: exit 0
 - test sdk/src/__tests__/process-definitions.test.ts: exit 0
 - probe dev/scratchpad/process-defs-probe.ts: exit 0
+- quality: exit 0
 ```
 
 ## Perfection Loop

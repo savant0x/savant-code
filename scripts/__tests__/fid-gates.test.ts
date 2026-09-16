@@ -36,7 +36,10 @@ const PROBE = 'scripts/__tests__/fixtures/fid-verify-echo.ts'
 const FAIL_PROBE = 'scripts/__tests__/fixtures/fid-verify-fail.ts'
 
 function fixedFid(gates: string[], receipt?: string): string {
-  const gatesBlock = gates.map((g) => `- gate: ${g}`).join('\n')
+  // Task 58: `quality` is mandatory for fixed/verified — fixtures declare it
+  // (with its exit-0 receipt line below) so the structural legs exercise the
+  // receipt contract, not the mandatory-gate error.
+  const gatesBlock = [...gates, 'quality'].map((g) => `- gate: ${g}`).join('\n')
   const content = `# FID: test
 
 **Status:** fixed
@@ -50,7 +53,8 @@ ${receipt ? `\n${receipt}` : ''}
 
 /** Attach a receipt whose fingerprint matches the given FID content. */
 function withValidReceipt(content: string, results: string[]): string {
-  const receiptBody = results.join('\n')
+  // Task 58: every fixture's receipt covers the mandatory quality gate.
+  const receiptBody = [...results, '- quality: exit 0'].join('\n')
   const receipt = `### Verification Receipt
 
 - verified: 2026-08-23T15:04:00Z

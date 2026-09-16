@@ -9,7 +9,8 @@
  *
  * Usage: `bun run fid:verify <fid-path> [--write]` | `--check`.
  * Gate shapes: `typecheck <workspace>`, `test <path>` (*.test.ts|tsx),
- * `probe <path>` (*.ts) — argv arrays only, no shell interpolation.
+ * `probe <path>` (*.ts), `quality` (no arg; repo-wide quality:report) —
+ * argv arrays only, no shell interpolation.
  * Exit 0 iff every declared gate passes (or --check is clean).
  */
 import fs from 'node:fs'
@@ -21,7 +22,11 @@ import {
   validateFidVerification,
 } from '@savant-code/agent-runtime/echo/fid-verification-gates'
 
+import { stampReceipt } from './fid-receipt-stamp'
 import { VALIDATION_WORKSPACE_POLICY } from './validation-manifest'
+
+// Public surface preserved for existing importers (facade re-export).
+export { stampReceipt }
 
 const root = path.resolve(import.meta.dir, '..')
 
@@ -29,7 +34,7 @@ const WORKSPACES = new Set(
   VALIDATION_WORKSPACE_POLICY.map((entry) => entry.workspace),
 )
 
-export type GateKind = 'typecheck' | 'test' | 'probe'
+export type GateKind = 'typecheck' | 'test' | 'probe' | 'quality'
 
 export type ResolvedGate = {
   kind: GateKind
@@ -67,6 +72,13 @@ export function safeRepoPath(
   return { ok: true }
 }
 
+/** Canonical gate label: `<kind> <arg>`, or the bare kind for a no-arg gate
+ * (`quality`) — the single rule shared by resolveGate and fid-gates so C3
+ * result lookups always match (Task 58). */
+export function gateLabel(kind: string, arg: string): string {
+  return arg === '' ? kind : `${kind} ${arg}`
+}
+
 /** Map a declared gate to an allowlisted argv command. Never shell text. */
 export function resolveGate(
   kind: string,
@@ -81,7 +93,7 @@ export function resolveGate(
     return {
       kind,
       arg,
-      label: `typecheck ${arg}`,
+      label: gateLabel(kind, arg),
       argv: ['bun', 'run', `--cwd=${arg}`, 'typecheck'],
       cwd: root,
     }
@@ -92,7 +104,7 @@ export function resolveGate(
     return {
       kind,
       arg,
-      label: `test ${arg}`,
+      label: gateLabel(kind, arg),
       argv: ['bun', 'test', arg],
       cwd: root,
     }
@@ -103,8 +115,22 @@ export function resolveGate(
     return {
       kind,
       arg,
-      label: `probe ${arg}`,
+      label: gateLabel(kind, arg),
       argv: ['bun', 'run', arg],
+      cwd: root,
+    }
+  }
+  // Task 58: the repo-wide quality gate — allowlisted script, no argument
+  // (repo-wide and singular; the parser rejects an argument).
+  if (kind === 'quality') {
+    if (arg !== '') {
+      return { error: 'unsafe quality gate — takes no argument' }
+    }
+    return {
+      kind,
+      arg,
+      label: gateLabel(kind, arg),
+      argv: ['bun', 'run', 'quality:report'],
       cwd: root,
     }
   }
@@ -164,48 +190,9 @@ export function buildReceipt(
   return lines.join('\n')
 }
 
-/**
- * Byte span of the first line matching `pattern` on its own line, outside
- * fenced blocks. Line-anchored + fence-aware: prose, backticked, or fenced
- * mentions of a heading can never hijack the stamp (FID-2026-0907-010).
- */
-function findHeadingLine(
-  content: string,
-  pattern: RegExp,
-): { start: number; end: number } | undefined {
-  let offset = 0
-  let fenced = false
-  for (const line of content.split('\n')) {
-    if (line.trimStart().startsWith('```')) fenced = !fenced
-    else if (!fenced && pattern.test(line))
-      return { start: offset, end: offset + line.length }
-    offset += line.length + 1
-  }
-  return undefined
-}
-
-/** Insert (or replace) the receipt block after the `## Verification Gates` section. */
-export function stampReceipt(content: string, receipt: string): string {
-  const existing = findHeadingLine(content, /^###\s+Verification Receipt\s*$/)
-  if (existing) {
-    // Search for the next heading AFTER the receipt heading line.
-    const after = content.slice(existing.end + 1)
-    const next = after.search(/^(## |### )/m)
-    const tail = next === -1 ? '' : after.slice(next)
-    return `${content.slice(0, existing.start).trimEnd()}\n\n${receipt}\n\n${tail.trimStart()}`
-  }
-  const gates = findHeadingLine(content, /^##\s+Verification Gates\s*$/)
-  if (!gates) return `${content.trimEnd()}\n\n${receipt}\n`
-  const after = content.slice(gates.end + 1)
-  const next = after.search(/^## |^### /m)
-  if (next === -1) return `${content.trimEnd()}\n\n${receipt}\n`
-  const insertAt = gates.end + 1 + next
-  return (
-    content.slice(0, insertAt).trimEnd() +
-    `\n\n${receipt}\n\n` +
-    content.slice(insertAt).trimStart()
-  )
-}
+// The fence-aware stamp locator + insert/replace logic (findHeadingLine /
+// stampReceipt) live in ./fid-receipt-stamp (300-line ceiling split,
+// FID-2026-0913-002 discipline; verbatim move).
 
 export function activeFidFiles(): string[] {
   const directory = path.join(root, 'dev', 'fids')

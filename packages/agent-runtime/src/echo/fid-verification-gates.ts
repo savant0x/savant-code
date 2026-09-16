@@ -33,8 +33,18 @@
 
 import { createHash } from 'node:crypto'
 
-/** Allowlisted gate kinds — never executed from free-form shell. */
-export type VerificationGateKind = 'typecheck' | 'test' | 'probe'
+import {
+  receiptBlock,
+  receiptSpan,
+  verificationGatesSection,
+  withoutFencedBlocks,
+} from './fid-verification-gates-locators'
+
+/** Allowlisted gate kinds — never executed from free-form shell. `quality`
+ * is the repo-wide ceiling/style gate (Task 58): no argument, singular — a
+ * fixed/verified FID must declare it so file-cap regressions cannot silently
+ * ship with a closure. */
+export type VerificationGateKind = 'typecheck' | 'test' | 'probe' | 'quality'
 
 /** A declared verification gate. `arg` semantics depend on `kind`. */
 export type VerificationGate = {
@@ -53,11 +63,14 @@ export type VerificationReceipt = {
   }[]
 }
 
-/** One `- gate: <kind> <arg>` declaration line. */
-const GATE_LINE = /^-\s*gate:\s*(typecheck|test|probe)\s+(\S+)$/
+/** One `- gate: <kind> <arg>` declaration line. The `quality` kind is
+ * no-arg (repo-wide, singular). */
+const GATE_LINE =
+  /^-\s*gate:\s*(typecheck|test|probe)\s+(\S+)$|^-[\s]*gate:\s*quality\s*$/
 
-/** One `- <kind> <arg>: exit <code>` receipt line. */
-const RESULT_LINE = /^-\s*(typecheck|test|probe)\s+(\S+):\s*exit\s+(\d+)$/
+/** One `- <kind> <arg>: exit <code>` receipt line (`quality` is no-arg). */
+const RESULT_LINE =
+  /^-\s*(typecheck|test|probe)\s+(\S+):\s*exit\s+(\d+)$|^-[\s]*quality:\s*exit\s+(\d+)$/
 
 const FINGERPRINT_LINE = /^-\s*fingerprint:\s*sha256:([0-9a-f]{64})$/
 const VERIFIED_LINE = /^-\s*verified:\s*(.+)$/
@@ -67,68 +80,10 @@ const STATUS_LINE = /^\*\*Status:\*\*\s*(.+)$/m
 /** FIDs must be at least one of these to require verification evidence. */
 const VERIFIED_STATUSES = new Set(['fixed', 'verified'])
 
-/** Strip fenced code blocks — documented examples (templates/FID-TEMPLATE.md) are
- * never parsed as real contract declarations; fence contents are documentation. */
-function withoutFencedBlocks(content: string): string {
-  return content.replace(/```[^\s]*\n[\s\S]*?```/g, '')
-} /**
- * Extract a headed section up to the next same-or-higher heading (or EOF). `start`
- * is line-anchored (^ + $) so inline prose mentions never shadow the real section;
- * fenced examples are excluded first (withoutFencedBlocks).
- */
-function sectionBetween(
-  content: string,
-  start: RegExp,
-  next: RegExp,
-): string | undefined {
-  const without = withoutFencedBlocks(content)
-  const match = without.match(start)
-  if (!match || match.index === undefined) return undefined
-  const after = without.slice(match.index + match[0].length)
-  const nextMatch = after.search(next)
-  return nextMatch === -1 ? after : after.slice(0, nextMatch)
-}
-
-/** The `## Verification Gates` section body (declarations + receipt). */
-function verificationGatesSection(content: string): string | undefined {
-  return sectionBetween(content, /^## Verification Gates\s*$/m, /^## /m)
-}
-
-/**
- * The receipt region on the fence-stripped view, as an exact byte span:
- * the anchored heading match (heading + consumed line terminator) plus the
- * body up to the next heading. ONE shared locator so the block reader
- * (`receiptBlock`) and the fingerprint (`computeFidFingerprint`, which
- * removes exactly this span) always agree on the region's byte extent
- * (FID-2026-0907-010: the old literal-length removal was one byte short,
- * leaving a stray line terminator in the hashed view and making every
- * FIRST receipt stamp validate as stale).
- */
-function receiptSpan(
-  stripped: string,
-): { start: number; headingLength: number; length: number } | undefined {
-  const headingMatch = stripped.match(/^### Verification Receipt\s*$/m)
-  if (!headingMatch || headingMatch.index === undefined) return undefined
-  const after = stripped.slice(headingMatch.index + headingMatch[0].length)
-  const next = after.search(/^(## |### )/m)
-  const block = next === -1 ? after : after.slice(0, next)
-  return {
-    start: headingMatch.index,
-    headingLength: headingMatch[0].length,
-    length: headingMatch[0].length + block.length,
-  }
-}
-
-/** The `### Verification Receipt` block inside the gates section. */
-function receiptBlock(content: string): string | undefined {
-  const stripped = withoutFencedBlocks(content)
-  const span = receiptSpan(stripped)
-  if (!span) return undefined
-  return stripped.slice(
-    span.start + span.headingLength,
-    span.start + span.length,
-  )
-}
+// The fence-aware locators (withoutFencedBlocks / sectionBetween /
+// verificationGatesSection / receiptSpan / receiptBlock) live in
+// ./fid-verification-gates-locators (300-line ceiling split,
+// FID-2026-0913-002 discipline; verbatim move).
 
 /**
  * Parse the declared gates. Returns structural errors for malformed lines;
@@ -149,7 +104,13 @@ export function parseVerificationGates(content: string): {
     if (!trimmed) continue
     const match = trimmed.match(GATE_LINE)
     if (match) {
-      gates.push({ kind: match[1] as VerificationGateKind, arg: match[2] })
+      // The quality branch of the alternation has no capture groups, so a
+      // no-arg quality declaration lands here with undefined groups.
+      if (match[1] === undefined) {
+        gates.push({ kind: 'quality', arg: '' })
+      } else {
+        gates.push({ kind: match[1] as VerificationGateKind, arg: match[2] })
+      }
       continue
     }
     // A line that starts with `- gate:` but failed the grammar is a
@@ -194,11 +155,17 @@ export function parseVerificationReceipt(content: string): {
     }
     const result = trimmed.match(RESULT_LINE)
     if (result) {
-      receipt.results.push({
-        kind: result[1] as VerificationGateKind,
-        arg: result[2],
-        exit: Number(result[3]),
-      })
+      // The quality branch of the alternation carries its exit code in
+      // group 4; the positional kinds use groups 1-3.
+      receipt.results.push(
+        result[1] === undefined
+          ? { kind: 'quality', arg: '', exit: Number(result[4]) }
+          : {
+              kind: result[1] as VerificationGateKind,
+              arg: result[2],
+              exit: Number(result[3]),
+            },
+      )
       continue
     }
     errors.push(`malformed receipt line: ${trimmed}`)
@@ -276,6 +243,16 @@ export function validateFidVerification(content: string): string[] {
   const covered = new Set(
     receipt.results.map((result) => `${result.kind} ${result.arg}`),
   )
+
+  // Task 58: the repo-wide quality gate is MANDATORY for fixed/verified —
+  // a closure that omits it cannot prove the file-ceiling/style report
+  // green, so the omission is an error (the pre-write tripwire and the
+  // validate:repository C1+C2 scan both flow through here).
+  if (!gates.some((gate) => gate.kind === 'quality')) {
+    errors.push(
+      'quality gate not declared — add `- gate: quality` (repo-wide quality:report is mandatory for fixed/verified)',
+    )
+  }
 
   for (const gate of gates) {
     const key = `${gate.kind} ${gate.arg}`

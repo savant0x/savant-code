@@ -32,7 +32,8 @@ const RECEIPT = `### Verification Receipt
 - verified: 2026-08-23T15:04:00Z
 - typecheck sdk: exit 0
 - test sdk/src/__tests__/process-definitions.test.ts: exit 0
-- probe dev/scratchpad/process-defs-probe.ts: exit 0`
+- probe dev/scratchpad/process-defs-probe.ts: exit 0
+- quality: exit 0`
 
 describe('parseVerificationGates', () => {
   it('parses typecheck/test/probe declarations', () => {
@@ -49,6 +50,20 @@ describe('parseVerificationGates', () => {
       { kind: 'test', arg: 'sdk/src/__tests__/process-definitions.test.ts' },
       { kind: 'probe', arg: 'dev/scratchpad/process-defs-probe.ts' },
     ])
+  })
+
+  it('parses the no-arg quality gate (Task 58)', () => {
+    const { gates, errors } = parseVerificationGates(fid('fixed', ['quality']))
+    expect(errors).toEqual([])
+    expect(gates).toEqual([{ kind: 'quality', arg: '' }])
+  })
+
+  it('rejects an argument on the quality gate (repo-wide, singular)', () => {
+    const { gates, errors } = parseVerificationGates(
+      fid('fixed', ['quality sdk']),
+    )
+    expect(gates).toEqual([])
+    expect(errors.join('; ')).toContain('malformed gate declaration')
   })
 
   it('reports missing gates section as an error', () => {
@@ -103,6 +118,7 @@ describe('parseVerificationReceipt', () => {
         exit: 0,
       },
       { kind: 'probe', arg: 'dev/scratchpad/process-defs-probe.ts', exit: 0 },
+      { kind: 'quality', arg: '', exit: 0 },
     ])
   })
 
@@ -177,6 +193,7 @@ const THREE_GATES = [
   'typecheck sdk',
   'test sdk/src/__tests__/process-definitions.test.ts',
   'probe dev/scratchpad/process-defs-probe.ts',
+  'quality',
 ]
 
 /** Build a FID whose receipt fingerprint matches its (receipt-stripped) body. */
@@ -251,6 +268,17 @@ describe('validateFidVerification (C1+C2)', () => {
       'typecheck sdk: exit 1',
     )
     expect(validateFidVerification(content).join('; ')).toContain('exit 1')
+  })
+
+  it('rejects fixed with no quality gate declared (Task 58 — mandatory)', () => {
+    const errors = validateFidVerification(
+      fidWithValidReceipt('fixed', [
+        'typecheck sdk',
+        'test sdk/src/__tests__/process-definitions.test.ts',
+        'probe dev/scratchpad/process-defs-probe.ts',
+      ]),
+    )
+    expect(errors.join('; ')).toContain('quality gate not declared')
   })
 
   it('rejects receipt results not declared as gates', () => {

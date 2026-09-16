@@ -22,7 +22,7 @@ import {
   validateFidVerification,
 } from '@savant-code/agent-runtime/echo/fid-verification-gates'
 
-import { resolveGate, runGates } from './fid-verify'
+import { gateLabel, resolveGate, runGates } from './fid-verify'
 
 import type { FidLedgerIssue } from './fid-ledger-types'
 
@@ -98,7 +98,7 @@ export function validateFidVerificationGates(root: string): FidLedgerIssue[] {
   for (const fid of fids) {
     const { gates } = parseVerificationGates(fid.content)
     for (const gate of gates) {
-      const key = `${gate.kind} ${gate.arg}`
+      const key = gateLabel(gate.kind, gate.arg)
       if (seen.has(key)) continue
       seen.add(key)
       toRun.push({ ...gate, label: key, fid: fid.name })
