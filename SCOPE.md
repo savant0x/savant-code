@@ -69,6 +69,34 @@
       streaming + provider flexibility) — split this task. (3) Ollama has
       no /model row — correct by design (dynamic local catalog via
       onboarding auto-detect).
+- [x] **T52.** Provider-suggestions system DEEP AUDIT (operator
+      directive): all 15 lib modules + 3 entry points read 0-EOF; data
+      flow verified feed→parse→seed-merge→stage-0→typosquat→diff→probe→
+      report/state/denylist/context-block; LIVE artifact forensics on
+      candidates.json (71/71 hostCount agreement), denylist.json, and
+      report.md; pipeline suite 85/0 (354 expects). **Verdict:
+      architecture sound (no-bypass seed chain, manual-redirect boundary
+      probe, dev-write guard, carry-forward boundary semantics all
+      verified) — 4 findings:** (1) **BUG — denylist never accumulates:**
+      mergeDenylist writes {_meta,entries} but reads back only if
+      Array.isArray → prior entries silently dropped every run; LIVE
+      proof: 118 rows, all decision=excluded, all firstSeen==lastSeen,
+      single day 2026-09-15, zero rejected/flagged rows persisted despite
+      two LIVE open-relay rejections in past runs; zero test coverage on
+      the seam. (2) **Audit-trail gap (re-confirmed on fresh artifact):**
+      silent-class exclusions (unconfirmed-category, monitor-directory,
+      free-product, unreachable) render no audit rows — the report's
+      "every gate decision, with reason" claim covers only rendered
+      classes (>50% of the feed unaccounted). (3) **propose-provider is
+      unconstrained:** accepts ANY host string with no check against
+      candidates.json / stage-0 / typosquat / denylist — an open-relay
+      host is scaffoldable with only a generic warning IF state exists;
+      hosts outside the tracked set scaffold with no warning at all.
+      (4) **SSRF exposure (defensible, should be deliberate):** feed URLs
+      flow to fetch unvalidated (loopback/private-IP/localhost literals
+      possible in a hostile feed; 10s timeout + read-only + no-key
+      posture limits blast radius). All four routed to FID candidates —
+      none written without operator approval.
 - [ ] **T51-F. [BLOCKED — operator]** Identity gauntlet on bazaarlink PAID
       channels: the account is zero-credit — LIVE 402 probe on `qwen3.8-max`
       ("Insufficient credits") — every paid cell would fail before serving.
