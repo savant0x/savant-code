@@ -65,3 +65,10 @@ docs/design/Free LLM API Aggregator Research — Verification.md
 # per harvest run (replaced in place), gitignored; MD013 on generated
 # evidence tables is meaningless. Same exemption precedent as the scratchpad.
 dev/provider-candidates/**
+
+# Session-end wiki pattern capture (FID-2026-0912-003) — machine-generated
+# distillations of recurring tool-failure patterns, updated by the
+# session-end review; never hand-edited. Long machine-authored sample lines
+# make MD013 meaningless. Same exemption precedent as the scratchpad and
+# provider-candidates.
+dev/wiki/**
