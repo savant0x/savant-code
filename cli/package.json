@@ -14,7 +14,7 @@
     }
   },
   "scripts": {
-    "dev": "bun run prebuild:agents && bun run src/index.tsx --cwd ..",
+    "dev": "bun run prebuild:agents && bun --no-env-file run src/index.tsx --cwd ..",
     "prebuild:agents": "bun run scripts/prebuild-agents.ts",
     "build:binary": "bun ./scripts/build-binary.ts savant-code $npm_package_version",
     "clean": "bun run scripts/clean.ts",

@@ -5,8 +5,12 @@
 //    binary at build time) provides the canonical env values. This is
 //    required because Bun's `--define` replacement is unreliable for env
 //    vars once workspace packages are pre-built to dist and minified.
-// 2. Local dev: `bun dev` runs with `--cwd ..`, which disables Bun's
-//    dotenv auto-loader, so we manually load the repo-root `.env.local`.
+// 2. Local dev: the dev script passes `--no-env-file` to the CLI entry,
+//    which disables Bun's dotenv auto-loader. Without it, Bun pre-seeds
+//    process.env from `cli/.env.local` at startup (cwd stays `cli/` —
+//    `--cwd ..` is script argv, not a runtime flag), and the "existing env
+//    wins" rule below then permanently locks in that stale value, shadowing
+//    the repo-root `.env.local`. (FID-2026-0917-003.)
 //
 // This module MUST be imported before any `@savant-code/common` import that
 // would trigger `common/src/env.ts` (which parses the schema at module load).
