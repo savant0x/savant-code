@@ -1,9 +1,19 @@
 import { TextAttributes } from '@opentui/core'
 import React from 'react'
 
+import { Button } from './button'
+import { CollapseButton } from './collapse-button'
 import { TrafficLightPanel } from './traffic-light-panel'
 import { useChatStore } from '../state/chat-store'
 
+import type { LastCompactionReport } from '../state/chat-store/chat-store-common-types'
+
+/**
+ * FID-2026-0916-008: chars of the report excerpt shown in the collapsed header
+ * row before the `…` truncation marker. Bounded well under the terminal width
+ * so the `▾ expand` affordance stays on screen.
+ */
+const REPORT_EXCERPT_PREVIEW_CHARS = 160
 /**
  * FID-2026-0821-001 P1-1/P1-2: in-stream compaction lifecycle panel,
  * restyled after the TerminalCommandDisplay chrome — rounded border on the
@@ -30,7 +40,9 @@ export const CompactionSignal = React.memo(function CompactionSignal() {
   const compactionStatus = useChatStore((s) => s.compactionStatus)
   const compactionEvents = useChatStore((s) => s.compactionEvents)
   const lastCompactionReport = useChatStore((s) => s.lastCompactionReport)
-
+  // FID-2026-0916-008: local fold state for the report excerpt. The panel is
+  // render-only — this is viewport state, never chat history.
+  const [reportExpanded, setReportExpanded] = React.useState(false)
   const phase = compactionStatus?.phase
   const body = (() => {
     if (phase === 'compacting') {
@@ -109,21 +121,61 @@ export const CompactionSignal = React.memo(function CompactionSignal() {
         <box style={{ flexDirection: 'column' }}>
           {body}
           {lastCompactionReport ? (
-            <box style={{ flexDirection: 'column' }}>
-              <text fg="#8f8f99">
-                {`▸ removed ${String(lastCompactionReport.removedMessages)} messages · summary: ${lastCompactionReport.summaryExcerpt.trim().slice(0, 160)}${lastCompactionReport.summaryExcerpt.length > 160 ? '…' : ''}`}
-              </text>
-              {/* FID-2026-0824-023 V2 completion: the FULL stored excerpt is
-                  rendered beneath the preview — OpenTUI primitives expose no
-                  click props in this version, so the expander is an
-                  always-visible block instead of a toggle (nothing hidden). */}
-              <text fg="#8f8f99">
-                {lastCompactionReport.summaryExcerpt.trim()}
-              </text>
-            </box>
+            <CompactionReportExcerpt
+              report={lastCompactionReport}
+              reportExpanded={reportExpanded}
+              onToggleExpanded={() => setReportExpanded((v) => !v)}
+            />
           ) : null}
         </box>
       </TrafficLightPanel>
     </box>
   )
 })
+
+/**
+ * FID-2026-0916-008: the post-compaction report excerpt, folded behind the
+ * same toggle CompactionSummaryBlock uses (Law 11). Collapsed by default —
+ * the header + a 160-char preview render in one row; the full excerpt
+ * reveals on demand. This replaces the old always-visible dump, which could
+ * not be folded.
+ *
+ * Extracted as a prop-driven presentational sub-component (the same shape
+ * as CompactionSummaryBlock's `isCollapsed` prop) so BOTH fold states are
+ * statically testable under react-dom/server — the harness cannot simulate
+ * clicks, so the toggle state must be injectable rather than internal.
+ */
+export function CompactionReportExcerpt({
+  report,
+  reportExpanded,
+  onToggleExpanded,
+}: {
+  report: LastCompactionReport
+  reportExpanded: boolean
+  onToggleExpanded: () => void
+}) {
+  const excerpt = report.summaryExcerpt.trim()
+  return (
+    <box style={{ flexDirection: 'column' }}>
+      <Button
+        style={{ justifyContent: 'flex-start', width: '100%' }}
+        onClick={onToggleExpanded}
+      >
+        <text fg="#8f8f99">
+          {`▸ removed ${String(report.removedMessages)} messages · summary: ${excerpt.slice(
+            0,
+            REPORT_EXCERPT_PREVIEW_CHARS,
+          )}${excerpt.length > REPORT_EXCERPT_PREVIEW_CHARS ? '…' : ''} ${reportExpanded ? '▴ collapse' : '▾ expand'}`}
+        </text>
+      </Button>
+      {reportExpanded ? (
+        <box style={{ flexDirection: 'column' }}>
+          <text fg="#8f8f99">{excerpt}</text>
+          {/* Re-collapse without scrolling back up to the header (same
+              shared control as CompactionSummaryBlock). */}
+          <CollapseButton onClick={onToggleExpanded} />
+        </box>
+      ) : null}
+    </box>
+  )
+}

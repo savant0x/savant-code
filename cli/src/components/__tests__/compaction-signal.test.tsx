@@ -36,7 +36,8 @@ initializeThemeStore()
 // Loaded after the stub registration so the component binds the stubbed
 // store; a dynamic import keeps the import/order groups intact while
 // preserving evaluation order.
-const { CompactionSignal } = await import('../compaction-signal')
+const { CompactionReportExcerpt, CompactionSignal } =
+  await import('../compaction-signal')
 
 // mock.module registrations are process-global under `bun test`; re-register
 // the captured real store so suites loaded after this file (same process)
@@ -150,6 +151,105 @@ describe('CompactionSignal (FID-2026-0822-006 characterization)', () => {
     expect(markup).toContain('Folded oldest exchange')
   })
 
+  test('report excerpt is COLLAPSED by default: preview + fold affordance, full text hidden (FID-2026-0916-008)', () => {
+    compactionState.compactionEvents = [
+      { at: Date.now(), outcome: 'pruned', tokensSaved: 1200 },
+    ]
+    // A long excerpt whose tail lands past the 160-char preview window.
+    const longExcerpt = [
+      `Folded exchange: ${'x'.repeat(200)}`,
+      '',
+      'SECRET-BEYOND-PREVIEW-TEXT',
+    ].join('\n')
+    ;(compactionState as Record<string, unknown>).lastCompactionReport = {
+      summaryExcerpt: longExcerpt,
+      removedMessages: 3,
+      tokensSaved: 1200,
+    }
+
+    const markup = renderToStaticMarkup(<CompactionSignal />)
+
+    // Collapsed affordance prompts to expand.
+    expect(markup).toContain('▾ expand')
+    // The preview line is present.
+    expect(markup).toContain('removed 3 messages')
+    // The full excerpt past the preview is folded away, not dumped.
+    expect(markup).not.toContain('SECRET-BEYOND-PREVIEW-TEXT')
+  })
+
+  test('CompactionReportExcerpt renders the FULL excerpt when explicitly expanded (FID-2026-0916-008)', () => {
+    const longExcerpt = [
+      `Folded exchange: ${'x'.repeat(200)}`,
+      '',
+      'SECRET-BEYOND-PREVIEW-TEXT',
+    ].join('\n')
+    const report = {
+      summaryExcerpt: longExcerpt,
+      removedMessages: 3,
+      tokensSaved: 1200,
+    }
+
+    // The static-render harness cannot simulate clicks, so the fold state is
+    // driven by props (the same pattern CompactionSummaryBlock uses for
+    // isCollapsed) rather than an act() round-trip.
+    const markup = renderToStaticMarkup(
+      <CompactionReportExcerpt
+        report={report}
+        reportExpanded={true}
+        onToggleExpanded={() => {}}
+      />,
+    )
+
+    // Expanded affordance prompts to collapse.
+    expect(markup).toContain('▴ collapse')
+    // The full excerpt — including text past the 160-char preview — renders.
+    expect(markup).toContain('SECRET-BEYOND-PREVIEW-TEXT')
+    expect(markup).toContain('removed 3 messages')
+  })
+
+  test('CompactionReportExcerpt COLLAPSED hides the full excerpt behind the preview (FID-2026-0916-008)', () => {
+    const longExcerpt = [
+      `Folded exchange: ${'x'.repeat(200)}`,
+      '',
+      'SECRET-BEYOND-PREVIEW-TEXT',
+    ].join('\n')
+    const report = {
+      summaryExcerpt: longExcerpt,
+      removedMessages: 3,
+      tokensSaved: 1200,
+    }
+
+    const markup = renderToStaticMarkup(
+      <CompactionReportExcerpt
+        report={report}
+        reportExpanded={false}
+        onToggleExpanded={() => {}}
+      />,
+    )
+
+    expect(markup).toContain('▾ expand')
+    expect(markup).toContain('removed 3 messages')
+    expect(markup).not.toContain('SECRET-BEYOND-PREVIEW-TEXT')
+  })
+
+  test('CompactionReportExcerpt omits the ellipsis when the excerpt fits the preview (FID-2026-0916-008)', () => {
+    const markup = renderToStaticMarkup(
+      <CompactionReportExcerpt
+        report={{
+          summaryExcerpt: 'Short summary.',
+          removedMessages: 1,
+          tokensSaved: 50,
+        }}
+        reportExpanded={false}
+        onToggleExpanded={() => {}}
+      />,
+    )
+
+    expect(markup).toContain('Short summary.')
+    expect(markup).toContain('▾ expand')
+    // No truncation ellipsis because the excerpt is shorter than the preview.
+    expect(markup).not.toContain('…')
+  })
   test('renders nothing without status or events', () => {
     const markup = renderToStaticMarkup(<CompactionSignal />)
 

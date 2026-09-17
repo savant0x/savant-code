@@ -192,6 +192,17 @@ export const createSidebarActions = (set: SetState): ChatSidebarActions => ({
       state.fsmPhase = 'idle'
       state.activity = { kind: 'idle', since: Date.now() }
       state.lastResetAt = Date.now()
+      // FID-2026-0916-008: retire the previous run's compaction signal.
+      // CompactionSignal renders compactionEvents[len-1] + the report
+      // excerpt as a trailing scrollbox child; without retirement the
+      // terminal `pruned` phase pins "✓ Compaction complete" below every
+      // later message forever. The permanent record is the in-stream
+      // CompactionSummaryBlock (foldable, collapsed by default); the
+      // compactionCount session stat is preserved so the sidebar stays
+      // honest.
+      state.compactionStatus = null
+      state.compactionEvents = []
+      state.lastCompactionReport = null
     }),
 
   /**
