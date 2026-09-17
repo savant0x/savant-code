@@ -87,6 +87,24 @@ async function resolveAndCacheOpenRouterApiKey(): Promise<string | undefined> {
           cachedKey = json.key
           return cachedKey
         }
+        logger.warn('OpenRouter master key exchange returned no key')
+      } else {
+        // FID-2026-0917-001: a failed exchange must not vanish silently.
+        // A bad OR_MASTER_KEY (e.g. a management key with no inference
+        // entitlement) previously fell straight through to the regular-key
+        // fallback with zero diagnostics, so the operator saw a vendor 401
+        // at chat-completions that named neither the key nor the failure.
+        // Log the status and (redacted-safe) body — the body is vendor JSON
+        // carrying the error message, never the master key itself.
+        const body = await response.text().catch(() => '')
+        logger.warn(
+          {
+            status: response.status,
+            statusText: response.statusText,
+            responseBody: body.slice(0, 200),
+          },
+          'OpenRouter master key exchange rejected; falling back',
+        )
       }
     } catch (error) {
       logger.warn('Failed to exchange OpenRouter master key:', error)

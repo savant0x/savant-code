@@ -14,20 +14,21 @@ import fs from 'fs'
 import path from 'path'
 
 /**
- * Walk upward from startDir looking for relName; return its absolute path
- * or null if not found before the filesystem root.
+ * Walk upward from startDir collecting every relName match, innermost first.
+ * Returns [] when none exist before the filesystem root.
  */
-function findUp(startDir: string, relName: string): string | null {
+function findAllUp(startDir: string, relName: string): string[] {
+  const found: string[] = []
   let dir = startDir
   // Guard against infinite loop at filesystem root.
   for (let i = 0; i < 20; i++) {
     const candidate = path.join(dir, relName)
-    if (fs.existsSync(candidate)) return candidate
+    if (fs.existsSync(candidate)) found.push(candidate)
     const parent = path.dirname(dir)
     if (parent === dir) break
     dir = parent
   }
-  return null
+  return found
 }
 
 /**
@@ -84,36 +85,61 @@ export function applyBinaryEnvValues(
 }
 
 /**
- * Parse a dotenv-style file and apply it to process.env.
+ * Parse one dotenv-style file and apply it to process.env.
  * Mirrors the e2e harness `loadEnvFile` parser so dev and test agree.
  * Existing process.env values win (don't clobber real shell exports).
  */
-function applyEnvLocal(): void {
-  const envLocalPath = findUp(import.meta.dir, '.env.local')
-  if (!envLocalPath) return
+function applyOneEnvLocal(envLocalPath: string): void {
+  let content = ''
   try {
-    const content = fs.readFileSync(envLocalPath, 'utf-8')
-    for (const rawLine of content.split('\n')) {
-      const line = rawLine.trim()
-      if (!line || line.startsWith('#')) continue
-      const normalized = line.startsWith('export ')
-        ? line.slice('export '.length)
-        : line
-      const equalsIndex = normalized.indexOf('=')
-      if (equalsIndex <= 0) continue
-      const key = normalized.slice(0, equalsIndex).trim()
-      if (!key || process.env[key]) continue
-      let value = normalized.slice(equalsIndex + 1).trim()
-      if (
-        (value.startsWith('"') && value.endsWith('"')) ||
-        (value.startsWith("'") && value.endsWith("'"))
-      ) {
-        value = value.slice(1, -1)
-      }
-      process.env[key] = value
-    }
+    content = fs.readFileSync(envLocalPath, 'utf8')
   } catch {
-    // Missing .env.local is fine — real deployments set these via the shell.
+    // A missing/unreadable file is fine — skip it; other files still apply.
+    return
+  }
+  for (const rawLine of content.split('\n')) {
+    const line = rawLine.trim()
+    if (!line || line.startsWith('#')) continue
+    const normalized = line.startsWith('export ')
+      ? line.slice('export '.length)
+      : line
+    const equalsIndex = normalized.indexOf('=')
+    if (equalsIndex <= 0) continue
+    const key = normalized.slice(0, equalsIndex).trim()
+    if (!key || process.env[key]) continue
+    let value = normalized.slice(equalsIndex + 1).trim()
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1)
+    }
+    process.env[key] = value
+  }
+}
+
+/**
+ * Apply every `.env.local` from the repo root down to the CLI's own
+ * directory — not just the first match walking upward.
+ *
+ * The previous first-match `findUp` started at `cli/src/pre-init` and stopped
+ * at `cli/.env.local`, so the repo-root `.env.local` was silently skipped in
+ * dev mode. A key set only at the root (e.g. `OPENROUTER_API_KEY`) never
+ * reached the process, the resolver then fell back to `OR_MASTER_KEY` from
+ * `cli/.env.local`, and the run 401'd at chat-completions with a vendor error
+ * that named neither file. (FID-2026-0917-001.)
+ *
+ * Outermost (repo root) is applied first as the base; inner files layer on
+ * top. Existing process.env always wins, so on a collision the outer value
+ * takes precedence and a real shell export beats both.
+ */
+function applyEnvLocal(): void {
+  // findAllUp returns innermost-first; reverse so the repo root is the base.
+  for (const envLocalPath of findAllUp(
+    import.meta.dir,
+    '.env.local',
+  ).reverse()) {
+    applyOneEnvLocal(envLocalPath)
   }
 }
 
