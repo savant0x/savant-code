@@ -6,13 +6,14 @@ points at.
 
 ## Where things stand
 
-- Branch `main`, **ahead of `origin/main` by 11** (5 new commits this
+- Branch `main`, **ahead of `origin/main` by 14** (8 new commits this
   session; local-only per operator instruction — ask before pushing).
 - **Working tree:** only auto-maintained bookkeeping dirty
   (`dev/agenda.md`, `dev/experiences/raw-traces.jsonl`) and untracked
   `dev/wiki/` (machine-generated pattern capture, now markdownlint-exempt).
-- **Active FID queue is empty** (`dev/fids/` holds only `README.md`);
-  FID-2026-0917-002 is closed + archived (`10fcbd4e`).
+- **Active FID: FID-2026-0917-003** (openrouter-key-shadow-bun-dotenv,
+  critical, `verified`, committed but **not yet archived** — the
+  loop-closure ceremony is the next operator decision).
 - Session summary with the full evidence ledger:
   `dev/session-summaries/2026-09-16-2330-compaction-signal-pin-and-fold.md`
 
@@ -41,29 +42,50 @@ points at.
 5. **Closed + archived FID-2026-0917-002** (`10fcbd4e`): status flipped to
    `closed`, `git mv` to `dev/fids/archive/`, receipt re-stamped 3/3 LIVE at
    the archived path, CHANGELOG + archive index + active ledger updated.
+6. **Root-caused the persistent `User not found.` OpenRouter 401**
+   (FID-2026-0917-003, critical, verified + committed). The operator was
+   hours from stripping OpenRouter entirely. The integration was fine — a
+   boot-flag bug shadowed the valid key. Two commits: `095cddc6` (code),
+   `7a28bb0d` (FID). See the next section.
 
-## The deadlock fix (the freshest work — VERIFIED + COMMITTED)
+## The OpenRouter 401 (the freshest work — VERIFIED + COMMITTED, NOT archived)
 
-The gate's block message named the exact write that would fix the violation:
+The operator reported `✕ Error User not found.` on every OpenRouter call in
+local dev, persisting across the FID-0917-001 env fix and the SDK rebuild, and
+was ready to strip OpenRouter entirely. **The integration was never broken.**
 
-```text
-[ECHO Enforcement] BLOCKED: Law 3: Verify before proceeding — 1 unverified
-file(s): [dev/handoff.md]. Run typecheck/lint before more writes.
-```
+A comment in `load-dev-env.ts:5-6` claimed `--cwd ..` "disables Bun's dotenv
+auto-loader." That claim is false — `--cwd ..` is passed as **script argv**,
+cwd stays `cli/`, and Bun happily pre-seeds `process.env` from the **stale**
+`cli/.env.local` before `load-dev-env.ts` ever runs. Since that loader skips
+any key already in `process.env` ("existing wins"), the good repo-root value
+was permanently shadowed by a dead key.
 
 | Claim | Evidence |
 |---|---|
-| Docs no longer hard-block writes | `pre-write-gates.ts` filters `unverifiedDirty` to `classifyFileKind(f) === 'code'` |
-| Code verification is NOT weakened | Mixed doc+code dirty set still blocks and names only the code file (test pins it) |
-| No duplication (Law 13) | `classifyFileKind` is the same authority `evaluateWritesAtStepBoundary` already uses |
-| Reachability (Law 4) | `runPreWriteGates` called at `tool-pipeline.ts:110` before every write dispatch |
-| Repo docs can now be verified | `bun run lint:md` exit 0 repo-wide (was exit 1) |
+| `--cwd ..` does not disable the auto-loader | clean-env probe from `cli/`: `OR_MASTER_KEY=sk-or-v1-2dd8917` appears with `--cwd ..` present |
+| The pre-seeded key is stale and divergent | root `.env.local` = `sk-or-v1-7af3559…` (valid); `cli/.env.local` = `sk-or-v1-2dd8917…` (dead) |
+| Root value can never win | `applyOneEnvLocal` skips keys already in `process.env`; the stale slot is occupied first |
+| Exact operator error reproduced | stale key → exchange 401 → fallback `…85db` → chat **401 `User not found.`** |
+| The fix works, bidirectionally | with `--no-env-file`: `AFTER = sk-or-v1-7af…c895` → **HTTP 200**; without it (post-cleanup): also **HTTP 200** |
 
-Gates: typecheck packages/agent-runtime exit 0; law3 suite 8 pass / 0 fail
-(3 new); eslint 0; prettier clean; `quality:report` PASS (1498 files);
-`fid:verify --write` receipt stamped.
+Three-part fix: `--no-env-file` added to the dev boot (`cli/package.json:17`);
+the false comment corrected (`load-dev-env.ts:2-8`); the stale duplicate
+`OR_MASTER_KEY` removed from `cli/.env.local` (gitignored — a local-machine
+change, not in any commit). Gates: `fid:verify` 3/3 PASS (typecheck cli,
+probe, quality), eslint 0, prettier clean, `lint:md` exit 0. Independent
+Verifier audit: all substantive items PASS; both NEEDS-REVIEW flags closed
+(zero non-`.local` `.env` files exist repo-wide, so `--no-env-file` drops no
+keys; a wording nit fixed).
 
-## SDK rebuild — DONE (the freshest work)
+**Lesson worth keeping:** a comment documenting an *assumption about a tool's
+behavior* is load-bearing. The false "disables the auto-loader" note is what
+made FID-0917-001's correct ordering fix *look* sufficient while the real
+culprit ran before it. Whenever two loaders race for one env slot and you
+control the loser, "existing wins" guarantees you lose — print the value
+*before* your loader runs to prove you are first.
+
+## SDK rebuild — DONE
 
 The gate fix is now **shipped to the built artifact**, not just source.
 `node_modules/@savant-code/sdk` is a symlink to `sdk/`, and the SDK's
