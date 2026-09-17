@@ -6,6 +6,7 @@ import { afterEach, describe, expect, test } from 'bun:test'
 
 import {
   LEGACY_BOUNDARY,
+  LEARNINGS_INSERTION_MARKER,
   validateEmbeddedLearningSource,
   validateLearnings,
 } from './learnings-core.js'
@@ -34,8 +35,11 @@ function fixtureRoot(): string {
   return root
 }
 
+// Safe Core layout (FID-2026-0916-007): the insertion marker sits in
+// governed space — above the legacy boundary — so newly appended entries land
+// where the validator checks them.
 function validLearning(overrides = ''): string {
-  return `# LEARNINGS\n\n## Lesson: Current\n\n- **Date:** 2026-08-11\n- **Failure:** Failure\n- **Evidence:** scripts/example.ts → symbol:example\n- **Invariant:** Invariant\n- **Guard:** Guard\n- **Verification:** Verification\n- **Scope:** internal\n- **Owning FID:** FID-2026-0811-024\n- **Status:** active\n- **Canonical rule:** safe-rule\n${overrides}\n${LEGACY_BOUNDARY}\n\n${'<!-- Add new entries above this line -->'}\n`
+  return `# LEARNINGS\n\n${LEARNINGS_INSERTION_MARKER}\n\n## Lesson: Current\n\n- **Date:** 2026-08-11\n- **Failure:** Failure\n- **Evidence:** scripts/example.ts → symbol:example\n- **Invariant:** Invariant\n- **Guard:** Guard\n- **Verification:** Verification\n- **Scope:** internal\n- **Owning FID:** FID-2026-0811-024\n- **Status:** active\n- **Canonical rule:** safe-rule\n${overrides}\n${LEGACY_BOUNDARY}\n`
 }
 
 describe('learnings validator', () => {
@@ -59,7 +63,7 @@ describe('learnings validator', () => {
   })
 
   test('rejects chronology drift and unresolved supersession', () => {
-    const content = `# LEARNINGS\n\n## Lesson: New\n\n- **Date:** 2026-08-10\n- **Failure:** Failure\n- **Evidence:** scripts/example.ts → symbol:example\n- **Invariant:** Invariant\n- **Guard:** Guard\n- **Verification:** Verification\n- **Scope:** internal\n- **Owning FID:** FID-2026-0811-024\n- **Status:** superseded\n- **Superseded by:** Missing replacement\n\n## Lesson: Older\n\n- **Date:** 2026-08-11\n- **Failure:** Failure\n- **Evidence:** scripts/example.ts → symbol:example\n- **Invariant:** Invariant\n- **Guard:** Guard\n- **Verification:** Verification\n- **Scope:** internal\n- **Owning FID:** FID-2026-0811-024\n- **Status:** active\n\n${LEGACY_BOUNDARY}\n\n<!-- Add new entries above this line -->\n`
+    const content = `# LEARNINGS\n\n${LEARNINGS_INSERTION_MARKER}\n\n## Lesson: New\n\n- **Date:** 2026-08-10\n- **Failure:** Failure\n- **Evidence:** scripts/example.ts → symbol:example\n- **Invariant:** Invariant\n- **Guard:** Guard\n- **Verification:** Verification\n- **Scope:** internal\n- **Owning FID:** FID-2026-0811-024\n- **Status:** superseded\n- **Superseded by:** Missing replacement\n\n## Lesson: Older\n\n- **Date:** 2026-08-11\n- **Failure:** Failure\n- **Evidence:** scripts/example.ts → symbol:example\n- **Invariant:** Invariant\n- **Guard:** Guard\n- **Verification:** Verification\n- **Scope:** internal\n- **Owning FID:** FID-2026-0811-024\n- **Status:** active\n\n${LEGACY_BOUNDARY}\n`
     const result = validateLearnings(content, fixtureRoot())
     expect(result.issues.map((issue) => issue.code)).toEqual(
       expect.arrayContaining([
@@ -178,6 +182,24 @@ describe('learnings validator', () => {
         (issue) => issue.code === 'learning.evidence.unresolved',
       ),
     ).toHaveLength(2)
+  })
+
+  test('rejects an insertion marker placed below the legacy boundary', () => {
+    // FID-2026-0916-007: the marker at EOF inverted the file — every new entry
+    // landed below the boundary and escaped validation entirely.
+    const content = `# LEARNINGS\n\n## Lesson: Current\n\n- **Date:** 2026-08-11\n- **Failure:** Failure\n- **Evidence:** scripts/example.ts → symbol:example\n- **Invariant:** Invariant\n- **Guard:** Guard\n- **Verification:** Verification\n- **Scope:** internal\n- **Owning FID:** FID-2026-0811-024\n- **Status:** active\n- **Canonical rule:** safe-rule\n\n${LEGACY_BOUNDARY}\n\n${LEARNINGS_INSERTION_MARKER}\n`
+    const result = validateLearnings(content, fixtureRoot())
+    expect(result.issues.map((issue) => issue.code)).toContain(
+      'learning.insertion-marker.below-boundary',
+    )
+  })
+
+  test('rejects narrative prose left trailing after the legacy boundary', () => {
+    const content = validLearning() + '\n## Session 2026-08-10: stray prose\n'
+    const result = validateLearnings(content, fixtureRoot())
+    expect(result.issues.map((issue) => issue.code)).toContain(
+      'learning.legacy-boundary.trailing-content',
+    )
   })
 
   test('rejects private or protocol-variant content in embedded source', () => {

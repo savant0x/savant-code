@@ -19,6 +19,11 @@ import type {
   StructuredLearning,
 } from './learnings-types.js'
 
+/** The insertion marker must sit in governed space, above the legacy
+ * boundary, so that entries appended above it stay validated. The original
+ * "nothing may follow the marker" rule pushed the marker to EOF — below the
+ * boundary — which inverted the file and silently unvalidated every new lesson
+ * (FID-2026-0916-007). */
 function markerIssues(content: string): LearningIssue[] {
   const matches = [
     ...content.matchAll(
@@ -35,16 +40,31 @@ function markerIssues(content: string): LearningIssue[] {
         message: `Expected exactly one insertion marker; found ${matches.length}.`,
       },
     ]
-  const end = (matches[0]?.index ?? 0) + LEARNINGS_INSERTION_MARKER.length
-  return content.slice(end).trim()
-    ? [
+  const markerIndex = matches[0]?.index ?? 0
+  const boundaryIndex = content.indexOf(LEGACY_BOUNDARY)
+  if (boundaryIndex !== -1 && markerIndex > boundaryIndex)
+    return [
+      {
+        code: 'learning.insertion-marker.below-boundary',
+        message:
+          'The insertion marker must sit above the legacy boundary so new entries land in governed space.',
+      },
+    ]
+  // Only comments and whitespace may trail the boundary once prose is retired.
+  if (boundaryIndex !== -1) {
+    const afterBoundary = content
+      .slice(boundaryIndex + LEGACY_BOUNDARY.length)
+      .trim()
+    if (afterBoundary && !afterBoundary.startsWith('<!--'))
+      return [
         {
-          code: 'learning.insertion-marker.trailing-content',
+          code: 'learning.legacy-boundary.trailing-content',
           message:
-            'No content may follow the insertion marker except whitespace.',
+            'Only comments may follow the legacy boundary; narrative prose must be retired to the archive.',
         },
       ]
-    : []
+  }
+  return []
 }
 function supersessionIssues(
   entries: readonly StructuredLearning[],
