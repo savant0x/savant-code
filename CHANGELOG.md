@@ -2,6 +2,122 @@
 
 ## Unreleased
 
+### OpenRouter 401 fixed: dev env split + observable key exchange (FID-2026-0917-001)
+
+- OpenRouter calls failed with the vendor 401 `User not found.` Two root
+  causes, neither in the OpenRouter client (header, base URL, and model id
+  proven correct by a live probe replaying the exact request path):
+  dev-mode `.env.local` discovery used first-match `findUp` and silently
+  skipped the repo-root file (a root `OPENROUTER_API_KEY` never reached
+  `process.env`), and the resolver's `OR_MASTER_KEY` exchange fell through
+  on failure with zero diagnostics — a management key lists models (200)
+  but cannot run inference.
+- `cli/src/pre-init/load-dev-env.ts` now discovers **every** `.env.local`
+  from the repo root down (`findAllUp` + `applyOneEnvLocal`), applying
+  outermost-first so deeper files override; existing `process.env` values
+  still win.
+- `sdk/src/impl/openrouter-key-resolver.ts` logs the exchange response
+  status/body (capped 200 chars) on non-2xx before falling through to the
+  regular-key fallback — a bad management key now says `401 Invalid API
+  key` instead of vanishing. No key material is logged (Law 12).
+- Evidence: live probe — the regular key streams chat-completions 200
+  through the unchanged client; the management key reproduces the exact
+  `User not found.` 401. Gates: typecheck cli+sdk exit 0; eslint 0;
+  prettier clean; `load-dev-env.test.ts` 4/0;
+  `openrouter-key-resolver.test.ts` 8/0; quality PASS; receipt 5/5 LIVE;
+  independent Verifier AUDIT PASS. **Closed + archived 2026-09-17.**
+
+### Compaction signal no longer pins; report excerpt folds (FID-2026-0916-008)
+
+- The in-stream "✓ Compaction complete (−N tokens) — P% of window" panel no
+  longer stays pinned below every later message. `onNewUserMessage` — the
+  canonical pre-run zeroing path — now clears `compactionStatus`,
+  `compactionEvents`, and `lastCompactionReport` (preserving `compactionCount`,
+  the session sidebar stat). The signal shows for the rest of the run that
+  compacted, then retires on the next message.
+- The report excerpt is now **collapsed by default** behind a `▾ expand`
+  affordance with a 160-char preview, instead of dumping the full
+  96K-char summary with no toggle. Reuses the existing `Button`/
+  `CollapseButton` pattern from `CompactionSummaryBlock` (Law 11).
+- The excerpt renders through a new presentational `CompactionReportExcerpt`
+  sub-component that takes the fold state as a prop (same shape as
+  `CompactionSummaryBlock`'s `isCollapsed`), making both fold states testable
+  under the static-render harness.
+- Gates: typecheck cli exit 0; eslint 0; prettier clean; markdownlint clean;
+  `chat-store-compaction.test.ts` 10/0; `compaction-signal.test.tsx` 13/0.
+
+### Atria gateway provider added (FID-2026-0916-005)
+
+- Atria AI (`https://api.atria-asi.ai/v1`) is a built-in provider exposing
+  the single `Atria-Dawn-Preview` model (256K context, vendor-published;
+  pinned at 262,144 in the fallback table, not derived from the family
+  heuristic). Follows the bazaarlink one-model static-catalog pattern
+  (FID-2026-0915-006) exactly: the vendor's `/v1/models` endpoint is
+  key-protected, so a static one-model map is the known-checked-in set.
+- `/provider atria` selects it and offers the masked `ATRIA_API_KEY` entry
+  (`setupAvailable: true` — derived, matching every other built-in gateway);
+  `/model atria/Atria-Dawn-Preview` routes through the generic
+  `createProviderModel` factory (`protocol: 'openai'`, `idTransform: 'strip'`).
+- Six derived surfaces wired: registry entry (`registry-partitioned.ts`),
+  `atriaModels` map + `AtriaModel` type (`gateway-catalogs.ts`),
+  `MODEL_CATALOGS` registration, fallback-table row + `NAME_CATALOG_MODEL_IDS`,
+  cli `fetchAtriaModels` + `ATRIA_NAMES` (merged in the gateway combine), and
+  the re-export. Provider docs regenerated (README / cli-release /
+  `.env.example` tables + `docs/index.md` + `docs/sdk-overview.md`).
+- Gates: typecheck ×3 (common, cli, sdk) exit 0; RED-first pin suite 4/4
+  (single model cataloged, cli fetcher serves vendor window, fallback-table
+  pin, registry setupAvailable + `ATRIA_API_KEY`); openrouter-models family
+  58/0; Law 4 reachability greps land at `gateway.ts:62`/`:210`,
+  `openrouter-models.ts:54`, `static-catalogs-gateways.ts:211`; eslint 0;
+  prettier + lint:md clean. **Closed + archived 2026-09-16.**
+
+### LEARNINGS.md Safe Core restructure; retire-tool defects fixed (FID-2026-0916-007)
+
+- `dev/LEARNINGS.md` no longer truncates at boot: **1,610 lines / 102,520 chars
+  → 810 lines / 45,409 chars**. The 27 legacy `## Session` narrative blocks
+  (2026-07-25..2026-08-10) were moved **verbatim** to a new move-only archive
+  `dev/LEARNINGS-RETIRED.md` (byte-identity proven against `git show HEAD:` —
+  exact substring, normalized equal).
+- **Boundary inversion fixed:** the insertion marker sat at EOF, below the
+  legacy boundary, so every new lesson landed in ungoverned space and
+  `learnings:check` printed a false `PASS (16)` over a 32-lesson file. The
+  marker now sits at line 3 (top of governed space) so appends validate.
+  `markerIssues` in `scripts/learnings-validation.ts` enforces marker-above-
+  boundary and rejects prose trailing after the boundary.
+- **Retire-tool defects fixed** in `scripts/learnings-retire.ts`: an absent
+  `--cap` parsed `argv[0]` → `NaN`, which is not nullish, so the loop retired
+  **every** entry; and `applyRetirement` rebuilt the file from lesson blocks
+  alone, silently deleting all prose and markers. `parseCap` now rejects
+  non-finite values; `removeLessonSpans` removes only retired spans.
+- **Two-tier governance by design:** the 16 pre-schema narrative lessons are
+  preserved below the boundary byte-identically and deliberately unvalidated —
+  conforming them would require fabricating `Evidence`/`Verification` claims
+  (Law 5). `learnings:check` output now names both populations so the count
+  can never be misread as "total lessons."
+- Regression pins: 8 tests in `scripts/__tests__/learnings-retire.test.ts`
+  (NaN cap, prose/marker preservation, final-block marker re-emission,
+  append-only archive) + 2 inversion tests in `scripts/learnings.test.ts`.
+
+### Compaction-summary contamination guards (FID-2026-0916-006)
+
+- The `/compact` standing summary no longer transcribes harness machinery as
+  operator dialogue. Four root causes fixed at source: `ECHO_REFRESH` protocol
+  refreshes are excluded from summary intake (`summary-parsing.ts`,
+  `structured-summary.ts`); user-turn transcription strips harness framing
+  (`<system>` dumps, `<compaction-notice>`, `<user_message>` wrappers,
+  `<think>`) via `stripHarnessFraming` (`summarize-messages.ts`,
+  `buildStandingFacts`); the existing ≥40% tag-density infrastructure detector
+  is now applied to every standing-fact candidate line; and substance floors
+  reject fragment "decisions" (`.`/`hosts`/`ok`) and greeting-spam goals
+  (`hey`), with operator-ruled greeting-run coalescing (MQ3).
+- All guards are pure functions in `agents/context-pruner/contamination-guards.ts`
+  (300-line-ceiling split from `structured-summary.ts`, 299 ≤ 300), embedded
+  into the generated pruner scope via the existing `.toString()` pipeline —
+  serialization contract verified.
+- RED-first pin suite reproduces the LIVE pasted-artifact shapes exactly
+  (8 fail → 11/0 GREEN); pruner contract suites 35/0; receipt 6/6 LIVE via
+  `fid:verify`.
+
 ### Gateway catalogs re-aligned to vendor truth; OpenCode zen/go removed (FID-2026-0916-004)
 
 - **commandcode catalog re-aligned** to the vendor's renormalized roster:

@@ -3,6 +3,60 @@
 This directory contains closed or historically completed FIDs. Files here are
 an audit record, not an active work queue.
 
+## 2026-09-17 closure — OpenRouter 401 (dev env split + silent key exchange) (1 FID archived)
+
+Agent-executed lifecycle per the G1 amendment (hybrid mode, 74 insertions /
+30 deletions across 2 files — under the 100-line escalation threshold).
+
+- [`FID-2026-0917-001-openrouter-env-split-and-silent-exchange.md`](FID-2026-0917-001-openrouter-env-split-and-silent-exchange.md)
+  (high) — closed 2026-09-17; archived 2026-09-17. OpenRouter calls failed
+  with the vendor 401 `User not found.` Root cause was NOT the client
+  (header/base URL/model id proven correct by a live probe: regular key
+  200 streaming OK; management key reproduces the exact 401; its failed
+  `/keys` exchange 401s `Invalid API key`). Two defects: dev-mode
+  `.env.local` discovery used first-match `findUp` from
+  `cli/src/pre-init/` and stopped at `cli/.env.local`, so a repo-root
+  `OPENROUTER_API_KEY` never reached `process.env`; and the resolver's
+  failed `OR_MASTER_KEY` exchange fell through silently. Fixes:
+  `findAllUp`/`applyOneEnvLocal` in `load-dev-env.ts` apply every
+  `.env.local` root-down; `openrouter-key-resolver.ts` logs status/body on
+  non-2xx exchanges (200-char cap, no key material — Law 12) before the
+  regular-key fallback. Independent Verifier AUDIT PASS (2 minor doc typos
+  fixed in self-correct). Receipt 5/5 LIVE (typecheck cli/sdk, both test
+  suites, quality); lint:md clean.
+
+## 2026-09-16 closure — LEARNINGS.md structural rebuild + Atria provider (2 FIDs archived)
+
+Agent-executed closures in the same session (operator directive: "review the
+fids folder, close them if they are complete, then update the changelog and
+ close the session").
+
+- [`FID-2026-0916-007-learnings-structure-rebuild.md`](FID-2026-0916-007-learnings-structure-rebuild.md)
+  (high) — closed 2026-09-16; archived 2026-09-16. `dev/LEARNINGS.md` exceeded
+  the 100,000-char tool read cap (102,520 chars → boot truncation) and was
+  structurally inverted: the insertion marker sat at EOF, below the legacy
+  boundary, so every new lesson landed ungoverned and `learnings:check`
+  printed a false `PASS (16)` over a 32-lesson file. Safe Core two-tier fix:
+  the 27 legacy `## Session` blocks moved verbatim to
+  `dev/LEARNINGS-RETIRED.md` (byte-identity proven), the marker relocated to
+  line 3 (top of governed space), the 16 pre-schema narrative lessons
+  preserved below the boundary deliberately unvalidated (conforming them would
+  require fabricating Evidence/Verification claims — Law 5). Two
+  `learnings:retire` defects fixed (NaN `--cap` retired every entry;
+  `applyRetirement` silently deleted all prose/markers). Gates: 27 tests /
+  47 expects, `learnings:check` PASS, retire dry-run 0 candidates, prettier +
+  eslint + markdownlint clean.
+- [`FID-2026-0916-005-atria-gateway-provider.md`](FID-2026-0916-005-atria-gateway-provider.md)
+(low) — closed 2026-09-16; archived 2026-09-16. Atria AI gateway
+  (`api.atria-asi.ai/v1`) as a built-in provider exposing the single
+  `Atria-Dawn-Preview` model (vendor-published 256K pinned at 262,144 in the
+  fallback table). Bazaarlink one-model static-catalog pattern verbatim;
+  `setupAvailable: true` derives the masked `ATRIA_API_KEY` entry. Receipt
+  stands as stamped (typecheck ×3, RED-first pin 4/4, family 58/0, quality);
+  ground-truth re-verified at closure (registry
+  `registry-partitioned.ts:259`, map `gateway-catalogs.ts:157`, fetcher wired
+  `gateway.ts:62`/`:210` + `openrouter-models.ts:54`).
+
 ## 2026-09-16 closure — stampReceipt EOF fingerprint edge (1 FID archived)
 
 Agent-executed lifecycle per the G1 amendment (simple-task path, operator
@@ -35,6 +89,17 @@ per-model protocols (all four wire-protocol legs preserved).
   (medium) — closed 2026-09-16; archived 2026-09-16. Receipt 10/10
   stamped on closed content (3 typecheck gates, 6 test gates, quality).
   `validate:repository` PASS; lint:md PASS.
+
+## 2026-09-16 closure — compaction-summary contamination guards (1 FID archived)
+
+- [`FID-2026-0916-006-compaction-summary-contamination.md`](FID-2026-0916-006-compaction-summary-contamination.md)
+  (medium) — closed 2026-09-16; archived 2026-09-16. The `/compact` standing
+  summary transcribed harness machinery (`<system>` dumps, `ECHO_REFRESH`,
+  interrupt fragments) as operator dialogue. Four root causes fixed at source;
+  guards live in `contamination-guards.ts` (299-line split discipline),
+  embedded via the generated pruner scope. RED pins 8 fail → 11/0 GREEN;
+  pruner contract suites 35/0; receipt 6/6 LIVE on closed content;
+  `fid:verify --check` PASS.
 
 ## 2026-09-16 closure — pipeline integrity + catalog window truth (2 FIDs archived)
 
