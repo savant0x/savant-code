@@ -5,6 +5,10 @@ import {
   tokensForRange,
 } from './budget'
 import { CONTEXT_PRUNER_CONSTANTS } from './constants'
+// FID-2026-0916-006: contamination guards are standalone embeddables (the
+// structured-summary re-exports dedupe to identical bodies, but embedding
+// the module directly keeps the guard cluster inspectable in one place).
+import * as contaminationGuards from './contamination-guards'
 import { runFoldOldestExchange } from './fold-exchange'
 import * as helpers from './helpers'
 import { runContextPrunerMain } from './main'
@@ -73,6 +77,11 @@ export function createContextPrunerHandleSteps(): ContextPrunerHandleSteps {
       .filter((v) => typeof v === 'function')
       .map((fn) => (fn as () => unknown).toString()),
     ...Object.values(summarySections)
+      .filter((v) => typeof v === 'function')
+      .map((fn) => (fn as () => unknown).toString()),
+    // FID-2026-0916-006: compaction-contamination guards (framing strip,
+    // decision-substance floor, greeting-spam classifier).
+    ...Object.values(contaminationGuards)
       .filter((v) => typeof v === 'function')
       .map((fn) => (fn as () => unknown).toString()),
     ...Object.values(summarizeMessagesEntries)

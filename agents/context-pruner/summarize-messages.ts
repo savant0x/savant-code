@@ -12,6 +12,9 @@ import {
 } from './constants'
 import { asNumber, asObject, getTextContent, truncateLongText } from './helpers'
 import { buildResultDigest } from './result-digests'
+// FID-2026-0916-006: framing strip + greeting-spam classification for the
+// user-turn branch (both embeddable, exported from structured-summary).
+import { isGreetingSpam, stripHarnessFraming } from './structured-summary'
 import {
   transcribeAskUserAnswers,
   transcribeEditResult,
@@ -42,7 +45,10 @@ export function summarizeMessages(
 
   for (const message of messagesToSummarize) {
     if (message.role === 'user') {
-      let text = getTextContent(message).trim()
+      // FID-2026-0916-006 RC2: strip harness framing before transcription so
+      // <system> interrupt/allowance blocks and <user_message> wrappers never
+      // appear in the historical entries.
+      let text = stripHarnessFraming(getTextContent(message))
       if (text) {
         text = truncateLongText(text, USER_MESSAGE_LIMIT * CHARS_PER_TOKEN)
         let hasImages = false
@@ -60,6 +66,10 @@ export function summarizeMessages(
         // verbatim produced 10 near-empty entries that budgets then promoted
         // over substance. Only exact-text repeats coalesce; any different
         // turn (or an image attachment) breaks the run.
+        // FID-2026-0916-006 MQ3 (operator ruling): greeting-spam runs
+        // coalesce too — 'hey → hello → hey → resume → hey' is ONE entry
+        // with a (×N) marker, not five near-empty budget competitors. The
+        // run breaks on any substantive turn or image attachment.
         const lastEntry = summarizedEntries[summarizedEntries.length - 1]
         // Strip a prior (×N) marker so the 3rd+ repeat of a run still
         // compares equal to the raw turn text (the marker is presentational).
@@ -69,10 +79,21 @@ export function summarizeMessages(
           lastEntry.parts.length > 0
             ? lastEntry.parts[0].replace(/ \(×\d+\)$/, '')
             : null
-        if (!hasImages && lastEntryText === `[USER]\n${text}`) {
+        const identicalRun = !hasImages && lastEntryText === `[USER]\n${text}`
+        const spamRun =
+          !hasImages &&
+          isGreetingSpam(text) &&
+          lastEntryText !== null &&
+          isGreetingSpam(lastEntryText.replace(/^\[USER\]\n/, ''))
+        if (identicalRun || spamRun) {
+          // For a spam run the entry text is the newest spam turn; the (×N)
+          // count is what carries the information.
+          const entryText = spamRun
+            ? `[USER]\n${text}`
+            : lastEntry.parts[0].replace(/ \(×\d+\)$/, '')
           const match = lastEntry.parts[0].match(/\(×(\d+)\)$/)
           const count = match ? Number.parseInt(match[1], 10) + 1 : 2
-          lastEntry.parts[0] = `[USER]\n${text} (×${count})`
+          lastEntry.parts[0] = `${entryText} (×${count})`
           if (message === latestLiveUserPromptMessage) {
             liveUserPromptEntry = lastEntry
           }

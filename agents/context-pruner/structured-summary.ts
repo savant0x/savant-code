@@ -17,7 +17,8 @@
  * buildTodosSection / buildIdentifiers / collectIdentifiers /
  * buildPreservedStateSection) moved to summary-sections.ts and are
  * re-exported here unchanged (block assembly + first-user-turn pin stay —
- * this module remains the import surface).
+ * this module remains the import surface). FID-2026-0916-006: the
+ * contamination guards moved to contamination-guards.ts (also re-exported).
  */
 import {
   CHARS_PER_TOKEN,
@@ -29,6 +30,11 @@ import {
   STRUCTURED_STATE_MAX_CHARS,
   USER_MESSAGE_LIMIT,
 } from './constants'
+import {
+  hasDecisionSubstance,
+  isGreetingSpam,
+  stripHarnessFraming,
+} from './contamination-guards' // FID-2026-0916-006 ceiling split
 import { getTextContent, truncateLongText } from './helpers'
 import { buildPendingAsks } from './pending-asks'
 import {
@@ -42,6 +48,11 @@ import type { PreservedState } from './preserved-state'
 import type { Message } from '../types/util-types'
 
 export { buildPendingAsks } from './pending-asks'
+export {
+  hasDecisionSubstance,
+  isGreetingSpam,
+  stripHarnessFraming,
+} from './contamination-guards'
 export {
   buildFilesSection,
   buildIdentifiers,
@@ -92,11 +103,19 @@ export function pinVerbatim(text: string, maxChars: number): string {
  * compaction while the real request aged out. A turn counts as
  * infrastructure only when it carries harness-injected system markers AND
  * the dense majority of its non-empty lines are tags/fences/headings.
+ * FID-2026-0916-006 RC3: sentinel/compaction-notice carriers and
+ * interrupt/allowance system blocks are infrastructure outright — the
+ * prose-heavy refresh passes the 40% density test.
  * Embeddable-safe: regexes live inside the function body.
  */
 export function isProtocolInfrastructureDump(text: string): boolean {
   if (!text || text.length < 120) return false
   if (!/<system>|<\/system>|<compaction-notice/.test(text)) return false
+  if (/<!--echo-critical-->|<compaction-notice/.test(text)) return true
+  const interruptBlock =
+    /<system>[\s\S]*?User interrupted[\s\S]*?<\/system>/.test(text) ||
+    /<system>[\s\S]*?allowance is too low[\s\S]*?<\/system>/.test(text)
+  if (interruptBlock) return true
   const lines = text
     .split('\n')
     .map((line) => line.trim())
@@ -128,7 +147,10 @@ export function isHarnessMessage(message: Message): boolean {
     message.tags?.includes('STEP_PROMPT') === true ||
     // FID-2026-0806-002 Phase 3c: harness-injected knowledge-graph evidence is
     // operational metadata — matches shouldExcludeMessage in main.ts.
-    message.tags?.includes('GRAPH_EVIDENCE') === true
+    message.tags?.includes('GRAPH_EVIDENCE') === true ||
+    // FID-2026-0916-006 MQ2: the ECHO protocol refresh is operational
+    // context re-injected on cadence — never operator dialogue.
+    message.tags?.includes('ECHO_REFRESH') === true
   )
 }
 
@@ -196,10 +218,10 @@ export function buildStandingFacts(messages: Message[]): string {
   for (const message of messages) {
     if (message.role !== 'user') continue
     if (isHarnessMessage(message)) continue
-    const text = getTextContent(message).trim()
+    // RC2: framing stripped BEFORE the dump check (detector sees prose, not
+    // wrapper density); RC3: dump carriers excluded (FID-2026-0916-006).
+    const text = stripHarnessFraming(getTextContent(message))
     if (!text || text.includes('<conversation_summary>')) continue
-    // FID-2026-0914-002: infrastructure dumps never become standing facts
-    // (same rule as the P1c pin below).
     if (isProtocolInfrastructureDump(text)) continue
     if (seen.has(text)) continue
     seen.add(text)
@@ -236,7 +258,9 @@ export function buildStandingFacts(messages: Message[]): string {
 
 export function buildGoalSection(goalText: string | null): string {
   const lines = ['## Goal']
-  if (goalText && goalText.trim()) {
+  // FID-2026-0916-006 RC4b: greeting/interrupt spam ('hey', 'resume'…) is
+  // not a goal — record the miss explicitly instead of pinning noise.
+  if (goalText && goalText.trim() && !isGreetingSpam(goalText)) {
     lines.push(pinVerbatim(goalText.trim(), GOAL_MAX_TOKENS * CHARS_PER_TOKEN))
   } else {
     lines.push('(none in this window)')
@@ -258,7 +282,9 @@ export function buildDecisions(messages: Message[]): string {
     for (const part of message.content) {
       if (part.type !== 'text' || typeof part.text !== 'string') continue
       const text = part.text.replace(/<think>[\s\S]*?<\/think>/g, '').trim()
-      if (text) {
+      // FID-2026-0916-006 RC4a: fragments ('.', 'hosts', 'ok' — interrupted
+      // turns) carry no decision substance; keep scanning earlier turns.
+      if (text && hasDecisionSubstance(text)) {
         decisions.push(truncateLongText(text, DECISION_MAX_CHARS))
         break
       }

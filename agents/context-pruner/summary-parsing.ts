@@ -18,6 +18,10 @@ export function shouldExcludeMessage(message: Message): boolean {
   // operational metadata, not user-authored dialogue — excluded from the
   // summary exactly like the other system-tagged operational messages.
   if (message.tags?.includes('GRAPH_EVIDENCE')) return true
+  // FID-2026-0916-006 MQ2 (operator ruling): the ECHO protocol refresh is
+  // re-injected on its own cadence — it never needs summary space, and
+  // transcribing it made the refresh dump the artifact's "standing facts".
+  if (message.tags?.includes('ECHO_REFRESH')) return true
   return false
 }
 
