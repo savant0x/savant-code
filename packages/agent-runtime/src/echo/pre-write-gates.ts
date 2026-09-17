@@ -31,6 +31,7 @@ import {
 import { canonicalizePath } from './path-canonicalization'
 import { runFidGates } from './pre-write-gates-fid'
 import { runYagniPreWriteGate } from './yagni-pre-write-gate'
+import { classifyFileKind } from '../util/echo-compliance-core'
 
 import type {
   EnforcementMode,
@@ -160,8 +161,12 @@ export function runPreWriteGates(params: {
   // never blocked by pending source-file verification — governance
   // bookkeeping must not be wedged by unverified code (FID-2026-0718-008,
   // FID-2026-0820-012).
+  // FID-2026-0917-002: docs verify via markdownlint (step-boundary 'info'
+  // + Law 15 at turn end), never via this hard-blocking code gate. Same
+  // classifyFileKind authority evaluateWritesAtStepBoundary uses — without
+  // the split, a lint-failing doc blocked the very write that would fix it.
   const unverifiedDirty = [...params.state.dirtyFiles].filter(
-    (f) => !params.state.verifiedFiles.has(f),
+    (f) => !params.state.verifiedFiles.has(f) && classifyFileKind(f) === 'code',
   )
   if (
     unverifiedDirty.length > 0 &&

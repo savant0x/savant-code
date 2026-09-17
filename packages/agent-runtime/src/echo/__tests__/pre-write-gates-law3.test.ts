@@ -80,4 +80,44 @@ describe('runPreWriteGates — Law 3 cumulative verification (FID-2026-0820-012)
       expect(result.blocked).toBe(false)
     }
   })
+
+  // FID-2026-0917-002: a markdownlint failure on a documentation artifact
+  // must never hard-block writes. Before the docs/code split was wired into
+  // this gate, a doc landed in dirtyFiles, the failing lint kept it out of
+  // verifiedFiles, and the only tool able to fix the doc (a write to it)
+  // was blocked by the doc's own unverified state — the violation blocked
+  // its own remedy and the session deadlocked.
+  it('does NOT block any write when the only unverified dirty files are DOCS (FID-2026-0917-002)', () => {
+    for (const target of [
+      '/proj/src/b.ts',
+      '/proj/docs/report.md',
+      '/proj/dev/handoff.md',
+    ]) {
+      const result = runLaw3Gate({
+        targetPath: target,
+        dirtyFiles: ['/proj/dev/handoff.md', '/proj/README.md'],
+      })
+      expect(result.blocked).toBe(false)
+    }
+  })
+
+  it('does NOT block the self-fix write to an unverified dirty doc (deadlock regression)', () => {
+    const result = runLaw3Gate({
+      targetPath: '/proj/dev/handoff.md',
+      dirtyFiles: ['/proj/dev/handoff.md'],
+    })
+    expect(result.blocked).toBe(false)
+  })
+
+  it('still BLOCKS when an unverified dirty DOC is mixed with unverified CODE', () => {
+    const result = runLaw3Gate({
+      targetPath: '/proj/src/b.ts',
+      dirtyFiles: ['/proj/dev/handoff.md', '/proj/src/a.ts'],
+    })
+    expect(result.blocked).toBe(true)
+    expect(result.reason).toContain('Law 3')
+    // The doc is excluded from the blocking set; only the code file is named.
+    expect(result.reason).toContain('/proj/src/a.ts')
+    expect(result.reason).not.toContain('/proj/dev/handoff.md')
+  })
 })
