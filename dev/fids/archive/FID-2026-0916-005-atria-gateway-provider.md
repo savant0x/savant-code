@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0916-005-atria-gateway-provider.md`
 **ID:** FID-2026-0916-005
 **Severity:** low
-**Status:** verified
+**Status:** closed
 **Created:** 2026-09-16
 
 ---
@@ -181,8 +181,28 @@ new architecture — the bazaarlink one-model static pattern verbatim (Law 13).
 
 ## Resolution
 
-- **Fix Description:** —
-- **Fixed Date:** —
+- **Fix Description:** Atria AI gateway integrated as a built-in provider
+  following the bazaarlink one-model static-catalog pattern (Law 13):
+  `atria` registry entry in `registry-partitioned.ts` (`setupAvailable: true`,
+  `protocol: 'openai'`, `idTransform: 'strip'`, baseUrl
+  `https://api.atria-asi.ai/v1`), the `atriaModels` map
+  (`atria/Atria-Dawn-Preview`) in `gateway-catalogs.ts`, the
+  `MODEL_CATALOGS` registration, the fallback-table row (262,144 — vendor-
+  published 256K, pinned not heuristically derived), `NAME_CATALOG_MODEL_IDS`,
+  the cli `fetchAtriaModels` fetcher + `ATRIA_NAMES`, the gateway merge, the
+  re-export, and the regenerated provider docs (README / cli-release /
+  `.env.example` tables + `docs/index.md` + `docs/sdk-overview.md`).
+- **Fixed Date:** 2026-09-16
+- **Closed 2026-09-16:** ground-truth re-verified at closure (registry entry
+  `registry-partitioned.ts:259`, map `gateway-catalogs.ts:157`, fetcher wired
+  `gateway.ts:62`/`:210` + `openrouter-models.ts:54` +
+  `static-catalogs-gateways.ts:211`); receipt stands as stamped (6/6);
+  archived.
+- **Typecheck-count reconciliation:** the stamped receipt and the
+  `## Verification Gates` list declare 3 typecheck gates (common, cli, sdk) —
+  the machine-enforced contract. The Loop-3 AUDIT narrative's "×4" includes
+  `packages/agent-runtime`, which is not a declared gate; the CHANGELOG and
+  archive-README closure entries cite ×3 after the stamped receipt.
 
 ### Code Verification Evidence
 
