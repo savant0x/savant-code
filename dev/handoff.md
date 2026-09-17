@@ -6,13 +6,13 @@ points at.
 
 ## Where things stand
 
-- Branch `main`, **ahead of `origin/main` by 10** (4 new commits this
+- Branch `main`, **ahead of `origin/main` by 11** (5 new commits this
   session; local-only per operator instruction — ask before pushing).
 - **Working tree:** only auto-maintained bookkeeping dirty
   (`dev/agenda.md`, `dev/experiences/raw-traces.jsonl`) and untracked
   `dev/wiki/` (machine-generated pattern capture, now markdownlint-exempt).
 - **Active FID queue is empty** (`dev/fids/` holds only `README.md`);
-  FID-2026-0917-002 is verified + committed but not yet archived.
+  FID-2026-0917-002 is closed + archived (`10fcbd4e`).
 - Session summary with the full evidence ledger:
   `dev/session-summaries/2026-09-16-2330-compaction-signal-pin-and-fold.md`
 
@@ -34,6 +34,13 @@ points at.
 3. **Committed locally** as three path-scoped atomic commits —
    `f8d46ee2` (gate + tests), `9fb99351` (handoff fences + ignore),
    `be9b71ec` (FID + session summary). Nothing pushed.
+4. **Rebuilt the SDK** so the gate fix ships in the built `dist` the running
+   CLI loads (source edits alone had no runtime effect — the bundle inlines
+   `runPreWriteGates`). Proven via a runtime probe on the shipped function
+   body: docs-only unblocks, code-only blocks, mixed blocks naming only code.
+5. **Closed + archived FID-2026-0917-002** (`10fcbd4e`): status flipped to
+   `closed`, `git mv` to `dev/fids/archive/`, receipt re-stamped 3/3 LIVE at
+   the archived path, CHANGELOG + archive index + active ledger updated.
 
 ## The deadlock fix (the freshest work — VERIFIED + COMMITTED)
 
@@ -56,21 +63,56 @@ Gates: typecheck packages/agent-runtime exit 0; law3 suite 8 pass / 0 fail
 (3 new); eslint 0; prettier clean; `quality:report` PASS (1498 files);
 `fid:verify --write` receipt stamped.
 
+## SDK rebuild — DONE (the freshest work)
+
+The gate fix is now **shipped to the built artifact**, not just source.
+`node_modules/@savant-code/sdk` is a symlink to `sdk/`, and the SDK's
+`package.json` exports map `import` → `./dist/index.mjs` — the running CLI
+executes the **bundle**, which inlines `runPreWriteGates` from
+`packages/agent-runtime` source. Source edits had no runtime effect until the
+rebuild.
+
+```text
+$ cd sdk && bun run build   → exit 0 (5/5 ripgrep platforms re-copied)
+$ cd sdk && bun run typecheck → exit 0
+$ cd sdk && bun run smoke-test:dist → CJS require PASS, tree-sitter PASS
+```
+
+The rebuilt bundle carries the guard in exactly one place, the blocking gate:
+
+| Location | Shipped code | Correct? |
+|---|---|---|
+| `dist/index.cjs:48430` (`runPreWriteGates`) | `... && classifyFileKind(f) === "code"` | ✓ fixed |
+| `dist/index.mjs:48334` (`runPreWriteGates`) | `... && classifyFileKind(f) === "code"` | ✓ fixed |
+| `dist/index.cjs:48957` (`runPostWriteScanners`) | unguarded filter | ✓ Law 15 advisory intentionally reports ALL files |
+
+Behavioral proof — the shipped function body was extracted from the built
+`index.cjs` and executed with stubbed helpers (`dev/scratchpad/dist-gate-probe.cjs`):
+
+```text
+guard present in shipped fn : true
+docs-only dirty -> {"blocked":false}
+code-only dirty -> {"blocked":true}
+mixed doc+code  -> {"blocked":true,"warnings":[]}
+PROBE: PASS — rebuilt dist ships the fix   EXIT=0
+```
+
+The mixed case's block message names only `src/foo.ts`, never the doc — the
+regression contract from the source tests holds in the built artifact.
+
 ## Pending after handoff
 
-1. **Push when authorized** — 9 local commits on `main`, unpushed. The
+1. **Push when authorized** — 11 local commits on `main`, unpushed. The
    operator has not authorized `git push`; ask first.
-2. **Rebuild the SDK** so the gate fix ships to the installed CLI — the fix
-   is in source and committed, but the running CLI loads the built artifact
-   (`node_modules/@savant-code/sdk/dist`) until rebuilt.
-3. **Archive FID-2026-0917-002** once the operator confirms the fix behaves
-   live: move to `dev/fids/archive/` + append to `CHANGELOG.md`.
-4. **Live TUI confirmation of FID-008's fold** — verified mechanically but
+2. **Live TUI confirmation of FID-008's fold** — verified mechanically but
    never exercised live. Worth a `/compact` run before the next release.
-5. **Resume the A-Z release audit** (prior session) — 12-gate clean signal
+3. **Live confirmation of the EHEL gate fix** — the rebuilt dist is proven by
+   probe, but a fresh CLI launch has not yet exercised the doc-write path in
+   the TUI. A restart picks up the rebuilt bundle automatically.
+4. **Resume the A-Z release audit** (prior session) — 12-gate clean signal
    stands; severity-ranked findings table was interrupted. `v0.0.31` tag
    already exists on `origin` — verify what it points at before any push.
-6. **`dev/wiki/` is untracked, not gitignored** — decide whether to track or
+5. **`dev/wiki/` is untracked, not gitignored** — decide whether to track or
    gitignore the machine-generated pattern capture.
 
 ## Recurring tool pain (dev/agenda.md)
