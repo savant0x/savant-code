@@ -3,6 +3,31 @@
 This directory contains closed or historically completed FIDs. Files here are
 an audit record, not an active work queue.
 
+## 2026-09-17 closure — EHEL docs/write deadlock (1 FID archived)
+
+Agent-executed lifecycle per the G1 amendment (hybrid mode, 51 insertions /
+1 deletion across 2 source files — under the 100-line escalation threshold).
+
+- [`FID-2026-0917-002-ehel-docs-write-deadlock.md`](FID-2026-0917-002-ehel-docs-write-deadlock.md)
+  (high) — closed 2026-09-17; archived 2026-09-17. The EHEL pre-write Law 3
+  gate blocked **every** write tool call, including the exact `str_replace`
+  that would have fixed the triggering markdownlint violation — a write/verify
+  ordering deadlock that forced a session restart. Root cause: the docs/code
+  split was enforced at step-boundary evaluation (`evaluateWritesAtStepBoundary`)
+  but never wired into the pre-write gate, which checked only the
+  `isExemptWritePath` prefix list. One-predicate fix reusing the existing
+  `classifyFileKind` classifier; the Law 15 advisory scanner is intentionally
+  left unguarded (it reports all files, docs included, as advisory not block).
+  Second independent blocker: machine-generated `dev/wiki/patterns/*.md`
+  (MD013) kept repo-wide `lint:md` at exit 1, so no doc could ever earn
+  verification credit — exempted in `.markdownlintignore`. The fix was also
+  proven shipped in the **rebuilt `sdk/dist`** the running CLI loads
+  (`dist/index.cjs:48430` + `dist/index.mjs:48334`) via a runtime probe that
+  extracted and executed the shipped function body. Independent Verifier AUDIT
+  (2 FAIL + 2 NEEDS-REVIEW, all discharged). Receipt re-stamped 3/3 LIVE at
+  the archived path. Commits `f8d46ee2` + `9fb99351` + `be9b71ec` +
+  `2394ac2f`.
+
 ## 2026-09-17 closure — OpenRouter 401 (dev env split + silent key exchange) (1 FID archived)
 
 Agent-executed lifecycle per the G1 amendment (hybrid mode, 74 insertions /

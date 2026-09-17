@@ -2,6 +2,47 @@
 
 ## Unreleased
 
+### EHEL Law 3 gate no longer deadlocks writes on a lint-failing doc (FID-2026-0917-002)
+
+- The EHEL pre-write Law 3 gate blocked **every** write tool call — including
+  the exact `str_replace` that would have fixed the violation — because a
+  markdown doc (`dev/handoff.md`) sat in `dirtyFiles` with a failing
+  markdownlint (MD040) run keeping it out of `verifiedFiles`. The violation
+  blocked its own remedy: a write/verify ordering deadlock. Root cause was a
+  policy enforced at one lifecycle point and not another: `classifyFileKind`
+  already classifies `*.md` as `docs` and `evaluateWritesAtStepBoundary`
+  already declares "documentation artifacts gate on markdownlint, never on
+  Law 3" — but the pre-write gate checked only the `isExemptWritePath` prefix
+  list (`dev/fids/`, `dev/nova/`, `dev/scratchpad/`), omitting `docs/`,
+  `dev/handoff.md`, `dev/session-summaries/`, and `README.md`.
+- One-predicate fix reusing the existing classifier (Law 13 — one function,
+  one truth): `unverifiedDirty` now filters to `classifyFileKind(f) ===
+  'code'`. Code verification is **not** weakened — a dirty code file still
+  hard-blocks, and a mixed doc+code set still blocks while naming only the
+  code file (pinned by a regression test). The Law 15 advisory scanner is
+  intentionally left unguarded: it reports ALL unverified files, docs
+  included, as an advisory rather than a block.
+- Second independent blocker fixed: `dev/wiki/patterns/*.md` (MD013,
+  machine-generated 286-char lines) kept repo-wide `lint:md` at exit 1, so no
+  doc could ever earn verification credit. Exempted in `.markdownlintignore`
+  on the same precedent as `dev/scratchpad/**` and
+  `dev/provider-candidates/**`; repo-wide `lint:md` flipped exit 1 → 0.
+- **Shipped to the built artifact:** the fix lives in source AND the rebuilt
+  `sdk/dist` the running CLI loads (`node_modules/@savant-code/sdk` symlinks
+  to `sdk/`, whose exports map to `dist/index.mjs`). After `bun run build`, the
+  guard appears in exactly one place per bundle — `runPreWriteGates` at
+  `dist/index.cjs:48430` + `dist/index.mjs:48334` — with the Law 15 scanner
+  correctly unguarded. A runtime probe extracted the shipped function body
+  from the built `index.cjs` and executed it: docs-only dirty unblocks,
+  code-only dirty blocks, mixed doc+code blocks naming only the code file.
+- Gates: typecheck packages/agent-runtime exit 0; law3 suite 8 pass / 0 fail
+  (3 new); eslint 0; prettier clean; `lint:md` repo-wide exit 0 (was exit 1);
+  `quality:report` PASS; receipt re-stamped 3/3 LIVE at the archived path;
+  independent Verifier AUDIT (2 FAIL + 2 NEEDS-REVIEW, all discharged).
+  Commits `f8d46ee2` (gate + tests), `9fb99351` (fences + exemption),
+  `be9b71ec` (FID + summary), `2394ac2f` (handoff refresh). **Closed +
+  archived 2026-09-17.**
+
 ### OpenRouter 401 fixed: dev env split + observable key exchange (FID-2026-0917-001)
 
 - OpenRouter calls failed with the vendor 401 `User not found.` Two root

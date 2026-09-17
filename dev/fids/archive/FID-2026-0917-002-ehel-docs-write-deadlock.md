@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0917-002-ehel-docs-write-deadlock.md`
 **ID:** FID-2026-0917-002
 **Severity:** high
-**Status:** verified
+**Status:** closed
 **Created:** 2026-09-17 16:15
 **YAGNI-Compliance:** Verified
 
@@ -170,7 +170,9 @@ Typecheck the workspace, run the law3 suite, and confirm the repo-wide
 
 ### Implementation Evidence
 
-- **Commit SHA:** uncommitted (operator has not authorized `git commit`)
+- **Commit SHA:** `f8d46ee2` (gate + tests), `9fb99351` (handoff fences +
+  dev/wiki exemption), `be9b71ec` (FID + session summary); closure records
+  `2394ac2f`
 - **File:line ranges:**
   `packages/agent-runtime/src/echo/pre-write-gates.ts` (import +
   `unverifiedDirty` filter), `.../__tests__/pre-write-gates-law3.test.ts`
@@ -203,7 +205,13 @@ Typecheck the workspace, run the law3 suite, and confirm the repo-wide
   non-blocking, mixed doc+code still blocks naming only code)
 - **Verification Evidence:** typecheck exit 0; law3 8/0; eslint 0; prettier
   clean; repo `lint:md` exit 0
-- **Archived:** pending operator-authorized commit
+- **Archived:** 2026-09-17 — moved to `dev/fids/archive/`, CHANGELOG entry
+  appended, receipt re-stamped at the archived path. The gate fix was proven
+  shipped in the BUILT artifact (`sdk/dist/index.cjs:48430` +
+  `dist/index.mjs:48334` carry `classifyFileKind(f) === "code"` in
+  `runPreWriteGates` only, leaving the Law 15 advisory scanner correctly
+  unguarded) after `bun run build` in `sdk/`; runtime probe extracted the
+  shipped function and confirmed docs-only unblocks while code still blocks.
 
 ## Lessons Learned
 
@@ -225,6 +233,14 @@ verification, it is enforcing stagnation.
 
 - fingerprint: sha256:308ca0f3fbaee7f8b7ab395e223ae3166d5143b5e26aa0f152a757867e8d3163
 - verified: 2026-09-17T20:41:43.006Z
+- typecheck packages/agent-runtime: exit 0
+- test packages/agent-runtime/src/echo/__tests__/pre-write-gates-law3.test.ts: exit 0
+- quality: exit 0
+
+### Verification Receipt
+
+- fingerprint: sha256:9762c3fdb336264d17964d9e8ca176ee803ea5050f8f0e1c713986b026a7c098
+- verified: 2026-09-17T21:52:13.299Z
 - typecheck packages/agent-runtime: exit 0
 - test packages/agent-runtime/src/echo/__tests__/pre-write-gates-law3.test.ts: exit 0
 - quality: exit 0

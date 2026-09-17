@@ -5,6 +5,16 @@ operator decision, implementation, runtime review, or closure evidence.
 
 ## Current active FIDs
 
+**2026-09-17 closure — FID-2026-0917-002 (EHEL docs/write deadlock) closed
+and archived:** the Law 3 pre-write gate deadlocked every write tool call
+after a markdown doc failed markdownlint — the violation blocked its own
+fix. One-predicate fix reusing `classifyFileKind` (docs gate on markdownlint,
+never on the hard-blocking code gate); the Law 15 advisory scanner
+intentionally stays unguarded. `dev/wiki/**` exempted (MD013,
+machine-generated) so repo-wide `lint:md` could reach exit 0. The fix was
+also proven shipped in the rebuilt `sdk/dist` the running CLI loads. Receipt
+re-stamped 3/3 LIVE at the archived path. **The active FID queue is empty.**
+
 **2026-08-22 ledger update (four passes):** (1) full inventory — the
 0821/0822 queues were folded into this table; every status below is
 re-verified against the FID's own header + Resolution/Step Status. (2)
