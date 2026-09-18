@@ -51,6 +51,10 @@ function parseHostEntry(
     typeof e['lastSeenUtc'] === 'string'
       ? e['lastSeenUtc']
       : new Date(0).toISOString()
+  const lastProbeAttemptUtc =
+    typeof e['lastProbeAttemptUtc'] === 'string'
+      ? e['lastProbeAttemptUtc']
+      : undefined
   // Migrate legacy fingerprints with ZERO classification blip: the old
   // prose form was JSON.stringify([models, quotaProse, status]) — extract
   // the models element and hash it (bit-identical to a fresh compute).
@@ -96,6 +100,7 @@ function parseHostEntry(
               : null,
         }
       : null,
+    lastProbeAttemptUtc,
   }
 }
 

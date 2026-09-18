@@ -156,6 +156,7 @@ async function main(): Promise<number> {
     doProbe,
     screened,
     auditTrail,
+    nowMs,
   })
 
   // Stage E tracking set (single settings read, shared by phases + summary).

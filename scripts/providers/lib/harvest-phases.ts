@@ -7,7 +7,9 @@
  * surface stays stable.
  */
 import { type CandidateState, type DiffEntry } from './diff-state'
+import { shouldReprobeUnverifiable, withProbeAttempt } from './health'
 import { probeEndpoint } from './probe-endpoint'
+import { PROBE_CONCURRENCY, runWithConcurrency } from './probe-pool'
 import { type ReportAuditRow } from './report'
 
 export {
@@ -25,6 +27,8 @@ export type ProbeMergeParams = {
   doProbe: boolean
   screened: Array<{ host: string; url: string }>
   auditTrail: ReportAuditRow[]
+  /** Wall-clock input for the FID-2026-0918-002 re-probe cadence gate. */
+  nowMs: number
 }
 
 /**
@@ -32,11 +36,17 @@ export type ProbeMergeParams = {
  * reject open relays into the audit trail, and persist the probe evidence
  * into the rolling state. Returns the per-host probe results (empty when
  * --probe is absent — identical to the original inline block).
+ *
+ * FID-2026-0918-002: the `boundary-unverifiable` disjunct is gated by the
+ * 3-day re-probe cadence (`shouldReprobeUnverifiable`) — the standing
+ * verdict carries forward on skipped days (diffCandidates), so no evidence
+ * is lost; `nowMs` feeds the gate. Every attempted probe stamps
+ * `lastProbeAttemptUtc` into state regardless of verdict.
  */
 export async function runProbeMergePhase(
   params: ProbeMergeParams,
 ): Promise<Map<string, Awaited<ReturnType<typeof probeEndpoint>>>> {
-  const { entries, next, doProbe, screened, auditTrail } = params
+  const { entries, next, doProbe, screened, auditTrail, nowMs } = params
   const probeResults = new Map<
     string,
     Awaited<ReturnType<typeof probeEndpoint>>
@@ -53,16 +63,28 @@ export async function runProbeMergePhase(
     (entry) =>
       entry.classification === 'new' ||
       entry.classification === 'changed' ||
-      next.get(entry.host)?.lastBoundary === 'boundary-unverifiable',
+      shouldReprobeUnverifiable(next.get(entry.host) ?? {}, nowMs),
   )
-  for (const target of probeTargets) {
-    const card = screened.find((c) => c.host === target.host)
-    if (!card) continue
-    const result = await probeEndpoint({ baseUrl: card.url })
-    probeResults.set(target.host, result)
-    if (result.boundary === 'open-relay-reject') {
+  // FID-2026-0918-001: probes run through a bounded-concurrency pool —
+  // hosts are distinct vendor endpoints, so overlapping probes does not
+  // change per-host etiquette; wall clock drops ~PROBE_CONCURRENCY× on
+  // probe-heavy runs. Results merge below exactly as the serial loop did.
+  const probed = await runWithConcurrency(
+    probeTargets,
+    PROBE_CONCURRENCY,
+    async (target) => {
+      const card = screened.find((c) => c.host === target.host)
+      if (!card) return null
+      const result = await probeEndpoint({ baseUrl: card.url })
+      return { host: target.host, result }
+    },
+  )
+  for (const item of probed) {
+    if (!item) continue
+    probeResults.set(item.host, item.result)
+    if (item.result.boundary === 'open-relay-reject') {
       auditTrail.push({
-        host: target.host,
+        host: item.host,
         decision: 'rejected',
         reason:
           'open relay — unauthenticated generation succeeded (LLMjacking class)',
@@ -71,19 +93,24 @@ export async function runProbeMergePhase(
   }
   // Persist the probe evidence into the rolling state (the agent-context
   // block and the propose scaffold read it from candidates.json).
+  // FID-2026-0918-002: every attempted probe also stamps
+  // `lastProbeAttemptUtc` so the cadence never re-fires early.
   for (const [host, result] of probeResults) {
     const state = next.get(host)
     if (state) {
-      next.set(host, {
-        ...state,
-        lastBoundary: result.boundary,
-        lastProbe: {
-          reachable: result.reachable,
-          modelsCount: result.modelsCount,
-          boundary: result.boundary,
-          latencyMs: result.latencyMs,
+      next.set(host, withProbeAttempt(
+        {
+          ...state,
+          lastBoundary: result.boundary,
+          lastProbe: {
+            reachable: result.reachable,
+            modelsCount: result.modelsCount,
+            boundary: result.boundary,
+            latencyMs: result.latencyMs,
+          },
         },
-      })
+        nowMs,
+      ))
     }
   }
   return probeResults

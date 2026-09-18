@@ -74,6 +74,13 @@ export type CandidateState = {
   models?: string[]
   /** Daily stability ring (W1), capped at HISTORY_CAP, oldest dropped. */
   history?: HistorySample[]
+  /**
+   * Last time the harvester ATTEMPTED a boundary probe of this host
+   * (FID-2026-0918-002) — the input to the 3-day re-probe cadence for
+   * `boundary-unverifiable` hosts. Absent = never attempted (probe now).
+   * Written on every attempted probe regardless of verdict.
+   */
+  lastProbeAttemptUtc?: string
 }
 
 export type DiffClassification = 'new' | 'unchanged' | 'changed' | 'lapsed'
@@ -192,6 +199,10 @@ export function diffCandidates(
       // omitted the list this run (the roster is an offering, not a probe).
       models:
         card.freeModelsEn.length > 0 ? card.freeModelsEn : (prev?.models ?? []),
+      // FID-2026-0918-002: the cadence input must survive the explicit
+      // state rebuild above — a re-sighted host keeps its last probe-attempt
+      // timestamp (this run's merge phase stamps a fresh one after probing).
+      lastProbeAttemptUtc: prev?.lastProbeAttemptUtc,
     })
 
     entries.push({ host: card.host, classification, downStreak })

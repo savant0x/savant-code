@@ -7,10 +7,52 @@
  * (LLMjacking class). Unverifiable boundaries degrade without false alarms.
  */
 
+import type { CandidateState } from '@savant-code/common/providers/discovery-state'
+
 export type HealthVerdict = 'healthy' | 'degraded' | 'down' | 'compromised'
 
 /** The 72h grace rule: 3 consecutive down days lapses a candidate. */
 export const PROBE_LAPSED_AFTER_DAYS = 3
+
+/**
+ * FID-2026-0918-002 — re-probe cadence for `boundary-unverifiable` hosts,
+ * in days. Deliberately the SAME number as the 72h grace rule (one truth,
+ * Law 13): a host's boundary evidence is at most 3 days stale, matching
+ * the lapse window a false assumption could survive.
+ */
+export const UNVERIFIABLE_REPROBE_DAYS = PROBE_LAPSED_AFTER_DAYS
+
+/**
+ * The cadence gate: whether an unverifiable host's standing verdict is
+ * stale enough to re-measure this run. Never-attempted and malformed
+ * timestamps fail OPEN (probe now) — a conservative default that can only
+ * spend an extra probe, never lose evidence.
+ */
+export function shouldReprobeUnverifiable(
+  state: Pick<CandidateState, 'lastBoundary' | 'lastProbeAttemptUtc'>,
+  nowMs: number,
+): boolean {
+  if (state.lastBoundary !== 'boundary-unverifiable') return false
+  if (state.lastProbeAttemptUtc === undefined) return true
+  const last = Date.parse(state.lastProbeAttemptUtc)
+  if (Number.isNaN(last)) return true
+  return nowMs - last >= UNVERIFIABLE_REPROBE_DAYS * 24 * 60 * 60 * 1000
+}
+
+/**
+ * Stamp a probe attempt into a host's state (pure — returns a NEW record).
+ * Called on EVERY attempted probe regardless of verdict, so the cadence
+ * never re-fires early on a failed measurement.
+ */
+export function withProbeAttempt(
+  state: CandidateState,
+  nowMs: number,
+): CandidateState {
+  return {
+    ...state,
+    lastProbeAttemptUtc: new Date(nowMs).toISOString(),
+  }
+}
 
 export function healthVerdict(probe: {
   reachable: boolean

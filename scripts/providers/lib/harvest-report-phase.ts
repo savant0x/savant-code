@@ -19,8 +19,11 @@ import {
   serializeStateFile,
   uptimeFor,
 } from './diff-state'
-import { healthDetail, healthVerdict } from './health'
-import { probeEndpoint } from './probe-endpoint'
+import {
+  type HealthProbeRow,
+  type HealthRow,
+  runHealthProbePhase,
+} from './health-probe'
 import {
   type ReportCandidate,
   REPORT_RELATIVE_PATH,
@@ -35,6 +38,8 @@ import {
   type ContextCandidate,
   nudgeLine,
 } from '../../../common/src/providers/discovery-context'
+
+import type { probeEndpoint } from './probe-endpoint'
 
 export type ReportWriteParams = {
   fetchedAtUtc: string
@@ -111,43 +116,14 @@ export async function runReportWritePhase(params: ReportWriteParams): Promise<{
   })
 
   // Stage E: health-probe tracked pipeline providers (only with --probe).
-  const health: Array<{ host: string; verdict: string; detail: string }> = []
-  const healthProbes: Array<{
-    host: string
-    verdict: string
-    latencyMs: number | null
-  }> = []
-  if (doProbe) {
-    for (const provider of tracked) {
-      // FID-2026-0916-001 (MQ4): tracked custom-provider URLs are
-      // operator-stamped (an explicit trust act) — a local Ollama custom
-      // must stay health-checkable.
-      const result = await probeEndpoint({
-        baseUrl: provider.baseUrl,
-        allowPrivate: true,
-      })
-      const verdict = healthVerdict({
-        reachable: result.reachable,
-        modelsCount: result.modelsCount,
-        boundary: result.boundary,
-      })
-      health.push({
-        host: provider.id,
-        verdict,
-        detail: `${healthDetail(verdict)} (accepted ${provider.acceptedAt})`,
-      })
-      healthProbes.push({
-        host: provider.id,
-        verdict,
-        latencyMs: result.latencyMs,
-      })
-    }
-  } else if (tracked.length > 0) {
-    health.push({
-      host: '(tracked providers)',
-      verdict: 'skipped',
-      detail: `${tracked.length} pipeline provider(s) tracked — run with --probe to health-check them`,
-    })
+  // FID-2026-0918-001: the phase block moved to lib/health-probe.ts
+  // (300-line ceiling split) and runs through the bounded probe pool.
+  const health: HealthRow[] = []
+  const healthProbes: HealthProbeRow[] = []
+  if (doProbe || tracked.length > 0) {
+    const probed = await runHealthProbePhase({ tracked, doProbe })
+    health.push(...probed.health)
+    healthProbes.push(...probed.healthProbes)
   }
 
   // W1 — append this run's sample to each tracked host's stability ring.
