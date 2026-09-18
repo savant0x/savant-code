@@ -2,6 +2,57 @@
 
 ## Unreleased
 
+### Rejected OpenRouter master key now fails closed, not silently (FID-2026-0917-004)
+
+- `resolveOpenRouterApiKey()` treated **any** failed master-key exchange as a
+  soft failure: log a warning, then fall through to `OPENROUTER_API_KEY`.
+  When that fallback held a stale or revoked key, the CLI silently sent a
+  dead credential and the operator saw the vendor 401 `User not found.` at
+  chat-completions time — an error naming neither the dead key nor the failed
+  exchange that selected it. Second occurrence of this exact anti-pattern
+  (FID-2026-0917-001 added the diagnostics but kept the fallthrough).
+- A 401/403 from the `/api/v1/keys` exchange is now terminal: it
+  negative-caches (`cachedKey = null`) and returns `undefined` instead of
+  substituting a different credential for the one the operator configured.
+  Because `openrouter` is a registered `kind: 'gateway'` provider
+  (`common/src/providers/registry.ts:23-25`), `getModelForRequest`'s
+  active-provider guard throws the templated missing-key error before
+  `createDefaultInferenceModel` is reached — so the operator gets an accurate
+  message, not a dead key sent upstream. Transient failures (429, 5xx,
+  network) keep the soft fallthrough, since a still-valid regular key remains
+  legitimately usable while the exchange endpoint is unavailable.
+- Returning `undefined` preserves the existing `string | undefined` contract
+  — no new throw sites, no caller breakage. The negative cache reuses the
+  existing environment-signature invalidation and
+  `resetOpenRouterApiKeyCache()`, so a fresh key stored via `/provider`
+  recovers without a restart.
+- Gates: sdk typecheck exit 0; resolver suite 13 pass / 0 fail (5 new);
+  eslint 0 warnings; prettier clean; `lint:md` exit 0; independent Verifier
+  AUDIT — 4 PASS / 1 FAIL refuted with registry evidence (the flagged
+  `?? apiKey` fallback is unreachable on the live `DIRECT_PROVIDER=openrouter`
+  path because the gateway guard throws first). Shipped to the rebuilt
+  `sdk/dist` the running CLI loads. **Closed + archived 2026-09-17.**
+
+### OpenRouter key shadowed by Bun dotenv auto-loader in dev boot (FID-2026-0917-003)
+
+- Every OpenRouter call in local dev failed with `User not found.` because
+  Bun's dotenv auto-loader is **not** disabled by the `--cwd ..` flag in the
+  dev script, contrary to the comment at `load-dev-env.ts:5-6`. With
+  `cwd=cli/`, Bun pre-seeded `process.env.OR_MASTER_KEY` from the **stale**
+  `cli/.env.local` before `load-dev-env.ts` ran; the "existing env wins" rule
+  then permanently locked in that value, so the good repo-root key was
+  always skipped.
+- Three-part fix: `--no-env-file` added to the dev script
+  (`cli/package.json:17`) so `load-dev-env.ts` is the sole deterministic
+  loader; the false comment replaced with the real mechanism; the divergent
+  stale `OR_MASTER_KEY` removed from `cli/.env.local` (gitignored — a
+  local-machine fix). The stale `OPENROUTER_API_KEY` was also cleared from
+  `HKCU\Environment`.
+- Bidirectional probe, identical command, one flag different: stale key →
+  401 → `User not found.`; root key → exchange OK → **HTTP 200**. Gates:
+  typecheck cli exit 0; probe exit 0; quality exit 0. **Closed + archived
+  2026-09-17.**
+
 ### EHEL Law 3 gate no longer deadlocks writes on a lint-failing doc (FID-2026-0917-002)
 
 - The EHEL pre-write Law 3 gate blocked **every** write tool call — including

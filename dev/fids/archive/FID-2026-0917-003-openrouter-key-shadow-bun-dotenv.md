@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0917-003-openrouter-key-shadow-bun-dotenv.md`
 **ID:** FID-2026-0917-003
 **Severity:** critical
-**Status:** verified
+**Status:** closed
 **Created:** 2026-09-17 19:20
 **YAGNI-Compliance:** Verified
 
@@ -203,8 +203,10 @@ remove the stale duplicate so there is one source of truth for the master key.
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [x] **Commit SHA:** pending local commit (changes are in the working tree,
-      not yet staged; this FID is written before the commit lands)
+- [x] **Commit SHA:** `095cddc6` (code: `cli/package.json` +
+      `cli/src/pre-init/load-dev-env.ts`), `7a28bb0d` (this FID), `e1a75318`
+      (handoff). Also `906764ca`–`7a28bb0d` chain for prior-session context.
+      Nothing pushed.
 - [x] **File:line ranges:**
       - `cli/package.json:17` — dev script now
         `bun run prebuild:agents && bun --no-env-file run src/index.tsx --cwd ..`
@@ -237,7 +239,8 @@ remove the stale duplicate so there is one source of truth for the master key.
 
 ## Resolution
 
-- **Closed Date:** (set when closure is independently verified)
+- **Closed Date:** 2026-09-17 20:01 (verified + committed; closure
+      ceremony executed same session)
 - **Fix Description:** `--no-env-file` added to the `cli` dev script so
       `load-dev-env.ts` is the sole env loader; the false `--cwd ..` comment
       corrected; the stale divergent `OR_MASTER_KEY` removed from
@@ -249,7 +252,8 @@ remove the stale duplicate so there is one source of truth for the master key.
   probe (without, real boot):  AFTER = sk-or-v1-7af...c895 → HTTP 200
   typecheck cli: exit 0 | eslint: 0 | prettier: clean | lint:md: exit 0
   ```
-- **Archived:** (set when moved to `dev/fids/archive/`)
+- **Archived:** 2026-09-17 20:01 (moved to `dev/fids/archive/`, receipt
+      re-stamped at the archived path)
 
 ## Lessons Learned
 

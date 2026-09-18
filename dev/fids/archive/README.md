@@ -3,6 +3,49 @@
 This directory contains closed or historically completed FIDs. Files here are
 an audit record, not an active work queue.
 
+## 2026-09-17 closure — OpenRouter key shadow + rejected-master-key fallthrough (2 FIDs archived)
+
+Agent-executed lifecycle per the G1 amendment (hybrid mode; FID-003: 3 source
+files + local secret hygiene; FID-004: 2 files, 41 insertions — both under the
+100-line escalation threshold). Both authored from a live audit of the
+operator-reported `User not found.` vendor 401.
+
+- [`FID-2026-0917-004-openrouter-rejected-master-key-fallthrough.md`](FID-2026-0917-004-openrouter-rejected-master-key-fallthrough.md)
+  (high) — closed 2026-09-17; archived 2026-09-17. `resolveOpenRouterApiKey()`
+  treated **any** failed master-key exchange as a soft failure: log, then fall
+  through to `OPENROUTER_API_KEY`. When that fallback held a stale/revoked key
+  the CLI silently sent a dead credential, surfacing later as the vendor 401
+  `User not found.` — an error naming neither the dead key nor the failed
+  exchange that selected it. Second occurrence of the same anti-pattern
+  (FID-001 added diagnostics, kept the fallthrough). Fix: a 401/403 from the
+  `/api/v1/keys` exchange is now terminal — negative-cache (`cachedKey = null`)
+  and return `undefined`, so the active-provider guard in `getModelForRequest`
+  throws the templated missing-key error instead of sending a dead key.
+  `openrouter` is registered `kind: 'gateway'` (`registry.ts:23-25`), so the
+  flagged `?? apiKey` consumer path is unreachable on the live
+  `DIRECT_PROVIDER=openrouter` config. Transient failures (429/5xx/network)
+  keep the soft fallthrough. Verifier AUDIT 4 PASS / 1 FAIL — the FAIL refuted
+  with registry evidence. Receipt 3/3 PASS (typecheck sdk, resolver suite
+  13/0, quality) at the archived path. Shipped to the rebuilt `sdk/dist`.
+
+## 2026-09-17 closure — OpenRouter key shadowed by Bun dotenv auto-loader (1 FID archived)
+
+- [`FID-2026-0917-003-openrouter-key-shadow-bun-dotenv.md`](FID-2026-0917-003-openrouter-key-shadow-bun-dotenv.md)
+  (critical) — closed 2026-09-17; archived 2026-09-17. Bun's dotenv
+  auto-loader is **not** disabled by the `--cwd ..` flag in the dev script,
+  contrary to the comment at `load-dev-env.ts:5-6`. With `cwd=cli/` Bun
+  pre-seeded `process.env.OR_MASTER_KEY` from the **stale** `cli/.env.local`;
+  the "existing wins" rule then permanently shadowed the good repo-root key.
+  Three-part fix: `--no-env-file` added to the dev script
+  (`cli/package.json:17`) so `load-dev-env.ts` is the sole deterministic
+  loader; the false comment replaced with the real mechanism; the divergent
+  stale key removed from `cli/.env.local` (gitignored, local-only). Stale
+  `OPENROUTER_API_KEY` also cleared from `HKCU\Environment`. Bidirectional
+  probe, one flag different: stale key → 401 `User not found.`; root key →
+  exchange OK → **HTTP 200**. Receipt 3/3 PASS (typecheck cli, probe, quality);
+  Verifier AUDIT PASS (both NEEDS-REVIEW closed: zero non-`.local` `.env`
+  files exist repo-wide). Commits `095cddc6` + `7a28bb0d` + `e1a75318`.
+
 ## 2026-09-17 closure — EHEL docs/write deadlock (1 FID archived)
 
 Agent-executed lifecycle per the G1 amendment (hybrid mode, 51 insertions /

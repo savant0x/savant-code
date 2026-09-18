@@ -5,6 +5,20 @@ operator decision, implementation, runtime review, or closure evidence.
 
 ## Current active FIDs
 
+**2026-09-17 closure — FID-2026-0917-003 + FID-2026-0917-004 (OpenRouter
+key shadow + rejected-master-key fallthrough) closed and archived:** both
+authored from a live audit of the operator-reported `User not found.` vendor
+401. FID-003 (critical): Bun's dotenv auto-loader was not disabled by `--cwd
+..` in the dev script, so it pre-seeded the stale `cli/.env.local` key and the
+"existing wins" rule permanently shadowed the good root key — fixed with
+`--no-env-file` + comment correction + stale-key removal (local-only), and
+the stale `OPENROUTER_API_KEY` cleared from the registry. FID-004 (high): a
+401/403 from the `/api/v1/keys` exchange is now terminal (negative-cache +
+`undefined`) instead of silently falling through to a stale regular key; the
+active-provider guard throws the templated missing-key error on the live
+`DIRECT_PROVIDER=openrouter` path. Both shipped to the rebuilt `sdk/dist`.
+Receipts 3/3 PASS at the archived paths. **The active FID queue is empty.**
+
 **2026-09-17 closure — FID-2026-0917-002 (EHEL docs/write deadlock) closed
 and archived:** the Law 3 pre-write gate deadlocked every write tool call
 after a markdown doc failed markdownlint — the violation blocked its own
