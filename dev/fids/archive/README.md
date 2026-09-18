@@ -3,6 +3,36 @@
 This directory contains closed or historically completed FIDs. Files here are
 an audit record, not an active work queue.
 
+## 2026-09-18 closure — free-compute harvester scan optimization (2 FIDs archived)
+
+Agent-executed lifecycle per the G1 amendment (hybrid mode). Both FIDs closed
+against implementation commit `69f6e7a7` (feat + RED-first suites + state
+layer) with receipts re-stamped live at the archived paths (`fid:verify --write`,
+5/5 gates PASS each).
+
+- [`FID-2026-0918-001-probe-phase-bounded-concurrency.md`](FID-2026-0918-001-probe-phase-bounded-concurrency.md)
+  (medium) — closed + archived 2026-09-18. The daily harvester probed every
+  tracked host serially (up to 3 round-trips × 10s timeout each; 41/71 hosts
+  sat at `boundary-unverifiable`, re-probed every run by design), making the
+  probe loop the dominant wall-clock cost. Fix: `runWithConcurrency` pool
+  (`PROBE_CONCURRENCY = 6`) wired through both probe sites — the daily
+  probe-merge phase and the Stage-E health loop (split to
+  `lib/health-probe.ts` to hold the 300-line ceiling). LIVE `--probe` harvest:
+  exit 0 in 13.7s (214 records, ~43 probes) against a serial bound of minutes.
+- [`FID-2026-0918-002-unverifiable-reprobe-cadence.md`](FID-2026-0918-002-unverifiable-reprobe-cadence.md)
+  (medium) — closed + archived 2026-09-18. `boundary-unverifiable` hosts
+  re-probed daily although a boundary verdict only needs re-measurement after
+  the 3-day lapse window. Fix: `shouldReprobeUnverifiable()` gate
+  (`UNVERIFIABLE_REPROBE_DAYS = PROBE_LAPSED_AFTER_DAYS`, fail-open on
+  stale/never/malformed) + `lastProbeAttemptUtc` stamping on every attempted
+  probe, carried through type, parse, and the `diffCandidates` field-literal
+  rebuild (carry-forward pinned — the diff would otherwise drop the field on
+  every re-sight). LIVE double-run: 40 hosts stamped in 14.0s; same-day rerun
+  skipped all 40 (zero timestamp diffs) in 1.13s.
+
+Combined effect: typical daily scan wall clock ~14s → ~1.1s, evidence
+freshness bounded at 3 days by construction.
+
 ## 2026-09-17 closure — /model picker provider passthrough (1 FID archived)
 
 Agent-executed lifecycle per the G1 amendment (hybrid mode; 3 files, 164

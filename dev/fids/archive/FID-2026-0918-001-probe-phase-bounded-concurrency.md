@@ -148,8 +148,8 @@ Correctness constraints (all preserved):
 
 ### Verification Receipt
 
-- fingerprint: sha256:18b6ef34155520ae8f444a993c1755f7a3d6a564beba23f35bf1d8d60a8bd5a0
-- verified: 2026-09-18T16:15:49.656Z
+- fingerprint: sha256:be44d23172f71aa7159937ae4fd1b5be66442121424aac8c5c711fe08a31857e
+- verified: 2026-09-18T18:08:27.282Z
 - test scripts/providers/__tests__/probe-pool.test.ts: exit 0
 - test scripts/providers/__tests__/harvest-core.test.ts: exit 0
 - test scripts/providers/__tests__/probe-boundary.test.ts: exit 0
@@ -256,7 +256,7 @@ Correctness constraints (all preserved):
 
 ## Resolution
 
-- **Closed Date:** pending G2 commit (closure + archive immediately after)
+- **Closed Date:** 2026-09-18 (G2 commit `69f6e7a7`)
 - **Fix Description:** bounded-concurrency pool (6) for both harvester
   probe phases; Stage-E block split to its own module to hold the
   300-line ceiling
@@ -264,7 +264,7 @@ Correctness constraints (all preserved):
   (9 pins: cap, ordering, empty, oversized limit, serial degradation,
   rejection propagation, constant pin, pooled health ×2)
 - **Verification Evidence:** see Implementation Evidence (gate output)
-- **Archived:** pending G2 commit
+- **Archived:** 2026-09-18 — moved to `dev/fids/archive/` at commit `69f6e7a7`; receipt re-stamped at the archived path
 
 ## Lessons Learned
 

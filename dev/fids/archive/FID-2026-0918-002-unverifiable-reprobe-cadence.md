@@ -136,8 +136,8 @@ Grace-rule precedent: PROBE_LAPSED_AFTER_DAYS = 3 (health.ts:10)
 
 ### Verification Receipt
 
-- fingerprint: sha256:262511910c69976c6431722cc1526a4812ae4d71963c73237f9cea042218dbbd
-- verified: 2026-09-18T16:31:37.504Z
+- fingerprint: sha256:c91e7614deb3086312c22d6a1d1aa39d45b42beefda0decf8afa9cfaaa43db21
+- verified: 2026-09-18T18:08:36.651Z
 - typecheck common: exit 0
 - test scripts/providers/__tests__/probe-cadence.test.ts: exit 0
 - test scripts/providers/__tests__/harvest-core.test.ts: exit 0
@@ -206,7 +206,7 @@ Grace-rule precedent: PROBE_LAPSED_AFTER_DAYS = 3 (health.ts:10)
 
 ## Resolution
 
-- **Closed Date:** pending G2 commit (closure + archive immediately after)
+- **Closed Date:** 2026-09-18 (G2 commit `69f6e7a7`)
 - **Fix Description:** 3-day re-probe cadence for boundary-unverifiable
   hosts via `shouldReprobeUnverifiable`; every attempted probe stamps
   `lastProbeAttemptUtc` (type/parse/diff/write-back all carry it)
@@ -217,7 +217,7 @@ Grace-rule precedent: PROBE_LAPSED_AFTER_DAYS = 3 (health.ts:10)
   zero re-probes in run 2 (identical host sets, zero timestamp diffs,
   wall clock 14.0s → 1.13s); probe-cadence 9/0; providers tree 119/0;
   typecheck common exit 0; quality PASS
-- **Archived:** pending G2 commit
+- **Archived:** 2026-09-18 — moved to `dev/fids/archive/` at commit `69f6e7a7`; receipt re-stamped at the archived path
 
 ## Lessons Learned
 
