@@ -1,6 +1,11 @@
 import { castDraft } from 'immer'
 
-import { dampTokenCount, recordRun } from './compaction-helpers'
+import {
+  compactionReportEpochOf,
+  compactionStatusEpochOf,
+  dampTokenCount,
+  recordRun,
+} from './compaction-helpers'
 import { initialState } from './initial-state'
 import {
   applyCompactionStatus,
@@ -67,6 +72,16 @@ export const createSidebarActions = (set: SetState): ChatSidebarActions => ({
   // snapshots never re-render the panel needlessly.
   setLastCompactionReport: (report) =>
     set((state) => {
+      // FID-2026-0917-006: a re-mirror of an already-retired report (the
+      // run-end adoptAndPersist re-delivers the runtime's long-lived
+      // lastCompactionReport) must not resurrect the retired excerpt.
+      if (
+        report &&
+        state.retiredCompactionReportEpoch !== null &&
+        state.retiredCompactionReportEpoch === compactionReportEpochOf(report)
+      ) {
+        return
+      }
       if (
         state.lastCompactionReport?.summaryExcerpt === report?.summaryExcerpt &&
         state.lastCompactionReport?.removedMessages === report?.removedMessages
@@ -200,6 +215,21 @@ export const createSidebarActions = (set: SetState): ChatSidebarActions => ({
       // CompactionSummaryBlock (foldable, collapsed by default); the
       // compactionCount session stat is preserved so the sidebar stays
       // honest.
+      //
+      // FID-2026-0917-006: clearing the three fields alone is NOT durable —
+      // the 2s heartbeat (send-message-monitors) and the run-end
+      // adoptAndPersist both re-mirror mainAgentState.compactionStatus, which
+      // retains its terminal phase indefinitely, resurrecting the retired
+      // panel. Stamp each half of the outcome's identity FIRST (while the
+      // outgoing status + report are still in hand) so those mirrors can
+      // recognize and drop a stale re-delivery; a genuinely new compaction
+      // (different epoch) still displays.
+      state.retiredCompactionStatusEpoch = compactionStatusEpochOf(
+        state.compactionStatus,
+      )
+      state.retiredCompactionReportEpoch = compactionReportEpochOf(
+        state.lastCompactionReport,
+      )
       state.compactionStatus = null
       state.compactionEvents = []
       state.lastCompactionReport = null

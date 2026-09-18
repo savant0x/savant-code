@@ -1,3 +1,4 @@
+import type { LastCompactionReport } from './chat-store-common-types'
 import type { CompactionLifecycleEvent } from './types'
 import type { CompactionStatus } from '@savant-code/common/types/session-state'
 
@@ -67,6 +68,48 @@ export function dampTokenCount(current: number, incoming: number): number {
 }
 
 /**
+ * FID-2026-0917-006: identity of the retired outcome, computed from the two
+ * halves the mirror sites actually have at hand.
+ *
+ * The runtime's `mainAgentState.compactionStatus` deliberately retains a
+ * terminal `compacted` phase indefinitely (the sidebar percent readout depends
+ * on it). The store therefore cannot use "a terminal status is present" to
+ * mean "fresh". Instead `onNewUserMessage` stamps BOTH epochs at retirement
+ * time, while the outgoing status + report are still in hand, and each mirror
+ * site compares only the half it re-delivers:
+ *   - the status mirror (2s heartbeat + adoptAndPersist status write) probes
+ *     the status epoch,
+ *   - the report mirror (adoptAndPersist report write) probes the report epoch.
+ * A match is a stale re-mirror of an already-retired signal and is dropped; a
+ * mismatch is a genuine new compaction and displays (clearing the stamps).
+ *
+ * `percentUsed` is intentionally excluded from both: it drifts on every step
+ * boundary (recount + window re-derivation), so including it would make the
+ * epoch unstable and let a re-mirror through disguised as a new compaction.
+ */
+export function compactionStatusEpochOf(
+  status: CompactionStatus | null,
+): string | null {
+  if (!status) return null
+  // Only terminal outcome phases carry a retired signal worth suppressing.
+  // `compacting` / `blocked` / `warning` are live states, not outcomes — a
+  // retirement must never silence them.
+  if (
+    status.phase !== 'compacted' &&
+    status.phase !== 'pruned' &&
+    status.phase !== 'ineffective'
+  ) {
+    return null
+  }
+  return `${status.phase}:${status.tokensSaved ?? 0}`
+}
+
+export function compactionReportEpochOf(
+  report: LastCompactionReport | null,
+): string | null {
+  if (!report) return null
+  return `${report.removedMessages}:${report.tokensSaved ?? 0}:${report.summaryExcerpt.length}`
+} /**
  * FID-2026-0815-008 (F-11): shallow field compare for the compaction status.
  * The runtime rebuilds a fresh object per heartbeat (not reference-stable), so
  * reference equality would never no-op; comparing the three scalar fields

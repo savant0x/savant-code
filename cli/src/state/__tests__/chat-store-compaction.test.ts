@@ -121,6 +121,126 @@ describe('compaction lifecycle store (FID-2026-0814-006)', () => {
   })
 })
 
+describe('CompactionSignal durable retirement (FID-2026-0917-006)', () => {
+  // Reproduces the operator-reported regression: the panel re-pins after
+  // onNewUserMessage because adoptAndPersist + the 2s heartbeat re-mirror
+  // mainAgentState.compactionStatus, which retains its terminal phase.
+  function mirrorTerminalStatus() {
+    // Exactly what adoptAndPersist / send-message-monitors do at run end
+    // and on each heartbeat poll: re-deliver the runtime's long-lived
+    // terminal status + report verbatim.
+    setStatus({ phase: 'compacted', tokensSaved: 1_500, percentUsed: 62 })
+  }
+  function mirrorTerminalReport() {
+    useChatStore.getState().setLastCompactionReport({
+      summaryExcerpt: 'removed stale tool results',
+      removedMessages: 3,
+      tokensSaved: 1_500,
+      percentUsed: 62,
+    })
+  }
+
+  test('onNewUserMessage retires the panel and stamps the outcome epoch', () => {
+    setStatus({ phase: 'compacting' })
+    setStatus({ phase: 'compacted', tokensSaved: 1_500, percentUsed: 62 })
+    mirrorTerminalReport()
+    expect(useChatStore.getState().compactionStatus?.phase).toBe('compacted')
+
+    useChatStore.getState().onNewUserMessage()
+
+    const state = useChatStore.getState()
+    expect(state.compactionStatus).toBeNull()
+    expect(state.compactionEvents).toHaveLength(0)
+    expect(state.lastCompactionReport).toBeNull()
+    // The compactionCount sidebar stat is preserved (honest accounting).
+    expect(state.compactionCount).toBe(1)
+    // And the retirement is recorded so mirrors can be suppressed.
+    expect(state.retiredCompactionStatusEpoch).not.toBeNull()
+  })
+
+  test('a stale re-mirror of the retired status does NOT re-pin the panel', () => {
+    setStatus({ phase: 'compacting' })
+    setStatus({ phase: 'compacted', tokensSaved: 1_500, percentUsed: 62 })
+    mirrorTerminalReport()
+    useChatStore.getState().onNewUserMessage()
+
+    // The run-end mirror re-delivers the same terminal status.
+    mirrorTerminalStatus()
+
+    const state = useChatStore.getState()
+    expect(state.compactionStatus).toBeNull()
+    // And it must not resurrect the report excerpt either.
+    expect(state.lastCompactionReport).toBeNull()
+    // No phantom double-count from the re-delivery.
+    expect(state.compactionCount).toBe(1)
+  })
+
+  test('a stale re-mirror of the retired report does NOT resurrect the excerpt', () => {
+    setStatus({ phase: 'compacting' })
+    setStatus({ phase: 'compacted', tokensSaved: 1_500, percentUsed: 62 })
+    mirrorTerminalReport()
+    useChatStore.getState().onNewUserMessage()
+
+    mirrorTerminalReport()
+
+    expect(useChatStore.getState().lastCompactionReport).toBeNull()
+  })
+
+  test('a genuinely new compaction after retirement displays normally', () => {
+    setStatus({ phase: 'compacting' })
+    setStatus({ phase: 'compacted', tokensSaved: 1_500, percentUsed: 62 })
+    mirrorTerminalReport()
+    useChatStore.getState().onNewUserMessage()
+
+    // A fresh, different compaction outcome.
+    setStatus({ phase: 'compacting' })
+    setStatus({ phase: 'pruned', tokensSaved: 9_000, percentUsed: 41 })
+    useChatStore.getState().setLastCompactionReport({
+      summaryExcerpt: 'a brand new summary',
+      removedMessages: 12,
+      tokensSaved: 9_000,
+      percentUsed: 41,
+    })
+
+    const state = useChatStore.getState()
+    expect(state.compactionStatus?.phase).toBe('pruned')
+    expect(state.lastCompactionReport?.removedMessages).toBe(12)
+    expect(state.compactionCount).toBe(2)
+    // The prior retirement is cleared — the panel is live again.
+    expect(state.retiredCompactionStatusEpoch).toBeNull()
+  })
+
+  test('a blocked/warning status is never suppressed by a retirement', () => {
+    // Live states are not compaction outcomes: the retirement must not
+    // silence a circuit-breaker block or a threshold warning.
+    setStatus({ phase: 'compacting' })
+    setStatus({ phase: 'compacted', tokensSaved: 500, percentUsed: 70 })
+    useChatStore.getState().onNewUserMessage()
+
+    setStatus({
+      phase: 'blocked',
+      percentUsed: 91,
+      blockReason: 'circuit-breaker-open',
+    })
+    expect(useChatStore.getState().compactionStatus?.phase).toBe('blocked')
+
+    useChatStore.getState().onNewUserMessage()
+    setStatus({ phase: 'warning', percentUsed: 88 })
+    expect(useChatStore.getState().compactionStatus?.phase).toBe('warning')
+  })
+
+  test('session reset clears the retirement stamp', () => {
+    setStatus({ phase: 'compacting' })
+    setStatus({ phase: 'compacted', tokensSaved: 500, percentUsed: 70 })
+    useChatStore.getState().onNewUserMessage()
+    expect(useChatStore.getState().retiredCompactionStatusEpoch).not.toBeNull()
+
+    useChatStore.getState().reset()
+
+    expect(useChatStore.getState().retiredCompactionStatusEpoch).toBeNull()
+  })
+})
+
 describe('CompactionSignal render-only boundary (FID-2026-0814-006)', () => {
   test('the in-stream signal is display-only: no tool, write, or history mutation path', () => {
     const source = fs.readFileSync(

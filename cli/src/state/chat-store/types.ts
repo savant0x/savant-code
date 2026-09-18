@@ -121,6 +121,18 @@ export type ChatStoreState = {
   compactionEvents: CompactionLifecycleEvent[]
   /** FID-2026-0824-023 stream-routing: last pruner report (WHAT was compacted). */
   lastCompactionReport: LastCompactionReport | null
+  /**
+   * FID-2026-0917-006: identity of the outcome retired by the last
+   * `onNewUserMessage`, split into the two halves the mirror sites actually
+   * hold at re-delivery time. `null` outside a retirement. The 2s heartbeat
+   * and the run-end `adoptAndPersist` re-mirror `mainAgentState.compactionStatus`
+   * and `lastCompactionReport`, which retain their terminal values indefinitely
+   * — without these stamps those mirrors resurrect the retired panel. A match
+   * is a stale re-delivery (suppressed); a mismatch is a fresh compaction
+   * (displayed, and the stamps cleared).
+   */
+  retiredCompactionStatusEpoch: string | null
+  retiredCompactionReportEpoch: string | null
   toolsUsed: string[]
   toolHistory: ToolHistoryEntry[]
   filesChanged: FilesChanged

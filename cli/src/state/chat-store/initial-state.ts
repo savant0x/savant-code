@@ -51,6 +51,9 @@ export const initialState: ChatStoreState = {
   compactionCount: 0,
   compactionEvents: [],
   lastCompactionReport: null,
+  /** FID-2026-0917-006: no retirement pending at session start. */
+  retiredCompactionStatusEpoch: null,
+  retiredCompactionReportEpoch: null,
   toolsUsed: [],
   toolHistory: [],
   filesChanged: { modified: 0, created: 0, added: 0, deleted: 0 },

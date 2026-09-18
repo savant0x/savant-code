@@ -4,7 +4,11 @@
 
 import { castDraft } from 'immer'
 
-import { recordRun, sameCompactionStatus } from './compaction-helpers'
+import {
+  compactionStatusEpochOf,
+  recordRun,
+  sameCompactionStatus,
+} from './compaction-helpers'
 import { generateSessionId, initialState } from './initial-state'
 
 import type { ChatStore } from './types'
@@ -22,6 +26,24 @@ export function applyCompactionStatus(
   state: DraftState,
   status: ChatStore['compactionStatus'],
 ): void {
+  // FID-2026-0917-006: suppress a stale re-mirror. The 2s heartbeat
+  // (send-message-monitors) and the run-end adoptAndPersist both re-deliver
+  // mainAgentState.compactionStatus, which holds its terminal phase
+  // indefinitely; without this guard they resurrect the panel that
+  // onNewUserMessage just retired. A matching epoch = same outcome (drop); a
+  // differing epoch = a fresh compaction (accept and clear both stamps).
+  if (
+    status &&
+    state.retiredCompactionStatusEpoch !== null &&
+    state.retiredCompactionStatusEpoch === compactionStatusEpochOf(status)
+  ) {
+    return
+  }
+  // A genuinely new compaction outcome ends any pending retirement.
+  if (state.retiredCompactionStatusEpoch !== null) {
+    state.retiredCompactionStatusEpoch = null
+    state.retiredCompactionReportEpoch = null
+  }
   // FID-2026-0815-008 (F-11): no-op on an equivalent status so re-delivered
   // heartbeats don't produce a new state. Shallow compare (not reference)
   // because the runtime rebuilds a fresh object per heartbeat.
@@ -112,6 +134,10 @@ export function resetSidebarSlice(state: DraftState): void {
   // FID-2026-0914-002 (MQ4): provenance resets with the window.
   state.contextWindowSource = 'default'
   state.compactionStatus = null
+  // FID-2026-0917-006: a session reset zeroes every compaction field, so
+  // there is nothing retired to remember — clear both stamps alongside.
+  state.retiredCompactionStatusEpoch = null
+  state.retiredCompactionReportEpoch = null
   // FID-2026-0814-006: the counter + transcript history are per-session
   // activity — reset alongside provenanceEvents on every session reset.
   state.compactionCount = 0
