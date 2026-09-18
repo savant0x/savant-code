@@ -17,12 +17,9 @@ import { useProviderPickerStore } from '../state/provider-picker-store'
 import { useRewindPickerStore } from '../state/rewind-picker-store'
 import { useSavantFreeModelStore } from '../state/savant-free-model-store'
 import { getSystemMessage } from '../utils/message-history'
+import { applyModelPickerSelection } from '../utils/provider-setup'
 import { executeRewind } from '../utils/rewind'
-import {
-  loadSavantCodeModelPreference,
-  saveSavantCodeModelPreference,
-  saveSavantCodeModelProviderPreference,
-} from '../utils/settings'
+import { loadSavantCodeModelPreference } from '../utils/settings'
 
 import type { MultilineInputHandle } from '../components/multiline-input'
 import type { RewindMode } from '../state/rewind-picker-store'
@@ -198,10 +195,20 @@ export function useChatPickers({
   )
 
   // Commit a model pick: persist the override, confirm in-chat, and close.
+  //
+  // applyModelPickerSelection resolves the provider, persists the model
+  // preference, and activates the provider's runtime routing
+  // (FID-2026-0917-005): persisting the preference alone leaves
+  // DIRECT_PROVIDER/INFERENCE_BASE_URL empty, so every downstream gate —
+  // isDirectProviderMode(), useUsageMonitor, getModelForRequest — sees no
+  // active provider and passthroughs to the SavantCode backend (402 "Out of
+  // credits"). Activation uses the same guarded seam the /provider picker
+  // uses: it writes the env vars only when the provider's key is configured,
+  // so an unkeyed provider stays fail-closed and an existing custom
+  // INFERENCE_BASE_URL is not clobbered.
   const handleModelPickerSelect = useCallback(
     (model: OpenRouterModel) => {
-      saveSavantCodeModelPreference(model.id)
-      saveSavantCodeModelProviderPreference(model.provider ?? 'openrouter')
+      applyModelPickerSelection(model)
       useSavantFreeModelStore.getState().switchModel(model.id)
       const current = loadSavantCodeModelPreference()
       setMessages((prev) => [
@@ -217,8 +224,7 @@ export function useChatPickers({
       inputRef.current?.focus()
     },
     [
-      saveSavantCodeModelPreference,
-      saveSavantCodeModelProviderPreference,
+      applyModelPickerSelection,
       loadSavantCodeModelPreference,
       setMessages,
       closeModelPicker,

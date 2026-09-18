@@ -10,6 +10,7 @@ import {
 import {
   getActiveProvider,
   saveActiveProvider,
+  saveSavantCodeModelPreference,
   saveSavantCodeModelProviderPreference,
 } from './settings'
 
@@ -112,6 +113,35 @@ export function activateConfiguredProvider(provider: string): boolean {
   saveSavantCodeModelProviderPreference(provider)
   saveActiveProvider(provider)
   return true
+}
+
+/**
+ * Apply a /model-picker selection end to end (FID-2026-0917-005).
+ *
+ * Resolves the model's provider (defaulting to 'openrouter' when unset),
+ * persists the model preference, and activates the provider's runtime
+ * routing via the same guarded seam the /provider picker uses. Without this,
+ * the picker persisted the preference only — DIRECT_PROVIDER /
+ * INFERENCE_BASE_URL stayed empty, so every downstream gate
+ * (isDirectProviderMode, useUsageMonitor, getModelForRequest) saw no active
+ * provider and requests passthrough-ed to the SavantCode backend
+ * (402 "Out of credits").
+ *
+ * The provider preference is persisted when activation declines (unkeyed
+ * provider) so the next /model open still defaults to that section;
+ * activateConfiguredProvider persists it itself on success, so the write is
+ * not duplicated on the happy path.
+ */
+export function applyModelPickerSelection(model: {
+  id: string
+  provider?: string
+}): void {
+  const provider = model.provider ?? 'openrouter'
+  saveSavantCodeModelPreference(model.id)
+  const activated = activateConfiguredProvider(provider)
+  if (!activated) {
+    saveSavantCodeModelProviderPreference(provider)
+  }
 }
 
 export function getProviderSetupGuidance(info: MissingProviderSetup): string {
