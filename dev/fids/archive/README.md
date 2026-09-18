@@ -3,6 +3,30 @@
 This directory contains closed or historically completed FIDs. Files here are
 an audit record, not an active work queue.
 
+## 2026-09-17 closure — /model picker provider passthrough (1 FID archived)
+
+Agent-executed lifecycle per the G1 amendment (hybrid mode; 3 files, 164
+insertions / 9 deletions — under the 100-line escalation threshold). Root
+caused from a live audit of the operator-reported "Out of credits" savant-
+code.com passthrough when selecting a provider through the `/model` picker.
+
+- [`FID-2026-0917-005-model-picker-provider-passthrough.md`](FID-2026-0917-005-model-picker-provider-passthrough.md)
+  (high) — closed 2026-09-17; archived 2026-09-17. The `/model` picker
+  persisted the model's provider to `settings.json` only, never writing
+  `process.env.DIRECT_PROVIDER` / `INFERENCE_BASE_URL`. Every downstream gate
+  reads `process.env` exclusively (`isDirectProviderMode`, `useUsageMonitor`,
+  `getActiveProviderId`, `createDefaultInferenceModel`), so a `/model` pick
+  left routing at the default `getWebsiteUrl()` → savant-code.com → 402
+  "Out of credits". The `/provider` picker avoided the bug by calling
+  `activateConfiguredProvider`. Fix: selection extracted into
+`applyModelPickerSelection(model)` in `cli/src/utils/provider-setup.ts`
+  (Law 13 — one function, one truth: resolve + persist + activate through the
+  same guarded seam), with `handleModelPickerSelect` as a one-line delegation.
+  Fail-closed preserved (unkeyed provider declines and leaves an explicit
+  route untouched). Verifier AUDIT PASS (2 findings fixed en route: a
+  tautological test target and a redundant persist call). Receipt 3/3 PASS
+  re-stamped live at the archived path. Commits `91daaf93` + `6b326d61`.
+
 ## 2026-09-17 closure — OpenRouter key shadow + rejected-master-key fallthrough (2 FIDs archived)
 
 Agent-executed lifecycle per the G1 amendment (hybrid mode; FID-003: 3 source

@@ -2,6 +2,41 @@
 
 ## Unreleased
 
+### /model picker now activates the selected provider's routing (FID-2026-0917-005)
+
+- Selecting a model in the `/model` picker persisted the model's provider to
+  `settings.json` but never activated it in the runtime environment.
+  `process.env.DIRECT_PROVIDER` and `process.env.INFERENCE_BASE_URL` stayed
+  empty, so `isDirectProviderMode()` returned false — the usage monitor
+  queried the SavantCode backend (402 → "Out of credits. Please add credits
+  at https://savant-code.com/usage") and the inference request itself routed
+  to `getWebsiteUrl()` (savant-code.com) instead of the selected provider.
+  The UI said the provider was selected, but requests silently passthrough-ed
+  to the SavantCode website. A different layer from the OpenRouter key fixes
+  (FID-2026-0917-003/-004) with the same user-visible symptom; the `/provider`
+  picker avoided the bug because it already called `activateConfiguredProvider`.
+- The selection logic is extracted into `applyModelPickerSelection(model)` in
+  `cli/src/utils/provider-setup.ts` (Law 13 — one function, one truth: resolves
+  `model.provider ?? 'openrouter'`, persists the model preference, and
+  activates via `activateConfiguredProvider`, the same guarded seam the
+  `/provider` picker uses). `handleModelPickerSelect` is now a one-line
+  delegation, so the regression suite exercises the real production seam
+  rather than a copy of its logic. The provider preference is persisted only
+  when activation declines (unkeyed provider) — no duplicated write on the
+  happy path.
+- Fail-closed preserved: an unkeyed provider declines activation and leaves an
+  explicit `INFERENCE_BASE_URL` untouched — the SDK surfaces a clear
+  missing-key error at send time rather than sending a stale credential.
+- Gates: typecheck cli exit 0; eslint 0/0 on all three files; prettier clean;
+  model-picker-activation + provider-setup 25 pass / 0 fail (77 expects);
+  receipt 3/3 PASS re-stamped live at the archived path; independent Verifier
+  AUDIT PASS on all functional criteria (two findings fixed en route: a
+  tautological test target resolved by the extraction, and a redundant persist
+  call removed). Production call-graph confirmed: `use-chat-pickers.ts` →
+  `build-chat-layout-props.ts:181` (`onModelPickerSelect`) → production chat
+  UI. Commits `91daaf93` (fix + test) + `6b326d61` (FID record). **Closed +
+  archived 2026-09-17.**
+
 ### Rejected OpenRouter master key now fails closed, not silently (FID-2026-0917-004)
 
 - `resolveOpenRouterApiKey()` treated **any** failed master-key exchange as a

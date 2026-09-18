@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0917-005-model-picker-provider-passthrough.md`
 **ID:** FID-2026-0917-005
 **Severity:** high
-**Status:** verified
+**Status:** closed
 > (`converged` is the correct pre-implementation status per
 > FID-2026-0915-004; `fixed` is deprecated-but-accepted legacy language —
 > do not use it for new FIDs. The receipt contract still keys to
@@ -162,8 +162,8 @@ All three steps `implemented`. Step 1 was refined after independent audit:
 
 ### Verification Receipt
 
-- fingerprint: sha256:3746e067e2b2a01469616e1617fea72cf61d0090a03e6e9309028f8fe1d4bc73
-- verified: 2026-09-18T02:12:00.186Z
+- fingerprint: sha256:b84298af108c05aa2213d875790c1427042dbab5dad86f368d67228f6c52475e
+- verified: 2026-09-18T02:41:38.117Z
 - typecheck cli: exit 0
 - test cli/src/chat/__tests__/model-picker-activation.test.ts: exit 0
 - quality: exit 0
@@ -211,8 +211,9 @@ All three steps `implemented`. Step 1 was refined after independent audit:
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [x] **Commit SHA:** uncommitted in working tree (local commits only, per
-      operator policy — no push)
+- [x] **Commit SHA:** `91daaf93` (fix + test, FID-2026-0917-005) +
+      `6b326d61` (this FID record); local commits only, per operator policy
+      — no push
 - [x] **File:line ranges:**
       - `cli/src/utils/provider-setup.ts` — new exported
         `applyModelPickerSelection(model)` (resolve + persist + activate)
@@ -243,7 +244,7 @@ All three steps `implemented`. Step 1 was refined after independent audit:
 
 ## Resolution
 
-- **Closed Date:** (set when closure is independently verified)
+- **Closed Date:** 2026-09-17
 - **Fix Description:** `handleModelPickerSelect` now activates the selected
   model's provider via `activateConfiguredProvider` — the same guarded seam
   the `/provider` picker uses — closing the savant-code.com passthrough.
@@ -252,7 +253,8 @@ All three steps `implemented`. Step 1 was refined after independent audit:
   default)
 - **Verification Evidence:** typecheck cli exit 0; eslint 0/0; prettier clean;
   4/4 new + 26/0 existing tests
-- **Archived:** (set when moved to `dev/fids/archive/`)
+- **Archived:** 2026-09-17 — moved to `dev/fids/archive/`; receipt
+  re-stamped at the archived path
 
 ## Lessons Learned
 

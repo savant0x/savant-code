@@ -5,6 +5,20 @@ operator decision, implementation, runtime review, or closure evidence.
 
 ## Current active FIDs
 
+**2026-09-17 closure — FID-2026-0917-005 (/model picker provider
+passthrough) closed and archived:** selecting a model in the `/model` picker
+persisted the provider to `settings.json` only, never writing
+`process.env.DIRECT_PROVIDER` / `INFERENCE_BASE_URL`, so every downstream gate
+(`isDirectProviderMode`, `useUsageMonitor`, `getActiveProviderId`,
+`createDefaultInferenceModel`) kept routing to `getWebsiteUrl()` =
+savant-code.com → 402 "Out of credits". Selection extracted into
+`applyModelPickerSelection(model)` in `cli/src/utils/provider-setup.ts` —
+resolve + persist + activate through the same guarded seam the `/provider`
+picker uses; `handleModelPickerSelect` is now a one-line delegation. Fail-
+closed preserved (unkeyed provider declines, explicit route untouched).
+Receipt 3/3 PASS re-stamped live at the archived path. **The active FID queue
+is empty.**
+
 **2026-09-17 closure — FID-2026-0917-003 + FID-2026-0917-004 (OpenRouter
 key shadow + rejected-master-key fallthrough) closed and archived:** both
 authored from a live audit of the operator-reported `User not found.` vendor
