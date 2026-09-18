@@ -1,4 +1,7 @@
-# FID-2026-0918-003 — Automation-Mode Release Is Dead Code (Preaudit Clean-Tree Block Contradicts the Required-Changes Automation Commit)
+# FID-2026-0918-003 — Automation-Mode Release Is Dead Code
+
+> Preaudit clean-tree block contradicts the required-changes automation
+> commit.
 
 ## Metadata
 
