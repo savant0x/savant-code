@@ -56,7 +56,7 @@ filesystem entries in `agents/`.
 - Prefer dependency injection over module mocking.
 - Run interactive CLI tests in tmux.
 - Do not force-push `main`.
-- All typecheck × 4 must pass before any merge: `sdk`, `common`, `packages/agent-runtime`, `cli`.
+- The full typecheck gate must pass before any merge: `bun run typecheck` (chains all 12 workspaces).
 - New FIDs follow the format `dev/fids/FID-YYYY-MMDD-NNN-{title}.md`.
 
 ## Docs
@@ -73,7 +73,7 @@ filesystem entries in `agents/`.
 - [**dev/test-prompts/**](dev/test-prompts/) — A-Z test prompts and reports
 - [**dev/nova/inbox/**](dev/nova/inbox/) + [**outbox/**](dev/nova/outbox/) — Third-party audit channel
 - [**dev/scratchpad/**](dev/scratchpad/) — Ephemeral working area (Orchestrator writes via `/dev override`)
-- [**`.agents/skills/`**](.agents/skills/) — 7 coding standards as `SKILL.md` skills (auto-loaded)
+- [**`.agents/skills/`**](.agents/skills/) — operator-trusted skills: coding standards, release workflow, design suite (auto-loaded)
 - [**`docs/self-improving-harness.md`**](docs/self-improving-harness.md) —
   Self-improving harness + agent-created skills (full guide)
 
@@ -115,8 +115,8 @@ key facts:
 ## Validation
 
 ```bash
-# Typecheck × 4 (HARD GATE)
-cd sdk && bun run typecheck && cd ../common && bun run typecheck && cd ../packages/agent-runtime && bun run typecheck && cd ../../cli && bun run typecheck
+# Typecheck (HARD GATE) — chains all 12 workspaces
+bun run typecheck
 
 # SDK test suite (HARD GATE)
 cd sdk && bun test src/

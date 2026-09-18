@@ -1,11 +1,12 @@
 # Agents and Tools
 
-> **Last verified:** 2026-09-13 — source reads of all agent definitions + `common/src/tools/constants.ts`
+> **Last verified:** 2026-09-18 — source reads of all agent definitions + `common/src/tools/constants.ts`
 > (`toolNames` 55 incl. 4 Composio / `publishedTools` 38) + `packages/agent-runtime/src/tools/tool-executor/`.
+> Counts re-verified live this date.
 
 ## Agents
 
-The Savant harness ships 10 canonical agents + 5 helper tool-library agents
+The Savant harness ships 10 canonical agents + 6 helper tool-library agents
 from the `agents/` workspace. Each agent is a
 `SecretAgentDefinition` with a restricted tool set — no agent may perform another agent's role (ECHO Law: Separation of
 Duties).
