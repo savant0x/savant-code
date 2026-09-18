@@ -32,7 +32,7 @@
 > `BACKUP_BUNDLE`（在任何公开产物生成前写入经验证的 OneDrive 同步备份包）、
 > `DESKTOP_BUNDLES` / `DESKTOP_RELEASE`（桌面打包作为管线阶段，配备
 > fail-closed 更新清单，由 `SAVANT_CODE_RELEASE_DESKTOP=1` 门控）以及按版本
-> 的更新清单验证——外加新增提供商（KiosAPI 与 OpenCode Zen，四协议，附带
+> 的更新清单验证——外加新增提供商（KiosAPI，四协议，附带
 > 面向严格上游的递归 schema 清洗器）、Triggers 计划（可选
 > `SAVANT_TRIGGERS=1`：环回 webhook 接收器（bearer 认证 + 重放/速率防护）、
 > "负载是数据而非提示"的指令注入、带漏跑恢复的免依赖 cron 调度器、
@@ -118,8 +118,6 @@ ollama serve
 | --- | --- | --- | --- |
 | Ollama | 自动检测 | — | 本地推理；无需 API 密钥 |
 | OpenRouter | `/provider openrouter` 或 `DIRECT_PROVIDER=openrouter` | `OR_MASTER_KEY`、`OPENROUTER_API_KEY` 或 `INFERENCE_API_KEY` | **默认提供商**；免费层（`openrouter/free`）为启动默认；主密钥、普通密钥，再推理密钥的优先级 |
-| OpenCode Go | `/provider opencode-go` | `OPENCODE_API_KEY` | 托管网关（OpenCode 共享密钥；旧版 `OPENCODE_GO_API_KEY` 仍兼容） |
-| OpenCode Zen | `/provider opencode-zen` | `OPENCODE_API_KEY` | 按量付费网关，70 个模型含免费层（OpenCode 共享密钥） |
 | TokenRouter | `/provider tokenrouter` | `TOKENROUTER_API_KEY` | 多提供商网关 |
 | TokenHarbor | `/provider tokenharbor` | `TOKENHARBOR_API_KEY` | `https://tokenharbor.ai/v1` 的 OpenAI 兼容网关 |
 | NVIDIA NIM | `/provider nvidia` | `NVIDIA_API_KEY` | NVIDIA 托管推理 |
@@ -313,11 +311,11 @@ MCP 工具发现、模式切换（`HYBRID` / `SCAFFOLD` / `STRICT` / `ANALYZE`�
   （FID-2026-0804-010）。
 - **上下文压缩** —— 4 层渐进式自动压缩：L0（总结旧轮次）、L1（压缩工具结果）、L2（裁剪过期上下文）、
   L3（激进缩减）。在保留关键上下文的同时降低 token 用量。
-- **上下文窗口解析** —— 网关模型（例如 `opencode-go/mimo-v2.5`）在运行时从 OpenRouter 目录解析其真实
+- **上下文窗口解析** —— 网关模型（例如 `tokenharbor/mimo-v2.5`）在运行时从 OpenRouter 目录解析其真实
   上下文长度。
 - **通用复制按钮** —— 在整个 TUI 中悬停即可复制代码块、工具输出与文件 diff。
 - **网关提供商** —— 通过 `@savant-code/llm-providers` 支持 OpenRouter、TokenRouter、TokenHarbor、NVIDIA NIM、
-  OpenCode Go、OpenCode Zen、CommandCode、Nous Research、KiosAPI、APInex、OrcaRouter、B.AI、HCNSec、
+  CommandCode、Nous Research、KiosAPI、APInex、OrcaRouter、B.AI、HCNSec、
   TokenBom、Infron、UnoRouter、BazaarLink、Atria AI 与 Cloudflare Workers AI。Nous Research 使用 OpenAI 兼容直连
   API；Portal OAuth 是独立集成。
 - **默认模型** —— 通过 OpenRouter 使用 `openrouter/free`（可通过 `/model` 配置）。
@@ -636,8 +634,6 @@ savant-code
 
 ```text
 /provider openrouter
-/provider opencode-go
-/provider opencode-zen
 /provider tokenrouter
 /provider tokenharbor
 /provider nvidia
@@ -655,8 +651,7 @@ savant-code
 /provider bazaarlink
 ```
 
-支持的环境变量是 `OPENROUTER_API_KEY`、`OPENCODE_API_KEY`（OpenCode Go 与 Zen 共享；旧版
-`OPENCODE_GO_API_KEY` 仍兼容）、`TOKENROUTER_API_KEY`、`TOKENHARBOR_API_KEY`、`NVIDIA_API_KEY`、
+支持的环境变量是 `OPENROUTER_API_KEY`、`TOKENROUTER_API_KEY`、`TOKENHARBOR_API_KEY`、`NVIDIA_API_KEY`、
 `COMMAND_CODE_API_KEY`、`NOUS_API_KEY`、`KIOSAPI_API_KEY`、`APINEX_API_KEY`、`ORCAROUTER_API_KEY`、
 `BAI_API_KEY`、`HCNSEC_API_KEY`、`TOKENBOM_API_KEY`、`ATRIA_API_KEY`、`INFRON_API_KEY`、`UNOROUTER_API_KEY` 与 `BAZAARLINK_API_KEY`。密钥提示为遮罩输入，并将密钥全局存储在
 Savant-Code 配置的 `credentials.json` 中；不会加入
