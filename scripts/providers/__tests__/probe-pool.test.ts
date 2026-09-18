@@ -6,10 +6,7 @@
 
 import { describe, expect, test } from 'bun:test'
 
-import {
-  type TrackedProvider,
-  runHealthProbePhase,
-} from '../lib/health-probe'
+import { type TrackedProvider, runHealthProbePhase } from '../lib/health-probe'
 import { PROBE_CONCURRENCY, runWithConcurrency } from '../lib/probe-pool'
 
 import type { lookup } from 'node:dns/promises'
@@ -77,17 +74,13 @@ describe('runWithConcurrency (FID-2026-0918-001)', () => {
   test('non-positive limit degrades to serial instead of hanging', async () => {
     let inFlight = 0
     let peak = 0
-    const results = await runWithConcurrency(
-      [1, 2, 3],
-      0,
-      async (n) => {
-        inFlight++
-        peak = Math.max(peak, inFlight)
-        await new Promise((r) => setTimeout(r, 2))
-        inFlight--
-        return n
-      },
-    )
+    const results = await runWithConcurrency([1, 2, 3], 0, async (n) => {
+      inFlight++
+      peak = Math.max(peak, inFlight)
+      await new Promise((r) => setTimeout(r, 2))
+      inFlight--
+      return n
+    })
     expect(peak).toBe(1)
     expect(results).toEqual([1, 2, 3])
   })

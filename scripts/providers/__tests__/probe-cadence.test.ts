@@ -36,36 +36,34 @@ describe('shouldReprobeUnverifiable', () => {
     expect(
       shouldReprobeUnverifiable({ lastBoundary: 'boundary-ok' }, NOW),
     ).toBe(false)
+    expect(shouldReprobeUnverifiable({ lastBoundary: null }, NOW)).toBe(false)
     expect(
-      shouldReprobeUnverifiable({ lastBoundary: null }, NOW),
-    ).toBe(false)
-    expect(
-      shouldReprobeUnverifiable(
-        { lastBoundary: 'open-relay-reject' },
-        NOW,
-      ),
+      shouldReprobeUnverifiable({ lastBoundary: 'open-relay-reject' }, NOW),
     ).toBe(false)
   })
 
   test('never-attempted host (pre-cadence state) probes now', () => {
     expect(
-      shouldReprobeUnverifiable(
-        { lastBoundary: 'boundary-unverifiable' },
-        NOW,
-      ),
+      shouldReprobeUnverifiable({ lastBoundary: 'boundary-unverifiable' }, NOW),
     ).toBe(true)
   })
 
   test('fresh attempt (<3 days) skips the re-probe', () => {
     expect(
       shouldReprobeUnverifiable(
-        { lastBoundary: 'boundary-unverifiable', lastProbeAttemptUtc: iso(1 * DAY_MS) },
+        {
+          lastBoundary: 'boundary-unverifiable',
+          lastProbeAttemptUtc: iso(1 * DAY_MS),
+        },
         NOW,
       ),
     ).toBe(false)
     expect(
       shouldReprobeUnverifiable(
-        { lastBoundary: 'boundary-unverifiable', lastProbeAttemptUtc: iso(2 * DAY_MS) },
+        {
+          lastBoundary: 'boundary-unverifiable',
+          lastProbeAttemptUtc: iso(2 * DAY_MS),
+        },
         NOW,
       ),
     ).toBe(false)
@@ -74,13 +72,19 @@ describe('shouldReprobeUnverifiable', () => {
   test('stale attempt (>=3 days) re-probes; exactly 3 days is stale', () => {
     expect(
       shouldReprobeUnverifiable(
-        { lastBoundary: 'boundary-unverifiable', lastProbeAttemptUtc: iso(3 * DAY_MS) },
+        {
+          lastBoundary: 'boundary-unverifiable',
+          lastProbeAttemptUtc: iso(3 * DAY_MS),
+        },
         NOW,
       ),
     ).toBe(true)
     expect(
       shouldReprobeUnverifiable(
-        { lastBoundary: 'boundary-unverifiable', lastProbeAttemptUtc: iso(4 * DAY_MS) },
+        {
+          lastBoundary: 'boundary-unverifiable',
+          lastProbeAttemptUtc: iso(4 * DAY_MS),
+        },
         NOW,
       ),
     ).toBe(true)
@@ -89,7 +93,10 @@ describe('shouldReprobeUnverifiable', () => {
   test('malformed attempt timestamp fails OPEN to probing (conservative)', () => {
     expect(
       shouldReprobeUnverifiable(
-        { lastBoundary: 'boundary-unverifiable', lastProbeAttemptUtc: 'not-a-date' },
+        {
+          lastBoundary: 'boundary-unverifiable',
+          lastProbeAttemptUtc: 'not-a-date',
+        },
         NOW,
       ),
     ).toBe(true)

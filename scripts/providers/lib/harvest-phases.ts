@@ -98,19 +98,22 @@ export async function runProbeMergePhase(
   for (const [host, result] of probeResults) {
     const state = next.get(host)
     if (state) {
-      next.set(host, withProbeAttempt(
-        {
-          ...state,
-          lastBoundary: result.boundary,
-          lastProbe: {
-            reachable: result.reachable,
-            modelsCount: result.modelsCount,
-            boundary: result.boundary,
-            latencyMs: result.latencyMs,
+      next.set(
+        host,
+        withProbeAttempt(
+          {
+            ...state,
+            lastBoundary: result.boundary,
+            lastProbe: {
+              reachable: result.reachable,
+              modelsCount: result.modelsCount,
+              boundary: result.boundary,
+              latencyMs: result.latencyMs,
+            },
           },
-        },
-        nowMs,
-      ))
+          nowMs,
+        ),
+      )
     }
   }
   return probeResults
