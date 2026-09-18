@@ -516,7 +516,7 @@ code 2 blocks a tool.
   file diffs throughout the TUI.
 - **Gateway providers** — OpenRouter, TokenRouter, TokenHarbor, NVIDIA NIM,
   CommandCode, Nous Research, KiosAPI, APInex,
-  OrcaRouter, B.AI, HCNSec, TokenBom, Infron, UnoRouter, BazaarLink, and Cloudflare Workers AI via
+  OrcaRouter, B.AI, HCNSec, TokenBom, Infron, UnoRouter, BazaarLink, Atria AI, and Cloudflare Workers AI via
   `@savant-code/llm-providers`. Nous Research uses the direct OpenAI-compatible API; Portal OAuth
   is a separate integration.
 - **Default model** — `openrouter/free` via OpenRouter (configurable via
@@ -949,6 +949,7 @@ picker or choose one directly:
 /provider apinex
 /provider orcarouter
 /provider bai
+/provider atria
 /provider hcnsec
 /provider tokenbom
 /provider infron
@@ -961,7 +962,7 @@ The supported environment variables are `OPENROUTER_API_KEY`,
 `TOKENHARBOR_API_KEY`, `NVIDIA_API_KEY`, `COMMAND_CODE_API_KEY`,
 `NOUS_API_KEY`, `KIOSAPI_API_KEY`, `APINEX_API_KEY`,
 `ORCAROUTER_API_KEY`, `BAI_API_KEY`, `HCNSEC_API_KEY`, `TOKENBOM_API_KEY`,
-`INFRON_API_KEY`, `UNOROUTER_API_KEY`, `BAZAARLINK_API_KEY`. The key
+`ATRIA_API_KEY`, `INFRON_API_KEY`, `UNOROUTER_API_KEY`, `BAZAARLINK_API_KEY`. The key
 prompt is masked and stores the key globally in the Savant-Code config
 `credentials.json`; it is not added to chat history. Shell environment variables
 take precedence over stored keys, so CI and managed environments can configure

@@ -85,6 +85,7 @@ Or configure one directly:
 | Nous Research | `/provider nous` | `NOUS_API_KEY` (direct OpenAI-compatible API; Portal OAuth is separate) |
 | KiosAPI | `/provider kiosapi` | `KIOSAPI_API_KEY` (authenticated live model catalog) |
 | APInex | `/provider apinex` | `APINEX_API_KEY` (authenticated live model catalog) |
+| Atria AI | `/provider atria` | `ATRIA_API_KEY` (audited static one-model allowlist: `Atria-Dawn-Preview`, 256K context window) |
 | Cloudflare Workers AI | see note | `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` (two credentials — key-store setup flow pending; set both env vars and switch via `/model cloudflare/...`, e.g. `/model cloudflare/meta/llama-3.3-70b-instruct-fp8-fast`) |
 
 You can also define **your own custom providers**: `/provider add` starts a

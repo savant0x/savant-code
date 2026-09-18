@@ -144,6 +144,7 @@ NOUS_API_KEY=dummy-nous-key-replace-me
 KIOSAPI_API_KEY=dummy-kiosapi-key-replace-me
 APINEX_API_KEY=dummy-apinex-key-replace-me
 ORCAROUTER_API_KEY=dummy-orcarouter-key-replace-me
+ATRIA_API_KEY=dummy-atria-key-replace-me
 BAI_API_KEY=dummy-bai-key-replace-me
 HCNSEC_API_KEY=dummy-hcnsec-key-replace-me
 TOKENBOM_API_KEY=dummy-tokenbom-key-replace-me
