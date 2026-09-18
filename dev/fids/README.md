@@ -5,6 +5,24 @@ operator decision, implementation, runtime review, or closure evidence.
 
 ## Current active FIDs
 
+**2026-09-18 closure — FID-2026-0917-006 (compaction signal durable
+retirement) closed and archived:** the in-stream `CompactionSignal` panel
+re-pinned after compaction because two run-end mirror sites
+(`send-message-monitors.ts:90` heartbeat; `send-message-lifecycle.ts:218-223`
+`adoptAndPersist`) re-hydrated the store from the runtime's
+`mainAgentState.compactionStatus`, which retains a terminal `compacted` phase
+indefinitely — the FID-2026-0916-008 retirement cleared the store copy but
+was resurrected within the same run. Fix: `onNewUserMessage` stamps a
+two-epoch-half identity (`retiredCompactionStatusEpoch` /
+`retiredCompactionReportEpoch`; `percentUsed` excluded, live phases never
+produce terminal epochs) before clearing, and both mirrors drop
+epoch-matching re-deliveries while a genuinely new compaction still displays.
+6 new regression pins (suite 16/0, 47 expects); receipt 3/3 PASS re-stamped
+live at the archived path. Record also restructured to the
+FID-2026-0915-004 validator template (flat metadata + required headings) —
+its legacy list-dash metadata defeated the ledger regex. **The active FID
+queue is empty.**
+
 **2026-09-17 closure — FID-2026-0917-005 (/model picker provider
 passthrough) closed and archived:** selecting a model in the `/model` picker
 persisted the provider to `settings.json` only, never writing

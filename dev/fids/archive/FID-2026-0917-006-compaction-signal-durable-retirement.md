@@ -2,11 +2,22 @@
 
 ## Metadata
 
-- **Filename:** `FID-2026-0917-006-compaction-signal-durable-retirement.md`
-- **ID:** FID-2026-0917-006
-- **Severity:** high
-- **Status:** fixed
-- **Created:** 2026-09-17
+**Filename:** FID-2026-0917-006-compaction-signal-durable-retirement.md
+**ID:** FID-2026-0917-006
+**Severity:** high
+**Status:** fixed
+**Created:** 2026-09-17
+
+## Summary
+
+The in-stream `CompactionSignal` panel re-pinned after compaction even though
+FID-2026-0916-008's retirement cleared the store fields on the next user
+message. Root cause: two run-end mirror sites re-hydrate the store from the
+runtime's `mainAgentState.compactionStatus`, which retains a terminal
+`compacted` phase indefinitely — so the retirement was resurrected within the
+same run. Fix: the retirement stamps a two-epoch-half identity before
+clearing, and the mirrors drop any re-delivery whose epoch matches, while a
+genuinely new compaction still displays.
 
 ## Problem
 
@@ -101,15 +112,55 @@ the first test run proved this and drove the split.
 
 ### Verification Receipt
 
-- fingerprint: sha256:29dbddecdf88d2fb2e3404392111434d6d507022c6ca8aaa2824631a9ca8c56f
-- verified: 2026-09-18T04:07:31.766Z
+- fingerprint: sha256:a5219d3ffa457d5ddf63801b349ca72eb742129fba436364930ac5694240e0bc
+- verified: 2026-09-18T18:26:47.581Z
 - typecheck cli: exit 0
 - test cli/src/state/__tests__/chat-store-compaction.test.ts: exit 0
 - quality: exit 0
 
-## Code Verification Evidence
+## Perfection Loop
+
+**Loop 1 → 2 (self-caught defect):** the first design keyed retirement on a
+single combined epoch; the first test run proved neither mirror site holds
+both halves at re-delivery time (the status mirror has no report; the report
+mirror has no status), so a combined epoch could never match either. Loop 2
+split the identity into two independent halves
+(`compactionStatusEpochOf` / `compactionReportEpochOf`), each matched by the
+mirror that holds that half.
+
+**Loop 3 (convergence, change delta <2%):** drift audit — `percentUsed`
+excluded from both epochs (it drifts on every step boundary);
+`blocked`/`warning` confirmed non-terminal (the epoch helpers return `null`,
+so a retirement can never suppress live runtime truth); session reset
+confirmed to clear both stamps (nothing left to remember).
+
+### Missed Questions
+
+- **MQ1 — Could one combined epoch suffice?** No: neither mirror holds both
+  halves at re-delivery time; proven by the first test run (Loop 2 above).
+- **MQ2 — Does suppression hide live runtime truth?** No: live phases
+  (`compacting`/`blocked`/`warning`) never produce terminal epochs, so they
+  are never suppressed.
+- **MQ3 — What about `percentUsed` drift?** Deliberately excluded from both
+  epoch identities; only stable identity fields participate (phase,
+  tokensSaved, removedMessages, excerpt length).
+
+### Code Verification Evidence
 
 All gates run after the fix (evidence: tool output, exit 0):
+
+- [x] Files referenced in Affected Components exist
+- [x] Implementation matches the Proposed Solution
+- [x] Typecheck/tests/lint pass with pasted tool output
+- [x] Production call-graph evidence is present for new or repaired wiring:
+      `compactionStatusEpochOf` used at `sidebar-reset.ts:38`;
+      `compactionReportEpochOf` at `sidebar-actions.ts:81`; both stamps
+      written at `sidebar-actions.ts:227-232`, read at
+      `sidebar-reset.ts:37-45`, declared at `types.ts:134-135`, initialized
+      at `initial-state.ts:55-56`, cleared at `sidebar-reset.ts:139-140`
+- [x] FID status reflects the actual implementation state
+
+Detail:
 
 - `typecheck` cli workspace — **exit 0**, zero errors
 - `eslint` on all six changed files `--max-warnings 0` — **exit 0**, clean
@@ -122,10 +173,25 @@ All gates run after the fix (evidence: tool output, exit 0):
   `blocked`/`warning` are never suppressed; session reset clears the stamps.
 - `compaction-signal.test.tsx` + `compaction-summary-block.test.tsx` —
   **17 pass / 0 fail** combined; the fold/excerpt behavior is untouched.
-- Law 4 reachability: `compactionStatusEpochOf` used at `sidebar-reset.ts:38`;
-  `compactionReportEpochOf` at `sidebar-actions.ts:81`; both stamps written at
-  `sidebar-actions.ts:227-232`, read at `sidebar-reset.ts:37-45`, declared at
-  `types.ts:134-135`, initialized at `initial-state.ts:55-56`, cleared at
-  `sidebar-reset.ts:139-140`.
+
+## Resolution
+
+- **Closed Date:** 2026-09-18
+- **Fix Description:** durable retirement via two-epoch-half identity —
+  `onNewUserMessage` stamps `retiredCompactionStatusEpoch` /
+  `retiredCompactionReportEpoch` before clearing; both mirror sites
+  (heartbeat re-mirror, `adoptAndPersist` run-end re-mirror) drop
+  epoch-matching re-deliveries; new compactions (different epoch) display
+  normally.
+- **Tests Added:** Yes — 6 new `CompactionSignal durable retirement` pins in
+  `cli/src/state/__tests__/chat-store-compaction.test.ts` (16 pass / 0 fail,
+  47 expects).
+- **Verification Evidence:** declared gates re-run green at closure —
+  typecheck cli exit 0; chat-store-compaction.test.ts exit 0; quality exit 0
+  (receipt fingerprint
+  `sha256:29dbddecdf88d2fb2e3404392111434d6d507022c6ca8aaa2824631a9ca8c56f`,
+  stamped 2026-09-18T04:07:31.766Z and re-stamped at the archived path).
+- **Archived:** 2026-09-18 — moved to `dev/fids/archive/`; receipt re-stamped
+  at the archived path.
 
 <!-- fid:verify receipt — do not remove this comment -->
