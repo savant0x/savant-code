@@ -8,11 +8,14 @@
 
 基于 TypeScript/Bun 构建，受 ECHO 协议治理，并针对本地优先的 Ollama 使用场景设计。
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-1.3.14-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![React](https://img.shields.io/badge/React-19-%23000000?style=flat-square&logo=react&logoColor=%2300fbff)](https://react.dev/)[![OpenTUI](https://img.shields.io/badge/OpenTUI-0.5.3-%23000000?style=flat-square&logo=opentui&logoColor=%2300fbff)](https://github.com/anomalyco/opentui)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](ECHO.md)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![Release](https://img.shields.io/badge/Release-v0.0.31-%23000000?style=flat-square&logo=semver&logoColor=%2300fbff)](CHANGELOG.md)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-1.3.14-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![React](https://img.shields.io/badge/React-19-%23000000?style=flat-square&logo=react&logoColor=%2300fbff)](https://react.dev/)[![OpenTUI](https://img.shields.io/badge/OpenTUI-0.5.3-%23000000?style=flat-square&logo=opentui&logoColor=%2300fbff)](https://github.com/anomalyco/opentui)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](ECHO.md)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![Release](https://img.shields.io/badge/Release-v0.0.32-%23000000?style=flat-square&logo=semver&logoColor=%2300fbff)](CHANGELOG.md)
 
 </div>
 
-> **v0.0.31** —— 本次发布包含：通过 `/provider` 的用户自定义提供商（完整特性：add/edit/list/remove 向导，
+> **v0.0.32** —— 本次发布修复 `/model` 选择器使其真正激活所选提供商的路由（消除伪装成
+> “Out of credits” 的 savant-code.com 静默直通），并重建免费算力采集器的每日扫描性能：
+> 提供商探测改用有界并发池，无法验证边界的主机按 3 天节奏复测——典型每日耗时从约 14 秒
+> 降至约 1.1 秒，证据新鲜度上界固定为 3 天。此前 v0.0.31 发布内容：通过 `/provider` 的用户自定义提供商（完整特性：add/edit/list/remove 向导，
 > 一等注册表条目——前缀路由、目录、密钥存储、在线测试）；四个经审计的新网关提供商（OrcaRouter 与 B.AI
 > 均通过密钥在线验证；HCNSec 与 TokenBom 基于审计的 14 模型静态白名单——注册表现有 16 家提供商）；
 > 技能演进套件（信任边界账本追加 + fail-closed 漂移门禁、归档替代清除的草稿过期、持久模式 wiki、

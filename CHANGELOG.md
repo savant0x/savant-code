@@ -1,6 +1,52 @@
 # Changelog
 
-## Unreleased
+## 0.0.32 — 2026-09-18
+
+### Free-compute harvester probes run through a bounded pool (FID-2026-0918-001)
+
+- The daily harvester (`scripts/providers/harvest-freeairouter.ts`) probed
+  every tracked host serially — one host at a time, up to 3 network
+  round-trips × 10s timeout each — and 41 of 71 tracked hosts sit at
+  `boundary-unverifiable`, re-probed every run by design. The probe loop
+  dominated the run's wall clock.
+- New `scripts/providers/lib/probe-pool.ts`: `runWithConcurrency` worker
+  pool with `PROBE_CONCURRENCY = 6` (named constant beside the timeout it
+  overlaps). Both probe sites wired through it: the daily probe-merge phase
+  and the Stage-E health loop — the latter split into its own module
+  `scripts/providers/lib/health-probe.ts` (move-only seam split) to hold
+  `harvest-report-phase.ts` under the 300-line ceiling. Per-host etiquette
+  untouched: hosts are distinct vendor endpoints, still one probe set each.
+- RED-first: 9-pin suite written before the implementation (cap, ordering,
+  empty, oversized limit, serial degradation, rejection propagation,
+  constant pin, pooled health ×2). LIVE evidence: full `--probe` harvest
+  exit 0 in 13.7s (214 records, ~43 probes) — the serial bound was minutes.
+- Gates: probe-pool 9/0; providers tree 110/0; eslint 0 warnings;
+  quality:report PASS; lint:md + prettier clean; fid:verify 5/5 gates PASS,
+  receipt stamped. Commit `69f6e7a7`. **Closed + archived 2026-09-18.**
+
+### Unverifiable hosts re-probe on a 3-day cadence (FID-2026-0918-002)
+
+- The harvester re-probed all 41 `boundary-unverifiable` hosts every daily
+  run even though a boundary verdict only needs re-measurement after the
+  lapse window (`PROBE_LAPSED_AFTER_DAYS = 3`). New
+  `shouldReprobeUnverifiable()` gate skips hosts with a fresh
+  `lastProbeAttemptUtc` (< 3 days) and fail-opens on stale/never/malformed
+  values — worst case one extra probe, never lost evidence. Every attempted
+  probe stamps `withProbeAttempt()` so failed measurements don't re-fire
+  early.
+- State layer: optional `lastProbeAttemptUtc` on `CandidateState` with
+  defensive parse — plus an explicit carry-forward line in `diffCandidates`,
+  which rebuilds every re-sighted host record from a field literal and
+  would otherwise have silently dropped the field on every run (a pin
+  proves a re-sight preserves it).
+- LIVE double-run evidence: run 1 stamped 40 hosts (14.0s); same-day run 2
+  skipped every freshly-stamped host (identical host sets, zero timestamp
+  diffs) in 1.13s. Combined with FID-2026-0918-001 the daily scan drops
+  from ~14s to ~1.1s typical wall clock, evidence freshness bounded at
+  3 days by construction.
+- Gates: probe-cadence 9/0; providers tree 119/0; typecheck common exit 0;
+  quality PASS; fid:verify 5/5 gates PASS. Commit `69f6e7a7`. **Closed +
+  archived 2026-09-18.**
 
 ### /model picker now activates the selected provider's routing (FID-2026-0917-005)
 
