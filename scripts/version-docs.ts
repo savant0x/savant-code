@@ -58,6 +58,7 @@ export function updateDocSurfaces(
   root: string,
   oldVersion: string,
   newVersion: string,
+  today: string = todayIso(),
 ): string[] {
   const changed: string[] = []
   const replace = (rel: string, from: string, to: string): void => {
@@ -99,8 +100,11 @@ export function updateDocSurfaces(
 
   const changelogPath = path.join(root, 'CHANGELOG.md')
   const changelog = fs.readFileSync(changelogPath, 'utf8')
-  const header = `## ${newVersion} — in development (unreleased)`
-  if (!changelog.includes(header)) {
+  // Operator ruling (2026-09-18): NO unreleased accumulators. Bump time OPENS
+  // the dated version heading (the format extractChangelogSection requires);
+  // release notes accumulate beneath it and the release ships it as-is.
+  const header = `## ${newVersion} — ${today}`
+  if (!changelog.includes(`## ${newVersion}`)) {
     fs.writeFileSync(
       changelogPath,
       changelog.replace(/^# Changelog\n/, `# Changelog\n\n${header}\n`),
@@ -109,4 +113,8 @@ export function updateDocSurfaces(
   }
 
   return [...new Set(changed)]
+}
+
+function todayIso(): string {
+  return new Date().toISOString().slice(0, 10)
 }

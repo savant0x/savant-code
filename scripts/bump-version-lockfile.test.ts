@@ -130,7 +130,7 @@ describe('updateDocSurfaces', () => {
     )
     writeDoc('CHANGELOG.md', '# Changelog\n')
 
-    const changed = updateDocSurfaces(root, '0.0.24', '0.0.25')
+    const changed = updateDocSurfaces(root, '0.0.24', '0.0.25', '2026-01-15')
 
     expect(readFileSync(path.join(root, 'README.md'), 'utf8')).toContain(
       'Release-v0.0.25-',
@@ -154,7 +154,7 @@ describe('updateDocSurfaces', () => {
       readFileSync(path.join(root, 'docs/SAVANT-VERSIONING.md'), 'utf8'),
     ).toContain('**Current release:** Savant-Code `0.0.25`.')
     expect(readFileSync(path.join(root, 'CHANGELOG.md'), 'utf8')).toContain(
-      '## 0.0.25 — in development (unreleased)',
+      '## 0.0.25 — 2026-01-15',
     )
 
     expect(changed.sort()).toEqual([
