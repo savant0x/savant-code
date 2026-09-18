@@ -73,6 +73,70 @@ describe('OpenRouter API key resolver', () => {
     expect(fetchCalls).toBe(1)
   })
 
+  test('a rejected master-key exchange does not fall through to a stale regular key', async () => {
+    // FID-2026-0917-004: a 401 means the configured master key is invalid.
+    // Sending the stale OPENROUTER_API_KEY instead surfaced as a confusing
+    // vendor 401 ("User not found.") at chat-completions time.
+    process.env.OR_MASTER_KEY = 'bad-master-key'
+    process.env.OPENROUTER_API_KEY = 'stale-regular-key'
+    globalThis.fetch = (async () => {
+      fetchCalls += 1
+      return new Response(
+        JSON.stringify({ error: { message: 'Invalid API key' } }),
+        { status: 401 },
+      )
+    }) as unknown as typeof globalThis.fetch
+
+    await expect(resolveOpenRouterApiKey()).resolves.toBeUndefined()
+    expect(fetchCalls).toBe(1)
+  })
+
+  test('an auth-rejected exchange is negative-cached across calls', async () => {
+    process.env.OR_MASTER_KEY = 'bad-master-key'
+    globalThis.fetch = (async () => {
+      fetchCalls += 1
+      return new Response(JSON.stringify({ message: 'Invalid API key' }), {
+        status: 401,
+      })
+    }) as unknown as typeof globalThis.fetch
+
+    await expect(resolveOpenRouterApiKey()).resolves.toBeUndefined()
+    await expect(resolveOpenRouterApiKey()).resolves.toBeUndefined()
+    expect(fetchCalls).toBe(1)
+  })
+
+  test('a forbidden (403) master-key exchange also fails closed', async () => {
+    process.env.OR_MASTER_KEY = 'forbidden-master-key'
+    process.env.OPENROUTER_API_KEY = 'stale-regular-key'
+    globalThis.fetch = (async () =>
+      new Response(JSON.stringify({ message: 'Forbidden' }), {
+        status: 403,
+      })) as unknown as typeof globalThis.fetch
+
+    await expect(resolveOpenRouterApiKey()).resolves.toBeUndefined()
+  })
+
+  test('a rate-limited exchange still falls through to the regular key', async () => {
+    process.env.OR_MASTER_KEY = 'master-key'
+    process.env.OPENROUTER_API_KEY = 'regular-key'
+    globalThis.fetch = (async () =>
+      new Response(JSON.stringify({ message: 'Rate limited' }), {
+        status: 429,
+      })) as unknown as typeof globalThis.fetch
+
+    await expect(resolveOpenRouterApiKey()).resolves.toBe('regular-key')
+  })
+
+  test('a transient exchange error still falls through to the regular key', async () => {
+    process.env.OR_MASTER_KEY = 'master-key'
+    process.env.OPENROUTER_API_KEY = 'regular-key'
+    globalThis.fetch = (async () => {
+      throw new Error('network unreachable')
+    }) as unknown as typeof globalThis.fetch
+
+    await expect(resolveOpenRouterApiKey()).resolves.toBe('regular-key')
+  })
+
   test('uses the regular key before the inference fallback', async () => {
     process.env.OPENROUTER_API_KEY = 'regular-key'
     process.env.INFERENCE_API_KEY = 'inference-key'

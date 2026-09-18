@@ -8,6 +8,12 @@ import { logger } from '../utils/logger'
  * 2. `OPENROUTER_API_KEY` — regular API key
  * 3. `INFERENCE_API_KEY` — SDK-specific inference key
  *
+ * An auth rejection in step 1 (HTTP 401/403) fails closed: it never falls
+ * through to step 2, which would silently send a stale regular key and
+ * surface later as a vendor 401 at request time (FID-2026-0917-004).
+ * Transient exchange failures (network, 429, 5xx) keep the fallback, since
+ * a valid regular key remains usable while the exchange is unavailable.
+ *
  * The resolved key is cached for the process lifetime.
  *
  * Exchange cadence (FID-2026-0803-003 SDK-6): with OR_MASTER_KEY set, every
@@ -90,10 +96,6 @@ async function resolveAndCacheOpenRouterApiKey(): Promise<string | undefined> {
         logger.warn('OpenRouter master key exchange returned no key')
       } else {
         // FID-2026-0917-001: a failed exchange must not vanish silently.
-        // A bad OR_MASTER_KEY (e.g. a management key with no inference
-        // entitlement) previously fell straight through to the regular-key
-        // fallback with zero diagnostics, so the operator saw a vendor 401
-        // at chat-completions that named neither the key nor the failure.
         // Log the status and (redacted-safe) body — the body is vendor JSON
         // carrying the error message, never the master key itself.
         const body = await response.text().catch(() => '')
@@ -103,10 +105,26 @@ async function resolveAndCacheOpenRouterApiKey(): Promise<string | undefined> {
             statusText: response.statusText,
             responseBody: body.slice(0, 200),
           },
-          'OpenRouter master key exchange rejected; falling back',
+          'OpenRouter master key exchange rejected',
         )
+
+        // FID-2026-0917-004: an auth rejection means the configured master
+        // key is invalid. Falling through to OPENROUTER_API_KEY would
+        // silently send a stale regular key, surfacing later as a vendor
+        // 401 ("User not found.") at chat-completions that names neither
+        // the dead key nor the failed exchange. Fail closed instead:
+        // negative-cache and let the caller's missing-key path report it.
+        // Non-auth failures (429/5xx) are transient, so the fallthrough
+        // below stays available for them.
+        if (response.status === 401 || response.status === 403) {
+          cachedKey = null
+          return undefined
+        }
       }
     } catch (error) {
+      // Transport-level failure is transient (not a credential rejection):
+      // a still-valid regular key remains usable while the exchange
+      // endpoint is unreachable. Keep the fallthrough (FID-2026-0917-004).
       logger.warn('Failed to exchange OpenRouter master key:', error)
     }
   }
