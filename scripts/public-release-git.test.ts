@@ -9,11 +9,10 @@ import { describe, expect, test } from 'bun:test'
 
 import {
   changedWorktreePaths,
+  commitAutomationChangesOrTagHead,
   commitAllAutomationChanges,
   fingerprintWorktree,
   ignoredPathDelta,
-  pruneLocalOnlyFailedTag,
-  receiptPath,
   recoverAutomationCommit,
 } from './public-release'
 
@@ -57,6 +56,82 @@ describe('public release contract — git & worktree', () => {
       expect(
         recoverAutomationCommit(repo, 'b'.repeat(40), '0.0.21'),
       ).toBeUndefined()
+    } finally {
+      rmSync(repo, { recursive: true, force: true })
+    }
+  })
+
+  test('tags current HEAD without a commit when the automation worktree is clean', () => {
+    const repo = mkdtempSync(
+      path.join(os.tmpdir(), 'savant-release-clean-auto-'),
+    )
+    try {
+      const runGit = (args: string[]) => {
+        const result = Bun.spawnSync({
+          cmd: ['git', ...args],
+          cwd: repo,
+          stdout: 'pipe',
+          stderr: 'pipe',
+        })
+        if (result.exitCode !== 0) {
+          throw new Error(new TextDecoder().decode(result.stderr))
+        }
+        return new TextDecoder().decode(result.stdout).trim()
+      }
+      runGit(['init'])
+      runGit(['config', 'user.email', 'release-test@example.invalid'])
+      runGit(['config', 'user.name', 'Release Test'])
+      writeFileSync(path.join(repo, 'base.txt'), 'base')
+      runGit(['add', '--all'])
+      runGit(['commit', '-m', 'base'])
+      const headBefore = runGit(['rev-parse', 'HEAD'])
+
+      const committed = commitAutomationChangesOrTagHead(repo, '0.0.33')
+
+      expect(committed.headSha).toBe(headBefore)
+      expect(committed.files).toEqual([])
+      expect(runGit(['rev-parse', 'HEAD'])).toBe(headBefore)
+      expect(runGit(['log', '-1', '--format=%s'])).toBe('base')
+    } finally {
+      rmSync(repo, { recursive: true, force: true })
+    }
+  })
+
+  test('still sweeps dirty worktrees into one automation commit via the shared entry point', () => {
+    const repo = mkdtempSync(
+      path.join(os.tmpdir(), 'savant-release-dirty-auto-'),
+    )
+    try {
+      const runGit = (args: string[]) => {
+        const result = Bun.spawnSync({
+          cmd: ['git', ...args],
+          cwd: repo,
+          stdout: 'pipe',
+          stderr: 'pipe',
+        })
+        if (result.exitCode !== 0) {
+          throw new Error(new TextDecoder().decode(result.stderr))
+        }
+        return new TextDecoder().decode(result.stdout).trim()
+      }
+      runGit(['init'])
+      runGit(['config', 'user.email', 'release-test@example.invalid'])
+      runGit(['config', 'user.name', 'Release Test'])
+      writeFileSync(path.join(repo, 'base.txt'), 'base')
+      runGit(['add', '--all'])
+      runGit(['commit', '-m', 'base'])
+      const headBefore = runGit(['rev-parse', 'HEAD'])
+      writeFileSync(path.join(repo, 'tracked.txt'), 'tracked')
+      writeFileSync(path.join(repo, 'untracked.txt'), 'untracked')
+
+      const committed = commitAutomationChangesOrTagHead(repo, '0.0.33')
+
+      expect(committed.files).toEqual(['tracked.txt', 'untracked.txt'])
+      expect(committed.headSha).toMatch(/^[0-9a-f]{40}$/)
+      expect(runGit(['rev-parse', 'HEAD^'])).toBe(headBefore)
+      expect(runGit(['log', '-1', '--format=%s'])).toBe(
+        'chore(release): prepare v0.0.33',
+      )
     } finally {
       rmSync(repo, { recursive: true, force: true })
     }
@@ -170,72 +245,4 @@ describe('public release contract — git & worktree', () => {
     }
   })
 
-  test('prunes a local-only failed-run tag but never a remote or unowned tag', () => {
-    const version = '9.9.9-prune'
-    const receipt = receiptPath(version)
-    const repo = mkdtempSync(path.join(os.tmpdir(), 'savant-release-prune-'))
-    const remote = mkdtempSync(
-      path.join(os.tmpdir(), 'savant-release-prune-remote-'),
-    )
-    const runGit = (args: string[], cwd: string) => {
-      const result = Bun.spawnSync({
-        cmd: ['git', ...args],
-        cwd,
-        stdout: 'pipe',
-        stderr: 'pipe',
-      })
-      if (result.exitCode !== 0)
-        throw new Error(new TextDecoder().decode(result.stderr))
-      return new TextDecoder().decode(result.stdout).trim()
-    }
-    try {
-      runGit(['init', '--bare'], remote)
-      runGit(['init'], repo)
-      runGit(['config', 'user.email', 'release-test@example.invalid'], repo)
-      runGit(['config', 'user.name', 'Release Test'], repo)
-      runGit(['remote', 'add', 'origin', remote], repo)
-      writeFileSync(path.join(repo, 'a.txt'), 'x')
-      runGit(['add', '--all'], repo)
-      runGit(['commit', '-m', 'base'], repo)
-      const head = runGit(['rev-parse', 'HEAD'], repo)
-
-      // No receipt -> nothing pruned, tag untouched.
-      runGit(['tag', '-a', `v${version}`, '-m', 't'], repo)
-      expect(pruneLocalOnlyFailedTag(repo, version, head)).toBe(false)
-      expect(runGit(['tag', '-l', `v${version}`], repo)).toBe(`v${version}`)
-
-      // Failed receipt owning this head + tag absent on remote -> pruned.
-      writeFileSync(
-        receipt,
-        JSON.stringify({
-          schemaVersion: 'release-receipt/v2',
-          version,
-          mode: 'automation',
-          headSha: head,
-          completedStages: ['TAG'],
-          failedStage: 'Stage command failed: git push origin main',
-          restored: true,
-        }),
-      )
-      expect(pruneLocalOnlyFailedTag(repo, version, head)).toBe(true)
-      expect(runGit(['tag', '-l', `v${version}`], repo)).toBe('')
-
-      // Receipt owns it but the tag IS on the remote -> refuse to prune.
-      runGit(['tag', '-a', `v${version}`, '-m', 't'], repo)
-      runGit(['push', 'origin', `v${version}`], repo)
-      expect(pruneLocalOnlyFailedTag(repo, version, head)).toBe(false)
-      expect(runGit(['tag', '-l', `v${version}`], repo)).toBe(`v${version}`)
-
-      // Receipt head mismatch -> refuse to prune.
-      runGit(['tag', '-d', `v${version}`], repo)
-      runGit(['push', 'origin', `:refs/tags/v${version}`], repo)
-      runGit(['tag', '-a', `v${version}`, '-m', 't2'], repo)
-      expect(pruneLocalOnlyFailedTag(repo, version, '0'.repeat(40))).toBe(false)
-      expect(runGit(['tag', '-l', `v${version}`], repo)).toBe(`v${version}`)
-    } finally {
-      rmSync(receipt, { force: true })
-      rmSync(repo, { recursive: true, force: true })
-      rmSync(remote, { recursive: true, force: true })
-    }
-  })
 })

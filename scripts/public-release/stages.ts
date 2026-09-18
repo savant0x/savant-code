@@ -22,7 +22,7 @@ import { fail } from './fail'
 import { buildGateManifest, executeGate } from './gates'
 import {
   assertNoExistingRelease,
-  commitAllAutomationChanges,
+  commitAutomationChangesOrTagHead,
   verifyGitHubTagHead,
 } from './git-publish'
 import {
@@ -89,7 +89,7 @@ export async function runProfileStage(ctx: TransactionContext): Promise<void> {
     options.automation &&
     !isStageComplete(receipt, 'AUTOMATION_COMMIT_ALL')
   ) {
-    const committed = commitAllAutomationChanges(root, version)
+    const committed = commitAutomationChangesOrTagHead(root, version)
     receipt.committedHead = committed.headSha
     receipt.committedFiles = committed.files
     // Re-verified preflight after the automation commit (mutation on,

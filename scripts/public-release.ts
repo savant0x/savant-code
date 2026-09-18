@@ -87,6 +87,7 @@ export { scanStagedCredentials } from './public-release/credential-scan'
 export { githubApiRequest } from './public-release/github-api'
 
 export {
+  commitAutomationChangesOrTagHead,
   commitAllAutomationChanges,
   recoverAutomationCommit,
   pruneLocalOnlyFailedTag,

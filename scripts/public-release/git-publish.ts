@@ -15,6 +15,38 @@ import { isNotFoundResult, receiptPath } from './receipts'
 
 import type { ReleaseReceipt } from './catalog'
 
+/**
+ * Automation-commit stage entry point (FID-2026-0918-003): sweep a dirty
+ * worktree into the single `chore(release): prepare v<version>` commit, or —
+ * when the pre-audit has guaranteed a clean tree — record the current HEAD
+ * with an empty file list so the tag can point at it directly. The pre-audit
+ * stays the absolute clean-tree gate; this only removes the commit stage's
+ * contradictory requires-changes failure.
+ */
+export function commitAutomationChangesOrTagHead(
+  root: string,
+  version: string,
+): { headSha: string; files: string[] } {
+  const status = run(
+    'git',
+    ['status', '--porcelain', '--untracked-files=all'],
+    root,
+    true,
+  )
+  if (status.status !== 0)
+    fail('Unable to inspect files for automated release commit.')
+  if (!status.stdout.trim()) {
+    const head = run('git', ['rev-parse', 'HEAD'], root, true)
+    if (head.status !== 0) fail('Unable to resolve release HEAD.')
+    const headSha = head.stdout.trim()
+    console.log(
+      `Automation commit: worktree clean — tagging current HEAD ${headSha.slice(0, 12)} (no release commit created).`,
+    )
+    return { headSha, files: [] }
+  }
+  return commitAllAutomationChanges(root, version)
+}
+
 export function commitAllAutomationChanges(
   root: string,
   version: string,

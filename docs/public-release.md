@@ -92,6 +92,9 @@ Manual mode and automation mode share the same release stages:
 4. Snapshot the release routing environment and persisted settings file.
 5. In automation mode, stage all current changes and create one
    `chore(release): prepare v<version>` commit. The receipt records the commit and file list.
+   When the worktree is clean (the pre-audit guarantees this), no commit is
+   created: the receipt records the current HEAD with an empty file list and
+   the release tag points at that HEAD (FID-2026-0918-003).
 6. Apply non-secret OpenRouter direct defaults (`openrouter/free`).
 7. Run build, typecheck, test, ESLint, Markdownlint, Prettier, and package dry-run gates.
 8. Manual mode asks for confirmation listing exact targets. Automation records its explicit
