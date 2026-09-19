@@ -69,7 +69,12 @@ export function validateFidVerificationGates(root: string): FidLedgerIssue[] {
   const fids = activeFixedFidFiles(root)
   if (fids.length === 0) return issues
 
-  // C1+C2: structural contract on every fixed/verified FID.
+  // C1+C2: structural contract on every fixed/verified FID. The
+  // FID-2026-0918-006 prose-contract sweep runs inside
+  // validateFidVerification for these receipt-bearing documents (error
+  // tier); the grandfathered warning tier is surfaced by fid:verify
+  // --check for receipt-less documents instead — never as issues here, so
+  // a warning-tier report cannot fail validate:repository.
   for (const fid of fids) {
     const errors = validateFidVerification(fid.content)
     for (const error of errors) {

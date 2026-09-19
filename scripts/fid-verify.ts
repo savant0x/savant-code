@@ -19,14 +19,18 @@ import path from 'node:path'
 import {
   computeFidFingerprint,
   parseVerificationGates,
-  validateFidVerification,
 } from '@savant-code/agent-runtime/echo/fid-verification-gates'
 
+import { checkAll } from './fid-check'
 import { stampReceipt } from './fid-receipt-stamp'
 import { VALIDATION_WORKSPACE_POLICY } from './validation-manifest'
 
 // Public surface preserved for existing importers (facade re-export).
+// FID-2026-0918-006 ceiling split: the --check scan lives in ./fid-check;
+// re-exported so existing importers of checkAll/activeFidFiles are
+// unchanged.
 export { stampReceipt }
+export { activeFidFiles, checkAll } from './fid-check'
 
 const root = path.resolve(import.meta.dir, '..')
 
@@ -194,40 +198,10 @@ export function buildReceipt(
 // stampReceipt) live in ./fid-receipt-stamp (300-line ceiling split,
 // FID-2026-0913-002 discipline; verbatim move).
 
-export function activeFidFiles(): string[] {
-  const directory = path.join(root, 'dev', 'fids')
-  if (!fs.existsSync(directory)) return []
-  return fs
-    .readdirSync(directory, { withFileTypes: true })
-    .filter((entry) => entry.isFile() && /^FID-.*\.md$/.test(entry.name))
-    .map((entry) => path.join(directory, entry.name))
-}
-
-/** --check: structural C1+C2 scan over all active fixed/verified FIDs (no execution). */
-export function checkAll(): number {
-  let failed = false
-  for (const file of activeFidFiles()) {
-    const content = fs.readFileSync(file, 'utf8')
-    const errors = validateFidVerification(content)
-    if (errors.length === 0) continue
-    failed = true
-    console.log(`✗ ${path.basename(file)}`)
-    for (const error of errors) console.log(`    - ${error}`)
-  }
-  if (failed) {
-    console.log(
-      'fid:verify --check FAILED — fixed/verified FIDs missing valid receipts',
-    )
-    return 1
-  }
-  console.log(
-    'fid:verify --check PASS — all active fixed/verified FIDs carry valid receipts',
-  )
-  return 0
-}
-
 export function main(): number {
   const args = process.argv.slice(2)
+  // FID-2026-0918-006 ceiling split: the --check scan lives in ./fid-check
+  // (this module re-exports it for importers).
   if (args[0] === '--check') return checkAll()
 
   const write = args.includes('--write')

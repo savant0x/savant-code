@@ -76,6 +76,11 @@ How should this be fixed?
 
 How will we confirm the fix works?
 
+> Contract rule (FID-2026-0918-006): every promised test artifact MUST name
+> its repo-relative `*.test.ts(x)` path, and that path MUST also appear as a
+> declared `- gate: test <path>` below. `fid:verify` enforces this for
+> fixed/verified — a promise with no covering gate fails the stamp.
+
 ## Verification Gates
 
 > FID-2026-0823-009 (mandatory once status flips to `fixed`/`verified`). Declare
