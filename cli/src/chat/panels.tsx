@@ -144,8 +144,14 @@ export function ChatLayout(props: ChatLayoutProps) {
             ))}
           {/* FID-2026-0814-006: in-stream compaction lifecycle signal (kimi
               pattern). Render-only — never enters messageHistory, so the ECHO
-              compliance accounting is untouched. Shows ⚙ Compacting… while a
-              pruner runs and the terminal ✓/⚠ outcome once per lifecycle. */}
+              compliance accounting is untouched.
+              FID-2026-0919-017: this slot is IN-FLIGHT ONLY — the signal
+              renders nothing unless the pruner is actively running. It is the
+              last child of a sticky-bottom scrollbox, so anything painted here
+              becomes a fake last message (later turns render above it; a stale
+              panel pins above the input until restart). Terminal outcomes must
+              stay in CompactionSummaryBlock (real transcript message); advisory
+              states stay in the sidebar Context row. */}
           <CompactionSignal />
         </scrollbox>
 

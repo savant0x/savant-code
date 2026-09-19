@@ -26,23 +26,48 @@ export function applyCompactionStatus(
   state: DraftState,
   status: ChatStore['compactionStatus'],
 ): void {
-  // FID-2026-0917-006: suppress a stale re-mirror. The 2s heartbeat
+  // FID-2026-0918-004: suppress a stale re-mirror. The 2s heartbeat
   // (send-message-monitors) and the run-end adoptAndPersist both re-deliver
   // mainAgentState.compactionStatus, which holds its terminal phase
   // indefinitely; without this guard they resurrect the panel that
-  // onNewUserMessage just retired. A matching epoch = same outcome (drop); a
-  // differing epoch = a fresh compaction (accept and clear both stamps).
-  if (
-    status &&
-    state.retiredCompactionStatusEpoch !== null &&
-    state.retiredCompactionStatusEpoch === compactionStatusEpochOf(status)
-  ) {
-    return
-  }
-  // A genuinely new compaction outcome ends any pending retirement.
-  if (state.retiredCompactionStatusEpoch !== null) {
-    state.retiredCompactionStatusEpoch = null
-    state.retiredCompactionReportEpoch = null
+  // onNewUserMessage just retired.
+  if (state.compactionSignalRetired) {
+    // FID-2026-0919-017: drop a stale re-mirror by OUTCOME IDENTITY, not
+    // by value equality. `sameCompactionStatus` includes `percentUsed`,
+    // which drifts on every step boundary (62 → 64): the drifting remirror
+    // failed the equality test, ended the retirement as a "new" outcome,
+    // and re-pinned the panel above the input. The epoch helper
+    // (`phase:tokensSaved`) is deliberately percent-blind — the re-pinning
+    // remirror carries the SAME outcome, so it is dropped, while any other
+    // terminal outcome still disarms retirement below.
+    if (
+      compactionStatusEpochOf(state.retiredCompactionStatus) !== null &&
+      compactionStatusEpochOf(state.retiredCompactionStatus) ===
+        compactionStatusEpochOf(status)
+    ) {
+      return
+    }
+    // A live state (warning / blocked / compacting / idle) is a per-step
+    // state, not an outcome: leave the retirement armed so a later stale
+    // re-mirror of the terminal outcome is still dropped. The
+    // FID-2026-0917-006 epoch scheme failed here — its identity helper
+    // returned null for every live phase, so a run ending on `warning`
+    // (the ordinary post-compaction regime, context still over the
+    // threshold) stamped a null that suppressed nothing, and the terminal
+    // status then resurrected "✓ Compaction complete" below every later
+    // message, forever.
+    //
+    // Both branches FALL THROUGH to the shared dedupe + status update +
+    // lifecycle derivation below. Falling through (rather than returning)
+    // matters: an early return would skip recordRun and silently swallow
+    // the compacting → warning ineffective-pruner lifecycle event + count
+    // during the armed window (FID-2026-0918-004 audit amendment).
+    if (compactionStatusEpochOf(status) !== null) {
+      // A genuinely new terminal outcome ends the retirement.
+      state.compactionSignalRetired = false
+      state.retiredCompactionStatus = null
+      state.retiredCompactionReport = null
+    }
   }
   // FID-2026-0815-008 (F-11): no-op on an equivalent status so re-delivered
   // heartbeats don't produce a new state. Shallow compare (not reference)
@@ -134,10 +159,11 @@ export function resetSidebarSlice(state: DraftState): void {
   // FID-2026-0914-002 (MQ4): provenance resets with the window.
   state.contextWindowSource = 'default'
   state.compactionStatus = null
-  // FID-2026-0917-006: a session reset zeroes every compaction field, so
-  // there is nothing retired to remember — clear both stamps alongside.
-  state.retiredCompactionStatusEpoch = null
-  state.retiredCompactionReportEpoch = null
+  // FID-2026-0918-004: a session reset zeroes every compaction field, so
+  // there is nothing retired to remember — clear the retirement alongside.
+  state.compactionSignalRetired = false
+  state.retiredCompactionStatus = null
+  state.retiredCompactionReport = null
   // FID-2026-0814-006: the counter + transcript history are per-session
   // activity — reset alongside provenanceEvents on every session reset.
   state.compactionCount = 0

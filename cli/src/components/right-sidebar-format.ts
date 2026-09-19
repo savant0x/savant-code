@@ -65,6 +65,22 @@ export function formatCompactionStatus(status: CompactionStatus): {
         warning: true,
         band: bandOf(status.percentUsed),
       }
+    // FID-2026-0919-017 (A2): once CompactionSignal became in-flight-only,
+    // `blocked` and `ineffective` had NO remaining surface — the formatter
+    // fell through to `idle`, hiding a circuit-breaker block and a failed
+    // pruner pass behind a lying "idle" label.
+    case 'blocked':
+      return {
+        label: `⛔ blocked (${status.blockReason ?? 'unknown'})`,
+        warning: true,
+        band: bandOf(status.percentUsed),
+      }
+    case 'ineffective':
+      return {
+        label: `⚠ pruner ineffective — context still over trigger`,
+        warning: true,
+        band: bandOf(status.percentUsed),
+      }
     case 'compacted':
       return {
         label: `✓ micro −${formatTokens(status.tokensSaved ?? 0)} tokens`,

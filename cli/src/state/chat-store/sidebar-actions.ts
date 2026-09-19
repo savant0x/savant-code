@@ -1,11 +1,6 @@
 import { castDraft } from 'immer'
 
-import {
-  compactionReportEpochOf,
-  compactionStatusEpochOf,
-  dampTokenCount,
-  recordRun,
-} from './compaction-helpers'
+import { dampTokenCount, recordRun } from './compaction-helpers'
 import { initialState } from './initial-state'
 import {
   applyCompactionStatus,
@@ -72,16 +67,20 @@ export const createSidebarActions = (set: SetState): ChatSidebarActions => ({
   // snapshots never re-render the panel needlessly.
   setLastCompactionReport: (report) =>
     set((state) => {
-      // FID-2026-0917-006: a re-mirror of an already-retired report (the
-      // run-end adoptAndPersist re-delivers the runtime's long-lived
-      // lastCompactionReport) must not resurrect the retired excerpt.
-      if (
-        report &&
-        state.retiredCompactionReportEpoch !== null &&
-        state.retiredCompactionReportEpoch === compactionReportEpochOf(report)
-      ) {
-        return
-      }
+      // FID-2026-0918-004: while a retirement is armed the report half only
+      // ever suppresses — it never ends the retirement. adoptAndPersist and
+      // the 2s heartbeat re-deliver mainAgentState.lastCompactionReport,
+      // which retains its value indefinitely. Value-equality against the
+      // retired report (the common case) drops the stale re-mirror; any other
+      // report is deferred rather than stored, because accepting it would
+      // resurrect the excerpt with no status to justify it. The deferral is
+      // lossless: a genuinely new compaction's terminal status reaches
+      // applyCompactionStatus first (same heartbeat, same snapshot), ends the
+      // retirement, and the next 2s tick or the run-end mirror re-delivers
+      // the report into an unarmed store. The user-visible permanent record
+      // is untouched — the in-stream CompactionSummaryBlock is created by the
+      // separate compaction_summary event handler, not by this field.
+      if (state.compactionSignalRetired) return
       if (
         state.lastCompactionReport?.summaryExcerpt === report?.summaryExcerpt &&
         state.lastCompactionReport?.removedMessages === report?.removedMessages
@@ -151,10 +150,16 @@ export const createSidebarActions = (set: SetState): ChatSidebarActions => ({
       // 0 means "unknown"; the sidebar falls back to the plain token readout.
       state.contextTokensMax = 0
       state.compactionStatus = null
+      // FID-2026-0918-004: nothing is retired after a data reset — clear the
+      // retirement so a later status mirror is not wrongly suppressed.
+      state.compactionSignalRetired = false
+      state.retiredCompactionStatus = null
+      state.retiredCompactionReport = null
       // FID-2026-0814-006: the counter + transcript history are per-session
       // activity — reset alongside provenanceEvents on every session reset.
       state.compactionCount = 0
       state.compactionEvents = []
+      state.lastCompactionReport = null
       state.toolsUsed = []
       state.toolHistory = []
       state.filesChanged = { modified: 0, created: 0, added: 0, deleted: 0 }
@@ -216,20 +221,21 @@ export const createSidebarActions = (set: SetState): ChatSidebarActions => ({
       // compactionCount session stat is preserved so the sidebar stays
       // honest.
       //
-      // FID-2026-0917-006: clearing the three fields alone is NOT durable —
-      // the 2s heartbeat (send-message-monitors) and the run-end
-      // adoptAndPersist both re-mirror mainAgentState.compactionStatus, which
-      // retains its terminal phase indefinitely, resurrecting the retired
-      // panel. Stamp each half of the outcome's identity FIRST (while the
-      // outgoing status + report are still in hand) so those mirrors can
-      // recognize and drop a stale re-delivery; a genuinely new compaction
-      // (different epoch) still displays.
-      state.retiredCompactionStatusEpoch = compactionStatusEpochOf(
-        state.compactionStatus,
-      )
-      state.retiredCompactionReportEpoch = compactionReportEpochOf(
-        state.lastCompactionReport,
-      )
+      // FID-2026-0917-006 → FID-2026-0918-004: clearing the three fields alone
+      // is NOT durable — the 2s heartbeat (send-message-monitors) and the
+      // run-end adoptAndPersist both re-mirror mainAgentState.compactionStatus
+      // and lastCompactionReport, which retain their terminal values
+      // indefinitely, resurrecting the retired panel. Arm the retirement and
+      // capture the outgoing VALUES first (while they are still in hand) so
+      // the mirrors can recognize and drop a stale re-delivery by equality; a
+      // genuinely new terminal outcome still displays (and ends the
+      // retirement). The explicit flag is required because the outgoing status
+      // may be a live phase or null, whose value-equality alone is ambiguous
+      // with "no retirement active" — the FID-2026-0917-006 epoch string tried
+      // to encode that state as null and so suppressed nothing.
+      state.compactionSignalRetired = true
+      state.retiredCompactionStatus = state.compactionStatus
+      state.retiredCompactionReport = state.lastCompactionReport
       state.compactionStatus = null
       state.compactionEvents = []
       state.lastCompactionReport = null

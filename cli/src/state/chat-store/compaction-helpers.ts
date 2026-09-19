@@ -68,32 +68,23 @@ export function dampTokenCount(current: number, incoming: number): number {
 }
 
 /**
- * FID-2026-0917-006: identity of the retired outcome, computed from the two
- * halves the mirror sites actually have at hand.
+ * FID-2026-0918-004: the identity of a *terminal* compaction outcome, or `null`
+ * for a live state.
  *
- * The runtime's `mainAgentState.compactionStatus` deliberately retains a
- * terminal `compacted` phase indefinitely (the sidebar percent readout depends
- * on it). The store therefore cannot use "a terminal status is present" to
- * mean "fresh". Instead `onNewUserMessage` stamps BOTH epochs at retirement
- * time, while the outgoing status + report are still in hand, and each mirror
- * site compares only the half it re-delivers:
- *   - the status mirror (2s heartbeat + adoptAndPersist status write) probes
- *     the status epoch,
- *   - the report mirror (adoptAndPersist report write) probes the report epoch.
- * A match is a stale re-mirror of an already-retired signal and is dropped; a
- * mismatch is a genuine new compaction and displays (clearing the stamps).
+ * Used to decide whether an incoming status ENDS an active retirement: only a
+ * genuinely new terminal outcome (`compacted` / `pruned` / `ineffective`) is a
+ * real compaction worth re-displaying. `compacting` / `blocked` / `warning` /
+ * `idle` are live per-step states, not outcomes — a retirement must never be
+ * ended by one (see `applyCompactionStatus`).
  *
- * `percentUsed` is intentionally excluded from both: it drifts on every step
- * boundary (recount + window re-derivation), so including it would make the
- * epoch unstable and let a re-mirror through disguised as a new compaction.
+ * `percentUsed` is intentionally excluded: it drifts on every step boundary
+ * (recount + window re-derivation), so including it would make the identity
+ * unstable and let a re-mirror through disguised as a new compaction.
  */
 export function compactionStatusEpochOf(
   status: CompactionStatus | null,
 ): string | null {
   if (!status) return null
-  // Only terminal outcome phases carry a retired signal worth suppressing.
-  // `compacting` / `blocked` / `warning` are live states, not outcomes — a
-  // retirement must never silence them.
   if (
     status.phase !== 'compacted' &&
     status.phase !== 'pruned' &&
@@ -104,13 +95,8 @@ export function compactionStatusEpochOf(
   return `${status.phase}:${status.tokensSaved ?? 0}`
 }
 
-export function compactionReportEpochOf(
-  report: LastCompactionReport | null,
-): string | null {
-  if (!report) return null
-  return `${report.removedMessages}:${report.tokensSaved ?? 0}:${report.summaryExcerpt.length}`
-} /**
- * FID-2026-0815-008 (F-11): shallow field compare for the compaction status.
+/**
+ * FID-2026-0915-008 (F-11): shallow field compare for the compaction status.
  * The runtime rebuilds a fresh object per heartbeat (not reference-stable), so
  * reference equality would never no-op; comparing the three scalar fields
  * collapses equal re-deliveries into true change-only notifications.
@@ -125,5 +111,27 @@ export function sameCompactionStatus(
     a.phase === b.phase &&
     a.percentUsed === b.percentUsed &&
     a.tokensSaved === b.tokensSaved
+  )
+}
+
+/**
+ * FID-2026-0918-004: shallow field compare for the compaction report, the
+ * report-half analogue of `sameCompactionStatus`. Suppression of a stale
+ * re-mirror is now a value-equality test over the full domain (including the
+ * live phases and the no-report case), replacing the FID-2026-0917-006 epoch
+ * string whose `null` return could not distinguish "no retirement active"
+ * from "retired with no stable identity".
+ */
+export function sameCompactionReport(
+  a: LastCompactionReport | null,
+  b: LastCompactionReport | null,
+): boolean {
+  if (a === b) return true
+  if (!a || !b) return false
+  return (
+    a.summaryExcerpt === b.summaryExcerpt &&
+    a.removedMessages === b.removedMessages &&
+    a.tokensSaved === b.tokensSaved &&
+    a.percentUsed === b.percentUsed
   )
 }

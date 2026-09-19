@@ -15,119 +15,40 @@ import type { LastCompactionReport } from '../state/chat-store/chat-store-common
  */
 const REPORT_EXCERPT_PREVIEW_CHARS = 160
 /**
- * FID-2026-0821-001 P1-1/P1-2: in-stream compaction lifecycle panel,
- * restyled after the TerminalCommandDisplay chrome — rounded border on the
- * surface color with the right-aligned TrafficLights title bar (FID-2026-
- * 0817-001 glow cycle; the animation budget suspends the dots off-screen).
- * FID-2026-0822-006: the chrome recipe itself is owned by the shared
- * TrafficLightPanel primitive (Law 13) — no hand-rolled copy remains.
- *
- * Phases rendered, highest priority first:
- *   compacting → ⚙ in-flight line (glowing title bar)
- *   blocked    → ⛔ reasoned block line (P0-1: WHY nothing happened)
- *   compacted  → ✓ micro-compact completion line (FID-2026-0824-023)
- *   warning    → one-shot threshold warning with the live window percent
- *   otherwise  → most recent terminal lifecycle event
- *                (✓ pruned / ⚙ micro-compacted / ⚠ ineffective)
+ * FID-2026-0821-001 P1-1/P1-2: in-stream compaction lifecycle signal.
+ * FID-2026-0919-017: this component is IN-FLIGHT ONLY — it renders nothing
+ * unless the pruner is actively running (`phase === 'compacting'`). It is
+ * mounted as the last child of the sticky-bottom chat scrollbox (panels.tsx),
+ * so anything it paints becomes a fake last message: later turns render
+ * ABOVE it and a stale panel pins above the input until restart. Terminal
+ * outcomes live in CompactionSummaryBlock (a real transcript message);
+ * warning/blocked/ineffective live in the right sidebar's Context row
+ * (formatCompactionStatus). Retirement of the in-flight slot on a new user
+ * message still disarms via the store's compaction-signal retirement.
  *
  * Render-only by design: subscribes to store selectors, never mutates chat
  * history (ECHO compliance accounting untouched), never dispatches tools.
  */
-// Design tokens (savant-cyberpunk contract): warning=#ff9500
-// error=#ff2d55 · success=#39ff14 · muted=#8f8f99 — explicit literals so the
-// EHEL design-contract scanner can map every fg deterministically.
+// Design tokens (savant-cyberpunk contract): warning=#ff9500 — explicit
+// literals so the EHEL design-contract scanner can map every fg
+// deterministically.
 export const CompactionSignal = React.memo(function CompactionSignal() {
   const compactionStatus = useChatStore((s) => s.compactionStatus)
-  const compactionEvents = useChatStore((s) => s.compactionEvents)
-  const lastCompactionReport = useChatStore((s) => s.lastCompactionReport)
-  // FID-2026-0916-008: local fold state for the report excerpt. The panel is
-  // render-only — this is viewport state, never chat history.
-  const [reportExpanded, setReportExpanded] = React.useState(false)
-  const phase = compactionStatus?.phase
-  const body = (() => {
-    if (phase === 'compacting') {
-      return (
-        <text attributes={TextAttributes.BOLD} fg="#ff9500">
-          ⚙ Compacting context…
-        </text>
-      )
-    }
-    if (phase === 'blocked') {
-      return (
-        <text attributes={TextAttributes.BOLD} fg="#ff2d55">
-          ⛔ Auto-compact blocked ({compactionStatus?.blockReason ?? 'unknown'})
-        </text>
-      )
-    }
-    if (phase === 'compacted') {
-      // FID-2026-0824-023: Layer-2 micro-compact outcomes are visible — data
-      // destruction is never silent.
-      const saved = compactionStatus?.tokensSaved
-      return (
-        <text attributes={TextAttributes.BOLD} fg="#39ff14">
-          ✓ Micro-compacted{saved ? ` (−${String(saved)} tokens)` : ''} — stale
-          tool results cleared
-        </text>
-      )
-    }
-    if (phase === 'warning') {
-      const pct = compactionStatus?.percentUsed
-      return (
-        <text attributes={TextAttributes.BOLD} fg="#ff9500">
-          ⚠ Context at {pct != null ? `${pct}%` : 'high'} of window —
-          auto-compact armed
-        </text>
-      )
-    }
-    const last = compactionEvents[compactionEvents.length - 1]
-    if (!last) return null
-    if (last.outcome === 'pruned') {
-      return (
-        <text>
-          <span fg="#39ff14" attributes={TextAttributes.BOLD}>
-            ✓ Compaction complete
-            {last.tokensSaved ? ` (−${String(last.tokensSaved)} tokens)` : ''}
-          </span>
-          {last.percentUsed != null && (
-            <span fg="#8f8f99">{` — ${last.percentUsed}% of window`}</span>
-          )}
-        </text>
-      )
-    }
-    if (last.outcome === 'compacted') {
-      // FID-2026-0824-023: micro-compact events render distinctly — never
-      // mislabeled as an ineffective full compaction.
-      return (
-        <text fg="#8f8f99">
-          {`⚙ Micro-compaction −${String(last.tokensSaved ?? 0)} tokens`}
-        </text>
-      )
-    }
-    return (
-      <text attributes={TextAttributes.BOLD} fg="#ff9500">
-        ⚠ Compaction ineffective — context still over the pruner trigger
-      </text>
-    )
-  })()
-
-  if (!body) return null
-
+  // FID-2026-0919-017: the trailing scrollbox slot is reserved for the
+  // in-flight phase only. Every other phase (terminal or advisory) renders
+  // through its owning surface: CompactionSummaryBlock (terminal transcript
+  // message), formatCompactionStatus (sidebar warning/blocked/ineffective
+  // row). Nothing else may re-occupy this slot — see panels.tsx.
+  if (compactionStatus?.phase !== 'compacting') return null
   // FID-2026-0822-006: chrome comes from the shared TrafficLightPanel
   // primitive. The thin wrapper preserves the previous selectable={false}
   // behavior without extending the primitive's API.
   return (
     <box selectable={false} style={{ width: '100%' }}>
       <TrafficLightPanel>
-        <box style={{ flexDirection: 'column' }}>
-          {body}
-          {lastCompactionReport ? (
-            <CompactionReportExcerpt
-              report={lastCompactionReport}
-              reportExpanded={reportExpanded}
-              onToggleExpanded={() => setReportExpanded((v) => !v)}
-            />
-          ) : null}
-        </box>
+        <text attributes={TextAttributes.BOLD} fg="#ff9500">
+          ⚙ Compacting context…
+        </text>
       </TrafficLightPanel>
     </box>
   )

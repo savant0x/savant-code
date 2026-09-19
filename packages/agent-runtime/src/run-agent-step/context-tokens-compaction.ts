@@ -28,6 +28,13 @@ import type {
 const WARNING_CLEAR_HYSTERESIS = 0.9
 
 /**
+ * FID-2026-0918-004: dedupe key for the micro-compact `compaction_summary`
+ * emission, mirroring the `lastEmittedCompactionStatus` WeakMap pattern in
+ * context-tokens.ts. Keyed by agentState so parallel agents never collide.
+ */
+const lastEmittedMicroSummary = new WeakMap<AgentState, string>()
+
+/**
  * FID-2026-0725-085: Run micro-compact before each API call to clear stale tool results.
  * This is zero-cost (no LLM call) and reduces context size incrementally.
  */
@@ -111,6 +118,31 @@ export function runMicroCompactPass(params: {
     agentState.compactionMetrics = {
       events: microMetrics.events + 1,
       tokensSaved: microMetrics.tokensSaved + microResult.tokensSaved,
+    }
+    // FID-2026-0918-004: land the micro-compact outcome as an in-stream
+    // CompactionSummaryBlock (the scrollable, "acts like a normal message"
+    // surface) rather than only the pinned CompactionSignal panel. The
+    // full-pruner boundary already emits `compaction_summary`
+    // (spawn-agent-inline-pruner-outcome.ts); the micro pass had
+    // `loopParams.onResponseChunk` in hand but never used the seam, so a
+    // micro-compact outcome left no scrollable record and could only be seen
+    // on the pinned panel — which is exactly the surface that pins below
+    // every later message. Guarded by a per-agentState dedupe so a repeated
+    // identical outcome (the same metrics re-reported at consecutive step
+    // boundaries) emits one block, not a burst.
+    const summaryKey = `${microResult.messagesCleared}:${microResult.tokensSaved}:${percentUsed}`
+    if (
+      !agentState.parentId &&
+      lastEmittedMicroSummary.get(agentState) !== summaryKey
+    ) {
+      lastEmittedMicroSummary.set(agentState, summaryKey)
+      loopParams.onResponseChunk({
+        type: 'compaction_summary',
+        summary: `⚙️ Context micro-compacted${boundaryLabel}: cleared ${microResult.messagesCleared} stale tool result${microResult.messagesCleared === 1 ? '' : 's'}, ~${microResult.tokensSaved.toLocaleString()} tokens saved. Context at ${percentUsed}% of auto-compact threshold.`,
+        removedMessages: microResult.messagesCleared,
+        tokensSaved: microResult.tokensSaved,
+        percentUsed,
+      })
     }
     if (!agentState.parentId) {
       appendGroundingRefresh(

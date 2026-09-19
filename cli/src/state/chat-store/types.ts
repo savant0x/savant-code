@@ -122,17 +122,23 @@ export type ChatStoreState = {
   /** FID-2026-0824-023 stream-routing: last pruner report (WHAT was compacted). */
   lastCompactionReport: LastCompactionReport | null
   /**
-   * FID-2026-0917-006: identity of the outcome retired by the last
-   * `onNewUserMessage`, split into the two halves the mirror sites actually
-   * hold at re-delivery time. `null` outside a retirement. The 2s heartbeat
-   * and the run-end `adoptAndPersist` re-mirror `mainAgentState.compactionStatus`
-   * and `lastCompactionReport`, which retain their terminal values indefinitely
-   * — without these stamps those mirrors resurrect the retired panel. A match
-   * is a stale re-delivery (suppressed); a mismatch is a fresh compaction
-   * (displayed, and the stamps cleared).
+   * FID-2026-0918-004: the previous run's compaction signal, retired by
+   * `onNewUserMessage`. `compactionSignalRetired` is the active flag and the
+   * two fields below hold the outgoing VALUES; the 2s heartbeat
+   * (send-message-monitors) and the run-end `adoptAndPersist` re-mirror
+   * `mainAgentState.compactionStatus` and `lastCompactionReport`, which retain
+   * their terminal values indefinitely, so the store suppresses a stale
+   * re-delivery by identity equality against the captured values.
+   *
+   * This replaced the FID-2026-0917-006 epoch-string scheme: the epoch helper
+   * returns null for every live phase (warning/blocked/compacting/idle), so a
+   * run ending on a live phase — the ordinary post-compaction regime, context
+   * still over the threshold — stamped a null that suppressed nothing and the
+   * panel re-pinned below every later message.
    */
-  retiredCompactionStatusEpoch: string | null
-  retiredCompactionReportEpoch: string | null
+  compactionSignalRetired: boolean
+  retiredCompactionStatus: CompactionStatus | null
+  retiredCompactionReport: LastCompactionReport | null
   toolsUsed: string[]
   toolHistory: ToolHistoryEntry[]
   filesChanged: FilesChanged
