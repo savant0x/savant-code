@@ -51,14 +51,69 @@ describe('CONTEXT_WINDOW_FALLBACKS (vendor table)', () => {
   test('adds correct resolution where the substring heuristics mis-guessed', () => {
     // A GLM id the old family heuristic cannot match (falls to the 200k
     // default) must now resolve to the vendor-published window.
+    // FID-2026-0919-020: value updated to the live capability (1,310,720).
     const glm = getContextWindowFallback('unorouter/glm-5.3-flash:free')
-    expect(glm.contextWindow).toBe(1_000_000)
+    expect(glm.contextWindow).toBe(1_310_720)
     expect(glm.source).toBe('fallback-table')
 
     // A modern claude id the old 200k claude guess under-windowed.
     const opus = getContextWindowFallback('unorouter/claude-opus-4.8')
     expect(opus.contextWindow).toBe(1_000_000)
     expect(opus.source).toBe('fallback-table')
+  })
+
+  test('kiosapi researched rows (FID-2026-0919-019) carry the researched windows', () => {
+    const expectations: Array<[string, number]> = [
+      ['kiosapi/agnes-2.0-flash', 524_288],
+      ['kiosapi/agnes-2.5-flash', 524_288],
+      ['kiosapi/agnes-3.0-flash', 524_288],
+      ['kiosapi/atria-dawn-preview', 262_144],
+      ['kiosapi/sensenova-6.8-flash-lite', 262_144],
+      ['kiosapi/diffusiongemma-26b-a4b-it', 262_144],
+    ]
+    for (const [id, window] of expectations) {
+      const resolved = getContextWindowFallback(id)
+      expect(resolved.source).toBe('fallback-table')
+      expect(resolved.contextWindow).toBe(window)
+    }
+    // big-pickle deliberately rowless: aggregator value equals the default.
+    expect(getContextWindowFallback('kiosapi/big-pickle').source).toBe(
+      'default',
+    )
+  })
+
+  test('FID-2026-0919-020 live-audit corrections (2026-09-19)', () => {
+    const corrections: Array<[string, number]> = [
+      // rounding artifacts normalized
+      ['infron/deepseek/deepseek-v4-flash:free', 1_048_576],
+      ['infron/kwaipilot/kat-coder-pro-v2', 262_144],
+      ['unorouter/qwen3.6-35b-a3b:free', 262_144],
+      ['unorouter/step-3.7-flash:free', 262_144],
+      ['commandcode/meituan/LongCat-2.0:free', 1_048_756],
+      // under-allocations raised to live capability
+      ['infron/deepseek/deepseek-v4-flash-0731:free', 1_310_720],
+      ['infron/qwen/qwen3.8-27b:free', 1_000_000],
+      ['infron/z-ai/glm-5.3-flash', 1_310_720],
+      ['unorouter/glm-5.3-flash:free', 1_310_720],
+      ['unorouter/deepseek-v4-flash:free', 1_048_576],
+      ['unorouter/gemini-3.6-flash:free', 1_048_576],
+      ['unorouter/qwen3.8-27b:free', 1_000_000],
+      ['unorouter/deepseek-v4-pro', 1_048_576],
+      ['commandcode/zai-org/glm-5.3', 1_310_720],
+      ['commandcode/Qwen/Qwen3.8-27B', 1_000_000],
+      // over-allocations corrected DOWN to live capability (OOM direction)
+      ['unorouter/gpt-5.5', 1_050_000],
+      ['unorouter/gpt-6-astra', 1_050_000],
+    ]
+    for (const [id, window] of corrections) {
+      const resolved = getContextWindowFallback(id)
+      expect(resolved.source).toBe('fallback-table')
+      expect(resolved.contextWindow).toBe(window)
+    }
+    // route-keyed exception stays at the route's served window
+    expect(
+      getContextWindowFallback('hcnsec/DeepSeek-V4-Flash').contextWindow,
+    ).toBe(1_310_720)
   })
 
   test('unmatched ids get the conservative default with explicit provenance', () => {

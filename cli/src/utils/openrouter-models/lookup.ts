@@ -11,7 +11,7 @@ import {
 import { PROVIDER_REGISTRY } from '@savant-code/common/providers/registry'
 
 import { getContextWindowForModel } from '../constants'
-import { getCachedGatewayModels } from './gateway'
+import { findGatewayModel } from './gateway-lookup'
 import { getCachedOpenRouterModels } from './openrouter'
 import {
   PINNED_MAX_OUTPUT_TOKENS,
@@ -50,37 +50,10 @@ function toCanonicalModelId(modelId: string): string {
 }
 
 /**
- * Look up a model in the cached gateway catalog by id, falling back to a
- * provider-prefixed match and then a base-family match.
- *
- * When the initial match comes from a hardcoded catalog (TokenRouter, OpenCode
- * Go) that has an *inferred* context length (not from the API), this function
- * also checks the live OpenRouter catalog for the canonical model ID to find
- * the real context length.
+ * Look up a model in the cached gateway catalog by id — moved verbatim to
+ * `gateway-lookup.ts` (FID-2026-0919-018 loop record: 300-line ceiling).
  */
-export function findGatewayModel(modelId: string): OpenRouterModel | undefined {
-  const catalog = getCachedGatewayModels()
-
-  // Exact match
-  const exact = catalog.find((m) => m.id === modelId)
-  if (exact) return exact
-
-  // Provider prefix variants (e.g. "openai/gpt-5" vs "gpt-5")
-  const withoutProvider = catalog.find(
-    (m) => m.id === modelId.replace(/^[a-z0-9-]+\//, ''),
-  )
-  if (withoutProvider) return withoutProvider
-
-  // Base family match (e.g. "anthropic/claude-sonnet-4" vs "anthropic/claude-sonnet-4.8")
-  // Also handles v-prefixed versions: "mimo-v2.5" → "mimo"
-  const familyId = modelId.replace(/-v?\d+(\.\d+)?$/, '')
-  if (familyId && familyId !== modelId) {
-    const family = catalog.find((m) => m.id.startsWith(familyId))
-    if (family) return family
-  }
-
-  return undefined
-}
+export { findGatewayModel } from './gateway-lookup'
 
 /**
  * Field picker for {@link findModelFieldFromOpenRouter}: the model's context
@@ -144,6 +117,26 @@ function findModelFieldFromOpenRouter(
   const byBase = openRouterCatalog.find((m) => m.id === withoutProvider)
   if (field(byBase) !== undefined) return field(byBase)!
 
+  // 2b. Exact terminal-segment match: a stripped gateway canonical whose
+  // version is mid-id ("glm-5.3-flash") or absent IS its own upstream
+  // terminal segment, but branch 3 (terminal-version reduction) and 3b's
+  // `familyName !== canonical` guard both skip exactly this case
+  // (FID-2026-0919-018: kiosapi/glm-5.3-flash-free → 200k default instead
+  // of z-ai/glm-5.3-flash's 1,310,720). Equality on the terminal segment is
+  // strict enough to exclude near-collisions ("glm-5.3-flashx",
+  // ":batch" variants ride along in the terminal segment and fail).
+  // FID-2026-0919-019: the compare is CASE-INSENSITIVE — catalog casing is
+  // the upstream's choice (OpenRouter lowercases; `kiosapi/Qwen/Qwen3-8B`
+  // mirrors HuggingFace casing and its twin is `qwen/qwen3-8b`); a routing-
+  // prefix spelling must not decide window truth. Near-collisions still
+  // fail: casing-insensitive equality remains exact over the full segment.
+  const terminal = canonical.split('/').pop() ?? canonical
+  const terminalLower = terminal.toLowerCase()
+  const byTerminal = openRouterCatalog.find(
+    (m) => (m.id.split('/').pop() ?? '').toLowerCase() === terminalLower,
+  )
+  if (field(byTerminal) !== undefined) return field(byTerminal)!
+
   // 3. Family match by prefix (handles "mimo-v2.5" → "mimo").
   // FID-2026-0919-016: prefer the candidate whose terminal segment equals the
   // query's (exact version) over the first id-sorted hit (sorted-first handed
@@ -154,7 +147,8 @@ function findModelFieldFromOpenRouter(
     const family =
       openRouterCatalog.find(
         (m) =>
-          m.id.startsWith(familyId) && (m.id.split('/').pop() ?? '') === terminal,
+          m.id.startsWith(familyId) &&
+          (m.id.split('/').pop() ?? '') === terminal,
       ) ?? openRouterCatalog.find((m) => m.id.startsWith(familyId))
     if (family && field(family) !== undefined) return field(family)!
   }
@@ -177,8 +171,9 @@ function findModelFieldFromOpenRouter(
       return mFamily === familyName
     })
     const chosen =
-      familyCandidates.find((m) => (m.id.split('/').pop() ?? '') === terminal) ??
-      familyCandidates[0]
+      familyCandidates.find(
+        (m) => (m.id.split('/').pop() ?? '') === terminal,
+      ) ?? familyCandidates[0]
     if (chosen && field(chosen) !== undefined) return field(chosen)!
   }
 
