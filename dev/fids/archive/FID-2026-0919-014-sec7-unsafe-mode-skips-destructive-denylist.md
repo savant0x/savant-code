@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0919-014-sec7-unsafe-mode-skips-destructive-denylist.md`
 **ID:** FID-2026-0919-014
 **Severity:** low
-**Status:** verified
+**Status:** closed
 **Created:** 2026-09-19
 **YAGNI-Compliance:** Confirmed (Loop 3 — two-line ordering fix per site;
 no new escape hatches)
@@ -161,8 +161,7 @@ Alternatives considered and rejected:
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [x] **Commit SHA:** pending G2 (operator commit withheld; no silent
-  deferral — presented at turn end)
+- [x] **Commit SHA:** cca075b1 (operator-authorized 2026-09-19)
 - [x] **File:line ranges:** `packages/agent-runtime/src/tools/sandbox/engine.ts`
   (floor above mode check), `tools/tool-executor/sandbox-gate.ts` (floor
   above dev override), `tools/sandbox/__tests__/engine.test.ts` (updated),
@@ -218,14 +217,14 @@ Alternatives considered and rejected:
 
 ## Resolution
 
-- **Closed Date:** pending G2 commit (operator authorization)
+- **Closed Date:** 2026-09-19 (commit cca075b1)
 - **Fix Description:** Destructive-command denylist hoisted to an
   unconditional floor in both the sandbox engine and the executor gate —
   applies in every permission mode and under the dev override
 - **Tests Added:** engine floor cases (deny in prompt/unsafe modes,
   readonly-tool reach); integration denial-text updated
 - **Verification Evidence:** receipt below
-- **Archived:** pending G2 (moves to `dev/fids/archive/` with the commit)
+- **Archived:** 2026-09-19 — moved to `dev/fids/archive/`
 
 ## Lessons Learned
 

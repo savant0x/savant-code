@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0919-015-exit-code-blind-verification-crediting.md`
 **ID:** FID-2026-0919-015
 **Severity:** medium
-**Status:** verified
+**Status:** closed
 **Created:** 2026-09-19
 **YAGNI-Compliance:** Confirmed (Loop 3 — thread one boolean through an
 existing bag; one predicate change; flip pinned tests. No modes, no config
@@ -233,6 +233,12 @@ pin asserts the credit state (`verifiedFiles`) directly — the actual
 subject of the contract. Live gates: agent-runtime typecheck exit 0; echo
 suite 181/0 (incl. new 6-test suite); result-lifecycle 2/0; repo-wide
 typecheck/eslint(0w)/lint:md/quality PASS. No open deltas.
+
+### Implementation Evidence closure (2026-09-19)
+
+- [x] **Commit SHA:** b8bb5a5d (path-scoped with FID-2026-0918-005 —
+      shared echo-crediting files; operator-authorized 2026-09-19)
+- [x] **Archived:** 2026-09-19 — moved to `dev/fids/archive/`
 
 ## Operator Decision
 

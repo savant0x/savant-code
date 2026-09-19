@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0919-010-sec3-readonly-redirect-waiver.md`
 **ID:** FID-2026-0919-010
 **Severity:** medium
-**Status:** verified
+**Status:** closed
 **Created:** 2026-09-19
 **YAGNI-Compliance:** Confirmed (Loop 3 — span-scoped re-scan only, no new
 policy surface)
@@ -188,8 +188,8 @@ Alternatives considered and rejected:
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [x] **Commit SHA:** pending G2 (operator commit withheld; no silent
-  deferral — presented at turn end)
+- [x] **Commit SHA:** 4d89d27d (code committed earlier via the quality-
+  ratchet checkpoint; operator-authorized closure 2026-09-19)
 - [x] **File:line ranges:**
   `packages/agent-runtime/src/tools/handlers/tool/readonly-command-validation.ts`
   (`validateReadonlySegment` waiver re-scan);
@@ -244,14 +244,14 @@ Alternatives considered and rejected:
 
 ## Resolution
 
-- **Closed Date:** pending G2 commit (operator authorization)
+- **Closed Date:** 2026-09-19 (implementation commit 4d89d27d)
 - **Fix Description:** stderr-redirect exemption scoped to the matched
   span; remainder of the segment re-scanned for forbidden metacharacters
 - **Tests Added:** `run-readonly-redirect-waiver.test.ts` (new);
   `run-readonly-command.test.ts` cases extended
 - **Verification Evidence:** receipt below; per-suite counts in the
   session summary
-- **Archived:** pending G2 (moves to `dev/fids/archive/` with the commit)
+- **Archived:** 2026-09-19 — moved to `dev/fids/archive/`
 
 ## Lessons Learned
 

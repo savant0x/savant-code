@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0918-007-ripgrep-vendor-gap-no-path-fallback.md`
 **ID:** FID-2026-0918-007
 **Severity:** medium
-**Status:** verified
+**Status:** closed
 **Created:** 2026-09-18 20:35
 **YAGNI-Compliance:** Confirmed (Loop 3 — pure-Bun fallback rejected; no
 new capabilities beyond the recorded failure class)
@@ -256,8 +256,7 @@ but the repro result is recorded in Loop 2.
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [x] **Commit SHA:** pending G2 (operator commit authorization; no silent
-  deferral — presented at turn end)
+- [x] **Commit SHA:** 0e0ffcd9 (operator-authorized 2026-09-19)
 - [x] **File:line ranges:** `sdk/src/native/ripgrep-path-fallback.ts`
   (new), `sdk/src/native/ripgrep.ts` (candidate 7 + throw text),
   `sdk/src/tools/code-search/executor.ts` (remediation text),
@@ -330,7 +329,7 @@ but the repro result is recorded in Loop 2.
 
 ## Resolution
 
-- **Closed Date:** pending G2 commit (operator authorization)
+- **Closed Date:** 2026-09-19 (commit 0e0ffcd9)
 - **Fix Description:** Ripgrep resolver degrades gracefully: vendored
   candidates → PATH `rg` (memoized probe) → fail-closed throw naming every
   attempted candidate and `bun run --cwd=sdk fetch-ripgrep`; executor
@@ -342,7 +341,7 @@ but the repro result is recorded in Loop 2.
   no-PATH probe
 - **Verification Evidence:** receipt below (typecheck/test/quality exit
   0); live sandbox proof transcript in the session summary
-- **Archived:** pending G2 (moves to `dev/fids/archive/` with the commit)
+- **Archived:** 2026-09-19 — moved to `dev/fids/archive/`
 
 ## Lessons Learned
 

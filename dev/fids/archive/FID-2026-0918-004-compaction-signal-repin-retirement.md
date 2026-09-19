@@ -274,6 +274,8 @@ only in the pinned panel. Dedupe mirrors `emitCompactionStatus`'s
   retirement tests), agent-runtime run-agent-step + compactor suites 83/83 ✓
   (192 expect calls, incl. the 4 new emission tests). Law 4 call-graph
   reachability ✓.
+- **Commit SHA:** 20fe3180 (carried with FID-2026-0919-017's compaction
+      lineage commit; operator-authorized 2026-09-19)
 - **Archived:** 2026-09-18 19:34 → dev/fids/archive/
 
 ## Lessons Learned

@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0919-017-compaction-signal-pin-above-input.md`
 **ID:** FID-2026-0919-017
 **Severity:** high
-**Status:** verified
+**Status:** closed
 **Created:** 2026-09-19 01:05
 **YAGNI-Compliance:** Confirmed (Loop 3 — two determinism fixes in existing
 modules + two missing sidebar labels; no new state, no new components.)
@@ -162,7 +162,9 @@ artifact maps to a declared gate:
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [ ] **Commit SHA:** G2 withheld — joins 005–016 in the pending set
+- [x] **Commit SHA:** 20fe3180 (+ cf3bebf2 follow-up carrying the
+      inverted suite omitted from the first commit; operator-authorized
+      2026-09-19)
 - [x] **File:line ranges:** `compaction-signal.tsx:36-58` (compacting
       gate + chrome); `sidebar-reset.ts:35-54` (identity drop);
       `right-sidebar-format.ts:66-79` (blocked/ineffective cases);
@@ -177,8 +179,7 @@ artifact maps to a declared gate:
 
 ## Resolution
 
-- **Closed Date:** pending G2 commit (implemented + verified
-      2026-09-19)
+- **Closed Date:** 2026-09-19 (commit 20fe3180)
 - **Fix Description:** in-flight-only scrollbox slot; outcome-identity
       retirement drop; no-orphaned-outcome sidebar labels
 - **Tests Added:** signal suite inverted (9 tests, 5 new in-flight-only
@@ -186,7 +187,7 @@ artifact maps to a declared gate:
       new format suite (6 tests incl. blocked/ineffective)
 - **Verification Evidence:** receipt 5/5 via `--write`; `--check` PASS
       (fingerprint sha256:b1ec125e…); eslint 0; lint:md 0; quality PASS
-- **Archived:** pending G2 commit (auto-archive on closure)
+- **Archived:** 2026-09-19 — moved to `dev/fids/archive/`
 
 ## Lessons Learned
 

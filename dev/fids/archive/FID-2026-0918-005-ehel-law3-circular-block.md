@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0918-005-ehel-law3-circular-block.md`
 **ID:** FID-2026-0918-005
 **Severity:** high
-**Status:** verified
+**Status:** closed
 **Created:** 2026-09-18 20:05
 **YAGNI-Compliance:** Confirmed (Loop 3 — minimal scope, no speculative
 additions)
@@ -261,8 +261,8 @@ Alternatives considered and rejected:
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [x] **Commit SHA:** pending G2 (operator commit authorization; no
-  silent deferral — presented at turn end)
+- [x] **Commit SHA:** b8bb5a5d (path-scoped with FID-2026-0919-015 —
+  shared echo-crediting files; operator-authorized 2026-09-19)
 - [x] **File:line ranges:** `pre-write-gates.ts` Law 3 section routes
   through `pre-write-gates-law3.ts` (`runLaw3Gate`); path helpers in
   `pre-write-gates-paths.ts`; tests in
@@ -329,7 +329,7 @@ Alternatives considered and rejected:
 
 ## Resolution
 
-- **Closed Date:** pending G2 commit (operator authorization)
+- **Closed Date:** 2026-09-19 (commit b8bb5a5d)
 - **Fix Description:** Law 3 pre-write gate narrowed to the target file
   (hard block kept); other-file dirtiness demoted to a steering advisory;
   turn-end Law 15 unchanged as the invariant boundary
@@ -338,7 +338,7 @@ Alternatives considered and rejected:
   for the narrowed scope
 - **Verification Evidence:** receipt below (typecheck/test/quality exit
   0); full battery in the session summary
-- **Archived:** pending G2 (moves to `dev/fids/archive/` with the commit)
+- **Archived:** 2026-09-19 — moved to `dev/fids/archive/`
 
 ## Lessons Learned
 

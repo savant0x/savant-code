@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0919-016-gateway-prefix-version-blind-window-matching.md`
 **ID:** FID-2026-0919-016
 **Severity:** medium
-**Status:** verified
+**Status:** closed
 **Created:** 2026-09-19
 **YAGNI-Compliance:** Confirmed (Loop 3 — one regex sourced from an
 existing closed-world registry + a deterministic version-preference
@@ -210,6 +210,11 @@ lines; compressed under the 300 absolute maximum (quality PASS, 1498
 files). Gates: cli + repo-wide typecheck exit 0; FID suite 7/0; sibling
 suites 61/0 (11 files); eslint 0 warnings; lint:md 0; quality PASS;
 receipt 5/5 via `fid:verify --write`; `--check` PASS. No open deltas.
+
+### Implementation Evidence closure (2026-09-19)
+
+- [x] **Commit SHA:** 246008fd (operator-authorized 2026-09-19)
+- [x] **Archived:** 2026-09-19 — moved to `dev/fids/archive/`
 
 ## Operator Decision
 

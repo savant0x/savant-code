@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0919-013-sec6-template-self-declared-capabilities.md`
 **ID:** FID-2026-0919-013
 **Severity:** medium
-**Status:** verified
+**Status:** closed
 **Created:** 2026-09-19
 **YAGNI-Compliance:** Confirmed (Loop 3 — code-level allowlist clamp at the
 single load point; per-deployment config surface deferred until an operator
@@ -166,8 +166,7 @@ Alternatives considered and rejected:
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [x] **Commit SHA:** pending G2 (operator commit withheld; no silent
-  deferral — presented at turn end)
+- [x] **Commit SHA:** 79cb00ea (operator-authorized 2026-09-19)
 - [x] **File:line ranges:** `templates/database-template-clamp.ts` (new),
   `templates/agent-registry.ts` (clamp at DB fallback),
   `templates/__tests__/database-template-clamp.test.ts` (new)
@@ -222,14 +221,14 @@ Alternatives considered and rejected:
 
 ## Resolution
 
-- **Closed Date:** pending G2 commit (operator authorization)
+- **Closed Date:** 2026-09-19 (commit 79cb00ea)
 - **Fix Description:** Database-sourced templates are capability-clamped
   at the single load point (fail-closed on unknown tools; mutation/exec/
   network/spawn stripped; local templates untouched)
 - **Tests Added:** `templates/__tests__/database-template-clamp.test.ts`
   (4 pass / 0 fail, incl. end-to-end registry wiring)
 - **Verification Evidence:** receipt below
-- **Archived:** pending G2 (moves to `dev/fids/archive/` with the commit)
+- **Archived:** 2026-09-19 — moved to `dev/fids/archive/`
 
 ## Lessons Learned
 

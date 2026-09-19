@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0919-011-sec4-telemetry-secret-value-pass-through.md`
 **ID:** FID-2026-0919-011
 **Severity:** medium
-**Status:** verified
+**Status:** closed
 **Created:** 2026-09-19
 **YAGNI-Compliance:** Confirmed (Loop 3 — three deterministic masking
 layers; no entropy threshold tuning UI, no remote-side filtering)
@@ -165,8 +165,7 @@ Alternatives considered and rejected:
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [x] **Commit SHA:** pending G2 (operator commit withheld; no silent
-  deferral — presented at turn end)
+- [x] **Commit SHA:** 9c2dcd5e (operator-authorized 2026-09-19)
 - [x] **File:line ranges:** `cli/src/utils/logger/sanitize.ts`
   (`maskSecretValues` + `sanitizeSecrets` integration),
   `cli/src/utils/__tests__/logger-mask-secret-values.test.ts` (new)
@@ -218,14 +217,14 @@ Alternatives considered and rejected:
 
 ## Resolution
 
-- **Closed Date:** pending G2 commit (operator authorization)
+- **Closed Date:** 2026-09-19 (commit 9c2dcd5e)
 - **Fix Description:** Value-shape masking (credential prefixes,
   KEY=value assignments, high-entropy tokens) applied to output-carrying
   fields before the remote fan-out
 - **Tests Added:** `cli/src/utils/__tests__/logger-mask-secret-values.test.ts`
   (8 pass / 0 fail)
 - **Verification Evidence:** receipt below
-- **Archived:** pending G2 (moves to `dev/fids/archive/` with the commit)
+- **Archived:** 2026-09-19 — moved to `dev/fids/archive/`
 
 ## Lessons Learned
 

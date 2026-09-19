@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0919-008-sec1-env-leak-to-spawned-shells.md`
 **ID:** FID-2026-0919-008
 **Severity:** high
-**Status:** verified
+**Status:** closed
 **Created:** 2026-09-19
 **YAGNI-Compliance:** Confirmed (Loop 3 — allowlist constant + two call
 sites; no per-deployment config surface until asked)
@@ -191,8 +191,7 @@ Alternatives considered and rejected:
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [x] **Commit SHA:** pending G2 (operator commit withheld; no silent
-  deferral — presented at turn end)
+- [x] **Commit SHA:** be2ca107 (operator-authorized 2026-09-19)
 - [x] **File:line ranges:** `sdk/src/env.ts` (`buildChildEnv` +
   allowlist), `sdk/src/tools/run-terminal-command.ts` (spawn site),
   `cli/src/commands/router/bash.ts` (router), `sdk/src/index.ts`
@@ -246,7 +245,7 @@ Alternatives considered and rejected:
 
 ## Resolution
 
-- **Closed Date:** pending G2 commit (operator authorization)
+- **Closed Date:** 2026-09-19 (commit be2ca107)
 - **Fix Description:** Allowlisted child env at the spawn chokepoint and
   the CLI bash router; credentials never cross the process boundary;
   explicit caller overrides unchanged
@@ -254,7 +253,7 @@ Alternatives considered and rejected:
   real-spawn sentinel proof)
 - **Verification Evidence:** receipt below; sentinel live proof in
   Loop 2/summary
-- **Archived:** pending G2 (moves to `dev/fids/archive/` with the commit)
+- **Archived:** 2026-09-19 — moved to `dev/fids/archive/`
 
 ## Lessons Learned
 

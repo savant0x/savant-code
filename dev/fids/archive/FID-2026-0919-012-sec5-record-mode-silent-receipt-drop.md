@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0919-012-sec5-record-mode-silent-receipt-drop.md`
 **ID:** FID-2026-0919-012
 **Severity:** medium
-**Status:** verified
+**Status:** closed
 **Created:** 2026-09-19
 **YAGNI-Compliance:** Confirmed (Loop 3 — visibility additions only;
 no mode-default change without an operator product call)
@@ -162,8 +162,7 @@ Alternatives considered and rejected:
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [x] **Commit SHA:** pending G2 (operator commit withheld; no silent
-  deferral — presented at turn end)
+- [x] **Commit SHA:** 85e877af (operator-authorized 2026-09-19)
 - [x] **File:line ranges:** `packages/agent-runtime/src/provenance/session.ts`
   (event + counter), `common/src/types/provenance.ts` (event variant),
   `spawn-agents-child-run.ts` + `spawn-agent-inline-verdict.ts` (catches),
@@ -217,14 +216,14 @@ Alternatives considered and rejected:
 
 ## Resolution
 
-- **Closed Date:** pending G2 commit (operator authorization)
+- **Closed Date:** 2026-09-19 (commit 85e877af)
 - **Fix Description:** Record-mode signing failures emit a
   `signing_failed` event + unaudited-write counter; verdict-binding
   failures warn with cause — the audit gap is visible in every outcome
 - **Tests Added:** `provenance-signing-failure-visibility.test.ts`
   (record emits+counts / enforce throws)
 - **Verification Evidence:** receipt below
-- **Archived:** pending G2 (moves to `dev/fids/archive/` with the commit)
+- **Archived:** 2026-09-19 — moved to `dev/fids/archive/`
 
 ## Lessons Learned
 

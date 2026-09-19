@@ -4,6 +4,130 @@
 > scope for the current task. Operator confirmation converts interpreted scope
 > into approved scope. Any drop/deferral requires a blocking presentation.
 
+## Task 65 — FID the handoff process findings (2026-09-18) — LOOP 2/3 DONE, G2 PENDING
+
+> Operator picked from the FID-2026-0918-004 handoff pending menu: "3" =
+> author FIDs for the process findings that surfaced in the incident report.
+> Both findings sit on the learning agenda (EHEL circular block, recurrence
+> 2; FID verification-contract gap, recurrence 1).
+
+- [x] **T65-A.** RED: evidence gathered from primary sources (not just the
+      summary's attribution): `pre-write-gates.ts` Law 3 block + exempt-path
+      scope, `tool-pipeline.ts` credit path, `turn-end.ts` Law 15,
+      `echo-compliance.ts` endingTurn-only tracker, `scripts/fid-verify.ts`
+      gate-only surface, FID-2026-0918-004's prose-vs-gates mismatch.
+- [x] **T65-B.** FID-2026-0918-005 authored (EHEL Law 3 circular block,
+      high; two-part target-dirty/other-dirty rule proposed). Status
+      `analyzed`; implementation blocked on operator approval of GREEN.
+- [x] **T65-C.** FID-2026-0918-006 authored (FID verification-contract
+      gap, medium; narrow contract sweep + template + solo-checklist fix
+      proposed). Status `analyzed`; implementation blocked on operator
+      approval of GREEN.
+- [x] **T65-D.** Operator approved all three ("Implement all three FIDs
+      005, 006, 007 through Perfection Loop 2/3 with receipts") — all
+      implemented 2026-09-18, Loop 2/3 complete, receipts stamped from
+      real gate runs (statuses `verified`):
+      **005** two-part Law 3 rule (target-dirty hard block + other-dirty
+      advisory) via `pre-write-gates-law3.ts` extraction; credit-mechanism
+      repro pin landed (detection-only, exit-code-blind — answers the FID's
+      open item). **006** contract sweep
+      (`fid-verification-contract-sweep.ts` + `scripts/fid-check.ts`)
+      wired into validator + `--check`; fixture suites + live `--check`
+      negative proof; FID-006 validates under its own contract. **007**
+      PATH-fallback candidate (memoized, injectable probe) +
+      workspace-correct throw/executor text; live sandbox proof (throw,
+      fallback, vendored-first). Closure+archive per G2 pending commit
+      authorization.
+      **Routed candidates (flagged in Loop 2 ADVERSARIAL):**
+      (1) verification crediting is exit-code-blind — a FAILING typecheck
+      discharges Law 3/Law 15 (pre-existing FID-2026-0819-001 design) —
+      **promoted to FID-2026-0919-015 2026-09-19 (operator directive),
+      then implemented same day on operator approval ("Approve implementing
+      FID-2026-0919-015 through Loop 2/3 with receipts"): outcome-aware
+      crediting via a `commandSucceeded` signal threaded through the
+      afterToolCall bag from both call sites (native + custom/MCP parity);
+      credit only on success, withhold + advisory on unknown, silent
+      withhold on failure; repro pin flipped + 6-test suite; receipt
+      stamped 6/6 from live gates, status `verified`.**
+      (2) gates parser accepts `gate: test <path>` whose path existence is
+      unchecked in the `--check` structural scan (caught only at `--write`).
+      **Operator decisions 2026-09-19:** (a) FID-007 part 3 (install-time
+      vendor guarantee) — APPROVED, implement now; (b) G2 commit — NOT
+      YET, withheld (nothing committed until operator says so).
+
+- [x] **T65-E.** (Approved 2026-09-18, operator: "nothing is out of scope,
+      add it") FID-2026-0918-007 authored (code_search ripgrep vendor gap —
+      fail-closed resolver with no PATH fallback + no install-time vendor
+      guarantee; 13 recurrences; two-surface distinction recorded, outer
+      client surface is operator-env-remediation only). Status `analyzed`;
+      implementation blocked on operator approval of GREEN (part 3
+      install-hook is an operator policy decision inside the FID).
+
+## Task 66 — System audit: Orchestrator→agent flow + security (2026-09-19) — SEC FIDs IMPLEMENTED, G2 PENDING
+
+> Operator directive: "I am going to audit the system. Review the full
+> flow of information from the orch to all agents. Along with any
+> security issues I need to address. Then create a report." Operator
+> also supplied `docs/security-audit-orchestrator-agent-flow.md`
+> (2026-09-18, analysis-only, unimplemented) — "this report needs to be
+> addressed."
+
+- [x] **T66-A.** Agent's own 2026-09-18 report verified against the live
+      tree (all 7 findings re-proven file:line; see report appendix).
+- [ ] **T66-B.** FID-007 part 3 implementation (approved decision above).
+- [x] **T66-C.** All 7 SEC findings FID'd (0919-008…014). Operator
+      approved implementing six ("Approve implementing the six SEC FIDs
+      in the recommended order") — ALL IMPLEMENTED 2026-09-19, receipts
+      stamped from real gate runs, statuses `verified`:
+      **010** span-scoped redirect waiver (worked example rejected);
+      **008** `buildChildEnv` allowlist at both spawn sites (sentinel
+      credential proven absent from the child via real spawn);
+      **011** value-shape secret masking (prefixes + KEY=value + entropy,
+      output fields, pre-fan-out); **014** destructive-command floor in
+      every mode incl. dev override; **012** `signing_failed` event +
+      unaudited-write counter + loud binding catches; **013** capability
+      clamp for database templates (fail-closed, local templates
+      untouched). 0919-009 (SEC-2): layer 3 (sanitization boundary)
+      **DECLINED** by the operator 2026-09-19 — residual
+      indirect-injection risk through inherited history is accepted and
+      recorded in the FID (mitigating context: the channel's two
+      weaponizable downstream payloads are closed by 008 and 010);
+      layers 1-2 remain available on request, not approved.
+- [x] **T66-D.** Report updated with §6 verification appendix + FID
+      mapping; session summaries recorded.
+- [x] **T66-E.** FID-2026-0919-015 (exit-code-blind crediting) implemented
+      + verified 2026-09-19; see its session summary.
+- [x] **T66-F.** FID-2026-0919-016 authored + implemented (operator
+      reported `kiosapi/grok-4.6-free` showing 2000.0k vs OpenRouter's
+      500k, then directed "fid+perfection loop"). Root cause live-proven:
+      (a) `toCanonicalModelId` stripped only the legacy trio prefix —
+      kiosapi/ ids missed every exact branch; (b) the version-blind
+      family fallback (first id-sorted hit) resolved grok-4.6 to
+      x-ai/grok-4.20's 2M window. Fix: registry-driven prefix stripping
+      + exact-version preference in both family branches of
+      `lookup.ts`. LIVE e2e (real module, real 447-model catalog):
+      kiosapi/grok-4.6-free → 500000 / source 'catalog' / max-output
+      450000. Gates: FID suite 7/0, sibling suites 61/0 (11 files),
+      typecheck ×2, eslint 0, lint:md 0, quality PASS (after compressing
+      lookup.ts back under the 300 ceiling), receipt 3/3 via `--write`,
+      `--check` PASS.
+- [x] **T66-G.** FID-2026-0919-017 authored + implemented (2026-09-19
+      resumed session; operator approved the amended GREEN). The
+      compaction panel pinned above the input because CompactionSignal —
+      the last child of the sticky-bottom scrollbox — painted terminal/
+      advisory phases as a fake last message, and the retirement drop
+      keyed on the drifting `percentUsed`. Fix: in-flight-only slot
+      (compacting only), outcome-identity drop (percent-blind epoch,
+      null-guarded), no-orphaned-outcome sidebar labels (blocked /
+      ineffective added to formatCompactionStatus), in-flight-only slot
+      comment in panels.tsx. Gates: typecheck cli 0, signal 9/0,
+      retirement 10/0, format 6/0 (new suite), quality PASS, eslint 0,
+      lint:md 0, prettier clean; receipt 5/5 via `--write`, `--check`
+      PASS (fingerprint sha256:b1ec125e…). Grounding found two defects
+      in the FID itself (A1 gate-path .ts/.tsx mismatch, A2 orphaned
+      blocked/ineffective outcomes) — both folded into the converged
+      doc before implementation. G2 commit withheld.
+
 ## Task 64 — Free-routing scanner optimization (2026-09-18) — RELEASE-DAY
 
 > Operator directive: "today we're going to release, however we need to
@@ -91,6 +215,15 @@
 - [ ] **T61.** Cloudflare surfacing FID (grounding + Perfection Loop;
       present only).
 - [ ] **T63.** Pipeline candidates → curated shortlist + proposal scaffolds.
+- [ ] **T67.** [OPEN-OUT-OF-SCOPE] (discovered 2026-09-19 during the
+      FID-queue review): `bun test` path arguments are SUBSTRING filters
+      — passing `packages/agent-runtime/src/__tests__/spawn-agents-
+      message-history.test.ts` from the repo root also swept a stale
+      vendored copy under gitignored `resources/freebuff-main/`, which
+      failed with a module-resolution error unrelated to the working
+      tree. Workaround: run suites from their workspace root. Candidate
+      FID if this bites CI or other agents; operator decides whether to
+      promote.
 
 ## Task 60 — stampReceipt EOF fingerprint edge (2026-09-16) — CLOSED
 

@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0918-006-fid-verification-contract-gap.md`
 **ID:** FID-2026-0918-006
 **Severity:** medium
-**Status:** verified
+**Status:** closed
 **The contract applies to its author first:** this FID's own Verification
 section promises a new test and therefore declares its gate (`gate: test
 scripts/__tests__/fid-contract-sweep.test.ts`) — the sweep validated this
@@ -235,8 +235,8 @@ Alternatives considered and rejected:
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [x] **Commit SHA:** pending G2 (operator commit authorization; no silent
-  deferral — presented at turn end)
+- [x] **Commit SHA:** 5e1a3cf5 (fingerprint extraction pre-commit
+  57bdb173; operator-authorized 2026-09-19)
 - [x] **File:line ranges:** `echo/fid-verification-contract-sweep.ts` (new;
   sweep), `fid-verification-gates.ts` (wiring, sweep errors merged into
   validator output), `scripts/fid-check.ts` (new; warning tier),
@@ -306,7 +306,7 @@ Alternatives considered and rejected:
 
 ## Resolution
 
-- **Closed Date:** pending G2 commit (operator authorization)
+- **Closed Date:** 2026-09-19 (commit 5e1a3cf5)
 - **Fix Description:** Machine-checkable Verification contract: narrow
   "new (runtime )?test" promise pattern must map to a declared
   `gate: test <path>`; receipt-bearing docs fail validation on gaps;
@@ -317,7 +317,7 @@ Alternatives considered and rejected:
   proof, 7 pass / 0 fail)
 - **Verification Evidence:** receipt below (typecheck/test/quality exit
   0); live negative proof transcript in the session summary
-- **Archived:** pending G2 (moves to `dev/fids/archive/` with the commit)
+- **Archived:** 2026-09-19 — moved to `dev/fids/archive/`
 
 ## Lessons Learned
 

@@ -1,5 +1,135 @@
 # Changelog
 
+## 2026-09-19 — Security hardening batch SEC-1/3–7 + verification, gateway and compaction fixes (13 FIDs archived)
+
+### Compaction signal repin: armed retirement + dedupe-guarded summary block (FID-2026-0918-004)
+
+- The pinned compaction panel could re-pin after retirement when the next
+  run's status was a live phase (`armed` never ended), and micro-compact
+  outcomes had no permanent record. Retirement now ends on any non-matching
+  status; `runMicroCompactPass` emits a dedupe-guarded `compaction_summary`
+  event (WeakMap keyed by agentState) when `tokensSaved > 0` and the agent
+  has no parent, so outcomes land a permanent in-stream
+  `CompactionSummaryBlock`.
+- Gates: chat-store-compaction 18/18; run-agent-step + compactor suites
+  83/83; typecheck cli/agent-runtime/common; eslint + prettier clean.
+- This record was archived 2026-09-18 with its commit withheld; the code
+  ships here under commit `20fe3180` (shared compaction lineage with
+  FID-2026-0919-017, operator-authorized 2026-09-19). **Closed + archived
+  (retro-stamped) 2026-09-19.**
+
+### EHEL Law-3 circular dependencies blocked at write time (FID-2026-0918-005)
+
+- A new two-part Law-3 pre-write gate (`pre-write-gates-law3.ts`) rejects
+  dependency writes that would create circular block/allow relations before
+  they land, instead of surfacing the contradiction on the next read.
+- Gates: echo suites green across agent-runtime; typecheck clean.
+  Commit `b8bb5a5d` (shared echo-crediting commit with FID-2026-0919-015).
+  **Closed + archived 2026-09-19.**
+
+### Machine-checkable FID verification contract sweep (FID-2026-0918-006)
+
+- FID "verification" was prose; nothing machine-checked that a FID's
+  declared gate paths actually exist and ran. New `scripts/fid-verify.ts`
+  + `fid-gates.ts` sweep: parse each FID's `gate:` lines, require the paths
+  to exist, execute the declared suites, and stamp a fingerprinted receipt;
+  `--check` mode re-validates stamped receipts (negative proof). Fingerprint
+  module extracted for reuse.
+- Gates: scripts suite 30/0; typecheck clean. Commits `57bdb173` (fingerprint
+  module) + `5e1a3cf5` (sweep). **Closed + archived 2026-09-19.**
+
+### Fail-closed vendored ripgrep resolver + install-time vendor guarantee (FID-2026-0918-007)
+
+- The SDK's ripgrep surface crashed with a bare ENOENT when the vendored
+  binary was missing (reproduced live mid-session). New
+  `ripgrep-path-fallback.ts` resolves the vendored binary fail-closed with a
+  precise error, and an install-time hook vendors ripgrep so a fresh clone
+  can't skip it.
+- Gates: sdk ripgrep suite 16/0; typecheck clean. Commit `0e0ffcd9`.
+  **Closed + archived 2026-09-19.**
+
+### Allowlisted child-shell env — spawned shells no longer inherit provider credentials (FID-2026-0919-008, SEC-1)
+
+- Spawned shells (terminal tool children) inherited the full parent env,
+  including provider API keys. `buildChildEnv` now passes only an allowlist
+  of safe vars (PATH, HOME, locale/term basics) — credentials never reach
+  child processes.
+- Gates: child-env allowlist suite green (sdk); typecheck clean. Commit
+  `be2ca107`. **Closed + archived 2026-09-19.**
+
+### Span-scoped waiver for Windows stderr-redirect readonly probes (FID-2026-0919-010, SEC-3)
+
+- The readonly-command validator false-positived on `2>nul`-style Windows
+  stderr-redirect probes. The waiver is scoped to the exact redirect span so
+  the bypass cannot smuggle arbitrary commands.
+- Implementation committed earlier in `4d89d27d`; closure recorded with this
+  batch (commit `6e816902`). **Closed + archived 2026-09-19.**
+
+### Value-shape secret masking before the telemetry fan-out (FID-2026-0919-011, SEC-4)
+
+- Secret *values* could pass through to telemetry when the surrounding text
+  wasn't a known key. `cli/src/utils/logger/sanitize.ts` now masks by value
+  shape (key prefixes, bearer/jwt patterns) before any fan-out.
+- Gates: logger masking suite green (cli); typecheck clean. Commit
+  `9c2dcd5e`. **Closed + archived 2026-09-19.**
+
+### Signing failures are loud — `signing_failed` event + binding catches warn (FID-2026-0919-012, SEC-5)
+
+- Record-mode receipt signing failures were swallowed silently, producing
+  unsigned evidence with no trace. Provenance now emits a `signing_failed`
+  event and binding catches warn instead of dropping.
+- Gates: provenance/session suites green (agent-runtime); typecheck clean.
+  Commit `85e877af`. **Closed + archived 2026-09-19.**
+
+### Database templates get clamped, fail-closed capabilities (FID-2026-0919-013, SEC-6)
+
+- Agent-declared templates could self-declare capabilities beyond their
+  grants. Template capabilities are now clamped to the actual grants,
+  failing closed on mismatch.
+- Gates: template suites green (agent-runtime); typecheck clean. Commit
+  `79cb00ea`. **Closed + archived 2026-09-19.**
+
+### Destructive-command denylist enforced in every mode including dev override (FID-2026-0919-014, SEC-7)
+
+- Unsafe/sandbox modes could skip the destructive-command denylist. The
+  floor now applies in every mode — dev override included.
+- Gates: sandbox engine suite green (agent-runtime); typecheck clean.
+  Commit `cca075b1`. **Closed + archived 2026-09-19.**
+
+### Outcome-aware verification crediting — failed commands earn nothing (FID-2026-0919-015)
+
+- Verification credit was exit-code-blind: a crashed command still earned
+  credit for "running the check". `commandSucceeded` is threaded through the
+  crediting path so only successful gates count.
+- Gates: 4 echo suites green (agent-runtime); typecheck clean. Commit
+  `b8bb5a5d` (shared with FID-2026-0918-005). **Closed + archived
+  2026-09-19.**
+
+### Registry-driven gateway prefix strip + exact-version family matching (FID-2026-0919-016)
+
+- `kiosapi/grok-4.6-free` matched the wrong family (`x-ai/grok-4.20`, 2M
+  context) because prefix stripping was version-blind. Matching now strips
+  registry-declared gateway prefixes and prefers the exact-version model in
+  the family — it resolves the correct 500k entry.
+- Gates: openrouter-models suite 7/0 (cli); typecheck clean. Commit
+  `246008fd`. **Closed + archived 2026-09-19.**
+
+### Compaction signal is in-flight-only; retirement keyed on outcome identity (FID-2026-0919-017)
+
+- After a compaction, the sticky-bottom `CompactionSignal` panel painted as
+  a fake last message — later turns rendered above it and it only cleared on
+  restart. The slot now renders only the in-flight `compacting` phase;
+  terminal outcomes live in `CompactionSummaryBlock`. Retirement dropping
+  keyed on `sameCompactionStatus` drifted with `percentUsed` (a 62%→64%
+  remirror disarmed retirement and re-pinned) — the drop now keys on the
+  percent-blind epoch identity `phase:tokensSaved`, null-guarded. Sidebar
+  formatter gained the missing `blocked` / `ineffective` labels so hiding
+  the signal orphans nothing.
+- Gates: signal 9/0, retirement 10/0 (incl. percent-drift pin), sidebar
+  format 6/0 (cli); typecheck clean; receipt 5/5 + `--check` PASS. Commits
+  `20fe3180` + `cf3bebf2` (follow-up carrying the inverted suite missed by
+  the first commit). **Closed + archived 2026-09-19.**
+
 ## 0.0.32 — 2026-09-18
 
 ### Free-compute harvester probes run through a bounded pool (FID-2026-0918-001)
