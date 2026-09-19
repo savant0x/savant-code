@@ -5,6 +5,8 @@ import {
 } from '@savant-code/common/util/agent-id-parsing'
 import { DEFAULT_ORG_PREFIX } from '@savant-code/common/util/agent-name-normalization'
 
+import { clampDatabaseTemplateCapabilities } from './database-template-clamp'
+
 import type { DynamicAgentValidationError } from '@savant-code/common/templates/agent-validation'
 import type { AgentTemplate } from '@savant-code/common/types/agent-template'
 import type { FetchAgentFromDatabaseFn } from '@savant-code/common/types/contracts/database'
@@ -67,8 +69,9 @@ export async function getAgentTemplate(
         parsedAgentId: savantCodeParsed,
       })
       if (dbAgent) {
-        databaseAgentCache.set(dbAgent.id, dbAgent)
-        return dbAgent
+        const clamped = clampDatabaseTemplateCapabilities(dbAgent, logger)
+        databaseAgentCache.set(dbAgent.id, clamped)
+        return clamped
       }
     }
     logger.debug({ agentId }, 'getAgentTemplate: Failed to parse agent ID')
@@ -80,11 +83,17 @@ export async function getAgentTemplate(
     ...params,
     parsedAgentId: parsed,
   })
-  if (dbAgent && parsed.version && parsed.version !== 'latest') {
+  if (!dbAgent) return null
+  // FID-2026-0919-013 (SEC-6): database-sourced templates are clamped to
+  // the grantable tool subset BEFORE caching/returning — the capability
+  // gate reads this template's toolNames, so the clamp must happen here,
+  // at the single load point (both versioned and unversioned lookups).
+  const clamped = clampDatabaseTemplateCapabilities(dbAgent, logger)
+  if (parsed.version && parsed.version !== 'latest') {
     // Cache only specific versions to avoid stale 'latest' results
-    databaseAgentCache.set(dbAgent.id, dbAgent)
+    databaseAgentCache.set(dbAgent.id, clamped)
   }
-  return dbAgent
+  return clamped
 }
 
 /**
