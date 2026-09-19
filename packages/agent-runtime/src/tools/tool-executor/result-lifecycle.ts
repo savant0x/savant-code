@@ -162,6 +162,10 @@ export async function runSuccessLifecycle<T extends ToolName>(
   }
   const writeSucceeded =
     writtenPath !== undefined && !hasToolResultError(toolResult.content)
+  // FID-2026-0919-015: outcome signal for Law 3 verification crediting —
+  // same primitive the write lifecycle trusts; only an explicit tool-result
+  // error marks the command as failed.
+  const commandSucceeded = !hasToolResultError(toolResult.content)
   enforcement.afterToolCall({
     toolName,
     input: toolCall.input as Record<string, unknown>,
@@ -174,6 +178,7 @@ export async function runSuccessLifecycle<T extends ToolName>(
     // the dirty ledger so strict turn-end scanning fails closed. Only an
     // explicit tool-result error suppresses the write lifecycle.
     writeSucceeded,
+    commandSucceeded,
   })
 
   // FID-2026-0813-004: ZTAP write-boundary receipt creation. Runs after

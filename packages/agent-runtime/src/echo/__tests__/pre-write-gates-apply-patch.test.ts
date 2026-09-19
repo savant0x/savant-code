@@ -79,11 +79,11 @@ describe('runPreWriteGates — apply_patch input shape (FID-2026-0820-014 EC-2)'
     expect(result.blocked).toBe(false)
   })
 
-  it('still BLOCKS when a dirty file lacks verification credit (Law 3 via resolved target)', () => {
+  it('still BLOCKS re-editing a dirty-unverified target (Law 3 via resolved target, FID-2026-0918-005)', () => {
     const target = existingFilePath()
     const state = createEnforcementState()
     state.filesRead.add(target)
-    state.dirtyFiles.add('/proj/src/dirty.ts')
+    state.dirtyFiles.add(target)
     const result = runPreWriteGates({
       toolName: 'apply_patch',
       input: {

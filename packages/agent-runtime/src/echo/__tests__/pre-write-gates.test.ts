@@ -14,7 +14,9 @@
  *   tracker's receipt path, so no double-reporting occurs.
  * - STRICT (all_15) keeps identical Law 1 semantics plus extended-law
  *   gates (Laws 7/8) and the post-write scanners.
- * - Law 3 (verify-before-proceed) still blocks unverified follow-up writes.
+ * - Law 3 (FID-2026-0918-005 two-part rule) still blocks re-editing a
+ *   dirty-unverified target; other-file dirtiness is advisory (see
+ *   pre-write-gates-law3.test.ts).
  */
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -129,13 +131,13 @@ describe('runPreWriteGates — Law 1 (read-before-write)', () => {
     expect(result.blocked).toBe(false)
   })
 
-  it('still blocks an unverified follow-up write (Law 3 unchanged)', () => {
+  it('still blocks re-editing a dirty-unverified target (Law 3 target-dirty leg, FID-2026-0918-005)', () => {
     const target = existingFilePath()
     const result = runGate({
       targetPath: target,
       tier: 'core_4',
       readPaths: [target],
-      dirtyFiles: ['/proj/dirty.ts'],
+      dirtyFiles: [target],
       verified: false,
     })
     expect(result.blocked).toBe(true)

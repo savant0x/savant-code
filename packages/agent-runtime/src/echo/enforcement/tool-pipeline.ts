@@ -155,7 +155,13 @@ export function afterToolCallImpl(
   result: { text?: string; error?: string },
   writtenContent?: string,
   writeSucceeded?: boolean,
+  /** FID-2026-0919-015: command outcome when determinable; undefined = unknown. */
+  commandSucceeded?: boolean,
 ): EnforcementResult {
+  // FID-2026-0919-015: collect advisories (unknown-outcome verification) for
+  // the caller; afterToolCall never blocks, it may only steer.
+  const warnings: EnforcementResult['warnings'] = []
+
   // Record only successful writes. The exact post-write payload is kept in a
   // bounded per-path ledger so turn-end scanners never reread unrelated disk
   // changes and can distinguish an empty file from unavailable content.
@@ -194,6 +200,11 @@ export function afterToolCallImpl(
 
   // Track verification commands for Law 3 (cumulative — FID-2026-0819-001).
   // Handles both terminal command types (RED-003) via the shared detector.
+  // FID-2026-0919-015: crediting is outcome-aware, not detection-only. A
+  // verification-shaped command credits ONLY when it demonstrably succeeded;
+  // a failed run is already visible in the transcript (no notice needed),
+  // and an unknown outcome withholds credit fail-closed with a steering
+  // notice so the agent knows the run did not count.
   if (
     toolName === 'run_terminal_command' ||
     toolName === 'run_readonly_command'
@@ -202,9 +213,20 @@ export function afterToolCallImpl(
       detectsVerificationCommand,
     )
     if (verified) {
-      for (const f of self.state.dirtyFiles) {
-        self.state.verifiedFiles.add(f)
+      if (commandSucceeded === true) {
+        for (const f of self.state.dirtyFiles) {
+          self.state.verifiedFiles.add(f)
+        }
+      } else if (commandSucceeded === undefined) {
+        warnings.push({
+          law: 3,
+          severity: 'warning',
+          message:
+            'Verification command detected but its outcome is unknown — Law 3 credit not granted; re-run it and confirm it passes.',
+        })
       }
+      // commandSucceeded === false: withhold credit silently — the failure
+      // is already visible in the transcript as the tool result.
     }
   }
 
@@ -229,5 +251,5 @@ export function afterToolCallImpl(
     }
   }
 
-  return { blocked: false, warnings: [] }
+  return { blocked: false, warnings }
 }

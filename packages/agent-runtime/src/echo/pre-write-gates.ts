@@ -6,8 +6,10 @@
  * Recorder gate.
  *
  * - Law 1: Path must be in filesRead (or be a new file)
- * - Law 3: every dirty file must be verified (dirtyFiles minus
- *   verifiedFiles; FID-2026-0819-001 cumulative credit)
+ * - Law 3: re-editing a dirty-unverified file blocks; OTHER files' pending
+ *   verification is advisory (FID-2026-0918-005 two-part rule — the old
+ *   any-file hard block deadlocked interlocked multi-file batches; turn-end
+ *   Law 15 preserves the no-unverified-exit invariant)
  * - Law 7 (Strict): hasSearchedSinceGreen before writing a new file
  * - Law 8 (Strict): intentLogged before first write
  * - FID gate: Orchestrator → FID > 100 lines → route through Recorder
@@ -30,8 +32,8 @@ import {
 
 import { canonicalizePath } from './path-canonicalization'
 import { runFidGates } from './pre-write-gates-fid'
+import { runLaw3Gate } from './pre-write-gates-law3'
 import { runYagniPreWriteGate } from './yagni-pre-write-gate'
-import { classifyFileKind } from '../util/echo-compliance-core'
 
 import type {
   EnforcementMode,
@@ -149,35 +151,23 @@ export function runPreWriteGates(params: {
   }
 
   // ── Law 3: Verify Before Proceed ────────────────────────────────────
-  // Cumulative verification (FID-2026-0819-001): a dirty file that has
-  // passed a subsequent verification command is recorded in verifiedFiles
-  // and must not block follow-up writes. Gating on the raw
-  // hasVerifiedSinceLastDirty flag deadlocked the write flow until turn
-  // end (FID-2026-0820-012): that flag is only cleared by resetForNewTurn,
-  // so post-write verification runs left the gate closed. Use the same
-  // unverified-dirty predicate as evaluateTurnEnd's Law 15 check — one
-  // source of truth. Exempt-path targets (the same prefixes the FSM write
-  // gate classifies as exempt: dev/fids/, dev/nova/, dev/scratchpad/) are
-  // never blocked by pending source-file verification — governance
-  // bookkeeping must not be wedged by unverified code (FID-2026-0718-008,
-  // FID-2026-0820-012).
-  // FID-2026-0917-002: docs verify via markdownlint (step-boundary 'info'
-  // + Law 15 at turn end), never via this hard-blocking code gate. Same
-  // classifyFileKind authority evaluateWritesAtStepBoundary uses — without
-  // the split, a lint-failing doc blocked the very write that would fix it.
-  const unverifiedDirty = [...params.state.dirtyFiles].filter(
-    (f) => !params.state.verifiedFiles.has(f) && classifyFileKind(f) === 'code',
-  )
-  if (
-    unverifiedDirty.length > 0 &&
-    !(targetPath && isExemptWritePath(targetPath))
-  ) {
-    const count = unverifiedDirty.length
-    const msg =
-      `Law 3: Verify before proceeding — ${count} unverified ` +
-      `file(s): [${unverifiedDirty.join(', ')}]. ` +
-      `Run typecheck/lint before more writes.`
-    return { blocked: true, reason: msg, warnings }
+  // FID-2026-0918-005: the gate body was extracted verbatim to
+  // pre-write-gates-law3.ts with the blocking scope narrowed to the
+  // two-part rule (target-dirty hard block, other-dirty advisory). The old
+  // any-file hard block deadlocked interlocked multi-file batches: an
+  // intermediate broken-typecheck state blocked the very write that would
+  // repair it, twice requiring operator turn-ends on 2026-09-18. History:
+  // FID-2026-0819-001 (cumulative credit), FID-2026-0820-012
+  // (unverified-dirty predicate), FID-2026-0917-002 (docs/code split).
+  // Turn-end Law 15 (enforcement/turn-end.ts) still blocks ending a turn
+  // with unverified files.
+  const law3Result = runLaw3Gate({
+    targetPath,
+    state: params.state,
+    warnings,
+  })
+  if (law3Result.blocked) {
+    return { blocked: true, reason: law3Result.reason, warnings }
   }
 
   // ── P5b YAGNI gate (FID-2026-0806-003) ──────────────────────────────
@@ -214,22 +204,6 @@ export function runPreWriteGates(params: {
   }
 
   return { blocked: false, warnings }
-}
-
-/**
- * A path that does not exist on disk is a brand-new file — Law 1 cannot
- * require reading a file that has not been created yet.
- */
-/** Exempt FSM write-gate prefixes (write-gate.ts): governance bookkeeping
- * paths whose writes are never blocked by pending code verification
- * (FID-2026-0820-012). */
-function isExemptWritePath(path: string): boolean {
-  const normalized = path.replace(/\\/g, '/').toLowerCase()
-  return (
-    normalized.includes('dev/fids/') ||
-    normalized.includes('dev/nova/') ||
-    normalized.includes('dev/scratchpad/')
-  )
 }
 
 /**

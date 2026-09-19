@@ -49,8 +49,10 @@ describe('EchoEnforcement — Law 3 re-arm on re-modification (FID-2026-0820-012
     })
     expect(allowed.blocked).toBe(false)
 
-    // Re-modifying the verified file must revoke its stale credit: the
-    // next write blocks again until fresh verification runs.
+    // Re-modifying the verified file must revoke its stale credit. Under the
+    // FID-2026-0918-005 two-part rule the OTHER-file write is advisory-only,
+    // so the re-arm is asserted on the target-dirty leg: re-editing the
+    // revoked file itself blocks until fresh verification runs.
     enforcement.afterToolCall({
       toolName: 'str_replace',
       input: { path },
@@ -59,7 +61,7 @@ describe('EchoEnforcement — Law 3 re-arm on re-modification (FID-2026-0820-012
     })
     const reblocked = enforcement.beforeToolCall({
       toolName: 'str_replace',
-      input: { path: '/proj/src/c.ts' },
+      input: { path },
       agentId: 'savant',
     })
     expect(reblocked.blocked).toBe(true)

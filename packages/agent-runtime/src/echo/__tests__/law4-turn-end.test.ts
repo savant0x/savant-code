@@ -186,7 +186,10 @@ describe('Law 3 credit channel — run_readonly_command commands arrays (FID-202
     enf.afterToolCall({
       toolName: 'run_readonly_command',
       input: { commands: ['git status', 'bun run --cwd=common typecheck'] },
+      // FID-2026-0919-015: the grant path requires a successful run; this
+      // pin covers batch-first extraction, which is orthogonal to outcome.
       result: {},
+      commandSucceeded: true,
     })
     expect(enf.getState().verifiedFiles.has('/proj/src/mod.ts')).toBe(true)
   })
@@ -207,6 +210,7 @@ describe('Law 3 credit channel — run_readonly_command commands arrays (FID-202
       toolName: 'run_readonly_command',
       input: { command: 'bun run --cwd=common typecheck' },
       result: {},
+      commandSucceeded: true,
     })
     expect(enf.getState().verifiedFiles.has('/proj/src/mod.ts')).toBe(true)
   })
@@ -217,6 +221,7 @@ describe('Law 3 credit channel — run_readonly_command commands arrays (FID-202
       toolName: 'run_terminal_command',
       input: { commands: ['bun test src/'] },
       result: {},
+      commandSucceeded: true,
     })
     expect(enf.getState().verifiedFiles.has('/proj/src/mod.ts')).toBe(true)
   })

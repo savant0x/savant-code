@@ -134,6 +134,8 @@ export class EchoEnforcement {
     result: { text?: string; error?: string }
     writtenContent?: string
     writeSucceeded?: boolean
+    /** FID-2026-0919-015: outcome of the command, when determinable. */
+    commandSucceeded?: boolean
   }): EnforcementResult {
     return afterToolCallImpl(
       this,
@@ -142,6 +144,7 @@ export class EchoEnforcement {
       params.result,
       params.writtenContent,
       params.writeSucceeded,
+      params.commandSucceeded,
     )
   }
 

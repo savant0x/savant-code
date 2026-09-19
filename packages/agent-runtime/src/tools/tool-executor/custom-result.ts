@@ -3,6 +3,7 @@
 // round-trip, tool_result emission, afterToolCall, PostToolUse hooks, and
 // the rejection path driving hadToolCallError).
 
+import { hasToolResultError } from './tool-result-errors'
 import { buildHookInput, getHookEngine } from '../../hooks/engine'
 import { MCP_TOOL_SEPARATOR } from '../../mcp-constants'
 
@@ -126,6 +127,9 @@ export async function resolveCustomToolResult({
           // effects above; they cannot claim a local write lifecycle without a
           // dedicated audited snapshot adapter.
           writeSucceeded: false,
+          // FID-2026-0919-015: same outcome signal as the native path so a
+          // custom/MCP tool invocation cannot silently bypass the policy.
+          commandSucceeded: !hasToolResultError(toolResult.content),
         })
 
         finishToolEvent('completed')
