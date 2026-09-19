@@ -92,6 +92,19 @@ export type ProvenanceEvent =
       receipt: TrustReceipt
     }
   | { type: 'session_finalized'; sessionId: string; receiptCount: number }
+  /**
+   * FID-2026-0919-012 (SEC-5): a receipt-signing or verdict-binding failure
+   * in `record` mode leaves an UNAUDITED write — the write proceeds but no
+   * receipt exists. The session stays available (record is best-effort),
+   * but the gap must be visible in the observability stream, not only a
+   * console.warn. `enforce` mode throws instead and never emits this.
+   */
+  | {
+      type: 'signing_failed'
+      sessionId: string
+      subject: string
+      error: string
+    }
 
 /**
  * Structural contract for the per-session provenance engine.

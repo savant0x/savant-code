@@ -56,8 +56,14 @@ export function applyVerdictReceipts({
           })
         }
       })
-      .catch(() => {
-        // Best-effort: a failed binding never fails the spawn.
+      .catch((error: unknown) => {
+        // FID-2026-0919-012 (SEC-5): best-effort — a failed binding never
+        // fails the spawn — but it must not be SILENT: the audit chain for
+        // this verdict is missing. Warn with the cause.
+        // eslint-disable-next-line no-console
+        console.warn(
+          `[provenance] verdict binding failed for ${agentType} ${childAgentId}: ${String(error)}`,
+        )
       })
   }
 }

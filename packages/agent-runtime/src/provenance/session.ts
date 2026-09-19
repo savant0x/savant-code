@@ -50,6 +50,8 @@ export class ProvenanceSession implements ProvenanceSessionLike {
   private readonly listeners = new Set<(event: ProvenanceEvent) => void>()
   private eventCount = 0
   private finalized = false
+  /** FID-2026-0919-012 (SEC-5): unaudited-write counter (record mode). */
+  private unauditedWrites = 0
   private readonly manifest: SessionManifest
 
   constructor(options: ProvenanceSessionOptions) {
@@ -172,6 +174,17 @@ export class ProvenanceSession implements ProvenanceSessionLike {
         // should have blocked earlier; this is the defense-in-depth path.
         throw error
       }
+      // FID-2026-0919-012 (SEC-5): record mode proceeds WITHOUT a receipt —
+      // an unaudited write. Best-effort must still be loud: surface the gap
+      // in the observability event stream (parent-visible), not only the
+      // console.
+      this.emit({
+        type: 'signing_failed',
+        sessionId: this.sessionId,
+        subject: receiptPath,
+        error: String(error),
+      })
+      this.unauditedWrites += 1
       this.emitNotice(
         `receipt signing failed for ${receiptPath}: ${String(error)}`,
       )
@@ -262,6 +275,11 @@ export class ProvenanceSession implements ProvenanceSessionLike {
   private emitNotice(message: string): void {
     // eslint-disable-next-line no-console
     console.warn(`[provenance] ${message}`)
+  }
+
+  /** FID-2026-0919-012 (SEC-5): count of unaudited writes (record mode). */
+  get unauditedWriteCount(): number {
+    return this.unauditedWrites
   }
 }
 
