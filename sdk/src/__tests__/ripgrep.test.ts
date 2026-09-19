@@ -116,9 +116,14 @@ describe('getBundledRgPath resolver regimes (FID-2026-0821-005 B4/B6)', () => {
     process.chdir(tmp)
     try {
       expect(() =>
-        getBundledRgPath(metaUrl, env, {
-          debug: (message) => debugMessages.push(message),
-        }),
+        getBundledRgPath(
+          metaUrl,
+          env,
+          {
+            debug: (message) => debugMessages.push(message),
+          },
+          () => undefined,
+        ),
       ).toThrow(/Ripgrep binary not found/)
     } finally {
       process.chdir(savedCwd)

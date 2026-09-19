@@ -57,7 +57,7 @@
     "learnings:check": "bun scripts/learnings.ts",
     "audit:evidence": "bun scripts/audit-evidence.ts",
     "validate:metadata": "bun scripts/validate-repository.ts",
-    "prepare": "git config core.hooksPath .githooks && git config commit.template .gitmessage",
+    "prepare": "git config core.hooksPath .githooks && git config commit.template .gitmessage && bun sdk/scripts/ensure-ripgrep-vendor.ts",
     "typecheck": "bun run --cwd=common typecheck && bun run --cwd=agents typecheck && bun run --cwd=sdk typecheck && bun run --cwd=cli typecheck && bun run --cwd=evals typecheck && bun run --cwd=packages/agent-runtime typecheck && bun run --cwd=packages/design-systems typecheck && bun run --cwd=packages/code-map typecheck && bun run --cwd=packages/database typecheck && bun run --cwd=packages/knowledge-graph typecheck && bun run --cwd=packages/llm-providers typecheck && bun run --cwd=desktop typecheck",
     "test": "bun run --cwd=sdk test && bun run --cwd=cli test && bun run --cwd=common test && bun run --cwd=agents test && bun run --cwd=evals test:v2 && bun run --cwd=packages/agent-runtime test && bun run --cwd=packages/design-systems test && bun run --cwd=packages/code-map test && bun run --cwd=packages/database test && bun run --cwd=packages/knowledge-graph test && bun run --cwd=packages/llm-providers test && bun run --cwd=desktop test",
     "version:bump": "bun run scripts/bump-version.ts",

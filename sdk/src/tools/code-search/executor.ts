@@ -282,8 +282,11 @@ export function codeSearch({
 
     childProcess.once('error', (error) => {
       if (isResolved) return
+      // FID-2026-0918-007: the message names the resolved path and the
+      // workspace-correct repair command so a mid-session failure is
+      // self-explanatory.
       settle({
-        errorMessage: `Failed to execute ripgrep: ${error.message}. Vendored ripgrep not found; ensure @savant-code/sdk is up-to-date or set SAVANT_CODE_RG_PATH.`,
+        errorMessage: `Failed to execute ripgrep at "${rgPath}": ${error.message}. Repair with 'bun run --cwd=sdk fetch-ripgrep' or set SAVANT_CODE_RG_PATH.`,
       })
     })
   })

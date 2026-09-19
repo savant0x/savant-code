@@ -4,6 +4,12 @@ import { fileURLToPath } from 'url'
 
 import { getSdkEnv } from '../env'
 import { resolvePlatformTarget } from './platform-targets'
+import { resolveRgFromPath } from './ripgrep-path-fallback'
+
+export {
+  resetPathRgCacheForTests,
+  resolveRgFromPath,
+} from './ripgrep-path-fallback'
 
 import type { SdkEnv } from '../types/env'
 
@@ -45,6 +51,7 @@ function emitDebug(
  *   4. CJS-parent:   <__dirname>/../../vendor/ripgrep/<dir>/<bin>
  *   5. CJS-self:     <__dirname>/vendor/ripgrep/<dir>/<bin>
  *   6. cwd fallback: <cwd>/node_modules/@savant-code/sdk/dist/vendor/...
+ *   7. PATH probe:   an `rg` on PATH (memoized; FID-2026-0918-007)
  *
  * @param importMetaUrl - import.meta.url from the calling module
  * @param env - SDK env (defaults to getSdkEnv())
@@ -55,6 +62,8 @@ export function getBundledRgPath(
   importMetaUrl?: string,
   env: SdkEnv = getSdkEnv(),
   debug?: ResolverDebugLogger,
+  /** FID-2026-0918-007: injectable PATH probe (tests). */
+  pathProbe?: (command: string[]) => string | undefined,
 ): string {
   // Allow override via environment variable
   if (env.SAVANT_CODE_RG_PATH) {
@@ -174,10 +183,24 @@ export function getBundledRgPath(
     return distVendorPath
   }
 
+  // FID-2026-0918-007: final candidate — an rg on PATH. A machine with
+  // ripgrep installed should search, not hard-fail, when the vendored tree
+  // is absent (fresh-install state; nothing in `bun install` guarantees
+  // it). The vendored candidates keep priority: the pinned binary is the
+  // supported configuration.
+  const pathRg = resolveRgFromPath(binaryName, pathProbe)
+  if (pathRg) {
+    emitDebug(debug, `ripgrep-resolver: resolved via path-probe -> ${pathRg}`)
+    return pathRg
+  }
+
   emitDebug(debug, 'ripgrep-resolver: exhausted all candidates')
   // No fallback available - bundled binaries are required. Name every
   // concrete candidate attempted (never an interpolated `undefined` —
-  // both fallback paths can be unassigned) plus the remediation.
+  // both fallback paths can be unassigned) plus the remediation. The
+  // repair command is workspace-correct (bun, sdk scope) — the old text
+  // said `npm run fetch-ripgrep`, which does not exist in this repo
+  // (FID-2026-0918-007).
   const attempted = [vendorPath, distVendorPath].filter(
     (candidate): candidate is string => typeof candidate === 'string',
   )
@@ -187,8 +210,9 @@ export function getBundledRgPath(
       : 'no candidate paths resolved'
   throw new Error(
     `Ripgrep binary not found for ${platform}-${arch}. ` +
-      `Expected at: ${attemptedList}. ` +
-      `Please run 'npm run fetch-ripgrep' or set SAVANT_CODE_RG_PATH environment variable.`,
+      `Attempted: ${attemptedList}, then an rg on PATH. ` +
+      `Run 'bun run --cwd=sdk fetch-ripgrep' to vendor the pinned binary, ` +
+      `or set SAVANT_CODE_RG_PATH.`,
   )
 }
 
