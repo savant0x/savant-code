@@ -265,7 +265,9 @@ presentation record is a Law 2 violation (severity 2, "scope reduction is a sile
 Since this protocol governs single-agent operation, the Double Audit requirement is satisfied via:
 
 - **Method 1:** Static analysis (typecheck/lint) — run build commands
-- **Method 2:** Manual verification — re-read the changed code and verify correctness against the FID
+- **Method 2:** Manual verification — re-read the changed code and verify correctness against the FID. Include the
+  FID-2026-0918-006 contract check: re-read the FID's Verification section against its declared gates and the tests on
+  disk — every promised test artifact must exist and be covered by a declared `gate: test`.
 
 **Self-reporting is prohibited.** You must run verification commands and paste the output as evidence. "I believe this
 works" is not verification.

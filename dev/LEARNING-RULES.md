@@ -74,6 +74,16 @@ This catalog provides stable names for lessons that explain those authorities.
 - **Authority:** `cli/src/commands/graph-export/universe-app-script.ts`
 - **Validation:** `bun test cli/src/commands/__tests__/graph-export.test.ts`
 
+## Rule: null-keyed-suppression-is-always-broken
+
+- **Authority:** `cli/src/state/chat-store/sidebar-reset.ts` (`applyCompactionStatus`)
+- **Validation:** `cli/src/state/__tests__/chat-store-compaction.test.ts`
+
+## Rule: fid-verification-section-is-contract
+
+- **Authority:** `scripts/learnings-validation.ts` (`validateCanonicalRuleCatalog`)
+- **Validation:** `bun run learnings:check`
+
 ## Rule: active-ledger-status-admission
 
 - **Authority:** `scripts/fid-ledger.ts` (`ALLOWED_ACTIVE_STATUSES`)

@@ -54,6 +54,12 @@ desktop/src-tauri/target/
 docs/lastsession.md
 docs/design/SkillOpt Integration into Savant.md
 
+# Operator-pasted conversation transcript at the repo root (2026-09-19) —
+# continuation input for a resumed session, not shipped documentation. Same
+# transcript exemption precedent as docs/lastsession.md (MD013/MD040 on a
+# raw tool-call transcript is meaningless).
+continue.md
+
 # Deep-research intake docs (FID-2026-0914-003) — pasted research report
 # (Gemini Deep Research output) + its adversarial verification record;
 # reference-only research artifacts, not shipped documentation. Same

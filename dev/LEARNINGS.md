@@ -1,5 +1,73 @@
 # LEARNINGS
 
+## Lesson: A suppression key that can legitimately be null cannot distinguish "inactive" from "active with no identity"
+
+- **Date:** 2026-09-18
+- **Failure:** The FID-2026-0917-006 compaction retirement stamped a
+  nullable epoch string on `onNewUserMessage`, and the suppression guards
+  required `retiredEpoch !== null` to fire. But `compactionStatusEpochOf`
+  returns `null` for every *live* phase (`warning`/`blocked`/`compacting`/
+  `idle`) — which is the ordinary post-compaction regime: after a compaction
+  that doesn't drop context back below threshold, every subsequent run ends
+  on `warning`. The retirement stamped a null that suppressed nothing, and a
+  second hole cleared both stamps on any non-matching status, so the stale
+  seed re-mirror resurrected the pinned panel forever. Two prior fixes patched
+  symptoms without touching the null-keyed scheme.
+- **Evidence:**
+  cli/src/state/chat-store/compaction-helpers.ts → symbol:compactionStatusEpochOf,
+  cli/src/state/chat-store/sidebar-reset.ts → symbol:applyCompactionStatus,
+  dev/fids/archive/FID-2026-0918-004-compaction-signal-repin-retirement.md →
+  heading:Root Cause
+- **Invariant:** A suppression scheme keyed on a value that can be
+  legitimately `null` cannot distinguish "no suppression active" from
+  "suppression active with no stable identity." Prefer an explicit active
+  flag plus the captured retired values, so suppression is an equality test
+  over the full domain — and end the suppression only on a genuinely new
+  terminal outcome, never on a live-phase update.
+- **Guard:** Any guard of the form `if (key !== null && key ===
+  computeKey(x))` where `computeKey` can return null is a latent
+  always-suppresses-nothing bug. Replace with a boolean active flag +
+  captured-value equality; add a regression test for the null-keyed half of
+  the domain.
+- **Verification:** typecheck cli + agent-runtime + common exit 0; eslint 0;
+  prettier clean; chat-store-compaction 18/18 incl. the live-phase-hole and
+  report-lateness regressions; agent-runtime 83/83 incl. the 4 emission tests.
+- **Scope:** internal
+- **Owning FID:** FID-2026-0918-004 (closed + archived)
+- **Status:** active
+- **Canonical rule:** null-keyed-suppression-is-always-broken
+
+## Lesson: A FID's Verification section is a contract — each promised test must exist before "verified"
+
+- **Date:** 2026-09-18
+- **Failure:** FID-2026-0918-004's Verification section promised "New
+  runtime test: micro-compact with `tokensSaved > 0` emits exactly one
+  `compaction_summary`," but only the CLI store tests were written. Nothing
+  in the Perfection Loop caught the mismatch — the Verifier had no disk
+  access, and the loop's own status transition to `verified` did not check
+  the FID's stated verification artifacts against the test tree. The gap
+  survived until the Adversary read the FID's Verification bullets against
+  the actual suites.
+- **Evidence:**
+  packages/agent-runtime/src/run-agent-step/context-tokens-compaction.ts →
+  symbol:runMicroCompactPass,
+  dev/fids/archive/FID-2026-0918-004-compaction-signal-repin-retirement.md →
+  heading:Verification
+- **Invariant:** A FID's Verification section is a contract with the loop,
+  not a plan. Status `verified` is earned only when every artifact named
+  there exists and passes; compilation + green suites are silent about an
+  artifact that was promised but never authored.
+- **Guard:** Before flipping a FID to `verified`, re-read its own
+  Verification bullets and confirm each named test/gate exists in the tree
+  and was run this session. If the loop cannot check this mechanically, the
+  Adversary pass must.
+- **Verification:** the missing test was authored and run (4/4 pass); the
+  FID was re-audited clean before archive.
+- **Scope:** internal
+- **Owning FID:** FID-2026-0918-004 (closed + archived)
+- **Status:** active
+- **Canonical rule:** fid-verification-section-is-contract
+
 <!-- Add new entries above this line -->
 
 ## Lesson: Environment-dependent guards need live probes — cwd-scoped path matching passed tests and failed production
