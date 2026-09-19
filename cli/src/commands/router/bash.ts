@@ -1,5 +1,5 @@
 import { AnalyticsEvent } from '@savant-code/common/constants/analytics-events'
-import { runTerminalCommand } from '@savant-code/sdk'
+import { runTerminalCommand , buildChildEnv } from '@savant-code/sdk'
 
 import { useChatStore } from '../../state/chat-store'
 import { trackEvent } from '../../utils/analytics'
@@ -7,7 +7,6 @@ import {
   buildBashHistoryMessages,
   createRunTerminalToolResult,
 } from '../../utils/bash-messages'
-import { getSystemProcessEnv } from '../../utils/env'
 
 import type { RouterParams } from '../command-registry'
 
@@ -52,10 +51,12 @@ export function runBashCommand(command: string) {
     setMessages((prev) => [...prev, assistantMessage])
   }
 
-  const rawEnv = getSystemProcessEnv()
-  const env = Object.fromEntries(
-    Object.entries(rawEnv).filter(([, v]) => v !== undefined),
-  ) as Record<string, string>
+  // FID-2026-0919-008 (SEC-1): route through the SDK's allowlisted child-env
+  // builder instead of handing the full process env (with every provider
+  // credential) to the spawned shell as explicit overrides. Commands that
+  // need extra vars fail fast with an obvious remediation; the model-facing
+  // tool path applies the same policy.
+  const env = buildChildEnv() as Record<string, string>
 
   runTerminalCommand({
     command,

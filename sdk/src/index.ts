@@ -141,6 +141,7 @@ export {
 } from './tools/run-terminal-command'
 export type { ActiveTerminalCommandProcess } from './tools/run-terminal-command'
 export {
+  buildChildEnv,
   getInferenceBaseUrlFromEnv,
   getInferenceApiKeyFromEnv,
   getTokenHarborApiKeyFromEnv,

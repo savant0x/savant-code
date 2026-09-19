@@ -51,6 +51,63 @@ export const getSystemProcessEnv = (): NodeJS.ProcessEnv => {
   return process.env
 }
 
+/**
+ * Allowlisted keys copied into a spawned command shell's environment
+ * (FID-2026-0919-008, SEC-1). Everything else in `process.env` — including
+ * every provider credential the CLI resolved (API keys, OAuth tokens) — is
+ * deliberately NOT inherited: one `printenv` in a spawned command must not
+ * be able to exfiltrate the parent's secrets. Callers can still inject
+ * additional vars explicitly via the `overrides` argument, which wins over
+ * the allowlist copy.
+ */
+const CHILD_ENV_ALLOWLIST = [
+  // Shell/function basics
+  'PATH',
+  'HOME',
+  'USERPROFILE',
+  'HOMEDRIVE',
+  'HOMEPATH',
+  'USERNAME',
+  'LOGNAME',
+  'USER',
+  'SHELL',
+  'TERM',
+  'LANG',
+  'TZ',
+  // Windows shell requirements (a bash/cmd child cannot start without these)
+  'SystemRoot',
+  'SystemDrive',
+  'COMSPEC',
+  'PATHEXT',
+  'windir',
+  'MSYSTEM',
+  // Temp dirs
+  'TMPDIR',
+  'TEMP',
+  'TMP',
+  // Non-secret SDK knobs a command shell may legitimately need
+  'SAVANT_CODE_APP_URL',
+] as const
+
+/**
+ * Build the environment for a spawned command shell (FID-2026-0919-008):
+ * allowlist copy of `process.env`, then the caller's explicit `overrides`
+ * on top. `getSystemProcessEnv` (full env) remains available for telemetry
+ * and in-process reads, but must not be used for child-process construction.
+ */
+export function buildChildEnv(
+  overrides: NodeJS.ProcessEnv = {},
+): NodeJS.ProcessEnv {
+  const childEnv: NodeJS.ProcessEnv = {}
+  for (const key of CHILD_ENV_ALLOWLIST) {
+    const value = process.env[key]
+    if (value !== undefined) {
+      childEnv[key] = value
+    }
+  }
+  return { ...childEnv, ...overrides }
+}
+
 export const getByokOpenrouterApiKeyFromEnv = (): string | undefined => {
   return process.env[BYOK_OPENROUTER_ENV_VAR]
 }

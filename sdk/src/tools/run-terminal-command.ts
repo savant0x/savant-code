@@ -11,7 +11,7 @@ import {
   unregisterLiveChild,
 } from './child-process-registry'
 import { createWindowsBashNotFoundError, findWindowsBash } from './windows-bash'
-import { getSystemProcessEnv } from '../env'
+import { buildChildEnv } from '../env'
 
 import type { SavantCodeToolOutput } from '../../../common/src/tools/list'
 
@@ -40,10 +40,12 @@ export function runTerminalCommand({
 }): Promise<SavantCodeToolOutput<'run_terminal_command'>> {
   return new Promise((resolve, reject) => {
     const isWindows = os.platform() === 'win32'
-    const processEnv = {
-      ...getSystemProcessEnv(),
-      ...(env ?? {}),
-    } as NodeJS.ProcessEnv
+    // FID-2026-0919-008 (SEC-1): the child shell gets an ALLOWLISTED env,
+    // not the full process env — `getSystemProcessEnv()` carries every
+    // provider credential the CLI resolved, and one `printenv` (malicious,
+    // injected, or accidental) would exfiltrate all of them. The caller's
+    // explicit `env` argument still wins (override semantics unchanged).
+    const processEnv = buildChildEnv(env)
     if (isWindows) {
       // Preserve other MSYS options while preventing Git Bash descendants from
       // allocating a ConPTY despite the detached/hidden process flags.
