@@ -1,4 +1,5 @@
 import { createDefaultSandboxPolicy, evaluateToolCall } from '../sandbox'
+import { findDestructivePattern } from '../sandbox/shell-denylist'
 
 import type {
   SandboxPermissionMode,
@@ -36,6 +37,30 @@ export function checkSandboxPolicy(params: {
     logger,
     onResponseChunk,
   } = params
+
+  // FID-2026-0919-014 (SEC-7): the destructive-command denylist is a floor
+  // evaluated BEFORE the dev override. Dev mode bypasses sandbox *policy*
+  // (approvals, network gates) — it does not authorize machine-destruction
+  // commands. The check mirrors engine.evaluateToolCall's floor; failure
+  // emits the same error chunk shape as a sandbox denial.
+  if (
+    (toolCallToolName === 'run_terminal_command' ||
+      toolCallToolName === 'run_readonly_command') &&
+    typeof toolCallInput.command === 'string'
+  ) {
+    const pattern = findDestructivePattern(toolCallInput.command)
+    if (pattern) {
+      logger.warn(
+        { toolName, pattern: pattern.name },
+        'Destructive-command floor denied a command under dev override (FID-2026-0919-014)',
+      )
+      onResponseChunk({
+        type: 'error',
+        message: `Tool \`${toolName}\` was blocked: ${pattern.reason} (matched: ${pattern.name}) — the destructive-command floor applies in every mode (FID-2026-0919-014).`,
+      })
+      return true
+    }
+  }
 
   if (isDevOverride) {
     return false

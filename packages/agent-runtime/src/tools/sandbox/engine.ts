@@ -47,6 +47,26 @@ export function evaluateToolCall(params: {
   const { toolName, input, policy, safetyOverride } = params
   const safety = safetyOverride ?? getToolSafety(toolName)
 
+  // FID-2026-0919-014 (SEC-7): the destructive-command denylist is a FLOOR —
+  // it is evaluated unconditionally, BEFORE the `unsafe`-mode early return.
+  // An operator who opts out of sandboxing did not thereby opt out of
+  // machine destruction (`rm -rf /`, `dd` to a device, fork bombs). For
+  // shell tools the floor denies outright in every mode; every other policy
+  // relaxation still applies above this floor (mode, network, prompts).
+  if (
+    toolName === 'run_terminal_command' ||
+    toolName === 'run_readonly_command'
+  ) {
+    const command = typeof input.command === 'string' ? input.command : ''
+    const pattern = findDestructivePattern(command)
+    if (pattern) {
+      return {
+        type: 'deny',
+        reason: `${pattern.reason} (matched: ${pattern.name}) — destructive-command floor applies in every permission mode (FID-2026-0919-014)`,
+      }
+    }
+  }
+
   // `unsafe` mode bypasses the sandbox engine. Path containment for write
   // tools is already enforced by the caller before the sandbox check runs.
   if (policy.permissionMode === 'unsafe') {
@@ -69,7 +89,10 @@ export function evaluateToolCall(params: {
     }
   }
 
-  // Shell command denylist.
+  // Shell command denylist (pre-mode floor above handles destructive
+  // patterns unconditionally; this branch keeps the safe/prompt
+  // distinction for the residual denylist surface — none today, but the
+  // structure documents intent if patterns gain severity classes).
   if (
     toolName === 'run_terminal_command' ||
     toolName === 'run_readonly_command'

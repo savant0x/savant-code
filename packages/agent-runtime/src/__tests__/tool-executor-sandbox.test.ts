@@ -142,7 +142,10 @@ describe('executeToolCall sandbox integration', () => {
 
     const errorChunk = chunks.find((c) => c.type === 'error')
     expect(errorChunk).toBeDefined()
-    expect(errorChunk?.message).toContain('blocked by the sandbox')
+    // FID-2026-0919-014: safe-mode destructive commands are caught by the
+    // pre-mode floor in checkSandboxPolicy (before the dev/mode branches),
+    // so the denial text names the floor rather than the sandbox policy.
+    expect(errorChunk?.message).toContain('destructive-command floor')
   })
 
   it('allows benign run_terminal_command in unsafe mode', async () => {

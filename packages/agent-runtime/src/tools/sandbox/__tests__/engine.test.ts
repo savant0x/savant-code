@@ -44,22 +44,37 @@ describe('sandbox engine', () => {
     expect(decision.type).toBe('deny')
   })
 
-  it('prompts for destructive run_terminal_command in prompt mode', () => {
+  // FID-2026-0919-014 (SEC-7): the destructive-command floor applies in
+  // EVERY permission mode — deny, not prompt — because an operator who
+  // relaxes sandbox policy did not opt out of machine destruction.
+  it('denies destructive run_terminal_command in prompt mode (floor)', () => {
     const decision = evaluateToolCall({
       toolName: 'run_terminal_command',
       input: { command: 'rm -rf /' },
       policy: policy('prompt'),
     })
-    expect(decision.type).toBe('prompt')
+    expect(decision.type).toBe('deny')
+    if (decision.type === 'deny') {
+      expect(decision.reason).toContain('FID-2026-0919-014')
+    }
   })
 
-  it('allows destructive command in unsafe mode', () => {
+  it('denies destructive command in unsafe mode (floor)', () => {
     const decision = evaluateToolCall({
       toolName: 'run_terminal_command',
       input: { command: 'rm -rf /' },
       policy: policy('unsafe'),
     })
-    expect(decision.type).toBe('allow')
+    expect(decision.type).toBe('deny')
+  })
+
+  it('denies destructive readonly command (floor reaches the readonly tool)', () => {
+    const decision = evaluateToolCall({
+      toolName: 'run_readonly_command',
+      input: { command: 'dd if=image.iso of=/dev/sda' },
+      policy: policy('unsafe'),
+    })
+    expect(decision.type).toBe('deny')
   })
 
   it('denies network tools when network is disabled', () => {
