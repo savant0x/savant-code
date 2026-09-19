@@ -128,23 +128,24 @@ describe('Infron static catalog (FID-2026-0914-001)', () => {
 
   test('pins vendor-published context windows and display names', () => {
     const byId = new Map(fetchInfronModels().map((m) => [m.id, m] as const))
-    // Windows are the vendors' OWN catalog values (api.infron.ai
-    // context_length), NOT the family heuristic.
+    // FID-2026-0919-020: windows flow from the vendor fallback table (single
+    // source of truth) at the 2026-09-19 live-audit values; the shadow pin
+    // table in static-catalogs-gateways.ts was deleted (drift class).
     expect(
       byId.get('infron/deepseek/deepseek-v4-flash:free')?.contextLength,
-    ).toBe(1_048_580)
+    ).toBe(1_048_576)
     expect(
       byId.get('infron/deepseek/deepseek-v4-flash-0731:free')?.contextLength,
-    ).toBe(1_000_000)
+    ).toBe(1_310_720)
     expect(byId.get('infron/qwen/qwen3.8-27b:free')?.contextLength).toBe(
-      256_000,
+      1_000_000,
     )
     expect(
       byId.get('infron/nvidia/nemotron-3.5-lightning-30b-a3b:free')
         ?.contextLength,
     ).toBe(1_048_576)
     expect(byId.get('infron/kwaipilot/kat-coder-pro-v2')?.contextLength).toBe(
-      262_140,
+      262_144,
     )
     expect(byId.get('infron/moonshotai/kimi-k2.7-code')?.contextLength).toBe(
       262_144,
@@ -155,7 +156,7 @@ describe('Infron static catalog (FID-2026-0914-001)', () => {
     expect(
       byId.get('infron/google/gemini-3.1-pro-preview')?.contextLength,
     ).toBe(1_048_576)
-    expect(byId.get('infron/z-ai/glm-5.3-flash')?.contextLength).toBe(1_000_000)
+    expect(byId.get('infron/z-ai/glm-5.3-flash')?.contextLength).toBe(1_310_720)
     expect(byId.get('infron/z-ai/glm-5.3-flash')?.name).toBe('GLM 5.3 Flash')
     expect(byId.get('infron/kwaipilot/kat-coder-pro-v2')?.name).toBe(
       'KAT Coder Pro V2',
@@ -189,12 +190,13 @@ describe('UnoRouter static catalog (FID-2026-0914-001)', () => {
 
   test('pins vendor-published context windows and display names', () => {
     const byId = new Map(fetchUnorouterModels().map((m) => [m.id, m] as const))
-    // Windows are the vendor console's own metadata.contextWindow values.
+    // FID-2026-0919-020: windows flow from the vendor fallback table at the
+    // 2026-09-19 live-audit values (shadow pin table deleted).
     expect(byId.get('unorouter/glm-5.3-flash:free')?.contextLength).toBe(
-      1_000_000,
+      1_310_720,
     )
     expect(byId.get('unorouter/gemini-3.6-flash:free')?.contextLength).toBe(
-      1_000_000,
+      1_048_576,
     )
     expect(byId.get('unorouter/seed-oss-36b:free')?.contextLength).toBe(524_288)
     expect(byId.get('unorouter/dots-3-note-preview:free')?.contextLength).toBe(
@@ -202,18 +204,19 @@ describe('UnoRouter static catalog (FID-2026-0914-001)', () => {
     )
     expect(byId.get('unorouter/gpt-oss-120b:free')?.contextLength).toBe(131_072)
     expect(byId.get('unorouter/qwen3.6-35b-a3b:free')?.contextLength).toBe(
-      262_100,
+      262_144,
     )
-    // metadata.contextWindow (65,536) wins over the 262.1K tag — flagged in
-    // the FID window table.
-    expect(byId.get('unorouter/qwen3.8-27b:free')?.contextLength).toBe(65_536)
-    expect(byId.get('unorouter/gpt-5.5')?.contextLength).toBe(1_100_000)
-    expect(byId.get('unorouter/gpt-6-astra')?.contextLength).toBe(1_100_000)
+    // Live-audit capability (1M) supersedes the flagged 65,536 metadata pin.
+    expect(byId.get('unorouter/qwen3.8-27b:free')?.contextLength).toBe(
+      1_000_000,
+    )
+    expect(byId.get('unorouter/gpt-5.5')?.contextLength).toBe(1_050_000)
+    expect(byId.get('unorouter/gpt-6-astra')?.contextLength).toBe(1_050_000)
     expect(byId.get('unorouter/claude-fable-5.1')?.contextLength).toBe(
       1_000_000,
     )
     expect(byId.get('unorouter/claude-opus-4.8')?.contextLength).toBe(1_000_000)
-    expect(byId.get('unorouter/deepseek-v4-pro')?.contextLength).toBe(1_000_000)
+    expect(byId.get('unorouter/deepseek-v4-pro')?.contextLength).toBe(1_048_576)
     expect(byId.get('unorouter/claude-fable-5.1')?.name).toBe(
       'Claude Fable 5.1',
     )

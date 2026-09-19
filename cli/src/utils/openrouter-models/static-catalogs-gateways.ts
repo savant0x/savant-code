@@ -18,7 +18,9 @@ import {
 
 import type { OpenRouterModel } from './types'
 
-/** Display names for Infron model ids (curated catalog, FID-2026-0914-001). */
+/**
+ * Display names for Infron model ids (curated catalog, FID-2026-0914-001).
+ */
 const INFRON_NAMES: Record<string, string> = {
   'infron/deepseek/deepseek-v4-flash:free': 'DeepSeek V4 Flash (Free)',
   'infron/deepseek/deepseek-v4-flash-0731:free':
@@ -34,22 +36,13 @@ const INFRON_NAMES: Record<string, string> = {
 }
 
 /**
- * Pinned context windows for Infron ids — the vendor's own catalog
- * `context_length` values (api.infron.ai, fetched 2026-09-14; FID
- * window table). NOT the family heuristic; a gateway may still cap
- * lower (surfaces as a vendor 400, never silent truncation).
+ * FID-2026-0919-020: the shadow `INFRON_CONTEXT_WINDOWS` /
+ * `UNOROUTER_CONTEXT_WINDOWS` pin tables are DELETED — they duplicated the
+ * fallback table and drifted from it the moment live windows moved (this
+ * audit's exact failure). The vendor fallback table
+ * (context-window-table.ts) is the single source of truth (Law 13); every
+ * curated id has full coverage there, pinned by the window-truth suite.
  */
-const INFRON_CONTEXT_WINDOWS: Record<string, number> = {
-  'infron/deepseek/deepseek-v4-flash:free': 1_048_580,
-  'infron/deepseek/deepseek-v4-flash-0731:free': 1_000_000,
-  'infron/qwen/qwen3.8-27b:free': 256_000,
-  'infron/nvidia/nemotron-3.5-lightning-30b-a3b:free': 1_048_576,
-  'infron/kwaipilot/kat-coder-pro-v2': 262_140,
-  'infron/moonshotai/kimi-k2.7-code': 262_144,
-  'infron/qwen/qwen3-coder-next': 262_144,
-  'infron/google/gemini-3.1-pro-preview': 1_048_576,
-  'infron/z-ai/glm-5.3-flash': 1_000_000,
-}
 
 /**
  * Return the Infron curated catalog (FID-2026-0914-001). Static by
@@ -62,10 +55,7 @@ export function fetchInfronModels(): OpenRouterModel[] {
     id,
     name: INFRON_NAMES[id] ?? id.slice('infron/'.length),
     provider: 'infron' as const,
-    // FID-2026-0914-002 (V6): the vendor fallback table replaces the
-    // substring heuristic — every curated Infron id is pinned there.
-    contextLength:
-      INFRON_CONTEXT_WINDOWS[id] ?? getContextWindowFallback(id).contextWindow,
+    contextLength: getContextWindowFallback(id).contextWindow,
   }))
 }
 
@@ -91,30 +81,11 @@ const UNOROUTER_NAMES: Record<string, string> = {
 }
 
 /**
- * Pinned context windows for UnoRouter ids — the vendor console's own
- * `metadata.contextWindow` values (api.unorouter.com, fetched
- * 2026-09-14; FID window table). `qwen3.8-27b:free` pins the metadata
- * value (65,536) over the conflicting 262.1K tag — flagged in the FID.
+ * FID-2026-0919-020: the shadow `UNOROUTER_CONTEXT_WINDOWS` pin table was
+ * deleted with the Infron one (same drift; its 65,536 qwen3.8-27b pin —
+ * a flagged FID-2026-0914-001 judgment — is superseded by the live audit's
+ * 1M capability row).
  */
-const UNOROUTER_CONTEXT_WINDOWS: Record<string, number> = {
-  'unorouter/glm-5.3-flash:free': 1_000_000,
-  'unorouter/deepseek-v4-flash:free': 1_000_000,
-  'unorouter/gemini-3.6-flash:free': 1_000_000,
-  'unorouter/gpt-oss-120b:free': 131_072,
-  'unorouter/qwen3.6-35b-a3b:free': 262_100,
-  'unorouter/qwen3.8-27b:free': 65_536,
-  'unorouter/step-3.7-flash:free': 256_000,
-  'unorouter/codestral-latest:free': 256_000,
-  'unorouter/north-mini-code:free': 256_000,
-  'unorouter/seed-oss-36b:free': 524_288,
-  'unorouter/dots-3-note-preview:free': 512_000,
-  'unorouter/intern-s2-preview:free': 262_144,
-  'unorouter/claude-fable-5.1': 1_000_000,
-  'unorouter/gpt-5.5': 1_100_000,
-  'unorouter/gpt-6-astra': 1_100_000,
-  'unorouter/claude-opus-4.8': 1_000_000,
-  'unorouter/deepseek-v4-pro': 1_000_000,
-}
 
 /**
  * Return the UnoRouter curated catalog (FID-2026-0914-001). Static by
@@ -127,11 +98,7 @@ export function fetchUnorouterModels(): OpenRouterModel[] {
     id,
     name: UNOROUTER_NAMES[id] ?? id.slice('unorouter/'.length),
     provider: 'unorouter' as const,
-    // FID-2026-0914-002 (V6): the vendor fallback table replaces the
-    // substring heuristic — every curated UnoRouter id is pinned there.
-    contextLength:
-      UNOROUTER_CONTEXT_WINDOWS[id] ??
-      getContextWindowFallback(id).contextWindow,
+    contextLength: getContextWindowFallback(id).contextWindow,
   }))
 }
 
