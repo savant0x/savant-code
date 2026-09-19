@@ -8,6 +8,7 @@ import {
   getContextWindowFallback,
   type ContextWindowSource,
 } from '@savant-code/common/constants/context-windows'
+import { PROVIDER_REGISTRY } from '@savant-code/common/providers/registry'
 
 import { getContextWindowForModel } from '../constants'
 import { getCachedGatewayModels } from './gateway'
@@ -22,19 +23,26 @@ import type { OpenRouterModel } from './types'
 export { formatModelInfo, getProviderFromModelId } from './model-info'
 
 /**
- * Strip provider prefixes (tokenrouter/, tokenharbor/, nvidia/)
- * and variant suffixes (-free, -fast, :free) from a model ID to get the canonical
- * OpenRouter model ID for context-window lookup.
+ * Strip provider prefixes and variant suffixes (-free, -fast, :free, :beta)
+ * from a model ID to get the canonical OpenRouter model ID for lookup.
  *
- * Examples:
- *   "tokenrouter/z-ai/glm-5.2-free" → "z-ai/glm-5.2"
- *   "tokenrouter/openai/gpt-5.5-pro" → "openai/gpt-5.5-pro"
- *   "z-ai/glm-5.2" → "z-ai/glm-5.2"
+ * FID-2026-0919-016: prefixes are DERIVED from the closed-world
+ * PROVIDER_REGISTRY (longest-first) — the hardcoded trio rotted as gateways
+ * were added, so `kiosapi/grok-4.6-free` kept its prefix and fell through to
+ * the version-blind family fallback (x-ai/grok-4.20's 2M, not 4.6's 500k).
+ * Vendor segments ("z-ai/") are NOT registry ids and survive stripping.
  */
+const GATEWAY_PREFIX_STRIP_REGEX = new RegExp(
+  `^(?:${Object.keys(PROVIDER_REGISTRY)
+    .sort((a, b) => b.length - a.length)
+    .join('|')})\\/`,
+)
+
 function toCanonicalModelId(modelId: string): string {
   let id = modelId
-  // Strip gateway provider prefixes while preserving the upstream model path.
-  id = id.replace(/^(?:tokenrouter|tokenharbor|nvidia)\//, '')
+  // Strip the gateway provider prefix (registry-driven) while preserving the
+  // upstream model path.
+  id = id.replace(GATEWAY_PREFIX_STRIP_REGEX, '')
   // Strip variant suffixes: -free, -fast, :free, :beta
   id = id.replace(/-(?:free|fast|beta)$/, '')
   id = id.replace(/:(?:free|beta)$/, '')
@@ -136,12 +144,19 @@ function findModelFieldFromOpenRouter(
   const byBase = openRouterCatalog.find((m) => m.id === withoutProvider)
   if (field(byBase) !== undefined) return field(byBase)!
 
-  // 3. Family match: strip version suffix and match by prefix
-  // Handles v-prefixed versions: "mimo-v2.5" → "mimo" → matches "xiaomi/mimo-v2.5"
+  // 3. Family match by prefix (handles "mimo-v2.5" → "mimo").
+  // FID-2026-0919-016: prefer the candidate whose terminal segment equals the
+  // query's (exact version) over the first id-sorted hit (sorted-first handed
+  // grok-4.6 the window of grok-4.20).
   const familyId = canonical.replace(/-v?\d+(\.\d+)?$/, '')
   if (familyId && familyId !== canonical) {
-    const family = openRouterCatalog.find((m) => m.id.startsWith(familyId))
-    if (field(family) !== undefined) return field(family)!
+    const terminal = canonical.split('/').pop() ?? canonical
+    const family =
+      openRouterCatalog.find(
+        (m) =>
+          m.id.startsWith(familyId) && (m.id.split('/').pop() ?? '') === terminal,
+      ) ?? openRouterCatalog.find((m) => m.id.startsWith(familyId))
+    if (family && field(family) !== undefined) return field(family)!
   }
 
   // 3b. Name-family match: when the ID-based family match misses (e.g.
@@ -150,7 +165,10 @@ function findModelFieldFromOpenRouter(
   //     to matching by normalized model name.
   const familyName = familyId.split('/').pop() ?? familyId
   if (familyName && familyName !== canonical) {
-    const byFamilyName = openRouterCatalog.find((m) => {
+    // FID-2026-0919-016: exact-version preference as in branch 3 — see the
+    // live proof in the FID (sorted-first handed grok-4.6 grok-4.20's 2M).
+    const terminal = canonical.split('/').pop() ?? canonical
+    const familyCandidates = openRouterCatalog.filter((m) => {
       const mFamily =
         m.id
           .split('/')
@@ -158,7 +176,10 @@ function findModelFieldFromOpenRouter(
           ?.replace(/-v?\d+(\.\d+)?$/, '') ?? ''
       return mFamily === familyName
     })
-    if (field(byFamilyName) !== undefined) return field(byFamilyName)!
+    const chosen =
+      familyCandidates.find((m) => (m.id.split('/').pop() ?? '') === terminal) ??
+      familyCandidates[0]
+    if (chosen && field(chosen) !== undefined) return field(chosen)!
   }
 
   // 4. Name-based fallback: when gateway model IDs (e.g.
