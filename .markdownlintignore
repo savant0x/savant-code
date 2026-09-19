@@ -67,6 +67,13 @@ continue.md
 docs/design/Free LLM API Aggregator Research.md
 docs/design/Free LLM API Aggregator Research — Verification.md
 
+# Pasted model-catalog audit report (2026-09-19) — operator-pasted external
+# research artifact whose claims were independently re-verified against the
+# shipped code + live APIs (FID-2026-0919-020); reference-only input, not
+# shipped documentation. Long prose/URL lines make MD013 meaningless. Same
+# exemption precedent as the Free LLM API Aggregator Research docs above.
+docs/Model Context Window Review.md
+
 # Discovery-pipeline daily report (FID-2026-0914-003) — machine-generated
 # per harvest run (replaced in place), gitignored; MD013 on generated
 # evidence tables is meaningless. Same exemption precedent as the scratchpad.

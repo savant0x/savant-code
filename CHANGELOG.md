@@ -1,5 +1,68 @@
 # Changelog
 
+## 2026-09-19 — Context-window resolution: ladder fall-through fix, kiosapi sweep, live fallback-table audit (3 FIDs archived)
+
+### Exact terminal-segment match for mid-id-version model ids (FID-2026-0919-018)
+
+- `kiosapi/glm-5.3-flash-free` resolved to the 200k conservative default
+  instead of its true 1,310,720 window: after the registry prefix strip the
+  canonical is `glm-5.3-flash`, whose version sits **mid-id** — branch 3's
+  terminal-version regex can't reduce it, and branch 3b's own
+  `familyName !== canonical` guard skipped the one exact upstream twin.
+  New **branch 2b (exact terminal-segment equality)** closes the crack
+  between branches 2 and 3; near-collisions (`glm-5.3-flashx`, `:batch`)
+  fail strict equality, pinned negatively. Root cause live-proven via
+  probe (`dev/scratchpad/probe-glm-flash-window.ts`) against the real
+  OpenRouter catalog before any code moved.
+- Gates: 018 suite 5/0; 016 suite green (regression); lookup suite 6/0;
+  typecheck cli; quality PASS; receipt 5/5. The insertion pushed
+  `lookup.ts` over the 300-line cap — `findGatewayModel` extracted
+  move-only to `gateway-lookup.ts`. Commit `a3d37313` (shared ladder/table
+  commit with FID-2026-0919-019, operator-authorized 2026-09-19).
+  **Closed + archived 2026-09-19.**
+
+### Kiosapi roster sweep: case-insensitive terminal match + researched fallback rows (FID-2026-0919-019)
+
+- Live sweep of the authenticated kiosapi roster (19 ids) showed 8 landing
+  on the 200k default, splitting into three causes: a case-sensitivity miss
+  (`kiosapi/Qwen/Qwen3-8B` vs catalog `qwen/qwen3-8b` — branch 2b now
+  compares case-insensitively), vendor-known windows with no fallback row
+  (six researched rows added: agnes-2.0/2.5/3.0-flash 524,288;
+  atria-dawn-preview 262,144; sensenova-6.8-flash-lite 262,144;
+  diffusiongemma-26b-a4b-it 262,144), and genuinely absent models where the
+  flagged default is honest (`big-pickle` deliberately rowless). Acceptance
+  re-sweep through the real resolver: **1/19 defaults remaining**
+  (big-pickle, as predicted).
+- Gates: typecheck cli+common; 018 suite 6/0; fallbacks + window-truth
+  green; quality PASS; receipt 5/5. The rows pushed `context-windows.ts`
+  over the line cap — table extracted move-only to
+  `context-window-table.ts`. Also root-caused (flagged, not changed): the
+  resolver prefers `top_provider.context_length` (serving limit) over the
+  top-level capability — a deliberate pre-existing policy. Commit
+  `a3d37313` (shared with FID-2026-0919-018). **Closed + archived
+  2026-09-19.**
+
+### Fallback-table live audit: 17 corrections + shadow-pin deletion (FID-2026-0919-020)
+
+- Full audit of all 140 `CONTEXT_WINDOW_FALLBACKS` rows against today's
+  live OpenRouter API plus each gateway's own keyed `/v1/models` roster:
+  97 exact matches, 4 verified via normalized spelling, 6 verified via
+  gateway rosters (zero new wrong values), kiosapi ×6 standing on FID-019
+  vendor research, 8 unverifiable/inert rows dispositioned in-table.
+  **17 rows corrected** (12 substantive — glm-5.3-flash ×3 up to 1,310,720,
+  qwen3.8-27b ×3 to 1,000,000, deepseek/gemini free-tier ups, and two
+  dangerous over-allocations down to true capability — plus 5 rounding
+  artifacts), under the operator policy that the table records model
+  **capability**, never an artificial restriction.
+- Bonus Law-13 catch: two **shadow pinned-window tables** in
+  `static-catalogs-gateways.ts` (`INFRON_CONTEXT_WINDOWS` /
+  `UNOROUTER_CONTEXT_WINDOWS`) were overriding the fallback table and had
+  silently drifted — deleted; the fallback table is now the single source
+  of truth, enforced by suites.
+- Gates: typecheck cli+common; 46/0 across the four affected suites;
+  quality PASS; receipt 6/6. Commit `0acad450` (operator-authorized
+  2026-09-19). **Closed + archived 2026-09-19.**
+
 ## 2026-09-19 — Security hardening batch SEC-1/3–7 + verification, gateway and compaction fixes (13 FIDs archived)
 
 ### Compaction signal repin: armed retirement + dedupe-guarded summary block (FID-2026-0918-004)

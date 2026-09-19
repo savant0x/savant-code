@@ -224,6 +224,18 @@
       tree. Workaround: run suites from their workspace root. Candidate
       FID if this bites CI or other agents; operator decides whether to
       promote.
+- [ ] **T68.** [OPEN-OUT-OF-SCOPE] (discovered 2026-09-19, live kiosapi
+      roster sweep `dev/scratchpad/sweep-kiosapi-defaults.ts` after
+      FID-2026-0919-018): 8 of 19 kiosapi ids land on the 200k default.
+      Classification: (1) case-sensitivity miss — `kiosapi/Qwen/Qwen3-8B`
+      vs catalog `qwen/qwen3-8b` (131,072); (2) vendor-known window with no
+      fallback row — `kiosapi/atria-dawn-preview` (upstream 262,144 per
+      FID-2026-0916-005, and `kiosapi/` is a second gateway selling the
+      same upstream); (3) six genuinely OpenRouter-absent ids with silent
+      rosters (agnes-2.0/2.5/3.0-flash, big-pickle, sensenova-6.8-flash-
+      lite, diffusiongemma-26b-a4b-it) — honest default per
+      FID-2026-0914-002; web research for vendor windows is optional.
+      Operator decides: promote (1)+(2) to a FID, research (3), or accept.
 
 ## Task 60 — stampReceipt EOF fingerprint edge (2026-09-16) — CLOSED
 
