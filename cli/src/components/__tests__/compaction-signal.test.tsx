@@ -46,10 +46,11 @@ afterAll(() => {
   mock.module('../../state/chat-store', () => chatStoreActualSnapshot)
 })
 
-describe('CompactionSignal (FID-2026-0822-006 characterization)', () => {
+describe('CompactionSignal (FID-2026-0919-017: in-flight-only slot)', () => {
   beforeEach(() => {
     compactionState.compactionStatus = null
     compactionState.compactionEvents = []
+    delete (compactionState as Record<string, unknown>).lastCompactionReport
   })
 
   test('compacting phase renders the in-flight line inside the traffic-lights chrome', () => {
@@ -62,122 +63,63 @@ describe('CompactionSignal (FID-2026-0822-006 characterization)', () => {
     expect(markup).toContain('●')
   })
 
-  test('blocked phase renders the reasoned block line with its reason', () => {
+  test('IN-FLIGHT ONLY: terminal status paints nothing (FID-2026-0919-017)', () => {
+    compactionState.compactionStatus = {
+      phase: 'compacted',
+      tokensSaved: 1_500,
+      percentUsed: 62,
+    }
+
+    const markup = renderToStaticMarkup(<CompactionSignal />)
+
+    // The trailing scrollbox slot must not become a fake last message.
+    expect(markup).toBe('')
+  })
+
+  test('IN-FLIGHT ONLY: warning status paints nothing (FID-2026-0919-017)', () => {
+    compactionState.compactionStatus = { phase: 'warning', percentUsed: 87 }
+
+    const markup = renderToStaticMarkup(<CompactionSignal />)
+
+    expect(markup).toBe('')
+  })
+
+  test('IN-FLIGHT ONLY: blocked status paints nothing (FID-2026-0919-017)', () => {
     compactionState.compactionStatus = {
       phase: 'blocked',
+      percentUsed: 91,
       blockReason: 'circuit-breaker-open',
     }
 
     const markup = renderToStaticMarkup(<CompactionSignal />)
 
-    expect(markup).toContain('⛔')
-    expect(markup).toContain('Auto-compact blocked (circuit-breaker-open)')
-    expect(markup).toContain('●')
+    expect(markup).toBe('')
   })
 
-  test('warning phase renders the one-shot threshold warning', () => {
-    compactionState.compactionStatus = { phase: 'warning', percentUsed: 87 }
-
-    const markup = renderToStaticMarkup(<CompactionSignal />)
-
-    expect(markup).toContain('⚠')
-    expect(markup).toContain('Context at 87% of window')
-  })
-
-  test('terminal pruned event renders completion with tokens saved and percent', () => {
+  test('IN-FLIGHT ONLY: terminal events paint nothing (FID-2026-0919-017)', () => {
     compactionState.compactionEvents = [
       {
         at: Date.now(),
         outcome: 'pruned',
-        tokensSaved: 1234,
+        tokensSaved: 1_234,
         percentUsed: 61,
       },
     ]
 
     const markup = renderToStaticMarkup(<CompactionSignal />)
 
-    expect(markup).toContain('✓ Compaction complete')
-    expect(markup).toContain('(−1234 tokens)')
-    expect(markup).toContain('61% of window')
-    expect(markup).toContain('●')
+    expect(markup).toBe('')
   })
 
-  test('terminal ineffective event renders the ineffective warning', () => {
-    compactionState.compactionEvents = [
-      { at: Date.now(), outcome: 'ineffective' },
-    ]
-
+  test('renders nothing without status or events', () => {
     const markup = renderToStaticMarkup(<CompactionSignal />)
 
-    expect(markup).toContain('⚠ Compaction ineffective')
-    expect(markup).toContain('●')
+    expect(markup).toBe('')
   })
+})
 
-  test('compacted phase renders the micro-compact completion line', () => {
-    compactionState.compactionStatus = { phase: 'compacted', tokensSaved: 850 }
-
-    const markup = renderToStaticMarkup(<CompactionSignal />)
-
-    expect(markup).toContain('Micro-compacted')
-    expect(markup).toContain('(−850 tokens)')
-    expect(markup).toContain('●')
-  })
-
-  test('micro-compacted lifecycle event renders distinctly from ineffective', () => {
-    compactionState.compactionEvents = [
-      { at: Date.now(), outcome: 'compacted', tokensSaved: 420 },
-    ]
-
-    const markup = renderToStaticMarkup(<CompactionSignal />)
-
-    expect(markup).toContain('Micro-compaction')
-    expect(markup).toContain('−420 tokens')
-    expect(markup).not.toContain('ineffective')
-  })
-
-  test('surfaces summary excerpt and removed-region counts when present', () => {
-    compactionState.compactionEvents = [
-      { at: Date.now(), outcome: 'pruned', tokensSaved: 1200 },
-    ]
-    ;(compactionState as Record<string, unknown>).lastCompactionReport = {
-      summaryExcerpt: 'Folded oldest exchange: auth refactor notes',
-      removedMessages: 3,
-      tokensSaved: 1200,
-    }
-
-    const markup = renderToStaticMarkup(<CompactionSignal />)
-
-    expect(markup).toContain('removed 3 messages')
-    expect(markup).toContain('Folded oldest exchange')
-  })
-
-  test('report excerpt is COLLAPSED by default: preview + fold affordance, full text hidden (FID-2026-0916-008)', () => {
-    compactionState.compactionEvents = [
-      { at: Date.now(), outcome: 'pruned', tokensSaved: 1200 },
-    ]
-    // A long excerpt whose tail lands past the 160-char preview window.
-    const longExcerpt = [
-      `Folded exchange: ${'x'.repeat(200)}`,
-      '',
-      'SECRET-BEYOND-PREVIEW-TEXT',
-    ].join('\n')
-    ;(compactionState as Record<string, unknown>).lastCompactionReport = {
-      summaryExcerpt: longExcerpt,
-      removedMessages: 3,
-      tokensSaved: 1200,
-    }
-
-    const markup = renderToStaticMarkup(<CompactionSignal />)
-
-    // Collapsed affordance prompts to expand.
-    expect(markup).toContain('▾ expand')
-    // The preview line is present.
-    expect(markup).toContain('removed 3 messages')
-    // The full excerpt past the preview is folded away, not dumped.
-    expect(markup).not.toContain('SECRET-BEYOND-PREVIEW-TEXT')
-  })
-
-  test('CompactionReportExcerpt renders the FULL excerpt when explicitly expanded (FID-2026-0916-008)', () => {
+describe('CompactionReportExcerpt (FID-2026-0916-008: fold contract, prop-driven)', () => {
+  test('renders the FULL excerpt when explicitly expanded', () => {
     const longExcerpt = [
       `Folded exchange: ${'x'.repeat(200)}`,
       '',
@@ -186,7 +128,7 @@ describe('CompactionSignal (FID-2026-0822-006 characterization)', () => {
     const report = {
       summaryExcerpt: longExcerpt,
       removedMessages: 3,
-      tokensSaved: 1200,
+      tokensSaved: 1_200,
     }
 
     // The static-render harness cannot simulate clicks, so the fold state is
@@ -200,14 +142,12 @@ describe('CompactionSignal (FID-2026-0822-006 characterization)', () => {
       />,
     )
 
-    // Expanded affordance prompts to collapse.
     expect(markup).toContain('▴ collapse')
-    // The full excerpt — including text past the 160-char preview — renders.
     expect(markup).toContain('SECRET-BEYOND-PREVIEW-TEXT')
     expect(markup).toContain('removed 3 messages')
   })
 
-  test('CompactionReportExcerpt COLLAPSED hides the full excerpt behind the preview (FID-2026-0916-008)', () => {
+  test('COLLAPSED hides the full excerpt behind the preview', () => {
     const longExcerpt = [
       `Folded exchange: ${'x'.repeat(200)}`,
       '',
@@ -216,7 +156,7 @@ describe('CompactionSignal (FID-2026-0822-006 characterization)', () => {
     const report = {
       summaryExcerpt: longExcerpt,
       removedMessages: 3,
-      tokensSaved: 1200,
+      tokensSaved: 1_200,
     }
 
     const markup = renderToStaticMarkup(
@@ -232,7 +172,7 @@ describe('CompactionSignal (FID-2026-0822-006 characterization)', () => {
     expect(markup).not.toContain('SECRET-BEYOND-PREVIEW-TEXT')
   })
 
-  test('CompactionReportExcerpt omits the ellipsis when the excerpt fits the preview (FID-2026-0916-008)', () => {
+  test('omits the ellipsis when the excerpt fits the preview', () => {
     const markup = renderToStaticMarkup(
       <CompactionReportExcerpt
         report={{
@@ -247,12 +187,6 @@ describe('CompactionSignal (FID-2026-0822-006 characterization)', () => {
 
     expect(markup).toContain('Short summary.')
     expect(markup).toContain('▾ expand')
-    // No truncation ellipsis because the excerpt is shorter than the preview.
     expect(markup).not.toContain('…')
-  })
-  test('renders nothing without status or events', () => {
-    const markup = renderToStaticMarkup(<CompactionSignal />)
-
-    expect(markup).toBe('')
   })
 })
