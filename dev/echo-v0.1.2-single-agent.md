@@ -75,10 +75,16 @@ Laws 1-4 are the Immutable Process Laws governing workflow. Laws 5-15 are the Ex
 | **3** | **Verify Before Proceed**          | Every change verified with build and test commands (from `protocol.config.yaml`) before moving on.                                | No broken builds ever. Zero errors, zero warnings.                                       |
 | **4** | **Verify Call-Graph Reachability** | After wiring any feature, grep production entry points to confirm it is actually called. Compilation is NOT verification.         | Zero grep results = NOT wired. Do not mark complete.                                     |
 
-**Additional Rule:** If you encounter ANY issue — even outside the current scope — you must record it immediately in
-`SCOPE.md` as an `[OPEN-OUT-OF-SCOPE]` item (see Scope Boundary section below). Never skip past a problem because
-"it's not what we're working on." Discovery of an issue is NOT permission to drop it — only the operator can close an
-out-of-scope item, and only after it has been presented.
+**Additional Rule — NOTHING IS EVER OUT OF SCOPE:** If you encounter ANY issue while working, it is a work item and you
+own it: append it to `SCOPE.md` with its automation level and its evidence, then complete it in the same pass. Never
+skip past a problem because "it's not what we're working on."
+
+There is **no agent-side scope disposition**. An agent may not label, tag, defer, drop, trim, or reclassify any
+discovered or approved work as out-of-scope, deferred, backlog, or "separate work" — in any artifact, for any reason.
+The terms `[OUT-OF-SCOPE]`, `[DEFERRED]` and `[OPEN-OUT-OF-SCOPE]` **do not exist as statuses**; writing one is a scope
+reduction without approval, i.e. a Law 2 violation, and is blocked mechanically (FID-2026-0919-024). A work item has
+exactly two states — **completed**, or **blocked pending an operator ruling** — and only an explicit operator ruling
+recorded verbatim with its date can end this session's obligation to it.
 
 ### Laws 5-15: The Extended Code Laws
 
@@ -127,6 +133,56 @@ When evaluating any approach, ask:
 5. Does this set the **standard for the industry**, not just meet it?
 
 **If any answer is `no` — redesign until all answers are `yes`.**
+
+---
+
+## Automation Levels
+
+An **Automation Level** states how much authority the agent has to act without asking. It is the
+only thing that modulates the approval requirement of Law 2 — it never modulates a hard gate, a
+version-control law, or Law 3.
+
+| Level | Name           | Agent authority                                                                                                                                                                                                               |
+| ----- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **1** | **Guided**     | Extremely limited. Reads, searches, and analysis only. Every write, every non-read-only command, and every scope decision is presented and **waits for explicit operator approval**.                                                                  |
+| **2** | **Supervised** | Executes the approved work end-to-end, plus reversible in-scope fixes it discovers on the way (stale doc, missing pin, drifted record) without a separate approval round. Stops and presents before anything irreversible. |
+| **3** | **Autonomous** | Complete agent automation. Runs the full Perfection Loop without per-step approval — discovery, FID authoring, implementation, verification, closure and archive, and the durable records. Findings inside the project are **fixed in the same pass**, not parked for a ruling. |
+
+**Session level vs item level.** The session level is the declared ceiling
+(`protocol.config.yaml` → `session.autonomy_level`, default `3`, restated by the operator at session
+start when overridden). Each work item carries its own level on the register (SCOPE.md `Automation
+level` field / FID metadata). **An item may be actioned without approval only when its level is less
+than or equal to the session level.** An item tagged `1` is always approval-gated, even in an
+Autonomous session; an item tagged `3` in a Guided session is not.
+
+### Law 2 at Level 3
+
+Law 2 requires that a change be *presented with full impact analysis before implementation*. At
+Level 3 that presentation is **written to the durable artifacts — FID, SCOPE.md, CHANGELOG — before
+the change**, and implementation proceeds without waiting for a reply. The record is the approval
+surface: the operator keeps the intervention right, and an objection raised in flight stops the work.
+This is a recorded presentation, not a skipped one. At Levels 1-2 the presentation still blocks.
+
+### Invariants no level lifts
+
+A level grants authority over **work**, never over **blast radius**. The following hold at every
+level, including 3:
+
+- **G2 — commit authorization.** No commit, amend, rebase, or history rewrite unless the operator
+  authorized that action. Level 3 does not mean "commit when you feel done"; it means "finish the
+  work without asking".
+- **Remote, release, and production.** No `git push`, no force-push to `main`, no tag, no publish, no
+  deploy, no release artifact — regardless of level.
+- **Credentials and secrets.** Never print, copy, or commit a secret; never widen credential scope;
+  never write outside the project directory.
+- **Destructive operations.** Level 3 authorizes fixing work, not destroying it: no recursive delete
+  outside scratch areas, no dropped databases, no wiping untracked operator work.
+- **Law 3 — Verify Before Proceed.** Levels change *when you may proceed*, never *whether you verify*.
+- **Law 11 — One Truth.** Autonomy is not licence to invent a parallel rule; extend the authority
+  that already exists.
+
+When the operator's instruction and an invariant conflict, the invariant wins and the conflict is
+reported — the operator can lift an invariant explicitly, but a level cannot imply it.
 
 ---
 
@@ -244,21 +300,48 @@ never be an internal, invisible reclassification.
    into `SCOPE.md` and present it for confirmation before proceeding. The operator's go-ahead (or explicit confirmation)
    converts interpreted scope into approved scope.
 
-**Before dropping, deferring, or reclassifying any item as "out of scope":**
+**There is no agent-side scope reduction.** Approved scope is completed; it is never trimmed. These dispositions are
+prohibited in every artifact an agent writes, without exception:
 
-1. The item MUST remain in `SCOPE.md` but be marked `[DEFERRED]` or `[OUT-OF-SCOPE]` with a one-line reason.
-2. The decision MUST be presented to the operator as a **blocking step** — the agent does not proceed past the decision
-   point until the operator responds. "Presenting" means stating the item, the reason, and waiting for a reply — not
-   logging it and moving on.
-3. An item is only truly dropped when the operator confirms. Until then, it stays an active approved item.
+| Prohibited | Why |
+| --- | --- |
+| The labels `[OUT-OF-SCOPE]`, `[OPEN-OUT-OF-SCOPE]`, `[DEFERRED]` | The label asserts a disposition the agent has no authority to set. The name *is* the trim. |
+| "out of scope", "deferred", "backlog", "not in this task", "separate work", "acceptable residual", "tracked for later" applied to approved or discovered work | The same trim in prose instead of a tag. |
+| A `deferred::` / `skipped::` / `dropped::` marker with no `operator-approved <YYYY-MM-DD>` marker | Mirrors Step-Level Anti-Deferral: only the operator sets those statuses. |
 
-**Out-of-scope issues discovered mid-work (Law 2 Additional Rule):**
-Any issue found outside the current scope MUST be appended to `SCOPE.md` as an `[OPEN-OUT-OF-SCOPE]` item — never
-silently skipped, never silently absorbed. The operator decides whether to add it to scope.
+**Two states, only.** Every `SCOPE.md` item is either **completed** (with its verification evidence) or **blocked pending
+an operator ruling**:
 
-`SCOPE.md` is the audit trail. After the session, it can be read to see exactly which items were dropped, by what
-reasoning, and whether presentation occurred. A dropped item with no `[DEFERRED]`/`[OUT-OF-SCOPE]` line and no
-presentation record is a Law 2 violation (severity 2, "scope reduction is a silent decision").
+1. A blocked item MUST state its specific blocker — a missing credential, an unavailable external system, or an action
+   the invariants reserve to the operator. "Not enough time", "too large", "adjacent concern", and "would be better as
+   its own task" are not blockers; they are the trim wearing a blocker's name.
+2. A blocked item stays an **active approved item** and is re-attempted the moment the blocker clears. It is never
+   re-tagged, renumbered into a future task, or narrated as not-this-work.
+3. Present a blocked item and keep working the rest. Do not stop the session to wait for a reply, and never treat the
+   absence of a reply as permission.
+
+**The only lawful exit.** Work leaves this session's obligation solely through an explicit operator ruling recorded
+verbatim with its date — `dropped::operator-approved <YYYY-MM-DD> — "<the operator's words>"`. Nothing else qualifies:
+not a summary mention, not a queue entry, not silence.
+
+**Why the previous language was removed (measured, 2026-09-19).** This section used to let the agent mark an item
+`[DEFERRED]`/`[OUT-OF-SCOPE]` "with a one-line reason" and required a *presentation*. An agent could satisfy that
+requirement unilaterally by mentioning the tag in a summary, which made the label a self-approved trim: 2 live register
+items, 1 index line, 3 CHANGELOG lines and 12 session summaries carried `[OPEN-OUT-OF-SCOPE]`, none of them
+operator-approved. The labels are therefore removed as vocabulary rather than discouraged, and their appearance in a
+scope surface now fails `validate:repository` (`scope.prohibited-disposition`) and is blocked at write time
+(FID-2026-0919-024).
+
+**Every tracked item has a register line.** Removing the label does not remove the quiet path: an item that never
+reaches `SCOPE.md` is invisible in the register, so it can be dropped without writing any forbidden token. Coverage is
+enforced as well — every record in the active queue (`dev/fids/FID-*.md`) must be named in `SCOPE.md`, and every task
+cited by an active FID or a current session summary (`Task NN`, `TNN-X`) must exist there as a `## Task NN` section or a
+`TNN-X` item. Both fail `validate:repository` (`scope.unregistered-item`) and the standalone
+`scripts/scope-register-check.ts` probe (FID-2026-0919-025). A reference in inline code is a quotation of history; a
+bare reference is a claim on current scope.
+
+`SCOPE.md` remains the audit trail: it records what was approved, what was completed with what evidence, and what is
+blocked on which ruling. An item that is neither completed nor blocked-with-a-ruling is the violation.
 
 ## Double Audit (Single-Agent)
 
@@ -314,6 +397,22 @@ When a FID status is updated to **Closed**, you MUST:
 3. Log the archival in the session summary
 4. Closed FIDs must not remain in the active `dev/fids/` directory
 
+> **A `closed` FID carries NO live fingerprint guarantee — by design.**
+> The verification contract (declared gates + receipt fingerprint freshness) is
+> enforced only while a FID claims `fixed` or `verified`. Closure then edits the
+> document — the status flip and the `- **Archived:**` line — **after** the last
+> stamp, so a closed record's stored fingerprint no longer matches its content
+> and nothing re-stamps or re-checks it afterwards (measured 2026-09-19: 284 of
+> 315 archived `closed` records carried a drifted fingerprint, concentrated in
+> batch-closure commits). Treat the receipt on a closed record as the record of
+> the verification that earned the status, **not** as a claim about the current
+> bytes. The contract gap is not a licence to skip verification: the gates must
+> still have passed live before closure. Re-stamping
+> (`bun run fid:verify <fid-path> --write`) at closure is optional and is used
+> when a record should stay byte-consistent; `fid:verify --check` now states
+> explicitly which active records sit outside the contract instead of skipping
+> them silently (FID-2026-0919-021).
+
 ### FID Ground-Truth Verification
 
 FID status metadata is manually maintained and can drift from reality. **When reporting FID status, verify against the
@@ -355,6 +454,7 @@ presenting design choices.
 | Skipping verification                                 | Broken builds cascade                                      | 3/15 |
 | Choosing speed over quality                           | Never in a rush                                            | —    |
 | "Good enough"                                         | Good enough is never good enough                           | —    |
+| Labelling approved or discovered work out-of-scope / deferred / skipped / backlog (anything but completed or blocked-with-ruling) | Trimming approved work without approval | 2 |
 | Deferring approved work without presenting            | Scope reduction is a silent decision                       | 2    |
 | Writing pseudo-code or placeholders                   | Every line must be production-ready                        | 5    |
 | Writing code before FID converges (for complex tasks) | FID-Bound Execution is absolute for complex tasks          | —    |
@@ -381,7 +481,9 @@ exhaust all reasonable fix attempts before invoking an emergency procedure.
 1. Run failing test with verbose output to see details
 2. Check if test is stale (references old API)
 3. Fix test or fix code (whichever is correct)
-4. If truly stuck after all attempts, create a FID, mark feature as `PENDING`, and move on
+4. If truly stuck after all attempts, create a FID, record the item as `blocked` **with its specific blocker**, present
+   it, and continue with the remaining work. The item stays active and is never dropped — `blocked` is not a synonym for
+   done-or-abandoned.
 
 ### If Compilation Won't Fix
 
@@ -395,9 +497,9 @@ exhaust all reasonable fix attempts before invoking an emergency procedure.
 If you've read the same file 2+ times or made the same edit 2+ times:
 
 1. **STOP** immediately
-2. Mark current feature as `PENDING`
-3. Move to next feature
-4. Come back later with fresh context
+2. Record the item as `blocked` with its specific blocker (never as deferred, out-of-scope, or "for later")
+3. Continue with the remaining work; the item stays active
+4. Return to it with fresh context
 
 ---
 
@@ -444,6 +546,7 @@ A plan with silent deferrals is a broken plan — the operator approved work tha
 | ------------------ | --------------------------------------------- |
 | This protocol      | `ECHO.md` (read first)                        |
 | Project config     | `protocol.config.yaml` (`single_agent.protocol`) |
+| Automation levels  | This document → "Automation Levels" (`session.autonomy_level`) |
 | Language standards | `coding-standards/{language}.md`              |
 | FID template       | `templates/FID-TEMPLATE.md`                   |
 | FIDs               | `dev/fids/`                                   |

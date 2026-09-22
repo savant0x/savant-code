@@ -151,14 +151,20 @@ coding standard's `## Quality Overrides` section:
 | **3** | **Verify Before Proceed**          | Every change verified with build and test commands (from `protocol.config.yaml`) before moving on.                                | No broken builds ever. Zero errors, zero warnings.                                       |
 | **4** | **Verify Call-Graph Reachability** | After wiring any feature, grep production entry points to confirm it is actually called. Compilation is NOT verification.         | Zero grep results = NOT wired. Do not mark complete.                                     |
 
-**Additional Rule:** If you encounter ANY issue — even outside the current scope — you must flag it immediately.
-Never skip past a problem because "it's not what we're working on."
+**Additional Rule — NOTHING IS EVER OUT OF SCOPE:** If you encounter ANY issue while working, it is a work item and you
+own it: record it with its automation level and its evidence, then complete it. Never skip past a problem because
+"it's not what we're working on." There is **no agent-side scope disposition**: no agent may label, tag, defer, drop,
+trim or reclassify discovered or approved work as out-of-scope, deferred or backlog, in any artifact, for any reason.
+`[OUT-OF-SCOPE]`, `[DEFERRED]` and `[OPEN-OUT-OF-SCOPE]` **do not exist as statuses**; writing one is a scope reduction
+without approval (Law 2). A work item is **completed** or **blocked pending an operator ruling** — nothing else.
 
-**Single-agent scope protection:** When running in single-agent mode (governed by `dev/echo-v0.1.2-single-agent.md`),
-the agent MUST maintain a `SCOPE.md` artifact at the repository root and present any scope-drop for operator approval
-before proceeding — there is no Adversary in single-agent mode to catch a silent decision. See the Scope Boundary
-section of that file. This does not replace the 10-agent roster's Adversary override; it hardens the solo case where
-that override does not exist.
+**Scope protection:** The `SCOPE.md` artifact at the repository root is the approved-scope record, and it is the only
+place a disposition may be stated. Its rules are absolute: items are completed or blocked-with-a-specific-blocker, the
+only marker that legalizes a drop is `operator-approved <YYYY-MM-DD>`, and no agent can set it. The prohibition is
+enforced mechanically (write-time block + `validate:repository`'s `scope.prohibited-disposition` check,
+FID-2026-0919-024); the single-agent protocol — `dev/echo-v0.1.2-single-agent.md` → Scope Boundary — carries the full
+elaboration, including the measured history of why the previous labels were removed. This does not replace the 10-agent
+roster's Adversary override; it hardens the solo case where that override does not exist.
 
 ### Laws 5-15: The Extended Code Laws
 
@@ -683,6 +689,7 @@ existing FID and note the change in its Resolution section.
 | Skipping verification | Broken builds cascade | 3/15 |
 | Choosing speed over quality | Never in a rush | — |
 | "Good enough" | Good enough is never good enough | — |
+| Labelling approved or discovered work out-of-scope / deferred / skipped / backlog (anything but completed or blocked-with-ruling) | Trimming approved work without approval | 2 |
 | Deferring approved work without presenting | Scope reduction is a silent decision | 2 |
 | Writing pseudo-code or placeholders | Every line must be production-ready | 5 |
 | Performing another agent's role | Separation of duties is non-negotiable | — |
@@ -731,8 +738,25 @@ active mode is set by the user via UI or `/mode`.
 | **SCAFFOLD** | Project initialization. Scaffolds once, then hands back to HYBRID. | New repo setup. |
 | **ANALYZE** | Read-only. Search, inspect, and reason without writing files. | Codebase exploration, Q&A. |
 
-*Note: Autonomy Levels (Guided, Supervised, Autonomous) govern push/commit behavior, but
-Execution Modes govern workflow rigor.*
+### Automation Levels (Autonomy)
+
+Autonomy levels govern **how far the agent proceeds before asking** — commit and push *proposals*
+included. They do **not** authorize a commit or a push on their own: G2 still requires operator
+authorization and pushing stays forbidden. Execution Modes govern workflow rigor; levels govern
+approval depth.
+
+| Level | Name           | Authority                                                                                                                                    |
+| ----- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| **1** | **Guided**     | Extremely limited — approval is required for everything beyond reading and analysis.                                                           |
+| **2** | **Supervised** | The approved work plus reversible in-scope fixes found on the way; stops and presents before anything irreversible.                             |
+| **3** | **Autonomous** | Complete agent automation — the full loop runs without per-step approval, and findings inside the project are fixed in the same pass, not parked. |
+
+Declared at `protocol.config.yaml` → `session.autonomy_level` (default `3`). Each work item also
+carries its own level on the FID / SCOPE register, and **an item is actioned without approval only
+when its level is ≤ the session level**. No level lifts the version-control laws (G1–G9), credential
+handling, Law 3, or the project-directory boundary. Full elaboration — including what a *recorded*
+Law 2 presentation means at Level 3 — is in `dev/echo-v0.1.2-single-agent.md` →
+"Automation Levels".
 
 ---
 
