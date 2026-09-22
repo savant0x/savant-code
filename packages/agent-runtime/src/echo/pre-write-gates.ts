@@ -33,6 +33,7 @@ import {
 import { canonicalizePath } from './path-canonicalization'
 import { runFidGates } from './pre-write-gates-fid'
 import { runLaw3Gate } from './pre-write-gates-law3'
+import { runScopeDispositionGate } from './scope-disposition-guard'
 import { runYagniPreWriteGate } from './yagni-pre-write-gate'
 
 import type {
@@ -201,6 +202,20 @@ export function runPreWriteGates(params: {
   })
   if (fidResult) {
     return fidResult
+  }
+
+  // ── Scope-disposition gate (FID-2026-0919-024) ─────────────────────
+  // No agent-side scope trimming: a write that would add `[OUT-OF-SCOPE]`,
+  // `[OPEN-OUT-OF-SCOPE]`, `[DEFERRED]` or an unapproved `deferred::` /
+  // `skipped::` marker to a scope surface is blocked here. The same authority
+  // backs the `scope.*` checks in validate:repository.
+  const scopeResult = runScopeDispositionGate({
+    targetPath,
+    input: params.input as Record<string, unknown>,
+    warnings,
+  })
+  if (scopeResult) {
+    return scopeResult
   }
 
   return { blocked: false, warnings }

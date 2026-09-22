@@ -32,6 +32,7 @@
  */
 
 import { collectContractViolations } from './fid-verification-contract-sweep'
+import { describeVerificationEnforcement } from './fid-verification-enforcement'
 import { computeFidFingerprint } from './fid-verification-fingerprint'
 import {
   receiptBlock,
@@ -78,10 +79,10 @@ const RESULT_LINE =
 const FINGERPRINT_LINE = /^-\s*fingerprint:\s*sha256:([0-9a-f]{64})$/
 const VERIFIED_LINE = /^-\s*verified:\s*(.+)$/
 
-const STATUS_LINE = /^\*\*Status:\*\*\s*(.+)$/m
-
-/** FIDs must be at least one of these to require verification evidence. */
-const VERIFIED_STATUSES = new Set(['fixed', 'verified'])
+// The status parser + the enforced-status set live in
+// ./fid-verification-enforcement (FID-2026-0919-021) — ONE truth, so the
+// explicit enforcement report and the validator's skip decision can never
+// disagree.
 
 // The fence-aware locators (withoutFencedBlocks / sectionBetween /
 // verificationGatesSection / receiptSpan / receiptBlock) live in
@@ -189,8 +190,13 @@ export function parseVerificationReceipt(content: string): {
  * `scripts/fid-gates.ts` / `scripts/fid-verify.ts`.
  */
 export function validateFidVerification(content: string): string[] {
-  const status = content.match(STATUS_LINE)?.[1]?.trim()
-  if (!status || !VERIFIED_STATUSES.has(status)) return []
+  // FID-2026-0919-021: the skip is single-sourced. A status outside
+  // {fixed, verified} is NOT ENFORCED rather than silently unmentioned —
+  // `describeVerificationEnforcement` owns that decision and
+  // `fid:verify --check` prints its reason. The return stays [] so the
+  // pre-write tripwire and the scan never treat a skipped record as a
+  // structural failure.
+  if (!describeVerificationEnforcement(content).enforced) return []
 
   const errors: string[] = []
   const { gates, errors: gateErrors } = parseVerificationGates(content)
