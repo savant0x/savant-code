@@ -8,8 +8,9 @@ import {
 } from './loop-iteration'
 import { getOrCreateEnforcement } from '../echo/enforcement'
 import { appendGroundingRefresh } from '../echo/grounding'
-import { getAgentOutput } from '../util/agent-output'
+import { fireMainAgentTerminalHook } from '../hooks/lifecycle-hooks'
 import { expireMessages } from '../util/messages'
+import { finishCompletedTurn } from './loop/completed-turn'
 import {
   handleLoopAbort,
   handleLoopError,
@@ -88,6 +89,15 @@ export async function loopAgentSteps(
       },
       params.traceWriter,
     )
+    // FID-2026-0919-031: a setup-phase cancellation IS a cancellation, so it
+    // reports as `Interrupt` — never `Stop` (nobody finished a turn).
+    fireMainAgentTerminalHook({
+      event: 'Interrupt',
+      agentState: setupResult.agentState,
+      fileContext: params.fileContext,
+      errorMessage: 'Run cancelled by user',
+    })
+
     return {
       agentState: setupResult.agentState,
       output: {
@@ -257,28 +267,16 @@ export async function loopAgentSteps(
       params.traceWriter,
     )
 
-    // FID-2026-0825-001: a manual /compact run ends via compact-and-stop —
-    // the interceptor spawns the pruner and returns without any LLM step, so
-    // NO assistant turn exists for this run. getAgentOutput treats a
-    // zero-assistant history as an error ("No response from agent"), which
-    // fired deterministically whenever the compacted history contained no
-    // surviving assistant messages (e.g. every /compact issued right after a
-    // previous successful one); and even when older turns survived, they were
-    // echoed as a stale fake "/compact response". Consume the one-shot stamp
-    // and report an explicitly empty last-turn output instead — success with
-    // nothing new to render (CompactionSignal carries the outcome).
-    if (initialAgentState.compactAndStop === true) {
-      initialAgentState.compactAndStop = undefined
-      return {
-        agentState: initialAgentState,
-        output: { type: 'lastMessage', value: [] },
-      }
-    }
-
-    return {
+    // FID-2026-0825-001 / FID-2026-0919-031: the completed-turn exit resolves
+    // the output (including the compact-and-stop stamp) and reports `Stop`
+    // together, in `loop/completed-turn.ts`.
+    const finalOutput = finishCompletedTurn({
       agentState: initialAgentState,
-      output: getAgentOutput(initialAgentState, agentTemplate),
-    }
+      agentTemplate,
+      fileContext: params.fileContext,
+    })
+
+    return { agentState: initialAgentState, output: finalOutput }
   } catch (error) {
     // Handle user-initiated aborts separately - don't log as errors
     if (isAbortError(error)) {
