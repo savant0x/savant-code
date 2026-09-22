@@ -1,5 +1,463 @@
 # Changelog
 
+## 0.0.33 — 2026-09-22
+
+### The last five hook events, and the contract that described them (FID-2026-0919-031) — **Closed + archived 2026-09-22**
+
+- **The five declared-but-inert events now fire, each with the semantics it had
+  to be given first.** `Stop` / `Interrupt` split on **who ended the turn**
+  (finished on its own terms vs cancelled; a failure fires neither, and both are
+  main-agent only — children report via `SubagentStop`). `PreCompact` is the
+  compaction **attempt** (the pruner spawn) and `PostCompact` only fires on the
+  runtime's existing `pruned` predicate, so a compaction that removed nothing
+  cannot claim the context was compacted — the unmatched `PreCompact` is the
+  signal. `Notification` is the runtime handing control to the operator (an
+  `ask_user` call), carrying the questions.
+- **The census now asks for reachability, not spelling.** Naming an event in a
+  helper's parameter type is what a type annotation does without firing anything,
+  so a helper-mediated event counts only with a caller outside the module — and
+  only with a caller passing that event when the helper is event-parameterized.
+  Both holes were found by trying to break the rule: deleting the `Notification`
+  call site and deleting the `Stop` call site each now fail the probe by name.
+- **The documented contract was read back against the source, and five drifts
+  corrected.** The events table (all twelve fire, with semantics), the
+  payload-field table (outcome / compaction / notification fields), the `Source`
+  section — which named a parser function in a file that does not contain it and
+  three wiring files that fire nothing — the missing `action` config row, and the
+  previously unstated behaviour of `matcher` on a tool-less event (it is not
+  consulted: the hook runs, because a config typo becoming a hook that silently
+  never runs is the failure mode the event classification exists to prevent).
+- **Found and fixed by the new pins, not by review:** `fireNotificationHook`
+  hardcoded `tool_name: 'ask_user'`, so a notification raised for any other
+  reason would have named a tool that never ran.
+- 16 new pins / 4 negative legs; full chain **7593 pass / 0 fail** at
+  implementation.
+- **Closed + archived 2026-09-22** on the operator's closure directive; the
+  receipt was re-stamped LIVE at the archived path so the closed record is
+  byte-consistent with its final content. Commit SHA pending operator git
+  execution (G2 withheld).
+
+### The hook surface tells the truth: acting agent on PreToolUse, session outcome, fired-vs-declared event census (FID-2026-0919-030) — **Closed + archived 2026-09-19**
+
+- **`PreToolUse` could not say who was acting.** It is the only hook event that
+  can BLOCK a tool, and it is documented as composing with the EHEL gate — which
+  gates **per agent**. Both call sites (the native gate chain and the custom/MCP
+  path) sent `session_id` + `cwd` + `tool_name` + `tool_input` only, so the natural
+  policies were inexpressible: "deny writes unless the caller is `forge`" had no
+  field to test, and a subagent's call arrived under the **child's** run id with
+  nothing naming the child. Both sites now carry the acting agent, and a census
+  pin makes a third site impossible to add without it.
+- **`SessionStart`/`SessionEnd` were outcome-blind.** `SessionEnd` fires in a
+  `finally` with identity only, so a clean end and a crash were indistinguishable
+  at the hook — the `SubagentStop` defect one boundary up. The outcome is now
+  computed on every path (return, error-form return, thrown) and reported, with
+  `SessionStart` deliberately outcome-free. Both lifecycles share ONE builder
+  (`hooks/run-outcome.ts`; `hooks/subagent-outcome.ts` re-exports), because two
+  implementations of the same boundary binding is how FID-2026-0919-027's
+  governance leak started.
+- **Five of the twelve declared hook events never fired, and nothing said so.**
+  `PreCompact`, `PostCompact`, `Stop`, `Interrupt` and `Notification` are in the
+  config vocabulary (so they parse and load) and were documented in
+  `docs/design/hook-system.md` as active — but had **zero firing sites** in the
+  runtime. A hook declared for one of them was silently inert: no parse error, no
+  warning, nothing to observe. The sets are now data (`FIRED_HOOK_EVENTS` /
+  `NEVER_FIRED_HOOK_EVENTS`, each inert event with the blocker that keeps it
+  inert) with compile-time exhaustiveness gates, verified against the runtime
+  source by `scripts/hook-events-check.ts`, which also fails if this repo's own
+  `protocol.config.yaml` declares an inert hook. The doc's Events table now states
+  what fires today.
+- **The blockers are named, not hidden:** three of the five have no defined
+  trigger in the repo's own docs (`Stop`/`Interrupt` are documented as the same
+  thing; `Notification` has no trigger at all), and the compaction pair needs an
+  attempt-vs-effect semantics ruling plus two scattered sites — the pruner can
+  complete having compacted nothing, so firing "around compaction" without a
+  predicate would emit an event that lies.
+- 10 new pins / 49 expectations, driven at the real boundaries (`createHookGate`
+  for the payload the engine receives, `mainPrompt` for all three session
+  endings) plus the source census. Full chain 7577 pass / 0 fail. Three negative
+  legs: drop the agent field → 3 red; drop the session outcome → 3 red; give an
+  inert event a firing site → 2 red and the probe exit 1. All sources restored.
+- **Closed + archived 2026-09-19** (operator directive). Record at
+  `dev/fids/archive/FID-2026-0919-030-hook-surface-truth.md`; receipt re-stamped
+  LIVE at the archived path (5/5 gates), fingerprint `sha256:724b6c62…`. Commit
+  SHA pending operator git execution (G2 withheld).
+
+### Boundary observability and enumeration: SubagentStop outcome payload + SessionState/FileContext field partitions (FID-2026-0919-029) — **Closed + archived 2026-09-19**
+
+- **Operator hooks could not tell a finished child from a failed one.**
+  `SubagentStart` / `SubagentStop` fired with type, session and cwd only, so
+  three genuinely different endings — the loop returned usable output, the loop
+  returned the error form (`{ type: 'error', message }`, which is how a silent
+  no-assistant-turn run already reports itself), and the loop threw — produced
+  byte-identical payloads. The hook contract already supported
+  `tool_result`/`error_message` (the same fields `PostToolUse` /
+  `PostToolUseFailure` use); `executeSubagent`, the single funnel both spawn paths
+  share, never set them. `hooks/subagent-outcome.ts` now builds the payload and
+  every terminal branch sets it — including the `catch`, which reports the cause
+  and still rethrows. The default before any branch is the truthful
+  "unknown ⇒ failed", so an unhandled path fails loudly instead of reporting
+  success. The payload carries **identity and shape only** (`status`, `agentType`,
+  `runId`, `creditsUsed`, `outputType`, `errorMessage`): hook JSON is stdin for
+  hook commands, so a child's transcript would be unbounded and would be a
+  content-leak path. `SubagentStart` is pinned to stay outcome-free.
+- **`SessionState` and `ProjectFileContext` now have enumerated boundary
+  contracts.** FID-2026-0919-028 made `AgentState` self-enforcing at the spawn
+  boundary and recorded this as the natural extension. Both types have a boundary:
+  `cloneSessionState` deep-copies `mainAgentState` (JSON round-trip, for
+  byte-parity with the persisted snapshot) and shares `fileContext` by reference
+  (~230ms per snapshot avoided on the render thread); run start rewrites 10 of the
+  16 file-context fields across two modules and carries the other 6.
+  `common/src/types/session-boundary-fields.ts` classifies every key once,
+  `AssertNever` gates make an unclassified field a build failure, and each
+  exemption carries the reason it is safe. `gitChanges` is now *declared* as
+  carried — captured at session init and **not** refreshed on resume — rather than
+  left for someone to discover.
+- **The census, not just the type, is the gate.** A boundary can drift by gaining
+  a *writer* without gaining a type key, so the pins include a census over the two
+  modules that assign `fileContext.*`: a new unclassified writer fails a test.
+  `scripts/handoff-transport-check.ts` now asks all three boundary questions
+  (child, snapshot, run start) reading the shipped lists.
+- 15 new pins (7 hook-outcome through the real `handleSpawnAgents` →
+  `executeSubagent` boundary, 8 partition pins driven off the shipped lists, 81
+  expectations). Full chain 7567 pass / 0 fail. Every gate was proven by a
+  negative leg: dropping the `toolResult` argument → 3 pins red; a field injected
+  into each type → `error TS2344` at its gate; a new run-start writer → census
+  `unclassified`; a writer on a carried field and a copied `fileContext` → the
+  probe exit 1. All sources restored.
+- **Closed + archived 2026-09-19** (operator directive). Record at
+  `dev/fids/archive/FID-2026-0919-029-boundary-outcome-and-enumeration.md`; receipt
+  re-stamped LIVE at the archived path (7/7 gates), fingerprint
+  `sha256:fb6eabb5…`. Commit SHA pending operator git execution (G2 withheld).
+
+### Spawn boundary made self-enforcing: an unclassified AgentState field is a build failure (FID-2026-0919-028) — **Closed + archived 2026-09-19**
+
+- **The mechanism that dropped the governance configuration is closed, not just
+  the fields it dropped.** `createAgentState` inherited a hand-written list of
+  parent fields, so the *next* field added to `AgentState` would be silently
+  absent on every child — exactly how FID-2026-0919-027's four governance fields
+  went missing, and why finding them took a full audit. Every one of the 54
+  `AgentState` keys is now classified exactly once in `spawn-child-fields.ts`:
+  **13 inherited**, **14 child-owned**, and **27 deliberately absent with a
+  stated reason** each (`groundingCheckpoint`, `maxContextLength`/`digestCaps`
+  because `createLoopContext` re-stamps them per run, the goal/drive records owned
+  by the root drivers, per-run compaction telemetry, anti-runaway counters).
+- **Omitting a field now fails `typecheck`.** `UnclassifiedAgentStateFields =
+  Exclude<keyof AgentState, …>` plus `AssertNever` gates make the build red for an
+  unclassified field, a category overlap, or a governance field missing from the
+  inherited list. Proven by injection: adding `probeUnclassifiedField?: string`
+  to `AgentState` yields `error TS2344: Type 'string' does not satisfy the
+  constraint 'never'` at the gate. The module documents the measured diagnostic
+  limitation (TS renders the deferred `Exclude` rather than the key) and points at
+  the exported alias as the readable entry point.
+- **The list IS the behavior.** `createAgentState` no longer hand-copies the
+  inherited half — it spreads `inheritFromParent()`, single-sourced from the same
+  partition, so a field cannot be documented as inherited and then forgotten at
+  the construction site. `inheritRunGovernance` is now a subset of that partition.
+- **The probe reads the authority.** `scripts/handoff-transport-check.ts`
+  iterates the shipped lists (inherited must cross, by-design must not leak) and
+  fails if the authority answers `unclassified` — it can no longer agree with code
+  it does not read.
+- 7 new pins / 114 expectations (`spawn-child-fields`): inherited fields cross,
+  per-run instances are shared by reference, no by-design field is set on a fresh
+  child, categories are disjoint, unknown names answer `unclassified`, governance
+  ⊆ inherited. Full chain 7552 pass / 0 fail.
+- **Closed + archived 2026-09-19** (operator directive). Record at
+  `dev/fids/archive/FID-2026-0919-028-spawn-boundary-self-enforcing.md`; receipt
+  re-stamped LIVE at the archived path (6/6 gates), fingerprint
+  `sha256:d85e2256…`. Commit SHA pending operator git execution.
+
+### Inter-agent handoff transport: children inherit the run's governance (FID-2026-0919-027) — **Closed + archived 2026-09-19**
+
+- **A spawned child was not governed by the run it belonged to.**
+  `createAgentState` threaded identity, ancestry, protocol variant, FSM phase,
+  `echoCompliance` and `provenance` into every child — and dropped the run's
+  resolved governance configuration. All four are read back from `agentState`
+  inside the child's own tool path, so every subagent ran under defaults: a
+  strict EHEL run silently relaxed to the hybrid tier in every child
+  (`getTier(strict) = all_15` vs `getTier(hybrid) = core_4` — 11 of the 15 Laws
+  ungated), the design write gate saw no contract on the writes Forge (always a
+  child) performs, embedded installs re-resolved the protocol as `local`, and a
+  child could open a second ZTAP session in `record` when the operator had set
+  `off`. Fixed at the single construction point (`spawn-child-state.ts` →
+  `inheritRunGovernance`) and made a **contract**: the propagation snapshot
+  carries the four fields and `executeSubagent` rejects a child state missing
+  any of them. `groundingCheckpoint` is deliberately excluded (children are
+  exempt from the boot gate and must not claim the root's reads).
+- **Raw evidence reached one audit-spawn path of three.** The batch path
+  required a ROOT parent (`!parentAgentState.parentId`), so a nested spawn
+  restored nothing, and the inline path never loaded records at all — an inline
+  or nested Verifier/Adversary audited compaction sentinels. One loader
+  (`evidence/spawn-evidence.ts`) now unions the run chain for both sites, which
+  is what the spill's per-RUN keying actually requires.
+- **The context-pruner was batch-spawnable and silently a no-op.** It is in the
+  Orchestrator's `spawnableAgents` (it must be — the inline path validates
+  through the same allowlist), so `spawn_agents` accepted it while performing
+  none of the wiring that makes a prune land: the child pruned its own discarded
+  copy and the parent's compaction never advanced — full cost, zero effect. Now
+  rejected before dispatch at both seams with a reason that names the mechanism.
+- **The inline relay dropped a child's artifact.** `spawn_agent_inline` returned
+  a constant `{ message: 'Agent spawned.' }` while `spawn_agents` relayed the
+  child's output, so a `structured_output` child informed its parent on one path
+  and not the other. The constant is kept for harness-owned inline agents (their
+  effect IS the history swap) and the real output is relayed otherwise.
+- **One binding, one authority.** The batch path carried its own copy of the
+  ZTAP verdict-receipt block while the inline path used `applyVerdictReceipts`;
+  both now route through the extracted authority.
+- 27 new pins (`spawn-handoff-transport` 11, `spawn-evidence` 4, propagation
+  contract +2 assertions); `agent-runtime` 1462/0; full chain 7545 pass / 0
+  fail. New live probe `scripts/handoff-transport-check.ts` reports the boundary
+  on demand — RED (6 fields missing, `all_15 → core_4`, `off → record`, diverged
+  grounding identity) → GREEN, with the negative leg proven by reverting the
+  fix (exit 1 naming the four fields).
+- **Closed + archived 2026-09-19** (operator directive). Record at
+  `dev/fids/archive/FID-2026-0919-027-inter-agent-handoff-transport.md`; receipt
+  re-stamped LIVE at the archived path (6/6 gates), fingerprint
+  `sha256:c705a855…`. Commit SHA pending operator git execution. The mechanism
+  that produced the defect is closed by FID-2026-0919-028.
+
+### Release tooling: automation-mode clean-tree dead code (FID-2026-0918-003)
+
+- The automation release path could never succeed: the pre-audit's absolute
+  clean-tree gate contradicted the required-changes automation commit, so a
+  clean worktree still entered the "commit the changes" branch and dead-ended.
+  `commitAutomationChangesOrTagHead` (`scripts/public-release/git-publish.ts`,
+  wired at `scripts/public-release/stages.ts:92`) now records the current HEAD
+  with `committedFiles: []` and creates no commit when the tree is clean, while
+  a dirty worktree still sweeps into the single `chore(release): prepare
+  v<version>` commit with the credential scan and governance warning intact.
+  The pre-audit gate itself is untouched; `docs/public-release.md`
+  transaction-order step 5 was amended; 2 pins in
+  `scripts/public-release-git.test.ts`. Commit `2cc0b854`. Internal
+  release-tooling fix — no user-visible product change.
+- Recorded at release-audit time (2026-09-19): the closure session shipped
+  this fix without a CHANGELOG entry, and the tagged `v0.0.32` tree does not
+  contain it (`git show v0.0.32:scripts/public-release/git-publish.ts` → 0
+  matches), so it belongs to this release rather than the previous one.
+
+### Automation levels documented + documented-version-surface integrity + test isolation (FID-2026-0919-023)
+
+- **Automation levels are now written governance.** `session.autonomy_level: 3`
+  existed as a bare scalar with a one-line gloss, `ECHO.md`'s "Execution &
+  Autonomy Modes" named Guided/Supervised/Autonomous in a note that never
+  defined them, and the single-agent protocol — the governing document in
+  single-agent sessions — had no such section at all. A canonical
+  `## Automation Levels` section now defines level 1 (Guided: extremely
+  limited, approval for everything), level 2 (Supervised: approved work plus
+  reversible in-scope fixes), and level 3 (Autonomous: complete agent
+  automation, in-project findings fixed in the same pass), plus the
+  session-ceiling-vs-item rule, the Law 2 semantics at level 3 (a *recorded*
+  presentation, not a skipped one), and the invariants no level lifts — G1–G9,
+  credentials, destructive operations, Law 3, Law 11, and the
+  project-directory boundary. `ECHO.md` carries the matching ladder,
+  reconciled with its version-control laws (levels govern how far the agent
+  proceeds before asking; they never authorize a commit or push);
+  `templates/FID-TEMPLATE.md` gained a required `Automation level` field; every
+  item in `SCOPE.md` is tagged.
+- **Documented version surfaces became a checked contract — and the check found
+  a real drift on its first run.** `updateDocSurfaces` replaced an exact
+  `oldVersion` string and silently skipped on a non-match, so a surface
+  advanced only when it sat *exactly one release behind*: `ARCHITECTURE.md`
+  claimed the "current state" was `0.0.26` through seven bumps (now `0.0.33`),
+  the localized README blurb label had no pattern at all, and the 0.0.33 bump
+  relabelled `**v0.0.32** —` in `README.md`, so the README advertised the
+  previous release's content under the new version (its v0.0.32 chain entry is
+  restored). One `DOC_VERSION_SURFACES` table now drives both the writer and
+  the checker: the writer converges each declared surface from whatever version
+  it currently states, and `collectVersionDrift` reports drifted **or missing**
+  surfaces through `version:check` (the desktop-family precedent — "reported as
+  missing, never skipped"). 5 pins in `scripts/version-docs-drift.test.ts` plus
+  the existing fixture extended.
+- **The root `bun run test` gate was RED and is now green.** Two
+  `teacher/progression` receipt assertions failed only in the full chain: the
+  SEC-5 suite installed a **process-wide** `mock.module` on
+  `@savant-code/common/crypto` whose stub threw unconditionally, so the teacher
+  keypair derivation in the other suite signed nothing and
+  `adaptAttemptReceipt` returned `null`. The leak reproduced in both suite
+  orders and survived both `afterAll(mock.restore())` and a `beforeAll`
+  installation; the stub is now input-scoped — it throws only for that suite's
+  payloads and delegates to the real signer for every other caller. 12/12
+  workspaces pass, 0 fail.
+- Six pre-existing `format`-gate violations (files committed unformatted by
+  earlier sessions, unrelated to this change) were formatted, taking repo-wide
+  `prettier --check` green.
+- Gates: `typecheck` ×12 exit 0; `bun run test` exit 0 / 0 fail;
+  `version:check` PASS; `prettier --check .` PASS; `quality` PASS (1498 files);
+  `validate:repository` PASS; `eslint` 0; `lint:md` 0;
+  `release:public:preview` exit 0; changelog audit PASS (no `[Unreleased]`
+  accumulator, completeness verified tag-aware against git ground truth).
+  **Closed + archived 2026-09-19** (receipt re-stamped live at the archived
+  path: 9/9 gates, fingerprint `sha256:e3c9453a…`). **Pending operator commit**
+  (G2 withheld).
+
+### No agent-side scope trimming — vocabulary removed + mechanical guard (FID-2026-0919-024)
+
+- **The protocol was authorizing it.** The operator reported that approved work
+  kept being marked out-of-scope without their approval. Root cause: the Scope
+  Boundary section instructed the agent to mark a dropped item
+  `[DEFERRED]`/`[OUT-OF-SCOPE]` "with a one-line reason" and to *present* it — a
+  requirement a summary mention discharges — while the same document's
+  Step-Level Anti-Deferral rule says only the operator may set those statuses
+  (already enforced for FID steps). Measured spread before the fix: 2 live
+  register items, 1 FID-index line, 3 changelog lines, 12 session summaries.
+- **Vocabulary removed, not discouraged.** Nothing is ever out of scope: the
+  labels are declared non-existent as statuses, the prose forms ("backlog",
+  "separate work", "acceptable residual", "tracked for later") are prohibited,
+  and every item is **completed** or **blocked pending an operator ruling** with
+  a *specific* blocker named — "too large", "adjacent concern", and "would be
+  better as its own task" are disqualified as the trim wearing a blocker's name.
+  The only lawful exit is an operator-approved ruling recorded verbatim with its
+  date. Applied to both protocols, the anti-pattern tables, the emergency
+  procedures, and the register preamble.
+- **Mechanical guard.** New `echo/scope-disposition-guard.ts` is the single
+  authority — token detection with inline-code awareness (a backticked token is
+  a quotation, a bare one is the disposition, which is what lets the rule be
+  stated in the very artifacts it governs). Wired as a **write-time block** in
+  `runPreWriteGates`, as `scope.prohibited-disposition` in
+  `validate:repository`, and as the `scripts/scope-guard-check.ts` probe. Live
+  surfaces (register, agenda, active FIDs) are scanned unconditionally; session
+  summaries and the current-release changelog block are windowed from
+  2026-09-19 so pre-existing records stay history.
+- Verification: 10 pins incl. reachability through `runPreWriteGates`; 49/0
+  across the 8 pre-existing pre-write gate suites; the probe exits 1 on a bare
+  token and 0 on the backticked form; `validate:repository` PASS; typecheck ×12
+  exit 0; `bun run test` 0 fail in 12/12 workspaces; eslint 0; lint:md 0;
+  prettier PASS; quality PASS (1498 files). **Closed + archived 2026-09-19**
+  (receipt re-stamped live at the archived path: 6/6 gates, fingerprint
+  `sha256:195a024a…`). **Pending operator commit** (G2 withheld).
+
+### Register completeness: a line for every tracked item (FID-2026-0919-025)
+
+- **The quiet half of the scope guard.** FID-2026-0919-024 removed the label an
+  agent trimmed scope with, which left the omission as the remaining path: an
+  item with no line in `SCOPE.md` is invisible in the register, so it can be
+  dropped with no operator decision and with no forbidden token to detect.
+- **Two decidable legs.** New `echo/scope-register-completeness.ts` is the single
+  authority: every active `dev/fids/FID-*.md` must be named in `SCOPE.md`, and
+  every `Task NN` / `TNN-X` cited by an active FID or a session summary dated
+  on/after the guard's effective date must exist there as a `## Task NN` section
+  or a `TNN-X` item. A reference in inline code is a quotation and a bare one is
+  the claim — the rule the disposition guard already applies, now shared through
+  one exported helper rather than restated. Wired as `scope.unregistered-item` in
+  `validate:repository` and as the `scripts/scope-register-check.ts` probe; not a
+  write-time block by design, since a FID is created and registered in two writes
+  (the FID-2026-0917-002 deadlock class). The requirement is stated in the
+  protocol's Scope Boundary and the register preamble.
+- **It caught its own author.** Pointed at the real tree while this record was
+  still unregistered, the check reported 8 gaps in its own FID; making the scan
+  inline-code aware took that to 4, and the register line to 0 — a live RED →
+  GREEN on the real repository rather than a fixture.
+- Verification: 15 pins / 24 expectations; 25/0 across both scope-guard suites;
+  `validate:repository` PASS; probe PASS (0 issues); typecheck ×12 exit 0;
+  `bun run test` 0 fail in 12/12 workspaces; eslint 0; lint:md 0; prettier PASS;
+  quality PASS (1498 files). **Closed + archived 2026-09-19** (receipt re-stamped
+  live at the archived path: 5/5 gates, fingerprint `sha256:dd7cd79f…`).
+  **Pending operator commit** (G2 withheld).
+
+### B.AI credit-gate audit + provider quota visibility (FID-2026-0919-026)
+
+- **The audit: the integration is correct and the account is unfunded.** Operator
+  report: live use returns `credit insufficient balance: balance=0 required=3672`
+  while the vendor's key page shows 100% free usage. Both keys in the working tree
+  authenticate (`/balance`, `/models` → 200; `x-api-key` and Bearer identical) and
+  resolve to the same account with `personal_balance: 0`; the live catalog resolves
+  47 internal ids including all five named models; the production chain emits
+  `POST https://api.b.ai/v1/chat/completions` with the correctly stripped upstream
+  id and bearer auth for every one of them — and every one is refused
+  `400 insufficient_user_quota`. B.AI is **prepaid** (1 USD = 1,000,000 Credits)
+  and none of the five is free: they are the cheapest paid tier, and the only
+  documented free credit is a bonus that expires after 30 days. The operator's
+  `required=3672` is therefore ~$0.0037 against a balance of exactly 0.
+  Corroborated by this repository's FID-2026-0911-004 (same key, HTTP 200 on
+  `qwen3.8-flash` on 2026-09-11). No repository claim is false and the vendor error
+  reaches the operator intact, so no rendering fix was warranted.
+- **The fix (operator ruled "Both"):** provider quota is now visible where the
+  operator is. A data-only `quota?: { url; valuePath; unit?; note }` on
+  `ProviderConfig` (mirroring `catalog`) — declared for B.AI against its documented
+  `GET /v1/balance` — drives a bounded, fail-silent reader
+  (`cli/src/utils/provider-quota.ts`) and one `**Quota:**` line in `/health` for
+  the active provider; `quotaHint` in the existing send-message hint seam appends
+  the provider's declared note to a quota-class refusal and points at `/health`,
+  resolving the provider from `DIRECT_PROVIDER` or the model id's prefix and never
+  fetching. A registry pin enforces that only providers documenting such an
+  endpoint declare one.
+- Verification: 15 new pins (reader 6, hint 4, `/health` line 3, registry 2);
+  typecheck cli + common exit 0; `quality` PASS (the registry entry hit the 300-line
+  ceiling at 303 mid-pass and was condensed back to 300); root test chain 0 fail;
+  `validate:repository` PASS; both scope probes PASS. **Closed + archived
+  2026-09-19** (receipt re-stamped live at the archived path: 8/8 gates,
+  fingerprint `sha256:5a85c231…`). **Pending operator commit** (G2 withheld).
+
+## 2026-09-19 — Verification-contract integrity: receipt-contract widening + repo-gate completeness (2 FIDs archived)
+
+### Verification-contract widening + explicit enforcement reporting (FID-2026-0919-021)
+
+- Ground-truthing FID-2026-0918-007 against its own verification contract
+  found two holes in the CONTRACT, not the record. The FID-2026-0918-006
+  sweep reported **0 errors / 0 warnings** over a document whose two test
+  suites were covered by no declared gate: its promise pattern matched only
+  the literal wording "new (runtime) test", and it read only the
+  `### Verification` section, while the artifacts were named in the Steps,
+  Implementation Evidence, and Resolution sections.
+- Widened rule: a promise is any line — in any section — that names a
+  repo-relative `*.test.ts(x)` path AND carries a novelty marker (`new`,
+  `added`) on that same line, in either order. A bare filename is a mention,
+  not a commitment (the directory separator is required), and the pathless
+  branch is scoped to `### Verification` + `### Implementation Evidence`
+  after the rule rejected this FID's own narrative prose (audit finding,
+  pinned).
+- Separately, the receipt contract skipped every status outside
+  `fixed`/`verified` SILENTLY — measured: **284 of 315 archived `closed`
+  records** carry a drifted fingerprint, because closure edits the document
+  after the last stamp by design. Causally proven on FID-2026-0918-007 with
+  git blobs (matching at `6e816902` while `verified`; stale after the
+  `3a0fe8dd` closure batch). New `echo/fid-verification-enforcement` module is
+  the single authority for the enforced-status set; `fid:verify --check` now
+  names every active record outside the contract with its reason, as a
+  non-fatal information tier. `validateFidVerification` behavior is unchanged
+  (pinned) so a by-design skip can never become a blocking error. Law 13:
+  `scripts/fid-gates.ts`'s duplicate status set/parser deleted.
+- Live proof on the real record, reproduced under the final rule: **0
+  violations → 3** after the widening → **0** after FID-2026-0918-007 was
+  amended with the two gates and re-stamped (fingerprint matching).
+- Gates: typecheck `packages/agent-runtime` 0; new suites 11/0 + 1/0 + 8/0;
+  five pre-existing contract suites green (50/0); echo tree 189/0; repo-wide
+  `fid:verify --check` PASS; quality PASS; eslint 0; lint:md 0; prettier
+  clean; receipt 10/10 stamped live, re-stamped at the archived path.
+  Commit SHA pending operator git execution (G2 withheld).
+  **Closed + archived 2026-09-19.**
+
+### Receipt-contract completeness: declarable repo-gate checks + closed-record docs (FID-2026-0919-022)
+
+- `bun run validate:repository` was RED with 13 issues, 2 of them shipped BY
+  FID-2026-0918-007's own part-3 code: bare `'bun'` spawns at
+  `sdk/scripts/ensure-ripgrep-vendor.ts:114` and
+  `sdk/src/__tests__/ensure-ripgrep-vendor.test.ts:39` — the `v0.0.30`
+  ENOENT-under-sanitized-env class `audit.gate-env-parity` exists to catch.
+- The escape route was structural: a FID could not DECLARE a repo-gate check,
+  and `validate:repository` itself can never be one — it re-enters FID gate
+  execution (C3) and would recurse (Lesson, FID-2026-0915-004). Fix: both
+  spawns moved to `process.execPath` (the FID-2026-0909-002 precedent), and
+  the specific check was made independently runnable
+  (`scripts/audit-gate-env-parity.ts` gained an `import.meta.main` entry
+  point: exit 0 clean / 1 with one line per issue) so the EXISTING `probe`
+  kind can express it. This record proves it on its own receipt:
+  `- gate: probe scripts/audit-gate-env-parity.ts` → PASS. A new `audit` gate
+  kind was rejected (Law 5 — no new capability, and it would add parser,
+  receipt, template, and bundle surface).
+- The probe route, the recursion boundary, and the T69 closed-record receipt
+  semantics are documented in `templates/FID-TEMPLATE.md`; the protocol bundle
+  was regenerated (1 file, harness v0.2.0) with `generate:protocol-bundle:check`
+  PASS. Also under this record (operator directive): 11 `hygiene.scratchpad-clutter`
+  violations cleared — scratch scripts moved from the `dev/scratchpad/` root to
+  `archive/`.
+- Gates: typecheck sdk + common 0; sdk install-hook suite 4/0; audit suite
+  13/0 (incl. 2 new entry-point pins); protocol-copies + embedded-protocol
+  33/0; `probe scripts/audit-gate-env-parity.ts` PASS; quality PASS; eslint 0;
+  lint:md 0; prettier clean; receipt 8/8 stamped live, re-stamped at the
+  archived path. `validate:repository` **FAIL (13) → PASS**. Commit SHA
+  pending operator git execution (G2 withheld).
+  **Closed + archived 2026-09-19.**
+
 ## 2026-09-19 — Context-window resolution: ladder fall-through fix, kiosapi sweep, live fallback-table audit (3 FIDs archived)
 
 ### Exact terminal-segment match for mid-id-version model ids (FID-2026-0919-018)
@@ -119,6 +577,19 @@
   child processes.
 - Gates: child-env allowlist suite green (sdk); typecheck clean. Commit
   `be2ca107`. **Closed + archived 2026-09-19.**
+
+### Indirect-prompt-injection channel (SEC-2) — DECLINED, residual risk accepted (FID-2026-0919-009)
+
+- Finding: agent-visible content from untrusted sources can be inherited into
+  a later turn's history, which is an indirect-injection channel. The
+  sanitization-boundary layer (layer 3) was **declined by the operator
+  (2026-09-19)**: the residual risk through inherited history is accepted and
+  recorded in the FID, on the grounds that the channel's two weaponizable
+  downstream payloads are closed by SEC-1 (child-env allowlist, FID-2026-0919-008)
+  and SEC-3 (span-scoped redirect waiver, FID-2026-0919-010). Layers 1-2
+  remain available on request but are not approved. Recorded here so the
+  release notes state the exclusion and its reason, rather than leaving it
+  implied by this section's `SEC-1/3–7` heading alone.
 
 ### Span-scoped waiver for Windows stderr-redirect readonly probes (FID-2026-0919-010, SEC-3)
 

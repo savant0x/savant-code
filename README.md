@@ -10,17 +10,32 @@ touches your repo.**
 Built with TypeScript/Bun, governed by the ECHO Protocol, and designed for
 local-first use with Ollama.
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-1.3.14-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![React](https://img.shields.io/badge/React-19-%23000000?style=flat-square&logo=react&logoColor=%2300fbff)](https://react.dev/)[![OpenTUI](https://img.shields.io/badge/OpenTUI-0.5.3-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](https://github.com/anomalyco/opentui)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](ECHO.md)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![Release](https://img.shields.io/badge/Release-v0.0.32-%2300fbff?style=flat-square&logo=semver&logoColor=%2300fbff)](CHANGELOG.md)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-1.3.14-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![React](https://img.shields.io/badge/React-19-%23000000?style=flat-square&logo=react&logoColor=%2300fbff)](https://react.dev/)[![OpenTUI](https://img.shields.io/badge/OpenTUI-0.5.3-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](https://github.com/anomalyco/opentui)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](ECHO.md)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![Release](https://img.shields.io/badge/Release-v0.0.33-%2300fbff?style=flat-square&logo=semver&logoColor=%2300fbff)](CHANGELOG.md)
 
 </div>
 
-> **v0.0.32** — this release makes the `/model` picker actually activate
-> the selected provider's routing (closing the silent savant-code.com
-> passthrough that surfaced as a bogus "Out of credits" error), and
-> rebuilds the free-compute harvester's daily scan for speed: provider
-> probes run through a bounded concurrency pool and boundary-unverifiable
-> hosts re-probe on a 3-day cadence — typical daily wall clock drops from
-> ~14s to ~1.1s with evidence freshness bounded at 3 days.
+> **v0.0.33** — this release hardens the security posture and closes holes in
+> the verification contract the agent itself operates under. Spawned shells no
+> longer inherit provider credentials (allowlisted child env), secret values are
+> masked by shape before the telemetry fan-out, signing failures are loud
+> instead of silent, database templates get fail-closed capability clamps, and
+> the destructive-command denylist now holds in every mode including the dev
+> override. FID verification detects promised test artifacts by meaning (any
+> section, any new/updated wording) and names the records it does not enforce
+> instead of skipping them silently; repo-gate checks can be declared on a FID's
+> own receipt — which is how two shipped bare-runtime spawns in the release
+> tooling were caught and fixed. Model context windows resolve exact terminal
+> segments for mid-id-version ids (kiosapi/grok-4.6 no longer inherits a 2M
+> window), the fallback table was audited against the live OpenRouter catalog
+> with 17 corrections, verification credits only commands that actually
+> succeeded, and EHEL blocks Law-3 circular writes at write time.
+> Previously shipped in v0.0.32: the `/model` picker now activates the
+> selected provider's routing (closing the silent savant-code.com
+> passthrough that surfaced as a bogus "Out of credits" error), and the
+> free-compute harvester's daily scan runs through a bounded concurrency
+> pool with boundary-unverifiable hosts re-probing on a 3-day cadence —
+> typical daily wall clock drops from ~14s to ~1.1s with evidence
+> freshness bounded at 3 days.
 > Previously shipped in v0.0.31: user-defined custom providers via
 > `/provider` (the full feature: add/edit/list/remove wizard with first-class
 > registry entries — prefix routing, catalogs, key storage, live tests),
