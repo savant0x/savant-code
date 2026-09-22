@@ -111,7 +111,11 @@ async function main(): Promise<void> {
   )
 
   const sdkDir = join(repoRoot(), 'sdk')
-  const spawned = spawnSync('bun', ['run', 'fetch-ripgrep'], {
+  // Spawn the running runtime by ABSOLUTE path: a bare `'bun'` resolves on
+  // PATH only in a dev shell and dies with uv_spawn ENOENT under the release
+  // gate's sanitized spawn environment (v0.0.30 incident; enforced by
+  // `audit.gate-env-parity` in validate:repository, FID-2026-0919-022).
+  const spawned = spawnSync(process.execPath, ['run', 'fetch-ripgrep'], {
     cwd: sdkDir,
     stdio: 'inherit',
   })

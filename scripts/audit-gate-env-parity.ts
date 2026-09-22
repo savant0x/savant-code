@@ -220,3 +220,37 @@ function defaultRunner(
     stderr: spawned.stderr.toString(),
   }
 }
+
+/**
+ * Standalone entry point (FID-2026-0919-022).
+ *
+ * A FID can only prove a REPO-GATE check passed if it can declare that check
+ * as a gate, and the gate vocabulary's `probe` kind runs a repo-relative
+ * `.ts` — so the check must be independently runnable. `validate:repository`
+ * itself can never be a gate: it re-enters FID gate execution (C3), which is
+ * the self-recursion recorded as a Lesson under FID-2026-0915-004. Running
+ * the specific check does not re-enter anything, so the probe route is the
+ * correct one (documented in templates/FID-TEMPLATE.md).
+ *
+ * Exit 0 clean, exit 1 with one line per issue. An explicit root argument
+ * keeps the audit usable against a checkout other than the cwd.
+ */
+function probeMain(): number {
+  const root = process.argv[2]
+    ? path.resolve(process.argv[2])
+    : path.resolve(import.meta.dir, '..')
+  const issues = auditGateEnvParity(root)
+  if (issues.length === 0) {
+    console.log('audit:gate-env-parity PASS (0 issues)')
+    return 0
+  }
+  console.error(`audit:gate-env-parity FAIL (${issues.length} issue(s))`)
+  for (const issue of issues) {
+    console.error(`- ${issue.file}:${issue.line}: ${issue.message}`)
+  }
+  return 1
+}
+
+if (import.meta.main) {
+  process.exitCode = probeMain()
+}

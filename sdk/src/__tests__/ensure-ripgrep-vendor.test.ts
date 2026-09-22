@@ -33,10 +33,16 @@ const SCRIPT = join(
 )
 const SDK_ROOT = join(import.meta.dir, '..', '..')
 
-function runScript(
-  env: Record<string, string>,
-): { status: number | null; stdout: string; stderr: string } {
-  const spawned = spawnSync('bun', [SCRIPT], {
+function runScript(env: Record<string, string>): {
+  status: number | null
+  stdout: string
+  stderr: string
+} {
+  // Absolute runtime path, never a bare `'bun'` — the bare name is
+  // PATH-resolvable only in a dev shell and ENOENTs under the release
+  // gate's sanitized spawn environment (v0.0.30 incident; enforced by
+  // `audit.gate-env-parity`, FID-2026-0919-022).
+  const spawned = spawnSync(process.execPath, [SCRIPT], {
     cwd: SDK_ROOT,
     encoding: 'utf8',
     env: { ...process.env, ...env },
@@ -60,10 +66,7 @@ function currentPlatformBinaryPresent(): boolean {
     (candidate) => candidate.platformDir === `${runtimeArch}-${runtimeDir}`,
   )
   if (!target) return false
-  const devTree = vendorBinaryPath(
-    join(SDK_ROOT, 'vendor', 'ripgrep'),
-    target,
-  )
+  const devTree = vendorBinaryPath(join(SDK_ROOT, 'vendor', 'ripgrep'), target)
   if (existsSync(devTree)) return true
   const dist = join(
     SDK_ROOT,

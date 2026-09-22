@@ -9,6 +9,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 
 import { collectContractViolations } from '@savant-code/agent-runtime/echo/fid-verification-contract-sweep'
+import { describeVerificationEnforcement } from '@savant-code/agent-runtime/echo/fid-verification-enforcement'
 import {
   parseVerificationGates,
   validateFidVerification,
@@ -25,7 +26,13 @@ export function activeFidFiles(): string[] {
     .map((entry) => path.join(directory, entry.name))
 }
 
-/** --check: structural C1+C2 scan over all active fixed/verified FIDs (no execution). */
+/**
+ * --check: structural C1+C2 scan over all active fixed/verified FIDs (no
+ * execution), plus two informational tiers that never affect the exit code:
+ * grandfathered contract warnings, and — FID-2026-0919-021 (T69) — the FIDs
+ * whose status places them OUTSIDE the contract, stated explicitly instead
+ * of being skipped silently.
+ */
 export function checkAll(): number {
   let failed = false
   for (const file of activeFidFiles()) {
@@ -57,6 +64,24 @@ export function checkAll(): number {
       console.log(`    - ${warning}`)
     }
   }
+  // FID-2026-0919-021 (T69 ruling): a status outside {fixed, verified} is
+  // NOT ENFORCED by design — the closure ceremony edits the document after
+  // the last stamp, so a closed record's fingerprint is expected to drift
+  // (284 of 315 archived records do). The validator no longer skips that
+  // silently: it is reported here as information so an operator can tell
+  // "checked and clean" apart from "not checked at all".
+  let unenforced = 0
+  for (const file of activeFidFiles()) {
+    const content = fs.readFileSync(file, 'utf8')
+    const enforcement = describeVerificationEnforcement(content)
+    if (enforcement.enforced) continue
+    if (unenforced === 0)
+      console.log('verification contract not enforced (info):')
+    unenforced += 1
+    console.log(`ℹ ${path.basename(file)}`)
+    console.log(`    - ${enforcement.reason}`)
+  }
+
   if (failed) {
     console.log(
       'fid:verify --check FAILED — fixed/verified FIDs missing valid receipts',
