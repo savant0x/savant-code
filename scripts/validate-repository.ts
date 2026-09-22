@@ -3,6 +3,8 @@
 import fs from 'node:fs'
 import path from 'node:path'
 
+import { collectScopeDispositionIssues } from '@savant-code/agent-runtime/echo/scope-disposition-guard'
+import { collectRegisterCompletenessIssues } from '@savant-code/agent-runtime/echo/scope-register-completeness'
 import {
   PROVIDER_EXCEPTION_MANIFEST,
   validateProviderAudit,
@@ -237,6 +239,33 @@ const exitCodeMaskingIssues = auditExitCodeMasking(root).map((issue) => ({
 // environment-parity defect classes (bare runtime-name spawns; Bun-only
 // import.meta properties in common/src production) — the v0.0.30 incident
 // class that shipped green through every local gate.
+/**
+ * FID-2026-0919-024: no agent-side scope trimming. Fails the repository gate on
+ * any prohibited disposition token (`[OUT-OF-SCOPE]`, `[OPEN-OUT-OF-SCOPE]`,
+ * `[DEFERRED]`, or an unapproved `deferred::`/`skipped::`/`dropped::` marker) in
+ * a scope surface — the live register, an active FID, the agenda, a session
+ * summary or a current-release CHANGELOG entry.
+ */
+function validateScopeDispositions(): { code: string; message: string }[] {
+  return collectScopeDispositionIssues(root).map((issue) => ({
+    code: 'scope.prohibited-disposition',
+    message: `${issue.file}:${issue.line}: ${issue.message}`,
+  }))
+}
+
+/**
+ * FID-2026-0919-025: a register line for every tracked item. Fails the
+ * repository gate on an active FID `SCOPE.md` never names, or on a task cited
+ * by an active FID or a current session summary that has no `## Task NN`
+ * heading or `TNN-X` item in the register — the quiet half of the scope trim.
+ */
+function validateRegisterCompleteness(): { code: string; message: string }[] {
+  return collectRegisterCompletenessIssues(root).map((issue) => ({
+    code: 'scope.unregistered-item',
+    message: `${issue.file}:${issue.line}: ${issue.message}`,
+  }))
+}
+
 const gateEnvParityIssues = auditGateEnvParity(root).map((issue) => ({
   code: 'audit.gate-env-parity',
   message: `${issue.file}:${issue.line}: ${issue.message}`,
@@ -262,6 +291,8 @@ const issues = [
   ...gateEnvParityIssues,
   ...validateCurrentHygiene(),
   ...validateRebrandCorruption(),
+  ...validateScopeDispositions(),
+  ...validateRegisterCompleteness(),
 ]
 
 process.stdout.write(`${formatValidationIssues(issues)}\n`)

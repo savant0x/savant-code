@@ -66,9 +66,7 @@ function fidDoc(opts: {
       `- fingerprint: sha256:${fingerprint}`,
       '- verified: 2026-09-19T00:00:00.000Z',
       ...opts.gates.map((gate) =>
-        gate === 'quality'
-          ? '- quality: exit 0'
-          : `- ${gate}: exit 0`,
+        gate === 'quality' ? '- quality: exit 0' : `- ${gate}: exit 0`,
       ),
     )
   }
@@ -106,9 +104,9 @@ describe('collectContractViolations (fixture shapes)', () => {
         error.includes(`promised test artifact "${PROMISED}"`),
       ),
     ).toBe(true)
-    expect(
-      errors.some((error) => error.includes('FID-2026-0918-006')),
-    ).toBe(true)
+    expect(errors.some((error) => error.includes('FID-2026-0918-006'))).toBe(
+      true,
+    )
     const result = collectContractViolations(doc, [])
     expect(result.errors).toHaveLength(1)
   })

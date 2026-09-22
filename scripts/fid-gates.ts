@@ -18,6 +18,10 @@ import fs from 'node:fs'
 import path from 'node:path'
 
 import {
+  ENFORCED_VERIFICATION_STATUSES,
+  parseFidStatus,
+} from '@savant-code/agent-runtime/echo/fid-verification-enforcement'
+import {
   parseVerificationGates,
   validateFidVerification,
 } from '@savant-code/agent-runtime/echo/fid-verification-gates'
@@ -26,11 +30,14 @@ import { gateLabel, resolveGate, runGates } from './fid-verify'
 
 import type { FidLedgerIssue } from './fid-ledger-types'
 
-const STATUS_LINE = /^\*\*Status:\*\*\s*(.+)$/m
 // FID-2026-0915-004 MQ3: receipts verify IMPLEMENTATION — `converged` is
-// pre-implementation and never satisfies the gate check. Exported for the
-// vocabulary pin test.
-export const VERIFIED_STATUSES = new Set(['fixed', 'verified'])
+// pre-implementation and never satisfies the gate check. FID-2026-0919-021:
+// the set is no longer defined here — it is re-exported from the single
+// enforcement authority (echo/fid-verification-enforcement) so the ledger
+// scan, the validator, and the FID-2026-0919-021 information tier can never
+// disagree about which statuses the contract covers. Export name preserved
+// for the vocabulary pin test.
+export const VERIFIED_STATUSES = ENFORCED_VERIFICATION_STATUSES
 
 /** Active FID files under dev/fids/ (not the archive). */
 export function activeFixedFidFiles(root: string): {
@@ -51,7 +58,7 @@ export function activeFixedFidFiles(root: string): {
     if (!entry.isFile() || !/^FID-.*\.md$/.test(entry.name)) continue
     const file = path.join(directory, entry.name)
     const content = fs.readFileSync(file, 'utf8')
-    const status = content.match(STATUS_LINE)?.[1]?.trim()
+    const status = parseFidStatus(content)
     if (status && VERIFIED_STATUSES.has(status)) {
       out.push({ file, name: entry.name, status, content })
     }

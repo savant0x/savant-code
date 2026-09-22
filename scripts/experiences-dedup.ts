@@ -50,6 +50,12 @@ const EXPECTED_FAILURE_PATTERNS: RegExp[] = [
   // Broad-search 404 / empty-result classes (e.g. web_search misses).
   /\b404\b/i,
   /no results? found/i,
+  // read_url: the target carried no extractable text (JS-rendered, blocked,
+  // or genuinely empty) — the tool reported its correct outcome, the same
+  // "resource has no content" shape as a search 404. Without this, a single
+  // research pass over JS-only vendor pages (15 records, 2026-09-19) took the
+  // agenda's top slot while an actionable class sat below it.
+  /no readable text/i,
 ]
 
 /** Fail-open parse: one line per record; malformed lines are skipped. */

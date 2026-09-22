@@ -4,6 +4,11 @@
 // the SDK dts program's input set); negatives pin the exemptions (the
 // pinned-bun contract probe, test files, non-common/src surfaces, comments).
 
+import { spawnSync } from 'node:child_process'
+import fs from 'node:fs'
+import os from 'node:os'
+import path from 'node:path'
+
 import { describe, expect, test } from 'bun:test'
 
 import {
@@ -141,5 +146,39 @@ describe('detectGateEnvParityIssues (FID-2026-0909-002)', () => {
       '*.js',
       '*.mjs',
     ])
+  })
+})
+
+describe('standalone probe entry point (FID-2026-0919-022)', () => {
+  // The check must stay INDEPENDENTLY RUNNABLE: that runnability is what lets
+  // a FID declare it as `- gate: probe <this path>` and prove the repo-gate
+  // check passed on its own receipt. The spawn uses `process.execPath`, the
+  // very rule this audit enforces (a bare runtime name would be flagged by
+  // the repo-level self-scan).
+  const MODULE = path.join(import.meta.dir, '..', 'audit-gate-env-parity.ts')
+
+  test('exits 0 and reports PASS on a clean checkout', () => {
+    const spawned = spawnSync(process.execPath, [MODULE], {
+      cwd: path.join(import.meta.dir, '..', '..'),
+      encoding: 'utf8',
+    })
+    expect(spawned.status).toBe(0)
+    expect(spawned.stdout).toContain('audit:gate-env-parity PASS')
+  })
+
+  test('exits 1 with one line per issue on a failing audit', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'gate-env-parity-'))
+    try {
+      // A non-git directory fails closed (auditability is unprovable there),
+      // which exercises the failure exit without needing a violating tree.
+      const spawned = spawnSync(process.execPath, [MODULE, dir], {
+        cwd: path.join(import.meta.dir, '..', '..'),
+        encoding: 'utf8',
+      })
+      expect(spawned.status).toBe(1)
+      expect(spawned.stderr).toContain('audit:gate-env-parity FAIL')
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true })
+    }
   })
 })

@@ -9,6 +9,13 @@
 > do not use it for new FIDs. The receipt contract still keys to
 > `fixed | verified` so archived records remain valid.)
 **Created:** YYYY-MM-DD HH:MM
+**Automation level:** 1 | 2 | 3
+> (Authority this FID needs to be actioned **without asking**: `1` approval-gated,
+> `2` within approved scope, `3` fully automatable. The session ceiling is
+> `protocol.config.yaml` → `session.autonomy_level`; an item is actioned without
+> approval only when its level is ≤ the session level. No level lifts the G-laws,
+> credential handling, Law 3, or the project-directory boundary — see
+> "Automation Levels" in the governing protocol.)
 **YAGNI-Compliance:** Pending | Verified | Debt-Incurred
 
 ---
@@ -89,7 +96,13 @@ How will we confirm the fix works?
 >
 > - `- gate: typecheck <workspace>` — workspace must be in `VALIDATION_WORKSPACE_POLICY`
 > - `- gate: test <repo-relative-path>` — must exist, `*.test.ts`/`*.test.tsx`
-> - `- gate: probe <repo-relative-path>` — must exist, `*.ts`
+> - `- gate: probe <repo-relative-path>` — must exist, `*.ts`. This is ALSO
+>   the route for proving a REPO-GATE check passed: make the check
+>   independently runnable (exit 0 clean / 1 with issues) and declare it as a
+>   probe — `scripts/audit-gate-env-parity.ts` is the worked example. Only
+>   checks that do NOT re-enter FID verification qualify: `validate:repository`
+>   itself can never be a gate, because it re-runs every active FID's declared
+>   gates (C3) and would recurse into itself (Lesson, FID-2026-0915-004).
 > - `- gate: quality` — no argument; runs the repo-wide `quality:report` file
 >   ceiling/style gate. MANDATORY for `fixed`/`verified` (Task 58): a closure
 >   without it is rejected by the validator and the pre-write tripwire.
@@ -98,6 +111,15 @@ How will we confirm the fix works?
 > fingerprint binds it to the document: any edit after verification invalidates
 > it until re-verified. `validate:repository` LIVE RE-RUNS the declared gates
 > (C3) and the pre-write gate blocks flipping status without a valid receipt.
+>
+> **A `closed` record is outside the contract by design** (FID-2026-0919-021).
+> Closure edits the document — the status flip plus the `- **Archived:**` line —
+> after the last stamp, so a closed record's fingerprint is expected to drift
+> and carries NO live guarantee (284 of 315 archived records did, measured
+> 2026-09-19). The receipt on a closed record documents the verification that
+> earned the status, not the current bytes. Re-stamping at closure is optional;
+> `fid:verify --check` names every active record outside the contract instead
+> of skipping it silently.
 
 ```markdown
 ## Verification Gates
