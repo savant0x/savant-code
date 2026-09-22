@@ -211,6 +211,10 @@ export async function executeCustomToolCall(
         cwd: hookProjectRoot,
         toolName,
         toolInput: toolCall.input as Record<string, JSONValue>,
+        // FID-2026-0919-030: identity parity with the native gate. The custom/
+        // MCP path is a `PreToolUse` gate too, so a policy keyed on the acting
+        // agent must see it here as well or the omission is a bypass.
+        subagentType: agentTemplate?.id ?? agentState?.agentType ?? undefined,
       }),
     )
     if (hookGate.blocked) {

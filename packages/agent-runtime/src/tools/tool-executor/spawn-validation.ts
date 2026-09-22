@@ -2,6 +2,7 @@ import { toolNames } from '@savant-code/common/tools/constants'
 import { toJSONValue } from '@savant-code/common/util/type-narrowing'
 
 import { resolveSpawnableAgent } from '../handlers/tool/spawn-agent-utils'
+import { batchSpawnRejectionMessage } from '../handlers/tool/spawn-inline-only'
 import { isJSONObject } from '../tool-call-parse'
 
 import type { ExecuteToolCallParams } from './types'
@@ -81,6 +82,13 @@ export async function validateSpawnAgentsInput(params: {
             valid: false as const,
             error: 'Agent entry missing agent_type',
           }
+        }
+
+        // FID-2026-0919-027: harness-owned inline agents are rejected BEFORE
+        // dispatch — batch spawning one would succeed and change nothing.
+        const inlineOnlyRejection = batchSpawnRejectionMessage(agentTypeStr)
+        if (inlineOnlyRejection !== null) {
+          return { valid: false as const, error: inlineOnlyRejection }
         }
 
         const resolved = await resolveSpawnableAgent({

@@ -1,34 +1,12 @@
-import {
-  MAX_AGENT_STEPS_DEFAULT,
-  MAX_SUBAGENT_DEPTH,
-} from '@savant-code/common/constants/agents'
-import { generateCompactId } from '@savant-code/common/util/string'
-
-import {
-  buildRestoredEvidenceNote,
-  spliceRawEvidence,
-} from '../../../evidence/splice'
-import {
-  buildGraphInjectionMessage,
-  buildGraphInjectionUserMessage,
-} from '../../../util/graph-injection'
-import {
-  filterUnfinishedToolCalls,
-  withSystemTags,
-} from '../../../util/messages'
+import { inheritRunGovernance } from './spawn-child-state'
 
 import type { SubagentPropagationSnapshot } from './execute-subagent'
-import type { EvidenceSpillRecord } from '../../../evidence/spill'
 import type { AgentTemplate } from '@savant-code/common/types/agent-template'
 import type {
   AgentRuntimeDeps,
   AgentRuntimeScopedDeps,
 } from '@savant-code/common/types/contracts/agent-runtime'
-import type { Message } from '@savant-code/common/types/messages/savant-code-message'
-import type {
-  AgentState,
-  Subgoal,
-} from '@savant-code/common/types/session-state'
+import type { AgentState } from '@savant-code/common/types/session-state'
 import type { ProjectFileContext } from '@savant-code/common/util/file'
 
 export type SubagentContextParams = AgentRuntimeDeps &
@@ -57,6 +35,10 @@ export {
   validateAndGetAgentTemplate,
   validateAgentInput,
 } from './spawn-agent-resolution'
+// FID-2026-0919-027: child-state construction moved to `spawn-child-state.ts`
+// (300-line ceiling + the run-governance inheritance it now owns). The spawn
+// sites keep importing it from here — this stays the spawn toolkit's surface.
+export { createAgentState, inheritRunGovernance } from './spawn-child-state'
 export { executeSubagent } from './execute-subagent'
 export type { SubagentPropagationSnapshot } from './execute-subagent'
 
@@ -130,6 +112,10 @@ export function extractSubagentContextParams(
             protocolStrictMode: params.agentState.protocolStrictMode,
             checkpointTurnId: params.checkpointTurnId,
             hasTraceWriter: params.traceWriter !== undefined,
+            // FID-2026-0919-027: governance configuration travels with the
+            // child so `executeSubagent` can PROVE the child state was built
+            // from this parent (see the propagation contract there).
+            ...inheritRunGovernance(params.agentState),
           },
         }
       : {}),
@@ -153,112 +139,6 @@ export function resolveChildOutputBudget(
   return childTemplate.model === parentTemplate.model
     ? maxOutputTokens
     : undefined
-}
-
-/**
- * Creates a new agent state for spawned agents
- */
-export function createAgentState(
-  agentType: string,
-  agentTemplate: AgentTemplate,
-  parentAgentState: AgentState,
-  agentContext: Record<string, Subgoal>,
-  graphInjectionProjectRoot?: string,
-  rawEvidenceRecords?: EvidenceSpillRecord[],
-): AgentState {
-  if (parentAgentState.ancestorRunIds.length >= MAX_SUBAGENT_DEPTH) {
-    throw new Error(
-      `Subagent depth limit exceeded (maximum ${MAX_SUBAGENT_DEPTH} ancestors).`,
-    )
-  }
-
-  const agentId = generateCompactId()
-
-  // When including message history, filter out any tool calls that don't have
-  // corresponding tool responses. This prevents the spawned agent from seeing
-  // unfinished tool calls which throw errors in the Anthropic API.
-  let messageHistory: Message[] = []
-
-  if (agentTemplate.includeMessageHistory) {
-    messageHistory = filterUnfinishedToolCalls(parentAgentState.messageHistory)
-    // FID-2026-0824-026: restore raw evidence over compaction sentinels for
-    // audit agents (requiresRawEvidence) BEFORE knowledge-graph/spawn markers.
-    if (rawEvidenceRecords && rawEvidenceRecords.length > 0) {
-      const recordsById = new Map(
-        rawEvidenceRecords.map((record) => [record.toolCallId, record]),
-      )
-      const spliced = spliceRawEvidence(messageHistory, recordsById)
-      messageHistory = spliced.messages
-      const note = buildRestoredEvidenceNote(spliced.restoredToolCallIds)
-      if (note !== null) {
-        messageHistory.push({
-          role: 'user',
-          content: [{ type: 'text', text: withSystemTags(note) }],
-          tags: ['EVIDENCE_RESTORED'],
-        })
-      }
-    }
-    // FID-2026-0806-002 Phase 3c: harness-injected knowledge-graph evidence.
-    // Zero-tool agents (Verifier) and restricted agents (Thinker) may not call
-    // the graph query tools; the harness computes the evidence and injects it
-    // into message history instead. Best-effort — null evidence is skipped.
-    if (graphInjectionProjectRoot) {
-      const evidence = buildGraphInjectionMessage({
-        projectRoot: graphInjectionProjectRoot,
-        agentType,
-        parentMessageHistory: parentAgentState.messageHistory,
-      })
-      if (evidence) {
-        messageHistory.push(buildGraphInjectionUserMessage(evidence))
-      }
-    }
-    messageHistory.push({
-      role: 'user',
-      content: [
-        {
-          type: 'text',
-          text: withSystemTags(`Subagent ${agentType} has been spawned.`),
-        },
-      ],
-      tags: ['SUBAGENT_SPAWN'],
-    })
-  }
-
-  return {
-    agentId,
-    agentType,
-    agentContext,
-    ancestorRunIds: [
-      ...parentAgentState.ancestorRunIds,
-      parentAgentState.runId ?? 'NULL',
-    ],
-    subagents: [],
-    childRunIds: [],
-    messageHistory,
-    stepsRemaining: MAX_AGENT_STEPS_DEFAULT,
-    creditsUsed: 0,
-    directCreditsUsed: 0,
-    output: undefined,
-    parentId: parentAgentState.agentId,
-    systemPrompt: '',
-    toolDefinitions: {},
-    contextTokenCount: parentAgentState.contextTokenCount,
-    fsmPhase: parentAgentState.fsmPhase,
-    iterationCount: parentAgentState.iterationCount,
-    protocolVariant: parentAgentState.protocolVariant,
-    protocolFile: parentAgentState.protocolFile,
-    protocolVersion: parentAgentState.protocolVersion,
-    protocolStrictMode: parentAgentState.protocolStrictMode,
-    // FID-2026-0804-009: thread the run's ECHO compliance tracker into subagent
-    // states so subagent writes/verification/spawns record against the same
-    // run and the Verifier criteria see the full picture (L-001: Forge wrote
-    // without the parent spawning a Verifier).
-    echoCompliance: parentAgentState.echoCompliance,
-    // FID-2026-0813-004: thread the parent's ZTAP provenance session so
-    // subagent writes sign into the same session and Verifier/Adversary
-    // verdicts bind to the same receipts.
-    provenance: parentAgentState.provenance,
-  }
 }
 
 /**

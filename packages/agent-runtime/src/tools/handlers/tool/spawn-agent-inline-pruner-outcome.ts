@@ -6,6 +6,7 @@ import {
   describeRemovedToolItem,
   diffRemovedSpans,
 } from '../../../evidence/inventory'
+import { fireCompactionHook } from '../../../hooks/lifecycle-hooks'
 import { withSystemTags } from '../../../util/messages'
 import { countTokensMessagesCached } from '../../../util/token-counter'
 
@@ -152,6 +153,23 @@ export function applyPrunerCompactionOutcome({
         tokensSaved: prunerTokensSaved,
         percentUsed: prunerPercentUsed,
       }
+      // FID-2026-0919-031: `PostCompact` — EFFECT-based, fired on the SAME
+      // predicate the runtime already uses for the `pruned` phase and for the
+      // `compaction_summary` wire event above (removed something AND saved
+      // tokens). An ineffective attempt deliberately emits no PostCompact: a
+      // `PostCompact` on a no-op would claim the context was compacted when
+      // nothing changed. The unmatched `PreCompact` is the signal.
+      fireCompactionHook({
+        event: 'PostCompact',
+        parentAgentState,
+        projectRoot,
+        toolResult: {
+          messagesRemoved: prunerMessagesRemoved,
+          tokensSaved: prunerTokensSaved,
+          percentUsed: prunerPercentUsed,
+          contextTokenCount: parentAgentState.contextTokenCount,
+        },
+      })
     } else if (
       !(spawnParams as { foldOldestExchange?: boolean } | undefined)
         ?.foldOldestExchange

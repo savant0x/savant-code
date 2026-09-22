@@ -3,6 +3,7 @@ import {
   checkRecorderOutcome,
   RECORDER_STALL_RETRY_LIMIT,
 } from './recorder-stall-check'
+import { applyVerdictReceipts } from './spawn-agent-inline-verdict'
 import {
   validateAndGetAgentTemplate,
   validateAgentInput,
@@ -12,9 +13,8 @@ import {
   resolveChildOutputBudget,
   withParentModel,
 } from './spawn-agent-utils'
-import { loadEvidenceRecords } from '../../../evidence/spill'
-import { getOrCreateProvenance } from '../../../provenance'
-import { extractVerdictText } from '../../../provenance/verdict'
+import { batchSpawnRejectionMessage } from './spawn-inline-only'
+import { loadRawEvidenceForSpawn } from '../../../evidence/spawn-evidence'
 import { filterToolSet } from '../../../tools/filter-tool-set'
 import { setActivity } from '../../../util/activity-tracking'
 
@@ -56,6 +56,16 @@ export async function runSingleSubagent({
       parentAgentTemplate,
     })
 
+  // FID-2026-0919-027: harness-owned inline agents must not be batch-spawned.
+  // The batch path skips the wiring that makes their effect land, so the call
+  // would succeed, bill its run, and change nothing (see spawn-inline-only.ts).
+  // The executor's pre-validation rejects this earlier for model calls; this is
+  // the boundary check for every other caller.
+  const inlineOnlyRejection = batchSpawnRejectionMessage(agentType)
+  if (inlineOnlyRejection !== null) {
+    throw new Error(inlineOnlyRejection)
+  }
+
   // Inherit the parent's model so subagents respect the user's selected model.
   const agentTemplate = withParentModel(childTemplate, parentAgentTemplate)
 
@@ -70,15 +80,15 @@ export async function runSingleSubagent({
 
   validateAgentInput(agentTemplate, agentType, prompt, spawnParams)
 
-  // FID-2026-0824-026: preload raw evidence for audit agents so the
-  // spawn-time splice can restore sentinel-compacted results verbatim.
-  const rawEvidenceRecords =
-    agentTemplate.requiresRawEvidence === true && !parentAgentState.parentId
-      ? await loadEvidenceRecords(
-          params.fileContext?.projectRoot ?? '',
-          parentAgentState.runId ?? '',
-        )
-      : undefined
+  // FID-2026-0824-026 / FID-2026-0919-027: preload raw evidence for audit
+  // agents so the spawn-time splice can restore sentinel-compacted results
+  // verbatim. The loader unions the run chain, so a NESTED spawn restores too
+  // (the previous `!parentAgentState.parentId` guard silently skipped it).
+  const rawEvidenceRecords = await loadRawEvidenceForSpawn({
+    agentTemplate,
+    spawningAgentState: parentAgentState,
+    projectRoot: params.fileContext?.projectRoot,
+  })
 
   const subAgentState = createAgentState(
     agentType,
@@ -254,44 +264,22 @@ export async function runSingleSubagent({
   // FID-2026-0813-004: ZTAP verdict binding — the Verifier (AUDIT) and
   // Adversary (ADVERSARIAL) verdicts are their final outputs. Bound to
   // every open receipt of the session as signed verbatim payloads (D7).
+  //
+  // FID-2026-0919-027: both spawn sites now route through the ONE extracted
+  // authority (`applyVerdictReceipts`) instead of the inline path using the
+  // helper and this path carrying its own copy — two implementations of the
+  // same binding is how the boundary drifts. `childAgentId` stays
+  // `subAgentState.agentId` (the child the loop ran as); only the recorder has
+  // a retry ladder that rebuilds the state, and the recorder is never bound.
   if (agentType === 'verifier' || agentType === 'adversary') {
-    const verdictText = extractVerdictText(result.agentState)
-    if (verdictText) {
-      const provenance = getOrCreateProvenance(parentAgentState, {
-        projectRoot: params.fileContext?.projectRoot ?? '.',
-      })
-      void provenance
-        .bindVerdict({
-          phase: agentType === 'verifier' ? 'audit' : 'adversarial',
-          agentId: subAgentState.agentId,
-          agentType,
-          verdictText,
-        })
-        .then((receipts) => {
-          for (const receipt of receipts) {
-            writeToClient({
-              type: 'provenance_receipt',
-              sessionId: receipt.sessionId,
-              seq: receipt.seq,
-              phase: agentType === 'verifier' ? 'audit' : 'adversarial',
-              status: receipt.status,
-              signed: receipt.signatures.length > 0,
-              receipt,
-              verdictText,
-            })
-          }
-        })
-        .catch((error: unknown) => {
-          // FID-2026-0919-012 (SEC-5): best-effort — a failed binding never
-          // fails the spawn — but it must not be SILENT: the audit chain for
-          // this child's verdict is missing. Warn with the cause so the gap
-          // is diagnosable in transcripts.
-          // eslint-disable-next-line no-console
-          console.warn(
-            `[provenance] verdict binding failed for ${agentType} ${subAgentState.agentId}: ${String(error)}`,
-          )
-        })
-    }
+    applyVerdictReceipts({
+      agentType,
+      childAgentId: subAgentState.agentId,
+      resultAgentState: result.agentState,
+      parentAgentState,
+      projectRoot: params.fileContext?.projectRoot ?? '.',
+      writeToClient,
+    })
   }
 
   return { ...result, agentType, agentName: agentTemplate.displayName }

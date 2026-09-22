@@ -35,6 +35,13 @@ export function createHookGate<T extends ToolName>(deps: {
         cwd: hookProjectRoot,
         toolName: ctx.toolCall.toolName,
         toolInput: ctx.toolCall.input as Record<string, JSONValue>,
+        // FID-2026-0919-030: the acting agent. This is the only event that can
+        // BLOCK, and the gate it composes with (EHEL `beforeToolCall`) gates
+        // PER AGENT — so without this a project policy cannot express the rule
+        // the event exists to enforce (e.g. "only forge may write"), and a
+        // subagent's call arrives under the CHILD's run id with nothing naming
+        // it. The child's own agent type is what its template resolves to.
+        subagentType: ctx.params.agentTemplate.id,
       }),
     )
     if (hookGate.blocked) {

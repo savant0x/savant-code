@@ -4,6 +4,7 @@ import { safeToJSONValue } from '@savant-code/common/util/type-narrowing'
 
 import { checkRecorderOutcome } from './recorder-stall-check'
 import { runSingleSubagent } from './spawn-agents-child-run'
+import { batchSpawnRejectionMessage } from './spawn-inline-only'
 import { setActivity } from '../../../util/activity-tracking'
 
 import type { SavantCodeToolHandlerFunction } from '../handler-function-type'
@@ -55,6 +56,17 @@ export const handleSpawnAgents = (async (
     throw new Error(
       `Subagent fan-out limit exceeded (maximum ${MAX_SUBAGENT_FAN_OUT} children per spawn).`,
     )
+  }
+
+  // FID-2026-0919-027: refuse harness-owned inline agents before any child
+  // starts. The executor's pre-validation reports this per agent for model
+  // calls; this is the same authority at the handler boundary, so a
+  // programmatic caller cannot start an expensive no-op either.
+  for (const agent of agents) {
+    const inlineOnlyRejection = batchSpawnRejectionMessage(agent.agent_type)
+    if (inlineOnlyRejection !== null) {
+      throw new Error(inlineOnlyRejection)
+    }
   }
 
   // FID-2026-0718-009 M3: surface sub-agent activity on parent.

@@ -1,5 +1,6 @@
 import { mapValues } from 'lodash'
 
+import { fireCompactionAttemptForInlineSpawn } from './spawn-agent-inline-precompact'
 import {
   applyPrunerPostRunGuards,
   markPrunerBlockedOnCrash,
@@ -16,6 +17,8 @@ import {
   resolveChildOutputBudget,
   withParentModel,
 } from './spawn-agent-utils'
+import { buildInlineSpawnRelay } from './spawn-inline-only'
+import { loadRawEvidenceForSpawn } from '../../../evidence/spawn-evidence'
 import { filterToolSet } from '../../../tools/filter-tool-set'
 import { countTokensMessagesCached } from '../../../util/token-counter'
 
@@ -129,6 +132,12 @@ export const handleSpawnAgentInline = (async (
     spawnParams,
   })
 
+  fireCompactionAttemptForInlineSpawn({
+    agentType,
+    parentAgentState,
+    projectRoot,
+  })
+
   // FID-2026-0824-023: bounded capture of streamed summary text.
   let prunerSummaryBuffer = ''
 
@@ -140,6 +149,13 @@ export const handleSpawnAgentInline = (async (
   }
   const inheritedTools = filterToolSet(parentTools, inlineTemplate.toolNames)
 
+  // FID-2026-0919-027: the inline path is a spawn boundary too.
+  const rawEvidenceRecords = await loadRawEvidenceForSpawn({
+    agentTemplate,
+    spawningAgentState: parentAgentState,
+    projectRoot: params.fileContext?.projectRoot,
+  })
+
   // Create child agent state that shares message history with parent
   const childAgentState: AgentState = {
     ...createAgentState(
@@ -148,6 +164,7 @@ export const handleSpawnAgentInline = (async (
       parentAgentState,
       parentAgentState.agentContext,
       params.fileContext?.projectRoot,
+      rawEvidenceRecords,
     ),
     systemPrompt: system,
     toolDefinitions: mapValues(inheritedTools, (tool) => ({
@@ -265,5 +282,18 @@ export const handleSpawnAgentInline = (async (
     writeToClient,
   })
 
-  return { output: [{ type: 'json', value: { message: 'Agent spawned.' } }] }
+  // FID-2026-0919-027: relay the child's real output (the historical constant
+  // dropped a structured_output child's artifact — see buildInlineSpawnRelay).
+  return {
+    output: [
+      {
+        type: 'json',
+        value: buildInlineSpawnRelay({
+          agentType,
+          outputMode: inlineTemplate.outputMode,
+          output: result.output,
+        }),
+      },
+    ],
+  }
 }) satisfies SavantCodeToolHandlerFunction<ToolName>

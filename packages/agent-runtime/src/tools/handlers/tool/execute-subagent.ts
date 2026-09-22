@@ -1,4 +1,5 @@
 import { buildHookInput, getHookEngine } from '../../../hooks/engine'
+import { buildSubagentOutcome } from '../../../hooks/subagent-outcome'
 import { loopAgentSteps } from '../../../run-agent-step'
 
 import type { AgentTemplate } from '@savant-code/common/types/agent-template'
@@ -25,6 +26,13 @@ export type SubagentPropagationSnapshot = {
   protocolStrictMode: boolean | undefined
   checkpointTurnId: string | undefined
   hasTraceWriter: boolean
+  // FID-2026-0919-027: the run's resolved governance configuration, carried in
+  // the snapshot so the contract below can PROVE the child inherited it — a
+  // child built without these reads as a different (ungoverned) run.
+  enforcementMode: AgentState['enforcementMode']
+  protocolSource: AgentState['protocolSource']
+  provenanceMode: AgentState['provenanceMode']
+  designContract: AgentState['designContract']
 }
 
 /**
@@ -70,6 +78,10 @@ export async function executeSubagent(
     propagation.protocolFile !== parentAgentState.protocolFile ||
     propagation.protocolVersion !== parentAgentState.protocolVersion ||
     propagation.protocolStrictMode !== parentAgentState.protocolStrictMode ||
+    propagation.enforcementMode !== parentAgentState.enforcementMode ||
+    propagation.protocolSource !== parentAgentState.protocolSource ||
+    propagation.provenanceMode !== parentAgentState.provenanceMode ||
+    propagation.designContract !== parentAgentState.designContract ||
     propagation.ancestorRunIds.length !==
       parentAgentState.ancestorRunIds.length ||
     propagation.ancestorRunIds.some(
@@ -98,6 +110,16 @@ export async function executeSubagent(
       parentAgentState.protocolVersion ||
     withDefaults.agentState.protocolStrictMode !==
       parentAgentState.protocolStrictMode ||
+    // FID-2026-0919-027: governance inheritance is verified, not assumed —
+    // a child state missing any of these is not part of this run.
+    withDefaults.agentState.enforcementMode !==
+      parentAgentState.enforcementMode ||
+    withDefaults.agentState.protocolSource !==
+      parentAgentState.protocolSource ||
+    withDefaults.agentState.provenanceMode !==
+      parentAgentState.provenanceMode ||
+    withDefaults.agentState.designContract !==
+      parentAgentState.designContract ||
     withDefaults.checkpointTurnId !== propagation.checkpointTurnId ||
     (withDefaults.traceWriter !== undefined) !== propagation.hasTraceWriter
   ) {
@@ -140,6 +162,10 @@ export async function executeSubagent(
     )
   }
 
+  // FID-2026-0919-029: the SubagentStop payload needs the OUTCOME, not just the
+  // identity. The default is the truthful "unknown ⇒ failed"; each terminal
+  // branch replaces it before the boundary fires (see hooks/subagent-outcome.ts).
+  let outcome = buildSubagentOutcome({ agentType: agentTemplate.id })
   let result
   try {
     result = await loopAgentSteps({
@@ -151,6 +177,16 @@ export async function executeSubagent(
       ancestorRunIds: [...ancestorRunIds, parentAgentState.runId ?? ''],
       agentType: agentTemplate.id,
     })
+    outcome = buildSubagentOutcome({ agentType: agentTemplate.id, result })
+  } catch (error) {
+    // Only pre-loop failures and 402 propagate (the loop's own error arm returns
+    // an error-form output instead), so this arm exists to keep the hook payload
+    // truthful in exactly those cases.
+    outcome = buildSubagentOutcome({
+      agentType: agentTemplate.id,
+      error,
+    })
+    throw error
   } finally {
     if (hookProjectRoot) {
       getHookEngine(hookProjectRoot).fireAndForgetTrigger(
@@ -159,6 +195,10 @@ export async function executeSubagent(
           sessionId: subagentSessionId,
           cwd: hookProjectRoot,
           subagentType: agentTemplate.id,
+          toolResult: outcome,
+          ...(outcome.errorMessage !== undefined
+            ? { errorMessage: outcome.errorMessage }
+            : {}),
         }),
       )
     }
