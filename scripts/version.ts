@@ -1,6 +1,8 @@
 import fs from 'node:fs'
 import path from 'node:path'
 
+import { collectDocVersionDrift } from './version-docs.js'
+
 /**
  * Canonical version identity — the single source of truth shared by the
  * validator (scripts/validate-repository.ts) and the bump writer
@@ -196,7 +198,7 @@ export function patchLockfileWorkspaceVersions(
 export type VersionDrift = {
   file: string
   version: string | undefined
-  /** Remedy for the surface (desktop family) — surfaced by version:check. */
+  /** Remedy for the surface (desktop family, doc surfaces) — surfaced by version:check. */
   hint?: string
 }
 
@@ -220,6 +222,11 @@ export function collectVersionDrift(root: string): VersionDrift[] {
       drift.push({ file: surface, version, hint: DESKTOP_DRIFT_HINTS[surface] })
     }
   }
+  // FID-2026-0919-023: documented version surfaces (README badges + release
+  // blurbs, docs version notes, ARCHITECTURE current-state note). A surface the
+  // bump tool fails to update is reported here instead of shipping silently —
+  // the localized README blurb shipped a release behind before this check.
+  drift.push(...collectDocVersionDrift(root, product))
   return drift
 }
 

@@ -18,20 +18,53 @@
  * the repo's prefer-DI-over-module-mocking convention — here the ESM import
  * inside @savant-code/common/crypto is intercepted via bun's module mock).
  */
-import { describe, expect, mock, test } from 'bun:test'
+import { afterAll, beforeAll, describe, expect, mock, test } from 'bun:test'
 
 import { ProvenanceSession } from '..'
 import { makeTempProject } from './provenance-test-harness'
 
 import type { ProvenanceEvent } from '@savant-code/common/types/provenance'
 
-const signPayloadMock = mock(() => {
-  throw new Error('HSM offline (simulated)')
+/** Session ids belonging to this suite — the signing-failure discriminator. */
+const FAILING_SESSIONS = ['sess_record_fail', 'sess_enforce_fail']
+
+/**
+ * FID-2026-0919-023: `mock.module` is PROCESS-WIDE in bun and cannot be relied
+ * on to be undone — measured on this suite: an unconditional stub leaked into
+ * unrelated files (`teacher/progression` derives its teacher keypair from the
+ * same `@savant-code/common/crypto` module, so its signing silently returned
+ * null and two receipt assertions failed in the root `bun test` chain, while
+ * each suite passed alone). The leak reproduced in BOTH argument orders and
+ * survived `afterAll(mock.restore())` and a `beforeAll` installation, so the
+ * only reliable containment is to make the replacement semantically inert for
+ * everyone else: it throws for THIS suite's payloads and delegates to the real
+ * signer for all others.
+ */
+beforeAll(() => {
+  mock.module('@savant-code/common/crypto', () => {
+    const actual = require('@savant-code/common/crypto') as Record<
+      string,
+      unknown
+    >
+    const realSign = actual.signPayload as (
+      keypair: unknown,
+      payload: unknown,
+    ) => unknown
+    return {
+      ...actual,
+      signPayload: (keypair: unknown, payload: unknown) => {
+        const signed = JSON.stringify(payload)
+        if (FAILING_SESSIONS.some((id) => signed.includes(id))) {
+          throw new Error('HSM offline (simulated)')
+        }
+        return realSign(keypair, payload)
+      },
+    }
+  })
 })
 
-mock.module('@savant-code/common/crypto', () => {
-  const actual = require('@savant-code/common/crypto') as Record<string, unknown>
-  return { ...actual, signPayload: signPayloadMock }
+afterAll(() => {
+  mock.restore()
 })
 
 function collectEvents(session: ProvenanceSession): ProvenanceEvent[] {
@@ -81,9 +114,9 @@ describe('signing-failure visibility (FID-2026-0919-012)', () => {
       projectRoot: root,
     })
     const events = collectEvents(session)
-    await expect(
-      session.recordWriteReceipt(writeParams(root)),
-    ).rejects.toThrow('HSM offline')
+    await expect(session.recordWriteReceipt(writeParams(root))).rejects.toThrow(
+      'HSM offline',
+    )
     expect(events.find((event) => event.type === 'signing_failed')).toBe(
       undefined,
     )

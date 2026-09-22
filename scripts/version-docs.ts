@@ -70,33 +70,38 @@ export function updateDocSurfaces(
   }
 
   replace('README.md', `Release-v${oldVersion}-`, `Release-v${newVersion}-`)
-  replace('README.md', `**v${oldVersion}** —`, `**v${newVersion}** —`)
   replace(
     'README.zh-CN.md',
     `Release-v${oldVersion}-`,
     `Release-v${newVersion}-`,
   )
-  replace(
-    'docs/sdk-overview.md',
-    `| Version | \`${oldVersion}\` |`,
-    `| Version | \`${newVersion}\` |`,
-  )
-  replace(
-    'docs/privacy.md',
-    `> **Version:** v${oldVersion}`,
-    `> **Version:** v${newVersion}`,
-  )
-  replace(
-    'ARCHITECTURE.md',
-    `at version \`${oldVersion}\``,
-    `at version \`${newVersion}\``,
-  )
 
-  replace(
-    'docs/SAVANT-VERSIONING.md',
-    `**Current release:** Savant-Code \`${oldVersion}\`.`,
-    `**Current release:** Savant-Code \`${newVersion}\`.`,
-  )
+  // FID-2026-0919-023: version *statements* are converged from the same table
+  // the drift check reads, and from whatever version the surface currently
+  // states — not just from `oldVersion`. The old exact-string form advanced a
+  // surface only when it sat exactly one release behind, so a surface that fell
+  // behind once stayed behind forever, invisibly (ARCHITECTURE.md had been
+  // stating 0.0.26 through seven bumps). The localized README blurb was never
+  // declared at all and drifted the same way.
+  for (const surface of DOC_VERSION_SURFACES) {
+    const filePath = path.join(root, surface.file)
+    let content: string
+    try {
+      content = fs.readFileSync(filePath, 'utf8')
+    } catch {
+      continue
+    }
+    const match = content.match(surface.pattern)
+    const stated = match?.[1]
+    if (!match || !stated || stated === newVersion) continue
+    fs.writeFileSync(
+      filePath,
+      content.replace(surface.pattern, (whole) =>
+        whole.replace(stated, newVersion),
+      ),
+    )
+    changed.push(surface.file)
+  }
 
   const changelogPath = path.join(root, 'CHANGELOG.md')
   const changelog = fs.readFileSync(changelogPath, 'utf8')
@@ -113,6 +118,80 @@ export function updateDocSurfaces(
   }
 
   return [...new Set(changed)]
+}
+
+/** A document surface that states the product version in prose or a badge. */
+export type DocVersionSurface = {
+  file: string
+  /** Regex whose first capture group is the version the surface states. */
+  pattern: RegExp
+  /** Remedy for the surface — surfaced by version:check. */
+  hint?: string
+}
+
+/**
+ * FID-2026-0919-023: the documented version surfaces, as a checked contract.
+ * `updateDocSurfaces` updates the ones it knows; this table is what makes an
+ * unknown/missed surface *reported* instead of silently skipped (the desktop
+ * precedent in version.ts). `version:check` fails on any drift listed below.
+ */
+export const DOC_VERSION_SURFACES: DocVersionSurface[] = [
+  {
+    file: 'README.md',
+    pattern: /^> \*\*v(\d+\.\d+\.\d+)\*\* —/m,
+    hint: 'release-blurb label',
+  },
+  {
+    file: 'README.zh-CN.md',
+    pattern: /^> \*\*v(\d+\.\d+\.\d+)\*\* ——/m,
+    hint: 'localized release-blurb label',
+  },
+  {
+    file: 'docs/sdk-overview.md',
+    pattern: /\| Version \| `(\d+\.\d+\.\d+)` \|/,
+  },
+  {
+    file: 'docs/privacy.md',
+    pattern: /> \*\*Version:\*\* v(\d+\.\d+\.\d+)/,
+  },
+  {
+    file: 'ARCHITECTURE.md',
+    pattern: /at version `(\d+\.\d+\.\d+)`/,
+  },
+  {
+    file: 'docs/SAVANT-VERSIONING.md',
+    pattern: /\*\*Current release:\*\* Savant-Code `(\d+\.\d+\.\d+)`\./,
+  },
+]
+
+/**
+ * Doc surfaces whose stated version differs from the product version. A missing
+ * file or an unmatched pattern is drift with an `undefined` version — never a
+ * silent pass.
+ */
+export function collectDocVersionDrift(
+  root: string,
+  product: string,
+): Array<{ file: string; version: string | undefined; hint?: string }> {
+  const drift: Array<{
+    file: string
+    version: string | undefined
+    hint?: string
+  }> = []
+  for (const surface of DOC_VERSION_SURFACES) {
+    let content: string
+    try {
+      content = fs.readFileSync(path.join(root, surface.file), 'utf8')
+    } catch {
+      drift.push({ file: surface.file, version: undefined, hint: surface.hint })
+      continue
+    }
+    const version = content.match(surface.pattern)?.[1]
+    if (version !== product) {
+      drift.push({ file: surface.file, version, hint: surface.hint })
+    }
+  }
+  return drift
 }
 
 function todayIso(): string {

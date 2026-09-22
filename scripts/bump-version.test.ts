@@ -84,6 +84,19 @@ version = "1.0.219"
 `
 }
 
+// FID-2026-0919-023: the documented version surfaces. A fixture without them
+// is (correctly) reported as drift, so the synced-state assertion needs them.
+function docSurfaceFixtures(): Record<string, string> {
+  return {
+    'README.md': '# README\n\n> **v0.0.23** — shipped\n',
+    'README.zh-CN.md': '# README\n\n> **v0.0.23** —— 已发布\n',
+    'docs/sdk-overview.md': '| Version | `0.0.23` |\n',
+    'docs/privacy.md': '> **Version:** v0.0.23\n',
+    'ARCHITECTURE.md': 'at version `0.0.23`\n',
+    'docs/SAVANT-VERSIONING.md': '**Current release:** Savant-Code `0.0.23`.\n',
+  }
+}
+
 function createFixtureRoot(): string {
   const root = mkdtempSync(path.join(os.tmpdir(), 'savant-version-'))
   tempRoots.push(root)
@@ -94,6 +107,11 @@ function createFixtureRoot(): string {
     writeFileSync(filePath, manifest(relativePath))
   }
   writeFileSync(path.join(root, 'protocol.config.yaml'), config())
+  for (const [relativePath, content] of Object.entries(docSurfaceFixtures())) {
+    const filePath = path.join(root, relativePath)
+    mkdirSync(path.dirname(filePath), { recursive: true })
+    writeFileSync(filePath, content)
+  }
   // The desktop family is part of the drift set (2026-09-07); fixtures keep
   // the synced-state assertion honest.
   const desktopManifest = manifest('desktop/package.json')
@@ -155,6 +173,16 @@ describe('version identity writers', () => {
     writeManifestVersion(root, 'sdk/package.json', '0.0.22')
     const drift = collectVersionDrift(root)
     expect(drift.some((entry) => entry.file === 'sdk/package.json')).toBe(true)
+
+    // FID-2026-0919-023: documented surfaces join the drift set — the localized
+    // release blurb shipped a release behind because it was never checked.
+    writeFileSync(
+      path.join(root, 'README.zh-CN.md'),
+      '# README\n\n> **v0.0.22** —— 已发布\n',
+    )
+    expect(collectVersionDrift(root).map((entry) => entry.file)).toContain(
+      'README.zh-CN.md',
+    )
   })
 
   test('collectVersionDrift covers the desktop family — JSON, Cargo.toml, Cargo.lock', () => {

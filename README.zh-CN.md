@@ -8,14 +8,24 @@
 
 基于 TypeScript/Bun 构建，受 ECHO 协议治理，并针对本地优先的 Ollama 使用场景设计。
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-1.3.14-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![React](https://img.shields.io/badge/React-19-%23000000?style=flat-square&logo=react&logoColor=%2300fbff)](https://react.dev/)[![OpenTUI](https://img.shields.io/badge/OpenTUI-0.5.3-%23000000?style=flat-square&logo=opentui&logoColor=%2300fbff)](https://github.com/anomalyco/opentui)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](ECHO.md)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![Release](https://img.shields.io/badge/Release-v0.0.32-%23000000?style=flat-square&logo=semver&logoColor=%2300fbff)](CHANGELOG.md)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-1.3.14-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![React](https://img.shields.io/badge/React-19-%23000000?style=flat-square&logo=react&logoColor=%2300fbff)](https://react.dev/)[![OpenTUI](https://img.shields.io/badge/OpenTUI-0.5.3-%23000000?style=flat-square&logo=opentui&logoColor=%2300fbff)](https://github.com/anomalyco/opentui)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](ECHO.md)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![Release](https://img.shields.io/badge/Release-v0.0.33-%23000000?style=flat-square&logo=semver&logoColor=%2300fbff)](CHANGELOG.md)
 
 </div>
 
-> **v0.0.32** —— 本次发布修复 `/model` 选择器使其真正激活所选提供商的路由（消除伪装成
+> **v0.0.33** —— 本次发布加固安全态势，并修补代理自身所遵循验证契约中的漏洞。派生子
+> shell 不再继承提供商凭据（子环境白名单），密钥值在遥测汇总前按形状掩码，签名失败改为
+> 显式告警而非静默，数据库模板获得 fail-closed 能力钳制，破坏性命令拒绝列表现在覆盖包括
+> 开发覆盖模式在内的所有模式。FID 验证按语义识别所承诺的测试产物（任意章节、任意“新增/
+> 更新”表述），并明确列出不予强制约束的记录而不再静默跳过；仓库级门禁检查可在 FID 自身
+> 回执中声明——正是这一机制发现并修复了发布工具链中两处已发布的裸运行时 spawn。模型
+> 上下文窗口对中段版本号 id 采用精确终端段匹配（kiosapi/grok-4.6 不再继承 2M 窗口），
+> 回退表已对照实时 OpenRouter 目录完成审计与 17 处修正；验证只为真正成功执行的命令记分，
+> EHEL 在写入时即阻断 Law-3 循环依赖。
+> 此前 v0.0.32 发布内容：修复 `/model` 选择器使其真正激活所选提供商的路由（消除伪装成
 > “Out of credits” 的 savant-code.com 静默直通），并重建免费算力采集器的每日扫描性能：
 > 提供商探测改用有界并发池，无法验证边界的主机按 3 天节奏复测——典型每日耗时从约 14 秒
-> 降至约 1.1 秒，证据新鲜度上界固定为 3 天。此前 v0.0.31 发布内容：通过 `/provider` 的用户自定义提供商（完整特性：add/edit/list/remove 向导，
+> 降至约 1.1 秒，证据新鲜度上界固定为 3 天。
+> 此前 v0.0.31 发布内容：通过 `/provider` 的用户自定义提供商（完整特性：add/edit/list/remove 向导，
 > 一等注册表条目——前缀路由、目录、密钥存储、在线测试）；四个经审计的新网关提供商（OrcaRouter 与 B.AI
 > 均通过密钥在线验证；HCNSec 与 TokenBom 基于审计的 14 模型静态白名单——注册表现有 16 家提供商）；
 > 技能演进套件（信任边界账本追加 + fail-closed 漂移门禁、归档替代清除的草稿过期、持久模式 wiki、
