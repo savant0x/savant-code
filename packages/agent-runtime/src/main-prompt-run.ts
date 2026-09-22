@@ -2,6 +2,7 @@ import { trackEvent } from '@savant-code/common/analytics'
 import { AnalyticsEvent } from '@savant-code/common/constants/analytics-events'
 
 import { buildHookInput, getHookEngine } from './hooks/engine'
+import { buildSessionOutcome } from './hooks/run-outcome'
 import { demoteStaleActiveDrive } from './run-agent-step/auto-drive-driver'
 import { driveAutoTurns } from './run-agent-step/auto-drive-loop'
 import { driveGoalTurns } from './run-agent-step/goal-driver'
@@ -138,6 +139,11 @@ export async function mainPrompt(
     )
   }
 
+  // FID-2026-0919-030: SessionEnd fires in the `finally` below, so the outcome
+  // must be computed on EVERY path — return, thrown, and the no-output arm.
+  // The default is the truthful "unknown ⇒ failed"; each path replaces it. Same
+  // contract as the subagent lifecycle (FID-2026-0919-029), one boundary up.
+  let outcome = buildSessionOutcome({})
   try {
     let { agentState, output } = await driveGoalTurns({
       ...params,
@@ -186,16 +192,27 @@ export async function mainPrompt(
       'Main prompt finished',
     )
 
+    // The EFFECTIVE output: a run that produced nothing is the error form, so
+    // the outcome must see the same value the caller does — otherwise a
+    // no-output run would report `completed` at the hook and fail at the caller.
+    const effectiveOutput = output ?? {
+      type: 'error' as const,
+      message: 'No output from agent',
+    }
+    outcome = buildSessionOutcome({
+      result: { agentState, output: effectiveOutput },
+    })
+
     return {
       sessionState: {
         fileContext,
         mainAgentState: agentState,
       },
-      output: output ?? {
-        type: 'error' as const,
-        message: 'No output from agent',
-      },
+      output: effectiveOutput,
     }
+  } catch (error) {
+    outcome = buildSessionOutcome({ error })
+    throw error
   } finally {
     if (hookProjectRoot) {
       getHookEngine(hookProjectRoot).fireAndForgetTrigger(
@@ -203,6 +220,10 @@ export async function mainPrompt(
           event: 'SessionEnd',
           sessionId,
           cwd: hookProjectRoot,
+          toolResult: outcome,
+          ...(outcome.errorMessage !== undefined
+            ? { errorMessage: outcome.errorMessage }
+            : {}),
         }),
       )
     }
