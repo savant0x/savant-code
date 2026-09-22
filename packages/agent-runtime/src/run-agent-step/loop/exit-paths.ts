@@ -6,6 +6,7 @@ import { userMessage } from '@savant-code/common/util/messages'
 
 import { getOrCreateEnforcement } from '../../echo/enforcement'
 import { appendGroundingRefresh } from '../../echo/grounding'
+import { fireMainAgentTerminalHook } from '../../hooks/lifecycle-hooks'
 import { clearProgrammaticRunState } from '../../run-programmatic-step'
 import { resetThinkerConvergenceState } from '../../tools/thinker-convergence-gate'
 import { cleanupThoughtSession } from '../../tools/thought-session-store'
@@ -93,6 +94,15 @@ export async function handleLoopAbort(
     },
     params.traceWriter,
   )
+
+  // FID-2026-0919-031: `Interrupt` — the abort IS the cancellation signal, so
+  // this is the event's canonical firing site (see lifecycle-hooks.ts).
+  fireMainAgentTerminalHook({
+    event: 'Interrupt',
+    agentState: initialAgentState,
+    fileContext: params.fileContext,
+    errorMessage: 'Run cancelled by user',
+  })
 
   return {
     agentState: initialAgentState,
@@ -193,6 +203,19 @@ export async function handleLoopError(
     },
     params.traceWriter,
   )
+
+  // FID-2026-0919-031: the error arm can settle as `cancelled` (an abort observed
+  // while handling a failure) — that is an `Interrupt`. A genuine FAILURE fires
+  // neither Stop nor Interrupt by the ruling: the turn did not finish and was
+  // not cancelled, and `SessionEnd` carries the failure (FID-2026-0919-030).
+  if (status === 'cancelled') {
+    fireMainAgentTerminalHook({
+      event: 'Interrupt',
+      agentState: initialAgentState,
+      fileContext: params.fileContext,
+      errorMessage,
+    })
+  }
 
   // Payment required errors (402) should propagate
   if (statusCode === 402) {
