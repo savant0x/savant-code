@@ -40,6 +40,16 @@ describe('subagent propagation contract', () => {
     parent.protocolFile = 'dev/echo.md'
     parent.protocolVersion = 'test-single-agent'
     parent.protocolStrictMode = true
+    // FID-2026-0919-027: the run's resolved governance configuration.
+    parent.enforcementMode = 'strict'
+    parent.protocolSource = 'embedded'
+    parent.provenanceMode = 'off'
+    const designContract = {
+      id: 'contract-1',
+      version: 1,
+      tokens: {},
+    } as unknown as NonNullable<typeof parent.designContract>
+    parent.designContract = designContract
 
     const context = extractSubagentContextParams({
       agentState: parent,
@@ -87,6 +97,10 @@ describe('subagent propagation contract', () => {
       protocolStrictMode: true,
       checkpointTurnId: 'turn-1',
       hasTraceWriter: true,
+      enforcementMode: 'strict',
+      protocolSource: 'embedded',
+      provenanceMode: 'off',
+      designContract,
     })
 
     const child = createAgentState('child', template, parent, {})
@@ -94,6 +108,14 @@ describe('subagent propagation contract', () => {
     expect(child.ancestorRunIds).toEqual(['root-run', 'parent-run'])
     expect(child.protocolVariant).toBe('single-agent')
     expect(child.protocolFile).toBe('dev/echo.md')
+    // FID-2026-0919-027: the child is part of the SAME run — the governance
+    // configuration travels too, or the child is governed by defaults instead
+    // of by the contract its parent resolved.
+    expect(child.enforcementMode).toBe('strict')
+    expect(child.protocolSource).toBe('embedded')
+    expect(child.provenanceMode).toBe('off')
+    expect(child.designContract).toBe(designContract)
+    expect(child.groundingCheckpoint).toBeUndefined()
   })
 
   it('rejects excessive ancestry before creating a child state', () => {
