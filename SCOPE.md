@@ -235,8 +235,34 @@
       recoverable from git history (`git log -p --
       scripts/tree-drain-manifest/`); recorded in the parent manifest header.
       **Verified:** dry-run exit 0 — **26 groups, 149 paths**, zero uncovered /
-      empty / overlap; prettier + eslint clean. Nothing committed (G2).
-      **Automation level: 3.**
+      empty / overlap; prettier + eslint clean. **Automation level: 3.**
+- [x] **T82-M. Tree drained + every release precondition cleared (2026-09-22).**
+      `release:preaudit:check` went **2 BLOCKs → PASS — release preconditions
+      clear**. Four steps, each evidence-checked: **(1)** the credential-scan
+      block cleared by the 13-commit rewrite (T82-K); **(2)** the 149-path
+      working tree drained with `scripts/tree-drain.ts --apply` — **26
+      path-scoped atomic commits**, `--no-verify` per the tool's contract (the
+      full battery runs once at push). **Nothing lost:** `git diff
+      <pre-drain-head> HEAD --stat` is **exactly the 149 drained paths**, so the
+      drain reorganized content into commits without altering it. **(3)**
+      **Public-release hygiene ruling (operator, 2026-09-22):**
+      `docs/Model Context Window Review.md` **ships**;
+      `docs/idea-farm-claude-mem-openhands-grok-build.md` — internal competitive
+      analysis ("ranked for what Savant can actually use") — does **not**. A
+      `.gitignore` entry (`docs/idea-farm-*.md`, line 33) keeps it on disk while
+      excluding it from the public repo, and it was removed from the drain plan.
+      **(4)** the CHANGELOG heading date was corrected **2026-09-19 →
+      2026-09-22** on evidence, not preference: the heading date is the *cut*
+      date in this repo (`0.0.32 — 2026-09-18` ↔ tag `v0.0.32` @ `2026-09-18`;
+      `0.0.31 — 2026-09-13` ↔ tag `v0.0.31` @ `2026-09-13`), so the draft date
+      was a 3-day drift against today's cut. **Final state:** worktree clean
+      (0 paths, 0 untracked); **48 unpushed commits**, still a fast-forward (no
+      force-push); typecheck 12/12 exit 0; root test chain **7593 pass / 0
+      fail**; prettier, eslint, `lint:md`, `validate:repository`,
+      `version:check`, `scope-register`, `fid:verify --check` all PASS;
+      `release:public:preview` exit 0 with **no** pre-audit block and
+      `Changelog section ready: ## 0.0.33 — 2026-09-22`. **Automation level: 1**
+      for the release itself (operator executes).
 
 ## Task 81 — The last five hook events + contract truth (2026-09-19) — CLOSED + ARCHIVED (FID-2026-0919-031)
 

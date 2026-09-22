@@ -127,13 +127,33 @@ modules are tracked, so the applied Aug plan is recoverable from git history.
 **Verified:** dry-run exit 0 — 26 groups, 149 paths, zero uncovered / empty /
 overlap; prettier + eslint clean. Recorded as SCOPE.md T82-L.
 
+## Follow-on: the tree drained and the release made ready
+
+`release:preaudit:check` went **2 BLOCKs → PASS — release preconditions clear.**
+
+- **Drain:** `bun scripts/tree-drain.ts --apply` → **26 path-scoped atomic
+  commits, 149 paths**, `--no-verify` per the tool's contract. **Nothing lost:**
+  `git diff <pre-drain-head> HEAD --stat` is exactly the 149 drained paths — the
+  drain reorganized content into commits, it did not change it.
+- **Public-release hygiene (operator ruling):** `docs/Model Context Window
+  Review.md` ships; `docs/idea-farm-claude-mem-openhands-grok-build.md`
+  (internal competitive analysis) does **not** — a `.gitignore` entry keeps it on
+  disk, out of the public repo.
+- **CHANGELOG heading date 2026-09-19 → 2026-09-22**, on evidence: the heading
+  date is the cut date here (`0.0.32 — 2026-09-18` ↔ tag `v0.0.32` @
+  `2026-09-18`).
+
+**Final state:** clean worktree (0 paths, 0 untracked), **48 unpushed commits**,
+fast-forward preserved; typecheck 12/12; test chain **7593 pass / 0 fail**;
+prettier / eslint / `lint:md` / `validate:repository` / `version:check` /
+`scope-register` / `fid:verify` all PASS; `release:public:preview` exit 0.
+Recorded as SCOPE.md T82-M.
+
 ## Open items
 
-1. **The remaining release blocker is the dirty worktree (144 paths)** — the G2
-   boundary. Nothing is committed; the 0.0.33 cut still cannot start. The
-   credential-scan block that blocked it is gone, and the tree can now be
-   drained (`bun scripts/tree-drain.ts` → review → `--apply`), which is the
-   operator's step under G2/G3.
+1. **No release blockers remain** — `release:preaudit:check` PASSes and the
+   preview shows no pre-audit block. The cut itself is the operator's to run
+   (`bun run release:public`).
 2. **`backup-pre-rewrite-20260922` is retained** — keep it until v0.0.33 ships.
    `dev/scratchpad/active/t82-old-head.txt` holds the pre-rewrite head
    (`b8f72ed2…`). The old tip is still reachable from the backup branch and the
