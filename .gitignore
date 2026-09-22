@@ -28,6 +28,9 @@ npm-app/src/__tests__/data/
 debug/
 .context/
 docs/bot-detection.md
+
+# Internal analysis notes — not public documentation (competitive idea-farm audits).
+docs/idea-farm-*.md
 .codex
 
 # Nx cache directories

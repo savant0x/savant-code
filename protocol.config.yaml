@@ -8,7 +8,7 @@
 project:
   name: 'savant-code'
   description: 'Multi-Agent AI Coding Assistant with ECHO Protocol governance. TypeScript monorepo, Bun runtime.'
-  version: '0.0.32'
+  version: '0.0.33'
 
 protocol:
   version: '0.2.0'
@@ -107,6 +107,20 @@ perfection_loop:
 
 # ADVISORY — session policy documentation; not consumed by the runtime.
 # FID-2026-0803-001 ECHO-3.
+#
+# `autonomy_level` is the session's AUTOMATION LEVEL — how much authority the
+# agent has to act without asking. Canonical definition (with the Law 2
+# semantics and the invariants no level lifts): dev/echo-v0.1.2-single-agent.md
+# § Automation Levels, mirrored for harness sessions in ECHO.md.
+#   1 = Guided     — extremely limited; approval required for everything.
+#   2 = Supervised — the approved work plus reversible in-scope fixes; stops
+#                    and presents before anything irreversible.
+#   3 = Autonomous — complete agent automation; in-project findings are fixed
+#                    in the same pass (default).
+# This is the CEILING: each work item carries its own level on the SCOPE
+# register / FID, and an item is actioned without approval only when its level
+# is <= this value. No level lifts G1-G9, credential handling, Law 3, or the
+# project-directory boundary.
 session:
   auto_summary: true
   summary_interval: 30
