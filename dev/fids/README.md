@@ -5,6 +5,304 @@ operator decision, implementation, runtime review, or closure evidence.
 
 ## Current active FIDs
 
+**2026-09-22 erratum — local history rewrite:** to unblock the v0.0.33 pre-push
+credential scan (the unpushed range carried credential-shaped literals in
+`cli/src/utils/__tests__/logger-mask-secret-values.test.ts` — the synthetic
+FID-2026-0919-011 masking fixtures, which the scan refuses fail-closed), the **13
+unpushed commits from `9c2dcd5e` (position 10 of 22) through the tip** were
+rewritten to carry **8–19-character fixture bodies**: below the scan's
+≥20-character threshold, still above the masking layer's ≥8 requirement, so every
+pin's intent is unchanged. The only content change in the whole range is that one
+file (`16 insertions(+), 4 deletions(-)`); the nine unpushed commits before
+`9c2dcd5e` keep their SHAs. Executed as a `checkout --detach` + `commit --amend` +
+`rebase --onto` rewrite; **fast-forward push preserved** (origin/main remains an
+ancestor — no force-push; nothing left this machine). All commit SHAs cited in FID
+records, `CHANGELOG.md`, and `SCOPE.md` for work authored 2026-09-22 or earlier are
+stale by this rewrite; the commit messages and diffs are unchanged. Pre-rewrite
+branch retained as `backup-pre-rewrite-20260922`.
+
+**2026-09-19 — FID-2026-0919-031 (the last five hook events, and the contract
+that described them), status `closed`, receipt re-stamped 7/7 LIVE at the archived
+path (`sha256:341fc2fe…`):** operator directives
+to implement the five inert events ("starting with the Stop vs Interrupt split and
+the compaction attempt-vs-effect predicate") and to review the whole hook surface
+against the documented contract for anything that over-promises. **Wired:** `Stop`
+= the turn finished on its own terms, `Interrupt` = it was cancelled (a failure
+fires neither; both main-agent only), with `Stop` fired once at the loop's single
+completed-turn exit (now `loop/completed-turn.ts`); `PreCompact` = the compaction
+ATTEMPT at the pruner spawn and `PostCompact` only on the runtime's existing
+`pruned` predicate, so an ineffective attempt cannot claim the context was
+compacted; `Notification` = the `ask_user` seam, before the client call.
+`FIRED_HOOK_EVENTS` is 12/12 and `NEVER_FIRED_HOOK_EVENTS` is empty (kept as the
+extension point whose rule is the useful part). **The census now demands
+reachability, not spelling:** a helper mention counts only with a caller outside
+the module, and only with a caller passing the event when the helper is
+event-parameterized — both proved by negative legs that failed first and were
+then made to fail for the right reason. **The contract was read back against the
+source:** the events table, the payload-field table, the `Source` paths (the
+parser is `protocol-config-parser.ts` via `applyHooksSection`; three listed
+wiring files fire nothing), the missing `action` row, and the unstated `matcher`
+behaviour on tool-less events (documented and pinned as a deliberate fail-open
+choice). 16 new pins / 4 negative legs; full chain 7593 pass / 0 fail; nothing
+committed; automation level 3. **Closed + archived 2026-09-22** on the operator's
+closure directive; the Resolution was restructured to the closure format (Closed
+Date / Fix Description / Tests Added / Verification Evidence / Archived) and the
+receipt re-stamped LIVE at the archived path (`sha256:341fc2fe…`), so the closed
+record is byte-consistent with its final content. Commit SHA pending operator git
+execution (G2 withheld).
+
+**The active FID queue is empty.** FID-2026-0919-030 was closed + archived on
+operator directive ("Close and archive FID-2026-0919-030 with its archive index
+entry, leaving the commit to me"); its receipt was re-stamped LIVE at the archived
+path (`sha256:724b6c62…`) so the closed record is byte-consistent with its final
+content. See `archive/README.md`.
+
+**2026-09-19 — FID-2026-0919-030 (the hook surface tells the truth), status
+`closed`, receipt re-stamped 5/5 LIVE at the archived path:** operator directive to audit the other hook events
+for the same observability gap `SubagentStop` had — asked of the whole surface
+instead of the one event. Three findings. **(A)** `PreToolUse` — the only
+BLOCKING event, documented as composing with the per-agent EHEL gate — sent no
+agent identity at either site, so "only `forge` may write" was inexpressible and a
+subagent's call arrived under the child's run id with nothing naming it; both
+sites now carry the acting agent, pinned by a census that makes a third site
+without it impossible. **(B)** `SessionStart`/`SessionEnd` were outcome-blind
+(`SessionEnd` fires from a `finally` with identity only); the outcome is now
+computed on every path and reported, with one shared builder for both lifecycles.
+**(C)** Five of the twelve declared events (`PreCompact`, `PostCompact`, `Stop`,
+`Interrupt`, `Notification`) had **zero firing sites** while the vocabulary
+accepted them and the docs presented them as active — a silently inert operator
+hook, the one failure mode nobody can observe. They are now classified with a
+reason each, compile-time gated, census-verified against the runtime source by
+`scripts/hook-events-check.ts` (which also fails if this repo's own config
+declares an inert hook), and the docs table states what fires today. 10 new pins /
+49 expectations; full chain 7577 pass / 0 fail; three negative legs (3 red, 3 red,
+2 red + probe exit 1), all sources restored. Closed + archived 2026-09-19;
+nothing committed; automation level 3.
+
+**The archive holds the earlier 2026-09-19 records.** FID-2026-0919-029 was closed
+and archived on operator directive ("Close and archive FID-2026-0919-029 with its
+archive index entry, leaving the commit to me"); its receipt was re-stamped LIVE
+at the archived path (`sha256:fb6eabb5…`) so the closed record is byte-consistent
+with its final content. See `archive/README.md`.
+
+**2026-09-19 — FID-2026-0919-029 (boundary observability and enumeration), status
+`closed`, receipt re-stamped 7/7 LIVE at the archived path:** operator directives to give `SubagentStop` an
+outcome payload ("so operator hooks can tell a finished child from a failed one")
+and to extend the field-partition gate to `SessionState` and `ProjectFileContext`
+— the second being the extension FID-2026-0919-028 recorded for itself.
+**(A)** `SubagentStart`/`SubagentStop` fired with identity only, so a completed
+child, a child whose loop returned the error form, and a child that threw were
+indistinguishable at the hook — the contract already had `tool_result` /
+`error_message` and the call site never set them. `hooks/subagent-outcome.ts` +
+the `executeSubagent` funnel now report `completed` / `failed` with the cause
+(identity and shape only, never transcript content; unknown ⇒ failed). **(B)**
+`common/src/types/session-boundary-fields.ts` partitions `SessionState` (2 keys:
+deep-copied vs shared-by-reference) and `ProjectFileContext` (16 keys: 10
+refreshed at run start with write-site citations, 6 carried with a reason each) with
+the same `AssertNever` gates as FID-028, plus pins driven off the shipped lists and
+a **writer census** over the two modules that assign `fileContext.*` — a boundary
+can drift by gaining a writer without gaining a type key. 15 new pins; full chain
+7567 pass / 0 fail. Every gate proven by a negative leg (3 pins red without the
+wiring; `error TS2344` for a field injected into either type; census
+`unclassified` for a new writer; probe exit 1 for a carried-field writer and for a
+copied `fileContext`), all sources restored. Closed + archived 2026-09-19;
+nothing committed; automation level 3.
+
+**The archive holds the rest of the 2026-09-19 records.** FID-2026-0919-027 and
+FID-2026-0919-028 were closed + archived on operator directive ("Close and archive
+FID-2026-0919-027 and FID-2026-0919-028 with their archive index entries, leaving
+the commit to me"); each receipt was re-stamped LIVE at its archived path
+(`sha256:c705a855…` and `sha256:d85e2256…`) so the closed records are
+byte-consistent with their final content. See `archive/README.md`.
+
+**2026-09-19 — FID-2026-0919-028 (spawn boundary self-enforcing), status
+`closed`, receipt re-stamped 6/6 LIVE at the archived path:** the follow-up FID-2026-0919-027 recorded for
+itself — *"nothing checks that a new `AgentState` field is transported… a
+`Pick`/required-fields list derived from `AgentState` would make the omission a
+type error instead of a review finding."* FID-027 fixed the fields the boundary
+was dropping; this closes the mechanism that dropped them. All **54**
+`AgentState` keys are classified exactly once in `spawn-child-fields.ts` (13
+inherited, 14 child-owned, 27 by-design **with a reason each**), the inherited
+half of the child state is produced by a typed picker over that same list (so the
+list drives construction instead of documenting it), and four `AssertNever` gates
+make an unclassified field, a category overlap, or a governance field missing
+from the inherited list fail `typecheck` — proven by injecting a field into
+`AgentState` (`error TS2344: Type 'string' does not satisfy the constraint
+'never'`). The handoff probe now reads the authority's lists rather than copies.
+7 new pins / 114 expectations; nothing committed (G2 withheld); automation level
+3.
+
+**2026-09-19 — FID-2026-0919-027 (inter-agent handoff transport), status
+`closed`, receipt re-stamped 6/6 LIVE at the archived path:** operator directive
+to review information flow
+between agents — "anything that agent B needs from agent A, but it doesnt
+properly transport… We need to ensure all the info/packages flow flawlessly
+through the entire system." **Audit result: the spawn boundary was the leak, and
+it was total** — `createAgentState` is the only child-state constructor in the
+runtime and it copied identity, ancestry, protocol variant, FSM phase,
+`echoCompliance` and `provenance` into every child while dropping the run's
+resolved governance configuration. Live probe over a fully-configured root:
+`enforcementMode`/`designContract`/`protocolSource`/`provenanceMode` all
+`undefined` on the child, with the consequence lines `all_15 → core_4` (strict
+EHEL silent in every subagent), `off → record`, and a diverged grounding
+identity — plus the design gate unable to fire on Forge, the roster's only
+writer and always a child. Three further boundary defects: raw evidence was
+transported on one audit-spawn path of three (the batch path required a ROOT
+parent; the inline path never loaded records), the context-pruner was
+batch-spawnable as an expensive no-op, and the inline relay dropped a
+`structured_output` child's artifact. All fixed, contract-enforced (the
+propagation snapshot now carries the four fields and rejects a child missing
+any), pinned with 27 new tests (agent-runtime 1462/0, full chain 7545 pass / 0
+fail), and observable through the new `scripts/handoff-transport-check.ts` probe
+whose negative leg was proven by reverting the fix. `maxContextLength` and
+`digestCaps` are **not** defects — `createLoopContext` re-stamps both per run.
+Nothing committed (G2 withheld); automation level 3 throughout.
+
+**The 2026-09-19 records before these** were closed + archived on the same terms
+(FID-2026-0919-025 and -026, then -023 and -024 and -021/-022); each receipt was
+re-stamped LIVE at its archived path so the closed record is byte-consistent with
+its final content. See `archive/README.md`.
+
+**2026-09-19 — FID-2026-0919-026 (B.AI credit-gate audit + provider quota
+visibility), status `closed`, receipt re-stamped 8/8 LIVE at the archived path:** operator directive to
+audit `docs.b.ai` and test the key for the five named models, after live use
+returned `credit insufficient balance: balance=0
+required=3672` while the vendor's key page showed 100% free usage. **Audit
+result: the integration is correct and the account is unfunded.** Both keys in the
+working tree authenticate and resolve to the same account
+(`user_P2SuQ53ei5CZ`) whose `personal_balance` is 0; the live catalog resolves 47
+internal ids including all five named models; the production chain emits
+`POST https://api.b.ai/v1/chat/completions` with the correctly stripped upstream
+id and bearer auth; and every model is refused `400 insufficient_user_quota`.
+B.AI is **prepaid** (1 USD = 1,000,000 Credits) and none of the five is free —
+they are the cheapest paid tier, and the only documented free credit is a bonus
+that expires after 30 days. `required=3672` is therefore ~$0.0037 against a
+balance of 0. Corroborated by FID-2026-0911-004 (same key reached HTTP 200 on
+`qwen3.8-flash` on 2026-09-11). No repository claim is false and the vendor error
+reaches the operator intact, so no code change is warranted for the report; the
+repository-side finding was that the vendor's documented `/v1/balance` endpoint
+went unused, leaving account-state refusals undiagnosable in-tool. The operator
+ruled **"Both"** and it is implemented: a data-only `quota?: { url; valuePath;
+unit?; note }` on `ProviderConfig` (declared for B.AI against its documented
+balance endpoint) drives a bounded, fail-silent reader and one `**Quota:**` line
+in `/health` for the active provider, plus `quotaHint` in the existing
+send-message hint seam, which appends the provider's declared note to a
+quota-class refusal and points at `/health`. 15 new pins; a registry pin enforces
+that only providers documenting such an endpoint declare one. Evidence: live
+outputs transcribed in the FID; probes at
+`dev/scratchpad/active/bai-free-quota-audit.ts` + `bai-chain-proof.ts` (gitignored,
+no key material printed). **Closed + archived 2026-09-19** on operator closure
+directive; receipt re-stamped LIVE at the archived path (8/8 gates, fingerprint
+`sha256:5a85c231…`). Commit SHA pending operator git execution (G2 withheld).
+
+**2026-09-19 — FID-2026-0919-025 (register completeness: a line for every
+tracked item), status `closed`, receipt re-stamped 5/5 LIVE at the archived
+path:** the operator asked
+for the quiet half of the scope guard — "flag approved items that appear in FIDs
+or session summaries but never got a SCOPE.md line." FID-2026-0919-024 removed
+the *label* an agent trimmed scope with; the omission writes no token, so an item
+with no register line stayed invisible and droppable with no operator decision.
+Fix: new `echo/scope-register-completeness.ts` enforces two decidable legs —
+every active `dev/fids/FID-*.md` must be named in `SCOPE.md`, and every task
+cited by an active FID or a current session summary (`Task NN`, `TNN-X`) must
+exist there as a `## Task NN` section or a `TNN-X` item — as
+`scope.unregistered-item` in `validate:repository` and as the
+`scripts/scope-register-check.ts` probe. A reference in inline code is a
+quotation, a bare one is the claim (the disposition guard's rule, now shared via
+one exported helper). **The check's first catch was its own author**: 8 gaps in
+this very record → 4 after the quotation rule → 0 after the register line, all on
+the real tree. 15 pins / 24 expectations, 25/0 across both scope-guard suites.
+**Closed + archived 2026-09-19** on operator closure directive; receipt re-stamped
+LIVE at the archived path (5/5 gates, fingerprint `sha256:dd7cd79f…`). Commit SHA
+pending operator git execution (G2 withheld). Every "the active FID queue is
+empty" line further down is a closure note dated to its own entry.
+
+**2026-09-19 release quality pass — FID-2026-0919-023 (automation levels,
+documented-version surfaces, cross-suite test isolation) — status `verified`,
+receipt stamped 9/9 from a live gate run:** the 0.0.33 release-readiness pass
+(operator: "this is a project wide quality pass, update every issue you find w/
+automation level 3" + "we need to document automation levels level 1 = extremely
+limited … level 3 = complete agent automation"). Three defect classes closed.
+(1) **Automation levels were undocumented**: a canonical `## Automation Levels`
+section now defines all three levels, the session-ceiling-vs-item rule, the
+Law 2 semantics at level 3 (a *recorded* presentation, not a skipped one), and
+the invariants no level lifts; `ECHO.md` carries the matching ladder (reconciled
+with G1–G9), `protocol.config.yaml` documents the ladder on
+`session.autonomy_level`, `templates/FID-TEMPLATE.md` gained a required
+`Automation level` field, and every SCOPE.md item is tagged. (2) **Documented
+version surfaces are now a checked contract**: `updateDocSurfaces` silently
+skipped any surface that was not *exactly one release behind*, so
+`ARCHITECTURE.md` sat at `0.0.26` through seven bumps, the localized README
+blurb label had no pattern, and the 0.0.33 bump relabelled the `**v0.0.32** —`
+blurb so `README.md` advertised the previous release under the new version. One
+`DOC_VERSION_SURFACES` table now drives both the writer (converges from whatever
+version the surface states) and the checker (`collectVersionDrift` reports
+drifted **or missing** surfaces via `version:check`) — the new check found the
+stale `ARCHITECTURE.md` on its first run. (3) **The root `bun run test` gate was
+RED**: a process-wide `mock.module` on `@savant-code/common/crypto` in the SEC-5
+suite leaked into `teacher/progression` and made its receipt signing return
+`null` (2 failures, invisible when either suite ran alone); the stub is now
+input-scoped and inert for all other callers — 12/12 workspaces, 0 fail. Six
+pre-existing `format`-gate violations were also fixed.
+**Closed + archived 2026-09-19** on operator closure directive ("Close and
+archive FID-2026-0919-023 with its archive index entry, leaving the commit to
+me"); receipt re-stamped LIVE at the archived path (9/9 gates, fingerprint
+`sha256:e3c9453a…`). Commit SHA pending operator git execution (G2 withheld).
+See `archive/README.md`.
+
+**2026-09-19 — FID-2026-0919-024 (no agent-side scope trimming), status
+`closed`, receipt re-stamped 6/6 LIVE at the archived path:** the operator reported that approved work
+kept being marked out-of-scope without their approval, and ruled it out
+absolutely ("nothing is ever out of scope... we complete the work, we never
+defer"). Investigation found the protocol authorizing it — the Scope Boundary
+section let the agent mark a dropped item with a scope/deferred label "with a
+one-line reason" and required only a *presentation*, which a summary mention
+discharges — contradicting the same document's Step-Level Anti-Deferral rule that
+only the operator sets those statuses (already enforced for FID steps). Measured
+before the fix: 2 live register items, 1 index line, 3 changelog lines and 12
+session summaries carried the label since 2026-09-03. Fix: the vocabulary is
+removed from both protocols (a prohibition table, the two lawful states with a
+specific blocker required, and a single lawful exit — an operator-approved ruling
+recorded verbatim with its date), and a new `echo/scope-disposition-guard.ts`
+enforces it mechanically as a write-time block, as
+`scope.prohibited-disposition` in `validate:repository`, and as the
+`scripts/scope-guard-check.ts` probe. The live register is clean; historical
+records are scanned only from 2026-09-19 forward and are not rewritten.
+**Closed + archived 2026-09-19** on operator closure directive ("Close and
+archive FID-2026-0919-024 with its archive index entry, leaving the commit to
+me"); receipt re-stamped LIVE at the archived path (6/6 gates, fingerprint
+`sha256:195a024a…`). Commit SHA pending operator git execution (G2 withheld).
+See `archive/README.md` — every "the active FID queue is empty" line further
+down is a closure note dated to its own entry.
+
+**2026-09-19 closure — FID-2026-0919-021 + FID-2026-0919-022 (contract
+widening, repo-gate completeness) closed + archived (operator closure
+directive):** two governance records produced by one audit of
+FID-2026-0918-007. **021** (medium) — the FID-2026-0918-006 sweep reported 0
+errors over two test artifacts covered by no declared gate (its promise
+pattern matched only the literal "new (runtime) test" wording and read only
+`### Verification`), and the receipt contract skipped every status outside
+`fixed`/`verified` silently (284 of 315 archived `closed` records carry a
+drifted fingerprint). Fix: a whole-document, novelty-marker promise rule; the
+new `echo/fid-verification-enforcement` module as the single authority for the
+enforced-status set (validator behavior unchanged, pinned); a non-fatal
+`fid:verify --check` information tier; closure semantics documented in the
+single-agent protocol; and FID-2026-0918-007 amended with both gates. LIVE
+proof on the real record: **0 → 3 → 0** violations. **022** (medium) —
+`validate:repository` was RED with 13 issues, 2 shipped by
+FID-2026-0918-007's own part-3 code (bare `'bun'` spawns). A FID could not
+declare a repo-gate check, and `validate:repository` can never be one (C3
+self-recursion). Fix: `process.execPath` at both sites; the check made
+independently runnable so the existing `probe` kind expresses it (declared in
+the record, PASS); probe route + recursion boundary + closed-record semantics
+documented on the template with the protocol bundle regenerated; 11
+scratchpad-root scripts moved to `dev/scratchpad/archive/`.
+`validate:repository` **FAIL (13) → PASS**. Both receipts re-stamped LIVE at
+the archived paths (10/10 and 8/8 gates; fingerprints `sha256:4a6dadaa…` /
+`sha256:55b5c4fc…`). Commit SHAs pending operator git execution (G2 withheld);
+evidence is the file:line + grep ranges in each record. See
+`archive/README.md` and the CHANGELOG entry. **The active FID queue is empty.**
+
 **2026-09-18 closure — FID-2026-0917-006 (compaction signal durable
 retirement) closed and archived:** the in-stream `CompactionSignal` panel
 re-pinned after compaction because two run-end mirror sites
@@ -123,7 +421,7 @@ probe; 002: 6/6 incl. the LIVE window-truth probe), then `git mv` to
 `dev/fids/archive/` + CHANGELOG entries. One ground-truth correction
 recorded on 002: the "display-name map pruned" claim was partially
 inaccurate — `tokenrouter/z-ai/glm-5.3-free` survives in two inert cli maps
-(`static-catalogs.ts:59/:124`); routed [OPEN-OUT-OF-SCOPE] (SCOPE Task 55).
+(`static-catalogs.ts:59/:124`); routed as a follow-up work item (SCOPE Task 55).
 **The active FID queue is empty.**
 
 **2026-09-14 closure — FID-2026-0914-001 implemented + closed + archived:**

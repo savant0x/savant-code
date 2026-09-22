@@ -206,14 +206,18 @@ but the repro result is recorded in Loop 2.
 
 - gate: typecheck sdk
 - gate: test sdk/src/__tests__/ripgrep.test.ts
+- gate: test sdk/src/__tests__/ripgrep-path-fallback.test.ts
+- gate: test sdk/src/__tests__/ensure-ripgrep-vendor.test.ts
 - gate: quality
 
 ### Verification Receipt
 
-- fingerprint: sha256:3817c5e2e74d1bc2f242f99ff084a7d796c1be3fe39bdd89e61fb25bd3ef892f
-- verified: 2026-09-19T02:51:26.073Z
+- fingerprint: sha256:b5d349acf24b9a07522e1c743f9fda133d3880d0bca2ff30abc42d5022393448
+- verified: 2026-09-19T17:41:21.290Z
 - typecheck sdk: exit 0
 - test sdk/src/__tests__/ripgrep.test.ts: exit 0
+- test sdk/src/__tests__/ripgrep-path-fallback.test.ts: exit 0
+- test sdk/src/__tests__/ensure-ripgrep-vendor.test.ts: exit 0
 - quality: exit 0
 
 ## Perfection Loop
@@ -326,6 +330,34 @@ but the repro result is recorded in Loop 2.
   (Loop 2).
 - **CHANGE DELTA:** Final: see Loop 2 CHANGE DELTA; none after receipt
   stamp.
+
+### Loop 4 — Amendment (2026-09-19, FID-2026-0919-021 / T70 ruling)
+
+- **RED:** Ground-truth re-audit of this record against its own
+  verification contract. The FID-2026-0918-006 sweep reported 0 errors /
+  0 warnings over this document while TWO of its own test artifacts were
+  uncovered by any declared gate — the sweep's promise pattern missed the
+  record's "New/updated" wording and read only the `### Verification`
+  section, while both artifacts are named in the Steps, Implementation
+  Evidence, and Resolution sections. Under the widened
+  (FID-2026-0919-021) rule, the same document reports 3 violations
+  (2 distinct artifacts).
+- **GREEN:** Both suites declared as gates, so the four tests this record
+  added (6 PATH-fallback + 4 install-hook) now run under the record's own
+  contract instead of only under the workspace suite:
+  `- gate: test sdk/src/__tests__/ripgrep-path-fallback.test.ts` and
+  `- gate: test sdk/src/__tests__/ensure-ripgrep-vendor.test.ts`.
+- **AUDIT:** Receipt re-stamped from a live run of all FIVE declared gates;
+  the widened sweep reports 0 errors on this document. Recorded as an
+  amendment loop because the code was already implemented and committed
+  (`0e0ffcd9`) — only the verification contract changed.
+- **ADVERSARIAL:** Does adding gates retroactively inflate the record? No —
+  the suites already existed and passed when this record was written; the
+  amendment makes the contract match the evidence that was always claimed.
+  Does it change the closed verdict? No: the implementation is unchanged
+  and all five gates are green.
+- **CHANGE DELTA:** Verification Gates block (+2 lines) and this Loop 4
+  section; no prose claim altered, no code touched.
 
 ## Resolution
 
