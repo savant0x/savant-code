@@ -244,5 +244,4 @@ describe('public release contract — git & worktree', () => {
       rmSync(repo, { recursive: true, force: true })
     }
   })
-
 })

@@ -59,7 +59,9 @@ describe('FID-2026-0919-016 — gateway window resolution', () => {
 
   test('each versioned sibling keeps its own window (no cross-version bleed)', async () => {
     await seedOpenRouter(GROK_FIXTURE)
-    expect(resolveContextWindowForModel('kiosapi/grok-4.3-free')).toBe(1_000_000)
+    expect(resolveContextWindowForModel('kiosapi/grok-4.3-free')).toBe(
+      1_000_000,
+    )
     expect(resolveContextWindowForModel('kiosapi/grok-4.5-free')).toBe(500_000)
   })
 
@@ -102,14 +104,18 @@ describe('FID-2026-0919-016 — gateway window resolution', () => {
         },
       ],
     })
-    expect(resolveMaxOutputTokensForModel('kiosapi/grok-4.6-free')).toBe(120_000)
+    expect(resolveMaxOutputTokensForModel('kiosapi/grok-4.6-free')).toBe(
+      120_000,
+    )
   })
 
   test('family fallback still answers when the exact version has no upstream twin', async () => {
     await seedOpenRouter(GROK_FIXTURE)
     // A version with no exact terminal-segment twin falls back to the
     // sorted-first family hit (unchanged legacy behavior for new versions).
-    expect(resolveContextWindowForModel('kiosapi/grok-9.9-free')).toBe(2_000_000)
+    expect(resolveContextWindowForModel('kiosapi/grok-9.9-free')).toBe(
+      2_000_000,
+    )
   })
 
   test('unmatched models still land on the conservative default, never a guess', async () => {

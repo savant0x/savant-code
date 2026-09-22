@@ -1,5 +1,5 @@
 import { AnalyticsEvent } from '@savant-code/common/constants/analytics-events'
-import { runTerminalCommand , buildChildEnv } from '@savant-code/sdk'
+import { runTerminalCommand, buildChildEnv } from '@savant-code/sdk'
 
 import { useChatStore } from '../../state/chat-store'
 import { trackEvent } from '../../utils/analytics'

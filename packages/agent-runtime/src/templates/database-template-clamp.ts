@@ -19,7 +19,6 @@
 import type { AgentTemplate } from './types'
 import type { Logger } from '@savant-code/common/types/contracts/logger'
 
-
 /** Tools a database-sourced template is always granted. */
 const DB_TEMPLATE_GRANTABLE_TOOLS = new Set([
   // Read/search
