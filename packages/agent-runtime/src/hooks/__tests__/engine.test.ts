@@ -29,6 +29,25 @@ describe('HookEngine — selection & dedupe', () => {
     expect(engine.getHooksFor('PreToolUse', 'anything')).toHaveLength(1)
   })
 
+  test('a matcher on a tool-less event never suppresses the hook (fail-open)', () => {
+    // FID-2026-0919-031: `Stop` / `Interrupt` / `PreCompact` / `PostCompact`
+    // carry no tool name, and neither do `SessionStart` / `SessionEnd`. The
+    // matcher is not consulted there, so a hook that declared one still runs —
+    // the alternative would turn a config typo into a hook that silently never
+    // runs, which is the failure mode the event classification exists to
+    // prevent (docs/design/hook-system.md § Matchers and tool-less events).
+    const engine = new HookEngine([
+      { event: 'SessionEnd', matcher: 'write_file', command: 'a' },
+      { event: 'Stop', matcher: 'never-matches-a-tool', command: 'b' },
+      { event: 'Notification', matcher: 'ask_user', command: 'c' },
+    ])
+    expect(engine.getHooksFor('SessionEnd')).toHaveLength(1)
+    expect(engine.getHooksFor('Stop')).toHaveLength(1)
+    // When the event DOES carry a tool name, the matcher is honored.
+    expect(engine.getHooksFor('Notification', 'ask_user')).toHaveLength(1)
+    expect(engine.getHooksFor('Notification', 'write_file')).toHaveLength(0)
+  })
+
   test('dedupes identical (cwd + command) declarations within one trigger', async () => {
     const engine = new HookEngine([
       { event: 'PreToolUse', command: 'missing-binary-a', cwd: '/x' },

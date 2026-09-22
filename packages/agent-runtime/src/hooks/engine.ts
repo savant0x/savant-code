@@ -13,8 +13,12 @@ import type { JSONValue } from '@savant-code/common/types/json'
  *
  * - `triggerBlock` runs matching hooks in parallel and aggregates: ANY hook
  *   that blocks blocks the action; failures fail-open.
- * - `fireAndForgetTrigger` is the observation path (session/subagent/compact
- *   events, PostToolUse): it never blocks and never throws.
+ * - `fireAndForgetTrigger` is the observation path — every event except
+ *   `PreToolUse`: it never blocks and never throws. As of FID-2026-0919-031 that
+ *   is the session/subagent/compaction/terminal set (`SessionStart`,
+ *   `SessionEnd`, `SubagentStart`, `SubagentStop`, `PreCompact`, `PostCompact`,
+ *   `Stop`, `Interrupt`, `Notification`) plus the post-tool events; see
+ *   `FIRED_HOOK_EVENTS` in `common/src/types/hooks.ts` for the authority.
  * - FID-2026-0824-012: configs declaring a builtin `action` dispatch to the
  *   in-process sink (experience-capture) instead of spawning a process.
  * - The factory caches one engine per project cwd (same precedent as the
