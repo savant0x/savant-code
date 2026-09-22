@@ -2,6 +2,8 @@ import { describe, expect, test } from 'bun:test'
 
 import { PROVIDER_REGISTRY } from '../registry'
 
+import type { ProviderConfig } from '../types'
+
 /**
  * Per-provider contract pins for the newer registry entries — apinex
  * (FID-2026-0907-008), orcarouter (FID-2026-0911-002), and bai
@@ -80,5 +82,30 @@ describe('PROVIDER_REGISTRY per-provider contract pins', () => {
     expect(bai.setupAvailable).toBe(true)
     expect(bai.domain).toBe('b.ai')
     expect(bai.order).toBe(4)
+  })
+
+  test('bai declares the documented balance/quota endpoint (FID-2026-0919-026)', () => {
+    const bai = PROVIDER_REGISTRY.bai as (typeof PROVIDER_REGISTRY)['bai']
+    // docs.b.ai/llmservice/api/: `GET /balance` — "Retrieve balance and quota
+    // information for the current API Key". The gateway refuses a request when
+    // the balance cannot cover it, so this is the reading that explains a
+    // `insufficient_user_quota` refusal (the operator-facing half of the
+    // FID-2026-0919-026 audit).
+    expect(bai.quota?.url).toBe('https://api.b.ai/v1/balance')
+    expect(bai.quota?.valuePath).toBe('data.personal_balance')
+    expect(bai.quota?.unit).toBe('credits')
+    expect(bai.quota?.note).toContain('prepaid')
+  })
+
+  test('only providers that document a quota endpoint declare one', () => {
+    const declared = Object.entries(
+      PROVIDER_REGISTRY as Record<string, ProviderConfig>,
+    )
+      .filter(([, config]) => config.quota !== undefined)
+      .map(([id]) => id)
+    // A data-only field: declaring it for an undocumented endpoint would
+    // invent a vendor contract. B.AI is the only provider whose docs publish
+    // a key-scoped balance read today.
+    expect(declared).toEqual(['bai'])
   })
 })

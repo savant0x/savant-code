@@ -3,6 +3,7 @@ import { detectOllama } from '@savant-code/llm-providers/ollama'
 
 import { getSystemMessage } from '../utils/message-history'
 import { readStoredProviderKeys } from '../utils/provider-credentials'
+import { formatProviderQuota, readProviderQuota } from '../utils/provider-quota'
 import {
   getConfiguredProviderKey,
   getProviderSetupInfo,
@@ -110,6 +111,26 @@ export async function handleHealthCommand(params: RouterParams): Promise<void> {
     }
   }
 
+  // FID-2026-0919-026: where the ACTIVE provider documents a key-scoped quota
+  // endpoint, state the account's own reading. Unlike a per-built-in `/models`
+  // probe, this is new information — a quota refusal (`insufficient_user_quota`)
+  // is otherwise indistinguishable inside the tool from an integration defect,
+  // and the vendor's web UI may disagree with its own gateway.
+  let quotaLine = ''
+  const activeConfig = providerName
+    ? getEffectiveProviderRegistry()[providerName]
+    : undefined
+  if (activeConfig?.quota) {
+    const activeKey =
+      (requiredEnvVar ? process.env[requiredEnvVar]?.trim() : undefined) ??
+      (providerName ? getConfiguredProviderKey(providerName) : undefined)
+    const quota = await readProviderQuota({
+      config: activeConfig,
+      key: activeKey,
+    })
+    quotaLine = `**Quota:** ${formatProviderQuota(quota)}`
+  }
+
   const lines = [
     '# Savant Code Health Check',
     '',
@@ -117,6 +138,7 @@ export async function handleHealthCommand(params: RouterParams): Promise<void> {
     '',
     providerSection,
     ...(liveCheckLine ? [liveCheckLine] : []),
+    ...(quotaLine ? [quotaLine] : []),
     `**Default model:** ${modelPreference ?? 'none (uses agent default)'}`,
     `**Permission mode:** ${permissionMode}`,
     `**Ads enabled:** ${settings.adsEnabled === true ? 'yes' : 'no'}`,

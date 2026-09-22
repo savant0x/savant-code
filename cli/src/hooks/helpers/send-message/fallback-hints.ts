@@ -1,5 +1,6 @@
 /**
  * FID-2026-0915-001 (W5) — the 429 fallback-hint seam.
+ * FID-2026-0919-026 — extended with the provider quota hint (`quotaHint`).
  *
  * On a rate-limit failure, offer up to 2 OTHER boundary-ok free hosts
  * serving the same model family (MQ rulings: hint, never switch; once per
@@ -16,6 +17,7 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
+import { getEffectiveProviderRegistry } from '@savant-code/common/providers/custom-providers'
 import {
   buildModelIndex,
   fallbackHint,
@@ -111,6 +113,52 @@ function readIndexRecords(projectRoot: string): Array<{
 /** Append the hint to an error message (or return the message unchanged). */
 export function appendHint(errorMessage: string, hint: string): string {
   return hint ? `${errorMessage}\n${hint}` : errorMessage
+}
+
+/**
+ * FID-2026-0919-026: true when the error is a provider quota refusal — the
+ * class that reads as an integration defect but is account state.
+ */
+function isQuotaRefusal(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false
+  const e = error as { code?: unknown; message?: unknown }
+  const code = typeof e.code === 'string' ? e.code : ''
+  if (/insufficient_(user_)?quota|insufficient_(balance|credits)/i.test(code)) {
+    return true
+  }
+  const message = typeof e.message === 'string' ? e.message : ''
+  return (
+    /insufficient (user )?quota|insufficient balance/i.test(message) ||
+    /credit insufficient balance/i.test(message)
+  )
+}
+
+/**
+ * Compute the provider quota hint, or `''` when nothing honest applies.
+ *
+ * The provider is taken from an explicit id when the caller knows it, and
+ * otherwise from the model id's routing prefix (gateway models carry
+ * `{provider}/`). Only providers that DECLARE a quota note in the registry can
+ * produce a hint — the message quotes their documented explanation and points
+ * at `/health` for the live reading. Never fetches: the failure path stays
+ * synchronous and fail-silent.
+ */
+export function quotaHint(params: {
+  error: unknown
+  modelId?: string | undefined
+  providerId?: string | undefined
+}): string {
+  if (!isQuotaRefusal(params.error)) return ''
+  const explicit = params.providerId?.trim()
+  const fromModel = params.modelId?.includes('/')
+    ? params.modelId.split('/')[0]
+    : undefined
+  const id = explicit || fromModel
+  if (!id) return ''
+  const config = getEffectiveProviderRegistry()[id]
+  const note = config?.quota?.note
+  if (!note) return ''
+  return `${config.label} quota refusal: ${note} Run /health for the current reading.`
 }
 
 /**

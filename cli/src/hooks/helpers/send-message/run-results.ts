@@ -1,6 +1,6 @@
 import { getErrorObject } from '@savant-code/common/util/error'
 
-import { appendHint, rateLimitHint } from './fallback-hints'
+import { appendHint, quotaHint, rateLimitHint } from './fallback-hints'
 import { finalizeQueueState } from './queue-state'
 import { handleSavantFreeGateError, isRateLimited } from './run-result-gates'
 import { useChatStore } from '../../../state/chat-store'
@@ -136,10 +136,18 @@ export const handleRunCompletion = (params: {
     // Pass the raw error message to setError (displayed in UserErrorBanner without additional wrapper formatting)
     const completionErrorMessage =
       output.message ?? DEFAULT_RUN_OUTPUT_ERROR_MESSAGE
+    // FID-2026-0919-026: a provider quota refusal explains itself — quote the
+    // provider's declared note and point at /health for the live reading.
+    const quotaHintText = quotaHint({
+      error: output,
+      modelId: params.effectiveModelId,
+      providerId: process.env.DIRECT_PROVIDER,
+    })
     updater.setError(
-      isRateLimited(output)
-        ? appendHint(completionErrorMessage, rateLimitHint429)
-        : completionErrorMessage,
+      appendHint(
+        completionErrorMessage,
+        isRateLimited(output) ? rateLimitHint429 : quotaHintText,
+      ),
     )
     finalizeAfterError()
     return
@@ -246,7 +254,13 @@ export const handleRunError = (params: {
   }
   // Use setError for all errors so they display in UserErrorBanner consistently
   const errorMessage = errorInfo.message || 'An unexpected error occurred'
+  // FID-2026-0919-026: gateway quota refusals are account state, not defects.
+  const quotaHintText = quotaHint({
+    error,
+    modelId: params.effectiveModelId,
+    providerId: process.env.DIRECT_PROVIDER,
+  })
   updater.setError(
-    isRateLimited(error) ? appendHint(errorMessage, w5Hint) : errorMessage,
+    appendHint(errorMessage, isRateLimited(error) ? w5Hint : quotaHintText),
   )
 }

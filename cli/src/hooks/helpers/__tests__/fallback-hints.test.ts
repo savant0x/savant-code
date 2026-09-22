@@ -16,7 +16,7 @@ import {
 } from '@savant-code/common/providers/discovery-state'
 import { describe, expect, test } from 'bun:test'
 
-import { rateLimitHint } from '../send-message/fallback-hints'
+import { quotaHint, rateLimitHint } from '../send-message/fallback-hints'
 
 function withState(
   hosts: Record<
@@ -160,6 +160,60 @@ describe('rateLimitHint (W5 seam)', () => {
     })
     expect(hint).toContain('ok.host')
     expect(hint).not.toContain('relay.host')
+  })
+})
+
+describe('quotaHint (FID-2026-0919-026)', () => {
+  const refusal = {
+    statusCode: 400,
+    code: 'insufficient_user_quota',
+    message:
+      'credit insufficient balance: balance=0 required=3672 (request id: 20260919193303938194165c955d568iMhaOQev)',
+  }
+
+  test('a gateway quota refusal quotes the declared note and points at /health', () => {
+    const hint = quotaHint({
+      error: refusal,
+      modelId: 'bai/deepseek-v4.1-flash',
+    })
+    expect(hint).toContain('B.AI')
+    expect(hint).toContain('prepaid')
+    expect(hint).toContain('/health')
+  })
+
+  test('an explicit provider id wins over the model prefix', () => {
+    const hint = quotaHint({
+      error: refusal,
+      modelId: 'bai/hy3',
+      providerId: 'bai',
+    })
+    expect(hint).toContain('B.AI')
+  })
+
+  test('stays silent when nothing honest applies', () => {
+    // Not a quota refusal.
+    expect(
+      quotaHint({
+        error: { code: 'invalid_request', message: 'bad param' },
+        modelId: 'bai/hy3',
+      }),
+    ).toBe('')
+    // Quota refusal, but no provider to attribute it to.
+    expect(quotaHint({ error: refusal })).toBe('')
+    expect(quotaHint({ error: refusal, modelId: 'some-bare-model' })).toBe('')
+    // Quota refusal on a provider that declares no quota note.
+    expect(quotaHint({ error: refusal, modelId: 'openrouter/hy3' })).toBe('')
+  })
+
+  test('message-only shapes are recognised, including the operator-reported text', () => {
+    const hint = quotaHint({
+      error: {
+        message:
+          'credit insufficient balance: balance=0 required=3672 (request id: 20260919193303938194165c955d568iMhaOQev)',
+      },
+      modelId: 'bai/qwen3.8-flash',
+    })
+    expect(hint).toContain('B.AI')
   })
 })
 

@@ -112,6 +112,17 @@ export const PROVIDER_REGISTRY_PARTITION = {
     // supplied via the Nous/apinex-style resolver — NOT OrcaRouter's
     // keyless pattern.
     catalog: { source: 'live', url: 'https://api.b.ai/v1/models' },
+    // docs.b.ai: `GET /balance` reads the key's balance/quota. The gateway
+    // refuses a request the balance cannot cover — this is that reading
+    // (FID-2026-0919-026).
+    quota: {
+      url: 'https://api.b.ai/v1/balance',
+      valuePath: 'data.personal_balance',
+      unit: 'credits',
+      note:
+        'B.AI is prepaid (1 USD = 1,000,000 credits); requests are refused ' +
+        'while the balance cannot cover them. Top up at https://chat.b.ai/chat.',
+    },
     setupAvailable: true,
     domain: 'b.ai',
     order: 4,

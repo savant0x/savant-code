@@ -99,6 +99,22 @@ export interface ProviderConfig {
         models: Record<string, string>
       }
     | { source: 'none' }
+  /**
+   * Optional key-scoped account/quota endpoint (FID-2026-0919-026). Data only,
+   * like `catalog`: the request path never reads it — the health report renders
+   * it, and a quota-class refusal quotes its `note`. Declared only where the
+   * vendor documents such an endpoint.
+   */
+  quota?: {
+    /** Documented balance/quota endpoint for the current credential. */
+    url: string
+    /** Dotted JSON path to the authoritative reading, e.g. `data.balance`. */
+    valuePath: string
+    /** Unit rendered after the reading, e.g. `credits`. */
+    unit?: string
+    /** One-line, actionable explanation of a quota refusal. */
+    note: string
+  }
   /** Whether the provider appears in the `/provider` setup picker. */
   setupAvailable: boolean
   /** Favicon/logo domain. Omitted for providers with no logo (ollama). */
