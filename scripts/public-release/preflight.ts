@@ -15,6 +15,28 @@ import { fail } from './fail'
 import { pruneLocalOnlyFailedTag } from './git-publish'
 import { hiddenIndexStateMessage, hiddenTrackedFiles } from './provenance'
 
+import type { FailedTagPruneOutcome } from './git-publish'
+
+/**
+ * The operator-facing verdict for a local tag that blocks a fresh cut
+ * (FID-2026-0924-001). `undefined` means nothing needs saying — either the tag
+ * was recovered, or the run was a preview that never probed the remote.
+ *
+ * The three blocking causes stay distinct: a pruned tag is silent, an
+ * unverifiable remote says so, and only a verified-present/verified-unowned
+ * tag gets the "already exists" verdict.
+ */
+export function blockedTagMessage(
+  outcome: FailedTagPruneOutcome,
+  version: string,
+): string | undefined {
+  if (outcome === 'pruned') return undefined
+  if (outcome === 'kept-unverified') {
+    return `Cannot verify whether tag v${version} exists on origin (git ls-remote failed) — keeping the local tag; re-run once origin is reachable.`
+  }
+  return `Tag v${version} already exists; use --resume with its receipt.`
+}
+
 export function currentVersion(root: string): string {
   const version = readFileSync(path.join(root, 'VERSION'), 'utf8').trim()
   if (!/^\d+\.\d+\.\d+$/.test(version))
@@ -144,11 +166,13 @@ export function verifyPreflight(
     }
   }
   if (tagExists && !allowExistingTag) {
-    const pruned = mutationMode
+    // Preview never probes the remote (prune mutates), so it can only ever
+    // report the verified-state verdict — unchanged from before.
+    const outcome: FailedTagPruneOutcome = mutationMode
       ? pruneLocalOnlyFailedTag(root, version, headSha)
-      : false
-    if (!pruned) {
-      const message = `Tag v${version} already exists; use --resume with its receipt.`
+      : 'kept'
+    const message = blockedTagMessage(outcome, version)
+    if (message !== undefined) {
       if (mutationMode) fail(message)
       warnings.push(message)
     }

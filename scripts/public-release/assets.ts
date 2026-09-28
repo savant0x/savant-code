@@ -8,19 +8,14 @@
 
 import { PUBLIC_REPOSITORY_SLUG, RELEASE_BINARY_TARBALLS } from './catalog'
 import { run } from './command-runner'
+import { positiveEnvMs } from './env-ms'
 import { fail } from './fail'
 import { githubApiRequest } from './github-api'
 
+import type { ReleaseFetch } from './fetch-seam'
+
 const DEFAULT_ASSET_RETRY_MS = 45 * 60 * 1_000
 const DEFAULT_ASSET_POLL_INTERVAL_MS = 30 * 1_000
-
-function positiveEnvMs(key: string, fallback: number): number {
-  const raw = process.env[key]
-  if (!raw) return fallback
-  const parsed = Number.parseInt(raw, 10)
-  if (!Number.isFinite(parsed) || parsed < 0) return fallback
-  return parsed
-}
 
 /**
  * Bounded retry window for binary assets to appear on the release after it is
@@ -58,7 +53,7 @@ async function fetchReleaseAssetNames(
   version: string,
   token: string | undefined,
   root: string,
-  fetchImpl?: typeof fetch,
+  fetchImpl?: ReleaseFetch,
 ): Promise<string[]> {
   if (token) {
     const result = await githubApiRequest<{
@@ -109,7 +104,7 @@ export async function verifyReleaseAssets(
   version: string,
   token: string | undefined,
   root: string,
-  fetchImpl?: typeof fetch,
+  fetchImpl?: ReleaseFetch,
 ): Promise<void> {
   const deadline = Date.now() + assetRetryTimeoutMs()
   let missing: string[] = [...RELEASE_BINARY_TARBALLS]

@@ -3,6 +3,10 @@
 // The pre-publish fail-closed assertions: npm identity access, package
 // absence, publish query, and post-release verification (npm pack + file
 // inventory in a temp dir). Verbatim moves from scripts/public-release.ts.
+//
+// FID-2026-0922-001 — POST_RELEASE_VERIFY polls the registry on a bounded,
+// env-overridable window instead of failing the stage on the read-after-write
+// race npm warns about in its own publish output.
 
 import { mkdirSync, rmSync } from 'fs'
 import os from 'os'
@@ -10,10 +14,14 @@ import path from 'path'
 
 import { configuredReleasePackages } from './catalog'
 import { run } from './command-runner'
+import { positiveEnvMs } from './env-ms'
 import { fail } from './fail'
 import { isNotFoundResult } from './receipts'
 
 import type { PackageTarget } from './catalog'
+
+const DEFAULT_NPM_VERIFY_TIMEOUT_MS = 10 * 60 * 1_000
+const DEFAULT_NPM_VERIFY_POLL_INTERVAL_MS = 30 * 1_000
 
 export function assertNpmAccess(root: string, identity: string): void {
   if (!identity) fail('npm whoami returned no authenticated identity.')
@@ -83,14 +91,67 @@ export function packageIsPublished(
   fail(`Unable to query npm for ${target.name}@${version}.`)
 }
 
-export function verifyPublishedPackage(
+/**
+ * Bounded retry window for the registry to serve a just-published package.
+ * npm's own publish output warns the package "may take a few minutes to
+ * become available"; the v0.0.33 cut lost exactly that race while the asset
+ * verifier immediately before it retried. Configurable via
+ * `SAVANT_RELEASE_NPM_TIMEOUT_MS` (milliseconds); defaults to 10 minutes.
+ */
+export function npmVerifyTimeoutMs(): number {
+  return positiveEnvMs(
+    'SAVANT_RELEASE_NPM_TIMEOUT_MS',
+    DEFAULT_NPM_VERIFY_TIMEOUT_MS,
+  )
+}
+
+/**
+ * Poll interval between registry reads. Configurable via
+ * `SAVANT_RELEASE_NPM_POLL_MS` so tests can shrink the wait.
+ */
+export function npmVerifyPollIntervalMs(): number {
+  return positiveEnvMs(
+    'SAVANT_RELEASE_NPM_POLL_MS',
+    DEFAULT_NPM_VERIFY_POLL_INTERVAL_MS,
+  )
+}
+
+/**
+ * Waits for the registry to serve `${target.name}@${version}`, then fails
+ * closed when the window expires. Only the not-found class is retried:
+ * `packageIsPublished` rethrows every other npm outcome (auth, network,
+ * malformed output) on the first read, so a broken environment is never
+ * papered over by waiting. `isPublished` is injectable for tests — the same
+ * seam shape `verifyReleaseAssets` uses for its fetch.
+ */
+export async function awaitPublishedPackage(
   root: string,
   target: PackageTarget,
   version: string,
-): void {
-  if (!packageIsPublished(root, target, version)) {
-    fail(`Post-release verification failed for ${target.name}@${version}.`)
+  isPublished: typeof packageIsPublished,
+): Promise<void> {
+  const deadline = Date.now() + npmVerifyTimeoutMs()
+  for (;;) {
+    if (isPublished(root, target, version)) return
+    const remaining = deadline - Date.now()
+    if (remaining <= 0) {
+      fail(
+        `Post-release verification failed for ${target.name}@${version} — the registry did not serve it within ${Math.round(npmVerifyTimeoutMs() / 1_000)}s of publish; if the publish itself succeeded, re-run 'bun run release:public:resume' once npm has propagated.`,
+      )
+    }
+    await new Promise((resolve) =>
+      setTimeout(resolve, Math.min(npmVerifyPollIntervalMs(), remaining)),
+    )
   }
+}
+
+export async function verifyPublishedPackage(
+  root: string,
+  target: PackageTarget,
+  version: string,
+  isPublished: typeof packageIsPublished = packageIsPublished,
+): Promise<void> {
+  await awaitPublishedPackage(root, target, version, isPublished)
   const inspectionDir = path.join(
     os.tmpdir(),
     `savant-public-release-inspect-${target.name.replaceAll('/', '-')}-${version}`,

@@ -10,6 +10,8 @@
 import { PUBLIC_REPOSITORY_SLUG } from './catalog'
 import { fail } from './fail'
 
+import type { ReleaseFetch } from './fetch-seam'
+
 /**
  * The per-release manifest URL. Deliberately NOT the pinned
  * `releases/latest/download/latest.json` updater endpoint: that redirect
@@ -97,7 +99,7 @@ export function assertUpdaterManifestShape(
  */
 export async function fetchUpdaterManifest(
   version: string,
-  fetchImpl: typeof fetch = fetch,
+  fetchImpl: ReleaseFetch = fetch,
 ): Promise<unknown> {
   const url = perReleaseManifestUrl(version)
   const response = await fetchImpl(url)

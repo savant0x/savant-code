@@ -11,6 +11,22 @@ import type { RunState } from '@savant-code/sdk'
 
 const TEST_AGENT = 'savant-code/base-lite'
 
+/**
+ * Budget for the abort-race cases below.
+ *
+ * Both race a signal abort against a hard-coded 2s dead-man fallback, so their
+ * floor is 2s whenever the fallback wins the race — which is the normal path
+ * here, and why they measured 2,055ms and 2,053ms. That floor is a wall-clock
+ * deadline, not work, so under a loaded machine (a 13-workspace typecheck chain
+ * + repo-wide eslint + this suite) it can stretch past bun's 10s default and
+ * red a green gate. The per-test argument is the only mechanism bun 1.3.14
+ * honours here — a `[test] timeout` in `cli/bunfig.toml` was proven inert by
+ * mutation. 60s matches what `terminal-watchdog.test.ts` already uses for its
+ * own process-spawning cases, and still bounds a genuine hang far inside the
+ * suite's ~2 minute runtime.
+ */
+const CONTROL_FRAME_TIMEOUT = 60_000
+
 function fakeRunState(): RunState {
   return {
     output: {
@@ -67,95 +83,109 @@ type RunOptions = {
 // unknown/foreign frames are ignored; EOF-only stdin never blocks; non-JSON
 // mode never attaches a reader.
 describe('runHeadlessPrint control frames (FID-2026-0907-006)', () => {
-  test('cancel mid-run aborts cooperatively: exit 1, cancel reason, no frames after the ack', async () => {
-    const control = fakeControlInput()
-    const lines: string[] = []
-    const client = {
-      run: async (runOptions: RunOptions) => {
-        // The parent writes the cancel frame on stdin, then an agent event
-        // arrives — the step boundary must drain the cancel FIRST and stop.
-        control.emitData('{"v":1,"type":"cancel"}\n')
-        runOptions.handleEvent?.({
-          type: 'tool_call',
-          toolCallId: 't1',
-          toolName: 'read_files',
-        } as never)
-        // Mirror the SDK: race the abort signal (short fallback so a missing
-        // wiring fails fast instead of hanging).
-        await Promise.race([
-          new Promise((resolve) => {
-            runOptions.signal?.addEventListener('abort', () =>
-              resolve('aborted'),
-            )
-          }),
-          new Promise((resolve) =>
-            setTimeout(() => resolve('no-abort'), 2_000),
-          ),
-        ])
-        const reason = runOptions.signal?.reason
-        throw reason instanceof Error ? reason : new Error('Aborted by caller')
-      },
-    }
+  test(
+    'cancel mid-run aborts cooperatively: exit 1, cancel reason, no frames after the ack',
+    async () => {
+      const control = fakeControlInput()
+      const lines: string[] = []
+      const client = {
+        run: async (runOptions: RunOptions) => {
+          // The parent writes the cancel frame on stdin, then an agent event
+          // arrives — the step boundary must drain the cancel FIRST and stop.
+          control.emitData('{"v":1,"type":"cancel"}\n')
+          runOptions.handleEvent?.({
+            type: 'tool_call',
+            toolCallId: 't1',
+            toolName: 'read_files',
+          } as never)
+          // Mirror the SDK: race the abort signal (short fallback so a missing
+          // wiring fails fast instead of hanging).
+          await Promise.race([
+            new Promise((resolve) => {
+              runOptions.signal?.addEventListener('abort', () =>
+                resolve('aborted'),
+              )
+            }),
+            new Promise((resolve) =>
+              setTimeout(() => resolve('no-abort'), 2_000),
+            ),
+          ])
+          const reason = runOptions.signal?.reason
+          throw reason instanceof Error
+            ? reason
+            : new Error('Aborted by caller')
+        },
+      }
 
-    const result = await runHeadlessPrint({
-      prompt: 'hello',
-      resolvedAgent: TEST_AGENT,
-      jsonMode: true,
-      jsonFrameWriter: (line) => lines.push(line),
-      jsonControlInput: control.input,
-      getClient: async () => client as never,
-    })
+      const result = await runHeadlessPrint({
+        prompt: 'hello',
+        resolvedAgent: TEST_AGENT,
+        jsonMode: true,
+        jsonFrameWriter: (line) => lines.push(line),
+        jsonControlInput: control.input,
+        getClient: async () => client as never,
+      })
 
-    expect(result.exitCode).toBe(HEADLESS_EXIT_ERROR)
-    expect(result.error).toBe('Cancelled by parent control frame')
-    // No progress frame after the cancel drained: the tool_call event's
-    // boundary consumed the cancel and returned before the tap ran.
-    expect(lines.some((line) => line.includes('tool_call_started'))).toBe(false)
-  })
+      expect(result.exitCode).toBe(HEADLESS_EXIT_ERROR)
+      expect(result.error).toBe('Cancelled by parent control frame')
+      // No progress frame after the cancel drained: the tool_call event's
+      // boundary consumed the cancel and returned before the tap ran.
+      expect(lines.some((line) => line.includes('tool_call_started'))).toBe(
+        false,
+      )
+    },
+    CONTROL_FRAME_TIMEOUT,
+  )
 
-  test('cancel with NO stream boundary aborts at arrival (held request, FID-2026-0907-007 case 4)', async () => {
-    const control = fakeControlInput()
-    const lines: string[] = []
-    const client = {
-      run: async (runOptions: RunOptions) => {
-        // The held-request analog (live matrix case 4): the parent writes the
-        // cancel but NO handleEvent/handleStreamChunk boundary ever fires
-        // while the request is in flight. The reader's arrival-time onCancel
-        // must abort regardless of stream state — waiting for the next
-        // boundary rode the run timeout (92s live).
-        control.emitData('{"v":1,"type":"cancel"}\n')
-        await Promise.race([
-          new Promise((resolve) => {
-            runOptions.signal?.addEventListener('abort', () =>
-              resolve('aborted'),
-            )
-          }),
-          new Promise((resolve) =>
-            setTimeout(() => resolve('no-abort'), 2_000),
-          ),
-        ])
-        if (!(runOptions.signal?.aborted ?? false)) {
-          throw new Error('cancel did not abort at arrival')
-        }
-        const reason = runOptions.signal?.reason
-        throw reason instanceof Error ? reason : new Error('Aborted by caller')
-      },
-    }
+  test(
+    'cancel with NO stream boundary aborts at arrival (held request, FID-2026-0907-007 case 4)',
+    async () => {
+      const control = fakeControlInput()
+      const lines: string[] = []
+      const client = {
+        run: async (runOptions: RunOptions) => {
+          // The held-request analog (live matrix case 4): the parent writes the
+          // cancel but NO handleEvent/handleStreamChunk boundary ever fires
+          // while the request is in flight. The reader's arrival-time onCancel
+          // must abort regardless of stream state — waiting for the next
+          // boundary rode the run timeout (92s live).
+          control.emitData('{"v":1,"type":"cancel"}\n')
+          await Promise.race([
+            new Promise((resolve) => {
+              runOptions.signal?.addEventListener('abort', () =>
+                resolve('aborted'),
+              )
+            }),
+            new Promise((resolve) =>
+              setTimeout(() => resolve('no-abort'), 2_000),
+            ),
+          ])
+          if (!(runOptions.signal?.aborted ?? false)) {
+            throw new Error('cancel did not abort at arrival')
+          }
+          const reason = runOptions.signal?.reason
+          throw reason instanceof Error
+            ? reason
+            : new Error('Aborted by caller')
+        },
+      }
 
-    const result = await runHeadlessPrint({
-      prompt: 'hello',
-      resolvedAgent: TEST_AGENT,
-      jsonMode: true,
-      jsonFrameWriter: (line) => lines.push(line),
-      jsonControlInput: control.input,
-      getClient: async () => client as never,
-    })
+      const result = await runHeadlessPrint({
+        prompt: 'hello',
+        resolvedAgent: TEST_AGENT,
+        jsonMode: true,
+        jsonFrameWriter: (line) => lines.push(line),
+        jsonControlInput: control.input,
+        getClient: async () => client as never,
+      })
 
-    expect(result.exitCode).toBe(HEADLESS_EXIT_ERROR)
-    expect(result.error).toBe('Cancelled by parent control frame')
-    // No frames after the ack: the artifact must never land on a cancelled run.
-    expect(lines.some((line) => line.includes('"artifact"'))).toBe(false)
-  })
+      expect(result.exitCode).toBe(HEADLESS_EXIT_ERROR)
+      expect(result.error).toBe('Cancelled by parent control frame')
+      // No frames after the ack: the artifact must never land on a cancelled run.
+      expect(lines.some((line) => line.includes('"artifact"'))).toBe(false)
+    },
+    CONTROL_FRAME_TIMEOUT,
+  )
 
   test('steer is accepted + parked and the run completes', async () => {
     const control = fakeControlInput()

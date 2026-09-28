@@ -7,7 +7,6 @@
 // never sync .toThrow() on a promise (the hang class this suite
 // originally had).
 
-import { readFileSync } from 'fs'
 import os from 'os'
 import path from 'path'
 
@@ -20,6 +19,9 @@ import {
   uploadDesktopAssets,
   watchDesktopRun,
   downloadDesktopArtifacts,
+  desktopPollIntervalMs,
+  desktopPollTimeoutMs,
+  desktopRunPoller,
   type DesktopRunPoller,
   type WorkflowRun,
 } from './public-release/desktop-workflow'
@@ -52,17 +54,58 @@ function runsFetcher(runs: unknown[]): typeof fetch {
     })) as unknown as typeof fetch
 }
 
-function readRepoFile(relativePath: string): string {
-  // scripts/ → repo root is exactly one '..' (the repositoryRoot depth rule).
-  return readFileSync(path.resolve(import.meta.dir, '..', relativePath), 'utf8')
-}
-
 describe('desktop workflow primitives (FID-2026-0903-001)', () => {
   test('watchDesktopRun: returns on success', async () => {
     const success = completedRun(7, 'f'.repeat(40))
     expect(await watchDesktopRun(pollerOf([success]), '0.0.29')).toEqual(
       success,
     )
+  })
+
+  test('the production poller honors the interval it is asked to wait', async () => {
+    // FID-2026-0924-001 audit: the DESKTOP_BUNDLES stage injected an
+    // argument-ignoring `sleepMs: () => setTimeout(…, 1000)` while
+    // watchDesktopRun passed DEFAULT_POLL_INTERVAL_MS (30 s) — so the declared
+    // cadence was dead in production and the 45-minute window polled at 1 Hz
+    // (~2,700 requests) against a client with no 429 handling. The poller
+    // factory is the single production seam, and it must honor its argument.
+    const poller = desktopRunPoller(async () => [])
+    const started = Date.now()
+    await poller.sleepMs(25)
+    const elapsed = Date.now() - started
+    expect(elapsed).toBeGreaterThanOrEqual(20)
+    expect(elapsed).toBeLessThan(900)
+  })
+
+  test('desktop timing helpers honor env overrides and invalid values', () => {
+    // FID-2026-0924-001 audit: the asset and npm polls already took their
+    // windows from the environment; the desktop poll did not — leaving the one
+    // 45-minute wait an operator could not widen without editing the pipeline.
+    const previousTimeout = process.env.SAVANT_RELEASE_DESKTOP_TIMEOUT_MS
+    const previousPoll = process.env.SAVANT_RELEASE_DESKTOP_POLL_MS
+    try {
+      delete process.env.SAVANT_RELEASE_DESKTOP_TIMEOUT_MS
+      delete process.env.SAVANT_RELEASE_DESKTOP_POLL_MS
+      expect(desktopPollTimeoutMs()).toBe(45 * 60 * 1_000)
+      expect(desktopPollIntervalMs()).toBe(30 * 1_000)
+
+      process.env.SAVANT_RELEASE_DESKTOP_TIMEOUT_MS = '5000'
+      process.env.SAVANT_RELEASE_DESKTOP_POLL_MS = '250'
+      expect(desktopPollTimeoutMs()).toBe(5_000)
+      expect(desktopPollIntervalMs()).toBe(250)
+
+      process.env.SAVANT_RELEASE_DESKTOP_TIMEOUT_MS = 'not-a-number'
+      process.env.SAVANT_RELEASE_DESKTOP_POLL_MS = '-1'
+      expect(desktopPollTimeoutMs()).toBe(45 * 60 * 1_000)
+      expect(desktopPollIntervalMs()).toBe(30 * 1_000)
+    } finally {
+      if (previousTimeout === undefined)
+        delete process.env.SAVANT_RELEASE_DESKTOP_TIMEOUT_MS
+      else process.env.SAVANT_RELEASE_DESKTOP_TIMEOUT_MS = previousTimeout
+      if (previousPoll === undefined)
+        delete process.env.SAVANT_RELEASE_DESKTOP_POLL_MS
+      else process.env.SAVANT_RELEASE_DESKTOP_POLL_MS = previousPoll
+    }
   })
 
   test('watchDesktopRun: fails closed on failure conclusion', async () => {
@@ -220,56 +263,5 @@ describe('desktop workflow primitives (FID-2026-0903-001)', () => {
       ]),
     )
     expect(runs).toEqual([completedRun(42, 'c'.repeat(40))])
-  })
-})
-
-describe('desktop-release workflow contract (FID-2026-0906-001)', () => {
-  test('signing-secret preflight runs before the Tauri build step', () => {
-    const yaml = readRepoFile('.github/workflows/desktop-release.yml')
-    const preflight = yaml.indexOf('Verify updater signing secret decodes')
-    const tauriBuild = yaml.indexOf('Tauri build (')
-    expect(preflight).toBeGreaterThan(-1)
-    expect(tauriBuild).toBeGreaterThan(-1)
-    expect(preflight).toBeLessThan(tauriBuild)
-    expect(yaml).toContain(
-      'TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}',
-    )
-    expect(yaml).toContain('secret did not decode')
-    expect(yaml).toContain('base64 -d')
-  })
-
-  test('Linux job installs the Tauri system dependencies before building', () => {
-    const yaml = readRepoFile('.github/workflows/desktop-release.yml')
-    const apt = yaml.indexOf('Install Linux desktop build dependencies (apt)')
-    const tauriBuild = yaml.indexOf('Tauri build (')
-    expect(apt).toBeGreaterThan(-1)
-    expect(apt).toBeLessThan(tauriBuild)
-    expect(yaml).toContain('libwebkit2gtk-4.1-dev')
-    expect(yaml).toContain('libayatana-appindicator3-dev')
-    expect(yaml).toContain("if: runner.os == 'Linux'")
-  })
-
-  test('AppImage bundling runs linuxdeploy without FUSE or strip', () => {
-    const yaml = readRepoFile('.github/workflows/desktop-release.yml')
-    const tauriBuild = yaml.indexOf('Tauri build (')
-    const appimageEnv = yaml.indexOf('APPIMAGE_EXTRACT_AND_RUN')
-    const noStrip = yaml.indexOf("NO_STRIP: '1'")
-    expect(tauriBuild).toBeGreaterThan(-1)
-    expect(appimageEnv).toBeGreaterThan(tauriBuild)
-    expect(yaml).toContain("APPIMAGE_EXTRACT_AND_RUN: '1'")
-    expect(noStrip).toBeGreaterThan(appimageEnv)
-    // linuxdeploy's strip step fails on modern toolchains and aborts
-    // bundling (tauri-apps/tauri#14796 class); skip it in CI.
-    expect(yaml).toContain('NO_STRIP')
-    expect(yaml).toContain('--verbose')
-  })
-
-  test('desktop-ci ubuntu leg shares the same declared dependency surface', () => {
-    const ci = readRepoFile('.github/workflows/desktop-ci.yml')
-    const apt = ci.indexOf('Install Linux desktop build dependencies (apt)')
-    const sidecar = ci.indexOf('Build native sidecar (externalBin contract)')
-    expect(apt).toBeGreaterThan(-1)
-    expect(apt).toBeLessThan(sidecar)
-    expect(ci).toContain('libwebkit2gtk-4.1-dev')
   })
 })

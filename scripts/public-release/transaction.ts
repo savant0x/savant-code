@@ -52,6 +52,26 @@ import type {
   TransactionContext,
 } from './catalog'
 
+/**
+ * Whether this run needs the `gh` CLI on PATH (FID-2026-0924-001).
+ *
+ * Automation was originally exempt because its tag/release work is
+ * token-native REST. The desktop stages are the exception: `assertEnabled`
+ * admits them ONLY in automation, yet they fetch and attach bundles through
+ * `gh run download` / `gh release upload`. Leaving them out meant a missing
+ * `gh` surfaced after the npm publishes — as a stage error that reads like a
+ * transport fault rather than a missing binary. Manual mode needs `gh` for
+ * tags/releases; preview probes nothing.
+ */
+export function requiresGhCli(
+  options: { automation: boolean; preview: boolean },
+  env: Record<string, string | undefined> = process.env,
+): boolean {
+  if (options.preview) return false
+  if (!options.automation) return true
+  return isDesktopPackagingEnabled(env)
+}
+
 export async function runReleaseTransaction(): Promise<void> {
   const args = process.argv.slice(2)
   const options = {
@@ -103,9 +123,7 @@ export async function runReleaseTransaction(): Promise<void> {
   )
 
   const commandWarnings = [
-    options.automation || options.preview
-      ? undefined
-      : requireCommand('gh', true),
+    requiresGhCli(options) ? requireCommand('gh', true) : undefined,
     requireCommand('npm', !options.preview),
   ].filter((warning): warning is string => Boolean(warning))
   const githubToken =

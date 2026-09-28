@@ -182,6 +182,25 @@ describe('checkStaleTag', () => {
     expect(result.findings[0]?.severity).toBe('block')
     expect(result.fixes).toEqual([])
   })
+
+  // FID-2026-0922-001: resume is not a re-cut. The shipped-version guard must
+  // keep blocking a RE-cut, while the tag on origin is the release being
+  // finished under --resume (verifyPreflight binds it to release HEAD).
+  test('tag on origin is kept in resume mode (finishing the shipped release)', () => {
+    const repo = initRepo()
+    wireOrigin(repo)
+    git(repo, ['tag', 'v9.9.9'])
+    git(repo, ['push', '-q', 'origin', 'v9.9.9'])
+    const result = checkStaleTag(repo, '9.9.9', true)
+    expect(result.findings[0]?.severity).toBe('warn')
+    expect(result.findings[0]?.message).toContain('resume')
+    expect(result.fixes).toEqual([])
+    expect(
+      spawnSync('git', ['rev-parse', '--verify', 'refs/tags/v9.9.9'], {
+        cwd: repo,
+      }).status,
+    ).toBe(0)
+  })
 })
 
 describe('oversizedPushedBlobs', () => {

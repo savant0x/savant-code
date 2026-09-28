@@ -17,6 +17,7 @@ import { isDesktopPackagingEnabled } from './catalog'
 import { run } from './command-runner'
 import { generatorArgs } from './desktop-manifest'
 import {
+  desktopRunPoller,
   dispatchDesktopRelease,
   downloadDesktopArtifacts,
   listDesktopRuns,
@@ -102,11 +103,7 @@ export async function runDesktopBundlesStage(
   assertEnabled(ctx)
   await dispatchDesktopRelease(ctx.version, ctx.githubToken)
   const completed = await watchDesktopRun(
-    {
-      listRuns: () => listDesktopRuns(ctx.version, ctx.githubToken),
-      nowMs: () => Date.now(),
-      sleepMs: () => new Promise((resolve) => setTimeout(resolve, 1000)),
-    },
+    desktopRunPoller(() => listDesktopRuns(ctx.version, ctx.githubToken)),
     ctx.version,
   )
   // FID-2026-0906-003: an omitted head_sha (the REST mapper defaults it

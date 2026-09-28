@@ -210,6 +210,33 @@ describe('public release contract — receipts & evidence', () => {
     ).toBe('a'.repeat(40))
   })
 
+  test('names the failing tool when the resume environment cannot be inspected', () => {
+    // FID-2026-0924-001 audit: three dissimilar causes (git/bun/npm failing to
+    // run, and a genuine HEAD mismatch) collapsed into the binding message, so
+    // a broken tool read as a binding verdict and sent the operator to the
+    // wrong remediation. A tool that could not run must say so.
+    const receipt = {
+      schemaVersion: 'release-receipt/v2' as const,
+      version: '0.0.21' as const,
+      mode: 'publish' as const,
+      headSha: 'a'.repeat(40),
+      completedStages: ['GIT_PUSH'],
+      restored: true,
+      receiptPath: '/tmp/receipt.json',
+      gateManifestHash: 'b'.repeat(64),
+    }
+    const absentRoot = path.join(os.tmpdir(), 'savant-absent-release-root')
+    expect(() =>
+      validateResumeReceipt(
+        '0.0.21',
+        receipt,
+        receipt.receiptPath,
+        undefined,
+        absentRoot,
+      ),
+    ).toThrow(/cannot be verified/)
+  })
+
   test('builds diagnostic receipts that fail closed and record ignored deltas', () => {
     const headSha = 'a'.repeat(40)
     const failed = buildDiagnosticReceipt(

@@ -13,6 +13,7 @@ import { describe, expect, test } from 'bun:test'
 
 import { buildPublicReleasePlan } from './public-release/catalog'
 import { RELEASE_STAGES } from './public-release/fail'
+import { requiresGhCli } from './public-release/transaction'
 import {
   completedRun,
   enableDesktop,
@@ -76,6 +77,36 @@ describe('desktop packaging stages (FID-2026-0903-001)', () => {
       if (previous === undefined) delete process.env.SAVANT_CODE_RELEASE_DESKTOP
       else process.env.SAVANT_CODE_RELEASE_DESKTOP = previous
     }
+  })
+
+  test('requiresGhCli: automation needs gh only for the desktop stages (FID-2026-0924-001)', () => {
+    // The pipeline chose "automation ⇒ no gh" because its tag/release work is
+    // token-native REST — but the desktop stages are admitted ONLY in
+    // automation and still shell out to `gh run download` /
+    // `gh release upload`. Deciding from the mode alone let a missing binary
+    // fail after the npm publishes, as a stage error that reads like a
+    // transport fault.
+    const desktopOff: Record<string, string | undefined> = {}
+    const desktopOn: Record<string, string | undefined> = {
+      SAVANT_CODE_RELEASE_DESKTOP: '1',
+    }
+
+    expect(
+      requiresGhCli({ automation: false, preview: false }, desktopOff),
+    ).toBe(true)
+    expect(
+      requiresGhCli({ automation: true, preview: false }, desktopOff),
+    ).toBe(false)
+    expect(requiresGhCli({ automation: true, preview: false }, desktopOn)).toBe(
+      true,
+    )
+    // Preview runs no stage and probes nothing — in either mode or flag state.
+    expect(requiresGhCli({ automation: false, preview: true }, desktopOn)).toBe(
+      false,
+    )
+    expect(requiresGhCli({ automation: true, preview: true }, desktopOn)).toBe(
+      false,
+    )
   })
 
   test('runDesktopBundlesStage: dispatch + watch + mark, run bound to the release HEAD', async () => {

@@ -11,8 +11,11 @@
 
 import { PUBLIC_REPOSITORY_SLUG } from './catalog'
 import { run } from './command-runner'
+import { positiveEnvMs } from './env-ms'
 import { fail } from './fail'
 import { githubApiRequest } from './github-api'
+
+import type { ReleaseFetch } from './fetch-seam'
 
 const WORKFLOW_NAME = 'desktop-release.yml'
 
@@ -31,7 +34,7 @@ export type WorkflowRun = {
 export async function dispatchDesktopRelease(
   version: string,
   token: string,
-  fetchImpl?: typeof fetch,
+  fetchImpl?: ReleaseFetch,
 ): Promise<void> {
   await githubApiRequest(
     `/repos/${PUBLIC_REPOSITORY_SLUG}/actions/workflows/${WORKFLOW_NAME}/dispatches`,
@@ -62,7 +65,7 @@ type WorkflowRunsResponse = {
 export async function listDesktopRuns(
   version: string,
   token: string,
-  fetchImpl?: typeof fetch,
+  fetchImpl?: ReleaseFetch,
 ): Promise<WorkflowRun[]> {
   const result = await githubApiRequest<WorkflowRunsResponse>(
     `/repos/${PUBLIC_REPOSITORY_SLUG}/actions/workflows/${WORKFLOW_NAME}/runs?branch=v${version}&per_page=10`,
@@ -86,6 +89,50 @@ export const DEFAULT_POLL_TIMEOUT_MS = 45 * 60 * 1_000
 export const DEFAULT_POLL_INTERVAL_MS = 30 * 1_000
 
 /**
+ * Bounded window for the desktop workflow poll. Configurable via
+ * `SAVANT_RELEASE_DESKTOP_TIMEOUT_MS` so a stuck run is not a dead end — the
+ * same shape `assetRetryTimeoutMs` (assets.ts) and `npmVerifyTimeoutMs`
+ * (npm-guards.ts) already use. A hardcoded window made the desktop poll the
+ * only bounded wait in the pipeline an operator could not widen
+ * (FID-2026-0924-001).
+ */
+export function desktopPollTimeoutMs(): number {
+  return positiveEnvMs(
+    'SAVANT_RELEASE_DESKTOP_TIMEOUT_MS',
+    DEFAULT_POLL_TIMEOUT_MS,
+  )
+}
+
+/**
+ * Poll cadence between desktop workflow runs. Configurable via
+ * `SAVANT_RELEASE_DESKTOP_POLL_MS`.
+ */
+export function desktopPollIntervalMs(): number {
+  return positiveEnvMs(
+    'SAVANT_RELEASE_DESKTOP_POLL_MS',
+    DEFAULT_POLL_INTERVAL_MS,
+  )
+}
+
+/**
+ * The production poller: real clock, real sleep, and a sleep that honors the
+ * interval it is asked for. FID-2026-0924-001 found the DESKTOP_BUNDLES stage
+ * injecting an argument-ignoring 1 s lambda here, which silently replaced the
+ * declared 30 s cadence with 1 Hz polling for up to 45 minutes (≈2,700
+ * requests) against a client with no 429 handling — the pipeline could
+ * rate-limit itself into a failed cut.
+ */
+export function desktopRunPoller(
+  listRuns: () => Promise<WorkflowRun[]>,
+): DesktopRunPoller {
+  return {
+    listRuns,
+    nowMs: () => Date.now(),
+    sleepMs: (ms: number) => new Promise((resolve) => setTimeout(resolve, ms)),
+  }
+}
+
+/**
  * Bounded fail-closed poll for a completed run created after dispatch:
  * waits for the newest run on the tag to reach a completed status, then
  * requires conclusion === 'success'. Timeout or failure aborts the cut
@@ -95,7 +142,7 @@ export async function watchDesktopRun(
   poller: DesktopRunPoller,
   version: string,
 ): Promise<WorkflowRun> {
-  const deadline = poller.nowMs() + DEFAULT_POLL_TIMEOUT_MS
+  const deadline = poller.nowMs() + desktopPollTimeoutMs()
   let seen = false
   let lastRun: WorkflowRun | undefined
   for (;;) {
@@ -119,7 +166,7 @@ export async function watchDesktopRun(
           : `No desktop-release.yml run appeared for v${version} within the poll window — confirm the dispatch under Actions, then re-run 'bun run release:public:resume'.`,
       )
     }
-    await poller.sleepMs(DEFAULT_POLL_INTERVAL_MS)
+    await poller.sleepMs(desktopPollIntervalMs())
   }
 }
 
@@ -131,7 +178,7 @@ export async function watchDesktopRun(
 export async function locateSuccessfulDesktopRun(
   version: string,
   token: string,
-  fetchImpl?: typeof fetch,
+  fetchImpl?: ReleaseFetch,
 ): Promise<WorkflowRun> {
   const runs = await listDesktopRuns(version, token, fetchImpl)
   const successful = runs.filter(

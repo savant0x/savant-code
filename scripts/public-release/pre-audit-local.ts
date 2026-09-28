@@ -172,6 +172,25 @@ export function checkStaleTag(
   }
   const onRemote = Boolean(remote.stdout.trim())
   if (onRemote) {
+    // FID-2026-0922-001: blocking a RE-cut is this guard's shipped-version job
+    // (FID-2026-0913-004), but resume is not a re-cut. The tag on origin IS the
+    // release being finished, and `verifyPreflight` binds it to release HEAD
+    // under `allowExistingTag` (preflight.ts), so keeping it here cannot let a
+    // mismatched tag through. Blocking anyway deadlocked every failure after
+    // GIT_PUSH — including the transient this stage's sibling anticipates —
+    // while the block's own message recommended the command it refused.
+    if (resume) {
+      return {
+        findings: [
+          {
+            check: 'stale-tag-absent',
+            severity: 'warn',
+            message: `tag ${tag} already exists on origin — kept (resume mode finishes the shipped release; preflight verifies the tag against release HEAD)`,
+          },
+        ],
+        fixes: [],
+      }
+    }
     return {
       findings: [
         {

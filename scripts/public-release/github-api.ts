@@ -7,9 +7,11 @@
 import { PUBLIC_REPOSITORY_SLUG } from './catalog'
 import { fail } from './fail'
 
+import type { ReleaseFetch } from './fetch-seam'
+
 type GitHubApiOptions = {
   token: string
-  fetchImpl?: typeof fetch
+  fetchImpl?: ReleaseFetch
 }
 
 export async function githubApiRequest<T>(

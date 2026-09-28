@@ -79,12 +79,24 @@ export function validateResumeReceipt(
     const currentHead = run('git', ['rev-parse', 'HEAD'], root, true)
     const bun = run('bun', ['--version'], root, true)
     const npm = run('npm', ['--version'], root, true)
-    if (
-      currentHead.status !== 0 ||
-      bun.status !== 0 ||
-      npm.status !== 0 ||
-      currentHead.stdout.trim() !== parsed.headSha
-    ) {
+    // FID-2026-0924-001 audit: a command that could not run is not a binding
+    // verdict. The two causes shared one message, so a broken toolchain read
+    // as "your receipt does not match this environment" and sent the operator
+    // to the wrong remediation.
+    const toolRuns: Array<[string, number | null]> = [
+      ['git', currentHead.status],
+      ['bun', bun.status],
+      ['npm', npm.status],
+    ]
+    const unrun = toolRuns
+      .filter(([, status]) => status !== 0)
+      .map(([command]) => command)
+    if (unrun.length > 0) {
+      fail(
+        `Resume environment cannot be verified — ${unrun.join(', ')} did not run in ${root} (${filePath}); fix the toolchain, then re-run 'bun run release:public:resume'.`,
+      )
+    }
+    if (currentHead.stdout.trim() !== parsed.headSha) {
       fail(
         `Resume gate evidence is not bound to the current release environment: ${filePath}`,
       )

@@ -25,6 +25,7 @@ import { verifyPublishedPackage } from './npm-guards'
 import { finalizeSuccessfulReleaseReceipt, markStage } from './receipts'
 
 import type { ReleaseReceipt, TransactionContext } from './catalog'
+import type { ReleaseFetch } from './fetch-seam'
 
 /**
  * Desktop claim verification (FID-2026-0906-002): POST_RELEASE_VERIFY must
@@ -36,7 +37,7 @@ import type { ReleaseReceipt, TransactionContext } from './catalog'
 export async function verifyDesktopUpdaterClaim(
   receipt: ReleaseReceipt,
   version: string,
-  fetchImpl: typeof fetch = fetch,
+  fetchImpl: ReleaseFetch = fetch,
 ): Promise<void> {
   if (isDesktopPackagingEnabled()) {
     if (receipt.desktopStagesSkipped) {
@@ -110,7 +111,7 @@ export async function runPostReleaseVerifyStage(
     root,
   )
   for (const target of configuredReleasePackages()) {
-    verifyPublishedPackage(root, target, version)
+    await verifyPublishedPackage(root, target, version)
   }
   // Desktop packaging integration (FID-2026-0903-001 + FID-2026-0906-002):
   // the desktop claim is verified in BOTH modes — manifest resolvable and

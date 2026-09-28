@@ -14,146 +14,177 @@ import { describe, expect, test } from 'bun:test'
 
 import { moduleRequire, repoRoot } from './wrapper-safety-fixtures'
 
+/**
+ * Budget for the cases that shell out or walk the filesystem.
+ *
+ * The `npm pack` case execs npm and untars a real archive; the tar and catalog
+ * cases recursively copy `.agents/skills/savant-design-systems` and extract it.
+ * Their cost is subprocess and disk wall clock, not work, so under a loaded
+ * machine (a 13-workspace typecheck chain + repo-wide eslint + this suite) they
+ * can stretch past bun's 10s default and red a green gate.
+ *
+ * Passed as the per-test argument because that is the only mechanism bun
+ * 1.3.14 honours — a `[test] timeout` in `cli/bunfig.toml` was proven inert by
+ * mutation (timeout = 1 left a 36ms test passing). 60s matches
+ * `terminal-watchdog.test.ts` and still bounds a genuine hang far inside the
+ * suite's ~2 minute runtime.
+ */
+const SUBPROCESS_TEST_TIMEOUT = 60_000
+
 describe('shared release launcher safety', () => {
   const launcherPath = join(repoRoot, 'cli/release-core/launcher.js')
   const { createLauncher, validateDesignSystemCatalog } =
     moduleRequire(launcherPath)
 
-  test('validates an extracted 74-resource release catalog', () => {
-    const fixtureRoot = mkdtempSync(join(tmpdir(), 'design-catalog-'))
-    const catalogRoot = join(fixtureRoot, 'savant-design-systems')
-    try {
-      cpSync(
-        join(repoRoot, '.agents/skills/savant-design-systems'),
-        catalogRoot,
-        { recursive: true },
-      )
-      expect(validateDesignSystemCatalog(catalogRoot)).toEqual({ count: 74 })
-
-      const resourcePath = join(
-        catalogRoot,
-        'resources',
-        'airbnb-design-analysis.json',
-      )
-      const original = readFileSync(resourcePath, 'utf8')
-      writeFileSync(resourcePath, `${original}\\n tampered`)
+  test(
+    'validates an extracted 74-resource release catalog',
+    () => {
+      const fixtureRoot = mkdtempSync(join(tmpdir(), 'design-catalog-'))
+      const catalogRoot = join(fixtureRoot, 'savant-design-systems')
       try {
-        validateDesignSystemCatalog(catalogRoot)
-        throw new Error('expected catalog validation to fail')
-      } catch (error) {
-        expect((error as { code?: string }).code).toBe(
-          'DESIGN_SYSTEM_CATALOG_INVALID',
+        cpSync(
+          join(repoRoot, '.agents/skills/savant-design-systems'),
+          catalogRoot,
+          { recursive: true },
         )
+        expect(validateDesignSystemCatalog(catalogRoot)).toEqual({ count: 74 })
+
+        const resourcePath = join(
+          catalogRoot,
+          'resources',
+          'airbnb-design-analysis.json',
+        )
+        const original = readFileSync(resourcePath, 'utf8')
+        writeFileSync(resourcePath, `${original}\\n tampered`)
+        try {
+          validateDesignSystemCatalog(catalogRoot)
+          throw new Error('expected catalog validation to fail')
+        } catch (error) {
+          expect((error as { code?: string }).code).toBe(
+            'DESIGN_SYSTEM_CATALOG_INVALID',
+          )
+        }
+      } finally {
+        rmSync(fixtureRoot, { recursive: true, force: true })
       }
-    } finally {
-      rmSync(fixtureRoot, { recursive: true, force: true })
-    }
-  })
+    },
+    SUBPROCESS_TEST_TIMEOUT,
+  )
 
-  test('preserves the catalog across an npm-pack boundary', async () => {
-    const fixtureRoot = mkdtempSync(join(tmpdir(), 'design-catalog-pack-'))
-    const tempRepo = join(fixtureRoot, 'repo')
-    const packageRoot = join(tempRepo, 'cli', 'release')
-    const packedRoot = join(fixtureRoot, 'packed')
-    try {
-      mkdirSync(join(tempRepo, 'cli', 'release-core'), { recursive: true })
-      mkdirSync(packageRoot, { recursive: true })
-      cpSync(
-        join(repoRoot, 'cli/release/package.json'),
-        join(packageRoot, 'package.json'),
-      )
-      cpSync(
-        join(repoRoot, 'cli/release/index.js'),
-        join(packageRoot, 'index.js'),
-      )
-      cpSync(
-        join(repoRoot, 'cli/release/README.md'),
-        join(packageRoot, 'README.md'),
-      )
-      cpSync(
-        join(repoRoot, 'cli/release-core/launcher.js'),
-        join(packageRoot, 'launcher.js'),
-      )
-      cpSync(
-        join(repoRoot, 'cli/release-core/http.js'),
-        join(packageRoot, 'http.js'),
-      )
-      cpSync(
-        join(repoRoot, 'cli/release-core/prepare-package.js'),
-        join(tempRepo, 'cli', 'release-core', 'prepare-package.js'),
-      )
-      cpSync(
-        join(repoRoot, 'cli/release-core/launcher.js'),
-        join(tempRepo, 'cli', 'release-core', 'launcher.js'),
-      )
-      cpSync(
-        join(repoRoot, 'cli/release-core/http.js'),
-        join(tempRepo, 'cli', 'release-core', 'http.js'),
-      )
-      cpSync(join(repoRoot, '.agents'), join(tempRepo, '.agents'), {
-        recursive: true,
-      })
-      const prepare = moduleRequire('node:child_process').execFileSync
-      prepare(
-        process.platform === 'win32' ? 'node.exe' : 'node',
-        [join(tempRepo, 'cli', 'release-core', 'prepare-package.js')],
-        { cwd: packageRoot },
-      )
-      const output = prepare(
-        process.platform === 'win32' ? 'npm.cmd' : 'npm',
-        ['pack', '--json'],
-        { cwd: packageRoot, encoding: 'utf8' },
-      )
-      const [packed] = JSON.parse(output) as Array<{
-        filename: string
-        files: Array<{ path: string }>
-      }>
-      expect(
-        packed.files.some(
-          (file) => file.path === 'savant-design-systems/manifest.json',
-        ),
-      ).toBe(true)
-      expect(
-        packed.files.filter((file) =>
-          file.path.startsWith('savant-design-systems/resources/'),
-        ),
-      ).toHaveLength(74)
-      mkdirSync(packedRoot, { recursive: true })
-      await moduleRequire('tar').x({
-        file: join(packageRoot, packed.filename),
-        cwd: packedRoot,
-        strip: 1,
-      })
-      expect(
-        validateDesignSystemCatalog(join(packedRoot, 'savant-design-systems')),
-      ).toEqual({ count: 74 })
-    } finally {
-      rmSync(fixtureRoot, { recursive: true, force: true })
-    }
-  })
+  test(
+    'preserves the catalog across an npm-pack boundary',
+    async () => {
+      const fixtureRoot = mkdtempSync(join(tmpdir(), 'design-catalog-pack-'))
+      const tempRepo = join(fixtureRoot, 'repo')
+      const packageRoot = join(tempRepo, 'cli', 'release')
+      const packedRoot = join(fixtureRoot, 'packed')
+      try {
+        mkdirSync(join(tempRepo, 'cli', 'release-core'), { recursive: true })
+        mkdirSync(packageRoot, { recursive: true })
+        cpSync(
+          join(repoRoot, 'cli/release/package.json'),
+          join(packageRoot, 'package.json'),
+        )
+        cpSync(
+          join(repoRoot, 'cli/release/index.js'),
+          join(packageRoot, 'index.js'),
+        )
+        cpSync(
+          join(repoRoot, 'cli/release/README.md'),
+          join(packageRoot, 'README.md'),
+        )
+        cpSync(
+          join(repoRoot, 'cli/release-core/launcher.js'),
+          join(packageRoot, 'launcher.js'),
+        )
+        cpSync(
+          join(repoRoot, 'cli/release-core/http.js'),
+          join(packageRoot, 'http.js'),
+        )
+        cpSync(
+          join(repoRoot, 'cli/release-core/prepare-package.js'),
+          join(tempRepo, 'cli', 'release-core', 'prepare-package.js'),
+        )
+        cpSync(
+          join(repoRoot, 'cli/release-core/launcher.js'),
+          join(tempRepo, 'cli', 'release-core', 'launcher.js'),
+        )
+        cpSync(
+          join(repoRoot, 'cli/release-core/http.js'),
+          join(tempRepo, 'cli', 'release-core', 'http.js'),
+        )
+        cpSync(join(repoRoot, '.agents'), join(tempRepo, '.agents'), {
+          recursive: true,
+        })
+        const prepare = moduleRequire('node:child_process').execFileSync
+        prepare(
+          process.platform === 'win32' ? 'node.exe' : 'node',
+          [join(tempRepo, 'cli', 'release-core', 'prepare-package.js')],
+          { cwd: packageRoot },
+        )
+        const output = prepare(
+          process.platform === 'win32' ? 'npm.cmd' : 'npm',
+          ['pack', '--json'],
+          { cwd: packageRoot, encoding: 'utf8' },
+        )
+        const [packed] = JSON.parse(output) as Array<{
+          filename: string
+          files: Array<{ path: string }>
+        }>
+        expect(
+          packed.files.some(
+            (file) => file.path === 'savant-design-systems/manifest.json',
+          ),
+        ).toBe(true)
+        expect(
+          packed.files.filter((file) =>
+            file.path.startsWith('savant-design-systems/resources/'),
+          ),
+        ).toHaveLength(74)
+        mkdirSync(packedRoot, { recursive: true })
+        await moduleRequire('tar').x({
+          file: join(packageRoot, packed.filename),
+          cwd: packedRoot,
+          strip: 1,
+        })
+        expect(
+          validateDesignSystemCatalog(
+            join(packedRoot, 'savant-design-systems'),
+          ),
+        ).toEqual({ count: 74 })
+      } finally {
+        rmSync(fixtureRoot, { recursive: true, force: true })
+      }
+    },
+    SUBPROCESS_TEST_TIMEOUT,
+  )
 
-  test('validates the catalog after tar extraction', async () => {
-    const fixtureRoot = mkdtempSync(join(tmpdir(), 'design-catalog-tar-'))
-    const archivePath = join(fixtureRoot, 'catalog.tar.gz')
-    const extractRoot = join(fixtureRoot, 'extract')
-    const catalogRoot = join(extractRoot, 'savant-design-systems')
-    try {
-      cpSync(
-        join(repoRoot, '.agents/skills/savant-design-systems'),
-        join(fixtureRoot, 'savant-design-systems'),
-        { recursive: true },
-      )
-      await moduleRequire('tar').c(
-        { gzip: true, file: archivePath, cwd: fixtureRoot },
-        ['savant-design-systems'],
-      )
-      mkdirSync(extractRoot, { recursive: true })
-      await moduleRequire('tar').x({ file: archivePath, cwd: extractRoot })
-      expect(validateDesignSystemCatalog(catalogRoot)).toEqual({ count: 74 })
-    } finally {
-      rmSync(fixtureRoot, { recursive: true, force: true })
-    }
-  })
+  test(
+    'validates the catalog after tar extraction',
+    async () => {
+      const fixtureRoot = mkdtempSync(join(tmpdir(), 'design-catalog-tar-'))
+      const archivePath = join(fixtureRoot, 'catalog.tar.gz')
+      const extractRoot = join(fixtureRoot, 'extract')
+      const catalogRoot = join(extractRoot, 'savant-design-systems')
+      try {
+        cpSync(
+          join(repoRoot, '.agents/skills/savant-design-systems'),
+          join(fixtureRoot, 'savant-design-systems'),
+          { recursive: true },
+        )
+        await moduleRequire('tar').c(
+          { gzip: true, file: archivePath, cwd: fixtureRoot },
+          ['savant-design-systems'],
+        )
+        mkdirSync(extractRoot, { recursive: true })
+        await moduleRequire('tar').x({ file: archivePath, cwd: extractRoot })
+        expect(validateDesignSystemCatalog(catalogRoot)).toEqual({ count: 74 })
+      } finally {
+        rmSync(fixtureRoot, { recursive: true, force: true })
+      }
+    },
+    SUBPROCESS_TEST_TIMEOUT,
+  )
 
   // FID-2026-0806-014: consent before apply. An update is staged in the
   // background and recorded as pending; the running session is never stopped

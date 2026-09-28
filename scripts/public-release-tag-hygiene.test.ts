@@ -10,9 +10,10 @@ import path from 'path'
 import { describe, expect, test } from 'bun:test'
 
 import { pruneLocalOnlyFailedTag, receiptPath } from './public-release'
+import { blockedTagMessage } from './public-release/preflight'
 
 describe('public release contract — tag hygiene', () => {
-  test('prunes a local-only failed-run tag but never a remote or unowned tag', () => {
+  test('prunes a local-only failed-run tag but never a remote, unowned or unverifiable one', () => {
     const version = '9.9.9-prune'
     const receipt = receiptPath(version)
     const repo = mkdtempSync(path.join(os.tmpdir(), 'savant-release-prune-'))
@@ -43,7 +44,7 @@ describe('public release contract — tag hygiene', () => {
 
       // No receipt -> nothing pruned, tag untouched.
       runGit(['tag', '-a', `v${version}`, '-m', 't'], repo)
-      expect(pruneLocalOnlyFailedTag(repo, version, head)).toBe(false)
+      expect(pruneLocalOnlyFailedTag(repo, version, head)).toBe('kept')
       expect(runGit(['tag', '-l', `v${version}`], repo)).toBe(`v${version}`)
 
       // Failed receipt owning this head + tag absent on remote -> pruned.
@@ -59,25 +60,58 @@ describe('public release contract — tag hygiene', () => {
           restored: true,
         }),
       )
-      expect(pruneLocalOnlyFailedTag(repo, version, head)).toBe(true)
+      expect(pruneLocalOnlyFailedTag(repo, version, head)).toBe('pruned')
       expect(runGit(['tag', '-l', `v${version}`], repo)).toBe('')
 
       // Receipt owns it but the tag IS on the remote -> refuse to prune.
       runGit(['tag', '-a', `v${version}`, '-m', 't'], repo)
       runGit(['push', 'origin', `v${version}`], repo)
-      expect(pruneLocalOnlyFailedTag(repo, version, head)).toBe(false)
+      expect(pruneLocalOnlyFailedTag(repo, version, head)).toBe('kept')
       expect(runGit(['tag', '-l', `v${version}`], repo)).toBe(`v${version}`)
 
       // Receipt head mismatch -> refuse to prune.
       runGit(['tag', '-d', `v${version}`], repo)
       runGit(['push', 'origin', `:refs/tags/v${version}`], repo)
       runGit(['tag', '-a', `v${version}`, '-m', 't2'], repo)
-      expect(pruneLocalOnlyFailedTag(repo, version, '0'.repeat(40))).toBe(false)
+      expect(pruneLocalOnlyFailedTag(repo, version, '0'.repeat(40))).toBe(
+        'kept',
+      )
+      expect(runGit(['tag', '-l', `v${version}`], repo)).toBe(`v${version}`)
+
+      // FID-2026-0924-001: unreachable origin is an absence of evidence, not
+      // evidence of presence — it must not read as "the tag already exists".
+      runGit(
+        [
+          'remote',
+          'set-url',
+          'origin',
+          path.join(os.tmpdir(), 'savant-release-prune-absent-origin'),
+        ],
+        repo,
+      )
+      expect(pruneLocalOnlyFailedTag(repo, version, head)).toBe(
+        'kept-unverified',
+      )
       expect(runGit(['tag', '-l', `v${version}`], repo)).toBe(`v${version}`)
     } finally {
       rmSync(receipt, { force: true })
       rmSync(repo, { recursive: true, force: true })
       rmSync(remote, { recursive: true, force: true })
     }
+  })
+
+  test('reports an unverifiable remote as unverified, never as a present tag', () => {
+    // FID-2026-0924-001: a failed `git ls-remote` is an absence of evidence.
+    // Rendering it as "the tag already exists" told the operator a fact the
+    // pipeline had not established, and pointed them at `--resume` for a tag
+    // that was never pushed.
+    const unverified = blockedTagMessage('kept-unverified', '9.9.9')
+    expect(unverified).toMatch(
+      /Cannot verify whether tag v9\.9\.9 exists on origin/,
+    )
+    expect(unverified).not.toMatch(/already exists/)
+
+    expect(blockedTagMessage('kept', '9.9.9')).toMatch(/already exists/)
+    expect(blockedTagMessage('pruned', '9.9.9')).toBeUndefined()
   })
 })
