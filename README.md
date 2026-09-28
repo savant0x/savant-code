@@ -10,25 +10,41 @@ touches your repo.**
 Built with TypeScript/Bun, governed by the ECHO Protocol, and designed for
 local-first use with Ollama.
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-1.3.14-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![React](https://img.shields.io/badge/React-19-%23000000?style=flat-square&logo=react&logoColor=%2300fbff)](https://react.dev/)[![OpenTUI](https://img.shields.io/badge/OpenTUI-0.5.3-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](https://github.com/anomalyco/opentui)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](ECHO.md)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![Release](https://img.shields.io/badge/Release-v0.0.33-%2300fbff?style=flat-square&logo=semver&logoColor=%2300fbff)](CHANGELOG.md)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-1.3.14-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![React](https://img.shields.io/badge/React-19-%23000000?style=flat-square&logo=react&logoColor=%2300fbff)](https://react.dev/)[![OpenTUI](https://img.shields.io/badge/OpenTUI-0.5.3-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](https://github.com/anomalyco/opentui)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](ECHO.md)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![Release](https://img.shields.io/badge/Release-v0.0.34-%2300fbff?style=flat-square&logo=semver&logoColor=%2300fbff)](CHANGELOG.md)
 
 </div>
 
-> **v0.0.33** — this release hardens the security posture and closes holes in
-> the verification contract the agent itself operates under. Spawned shells no
-> longer inherit provider credentials (allowlisted child env), secret values are
-> masked by shape before the telemetry fan-out, signing failures are loud
-> instead of silent, database templates get fail-closed capability clamps, and
-> the destructive-command denylist now holds in every mode including the dev
-> override. FID verification detects promised test artifacts by meaning (any
-> section, any new/updated wording) and names the records it does not enforce
-> instead of skipping them silently; repo-gate checks can be declared on a FID's
-> own receipt — which is how two shipped bare-runtime spawns in the release
-> tooling were caught and fixed. Model context windows resolve exact terminal
-> segments for mid-id-version ids (kiosapi/grok-4.6 no longer inherits a 2M
-> window), the fallback table was audited against the live OpenRouter catalog
-> with 17 corrections, verification credits only commands that actually
-> succeeded, and EHEL blocks Law-3 circular writes at write time.
+> **v0.0.34** — two built-in gateway providers, both live-verified end to end:
+> **Vercel AI Gateway** (keyless live catalog, slash-bearing upstream ids
+> stripped exactly one segment) and **Clean APIs** (authenticated live catalog,
+> catalog **200 / 33 models** and a real `chat/completions` round-trip
+> returning `PONG`). And a **critical soundness fix to the Law 3 verification
+> gate**: credit was shape-aware rather than outcome-aware, so a failing
+> `bun test` — non-zero `exitCode`, plain-text output, no structured error —
+> was credited as a **pass**, leaving the gate inert for the dominant failure
+> mode. Also here: the `@@` hunk row no longer spends the panel's loudest
+> colour on a line carrying no change information; four mutation-proven guards
+> against controls that looked load-bearing and were not; a standing
+> type-check surface for the release engine; and the release-recovery path
+> (`--resume` plus a bounded npm read-after-write retry) that was dead.
+> Governance: agents may stage, commit, and push granular commits to origin
+> main; force-push, history rewrite, and release mutations stay operator-only.
+> Previously shipped in v0.0.33: this release hardened the security posture
+> and closed holes in the verification contract the agent itself operates
+> under. Spawned shells no longer inherit provider credentials (allowlisted
+> child env), secret values are masked by shape before the telemetry fan-out,
+> signing failures are loud instead of silent, database templates get
+> fail-closed capability clamps, and the destructive-command denylist now holds
+> in every mode including the dev override. FID verification detects promised
+> test artifacts by meaning (any section, any new/updated wording) and names
+> the records it does not enforce instead of skipping them silently;
+> repo-gate checks can be declared on a FID's own receipt — which is how two
+> shipped bare-runtime spawns in the release tooling were caught and fixed.
+> Model context windows resolve exact terminal segments for mid-id-version
+> ids (kiosapi/grok-4.6 no longer inherits a 2M window), the fallback table
+> was audited against the live OpenRouter catalog with 17 corrections,
+> verification credits only commands that actually succeeded, and EHEL blocks
+> Law-3 circular writes at write time.
 > Previously shipped in v0.0.32: the `/model` picker now activates the
 > selected provider's routing (closing the silent savant-code.com
 > passthrough that surfaced as a bogus "Out of credits" error), and the
@@ -188,6 +204,7 @@ history. The supported hosted providers are:
 | Atria AI | `/provider atria` or `DIRECT_PROVIDER=atria` | `ATRIA_API_KEY` | Hosted gateway |
 | B.AI | `/provider bai` or `DIRECT_PROVIDER=bai` | `BAI_API_KEY` | OpenAI-compatible gateway with an authenticated live model catalog |
 | BazaarLink | `/provider bazaarlink` or `DIRECT_PROVIDER=bazaarlink` | `BAZAARLINK_API_KEY` | Hosted gateway |
+| Clean APIs | `/provider cleanapis` or `DIRECT_PROVIDER=cleanapis` | `CLEANAPIS_API_KEY` | Hosted gateway |
 | Cloudflare | Environment configuration | `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` | Env-only — not in the `/provider` picker; requires the account id too |
 | CommandCode | `/provider commandcode` or `DIRECT_PROVIDER=commandcode` | `COMMAND_CODE_API_KEY` | OpenAI-compatible hosted inference (dual-protocol) |
 | HCNSec | `/provider hcnsec` or `DIRECT_PROVIDER=hcnsec` | `HCNSEC_API_KEY` | OpenAI-compatible gateway on an audited static 7-model allowlist |
@@ -199,6 +216,7 @@ history. The supported hosted providers are:
 | TokenBom | `/provider tokenbom` or `DIRECT_PROVIDER=tokenbom` | `TOKENBOM_API_KEY` | OpenAI-compatible gateway on an audited static 7-model allowlist |
 | TokenHarbor | `/provider tokenharbor` or `DIRECT_PROVIDER=tokenharbor` | `TOKENHARBOR_API_KEY` | OpenAI-compatible hosted gateway |
 | UnoRouter | `/provider unorouter` or `DIRECT_PROVIDER=unorouter` | `UNOROUTER_API_KEY` | Hosted gateway |
+| Vercel AI Gateway | `/provider vercel` or `DIRECT_PROVIDER=vercel` | `AI_GATEWAY_API_KEY` | Hosted gateway |
 | Custom endpoint | Environment configuration | `INFERENCE_BASE_URL`, `INFERENCE_API_KEY` | Advanced OpenAI-compatible endpoint |
 <!-- GENERATED:provider-table-end -->
 
@@ -531,7 +549,8 @@ code 2 blocks a tool.
   file diffs throughout the TUI.
 - **Gateway providers** — OpenRouter, TokenRouter, TokenHarbor, NVIDIA NIM,
   CommandCode, Nous Research, KiosAPI, APInex,
-  OrcaRouter, B.AI, HCNSec, TokenBom, Infron, UnoRouter, BazaarLink, Atria AI, and Cloudflare Workers AI via
+OrcaRouter, B.AI, HCNSec, TokenBom, Infron, UnoRouter, BazaarLink, Atria AI,
+  Vercel AI Gateway, Clean APIs, and Cloudflare Workers AI via
   `@savant-code/llm-providers`. Nous Research uses the direct OpenAI-compatible API; Portal OAuth
   is a separate integration.
 - **Default model** — `openrouter/free` via OpenRouter (configurable via
@@ -970,6 +989,8 @@ picker or choose one directly:
 /provider infron
 /provider unorouter
 /provider bazaarlink
+/provider vercel
+/provider cleanapis
 ```
 
 The supported environment variables are `OPENROUTER_API_KEY`,
@@ -977,7 +998,8 @@ The supported environment variables are `OPENROUTER_API_KEY`,
 `TOKENHARBOR_API_KEY`, `NVIDIA_API_KEY`, `COMMAND_CODE_API_KEY`,
 `NOUS_API_KEY`, `KIOSAPI_API_KEY`, `APINEX_API_KEY`,
 `ORCAROUTER_API_KEY`, `BAI_API_KEY`, `HCNSEC_API_KEY`, `TOKENBOM_API_KEY`,
-`ATRIA_API_KEY`, `INFRON_API_KEY`, `UNOROUTER_API_KEY`, `BAZAARLINK_API_KEY`. The key
+`ATRIA_API_KEY`, `INFRON_API_KEY`, `UNOROUTER_API_KEY`, `BAZAARLINK_API_KEY`,
+`AI_GATEWAY_API_KEY`, `CLEANAPIS_API_KEY`. The key
 prompt is masked and stores the key globally in the Savant-Code config
 `credentials.json`; it is not added to chat history. Shell environment variables
 take precedence over stored keys, so CI and managed environments can configure

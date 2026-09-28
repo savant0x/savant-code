@@ -8,11 +8,22 @@
 
 基于 TypeScript/Bun 构建，受 ECHO 协议治理，并针对本地优先的 Ollama 使用场景设计。
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-1.3.14-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![React](https://img.shields.io/badge/React-19-%23000000?style=flat-square&logo=react&logoColor=%2300fbff)](https://react.dev/)[![OpenTUI](https://img.shields.io/badge/OpenTUI-0.5.3-%23000000?style=flat-square&logo=opentui&logoColor=%2300fbff)](https://github.com/anomalyco/opentui)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](ECHO.md)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![Release](https://img.shields.io/badge/Release-v0.0.33-%23000000?style=flat-square&logo=semver&logoColor=%2300fbff)](CHANGELOG.md)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-1.3.14-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![React](https://img.shields.io/badge/React-19-%23000000?style=flat-square&logo=react&logoColor=%2300fbff)](https://react.dev/)[![OpenTUI](https://img.shields.io/badge/OpenTUI-0.5.3-%23000000?style=flat-square&logo=opentui&logoColor=%2300fbff)](https://github.com/anomalyco/opentui)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](ECHO.md)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![Release](https://img.shields.io/badge/Release-v0.0.34-%23000000?style=flat-square&logo=semver&logoColor=%2300fbff)](CHANGELOG.md)
 
 </div>
 
-> **v0.0.33** —— 本次发布加固安全态势，并修补代理自身所遵循验证契约中的漏洞。派生子
+> **v0.0.34** —— 新增两个内置网关提供商，均已完成端到端在线验证：**Vercel AI
+> Gateway**（免密钥实时模型目录，上游带斜杠的 id 仅剥离一段）与 **Clean APIs**
+> （需认证的实时目录，目录 **200 / 33 个模型**，并完成真实 `chat/completions`
+> 往返，返回 `PONG`）。同时修复 **Law 3 验证门禁的关键健全性缺陷**：记分逻辑
+> 此前是“结构感知”而非“结果感知”，因此失败的 `bun test`（非零 `exitCode`、
+> 纯文本输出、无结构化错误）会被记为**通过**，使门禁在主要失败模式下形同
+> 虚设。本版本还包含：`@@` hunk 行不再占用面板中最刺眼的颜色来渲染一条不携带
+> 变更信息的行；四道经变异证明的守卫关闭了看似有效实则无效的管控项；发布引擎
+> 获得常驻类型检查面；以及此前处于死状态的发布恢复路径（`--resume` 加有界
+> npm 读后写重试）。治理：代理可对 origin main 执行分阶段、粒度化提交与推送；
+> 强推、历史重写与发布变更仍仅限操作者。
+> 此前 v0.0.33 发布内容：本次发布加固安全态势，并修补代理自身所遵循验证契约中的漏洞。派生子
 > shell 不再继承提供商凭据（子环境白名单），密钥值在遥测汇总前按形状掩码，签名失败改为
 > 显式告警而非静默，数据库模板获得 fail-closed 能力钳制，破坏性命令拒绝列表现在覆盖包括
 > 开发覆盖模式在内的所有模式。FID 验证按语义识别所承诺的测试产物（任意章节、任意“新增/
@@ -143,6 +154,8 @@ ollama serve
 | Infron | `/provider infron` | `INFRON_API_KEY` | OpenAI 兼容推理路由平台（精选的 9 模型静态白名单） |
 | UnoRouter | `/provider unorouter` | `UNOROUTER_API_KEY` | OpenAI 兼容网关（精选的 17 模型静态白名单；`:free` 模型不计费） |
 | BazaarLink | `/provider bazaarlink` | `BAZAARLINK_API_KEY` | OpenAI 兼容网关（12 模型静态白名单：身份审计的 `qwen3.7-flash:free`，1M 上下文 + 11 个精选付费旗舰模型） |
+| Vercel AI Gateway | `/provider vercel` | `AI_GATEWAY_API_KEY` | 托管网关（免密钥的实时模型目录） |
+| Clean APIs | `/provider cleanapis` | `CLEANAPIS_API_KEY` | 托管网关（密钥认证的实时模型目录） |
 
 密钥持久化在 Windows 的 `C:\Users\<username>\.savant-code\credentials.json` 或 macOS/Linux 的
 `~/.savant-code/credentials.json`。环境变量优先于已保存的凭据。自动化时，在启动 Savant-Code 前设置一个提供商密钥：
@@ -326,7 +339,8 @@ MCP 工具发现、模式切换（`HYBRID` / `SCAFFOLD` / `STRICT` / `ANALYZE`�
 - **通用复制按钮** —— 在整个 TUI 中悬停即可复制代码块、工具输出与文件 diff。
 - **网关提供商** —— 通过 `@savant-code/llm-providers` 支持 OpenRouter、TokenRouter、TokenHarbor、NVIDIA NIM、
   CommandCode、Nous Research、KiosAPI、APInex、OrcaRouter、B.AI、HCNSec、
-  TokenBom、Infron、UnoRouter、BazaarLink、Atria AI 与 Cloudflare Workers AI。Nous Research 使用 OpenAI 兼容直连
+TokenBom、Infron、UnoRouter、BazaarLink、Atria AI、Vercel AI Gateway、Clean APIs 与
+  Cloudflare Workers AI。Nous Research 使用 OpenAI 兼容直连
   API；Portal OAuth 是独立集成。
 - **默认模型** —— 通过 OpenRouter 使用 `openrouter/free`（可通过 `/model` 配置）。
 - **无头 / 非交互模式** —— `savant-code --print "<prompt>"` 无需 TUI 即可运行单个提示词，并将最终答案打印到
@@ -659,11 +673,14 @@ savant-code
 /provider infron
 /provider unorouter
 /provider bazaarlink
+/provider vercel
+/provider cleanapis
 ```
 
 支持的环境变量是 `OPENROUTER_API_KEY`、`TOKENROUTER_API_KEY`、`TOKENHARBOR_API_KEY`、`NVIDIA_API_KEY`、
 `COMMAND_CODE_API_KEY`、`NOUS_API_KEY`、`KIOSAPI_API_KEY`、`APINEX_API_KEY`、`ORCAROUTER_API_KEY`、
-`BAI_API_KEY`、`HCNSEC_API_KEY`、`TOKENBOM_API_KEY`、`ATRIA_API_KEY`、`INFRON_API_KEY`、`UNOROUTER_API_KEY` 与 `BAZAARLINK_API_KEY`。密钥提示为遮罩输入，并将密钥全局存储在
+`BAI_API_KEY`、`HCNSEC_API_KEY`、`TOKENBOM_API_KEY`、`ATRIA_API_KEY`、`INFRON_API_KEY`、`UNOROUTER_API_KEY`、
+`BAZAARLINK_API_KEY`、`AI_GATEWAY_API_KEY` 与 `CLEANAPIS_API_KEY`。密钥提示为遮罩输入，并将密钥全局存储在
 Savant-Code 配置的 `credentials.json` 中；不会加入
 聊天记录。shell 环境变量优先于已存储的密钥，因此 CI 与托管环境可以不使用本地持久化来配置提供商。高级直接提供商
 集成可以使用 `INFERENCE_BASE_URL` 与 `INFERENCE_API_KEY`；OpenRouter 可使用 `OPENROUTER_API_KEY` 或

@@ -8,7 +8,7 @@
 project:
   name: 'savant-code'
   description: 'Multi-Agent AI Coding Assistant with ECHO Protocol governance. TypeScript monorepo, Bun runtime.'
-  version: '0.0.33'
+  version: '0.0.34'
 
 protocol:
   version: '0.2.0'
@@ -21,7 +21,10 @@ commands:
   test: 'bun run test' # Root `test` script — chains all workspace unit suites, including design-systems. Matches the `type_check` gate coverage.
   # Mirrors the root `typecheck` script — all workspaces including the
   # design-systems package and packages/database + packages/knowledge-graph.
-  type_check: 'bun run --cwd=common typecheck && bun run --cwd=agents typecheck && bun run --cwd=sdk typecheck && bun run --cwd=cli typecheck && bun run --cwd=evals typecheck && bun run --cwd=packages/agent-runtime typecheck && bun run --cwd=packages/design-systems typecheck && bun run --cwd=packages/code-map typecheck && bun run --cwd=packages/database typecheck && bun run --cwd=packages/knowledge-graph typecheck && bun run --cwd=packages/llm-providers typecheck && bun run --cwd=desktop typecheck'
+  # The trailing `typecheck:scripts` leg is the release-engine surface
+  # (scripts/tsconfig.json) added by SCOPE T84-B: that tree is not a workspace,
+  # so it needs its own standing entry rather than a `--cwd` leg.
+  type_check: 'bun run --cwd=common typecheck && bun run --cwd=agents typecheck && bun run --cwd=sdk typecheck && bun run --cwd=cli typecheck && bun run --cwd=evals typecheck && bun run --cwd=packages/agent-runtime typecheck && bun run --cwd=packages/design-systems typecheck && bun run --cwd=packages/code-map typecheck && bun run --cwd=packages/database typecheck && bun run --cwd=packages/knowledge-graph typecheck && bun run --cwd=packages/llm-providers typecheck && bun run --cwd=desktop typecheck && bun run typecheck:scripts'
   lint: 'bun x eslint . --max-warnings 0' # zero-tolerance gate (matches .githooks/pre-push)
   lint_md: 'bun run lint:md'
   # Full-repo prettier check — LIVE gate since the 0.0.21 hardening session; active target 0.0.23
