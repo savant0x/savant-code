@@ -1,7 +1,3 @@
-import type { JSONSchema as ZodJSONSchemaNamespace } from 'zod/v4/core'
-
-type ZodJSONSchema = ZodJSONSchemaNamespace.JSONSchema
-
 // ===== JSON Types =====
 export type JSONValue =
   null | string | number | boolean | JSONObject | JSONArray
@@ -12,12 +8,34 @@ export type JSONArray = JSONValue[]
 
 /**
  * JSON Schema definition (for prompt schema or output schema).
- * Reuse Zod's built-in JSON Schema type so generated and hand-written
- * schemas remain structurally compatible.
+ *
+ * Defined locally, deliberately importing nothing (SCOPE T87-A): `/init`
+ * copies this scaffold into a user's project, which is not required to have
+ * any package installed — an import here would be a compile error in their
+ * editor before they wrote a line of their own agent.
+ *
+ * A JSON Schema is a JSON document, so the bound is "an object, or the
+ * booleans `true`/`false`". Values are `unknown` rather than `JSONValue`
+ * because schemas also arrive from dynamic sources (a published template, a
+ * generated document) whose shape is validated at runtime, not statically;
+ * that is the accept-bound the runtime enforces, and `unknown` narrowed at the
+ * boundary is the pattern the coding standard prescribes.
+ *
+ * Validation is not this type's job: the runtime compiles the schema with
+ * `convertJsonSchemaToZod` when the agent loads, and that is the real contract.
+ * Enumerating keywords here would advertise a partial list as if it were the
+ * whole spec.
+ *
+ * @see https://json-schema.org/draft/2020-12/json-schema-core
  */
-export type JsonSchema = ZodJSONSchema
-export type JsonObjectSchema = ZodJSONSchema & { type: 'object' }
-export type JsonStringSchema = ZodJSONSchema & { type: 'string' }
+export type JsonSchema = boolean | JsonSchemaObject
+
+export interface JsonSchemaObject {
+  [key: string]: unknown
+}
+
+export type JsonObjectSchema = JsonSchemaObject & { type: 'object' }
+export type JsonStringSchema = JsonSchemaObject & { type: 'string' }
 
 // ===== Data Content Types =====
 export type DataContent = string | Uint8Array | ArrayBuffer | Buffer | URL

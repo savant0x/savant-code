@@ -14,6 +14,40 @@
  *   export default definition
  */
 
+import type {
+  ToolCall,
+  AgentState,
+  AgentStepContext,
+  StepText,
+  GenerateN,
+} from './agent-definition-support'
+import type {
+  ModelName,
+  ReasoningOptions,
+  ProviderRoutingOptions,
+} from './agent-models'
+import type { ToolName } from './tools'
+import type {
+  MCPConfig,
+  JsonObjectSchema,
+  JsonStringSchema,
+  ToolResultOutput,
+} from './util-types'
+
+export type {
+  ToolName,
+  ToolCall,
+  AgentState,
+  AgentStepContext,
+  StepText,
+  GenerateN,
+} from './agent-definition-support'
+export type {
+  ModelName,
+  ReasoningOptions,
+  ProviderRoutingOptions,
+} from './agent-models'
+
 // ============================================================================
 // Agent Definition and Utility Types
 // ============================================================================
@@ -39,20 +73,14 @@ export interface AgentDefinition {
    * One of `max_tokens` or `effort` is required.
    * If `exclude` is true, reasoning will be removed from the response. Default is false.
    */
-  reasoningOptions?: {
-    enabled?: boolean
-    exclude?: boolean
-  } & (
-    | {
-        max_tokens: number
-      }
-    | {
-        effort: 'high' | 'medium' | 'low' | 'minimal' | 'none'
-      }
-  )
+  reasoningOptions?: ReasoningOptions
 
-  /** Provider routing options for OpenRouter. */
-  providerOptions?: ProviderOptions
+  /**
+   * Provider routing options for OpenRouter.
+   * Controls which providers to use and fallback behavior.
+   * See https://openrouter.ai/docs/features/provider-routing
+   */
+  providerOptions?: ProviderRoutingOptions
 
   // ============================================================================
   // Tools and Subagents
@@ -129,6 +157,13 @@ export interface AgentDefinition {
    * Use this when the agent needs to know all the previous messages in the conversation.
    */
   includeMessageHistory?: boolean
+
+  /**
+   * FID-2026-0824-026: when true, spawn-time splices raw tool results from
+   * the evidence spill over compaction sentinels so zero-tool audit agents
+   * verify against bytes instead of digests. Defaults to false.
+   */
+  requiresRawEvidence?: boolean
 
   /** Whether to inherit the parent agent's model instead of using this agent's own model.
    *
@@ -226,32 +261,13 @@ export interface AgentDefinition {
       >)
 }
 
-import type {
-  AgentState,
-  AgentStepContext,
-  GenerateN,
-  StepText,
-  ToolCall,
-} from './agent-runtime'
-import type { ModelName } from './model-name'
-import type { ProviderOptions } from './provider-options'
-import type { ToolName } from './tools'
-import type {
-  JsonObjectSchema,
-  JsonStringSchema,
-  MCPConfig,
-  ToolResultOutput,
-} from './util-types'
-
-export type { AgentState, AgentStepContext, GenerateN, StepText, ToolCall }
 export type {
-  AgentTools,
-  CodeAnalysisTools,
   FileEditingTools,
-  OutputTools,
+  CodeAnalysisTools,
   TerminalTools,
   WebTools,
-} from './available-tools'
-export type { ModelName } from './model-name'
-export type { ProviderOptions } from './provider-options'
-export type { ToolName }
+  AgentTools,
+  OutputTools,
+} from './agent-definition-support'
+
+export type { ToolParamsMap, GetToolParams } from './tools'
