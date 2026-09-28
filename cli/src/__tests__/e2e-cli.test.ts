@@ -7,7 +7,36 @@ import stripAnsi from 'strip-ansi'
 import { isSDKBuilt, ensureCliTestEnv } from './test-utils'
 
 const CLI_PATH = path.join(__dirname, '../index.tsx')
-const TIMEOUT_MS = 10000
+/**
+ * Kill budget for a CLI child that should answer `--help` instantly.
+ *
+ * FID-2026-0927-002 F4: this was 10_000, which is the value the named 10s
+ * flake actually died on — NOT the per-test budget. Re-running the file under
+ * 3x CPU contention (48 spinners on 16 cores) reproduced 5 failures, every one
+ * `Expected to contain: "--agent" / Received: ""` at 10.3-11.6s. `Received: ""`
+ * is the fingerprint of a spawn killed mid-boot: `spawnSync` SIGTERMs the child,
+ * `result.stdout` is `undefined`, `?? ''` makes it `""`. A child that needs
+ * >10s to answer `--help` under load is not hung, it is contended — so the
+ * budget must clear contended boot, not just an idle one.
+ *
+ * 45s is the upper of the two candidates: it still bounds a genuine hang far
+ * inside the suite runtime, while giving ~20x headroom over the observed 1.4-2.2s
+ * idle and ~4x over the ~10.5s measured at 3x contention. Raising the PER-TEST
+ * budget alone was already proven insufficient — those tests had 60s of room
+ * and still died in here, where the per-test budget has no jurisdiction.
+ */
+const SPAWN_KILL_MS = 45000
+/**
+ * Per-test budget. Deliberately separate from the spawn kill budget: reusing
+ * one constant gave these cases exactly bun's 10s default, so the observed
+ * 1.4-2.2s runs had only ~5x headroom and could cross the line on a loaded
+ * machine (a 13-workspace typecheck chain + repo-wide eslint + this suite).
+ * 60s matches `terminal-watchdog.test.ts` and still bounds a genuine hang far
+ * inside the suite's ~2 minute runtime. Passed per-test because that is the
+ * only mechanism bun 1.3.14 honours — a `[test] timeout` in `cli/bunfig.toml`
+ * was proven inert by mutation.
+ */
+const E2E_TEST_TIMEOUT = 60000
 const sdkBuilt = isSDKBuilt()
 const BUN = process.execPath
 
@@ -20,7 +49,7 @@ function runCLI(args: string[]): {
 } {
   const result = spawnSync(BUN, ['run', CLI_PATH, ...args], {
     cwd: path.join(__dirname, '../..'),
-    timeout: TIMEOUT_MS,
+    timeout: SPAWN_KILL_MS,
     env: process.env,
   })
   return {
@@ -41,7 +70,7 @@ describe.skipIf(!sdkBuilt)('CLI End-to-End Tests', () => {
       expect(cleanOutput).toContain('Usage:')
       expect(exitCode).toBe(0)
     },
-    TIMEOUT_MS,
+    E2E_TEST_TIMEOUT,
   )
 
   test(
@@ -53,7 +82,7 @@ describe.skipIf(!sdkBuilt)('CLI End-to-End Tests', () => {
       expect(cleanOutput).toContain('--agent')
       expect(exitCode).toBe(0)
     },
-    TIMEOUT_MS,
+    E2E_TEST_TIMEOUT,
   )
 
   test(
@@ -65,7 +94,7 @@ describe.skipIf(!sdkBuilt)('CLI End-to-End Tests', () => {
       expect(cleanOutput).toMatch(/\d+\.\d+\.\d+|dev/)
       expect(exitCode).toBe(0)
     },
-    TIMEOUT_MS,
+    E2E_TEST_TIMEOUT,
   )
 
   test(
@@ -77,7 +106,7 @@ describe.skipIf(!sdkBuilt)('CLI End-to-End Tests', () => {
       expect(cleanOutput).toMatch(/\d+\.\d+\.\d+|dev/)
       expect(exitCode).toBe(0)
     },
-    TIMEOUT_MS,
+    E2E_TEST_TIMEOUT,
   )
 
   test(
@@ -121,7 +150,7 @@ describe.skipIf(!sdkBuilt)('CLI End-to-End Tests', () => {
 
       expect(started).toBe(true)
     },
-    TIMEOUT_MS,
+    E2E_TEST_TIMEOUT,
   )
 
   test(
@@ -160,7 +189,7 @@ describe.skipIf(!sdkBuilt)('CLI End-to-End Tests', () => {
 
       expect(started).toBe(true)
     },
-    TIMEOUT_MS,
+    E2E_TEST_TIMEOUT,
   )
 
   test(
@@ -172,7 +201,7 @@ describe.skipIf(!sdkBuilt)('CLI End-to-End Tests', () => {
       expect(exitCode).not.toBe(0)
       expect(stripAnsi(stderr)).toContain('error')
     },
-    TIMEOUT_MS,
+    E2E_TEST_TIMEOUT,
   )
 })
 

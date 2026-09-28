@@ -30,7 +30,6 @@ interface DiffRowProps {
   gutterWidth: number
   addBackground: string
   removeBackground: string
-  hunkBackground: string
 }
 
 /**
@@ -41,13 +40,7 @@ interface DiffRowProps {
  * sign reads as a gutter accent and content stays clean.
  */
 const DiffRow = memo(
-  ({
-    line,
-    gutterWidth,
-    addBackground,
-    removeBackground,
-    hunkBackground,
-  }: DiffRowProps) => {
+  ({ line, gutterWidth, addBackground, removeBackground }: DiffRowProps) => {
     const theme = useTheme()
     const isAdd = line.kind === 'add'
     const isRemove = line.kind === 'remove'
@@ -61,17 +54,24 @@ const DiffRow = memo(
       ? addBackground
       : isRemove
         ? removeBackground
-        : isHunk
-          ? hunkBackground
-          : undefined
+        : undefined
 
-    // Dark foregrounds keep tinted rows readable; hunk/header rows use the
-    // theme's diff tokens; context uses the default foreground.
+    // Dark foregrounds keep tinted rows readable; metadata rows (header AND
+    // hunk) use the theme's muted metadata token; context uses the default
+    // foreground.
+    //
+    // FID-2026-0927-004: hunk headers were rendered in `diffHunkHeader` (the
+    // design system's primary cyan) on a cyan-tinted full-width bar. On line 0
+    // that made a row carrying no change information the loudest thing in the
+    // panel, and it contradicted this component's own stated rule that
+    // "metadata rows render muted so the change content dominates". A hunk
+    // header is metadata: its text is identical in every hunk modulo the line
+    // numbers already shown in the gutter. It now takes the same muted
+    // treatment as the `diff --git` / `---` / `+++` rows.
     let foreground = theme.foreground
     if (isAdd) foreground = DIFF_ADD_FOREGROUND
     else if (isRemove) foreground = DIFF_REMOVE_FOREGROUND
-    else if (isHunk) foreground = theme.diffHunkHeader
-    else if (isHeader) foreground = theme.diffMeta
+    else if (isHunk || isHeader) foreground = theme.diffMeta
 
     let content = line.text
     if (isAdd || isRemove || line.kind === 'context') {
@@ -125,8 +125,11 @@ const DiffRow = memo(
  * the proven line-by-line renderer (parseDiffLines + neon tinting) in the
  * shared TrafficLightPanel primitive with a header strip (file path +
  * `+N -N` counts) and a dual old/new line-number + sign gutter. Hunk headers
- * render as tinted full-width bars; `diff --git`/`index`/`---`/`+++`
- * metadata rows render muted so the change content dominates.
+ * and `diff --git`/`index`/`---`/`+++` rows are BOTH metadata and both render
+ * muted, so the change content dominates (FID-2026-0927-004: hunk headers
+ * previously rendered as tinted full-width bars in the diff accent, which made
+ * line 0 the loudest element in the panel while carrying no change
+ * information).
  */
 export const DiffViewer = memo(({ diffText }: DiffViewerProps) => {
   const theme = useTheme()
@@ -143,9 +146,21 @@ export const DiffViewer = memo(({ diffText }: DiffViewerProps) => {
     () => blendHex(NEON_RED, theme.background, 0.5),
     [theme.background],
   )
-  const hunkBackground = useMemo(
-    () => blendHex(theme.diffHunkHeader, theme.background, 0.15),
-    [theme.background, theme.diffHunkHeader],
+  // Operator directive 2026-09-27: suppress the FIRST hunk row.
+  //
+  // The leading `@@` carries the start numbers that seed the gutter columns
+  // printed on every row beneath it, so on screen it restates what the gutter
+  // already shows. Later `@@` rows are NOT suppressed: in a multi-hunk diff
+  // each one marks a real elision (rows jump from line 12 to line 300), and
+  // that discontinuity is information no other row carries.
+  //
+  // Filtering happens HERE, not in `parseDiffLines`. The parser must keep
+  // emitting the row because it owns the counter reset (`diff-stats.ts:120`):
+  // dropping it there would leave both counters at 0 and blank the gutter on
+  // every row. This is display-only by construction.
+  const firstHunkIndex = useMemo(
+    () => lines.findIndex((line) => line.kind === 'hunk'),
+    [lines],
   )
   // Gutter width scales with the largest line number present so 5-digit hunks
   // don't clip, while small diffs stay narrow.
@@ -176,16 +191,17 @@ export const DiffViewer = memo(({ diffText }: DiffViewerProps) => {
           <span fg={theme.muted}>{` ${formatDiffCounts(added, removed)}`}</span>
         </text>
       </box>
-      {lines.map((line, index) => (
-        <DiffRow
-          key={index}
-          line={line}
-          gutterWidth={gutterWidth}
-          addBackground={addBackground}
-          removeBackground={removeBackground}
-          hunkBackground={hunkBackground}
-        />
-      ))}
+      {lines.map((line, index) =>
+        index === firstHunkIndex ? null : (
+          <DiffRow
+            key={index}
+            line={line}
+            gutterWidth={gutterWidth}
+            addBackground={addBackground}
+            removeBackground={removeBackground}
+          />
+        ),
+      )}
     </TrafficLightPanel>
   )
 })

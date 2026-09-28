@@ -12,8 +12,12 @@ import {
 } from '@savant-code/common/providers/audit'
 import { PROVIDER_REGISTRY } from '@savant-code/common/providers/registry'
 
+import { auditBunfigTestTimeout } from './audit-bunfig-test-timeout.js'
 import { auditExitCodeMasking } from './audit-exit-codes.js'
 import { auditGateEnvParity } from './audit-gate-env-parity.js'
+import { auditRebrandCorruption } from './audit-rebrand-corruption.js'
+import { auditVendoredTrees } from './audit-vendored-tree.js'
+import { collectChangelogCoverageIssues } from './changelog-coverage.js'
 import { validateFidVerificationGates } from './fid-gates.js'
 import { validateActiveFidLedger } from './fid-ledger.js'
 import { collectHygieneIssues } from './hygiene.js'
@@ -36,6 +40,7 @@ import {
   SYNCHRONIZED_PACKAGE_PATHS,
 } from './version.js'
 
+import type { FidLedgerIssue } from './fid-ledger-types.js'
 import type {
   CommandParityInput,
   MetadataValidationInput,
@@ -70,53 +75,6 @@ function validateCurrentHygiene(): { code: string; message: string }[] {
     code: `hygiene.${issue.code}`,
     message: `${issue.file}: ${issue.message}`,
   }))
-}
-
-// FID-2026-0813-023: fail-closed, absence-shaped scan for the un-expanded
-// rebrand marker. The rebrand commit (da18963) left the literal identifier
-// `savantCode$1` repo-wide; it compiles silently, so the only durable defense
-// is a validation gate that fails when the marker reappears in source.
-const REBRAND_CORRUPTION_MARKER = 'savantCode$1'
-const REBRAND_SOURCE_DIRS = [
-  'sdk/src',
-  'cli/src',
-  'common/src',
-  'packages',
-  'agents',
-]
-
-function collectRebrandHits(dir: string, hits: string[]): void {
-  let entries: fs.Dirent[]
-  try {
-    entries = fs.readdirSync(dir, { withFileTypes: true })
-  } catch {
-    return
-  }
-  for (const entry of entries) {
-    if (entry.name === 'node_modules' || entry.name === 'dist') continue
-    const full = path.join(dir, entry.name)
-    if (entry.isDirectory()) {
-      collectRebrandHits(full, hits)
-    } else if (/\.(ts|tsx)$/.test(entry.name)) {
-      if (fs.readFileSync(full, 'utf8').includes(REBRAND_CORRUPTION_MARKER)) {
-        hits.push(path.relative(root, full))
-      }
-    }
-  }
-}
-
-function validateRebrandCorruption(): { code: string; message: string }[] {
-  const hits: string[] = []
-  for (const dir of REBRAND_SOURCE_DIRS) {
-    collectRebrandHits(path.join(root, dir), hits)
-  }
-  if (hits.length === 0) return []
-  return [
-    {
-      code: 'rebrand.corruption',
-      message: `Un-expanded rebrand marker \`${REBRAND_CORRUPTION_MARKER}\` found at ${hits.length} source location(s): ${hits.join(', ')}`,
-    },
-  ]
 }
 
 function readJson(relativePath: string): JsonObject {
@@ -266,12 +224,32 @@ function validateRegisterCompleteness(): { code: string; message: string }[] {
   }))
 }
 
+/**
+ * An archived FID whose id appears nowhere in CHANGELOG.md is invisible to
+ * anyone reading release notes. The gate is notation-aware (ranges, `/NNN`
+ * siblings, and `NNN/-004/-005` compounds all count) and ratcheted against
+ * `dev/changelog-coverage-baseline.json`, so it fails on new gaps only.
+ */
+const changelogCoverageIssues = collectChangelogCoverageIssues(root).map(
+  (issue) => ({ code: issue.code, message: issue.message }),
+)
+
 const gateEnvParityIssues = auditGateEnvParity(root).map((issue) => ({
   code: 'audit.gate-env-parity',
   message: `${issue.file}:${issue.line}: ${issue.message}`,
 }))
 
-const issues = [
+// FID-2026-0927-002: two controls that LOOK load-bearing and are not.
+//   F1b — a top-level tree with no tracked files and no ignore rule sits inside
+//         the release automation's `git add --all` blast radius, and the
+//         never-committed disclosure (git-publish.ts:104-111) only warns.
+//   F2  — `cli/bunfig.toml`'s `[test] timeout` is not read by bun 1.3.14, so a
+//         budget added there looks like it hardens the suite and changes
+//         nothing. Both mutation-proven before being trusted.
+const vendoredTreeIssues = auditVendoredTrees(root)
+const bunfigTimeoutIssues = auditBunfigTestTimeout(root)
+
+const issues: FidLedgerIssue[] = [
   ...validateMetadata(collectMetadata()),
   ...validateCommandParity(collectParity()),
   ...validateGateContract(repositoryValidationGates(root), root),
@@ -290,10 +268,23 @@ const issues = [
   ...exitCodeMaskingIssues,
   ...gateEnvParityIssues,
   ...validateCurrentHygiene(),
-  ...validateRebrandCorruption(),
+  ...auditRebrandCorruption(root),
   ...validateScopeDispositions(),
   ...validateRegisterCompleteness(),
+  ...changelogCoverageIssues,
+  ...vendoredTreeIssues,
+  ...bunfigTimeoutIssues,
 ]
 
-process.stdout.write(`${formatValidationIssues(issues)}\n`)
-if (issues.length > 0) process.exitCode = 1
+// FID-2026-0927-003 F3: `severity: 'warning'` findings are REPORTED but do
+// not fail the gate. Only the FID receipt-staleness demotion produces them,
+// and only when the C3 live re-run already proved every declared gate green —
+// so this weakens a tripwire over a property that is independently enforced,
+// not the enforcement itself. Every other issue still fails as before.
+const warnings = issues.filter((issue) => issue.severity === 'warning')
+const failures = issues.filter((issue) => issue.severity !== 'warning')
+process.stdout.write(`${formatValidationIssues(failures)}\n`)
+for (const warning of warnings) {
+  process.stdout.write(`- [warning] ${warning.code} ${warning.message}\n`)
+}
+if (failures.length > 0) process.exitCode = 1
