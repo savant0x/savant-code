@@ -3,6 +3,103 @@
 This directory contains closed or historically completed FIDs. Files here are
 an audit record, not an active work queue.
 
+## 2026-09-27 closure — Vercel AI Gateway provider (FID-2026-0927-001)
+
+FID-bound first on operator direction: the Perfection Loop converged the record
+before any code, then the implementation landed RED-first with every gate green.
+Closure followed the ceremony: status `verified` → `closed`, the Resolution
+restructured to the closure format, the file moved here, and the receipt
+re-stamped LIVE at the archived path (13/13 gates, `sha256:8e60648f…`,
+`2026-09-27T16:07:49Z`). The commit SHA is pending operator git execution (G2
+withheld). **The active FID queue is empty.**
+
+- [`FID-2026-0927-001-vercel-ai-gateway-provider.md`](FID-2026-0927-001-vercel-ai-gateway-provider.md)
+  (low) — closed + archived 2026-09-27. Vercel AI Gateway added as built-in
+  provider `vercel` (routing prefix `vercel`, operator-confirmed) from one registry
+  entry in a new second partition module — `registry-partitioned.ts` sat at
+  298/300 lines and the quality ceiling forbids one more entry — with keyless live
+  catalog at `https://ai-gateway.vercel.sh/v1/models`, `AI_GATEWAY_API_KEY` plus
+  the masked `/provider vercel` store (shell precedence, FID-2026-0804-001), and
+  `idTransform: 'strip'` preserving vendor-namespaced upstream ids with exactly
+  one prefix segment removed. Intake probes measured the boundary (keyless catalog
+  200 / keyless chat 401); the catalog's field drift (`context_window`/
+  `max_tokens`, numeric `created`) is mapped explicitly by the new parser, and the
+  `live-catalog` exception-manifest entry the FID-2026-0809-008 audit contract
+  requires was added — the archived "one registry entry" walkthrough
+  under-documented both. RED-first (common 4 fail / cli 3 fail + import error /
+  sdk 2 fail — the routing leg captured `POST
+  https://ai-gateway.vercel.sh/v1/chat/completions` with `Bearer` auth and the
+  stripped wire id `alibaba/qwen-3-14b`); two new suites + widened pins in four;
+  full chain 12/12 workspaces 0 fail; receipt 13/13. Keyed live inference not
+  claimed (no `AI_GATEWAY_API_KEY` this session).
+
+## 2026-09-25 closure — release-pipeline verdict integrity (FID-2026-0924-001)
+
+Operator closure directive, issued after the record's receipt was restored (it had reached
+`verified` with a `pending` receipt block). Closure followed the established ceremony:
+status `verified` → `closed`, the Resolution restructured to the closure format, the file
+moved here, and the receipt re-stamped LIVE at the archived path (5/5 gates,
+`sha256:0cbb8d44…`, `2026-09-25T15:31:07Z`). The commit SHA is pending operator git
+execution (G2 withheld). **The active FID queue is empty.**
+
+- [`FID-2026-0924-001-unestablished-release-verdicts.md`](FID-2026-0924-001-unestablished-release-verdicts.md)
+  (high) — closed + archived 2026-09-25. An audit for the asymmetry class the
+  2026-09-24 entry named found four live instances of one authoring habit — deriving a
+  verdict from a convenient proxy instead of the evidence actually read. **(F-1)** the
+  DESKTOP_BUNDLES stage injected a `sleepMs` that ignored its own `ms`, replacing the
+  declared 30 s cadence with 1 Hz for up to 45 minutes (≈2,700 requests, 90 intended)
+  against a client with no 429 branch. **(F-2)** `validateResumeReceipt` collapsed
+  `git`/`bun`/`npm` failing to run into the HEAD-binding message. **(F-3)** the `gh`
+  precheck skipped automation, but the desktop stages are automation-only and shell out
+  to `gh`, so a missing binary failed *after* the npm publishes. **(F-4)**
+  `pruneLocalOnlyFailedTag` returned one `false` for two unrelated causes, so preflight
+  asserted "the tag already exists" for a tag it had never read on origin — the same
+  shape as the deadlock below, one layer down. **(F-5)** the desktop poll window was the
+  only bounded wait not env-overridable. All five fixed fail-closed-preserving
+  (`desktopRunPoller` honoring `ms`; a named unverifiable-toolchain failure;
+  `requiresGhCli(options, env)`; `FailedTagPruneOutcome` + `blockedTagMessage`;
+  `desktopPollTimeoutMs`/`desktopPollIntervalMs` through `positiveEnvMs`), with
+  retry/429 deliberately not added to the non-idempotent REST client. Six pins across
+  four files, two proven load-bearing by mutation; four candidate sites audited and
+  CLEARED rather than "fixed". Release suites 143/0 across 22 files; receipt 5/5.
+
+## 2026-09-24 closure — the release recovery path (FID-2026-0922-001)
+
+Operator closure directive. The record was `verified` with a live receipt; closure
+restructured the Resolution to the closure format (Closed Date / Fix Description /
+Tests Added / Verification Evidence / Archived) and re-stamped the receipt LIVE at
+the archived path so the closed record stays byte-consistent with its final
+content. The commit SHA is pending operator git execution (G2 withheld); the
+implementation evidence is the file:line ranges in the record, which the FID
+Lifecycle rule admits for `closed`. **The active FID queue is empty.**
+
+- [`FID-2026-0922-001-resume-unreachable-after-git-push.md`](FID-2026-0922-001-resume-unreachable-after-git-push.md)
+  (high) — closed + archived 2026-09-24. The v0.0.33 cut published completely and
+  then exited 1 in `POST_RELEASE_VERIFY` on an npm registry-propagation race — and
+  the documented recovery, `bun run release:public:resume`, failed at its first
+  step with a block whose own message told the operator to run `--resume`. Root
+  cause: `checkStaleTag` consulted its `resume` parameter only on the local-only
+  tag branch, returning `severity: block` whenever the tag existed on origin, which
+  the orchestrator makes fatal outside `preview` — so every failure after
+  `GIT_PUSH` was unrecoverable, and a fix commit could not help either (the receipt
+  is HEAD-bound). The fix scopes the tolerance to the mode it belongs to: mutation
+  mode still blocks a re-cut (retained, still pinned), while resume warns and keeps
+  the tag, whose HEAD binding is enforced downstream by `verifyPreflight` and
+  re-asserted by `runPostReleaseVerifyStage`. The second defect was folded in
+  rather than split — the npm presence check read the registry once while its
+  sibling in the same stage retried for 45 minutes — and now polls a bounded,
+  env-overridable window (`awaitPublishedPackage`), retrying only the not-found
+  class and failing closed on expiry. Pinned RED-first on both legs (the guard pin
+  failed `Expected: "warn" / Received: "block"`; the npm leg failed on a missing
+  export), with a conservative negative leg proving the pins load-bearing (a
+  single-shot window fails the absorb leg in 0.73 ms) and a call-graph census for
+  the stage wiring. 4 new pins; release suites 138 pass / 0 fail across 22 files;
+  full battery green; receipt re-stamped LIVE at the archived path
+  (`sha256:a3fe41e4…`). The v0.0.33 receipt stays unreachable **by design** and is
+  recorded as the 2026-09-22 hand-verified erratum. Two durable lessons were
+  promoted to `dev/LEARNINGS.md` (`networked-downstream-defeats-boundary-pin`,
+  `pin-mode-parameter-on-every-verdict-branch`).
+
 ## 2026-09-22 closure — the last five hook events (FID-2026-0919-031)
 
 Operator closure directive. The record was `verified` with a live receipt; closure

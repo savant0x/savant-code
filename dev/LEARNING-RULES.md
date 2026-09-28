@@ -48,6 +48,11 @@ This catalog provides stable names for lessons that explain those authorities.
 - **Authority:** `ECHO.md` (FID Ground-Truth Verification)
 - **Validation:** `bun run learnings:check`
 
+## Rule: archived-runbook-is-claim-not-contract
+
+- **Authority:** `common/src/providers/audit.ts` (the live contract an archived runbook describes)
+- **Validation:** `bun run learnings:check`
+
 ## Rule: test-renderer-not-proxy
 
 - **Authority:** `cli/src/components/tools/diff-viewer.tsx`
@@ -64,10 +69,15 @@ This catalog provides stable names for lessons that explain those authorities.
 - **Validation:** `packages/design-systems/src/__tests__/default.test.ts`
   (no-navy neutral-family assertion)
 
-## Rule: large-file-edits-via-apply-patch
+## Rule: large-file-edits-bypass-the-tool-read-path
 
-- **Authority:** `SCOPE.md`
-- **Validation:** `bun run learnings:check`
+- **Authority:** the harness tool read path — the 100,000-char cap is shared by every
+  read-before-write tool (`str_replace`, `read_files` and `write_file` all inherit
+  it, so it is a property of the read step and not of one edit tool; not a
+  repository module)
+- **Validation:** `wc -c <file>` before choosing an edit tool; the staged-copy
+  route is recorded in `dev/LEARNINGS.md`
+  (`Files over the 100k-character tool read limit break every in-place edit path`)
 
 ## Rule: string-split-byte-identity-gate
 
@@ -109,3 +119,23 @@ This catalog provides stable names for lessons that explain those authorities.
 - **Authority:** `packages/agent-runtime/src/tools/handlers/tool/recorder-stall-check.ts` (`isAllowedWritePath`)
 - **Validation:** `packages/agent-runtime/src/tools/handlers/tool/__tests__/recorder-stall-check.test.ts`
   (cwd-independence case: arbitrary NON-cwd root must count)
+
+## Rule: networked-downstream-defeats-boundary-pin
+
+- **Authority:** `scripts/public-release/npm-guards.ts` (`awaitPublishedPackage`)
+- **Validation:** `scripts/__tests__/public-release-npm-guards.test.ts`
+  (both legs hermetic; the transient-404 leg is load-bearing — a single-shot
+  window fails it)
+
+## Rule: pin-mode-parameter-on-every-verdict-branch
+
+- **Authority:** `scripts/public-release/pre-audit-local.ts` (`checkStaleTag`)
+- **Validation:** `scripts/__tests__/pre-audit.test.ts`
+  (tag-on-origin + resume warns while mutation mode still blocks)
+
+## Rule: gate-grammar-decides-condensable-scope
+
+- **Authority:** `packages/agent-runtime/src/echo/scope-register-completeness.ts`
+  (`scanUnregisteredTaskReferences` / `collectRegisteredTasks` — a `## Task NN`
+  heading is the registration of every `TNN-X` item under it)
+- **Validation:** `bun run scripts/scope-register-check.ts`

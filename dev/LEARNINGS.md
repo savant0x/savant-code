@@ -1,5 +1,130 @@
 # LEARNINGS
 
+## Lesson: The register-completeness gate decides what a scope register may be condensed to, not the author
+
+- **Date:** 2026-09-27
+- **Failure:** A 1,696-line `SCOPE.md` whose 16 largest sections were entirely `[x]` read as a work log rather than
+  an active register, and the obvious cleanup — deleting the completed task sections — is mechanically illegal.
+  `collectRegisterCompletenessIssues` requires every `Task NN` / `TNN-X` cited by an active FID or a session summary
+  dated on/after `SCOPE_GUARD_EFFECTIVE_DATE` to have a register line, and **16** task numbers were cited by the
+  windowed summaries (65, 66, 73, 74, 75, 77, 78, 79, 80, 81, 82, 83, 84, 86, 87, 88). Proposing deletion would have
+  red `validate:repository` on `scope.unregistered-item`.
+- **Evidence:** packages/agent-runtime/src/echo/scope-register-completeness.ts →
+  symbol:scanUnregisteredTaskReferences,
+  packages/agent-runtime/src/echo/scope-register-completeness.ts → symbol:collectRegisteredTasks
+- **Invariant:** The gate resolves an item reference as
+  `registered.itemIds.has(id) || registered.taskNumbers.has(n)`, so a bare `## Task NN` heading keeps every `TNN-X`
+  reference legal on its own. **Condensing is legal; deleting a heading is not** — the heading *is* the registration,
+  not a title. Per-item narrative may be dropped only where the evidence survives elsewhere, and open items must be
+  reproduced in full, because a condensed register's whole job is that an unfinished item stays visible.
+- **Guard:** Before condensing a register, enumerate the cited task numbers first (`grep` the windowed summaries)
+  and keep every one of them as a heading; confirm with `bun run scripts/scope-register-check.ts`, the probe that
+  answers this directly. Claim each condensed entry's evidence pointer only where it was measured — a bare "no
+  CHANGELOG entry" negative is unfalsifiable when the same file mentions the paths for unrelated reasons, so name
+  the token instead and state its count.
+- **Verification:** `scope-register-check` PASS (0 issues) and `scope-guard-check` PASS (0 issues) on the condensed
+  register; 1,696 → 350 lines with all 24 `## Task` headings and all 8 pre-existing unchecked items intact. The
+  Verifier's NEEDS-REVIEW on the CHANGELOG-coverage claims was resolved with tool evidence, and four overstated
+  negatives were rewritten to name a verifiable token. `validate:repository` PASS, `lint:md` clean, prettier clean.
+- **Scope:** internal
+- **Owning FID:** FID-2026-0919-025 (closed + archived)
+- **Status:** active
+- **Canonical rule:** gate-grammar-decides-condensable-scope
+
+## Lesson: An archived walkthrough is a claim — ground the plan in the current contract modules
+
+- **Date:** 2026-09-27
+- **Failure:** The archived provider runbook (`docs/archive/design/Adding New
+  Providers.md`) promised "one registry entry + a catalog reference. Everything
+  else derives" — but following it literally would have failed the registry audit
+  (which requires a `live-catalog` entry in `PROVIDER_EXCEPTION_MANIFEST` with
+  owner + evidence paths) and silently mis-parsed the Vercel AI Gateway catalog,
+  which publishes `context_window`/`max_tokens` and a numeric `created` where the
+  shared `OpenRouterModel` type expects `context_length`/`max_completion_tokens`
+  and a string `created`. The runbook was true of a past contract, not the live
+  one.
+- **Evidence:** common/src/providers/audit.ts → symbol:requiredExceptionKinds,
+  cli/src/utils/openrouter-models/vercel.ts → symbol:parseVercelCatalog,
+  dev/fids/archive/FID-2026-0927-001-vercel-ai-gateway-provider.md → heading:Lessons Learned
+- **Invariant:** An archived runbook is a dated claim about a contract that lives
+  in code; the ground truth is whatever the enforcing modules (audit gates,
+  shared types, quality ceilings, drift checkers) require *now*. Measure the
+  external API's actual response shape at intake instead of trusting the doc's
+  description of it.
+- **Guard:** For every "everything else derives" claim in a walkthrough, grep the
+  enforcing module named above it and diff the doc's described shapes against a
+  live probe of the endpoint; record each divergence in the FID's RED evidence
+  before writing the GREEN plan.
+- **Verification:** RED-first named both divergences before any source change
+  (common 4 fail / cli 3 fail + import error / sdk 2 fail); the registry audit
+  passes with the manifest entry; the parser pins the drift (5 tests); receipt
+  13/13 live at the archived path.
+- **Scope:** internal
+- **Owning FID:** FID-2026-0927-001 (closed + archived)
+- **Status:** active
+- **Canonical rule:** archived-runbook-is-claim-not-contract
+
+## Lesson: A stage followed by a network-bound step cannot pin its own retry — extract the seam
+
+- **Date:** 2026-09-24
+- **Failure:** The FID-2026-0922-001 npm retry was first pinned through the whole
+  `verifyPublishedPackage` boundary. Its next step is the real `npm pack`
+  artifact inspection, so the pin failed for a reason unrelated to the retry
+  (it reached the network and died on an absent artifact) and the retry's own
+  behavior was never isolated — the assertion would have passed or failed on the
+  wrong thing.
+- **Evidence:** scripts/public-release/npm-guards.ts →
+  symbol:awaitPublishedPackage,
+  scripts/__tests__/public-release-npm-guards.test.ts →
+  test:absorbs a transient 404 instead of failing the stage
+- **Invariant:** A behavior whose function continues into a slow/networked step
+  cannot be pinned through that function hermetically; extract the behavior at
+  its own boundary (exported, with an injectable probe — the same seam shape
+  `verifyReleaseAssets` uses for `fetchImpl`) and prove the stage-level wiring by
+  a call-graph census instead of a networked assertion.
+- **Guard:** When a new pin cannot stay offline, stop and ask which boundary owns
+  the behavior; if the answer is "a sub-step of the function I am calling",
+  extract that sub-step rather than mocking the network.
+- **Verification:** Both legs hermetic and load-bearing — the absorb leg
+  resolves on the third probe read; collapsing the window to single-shot makes
+  it fail in 0.73 ms (source restored); release suites 138/0 across 22 files;
+  receipt 3/3 live.
+- **Scope:** release
+- **Owning FID:** FID-2026-0922-001
+- **Status:** active
+- **Canonical rule:** networked-downstream-defeats-boundary-pin
+
+## Lesson: A mode parameter must be pinned on every branch that returns a verdict
+
+- **Date:** 2026-09-24
+- **Failure:** `checkStaleTag(root, version, resume)` ignored its `resume`
+  parameter on the on-origin branch for the whole life of the shipped-version
+  guard, while its own failure message told the operator to run `--resume`. Every
+  signal that resume had been considered was present — the parameter, a
+  resume-specific branch (local-only tag), the message — so the mode-blind block
+  was indistinguishable from a mode-aware one, and the recovery path for any
+  release failure after `GIT_PUSH` was dead. It survived until a real release
+  failed after its tag was pushed.
+- **Evidence:** scripts/public-release/pre-audit-local.ts → symbol:checkStaleTag,
+  scripts/__tests__/pre-audit.test.ts → test:tag on origin is kept in resume mode
+  (finishing the shipped release), scripts/public-release/preflight.ts →
+  symbol:verifyPreflight
+- **Invariant:** When a parameter selects between branches and each branch
+  returns a verdict, the parameter's effect belongs in a test for EACH such
+  branch. A mode-aware branch elsewhere in the same function is not evidence for
+  the branch you did not pin; and a remediation message naming a mode is a claim
+  that mode is honored.
+- **Guard:** Before signing off a mode-parameterized gate, enumerate the branch
+  that returns the blocking verdict and pin the tolerant mode against it; keep
+  the strict-mode pin beside it so the guard cannot be softened silently.
+- **Verification:** The new pin failed pre-fix (`Expected: "warn" / Received:
+  "block"`) and passes now, with the mutation-mode block pin retained; negative
+  leg via window collapse; receipt 3/3 live.
+- **Scope:** release
+- **Owning FID:** FID-2026-0922-001
+- **Status:** active
+- **Canonical rule:** pin-mode-parameter-on-every-verdict-branch
+
 ## Lesson: A suppression key that can legitimately be null cannot distinguish "inactive" from "active with no identity"
 
 - **Date:** 2026-09-18
@@ -152,23 +277,35 @@
 - **Status:** active
 - **Canonical rule:** no-attribution-fid-metadata
 
-## Lesson: Files over the 100k-character tool read limit break string-replace editing
+## Lesson: Files over the 100k-character tool read limit break every in-place edit path
 
 - **Date:** 2026-08-21
-- **Failure:** str_replace and read_files silently fail to match content near the tail of `SCOPE.md` once it reached
-  102,314 chars (the read path truncates at 100,000), reporting old-string-not-found for content that grep confirms
-  exists — and six apply_patch attempts with removal-style hunks also failed to serialize.
+- **Failure:** (2026-08-21) `str_replace` and `read_files` silently failed to match content near the tail of a
+  102,314-char `SCOPE.md` — the read path truncates at 100,000 — reporting old-string-not-found for content `grep`
+  confirms exists, and six `apply_patch` attempts with removal-style hunks also failed to serialize. (2026-09-27
+  amendment) The ceiling is **not** specific to `str_replace`: `write_file` reads the target to compute a diff and
+  fails identically, reporting `Failed to apply patch` and leaving the file byte-identical — so a whole-file rewrite
+  of a >100K file is also unavailable, and the error names a patch the caller never authored. Reproduced on a
+  118,822-byte `SCOPE.md` and a 792,353-character `CHANGELOG.md`.
 - **Evidence:** dev/fids/archive/FID-2026-0819-005-quality-ratchet-file-remediation.md → heading:Current Evidence
-- **Invariant:** For any file near or above 100,000 chars, tail edits go through apply_patch with exact FULL-LINE
-  context (partial context lines are rejected), never str_replace.
-- **Guard:** Check `wc -c` before choosing the edit tool; prefer insert-only apply_patch hunks; removal hunks whose
-  removed line begins with a dash repeatedly failed to serialize.
-- **Verification:** The QR-HH/QR-II/QR-IJ and pause-record edits succeeded via apply_patch after str_replace failures;
-  the full record is in FID-2026-0819-005 (Program Paused section); markdownlint and Prettier pass on the edited file.
+- **Invariant:** The 100,000-char cap is a property of the **shared read path**, not of any one edit tool, so every
+  tool that reads a target before writing inherits it. Past the cap no in-place edit is available at all, and a
+  whole-file rewrite needs a route that never reads the target through the tool surface.
+- **Guard:** Check `wc -c` before choosing an edit tool. Under the cap: apply_patch with exact FULL-LINE context
+  (partial context lines are rejected), insert-only hunks. Over the cap: write the new content to a path **outside**
+  the target — a gitignored `dev/scratchpad/active/` file — and move it into place with a terminal command, or run a
+  small anchor-matched script that reads the file itself. The scratchpad route is safe by construction: the staging
+  artifact is gitignored and can never enter a commit.
+- **Verification:** `write_file` on the 118,822-byte `SCOPE.md` returned `Failed to apply patch` with the file
+  byte-identical (`wc -c` 118,822 before and after). The staged-copy route produced 350 lines / 21,494 chars with
+  `validate:repository`, `scope-register`, `scope-guard`, `lint:md` and prettier all exit 0. The same route inserted
+  four CHANGELOG entries (792,353 → 804,413 chars) under a unique-anchor assertion with an idempotence guard, after
+  which `release:public:preview` still extracted `Changelog section ready: ## 0.0.33 — 2026-09-22`. The 2026-08-21
+  record remains in FID-2026-0819-005 (Program Paused section).
 - **Scope:** internal
 - **Owning FID:** FID-2026-0819-005
 - **Status:** active
-- **Canonical rule:** large-file-edits-via-apply-patch
+- **Canonical rule:** large-file-edits-bypass-the-tool-read-path
 
 ## Lesson: Static-string decompositions require a byte-identity hash gate
 

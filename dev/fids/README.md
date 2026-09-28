@@ -5,6 +5,155 @@ operator decision, implementation, runtime review, or closure evidence.
 
 ## Current active FIDs
 
+**The active FID queue is empty** (2026-09-27): the records below were closed and
+archived on operator directive, with their receipts re-stamped at the archived
+paths. Each block is kept as the record of what it claimed while it was active.
+
+**2026-09-27 — Vercel AI Gateway as a built-in provider (FID-2026-0927-001,
+`closed` + archived 2026-09-27).** FID-bound first: the Perfection Loop converged
+before any code, then one registry entry (`vercel` — label "Vercel AI Gateway",
+`AI_GATEWAY_API_KEY` + masked `/provider vercel` store with shell precedence,
+base `https://ai-gateway.vercel.sh/v1`, `protocol: 'openai'`, `idTransform:
+'strip'`, keyless live catalog at `/v1/models`) landed in a new second partition
+module (`registry-partitioned.ts` was measured at 298/300 lines against the
+quality ceiling). The archived "one registry entry" walkthrough was treated as a
+claim, not the contract: the gateway's list is OpenAI-shaped but not
+OpenRouter-typed (`context_window`/`max_tokens`, numeric `created`), so the new
+parser maps the drift explicitly, and the FID-2026-0809-008 audit contract
+requires a `live-catalog` exception-manifest entry (owner + evidence paths) the
+runbook never mentioned. Boundary measured at intake (keyless catalog 200 /
+keyless chat 401); RED-first with named failures (common 4 fail / cli 3 fail +
+import error / sdk 2 fail — the routing leg captured `POST
+https://ai-gateway.vercel.sh/v1/chat/completions` with `Bearer` auth and the
+stripped wire id `alibaba/qwen-3-14b`); two new suites (parser contract;
+two-way credential legs split at the 300-line ceiling) + widened pins in four;
+full chain `bun run test` 12/12 workspaces 0 fail, typecheck exit 0, eslint 0,
+lint:md clean, `quality:report` PASS, `generate:provider-docs:check` clean.
+Keyed live inference deliberately not claimed (no `AI_GATEWAY_API_KEY` this
+session). Receipt 13/13 live at the archived path (`sha256:8e60648f…`,
+`2026-09-27T16:07:49Z`). Nothing committed (G2 withheld).
+
+**2026-09-24 — release-pipeline verdict integrity: four asymmetries found and
+fixed (FID-2026-0924-001, `closed` + archived 2026-09-25).** The direct follow-on to the entry below,
+authored from the operator's directive to "audit the rest of the release pipeline for
+the same asymmetry — single-shot reads and mode parameters that only some branches
+honor". **Four live instances, each with file:line evidence.** **(F-1)**
+`runDesktopBundlesStage` injected `sleepMs: () => setTimeout(…, 1000)` — a lambda
+that ignored its own `ms` argument — while `watchDesktopRun` passed the declared 30 s
+interval (`desktop-workflow.ts:167`), so DESKTOP_BUNDLES polled GitHub at **1 Hz for
+up to 45 minutes (≈2,700 requests where 90 were intended)** against
+`githubApiRequest`, a client with **no 429 branch** that fails the cut on any
+unexpected status. **(F-2)** `validateResumeReceipt` collapsed `git`/`bun`/`npm`
+failing to run into the HEAD-binding message "Resume gate evidence is not bound to
+the current release environment", so an unverifiable toolchain read as a receipt
+mismatch. **(F-3)** the command precheck skipped the `gh` requirement for automation
+(`transaction.ts:105-109`) — but the desktop stages are admitted **only** in
+automation (`desktop-stages.ts:92-96`) and shell out to `gh run download` /
+`gh release upload`, so a missing binary failed *after* the npm publishes as
+"Failed to download desktop artifacts…". **(F-4)** `pruneLocalOnlyFailedTag`
+returned one `false` for "the tag is on origin" and for "`git ls-remote` failed", so
+preflight asserted "Tag `v<version>` already exists; use --resume with its receipt" —
+a fact it had not established, and the **same shape as the deadlock below, one layer
+down** (`pre-audit-local.ts:167-176` already had the correct "cannot verify" warn
+pattern). **(F-5)** the desktop poll window was the only bounded wait not
+env-overridable, while `assets.ts:27` and `npm-guards.ts:102` both are. **Fixes, all
+fail-closed preserved:** `desktopRunPoller` is the single production poller seam and
+honors `ms`; the resume failure names the tool that did not run;
+`requiresGhCli(options, env)` derives the requirement from the mode **and** the
+desktop flag; `FailedTagPruneOutcome` (`pruned | kept | kept-unverified`) plus
+`blockedTagMessage` keep "present" and "unknown" distinct — the guard still never
+deletes on an unverifiable claim; `desktopPollTimeoutMs` / `desktopPollIntervalMs`
+read `SAVANT_RELEASE_DESKTOP_TIMEOUT_MS` / `SAVANT_RELEASE_DESKTOP_POLL_MS` through
+the shared `positiveEnvMs`. **Deliberately NOT done:** retry/429 handling in
+`githubApiRequest` — it carries non-idempotent POSTs (`/releases` 201, `/dispatches`
+204), so a blind retry could double-create a release or re-dispatch the workflow;
+the load was removed at its source instead. **Candidates audited and CLEARED:**
+the gh-vs-REST release-absence assertions (mode-consistent), `verifyGitHubTagHead`
+vs `verifyGitHubTagHeadApi` (behaviourally equivalent), the `GITHUB_RELEASE` dual
+branches (complete in both modes), and `watchDesktopRun`'s testability (never the
+problem — the window was injectable; F-1 broke the production seam alone).
+**Evidence:** 6 new pins across 4 files; two proven load-bearing by mutation (the
+cadence pin fails at **1002.88 ms** when the argument-ignoring lambda is restored;
+the verdict pin fails when the `kept-unverified` branch is collapsed); release suites
+**143 pass / 0 fail across 22 files** (was 138); the six changed modules + five test
+files **type-clean** under a root-inheriting `tsc` probe (exit 0, probe deleted
+after use). Nothing committed (G2 withheld). Registered as **Task 85**; the record is
+`verified`, not closed — closure + archive is the operator's call. Second
+consecutive session in which a release-module signature change had to be proven by a
+hand-built probe: direct evidence for **Task 84-B**'s ruling.
+
+**2026-09-24 — the `--resume` deadlock is FIXED; FID-2026-0922-001 is `closed` +
+archived with a live 3/3 receipt, and the active queue is empty again.** The
+operator authorized the fix the 2026-09-22 ruling (recorded below) had held back,
+and it landed as one unit. **RED first, both legs
+failing against the unmodified tree:** the guard pin with `Expected: "warn" /
+Received: "block"` (`scripts/__tests__/pre-audit.test.ts:195`) and the npm leg with
+`SyntaxError: Export named 'npmVerifyPollIntervalMs' not found` — no bounded window
+existed at all. **Then the change:** `checkStaleTag` consults its `resume` parameter
+on the **on-origin** branch too — mutation mode still blocks a re-cut (the
+shipped-version guard, retained and still pinned), while resume returns a `warn` and
+keeps the tag, because the tag on origin *is* the release being finished and its
+HEAD binding is enforced downstream (`preflight.ts:126-141` dereferences the tag and
+fails unless it points at release HEAD; `transaction.ts:139` re-checks the receipt
+binding) — and `verifyPublishedPackage` now polls a bounded, env-overridable window
+(`awaitPublishedPackage`, `npm-guards.ts:127-146`) instead of failing the stage on
+the first `npm view`, retrying only the not-found class and failing closed on expiry
+with the `--resume` remediation. `positiveEnvMs` moved to
+`scripts/public-release/env-ms.ts` so both retry windows share one parse.
+**Evidence:** 4 new pins; the pre-audit suite 11/0 with both tag-on-origin modes
+covered; the release suites 138/0 across 22 files; a negative leg that proves the
+pins load-bearing (collapsing the window to single-shot makes the absorb pin fail in
+0.73 ms; both sources restored); typecheck 12/12 exit 0; eslint `--max-warnings 0`
+exit 0; prettier clean; `lint:md` 0; `quality: PASS (1498 baselined files)`;
+`validate:repository` PASS; `version:check` PASS; receipt stamped live at **3/3
+gates** (test pre-audit, test npm-guards, quality) and re-stamped at the archived
+path (`sha256:a3fe41e4…`). The v0.0.33 receipt stays
+unreachable **by design** (its HEAD binding) and remains recorded as the
+hand-verified erratum below. Nothing committed (G2 withheld; the operator holds the
+commit). Also registered this session: **Task 84** — `scripts/` has no standing
+type-check surface (a root-inherited `scripts/**` probe reports 117 errors today),
+blocked pending an operator ruling because adding it changes the fail-closed release
+gate battery. The 2026-09-22 entry below is retained as history; its "document only"
+ruling is **superseded** by the 2026-09-24 authorization. **Closed + archived 2026-09-24** on the operator's closure
+directive: status `closed`, Resolution in the closure format, file moved to
+`dev/fids/archive/`, receipt re-stamped LIVE there, and the CHANGELOG + archive
+index entries added.
+
+**2026-09-22 — v0.0.33 shipped and verified complete; its receipt carries a
+`failedStage`, and the `--resume` remedy is deadlocked (FID-2026-0922-001).**
+The v0.0.33 cut published successfully and then exited 1 in the pipeline's own
+`POST_RELEASE_VERIFY`: the npm read-after-write check (`npm-guards.ts:70-83`) does a
+single `npm view` with no retry, so it read an unpropagated 404 seconds after the
+registry accepted the publish — the registry itself warned ("being processed and
+may take a few minutes"). **The release is complete.** Verified independently,
+assertion by assertion, from this machine: the GitHub release `v0.0.33` is
+published (`draft: false`, `pre: false`, `2026-09-22T18:22:40Z`) carrying all five
+binary tarballs (darwin-arm64/x64, linux-arm64/x64, win32-x64); the tag resolves to
+release HEAD (`v0.0.33^{commit}` = `8f40f6f2945e56fa7edaff92d1da3986ba090a5b` =
+HEAD); npm serves `savant-code@0.0.33` with `dist-tags.latest` = `0.0.33` and 81
+files including both required entries (`README.md`, `index.js`); the desktop-absence
+claim holds (`…/releases/download/v0.0.33/latest.json` → **404**); `VERSION` is
+`0.0.33` and the shipped CHANGELOG heading is `## 0.0.33 — 2026-09-22`. All five
+`POST_RELEASE_VERIFY` assertions therefore pass — the stage would have been green had
+the registry propagated in time. **The receipt was deliberately left honest**
+(`failedStage: "Post-release verification failed for savant-code@0.0.33."`,
+`restored: true`, no `POST_RELEASE_VERIFY` mark): hand-writing that mark would
+fabricate evidence for a stage the pipeline did not complete. Its `restored: true`
+means the next cut is **not** blocked (`local-state.ts` keys that guard to
+`restored`, not `failedStage`). **The recovery path is the real finding
+(FID-2026-0922-001, `analyzed`, severity high):** `bun run release:public:resume`
+fails at its first step — `[pre-audit BLOCK] tag v0.0.33 already exists on origin —
+the release already shipped; use --resume or delete the release` — because
+`checkStaleTag` returns `severity: block` whenever the tag is on origin in **every**
+mode (`pre-audit-local.ts:174-185`; `resume` alters only the local-only-tag branch),
+and the orchestrator makes any non-preview block fatal (`transaction.ts:256`). The
+message recommends the command that just failed. No exit exists for a failure after
+`GIT_PUSH`: a fix commit moves HEAD and the HEAD-bound receipt refuses
+(`transaction.ts:139`), while deleting the release or tag fails the tag/release
+assertions (`stages-verify.ts:96-101`). Operator ruling (SCOPE.md T83-C):
+**document only this session — change no guard code.** The fix and its RED-first
+pins are specified in the FID for the next session.
+
 **2026-09-22 erratum — local history rewrite:** to unblock the v0.0.33 pre-push
 credential scan (the unpushed range carried credential-shaped literals in
 `cli/src/utils/__tests__/logger-mask-secret-values.test.ts` — the synthetic
