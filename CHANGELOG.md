@@ -1,6 +1,474 @@
 # Changelog
 
+## 0.0.34 — 2026-09-28
+
+> **v0.0.34** — two built-in gateway providers (**Vercel AI Gateway**, **Clean
+> APIs**), both live-verified end to end, and a **critical soundness fix to the
+> Law 3 verification gate** that had been crediting a red test suite as a pass.
+> Also in this release: the `@@` hunk-header diff fix, four mutation-proven
+> guards against controls that looked load-bearing and were not, a standing
+> type-check surface for the release engine, and the release-recovery path
+> (`--resume` plus an npm read-after-write retry) that was dead. Governance:
+> agents may stage, commit, and push granular commits to origin main; force-push,
+> history rewrite, and release mutations remain operator-only.
+
+### Law 3 credited a red test suite as a pass (FID-2026-0927-003) — **`fixed` 2026-09-27, residual open**
+
+Severity `critical`. One representational root cause produced opposite
+failures: Law 3 credit was **shape-aware** (`hasToolResultError` reads only
+structured error fields) rather than **outcome-aware**.
+
+- **F1 (critical, implemented).** A failing `bun test` emits a non-zero
+  `exitCode` plus plain text and no structured error, so the old predicate
+  returned false and **the gate credited a red suite as a pass** — the gate was
+  inert for the dominant failure mode and produced no evidence of its own
+  failure. The `exitCode` was already in the payload and never read. Fix:
+  `hasCommandFailure` in `packages/agent-runtime/src/tools/tool-executor/tool-result-errors.ts`,
+  wired at `result-lifecycle.ts:176` and `custom-result.ts:134`; 11 RED-first
+  legs in `command-outcome.test.ts` including the end-to-end credit contract.
+  `writeSucceeded` deliberately keeps the shape-aware predicate — a command
+  that ran and exited non-zero is a successful write of a failing program.
+- **F2 (liveness, implemented).** `verification-failure-paths.ts` attributes a
+  red run to the files it names, `EnforcementState.failureAttributedFiles`
+  carries the set, and `pre-write-gates-law3.ts` permits the named file while
+  still blocking every other dirty-unverified file. The anti-masking leg is
+  pinned by a test asserting `blocked === true`. 13 legs in
+  `law3-failure-attribution.test.ts`; five audit findings fixed, including an
+  inert `fsmPhase` that no production caller supplied and a vacuous fail-closed
+  test that would have passed with the exemption deleted.
+- **F3 (partial — residual open, named not hidden).** The repository gate now
+  demotes a stale receipt to a non-fatal warning when every declared gate
+  passes a live re-run, mutation-proven end to end on a real `fixed` FID
+  (`REAL_EXIT=0`, byte-identical restore). **Still open:**
+  `fid-check.ts:40` and `pre-write-gates-fid.ts:105` treat staleness as fatal,
+  so the doc-edit loop survives at the **write** boundary — demoting there
+  requires running the declared gates at write time, which the write path does
+  not perform. That is a design tradeoff for the operator, not a patch.
+- **F4/F5 are recorded rejected hypotheses, not defects.** "Incomplete arguments
+  for tool X" is a native LLM tool-call error (`sdk/src/impl/llm/errors.ts:102`)
+  affecting every tool, not a `str_replace` serialization bug; and EHEL tracks
+  dirtiness in in-memory `Set`s, so it never reads the git index — the observed
+  `git mv` behaviour was plain git semantics.
+
+### Ruled: `OpenRouterModel` must not carry a `capabilities` field (FID-2026-0927-006) — **`converged` 2026-09-27**
+
+Severity `low`. A **decision record — zero code changed**; the deliverable is
+the decision and its evidence. Ruled during the Clean APIs work when that
+vendor's catalog exposed the field and no live parser read it.
+
+Cross-tabulated over all 33 live models: `vision` ⟺
+`architecture.input_modalities.includes('image')` with **0 disagreements** (the
+28/5 split is identical in both fields); `tools` ⟺
+`supported_parameters.includes('tools')` with **33 agree / 0 disagree**;
+`reasoning` is likewise derivable. `streaming` and `json_mode` are **33/33
+constant**, so neither can discriminate between picker entries. **Four of six
+flags carry no information the payload does not already state** — a Law 13
+violation (two truths for one fact) with no consumer. Only `web_search`
+(11/33) is independent, and one boolean would hold it, not a six-element array.
+`model-info.ts:67-68` is the only genuine consumer of the capability-shaped
+fields and it renders `modality` — which `capabilities` does not even contain;
+`openrouter.ts:55,60` merely *writes* it. `supported_parameters` has zero
+in-repo presence, and `capabilities` is sent by one provider in twenty, so the
+field would be `undefined` almost everywhere.
+
+### Clean APIs as a built-in provider (FID-2026-0927-005) — **Closed + archived 2026-09-27**
+
+- **The design decision came from the probe, not the runbook.**
+  `GET https://cleanapis.com/v1/models` returns **401 keyless**, which is the
+  healthy boundary signal: the route exists and is auth-gated. That made this the
+  **authenticated** live-catalog pattern (Nous / KiosAPI / B.AI) with a
+  `resolveKey` wiring — a `url`-only registry entry would have looked correct
+  and silently never listed a model. One entry in the second registry partition
+  (spread at `registry.ts:189`), the catalog wrapper, gateway registration, and a
+  `live-catalog` exception-manifest record with owner + evidence.
+- **Live round-trip, both legs.** Authenticated catalog **200 / 33 models**, and
+  `POST /v1/chat/completions` **200 OK** returning `content: "PONG"` (500
+  tokens) — not 401, 402, or 404. `idTransform: 'strip'` is **proven rather than
+  assumed**: upstream ids are genuinely bare (`"muse-spark-1.1"`, no
+  `openai/` segment), and the completion echoes the bare id back unchanged.
+- **A defensive guard that was a routing bug.** The first implementation guarded
+  the prefix with `startsWith('cleanapis/')`. Because `strip` removes **exactly
+  one** segment, that guard would have sent the **wrong id on the wire** for any
+  upstream id sharing the prefix (`cleanapis/router` → `router`). Neither
+  live-catalog precedent (`vercel`, `orcarouter`) has it — it belongs to
+  custom providers, where the operator types their own prefixed ids. The
+  eight-leg suite caught it; the **code** was changed, not the test, because the
+  test's expectation was right.
+- **The catalog served models the public site does not advertise**
+  (`muse-spark-1.1`, `claude-opus-5.5`, `claude-sonnet-5`) — a static pin would
+  have been wrong on arrival, so the live catalog is load-bearing, not
+  decorative.
+- **Open remediation, named rather than folded in.** This vendor serves the
+  OpenRouter-shaped fields **nested** (`top_provider`, `architecture`,
+  `pricing`), so `OpenRouterModel.topProvider` is never populated even though
+  `openrouter.ts` and `lookup.ts` already populate it. Recorded as a
+  structural mapping gap for its own record; the first draft's fix (read
+  `top_provider.max_completion_tokens` into `maxCompletionTokens`) was wrong
+  and is withdrawn. The per-model `capabilities` array is the only one of the
+  vendor's 13 fields with no home on the type — and no other live catalog reads
+  it either.
+- **Doc surface.** 13 hand-maintained surfaces synced (named by the drift
+  checker) after `generate:provider-docs`; the drift gate fails closed when a
+  provider entry lands and a hand-maintained surface misses it.
+
+### Unignored vendored tree + three silent-failure classes (FID-2026-0927-002) — **Closed + archived 2026-09-27**
+
+- **Four guards, each mutation-proven before it was trusted** — the method that
+  found the counterpart in the first place. A release-readiness audit found the
+  gate contract green 12/12 while four controls were unverified: an ignore rule
+  scoped to a sibling directory, a test-timeout key Bun silently ignores, a
+  coverage gate that tolerated the exact abbreviation class it was built to
+  catch, and a 10 s cli flake with no surviving name. The unifying root cause is
+  that **a control which has never been broken is a belief, not a control**.
+- **F1a — the 77 MB / 4,150-file `cline-main/` tree was unignored at the repo
+  root**, one level above the `/resources/` rule that already covered it, and
+  inside the release sweep's `git add --all` blast radius
+  (`git-publish.ts:78`). Resolved by operator move under `resources/` — the
+  *path* was wrong, the rule was not, and no new ignore entry was needed.
+- **F1b — `scripts/audit-vendored-tree.ts`**: a top-level directory with no
+  tracked files that git does not ignore is a foreign tree. Wired at
+  `validate-repository.ts:19,248`, spread at `:274`, so it runs in the release
+  contract (`public-release/gates.ts:12,29`) and not just locally. Proven by
+  staging a synthetic foreign root (FAIL, exit 1) and removing it (PASS).
+- **F2 — `scripts/audit-bunfig-test-timeout.ts`**: fails when
+  `cli/bunfig.toml` declares a `[test] timeout`, which Bun 1.3.14 does not read
+  (`timeout = 1` left a 36 ms test passing). Comment → mechanical gate.
+- **F3 — abbreviation advisory + baseline staleness**: range notation is
+  legitimate house style, so `collectAbbreviatedReferences` advises rather than
+  rejects, and `collectStaleBaselineEntries` fails a `knownGaps` entry the
+  changelog already covers — the ratchet can tighten, never rot.
+- **F4 — the 10 s flake is named**, and it was **not** the test budget. Re-running
+  under contention reproduced 5 failures, every one
+  `Expected to contain: "--agent" / Received: ""` — the fingerprint of a spawn
+  killed mid-boot. The cause was `SPAWN_KILL_MS = 10000`, the `spawnSync` kill
+  budget in `e2e-cli.test.ts`: the per-test budget had 60 s of room and the child
+  still died inside `spawnSync`, where it has no jurisdiction. Raised to
+  45_000 and verified at the **real** pre-push load (typecheck + eslint + suite
+  concurrently) — **7 pass / 0 fail**, slowest test 2,181 ms, 20x under budget.
+  **Explicitly not claimed at 3x oversubscription**, where 4 tests still meet the
+  ceiling: that load is roughly 3x anything the pre-push gate produces, and no
+  wall-clock budget survives it. The harness, not the constant, binds there.
+- **Two measurement lessons, both paid for.** A `tail -8` chosen for readability
+  destroyed the original diagnosis; 48 spinners chosen for severity would have
+  destroyed the fix's validation. A bound is a decision, and both went wrong in
+  opposite directions.
+- **CHANGELOG coverage gate ended empty-baseline**: 419 archived FIDs, 0
+  uncovered, baseline 14 → 0 — after fixing two parser bugs its own tests caught
+  and widening notation awareness to five forms.
+- **CHANGELOG:** release-readiness audit of the uncommitted Sept 19–27 wave
+  (entry written 2026-09-27).
+
+### Diff panel: the `@@` hunk row was rendered in the diff accent (FID-2026-0927-004) — **Closed + archived 2026-09-27**
+
+- **Operator report:** *"on the EDIT block's, line 0 shows '@@', in teal.
+  However, there is no reason for that first line to be a special color."*
+  Confirmed still present in this tree, so the report was not already-fixed.
+- **The `@@` row was the loudest element in the panel while carrying no change
+  information.** `diff-viewer.tsx` gave it two accent treatments no other
+  metadata row received — foreground `theme.diffHunkHeader` (`#18faf9`, the
+  design system's primary cyan) plus a cyan-tinted full-width bar (`#15d5d5`) —
+  while the `diff --git` / `---` / `+++` rows got a single muted
+  `theme.diffMeta`. It also contradicted the component's own docblock rule that
+  *"metadata rows render muted so the change content dominates"*. The token is
+  deliberately **retained**: it is part of the declared design-system contract,
+  and removing it is a theme-system refactor rather than a diff fix.
+- **Colour fixed, then the row itself was removed** (operator directive: *"just
+  trim/suppress the first row that contains @@"*). The leading `@@` only restates
+  the start numbers the gutter already prints beneath it. **Later `@@` rows are
+  deliberately kept**: each marks a real elision — rows jump from line 3 to line
+  20 — that no other row communicates. Suppressing the first is more correct
+  than suppressing all, because the first marks nothing.
+- **The filter lives in the renderer, never the parser.** `parseDiffLines` owns
+  the counter reset (`diff-stats.ts:120`); dropping the row there would blank the
+  gutter on every row — a cosmetic change silently destroying line numbers. A
+  dedicated leg pins exactly that.
+- **Both halves mutation-proven, not asserted.** Restoring the teal yields
+  `Expected: "#8f8f99" / Received: "#18faf9"`; suppressing *all* hunk rows
+  instead of the first yields **7 pass / 3 fail**. Both restores byte-identical.
+- **Two vacuous-test traps, found and closed.** In the dark palette `muted` and
+  `diffMeta` are **both** `#8f8f99`, so a whole-document colour assertion was
+  satisfied by the **gutter spans** and passed with the hunk row still teal. The
+  same leg then went vacuous a second time once single-hunk diffs stopped
+  rendering a row at all. Both rewritten to be structurally scoped to the hunk
+  row rather than the document.
+- **A patch that deleted what it meant to edit.** One edit removed the whole
+  `lines.map` block, leaving the panel rendering only its header strip — and
+  `tsc` passed, because removing JSX is type-correct. Caught by re-reading the
+  file after a subsequent patch failed to match.
+- **CHANGELOG:** the `@@` hunk row no longer spends the panel's loudest colour on
+  a line that carries no change information (entry written 2026-09-27).
+
+
+### Vercel AI Gateway as a built-in provider (FID-2026-0927-001) — **Closed + archived 2026-09-27**
+
+- **Provider `vercel` shipped from one registry entry, measured against the live
+  gateway first.** Vercel AI Gateway (`https://vercel.com/docs/ai-gateway`) added as
+  built-in provider `vercel`: `kind: 'gateway'`, `protocol: 'openai'`, base
+  `https://ai-gateway.vercel.sh/v1`, `AI_GATEWAY_API_KEY` with the masked
+  `/provider vercel` store as the second credential path (shell precedence per
+  FID-2026-0804-001), keyless live catalog at `/v1/models`, and `idTransform:
+  'strip'` so upstream ids that are vendor-namespaced **with slashes**
+  (`openai/gpt-6-astra`) keep exactly one segment stripped (`vercel/`) on the wire
+  — the orcarouter precedent. The entry lives in a new second registry partition
+  (`registry-partitioned-2.ts`, spread into `PROVIDER_REGISTRY` preserving
+  `Object.keys` order) because `registry-partitioned.ts` sat at 298/300 lines and
+  the quality ceiling forbids one more entry.
+- **The gateway is OpenAI-shaped, not OpenRouter-typed — and the runbook was a
+  claim, not the contract.** The catalog publishes `context_window`/`max_tokens`
+  where the shared types expect `context_length`/`max_completion_tokens`, and a
+  numeric `created` against a string field; the new parser
+  (`cli/src/utils/openrouter-models/vercel.ts`) maps the drift explicitly instead
+  of trusting the archived walkthrough, which also under-documented the
+  FID-2026-0809-008 audit contract: a `live-catalog` entry in
+  `PROVIDER_EXCEPTION_MANIFEST` with owner + evidence paths is required or the
+  registry audit fails closed. Both gaps grounded in the current contract modules
+  before any code. In-pass repair: `gateway.ts`'s doc header still named two
+  removed providers and omitted Atria AI.
+- **RED-first, then every gate green; credentials pinned both ways.** Named
+  failures before any source change (common 4 fail, cli 3 fail + module-missing
+  import, sdk 2 fail) — the sdk routing leg drove the live chain and captured
+  `POST https://ai-gateway.vercel.sh/v1/chat/completions` with `Bearer` auth and
+  the stripped wire id `alibaba/qwen-3-14b`. Then 65/0 + 476 expects (common),
+  27/0 (cli), 10/0 (sdk) on the touched suites; `bun run test` 12/12 workspaces 0
+  fail; typecheck exit 0; eslint 0; prettier clean; lint:md clean;
+  `quality:report` PASS (1498); `validate:repository` PASS;
+  `generate:provider-docs:check` clean. Two new suites (parser contract;
+  two-way credential legs split at the 300-line ceiling) plus widened pins in four
+  existing suites. Keyed live inference deliberately **not** claimed — no
+  `AI_GATEWAY_API_KEY` existed in this session. Receipt **13/13 live**, re-stamped
+  at the archived path (`sha256:8e60648f…`, `2026-09-27T16:07:49Z`). Commit SHA
+  pending operator git execution (G2 withheld).
+
+### Release stages that reported verdicts they had not established (FID-2026-0924-001) — **Closed + archived 2026-09-25**
+
+- **Four asymmetries, one engine.** An audit of the public-release pipeline for the
+  class the entry below named — a single-shot read, or a mode/parameter only some
+  branches honor — found four places where the pipeline *said* something it had not
+  established, plus one declared constant no production path honored. `DESKTOP_BUNDLES`
+  injected a `sleepMs` lambda that ignored its own `ms` argument, so the stage polled
+  GitHub at 1 Hz for up to 45 minutes (≈2,700 requests where 90 were intended) against a
+  client with no 429 branch and no retry; `validateResumeReceipt` reported `git`/`bun`/`npm`
+  failing to run as a receipt-vs-HEAD mismatch; the `gh` precheck reasoned from the mode
+  alone while the desktop stages are automation-only and shell out to `gh`; and
+  `pruneLocalOnlyFailedTag` returned one `false` for "the tag is on origin" and for
+  "origin was unreachable", so preflight asserted a tag state it had not read. The desktop
+  poll window was also the only bounded wait an operator could not widen.
+- **All five repaired with every decision preserved fail-closed.** `desktopRunPoller` is
+  the single production poller and honors the interval it is passed; the resume failure
+  names the tool that did not run; `requiresGhCli(options, env)` derives the requirement
+  from the mode **and** the desktop flag; `FailedTagPruneOutcome`
+  (`pruned | kept | kept-unverified`) keeps "present" and "unknown" distinct while the
+  guard still never deletes on an unverifiable claim; the desktop window reads
+  `SAVANT_RELEASE_DESKTOP_TIMEOUT_MS` / `SAVANT_RELEASE_DESKTOP_POLL_MS` through the
+  shared `positiveEnvMs`. Retry/429 was deliberately **not** added to
+  `githubApiRequest` — it carries non-idempotent POSTs (`/releases` 201, `/dispatches`
+  204), so the load was removed at its source instead of tolerated downstream.
+- **Six pins, two proven load-bearing by mutation.** Restoring the argument-ignoring
+  lambda fails the cadence pin at 1002.88 ms; collapsing the verdict branch fails the
+  tag-state pin. Release suites 143 pass / 0 fail across 22 files at the time; receipt
+  5/5 live.
+- **Closed 2026-09-25** on operator directive. At closure the record was found carrying
+  `verified` while its receipt block still read `pending` — a status pointing at an
+  artefact that was not in the file — so the receipt was stamped (5/5 gates) and then
+  re-stamped LIVE at the archived path (`sha256:0cbb8d44…`, `2026-09-25T15:31:07Z`) so the
+  closed record stays byte-consistent with its final content. Commit SHA pending operator
+  git execution (G2 withheld).
+
+### Release tooling gets a standing type-check surface (2026-09-25)
+
+- **`scripts/` had no tsconfig, so a wrong signature there was invisible to every
+  standing gate.** Discovered while implementing the `--resume` fix recorded below: the
+  changed modules live in `scripts/`, which no tsconfig covers, and the root `typecheck`
+  chains 12 workspaces only — the sync→async change to `verifyPublishedPackage` in that
+  same session is the worked example. A purpose-built probe measured the real surface:
+  **117 errors across ≥20 files**, concentrated in `scripts/providers/**` (which carry
+  their own `typeof fetch` seams and double-assertion casts) and the `scripts/__tests__`
+  test globals. A naive `scripts/**` config *without* the root `extends` is not a viable
+  shape at all — it produced 126 module-resolution errors from the workspace imports
+  alone, which is why the measurement was re-run correctly rather than quoted from the
+  first attempt.
+- **`scripts/tsconfig.json` added and wired as `typecheck:scripts`, and the surface was
+  made green rather than scoped around.** Root-inheriting, so `strict` and the repo
+  `paths` aliases apply; it covers the release engine plus its suites, is appended to the
+  `typecheck` chain in `package.json`, and is mirrored in `protocol.config.yaml` →
+  `commands.type_check`. **No manifest edit was needed, contrary to the item's recorded
+  assumption:** `validateCommandParity` runs over the *workspace inventory* (the
+  `package.json` workspaces) and `scripts/` is not one, so a `VALIDATION_WORKSPACE_POLICY`
+  entry would itself have been flagged as missing from the inventory. The engine itself
+  had no errors, but 7 surfaced in two suites — one class, fetch doubles rejected because
+  `typeof fetch` is Bun's global (it carries `preconnect`) while the seam only ever calls
+  `(input, init?) => Promise<Response>`. Instead of a double assertion per test the seam
+  is declared once (`public-release/fetch-seam.ts` → `ReleaseFetch`) and five modules
+  consume it (`github-api.ts`, `assets.ts`, `desktop-manifest.ts`, `stages-verify.ts`,
+  `desktop-workflow.ts`).
+- **Load-bearing, proven by mutation.** Changing `positiveEnvMs`'s return type to `string`
+  fails the leg at **5 call sites** — the exact class of signature change that previously
+  required a hand-built probe. Evidence: `bun run typecheck:scripts` 0 errors exit 0; full
+  `bun run typecheck` exit 0; release battery 145/0 across 24 files. The remaining untyped
+  boundary (`scripts/**` outside the release engine) is carried as an open
+  operator-scoped item in `SCOPE.md`, named rather than trimmed.
+
+### `/init` scaffold parity and release-sweep disclosure (2026-09-25)
+
+- **Four "orphan" type files in `.agents/types/` were the dependency closure of a stale
+  tracked hub, not standalone cruft.** `.agents/types/agent-definition.ts` imported
+  `./agent-runtime`, `./model-name` and `./provider-options` and re-exported
+  `./available-tools`, so deleting the four alone would have left four unresolvable
+  imports in a tracked file. Measured before repair: `agent-definition.ts` (8654 B vs
+  template 8990), `tools.ts` (4524 vs 3108) and `tool-params-discovery.ts` (2856 vs 5395)
+  were **stale**, and the four generation-1 siblings were in neither `COMMON_TYPE_FILES`
+  nor the template directory. The premise was presented back rather than executed, and
+  the corrected plan approved: sync the three from the template, then remove the four.
+  Evidence: `cmp -s` **8/8 OK**; zero references to the four names remain under
+  `.agents/`; the relative-import closure resolves (7 edges, 0 dangling).
+- **`/init` is now pinned end-to-end through the real command, in a real temp project.**
+  `cli/src/commands/__tests__/init-scaffold.test.ts` drives the real command through the
+  real project-root seam into a real temp dir: every sibling lands byte-identical to the
+  template, the copy table equals the template dir exactly (a hub whose sibling never
+  ships fails the pin), none skipped, none orphaned, and a second run never clobbers an
+  operator edit. **4/4 pass, 65 expects.** The first version of the closure leg failed and
+  was right to: the scan matched `from './types/agent-definition'` inside the scaffold's
+  own doc comment, so the parser now strips comments first and carries a non-vacuity
+  guard.
+- **A never-committed file can no longer enter a release commit silently.**
+  `commitAllAutomationChanges` runs `git add --all` over the whole worktree but warned
+  only about `dev/` + `SCOPE.md`, so any other untracked path was swept in unannounced.
+  New exported `untrackedPaths(porcelainZ)` reads `??` records from the **`-z`** status
+  form — measured: `-z` yields unquoted, NUL-separated records, while the non-`-z` form
+  quotes a path containing spaces, which is exactly how such a comparison goes silent.
+  Pinned both ways (a plain path *and* a path with spaces; a tracked-only sweep stays
+  silent) and proven load-bearing by mutation — collapsing the `?? ` filter to `!! ` fails
+  the positive leg (`Received: ""`). Call-graph: `untrackedPaths` →
+  `commitAllAutomationChanges` → `commitAutomationChangesOrTagHead` → `stages.ts:92`.
+- **Three further in-pass findings, all fixed in the same pass.** The live format gate was
+  already red on two files this session did not write (both uncommitted from 2026-09-24);
+  two suites exceeded the 300-line quality ceiling and were split along their existing
+  seam (the desktop workflow-contract block →
+  `public-release-desktop-release-contract.test.ts`, the sweep-disclosure pins →
+  `public-release-sweep-disclosure.test.ts`) with **no test dropped** — the battery reports
+  the same 145 tests across 24 files; `lint:md` was red on two raw inline-HTML
+  occurrences, fixed by wrapping the words in backticks; and FID-2026-0924-001 claimed
+  `verified` over a receipt that still read `pending`, cleared by running the protocol's
+  own `bun run fid:verify <fid> --write` (**5/5 PASS**).
+- **Gates:** `bun run typecheck` **12/12 exit 0**; `eslint . --max-warnings 0` exit 0;
+  `prettier --check .` clean; `lint:md` clean; `quality:report` **PASS (1498 baselined
+  files)**; `validate:repository` **PASS** (was FAIL, 10 issues); release battery **145
+  pass / 0 fail across 24 files**; cli init suites 14/0. Nothing committed (G2 withheld).
+
+### The `/init` scaffold is now import-free (2026-09-25)
+
+- **A generated scaffold that imports a monorepo dependency compiles in the monorepo and
+  fails in the user's project.** `util-types.ts:1` imported `zod/v4/core`, which resolved
+  only because the root, cli, common and sdk manifests all declare zod; a fresh project
+  with no `node_modules` reported `util-types.ts(1,59): error TS2307`. Operator ruling
+  (verbatim): *"Make the /init scaffold self-contained so it needs no external package,
+  resolving the zod/v4/core dependency."*
+- **`JsonSchema` is now the accept-bound the runtime actually enforces, reached by
+  measurement rather than preference.** It is `boolean | JsonSchemaObject`, with
+  `JsonSchemaObject` an object whose values are `unknown` — the runtime compiles schemas
+  with `convertJsonSchemaToZod` at agent load, and schemas also arrive from dynamic
+  sources checked at runtime rather than statically. A `JSONValue` bound was tried first
+  and **rejected on evidence**: the dynamic-template layer produces
+  `{[key: string]: unknown}`, so a JSON-value bound is *narrower* than what the pipeline
+  accepts, and `typecheck` in `common` failed `TS2322` on
+  `dynamic-agent-template.test.ts`.
+- **Evidence:** a temp user project with **no `node_modules` at all** compiles under
+  `tsc --strict` at **exit 0**; `zod` now appears **0** times in both
+  `.agents/types/util-types.ts` and the shipped template; `.agents/types/util-types.ts`
+  re-synced byte-exact to the template; the `/init` pin's reviewed-dependency ceiling is
+  now **empty** with an anti-vacuity guard (4/4 green); full `bun run typecheck` 12/12
+  exit 0.
+
+### The release recovery path was dead: `--resume` refused by its own guard, and an npm read-after-write with no retry (FID-2026-0922-001) — **Closed + archived 2026-09-24**
+
+- **The `--resume` remedy could not run, and the block's own message recommended
+  it.** `checkStaleTag` returned `severity: block` whenever the release tag existed
+  on origin — in every mode — while the `resume` argument it was handed was
+  consulted only on the local-only branch. Every release failure after `GIT_PUSH`
+  (npm publish, desktop stages, asset-retry exhaustion, post-release verification)
+  was therefore unrecoverable: the command named by the failure itself exited 1 at
+  its first step. Fixed by scoping the tolerance to the mode it belongs to —
+  mutation mode still blocks a genuine re-cut (the shipped-version guard, retained
+  and still pinned), while `resume` warns and keeps the tag, because the tag on
+  origin *is* the release being finished and its HEAD binding is verified
+  downstream (`preflight.ts` dereferences the existing tag and fails unless it
+  points at release HEAD; the transaction re-checks the receipt's HEAD binding).
+- **The npm read-after-write had no retry while its sibling did.** The v0.0.33 cut
+  exited 1 on a registry-propagation race the registry itself had just warned
+  about ("being processed and may take a few minutes to become available"):
+  `packageIsPublished` read the registry once, while `verifyReleaseAssets`
+  immediately before it retried for a bounded window. The presence check now polls
+  a bounded, env-overridable window (`SAVANT_RELEASE_NPM_TIMEOUT_MS` /
+  `SAVANT_RELEASE_NPM_POLL_MS`) and still fails closed on expiry with the
+  `--resume` remediation; only the not-found class is retried, so a broken
+  environment is never papered over by waiting. The shared retry-window parse moved
+  to one module (`public-release/env-ms.ts`) instead of a second private copy.
+- **Pinned RED-first, and proven load-bearing.** Both new pins failed against the
+  unmodified tree — the guard pin with `Expected: "warn" / Received: "block"`, the
+  npm leg with a missing export (no bounded window existed at all) — and collapsing
+  the window to single-shot afterwards made the absorb leg fail in 0.73 ms. 4 new
+  pins; the release suites report 138 pass / 0 fail across 22 files; `typecheck`
+  12/12, eslint `--max-warnings 0`, prettier, `lint:md`, `quality` and
+  `validate:repository` all green.
+- **The v0.0.33 receipt itself remains unreachable by design** — its HEAD binding
+  means any fix commit changes HEAD and the transaction refuses — so it stays
+  recorded as the hand-verified erratum rather than a rewritten receipt.
+- Receipt re-stamped LIVE at the archived path (3/3 gates, `sha256:a3fe41e4…`).
+  Commit SHA pending operator git execution (G2 withheld).
+
 ## 0.0.33 — 2026-09-22
+
+### Gate battery, agenda findings, and a 13-commit release rewrite (2026-09-22)
+
+- **Battery re-run live; exactly one finding.** `bun run typecheck` **12/12 exit 0**; root
+  `test` chain **12/12 workspaces, 0 fail** (7616 tests); `eslint --max-warnings 0` exit
+  0; `prettier --check .` clean; `quality:report` **PASS (1498 baselined files)**;
+  `validate:repository` **PASS**. `lint:md` was red on a single line — a 133-character
+  register heading over the 120 limit.
+- **All three agenda findings resolved — one by code, two already fixed by prior FIDs.**
+  `read_url` "No readable text found at URL" (15×) was the tool reporting its *correct*
+  outcome for pages with no extractable text, the same shape the engine already treats as
+  an expected search 404, so `/no readable text/i` joined `EXPECTED_FAILURE_PATTERNS`
+  (deliberately narrow — 429/timeout and "No change to the file" stay promotable, pinned);
+  live effect: recurrence groups **12 → 11**. `code_search` ripgrep ENOENT (13×) and
+  `str_replace` "tool result contains an error" (14×) were both already resolved by prior
+  FIDs, with **zero occurrences after**; deliberately not silenced as an "expected
+  failure", because silencing a fixed class would hide its regression.
+- **A new finding owned, not dismissed.** The `Incomplete arguments for tool …` class
+  (30 records across 5 tools — the ledger's largest) is the native tool-call truncation
+  class already owned and steered by FID-2026-0909-007, generated at
+  `sdk/src/impl/llm/errors.ts:101-102`; it reflects model-side argument truncation the
+  strike/steering ladder exists to recover from. **No repo defect and no new work**, but
+  kept **visible** in the dedup report so it is not re-discovered.
+- **A release blocker, cleared by an operator-authorized history rewrite.** The pre-push
+  credential scan refused the entire unpushed range over a *provably synthetic*
+  GitHub-PAT-shaped fixture in a test file. The first fix pass under-counted and
+  verification caught it: the whole-file scan reports only the first matching pattern per
+  file, so naming one literal left three more behind; removing the `ghp_` literal merely
+  surfaced an `sk-` one. Measured line-by-line with the real scanner, **four** offending
+  lines. The masking layer needs ≥8 characters after a known prefix while the scan flags
+  ≥20, so every secret-shaped fixture now uses an **8–19 character body** — the tested
+  intent unchanged, nothing scannable, the rule documented in the file itself. The
+  offending commit sat at position **10 of 22**, so a rewrite cascaded to 13 commits; on
+  the operator's explicit "just fix it" the rewrite executed — **12/12 replayed, zero
+  conflicts**, the committed blob byte-identical to the validated artifact and carrying
+  **0** offending literals, the scan then printing `pre-push: credential scan passed
+  (147 file(s) scanned)`. **Nothing pushed** (invariant).
+- **The drain manifest was re-scoped so the tree could be drained at all.**
+  `tree-drain` fails closed on both uncovered and empty groups, and the tree tripped
+  both: 42 modified paths belonged to no group, and 8 groups were empty. Each of the 42
+  was attributed to the FID cited in the **added lines of its own diff** (`git diff -U0 --
+  <path> | grep '^+'`) — by evidence, not proximity — yielding
+  `tree-drain-manifest/sept-2026.ts` (`SEPT_GROUPS`, spread at
+  `scripts/tree-drain-manifest.ts:35`).
+- **Every release precondition cleared.** The 149-path working tree then drained into
+  **26 path-scoped atomic commits**, with `git diff <pre-drain-head> HEAD --stat`
+  proving exactly those 149 paths moved and no content changed. Worktree clean, 48
+  unpushed commits still a fast-forward (no force-push), root test chain 7593 pass / 0
+  fail, and `release:preaudit:check` went **2 BLOCKs → PASS — release preconditions
+  clear**. One operator hygiene ruling is recorded with it: the internal competitive
+  analysis `docs/idea-farm-*.md` stays on disk but is excluded from the public repo by
+  `.gitignore`, while `docs/Model Context Window Review.md` ships.
 
 ### The last five hook events, and the contract that described them (FID-2026-0919-031) — **Closed + archived 2026-09-22**
 
@@ -521,7 +989,7 @@
   quality PASS; receipt 6/6. Commit `0acad450` (operator-authorized
   2026-09-19). **Closed + archived 2026-09-19.**
 
-## 2026-09-19 — Security hardening batch SEC-1/3–7 + verification, gateway and compaction fixes (13 FIDs archived)
+## 2026-09-19 — SEC-1/3–7 hardening, verification, gateway, compaction + 4 × 2026-09-18 records (14 FIDs archived)
 
 ### Compaction signal repin: armed retirement + dedupe-guarded summary block (FID-2026-0918-004)
 
@@ -665,6 +1133,60 @@
   the first commit). **Closed + archived 2026-09-19.**
 
 ## 0.0.32 — 2026-09-18
+
+### Compaction signal retirement defeated by the run-end mirror; durable two-epoch suppression (FID-2026-0917-006)
+
+- **The retirement cleared the store but never told the mirrors.** FID-2026-0916-008 made
+  the in-stream `CompactionSignal` panel retire on the next user message by clearing
+  `compactionStatus`, `compactionEvents` and `lastCompactionReport` in
+  `onNewUserMessage` — but two run-end mirror sites re-hydrate all three from the
+  runtime's `mainAgentState.compactionStatus`, which **retains a terminal
+  `compacted` phase indefinitely** (`context-tokens-compaction.ts:178-184` stamps it
+  every step and never resets). The 2s heartbeat (`send-message-monitors.ts:90`) and
+  `adoptAndPersist` (`send-message-lifecycle.ts:218-223`) therefore re-pinned the panel
+  inside the same run. A store-layer ordering defect, not a runtime one — the sidebar
+  percent readout depends on that field staying long-lived.
+- **Fix: a two-epoch-half identity, one half per mirror.** `onNewUserMessage` stamps
+  `retiredCompactionStatusEpoch` / `retiredCompactionReportEpoch` before clearing;
+  `applyCompactionStatus` drops any status whose epoch matches and
+  `setLastCompactionReport` refuses an epoch-matching report. `percentUsed` is
+  deliberately excluded from both epochs because it drifts on every step boundary. The
+  first design used a single combined epoch and the **first test run proved it wrong** —
+  neither mirror site holds both halves at re-delivery time, so a combined epoch could
+  never match either; Loop 2 split the identity.
+- **Live runtime truth is not suppressible.** `compactionStatusEpochOf` returns `null`
+  for the live `compacting`/`blocked`/`warning` phases, so a retirement can never hide
+  a non-terminal state; a genuinely new compaction still displays because its epoch
+  differs. `compactionCount` still counts real outcomes and the `CompactionSummaryBlock`
+  transcript record is untouched.
+- **Gates:** `typecheck` cli exit 0; `chat-store-compaction.test.ts` **16 pass / 0 fail**
+  (47 expects) including 6 new durable-retirement pins; `compaction-signal.test.tsx` +
+  `compaction-summary-block.test.tsx` **17 pass / 0 fail** combined; eslint
+  `--max-warnings 0` clean; `quality` exit 0. **Closed + archived 2026-09-18**; receipt
+  re-stamped at the archived path (`sha256:29dbddecd…`).
+
+### Seed URL corrections: 2 of 6 unverifiable hosts resolved to their real API bases (FID-2026-0915-005)
+
+- **Read-only deep API-surface discovery over the 6 `boundary-unverifiable` seed hosts.**
+  A variant matrix (apex / `www.` / `api.` × `/v1/models` + `/api/v1/models`, plus the
+  pipeline's own `probeEndpoint`) found the real API base for **2** and confirmed **4**
+  dead ends. `www.tokenrouter.com` → `api.tokenrouter.com` (the `www` host returns a
+  200 SPA HTML fallback, not JSON) and `freetheai.xyz` → `api.freetheai.xyz`; both
+  re-verified `boundary-ok` (401) by the pipeline's own probe with real latency samples.
+- **The four dead ends are kept, not dropped.** `nicked.bond` (`api.` behind a
+  Cloudflare 530, origin DNS error), `gorouter.app` (502 across every variant at scan
+  time — plausibly transient), `9router.com` and `use-llm.site` (no `/v1` or
+  `/api/v1` surface on any variant). Each keeps its site root with the finding recorded
+  in a `probeNote`, so the verdict stays honestly `boundary-unverifiable` until the
+  surface appears rather than being edited away.
+- **No churn, by construction.** `fingerprintOf` hashes only the model roster (empty for
+  seeds), not the URL, so the two corrected hosts classify `unchanged`; the probe-merge
+  re-probes them through the existing standing-unverifiable mechanism. Seed-unverifiable
+  count **6 → 4**.
+- **Gates:** `typecheck` cli exit 0; `seed-hosts.test.ts` exit 0; `probe
+  harvest-freeairouter.ts` exit 0; pipeline suite **82 tests / 342 expect() / 0 fail**;
+  eslint / prettier / lint:md / `quality:report` all green. **Closed + archived
+  2026-09-15**; receipt `sha256:3fa559d0…` (3/3 gates).
 
 ### Free-compute harvester probes run through a bounded pool (FID-2026-0918-001)
 
@@ -2455,20 +2977,33 @@ print-mode schema, skill-management, spawn-agent-inline emission, experience-cap
 adopt-and-persist mirror, compaction-summary handler + block, skills-command, experiences-dedup).
 Active FID ledger drops to 10 records.
 
-## 2026-09-02 — Release-ready audit: deck rebuild closed, desktop CLI-parity program closed, sidecar env fix closed (7 FIDs archived)
+## 2026-09-02 — Release-ready audit: deck rebuild closed, desktop CLI-parity program closed, sidecar env fix closed (8 FIDs archived)
 
 The 2026-08-29…09-02 sessions rebuilt the desktop command deck and closed the
-desktop parity program. All seven FIDs are archived with re-stamped gate
+desktop parity program. All eight FIDs are archived with re-stamped gate
 receipts; the repo-wide `validate:repository` FID-ledger issues went 40 → 0.
 
 - **Deck rebuild: neon-noir agent office (R3F)** — FID-2026-0831-001 +
-  FID-2026-0831-002 closed: `@react-three/fiber` office replacing the stage
-  renderer — 10-agent robot cast with per-role accents and glowing rims,
-  walk-to-station on live tool calls, obstacle-aware routing, activity
-  beacons + ThinkingDots/SparkBurst, speech bubbles from the driver text
-  snapshot, day/night cycle, break furniture, click-to-focus + follow-cam,
-  real Savant emblem. Floor suites 178/0 across the passes; live smoke
-  discharged by the operator across five native sessions.
+  FID-2026-0831-002 closed: `@react-three/fiber` office replacing the hand-rolled
+  imperative Three.js stage renderer — 10-agent robot cast with per-role accents and
+  glowing rims, walk-to-station on live tool calls, speech bubbles fed by the driver
+  text snapshot, activity beacons, real Savant emblem; the second record rebuilt the
+  presentation into a legible office after the first native smoke came back mostly
+  black. Floor suites 126/0 then 162/0 across the passes; live smoke discharged by
+  the operator across five native sessions.
+- **Deck ambient life, interaction and headroom** — FID-2026-0901-003, closed and
+  archived the same day, layered six features onto that rebuilt office: a day/night
+  cycle with sweeping ceiling spotlights, purposeful break fidgets (deterministic
+  dwell/bind helpers against named `BREAK_SPOTS`, never active while a tool runs),
+  activity effects (`ThinkingDots` over a working agent, `SparkBurst` on
+  completion), break furniture (coffee machine, water cooler, fridge, couch,
+  whiteboard), click-to-focus with hover tooltips, and a follow-cam preset on the
+  active agent. Two operator-reported findings landed the same session: every walk
+  beelined through desks, so `routeAround` obstacle routing with a
+  `WALK_OBSTACLES` footprint list was added; and live positions were lost on unmount,
+  so agents respawned from centre whenever chat was clicked. **Floor suites 178/0
+  (5,154 expects)** with desktop typecheck exit 0, eslint and prettier clean; receipt
+  `sha256:748c61e1…`.
 - **Desktop CLI-parity program** — FID-2026-0901-006 closed after 36 passes:
   timestamps under messages, model display + real context window (no more
   hardcoded x/200k), markdown chat bubbles with traffic-light headers,
@@ -6014,13 +6549,14 @@ operator actions.
 
 ## v0.0.23 — 2026-08-09
 
-> **Optimization and automation program (FIDs 003–010):** The implementation scope was
+> **Optimization and automation program (FID-2026-0809-003..010):** The implementation scope was
 > completed and independently signed off. The batch adds canonical metadata validation,
 > deterministic validation-manifest parity, bounded/redacted runtime evidence,
 > backward-compatible RunState serialization, bounded subagent propagation,
 > provider-registry exception/drift audits, and a fail-closed single-agent boot contract.
-> FID-009 is the governance master plan and adds no runtime behavior; FID-010 prevents
-> single-agent protocol selection from silently falling back to the harness protocol.
+> FID-2026-0809-009 is the governance master plan and adds no runtime behavior;
+> FID-2026-0809-010 prevents single-agent protocol selection from silently falling
+> back to the harness protocol.
 >
 > **Governance:** Operator build approval was supplied, and the independent implementation
 > audit is recorded at `dev/nova/inbox/2026-08-09-fid-2026-0809-003-010-optimization-automation-implementation-sign-off-response.md`.
@@ -6036,7 +6572,7 @@ operator actions.
 > `NEXT_PUBLIC_*` overrides and `.env.local` set aside), per the FID-2026-0805-002 env-integrity
 > gate. Publication is a separate operator action.
 
-### Housekeeping and FID closure batch (FIDs 003–010)
+### Housekeeping and FID closure batch (FID-2026-0809-003..010)
 
 - Archived the independently signed-off implementation FIDs under `dev/fids/archive/`.
 - Updated active README, versioning, privacy, architecture, SDK, and Savant-Free documentation to the `0.0.23` release.
@@ -6190,28 +6726,28 @@ operator actions.
 > progress-wrapper duplication) were fixed and re-verified before the Nova audit. FID archived
 > to `dev/fids/archive/`.
 
-## All-tier optimization program — gate, compliance, file-length, tests, prompts (FID-2026-0809-012 through 018)
+## All-tier optimization program — gate, compliance, file-length, tests, prompts (FID-2026-0809-012..018)
 
 > Implemented 2026-08-09 under the operator's automation level 3 grant. The master FID-2026-0809-012
 > coordinates six children across four tiers. The independent Nova implementation audit is recorded
 > as **PASS** (`dev/nova/inbox/2026-08-09-fid-2026-0809-012-018-optimization-program-implementation-audit-response.md`)
 > and all seven FIDs were closed and archived 2026-08-09.
 >
-> - **FID-013 (Tier 0 — gate restoration):** `bun run lint:md` restored to exit 0 after handling the
+> - **FID-2026-0809-013 (Tier 0 — gate restoration):** `bun run lint:md` restored to exit 0 after handling the
 >   three untracked MD013-breaking design documents (`Savant Command Center Design Concept.md`,
 >   `Visual Workflows For Savant-Code.md`, `Command Center Design Sprint.md`).
-> - **FID-014 (Tier 1 — signature scrub):** `Author: Savant` attribution removed from the three
+> - **FID-2026-0809-014 (Tier 1 — signature scrub):** `Author: Savant` attribution removed from the three
 >   tracked active documents; dated historical session summaries preserved (immutability invariant).
-> - **FID-015 (Tier 2 — batch A):** the 6 largest production files (509–756 lines, incl. the
+> - **FID-2026-0809-015 (Tier 2 — batch A):** the 6 largest production files (509–756 lines, incl. the
 >   `agents/context-pruner/main.ts` 756-line regression and `export/helpers.ts` 691-line leftover)
 >   decomposed to ≤ 400 lines via pure-move + re-export shims; serialized `handleSteps`
 >   `.toString()` self-containment preserved; byte-identity proven per file.
-> - **FID-016 (Tier 2 — batch B):** 17 production files in the 400–500 range decomposed to ≤ 400
+> - **FID-2026-0809-016 (Tier 2 — batch B):** 17 production files in the 400–500 range decomposed to ≤ 400
 >   lines with the same methodology.
-> - **FID-017 (Tier 2 — test suites):** 14 test files > 500 lines split into part-files
+> - **FID-2026-0809-017 (Tier 2 — test suites):** 14 test files > 500 lines split into part-files
 >   (describe-boundary splits; shared fixture extraction where setup was large); counts preserved
 >   exactly — agent-runtime 761, sdk 461, common 557 — all suites green.
-> - **FID-018 (Tier 3 — prompt tokens):** prose-only trims to `agents/savant/system-prompt.ts`,
+> - **FID-2026-0809-018 (Tier 3 — prompt tokens):** prose-only trims to `agents/savant/system-prompt.ts`,
 >   `agents/savant/prompts.ts`, `agents/tmux-cli/prompts.ts` — −1,301 tokens (−10.1% on the shipped
 >   payload; −9.0% raw source) with every behavioral instruction, law, tool contract, and gate
 >   preserved; `bundled-agents.generated.ts` regenerated (616,267 B → 568,348 B).
