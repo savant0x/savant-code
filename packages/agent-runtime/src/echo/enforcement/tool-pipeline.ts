@@ -30,6 +30,8 @@ export function beforeToolCallImpl(
   assistantText?: string,
   /** FID-2026-0822-004: `yagni.enforced: false` disables the P5b gate. */
   yagniEnforced?: boolean,
+  /** FID-2026-0927-003 F2: the caller's current Perfection Loop phase. */
+  fsmPhase?: string,
 ): EnforcementResult {
   const tier = getTier(self.mode)
 
@@ -56,9 +58,9 @@ export function beforeToolCallImpl(
         reason: `Must read ${self.requiredProtocolFile} 0-EOF before using tools`,
         warnings: [],
         // FID-2026-0901-002: this gate self-heals — the agent reads the
-        // protocol and retries within the same turn. Surface the block to
-        // the agent via steering only; a visible error chunk in the
-        // transcript reads as a crash to the operator.
+        // protocol and retries within the same turn. Surface the block to the
+        // agent via steering only; a visible error chunk in the transcript
+        // reads as a crash to the operator.
         silent: true,
       }
     } else if (self.groundingReadPending && isTerminalTool(toolName)) {
@@ -118,6 +120,9 @@ export function beforeToolCallImpl(
       // P5b YAGNI gate so it fires on the Forge's prompted emission point.
       assistantText: assistantText,
       yagniEnforced: yagniEnforced,
+      // FID-2026-0927-003 F2: the Law 3 gate needs the phase so the
+      // self_correct repair path can permit the write a red run blocks.
+      fsmPhase,
     })
 
     // Any advisory attached to a gate result (Law 7/8) also becomes
@@ -157,6 +162,11 @@ export function afterToolCallImpl(
   writeSucceeded?: boolean,
   /** FID-2026-0919-015: command outcome when determinable; undefined = unknown. */
   commandSucceeded?: boolean,
+  /** FID-2026-0927-003 F2: repo-relative source paths a FAILED verification
+   *  run named. Recorded so the Law 3 gate can permit editing the file being
+   *  reported — the only legal repair for a red run — without permitting the
+   *  masking edit to any other file. */
+  verificationFailurePaths?: string[],
 ): EnforcementResult {
   // FID-2026-0919-015: collect advisories (unknown-outcome verification) for
   // the caller; afterToolCall never blocks, it may only steer.
@@ -217,7 +227,23 @@ export function afterToolCallImpl(
         for (const f of self.state.dirtyFiles) {
           self.state.verifiedFiles.add(f)
         }
-      } else if (commandSucceeded === undefined) {
+        // FID-2026-0927-003 F2: a green run retires attribution from any
+        // earlier red run, so the exemption can never become permanent.
+        self.state.failureAttributedFiles.clear()
+      } else if (commandSucceeded === false) {
+        // FID-2026-0927-003 F2: record which files this failure named, so the
+        // pre-write gate can unblock the file under test while continuing to
+        // block every other dirty-unverified file. Cleared first, not
+        // appended (audit finding): an accumulating set
+        // would keep a file unlocked by a run that no longer names it, which
+        // contradicts the "most recent failed run" contract on
+        // EnforcementState.failureAttributedFiles. Attribution must be EXACTLY
+        // this run's subjects for the anti-masking property to hold.
+        self.state.failureAttributedFiles.clear()
+        for (const p of verificationFailurePaths ?? []) {
+          self.state.failureAttributedFiles.add(canonicalizePath(p))
+        }
+      } else {
         warnings.push({
           law: 3,
           severity: 'warning',
@@ -225,8 +251,6 @@ export function afterToolCallImpl(
             'Verification command detected but its outcome is unknown — Law 3 credit not granted; re-run it and confirm it passes.',
         })
       }
-      // commandSucceeded === false: withhold credit silently — the failure
-      // is already visible in the transcript as the tool result.
     }
   }
 

@@ -13,6 +13,12 @@
  *
  * Execution is allowlisted only (see scripts/fid-verify.ts resolveGate);
  * malformed or unsafe declarations produce issues, never execution.
+ *
+ * FID-2026-0927-003 F3 — ORDERING. C1/C2 and C3 used to run in that literal
+ * order, so a stale receipt was classified before the gates had executed and
+ * the demotion could not be considered. C1/C2 now COLLECT first and classify
+ * after C3, because whether a stale receipt is fatal depends entirely on what
+ * the live re-run found.
  */
 import fs from 'node:fs'
 import path from 'node:path'
@@ -38,6 +44,19 @@ import type { FidLedgerIssue } from './fid-ledger-types'
 // disagree about which statuses the contract covers. Export name preserved
 // for the vocabulary pin test.
 export const VERIFIED_STATUSES = ENFORCED_VERIFICATION_STATUSES
+
+/** Map a structural validation message onto a stable issue code. */
+function codeForError(error: string): string {
+  if (error.startsWith('stale')) return 'fid.gates.stale'
+  if (error.startsWith('missing ### Verification Receipt'))
+    return 'fid.gates.receipt-missing'
+  if (error.startsWith('no verification gates')) return 'fid.gates.missing'
+  if (error.startsWith('declared gate missing')) return 'fid.gates.incomplete'
+  if (error.startsWith('receipt result not declared'))
+    return 'fid.gates.undeclared-result'
+  if (error.startsWith('gate failed')) return 'fid.gates.nonzero'
+  return 'fid.gates.malformed'
+}
 
 /** Active FID files under dev/fids/ (not the archive). */
 export function activeFixedFidFiles(root: string): {
@@ -76,31 +95,48 @@ export function validateFidVerificationGates(root: string): FidLedgerIssue[] {
   const fids = activeFixedFidFiles(root)
   if (fids.length === 0) return issues
 
-  // C1+C2: structural contract on every fixed/verified FID. The
-  // FID-2026-0918-006 prose-contract sweep runs inside
+  // C1+C2: COLLECT the structural errors now, but do not classify them yet.
+  // Classification depends on the C3 outcome (FID-2026-0927-003 F3).
+  // The FID-2026-0918-006 prose-contract sweep runs inside
   // validateFidVerification for these receipt-bearing documents (error
   // tier); the grandfathered warning tier is surfaced by fid:verify
   // --check for receipt-less documents instead — never as issues here, so
   // a warning-tier report cannot fail validate:repository.
+  const structural = new Map<string, string[]>()
   for (const fid of fids) {
-    const errors = validateFidVerification(fid.content)
-    for (const error of errors) {
-      issues.push({
-        code: error.startsWith('stale')
-          ? 'fid.gates.stale'
-          : error.startsWith('missing ### Verification Receipt')
-            ? 'fid.gates.receipt-missing'
-            : error.startsWith('no verification gates')
-              ? 'fid.gates.missing'
-              : error.startsWith('declared gate missing')
-                ? 'fid.gates.incomplete'
-                : error.startsWith('receipt result not declared')
-                  ? 'fid.gates.undeclared-result'
-                  : error.startsWith('gate failed')
-                    ? 'fid.gates.nonzero'
-                    : 'fid.gates.malformed',
-        message: `${fid.name}: ${error}`,
-      })
+    structural.set(fid.name, validateFidVerification(fid.content))
+  }
+
+  /**
+   * Emit the collected C1+C2 errors. `greenFids` is the set of FIDs whose
+   * EVERY declared gate exited 0 in the C3 live re-run.
+   */
+  const emitStructural = (greenFids: ReadonlySet<string>): void => {
+    for (const fid of fids) {
+      for (const error of structural.get(fid.name) ?? []) {
+        // F3: a stale receipt is a STALENESS TRIPWIRE, not the enforcement.
+        // C3 re-ran every declared gate against the CURRENT tree, so when they
+        // are all green the code is verified whether or not the document was
+        // edited afterwards. Failing here made the ordinary workflow
+        // (implement -> verify -> record findings) self-invalidating: the act
+        // of documenting the result is what made the receipt stale.
+        //
+        // Demotion is conditional and fails closed. A red gate, an unsafe
+        // declaration, or NO executed gates at all leaves `greenFids` without
+        // this FID, so the error stands — that is the case the receipt
+        // contract exists for.
+        const demote = error.startsWith('stale') && greenFids.has(fid.name)
+        issues.push({
+          code: codeForError(error),
+          message: demote
+            ? `${fid.name}: ${error} — demoted to a warning ` +
+              '(FID-2026-0927-003 F3): the declared gates pass the live ' +
+              're-run, so the tree is verified. Re-stamp with ' +
+              `\`bun run fid:verify ${fid.name} --write\` when convenient.`
+            : `${fid.name}: ${error}`,
+          ...(demote ? { severity: 'warning' as const } : {}),
+        })
+      }
     }
   }
 
@@ -116,7 +152,12 @@ export function validateFidVerificationGates(root: string): FidLedgerIssue[] {
       toRun.push({ ...gate, label: key, fid: fid.name })
     }
   }
-  if (toRun.length === 0) return issues
+  // No gate ever executed: nothing is proven green, so every structural error
+  // stands. Emitted with an empty green set rather than dropped.
+  if (toRun.length === 0) {
+    emitStructural(new Set())
+    return issues
+  }
 
   // Validate safety of every unique command BEFORE running any of them, so
   // a single hostile declaration cannot cause partial execution.
@@ -130,13 +171,13 @@ export function validateFidVerificationGates(root: string): FidLedgerIssue[] {
         message: `${gate.fid}: gate "${gate.label}" failed the allowlist`,
       })
     }
+    emitStructural(new Set())
     return issues
   }
 
   const { results, errors } = runGates(
     toRun.map((gate) => ({ kind: gate.kind, arg: gate.arg })),
   )
-  void errors
   for (const error of errors) {
     issues.push({ code: 'fid.gates.unsafe', message: error })
   }
@@ -150,5 +191,21 @@ export function validateFidVerificationGates(root: string): FidLedgerIssue[] {
       })
     }
   }
+
+  // F3: which FIDs are fully proven green right now? Evaluated per FID
+  // against the SHARED result map, so deduplication across FIDs does not
+  // change the answer. A FID declaring zero gates is never green.
+  const greenFids = new Set<string>()
+  for (const fid of fids) {
+    const { gates } = parseVerificationGates(fid.content)
+    if (gates.length === 0) continue
+    const allGreen = gates.every((gate) => {
+      const result = resultByLabel.get(gateLabel(gate.kind, gate.arg))
+      return result !== undefined && result.exit === 0
+    })
+    if (allGreen) greenFids.add(fid.name)
+  }
+
+  emitStructural(greenFids)
   return issues
 }

@@ -183,6 +183,9 @@ export async function executeCustomToolCall(
     // keeps the enforcement surface consistent.
     assistantText: params.fullResponse,
     yagniEnforced: resolveYagniEnforced(params.fileContext?.projectRoot),
+    // FID-2026-0927-003 F2: without this the Law 3 self_correct fallback is
+    // inert on the custom/MCP path (audit finding: accepted-but-never-supplied).
+    fsmPhase: agentState.fsmPhase,
   })
   for (const chunk of buildComplianceWarningChunks(enforceResult.warnings)) {
     onResponseChunk(chunk)

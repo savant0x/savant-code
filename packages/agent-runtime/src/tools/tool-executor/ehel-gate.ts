@@ -41,6 +41,11 @@ export function createEhelGate<T extends ToolName>(deps: {
       // honors `yagni.enforced` from protocol.config.yaml.
       assistantText: deps.fullResponse(),
       yagniEnforced: resolveYagniEnforced(deps.projectRoot()),
+      // FID-2026-0927-003 F2: without this the Law 3 self_correct fallback
+      // is inert on the NATIVE write path (audit finding: the parameter was
+      // threaded internally but supplied by no production caller, so the
+      // exemption passed its tests and could never fire in a real session).
+      fsmPhase: ctx.params.agentState.fsmPhase,
     })
     if (!enforceResult.blocked && enforceResult.warnings.length > 0) {
       writeLawChecks = enforceResult.warnings.map((warning) => ({

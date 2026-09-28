@@ -117,6 +117,12 @@ export class EchoEnforcement {
     assistantText?: string
     /** FID-2026-0822-004: `yagni.enforced: false` disables the P5b gate. */
     yagniEnforced?: boolean
+    /** FID-2026-0927-003 F2: the caller's current Perfection Loop phase. The
+     *  Law 3 gate treats `self_correct` as the sanctioned repair phase, where
+     *  a dirty-unverified file is writable even when the failure could not be
+     *  attributed. Absent in callers that do not know the phase, which fails
+     *  closed to the blocking behaviour. */
+    fsmPhase?: string
   }): EnforcementResult {
     return beforeToolCallImpl(
       this,
@@ -125,6 +131,7 @@ export class EchoEnforcement {
       params.agentId,
       params.assistantText,
       params.yagniEnforced,
+      params.fsmPhase,
     )
   }
 
@@ -136,6 +143,11 @@ export class EchoEnforcement {
     writeSucceeded?: boolean
     /** FID-2026-0919-015: outcome of the command, when determinable. */
     commandSucceeded?: boolean
+    /** FID-2026-0927-003 F2: repo-relative source paths a FAILED
+     *  verification run named. Attribution is what lets the Law 3 gate permit
+     *  editing the file the run is complaining about, instead of blocking the
+     *  only legal repair. Ignored unless `commandSucceeded === false`. */
+    verificationFailurePaths?: string[]
   }): EnforcementResult {
     return afterToolCallImpl(
       this,
@@ -145,6 +157,7 @@ export class EchoEnforcement {
       params.writtenContent,
       params.writeSucceeded,
       params.commandSucceeded,
+      params.verificationFailurePaths,
     )
   }
 

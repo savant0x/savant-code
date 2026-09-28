@@ -161,3 +161,99 @@ describe('validateFidVerificationGates', () => {
     expect(validateFidVerificationGates(root)).toEqual([])
   })
 })
+
+/**
+ * FID-2026-0927-003 F3 — a stale receipt is a STALENESS TRIPWIRE, not the
+ * enforcement. C3 re-runs every declared gate against the CURRENT tree, so
+ * when those gates are green the code is verified regardless of whether the
+ * document was edited afterwards. Failing there made the ordinary workflow
+ * (implement -> verify -> record findings) self-invalidating: the act of
+ * documenting the result is what made the receipt stale.
+ *
+ * The demotion is conditional, and both directions are pinned. A stale
+ * receipt alongside a RED gate stays a hard error — that is the case the
+ * receipt contract exists for, because the tree no longer matches the
+ * verification at all.
+ */
+describe('FID-2026-0927-003 F3 — stale receipt vs the live gate re-run', () => {
+  /** A receipt made stale by editing the document after stamping. */
+  function staleFidWithGates(gates: string[]): string {
+    const valid = withValidReceipt(
+      fixedFid(gates),
+      gates.map((gate) => `- ${gate}: exit 0`),
+    )
+    return valid.replace('## Verification Gates', '## Verification Gates\n')
+  }
+
+  it('DEMOTES a stale receipt to a warning when every declared gate is green', () => {
+    // The doc-edit loop: the implementation verified green, and the only
+    // reason the fingerprint moved is that findings were written down.
+    const root = createRoot({
+      'FID-2026-0820-001-a.md': staleFidWithGates([`probe ${PROBE}`]),
+    })
+    const issues = validateFidVerificationGates(root)
+    // It must not be a FAILURE any more.
+    expect(issues.filter((i) => i.severity !== 'warning')).toEqual([])
+    // ...and it must still be VISIBLE, not silently dropped.
+    const stale = issues.find((i) => i.code === 'fid.gates.stale')
+    expect(stale).toBeDefined()
+    expect(stale?.severity).toBe('warning')
+    expect(stale?.message).toContain('gates pass the live re-run')
+  })
+
+  it('KEEPS a stale receipt a hard error when a declared gate is red', () => {
+    // The receipt says exit 0, the tree disagrees: this is the case the
+    // contract must still catch.
+    const valid = withValidReceipt(fixedFid([`probe ${FAIL_PROBE}`]), [
+      `- probe ${FAIL_PROBE}: exit 0`,
+    ])
+    const stale = valid.replace(
+      '## Verification Gates',
+      '## Verification Gates\n',
+    )
+    const root = createRoot({ 'FID-2026-0820-001-a.md': stale })
+    const issues = validateFidVerificationGates(root)
+    const staleIssue = issues.find((i) => i.code === 'fid.gates.stale')
+    expect(staleIssue).toBeDefined()
+    expect(staleIssue?.severity).not.toBe('warning')
+    // The red gate is still reported in its own right.
+    expect(issues.map((i) => i.code)).toContain('fid.gates.red')
+  })
+
+  it('leaves a valid receipt with green gates entirely clean', () => {
+    // Regression guard: the demotion must not turn the gate slack in the
+    // other direction, or a healthy FID starts reporting.
+    const root = createRoot({
+      'FID-2026-0820-001-a.md': withValidReceipt(fixedFid([`probe ${PROBE}`]), [
+        `- probe ${PROBE}: exit 0`,
+      ]),
+    })
+    expect(validateFidVerificationGates(root)).toEqual([])
+  })
+
+  it('does NOT demote when the gate cannot be executed (unsafe declaration)', () => {
+    // Fail-closed on the C3 early return. The declared gate is rejected by
+    // the allowlist, so NOTHING runs and nothing is proven green.
+    //
+    // The previous version of this leg stripped the gate lines instead,
+    // which made it VACUOUS: with no gates declared, C1+C2 emits
+    // `no verification gates declared` (fid.gates.missing) and never emits a
+    // stale issue at all, so `find(...)` returned undefined and
+    // `expect(undefined).not.toBe('warning')` passed even if the demotion
+    // were deleted outright. Asserting `toBeDefined()` first is what makes
+    // the leg mean anything — the red-gate sibling already does this.
+    const valid = withValidReceipt(fixedFid(['typecheck not-a-workspace']), [
+      '- typecheck not-a-workspace: exit 0',
+    ])
+    const stale = valid.replace(
+      '## Verification Gates',
+      '## Verification Gates\n',
+    )
+    const root = createRoot({ 'FID-2026-0820-001-a.md': stale })
+    const issues = validateFidVerificationGates(root)
+    expect(issues.map((i) => i.code)).toContain('fid.gates.unsafe')
+    const staleIssue = issues.find((i) => i.code === 'fid.gates.stale')
+    expect(staleIssue).toBeDefined()
+    expect(staleIssue?.severity).not.toBe('warning')
+  })
+})

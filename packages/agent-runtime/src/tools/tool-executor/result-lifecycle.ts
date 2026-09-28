@@ -1,4 +1,9 @@
-import { hasToolResultError, toolResultErrorLine } from './tool-result-errors'
+import {
+  hasCommandFailure,
+  hasToolResultError,
+  toolResultErrorLine,
+} from './tool-result-errors'
+import { extractFailingPathsFromContent } from './verification-failure-paths'
 import { isWriteToolName, resolveFidIdForWrite } from './write-bookkeeping'
 import { appendGroundingRefresh } from '../../echo/grounding'
 import { recordEvidence } from '../../evidence/spill'
@@ -162,10 +167,7 @@ export async function runSuccessLifecycle<T extends ToolName>(
   }
   const writeSucceeded =
     writtenPath !== undefined && !hasToolResultError(toolResult.content)
-  // FID-2026-0919-015: outcome signal for Law 3 verification crediting —
-  // same primitive the write lifecycle trusts; only an explicit tool-result
-  // error marks the command as failed.
-  const commandSucceeded = !hasToolResultError(toolResult.content)
+  const commandSucceeded = !hasCommandFailure(toolResult.content)
   enforcement.afterToolCall({
     toolName,
     input: toolCall.input as Record<string, unknown>,
@@ -179,13 +181,12 @@ export async function runSuccessLifecycle<T extends ToolName>(
     // explicit tool-result error suppresses the write lifecycle.
     writeSucceeded,
     commandSucceeded,
+    // FID-2026-0927-003 F2: which files the failure named (see the module).
+    verificationFailurePaths: commandSucceeded
+      ? undefined
+      : extractFailingPathsFromContent(toolResult.content),
   })
 
-  // FID-2026-0813-004: ZTAP write-boundary receipt creation. Runs after
-  // the write lifecycle completes; never holds or blocks the write
-  // (append-only chain, D1). Best-effort in record mode; enforce mode
-  // fails closed at the pre-write gate (below) so an exception here is
-  // defense-in-depth only.
   if (
     writtenPath !== undefined &&
     writeSucceeded &&

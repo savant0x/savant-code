@@ -22,6 +22,15 @@ export interface EnforcementState {
   hasVerifiedSinceLastDirty: boolean
   /** Cumulative verification credits per file (FID-2026-0819-001). */
   verifiedFiles: Set<string>
+  /**
+   * FID-2026-0927-003 F2: files named by the most recent FAILED verification
+   * run, canonicalized. A file in this set may be re-edited even while it is
+   * dirty-and-unverified, because editing it is the only legal repair for the
+   * failure that withheld its credit. A file NOT in this set is still blocked,
+   * which is what keeps the exemption from becoming a test-masking bypass.
+   * Cleared by a green run and by `resetForNewTurn`.
+   */
+  failureAttributedFiles: Set<string>
   writeCount: number
 
   // Law 4: Call-graph tracking

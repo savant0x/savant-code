@@ -85,6 +85,9 @@ export function runPreWriteGates(params: {
   assistantText?: string
   /** FID-2026-0822-004: `yagni.enforced: false` disables the P5b gate. */
   yagniEnforced?: boolean
+  /** FID-2026-0927-003 F2: the caller's current Perfection Loop phase,
+   *  forwarded to the Law 3 gate's self_correct repair path. */
+  fsmPhase?: string
 }): EnforcementResult {
   if (!isWriteTool(params.toolName)) {
     return { blocked: false, warnings: [] }
@@ -166,6 +169,9 @@ export function runPreWriteGates(params: {
     targetPath,
     state: params.state,
     warnings,
+    // FID-2026-0927-003 F2: without this the param is accepted and dropped,
+    // and the self_correct exemption silently never fires.
+    fsmPhase: params.fsmPhase,
   })
   if (law3Result.blocked) {
     return { blocked: true, reason: law3Result.reason, warnings }

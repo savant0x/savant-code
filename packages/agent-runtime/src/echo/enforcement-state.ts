@@ -19,6 +19,7 @@ export function createEnforcementState(): EnforcementState {
     writtenFileContent: new Map(),
     hasVerifiedSinceLastDirty: true,
     verifiedFiles: new Set(),
+    failureAttributedFiles: new Set(),
     writeCount: 0,
     featuresWired: new Set(),
     featuresVerified: new Set(),
@@ -50,5 +51,6 @@ export function resetForNewTurn(state: EnforcementState): void {
   state.dirtyFiles.clear()
   state.writtenFileContent.clear()
   state.verifiedFiles.clear()
+  state.failureAttributedFiles.clear()
   state.hasVerifiedSinceLastDirty = true
 }

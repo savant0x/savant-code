@@ -3,7 +3,8 @@
 // round-trip, tool_result emission, afterToolCall, PostToolUse hooks, and
 // the rejection path driving hadToolCallError).
 
-import { hasToolResultError } from './tool-result-errors'
+import { hasCommandFailure } from './tool-result-errors'
+import { extractFailingPathsFromContent } from './verification-failure-paths'
 import { buildHookInput, getHookEngine } from '../../hooks/engine'
 import { MCP_TOOL_SEPARATOR } from '../../mcp-constants'
 
@@ -127,9 +128,15 @@ export async function resolveCustomToolResult({
           // effects above; they cannot claim a local write lifecycle without a
           // dedicated audited snapshot adapter.
           writeSucceeded: false,
-          // FID-2026-0919-015: same outcome signal as the native path so a
-          // custom/MCP tool invocation cannot silently bypass the policy.
-          commandSucceeded: !hasToolResultError(toolResult.content),
+          // FID-2026-0919-015 / FID-2026-0927-003 F1+F2: same outcome signal
+          // and failure attribution as the native path, so a custom/MCP
+          // invocation cannot bypass the policy either.
+          commandSucceeded: !hasCommandFailure(toolResult.content),
+          // Gated on the same predicate as result-lifecycle.ts, so the two
+          // call sites cannot drift (audit finding: they previously disagreed).
+          verificationFailurePaths: hasCommandFailure(toolResult.content)
+            ? extractFailingPathsFromContent(toolResult.content)
+            : undefined,
         })
 
         finishToolEvent('completed')

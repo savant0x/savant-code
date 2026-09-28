@@ -72,3 +72,55 @@ export function extractToolResultError(content: unknown): string {
 export function toolResultErrorLine(content: unknown): string {
   return extractToolResultError(content) || 'tool result contains an error'
 }
+
+/**
+ * FID-2026-0927-003 F1 — outcome-aware command failure detection.
+ *
+ * `hasToolResultError` is SHAPE-aware: it recognises only structured
+ * errorMessage / error / errorCode fields. That is the correct primitive for
+ * "did the tool itself error", but the wrong primitive for "did the command I
+ * ran fail", because a CLI test run reports failure as a non-zero exit plus
+ * plain text. Law 3 credited exactly those runs as passes, so the gate was
+ * inert for the dominant failure mode.
+ *
+ * The outcome is already in the payload — `run_readonly_command` and
+ * `run_terminal_command` both emit
+ * `{ type: 'json', value: { command, stdout, stderr, exitCode } }`, and a
+ * batch nests them under `results` — so this reads a field that was already
+ * being written and never consulted.
+ *
+ * Deliberately additive: `hasToolResultError` is retained as the fallback so
+ * an infrastructure-level failure (a rejected command with no exitCode) still
+ * fails closed. This decides Law 3 verification credit ONLY; `writeSucceeded`
+ * keeps the shape-aware predicate, because a command that ran and returned
+ * non-zero is a SUCCESSFUL write of a failing program, not a failed write.
+ */
+export function hasCommandFailure(content: unknown): boolean {
+  if (!Array.isArray(content)) return false
+  for (const part of content) {
+    if (!part || typeof part !== 'object' || !('value' in part)) continue
+    const value = part.value
+    if (!value || typeof value !== 'object' || Array.isArray(value)) continue
+    const record = value as Record<string, unknown>
+    if (isNonZeroExit(record.exitCode)) return true
+    // Batch shape: run_readonly_command's `commands` form nests one result per
+    // command. Any non-zero member makes the whole verification run red.
+    if (Array.isArray(record.results)) {
+      for (const entry of record.results) {
+        if (
+          entry &&
+          typeof entry === 'object' &&
+          isNonZeroExit((entry as Record<string, unknown>).exitCode)
+        ) {
+          return true
+        }
+      }
+    }
+  }
+  return hasToolResultError(content)
+}
+
+/** A numeric exit code other than 0. A non-numeric value is unknown, not failure. */
+function isNonZeroExit(exitCode: unknown): boolean {
+  return typeof exitCode === 'number' && exitCode !== 0
+}
