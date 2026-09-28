@@ -53,6 +53,7 @@ Or select one of the supported gateway providers directly:
 | Atria AI | `/provider atria` or `DIRECT_PROVIDER=atria` | `ATRIA_API_KEY` | Hosted gateway |
 | B.AI | `/provider bai` or `DIRECT_PROVIDER=bai` | `BAI_API_KEY` | OpenAI-compatible gateway with an authenticated live model catalog |
 | BazaarLink | `/provider bazaarlink` or `DIRECT_PROVIDER=bazaarlink` | `BAZAARLINK_API_KEY` | Hosted gateway |
+| Clean APIs | `/provider cleanapis` or `DIRECT_PROVIDER=cleanapis` | `CLEANAPIS_API_KEY` | Hosted gateway |
 | Cloudflare | Environment configuration | `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` | Env-only — not in the `/provider` picker; requires the account id too |
 | CommandCode | `/provider commandcode` or `DIRECT_PROVIDER=commandcode` | `COMMAND_CODE_API_KEY` | OpenAI-compatible hosted inference (dual-protocol) |
 | HCNSec | `/provider hcnsec` or `DIRECT_PROVIDER=hcnsec` | `HCNSEC_API_KEY` | OpenAI-compatible gateway on an audited static 7-model allowlist |
@@ -64,6 +65,7 @@ Or select one of the supported gateway providers directly:
 | TokenBom | `/provider tokenbom` or `DIRECT_PROVIDER=tokenbom` | `TOKENBOM_API_KEY` | OpenAI-compatible gateway on an audited static 7-model allowlist |
 | TokenHarbor | `/provider tokenharbor` or `DIRECT_PROVIDER=tokenharbor` | `TOKENHARBOR_API_KEY` | OpenAI-compatible hosted gateway |
 | UnoRouter | `/provider unorouter` or `DIRECT_PROVIDER=unorouter` | `UNOROUTER_API_KEY` | Hosted gateway |
+| Vercel AI Gateway | `/provider vercel` or `DIRECT_PROVIDER=vercel` | `AI_GATEWAY_API_KEY` | Hosted gateway |
 | Custom endpoint | Environment configuration | `INFERENCE_BASE_URL`, `INFERENCE_API_KEY` | Advanced OpenAI-compatible endpoint |
 <!-- GENERATED:provider-table-end -->
 
@@ -151,6 +153,8 @@ TOKENBOM_API_KEY=dummy-tokenbom-key-replace-me
 INFRON_API_KEY=dummy-infron-key-replace-me
 UNOROUTER_API_KEY=dummy-unorouter-key-replace-me
 BAZAARLINK_API_KEY=dummy-bazaarlink_api_key-replace-me
+AI_GATEWAY_API_KEY=dummy-ai-gateway-key-replace-me
+CLEANAPIS_API_KEY=dummy-cleanapis-api-key-replace-me
 
 # Local Ollama override (optional)
 # OLLAMA_HOST=http://localhost:11434

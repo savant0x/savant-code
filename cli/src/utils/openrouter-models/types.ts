@@ -77,6 +77,22 @@ export type OpenRouterModelsResponse = {
       web_search?: string
     }
     provider?: string
+    /**
+     * Nested modality metadata. **Measured 2026-09-27** against the live
+     * catalog: OpenRouter serves `modality` / `tokenizer` / `instruct_type`
+     * HERE, not flat — the flat keys are populated on 0/458 models. The flat
+     * keys below are retained because they are declared by the public API
+     * schema and other gateways (and some cached responses) may still send
+     * them; parsers read nested first, flat second.
+     */
+    architecture?: {
+      modality?: string
+      input_modalities?: string[]
+      output_modalities?: string[]
+      tokenizer?: string
+      /** `null` on the wire for models with no declared instruct type. */
+      instruct_type?: string | null
+    }
     modality?: string
     tokenizer?: string
     instruct_type?: string
@@ -86,9 +102,16 @@ export type OpenRouterModelsResponse = {
       mandatory?: boolean
       default_enabled?: boolean
     }
+    /**
+     * `null` is a real wire value here, not just "absent": measured 2026-09-27,
+     * OpenRouter sends `context_length: null` and `max_completion_tokens: null`
+     * for resold/routed models (e.g. `typesafe/jev-router`). The internal
+     * `OpenRouterModel` type stays `number | undefined`, so parsers must
+     * coerce `null` away rather than pass it through.
+     */
     top_provider?: {
-      context_length?: number
-      max_completion_tokens?: number
+      context_length?: number | null
+      max_completion_tokens?: number | null
       is_moderated?: boolean
     }
     benchmarks?: unknown

@@ -97,6 +97,33 @@ describe('PROVIDER_REGISTRY per-provider contract pins', () => {
     expect(bai.quota?.note).toContain('prepaid')
   })
 
+  test('vercel entry matches the documented contract (FID-2026-0927-001)', () => {
+    expect('vercel' in PROVIDER_REGISTRY).toBe(true)
+    const vercel =
+      PROVIDER_REGISTRY.vercel as (typeof PROVIDER_REGISTRY)['vercel']
+    expect(vercel.kind).toBe('gateway')
+    expect(vercel.label).toBe('Vercel AI Gateway')
+    expect(vercel.protocol).toBe('openai')
+    expect(vercel.idTransform).toBe('strip')
+    // vercel.com/docs/ai-gateway: OpenAI Chat Completions at
+    // https://ai-gateway.vercel.sh/v1/chat/completions with
+    // `Authorization: Bearer $AI_GATEWAY_API_KEY` (curl contract).
+    expect(vercel.baseUrl).toBe('https://ai-gateway.vercel.sh/v1')
+    expect(vercel.credentials.envVar).toBe('AI_GATEWAY_API_KEY')
+    expect(vercel.credentials.missingKeyMessage).toBe(
+      'Vercel AI Gateway API key not set. Set AI_GATEWAY_API_KEY environment variable or run /provider vercel.',
+    )
+    // Keyless live catalog (probed HTTP 200 keyless, 391 models, OpenAI list
+    // shape) — the OrcaRouter pattern; no resolver wire-in.
+    expect(vercel.catalog).toEqual({
+      source: 'live',
+      url: 'https://ai-gateway.vercel.sh/v1/models',
+    })
+    expect(vercel.setupAvailable).toBe(true)
+    expect(vercel.domain).toBe('vercel.com')
+    expect(vercel.order).toBe(4)
+  })
+
   test('only providers that document a quota endpoint declare one', () => {
     const declared = Object.entries(
       PROVIDER_REGISTRY as Record<string, ProviderConfig>,

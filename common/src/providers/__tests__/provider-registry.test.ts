@@ -23,12 +23,13 @@ import type { ProviderConfig } from '../types'
  * as its first argument so tests inject a fixture instead of the singleton).
  */
 describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
-  test('covers all eighteen current providers', () => {
+  test('covers all twenty current providers', () => {
     expect(Object.keys(PROVIDER_REGISTRY).sort()).toEqual([
       'apinex',
       'atria',
       'bai',
       'bazaarlink',
+      'cleanapis',
       'cloudflare',
       'commandcode',
       'hcnsec',
@@ -43,6 +44,7 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
       'tokenharbor',
       'tokenrouter',
       'unorouter',
+      'vercel',
     ])
   })
 
@@ -93,6 +95,8 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
       'ollama',
       'cloudflare',
       'kiosapi',
+      'vercel',
+      'cleanapis',
     ]) {
       expect(deriveProviderOrder(PROVIDER_REGISTRY, id)).toBe(4)
     }
@@ -100,13 +104,14 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
     expect(deriveProviderOrder(PROVIDER_REGISTRY, 'unknown')).toBe(4)
   })
 
-  test('setup config derives exactly the sixteen current setup providers', () => {
+  test('setup config derives exactly the eighteen current setup providers', () => {
     const setup = deriveSetupConfig(PROVIDER_REGISTRY)
     expect(Object.keys(setup).sort()).toEqual([
       'apinex',
       'atria',
       'bai',
       'bazaarlink',
+      'cleanapis',
       'commandcode',
       'hcnsec',
       'infron',
@@ -119,6 +124,7 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
       'tokenharbor',
       'tokenrouter',
       'unorouter',
+      'vercel',
     ])
     expect(setup.openrouter).toEqual({
       label: 'OpenRouter',
@@ -144,6 +150,11 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
       label: 'APInex',
       envVar: 'APINEX_API_KEY',
       baseUrl: 'https://api.apinex.bond/v1',
+    })
+    expect(setup.cleanapis).toEqual({
+      label: 'Clean APIs',
+      envVar: 'CLEANAPIS_API_KEY',
+      baseUrl: 'https://cleanapis.com/v1',
     })
   })
 

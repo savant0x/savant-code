@@ -29,6 +29,22 @@ if (!OPENROUTER_MODELS_URL) {
   )
 }
 
+/**
+ * Coerce a wire numeric that may be `null` down to `number | undefined`.
+ *
+ * Measured 2026-09-27: OpenRouter sends `context_length: null` and
+ * `max_completion_tokens: null` under `top_provider` for routed/resold models
+ * (e.g. `typesafe/jev-router`). Passing that `null` straight through would put
+ * a value the internal type forbids into `OpenRouterModel`, and every consumer
+ * would have to re-guard. `lookup.ts` already does guard with `typeof`, but the
+ * boundary is the right place to normalize — same rule as the cleanapis parser.
+ */
+function asOptionalNumber(
+  value: number | null | undefined,
+): number | undefined {
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined
+}
+
 function parseCatalog(json: OpenRouterModelsResponse): OpenRouterModel[] {
   const models = json.data ?? []
   const parsed: OpenRouterModel[] = []
@@ -52,16 +68,27 @@ function parseCatalog(json: OpenRouterModelsResponse): OpenRouterModel[] {
       webSearchPricePerToken:
         webSearch !== undefined ? Number(webSearch) : undefined,
       provider: undefined,
-      modality: m.modality,
-      tokenizer: m.tokenizer,
-      instructType: m.instruct_type,
+      // Nested first, flat second. Measured 2026-09-27 against the live
+      // catalog (HTTP 200, 458 models): `architecture.*` is present on 458/458
+      // while the flat `modality`/`tokenizer`/`instruct_type` keys are populated
+      // on **0/458**. So the flat read — the only one this parser had until now
+      // — yielded `undefined` for every model, and `model-info.ts` rendered no
+      // modalities line for any of them. The flat fallback is retained because
+      // the public schema still declares those keys and cached responses or
+      // other gateways may send them.
+      modality: m.architecture?.modality ?? m.modality,
+      tokenizer: m.architecture?.tokenizer ?? m.tokenizer,
+      instructType:
+        m.architecture?.instruct_type ?? m.instruct_type ?? undefined,
       knowledgeCutoff: m.knowledge_cutoff,
       created: m.created,
       reasoning: m.reasoning,
       topProvider: m.top_provider
         ? {
-            contextLength: m.top_provider.context_length,
-            maxCompletionTokens: m.top_provider.max_completion_tokens,
+            contextLength: asOptionalNumber(m.top_provider.context_length),
+            maxCompletionTokens: asOptionalNumber(
+              m.top_provider.max_completion_tokens,
+            ),
             isModerated: m.top_provider.is_moderated,
           }
         : undefined,

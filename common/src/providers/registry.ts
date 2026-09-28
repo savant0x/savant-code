@@ -16,6 +16,7 @@
  *       FID-2026-0916-004 removed opencode-go/opencode-zen)
  */
 import { PROVIDER_REGISTRY_PARTITION } from './registry-partitioned'
+import { PROVIDER_REGISTRY_PARTITION_2 } from './registry-partitioned-2'
 
 import type { ProviderConfig } from './types'
 
@@ -179,11 +180,13 @@ export const PROVIDER_REGISTRY = {
     setupAvailable: false,
     order: 4,
   },
-  // kiosapi/apinex/orcarouter/bai entries live in
-  // ./registry-partitioned (300-line file split) and are spread in —
-  // Object.keys order is preserved: these five follow ollama, and the
-  // inline object ends immediately after the spread.
+  // kiosapi/apinex/orcarouter/bai and later entries live in
+  // ./registry-partitioned and ./registry-partitioned-2 (300-line file
+  // splits) and are spread in — Object.keys order is preserved: the
+  // partition entries follow ollama, and the inline object ends
+  // immediately after the spreads.
   ...PROVIDER_REGISTRY_PARTITION,
+  ...PROVIDER_REGISTRY_PARTITION_2,
 } as const satisfies Record<string, ProviderConfig>
 
 /** Literal union of registry ids, e.g. 'tokenharbor' | 'commandcode'. */

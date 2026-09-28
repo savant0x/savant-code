@@ -44,6 +44,17 @@ describe('provider completion audit (FID-2026-0809-008)', () => {
     )
   })
 
+  test('vercel owns its live-catalog exception (FID-2026-0927-001)', () => {
+    const entry = PROVIDER_EXCEPTION_MANIFEST.find(
+      (candidate) => candidate.providerId === 'vercel',
+    )
+    expect(entry?.kinds).toEqual(['live-catalog'])
+    expect(entry?.owner).toBe('cli/src/utils/openrouter-models/vercel.ts')
+    expect(entry?.evidence).toContain(
+      'cli/src/utils/openrouter-models/gateway.ts',
+    )
+  })
+
   test('detects evidence paths that do not exist at the integration boundary', () => {
     const problems = validateProviderAudit(
       PROVIDER_REGISTRY,

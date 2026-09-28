@@ -10,6 +10,7 @@ import {
   TOKEN_HARBOR_MODEL,
   ORCAROUTER_MODEL,
   BAI_MODEL,
+  VERCEL_MODEL,
   COMMAND_CODE_PROMPT,
 } from './model-provider-free-mode-test-setup'
 
@@ -190,5 +191,56 @@ describe('getModelForRequest ChatGPT OAuth fallback behavior', () => {
     expect(JSON.parse(String(init?.body)).model).toBe(
       'deepseek/deepseek-v4-flash',
     )
+  })
+
+  test('requires the Vercel AI Gateway API key (FID-2026-0927-001)', async () => {
+    const { getModelForRequest } = await importFresh()
+
+    await expect(
+      getModelForRequest({
+        apiKey: 'test-key',
+        model: VERCEL_MODEL,
+      }),
+    ).rejects.toThrow(
+      'Vercel AI Gateway API key not set. Set AI_GATEWAY_API_KEY environment variable or run /provider vercel.',
+    )
+  })
+
+  test('routes Vercel models with one-prefix normalization (FID-2026-0927-001)', async () => {
+    process.env.AI_GATEWAY_API_KEY = 'vercel-test-key'
+    const fetchMock = mock(() =>
+      Promise.resolve(
+        new Response('data: [DONE]\n\n', {
+          status: 200,
+          headers: { 'content-type': 'text/event-stream' },
+        }),
+      ),
+    )
+    // @ts-expect-error - test fetch has the same runtime contract
+    globalThis.fetch = fetchMock
+
+    const { getModelForRequest } = await importFresh()
+    const result = await getModelForRequest({
+      apiKey: 'test-key',
+      model: VERCEL_MODEL,
+    })
+    await (result.model as LanguageModelV2).doStream({
+      prompt: COMMAND_CODE_PROMPT,
+    })
+
+    const [input, init] = fetchMock.mock.calls[0] as unknown as [
+      RequestInfo | URL,
+      RequestInit | undefined,
+    ]
+    // Base URL + Bearer auth per the vercel.com/docs/ai-gateway curl contract.
+    expect(String(input)).toBe(
+      'https://ai-gateway.vercel.sh/v1/chat/completions',
+    )
+    expect(new Headers(init?.headers).get('authorization')).toBe(
+      'Bearer vercel-test-key',
+    )
+    // `strip` removes only the internal `vercel/` routing prefix; the
+    // vendor-namespaced remainder goes verbatim (openrouter/apinex shape).
+    expect(JSON.parse(String(init?.body)).model).toBe('alibaba/qwen-3-14b')
   })
 })

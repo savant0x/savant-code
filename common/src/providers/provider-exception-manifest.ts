@@ -95,6 +95,24 @@ export const PROVIDER_EXCEPTION_MANIFEST: readonly ProviderExceptionManifestEntr
       ],
     },
     {
+      providerId: 'vercel',
+      kinds: ['live-catalog'],
+      owner: 'cli/src/utils/openrouter-models/vercel.ts',
+      evidence: [
+        'cli/src/utils/openrouter-models/vercel.ts',
+        'cli/src/utils/openrouter-models/gateway.ts',
+      ],
+    },
+    {
+      providerId: 'cleanapis',
+      kinds: ['live-catalog'],
+      owner: 'cli/src/utils/openrouter-models/cleanapis.ts',
+      evidence: [
+        'cli/src/utils/openrouter-models/cleanapis.ts',
+        'cli/src/utils/openrouter-models/gateway.ts',
+      ],
+    },
+    {
       providerId: 'tokenrouter',
       kinds: ['multi-protocol'],
       owner: 'common/src/constants/model-config/provider-protocols.ts',

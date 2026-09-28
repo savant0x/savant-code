@@ -75,6 +75,108 @@ describe('openrouter-models', () => {
     expect(models[0].id).toBe('x/y')
   })
 
+  // ---- REAL-PAYLOAD legs (measured 2026-09-27, HTTP 200, 458 models) ----
+  //
+  // The synthetic fixture above uses FLAT modality/tokenizer/instruct_type,
+  // which OpenRouter does NOT serve: measured across all 458 live models the
+  // flat keys are populated on 0/458 while `architecture.*` is present on
+  // 458/458. So the parser's only read — the flat one — yielded `undefined`
+  // for every real model, and `formatModelInfo` rendered no modalities line.
+  // These legs pin the shape the vendor actually serves.
+
+  test('maps the real nested architecture.* fields', async () => {
+    // @ts-expect-error - mock fetch
+    globalThis.fetch = mock(() =>
+      Promise.resolve(
+        makeJsonResponse({
+          data: [
+            {
+              id: 'typesafe/jev-router',
+              name: 'Jev Router',
+              created: 1780000000,
+              context_length: 1000000,
+              architecture: {
+                modality: 'text+image+file+audio+video->text',
+                input_modalities: ['audio', 'file', 'image', 'text', 'video'],
+                output_modalities: ['text'],
+                tokenizer: 'Router',
+                instruct_type: null,
+              },
+              pricing: { prompt: '-1', completion: '-1' },
+              top_provider: {
+                context_length: null,
+                max_completion_tokens: null,
+                is_moderated: false,
+              },
+            },
+          ],
+        }),
+      ),
+    )
+    const models = await fetchOpenRouterModels(true)
+    const m = models[0]
+    expect(m?.modality).toBe('text+image+file+audio+video->text')
+    expect(m?.tokenizer).toBe('Router')
+    // `instruct_type` is null in the real payload — absent, not empty-string.
+    expect(m?.instructType).toBeUndefined()
+    expect(m?.topProvider).toEqual({
+      contextLength: undefined,
+      maxCompletionTokens: undefined,
+      isModerated: false,
+    })
+  })
+
+  test('nested architecture.* wins when flat keys are also present', async () => {
+    // Guards the `??` order: the nested value is the one the vendor serves, so
+    // a stale flat copy must not win. (An accidental swap would pass the
+    // synthetic leg above while breaking every real model.)
+    // @ts-expect-error - mock fetch
+    globalThis.fetch = mock(() =>
+      Promise.resolve(
+        makeJsonResponse({
+          data: [
+            {
+              id: 'a/b',
+              modality: 'FLAT-SHOULD-LOSE',
+              tokenizer: 'FLAT-SHOULD-LOSE',
+              instruct_type: 'FLAT-SHOULD-LOSE',
+              architecture: {
+                modality: 'NESTED-WINS',
+                tokenizer: 'NESTED-WINS',
+                instruct_type: 'NESTED-WINS',
+              },
+            },
+          ],
+        }),
+      ),
+    )
+    const models = await fetchOpenRouterModels(true)
+    expect(models[0]?.modality).toBe('NESTED-WINS')
+    expect(models[0]?.tokenizer).toBe('NESTED-WINS')
+    expect(models[0]?.instructType).toBe('NESTED-WINS')
+  })
+
+  test('a null nested instruct_type falls back to flat, not "null"', async () => {
+    // Negative leg for the `??` chain: a null nested value must not be
+    // stringified, and must not mask a genuine flat value.
+    // @ts-expect-error - mock fetch
+    globalThis.fetch = mock(() =>
+      Promise.resolve(
+        makeJsonResponse({
+          data: [
+            {
+              id: 'a/b',
+              instruct_type: 'flat-chat',
+              architecture: { modality: 'text->text', instruct_type: null },
+            },
+          ],
+        }),
+      ),
+    )
+    const models = await fetchOpenRouterModels(true)
+    expect(models[0]?.instructType).toBe('flat-chat')
+    expect(models[0]?.modality).toBe('text->text')
+  })
   test('degrades to empty list on fetch failure (never throws)', async () => {
     // @ts-expect-error - mock fetch to reject
     globalThis.fetch = mock(() => Promise.reject(new Error('network down')))

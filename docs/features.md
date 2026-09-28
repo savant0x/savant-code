@@ -199,6 +199,8 @@ Works with multiple inference providers:
 - **BazaarLink** — OpenAI-compatible gateway on a static 12-model allowlist (`BAZAARLINK_API_KEY`; the identity-audited genuine free channel `qwen/qwen3.7-flash:free` @ 1M ctx + 11 curated paid flagships per the 2026-09-15 top-coding ranking — substituted free channels excluded by ruling)
 - **KiosAPI** — OpenAI-compatible gateway with an authenticated live model catalog (`KIOSAPI_API_KEY`)
 - **APInex** — Hosted gateway with an authenticated live model catalog (`APINEX_API_KEY`)
+- **Vercel AI Gateway** — Managed multi-provider gateway with a keyless live model catalog (`AI_GATEWAY_API_KEY`; OpenAI Chat Completions at `https://ai-gateway.vercel.sh/v1`)
+- **Clean APIs** — OpenAI-compatible hosted gateway with an authenticated live model catalog (`CLEANAPIS_API_KEY`; OpenAI Chat Completions at `https://cleanapis.com/v1`)
 - **NVIDIA NIM** — NVIDIA-hosted inference
 - **CommandCode** — OpenAI-compatible hosted inference
 - **Nous Research** — OpenAI-compatible direct inference via `NOUS_API_KEY`; Portal OAuth is a separate integration

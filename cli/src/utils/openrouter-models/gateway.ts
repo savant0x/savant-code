@@ -1,8 +1,8 @@
 /**
  * Combined gateway catalog — OpenRouter + TokenRouter + TokenHarbor + NVIDIA NIM
- * + OpenCode Go + CommandCode + Nous Research + KiosAPI + APInex + OpenCode Zen
- * + OrcaRouter + B.AI + HCNSec + TokenBom + Infron + UnoRouter + BazaarLink —
- * plus subscription plumbing.
+ * + CommandCode + Nous Research + KiosAPI + APInex + OrcaRouter + B.AI +
+ * HCNSec + TokenBom + Infron + UnoRouter + BazaarLink + Atria AI +
+ * Vercel AI Gateway — plus subscription plumbing.
  */
 import fs from 'node:fs'
 
@@ -17,6 +17,11 @@ import {
   fetchBaiModels,
   getCachedBaiModels,
 } from './bai'
+import {
+  __resetCleanApisCacheForTest,
+  fetchCleanApisModels,
+  getCachedCleanApisModels,
+} from './cleanapis'
 import {
   __resetCustomCatalogsForTest,
   fetchAllCustomModels,
@@ -65,6 +70,11 @@ import {
   fetchUnorouterModels,
 } from './static-catalogs-gateways'
 import { CATALOG_TTL_MS } from './types'
+import {
+  __resetVercelCacheForTest,
+  fetchVercelModels,
+  getCachedVercelModels,
+} from './vercel'
 
 import type { OpenRouterModel } from './types'
 
@@ -112,12 +122,15 @@ function notifyGatewayCatalogListeners(catalog: OpenRouterModel[]): void {
  * - NVIDIA NIM (live API, public)
  * - TokenRouter (hardcoded, requires auth for API)
  * - TokenHarbor (hardcoded baseline; authenticated catalog intentionally skipped)
- * - OpenCode Go (hardcoded, subscription-gated)
  * - CommandCode (hardcoded, provider catalog)
  * - Nous Research (live API, authenticated)
  * - KiosAPI (live API, authenticated)
  * - APInex (live API, authenticated)
- * - OpenCode Zen (live API, public)
+ * - OrcaRouter (live API, public)
+ * - B.AI (live API, authenticated)
+ * - HCNSec / TokenBom / Infron / UnoRouter / BazaarLink / Atria AI
+ *   (static audited catalogs)
+ * - Vercel AI Gateway (live API, public)
  *
  * Fetches live sources in parallel via Promise.allSettled(). If a source fails,
  * uses cached/empty list for that provider. Returns a combined, sorted list.
@@ -156,6 +169,8 @@ export async function fetchGatewayModels(
       fetchApinexModels(forceRefresh),
       fetchOrcarouterModels(forceRefresh),
       fetchBaiModels(forceRefresh),
+      fetchVercelModels(forceRefresh),
+      fetchCleanApisModels(forceRefresh),
       // FID-2026-0910-004 Step 9 remainder: custom catalogs (live + inline)
       // merge here; per-provider failures degrade to [] (D10 ladder).
       fetchAllCustomModels(forceRefresh),
@@ -166,7 +181,9 @@ export async function fetchGatewayModels(
       apinexResult,
       orcarouterResult,
       baiResult,
+      vercelResult,
       customResult,
+      cleanApisResult,
     ] = restResults
 
     const orModels =
@@ -195,6 +212,14 @@ export async function fetchGatewayModels(
         : getCachedOrcarouterModels()
     const baiModels =
       baiResult.status === 'fulfilled' ? baiResult.value : getCachedBaiModels()
+    const vercelModels =
+      vercelResult && vercelResult.status === 'fulfilled'
+        ? vercelResult.value
+        : getCachedVercelModels()
+    const cleanApisModels =
+      cleanApisResult && cleanApisResult.status === 'fulfilled'
+        ? cleanApisResult.value
+        : getCachedCleanApisModels()
     const customModels =
       customResult && customResult.status === 'fulfilled'
         ? customResult.value
@@ -219,6 +244,8 @@ export async function fetchGatewayModels(
       ...apinexModels,
       ...orcarouterModels,
       ...baiModels,
+      ...vercelModels,
+      ...cleanApisModels,
       ...commandCodeModels,
       ...hcnsecCatalog,
       ...tokenbomCatalog,
@@ -252,6 +279,8 @@ export function __resetOpenRouterModelsCacheForTest(): void {
   __resetApinexCacheForTest()
   __resetOrcarouterCacheForTest()
   __resetBaiCacheForTest()
+  __resetVercelCacheForTest()
+  __resetCleanApisCacheForTest()
   // Step 9 remainder: lazily-built custom fetchers are cache state too.
   __resetCustomCatalogsForTest()
   gatewayCache = null
