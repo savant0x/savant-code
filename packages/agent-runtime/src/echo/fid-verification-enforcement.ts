@@ -26,8 +26,20 @@
  * into an explicit, non-fatal line of output.
  */
 
-/** The `**Status:**` declaration line. */
-const STATUS_LINE = /^\*\*Status:\*\*\s*(.+)$/m
+/**
+ * The `**Status:**` declaration line.
+ *
+ * The list marker is optional and the match is not line-start-anchored to the
+ * marker itself: records authored against the earlier metadata-bullet template
+ * write `- **Status:** closed`, which the line-start anchor could not see.
+ * Twelve archived FIDs read as `undefined`, and one of them
+ * (FID-2026-0917-004) genuinely declares `verified` — so the verification
+ * contract was never enforced on it, and the failure reason misreported it as
+ * having no status line at all. Fixing the read rather than rewriting those
+ * records repairs every present and future record at once and edits no history
+ * (FID-2026-0928-002).
+ */
+const STATUS_LINE = /^[ \t]*(?:[-*][ \t]+)?\*\*Status:\*\*[ \t]*(.+)$/m
 
 /** The statuses for which gates + receipt freshness are enforced. */
 export const ENFORCED_VERIFICATION_STATUSES: ReadonlySet<string> = new Set([

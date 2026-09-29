@@ -29,7 +29,10 @@ export const UNVERIFIABLE_REPROBE_DAYS = PROBE_LAPSED_AFTER_DAYS
  * spend an extra probe, never lose evidence.
  */
 export function shouldReprobeUnverifiable(
-  state: Pick<CandidateState, 'lastBoundary' | 'lastProbeAttemptUtc'>,
+  // `Partial` on purpose: never-probed hosts pass `{}` from the caller and
+  // must fail OPEN (probe now) — the contract already treats absent state as
+  // "re-probe"; the type now states it.
+  state: Partial<Pick<CandidateState, 'lastBoundary' | 'lastProbeAttemptUtc'>>,
   nowMs: number,
 ): boolean {
   if (state.lastBoundary !== 'boundary-unverifiable') return false

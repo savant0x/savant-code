@@ -17,12 +17,13 @@ export const OSC_QUERY_TIMEOUT_MS = 500 // Timeout for individual OSC query
 export const GLOBAL_OSC_TIMEOUT_MS = 2000 // Global timeout for entire detection process
 
 /**
- * Wrap a promise with a timeout
- * @param promise - The promise to wrap
- * @param timeoutMs - Timeout in milliseconds
- * @param timeoutValue - Value to return on timeout
+ * Resolve-value timeout variant — deliberately distinct from the canonical
+ * rejecting `withTimeout` in `common/util/promise` (FID-2026-0928-009): this
+ * version RESOLVES to `timeoutValue` on timeout instead of rejecting, which
+ * is the contract the OSC detection flow (theme fallback) is built on.
+ * Different behavior, therefore a different name — not a duplicate body.
  */
-export function withTimeout<T>(
+export function withTimeoutValue<T>(
   promise: Promise<T>,
   timeoutMs: number,
   timeoutValue: T,

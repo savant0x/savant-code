@@ -1,4 +1,5 @@
 import { AgentOutputSchema } from '@savant-code/common/types/session-state'
+import { isRecord } from '@savant-code/common/util/object'
 
 import type { RunState } from './types'
 import type { SessionState } from '@savant-code/common/types/session-state'
@@ -15,10 +16,6 @@ const EPHEMERAL_KEYS = new Set([
 ])
 
 type UnknownRecord = Record<string, unknown>
-
-function isRecord(value: unknown): value is UnknownRecord {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
 
 function omitEphemeralAndFunctions(_key: string, value: unknown): unknown {
   if (EPHEMERAL_KEYS.has(_key) || typeof value === 'function') {

@@ -34,6 +34,7 @@
     "build:savant-free": "bun savant-free/cli/build.ts 0.0.0-dev",
     "ci": "bun run build:sdk && bun run build:savant-free",
     "providers:harvest": "bun scripts/providers/harvest-freeairouter.ts",
+    "providers:custats": "bun scripts/providers/harvest-custats.ts",
     "providers:propose": "bun scripts/providers/propose-provider.ts",
     "providers:quality": "bun scripts/providers/quality-gauntlet.ts",
     "generate:provider-docs": "bun run scripts/generate-provider-reference.ts",

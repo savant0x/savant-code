@@ -3,6 +3,74 @@
 This directory contains closed or historically completed FIDs. Files here are
 an audit record, not an active work queue.
 
+## 2026-09-28 closure — level-3 register sweep (6 FIDs archived)
+
+Six records closed and archived today across the register sweep: -006, -007,
+-008, -009, -010, and the -0927-003 closure. All follow All follow
+the established ceremony: status flipped at closure, the Resolution filled,
+the file moved here, and the receipt re-stamped LIVE at the archived path
+after the last body edit. The commit SHA is pending operator git execution
+(G2 withheld); the operator deferred all commits of the day's work to a
+single later push. Full narratives live in `CHANGELOG.md` (0.0.34) and the
+2026-09-28 session summaries; rows here are the archive index.
+
+Earlier in the day (T96-followup probe, T84-C scripts type-gate, T61
+cloudflare setup seam, utility-tier dedup + eslint rule):
+
+- [`FID-2026-0928-006-t96-vendor-live-probe-nested-shape.md`](FID-2026-0928-006-t96-vendor-live-probe-nested-shape.md)
+  (medium) — 8 live vendor catalogs probed (all HTTP 200); no parser change
+  warranted; negative contract pins added; FID-2026-0927-006 closed on this
+  evidence.
+- [`FID-2026-0928-007-t84c-scripts-type-boundary-triage.md`](FID-2026-0928-007-t84c-scripts-type-boundary-triage.md)
+  (medium) — `scripts/tsconfig.json` now type-gates the whole tree
+  (36 errors → 0 across four classes).
+- [`FID-2026-0928-008-t61-cloudflare-setup-surfacing.md`](FID-2026-0928-008-t61-cloudflare-setup-surfacing.md)
+  (low) — `ProviderSetupInfo.extraEnvVars` seam; cloudflare
+  `setupAvailable: true` under the operator's Option A ruling.
+- [`FID-2026-0928-009-utility-tier-duplication-eslint-gap.md`](FID-2026-0928-009-utility-tier-duplication-eslint-gap.md)
+  (medium) — canonical shared primitives (`isRecord`, `sha256`, `sleep`,
+  `withTimeout`, `asOptional*`) deduplicated 17 copies; new
+  `savant/no-duplicate-shared-primitive` eslint rule with a repo-relative
+  registry.
+
+This session (T90-F3 ruling + T62-followup(1)):
+
+- [`FID-2026-0927-003-ehel-law3-credit-and-fid-receipt-deadlock.md`](FID-2026-0927-003-ehel-law3-credit-and-fid-receipt-deadlock.md)
+  (critical) — closed + archived 2026-09-28 by operator ruling on the T90-F3
+  register item: asked to choose between running the declared gates at write
+  time or accepting the repository-only stale-receipt demotion, the operator
+  ruled *"T90-F3 residual needs no code"* — the repository-only demotion
+  (a stale receipt demotes to a warning when every declared gate passes the C3
+  live re-run at `validate:repository`) is the final disposition. F1
+  (outcome-aware Law 3 credit) and F2 (failure-attributed exemption +
+  `self_correct` fallback) stand as shipped 2026-09-27; the write boundary
+  (`pre-write-gates-fid.ts:105`, `scripts/fid-check.ts:40`) intentionally
+  keeps a stale receipt fatal — it cannot run the C3 re-run at write time, and
+  the operator declines the weaker write-time guarantee. The *Open Remediation*
+  section records accepted behavior, not outstanding work. Receipt re-stamped
+  7/7 LIVE at the archived path.
+- [`FID-2026-0928-010-commandcode-glm-casedrift-window-truth.md`](FID-2026-0928-010-commandcode-glm-casedrift-window-truth.md)
+  (medium) — closed + archived 2026-09-28. The T62-followup(1) register item,
+  re-grounded LIVE: the commandcode roster serves `zai-org/GLM-5.2`/`GLM-5.3`
+  (uppercase) while the static catalog pinned lowercase — the realign FID's
+  own CHANGELOG says uppercase, so the lowercase spellings shipped as a
+  transcription defect that its test pins then embalmed. Catalog, protocol
+  map, and fallback-table rows re-keyed to the roster casing; the two rows'
+  windows re-sourced to the gateway's own publication (the roster publishes
+  `context_length` — 1,000,000 for both, strictly conservative vs the upstream
+  votes 1,048,576/1,310,720, kept in comments). The provider's keyless
+  fail-open `/models` boundary (HTTP 200 with the full roster; TokenRouter and
+  TokenHarbor 401 for the same shape) is vendor-side posture, documented on
+  the registry entry with a pin, not patched. Bonus repair:
+  `scripts/providers/verify-window-truth.ts` had been structurally red since
+  the realign — 4 dead samples (2 pre-realign keys, 2 removed opencode-go
+  rows); re-pointed (incl. `tokenharbor/deepseek-v4-flash` to orcarouter after
+  a 2-of-3 vote upheld the table row against a genuine bazaarlink drift), and
+  a new in-process pin makes stranded probe samples a gate failure instead of
+  silent rot. LIVE probe 14/14; RED-first pin suite observed 1 pass/4 fail
+  pre-change; receipt 7/7 LIVE. Wire-level case-sensitivity proof not claimed
+  (no `COMMAND_CODE_API_KEY` this session — recorded in the FID).
+
 ## 2026-09-27 closure — Vercel AI Gateway provider (FID-2026-0927-001)
 
 FID-bound first on operator direction: the Perfection Loop converged the record

@@ -9,10 +9,11 @@ work separate from historical evidence and generated output.
 | [`fids/archive/`](fids/archive/) | Closed FIDs and immutable historical records |
 | [`build-orders/`](build-orders/) | Planning-only build orders and phase sequencing |
 | [`idea-shelf/`](idea-shelf/) | Shelved ideas, explorations, and design references (not active work) |
+| [`idea-shelf/archive/`](idea-shelf/archive/) | Realized, superseded, or resolved shelf items — terminal records |
 | [`scratchpad/`](scratchpad/) | Short-lived experiments and reusable local validation scripts |
 | [`nova/`](nova/) | Third-party audit inbox/outbox and research channel |
 | [`session-summaries/`](session-summaries/) | Historical session audit trail |
-| [`test-prompts/`](test-prompts/) | Reusable test prompts and live validation harnesses |
+| [`test-prompts/`](test-prompts/) | Reusable test prompts, live validation harnesses, and deep-research prompts |
 | [`exports/`](exports/) | Generated export artifacts; never treat as source documentation |
 | [`releases/`](releases/) | Release-specific development records |
 | [`LEARNINGS.md`](LEARNINGS.md) | Cross-session lessons |

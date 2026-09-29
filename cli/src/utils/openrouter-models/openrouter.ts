@@ -15,6 +15,7 @@ import { PROVIDER_REGISTRY } from '@savant-code/common/providers/registry'
 import { resolveOpenRouterApiKey } from '@savant-code/sdk'
 
 import { createLiveCatalogFetcher } from './live-catalog'
+import { asOptionalNumber } from './wire-guards'
 
 import type { OpenRouterModel, OpenRouterModelsResponse } from './types'
 
@@ -39,12 +40,6 @@ if (!OPENROUTER_MODELS_URL) {
  * would have to re-guard. `lookup.ts` already does guard with `typeof`, but the
  * boundary is the right place to normalize — same rule as the cleanapis parser.
  */
-function asOptionalNumber(
-  value: number | null | undefined,
-): number | undefined {
-  return typeof value === 'number' && Number.isFinite(value) ? value : undefined
-}
-
 function parseCatalog(json: OpenRouterModelsResponse): OpenRouterModel[] {
   const models = json.data ?? []
   const parsed: OpenRouterModel[] = []

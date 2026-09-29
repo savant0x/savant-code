@@ -1,6 +1,6 @@
 import { flushAnalytics } from './analytics'
 import { stopEngagementTracking } from './engagement'
-import { withTimeout } from './terminal-color-detection'
+import { withTimeoutValue } from './terminal-color-detection'
 import { endSavantFreeSessionBestEffort } from '../hooks/use-savant-free-session'
 
 /** Cap on exit cleanup so a slow network doesn't block process exit. */
@@ -15,7 +15,7 @@ export async function exitSavantFreeCleanly(): Promise<never> {
   // Stop the heartbeat first so no engaged-minute fires mid-teardown, then
   // flush whatever's already queued.
   stopEngagementTracking()
-  await withTimeout(
+  await withTimeoutValue(
     Promise.allSettled([flushAnalytics(), endSavantFreeSessionBestEffort()]),
     EXIT_CLEANUP_TIMEOUT_MS,
     undefined,

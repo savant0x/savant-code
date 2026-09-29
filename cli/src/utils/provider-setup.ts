@@ -25,6 +25,7 @@ export {
   getConfiguredProviderNames,
   getProviderSetupInfo,
   saveProviderApiKey,
+  saveProviderApiKeyExtra,
   type MissingProviderSetup,
   type ProviderSetupName,
 } from './provider-key-store'
@@ -40,17 +41,50 @@ export {
 
 let activeProvider: ProviderSetupName = PROVIDER_SETUP_DEFAULT
 
+/**
+ * Dual-credential setup state (T61 Option A, FID-2026-0928-008): after the
+ * primary key is saved, the setup flow may still owe the operator prompts
+ * for `extraEnvVars` credentials (Cloudflare's account id). The queue holds
+ * the remaining extras for the ACTIVE setup session only; it is not
+ * persisted and is cleared when consumed or replaced.
+ */
+let pendingExtraCredentials: Array<{ envVar: string; label: string }> = []
+
+/** Begin key setup for a provider and stage its extra-credential prompts. */
 export function beginProviderSetup(
   provider: string,
 ): ProviderSetupName | undefined {
   const info = getProviderSetupInfo(provider)
   if (!info) return undefined
   activeProvider = info.provider
+  pendingExtraCredentials = info.extraEnvVars
+    ? info.extraEnvVars.filter((e) => !process.env[e.envVar]?.trim())
+    : []
   return activeProvider
 }
 
 export function getActiveProviderSetup(): ProviderSetupName {
   return activeProvider
+}
+
+/** The next staged extra credential for the active setup, if any remain. */
+export function getNextPendingExtraCredential():
+  { envVar: string; label: string } | undefined {
+  return pendingExtraCredentials[0]
+}
+
+/**
+ * Consume the next staged extra credential (call after its value is
+ * saved). Returns the one just consumed so the caller can reference it.
+ */
+export function consumeNextPendingExtraCredential():
+  { envVar: string; label: string } | undefined {
+  return pendingExtraCredentials.shift()
+}
+
+/** Drop any staged extra-credential prompts (setup cancelled/completed). */
+export function clearPendingExtraCredentials(): void {
+  pendingExtraCredentials = []
 }
 
 /**

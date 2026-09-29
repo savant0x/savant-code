@@ -47,7 +47,12 @@ export const PROVIDER_EXCEPTION_MANIFEST: readonly ProviderExceptionManifestEntr
       providerId: 'commandcode',
       kinds: ['dual-protocol'],
       owner: 'common/src/constants/model-config.ts',
-      evidence: ['sdk/src/impl/model-provider/model-factories.ts'],
+      evidence: [
+        'sdk/src/impl/model-provider/model-factories.ts',
+        // FID-2026-0928-010: live vendor rosters — the provider's own
+        // catalog surface and the casing/window probe evidence.
+        'common/src/constants/model-config/providers.ts',
+      ],
     },
     {
       providerId: 'nous',
@@ -123,8 +128,11 @@ export const PROVIDER_EXCEPTION_MANIFEST: readonly ProviderExceptionManifestEntr
       ],
     },
     {
+      // T61 Option A (FID-2026-0928-008): the 'setup-exclusion' kind was
+      // removed — the setup seam now carries credentials.extra
+      // (ProviderSetupInfo.extraEnvVars) and cloudflare is setup-surfaced.
       providerId: 'cloudflare',
-      kinds: ['extra-credentials', 'id-rewrite', 'setup-exclusion'],
+      kinds: ['extra-credentials', 'id-rewrite'],
       owner: 'sdk/src/impl/model-provider/model-factories.ts',
       evidence: [
         'sdk/src/impl/model-provider/model-factories.ts',

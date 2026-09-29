@@ -13,6 +13,15 @@ export interface ProviderSetupInfo {
   label: string
   envVar: string
   baseUrl: string
+  /**
+   * Additional required credentials (T61 Option A, FID-2026-0928-008):
+   * `credentials.extra` carried into the setup flow so a dual-credential
+   * provider can be onboarded completely — the wizard prompts for each
+   * extra after the primary key, and the key store persists them by their
+   * own env-var name. Absent for single-credential providers, so the
+   * derived shape of every existing entry is unchanged.
+   */
+  extraEnvVars?: Array<{ envVar: string; label: string }>
 }
 
 /** Ids whose registry entry has setupAvailable: true (literal-preserving). */
@@ -100,6 +109,14 @@ export function deriveSetupConfig<R extends Record<string, ProviderConfig>>(
         label: config.label,
         envVar: config.credentials.envVar,
         baseUrl: config.baseUrl,
+        ...(config.credentials.extra && config.credentials.extra.length > 0
+          ? {
+              extraEnvVars: config.credentials.extra.map((e) => ({
+                envVar: e.envVar,
+                label: e.label,
+              })),
+            }
+          : {}),
       }
     }
   }

@@ -39,8 +39,10 @@ function buildScaffold(
 ): string {
   const id = slugForHost(host)
   const envVar = `${id.replace(/-/g, '_').toUpperCase()}_API_KEY`
+  const probeCount = (state?.lastProbe as { modelsCount?: unknown } | undefined)
+    ?.modelsCount
   const probe = state
-    ? `From the last harvest: models=${JSON.stringify(state.lastProbe?.modelsCount ?? 'unknown')}`
+    ? `From the last harvest: models=${JSON.stringify(probeCount ?? 'unknown')}`
     : 'No harvest state found — run `bun run providers:harvest --probe` first.'
   const boundaryWarning =
     state?.lastBoundary === 'open-relay-reject'

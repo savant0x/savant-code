@@ -1,3 +1,4 @@
+import { sleep } from '@savant-code/common/util/promise'
 import { useEffect, useRef } from 'react'
 
 import { LOGIN_WEBSITE_URL } from '../login/constants'
@@ -64,11 +65,6 @@ export function useLoginPolling({
     }
 
     let active = true
-
-    const sleep = (ms: number) =>
-      new Promise<void>((resolve) => {
-        setTimeout(resolve, ms)
-      })
 
     pollLoginStatus(
       {

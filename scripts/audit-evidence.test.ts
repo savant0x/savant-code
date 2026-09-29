@@ -6,6 +6,8 @@ import {
   redactAuditText,
 } from './audit-evidence'
 
+import type { AuditTranscript } from './audit-evidence-types'
+
 describe('audit evidence', () => {
   it('redacts credential-shaped output before hashing', () => {
     const redacted = redactAuditText(
@@ -53,7 +55,7 @@ describe('audit evidence', () => {
           redactedOutputSha256: 'b'.repeat(64),
           transcriptFinalized: true,
         },
-      ],
+      ] as unknown as AuditTranscript[],
     ] as const
     expect(buildAuditManifest(...args).manifestSha256).toBe(
       buildAuditManifest(...args).manifestSha256,

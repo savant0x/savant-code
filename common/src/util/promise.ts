@@ -56,7 +56,14 @@ export async function withRetry<
   throw lastError
 }
 
-export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
+/**
+ * Canonical sleep (FID-2026-0928-009 Part 4: utility-tier consolidation
+ * home; the shared-primitive rule registry points every definition here).
+ * Typed `Promise<void>` so it satisfies `(ms: number) => Promise<void>`
+ * dependency slots (e.g. PollLoginStatusDeps) without a local re-wrap.
+ */
+export const sleep = (ms: number): Promise<void> =>
+  new Promise<void>((resolve) => setTimeout(resolve, ms))
 
 /**
  * Wraps a promise with a timeout

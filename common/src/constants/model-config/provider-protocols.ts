@@ -27,8 +27,8 @@ export const COMMANDCODE_PROTOCOLS: Record<string, ProviderModelProtocol> = {
   'commandcode/claude-haiku-4-5-20251001': 'anthropic',
   'commandcode/xai/grok-4.5': 'openai',
   'commandcode/xai/grok-4.6': 'openai',
-  'commandcode/zai-org/glm-5.2': 'openai',
-  'commandcode/zai-org/glm-5.3': 'openai',
+  'commandcode/zai-org/GLM-5.2': 'openai', // FID-2026-0928-010: roster casing
+  'commandcode/zai-org/GLM-5.3': 'openai',
   'commandcode/moonshotai/Kimi-K3': 'openai',
   'commandcode/moonshotai/Kimi-K2.7-Code': 'openai',
   'commandcode/moonshotai/Kimi-K2.6': 'openai',

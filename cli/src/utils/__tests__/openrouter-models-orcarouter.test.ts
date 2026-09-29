@@ -70,6 +70,28 @@ describe('orcarouter live catalog parser (FID-2026-0911-002)', () => {
     expect(gpt.contextLength).toBeUndefined()
   })
 
+  test('nested architecture fields stay unmapped (T96-followup probe 2026-09-28)', () => {
+    // Measured live 2026-09-28 (HTTP 200, 204 models): an `architecture`
+    // OBJECT is present on 182/204 models but every field inside it is
+    // null/absent — nested modality/tokenizer/instruct_type populated on
+    // 0/204, flat keys also 0/204 (T96-followup / FID-2026-0927-006). The
+    // empty shell is the speculative-shape trap in its purest form: a
+    // presence check would pass, a populated-field read maps `undefined`
+    // for every model. The parser deliberately reads neither position.
+    const models = parseOrcarouterModelsForTest({
+      data: [
+        {
+          id: 'orcarouter/free',
+          architecture: { modality: 'text->text', tokenizer: 'Other' },
+          modality: 'text->text',
+        } as Record<string, unknown>,
+      ],
+    })
+    expect(models[0]?.modality).toBeUndefined()
+    expect(models[0]?.tokenizer).toBeUndefined()
+    expect(models[0]?.instructType).toBeUndefined()
+  })
+
   test('empty/missing data yields an empty catalog (degrade, not throw)', () => {
     expect(parseOrcarouterModelsForTest({})).toEqual([])
     expect(parseOrcarouterModelsForTest({ data: [] })).toEqual([])

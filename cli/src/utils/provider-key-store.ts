@@ -87,6 +87,17 @@ export function applyPersistedProviderApiKeys(): void {
     if (storedKey) {
       process.env[config.envVar] = storedKey
     }
+
+    // Dual-credential providers (T61 Option A): apply persisted extras too.
+    // Extras are stored under their OWN env-var names, so the lookup is by
+    // name and needs no per-provider wiring here.
+    for (const extra of config.extraEnvVars ?? []) {
+      if (process.env[extra.envVar]?.trim()) continue
+      const storedExtra = storedKeys[extra.envVar]
+      if (storedExtra) {
+        process.env[extra.envVar] = storedExtra
+      }
+    }
   }
 
   // A provider key saved by an earlier release may predate the persisted
@@ -155,6 +166,57 @@ export function saveProviderApiKey(provider: string, apiKey: string): void {
       `Unknown provider '${provider}'. Register custom providers or pick a built-in.`,
     )
   }
+  persistProviderKey(config.envVar, trimmedKey)
+
+  const hasShellKey = Boolean(process.env[config.envVar]?.trim())
+  if (!hasShellKey) {
+    process.env[config.envVar] = trimmedKey
+  }
+
+  activateProviderRouting(provider, config)
+
+  if (provider === 'openrouter') {
+    resetOpenRouterApiKeyCache()
+  }
+}
+
+/**
+ * Save one additional (extra) credential for a dual-credential provider
+ * (T61 Option A, FID-2026-0928-008). The value is persisted under the
+ * extra's own env-var name in the same 0600 credentials store and applied
+ * to the process env with the same shell-precedence rule as the primary
+ * key. No routing state changes — activation stays the primary key's job.
+ */
+export function saveProviderApiKeyExtra(
+  provider: string,
+  extraEnvVar: string,
+  value: string,
+): void {
+  const trimmed = value.trim()
+  if (!trimmed) {
+    throw new Error('Credential value cannot be empty.')
+  }
+  const config = getEffectiveProviderSetupConfig()[provider]
+  if (!config) {
+    throw new Error(
+      `Unknown provider '${provider}'. Register custom providers or pick a built-in.`,
+    )
+  }
+  const extra = config.extraEnvVars?.find((e) => e.envVar === extraEnvVar)
+  if (!extra) {
+    throw new Error(
+      `Provider '${provider}' has no additional credential '${extraEnvVar}'.`,
+    )
+  }
+  persistProviderKey(extraEnvVar, trimmed)
+
+  if (!process.env[extraEnvVar]?.trim()) {
+    process.env[extraEnvVar] = trimmed
+  }
+}
+
+/** Write one credential into the shared 0600 credentials store by env-var name. */
+function persistProviderKey(envVar: string, value: string): void {
   const credentialsPath = getCredentialsPath()
   const existing = readCredentialsRecord()
   const existingKeys = readStoredProviderKeys()
@@ -167,7 +229,7 @@ export function saveProviderApiKey(provider: string, apiKey: string): void {
     ...existing,
     providerApiKeys: {
       ...existingKeys,
-      [config.envVar]: trimmedKey,
+      [envVar]: value,
     },
   }
   fs.writeFileSync(credentialsPath, JSON.stringify(updated, null, 2))
@@ -179,12 +241,13 @@ export function saveProviderApiKey(provider: string, apiKey: string): void {
   } catch {
     // Best effort only; do not make a valid Windows setup fail.
   }
+}
 
-  const hasShellKey = Boolean(process.env[config.envVar]?.trim())
-  if (!hasShellKey) {
-    process.env[config.envVar] = trimmedKey
-  }
-
+/** Apply the direct-provider routing/activation effects of a saved primary key. */
+function activateProviderRouting(
+  provider: string,
+  config: ProviderSetupInfo,
+): void {
   const shellProvider = process.env.DIRECT_PROVIDER?.trim()
   const shellBaseUrl = process.env.INFERENCE_BASE_URL?.trim()
   let activated = false
@@ -209,10 +272,6 @@ export function saveProviderApiKey(provider: string, apiKey: string): void {
     // validated the id; no cast needed at the settings seam.
     saveSavantCodeModelProviderPreference(provider)
     saveActiveProvider(provider)
-  }
-
-  if (provider === 'openrouter') {
-    resetOpenRouterApiKeyCache()
   }
 }
 

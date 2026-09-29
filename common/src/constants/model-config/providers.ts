@@ -182,8 +182,11 @@ export const commandcodeModels = {
   // OpenAI-compatible models
   commandcode_grok_4_5: 'commandcode/xai/grok-4.5',
   commandcode_grok_4_6: 'commandcode/xai/grok-4.6',
-  commandcode_glm_5_2: 'commandcode/zai-org/glm-5.2',
-  commandcode_glm_5_3: 'commandcode/zai-org/glm-5.3',
+  // FID-2026-0928-010: GLM ids use the live roster's casing
+  // (zai-org/GLM-5.2/5.3, keyless /models probe 2026-09-28) — the lowercase
+  // spellings that shipped contradicted the realign FID's stated casing.
+  commandcode_glm_5_2: 'commandcode/zai-org/GLM-5.2',
+  commandcode_glm_5_3: 'commandcode/zai-org/GLM-5.3',
   commandcode_kimi_k3: 'commandcode/moonshotai/Kimi-K3',
   commandcode_kimi_k2_7_code: 'commandcode/moonshotai/Kimi-K2.7-Code',
   commandcode_kimi_k2_6: 'commandcode/moonshotai/Kimi-K2.6',

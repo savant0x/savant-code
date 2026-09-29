@@ -1,7 +1,7 @@
 import { describe, test, expect } from 'bun:test'
 
 import {
-  withTimeout,
+  withTimeoutValue,
   getGlobalOscTimeout,
   getQueryOscTimeout,
 } from '../terminal-color-detection'
@@ -20,7 +20,11 @@ describe('OSC Timeout Protection Scenarios', () => {
       })
 
       const startTime = Date.now()
-      const result = await withTimeout(neverResolvingPromise, 100, 'fallback')
+      const result = await withTimeoutValue(
+        neverResolvingPromise,
+        100,
+        'fallback',
+      )
       const elapsed = Date.now() - startTime
 
       expect(result).toBe('fallback')
@@ -31,7 +35,7 @@ describe('OSC Timeout Protection Scenarios', () => {
     test('returns null theme when detection hangs', async () => {
       const hangingDetection = new Promise<'dark' | 'light' | null>(() => {})
 
-      const result = await withTimeout(hangingDetection, 50, null)
+      const result = await withTimeoutValue(hangingDetection, 50, null)
       expect(result).toBeNull()
     })
   })
@@ -42,7 +46,11 @@ describe('OSC Timeout Protection Scenarios', () => {
         setTimeout(() => resolve('slow-response'), 500)
       })
 
-      const result = await withTimeout(slowPromise, 100, 'timeout-fallback')
+      const result = await withTimeoutValue(
+        slowPromise,
+        100,
+        'timeout-fallback',
+      )
       expect(result).toBe('timeout-fallback')
     })
 
@@ -51,7 +59,11 @@ describe('OSC Timeout Protection Scenarios', () => {
         setTimeout(() => resolve('fast-response'), 10)
       })
 
-      const result = await withTimeout(fastPromise, 100, 'timeout-fallback')
+      const result = await withTimeoutValue(
+        fastPromise,
+        100,
+        'timeout-fallback',
+      )
       expect(result).toBe('fast-response')
     })
   })
@@ -71,7 +83,7 @@ describe('OSC Timeout Protection Scenarios', () => {
     test('multiple timeouts racing dont cause issues', async () => {
       // Create multiple promises that might complete at similar times
       const promises = Array.from({ length: 10 }, (_, i) =>
-        withTimeout(
+        withTimeoutValue(
           new Promise<number>((resolve) =>
             setTimeout(() => resolve(i), Math.random() * 100),
           ),
@@ -96,7 +108,7 @@ describe('OSC Timeout Protection Scenarios', () => {
       })
 
       // This should timeout and return the fallback value
-      const result = await withTimeout(neverResolves, 50, 'timeout')
+      const result = await withTimeoutValue(neverResolves, 50, 'timeout')
       expect(result).toBe('timeout')
 
       // Note: withTimeout cleans up its own setTimeout via the finally block
@@ -129,20 +141,20 @@ describe('OSC Timeout Protection Scenarios', () => {
       const rejectingPromise = Promise.reject(new Error('test error'))
 
       await expect(
-        withTimeout(rejectingPromise, 100, 'fallback'),
+        withTimeoutValue(rejectingPromise, 100, 'fallback'),
       ).rejects.toThrow('test error')
     })
 
     test('timeout value can be any type', async () => {
       const hangingPromise = new Promise<{ theme: string }>(() => {})
 
-      const objectResult = await withTimeout(hangingPromise, 50, {
+      const objectResult = await withTimeoutValue(hangingPromise, 50, {
         theme: 'default',
       })
       expect(objectResult).toEqual({ theme: 'default' })
 
       const hangingPromise2 = new Promise<number[]>(() => {})
-      const arrayResult = await withTimeout(hangingPromise2, 50, [1, 2, 3])
+      const arrayResult = await withTimeoutValue(hangingPromise2, 50, [1, 2, 3])
       expect(arrayResult).toEqual([1, 2, 3])
     })
   })
@@ -150,9 +162,9 @@ describe('OSC Timeout Protection Scenarios', () => {
   describe('Scenario 7: Stacked timeouts (defense in depth)', () => {
     test('inner timeout fires before outer timeout', async () => {
       const innerPromise = new Promise<string>(() => {})
-      const innerResult = withTimeout(innerPromise, 30, 'inner-timeout')
+      const innerResult = withTimeoutValue(innerPromise, 30, 'inner-timeout')
 
-      const outerPromise = withTimeout(innerResult, 100, 'outer-timeout')
+      const outerPromise = withTimeoutValue(innerResult, 100, 'outer-timeout')
 
       const result = await outerPromise
       // Inner timeout should fire first
@@ -165,7 +177,11 @@ describe('OSC Timeout Protection Scenarios', () => {
         // This never resolves, simulating broken inner timeout
       })
 
-      const result = await withTimeout(brokenInnerPromise, 50, 'outer-saved-us')
+      const result = await withTimeoutValue(
+        brokenInnerPromise,
+        50,
+        'outer-saved-us',
+      )
       expect(result).toBe('outer-saved-us')
     })
   })

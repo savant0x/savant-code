@@ -7,6 +7,11 @@ master-fetch-master/
 packages/design-systems/library/**
 cli/bin/savant-design-systems/SKILL.md
 dev/test-prompts/archive/**
+# Deep-research prompts (moved from dev/idea-shelf/ 2026-09-28) — paste-ready
+# research payloads, not shipped documentation; carry long URLs and prose lines
+# by design. Exemption follows the dev/idea-shelf/** and research-payload
+# precedent.
+dev/test-prompts/*-deep-research-prompt.md
 dev/nova/inbox/archive/**
 dev/nova/outbox/archive/**
 dev/nova/reports/**

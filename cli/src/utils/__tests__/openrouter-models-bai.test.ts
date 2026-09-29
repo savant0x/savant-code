@@ -83,6 +83,26 @@ describe('bai live catalog parser (FID-2026-0911-004)', () => {
     expect(good.contextLength).toBe(128000)
   })
 
+  test('nested architecture fields stay unmapped (T96-followup probe 2026-09-28)', () => {
+    // Measured live 2026-09-28 (HTTP 200, 57 models): no `architecture.*`
+    // object and no flat modality/tokenizer/instruct_type — 0/57 in both
+    // positions (T96-followup / FID-2026-0927-006). Mapping a nested read
+    // here would populate nothing for every model; the negative leg keeps
+    // that decision pinned and detectable if the vendor changes shape.
+    const models = parseBaiModelsForTest({
+      data: [
+        {
+          id: 'minimax-m3',
+          architecture: { modality: 'text->text', tokenizer: 'Other' },
+          modality: 'text->text',
+        } as Record<string, unknown>,
+      ],
+    })
+    expect(models[0]?.modality).toBeUndefined()
+    expect(models[0]?.tokenizer).toBeUndefined()
+    expect(models[0]?.instructType).toBeUndefined()
+  })
+
   test('empty/missing data yields an empty catalog', () => {
     expect(parseBaiModelsForTest({})).toEqual([])
     expect(parseBaiModelsForTest({ data: [] })).toEqual([])

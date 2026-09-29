@@ -2,6 +2,20 @@ import { isEqual, mapValues, union } from 'lodash'
 
 import type { JSONValue } from '../types/json'
 
+/**
+ * Canonical `isRecord` — narrows an arbitrary value to a plain-object
+ * record (FID-2026-0928-009 Part 4: the utility-tier consolidation home;
+ * the rule registry points every future definition here).
+ *
+ * Arrays and `null` are excluded — a JSON array is not a record. For JSON
+ * trust-boundary validation with parsed output, prefer
+ * `safeParseJSONObject` from `util/type-narrowing`; this guard is the cheap
+ * boolean check for already-in-memory values.
+ */
+export function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
 type RemoveUndefined<T extends object> = {
   [K in keyof T as T[K] extends undefined ? never : K]: Exclude<T[K], undefined>
 }

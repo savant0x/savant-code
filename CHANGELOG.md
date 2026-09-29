@@ -2,6 +2,257 @@
 
 ## 0.0.34 — 2026-09-28
 
+### `/provider free` — free-options discovery, agent-answerable (FID-2026-0928-012) — **`closed` 2026-09-28**
+
+Savant-Code is BYOK — there is no Savant backend or credit balance, so
+"free" means free tiers/models of the gateways the user wires with their own
+keys, and nothing told the user what those were. New `/provider free`
+subcommand: on invocation (never at boot) it live-fetches the keyless
+custats free-models catalog (`free-llm-models.custats.info`, agent-facing by
+design — robots Policy A; 24h TTL cache, 30s timeout, soft-degrade to the
+last-good cache with a staleness note on failure), splits free lanes by the
+user's OWN wired keys (`readStoredProviderKeys` ∪ non-empty env vars — the
+same truth `applyPersistedProviderApiKeys` consumes), and lists **wired &
+free** (models usable today), **free but not wired** (with the exact
+`/provider <name>` onboarding command), and **local & free** (ollama, no
+key). The same refresh writes `~/.savant-code/free-options.md` — the
+agent-answerable reference — so the user and the agent share one canonical
+surface: ask the agent "what free options do I have?" and it reads that
+file. `free` joins the `/provider` grammar words (wizard custom-id
+reservation picks it up automatically). Content is untrusted third-party
+text rendered as read-only information; nothing mutates configuration.
+
+### custats feeds wired in as the discovery pipeline's second source (FID-2026-0928-011) — **`closed` 2026-09-28**
+
+The free-compute discovery pipeline (`providers:harvest`) was single-source
+(`freeairouter.com`). New `providers:custats` leg adds
+`freetokens.custats.info/feed` (RSS, 196 offers — the 87 `api_provider`
+offers parse to an offers ledger with expiry dates; offers are TIME EVENTS
+and never enter the host candidate queue) and `free-llm-models.custats.info`
+(OpenRouter-schema catalog, 161 rows — enrichment + retirement signal via
+`newModelIds`/`archivedModels`/`expiration_date`; all 6 of its providers are
+already tracked). Host attribution is conservative two-mechanism (host
+literals + ≥3-char brand-label tokens; "Vercel AI Gateway" prose now
+attributes, "Z AI" deliberately lands in the operator-review bucket); new
+discovery lanes still enter only through SEED_HOSTS review. Freshness gates
+(RSS ≤72h, catalog ≤48h) soft-skip stale cycles instead of failing
+automation. LIVE: 43 attributed / 44 unattributed / 1 expiring soon
+(Vercel Ling 3.0 window, 6 days out). RED-first: 18/18 pins; the pins caught
+two real defects pre-live (fixture lying about the malformed-row contract;
+matcher blind to brand-label prose).
+
+### Law 3 credit + FID receipt deadlock closed: the write-boundary residual accepted as final (FID-2026-0927-003) — **`closed` 2026-09-28**
+
+Closed by operator ruling (2026-09-28): asked to choose between running the
+declared gates at write time or accepting the repository-only stale-receipt
+demotion, the operator ruled *"T90-F3 residual needs no code"* — the
+repository-only demotion is the final disposition. The F1 fix (Law 3 credit
+is outcome-aware; a red `bun test` can no longer be credited as a pass),
+the F2 fix (failure-attributed exemption + `self_correct` fallback end the
+deadlock without opening a masking vector), and the F3 repository-gate half
+(a stale receipt demotes to a warning when every declared gate passes the
+C3 live re-run) all stand as shipped and mutation-proven. The write boundary
+(`pre-write-gates-fid.ts:105`, `scripts/fid-check.ts:40`) intentionally
+keeps treating a stale receipt as fatal: it cannot run the C3 re-run at
+write time, and the operator declines the weaker write-time guarantee. The
+FID's *Open Remediation* section now records accepted behavior, not
+outstanding work.
+
+### CommandCode GLM ids re-keyed to the live roster; window-truth probe repaired (FID-2026-0928-010) — **`closed` 2026-09-28**
+
+The T62-followup(1) register item, grounded LIVE on 2026-09-28. The static
+commandcode catalog pinned `zai-org/glm-5.2`/`glm-5.3` lowercase while the
+live roster serves `zai-org/GLM-5.2`/`GLM-5.3` — the realign FID's own
+CHANGELOG says uppercase, so the lowercase spellings shipped as a
+transcription defect that its test pins then embalmed; the wire path sends
+catalog ids verbatim after the prefix strip. Catalog, protocol map, and
+fallback-table rows are re-keyed to the roster casing, and the two rows'
+windows are re-sourced to the gateway's own publication (the commandcode
+roster publishes `context_length` per id — 1,000,000 for both rows, a
+strictly conservative correction from 1,048,576 / 1,310,720; upstream votes
+kept in the comment trail). The provider's **fail-open /models boundary**
+(keyless GET → HTTP 200 with the full 82-id roster, re-measured 2026-09-28;
+TokenRouter/TokenHarbor 401 for the same shape) is vendor-side posture and
+is now documented on the registry entry with a pin, not patched. Bonus
+repair: `verify-window-truth.ts` had been structurally red since the
+realign — 4 sample rows referenced removed/pre-realign table keys. Samples
+re-pointed (incl. `tokenharbor/deepseek-v4-flash` to orcarouter after a
+2-of-3 vote upheld the table row against a bazaarlink drift), two re-keyed
+commandcode samples added, and a new in-process pin makes stranded probe
+samples a gate failure instead of silent rot (LIVE: probe exits 0, 14/14
+rows match). RED-first pin suite observed 1 pass/4 fail pre-change.
+
+### Every `scripts/**` file is now type-gated: 36 errors fixed, boundary widened (FID-2026-0928-007) — **`closed` 2026-09-28**
+
+The T84-C triage reproduced the unreproducible `36 errors across 14 files`
+figure (the earlier TS5102 failures were a cwd/config-resolution artifact)
+and categorized every error. Under the operator's Option 1 ruling:
+`scripts/tsconfig.json` now compiles the **entire tree** (`include:
+["**/*.ts"]`) in the standing `typecheck:scripts` hard gate — previously a
+closed include list covered only the release engine, and not even every test
+in its own directory.
+
+The 36 errors fell in four classes, all fixed: **8 real production defects**
+(`audit-evidence.ts` wrote a `durationMs` field its own type denied;
+`fid-verify.ts` normalized Bun's `signalCode: undefined` to `null` at the
+boundary rather than widening the contract; `candidates-io.ts`,
+`harvest-phases.ts`/`health.ts`, `propose-provider.ts` type-lag repairs),
+**8 stale `buildReceipt` calls** in `fid-verify.test.ts` that had silently
+verified receipts built with `verifiedAt: undefined` (bun does not
+arity-check), **18 test-fixture friction errors** (typed fixtures against
+`CustomProviderConfig`/`ReportInput`/`NudgeCandidate`, explicit
+`as unknown as typeof fetch` doubles), and **2 errors in a production-dead
+file** (`provider-stamp.ts`, rewritten as the canonical-typed seam; its
+drifted `DiscoveryStamp` import and hand-rolled stamp fields are gone).
+
+### Cloudflare is now setup-surfaced: the dual-credential seam (FID-2026-0928-008) — **`closed` 2026-09-28**
+
+Under the operator's Option A ruling, `ProviderSetupInfo` gained optional
+`extraEnvVars` populated by `deriveSetupConfig` from `credentials.extra`, and
+Cloudflare flipped `setupAvailable: true` — the last registered gateway that
+was fully routed yet invisible in `/provider`. The wizard now prompts for the
+account id after the token (staged per session in `beginProviderSetup`,
+chained through `routeKeySetup`'s new post-save `getNextInputMode` hook, with
+an `emptyValueMessage` override so an account id is never called an "API
+key"); `saveProviderApiKeyExtra` persists extras under their own env-var
+names in the shared 0600 store; `applyPersistedProviderApiKeys` applies them
+at run start. The provider-exception manifest dropped the stale
+`setup-exclusion` entry — the audit gate flagged it live. Registry test's
+setup-provider count pin moved 18 → 19; README (EN + zh-CN) provider
+surfaces updated.
+
+### Utility-tier duplication is now mechanically enforced (FID-2026-0928-009) — **`closed` 2026-09-28**
+
+The shelved idea-shelf report became a filed record, was activated by the
+operator, and shipped in three sequenced parts. **Part 4 (sweep):** canonical
+homes created (`isRecord` in `common/util/object.ts`, `sha256`/`sha256Hex` in
+the new `common/util/hash.ts`, the `asOptionalString`/`asOptionalNumber`
+pair in the new `cli/src/utils/openrouter-models/wire-guards.ts`); all 9+8
+per-shim guard copies deleted in favor of the shared import; `withTimeout`
+deduped to `common/util/promise.ts` (the OSC resolve-value variant renamed
+`withTimeoutValue` — different behavior, different name); the four
+genuinely-different `isRecord` predicates renamed for what they are. Final
+counts: one body per primitive. **Parts 1+2+3 (the gate):** the new
+`no-duplicate-shared-primitive` ESLint rule (registry-driven:
+`shared-primitives.json`) errors on any top-level re-declaration of a
+registered primitive outside its canonical home, wired active in the
+standing `eslint . --max-warnings 0` pre-push leg, with 5 fixture-backed
+pins. It earned its keep on first run: 7 additional stragglers the manual
+scan missed, each explicitly dispositioned (the clean-process attestation
+tree's independence is contract, not duplication). **Part 5:** the rule
+header documents harvest inheritance — future provider shims must import the
+shared guards, so the fan-out that created 17 duplicates cannot recur
+silently.
+
+### All eight live catalogs probed: nested-shape reconciliation closes with a null result (FID-2026-0928-006) — **`closed` 2026-09-28**
+
+The T96-followup per-vendor live probe ran against every live catalog endpoint
+in the registry (all HTTP 200): **openrouter 459, nous 418, cleanapis 33
+(re-measured by FID-2026-0927-005), apinex 34, kiosapi 36, bai 57, orcarouter
+204, nvidia 81, vercel 389 models.** The three parsers that read the nested
+`architecture.*` fields are exactly the three vendors that measurably serve
+populated nested fields; the other six serve **no** modality/tokenizer/
+instruct_type data in either position — orcarouter is the instructive case: an
+`architecture` object present on 182/204 models with every field null (an
+empty shell that passes presence checks and maps nothing).
+
+**Verdict: no code change.** Adding a nested read to the six would map
+`undefined` for every model — the speculative-shape trap FID-2026-0927-006
+ruled against, confirmed by measurement instead of argument. The null result
+is mechanically enforced by negative contract pins (one leg per unmapped
+parser, each citing the probe: apinex, bai, orcarouter, vercel, kiosapi,
+nvidia), which fail the moment a vendor payload would populate a mapped field.
+
+**Also fixed:** `parseNvidiaModelsForTest` — nvidia was the last live parser
+without a test seam (Law 11). New `openrouter-models-nvidia.test.ts` (3 legs).
+
+This closure unblocked **FID-2026-0927-006** (the `capabilities` decision
+record), which closed the same day with no code change, exactly as its ruling
+stated it would.
+
+### The scope register now holds open items only (FID-2026-0928-005) — **`closed` 2026-09-28**
+
+Operator ruling: *"if the item is completed, it should not even be in scope, only
+active/pending items should be in scope."* `SCOPE.md` could not comply, and the
+measurement is the interesting part.
+
+**The gate was the obstacle, not the file.** Stripping the completed index and
+running the live collector produced **111 issues — every one from a historical
+session summary, and none from either active FID.** Leg 2 of
+`scope-register-completeness.ts` demanded a register line for every task cited
+by *"an active FID or a current session summary"*, and the code read "current"
+as *every summary written since 2026-09-19*. A summary is written when a session
+**ends**, so what it cites is finished by construction — the leg was requiring
+completed work to stay in scope permanently, and each finished session added to
+that set forever.
+
+**Change.** Leg 2 now scans the active queue plus `dev/agenda.md`; session
+summaries are no longer scanned. `SCOPE.md` drops all 34 completed task
+sections. **582 → 246 lines, 16 open items, zero `## Task NN` sections.**
+
+**What this gives up, stated rather than absorbed.** Work completed in a session
+that filed neither a FID nor a CHANGELOG entry now leaves no gate-visible trace.
+The compensating control is `changelog-coverage`, ratcheted against a baseline,
+currently 0 uncovered of 423 archived FIDs. The gate also cannot tell a
+*finished* task from an *abandoned* one — both look identical and both are now
+accepted; an abandoned item is caught only if a live surface still names it.
+
+**Evidence.** 8 new legs in `scope-register-open-items-only.test.ts`, 4 failing
+before the change. Two of the eight pass before *and* after on purpose — the
+retained active-FID controls, so the suite could not be satisfied by gutting the
+check. A live adversarial probe confirmed an active FID citing `Task 74` and
+`T83-A` still yields both as issues. One pre-existing leg asserted the removed
+behaviour and was **inverted rather than deleted**, so the narrowing stays
+visible. The gate also caught this FID's own first draft for citing a task
+number inside a fenced block — `withoutInlineCode` strips only single-line
+spans, so a fence is a live claim, not a quotation.
+
+### The scope register was 74% historical prose and its pending work was in three places — **`closed` 2026-09-28**
+
+An audit of `SCOPE.md` found the file breaking the rule its own header states
+40 lines earlier ("a completed task is indexed here to one line"). Four defects,
+all now fixed.
+
+**The open list was a third of the pending set.** 15 items were open; the
+*Open items* section held 8. Six more checkboxes — T95-B, T95-C, T97 and the
+three Code Universe rulings R1–R3 — sat in per-task sections 120+ lines further
+down, and Task 90's F3 residual was open in prose with no checkbox at all. A
+reader asking "what is open?" got the wrong answer. All 16 now live in one
+section, grouped by area, each keeping its full blocker text.
+
+**296 lines of completed-task prose sat under a heading that called itself an
+index**, with per-section detail averaging 9–11 wrapped lines. Now one index
+entry per task carrying the FID id, receipt, the substantive finding and a
+CHANGELOG/summary pointer. The four largest sections collapsed hardest: Task 95
+85 → 12 lines, Task 90 43 → 8, Task 92 39 → 16, Task 93 27 → 9.
+
+**The index boundary was not the open/complete boundary.** Tasks 90, 95 and 97
+were marked OPEN/PARTIAL/rulings-pending *above* `## Completed — index`, while
+Tasks 87, 84 and 62 sat *inside* it carrying open sub-items. Each index entry now
+says so explicitly and points at *Open items*.
+
+**A 16th open item was hiding as prose.** The cross-catalog nested-shape
+reconciliation was carried as "deferred to `FID-2026-0927-006` → _Deferred_" at
+the foot of a *COMPLETE* task heading — wrong twice over, since that FID is
+`converged` and still active and its subject is the `capabilities` field (Task
+93, ruled NO). It is now a checkbox with a named blocker. It is also the clearest
+live demonstration of a gap in `scope.prohibited-disposition`: the guard matches
+the notation `deferred::` / `[DEFERRED]`, so the same disposition written as
+prose passes.
+
+Two factual corrections rode along: a severed sentence in the Task 84 entry
+(`T84-C remains` orphaned mid-clause and restated two lines later), and a
+register line asserting the 09-19 → 09-27 wave was uncommitted — it is in
+history, verified against 462 commits.
+
+**No gate reads a section body.** `collectRegisteredTasks`
+(`scope-register-completeness.ts:69-83`) matches only the `## Task NN` heading
+and `TNN-X` item lines, so condensing bodies was provably safe. All 34 task
+headings are retained and two were added (Task 68, Task 96), making register
+coverage strictly larger. `validate:repository`, `lint:md`,
+`scope-register-check`, `quality:report` and `prettier --check` all pass.
+
+
 > **v0.0.34** — two built-in gateway providers (**Vercel AI Gateway**, **Clean
 > APIs**), both live-verified end to end, and a **critical soundness fix to the
 > Law 3 verification gate** that had been crediting a red test suite as a pass.
@@ -11,6 +262,78 @@
 > (`--resume` plus an npm read-after-write retry) that was dead. Governance:
 > agents may stage, commit, and push granular commits to origin main; force-push,
 > history rewrite, and release mutations remain operator-only.
+
+### Code Universe: six colours below AA, an 8px type floor, and a bypassed palette (FID-2026-0928-004) — **`closed` 2026-09-28**
+
+Severity `medium`. A design pass over the offline Code Universe export
+(FID-2026-0928-003) found four defects in its stylesheet, all now fixed.
+**D1:** six text pairs failed WCAG AA 1.4.3 at the 8–9px sizes they are used at
+— the worst was `.document-line-number` `#3f6681` at **3.24:1**, the gutter on
+every line of every document. Each colour was lifted per background to ≥4.62:1;
+`#607899` needed two different replacements because its three uses sit on two
+differently-composited backgrounds. **D2:** the declared palette was bypassed —
+`--muted` and `--line` were re-typed as literals in 14 places. Eight tokens
+added, ten families routed: body hex **122 → 52** (distinct 57 → 40), `var()`
+**58 → 130**. **D3:** 29 of 38 `font-size` declarations sat below 11px; the
+floor is now 10px. **D4:** only three focus rules existed for ~15 control
+groups; one shared cyan ring now covers ten. The regression suite reads the live
+declaration out of the CSS, so reverting a value re-breaks it — 13 of 14 legs
+failed before the change. No layout, markup or behaviour change, and the
+deterministic-artifact gate stayed green. **Open:** R1 (the OS-window metaphor
+and atmosphere are a Gate 7 product-identity call), R2 (short-viewport clipping
+is NEEDS-REVIEW — only settleable by rendering), R3 (40 literals remain, needing
+`color-mix()`).
+
+### The FID status parser could not read a bullet-form `**Status:**` line (FID-2026-0928-002) — **`closed` 2026-09-28**
+
+Severity `medium`. Found by a `dev/fids/` audit. `STATUS_LINE`
+(`packages/agent-runtime/src/echo/fid-verification-enforcement.ts:30`) was
+line-start-anchored, so the `- **Status:** …` metadata-bullet form written by
+the older record template parsed as `undefined` — and the failure reason
+misreported those records as having *no status line at all*. **12 of 423**
+archived FIDs were affected, one of them (`FID-2026-0917-004`) genuinely
+declaring `verified`. Two further copies of the same anchor lived in
+`fid-validator.ts:67,249`; all three now read through `parseFidStatus`, so the
+status has one definition. The read was repaired rather than the 12 records
+rewritten, which touches no history and covers future records. 11 unit legs,
+5 red before the change.
+
+**The measured blast radius is zero today, and the FID says so.** All 12 records
+are in the archive, and `activeFidFiles()` (`scripts/fid-check.ts:20-27`) scans
+only `dev/fids/` top level, so the defect is latent rather than live: the first
+bullet-form `verified` record left *active* would be silently exempt from the
+verification contract. Two claims in the first draft of that FID were wrong —
+it rated itself `high`, and set a verification criterion
+(`fid:verify --check` must name the record) that was unsatisfiable because that
+scan never reads the archive. Both were corrected in place rather than dropped.
+
+### `skills:check` read backticked prose as shell commands (FID-2026-0928-001) — **`closed` 2026-09-28**
+
+Severity `low`. Project-scoped errors **17 → 3**. One root cause: the
+command-allowlist rule matched inline spans with `` /`([^`]+)`/g `` over the raw
+skill body, without excluding fenced blocks. A ` ``` ` fence contributes
+**three** backticks — an odd count the regex cannot pair — so it swallowed the
+closing fence and mis-attributed **every subsequent inline span**. The false
+words were the visible symptom (`markdown` is a fence info string, `with` and
+`and` are second words of unrelated sentences); the real finding is that the same
+defect also **swallowed real commands** after a fence, so the rule was
+under-reporting as well as over-reporting. Fixed for all three forms — fenced
+block, inline 3+ backtick run, and `label: value` record — and mutation-proven:
+6 of 8 new legs fail with the extractor reverted. `BLOCKLIST_PATTERNS` runs
+against the raw body and is **not** narrowed, so no dangerous pattern lost
+coverage. Three quarantined `SKILL.md` files were also repaired: one had an
+unquoted `description` whose colon-space made `gray-matter` **throw**, and the
+early `return` on that finding was hiding four further defects in the same file;
+one carried a duplicated frontmatter block. **Open:** `tauri` is a genuine CLI
+absent from the command allowlist — a security-control change reserved to the
+operator. Separately, `discoverSkillDirs` was reporting a legitimately
+untrusted skill as `SKILL.md not found`: a skill's version ledger lives in the
+trusted tier by design while its content sits in `.quarantine/`, so the checker
+named the same skill twice — once missing, once as its own draft. Fixed by
+skipping a ledger-only trusted dir that has a quarantined twin, while a ledger
+with no draft still fails closed. `skills:check` project-scoped errors
+**17 → 3 → 1**. The remaining finding is the `tauri` allowlist ruling (T95-B);
+both remaining items are registered in `SCOPE.md`.
 
 ### Law 3 credited a red test suite as a pass (FID-2026-0927-003) — **`fixed` 2026-09-27, residual open**
 

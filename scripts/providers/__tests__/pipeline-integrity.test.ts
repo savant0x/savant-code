@@ -257,7 +257,7 @@ describe('probe URL trust boundary (FID-2026-0916-001)', () => {
       fetchImpl: (async () => {
         calls++
         throw new Error('must not be called')
-      }) as typeof fetch,
+      }) as unknown as typeof fetch,
     })
     expect(calls).toBe(0)
     expect(result.reachable).toBe(false)
@@ -272,7 +272,7 @@ describe('probe URL trust boundary (FID-2026-0916-001)', () => {
       fetchImpl: (async () => {
         calls++
         throw new Error('stub network failure')
-      }) as typeof fetch,
+      }) as unknown as typeof fetch,
     })
     expect(calls).toBe(1)
     expect(result.reachable).toBe(false)

@@ -1,24 +1,22 @@
 ---
 name: release-workflow
 description: Release cycle conventions for Savant-Code pipeline releases
-version: 0.2.0
+version: 0.3.0
 metadata:
     origin: agent
 ---
 
----
-name: release-workflow
-description: Release cycle conventions for Savant-Code pipeline releases
----
-
 # Release Workflow Standards (Savant-Code)
+
+## When to Use
 
 <!-- Load this for all projects — defines the mandatory release cycle -->
 
-## Official Release System
+For any version bump, release, resume, or release-readiness check in
+Savant-Code. Releases flow exclusively through the public-release pipeline
+(`scripts/public-release.ts`; docs: `docs/public-release.md`).
 
-Releases flow exclusively through the public-release pipeline
-(`scripts/public-release.ts`; docs: `docs/public-release.md`):
+## Procedure
 
 1. **Open the version heading at bump time** — when the version bump lands
    (`bun run version:bump`), open `## <version> — <YYYY-MM-DD>` in
@@ -47,36 +45,20 @@ Releases flow exclusively through the public-release pipeline
 **Never push code without the version heading + notes in CHANGELOG.md and the
 README checked against the release. Never release outside the pipeline.**
 
-## CHANGELOG Format
+### CHANGELOG format
 
 One reverse-chronological heading per released version — no brackets, no
 Keep-a-Changelog category scaffolding, no `## Unreleased`:
 
-```markdown
-## 0.0.30 — 2026-09-08
+    ## 0.0.30 — 2026-09-08
 
-### <Area heading> (closed YYYY-MM-DD)
+    ### <Area heading> (closed YYYY-MM-DD)
 
-- **FID-2026-0907-00X — severity — summary.** Details with file references.
-```
+    - **FID-2026-0907-00X — severity — summary.** Details with file references.
 
 Group entries by FID when applicable. Include file references in parentheses.
 
-## README Maintenance
-
-On every release, verify:
-
-- [ ] Version references match `VERSION` (single-sourced via `version:bump`)
-- [ ] Test counts and provider/feature lists match the tree
-- [ ] FID references resolve (active queue + archive)
-- [ ] No stale links or descriptions
-
-## AGENTS.md
-
-The repository root carries `AGENTS.md` with project-specific overrides
-(release workflow, build/test commands, protocol version, conventions).
-
-## Version Bumping
+### Version bumping
 
 - **Patch** (0.0.29 → 0.0.30): fixes, small improvements
 - **Minor** (0.0.x → 0.1.0): new features, non-breaking changes
@@ -85,3 +67,30 @@ The repository root carries `AGENTS.md` with project-specific overrides
 Run `bun run version:bump` — it updates `VERSION` and propagates to every
 manifest (verify with `bun run version:check`). Open the matching CHANGELOG
 version heading in the same change.
+
+## Pitfalls
+
+- Accumulating an `## Unreleased` section — the engine requires exactly one
+  version heading matching the release, so it never ships.
+- Bumping without opening the CHANGELOG heading in the same change.
+- Running the release without the audit phase, or pushing first and auditing
+  after: `release:preaudit:check` treats a dirty worktree as blocking.
+- Bumping the version token and hand-editing the `> **vX.Y.Z**` release callout
+  in `README.md` / `README.zh-CN.md`. Only the token is single-sourced; the
+  callout body is hand-written and drifts.
+
+## Verification
+
+On every release, verify:
+
+- [ ] Version references match `VERSION` (single-sourced via `version:bump`)
+- [ ] Test counts and provider/feature lists match the tree
+- [ ] FID references resolve (active queue + archive)
+- [ ] No stale links or descriptions
+
+Then confirm the read-only legs agree before mutating anything:
+`bun run release:public:preview` and `bun run release:public:diagnose` must
+both report the extracted CHANGELOG section matching the bumped version.
+
+The repository root carries `AGENTS.md` with project-specific overrides
+(release workflow, build/test commands, protocol version, conventions).

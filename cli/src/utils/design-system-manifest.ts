@@ -1,7 +1,7 @@
-import { createHash } from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
 
+import { sha256 } from '@savant-code/common/util/hash'
 import {
   designSystemProvenanceSchema,
   type DesignSystemResource,
@@ -258,6 +258,11 @@ export function readCustomManifest(scope: 'project' | 'user'): CustomManifest {
   }
 }
 
-export function sha256(value: string): string {
-  return createHash('sha256').update(value, 'utf8').digest('hex')
-}
+// Canonical hex SHA-256 — re-exported from the common home
+// (FID-2026-0928-009 Part 4); the module-local import path is preserved
+// for `design-system-write.ts` and other existing consumers.
+
+// Canonical hex SHA-256 — re-exported from the common home
+// (FID-2026-0928-009 Part 4) for `design-system-write.ts` and other
+// existing consumers of this module.
+export { sha256 } from '@savant-code/common/util/hash'

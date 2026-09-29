@@ -1,7 +1,7 @@
-import { createHash } from 'node:crypto'
-
 import { IS_PROD } from '@savant-code/common/env'
 import { extractClientIp } from '@savant-code/common/util/rate-limit'
+
+import { sha256 } from './util/hash'
 
 import type { Logger } from '@savant-code/common/types/contracts/logger'
 import type {
@@ -30,9 +30,9 @@ export type RedditCapiUser = {
 export type RedditCapiCustomEvent =
   RedditFirstPromptCapiEventName | RedditRetentionCapiEventName
 
-function sha256(value: string): string {
-  return createHash('sha256').update(value).digest('hex')
-}
+// Canonical `sha256` from `util/hash` (FID-2026-0928-009 Part 4) —
+// same workspace, one body. The bare `.update(value)` call was UTF-8
+// by default; the canonical form is explicit.
 
 function normalizeEmail(email: string): string {
   return email.trim().toLowerCase()

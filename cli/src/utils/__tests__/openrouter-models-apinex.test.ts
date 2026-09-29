@@ -29,6 +29,28 @@ describe('parseApinexCatalog (FID-2026-0907-008)', () => {
     expect(models[0]?.id).toBe('apinex/gpt/5.6-luna')
   })
 
+  test('nested architecture fields stay unmapped (T96-followup probe 2026-09-28)', () => {
+    // Measured live 2026-09-28 (HTTP 200, 34 models): this vendor serves no
+    // `architecture.*` object and no flat modality/tokenizer/instruct_type
+    // either — 0/34 in both positions. A nested read would map `undefined`
+    // for every model (the FID-2026-0927-006 speculative-shape trap), so the
+    // parser deliberately reads neither. If a vendor payload ever gains a
+    // populated nested object, this leg is the tripwire that forces the
+    // mapping decision back through a FID.
+    const models = parseApinexModelsForTest({
+      data: [
+        {
+          id: 'gpt/5.6-luna',
+          architecture: { modality: 'text->text', tokenizer: 'GPT' },
+          modality: 'text->text',
+        } as Record<string, unknown>,
+      ],
+    })
+    expect(models[0]?.modality).toBeUndefined()
+    expect(models[0]?.tokenizer).toBeUndefined()
+    expect(models[0]?.instructType).toBeUndefined()
+  })
+
   test('skips entries without a usable id and tolerates unknown fields', () => {
     const models = parseApinexModelsForTest({
       data: [

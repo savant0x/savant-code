@@ -4,7 +4,7 @@ import { getCurrentChatId } from '../project-files'
 import { flushAnalytics } from '../utils/analytics'
 import { IS_SAVANT_FREE } from '../utils/constants'
 import { exitSavantFreeCleanly } from '../utils/savant-free-exit'
-import { withTimeout } from '../utils/terminal-color-detection'
+import { withTimeoutValue } from '../utils/terminal-color-detection'
 
 import type { InputValue } from '../types/store'
 
@@ -45,7 +45,7 @@ function exitCli(): void {
     return
   }
 
-  withTimeout(flushAnalytics(), EXIT_FLUSH_TIMEOUT_MS, undefined).finally(
+  withTimeoutValue(flushAnalytics(), EXIT_FLUSH_TIMEOUT_MS, undefined).finally(
     () => {
       process.exit(0)
     },

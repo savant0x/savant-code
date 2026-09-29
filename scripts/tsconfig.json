@@ -3,11 +3,5 @@
   "compilerOptions": {
     "noEmit": true
   },
-  "include": [
-    "public-release.ts",
-    "public-release/**/*.ts",
-    "public-release*.test.ts",
-    "__tests__/pre-audit.test.ts",
-    "__tests__/public-release-npm-guards.test.ts"
-  ]
+  "include": ["**/*.ts"]
 }

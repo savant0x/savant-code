@@ -7,7 +7,7 @@ import { getCliEnv } from '../env'
 import {
   queryTerminalOSC,
   terminalSupportsOSC,
-  withTimeout,
+  withTimeoutValue,
   GLOBAL_OSC_TIMEOUT_MS,
   OSC_QUERY_TIMEOUT_MS,
 } from './osc-query'
@@ -216,7 +216,7 @@ async function detectTerminalThemeCore(
  */
 export async function detectTerminalTheme(): Promise<'dark' | 'light' | null> {
   try {
-    return await withTimeout(
+    return await withTimeoutValue(
       detectTerminalThemeCore(),
       GLOBAL_OSC_TIMEOUT_MS,
       null,

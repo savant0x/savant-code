@@ -16,6 +16,8 @@
  * Also checks for placeholder text ([pending], TODO, TBD).
  */
 
+import { parseFidStatus } from './fid-verification-enforcement'
+
 import type { FidValidationResult } from './types'
 
 /** Sections required in every FID, regardless of mode. */
@@ -64,9 +66,12 @@ export function validateFidStepStatus(content: string): string[] {
   const section = content.match(/^## Step Status[\s\S]*?(?=^## |(?![^]))/m)?.[0]
   if (!section) return errors
 
-  const statusMatch = content.match(/^\*\*Status:\*\*\s*(converged|closed)/m)
-  const declaredClosed = statusMatch !== null
-  const statusWord = statusMatch?.[1] ?? 'converged/closed'
+  // One status truth: parseFidStatus accepts the metadata-bullet form the older
+  // template used, and both call sites read through it (FID-2026-0928-002,
+  // Law 13 — two independent copies of the anchor silently disagreed).
+  const status = parseFidStatus(content)
+  const declaredClosed = status === 'converged' || status === 'closed'
+  const statusWord = status ?? 'converged/closed'
 
   const stepLinePattern = /^\s*-\s*\[([ xX])\]\s*(.+)$/
   const approvalPattern = /operator-approved\s+\d{4}-\d{2}-\d{2}/
@@ -246,7 +251,7 @@ export function validateFidPhaseEvidence(
       break
     }
     case 'complete': {
-      const status = content.match(/^\*\*Status:\*\*\s*(.+)$/m)?.[1]?.trim()
+      const status = parseFidStatus(content)
       if (status !== 'closed') {
         errors.push(
           `COMPLETE requires **Status:** closed (found ${status ?? 'missing'})`,

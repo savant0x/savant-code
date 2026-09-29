@@ -254,6 +254,20 @@ function handleRemove(params: ProviderParams, rest: string): void {
   replyAndClear(params, notes.join(' '))
 }
 
+/**
+ * `/provider free` — free-options discovery (FID-2026-0928-012). Live-fetches
+ * the keyless custats catalog (24h cache, soft-degrade on failure), splits
+ * free lanes by the user's OWN wired keys (BYOK — no Savant backend), and
+ * writes the agent-answerable reference so the user and the agent share one
+ * truth. Never mutates configuration.
+ */
+export async function handleFree(params: ProviderParams): Promise<void> {
+  const { refreshFreeOptions, renderCommandOutput } =
+    await import('../utils/free-options')
+  const report = await refreshFreeOptions()
+  replyAndClear(params, renderCommandOutput(report).join('\n'))
+}
+
 /** Dispatch entry: called from the /provider command definition. */
 export async function handleProviderSubcommand(
   params: ProviderParams,
@@ -266,6 +280,9 @@ export async function handleProviderSubcommand(
       return
     case 'edit':
       handleEdit(params, rest)
+      return
+    case 'free':
+      await handleFree(params)
       return
     case 'list':
       handleList(params)

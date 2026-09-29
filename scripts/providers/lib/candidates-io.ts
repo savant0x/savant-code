@@ -91,6 +91,9 @@ export function mergeDenylist(
         decision?: string
         reason: string
         firstSeenUtc?: string
+        // Persisted by the write path below; optional on read because a
+        // legacy bare-array record may predate it.
+        lastSeenUtc?: string
       }
       entries.set(`${rec.host}::${rec.reason}`, {
         host: rec.host,

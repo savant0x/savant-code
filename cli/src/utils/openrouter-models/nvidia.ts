@@ -47,5 +47,12 @@ export const fetchNvidiaModels = fetcher.fetchModels
 /** Synchronous read of the cached NVIDIA catalog (or empty). */
 export const getCachedNvidiaModels = fetcher.getCachedModels
 
+/** Test-only parser seam for catalog contract tests without network access. */
+export function parseNvidiaModelsForTest(
+  json: NvidiaModelsResponse,
+): OpenRouterModel[] {
+  return parseNvidiaCatalog(json)
+}
+
 /** Test-only: clear the NVIDIA cache + in-flight request. */
 export const __resetNvidiaCacheForTest = fetcher.resetForTest

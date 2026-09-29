@@ -8,35 +8,40 @@ import { describe, expect, test } from 'bun:test'
 
 import { renderReport } from '../lib/report'
 
+import type { ReportCandidate, ReportInput } from '../lib/report'
+
 describe('renderReport (MQ8)', () => {
-  const reportInput = {
+  const candidates: ReportCandidate[] = [
+    {
+      host: 'api.example-free.ai',
+      category: 'first-party-free',
+      modelsCount: 12,
+      latencyMs: 320,
+      boundary: 'boundary-ok',
+      typosquat: 'pass',
+      classification: 'unchanged',
+      downStreak: 0,
+    },
+  ]
+  const reportInput: ReportInput = {
     fetchedAtUtc: '2026-09-14T18:48:23Z',
     totalRecords: 214,
     stage0Count: 2,
-    candidates: [
-      {
-        host: 'api.example-free.ai',
-        category: 'first-party-free',
-        modelsCount: 12,
-        latencyMs: 320,
-        boundary: 'boundary-ok' as const,
-        typosquat: 'pass' as const,
-      },
-    ],
+    candidates,
     auditTrail: [
       {
         host: 'api.celebras.ai',
-        decision: 'rejected',
+        decision: 'rejected' as const,
         reason: 'typosquat tier-1: distance 1 from api.cerebras.ai',
       },
       {
         host: 'a.risky',
-        decision: 'excluded',
+        decision: 'excluded' as const,
         reason: 'status=risky (MQ2 hard-exclusion)',
       },
       {
         host: 'a.relay',
-        decision: 'excluded',
+        decision: 'excluded' as const,
         reason: 'category=free-relay (anonymous relay class)',
       },
     ],
@@ -44,7 +49,7 @@ describe('renderReport (MQ8)', () => {
       newHosts: ['api.example-free.ai'],
       changedHosts: [] as string[],
       lapsedHosts: [] as string[],
-      health: [] as Array<{ host: string; verdict: string }>,
+      health: [] as Array<{ host: string; verdict: string; detail: string }>,
     },
   }
 
@@ -218,7 +223,12 @@ describe('renderReport (MQ8)', () => {
     expect(md).toContain("This run's changes")
     const stable = renderReport({
       ...reportInput,
-      sections: { newHosts: [], changedHosts: [], lapsedHosts: [], health: [] },
+      sections: {
+        newHosts: [],
+        changedHosts: [],
+        lapsedHosts: [],
+        health: [] as Array<{ host: string; verdict: string; detail: string }>,
+      },
     })
     expect(stable).not.toContain("This run's changes")
   })

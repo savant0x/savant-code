@@ -18,6 +18,7 @@ import { PROVIDER_REGISTRY } from '@savant-code/common/providers/registry'
 
 import { readStoredProviderKeys } from '../provider-credentials'
 import { createLiveCatalogFetcher } from './live-catalog'
+import { asOptionalNumber, asOptionalString } from './wire-guards'
 
 import type { OpenRouterModel } from './types'
 import type { CustomProviderConfig } from '@savant-code/common/providers/types'
@@ -30,14 +31,6 @@ type CustomLiveCatalogResponse = {
     context_length?: unknown
     max_completion_tokens?: unknown
   }>
-}
-
-function asOptionalString(value: unknown): string | undefined {
-  return typeof value === 'string' && value.length > 0 ? value : undefined
-}
-
-function asOptionalNumber(value: unknown): number | undefined {
-  return typeof value === 'number' && Number.isFinite(value) ? value : undefined
 }
 
 /** Parse an OpenAI-compatible /v1/models body into prefixed models. */

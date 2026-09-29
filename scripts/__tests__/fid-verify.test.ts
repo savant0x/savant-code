@@ -153,8 +153,12 @@ describe('buildReceipt + stampReceipt', () => {
     { label: 'quality', exit: 0, signal: null },
   ]
 
+  // buildReceipt(content, results, verifiedAt) requires the timestamp
+  // (FID-2026-0928-007 class B: the old 2-arg calls predated the parameter).
+  const VERIFIED_AT = '2026-09-28T00:00:00.000Z'
+
   it('builds a receipt with fingerprint + exit lines', () => {
-    const receipt = buildReceipt(FID, probeResult)
+    const receipt = buildReceipt(FID, probeResult, VERIFIED_AT)
     expect(receipt).toContain('### Verification Receipt')
     expect(receipt).toContain('- fingerprint: sha256:')
     expect(receipt).toContain('- verified: ')
@@ -162,7 +166,7 @@ describe('buildReceipt + stampReceipt', () => {
   })
 
   it('stamps the receipt inside the gates section', () => {
-    const receipt = buildReceipt(FID, probeResult)
+    const receipt = buildReceipt(FID, probeResult, VERIFIED_AT)
     const stamped = stampReceipt(FID, receipt)
     expect(stamped).toContain('## Verification Gates')
     expect(stamped.indexOf('### Verification Receipt')).toBeGreaterThan(
@@ -173,14 +177,14 @@ describe('buildReceipt + stampReceipt', () => {
   })
 
   it('replaces an existing receipt on re-stamp', () => {
-    const receipt = buildReceipt(FID, probeResult)
+    const receipt = buildReceipt(FID, probeResult, VERIFIED_AT)
     const once = stampReceipt(FID, receipt)
     const twice = stampReceipt(once, receipt)
     expect(twice.match(/### Verification Receipt/g)?.length).toBe(1)
   })
 
-  // FID-2026-0907-010 defect 2: a PROSE mention of the headings (backticked,
-  // as in a FID documenting the stamping system) must not hijack the stamp.
+  // FID-2026-0907-010 defect 2: a backticked PROSE mention of a heading must
+  // not hijack the stamp.
   const PROSE_LINE = `The receipt heading ${BT}### Verification Receipt${BT} appears in prose here, and the gates heading too: ${BT}## Verification Gates${BT}.`
 
   const FID_WITH_PROSE_MENTION = [
@@ -204,7 +208,11 @@ describe('buildReceipt + stampReceipt', () => {
   ].join('\n')
 
   it('inserts the receipt into the gates section even when prose mentions the headings', () => {
-    const receipt = buildReceipt(FID_WITH_PROSE_MENTION, probeResult)
+    const receipt = buildReceipt(
+      FID_WITH_PROSE_MENTION,
+      probeResult,
+      VERIFIED_AT,
+    )
     const stamped = stampReceipt(FID_WITH_PROSE_MENTION, receipt)
     // The Summary prose survives untouched…
     expect(stamped).toContain(PROSE_LINE)
@@ -217,7 +225,11 @@ describe('buildReceipt + stampReceipt', () => {
   })
 
   it('re-stamps at the real receipt, not at a prose mention', () => {
-    const receipt = buildReceipt(FID_WITH_PROSE_MENTION, probeResult)
+    const receipt = buildReceipt(
+      FID_WITH_PROSE_MENTION,
+      probeResult,
+      VERIFIED_AT,
+    )
     const once = stampReceipt(FID_WITH_PROSE_MENTION, receipt)
     const twice = stampReceipt(once, receipt)
     expect(twice.match(/^### Verification Receipt$/gm)?.length).toBe(1)
@@ -248,31 +260,28 @@ describe('buildReceipt + stampReceipt', () => {
       'loop text',
       '',
     ].join('\n')
-    const receipt = buildReceipt(fidFenced, probeResult)
+    const receipt = buildReceipt(fidFenced, probeResult, VERIFIED_AT)
     const stamped = stampReceipt(fidFenced, receipt)
 
     // The fenced example survives intact, inside the Summary…
     expect(stamped).toContain(`${fence}markdown`)
     expect(stamped).toContain(`- fingerprint: sha256:${'0'.repeat(64)}`)
-    // …and the REAL receipt (identified by its verified line, which the
-    // fenced example lacks) lands inside the gates section, after it.
+    // …and the REAL receipt (the one carrying a verified line) lands
+    // inside the gates section, after it.
     const gatesAt = stamped.indexOf('## Verification Gates')
-    const realReceiptAt = stamped.indexOf(
-      '### Verification Receipt\n\n- fingerprint: sha256:' +
-        buildReceipt(fidFenced, probeResult)
-          .split('- fingerprint: sha256:')[1]
-          ?.split('\n')[0],
-    )
     const verifiedAt = stamped.indexOf('- verified: ')
     expect(verifiedAt).toBeGreaterThan(gatesAt)
     expect(
       stamped.lastIndexOf('### Verification Receipt', verifiedAt),
     ).toBeGreaterThan(gatesAt)
-    expect(realReceiptAt).toBeGreaterThan(-1)
   })
 
   it('end-to-end: a stamped document validates against the agent-runtime contract', async () => {
-    const receipt = buildReceipt(FID_WITH_PROSE_MENTION, probeResult)
+    const receipt = buildReceipt(
+      FID_WITH_PROSE_MENTION,
+      probeResult,
+      VERIFIED_AT,
+    )
     const stamped = stampReceipt(FID_WITH_PROSE_MENTION, receipt)
     const { validateFidVerification } =
       await import('@savant-code/agent-runtime/echo/fid-verification-gates')

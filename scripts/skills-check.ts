@@ -61,23 +61,40 @@ export function discoverSkillDirs(skillsDir: string): {
   } catch {
     return result
   }
+
+  // Pass 1 — collect the quarantined draft names. A skill's on-disk version
+  // ledger (versions/ + VERSIONS.jsonl) lives in the TRUSTED tier while its
+  // content stays in `.quarantine/` until the operator trusts it, because git
+  // is not the ledger (FID-2026-0824-012). Such a trusted dir therefore
+  // legitimately has no SKILL.md, and reporting it `missing` named the same
+  // skill twice — once as missing, once as its own quarantined draft
+  // (FID-2026-0928-001, T95-A). The draft names must be known before the
+  // trusted tier is filtered, so this cannot be a single pass over `entries`.
+  const drafts = new Set<string>()
   for (const entry of entries) {
-    if (entry === '.quarantine') {
-      const quarantineDir = path.join(skillsDir, entry)
-      let drafts: string[]
+    if (entry !== '.quarantine') continue
+    let names: string[]
+    try {
+      names = fs.readdirSync(path.join(skillsDir, entry))
+    } catch {
+      continue
+    }
+    for (const name of names) {
+      const dir = path.join(skillsDir, entry, name)
       try {
-        drafts = fs.readdirSync(quarantineDir)
+        if (fs.statSync(dir).isDirectory()) {
+          drafts.add(name)
+          result.push({ entry: name, dir, quarantined: true })
+        }
       } catch {
         continue
       }
-      for (const draft of drafts) {
-        const draftDir = path.join(quarantineDir, draft)
-        if (fs.statSync(draftDir).isDirectory()) {
-          result.push({ entry: draft, dir: draftDir, quarantined: true })
-        }
-      }
-      continue
     }
+  }
+
+  // Pass 2 — the trusted tier.
+  for (const entry of entries) {
+    if (entry === '.quarantine') continue
     if (!isValidSkillName(entry)) continue
     const dir = path.join(skillsDir, entry)
     let stat
@@ -86,7 +103,14 @@ export function discoverSkillDirs(skillsDir: string): {
     } catch {
       continue
     }
-    if (stat.isDirectory()) result.push({ entry, dir, quarantined: false })
+    if (!stat.isDirectory()) continue
+    // A ledger-only dir whose draft is still in quarantine is that draft, not a
+    // broken skill. A ledger-only dir with NO draft is genuine corruption and
+    // still falls through to the `missing` finding.
+    if (drafts.has(entry) && !fs.existsSync(path.join(dir, SKILL_FILE_NAME))) {
+      continue
+    }
+    result.push({ entry, dir, quarantined: false })
   }
   return result
 }

@@ -1,4 +1,5 @@
 import { AnalyticsEvent } from '@savant-code/common/constants/analytics-events'
+import { sleep } from '@savant-code/common/util/promise'
 import { cyan, green, red, yellow, bold } from 'picocolors'
 
 import { LOGIN_WEBSITE_URL } from './constants'
@@ -52,11 +53,6 @@ export async function runPlainLogin(): Promise<void> {
   console.log(yellow('Please open the URL above manually to complete login.'))
   console.log()
   console.log('Waiting for login...')
-
-  const sleep = (ms: number) =>
-    new Promise<void>((resolve) => {
-      setTimeout(resolve, ms)
-    })
 
   const result = await pollLoginStatus(
     { sleep, logger, trackEvent },

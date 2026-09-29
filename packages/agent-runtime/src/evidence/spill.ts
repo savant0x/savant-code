@@ -1,6 +1,9 @@
-import { createHash } from 'node:crypto'
 import { appendFile, mkdir, readFile, stat } from 'node:fs/promises'
 import path from 'node:path'
+
+// Canonical body lives in `@savant-code/common/util/hash`
+// (FID-2026-0928-009 Part 4); this module keeps the call-site name.
+import { sha256Hex } from '@savant-code/common/util/hash'
 
 /**
  * Evidence spill (FID-2026-0824-026): append-only JSONL capture of raw tool
@@ -28,9 +31,9 @@ export function evidenceFilePath(projectRoot: string, runId: string): string {
   return path.join(projectRoot, '.savant', 'evidence', `${runId}.jsonl`)
 }
 
-export function sha256Hex(value: string): string {
-  return createHash('sha256').update(value).digest('hex')
-}
+// Canonical body lives in `@savant-code/common/util/hash`
+// (FID-2026-0928-009 Part 4); this module keeps the call-site name.
+export { sha256Hex } from '@savant-code/common/util/hash'
 
 /**
  * Load a run's records. Absent/unreadable spill ⇒ empty array (off-switch

@@ -121,6 +121,9 @@ bun run typecheck
 # SDK test suite (HARD GATE)
 cd sdk && bun test src/
 
+# Single suite (HARD GATE — run it from its workspace root, never the repo root)
+cd packages/agent-runtime && bun test src/__tests__/some-suite.test.ts
+
 # Lint (HARD GATE — enforced pre-push)
 bun x eslint . --max-warnings 0
 
@@ -130,6 +133,13 @@ bun run lint:md
 # Format
 bun x prettier --write .
 ```
+
+> **`bun test` path arguments are SUBSTRING filters** (T67, reproduced
+> 2026-09-28): `bun test packages/agent-runtime/src/__tests__/foo.test.ts`
+> from the repo root matches every path containing that string — including
+> stale copies under gitignored `resources/` — and fails on errors unrelated
+> to the working tree. Run suites from their workspace root (the `cd` form
+> above), where the filter resolves to exactly one file.
 
 > **Pre-push gate:** a native git pre-push hook (`.githooks/pre-push`) runs the
 > fail-closed pushed-range credential scan

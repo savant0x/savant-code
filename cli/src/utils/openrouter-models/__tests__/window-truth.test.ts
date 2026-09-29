@@ -9,6 +9,9 @@
  * supported_endpoint_types, 2026-09-16).
  */
 
+import fs from 'node:fs'
+import path from 'node:path'
+
 import {
   CONTEXT_WINDOW_FALLBACKS,
   getContextWindowFallback,
@@ -97,6 +100,43 @@ describe('FID-2026-0916-002: spot windows (keyed rosters 2026-09-16)', () => {
       contextWindow: 200_000,
       source: 'fallback-table',
     })
+  })
+})
+
+describe('FID-2026-0928-010: window-truth probe samples stay live', () => {
+  // F3 rot class: the LIVE probe script's sample table went structurally red
+  // when FID-2026-0916-004 re-keyed table rows and removed opencode-go,
+  // because no gate pinned the samples against the table. Every sample key
+  // must exist as a fallback-table row, so a future re-key/removal that
+  // strands a sample fails HERE, in-process, instead of rotting the alarm.
+  // Resolved from this file's location (5 levels below the repo root),
+  // NOT process.cwd() — `bun run test` executes per-workspace with the
+  // workspace as cwd, and a cwd-relative path breaks the full battery.
+  const probePath = (): string =>
+    path.join(
+      path.resolve(import.meta.dir, '../../../../..'),
+      'scripts/providers/verify-window-truth.ts',
+    )
+
+  test('every verify-window-truth sample key exists as a fallback-table row', async () => {
+    const source = fs.readFileSync(probePath(), 'utf8')
+    const sampleKeys = [
+      ...source.matchAll(
+        /\['([^']+)',\s*'[^']+',\s*'(?:bazaarlink|orcarouter)'\]/g,
+      ),
+    ].map((m) => m[1])
+    expect(sampleKeys.length).toBeGreaterThan(0)
+    const missing = sampleKeys.filter(
+      (key) => !CONTEXT_WINDOW_FALLBACKS.has(key),
+    )
+    expect(missing).toEqual([])
+  })
+
+  test('no removed-provider samples remain in the probe', () => {
+    const source = fs.readFileSync(probePath(), 'utf8')
+    expect(source).not.toContain('opencode-go/')
+    expect(source).not.toContain("'commandcode/z-ai/glm-5.2'")
+    expect(source).not.toContain("'commandcode/openai/gpt-5.6-sol'")
   })
 })
 

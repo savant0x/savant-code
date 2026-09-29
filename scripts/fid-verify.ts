@@ -171,7 +171,10 @@ export function runGates(gates: { kind: string; arg: string }[]): {
     results.push({
       label: resolved.label,
       exit: spawned.exitCode,
-      signal: spawned.signalCode,
+      // Bun's spawnSync reports `signalCode: undefined` (not null) when no
+      // signal killed the process; the contract here is `string | null`, so
+      // the boundary normalizes rather than widening the type.
+      signal: spawned.signalCode ?? null,
     })
   }
   return { results, errors }

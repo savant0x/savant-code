@@ -12,7 +12,10 @@
 import { describe, expect, test } from 'bun:test'
 
 import { DAY, state, T0 } from './helpers'
-import { nudgeLine } from '../../../common/src/providers/discovery-context'
+import {
+  type NudgeCandidate,
+  nudgeLine,
+} from '../../../common/src/providers/discovery-context'
 import {
   buildModelIndex,
   churnSummary,
@@ -179,7 +182,9 @@ describe('churnSummary (W3)', () => {
 // ---------------------------------------------------------------------------
 
 describe('nudgeLine (W4 threshold)', () => {
-  const candidates = [
+  // Typed against the seam's NudgeCandidate — the fixture must satisfy the
+  // real contract, not an inferred lookalike.
+  const candidates: NudgeCandidate[] = [
     {
       host: 'fast.candidate',
       boundary: 'boundary-ok',
@@ -215,10 +220,13 @@ describe('nudgeLine (W4 threshold)', () => {
       },
       candidates,
     })
-    expect(line).toContain('fast.candidate')
-    expect(line).not.toContain('slower.candidate')
-    expect(line).not.toContain('relay.candidate')
-    expect(line.split('\n').length).toBe(1)
+    // `nudgeLine` returns null when no candidate qualifies; these fixtures
+    // guarantee a nudge, so the narrowing is asserted, not assumed.
+    expect(line).not.toBeNull()
+    expect(line!).toContain('fast.candidate')
+    expect(line!).not.toContain('slower.candidate')
+    expect(line!).not.toContain('relay.candidate')
+    expect(line!.split('\n').length).toBe(1)
   })
 
   test('healthy provider → never nudges', () => {

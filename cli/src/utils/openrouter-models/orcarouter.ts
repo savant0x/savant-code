@@ -12,6 +12,7 @@ import { deriveLiveCatalogUrl } from '@savant-code/common/providers/derive'
 import { PROVIDER_REGISTRY } from '@savant-code/common/providers/registry'
 
 import { createLiveCatalogFetcher } from './live-catalog'
+import { asOptionalNumber, asOptionalString } from './wire-guards'
 
 import type { OpenRouterModel } from './types'
 
@@ -34,14 +35,6 @@ type OrcarouterModelsResponse = {
     max_completion_tokens?: unknown
     created?: unknown
   }>
-}
-
-function asOptionalString(value: unknown): string | undefined {
-  return typeof value === 'string' && value.length > 0 ? value : undefined
-}
-
-function asOptionalNumber(value: unknown): number | undefined {
-  return typeof value === 'number' && Number.isFinite(value) ? value : undefined
 }
 
 function parseOrcarouterCatalog(

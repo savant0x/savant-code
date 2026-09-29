@@ -18,7 +18,13 @@
 import type { FetchFunction } from '@ai-sdk/provider-utils'
 import type { JSONValue } from '@savant-code/common/types/json'
 
-function isRecord(value: JSONValue): value is Record<string, JSONValue> {
+// JSON-value-specific guard — deliberately NOT the canonical `isRecord`
+// (FID-2026-0928-009 Part 4): this narrows all the way to
+// `Record<string, JSONValue>`, a different predicate from the general
+// `Record<string, unknown>` home, so it is named for what it is.
+function isJSONObjectRecord(
+  value: JSONValue,
+): value is Record<string, JSONValue> {
   return value !== null && typeof value === 'object' && !Array.isArray(value)
 }
 
@@ -37,7 +43,8 @@ function lookupJsonPointer(
     .slice(2)
     .split('/')
     .map(decodeJsonPointerSegment)) {
-    if (!isRecord(current) && !Array.isArray(current)) return undefined
+    if (!isJSONObjectRecord(current) && !Array.isArray(current))
+      return undefined
     current = (current as Record<string, JSONValue>)[segment]
   }
   return current
@@ -45,14 +52,16 @@ function lookupJsonPointer(
 
 export function inlineLocalSchemaRefs(schema: JSONValue): JSONValue {
   const root: JSONValue =
-    isRecord(schema) && 'jsonSchema' in schema ? schema.jsonSchema : schema
+    isJSONObjectRecord(schema) && 'jsonSchema' in schema
+      ? schema.jsonSchema
+      : schema
 
   const visit = (value: JSONValue, refStack: Set<string>): JSONValue => {
     if (Array.isArray(value)) {
       return value.map((item) => visit(item, refStack))
     }
 
-    if (!isRecord(value)) return value
+    if (!isJSONObjectRecord(value)) return value
 
     const ref = typeof value.$ref === 'string' ? value.$ref : undefined
     if (ref?.startsWith('#/')) {
@@ -66,7 +75,7 @@ export function inlineLocalSchemaRefs(schema: JSONValue): JSONValue {
         const nextRefStack = new Set(refStack)
         nextRefStack.add(ref)
         const resolved = visit(target, nextRefStack)
-        if (isRecord(resolved) && Object.keys(siblings).length > 0) {
+        if (isJSONObjectRecord(resolved) && Object.keys(siblings).length > 0) {
           return visit({ ...resolved, ...siblings }, refStack)
         }
         return resolved
@@ -89,7 +98,7 @@ export function inlineLocalSchemaRefs(schema: JSONValue): JSONValue {
 /** Sanitize one tool object's schema fields in place-shape; returns the tool. */
 function sanitizeToolObject(tool: Record<string, JSONValue>): JSONValue {
   const fn = tool.function
-  if (isRecord(fn) && 'parameters' in fn) {
+  if (isJSONObjectRecord(fn) && 'parameters' in fn) {
     return {
       ...tool,
       function: { ...fn, parameters: inlineLocalSchemaRefs(fn.parameters) },
@@ -110,7 +119,7 @@ function sanitizeToolObject(tool: Record<string, JSONValue>): JSONValue {
       return {
         ...tool,
         [declarationsKey]: declarations.map((declaration) =>
-          isRecord(declaration) && 'parameters' in declaration
+          isJSONObjectRecord(declaration) && 'parameters' in declaration
             ? {
                 ...declaration,
                 parameters: inlineLocalSchemaRefs(declaration.parameters),
@@ -130,13 +139,13 @@ function sanitizeToolObject(tool: Record<string, JSONValue>): JSONValue {
  * (see `createSanitizingFetch`).
  */
 export function sanitizeOutboundBody(body: JSONValue): JSONValue {
-  if (!isRecord(body)) return body
+  if (!isJSONObjectRecord(body)) return body
   const tools = body.tools
   if (!Array.isArray(tools)) return body
   return {
     ...body,
     tools: tools.map((tool) =>
-      isRecord(tool) ? sanitizeToolObject(tool) : tool,
+      isJSONObjectRecord(tool) ? sanitizeToolObject(tool) : tool,
     ),
   }
 }

@@ -3,6 +3,19 @@
 This directory contains reusable validation prompts and live harnesses.
 
 - Root-level files are active prompts or current harnesses.
+- **Deep-research prompts** (`*-deep-research-prompt.md`) are paste-ready
+  payloads for a deep-research engine (method: attach the prompt + Savant-Code
+  core files + the referenced repo for context). Moved here from the idea
+  shelf on 2026-09-28; they are prompts to run, not shelved ideas.
+- **Run status (2026-09-28 review):** `auto-drive` and `devvy-integration`
+  are **REALIZED** — their features shipped before the prompts were ever fed
+  to a research engine (Auto Drive: FID-2026-0818-001..008 + `/auto-drive`;
+  Discord Rich Presence: FID-2026-0818-009 + `/presence`, design doc at
+  `docs/design/Discord Presence For Savant-Code.md`) — both now in
+  [`archive/`](archive/). Still runnable, at root: `mcp-search-server`,
+  `savant-desktop-chat`, `zero-cost-search` (note: `desktop/` shipped and
+  desktop design docs exist — verify overlap before re-running the chat
+  prompt).
 - The current comprehensive A–Z harness prompt is
   [`az-v0.0.24-harness-live-test.md`](az-v0.0.24-harness-live-test.md). It
   covers the full 0.0.24 delta — ZTAP provenance (FID-2026-0813-001..010), the

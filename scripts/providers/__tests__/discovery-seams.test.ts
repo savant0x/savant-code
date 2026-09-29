@@ -17,8 +17,12 @@ import {
 import { healthVerdict, PROBE_LAPSED_AFTER_DAYS } from '../lib/health'
 import { isPipelineSourced, readStamp, writeStamp } from '../lib/provider-stamp'
 
+import type { CustomProviderConfig } from '../../../common/src/providers/types'
+
 describe('provider stamp (round-trip through parseCustomProviders)', () => {
-  const base = {
+  // The catalog field is a discriminated union — the fixture must satisfy
+  // the real shape, not a widened `{ source: string }` (T84-C class C).
+  const base: CustomProviderConfig = {
     id: 'swiftfree',
     label: 'SwiftFree',
     baseUrl: 'https://api.swiftfree.ai/v1',
@@ -47,7 +51,10 @@ describe('provider stamp (round-trip through parseCustomProviders)', () => {
     const { parseCustomProviders } =
       require('@savant-code/common/providers/custom-providers') as {
         parseCustomProviders: (v: unknown) => {
-          configs: Array<Record<string, unknown>>
+          // The parser's return carries the config shape at runtime; the
+          // seal (unknown) is intentional — the assertions below exercise
+          // the stamp via the seam functions, which accept the config type.
+          configs: CustomProviderConfig[]
           problems: string[]
         }
       }

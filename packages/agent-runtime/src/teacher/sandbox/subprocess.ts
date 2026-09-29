@@ -8,11 +8,12 @@
  * policy requiring them fails closed to `unavailable` with no execution.
  */
 import { spawn, type ChildProcessByStdio } from 'node:child_process'
-import { createHash } from 'node:crypto'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+
+import { sha256 as sha256Canonical } from '@savant-code/common/util/hash'
 
 import { RESTRICTED_VM_CAPABILITIES, missingCapabilities } from './capabilities'
 
@@ -49,8 +50,10 @@ function emptyTestSummary(): TestSummary {
   return { total: 0, passed: 0, failed: 0, failedNames: [] }
 }
 
+// Canonical digest body lives in `@savant-code/common/util/hash`
+// (FID-2026-0928-009 Part 4); this site prefixes the wire format `sha256:`.
 function sha256(text: string): string {
-  return `sha256:${createHash('sha256').update(text, 'utf8').digest('hex')}`
+  return `sha256:${sha256Canonical(text)}`
 }
 
 function boundedStderr(text: string): string {

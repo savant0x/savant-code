@@ -34,7 +34,13 @@ const CONTEXT_PRUNING_FIELDS = {
   newest_entry_forced: 'boolean',
 } as const satisfies Record<string, 'string' | 'number' | 'boolean'>
 
-function isRecord(v: unknown): v is Record<string, string | number | boolean> {
+// Narrower primitive-valued-record guard — deliberately NOT the canonical
+// `isRecord` (FID-2026-0928-009 Part 4): the axiom-only log event contract
+// requires primitive leaf values, a different predicate from the general
+// `Record<string, unknown>` home.
+function isPrimitiveRecord(
+  v: unknown,
+): v is Record<string, string | number | boolean> {
   return v != null && typeof v === 'object' && !Array.isArray(v)
 }
 
@@ -51,7 +57,7 @@ export function getAxiomOnlyLogEvent(
   data: unknown,
   event?: string | null,
 ): AxiomOnlyLogEvent | null {
-  const record = isRecord(data) ? data : {}
+  const record = isPrimitiveRecord(data) ? data : {}
   if (
     record.axiomEvent !== CONTEXT_PRUNING_COMPLETED_EVENT &&
     event !== CONTEXT_PRUNING_COMPLETED_EVENT

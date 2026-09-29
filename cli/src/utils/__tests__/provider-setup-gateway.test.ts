@@ -24,6 +24,9 @@ import { saveSettings } from '../settings'
 // of the openrouter bootstrap default.
 const PROVIDER_ENV_VARS = [
   ...Object.values(PROVIDER_SETUP_CONFIG).map((config) => config.envVar),
+  ...Object.values(PROVIDER_SETUP_CONFIG).flatMap((config) =>
+    (config.extraEnvVars ?? []).map((extra) => extra.envVar),
+  ),
   ...Object.values(RESEARCH_KEY_SERVICES).map((service) => service.envVar),
   'DIRECT_PROVIDER',
   'INFERENCE_BASE_URL',
@@ -160,5 +163,76 @@ describe('provider setup', () => {
       baseUrl: 'https://inference-api.nousresearch.com/v1',
     })
     expect(getProviderSetupInfo('unknown')).toBeUndefined()
+  })
+
+  test('cloudflare is setup-surfaced with its extra credential (T61 Option A)', () => {
+    const info = getProviderSetupInfo('cloudflare')
+    expect(info).toBeDefined()
+    expect(info?.envVar).toBe('CLOUDFLARE_API_TOKEN')
+    expect(info?.extraEnvVars).toEqual([
+      { envVar: 'CLOUDFLARE_ACCOUNT_ID', label: 'Cloudflare Account ID' },
+    ])
+  })
+
+  test('saves an extra credential under its own env-var name and re-applies it', () => {
+    const { saveProviderApiKeyExtra } = require('../provider-key-store') as {
+      saveProviderApiKeyExtra: (
+        provider: string,
+        extraEnvVar: string,
+        value: string,
+      ) => void
+    }
+    saveProviderApiKeyExtra('cloudflare', 'CLOUDFLARE_ACCOUNT_ID', 'abc123')
+    // Applied to the process env immediately (shell precedence: env was
+    // empty in this sandbox).
+    expect(process.env.CLOUDFLARE_ACCOUNT_ID).toBe('abc123')
+    // Persisted under its own name in the shared store.
+    const stored = JSON.parse(
+      fs.readFileSync(path.join(tempDir, 'credentials.json'), 'utf8'),
+    ) as { providerApiKeys?: Record<string, string> }
+    expect(stored.providerApiKeys?.CLOUDFLARE_ACCOUNT_ID).toBe('abc123')
+    // A second save persists under its own name too; both survive a re-apply.
+    delete process.env.CLOUDFLARE_ACCOUNT_ID
+    applyPersistedProviderApiKeys()
+    expect(process.env.CLOUDFLARE_ACCOUNT_ID as string | undefined).toBe(
+      'abc123',
+    )
+  })
+
+  test('rejects an unknown extra credential for the provider', () => {
+    const { saveProviderApiKeyExtra } = require('../provider-key-store') as {
+      saveProviderApiKeyExtra: (
+        provider: string,
+        extraEnvVar: string,
+        value: string,
+      ) => void
+    }
+    expect(() =>
+      saveProviderApiKeyExtra('openrouter', 'OPENROUTER_ACCOUNT_ID', 'x'),
+    ).toThrow(/no additional credential/)
+  })
+
+  test('multi-step setup state: begin stages extras, consume drains, shell env skips', () => {
+    const mod = require('../provider-setup') as {
+      beginProviderSetup: (p: string) => string | undefined
+      getNextPendingExtraCredential: () =>
+        { envVar: string; label: string } | undefined
+      consumeNextPendingExtraCredential: () =>
+        { envVar: string; label: string } | undefined
+    }
+    // Shell-provided extras are never staged (env takes precedence).
+    process.env.CLOUDFLARE_ACCOUNT_ID = 'from-shell'
+    mod.beginProviderSetup('cloudflare')
+    expect(mod.getNextPendingExtraCredential()).toBeUndefined()
+    delete process.env.CLOUDFLARE_ACCOUNT_ID
+
+    mod.beginProviderSetup('cloudflare')
+    const staged = mod.getNextPendingExtraCredential()
+    expect(staged?.envVar).toBe('CLOUDFLARE_ACCOUNT_ID')
+    expect(mod.consumeNextPendingExtraCredential()?.envVar).toBe(
+      'CLOUDFLARE_ACCOUNT_ID',
+    )
+    expect(mod.getNextPendingExtraCredential()).toBeUndefined()
+    expect(mod.consumeNextPendingExtraCredential()).toBeUndefined()
   })
 })

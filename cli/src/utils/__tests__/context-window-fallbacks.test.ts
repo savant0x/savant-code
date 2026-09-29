@@ -99,7 +99,9 @@ describe('CONTEXT_WINDOW_FALLBACKS (vendor table)', () => {
       ['unorouter/gemini-3.6-flash:free', 1_048_576],
       ['unorouter/qwen3.8-27b:free', 1_000_000],
       ['unorouter/deepseek-v4-pro', 1_048_576],
-      ['commandcode/zai-org/glm-5.3', 1_310_720],
+      // FID-2026-0928-010: re-keyed to roster casing, re-sourced to the
+      // gateway's own publication (1,000,000).
+      ['commandcode/zai-org/GLM-5.3', 1_000_000],
       ['commandcode/Qwen/Qwen3.8-27B', 1_000_000],
       // over-allocations corrected DOWN to live capability (OOM direction)
       ['unorouter/gpt-5.5', 1_050_000],

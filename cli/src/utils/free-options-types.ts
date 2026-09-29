@@ -1,0 +1,58 @@
+/**
+ * FID-2026-0928-012 — shared types for the free-options discovery surface.
+ * Own module so the lib, renderers, and command handler can import them
+ * without pulling in the fetch/IO half (Law 13, cycle-free).
+ */
+
+/** One free-model row we consume from the custats catalog. */
+export type FreeCatalogModel = {
+  id: string
+  providerId: string
+  context_length: number | null
+}
+
+/** The catalog envelope shape we rely on (defensive lift at the boundary). */
+export type FreeCatalogEnvelope = {
+  fetchedAt: string
+  totalModels: number
+  models: FreeCatalogModel[]
+  newModelIds: string[]
+  archivedModels: Array<{
+    id: string
+    providerId: string | null
+    removedAt: string
+  }>
+}
+
+/** Registry attribution for one catalog provider id. */
+export type FreeProviderAttribution = {
+  id: string
+  label: string
+  envVar: string
+  setupCommand: string
+}
+
+/** Everything the pure builder needs about the user's machine. */
+export type FreeOptionsContext = {
+  nowMs: number
+  /** Env vars with non-empty values (store ∪ environment), BYOK truth. */
+  wiredEnvVars: ReadonlySet<string>
+  /** Catalog providerId → registry attribution (known providers only). */
+  registryByProviderId: Record<string, FreeProviderAttribution>
+  /** Key-less local providers (registry `kind: 'local'`). */
+  localProviders: Array<{ id: string; label: string; setupCommand: string }>
+}
+
+export type FreeLane = {
+  providerId: string
+  label: string
+  models: string[]
+}
+
+export type FreeOptionsReport = {
+  fetchedAt: string | null
+  stale: boolean
+  wiredFree: Array<FreeLane>
+  notWired: Array<FreeLane & { setupCommand: string }>
+  localFree: Array<{ id: string; label: string; setupCommand: string }>
+}

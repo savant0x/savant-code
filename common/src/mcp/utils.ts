@@ -2,23 +2,12 @@
 const MAX_TIMEOUT_MS = 300_000
 
 /**
- * Races a promise against a timeout. Rejects with a timeout Error if the
- * promise does not settle within `ms` milliseconds. The timer is always
- * cleared (via .finally) to avoid leaks when the promise wins the race.
+ * Races a promise against a timeout — re-exported from the canonical home
+ * (FID-2026-0928-009: one body in `util/promise`; the local copy here was
+ * the second truth the shared-primitive rule now forbids). The canonical
+ * signature's optional message defaults to a timeout error.
  */
-export async function withTimeout<T>(
-  promise: Promise<T>,
-  ms: number,
-  errorMessage: string,
-): Promise<T> {
-  let timer: ReturnType<typeof setTimeout>
-  const timeoutPromise = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => reject(new Error(errorMessage)), ms)
-  })
-  return Promise.race([promise, timeoutPromise]).finally(() =>
-    clearTimeout(timer),
-  )
-}
+export { withTimeout } from '../util/promise'
 
 /**
  * Clamps a user-supplied timeout to [1, MAX_TIMEOUT_MS].

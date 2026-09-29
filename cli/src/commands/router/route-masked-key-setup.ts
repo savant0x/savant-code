@@ -1,10 +1,13 @@
 import { routeKeySetup } from './route-key-setup'
 import {
+  consumeNextPendingExtraCredential,
   getActiveProviderSetup,
   getActiveResearchKeyService,
+  getNextPendingExtraCredential,
   getProviderSetupInfo,
   getResearchKeyServiceInfo,
   saveProviderApiKey,
+  saveProviderApiKeyExtra,
   saveResearchApiKey,
 } from '../../utils/provider-setup'
 
@@ -53,6 +56,37 @@ export function routeMaskedKeySetup(
   // Handle provider API-key setup without writing the secret to chat history.
   if (inputMode === 'providerSetup') {
     const provider = getActiveProviderSetup()
+    // Dual-credential continuation (T61 Option A): when the previous save
+    // staged extra credentials, THIS input is the extra's value. Save it by
+    // its own env-var name and chain to any remaining extra; when none
+    // remain, finish with the normal success message.
+    const pendingExtra = getNextPendingExtraCredential()
+    if (pendingExtra) {
+      routeKeySetup({
+        trimmed,
+        setInputValue,
+        setInputMode,
+        setInputFocused,
+        inputRef,
+        setMessages,
+        getInfo: () =>
+          getProviderSetupInfo(provider)
+            ? { label: pendingExtra.label }
+            : undefined,
+        saveKey: (value) => {
+          saveProviderApiKeyExtra(provider, pendingExtra.envVar, value)
+          consumeNextPendingExtraCredential()
+        },
+        unavailableMessage:
+          'Provider setup is unavailable. Use /provider to try again.',
+        emptyValueMessage: (label) => `${label} cannot be empty.`,
+        successMessage: () =>
+          getNextPendingExtraCredential()
+            ? `${pendingExtra.label} saved. Enter your ${getNextPendingExtraCredential()?.label ?? ''} below.`
+            : `${getProviderSetupInfo(provider)?.label ?? provider} setup complete. You can now use the configured provider model.`,
+      })
+      return true
+    }
     routeKeySetup({
       trimmed,
       setInputValue,
@@ -61,11 +95,19 @@ export function routeMaskedKeySetup(
       inputRef,
       setMessages,
       getInfo: () => getProviderSetupInfo(provider),
-      saveKey: (value) => saveProviderApiKey(provider, value),
+      saveKey: (value) => {
+        saveProviderApiKey(provider, value)
+        // The staged queue (seeded by beginProviderSetup) decides whether
+        // the flow chains into the next extra-credential prompt.
+      },
+      getNextInputMode: () =>
+        getNextPendingExtraCredential() ? 'providerSetup' : undefined,
       unavailableMessage:
         'Provider setup is unavailable. Use /provider to try again.',
       successMessage: (label) =>
-        `${label} API key saved locally. You can now use the configured provider model.`,
+        getNextPendingExtraCredential()
+          ? `${label} API key saved locally. Now enter your ${getNextPendingExtraCredential()?.label ?? 'additional credential'} below.`
+          : `${label} API key saved locally. You can now use the configured provider model.`,
     })
     return true
   }

@@ -4,6 +4,7 @@ import pluginReactHooks from 'eslint-plugin-react-hooks'
 import globals from 'globals'
 import tseslint from 'typescript-eslint'
 
+import noDuplicateSharedPrimitive from './scripts/eslint-rules/no-duplicate-shared-primitive.js'
 import noUnknownInSignatures from './scripts/eslint-rules/no-unknown-in-signatures.js'
 
 export default tseslint.config(
@@ -158,6 +159,7 @@ export default tseslint.config(
       savant: {
         rules: {
           'no-unknown-in-signatures': noUnknownInSignatures,
+          'no-duplicate-shared-primitive': noDuplicateSharedPrimitive,
         },
       },
     },
@@ -212,6 +214,13 @@ export default tseslint.config(
       // Temporarily disabled while the dedicated unknown-cleanup FID is drafted (see FID-069 notes).
       // NOTE: re-enable as 'error' once all non-guard `unknown` usages are typed or suppressed.
       'savant/no-unknown-in-signatures': 'off',
+      // ECHO Laws 7 + 13 for the utility tier (FID-2026-0928-009): a local
+      // top-level declaration of a registered shared primitive outside its
+      // canonical home (scripts/eslint-rules/shared-primitives.json) is an
+      // error. Consolidation sweep landed with the rule so the tree enters
+      // clean; the registry grows by one line when a new canonical export
+      // is added.
+      'savant/no-duplicate-shared-primitive': 'error',
       // React Rules of Hooks (FID-2026-0815-014): hooks must run unconditionally
       // in the same order every render; a conditional `return` before a hook
       // crashes React with "Rendered more hooks than during the previous render".

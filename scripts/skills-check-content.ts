@@ -54,12 +54,52 @@ export function isAgentAuthored(
   return false
 }
 
-/** Extract the first command word from an inline-code span, if it looks like a CLI invocation. */
+/**
+ * A fenced code block: ``` or ~~~, 3+ chars, optional info string, closed by a
+ * line repeating the same fence. Removed before inline spans are matched
+ * (FID-2026-0928-001 RC1).
+ */
+const FENCED_BLOCK = /^([`~]{3,})[^\n]*\n[\s\S]*?^\1\s*$/gm
+
+/**
+ * A run of 3+ backticks that survived fence stripping — i.e. one written
+ * inline inside prose. A run of 3+ is never a valid *inline* delimiter (inline
+ * spans use single backticks), but it is still an odd count that mispairs every
+ * following span, so it is neutralised here (RC1, second form).
+ */
+const INLINE_BACKTICK_RUN = /`{3,}/g
+
+/** A leading short lowercase token followed by at least one argument. */
+const COMMAND_INVOCATION = /^[a-z][a-z0-9-]{1,30}\s+\S/
+
+/**
+ * A leading token followed by a `word:` label — a quoted `name: value` record
+ * (e.g. `untrusted comment: rsign …`), not a shell line (RC2).
+ */
+const LABEL_VALUE_SPAN = /^[a-z][a-z0-9-]{1,30}\s+[A-Za-z][\w-]*:/
+
+/**
+ * Extract the first command word from an inline-code span, if it looks like a
+ * CLI invocation.
+ *
+ * Fenced blocks — and any inline run of 3+ backticks — are stripped first. They
+ * contain an odd number of backticks, so an inline-span regex pairs across the
+ * boundary and mis-attributes every subsequent span: the fence's info string is
+ * reported as a command, and real commands after the fence can be swallowed
+ * entirely. A span is then only a candidate if it reads like an invocation — a
+ * bare backticked word is prose, and a `label: value` span quotes file content.
+ */
 function extractCommandWords(text: string): string[] {
   const words: string[] = []
-  const spans = text.match(/`([^`]+)`/g) ?? []
+  const spans =
+    text
+      .replace(FENCED_BLOCK, '')
+      .replace(INLINE_BACKTICK_RUN, '')
+      .match(/`([^`]+)`/g) ?? []
   for (const span of spans) {
     const code = span.slice(1, -1).trim()
+    if (!COMMAND_INVOCATION.test(code)) continue
+    if (LABEL_VALUE_SPAN.test(code)) continue
     const first = code.split(/\s+/)[0]
     if (!first) continue
     // Looks like a CLI invocation: short lowercase alphanumeric/hyphen token.

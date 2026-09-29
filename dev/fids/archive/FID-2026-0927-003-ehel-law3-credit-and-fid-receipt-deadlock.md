@@ -3,8 +3,9 @@
 **Filename:** `FID-2026-0927-003-ehel-law3-credit-and-fid-receipt-deadlock.md`
 **ID:** FID-2026-0927-003
 **Severity:** critical
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-09-27 17:20
+**Closed:** 2026-09-28
 **Automation level:** 3
 > **Status corrected 2026-09-27: `analyzed` → `fixed`.** Steps 1 and 2 are
 > implemented, audited, and mutation-proven. Step 3 is implemented at the
@@ -12,6 +13,15 @@
 > a stale receipt as fatal) — recorded under *Open Remediation*, not hidden.
 > Step 4 is satisfied by this document. `fixed` is therefore the honest status:
 > the critical soundness hole is closed, and the remainder is named.
+>
+> **Closed 2026-09-28 by operator ruling.** Asked to decide F3's residual
+> (run the declared gates at write time, or accept the narrower
+> repository-only demotion), the operator ruled: *"T90-F3 residual needs no
+> code."* The repository-only demotion is accepted as final: the write
+> boundary stays fatal by design (it cannot run the C3 live re-run at write
+> time, and trading that for a weaker write-time guarantee is a design
+> decision the operator declines to make). The residual is documented under
+> *Open Remediation* as accepted, not outstanding.
 
 ## Summary
 
@@ -283,8 +293,8 @@ land in parallel.
 
 ### Verification Receipt
 
-- fingerprint: sha256:2bfd5220870b1b7d0899441026d69ab72bc3c208badf6fc10ffbc60ebca7e6fa
-- verified: 2026-09-27T22:26:13.537Z
+- fingerprint: sha256:c065795377e5222eff5078c5fbf546a5e7fb02f95be46dacfb3c4e18f57309ea
+- verified: 2026-09-28T22:23:03.223Z
 - typecheck packages/agent-runtime: exit 0
 - test packages/agent-runtime/src/echo/__tests__/law3-failure-attribution.test.ts: exit 0
 - test packages/agent-runtime/src/echo/__tests__/law3-fsmphase-reachability.test.ts: exit 0
@@ -334,15 +344,18 @@ Remediation steps:
       other dirty-unverified file (the anti-masking leg). 13 legs in
       `law3-failure-attribution.test.ts`. Five audit findings fixed — see
       *Adversarial findings fixed* below.
-- [ ] Proposed Solution step 3 — **F3 stale-receipt demotion.** PARTIAL by
-      operator direction. The repository-gate half is IMPLEMENTED: C1+C2 in
-      `scripts/fid-gates.ts` now collects structural errors and classifies them
-      AFTER C3 runs, and a stale receipt whose declared gates all pass the live
-      re-run is demoted to a non-fatal `severity: 'warning'`. Mutation-proven
-      end-to-end on a real `fixed` FID (`REAL_EXIT=0` with the warning printed,
-      byte-identical restore). **OPEN:** `pre-write-gates-fid.ts:105` and
-      `scripts/fid-check.ts:40` still treat a stale receipt as fatal, so the
-      doc-edit loop persists at the write boundary. See *Open Remediation*.
+- [x] Proposed Solution step 3 — **F3 stale-receipt demotion.** PARTIAL
+      implementation, RESOLVED by operator ruling 2026-09-28 ("T90-F3
+      residual needs no code"). The repository-gate half is IMPLEMENTED:
+      C1+C2 in `scripts/fid-gates.ts` collects structural errors and
+      classifies them AFTER C3 runs, and a stale receipt whose declared gates
+      all pass the live re-run is demoted to a non-fatal `severity:
+      'warning'` (mutation-proven end-to-end on a real `fixed` FID,
+      `REAL_EXIT=0`, byte-identical restore). The write-boundary half
+      (`pre-write-gates-fid.ts:105`, `scripts/fid-check.ts:40` staying
+      fatal) is accepted as final by the ruling — the write path cannot run
+      the C3 live re-run, and the operator declines the weaker write-time
+      guarantee. See *Open Remediation* for the accepted-behavior record.
 - [x] Proposed Solution step 4 — **F4/F5 corrections.** No code change
       required; this record IS the record. Both hypotheses are recorded as
       rejected above with the refuting evidence.
@@ -435,12 +448,22 @@ Remediation steps:
   tool-mediated runs of every gate quoted in *Code Verification Evidence*.
 - **Verification date:** 2026-09-27
 - **Verification receipt:** see `## Verification Receipt` below.
-- **Closed by:** _not closed_ — step 3 is open.
-- **Close date:** _n/a while step 3 is open._
-- **Archived:** no.
-- **CHANGELOG entry:** pending — to be written when this record closes.
+- **Closed by:** operator ruling 2026-09-28 — *"T90-F3 residual needs no
+  code."* The step-3 residual (write-boundary staleness staying fatal) is
+  accepted as final repository behavior, not deferred work. Closure commit
+  hash pending (G2) — to be recorded at push.
+- **Close date:** 2026-09-28
+- **Archived:** yes — moved to `dev/fids/archive/` on close.
+- **CHANGELOG entry:** yes — under 0.0.34 (written at closure).
 
-## Open Remediation (step 3 residual)
+## Open Remediation (step 3 residual — ACCEPTED AS FINAL 2026-09-28)
+
+**Operator ruling, 2026-09-28:** asked to choose between running the
+declared gates at write time or accepting the narrower repository-only
+demotion, the operator ruled *"T90-F3 residual needs no code."* The
+repository-only demotion is the final disposition: the two write-boundary
+consumers below stay fatal **by design**, and this section records accepted
+behavior rather than outstanding work.
 
 The repository gate now demotes a stale receipt to a warning when every
 declared gate passes the C3 live re-run. **Two other consumers of

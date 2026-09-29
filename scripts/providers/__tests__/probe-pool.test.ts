@@ -115,10 +115,17 @@ describe('runHealthProbePhase pooled path (FID-2026-0918-001)', () => {
   // (repo DI convention), so the pool's health branch is exercised without
   // sockets. 4 fake providers × real DNS would otherwise leave the pooled
   // health path with LIVE-evidence-only coverage (unverifiable here).
-  const fakeLookup: typeof lookup = (_hostname, _options, callback) =>
+  const fakeLookup = ((
+    _hostname: string,
+    _options: unknown,
+    callback: (
+      err: unknown,
+      addresses: Array<{ address: string; family: number }>,
+    ) => void,
+  ) =>
     process.nextTick(() =>
       callback(null, [{ address: '93.184.216.34', family: 4 }]),
-    ) as unknown as void
+    )) as unknown as typeof lookup
 
   function makeFetch(latch: { inFlight: number; peak: number }): typeof fetch {
     return (async (

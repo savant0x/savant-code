@@ -42,9 +42,13 @@ describe('FID-2026-0916-004: commandcode renamed spellings', () => {
 
   test('glm/kimi/mimo ids use the roster org spellings', () => {
     const ids = Object.values(commandcodeModels)
-    expect(ids).toContain('commandcode/zai-org/glm-5.2')
-    expect(ids).toContain('commandcode/moonshotai/Kimi-K3')
+    // FID-2026-0928-010: the GLM rows use the live roster casing — the
+    // lowercase spellings originally pinned here shipped as a realignment
+    // defect (this suite's own CHANGELOG intent says zai-org/GLM-5.2).
+    expect(ids).toContain('commandcode/zai-org/GLM-5.2')
+    expect(ids).not.toContain('commandcode/zai-org/glm-5.2')
     expect(ids).not.toContain('commandcode/z-ai/glm-5.2')
+    expect(ids).toContain('commandcode/moonshotai/Kimi-K3')
     expect(ids).not.toContain('commandcode/moonshotai/kimi-k3')
   })
 

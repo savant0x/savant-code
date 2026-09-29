@@ -13,6 +13,19 @@ type KeySetupParams = Pick<
   saveKey: (value: string) => void
   unavailableMessage: string
   successMessage: (label: string) => string
+  /**
+   * Optional next input mode, resolved AFTER the save succeeds — used by
+   * the multi-step dual-credential flow (T61 Option A) to chain into the
+   * next prompt instead of dropping back to the default mode. When it
+   * returns undefined (or is absent) the flow ends in the default mode.
+   */
+  getNextInputMode?: () => InputMode | undefined
+  /**
+   * Optional empty-value message override — the default names the value an
+   * "API key", which is wrong for extra credentials like an account id
+   * (T61 Option A).
+   */
+  emptyValueMessage?: (label: string) => string
 }
 
 /**
@@ -33,6 +46,8 @@ export function routeKeySetup({
   saveKey,
   unavailableMessage,
   successMessage,
+  getNextInputMode,
+  emptyValueMessage = (label) => `${label} API key cannot be empty.`,
 }: KeySetupParams): void {
   const info = getInfo()
   if (!info) {
@@ -40,7 +55,7 @@ export function routeKeySetup({
   } else if (!trimmed) {
     setMessages((prev) => [
       ...prev,
-      getSystemMessage(`${info.label} API key cannot be empty.`),
+      getSystemMessage(emptyValueMessage(info.label)),
     ])
   } else {
     try {
@@ -59,9 +74,11 @@ export function routeKeySetup({
     }
   }
 
-  // Never save or display the secret itself, and always return to normal input.
+  // Never save or display the secret itself, and always return to normal
+  // input — unless a chained step is queued (dual-credential setup), which
+  // resolves after the save so its answer reflects the post-save queue.
   setInputValue({ text: '', cursorPosition: 0, lastEditDueToNav: false })
-  setInputMode('default')
+  setInputMode(getNextInputMode?.() ?? 'default')
   setInputFocused(true)
   inputRef.current?.focus()
 }

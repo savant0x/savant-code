@@ -187,7 +187,13 @@ describe('FID coverage', () => {
 })
 
 describe('narrative window', () => {
-  test('session summaries from before the effective date are history', () => {
+  // FID-2026-0928-005 replaced the date window. These legs used to pin a
+  // *before/after* effective-date split over session summaries; the scan
+  // itself is gone, because a summary is written when a session ends, so what
+  // it cites is finished and its record belongs in CHANGELOG.md. The second
+  // leg is the one that actually changed meaning, and it is inverted rather
+  // than deleted so the narrowing stays visible.
+  test('session summaries are history and are not scanned', () => {
     const root = createRoot()
     write(
       root,
@@ -197,18 +203,14 @@ describe('narrative window', () => {
     expect(collectRegisterCompletenessIssues(root)).toEqual([])
   })
 
-  test('current session summaries are scanned', () => {
+  test('a task cited only by a session summary is not a gap', () => {
     const root = createRoot(REGISTER_WITH_TASK_74)
     write(
       root,
       'dev/session-summaries/2026-09-19-2200-current.md',
       'Task 98 work landed here.',
     )
-    const issues = collectRegisterCompletenessIssues(root)
-    expect(issues).toHaveLength(1)
-    expect(issues[0]?.file).toBe(
-      'dev/session-summaries/2026-09-19-2200-current.md',
-    )
+    expect(collectRegisterCompletenessIssues(root)).toEqual([])
   })
 
   test('a missing register is not an error', () => {

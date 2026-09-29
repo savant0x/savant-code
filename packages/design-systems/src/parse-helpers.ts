@@ -13,6 +13,9 @@ export const HEX_COLOR = /^#[0-9a-f]{3,8}$/i
 export const UNSAFE_CONTENT = /<script\b|javascript:|data:text\/html|<iframe\b/i
 export const ABSOLUTE_PATH = /^(?:[a-zA-Z]:[\\/]|[\\/]{2,}|\/)/
 
+// Canonical in-package sha256 (FID-2026-0928-009 Part 4): default.ts now
+// imports this body instead of carrying its own copy. `node:crypto` remains
+// for any other hashing callers in this module.
 export function sha256(value: string): string {
   return createHash('sha256').update(value, 'utf8').digest('hex')
 }

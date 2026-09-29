@@ -79,10 +79,11 @@ export function formatNetworkErrorMessage(
 }
 
 /**
- * Sleep for a given duration
+ * Sleep for a given duration — re-exported from the canonical home
+ * (FID-2026-0928-009: one body in `common/util/promise`); the module-local
+ * import path is preserved for existing consumers.
  */
-export const sleep = (ms: number): Promise<void> =>
-  new Promise((resolve) => setTimeout(resolve, ms))
+export { sleep } from '@savant-code/common/util/promise'
 
 /**
  * Calculate delay with exponential backoff and jitter

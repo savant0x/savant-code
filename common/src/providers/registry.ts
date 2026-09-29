@@ -107,6 +107,11 @@ export const PROVIDER_REGISTRY = {
     kind: 'gateway',
     credentials: { envVar: 'COMMAND_CODE_API_KEY' },
     baseUrl: 'https://api.commandcode.ai/provider/v1',
+    // FID-2026-0928-010: the vendor's /models boundary is fail-open — a
+    // keyless GET returns HTTP 200 with the full roster (measured 2026-09-18
+    // gauntlet and re-measured 2026-09-28, 82 ids). TokenRouter/TokenHarbor
+    // return 401 for the same shape. Vendor-side posture, not patchable
+    // here; recorded so the fact travels with the provider metadata.
     protocol: 'openai-anthropic',
     idTransform: 'strip',
     protocolMap: 'COMMANDCODE_PROTOCOLS',
@@ -160,9 +165,12 @@ export const PROVIDER_REGISTRY = {
     protocol: 'openai',
     idTransform: 'cf-rewrite',
     catalog: { source: 'static', modelsRef: 'cloudflare' },
-    // Phase 1: not added to the /provider setup picker yet — delta (b) only
-    // adds cloudflare to the ModelProvider union and settings.validProviders.
-    setupAvailable: false,
+    // Surfaced for setup (T61 Option A, FID-2026-0928-008): the setup seam
+    // now carries `credentials.extra` (ProviderSetupInfo.extraEnvVars), so the
+    // wizard prompts for the account id after the token and the key store
+    // persists it under its own env-var name. The registry entry stays the
+    // single source of the credential list.
+    setupAvailable: true,
     domain: 'cloudflare.com',
     order: 4,
   },

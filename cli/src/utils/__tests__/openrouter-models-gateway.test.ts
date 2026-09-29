@@ -79,6 +79,26 @@ describe('openrouter-models', () => {
     ).toBe('2023-06-16T17:03:22.000Z')
   })
 
+  test('kiosapi nested architecture fields stay unmapped (T96-followup probe 2026-09-28)', () => {
+    // Measured live 2026-09-28 (HTTP 200, 36 models): no `architecture.*`
+    // object and no flat modality/tokenizer/instruct_type — 0/36 in both
+    // positions (T96-followup / FID-2026-0927-006). The catalog serves the
+    // plain OpenAI list shape; a nested read would populate nothing for
+    // every model, so the parser deliberately reads neither position.
+    const models = parseKiosapiModelsForTest({
+      data: [
+        {
+          id: 'z-ai/glm-5.3-free',
+          architecture: { modality: 'text->text', tokenizer: 'Other' },
+          modality: 'text->text',
+        } as Record<string, unknown>,
+      ],
+    })
+    expect(models[0]?.modality).toBeUndefined()
+    expect(models[0]?.tokenizer).toBeUndefined()
+    expect(models[0]?.instructType).toBeUndefined()
+  })
+
   test('builds the static TokenHarbor baseline catalog without network access', () => {
     const models = getTokenHarborModels()
 

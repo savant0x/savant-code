@@ -77,6 +77,25 @@ describe('vercel live catalog parser (FID-2026-0927-001)', () => {
     expect(gpt?.created).toBeUndefined()
   })
 
+  test('nested architecture fields stay unmapped (T96-followup probe 2026-09-28)', () => {
+    // Measured live 2026-09-28 (HTTP 200, 389 models): no `architecture.*`
+    // object and no flat modality/tokenizer/instruct_type — 0/389 in both
+    // positions (T96-followup / FID-2026-0927-006). The gateway serves only
+    // OpenAI-list fields; a nested read would populate nothing.
+    const models = parseVercelModelsForTest({
+      data: [
+        {
+          id: 'alibaba/qwen-3-14b',
+          architecture: { modality: 'text->text', tokenizer: 'Other' },
+          modality: 'text->text',
+        } as Record<string, unknown>,
+      ],
+    })
+    expect(models[0]?.modality).toBeUndefined()
+    expect(models[0]?.tokenizer).toBeUndefined()
+    expect(models[0]?.instructType).toBeUndefined()
+  })
+
   test('empty/missing data yields an empty catalog (degrade, not throw)', () => {
     expect(parseVercelModelsForTest({})).toEqual([])
     expect(parseVercelModelsForTest({ data: [] })).toEqual([])

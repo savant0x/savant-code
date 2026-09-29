@@ -152,8 +152,15 @@ export const CONTEXT_WINDOW_FALLBACKS: ReadonlyMap<string, number> = new Map([
   ['commandcode/claude-haiku-4-5-20251001', 200_000],
   ['commandcode/xai/grok-4.5', 500_000],
   ['commandcode/xai/grok-4.6', 500_000],
-  ['commandcode/zai-org/glm-5.2', 1_048_576], // 2-of-3
-  ['commandcode/zai-org/glm-5.3', 1_310_720], // live capability 2026-09-19 (was 1,048,576)
+  // FID-2026-0928-010: rows re-keyed to the live roster casing and
+  // re-sourced to the gateway's own publication — the commandcode roster
+  // publishes context_length per id, both GLM rows advertise 1,000,000
+  // (keyless probe 2026-09-28). Upstream votes for the record: glm-5.2
+  // 1,048,576 (2-of-3), glm-5.3 1,310,720 (OpenRouter 2026-09-28). A
+  // gateway proxies at most the upstream window, so the gateway's own
+  // advertisement is binding and the correction is strictly conservative.
+  ['commandcode/zai-org/GLM-5.2', 1_000_000],
+  ['commandcode/zai-org/GLM-5.3', 1_000_000],
   ['commandcode/moonshotai/Kimi-K3', 1_048_576],
   ['commandcode/moonshotai/Kimi-K2.7-Code', 262_144],
   ['commandcode/moonshotai/Kimi-K2.6', 262_144],

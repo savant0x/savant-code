@@ -1,5 +1,4 @@
-import { createHash } from 'node:crypto'
-
+import { sha256 } from './parse-helpers'
 import {
   DESIGN_SYSTEM_SCHEMA_VERSION,
   designSystemResourceSchema,
@@ -7,10 +6,6 @@ import {
 } from './types'
 
 export const DEFAULT_SOURCE = `savant-cyberpunk-v1\nprimary=#18faf9\nsecondary=#18faf9\nsuccess=#39ff14\nwarning=#ff9500\nerror=#ff2d55\nbackground=#050508\nsurface=#0b0b11\nforeground=#e4e4e8\nmuted=#8f8f99\nborder=#20202a\nsyntaxKeyword=#ffb000\ninlineCodeFg=#22d3ee\nlistBulletFg=#39ff14\nfont=system-ui,sans-serif\nspacing=4px,8px,16px,24px\nradius=0px,4px,8px,9999px\n`
-
-function sha256(value: string): string {
-  return createHash('sha256').update(value, 'utf8').digest('hex')
-}
 
 export function getDefaultNormalizedPayload(
   tokens: Record<string, unknown>,

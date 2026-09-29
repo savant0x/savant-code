@@ -22,11 +22,20 @@ local-first use with Ollama.
 > gate**: credit was shape-aware rather than outcome-aware, so a failing
 > `bun test` — non-zero `exitCode`, plain-text output, no structured error —
 > was credited as a **pass**, leaving the gate inert for the dominant failure
-> mode. Also here: the `@@` hunk row no longer spends the panel's loudest
-> colour on a line carrying no change information; four mutation-proven guards
-> against controls that looked load-bearing and were not; a standing
-> type-check surface for the release engine; and the release-recovery path
-> (`--resume` plus a bounded npm read-after-write retry) that was dead.
+> mode. Also here: Cloudflare is now **setup-surfaced** (dual-credential
+> wizard seam: token + account id); `scripts/**` is fully type-gated (36
+> errors fixed, boundary widened); **CommandCode GLM ids re-keyed to the live
+> roster casing** and the window-truth probe repaired; the discovery pipeline
+> gained a **second source** (custats feeds: offers ledger with expiry radar
+> and model enrichment/retirement); new **`/provider free`** lists free lanes
+> you have — and haven't — wired, with an agent-answerable reference; the
+> idea shelf got an archive with a full status review; and the FID receipt
+> deadlock closed with the write-boundary residual accepted by ruling. Also:
+> the `@@` hunk row no longer spends the panel's loudest colour on a line
+> carrying no change information; four mutation-proven guards against
+> controls that looked load-bearing and were not; a standing type-check
+> surface for the release engine; and the release-recovery path (`--resume`
+> plus a bounded npm read-after-write retry) that was dead.
 > Governance: agents may stage, commit, and push granular commits to origin
 > main; force-push, history rewrite, and release mutations stay operator-only.
 > Previously shipped in v0.0.33: this release hardened the security posture
@@ -205,7 +214,7 @@ history. The supported hosted providers are:
 | B.AI | `/provider bai` or `DIRECT_PROVIDER=bai` | `BAI_API_KEY` | OpenAI-compatible gateway with an authenticated live model catalog |
 | BazaarLink | `/provider bazaarlink` or `DIRECT_PROVIDER=bazaarlink` | `BAZAARLINK_API_KEY` | Hosted gateway |
 | Clean APIs | `/provider cleanapis` or `DIRECT_PROVIDER=cleanapis` | `CLEANAPIS_API_KEY` | Hosted gateway |
-| Cloudflare | Environment configuration | `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` | Env-only — not in the `/provider` picker; requires the account id too |
+| Cloudflare | `/provider cloudflare` or `DIRECT_PROVIDER=cloudflare` | `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` | Workers AI gateway; the `/provider` flow prompts for the token, then the account id (env vars take precedence) |
 | CommandCode | `/provider commandcode` or `DIRECT_PROVIDER=commandcode` | `COMMAND_CODE_API_KEY` | OpenAI-compatible hosted inference (dual-protocol) |
 | HCNSec | `/provider hcnsec` or `DIRECT_PROVIDER=hcnsec` | `HCNSEC_API_KEY` | OpenAI-compatible gateway on an audited static 7-model allowlist |
 | Infron | `/provider infron` or `DIRECT_PROVIDER=infron` | `INFRON_API_KEY` | Hosted gateway |
@@ -295,8 +304,9 @@ OpenRouter key resolution is ordered as follows:
 2. `OPENROUTER_API_KEY` — uses an existing regular OpenRouter key directly.
 3. `INFERENCE_API_KEY` — uses the SDK-specific inference key.
 
-Advanced Cloudflare Workers AI integrations use `CLOUDFLARE_API_TOKEN` together
-with `CLOUDFLARE_ACCOUNT_ID`. Nous Research uses `/provider nous` or
+Cloudflare Workers AI integrations use `CLOUDFLARE_API_TOKEN` together
+with `CLOUDFLARE_ACCOUNT_ID` — `/provider cloudflare` prompts for both (or set
+the env vars directly). Nous Research uses `/provider nous` or
 `NOUS_API_KEY` for direct OpenAI-compatible inference; Nous Portal OAuth is a
 separate integration and is not part of this provider. Ordinary CLI users should
 use `/provider` or one of the provider-specific keys above. Do not create a project-local `.env`

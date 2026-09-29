@@ -64,7 +64,9 @@ async function pullRoster(
  */
 const SAMPLES: Array<[string, string, 'bazaarlink' | 'orcarouter']> = [
   // The operator-reported bug row.
-  ['tokenharbor/deepseek-v4-flash', 'deepseek-v4-flash', 'bazaarlink'],
+  // FID-2026-0928-010: re-pointed to orcarouter — 2-of-3 vote upheld the
+  // table row on 2026-09-28 (orcarouter + OpenRouter both serve 1,048,576;
+  // bazaarlink drifted to 1,000,000 and the WARN path covers its leg).
   ['tokenharbor/deepseek-v4-flash', 'deepseek/deepseek-v4-flash', 'orcarouter'],
   // Conflict-resolved 2-of-3 rows.
   ['tokenrouter/z-ai/glm-5.2', 'glm-5.2', 'bazaarlink'],
@@ -76,10 +78,13 @@ const SAMPLES: Array<[string, string, 'bazaarlink' | 'orcarouter']> = [
   ['tokenrouter/MiniMax-M3', 'minimax-m3', 'bazaarlink'],
   ['tokenharbor/grok-4.5', 'grok-4.5', 'bazaarlink'],
   ['tokenharbor/grok-4.5', 'grok/grok-4.5', 'orcarouter'],
-  ['opencode-go/deepseek-v4-pro', 'deepseek/deepseek-v4-pro', 'orcarouter'],
-  ['opencode-go/kimi-k3', 'kimi/kimi-k3', 'orcarouter'],
-  ['commandcode/z-ai/glm-5.2', 'glm-5.2', 'bazaarlink'],
-  ['commandcode/openai/gpt-5.6-sol', 'gpt-5.6-sol', 'bazaarlink'],
+  // FID-2026-0928-010: removed the two pre-realign commandcode keys and the
+  // two opencode-go rows (provider removed from Savant — FID-2026-0916-004);
+  // all four had failed structurally since the realign. Re-keyed commandcode
+  // rows sourced from orcarouter (z-ai/glm-5.2 / z-ai/glm-5.3 → 1,000,000,
+  // matching the re-sourced table values).
+  ['commandcode/zai-org/GLM-5.2', 'z-ai/glm-5.2', 'orcarouter'],
+  ['commandcode/zai-org/GLM-5.3', 'z-ai/glm-5.3', 'orcarouter'],
   // The direct bazaarlink catalog rows.
   [
     'bazaarlink/qwen/qwen3.7-flash:free',

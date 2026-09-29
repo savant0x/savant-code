@@ -14,9 +14,12 @@
  * 1. **FID coverage** — every record in the active queue (`dev/fids/FID-*.md`)
  *    must be named in `SCOPE.md`. A FID is a work item by definition, so a FID
  *    the register has never heard of is unreachable policy.
- * 2. **Task coverage** — every task an active FID or a current session summary
- *    cites (`Task NN`, `TNN-X`) must exist in the register as a `## Task NN`
- *    heading or a `TNN-X` item id.
+ * 2. **Task coverage** — every task an active FID or the agenda cites
+ *    (`Task NN`, `TNN-X`) must exist in the register as a `## Task NN` heading
+ *    or a `TNN-X` item id. Both are *live* surfaces. Session summaries are not
+ *    scanned (FID-2026-0928-005): a summary is written when a session ends, so
+ *    what it cites is finished, and finished work is recorded in `CHANGELOG.md`
+ *    rather than held in scope forever.
  *
  * A reference written in inline code is a *quotation* — a historical id or the
  * rule being restated — while a bare one is a claim on current scope. That is
@@ -27,18 +30,17 @@
  * what this cannot read is prose. A session that does work and files neither a
  * FID nor a task reference writes nothing to match, and no text check can
  * decide that from the summary alone — that is what the register discipline
- * itself is for. Historical records are not rewritten: the same effective date
- * the disposition guard uses (`SCOPE_GUARD_EFFECTIVE_DATE`) windows the
- * narrative surfaces, while the active queue and the register are always live.
+ * itself is for. The narrowing of 2026-09-28 adds one more: this cannot tell a
+ * *finished* task from an *abandoned* one. Both look like "cited by a past
+ * summary, not registered", and both are now accepted. An abandoned item is
+ * caught only if a live surface still names it. The active queue and the agenda
+ * are always live; the register is always live.
  */
 
 import fs from 'node:fs'
 import path from 'node:path'
 
-import {
-  SCOPE_GUARD_EFFECTIVE_DATE,
-  withoutInlineCode,
-} from './scope-disposition-guard'
+import { withoutInlineCode } from './scope-disposition-guard'
 
 /** One tracked item that the register does not account for. */
 export type RegisterCompletenessIssue = {
@@ -141,11 +143,6 @@ export function scanUnregisteredTaskReferences(
   return issues
 }
 
-/** Leading `YYYY-MM-DD` of a session-summary filename. */
-function summaryDate(fileName: string): string | undefined {
-  return fileName.match(/^(\d{4}-\d{2}-\d{2})/)?.[1]
-}
-
 function readIfPresent(root: string, relativePath: string): string | undefined {
   try {
     return fs.readFileSync(path.join(root, relativePath), 'utf8')
@@ -204,14 +201,19 @@ export function collectRegisterCompletenessIssues(
     issues.push(...scanUnregisteredTaskReferences(content, file, registered))
   }
 
-  for (const entry of listDirectory(root, 'dev/session-summaries')) {
-    if (!entry.endsWith('.md')) continue
-    const date = summaryDate(entry)
-    if (!date || date < SCOPE_GUARD_EFFECTIVE_DATE) continue
-    const file = `dev/session-summaries/${entry}`
-    const content = readIfPresent(root, file)
-    if (content === undefined) continue
-    issues.push(...scanUnregisteredTaskReferences(content, file, registered))
+  // FID-2026-0928-005: session summaries are deliberately NOT scanned. A summary
+  // is written at the *end* of a session, so a task it cites is finished by
+  // construction and its record belongs in `CHANGELOG.md`, which has its own
+  // ratcheted coverage gate. Requiring it to stay in the register made completed
+  // work permanently in-scope: removing the completed index produced 111 issues,
+  // every one from a historical summary and none from either active FID. Live
+  // work stays covered by the active queue above and the agenda below.
+  const agendaFile = 'dev/agenda.md'
+  const agenda = readIfPresent(root, agendaFile)
+  if (agenda !== undefined) {
+    issues.push(
+      ...scanUnregisteredTaskReferences(agenda, agendaFile, registered),
+    )
   }
 
   return issues

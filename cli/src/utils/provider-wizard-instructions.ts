@@ -13,6 +13,7 @@ import type { CustomProviderConfig } from '@savant-code/common/providers/types'
 export const PROVIDER_GRAMMAR_WORDS = [
   'add',
   'edit',
+  'free',
   'list',
   'remove',
   'test',

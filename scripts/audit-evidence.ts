@@ -101,6 +101,7 @@ function run(
   exitCode: number
   output: string
   failureClass: AuditTranscript['failureClass']
+  durationMs: number
   transcriptFinalized: boolean
   finalizationError?: string
 } {

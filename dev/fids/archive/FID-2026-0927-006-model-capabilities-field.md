@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0927-006-model-capabilities-field.md`
 **ID:** FID-2026-0927-006
 **Severity:** low
-**Status:** converged
+**Status:** closed
 **Created:** 2026-09-27 20:20
 **Automation level:** 3
 
@@ -254,13 +254,44 @@ Ruled: **no change to `OpenRouterModel`.**
 - **Verified by:** tool-mediated runs quoted in *Code Verification Evidence*
 - **Verification date:** 2026-09-27
 - **Verification receipt:** see `### Verification Receipt` below
-- **Closed by:** _not closed_ — a decision record is closed when the ruling is
-  implemented, and here the ruling is a no-op
-- **Close date:** _n/a while the deferred mapping fix is open_
-- **Archived:** no
-- **CHANGELOG entry:** _none_ — no code shipped, and the changelog-coverage gate
-  correctly requires an entry only for **archived** records. A release note for
-  a decision that changed nothing would be a false claim of shipped work.
+- **Closed by:** this record — the ruling's one open precondition (the
+  nested-shape probe) completed 2026-09-28; see the closure addendum below
+- **Close date:** 2026-09-28
+- **Archived:** yes — moved to `dev/fids/archive/` on closure
+- **CHANGELOG entry:** written at closure (the `changelog-coverage` gate
+  requires one for archived records; the earlier "none" applied only while this
+  record stayed open, and closure is a real event in the record's history)
+
+## Closure addendum (2026-09-28)
+
+The record stayed open for exactly one reason: *"a decision record is closed
+when the ruling is implemented, and here the ruling is a no-op"* — with the
+nested-shape reconciliation named in _Deferred_ as the remaining work. That
+work was the **T96-followup per-vendor live probe**, and it is now complete.
+Full method and measurements: `FID-2026-0928-006-t96-vendor-live-probe-nested-shape.md`
+(archived, `closed` 2026-09-28 with an 8/8 verification receipt). Result in
+one table:
+
+| Vendor | Models | `architecture.*` present | Nested modality populated | Flat modality populated | Verdict |
+|---|---|---|---|---|---|
+| openrouter | 459 | 459/459 | 459/459 | 0/459 | nested read justified (mapped) |
+| nous | 418 | 418/418 | 409/418 | 0/418 | nested read justified (mapped) |
+| cleanapis | 33 | measured 2026-09-27 | 33/33 | 0/33 | nested read justified (mapped) |
+| apinex | 34 | 0/34 | 0/34 | 0/34 | serves neither shape |
+| kiosapi | 36 | 0/36 | 0/36 | 0/36 | serves neither shape |
+| bai | 57 | 0/57 | 0/57 | 0/57 | serves neither shape |
+| orcarouter | 204 | 182/204 (fields all null) | 0/204 | 0/204 | empty shell — no data served |
+| nvidia | 81 | 0/81 | 0/81 | 0/81 | serves neither shape |
+| vercel | 389 | 0/389 | 0/389 | 0/389 | serves neither shape |
+
+**The three parsers with nested reads are exactly the three vendors that
+measurably serve populated nested fields; the six without serve no
+modality/tokenizer/instruct_type data in either position.** The reconciliation
+this record deferred is therefore a completed verification with a null result,
+not an open fix: adding a nested read to the remaining six would map
+`undefined` for every model — orcarouter's 89%-present-but-fieldless object is
+the speculative-shape trap in its purest form. No code change. This record
+closes with no code change, exactly as its ruling said it would.
 
 ## Deferred, with its correct home
 

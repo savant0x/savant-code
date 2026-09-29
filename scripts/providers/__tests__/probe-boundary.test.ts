@@ -47,7 +47,7 @@ describe('classifyUnauthBoundary (401-boundary gate)', () => {
       baseUrl: 'https://open.relay.example',
       allowPrivate: true,
       fetchImpl: (async () =>
-        new Response('ok', { status: 200 })) as typeof fetch,
+        new Response('ok', { status: 200 })) as unknown as typeof fetch,
     })
     expect(open.boundary).toBe('open-relay-reject')
 
@@ -56,7 +56,7 @@ describe('classifyUnauthBoundary (401-boundary gate)', () => {
       allowPrivate: true,
       fetchImpl: (async () => {
         throw new TypeError('fetch failed')
-      }) as typeof fetch,
+      }) as unknown as typeof fetch,
     })
     expect(dead.boundary).toBe('boundary-unverifiable')
     expect(dead.modelsCount).toBe(0)

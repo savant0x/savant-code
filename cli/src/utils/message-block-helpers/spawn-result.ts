@@ -34,7 +34,12 @@ const extractTextFromMessageContent = (content: unknown): string => {
     .join('')
 }
 
-function isRecord(value: unknown): value is Record<string, JSONValue> {
+// JSON-shape guard — deliberately NOT the canonical `isRecord`
+// (FID-2026-0928-009 Part 4): this variant accepts ARRAYS by design (the
+// spawn-result payloads are JSONValue trees where array elements are
+// filtered with it) and narrows to `Record<string, JSONValue>`, so renaming
+// for what it is beats forcing it into the general home.
+function isJSONRecord(value: unknown): value is Record<string, JSONValue> {
   return value !== null && typeof value === 'object'
 }
 
@@ -71,7 +76,7 @@ export const extractSpawnAgentResultContent = (
     return { content: obj.errorMessage, hasError: true }
   }
 
-  const valueObj = isRecord(obj.value) ? obj.value : null
+  const valueObj = isJSONRecord(obj.value) ? obj.value : null
   if (valueObj && typeof valueObj.errorMessage === 'string') {
     return { content: valueObj.errorMessage, hasError: true }
   }
@@ -83,7 +88,7 @@ export const extractSpawnAgentResultContent = (
     Array.isArray(obj.value)
   ) {
     const textContent = obj.value
-      .filter(isRecord)
+      .filter(isJSONRecord)
       .filter((msg) => msg.role === 'assistant')
       .map((msg) => extractTextFromMessageContent(msg.content))
       .filter(Boolean)
@@ -95,12 +100,12 @@ export const extractSpawnAgentResultContent = (
   if (obj.type === 'structuredOutput') {
     const value = obj.value
     // Check for message field in structured output
-    if (isRecord(value)) {
+    if (isJSONRecord(value)) {
       if (typeof value.message === 'string') {
         return { content: value.message, hasError: false }
       }
       // Check for data.message pattern
-      if (isRecord(value.data) && typeof value.data.message === 'string') {
+      if (isJSONRecord(value.data) && typeof value.data.message === 'string') {
         return { content: value.data.message, hasError: false }
       }
     }

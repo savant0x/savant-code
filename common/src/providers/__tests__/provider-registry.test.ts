@@ -104,7 +104,7 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
     expect(deriveProviderOrder(PROVIDER_REGISTRY, 'unknown')).toBe(4)
   })
 
-  test('setup config derives exactly the eighteen current setup providers', () => {
+  test('setup config derives exactly the nineteen current setup providers', () => {
     const setup = deriveSetupConfig(PROVIDER_REGISTRY)
     expect(Object.keys(setup).sort()).toEqual([
       'apinex',
@@ -112,6 +112,7 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
       'bai',
       'bazaarlink',
       'cleanapis',
+      'cloudflare',
       'commandcode',
       'hcnsec',
       'infron',

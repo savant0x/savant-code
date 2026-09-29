@@ -1,4 +1,4 @@
-import { withTimeout } from '@savant-code/common/util/promise'
+import { sleep, withTimeout } from '@savant-code/common/util/promise'
 
 import type { Logger } from '@savant-code/common/types/contracts/logger'
 
@@ -48,9 +48,6 @@ export type SearchResult = {
   creditsUsed?: number
 }
 export type SearchFn = (query: string) => Promise<SearchResult>
-
-const sleep = (ms: number): Promise<void> =>
-  new Promise((resolve) => setTimeout(resolve, ms))
 
 /**
  * Domain-reputation scoring (ported idea from the reference

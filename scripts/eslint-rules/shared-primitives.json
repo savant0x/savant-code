@@ -1,0 +1,49 @@
+{
+  "$comment": "Canonical homes for shared utility primitives (FID-2026-0928-009 Part 2). The no-duplicate-shared-primitive ESLint rule reads this file: a top-level function/const declaration whose name is a key here is an ERROR unless the file is the symbol's declared owner (or listed in allowedFiles). Adding a canonical export = add one registry entry in the same PR. Paths are forward-slash relative to the repo root.",
+  "sleep": {
+    "owner": "common/src/util/promise.ts",
+    "note": "Typed Promise<void>; satisfies PollLoginStatusDeps-style dependency slots."
+  },
+  "withTimeout": {
+    "owner": "common/src/util/promise.ts",
+    "note": "Rejecting timeout. The OSC resolve-value variant is deliberately named withTimeoutValue and lives in cli/src/utils/terminal-color-detection/osc-query.ts."
+  },
+  "sha256": {
+    "owner": "common/src/util/hash.ts",
+    "note": "Hex SHA-256 over UTF-8. sha256Hex in agent-runtime is a re-export of this body."
+  },
+  "sha256Hex": {
+    "owner": "common/src/util/hash.ts",
+    "note": "Call-site-name alias of sha256."
+  },
+  "isRecord": {
+    "owner": "common/src/util/object.ts",
+    "note": "Plain-object guard excluding arrays. JSON/narrower variants must use a distinct descriptive name (isJSONObjectRecord, isPrimitiveRecord, isJSONRecord)."
+  },
+  "asOptionalString": {
+    "owner": "cli/src/utils/openrouter-models/wire-guards.ts",
+    "note": "Non-empty string or undefined, for untyped vendor payloads."
+  },
+  "asOptionalNumber": {
+    "owner": "cli/src/utils/openrouter-models/wire-guards.ts",
+    "note": "Finite number or undefined; wire null coerces to undefined at the parser boundary."
+  },
+  "allowedFiles": [
+    "cli/src/utils/openrouter-models/wire-guards.ts",
+    "common/src/util/promise.ts",
+    "common/src/util/hash.ts",
+    "common/src/util/object.ts",
+    "packages/agent-runtime/src/evidence/spill.ts",
+    "packages/agent-runtime/src/teacher/sandbox/subprocess.ts",
+    "packages/design-systems/src/parse-helpers.ts",
+    "common/src/reddit-capi.ts",
+    "cli/src/commands/attest/clean-process/primitives.ts",
+    "common/src/testing/setup.ts",
+    "scripts/evolve-skills.ts",
+    "packages/llm-providers/src/schema-sanitize.ts",
+    "cli/src/utils/message-block-helpers/spawn-result.ts",
+    "common/src/util/axiom-only-log.ts",
+    "sdk/src/run-state/serialization.ts"
+  ],
+  "allowedTests": true
+}
