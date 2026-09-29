@@ -54,7 +54,7 @@ Or select one of the supported gateway providers directly:
 | B.AI | `/provider bai` or `DIRECT_PROVIDER=bai` | `BAI_API_KEY` | OpenAI-compatible gateway with an authenticated live model catalog |
 | BazaarLink | `/provider bazaarlink` or `DIRECT_PROVIDER=bazaarlink` | `BAZAARLINK_API_KEY` | Hosted gateway |
 | Clean APIs | `/provider cleanapis` or `DIRECT_PROVIDER=cleanapis` | `CLEANAPIS_API_KEY` | Hosted gateway |
-| Cloudflare | Environment configuration | `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` | Env-only — not in the `/provider` picker; requires the account id too |
+| Cloudflare | `/provider cloudflare` or `DIRECT_PROVIDER=cloudflare` | `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` | Workers AI gateway; the `/provider` flow prompts for the token, then the account id (env vars take precedence) |
 | CommandCode | `/provider commandcode` or `DIRECT_PROVIDER=commandcode` | `COMMAND_CODE_API_KEY` | OpenAI-compatible hosted inference (dual-protocol) |
 | HCNSec | `/provider hcnsec` or `DIRECT_PROVIDER=hcnsec` | `HCNSEC_API_KEY` | OpenAI-compatible gateway on an audited static 7-model allowlist |
 | Infron | `/provider infron` or `DIRECT_PROVIDER=infron` | `INFRON_API_KEY` | Hosted gateway |
@@ -155,6 +155,9 @@ UNOROUTER_API_KEY=dummy-unorouter-key-replace-me
 BAZAARLINK_API_KEY=dummy-bazaarlink_api_key-replace-me
 AI_GATEWAY_API_KEY=dummy-ai-gateway-key-replace-me
 CLEANAPIS_API_KEY=dummy-cleanapis-api-key-replace-me
+# Cloudflare needs TWO credentials (token + account id):
+CLOUDFLARE_API_TOKEN=cloudflare-dummy-replace-me
+CLOUDFLARE_ACCOUNT_ID=cloudflare-account-dummy-replace-me
 
 # Local Ollama override (optional)
 # OLLAMA_HOST=http://localhost:11434
@@ -165,8 +168,6 @@ CLEANAPIS_API_KEY=dummy-cleanapis-api-key-replace-me
 
 # Optional backend and advanced integrations
 # SAVANT_CODE_API_KEY=backend-dummy-replace-me
-# CLOUDFLARE_API_TOKEN=cloudflare-dummy-replace-me
-# CLOUDFLARE_ACCOUNT_ID=cloudflare-account-dummy-replace-me
 AMAZON_WORKER=amazon-worker-dummy-replace-me
 ```
 

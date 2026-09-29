@@ -1001,6 +1001,7 @@ picker or choose one directly:
 /provider bazaarlink
 /provider vercel
 /provider cleanapis
+/provider cloudflare
 ```
 
 The supported environment variables are `OPENROUTER_API_KEY`,
@@ -1009,7 +1010,8 @@ The supported environment variables are `OPENROUTER_API_KEY`,
 `NOUS_API_KEY`, `KIOSAPI_API_KEY`, `APINEX_API_KEY`,
 `ORCAROUTER_API_KEY`, `BAI_API_KEY`, `HCNSEC_API_KEY`, `TOKENBOM_API_KEY`,
 `ATRIA_API_KEY`, `INFRON_API_KEY`, `UNOROUTER_API_KEY`, `BAZAARLINK_API_KEY`,
-`AI_GATEWAY_API_KEY`, `CLEANAPIS_API_KEY`. The key
+`AI_GATEWAY_API_KEY`, `CLEANAPIS_API_KEY`,
+`CLOUDFLARE_API_TOKEN`. The key
 prompt is masked and stores the key globally in the Savant-Code config
 `credentials.json`; it is not added to chat history. Shell environment variables
 take precedence over stored keys, so CI and managed environments can configure

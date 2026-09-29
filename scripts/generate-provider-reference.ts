@@ -105,12 +105,11 @@ const TABLE_NOTES: Record<string, string> = {
   'opencode-zen':
     'Pay-per-use gateway, 70 models incl. free tier (multi-protocol)',
   cloudflare:
-    'Env-only — not in the `/provider` picker; requires the account id too',
+    'Workers AI gateway; the `/provider` flow prompts for the token, then the account id (env vars take precedence)',
 }
 
 const TABLE_SELECTION: Record<string, string> = {
   ollama: 'Automatic detection',
-  cloudflare: 'Environment configuration',
 }
 
 /**
