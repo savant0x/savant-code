@@ -62,7 +62,7 @@
 
 ## Open items
 
-**Ten** items are open. Each names its own specific blocker. Nothing here
+**Fourteen** items are open. Each names its own specific blocker. Nothing here
 may be dropped, trimmed, or reclassified without an operator ruling; a working
 tree state is not a disposition. When an item closes it leaves this file
 entirely — its evidence goes to `CHANGELOG.md`, not to a section here.
@@ -149,30 +149,29 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
 ### Archived-FID disposition
 
 - [ ] **T97. 39 archived FIDs carry a non-`closed` status** — re-measured
-      2026-09-28 with the repo's own `parseFidStatus`
-      (`fid-verification-enforcement.ts:57-59`), not a re-implemented regex: the
-      archive holds **428** records, of which **386** are `closed` (including
-      decorated forms like `closed (2026-08-09 — …)`) and **39** are not. The
-      39 break down as 17 `fixed`, 9 `verified`, 2 `created`, 2 `analyzed`,
-      2 `implemented`, plus 7 annotated forms. **The earlier figures on this line
-      (423 records / 35) were stale**, and a first recount that produced 51 was
-      wrong because it used the line-anchored status regex that
-      FID-2026-0928-002 had already replaced. **Two sub-findings the old line
-      did not carry:** (a) **2 archived records have no `**Status:**` line at
-      all** — `FID-2026-0807-010` and `FID-2026-0807-011`. These are genuinely
-      malformed, distinct from the 12 bullet-form records that were a *parser*
-      blind spot and are now read correctly; (b) `FID-2026-0807-014` declares
-      `complete (operator-approved; …)`, and `complete` is outside the allowed
-      vocabulary `created | analyzed | fixed | verified | converged | closed`
-      (`dev/echo-v0.1.2-single-agent.md:462`). **Risk:** the archive is outside
-      the active queue, so `scope.unregistered-item` — which walks only
-      `dev/fids/FID-*.md` — cannot see any of them. **Blocker:** closing 39
-      records requires per-record implementation evidence (commit SHA or
-      file:line + grep); bulk-setting them to `closed` would be exactly the
-      Ground-Truth violation this protocol exists to prevent, and the
-      alternative — moving them back to the active queue — would put 39
-      unverifiable items in front of the operator at once. This needs an
-      operator ruling on the disposition. **Automation level: 1.**
+      2026-09-29 with the repo's own `parseFidStatus`, not a re-implemented
+      regex: the archive holds **436** records, of which **395** are `closed`
+      (including decorated forms like `closed (2026-08-09 — …)`) and **41**
+      are problem records (39 non-`closed` + 2 with no `**Status:**` line —
+      `FID-2026-0807-010` / `-011`, genuinely malformed). **The 2026-09-28
+      figures (428/386/39) were stale.** The 9 records created on/after the
+      2026-09-15 closure-vocabulary cutoff were repaired and are now
+      mechanically guarded (`FID-2026-0928-013`: eight status flips to
+      `closed` aligned to their own ledger/Resolution evidence, one dated
+      operator-decline marker on `FID-2026-0919-009`); the guard fails
+      `validate:repository` on any future post-cutoff non-`closed` archived
+      record. **Remaining disposition surface for this item: the pre-cutoff
+      August batch (~30 records: 2026-08 code-universe/deck/desktop-era
+      `fixed`/`verified`/`implemented`) + the 2 malformed records.**
+      **Risk:** the archive is outside the active queue, so
+      `scope.unregistered-item` — which walks only `dev/fids/FID-*.md` —
+      cannot see any of them. **Blocker:** closing them requires per-record
+      implementation evidence (commit SHA or file:line + grep); bulk-setting
+      them to `closed` would be exactly the Ground-Truth violation this
+      protocol exists to prevent, and the alternative — moving them back to
+      the active queue — would put ~30 unverifiable items in front of the
+      operator at once. This needs an operator ruling on the disposition.
+      **Automation level: 1.**
 
 ### Code Universe rulings (FID-2026-0928-003 / -004)
 
@@ -222,6 +221,73 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
       tokens, 1 for the tail.
 
 ### Providers and routing
+
+- [ ] **T98. Provider identity leak — the free lane's supplier persona wins
+      the agent's self-description.** IMPLEMENTED + VERIFIED 2026-09-29
+      (`dev/fids/FID-2026-0929-001-provider-identity-leak-brand-guard.md`,
+      status `verified`, receipt stamped): harness identity counter-clause in
+      `agents/savant/system-prompt.ts` (shared base → all 6 modes), 9-test pin
+      at `agents/savant/__tests__/system-prompt-identity.test.ts`, bundle
+      regenerated (13/13 savant chunks carry the clause). Remaining:
+      closure ceremony (commit + archive + CHANGELOG) awaits operator git
+      authorization, and the live APInex identity probe is operator-run
+      (NEEDS-REVIEW in the FID). **Automation level: 3.**
+
+- [ ] **T99. In direct-provider mode, a provider 402 is misreported as a
+      SavantCode-backend out-of-credits error.** IMPLEMENTED + VERIFIED
+      2026-09-29
+      (`dev/fids/FID-2026-0929-002-direct-provider-402-out-of-credits-misfire.md`,
+      status `verified`, receipt stamped): both 402 branches in
+      `run-results.ts` gated on `isDirectProviderMode()` — direct mode now
+      renders the provider's own message + `/health` pointer via
+      `providerOutOfCreditsError` (new selector) and the widened `quotaHint`
+      (bare 402s now match); no input-mode flip, no backend usage poll in
+      direct mode; backend mode byte-identical (regression pin green). Full
+      cli suite 3881/0. Remaining: closure ceremony (commit + archive +
+      CHANGELOG) awaits operator git authorization, and the live direct-lane
+      402 reproduction is operator-run (NEEDS-REVIEW in the FID).
+      **Automation level: 3.**
+
+- [ ] **T100. Boot-mode precedence was unruled; ruling received and the
+      routing slice implemented.** Third-party diagnosis (Nova, Discord
+      2026-09-29) claimed the CLI booted in backend mode because `.env.local`
+      lacked `DIRECT_PROVIDER`/`INFERENCE_BASE_URL` — adjudicated
+      claim-by-claim in
+      `dev/fids/FID-2026-0929-003-boot-mode-precedence-token-vs-selection.md`
+      (backend-mode claim REFUTED by live probe, names only; `.env.local`
+      append claim REFUTED, 0 matches). Operator ruling 2026-09-29, verbatim:
+      *"we need to gut this whole 'backend' idea, we don't have a backend to
+      fall back to."* **Implemented + verified** (receipt stamped): one
+      predicate `hasEnvBackendCredentials()` (`auth.ts`) — only the explicit
+      `SAVANT_CODE_API_KEY` defers boot routing; a stored login token defers
+      to nothing (residue, not a routing command); the stub bypass token
+      never counts. All three boot gates re-keyed (`provider-key-store.ts`
+      ×2, `ollama-onboarding.ts` ×2 → 3 sites); 8 new pins across 3 suites;
+      cli workspace 3889/0; `quality` PASS. **Remaining, blocked on operator
+      direction:** (a) closure ceremony for all three 0929 FIDs — commit +
+      archive + CHANGELOG needs git authorization; (b) the remaining
+      gut-the-backend stages named in the ruling (login flow,
+      `SAVANT_CODE_API_KEY` retirement, SDK backend-call surface,
+      backend-mode `OUT_OF_CREDITS` branch) — each is a destructive-facing
+      change needing its own presented plan; **blocker:** the operator names
+      the next stage. **Automation level: 1** for both remainders.
+
+- [ ] **T101. Gut-the-backend stage 1 — delete the dead login surface.**
+      IMPLEMENTED + VERIFIED 2026-09-29
+      (`dev/fids/FID-2026-0929-004-delete-dead-login-surface.md`, receipt
+      stamped; green-lit by operator directive "Green-light deleting the dead
+      login surface first"): 9 production files + 4 test suites deleted;
+      `cli/src/login/{constants,utils}.ts` RELOCATED to `cli/src/branding/`
+      (logo/sheen/URL assets consumed by 8 live components); modal plumbing
+      stripped; `/login` slash command + `login` CLI argument removed.
+      Evidence: cli workspace 3867/0 (453 files), absence-greps zero
+      production matches, `cli/src/login/` gone. Honest correction recorded:
+      `savant-free login` now hits commander's default excess-argument
+      rejection (the branch never accepted prompts) — documented, not
+      unit-pinnable. **Remaining: closure ceremony awaits operator git
+      authorization. Next stage (operator's pick): `SAVANT_CODE_API_KEY`
+      retirement, SDK backend-call surface, or the backend-mode
+      `OUT_OF_CREDITS` branch. Automation level: 3.**
 
 - [ ] **T62-followups (remaining items routed, not blocking Task 62
       closure):** (1) is **completed 2026-09-28** — commandcode catalog
